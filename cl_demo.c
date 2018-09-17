@@ -3525,6 +3525,7 @@ char *CL_Macro_DemoLength_f (void)
 //
 void CL_Play_f (void)
 {
+	keydest_t failure_dest = KeyDestStartupDemo(key_dest) ? key_console : key_dest;
 	#ifndef WITH_VFS_ARCHIVE_LOADING
 	#ifdef WITH_ZIP
 	char unpacked_path[MAX_OSPATH];
@@ -3539,6 +3540,7 @@ void CL_Play_f (void)
 	if (Cmd_Argc() != 2)
 	{
 		Com_Printf ("Usage: %s <demoname>\n", Cmd_Argv(0));
+		key_dest = failure_dest;
 		return;
 	}
 
@@ -3548,6 +3550,7 @@ void CL_Play_f (void)
 	// Quick check for buffer overrun on COM_StripExtension below...
 	if (strlen (real_name) > MAX_OSPATH - 4) {
 		Com_Printf ("Path is too long (%d characters, max is %d)\n", strlen (real_name), MAX_OSPATH - 4);
+		key_dest = failure_dest;
 		return;
 	}
 
@@ -3579,8 +3582,8 @@ void CL_Play_f (void)
 		PlayQWZDemo();
 
 		// We failed to extract the QWZ demo.
-		if (!playbackfile && !qwz_playback)
-		{
+		if (!playbackfile && !qwz_playback) {
+			key_dest = failure_dest;
 			return;
 		}
 
@@ -3596,12 +3599,13 @@ void CL_Play_f (void)
 		//
 
 		// If they specified a valid extension, try that first
-		for (s = ext; *s && !playbackfile; ++s)
-			if (!strcasecmp(COM_FileExtension(name), *s)) 
+		for (s = ext; *s && !playbackfile; ++s) {
+			if (!strcasecmp(COM_FileExtension(name), *s)) {
 				playbackfile = CL_Open_Demo_File(name, true, NULL);
+			}
+		}
 
-		for (s = ext; *s && !playbackfile; s++)
-		{
+		for (s = ext; *s && !playbackfile; s++) {
 			// Strip the extension from the specified filename and append
 			// the one we're currently checking for.
 			COM_StripExtension(name, name, sizeof(name));
@@ -3682,6 +3686,7 @@ void CL_Play_f (void)
 	if (!playbackfile)
 	{
 		Com_Printf ("Error: Couldn't open %s\n", Cmd_Argv(1));
+		key_dest = failure_dest;
 		return;
 	}
 

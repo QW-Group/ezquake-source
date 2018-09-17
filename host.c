@@ -549,7 +549,18 @@ void Startup_Place(void)
 
 	if (cl_startupdemo.string[0]) {
 		Cbuf_AddText(va("playdemo %s\n", cl_startupdemo.string));
-		key_dest = key_startupdemo;
+		if (!strcmp(cl_onload.string, "menu")) {
+			key_dest = key_startupdemo_menu;
+		}
+		else if (!strcmp(cl_onload.string, "browser")) {
+			key_dest = key_startupdemo_browser;
+		}
+		else if (!strcmp(cl_onload.string, "console")) {
+			key_dest = key_startupdemo_console;
+		}
+		else {
+			key_dest = key_startupdemo_game;
+		}
 	}
 	else if (!strcmp (cl_onload.string, "menu")) {
 		Cbuf_AddText ("togglemenu\n");

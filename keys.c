@@ -2065,6 +2065,11 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 			return;
 		}
 
+		if (KeyDestStartupDemo(key_dest)) {
+			Cbuf_AddText("togglemenu\n");
+			return;
+		}
+
 		switch (key_dest) 
 		{
 			case key_message:
@@ -2077,10 +2082,12 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 				M_ToggleMenu_f ();
 				break;
 			case key_console:
-				if (!SCR_NEED_CONSOLE_BACKGROUND)
-					Con_ToggleConsole_f ();
-				else
-					M_ToggleMenu_f ();
+				if (!SCR_NEED_CONSOLE_BACKGROUND) {
+					Con_ToggleConsole_f();
+				}
+				else {
+					M_ToggleMenu_f();
+				}
 				break;
 			case key_hudeditor:
 				HUD_Editor_Key(key, unichar, down);
@@ -2088,9 +2095,7 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 			case key_demo_controls:
 				DemoControls_KeyEvent(key, unichar, down);
 				break;
-			case key_startupdemo:
-				Cbuf_AddText("disconnect;togglemenu\n");
-				break;
+
 			default:
 				assert(!"Bad key_dest");
 		}
@@ -2232,8 +2237,15 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 			DemoControls_KeyEvent(key, unichar, down);
 			break;
 
-		case key_startupdemo:
-			Cbuf_AddText("disconnect;togglemenu\n");
+		case key_startupdemo_browser:
+			Cbuf_AddText("menu_slist\n");
+			break;
+		case key_startupdemo_console:
+		case key_startupdemo_game:
+			key_dest = key_console;
+			break;
+		case key_startupdemo_menu:
+			Cbuf_AddText("togglemenu\n");
 			break;
 
 		default:

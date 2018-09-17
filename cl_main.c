@@ -358,6 +358,10 @@ void CL_MakeActive(void)
 		demostarttime = cls.demotime;
 	}
 
+	if (key_dest == key_startupdemo_game) {
+		key_dest = key_game;
+	}
+
 	if (!cls.demoseeking) {
 		Con_ClearNotify ();
 	}
@@ -1416,6 +1420,10 @@ void CL_ConnectionlessPacket (void)
 			} 
 			else 
 			{
+				if (KeyDestStartupDemo(key_dest)) {
+					key_dest = key_console;
+				}
+
 				Cbuf_AddText (cmdtext);
 				Cbuf_AddText ("\n");
 				allowremotecmd = false;

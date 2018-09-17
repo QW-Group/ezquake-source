@@ -164,7 +164,20 @@ typedef enum {
 } keynum_t;
 
 
-typedef enum { key_game, key_console, key_message, key_menu, key_hudeditor, key_demo_controls, key_startupdemo } keydest_t;
+typedef enum {
+	key_game,
+	key_console,
+	key_message,
+	key_menu,
+	key_hudeditor,
+	key_demo_controls,
+	key_startupdemo_menu,
+	key_startupdemo_console,
+	key_startupdemo_game,
+	key_startupdemo_browser
+} keydest_t;
+
+#define KeyDestStartupDemo(x) ((x) >= key_startupdemo_menu && (x) <= key_startupdemo_browser)
 
 extern keydest_t	key_dest, key_dest_beforemm, key_dest_beforecon;
 extern char 	*keybindings[UNKNOWN + 256];
