@@ -287,22 +287,27 @@ void Cvar_SetByName (const char *var_name, char *value)
 	Cvar_Set (var, value);
 }
 
-void Cvar_SetValue (cvar_t *var, const float value)
+static void Cvar_ValueToString(char* val, int size, float value)
 {
-	char val[128];
 	int	i;
 
-	snprintf (val, sizeof(val), "%f", value);
-
+	snprintf(val, size - 1, "%f", value);
 	for (i = strlen(val) - 1; i > 0 && val[i] == '0'; i--) {
 		val[i] = 0;
 	}
 
 	if (val[i] == '.') {
-		val[i] = 0;
+		val[i] = '\0';
 	}
+}
 
-	Cvar_Set (var, val);
+void Cvar_SetValue (cvar_t *var, const float value)
+{
+	char val[128];
+
+	Cvar_ValueToString(val, sizeof(val), value);
+
+	Cvar_Set(var, val);
 }
 
 void Cvar_SetValueByName(const char *var_name, const float value)
@@ -395,6 +400,16 @@ void Cvar_Register(cvar_t *var)
 	}
 
 	var->value = Q_atof(var->string);
+	if (((var->flags & CVAR_RULESET_MIN) && var->value < var->minrulesetvalue) ||
+	    ((var->flags & CVAR_RULESET_MAX) && var->value > var->maxrulesetvalue)) {
+		char val[128];
+
+		var->value = bound(var->minrulesetvalue, var->value, var->maxrulesetvalue);
+		Cvar_ValueToString(val, sizeof(val), var->value);
+
+		Q_free(var->string);
+		var->string = Q_strdup_named(val, var->name);
+	}
 	var->integer = Q_atoi(var->string);
 	StringToRGB_W(var->string, var->color);
 	var->modified = true;
