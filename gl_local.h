@@ -214,39 +214,6 @@ void GL_InitialiseDebugging(void);
 // Which renderer to use
 #define GL_VersionAtLeast(major, minor) (glConfig.majorVersion > (major) || (glConfig.majorVersion == (major) && glConfig.minorVersion >= (minor)))
 
-// 
-#ifdef RENDERER_OPTION_MODERN_OPENGL
-
-extern cvar_t vid_gl_core_profile;
-#define GL_CoreProfileContext()   (R_UseModernOpenGL() && vid_gl_core_profile.integer)
-
-#ifdef __APPLE__
-// https://www.khronos.org/opengl/wiki/OpenGL_Context
-// "Recommendation: You should use the forward compatibility bit only if you need compatibility with MacOS.
-//    That API requires the forward compatibility bit to create any core profile context."
-#define GL_ForwardOnlyProfile()   (GL_CoreProfileContext())
-#else
-// There's no reason for this unless we need to check that we're not using deprecated functionality, so keep disabled
-#define GL_ForwardOnlyProfile()   (GL_CoreProfileContext() && COM_CheckParm(cmdline_param_client_forwardonlyprofile))
-#endif
-
-#else
-
-#define GL_CoreProfileContext() (0)
-#define GL_ForwardOnlyProfile() (0)
-
-#endif // RENDERER_OPTION_MODERN_OPENGL
-
-void GL_TextureEnvMode(GLenum mode);
-void GL_TextureEnvModeForUnit(GLenum unit, GLenum mode);
-
-#define GL_ALPHATEST_NOCHANGE 0
-#define GL_ALPHATEST_ENABLED  1
-#define GL_ALPHATEST_DISABLED 2
-#define GL_BLEND_NOCHANGE 0
-#define GL_BLEND_ENABLED  4
-#define GL_BLEND_DISABLED 8
-
 void GL_TextureInitialiseState(void);
 void GL_InvalidateTextureReferences(GLuint texture);
 

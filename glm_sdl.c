@@ -25,18 +25,52 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "quakedef.h"
 #include "gl_local.h"
 
-void GLM_SDL_SetupAttributes(void)
+typedef struct opengl_version_s {
+	int majorVersion;
+	int minorVersion;
+	qbool core;
+} opengl_version_t;
+
+static opengl_version_t versions[] = {
+	{ 4, 6, false },
+	{ 4, 5, false },
+	{ 4, 4, false },
+	{ 4, 3, false },
+	{ 4, 6, true },
+	{ 4, 5, true },
+	{ 4, 4, true },
+	{ 4, 3, true },
+};
+
+qbool GLM_SDL_SetupAttributes(int attempt)
 {
 	int contextFlags = 0;
+	extern cvar_t vid_gl_core_profile;
 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	if (GL_CoreProfileContext()) {
+	// This will make
+	if (vid_gl_core_profile.integer) {
+		while (attempt < sizeof(versions) / sizeof(versions[0]) && !versions[attempt].core) {
+			++attempt;
+		}
+	}
+
+	if (attempt >= sizeof(versions) / sizeof(versions[0])) {
+		return false;
+	}
+
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, versions[attempt].majorVersion);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, versions[attempt].minorVersion);
+	if (versions[attempt].core) {
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-		if (GL_ForwardOnlyProfile()) {
-			contextFlags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
-		}
+#ifdef __APPLE__
+		// https://www.khronos.org/opengl/wiki/OpenGL_Context
+		// Recommendation: You should use the forward compatibility bit only if you need compatibility with MacOS.
+		// That API requires the forward compatibility bit to create any core profile context.
+		contextFlags |= SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+#else
+		contextFlags |= COM_CheckParm(cmdline_param_client_forwardonlyprofile) ? SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG : 0;
+#endif
 	}
 	else {
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
@@ -45,4 +79,6 @@ void GLM_SDL_SetupAttributes(void)
 		contextFlags |= SDL_GL_CONTEXT_DEBUG_FLAG;
 	}
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
+
+	return true;
 }

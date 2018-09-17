@@ -25,9 +25,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "quakedef.h"
 #include "gl_local.h"
 
-void GLC_SDL_SetupAttributes(void)
+qbool GLC_SDL_SetupAttributes(int attempt)
 {
 	// SDL defaults - take what we can get
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+
+	return attempt == 0;
 }

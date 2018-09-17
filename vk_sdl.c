@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <SDL.h>
 #include "quakedef.h"
 
-void VK_SDL_SetupAttributes(void)
+qbool VK_SDL_SetupAttributes(int attempt)
 {
-
+	return attempt == 0;
 }

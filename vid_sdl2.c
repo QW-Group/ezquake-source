@@ -59,9 +59,9 @@ void Sys_ActiveAppChanged (void);
 #include "r_buffers.h"
 #include "r_renderer.h"
 
-void VK_SDL_SetupAttributes(void);
-void GLM_SDL_SetupAttributes(void);
-void GLC_SDL_SetupAttributes(void);
+qbool VK_SDL_SetupAttributes(int attempt);
+qbool GLM_SDL_SetupAttributes(int attempt);
+qbool GLC_SDL_SetupAttributes(int attempt);
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
@@ -1004,7 +1004,7 @@ static void VID_SDL_GL_DisableMSAA(void)
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
 }
 
-static void VID_SDL_GL_SetupAttributes(void)
+static qbool VID_SDL_GL_SetupAttributes(int attempt)
 {
 	extern cvar_t gl_gammacorrection;
 
@@ -1030,23 +1030,31 @@ static void VID_SDL_GL_SetupAttributes(void)
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, COM_CheckParm(cmdline_param_client_unaccelerated_visuals) ? 0 : 1);
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
-		GLM_SDL_SetupAttributes();
+		if (!GLM_SDL_SetupAttributes(attempt)) {
+			return false;
+		}
 	}
 #endif
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
-		GLC_SDL_SetupAttributes();
+		if (!GLC_SDL_SetupAttributes(attempt)) {
+			return false;
+		}
 	}
 #endif
 #ifdef RENDERER_OPTION_VULKAN
 	if (R_UseVulkan()) {
-		VK_SDL_SetupAttributes();
+		if (!VK_SDL_SetupAttributes(attempt)) {
+			return false;
+		}
 	}
 #endif
 
 	if (r_24bit_depth.integer == 1) {
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 	} /* else, SDL2 defaults to 16 */
+
+	return true;
 }
 
 static int VID_SetWindowIcon(SDL_Window *sdl_window)
@@ -1137,6 +1145,34 @@ static void VID_X11_GetGammaRampSize(void)
 }
 #endif
 
+static void VID_CreateContext(int flags)
+{
+	int attempt;
+
+	sdl_window = NULL;
+	for (attempt = 0; sdl_window == NULL && VID_SDL_GL_SetupAttributes(attempt); ++attempt) {
+		VID_SetupModeList();
+		VID_SetupResolution();
+
+#if SDL_VERSION_ATLEAST(2,0,8)
+#ifdef RENDERER_OPTION_VULKAN
+		sdl_window = VID_SDL_CreateWindow((flags & ~SDL_WINDOW_OPENGL) | SDL_WINDOW_VULKAN);
+		{
+			extern qbool VK_Initialise(SDL_Window* window);
+			extern void VK_Shutdown(void);
+
+			if (VK_Initialise(sdl_window)) {
+				VK_Shutdown();
+			}
+			SDL_DestroyWindow(sdl_window);
+		}
+#endif
+#endif
+
+		sdl_window = VID_SDL_CreateWindow(flags);
+	}
+}
+
 static void VID_SDL_Init(void)
 {
 	int flags;
@@ -1149,7 +1185,6 @@ static void VID_SDL_Init(void)
 	R_SelectRenderer();
 
 	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
-
 	if (r_fullscreen.integer > 0) {
 		if (vid_usedesktopres.integer == 1) {
 			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
@@ -1168,32 +1203,13 @@ static void VID_SDL_Init(void)
 	SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, vid_grab_keyboard.integer == 0 ? "0" : "1");
 	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
 
-	VID_SDL_GL_SetupAttributes();
+	VID_CreateContext(flags);
 
-	VID_SetupModeList();
-	VID_SetupResolution();
-
-#if SDL_VERSION_ATLEAST(2,0,8)
-#ifdef RENDERER_OPTION_VULKAN
-	sdl_window = VID_SDL_CreateWindow((flags & ~SDL_WINDOW_OPENGL) | SDL_WINDOW_VULKAN);
-	{
-		extern qbool VK_Initialise(SDL_Window* window);
-		extern void VK_Shutdown(void);
-
-		if (VK_Initialise(sdl_window)) {
-			VK_Shutdown();
-		}
-		SDL_DestroyWindow(sdl_window);
-	}
-#endif
-#endif
-
-	sdl_window = VID_SDL_CreateWindow(flags);
 	if (!sdl_window) {
 		if (gl_multisamples.integer > 0) {
 			VID_SDL_GL_DisableMSAA();
 			Cvar_AutoSet(&gl_multisamples, "0");
-			sdl_window = VID_SDL_CreateWindow(flags);
+			VID_CreateContext(flags);
 		}
 		if (sdl_window) {
 			Com_Printf("WARNING: Invalid gl_multisamples value. Disabling MSAA");
