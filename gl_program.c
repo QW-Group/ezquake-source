@@ -26,7 +26,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_program.h"
 #include "tr_types.h"
 
-#define GL_DefineProgram_VF(program_id, name, expect_params, sourcename) \
+typedef enum {
+	renderer_classic = 1,
+	renderer_modern,
+} renderer_id;
+
+#define GL_DefineProgram_VF(program_id, name, expect_params, sourcename, renderer) \
 	{ \
 		extern unsigned char sourcename##_vertex_glsl[]; \
 		extern unsigned int sourcename##_vertex_glsl_len; \
@@ -40,9 +45,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 		program_data[program_id].shaders[shadertype_fragment].text = (const char*)sourcename##_fragment_glsl; \
 		program_data[program_id].shaders[shadertype_fragment].length = sourcename##_fragment_glsl_len; \
 		program_data[program_id].initialised = true; \
+		program_data[program_id].renderer_id = renderer; \
 	}
 
-#define GL_DefineProgram_CS(program_id, name, expect_params, sourcename) \
+#define GL_DefineProgram_CS(program_id, name, expect_params, sourcename, renderer) \
 	{ \
 		extern unsigned char sourcename##_compute_glsl[]; \
 		extern unsigned int sourcename##_compute_glsl_len; \
@@ -52,6 +58,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 		program_data[program_id].shaders[shadertype_compute].text = (const char*)sourcename##_compute_glsl; \
 		program_data[program_id].shaders[shadertype_compute].length = sourcename##_compute_glsl_len; \
 		program_data[program_id].initialised = true; \
+		program_data[program_id].renderer_id = renderer; \
 	}
 
 static void GL_BuildCoreDefinitions(void);
@@ -91,6 +98,7 @@ typedef struct gl_program_s {
 
 	unsigned int custom_options;
 	qbool force_recompile;
+	renderer_id renderer_id;
 } gl_program_t;
 
 typedef struct {
@@ -525,6 +533,13 @@ void GL_ProgramsInitialise(void)
 	GL_BuildCoreDefinitions();
 
 	for (p = r_program_none; p < r_program_count; ++p) {
+		if (R_UseImmediateOpenGL() && program_data[p].renderer_id != renderer_classic) {
+			continue;
+		}
+		if (R_UseModernOpenGL() && program_data[p].renderer_id != renderer_modern) {
+			continue;
+		}
+
 		if (!program_data[p].program && !program_data[p].needs_params && program_data[p].initialised) {
 			gl_shader_def_t* compute = &program_data[p].shaders[shadertype_compute];
 			if (compute->length) {
@@ -793,18 +808,18 @@ static void GL_BuildCoreDefinitions(void)
 	memset(core_definitions, 0, sizeof(core_definitions));
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
-	GL_DefineProgram_VF(r_program_aliasmodel, "aliasmodel", true, draw_aliasmodel);
-	GL_DefineProgram_VF(r_program_brushmodel, "brushmodel", true, draw_world);
-	GL_DefineProgram_VF(r_program_sprite3d, "3d-sprites", false, draw_sprites);
-	GL_DefineProgram_VF(r_program_hud_polygon, "polygon-draw", false, hud_draw_polygon);
-	GL_DefineProgram_VF(r_program_hud_line, "line-draw", false, hud_draw_line);
-	GL_DefineProgram_VF(r_program_hud_images, "image-draw", true, hud_draw_image);
-	GL_DefineProgram_VF(r_program_hud_circles, "circle-draw", false, hud_draw_circle);
-	GL_DefineProgram_VF(r_program_post_process, "post-process-screen", true, post_process_screen);
-	GL_DefineProgram_CS(r_program_lightmap_compute, "lightmaps", false, lighting);
+	GL_DefineProgram_VF(r_program_aliasmodel, "aliasmodel", true, draw_aliasmodel, renderer_modern);
+	GL_DefineProgram_VF(r_program_brushmodel, "brushmodel", true, draw_world, renderer_modern);
+	GL_DefineProgram_VF(r_program_sprite3d, "3d-sprites", false, draw_sprites, renderer_modern);
+	GL_DefineProgram_VF(r_program_hud_polygon, "polygon-draw", false, hud_draw_polygon, renderer_modern);
+	GL_DefineProgram_VF(r_program_hud_line, "line-draw", false, hud_draw_line, renderer_modern);
+	GL_DefineProgram_VF(r_program_hud_images, "image-draw", true, hud_draw_image, renderer_modern);
+	GL_DefineProgram_VF(r_program_hud_circles, "circle-draw", false, hud_draw_circle, renderer_modern);
+	GL_DefineProgram_VF(r_program_post_process, "post-process-screen", true, post_process_screen, renderer_modern);
+	GL_DefineProgram_CS(r_program_lightmap_compute, "lightmaps", false, lighting, renderer_modern);
 #endif
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
-	GL_DefineProgram_VF(r_program_post_process_glc, "post-process-screen", true, glc_post_process_screen);
+	GL_DefineProgram_VF(r_program_post_process_glc, "post-process-screen", true, glc_post_process_screen, renderer_classic);
 #endif
 }
