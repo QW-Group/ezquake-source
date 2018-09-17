@@ -44,7 +44,7 @@ typedef enum {
 	p_slimeglow, //slime glow
 	p_slimebubble, //slime yellowish growing popping bubble
 	p_blacklavasmoke,
-	p_entitytrail,
+	p_nailtrail,
 	num_particletypes,
 } part_type_t;
 
@@ -53,7 +53,8 @@ typedef enum {
 	//VULT PARTICLES
 	pm_rain,
 	pm_streak,
-	pm_streakwave
+	pm_streakwave,
+	pm_trail
 } part_move_t;
 
 typedef enum {
@@ -72,7 +73,7 @@ typedef enum {
 	pd_beam,
 	pd_hide,
 	pd_normal,
-	pd_boxcone
+	pd_dynamictrail
 } part_draw_t;
 
 typedef enum {

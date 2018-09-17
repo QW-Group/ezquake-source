@@ -428,7 +428,7 @@ void QMB_InitParticles(void)
 	}
 
 	// meag: new, 'simple' trails following entities, updated as entity moves
-	QMB_AddParticleType(p_entitytrail, pd_boxcone, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_none, R_SIMPLETRAIL_NEAR_ALPHA, 0, 0, pm_static, 0, 8, &count, "part:entitytrail");
+	QMB_AddParticleType(p_nailtrail, pd_dynamictrail, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_none, R_SIMPLETRAIL_NEAR_ALPHA, 0, 0, pm_trail, 0, 8, &count, "part:entitytrail");
 
 	QMB_SortParticleTypes();
 
@@ -748,7 +748,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 			}
 			break;
-		case pd_boxcone:
+		case pd_dynamictrail:
 			{
 				particle_texture_t* ptex = &particle_textures[pt->texture];
 
@@ -825,7 +825,7 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 		return;
 	}
 
-	if (pt->move == pm_static) {
+	if (pt->move == pm_trail) {
 		// velocity isn't used, accel etc is irrelevant...
 		if (p->entity_ref) {
 			centity_t* cent = &cl_entities[p->entity_ref];

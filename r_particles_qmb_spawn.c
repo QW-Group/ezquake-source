@@ -90,7 +90,7 @@ static byte *ColorForParticle(part_type_t type)
 		case p_smallspark:
 			color[0] = color[1] = color[2] = color[3] = 255;
 			break;
-		case p_entitytrail:
+		case p_nailtrail:
 			color[0] = color[1] = color[2] = color[3] = R_SIMPLETRAIL_NEAR_ALPHA;
 			break;
 		default:
@@ -342,7 +342,7 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 {
 	byte *color;
 	int i, j, num_particles;
-	float count = 0.0, length, theta = 0.0;
+	float count = 0.0, theta = 0.0;
 	vec3_t point, delta;
 	particle_t *p;
 	particle_type_t *pt;
@@ -368,55 +368,57 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 
 	VectorCopy(start, point);
 	VectorSubtract(end, start, delta);
-	length = VectorLength(delta);
-	if (type != p_entitytrail && length < 1) {
-		goto done;
+	if (pt->drawtype == pd_dynamictrail) {
+		count = 1;
 	}
+	else {
+		float length = VectorLength(delta);
+		if (length < 1) {
+			goto done;
+		}
 
-	switch (type) {
-		case p_alphatrail:
-		case p_lavatrail:
-		case p_bleedspike:
-		case p_bubble:
-			count = length / 1.1;
-			break;
-		case p_bubble2:
-			count = length / 5;
-			break;
-		case p_trailpart:
-			count = length / 1.1;
-			break;
-		case p_blood3:
-			count = length / 8;
-			break;
-		case p_smoke:
-		case p_vxrocketsmoke:
-			count = length / 3.8;
-			break;
-		case p_dpsmoke:
-			count = length / 2.5;
-			break;
-		case p_dpfire:
-			count = length / 2.8;
-			break;
-			//VULT PARTICLES
-		case p_railtrail:
-			count = length * 1.6;
-			if (!(loops = (int)length / 13.0)) {
-				goto done;
-			}
-			VectorScale(delta, 1 / length, vf);
-			VectorVectors(vf, vr, vup);
-			break;
-		case p_trailbleed:
-			count = length / 1.1;
-			break;
-		case p_entitytrail:
-			count = 1;
-			break;
-		default:
-			Com_DPrintf("AddParticleTrail: unexpected type %d\n", type);
-			break;
+		switch (type) {
+			case p_alphatrail:
+			case p_lavatrail:
+			case p_bleedspike:
+			case p_bubble:
+				count = length / 1.1;
+				break;
+			case p_bubble2:
+				count = length / 5;
+				break;
+			case p_trailpart:
+				count = length / 1.1;
+				break;
+			case p_blood3:
+				count = length / 8;
+				break;
+			case p_smoke:
+			case p_vxrocketsmoke:
+				count = length / 3.8;
+				break;
+			case p_dpsmoke:
+				count = length / 2.5;
+				break;
+			case p_dpfire:
+				count = length / 2.8;
+				break;
+				//VULT PARTICLES
+			case p_railtrail:
+				count = length * 1.6;
+				if (!(loops = (int)length / 13.0)) {
+					goto done;
+				}
+				VectorScale(delta, 1 / length, vf);
+				VectorVectors(vf, vr, vup);
+				break;
+			case p_trailbleed:
+				count = length / 1.1;
+				break;
+			default:
+				Com_DPrintf("AddParticleTrail: unexpected type %d\n", type);
+				break;
+		}
 	}
 
 	if (!(num_particles = (int)count)) {
@@ -432,102 +434,104 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 			p->entity_trailnumber = cl_entities[entity_ref].trailnumber;
 		}
 
-		switch (type) {
-			//VULT PARTICLES
-			case p_trailpart:
-			case p_alphatrail:
-				VectorCopy(point, p->org);
-				VectorClear(p->vel);
-				p->growth = -size / time;
-				break;
-			case p_entitytrail:
-				VectorCopy(start, p->org);
-				VectorCopy(end, p->endorg);
-				break;
-			case p_blood3:
-				VectorCopy(point, p->org);
-				for (j = 0; j < 3; j++) {
-					p->org[j] += ((rand() & 15) - 8) / 8.0;
-				}
-				for (j = 0; j < 3; j++) {
-					p->vel[j] = ((rand() & 15) - 8) / 2.0;
-				}
-				p->size = size * (rand() % 20) / 10.0;
-				p->growth = 6;
-				break;
-			case p_smoke:
-				VectorCopy(point, p->org);
-				for (j = 0; j < 3; j++) {
-					p->org[j] += ((rand() & 7) - 4) / 8.0;
-				}
-				p->vel[0] = p->vel[1] = 0;
-				p->vel[2] = rand() & 3;
-				p->growth = 4.5;
-				p->rotspeed = (rand() & 63) + 96;
-				break;
-			case p_dpsmoke:
-				VectorCopy(point, p->org);
-				for (j = 0; j < 3; j++) {
-					p->vel[j] = (rand() % 10) - 5;
-				}
-				p->growth = 3;
-				p->rotspeed = (rand() & 63) + 96;
-				break;
-			case p_dpfire:
-				VectorCopy(point, p->org);
-				for (j = 0; j < 3; j++) {
-					p->vel[j] = (rand() % 40) - 20;
-				}
-				break;
+		if (pt->drawtype == pd_dynamictrail) {
+			VectorCopy(start, p->org);
+			VectorCopy(end, p->endorg);
+		}
+		else {
+			switch (type) {
 				//VULT PARTICLES
-			case p_railtrail:
-				theta += loops * 2 * M_PI / count;
-				for (j = 0; j < 3; j++) {
-					radial[j] = vr[j] * cos(theta) + vup[j] * sin(theta);
-				}
-				VectorMA(point, 2.6, radial, p->org);
-				for (j = 0; j < 3; j++) {
-					p->vel[j] = radial[j] * 5;
-				}
-				break;
-				//VULT PARTICLES
-			case p_bubble:
-			case p_bubble2:
-				VectorCopy(point, p->org);
-				for (j = 0; j < 3; j++) {
-					p->vel[j] = (rand() % 10) - 5;
-				}
-				break;
-				//VULT PARTICLES
-			case p_lavatrail:
-				VectorCopy(point, p->org);
-				for (j = 0; j < 3; j++) {
-					p->org[j] += ((rand() & 7) - 4);
-				}
-				p->vel[0] = p->vel[1] = 0;
-				p->vel[2] = rand() & 3;
-				break;
-				//VULT PARTICLES
-			case p_vxrocketsmoke:
-				VectorCopy(point, p->org);
-				for (j = 0; j < 3; j++) {
-					p->vel[j] = (rand() % 8) - 4;
-				}
-				break;
-				//VULT PARTICLES
-			case p_trailbleed:
-				p->size = (rand() % (int)size);
-				p->growth = -rand() % 5;
-				VectorCopy(point, p->org);
-				break;
-				//VULT PARTICLES
-			case p_bleedspike:
-				size = 9 * size / 10;
-				VectorCopy(point, p->org);
-				break;
-			default:
-				//assert(!"AddParticleTrail: unexpected type"); -> hexum - FIXME not all types are handled, seems to work ok though
-				break;
+				case p_trailpart:
+				case p_alphatrail:
+					VectorCopy(point, p->org);
+					VectorClear(p->vel);
+					p->growth = -size / time;
+					break;
+				case p_blood3:
+					VectorCopy(point, p->org);
+					for (j = 0; j < 3; j++) {
+						p->org[j] += ((rand() & 15) - 8) / 8.0;
+					}
+					for (j = 0; j < 3; j++) {
+						p->vel[j] = ((rand() & 15) - 8) / 2.0;
+					}
+					p->size = size * (rand() % 20) / 10.0;
+					p->growth = 6;
+					break;
+				case p_smoke:
+					VectorCopy(point, p->org);
+					for (j = 0; j < 3; j++) {
+						p->org[j] += ((rand() & 7) - 4) / 8.0;
+					}
+					p->vel[0] = p->vel[1] = 0;
+					p->vel[2] = rand() & 3;
+					p->growth = 4.5;
+					p->rotspeed = (rand() & 63) + 96;
+					break;
+				case p_dpsmoke:
+					VectorCopy(point, p->org);
+					for (j = 0; j < 3; j++) {
+						p->vel[j] = (rand() % 10) - 5;
+					}
+					p->growth = 3;
+					p->rotspeed = (rand() & 63) + 96;
+					break;
+				case p_dpfire:
+					VectorCopy(point, p->org);
+					for (j = 0; j < 3; j++) {
+						p->vel[j] = (rand() % 40) - 20;
+					}
+					break;
+					//VULT PARTICLES
+				case p_railtrail:
+					theta += loops * 2 * M_PI / count;
+					for (j = 0; j < 3; j++) {
+						radial[j] = vr[j] * cos(theta) + vup[j] * sin(theta);
+					}
+					VectorMA(point, 2.6, radial, p->org);
+					for (j = 0; j < 3; j++) {
+						p->vel[j] = radial[j] * 5;
+					}
+					break;
+					//VULT PARTICLES
+				case p_bubble:
+				case p_bubble2:
+					VectorCopy(point, p->org);
+					for (j = 0; j < 3; j++) {
+						p->vel[j] = (rand() % 10) - 5;
+					}
+					break;
+					//VULT PARTICLES
+				case p_lavatrail:
+					VectorCopy(point, p->org);
+					for (j = 0; j < 3; j++) {
+						p->org[j] += ((rand() & 7) - 4);
+					}
+					p->vel[0] = p->vel[1] = 0;
+					p->vel[2] = rand() & 3;
+					break;
+					//VULT PARTICLES
+				case p_vxrocketsmoke:
+					VectorCopy(point, p->org);
+					for (j = 0; j < 3; j++) {
+						p->vel[j] = (rand() % 8) - 4;
+					}
+					break;
+					//VULT PARTICLES
+				case p_trailbleed:
+					p->size = (rand() % (int)size);
+					p->growth = -rand() % 5;
+					VectorCopy(point, p->org);
+					break;
+					//VULT PARTICLES
+				case p_bleedspike:
+					size = 9 * size / 10;
+					VectorCopy(point, p->org);
+					break;
+				default:
+					//assert(!"AddParticleTrail: unexpected type"); -> hexum - FIXME not all types are handled, seems to work ok though
+					break;
+			}
 		}
 
 		VectorAdd(point, delta, point);
@@ -1527,7 +1531,7 @@ void ParticleNailTrail(vec3_t start, vec3_t end, centity_t* client_ent, float si
 		return;
 	}
 
-	AddParticleTrail(p_entitytrail, start, end, size, life, NULL, client_ent - cl_entities);
+	AddParticleTrail(p_nailtrail, start, end, size, life, NULL, client_ent - cl_entities);
 }
 
 //VULT - Some of the following functions might be the same as above, thats because I intended to change them but never
