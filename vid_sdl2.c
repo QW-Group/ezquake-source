@@ -159,9 +159,7 @@ cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CV
 #ifdef EZ_MULTIPLE_RENDERERS
 cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH };
 #endif
-#ifdef RENDERER_OPTION_MODERN_OPENGL
 cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH };
-#endif
 
 #ifdef X11_GAMMA_WORKAROUND
 cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH  };
@@ -832,9 +830,7 @@ void VID_RegisterLatchCvars(void)
 #ifdef EZ_MULTIPLE_RENDERERS
 	Cvar_Register(&vid_renderer);
 #endif
-#ifdef RENDERER_OPTION_MODERN_OPENGL
 	Cvar_Register(&vid_gl_core_profile);
-#endif
 	Cvar_Register(&vid_framebuffer);
 	Cvar_Register(&vid_framebuffer_palette);
 

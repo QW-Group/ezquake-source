@@ -68,7 +68,7 @@ SDL_GLContext GL_SDL_CreateBestContext(SDL_Window* window, const opengl_version_
 		extern cvar_t vid_gl_core_profile;
 		const opengl_version_t* version = &versions[attempt];
 
-		if (vid_gl_core_profile.integer && !version->core) {
+		if (vid_gl_core_profile.integer && !version->core && !version->legacy) {
 			continue;
 		}
 
