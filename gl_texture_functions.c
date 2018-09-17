@@ -60,6 +60,8 @@ typedef void (APIENTRY *glGenSamplers_t)(GLsizei n, GLuint* samplers);
 typedef void (APIENTRY *glDeleteSamplers_t)(GLsizei n, const GLuint* samplers);
 typedef void (APIENTRY *glBindSampler_t)(GLuint unit, GLuint sampler);
 
+typedef void (APIENTRY *glGetInternalformativ_t)(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params);
+
 static glGetTextureLevelParameterfv_t qglGetTextureLevelParameterfv;
 static glGetTextureLevelParameteriv_t qglGetTextureLevelParameteriv;
 static glGenerateTextureMipmap_t qglGenerateTextureMipmap;
@@ -85,9 +87,21 @@ static glDeleteSamplers_t qglDeleteSamplers;
 static glSamplerParameterf_t qglSamplerParameterf;
 static glBindSampler_t qglBindSampler;
 
+static glGetInternalformativ_t qglGetInternalformativ;
+
 void GL_LoadTextureManagementFunctions(void)
 {
 	glConfig.supported_features &= ~(R_SUPPORT_TEXTURE_ARRAYS | R_SUPPORT_TEXTURE_SAMPLERS);
+
+	glConfig.preferred_format = glConfig.preferred_type = 0;
+	if (GL_VersionAtLeast(4, 3) || SDL_GL_ExtensionSupported("GL_ARB_internalformat_query2")) {
+		GL_LoadOptionalFunction(glGetInternalformativ);
+
+		if (qglGetInternalformativ) {
+			qglGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_FORMAT, 1, &glConfig.preferred_format);
+			qglGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_TYPE, 1, &glConfig.preferred_type);
+		}
+	}
 
 	if (SDL_GL_ExtensionSupported("GL_ARB_texture_storage")) {
 		GL_LoadOptionalFunction(glTexStorage2D);

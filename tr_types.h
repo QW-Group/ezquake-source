@@ -99,7 +99,9 @@ typedef struct {
 	int uniformBufferOffsetAlignment;
 	int shaderStorageBufferOffsetAlignment;
 
-	unsigned long supported_features;
+	unsigned int supported_features;
+	unsigned int preferred_format;
+	unsigned int preferred_type;
 } glconfig_t;
 
 extern glconfig_t	glConfig;

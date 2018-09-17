@@ -78,7 +78,7 @@ void GL_LoadDrawFunctions(void)
 	GL_LoadOptionalFunction(glMultiDrawArrays);
 	GL_LoadOptionalFunction(glMultiDrawElements);
 
-	if (SDL_GL_ExtensionSupported("GL_ARB_draw_elements_base_vertex")) {
+	if (GL_VersionAtLeast(3, 2) || SDL_GL_ExtensionSupported("GL_ARB_draw_elements_base_vertex")) {
 		GL_LoadOptionalFunction(glDrawElementsBaseVertex);
 	}
 

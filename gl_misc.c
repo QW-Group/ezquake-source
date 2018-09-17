@@ -68,6 +68,11 @@ static void GL_PrintInfoLine(const char* label, int labelsize, const char* fmt, 
 	Com_Printf_State(PRINT_ALL, "\n");
 }
 
+typedef struct gl_enum_value_s {
+	GLenum value;
+	const char* name;
+} gl_enum_value_t;
+
 void GL_PrintGfxInfo(void)
 {
 	SDL_DisplayMode current;
@@ -129,6 +134,66 @@ void GL_PrintGfxInfo(void)
 	}
 	if (r_conwidth.integer || r_conheight.integer) {
 		GL_PrintInfoLine("Console Res:", 12,"%d x %d", r_conwidth.integer, r_conheight.integer);
+	}
+
+	if (glConfig.preferred_format || glConfig.preferred_type) {
+		Com_Printf_State(PRINT_ALL, "Preferences\n");
+		gl_enum_value_t formats[] = {
+			{ GL_RED, "RED" },
+			{ GL_RG, "RG" },
+			{ GL_RGB, "RGB" },
+			{ GL_BGR, "BGR" },
+			{ GL_RGBA, "RGBA" },
+			{ GL_BGRA, "BGRA" },
+			{ GL_RED_INTEGER, "RED_INT" },
+			{ GL_RG_INTEGER, "RG_INT" },
+			{ GL_RGB_INTEGER, "RGB_INT" },
+			{ GL_BGR_INTEGER, "BGR_INT" },
+			{ GL_RGBA_INTEGER, "RGBA_INT" },
+			{ GL_BGRA_INTEGER, "BGRA_INT" },
+			{ GL_STENCIL_INDEX, "STENCIL_INDEX" },
+			{ GL_DEPTH_COMPONENT, "DEPTH_COMPONENT" },
+			{ GL_DEPTH_STENCIL, "DEPTH_STENCIL" }
+		};
+		gl_enum_value_t types[] = {
+			{ GL_UNSIGNED_BYTE, "UBYTE" },
+			{ GL_BYTE, "BYTE" },
+			{ GL_UNSIGNED_SHORT, "USHORT" },
+			{ GL_SHORT, "SHORT" },
+			{ GL_UNSIGNED_INT, "UINT" },
+			{ GL_INT, "INT" },
+			{ GL_FLOAT, "FLOAT" },
+			{ GL_UNSIGNED_BYTE_3_3_2, "UBYTE_332" },
+			{ GL_UNSIGNED_BYTE_2_3_3_REV, "UBYTE_233R" },
+			{ GL_UNSIGNED_SHORT_5_6_5, "USHORT_565" },
+			{ GL_UNSIGNED_SHORT_5_6_5_REV, "USHORT_565R" },
+			{ GL_UNSIGNED_SHORT_4_4_4_4, "USHORT_4444" },
+			{ GL_UNSIGNED_SHORT_4_4_4_4_REV, "USHORT_4444R" },
+			{ GL_UNSIGNED_SHORT_5_5_5_1, "USHORT_5551" },
+			{ GL_UNSIGNED_SHORT_1_5_5_5_REV, "USHORT_1555R" },
+			{ GL_UNSIGNED_INT_8_8_8_8, "UINT_8888" },
+			{ GL_UNSIGNED_INT_8_8_8_8_REV, "UINT_8888R" },
+			{ GL_UNSIGNED_INT_10_10_10_2, "UINT_101010_2" },
+			{ GL_UNSIGNED_INT_2_10_10_10_REV, "UINT_2_101010R" }
+		};
+		const char* format = "?";
+		const char* type = "?";
+
+		for (i = 0; i < sizeof(formats) / sizeof(formats[0]); ++i) {
+			if (formats[i].value == glConfig.preferred_format) {
+				format = formats[i].name;
+				break;
+			}
+		}
+		for (i = 0; i < sizeof(types) / sizeof(types[0]); ++i) {
+			if (types[i].value == glConfig.preferred_type) {
+				type = types[i].name;
+				break;
+			}
+		}
+
+		GL_PrintInfoLine("Image Format:", 14, "0x%x (%s)", glConfig.preferred_format, format);
+		GL_PrintInfoLine("Image Type:", 14, "0x%x (%s)", glConfig.preferred_type, type);
 	}
 }
 
