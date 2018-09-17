@@ -172,7 +172,7 @@ void FS_Path_f (void)
 
 	for (search=fs_searchpaths ; search ; search=search->next)
 	{
-		if (search == fs_base_searchpaths)
+		if (search == fs_base_searchpaths && !fs_purepaths)
 			Com_Printf ("----------\n");
 
 		search->funcs->PrintPath(search->handle);
@@ -478,8 +478,7 @@ static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpa
 	vfs = search->funcs->OpenVFS(search->handle, &loc, "r");
 	if (!vfs)
 		return -1;
-	Com_Printf("Opened %s\n", pakfile);
-	handle = funcs->OpenNew (vfs, pakfile);
+	handle = funcs->OpenNew(vfs, pakfile);
 	if (!handle) {
 		VFS_CLOSE(vfs);
 		return -1;
@@ -3157,11 +3156,13 @@ void FS_ReloadPackFiles_f(void)
 		Com_Printf("Usage: %s [reload flags]\n", Cmd_Argv(0));
 		return;
 	}
-	if (atoi(Cmd_Argv(1)))
+	if (atoi(Cmd_Argv(1))) {
 		FS_ReloadPackFilesFlags(atoi(Cmd_Argv(1)));
-	else
+	}
+	else {
 		FS_ReloadPackFilesFlags(FS_LOAD_FILE_ALL);
-
+	}
+	FS_Path_f();
 }
 
 void FS_ListFiles_f(void)
