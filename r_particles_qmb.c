@@ -135,7 +135,6 @@ particle_type_t particle_types[num_particletypes];
 int particle_type_index[num_particletypes];
 
 static int r_numparticles;		
-static int particle_count = 0;
 static float particle_time;		
 
 vec3_t zerodir = { 22, 22, 22 };
@@ -484,7 +483,6 @@ void QMB_ClearParticles (void)
 	Q_free(particles);		// free
 	QMB_AllocParticles();	// and alloc again
 
-	particle_count = 0;
 	memset(particles, 0, r_numparticles * sizeof(particle_t));
 	free_particles = &particles[0];
 
@@ -1103,8 +1101,6 @@ static void QMB_UpdateParticles(void)
 		return;
 	}
 
-	particle_count = 0;
-
 	//VULT PARTICLES
 	WeatherEffect();
 
@@ -1132,8 +1128,6 @@ static void QMB_UpdateParticles(void)
 			}
 			else {
 				if (particle_time >= p->start) {
-					particle_count++;
-
 					QMB_ProcessParticle(pt, p);
 				}
 

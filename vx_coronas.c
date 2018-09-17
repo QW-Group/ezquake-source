@@ -59,7 +59,6 @@ void R_UpdateCoronas(void)
 {
 	int i;
 	corona_t *c;
-	vec3_t impact = { 0,0,0 }, normal;
 	float frametime = cls.frametime;
 
 	memset(r_corona_by_tex, 0, sizeof(r_corona_by_tex));
@@ -109,8 +108,14 @@ void R_UpdateCoronas(void)
 			c->los = (cl_entities[c->client_entity_id - 1].sequence == cl.validsequence);
 		}
 		if (c->los) {
-			CL_TraceLine(r_refdef.vieworg, c->origin, impact, normal);
-			c->los = VectorCompare(impact, c->origin);
+			vec3_t impact = { 0,0,0 }, normal, temp;
+
+			VectorCopy(c->origin, temp);
+			if (c->type == C_FIRE) {
+				temp[2] += 6;
+			}
+			CL_TraceLine(r_refdef.vieworg, temp, impact, normal);
+			c->los = VectorCompare(impact, temp);
 		}
 		if (!c->los) {
 			//Can't see it, so make it fade out(faster)
@@ -585,7 +590,7 @@ void NewStaticLightCorona(coronatype_t type, vec3_t origin, int entity_id)
 		//e->scale = 0.1;
 		e->scale = 150 + rand() % 15;
 		e->die = cl.time + 800;
-		e->alpha = 0.05;
+		e->alpha = 0.2f;
 		e->fade = 0.5;
 		e->growth = 800;
 	}
