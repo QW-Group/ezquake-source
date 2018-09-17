@@ -50,7 +50,7 @@ void R_InitialiseStates(void);
 
 // VAOs
 static r_vao_id currentVAO = vao_none;
-static const char* vaoNames[vao_count] = {
+static const char* vaoNames[] = {
 	"none",
 	"aliasmodel",
 	"brushmodel",
@@ -104,8 +104,15 @@ static GLuint bound_arrays[MAX_LOGGED_TEXTURE_UNITS];
 static image_unit_binding_t bound_images[MAX_LOGGED_IMAGE_UNITS];
 
 static opengl_state_t opengl;
-static GLenum glDepthFunctions[r_depthfunc_count];
-static GLenum glCullFaceValues[r_cullface_count];
+static GLenum glDepthFunctions[] = {
+	GL_LESS,   // r_depthfunc_less,
+	GL_EQUAL,  // r_depthfunc_equal,
+	GL_LEQUAL, // r_depthfunc_lessorequal,
+};
+static GLenum glCullFaceValues[] = {
+	GL_FRONT,  // r_cullface_front
+	GL_BACK,   // r_cullface_back
+};
 static GLenum glBlendFuncValuesSource[] = {
 	GL_ONE, // r_blendfunc_overwrite,
 	GL_ONE, // r_blendfunc_additive_blending,
@@ -132,8 +139,14 @@ static GLenum glBlendFuncValuesDestination[] = {
 	GL_ONE, // r_blendfunc_src_zero_dest_one,
 	GL_ONE_MINUS_SRC_COLOR, // r_blendfunc_src_one_dest_one_minus_src_color,
 };
-static GLenum glPolygonModeValues[r_polygonmode_count];
-static GLenum glAlphaTestModeValues[r_alphatest_func_count];
+static GLenum glPolygonModeValues[] = {
+	GL_FILL, // r_polygonmode_fill,
+	GL_LINE, // r_polygonmode_line,
+};
+static GLenum glAlphaTestModeValues[] = {
+	GL_ALWAYS,  // r_alphatest_func_always,
+	GL_GREATER, // r_alphatest_func_greater,
+};
 static GLenum glTextureEnvModeValues[] = {
 	GL_BLEND, GL_REPLACE, GL_MODULATE, GL_DECAL, GL_ADD
 };
@@ -142,19 +155,53 @@ static GLenum glTextureEnvModeValues[] = {
 C_ASSERT(sizeof(glBlendFuncValuesSource) / sizeof(glBlendFuncValuesSource[0]) == r_blendfunc_count);
 C_ASSERT(sizeof(glBlendFuncValuesDestination) / sizeof(glBlendFuncValuesDestination[0]) == r_blendfunc_count);
 C_ASSERT(sizeof(glTextureEnvModeValues) / sizeof(glTextureEnvModeValues[0]) == r_texunit_mode_count);
+C_ASSERT(sizeof(glDepthFunctions) / sizeof(glDepthFunctions[0]) == r_depthfunc_count);
+C_ASSERT(sizeof(glCullFaceValues) / sizeof(glCullFaceValues[0]) == r_cullface_count);
+C_ASSERT(sizeof(glPolygonModeValues) / sizeof(glPolygonModeValues[0]) == r_polygonmode_count);
+C_ASSERT(sizeof(glAlphaTestModeValues) / sizeof(glAlphaTestModeValues[0]) == r_alphatest_func_count);
 #endif
 
 #ifdef WITH_RENDERING_TRACE
-static const char* txtDepthFunctions[r_depthfunc_count];
-static const char* txtCullFaceValues[r_cullface_count];
-static const char* txtBlendFuncNames[r_blendfunc_count];
-static const char* txtPolygonModeValues[r_polygonmode_count];
-static const char* txtAlphaTestModeValues[r_alphatest_func_count];
+static const char* txtDepthFunctions[] = {
+	"<", // r_depthfunc_less,
+	"=", // r_depthfunc_equal,
+	"<=", // r_depthfunc_lessorequal,
+};
+static const char* txtCullFaceValues[] = {
+	"front", // r_cullface_front,
+	"back", // r_cullface_back,
+};
+static const char* txtBlendFuncNames[] = {
+	"overwrite", // r_blendfunc_overwrite,
+	"additive",        // r_blendfunc_additive_blending,
+	"premul-alpha",    // r_blendfunc_premultiplied_alpha,
+	"src_dst_color_dest_zero", // r_blendfunc_src_dst_color_dest_zero
+	"src_dst_color_dest_one", // r_blendfunc_src_dst_color_dest_one
+	"src_dst_color_dest_src_color", // r_blendfunc_src_dst_color_dest_src_color
+	"src_zero_dest_one_minus_src_color", // r_blendfunc_src_zero_dest_one_minus_src_color
+	"src_zero_dest_src_color", // r_blendfunc_src_zero_dest_src_color
+	"src_one_dest_zero", // r_blendfunc_src_one_dest_zero
+	"src_zero_dest_one", // r_blendfunc_src_zero_dest_one
+	"src_one_dest_one_minus_src_color", // "r_blendfunc_src_one_dest_one_minus_src_color"
+};
+static const char* txtPolygonModeValues[] = {
+	"fill", // r_polygonmode_fill,
+	"line", // r_polygonmode_line,
+};
+static const char* txtAlphaTestModeValues[] = {
+	"always", // r_alphatest_func_always,
+	"greater", // r_alphatest_func_greater,
+};
 static const char* txtTextureEnvModeValues[] = {
 	"GL_BLEND", "GL_REPLACE", "GL_MODULATE", "GL_DECAL", "GL_ADD"
 };
 
 #ifdef C_ASSERT
+C_ASSERT(sizeof(txtDepthFunctions) / sizeof(txtDepthFunctions[0]) == r_depthfunc_count);
+C_ASSERT(sizeof(txtCullFaceValues) / sizeof(txtCullFaceValues[0]) == r_cullface_count);
+C_ASSERT(sizeof(txtBlendFuncNames) / sizeof(txtCullFaceValues[0]) == r_blendfunc_count);
+C_ASSERT(sizeof(txtPolygonModeValues) / sizeof(txtPolygonModeValues[0]) == r_polygonmode_count);
+C_ASSERT(sizeof(txtAlphaTestModeValues) / sizeof(txtAlphaTestModeValues[0]) == r_alphatest_func_count);
 C_ASSERT(sizeof(txtTextureEnvModeValues) / sizeof(txtTextureEnvModeValues[0]) == r_texunit_mode_count);
 #endif
 #endif
@@ -429,37 +476,6 @@ void R_GetViewport(int* view)
 
 void GL_InitialiseState(void)
 {
-	glDepthFunctions[r_depthfunc_less] = GL_LESS;
-	glDepthFunctions[r_depthfunc_equal] = GL_EQUAL;
-	glDepthFunctions[r_depthfunc_lessorequal] = GL_LEQUAL;
-	glCullFaceValues[r_cullface_back] = GL_BACK;
-	glCullFaceValues[r_cullface_front] = GL_FRONT;
-	glPolygonModeValues[r_polygonmode_fill] = GL_FILL;
-	glPolygonModeValues[r_polygonmode_line] = GL_LINE;
-	glAlphaTestModeValues[r_alphatest_func_always] = GL_ALWAYS;
-	glAlphaTestModeValues[r_alphatest_func_greater] = GL_GREATER;
-#ifdef WITH_RENDERING_TRACE
-	txtDepthFunctions[r_depthfunc_less] = "<";
-	txtDepthFunctions[r_depthfunc_equal] = "=";
-	txtDepthFunctions[r_depthfunc_lessorequal] = "<=";
-	txtCullFaceValues[r_cullface_back] = "back";
-	txtCullFaceValues[r_cullface_front] = "front";
-	txtBlendFuncNames[r_blendfunc_overwrite] = "overwrite";
-	txtBlendFuncNames[r_blendfunc_additive_blending] = "additive";
-	txtBlendFuncNames[r_blendfunc_premultiplied_alpha] = "premul-alpha";
-	txtBlendFuncNames[r_blendfunc_src_dst_color_dest_zero] = "src_dst_color_dest_zero";
-	txtBlendFuncNames[r_blendfunc_src_dst_color_dest_one] = "src_dst_color_dest_one";
-	txtBlendFuncNames[r_blendfunc_src_dst_color_dest_src_color] = "src_dst_color_dest_src_color";
-	txtBlendFuncNames[r_blendfunc_src_zero_dest_one_minus_src_color] = "src_zero_dest_one_minus_src_color";
-	txtBlendFuncNames[r_blendfunc_src_zero_dest_src_color] = "src_zero_dest_src_color";
-	txtBlendFuncNames[r_blendfunc_src_one_dest_zero] = "src_one_dest_zero";
-	txtBlendFuncNames[r_blendfunc_src_zero_dest_one] = "src_zero_dest_one";
-	txtPolygonModeValues[r_polygonmode_fill] = "fill";
-	txtPolygonModeValues[r_polygonmode_line] = "line";
-	txtAlphaTestModeValues[r_alphatest_func_always] = "always";
-	txtAlphaTestModeValues[r_alphatest_func_greater] = "greater";
-#endif
-
 	R_InitRenderingState(r_state_default_opengl, false, "opengl", vao_none);
 	R_ApplyRenderingState(r_state_default_opengl);
 	R_InitialiseStates();
