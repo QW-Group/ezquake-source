@@ -40,8 +40,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_local.h"
 #include "tr_types.h"
 
-#ifdef BLOOM_SUPPORTED
-
 /*
 ==============================================================================
 
@@ -530,6 +528,7 @@ void GLC_BloomBlend(void)
 
 void GLC_BloomRegisterCvars(void)
 {
+	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register(&r_bloom);
 	Cvar_Register(&r_bloom_darken);
 	Cvar_Register(&r_bloom_alpha);
@@ -537,6 +536,5 @@ void GLC_BloomRegisterCvars(void)
 	Cvar_Register(&r_bloom_intensity);
 	Cvar_Register(&r_bloom_sample_size);
 	Cvar_Register(&r_bloom_fast_sample);
+	Cvar_ResetCurrentGroup();
 }
-
-#endif // BLOOM_SUPPORTED

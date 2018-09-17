@@ -165,7 +165,7 @@ static void R_Initialise2DStates(void)
 	state = R_CopyRenderingState(r_state_hud_images_alphatested_glc, r_state_hud_images_glc, "glcAlphaTestedImageDrawState");
 	R_GLC_EnableAlphaTesting(state);
 
-#ifdef BLOOM_SUPPORTED
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	state = R_InitRenderingState(r_state_postprocess_bloom1, true, "glcBloomState", postprocess_vao);
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;

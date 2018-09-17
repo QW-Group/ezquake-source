@@ -251,6 +251,7 @@ typedef enum {
 	r_state_aliasmodel_opaque_batch,
 	r_state_aliasmodel_translucent_batch,
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	r_state_postprocess_bloom1,
 	r_state_postprocess_bloom2,
 	r_state_postprocess_bloom_darkenpass,
@@ -259,6 +260,7 @@ typedef enum {
 	r_state_postprocess_bloom_downsample_blend,
 	r_state_postprocess_bloom_restore,
 	r_state_postprocess_bloom_draweffect,
+#endif
 
 	r_state_light_bubble,
 	r_state_chaticon,

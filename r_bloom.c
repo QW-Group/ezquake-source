@@ -26,18 +26,14 @@ void GLC_InitBloomTextures(void);
 
 void R_BloomBlend(void)
 {
-#ifdef BLOOM_SUPPORTED
 	if (R_UseImmediateOpenGL()) {
 		GLC_BloomBlend();
 	}
-#endif
 }
 
 void R_InitBloomTextures(void)
 {
-#ifdef BLOOM_SUPPORTED
 	if (R_UseImmediateOpenGL()) {
 		GLC_InitBloomTextures();
 	}
-#endif
 }

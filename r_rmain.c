@@ -484,12 +484,11 @@ void R_Init(void)
 	Cmd_AddCommand("dev_pointfile", R_ReadPointFile_f);
 #endif
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
-#ifdef BLOOM_SUPPORTED
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	GLC_BloomRegisterCvars();
 #endif
-#endif
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register(&r_drawentities);
 	Cvar_Register(&r_lerpframes);
 	Cvar_Register(&r_drawflame);

@@ -52,9 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "hud_common.h"
 
 extern cvar_t r_farclip, gl_max_size, gl_miptexLevel;
-#ifdef BLOOM_SUPPORTED
 extern cvar_t r_bloom;
-#endif
 extern cvar_t gl_flashblend, r_dynamic, gl_lightmode;
 
 typedef enum {
@@ -969,9 +967,7 @@ setting settfps_arr[] = {
 	ADDSET_BASIC_SECTION(),
 
 	ADDSET_SEPARATOR("Lighting"),
-#ifdef BLOOM_SUPPORTED
 	ADDSET_BOOL		("GL Bloom", r_bloom),
-#endif
 	ADDSET_NAMED	("Powerup Glow", r_powerupglow, powerupglow_enum),
 	ADDSET_NUMBER	("Damage Flash", v_damagecshift, 0, 1, 0.1),
 	ADDSET_ADVANCED_SECTION(),
