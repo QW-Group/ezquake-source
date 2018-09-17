@@ -369,6 +369,7 @@ qbool NewLerp_AbleModel(int idx)
 
 void CL_SetupPacketEntity (int number, entity_state_t *state, qbool changed) {
 	centity_t *cent;
+	int t;
 
 	cent = &cl_entities[number];
 
@@ -380,8 +381,11 @@ void CL_SetupPacketEntity (int number, entity_state_t *state, qbool changed) {
 		cent->deltalerp = -1;
 		cent->frametime = -1;
 		cent->oldsequence = 0;
-		cent->flags = 0;
-		cent->trailnumber = (cent->trailnumber + 1) % 1000;
+		cent->trail_number = (cent->trail_number + 1) % 1000;
+		for (t = 0; t < sizeof(cent->trails) / sizeof(cent->trails[0]); ++t) {
+			cent->trails[t].lasttime = 0;
+			VectorCopy(state->origin, cent->trails[t].stop);
+		}
 	}
 	else {
 		cent->oldsequence = cent->sequence;
@@ -393,8 +397,7 @@ void CL_SetupPacketEntity (int number, entity_state_t *state, qbool changed) {
 		
 		if (changed) {
 			if (!VectorCompare(state->origin, cent->current.origin) || !VectorCompare(state->angles, cent->current.angles)) {
-			    if (NewLerp_AbleModel(state->modelindex))
-			    {
+			    if (NewLerp_AbleModel(state->modelindex)) {
 			    	float s  = (cls.mvdplayback ? nextdemotime - olddemotime : cl.time - cent->startlerp); // time delta
 			    	float s2 = 1.0 / (s ? s : 1); // here no function which divide vector by X value, so we multiplay vector by 1/X
 			    	vec3_t tmp, tmp2;
@@ -786,72 +789,9 @@ void CL_ParsePacketEntities (qbool delta)
 
 	newp->num_entities = newindex;
 
-	if (cls.state == ca_onserver)	// we can now render a frame
+	if (cls.state == ca_onserver) {
+		// we can now render a frame
 		CL_MakeActive();
-}
-
-static int fix_trail_num_for_grens(int trail_num)
-{	
-	//trails for rockets and grens are the same
-	//only nums 1 and 2 must be swapped
-	switch(trail_num)
-	{
-		case 1: trail_num = 2; break;
-		case 2: trail_num = 1; break;
-	}
-
-	return trail_num;
-}
-
-static void missile_trail(int trail_num, model_t *model, vec3_t *old_origin, entity_t* ent, centity_t *cent)
-{
-	if (trail_num == 1) {
-		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, ROCKET_TRAIL);
-	}
-	else if (trail_num == 2) {
-		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, GRENADE_TRAIL);
-	}
-	else if (trail_num == 3) {
-		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, ALT_ROCKET_TRAIL);
-	}
-	else if (trail_num == 4) {
-		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, BLOOD_TRAIL);
-	}
-	else if (trail_num == 5) {
-		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, BIG_BLOOD_TRAIL);
-	}
-	else if (trail_num == 6) {
-		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, TRACER1_TRAIL);
-	}
-	else if (trail_num == 7) {
-		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, TRACER2_TRAIL);
-	}
-	else if (trail_num == 8) {
-		// VULT PARTICLES
-		byte color[3];
-		color[0] = 0; color[1] = 70; color[2] = 255;
-		FireballTrail (*old_origin, ent->origin, &cent->trail_origin, color, 2, 0.5);
-	}
-	else if (trail_num == 9) {
-		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, LAVA_TRAIL);
-	}
-	else if (trail_num == 10) {
-		// VULT PARTICLES
-		FuelRodGunTrail (*old_origin, ent->origin, ent->angles, &cent->trail_origin);
-	}
-	else if (trail_num == 11) {
-		byte color[3];
-		color[0] = 255; color[1] = 70; color[2] = 5;
-		FireballTrailWave (*old_origin, ent->origin, &cent->trail_origin, color, 2, 0.5, ent->angles);
-	}
-	else if (trail_num == 12) {
-		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, AMF_ROCKET_TRAIL);
-	}
-	else if (trail_num == 14) {
-		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, RAIL_TRAIL);
-	}
-	else {
-		R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, GRENADE_TRAIL);
 	}
 }
 
@@ -880,7 +820,6 @@ void CL_LinkPacketEntities(void)
 	packet_entities_t *pack;
 	entity_state_t *state;
 	model_t *model;
-	vec3_t *old_origin;
 	double time;
 	float autorotate, lerp;
 	int i, pnum, flicker;
@@ -1114,21 +1053,10 @@ void CL_LinkPacketEntities(void)
 		}
 
 		// Add trails
-		if (model->flags & ~EF_ROTATE || model->modhint) 
-		{
-			if (!(cent->flags & CENT_TRAILDRAWN) || !VectorL2Compare(cent->trail_origin, ent.origin, 140)) 
-			{
-				old_origin = &ent.origin;	// Not present last frame or too far away
-				cent->flags |= CENT_TRAILDRAWN;
-			}
-			else
-			{
-				old_origin = &cent->trail_origin;
-			}
-
-			CL_AddParticleTrail(&ent, cent, old_origin, &cst_lt, state);
+		VectorCopy(ent.origin, cent->lerp_origin);
+		if ((model->flags & ~EF_ROTATE) || model->modhint) {
+			CL_AddParticleTrail(&ent, cent, &cst_lt, state);
 		}
-		VectorCopy (ent.origin, cent->lerp_origin);
 
 		if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing && cl.race_pacemaker_ent == state->number && !CL_SetAlphaByDistance(&ent)) {
 			continue;
@@ -2344,207 +2272,4 @@ void CL_CalcPlayerFPS(player_info_t *info, int msec)
 		info->fps_frames = 0;
 		info->fps_measure_time += 1.0;
     }
-}
-
-// Moved out of CL_LinkPacketEntities() so NQD playback can use same code.
-void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, customlight_t* cst_lt, entity_state_t *state)
-{
-	extern cvar_t gl_no24bit;
-	model_t* model = cl.model_precache[state->modelindex];
-	float rocketlightsize = 0.0f;
-
-	if (model->modhint == MOD_LAVABALL)
-	{
-		R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, LAVA_TRAIL);
-	}
-	else
-	{
-		if (model->flags & EF_ROCKET)
-		{
-			if (r_rockettrail.value)
-			{
-				missile_trail(r_rockettrail.integer, model, old_origin, ent, cent);
-			}
-			else
-			{
-				VectorCopy(ent->origin, cent->trail_origin);
-			}
-
-			// Add rocket lights
-			rocketlightsize = 200.0 * bound(0, r_rocketlight.value, 1);
-			if (rocketlightsize >= 1)
-			{
-				extern cvar_t gl_rl_globe;
-				int bubble = gl_rl_globe.integer ? 2 : 1;
-
-				if ((r_rockettrail.value < 8 || r_rockettrail.value == 12) && model->modhint != MOD_LAVABALL)
-				{
-					dlightColorEx(r_rocketlightcolor.value, r_rocketlightcolor.string, lt_rocket, false, cst_lt);
-					CL_NewDlightEx(state->number, ent->origin, rocketlightsize, 0.1, cst_lt, bubble);
-					if (!ISPAUSED && amf_coronas.integer) {
-						//VULT CORONAS
-						R_CoronasEntityNew(C_ROCKETLIGHT, cent);
-					}
-				}
-				else if (r_rockettrail.value == 9 || r_rockettrail.value == 11)
-				{
-					CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.1, lt_default, bubble);
-				}
-				else if (r_rockettrail.value == 8)
-				{
-					// PLASMA ROCKETS
-					CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.1, lt_blue, bubble);
-				}
-				else if (r_rockettrail.value == 10)
-				{
-					// FUEL ROD GUN
-					CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.1, lt_green, bubble);
-				}
-			}
-		}
-		else if (model->flags & EF_GRENADE)
-		{
-			if (model->modhint == MOD_BUILDINGGIBS) {
-				R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, GRENADE_TRAIL);
-			}
-			else if (r_grenadetrail.value && model->modhint != MOD_RAIL) {
-				missile_trail(fix_trail_num_for_grens(r_grenadetrail.integer), model, old_origin, ent, cent);
-			}
-			else if (r_railtrail.value && model->modhint == MOD_RAIL) {
-				missile_trail(fix_trail_num_for_grens(r_railtrail.integer), model, old_origin, ent, cent);
-			}
-			else {
-				VectorCopy(ent->origin, cent->trail_origin);
-			}
-		}
-		else if (model->flags & EF_GIB)
-		{
-			if (amf_part_gibtrails.value)
-				R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, BLEEDING_TRAIL);
-			else
-				R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, BLOOD_TRAIL);
-		}
-		else if (model->flags & EF_ZOMGIB)
-		{
-			if (model->modhint == MOD_RAIL2)
-				R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, RAIL_TRAIL2);
-			else if (amf_part_gibtrails.value)
-				R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, BLEEDING_TRAIL);
-			else
-				R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, BIG_BLOOD_TRAIL);
-		}
-		else if (model->flags & EF_TRACER)
-		{
-			// VULT TRACER GLOW
-			rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));
-			CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.01, lt_green, true);
-			if (!ISPAUSED && amf_coronas.integer) {
-				R_CoronasEntityNew(C_WIZLIGHT, cent);
-			}
-
-			R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, TRACER1_TRAIL);
-		}
-		else if (model->flags & EF_TRACER2)
-		{
-			// VULT TRACER GLOW
-			rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));
-			CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.01, lt_default, true);
-			if (!ISPAUSED && amf_coronas.integer) {
-				R_CoronasEntityNew(C_KNIGHTLIGHT, cent);
-			}
-
-			R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, TRACER2_TRAIL);
-		}
-		else if (model->flags & EF_TRACER3)
-		{
-			// VULT TRACER GLOW
-			rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));
-			CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.01, lt_blue, true);
-			if (!ISPAUSED && amf_coronas.integer) {
-				R_CoronasEntityNew(C_VORELIGHT, cent);
-			}
-
-			R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, VOOR_TRAIL);
-		}
-		else if (model->modhint == MOD_SPIKE && amf_nailtrail.value && !gl_no24bit.integer)
-		{
-			// VULT NAILTRAIL
-			if (amf_nailtrail_plasma.value) {
-				byte color[3];
-				color[0] = 0; color[1] = 70; color[2] = 255;
-				FireballTrail(*old_origin, ent->origin, &cent->trail_origin, color, 0.6, 0.3);
-			}
-			else {
-				ParticleNailTrail(*old_origin, ent->origin, cent, 2, 0.4f);
-			}
-		}
-		else if (model->modhint == MOD_TF_TRAIL && amf_extratrails.value)
-		{
-			// VULT TRAILS
-			ParticleAlphaTrail(*old_origin, ent->origin, &cent->trail_origin, 4, 0.4);
-		}
-		else if (model->modhint == MOD_LASER && amf_extratrails.value)
-		{
-			rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));
-			CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.01, lt_default, true);
-			if (!ISPAUSED && amf_coronas.integer) {
-				R_CoronasEntityNew(C_KNIGHTLIGHT, cent);
-			}
-			VX_LightningTrail(*old_origin, ent->origin);
-			R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, TRACER2_TRAIL);
-		}
-		else if (model->modhint == MOD_DETPACK)
-		{
-			// VULT CORONAS
-			if (qmb_initialized)
-			{
-				vec3_t liteorg, litestop, forward, right, up;
-				VectorCopy(ent->origin, liteorg);
-				AngleVectors(ent->angles, forward, right, up);
-				VectorMA(liteorg, -15, up, liteorg);
-				VectorMA(liteorg, -10, forward, liteorg);
-				VectorCopy(*old_origin, litestop);
-				VectorMA(litestop, -15, up, litestop);
-				VectorMA(litestop, -10, forward, litestop);
-
-				// R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, TF_TRAIL); //for cutf tossable dets
-				ParticleAlphaTrail(*old_origin, liteorg, &cent->trail_origin, 10, 0.8);
-				if (!ISPAUSED && amf_coronas.integer) {
-					if (ent->skinnum > 0) {
-						R_CoronasNew(C_REDLIGHT, liteorg);
-					}
-					else {
-						R_CoronasNew(C_GREENLIGHT, liteorg);
-					}
-				}
-			}
-		}
-
-		// VULT BUILDING SPARKS
-		if (!ISPAUSED && amf_buildingsparks.value && (model->modhint == MOD_BUILDINGGIBS && (rand() % 40 < 2)))
-		{
-			vec3_t liteorg, forward, right, up;
-			byte col[3] = { 60, 100, 240 };
-			VectorCopy(ent->origin, liteorg);
-			AngleVectors(ent->angles, forward, right, up);
-			VectorMA(liteorg, rand() % 10 - 5, up, liteorg);
-			VectorMA(liteorg, rand() % 10 - 5, right, liteorg);
-			VectorMA(liteorg, rand() % 10 - 5, forward, liteorg);
-			SparkGen(liteorg, col, (int)(6 * amf_buildingsparks.value), 100, 1);
-			if (amf_coronas.integer) {
-				R_CoronasNew(C_BLUESPARK, liteorg);
-			}
-		}
-
-		// VULT TESLA CHARGE - Tesla or shambler in charging animation
-		if (((model->modhint == MOD_TESLA && ent->frame >= 7 && ent->frame <= 12) ||
-			(model->modhint == MOD_SHAMBLER && ent->frame >= 65 && ent->frame <= 68))
-			&& !ISPAUSED && amf_cutf_tesla_effect.value)
-		{
-			vec3_t liteorg;
-			VectorCopy(ent->origin, liteorg);
-			liteorg[2] += 32;
-			VX_TeslaCharge(liteorg);
-		}
-	}
 }

@@ -109,6 +109,7 @@ typedef struct particle_s {
 	float       cached_distance;
 
 	int         entity_ref;
+	int         entity_trailindex;
 	int         entity_trailnumber;
 } particle_t;
 
@@ -142,8 +143,6 @@ typedef struct particle_texture_s {
 } particle_texture_t;
 
 typedef void(*func_color_transform_t)(col_t input, col_t output);
-extern vec3_t zerodir;
-extern vec3_t trail_stop;
 extern particle_type_t particle_types[num_particletypes];
 extern int particle_type_index[num_particletypes];
 extern particle_t* free_particles;
@@ -155,6 +154,8 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p);
 qbool TraceLineN(vec3_t start, vec3_t end, vec3_t impact, vec3_t normal);
 extern particle_t* free_particles;
 void ParticleStats(int change);
+byte *ColorForParticle(part_type_t type);
+void AddParticle(part_type_t type, vec3_t org, int count, float size, float time, col_t col, vec3_t dir);
 
 #define R_SIMPLETRAIL_MAXLENGTH    100
 #define R_SIMPLETRAIL_NEAR_ALPHA    75

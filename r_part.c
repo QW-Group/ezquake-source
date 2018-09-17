@@ -409,7 +409,7 @@ void Classic_TeleportSplash(vec3_t org)
 	}
 }
 
-void Classic_ParticleTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, trail_type_t type)
+void Classic_ParticleTrail(vec3_t start, vec3_t end, vec3_t* trail_stop, trail_type_t type)
 {
 	vec3_t point, delta, dir;
 	float len;
@@ -419,8 +419,9 @@ void Classic_ParticleTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, trail
 
 	VectorCopy(start, point);
 	VectorSubtract(end, start, delta);
-	if (!(len = VectorLength(delta)))
+	if (!(len = VectorLength(delta))) {
 		goto done;
+	}
 	VectorScale(delta, 1 / len, dir);	//unit vector in direction of trail
 
 	switch (type) {
@@ -432,8 +433,9 @@ void Classic_ParticleTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, trail
 		len /= 3; break;
 	}
 
-	if (!(num_particles = (int)len))
+	if (!(num_particles = (int)len)) {
 		goto done;
+	}
 
 	VectorScale(delta, 1.0 / num_particles, delta);
 
@@ -507,10 +509,13 @@ void Classic_ParticleTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, trail
 				p->org[j] = point[j] + ((rand() % 6) - 3);
 			break;
 		}
+
 		VectorAdd(point, delta, point);
 	}
 done:
-	VectorCopy(point, *trail_origin);
+	if (trail_stop) {
+		VectorCopy(point, *trail_stop);
+	}
 }
 
 // deurk: ported from zquake, thx Tonik
@@ -779,12 +784,25 @@ void R_RunParticleEffect(vec3_t org, vec3_t dir, int color, int count)
 	}
 }
 
-void R_ParticleTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, trail_type_t type)
+// Used for temporary entities and untrackable effects
+void R_ParticleTrail(vec3_t start, vec3_t end, trail_type_t type)
 {
-	if (qmb_initialized && gl_part_trails.value)
-		QMB_ParticleTrail(start, end, trail_origin, type);
-	else
-		Classic_ParticleTrail(start, end, trail_origin, type);
+	if (qmb_initialized && gl_part_trails.integer) {
+		QMB_ParticleTrail(start, end, type);
+	}
+	else {
+		Classic_ParticleTrail(start, end, NULL, type);
+	}
+}
+
+void R_EntityParticleTrail(centity_t* cent, trail_type_t type)
+{
+	if (qmb_initialized && gl_part_trails.integer) {
+		QMB_EntityParticleTrail(cent, type);
+	}
+	else {
+		Classic_ParticleTrail(cent->trails[0].stop, cent->lerp_origin, cent->trails[0].stop, type);
+	}
 }
 
 #define ParticleFunction(var, name)				\

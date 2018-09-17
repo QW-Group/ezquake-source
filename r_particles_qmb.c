@@ -137,16 +137,13 @@ particle_type_t particle_types[num_particletypes];
 int particle_type_index[num_particletypes];
 
 static int r_numparticles;		
-static float particle_time;		
-
-vec3_t zerodir = { 22, 22, 22 };
-vec3_t trail_stop;
+float particle_time;
 
 qbool qmb_initialized = false;
 
 static cvar_t gl_clipparticles = {"gl_clipparticles", "1"};
 static cvar_t gl_part_cache = { "gl_part_cache", "1", CVAR_LATCH };
-cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
+static cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
 cvar_t amf_part_fulldetail = { "gl_particle_fulldetail", "0", CVAR_LATCH };
 
 static int ParticleContents(particle_t* p, vec3_t movement)
@@ -908,21 +905,21 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 
 		// velocity isn't used, accel etc is irrelevant...
 		if (p->entity_ref > 0) {
-			centity_t* cent = &cl_entities[p->entity_ref];
+			centity_t* cent = &cl_entities[p->entity_ref - 1];
 
-			if (cent->trailnumber == p->entity_trailnumber && cent->sequence == cl.validsequence) {
+			if (cent->trail_number == p->entity_trailnumber && cent->sequence == cl.validsequence) {
 				// update based on entity
 				float length;
 				vec3_t diff;
 
-				VectorCopy(cl_entities[p->entity_ref].lerp_origin, p->endorg);
+				VectorCopy(cent->lerp_origin, p->endorg);
 				VectorSubtract(p->org, p->endorg, diff);
 				length = VectorLength(diff);
 				if (length > R_SIMPLETRAIL_MAXLENGTH) {
 					VectorMA(p->endorg, R_SIMPLETRAIL_MAXLENGTH / length, diff, p->org);
 				}
 				p->die = particle_time + 0.2f;
-				cent->particle_time = particle_time;
+				cent->trails[p->entity_trailindex].lasttime = particle_time;
 			}
 			else {
 				// disconnect, let it die out

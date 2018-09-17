@@ -177,45 +177,41 @@ static void CL_ParseBeam(int type)
         // 1111111nnnnnnccc  (n = player num, c = color code)
         cnum = ent & 7;
         pnum = (ent >> 3) & 63;
-        if (pnum < MAX_CLIENTS)
-        {
-			// TODO: apply team/enemy overrides
-        }
         color = colors[cnum];
 
 		//color is ignored by most of trails
 		switch(r_instagibtrail.integer)
 		{
 			case 1:
-			R_ParticleTrail(start, end, &start, GRENADE_TRAIL);
+			R_ParticleTrail(start, end, GRENADE_TRAIL);
 			break;
 
 			case 2:
-			R_ParticleTrail(start, end, &start, ROCKET_TRAIL);
+			R_ParticleTrail(start, end, ROCKET_TRAIL);
 			break;
 
 			case 3:
-			R_ParticleTrail(start, end, &start, ALT_ROCKET_TRAIL);
+			R_ParticleTrail(start, end, ALT_ROCKET_TRAIL);
 			break;
 
 			case 4:
-			R_ParticleTrail(start, end, &start, BLOOD_TRAIL);
+			R_ParticleTrail(start, end, BLOOD_TRAIL);
 			break;
 
 			case 5:
-			R_ParticleTrail(start, end, &start, BIG_BLOOD_TRAIL);
+			R_ParticleTrail(start, end, BIG_BLOOD_TRAIL);
 			break;
 
 			case 6:
-			R_ParticleTrail(start, end, &start, TRACER1_TRAIL);
+			R_ParticleTrail(start, end, TRACER1_TRAIL);
 			break;
 
 			case 7:
-			R_ParticleTrail(start, end, &start, TRACER2_TRAIL);
+			R_ParticleTrail(start, end, TRACER2_TRAIL);
 			break;
 
 			case 8:
-			R_ParticleTrail(start, end, &start, VOOR_TRAIL);
+			R_ParticleTrail(start, end, VOOR_TRAIL);
 			break;
 
 			case 9:
@@ -223,7 +219,7 @@ static void CL_ParseBeam(int type)
 			break;
 
 			case 10:
-			R_ParticleTrail(start, end, &start, RAIL_TRAIL);
+			R_ParticleTrail(start, end, RAIL_TRAIL);
 			break;
 
 			case 11:
@@ -231,11 +227,11 @@ static void CL_ParseBeam(int type)
 			break;
 
 			case 12:
-			R_ParticleTrail(start, end, &start, LAVA_TRAIL);
+			R_ParticleTrail(start, end, LAVA_TRAIL);
 			break;
 
 			case 13:
-			R_ParticleTrail(start, end, &start, AMF_ROCKET_TRAIL);
+			R_ParticleTrail(start, end, AMF_ROCKET_TRAIL);
 			break;
 
 			default: break;

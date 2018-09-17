@@ -902,7 +902,6 @@ void NQD_LinkEntities (void)
 	struct model_s		*model;
 	int					modelflags;
 	vec3_t				cur_origin;
-	vec3_t				old_origin;
 	float				autorotate;
 	int					i;
 	int					num;
@@ -1042,35 +1041,19 @@ void NQD_LinkEntities (void)
 		}
 		
 		// add automatic particle trails
-		if ((modelflags & ~EF_ROTATE))
-		{
-			if (false /*cl_entframecount == 1 || cent->lastframe != cl_entframecount-1*/)
-			{	// not in last message
-				VectorCopy (ent.origin, old_origin);
-			}
-			else
-			{
-				VectorCopy (cent->lerp_origin, old_origin);
-
-				for (i=0 ; i<3 ; i++)
-					if ( abs(old_origin[i] - ent.origin[i]) > 128)
-					{	// no trail if too far
-						VectorCopy (ent.origin, old_origin);
-						break;
-					}
-			}
-
-			CL_AddParticleTrail (&ent, cent, &old_origin, &cst_lt, state);
+		if ((modelflags & ~EF_ROTATE)) {
+			CL_AddParticleTrail(&ent, cent, &cst_lt, state);
 		}
 
-		VectorCopy (ent.origin, cent->lerp_origin);
+		VectorCopy(ent.origin, cent->lerp_origin);
 		cent->sequence = cl_entframecount;
-		CL_AddEntity (&ent);
+		CL_AddEntity(&ent);
 	}
 
-	if (nq_viewentity == 0)
-		Host_Error ("viewentity == 0");
-	VectorCopy (cl_entities[nq_viewentity].lerp_origin, cl.simorg);
+	if (nq_viewentity == 0) {
+		Host_Error("viewentity == 0");
+	}
+	VectorCopy(cl_entities[nq_viewentity].lerp_origin, cl.simorg);
 }
 
 

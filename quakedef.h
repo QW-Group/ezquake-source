@@ -54,6 +54,42 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "client.h"
 
+// particles
+typedef enum trail_type_s {
+	ROCKET_TRAIL, GRENADE_TRAIL, ALT_ROCKET_TRAIL, BLOOD_TRAIL, BIG_BLOOD_TRAIL,
+	TRACER1_TRAIL, TRACER2_TRAIL, VOOR_TRAIL,
+	//VULT PARTICLES
+	RAIL_TRAIL,
+	RAIL_TRAIL2,
+	LAVA_TRAIL,
+	AMF_ROCKET_TRAIL,
+	BLEEDING_TRAIL,
+	BLEEDING_TRAIL2,
+} trail_type_t;
+
+void R_InitParticles(void);
+void R_ClearParticles(void);
+void R_DrawParticles(void);
+void R_ParticleFrame(void);
+void R_ParticleEndFrame(void);
+void R_ReadPointFile_f(void);
+void R_RunParticleEffect(vec3_t, vec3_t, int, int);
+void R_ParticleTrail(vec3_t start, vec3_t end, trail_type_t type);
+void R_EntityParticleTrail(centity_t* cent, trail_type_t type);
+void R_BlobExplosion(vec3_t);
+void R_ParticleExplosion(vec3_t);
+void R_LavaSplash(vec3_t);
+void R_TeleportSplash(vec3_t);
+void Classic_InitParticles(void);
+void Classic_ClearParticles(void);
+void Classic_RunParticleEffect(vec3_t org, vec3_t dir, int color, int count);
+void Classic_ParticleTrail(vec3_t start, vec3_t end, vec3_t *, trail_type_t type);
+void Classic_ParticleRailTrail(vec3_t start, vec3_t end, int color);
+void Classic_BlobExplosion(vec3_t org);
+void Classic_ParticleExplosion(vec3_t org);
+void Classic_LavaSplash(vec3_t org);
+void Classic_TeleportSplash(vec3_t org);
+
 typedef enum {
 	texture_type_2d,
 	texture_type_2d_array,

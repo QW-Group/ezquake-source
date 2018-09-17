@@ -27,13 +27,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qmb_particles.h"
 #include "r_brushmodel.h" // R_PointIsUnderwater only
 
-#define MIN_ENTITY_PARTICLE_FRAMETIME (0.1)
-#define ONE_FRAME_ONLY	(0.0001)
+static const float particle_emit_time = 0.01; // 100 fps
+static vec3_t zerodir = { 22, 22, 22 };
 
 static float alphatrail_s;
 static float alphatrail_l;
 
-static byte *ColorForParticle(part_type_t type)
+byte *ColorForParticle(part_type_t type)
 {
 	int lambda;
 	static col_t color;
@@ -100,28 +100,6 @@ static byte *ColorForParticle(part_type_t type)
 	}
 	return color;
 }
-
-#define	INIT_NEW_PARTICLE(_pt, _p, _color, _size, _time)	\
-		_p = free_particles;								\
-		free_particles = _p->next;							\
-		_p->next = _pt->start;								\
-		_pt->start = _p;									\
-		_p->size = _size;									\
-		_p->hit = 0;										\
-		_p->start = r_refdef2.time;							\
-		_p->die = _p->start + _time;						\
-		_p->growth = 0;										\
-		_p->rotspeed = 0;									\
-		_p->texindex = (rand() % particle_textures[_pt->texture].components);	\
-		_p->bounces = 0;									\
-		_p->initial_alpha = _pt->startalpha;                \
-		memcpy(_p->color, _color, sizeof(_p->color));		\
-		_p->cached_contents = 0;                            \
-		_p->cached_distance = 0;                            \
-		VectorClear(_p->cached_movement);                   \
-		_p->entity_ref = 0;                                 \
-		_p->entity_trailnumber = 0;                         \
-		ParticleStats(1);		//VULT PARTICLES
 
 __inline static void AddParticleEnt(part_type_t type, vec3_t org, int count, float size, float time, col_t col, vec3_t dir, int entity_id)
 {
@@ -345,292 +323,9 @@ __inline static void AddParticleEnt(part_type_t type, vec3_t org, int count, flo
 	}
 }
 
-__inline static void AddParticle(part_type_t type, vec3_t org, int count, float size, float time, col_t col, vec3_t dir)
+void AddParticle(part_type_t type, vec3_t org, int count, float size, float time, col_t col, vec3_t dir)
 {
 	AddParticleEnt(type, org, count, size, time, col, dir, 0);
-}
-
-__inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end, float size, float time, col_t col, int entity_ref)
-{
-	byte *color;
-	int i, j, num_particles;
-	float count = 0.0, theta = 0.0;
-	vec3_t point, delta;
-	particle_t *p;
-	particle_type_t *pt;
-	//VULT PARTICLES - for railtrail
-	int loops = 0;
-	vec3_t vf, vr, radial;
-
-	if (!qmb_initialized) {
-		Sys_Error("QMB particle added without initialization");
-	}
-
-	entity_ref = bound(0, entity_ref, CL_MAX_EDICTS - 1);
-
-	if (time == 0 || size == 0.0f) {
-		return;
-	}
-
-	if (type >= num_particletypes) {
-		Sys_Error("AddParticle: Invalid type (%d)", type);
-	}
-
-	pt = &particle_types[particle_type_index[type]];
-
-	VectorCopy(start, point);
-	VectorSubtract(end, start, delta);
-	if (pt->drawtype == pd_dynamictrail) {
-		count = 1;
-	}
-	else {
-		float length = VectorLength(delta);
-		if (length < 1) {
-			goto done;
-		}
-
-		switch (type) {
-			case p_alphatrail:
-			case p_lavatrail:
-			case p_bleedspike:
-			case p_bubble:
-				count = length / 1.1;
-				break;
-			case p_bubble2:
-				count = length / 5;
-				break;
-			case p_trailpart:
-				count = length / 1.1;
-				break;
-			case p_blood3:
-				count = length / 8;
-				break;
-			case p_smoke:
-			case p_vxrocketsmoke:
-				count = length / 3.8;
-				break;
-			case p_dpsmoke:
-				count = length / 2.5;
-				break;
-			case p_dpfire:
-				count = length / 2.8;
-				break;
-				//VULT PARTICLES
-			case p_railtrail:
-				count = length * 1.6;
-				if (!(loops = (int)length / 13.0)) {
-					goto done;
-				}
-				VectorScale(delta, 1 / length, vf);
-				VectorVectors(vf, vr, vup);
-				break;
-			case p_trailbleed:
-				count = length / 1.1;
-				break;
-			default:
-				Com_DPrintf("AddParticleTrail: unexpected type %d\n", type);
-				break;
-		}
-	}
-
-	if (!(num_particles = (int)count)) {
-		goto done;
-	}
-
-	VectorScale(delta, 1.0 / num_particles, delta);
-	for (i = 0; i < num_particles && free_particles; i++) {
-		color = col ? col : ColorForParticle(type);
-		INIT_NEW_PARTICLE(pt, p, color, size, time);
-		p->entity_ref = entity_ref;
-		if (entity_ref) {
-			p->entity_trailnumber = cl_entities[entity_ref].trailnumber;
-		}
-
-		if (pt->drawtype == pd_dynamictrail) {
-			VectorCopy(start, p->org);
-			VectorCopy(end, p->endorg);
-		}
-		else {
-			switch (type) {
-				//VULT PARTICLES
-				case p_trailpart:
-				case p_alphatrail:
-					VectorCopy(point, p->org);
-					VectorClear(p->vel);
-					p->growth = -size / time;
-					break;
-				case p_blood3:
-					VectorCopy(point, p->org);
-					for (j = 0; j < 3; j++) {
-						p->org[j] += ((rand() & 15) - 8) / 8.0;
-					}
-					for (j = 0; j < 3; j++) {
-						p->vel[j] = ((rand() & 15) - 8) / 2.0;
-					}
-					p->size = size * (rand() % 20) / 10.0;
-					p->growth = 6;
-					break;
-				case p_smoke:
-					VectorCopy(point, p->org);
-					for (j = 0; j < 3; j++) {
-						p->org[j] += ((rand() & 7) - 4) / 8.0;
-					}
-					p->vel[0] = p->vel[1] = 0;
-					p->vel[2] = rand() & 3;
-					p->growth = 4.5;
-					p->rotspeed = (rand() & 63) + 96;
-					break;
-				case p_dpsmoke:
-					VectorCopy(point, p->org);
-					for (j = 0; j < 3; j++) {
-						p->vel[j] = (rand() % 10) - 5;
-					}
-					p->growth = 3;
-					p->rotspeed = (rand() & 63) + 96;
-					break;
-				case p_dpfire:
-					VectorCopy(point, p->org);
-					for (j = 0; j < 3; j++) {
-						p->vel[j] = (rand() % 40) - 20;
-					}
-					break;
-					//VULT PARTICLES
-				case p_railtrail:
-					theta += loops * 2 * M_PI / count;
-					for (j = 0; j < 3; j++) {
-						radial[j] = vr[j] * cos(theta) + vup[j] * sin(theta);
-					}
-					VectorMA(point, 2.6, radial, p->org);
-					for (j = 0; j < 3; j++) {
-						p->vel[j] = radial[j] * 5;
-					}
-					break;
-					//VULT PARTICLES
-				case p_bubble:
-				case p_bubble2:
-					VectorCopy(point, p->org);
-					for (j = 0; j < 3; j++) {
-						p->vel[j] = (rand() % 10) - 5;
-					}
-					break;
-					//VULT PARTICLES
-				case p_lavatrail:
-					VectorCopy(point, p->org);
-					for (j = 0; j < 3; j++) {
-						p->org[j] += ((rand() & 7) - 4);
-					}
-					p->vel[0] = p->vel[1] = 0;
-					p->vel[2] = rand() & 3;
-					break;
-					//VULT PARTICLES
-				case p_vxrocketsmoke:
-					VectorCopy(point, p->org);
-					for (j = 0; j < 3; j++) {
-						p->vel[j] = (rand() % 8) - 4;
-					}
-					break;
-					//VULT PARTICLES
-				case p_trailbleed:
-					p->size = (rand() % (int)size);
-					p->growth = -rand() % 5;
-					VectorCopy(point, p->org);
-					break;
-					//VULT PARTICLES
-				case p_bleedspike:
-					size = 9 * size / 10;
-					VectorCopy(point, p->org);
-					break;
-				default:
-					//assert(!"AddParticleTrail: unexpected type"); -> hexum - FIXME not all types are handled, seems to work ok though
-					break;
-			}
-		}
-
-		VectorAdd(point, delta, point);
-	}
-done:
-	VectorCopy(point, trail_stop);
-}
-
-//VULT PARTICLES
-void FireballTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[3], float size, float life)
-{
-	col_t color;
-	color[0] = col[0];
-	color[1] = col[1];
-	color[2] = col[2];
-	color[3] = 255;
-
-	//head
-	AddParticleTrail(p_trailpart, start, end, size * 7, 0.15, color, 0);
-
-	//head-white part
-	color[0] = 255; color[1] = 255; color[2] = 255;
-	AddParticleTrail(p_trailpart, start, end, size * 5, 0.15, color, 0);
-
-	//medium trail
-	color[0] = col[0];
-	color[1] = col[1];
-	color[2] = col[2];
-	AddParticleTrail(p_trailpart, start, end, size * 3, life, color, 0);
-
-	VectorCopy(trail_stop, *trail_origin);
-}
-
-//VULT PARTICLES
-void FireballTrailWave(vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[3], float size, float life, vec3_t angle)
-{
-	int i, j;
-	vec3_t dir, vec;
-	col_t color;
-	color[0] = col[0];
-	color[1] = col[1];
-	color[2] = col[2];
-	color[3] = 255;
-
-	AngleVectors(angle, vec, NULL, NULL);
-	vec[2] *= -1;
-	FireballTrail(start, end, trail_origin, col, size, life);
-	if (!ISPAUSED) {
-		for (i = 0; i < 3; i++) {
-			for (j = 0; j < 3; j++) {
-				dir[j] = vec[j] * -600 + ((rand() % 100) - 50);
-			}
-			AddParticle(p_streakwave, end, 1, 1, 1, color, dir);
-		}
-	}
-}
-
-//VULT PARTICLES
-void FuelRodGunTrail(vec3_t start, vec3_t end, vec3_t angle, vec3_t *trail_origin)
-{
-	col_t color;
-	int i, j;
-	vec3_t dir, vec;
-	color[3] = 255;
-
-	color[0] = 0; color[1] = 255; color[2] = 0;
-	AddParticleTrail(p_trailpart, start, end, 15, 0.2, color, 0);
-	color[0] = 255; color[1] = 255; color[2] = 255;
-	AddParticleTrail(p_trailpart, start, end, 10, 0.2, color, 0);
-	color[0] = 0; color[1] = 128; color[2] = 0;
-	AddParticleTrail(p_trailpart, start, end, 10, 0.5, color, 0);
-	color[0] = 0; color[1] = 22; color[2] = 0;
-	AddParticleTrail(p_trailpart, start, end, 2, 3, color, 0);
-	if (!ISPAUSED) {
-		AngleVectors(angle, vec, NULL, NULL);
-		color[0] = 75; color[1] = 255; color[2] = 75;
-		for (i = 0; i<3; i++) {
-			for (j = 0; j<3; j++)
-				dir[j] = vec[j] * -300 + ((rand() % 100) - 50);
-			dir[2] = dir[2] + 60;
-			if (amf_part_trailtype.value == 2)
-				AddParticle(p_smallspark, end, 1, 1, 2, color, dir);
-			else
-				AddParticle(p_streak, end, 1, 1, 2, color, dir);
-		}
-	}
-	VectorCopy(trail_stop, *trail_origin);
 }
 
 //VULT PARTICLES
@@ -1104,170 +799,6 @@ void QMB_RunParticleEffect(vec3_t org, vec3_t dir, int col, int count)
 	}
 }
 
-void QMB_ParticleTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, trail_type_t type)
-{
-	col_t color;
-	extern cvar_t gl_part_tracer1_color, gl_part_tracer1_size, gl_part_tracer1_time,
-		gl_part_tracer2_color, gl_part_tracer2_size, gl_part_tracer2_time;
-
-	switch (type) {
-		case GRENADE_TRAIL:
-			//VULT PARTICLES
-			if (amf_underwater_trails.integer && R_PointIsUnderwater(start)) {
-				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL, 0);
-			}
-			else {
-				AddParticleTrail(p_smoke, start, end, 1.45, 0.825, NULL, 0);
-			}
-			break;
-		case BLOOD_TRAIL:
-		case BIG_BLOOD_TRAIL:
-			AddParticleTrail(p_blood3, start, end, type == BLOOD_TRAIL ? 1.35 : 2.4, 2, NULL, 0);
-			break;
-		case TRACER1_TRAIL:
-			AddParticleTrail(p_trailpart, start, end, gl_part_tracer1_size.value, gl_part_tracer1_time.value, gl_part_tracer1_color.color, 0);
-			break;
-		case TRACER2_TRAIL:
-			AddParticleTrail(p_trailpart, start, end, gl_part_tracer2_size.value, gl_part_tracer2_time.value, gl_part_tracer2_color.color, 0);
-			break;
-		case VOOR_TRAIL:
-			color[0] = 77; color[1] = 0; color[2] = 255; color[3] = 255;
-			AddParticleTrail(p_trailpart, start, end, 3.75, 0.5, color, 0);
-			break;
-		case ALT_ROCKET_TRAIL:
-			if (amf_underwater_trails.integer && R_PointIsUnderwater(start)) {
-				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL, 0);
-			}
-			else {
-				AddParticleTrail(p_dpfire, start, end, 3, 0.26, NULL, 0);
-				AddParticleTrail(p_dpsmoke, start, end, 3, 0.825, NULL, 0);
-			}
-			break;
-			//VULT TRAILS
-		case RAIL_TRAIL:
-		case RAIL_TRAIL2:
-			color[0] = 255; color[1] = 255; color[2] = 255; color[3] = 255;
-			//VULT PARTICLES
-			AddParticleTrail(p_alphatrail, start, end, 2, 0.525, color, 0);
-			if (type == RAIL_TRAIL2) {
-				color[0] = 255;
-				color[1] = 0;
-				color[2] = 0;
-			}
-			else {
-				color[0] = 0;
-				color[1] = 0;
-				color[2] = 255;
-			}
-			AddParticleTrail(p_railtrail, start, end, 1.3, 0.525, color, 0);
-			break;
-			//VULT TRAILS
-		case TF_TRAIL:
-			if (amf_underwater_trails.integer && R_PointIsUnderwater(start)) {
-				if (amf_nailtrail_water.value) {
-					AddParticleTrail(p_bubble2, start, end, 1.5, 0.825, NULL, 0);
-				}
-				else {
-					AddParticleTrail(p_bubble, start, end, 1.5, 0.825, NULL, 0);
-				}
-				break;
-			}
-			color[0] = 10; color[1] = 10; color[2] = 10;
-			AddParticleTrail(p_alphatrail, start, end, alphatrail_s, alphatrail_l, color, 0);
-			break;
-			//VULT TRAILS
-		case LAVA_TRAIL:
-			if (amf_underwater_trails.integer && R_PointIsUnderwater(start)) {
-				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL, 0);
-				color[0] = 25;
-				color[1] = 102;
-				color[2] = 255;
-				color[3] = 255;
-			}
-			else {
-				color[0] = 255;
-				color[1] = 102;
-				color[2] = 25;
-				color[3] = 255;
-			}
-			AddParticleTrail(p_lavatrail, start, end, 5, 1, color, 0);
-			break;
-			//VULT TRAILS
-		case AMF_ROCKET_TRAIL:
-			if (amf_underwater_trails.integer && R_PointIsUnderwater(start)) {
-				AddParticleTrail(p_bubble, start, end, 1.8, 0.825, NULL, 0);
-			}
-			else {
-				color[0] = 128; color[1] = 128; color[2] = 128; color[3] = 255;
-				AddParticleTrail(p_alphatrail, start, end, 2, 0.6, color, 0);
-				AddParticleTrail(p_vxrocketsmoke, start, end, 3, 0.5, color, 0);
-
-				color[0] = 128; color[1] = 56; color[2] = 9; color[3] = 255;
-				AddParticleTrail(p_trailpart, start, end, 4, 0.2, color, 0);
-			}
-			break;
-			//VULT PARTICLES
-		case BLEEDING_TRAIL:
-		case BLEEDING_TRAIL2:
-			if (amf_part_blood_color.value == 2) {
-				color[0] = 55; color[1] = 102; color[2] = 255;
-			}
-			//green
-			else if (amf_part_blood_color.value == 3) {
-				color[0] = 80; color[1] = 255; color[2] = 80;
-			}
-			//red
-			else {
-				color[0] = 128; color[1] = 0; color[2] = 0;
-			}
-			color[3] = 255;
-			AddParticleTrail(type == BLEEDING_TRAIL ? p_trailbleed : p_bleedspike, start, end, 4, type == BLEEDING_TRAIL ? 0.5 : 0.2, color, 0);
-			break;
-		case ROCKET_TRAIL:
-		default:
-			color[0] = 255; color[1] = 56; color[2] = 9; color[3] = 255;
-			AddParticleTrail(p_trailpart, start, end, 6.2, 0.31, color, 0);
-			AddParticleTrail(p_smoke, start, end, 1.8, 0.825, NULL, 0);
-			break;
-	}
-
-	VectorCopy(trail_stop, *trail_origin);
-}
-
-
-// deurk: QMB version of ported zquake rail trail
-void QMB_ParticleRailTrail(vec3_t start, vec3_t end, int color_num)
-{
-	col_t		color;
-
-	color[0] = 255; color[1] = 255; color[2] = 255; color[3] = 255;
-	AddParticleTrail(p_alphatrail, start, end, 0.5, 0.5, color, 0);
-	switch (color_num) {
-		case 180:
-			color[0] = 91; color[1] = 74; color[2] = 56;
-			break;
-		case 35:
-			color[0] = 121; color[1] = 118; color[2] = 185;
-			break;
-		case 224:
-			color[0] = 206; color[1] = 0; color[2] = 0;
-			break;
-		case 133:
-			color[0] = 107; color[1] = 70; color[2] = 88;
-			break;
-		case 192:
-			color[0] = 255; color[1] = 242; color[2] = 32;
-			break;
-		case 6:
-			color[0] = 200; color[1] = 200; color[2] = 200;
-			break;
-		default:
-			color[0] = 0; color[1] = 0; color[2] = 255;
-			break;
-	}
-	AddParticleTrail(p_alphatrail, start, end, 2, 1, color, 0);
-}
-
 void QMB_BlobExplosion(vec3_t org)
 {
 	float theta;
@@ -1282,7 +813,7 @@ void QMB_BlobExplosion(vec3_t org)
 
 	vel[2] = 0;
 	//VULT PARTICLES
-	if (amf_part_shockwaves.value) {
+	if (amf_part_shockwaves.integer) {
 		//VULT Get 3 rings to fly out
 		if (amf_part_2dshockwaves.value) {
 			vec3_t shockdir;
@@ -1543,68 +1074,6 @@ void SparkGen(vec3_t org, byte col[3], float count, float size, float life)
 	}
 	else
 		AddParticle(p_spark, org, count, size, life, color, zerodir);
-}
-
-//VULT PARTICLES
-//VULT - Draw a thin white trail that could be used to represent motion for just about anything
-void ParticleAlphaTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, float size, float life)
-{
-	if (amf_part_fasttrails.value) {
-		col_t color = { 255,255,255,128 };
-		AddParticle(p_streaktrail, start, 1, size * 5, life, color, end);
-		VectorCopy(end, *trail_origin);
-	}
-	else {
-		alphatrail_s = size;
-		alphatrail_l = life;
-		QMB_ParticleTrail(start, end, trail_origin, TF_TRAIL);
-	}
-}
-
-//MEAG: Draw thin trail for nails etc
-void ParticleNailTrail(vec3_t start, vec3_t end, centity_t* client_ent, float size, float life)
-{
-	if (r_refdef2.time - client_ent->particle_time < MIN_ENTITY_PARTICLE_FRAMETIME) {
-		return;
-	}
-	client_ent->particle_time = r_refdef2.time;
-
-	if (amf_underwater_trails.integer && R_PointIsUnderwater(start)) {
-		AddParticleTrail(amf_nailtrail_water.integer ? p_bubble2 : p_bubble, start, end, 1.5, 0.825, NULL, 0);
-		return;
-	}
-
-	AddParticleTrail(p_nailtrail, start, end, size, life, NULL, client_ent - cl_entities);
-}
-
-//VULT - Some of the following functions might be the same as above, thats because I intended to change them but never
-//got around to it.
-
-//VULT PARTICLES
-//VULT - These trails were my initial motivation behind AMFQUAKE.
-void VX_ParticleTrail(vec3_t start, vec3_t end, float size, float time, col_t color)
-{
-	vec3_t		vec;
-	float		len;
-	time *= amf_part_traillen.value;
-
-	if (!time) {
-		return;
-	}
-
-	if (amf_part_fulldetail.integer) {
-		VectorSubtract(end, start, vec);
-		len = VectorNormalize(vec);
-
-		while (len > 0) {
-			//ADD PARTICLE HERE
-			AddParticle(p_streaktrail, start, 1, size, time, color, zerodir);
-			len--;
-			VectorAdd(start, vec, start);
-		}
-	}
-	AddParticle(p_streaktrail, start, 1, size, time, color, end);
-
 }
 
 //VULT PARTICLES
@@ -1911,20 +1380,19 @@ void VXBlood(vec3_t org, float count)
 {
 	col_t color;
 	int a, i;
-	vec3_t trail, start, end;
+	vec3_t start, end;
 
-	if (amf_part_blood_type.value) {
+	if (amf_part_blood_type.integer) {
 		VectorCopy(org, start);
 
 		for (i = 0; i < 15; i++) {
 			VectorCopy(start, end);
+
 			end[0] += rand() % 30 - 15;
 			end[1] += rand() % 30 - 15;
 			end[2] += rand() % 30 - 15;
 
-			VectorCopy(end, trail);
-
-			QMB_ParticleTrail(start, end, &trail, BLEEDING_TRAIL2);
+			QMB_ParticleTrail(start, end, BLEEDING_TRAIL2);
 		}
 	}
 

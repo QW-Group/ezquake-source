@@ -183,17 +183,19 @@ typedef struct
 	int					seq_when_received;
 } frame_t;
 
+typedef struct centity_trail_s {
+	vec3_t          stop;          // last position the trail was generated in
+	double          lasttime;      // last time this trail generated a particle, or 0 if new
+} centity_trail_t;
+
 typedef struct 
 {
 	entity_state_t	baseline;
 	entity_state_t	current;
 
 	vec3_t			lerp_origin;
-	vec3_t			trail_origin;
 
 	vec3_t			velocity; // hack
-
-	int				flags;
 
 	vec3_t			old_origin;
 	vec3_t			old_angles;
@@ -209,12 +211,11 @@ typedef struct
 	int				old_vw_index;	// player entities only
 	int				old_vw_frame;	// player entities only
 
-	double          particle_time;
-	int             trailnumber;
+	centity_trail_t trails[4];
+	float           particle_emittime;
+	int             trail_number;   // this changes as trails are killed and entity re-used (can be used to detect reset)
 	int             corona_id;
 } centity_t;
-
-#define CENT_TRAILDRAWN		1
 
 typedef struct 
 {
@@ -901,7 +902,7 @@ extern struct model_s *cl_flame0_model;
 void CL_InitEnts(void);
 void CL_AddEntity (entity_t *ent);
 void CL_ClearScene (void) ;
-void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, customlight_t* cst_lt, entity_state_t *state);
+void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, entity_state_t *state);
 
 dlighttype_t dlightColor(float f, dlighttype_t def, qbool random);
 customlight_t *dlightColorEx(float f, char *str, dlighttype_t def, qbool random, customlight_t *l);

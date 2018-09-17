@@ -28,8 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 corona_texture_t corona_textures[CORONATEX_COUNT];
 
-extern cvar_t gl_bounceparticles;
-
 cvar_t		amf_showstats = { "r_glstats", "0" };
 
 cvar_t		tei_lavafire = { "gl_surface_lava", "0" };
@@ -81,7 +79,6 @@ cvar_t		amf_part_blood_color = { "gl_particle_blood_color", "1" };
 cvar_t		amf_part_blood_type = { "gl_particle_blood_type", "1" };
 cvar_t		amf_part_explosion = { "gl_particle_explosions", "0" };
 cvar_t		amf_part_blobexplosion = { "gl_particle_blobs", "0" }; // 0.1
-cvar_t		amf_part_fasttrails = { "gl_particle_fasttrails", "0" };
 cvar_t		amf_part_gibtrails = { "gl_particle_gibtrails", "0" }; // 1
 cvar_t		amf_part_muzzleflash = { "gl_particle_muzzleflash", "0" };
 cvar_t		amf_part_deatheffect = { "gl_particle_deatheffect", "0" }; // 1
@@ -367,7 +364,6 @@ void InitVXStuff(void)
 	Cvar_Register(&amf_part_2dshockwaves);
 	Cvar_Register(&amf_part_shockwaves);
 	Cvar_Register(&amf_part_gibtrails);
-	Cvar_Register(&amf_part_fasttrails);
 	Cvar_Register(&amf_part_traillen);
 	Cvar_Register(&amf_part_trailtime);
 	Cvar_Register(&amf_part_traildetail);

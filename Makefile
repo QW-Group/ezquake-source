@@ -313,7 +313,9 @@ COMMON_RENDERER_OBJS := \
     r_netgraph.o \
     r_palette.o \
     r_part.o \
+    r_part_trails.o \
     r_particles_qmb.o \
+    r_particles_qmb_trails.o \
     r_particles_qmb_spawn.o \
     r_performance.o \
     r_refrag.o \

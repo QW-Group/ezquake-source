@@ -134,7 +134,6 @@ extern cvar_t amf_tracker_streaks;
 extern cvar_t amf_cutf_tesla_effect;
 extern cvar_t amf_nailtrail_water;
 extern cvar_t amf_part_deatheffect;
-extern cvar_t amf_part_fasttrails;
 extern cvar_t amf_part_traildetail;
 extern cvar_t amf_part_trailwidth;
 extern cvar_t amf_part_trailtype;
@@ -142,8 +141,8 @@ extern cvar_t amf_part_trailtype;
 void SCR_DrawAMFstats(void);
 int ParticleCount, ParticleCountHigh, CoronaCount, CoronaCountHigh;
 
-void ParticleAlphaTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, float size, float life);
-void ParticleNailTrail(vec3_t start, vec3_t end, centity_t* client_ent, float size, float life);
+void ParticleAlphaTrail(centity_t* cent, float size, float life);
+void ParticleNailTrail(centity_t* client_ent, float size, float life);
 
 typedef enum
 {
@@ -159,9 +158,9 @@ void VXTeleport(vec3_t org);
 void VXBlobExplosion(vec3_t org);
 void VXExplosion(vec3_t org);
 void VXBlood(vec3_t org, float count);
-void FuelRodGunTrail(vec3_t start, vec3_t end, vec3_t angle, vec3_t *trail_origin);
-void FireballTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[3], float size, float life);
-void FireballTrailWave(vec3_t start, vec3_t end, vec3_t *trail_origin, byte col[3], float size, float life, vec3_t angle);
+void FuelRodGunTrail(centity_t* cent);
+void FireballTrail(centity_t* cent, byte col[3], float size, float life);
+void FireballTrailWave(centity_t* cent, byte col[3], float size, float life, vec3_t angle);
 
 void DrawMuzzleflash(vec3_t start, vec3_t angle, vec3_t vel);
 void VXNailhit(vec3_t org, float count);
