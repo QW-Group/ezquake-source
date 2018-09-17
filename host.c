@@ -273,7 +273,7 @@ void SYSINFO_Init(void)
 	}
 
 	if (sysctlbyname("machdep.cpu.brand_string", &cpu_brand_string, &cpu_brand_string_len, NULL, 0) != -1) {
-		SYSINFO_processor_description = cpu_brand_string;
+		SYSINFO_processor_description = Q_strdup(cpu_brand_string);
 	}
 
 	mib[0] = CTL_HW;
@@ -286,7 +286,7 @@ void SYSINFO_Init(void)
 
 	if (gl_renderer && gl_renderer[0]) {
 		if (SYSINFO_3D_description != NULL) {
-			free(SYSINFO_3D_description);
+			Q_free(SYSINFO_3D_description);
 		}
 		SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
@@ -353,7 +353,7 @@ void SYSINFO_Init(void)
 
 	if (gl_renderer  &&  gl_renderer[0]) {
 		if (SYSINFO_3D_description != NULL) {
-			free(SYSINFO_3D_description);
+			Q_free(SYSINFO_3D_description);
 		}
 		SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
