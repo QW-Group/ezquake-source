@@ -278,7 +278,7 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 				b = (b >> 8) * s;
 			}
 			if (gl_invlightmaps) {
-				if (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) {
+				if (GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS)) {
 					dest[2] = 255 - (r >> 16);
 					dest[1] = 255 - (g >> 16);
 					dest[0] = 255 - (b >> 16);
@@ -290,7 +290,7 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 				}
 			}
 			else {
-				if (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) {
+				if (GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS)) {
 					dest[2] = r >> 16;
 					dest[1] = g >> 16;
 					dest[0] = b >> 16;

@@ -178,14 +178,14 @@ void GL_PrintGfxInfo(void)
 		GL_PrintInfoLine("Image Format:", 14, "0x%x (%s)", glConfig.preferred_format, format);
 		GL_PrintInfoLine("Image Type:", 14, "0x%x (%s)", glConfig.preferred_type, type);
 	}
-	GL_PrintInfoLine("Lightmaps:", 14, "%s/%s", glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS ? "BGRA" : "RGBA", glConfig.supported_features & R_SUPPORT_INT8888R_LIGHTMAPS ? "INT8888R" : "UBYTE");
+	GL_PrintInfoLine("Lightmaps:", 14, "%s/%s", GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? "BGRA" : "RGBA", GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? "UINT8888R" : "UBYTE");
 
 	Com_Printf_State(PRINT_ALL, "Supported features:\n");
-	GL_PrintInfoLine("Shaders:", 15, "%s", glConfig.supported_features & R_SUPPORT_RENDERING_SHADERS ? "&c0f0available&r" : "&cf00unsupported&r");
-	GL_PrintInfoLine("Compute:", 15, "%s", glConfig.supported_features & R_SUPPORT_COMPUTE_SHADERS ? "&c0f0available&r" : "&cf00unsupported&r");
-	GL_PrintInfoLine("Framebuffers:", 15, "%s", glConfig.supported_features & R_SUPPORT_FRAMEBUFFERS ? "&c0f0available&r" : "&cf00unsupported&r");
-	GL_PrintInfoLine("Texture arrays:", 15, "%s", glConfig.supported_features & R_SUPPORT_TEXTURE_ARRAYS ? "&c0f0available&r" : "&cf00unsupported&r");
-	GL_PrintInfoLine("HW lighting:", 15, "%s", glConfig.supported_features & R_SUPPORT_FEATURE_HW_LIGHTING ? "&c0f0available&r" : "&cf00unsupported&r");
+	GL_PrintInfoLine("Shaders:", 15, "%s", GL_Supported(R_SUPPORT_RENDERING_SHADERS) ? "&c0f0available&r" : "&cf00unsupported&r");
+	GL_PrintInfoLine("Compute:", 15, "%s", GL_Supported(R_SUPPORT_COMPUTE_SHADERS) ? "&c0f0available&r" : "&cf00unsupported&r");
+	GL_PrintInfoLine("Framebuffers:", 15, "%s", GL_Supported(R_SUPPORT_FRAMEBUFFERS) ? "&c0f0available&r" : "&cf00unsupported&r");
+	GL_PrintInfoLine("Texture arrays:", 15, "%s", GL_Supported(R_SUPPORT_TEXTURE_ARRAYS) ? "&c0f0available&r" : "&cf00unsupported&r");
+	GL_PrintInfoLine("HW lighting:", 15, "%s", GL_Supported(R_SUPPORT_FEATURE_HW_LIGHTING) ? "&c0f0available&r" : "&cf00unsupported&r");
 
 	if (SDL_GetCurrentDisplayMode(VID_DisplayNumber(r_fullscreen.value), &current) != 0) {
 		current.refresh_rate = 0; // print 0Hz if we run into problem fetching data
@@ -302,8 +302,8 @@ void GL_BenchmarkLightmapFormats(void)
 		strlcat(label, image_types[type].name, sizeof(label));
 
 		preferred = (image_formats[format].value == glConfig.preferred_format && image_types[type].value == glConfig.preferred_type);
-		current = (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS ? GL_BGRA : GL_RGBA) == image_formats[format].value &&
-			(glConfig.supported_features & R_SUPPORT_INT8888R_LIGHTMAPS ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE) == image_types[type].value;
+		current = (GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA) == image_formats[format].value &&
+		          (GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE) == image_types[type].value;
 
 		Con_Printf("%s %02d %-20s: %8.3fms%s&r\n", current ? "&c0f0>>>" : "   ", i + 1, label, results[i].result, current && preferred ? " <<< preferred" : preferred ? " &cff0<<< preferred" : "");
 	}

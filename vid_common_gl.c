@@ -65,7 +65,7 @@ static qbool GL_InitialiseRenderer(void)
 	GL_LoadDrawFunctions();
 	GL_InitialiseDebugging();
 
-	shaders_supported = (glConfig.supported_features & R_SUPPORT_MODERN_OPENGL_REQUIREMENTS);
+	shaders_supported = GL_Supported(R_SUPPORT_MODERN_OPENGL_REQUIREMENTS);
 	if ((glConfig.preferred_format == 0 && GL_VersionAtLeast(1, 2)) || glConfig.preferred_format == GL_BGRA) {
 		glConfig.supported_features |= R_SUPPORT_BGRA_LIGHTMAPS;
 	}

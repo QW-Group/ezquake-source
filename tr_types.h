@@ -105,6 +105,8 @@ typedef struct {
 	unsigned int preferred_type;
 } glconfig_t;
 
+#define GL_Supported(x) ((glConfig.supported_features & (x)) == (x))
+
 extern glconfig_t	glConfig;
 
 //

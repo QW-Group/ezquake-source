@@ -37,10 +37,10 @@ void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_batch, int
 	int numVertices = batch->numVertices[first_batch];
 	int batch_count = last_batch - first_batch;
 	void* indexes = (void*)(index_offset * sizeof(GLuint));
-	int terminators = (glConfig.supported_features & R_SUPPORT_PRIMITIVERESTART) ? 1 : (numVertices % 2 == 0 ? 2 : 3);
+	int terminators = GL_Supported(R_SUPPORT_PRIMITIVERESTART) ? 1 : (numVertices % 2 == 0 ? 2 : 3);
 
 	// Ugh!
-	if (!(glConfig.supported_features & R_SUPPORT_PRIMITIVERESTART) && batch->primitive_id == r_primitive_triangle_fan) {
+	if (!GL_Supported(R_SUPPORT_PRIMITIVERESTART) && batch->primitive_id == r_primitive_triangle_fan) {
 		maximum_batch_size = 1;
 	}
 
