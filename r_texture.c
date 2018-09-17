@@ -270,7 +270,9 @@ void R_DeleteTexture(texture_ref* texture)
 	}
 
 	// Delete renderer's version
-	renderer.TextureDelete(*texture);
+	if (renderer.TextureDelete) {
+		renderer.TextureDelete(*texture);
+	}
 
 	// Free structure, updated linked list so we can re-use this slot
 	Q_free(gltextures[texture->index].pathname);

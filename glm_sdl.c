@@ -47,7 +47,7 @@ qbool GLM_SDL_SetupAttributes(int attempt)
 	int contextFlags = 0;
 	extern cvar_t vid_gl_core_profile;
 
-	// This will make
+	// This will make some modes be attempted multiple times (int* attempt?)
 	if (vid_gl_core_profile.integer) {
 		while (attempt < sizeof(versions) / sizeof(versions[0]) && !versions[attempt].core) {
 			++attempt;
@@ -75,9 +75,7 @@ qbool GLM_SDL_SetupAttributes(int attempt)
 	else {
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
 	}
-	if (R_DebugProfileContext()) {
-		contextFlags |= SDL_GL_CONTEXT_DEBUG_FLAG;
-	}
+	contextFlags |= R_DebugProfileContext() ? SDL_GL_CONTEXT_DEBUG_FLAG : 0;
 	SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, contextFlags);
 
 	return true;

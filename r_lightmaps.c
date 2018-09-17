@@ -787,7 +787,9 @@ void R_InvalidateLightmapTextures(void)
 {
 	int i;
 
-	renderer.InvalidateLightmapTextures();
+	if (renderer.InvalidateLightmapTextures) {
+		renderer.InvalidateLightmapTextures();
+	}
 
 	for (i = 0; i < lightmap_array_size; ++i) {
 		R_TextureReferenceInvalidate(lightmaps[i].gl_texref);
@@ -803,7 +805,9 @@ void R_LightmapShutdown(void)
 	Q_free(lightmaps);
 	lightmap_array_size = 0;
 
-	renderer.LightmapShutdown();
+	if (renderer.LightmapShutdown) {
+		renderer.LightmapShutdown();
+	}
 }
 
 // mark all surfaces so ALL light maps will reload in R_RenderDynamicLightmaps()

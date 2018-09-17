@@ -68,6 +68,10 @@ qbool GLC_SDL_SetupAttributes(int attempt);
 #define VID_RENDERER_MIN 0
 #define VID_RENDERER_MAX 1
 
+#define VID_MULTISAMPLED  1
+#define VID_ACCELERATED   2
+#define VID_DEPTHBUFFER24 4
+
 /* FIXME: This should be in a header file and it probably shouldn't be called TP_
  *        since there are a lot of triggers that has nothing to do with teamplay.
  *        Should probably split them
@@ -991,28 +995,14 @@ const SDL_DisplayMode *VID_GetDisplayMode(int index)
 	return &modelist[index];
 }
 
-static void VID_SDL_GL_EnableMSAA(void)
-{
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, bound(2, gl_multisamples.integer, 16));
-}
-
-static void VID_SDL_GL_DisableMSAA(void)
-{
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
-	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
-}
-
-static qbool VID_SDL_GL_SetupAttributes(int attempt)
+static qbool VID_SDL_GL_SetupAttributes(int attempt, int options)
 {
 	extern cvar_t gl_gammacorrection;
 
-	if (gl_multisamples.integer > 0) {
-		VID_SDL_GL_EnableMSAA();
-	}
-	else {
-		VID_SDL_GL_DisableMSAA();
-	}
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, options & VID_MULTISAMPLED ? 1 : 0);
+	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, options & VID_MULTISAMPLED ? bound(2, gl_multisamples.integer, 16) : 0);
+	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, options & VID_ACCELERATED ? 1 : 0);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, options & VID_DEPTHBUFFER24 ? 24 : 16);
 
 #ifdef EZ_MULTIPLE_RENDERERS
 	if (vid_renderer.integer < VID_RENDERER_MIN || vid_renderer.integer > VID_RENDERER_MAX) {
@@ -1026,7 +1016,6 @@ static qbool VID_SDL_GL_SetupAttributes(int attempt)
 #endif
 
 	SDL_GL_SetAttribute(SDL_GL_FRAMEBUFFER_SRGB_CAPABLE, gl_gammacorrection.integer);
-	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, COM_CheckParm(cmdline_param_client_unaccelerated_visuals) ? 0 : 1);
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
 		if (!GLM_SDL_SetupAttributes(attempt)) {
@@ -1048,10 +1037,6 @@ static qbool VID_SDL_GL_SetupAttributes(int attempt)
 		}
 	}
 #endif
-
-	if (r_24bit_depth.integer == 1) {
-		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-	} /* else, SDL2 defaults to 16 */
 
 	return true;
 }
@@ -1144,12 +1129,12 @@ static void VID_X11_GetGammaRampSize(void)
 }
 #endif
 
-static void VID_CreateContext(int flags)
+static void VID_CreateContext(int flags, int options)
 {
 	int attempt;
 
 	sdl_window = NULL;
-	for (attempt = 0; sdl_window == NULL && VID_SDL_GL_SetupAttributes(attempt); ++attempt) {
+	for (attempt = 0; sdl_window == NULL && VID_SDL_GL_SetupAttributes(attempt, options); ++attempt) {
 		VID_SetupModeList();
 		VID_SetupResolution();
 
@@ -1185,35 +1170,93 @@ static void VID_SDL_Init(void)
 
 	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI;
 	if (r_fullscreen.integer > 0) {
-		if (vid_usedesktopres.integer == 1) {
-			flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
-		}
-	} else {
-		if (vid_win_borderless.integer > 0) {
-			flags |= SDL_WINDOW_BORDERLESS;
-		}
+		flags |= (vid_usedesktopres.integer == 1 ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+	}
+	else {
+		flags |= (vid_win_borderless.integer > 0 ? SDL_WINDOW_BORDERLESS : 0);
 	}
 
 	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, vid_minimize_on_focus_loss.integer == 0 ? "0" : "1");
-
 #ifdef __APPLE__
 	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
 #endif
 	SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, vid_grab_keyboard.integer == 0 ? "0" : "1");
 	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
 
-	VID_CreateContext(flags);
+	{
+		int i;
+		int vid_options[] = {
+			VID_MULTISAMPLED | VID_ACCELERATED | VID_DEPTHBUFFER24,
+			VID_ACCELERATED | VID_DEPTHBUFFER24,
+			VID_ACCELERATED,
+			VID_DEPTHBUFFER24,
+			0
+		};
 
-	if (!sdl_window) {
-		if (gl_multisamples.integer > 0) {
-			VID_SDL_GL_DisableMSAA();
-			Cvar_AutoSet(&gl_multisamples, "0");
-			VID_CreateContext(flags);
+		while (true) {
+			for (i = 0, sdl_window = NULL; sdl_window == NULL && i < sizeof(vid_options) / sizeof(vid_options[0]); ++i) {
+				if ((vid_options[i] & VID_MULTISAMPLED) && gl_multisamples.integer <= 0) {
+					continue;
+				}
+				if ((vid_options[i] & VID_DEPTHBUFFER24) && !r_24bit_depth.integer) {
+					continue;
+				}
+				if ((vid_options[i] & VID_ACCELERATED) && COM_CheckParm(cmdline_param_client_unaccelerated_visuals)) {
+					continue;
+				}
+
+				VID_CreateContext(flags, vid_options[i]);
+				if (sdl_window) {
+					sdl_context = SDL_GL_CreateContext(sdl_window);
+#ifdef _WIN32
+					if (sdl_context && (vid_options[i] & VID_ACCELERATED)) {
+						// SDL2 falls back to not even asking if it's accelerated, so we might get software :(
+						if (strstr((const char*)glGetString(GL_VENDOR), "Microsoft") != NULL) {
+							SDL_GL_DeleteContext(sdl_context);
+							sdl_context = NULL;
+						}
+					}
+#endif
+					if (sdl_context) {
+						break;
+					}
+					else {
+						SDL_DestroyWindow(sdl_window);
+						sdl_window = NULL;
+					}
+				}
+			}
+
+#if defined(RENDERER_OPTION_CLASSIC_OPENGL) && defined(EZ_MULTIPLE_RENDERERS)
+			// FIXME: Implement falling back from Vulkan too
+			if (!sdl_window && !R_UseImmediateOpenGL()) {
+				Con_Printf("&cf00Error&r: failed to create rendering context, trying classic OpenGL...\n");
+
+				Cvar_LatchedSetValue(&vid_renderer, 0);
+				continue;
+			}
+#endif
+
+			break;
 		}
-		if (sdl_window) {
-			Com_Printf("WARNING: Invalid gl_multisamples value. Disabling MSAA");
-		} else {
-			Sys_Error("Failed to create SDL window: %s\n", SDL_GetError());
+
+		if (!sdl_window) {
+			Sys_Error("Failed to create SDL window/context: %s\n", SDL_GetError());
+		}
+
+		// Alert user if our mode doesn't match what they requested
+		if (!(vid_options[i] & VID_MULTISAMPLED) && gl_multisamples.integer > 0) {
+			Cvar_AutoSetInt(&gl_multisamples, 0);
+			Com_Printf("WARNING: MSAA request failed - disabled\n");
+		}
+
+		if (!(vid_options[i] & VID_DEPTHBUFFER24) && r_24bit_depth.integer) {
+			Cvar_AutoSetInt(&r_24bit_depth, 0);
+			Com_Printf("WARNING: 24-bit depth buffer request failed\n");
+		}
+
+		if (!(vid_options[i] & VID_ACCELERATED) && !COM_CheckParm(cmdline_param_client_unaccelerated_visuals)) {
+			Com_Printf("WARNING: Using unaccelerated graphics\n");
 		}
 	}
 
@@ -1232,16 +1275,19 @@ static void VID_SDL_Init(void)
 				Cvar_AutoSetInt(&vid_height, last_working_height);
 				Cvar_AutoSetInt(&r_displayRefresh, last_working_hz);
 				Cvar_AutoSetInt(&vid_displayNumber, last_working_display);
-			} else {
+			}
+			else {
 				Com_Printf("Using desktop resolution as fallback\n");
 				Cvar_LatchedSet(&vid_usedesktopres, "1");
 				Cvar_AutoSet(&vid_usedesktopres, "1");
 			}
 			VID_SetupResolution();
-		} else {
+		}
+		else {
 			if (SDL_SetWindowDisplayMode(sdl_window, &modelist[index]) != 0) {
 				Com_Printf("sdl error: %s\n", SDL_GetError());
-			} else {
+			}
+			else {
 				last_working_width = (&modelist[index])->w;
 				last_working_height = (&modelist[index])->h;
 				last_working_hz = (&modelist[index])->refresh_rate;
@@ -1254,32 +1300,12 @@ static void VID_SDL_Init(void)
 			Com_Printf("Failed to change to fullscreen mode\n");
 		}
 	}
-      
+
 	if (VID_SetWindowIcon(sdl_window) < 0) {
 		Com_Printf("Failed to set window icon");
 	}
 
 	SDL_SetWindowMinimumSize(sdl_window, 320, 240);
-
-	sdl_context = SDL_GL_CreateContext(sdl_window);
-#if defined(RENDERER_OPTION_CLASSIC_OPENGL) && defined(EZ_MULTIPLE_RENDERERS)
-	// FIXME: Implement falling back from Vulkan too
-	if (!sdl_context && R_UseModernOpenGL()) {
-		Con_Printf("&cf00Error&r: failed to create glsl context, trying classic mode...\n");
-
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-
-		Cvar_LatchedSetValue(&vid_renderer, 0);
-
-		sdl_context = SDL_GL_CreateContext(sdl_window);
-	}
-#endif
-	if (!sdl_context) {
-		Com_Printf("Couldn't create OpenGL context: %s\n", SDL_GetError());
-		return;
-	}
 
 	v_gamma.modified = true;
 	r_swapInterval.modified = true;
