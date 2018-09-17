@@ -201,10 +201,9 @@ void GLC_RenderSceneBlurDo(float alpha)
 	vs *= 1;//gl_motionblurscale.value;
 	vt *= 1;//gl_motionblurscale.value;
 
-	renderer.TextureUnitBind(GL_TEXTURE0, sceneblur_texture);
+	renderer.TextureUnitBind(0, sceneblur_texture);
 	R_CustomColor(alpha, alpha, alpha, alpha);
-	if (draw)
-	{
+	if (draw) {
 		GLC_Begin(GL_QUADS);
 		glTexCoord2f(cs-vs, ct-vt);
 		GLC_Vertex2f(0, 0);
@@ -223,8 +222,7 @@ void GLC_RenderSceneBlurDo(float alpha)
 
 	// With high frame rate frames difference is soo smaaaal, so motion blur almost unnoticeable,
 	// so I copy frame not every frame.
-	if (diff_time >= 1.0 / fps)
-	{
+	if (diff_time >= 1.0 / fps) {
 		last_time = current_time;
 
 		//copy the image into the texture so that we can play with it next frame too!
