@@ -4504,7 +4504,7 @@ void CL_Demo_Stop_Rewinding(void)
 	}
 	cls.findtrack		= false;
 
-	R_InitParticles();
+	R_ClearParticles();
 	cls.demorewinding   = false;
 }
 
