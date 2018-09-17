@@ -102,17 +102,19 @@ int GLM_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 		target->flags = TEXTURE_TURB_SKY;
 	}
 	else if (surf->flags & SURF_DRAWTURB) {
-		target->flags = surf->texinfo->texture->turbType & EZQ_SURFACE_TYPE;
+		target->flags = (surf->texinfo->texture->turbType & EZQ_SURFACE_TYPE);
 	}
-
-	target->flags |= (surf->flags & SURF_UNDERWATER ? EZQ_SURFACE_UNDERWATER : 0);
-	target->flags |= (surf->flags & SURF_DRAWFLAT_FLOOR ? EZQ_SURFACE_IS_FLOOR : 0);
-	// target->flags |= (has_luma_texture ? EZQ_SURFACE_HAS_LUMA : 0) |
+	else if (mod->isworldmodel) {
+		target->flags = EZQ_SURFACE_WORLD;
+		target->flags |= (surf->flags & SURF_DRAWFLAT_FLOOR ? EZQ_SURFACE_IS_FLOOR: 0);
+		target->flags |= (surf->flags & SURF_UNDERWATER ? EZQ_SURFACE_UNDERWATER : 0);
+	}
+	else {
+		target->flags = 0;
+	}
 	target->flags |= (surf->flags & SURF_DRAWALPHA ? EZQ_SURFACE_ALPHATEST : 0);
-	target->flags |= (mod->isworldmodel ? EZQ_SURFACE_DETAIL : 0);
 
 	memcpy(target->flatcolor, &surf->texinfo->texture->flatcolor3ub, sizeof(target->flatcolor));
-
 	target->surface_num = mod->isworldmodel ? surf - mod->surfaces : 0;
 
 	return position + 1;
