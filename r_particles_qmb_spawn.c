@@ -1152,61 +1152,59 @@ void VXNailhit(vec3_t org, float count)
 	vec3_t dir, neworg;
 	int a, i;
 	int contents;
-	if (amf_nailtrail_plasma.value) {
+	if (amf_nailtrail_plasma.integer) {
 		color[0] = 10;
 		color[1] = 80;
 		color[2] = 255;
 		color[3] = 128;
 		AddParticle(p_fire, org, 15, 5, 0.5, color, zerodir);
 	}
-	else {
-		if (amf_part_spikes_type.value == 2 || amf_part_spikes_type.value == 3) {
-			color[0] = 255;
-			color[1] = 242;
-			color[2] = 153;
-			color[3] = 255;
-			VectorClear(dir);
-			for (i = 0; i < 5; i++) {
-				dir[2] = 0;
-				for (a = 0; a < 5; a++) {
-					AngleVectors(dir, NULL, NULL, neworg);
-					VectorMA(org, 40, neworg, neworg);
-					AddParticle(p_sparkray, org, 1, 3, 1.5, color, neworg);
-					dir[2] += 360 / 5;
-				}
-				dir[0] += 180 / 5;
+	else if (amf_part_spikes_type.integer == 2 || amf_part_spikes_type.integer == 3) {
+		color[0] = 255;
+		color[1] = 242;
+		color[2] = 153;
+		color[3] = 255;
+		VectorClear(dir);
+		for (i = 0; i < 5; i++) {
+			dir[2] = 0;
+			for (a = 0; a < 5; a++) {
+				AngleVectors(dir, NULL, NULL, neworg);
+				VectorMA(org, 40, neworg, neworg);
+				AddParticle(p_sparkray, org, 1, 3, 1.5, color, neworg);
+				dir[2] += 360 / 5;
 			}
-			if (amf_coronas.integer) {
-				R_CoronasNew(C_WHITELIGHT, org);
-			}
-			if (amf_part_spikes_type.value == 3) {
-				return;
-			}
+			dir[0] += 180 / 5;
 		}
-		else if (amf_part_spikes_type.value == 4) {
-			color[0] = 255;
-			color[1] = 80;
-			color[2] = 10;
-			color[3] = 128;
-			if (amf_coronas.integer) {
-				R_CoronasNew(C_GUNFLASH, org);
-			}
-			for (a = 0; a<count*1.5; a++) {
-				for (i = 0; i < 3; i++) {
-					dir[i] = (rand() % 700) - 300;
-				}
-				AddParticle(p_streakwave, org, 1, 1, 0.066*amf_part_trailtime.value, color, dir);
-			}
+		if (amf_coronas.integer) {
+			R_CoronasNew(C_WHITELIGHT, org);
+		}
+		if (amf_part_spikes_type.integer == 3) {
 			return;
 		}
-		else {
-			color[0] = 255;
-			color[1] = 80;
-			color[2] = 10;
-			color[3] = 128;
-			if (amf_coronas.integer) {
-				R_CoronasNew(C_GUNFLASH, org);
+	}
+	else if (amf_part_spikes_type.integer == 4) {
+		color[0] = 255;
+		color[1] = 80;
+		color[2] = 10;
+		color[3] = 128;
+		if (amf_coronas.integer) {
+			R_CoronasNew(C_GUNFLASH, org);
+		}
+		for (a = 0; a<count*1.5; a++) {
+			for (i = 0; i < 3; i++) {
+				dir[i] = (rand() % 700) - 300;
 			}
+			AddParticle(p_streakwave, org, 1, 1, 0.066*amf_part_trailtime.value, color, dir);
+		}
+		return;
+	}
+	else {
+		color[0] = 255;
+		color[1] = 80;
+		color[2] = 10;
+		color[3] = 128;
+		if (amf_coronas.integer) {
+			R_CoronasNew(C_GUNFLASH, org);
 		}
 	}
 

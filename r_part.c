@@ -801,7 +801,7 @@ void R_EntityParticleTrail(centity_t* cent, trail_type_t type)
 		QMB_EntityParticleTrail(cent, type);
 	}
 	else {
-		Classic_ParticleTrail(cent->trails[0].stop, cent->lerp_origin, cent->trails[0].stop, type);
+		Classic_ParticleTrail(cent->trails[0].stop, cent->lerp_origin, &cent->trails[0].stop, type);
 	}
 }
 

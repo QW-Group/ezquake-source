@@ -73,6 +73,12 @@ __inline static void AddParticleTrailImpl(part_type_t type, vec3_t start, vec3_t
 			goto done;
 		}
 
+		// length > 140 was old limit in cl_ents.c
+		if (length > 140) {
+			VectorCopy(end, point);
+			goto done;
+		}
+
 		switch (type) {
 			case p_alphatrail:
 			case p_lavatrail:
@@ -118,6 +124,12 @@ __inline static void AddParticleTrailImpl(part_type_t type, vec3_t start, vec3_t
 	}
 
 	if (!(num_particles = (int)count)) {
+		goto done;
+	}
+
+	if (!free_particles) {
+		// we hit limit, don't try and draw from old position if this resolves
+		VectorCopy(end, point);
 		goto done;
 	}
 
@@ -266,18 +278,16 @@ void ParticleAlphaTrail(centity_t* cent, float size, float life)
 //MEAG: Draw thin trail for nails etc
 void ParticleNailTrail(centity_t* client_ent, float size, float life)
 {
-	// vec3_t start, vec3_t end, 
-	if (particle_time - client_ent->trails[0].lasttime < MIN_ENTITY_PARTICLE_FRAMETIME) {
-		return;
-	}
-	client_ent->trails[0].lasttime = particle_time;
-
 	if (amf_underwater_trails.integer && R_PointIsUnderwater(client_ent->trails[0].stop)) {
 		AddEntityParticleTrail(amf_nailtrail_water.integer ? p_bubble2 : p_bubble, client_ent, 0, 1.5, 0.825, NULL);
-		return;
 	}
-
-	AddEntityParticleTrail(p_nailtrail, client_ent, 0, size, life, NULL);
+	else {
+		if (particle_time - client_ent->trails[0].lasttime < MIN_ENTITY_PARTICLE_FRAMETIME) {
+			return;
+		}
+		client_ent->trails[0].lasttime = particle_time;
+		AddEntityParticleTrail(p_nailtrail, client_ent, 0, size, life, NULL);
+	}
 }
 
 //VULT PARTICLES
