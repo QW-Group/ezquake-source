@@ -248,11 +248,6 @@ typedef enum {
 	r_state_aliasmodel_shadows,
 	r_state_aliasmodel_outline,
 
-	r_state_brushmodel_opaque,
-	r_state_brushmodel_opaque_offset,
-	r_state_brushmodel_translucent,
-	r_state_brushmodel_translucent_offset,
-
 	r_state_aliasmodel_opaque_batch,
 	r_state_aliasmodel_translucent_batch,
 
@@ -290,6 +285,7 @@ void R_CustomLineWidth(float width);
 void R_EnableScissorTest(int x, int y, int width, int height);
 void R_DisableScissorTest(void);
 void R_ClearColor(float r, float g, float b, float a);
+void R_CustomPolygonOffset(r_polygonoffset_t mode);
 
 void R_Hud_Initialise(void);
 

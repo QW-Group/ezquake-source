@@ -108,7 +108,7 @@ void GLC_RenderFullbrights(void);
 void GLC_RenderLumas(void);
 unsigned int GLC_DrawIndexedPoly(glpoly_t* p, unsigned int* modelIndexes, unsigned int modelIndexMaximum, unsigned int index_count);
 
-static void GLC_DrawFlat(model_t *model)
+static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 {
 	int index_count = 0;
 
@@ -173,6 +173,7 @@ static void GLC_DrawFlat(model_t *model)
 					R_ApplyRenderingState(r_state_drawflat_without_lightmaps_glc);
 					R_CustomColor4ubv(desired);
 				}
+				R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
 			}
 			last_lightmap = new_lightmap;
 
@@ -220,7 +221,7 @@ static void GLC_DrawFlat(model_t *model)
 	// } END shaman FIX /r_drawflat + /gl_caustics
 }
 
-static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
+static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset)
 {
 	extern cvar_t gl_lumatextures;
 	extern cvar_t gl_textureless;
@@ -294,6 +295,12 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics)
 	}
 
 	R_ApplyRenderingState(state);
+	if (ent && ent->alpha) {
+		R_CustomColor(ent->alpha, ent->alpha, ent->alpha, ent->alpha);
+	}
+	if (polygonOffset) {
+		R_CustomPolygonOffset(r_polygonoffset_standard);
+	}
 
 	//Tei: textureless for the world brush models (Qrack)
 	if (draw_textureless) {
@@ -470,10 +477,10 @@ void GLC_DrawWorld(void)
 	extern msurface_t* alphachain;
 
 	if (r_drawflat.integer != 1) {
-		GLC_DrawTextureChains(NULL, cl.worldmodel, false);
+		GLC_DrawTextureChains(NULL, cl.worldmodel, false, false);
 	}
 	if (cl.worldmodel->drawflat_chain[0] || cl.worldmodel->drawflat_chain[1]) {
-		GLC_DrawFlat(cl.worldmodel);
+		GLC_DrawFlat(cl.worldmodel, false);
 	}
 
 	if (R_DrawWorldOutlines()) {
@@ -491,15 +498,15 @@ void GLC_DrawBrushModel(entity_t* e, qbool polygonOffset, qbool caustics)
 
 	if (r_drawflat.integer && clmodel->isworldmodel) {
 		if (r_drawflat.integer == 1) {
-			GLC_DrawFlat(clmodel);
+			GLC_DrawFlat(clmodel, polygonOffset);
 		}
 		else {
-			GLC_DrawTextureChains(e, clmodel, caustics);
-			GLC_DrawFlat(clmodel);
+			GLC_DrawTextureChains(e, clmodel, caustics, polygonOffset);
+			GLC_DrawFlat(clmodel, polygonOffset);
 		}
 	}
 	else {
-		GLC_DrawTextureChains(e, clmodel, caustics);
+		GLC_DrawTextureChains(e, clmodel, caustics, polygonOffset);
 	}
 
 	if (clmodel->isworldmodel && R_DrawWorldOutlines()) {

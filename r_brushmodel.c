@@ -305,15 +305,13 @@ void R_BrushModelDrawEntity(entity_t *e)
 		}
 	}
 
-	R_PushModelviewMatrix(oldMatrix);
-
-	R_StateBrushModelBeginDraw(e, polygonOffset);
-
 	R_BrushModelClearTextureChains(clmodel);
-
 	renderer.ChainBrushModelSurfaces(clmodel);
 
 	if (clmodel->last_texture_chained >= 0 || clmodel->drawflat_chain[0] || clmodel->drawflat_chain[1]) {
+		R_PushModelviewMatrix(oldMatrix);
+		R_RotateForEntity(e);
+
 		// START shaman FIX for no simple textures on world brush models {
 		//draw the textures chains for the model
 		R_RenderAllDynamicLightmaps(clmodel);
@@ -336,9 +334,9 @@ void R_BrushModelDrawEntity(entity_t *e)
 
 		renderer.DrawBrushModel(e, polygonOffset, caustics);
 		// } END shaman FIX for no simple textures on world brush models
-	}
 
-	R_PopModelviewMatrix(oldMatrix);
+		R_PopModelviewMatrix(oldMatrix);
+	}
 
 	R_TraceLeaveRegion(true);
 }

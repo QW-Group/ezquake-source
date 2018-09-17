@@ -337,26 +337,6 @@ static void R_InitialiseEntityStates(void)
 	state->line.smooth = true;
 	state->color[0] = state->color[1] = state->color[2] = 0;
 
-	state = R_InitRenderingState(r_state_brushmodel_opaque, true, "brushModelOpaqueState", vao_brushmodel);
-	state->cullface.mode = r_cullface_front;
-	state->cullface.enabled = true;
-	state->polygonMode = r_polygonmode_fill;
-	R_GLC_DisableAlphaTesting(state);
-	state->blendingEnabled = false;
-	state->line.smooth = false;
-	state->fog.enabled = false;
-	state->polygonOffset.option = r_polygonoffset_disabled;
-
-	state = R_CopyRenderingState(r_state_brushmodel_opaque_offset, r_state_brushmodel_opaque, "brushModelOpaqueOffsetState");
-	state->polygonOffset.option = r_polygonoffset_standard;
-
-	state = R_CopyRenderingState(r_state_brushmodel_translucent, r_state_brushmodel_opaque, "brushModelTranslucentState");
-	state->blendingEnabled = true;
-	state->blendFunc = r_blendfunc_premultiplied_alpha;
-
-	state = R_CopyRenderingState(r_state_brushmodel_translucent_offset, r_state_brushmodel_translucent, "brushModelTranslucentOffsetState");
-	state->polygonOffset.option = r_polygonoffset_standard;
-
 	state = R_InitRenderingState(r_state_aliasmodel_opaque_batch, true, "aliasModelBatchState", vao_aliasmodel);
 	state->cullface.mode = r_cullface_front;
 	state->cullface.enabled = true;
@@ -473,25 +453,6 @@ void R_StateBeginAlphaLineRGB(float thickness)
 	if (thickness > 0.0) {
 		R_CustomLineWidth(thickness);
 	}
-}
-
-void R_StateBrushModelBeginDraw(entity_t* e, qbool polygonOffset)
-{
-	static r_state_id brushModelStates[] = {
-		r_state_brushmodel_opaque,
-		r_state_brushmodel_opaque_offset,
-		r_state_brushmodel_translucent,
-		r_state_brushmodel_translucent_offset
-	};
-
-	R_TraceEnterRegion("R_StateBrushModelBeginDraw", true);
-	R_RotateForEntity(e);
-	R_ApplyRenderingState(brushModelStates[(e->alpha ? 2 : 0) + (polygonOffset ? 1 : 0)]);
-	if (e->alpha) {
-		R_CustomColor(e->alpha, e->alpha, e->alpha, e->alpha);
-	}
-
-	R_TraceLeaveFunctionRegion;
 }
 
 void R_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)

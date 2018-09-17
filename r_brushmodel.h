@@ -29,8 +29,6 @@ void GLC_StateBeginWaterSurfaces(void);
 void GLC_StateBeginAlphaChain(void);
 void GLC_StateBeginAlphaChainSurface(msurface_t* s);
 
-void R_StateBrushModelBeginDraw(entity_t* e, qbool polygonOffset);
-
 // gl_rsurf.c
 void GLC_EmitDetailPolys(qbool use_vbo);
 void R_BrushModelDrawEntity(entity_t *e);

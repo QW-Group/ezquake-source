@@ -313,45 +313,9 @@ void GL_ApplyRenderingState(r_state_id id)
 	GL_ApplySimpleToggle(state, current, line.smooth, GL_LINE_SMOOTH);
 
 	if (state->polygonOffset.option != current->polygonOffset.option || gl_brush_polygonoffset.modified) {
-		float factor = (state->polygonOffset.option == r_polygonoffset_standard ? 0.05 : 1);
-		float units = (state->polygonOffset.option == r_polygonoffset_standard ? bound(0, gl_brush_polygonoffset.value, 25.0) : 1);
-		qbool enabled = (state->polygonOffset.option == r_polygonoffset_standard || state->polygonOffset.option == r_polygonoffset_outlines) && units > 0;
-
-		if (enabled) {
-			if (!current->polygonOffset.fillEnabled) {
-				glEnable(GL_POLYGON_OFFSET_FILL);
-				R_TraceLogAPICall("glEnable(GL_POLYGON_OFFSET_FILL)");
-				current->polygonOffset.fillEnabled = true;
-			}
-			if (!current->polygonOffset.lineEnabled) {
-				glEnable(GL_POLYGON_OFFSET_LINE);
-				R_TraceLogAPICall("glEnable(GL_POLYGON_OFFSET_LINE)");
-				current->polygonOffset.lineEnabled = true;
-			}
-
-			if (current->polygonOffset.factor != factor || current->polygonOffset.units != units) {
-				glPolygonOffset(factor, units);
-				R_TraceLogAPICall("glPolygonOffset(factor %f, units %f)", factor, units);
-
-				current->polygonOffset.factor = factor;
-				current->polygonOffset.units = units;
-			}
-		}
-		else {
-			if (current->polygonOffset.fillEnabled) {
-				glDisable(GL_POLYGON_OFFSET_FILL);
-				R_TraceLogAPICall("glDisable(GL_POLYGON_OFFSET_FILL)");
-				current->polygonOffset.fillEnabled = false;
-			}
-			if (current->polygonOffset.lineEnabled) {
-				glDisable(GL_POLYGON_OFFSET_LINE);
-				R_TraceLogAPICall("glDisable(GL_POLYGON_OFFSET_LINE)");
-				current->polygonOffset.lineEnabled = false;
-			}
-		}
+		R_CustomPolygonOffset(state->polygonOffset.option);
 
 		gl_brush_polygonoffset.modified = false;
-		current->polygonOffset.option = state->polygonOffset.option;
 	}
 	if (state->polygonMode != current->polygonMode) {
 		glPolygonMode(GL_FRONT_AND_BACK, glPolygonModeValues[current->polygonMode = state->polygonMode]);
@@ -836,6 +800,53 @@ void R_CustomLineWidth(float width)
 			// vkCmdSetLineWidth(commandBuffer, width)
 			opengl.rendering_state.line.width = width;
 		}
+	}
+}
+
+void R_CustomPolygonOffset(r_polygonoffset_t mode)
+{
+	rendering_state_t* current = &opengl.rendering_state;
+
+	if (mode != current->polygonOffset.option) {
+		extern cvar_t gl_brush_polygonoffset;
+
+		float factor = (mode == r_polygonoffset_standard ? 0.05 : 1);
+		float units = (mode == r_polygonoffset_standard ? bound(0, gl_brush_polygonoffset.value, 25.0) : 1);
+		qbool enabled = (mode == r_polygonoffset_standard || mode == r_polygonoffset_outlines) && units > 0;
+
+		if (enabled) {
+			if (!current->polygonOffset.fillEnabled) {
+				glEnable(GL_POLYGON_OFFSET_FILL);
+				R_TraceLogAPICall("glEnable(GL_POLYGON_OFFSET_FILL)");
+				current->polygonOffset.fillEnabled = true;
+			}
+			if (!current->polygonOffset.lineEnabled) {
+				glEnable(GL_POLYGON_OFFSET_LINE);
+				R_TraceLogAPICall("glEnable(GL_POLYGON_OFFSET_LINE)");
+				current->polygonOffset.lineEnabled = true;
+			}
+
+			if (current->polygonOffset.factor != factor || current->polygonOffset.units != units) {
+				glPolygonOffset(factor, units);
+				R_TraceLogAPICall("glPolygonOffset(factor %f, units %f)", factor, units);
+
+				current->polygonOffset.factor = factor;
+				current->polygonOffset.units = units;
+			}
+		}
+		else {
+			if (current->polygonOffset.fillEnabled) {
+				glDisable(GL_POLYGON_OFFSET_FILL);
+				R_TraceLogAPICall("glDisable(GL_POLYGON_OFFSET_FILL)");
+				current->polygonOffset.fillEnabled = false;
+			}
+			if (current->polygonOffset.lineEnabled) {
+				glDisable(GL_POLYGON_OFFSET_LINE);
+				R_TraceLogAPICall("glDisable(GL_POLYGON_OFFSET_LINE)");
+				current->polygonOffset.lineEnabled = false;
+			}
+		}
+		current->polygonOffset.option = mode;
 	}
 }
 
