@@ -33,30 +33,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static void Update_TeamInfo(void);
 mpic_t* SCR_GetWeaponIconByFlag(int flag);
 
-cvar_t scr_shownick_order           = { "scr_shownick_order", "%p%n %a/%H %w" };
-cvar_t scr_shownick_frame_color     = { "scr_shownick_frame_color", "10 0 0 120", CVAR_COLOR };
-cvar_t scr_shownick_scale           = { "scr_shownick_scale",		"1" };
-cvar_t scr_shownick_y               = { "scr_shownick_y",			"0" };
-cvar_t scr_shownick_x               = { "scr_shownick_x",			"0" };
-cvar_t scr_shownick_name_width      = { "scr_shownick_name_width",	"6" };
-cvar_t scr_shownick_time            = { "scr_shownick_time",		"0.8" };
+static cvar_t scr_shownick_order           = { "scr_shownick_order", "%p%n %a/%H %w" };
+static cvar_t scr_shownick_frame_color     = { "scr_shownick_frame_color", "10 0 0 120", CVAR_COLOR };
+static cvar_t scr_shownick_scale           = { "scr_shownick_scale",		"1" };
+static cvar_t scr_shownick_y               = { "scr_shownick_y",			"0" };
+static cvar_t scr_shownick_x               = { "scr_shownick_x",			"0" };
+static cvar_t scr_shownick_name_width      = { "scr_shownick_name_width",	"6" };
+static cvar_t scr_shownick_time            = { "scr_shownick_time",		"0.8" };
+static cvar_t scr_shownick_proportional    = { "scr_shownick_proportional", "0" };
 
-cvar_t scr_teaminfo_order           = { "scr_teaminfo_order", "%p%n $x10%l$x11 %a/%H %w", CVAR_NONE };
-cvar_t scr_teaminfo_align_right     = { "scr_teaminfo_align_right", "1" };
-cvar_t scr_teaminfo_frame_color     = { "scr_teaminfo_frame_color", "10 0 0 120", CVAR_COLOR };
-cvar_t scr_teaminfo_scale           = { "scr_teaminfo_scale",       "1" };
-cvar_t scr_teaminfo_y               = { "scr_teaminfo_y",           "0" };
-cvar_t scr_teaminfo_x               = { "scr_teaminfo_x",           "0" };
-cvar_t scr_teaminfo_loc_width       = { "scr_teaminfo_loc_width",   "5" };
-cvar_t scr_teaminfo_name_width      = { "scr_teaminfo_name_width",  "6" };
-cvar_t scr_teaminfo_low_health      = { "scr_teaminfo_low_health",  "25" };
-cvar_t scr_teaminfo_armor_style     = { "scr_teaminfo_armor_style", "3" };
-cvar_t scr_teaminfo_powerup_style   = { "scr_teaminfo_powerup_style", "1" };
-cvar_t scr_teaminfo_weapon_style    = { "scr_teaminfo_weapon_style","1" };
-cvar_t scr_teaminfo_show_enemies    = { "scr_teaminfo_show_enemies","0" };
-cvar_t scr_teaminfo_show_self       = { "scr_teaminfo_show_self",   "2" };
-cvar_t scr_teaminfo_proportional    = { "scr_teaminfo_proportional", "0"};
-cvar_t scr_teaminfo                 = { "scr_teaminfo",             "1" };
+static cvar_t scr_teaminfo_order           = { "scr_teaminfo_order", "%p%n $x10%l$x11 %a/%H %w", CVAR_NONE };
+static cvar_t scr_teaminfo_align_right     = { "scr_teaminfo_align_right", "1" };
+static cvar_t scr_teaminfo_frame_color     = { "scr_teaminfo_frame_color", "10 0 0 120", CVAR_COLOR };
+static cvar_t scr_teaminfo_scale           = { "scr_teaminfo_scale",       "1" };
+static cvar_t scr_teaminfo_y               = { "scr_teaminfo_y",           "0" };
+static cvar_t scr_teaminfo_x               = { "scr_teaminfo_x",           "0" };
+static cvar_t scr_teaminfo_loc_width       = { "scr_teaminfo_loc_width",   "5" };
+static cvar_t scr_teaminfo_name_width      = { "scr_teaminfo_name_width",  "6" };
+static cvar_t scr_teaminfo_low_health      = { "scr_teaminfo_low_health",  "25" };
+static cvar_t scr_teaminfo_armor_style     = { "scr_teaminfo_armor_style", "3" };
+static cvar_t scr_teaminfo_powerup_style   = { "scr_teaminfo_powerup_style", "1" };
+static cvar_t scr_teaminfo_weapon_style    = { "scr_teaminfo_weapon_style","1" };
+static cvar_t scr_teaminfo_show_enemies    = { "scr_teaminfo_show_enemies","0" };
+static cvar_t scr_teaminfo_show_self       = { "scr_teaminfo_show_self",   "2" };
+static cvar_t scr_teaminfo_proportional    = { "scr_teaminfo_proportional", "0"};
+cvar_t scr_teaminfo                        = { "scr_teaminfo",             "1" };   // non-static for menu
 
 static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int maxname, int maxloc, qbool width_only, float scale, const char* layout, int weapon_style, int armor_style, int powerup_style, int low_health, qbool proportional);
 
@@ -631,6 +632,7 @@ void TeamInfo_HudInit(void)
 	Cvar_Register(&scr_shownick_x);
 	Cvar_Register(&scr_shownick_name_width);
 	Cvar_Register(&scr_shownick_time);
+	Cvar_Register(&scr_shownick_proportional);
 
 	Cvar_Register(&scr_teaminfo_order);
 	Cvar_Register(&scr_teaminfo_align_right);
@@ -747,8 +749,7 @@ void SCR_Draw_ShowNick(void)
 	y = vid.height * 0.6 + scr_shownick_y.value;
 
 	// this does't draw anything, just calculate width
-	//w = SCR_Draw_TeamInfoPlayer(&shownick, 0, 0, maxname, maxloc, true, scr_shownick_order.string);
-	w = SCR_HudDrawTeamInfoPlayer(&shownick, 0, 0, maxname, maxloc, true, scale, scr_teaminfo_order.string, scr_teaminfo_weapon_style.integer, scr_teaminfo_armor_style.integer, scr_teaminfo_powerup_style.integer, scr_teaminfo_low_health.integer, scr_teaminfo_proportional.integer);
+	w = SCR_HudDrawTeamInfoPlayer(&shownick, 0, 0, maxname, maxloc, true, scale, scr_shownick_order.string, scr_teaminfo_weapon_style.integer, scr_teaminfo_armor_style.integer, scr_teaminfo_powerup_style.integer, scr_teaminfo_low_health.integer, scr_shownick_proportional.integer);
 	h = FONTWIDTH * scale;
 
 	x = (scr_shownick_align_right ? (vid.width - w) - FONTWIDTH : FONTWIDTH);
@@ -760,5 +761,5 @@ void SCR_Draw_ShowNick(void)
 	Draw_AlphaRectangleRGB(x, y, w, h, 0, true, RGBAVECT_TO_COLOR(col));
 
 	// draw shownick
-	SCR_HudDrawTeamInfoPlayer(&shownick, x, y, maxname, maxloc, false, scale, scr_teaminfo_order.string, scr_teaminfo_weapon_style.integer, scr_teaminfo_armor_style.integer, scr_teaminfo_powerup_style.integer, scr_teaminfo_low_health.integer, scr_teaminfo_proportional.integer);
+	SCR_HudDrawTeamInfoPlayer(&shownick, x, y, maxname, maxloc, false, scale, scr_shownick_order.string, scr_teaminfo_weapon_style.integer, scr_teaminfo_armor_style.integer, scr_teaminfo_powerup_style.integer, scr_teaminfo_low_health.integer, scr_shownick_proportional.integer);
 }
