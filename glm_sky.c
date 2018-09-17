@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "gl_texture_internal.h"
 #include "r_renderer.h"
+#include "tr_types.h"
 
 texture_ref skybox_cubeMap;
 
@@ -36,7 +37,7 @@ void GLM_DrawSky(void)
 
 static void GLM_CopySkyboxTexturesToCubeMap(texture_ref cubemap, int width, int height)
 {
-	static int skytexorder[MAX_SKYBOXTEXTURES] = {0,2,1,3,4,5};
+	static int skytexorder[MAX_SKYBOXTEXTURES] = { 3, 1, 4, 5, 0, 2 };  // converts from opengl to [{ "rt", "bk", "lf", "ft", "up", "dn" }]
 	int i;
 	GLbyte* data;
 
@@ -87,7 +88,9 @@ qbool GLM_LoadSkyboxTextures(const char* skyname)
 
 	GLM_CopySkyboxTexturesToCubeMap(skybox_cubeMap, widths[0], heights[0]);
 
-	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+	if (GL_Supported(R_SUPPORT_SEAMLESS_CUBEMAPS)) {
+		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+	}
 
 	return true;
 }

@@ -58,6 +58,7 @@ typedef enum {
 #define R_SUPPORT_FRAMEBUFFERS_BLIT   (1 << 10)     // blit from one framebuffer to another
 #define R_SUPPORT_BGRA_LIGHTMAPS      (1 << 11)     // BGRA lightmaps (if optimal format)
 #define R_SUPPORT_INT8888R_LIGHTMAPS  (1 << 12)     // Lightmaps uploaded as UINT8888R rather than UNSIGNED_BYTE
+#define R_SUPPORT_SEAMLESS_CUBEMAPS   (1 << 13)     // filtering works across faces of the cubemap
 
 #define R_SUPPORT_FEATURE_HW_LIGHTING (R_SUPPORT_TEXTURE_ARRAYS | R_SUPPORT_COMPUTE_SHADERS | R_SUPPORT_IMAGE_PROCESSING)
 

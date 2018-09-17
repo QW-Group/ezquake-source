@@ -50,7 +50,10 @@ void main()
 	if (lightmapNumber < 0) {
 		TextureCoord = vec3(tex, materialArrayIndex);
 		TexCoordLightmap = vec3(0, 0, 0);
-		Direction = position - cameraPosition;
+		Direction = (position - cameraPosition);
+#if defined(DRAW_SKYBOX)
+		Direction = Direction.xzy;
+#endif
 #ifdef DRAW_DETAIL_TEXTURES
 		DetailCoord = vec2(0, 0);
 #endif

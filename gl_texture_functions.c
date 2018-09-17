@@ -161,6 +161,10 @@ void GL_LoadTextureManagementFunctions(void)
 	if (GL_VersionAtLeast(4, 5)) {
 		GL_LoadOptionalFunction(glGetnTexImage);
 	}
+
+	if (GL_VersionAtLeast(3, 2) || SDL_GL_ExtensionSupported("GL_ARB_seamless_cube_map")) {
+		glConfig.supported_features |= R_SUPPORT_SEAMLESS_CUBEMAPS;
+	}
 }
 
 void GL_TexSubImage3D(
