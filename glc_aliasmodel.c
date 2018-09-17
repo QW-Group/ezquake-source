@@ -167,15 +167,21 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_
 
 	// VULT VERTEX LIGHTING
 	if (amf_lighting_vertex.integer && !ent->full_light) {
-		int i;
 		vec3_t lc;
 
 		l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, ent->angles[0], ent->angles[1]);
+		l *= (ent->shadelight + ent->ambientlight) / 256.0;
 		l = min(l, 1);
 
-		for (i = 0; i < 3; i++) {
-			lc[i] = ent->lightcolor[i] / 255 + l;
-			lc[i] = min(lc[i], 1);
+		if (amf_lighting_colour.integer) {
+			int i;
+			for (i = 0; i < 3; i++) {
+				lc[i] = l * ent->lightcolor[i] / 255;
+				lc[i] = min(lc[i], 1);
+			}
+		}
+		else {
+			VectorSet(lc, l, l, l);
 		}
 
 		if (ent->r_modelcolor[0] < 0) {

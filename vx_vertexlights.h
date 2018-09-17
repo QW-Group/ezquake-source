@@ -15,10 +15,6 @@ See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-extern byte anorm_pitch[162];
-extern byte anorm_yaw[162];
-
-extern byte vlighttable[256][256];
 
 float VLight_LerpLight(int index1, int index2, float ilerp, float apitch, float ayaw);
 

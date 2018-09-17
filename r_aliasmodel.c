@@ -81,8 +81,6 @@ static void* Mod_LoadAliasFrame(void* pin, maliasframedesc_t *frame, int* posenu
 static void* Mod_LoadAliasGroup(void* pin, maliasframedesc_t *frame, int* posenum);
 void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t *pskintype);
 
-static vec3_t    dlight_color;
-
 static cvar_t    r_lerpmuzzlehack = { "r_lerpmuzzlehack", "1" };
 static cvar_t    gl_shaftlight = { "gl_shaftlight", "1" };
 cvar_t    gl_powerupshells_effect1level = { "gl_powerupshells_effect1level", "0.75" };
@@ -98,8 +96,6 @@ extern float     bubblecolor[NUM_DLIGHTTYPES][4];
 extern cvar_t    r_lerpframes;
 extern cvar_t    gl_outline;
 extern cvar_t    gl_outline_width;
-
-void R_AliasSetupLighting(entity_t *ent);
 
 static custom_model_color_t custom_model_colors[] = {
 	// LG beam
@@ -437,7 +433,7 @@ static void R_AliasModelColoredLighting(entity_t* ent)
 {
 	int i, j, k, lnum;
 	vec3_t dist;
-	float add;
+	float add, added = 0;
 
 	/* FIXME: dimman... cache opt from fod */
 	//VULT COLOURED MODEL LIGHTS
@@ -455,9 +451,12 @@ static void R_AliasModelColoredLighting(entity_t* ent)
 				add = cl_dlights[lnum].radius - VectorLength(dist);
 
 				if (add > 0) {
+					vec3_t dlight_color;
+
 					if (amf_lighting_vertex.integer && (ent->bestlight < 0 || cl_dlights[lnum].radius > cl_dlights[ent->bestlight].radius)) {
 						ent->bestlight = lnum;
 					}
+					added += add;
 
 					if (cl_dlights[lnum].type == lt_custom) {
 						VectorCopy(cl_dlights[lnum].color, dlight_color);
@@ -475,6 +474,7 @@ static void R_AliasModelColoredLighting(entity_t* ent)
 		}
 	}
 
+	ent->ambientlight += added;
 	R_AliasModelScaleLight(ent);
 }
 
@@ -482,7 +482,7 @@ static void R_AliasModelStandardLighting(entity_t* ent)
 {
 	int i, j, lnum;
 	vec3_t dist;
-	float add;
+	float add, added = 0;
 
 	/* FIXME: dimman... cache opt from fod */
 	ent->bestlight = -1;
@@ -499,13 +499,17 @@ static void R_AliasModelStandardLighting(entity_t* ent)
 						if (amf_lighting_vertex.integer && (ent->bestlight < 0 || cl_dlights[lnum].radius > cl_dlights[ent->bestlight].radius)) {
 							ent->bestlight = lnum;
 						}
-
-						ent->ambientlight += add;
+						added += add;
 					}
 				}
 			}
 		}
 	}
+
+	ent->ambientlight += added;
+	ent->lightcolor[0] += added;
+	ent->lightcolor[1] += added;
+	ent->lightcolor[2] += added;
 }
 
 void R_AliasSetupLighting(entity_t *ent)
@@ -513,9 +517,12 @@ void R_AliasSetupLighting(entity_t *ent)
 	float fbskins;
 	unsigned int i;
 	model_t* clmodel = ent->model;
+	qbool player_model = (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL);
+	qbool calculate_lighting = true;
 
 	//VULT COLOURED MODEL LIGHTING
 	ent->custom_model = NULL;
+	ent->ambientlight = ent->shadelight = 0;
 	for (i = 0; i < sizeof(custom_model_colors) / sizeof(custom_model_colors[0]); ++i) {
 		custom_model_color_t* test = &custom_model_colors[i];
 		if (test->model_hint == clmodel->modhint) {
@@ -549,32 +556,26 @@ void R_AliasSetupLighting(entity_t *ent)
 
 	//normal lighting
 	ent->full_light = false;
-
-	if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
+	if (player_model) {
 		fbskins = bound(0, r_fullbrightSkins.value, r_refdef2.max_fbskins);
-		if (fbskins == 1 && gl_fb_models.integer == 1) {
+		if (fbskins >= 1 && gl_fb_models.integer == 1) {
 			ent->ambientlight = ent->shadelight = 4096;
 			ent->full_light = true;
+			calculate_lighting = false;
 		}
-		else if (fbskins == 0) {
-			ent->ambientlight = max(ent->ambientlight, 8);
-			ent->shadelight = max(ent->shadelight, 8);
-			ent->full_light = false;
-		}
-		else if (fbskins) {
+		else {
 			ent->ambientlight = max(ent->ambientlight, 8 + fbskins * 120);
 			ent->shadelight = max(ent->shadelight, 8 + fbskins * 120);
-			ent->full_light = true;
+			ent->full_light = fbskins > 0;
+			calculate_lighting = true;
 		}
 	}
 	else if (Rulesets_FullbrightModel(clmodel, IsLocalSinglePlayerGame())) {
 		ent->ambientlight = ent->shadelight = 4096;
-		if (r_shadows.integer) {
-			// still need lightpoint...
-			R_LightEntity(ent);
-		}
+		calculate_lighting = (r_shadows.integer);
 	}
-	else {
+
+	if (calculate_lighting) {
 		R_LightEntity(ent);
 
 		if (amf_lighting_colour.integer) {
@@ -605,15 +606,6 @@ void R_AliasSetupLighting(entity_t *ent)
 
 	if (ent->ambientlight < cl.minlight) {
 		ent->ambientlight = ent->shadelight = cl.minlight;
-	}
-
-	if (!amf_lighting_colour.integer) {
-		if (ent->full_light) {
-			VectorSet(ent->lightcolor, 255, 255, 255);
-		}
-		else {
-			ent->lightcolor[0] = ent->lightcolor[1] = ent->lightcolor[2] = ent->ambientlight + ent->shadelight;
-		}
 	}
 }
 
