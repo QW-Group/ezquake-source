@@ -381,7 +381,9 @@ void CL_SetupPacketEntity (int number, entity_state_t *state, qbool changed) {
 		cent->frametime = -1;
 		cent->oldsequence = 0;
 		cent->flags = 0;
- 	} else {
+		cent->trailnumber = (cent->trailnumber + 1) % 1000;
+	}
+	else {
 		cent->oldsequence = cent->sequence;
 		
 		if (state->frame != cent->current.frame) {
@@ -1118,7 +1120,7 @@ void CL_LinkPacketEntities(void)
 			{
 				old_origin = &ent.origin;	// Not present last frame or too far away
 				cent->flags |= CENT_TRAILDRAWN;
-			} 
+			}
 			else
 			{
 				old_origin = &cent->trail_origin;
@@ -2464,15 +2466,13 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 		else if (model->modhint == MOD_SPIKE && amf_nailtrail.value && !gl_no24bit.integer)
 		{
 			// VULT NAILTRAIL
-			if (amf_nailtrail_plasma.value)
-			{
+			if (amf_nailtrail_plasma.value) {
 				byte color[3];
 				color[0] = 0; color[1] = 70; color[2] = 255;
 				FireballTrail(*old_origin, ent->origin, &cent->trail_origin, color, 0.6, 0.3);
 			}
-			else
-			{
-				ParticleAlphaTrail(*old_origin, ent->origin, &cent->trail_origin, 2, 0.4);
+			else {
+				ParticleNailTrail(*old_origin, ent->origin, cent, 2, 0.4f);
 			}
 		}
 		else if (model->modhint == MOD_TF_TRAIL && amf_extratrails.value)

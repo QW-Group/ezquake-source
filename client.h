@@ -208,6 +208,9 @@ typedef struct
 
 	int				old_vw_index;	// player entities only
 	int				old_vw_frame;	// player entities only
+
+	double          particle_time;
+	int             trailnumber;
 } centity_t;
 
 #define CENT_TRAILDRAWN		1

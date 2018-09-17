@@ -202,6 +202,7 @@ static void QMB_AddParticleType(part_type_t id, part_draw_t drawtype, int blendt
 	type->custom = custom;
 	type->verts_per_primitive = verts_per_primitive;
 	type->billboard_type = SPRITE3D_PARTICLES_NEW_p_spark + id;
+	assert(type->billboard_type < SPRITE3D_PARTICLES_NEW_LIMIT);
 	particle_type_index[id] = *count;
 	*count = *count + 1;
 }
@@ -425,6 +426,10 @@ void QMB_InitParticles(void)
 	else {
 		QMB_AddParticleType(p_streaktrail, pd_beam, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 128, 0, 0, pm_die, 0, 4, &count, "part:streaktrail");
 	}
+
+	// meag: new, 'simple' trails following entities, updated as entity moves
+	QMB_AddParticleType(p_entitytrail, pd_boxcone, BLEND_GL_SRC_ALPHA_GL_ONE_MINUS_SRC_ALPHA, ptex_none, R_SIMPLETRAIL_NEAR_ALPHA, 0, 0, pm_static, 0, 8, &count, "part:entitytrail");
+
 	QMB_SortParticleTypes();
 
 	qmb_initialized = true;
@@ -743,6 +748,52 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 			}
 			break;
+		case pd_boxcone:
+			{
+				particle_texture_t* ptex = &particle_textures[pt->texture];
+
+				for (p = pt->start; p; p = p->next) {
+					r_sprite3d_vert_t* vert;
+
+					if (particle_time < p->start || particle_time >= p->die) {
+						continue;
+					}
+
+					if (first) {
+						R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
+						first = false;
+					}
+
+					vert = R_Sprite3DAddEntry(pt->billboard_type, pt->verts_per_primitive);
+					if (vert) {
+						vec3_t points[6];
+						col_t near_color;
+						
+						VectorCopy(p->color, near_color);
+						near_color[3] = R_SIMPLETRAIL_NEAR_ALPHA;
+
+						VectorMA(p->endorg, -1, vup, points[0]);
+						VectorMA(points[0], -2, vright, points[2]);
+						VectorMA(points[0], 2, vright, points[0]);
+						VectorMA(p->endorg, 2, vup, points[1]);
+
+						VectorMA(p->org, -0.5, vup, points[3]);
+						VectorMA(points[0], -1, vright, points[5]);
+						VectorMA(points[3], -1, vright, points[3]);
+						VectorMA(p->org, 1, vup, points[4]);
+
+						QMB_BillboardAddVert(vert++, pt, points[0][0], points[0][1], points[0][2], 0, 0, near_color, -1);
+						QMB_BillboardAddVert(vert++, pt, points[3][0], points[3][1], points[3][2], 0, 0, p->color, -1);
+						QMB_BillboardAddVert(vert++, pt, points[1][0], points[1][1], points[1][2], 0, 0, near_color, -1);
+						QMB_BillboardAddVert(vert++, pt, points[4][0], points[4][1], points[4][2], 0, 0, p->color, -1);
+						QMB_BillboardAddVert(vert++, pt, points[2][0], points[2][1], points[2][2], 0, 0, near_color, -1);
+						QMB_BillboardAddVert(vert++, pt, points[5][0], points[5][1], points[5][2], 0, 0, p->color, -1);
+						QMB_BillboardAddVert(vert++, pt, points[0][0], points[0][1], points[0][2], 0, 0, near_color, -1);
+						QMB_BillboardAddVert(vert++, pt, points[3][0], points[3][1], points[3][2], 0, 0, p->color, -1);
+					}
+				}
+			}
+			break;
 		default:
 			assert(!"QMB_DrawParticles: unexpected drawtype");
 			break;
@@ -776,6 +827,32 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 
 	if (pt->move == pm_static) {
 		// velocity isn't used, accel etc is irrelevant...
+		if (p->entity_ref) {
+			centity_t* cent = &cl_entities[p->entity_ref];
+
+			if (cent->trailnumber == p->entity_trailnumber && cent->sequence == cl.validsequence) {
+				// update based on entity
+				float length;
+				vec3_t diff;
+
+				VectorCopy(cl_entities[p->entity_ref].lerp_origin, p->endorg);
+				VectorSubtract(p->org, p->endorg, diff);
+				length = VectorLength(diff);
+				if (length > R_SIMPLETRAIL_MAXLENGTH) {
+					VectorMA(p->endorg, R_SIMPLETRAIL_MAXLENGTH / length, diff, p->org);
+				}
+				p->die = particle_time + 0.2f;
+				cent->particle_time = particle_time;
+			}
+			else {
+				// disconnect, let it die out
+				p->entity_ref = p->entity_trailnumber = 0;
+
+				// length should be reducing as it dies
+				//p->size = p->;
+				//VectorMA(p->endorg, p->size, diff, p->org);
+			}
+		}
 		return;
 	}
 

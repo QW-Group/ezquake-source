@@ -44,6 +44,7 @@ typedef enum {
 	p_slimeglow, //slime glow
 	p_slimebubble, //slime yellowish growing popping bubble
 	p_blacklavasmoke,
+	p_entitytrail,
 	num_particletypes,
 } part_type_t;
 
@@ -71,6 +72,7 @@ typedef enum {
 	pd_beam,
 	pd_hide,
 	pd_normal,
+	pd_boxcone
 } part_draw_t;
 
 typedef enum {
@@ -102,6 +104,9 @@ typedef struct particle_s {
 	int         cached_contents;
 	vec3_t      cached_movement;
 	float       cached_distance;
+
+	int         entity_ref;
+	int         entity_trailnumber;
 } particle_t;
 
 typedef struct particle_type_s {
@@ -147,5 +152,8 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p);
 qbool TraceLineN(vec3_t start, vec3_t end, vec3_t impact, vec3_t normal);
 extern particle_t* free_particles;
 void ParticleStats(int change);
+
+#define R_SIMPLETRAIL_MAXLENGTH    100
+#define R_SIMPLETRAIL_NEAR_ALPHA    75
 
 #endif // def(EZQUAKE_GL_RPART_HEADER)

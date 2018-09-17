@@ -53,6 +53,7 @@ typedef enum {
 	SPRITE3D_PARTICLES_NEW_p_slimeglow,
 	SPRITE3D_PARTICLES_NEW_p_slimebubble,
 	SPRITE3D_PARTICLES_NEW_p_blacklavasmoke,
+	SPRITE3D_PARTICLES_NEW_p_entitytrail,
 	SPRITE3D_FLASHBLEND_LIGHTS,
 	SPRITE3D_CORONATEX_STANDARD,
 	SPRITE3D_CORONATEX_GUNFLASH,
@@ -69,6 +70,9 @@ typedef enum {
 
 	MAX_SPRITE3D_BATCHES
 } sprite3d_batch_id;
+
+// Meag: use this as sanity check that any new particles have had batch created
+#define SPRITE3D_PARTICLES_NEW_LIMIT (SPRITE3D_FLASHBLEND_LIGHTS)
 
 typedef struct r_sprite3d_vert_s {
 	float position[3];

@@ -142,6 +142,7 @@ void SCR_DrawAMFstats(void);
 int ParticleCount, ParticleCountHigh, CoronaCount, CoronaCountHigh;
 
 void ParticleAlphaTrail(vec3_t start, vec3_t end, vec3_t *trail_origin, float size, float life);
+void ParticleNailTrail(vec3_t start, vec3_t end, centity_t* client_ent, float size, float life);
 
 typedef enum
 {

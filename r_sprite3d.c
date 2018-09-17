@@ -78,6 +78,7 @@ static const char* batch_type_names[] = {
 	"PARTICLES_NEW_p_slimeglow",
 	"PARTICLES_NEW_p_slimebubble",
 	"PARTICLES_NEW_p_blacklavasmoke",
+	"PARTICLES_NEW_p_entitytrail",
 	"FLASHBLEND_LIGHTS",
 	"CORONATEX_STANDARD",
 	"CORONATEX_GUNFLASH",
@@ -90,10 +91,12 @@ static const char* batch_type_names[] = {
 	"CORONATEX_EXPLOSIONFLASH7",
 	"CHATICON_AFK_CHAT",
 	"CHATICON_CHAT",
-	"CHATICON_AFK",
-
-	"MAX_BATCHES"
+	"CHATICON_AFK"
 };
+
+#ifdef C_ASSERT
+C_ASSERT(sizeof(batch_type_names) / sizeof(batch_type_names[0]) == MAX_SPRITE3D_BATCHES);
+#endif
 
 r_sprite3d_vert_t verts[MAX_VERTS_PER_SCENE];
 gl_sprite3d_batch_t batches[MAX_SPRITE3D_BATCHES];
