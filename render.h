@@ -81,7 +81,10 @@ typedef struct entity_s {
 	float     ambientlight;
 	custom_model_color_t* custom_model;
 	vec3_t    lightcolor; // LordHavoc: used by model rendering
+	vec3_t    lightspot;  // used for shadows
 
+	// vertex lighting only
+	int       bestlight;
 	int       entity_id;
 	int       corona_id;
 	double    particle_time;

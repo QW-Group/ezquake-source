@@ -131,8 +131,6 @@ static custom_model_color_t custom_model_colors[] = {
 	}
 };
 
-extern vec3_t lightspot;
-
 static qbool IsFlameModel(model_t* model)
 {
 	return model->modhint == MOD_FLAME || model->modhint == MOD_FLAME0 || model->modhint == MOD_FLAME3;
@@ -417,6 +415,23 @@ void R_SetupAliasFrame(
 	renderer.DrawAliasFrame(ent, model, oldpose, pose, texture, fb_texture, outline, effects, render_effects, lerp);
 }
 
+static void R_AliasModelScaleLight(entity_t* ent)
+{
+	float max_component;
+
+	max_component = max(ent->lightcolor[0], ent->lightcolor[1]);
+	max_component = max(max_component, ent->lightcolor[2]);
+
+	if (max_component >= 256) {
+		VectorScale(ent->lightcolor, 255 / max_component, ent->lightcolor);
+	}
+	else if (max_component < cl.minlight) {
+		ent->lightcolor[0] += cl.minlight;
+		ent->lightcolor[1] += cl.minlight;
+		ent->lightcolor[2] += cl.minlight;
+	}
+}
+
 static void R_AliasModelColoredLighting(entity_t* ent)
 {
 	int i, j, k, lnum;
@@ -425,6 +440,7 @@ static void R_AliasModelColoredLighting(entity_t* ent)
 
 	/* FIXME: dimman... cache opt from fod */
 	//VULT COLOURED MODEL LIGHTS
+	ent->bestlight = -1;
 	for (i = 0; i < MAX_DLIGHTS / 32; i++) {
 		if (!cl_dlight_active[i]) {
 			continue;
@@ -438,6 +454,10 @@ static void R_AliasModelColoredLighting(entity_t* ent)
 				add = cl_dlights[lnum].radius - VectorLength(dist);
 
 				if (add > 0) {
+					if (amf_lighting_vertex.integer && (ent->bestlight < 0 || cl_dlights[lnum].radius > cl_dlights[ent->bestlight].radius)) {
+						ent->bestlight = lnum;
+					}
+
 					if (cl_dlights[lnum].type == lt_custom) {
 						VectorCopy(cl_dlights[lnum].color, dlight_color);
 						VectorScale(dlight_color, (1.0 / 255), dlight_color); // convert color from byte to float
@@ -447,28 +467,14 @@ static void R_AliasModelColoredLighting(entity_t* ent)
 					}
 
 					for (k = 0; k < 3; k++) {
-						ent->lightcolor[k] = ent->lightcolor[k] + (dlight_color[k] * add) * 2;
-						if (ent->lightcolor[k] >= 256) {
-							switch (k) {
-								case 0:
-									ent->lightcolor[1] = ent->lightcolor[1] - (1 * ent->lightcolor[1] / 3);
-									ent->lightcolor[2] = ent->lightcolor[2] - (1 * ent->lightcolor[2] / 3);
-									break;
-								case 1:
-									ent->lightcolor[0] = ent->lightcolor[0] - (1 * ent->lightcolor[0] / 3);
-									ent->lightcolor[2] = ent->lightcolor[2] - (1 * ent->lightcolor[2] / 3);
-									break;
-								case 2:
-									ent->lightcolor[1] = ent->lightcolor[1] - (1 * ent->lightcolor[1] / 3);
-									ent->lightcolor[0] = ent->lightcolor[0] - (1 * ent->lightcolor[0] / 3);
-									break;
-							}
-						}
+						ent->lightcolor[k] += (dlight_color[k] * add) * 2;
 					}
 				}
 			}
 		}
 	}
+
+	R_AliasModelScaleLight(ent);
 }
 
 static void R_AliasModelStandardLighting(entity_t* ent)
@@ -478,7 +484,7 @@ static void R_AliasModelStandardLighting(entity_t* ent)
 	float add;
 
 	/* FIXME: dimman... cache opt from fod */
-	//VULT COLOURED MODEL LIGHTS
+	ent->bestlight = -1;
 	for (i = 0; i < MAX_DLIGHTS / 32; i++) {
 		if (cl_dlight_active[i]) {
 			for (j = 0; j < 32; j++) {
@@ -489,6 +495,10 @@ static void R_AliasModelStandardLighting(entity_t* ent)
 					add = cl_dlights[lnum].radius - VectorLength(dist);
 
 					if (add > 0) {
+						if (amf_lighting_vertex.integer && (ent->bestlight < 0 || cl_dlights[lnum].radius > cl_dlights[ent->bestlight].radius)) {
+							ent->bestlight = lnum;
+						}
+
 						ent->ambientlight += add;
 					}
 				}
@@ -594,6 +604,15 @@ void R_AliasSetupLighting(entity_t *ent)
 
 	if (ent->ambientlight < cl.minlight) {
 		ent->ambientlight = ent->shadelight = cl.minlight;
+	}
+
+	if (!amf_lighting_colour.integer) {
+		if (ent->full_light) {
+			VectorSet(ent->lightcolor, 255, 255, 255);
+		}
+		else {
+			ent->lightcolor[0] = ent->lightcolor[1] = ent->lightcolor[2] = ent->ambientlight + ent->shadelight;
+		}
 	}
 }
 

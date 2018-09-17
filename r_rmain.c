@@ -76,7 +76,6 @@ static void R_SetupGL(void);
 void GLM_RenderView(void);
 
 extern msurface_t *alphachain;
-extern vec3_t     lightspot;
 
 texture_t *r_notexture_mip = NULL;
 refdef2_t r_refdef2;                          // screen size info

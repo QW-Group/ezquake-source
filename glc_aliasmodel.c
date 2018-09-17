@@ -167,21 +167,15 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_
 
 	// VULT VERTEX LIGHTING
 	if (amf_lighting_vertex.integer && !ent->full_light) {
-		l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, ent->angles[0], ent->angles[1]);
-	}
-	else {
-		l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
-		l = (l * ent->shadelight + ent->ambientlight) / 256.0;
-	}
-	l = min(l, 1);
-
-	//VULT COLOURED MODEL LIGHTS
-	if (amf_lighting_colour.integer && !ent->full_light) {
 		int i;
 		vec3_t lc;
 
+		l = VLight_LerpLight(verts1->lightnormalindex, verts2->lightnormalindex, lerpfrac, ent->angles[0], ent->angles[1]);
+		l = min(l, 1);
+
 		for (i = 0; i < 3; i++) {
-			lc[i] = ent->lightcolor[i] / 256 + l;
+			lc[i] = ent->lightcolor[i] / 255 + l;
+			lc[i] = min(lc[i], 1);
 		}
 
 		if (ent->r_modelcolor[0] < 0) {
@@ -194,20 +188,26 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_
 			color[2] = ent->r_modelcolor[2] * lc[2];
 		}
 	}
-	else if (ent->custom_model == NULL) {
-		if (ent->r_modelcolor[0] < 0) {
-			color[0] = color[1] = color[2] = l;
+	else {
+		l = FloatInterpolate(shadedots[verts1->lightnormalindex], lerpfrac, shadedots[verts2->lightnormalindex]) / 127.0;
+		l = (l * ent->shadelight + ent->ambientlight) / 256.0;
+		l = min(l, 1);
+
+		if (ent->custom_model == NULL) {
+			if (ent->r_modelcolor[0] < 0) {
+				color[0] = color[1] = color[2] = l;
+			}
+			else {
+				color[0] = ent->r_modelcolor[0] * l;
+				color[1] = ent->r_modelcolor[1] * l;
+				color[2] = ent->r_modelcolor[2] * l;
+			}
 		}
 		else {
-			color[0] = ent->r_modelcolor[0] * l;
-			color[1] = ent->r_modelcolor[1] * l;
-			color[2] = ent->r_modelcolor[2] * l;
+			color[0] = ent->custom_model->color_cvar.color[0] / 255.0f;
+			color[1] = ent->custom_model->color_cvar.color[1] / 255.0f;
+			color[2] = ent->custom_model->color_cvar.color[2] / 255.0f;
 		}
-	}
-	else {
-		color[0] = ent->custom_model->color_cvar.color[0] / 255.0f;
-		color[1] = ent->custom_model->color_cvar.color[1] / 255.0f;
-		color[2] = ent->custom_model->color_cvar.color[2] / 255.0f;
 	}
 
 	color[0] *= ent->r_modelalpha;
@@ -267,36 +267,32 @@ static void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int
 			float t = ((float *)order)[1];
 			order += 2;
 
-			// texture coordinates come from the draw list
-			if (cache) {
-				temp_aliasmodel_buffer[position].texture_coords[0] = s;
-				temp_aliasmodel_buffer[position].texture_coords[1] = t;
-			}
-			else if (mtex) {
-				qglMultiTexCoord2f(GL_TEXTURE0, s, t);
-				qglMultiTexCoord2f(GL_TEXTURE1, s, t);
-			}
-			else {
-				glTexCoord2f(s, t);
-			}
-
 			if ((ent->renderfx & RF_LIMITLERP)) {
 				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
 			}
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 
 			GLC_AliasModelLightPoint(color, ent, verts1, verts2, lerpfrac);
-
 			if (cache) {
-				VectorCopy(interpolated_verts, temp_aliasmodel_buffer[position].position);
+				temp_aliasmodel_buffer[position].texture_coords[0] = s;
+				temp_aliasmodel_buffer[position].texture_coords[1] = t;
 				temp_aliasmodel_buffer[position].color[0] = color[0] * 255;
 				temp_aliasmodel_buffer[position].color[1] = color[1] * 255;
 				temp_aliasmodel_buffer[position].color[2] = color[2] * 255;
 				temp_aliasmodel_buffer[position].color[3] = color[3] * 255;
+				VectorCopy(interpolated_verts, temp_aliasmodel_buffer[position].position);
 
 				++position;
 			}
 			else {
+				// texture coordinates come from the draw list
+				if (mtex) {
+					qglMultiTexCoord2f(GL_TEXTURE0, s, t);
+					qglMultiTexCoord2f(GL_TEXTURE1, s, t);
+				}
+				else {
+					glTexCoord2f(s, t);
+				}
 				R_CustomColor(color[0], color[1], color[2], color[3]);
 				GLC_Vertex3fv(interpolated_verts);
 			}
@@ -551,10 +547,9 @@ void GLC_DrawAliasModelShadow(entity_t* ent)
 
 static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector)
 {
-	extern vec3_t lightspot;
 	int *order, count;
 	vec3_t point;
-	float lheight = ent->origin[2] - lightspot[2], height = 1 - lheight;
+	float lheight = ent->origin[2] - ent->lightspot[2], height = 1 - lheight;
 	ez_trivertx_t *verts;
 
 	verts = (ez_trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);

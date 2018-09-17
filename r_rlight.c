@@ -303,10 +303,10 @@ LIGHT SAMPLING
 */
 
 mplane_t		*lightplane;
-vec3_t			lightspot;
+
 // LordHavoc: .lit support begin
 // LordHavoc: original code replaced entirely
-int RecursiveLightPoint(vec3_t color, mnode_t *node, const vec3_t start, const vec3_t end)
+int RecursiveLightPoint(vec3_t color, mnode_t *node, const vec3_t start, const vec3_t end, vec3_t lightspot)
 {
 	float		front, back, frac;
 	vec3_t		mid;
@@ -341,10 +341,10 @@ loc0:
 	mid[2] = start[2] + (end[2] - start[2])*frac;
 	
 // go down front side
-	if (RecursiveLightPoint (color, node->children[front < 0], start, mid))
+	if (RecursiveLightPoint(color, node->children[front < 0], start, mid, lightspot)) {
 		return true;	// hit something
-	else
-	{
+	}
+	else {
 		int i, ds, dt;
 		msurface_t *surf;
 	// check for impact on this node
@@ -397,7 +397,7 @@ loc0:
 		}
 
 	// go down back side
-		return RecursiveLightPoint (color, node->children[front >= 0], mid, end);
+		return RecursiveLightPoint(color, node->children[front >= 0], mid, end, lightspot);
 	}
 }
 
@@ -410,6 +410,7 @@ void R_LightEntity(entity_t* ent)
 	full_light = (R_FullBrightAllowed() || !cl.worldmodel->lightdata);
 	if (full_light && !r_shadows.value) {
 		ent->lightcolor[0] = ent->lightcolor[1] = ent->lightcolor[2] = 255;
+		VectorCopy(ent->origin, ent->lightspot);
 		ent->ambientlight = ent->shadelight = 255;
 	}
 	else {
@@ -417,10 +418,10 @@ void R_LightEntity(entity_t* ent)
 		end[1] = ent->origin[1];
 		end[2] = ent->origin[2] - 8192;
 
-		ent->lightcolor[0] = ent->lightcolor[1] = ent->lightcolor[2] = 0;
-		RecursiveLightPoint(ent->lightcolor, cl.worldmodel->nodes, ent->origin, end);
-		if (!full_light) {
-			ent->lightcolor[0] = ent->lightcolor[1] = ent->lightcolor[2] = 255;
+		VectorClear(ent->lightcolor);
+		RecursiveLightPoint(ent->lightcolor, cl.worldmodel->nodes, ent->origin, end, ent->lightspot);
+		if (full_light) {
+			VectorSet(ent->lightcolor, 255, 255, 255);
 			ent->ambientlight = ent->shadelight = 255;
 		}
 		else {

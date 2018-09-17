@@ -45,32 +45,50 @@ byte vlighttable[256][256];
 
 static float VLight_GetLightValue(int index, float apitch, float ayaw)
 {
-	int pitchofs, yawofs;
-	float retval;
+	float pitchofs, yawofs;
+	int pitch, yaw;
+	float retval[4];
+	float weight[2], diff[2];
 
 	pitchofs = anorm_pitch[index] + (apitch * 256 / 360);
 	yawofs = anorm_yaw[index] + (ayaw * 256 / 360);
 
-	pitchofs = fmodf(fabsf(pitchofs), 256);
-	yawofs = fmodf(fabsf(yawofs), 256);
+	pitchofs = fabsf(pitchofs);
+	yawofs = fabsf(yawofs);
 
-	retval = vlighttable[(unsigned int)pitchofs][(unsigned int)yawofs];
+	pitch = (unsigned int)pitchofs;
+	yaw = (unsigned int)yawofs;
 
-	return retval / 256;
+	weight[0] = pitchofs - pitch;
+	weight[1] = yawofs - yaw;
+
+	retval[0] = vlighttable[pitch % 256][yaw % 256];
+	retval[1] = vlighttable[(pitch + 1) % 256][yaw % 256];
+	retval[2] = vlighttable[pitch % 256][(yaw + 1) % 256];
+	retval[3] = vlighttable[(pitch + 1) % 256][(yaw + 1) % 256];
+
+	diff[0] = retval[0] + (retval[1] - retval[0]) * weight[0];
+	diff[1] = retval[2] + (retval[3] - retval[2]) * weight[0];
+
+	retval[0] = (diff[0] + (diff[1] - diff[0]) * weight[1]) / 255.0f;
+	retval[0] = max(retval[0], cl.minlight);
+	return bound(0, retval[0], 1);
 }
 
 float VLight_LerpLight(int index1, int index2, float ilerp, float apitch, float ayaw)
 {
-	float lightval1;
-	float lightval2;
+	float lightval1, lightval2;
 
 	lightval1 = VLight_GetLightValue(index1, apitch, ayaw);
-	lightval2 = VLight_GetLightValue(index2, apitch, ayaw);
+	if (index1 == index2) {
+		return lightval1;
+	}
 
+	lightval2 = VLight_GetLightValue(index2, apitch, ayaw);
 	return (lightval2 * ilerp) + (lightval1 * (1 - ilerp));
 }
 
-void VLight_ResetAnormTable(void)
+static void VLight_ResetAnormTable(void)
 {
 	int i,j;
 	vec3_t tempanorms[162] = {
