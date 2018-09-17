@@ -309,7 +309,7 @@ float Draw_MultiplyOverallAlpha(float alpha)
 	return old;
 }
 
-void Draw_EnableScissorRectangle(int x, int y, int width, int height)
+void Draw_EnableScissorRectangle(float x, float y, float width, float height)
 {
 	float resdif_w = (glwidth / (float)vid.conwidth);
 	float resdif_h = (glheight / (float)vid.conheight);
@@ -322,7 +322,7 @@ void Draw_EnableScissorRectangle(int x, int y, int width, int height)
 	);
 }
 
-void Draw_EnableScissor(int left, int right, int top, int bottom)
+void Draw_EnableScissor(float left, float right, float top, float bottom)
 {
 	Draw_EnableScissorRectangle(left, top, (right - left), (bottom - top));
 }
@@ -710,7 +710,7 @@ void Draw_Crosshair (void)
 	}
 }
 
-void Draw_TextBox (int x, int y, int width, int lines)
+void Draw_TextBox(float x, float y, int width, int lines)
 {
 	mpic_t *p;
 	int cx, cy, n;
@@ -777,7 +777,7 @@ void Draw_TileClear(int x, int y, int w, int h)
 	R_DrawImage(x, y, w, h, x / 64.0, y / 64.0, w / 64.0, h / 64.0, white, false, draw_backtile->texnum, false, false);
 }
 
-void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool fill, color_t color)
+void Draw_AlphaRectangleRGB(float x, float y, float w, float h, float thickness, qbool fill, color_t color)
 {
 	byte bytecolor[4];
 
@@ -798,12 +798,12 @@ void Draw_AlphaRectangle (int x, int y, int w, int h, byte c, float thickness, q
 		RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)(alpha * 255)));
 }
 
-void Draw_AlphaFillRGB (int x, int y, int w, int h, color_t color)
+void Draw_AlphaFillRGB(float x, float y, float w, float h, color_t color)
 {
 	Draw_AlphaRectangleRGB(x, y, w, h, 1, true, color);
 }
 
-void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha)
+void Draw_AlphaFill(float x, float y, float w, float h, byte c, float alpha)
 {
 	Draw_AlphaRectangle(x, y, w, h, c, 1, true, alpha);
 }
@@ -813,7 +813,7 @@ void Draw_Fill (int x, int y, int w, int h, byte c)
 	Draw_AlphaFill(x, y, w, h, c, 1);
 }
 
-void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, color_t color)
+void Draw_AlphaLineRGB (float x_start, float y_start, float x_end, float y_end, float thickness, color_t color)
 {
 	byte bytecolor[4];
 
@@ -822,7 +822,7 @@ void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float th
 	R_Draw_LineRGB(thickness, bytecolor, x_start, y_start, x_end, y_end);
 }
 
-void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, byte c, float alpha)
+void Draw_AlphaLine (float x_start, float y_start, float x_end, float y_end, float thickness, byte c, float alpha)
 {
 	Draw_AlphaLineRGB (x_start, y_start, x_end, y_end, thickness,
 		RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], 255));
@@ -844,34 +844,34 @@ void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float end
 		RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)Q_rint(255 * alpha)));
 }
 
-void Draw_AlphaCircleRGB (int x, int y, float radius, float thickness, qbool fill, color_t color)
+void Draw_AlphaCircleRGB(float x, float y, float radius, float thickness, qbool fill, color_t color)
 {
 	Draw_AlphaPieSliceRGB (x, y, radius, 0, 2 * M_PI, thickness, fill, color);
 }
 
-void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, byte c, float alpha)
+void Draw_AlphaCircle(float x, float y, float radius, float thickness, qbool fill, byte c, float alpha)
 {
 	Draw_AlphaPieSlice (x, y, radius, 0, 2 * M_PI, thickness, fill, c, alpha);
 }
 
-void Draw_AlphaCircleOutlineRGB (int x, int y, float radius, float thickness, color_t color)
+void Draw_AlphaCircleOutlineRGB(float x, float y, float radius, float thickness, color_t color)
 {
-	Draw_AlphaCircleRGB (x, y, radius, thickness, false, color);
+	Draw_AlphaCircleRGB(x, y, radius, thickness, false, color);
 }
 
-void Draw_AlphaCircleOutline (int x, int y, float radius, float thickness, byte color, float alpha)
+void Draw_AlphaCircleOutline(float x, float y, float radius, float thickness, byte color, float alpha)
 {
-	Draw_AlphaCircle (x, y, radius, thickness, false, color, alpha);
+	Draw_AlphaCircle(x, y, radius, thickness, false, color, alpha);
 }
 
-void Draw_AlphaCircleFillRGB (int x, int y, float radius, color_t color)
+void Draw_AlphaCircleFillRGB(float x, float y, float radius, color_t color)
 {
-	Draw_AlphaCircleRGB (x, y, radius, 1.0, true, color);
+	Draw_AlphaCircleRGB(x, y, radius, 1.0, true, color);
 }
 
-void Draw_AlphaCircleFill (int x, int y, float radius, byte color, float alpha)
+void Draw_AlphaCircleFill(float x, float y, float radius, byte color, float alpha)
 {
-	Draw_AlphaCircle (x, y, radius, 1.0, true, color, alpha);
+	Draw_AlphaCircle(x, y, radius, 1.0, true, color, alpha);
 }
 
 //
@@ -881,7 +881,7 @@ void Draw_AlphaCircleFill (int x, int y, float radius, byte color, float alpha)
 //=============================================================================
 // Draw picture functions
 //=============================================================================
-void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale_x, float scale_y, float alpha)
+void Draw_SAlphaSubPic2(float x, float y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale_x, float scale_y, float alpha)
 {
 	float newsl, newtl, newsh, newth;
     float oldglwidth, oldglheight;
@@ -900,42 +900,42 @@ void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int sr
 	R_Draw_SAlphaSubPic2(x, y, pic, src_width, src_height, newsl, newtl, newsh, newth, scale_x, scale_y, alpha);
 }
 
-void Draw_SAlphaSubPic (int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha)
+void Draw_SAlphaSubPic(float x, float y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha)
 {
-	Draw_SAlphaSubPic2 (x, y, pic, src_x, src_y, src_width, src_height, scale, scale, alpha);
+	Draw_SAlphaSubPic2(x, y, pic, src_x, src_y, src_width, src_height, scale, scale, alpha);
 }
 
-void Draw_SSubPic(int x, int y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale)
+void Draw_SSubPic(float x, float y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale)
 {
-	Draw_SAlphaSubPic (x, y, gl, srcx, srcy, width, height, scale, 1);
+	Draw_SAlphaSubPic(x, y, gl, srcx, srcy, width, height, scale, 1);
 }
 
-void Draw_AlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float alpha)
+void Draw_AlphaSubPic(float x, float y, mpic_t *pic, int srcx, int srcy, int width, int height, float alpha)
 {
-	Draw_SAlphaSubPic (x, y, pic, srcx, srcy, width, height, 1, alpha);
+	Draw_SAlphaSubPic(x, y, pic, srcx, srcy, width, height, 1, alpha);
 }
 
-void Draw_SubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height)
+void Draw_SubPic(float x, float y, mpic_t *pic, int srcx, int srcy, int width, int height)
 {
-	Draw_SAlphaSubPic (x, y, pic, srcx, srcy, width, height, 1, 1);
+	Draw_SAlphaSubPic(x, y, pic, srcx, srcy, width, height, 1, 1);
 }
 
-void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha)
+void Draw_AlphaPic(float x, float y, mpic_t *pic, float alpha)
 {
-	Draw_SAlphaSubPic (x , y, pic, 0, 0, pic->width, pic->height, 1, alpha);
+	Draw_SAlphaSubPic(x , y, pic, 0, 0, pic->width, pic->height, 1, alpha);
 }
 
-void Draw_SAlphaPic (int x, int y, mpic_t *gl, float alpha, float scale)
+void Draw_SAlphaPic(float x, float y, mpic_t *gl, float alpha, float scale)
 {
-	Draw_SAlphaSubPic (x ,y , gl, 0, 0, gl->width, gl->height, scale, alpha);
+	Draw_SAlphaSubPic(x ,y , gl, 0, 0, gl->width, gl->height, scale, alpha);
 }
 
-void Draw_SPic (int x, int y, mpic_t *gl, float scale)
+void Draw_SPic(float x, float y, mpic_t *gl, float scale)
 {
 	Draw_SAlphaSubPic (x, y, gl, 0, 0, gl->width, gl->height, scale, 1.0);
 }
 
-void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl)
+void Draw_FitPic(float x, float y, int fit_width, int fit_height, mpic_t *gl)
 {
     float sw, sh;
     sw = (float) fit_width / (float) gl->width;
@@ -943,7 +943,7 @@ void Draw_FitPic (int x, int y, int fit_width, int fit_height, mpic_t *gl)
     Draw_SPic(x, y, gl, min(sw, sh));
 }
 
-void Draw_FitPicAlpha(int x, int y, int fit_width, int fit_height, mpic_t *gl, float alpha)
+void Draw_FitPicAlpha(float x, float y, int fit_width, int fit_height, mpic_t *gl, float alpha)
 {
 	float sw, sh;
 	sw = (float) fit_width / (float) gl->width;
@@ -951,31 +951,26 @@ void Draw_FitPicAlpha(int x, int y, int fit_width, int fit_height, mpic_t *gl, f
 	Draw_SAlphaPic(x, y, gl, alpha, min(sw, sh));
 }
 
-void Draw_STransPic (int x, int y, mpic_t *pic, float scale)
+void Draw_STransPic(float x, float y, mpic_t *pic, float scale)
 {
-    Draw_SPic (x, y, pic, scale);
+    Draw_SPic(x, y, pic, scale);
 }
 
-void Draw_TransSubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height)
+void Draw_Pic(float x, float y, mpic_t *pic)
 {
-    Draw_SubPic(x, y, pic, srcx, srcy, width, height);
+	Draw_SAlphaSubPic(x, y, pic, 0, 0, pic->width, pic->height, 1, 1);
 }
 
-void Draw_Pic (int x, int y, mpic_t *pic)
+void Draw_TransPic(float x, float y, mpic_t *pic)
 {
-	Draw_SAlphaSubPic (x, y, pic, 0, 0, pic->width, pic->height, 1, 1);
-}
-
-void Draw_TransPic (int x, int y, mpic_t *pic)
-{
-	Draw_Pic (x, y, pic);
+	Draw_Pic(x, y, pic);
 }
 
 static char last_mapname[MAX_QPATH] = {0};
 static mpic_t *last_lvlshot = NULL;
 
 // If conwidth or conheight changes, adjust conback sizes too.
-void Draw_AdjustConback (void)
+void Draw_AdjustConback(void)
 {
 	conback.width  = vid.conwidth;
 	conback.height = vid.conheight;
@@ -997,7 +992,7 @@ static void Draw_DeleteOldLevelshot(mpic_t* pic)
 	}
 }
 
-void Draw_InitConback (void)
+void Draw_InitConback(void)
 {
 	qpic_t *cb;
 	int start;
@@ -1039,7 +1034,7 @@ void Draw_InitConback (void)
 	Hunk_FreeToLowMark (start);
 }
 
-void Draw_ConsoleBackground (int lines)
+void Draw_ConsoleBackground(int lines)
 {
 	mpic_t *lvlshot = NULL;
 	float alpha = (SCR_NEED_CONSOLE_BACKGROUND ? 1 : bound(0, scr_conalpha.value, 1)) * overall_alpha;

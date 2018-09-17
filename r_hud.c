@@ -110,7 +110,7 @@ void R_DrawAlphaRectangleRGB(int x, int y, int w, int h, float thickness, qbool 
 	}
 }
 
-void R_Draw_SAlphaSubPic2(int x, int y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha)
+void R_Draw_SAlphaSubPic2(float x, float y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha)
 {
 	byte color[] = { 255, 255, 255, alpha * 255 };
 

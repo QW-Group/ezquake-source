@@ -34,7 +34,7 @@ void GLM_Draw_Line3D(byte* color, vec3_t start, vec3_t end)
 	}
 }
 
-void R_Draw_LineRGB(float thickness, byte* color, int x_start, int y_start, int x_end, int y_end)
+void R_Draw_LineRGB(float thickness, byte* color, float x_start, float y_start, float x_end, float y_end)
 {
 	if (lineData.lineCount >= MAX_LINES_PER_FRAME) {
 		return;

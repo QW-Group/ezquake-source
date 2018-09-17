@@ -256,32 +256,26 @@ static void Draw_ResetCharGLState(void)
 	R_Draw_ResetCharGLState();
 }
 
-void Draw_SCharacter(int x, int y, int num, float scale)
+void Draw_SCharacter(float x, float y, int num, float scale)
 {
 	Draw_CharacterBaseW(x, y, char2wc(num), scale, true, false, true, false);
 	Draw_ResetCharGLState();
 }
 
-float Draw_SCharacterP(int x, int y, int num, float scale, qbool proportional)
+float Draw_SCharacterP(float x, float y, int num, float scale, qbool proportional)
 {
 	float new_x = Draw_CharacterBaseW(x, y, char2wc(num), scale, true, false, true, proportional);
 	Draw_ResetCharGLState();
 	return new_x;
 }
 
-void Draw_SCharacterW(int x, int y, wchar num, float scale)
-{
-	Draw_CharacterBaseW(x, y, num, scale, true, false, true, false);
-	Draw_ResetCharGLState();
-}
-
-void Draw_CharacterW(int x, int y, wchar num)
+void Draw_CharacterW(float x, float y, wchar num)
 {
 	Draw_CharacterBaseW(x, y, num, 1, true, false, true, false);
 	Draw_ResetCharGLState();
 }
 
-void Draw_Character(int x, int y, int num)
+void Draw_Character(float x, float y, int num)
 {
 	Draw_CharacterBaseW(x, y, char2wc(num), 1, true, false, true, false);
 	Draw_ResetCharGLState();
@@ -392,12 +386,12 @@ static float Draw_StringBase(float x, float y, const char *text, clrinfo_t *colo
 	return ceil(x - original_x);
 }
 
-void Draw_BigString(int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap)
+void Draw_BigString(float x, float y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap)
 {
 	Draw_StringBase(x, y, text, color, color_count, false, scale, alpha, true, char_gap, false, 0);
 }
 
-float Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool proportional)
+float Draw_SColoredAlphaString(float x, float y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool proportional)
 {
 	return Draw_StringBase(x, y, text, color, color_count, red, scale, alpha, false, 0, proportional, 0);
 }
@@ -436,12 +430,12 @@ void Draw_SStringAligned(int x, int y, const char *text, float scale, float alph
 	}
 }
 
-float Draw_SString(int x, int y, const char *text, float scale, qbool proportional)
+float Draw_SString(float x, float y, const char *text, float scale, qbool proportional)
 {
 	return Draw_StringBase(x, y, text, NULL, 0, false, scale, 1, false, 0, proportional, 0);
 }
 
-void Draw_SAlt_String(int x, int y, const char *text, float scale, qbool proportional)
+void Draw_SAlt_String(float x, float y, const char *text, float scale, qbool proportional)
 {
 	Draw_StringBase(x, y, text, NULL, 0, true, scale, 1, false, 0, proportional, 0);
 }
@@ -541,34 +535,34 @@ float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *color, 
 	return x - original_x;
 }
 
-void Draw_ColoredString3(int x, int y, const char *text, clrinfo_t *color, int color_count, int red)
+void Draw_ColoredString3(float x, float y, const char *text, clrinfo_t *color, int color_count, int red)
 {
 	Draw_StringBase(x, y, text, color, color_count, red, 1, 1, false, 0, false, 0);
 }
 
-void Draw_ColoredString(int x, int y, const char *text, int red, qbool proportional)
+void Draw_ColoredString(float x, float y, const char *text, int red, qbool proportional)
 {
 	Draw_StringBase(x, y, text, NULL, 0, red, 1, 1, false, 0, proportional, 0);
 }
 
-void Draw_SColoredStringBasic(int x, int y, const char *text, int red, float scale, qbool proportional)
+void Draw_SColoredStringBasic(float x, float y, const char *text, int red, float scale, qbool proportional)
 {
 	Draw_StringBase(x, y, text, NULL, 0, red, scale, 1, false, 0, proportional, 0);
 }
 
 // FIXME: Replace with Draw_ColoredString()
-void Draw_Alt_String(int x, int y, const char *text, float scale, qbool proportional)
+void Draw_Alt_String(float x, float y, const char *text, float scale, qbool proportional)
 {
 	Draw_StringBase(x, y, text, NULL, 0, true, scale, 1, false, 0, proportional, 0);
 }
 
 // TODO: proportional
-void Draw_AlphaString(int x, int y, const char *text, float alpha)
+void Draw_AlphaString(float x, float y, const char *text, float alpha)
 {
 	Draw_StringBase(x, y, text, NULL, 0, false, 1, alpha, false, 0, false, 0);
 }
 
-void Draw_String(int x, int y, const char *text)
+void Draw_String(float x, float y, const char *text)
 {
 	Draw_StringBase(x, y, text, NULL, 0, false, 1, 1, false, 0, false, 0);
 }
@@ -823,7 +817,7 @@ void R_Draw_SetColor(byte* rgba)
 	}
 }
 
-void R_Draw_StringBase_StartString(int x, int y, float scale)
+void R_Draw_StringBase_StartString(float x, float y, float scale)
 {
 	Draw_TextCacheInit(x, y, scale);
 }

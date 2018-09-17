@@ -88,18 +88,17 @@ float Draw_MultiplyOverallAlpha(float alpha);
 
 void Draw_Init(void);
 void Draw_Shutdown(void);
-void Draw_Character (int x, int y, int num);
-void Draw_CharacterW (int x, int y, wchar num);
-void Draw_SubPic(int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height);
-void Draw_Pic (int x, int y, mpic_t *pic);
-void Draw_TransPic (int x, int y, mpic_t *pic);
-void Draw_TransSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height);
+void Draw_Character(float x, float y, int num);
+void Draw_CharacterW(float x, float y, wchar num);
+void Draw_SubPic(float x, float y, mpic_t *pic, int srcx, int srcy, int width, int height);
+void Draw_Pic(float x, float y, mpic_t *pic);
+void Draw_TransPic(float x, float y, mpic_t *pic);
 void Draw_ConsoleBackground (int lines);
-void Draw_BeginDisc (void);
-void Draw_EndDisc (void);
-void Draw_TileClear (int x, int y, int w, int h);
-void Draw_Fill (int x, int y, int w, int h, byte c);
-void Draw_FadeScreen (float alpha);
+void Draw_BeginDisc(void);
+void Draw_EndDisc(void);
+void Draw_TileClear(int x, int y, int w, int h);
+void Draw_Fill(int x, int y, int w, int h, byte c);
+void Draw_FadeScreen(float alpha);
 
 typedef struct clrinfo_s
 {
@@ -119,16 +118,16 @@ void Draw_SStringAligned(int x, int y, const char *text, float scale, float alph
 void Draw_SColoredStringAligned(int x, int y, const char *text, clrinfo_t* color, int color_count, float scale, float alpha, qbool proportional, text_alignment_t align, float max_x);
 
 void Draw_GetBigfontSourceCoords(char c, int char_width, int char_height, int *sx, int *sy);
-void Draw_BigString(int x, int y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap);
-void Draw_String(int x, int y, const char *str);
-void Draw_AlphaString(int x, int y, const char *str, float alpha);
-void Draw_Alt_String(int x, int y, const char *str, float scale, qbool proportional);
-void Draw_ColoredString(int x, int y, const char *str, int red, qbool proportional);
-void Draw_SColoredStringBasic(int x, int y, const char *text, int red, float scale, qbool proportional);
-void Draw_ColoredString3(int x, int y, const char *text, clrinfo_t *clr, int clr_cnt, int red);
-float Draw_SColoredAlphaString(int x, int y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool proportional);
-void Draw_SAlt_String(int x, int y, const char *text, float scale, qbool proportional);
-float Draw_SString(int x, int y, const char *str, float scale, qbool proportional);
+void Draw_BigString(float x, float y, const char *text, clrinfo_t *color, int color_count, float scale, float alpha, int char_gap);
+void Draw_String(float x, float y, const char *str);
+void Draw_AlphaString(float x, float y, const char *str, float alpha);
+void Draw_Alt_String(float x, float y, const char *str, float scale, qbool proportional);
+void Draw_ColoredString(float x, float y, const char *str, int red, qbool proportional);
+void Draw_SColoredStringBasic(float x, float y, const char *text, int red, float scale, qbool proportional);
+void Draw_ColoredString3(float x, float y, const char *text, clrinfo_t *clr, int clr_cnt, int red);
+float Draw_SColoredAlphaString(float x, float y, const char *text, clrinfo_t *color, int color_count, int red, float scale, float alpha, qbool proportional);
+void Draw_SAlt_String(float x, float y, const char *text, float scale, qbool proportional);
+float Draw_SString(float x, float y, const char *str, float scale, qbool proportional);
 
 float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale, qbool proportional);
 float Draw_StringLengthW(const wchar *text, int length, float scale, qbool proportional);
@@ -141,48 +140,47 @@ mpic_t *Draw_CachePicSafe(const char *path, qbool crash, qbool only24bit);
 mpic_t *Draw_CachePic(cache_pic_id_t id);
 mpic_t *Draw_CacheWadPic(char *name, int code);
 void Draw_Crosshair(void);
-void Draw_TextBox(int x, int y, int width, int lines);
+void Draw_TextBox(float x, float y, int width, int lines);
 
-float Draw_SCharacterP(int x, int y, int num, float scale, qbool proportional);
+float Draw_SCharacterP(float x, float y, int num, float scale, qbool proportional);
 
-void Draw_SCharacter(int x, int y, int num, float scale);
-void Draw_SPic(int x, int y, mpic_t *, float scale);
-void Draw_FitPic(int x, int y, int fit_width, int fit_height, mpic_t *gl); // Will fit image into given area; will keep it's proportions.
-void Draw_FitPicAlpha(int x, int y, int fit_width, int fit_height, mpic_t *gl, float alpha);
-void Draw_SAlphaPic(int x, int y, mpic_t *, float alpha, float scale);
-void Draw_SSubPic(int x, int y, mpic_t *, int srcx, int srcy, int width, int height, float scale);
-void Draw_STransPic(int x, int y, mpic_t *, float scale);
+void Draw_SCharacter(float x, float y, int num, float scale);
+void Draw_SPic(float x, float y, mpic_t *, float scale);
+void Draw_FitPic(float x, float y, int fit_width, int fit_height, mpic_t *gl); // Will fit image into given area; will keep it's proportions.
+void Draw_FitPicAlpha(float x, float y, int fit_width, int fit_height, mpic_t *gl, float alpha);
+void Draw_SAlphaPic(float x, float y, mpic_t *, float alpha, float scale);
+void Draw_SSubPic(float x, float y, mpic_t *, int srcx, int srcy, int width, int height, float scale);
+void Draw_STransPic(float x, float y, mpic_t *, float scale);
 
 void Draw_AlphaPieSlice (int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, byte c, float alpha);
 
-void Draw_AlphaCircleRGB (int x, int y, float radius, float thickness, qbool fill, color_t color);
-void Draw_AlphaCircle (int x, int y, float radius, float thickness, qbool fill, byte c, float alpha);
-void Draw_AlphaCircleOutlineRGB (int x, int y, float radius, float thickness, color_t color);
-void Draw_AlphaCircleOutline (int x, int y, float radius, float thickness, byte color, float alpha);
-void Draw_AlphaCircleFillRGB (int x, int y, float radius, color_t color);
-void Draw_AlphaCircleFill (int x, int y, float radius, byte color, float alpha);
+void Draw_AlphaCircleRGB(float x, float y, float radius, float thickness, qbool fill, color_t color);
+void Draw_AlphaCircle(float x, float y, float radius, float thickness, qbool fill, byte c, float alpha);
+void Draw_AlphaCircleOutlineRGB(float x, float y, float radius, float thickness, color_t color);
+void Draw_AlphaCircleOutline(float x, float y, float radius, float thickness, byte color, float alpha);
+void Draw_AlphaCircleFillRGB(float x, float y, float radius, color_t color);
+void Draw_AlphaCircleFill(float x, float y, float radius, byte color, float alpha);
 
-void Draw_AlphaLineRGB (int x_start, int y_start, int x_end, int y_end, float thickness, color_t color);
-void Draw_AlphaLine (int x_start, int y_start, int x_end, int y_end, float thickness, byte c, float alpha);
+void Draw_AlphaLineRGB(float x_start, float y_start, float x_end, float y_end, float thickness, color_t color);
+void Draw_AlphaLine(float x_start, float y_start, float x_end, float y_end, float thickness, byte c, float alpha);
 
-void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
-void Draw_AlphaRectangleRGB (int x, int y, int w, int h, float thickness, qbool fill, color_t color);
-void Draw_AlphaFillRGB (int x, int y, int w, int h, color_t color);
+void Draw_AlphaFill(float x, float y, float w, float h, byte c, float alpha);
+void Draw_AlphaRectangleRGB(float x, float y, float w, float h, float thickness, qbool fill, color_t color);
+void Draw_AlphaFillRGB(float x, float y, float w, float h, color_t color);
 
-void Draw_AlphaSubPic (int x, int y, mpic_t *pic, int srcx, int srcy, int width, int height, float alpha);
-void Draw_SAlphaSubPic (int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha);
-void Draw_SAlphaSubPic2 (int x, int y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale_x, float scale_y, float alpha);
-void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
+void Draw_AlphaSubPic(float x, float y, mpic_t *pic, int srcx, int srcy, int width, int height, float alpha);
+void Draw_SAlphaSubPic(float x, float y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha);
+void Draw_SAlphaSubPic2(float x, float y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale_x, float scale_y, float alpha);
+void Draw_AlphaPic(float x, float y, mpic_t *pic, float alpha);
 void Draw_2dAlphaTexture(float x, float y, float width, float height, texture_ref texture_num, float alpha);
 
 qbool R_CharAvailable (wchar num);
 
-void Draw_EnableScissorRectangle(int x, int y, int width, int height);
-void Draw_EnableScissor(int left, int right, int top, int bottom);
+void Draw_EnableScissorRectangle(float x, float y, float width, float height);
+void Draw_EnableScissor(float left, float right, float top, float bottom);
 void Draw_DisableScissor(void);
 
 void InitTracker(void);
-void Draw_TextCacheFlush(void);
 
 enum {
 	WADPIC_RAM = 0,

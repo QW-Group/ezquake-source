@@ -30,7 +30,7 @@ glm_circle_framedata_t circleData;
 
 extern float overall_alpha;
 
-void R_Draw_AlphaPieSliceRGB(int x, int y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
+void R_Draw_AlphaPieSliceRGB(float x, float y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
 {
 	float* pointData;
 	double angle;

@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 glm_polygon_framedata_t polygonData;
 
-void R_Draw_Polygon(int x, int y, vec3_t *vertices, int num_vertices, color_t color)
+void R_Draw_Polygon(float x, float y, vec3_t *vertices, int num_vertices, color_t color)
 {
 	if (num_vertices < 0 || num_vertices > MAX_POLYGON_POINTS) {
 		return;

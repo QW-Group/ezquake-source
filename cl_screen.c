@@ -162,8 +162,6 @@ double cursor_x = 0, cursor_y = 0;
 void SCR_DrawMultiviewBorders(void);
 void SCR_DrawMVStatus(void);
 void SCR_DrawMVStatusStrings(void);
-void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
-void Draw_AlphaPic (int x, int y, mpic_t *pic, float alpha);
 
 /**************************** CENTER PRINTING ********************************/
 
@@ -832,8 +830,8 @@ static void SCR_DrawCursor(void)
 
 	// Always draw the cursor if fullscreen
 	if (IN_QuakeMouseCursorRequired()) {
-		int x_coord = (int)scr_pointer_state.x;
-		int y_coord = (int)scr_pointer_state.y;
+		float x_coord = scr_pointer_state.x;
+		float y_coord = scr_pointer_state.y;
 
 		if (scr_cursor && R_TextureReferenceIsValid(scr_cursor->texnum)) {
 			Draw_SAlphaPic(x_coord, y_coord, scr_cursor, scr_cursor_alpha.value, scale);

@@ -88,8 +88,6 @@ qbool	sb_showteamscores;
 
 int			sb_lines;			// scan lines to draw
 
-void Draw_AlphaFill (int x, int y, int w, int h, byte c, float alpha);
-
 static int	sbar_xofs;
 
 cvar_t	scr_centerSbar                = {"scr_centerSbar",                "1"};

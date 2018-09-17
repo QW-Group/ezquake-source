@@ -1608,31 +1608,31 @@ static void VID_UpdateConRes(void)
 
 	// Default
 	if (r_conwidth.integer == 0 && r_conheight.integer == 0) {
-		vid.width   = vid.conwidth  = bound(320, (int)(vidWidth  / r_conscale.value), vidWidth);
-		vid.height  = vid.conheight = bound(200, (int)(vidHeight / r_conscale.value), vidHeight);
+		vid.width = vid.conwidth = bound(320, (int)(vidWidth  / r_conscale.value), vidWidth);
+		vid.height = vid.conheight = bound(200, (int)(vidHeight / r_conscale.value), vidHeight);
 
 		set_width = set_height = true;
 	}
 	else if (r_conwidth.integer == 0) {
 		double ar_w = (double)vidWidth/(double)vidHeight;
 
-		vid.height  = vid.conheight = bound(200, r_conheight.integer, vidHeight);
-		vid.width   = vid.conwidth  = bound(320, (int)(r_conheight.integer*ar_w + 0.5), vidWidth);
+		vid.height = vid.conheight = bound(200, r_conheight.integer, vidHeight);
+		vid.width = vid.conwidth = bound(320, (int)(r_conheight.integer*ar_w + 0.5), vidWidth);
 
 		set_width = true;
 	}
 	else if (r_conheight.integer == 0) {
 		double ar_h = (double)vidHeight/(double)vidWidth;
 
-		vid.height  = vid.conheight = bound(200, (int)(r_conwidth.integer*ar_h + 0.5), vidHeight);
-		vid.width   = vid.conwidth  = bound(320, r_conwidth.integer, vidWidth);
+		vid.height = vid.conheight = bound(200, (int)(r_conwidth.integer*ar_h + 0.5), vidHeight);
+		vid.width = vid.conwidth = bound(320, r_conwidth.integer, vidWidth);
 
 		set_height = true;
 	}
 	else {
 		// User specified, use that but check boundaries
-		vid.width   = vid.conwidth  = bound(320, r_conwidth.integer,  vidWidth);
-		vid.height  = vid.conheight = bound(200, r_conheight.integer, vidHeight);
+		vid.width = vid.conwidth = bound(320, r_conwidth.integer,  vidWidth);
+		vid.height = vid.conheight = bound(200, r_conheight.integer, vidHeight);
 
 		Cvar_SetValue(&r_conwidth, vid.conwidth);
 		Cvar_SetValue(&r_conheight, vid.conheight);
