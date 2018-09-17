@@ -25,11 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void ConfigManager_Init (void);
 void Config_QuitSave(void);
 void ResetBinds(void);
+void Cfg_ExecuteDefaultConfig(void);
 
 extern cvar_t	cfg_save_unchanged, cfg_legacy_exec;
 
-#define MAIN_GL_CONFIG_FILENAME "config.cfg"
-#define MAIN_SW_CONFIG_FILENAME "configsw.cfg"
-#define MAIN_CONFIG_FILENAME MAIN_GL_CONFIG_FILENAME
+#define MAIN_CONFIG_FILENAME "config.cfg"
 
 #endif

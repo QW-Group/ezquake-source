@@ -617,6 +617,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Browser_Init2();
 	ConfigManager_Init();
 	ResetBinds();
+	Cfg_ExecuteDefaultConfig();
 
 	i = COM_FindParm("+cfg_load");
 

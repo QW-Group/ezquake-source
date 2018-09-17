@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "config_manager.h"
 #include "version.h"
 #include "gl_model.h"
+#include "vfs.h"
 
 char *Key_KeynumToString (int keynum);
 
@@ -750,6 +751,23 @@ static void Config_PrintPreamble(FILE *f)
 
 /************************************ MAIN FUCTIONS	************************************/
 
+// Executes default.cfg as long as it isn't the one from pak0.pak
+void Cfg_ExecuteDefaultConfig(void)
+{
+	flocation_t loc;
+
+	if (FS_FLocateFile("default.cfg", FSLFRT_IFFOUND, &loc)) {
+		char pak0default[MAX_OSPATH];
+
+		strlcpy(pak0default, com_basedir, sizeof(pak0default));
+		strlcat(pak0default, "/id1/pak0.pak/default.cfg", sizeof(pak0default));
+
+		if (strcmp(pak0default, loc.rawname)) {
+			Cbuf_AddText("exec default.cfg\n");
+		}
+	}
+}
+
 static void ResetConfigs(qbool resetall, qbool read_legacy_configs)
 {
 	vfsfile_t *v;
@@ -765,6 +783,7 @@ static void ResetConfigs(qbool resetall, qbool read_legacy_configs)
 	if (read_legacy_configs)
 	{
 		Cbuf_AddText ("cl_warncmd 0\n");
+		Cfg_ExecuteDefaultConfig();
 		if ((v = FS_OpenVFS("autoexec.cfg", "rb", FS_ANY))) {
 			Cbuf_AddText ("exec autoexec.cfg\n");
 			VFS_CLOSE(v);
@@ -778,10 +797,14 @@ void DumpConfig(char *name)
 	FILE	*f;
 	char	*outfile, *newlines = "\n";
 
-	if (cfg_use_home.integer) // homedir
+	if (cfg_use_home.integer) {
+		// homedir
 		outfile = va("%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "" : com_gamedirfile, name);
-	else // basedir
+	}
+	else {
+		// basedir
 		outfile = va("%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "ezquake" : com_gamedirfile, name);
+	}
 
 	if (!(f	= fopen	(outfile, "w"))) {
 		FS_CreatePath(outfile);
@@ -1204,6 +1227,7 @@ void ConfigManager_Init(void)
 	Cmd_AddCommand("cfg_load", LoadConfig_f);
 	Cmd_AddCommand("cfg_reset",	ResetConfigs_f);
 	Cmd_AddCommand("hud_export", DumpHUD_f);
+	Cmd_AddCommand("meagtest", Cfg_ExecuteDefaultConfig);
 	if (IsDeveloperMode()) {
 		Cmd_AddCommand("dev_dump_defaults", DumpVariablesDefaults_f);
 	}
