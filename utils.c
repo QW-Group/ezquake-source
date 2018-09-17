@@ -578,6 +578,20 @@ int Player_StringtoSlot(char *arg)
 		Q_free(stripped);
 	}
 
+	// Regexp match against stripped player name if previous attempts have failed
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		char *stripped = Player_StripNameColor(cl.players[i].name);
+
+		if (cl.players[i].name[0] && Utils_RegExpMatch(arg, stripped))
+		{
+			Q_free(stripped);
+			return i;
+		}
+
+		Q_free(stripped);
+	}
+
 	// Check if the argument is a user id instead
 	// Make sure all chars in the given arg are digits in that case.
 	for (i = 0; arg[i]; i++)
