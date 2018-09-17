@@ -41,6 +41,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 
 texture_ref shelltexture;
+model_t* cl_custommodels[custom_model_count];
 
 void R_SetSkinForPlayerEntity(entity_t* ent, texture_ref* texture, texture_ref* fb_texture, byte** color32bit);
 
@@ -229,12 +230,12 @@ qbool R_FilterEntity(entity_t* ent)
 					ParticleTorchFire(ent);
 				}
 			}
-			else if (ent->model->modhint == MOD_FLAME && cl_flame0_model) {
+			else if (ent->model->modhint == MOD_FLAME && cl_custommodels[custom_model_flame0]) {
 				// do we have progs/flame0.mdl?
 				if (!ISPAUSED) {
 					ParticleTorchFire(ent);
 				}
-				ent->model = cl_flame0_model;
+				ent->model = cl_custommodels[custom_model_flame0];
 			}
 			else if (ent->model->modhint == MOD_FLAME2 || ent->model->modhint == MOD_FLAME3) {
 				if (!ISPAUSED) {

@@ -551,7 +551,7 @@ typedef struct model_s {
 
 void	Mod_Init (void);
 void	Mod_ClearAll (void);
-model_t *Mod_ForName (char *name, qbool crash);
+model_t *Mod_ForName (const char *name, qbool crash);
 void	*Mod_Extradata (model_t *mod); // handles caching
 void	Mod_TouchModel (char *name);
 void	Mod_TouchModels (void); // for vid_restart
@@ -592,6 +592,8 @@ typedef enum {
 
 	custom_model_count
 } custom_model_id_t;
+
+extern model_t* cl_custommodels[custom_model_count];
 
 model_t* Mod_CustomModel(custom_model_id_t id, qbool crash);
 

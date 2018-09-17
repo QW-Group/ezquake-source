@@ -56,7 +56,6 @@ static struct predicted_player {
 
 char *cl_modelnames[cl_num_modelindices];
 int cl_modelindices[cl_num_modelindices];
-model_t *cl_flame0_model;
 
 void CL_InitEnts(void) {
 	int i;

@@ -150,7 +150,7 @@ void Mod_ClearAll(void)
 	}
 }
 
-model_t *Mod_FindName(char *name)
+model_t *Mod_FindName(const char *name)
 {
 	int i;
 	model_t	*mod;
@@ -243,6 +243,20 @@ void Mod_ReloadModels(qbool vid_restart)
 			Mod_LoadModel(mod, true);
 		}
 	}
+
+	for (i = 0; i < custom_model_count; i++) {
+		model_t* mod = cl_custommodels[i];
+
+		if (mod) {
+			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
+				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
+					// Invalidate cache so VBO buffer gets refilled
+					Cache_FreeSafe(&mod->cache);
+				}
+			}
+			Mod_LoadModel(mod, true);
+		}
+	}
 }
 
 //Loads a model into the cache
@@ -316,7 +330,7 @@ model_t *Mod_LoadModel(model_t *mod, qbool crash)
 }
 
 //Loads in a model for the given name
-model_t *Mod_ForName(char *name, qbool crash)
+model_t *Mod_ForName(const char *name, qbool crash)
 {
 	model_t	*mod = Mod_FindName(name);
 
@@ -661,22 +675,23 @@ mpic_t* Mod_SimpleTextureForHint(int model_hint, int skinnum)
 	return 0;
 }
 
+const char* custom_model_names[] = {
+	"progs/s_explod.spr",    // custom_model_explosion
+	"progs/bolt.mdl",        // custom_model_bolt
+	"progs/bolt2.mdl",       // custom_model_bolt2
+	"progs/bolt3.mdl",       // custom_model_bolt3
+	"progs/beam.mdl",        // custom_model_beam
+	"progs/flame0.mdl"       // custom_model_flame0
+};
+
+#ifdef C_ASSERT
+C_ASSERT(sizeof(custom_model_names) / sizeof(custom_model_names[0]) == custom_model_count);
+#endif
+
 model_t* Mod_CustomModel(custom_model_id_t id, qbool crash)
 {
-	switch (id) {
-		case custom_model_explosion:
-			return Mod_ForName("progs/s_explod.spr", crash);
-		case custom_model_bolt:
-			return Mod_ForName("progs/bolt.mdl", crash);
-		case custom_model_bolt2:
-			return Mod_ForName("progs/bolt2.mdl", crash);
-		case custom_model_bolt3:
-			return Mod_ForName("progs/bolt3.mdl", crash);
-		case custom_model_beam:
-			return Mod_ForName("progs/beam.mdl", crash);
-		case custom_model_flame0:
-			return (cl_flame0_model = Mod_ForName("progs/flame0.mdl", crash));
-		default:
-			return NULL;
+	if (id >= 0 && id < sizeof(custom_model_names) / sizeof(custom_model_names[0])) {
+		return (cl_custommodels[id] = Mod_ForName(custom_model_names[id], crash));
 	}
+	return NULL;
 }

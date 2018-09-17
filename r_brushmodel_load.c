@@ -51,7 +51,7 @@ qbool Mod_LoadExternalTexture(model_t* loadmodel, texture_t *tx, int mode, int b
 void* Mod_BSPX_FindLump(bspx_header_t* bspx_header, char *lumpname, int *plumpsize, byte* mod_base);
 bspx_header_t* Mod_LoadBSPX(int filesize, byte* mod_base);
 
-model_t* Mod_FindName(char *name);
+model_t* Mod_FindName(const char *name);
 
 static void SetTextureFlags(model_t* mod, msurface_t* out, int surfnum)
 {
