@@ -137,7 +137,6 @@ extern cvar_t sys_inactivesleep;
 // latched variables that can only change over a restart
 cvar_t r_colorbits                = {"vid_colorbits",              "0",       CVAR_LATCH };
 cvar_t r_24bit_depth              = {"vid_24bit_depth",            "1",       CVAR_LATCH };
-cvar_t r_stereo                   = {"vid_stereo",                 "0",       CVAR_LATCH };
 cvar_t r_fullscreen               = {"vid_fullscreen",             "1",       CVAR_LATCH };
 cvar_t r_displayRefresh           = {"vid_displayfrequency",       "0",       CVAR_LATCH | CVAR_AUTO };
 cvar_t vid_displayNumber          = {"vid_displaynumber",          "0",       CVAR_LATCH | CVAR_AUTO };

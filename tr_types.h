@@ -112,7 +112,6 @@ extern glconfig_t	glConfig;
 //
 
 extern cvar_t	r_colorbits;
-extern cvar_t	r_stereo;
 extern cvar_t	r_24bit_depth;
 extern cvar_t	r_fullscreen;
 extern cvar_t	vid_width;
