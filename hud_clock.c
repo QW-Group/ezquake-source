@@ -197,23 +197,15 @@ static cvar_t scr_democlock_y = { "cl_democlock_y", "-2" };
 static void SCR_DrawClock(void)
 {
 	int x, y;
-	time_t t;
-	struct tm *ptm;
 	char str[64];
 
-	if (!scr_clock.value || scr_newHud.value == 1) {
+	if (!scr_clock.integer || scr_newHud.integer == 1) {
 		// newHud has its own clock
 		return;
 	}
 
-	if (scr_clock.value == 2) {
-		time(&t);
-		if ((ptm = localtime(&t))) {
-			strlcpy(str, SCR_GetTimeString(TIMETYPE_CLOCK, SCR_HUD_ClockFormat(scr_clock_format.integer)), sizeof(str));
-		}
-		else {
-			strlcpy(str, "#bad date#", sizeof(str));
-		}
+	if (scr_clock.integer == 2) {
+		strlcpy(str, SCR_GetTimeString(TIMETYPE_CLOCK, SCR_HUD_ClockFormat(scr_clock_format.integer)), sizeof(str));
 	}
 	else {
 		float time = (cl.servertime_works) ? cl.servertime : cls.realtime;
