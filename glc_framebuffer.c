@@ -64,10 +64,10 @@ static qbool GLC_CompilePostProcessProgram(void)
 	return R_ProgramReady(r_program_post_process_glc);
 }
 
-void GLC_RenderFramebuffers(framebuffer_ref fb_3d, framebuffer_ref fb_2d)
+void GLC_RenderFramebuffers(void)
 {
-	qbool flip2d = GL_FramebufferReferenceIsValid(fb_2d);
-	qbool flip3d = GL_FramebufferReferenceIsValid(fb_3d);
+	qbool flip2d = GL_FramebufferEnabled2D();
+	qbool flip3d = GL_FramebufferEnabled3D();
 
 	if (GLC_CompilePostProcessProgram()) {
 		extern cvar_t gl_hwblend;
@@ -86,19 +86,19 @@ void GLC_RenderFramebuffers(framebuffer_ref fb_3d, framebuffer_ref fb_2d)
 		R_ProgramUniform1f(r_program_uniform_post_process_glc_contrast, bound(1, v_contrast.value, 3));
 
 		if (flip2d && flip3d) {
-			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(fb_3d, 0));
-			renderer.TextureUnitBind(1, GL_FramebufferTextureReference(fb_2d, 0));
+			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(framebuffer_std, fbtex_standard));
+			renderer.TextureUnitBind(1, GL_FramebufferTextureReference(framebuffer_hud, fbtex_standard));
 
 			R_ProgramUniform1i(r_program_uniform_post_process_glc_base, 0);
 			R_ProgramUniform1i(r_program_uniform_post_process_glc_overlay, 1);
 		}
 		else if (flip3d) {
-			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(fb_3d, 0));
+			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(framebuffer_std, fbtex_standard));
 
 			R_ProgramUniform1i(r_program_uniform_post_process_glc_base, 0);
 		}
 		else if (flip2d) {
-			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(fb_2d, 0));
+			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(framebuffer_hud, fbtex_standard));
 
 			R_ProgramUniform1i(r_program_uniform_post_process_glc_overlay, 0);
 		}

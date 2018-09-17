@@ -19,31 +19,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef __GL_FRAMEBUFFER_H__
 #define __GL_FRAMEBUFFER_H__
 
-typedef struct framebuffer_ref_s {
-	int index;
-} framebuffer_ref;
+typedef enum {
+	framebuffer_none,
+	framebuffer_std,
+	framebuffer_hud,
+	framebuffer_count
+} framebuffer_id;
+
+typedef enum {
+	fbtex_standard,
+	fbtex_bloom,
+	fbtex_count
+} fbtex_id;
 
 void GL_InitialiseFramebufferHandling(void);
-framebuffer_ref GL_FramebufferCreate(int width, int height, qbool is3D);
-void GL_FramebufferDelete(framebuffer_ref* pref);
-void GL_FramebufferStartUsing(framebuffer_ref ref);
+qbool GL_FramebufferCreate(framebuffer_id id, int width, int height, qbool is3D);
+void GL_FramebufferDelete(framebuffer_id id);
+void GL_FramebufferStartUsing(framebuffer_id id);
 void GL_FramebufferStartUsingScreen(void);
-texture_ref GL_FramebufferTextureReference(framebuffer_ref ref, int index);
-int GL_FrameBufferWidth(framebuffer_ref ref);
-int GL_FrameBufferHeight(framebuffer_ref ref);
-void GL_FramebufferBlitSimple(framebuffer_ref source, framebuffer_ref destination);
-
-extern const framebuffer_ref null_framebuffer_ref;
-
-#define GL_FramebufferReferenceIsValid(x) ((x).index)
-#define GL_FramebufferReferenceInvalidate(ref) { (ref).index = 0; }
-#define GL_FramebufferReferenceEqual(ref1, ref2) ((ref1).index == (ref2).index)
-#define GL_FramebufferReferenceCompare(ref1, ref2) ((ref1).index < (ref2).index ? -1 : (ref1).index > (ref2).index ? 1 : 0)
+texture_ref GL_FramebufferTextureReference(framebuffer_id id, fbtex_id tex_id);
+int GL_FrameBufferWidth(framebuffer_id ref);
+int GL_FrameBufferHeight(framebuffer_id ref);
+void GL_FramebufferBlitSimple(framebuffer_id source, framebuffer_id destination);
+const char* GL_FramebufferZBufferString(framebuffer_id ref);
 
 void GL_FramebufferScreenDrawStart(void);
 qbool GL_Framebuffer2DSwitch(void);
 void GL_FramebufferPostProcessScreen(void);
 qbool GL_FramebufferEnabled2D(void);
+qbool GL_FramebufferEnabled3D(void);
 
 #define USE_FRAMEBUFFER_SCREEN    1
 #define USE_FRAMEBUFFER_3DONLY    2

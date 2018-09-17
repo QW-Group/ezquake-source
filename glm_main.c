@@ -68,6 +68,8 @@ static void GLM_Begin2DRendering(void)
 #define GLM_ProgramsInitialise             GL_ProgramsInitialise
 #define GLM_ProgramsShutdown               GL_ProgramsShutdown
 
+#define GLM_FramebufferCreate              GL_FramebufferCreate
+
 #define RENDERER_METHOD(returntype, name, ...) \
 { \
 	extern returntype GLM_ ## name(__VA_ARGS__); \

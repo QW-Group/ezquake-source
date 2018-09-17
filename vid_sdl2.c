@@ -188,6 +188,7 @@ cvar_t vid_framebuffer_width      = {"vid_framebuffer_width",      "0",       CV
 cvar_t vid_framebuffer_height     = {"vid_framebuffer_height",     "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
 cvar_t vid_framebuffer_scale      = {"vid_framebuffer_scale",      "1",       CVAR_NO_RESET, conres_changed_callback };
 cvar_t vid_framebuffer_palette    = {"vid_framebuffer_palette",    "0",       CVAR_NO_RESET | CVAR_LATCH };
+cvar_t vid_framebuffer_depthformat = { "vid_framebuffer_depthformat",  "0",       CVAR_NO_RESET | CVAR_LATCH };
 
 //
 // function declaration
@@ -342,7 +343,6 @@ void IN_Restart_f(void)
 		IN_ActivateMouse();
 	}
 }
-
 
 // Converts co-ordinates for the whole desktop to co-ordinates for a specific display
 static void VID_RelativePositionFromAbsolute(int* x, int* y, int* display)
@@ -833,6 +833,7 @@ void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_gl_core_profile);
 	Cvar_Register(&vid_framebuffer);
 	Cvar_Register(&vid_framebuffer_palette);
+	Cvar_Register(&vid_framebuffer_depthformat);
 
 #ifdef X11_GAMMA_WORKAROUND
 	Cvar_Register(&vid_gamma_workaround);

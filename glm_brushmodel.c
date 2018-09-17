@@ -42,6 +42,10 @@ void GLM_CreateBrushModelVAO(buffer_ref brushModel_vbo, buffer_ref vbo_brushElem
 {
 	int i;
 
+	if (!R_BufferReferenceIsValid(brushModel_vbo) || !R_BufferReferenceIsValid(vbo_brushElements)) {
+		return;
+	}
+
 	// Create vao
 	R_GenVertexArray(vao_brushmodel);
 	buffers.Bind(vbo_brushElements);

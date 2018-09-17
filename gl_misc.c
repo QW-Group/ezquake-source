@@ -194,6 +194,9 @@ void GL_PrintGfxInfo(void)
 	Com_Printf_State(PRINT_ALL, "Video\n");
 	GL_PrintInfoLine("Resolution:", 12, "%dx%d@%dhz [%s]", current.w, current.h, current.refresh_rate, r_fullscreen.integer ? "fullscreen" : "windowed");
 	GL_PrintInfoLine("Format:", 12, "%2d-bit color\n%2d-bit z-buffer\n%2d-bit stencil", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits);
+	if (GL_FramebufferEnabled3D()) {
+		GL_PrintInfoLine("Framebuffer:", 12, "%dx%d,%s\n", GL_FrameBufferWidth(framebuffer_std), GL_FrameBufferHeight(framebuffer_std), GL_FramebufferZBufferString(framebuffer_std));
+	}
 	if (vid.aspect) {
 		GL_PrintInfoLine("Aspect:", 12, "%f%%", vid.aspect);
 	}

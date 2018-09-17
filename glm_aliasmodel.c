@@ -99,6 +99,7 @@ extern float r_framelerp;
 
 #define DRAW_DETAIL_TEXTURES 1
 #define DRAW_CAUSTIC_TEXTURES 2
+#define DRAW_REVERSED_DEPTH 4
 static uniform_block_aliasmodels_t aliasdata;
 static buffer_ref vbo_aliasDataBuffer;
 static buffer_ref vbo_aliasIndirectDraw;
@@ -121,7 +122,9 @@ static qbool GLM_CompileAliasModelProgram(void)
 {
 	extern cvar_t gl_caustics;
 	qbool caustic_textures = gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture);
-	unsigned int drawAlias_desiredOptions = (caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0);
+	unsigned int drawAlias_desiredOptions =
+		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
+		(glConfig.reversed_depth ? DRAW_REVERSED_DEPTH : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_aliasmodel, drawAlias_desiredOptions)) {
 		static char included_definitions[1024];
@@ -144,6 +147,9 @@ static qbool GLM_CompileAliasModelProgram(void)
 		}
 
 		strlcat(included_definitions, va("#define SAMPLER_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
+		if (glConfig.reversed_depth) {
+			strlcat(included_definitions, "#define EZQ_REVERSED_DEPTH\n", sizeof(included_definitions));
+		}
 
 		// Initialise program for drawing image
 		R_ProgramCompileWithInclude(r_program_aliasmodel, included_definitions);

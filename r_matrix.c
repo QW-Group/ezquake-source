@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "glc_matrix.h"
 #include "r_draw.h"
+#include "tr_types.h"
 
 static float projectionMatrix[16];
 static float modelMatrix[16];
@@ -331,6 +332,11 @@ void R_Frustum(double left, double right, double bottom, double top, double zNea
 	perspective[10] = -(zFar + zNear) / (zFar - zNear);
 	perspective[11] = -1;
 	perspective[14] = -2 * (zFar * zNear) / (zFar - zNear);
+
+	if (glConfig.reversed_depth) {
+		perspective[10] = -zFar / (zNear - zFar) - 1;
+		perspective[14] = -(zNear * zFar) / (zNear - zFar);
+	}
 
 	R_MultiplyMatrix(perspective, R_ProjectionMatrix(), new_projection);
 	R_SetMatrix(R_ProjectionMatrix(), new_projection);

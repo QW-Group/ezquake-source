@@ -109,6 +109,11 @@ static GLenum glDepthFunctions[] = {
 	GL_EQUAL,  // r_depthfunc_equal,
 	GL_LEQUAL, // r_depthfunc_lessorequal,
 };
+static GLenum glReversedDepthFunctions[] = {
+	GL_GREATER, // inv(r_depthfunc_less)
+	GL_EQUAL,   // inv(r_depthfunc_equal)
+	GL_GEQUAL   // inv(r_depthfunc_lessorequal)
+};
 static GLenum glCullFaceValues[] = {
 	GL_FRONT,  // r_cullface_front
 	GL_BACK,   // r_cullface_back
@@ -156,6 +161,7 @@ C_ASSERT(sizeof(glBlendFuncValuesSource) / sizeof(glBlendFuncValuesSource[0]) ==
 C_ASSERT(sizeof(glBlendFuncValuesDestination) / sizeof(glBlendFuncValuesDestination[0]) == r_blendfunc_count);
 C_ASSERT(sizeof(glTextureEnvModeValues) / sizeof(glTextureEnvModeValues[0]) == r_texunit_mode_count);
 C_ASSERT(sizeof(glDepthFunctions) / sizeof(glDepthFunctions[0]) == r_depthfunc_count);
+C_ASSERT(sizeof(glReversedDepthFunctions) / sizeof(glReversedDepthFunctions[0]) == r_depthfunc_count);
 C_ASSERT(sizeof(glCullFaceValues) / sizeof(glCullFaceValues[0]) == r_cullface_count);
 C_ASSERT(sizeof(glPolygonModeValues) / sizeof(glPolygonModeValues[0]) == r_polygonmode_count);
 C_ASSERT(sizeof(glAlphaTestModeValues) / sizeof(glAlphaTestModeValues[0]) == r_alphatest_func_count);
@@ -166,6 +172,11 @@ static const char* txtDepthFunctions[] = {
 	"<", // r_depthfunc_less,
 	"=", // r_depthfunc_equal,
 	"<=", // r_depthfunc_lessorequal,
+};
+static const char* txtReversedDepthFunctions[] = {
+	">", // r_depthfunc_less,
+	"=", // r_depthfunc_equal,
+	">=", // r_depthfunc_lessorequal,
 };
 static const char* txtCullFaceValues[] = {
 	"front", // r_cullface_front,
@@ -198,6 +209,7 @@ static const char* txtTextureEnvModeValues[] = {
 
 #ifdef C_ASSERT
 C_ASSERT(sizeof(txtDepthFunctions) / sizeof(txtDepthFunctions[0]) == r_depthfunc_count);
+C_ASSERT(sizeof(txtReversedDepthFunctions) / sizeof(txtReversedDepthFunctions[0]) == r_depthfunc_count);
 C_ASSERT(sizeof(txtCullFaceValues) / sizeof(txtCullFaceValues[0]) == r_cullface_count);
 C_ASSERT(sizeof(txtBlendFuncNames) / sizeof(txtCullFaceValues[0]) == r_blendfunc_count);
 C_ASSERT(sizeof(txtPolygonModeValues) / sizeof(txtPolygonModeValues[0]) == r_polygonmode_count);
@@ -319,19 +331,30 @@ void GL_ApplyRenderingState(r_state_id id)
 	rendering_state_t* state = &states[id];
 	extern cvar_t gl_brush_polygonoffset;
 	rendering_state_t* current = &opengl.rendering_state;
+	float zRange[2] = {
+		glConfig.reversed_depth && false ? 1.0f - state->depth.nearRange : state->depth.nearRange,
+		glConfig.reversed_depth && false ? 1.0f - state->depth.farRange : state->depth.farRange,
+	};
 
 	R_TraceEnterRegion(va("GL_ApplyRenderingState(%s)", state->name), true);
 
 	if (state->depth.func != current->depth.func) {
-		glDepthFunc(glDepthFunctions[current->depth.func = state->depth.func]);
-		R_TraceLogAPICall("glDepthFunc(%s)", txtDepthFunctions[current->depth.func]);
+		current->depth.func = state->depth.func;
+		if (glConfig.reversed_depth) {
+			glDepthFunc(glReversedDepthFunctions[current->depth.func]);
+			R_TraceLogAPICall("glDepthFunc(reversed(%s)=%s)", txtDepthFunctions[current->depth.func], txtReversedDepthFunctions[current->depth.func]);
+		}
+		else {
+			glDepthFunc(glDepthFunctions[current->depth.func]);
+			R_TraceLogAPICall("glDepthFunc(%s)", txtDepthFunctions[current->depth.func]);
+		}
 	}
-	if (state->depth.nearRange != current->depth.nearRange || state->depth.farRange != current->depth.farRange) {
+	if (zRange[0] != current->depth.nearRange || zRange[1] != current->depth.farRange) {
 		glDepthRange(
-			current->depth.nearRange = state->depth.nearRange,
-			current->depth.farRange = state->depth.farRange
+			current->depth.nearRange = zRange[0],
+			current->depth.farRange = zRange[1]
 		);
-		R_TraceLogAPICall("glDepthRange(%f,%f)", state->depth.nearRange, state->depth.farRange);
+		R_TraceLogAPICall("glDepthRange(%f,%f)", zRange[0], zRange[1]);
 	}
 	if (state->cullface.mode != current->cullface.mode) {
 		glCullFace(glCullFaceValues[current->cullface.mode = state->cullface.mode]);
@@ -926,7 +949,9 @@ qbool R_VertexArrayCreated(r_vao_id vao)
 void R_BindVertexArray(r_vao_id vao)
 {
 	if (currentVAO != vao || opengl.rendering_state.glc_vao_force_rebind) {
-		assert(vao == vao_none || R_VertexArrayCreated(vao));
+		if (!(vao == vao_none || R_VertexArrayCreated(vao))) {
+			assert(false);
+		}
 
 		renderer.BindVertexArray(vao);
 

@@ -80,6 +80,7 @@ static void GLC_Begin2DRendering(void)
 #define GLC_CvarForceRecompile             GL_CvarForceRecompile
 #define GLC_ProgramsInitialise             GL_ProgramsInitialise
 #define GLC_ProgramsShutdown               GL_ProgramsShutdown
+#define GLC_FramebufferCreate              GL_FramebufferCreate
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \

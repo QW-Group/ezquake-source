@@ -452,7 +452,6 @@ void R_SetupViewport(void)
 	h = y - y2;
 
 	// Multiview
-	R_IdentityProjectionView();
 	if (CL_MultiviewEnabled() && CL_MultiviewCurrentView() != 0) {
 		R_SetViewports(glx, x, gly, y2, w, h, cl_multiview.value);
 	}
@@ -463,6 +462,7 @@ void R_SetupViewport(void)
 	farclip = max((int)r_farclip.value, 4096);
 	screenaspect = (float)r_refdef.vrect.width / r_refdef.vrect.height;
 
+	R_IdentityProjectionView();
 	MYgluPerspective(r_refdef.fov_y, screenaspect, r_nearclip.value, farclip);
 }
 

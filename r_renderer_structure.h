@@ -105,7 +105,8 @@ RENDERER_METHOD(void, Draw3DSprites, void)
 RENDERER_METHOD(void, Draw3DSpritesInline, void)   // FIXME get rid of this and all other inline rendering
 
 // Framebuffers
-RENDERER_METHOD(void, RenderFramebuffers, framebuffer_ref fb_3d, framebuffer_ref fb_2d)
+RENDERER_METHOD(void, RenderFramebuffers, void)
+RENDERER_METHOD(qbool, FramebufferCreate, framebuffer_id id, int width, int height, qbool is3d)
 
 // Programs
 RENDERER_METHOD(void, ProgramsInitialise, void)

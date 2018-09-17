@@ -98,24 +98,24 @@ static qbool GLM_CompilePostProcessProgram(void)
 	return R_ProgramReady(r_program_post_process) && R_VertexArrayCreated(vao_postprocess);
 }
 
-void GLM_RenderFramebuffers(framebuffer_ref fb_3d, framebuffer_ref fb_2d)
+void GLM_RenderFramebuffers(void)
 {
-	qbool flip2d = GL_FramebufferReferenceIsValid(fb_2d);
-	qbool flip3d = GL_FramebufferReferenceIsValid(fb_3d);
+	qbool flip2d = GL_FramebufferEnabled2D();
+	qbool flip3d = GL_FramebufferEnabled3D();
 
 	if (GLM_CompilePostProcessProgram()) {
 		R_ProgramUse(r_program_post_process);
 		R_BindVertexArray(vao_postprocess);
 
 		if (flip2d && flip3d) {
-			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(fb_3d, 0));
-			renderer.TextureUnitBind(1, GL_FramebufferTextureReference(fb_2d, 0));
+			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(framebuffer_std, fbtex_standard));
+			renderer.TextureUnitBind(1, GL_FramebufferTextureReference(framebuffer_hud, fbtex_standard));
 		}
 		else if (flip3d) {
-			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(fb_3d, 0));
+			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(framebuffer_std, fbtex_standard));
 		}
 		else if (flip2d) {
-			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(fb_2d, 0));
+			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(framebuffer_hud, fbtex_standard));
 		}
 		GL_DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	}

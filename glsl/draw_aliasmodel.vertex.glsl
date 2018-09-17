@@ -101,6 +101,10 @@ void main()
 	}
 
 	if ((fsFlags & AMF_WEAPONMODEL) != 0) {
+#ifdef EZQ_REVERSED_DEPTH
+		gl_Position.z *= 1 / 0.3;
+#else
 		gl_Position.z *= 0.3;
+#endif
 	}
 }

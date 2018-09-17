@@ -52,13 +52,15 @@ void GLM_PrepareModelRendering(qbool vid_restart)
 	extern buffer_ref brushModel_vbo, vbo_brushElements;
 	buffer_ref instance_vbo;
 
-	GLM_BuildCommonTextureArrays(vid_restart);
+	if (cls.state != ca_disconnected) {
+		GLM_BuildCommonTextureArrays(vid_restart);
 
-	instance_vbo = R_CreateInstanceVBO();
-	R_CreateAliasModelVBO(instance_vbo);
-	R_BrushModelCreateVBO(instance_vbo);
+		instance_vbo = R_CreateInstanceVBO();
+		R_CreateAliasModelVBO(instance_vbo);
+		R_BrushModelCreateVBO(instance_vbo);
 
-	GLM_CreateBrushModelVAO(brushModel_vbo, vbo_brushElements, instance_vbo);
+		GLM_CreateBrushModelVAO(brushModel_vbo, vbo_brushElements, instance_vbo);
+	}
 	renderer.ProgramsInitialise();
 }
 
