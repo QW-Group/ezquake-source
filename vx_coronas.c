@@ -39,9 +39,11 @@ typedef struct corona_s
 	coronatype_t type;
 	qbool sighted;
 	qbool los; //to prevent having to trace a line twice
-	entity_t *serialhint;//is a serial to avoid recreating stuff
 	int texture;
 	struct corona_s* next;
+
+	int static_entity_id;
+	int client_entity_id;
 } corona_t;
 
 //Tei: original whas 256, upped so whas low (?!) for some games
@@ -66,6 +68,10 @@ void R_UpdateCoronas(void)
 	for (i = 0; i < MAX_CORONAS; i++) {
 		c = &r_corona[i];
 
+		if (c->origin[1] == -2054) {
+			c = c;
+		}
+
 		if (c->type == C_FREE) {
 			continue;
 		}
@@ -77,13 +83,14 @@ void R_UpdateCoronas(void)
 		}
 
 		// First, check to see if it's time to die.
-		if (c->die < cl.time || c->scale <= 0 || c->alpha <= 0) {
+		if (!amf_coronas.integer || c->die < cl.time || c->scale <= 0 || c->alpha <= 0) {
 			// Free this corona up.
 			c->scale = 0;
 			c->alpha = 0;
 			c->type = C_FREE;
 			c->sighted = false;
-			c->serialhint = 0; // so can be reused
+			c->client_entity_id = 0; // so can be reused
+			c->static_entity_id = 0;
 			continue;
 		}
 
@@ -94,26 +101,31 @@ void R_UpdateCoronas(void)
 		c->next = r_corona_by_tex[c->texture];
 		r_corona_by_tex[c->texture] = c;
 
-		CL_TraceLine(r_refdef.vieworg, c->origin, impact, normal);
-		if (!VectorCompare(impact, c->origin)) {
+		c->los = true;
+		if (c->static_entity_id > 0) {
+			c->los = (cl_static_entities[c->static_entity_id - 1].visframe >= r_framecount - 1);
+		}
+		else if (c->client_entity_id > 0) {
+			c->los = (cl_entities[c->client_entity_id - 1].sequence == cl.validsequence);
+		}
+		//c->los = true;
+		if (c->los) {
+			CL_TraceLine(r_refdef.vieworg, c->origin, impact, normal);
+			c->los = VectorCompare(impact, c->origin);
+		}
+		if (!c->los) {
 			//Can't see it, so make it fade out(faster)
-			c->los = false;
-
 			c->scale = 0;
 			c->alpha = 0;
 		}
 		else {
-			c->los = true;
 			if (c->type == C_FIRE) {
 				c->fade = 1.5;
 				c->growth = 1000;
 				if (c->scale > 150) {
 					c->scale = 150 + rand() % 15; //flicker when at full radius
 				}
-				if (c->alpha > 0.2f) {
-					//TODO: make a cvar to control this
-					c->alpha = 0.2f;// .. coronacontrast or something
-				}
+				c->alpha = min(c->alpha, 0.2f);
 			}
 			c->sighted = true;
 		}
@@ -265,16 +277,19 @@ void R_DrawCoronas(void)
 	}
 }
 
-//NewCorona
-void NewCorona(coronatype_t type, vec3_t origin)
+static void R_CoronasNewImpl(coronatype_t type, vec3_t origin, int entity_ref)
 {
 	corona_t *c = NULL;
 	int i;
 	qbool corona_found = false;
 	customlight_t cst_lt = { 0 };
 
-	if (ISPAUSED) {
+	if (ISPAUSED || !amf_coronas.integer) {
 		return;
+	}
+
+	if (entity_ref) {
+		entity_ref = bound(0, entity_ref, CL_MAX_EDICTS);
 	}
 
 	c = r_corona;
@@ -288,7 +303,7 @@ void NewCorona(coronatype_t type, vec3_t origin)
 	}
 
 	if (!corona_found) {
-		//Tei: last attemp to get a valid corona to "canibalize"
+		//Tei: last attempt to get a valid corona to "canibalize"
 		c = r_corona;
 		for (i = 0; i < MAX_CORONAS; i++, c++) {
 			//Search a fire corona that is about to die soon
@@ -311,6 +326,8 @@ void NewCorona(coronatype_t type, vec3_t origin)
 	c->type = type;
 	c->los = false;
 	c->texture = CORONATEX_STANDARD;
+	c->client_entity_id = entity_ref;
+
 	if (type == C_FLASH || type == C_BLUEFLASH) {
 		if (type == C_BLUEFLASH) {
 			VectorCopy(bubblecolor[lt_blue], c->color);
@@ -473,6 +490,15 @@ void NewCorona(coronatype_t type, vec3_t origin)
 	}
 }
 
+void R_CoronasNew(coronatype_t type, vec3_t origin)
+{
+	R_CoronasNewImpl(type, origin, 0);
+}
+
+void R_CoronasEntityNew(coronatype_t type, centity_t* cent)
+{
+	R_CoronasNewImpl(type, cent->lerp_origin, (cent - cl_entities) + 1);
+}
 
 void InitCoronas(void)
 {
@@ -493,31 +519,42 @@ void InitCoronas(void)
 //NewStaticLightCorona
 //Throws down a permanent light at origin, and wont put another on top of it
 //This needs fixing so it wont be called so often
-void NewStaticLightCorona(coronatype_t type, vec3_t origin, entity_t *hint)
+void NewStaticLightCorona(coronatype_t type, vec3_t origin, int entity_id)
 {
 	corona_t* c;
 	corona_t* e = NULL;
 	int	      i;
 	qbool     breakage = true;
 
-	c = r_corona;
-	for (i = 0; i < MAX_CORONAS; i++, c++) {
-		if (c->type == C_FREE) {
-			e = c;
-			breakage = false;
-		}
+	if (entity_id) {
+		int corona_id = cl_static_entities[entity_id - 1].corona_id;
 
-		if (hint == c->serialhint) {
-			return;
-		}
-
-		if (VectorCompare(c->origin, origin) && c->type == C_FIRE) {
-			return;
+		if (corona_id >= 0 && corona_id < MAX_CORONAS) {
+			if (r_corona[corona_id].static_entity_id == entity_id) {
+				e = &r_corona[corona_id];
+			}
 		}
 	}
-	if (breakage) {
-		//no free coronas
-		return;
+
+	if (!e) {
+		c = r_corona;
+		for (i = 0; i < MAX_CORONAS; i++, c++) {
+			if (!e && c->type == C_FREE) {
+				e = c;
+				breakage = false;
+			}
+			else if (entity_id && entity_id == c->static_entity_id) {
+				return;
+			}
+
+			if (c->type == C_FIRE && VectorCompare(c->origin, origin)) {
+				return;
+			}
+		}
+		if (breakage) {
+			//no free coronas
+			return;
+		}
 	}
 
 	memset(e, 0, sizeof(*e));
@@ -527,13 +564,17 @@ void NewStaticLightCorona(coronatype_t type, vec3_t origin, entity_t *hint)
 	e->type = type;
 	e->los = false;
 	e->texture = CORONATEX_STANDARD;
-	e->serialhint = hint;
+	e->static_entity_id = entity_id;
+	if (entity_id) {
+		cl_static_entities[entity_id - 1].corona_id = e - r_corona;
+	}
 
 	if (type == C_FIRE) {
 		e->color[0] = 0.5;
 		e->color[1] = 0.2;
 		e->color[2] = 0.05;
-		e->scale = 0.1;
+		//e->scale = 0.1;
+		e->scale = 150 + rand() % 15;
 		e->die = cl.time + 800;
 		e->alpha = 0.05;
 		e->fade = 0.5;

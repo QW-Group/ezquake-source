@@ -2383,7 +2383,7 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 					CL_NewDlightEx(state->number, ent->origin, rocketlightsize, 0.1, cst_lt, bubble);
 					if (!ISPAUSED && amf_coronas.value) {
 						//VULT CORONAS
-						NewCorona(C_ROCKETLIGHT, ent->origin);
+						R_CoronasEntityNew(C_ROCKETLIGHT, cent);
 					}
 				}
 				else if (r_rockettrail.value == 9 || r_rockettrail.value == 11)
@@ -2438,8 +2438,9 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 			// VULT TRACER GLOW
 			rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));
 			CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.01, lt_green, true);
-			if (!ISPAUSED && amf_coronas.value)
-				NewCorona(C_WIZLIGHT, ent->origin);
+			if (!ISPAUSED && amf_coronas.integer) {
+				R_CoronasNew(C_WIZLIGHT, ent->origin);
+			}
 
 			R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, TRACER1_TRAIL);
 		}
@@ -2448,8 +2449,9 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 			// VULT TRACER GLOW
 			rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));
 			CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.01, lt_default, true);
-			if (!ISPAUSED && amf_coronas.value)
-				NewCorona(C_KNIGHTLIGHT, ent->origin);
+			if (!ISPAUSED && amf_coronas.integer) {
+				R_CoronasNew(C_KNIGHTLIGHT, ent->origin);
+			}
 
 			R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, TRACER2_TRAIL);
 		}
@@ -2458,8 +2460,9 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 			// VULT TRACER GLOW
 			rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));
 			CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.01, lt_blue, true);
-			if (!ISPAUSED && amf_coronas.value)
-				NewCorona(C_VORELIGHT, ent->origin);
+			if (!ISPAUSED && amf_coronas.integer) {
+				R_CoronasNew(C_VORELIGHT, ent->origin);
+			}
 
 			R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, VOOR_TRAIL);
 		}
@@ -2484,8 +2487,9 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 		{
 			rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));
 			CL_NewDlight(state->number, ent->origin, rocketlightsize, 0.01, lt_default, true);
-			if (!ISPAUSED && amf_coronas.value)
-				NewCorona(C_KNIGHTLIGHT, ent->origin);
+			if (!ISPAUSED && amf_coronas.value) {
+				R_CoronasNew(C_KNIGHTLIGHT, ent->origin);
+			}
 			VX_LightningTrail(*old_origin, ent->origin);
 			R_ParticleTrail(*old_origin, ent->origin, &cent->trail_origin, TRACER2_TRAIL);
 		}
@@ -2505,12 +2509,13 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 
 				// R_ParticleTrail (*old_origin, ent->origin, &cent->trail_origin, TF_TRAIL); //for cutf tossable dets
 				ParticleAlphaTrail(*old_origin, liteorg, &cent->trail_origin, 10, 0.8);
-				if (!ISPAUSED && amf_coronas.value)
-				{
-					if (ent->skinnum > 0)
-						NewCorona(C_REDLIGHT, liteorg);
-					else
-						NewCorona(C_GREENLIGHT, liteorg);
+				if (!ISPAUSED && amf_coronas.integer) {
+					if (ent->skinnum > 0) {
+						R_CoronasNew(C_REDLIGHT, liteorg);
+					}
+					else {
+						R_CoronasNew(C_GREENLIGHT, liteorg);
+					}
 				}
 			}
 		}
@@ -2526,8 +2531,9 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 			VectorMA(liteorg, rand() % 10 - 5, right, liteorg);
 			VectorMA(liteorg, rand() % 10 - 5, forward, liteorg);
 			SparkGen(liteorg, col, (int)(6 * amf_buildingsparks.value), 100, 1);
-			if (amf_coronas.value)
-				NewCorona(C_BLUESPARK, liteorg);
+			if (amf_coronas.integer) {
+				R_CoronasNew(C_BLUESPARK, liteorg);
+			}
 		}
 
 		// VULT TESLA CHARGE - Tesla or shambler in charging animation

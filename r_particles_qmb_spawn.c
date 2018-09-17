@@ -354,6 +354,8 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 		Sys_Error("QMB particle added without initialization");
 	}
 
+	entity_ref = bound(0, entity_ref, CL_MAX_EDICTS - 1);
+
 	if (time == 0 || size == 0.0f) {
 		return;
 	}
@@ -366,7 +368,8 @@ __inline static void AddParticleTrail(part_type_t type, vec3_t start, vec3_t end
 
 	VectorCopy(start, point);
 	VectorSubtract(end, start, delta);
-	if (type != p_entitytrail && !(length = VectorLength(delta))) {
+	length = VectorLength(delta);
+	if (type != p_entitytrail && length < 1) {
 		goto done;
 	}
 
@@ -1581,8 +1584,8 @@ void VXGunshot(vec3_t org, float count)
 			}
 			dir[0] += 180 / 5;
 		}
-		if (amf_coronas.value) {
-			NewCorona(C_WHITELIGHT, org);
+		if (amf_coronas.integer) {
+			R_CoronasNew(C_WHITELIGHT, org);
 		}
 		if (amf_part_gunshot_type.value == 3) {
 			return;
@@ -1593,8 +1596,8 @@ void VXGunshot(vec3_t org, float count)
 		color[1] = 80;
 		color[2] = 10;
 		color[3] = 128;
-		if (amf_coronas.value) {
-			NewCorona(C_GUNFLASH, org);
+		if (amf_coronas.integer) {
+			R_CoronasNew(C_GUNFLASH, org);
 		}
 		for (a = 0; a < count*1.5; a++) {
 			for (i = 0; i < 3; i++) {
@@ -1604,8 +1607,8 @@ void VXGunshot(vec3_t org, float count)
 		}
 		return;
 	}
-	else if (amf_coronas.value) {
-		NewCorona(C_GUNFLASH, org);
+	else if (amf_coronas.integer) {
+		R_CoronasNew(C_GUNFLASH, org);
 	}
 
 	for (a = 0; a < count; a++) {
@@ -1657,8 +1660,8 @@ void VXNailhit(vec3_t org, float count)
 				}
 				dir[0] += 180 / 5;
 			}
-			if (amf_coronas.value) {
-				NewCorona(C_WHITELIGHT, org);
+			if (amf_coronas.integer) {
+				R_CoronasNew(C_WHITELIGHT, org);
 			}
 			if (amf_part_spikes_type.value == 3) {
 				return;
@@ -1669,8 +1672,8 @@ void VXNailhit(vec3_t org, float count)
 			color[1] = 80;
 			color[2] = 10;
 			color[3] = 128;
-			if (amf_coronas.value) {
-				NewCorona(C_GUNFLASH, org);
+			if (amf_coronas.integer) {
+				R_CoronasNew(C_GUNFLASH, org);
 			}
 			for (a = 0; a<count*1.5; a++) {
 				for (i = 0; i < 3; i++) {
@@ -1685,8 +1688,8 @@ void VXNailhit(vec3_t org, float count)
 			color[1] = 80;
 			color[2] = 10;
 			color[3] = 128;
-			if (amf_coronas.value) {
-				NewCorona(C_GUNFLASH, org);
+			if (amf_coronas.integer) {
+				R_CoronasNew(C_GUNFLASH, org);
 			}
 		}
 	}

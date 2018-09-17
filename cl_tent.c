@@ -418,8 +418,8 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 			R_TeleportSplash(pos);
 		}
 
-		if (amf_coronas_tele.value) {
-			NewCorona(C_BLUEFLASH, pos);
+		if (amf_coronas_tele.integer) {
+			R_CoronasNew(C_BLUEFLASH, pos);
 		}
 	}
 	else if (r_explosiontype.value == 3) {
@@ -441,8 +441,9 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 		else {
 			R_BlobExplosion(pos); // Blob explosion
 		}
-		if (amf_coronas.value)
-			NewCorona(C_BLUEFLASH, pos);
+		if (amf_coronas.integer) {
+			R_CoronasNew(C_BLUEFLASH, pos);
+		}
 	}
 	else if (r_explosiontype.value == 7 && qmb_initialized && gl_part_explosions.value) {
 		QMB_DetpackExplosion(pos);	// Detpack explosion
@@ -480,8 +481,8 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 				VectorCopy(cst_lt.color, dl->color);
 			}
 		}
-		if (amf_coronas.value && r_explosiontype.value != 7 && r_explosiontype.value != 2 && r_explosiontype.value != 8) {
-			NewCorona(C_FLASH, pos);
+		if (amf_coronas.integer && r_explosiontype.integer != 7 && r_explosiontype.integer != 2 && r_explosiontype.integer != 8) {
+			R_CoronasNew(C_FLASH, pos);
 		}
 	}
 
@@ -490,17 +491,16 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 
 static void CL_Parse_TE_TAREXPLOSION(vec3_t pos)
 {
-	if (amf_part_blobexplosion.value)
-	{
+	if (amf_part_blobexplosion.value) {
 		VXBlobExplosion(pos);
 	}
-	else
-	{
+	else {
 		R_BlobExplosion(pos); // Blob explosion
 	}
 	
-	if (amf_coronas.value)
-		NewCorona (C_BLUEFLASH, pos);
+	if (amf_coronas.integer) {
+		R_CoronasNew(C_BLUEFLASH, pos);
+	}
 
 	S_StartSound(-1, 0, cl_sfx_r_exp3, pos, 1, 1);
 }
@@ -515,8 +515,8 @@ static void CL_Parse_TE_TELEPORT(vec3_t pos)
 		else {
 			R_TeleportSplash(pos); // Teleport splash
 		}
-		if (amf_coronas_tele.value) {
-			NewCorona(C_BLUEFLASH, pos);
+		if (amf_coronas_tele.integer) {
+			R_CoronasNew(C_BLUEFLASH, pos);
 		}
 	}
 }
@@ -526,22 +526,25 @@ static void CL_Parse_TE_GUNSHOT(void)
 	int count;
 	vec3_t pos;
 
-	if (cls.nqdemoplayback)
+	if (cls.nqdemoplayback) {
 		count = 1;
-	else
+	}
+	else {
 		count = MSG_ReadByte();
+	}
 
 	pos[0] = MSG_ReadCoord();
 	pos[1] = MSG_ReadCoord();
 	pos[2] = MSG_ReadCoord();
 
-	if (CL_Demo_SkipMessage(true))
+	if (CL_Demo_SkipMessage(true)) {
 		return;
+	}
 	
-	if (amf_part_gunshot.value && !Rulesets_RestrictParticles())
+	if (amf_part_gunshot.value && !Rulesets_RestrictParticles()) {
 		VXGunshot(pos, 5 * count * amf_part_gunshot.value);
-	else
-	{
+	}
+	else {
 		R_RunParticleEffect(pos, vec3_origin, 256 /* magic! */, 20 * count);
 	}
 }
@@ -886,10 +889,10 @@ void CL_UpdateBeams(void)
 			// The infamous d-light glow has been replaced with a simple corona so it doesn't light up the room anymore.
 			if (amf_coronas.value && amf_lightning.value && !ISPAUSED) {
 				if (b->entity == cl.viewplayernum + 1 && !((cls.demoplayback || cl.spectator) && cl_camera_tpp.integer)) {
-					NewCorona(C_SMALLLIGHTNING, org);
+					R_CoronasNew(C_SMALLLIGHTNING, org);
 				}
 				else {
-					NewCorona(C_LIGHTNING, org);
+					R_CoronasNew(C_LIGHTNING, org);
 				}
 			}
 

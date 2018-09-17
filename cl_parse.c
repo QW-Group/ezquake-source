@@ -1834,10 +1834,11 @@ void CL_ParseStatic (qbool extended)
 		CL_ParseBaseline (&es);
 	}
 
-	if (cl.num_statics >= MAX_STATIC_ENTITIES)
-		Host_Error ("Too many static entities");
-	ent = &cl_static_entities[cl.num_statics];
-	cl.num_statics++;
+	if (cl.num_statics >= MAX_STATIC_ENTITIES) {
+		Host_Error("Too many static entities");
+	}
+	ent = &cl_static_entities[cl.num_statics++];
+	ent->entity_id = cl.num_statics;
 
 	// Copy it to the current state
 	ent->model = cl.model_precache[es.modelindex];
@@ -1845,10 +1846,10 @@ void CL_ParseStatic (qbool extended)
 	ent->colormap = vid.colormap;
 	ent->skinnum = es.skinnum;
 
-	VectorCopy (es.origin, ent->origin);
-	VectorCopy (es.angles, ent->angles);
+	VectorCopy(es.origin, ent->origin);
+	VectorCopy(es.angles, ent->angles);
 
-	R_AddEfrags (ent);
+	R_AddEfrags(ent);
 }
 
 void CL_ParseStaticSound (void)
@@ -1857,8 +1858,9 @@ void CL_ParseStaticSound (void)
 	static_sound_t ss;
 	int i;
 
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++) {
 		ss.org[i] = MSG_ReadCoord();
+	}
 
 	ss.sound_num = MSG_ReadByte();
 	ss.vol = MSG_ReadByte();
@@ -3184,8 +3186,7 @@ void CL_MuzzleFlash (void)
 				mod = cl.model_precache[ent->modelindex];
 
 				// Special muzzleflashes for some enemies.
-				if (mod->modhint == MOD_SOLDIER)
-				{
+				if (mod->modhint == MOD_SOLDIER) {
 					AngleVectors(ent->angles, forward, right, up);
 					VectorMA(ent->origin, 22, forward, org);
 					VectorMA(org, 10, right, org);
@@ -3193,39 +3194,37 @@ void CL_MuzzleFlash (void)
 
 					if (amf_part_muzzleflash.value)
 					{
-						if (!ISPAUSED && amf_coronas.value)
-							NewCorona(C_SMALLFLASH, org);
+						if (!ISPAUSED && amf_coronas.integer) {
+							R_CoronasNew(C_SMALLFLASH, org);
+						}
 						DrawMuzzleflash(org, ent->angles, none);
 					}
 				}
-				else if (mod->modhint == MOD_ENFORCER)
-				{
+				else if (mod->modhint == MOD_ENFORCER) {
 					AngleVectors (ent->angles, forward, right, up);
 					VectorMA(ent->origin, 22, forward, org);
 					VectorMA(org, 10, right, org);
 					VectorMA(org, 12, up, org);
-					if (amf_part_muzzleflash.value)
-					{
-						if (amf_coronas.value)
-							NewCorona(C_SMALLFLASH, org);
+					if (amf_part_muzzleflash.integer) {
+						if (amf_coronas.integer) {
+							R_CoronasNew(C_SMALLFLASH, org);
+						}
 						DrawMuzzleflash(org, ent->angles, none);
 					}
 				}
-				else if (mod->modhint == MOD_OGRE)
-				{
+				else if (mod->modhint == MOD_OGRE) {
 					AngleVectors(ent->angles, forward, right, up);
 					VectorMA(ent->origin, 22, forward, org);
 					VectorMA(org, -8, right, org);
 					VectorMA(org, 14, up, org);
-					if (amf_part_muzzleflash.value)
-					{
-						if (amf_coronas.value)
-							NewCorona(C_SMALLFLASH, org);
+					if (amf_part_muzzleflash.integer) {
+						if (amf_coronas.integer) {
+							R_CoronasNew(C_SMALLFLASH, org);
+						}
 						DrawMuzzleflash(org, ent->angles, none);
 					}
 				}
-				else
-				{
+				else {
 					AngleVectors(ent->angles, forward, NULL, NULL);
 					VectorMA(ent->origin, 18, forward, org);
 				}
@@ -3236,10 +3235,12 @@ void CL_MuzzleFlash (void)
 				dl->die = cl.time + 0.1;
 
 				// Blue muzzleflashes for shamblers/teslas
-				if (mod->modhint == MOD_SHAMBLER || mod->modhint == MOD_TESLA)
+				if (mod->modhint == MOD_SHAMBLER || mod->modhint == MOD_TESLA) {
 					dl->type = lt_blue;
-				else
+				}
+				else {
 					dl->type = lt_muzzleflash;
+				}
 				VectorCopy(org, dl->origin);
 
 				break;
@@ -3280,8 +3281,9 @@ void CL_MuzzleFlash (void)
 	{
 		if (((i - 1) != cl.viewplayernum) || (cameratype != C_NORMAL))
 		{
-			if (amf_coronas.value)
-				NewCorona(C_SMALLFLASH, dl->origin);
+			if (amf_coronas.integer) {
+				R_CoronasNew(C_SMALLFLASH, dl->origin);
+			}
 			DrawMuzzleflash(org, angles, state->velocity);
 		}
 	}

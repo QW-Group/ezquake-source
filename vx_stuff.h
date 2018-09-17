@@ -43,11 +43,12 @@ typedef enum
 	C_VORELIGHT,
 } coronatype_t;
 
-void NewCorona(coronatype_t type, vec3_t origin);
+void R_CoronasNew(coronatype_t type, vec3_t origin);
+void R_CoronasEntityNew(coronatype_t type, centity_t* cent);
 void R_DrawCoronas(void);
 void InitCoronas(void);
 void InitVXStuff(void);
-void NewStaticLightCorona(coronatype_t type, vec3_t origin, entity_t *serialhint);
+void NewStaticLightCorona(coronatype_t type, vec3_t origin, int entity_id);
 
 typedef enum {
 	CORONATEX_STANDARD,

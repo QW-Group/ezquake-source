@@ -292,10 +292,10 @@ void R_DrawAliasModel(entity_t *ent)
 		if (IsFlameModel(ent->model)) {
 			//FIXME: This is slow and pathetic as hell, really we should just check the entity
 			//alternativley add some kind of permanent client side TE for the torch
-			NewStaticLightCorona(C_FIRE, ent->origin, ent);
+			NewStaticLightCorona(C_FIRE, ent->origin, ent->entity_id);
 		}
-		if (ent->model->modhint == MOD_TELEPORTDESTINATION) {
-			NewStaticLightCorona(C_LIGHTNING, ent->origin, ent);
+		else if (ent->model->modhint == MOD_TELEPORTDESTINATION) {
+			NewStaticLightCorona(C_LIGHTNING, ent->origin, ent->entity_id);
 		}
 	}
 
