@@ -752,6 +752,7 @@ void R_BuildLightmaps(void)
 			qbool isSky = (m->surfaces[i].flags & SURF_DRAWSKY);
 
 			m->surfaces[i].surfacenum = i;
+			m->surfaces[i].lightmaptexturenum = -1;
 			if (isSky) {
 				continue;
 			}

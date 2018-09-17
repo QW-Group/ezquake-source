@@ -171,7 +171,7 @@ qbool Mod_IsTurbTextureName(model_t* model, const char* name)
 
 qbool Mod_IsSkyTextureName(model_t* model, const char* name)
 {
-	return (name[0] == 's' && name[1] == 'k' && name[2] == 'y');
+	return (tolower(name[0]) == 's' && tolower(name[1]) == 'k' && tolower(name[2]) == 'y');
 }
 
 qbool Mod_IsAlphaTextureName(model_t* model, const char* name)
