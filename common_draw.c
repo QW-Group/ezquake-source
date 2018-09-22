@@ -805,6 +805,8 @@ char* SCR_GetGameTime(int t)
 
 	if (cl.countdown || cl.standby)
 		strlcpy (str, SecondsToMinutesString(timelimit), sizeof(str));
+	else if (cl.teamfortress)
+		strlcpy (str, SecondsToMinutesString((int) abs(timelimit - cl.servertime)), sizeof(str));
 	else
 		strlcpy (str, SecondsToMinutesString((int) abs(timelimit - cl.gametime + *gameclockoffset)), sizeof(str));
 
