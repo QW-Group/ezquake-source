@@ -335,7 +335,7 @@ static void GLC_MakeAliasModelVBO(model_t *m, aliashdr_t* paliashdr)
 				vbo_buffer[v].texture_coords[0] = s;
 				vbo_buffer[v].texture_coords[1] = t;
 				VectorCopy(r_avertexnormals[l], vbo_buffer[v].normal);
-				vbo_buffer[v].vert_index = 0;
+				vbo_buffer[v].flags = 0;
 
 				++v;
 				++vertices;
@@ -371,9 +371,12 @@ void GLC_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 			//TODO: corrupted files may cause a crash here, sanity checks?
 			trivertx_t* src = &poseverts[i][vertexorder[j]];
 
-			verts->v[0] = src->v[0] * hdr->scale[0];
-			verts->v[1] = src->v[1] * hdr->scale[1];
-			verts->v[2] = src->v[2] * hdr->scale[2];
+			verts->v[0] = src->v[0] * hdr->scale[0] + hdr->scale_origin[0];
+			verts->v[1] = src->v[1] * hdr->scale[1] + hdr->scale_origin[1];
+			verts->v[2] = src->v[2] * hdr->scale[2] + hdr->scale_origin[2] - (m->modhint == MOD_EYES ? 30 : 0);
+			if (m->modhint == MOD_EYES) {
+				VectorScale(verts->v, 2, verts->v);
+			}
 			verts->lightnormalindex = src->lightnormalindex;
 
 			++verts;

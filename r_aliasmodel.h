@@ -60,4 +60,8 @@ void R_DrawAliasModel(entity_t *ent);
 int R_AliasFramePose(maliasframedesc_t* frame);
 maliasframedesc_t* R_AliasModelFindFrame(aliashdr_t* hdr, const char* framename, int framenumber);
 
+// Previous constant was 135, pre-scaling... this is in world coordinates now,
+//   so picked a new constant that stopped the nailgun moving 
+#define ALIASMODEL_MAX_LERP_DISTANCE (6.3)
+
 #endif // EZQUAKE_R

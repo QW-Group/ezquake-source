@@ -58,7 +58,6 @@ extern cvar_t    gl_outline;
 extern cvar_t    gl_outline_width;
 
 extern float     r_framelerp;
-extern float     r_lerpdistance;
 
 // Temporary r_lerpframes fix, unless we go for shaders-in-classic...
 //   After all models loaded, this needs to be allocated enough space to hold a complete pose of verts
@@ -224,10 +223,13 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_
 
 static void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfrac)
 {
+	extern cvar_t r_lerpmuzzlehack;
+
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
 	GLenum primitive = GL_TRIANGLE_STRIP;
 	qbool mtex = R_TextureReferenceIsValid(fb_texture) && gl_mtexable;
+	qbool limit_lerp = r_lerpmuzzlehack.integer && (ent->model->renderfx & RF_LIMITLERP);
 	int position = 0;
 
 	int *order, count;
@@ -273,8 +275,9 @@ static void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int
 			float t = ((float *)order)[1];
 			order += 2;
 
-			if ((ent->renderfx & RF_LIMITLERP)) {
-				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
+			lerpfrac = r_framelerp;
+			if (limit_lerp && !VectorL2Compare(verts1->v, verts2->v, ALIASMODEL_MAX_LERP_DISTANCE)) {
+				lerpfrac = 1;
 			}
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 
@@ -368,6 +371,8 @@ static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, 
 	float lerpfrac;
 	ez_trivertx_t *verts1, *verts2;
 	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
+	extern cvar_t r_lerpmuzzlehack;
+	qbool limit_lerp = r_lerpmuzzlehack.integer && (ent->model->renderfx & RF_LIMITLERP);
 
 	GLC_StateBeginAliasOutlineFrame();
 	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
@@ -400,8 +405,9 @@ static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, 
 		do {
 			order += 2;
 
-			if ((ent->renderfx & RF_LIMITLERP)) {
-				lerpfrac = VectorL2Compare(verts1->v, verts2->v, r_lerpdistance) ? r_framelerp : 1;
+			lerpfrac = r_framelerp;
+			if (limit_lerp && !VectorL2Compare(verts1->v, verts2->v, ALIASMODEL_MAX_LERP_DISTANCE)) {
+				lerpfrac = 1;
 			}
 
 			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);

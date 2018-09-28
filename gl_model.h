@@ -153,7 +153,7 @@ typedef struct vbo_model_vert_s {
 	vec3_t normal;
 	vec3_t direction;
 	float texture_coords[2];
-	int vert_index;
+	unsigned int flags;
 } vbo_model_vert_t;
 
 typedef struct glpoly_s {
@@ -545,6 +545,8 @@ typedef struct model_s {
 	msurface_t*         drawflat_chain[2];
 	int                 first_texture_chained;
 	int                 last_texture_chained;
+
+	int                 renderfx;
 } model_t;
 
 //============================================================================

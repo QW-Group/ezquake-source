@@ -225,8 +225,6 @@ void R_DrawViewModel(void);
 void R_LightmapFrameInit(void);
 void R_UploadChangedLightmaps(void);
 
-void R_SetupAliasFrame(entity_t* ent, model_t* model, maliasframedesc_t *oldframe, maliasframedesc_t *frame, qbool outline, texture_ref texture, texture_ref fb_texture, int effects, int render_effects);
-
 mspriteframe_t* R_GetSpriteFrame(entity_t *e, msprite2_t *psprite);
 
 void GLC_CreateLightmapTextures(void);

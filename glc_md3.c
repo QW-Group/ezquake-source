@@ -69,7 +69,6 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	R_PushModelviewMatrix(oldMatrix);
 	R_RotateForEntity (ent);
 	scale = (ent->renderfx & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1;
-	// perform two scaling at once, one scalling for MD3_XYZ_SCALE, other for r_viewmodelsize
 	R_ScaleModelview(scale, 1, 1);
 
 	// 

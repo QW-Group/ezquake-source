@@ -424,3 +424,16 @@ void Matrix3x3_MultiplyByVector (vec3_t out, const matrix3x3_t in, const vec3_t 
 	out[2] = in[2][0] * v[0] + in[2][1] * v[1] + in[2][2] * v[2];
 }
 
+float VectorDistance(const vec3_t x, const vec3_t y)
+{
+	vec3_t diff = { x[0] - y[0], x[1] - y[1], x[2] - y[2] };
+
+	return VectorLength(diff);
+}
+
+float VectorDistanceQuick(const vec3_t x, const vec3_t y)
+{
+	vec3_t diff = { x[0] - y[0], x[1] - y[1], x[2] - y[2] };
+
+	return diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
+}

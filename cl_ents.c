@@ -34,20 +34,6 @@ extern cvar_t cl_nolerp, cl_lerp_monsters, cl_newlerp;
 extern cvar_t r_drawvweps;		
 extern  unsigned int     cl_dlight_active[MAX_DLIGHTS/32];       
 
-static float VectorDistance(const vec3_t x, const vec3_t y)
-{
-	vec3_t diff = { x[0] - y[0], x[1] - y[1], x[2] - y[2] };
-
-	return VectorLength(diff);
-}
-
-static float VectorDistanceQuick(const vec3_t x, const vec3_t y)
-{
-	vec3_t diff = { x[0] - y[0], x[1] - y[1], x[2] - y[2] };
-
-	return diff[0] * diff[0] + diff[1] * diff[1] + diff[2] * diff[2];
-}
-
 static struct predicted_player {
 	int flags;
 	qbool active;

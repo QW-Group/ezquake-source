@@ -40,7 +40,7 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	int r_fastsky;
 	int r_textureless;
 
-	float unused_r_texture_luma_fb_bmodels;
+	float r_lerpmodels;
 
 	// powerup shells round alias models
 	float shellSize;
@@ -84,7 +84,7 @@ struct AliasModel {
 	float shadelight;
 	float ambientlight;
 	int materialTextureMapping;
-	int lerpBaseIndex;
 	float lerpFraction;
 	float minLumaMix;
+	int unused_space;
 };

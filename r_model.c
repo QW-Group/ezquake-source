@@ -425,6 +425,8 @@ float RadiusFromBounds (vec3_t mins, vec3_t maxs)
 //It was used in one of the older versions when it supported Q2 Models.
 void Mod_AddModelFlags(model_t *mod)
 {
+	mod->renderfx = 0;
+
 	//modhints
 	if (!strcmp(mod->name, "progs/player.mdl")) {
 		mod->modhint = MOD_PLAYER;
@@ -555,7 +557,20 @@ void Mod_AddModelFlags(model_t *mod)
 		mod->modhint = MOD_GIB;
 	}
 	else if (!strncasecmp(mod->name, "progs/v_", 8)) {
+		qbool suppress_nolerp = false;
+
 		mod->modhint = MOD_VMODEL;
+
+		// the following models are excluded
+		suppress_nolerp |= !strcmp(cl_modelnames[mi_vaxe], mod->name);
+		suppress_nolerp |= !strcmp(cl_modelnames[mi_vbio], mod->name);
+		suppress_nolerp |= !strcmp(cl_modelnames[mi_vgrap], mod->name);
+		suppress_nolerp |= !strcmp(cl_modelnames[mi_vknife], mod->name);
+		suppress_nolerp |= !strcmp(cl_modelnames[mi_vknife2], mod->name);
+		suppress_nolerp |= !strcmp(cl_modelnames[mi_vmedi], mod->name);
+		suppress_nolerp |= !strcmp(cl_modelnames[mi_vspan], mod->name);
+
+		mod->renderfx |= (suppress_nolerp ? 0 : RF_LIMITLERP);
 	}
 	else if (!strcmp(mod->name, "progs/missile.mdl")) {
 		mod->modhint = MOD_ROCKET;

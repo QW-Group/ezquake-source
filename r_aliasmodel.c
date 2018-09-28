@@ -81,15 +81,14 @@ static void* Mod_LoadAliasFrame(void* pin, maliasframedesc_t *frame, int* posenu
 static void* Mod_LoadAliasGroup(void* pin, maliasframedesc_t *frame, int* posenum);
 void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t *pskintype);
 
-static cvar_t    r_lerpmuzzlehack = { "r_lerpmuzzlehack", "1" };
 static cvar_t    gl_shaftlight = { "gl_shaftlight", "1" };
+cvar_t    r_lerpmuzzlehack = { "r_lerpmuzzlehack", "1" };
 cvar_t    gl_powerupshells_effect1level = { "gl_powerupshells_effect1level", "0.75" };
 cvar_t    gl_powerupshells_base1level = { "gl_powerupshells_base1level", "0.05" };
 cvar_t    gl_powerupshells_effect2level = { "gl_powerupshells_effect2level", "0.4" };
 cvar_t    gl_powerupshells_base2level = { "gl_powerupshells_base2level", "0.1" };
 
 float     r_framelerp;
-float     r_lerpdistance;
 
 extern float     bubblecolor[NUM_DLIGHTTYPES][4];
 
@@ -150,11 +149,10 @@ static void R_RenderAliasModelEntity(
 			ent->r_modelcolor[i] = bound(0, ent->r_modelcolor[i], 1);
 		}
 
-		R_SetupAliasFrame(ent, model, oldframe, frame, outline, texture, null_texture_reference, effects, ent->renderfx);
+		fb_texture = null_texture_reference;
 	}
-	else {
-		R_SetupAliasFrame(ent, model, oldframe, frame, outline, texture, fb_texture, effects, ent->renderfx);
-	}
+
+	R_SetupAliasFrame(ent, model, oldframe, frame, outline, texture, fb_texture, effects, ent->renderfx);
 }
 
 qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame)
@@ -634,22 +632,7 @@ void R_DrawViewModel(void)
 	VectorCopy(cent->current.origin, gun.origin);
 	VectorCopy(cent->current.angles, gun.angles);
 	gun.colormap = vid.colormap;
-	gun.renderfx = RF_WEAPONMODEL | RF_NOSHADOW;
-	if (r_lerpmuzzlehack.integer) {
-		// These seem to be 'viewmodels that don't have muzzleflash'
-		// ... Models generally have the muzzleflash behind the gun when not firing, so
-		//     RF_LIMITLERP stops the muzzleflash slowly moving forward when smoothing
-		if (cent->current.modelindex != cl_modelindices[mi_vaxe] &&
-			cent->current.modelindex != cl_modelindices[mi_vbio] &&
-			cent->current.modelindex != cl_modelindices[mi_vgrap] &&
-			cent->current.modelindex != cl_modelindices[mi_vknife] &&
-			cent->current.modelindex != cl_modelindices[mi_vknife2] &&
-			cent->current.modelindex != cl_modelindices[mi_vmedi] &&
-			cent->current.modelindex != cl_modelindices[mi_vspan]) {
-			gun.renderfx |= RF_LIMITLERP;
-			r_lerpdistance = 15;
-		}
-	}
+	gun.renderfx = RF_WEAPONMODEL | RF_NOSHADOW | gun.model->renderfx;
 
 	gun.effects |= (cl.stats[STAT_ITEMS] & IT_QUAD) ? EF_BLUE : 0;
 	gun.effects |= (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) ? EF_RED : 0;
@@ -664,6 +647,7 @@ void R_DrawViewModel(void)
 		gun.oldframe = gun.frame;
 		gun.framelerp = -1;
 	}
+	//Con_Printf("Lerping %d=>%d\n", gun.oldframe, gun.frame);
 
 	gun.alpha = bound(0, cl_drawgun.value, 1);
 

@@ -94,7 +94,7 @@ qbool VK_CreateAliasModelPipeline(buffer_ref aliasModelVBO, buffer_ref instanceV
 	VK_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 1, VK_FORMAT_R32G32_SFLOAT, sizeof(vbo_model_vert_t), VK_VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords), false);
 	VK_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 2, VK_FORMAT_R32G32B32_SFLOAT, sizeof(vbo_model_vert_t), VK_VBO_FIELDOFFSET(vbo_model_vert_t, normal), false);
 	VK_ConfigureVertexAttribPointer(vao_aliasmodel, instanceVBO, 3, VK_FORMAT_R32_UINT, sizeof(uint32_t), 0, true);
-	VK_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 4, VK_FORMAT_R32_SINT, sizeof(vbo_model_vert_t), VK_VBO_FIELDOFFSET(vbo_model_vert_t, vert_index), false);
+	//VK_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 4, VK_FORMAT_R32_SINT, sizeof(vbo_model_vert_t), VK_VBO_FIELDOFFSET(vbo_model_vert_t, flags), false);
 	
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;

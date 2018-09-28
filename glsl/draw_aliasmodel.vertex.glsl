@@ -8,17 +8,9 @@ layout(location = 0) in vec3 vboPosition;
 layout(location = 1) in vec2 vboTex;
 layout(location = 2) in vec3 vboNormalCoords;
 layout(location = 3) in int _instanceId;
-#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
-layout(location = 4) in int vertexIndex;
-#else
 layout(location = 4) in vec3 vboDirection;
-#endif
+layout(location = 5) in int vboFlags;
 
-#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
-layout(std140, binding=EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO) buffer model_data {
-	AliasModelVert lerpVertices[];
-};
-#endif
 layout(std140, binding=EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) buffer AliasModelData {
 	AliasModel models[];
 };
@@ -33,7 +25,6 @@ flat out float fsMinLumaMix;
 
 void main()
 {
-	int lerpIndex = models[_instanceId].lerpBaseIndex;
 	float lerpFrac = models[_instanceId].lerpFraction;
 
 	vec3 position = vboPosition;
@@ -43,29 +34,13 @@ void main()
 	fsFlags = models[_instanceId].flags;
 	fsMinLumaMix = models[_instanceId].minLumaMix;
 
-	if (lerpFrac > 0 && lerpFrac <= 1) {
-#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
-		vec3 position2 = vec3(lerpVertices[lerpIndex + vertexIndex].x, lerpVertices[lerpIndex + vertexIndex].y, lerpVertices[lerpIndex + vertexIndex].z);
-		if ((fsFlags & AMF_LIMITLERP) != 0 && distance(position, position2) >= 15) {
-			lerpFrac = 1;
-		}
-		vec2 tex2 = vec2(lerpVertices[lerpIndex + vertexIndex].s, lerpVertices[lerpIndex + vertexIndex].t);
-		vec3 normals2 = vec3(lerpVertices[lerpIndex + vertexIndex].nx, lerpVertices[lerpIndex + vertexIndex].ny, lerpVertices[lerpIndex + vertexIndex].nz);
-#else
-		if ((fsFlags & AMF_LIMITLERP) != 0 && length(vboDirection) >= 15) {
-			lerpFrac = 1;
-		}
-
-		vec3 position2 = position + lerpFrac * vboDirection;
-		vec2 tex2 = tex;
-		vec3 normals2 = normalCoords;
+	if (lerpFrac != 0) {
+#ifdef EZQ_ALIASMODEL_MUZZLEHACK
+		lerpFrac = max(lerpFrac, (vboFlags & AM_VERTEX_NOLERP));
 #endif
 
-		position = mix(position, position2, lerpFrac);
-		tex = mix(tex, tex2, lerpFrac);
-		normalCoords = mix(normalCoords, normals2, lerpFrac);
+		position = mix(position, position + vboDirection, lerpFrac);
 	}
-
 	fsMaterialSampler = models[_instanceId].materialTextureMapping;
 
 	if (mode == EZQ_ALIAS_MODE_NORMAL) {

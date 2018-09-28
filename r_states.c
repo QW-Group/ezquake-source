@@ -462,19 +462,8 @@ void R_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
 	R_TraceEnterRegion(__FUNCTION__, true);
 
 	R_RotateForEntity(ent);
-	if (ent->model->modhint == MOD_EYES) {
-		R_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2] - (22 + 8));
-		// double size of eyes, since they are really hard to see in gl
-		R_ScaleModelview(2, 2, 2);
-	}
-	else if (ent->renderfx & RF_WEAPONMODEL) {
-		float scale = 0.5 + bound(0, r_viewmodelsize.value, 1) / 2;
-
-		R_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
-		R_ScaleModelview(scale, 1, 1);
-	}
-	else {
-		R_TranslateModelview(paliashdr->scale_origin[0], paliashdr->scale_origin[1], paliashdr->scale_origin[2]);
+	if (ent->renderfx & RF_WEAPONMODEL) {
+		R_ScaleModelview(0.5 + bound(0, r_viewmodelsize.value, 1) / 2, 1, 1);
 	}
 
 	R_TraceLeaveFunctionRegion;

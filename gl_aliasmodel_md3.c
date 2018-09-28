@@ -37,6 +37,7 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 	int v;
 	md3model_t* md3Model = (md3model_t *)Mod_Extradata(model);
 	md3Header_t* pheader = MD3_HeaderForModel(md3Model);
+	vbo_model_vert_t* vbo;
 
 	// Work out how many verts we are going to need to store in VBO
 	model->vertsInVBO = 0;
@@ -45,47 +46,43 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 	}
 	model->vertsInVBO *= pheader->numFrames;
 
-	if (R_UseModernOpenGL()) {
-		vbo_model_vert_t* vbo;
+	model->temp_vbo_buffer = vbo = Q_malloc(sizeof(vbo_model_vert_t) * model->vertsInVBO);
 
-		model->temp_vbo_buffer = vbo = Q_malloc(sizeof(vbo_model_vert_t) * model->vertsInVBO);
+	// foreach frame
+	for (framenum = 0, v = 0; framenum < pheader->numFrames; ++framenum) {
+		int base = v;
 
-		// foreach frame
-		for (framenum = 0, v = 0; framenum < pheader->numFrames; ++framenum) {
-			int base = v;
+		// loop through the surfaces.
+		MD3_ForEachSurface(pheader, surf, surfnum)
+		{
+			int i, triangle;
 
-			// loop through the surfaces.
-			MD3_ForEachSurface(pheader, surf, surfnum)
-			{
-				int i, triangle;
+			texCoords = MD3_SurfaceTextureCoords(surf);
+			vertices = MD3_SurfaceVertices(surf);
 
-				texCoords = MD3_SurfaceTextureCoords(surf);
-				vertices = MD3_SurfaceVertices(surf);
+			triangles = MD3_SurfaceTriangles(surf);
 
-				triangles = MD3_SurfaceTriangles(surf);
+			for (triangle = 0; triangle < surf->numTriangles; ++triangle) {
+				for (i = 0; i < 3; ++i, ++v) {
+					int vertexNumber = framenum * surf->numVerts + triangles[triangle].indexes[i];
+					md3XyzNormal_t* vert = &vertices[vertexNumber];
+					float s, t;
 
-				for (triangle = 0; triangle < surf->numTriangles; ++triangle) {
-					for (i = 0; i < 3; ++i, ++v) {
-						int vertexNumber = framenum * surf->numVerts + triangles[triangle].indexes[i];
-						md3XyzNormal_t* vert = &vertices[vertexNumber];
-						float s, t;
+					s = texCoords[triangles[triangle].indexes[i]].s;
+					t = texCoords[triangles[triangle].indexes[i]].t;
 
-						s = texCoords[triangles[triangle].indexes[i]].s;
-						t = texCoords[triangles[triangle].indexes[i]].t;
-
-						VectorScale(vert->xyz, MD3_XYZ_SCALE, vbo[v].position);
+					VectorScale(vert->xyz, MD3_XYZ_SCALE, vbo[v].position);
+					{
 						{
-							{
-								float lat = ((vert->normal >> 8) & 255) * (2.0 * M_PI) / 255.0;
-								float lng = (vert->normal & 255) * (2.0 * M_PI) / 255.0;
-								vbo[v].normal[0] = cos(lat) * sin(lng);
-								vbo[v].normal[1] = sin(lat) * sin(lng);
-								vbo[v].normal[2] = cos(lng);
-							}
-							vbo[v].texture_coords[0] = s;
-							vbo[v].texture_coords[1] = t;
-							vbo[v].vert_index = v - base;
+							float lat = ((vert->normal >> 8) & 255) * (2.0 * M_PI) / 255.0;
+							float lng = (vert->normal & 255) * (2.0 * M_PI) / 255.0;
+							vbo[v].normal[0] = cos(lat) * sin(lng);
+							vbo[v].normal[1] = sin(lat) * sin(lng);
+							vbo[v].normal[2] = cos(lng);
 						}
+						vbo[v].texture_coords[0] = s;
+						vbo[v].texture_coords[1] = t;
+						vbo[v].flags = 0;
 					}
 				}
 			}

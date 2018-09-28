@@ -23,11 +23,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "r_local.h"
 #include "r_aliasmodel.h"
+#include "glsl/constants.glsl"
 
 void GLM_CreateAliasModelVBO(buffer_ref instanceVBO);
 void GLC_AllocateAliasPoseBuffer(void);
 
-static void GLM_AliasModelSetVertexDirection(aliashdr_t* hdr, vbo_model_vert_t* vbo_buffer, int pose1, int pose2)
+static void GLM_AliasModelSetVertexDirection(aliashdr_t* hdr, vbo_model_vert_t* vbo_buffer, int pose1, int pose2, qbool limit_lerp, int key_pose)
 {
 	int v1 = pose1 * hdr->vertsPerPose;
 	int v2 = pose2 * hdr->vertsPerPose;
@@ -35,8 +36,16 @@ static void GLM_AliasModelSetVertexDirection(aliashdr_t* hdr, vbo_model_vert_t* 
 
 	for (j = 0; j < hdr->numtris; ++j) {
 		for (k = 0; k < 3; ++k, ++v1, ++v2) {
-			// FIXME: This is a much better place to process RF_LIMITLERP
 			VectorSubtract(vbo_buffer[v2].position, vbo_buffer[v1].position, vbo_buffer[v1].direction);
+
+			vbo_buffer[v1].flags = 0;
+			if (limit_lerp) {
+				float distance = VectorDistance(vbo_buffer[v1].position, vbo_buffer[v2].position);
+
+				if (distance > ALIASMODEL_MAX_LERP_DISTANCE) {
+					vbo_buffer[v1].flags |= AM_VERTEX_NOLERP;
+				}
+			}
 		}
 	}
 }
@@ -51,7 +60,7 @@ void GLM_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 	
 	v = 0;
 	hdr->poseverts = hdr->vertsPerPose = 3 * hdr->numtris;
-	m->vertsInVBO = 3 * hdr->numtris * hdr->numposes;
+	m->vertsInVBO = hdr->vertsPerPose * hdr->numposes;
 	m->temp_vbo_buffer = vbo_buffer = Q_malloc_named(m->vertsInVBO * sizeof(vbo_model_vert_t), m->name);
 
 	// 
@@ -67,9 +76,12 @@ void GLM_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 				src = &poseverts[pose][vert];
 
 				l = src->lightnormalindex;
-				x = src->v[0] * hdr->scale[0];
-				y = src->v[1] * hdr->scale[1];
-				z = src->v[2] * hdr->scale[2];
+				x = src->v[0] * hdr->scale[0] + hdr->scale_origin[0];
+				y = src->v[1] * hdr->scale[1] + hdr->scale_origin[1];
+				z = src->v[2] * hdr->scale[2] + hdr->scale_origin[2] - (m->modhint == MOD_EYES ? 30 : 0);
+				if (m->modhint == MOD_EYES) {
+					VectorScale(src->v, 2, src->v);
+				}
 				s = stverts[vert].s;
 				t = stverts[vert].t;
 
@@ -84,7 +96,7 @@ void GLM_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 				vbo_buffer[v].texture_coords[0] = s;
 				vbo_buffer[v].texture_coords[1] = t;
 				VectorCopy(r_avertexnormals[l], vbo_buffer[v].normal);
-				vbo_buffer[v].vert_index = v - pose * hdr->vertsPerPose;
+				vbo_buffer[v].flags = 0;
 			}
 		}
 	}
@@ -96,7 +108,7 @@ void GLM_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 		if (frame->numposes > 1) {
 			// This frame has animated poses, so link them all together
 			for (pose = 0; pose < frame->numposes - 1; ++pose) {
-				GLM_AliasModelSetVertexDirection(hdr, vbo_buffer, frame->firstpose + pose, frame->firstpose + pose + 1);
+				GLM_AliasModelSetVertexDirection(hdr, vbo_buffer, frame->firstpose + pose, frame->firstpose + pose + 1, m->renderfx & RF_LIMITLERP, 0);
 			}
 		}
 		else {
@@ -107,7 +119,7 @@ void GLM_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 			}
 
 			if (frame2) {
-				GLM_AliasModelSetVertexDirection(hdr, vbo_buffer, frame->firstpose, frame2->firstpose);
+				GLM_AliasModelSetVertexDirection(hdr, vbo_buffer, frame->firstpose, frame2->firstpose, m->renderfx & RF_LIMITLERP, 0);
 				frame->nextpose = frame2->firstpose;
 			}
 		}

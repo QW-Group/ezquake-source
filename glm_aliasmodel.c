@@ -86,9 +86,9 @@ typedef struct uniform_block_aliasmodel_s {
 	float shadelight;
 	float ambientlight;
 	int materialSamplerMapping;
-	int lerpBaseIndex;
 	float lerpFraction;
 	float minLumaMix;
+	int unused_space;
 } uniform_block_aliasmodel_t;
 
 typedef struct block_aliasmodels_s {
@@ -97,9 +97,10 @@ typedef struct block_aliasmodels_s {
 
 extern float r_framelerp;
 
-#define DRAW_DETAIL_TEXTURES 1
-#define DRAW_CAUSTIC_TEXTURES 2
-#define DRAW_REVERSED_DEPTH 4
+#define DRAW_DETAIL_TEXTURES   1
+#define DRAW_CAUSTIC_TEXTURES  2
+#define DRAW_REVERSED_DEPTH    4
+#define DRAW_LERP_MUZZLEHACK   8
 static uniform_block_aliasmodels_t aliasdata;
 static buffer_ref vbo_aliasDataBuffer;
 static buffer_ref vbo_aliasIndirectDraw;
@@ -120,17 +121,19 @@ static int TEXTURE_UNIT_CAUSTICS;
 
 static qbool GLM_CompileAliasModelProgram(void)
 {
-	extern cvar_t gl_caustics;
+	extern cvar_t gl_caustics, r_lerpmuzzlehack;
+
 	qbool caustic_textures = gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture);
 	unsigned int drawAlias_desiredOptions =
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
-		(glConfig.reversed_depth ? DRAW_REVERSED_DEPTH : 0);
+		(glConfig.reversed_depth ? DRAW_REVERSED_DEPTH : 0) |
+		(r_lerpmuzzlehack.integer ? DRAW_LERP_MUZZLEHACK : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_aliasmodel, drawAlias_desiredOptions)) {
 		static char included_definitions[1024];
 
 		included_definitions[0] = '\0';
-		if (caustic_textures) {
+		if (drawAlias_desiredOptions & DRAW_CAUSTIC_TEXTURES) {
 			material_samplers_max = glConfig.texture_units - 1;
 			TEXTURE_UNIT_CAUSTICS = 0;
 			TEXTURE_UNIT_MATERIAL = 1;
@@ -147,13 +150,15 @@ static qbool GLM_CompileAliasModelProgram(void)
 		}
 
 		strlcat(included_definitions, va("#define SAMPLER_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
-		if (glConfig.reversed_depth) {
+		if (drawAlias_desiredOptions & DRAW_REVERSED_DEPTH) {
 			strlcat(included_definitions, "#define EZQ_REVERSED_DEPTH\n", sizeof(included_definitions));
+		}
+		if (drawAlias_desiredOptions & DRAW_LERP_MUZZLEHACK) {
+			strlcat(included_definitions, "#define EZQ_ALIASMODEL_MUZZLEHACK\n", sizeof(included_definitions));
 		}
 
 		// Initialise program for drawing image
 		R_ProgramCompileWithInclude(r_program_aliasmodel, included_definitions);
-
 		R_ProgramSetCustomOptions(r_program_aliasmodel, drawAlias_desiredOptions);
 	}
 	cached_mode = R_ProgramUniformGet1i(r_program_uniform_aliasmodel_drawmode);
@@ -177,11 +182,8 @@ static void GLM_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanc
 	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords), 0);
 	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 2, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, normal), 0);
 	GLM_ConfigureVertexAttribIPointer(vao_aliasmodel, instanceVBO, 3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
-#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
-	GLM_ConfigureVertexAttribIPointer(vao_aliasmodel, aliasModelVBO, 4, 1, GL_INT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, vert_index), 0);
-#else
 	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 4, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, direction), 0);
-#endif
+	GLM_ConfigureVertexAttribIPointer(vao_aliasmodel, aliasModelVBO, 5, 1, GL_UNSIGNED_INT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags), 0);
 
 	R_BindVertexArray(vao_none);
 }
@@ -195,22 +197,22 @@ static void R_ImportSpriteCoordsToVBO(vbo_model_vert_t* verts, int* position)
 	VectorSet(verts[0].position, 0, -1, -1);
 	verts[0].texture_coords[0] = 1;
 	verts[0].texture_coords[1] = 1;
-	verts[0].vert_index = 0;
+	verts[0].flags = 0;
 
 	VectorSet(verts[1].position, 0, -1, 1);
 	verts[1].texture_coords[0] = 1;
 	verts[1].texture_coords[1] = 0;
-	verts[1].vert_index = 1;
+	verts[1].flags = 1;
 
 	VectorSet(verts[2].position, 0, 1, 1);
 	verts[2].texture_coords[0] = 0;
 	verts[2].texture_coords[1] = 0;
-	verts[2].vert_index = 2;
+	verts[2].flags = 2;
 
 	VectorSet(verts[3].position, 0, 1, -1);
 	verts[3].texture_coords[0] = 0;
 	verts[3].texture_coords[1] = 1;
-	verts[3].vert_index = 3;
+	verts[3].flags = 3;
 
 	*position += 4;
 }
@@ -436,13 +438,11 @@ static void GLM_QueueAliasModelDrawImpl(
 		(effects & EF_BLUE ? AMF_SHELLMODEL_BLUE : 0) |
 		(R_TextureReferenceIsValid(texture) ? AMF_TEXTURE_MATERIAL : 0) |
 		(render_effects & RF_CAUSTICS ? AMF_CAUSTICS : 0) |
-		(render_effects & RF_WEAPONMODEL ? AMF_WEAPONMODEL : 0) |
-		(render_effects & RF_LIMITLERP ? AMF_LIMITLERP : 0);
+		(render_effects & RF_WEAPONMODEL ? AMF_WEAPONMODEL : 0);
 	uniform->yaw_angle_rad = ent->angles[YAW] * M_PI / 180.0;
 	uniform->shadelight = ent->shadelight;
 	uniform->ambientlight = ent->ambientlight;
 	uniform->lerpFraction = lerpFraction;
-	uniform->lerpBaseIndex = lerpFrameVertOffset;
 	uniform->color[0] = color[0];
 	uniform->color[1] = color[1];
 	uniform->color[2] = color[2];

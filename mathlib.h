@@ -219,4 +219,7 @@ Multiply matrix 'in' by vector 'v', note what 'out' is vector.
 */
 void Matrix3x3_MultiplyByVector(vec3_t out, const matrix3x3_t in, const vec3_t v);
 
+float VectorDistance(const vec3_t x, const vec3_t y);
+float VectorDistanceQuick(const vec3_t x, const vec3_t y);
+
 #endif /* !__MATHLIB_H__ */
