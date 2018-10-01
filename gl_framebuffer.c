@@ -30,6 +30,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_texture_internal.h"
 #include "r_renderer.h"
 
+#ifndef GL_NEGATIVE_ONE_TO_ONE
+#define GL_NEGATIVE_ONE_TO_ONE            0x935E
+#endif
+
+#ifndef GL_ZERO_TO_ONE
+#define GL_ZERO_TO_ONE                    0x935F
+#endif
+
 // OpenGL functionality from elsewhere
 GLuint GL_TextureNameFromReference(texture_ref ref);
 
