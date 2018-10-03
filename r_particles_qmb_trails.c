@@ -74,7 +74,7 @@ __inline static void AddParticleTrailImpl(part_type_t type, vec3_t start, vec3_t
 		}
 
 		// length > 140 was old limit in cl_ents.c
-		if (length > 140) {
+		if (length > 140 && entity_ref) {
 			VectorCopy(end, point);
 			goto done;
 		}
