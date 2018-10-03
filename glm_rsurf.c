@@ -87,6 +87,7 @@ typedef struct glm_brushmodel_drawcall_s {
 	struct glm_brushmodel_drawcall_s* next;
 } glm_brushmodel_drawcall_t;
 
+static glm_brushmodel_drawcall_t* GL_FlushWorldModelBatch(void);
 static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall);
 
 static glm_brushmodel_drawcall_t* drawcalls;
@@ -274,30 +275,31 @@ static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
 	int index = req->samplerMappingBase + texture_num;
 	int i;
 	int sampler = -1;
+	glm_brushmodel_drawcall_t* drawcall = &drawcalls[current_drawcall];
 
-	if (index >= sizeof(drawcalls[current_drawcall].mappings) / sizeof(drawcalls[current_drawcall].mappings[0])) {
+	if (index >= sizeof(drawcall->mappings) / sizeof(drawcall->mappings[0])) {
 		return false;
 	}
 
-	for (i = 0; i < drawcalls[current_drawcall].material_samplers; ++i) {
-		if (R_TextureReferenceEqual(texture->gl_texture_array, drawcalls[current_drawcall].allocated_samplers[i])) {
+	for (i = 0; i < drawcall->material_samplers; ++i) {
+		if (R_TextureReferenceEqual(texture->gl_texture_array, drawcall->allocated_samplers[i])) {
 			sampler = i;
 			break;
 		}
 	}
 
 	if (sampler < 0) {
-		if (drawcalls[current_drawcall].material_samplers >= material_samplers_max) {
-			GL_FlushWorldModelBatch();
+		if (drawcall->material_samplers >= material_samplers_max) {
+			drawcall = GL_FlushWorldModelBatch();
 		}
 
-		sampler = drawcalls[current_drawcall].material_samplers++;
-		drawcalls[current_drawcall].allocated_samplers[sampler] = texture->gl_texture_array;
+		sampler = drawcall->material_samplers++;
+		drawcall->allocated_samplers[sampler] = texture->gl_texture_array;
 	}
 
-	drawcalls[current_drawcall].mappings[index].samplerIndex = sampler;
-	drawcalls[current_drawcall].mappings[index].arrayIndex = texture->gl_texture_index;
-	drawcalls[current_drawcall].mappings[index].flags = R_TextureReferenceIsValid(texture->fb_texturenum) ? EZQ_SURFACE_HAS_LUMA : 0;
+	drawcall->mappings[index].samplerIndex = sampler;
+	drawcall->mappings[index].arrayIndex = texture->gl_texture_index;
+	drawcall->mappings[index].flags = R_TextureReferenceIsValid(texture->fb_texturenum) ? EZQ_SURFACE_HAS_LUMA : 0;
 	return true;
 }
 
@@ -392,10 +394,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 	}
 
 	if (drawcall->sampler_mappings >= MAX_SAMPLER_MAPPINGS || drawcall->batch_count >= MAX_WORLDMODEL_BATCH) {
-		GL_FlushWorldModelBatch();
-
-		drawcall = &drawcalls[current_drawcall];
-		memset(drawcall, 0, sizeof(*drawcall));
+		drawcall = GL_FlushWorldModelBatch();
 	}
 
 	req = &drawcall->worldmodel_requests[drawcall->batch_count];
@@ -533,7 +532,7 @@ static glm_worldmodel_req_t* GLM_DrawTexturedChain(glm_worldmodel_req_t* req, ms
 	return req;
 }
 
-static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
+static void GLM_DrawWorldModelOutlines(const glm_brushmodel_drawcall_t* drawcall)
 {
 	int begin = -1;
 	int i;
@@ -578,11 +577,16 @@ static void GLM_DrawWorldModelOutlines(glm_brushmodel_drawcall_t* drawcall)
 	R_ProgramUniform1i(r_program_uniform_brushmodel_outlines, 0);
 }
 
-void GL_FlushWorldModelBatch(void)
+static glm_brushmodel_drawcall_t* GL_FlushWorldModelBatch(void)
 {
-	current_drawcall++;
+	const glm_brushmodel_drawcall_t* prev = &drawcalls[current_drawcall++];
+	glm_brushmodel_drawcall_t* current = &drawcalls[current_drawcall];
 
 	GLM_CheckDrawCallSize();
+
+	memset(current, 0, sizeof(*current));
+	current->type = prev->type;
+	return current;
 }
 
 void GL_StartWaterSurfaceBatch(void)
@@ -620,7 +624,9 @@ void GLM_PrepareWorldModelBatch(void)
 		GL_SortDrawCalls(drawcall);
 
 		for (i = 0; i < drawcall->batch_count; ++i) {
-			drawcall->calls[i].samplerBase += samplerMappingOffset;
+			if (dynamic_sampler_index) {
+				drawcall->calls[i].samplerBase += samplerMappingOffset;
+			}
 			drawcall->worldmodel_requests[i].baseInstance += batchOffset;
 			drawcall->worldmodel_requests[i].firstIndex += indexOffset;
 		}
@@ -654,7 +660,7 @@ static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintp
 		int i;
 		for (i = begin; i < begin + count; ++i) {
 			glm_worldmodel_req_t* req = &drawcall->worldmodel_requests[i];
-			int mappingIndex = bound(0, drawcall->calls[i].samplerBase + req->firstTexture, drawcall->sampler_mappings - 1);
+			int mappingIndex = bound(0, drawcall->calls[i].samplerBase + req->firstTexture, sizeof(drawcall->mappings) / sizeof(drawcall->mappings[0]) - 1);
 			int sampler = drawcall->mappings[mappingIndex].samplerIndex;
 
 			R_ProgramUniform1i(r_program_uniform_brushmodel_sampler, sampler);
@@ -695,6 +701,8 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 			first = false;
 		}
 
+		R_TraceEnterNamedRegion(va("WorldModelBatch(%d/%d)", draw, current_drawcall));
+
 		// Bind texture units
 		renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
 
@@ -718,6 +726,8 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 		if (R_DrawWorldOutlines()) {
 			GLM_DrawWorldModelOutlines(drawcall);
 		}
+
+		R_TraceLeaveNamedRegion();
 
 		frameStats.subdraw_calls += drawcall->batch_count;
 		drawcall->batch_count = 0;

@@ -274,7 +274,6 @@ struct custom_model_color_s;
 void R_StateBeginAlphaLineRGB(float thickness);
 void R_SetupFrame(void);
 
-void GL_FlushWorldModelBatch(void);
 void GL_InitialiseFramebufferHandling(void);
 
 // Rendering functions
