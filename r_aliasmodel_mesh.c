@@ -78,9 +78,12 @@ void GLM_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 				l = src->lightnormalindex;
 				x = src->v[0] * hdr->scale[0] + hdr->scale_origin[0];
 				y = src->v[1] * hdr->scale[1] + hdr->scale_origin[1];
-				z = src->v[2] * hdr->scale[2] + hdr->scale_origin[2] - (m->modhint == MOD_EYES ? 30 : 0);
+				z = src->v[2] * hdr->scale[2] + hdr->scale_origin[2];
 				if (m->modhint == MOD_EYES) {
-					VectorScale(src->v, 2, src->v);
+					x *= 2;
+					y *= 2;
+					z *= 2;
+					z -= 30;
 				}
 				s = stverts[vert].s;
 				t = stverts[vert].t;

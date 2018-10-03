@@ -373,9 +373,10 @@ void GLC_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 
 			verts->v[0] = src->v[0] * hdr->scale[0] + hdr->scale_origin[0];
 			verts->v[1] = src->v[1] * hdr->scale[1] + hdr->scale_origin[1];
-			verts->v[2] = src->v[2] * hdr->scale[2] + hdr->scale_origin[2] - (m->modhint == MOD_EYES ? 30 : 0);
+			verts->v[2] = src->v[2] * hdr->scale[2] + hdr->scale_origin[2];
 			if (m->modhint == MOD_EYES) {
 				VectorScale(verts->v, 2, verts->v);
+				verts->v[2] -= 30;
 			}
 			verts->lightnormalindex = src->lightnormalindex;
 
