@@ -166,10 +166,12 @@ void GLM_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 		}
 		else {
 			if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-				chain_surfaces_simple(&clmodel->drawflat_chain, psurf);
+				chain_surfaces_simple_drawflat(&clmodel->drawflat_chain, psurf);
+				clmodel->drawflat_todo = true;
 			}
 			else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-				chain_surfaces_simple(&clmodel->drawflat_chain, psurf);
+				chain_surfaces_simple_drawflat(&clmodel->drawflat_chain, psurf);
+				clmodel->drawflat_todo = true;
 			}
 			else {
 				chain_surfaces_simple(&psurf->texinfo->texture->texturechain, psurf);

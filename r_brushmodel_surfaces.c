@@ -84,28 +84,6 @@ void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf)
 	*chain_head = surf;
 }
 
-// Order by lightmap# then by floor/ceiling... seems faster to switch colour than Bind(lightmap tex)
-void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf)
-{
-	msurface_t* current = *chain_head;
-	int surf_order = (surf->flags & SURF_DRAWFLAT_FLOOR ? 1 : 0) + max(surf->lightmaptexturenum, 0) * 2;
-
-	while (current) {
-		int current_order = (current->flags & SURF_DRAWFLAT_FLOOR ? 1 : 0) + max(current->lightmaptexturenum, 0) * 2;
-
-		if (surf_order > current_order) {
-			chain_head = &(current->drawflatchain);
-			current = *chain_head;
-			continue;
-		}
-
-		break;
-	}
-
-	surf->drawflatchain = current;
-	*chain_head = surf;
-}
-
 #define CHAIN_SURF_F2B(surf, chain_tail)		\
 	{											\
 		*(chain_tail) = (surf);					\
@@ -327,7 +305,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 						R_AddDrawflatChainSurface(surf, true);
 					}
 					else {
-						chain_surfaces_simple(&cl.worldmodel->drawflat_chain, surf);
+						chain_surfaces_simple_drawflat(&cl.worldmodel->drawflat_chain, surf);
 					}
 					cl.worldmodel->drawflat_todo = true;
 				}
@@ -336,7 +314,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 						R_AddDrawflatChainSurface(surf, false);
 					}
 					else {
-						chain_surfaces_simple(&cl.worldmodel->drawflat_chain, surf);
+						chain_surfaces_simple_drawflat(&cl.worldmodel->drawflat_chain, surf);
 					}
 					cl.worldmodel->drawflat_todo = true;
 				}
