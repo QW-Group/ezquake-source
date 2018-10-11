@@ -5070,7 +5070,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	if (!cl.teamplay)  // non teamplay mode
 		return;
 
-	if (!HUD_PrepareDraw(hud, width , height, &x, &y))
+	if (!HUD_PrepareDraw(hud, width, height, &x, &y))
 		return;
 
 	_y = y ;
@@ -5083,8 +5083,8 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		while (sorted_teams[k].name)
 		{
 			Draw_SString (x, _y, sorted_teams[k].name, hud_teaminfo_scale->value);
-			sprintf(tmp,"%s %i",TP_ParseFunChars("$.",false), sorted_teams[k].frags);
-			Draw_SString (x+(strlen(sorted_teams[k].name)+1)*FONTWIDTH, _y, tmp, hud_teaminfo_scale->value);
+			sprintf(tmp,"%s %4i", TP_ParseFunChars("$.",false), sorted_teams[k].frags);
+			Draw_SString(x + width - 6 * FONTWIDTH * hud_teaminfo_scale->value, _y, tmp, hud_teaminfo_scale->value);
 			_y += FONTWIDTH * hud_teaminfo_scale->value;
 			for ( j = 0; j < slots_num; j++ ) 
 			{
@@ -5202,6 +5202,15 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 						x += 3 * FONTWIDTH * scale;
 
 						break;
+					case 'f': // draw frags, space on left side
+					case 'F': // draw frags, space on right side
+						if (!width_only) {
+							snprintf(tmp, sizeof(tmp), (s[0] == 'f' ? "%3d" : "%-3d"), cl.players[i].frags);
+							Draw_SString(x, y, tmp, scale);
+						}
+						x += 3 * FONTWIDTH * scale;
+						break;
+
 					case 'a': // draw armor, padded with space on left side
 					case 'A': // draw armor, padded with space on right side
 
