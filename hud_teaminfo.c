@@ -61,6 +61,26 @@ cvar_t scr_teaminfo                        = { "scr_teaminfo",             "1" }
 
 static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int maxname, int maxloc, qbool width_only, float scale, const char* layout, int weapon_style, int armor_style, int powerup_style, int low_health, qbool proportional);
 
+static int HUD_CompareTeamInfoSlots(const void* lhs_, const void* rhs_)
+{
+	int lhs = *(const int*)lhs_;
+	int rhs = *(const int*)rhs_;
+	int lhs_pos = -1;
+	int rhs_pos = -1;
+	int i;
+
+	for (i = 0; i < n_players; ++i) {
+		if (sorted_players[i].playernum == lhs) {
+			lhs_pos = i;
+		}
+		if (sorted_players[i].playernum == rhs) {
+			rhs_pos = i;
+		}
+	}
+
+	return lhs_pos - rhs_pos;
+}
+
 void SCR_HUD_DrawTeamInfo(hud_t *hud)
 {
 	int x, y, _y, width, height;
@@ -136,6 +156,8 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 
 		slots[slots_num++] = i;
 	}
+
+	qsort(slots, slots_num, sizeof(slots[0]), HUD_CompareTeamInfoSlots);
 
 	// well, better use fixed loc length
 	maxloc = bound(0, hud_teaminfo_loc_width->integer, 100);

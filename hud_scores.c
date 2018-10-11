@@ -33,6 +33,9 @@ static cvar_t hud_sortrules_teamsort = { "hud_sortrules_teamsort", "0" };
 static cvar_t hud_sortrules_playersort = { "hud_sortrules_playersort", "1" };
 static cvar_t hud_sortrules_includeself = { "hud_sortrules_includeself", "1" };
 
+// FIXME: move to other string comparison functions
+int strcmp2(const char* s1, const char* s2);
+
 static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 {
 	const sort_players_info_t *p1 = vp1;
@@ -49,7 +52,7 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 		r = 1;
 	}
 	else if (i1->spectator && i2->spectator) {
-		r = strcmp(i1->name, i2->name);
+		r = strcmp2(i1->name, i2->name);
 	}
 	else {
 		//
@@ -64,13 +67,13 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 			}
 
 			// sort on team name only.
-			r = (r == 0) ? -strcasecmp(p1->team->name, p2->team->name) : r;
+			r = (r == 0) ? -strcmp2(p1->team->name, p2->team->name) : r;
 		}
 
 		if (hud_sortrules_playersort.integer & 1) {
 			r = (r == 0) ? i1->frags - i2->frags : r;
 		}
-		r = (r == 0) ? -strcasecmp(i1->name, i2->name) : r;
+		r = (r == 0) ? -strcmp2(i1->name, i2->name) : r;
 	}
 
 	r = (r == 0) ? (p1->playernum - p2->playernum) : r;
@@ -89,7 +92,7 @@ static int HUD_CompareTeams(const void *vt1, const void *vt2)
 	if (hud_sortrules_teamsort.integer == 1) {
 		r = (t1->frags - t2->frags);
 	}
-	r = !r ? -strcasecmp(t1->name, t2->name) : r;
+	r = !r ? -strcmp2(t1->name, t2->name) : r;
 
 	// qsort() sorts ascending by default, we want descending.
 	// So negate the result.
@@ -257,9 +260,16 @@ void HUD_Sort_Scoreboard(int flags)
 			// Find players team.
 			for (team = 0; team < n_teams; team++) {
 				if (!strcmp(player->team, sorted_teams[team].name) && sorted_teams[team].name[0]) {
-					if (hud_sortrules_includeself.integer == 2 && team != 0) {
+					qbool needs_switch = hud_sortrules_includeself.integer == 1 && team != 0;
+
+					if (hud_sortrules_includeself.integer == 1 && team > 0) {
 						sort_teams_info_t temp = sorted_teams[0];
 						sorted_teams[0] = sorted_teams[team];
+						sorted_teams[team] = temp;
+					}
+					else if (hud_sortrules_includeself.integer == 2 && team > 1) {
+						sort_teams_info_t temp = sorted_teams[1];
+						sorted_teams[1] = sorted_teams[team];
 						sorted_teams[team] = temp;
 					}
 					break;
@@ -276,6 +286,8 @@ void HUD_Sort_Scoreboard(int flags)
 			// Find players team.
 			for (team = 0; team < n_teams; team++) {
 				if (!strcmp(player->team, sorted_teams[team].name) && sorted_teams[team].name[0]) {
+					qbool needs_switch = hud_sortrules_includeself.integer == 1 && team != 0;
+
 					sorted_players[i].team = &sorted_teams[team];
 					if (sorted_players[i].playernum == active_player) {
 						active_team_position = team;
@@ -290,12 +302,17 @@ void HUD_Sort_Scoreboard(int flags)
 	if (flags & HUD_SCOREBOARD_SORT_PLAYERS) {
 		qsort(sorted_players, n_players + n_spectators, sizeof(sort_players_info_t), HUD_ComparePlayers);
 
-		if (hud_sortrules_includeself.integer) {
+		if (hud_sortrules_includeself.integer && !cl.teamplay) {
 			// Re-find player
 			active_player_position = -1;
 			for (i = 0; i < n_players + n_spectators; ++i) {
 				if (sorted_players[i].playernum == active_player) {
-					if (hud_sortrules_includeself.integer == 2 && i > 0) {
+					if (hud_sortrules_includeself.integer == 1 && i > 0) {
+						sort_players_info_t temp = sorted_players[0];
+						sorted_players[0] = sorted_players[i];
+						sorted_players[i] = temp;
+					}
+					else if (hud_sortrules_includeself.integer == 2 && i > 1) {
 						sort_players_info_t temp = sorted_players[1];
 						sorted_players[1] = sorted_players[i];
 						sorted_players[i] = temp;
