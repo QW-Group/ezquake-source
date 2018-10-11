@@ -2328,6 +2328,8 @@ static void SCR_HUD_Groups_Draw(hud_t *hud)
 	SCR_HUD_DrawGroup(hud, width[idx]->value, height[idx]->value, hud_group_pics[idx], pic_scalemode[idx]->value, pic_alpha[idx]->value);
 }
 
+int strcmp2(const char * s1, const char * s2);
+
 static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 {
 	const sort_players_info_t *p1 = vp1;
@@ -2344,7 +2346,7 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 		r = 1;
 	}
 	else if (i1->spectator && i2->spectator) {
-		r = strcmp(i1->name, i2->name);
+		r = strcmp2(i1->name, i2->name);
 	}
 	else {
 		//
@@ -2359,13 +2361,13 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 			}
 
 			// sort on team name only.
-			r = (r == 0) ? -strcasecmp(p1->team->name, p2->team->name) : r;
+			r = (r == 0) ? -strcmp2(p1->team->name, p2->team->name) : r;
 		}
 
 		if (hud_sortrules_playersort.integer & 1) {
 			r = (r == 0) ? i1->frags - i2->frags : r;
 		}
-		r = (r == 0) ? -strcasecmp(i1->name, i2->name) : r;
+		r = (r == 0) ? -strcmp2(i1->name, i2->name) : r;
 	}
 
 	r = (r == 0) ? (p1->playernum - p2->playernum) : r;
@@ -2384,7 +2386,7 @@ static int HUD_CompareTeams(const void *vt1, const void *vt2)
 	if (hud_sortrules_teamsort.integer == 1) {
 		r = (t1->frags - t2->frags);
 	}
-	r = !r ? -strcasecmp(t1->name, t2->name) : r;
+	r = !r ? -strcmp2(t1->name, t2->name) : r;
 
 	// qsort() sorts ascending by default, we want descending.
 	// So negate the result.
@@ -2558,9 +2560,16 @@ static void HUD_Sort_Scoreboard(int flags)
 			// Find players team.
 			for (team = 0; team < n_teams; team++) {
 				if (!strcmp(player->team, sorted_teams[team].name) && sorted_teams[team].name[0]) {
-					if (hud_sortrules_includeself.integer == 2 && team != 0) {
+					qbool needs_switch = hud_sortrules_includeself.integer == 1 && team != 0;
+
+					if (hud_sortrules_includeself.integer == 1 && team > 0) {
 						sort_teams_info_t temp = sorted_teams[0];
 						sorted_teams[0] = sorted_teams[team];
+						sorted_teams[team] = temp;
+					}
+					else if (hud_sortrules_includeself.integer == 2 && team > 1) {
+						sort_teams_info_t temp = sorted_teams[1];
+						sorted_teams[1] = sorted_teams[team];
 						sorted_teams[team] = temp;
 					}
 					break;
@@ -2591,12 +2600,17 @@ static void HUD_Sort_Scoreboard(int flags)
 	if (flags & HUD_SCOREBOARD_SORT_PLAYERS) {
 		qsort(sorted_players, n_players + n_spectators, sizeof(sort_players_info_t), HUD_ComparePlayers);
 
-		if (hud_sortrules_includeself.integer) {
+		if (hud_sortrules_includeself.integer && !cl.teamplay) {
 			// Re-find player
 			active_player_position = -1;
 			for (i = 0; i < n_players + n_spectators; ++i) {
 				if (sorted_players[i].playernum == active_player) {
-					if (hud_sortrules_includeself.integer == 2 && i > 0) {
+					if (hud_sortrules_includeself.integer == 1 && i > 0) {
+						sort_players_info_t temp = sorted_players[0];
+						sorted_players[0] = sorted_players[i];
+						sorted_players[i] = temp;
+					}
+					else if (hud_sortrules_includeself.integer == 2 && i > 1) {
 						sort_players_info_t temp = sorted_players[1];
 						sorted_players[1] = sorted_players[i];
 						sorted_players[i] = temp;
@@ -4989,6 +5003,26 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 
 static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, hud_t *hud);
 
+static int HUD_CompareTeamInfoSlots(const void* lhs_, const void* rhs_)
+{
+	int lhs = *(const int*)lhs_;
+	int rhs = *(const int*)rhs_;
+	int lhs_pos = -1;
+	int rhs_pos = -1;
+	int i;
+
+	for (i = 0; i < n_players; ++i) {
+		if (sorted_players[i].playernum == lhs) {
+			lhs_pos = i;
+		}
+		if (sorted_players[i].playernum == rhs) {
+			rhs_pos = i;
+		}
+	}
+
+	return lhs_pos - rhs_pos;
+}
+
 void SCR_HUD_DrawTeamInfo(hud_t *hud)
 {
 	int x, y, _y, width, height;
@@ -5051,6 +5085,8 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 
 		slots[slots_num++] = i;
 	}
+
+	qsort(slots, slots_num, sizeof(slots[0]), HUD_CompareTeamInfoSlots);
 
 	// well, better use fixed loc length
 	maxloc  = bound(0, hud_teaminfo_loc_width->integer, 100);

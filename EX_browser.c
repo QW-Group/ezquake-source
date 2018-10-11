@@ -313,7 +313,7 @@ static void Observe_Server (server_data *s)
 }
 
 // case insensitive and red-insensitive compare
-static int strcmp2 (const char * s1, const char * s2)
+int strcmp2 (const char * s1, const char * s2)
 {
 	if (s1 == NULL  &&  s2 == NULL)
 		return 0;
