@@ -393,13 +393,9 @@ typedef struct bigmenu_items_s {
 #define BIGMENU_ITEMS_COUNT(x) (sizeof(x) / sizeof(bigmenu_items_t))
 
 bigmenu_items_t mainmenu_items[] = {
-	{"Single Player", M_Menu_SinglePlayer_f},
-	{"Multiplayer", M_Menu_MultiPlayer_f},
+	{"Play", M_Menu_MultiPlayer_f},
 	{"Options", M_Menu_Options_f},
 	{"Demos", M_Menu_Demos_f},
-#ifdef WITH_MP3_PLAYER
-	{"MP3 Player", M_Menu_MP3_Control_f},
-#endif
 	{"Help", M_Menu_Help_f},
 	{"Quit", M_Menu_Quit_f}
 };
