@@ -1148,7 +1148,7 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Reload Next Weapon", "reloadnext"),
 	ADDSET_BIND("Throw Flag", "dropflag"),
 	ADDSET_BIND("Drop Ammo", "dropammo"),
-	ADDSET_BIND("Discard Useless Ammo", "dropammo"),
+	ADDSET_BIND("Discard Useless Ammo", "discard"),
 	ADDSET_BIND("Call Medic", "saveme"),
 	ADDSET_BIND("Kill Yourself", "kill"),
 
