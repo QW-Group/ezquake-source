@@ -80,6 +80,7 @@ extern cvar_t  sb_hidenotempty;
 extern cvar_t  sb_hidefull;
 extern cvar_t  sb_hidedead;
 extern cvar_t  sb_hidehighping;
+extern cvar_t  sb_hideother;
 extern cvar_t  sb_pinglimit;
 extern cvar_t  sb_showproxies;
 
