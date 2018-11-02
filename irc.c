@@ -32,7 +32,7 @@ cvar_t irc_server_address = {"irc_server_address", "194.124.229.59"}; // quakene
 cvar_t irc_server_port = {"irc_server_port", "6667"};
 cvar_t irc_server_password = {"irc_server_password", ""};
 cvar_t irc_user_nick = {"irc_user_nick", ""};
-cvar_t irc_user_username = {"irc_user_username", "ezQuake"};
+cvar_t irc_user_username = {"irc_user_username", "FortressOne"};
 cvar_t irc_user_realname = {"irc_user_realname", ""};
 
 #define MAX_TARGET_LEN 128
@@ -295,7 +295,7 @@ void IRC_event_ctcp_req(irc_session_t * session, const char * event, const char 
 	IRC_Printf("IRC: CTCP Request %s from %s\n", params[0], IRC_mask_to_nick(origin));
 
 	if (strcmp(params[0], "VERSION") == 0) {
-		irc_cmd_ctcp_reply(session, IRC_mask_to_nick(origin), "VERSION ezQuake " VERSION_NUMBER);
+		irc_cmd_ctcp_reply(session, IRC_mask_to_nick(origin), "VERSION FortressOne " VERSION_NUMBER);
 		Com_Printf("- replied\n");
 	}
 	Com_Printf("- ignored\n");

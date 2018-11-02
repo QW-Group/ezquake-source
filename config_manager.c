@@ -733,13 +733,13 @@ static void Config_PrintPreamble(FILE *f)
 	Config_PrintBorder(f);
 	Config_PrintLine(f, "", 3);
 	Config_PrintLine(f, "", 3);
-	Config_PrintLine(f, "E Z Q U A K E   C O N F I G U R A T I O N", 3);
+	Config_PrintLine(f, "F O R T R E S S O N E   C O N F I G U R A T I O N", 3);
 	Config_PrintLine(f, "", 3);
 	Config_PrintLine(f, "", 3);
 	Config_PrintBorder(f);
 	Config_PrintBorder(f);
 	fprintf(f,"\n// %s's config\n\n", name.string);
-	fprintf(f,"// ezQuake %s " __DATE__ ", " __TIME__"\n", VersionString());
+	fprintf(f,"// FortressOne %s " __DATE__ ", " __TIME__"\n", VersionString());
 
 	if (cfg_save_cmdline.value) {
 		DumpCmdLine(f);

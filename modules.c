@@ -98,7 +98,7 @@ void QLib_MissingModuleError(int errortype, char *libname, char *cmdline, char *
 	switch (errortype) {
 	case QLIB_ERROR_MODULE_NOT_FOUND:
 		Sys_Error(
-			"ezQuake couldn't load the required \"%s" QLIB_LIBRARY_EXTENSION "\" library.  You must\n"
+			"FortressOne couldn't load the required \"%s" QLIB_LIBRARY_EXTENSION "\" library.  You must\n"
 			"specify \"%s\" on the cmdline to disable %s.",
 			libname, cmdline, features
 			);

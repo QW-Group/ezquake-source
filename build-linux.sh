@@ -7,7 +7,7 @@ GREEN='\e[32m'
 YELLOW='\e[33m'
 NC='\e[0m'
 
-BUILD_LOG=/tmp/ezquake-build.log
+BUILD_LOG=/tmp/fortressone-build.log
 
 PKGS_DEB="git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev"
 PKGS_RPM="pcre-devel mesa-libGL-devel SDL2-devel make gcc jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel"
@@ -116,4 +116,4 @@ njobs=2
 make -j$njobs >>$BUILD_LOG 2>&1 || error "Compilation failed. Exiting."
 
 printf "\n${GREEN}Build completed successfully.${NC}\n"
-printf "Copy ${YELLOW}ezquake-linux-${CPU}${NC} into your quake directory.\n\n"
+printf "Copy ${YELLOW}fortressone-linux-${CPU}${NC} into your quake directory.\n\n"

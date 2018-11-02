@@ -18,7 +18,7 @@
 # export PKT_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/opt/curl/lib/pkgconfig
 # export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/opt/jpeg-turbo/lib/pkgconfig
 
-project('ezquake', 'c')
+project('fortressone', 'c')
 
 deps = [
 	dependency('expat'),
@@ -338,7 +338,7 @@ else # Otherwise assume a roughly POSIX compliant OS with X11.
 	c_args += '-DX11_GAMMA_WORKAROUND'
 endif
 
-executable('ezquake-' + host_machine.system() + '-' + host_machine.cpu(), sources,
+executable('fortressone-' + host_machine.system() + '-' + host_machine.cpu(), sources,
 	dependencies : deps,
 	include_directories : includes,
 	c_args : c_args,
