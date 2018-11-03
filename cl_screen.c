@@ -803,6 +803,8 @@ void SCR_DrawGameClock (void) {
 
 	if (cl.countdown || cl.standby)
 		strlcpy (str, SecondsToHourString(timelimit), sizeof(str));
+	else if (cl.teamfortress)
+		strlcpy (str, SecondsToHourString((int) abs(timelimit - cl.servertime)), sizeof(str));
 	else
 		strlcpy (str, SecondsToHourString((int) abs(timelimit - cl.gametime + scr_gameclock_offset.value)), sizeof(str));
 
