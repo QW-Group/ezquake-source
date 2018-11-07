@@ -4016,8 +4016,12 @@ void CL_QTVPoll (void)
 
 		if (!strcmp(authmethod, "PLAIN"))
 		{
-			snprintf(connrequest, sizeof(connrequest), 
-					"%s" "AUTH: PLAIN\nPASSWORD: \"%s\"\n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM), qtvpassword);
+			strlcpy(connrequest, QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM), sizeof(connrequest));
+			strlcat(connrequest, "AUTH: PLAIN\nPASSWORD: \"", sizeof(connrequest));
+			strlcat(connrequest, qtvpassword, sizeof(connrequest));
+			strlcat(connrequest, "\"\n", sizeof(connrequest));
+			strlcat(connrequest, cls.qtv_source, sizeof(connrequest));
+			strlcat(connrequest, "\n", sizeof(connrequest));
 
 			VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
 
@@ -4425,14 +4429,15 @@ void CL_QTVPlay_f (void)
 
 	// If the user specified a specific stream such as "5@hostname:port"
 	// we need to send a SOURCE request.
-	if (stream[0])
-	{
-		connrequest =	"SOURCE: ";
-		VFS_WRITE(newf, connrequest, strlen(connrequest));
-		connrequest =	stream;
-		VFS_WRITE(newf, connrequest, strlen(connrequest));
-		connrequest =	"\n";
-		VFS_WRITE(newf, connrequest, strlen(connrequest));
+	if (stream[0]) {
+		strlcpy(cls.qtv_source, "SOURCE: ", sizeof(cls.qtv_source));
+		strlcat(cls.qtv_source, stream, sizeof(cls.qtv_source));
+		strlcat(cls.qtv_source, "\n", sizeof(cls.qtv_source));
+
+		VFS_WRITE(newf, cls.qtv_source, strlen(cls.qtv_source));
+	}
+	else {
+		memset(cls.qtv_source, 0, sizeof(cls.qtv_source));
 	}
 
 	// Send our userinfo
