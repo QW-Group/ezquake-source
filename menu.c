@@ -469,12 +469,10 @@ static void M_Main_Enter(const unsigned int entry)
 	}
 	else {
 		switch (entry) {
-		case 0: M_Menu_SinglePlayer_f (); break;
-		case 1:	M_Menu_MultiPlayer_f (); break;
-		case 2: M_Menu_Options_f (); break;
-#ifdef WITH_MP3_PLAYER
-		case 3: M_Menu_MP3_Control_f(); break;
-#endif // WITH_MP3_PLAYER
+		case 0:	M_Menu_MultiPlayer_f (); break;
+		case 1: M_Menu_Options_f (); break;
+		case 2: M_Menu_Demos_f (); break;
+		case 3: M_Menu_Help_f (); break;
 		case 4: M_Menu_Quit_f (); break;
 		}
 	}
