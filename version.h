@@ -70,7 +70,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 // Note: for server mods to detect version, change VERSION_NUM below
-#define VERSION_NUMBER "1.0"
+#define VERSION_NUMBER "3.1"
 
 int build_number(void);
 void CL_Version_f(void);
@@ -79,7 +79,7 @@ char *VersionStringColour(void);
 char *VersionStringFull(void);
 
 #define SERVER_NAME         "FORTRESSONE"
-#define VERSION_NUM         1.0
+#define VERSION_NUM         3.1
 
 // MVDSV compatibility
 #define QWE_VERSION			"0.28"
