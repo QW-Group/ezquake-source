@@ -48,6 +48,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "Ctrl.h"
 #include "qtv.h"
 #include "demo_controls.h"
+#include "tr_types.h"
 
 #ifndef CLIENTONLY
 #include "server.h"
@@ -3387,9 +3388,20 @@ static void applyHWGamma(byte *buffer, int size) {
 
 	if (vid_hwgamma_enabled) {
 		for (i = 0; i < size; i += 3) {
-			buffer[i + 0] = ramps[0][buffer[i + 0]] >> 8;
-			buffer[i + 1] = ramps[1][buffer[i + 1]] >> 8;
-			buffer[i + 2] = ramps[2][buffer[i + 2]] >> 8;
+			int r = buffer[i + 0];
+			int g = buffer[i + 1];
+			int b = buffer[i + 2];
+
+#ifdef X11_GAMMA_WORKAROUND
+			if (glConfig.gammacrap.size >= 256 && glConfig.gammacrap.size <= 4096) {
+				r = (int)(r / 256.0f * glConfig.gammacrap.size);
+				g = (int)(g / 256.0f * glConfig.gammacrap.size);
+				b = (int)(b / 256.0f * glConfig.gammacrap.size);
+			}
+#endif
+			buffer[i + 0] = ramps[0][r] >> 8;
+			buffer[i + 1] = ramps[1][g] >> 8;
+			buffer[i + 2] = ramps[2][b] >> 8;
 		}
 	}
 }
