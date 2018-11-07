@@ -43,16 +43,15 @@ static int pr_globaloffsetpatch_nq[62] = {0,0,0,0,0,666,-4,-4,8,8,
 8,8,8,8,8,8,8,8,8,8, 8,8,8,8,8,8,8,8,8,8, 8,8};
 #endif
 
-int		type_size[8] =
-{
+int	type_size[8] = {
 	1,					// void
-	sizeof(void *)/4,	// string_t
+	1,	                // string_t
 	1,					// float
 	3,					// vector
 	1,					// entity
 	1,					// field
-	sizeof(void *)/4, 	// func_t
-	sizeof(void *)/4 	// pointer (its an int index)
+	1,              	// func_t
+	1 	                // pointer (its an int index)
 };
 
 ddef_t *ED_FieldAtOfs (int ofs);

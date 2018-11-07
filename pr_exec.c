@@ -700,6 +700,11 @@ void PR1_SetString(string_t* address, char* s)
 		return;
 	}
 
+	if (!s || !s[0]) {
+		*address = 0;
+		return;
+	}
+
 	if (s - pr_strings < 0) {
 		for (i = 0; i < num_prstr; i++) {
 			if (pr_strtbl[i] == s) {
