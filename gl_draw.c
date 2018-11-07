@@ -46,7 +46,7 @@ void OnChange_crosshairimage(cvar_t *, char *, qbool *);
 static cvar_t crosshairimage          = {"crosshairimage", "", 0, OnChange_crosshairimage};
 
 void OnChange_gl_consolefont (cvar_t *, char *, qbool *);
-cvar_t gl_consolefont                 = {"gl_consolefont", "povo5", 0, OnChange_gl_consolefont};
+cvar_t gl_consolefont                 = {"gl_consolefont", "darkstorm", 0, OnChange_gl_consolefont};
 static cvar_t gl_alphafont            = {"gl_alphafont", "1"};
 
 cvar_t crosshairalpha                 = {"crosshairalpha", "1"};
