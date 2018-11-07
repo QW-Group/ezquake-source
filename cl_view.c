@@ -825,12 +825,14 @@ static int V_CurrentWeaponModel(void) {
 		}
 	}
 	else {
-		if (ShowPreselectedWeap() && r_viewpreselgun.value)
-		{
+		if (ShowPreselectedWeap() && r_viewpreselgun.integer && !view_message.weaponframe) {
 			bestgun = IN_BestWeaponReal();
-			if (bestgun == 1) return cl_modelindices[mi_vaxe];
-			if (bestgun > 1 && bestgun <= 8)
+			if (bestgun == 1) {
+				return cl_modelindices[mi_vaxe];
+			}
+			if (bestgun > 1 && bestgun <= 8) {
 				return cl_modelindices[mi_weapon1 - 1 + bestgun];
+			}
 		}
 		return cl.stats[STAT_WEAPON];
 	}
