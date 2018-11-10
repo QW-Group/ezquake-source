@@ -1248,14 +1248,7 @@ qbool M_MultiPlayerSub_Mouse_Event(const mouse_state_t *ms)
 
 void M_Menu_MultiPlayer_f (void)
 {
-	if (Draw_BigFontAvailable()) {
-		M_EnterMenu(m_multiplayer);
-	}
-	else {
-		// demos entry is not accessible with old main menu
-		// so we need to create a submenu in the multiplayer menu
-		M_EnterMenu(m_multiplayer_submenu);
-	}
+        M_EnterMenu(m_multiplayer);
 }
 
 void M_Menu_Demos_f (void)
