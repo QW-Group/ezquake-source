@@ -46,7 +46,6 @@ static char announcer_line_strings[MAX_ANNOUNCER_LINES][256];
 static double announcer_line_times[MAX_ANNOUNCER_LINES];
 static int announcer_lines;
 
-static qbool mvd_ktx_markers = false;
 static const char* MVD_AnnouncerTeamPlayerName(player_info_t* info);
 
 // Can contain 'pack'
@@ -66,27 +65,29 @@ mvd_gt_info_t mvd_gt_info[mvd_gt_types] = {
 mvd_cg_info_s mvd_cg_info;
 
 mvd_wp_info_t mvd_wp_info[mvd_info_types] = {
-    {AXE_INFO,  "axe",  IT_AXE,              "axe",         0,                  0, 0xDA, 0xDA, 0xDA, NULL,          "&cf0f", "axe",             false, false },
-    {SG_INFO,   "sg",   IT_SHOTGUN,          "sg",          0,                  0, 0xDA, 0xDA, 0xDA, NULL,          "&cf0f", "sg",              false, false },
-    {SSG_INFO,  "ssg",  IT_SUPER_SHOTGUN,    "&cf0fssg&r",  0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_ssg,  "&cf0f", "&cf0fssg pack&r", false, false },
-    {NG_INFO,   "ng",   IT_NAILGUN,          "&cf0fng&r",   0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_ng,   "&cf0f", "&cf0fng pack&r",  false, false },
-    {SNG_INFO,  "sng",  IT_SUPER_NAILGUN,    "&cf0fsng&r",  0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_sng,  "&cf0f", "&cf0fsng pack&r", false, false },
-    {GL_INFO,   "gl",   IT_GRENADE_LAUNCHER, "&cf0fgl&r",   0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_gl,   "&cf0f", "&cf0fgl pack&r",  false, false },
-    {RL_INFO,   "rl",   IT_ROCKET_LAUNCHER,  "&cf0frl&r",   MOD_ROCKETLAUNCHER, 0, 0xDA, 0xDA, 0xDA, &tp_name_rl,   "&cf0f", "&cf0frl pack&r",  true,  false },
-    {LG_INFO,   "lg",   IT_LIGHTNING,        "&cf0flg&r",   MOD_LIGHTNINGGUN,   0, 0xDA, 0xDA, 0xDA, &tp_name_lg,   "&cf0f", "&cf0flg pack&r",  true,  false },
-    {RING_INFO, "rg",   IT_INVISIBILITY,     "&cff0ring&r", MOD_RING,           0, 0xA6, 0xA6, 0x00, &tp_name_ring, "&cff0", "",                true,  true  },
-    {QUAD_INFO, "qd",   IT_QUAD,             "&c00fquad&r", MOD_QUAD,           0, 0x4D, 0x45, 0xC9, &tp_name_quad, "&c00f", "",                true,  true  },
-    {PENT_INFO, "pt",   IT_INVULNERABILITY,  "&cf00pent&r", MOD_PENT,           0, 0x91, 0x01, 0x01, &tp_name_pent, "&cf00", "",                true,  true  },
-    {GA_INFO,   "ga",   IT_ARMOR1,           "&c0f0ga&r",   MOD_ARMOR,          0, 0x00, 0x72, 0x36, &tp_name_ga,   "&c0f0", "",                true,  false },
-    {YA_INFO,   "ya",   IT_ARMOR2,           "&cff0ya&r",   MOD_ARMOR,          1, 0xA6, 0xA6, 0x00, &tp_name_ya,   "&cff0", "",                true,  false },
-    {RA_INFO,   "ra",   IT_ARMOR3,           "&cf00ra&r",   MOD_ARMOR,          2, 0x91, 0x01, 0x01, &tp_name_ra,   "&cf00", "",                true,  false },
-    {MH_INFO,   "mh",   IT_SUPERHEALTH,      "&c00fmh&r",   MOD_MEGAHEALTH,     0, 0xAD, 0x54, 0x2A, &tp_name_mh,   "&c00f", "",                true,  false },
+    {AXE_INFO,  "axe",  IT_AXE,              "axe",         0,                  0, 0xDA, 0xDA, 0xDA, NULL,          "&cf0f", "axe",             MVD_ADDCLOCK_NEVER, false },
+    {SG_INFO,   "sg",   IT_SHOTGUN,          "sg",          0,                  0, 0xDA, 0xDA, 0xDA, NULL,          "&cf0f", "sg",              MVD_ADDCLOCK_NEVER, false },
+    {SSG_INFO,  "ssg",  IT_SUPER_SHOTGUN,    "&cf0fssg&r",  0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_ssg,  "&cf0f", "&cf0fssg pack&r", MVD_ADDCLOCK_NEVER, false },
+    {NG_INFO,   "ng",   IT_NAILGUN,          "&cf0fng&r",   0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_ng,   "&cf0f", "&cf0fng pack&r",  MVD_ADDCLOCK_NEVER, false },
+    {SNG_INFO,  "sng",  IT_SUPER_NAILGUN,    "&cf0fsng&r",  0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_sng,  "&cf0f", "&cf0fsng pack&r", MVD_ADDCLOCK_NEVER, false },
+    {GL_INFO,   "gl",   IT_GRENADE_LAUNCHER, "&cf0fgl&r",   0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_gl,   "&cf0f", "&cf0fgl pack&r",  MVD_ADDCLOCK_NEVER, false },
+    {RL_INFO,   "rl",   IT_ROCKET_LAUNCHER,  "&cf0frl&r",   MOD_ROCKETLAUNCHER, 0, 0xDA, 0xDA, 0xDA, &tp_name_rl,   "&cf0f", "&cf0frl pack&r",  MVD_ADDCLOCK_DMM1,  false },
+    {LG_INFO,   "lg",   IT_LIGHTNING,        "&cf0flg&r",   MOD_LIGHTNINGGUN,   0, 0xDA, 0xDA, 0xDA, &tp_name_lg,   "&cf0f", "&cf0flg pack&r",  MVD_ADDCLOCK_DMM1,  false },
+    {RING_INFO, "rg",   IT_INVISIBILITY,     "&cff0ring&r", MOD_RING,           0, 0xA6, 0xA6, 0x00, &tp_name_ring, "&cff0", "",                MVD_ADDCLOCK_ALWAYS,  true  },
+    {QUAD_INFO, "qd",   IT_QUAD,             "&c00fquad&r", MOD_QUAD,           0, 0x4D, 0x45, 0xC9, &tp_name_quad, "&c00f", "",                MVD_ADDCLOCK_ALWAYS,  true  },
+    {PENT_INFO, "pt",   IT_INVULNERABILITY,  "&cf00pent&r", MOD_PENT,           0, 0x91, 0x01, 0x01, &tp_name_pent, "&cf00", "",                MVD_ADDCLOCK_ALWAYS,  true  },
+    {GA_INFO,   "ga",   IT_ARMOR1,           "&c0f0ga&r",   MOD_ARMOR,          0, 0x00, 0x72, 0x36, &tp_name_ga,   "&c0f0", "",                MVD_ADDCLOCK_ALWAYS,  false },
+    {YA_INFO,   "ya",   IT_ARMOR2,           "&cff0ya&r",   MOD_ARMOR,          1, 0xA6, 0xA6, 0x00, &tp_name_ya,   "&cff0", "",                MVD_ADDCLOCK_ALWAYS,  false },
+    {RA_INFO,   "ra",   IT_ARMOR3,           "&cf00ra&r",   MOD_ARMOR,          2, 0x91, 0x01, 0x01, &tp_name_ra,   "&cf00", "",                MVD_ADDCLOCK_ALWAYS,  false },
+    {MH_INFO,   "mh",   IT_SUPERHEALTH,      "&c00fmh&r",   MOD_MEGAHEALTH,     0, 0xAD, 0x54, 0x2A, &tp_name_mh,   "&c00f", "",                MVD_ADDCLOCK_ALWAYS,  false },
 };
 static int item_counts[mvd_info_types];
 
 #define MVDCLOCK_PERSISTENT        1
 #define MVDCLOCK_BACKPACK          2
 #define MVDCLOCK_BACKPACK_REMOVED  4
+#define MVDCLOCK_NEVERSPAWNED      8    // we add baseline ents, so might include quad in duel... use this to hide
+#define MVDCLOCK_HIDDEN           16    // don't show in itemslist
 
 #define ITEMSCLOCK_TAKEN_PAUSE     4    // in seconds
 
@@ -170,16 +171,7 @@ typedef struct mvd_gameinfo_s {
 	int pcount;
 	int deathmatch;
 } mvd_gameinfo_t;
-/*
-   typedef struct mvd_info_s {
-   mvd_gameinfo_t gameinfo;
-   mvd_player_t player[MAX_CLIENTS];
 
-   } mvd_info_t;
-   */
-
-//extern mt_matchstate_t matchstate;
-//extern matchinfo_t matchinfo;
 extern	centity_t		cl_entities[CL_MAX_EDICTS];
 extern	entity_t		cl_static_entities[MAX_STATIC_ENTITIES];
 double lasttime1 ,lasttime2;
@@ -241,7 +233,7 @@ cvar_t mvd_pc_view_3 = {"mvd_pc_view_3",""};
 cvar_t mvd_pc_view_4 = {"mvd_pc_view_4",""};
 
 cvar_t mvd_moreinfo = {"mvd_moreinfo","0"};
-cvar_t mvd_autoadd_items = { "mvd_autoadd_items", "1" };
+cvar_t mvd_autoadd_items = { "mvd_autoadd_items", "0" };
 cvar_t mvd_sortitems = { "mvd_sortitems", "1" };
 
 typedef struct bp_var_s{
@@ -623,7 +615,7 @@ static void MVD_ClockList_Sort(void)
 }
 
 // MEAG: Deliberately not taking 'proportional' argument into account here, don't think we should measure by item type either...
-void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int* width, int* height, float scale, qbool proportional)
+void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int* width, int* height, float scale, qbool backpacks, qbool proportional)
 {
 	int lines = 0;
 	mvd_clock_t *current = mvd_clocklist;
@@ -636,9 +628,36 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int* wid
 	}
 
 	while (current) {
+		int time = (int)((current->clockval - cls.demotime) + 1);
+
+		// Skip if it's a backpack and the config turns these off
+		if (!backpacks && (current->flags & (MVDCLOCK_BACKPACK | MVDCLOCK_BACKPACK_REMOVED))) {
+			current = current->next;
+			continue;
+		}
+
+		if (current->flags & MVDCLOCK_PERSISTENT) {
+			// Skip if player has manually removed
+			if (current->flags & MVDCLOCK_HIDDEN) {
+				current = current->next;
+				continue;
+			}
+
+			// Skip auto-added items that haven't spawned and have never spawned
+			if ((current->flags & MVDCLOCK_NEVERSPAWNED) && cl_entities[current->entity].current.modelindex == 0 && time <= 0) {
+				current = current->next;
+				continue;
+			}
+			current->flags &= ~(MVDCLOCK_NEVERSPAWNED);
+		}
+
 		if (current->entity || current->clockval - cls.demotime < time_limit) {
+			int time = (int)((current->clockval - cls.demotime) + 1);
+
 			if (current->flags & MVDCLOCK_PERSISTENT) {
-				++persistent;
+				if (cl_entities[current->entity].current.modelindex != 0 || time >= 0) {
+					++persistent;
+				}
 			}
 			else {
 				++temporary;
@@ -705,7 +724,7 @@ static qbool MVD_ClockIsHeld(mvd_clock_t* current, qbool test_held, float* alpha
 	return time_since < ITEMSCLOCK_TAKEN_PAUSE;
 }
 
-void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, float scale, int filter, qbool proportional)
+void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, float scale, int filter, qbool backpacks, qbool proportional)
 {
 	mvd_clock_t *current = mvd_clocklist;
 	char clockitem[128];
@@ -717,6 +736,18 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 	while (current) {
 		float alpha = 1.0f;
 		x = base_x;
+
+		// Skip backpacks
+		if (!backpacks && (current->flags & (MVDCLOCK_BACKPACK | MVDCLOCK_BACKPACK_REMOVED))) {
+			current = current->next;
+			continue;
+		}
+
+		// Skip auto-added items that have never spawned or manually removed
+		if (current->flags & (MVDCLOCK_NEVERSPAWNED | MVDCLOCK_HIDDEN)) {
+			current = current->next;
+			continue;
+		}
 
 		if (current->entity || current->clockval - cls.demotime < time_limit) {
 			int time = (int)((current->clockval - cls.demotime) + 1);
@@ -757,7 +788,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 					strlcpy(item_name, mvd_wp_info[current->itemtype].colored_name, sizeof(item_name));
 				}
 
-				snprintf(clockitem, sizeof(clockitem), "%*s", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(item_name) - strlen_color(item_name)), item_name);
+				snprintf(clockitem, sizeof(clockitem), "%*s", MVD_ANNOUNCER_ITEM_LENGTH + ((int)strlen(item_name) - strlen_color(item_name)), item_name);
 
 				strlcat(clockitem, " \034", sizeof(clockitem));
 			}
@@ -767,19 +798,19 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 				if (current->flags & (MVDCLOCK_BACKPACK | MVDCLOCK_BACKPACK_REMOVED)) {
 					const char* name = mvd_wp_info[current->itemtype].colored_packname;
 
-					snprintf(item_name, sizeof(item_name) - 1, "%*s", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(name) - strlen_color(name)), name);
+					snprintf(item_name, sizeof(item_name) - 1, "%*s", MVD_ANNOUNCER_ITEM_LENGTH + ((int)strlen(name) - strlen_color(name)), name);
 				}
 				else {
 					const char* color = mvd_wp_info[current->itemtype].color_string;
 
-					snprintf(item_name, sizeof(item_name) - 1, "%s%*s&r", color ? color : "", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(current->location) - strlen_color(current->location)), current->location);
+					snprintf(item_name, sizeof(item_name) - 1, "%s%*s&r", color ? color : "", MVD_ANNOUNCER_ITEM_LENGTH + ((int)strlen(current->location) - strlen_color(current->location)), current->location);
 				}
 
 				strlcpy(clockitem, item_name, sizeof(clockitem));
 				strlcat(clockitem, " \034", sizeof(clockitem));
 				Draw_SString(x, y, clockitem, scale, proportional);
 
-				x += strlen_color(clockitem) * 8;
+				x += strlen_color(clockitem) * 8 * scale;
 				clockitem[0] = '\0';
 			}
 			else if (style == 6) {
@@ -902,7 +933,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 
 static void MVD_Took(int player, int item, qbool addclock)
 {
-	if (mvd_new_info[player].mvdinfo.initialized && !mvd_ktx_markers) {
+	if (mvd_new_info[player].mvdinfo.initialized && !cl.mvd_ktx_markers) {
 		if (addclock) {
 			MVD_ClockStart(item, mvd_new_info[player].p_state ? mvd_new_info[player].p_state->origin : NULL);
 		}
@@ -1159,7 +1190,7 @@ void MVD_Status_Announcer(int i, int z){
 	//char *pn = mvd_new_info[i].p_info->name;
 	vec3_t *pl = &mvd_new_info[i].p_state->origin;
 
-	if (mvd_ktx_markers) {
+	if (cl.mvd_ktx_markers) {
 		return;
 	}
 
@@ -1501,7 +1532,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 		int megas = mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has;
 		while (megas > 0) {
 			--megas;
-			if (!mvd_ktx_markers) {
+			if (!cl.mvd_ktx_markers) {
 				MVD_ClockStart(MH_INFO, megas < MAX_MEGAS_PER_PLAYER ? mvd_new_info[i].mega_locations[megas] : NULL);
 			}
 		}
@@ -2110,7 +2141,7 @@ static void MVDAnnouncer_RemoveItem(void)
 			if (ent) {
 				for (clock_entry = mvd_clocklist; clock_entry; clock_entry = clock_entry->next) {
 					if ((clock_entry->flags & MVDCLOCK_PERSISTENT) && clock_entry->entity == ent) {
-						MVD_ClockList_Remove(clock_entry);
+						clock_entry->flags |= MVDCLOCK_HIDDEN;
 						return;
 					}
 				}
@@ -2176,6 +2207,7 @@ static void MVDAnnouncer_NameItem(void)
 					strlcpy(existing->location, label, sizeof(existing->location));
 					// We move to bottom of the list to allow the user to list every item and dictate order
 					existing->order = ++fixed_ordering;
+					existing->flags &= ~(MVDCLOCK_HIDDEN);
 				}
 				else {
 					MVD_ClockStartEntity(ent, mvd_wp_info[i].id, MVDCLOCK_PERSISTENT);
@@ -2306,14 +2338,14 @@ void MVD_Initialise(void)
 {
 	memset(mvd_new_info, 0, sizeof(mvd_new_info));
 	memset(&mvd_cg_info, 0, sizeof(mvd_cg_info));
-	mvd_ktx_markers = false;
+	cl.mvd_ktx_markers = false;
 }
 
 void MVD_GameStart(void)
 {
 	int i;
 
-	if (!mvd_ktx_markers) {
+	if (!cl.mvd_ktx_markers) {
 		MVD_Initialise();
 	}
 
@@ -2326,6 +2358,25 @@ void MVD_GameStart(void)
 	}
 }
 
+int MVD_ItemTypeForEntity(int ent)
+{
+	int modindex = cl_entities[ent].baseline.modelindex;
+	int skin = cl_entities[ent].baseline.skinnum;
+
+	if (modindex >= 0 && modindex < sizeof(cl.model_precache) / sizeof(cl.model_precache[0]) && cl.model_precache[modindex]) {
+		int j;
+
+		for (j = 0; j < sizeof(mvd_wp_info) / sizeof(mvd_wp_info[0]); ++j) {
+			if (mvd_wp_info[j].add_clock == MVD_ADDCLOCK_ALWAYS || (mvd_wp_info[j].add_clock == MVD_ADDCLOCK_DMM1 && cl.deathmatch == 1)) {
+				if (cl.model_precache[modindex]->modhint == mvd_wp_info[j].model_hint && skin == mvd_wp_info[j].skin_number) {
+					return mvd_wp_info[j].id;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
 // ktx matchstart (no args)
 void MVDAnnouncer_MatchStart(void)
 {
@@ -2333,7 +2384,7 @@ void MVDAnnouncer_MatchStart(void)
 	int j;
 
 	MVD_GameStart();
-	mvd_ktx_markers = true;
+	cl.mvd_ktx_markers = true;
 
 	// Clocklist should start as persistent timers from entity baselines
 	MVD_Stats_Cleanup();
@@ -2344,8 +2395,10 @@ void MVDAnnouncer_MatchStart(void)
 
 			if (modindex >= 0 && modindex < sizeof(cl.model_precache) / sizeof(cl.model_precache[0]) && cl.model_precache[modindex]) {
 				for (j = 0; j < sizeof(mvd_wp_info) / sizeof(mvd_wp_info[0]); ++j) {
-					if (mvd_wp_info[j].add_clock && cl.model_precache[modindex]->modhint == mvd_wp_info[j].model_hint && skin == mvd_wp_info[j].skin_number) {
-						MVD_ClockStartEntity(i, mvd_wp_info[j].id, MVDCLOCK_PERSISTENT);
+					if (mvd_wp_info[j].add_clock == MVD_ADDCLOCK_ALWAYS || (mvd_wp_info[j].add_clock == MVD_ADDCLOCK_DMM1 && cl.deathmatch == 1)) {
+						if (cl.model_precache[modindex]->modhint == mvd_wp_info[j].model_hint && skin == mvd_wp_info[j].skin_number) {
+							MVD_ClockStartEntity(i, mvd_wp_info[j].id, MVDCLOCK_PERSISTENT | MVDCLOCK_NEVERSPAWNED);
+						}
 					}
 				}
 			}
@@ -2397,6 +2450,14 @@ void MVDAnnouncer_ItemTaken(const char* s)
 			clock_entry->last_taken_by = player_ent;
 		}
 	}
+	else if (respawn) {
+		int item = MVD_ItemTypeForEntity(entity);
+
+		if (item) {
+			MVD_ClockStart(item, cl_entities[entity].baseline.origin);
+			mvd_new_info[player_ent - 1].mvdinfo.itemstats[item].mention = MENTION_PICKED_UP_ITEM;
+		}
+	}
 }
 
 // Used to manually start a countdown if it was indefinitely held in the past (e.g. mega-health worn off)
@@ -2422,6 +2483,13 @@ void MVDAnnouncer_StartTimer(const char* s)
 		clock_entry->clockval = cls.demotime + respawn;
 		clock_entry->last_taken_by = 0;
 		clock_entry->last_taken = 0;
+	}
+	else {
+		int item = MVD_ItemTypeForEntity(entity);
+
+		if (item) {
+			MVD_ClockStart(item, cl_entities[entity].baseline.origin);
+		}
 	}
 }
 

@@ -607,7 +607,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		*hud_itemsclock_scale = NULL,
 		*hud_itemsclock_filter = NULL,
 		*hud_itemsclock_proportional = NULL,
-		*hud_itemsclock_announcer = NULL;
+		*hud_itemsclock_backpacks = NULL;
 
 	if (hud_itemsclock_timelimit == NULL) {
 		char val[256];
@@ -617,7 +617,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		hud_itemsclock_scale = HUD_FindVar(hud, "scale");
 		hud_itemsclock_filter = HUD_FindVar(hud, "filter");
 		hud_itemsclock_proportional = HUD_FindVar(hud, "proportional");
-		hud_itemsclock_announcer = HUD_FindVar(hud, "announcer");
+		hud_itemsclock_backpacks = HUD_FindVar(hud, "backpacks");
 
 		// Unecessary to parse the item filter string on each frame.
 		hud_itemsclock_filter->OnChange = ItemsClock_OnChangeItemFilter;
@@ -627,7 +627,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		Cvar_Set(hud_itemsclock_filter, val);
 	}
 
-	MVD_ClockList_TopItems_DimensionsGet(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, &width, &height, hud_itemsclock_scale->value, hud_itemsclock_proportional->integer);
+	MVD_ClockList_TopItems_DimensionsGet(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, &width, &height, hud_itemsclock_scale->value, hud_itemsclock_backpacks->integer, hud_itemsclock_proportional->integer);
 
 	if (hud_editor)
 		HUD_PrepareDraw(hud, width, LETTERHEIGHT * hud_itemsclock_scale->value, &x, &y);
@@ -638,7 +638,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 	if (!HUD_PrepareDraw(hud, width, height, &x, &y))
 		return;
 
-	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value, itemsclock_filter, hud_itemsclock_proportional->integer);
+	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value, itemsclock_filter, hud_itemsclock_backpacks->integer, hud_itemsclock_proportional->integer);
 }
 
 #ifdef WITH_PNG
@@ -928,7 +928,7 @@ void CommonDraw_Init(void)
 		"scale", "1",
 		"filter", "",
 		"proportional", "0",
-		"announcer", "0",
+		"backpacks", "0",
 		NULL
 	);
 

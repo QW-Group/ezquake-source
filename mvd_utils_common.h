@@ -182,6 +182,10 @@ typedef struct mvd_gt_info_s {
 
 extern mvd_gt_info_t mvd_gt_info[mvd_gt_types];
 
+#define MVD_ADDCLOCK_NEVER  0
+#define MVD_ADDCLOCK_ALWAYS 1
+#define MVD_ADDCLOCK_DMM1   2
+
 typedef struct mvd_wp_info_s {
 	int           id;
 	char*         name;
@@ -195,7 +199,7 @@ typedef struct mvd_wp_info_s {
 	const cvar_t* name_cvar;
 	const char*   color_string;
 	const char*   colored_packname;
-	qbool         add_clock;
+	int           add_clock;
 	qbool         show_held;
 } mvd_wp_info_t;
 

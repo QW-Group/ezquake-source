@@ -629,6 +629,7 @@ typedef struct {
 	int         scoring_system;
 
 	char        fixed_team_names[4][16];
+	qbool       mvd_ktx_markers;
 } clientState_t;
 
 #define SCORING_SYSTEM_DEFAULT   0
