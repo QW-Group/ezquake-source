@@ -39,7 +39,6 @@ int cl_entframecount;
 #define CL_EntityParticles(a)
 extern cvar_t cl_rocket2grenade;
 #define R_ModelFlags(model) model->flags
-#define V_AddDlight(a,b,c,d,e)
 
 void CL_FindModelNumbers (void);
 void TP_NewMap (void);
@@ -892,18 +891,17 @@ static int NQD_FirstPersonCamera(void)
 
 void NQD_LinkEntities (void)
 {
-	entity_t			ent;
-	centity_t			*cent;
-	entity_state_t		*state;
-	float				f;
-	struct model_s		*model;
-	int					modelflags;
-	vec3_t				cur_origin;
-	vec3_t				old_origin;
-	float				autorotate;
-	int					i;
-	int					num;
-	customlight_t		cst_lt = { 0 };
+	entity_t            ent;
+	centity_t*          cent;
+	entity_state_t*     state;
+	float               f;
+	struct model_s*     model;
+	int                 modelflags;
+	vec3_t              cur_origin, old_origin;
+	float               autorotate;
+	int                 i, num;
+	customlight_t       cst_lt = { 0 };
+	float               flicker = (r_lightflicker.integer ? rand() & 31 : 0);
 
 	f = NQD_LerpPoint ();
 
@@ -922,9 +920,9 @@ void NQD_LinkEntities (void)
 			continue;		// not present in this frame
 
 		VectorCopy (state->origin, cur_origin);
-
-		if (state->effects & EF_BRIGHTFIELD)
-			CL_EntityParticles (cur_origin);
+		if (state->effects & EF_BRIGHTFIELD) {
+			CL_EntityParticles(cur_origin);
+		}
 
 		// spawn light flashes, even ones coming from invisible objects
 		if (state->effects & EF_MUZZLEFLASH) {
@@ -936,68 +934,74 @@ void NQD_LinkEntities (void)
 			AngleVectors (angles, forward, NULL, NULL);
 			VectorMA (cur_origin, 18, forward, dl->origin);
 			dl->origin[2] += 16;
-			dl->radius = 200 + (rand()&31);
+			dl->radius = 200 + flicker;
 			dl->minlight = 32;
 			dl->die = cl.time + 0.1;
 			dl->type = lt_muzzleflash;
 		}
 		if (state->effects & EF_BRIGHTLIGHT) {
-			if (state->modelindex != cl_modelindices[mi_player] || r_powerupglow.value) {
+			if (state->modelindex != cl_modelindices[mi_player] || r_powerupglow.integer) {
 				vec3_t	tmp;
 				VectorCopy (cur_origin, tmp);
 				tmp[2] += 16;
-				V_AddDlight (state->number, tmp, 400 + (rand()&31), 0, lt_default);
+				CL_NewDlight(state->number, cur_origin, 400 + flicker, 0.1, lt_default, 0);
 			}
 		}
-		if (state->effects & EF_DIMLIGHT)
-			if (state->modelindex != cl_modelindices[mi_player] || r_powerupglow.value)
-				V_AddDlight (state->number, cur_origin, 200 + (rand()&31), 0, lt_default);
+		if (state->effects & EF_DIMLIGHT) {
+			if (state->modelindex != cl_modelindices[mi_player] || r_powerupglow.integer) {
+				CL_NewDlight(state->number, cur_origin, 200 + flicker, 0.1, lt_default, 0);
+			}
+		}
 
 		// if set to invisible, skip
-		if (!state->modelindex)
+		if (!state->modelindex) {
 			continue;
+		}
 
 		cent->current = *state;
 
 		ent.model = model = cl.model_precache[state->modelindex];
-		if (!model)
-			Host_Error ("CL_LinkPacketEntities: bad modelindex");
+		if (!model) {
+			Host_Error("CL_LinkPacketEntities: bad modelindex");
+		}
 
-		if (cl_rocket2grenade.value && cl_modelindices[mi_grenade]!= -1)
-			if (state->modelindex == cl_modelindices[mi_rocket])
+		if (cl_rocket2grenade.value && cl_modelindices[mi_grenade] != -1) {
+			if (state->modelindex == cl_modelindices[mi_rocket]) {
 				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
+			}
+		}
 
 		modelflags = R_ModelFlags (model);
 
 		// rotate binary objects locally
-		if (modelflags & EF_ROTATE)
-		{
+		if (modelflags & EF_ROTATE) {
 			ent.angles[0] = 0;
 			ent.angles[1] = autorotate;
 			ent.angles[2] = 0;
 		}
-		else
-			AngleInterpolate (cent->old_angles, f ,cent->current.angles, ent.angles);
+		else {
+			AngleInterpolate(cent->old_angles, f, cent->current.angles, ent.angles);
+		}
 
 		// calculate origin
-		for (i = 0; i < 3; i++)
-		{
+		for (i = 0; i < 3; i++) {
 			if (abs(cent->current.origin[i] - cent->old_origin[i]) > 128) {
 				// teleport or something, don't lerp
-				VectorCopy (cur_origin, ent.origin);
-				if (num == nq_viewentity)
+				VectorCopy(cur_origin, ent.origin);
+				if (num == nq_viewentity) {
 					nq_player_teleported = true;
+				}
 				break;
 			}
-			ent.origin[i] = cent->old_origin[i] + 
-				f * (cur_origin[i] - cent->old_origin[i]);
+			ent.origin[i] = cent->old_origin[i] + f * (cur_origin[i] - cent->old_origin[i]);
 		}
 
 		if (num == nq_viewentity) {
 			VectorCopy (ent.origin, cent->lerp_origin);	// FIXME?
 
-			if (!cls.nqdemoplayback || NQD_FirstPersonCamera())
+			if (!cls.nqdemoplayback || NQD_FirstPersonCamera()) {
 				continue;			// player entity
+			}
 		}
 
 		if (cl_deadbodyfilter.value && state->modelindex == cl_modelindices[mi_player]
@@ -1031,9 +1035,8 @@ void NQD_LinkEntities (void)
 		if (cent->frametime >= 0 && cent->frametime <= cl.time) {
 			ent.oldframe = cent->oldframe;
 			ent.framelerp = (cl.time - cent->frametime) * 10;
-			//if (ent.oldframe != ent.frame) 
-				//Com_DPrintf("framelerp %f\n", ent.framelerp);
-		} else {
+		}
+		else {
 			ent.oldframe = ent.frame;
 			ent.framelerp = -1;
 		}
