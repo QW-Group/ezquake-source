@@ -2560,8 +2560,6 @@ static void HUD_Sort_Scoreboard(int flags)
 			// Find players team.
 			for (team = 0; team < n_teams; team++) {
 				if (!strcmp(player->team, sorted_teams[team].name) && sorted_teams[team].name[0]) {
-					qbool needs_switch = hud_sortrules_includeself.integer == 1 && team != 0;
-
 					if (hud_sortrules_includeself.integer == 1 && team > 0) {
 						sort_teams_info_t temp = sorted_teams[0];
 						sorted_teams[0] = sorted_teams[team];
@@ -5437,7 +5435,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		*hud_itemsclock_style = NULL,
 		*hud_itemsclock_scale = NULL,
 		*hud_itemsclock_filter = NULL,
-		*hud_itemsclock_announcer = NULL;
+		*hud_itemsclock_backpacks = NULL;
 
 	if (hud_itemsclock_timelimit == NULL) {
 		char val[256];
@@ -5446,7 +5444,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		hud_itemsclock_style = HUD_FindVar(hud, "style");
 		hud_itemsclock_scale = HUD_FindVar(hud, "scale");
 		hud_itemsclock_filter = HUD_FindVar(hud, "filter");
-		hud_itemsclock_announcer = HUD_FindVar(hud, "announcer");
+		hud_itemsclock_backpacks = HUD_FindVar(hud, "backpacks");
 
 		// Unecessary to parse the item filter string on each frame.
 		hud_itemsclock_filter->OnChange = ItemsClock_OnChangeItemFilter;
@@ -5456,7 +5454,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		Cvar_Set(hud_itemsclock_filter, val);
 	}
 
-	MVD_ClockList_TopItems_DimensionsGet(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, &width, &height, hud_itemsclock_scale->value);
+	MVD_ClockList_TopItems_DimensionsGet(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, &width, &height, hud_itemsclock_scale->value, hud_itemsclock_backpacks->integer);
 
 	if (hud_editor)
 		HUD_PrepareDraw(hud, width, LETTERHEIGHT * hud_itemsclock_scale->value, &x, &y);
@@ -5467,7 +5465,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 	if (!HUD_PrepareDraw(hud, width, height, &x, &y))
 		return;
 
-	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value, itemsclock_filter);
+	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value, itemsclock_filter, hud_itemsclock_backpacks->integer);
 }
 
 static qbool SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** enemyName)
@@ -6836,7 +6834,7 @@ void CommonDraw_Init(void)
 		"style", "0",
 		"scale", "1",
 		"filter", "",
-		"announcer", "0",
+		"backpacks", "0",
 		NULL
 	);
 

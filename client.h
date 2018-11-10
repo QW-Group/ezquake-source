@@ -621,6 +621,7 @@ typedef struct {
 	int         cif_flags;
 
 	int         scoring_system;
+	qbool       mvd_ktx_markers;
 } clientState_t;
 
 #define SCORING_SYSTEM_DEFAULT   0
