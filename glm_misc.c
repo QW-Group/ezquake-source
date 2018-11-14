@@ -121,11 +121,12 @@ void GLM_PreRenderView(void)
 
 	// Draw-world constants
 	frameConstants.r_textureless = gl_textureless.integer || gl_max_size.integer == 1;
-	frameConstants.r_farclip = R_FarPlaneZ() * 0.577;
 	frameConstants.skySpeedscale = r_refdef2.time * 8;
 	frameConstants.skySpeedscale -= (int)frameConstants.skySpeedscale & ~127;
+	frameConstants.skySpeedscale /= 128.0f;
 	frameConstants.skySpeedscale2 = r_refdef2.time * 16;
 	frameConstants.skySpeedscale2 -= (int)frameConstants.skySpeedscale2 & ~127;
+	frameConstants.skySpeedscale2 /= 128.0f;
 
 	frameConstants.waterAlpha = R_WaterAlpha();
 

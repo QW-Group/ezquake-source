@@ -40,7 +40,7 @@ typedef struct uniform_block_frame_constants_s {
 	// turb settings
 	float skySpeedscale;
 	float skySpeedscale2;
-	float r_farclip;
+	float r_farclip_unused;                  // NO LONGER USED, replace
 	float waterAlpha;
 
 	// drawflat toggles (combine into bitfield?)

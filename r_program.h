@@ -40,7 +40,6 @@ typedef enum {
 	r_program_uniform_post_process_glc_v_blend,
 	r_program_uniform_post_process_glc_contrast,
 	r_program_uniform_sky_glc_cameraPosition,
-	r_program_uniform_sky_glc_r_farclip,
 	r_program_uniform_sky_glc_speedscale,
 	r_program_uniform_sky_glc_speedscale2,
 	r_program_uniform_sky_glc_skyTex,

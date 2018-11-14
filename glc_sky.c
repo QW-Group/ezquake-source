@@ -316,7 +316,6 @@ void GLC_DrawSky(void)
 		R_ProgramUse(r_program_sky_glc);
 		R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale, skySpeedscale);
 		R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale2, skySpeedscale2);
-		R_ProgramUniform1f(r_program_uniform_sky_glc_r_farclip, R_FarPlaneZ() * 0.577);
 		R_ProgramUniform3fv(r_program_uniform_sky_glc_cameraPosition, r_refdef.vieworg);
 
 		if (r_skyboxloaded && R_UseCubeMapForSkyBox()) {

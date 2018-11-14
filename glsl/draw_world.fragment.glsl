@@ -115,17 +115,12 @@ void main()
 #if defined(DRAW_SKYBOX)
 			frag_colour = texture(skyTex, Direction);
 #elif defined(DRAW_SKYDOME)
-			vec3 dir = normalize(Direction) * r_farclip;
-			float len;
-
+			const float len = 3.09375;
 			// Flatten it out
-			dir.z *= 3;
-			len = 198 / length(dir);
-			dir.x *= len;
-			dir.y *= len;
+			vec3 dir = normalize(vec3(Direction.x, Direction.y, 3 * Direction.z));
 
-			vec4 skyColor = texture(skyDomeTex, vec2((skySpeedscale + dir.x) / 128.0, (skySpeedscale + dir.y) / 128.0));
-			vec4 cloudColor = texture(skyDomeCloudTex, vec2((skySpeedscale2 + dir.x) / 128.0, (skySpeedscale2 + dir.y) / 128.0));
+			vec4 skyColor = texture2D(skyDomeTex, vec2(skySpeedscale + dir.x * len, skySpeedscale + dir.y * len));
+			vec4 cloudColor = texture2D(skyDomeCloudTex, vec2(skySpeedscale2 + dir.x * len, skySpeedscale2 + dir.y * len));
 
 			frag_colour = mix(skyColor, cloudColor, cloudColor.a);
 #else

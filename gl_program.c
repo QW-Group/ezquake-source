@@ -147,8 +147,6 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_post_process_glc, "contrast", 1, false },
 	// r_program_uniform_sky_glc_cameraPosition,
 	{ r_program_sky_glc, "cameraPosition", 1, false },
-	// r_program_uniform_sky_glc_r_farclip,
-	{ r_program_sky_glc, "r_farclip", 1, false },
 	// r_program_uniform_sky_glc_speedscale,
 	{ r_program_sky_glc, "skySpeedscale", 1, false },
 	// r_program_uniform_sky_glc_speedscale2,
