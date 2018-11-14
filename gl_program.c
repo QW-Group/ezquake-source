@@ -156,7 +156,11 @@ static r_program_uniform_t program_uniforms[] = {
 	// r_program_uniform_sky_glc_skyDomeTex,
 	{ r_program_sky_glc, "skyDomeTex", 1, false },
 	// r_program_uniform_sky_glc_skyDomeCloudTex,
-	{ r_program_sky_glc, "skyDomeCloudTex", 1, false }
+	{ r_program_sky_glc, "skyDomeCloudTex", 1, false },
+	// r_program_uniform_turb_glc_texSampler,
+	{ r_program_turb_glc, "texSampler", 1, false },
+	// r_program_uniform_turb_glc_time,
+	{ r_program_turb_glc, "time", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -864,5 +868,6 @@ static void GL_BuildCoreDefinitions(void)
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	GL_DefineProgram_VF(r_program_post_process_glc, "post-process-screen", true, glc_post_process_screen, renderer_classic);
 	GL_DefineProgram_VF(r_program_sky_glc, "sky-rendering", true, glc_sky, renderer_classic);
+	GL_DefineProgram_VF(r_program_turb_glc, "turb-rendering", true, glc_turbsurface, renderer_classic);
 #endif
 }

@@ -106,7 +106,6 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 static void GLC_BlendLightmaps(void);
 void GLC_RenderFullbrights(void);
 void GLC_RenderLumas(void);
-unsigned int GLC_DrawIndexedPoly(glpoly_t* p, unsigned int* modelIndexes, unsigned int modelIndexMaximum, unsigned int index_count);
 
 static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 {

@@ -22,16 +22,31 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "glc_local.h"
 #include "rulesets.h"
 #include "utils.h"
 #include "r_brushmodel.h"
 #include "r_renderer.h"
+#include "tr_types.h"
+#include "r_program.h"
 
 extern msurface_t* waterchain;
 void GLC_EmitWaterPoly(msurface_t* fa);
 
+static qbool GLC_TurbSurfaceProgramCompile(void)
+{
+	if (R_ProgramRecompileNeeded(r_program_turb_glc, 0)) {
+		R_ProgramCompile(r_program_turb_glc);
+		R_ProgramUniform1i(r_program_uniform_turb_glc_texSampler, 0);
+		R_ProgramSetCustomOptions(r_program_turb_glc, 0);
+	}
+
+	return R_ProgramReady(r_program_turb_glc);
+}
+
 void GLC_DrawWaterSurfaces(void)
 {
+	extern cvar_t gl_program_turbsurfaces;
 	msurface_t *s;
 
 	if (!waterchain) {
@@ -41,10 +56,49 @@ void GLC_DrawWaterSurfaces(void)
 	R_TraceEnterRegion(__FUNCTION__, true);
 	GLC_StateBeginWaterSurfaces();
 
-	for (s = waterchain; s; s = s->texturechain) {
-		renderer.TextureUnitBind(0, s->texinfo->texture->gl_texturenum);
+	if (gl_program_turbsurfaces.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_TurbSurfaceProgramCompile()) {
+		qbool use_vbo = buffers.supported && modelIndexes;
+		msurface_t* fa;
+		texture_ref prev_tex = null_texture_reference;
+		int index_count = 0;
 
-		GLC_EmitWaterPoly(s);
+		R_ProgramUse(r_program_turb_glc);
+		R_ProgramUniform1f(r_program_uniform_turb_glc_time, cl.time);
+	
+		for (fa = waterchain; fa; fa = fa->texturechain) {
+			glpoly_t *p;
+
+			if (!R_TextureReferenceEqual(fa->texinfo->texture->gl_texturenum, prev_tex)) {
+				prev_tex = fa->texinfo->texture->gl_texturenum;
+
+				if (index_count) {
+					GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+					index_count = 0;
+				}
+				renderer.TextureUnitBind(0, prev_tex);
+			}
+
+			if (use_vbo) {
+				for (p = fa->polys; p; p = p->next) {
+					index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+				}
+			}
+			else {
+				GLC_EmitWaterPoly(fa);
+			}
+		}
+
+		if (index_count) {
+			GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+		}
+		R_ProgramUse(r_program_none);
+	}
+	else {
+		for (s = waterchain; s; s = s->texturechain) {
+			renderer.TextureUnitBind(0, s->texinfo->texture->gl_texturenum);
+
+			GLC_EmitWaterPoly(s);
+		}
 	}
 
 	R_TraceLeaveRegion(true);

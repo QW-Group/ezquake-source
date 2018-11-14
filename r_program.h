@@ -16,6 +16,7 @@ typedef enum {
 
 	r_program_post_process_glc,
 	r_program_sky_glc,
+	r_program_turb_glc,
 
 	r_program_lightmap_compute,
 
@@ -45,6 +46,8 @@ typedef enum {
 	r_program_uniform_sky_glc_skyTex,
 	r_program_uniform_sky_glc_skyDomeTex,
 	r_program_uniform_sky_glc_skyDomeCloudTex,
+	r_program_uniform_turb_glc_texSampler,
+	r_program_uniform_turb_glc_time,
 
 	r_program_uniform_count
 } r_program_uniform_id;

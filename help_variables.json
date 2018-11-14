@@ -5575,6 +5575,22 @@
       "group-id": "8",
       "type": "integer"
     },
+    "gl_program_sky": {
+      "default": "1",
+      "desc": "Determines if GLSL will be used to render skybox/skydome surfaces.\nr_fastsky does not use this setting.",
+      "remarks": "Applies to classic OpenGL renderer only",
+      "group-id": "35",
+      "type": "integer",
+      "renderers": [ "classic" ]
+    },
+    "gl_program_turbsurfaces": {
+      "default": "1",
+      "desc": "Determines if GLSL will be used to render skybox/skydome surfaces.\nr_fastturb does not use this setting.",
+      "remarks": "Applies to classic OpenGL renderer only",
+      "group-id": "35",
+      "type": "integer",
+      "renderers": [ "classic" ]
+    },
     "gl_rl_globe": {
       "default": "0",
       "desc": "Helps customize rocket light independant of gl_flashblend.\n0 - treated as feature off.\n1 - rocket light looks like with gl_flashblend 2, but no dynamic lighting.\n2 - rocket light looks like with gl_flashblend 0 or 1.\n3 - rocket light looks like with gl_flashblend 2, with dynamic lighting, exactly the same.",

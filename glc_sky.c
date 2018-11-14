@@ -31,8 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define SUBDIVISIONS 10
 
-unsigned int GLC_DrawIndexedPoly(glpoly_t* p, unsigned int* modelIndexes, unsigned int modelIndexMaximum, unsigned int index_count);
-
 static float skymins[2][6], skymaxs[2][6];
 
 static void GLC_DrawSkyBox(void);

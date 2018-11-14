@@ -42,4 +42,6 @@ void GLC_Vertex2fv(const GLfloat* v);
 void GLC_Vertex3f(GLfloat x, GLfloat y, GLfloat z);
 void GLC_Vertex3fv(const GLfloat* v);
 
+unsigned int GLC_DrawIndexedPoly(glpoly_t* p, unsigned int* modelIndexes, unsigned int modelIndexMaximum, unsigned int index_count);
+
 #endif
