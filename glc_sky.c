@@ -25,8 +25,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_brushmodel_sky.h"
 #include "r_renderer.h"
 #include "tr_types.h"
+#include "r_brushmodel.h"
 
 #define SUBDIVISIONS 10
+
+unsigned int GLC_DrawIndexedPoly(glpoly_t* p, unsigned int* modelIndexes, unsigned int modelIndexMaximum, unsigned int index_count);
 
 static float skymins[2][6], skymaxs[2][6];
 
@@ -96,7 +99,7 @@ static void Sky_MakeSkyVec2(float s, float t, int axis, vec3_t v)
 	}
 }
 
-static void GLC_DrawFlatPoly(glpoly_t* p, qbool texture)
+static void GLC_DrawFlatSkyPoly(glpoly_t* p, qbool texture)
 {
 	int i;
 
@@ -113,6 +116,29 @@ static void GLC_DrawFlatPoly(glpoly_t* p, qbool texture)
 		GLC_Vertex3fv(v);
 	}
 	GLC_End();
+}
+
+static void GLC_DrawFastSkyChain(void)
+{
+	qbool use_vbo = buffers.supported && modelIndexes;
+	int index_count = 0;
+	msurface_t* fa;
+
+	for (fa = skychain; fa; fa = fa->texturechain) {
+		glpoly_t *p;
+
+		for (p = fa->polys; p; p = p->next) {
+			if (use_vbo) {
+				index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+			}
+			else {
+				GLC_DrawFlatSkyPoly(p, false);
+			}
+		}
+	}
+	if (index_count) {
+		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+	}
 }
 
 static void GLC_EmitSkyPolys(msurface_t *fa, skypoly_mode_id mode)
@@ -169,14 +195,7 @@ void GLC_SkyDrawChainedSurfaces(void)
 
 	if (r_fastsky.integer || cl.worldmodel->bspversion == HL_BSPVERSION) {
 		GLC_StateBeginFastSky();
-
-		for (fa = skychain; fa; fa = fa->texturechain) {
-			glpoly_t* p;
-
-			for (p = fa->polys; p; p = p->next) {
-				GLC_DrawFlatPoly(p, false);
-			}
-		}
+		GLC_DrawFastSkyChain();
 	}
 	else if (gl_mtexable) {
 		GLC_StateBeginMultiTextureSkyChain();
@@ -255,13 +274,7 @@ void GLC_DrawSky(void)
 	if (r_fastsky.integer) {
 		GLC_StateBeginFastSky();
 
-		for (fa = skychain; fa; fa = fa->texturechain) {
-			glpoly_t *p;
-
-			for (p = fa->polys; p; p = p->next) {
-				GLC_DrawFlatPoly(p, false);
-			}
-		}
+		GLC_DrawFastSkyChain();
 
 		skychain = NULL;
 		return;
@@ -278,7 +291,7 @@ void GLC_DrawSky(void)
 			glpoly_t *p;
 
 			for (p = fa->polys; p; p = p->next) {
-				GLC_DrawFlatPoly(p, true);
+				GLC_DrawFlatSkyPoly(p, true);
 			}
 		}
 
@@ -304,14 +317,7 @@ void GLC_DrawSky(void)
 	// don't need depth test yet
 	if (!ignore_z) {
 		GLC_StateBeginSkyZBufferPass();
-
-		for (fa = skychain; fa; fa = fa->texturechain) {
-			glpoly_t *p;
-
-			for (p = fa->polys; p; p = p->next) {
-				GLC_DrawFlatPoly(p, false);
-			}
-		}
+		GLC_DrawFastSkyChain();
 	}
 }
 

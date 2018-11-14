@@ -311,14 +311,14 @@ void GLC_InitialiseSkyStates(void)
 	state->depth.test_enabled = false;
 	state->fog.enabled = true;
 
-	state = R_InitRenderingState(r_state_skydome_zbuffer_pass, true, "skyDomeZPassState", vao_none);
+	state = R_InitRenderingState(r_state_skydome_zbuffer_pass, true, "skyDomeZPassState", vao_brushmodel);
 	state->depth.test_enabled = true;
 	state->blendingEnabled = true;
 	state->fog.enabled = false;
 	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = false;
 	state->blendFunc = r_blendfunc_src_zero_dest_one;
 
-	state = R_InitRenderingState(r_state_skydome_zbuffer_pass_fogged, true, "skyDomeZPassFoggedState", vao_none);
+	state = R_InitRenderingState(r_state_skydome_zbuffer_pass_fogged, true, "skyDomeZPassFoggedState", vao_brushmodel);
 	state->depth.test_enabled = true;
 	state->blendingEnabled = true;
 	state->fog.enabled = true;
