@@ -376,6 +376,9 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 						}
 
 						renderer.TextureUnitMultiBind(0, texture_unit_count, desired_textures);
+						if (r_lightmap_lateupload.integer && lmTextureUnit >= 0) {
+							R_UploadLightMap(lmTextureUnit, current_lightmap);
+						}
 
 						texture_change = false;
 					}
@@ -639,8 +642,6 @@ int GLC_PopulateVBOForBrushModel(model_t* m, float* vbo_buffer, int vbo_pos)
 
 static void GLC_BlendLightmaps(void)
 {
-	extern void R_UploadLightMap(GLenum textureUnit, int lightmapnum);
-
 	int i, j;
 	glpoly_t *p;
 	float *v;

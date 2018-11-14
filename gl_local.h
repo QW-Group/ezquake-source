@@ -221,6 +221,7 @@ void R_RenderDynamicLightmaps(msurface_t *fa, qbool world);
 void R_DrawViewModel(void);
 void R_LightmapFrameInit(void);
 void R_UploadChangedLightmaps(void);
+void R_UploadLightMap(int textureUnit, int lightmapnum);
 
 mspriteframe_t* R_GetSpriteFrame(entity_t *e, msprite2_t *psprite);
 

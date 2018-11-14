@@ -179,23 +179,24 @@ cvar_t cl_newlerp				= {"cl_newlerp", "0"};
 cvar_t cl_lerp_monsters			= {"cl_lerp_monsters", "1"};
 cvar_t cl_fix_mvd				= {"cl_fix_mvd", "0"};
 
-cvar_t r_rocketlight			= {"r_rocketLight", "1"};
-cvar_t r_rocketlightcolor		= {"r_rocketLightColor", "0"};
-cvar_t r_explosionlightcolor	= {"r_explosionLightColor", "0"};
-cvar_t r_explosionlight			= {"r_explosionLight", "1"};
-cvar_t r_flagcolor				= {"r_flagColor", "0"};
-cvar_t r_lightflicker			= {"r_lightflicker", "1"};
-cvar_t r_powerupglow			= {"r_powerupGlow", "1"};
-cvar_t cl_novweps				= {"cl_novweps", "0"};
-cvar_t r_drawvweps				= {"r_drawvweps", "1"};
-cvar_t r_rockettrail			= {"r_rocketTrail", "1"}; // 9
-cvar_t r_grenadetrail			= {"r_grenadeTrail", "1"}; // 3
-cvar_t r_railtrail				= {"r_railTrail", "1"};
-cvar_t r_instagibtrail				= {"r_instagibTrail", "1"};
-cvar_t r_explosiontype			= {"r_explosionType", "1"}; // 7
-cvar_t r_telesplash				= {"r_telesplash", "1"}; // disconnect
-cvar_t r_shaftalpha				= {"r_shaftalpha", "1"};
+cvar_t r_rocketlight            = {"r_rocketLight", "1"};
+cvar_t r_rocketlightcolor       = {"r_rocketLightColor", "0"};
+cvar_t r_explosionlightcolor    = {"r_explosionLightColor", "0"};
+cvar_t r_explosionlight         = {"r_explosionLight", "1"};
+cvar_t r_flagcolor              = {"r_flagColor", "0"};
+cvar_t r_lightflicker           = {"r_lightflicker", "1"};
+cvar_t r_powerupglow            = {"r_powerupGlow", "1"};
+cvar_t cl_novweps               = {"cl_novweps", "0"};
+cvar_t r_drawvweps              = {"r_drawvweps", "1"};
+cvar_t r_rockettrail            = {"r_rocketTrail", "1"}; // 9
+cvar_t r_grenadetrail           = {"r_grenadeTrail", "1"}; // 3
+cvar_t r_railtrail              = {"r_railTrail", "1"};
+cvar_t r_instagibtrail          = {"r_instagibTrail", "1"};
+cvar_t r_explosiontype          = {"r_explosionType", "1"}; // 7
+cvar_t r_telesplash             = {"r_telesplash", "1"}; // disconnect
+cvar_t r_shaftalpha             = {"r_shaftalpha", "1"};
 cvar_t r_lightdecayrate         = {"r_lightdecayrate", "2"}; // default 2, as CL_DecayLights() used to get called twice per frame
+cvar_t r_lightmap_lateupload    = {"r_lightmap_lateupload", "0"};
 
 // info mirrors
 cvar_t  password                = {"password", "", CVAR_USERINFO};
@@ -1672,6 +1673,7 @@ static void CL_InitLocal (void)
 	Cvar_Register (&cl_rocket2grenade);
 	Cvar_Register (&r_explosiontype);
 	Cvar_Register (&r_lightflicker);
+	Cvar_Register (&r_lightmap_lateupload);
 	Cvar_Register (&r_rockettrail);
 	Cvar_Register (&r_grenadetrail);
 	Cvar_Register (&r_railtrail);

@@ -308,17 +308,19 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 	}
 }
 
-static void R_UploadLightMap(int textureUnit, int lightmapnum)
+void R_UploadLightMap(int textureUnit, int lightmapnum)
 {
 	lightmap_data_t* lm = &lightmaps[lightmapnum];
 
-	lm->modified = false;
-	renderer.UploadLightmap(textureUnit, lightmapnum);
-	lm->change_area.l = LIGHTMAP_WIDTH;
-	lm->change_area.t = LIGHTMAP_HEIGHT;
-	lm->change_area.h = 0;
-	lm->change_area.w = 0;
-	++frameStats.lightmap_updates;
+	if (lm->modified) {
+		lm->modified = false;
+		renderer.UploadLightmap(textureUnit, lightmapnum);
+		lm->change_area.l = LIGHTMAP_WIDTH;
+		lm->change_area.t = LIGHTMAP_HEIGHT;
+		lm->change_area.h = 0;
+		lm->change_area.w = 0;
+		++frameStats.lightmap_updates;
+	}
 }
 
 void R_RenderDynamicLightmaps(msurface_t *fa, qbool world)
@@ -439,6 +441,10 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 
 void R_UploadChangedLightmaps(void)
 {
+	if (r_lightmap_lateupload.integer == 1) {
+		return;
+	}
+
 	R_TraceEnterNamedRegion(__FUNCTION__);
 	if (R_HardwareLighting()) {
 		if (R_FullBrightAllowed() || !cl.worldmodel || !cl.worldmodel->lightdata) {
