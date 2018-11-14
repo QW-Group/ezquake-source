@@ -337,13 +337,18 @@ void GLC_InitialiseSkyStates(void)
 	state->textureUnits[0].enabled = true;
 	state->textureUnits[0].mode = r_texunit_mode_replace;
 
-	state = R_InitRenderingState(r_state_skydome_single_pass, true, "skyDomeSinglePassState", vao_none);
+	// Used when rendering the skydome/cloud background, prior to z-pass
+	state = R_InitRenderingState(r_state_skydome_single_pass, true, "skyDomeSinglePassState", vao_brushmodel);
 	state->depth.test_enabled = false;
 	state->blendingEnabled = false;
 	state->textureUnits[0].enabled = true;
 	state->textureUnits[0].mode = r_texunit_mode_replace;
 	state->textureUnits[1].enabled = true;
 	state->textureUnits[1].mode = r_texunit_mode_decal;
+
+	// Used when rendering the polys directly (like r_fastsky) but texturing
+	state = R_CopyRenderingState(r_state_skydome_single_pass_program, r_state_skydome_single_pass, "skyDomeSinglePass(program)");
+	state->depth.test_enabled = true;
 }
 
 void GLC_StateBeginFastSky(void)
@@ -400,11 +405,11 @@ void GLC_StateBeginSingleTextureSkyDomeCloudPass(void)
 	R_TraceLeaveFunctionRegion;
 }
 
-void GLC_StateBeginMultiTextureSkyDome(void)
+void GLC_StateBeginMultiTextureSkyDome(qbool use_program)
 {
 	R_TraceEnterFunctionRegion;
 
-	R_ApplyRenderingState(r_state_skydome_single_pass);
+	R_ApplyRenderingState(use_program ? r_state_skydome_single_pass_program : r_state_skydome_single_pass);
 	renderer.TextureUnitBind(0, solidskytexture);
 	renderer.TextureUnitBind(1, alphaskytexture);
 

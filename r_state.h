@@ -199,6 +199,7 @@ typedef enum {
 	r_state_skydome_background_pass,
 	r_state_skydome_cloud_pass,
 	r_state_skydome_single_pass,
+	r_state_skydome_single_pass_program,
 	r_state_skydome_zbuffer_pass,
 	r_state_skydome_zbuffer_pass_fogged,
 	r_state_skybox,

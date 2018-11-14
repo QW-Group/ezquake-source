@@ -26,6 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 #include "tr_types.h"
 #include "r_brushmodel.h"
+#include "r_program.h"
+#include "r_matrix.h"
 
 #define SUBDIVISIONS 10
 
@@ -185,6 +187,7 @@ static void GLC_EmitSkyPolys(msurface_t *fa, skypoly_mode_id mode)
 	}
 }
 
+// This is used for brushmodel entity surfaces only
 void GLC_SkyDrawChainedSurfaces(void)
 {
 	msurface_t *fa;
@@ -265,15 +268,78 @@ static qbool R_DetermineSkyLimits(qbool *ignore_z)
 	return true;
 }
 
+#define PROGRAMFLAGS_SKYBOX 1
+
+static qbool GLC_SkyProgramCompile(void)
+{
+	int flags = (r_skyboxloaded && R_UseCubeMapForSkyBox() ? PROGRAMFLAGS_SKYBOX : 0);
+
+	if (R_ProgramRecompileNeeded(r_program_sky_glc, flags)) {
+		static char included_definitions[512];
+
+		memset(included_definitions, 0, sizeof(included_definitions));
+		if (flags & PROGRAMFLAGS_SKYBOX) {
+			strlcat(included_definitions, "#define DRAW_SKYBOX\n", sizeof(included_definitions));
+		}
+
+		R_ProgramCompileWithInclude(r_program_sky_glc, included_definitions);
+		if (flags & PROGRAMFLAGS_SKYBOX) {
+			R_ProgramUniform1i(r_program_uniform_sky_glc_skyTex, 0);
+		}
+		else {
+			R_ProgramUniform1i(r_program_uniform_sky_glc_skyDomeTex, 0);
+			R_ProgramUniform1i(r_program_uniform_sky_glc_skyDomeCloudTex, 1);
+		}
+		R_ProgramSetCustomOptions(r_program_sky_glc, flags);
+	}
+
+	return R_ProgramReady(r_program_sky_glc);
+}
+
 void GLC_DrawSky(void)
 {
 	msurface_t	*fa;
 	qbool		ignore_z;
 	extern msurface_t *skychain;
+	extern cvar_t gl_program_sky;
+
+	if (gl_program_sky.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_SkyProgramCompile()) {
+		float skySpeedscale = r_refdef2.time * 8;
+		float skySpeedscale2 = r_refdef2.time * 16;
+
+		skySpeedscale -= (int)skySpeedscale & ~127;
+		skySpeedscale2 -= (int)skySpeedscale2 & ~127;
+
+		skySpeedscale /= 128.0f;
+		skySpeedscale2 /= 128.0f;
+
+		R_ProgramUse(r_program_sky_glc);
+		R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale, skySpeedscale);
+		R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale2, skySpeedscale2);
+		R_ProgramUniform1f(r_program_uniform_sky_glc_r_farclip, R_FarPlaneZ() * 0.577);
+		R_ProgramUniform3fv(r_program_uniform_sky_glc_cameraPosition, r_refdef.vieworg);
+
+		if (r_skyboxloaded && R_UseCubeMapForSkyBox()) {
+			extern texture_ref skybox_cubeMap;
+
+			glEnable(GL_TEXTURE_CUBE_MAP);
+			R_ApplyRenderingState(r_state_skybox);
+			renderer.TextureUnitBind(0, skybox_cubeMap);
+			GLC_DrawFastSkyChain();
+			glDisable(GL_TEXTURE_CUBE_MAP);
+		}
+		else {
+			GLC_StateBeginMultiTextureSkyDome(true);
+			GLC_DrawFastSkyChain();
+		}
+
+		R_ProgramUse(r_program_none);
+		skychain = NULL;
+		return;
+	}
 
 	if (r_fastsky.integer) {
 		GLC_StateBeginFastSky();
-
 		GLC_DrawFastSkyChain();
 
 		skychain = NULL;
@@ -401,7 +467,7 @@ static void GLC_DrawSkyDome(void)
 	int i;
 
 	if (gl_mtexable) {
-		GLC_StateBeginMultiTextureSkyDome();
+		GLC_StateBeginMultiTextureSkyDome(false);
 	}
 	else {
 		GLC_StateBeginSingleTextureSkyDome();

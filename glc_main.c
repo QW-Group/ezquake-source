@@ -7,6 +7,8 @@
 #include "r_aliasmodel.h"
 #include "tr_types.h"
 
+cvar_t gl_program_sky = { "gl_program_sky", "1" };
+
 void GL_Init(void);
 qbool GLC_InitialiseVAOHandling(void);
 void GL_InitialiseBufferHandling(api_buffers_t* buffers);
@@ -92,6 +94,10 @@ static void GLC_Begin2DRendering(void)
 void GLC_Initialise(void)
 {
 	#include "r_renderer_structure.h"
+
+	if (!host_initialized) {
+		Cvar_Register(&gl_program_sky);
+	}
 
 	GL_Init();
 	renderer.vaos_supported = GLC_InitialiseVAOHandling();

@@ -145,6 +145,20 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_post_process_glc, "v_blend", 1, false },
 	// r_program_uniform_post_process_glc_contrast,
 	{ r_program_post_process_glc, "contrast", 1, false },
+	// r_program_uniform_sky_glc_cameraPosition,
+	{ r_program_sky_glc, "cameraPosition", 1, false },
+	// r_program_uniform_sky_glc_r_farclip,
+	{ r_program_sky_glc, "r_farclip", 1, false },
+	// r_program_uniform_sky_glc_speedscale,
+	{ r_program_sky_glc, "skySpeedscale", 1, false },
+	// r_program_uniform_sky_glc_speedscale2,
+	{ r_program_sky_glc, "skySpeedscale2", 1, false },
+	// r_program_uniform_sky_glc_skyTex,
+	{ r_program_sky_glc, "skyTex", 1, false },
+	// r_program_uniform_sky_glc_skyDomeTex,
+	{ r_program_sky_glc, "skyDomeTex", 1, false },
+	// r_program_uniform_sky_glc_skyDomeCloudTex,
+	{ r_program_sky_glc, "skyDomeCloudTex", 1, false }
 };
 
 #ifdef C_ASSERT
@@ -179,10 +193,12 @@ typedef void (APIENTRY *glGetProgramiv_t)(GLuint program, GLenum pname, GLint* p
 typedef GLint(APIENTRY *glGetUniformLocation_t)(GLuint program, const GLchar* name);
 typedef void (APIENTRY *glUniform1i_t)(GLint location, GLint v0);
 typedef void (APIENTRY *glUniform1f_t)(GLint location, GLfloat value);
+typedef void (APIENTRY *glUniform3fv_t)(GLint location, GLsizei count, const GLfloat *value);
 typedef void (APIENTRY *glUniform4fv_t)(GLint location, GLsizei count, const GLfloat *value);
 typedef void (APIENTRY *glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 typedef void (APIENTRY *glProgramUniform1i_t)(GLuint program, GLuint location, GLint v0);
 typedef void (APIENTRY *glProgramUniform1f_t)(GLuint program, GLuint location, GLfloat value);
+typedef void (APIENTRY *glProgramUniform3fv_t)(GLuint program, GLuint location, GLsizei count, const GLfloat *value);
 typedef void (APIENTRY *glProgramUniform4fv_t)(GLuint program, GLuint location, GLsizei count, const GLfloat *value);
 typedef void (APIENTRY *glProgramUniformMatrix4fv_t)(GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 
@@ -213,10 +229,12 @@ static glDetachShader_t      qglDetachShader = NULL;
 static glGetUniformLocation_t      qglGetUniformLocation = NULL;
 static glUniform1i_t               qglUniform1i;
 static glUniform1f_t               qglUniform1f;
+static glUniform3fv_t              qglUniform3fv;
 static glUniform4fv_t              qglUniform4fv;
 static glUniformMatrix4fv_t        qglUniformMatrix4fv;
 static glProgramUniform1i_t        qglProgramUniform1i;
 static glProgramUniform1f_t        qglProgramUniform1f;
+static glProgramUniform3fv_t       qglProgramUniform3fv;
 static glProgramUniform4fv_t       qglProgramUniform4fv;
 static glProgramUniformMatrix4fv_t qglProgramUniformMatrix4fv;
 
@@ -650,6 +668,7 @@ void GL_LoadProgramFunctions(void)
 		GL_LoadMandatoryFunctionExtension(glGetUniformLocation, rendering_shaders_support);
 		GL_LoadMandatoryFunctionExtension(glUniform1i, rendering_shaders_support);
 		GL_LoadMandatoryFunctionExtension(glUniform1f, rendering_shaders_support);
+		GL_LoadMandatoryFunctionExtension(glUniform3fv, rendering_shaders_support);
 		GL_LoadMandatoryFunctionExtension(glUniform4fv, rendering_shaders_support);
 		GL_LoadMandatoryFunctionExtension(glUniformMatrix4fv, rendering_shaders_support);
 
@@ -659,6 +678,7 @@ void GL_LoadProgramFunctions(void)
 	if (GL_UseDirectStateAccess() || GL_VersionAtLeast(4, 1)) {
 		GL_LoadOptionalFunction(glProgramUniform1i);
 		GL_LoadOptionalFunction(glProgramUniform1f);
+		GL_LoadOptionalFunction(glProgramUniform3fv);
 		GL_LoadOptionalFunction(glProgramUniform4fv);
 		GL_LoadOptionalFunction(glProgramUniformMatrix4fv);
 	}
@@ -761,6 +781,19 @@ void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value)
 	uniform->int_value = value;
 }
 
+void R_ProgramUniform3fv(r_program_uniform_id uniform_id, float* values)
+{
+	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
+
+	if (qglProgramUniform3fv) {
+		qglProgramUniform3fv(program_data[uniform->program_id].program, uniform->location, uniform->count, values);
+	}
+	else {
+		R_ProgramUse(uniform->program_id);
+		qglUniform3fv(uniform->location, uniform->count, values);
+	}
+}
+
 void R_ProgramUniform4fv(r_program_uniform_id uniform_id, float* values)
 {
 	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
@@ -832,5 +865,6 @@ static void GL_BuildCoreDefinitions(void)
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	GL_DefineProgram_VF(r_program_post_process_glc, "post-process-screen", true, glc_post_process_screen, renderer_classic);
+	GL_DefineProgram_VF(r_program_sky_glc, "sky-rendering", true, glc_sky, renderer_classic);
 #endif
 }

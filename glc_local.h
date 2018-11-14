@@ -13,7 +13,7 @@ void GLC_StateBeginFastSky(void);
 void GLC_StateBeginSkyZBufferPass(void);
 void GLC_StateBeginSingleTextureSkyDome(void);
 void GLC_StateBeginSingleTextureSkyDomeCloudPass(void);
-void GLC_StateBeginMultiTextureSkyDome(void);
+void GLC_StateBeginMultiTextureSkyDome(qbool use_program);
 void GLC_StateBeginMultiTextureSkyChain(void);
 void GLC_StateBeginSingleTextureSkyPass(void);
 void GLC_StateBeginSingleTextureCloudPass(void);
