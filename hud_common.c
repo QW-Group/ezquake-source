@@ -991,7 +991,5 @@ const char* HUD_FirstTeam(void)
 	if (n_teams) {
 		return sorted_teams[0].name;
 	}
-	else {
-		return "";
-	}
+	return "";
 }
