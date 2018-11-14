@@ -41,18 +41,6 @@ static byte turbsin[TURBSINSIZE] = {
 	37, 41, 46, 51, 56, 61, 67, 72, 78, 84, 90, 96, 102, 108, 115, 121, 
 };
 
-//VULT RIPPLE : Not sure where this came from first, but I've seen in it more than one engine
-//I got this one from the QMB engine though
-static void GLC_ApplyTurbRippleVertex(msurface_t* surf, float* v)
-{
-	if (r_refdef2.turb_ripple && surf->texinfo->texture->turbType != TEXTURE_TURB_TELE) {
-		GLC_Vertex3f(v[0], v[1], v[2] + r_refdef2.turb_ripple * sin(v[0] * 0.02 + r_refdef2.time) * sin(v[1] * 0.02 + r_refdef2.time) * sin(v[2] * 0.02 + r_refdef2.time));
-	}
-	else {
-		GLC_Vertex3fv(v);
-	}
-}
-
 __inline static float SINTABLE_APPROX(float time) {
 	float sinlerpf, lerptime, lerp;
 	int sinlerp1, sinlerp2;
@@ -79,10 +67,10 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 		byte color[4] = { col[0], col[1], col[2], 255 };
 
 		GLC_StateBeginFastTurbPoly(color);
-		for (p = r_refdef2.turb_ripple ? fa->subdivided : fa->polys; p; p = p->next) {
+		for (p = fa->polys; p; p = p->next) {
 			GLC_Begin(GL_TRIANGLE_STRIP);
 			for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
-				GLC_ApplyTurbRippleVertex(fa, v);
+				GLC_Vertex3fv(v);
 			}
 			GLC_End();
 		}
@@ -101,7 +89,7 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 				float t = ot + v[6] * r_refdef2.cos_time + v[8] * r_refdef2.sin_time;
 
 				glTexCoord2f(s, t);
-				GLC_ApplyTurbRippleVertex(fa, v);
+				GLC_Vertex3fv(v);
 			}
 			GLC_End();
 		}

@@ -40,7 +40,6 @@ cvar_t		amf_weather_rain_fast = { "gl_weather_rain_fast", "0" };
 cvar_t		amf_extratrails = { "gl_extratrails", "0" }; // 1
 cvar_t		amf_detpacklights = { "gl_detpacklights", "0" }; // 1
 cvar_t		amf_buildingsparks = { "gl_buildingsparks", "0" }; // 1
-cvar_t		amf_waterripple = { "gl_turbripple", "0" };
 cvar_t		amf_cutf_tesla_effect = { "gl_cutf_tesla_effect", "0" }; // 1
 cvar_t		amf_underwater_trails = { "gl_turb_trails", "0" }; // 1
 
@@ -376,7 +375,6 @@ void InitVXStuff(void)
 	Cvar_Register(&tei_slime);
 	Cvar_Register(&amf_weather_rain);
 	Cvar_Register(&amf_weather_rain_fast);
-	Cvar_Register(&amf_waterripple);
 	Cvar_Register(&amf_underwater_trails);
 	Cvar_ResetCurrentGroup();
 

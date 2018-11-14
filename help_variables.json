@@ -5969,13 +5969,6 @@
         }
       ]
     },
-    "gl_turbripple": {
-      "default": "0",
-      "desc": "Put your life vests on, waves are coming! Creates an effect of waves on liquids.",
-      "group-id": "51",
-      "remarks": "Enabled only for viewing demos and observing games.",
-      "type": "float"
-    },
     "gl_vbo_clientmemory": {
       "default": "0",
       "desc": "Use client memory when rendering dynamic geometry.",
