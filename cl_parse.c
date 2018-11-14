@@ -2035,19 +2035,21 @@ void CL_NewTranslation (int slot)
 			teammate = true;
 		}
 
-		if (teammate)
-		{
-			if (cl_teamtopcolor.integer != -1)
+		if (teammate) {
+			if (cl_teamtopcolor.integer != -1) {
 				player->topcolor = cl_teamtopcolor.value;
-			if (cl_teambottomcolor.integer != -1)
+			}
+			if (cl_teambottomcolor.integer != -1) {
 				player->bottomcolor = cl_teambottomcolor.value;
+			}
 		}
-		else if (slot != cl.playernum)
-		{
-			if (cl_enemytopcolor.integer != -1)
+		else if (slot != cl.playernum) {
+			if (cl_enemytopcolor.integer != -1) {
 				player->topcolor = cl_enemytopcolor.value;
-			if (cl_enemybottomcolor.integer != -1)
+			}
+			if (cl_enemybottomcolor.integer != -1) {
 				player->bottomcolor = cl_enemybottomcolor.value;
+			}
 		}
 	}
 

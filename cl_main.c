@@ -353,7 +353,7 @@ void CL_MakeActive(void)
 	if (!cls.demoseeking) {
 		Con_ClearNotify ();
 	}
-	TP_ExecTrigger ("f_spawn");
+	TP_ExecTrigger("f_spawn");
 }
 
 // Cvar system calls this when a CVAR_USERINFO cvar changes
