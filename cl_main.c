@@ -355,6 +355,9 @@ void CL_MakeActive(void)
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	Sys_Printf("event,active (map=%s)\n", host_mapname.string);
 #endif
+	// last chance
+	CachePics_AtlasFrame();
+
 	cls.state = ca_active;
 	if (cls.demoplayback) 
 	{

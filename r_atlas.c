@@ -241,7 +241,8 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 
 void CachePics_AtlasFrame(void)
 {
-	if (atlas_refresh) {
+	// cls.state != active should be safe, vid_restart builds atlas directly via GFX_Init()
+	if (atlas_refresh && cls.state != ca_active) {
 		CachePics_CreateAtlas();
 	}
 }
