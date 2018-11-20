@@ -40,12 +40,14 @@ entities sent from the server may not include everything in the pvs, especially
 when crossing a water boudnary.
 */
 
+static cvar_t cl_bob      = { "cl_bob",      "0"   };
+static cvar_t cl_bobcycle = { "cl_bobcycle", "0.0" };
+static cvar_t cl_bobup    = { "cl_bobup",    "0.0" };
+static cvar_t cl_bobhead  = { "cl_bobhead",  "0"   };
+
 cvar_t	cl_rollspeed = {"cl_rollspeed", "200"};
 cvar_t	cl_rollangle = {"cl_rollangle", "0"};
 cvar_t	cl_rollalpha = {"cl_rollalpha", "20"};
-cvar_t	cl_bob = {"cl_bob", "0"};
-cvar_t	cl_bobcycle = {"cl_bobcycle", "0.0"};
-cvar_t	cl_bobup = {"cl_bobup", "0.0"};
 cvar_t	v_kicktime = {"v_kicktime", "0.0"};
 cvar_t	v_kickroll = {"v_kickroll", "0.0"};
 cvar_t	v_kickpitch = {"v_kickpitch", "0.0"};
@@ -822,7 +824,9 @@ static int V_CurrentWeaponModel(void) {
 }
 
 extern void TP_ParseWeaponModel(model_t *model);
-void V_AddViewWeapon (float bob) {
+
+static void V_AddViewWeapon(float bob)
+{
 	vec3_t forward, right, up;
 	centity_t *cent;
 	int gunmodel = V_CurrentWeaponModel();
@@ -832,9 +836,8 @@ void V_AddViewWeapon (float bob) {
 	TP_ParseWeaponModel(cl.model_precache[gunmodel]);
 
 	if (!cl_drawgun.value || (cl_drawgun.value == 2 && scr_fov.value > 90)
-		|| ((view_message.flags & (PF_GIB|PF_DEAD)))	
-		|| cl.stats[STAT_ITEMS] & IT_INVISIBILITY || cl.stats[STAT_HEALTH] <= 0 || !Cam_DrawViewModel())
-	{
+		|| ((view_message.flags & (PF_GIB | PF_DEAD)))
+		|| cl.stats[STAT_ITEMS] & IT_INVISIBILITY || cl.stats[STAT_HEALTH] <= 0 || !Cam_DrawViewModel()) {
 		cent->current.modelindex = 0;	//no model
 		return;
 	}
@@ -845,18 +848,19 @@ void V_AddViewWeapon (float bob) {
 	cent->current.angles[ROLL] = r_refdef.viewangles[ROLL];
 	//origin
 
-	AngleVectors (r_refdef.viewangles, forward, right, up);
-	VectorCopy (r_refdef.vieworg, cent->current.origin);
-	VectorMA (cent->current.origin, bob * 0.4, forward, cent->current.origin);
+	AngleVectors(r_refdef.viewangles, forward, right, up);
+	VectorCopy(r_refdef.vieworg, cent->current.origin);
+
+	VectorMA(cent->current.origin, bob * 0.4, forward, cent->current.origin);
 
 	if (r_viewmodeloffset.string[0]) {
 		float offset[3];
-		int size = sizeof(offset)/sizeof(offset[0]);
+		int size = sizeof(offset) / sizeof(offset[0]);
 
 		ParseFloats(r_viewmodeloffset.string, offset, &size);
-		VectorMA (cent->current.origin,  offset[0], right,   cent->current.origin);
-		VectorMA (cent->current.origin, -offset[1], up,      cent->current.origin);
-		VectorMA (cent->current.origin,  offset[2], forward, cent->current.origin);
+		VectorMA(cent->current.origin, offset[0], right, cent->current.origin);
+		VectorMA(cent->current.origin, -offset[1], up, cent->current.origin);
+		VectorMA(cent->current.origin, offset[2], forward, cent->current.origin);
 	}
 
 	// fudge position around to keep amount of weapon visible roughly equal with different FOV
@@ -873,7 +877,8 @@ void V_AddViewWeapon (float bob) {
 
 	if (cent->current.modelindex != gunmodel) {
 		cl.viewent.frametime = -1;
-	} else {
+	}
+	else {
 		if (cent->current.frame != view_message.weaponframe) {
 			cent->frametime = cl.time;
 			cent->oldframe = cent->current.frame;
@@ -911,7 +916,10 @@ void V_CalcRefdef(void)
 	bob = V_CalcBob();
 
 	height_adjustment = v_viewheight.value ? bound(-7, v_viewheight.value, 4) : V_CalcBob();
-
+	if (cl_bobhead.integer) {
+		height_adjustment += bob;
+		bob = 0;
+	}
 
 	// set up the refresh position
 	VectorCopy(cl.simorg, r_refdef.vieworg);
@@ -937,8 +945,6 @@ void V_CalcRefdef(void)
 
 		r_refdef.vieworg[2] += height_adjustment;
 
-		r_refdef.vieworg[2] += bob;
-
 		// smooth out stair step ups
 		r_refdef.vieworg[2] += cl.crouch;
 	}
@@ -962,7 +968,10 @@ void V_CalcRefdef(void)
 
 	//VULT CAMERAS
 	CameraUpdate(view_message.flags & PF_DEAD);
-	V_AddViewWeapon(height_adjustment);
+
+	// meag: really viewheight shouldn't be here, but it was incorrectly passed for years instead of bob,
+	//       and so without it the gun is rendered too far forward if e.g. viewheight -6
+	V_AddViewWeapon(bob + height_adjustment);
 }
 
 void DropPunchAngle (void) {
@@ -1061,22 +1070,23 @@ void V_Init (void) {
 	Cvar_Register (&r_nearclip);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CROSSHAIR);
-	Cvar_Register (&crosshaircolor);
-	Cvar_Register (&crosshair);
-	Cvar_Register (&crosshairsize);
-	Cvar_Register (&cl_crossx);
-	Cvar_Register (&cl_crossy);
+	Cvar_Register(&crosshaircolor);
+	Cvar_Register(&crosshair);
+	Cvar_Register(&crosshairsize);
+	Cvar_Register(&cl_crossx);
+	Cvar_Register(&cl_crossy);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIEWMODEL);
-	Cvar_Register (&cl_bob);
-	Cvar_Register (&cl_bobcycle);
-	Cvar_Register (&cl_bobup);
+	Cvar_Register(&cl_bob);
+	Cvar_Register(&cl_bobcycle);
+	Cvar_Register(&cl_bobup);
+	Cvar_Register(&cl_bobhead);
 
-	Cvar_Register (&cl_drawgun);
-	Cvar_Register (&r_viewmodelsize);
-	Cvar_Register (&r_viewmodeloffset);
-	Cvar_Register (&r_viewpreselgun);
-	Cvar_Register (&r_viewlastfired);
+	Cvar_Register(&cl_drawgun);
+	Cvar_Register(&r_viewmodelsize);
+	Cvar_Register(&r_viewmodeloffset);
+	Cvar_Register(&r_viewpreselgun);
+	Cvar_Register(&r_viewlastfired);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIEW);
 	Cvar_Register (&v_kicktime);
