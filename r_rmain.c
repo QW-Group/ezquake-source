@@ -87,6 +87,7 @@ mleaf_t   *r_oldviewleaf;
 mleaf_t   *r_viewleaf2;                       // for watervis hack
 mleaf_t   *r_oldviewleaf2;                    // for watervis hack
 vec3_t    vup, vpn, vright;                   // view origin
+vec3_t    vup_noroll, vright_noroll;          // view directions, with roll=0
 vec3_t    r_origin; // view origin
 float     clearColor[3] = {0, 0, 0};
 int       r_visframecount;                    // bumped when going to a new PVS
@@ -284,6 +285,15 @@ void R_SetupFrame(void)
 	// build the transformation matrix for the given view angles
 	VectorCopy (r_refdef.vieworg, r_origin);
 	AngleVectors (r_refdef.viewangles, vpn, vright, vup);
+	if (r_refdef.viewangles[ROLL] != 0) {
+		vec3_t noroll_angles = { r_refdef.viewangles[0], r_refdef.viewangles[1], 0 };
+
+		AngleVectors(noroll_angles, NULL, vright_noroll, vup_noroll);
+	}
+	else {
+		VectorCopy(vright, vright_noroll);
+		VectorCopy(vup, vup_noroll);
+	}
 
 	// current viewleaf
 	r_oldviewleaf = r_viewleaf;
@@ -853,7 +863,7 @@ static qbool R_DrawTrySimpleItem(entity_t* ent)
 	int sprtype = gl_simpleitems_orientation.integer;
 	float sprsize = bound(1, gl_simpleitems_size.value, 16), autorotate;
 	texture_ref simpletexture;
-	vec3_t right, up, org, offset, angles;
+	vec3_t right, up, org, offset;
 	int skin;
 
 	if (!ent || !ent->model) {
@@ -874,6 +884,7 @@ static qbool R_DrawTrySimpleItem(entity_t* ent)
 	autorotate = anglemod(100 * cl.time);
 	if (sprtype == SPR_ORIENTED) {
 		// bullet marks on walls
+		vec3_t angles;
 		angles[0] = angles[2] = 0;
 		angles[1] = anglemod(autorotate);
 		AngleVectors(angles, NULL, right, up);
@@ -884,18 +895,15 @@ static qbool R_DrawTrySimpleItem(entity_t* ent)
 		right[1] = -(ent->origin[0] - r_origin[0]);
 		right[2] = 0;
 		VectorNormalizeFast(right);
-		vectoangles(right, angles);
 	}
 	else if (sprtype == SPR_VP_PARALLEL_UPRIGHT) {
 		VectorSet(up, 0, 0, 1);
 		VectorCopy(vright, right);
-		vectoangles(right, angles);
 	}
 	else {
 		// normal sprite
-		VectorCopy(vup, up);
-		VectorCopy(vright, right);
-		vectoangles(right, angles);
+		VectorCopy(vup_noroll, up);
+		VectorCopy(vright_noroll, right);
 	}
 
 	VectorCopy(ent->origin, org);

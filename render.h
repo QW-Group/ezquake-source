@@ -144,6 +144,7 @@ typedef struct {
 extern refdef_t	r_refdef;
 extern refdef2_t r_refdef2;
 extern vec3_t r_origin, vpn, vright, vup;
+extern vec3_t vright_noroll, vup_noroll;
 
 extern struct texture_s	*r_notexture_mip;
 
