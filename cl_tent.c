@@ -756,7 +756,7 @@ void CL_UpdateBeams(void)
 	memset (&ent, 0, sizeof(entity_t));
 	ent.colormap = vid.colormap;
 
-	fakeshaft = bound(0, cl_fakeshaft.value, fakeshaft_policy());
+	fakeshaft = cl.intermission ? 0 : bound(0, cl_fakeshaft.value, fakeshaft_policy());
 
 	// Update lightning.
 	for (i = 0, b = cl_beams; i < MAX_BEAMS; i++, b++) {
