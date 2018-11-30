@@ -143,7 +143,7 @@ cvar_t r_drawflat                          = {"r_drawflat", "0", 0, OnChange_r_d
 cvar_t r_wallcolor                         = {"r_wallcolor", "255 255 255", CVAR_COLOR, OnChange_r_drawflat};
 cvar_t r_floorcolor                        = {"r_floorcolor", "50 100 150", CVAR_COLOR, OnChange_r_drawflat};
 cvar_t gl_textureless                      = {"gl_textureless", "0", 0, OnChange_r_drawflat}; //Qrack
-cvar_t r_farclip                           = {"r_farclip", "8192", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 8192.0f, 16384.0f, 2048.0f }; // previous default was 4096. 8192 helps some TF players in big maps
+cvar_t r_farclip                           = {"r_farclip", "8192", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, 8192.0f, R_MAXIMUM_FARCLIP, R_MINIMUM_FARCLIP }; // previous default was 4096. 8192 helps some TF players in big maps
 cvar_t r_skyname                           = {"r_skyname", "", 0, OnChange_r_skyname};
 cvar_t gl_detail                           = {"gl_detail","0"};
 cvar_t gl_brush_polygonoffset              = {"gl_brush_polygonoffset", "2.0"}; // This is the one to adjust if you notice flicker on lift @ e1m1 for instance, for z-fighting
@@ -431,12 +431,23 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 	return;
 }
 
-void R_SetupViewport(void)
+float R_FarPlaneZ(void)
+{
+	return bound(R_MINIMUM_FARCLIP, r_farclip.value, R_MAXIMUM_FARCLIP);
+}
+
+float R_NearPlaneZ(void)
+{
+	extern cvar_t r_nearclip;
+
+	return bound(R_MINIMUM_NEARCLIP, r_nearclip.value, R_MAXIMUM_NEARCLIP);
+}
+
+static void R_SetupViewport(void)
 {
 	float screenaspect;
 	extern int glwidth, glheight;
-	extern cvar_t r_nearclip;
-	int x, x2, y2, y, w, h, farclip;
+	int x, x2, y2, y, w, h;
 
 	// set up viewpoint
 	x = r_refdef.vrect.x * glwidth / vid.width;
@@ -469,11 +480,10 @@ void R_SetupViewport(void)
 		R_Viewport(glx + x, gly + y2, w, h);
 	}
 
-	farclip = max((int)r_farclip.value, 4096);
 	screenaspect = (float)r_refdef.vrect.width / r_refdef.vrect.height;
 
 	R_IdentityProjectionView();
-	MYgluPerspective(r_refdef.fov_y, screenaspect, r_nearclip.value, farclip);
+	MYgluPerspective(r_refdef.fov_y, screenaspect, R_NearPlaneZ(), R_FarPlaneZ());
 }
 
 static void R_SetupGL(void)

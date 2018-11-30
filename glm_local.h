@@ -61,6 +61,12 @@ typedef struct uniform_block_frame_constants_s {
 
 	// hardware lighting scale
 	float lightScale;
+
+	// [4-byte break]
+	int r_width;
+	int r_height;
+	float r_zFar;
+	float r_zNear;
 } uniform_block_frame_constants_t;
 
 #define MAX_WORLDMODEL_BATCH     64

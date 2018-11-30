@@ -121,7 +121,7 @@ void GLM_PreRenderView(void)
 
 	// Draw-world constants
 	frameConstants.r_textureless = gl_textureless.integer || gl_max_size.integer == 1;
-	frameConstants.r_farclip = max(r_farclip.value, 4096) * 0.577;
+	frameConstants.r_farclip = R_FarPlaneZ() * 0.577;
 	frameConstants.skySpeedscale = r_refdef2.time * 8;
 	frameConstants.skySpeedscale -= (int)frameConstants.skySpeedscale & ~127;
 	frameConstants.skySpeedscale2 = r_refdef2.time * 16;
@@ -153,6 +153,12 @@ void GLM_PreRenderView(void)
 		frameConstants.shell_effect_level2 = gl_powerupshells_effect2level.value;
 		frameConstants.shell_alpha = bound(0, gl_powerupshells.value, 1);
 	}
+
+	// Window constants
+	frameConstants.r_width = vid.width;
+	frameConstants.r_height = vid.height;
+	frameConstants.r_zFar = R_FarPlaneZ();
+	frameConstants.r_zNear = R_NearPlaneZ();
 
 	frameConstantsUploaded = false;
 }

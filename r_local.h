@@ -110,4 +110,12 @@ void VID_SetPalette(unsigned char *palette);
 void R_Initialise(void);
 float R_WaterAlpha(void);
 
+// 3d rendering limits
+#define R_MINIMUM_NEARCLIP (2.0f)
+#define R_MAXIMUM_NEARCLIP (4.0f)
+#define R_MINIMUM_FARCLIP (4096.0f)
+#define R_MAXIMUM_FARCLIP (16384.0f)
+float R_FarPlaneZ(void);
+float R_NearPlaneZ(void);
+
 #endif // EZQUAKE_R_LOCAL_HEADER

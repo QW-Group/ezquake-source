@@ -358,7 +358,7 @@ static void GLC_DrawSkyFace(int axis, qbool multitexture)
 	float s, t;
 	int v;
 	float fstep = 2.0 / SUBDIVISIONS;
-	float skyrange = max(r_farclip.value, 4096) * 0.577; // 0.577 < 1/sqrt(3)
+	float skyrange = R_FarPlaneZ() * 0.577; // 0.577 < 1/sqrt(3)
 
 	GLC_Begin(GL_QUADS);
 	for (v = 0, i = 0; i < SUBDIVISIONS; i++, v++)
@@ -470,7 +470,7 @@ static void GLC_DrawSkyBox(void)
 static void GLC_MakeSkyVec(float s, float t, int axis)
 {
 	vec3_t v, b;
-	float skyrange = max(r_farclip.value, 4096) * 0.577; // 0.577 < 1/sqrt(3)
+	float skyrange = R_FarPlaneZ() * 0.577; // 0.577 < 1/sqrt(3)
 
 	Sky_MakeSkyVec2(s, t, axis, b);
 	VectorMA(r_origin, skyrange, b, v);
