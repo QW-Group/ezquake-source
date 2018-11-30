@@ -274,6 +274,8 @@ typedef enum {
 	r_state_drawflat_with_lightmaps_glc,
 	r_state_drawflat_without_lightmaps_glc,
 
+	r_state_fx_world_geometry,
+
 	r_state_count
 } r_state_id;
 

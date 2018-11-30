@@ -38,15 +38,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define GL_ZERO_TO_ONE                    0x935F
 #endif
 
+// If this isn't defined, we use simple texture for depth buffer
+//   in theory render buffers _might_ be better, as they can't be read from
+#define GL_USE_RENDER_BUFFERS
+
 // OpenGL functionality from elsewhere
 GLuint GL_TextureNameFromReference(texture_ref ref);
 
 // OpenGL wrapper functions
+#ifdef GL_USE_RENDER_BUFFERS
 static void GL_RenderBufferStorage(GLuint renderBuffer, GLenum internalformat, GLsizei width, GLsizei height);
 static void GL_FramebufferRenderbuffer(GLuint fbref, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+static void GL_GenRenderBuffers(GLsizei n, GLuint* buffers);
+#endif
 static GLenum GL_CheckFramebufferStatus(GLuint fbref);
 static void GL_FramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
-static void GL_GenRenderBuffers(GLsizei n, GLuint* buffers);
 static void GL_GenFramebuffers(GLsizei n, GLuint* buffers);
 
 typedef struct framebuffer_data_s {
@@ -67,13 +73,21 @@ static const char* framebuffer_names[] = {
 };
 static const char* framebuffer_texture_names[] = {
 	"std", // fbtex_standard,
+	"depth", // fbtex_depth
 	"env", // fbtex_bloom,
+	"norms", // fbtex_worldnormals
 };
 static qbool framebuffer_depth_buffer[] = {
 	false, // framebuffer_none
 	true, // framebuffer_std
 	false, // framebuffer_hud
 };
+
+#ifdef C_ASSERT
+C_ASSERT(sizeof(framebuffer_names) / sizeof(framebuffer_names[0]) == framebuffer_count);
+C_ASSERT(sizeof(framebuffer_texture_names) / sizeof(framebuffer_texture_names[0]) == fbtex_count);
+C_ASSERT(sizeof(framebuffer_depth_buffer) / sizeof(framebuffer_depth_buffer[0]) == framebuffer_count);
+#endif
 
 static framebuffer_data_t framebuffer_data[framebuffer_count];
 static int framebuffers;
@@ -97,6 +111,8 @@ typedef GLenum (APIENTRY *glCheckFramebufferStatus_t)(GLenum target);
 typedef GLenum (APIENTRY *glCheckNamedFramebufferStatus_t)(GLuint framebuffer, GLenum target);
 typedef void (APIENTRY *glBlitFramebuffer_t)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 typedef void (APIENTRY *glBlitNamedFramebuffer_t)(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
+typedef void (APIENTRY *glDrawBuffers_t)(GLsizei n, const GLenum* bufs);
+typedef void (APIENTRY *glClearBufferfv_t)(GLenum buffer, GLint drawbuffer, const GLfloat* value);
 
 typedef void (APIENTRY *glClipControl_t)(GLenum origin, GLenum depth);
 
@@ -116,6 +132,8 @@ static glFramebufferTexture_t qglFramebufferTexture;
 static glNamedFramebufferTexture_t qglNamedFramebufferTexture;
 static glCheckFramebufferStatus_t qglCheckFramebufferStatus;
 static glCheckNamedFramebufferStatus_t qglCheckNamedFramebufferStatus;
+static glDrawBuffers_t qglDrawBuffers;
+static glClearBufferfv_t qglClearBufferfv;
 
 static glBlitFramebuffer_t qglBlitFramebuffer;
 static glBlitNamedFramebuffer_t qglBlitNamedFramebuffer;
@@ -158,6 +176,8 @@ void GL_InitialiseFramebufferHandling(void)
 
 		GL_LoadMandatoryFunction(glFramebufferTexture, framebuffers_supported);
 		GL_LoadMandatoryFunction(glCheckFramebufferStatus, framebuffers_supported);
+		GL_LoadMandatoryFunction(glDrawBuffers, framebuffers_supported);
+		GL_LoadMandatoryFunction(glClearBufferfv, framebuffers_supported);
 
 		glConfig.supported_features |= (framebuffers_supported ? (R_SUPPORT_FRAMEBUFFERS | R_SUPPORT_FRAMEBUFFERS_BLIT) : 0);
 		if (GL_VersionAtLeast(3, 0) || SDL_GL_ExtensionSupported("GL_ARB_depth_buffer_float")) {
@@ -177,9 +197,11 @@ void GL_InitialiseFramebufferHandling(void)
 		if (SDL_GL_ExtensionSupported("GL_EXT_framebuffer_blit")) {
 			GL_LoadOptionalFunctionEXT(glBlitFramebuffer);
 		}
+		GL_LoadMandatoryFunctionEXT(glDrawBuffers, framebuffers_supported);
 
 		GL_LoadMandatoryFunctionEXT(glFramebufferTexture, framebuffers_supported);
 		GL_LoadMandatoryFunctionEXT(glCheckFramebufferStatus, framebuffers_supported);
+		GL_LoadMandatoryFunctionEXT(glClearBufferfv, framebuffers_supported);
 
 		glConfig.supported_features |= (framebuffers_supported ? (R_SUPPORT_FRAMEBUFFERS) : 0);
 		glConfig.supported_features |= (framebuffers_supported && (qglBlitFramebuffer != NULL) ? (R_SUPPORT_FRAMEBUFFERS_BLIT) : 0);
@@ -227,9 +249,11 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	strlcat(label, "/", sizeof(label));
 	strlcat(label, framebuffer_texture_names[fbtex_standard], sizeof(label));
 
-	//R_AllocateTextureReferences(texture_type_2d, width, height, TEX_NOSCALE | (id == framebuffer_std ? 0 : TEX_ALPHA), 1, &fb->texture[fbtex_standard]);
+	//
+	//R_AllocateTextureReferences(texture_type_2d, width, height, hdr ? TEX_NOSCALE | (id == framebuffer_std ? 0 : TEX_ALPHA), 1, &fb->texture[fbtex_standard]);
 	GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_standard], label);
 	GL_TexStorage2D(fb->texture[fbtex_standard], 1, hdr ? GL_RGB16F : (id == framebuffer_std ? GL_RGB8 : GL_RGBA8), width, height, false);
+	renderer.TextureLabelSet(fb->texture[fbtex_standard], label);
 	renderer.TextureSetFiltering(fb->texture[fbtex_standard], texture_minification_linear, texture_minification_linear);
 	renderer.TextureWrapModeClamp(fb->texture[fbtex_standard]);
 
@@ -258,10 +282,24 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 			depthFormat = GL_DEPTH_COMPONENT32;
 		}
 
+#ifdef GL_USE_RENDER_BUFFERS
 		GL_GenRenderBuffers(1, &fb->depthBuffer);
 		GL_TraceObjectLabelSet(GL_RENDERBUFFER, fb->depthBuffer, -1, "depth-buffer");
 		GL_RenderBufferStorage(fb->depthBuffer, fb->depthFormat = depthFormat, width, height);
 		GL_FramebufferRenderbuffer(fb->glref, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fb->depthBuffer);
+#else
+		// create depth texture
+		strlcpy(label, framebuffer_names[id], sizeof(label));
+		strlcat(label, "/", sizeof(label));
+		strlcat(label, framebuffer_texture_names[fbtex_depth], sizeof(label));
+
+		GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_depth], label);
+		GL_TexStorage2D(fb->texture[fbtex_depth], 1, depthFormat, width, height, false);
+		renderer.TextureSetFiltering(fb->texture[fbtex_depth], texture_minification_linear, texture_minification_linear);
+		renderer.TextureWrapModeClamp(fb->texture[fbtex_depth]);
+
+		GL_FramebufferTexture(fb->glref, GL_DEPTH_ATTACHMENT, GL_TextureNameFromReference(fb->texture[fbtex_depth]), 0);
+#endif
 
 		if (qglClipControl) {
 			if (depthFormat == GL_DEPTH_COMPONENT32F) {
@@ -290,6 +328,65 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	qglBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	return fb->status == GL_FRAMEBUFFER_COMPLETE;
+}
+
+qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
+{
+	framebuffer_data_t* fb = NULL;
+	GLenum buffers[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+	float clearValue[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	extern cvar_t r_fx_geometry;
+
+	if (!r_fx_geometry.integer || !GL_Supported(R_SUPPORT_FRAMEBUFFERS)) {
+		return false;
+	}
+
+	fb = &framebuffer_data[id];
+	if (!fb->glref) {
+		return false;
+	}
+
+	if (!R_TextureReferenceIsValid(fb->texture[fbtex_worldnormals])) {
+		char label[128];
+
+		// normals
+		strlcpy(label, framebuffer_names[id], sizeof(label));
+		strlcat(label, "/", sizeof(label));
+		strlcat(label, framebuffer_texture_names[fbtex_worldnormals], sizeof(label));
+
+		GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_worldnormals], label);
+		if (!R_TextureReferenceIsValid(fb->texture[fbtex_worldnormals])) {
+			return false;
+		}
+
+		GL_TexStorage2D(fb->texture[fbtex_worldnormals], 1, GL_RGBA16F, fb->width, fb->height, false);
+		renderer.TextureSetFiltering(fb->texture[fbtex_worldnormals], texture_minification_nearest, texture_minification_nearest);
+		renderer.TextureWrapModeClamp(fb->texture[fbtex_worldnormals]);
+	}
+
+	GL_FramebufferTexture(fb->glref, GL_COLOR_ATTACHMENT1, GL_TextureNameFromReference(fb->texture[fbtex_worldnormals]), 0);
+	qglDrawBuffers(2, buffers);
+	qglClearBufferfv(GL_COLOR, 1, clearValue);
+	return true;
+}
+
+qbool GL_FramebufferEndWorldNormals(framebuffer_id id)
+{
+	framebuffer_data_t* fb = NULL;
+	GLenum buffer = GL_COLOR_ATTACHMENT0;
+
+	if (!GL_Supported(R_SUPPORT_FRAMEBUFFERS)) {
+		return false;
+	}
+
+	fb = &framebuffer_data[id];
+	if (!fb->glref) {
+		return false;
+	}
+
+	GL_FramebufferTexture(fb->glref, GL_COLOR_ATTACHMENT1, 0, 0);
+	qglDrawBuffers(1, &buffer);
+	return true;
 }
 
 void GL_FramebufferDelete(framebuffer_id id)
@@ -330,6 +427,7 @@ texture_ref GL_FramebufferTextureReference(framebuffer_id id, fbtex_id tex_id)
 }
 
 // OpenGL wrapper functions
+#ifdef GL_USE_RENDER_BUFFERS
 static void GL_RenderBufferStorage(GLuint renderBuffer, GLenum internalformat, GLsizei width, GLsizei height)
 {
 	if (qglNamedRenderbufferStorage) {
@@ -358,6 +456,18 @@ static void GL_FramebufferRenderbuffer(GLuint fbref, GLenum attachment, GLenum r
 	}
 }
 
+static void GL_GenRenderBuffers(GLsizei n, GLuint* buffers)
+{
+	int i;
+
+	qglGenRenderbuffers(n, buffers);
+
+	for (i = 0; i < n; ++i) {
+		qglBindRenderbuffer(GL_RENDERBUFFER, buffers[i]);
+	}
+}
+#endif
+
 static GLenum GL_CheckFramebufferStatus(GLuint fbref)
 {
 	if (qglCheckNamedFramebufferStatus) {
@@ -384,17 +494,6 @@ static void GL_FramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint 
 	}
 	else {
 		Sys_Error("ERROR: %s called without driver support", __FUNCTION__);
-	}
-}
-
-static void GL_GenRenderBuffers(GLsizei n, GLuint* buffers)
-{
-	int i;
-
-	qglGenRenderbuffers(n, buffers);
-
-	for (i = 0; i < n; ++i) {
-		qglBindRenderbuffer(GL_RENDERBUFFER, buffers[i]);
 	}
 }
 

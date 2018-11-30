@@ -75,7 +75,10 @@ static int GL_InternalFormat(int mode)
 
 static int GL_StorageFormat(int mode)
 {
-	if (gl_gammacorrection.integer) {
+	if (mode & TEX_FLOAT) {
+		return (mode & TEX_ALPHA) ? GL_RGBA16F : GL_RGB16F;
+	}
+	else if (gl_gammacorrection.integer) {
 		return (mode & TEX_ALPHA) ? GL_SRGB8_ALPHA8 : GL_SRGB8;
 	}
 	else {

@@ -38,14 +38,25 @@ in vec3 FlatColor;
 in flat int Flags;
 uniform int SamplerNumber;
 in vec3 Direction;
+#ifdef DRAW_GEOMETRY
+in vec3 Normal;
+in vec4 UnClipped;
+#endif
 
-out vec4 frag_colour;
+layout(location=0) out vec4 frag_colour;
+#ifdef DRAW_GEOMETRY
+layout(location=1) out vec4 normal_texture;
+#endif
 
 void main()
 {
 	vec4 texColor;
 	vec4 lmColor;
 	int turbType;
+
+#ifdef DRAW_GEOMETRY
+	normal_texture = vec4(Normal, mix(UnClipped.z / r_zFar, 0, min(1, Flags & EZQ_SURFACE_TYPE)));
+#endif
 
 	if (draw_outlines == 1) {
 		frag_colour = vec4(0.5, 0.5, 0.5, 1);
@@ -127,20 +138,26 @@ void main()
 	}
 	else {
 		// Typical material
+#if defined(DRAW_FLATFLOORS) || defined(DRAW_FLATWALLS)
+		float mix_floor = min(1, (Flags & EZQ_SURFACE_WORLD) * (Flags & EZQ_SURFACE_IS_FLOOR));
+		float mix_wall = min(1, (Flags & EZQ_SURFACE_WORLD) * (1 - mix_floor));
+#endif
+
 #if defined(DRAW_FLATFLOORS) && defined(DRAW_FLATWALLS)
-		texColor = vec4(mix(r_wallcolor.rgb, r_floorcolor.rgb, min(1, (Flags & EZQ_SURFACE_IS_FLOOR))), texColor.a);
+		texColor = vec4(mix(mix(texColor.rgb, r_floorcolor.rgb, mix_floor), r_wallcolor.rgb, mix_wall), texColor.a);
 	#ifdef DRAW_LUMA_TEXTURES
 		lumaColor = vec4(0, 0, 0, 0);
 	#endif
 #elif defined(DRAW_FLATFLOORS)
-		texColor = vec4(mix(texColor.rgb, r_floorcolor.rgb, min(1, (Flags & EZQ_SURFACE_IS_FLOOR))), texColor.a);
+		texColor = vec4(mix(texColor.rgb, r_floorcolor.rgb, mix_floor), texColor.a);
 	#ifdef DRAW_LUMA_TEXTURES
-		lumaColor = mix(lumaColor, vec4(0, 0, 0, 0), min(1, (Flags & EZQ_SURFACE_IS_FLOOR)));
+		lumaColor = mix(lumaColor, vec4(0, 0, 0, 0), mix_floor);
 	#endif
 #elif defined(DRAW_FLATWALLS)
-		texColor = vec4(mix(r_wallcolor.rgb, texColor.rgb, min(1, (Flags & EZQ_SURFACE_IS_FLOOR))), texColor.a);
+		//texColor = vec4(mix(r_wallcolor.rgb, texColor.rgb, min(1, (Flags & EZQ_SURFACE_IS_FLOOR))), texColor.a);
+		texColor = vec4(mix(texColor.rgb, r_wallcolor.rgb, mix_wall), texColor.a);
 	#ifdef DRAW_LUMA_TEXTURES
-		lumaColor = mix(vec4(0, 0, 0, 0), lumaColor, min(1, (Flags & EZQ_SURFACE_IS_FLOOR)));
+		lumaColor = mix(lumaColor, vec4(0, 0, 0, 0), mix_wall);
 	#endif
 #endif
 
@@ -157,7 +174,7 @@ void main()
 #endif
 
 #ifdef DRAW_DETAIL_TEXTURES
-		frag_colour = vec4(mix(frag_colour.rgb, detail.rgb * frag_colour.rgb * 1.8, min(1, Flags & EZQ_SURFACE_DETAIL)), frag_colour.a);
+		frag_colour = vec4(mix(frag_colour.rgb, detail.rgb * frag_colour.rgb * 1.8, min(1, Flags & EZQ_SURFACE_WORLD)), frag_colour.a);
 #endif
 	}
 }

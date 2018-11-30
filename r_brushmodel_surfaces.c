@@ -353,11 +353,15 @@ void R_DrawWorld(void)
 {
 	VectorCopy(r_refdef.vieworg, modelorg);
 
+	R_TraceEnterNamedRegion("DrawWorld");
 	//draw the world sky
 	R_DrawSky();
 
-	R_TraceEnterNamedRegion("DrawWorld");
 	renderer.DrawWorld();
+
+	if (R_WaterAlpha() == 1) {
+		renderer.DrawWaterSurfaces();
+	}
 	R_TraceLeaveNamedRegion();
 }
 

@@ -208,6 +208,7 @@ cvar_t gl_gammacorrection                  = {"gl_gammacorrection", "0", CVAR_LA
 cvar_t gl_modulate                         = {"gl_modulate", "1"};
 cvar_t gl_outline                          = {"gl_outline", "0"};
 cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
+cvar_t r_fx_geometry                       = {"r_fx_geometry", "0"};
 
 cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0", CVAR_LATCH};
 
@@ -612,7 +613,6 @@ void R_Init(void)
 	Cvar_Register(&r_farclip);
 	Cvar_Register(&gl_clear);
 	Cvar_Register(&gl_clearColor);
-
 	Cvar_Register(&gl_brush_polygonoffset);
 
 	Cvar_Register(&gl_nocolors);
@@ -622,6 +622,8 @@ void R_Init(void)
 
 	Cvar_Register(&gl_outline);
 	Cvar_Register(&gl_outline_width);
+
+	Cvar_Register(&r_fx_geometry);
 
 	Cvar_Register(&gl_vbo_clientmemory);
 

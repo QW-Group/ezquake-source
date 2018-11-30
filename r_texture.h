@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TEX_PREMUL_ALPHA    (1<<10) // pre-multiply alpha
 #define TEX_ZERO_ALPHA      (1<<11) // after pre-multiplying alpha, set alpha to 0 (additive blending)
 #define TEX_MERGED_LUMA     (1<<12) // alpha channel signifies luma %
+#define TEX_FLOAT           (1<<13) // floating point texture format
 
 #define MAX_GLTEXTURES 8192	//dimman: old value 1024 isn't enough when using high framecount sprites (according to Spike)
 #define MAX_CHARSETS 256

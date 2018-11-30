@@ -40,6 +40,7 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	int r_fastsky;
 	int r_textureless;
 
+	// [4-byte break]
 	float r_lerpmodels;
 
 	// powerup shells round alias models
@@ -52,6 +53,12 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 
 	// lighting
 	float lightScale;
+
+	// [4-byte break]
+	int r_width;
+	int r_height;
+	float r_zFar;
+	float r_zNear;
 };
 
 struct WorldDrawInfo {
@@ -87,4 +94,10 @@ struct AliasModel {
 	float lerpFraction;
 	float minLumaMix;
 	int unused_space;
+};
+
+struct model_surface {
+	vec4 normal;
+	vec3 vecs0;
+	vec3 vecs1;
 };

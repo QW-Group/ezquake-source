@@ -7,12 +7,6 @@ layout(binding=0, rgba32ui) uniform uimage2DArray sourceBlocklights;
 layout(binding=1, rgba8)    uniform image2DArray  destinationLightmap;
 layout(binding=2, rgba32i)  uniform iimage2DArray sourceLightmapData;
 
-struct model_surface {
-	vec4 normal;
-	vec3 vecs0;
-	vec3 vecs1;
-};
-
 layout(std140, binding=EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface_data {
 	model_surface surfaces[];
 };

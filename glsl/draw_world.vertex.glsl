@@ -24,6 +24,14 @@ out vec2 DetailCoord;
 out vec3 FlatColor;
 out flat int Flags;
 out vec3 Direction;
+#ifdef DRAW_GEOMETRY
+out vec3 Normal;
+out vec4 UnClipped;
+
+layout(std140, binding = EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface_data {
+	model_surface surfaces[];
+};
+#endif
 
 layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA) buffer WorldCvars {
 	WorldDrawInfo drawInfo[];
@@ -32,6 +40,7 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS) buffer SamplerMa
 	SamplerMapping samplerMapping[];
 };
 
+
 void main()
 {
 	float materialArrayIndex = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].layer;
@@ -39,6 +48,10 @@ void main()
 	int textureFlags = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].flags;
 
 	gl_Position = projectionMatrix * drawInfo[_instanceId].mvMatrix * vec4(position, 1.0);
+#ifdef DRAW_GEOMETRY
+	Normal = surfaces[surfaceNumber].normal.xyz;
+	UnClipped = drawInfo[_instanceId].mvMatrix * vec4(position, 1.0);
+#endif
 
 	FlatColor = flatColor;
 	Flags = vboFlags | drawCallFlags | textureFlags;
@@ -59,7 +72,7 @@ void main()
 	}
 	else {
 #ifdef DRAW_TEXTURELESS
-		TextureCoord = vec3(0, 0, materialArrayIndex);
+		TextureCoord = vec3(mix(tex, vec2(0, 0), min(Flags & EZQ_SURFACE_WORLD, 1)), materialArrayIndex);
 #else
 		TextureCoord = vec3(tex, materialArrayIndex);
 #endif

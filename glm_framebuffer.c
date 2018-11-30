@@ -40,35 +40,8 @@ static buffer_ref post_process_vbo;
 #define POST_PROCESS_3DONLY     2
 #define POST_PROCESS_TONEMAP    4
 
-// If this returns false then the framebuffer will be blitted instead
-static qbool GLM_CompilePostProcessProgram(void)
+qbool GLM_CompilePostProcessVAO(void)
 {
-	extern cvar_t vid_framebuffer_palette, vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap;
-	int post_process_flags =
-		(vid_framebuffer_palette.integer ? POST_PROCESS_PALETTE : 0) |
-		(vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY ? POST_PROCESS_3DONLY : 0) |
-		(vid_framebuffer_hdr.integer && vid_framebuffer_hdr_tonemap.integer ? POST_PROCESS_TONEMAP : 0);
-
-	if (R_ProgramRecompileNeeded(r_program_post_process, post_process_flags)) {
-		static char included_definitions[512];
-
-		memset(included_definitions, 0, sizeof(included_definitions));
-		if (post_process_flags & POST_PROCESS_PALETTE) {
-			strlcat(included_definitions, "#define EZ_POSTPROCESS_PALETTE\n", sizeof(included_definitions));
-		}
-		if (post_process_flags & POST_PROCESS_3DONLY) {
-			strlcat(included_definitions, "#define EZ_POSTPROCESS_OVERLAY\n", sizeof(included_definitions));
-		}
-		if (post_process_flags & POST_PROCESS_TONEMAP) {
-			strlcat(included_definitions, "#define EZ_POSTPROCESS_TONEMAP\n", sizeof(included_definitions));
-		}
-
-		// Initialise program for drawing image
-		R_ProgramCompileWithInclude(r_program_post_process, included_definitions);
-
-		R_ProgramSetCustomOptions(r_program_post_process, post_process_flags);
-	}
-
 	if (!R_BufferReferenceIsValid(post_process_vbo)) {
 		float verts[4][5] = { { 0 } };
 
@@ -100,7 +73,39 @@ static qbool GLM_CompilePostProcessProgram(void)
 		R_BindVertexArray(vao_none);
 	}
 
-	return R_ProgramReady(r_program_post_process) && R_VertexArrayCreated(vao_postprocess);
+	return R_VertexArrayCreated(vao_postprocess);
+}
+
+// If this returns false then the framebuffer will be blitted instead
+static qbool GLM_CompilePostProcessProgram(void)
+{
+	extern cvar_t vid_framebuffer_palette, vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap;
+	int post_process_flags =
+		(vid_framebuffer_palette.integer ? POST_PROCESS_PALETTE : 0) |
+		(vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY ? POST_PROCESS_3DONLY : 0) |
+		(vid_framebuffer_hdr.integer && vid_framebuffer_hdr_tonemap.integer ? POST_PROCESS_TONEMAP : 0);
+
+	if (R_ProgramRecompileNeeded(r_program_post_process, post_process_flags)) {
+		static char included_definitions[512];
+
+		memset(included_definitions, 0, sizeof(included_definitions));
+		if (post_process_flags & POST_PROCESS_PALETTE) {
+			strlcat(included_definitions, "#define EZ_POSTPROCESS_PALETTE\n", sizeof(included_definitions));
+		}
+		if (post_process_flags & POST_PROCESS_3DONLY) {
+			strlcat(included_definitions, "#define EZ_POSTPROCESS_OVERLAY\n", sizeof(included_definitions));
+		}
+		if (post_process_flags & POST_PROCESS_TONEMAP) {
+			strlcat(included_definitions, "#define EZ_POSTPROCESS_TONEMAP\n", sizeof(included_definitions));
+		}
+
+		// Initialise program for drawing image
+		R_ProgramCompileWithInclude(r_program_post_process, included_definitions);
+
+		R_ProgramSetCustomOptions(r_program_post_process, post_process_flags);
+	}
+
+	return R_ProgramReady(r_program_post_process) && GLM_CompilePostProcessVAO();
 }
 
 void GLM_RenderFramebuffers(void)

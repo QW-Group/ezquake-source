@@ -28,7 +28,9 @@ typedef enum {
 
 typedef enum {
 	fbtex_standard,
+	fbtex_depth,
 	fbtex_bloom,
+	fbtex_worldnormals,
 	fbtex_count
 } fbtex_id;
 
@@ -48,6 +50,9 @@ qbool GL_Framebuffer2DSwitch(void);
 void GL_FramebufferPostProcessScreen(void);
 qbool GL_FramebufferEnabled2D(void);
 qbool GL_FramebufferEnabled3D(void);
+
+qbool GL_FramebufferStartWorldNormals(framebuffer_id id);
+qbool GL_FramebufferEndWorldNormals(framebuffer_id id);
 
 #define USE_FRAMEBUFFER_SCREEN    1
 #define USE_FRAMEBUFFER_3DONLY    2

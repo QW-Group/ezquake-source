@@ -17,6 +17,8 @@ typedef enum {
 
 	r_program_lightmap_compute,
 
+	r_program_fx_world_geometry,
+
 	r_program_count
 } r_program_id;
 

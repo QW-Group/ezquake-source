@@ -107,6 +107,7 @@ static void GLM_CheckDrawCallSize(void)
 #define DRAW_FLATWALLS            64
 #define DRAW_LUMA_TEXTURES_FB    128
 #define DRAW_TEXTURELESS         256
+#define DRAW_GEOMETRY            512
 
 static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
@@ -122,6 +123,7 @@ static void Compile_DrawWorldProgram(void)
 {
 	extern cvar_t gl_lumatextures;
 	extern cvar_t gl_textureless;
+	extern cvar_t r_fx_geometry;
 
 	qbool detail_textures = gl_detail.integer && R_TextureReferenceIsValid(detailtexture);
 	qbool caustic_textures = gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture);
@@ -137,7 +139,8 @@ static void Compile_DrawWorldProgram(void)
 		(skybox ? DRAW_SKYBOX : (skydome ? DRAW_SKYDOME : 0)) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
-		(gl_textureless.integer ? DRAW_TEXTURELESS : 0);
+		(gl_textureless.integer ? DRAW_TEXTURELESS : 0) |
+		(r_fx_geometry.integer ? DRAW_GEOMETRY : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_brushmodel, drawworld_desiredOptions)) {
 		static char included_definitions[1024];
@@ -177,6 +180,9 @@ static void Compile_DrawWorldProgram(void)
 			strlcat(included_definitions, "#define DRAW_SKYDOME\n", sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_SKYDOME_TEXTURE %d\n", TEXTURE_UNIT_SKYDOME_TEXTURE), sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_SKYDOME_CLOUDTEXTURE %d\n", TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE), sizeof(included_definitions));
+		}
+		if (r_fx_geometry.integer) {
+			strlcat(included_definitions, "#define DRAW_GEOMETRY\n", sizeof(included_definitions));
 		}
 		TEXTURE_UNIT_LIGHTMAPS = samplers++;
 		strlcat(included_definitions, va("#define SAMPLER_LIGHTMAP_TEXTURE %d\n", TEXTURE_UNIT_LIGHTMAPS), sizeof(included_definitions));

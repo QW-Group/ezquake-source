@@ -155,8 +155,8 @@ void GLM_PreRenderView(void)
 	}
 
 	// Window constants
-	frameConstants.r_width = vid.width;
-	frameConstants.r_height = vid.height;
+	frameConstants.r_width = glConfig.vidWidth;
+	frameConstants.r_height = glConfig.vidHeight;
 	frameConstants.r_zFar = R_FarPlaneZ();
 	frameConstants.r_zNear = R_NearPlaneZ();
 

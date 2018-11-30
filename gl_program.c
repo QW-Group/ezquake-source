@@ -827,6 +827,7 @@ static void GL_BuildCoreDefinitions(void)
 	GL_DefineProgram_VF(r_program_hud_circles, "circle-draw", false, hud_draw_circle, renderer_modern);
 	GL_DefineProgram_VF(r_program_post_process, "post-process-screen", true, post_process_screen, renderer_modern);
 	GL_DefineProgram_CS(r_program_lightmap_compute, "lightmaps", false, lighting, renderer_modern);
+	GL_DefineProgram_VF(r_program_fx_world_geometry, "world-geometry", true, fx_world_geometry, renderer_modern);
 #endif
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL

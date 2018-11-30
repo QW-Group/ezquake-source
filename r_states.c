@@ -208,6 +208,14 @@ static void R_Initialise2DStates(void)
 	state->cullface.enabled = false;
 	R_GLC_DisableAlphaTesting(state);
 	state->blendingEnabled = r_blendfunc_premultiplied_alpha;
+
+	state = R_InitRenderingState(r_state_fx_world_geometry, true, "r_state_fx_world_geometry", postprocess_vao);
+	state->depth.test_enabled = false;
+	state->depth.mask_enabled = false;
+	state->cullface.enabled = false;
+	R_GLC_EnableAlphaTesting(state); // really?
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_premultiplied_alpha;
 }
 
 static void R_InitialiseSpriteStates(void)
