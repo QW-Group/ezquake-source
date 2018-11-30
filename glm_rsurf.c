@@ -498,7 +498,7 @@ static glm_worldmodel_req_t* GLM_DrawFlatChain(glm_worldmodel_req_t* req, msurfa
 	return req;
 }
 
-static glm_worldmodel_req_t* GLM_DrawTexturedChain(glm_worldmodel_req_t* req, msurface_t* surf, texture_t* tex, int i)
+static glm_worldmodel_req_t* GLM_DrawTexturedChain(glm_worldmodel_req_t* req, msurface_t* surf)
 {
 	glpoly_t* poly;
 	int v;
@@ -778,8 +778,8 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 			GLM_AssignTexture(i, tex);
 		}
 
-		req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[0], tex, i);
-		req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[1], tex, i);
+		req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[0]);
+		req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[1]);
 	}
 }
 
