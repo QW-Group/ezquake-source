@@ -356,7 +356,7 @@ void GLM_MultiplyMatrixVector(float* matrix, vec3_t vector, float* result)
 	result[3] = matrix[3] * vector[0] + matrix[7] * vector[1] + matrix[11] * vector[2] + matrix[15] * vector[3];
 }
 
-void R_RotateForEntity(entity_t *e)
+void R_RotateForEntity(struct entity_s *e)
 {
 	R_TranslateModelview(e->origin[0], e->origin[1], e->origin[2]);
 

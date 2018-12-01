@@ -38,7 +38,7 @@ extern qbool gl_mtexable;
 extern texture_ref shelltexture;
 
 void GLC_StateBeginMD3Draw(float alpha, qbool textured);
-void R_StateBeginDrawAliasModel(entity_t* e, aliashdr_t* paliashdr);
+void R_StateBeginDrawAliasModel(const entity_t* e, aliashdr_t* paliashdr);
 
 // gl_mesh.c
 void R_AliasModelPopulateVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* aliasModelBuffer, int position);

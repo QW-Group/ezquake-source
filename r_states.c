@@ -463,7 +463,7 @@ void R_StateBeginAlphaLineRGB(float thickness)
 	}
 }
 
-void R_StateBeginDrawAliasModel(entity_t* ent, aliashdr_t* paliashdr)
+void R_StateBeginDrawAliasModel(const entity_t* ent, aliashdr_t* paliashdr)
 {
 	extern cvar_t r_viewmodelsize;
 

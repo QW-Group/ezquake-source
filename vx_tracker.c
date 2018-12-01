@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "server.h"
 #include "gl_model.h"
 #include "fonts.h"
+#include "hud.h"
 
 #define MAX_IMAGENAME 32
 
@@ -87,7 +88,7 @@ extern cvar_t		cl_useimagesinfraglog;
 static int active_track = 0;
 static int max_active_tracks = 0;
 
-static void VXSCR_DrawTrackerString(void);
+static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int name_width, qbool proportional, float scale, float image_scale, qbool align_right);
 static void OnChange_TrackerNameWidth(cvar_t* var, char* value, qbool* cancel);
 
 cvar_t amf_tracker_flags                         = {"r_tracker_flags", "0"};
@@ -231,7 +232,7 @@ void VX_TrackerThink(void)
 		return;
 	}
 
-	VXSCR_DrawTrackerString();
+	VXSCR_DrawTrackerString(amf_tracker_x.value, vid.height * 0.2 / bound(0.1, amf_tracker_scale.value, 10) + amf_tracker_y.value, vid.width, amf_tracker_name_width.integer, amf_tracker_proportional.integer, amf_tracker_scale.value, amf_tracker_images_scale.value, amf_tracker_align_right.integer);
 
 	if (ISPAUSED) {
 		return;
@@ -1084,26 +1085,78 @@ void VX_TrackerStreakEndOddTeamkilled(int player, int count)
 	}
 }
 
-// We need a seperate function, since our messages are in colour... and transparent
-void VXSCR_DrawTrackerString (void)
+void VXSCR_MeasureTracker(float* width, float* height, float scale, qbool proportional, int name_width)
 {
-	int		x, y;
-	int		i, printable_chars, s;
-	float	alpha = 1;
-	float	scale = bound(0.1, amf_tracker_scale.value, 10);
-	float	im_scale = bound(0.1, amf_tracker_images_scale.value, 10);
-	qbool   proportional = amf_tracker_proportional.integer;
-	int     padded_width = 8 * bound(amf_tracker_name_width.integer, 0, MAX_SCOREBOARDNAME - 1) * scale;
+	int i;
+	int padded_width = 8 * bound(name_width, 0, MAX_SCOREBOARDNAME - 1) * scale;
+
+	*width = *height = 0;
 
 	if (!active_track) {
 		return;
 	}
 
-	StringToRGB(amf_tracker_frame_color.string);
+	// Draw the max allowed trackers allowed at the same time
+	// the latest ones are always shown.
+	for (i = 0; i < max_active_tracks; i++) {
+		int printable_chars;
+		float x = 0;
+		int s;
+
+		// Time expired for this tracker, don't draw it.
+		if (trackermsg[i].die < r_refdef2.time) {
+			continue;
+		}
+
+		printable_chars = trackermsg[i].printable_characters + trackermsg[i].image_characters;
+		if (printable_chars <= 0) {
+			break;
+		}
+
+		// Place the tracker.
+		x = FontFixedWidth(1, scale, false, proportional);
+
+		// Draw the segments.
+		for (s = 0; s < trackermsg[i].segments; ++s) {
+			mpic_t* pic = trackermsg[i].images[s];
+
+			if (pic) {
+				x += 8 * 2 * scale;
+			}
+			else {
+				if (trackermsg[i].pad && padded_width) {
+					x += padded_width;
+				}
+				else {
+					x += Draw_StringLength(trackermsg[i].text[s], -1, scale, proportional);
+				}
+			}
+
+			x += 8 * scale;
+		}
+
+		*width = max(*width, x);
+		*height += 8 * scale;	// Next line.
+	}
+}
+
+// We need a seperate function, since our messages are in colour... and transparent
+static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int name_width, qbool proportional, float scale, float image_scale, qbool align_right)
+{
+	int		x, y;
+	int		i, printable_chars, s;
+	float	alpha = 1;
+	int     padded_width = 8 * bound(name_width, 0, MAX_SCOREBOARDNAME - 1) * scale;
+
+	scale = bound(0.1, scale, 10);
+	image_scale = bound(0.1, image_scale, 10);
+	if (!active_track) {
+		return;
+	}
 
 	// Draw the max allowed trackers allowed at the same time
 	// the latest ones are always shown.
-	y = vid.height * 0.2 / scale + amf_tracker_y.value;
+	y = y_pos;
 	for (i = 0; i < max_active_tracks; i++) {
 		// Time expired for this tracker, don't draw it.
 		if (trackermsg[i].die < r_refdef2.time) {
@@ -1119,8 +1172,7 @@ void VXSCR_DrawTrackerString (void)
 		}
 
 		// Place the tracker.
-		x = (amf_tracker_align_right.value ? vid.width - FontFixedWidth(printable_chars, scale, false, proportional) - FontFixedWidth(1, scale, false, proportional) : FontFixedWidth(1, scale, false, proportional));
-		x += amf_tracker_x.value;
+		x = x_pos + (align_right ? width - FontFixedWidth(printable_chars, scale, false, proportional) - FontFixedWidth(1, scale, false, proportional) : FontFixedWidth(1, scale, false, proportional));
 
 		// Draw the segments.
 		for (s = 0; s < trackermsg[i].segments; ++s) {
@@ -1129,10 +1181,10 @@ void VXSCR_DrawTrackerString (void)
 			if (pic) {
 				// Draw pic
 				Draw_FitPicAlpha(
-					(float)x - 0.5 * 8 * 2 * (im_scale - 1) * scale,
-					(float)y - 0.5 * 8 * (im_scale - 1) * scale,
-					im_scale * 8 * 2 * scale,
-					im_scale * 8 * scale, pic, alpha
+					(float)x - 0.5 * 8 * 2 * (image_scale - 1) * scale,
+					(float)y - 0.5 * 8 * (image_scale - 1) * scale,
+					image_scale * 8 * 2 * scale,
+					image_scale * 8 * scale, pic, alpha
 				);
 
 				x += 8 * 2 * scale;
@@ -1329,4 +1381,31 @@ void VX_TrackerInit(void)
 	}
 
 	CachePics_MarkAtlasDirty();
+}
+
+void SCR_HUD_DrawTracker(hud_t* hud)
+{
+	int x = 0, y = 0;
+	float width = 0, height = 0;
+
+	static cvar_t
+		*hud_tracker_scale = NULL,
+		*hud_tracker_proportional,
+		*hud_tracker_name_width,
+		*hud_tracker_image_scale,
+		*hud_tracker_align_right;
+
+	if (!hud_tracker_scale) {
+		hud_tracker_scale = HUD_FindVar(hud, "scale");
+		hud_tracker_proportional = HUD_FindVar(hud, "proportional");
+		hud_tracker_name_width = HUD_FindVar(hud, "name_width");
+		hud_tracker_align_right = HUD_FindVar(hud, "align_right");
+		hud_tracker_image_scale = HUD_FindVar(hud, "image_scale");
+	}
+
+	VXSCR_MeasureTracker(&width, &height, hud_tracker_scale->value, hud_tracker_proportional->integer, hud_tracker_name_width->integer);
+
+	if (height > 0 && width > 0 && HUD_PrepareDraw(hud, ceil(width), ceil(height), &x, &y)) {
+		VXSCR_DrawTrackerString(x, y, ceil(width), hud_tracker_name_width->integer, hud_tracker_proportional->integer, hud_tracker_scale->value, hud_tracker_image_scale->value, hud_tracker_align_right->integer);
+	}
 }
