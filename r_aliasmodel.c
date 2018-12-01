@@ -512,7 +512,7 @@ static void R_AliasModelStandardLighting(entity_t* ent)
 
 void R_AliasSetupLighting(entity_t *ent)
 {
-	float fbskins;
+	float fbskins = 0;
 	unsigned int i;
 	model_t* clmodel = ent->model;
 	qbool player_model = (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL);
@@ -562,8 +562,6 @@ void R_AliasSetupLighting(entity_t *ent)
 			calculate_lighting = false;
 		}
 		else {
-			ent->ambientlight = max(ent->ambientlight, 8 + fbskins * 120);
-			ent->shadelight = max(ent->shadelight, 8 + fbskins * 120);
 			ent->full_light = fbskins > 0;
 			calculate_lighting = true;
 		}
@@ -583,10 +581,16 @@ void R_AliasSetupLighting(entity_t *ent)
 			R_AliasModelStandardLighting(ent);
 		}
 
-		// clamp lighting so it doesn't overbright as much
-		ent->ambientlight = min(ent->ambientlight, 128);
-		if (ent->ambientlight + ent->shadelight > 192) {
-			ent->shadelight = 192 - ent->ambientlight;
+		if (player_model) {
+			ent->ambientlight = max(ent->ambientlight, 8 + fbskins * 120);
+			ent->shadelight = max(ent->shadelight, 8 + fbskins * 120);
+		}
+		else {
+			// clamp lighting so it doesn't overbright as much
+			ent->ambientlight = min(ent->ambientlight, 128);
+			if (ent->ambientlight + ent->shadelight > 192) {
+				ent->shadelight = 192 - ent->ambientlight;
+			}
 		}
 	}
 
@@ -596,10 +600,8 @@ void R_AliasSetupLighting(entity_t *ent)
 	}
 
 	// never allow players to go totally black
-	if (clmodel->modhint == MOD_PLAYER || ent->renderfx & RF_PLAYERMODEL) {
-		if (ent->ambientlight < 8) {
-			ent->ambientlight = ent->shadelight = 8;
-		}
+	if (player_model && ent->ambientlight < 8) {
+		ent->ambientlight = ent->shadelight = 8;
 	}
 
 	if (ent->ambientlight < cl.minlight) {
