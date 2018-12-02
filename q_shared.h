@@ -243,8 +243,6 @@ char wc2char (wchar wc);
 wchar *str2wcs (const char *str);
 char *wcs2str (const wchar *ws);
 
-char *wcs2str_malloc (const wchar *ws); // you must freed returned string after it no longer need!!!
-
 #ifdef _WIN32
 #ifdef _WIN64
 #define qwcscpy wcscpy
@@ -285,6 +283,7 @@ void *Q_calloc_debug(size_t n, size_t size, const char* file, int line, const ch
 void *Q_realloc_debug(void *p, size_t newsize, const char* file, int line, const char* label);
 char *Q_strdup_debug(const char *src, const char* file, int line, const char* label);
 void Q_free_debug(void* ptr, const char* file, int line);
+char *Q_wcs2str_malloc_debug(const wchar *ws, const char* file, int line); // you must freed returned string after it no longer need!!!
 #define Q_malloc_named(size, name) (Q_malloc_debug((size), __FILE__, __LINE__, name))
 #define Q_malloc(size) (Q_malloc_debug((size), __FILE__, __LINE__, NULL))
 #define Q_calloc(n, size) (Q_calloc_debug((n), (size), __FILE__, __LINE__, NULL))
@@ -294,6 +293,7 @@ void Q_free_debug(void* ptr, const char* file, int line);
 #define Q_strdup(src) (Q_strdup_debug((src), __FILE__, __LINE__, NULL))
 #define Q_strdup_named(src, name) (Q_strdup_debug((src), __FILE__, __LINE__, (name)))
 #define Q_free(ptr) { Q_free_debug(ptr, __FILE__, __LINE__); ptr = NULL; }
+#define Q_wcs2str_malloc(ws) (Q_wcs2str_malloc_debug(ws, __FILE__, __LINE__))
 #else
 #define Q_malloc_named(size, name) (Q_malloc(size))
 #define Q_calloc_named(n, size, name) (Q_calloc(n, size))
@@ -304,6 +304,7 @@ void *Q_calloc(size_t n, size_t size);
 void *Q_realloc(void *p, size_t newsize);
 #define Q_free(ptr) if(ptr) { free(ptr); ptr = NULL; }
 char *Q_strdup(const char *src);
+char *Q_wcs2str_malloc(const wchar *ws); // you must freed returned string after it no longer need!!!
 #endif
 #define Q_calloc_untracked(n, size) (calloc(n, size))
 #define Q_free_untracked(ptr) if(ptr) { free(ptr); ptr = NULL; }

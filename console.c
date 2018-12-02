@@ -565,14 +565,14 @@ void Con_PrintW(wchar *txt)
 
 	if (!(Print_flags[Print_current] & PR_LOG_SKIP)) {
 		if (qconsole_log) {
-			char *tempbuf = wcs2str_malloc(txt);
+			char *tempbuf = Q_wcs2str_malloc(txt);
 			fprintf(qconsole_log, "%s", tempbuf);
 			fflush(qconsole_log);
 			Q_free(tempbuf);
 		}
 		if (Log_IsLogging()) {
 			if (log_readable.value) {
-				char *s, *tempbuf = wcs2str_malloc(txt);
+				char *s, *tempbuf = Q_wcs2str_malloc(txt);
 				for (s = tempbuf; *s; s++)
 					*s = readableChars[(unsigned char)*s];
 				Log_Write(tempbuf);

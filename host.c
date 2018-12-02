@@ -724,7 +724,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	host_everything_loaded = true;
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-	Sys_Printf("event,init\n");
+	Sys_Printf("\nevent,init\n");
 #endif
 }
 
@@ -769,7 +769,7 @@ void Host_Shutdown (void)
 void Host_Quit (void)
 {
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-	Sys_Printf("event,quit\n");
+	Sys_Printf("\nevent,quit\n");
 #endif
 
 	// execute user's trigger

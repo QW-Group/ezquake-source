@@ -429,22 +429,6 @@ char *wcs2str (const wchar *ws)
 	return buf;
 }
 
-// PLZ free returned string after it no longer need!!!
-char *wcs2str_malloc (const wchar *ws)
-{
-	size_t i;
-	size_t len = qwcslen(ws);
-	char *buf = (char *) Q_malloc (len + 1);
-
-	for (i = 0; i < len; i++) {
-		if (ws[i] == 0)
-			break;
-		buf[i] = ws[i] <= 255 ? (char)ws[i] : '?';
-	}
-	buf[i] = 0;
-	return buf;
-}
-
 #ifndef _WIN32
 // disconnect: We assume both str and strSearch are NULL-terminated
 wchar *qwcsstr (const wchar *str, const wchar *strSearch)
@@ -912,7 +896,7 @@ void* Q_malloc(size_t size)
 	void *p;
 	ezquake_memory_block_t* block = malloc(sizeof(ezquake_memory_block_t) + size);
 
-	Sys_Printf("memory,alloc,%u,%s,%d,%u,%s\n", allocation_number, file, line, size, label ? label : "");
+	Sys_Printf("\nmemory,alloc,%u,%s,%d,%u,%s\n", allocation_number, file, line, size, label ? label : "");
 
 	if (!block) {
 		Sys_Error("Q_malloc: Not enough memory free; check disk space\n");
@@ -970,8 +954,8 @@ void *Q_realloc(void *p, size_t newsize)
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	ezquake_memory_block_t* block = MEMORY_BLOCK_FOR_PTR(p);
 
-	Sys_Printf("memory,free(realloc),%u,%s,%d,%u,%s,%d\n", block->allocation_number, block->filename, block->line_number, block->size, file, line);
-	Sys_Printf("memory,alloc(realloc),%u,%s,%d,%u,%s\n", allocation_number, file, line, newsize, label ? label : "");
+	Sys_Printf("\nmemory,free(realloc),%u,%s,%d,%u,%s,%d\n", block->allocation_number, block->filename, block->line_number, block->size, file, line);
+	Sys_Printf("\nmemory,alloc(realloc),%u,%s,%d,%u,%s\n", allocation_number, file, line, newsize, label ? label : "");
 
 	block = p = realloc(block, newsize + sizeof(ezquake_memory_block_t));
 
@@ -999,7 +983,7 @@ void Q_free_debug(void* ptr, const char* file, int line)
 	if (ptr) {
 		ezquake_memory_block_t* block = MEMORY_BLOCK_FOR_PTR(ptr);
 
-		Sys_Printf("memory,free,%u,%s,%d,%u,%s,%d\n", block->allocation_number, block->filename, block->line_number, block->size, file, line);
+		Sys_Printf("\nmemory,free,%u,%s,%d,%u,%s,%d\n", block->allocation_number, block->filename, block->line_number, block->size, file, line);
 
 		free(block);
 	}
@@ -1036,6 +1020,30 @@ char *Q_strdup(const char *src)
 	return NULL;
 }
 #endif
+
+// PLZ free returned string after it no longer need!!!
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+char *Q_wcs2str_malloc_debug(const wchar *ws, const char* file, int line)
+#else
+char *Q_wcs2str_malloc(const wchar *ws)
+#endif
+{
+	size_t i;
+	size_t len = qwcslen(ws);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	char *buf = (char *)Q_malloc_debug(len + 1, file, line, NULL);
+#else
+	char *buf = (char *)Q_malloc(len + 1);
+#endif
+
+	for (i = 0; i < len; i++) {
+		if (ws[i] == 0)
+			break;
+		buf[i] = ws[i] <= 255 ? (char)ws[i] : '?';
+	}
+	buf[i] = 0;
+	return buf;
+}
 
 #ifdef _WIN64
 #undef strlen

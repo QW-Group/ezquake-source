@@ -977,7 +977,7 @@ void CL_Changing_f (void) {
 			// not active anymore, but not disconnected
 			cls.state = ca_connected;
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-			Sys_Printf("event,active(changing)\n");
+			Sys_Printf("\nevent,active(changing)\n");
 #endif
 
 			if (!com_serveractive) {

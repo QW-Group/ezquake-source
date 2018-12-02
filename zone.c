@@ -26,8 +26,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #endif
 
-void Cache_FreeLow(int new_low_hunk);
-void Cache_FreeHigh(int new_high_hunk);
+static void Cache_FreeLow(int new_low_hunk);
+static void Cache_FreeHigh(int new_high_hunk);
 
 //============================================================================
 
@@ -347,7 +347,7 @@ static cache_system_t cache_head;
 Cache_Move
 ===========
 */
-void Cache_Move(cache_system_t *c)
+static void Cache_Move(cache_system_t *c)
 {
 	cache_system_t *new_block;
 
@@ -372,7 +372,7 @@ Cache_FreeLow
 Throw things out until the hunk can be expanded to the given point
 ============
 */
-void Cache_FreeLow(int new_low_hunk)
+static void Cache_FreeLow(int new_low_hunk)
 {
 	cache_system_t *c;
 
@@ -395,7 +395,7 @@ Cache_FreeHigh
 Throw things out until the hunk can be expanded to the given point
 ============
 */
-void Cache_FreeHigh(int new_high_hunk)
+static void Cache_FreeHigh(int new_high_hunk)
 {
 	cache_system_t *c, *prev;
 
@@ -418,7 +418,7 @@ void Cache_FreeHigh(int new_high_hunk)
 	}
 }
 
-void Cache_UnlinkLRU(cache_system_t *cs)
+static void Cache_UnlinkLRU(cache_system_t *cs)
 {
 	if (!cs->lru_next || !cs->lru_prev) {
 		Sys_Error("Cache_UnlinkLRU: NULL link");
@@ -430,7 +430,7 @@ void Cache_UnlinkLRU(cache_system_t *cs)
 	cs->lru_prev = cs->lru_next = NULL;
 }
 
-void Cache_MakeLRU(cache_system_t *cs)
+static void Cache_MakeLRU(cache_system_t *cs)
 {
 	if (cs->lru_next || cs->lru_prev) {
 		Sys_Error("Cache_MakeLRU: active link");
@@ -580,7 +580,7 @@ void Cache_Init(void)
 
 void Cache_Init_Commands(void)
 {
-	Cmd_AddCommand("flush", Cache_Flush);
+	Cmd_AddCommand("dev_cache_flush", Cache_Flush);
 	Cmd_AddCommand("dev_cache_print", Cache_Print);
 	Cmd_AddCommand("dev_cache_report", Cache_Report);
 
@@ -601,14 +601,14 @@ void Cache_Free(cache_user_t *c)
 
 	if (!c->data) {
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-		Sys_Printf("cache,free-error,%p\n", c);
+		Sys_Printf("\ncache,free-error,%p\n", c);
 #endif
 		Sys_Error("Cache_Free: not allocated");
 	}
 
 	cs = ((cache_system_t *)c->data) - 1;
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-	Sys_Printf("cache,free,%d,%s,%d,%p\n", cs->alloc_number, cs->name, cs->size, cs->user);
+	Sys_Printf("\ncache,free,%d,%s,%d,%p\n", cs->alloc_number, cs->name, cs->size, cs->user);
 #endif
 
 	cs->prev->next = cs->next;
@@ -674,7 +674,7 @@ void *Cache_Alloc(cache_user_t *c, int size, const char *name)
 		if (cs) {
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 			cs->alloc_number = allocation_id++;
-			Sys_Printf("cache,alloc,%d,%s,%d,%p\n", cs->alloc_number, name, size, c);
+			Sys_Printf("\ncache,alloc,%d,%s,%d,%p\n", cs->alloc_number, name, size, c);
 #endif
 			strlcpy(cs->name, name, sizeof(cs->name));
 			c->data = (void *)(cs + 1);

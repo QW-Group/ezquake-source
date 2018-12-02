@@ -462,20 +462,13 @@ void Sys_Error (char *error, ...)
 
 void Sys_Printf (char *fmt, ...) 
 {
-#ifdef NDEBUG
+#ifndef _DEBUG
 	return;
 #endif
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	if (houtput == NULL) {
-		houtput = GetStdHandle(STD_OUTPUT_HANDLE);
-
-		if (houtput == NULL) {
-			/*if (AllocConsole()) {
-				houtput = GetStdHandle(STD_OUTPUT_HANDLE);
-			}*/
-			houtput = CreateFile("SysPrintf.log", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-		}
+		houtput = CreateFile("SysPrintf.log", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	}
 
 	if (houtput != NULL) {

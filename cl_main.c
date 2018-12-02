@@ -353,7 +353,7 @@ int CL_ClientState (void)
 void CL_MakeActive(void) 
 {
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-	Sys_Printf("event,active (map=%s)\n", host_mapname.string);
+	Sys_Printf("\nevent,active (map=%s)\n", host_mapname.string);
 #endif
 	// last chance
 	CachePics_AtlasFrame();
@@ -1374,7 +1374,7 @@ void CL_ConnectionlessPacket (void)
 			MSG_WriteString (&cls.netchan.message, "new");
 			cls.state = ca_connected;
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-			Sys_Printf("event,connected...\n");
+			Sys_Printf("\nevent,connected...\n");
 #endif
 			if ((!com_serveractive || developer.value) && !cls.demoplayback)
 				Com_Printf("&c1f1connected!&r\n");
