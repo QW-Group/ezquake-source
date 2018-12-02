@@ -249,6 +249,15 @@ void SV_Shutdown (char *finalmsg)
 	sv.state = ss_dead;
 #ifndef SERVERONLY
 	com_serveractive = false;
+	{
+		extern  ctxinfo_t _localinfo_;
+
+		Info_RemoveAll(&_localinfo_);
+		for (i = 0; i < MAX_CLIENTS; ++i) {
+			Info_RemoveAll(&svs.clients[i]._userinfo_ctx_);
+			Info_RemoveAll(&svs.clients[i]._userinfoshort_ctx_);
+		}
+	}
 #endif
 
 	memset (svs.clients, 0, sizeof(svs.clients));
