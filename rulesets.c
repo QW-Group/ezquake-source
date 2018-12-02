@@ -28,9 +28,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static void Rulesets_OnChange_ruleset (cvar_t *var, char *value, qbool *cancel);
 
+typedef struct rulesetDef_s {
+	ruleset_t ruleset;
+	float maxfps;
+	qbool restrictTriggers;
+	qbool restrictPacket;
+	qbool restrictParticles;
+	qbool restrictSound;
+	qbool restrictLogging;
+} rulesetDef_t;
+
 static rulesetDef_t rulesetDef = {
 	rs_default,
 	72.0,
+	false,
+	false,
 	false,
 	false,
 	false
@@ -209,6 +221,7 @@ static void Rulesets_Smackdown(qbool enable)
 		rulesetDef.restrictTriggers = true;
 		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
 		rulesetDef.restrictParticles = true;
+		rulesetDef.restrictLogging = true;
 		rulesetDef.ruleset = rs_smackdown;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
@@ -221,6 +234,7 @@ static void Rulesets_Smackdown(qbool enable)
 		rulesetDef.restrictTriggers = false;
 		rulesetDef.restrictPacket = false;
 		rulesetDef.restrictParticles = false;
+		rulesetDef.restrictLogging = false;
 		rulesetDef.ruleset = rs_default;
 	}
 }
@@ -260,6 +274,7 @@ static void Rulesets_Qcon(qbool enable)
 		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
 		rulesetDef.restrictParticles = true;
 		rulesetDef.restrictSound = true;
+		rulesetDef.restrictLogging = true;
 		rulesetDef.ruleset = rs_qcon;
 
 		MP3_Shutdown ();
@@ -275,6 +290,7 @@ static void Rulesets_Qcon(qbool enable)
 		rulesetDef.restrictPacket = false;
 		rulesetDef.restrictParticles = false;
 		rulesetDef.restrictSound = false;
+		rulesetDef.restrictLogging = false;
 		rulesetDef.ruleset = rs_default;
 	}
 }
@@ -310,6 +326,7 @@ static void Rulesets_Thunderdome(qbool enable)
 		rulesetDef.restrictTriggers = true;
 		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
 		rulesetDef.restrictParticles = false;
+		rulesetDef.restrictLogging = true;
 		rulesetDef.ruleset = rs_thunderdome;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
@@ -322,6 +339,7 @@ static void Rulesets_Thunderdome(qbool enable)
 		rulesetDef.restrictTriggers = false;
 		rulesetDef.restrictPacket = false;
 		rulesetDef.restrictParticles = false;
+		rulesetDef.restrictLogging = false;
 		rulesetDef.ruleset = rs_default;
 	}
 }
@@ -722,4 +740,9 @@ qbool Ruleset_AllowPowerupShell(model_t* model)
 	extern cvar_t gl_powerupshells;
 
 	return (bound(0, gl_powerupshells.value, 1) && ((cls.demoplayback || cl.spectator) || model->modhint != MOD_EYES));
+}
+
+qbool Ruleset_CanLogConsole(void)
+{
+	return cls.demoplayback || cls.state != ca_active || cl.standby || cl.countdown || !rulesetDef.restrictLogging;
 }

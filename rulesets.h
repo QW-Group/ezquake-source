@@ -44,15 +44,6 @@ typedef enum {
 	rs_mtfl
 } ruleset_t;
 
-typedef struct rulesetDef_s {
-	ruleset_t ruleset;
-	float maxfps;
-	qbool restrictTriggers;
-	qbool restrictPacket;
-	qbool restrictParticles;
-	qbool restrictSound;
-} rulesetDef_t;
-
 void  Rulesets_Init(void);
 const char* Rulesets_Ruleset(void);
 qbool Rulesets_AllowTimerefresh(void);
@@ -83,3 +74,5 @@ void Rulesets_OnChange_cl_iDrive(cvar_t *var, char *value, qbool *cancel);
 qbool Rulesets_ToggleWhenFlashed(void);
 qbool Rulesets_FullbrightModel(struct model_s* model, qbool local_singleplayer_game);
 const char* Ruleset_BlockPlayerCountMacros(void);
+
+qbool Ruleset_CanLogConsole(void);

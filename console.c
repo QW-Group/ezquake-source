@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "localtime.h"
 #include "irc.h"
 #include "fonts.h"
+#include "rulesets.h"
 
 #define     MINIMUM_CONBUFSIZE     (1 << 15)
 #define     DEFAULT_CONBUFSIZE     (1 << 16)
@@ -563,7 +564,7 @@ void Con_PrintW(wchar *txt)
 	wchar *s;
 	static int cr;
 
-	if (!(Print_flags[Print_current] & PR_LOG_SKIP)) {
+	if (Ruleset_CanLogConsole() && !(Print_flags[Print_current] & PR_LOG_SKIP)) {
 		if (qconsole_log) {
 			char *tempbuf = Q_wcs2str_malloc(txt);
 			fprintf(qconsole_log, "%s", tempbuf);
