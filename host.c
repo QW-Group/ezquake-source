@@ -608,8 +608,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	COM_Init ();
 	Key_Init ();
 
-	Cache_Init_Commands ();
-
 	FS_InitFilesystem ();
 	NET_Init ();
 

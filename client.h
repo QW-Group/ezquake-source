@@ -65,7 +65,7 @@ typedef struct
 	int             width, height;          // this is valid for pcx too, but used for 32bit skins only
 	int             bpp;                    // used in gl, bpp = 1 for pcx and 4 for 32bit skins
 	texture_ref     texnum[skin_textures];  // texture num, used for 32bit skins, speed up
-	cache_user_t    cache;
+	byte*           cached_data;
 } skin_t;
 
 // player_state_t is the information needed by a player entity
@@ -957,6 +957,7 @@ void Cam_Lock(int playernum);
 
 // skin.c
 void Skin_Skins_f(void);
+void Skin_Clear(qbool download);
 void Skin_AllSkins_f(void);
 void Skin_NextDownload(void);
 void Skin_ShowSkins_f(void);
@@ -1092,5 +1093,7 @@ qbool Movie_BackgroundCapture(scr_sshot_target_t* params);
 byte* Movie_TempBuffer(int width, int height);
 qbool Movie_BackgroundInitialise(void);
 void Movie_BackgroundShutdown(void);
+
+void Cache_Flush(void);
 
 #define DEFAULT_CHAT_SOUND "misc/talk.wav"

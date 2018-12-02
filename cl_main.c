@@ -2559,7 +2559,7 @@ void CL_Shutdown (void)
 	M_Shutdown();
 	Stats_Shutdown();
 	Draw_Shutdown();
-	Mod_FreeAllCachedData();
+	Cache_Flush();
 	Q_free(host_basepal);
 	Q_free(host_colormap);
 }
@@ -2724,4 +2724,10 @@ void Dev_PhysicsNormalSave(void)
 	fclose(out);
 
 	Con_Printf("Wrote %s\n", filename);
+}
+
+void Cache_Flush(void)
+{
+	Skin_Clear(false);
+	Mod_FreeAllCachedData();
 }

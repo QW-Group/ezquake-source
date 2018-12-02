@@ -343,8 +343,8 @@ static byte* Skin_Cache(skin_t *skin, qbool no_baseskin)
 		return NULL;
 	}
 
-	if ((out = (byte *)Cache_Check(&skin->cache))) {
-		return out;
+	if (skin->cached_data) {
+		return skin->cached_data;
 	}
 
 	// not cached, load from HDD
@@ -374,7 +374,7 @@ static byte* Skin_Cache(skin_t *skin, qbool no_baseskin)
 		}
 	}
 
-	if (!(out = pix = (byte *)Cache_Alloc(&skin->cache, max_w * max_h * bpp, skin->name))) {
+	if (!(out = pix = skin->cached_data = (byte *)Q_malloc_named(max_w * max_h * bpp, skin->name))) {
 		Sys_Error("Skin_Cache: couldn't allocate");
 	}
 
@@ -450,27 +450,32 @@ void Skin_NextDownload(void)
 	}
 }
 
-//Refind all skins, downloading if needed.
-void Skin_Skins_f(void)
+void Skin_Clear(qbool download)
 {
 	int i;
 
 	for (i = 0; i < numskins; i++) {
-		if (skins[i].cache.data) {
-			Cache_Free(&skins[i].cache);
-		}
+		Q_free(skins[i].cached_data);
 	}
 	numskins = 0;
 
 	skins_need_preache = true; // we need precache it ASAP
 
-	cls.downloadnumber = 0;
-	cls.downloadtype = dl_skin;
-	Skin_NextDownload();
+	if (download) {
+		cls.downloadnumber = 0;
+		cls.downloadtype = dl_skin;
+		Skin_NextDownload();
 
-	if (cls.mvdplayback == QTV_PLAYBACK && cbuf_current != &cbuf_main) {
-		cls.qtv_donotbuffer = false;
+		if (cls.mvdplayback == QTV_PLAYBACK && cbuf_current != &cbuf_main) {
+			cls.qtv_donotbuffer = false;
+		}
 	}
+}
+
+//Refind all skins, downloading if needed.
+void Skin_Skins_f(void)
+{
+	Skin_Clear(true);
 }
 
 //Sets all skins to one specific one

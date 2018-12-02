@@ -97,6 +97,7 @@ void *Hunk_TempAlloc (int size);
 
 void Hunk_Check (void);
 
+#if 0
 typedef struct cache_user_s
 {
 	void *data;
@@ -116,7 +117,7 @@ void *Cache_Alloc (cache_user_t *c, int size, const char *name);
 // wasn't enough room.
 
 void Cache_Report (void);
-
 void Cache_Init_Commands (void);
+#endif
 
 #endif /* !__ZONE_H__ */
