@@ -141,7 +141,6 @@ extern cvar_t gl_gammacorrection;
 // gl_rmain.c
 qbool R_CullBox (vec3_t mins, vec3_t maxs);
 qbool R_CullSphere (vec3_t centre, float radius);
-void R_RotateForEntity (entity_t *e);
 void R_BrightenScreen (void);
 
 extern int dlightcolor[NUM_DLIGHTTYPES][3];

@@ -257,18 +257,13 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer)
 	mod->type = mod_sprite;
 
 	// move the complete, relocatable model to the cache
-
-	Cache_Alloc (&mod->cache, size, loadname);
-	if (!mod->cache.data) {
-		Q_free(psprite2);
-		Hunk_FreeToLowMark (start);
-		return;
+	mod->cached_data = Q_malloc(size);
+	if (mod->cached_data) {
+		memcpy(mod->cached_data, psprite2, size);
 	}
 
-	memcpy (mod->cache.data, psprite2, size);
-
 	Q_free(psprite2);
-	Hunk_FreeToLowMark (start);
+	Hunk_FreeToLowMark(start);
 }
 
 mspriteframe_t *R_GetSpriteFrame(entity_t *e, msprite2_t *psprite)

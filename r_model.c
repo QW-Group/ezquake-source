@@ -58,19 +58,16 @@ void Mod_Init(void)
 //Caches the data if needed
 void *Mod_Extradata(model_t *mod)
 {
-	void *r;
-
-	r = Cache_Check(&mod->cache);
-	if (r) {
-		return r;
+	if (mod->cached_data) {
+		return mod->cached_data;
 	}
 
 	Mod_LoadModel(mod, true);
 
-	if (!mod->cache.data) {
+	if (!mod->cached_data) {
 		Sys_Error("Mod_Extradata: caching failed");
 	}
-	return mod->cache.data;
+	return mod->cached_data;
 }
 
 mleaf_t *Mod_PointInLeaf(vec3_t p, model_t *model)
@@ -150,6 +147,16 @@ void Mod_ClearAll(void)
 	}
 }
 
+void Mod_FreeAllCachedData(void)
+{
+	int i;
+	model_t	*mod;
+
+	for (i = 0, mod = mod_known; i < mod_numknown; i++, mod++) {
+		Q_free(mod->cached_data);
+	}
+}
+
 model_t *Mod_FindName(const char *name)
 {
 	int i;
@@ -179,37 +186,7 @@ model_t *Mod_FindName(const char *name)
 
 void Mod_TouchModel(char *name)
 {
-	model_t	*mod;
-
-	mod = Mod_FindName (name);
-	if (!mod->needload)	{
-		if (mod->type == mod_alias || mod->type == mod_alias3 || mod->type == mod_sprite) {
-			Cache_Check(&mod->cache);
-		}
-	}
-}
-
-// this is callback from VID after a vid_restart
-void Mod_TouchModels(void)
-{
-	int i;
-	model_t *mod;
-
-	if (cls.state != ca_active) {
-		return; // seems we are not loaded models yet, so no need to do anything
-	}
-
-	for (i = 1; i < MAX_MODELS; i++) {
-		if (!cl.model_name[i][0]) {
-			break;
-		}
-
-		mod = cl.model_precache[i];
-
-		if (mod->type == mod_alias || mod->type == mod_alias3 || mod->type == mod_sprite) {
-			Mod_Extradata(mod);
-		}
-	}
+	Mod_FindName(name);
 }
 
 void Mod_ReloadModels(qbool vid_restart)
@@ -220,10 +197,10 @@ void Mod_ReloadModels(qbool vid_restart)
 		model_t* mod = cl.model_precache[i];
 
 		if (mod && (mod == cl.worldmodel || !mod->isworldmodel)) {
-			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
+			if (mod->type == mod_alias || mod->type == mod_alias3) {
 				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
 					// Invalidate cache so VBO buffer gets refilled
-					Cache_FreeSafe(&mod->cache);
+					Q_free(mod->cached_data);
 				}
 			}
 			Mod_LoadModel(mod, true);
@@ -234,10 +211,10 @@ void Mod_ReloadModels(qbool vid_restart)
 		model_t* mod = cl.vw_model_precache[i];
 
 		if (mod) {
-			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
+			if (mod->type == mod_alias || mod->type == mod_alias3) {
 				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
 					// Invalidate cache so VBO buffer gets refilled
-					Cache_FreeSafe(&mod->cache);
+					Q_free(mod->cached_data);
 				}
 			}
 			Mod_LoadModel(mod, true);
@@ -248,10 +225,10 @@ void Mod_ReloadModels(qbool vid_restart)
 		model_t* mod = cl_custommodels[i];
 
 		if (mod) {
-			if (!vid_restart && (mod->type == mod_alias || mod->type == mod_alias3)) {
+			if (mod->type == mod_alias || mod->type == mod_alias3) {
 				if (mod->vertsInVBO && !mod->temp_vbo_buffer) {
 					// Invalidate cache so VBO buffer gets refilled
-					Cache_FreeSafe(&mod->cache);
+					Q_free(mod->cached_data);
 				}
 			}
 			Mod_LoadModel(mod, true);
@@ -262,15 +239,13 @@ void Mod_ReloadModels(qbool vid_restart)
 //Loads a model into the cache
 model_t *Mod_LoadModel(model_t *mod, qbool crash)
 {
-	void *d;
 	unsigned *buf;
 	int namelen;
 	int filesize;
 
 	if (!mod->needload) {
 		if (mod->type == mod_alias || mod->type == mod_alias3 || mod->type == mod_sprite) {
-			d = Cache_Check(&mod->cache);
-			if (d) {
+			if (mod->cached_data) {
 				return mod;
 			}
 		}

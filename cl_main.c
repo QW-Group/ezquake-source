@@ -2559,6 +2559,7 @@ void CL_Shutdown (void)
 	M_Shutdown();
 	Stats_Shutdown();
 	Draw_Shutdown();
+	Mod_FreeAllCachedData();
 	Q_free(host_basepal);
 	Q_free(host_colormap);
 }

@@ -827,11 +827,8 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 	end = Hunk_LowMark();
 	total = end - start;
 
-	Cache_Alloc(&mod->cache, total, loadname);
-	if (!mod->cache.data) {
-		return;
-	}
-	memcpy(mod->cache.data, pheader, total);
+	mod->cached_data = Q_malloc(total);
+	memcpy(mod->cached_data, pheader, total);
 
 	// try load simple textures
 	memset(mod->simpletexture, 0, sizeof(mod->simpletexture));

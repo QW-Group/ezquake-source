@@ -175,10 +175,6 @@ void R_NewMap(qbool vid_restart)
 		//VULT NAMES
 		VX_TrackerClear();
 	}
-	else {
-		// force all cached models to be loaded, so no short HDD lag then u walk over level and discover new model
-		Mod_TouchModels();
-	}
 }
 
 void R_TimeRefresh_f(void)

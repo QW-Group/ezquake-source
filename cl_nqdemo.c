@@ -461,17 +461,17 @@ ok:
 NQD_ParseServerData
 ==================
 */
-static void NQD_ParseServerData (void)
+static void NQD_ParseServerData(void)
 {
 	char	*str;
 	int		i;
 	int		nummodels, numsounds;
 	char	mapname[MAX_QPATH];
 
-	Com_DPrintf ("Serverdata packet received.\n");
+	Com_DPrintf("Serverdata packet received.\n");
 
 	// wipe the client_state_t struct
-	CL_ClearState ();
+	CL_ClearState();
 
 #ifdef PROTOCOL_VERSION_FTE
 	cls.fteprotocolextensions = 0;
@@ -491,106 +491,111 @@ static void NQD_ParseServerData (void)
 #endif
 
 	// parse protocol version number
-	i = MSG_ReadLong ();
+	i = MSG_ReadLong();
 	if (i != NQ_PROTOCOL_VERSION)
-		Host_Error ("Server returned version %i, not %i", i, NQ_PROTOCOL_VERSION);
+		Host_Error("Server returned version %i, not %i", i, NQ_PROTOCOL_VERSION);
 
 	// parse maxclients
-	nq_maxclients = MSG_ReadByte ();
+	nq_maxclients = MSG_ReadByte();
 	if (nq_maxclients < 1 || nq_maxclients > NQ_MAX_CLIENTS)
-		Host_Error ("Bad maxclients (%u) from server", nq_maxclients);
+		Host_Error("Bad maxclients (%u) from server", nq_maxclients);
 
 	// parse gametype
 	cl.gametype = MSG_ReadByte() ? GAME_DEATHMATCH : GAME_COOP;
 
 	// parse signon message
-	str = MSG_ReadString ();
-	strlcpy (cl.levelname, str, sizeof (cl.levelname));
+	str = MSG_ReadString();
+	strlcpy(cl.levelname, str, sizeof(cl.levelname));
 
 	// separate the printfs so the server message can have a color
 	Com_Printf("\n\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n");
-	Com_Printf ("%c%s\n", 2, str);
+	Com_Printf("%c%s\n", 2, str);
 
-//
-// first we go through and touch all of the precache data that still
-// happens to be in the cache, so precaching something else doesn't
-// needlessly purge it
-//
+	//
+	// first we go through and touch all of the precache data that still
+	// happens to be in the cache, so precaching something else doesn't
+	// needlessly purge it
+	//
 
 	// precache models
 	*mapname = 0;
-	for (nummodels=1 ; ; nummodels++)
-	{
-		str = MSG_ReadString ();
-		if (!str[0])
+	for (nummodels = 1; ; nummodels++) {
+		str = MSG_ReadString();
+		if (!str[0]) {
 			break;
-		if (nummodels == MAX_MODELS)
-			Host_Error ("Server sent too many model precaches");
-		strlcpy (cl.model_name[nummodels], str, sizeof(cl.model_name[0]));
-		Mod_TouchModel (str);
+		}
+		if (nummodels == MAX_MODELS) {
+			Host_Error("Server sent too many model precaches");
+		}
+		strlcpy(cl.model_name[nummodels], str, sizeof(cl.model_name[0]));
+		Mod_TouchModel(str);
 
-		if (nummodels == 1)
-			COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname, sizeof(mapname));
+		if (nummodels == 1) {
+			COM_StripExtension(COM_SkipPath(cl.model_name[1]), mapname, sizeof(mapname));
+		}
 	}
 
 	// precache sounds
-	for (numsounds=1 ; ; numsounds++)
-	{
-		str = MSG_ReadString ();
-		if (!str[0])
+	for (numsounds = 1; ; numsounds++) {
+		str = MSG_ReadString();
+		if (!str[0]) {
 			break;
-		if (numsounds == MAX_SOUNDS)
-			Host_Error ("Server sent too many sound precaches");
-		strlcpy (cl.sound_name[numsounds], str, sizeof(cl.sound_name[0]));
-//		S_TouchSound (str); @ZQ@
+		}
+		if (numsounds == MAX_SOUNDS) {
+			Host_Error("Server sent too many sound precaches");
+		}
+		strlcpy(cl.sound_name[numsounds], str, sizeof(cl.sound_name[0]));
+		// S_TouchSound (str); @ZQ@
 	}
 
 	// now we try to load everything else until a cache allocation fails
-	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
-	if (!com_serveractive)
-		Cvar_ForceSet (&host_mapname, mapname);
-	COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname, sizeof(mapname));
-	cl.map_checksum2 = Com_TranslateMapChecksum (mapname, cl.map_checksum2);
+	cl.clipmodels[1] = CM_LoadMap(cl.model_name[1], true, NULL, &cl.map_checksum2);
+	if (!com_serveractive) {
+		Cvar_ForceSet(&host_mapname, mapname);
+	}
+	COM_StripExtension(COM_SkipPath(cl.model_name[1]), mapname, sizeof(mapname));
+	cl.map_checksum2 = Com_TranslateMapChecksum(mapname, cl.map_checksum2);
 
-	for (i = 1; i < nummodels; i++)
-	{
-		cl.model_precache[i] = Mod_ForName (cl.model_name[i], false);
-		if (cl.model_precache[i] == NULL)
-			Host_Error ("Model %s not found", cl.model_name[i]);
+	for (i = 1; i < nummodels; i++) {
+		cl.model_precache[i] = Mod_ForName(cl.model_name[i], false);
+		if (cl.model_precache[i] == NULL) {
+			Host_Error("Model %s not found", cl.model_name[i]);
+		}
 
-		if (cl.model_name[i][0] == '*')
+		if (cl.model_name[i][0] == '*') {
 			cl.clipmodels[i] = CM_InlineModel(cl.model_name[i]);
+		}
 	}
 
-	for (i=1 ; i<numsounds ; i++) {
-		cl.sound_precache[i] = S_PrecacheSound (cl.sound_name[i]);
+	for (i = 1; i < numsounds; i++) {
+		cl.sound_precache[i] = S_PrecacheSound(cl.sound_name[i]);
 	}
-
 
 	// local state
 	cl.worldmodel = cl.model_precache[1];
-	if (!cl.model_precache[1])
-		Host_Error ("NQD_ParseServerData: NULL worldmodel");
+	if (!cl.model_precache[1]) {
+		Host_Error("NQD_ParseServerData: NULL worldmodel");
+	}
 
-	Classic_InitParticles (); 
-	CL_FindModelNumbers ();
-	R_NewMap (false);
-	TP_NewMap ();
-	MT_NewMap ();
-	Stats_NewMap ();
+	Classic_InitParticles();
+	CL_FindModelNumbers();
+	R_NewMap(false);
+	TP_NewMap();
+	MT_NewMap();
+	Stats_NewMap();
 
 	// Reset the status grid.
-	StatsGrid_Remove (&stats_grid);
-	StatsGrid_ResetHoldItems ();
-	HUD_NewMap ();
+	StatsGrid_Remove(&stats_grid);
+	StatsGrid_ResetHoldItems();
+	HUD_NewMap();
 
-	Hunk_Check (); // make sure nothing is hurt
+	Hunk_Check(); // make sure nothing is hurt
 
 	nq_signon = 0;
 	nq_num_entities = 0;
 	nq_drawpings = false; // unless we have the ProQuake extension
 	cl.servertime_works = true;
-//	cl.allow_fbskins = true; @ZQ@
+	//	cl.allow_fbskins = true; @ZQ@
 	cls.state = ca_onserver;
 	CL_Demo_Check_For_Rewind(nq_mtime[0]);
 

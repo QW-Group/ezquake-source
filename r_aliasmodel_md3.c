@@ -68,7 +68,6 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 	char specifiedskinname[128];
 	char skinfileskinname[128];
 	char tenebraeskinname[128];
-	extern char loadname[];
 	int start, end, total;
 	int numsurfs;
 	int surfn;
@@ -247,11 +246,11 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 	end = Hunk_LowMark();
 	total = end - start;
 
-	Cache_Alloc(&mod->cache, total, loadname);
-	if (!mod->cache.data) {
+	mod->cached_data = Q_malloc(total);
+	if (!mod->cached_data) {
 		return;
 	}
-	memcpy(mod->cache.data, pheader, total);
+	memcpy(mod->cached_data, pheader, total);
 
 	// try load simple textures
 	memset(mod->simpletexture, 0, sizeof(mod->simpletexture));

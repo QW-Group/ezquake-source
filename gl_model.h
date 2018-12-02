@@ -522,7 +522,7 @@ typedef struct model_s {
 	qbool				isworldmodel;
 
 	// additional model data
-	cache_user_t		cache; // only access through Mod_Extradata
+	void*               cached_data;
 
 	texture_ref         texture_arrays[MAX_TEXTURE_ARRAYS_PER_MODEL];
 	float               texture_arrays_scale_s[MAX_TEXTURE_ARRAYS_PER_MODEL];
@@ -558,6 +558,7 @@ void	*Mod_Extradata (model_t *mod); // handles caching
 void	Mod_TouchModel (char *name);
 void	Mod_TouchModels (void); // for vid_restart
 void Mod_ReloadModels(qbool vid_restart);
+void Mod_FreeAllCachedData(void);
 
 mleaf_t *Mod_PointInLeaf(vec3_t p, model_t *model);
 byte	*Mod_LeafPVS(mleaf_t *leaf, model_t *model);
