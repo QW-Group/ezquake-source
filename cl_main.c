@@ -2173,7 +2173,7 @@ void CL_Frame(double time)
 	double minframetime;
 	static double	extraphysframetime;	//#fps
 	qbool need_server_frame = false;
-	qbool render_frame = true; // Movie_IsCapturing() || !cl_bufferwait.integer || buffers.FrameReady();
+	qbool render_frame = Movie_IsCapturing() || !cl_bufferwait.integer || buffers.FrameReady();
 
 	extratime += time;
 	minframetime = CL_MinFrameTime();
