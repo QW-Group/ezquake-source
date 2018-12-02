@@ -402,7 +402,6 @@ void CachePics_CreateAtlas(void)
 	}
 
 	for (i = 0; i < MAX_CHARSETS; ++i) {
-		extern charset_t char_textures[MAX_CHARSETS];
 #ifdef EZ_FREETYPE_SUPPORT
 		extern charset_t proportional_fonts[MAX_CHARSETS];
 #endif
@@ -410,30 +409,30 @@ void CachePics_CreateAtlas(void)
 		int j;
 
 		charset = &char_textures[i];
-		if (R_TextureReferenceIsValid(charset->glyphs[0].texnum)) {
-			for (j = 0; j < 256; ++j) {
-				if (R_TextureReferenceIsValid(charset->glyphs[j].texnum)) {
-					charsetpics[i * 256 + j].data.pic = &charset->glyphs[j];
+		for (j = 0; j < 256; ++j) {
+			if (R_TextureReferenceIsValid(charset->glyphs[j].texnum)) {
+				charsetpics[i * 256 + j].data.pic = &charset->glyphs[j];
 
-					CachePics_InsertBySize(&sized_list, &charsetpics[i * 256 + j]);
-				}
+				CachePics_InsertBySize(&sized_list, &charsetpics[i * 256 + j]);
 			}
 		}
-		AddTextureToDeleteList(charset->master);
+		if (R_TextureReferenceIsValid(charset->master)) {
+			AddTextureToDeleteList(charset->master);
+		}
 		R_TextureReferenceInvalidate(charset->master);
 
 #ifdef EZ_FREETYPE_SUPPORT
 		charset = &proportional_fonts[i];
-		if (R_TextureReferenceIsValid(charset->master)) {
-			for (j = 0; j < 256; ++j) {
-				if (R_TextureReferenceIsValid(charset->glyphs[j].texnum)) {
-					fontpics[i * 256 + j].data.pic = &charset->glyphs[j];
+		for (j = 0; j < 256; ++j) {
+			if (R_TextureReferenceIsValid(charset->glyphs[j].texnum)) {
+				fontpics[i * 256 + j].data.pic = &charset->glyphs[j];
 
-					CachePics_InsertBySize(&sized_list, &fontpics[i * 256 + j]);
-				}
+				CachePics_InsertBySize(&sized_list, &fontpics[i * 256 + j]);
 			}
 		}
-		AddTextureToDeleteList(charset->master);
+		if (R_TextureReferenceIsValid(charset->master)) {
+			AddTextureToDeleteList(charset->master);
+		}
 		R_TextureReferenceInvalidate(charset->master);
 #endif
 	}

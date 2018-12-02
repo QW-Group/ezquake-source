@@ -39,11 +39,20 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MAX_GLTEXTURES 8192	//dimman: old value 1024 isn't enough when using high framecount sprites (according to Spike)
 #define MAX_CHARSETS 256
+#define MAX_USER_CHARSETS 0xE0
+
+#define PRIVATE_USE_TRACKERIMAGES_CHARSET 0xE0
+// reservations:
+//   0xE000 - 0xE0FF = Tracker weapon images
 
 typedef struct charset_s {
 	mpic_t glyphs[256];
 	texture_ref master;
+	float custom_scale_x;
+	float custom_scale_y;
 } charset_t;
+
+extern charset_t char_textures[MAX_CHARSETS];
 
 /*
 typedef struct texture_api_s {

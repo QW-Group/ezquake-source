@@ -884,7 +884,7 @@ void CommonDraw_Init(void)
 	HUD_Register(
 		"tracker", NULL, "Shows deaths, frag streaks etc",
 		0, ca_active, 0, SCR_HUD_DrawTracker,
-		"1", "screen", "left", "top", "0", "48", "0", "0 0 0", NULL,
+		"0", "screen", "left", "top", "0", "48", "0", "0 0 0", NULL,
 		"scale", "1",
 		"proportional", "0",
 		"name_width", "0",

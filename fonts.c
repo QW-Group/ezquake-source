@@ -336,49 +336,6 @@ static qbool FontCreate(int grouping, const char* path)
 	return true;
 }
 
-float FontCharacterWidthWide(wchar ch, float scale, qbool proportional)
-{
-	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
-		return 8 * glyphs[ch].advance[0] * scale;
-	}
-	else {
-		return 8 * scale;
-	}
-}
-
-float FontCharacterWidth(char ch_, qbool proportional)
-{
-	unsigned char ch = (unsigned char)ch_;
-
-	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
-		return 8 * glyphs[ch].advance[0];
-	}
-
-	return 8;
-}
-
-qbool FontAlterCharCoordsWide(float* x, float* y, wchar ch, qbool bigchar, float scale, qbool proportional)
-{
-	int char_size = (bigchar ? 64 : 8);
-
-	// Totally off screen.
-	if (*y <= (-char_size * scale)) {
-		return false;
-	}
-
-	// Space.
-	if (ch == 32) {
-		*x += FontCharacterWidthWide(ch, scale, proportional);
-		return false;
-	}
-
-	if (proportional && ch <= sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
-		*x += glyphs[ch].offsets[0] * char_size * scale;
-	}
-
-	return true;
-}
-
 // Used for allocating space - if we just measure the string then other hud elements
 //   might move around as content changes, which is probably not what is wanted
 int FontFixedWidth(int max_length, float scale, qbool digits_only, qbool proportional)
@@ -447,10 +404,9 @@ void FontInitialise(void)
 
 #endif // EZ_FREETYPE_SUPPORT
 
-qbool FontAlterCharCoords(float* x, float* y, char ch_, qbool bigchar, float scale, qbool proportional)
+qbool FontAlterCharCoordsWide(float* x, float* y, wchar ch, qbool bigchar, float scale, qbool proportional)
 {
 	int char_size = (bigchar ? 64 : 8);
-	unsigned char ch = (unsigned char)ch_;
 
 	// Totally off screen.
 	if (*y <= (-char_size * scale)) {
@@ -459,19 +415,53 @@ qbool FontAlterCharCoords(float* x, float* y, char ch_, qbool bigchar, float sca
 
 	// Space.
 	if (ch == 32) {
-#ifdef EZ_FREETYPE_SUPPORT
-		*x += (proportional ? FontCharacterWidthWide(ch, scale, proportional) : 8 * scale);
-#else
-		*x += 8 * scale;
-#endif
+		*x += FontCharacterWidthWide(ch, scale, proportional);
 		return false;
 	}
 
 #ifdef EZ_FREETYPE_SUPPORT
-	if (proportional && !bigchar && ch <= sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
+	if (proportional && ch <= sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
 		*x += glyphs[ch].offsets[0] * char_size * scale;
 	}
 #endif
 
 	return true;
 }
+
+float FontCharacterWidthWide(wchar ch, float scale, qbool proportional)
+{
+	unsigned char charset = (unsigned char)((ch >> 8) & 0xFF);
+	float width = 8 * scale;
+
+#ifdef EZ_FREETYPE_SUPPORT
+	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
+		return width * glyphs[ch].advance[0];
+	}
+#endif
+
+	if (charset >= 0 && charset < MAX_CHARSETS && char_textures[charset].custom_scale_x != 0) {
+		width *= char_textures[charset].custom_scale_x;
+	}
+
+	return width;
+}
+
+float FontCharacterWidth(char ch_, float scale, qbool proportional)
+{
+	int charset = 0;
+
+#ifdef EZ_FREETYPE_SUPPORT
+	unsigned char ch = (unsigned char)(ch_);
+
+	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch_].loaded) {
+		return 8 * glyphs[ch].advance[0] * scale;
+	}
+#endif
+
+	if (charset < 0 || charset >= MAX_CHARSETS || char_textures[charset].custom_scale_x == 0) {
+		return 8 * scale;
+	}
+
+	return 8 * char_textures[charset].custom_scale_x * scale;
+}
+

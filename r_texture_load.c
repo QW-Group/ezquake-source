@@ -240,6 +240,9 @@ qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t*
 		}
 	}
 
+	pic->custom_scale_x = 1;
+	pic->custom_scale_y = 1;
+
 	Q_free(data);	// data was Q_malloc'ed by R_LoadImagePixels
 	return R_TextureReferenceIsValid(tex);
 }

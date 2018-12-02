@@ -32,13 +32,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_model.h"
 #include "fonts.h"
 #include "hud.h"
+#include "r_texture.h"
 
 #define MAX_IMAGENAME 32
 
-typedef struct weapon_image_s {
-	mpic_t* pics[4];
-	int count;
-} weapon_image_t;
+// This can't be increased without changing private use image reservations (PRIVATE_USE_IMAGES_TRACKERIMAGES_BASE etc)
+#define MAX_IMAGES_PER_WEAPON 4
 
 typedef struct weapon_label_s {
 	char label[64];
@@ -47,7 +46,7 @@ typedef struct weapon_label_s {
 	int count;
 } weapon_label_t;
 
-static weapon_image_t weapon_images[MAX_WEAPON_CLASSES];
+static int weapon_images[MAX_WEAPON_CLASSES];
 static weapon_label_t weapon_labels[MAX_WEAPON_CLASSES];
 
 // hard-coded values, remember tracker color codes were 0-9, not 0-F
@@ -91,6 +90,7 @@ static int max_active_tracks = 0;
 static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int name_width, qbool proportional, float scale, float image_scale, qbool align_right);
 static void OnChange_TrackerNameWidth(cvar_t* var, char* value, qbool* cancel);
 
+cvar_t r_tracker                                 = {"r_tracker", "1"};
 cvar_t amf_tracker_flags                         = {"r_tracker_flags", "0"};
 cvar_t amf_tracker_frags                         = {"r_tracker_frags", "1"};
 cvar_t amf_tracker_streaks                       = {"r_tracker_streaks", "0"};
@@ -175,6 +175,7 @@ void InitTracker(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 
+	Cvar_Register(&r_tracker);
 	Cvar_Register(&amf_tracker_frags);
 	Cvar_Register(&amf_tracker_flags);
 	Cvar_Register(&amf_tracker_streaks);
@@ -228,11 +229,9 @@ void VX_TrackerThink(void)
 {
 	int i;
 
-	if (!(amf_tracker_frags.value || amf_tracker_flags.value || amf_tracker_streaks.value)) {
-		return;
+	if (r_tracker.integer) {
+		VXSCR_DrawTrackerString(amf_tracker_x.value, vid.height * 0.2 / bound(0.1, amf_tracker_scale.value, 10) + amf_tracker_y.value, vid.width, amf_tracker_name_width.integer, amf_tracker_proportional.integer, amf_tracker_scale.value, amf_tracker_images_scale.value, amf_tracker_align_right.integer);
 	}
-
-	VXSCR_DrawTrackerString(amf_tracker_x.value, vid.height * 0.2 / bound(0.1, amf_tracker_scale.value, 10) + amf_tracker_y.value, vid.width, amf_tracker_name_width.integer, amf_tracker_proportional.integer, amf_tracker_scale.value, amf_tracker_images_scale.value, amf_tracker_align_right.integer);
 
 	if (ISPAUSED) {
 		return;
@@ -324,6 +323,61 @@ static qbool VX_TrackerStringPrintSegments(const char* text1, const char* text2,
 	return true;
 }
 
+static qbool VX_TrackerStringPrintSegmentsWithImage(const char* text1, int weapon, const char* text3, const char* text4)
+{
+	int i;
+	wchar imagetext[MAX_IMAGES_PER_WEAPON + 1] = { 0 };
+	int offset = weapon * MAX_IMAGES_PER_WEAPON;
+	int base = (PRIVATE_USE_TRACKERIMAGES_CHARSET << 8) + offset;
+
+	if (!amf_tracker_inconsole.integer) {
+		return true;
+	}
+
+	if (R_TextureReferenceIsValid(char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].glyphs[offset].texnum)) {
+		int i;
+		for (i = 0; i < weapon_images[weapon]; ++i) {
+			imagetext[i] = base + i;
+		}
+	}
+	else {
+		return VX_TrackerStringPrintSegments(text1, GetWeaponName(weapon), text3, text4);
+	}
+
+	for (i = 0; i < 4; ++i) {
+		if (text1 == NULL || !text1[0]) {
+			text1 = text3;
+			text3 = text4;
+			text4 = NULL;
+		}
+	}
+
+	switch (amf_tracker_inconsole.integer) {
+		case 1:
+			Com_Printf("%s%s", text1 ? text1 : "", text1 ? " " : "");
+			Con_PrintW(imagetext);
+			Com_Printf("%s%s%s%s\n", text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
+			return false;
+		case 2:
+			Com_Printf("%s%s", text1 ? text1 : "", text1 ? " " : "");
+			Con_PrintW(imagetext);
+			Com_Printf("%s%s%s%s\n", text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
+			return true;
+		case 3:
+		{
+			int flags = Print_flags[Print_current];
+			Print_flags[Print_current] |= PR_NONOTIFY;
+			Com_Printf("%s%s", text1 ? text1 : "", text1 ? " " : "");
+			Con_PrintW(imagetext);
+			Com_Printf("%s%s%s%s\n", text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
+			Print_flags[Print_current] = flags;
+			return true;
+		}
+	}
+
+	return true;
+}
+
 static trackmsg_t* VX_NewTrackerMsg(void)
 {
 	// free space by removing the oldest one
@@ -394,10 +448,8 @@ static void VX_TrackerAddSegmented4(const char* lhs_text, const byte* lhs_color,
 		return;
 	}
 
-	{
-		if (!VX_TrackerStringPrintSegments(lhs_text, center_text, rhs_text, extra_text)) {
-			return;
-		}
+	if (!VX_TrackerStringPrintSegments(lhs_text, center_text, rhs_text, extra_text)) {
+		return;
 	}
 
 	msg = VX_NewTrackerMsg();
@@ -425,15 +477,19 @@ static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_
 		return;
 	}
 
-	if (!VX_TrackerStringPrintSegments(lhs_text, GetWeaponName(weapon), rhs_text, NULL)) {
+	if (!VX_TrackerStringPrintSegmentsWithImage(lhs_text, weapon, rhs_text, NULL)) {
 		return;
 	}
 
 	msg = VX_NewTrackerMsg();
 	msg->pad = lhs_text && rhs_text && lhs_text[0] && rhs_text[0];
 	VX_TrackerAddTextSegment(msg, lhs_text, lhs_color);
-	for (i = 0; i < weapon_images[weapon].count; ++i) {
-		VX_TrackerAddImageSegment(msg, weapon_images[weapon].pics[i]);
+	for (i = 0; i < weapon_images[weapon]; ++i) {
+		mpic_t* pic = &char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].glyphs[weapon * MAX_IMAGES_PER_WEAPON + i];
+
+		if (R_TextureReferenceIsValid(pic->texnum)) {
+			VX_TrackerAddImageSegment(msg, pic);
+		}
 	}
 	VX_TrackerAddTextSegment(msg, rhs_text, rhs_color);
 	VX_PreProcessMessage(msg);
@@ -1262,6 +1318,9 @@ void VX_TrackerInit(void)
 	memset(weapon_images, 0, sizeof(weapon_images));
 	memset(weapon_labels, 0, sizeof(weapon_labels));
 
+	char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].custom_scale_x = 2;
+	char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].custom_scale_y = 1;
+
 	// Pre-cache weapon-class images
 	for (i = 0; i < MAX_WEAPON_CLASSES; ++i) {
 		const char* image = GetWeaponImageName(i);
@@ -1294,11 +1353,18 @@ void VX_TrackerInit(void)
 
 						// We got potential image name, treat image as two printable characters.
 						if (to - from < sizeof(imagename)) {
+							int base = (i * MAX_IMAGES_PER_WEAPON);
+							mpic_t* pic = &char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].glyphs[base + weapon_images[i]];
+
 							strncpy(imagename, start + from, to - from);
 							imagename[to - from] = '\0';
 
 							snprintf(fullpath, sizeof(fullpath), "textures/tracker/%s", imagename);
-							weapon_images[i].pics[weapon_images[i].count++] = Draw_CachePicSafe(fullpath, false, true);
+
+							*pic = *R_LoadPicImage(fullpath, NULL, 0, 0, TEX_ALPHA);
+							pic->width = 16;
+							pic->height = 8;
+							++weapon_images[i];
 						}
 					}
 

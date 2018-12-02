@@ -321,7 +321,7 @@ static void Frags_DrawColors(
 
 		switch (style) {
 			case 1:
-				Draw_SCharacterP(x - FontCharacterWidth(13, proportional) * scale * 0.5f, posy, 13, scale, proportional);
+				Draw_SCharacterP(x - FontCharacterWidth(13, scale, proportional) * 0.5f, posy, 13, scale, proportional);
 				break;
 			case 2:
 				// Red outline.

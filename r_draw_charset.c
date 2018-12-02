@@ -186,7 +186,7 @@ static int Draw_LoadCharset(const char *name)
 		Load_Locale_Charset(name, "cyr", 4, flags);
 	}
 	else {
-		for (i = 1; i < MAX_CHARSETS; ++i) {
+		for (i = 1; i < MAX_USER_CHARSETS; ++i) {
 			char charsetName[10];
 
 			snprintf(charsetName, sizeof(charsetName), "%03d", i);
@@ -245,7 +245,7 @@ static float Draw_CharacterBaseW(float x, float y, wchar num, float scale, qbool
 {
 	int original_x = x;
 
-	if (FontAlterCharCoords(&x, &y, num, bigchar, scale, proportional)) {
+	if (FontAlterCharCoordsWide(&x, &y, num, bigchar, scale, proportional)) {
 		return R_Draw_CharacterBase(x, y, num, scale, apply_overall_alpha, bigchar, gl_statechange, proportional);
 	}
 	return x - original_x;
@@ -569,22 +569,14 @@ void Draw_String(float x, float y, const char *text)
 
 float Draw_StringLengthW(const wchar *text, int length, float scale, qbool proportional)
 {
-	if (!proportional) {
-		if (length < 0) {
-			length = qwcslen(text);
-		}
-		return length * scale * 8;
-	}
-	else {
-		int i;
-		float x = 0;
+	int i;
+	float x = 0;
 
-		for (i = 0; text[i] && (length == -1 || i < length); i++) {
-			x += FontCharacterWidthWide(text[i], scale, proportional);
-		}
-
-		return x;
+	for (i = 0; text[i] && (length == -1 || i < length); i++) {
+		x += FontCharacterWidthWide(text[i], scale, proportional);
 	}
+
+	return x;
 }
 
 float Draw_StringLength(const char *text, int length, float scale, qbool proportional)
@@ -600,7 +592,7 @@ float Draw_StringLength(const char *text, int length, float scale, qbool proport
 		float x = 0;
 
 		for (i = 0; text[i] && (length == -1 || i < length); i++) {
-			x += FontCharacterWidth(text[i], proportional) * scale;
+			x += FontCharacterWidth(text[i], scale, proportional);
 		}
 
 		return x;
@@ -726,7 +718,7 @@ static void Draw_TextCacheSetColor(const byte* color)
 
 static float Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale, qbool proportional)
 {
-	int new_charset = (ch & 0xFF00) >> 8;
+	int new_charset = (ch >> 8) & 0xFF;
 	charset_t* texture = &char_textures[0];
 	mpic_t* pic;
 
@@ -746,11 +738,10 @@ static float Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale,
 #endif
 
 	if (!proportional) {
-		int slot = 0;
+		int slot = new_charset;
 
-		if (new_charset) {
-			slot = ((ch >> 8) & 0xFF);
-			if (!char_mapping[slot]) {
+		if (slot) {
+			if (slot < 0xE0 && !char_mapping[slot]) {
 				slot = 0;
 				ch = '?';
 			}
@@ -759,12 +750,13 @@ static float Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale,
 		texture = &char_textures[slot];
 	}
 
-	ch &= 0xFF;	// Only use the first byte.
-
-	pic = &texture->glyphs[ch];
-	R_DrawImage(x, y, scale * 8, scale * 8, pic->sl, pic->tl, pic->sh - pic->sl, pic->th - pic->tl, cache_currentColor, false, pic->texnum, true, nextCharacterIsCrosshair);
-
-	return FontCharacterWidth(ch, proportional) * scale;
+	pic = &texture->glyphs[ch & 0xFF];
+	if (!R_TextureReferenceIsValid(pic->texnum)) {
+		texture = &char_textures[0];
+		pic = &texture->glyphs['*'];
+	}
+	R_DrawImage(x, y, texture->custom_scale_x * scale * 8, texture->custom_scale_y * scale * 8, pic->sl, pic->tl, pic->sh - pic->sl, pic->th - pic->tl, cache_currentColor, false, pic->texnum, true, nextCharacterIsCrosshair);
+	return FontCharacterWidthWide(ch, scale, proportional);
 }
 
 // x, y					= Pixel position of char.
