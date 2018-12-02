@@ -181,6 +181,7 @@ cvar_t vid_flashonactivity        = {"vid_flashonactivity",        "1",       CV
 cvar_t r_verbose                  = {"vid_verbose",                "0",       CVAR_SILENT };
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
 cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH | CVAR_AUTO }; // It's here because it needs to be registered before window creation
+cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "0",       CVAR_LATCH };
 
 cvar_t vid_framebuffer             = {"vid_framebuffer",               "0",       CVAR_NO_RESET | CVAR_LATCH, conres_changed_callback };
 cvar_t vid_framebuffer_blit        = {"vid_framebuffer_blit",          "0",       CVAR_NO_RESET };
@@ -810,7 +811,7 @@ static int VID_SDL_InitSubSystem(void)
 	return 0;
 }
 
-void VID_RegisterLatchCvars(void)
+static void VID_RegisterLatchCvars(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
 
@@ -841,6 +842,7 @@ void VID_RegisterLatchCvars(void)
 #ifdef X11_GAMMA_WORKAROUND
 	Cvar_Register(&vid_gamma_workaround);
 #endif
+	Cvar_Register(&vid_gammacorrection);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -871,6 +873,8 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&vid_framebuffer_hdr_tonemap);
 
 	Cvar_ResetCurrentGroup();
+
+	Cmd_AddLegacyCommand("gl_gammacorrection", "vid_gammacorrection");
 }
 
 // Returns valid display number
@@ -1139,6 +1143,7 @@ static void VID_SDL_Init(void)
 		return;
 	}
 
+	Con_Printf("VID_SDL_Init()\n");
 	VID_SDL_InitSubSystem();
 
 	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
@@ -1163,7 +1168,6 @@ static void VID_SDL_Init(void)
 	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
 
 	{
-		extern cvar_t gl_gammacorrection;
 		int i;
 		int vid_options[] = {
 			// Try to get everything they ask for...
@@ -1193,10 +1197,10 @@ static void VID_SDL_Init(void)
 				if ((vid_options[i] & VID_ACCELERATED) && COM_CheckParm(cmdline_param_client_unaccelerated_visuals)) {
 					continue;
 				}
-				if ((vid_options[i] & VID_GAMMACORRECTED) && gl_gammacorrection.integer == 0) {
+				if ((vid_options[i] & VID_GAMMACORRECTED) && vid_gammacorrection.integer == 0) {
 					continue;
 				}
-				if (!(vid_options[i] & VID_GAMMACORRECTED) && gl_gammacorrection.integer == 2) {
+				if (!(vid_options[i] & VID_GAMMACORRECTED) && vid_gammacorrection.integer == 2) {
 					continue;
 				}
 
@@ -1214,6 +1218,9 @@ static void VID_SDL_Init(void)
 					if (!sdl_context) {
 						SDL_DestroyWindow(sdl_window);
 						sdl_window = NULL;
+					}
+					else {
+						break;
 					}
 				}
 			}
@@ -1250,9 +1257,9 @@ static void VID_SDL_Init(void)
 			Com_Printf("WARNING: Using unaccelerated graphics\n");
 		}
 
-		if (gl_gammacorrection.integer && !(vid_options[i] & VID_GAMMACORRECTED)) {
+		if (vid_gammacorrection.integer && !(vid_options[i] & VID_GAMMACORRECTED)) {
 			Com_Printf("WARNING: Not able to apply gamma-correction\n");
-			Cvar_LatchedSetValue(&gl_gammacorrection, 0);
+			Cvar_LatchedSetValue(&vid_gammacorrection, 0);
 		}
 	}
 

@@ -137,10 +137,10 @@ static qbool VK_PhysicalDeviceBestPresentationMode(VkPhysicalDevice device, VkSu
 
 static qbool VK_PhysicalDeviceSwapChainCompatible(VkPhysicalDevice device, VkSurfaceKHR surface, VkSurfaceFormatKHR* preferred_format, VkSurfaceCapabilitiesKHR* capabilities)
 {
-	extern cvar_t gl_gammacorrection;
+	extern cvar_t vid_gammacorrection;
 	uint32_t num_formats;
 	VkSurfaceFormatKHR* formats;
-	VkColorSpaceKHR req_color_space = (gl_gammacorrection.integer ? VK_COLOR_SPACE_SRGB_NONLINEAR_KHR : VK_COLOR_SPACE_PASS_THROUGH_EXT);
+	VkColorSpaceKHR req_color_space = (vid_gammacorrection.integer ? VK_COLOR_SPACE_SRGB_NONLINEAR_KHR : VK_COLOR_SPACE_PASS_THROUGH_EXT);
 
 	if (vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, capabilities) != VK_SUCCESS) {
 		return false;

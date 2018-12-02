@@ -377,7 +377,7 @@ void GL_ApplyRenderingState(r_state_id id)
 		glDepthMask((current->depth.mask_enabled = state->depth.mask_enabled) ? GL_TRUE : GL_FALSE);
 		R_TraceLogAPICall("glDepthMask(%s)", current->depth.mask_enabled ? "on" : "off");
 	}
-	if (gl_gammacorrection.integer) {
+	if (vid_gammacorrection.integer) {
 		GL_ApplySimpleToggle(state, current, framebuffer_srgb, GL_FRAMEBUFFER_SRGB);
 	}
 	GL_ApplySimpleToggle(state, current, cullface.enabled, GL_CULL_FACE);

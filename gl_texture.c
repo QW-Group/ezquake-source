@@ -62,7 +62,7 @@ C_ASSERT(sizeof(glTextureTargetForType) / sizeof(glTextureTargetForType[0]) == t
 
 static int GL_InternalFormat(int mode)
 {
-	if (gl_gammacorrection.integer) {
+	if (vid_gammacorrection.integer) {
 		return (mode & TEX_ALPHA) ? GL_SRGB8_ALPHA8 : GL_SRGB8;
 	}
 	else if (mode & TEX_NOCOMPRESS) {
@@ -78,7 +78,7 @@ static int GL_StorageFormat(int mode)
 	if (mode & TEX_FLOAT) {
 		return (mode & TEX_ALPHA) ? GL_RGBA16F : GL_RGB16F;
 	}
-	else if (gl_gammacorrection.integer) {
+	else if (vid_gammacorrection.integer) {
 		return (mode & TEX_ALPHA) ? GL_SRGB8_ALPHA8 : GL_SRGB8;
 	}
 	else {

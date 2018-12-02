@@ -136,7 +136,7 @@ extern	cvar_t gl_part_detpackexplosion_ray_color;
 
 extern	cvar_t gl_powerupshells;
 
-extern cvar_t gl_gammacorrection;
+extern cvar_t vid_gammacorrection;
 
 // gl_rmain.c
 qbool R_CullBox (vec3_t mins, vec3_t maxs);

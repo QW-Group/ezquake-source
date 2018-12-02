@@ -4726,11 +4726,6 @@
       "group-id": "40",
       "type": "float"
     },
-    "gl_gammacorrection": {
-      "default": "0",
-      "group-id": "35",
-      "type": "boolean"
-    },
     "gl_hwblend": {
       "default": "1",
       "group-id": "39",
@@ -20948,6 +20943,25 @@
       "desc": "This variable sets the full screen video mode that the game will switch to when\nthe \"vid_fullscreen\" command is executed.",
       "group-id": "52",
       "type": "float"
+    },
+    "vid_gammacorrection": {
+      "default": "0",
+      "group-id": "35",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Do not use sRGB rendering context.",
+          "name": "0"
+        },
+        {
+          "description": "Request sRGB rendering context, use if possible.",
+          "name": "1"
+        },
+        {
+          "description": "Request sRGB rendering context, reject non-sRGB contexts.",
+          "name": "2"
+        }
+      ]
     },
     "vid_gl_core_profile": {
       "default": "0",
