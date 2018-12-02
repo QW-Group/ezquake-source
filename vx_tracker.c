@@ -323,12 +323,14 @@ static qbool VX_TrackerStringPrintSegments(const char* text1, const char* text2,
 	return true;
 }
 
-static qbool VX_TrackerStringPrintSegmentsWithImage(const char* text1, int weapon, const char* text3, const char* text4)
+static qbool VX_TrackerStringPrintSegmentsWithImage(const char* text1, const byte* text1_color, int weapon, const char* text3, const byte* text3_color)
 {
-	int i;
 	wchar imagetext[MAX_IMAGES_PER_WEAPON + 1] = { 0 };
 	int offset = weapon * MAX_IMAGES_PER_WEAPON;
 	int base = (PRIVATE_USE_TRACKERIMAGES_CHARSET << 8) + offset;
+	int flags = Print_flags[Print_current];
+	qbool suppress_from_tracker = amf_tracker_inconsole.integer == 1;
+	qbool suppress_from_notify = amf_tracker_inconsole.integer == 3;
 
 	if (!amf_tracker_inconsole.integer) {
 		return true;
@@ -341,41 +343,44 @@ static qbool VX_TrackerStringPrintSegmentsWithImage(const char* text1, int weapo
 		}
 	}
 	else {
-		return VX_TrackerStringPrintSegments(text1, GetWeaponName(weapon), text3, text4);
+		return VX_TrackerStringPrintSegments(text1, GetWeaponName(weapon), text3, NULL);
 	}
 
-	for (i = 0; i < 4; ++i) {
-		if (text1 == NULL || !text1[0]) {
-			text1 = text3;
-			text3 = text4;
-			text4 = NULL;
+	Print_flags[Print_current] |= (suppress_from_notify == 3 ? PR_NONOTIFY : 0);
+
+	if (text1 && text1[0]) {
+		if (text1_color) {
+			Com_Printf("&c%x%x%x%s&r ", text1_color[0] / 16, text1_color[1] / 16, text1_color[2] / 16, text1);
+		}
+		else {
+			Com_Printf("%s ", text1);
 		}
 	}
-
-	switch (amf_tracker_inconsole.integer) {
-		case 1:
-			Com_Printf("%s%s", text1 ? text1 : "", text1 ? " " : "");
-			Con_PrintW(imagetext);
-			Com_Printf("%s%s%s%s\n", text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
-			return false;
-		case 2:
-			Com_Printf("%s%s", text1 ? text1 : "", text1 ? " " : "");
-			Con_PrintW(imagetext);
-			Com_Printf("%s%s%s%s\n", text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
-			return true;
-		case 3:
-		{
-			int flags = Print_flags[Print_current];
-			Print_flags[Print_current] |= PR_NONOTIFY;
-			Com_Printf("%s%s", text1 ? text1 : "", text1 ? " " : "");
-			Con_PrintW(imagetext);
-			Com_Printf("%s%s%s%s\n", text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
-			Print_flags[Print_current] = flags;
-			return true;
+	Con_PrintW(imagetext);
+	if (text3 && text3[0]) {
+		if (text1 && text1[0]) {
+			if (text3_color) {
+				Com_Printf(" &c%x%x%x%s&r\n", text3_color[0] / 16, text3_color[1] / 16, text3_color[2] / 16, text3);
+			}
+			else {
+				Com_Printf(" %s\n", text3);
+			}
+		}
+		else {
+			if (text3_color) {
+				Com_Printf(" &c%x%x%x%s&r\n", text3_color[0] / 16, text3_color[1] / 16, text3_color[2] / 16, text3);
+			}
+			else {
+				Com_Printf("%s\n", text3);
+			}
 		}
 	}
+	else {
+		Com_Printf("\n");
+	}
 
-	return true;
+	Print_flags[Print_current] = flags;
+	return !suppress_from_tracker;
 }
 
 static trackmsg_t* VX_NewTrackerMsg(void)
@@ -477,7 +482,7 @@ static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_
 		return;
 	}
 
-	if (!VX_TrackerStringPrintSegmentsWithImage(lhs_text, weapon, rhs_text, NULL)) {
+	if (!VX_TrackerStringPrintSegmentsWithImage(lhs_text, lhs_color, weapon, rhs_text, rhs_color)) {
 		return;
 	}
 
