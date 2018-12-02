@@ -1118,7 +1118,4 @@ void V_Init (void) {
 	Cvar_Register (&v_contrast);
 
 	Cvar_ResetCurrentGroup();
-
-	Cmd_AddLegacyCommand ("gamma", v_gamma.name);
-	Cmd_AddLegacyCommand ("contrast", v_contrast.name);
 }

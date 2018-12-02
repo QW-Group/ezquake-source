@@ -242,15 +242,6 @@ void WeaponStats_HUDInit(void)
 
 void WeaponStats_CommandInit(void)
 {
-	// Compatibility with old configs
-	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
-	Cmd_AddLegacyCommand("scr_weaponstats_order", "hud_weaponstats_format");
-	Cmd_AddLegacyCommand("scr_weaponstats_frame_color", "hud_weaponstats_frame_color");
-	Cmd_AddLegacyCommand("scr_weaponstats_scale", "hud_weaponstats_scale");
-	Cmd_AddLegacyCommand("scr_weaponstats_y", "hud_weaponstats_y");
-	Cmd_AddLegacyCommand("scr_weaponstats_x", "hud_weaponstats_x");
-	Cvar_ResetCurrentGroup();
-
 	Cmd_AddCommand ("+cl_wp_stats", SCR_MvdWeaponStatsOn_f);
 	Cmd_AddCommand ("-cl_wp_stats", SCR_MvdWeaponStatsOff_f);
 }

@@ -1614,7 +1614,7 @@ void CL_Fog_f (void)
 	Cvar_SetValue (&gl_fogblue, atof(Cmd_Argv(3)));
 }
 
-void CL_InitLocal (void) 
+static void CL_InitLocal (void) 
 {
 	char st[256];
 
@@ -1625,7 +1625,6 @@ void CL_InitLocal (void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_CHAT);
 	Cvar_Register (&cl_parseWhiteText);
 	Cvar_Register (&cl_chatsound);
-	Cmd_AddLegacyCommand ("cl_chatsound", "s_chat_custom");
 	Cvar_Register (&cl_fakename);
 	Cvar_Register (&cl_fakename_suffix);
 
@@ -1687,7 +1686,6 @@ void CL_InitLocal (void)
 	Cvar_Register (&r_flagcolor);
 	Cvar_Register (&cl_fakeshaft);
 	Cvar_Register (&cl_fakeshaft_extra_updates);
-	Cmd_AddLegacyCommand ("cl_truelightning", "cl_fakeshaft");
 	Cvar_Register (&r_telesplash);
 	Cvar_Register (&r_shaftalpha);
 	Cvar_Register (&r_lightdecayrate);
@@ -1787,8 +1785,6 @@ void CL_InitLocal (void)
 		Cvar_SetValue(&cl_independentPhysics, 0);
 		Cvar_SetValue(&cl_nolerp, 1);
 	}
-
-	Cmd_AddLegacyCommand ("demotimescale", "cl_demospeed");
 
 	CL_InitCommands ();
 

@@ -502,22 +502,21 @@ char *Host_PrintBars(char *s, int len)
 
 static void Commands_For_Configs_Init (void)
 {
-extern void SV_Floodprot_f (void);
-extern void SV_Floodprotmsg_f (void);
-extern void TP_MsgTrigger_f (void);
-extern void TP_MsgFilter_f (void);
-extern void TP_Took_f (void);
-extern void TP_Pickup_f (void);
-extern void TP_Point_f (void);
-extern void MT_AddMapGroups (void);
-extern void MT_MapGroup_f (void);
-extern void MT_AddSkyGroups (void);
-extern void MT_SkyGroup_f (void);
-extern void CL_Fog_f (void);
-extern void SB_SourceUnmarkAll(void);
-extern void SB_SourceMark(void);
-extern void LoadConfig_f(void);
-
+	extern void SV_Floodprot_f (void);
+	extern void SV_Floodprotmsg_f (void);
+	extern void TP_MsgTrigger_f (void);
+	extern void TP_MsgFilter_f (void);
+	extern void TP_Took_f (void);
+	extern void TP_Pickup_f (void);
+	extern void TP_Point_f (void);
+	extern void MT_AddMapGroups (void);
+	extern void MT_MapGroup_f (void);
+	extern void MT_AddSkyGroups (void);
+	extern void MT_SkyGroup_f (void);
+	extern void CL_Fog_f (void);
+	extern void SB_SourceUnmarkAll(void);
+	extern void SB_SourceMark(void);
+	extern void LoadConfig_f(void);
 
 	//disconnect: fix it if i forgot something
 #ifndef CLIENTONLY
@@ -540,6 +539,51 @@ extern void LoadConfig_f(void);
 
 	Cmd_AddCommand ("sb_sourceunmarkall", SB_SourceUnmarkAll);
 	Cmd_AddCommand ("sb_sourcemark", SB_SourceMark);
+}
+
+// meag: try to move all renamed cvars here so they exist prior to config load, and
+//       eventually old configs will set the new values
+// fixme: would be better to have these all in the format of v_gamma, or (dream) all built-in cvars as enumerated type
+static void Host_RegisterLegacyCvars(void)
+{
+	// Sound
+	Cmd_AddLegacyCommand("nosound", "s_nosound");
+	Cmd_AddLegacyCommand("precache", "s_precache");
+	Cmd_AddLegacyCommand("loadas8bit", "s_loadas8bit");
+	Cmd_AddLegacyCommand("ambient_level", "s_ambientlevel");
+	Cmd_AddLegacyCommand("ambient_fade", "s_ambientfade");
+	Cmd_AddLegacyCommand("snd_show", "s_show");
+	Cmd_AddLegacyCommand("cl_chatsound", "s_chat_custom");
+
+	// Weaponstats
+	Cmd_AddLegacyCommand("scr_weaponstats_order", "hud_weaponstats_format");
+	Cmd_AddLegacyCommand("scr_weaponstats_frame_color", "hud_weaponstats_frame_color");
+	Cmd_AddLegacyCommand("scr_weaponstats_scale", "hud_weaponstats_scale");
+	Cmd_AddLegacyCommand("scr_weaponstats_y", "hud_weaponstats_y");
+	Cmd_AddLegacyCommand("scr_weaponstats_x", "hud_weaponstats_x");
+
+	// Drawing (now r_smoothtext/images/crosshair)
+	Cmd_AddLegacyCommand("gl_smoothfont", "r_smoothtext");
+
+	// Typo
+	Cmd_AddLegacyCommand("gl_lighting_colour", "gl_lighting_color");
+
+	Cmd_AddLegacyCommand("cl_truelightning", "cl_fakeshaft");
+	Cmd_AddLegacyCommand("demotimescale", "cl_demospeed");
+
+	Cmd_AddLegacyCommand("gamma", v_gamma.name);
+	Cmd_AddLegacyCommand("contrast", v_contrast.name);
+	Cmd_AddLegacyCommand("gl_gammacorrection", "vid_gammacorrection");
+
+	// if you don't like renaming things in this way, let's have some talk with tea - johnnycz
+	Cmd_AddLegacyCommand("con_sound_mm1_file", "s_mm1_file");
+	Cmd_AddLegacyCommand("con_sound_mm2_file", "s_mm2_file");
+	Cmd_AddLegacyCommand("con_sound_spec_file", "s_spec_file");
+	Cmd_AddLegacyCommand("con_sound_other_file", "s_otherchat_file");
+	Cmd_AddLegacyCommand("con_sound_mm1_volume", "s_mm1_volume");
+	Cmd_AddLegacyCommand("con_sound_mm2_volume", "s_mm2_volume");
+	Cmd_AddLegacyCommand("con_sound_spec_volume", "s_spec_volume");
+	Cmd_AddLegacyCommand("con_sound_other_volume", "s_otherchat_volume");
 }
 
 void Startup_Place(void)
@@ -612,6 +656,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	NET_Init ();
 
 	Commands_For_Configs_Init ();
+	Host_RegisterLegacyCvars();
 	Browser_Init2();
 	ConfigManager_Init();
 	ResetBinds();

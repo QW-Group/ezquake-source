@@ -441,12 +441,6 @@ static void S_Register_RegularCvarsAndCommands(void)
 	Cvar_ResetCurrentGroup();
 
 	// compatibility with old configs
-	Cmd_AddLegacyCommand("nosound", "s_nosound");
-	Cmd_AddLegacyCommand("precache", "s_precache");
-	Cmd_AddLegacyCommand("loadas8bit", "s_loadas8bit");
-	Cmd_AddLegacyCommand("ambient_level", "s_ambientlevel");
-	Cmd_AddLegacyCommand("ambient_fade", "s_ambientfade");
-	Cmd_AddLegacyCommand("snd_show", "s_show");
 	Cmd_AddLegacyCommand("snd_restart", "s_restart"); // and snd_restart a legacy command
 
 	Cmd_AddCommand("s_restart", S_Restart_f); // dimman: made s_restart the actual command

@@ -558,7 +558,6 @@ void Draw_Init (void)
 	Cvar_Register (&scr_conback);
 	Cvar_Register (&scr_conpicture);
 	Cvar_Register (&r_smoothtext);
-	Cmd_AddLegacyCommand("gl_smoothfont", "r_smoothtext");
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&scr_menualpha);

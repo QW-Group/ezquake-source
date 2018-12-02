@@ -481,15 +481,6 @@ void Con_Init (void) {
 	Cvar_Register (&con_sound_mm2_volume); 
 	Cvar_Register (&con_sound_spec_volume); 
 	Cvar_Register (&con_sound_other_volume); 
-	// if you don't like renaming things in this way, let's have some talk with tea - johnnycz
-	Cmd_AddLegacyCommand("con_sound_mm1_file", "s_mm1_file");
-	Cmd_AddLegacyCommand("con_sound_mm2_file", "s_mm2_file");
-	Cmd_AddLegacyCommand("con_sound_spec_file", "s_spec_file");
-	Cmd_AddLegacyCommand("con_sound_other_file", "s_otherchat_file");
-	Cmd_AddLegacyCommand("con_sound_mm1_volume", "s_mm1_volume");
-	Cmd_AddLegacyCommand("con_sound_mm2_volume", "s_mm2_volume");
-	Cmd_AddLegacyCommand("con_sound_spec_volume", "s_spec_volume");
-	Cmd_AddLegacyCommand("con_sound_other_volume", "s_otherchat_volume");
 
     Cvar_ResetCurrentGroup();
 

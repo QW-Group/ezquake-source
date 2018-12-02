@@ -343,7 +343,6 @@ void InitVXStuff(void)
 	Cvar_Register(&amf_coronas_tele);
 	Cvar_Register(&amf_lighting_vertex);
 	Cvar_Register(&amf_lighting_colour);
-	Cmd_AddLegacyCommand("gl_lighting_colour", "gl_lighting_color");
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);

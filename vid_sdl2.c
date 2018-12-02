@@ -873,8 +873,6 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&vid_framebuffer_hdr_tonemap);
 
 	Cvar_ResetCurrentGroup();
-
-	Cmd_AddLegacyCommand("gl_gammacorrection", "vid_gammacorrection");
 }
 
 // Returns valid display number
