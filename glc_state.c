@@ -171,16 +171,22 @@ void GLC_StateBeginMD3Draw(float alpha, qbool textured)
 	}
 }
 
-void GLC_StateBeginDrawAliasFrameProgram(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model, qbool weapon_model)
+void GLC_StateBeginDrawAliasFrameProgram(texture_ref texture, texture_ref fb_texture, int render_effects, struct custom_model_color_s* custom_model, float ent_alpha)
 {
+	qbool weapon_model = render_effects & RF_WEAPONMODEL;
+	qbool alpha_blend = (render_effects & RF_ALPHABLEND) || ent_alpha < 1;
+
 	R_TraceEnterFunctionRegion;
 
 	if (!weapon_model && (!R_TextureReferenceIsValid(texture) || (custom_model && custom_model->fullbright_cvar.integer))) {
 		R_ApplyRenderingState(alpha_blend ? r_state_aliasmodel_notexture_transparent : r_state_aliasmodel_notexture_opaque);
 	}
-	else if (custom_model == NULL && R_TextureReferenceIsValid(fb_texture) && mtex) {
+	else if (custom_model == NULL && R_TextureReferenceIsValid(fb_texture)) {
 		R_ApplyRenderingState(weapon_model ? (alpha_blend ? r_state_weaponmodel_multitexture_transparent : r_state_weaponmodel_multitexture_opaque) : (alpha_blend ? r_state_aliasmodel_multitexture_transparent : r_state_aliasmodel_multitexture_opaque));
 		renderer.TextureUnitBind(0, texture);
+		if (render_effects & RF_CAUSTICS) {
+			GLC_BeginCausticsTextureMatrix();
+		}
 		renderer.TextureUnitBind(1, fb_texture);
 	}
 	else {
