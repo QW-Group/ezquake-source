@@ -123,7 +123,7 @@ void R_NewMapPreLoad(void)
 
 void R_NewMap(qbool vid_restart)
 {
-	int	i, waterline;
+	int	i;
 
 	extern int R_SetSky(char *skyname);
 	extern void HUD_NewRadarMap(void); // hud_common.c
@@ -164,10 +164,8 @@ void R_NewMap(qbool vid_restart)
 			if (!cl.worldmodel->textures[i]) {
 				continue;
 			}
-			for (waterline = 0; waterline < 2; waterline++) {
- 	 			cl.worldmodel->textures[i]->texturechain[waterline] = NULL;
-				cl.worldmodel->textures[i]->texturechain_tail[waterline] = &cl.worldmodel->textures[i]->texturechain[waterline];
-			}
+			cl.worldmodel->textures[i]->texturechain = NULL;
+			cl.worldmodel->textures[i]->texturechain_tail = &cl.worldmodel->textures[i]->texturechain;
 		}
 
 		//VULT CORONAS

@@ -140,7 +140,7 @@ void GLM_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 	for (i = 0; i < clmodel->nummodelsurfaces; i++, psurf++) {
 		if (psurf->flags & SURF_DRAWSKY) {
 			// FIXME: Find an example...
-			CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain[0]);
+			CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain);
 
 			clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
 			clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
@@ -149,10 +149,10 @@ void GLM_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 			extern cvar_t r_fastturb;
 			// FIXME: Find an example...
 			if (r_fastturb.integer) {
-				CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain[0]);
+				CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain);
 			}
 			else {
-				CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain[0]);
+				CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain);
 			}
 
 			clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
@@ -163,19 +163,14 @@ void GLM_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 			CHAIN_SURF_B2F(psurf, alphachain); // FIXME: ?
 		}
 		else {
-			int underwater = 0;
-			if ((psurf->flags & SURF_UNDERWATER) && draw_caustics) {
-				underwater = 1;
-			}
-
 			if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-				chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
+				chain_surfaces_drawflat(&clmodel->drawflat_chain, psurf);
 			}
 			else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-				chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
+				chain_surfaces_drawflat(&clmodel->drawflat_chain, psurf);
 			}
 			else {
-				chain_surfaces_by_lightmap(&psurf->texinfo->texture->texturechain[underwater], psurf);
+				chain_surfaces_by_lightmap(&psurf->texinfo->texture->texturechain, psurf);
 
 				clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
 				clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);

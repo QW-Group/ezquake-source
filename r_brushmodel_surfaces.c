@@ -144,7 +144,7 @@ texture_t *R_TextureAnimation(entity_t* ent, texture_t *base)
 
 void R_BrushModelClearTextureChains(model_t *clmodel)
 {
-	int i, waterline;
+	int i;
 	texture_t *texture;
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
@@ -154,20 +154,16 @@ void R_BrushModelClearTextureChains(model_t *clmodel)
 	clmodel->texturechains_have_lumas = false;
 	for (i = 0; i < clmodel->numtextures; i++) {
 		if ((texture = clmodel->textures[i])) {
-			for (waterline = 0; waterline < 2; waterline++) {
-				texture->texturechain[waterline] = NULL;
-				texture->texturechain_tail[waterline] = &texture->texturechain[waterline];
-			}
+			texture->texturechain = NULL;
+			texture->texturechain_tail = &texture->texturechain;
 		}
 	}
-	clmodel->drawflat_chain[0] = clmodel->drawflat_chain[1] = NULL;
+	clmodel->drawflat_chain = NULL;
 	clmodel->first_texture_chained = clmodel->numtextures;
 	clmodel->last_texture_chained = -1;
 
-	r_notexture_mip->texturechain[0] = NULL;
-	r_notexture_mip->texturechain_tail[0] = &r_notexture_mip->texturechain[0];
-	r_notexture_mip->texturechain[1] = NULL;
-	r_notexture_mip->texturechain_tail[1] = &r_notexture_mip->texturechain[1];
+	r_notexture_mip->texturechain = NULL;
+	r_notexture_mip->texturechain_tail = &r_notexture_mip->texturechain;
 
 	CHAIN_RESET(skychain);
 	if (clmodel == cl.worldmodel) {
@@ -197,7 +193,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 	extern cvar_t r_fastturb, r_drawflat, r_fastsky, gl_caustics;
 	model_t* clmodel = cl.worldmodel;
 
-	int c, side, clipped, underwater;
+	int c, side, clipped;
 	mplane_t *plane, *clipplane;
 	msurface_t *surf, **mark;
 	mleaf_t *pleaf;
@@ -289,7 +285,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 			alphaSurface = (surf->flags & SURF_DRAWALPHA);
 			if (surf->flags & SURF_DRAWSKY) {
 				if (r_fastsky.integer || R_UseModernOpenGL()) {
-					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[0], surf);
+					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain, surf);
 				}
 				if (!r_fastsky.integer) {
 					chain_surfaces_by_lightmap(&skychain, surf);
@@ -297,10 +293,10 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 			}
 			else if (turbSurface) {
 				if (r_fastturb.integer && wateralpha == 1) {
-					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[0], surf);
+					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain, surf);
 				}
 				else if (solidTexTurb && R_UseModernOpenGL()) {
-					chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain[0], surf);
+					chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain, surf);
 				}
 				else {
 					chain_surfaces_by_lightmap(&waterchain, surf);
@@ -311,20 +307,15 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 				CHAIN_SURF_B2F(surf, alphachain);
 			}
 			else {
-				underwater = 0;
-				if (R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer && (surf->flags & SURF_UNDERWATER)) {
-					underwater = 1;
-				}
-
 				if (!alphaSurface && drawFlatFloors && (surf->flags & SURF_DRAWFLAT_FLOOR)) {
-					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[underwater], surf);
+					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain, surf);
 				}
 				else if (!alphaSurface && drawFlatWalls && !(surf->flags & SURF_DRAWFLAT_FLOOR)) {
-					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[underwater], surf);
+					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain, surf);
 				}
 				else {
 					clmodel->texturechains_have_lumas |= R_TextureAnimation(NULL, surf->texinfo->texture)->isLumaTexture;
-					chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain[underwater], surf);
+					chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain, surf);
 				}
 			}
 		}

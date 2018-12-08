@@ -753,11 +753,12 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 		return;
 	}
 
-	if (model->drawflat_chain[0] || model->drawflat_chain[1]) {
+	if (model->drawflat_chain) {
 		req = GLM_NextBatchRequest(model, 1.0f, 0, 0, false, false, false);
 
-		req = GLM_DrawFlatChain(req, model->drawflat_chain[0]);
-		req = GLM_DrawFlatChain(req, model->drawflat_chain[1]);
+		req = GLM_DrawFlatChain(req, model->drawflat_chain);
+
+		model->drawflat_chain = NULL;
 	}
 
 	if (model->last_texture_chained < 0) {
@@ -767,7 +768,7 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 	for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
 		texture_t* tex = model->textures[i];
 
-		if (!tex || !tex->loaded || (!tex->texturechain[0] && !tex->texturechain[1]) || !R_TextureReferenceIsValid(tex->gl_texture_array)) {
+		if (!tex || !tex->loaded || !tex->texturechain || !R_TextureReferenceIsValid(tex->gl_texture_array)) {
 			continue;
 		}
 
@@ -778,8 +779,7 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 			GLM_AssignTexture(i, tex);
 		}
 
-		req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[0]);
-		req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain[1]);
+		req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain);
 	}
 }
 

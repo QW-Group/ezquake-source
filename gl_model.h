@@ -55,8 +55,8 @@ typedef struct texture_s {
 	unsigned int        width, height;
 	texture_ref         gl_texturenum;
 	texture_ref         fb_texturenum;				//index of fullbright mask or 0
-	struct msurface_s*  texturechain[2];		
-	struct msurface_s** texturechain_tail[2];       //Points to the node right after the last non-NULL node in the texturechain.
+	struct msurface_s*  texturechain;
+	struct msurface_s** texturechain_tail;          //Points to the node right after the last non-NULL node in the texturechain.
 
 	int                 anim_total;                 //total tenths in sequence ( 0 = no)
 	int                 anim_min, anim_max;         //time for this frame min <=time< max
@@ -542,7 +542,7 @@ typedef struct model_s {
 	float               simpletexture_scalingS[MAX_SIMPLE_TEXTURES];
 	float               simpletexture_scalingT[MAX_SIMPLE_TEXTURES];
 
-	msurface_t*         drawflat_chain[2];
+	msurface_t*         drawflat_chain;
 	int                 first_texture_chained;
 	int                 last_texture_chained;
 	qbool               texturechains_have_lumas;

@@ -490,12 +490,10 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 			continue;
 		}
 
-		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain[0], model->isworldmodel);
-		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain[1], model->isworldmodel);
+		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain, model->isworldmodel);
 	}
 
-	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[0], model->isworldmodel);
-	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain[1], model->isworldmodel);
+	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain, model->isworldmodel);
 
 	if (R_UseImmediateOpenGL()) {
 		R_UploadChangedLightmaps();

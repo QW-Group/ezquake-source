@@ -128,7 +128,7 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 	int index_count = 0;
 
 	msurface_t *s;
-	int waterline, k;
+	int k;
 	float *v;
 	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
 	qbool first_surf = true;
@@ -136,7 +136,7 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 	int last_lightmap = -2;
 	extern cvar_t gl_program_world;
 
-	if (!model->drawflat_chain[0] && !model->drawflat_chain[1]) {
+	if (!model->drawflat_chain) {
 		return;
 	}
 
@@ -164,36 +164,34 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 
 		R_ApplyRenderingState(r_state_drawflat_with_lightmaps_glc);
 		R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
-		for (waterline = 0; waterline < 2; waterline++) {
-			for (s = model->drawflat_chain[waterline]; s; s = s->drawflatchain) {
-				int new_lightmap = s->lightmaptexturenum;
-				glpoly_t *p;
+		for (s = model->drawflat_chain; s; s = s->drawflatchain) {
+			int new_lightmap = s->lightmaptexturenum;
+			glpoly_t *p;
 
-				if (index_count && (last_lightmap != new_lightmap || first_surf)) {
-					GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-					index_count = 0;
-				}
-
-				if (last_lightmap != new_lightmap) {
-					if (new_lightmap >= 0) {
-						GLC_SetTextureLightmap(0, new_lightmap);
-					}
-					last_lightmap = new_lightmap;
-				}
-
-				first_surf = false;
-
-				for (p = s->polys; p; p = p->next) {
-					index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
-				}
-
-				// START shaman FIX /r_drawflat + /gl_caustics {
-				if (waterline && draw_caustics) {
-					s->polys->caustics_chain = caustics_polys;
-					caustics_polys = s->polys;
-				}
-				// } END shaman FIX /r_drawflat + /gl_caustics
+			if (index_count && (last_lightmap != new_lightmap || first_surf)) {
+				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+				index_count = 0;
 			}
+
+			if (last_lightmap != new_lightmap) {
+				if (new_lightmap >= 0) {
+					GLC_SetTextureLightmap(0, new_lightmap);
+				}
+				last_lightmap = new_lightmap;
+			}
+
+			first_surf = false;
+
+			for (p = s->polys; p; p = p->next) {
+				index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+			}
+
+			// START shaman FIX /r_drawflat + /gl_caustics {
+			if ((s->flags & SURF_UNDERWATER) && draw_caustics) {
+				s->polys->caustics_chain = caustics_polys;
+				caustics_polys = s->polys;
+			}
+			// } END shaman FIX /r_drawflat + /gl_caustics
 		}
 
 		if (index_count) {
@@ -210,85 +208,83 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 		memcpy(current, color_white, 3);
 		memcpy(desired, current, 3);
 
-		for (waterline = 0; waterline < 2; waterline++) {
-			for (s = model->drawflat_chain[waterline]; s; s = s->drawflatchain) {
-				int new_lightmap = s->lightmaptexturenum;
+		for (s = model->drawflat_chain; s; s = s->drawflatchain) {
+			int new_lightmap = s->lightmaptexturenum;
 
-				if (s->flags & SURF_DRAWSKY) {
-					memcpy(desired, sky, 3);
-					new_lightmap = -1;
+			if (s->flags & SURF_DRAWSKY) {
+				memcpy(desired, sky, 3);
+				new_lightmap = -1;
+			}
+			else if (s->flags & SURF_DRAWTURB) {
+				memcpy(desired, SurfaceFlatTurbColor(s->texinfo->texture), 3);
+				new_lightmap = -1;
+			}
+			else if (s->flags & SURF_DRAWFLAT_FLOOR) {
+				memcpy(desired, f, 3);
+			}
+			else {
+				memcpy(desired, w, 3);
+			}
+
+			if (index_count && last_lightmap != new_lightmap) {
+				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+				index_count = 0;
+			}
+
+			if (first_surf || desired[0] != current[0] || desired[1] != current[1] || desired[2] != current[2]) {
+				if (index_count) {
+					GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 				}
-				else if (s->flags & SURF_DRAWTURB) {
-					memcpy(desired, SurfaceFlatTurbColor(s->texinfo->texture), 3);
-					new_lightmap = -1;
-				}
-				else if (s->flags & SURF_DRAWFLAT_FLOOR) {
-					memcpy(desired, f, 3);
+				index_count = 0;
+				R_CustomColor4ubv(desired);
+			}
+
+			if (last_lightmap != new_lightmap) {
+				if (new_lightmap >= 0) {
+					R_ApplyRenderingState(r_state_drawflat_with_lightmaps_glc);
+					R_CustomColor4ubv(desired);
+					GLC_SetTextureLightmap(0, new_lightmap);
 				}
 				else {
-					memcpy(desired, w, 3);
-				}
-
-				if (index_count && last_lightmap != new_lightmap) {
-					GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-					index_count = 0;
-				}
-
-				if (first_surf || desired[0] != current[0] || desired[1] != current[1] || desired[2] != current[2]) {
-					if (index_count) {
-						GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-					}
-					index_count = 0;
+					R_ApplyRenderingState(r_state_drawflat_without_lightmaps_glc);
 					R_CustomColor4ubv(desired);
 				}
+				R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
+			}
+			last_lightmap = new_lightmap;
 
-				if (last_lightmap != new_lightmap) {
-					if (new_lightmap >= 0) {
-						R_ApplyRenderingState(r_state_drawflat_with_lightmaps_glc);
-						R_CustomColor4ubv(desired);
-						GLC_SetTextureLightmap(0, new_lightmap);
+			current[0] = desired[0];
+			current[1] = desired[1];
+			current[2] = desired[2];
+			first_surf = false;
+
+			{
+				glpoly_t *p;
+				for (p = s->polys; p; p = p->next) {
+					v = p->verts[0];
+
+					if (use_vbo) {
+						index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
 					}
 					else {
-						R_ApplyRenderingState(r_state_drawflat_without_lightmaps_glc);
-						R_CustomColor4ubv(desired);
-					}
-					R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
-				}
-				last_lightmap = new_lightmap;
-
-				current[0] = desired[0];
-				current[1] = desired[1];
-				current[2] = desired[2];
-				first_surf = false;
-
-				{
-					glpoly_t *p;
-					for (p = s->polys; p; p = p->next) {
-						v = p->verts[0];
-
-						if (use_vbo) {
-							index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
-						}
-						else {
-							GLC_Begin(GL_TRIANGLE_STRIP);
-							for (k = 0; k < p->numverts; k++, v += VERTEXSIZE) {
-								if (new_lightmap >= 0) {
-									glTexCoord2f(v[5], v[6]);
-								}
-								GLC_Vertex3fv(v);
+						GLC_Begin(GL_TRIANGLE_STRIP);
+						for (k = 0; k < p->numverts; k++, v += VERTEXSIZE) {
+							if (new_lightmap >= 0) {
+								glTexCoord2f(v[5], v[6]);
 							}
-							GLC_End();
+							GLC_Vertex3fv(v);
 						}
+						GLC_End();
 					}
 				}
-
-				// START shaman FIX /r_drawflat + /gl_caustics {
-				if (waterline && draw_caustics) {
-					s->polys->caustics_chain = caustics_polys;
-					caustics_polys = s->polys;
-				}
-				// } END shaman FIX /r_drawflat + /gl_caustics
 			}
+
+			// START shaman FIX /r_drawflat + /gl_caustics {
+			if ((s->flags & SURF_UNDERWATER) && draw_caustics) {
+				s->polys->caustics_chain = caustics_polys;
+				caustics_polys = s->polys;
+			}
+			// } END shaman FIX /r_drawflat + /gl_caustics
 		}
 
 		if (index_count) {
@@ -296,8 +292,13 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 		}
 	}
 
+	model->drawflat_chain = NULL;
+
 	// START shaman FIX /r_drawflat + /gl_caustics {
-	GLC_EmitCausticsPolys(use_vbo);
+	if (gl_caustics.integer && caustics_polys && R_TextureReferenceIsValid(underwatertexture)) {
+		GLC_EmitCausticsPolys(use_vbo);
+	}
+	caustics_polys = NULL;
 	// } END shaman FIX /r_drawflat + /gl_caustics
 }
 
@@ -308,7 +309,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 	int index_count = 0;
 	r_state_id state = r_state_world_singletexture_glc;
 	texture_ref fb_texturenum = null_texture_reference;
-	int waterline, i, k;
+	int i, k;
 	msurface_t *s;
 	float *v;
 
@@ -410,7 +411,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 	for (i = 0; i < model->numtextures; i++) {
 		texture_t* t;
 
-		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1])) {
+		if (!model->textures[i] || !model->textures[i]->texturechain) {
 			continue;
 		}
 
@@ -436,88 +437,82 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 			desired_textures[fbTextureUnit] = current_material_fb;
 		}
 
-		for (waterline = 0; waterline < 2; waterline++) {
-			if (!(s = model->textures[i]->texturechain[waterline])) {
-				continue;
+		for (s = model->textures[i]->texturechain; s; s = s->texturechain) {
+			if (!(s->texinfo->flags & TEX_SPECIAL)) {
+				if (lmTextureUnit >= 0) {
+					texture_change |= (s->lightmaptexturenum != current_lightmap);
+
+					desired_textures[lmTextureUnit] = GLC_LightmapTexture(s->lightmaptexturenum);
+					current_lightmap = s->lightmaptexturenum;
+				}
+				else {
+					GLC_AddToLightmapChain(s);
+				}
+
+				if (texture_change) {
+					if (index_count) {
+						GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+						index_count = 0;
+					}
+
+					renderer.TextureUnitMultiBind(0, texture_unit_count, desired_textures);
+					if (r_lightmap_lateupload.integer && lmTextureUnit >= 0) {
+						R_UploadLightMap(lmTextureUnit, current_lightmap);
+					}
+
+					texture_change = false;
+				}
+
+				if (use_vbo) {
+					index_count = GLC_DrawIndexedPoly(s->polys, modelIndexes, modelIndexMaximum, index_count);
+				}
+				else {
+					v = s->polys->verts[0];
+
+					GLC_Begin(GL_TRIANGLE_STRIP);
+					for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
+						if (lmTextureUnit >= 0) {
+							qglMultiTexCoord2f(GL_TEXTURE0 + lmTextureUnit, v[5], v[6]);
+						}
+
+						if (!draw_textureless) {
+							if (qglMultiTexCoord2f) {
+								qglMultiTexCoord2f(GL_TEXTURE0, v[3], v[4]);
+
+								if (fbTextureUnit >= 0) {
+									qglMultiTexCoord2f(GL_TEXTURE0 + fbTextureUnit, v[3], v[4]);
+								}
+							}
+							else {
+								glTexCoord2f(v[3], v[4]);
+							}
+						}
+						GLC_Vertex3fv(v);
+					}
+					GLC_End();
+				}
 			}
 
-			for (; s; s = s->texturechain) {
-				if (!(s->texinfo->flags & TEX_SPECIAL)) {
-					if (lmTextureUnit >= 0) {
-						texture_change |= (s->lightmaptexturenum != current_lightmap);
+			if (draw_caustics && ((s->flags & SURF_UNDERWATER) || caustics)) {
+				s->polys->caustics_chain = caustics_polys;
+				caustics_polys = s->polys;
+			}
 
-						desired_textures[lmTextureUnit] = GLC_LightmapTexture(s->lightmaptexturenum);
-						current_lightmap = s->lightmaptexturenum;
-					}
-					else {
-						GLC_AddToLightmapChain(s);
-					}
+			if (!(s->flags & SURF_UNDERWATER) && draw_details) {
+				s->polys->detail_chain = detail_polys;
+				detail_polys = s->polys;
+			}
 
-					if (texture_change) {
-						if (index_count) {
-							GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-							index_count = 0;
-						}
-
-						renderer.TextureUnitMultiBind(0, texture_unit_count, desired_textures);
-						if (r_lightmap_lateupload.integer && lmTextureUnit >= 0) {
-							R_UploadLightMap(lmTextureUnit, current_lightmap);
-						}
-
-						texture_change = false;
-					}
-
-					if (use_vbo) {
-						index_count = GLC_DrawIndexedPoly(s->polys, modelIndexes, modelIndexMaximum, index_count);
-					}
-					else {
-						v = s->polys->verts[0];
-
-						GLC_Begin(GL_TRIANGLE_STRIP);
-						for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
-							if (lmTextureUnit >= 0) {
-								qglMultiTexCoord2f(GL_TEXTURE0 + lmTextureUnit, v[5], v[6]);
-							}
-
-							if (!draw_textureless) {
-								if (qglMultiTexCoord2f) {
-									qglMultiTexCoord2f(GL_TEXTURE0, v[3], v[4]);
-
-									if (fbTextureUnit >= 0) {
-										qglMultiTexCoord2f(GL_TEXTURE0 + fbTextureUnit, v[3], v[4]);
-									}
-								}
-								else {
-									glTexCoord2f(v[3], v[4]);
-								}
-							}
-							GLC_Vertex3fv(v);
-						}
-						GLC_End();
-					}
+			if (!R_TextureReferenceEqual(fb_texturenum, null_fb_texture) && gl_fb_bmodels.integer && fbTextureUnit < 0) {
+				if (isLumaTexture) {
+					s->polys->luma_chain = luma_polys[fb_texturenum.index];
+					luma_polys[fb_texturenum.index] = s->polys;
+					drawlumas = true;
 				}
-
-				if (draw_caustics && (waterline || caustics)) {
-					s->polys->caustics_chain = caustics_polys;
-					caustics_polys = s->polys;
-				}
-
-				if (!waterline && draw_details) {
-					s->polys->detail_chain = detail_polys;
-					detail_polys = s->polys;
-				}
-
-				if (!R_TextureReferenceEqual(fb_texturenum, null_fb_texture) && gl_fb_bmodels.integer && fbTextureUnit < 0) {
-					if (isLumaTexture) {
-						s->polys->luma_chain = luma_polys[fb_texturenum.index];
-						luma_polys[fb_texturenum.index] = s->polys;
-						drawlumas = true;
-					}
-					else {
-						s->polys->fb_chain = fullbright_polys[fb_texturenum.index];
-						fullbright_polys[fb_texturenum.index] = s->polys;
-						drawfullbrights = true;
-					}
+				else {
+					s->polys->fb_chain = fullbright_polys[fb_texturenum.index];
+					fullbright_polys[fb_texturenum.index] = s->polys;
+					drawfullbrights = true;
 				}
 			}
 		}
@@ -565,7 +560,7 @@ void GLC_DrawWorld(void)
 	if (r_drawflat.integer != 1) {
 		GLC_DrawTextureChains(NULL, cl.worldmodel, false, false);
 	}
-	if (cl.worldmodel->drawflat_chain[0] || cl.worldmodel->drawflat_chain[1]) {
+	if (cl.worldmodel->drawflat_chain) {
 		GLC_DrawFlat(cl.worldmodel, false);
 	}
 
@@ -885,16 +880,14 @@ void GLC_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 				CHAIN_SURF_B2F(psurf, alphachain);
 			}
 			else {
-				int underwater = (psurf->flags & SURF_UNDERWATER) ? 1 : 0;
-
 				if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-					chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
+					chain_surfaces_drawflat(&clmodel->drawflat_chain, psurf);
 				}
 				else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-					chain_surfaces_drawflat(&clmodel->drawflat_chain[underwater], psurf);
+					chain_surfaces_drawflat(&clmodel->drawflat_chain, psurf);
 				}
 				else {
-					chain_surfaces_by_lightmap(&psurf->texinfo->texture->texturechain[underwater], psurf);
+					chain_surfaces_by_lightmap(&psurf->texinfo->texture->texturechain, psurf);
 
 					clmodel->texturechains_have_lumas |= R_TextureAnimation(ent, psurf->texinfo->texture)->isLumaTexture;
 					clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);

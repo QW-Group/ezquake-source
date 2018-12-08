@@ -50,32 +50,28 @@ void GLC_ClearTextureChains(void)
 void GLC_DrawMapOutline(model_t *model)
 {
 	msurface_t *s;
-	int waterline, i;
+	int i;
 
 	GLC_StateBeginDrawMapOutline();
 
 	for (i = 0; i < model->numtextures; i++) {
-		if (!model->textures[i] || (!model->textures[i]->texturechain[0] && !model->textures[i]->texturechain[1]))
+		if (!model->textures[i] || !model->textures[i]->texturechain) {
 			continue;
+		}
 
-		for (waterline = 0; waterline < 2; waterline++) {
-			if (!(s = model->textures[i]->texturechain[waterline]))
-				continue;
+		for (s = model->textures[i]->texturechain; s; s = s->texturechain) {
+			int front = 0, back = s->polys->numverts - 1;
 
-			for (; s; s = s->texturechain) {
-				int front = 0, back = s->polys->numverts - 1;
-
-				GLC_Begin(GL_LINE_LOOP);
-				while (front < back) {
-					GLC_Vertex3fv(s->polys->verts[front]);
-					front += 2;
-				}
-				while (back > 0) {
-					GLC_Vertex3fv(s->polys->verts[back]);
-					back -= 2;
-				}
-				GLC_End();
+			GLC_Begin(GL_LINE_LOOP);
+			while (front < back) {
+				GLC_Vertex3fv(s->polys->verts[front]);
+				front += 2;
 			}
+			while (back > 0) {
+				GLC_Vertex3fv(s->polys->verts[back]);
+				back -= 2;
+			}
+			GLC_End();
 		}
 	}
 }
