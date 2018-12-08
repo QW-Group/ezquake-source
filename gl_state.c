@@ -64,7 +64,8 @@ static const char* vaoNames[] = {
 	"powerupshell",
 	"brushmodel_details",
 	"brushmodel_lightmap_pass",
-	"brushmodel_lm_unit1"
+	"brushmodel_lm_unit1",
+	"brushmodel_simpletex"
 };
 
 #ifdef C_ASSERT

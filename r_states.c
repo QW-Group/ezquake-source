@@ -61,7 +61,7 @@ static void R_InitialiseWorldStates(void)
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(state, 1, true, r_texunit_mode_decal);
 
-	state = R_InitRenderingState(r_state_world_fast_opaque_water, true, "fastWaterSurfacesState", vao_brushmodel);
+	state = R_InitRenderingState(r_state_world_fast_opaque_water, true, "fastWaterSurfacesState", vao_brushmodel_simpletex);
 	state->depth.test_enabled = true;
 	state->fog.enabled = true;
 
