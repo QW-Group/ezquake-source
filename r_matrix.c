@@ -246,24 +246,28 @@ void R_GetProjectionMatrix(float* matrix)
 
 void R_RotateModelview(float angle, float x, float y, float z)
 {
-	R_RotateMatrix(modelMatrix, angle, x, y, z);
+	if (fmodf(angle, 360.0f) != 0) {
+		R_RotateMatrix(modelMatrix, angle, x, y, z);
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
-	if (R_UseImmediateOpenGL()) {
-		GLC_RotateModelview(angle, x, y, z);
-	}
+		if (R_UseImmediateOpenGL()) {
+			GLC_RotateModelview(angle, x, y, z);
+		}
 #endif
+	}
 }
 
 void R_TranslateModelview(float x, float y, float z)
 {
-	R_TransformMatrix(modelMatrix, x, y, z);
+	if (x != 0 || y != 0 || z != 0) {
+		R_TransformMatrix(modelMatrix, x, y, z);
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
-	if (R_UseImmediateOpenGL()) {
-		GLC_TranslateModelview(x, y, z);
-	}
+		if (R_UseImmediateOpenGL()) {
+			GLC_TranslateModelview(x, y, z);
+		}
 #endif
+	}
 }
 
 void R_IdentityProjectionView(void)
