@@ -353,7 +353,7 @@ void GLM_DrawAliasModelFrame(
 
 	// TODO: Vertex lighting etc
 	// TODO: Coloured lighting per-vertex?
-	GL_AliasModelColor(ent, color, &invalidate_texture);
+	R_AliasModelColor(ent, color, &invalidate_texture);
 
 	if (invalidate_texture) {
 		R_TextureReferenceInvalidate(texture);

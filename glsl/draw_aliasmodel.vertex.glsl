@@ -34,13 +34,10 @@ void main()
 	fsFlags = models[_instanceId].flags;
 	fsMinLumaMix = models[_instanceId].minLumaMix;
 
-	if (lerpFrac != 0) {
 #ifdef EZQ_ALIASMODEL_MUZZLEHACK
-		lerpFrac = max(lerpFrac, (vboFlags & AM_VERTEX_NOLERP));
+	lerpFrac = sign(lerpFrac) * max(lerpFrac, (vboFlags & AM_VERTEX_NOLERP));
 #endif
-
-		position = mix(position, position + vboDirection, lerpFrac);
-	}
+	position = position + vboDirection * lerpFrac;
 	fsMaterialSampler = models[_instanceId].materialTextureMapping;
 
 	if (mode == EZQ_ALIAS_MODE_NORMAL) {

@@ -25,7 +25,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_aliasmodel.h"
 #include "glsl/constants.glsl"
 
-static void GLM_AliasModelSetVertexDirection(aliashdr_t* hdr, vbo_model_vert_t* vbo_buffer, int pose1, int pose2, qbool limit_lerp, int key_pose)
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+void GLM_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanceVBO);
+#endif
+
+static void GL_AliasModelSetVertexDirection(aliashdr_t* hdr, vbo_model_vert_t* vbo_buffer, int pose1, int pose2, qbool limit_lerp, int key_pose)
 {
 	int v1 = pose1 * hdr->vertsPerPose;
 	int v2 = pose2 * hdr->vertsPerPose;
@@ -108,7 +112,7 @@ void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 		if (frame->numposes > 1) {
 			// This frame has animated poses, so link them all together
 			for (pose = 0; pose < frame->numposes - 1; ++pose) {
-				GLM_AliasModelSetVertexDirection(hdr, vbo_buffer, frame->firstpose + pose, frame->firstpose + pose + 1, m->renderfx & RF_LIMITLERP, 0);
+				GL_AliasModelSetVertexDirection(hdr, vbo_buffer, frame->firstpose + pose, frame->firstpose + pose + 1, m->renderfx & RF_LIMITLERP, 0);
 			}
 		}
 		else {
@@ -119,7 +123,7 @@ void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 			}
 
 			if (frame2) {
-				GLM_AliasModelSetVertexDirection(hdr, vbo_buffer, frame->firstpose, frame2->firstpose, m->renderfx & RF_LIMITLERP, 0);
+				GL_AliasModelSetVertexDirection(hdr, vbo_buffer, frame->firstpose, frame2->firstpose, m->renderfx & RF_LIMITLERP, 0);
 				frame->nextpose = frame2->firstpose;
 			}
 		}

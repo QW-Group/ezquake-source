@@ -69,6 +69,7 @@ static void GLM_Begin2DRendering(void)
 #define GLM_ProgramsInitialise             GL_ProgramsInitialise
 #define GLM_ProgramsShutdown               GL_ProgramsShutdown
 #define GLM_DrawSky                        R_Stubs_NoOperation
+#define GLM_PrepareAliasModel              GL_PrepareAliasModel
 
 #define GLM_FramebufferCreate              GL_FramebufferCreate
 
