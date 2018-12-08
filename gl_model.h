@@ -140,7 +140,8 @@ typedef struct glc_vbo_world_vert_s {
 	float lightmap_coords[2];
 	float detail_coords[2];
 
-	float padding[2];
+	float flatstyle;
+	float padding;
 } glc_vbo_world_vert_t;
 
 // GLC only...

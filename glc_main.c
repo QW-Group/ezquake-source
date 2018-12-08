@@ -10,6 +10,7 @@
 cvar_t gl_program_sky = { "gl_program_sky", "1" };
 cvar_t gl_program_turbsurfaces = { "gl_program_turbsurfaces", "1" };
 cvar_t gl_program_aliasmodels = { "gl_program_aliasmodels", "1", CVAR_LATCH };
+cvar_t gl_program_world = { "gl_program_world", "1" };
 
 void GL_Init(void);
 qbool GLC_InitialiseVAOHandling(void);
@@ -101,6 +102,7 @@ void GLC_Initialise(void)
 		Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
 		Cvar_Register(&gl_program_sky);
 		Cvar_Register(&gl_program_turbsurfaces);
+		Cvar_Register(&gl_program_world);
 		Cvar_ResetCurrentGroup();
 	}
 

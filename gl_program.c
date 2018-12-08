@@ -201,6 +201,20 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_aliasmodel_shadow_glc, "shadevector", 1, false },
 	// r_program_uniform_aliasmodel_shadow_glc_lheight,
 	{ r_program_aliasmodel_shadow_glc, "lheight", 1, false },
+	// r_program_uniform_world_drawflat_glc_wallcolor,
+	{ r_program_world_drawflat_glc, "wallcolor", 1, false },
+	// r_program_uniform_world_drawflat_glc_floorcolor,
+	{ r_program_world_drawflat_glc, "floorcolor", 1, false },
+	// r_program_uniform_world_drawflat_glc_skycolor,
+	{ r_program_world_drawflat_glc, "skycolor", 1, false },
+	// r_program_uniform_world_drawflat_glc_watercolor,
+	{ r_program_world_drawflat_glc, "watercolor", 1, false },
+	// r_program_uniform_world_drawflat_glc_slimecolor,
+	{ r_program_world_drawflat_glc, "slimecolor", 1, false },
+	// r_program_uniform_world_drawflat_glc_lavacolor,
+	{ r_program_world_drawflat_glc, "lavacolor", 1, false },
+	// r_program_uniform_world_drawflat_glc_telecolor,
+	{ r_program_world_drawflat_glc, "telecolor", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -222,6 +236,8 @@ static r_program_attribute_t program_attributes[] = {
 	{ r_program_aliasmodel_shell_glc, "flags" },
 	// r_program_attribute_aliasmodel_shadow_glc_flags
 	{ r_program_aliasmodel_shadow_glc, "flags" },
+	// r_program_attribute_world_drawflat_style
+	{ r_program_world_drawflat_glc, "style" },
 };
 
 #ifdef C_ASSERT
@@ -931,6 +947,17 @@ void R_ProgramUniform3fv(r_program_uniform_id uniform_id, const float* values)
 	}
 }
 
+void R_ProgramUniform3fNormalize(r_program_uniform_id uniform_id, const byte* values)
+{
+	float float_values[3];
+
+	float_values[0] = values[0] * 1.0f / 255;
+	float_values[1] = values[1] * 1.0f / 255;
+	float_values[2] = values[2] * 1.0f / 255;
+
+	R_ProgramUniform3fv(uniform_id, float_values);
+}
+
 void R_ProgramUniform4fv(r_program_uniform_id uniform_id, const float* values)
 {
 	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
@@ -1013,6 +1040,7 @@ static void GL_BuildCoreDefinitions(void)
 	GL_DefineProgram_VF(r_program_aliasmodel_std_glc, "aliasmodel-std", true, glc_aliasmodel_std, renderer_classic);
 	GL_DefineProgram_VF(r_program_aliasmodel_shell_glc, "aliasmodel-shell", true, glc_aliasmodel_shell, renderer_classic);
 	GL_DefineProgram_VF(r_program_aliasmodel_shadow_glc, "aliasmodel-shadow", true, glc_aliasmodel_shadow, renderer_classic);
+	GL_DefineProgram_VF(r_program_world_drawflat_glc, "drawflat-world", true, glc_world_drawflat, renderer_classic);
 #endif
 }
 
