@@ -102,10 +102,10 @@ void R_ProgramComputeSetMemoryBarrierFlag(r_program_id program_id, r_program_mem
 
 void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value);
 void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value);
-void R_ProgramUniform4fv(r_program_uniform_id uniform_id, float* values);
-void R_ProgramUniform3fv(r_program_uniform_id uniform_id, float* values);
-void R_ProgramUniform2fv(r_program_uniform_id uniform_id, float* values);
-void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, float* values);
+void R_ProgramUniform4fv(r_program_uniform_id uniform_id, const float* values);
+void R_ProgramUniform3fv(r_program_uniform_id uniform_id, const float* values);
+void R_ProgramUniform2fv(r_program_uniform_id uniform_id, const float* values);
+void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, const float* values);
 int R_ProgramUniformGet1i(r_program_uniform_id uniform_id);
 
 int R_ProgramAttributeLocation(r_program_attribute_id attr_id);

@@ -901,7 +901,7 @@ void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value)
 	}
 }
 
-void R_ProgramUniform2fv(r_program_uniform_id uniform_id, float* values)
+void R_ProgramUniform2fv(r_program_uniform_id uniform_id, const float* values)
 {
 	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
 
@@ -916,7 +916,7 @@ void R_ProgramUniform2fv(r_program_uniform_id uniform_id, float* values)
 	}
 }
 
-void R_ProgramUniform3fv(r_program_uniform_id uniform_id, float* values)
+void R_ProgramUniform3fv(r_program_uniform_id uniform_id, const float* values)
 {
 	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
 
@@ -931,7 +931,7 @@ void R_ProgramUniform3fv(r_program_uniform_id uniform_id, float* values)
 	}
 }
 
-void R_ProgramUniform4fv(r_program_uniform_id uniform_id, float* values)
+void R_ProgramUniform4fv(r_program_uniform_id uniform_id, const float* values)
 {
 	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
 
@@ -946,7 +946,7 @@ void R_ProgramUniform4fv(r_program_uniform_id uniform_id, float* values)
 	}
 }
 
-void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, float* values)
+void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, const float* values)
 {
 	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
 
