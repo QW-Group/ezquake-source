@@ -165,6 +165,22 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_caustics_glc, "texSampler", 1, false },
 	// r_program_uniform_caustics_glc_time,
 	{ r_program_caustics_glc, "time", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_angleVector,
+	{ r_program_aliasmodel_std_glc, "angleVector", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_shadelight,
+	{ r_program_aliasmodel_std_glc, "shadelight", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_ambientlight,
+	{ r_program_aliasmodel_std_glc, "ambientlight", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_texSampler,
+	{ r_program_aliasmodel_std_glc, "texSampler", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_fsTextureEnabled,
+	{ r_program_aliasmodel_std_glc, "fsTextureEnabled", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_fsMinLumaMix,
+	{ r_program_aliasmodel_std_glc, "fsMinLumaMix", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_time,
+	{ r_program_aliasmodel_std_glc, "time", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_fsCausticEffects
+	{ r_program_aliasmodel_std_glc, "fsCausticEffects", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -877,5 +893,6 @@ static void GL_BuildCoreDefinitions(void)
 	GL_DefineProgram_VF(r_program_sky_glc, "sky-rendering", true, glc_sky, renderer_classic);
 	GL_DefineProgram_VF(r_program_turb_glc, "turb-rendering", true, glc_turbsurface, renderer_classic);
 	GL_DefineProgram_VF(r_program_caustics_glc, "caustics-rendering", true, glc_caustics, renderer_classic);
+	GL_DefineProgram_VF(r_program_aliasmodel_std_glc, "aliasmodel-std", true, glc_aliasmodel_std, renderer_classic);
 #endif
 }

@@ -41,12 +41,11 @@ void GLC_StateBeginMD3Draw(float alpha, qbool textured);
 void R_StateBeginDrawAliasModel(const entity_t* e, aliashdr_t* paliashdr);
 
 // gl_mesh.c
-void R_AliasModelPopulateVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* aliasModelBuffer, int position);
-void R_AliasModelMD3PopulateVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position);
+void R_AliasModelPopulateVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position);
 void R_CreateAliasModelVBO(buffer_ref instance_vbo);
 
 void GLC_StateBeginAliasPowerupShell(qbool weapon);
-void GLC_AllocateAliasPoseBuffer(void);
+void GLC_AllocateAliasPoseBuffer(buffer_ref vbo);
 
 void GLC_BeginCausticsTextureMatrix(void);
 void GLC_EndCausticsTextureMatrix(void);

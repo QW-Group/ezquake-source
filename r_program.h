@@ -18,6 +18,7 @@ typedef enum {
 	r_program_sky_glc,
 	r_program_turb_glc,
 	r_program_caustics_glc,
+	r_program_aliasmodel_std_glc,
 
 	r_program_lightmap_compute,
 
@@ -51,7 +52,14 @@ typedef enum {
 	r_program_uniform_turb_glc_time,
 	r_program_uniform_caustics_glc_texSampler,
 	r_program_uniform_caustics_glc_time,
-
+	r_program_uniform_aliasmodel_std_glc_angleVector,
+	r_program_uniform_aliasmodel_std_glc_shadelight,
+	r_program_uniform_aliasmodel_std_glc_ambientlight,
+	r_program_uniform_aliasmodel_std_glc_texSampler,
+	r_program_uniform_aliasmodel_std_glc_fsTextureEnabled,
+	r_program_uniform_aliasmodel_std_glc_fsMinLumaMix,
+	r_program_uniform_aliasmodel_std_glc_time,
+	r_program_uniform_aliasmodel_std_glc_fsCausticEffects,
 	r_program_uniform_count
 } r_program_uniform_id;
 

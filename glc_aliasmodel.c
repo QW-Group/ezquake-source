@@ -43,6 +43,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_local.h"
 #include "glc_matrix.h"
 #include "glc_state.h"
+#include "r_program.h"
+#include "tr_types.h"
+#include "r_renderer.h"
 
 static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2);
 static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector);
@@ -56,6 +59,7 @@ extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 extern cvar_t    r_lerpframes;
 extern cvar_t    gl_outline;
 extern cvar_t    gl_outline_width;
+extern cvar_t    gl_program_aliasmodels;
 
 extern float     r_framelerp;
 
@@ -68,90 +72,109 @@ typedef struct glc_aliasmodel_vert_s {
 	float texture_coords[2];
 	byte color[4];
 } glc_aliasmodel_vert_t;
+
 static glc_aliasmodel_vert_t* temp_aliasmodel_buffer;
 static int temp_aliasmodel_buffer_size;
 
 static buffer_ref aliasmodel_pose_vbo;
+static buffer_ref aliasmodel_full_vbo;
 
-static void GLC_ConfigureAliasModelState(void)
+static void GLC_ConfigureAliasModelState(buffer_ref vbo)
 {
 	extern cvar_t gl_vbo_clientmemory;
 
-	R_GenVertexArray(vao_aliasmodel);
-	if (gl_vbo_clientmemory.integer) {
-		GLC_VAOEnableVertexPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].position[0]);
-		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 0, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords[0]);
-		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 1, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords[0]);
-		GLC_VAOEnableColorPointer(vao_aliasmodel, 4, GL_UNSIGNED_BYTE, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].color[0]);
+	if (gl_program_aliasmodels.integer) {
+		R_GenVertexArray(vao_aliasmodel);
+		GLC_VAOSetVertexBuffer(vao_aliasmodel, vbo);
+		GLC_VAOEnableVertexPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, position));
+		GLC_VAOEnableNormalPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, normal));
+		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 0, 2, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords));
+		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 1, 3, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, direction));
 	}
 	else {
-		GLC_VAOSetVertexBuffer(vao_aliasmodel, aliasmodel_pose_vbo);
-		GLC_VAOEnableVertexPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, position));
-		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 0, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, texture_coords));
-		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 1, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, texture_coords));
-		GLC_VAOEnableColorPointer(vao_aliasmodel, 4, GL_UNSIGNED_BYTE, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, color));
-	}
+		if (gl_vbo_clientmemory.integer) {
+			R_GenVertexArray(vao_aliasmodel);
+			GLC_VAOEnableVertexPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].position[0]);
+			GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 0, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords[0]);
+			GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 1, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords[0]);
+			GLC_VAOEnableColorPointer(vao_aliasmodel, 4, GL_UNSIGNED_BYTE, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].color[0]);
+		}
+		else {
+			R_GenVertexArray(vao_aliasmodel);
+			GLC_VAOSetVertexBuffer(vao_aliasmodel, aliasmodel_pose_vbo);
+			GLC_VAOEnableVertexPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, position));
+			GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 0, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, texture_coords));
+			GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 1, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, texture_coords));
+			GLC_VAOEnableColorPointer(vao_aliasmodel, 4, GL_UNSIGNED_BYTE, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, color));
+		}
 
-	R_GenVertexArray(vao_aliasmodel_powerupshell);
-	GLC_VAOEnableVertexPointer(vao_aliasmodel_powerupshell, 3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].position);
-	GLC_VAOEnableTextureCoordPointer(vao_aliasmodel_powerupshell, 0, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords[0]);
+		R_GenVertexArray(vao_aliasmodel_powerupshell);
+		GLC_VAOEnableVertexPointer(vao_aliasmodel_powerupshell, 3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].position);
+		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel_powerupshell, 0, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords[0]);
+	}
 }
 
-void GLC_AllocateAliasPoseBuffer(void)
+void GLC_AllocateAliasPoseBuffer(buffer_ref vbo)
 {
-	int max_verts = 0;
-	int i;
+	if (!gl_program_aliasmodels.integer) {
+		int max_verts = 0;
+		int i;
+		int total_verts = 0;
 
-	for (i = 1; i < MAX_MODELS; ++i) {
-		model_t* mod = cl.model_precache[i];
+		for (i = 1; i < MAX_MODELS; ++i) {
+			model_t* mod = cl.model_precache[i];
 
-		if (mod && mod->type == mod_alias) {
-			aliashdr_t* hdr = (aliashdr_t *)Mod_Extradata(mod);
+			if (mod && mod->type == mod_alias) {
+				aliashdr_t* hdr = (aliashdr_t *)Mod_Extradata(mod);
 
-			if (hdr) {
-				max_verts = max(max_verts, hdr->vertsPerPose);
+				if (hdr) {
+					max_verts = max(max_verts, hdr->vertsPerPose);
+					total_verts += hdr->vertsPerPose * hdr->numposes;
+				}
 			}
+		}
+
+		for (i = 0; i < MAX_VWEP_MODELS; i++) {
+			model_t* mod = cl.vw_model_precache[i];
+
+			if (mod && mod->type == mod_alias) {
+				aliashdr_t* hdr = (aliashdr_t *)Mod_Extradata(mod);
+
+				if (hdr) {
+					max_verts = max(max_verts, hdr->vertsPerPose);
+					total_verts += hdr->vertsPerPose * hdr->numposes;
+				}
+			}
+		}
+
+		for (i = 0; i < custom_model_count; ++i) {
+			model_t* mod = Mod_CustomModel(i, false);
+
+			if (mod && mod->type == mod_alias) {
+				aliashdr_t* hdr = (aliashdr_t *)Mod_Extradata(mod);
+
+				if (hdr) {
+					max_verts = max(max_verts, hdr->vertsPerPose);
+					total_verts += hdr->vertsPerPose * hdr->numposes;
+				}
+			}
+		}
+
+		if (temp_aliasmodel_buffer == NULL || temp_aliasmodel_buffer_size < max_verts) {
+			Q_free(temp_aliasmodel_buffer);
+			temp_aliasmodel_buffer = Q_malloc(sizeof(temp_aliasmodel_buffer[0]) * max_verts);
+			temp_aliasmodel_buffer_size = max_verts;
+		}
+
+		if (R_BufferReferenceIsValid(aliasmodel_pose_vbo)) {
+			aliasmodel_pose_vbo = buffers.Resize(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL);
+		}
+		else {
+			aliasmodel_pose_vbo = buffers.Create(buffertype_vertex, "glc-alias-pose", sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL, bufferusage_reuse_per_frame);
 		}
 	}
 
-	for (i = 0; i < MAX_VWEP_MODELS; i++) {
-		model_t* mod = cl.vw_model_precache[i];
-
-		if (mod && mod->type == mod_alias) {
-			aliashdr_t* hdr = (aliashdr_t *)Mod_Extradata(mod);
-
-			if (hdr) {
-				max_verts = max(max_verts, hdr->vertsPerPose);
-			}
-		}
-	}
-
-	for (i = 0; i < custom_model_count; ++i) {
-		model_t* mod = Mod_CustomModel(i, false);
-
-		if (mod && mod->type == mod_alias) {
-			aliashdr_t* hdr = (aliashdr_t *)Mod_Extradata(mod);
-
-			if (hdr) {
-				max_verts = max(max_verts, hdr->vertsPerPose);
-			}
-		}
-	}
-
-	if (temp_aliasmodel_buffer == NULL || temp_aliasmodel_buffer_size < max_verts) {
-		Q_free(temp_aliasmodel_buffer);
-		temp_aliasmodel_buffer = Q_malloc(sizeof(temp_aliasmodel_buffer[0]) * max_verts);
-		temp_aliasmodel_buffer_size = max_verts;
-	}
-
-	if (R_BufferReferenceIsValid(aliasmodel_pose_vbo)) {
-		aliasmodel_pose_vbo = buffers.Resize(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL);
-	}
-	else {
-		aliasmodel_pose_vbo = buffers.Create(buffertype_vertex, "glc-alias-pose", sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL, bufferusage_reuse_per_frame);
-	}
-
-	GLC_ConfigureAliasModelState();
+	GLC_ConfigureAliasModelState(vbo);
 }
 
 void GLC_FreeAliasPoseBuffer(void)
@@ -221,113 +244,162 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_
 	color[3] = ent->r_modelalpha;
 }
 
+#define DRAWFLAGS_CAUSTICS 1
+
+static qbool GLC_AliasModelStandardCompile(void)
+{
+	int flags = gl_caustics.integer ? DRAWFLAGS_CAUSTICS : 0;
+
+	if (R_ProgramRecompileNeeded(r_program_aliasmodel_std_glc, flags)) {
+		char included_definitions[128];
+
+		included_definitions[0] = '\0';
+		if (flags & DRAWFLAGS_CAUSTICS) {
+			strlcpy(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
+		}
+
+		R_ProgramCompileWithInclude(r_program_aliasmodel_std_glc, included_definitions);
+		R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_texSampler, 0);
+		R_ProgramSetCustomOptions(r_program_aliasmodel_std_glc, flags);
+	}
+
+	return R_ProgramReady(r_program_aliasmodel_std_glc);
+}
+
 static void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfrac)
 {
-	extern cvar_t r_lerpmuzzlehack;
+	extern cvar_t r_lerpmuzzlehack, gl_program_aliasmodels;
 
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
-	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
-	GLenum primitive = GL_TRIANGLE_STRIP;
-	qbool mtex = R_TextureReferenceIsValid(fb_texture) && gl_mtexable;
-	qbool limit_lerp = r_lerpmuzzlehack.integer && (ent->model->renderfx & RF_LIMITLERP);
-	int position = 0;
+	if (gl_program_aliasmodels.integer) {
+		if (buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompile()) {
+			float color[4];
+			qbool invalidate_texture;
+			qbool mtex = R_TextureReferenceIsValid(fb_texture) && gl_mtexable;
+			float angle_radians = -ent->angles[YAW] * M_PI / 180.0;
+			vec3_t angle_vector = { cos(angle_radians), sin(angle_radians), 1 };
 
-	int *order, count;
-	vec3_t interpolated_verts;
-	ez_trivertx_t *verts1, *verts2;
+			VectorNormalize(angle_vector);
+			R_AliasModelColor(ent, color, &invalidate_texture);
 
-	if (render_effects & RF_CAUSTICS) {
-		GLC_StateBeginUnderwaterAliasModelCaustics(texture, fb_texture);
+			R_ProgramUse(r_program_aliasmodel_std_glc);
+			R_ProgramUniform3fv(r_program_uniform_aliasmodel_std_glc_angleVector, angle_vector);
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_shadelight, ent->shadelight / 256.0f);
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_ambientlight, ent->ambientlight / 256.0f);
+			R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_fsTextureEnabled, invalidate_texture ? 0 : 1);
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsMinLumaMix, 1.0f - (ent->full_light ? bound(0, gl_fb_models.integer, 1) : 0));
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsCausticEffects, render_effects & RF_CAUSTICS ? 1 : 0);
+
+			GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, (render_effects & RF_ALPHABLEND) || ent->r_modelalpha < 1, ent->custom_model, ent->renderfx & RF_WEAPONMODEL);
+			R_CustomColor(color[0], color[1], color[2], color[3]);
+			GL_DrawArrays(GL_TRIANGLES, model->vbo_start + pose1 * paliashdr->vertsPerPose, paliashdr->vertsPerPose);
+			R_ProgramUse(r_program_none);
+		}
 	}
 	else {
-		GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, (render_effects & RF_ALPHABLEND) || ent->r_modelalpha < 1, ent->custom_model, ent->renderfx & RF_WEAPONMODEL);
-	}
+		qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
+		GLenum primitive = GL_TRIANGLE_STRIP;
+		qbool mtex = R_TextureReferenceIsValid(fb_texture) && gl_mtexable;
+		qbool limit_lerp = r_lerpmuzzlehack.integer && (ent->model->renderfx & RF_LIMITLERP);
+		int position = 0;
 
-	lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
+		int *order, count;
+		vec3_t interpolated_verts;
+		ez_trivertx_t *verts1, *verts2;
 
-	verts2 = verts1 = (ez_trivertx_t *)((byte *) paliashdr + paliashdr->posedata);
-	verts1 += pose1 * paliashdr->poseverts;
-	verts2 += pose2 * paliashdr->poseverts;
-
-	order = (int *)((byte *)paliashdr + paliashdr->commands);
-
-	for (; ; ) {
-		count = *order++;
-		if (!count) {
-			break;
-		}
-
-		if (count < 0) {
-			primitive = GL_TRIANGLE_FAN;
-			count = -count;
+		if (render_effects & RF_CAUSTICS) {
+			GLC_StateBeginUnderwaterAliasModelCaustics(texture, fb_texture);
 		}
 		else {
-			primitive = GL_TRIANGLE_STRIP;
+			GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, (render_effects & RF_ALPHABLEND) || ent->r_modelalpha < 1, ent->custom_model, ent->renderfx & RF_WEAPONMODEL);
 		}
 
-		if (!cache) {
-			GLC_Begin(primitive);
-		}
+		lastposenum = (lerpfrac >= 0.5) ? pose2 : pose1;
 
-		do {
-			float color[4];
-			float s = ((float *)order)[0];
-			float t = ((float *)order)[1];
-			order += 2;
+		verts2 = verts1 = (ez_trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+		verts1 += pose1 * paliashdr->poseverts;
+		verts2 += pose2 * paliashdr->poseverts;
 
-			lerpfrac = r_framelerp;
-			if (limit_lerp && !VectorL2Compare(verts1->v, verts2->v, ALIASMODEL_MAX_LERP_DISTANCE)) {
-				lerpfrac = 1;
+		order = (int *)((byte *)paliashdr + paliashdr->commands);
+
+		for (; ; ) {
+			count = *order++;
+			if (!count) {
+				break;
 			}
-			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
 
-			GLC_AliasModelLightPoint(color, ent, verts1, verts2, lerpfrac);
-			if (cache) {
-				temp_aliasmodel_buffer[position].texture_coords[0] = s;
-				temp_aliasmodel_buffer[position].texture_coords[1] = t;
-				temp_aliasmodel_buffer[position].color[0] = color[0] * 255;
-				temp_aliasmodel_buffer[position].color[1] = color[1] * 255;
-				temp_aliasmodel_buffer[position].color[2] = color[2] * 255;
-				temp_aliasmodel_buffer[position].color[3] = color[3] * 255;
-				VectorCopy(interpolated_verts, temp_aliasmodel_buffer[position].position);
-
-				++position;
+			if (count < 0) {
+				primitive = GL_TRIANGLE_FAN;
+				count = -count;
 			}
 			else {
-				// texture coordinates come from the draw list
-				if (mtex) {
-					qglMultiTexCoord2f(GL_TEXTURE0, s, t);
-					qglMultiTexCoord2f(GL_TEXTURE1, s, t);
-				}
-				else {
-					glTexCoord2f(s, t);
-				}
-				R_CustomColor(color[0], color[1], color[2], color[3]);
-				GLC_Vertex3fv(interpolated_verts);
+				primitive = GL_TRIANGLE_STRIP;
 			}
 
-			verts1++;
-			verts2++;
-		} while (--count);
+			if (!cache) {
+				GLC_Begin(primitive);
+			}
 
-		if (cache) {
-			buffers.Update(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * position, temp_aliasmodel_buffer);
-			GL_DrawArrays(primitive, 0, position);
-		}
-		else {
-			GLC_End();
-		}
-	}
+			do {
+				float color[4];
+				float s = ((float *)order)[0];
+				float t = ((float *)order)[1];
+				order += 2;
 
-	if (render_effects & RF_CAUSTICS) {
-		GLC_StateEndUnderwaterAliasModelCaustics();
-	}
-	if (outline) {
-		if (cache) {
-			GLC_DrawCachedAliasOutlineFrame(model, primitive, position);
+				lerpfrac = r_framelerp;
+				if (limit_lerp && !VectorL2Compare(verts1->v, verts2->v, ALIASMODEL_MAX_LERP_DISTANCE)) {
+					lerpfrac = 1;
+				}
+				VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
+
+				GLC_AliasModelLightPoint(color, ent, verts1, verts2, lerpfrac);
+				if (cache) {
+					temp_aliasmodel_buffer[position].texture_coords[0] = s;
+					temp_aliasmodel_buffer[position].texture_coords[1] = t;
+					temp_aliasmodel_buffer[position].color[0] = color[0] * 255;
+					temp_aliasmodel_buffer[position].color[1] = color[1] * 255;
+					temp_aliasmodel_buffer[position].color[2] = color[2] * 255;
+					temp_aliasmodel_buffer[position].color[3] = color[3] * 255;
+					VectorCopy(interpolated_verts, temp_aliasmodel_buffer[position].position);
+
+					++position;
+				}
+				else {
+					// texture coordinates come from the draw list
+					if (mtex) {
+						qglMultiTexCoord2f(GL_TEXTURE0, s, t);
+						qglMultiTexCoord2f(GL_TEXTURE1, s, t);
+					}
+					else {
+						glTexCoord2f(s, t);
+					}
+					R_CustomColor(color[0], color[1], color[2], color[3]);
+					GLC_Vertex3fv(interpolated_verts);
+				}
+
+				verts1++;
+				verts2++;
+			} while (--count);
+
+			if (cache) {
+				buffers.Update(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * position, temp_aliasmodel_buffer);
+				GL_DrawArrays(primitive, 0, position);
+			}
+			else {
+				GLC_End();
+			}
 		}
-		else {
-			GLC_DrawAliasOutlineFrame(ent, model, pose1, pose2);
+
+		if (render_effects & RF_CAUSTICS) {
+			GLC_StateEndUnderwaterAliasModelCaustics();
+		}
+		if (outline) {
+			if (cache) {
+				GLC_DrawCachedAliasOutlineFrame(model, primitive, position);
+			}
+			else {
+				GLC_DrawAliasOutlineFrame(ent, model, pose1, pose2);
+			}
 		}
 	}
 }

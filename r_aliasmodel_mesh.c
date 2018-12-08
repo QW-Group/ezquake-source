@@ -25,9 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_aliasmodel.h"
 #include "glsl/constants.glsl"
 
-void GLM_CreateAliasModelVBO(buffer_ref instanceVBO);
-void GLC_AllocateAliasPoseBuffer(void);
-
 static void GLM_AliasModelSetVertexDirection(aliashdr_t* hdr, vbo_model_vert_t* vbo_buffer, int pose1, int pose2, qbool limit_lerp, int key_pose)
 {
 	int v1 = pose1 * hdr->vertsPerPose;
@@ -50,14 +47,14 @@ static void GLM_AliasModelSetVertexDirection(aliashdr_t* hdr, vbo_model_vert_t* 
 	}
 }
 
-void GLM_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
+void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 {
 	// 
 	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 	vbo_model_vert_t* vbo_buffer;
 	int pose, j, k, v;
 	int f;
-	
+
 	v = 0;
 	hdr->poseverts = hdr->vertsPerPose = 3 * hdr->numtris;
 	m->vertsInVBO = hdr->vertsPerPose * hdr->numposes;
@@ -129,34 +126,138 @@ void GLM_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 	}
 }
 
-void R_AliasModelPopulateVBO(model_t* mod, aliashdr_t* hdr, vbo_model_vert_t* aliasModelBuffer, int position)
+void R_AliasModelPopulateVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position)
 {
 	if (mod->temp_vbo_buffer) {
 		memcpy(aliasModelBuffer + position, mod->temp_vbo_buffer, mod->vertsInVBO * sizeof(vbo_model_vert_t));
 
-		hdr->vertsOffset = mod->vbo_start = position;
+		mod->vbo_start = position;
 		Q_free(mod->temp_vbo_buffer);
 	}
 }
 
-void R_AliasModelMD3PopulateVBO(model_t* mod, vbo_model_vert_t* aliasModelData, int position)
+static void R_ImportSpriteCoordsToVBO(vbo_model_vert_t* verts, int* position)
 {
-	memcpy(aliasModelData + position, mod->temp_vbo_buffer, mod->vertsInVBO * sizeof(vbo_model_vert_t));
+	verts = &verts[*position];
 
-	mod->vbo_start = position;
-	Q_free(mod->temp_vbo_buffer);
+	memset(verts, 0, sizeof(vbo_model_vert_t) * 4);
+
+	VectorSet(verts[0].position, 0, -1, -1);
+	verts[0].texture_coords[0] = 1;
+	verts[0].texture_coords[1] = 1;
+	verts[0].flags = 0;
+
+	VectorSet(verts[1].position, 0, -1, 1);
+	verts[1].texture_coords[0] = 1;
+	verts[1].texture_coords[1] = 0;
+	verts[1].flags = 1;
+
+	VectorSet(verts[2].position, 0, 1, 1);
+	verts[2].texture_coords[0] = 0;
+	verts[2].texture_coords[1] = 0;
+	verts[2].flags = 2;
+
+	VectorSet(verts[3].position, 0, 1, -1);
+	verts[3].texture_coords[0] = 0;
+	verts[3].texture_coords[1] = 1;
+	verts[3].flags = 3;
+
+	*position += 4;
+}
+
+static void R_ImportModelToVBO(model_t* mod, vbo_model_vert_t* aliasmodel_data, int* new_vbo_position)
+{
+	if (mod->type == mod_alias || mod->type == mod_alias3) {
+		R_AliasModelPopulateVBO(mod, aliasmodel_data, *new_vbo_position);
+		*new_vbo_position += mod->vertsInVBO;
+	}
+	else if (mod->type == mod_sprite) {
+		mod->vbo_start = 0;
+	}
+	else if (mod->type == mod_brush) {
+		mod->vbo_start = 0;
+	}
 }
 
 void R_CreateAliasModelVBO(buffer_ref instanceVBO)
 {
+	vbo_model_vert_t* aliasModelData;
+	int new_vbo_position = 0;
+	int required_vbo_length = 4;
+	int i;
+	buffer_ref vbo;
+
+	for (i = 1; i < MAX_MODELS; ++i) {
+		model_t* mod = cl.model_precache[i];
+
+		if (mod && (mod->type == mod_alias || mod->type == mod_alias3)) {
+			required_vbo_length += mod->vertsInVBO;
+		}
+	}
+
+	for (i = 0; i < MAX_VWEP_MODELS; i++) {
+		model_t* mod = cl.vw_model_precache[i];
+
+		if (mod && (mod->type == mod_alias || mod->type == mod_alias3)) {
+			required_vbo_length += mod->vertsInVBO;
+		}
+	}
+
+	// custom models are explicitly loaded by client, not notified by server
+	for (i = 0; i < custom_model_count; ++i) {
+		model_t* mod = Mod_CustomModel(i, false);
+
+		if (mod && (mod->type == mod_alias || mod->type == mod_alias3)) {
+			required_vbo_length += mod->vertsInVBO;
+		}
+	}
+
+	// Go back through all models, populating VBO content
+	aliasModelData = Q_malloc(required_vbo_length * sizeof(vbo_model_vert_t));
+
+	// VBO starts with simple-model/sprite vertices
+	R_ImportSpriteCoordsToVBO(aliasModelData, &new_vbo_position);
+
+	for (i = 1; i < MAX_MODELS; ++i) {
+		model_t* mod = cl.model_precache[i];
+
+		if (mod) {
+			R_ImportModelToVBO(mod, aliasModelData, &new_vbo_position);
+		}
+	}
+
+	for (i = 0; i < MAX_VWEP_MODELS; i++) {
+		model_t* mod = cl.vw_model_precache[i];
+
+		if (mod) {
+			R_ImportModelToVBO(mod, aliasModelData, &new_vbo_position);
+		}
+	}
+
+	for (i = 0; i < custom_model_count; ++i) {
+		model_t* mod = Mod_CustomModel(i, false);
+
+		if (mod) {
+			R_ImportModelToVBO(mod, aliasModelData, &new_vbo_position);
+		}
+	}
+
+	vbo = buffers.Create(buffertype_vertex, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
-		GLM_CreateAliasModelVBO(instanceVBO);
+		GLM_CreateAliasModelVAO(vbo, instanceVBO);
+#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
+		aliasModel_ssbo = buffers.Create(buffertype_storage, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
+		buffers.BindBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
+#endif
 	}
 #endif
+
+	Q_free(aliasModelData);
+
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
-		GLC_AllocateAliasPoseBuffer();
+		GLC_AllocateAliasPoseBuffer(vbo);
 	}
 #endif
 }

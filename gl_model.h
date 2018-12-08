@@ -378,7 +378,6 @@ typedef struct aliashdr_s {
 	texture_ref  glc_fb_texturenum[MAX_SKINS][4];
 
 	int          vertsPerPose;
-	int          vertsOffset;
 
 	maliasframedesc_t	frames[1];	// variable sized
 } aliashdr_t;

@@ -174,7 +174,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 	return R_ProgramReady(r_program_aliasmodel);
 }
 
-static void GLM_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanceVBO)
+void GLM_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanceVBO)
 {
 	R_GenVertexArray(vao_aliasmodel);
 
@@ -186,131 +186,6 @@ static void GLM_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanc
 	GLM_ConfigureVertexAttribIPointer(vao_aliasmodel, aliasModelVBO, 5, 1, GL_UNSIGNED_INT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags), 0);
 
 	R_BindVertexArray(vao_none);
-}
-
-static void R_ImportSpriteCoordsToVBO(vbo_model_vert_t* verts, int* position)
-{
-	verts = &verts[*position];
-
-	memset(verts, 0, sizeof(vbo_model_vert_t) * 4);
-
-	VectorSet(verts[0].position, 0, -1, -1);
-	verts[0].texture_coords[0] = 1;
-	verts[0].texture_coords[1] = 1;
-	verts[0].flags = 0;
-
-	VectorSet(verts[1].position, 0, -1, 1);
-	verts[1].texture_coords[0] = 1;
-	verts[1].texture_coords[1] = 0;
-	verts[1].flags = 1;
-
-	VectorSet(verts[2].position, 0, 1, 1);
-	verts[2].texture_coords[0] = 0;
-	verts[2].texture_coords[1] = 0;
-	verts[2].flags = 2;
-
-	VectorSet(verts[3].position, 0, 1, -1);
-	verts[3].texture_coords[0] = 0;
-	verts[3].texture_coords[1] = 1;
-	verts[3].flags = 3;
-
-	*position += 4;
-}
-
-static void R_ImportModelToVBO(model_t* mod, vbo_model_vert_t* aliasmodel_data, int* new_vbo_position)
-{
-	if (mod->type == mod_alias) {
-		aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(mod);
-
-		R_AliasModelPopulateVBO(mod, paliashdr, aliasmodel_data, *new_vbo_position);
-		*new_vbo_position += mod->vertsInVBO;
-	}
-	else if (mod->type == mod_alias3) {
-		R_AliasModelMD3PopulateVBO(mod, aliasmodel_data, *new_vbo_position);
-
-		*new_vbo_position += mod->vertsInVBO;
-	}
-	else if (mod->type == mod_sprite) {
-		mod->vbo_start = 0;
-	}
-	else if (mod->type == mod_brush) {
-		mod->vbo_start = 0;
-	}
-}
-
-void GLM_CreateAliasModelVBO(buffer_ref instanceVBO)
-{
-	vbo_model_vert_t* aliasModelData;
-	int new_vbo_position = 0;
-	int required_vbo_length = 4;
-	int i;
-	buffer_ref vbo;
-
-	for (i = 1; i < MAX_MODELS; ++i) {
-		model_t* mod = cl.model_precache[i];
-
-		if (mod && (mod->type == mod_alias || mod->type == mod_alias3)) {
-			required_vbo_length += mod->vertsInVBO;
-		}
-	}
-
-	for (i = 0; i < MAX_VWEP_MODELS; i++) {
-		model_t* mod = cl.vw_model_precache[i];
-
-		if (mod && (mod->type == mod_alias || mod->type == mod_alias3)) {
-			required_vbo_length += mod->vertsInVBO;
-		}
-	}
-
-	// custom models are explicitly loaded by client, not notified by server
-	for (i = 0; i < custom_model_count; ++i) {
-		model_t* mod = Mod_CustomModel(i, false);
-
-		if (mod && (mod->type == mod_alias || mod->type == mod_alias3)) {
-			required_vbo_length += mod->vertsInVBO;
-		}
-	}
-
-	// Go back through all models, importing textures into arrays and creating new VBO
-	aliasModelData = Q_malloc(required_vbo_length * sizeof(vbo_model_vert_t));
-
-	// VBO starts with simple-model/sprite vertices
-	R_ImportSpriteCoordsToVBO(aliasModelData, &new_vbo_position);
-
-	for (i = 1; i < MAX_MODELS; ++i) {
-		model_t* mod = cl.model_precache[i];
-
-		if (mod) {
-			R_ImportModelToVBO(mod, aliasModelData, &new_vbo_position);
-		}
-	}
-
-	for (i = 0; i < MAX_VWEP_MODELS; i++) {
-		model_t* mod = cl.vw_model_precache[i];
-
-		if (mod) {
-			R_ImportModelToVBO(mod, aliasModelData, &new_vbo_position);
-		}
-	}
-
-	for (i = 0; i < custom_model_count; ++i) {
-		model_t* mod = Mod_CustomModel(i, false);
-
-		if (mod) {
-			R_ImportModelToVBO(mod, aliasModelData, &new_vbo_position);
-		}
-	}
-
-	vbo = buffers.Create(buffertype_vertex, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
-#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
-	aliasModel_ssbo = buffers.Create(buffertype_storage, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
-#endif
-	Q_free(aliasModelData);
-
-	GLM_CreateAliasModelVAO(vbo, instanceVBO);
-#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
-	buffers.BindBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
-#endif
 }
 
 static int AssignSampler(aliasmodel_draw_instructions_t* instr, texture_ref texture)
@@ -504,8 +379,8 @@ void GLM_DrawAliasFrame(
 )
 {
 	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
-	int vertIndex = paliashdr->vertsOffset + pose1 * paliashdr->vertsPerPose;
-	int nextVertIndex = paliashdr->vertsOffset + pose2 * paliashdr->vertsPerPose;
+	int vertIndex = model->vbo_start + pose1 * paliashdr->vertsPerPose;
+	int nextVertIndex = model->vbo_start + pose2 * paliashdr->vertsPerPose;
 
 	GLM_DrawAliasModelFrame(
 		ent, model, vertIndex, nextVertIndex, paliashdr->vertsPerPose,

@@ -9,6 +9,7 @@
 
 cvar_t gl_program_sky = { "gl_program_sky", "1" };
 cvar_t gl_program_turbsurfaces = { "gl_program_turbsurfaces", "1" };
+cvar_t gl_program_aliasmodels = { "gl_program_aliasmodels", "1", CVAR_LATCH };
 
 void GL_Init(void);
 qbool GLC_InitialiseVAOHandling(void);
@@ -103,6 +104,10 @@ void GLC_Initialise(void)
 		Cvar_ResetCurrentGroup();
 	}
 
+	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
+	Cvar_Register(&gl_program_aliasmodels);
+	Cvar_ResetCurrentGroup();
+
 	GL_Init();
 	renderer.vaos_supported = GLC_InitialiseVAOHandling();
 	GL_ProcessErrors("post-GLC_InitialiseVAOHandling");
@@ -110,6 +115,21 @@ void GLC_Initialise(void)
 	GL_ProcessErrors("post-GL_InitialiseBufferHandling");
 	GL_InitialiseState();
 	GL_ProcessErrors("post-GL_InitialiseState");
+
+	if (!GL_Supported(R_SUPPORT_RENDERING_SHADERS)) {
+		Cvar_LatchedSetValue(&gl_program_aliasmodels, 0);
+		Cvar_SetValue(&gl_program_sky, 0);
+		Cvar_SetValue(&gl_program_turbsurfaces, 0);
+		Cvar_SetFlags(&gl_program_aliasmodels, Cvar_GetFlags(&gl_program_aliasmodels) | CVAR_ROM);
+		Cvar_SetFlags(&gl_program_sky, Cvar_GetFlags(&gl_program_sky) | CVAR_ROM);
+		Cvar_SetFlags(&gl_program_turbsurfaces, Cvar_GetFlags(&gl_program_turbsurfaces) | CVAR_ROM);
+		Con_Printf("&cf00ERROR&r: GLSL programs not supported.\n");
+	}
+	else {
+		Cvar_SetFlags(&gl_program_aliasmodels, Cvar_GetFlags(&gl_program_aliasmodels) & ~CVAR_ROM);
+		Cvar_SetFlags(&gl_program_sky, Cvar_GetFlags(&gl_program_sky) & ~CVAR_ROM);
+		Cvar_SetFlags(&gl_program_turbsurfaces, Cvar_GetFlags(&gl_program_turbsurfaces) & ~CVAR_ROM);
+	}
 }
 
 void GLC_PrepareModelRendering(qbool vid_restart)
