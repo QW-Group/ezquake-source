@@ -709,6 +709,9 @@ void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolea
 #ifdef WITH_RENDERING_TRACE
 void R_TracePrintState(FILE* debug_frame_out, int debug_frame_depth)
 {
+// meag: disabled just for clarity, only enable if you fear the states aren't being reset correctly
+//       less useful now we have all the states enumerated, the state manager should be setting everything
+#if 0
 	debug_frame_depth += 7;
 
 	if (debug_frame_out) {
@@ -767,6 +770,7 @@ void R_TracePrintState(FILE* debug_frame_out, int debug_frame_depth)
 		}
 		fprintf(debug_frame_out, "%.*s </state-dump>\n", debug_frame_depth, "                                                          ");
 	}
+#endif
 }
 #endif
 

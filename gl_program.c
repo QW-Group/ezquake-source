@@ -707,6 +707,7 @@ void R_ProgramUse(r_program_id program_id)
 
 	if (program != currentProgram) {
 		qglUseProgram(program);
+		R_TraceLogAPICall("R_ProgramUse(%s)", program_data[program_id].friendly_name);
 
 		currentProgram = program;
 	}
