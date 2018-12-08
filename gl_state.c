@@ -627,55 +627,70 @@ void GL_InvalidateTextureReferences(GLuint texture)
 
 void GL_TextureUnitMultiBind(int first, int count, texture_ref* textures)
 {
+	GLuint glTextures[MAX_LOGGED_TEXTURE_UNITS];
+	qbool already_bound[MAX_LOGGED_TEXTURE_UNITS];
+	qbool is_array[MAX_LOGGED_TEXTURE_UNITS];
+	int to_change = 0;
 	int i;
 
-	if (qglBindTextures) {
-		GLuint glTextures[MAX_LOGGED_TEXTURE_UNITS];
-		qbool already_bound = true;
+	count = min(count, MAX_LOGGED_TEXTURE_UNITS);
+	for (i = 0; i < count; ++i) {
+		glTextures[i] = GL_TextureNameFromReference(textures[i]);
+		if (i + first < MAX_LOGGED_TEXTURE_UNITS) {
+			GLenum target = GL_TextureTargetFromReference(textures[i]);
 
-		count = min(count, MAX_LOGGED_TEXTURE_UNITS);
-		for (i = 0; i < count; ++i) {
-			glTextures[i] = GL_TextureNameFromReference(textures[i]);
-			if (i + first < MAX_LOGGED_TEXTURE_UNITS) {
-				GLenum target = GL_TextureTargetFromReference(textures[i]);
+			is_array[i] = (target == GL_TEXTURE_2D_ARRAY);
 
-				if (target == GL_TEXTURE_2D_ARRAY || glTextures[i] == 0) {
-					already_bound &= (bound_arrays[i + first] == glTextures[i]);
-					bound_arrays[i + first] = glTextures[i];
+			if (is_array[i] || glTextures[i] == 0) {
+				if (!(already_bound[i] = (bound_arrays[i + first] == glTextures[i]))) {
+					++to_change;
 				}
-				if (target == GL_TEXTURE_2D || glTextures[i] == 0) {
-					already_bound &= (bound_textures[i + first] == glTextures[i]);
-					bound_textures[i + first] = glTextures[i];
+			}
+			if (!is_array[i] || glTextures[i] == 0) {
+				if (!(already_bound[i] = (bound_textures[i + first] == glTextures[i]))) {
+					++to_change;
 				}
 			}
 		}
-
-		if (!already_bound) {
-			qglBindTextures(first, count, glTextures);
+		else {
+			to_change = 999;
 		}
 	}
-	else {
+
+	if (qglBindTextures && to_change >= 2) {
+		qglBindTextures(first, count, glTextures);
+
 		for (i = 0; i < count; ++i) {
-			if (R_TextureReferenceIsValid(textures[i])) {
+			if (is_array[i]) {
+				bound_arrays[i + first] = glTextures[i];
+			}
+			else {
+				bound_textures[i + first] = glTextures[i];
+			}
+		}
+
+#ifdef WITH_RENDERING_TRACE
+		if (R_TraceLoggingEnabled()) {
+			static char temp[1024];
+
+			temp[0] = '\0';
+			for (i = 0; i < count; ++i) {
+				if (i) {
+					strlcat(temp, ",", sizeof(temp));
+				}
+				strlcat(temp, R_TextureIdentifier(textures[i]), sizeof(temp));
+			}
+			R_TraceLogAPICall("glBindTextures(GL_TEXTURE%d, %d[%s])", first, count, temp);
+		}
+#endif
+	}
+	else if (to_change >= 1) {
+		for (i = 0; i < count; ++i) {
+			if (!already_bound[i]) {
 				renderer.TextureUnitBind(first + i, textures[i]);
 			}
 		}
 	}
-
-#ifdef WITH_RENDERING_TRACE
-	if (R_TraceLoggingEnabled()) {
-		static char temp[1024];
-
-		temp[0] = '\0';
-		for (i = 0; i < count; ++i) {
-			if (i) {
-				strlcat(temp, ",", sizeof(temp));
-			}
-			strlcat(temp, R_TextureIdentifier(textures[i]), sizeof(temp));
-		}
-		R_TraceLogAPICall("glBindTextures(GL_TEXTURE%d, %d[%s])", first, count, temp);
-	}
-#endif
 }
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format)
@@ -954,15 +969,14 @@ qbool R_VertexArrayCreated(r_vao_id vao)
 void R_BindVertexArray(r_vao_id vao)
 {
 	if (currentVAO != vao || opengl.rendering_state.glc_vao_force_rebind) {
-		if (!(vao == vao_none || R_VertexArrayCreated(vao))) {
-			assert(false);
-		}
+		assert(vao == vao_none || R_VertexArrayCreated(vao));
 
+		R_TraceEnterRegion(va("R_BindVertexArray(%s)", vaoNames[vao]), true);
 		renderer.BindVertexArray(vao);
 
 		currentVAO = vao;
-		R_TraceLogAPICall("BindVertexArray(%s)", vaoNames[vao]);
 		opengl.rendering_state.glc_vao_force_rebind = false;
+		R_TraceLeaveRegion(true);
 	}
 }
 
@@ -998,6 +1012,7 @@ void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, i
 
 		if (!R_BufferReferencesEqual(buf, array->buf) || size != array->size || type != array->type || stride != array->stride || pointer_or_offset != array->pointer_or_offset) {
 			glVertexPointer(array->size = size, array->type = type, array->stride = stride, array->pointer_or_offset = pointer_or_offset);
+			array->buf = buf;
 			R_TraceLogAPICall("glVertexPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
 		}
 		if (!opengl.rendering_state.vertex_array.enabled) {
@@ -1121,6 +1136,7 @@ void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLe
 		}
 		if (pointer_call_needed) {
 			glTexCoordPointer(array->size = size, array->type = type, array->stride = stride, array->pointer_or_offset = pointer_or_offset);
+			array->buf = buf;
 			R_TraceLogAPICall("glTexCoordPointer[unit %d](size %d, type %s, stride %d, ptr %p)", unit, size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
 		}
 		if (!array->enabled) {
