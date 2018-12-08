@@ -725,11 +725,41 @@ static void R_LightmapCreateForSurface(msurface_t *surf, int surfnum)
 	R_BuildLightMap(surf, base, LIGHTMAP_WIDTH * 4);
 }
 
+static int R_LightmapSurfaceSortFunction(const void* lhs_, const void* rhs_)
+{
+	const msurface_t* lhs = *(const msurface_t**)lhs_;
+	const msurface_t* rhs = *(const msurface_t**)rhs_;
+
+	if (r_lightmap_packbytexture.integer == 1) {
+		int lhs_size = ((lhs->extents[0] >> 4) + 1) * ((lhs->extents[1] >> 4) + 1);
+		int rhs_size = ((rhs->extents[0] >> 4) + 1) * ((rhs->extents[1] >> 4) + 1);
+
+		return rhs_size - lhs_size;
+	}
+	else if (r_lightmap_packbytexture.integer == 2) {
+		int lhs_width = ((lhs->extents[0] >> 4) + 1);
+		int lhs_height = ((lhs->extents[1] >> 4) + 1);
+		int rhs_width = ((rhs->extents[0] >> 4) + 1);
+		int rhs_height = ((rhs->extents[1] >> 4) + 1);
+
+		int height_diff = rhs_height - lhs_height;
+		int width_diff = rhs_width - lhs_width;
+
+		if (height_diff) {
+			return height_diff;
+		}
+		return width_diff;
+	}
+	else {
+		return 0;
+	}
+}
+
 //Builds the lightmap texture with all the surfaces from all brush models
 //Only called when map is initially loaded
 void R_BuildLightmaps(void)
 {
-	int i, j;
+	int i, j, t;
 	model_t	*m;
 
 	if (lightmaps) {
@@ -753,13 +783,61 @@ void R_BuildLightmaps(void)
 		if (m->name[0] == '*') {
 			continue;
 		}
+
+		// mark all surfaces as needing lightmap
+		for (i = 0; i < m->numsurfaces; i++) {
+			m->surfaces[i].surfacenum = i;
+			m->surfaces[i].lightmaptexturenum = -1;
+		}
+
+		// assign in order based on texture and then by size
+		if (r_lightmap_packbytexture.integer) {
+			msurface_t** surfaces = Q_malloc(m->numsurfaces * sizeof(msurface_t*));
+
+			for (t = 0; t < m->numtextures; ++t) {
+				int surface_count = 0;
+
+				// create list of surfaces that need processed for this texture
+				for (i = 0; i < m->numsurfaces; i++) {
+					qbool isTurb = (m->surfaces[i].flags & SURF_DRAWTURB);
+					qbool isSky = (m->surfaces[i].flags & SURF_DRAWSKY);
+
+					if (m->surfaces[i].texinfo->miptex != t) {
+						continue;
+					}
+					if (isSky || m->surfaces[i].lightmaptexturenum >= 0) {
+						continue;
+					}
+					if (!isTurb && (m->surfaces[i].texinfo->flags & TEX_SPECIAL)) {
+						continue;
+					}
+
+					surfaces[surface_count++] = &m->surfaces[i];
+				}
+
+				// sort, biggest first
+				qsort(surfaces, surface_count, sizeof(surfaces[0]), R_LightmapSurfaceSortFunction);
+
+				//
+				for (i = 0; i < surface_count; ++i) {
+					qbool isTurb = (surfaces[i]->flags & SURF_DRAWTURB);
+
+					if (!isTurb) {
+						R_LightmapCreateForSurface(surfaces[i], m->isworldmodel ? surfaces[i]->surfacenum : -1);
+					}
+					R_BuildSurfaceDisplayList(m, surfaces[i]);
+				}
+			}
+
+			Q_free(surfaces);
+		}
+
+		// Double-check: go through all textures again
 		for (i = 0; i < m->numsurfaces; i++) {
 			qbool isTurb = (m->surfaces[i].flags & SURF_DRAWTURB);
 			qbool isSky = (m->surfaces[i].flags & SURF_DRAWSKY);
 
-			m->surfaces[i].surfacenum = i;
-			m->surfaces[i].lightmaptexturenum = -1;
-			if (isSky) {
+			if (isSky || m->surfaces[i].lightmaptexturenum >= 0) {
 				continue;
 			}
 			if (!isTurb && (m->surfaces[i].texinfo->flags & TEX_SPECIAL)) {
@@ -767,7 +845,7 @@ void R_BuildLightmaps(void)
 			}
 
 			if (!isTurb) {
-				R_LightmapCreateForSurface(m->surfaces + i, m->isworldmodel ? i : -1);
+				R_LightmapCreateForSurface(m->surfaces + i, m->isworldmodel ? m->surfaces[i].surfacenum : -1);
 			}
 			R_BuildSurfaceDisplayList(m, m->surfaces + i);
 		}

@@ -197,6 +197,7 @@ cvar_t r_telesplash             = {"r_telesplash", "1"}; // disconnect
 cvar_t r_shaftalpha             = {"r_shaftalpha", "1"};
 cvar_t r_lightdecayrate         = {"r_lightdecayrate", "2"}; // default 2, as CL_DecayLights() used to get called twice per frame
 cvar_t r_lightmap_lateupload    = {"r_lightmap_lateupload", "0"};
+cvar_t r_lightmap_packbytexture = {"r_lightmap_packbytexture", "2"};
 
 // info mirrors
 cvar_t  password                = {"password", "", CVAR_USERINFO};
@@ -1674,6 +1675,7 @@ static void CL_InitLocal (void)
 	Cvar_Register (&r_explosiontype);
 	Cvar_Register (&r_lightflicker);
 	Cvar_Register (&r_lightmap_lateupload);
+	Cvar_Register (&r_lightmap_packbytexture);
 	Cvar_Register (&r_rockettrail);
 	Cvar_Register (&r_grenadetrail);
 	Cvar_Register (&r_railtrail);

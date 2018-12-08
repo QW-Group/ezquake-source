@@ -225,7 +225,6 @@ void R_UploadLightMap(int textureUnit, int lightmapnum);
 
 mspriteframe_t* R_GetSpriteFrame(entity_t *e, msprite2_t *psprite);
 
-void GLC_CreateLightmapTextures(void);
 void GLC_DrawSpriteModel(entity_t* e);
 void GLC_PolyBlend(float v_blend[4]);
 void GLC_BrightenScreen(void);
@@ -248,7 +247,6 @@ void GLM_PolyBlend(float v_blend[4]);
 void GLM_DrawVelocity3D(void);
 void GLM_RenderSceneBlurDo(float alpha);
 texture_ref GLM_LightmapArray(void);
-void GLM_CreateLightmapTextures(void);
 void GLM_PostProcessScreen(void);
 void GLM_RenderView(void);
 void GLM_UploadFrameConstants(void);

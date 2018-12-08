@@ -10,7 +10,7 @@
 #define LIGHTMAP_ARRAY_GROWTH 4
 
 typedef struct glRect_s {
-	unsigned char l, t, w, h;
+	unsigned int l, t, w, h;
 } glRect_t;
 
 typedef struct lightmap_data_s {
@@ -28,28 +28,8 @@ typedef struct lightmap_data_s {
 extern lightmap_data_t* lightmaps;
 extern unsigned int lightmap_array_size;
 
-void GLM_UploadLightmap(int textureUnit, int lightmapnum);
-void GLC_UploadLightmap(int textureUnit, int lightmapnum);
-void VK_UploadLightmap(int textureUnit, int lightmapnum);
-
 void GLM_LightmapFrameInit(void);
 void GLM_RenderDynamicLightmaps(msurface_t* surface, qbool world);
 void GLM_ComputeLightmaps(void);
-
-void GLM_CreateLightmapTextures(void);
-void GLC_CreateLightmapTextures(void);
-void VK_CreateLightmapTextures(void);
-
-void GLM_BuildLightmap(int lightmapnum);
-void GLC_BuildLightmap(int lightmapnum);
-void VK_BuildLightmap(int lightmapnum);
-
-void GLM_LightmapShutdown(void);
-//void GLC_LightmapShutdown(void);
-//void VK_LightmapShutdown(void);
-
-void GLM_InvalidateLightmapTextures(void);
-// void GLC_InvalidateLightmapTextures(void);
-// void VK_InvalidateLightmapTextures(void);
 
 #endif // EZQUAKE_R_LIGHTMAPS_INTERNAL_HEADER
