@@ -1043,6 +1043,36 @@ void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, in
 	}
 }
 
+void R_GLC_NormalPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
+{
+	if (enabled) {
+		glc_vertex_array_element_t* array = &opengl.rendering_state.normal_array;
+
+		if (R_BufferReferenceIsValid(buf)) {
+			buffers.Bind(buf);
+		}
+		else {
+			buffers.UnBind(buffertype_vertex);
+		}
+
+		if (!R_BufferReferencesEqual(buf, array->buf) || size != array->size || type != array->type || stride != array->stride || pointer_or_offset != array->pointer_or_offset) {
+			glNormalPointer(array->type = type, array->stride = stride, array->pointer_or_offset = pointer_or_offset);
+			array->size = size;
+			R_TraceLogAPICall("glColorPointer(size %d, type %s, stride %d, ptr %p)", size, type == GL_FLOAT ? "FLOAT" : type == GL_UNSIGNED_BYTE ? "UBYTE" : "???", stride, pointer_or_offset);
+		}
+		if (!opengl.rendering_state.normal_array.enabled) {
+			glEnableClientState(GL_NORMAL_ARRAY);
+			R_TraceLogAPICall("glEnableClientState(GL_NORMAL_ARRAY)");
+			opengl.rendering_state.normal_array.enabled = true;
+		}
+	}
+	else if (!enabled && opengl.rendering_state.normal_array.enabled) {
+		glDisableClientState(GL_NORMAL_ARRAY);
+		R_TraceLogAPICall("glDisableClientState(GL_NORMAL_ARRAY)");
+		opengl.rendering_state.normal_array.enabled = false;
+	}
+}
+
 void R_GLC_DisableColorPointer(void)
 {
 	if (opengl.rendering_state.color_array.enabled) {

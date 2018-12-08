@@ -167,6 +167,7 @@ typedef struct rendering_state_s {
 
 	glc_vertex_array_element_t vertex_array;
 	glc_vertex_array_element_t color_array;
+	glc_vertex_array_element_t normal_array;
 #endif
 
 	// always false if not classic

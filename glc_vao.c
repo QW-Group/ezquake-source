@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
 void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
 void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
+void R_GLC_NormalPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
 
 // GLC uses vertex array, all client state
 typedef struct {
@@ -45,6 +46,7 @@ typedef struct glc_vao_s {
 	buffer_ref element_index_buffer;
 
 	glc_va_element vertex_array;
+	glc_va_element normal_array;
 	glc_va_element color_array;
 	glc_va_element texture_array[MAX_GLC_TEXTURE_UNIT_STATES];
 } glc_vao_t;
@@ -61,11 +63,13 @@ void GLC_BindVertexArray(r_vao_id vao)
 {
 	glc_va_element* vertexes = &vaos[vao].vertex_array;
 	glc_va_element* colors = &vaos[vao].color_array;
+	glc_va_element* normals = &vaos[vao].normal_array;
 	buffer_ref buf = vaos[vao].vertex_buffer;
 	int i;
 
 	R_GLC_VertexPointer(buf, vertexes->enabled, vertexes->size, vertexes->type, vertexes->stride, vertexes->pointer_or_offset);
 	R_GLC_ColorPointer(buf, colors->enabled, colors->size, colors->type, colors->stride, colors->pointer_or_offset);
+	R_GLC_NormalPointer(buf, normals->enabled, normals->size, normals->type, normals->stride, normals->pointer_or_offset);
 	for (i = 0; i < sizeof(vaos[vao].texture_array) / sizeof(vaos[vao].texture_array[0]); ++i) {
 		glc_va_element* textures = &vaos[vao].texture_array[i];
 
@@ -122,6 +126,16 @@ void GLC_VAODisableVertexPointer(r_vao_id vao)
 	GLC_VAODisableComponent(&vaos[vao].vertex_array);
 }
 
+void GLC_VAOEnableNormalPointer(r_vao_id vao, int size, GLenum type, GLsizei stride, GLvoid* pointer)
+{
+	GLC_VAOEnableComponent(&vaos[vao].normal_array, size, type, stride, pointer);
+}
+
+void GLC_VAODisableNormalPointer(r_vao_id vao)
+{
+	GLC_VAODisableComponent(&vaos[vao].normal_array);
+}
+
 void GLC_VAOEnableColorPointer(r_vao_id vao, int size, GLenum type, GLsizei stride, GLvoid* pointer)
 {
 	GLC_VAOEnableComponent(&vaos[vao].color_array, size, type, stride, pointer);
@@ -163,6 +177,9 @@ void GLC_PrintVAOState(FILE* output, int indent, r_vao_id vao)
 	}
 	if (vaos[vao].color_array.enabled) {
 		fprintf(output, "%.*s   color_array: enabled\n", indent, "                                                          ");
+	}
+	if (vaos[vao].normal_array.enabled) {
+		fprintf(output, "%.*s   normal_array: enabled\n", indent, "                                                          ");
 	}
 	for (i = 0; i < sizeof(vaos[vao].texture_array) / sizeof(vaos[vao].texture_array[0]); ++i) {
 		if (vaos[vao].texture_array[i].enabled) {

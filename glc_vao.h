@@ -27,6 +27,8 @@ void GLC_VAOEnableVertexPointer(r_vao_id vao, int size, GLenum type, GLsizei str
 void GLC_VAODisableVertexPointer(r_vao_id vao);
 void GLC_VAOEnableColorPointer(r_vao_id vao, int size, GLenum type, GLsizei stride, GLvoid* pointer);
 void GLC_VAODisableColorPointer(r_vao_id vao);
+void GLC_VAOEnableNormalPointer(r_vao_id vao, int size, GLenum type, GLsizei stride, GLvoid* pointer);
+void GLC_VAODisableNormalPointer(r_vao_id vao);
 void GLC_VAOEnableTextureCoordPointer(r_vao_id vao, int index, int size, GLenum type, GLsizei stride, GLvoid* pointer);
 void GLC_VAODisableTextureCoordPointer(r_vao_id vao, int index);
 void GLC_VAOSetIndexBuffer(r_vao_id vao, buffer_ref ref);

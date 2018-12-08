@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_aliasmodel.h"
 #include "r_matrix.h"
 #include "r_renderer.h"
+#include "r_program.h"
 
 extern texture_ref solidskytexture, alphaskytexture;
 
@@ -163,6 +164,26 @@ void GLC_StateBeginMD3Draw(float alpha, qbool textured)
 			R_ApplyRenderingState(r_state_aliasmodel_notexture_opaque);
 		}
 	}
+}
+
+void GLC_StateBeginDrawAliasFrameProgram(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model, qbool weapon_model)
+{
+	R_TraceEnterFunctionRegion;
+
+	if (!weapon_model && (!R_TextureReferenceIsValid(texture) || (custom_model && custom_model->fullbright_cvar.integer))) {
+		R_ApplyRenderingState(alpha_blend ? r_state_aliasmodel_notexture_transparent : r_state_aliasmodel_notexture_opaque);
+	}
+	else if (custom_model == NULL && R_TextureReferenceIsValid(fb_texture) && mtex) {
+		R_ApplyRenderingState(weapon_model ? (alpha_blend ? r_state_weaponmodel_multitexture_transparent : r_state_weaponmodel_multitexture_opaque) : (alpha_blend ? r_state_aliasmodel_multitexture_transparent : r_state_aliasmodel_multitexture_opaque));
+		renderer.TextureUnitBind(0, texture);
+		renderer.TextureUnitBind(1, fb_texture);
+	}
+	else {
+		R_ApplyRenderingState(weapon_model ? (alpha_blend ? r_state_weaponmodel_singletexture_transparent : r_state_weaponmodel_singletexture_opaque) : (alpha_blend ? r_state_aliasmodel_singletexture_transparent : r_state_aliasmodel_singletexture_opaque));
+		renderer.TextureUnitBind(0, texture);
+	}
+
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model, qbool weapon_model)
