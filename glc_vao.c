@@ -244,17 +244,21 @@ void GLC_PrintVAOState(FILE* output, int indent, r_vao_id vao)
 
 	indent += 2;
 	if (vaos[vao].vertex_array.enabled) {
-		fprintf(output, "%.*s   vertex-array: enabled\n", indent, "                                                          ");
+		glc_va_element* el = &vaos[vao].vertex_array;
+		fprintf(output, "%.*s   vertex-array: enabled(type %u, size %d, stride %d, pointer %p)\n", indent, "                                                          ", el->type, el->size, el->stride, el->pointer_or_offset);
 	}
 	if (vaos[vao].color_array.enabled) {
-		fprintf(output, "%.*s   color_array: enabled\n", indent, "                                                          ");
+		glc_va_element* el = &vaos[vao].color_array;
+		fprintf(output, "%.*s   color_array: enabled(type %u, size %d, stride %d, pointer %p)\n", indent, "                                                          ", el->type, el->size, el->stride, el->pointer_or_offset);
 	}
 	if (vaos[vao].normal_array.enabled) {
-		fprintf(output, "%.*s   normal_array: enabled\n", indent, "                                                          ");
+		glc_va_element* el = &vaos[vao].normal_array;
+		fprintf(output, "%.*s   normal_array: enabled(type %u, size %d, stride %d, pointer %p)\n", indent, "                                                          ", el->type, el->size, el->stride, el->pointer_or_offset);
 	}
 	for (i = 0; i < sizeof(vaos[vao].texture_array) / sizeof(vaos[vao].texture_array[0]); ++i) {
-		if (vaos[vao].texture_array[i].enabled) {
-			fprintf(output, "%.*s   texture-array[%d]: enabled\n", indent, "                                                          ", i);
+		glc_va_element* el = &vaos[vao].texture_array[i];
+		if (el->enabled) {
+			fprintf(output, "%.*s   texture-array[%d]: enabled(type %u, size %d, stride %d, pointer %p)\n", indent, "                                                          ", i, el->type, el->size, el->stride, el->pointer_or_offset);
 		}
 	}
 }

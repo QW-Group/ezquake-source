@@ -739,7 +739,10 @@ void R_TracePrintState(FILE* debug_frame_out, int debug_frame_depth)
 		fprintf(debug_frame_out, "%.*s   Cull-face: %s, mode %s\n", debug_frame_depth, "                                                          ", current->cullface.enabled ? "enabled" : "disabled", txtCullFaceValues[current->cullface.mode]);
 		fprintf(debug_frame_out, "%.*s   Blending: %s, func %s\n", debug_frame_depth, "                                                          ", current->blendingEnabled ? "enabled" : "disabled", txtBlendFuncNames[current->blendFunc]);
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
-		fprintf(debug_frame_out, "%.*s   AlphaTest: %s, func %s(%f)\n", debug_frame_depth, "                                                          ", current->alphaTesting.enabled ? "on" : "off", txtAlphaTestModeValues[current->alphaTesting.func], current->alphaTesting.value);
+		fprintf(debug_frame_out, "%.*s   AlphaTest: %s", debug_frame_depth, "                                                          ", current->alphaTesting.enabled ? "on" : "off");
+		if (current->alphaTesting.enabled) {
+			fprintf(debug_frame_out, "func %s(%f)\n", txtAlphaTestModeValues[current->alphaTesting.func], current->alphaTesting.value);
+		}
 		fprintf(debug_frame_out, "%.*s   Texture units: [", debug_frame_depth, "                                                          ");
 		{
 			int i;
