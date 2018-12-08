@@ -161,6 +161,10 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_turb_glc, "texSampler", 1, false },
 	// r_program_uniform_turb_glc_time,
 	{ r_program_turb_glc, "time", 1, false },
+	// r_program_uniform_caustics_glc_texSampler,
+	{ r_program_caustics_glc, "texSampler", 1, false },
+	// r_program_uniform_caustics_glc_time,
+	{ r_program_caustics_glc, "time", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -562,6 +566,8 @@ void GL_ProgramsInitialise(void)
 
 	GL_BuildCoreDefinitions();
 
+	program_data[r_program_none].friendly_name = "(none)";
+
 	for (p = r_program_none; p < r_program_count; ++p) {
 		if (R_UseImmediateOpenGL() && program_data[p].renderer_id != renderer_classic) {
 			continue;
@@ -869,5 +875,6 @@ static void GL_BuildCoreDefinitions(void)
 	GL_DefineProgram_VF(r_program_post_process_glc, "post-process-screen", true, glc_post_process_screen, renderer_classic);
 	GL_DefineProgram_VF(r_program_sky_glc, "sky-rendering", true, glc_sky, renderer_classic);
 	GL_DefineProgram_VF(r_program_turb_glc, "turb-rendering", true, glc_turbsurface, renderer_classic);
+	GL_DefineProgram_VF(r_program_caustics_glc, "caustics-rendering", true, glc_caustics, renderer_classic);
 #endif
 }

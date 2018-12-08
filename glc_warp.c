@@ -26,6 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "glc_local.h"
 #include "r_renderer.h"
+#include "r_brushmodel.h"
+#include "r_program.h"
+#include "tr_types.h"
 
 #define TURBSINSIZE 128
 #define TURBSCALE ((float) TURBSINSIZE / (2 * M_PI))
@@ -97,6 +100,16 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 }
 
 // Caustics
+static qbool GLC_CausticsProgramCompile(void)
+{
+	if (R_ProgramRecompileNeeded(r_program_caustics_glc, 0)) {
+		R_ProgramCompile(r_program_caustics_glc);
+		R_ProgramUniform1i(r_program_uniform_caustics_glc_texSampler, 0);
+		R_ProgramSetCustomOptions(r_program_caustics_glc, 0);
+	}
+
+	return R_ProgramReady(r_program_caustics_glc);
+}
 
 static void GLC_CalcCausticTexCoords(float *v, float *s, float *t)
 {
@@ -118,23 +131,44 @@ void GLC_EmitCausticsPolys(qbool use_vbo)
 	int i;
 	float s, t;
 	extern glpoly_t *caustics_polys;
+	extern cvar_t gl_program_turbsurfaces;
 
 	if (!caustics_polys) {
 		return;
 	}
 
+	R_TraceEnterRegion(__FUNCTION__, true);
 	GLC_StateBeginCausticsPolys();
 
 	renderer.TextureUnitBind(0, underwatertexture);
-	for (p = caustics_polys; p; p = p->caustics_chain) {
-		GLC_Begin(GL_TRIANGLE_STRIP);
-		for (i = 0; i < p->numverts; ++i) {
-			GLC_CalcCausticTexCoords(p->verts[i], &s, &t);
-			glTexCoord2f(s, t);
-			GLC_Vertex3fv(p->verts[i]);
+
+	if (use_vbo && gl_program_turbsurfaces.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_CausticsProgramCompile()) {
+		unsigned int index_count = 0;
+
+		R_ProgramUse(r_program_caustics_glc);
+		R_ProgramUniform1f(r_program_uniform_caustics_glc_time, cl.time);
+
+		for (p = caustics_polys; p; p = p->caustics_chain) {
+			index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
 		}
-		GLC_End();
+
+		if (index_count) {
+			GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+		}
+		R_ProgramUse(r_program_none);
+	}
+	else {
+		for (p = caustics_polys; p; p = p->caustics_chain) {
+			GLC_Begin(GL_TRIANGLE_STRIP);
+			for (i = 0; i < p->numverts; ++i) {
+				GLC_CalcCausticTexCoords(p->verts[i], &s, &t);
+				glTexCoord2f(s, t);
+				GLC_Vertex3fv(p->verts[i]);
+			}
+			GLC_End();
+		}
 	}
 
 	caustics_polys = NULL;
+	R_TraceLeaveRegion(true);
 }
