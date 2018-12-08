@@ -294,6 +294,7 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 rendering_state_t* R_CopyRenderingState(r_state_id id, r_state_id original_id, const char* name);
 rendering_state_t* R_Init3DSpriteRenderingState(r_state_id id, const char* name);
 void R_ApplyRenderingState(r_state_id id);
+void R_BufferInvalidateBoundState(buffer_ref ref);
 
 void R_CustomColor(float r, float g, float b, float a);
 void R_CustomColor4ubv(const byte* color);

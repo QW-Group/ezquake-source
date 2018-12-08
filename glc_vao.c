@@ -116,7 +116,7 @@ void GLC_BindVertexArray(r_vao_id vao)
 		}
 	}
 
-	for (i = 0; i < sizeof(vaos[vao].attributes) / sizeof(vaos[vao].attributes[0]); ++i) {
+	for (i = 0; i < MAX_GLC_ATTRIBUTES; ++i) {
 		glc_va_attribute_t* attr = &vaos[vao].attributes[i];
 		GLint location = R_ProgramAttributeLocation(attr->attr_id);
 
@@ -149,7 +149,7 @@ void GLC_GenVertexArray(r_vao_id vao, const char* name)
 
 void GLC_DeleteVAOs(void)
 {
-	// nothing to do here
+	memset(vaos, 0, sizeof(vaos));
 }
 
 static void GLC_VAOEnableComponent(glc_va_element* el, int size, GLenum type, GLsizei stride, GLvoid* pointer)

@@ -47,7 +47,6 @@ void R_GenVertexArray(r_vao_id vao);
 void R_BindVertexArray(r_vao_id vao);
 qbool R_VertexArrayCreated(r_vao_id vao);
 void R_InitialiseVAOState(void);
-qbool R_InitialiseVAOHandling(void);
 qbool R_VAOBound(void);
 void R_BindVertexArrayElementBuffer(buffer_ref ref);
 

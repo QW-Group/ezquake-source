@@ -158,6 +158,8 @@ static GLuint currentUniformBuffer;
 static GLuint currentDrawIndirectBuffer;
 static GLuint currentElementArrayBuffer;
 
+#define GL_BufferInvalidateReference(name, glref) { name = ((name) == (glref)) ? 0 : (name); }
+
 static buffer_data_t* GL_BufferAllocateSlot(buffertype_t type, const char* name, GLsizei size, bufferusage_t usage)
 {
 	buffer_data_t* buffer = NULL;
@@ -170,6 +172,16 @@ static buffer_data_t* GL_BufferAllocateSlot(buffertype_t type, const char* name,
 			if (!strcmp(name, buffer_data[i].name)) {
 				buffer = &buffer_data[i];
 				if (buffer->glref) {
+					buffer_ref ref = { i };
+
+					GL_BufferInvalidateReference(currentArrayBuffer, buffer->glref);
+					GL_BufferInvalidateReference(currentUniformBuffer, buffer->glref);
+					GL_BufferInvalidateReference(currentDrawIndirectBuffer, buffer->glref);
+					GL_BufferInvalidateReference(currentElementArrayBuffer, buffer->glref);
+					if (buffer->type == buffertype_index) {
+						R_BindVertexArrayElementBuffer(null_buffer_reference);
+					}
+					R_BufferInvalidateBoundState(ref);
 					qglDeleteBuffers(1, &buffer->glref);
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 					Sys_Printf("\nbuffer,free,%d,%s,%u\n", i, name, buffer->size * (buffer->persistent_mapped_ptr ? 3 : 1));

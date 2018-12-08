@@ -72,7 +72,6 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 		case vao_brushmodel_lm_unit1:
 		{
 			// tmus: [material, lightmap, material2]
-			GLC_VAOSetVertexBuffer(vao, brushModel_vbo);
 			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
 			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
 			GLC_VAOEnableTextureCoordPointer(vao, 1, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
@@ -82,7 +81,6 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 		case vao_brushmodel_details:
 		{
 			// tmus: [details]
-			GLC_VAOSetVertexBuffer(vao, brushModel_vbo);
 			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
 			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, detail_coords));
 			break;
@@ -90,13 +88,13 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 		case vao_brushmodel_lightmap_pass:
 		{
 			// tmus: [lightmap]
-			GLC_VAOSetVertexBuffer(vao, brushModel_vbo);
 			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
 			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 			break;
 		}
 		case vao_brushmodel_simpletex:
 		{
+			// tmus: [material]
 			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
 			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
 			break;

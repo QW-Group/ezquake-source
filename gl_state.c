@@ -264,7 +264,7 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 		int i;
 		for (i = 0; i < sizeof(state->textureUnits) / sizeof(state->textureUnits[0]); ++i) {
 			state->textureUnits[i].enabled = false;
-			state->textureUnits[i].mode = GL_MODULATE;
+			state->textureUnits[i].mode = r_texunit_mode_modulate;
 		}
 	}
 #endif
@@ -1243,3 +1243,25 @@ void R_GLC_ConfigureAlphaTesting(rendering_state_t* state, qbool enabled, r_alph
 }
 
 #endif // RENDERER_OPTION_CLASSIC_OPENGL
+
+void R_BufferInvalidateBoundState(buffer_ref ref)
+{
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+	int i;
+
+	if (R_BufferReferencesEqual(opengl.rendering_state.vertex_array.buf, ref)) {
+		opengl.rendering_state.vertex_array.buf = null_buffer_reference;
+	}
+	if (R_BufferReferencesEqual(opengl.rendering_state.color_array.buf, ref)) {
+		opengl.rendering_state.color_array.buf = null_buffer_reference;
+	}
+	if (R_BufferReferencesEqual(opengl.rendering_state.normal_array.buf, ref)) {
+		opengl.rendering_state.normal_array.buf = null_buffer_reference;
+	}
+	for (i = 0; i < sizeof(opengl.rendering_state.textureUnits) / sizeof(opengl.rendering_state.textureUnits[0]); ++i) {
+		if (R_BufferReferencesEqual(opengl.rendering_state.textureUnits[i].va.buf, ref)) {
+			opengl.rendering_state.textureUnits[i].va.buf = null_buffer_reference;
+		}
+	}
+#endif
+}
