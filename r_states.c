@@ -50,7 +50,7 @@ static void R_InitialiseWorldStates(void)
 	state->blendFunc = r_blendfunc_src_zero_dest_one_minus_src_color;
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
-	state = R_InitRenderingState(r_state_world_caustics, true, "causticsState", vao_brushmodel);
+	state = R_InitRenderingState(r_state_world_caustics, true, "causticsState", vao_brushmodel_simpletex);
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_decal);
 	state->blendFunc = r_blendfunc_src_dst_color_dest_src_color;
 	state->blendingEnabled = true;

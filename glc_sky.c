@@ -294,6 +294,41 @@ static qbool GLC_SkyProgramCompile(void)
 	return R_ProgramReady(r_program_sky_glc);
 }
 
+static void GLC_DrawSky_Program(void)
+{
+	extern msurface_t *skychain;
+	float skySpeedscale = r_refdef2.time * 8;
+	float skySpeedscale2 = r_refdef2.time * 16;
+
+	skySpeedscale -= (int)skySpeedscale & ~127;
+	skySpeedscale2 -= (int)skySpeedscale2 & ~127;
+
+	skySpeedscale /= 128.0f;
+	skySpeedscale2 /= 128.0f;
+
+	R_ProgramUse(r_program_sky_glc);
+	R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale, skySpeedscale);
+	R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale2, skySpeedscale2);
+	R_ProgramUniform3fv(r_program_uniform_sky_glc_cameraPosition, r_refdef.vieworg);
+
+	if (r_skyboxloaded && R_UseCubeMapForSkyBox()) {
+		extern texture_ref skybox_cubeMap;
+
+		glEnable(GL_TEXTURE_CUBE_MAP);
+		R_ApplyRenderingState(r_state_skybox);
+		renderer.TextureUnitBind(0, skybox_cubeMap);
+		GLC_DrawFastSkyChain();
+		glDisable(GL_TEXTURE_CUBE_MAP);
+	}
+	else {
+		GLC_StateBeginMultiTextureSkyDome(true);
+		GLC_DrawFastSkyChain();
+	}
+
+	R_ProgramUse(r_program_none);
+	skychain = NULL;
+}
+
 void GLC_DrawSky(void)
 {
 	msurface_t	*fa;
@@ -302,48 +337,13 @@ void GLC_DrawSky(void)
 	extern cvar_t gl_program_sky;
 
 	if (gl_program_sky.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_SkyProgramCompile()) {
-		float skySpeedscale = r_refdef2.time * 8;
-		float skySpeedscale2 = r_refdef2.time * 16;
-
-		skySpeedscale -= (int)skySpeedscale & ~127;
-		skySpeedscale2 -= (int)skySpeedscale2 & ~127;
-
-		skySpeedscale /= 128.0f;
-		skySpeedscale2 /= 128.0f;
-
-		R_ProgramUse(r_program_sky_glc);
-		R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale, skySpeedscale);
-		R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale2, skySpeedscale2);
-		R_ProgramUniform3fv(r_program_uniform_sky_glc_cameraPosition, r_refdef.vieworg);
-
-		if (r_skyboxloaded && R_UseCubeMapForSkyBox()) {
-			extern texture_ref skybox_cubeMap;
-
-			glEnable(GL_TEXTURE_CUBE_MAP);
-			R_ApplyRenderingState(r_state_skybox);
-			renderer.TextureUnitBind(0, skybox_cubeMap);
-			GLC_DrawFastSkyChain();
-			glDisable(GL_TEXTURE_CUBE_MAP);
-		}
-		else {
-			GLC_StateBeginMultiTextureSkyDome(true);
-			GLC_DrawFastSkyChain();
-		}
-
-		R_ProgramUse(r_program_none);
-		skychain = NULL;
-		return;
+		GLC_DrawSky_Program();
 	}
-
-	if (r_fastsky.integer) {
+	else if (r_fastsky.integer) {
 		GLC_StateBeginFastSky();
 		GLC_DrawFastSkyChain();
-
-		skychain = NULL;
-		return;
 	}
-	
-	if (r_skyboxloaded && R_UseCubeMapForSkyBox()) {
+	else if (r_skyboxloaded && R_UseCubeMapForSkyBox()) {
 		extern texture_ref skybox_cubeMap;
 
 		R_ApplyRenderingState(r_state_skybox);
@@ -359,29 +359,26 @@ void GLC_DrawSky(void)
 		}
 
 		glDisable(GL_TEXTURE_CUBE_MAP);
+	}
+	else if (R_DetermineSkyLimits(&ignore_z)) {
+		// draw a skybox or classic quake clouds
+		if (r_skyboxloaded) {
+			GLC_DrawSkyBox();
+		}
+		else {
+			GLC_DrawSkyDome();
+		}
 
-		skychain = NULL;
-		return;
+		// draw the sky polys into the Z buffer
+		// don't need depth test yet
+		if (!ignore_z) {
+			GLC_StateBeginSkyZBufferPass();
+			GLC_DrawFastSkyChain();
+		}
 	}
 
-	if (!R_DetermineSkyLimits(&ignore_z)) {
-		return;
-	}
-
-	// draw a skybox or classic quake clouds
-	if (r_skyboxloaded) {
-		GLC_DrawSkyBox();
-	}
-	else {
-		GLC_DrawSkyDome();
-	}
-
-	// draw the sky polys into the Z buffer
-	// don't need depth test yet
-	if (!ignore_z) {
-		GLC_StateBeginSkyZBufferPass();
-		GLC_DrawFastSkyChain();
-	}
+	skychain = NULL;
+	return;
 }
 
 static void EmitSkyVert(vec3_t v, qbool multitexture)

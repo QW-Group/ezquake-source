@@ -125,11 +125,43 @@ static void GLC_CalcCausticTexCoords(float *v, float *s, float *t)
 	*t *= -3 * (0.5 / 64);
 }
 
-void GLC_EmitCausticsPolys(qbool use_vbo)
+static void GLC_EmitCausticPolys_Program(glpoly_t* caustics_polys)
+{
+	unsigned int index_count = 0;
+	glpoly_t *p;
+
+	R_ProgramUse(r_program_caustics_glc);
+	R_ProgramUniform1f(r_program_uniform_caustics_glc_time, cl.time);
+
+	for (p = caustics_polys; p; p = p->caustics_chain) {
+		index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+	}
+
+	if (index_count) {
+		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+	}
+	R_ProgramUse(r_program_none);
+}
+
+static void GLC_EmitCausticPolys_Immediate(glpoly_t* caustics_polys)
 {
 	glpoly_t *p;
-	int i;
 	float s, t;
+	int i;
+
+	for (p = caustics_polys; p; p = p->caustics_chain) {
+		GLC_Begin(GL_TRIANGLE_STRIP);
+		for (i = 0; i < p->numverts; ++i) {
+			GLC_CalcCausticTexCoords(p->verts[i], &s, &t);
+			glTexCoord2f(s, t);
+			GLC_Vertex3fv(p->verts[i]);
+		}
+		GLC_End();
+	}
+}
+
+void GLC_EmitCausticsPolys(qbool use_vbo)
+{
 	extern glpoly_t *caustics_polys;
 	extern cvar_t gl_program_turbsurfaces;
 
@@ -143,30 +175,10 @@ void GLC_EmitCausticsPolys(qbool use_vbo)
 	renderer.TextureUnitBind(0, underwatertexture);
 
 	if (use_vbo && gl_program_turbsurfaces.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_CausticsProgramCompile()) {
-		unsigned int index_count = 0;
-
-		R_ProgramUse(r_program_caustics_glc);
-		R_ProgramUniform1f(r_program_uniform_caustics_glc_time, cl.time);
-
-		for (p = caustics_polys; p; p = p->caustics_chain) {
-			index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
-		}
-
-		if (index_count) {
-			GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-		}
-		R_ProgramUse(r_program_none);
+		GLC_EmitCausticPolys_Program(caustics_polys);
 	}
 	else {
-		for (p = caustics_polys; p; p = p->caustics_chain) {
-			GLC_Begin(GL_TRIANGLE_STRIP);
-			for (i = 0; i < p->numverts; ++i) {
-				GLC_CalcCausticTexCoords(p->verts[i], &s, &t);
-				glTexCoord2f(s, t);
-				GLC_Vertex3fv(p->verts[i]);
-			}
-			GLC_End();
-		}
+		GLC_EmitCausticPolys_Immediate(caustics_polys);
 	}
 
 	caustics_polys = NULL;

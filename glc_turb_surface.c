@@ -44,10 +44,59 @@ static qbool GLC_TurbSurfaceProgramCompile(void)
 	return R_ProgramReady(r_program_turb_glc);
 }
 
+static void GLC_DrawWaterSurfaces_Program(void)
+{
+	qbool use_vbo = buffers.supported && modelIndexes;
+	msurface_t* fa;
+	texture_ref prev_tex = null_texture_reference;
+	int index_count = 0;
+
+	R_ProgramUse(r_program_turb_glc);
+	R_ProgramUniform1f(r_program_uniform_turb_glc_time, cl.time);
+
+	for (fa = waterchain; fa; fa = fa->texturechain) {
+		glpoly_t *p;
+
+		if (!R_TextureReferenceEqual(fa->texinfo->texture->gl_texturenum, prev_tex)) {
+			prev_tex = fa->texinfo->texture->gl_texturenum;
+
+			if (index_count) {
+				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+				index_count = 0;
+			}
+			renderer.TextureUnitBind(0, prev_tex);
+		}
+
+		if (use_vbo) {
+			for (p = fa->polys; p; p = p->next) {
+				index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+			}
+		}
+		else {
+			GLC_EmitWaterPoly(fa);
+		}
+	}
+
+	if (index_count) {
+		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+	}
+	R_ProgramUse(r_program_none);
+}
+
+static void GLC_DrawWaterSurfaces_Immediate(void)
+{
+	msurface_t *s;
+
+	for (s = waterchain; s; s = s->texturechain) {
+		renderer.TextureUnitBind(0, s->texinfo->texture->gl_texturenum);
+
+		GLC_EmitWaterPoly(s);
+	}
+}
+
 void GLC_DrawWaterSurfaces(void)
 {
 	extern cvar_t gl_program_turbsurfaces;
-	msurface_t *s;
 
 	if (!waterchain) {
 		return;
@@ -57,48 +106,10 @@ void GLC_DrawWaterSurfaces(void)
 	GLC_StateBeginWaterSurfaces();
 
 	if (gl_program_turbsurfaces.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_TurbSurfaceProgramCompile()) {
-		qbool use_vbo = buffers.supported && modelIndexes;
-		msurface_t* fa;
-		texture_ref prev_tex = null_texture_reference;
-		int index_count = 0;
-
-		R_ProgramUse(r_program_turb_glc);
-		R_ProgramUniform1f(r_program_uniform_turb_glc_time, cl.time);
-	
-		for (fa = waterchain; fa; fa = fa->texturechain) {
-			glpoly_t *p;
-
-			if (!R_TextureReferenceEqual(fa->texinfo->texture->gl_texturenum, prev_tex)) {
-				prev_tex = fa->texinfo->texture->gl_texturenum;
-
-				if (index_count) {
-					GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-					index_count = 0;
-				}
-				renderer.TextureUnitBind(0, prev_tex);
-			}
-
-			if (use_vbo) {
-				for (p = fa->polys; p; p = p->next) {
-					index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
-				}
-			}
-			else {
-				GLC_EmitWaterPoly(fa);
-			}
-		}
-
-		if (index_count) {
-			GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-		}
-		R_ProgramUse(r_program_none);
+		GLC_DrawWaterSurfaces_Program();
 	}
 	else {
-		for (s = waterchain; s; s = s->texturechain) {
-			renderer.TextureUnitBind(0, s->texinfo->texture->gl_texturenum);
-
-			GLC_EmitWaterPoly(s);
-		}
+		GLC_DrawWaterSurfaces_Immediate();
 	}
 
 	R_TraceLeaveRegion(true);

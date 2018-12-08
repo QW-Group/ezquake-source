@@ -798,7 +798,7 @@ static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, vec3_t shadevector)
 	const aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 	const maliasframedesc_t* frame = &paliashdr->frames[ent->frame];
 	const maliasframedesc_t* oldframe = &paliashdr->frames[ent->oldframe];
-	float lheight = ent->origin[2] - ent->lightspot[2], height = 1 - lheight;
+	float lheight = ent->origin[2] - ent->lightspot[2];
 	int pose1, pose2;
 	float lerpfrac;
 
