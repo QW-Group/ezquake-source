@@ -19,6 +19,7 @@ typedef enum {
 	r_program_turb_glc,
 	r_program_caustics_glc,
 	r_program_aliasmodel_std_glc,
+	r_program_aliasmodel_shell_glc,
 
 	r_program_lightmap_compute,
 
@@ -62,11 +63,17 @@ typedef enum {
 	r_program_uniform_aliasmodel_std_glc_fsCausticEffects,
 	r_program_uniform_aliasmodel_std_glc_lerpFraction,
 	r_program_uniform_aliasmodel_std_glc_causticsSampler,
+	r_program_uniform_aliasmodel_shell_glc_fsBaseColor1,
+	r_program_uniform_aliasmodel_shell_glc_fsBaseColor2,
+	r_program_uniform_aliasmodel_shell_glc_texSampler,
+	r_program_uniform_aliasmodel_shell_glc_lerpFraction,
+	r_program_uniform_aliasmodel_shell_glc_scroll,
 	r_program_uniform_count
 } r_program_uniform_id;
 
 typedef enum {
 	r_program_attribute_aliasmodel_std_glc_flags,
+	r_program_attribute_aliasmodel_shell_glc_flags,
 
 	r_program_attribute_count
 } r_program_attribute_id;

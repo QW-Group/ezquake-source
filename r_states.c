@@ -267,7 +267,7 @@ static void R_InitialiseEntityStates(void)
 {
 	rendering_state_t* state;
 
-	state = R_InitRenderingState(r_state_aliasmodel_powerupshell, true, "powerupShellState", vao_none);
+	state = R_InitRenderingState(r_state_aliasmodel_powerupshell, true, "powerupShellState", vao_aliasmodel);
 	state->fog.enabled = true;
 	state->cullface.enabled = true;
 	state->cullface.mode = r_cullface_front;

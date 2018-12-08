@@ -141,9 +141,14 @@ void GLC_StateBeginDrawMapOutline(void)
 void GLC_StateBeginAliasPowerupShell(qbool weapon)
 {
 	extern texture_ref shelltexture;
+	extern cvar_t r_viewmodelsize;
 
 	R_ApplyRenderingState(weapon ? r_state_weaponmodel_powerupshell : r_state_aliasmodel_powerupshell);
 	renderer.TextureUnitBind(0, shelltexture);
+
+	if (weapon) {
+		R_ScaleModelview(0.5 + bound(0, r_viewmodelsize.value, 1) / 2, 1, 1);
+	}
 }
 
 void GLC_StateBeginMD3Draw(float alpha, qbool textured)

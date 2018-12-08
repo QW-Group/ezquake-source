@@ -2,21 +2,23 @@
 
 #ezquake-definitions
 
+attribute float flags;
+
 varying vec2 fsTextureCoord;
-varying vec4 fsBaseColor;
-uniform vec3 angleVector;        // normalized
-uniform float shadelight;        // divided by 256 in C
-uniform float ambientlight;      // divided by 256 in C
+varying vec2 fsAltTextureCoord;
 uniform float lerpFraction;      // 0 to 1
+uniform vec4 scroll;
 
 void main()
 {
-	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-	fsTextureCoord = gl_MultiTexCoord0.st;
+	float lerpFrac = lerpFraction;
 
-	// Lighting: this is rough approximation
-	//   Credit to mh @ http://forums.insideqc.com/viewtopic.php?f=3&t=2983
-	float l = (1 - step(1000, shadelight)) * min((dot(gl_Normal, angleVector) + 1) * shadelight + ambientlight, 1);
+#ifdef EZQ_ALIASMODEL_MUZZLEHACK
+	// #define AM_VERTEX_NOLERP 1 - no bittest in glsl 1.2
+	lerpFrac = sign(lerpFrac) * max(lerpFrac, mod(flags, 2));
+#endif
 
-	fsBaseColor = vec4(gl_Color.rgb * l, gl_Color.a);
+	gl_Position = gl_ModelViewProjectionMatrix * ((gl_Vertex + lerpFrac * vec4(gl_MultiTexCoord1.xyz, 0)) + vec4(gl_Normal * 0.5, 0));
+	fsTextureCoord = vec2(gl_MultiTexCoord0.s * 2 + scroll.x, gl_MultiTexCoord0.t * 2 + scroll.y);
+	fsAltTextureCoord = vec2(gl_MultiTexCoord0.s * 2 + scroll.z, gl_MultiTexCoord0.t * 2 + scroll.a);
 }

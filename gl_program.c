@@ -185,6 +185,16 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_aliasmodel_std_glc, "lerpFraction", 1, false },
 	// r_program_uniform_aliasmodel_std_glc_causticsSampler
 	{ r_program_aliasmodel_std_glc, "causticsSampler", 1, false },
+	// r_program_uniform_aliasmodel_shell_glc_fsBaseColor1,
+	{ r_program_aliasmodel_shell_glc, "fsBaseColor1", 1, false },
+	// r_program_uniform_aliasmodel_shell_glc_fsBaseColor2,
+	{ r_program_aliasmodel_shell_glc, "fsBaseColor2", 1, false },
+	// r_program_uniform_aliasmodel_shell_glc_texSampler,
+	{ r_program_aliasmodel_shell_glc, "texSampler", 1, false },
+	// r_program_uniform_aliasmodel_shell_glc_lerpFraction,
+	{ r_program_aliasmodel_shell_glc, "lerpFraction", 1, false },
+	// r_program_uniform_aliasmodel_shell_glc_scroll,
+	{ r_program_aliasmodel_shell_glc, "scroll", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -201,7 +211,9 @@ typedef struct r_program_attribute_s {
 
 static r_program_attribute_t program_attributes[] = {
 	// r_program_attribute_aliasmodel_std_glc_flags
-	{ r_program_aliasmodel_std_glc, "flags" }
+	{ r_program_aliasmodel_std_glc, "flags" },
+	// r_program_attribute_aliasmodel_shell_glc_flags
+	{ r_program_aliasmodel_shell_glc, "flags" },
 };
 
 #ifdef C_ASSERT
@@ -970,6 +982,7 @@ static void GL_BuildCoreDefinitions(void)
 	GL_DefineProgram_VF(r_program_turb_glc, "turb-rendering", true, glc_turbsurface, renderer_classic);
 	GL_DefineProgram_VF(r_program_caustics_glc, "caustics-rendering", true, glc_caustics, renderer_classic);
 	GL_DefineProgram_VF(r_program_aliasmodel_std_glc, "aliasmodel-std", true, glc_aliasmodel_std, renderer_classic);
+	GL_DefineProgram_VF(r_program_aliasmodel_shell_glc, "aliasmodel-shell", true, glc_aliasmodel_shell, renderer_classic);
 #endif
 }
 
