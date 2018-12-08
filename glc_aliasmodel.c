@@ -49,7 +49,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2);
 static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector);
-static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int verts);
+static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int firstVert, int verts);
 
 // Which pose to use if shadow to be drawn
 static int lastposenum;
@@ -286,6 +286,7 @@ static void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int
 			qbool mtex = R_TextureReferenceIsValid(fb_texture) && gl_mtexable;
 			float angle_radians = -ent->angles[YAW] * M_PI / 180.0;
 			vec3_t angle_vector = { cos(angle_radians), sin(angle_radians), 1 };
+			int firstVert = model->vbo_start + pose1 * paliashdr->vertsPerPose;
 
 			VectorNormalize(angle_vector);
 			R_AliasModelColor(ent, color, &invalidate_texture);
@@ -301,7 +302,11 @@ static void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int
 
 			GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, (render_effects & RF_ALPHABLEND) || ent->r_modelalpha < 1, ent->custom_model, ent->renderfx & RF_WEAPONMODEL);
 			R_CustomColor(color[0], color[1], color[2], color[3]);
-			GL_DrawArrays(GL_TRIANGLES, model->vbo_start + pose1 * paliashdr->vertsPerPose, paliashdr->vertsPerPose);
+			GL_DrawArrays(GL_TRIANGLES, firstVert, paliashdr->vertsPerPose);
+
+			if (outline) {
+				GLC_DrawCachedAliasOutlineFrame(model, GL_TRIANGLES, firstVert, paliashdr->vertsPerPose);
+			}
 			R_ProgramUse(r_program_none);
 		}
 	}
@@ -404,7 +409,7 @@ static void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int
 		}
 		if (outline) {
 			if (cache) {
-				GLC_DrawCachedAliasOutlineFrame(model, primitive, position);
+				GLC_DrawCachedAliasOutlineFrame(model, primitive, 0, position);
 			}
 			else {
 				GLC_DrawAliasOutlineFrame(ent, model, pose1, pose2);
@@ -433,7 +438,7 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, tex
 	}
 }
 
-static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int verts)
+static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int firstVert, int verts)
 {
 	GLC_StateBeginAliasOutlineFrame();
 
@@ -442,7 +447,7 @@ static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, in
 	R_CustomColor(0, 0, 0, 1);
 	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
-	GL_DrawArrays(primitive, 0, verts);
+	GL_DrawArrays(primitive, firstVert, verts);
 }
 
 static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2)
