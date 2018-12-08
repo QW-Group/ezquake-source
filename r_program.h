@@ -61,6 +61,7 @@ typedef enum {
 	r_program_uniform_aliasmodel_std_glc_time,
 	r_program_uniform_aliasmodel_std_glc_fsCausticEffects,
 	r_program_uniform_aliasmodel_std_glc_lerpFraction,
+	r_program_uniform_aliasmodel_std_glc_causticsSampler,
 	r_program_uniform_count
 } r_program_uniform_id;
 

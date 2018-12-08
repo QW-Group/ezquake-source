@@ -183,6 +183,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_aliasmodel_std_glc, "fsCausticEffects", 1, false },
 	// r_program_uniform_aliasmodel_std_glc_lerpFraction
 	{ r_program_aliasmodel_std_glc, "lerpFraction", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_causticsSampler
+	{ r_program_aliasmodel_std_glc, "causticsSampler", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -845,40 +847,46 @@ void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value)
 {
 	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
 
-	if (qglProgramUniform1i) {
-		qglProgramUniform1i(program_data[uniform->program_id].program, uniform->location, value);
+	if (uniform->location >= 0) {
+		if (qglProgramUniform1i) {
+			qglProgramUniform1i(program_data[uniform->program_id].program, uniform->location, value);
+		}
+		else {
+			R_ProgramUse(uniform->program_id);
+			qglUniform1i(uniform->location, value);
+		}
+		uniform->int_value = value;
 	}
-	else {
-		R_ProgramUse(uniform->program_id);
-		qglUniform1i(uniform->location, value);
-	}
-	uniform->int_value = value;
 }
 
 void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value)
 {
 	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
 
-	if (qglProgramUniform1f) {
-		qglProgramUniform1f(program_data[uniform->program_id].program, uniform->location, value);
+	if (uniform->location >= 0) {
+		if (qglProgramUniform1f) {
+			qglProgramUniform1f(program_data[uniform->program_id].program, uniform->location, value);
+		}
+		else {
+			R_ProgramUse(uniform->program_id);
+			qglUniform1f(uniform->location, value);
+		}
+		uniform->int_value = value;
 	}
-	else {
-		R_ProgramUse(uniform->program_id);
-		qglUniform1f(uniform->location, value);
-	}
-	uniform->int_value = value;
 }
 
 void R_ProgramUniform3fv(r_program_uniform_id uniform_id, float* values)
 {
 	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
 
-	if (qglProgramUniform3fv) {
-		qglProgramUniform3fv(program_data[uniform->program_id].program, uniform->location, uniform->count, values);
-	}
-	else {
-		R_ProgramUse(uniform->program_id);
-		qglUniform3fv(uniform->location, uniform->count, values);
+	if (uniform->location >= 0) {
+		if (qglProgramUniform3fv) {
+			qglProgramUniform3fv(program_data[uniform->program_id].program, uniform->location, uniform->count, values);
+		}
+		else {
+			R_ProgramUse(uniform->program_id);
+			qglUniform3fv(uniform->location, uniform->count, values);
+		}
 	}
 }
 
@@ -886,12 +894,14 @@ void R_ProgramUniform4fv(r_program_uniform_id uniform_id, float* values)
 {
 	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
 
-	if (qglProgramUniform4fv) {
-		qglProgramUniform4fv(program_data[uniform->program_id].program, uniform->location, uniform->count, values);
-	}
-	else {
-		R_ProgramUse(uniform->program_id);
-		qglUniform4fv(uniform->location, uniform->count, values);
+	if (uniform->location >= 0) {
+		if (qglProgramUniform4fv) {
+			qglProgramUniform4fv(program_data[uniform->program_id].program, uniform->location, uniform->count, values);
+		}
+		else {
+			R_ProgramUse(uniform->program_id);
+			qglUniform4fv(uniform->location, uniform->count, values);
+		}
 	}
 }
 
@@ -899,12 +909,14 @@ void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, float* values)
 {
 	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
 
-	if (qglProgramUniformMatrix4fv) {
-		qglProgramUniformMatrix4fv(program_data[uniform->program_id].program, uniform->location, uniform->count, uniform->transpose, values);
-	}
-	else {
-		R_ProgramUse(uniform->program_id);
-		qglUniformMatrix4fv(uniform->location, uniform->count, uniform->transpose, values);
+	if (uniform->location >= 0) {
+		if (qglProgramUniformMatrix4fv) {
+			qglProgramUniformMatrix4fv(program_data[uniform->program_id].program, uniform->location, uniform->count, uniform->transpose, values);
+		}
+		else {
+			R_ProgramUse(uniform->program_id);
+			qglUniformMatrix4fv(uniform->location, uniform->count, uniform->transpose, values);
+		}
 	}
 }
 

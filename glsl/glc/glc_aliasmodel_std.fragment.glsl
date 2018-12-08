@@ -3,12 +3,13 @@
 #ezquake-definitions
 
 uniform sampler2D texSampler;
-uniform sampler2D causticsSampler;
 uniform int fsTextureEnabled;
 uniform float fsMinLumaMix;
+
 #ifdef DRAW_CAUSTIC_TEXTURES
+uniform sampler2D causticsSampler;
 uniform float time;
-uniform int fsCausticEffects;
+uniform float fsCausticEffects;
 #endif
 
 varying vec2 fsTextureCoord;
@@ -26,13 +27,15 @@ void main()
 
 #ifdef DRAW_CAUSTIC_TEXTURES
 	if (fsCausticEffects != 0) {
-		vec2 causticCoord = vec2(
+		vec4 causticCoord = vec4(
 			// Using multipler of 3 here - not in other caustics logic but range
 			//   isn't enough otherwise, effect too subtle
 			(fsTextureCoord.s + sin(0.465 * (time + fsTextureCoord.t))) * 3 * -0.1234375,
-			(fsTextureCoord.t + sin(0.465 * (time + fsTextureCoord.s))) * 3 * -0.1234375
+			(fsTextureCoord.t + sin(0.465 * (time + fsTextureCoord.s))) * 3 * -0.1234375,
+			0,
+			1
 		);
-		vec4 caustic = texture2D(causticsSampler, causticCoord);
+		vec4 caustic = texture2D(causticsSampler, (gl_TextureMatrix[1] * causticCoord).st);
 
 		// FIXME: Do proper GL_DECAL etc
 		gl_FragColor = vec4(caustic.rgb * gl_FragColor.rgb * 1.8, gl_FragColor.a);
