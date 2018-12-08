@@ -66,6 +66,8 @@ qbool GLM_InitialiseVAOHandling(void)
 	// OpenGL 2.0
 	GL_LoadMandatoryFunctionExtension(glEnableVertexAttribArray, vaos_supported);
 	GL_LoadMandatoryFunctionExtension(glVertexAttribPointer, vaos_supported);
+
+	// OpengGL 3.0
 	GL_LoadMandatoryFunctionExtension(glVertexAttribIPointer, vaos_supported);
 
 	if (SDL_GL_ExtensionSupported("GL_ARB_instanced_arrays")) {

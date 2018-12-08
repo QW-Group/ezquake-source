@@ -2,8 +2,6 @@
 
 #ezquake-definitions
 
-attribute float flags;
-
 varying vec2 fsTextureCoord;
 varying vec4 fsBaseColor;
 uniform vec3 angleVector;        // normalized
@@ -11,16 +9,9 @@ uniform float shadelight;        // divided by 256 in C
 uniform float ambientlight;      // divided by 256 in C
 uniform float lerpFraction;      // 0 to 1
 
-#define AM_VERTEX_NOLERP 1
-
 void main()
 {
-	float lerpFrac = lerpFraction;
-#ifdef EZQ_ALIASMODEL_MUZZLEHACK
-	lerpFrac = sign(lerpFrac) * max(lerpFrac, mod(flags, 2));
-#endif
-
-	gl_Position = gl_ModelViewProjectionMatrix * (gl_Vertex + lerpFrac * vec4(gl_MultiTexCoord1.xyz, 0));
+	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 	fsTextureCoord = gl_MultiTexCoord0.st;
 
 	// Lighting: this is rough approximation

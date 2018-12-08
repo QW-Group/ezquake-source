@@ -90,6 +90,7 @@ static void GLC_ConfigureAliasModelState(buffer_ref vbo)
 		GLC_VAOEnableNormalPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, normal));
 		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 0, 2, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords));
 		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 1, 3, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, direction));
+		GLC_VAOEnableCustomAttribute(vao_aliasmodel, 0, r_program_attribute_aliasmodel_std_glc_flags, 1, GL_INT, false, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags));
 	}
 	else {
 		if (gl_vbo_clientmemory.integer) {
@@ -244,18 +245,25 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_
 	color[3] = ent->r_modelalpha;
 }
 
-#define DRAWFLAGS_CAUSTICS 1
+#define DRAWFLAGS_CAUSTICS     1
+#define DRAWFLAGS_MUZZLEHACK   2
 
 static qbool GLC_AliasModelStandardCompile(void)
 {
-	int flags = gl_caustics.integer ? DRAWFLAGS_CAUSTICS : 0;
+	extern cvar_t r_lerpmuzzlehack;
+	int flags =
+		(gl_caustics.integer ? DRAWFLAGS_CAUSTICS : 0) |
+		(r_lerpmuzzlehack.integer ? DRAWFLAGS_MUZZLEHACK : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_aliasmodel_std_glc, flags)) {
 		char included_definitions[128];
 
 		included_definitions[0] = '\0';
 		if (flags & DRAWFLAGS_CAUSTICS) {
-			strlcpy(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
+			strlcat(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
+		}
+		if (flags & DRAWFLAGS_MUZZLEHACK) {
+			strlcat(included_definitions, "#define EZQ_ALIASMODEL_MUZZLEHACK\n", sizeof(included_definitions));
 		}
 
 		R_ProgramCompileWithInclude(r_program_aliasmodel_std_glc, included_definitions);
@@ -289,6 +297,7 @@ static void GLC_DrawAliasFrameImpl(entity_t* ent, model_t* model, int pose1, int
 			R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_fsTextureEnabled, invalidate_texture ? 0 : 1);
 			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsMinLumaMix, 1.0f - (ent->full_light ? bound(0, gl_fb_models.integer, 1) : 0));
 			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsCausticEffects, render_effects & RF_CAUSTICS ? 1 : 0);
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_lerpFraction, lerpfrac);
 
 			GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, (render_effects & RF_ALPHABLEND) || ent->r_modelalpha < 1, ent->custom_model, ent->renderfx & RF_WEAPONMODEL);
 			R_CustomColor(color[0], color[1], color[2], color[3]);

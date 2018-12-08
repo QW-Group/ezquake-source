@@ -60,8 +60,15 @@ typedef enum {
 	r_program_uniform_aliasmodel_std_glc_fsMinLumaMix,
 	r_program_uniform_aliasmodel_std_glc_time,
 	r_program_uniform_aliasmodel_std_glc_fsCausticEffects,
+	r_program_uniform_aliasmodel_std_glc_lerpFraction,
 	r_program_uniform_count
 } r_program_uniform_id;
+
+typedef enum {
+	r_program_attribute_aliasmodel_std_glc_flags,
+
+	r_program_attribute_count
+} r_program_attribute_id;
 
 typedef enum {
 	r_program_memory_barrier_image_access,
@@ -73,6 +80,7 @@ void R_ProgramInitialiseState(void);
 int R_ProgramCustomOptions(r_program_id program_id);
 qbool R_ProgramReady(r_program_id program_id);
 void R_ProgramUse(r_program_id program_id);
+r_program_id R_ProgramInUse(void);
 int R_ProgramCustomOptions(r_program_id program_id);
 void R_ProgramSetCustomOptions(r_program_id program_id, int options);
 
@@ -85,6 +93,8 @@ void R_ProgramUniform4fv(r_program_uniform_id uniform_id, float* values);
 void R_ProgramUniform3fv(r_program_uniform_id uniform_id, float* values);
 void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, float* values);
 int R_ProgramUniformGet1i(r_program_uniform_id uniform_id);
+
+int R_ProgramAttributeLocation(r_program_attribute_id attr_id);
 
 // Check if a program needs to be recompiled
 qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options);

@@ -402,6 +402,7 @@ void R_SetupAliasFrame(
 
 	if (lerp == 1) {
 		oldpose = pose;
+		lerp = 0;
 	}
 	else if (lerp == 0) {
 		pose = oldpose;

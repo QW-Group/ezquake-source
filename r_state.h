@@ -23,7 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_vao.h"
 
-#define MAX_GLC_TEXTURE_UNIT_STATES 4
+#define MAX_GLC_TEXTURE_UNIT_STATES    4
+#define MAX_GLC_ATTRIBUTES            16
 
 // rendering state
 typedef enum {
@@ -98,6 +99,12 @@ typedef struct glc_vertex_array_element_s {
 	int stride;
 	void* pointer_or_offset;
 } glc_vertex_array_element_t;
+
+typedef struct glc_attribute_s {
+	qbool enabled;
+
+	int location;
+} glc_attribute_t;
 #endif
 
 typedef struct rendering_state_s {
@@ -168,6 +175,8 @@ typedef struct rendering_state_s {
 	glc_vertex_array_element_t vertex_array;
 	glc_vertex_array_element_t color_array;
 	glc_vertex_array_element_t normal_array;
+
+	glc_attribute_t glc_attributes[MAX_GLC_ATTRIBUTES];
 #endif
 
 	// always false if not classic

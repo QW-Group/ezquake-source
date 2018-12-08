@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "gl_local.h"
 #include "r_vao.h"
+#include "r_program.h"
 
 void GLC_VAOEnableVertexPointer(r_vao_id vao, int size, GLenum type, GLsizei stride, GLvoid* pointer);
 void GLC_VAODisableVertexPointer(r_vao_id vao);
@@ -33,6 +34,8 @@ void GLC_VAOEnableTextureCoordPointer(r_vao_id vao, int index, int size, GLenum 
 void GLC_VAODisableTextureCoordPointer(r_vao_id vao, int index);
 void GLC_VAOSetIndexBuffer(r_vao_id vao, buffer_ref ref);
 void GLC_VAOSetVertexBuffer(r_vao_id vao, buffer_ref ref);
+void GLC_VAOEnableCustomAttribute(r_vao_id vao, int index, r_program_attribute_id attr_id, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
+void GLC_VAODisableCustomAttribute(r_vao_id vao, int index);
 
 void GLC_DeleteVAOs(void);
 void GLC_GenVertexArray(r_vao_id vao, const char* name);

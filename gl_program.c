@@ -181,10 +181,29 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_aliasmodel_std_glc, "time", 1, false },
 	// r_program_uniform_aliasmodel_std_glc_fsCausticEffects
 	{ r_program_aliasmodel_std_glc, "fsCausticEffects", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_lerpFraction
+	{ r_program_aliasmodel_std_glc, "lerpFraction", 1, false },
 };
 
 #ifdef C_ASSERT
 C_ASSERT(sizeof(program_uniforms) / sizeof(program_uniforms[0]) == r_program_uniform_count);
+#endif
+
+typedef struct r_program_attribute_s {
+	r_program_id program_id;
+	const char* name;
+
+	qbool found;
+	GLint location;
+} r_program_attribute_t;
+
+static r_program_attribute_t program_attributes[] = {
+	// r_program_attribute_aliasmodel_std_glc_flags
+	{ r_program_aliasmodel_std_glc, "flags" }
+};
+
+#ifdef C_ASSERT
+C_ASSERT(sizeof(program_attributes) / sizeof(program_attributes[0]) == r_program_attribute_count);
 #endif
 
 static gl_program_t program_data[r_program_count];
@@ -224,6 +243,9 @@ typedef void (APIENTRY *glProgramUniform3fv_t)(GLuint program, GLuint location, 
 typedef void (APIENTRY *glProgramUniform4fv_t)(GLuint program, GLuint location, GLsizei count, const GLfloat *value);
 typedef void (APIENTRY *glProgramUniformMatrix4fv_t)(GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 
+// Attributes
+typedef GLint (APIENTRY *glGetAttribLocation_t)(GLuint program, const GLchar* name);
+
 // Compute shaders
 typedef void (APIENTRY *glDispatchCompute_t)(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
 typedef void (APIENTRY *glMemoryBarrier_t)(GLbitfield barriers);
@@ -259,6 +281,9 @@ static glProgramUniform1f_t        qglProgramUniform1f;
 static glProgramUniform3fv_t       qglProgramUniform3fv;
 static glProgramUniform4fv_t       qglProgramUniform4fv;
 static glProgramUniformMatrix4fv_t qglProgramUniformMatrix4fv;
+
+// Attribute functions
+static glGetAttribLocation_t         qglGetAttribLocation;
 
 // Compute shaders
 static glDispatchCompute_t         qglDispatchCompute;
@@ -327,6 +352,31 @@ static void R_ProgramFindUniformsForProgram(r_program_id program_id)
 		if (program_uniforms[u].program_id == program_id) {
 			program_uniforms[u].found = false;
 			GL_ProgramUniformFind(u);
+		}
+	}
+}
+
+static r_program_attribute_t* GL_ProgramAttributeFind(r_program_attribute_id attribute_id)
+{
+	r_program_attribute_t* attribute = &program_attributes[attribute_id];
+	r_program_id program_id = attribute->program_id;
+
+	if (program_data[program_id].program && !attribute->found) {
+		attribute->location = qglGetAttribLocation(program_data[program_id].program, attribute->name);
+		attribute->found = true;
+	}
+
+	return attribute;
+}
+
+static void R_ProgramFindAttributesForProgram(r_program_id program_id)
+{
+	r_program_attribute_id a;
+
+	for (a = 0; a < r_program_attribute_count; ++a) {
+		if (program_attributes[a].program_id == program_id) {
+			program_attributes[a].found = false;
+			GL_ProgramAttributeFind(a);
 		}
 	}
 }
@@ -538,6 +588,7 @@ void GL_ProgramsShutdown(qbool restarting)
 {
 	r_program_id p;
 	r_program_uniform_id u;
+	r_program_attribute_id a;
 	gl_program_t* prog;
 
 	R_ProgramUse(r_program_none);
@@ -569,6 +620,11 @@ void GL_ProgramsShutdown(qbool restarting)
 		program_uniforms[u].location = -1;
 		program_uniforms[u].int_value = 0;
 	}
+
+	for (a = 0; a < r_program_attribute_count; ++a) {
+		program_attributes[a].found = false;
+		program_attributes[a].location = -1;
+	}
 }
 
 // Called during vid_restart, as starting up again
@@ -596,12 +652,12 @@ void GL_ProgramsInitialise(void)
 			gl_shader_def_t* compute = &program_data[p].shaders[shadertype_compute];
 			if (compute->length) {
 				GL_CompileComputeShaderProgram(p, compute->text, compute->length);
-				R_ProgramFindUniformsForProgram(p);
 			}
 			else {
 				GL_CompileProgram(&program_data[p]);
-				R_ProgramFindUniformsForProgram(p);
 			}
+			R_ProgramFindUniformsForProgram(p);
+			R_ProgramFindAttributesForProgram(p);
 		}
 	}
 }
@@ -696,6 +752,8 @@ void GL_LoadProgramFunctions(void)
 		GL_LoadMandatoryFunctionExtension(glUniform4fv, rendering_shaders_support);
 		GL_LoadMandatoryFunctionExtension(glUniformMatrix4fv, rendering_shaders_support);
 
+		GL_LoadMandatoryFunctionExtension(glGetAttribLocation, rendering_shaders_support);
+
 		glConfig.supported_features |= (rendering_shaders_support ? R_SUPPORT_RENDERING_SHADERS : 0);
 	}
 
@@ -733,6 +791,11 @@ void R_ProgramUse(r_program_id program_id)
 		GLM_UploadFrameConstants();
 	}
 #endif
+}
+
+r_program_id R_ProgramInUse(void)
+{
+	return currentProgram;
 }
 
 void R_ProgramInitialiseState(void)
@@ -865,6 +928,7 @@ qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_
 
 	if (GL_CompileProgram(program)) {
 		R_ProgramFindUniformsForProgram(program_id);
+		R_ProgramFindAttributesForProgram(program_id);
 		return true;
 	}
 	return false;
@@ -895,4 +959,13 @@ static void GL_BuildCoreDefinitions(void)
 	GL_DefineProgram_VF(r_program_caustics_glc, "caustics-rendering", true, glc_caustics, renderer_classic);
 	GL_DefineProgram_VF(r_program_aliasmodel_std_glc, "aliasmodel-std", true, glc_aliasmodel_std, renderer_classic);
 #endif
+}
+
+int R_ProgramAttributeLocation(r_program_attribute_id attr_id)
+{
+	if (attr_id < 0 || attr_id >= r_program_attribute_count || !program_attributes[attr_id].found) {
+		return -1;
+	}
+
+	return program_attributes[attr_id].location;
 }

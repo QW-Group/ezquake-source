@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static rendering_state_t states[r_state_count];
 
+// Texture functions
 typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
 typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 static glBindImageTexture_t     qglBindImageTexture;

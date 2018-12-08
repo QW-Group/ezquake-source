@@ -24,6 +24,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_state.h"
 #include "glc_vao.h"
 #include "r_buffers.h"
+#include "r_program.h"
+
+typedef void (APIENTRY *glVertexAttribPointer_t)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
+typedef void (APIENTRY *glDisableVertexAttribArray_t)(GLuint index);
+typedef void (APIENTRY *glEnableVertexAttribArray_t)(GLuint index);
+static glVertexAttribPointer_t       qglVertexAttribPointer;
+static glDisableVertexAttribArray_t  qglDisableVertexAttribArray;
+static glEnableVertexAttribArray_t   qglEnableVertexAttribArray;
 
 void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
 void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
@@ -40,6 +48,17 @@ typedef struct {
 	void* pointer_or_offset;
 } glc_va_element;
 
+typedef struct glc_va_attribute_s {
+	qbool enabled;
+
+	r_program_attribute_id attr_id;
+	GLint size;
+	GLenum type;
+	GLboolean normalized;
+	GLsizei stride;
+	const GLvoid* pointer;
+} glc_va_attribute_t;
+
 typedef struct glc_vao_s {
 	qbool initialised;
 	buffer_ref vertex_buffer;
@@ -49,15 +68,26 @@ typedef struct glc_vao_s {
 	glc_va_element normal_array;
 	glc_va_element color_array;
 	glc_va_element texture_array[MAX_GLC_TEXTURE_UNIT_STATES];
+	glc_va_attribute_t attributes[MAX_GLC_ATTRIBUTES];
 } glc_vao_t;
 
 static glc_vao_t vaos[vao_count];
 
 qbool GLC_InitialiseVAOHandling(void)
 {
+	qbool vaos_supported = true;
+
 	memset(&vaos, 0, sizeof(vaos));
-	return true;
+
+	// OpenGL 2.0
+	GL_LoadMandatoryFunctionExtension(glEnableVertexAttribArray, vaos_supported);
+	GL_LoadMandatoryFunctionExtension(glDisableVertexAttribArray, vaos_supported);
+	GL_LoadMandatoryFunctionExtension(glVertexAttribPointer, vaos_supported);
+
+	return vaos_supported;
 }
+
+static glc_attribute_t attributes[MAX_GLC_ATTRIBUTES];
 
 void GLC_BindVertexArray(r_vao_id vao)
 {
@@ -67,6 +97,14 @@ void GLC_BindVertexArray(r_vao_id vao)
 	buffer_ref buf = vaos[vao].vertex_buffer;
 	int i;
 
+	// Unbind any active attributes
+	for (i = 0; i < MAX_GLC_ATTRIBUTES; ++i) {
+		if (attributes[i].enabled) {
+			qglDisableVertexAttribArray(attributes[i].location);
+			attributes[i].enabled = false;
+		}
+	}
+
 	R_GLC_VertexPointer(buf, vertexes->enabled, vertexes->size, vertexes->type, vertexes->stride, vertexes->pointer_or_offset);
 	R_GLC_ColorPointer(buf, colors->enabled, colors->size, colors->type, colors->stride, colors->pointer_or_offset);
 	R_GLC_NormalPointer(buf, normals->enabled, normals->size, normals->type, normals->stride, normals->pointer_or_offset);
@@ -75,6 +113,18 @@ void GLC_BindVertexArray(r_vao_id vao)
 
 		if (i < gl_textureunits) {
 			R_GLC_TexturePointer(buf, i, textures->enabled, textures->size, textures->type, textures->stride, textures->pointer_or_offset);
+		}
+	}
+
+	for (i = 0; i < sizeof(vaos[vao].attributes) / sizeof(vaos[vao].attributes[0]); ++i) {
+		glc_va_attribute_t* attr = &vaos[vao].attributes[i];
+		GLint location = R_ProgramAttributeLocation(attr->attr_id);
+
+		if (attr->enabled) {
+			qglEnableVertexAttribArray(location);
+			qglVertexAttribPointer(location, attr->size, attr->type, attr->normalized ? GL_TRUE : GL_FALSE, attr->stride, attr->pointer);
+			attributes[i].location = location;
+			attributes[i].enabled = true;
 		}
 	}
 
@@ -154,6 +204,27 @@ void GLC_VAOEnableTextureCoordPointer(r_vao_id vao, int index, int size, GLenum 
 void GLC_VAODisableTextureCoordPointer(r_vao_id vao, int index)
 {
 	GLC_VAODisableComponent(&vaos[vao].texture_array[index]);
+}
+
+void GLC_VAOEnableCustomAttribute(r_vao_id vao, int index, r_program_attribute_id attr_id, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer)
+{
+	glc_va_attribute_t* attr = &vaos[vao].attributes[index];
+
+	memset(attr, 0, sizeof(*attr));
+	attr->enabled = true;
+	attr->attr_id = attr_id;
+	attr->size = size;
+	attr->type = type;
+	attr->normalized = normalized;
+	attr->stride = stride;
+	attr->pointer = pointer;
+}
+
+void GLC_VAODisableCustomAttribute(r_vao_id vao, int index)
+{
+	glc_va_attribute_t* attr = &vaos[vao].attributes[index];
+
+	attr->enabled = false;
 }
 
 void GLC_VAOSetVertexBuffer(r_vao_id vao, buffer_ref ref)
