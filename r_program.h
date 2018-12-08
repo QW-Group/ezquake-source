@@ -20,6 +20,7 @@ typedef enum {
 	r_program_caustics_glc,
 	r_program_aliasmodel_std_glc,
 	r_program_aliasmodel_shell_glc,
+	r_program_aliasmodel_shadow_glc,
 
 	r_program_lightmap_compute,
 
@@ -68,12 +69,16 @@ typedef enum {
 	r_program_uniform_aliasmodel_shell_glc_texSampler,
 	r_program_uniform_aliasmodel_shell_glc_lerpFraction,
 	r_program_uniform_aliasmodel_shell_glc_scroll,
+	r_program_uniform_aliasmodel_shadow_glc_lerpFraction,
+	r_program_uniform_aliasmodel_shadow_glc_shadevector,
+	r_program_uniform_aliasmodel_shadow_glc_lheight,
 	r_program_uniform_count
 } r_program_uniform_id;
 
 typedef enum {
 	r_program_attribute_aliasmodel_std_glc_flags,
 	r_program_attribute_aliasmodel_shell_glc_flags,
+	r_program_attribute_aliasmodel_shadow_glc_flags,
 
 	r_program_attribute_count
 } r_program_attribute_id;
@@ -99,6 +104,7 @@ void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value);
 void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value);
 void R_ProgramUniform4fv(r_program_uniform_id uniform_id, float* values);
 void R_ProgramUniform3fv(r_program_uniform_id uniform_id, float* values);
+void R_ProgramUniform2fv(r_program_uniform_id uniform_id, float* values);
 void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, float* values);
 int R_ProgramUniformGet1i(r_program_uniform_id uniform_id);
 

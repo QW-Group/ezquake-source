@@ -43,8 +43,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 texture_ref shelltexture;
 model_t* cl_custommodels[custom_model_count];
 
-void R_SetSkinForPlayerEntity(entity_t* ent, texture_ref* texture, texture_ref* fb_texture, byte** color32bit);
-
 // precalculated dot products for quantized angles
 byte      r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS] =
 #include "anorm_dots.h"
@@ -352,7 +350,7 @@ void R_DrawAliasModel(entity_t *ent)
 	return;
 }
 
-int R_AliasFramePose(maliasframedesc_t* frame)
+int R_AliasFramePose(const maliasframedesc_t* frame)
 {
 	int pose, numposes;
 	float interval;
@@ -378,14 +376,23 @@ void R_SetupAliasFrame(
 {
 	extern cvar_t gl_lumatextures;
 	int oldpose, pose;
-	float lerp = 0;
+	float lerp;
+
+	R_AliasModelDeterminePoses(oldframe, frame, &oldpose, &pose, &lerp);
 
 	if (!gl_lumatextures.integer) {
 		R_TextureReferenceInvalidate(fb_texture);
 	}
 
-	oldpose = R_AliasFramePose(oldframe);
-	pose = R_AliasFramePose(frame);
+	renderer.DrawAliasFrame(ent, model, oldpose, pose, texture, fb_texture, outline, effects, render_effects, lerp);
+}
+
+void R_AliasModelDeterminePoses(const maliasframedesc_t* oldframe, const maliasframedesc_t* frame, int* prevpose, int* nextpose, float* lerpfrac)
+{
+	int oldpose = R_AliasFramePose(oldframe);
+	int pose = R_AliasFramePose(frame);
+	float lerp = 0;
+
 	if (oldframe->nextpose == pose) {
 		lerp = r_framelerp;
 	}
@@ -408,7 +415,9 @@ void R_SetupAliasFrame(
 		pose = oldpose;
 	}
 
-	renderer.DrawAliasFrame(ent, model, oldpose, pose, texture, fb_texture, outline, effects, render_effects, lerp);
+	*prevpose = oldpose;
+	*nextpose = pose;
+	*lerpfrac = lerp;
 }
 
 static void R_AliasModelScaleLight(entity_t* ent)

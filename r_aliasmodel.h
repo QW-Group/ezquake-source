@@ -56,12 +56,18 @@ qbool R_FilterEntity(entity_t* ent);
 qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);
 
 void R_DrawAliasModel(entity_t *ent);
-int R_AliasFramePose(maliasframedesc_t* frame);
+int R_AliasFramePose(const maliasframedesc_t* frame);
 maliasframedesc_t* R_AliasModelFindFrame(aliashdr_t* hdr, const char* framename, int framenumber);
 void R_AliasModelColor(const entity_t* ent, float* color, qbool* invalidate_texture);
 
 // Previous constant was 135, pre-scaling... this is in world coordinates now,
 //   so picked a new constant that stopped the nailgun moving 
 #define ALIASMODEL_MAX_LERP_DISTANCE (6.3)
+
+void R_SetSkinForPlayerEntity(entity_t* ent, texture_ref* texture, texture_ref* fb_texture, byte** color32bit);
+void R_AliasModelDeterminePoses(const maliasframedesc_t* oldframe, const maliasframedesc_t* frame, int* prevpose, int* nextpose, float* lerpfrac);
+
+// FIXME: not really GL_, probably Vulkan too?
+void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr);
 
 #endif // EZQUAKE_R

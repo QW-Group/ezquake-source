@@ -48,7 +48,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 
 static void GLC_DrawAliasOutlineFrame(entity_t* ent, model_t* model, int pose1, int pose2, float lerpFracDefault);
-static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector);
+static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, vec3_t shadevector);
 static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int firstVert, int verts);
 
 // Which pose to use if shadow to be drawn
@@ -273,6 +273,18 @@ static qbool GLC_AliasModelStandardCompile(void)
 	}
 
 	return R_ProgramReady(r_program_aliasmodel_std_glc);
+}
+
+static qbool GLC_AliasModelShadowCompile(void)
+{
+	int flags = 0;
+
+	if (R_ProgramRecompileNeeded(r_program_aliasmodel_shadow_glc, flags)) {
+		R_ProgramCompile(r_program_aliasmodel_shadow_glc);
+		R_ProgramSetCustomOptions(r_program_aliasmodel_shadow_glc, flags);
+	}
+
+	return R_ProgramReady(r_program_aliasmodel_shadow_glc);
 }
 
 static qbool GLC_AliasModelShellCompile(void)
@@ -686,7 +698,6 @@ void GLC_DrawAliasModelShadow(entity_t* ent)
 	float oldMatrix[16];
 	static float shadescale = 0;
 	vec3_t shadevector;
-	aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 
 	if (!shadescale) {
 		shadescale = 1 / sqrt(2);
@@ -700,49 +711,72 @@ void GLC_DrawAliasModelShadow(entity_t* ent)
 	R_RotateModelview(ent->angles[1], 0, 0, 1);
 
 	GLC_StateBeginAliasModelShadow();
-	GLC_DrawAliasModelShadowDrawCall(ent, paliashdr, lastposenum, shadevector);
+	GLC_DrawAliasModelShadowDrawCall(ent, shadevector);
 	R_PopModelviewMatrix(oldMatrix);
 }
 
-static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, aliashdr_t *paliashdr, int posenum, vec3_t shadevector)
+static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, vec3_t shadevector)
 {
-	int *order, count;
-	vec3_t point;
+	const aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
+	const maliasframedesc_t* frame = &paliashdr->frames[ent->frame];
+	const maliasframedesc_t* oldframe = &paliashdr->frames[ent->oldframe];
 	float lheight = ent->origin[2] - ent->lightspot[2], height = 1 - lheight;
-	ez_trivertx_t *verts;
+	int pose1, pose2;
+	float lerpfrac;
 
-	verts = (ez_trivertx_t *) ((byte *) paliashdr + paliashdr->posedata);
-	verts += posenum * paliashdr->poseverts;
-	order = (int *) ((byte *) paliashdr + paliashdr->commands);
+	R_AliasModelDeterminePoses(oldframe, frame, &pose1, &pose2, &lerpfrac);
 
-	while ((count = *order++)) {
-		// get the vertex count and primitive type
-		if (count < 0) {
-			count = -count;
-			GLC_Begin(GL_TRIANGLE_FAN);
-		} else {
-			GLC_Begin(GL_TRIANGLE_STRIP);
+	if (gl_program_aliasmodels.integer) {
+		if (buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelShadowCompile()) {
+			int firstVert = ent->model->vbo_start + pose1 * paliashdr->vertsPerPose;
+
+			R_ProgramUse(r_program_aliasmodel_shadow_glc);
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_shadow_glc_lerpFraction, lerpfrac);
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_shadow_glc_lheight, lheight);
+			R_ProgramUniform2fv(r_program_uniform_aliasmodel_shadow_glc_shadevector, shadevector);
+			GL_DrawArrays(GL_TRIANGLES, firstVert, paliashdr->vertsPerPose);
+			R_ProgramUse(r_program_none);
 		}
+	}
+	else {
+		int *order, count;
+		vec3_t point;
+		ez_trivertx_t *verts;
 
-		do {
-			//no texture for shadows
-			order += 2;
+		verts = (ez_trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
+		verts += pose1 * paliashdr->poseverts;
+		order = (int *)((byte *)paliashdr + paliashdr->commands);
 
-			// normals and vertexes come from the frame list
-			point[0] = verts->v[0] + paliashdr->scale_origin[0];
-			point[1] = verts->v[1] + paliashdr->scale_origin[1];
-			point[2] = verts->v[2] + paliashdr->scale_origin[2];
+		while ((count = *order++)) {
+			// get the vertex count and primitive type
+			if (count < 0) {
+				count = -count;
+				GLC_Begin(GL_TRIANGLE_FAN);
+			}
+			else {
+				GLC_Begin(GL_TRIANGLE_STRIP);
+			}
 
-			point[0] -= shadevector[0] * (point[2] +lheight);
-			point[1] -= shadevector[1] * (point[2] + lheight);
-			point[2] = height;
-			//height -= 0.001;
-			GLC_Vertex3fv (point);
+			do {
+				//no texture for shadows
+				order += 2;
 
-			verts++;
-		} while (--count);
+				// normals and vertexes come from the frame list
+				point[0] = verts->v[0] + paliashdr->scale_origin[0];
+				point[1] = verts->v[1] + paliashdr->scale_origin[1];
+				point[2] = verts->v[2] + paliashdr->scale_origin[2];
 
-		GLC_End();
+				point[0] -= shadevector[0] * (point[2] + lheight);
+				point[1] -= shadevector[1] * (point[2] + lheight);
+				point[2] = height;
+
+				GLC_Vertex3fv(point);
+
+				verts++;
+			} while (--count);
+
+			GLC_End();
+		}
 	}
 }
 
