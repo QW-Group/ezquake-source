@@ -59,6 +59,7 @@ qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframede
 void R_DrawAliasModel(entity_t *ent);
 int R_AliasFramePose(maliasframedesc_t* frame);
 maliasframedesc_t* R_AliasModelFindFrame(aliashdr_t* hdr, const char* framename, int framenumber);
+void R_AliasModelColor(const entity_t* ent, float* color, qbool* invalidate_texture);
 
 // Previous constant was 135, pre-scaling... this is in world coordinates now,
 //   so picked a new constant that stopped the nailgun moving 

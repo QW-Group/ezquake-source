@@ -469,6 +469,7 @@ void GLM_DrawAliasModelFrame(
 )
 {
 	float color[4];
+	qbool invalidate_texture;
 
 	if (lerp_fraction == 1) {
 		poseVertIndex = poseVertIndex2;
@@ -477,30 +478,11 @@ void GLM_DrawAliasModelFrame(
 
 	// TODO: Vertex lighting etc
 	// TODO: Coloured lighting per-vertex?
-	if (ent->custom_model == NULL) {
-		if (ent->r_modelcolor[0] < 0) {
-			// normal color
-			color[0] = color[1] = color[2] = 1.0f;
-		}
-		else {
-			color[0] = ent->r_modelcolor[0];
-			color[1] = ent->r_modelcolor[1];
-			color[2] = ent->r_modelcolor[2];
-		}
-	}
-	else {
-		color[0] = ent->custom_model->color_cvar.color[0] / 255.0f;
-		color[1] = ent->custom_model->color_cvar.color[1] / 255.0f;
-		color[2] = ent->custom_model->color_cvar.color[2] / 255.0f;
+	GL_AliasModelColor(ent, color, &invalidate_texture);
 
-		if (ent->custom_model->fullbright_cvar.integer) {
-			R_TextureReferenceInvalidate(texture);
-		}
+	if (invalidate_texture) {
+		R_TextureReferenceInvalidate(texture);
 	}
-	color[0] *= ent->r_modelalpha;
-	color[1] *= ent->r_modelalpha;
-	color[2] *= ent->r_modelalpha;
-	color[3] = ent->r_modelalpha;
 
 	if (gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture)) {
 		if (R_PointIsUnderwater(ent->origin)) {

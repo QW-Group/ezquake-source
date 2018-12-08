@@ -927,3 +927,25 @@ maliasframedesc_t* R_AliasModelFindFrame(aliashdr_t* hdr, const char* framename,
 
 	return NULL;
 }
+
+void R_AliasModelColor(const entity_t* ent, float* color, qbool* invalidate_texture)
+{
+	*invalidate_texture = false;
+
+	if (ent->custom_model == NULL) {
+		if (ent->r_modelcolor[0] < 0) {
+			// normal color
+			VectorSet(color, 1, 1, 1);
+		}
+		else {
+			VectorCopy(ent->r_modelcolor, color);
+		}
+	}
+	else {
+		VectorScale(ent->custom_model->color_cvar.color, 1.0f / 255, color);
+
+		*invalidate_texture = ent->custom_model->fullbright_cvar.integer;
+	}
+	VectorScale(color, ent->r_modelalpha, color);
+	color[3] = ent->r_modelalpha;
+}
