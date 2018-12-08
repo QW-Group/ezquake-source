@@ -306,7 +306,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 	}
 
 	R_BrushModelClearTextureChains(clmodel);
-	renderer.ChainBrushModelSurfaces(clmodel);
+	renderer.ChainBrushModelSurfaces(clmodel, e);
 
 	if (clmodel->last_texture_chained >= 0 || clmodel->drawflat_chain[0] || clmodel->drawflat_chain[1]) {
 		R_PushModelviewMatrix(oldMatrix);

@@ -151,6 +151,7 @@ void R_BrushModelClearTextureChains(model_t *clmodel)
 	GLC_ClearTextureChains();
 #endif
 
+	clmodel->texturechains_have_lumas = false;
 	for (i = 0; i < clmodel->numtextures; i++) {
 		if ((texture = clmodel->textures[i])) {
 			for (waterline = 0; waterline < 2; waterline++) {
@@ -194,6 +195,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 {
 	float wateralpha = R_WaterAlpha();
 	extern cvar_t r_fastturb, r_drawflat, r_fastsky, gl_caustics;
+	model_t* clmodel = cl.worldmodel;
 
 	int c, side, clipped, underwater;
 	mplane_t *plane, *clipplane;
@@ -321,6 +323,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain[underwater], surf);
 				}
 				else {
+					clmodel->texturechains_have_lumas |= R_TextureAnimation(NULL, surf->texinfo->texture)->isLumaTexture;
 					chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain[underwater], surf);
 				}
 			}

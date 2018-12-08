@@ -124,7 +124,7 @@ int GLM_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 	return position + 1;
 }
 
-void GLM_ChainBrushModelSurfaces(model_t* clmodel)
+void GLM_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 {
 	int i;
 	extern texture_ref underwatertexture;

@@ -47,7 +47,7 @@ RENDERER_METHOD(void, LightmapShutdown, void)
 
 // Rendering loop
 RENDERER_METHOD(void, SetupGL, void)
-RENDERER_METHOD(void, ChainBrushModelSurfaces, model_t* model)
+RENDERER_METHOD(void, ChainBrushModelSurfaces, model_t* model, entity_t* ent)
 RENDERER_METHOD(void, DrawBrushModel, entity_t* ent, qbool polygonOffset, qbool caustics)
 RENDERER_METHOD(int, BrushModelCopyVertToBuffer, model_t* mod, void* vbo_buffer_, int position, float* source, int lightmap, int material, float scaleS, float scaleT, msurface_t* surf, qbool has_luma_texture)
 RENDERER_METHOD(void, ClearRenderingSurface, qbool clear_color)

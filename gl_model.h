@@ -545,6 +545,7 @@ typedef struct model_s {
 	msurface_t*         drawflat_chain[2];
 	int                 first_texture_chained;
 	int                 last_texture_chained;
+	qbool               texturechains_have_lumas;
 
 	int                 renderfx;
 } model_t;

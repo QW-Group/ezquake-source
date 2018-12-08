@@ -231,8 +231,8 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 	msurface_t *s;
 	float *v;
 
-	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
-	qbool draw_details = R_TextureReferenceIsValid(detailtexture) && gl_detail.value;
+	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer;
+	qbool draw_details = R_TextureReferenceIsValid(detailtexture) && gl_detail.integer;
 	qbool isLumaTexture;
 	qbool use_vbo = buffers.supported && modelIndexes;
 
@@ -257,6 +257,9 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 	//   (material + fullbright) * lightmap
 	// else
 	//   material * lightmap + fullbright
+
+	// If there are no luma textures in the chain, disable luma textures (saves enabling 3rd unit etc)
+	useLumaTextures &= model->texturechains_have_lumas;
 
 	// For each texture we have to draw, it may or may not have a luma, so the old code changed
 	//   up the bindings/allocations with each texture (binding lightmap to each unit with luma textures on/off)
@@ -739,7 +742,7 @@ int GLC_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 	return position + 1;
 }
 
-void GLC_ChainBrushModelSurfaces(model_t* clmodel)
+void GLC_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 {
 	extern void GLC_EmitWaterPoly(msurface_t* fa);
 	qbool glc_first_water_poly = true;
@@ -784,6 +787,7 @@ void GLC_ChainBrushModelSurfaces(model_t* clmodel)
 				else {
 					chain_surfaces_by_lightmap(&psurf->texinfo->texture->texturechain[underwater], psurf);
 
+					clmodel->texturechains_have_lumas |= R_TextureAnimation(ent, psurf->texinfo->texture)->isLumaTexture;
 					clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
 					clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
 				}
