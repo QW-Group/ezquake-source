@@ -151,7 +151,6 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
 	qbool first_surf = true;
 	qbool use_vbo = buffers.supported && modelIndexes;
-	int last_lightmap = -2;
 	extern cvar_t gl_program_world;
 	int i;
 	qbool first_lightmap_surf = true;

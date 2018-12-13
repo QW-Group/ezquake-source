@@ -197,7 +197,7 @@ void OnChange_r_drawflat (cvar_t *var, char *value, qbool *cancel) {
 void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 {
 	float wateralpha = R_WaterAlpha();
-	extern cvar_t r_fastturb, r_drawflat, r_fastsky, gl_caustics;
+	extern cvar_t r_fastturb, r_drawflat, r_fastsky;
 	model_t* clmodel = cl.worldmodel;
 
 	int c, side, clipped;

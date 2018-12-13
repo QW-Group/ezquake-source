@@ -312,7 +312,6 @@ static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int po
 	if (buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompile()) {
 		float color[4];
 		qbool invalidate_texture;
-		qbool mtex = R_TextureReferenceIsValid(fb_texture) && gl_mtexable;
 		float angle_radians = -ent->angles[YAW] * M_PI / 180.0;
 		vec3_t angle_vector = { cos(angle_radians), sin(angle_radians), 1 };
 		int firstVert = model->vbo_start + pose1 * paliashdr->vertsPerPose;
