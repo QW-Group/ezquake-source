@@ -217,6 +217,8 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 	unsigned scale, *bl;
 	qbool fullbright = false;
 
+	R_TraceEnterRegion(va("R_BuildLightMap(%d)", surf->surfacenum), true);
+
 	surf->cached_dlight = !!numdlights;
 
 	smax = (surf->extents[0] >> 4) + 1;
@@ -306,12 +308,15 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 			dest += 4;
 		}
 	}
+
+	R_TraceLeaveFunctionRegion;
 }
 
 void R_UploadLightMap(int textureUnit, int lightmapnum)
 {
 	lightmap_data_t* lm = &lightmaps[lightmapnum];
 
+	R_TraceEnterFunctionRegion;
 	if (lm->modified) {
 		lm->modified = false;
 		renderer.UploadLightmap(textureUnit, lightmapnum);
@@ -321,6 +326,7 @@ void R_UploadLightMap(int textureUnit, int lightmapnum)
 		lm->change_area.w = 0;
 		++frameStats.lightmap_updates;
 	}
+	R_TraceLeaveFunctionRegion;
 }
 
 void R_RenderDynamicLightmaps(msurface_t *fa, qbool world)
@@ -407,6 +413,8 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 		return;
 	}
 
+	R_TraceEnterFunctionRegion;
+
 	polyType = world ? polyTypeWorldModel : polyTypeBrushModel;
 	for (s = surface; s; s = s->texturechain) {
 		k = s->lightmaptexturenum;
@@ -437,6 +445,8 @@ static void R_RenderAllDynamicLightmapsForChain(msurface_t* surface, qbool world
 			}
 		}
 	}
+
+	R_TraceLeaveFunctionRegion;
 }
 
 void R_UploadChangedLightmaps(void)
@@ -485,23 +495,37 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 {
 	unsigned int i;
 
+	R_TraceEnterFunctionRegion;
+
 	for (i = 0; i < model->numtextures; i++) {
 		if (!model->textures[i]) {
 			continue;
 		}
 
+		R_TraceEnterRegion(model->textures[i]->name, true);
 		R_RenderAllDynamicLightmapsForChain(model->textures[i]->texturechain, model->isworldmodel);
+		R_TraceLeaveRegion(true);
 	}
 
+	R_TraceEnterRegion("drawflat_chain", true);
 	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain, model->isworldmodel);
+	R_TraceLeaveRegion(true);
 
 	for (i = 0; i < R_LightmapCount(); ++i) {
-		R_RenderAllDynamicLightmapsForChain(R_DrawflatLightmapChain(i), model->isworldmodel);
+		msurface_t* surf = R_DrawflatLightmapChain(i);
+
+		if (surf) {
+			R_TraceEnterRegion(va("lightmapChain[%d]", i), true);
+			R_RenderAllDynamicLightmapsForChain(surf, model->isworldmodel);
+			R_TraceLeaveRegion(true);
+		}
 	}
 
 	if (R_UseImmediateOpenGL()) {
 		R_UploadChangedLightmaps();
 	}
+
+	R_TraceLeaveFunctionRegion;
 }
 
 // returns a lightmap number and the position inside it

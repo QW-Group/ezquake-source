@@ -37,6 +37,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "r_renderer.h"
 #include "glsl/constants.glsl"
 #include "r_lightmaps.h"
+#include "r_trace.h"
 
 extern buffer_ref brushModel_vbo;
 
@@ -144,7 +145,7 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 {
 	int index_count = 0;
 
-	msurface_t *s;
+	msurface_t *s, *prev;
 	int k;
 	float *v;
 	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.value;
@@ -155,6 +156,8 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 	int i;
 	qbool first_lightmap_surf = true;
 	unsigned int lightmap_count = R_LightmapCount();
+
+	R_TraceEnterFunctionRegion;
 
 	if (use_vbo && gl_program_world.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_DrawflatProgramCompile()) {
 		extern cvar_t r_watercolor, r_slimecolor, r_lavacolor, r_telecolor;
@@ -183,7 +186,8 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 			R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
 
 			// drawflat_chain has no lightmaps
-			for (s = model->drawflat_chain; s; s = s->drawflatchain) {
+			s = model->drawflat_chain;
+			while (s) {
 				glpoly_t *p;
 
 				for (p = s->polys; p; p = p->next) {
@@ -196,6 +200,10 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 					caustics_polys = s->polys;
 				}
 				// } END shaman FIX /r_drawflat + /gl_caustics
+
+				prev = s;
+				s = s->drawflatchain;
+				prev->drawflatchain = NULL;
 			}
 			if (index_count) {
 				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
@@ -216,12 +224,16 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 				}
 
 				GLC_SetTextureLightmap(0, i);
-				for (; surf; surf = surf->drawflatchain) {
+				while (surf) {
 					glpoly_t* p;
 
 					for (p = surf->polys; p; p = p->next) {
 						index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
 					}
+
+					prev = surf;
+					surf = surf->drawflatchain;
+					prev->drawflatchain = NULL;
 				}
 				R_ClearDrawflatLightmapChain(i);
 
@@ -236,7 +248,8 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 	else {
 		byte current[3] = { 255, 255, 255 }, desired[4] = { 255, 255, 255, 255 };
 
-		for (s = model->drawflat_chain; s; s = s->drawflatchain) {
+		s = model->drawflat_chain;
+		while (s) {
 			GLC_SurfaceColor(s, desired);
 
 			if (first_surf || (use_vbo && (desired[0] != current[0] || desired[1] != current[1] || desired[2] != current[2]))) {
@@ -279,6 +292,10 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 				caustics_polys = s->polys;
 			}
 			// } END shaman FIX /r_drawflat + /gl_caustics
+
+			prev = s;
+			s = s->drawflatchain;
+			prev->drawflatchain = NULL;
 		}
 
 		if (index_count) {
@@ -292,7 +309,7 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 
 			if (surf) {
 				GLC_SetTextureLightmap(0, i);
-				for (; surf; surf = surf->drawflatchain) {
+				while (surf) {
 					glpoly_t* p;
 
 					GLC_SurfaceColor(surf, desired);
@@ -327,6 +344,10 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 							GLC_End();
 						}
 					}
+
+					prev = surf;
+					surf = surf->drawflatchain;
+					prev->drawflatchain = NULL;
 				}
 				R_ClearDrawflatLightmapChain(i);
 
@@ -351,6 +372,8 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 	}
 	caustics_polys = NULL;
 	// } END shaman FIX /r_drawflat + /gl_caustics
+
+	R_TraceLeaveFunctionRegion;
 }
 
 static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset)
@@ -361,7 +384,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 	r_state_id state = r_state_world_singletexture_glc;
 	texture_ref fb_texturenum = null_texture_reference;
 	int i, k;
-	msurface_t *s;
+	msurface_t *s, *prev;
 	float *v;
 
 	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer;
@@ -390,6 +413,8 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 	//   (material + fullbright) * lightmap
 	// else
 	//   material * lightmap + fullbright
+
+	R_TraceEnterFunctionRegion;
 
 	// If there are no luma textures in the chain, disable luma textures (saves enabling 3rd unit etc)
 	useLumaTextures &= model->texturechains_have_lumas;
@@ -488,7 +513,8 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 			desired_textures[fbTextureUnit] = current_material_fb;
 		}
 
-		for (s = model->textures[i]->texturechain; s; s = s->texturechain) {
+		s = model->textures[i]->texturechain;
+		while (s) {
 			if (!(s->texinfo->flags & TEX_SPECIAL)) {
 				if (lmTextureUnit >= 0) {
 					texture_change |= (s->lightmaptexturenum != current_lightmap);
@@ -566,6 +592,10 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 					drawfullbrights = true;
 				}
 			}
+
+			prev = s;
+			s = s->texturechain;
+			prev->texturechain = NULL;
 		}
 	}
 
@@ -602,11 +632,15 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 
 	GLC_EmitCausticsPolys(use_vbo);
 	GLC_EmitDetailPolys(use_vbo);
+
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_DrawWorld(void)
 {
 	extern msurface_t* alphachain;
+
+	R_TraceEnterFunctionRegion;
 
 	if (r_drawflat.integer != 1) {
 		GLC_DrawTextureChains(NULL, cl.worldmodel, false, false);
@@ -621,6 +655,8 @@ void GLC_DrawWorld(void)
 
 	//draw the world alpha textures
 	GLC_DrawAlphaChain(alphachain, polyTypeWorldModel);
+
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_DrawBrushModel(entity_t* e, qbool polygonOffset, qbool caustics)
@@ -844,7 +880,6 @@ void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType)
 		}
 		GLC_End();
 	}
-
 	alphachain = NULL;
 }
 
