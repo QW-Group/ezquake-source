@@ -141,6 +141,7 @@ void GLM_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 		if (psurf->flags & SURF_DRAWSKY) {
 			// FIXME: Find an example...
 			CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain);
+			clmodel->drawflat_todo = true;
 
 			clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
 			clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
@@ -150,6 +151,7 @@ void GLM_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 			// FIXME: Find an example...
 			if (r_fastturb.integer) {
 				CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain);
+				clmodel->drawflat_todo = true;
 			}
 			else {
 				CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain);
@@ -164,13 +166,13 @@ void GLM_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 		}
 		else {
 			if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-				chain_surfaces_drawflat(&clmodel->drawflat_chain, psurf);
+				chain_surfaces_simple(&clmodel->drawflat_chain, psurf);
 			}
 			else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-				chain_surfaces_drawflat(&clmodel->drawflat_chain, psurf);
+				chain_surfaces_simple(&clmodel->drawflat_chain, psurf);
 			}
 			else {
-				chain_surfaces_by_lightmap(&psurf->texinfo->texture->texturechain, psurf);
+				chain_surfaces_simple(&psurf->texinfo->texture->texturechain, psurf);
 
 				clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
 				clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);

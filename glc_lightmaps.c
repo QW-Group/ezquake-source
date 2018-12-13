@@ -35,9 +35,7 @@ void GLC_SetTextureLightmap(int textureUnit, int lightmap_num)
 	if (lightmaps[lightmap_num].modified) {
 		GLC_UploadLightmap(textureUnit, lightmap_num);
 	}
-	else {
-		renderer.TextureUnitBind(textureUnit, lightmaps[lightmap_num].gl_texref);
-	}
+	renderer.TextureUnitBind(textureUnit, lightmaps[lightmap_num].gl_texref);
 }
 
 void GLC_ClearLightmapPolys(void)

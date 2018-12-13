@@ -164,6 +164,7 @@ typedef struct glpoly_s {
 	struct	glpoly_s	*luma_chain;				//next luma poly in chain
 	struct	glpoly_s	*caustics_chain;			//next caustic poly in chain
 	struct	glpoly_s	*detail_chain;				//next detail poly in chain
+	struct  glpoly_s    *drawflat_chain;            //next drawflat poly in chain
 
 	unsigned int        vbo_start;
 	int					numverts;
@@ -543,6 +544,7 @@ typedef struct model_s {
 	float               simpletexture_scalingT[MAX_SIMPLE_TEXTURES];
 
 	msurface_t*         drawflat_chain;
+	qbool               drawflat_todo;
 	int                 first_texture_chained;
 	int                 last_texture_chained;
 	qbool               texturechains_have_lumas;

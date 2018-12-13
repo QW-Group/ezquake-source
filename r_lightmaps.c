@@ -495,6 +495,10 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 
 	R_RenderAllDynamicLightmapsForChain(model->drawflat_chain, model->isworldmodel);
 
+	for (i = 0; i < R_LightmapCount(); ++i) {
+		R_RenderAllDynamicLightmapsForChain(R_DrawflatLightmapChain(i), model->isworldmodel);
+	}
+
 	if (R_UseImmediateOpenGL()) {
 		R_UploadChangedLightmaps();
 	}
@@ -937,4 +941,42 @@ void R_CheckReloadLightmaps(void)
 	hardware_lighting = R_HardwareLighting();
 
 	R_ForceReloadLightMaps();
+}
+
+unsigned int R_LightmapCount(void)
+{
+	return lightmap_array_size;
+}
+
+struct msurface_s* R_DrawflatLightmapChain(int i)
+{
+	return lightmaps[i].drawflat_chain;
+}
+
+void R_ClearDrawflatLightmapChain(int i)
+{
+	lightmaps[i].drawflat_chain = NULL;
+	lightmaps[i].drawflat_chain_tail = &lightmaps[i].drawflat_chain;
+}
+
+void R_AddDrawflatChainSurface(struct msurface_s* surf, qbool floor)
+{
+	lightmap_data_t* lm = &lightmaps[surf->lightmaptexturenum];
+
+	if (!lm->drawflat_chain_tail) {
+		lm->drawflat_chain_tail = &lm->drawflat_chain;
+	}
+
+	if (floor) {
+		*lm->drawflat_chain_tail = surf;
+		lm->drawflat_chain_tail = &surf->drawflatchain;
+		surf->drawflatchain = NULL;
+	}
+	else {
+		surf->drawflatchain = lm->drawflat_chain;
+		if (lm->drawflat_chain_tail == &lm->drawflat_chain) {
+			lm->drawflat_chain_tail = &surf->drawflatchain;
+		}
+		lm->drawflat_chain = surf;
+	}
 }

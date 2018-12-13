@@ -36,6 +36,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "tr_types.h"
 #include "r_renderer.h"
 #include "glsl/constants.glsl"
+#include "r_lightmaps.h"
 
 extern buffer_ref brushModel_vbo;
 
@@ -123,6 +124,22 @@ static qbool GLC_DrawflatProgramCompile(void)
 	return R_ProgramReady(r_program_world_drawflat_glc);
 }
 
+static void GLC_SurfaceColor(const msurface_t* s, byte* desired)
+{
+	if (s->flags & SURF_DRAWSKY) {
+		memcpy(desired, r_skycolor.color, 3);
+	}
+	else if (s->flags & SURF_DRAWTURB) {
+		memcpy(desired, SurfaceFlatTurbColor(s->texinfo->texture), 3);
+	}
+	else if (s->flags & SURF_DRAWFLAT_FLOOR) {
+		memcpy(desired, r_floorcolor.color, 3);
+	}
+	else {
+		memcpy(desired, r_wallcolor.color, 3);
+	}
+}
+
 static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 {
 	int index_count = 0;
@@ -135,10 +152,9 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 	qbool use_vbo = buffers.supported && modelIndexes;
 	int last_lightmap = -2;
 	extern cvar_t gl_program_world;
-
-	if (!model->drawflat_chain) {
-		return;
-	}
+	int i;
+	qbool first_lightmap_surf = true;
+	unsigned int lightmap_count = R_LightmapCount();
 
 	if (use_vbo && gl_program_world.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_DrawflatProgramCompile()) {
 		extern cvar_t r_watercolor, r_slimecolor, r_lavacolor, r_telecolor;
@@ -162,100 +178,80 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 		VectorScale(r_telecolor.color, 1.0f / 255.0f, color);
 		R_ProgramUniform4fv(r_program_uniform_world_drawflat_glc_telecolor, color);
 
-		R_ApplyRenderingState(r_state_drawflat_with_lightmaps_glc);
-		R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
-		for (s = model->drawflat_chain; s; s = s->drawflatchain) {
-			int new_lightmap = s->lightmaptexturenum;
-			glpoly_t *p;
+		if (model->drawflat_chain) {
+			R_ApplyRenderingState(r_state_drawflat_without_lightmaps_glc);
+			R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
 
-			if (index_count && (last_lightmap != new_lightmap || first_surf)) {
+			// drawflat_chain has no lightmaps
+			for (s = model->drawflat_chain; s; s = s->drawflatchain) {
+				glpoly_t *p;
+
+				for (p = s->polys; p; p = p->next) {
+					index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+				}
+
+				// START shaman FIX /r_drawflat + /gl_caustics {
+				if ((s->flags & SURF_UNDERWATER) && draw_caustics) {
+					s->polys->caustics_chain = caustics_polys;
+					caustics_polys = s->polys;
+				}
+				// } END shaman FIX /r_drawflat + /gl_caustics
+			}
+			if (index_count) {
 				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 				index_count = 0;
 			}
 
-			if (last_lightmap != new_lightmap) {
-				if (new_lightmap >= 0) {
-					GLC_SetTextureLightmap(0, new_lightmap);
-				}
-				last_lightmap = new_lightmap;
-			}
-
-			first_surf = false;
-
-			for (p = s->polys; p; p = p->next) {
-				index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
-			}
-
-			// START shaman FIX /r_drawflat + /gl_caustics {
-			if ((s->flags & SURF_UNDERWATER) && draw_caustics) {
-				s->polys->caustics_chain = caustics_polys;
-				caustics_polys = s->polys;
-			}
-			// } END shaman FIX /r_drawflat + /gl_caustics
+			model->drawflat_chain = NULL;
 		}
 
-		if (index_count) {
-			GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+		// go through lightmap chains
+		for (i = 0; i < lightmap_count; ++i) {
+			msurface_t* surf = R_DrawflatLightmapChain(i);
+
+			if (surf) {
+				if (first_lightmap_surf) {
+					R_ApplyRenderingState(r_state_drawflat_with_lightmaps_glc);
+					R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
+				}
+
+				GLC_SetTextureLightmap(0, i);
+				for (; surf; surf = surf->drawflatchain) {
+					glpoly_t* p;
+
+					for (p = surf->polys; p; p = p->next) {
+						index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+					}
+				}
+				R_ClearDrawflatLightmapChain(i);
+
+				if (index_count) {
+					GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+					index_count = 0;
+				}
+			}
 		}
 		R_ProgramUse(r_program_none);
 	}
 	else {
-		byte w[3], f[3], sky[3], current[3], desired[3];
-
-		memcpy(w, r_wallcolor.color, 3);
-		memcpy(f, r_floorcolor.color, 3);
-		memcpy(sky, r_skycolor.color, 3);
-		memcpy(current, color_white, 3);
-		memcpy(desired, current, 3);
+		byte current[3] = { 255, 255, 255 }, desired[4] = { 255, 255, 255, 255 };
 
 		for (s = model->drawflat_chain; s; s = s->drawflatchain) {
-			int new_lightmap = s->lightmaptexturenum;
+			GLC_SurfaceColor(s, desired);
 
-			if (s->flags & SURF_DRAWSKY) {
-				memcpy(desired, sky, 3);
-				new_lightmap = -1;
-			}
-			else if (s->flags & SURF_DRAWTURB) {
-				memcpy(desired, SurfaceFlatTurbColor(s->texinfo->texture), 3);
-				new_lightmap = -1;
-			}
-			else if (s->flags & SURF_DRAWFLAT_FLOOR) {
-				memcpy(desired, f, 3);
-			}
-			else {
-				memcpy(desired, w, 3);
-			}
-
-			if (index_count && last_lightmap != new_lightmap) {
-				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-				index_count = 0;
-			}
-
-			if (first_surf || desired[0] != current[0] || desired[1] != current[1] || desired[2] != current[2]) {
+			if (first_surf || (use_vbo && (desired[0] != current[0] || desired[1] != current[1] || desired[2] != current[2]))) {
 				if (index_count) {
 					GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+					index_count = 0;
 				}
-				index_count = 0;
+				if (first_surf) {
+					R_ApplyRenderingState(r_state_drawflat_without_lightmaps_glc);
+					R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
+				}
 				R_CustomColor4ubv(desired);
 			}
 
-			if (last_lightmap != new_lightmap) {
-				if (new_lightmap >= 0) {
-					R_ApplyRenderingState(r_state_drawflat_with_lightmaps_glc);
-					R_CustomColor4ubv(desired);
-					GLC_SetTextureLightmap(0, new_lightmap);
-				}
-				else {
-					R_ApplyRenderingState(r_state_drawflat_without_lightmaps_glc);
-					R_CustomColor4ubv(desired);
-				}
-				R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
-			}
-			last_lightmap = new_lightmap;
-
-			current[0] = desired[0];
-			current[1] = desired[1];
-			current[2] = desired[2];
+			VectorCopy(desired, current);
 			first_surf = false;
 
 			{
@@ -267,11 +263,9 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 						index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
 					}
 					else {
+						R_CustomColor4ubv(desired);
 						GLC_Begin(GL_TRIANGLE_STRIP);
 						for (k = 0; k < p->numverts; k++, v += VERTEXSIZE) {
-							if (new_lightmap >= 0) {
-								glTexCoord2f(v[5], v[6]);
-							}
 							GLC_Vertex3fv(v);
 						}
 						GLC_End();
@@ -289,10 +283,67 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 
 		if (index_count) {
 			GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+			index_count = 0;
+		}
+
+		first_surf = true;
+		for (i = 0; i < lightmap_count; ++i) {
+			msurface_t* surf = R_DrawflatLightmapChain(i);
+
+			if (surf) {
+				GLC_SetTextureLightmap(0, i);
+				for (; surf; surf = surf->drawflatchain) {
+					glpoly_t* p;
+
+					GLC_SurfaceColor(surf, desired);
+
+					if (first_surf || (use_vbo && (desired[0] != current[0] || desired[1] != current[1] || desired[2] != current[2]))) {
+						if (index_count) {
+							GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+							index_count = 0;
+						}
+						if (first_surf) {
+							R_ApplyRenderingState(r_state_drawflat_with_lightmaps_glc);
+							R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
+						}
+						R_CustomColor4ubv(desired);
+					}
+					VectorCopy(desired, current);
+					first_surf = false;
+
+					for (p = surf->polys; p; p = p->next) {
+						v = p->verts[0];
+
+						if (use_vbo) {
+							index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+						}
+						else {
+							R_CustomColor4ubv(desired);
+							GLC_Begin(GL_TRIANGLE_STRIP);
+							for (k = 0; k < p->numverts; k++, v += VERTEXSIZE) {
+								glTexCoord2f(v[5], v[6]);
+								GLC_Vertex3fv(v);
+							}
+							GLC_End();
+						}
+					}
+				}
+				R_ClearDrawflatLightmapChain(i);
+
+				if (index_count) {
+					GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+					index_count = 0;
+				}
+			}
+		}
+
+		if (index_count) {
+			GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 		}
 	}
 
 	model->drawflat_chain = NULL;
+	model->drawflat_todo = false;
 
 	// START shaman FIX /r_drawflat + /gl_caustics {
 	if (gl_caustics.integer && caustics_polys && R_TextureReferenceIsValid(underwatertexture)) {
@@ -560,7 +611,7 @@ void GLC_DrawWorld(void)
 	if (r_drawflat.integer != 1) {
 		GLC_DrawTextureChains(NULL, cl.worldmodel, false, false);
 	}
-	if (cl.worldmodel->drawflat_chain) {
+	if (cl.worldmodel->drawflat_todo) {
 		GLC_DrawFlat(cl.worldmodel, false);
 	}
 
@@ -882,9 +933,11 @@ void GLC_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 			else {
 				if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
 					chain_surfaces_drawflat(&clmodel->drawflat_chain, psurf);
+					clmodel->drawflat_todo = true;
 				}
 				else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
 					chain_surfaces_drawflat(&clmodel->drawflat_chain, psurf);
+					clmodel->drawflat_todo = true;
 				}
 				else {
 					chain_surfaces_by_lightmap(&psurf->texinfo->texture->texturechain, psurf);

@@ -53,6 +53,12 @@ msurface_t	**alphachain_tail = &alphachain;
 
 typedef void(*chain_surf_func)(msurface_t** chain_head, msurface_t* surf);
 
+void chain_surfaces_simple(msurface_t** chain_head, msurface_t* surf)
+{
+	surf->texturechain = *chain_head;
+	*chain_head = surf;
+}
+
 void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf)
 {
 	msurface_t* current = *chain_head;
@@ -159,6 +165,7 @@ void R_BrushModelClearTextureChains(model_t *clmodel)
 		}
 	}
 	clmodel->drawflat_chain = NULL;
+	clmodel->drawflat_todo = false;
 	clmodel->first_texture_chained = clmodel->numtextures;
 	clmodel->last_texture_chained = -1;
 
@@ -286,20 +293,22 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 			if (surf->flags & SURF_DRAWSKY) {
 				if (r_fastsky.integer || R_UseModernOpenGL()) {
 					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain, surf);
+					cl.worldmodel->drawflat_todo = true;
 				}
-				if (!r_fastsky.integer) {
-					chain_surfaces_by_lightmap(&skychain, surf);
+				else if (!r_fastsky.integer) {
+					chain_surfaces_simple(&skychain, surf);
 				}
 			}
 			else if (turbSurface) {
 				if (r_fastturb.integer && wateralpha == 1) {
 					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain, surf);
+					cl.worldmodel->drawflat_todo = true;
 				}
 				else if (solidTexTurb && R_UseModernOpenGL()) {
-					chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain, surf);
+					chain_surfaces_simple(&surf->texinfo->texture->texturechain, surf);
 				}
 				else {
-					chain_surfaces_by_lightmap(&waterchain, surf);
+					chain_surfaces_simple(&waterchain, surf);
 				}
 				R_TurbSurfacesEmitParticleEffects(surf);
 			}
@@ -308,14 +317,31 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 			}
 			else {
 				if (!alphaSurface && drawFlatFloors && (surf->flags & SURF_DRAWFLAT_FLOOR)) {
-					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain, surf);
+					if (R_UseImmediateOpenGL()) {
+						R_AddDrawflatChainSurface(surf, true);
+					}
+					else {
+						chain_surfaces_simple(&cl.worldmodel->drawflat_chain, surf);
+					}
+					cl.worldmodel->drawflat_todo = true;
 				}
 				else if (!alphaSurface && drawFlatWalls && !(surf->flags & SURF_DRAWFLAT_FLOOR)) {
-					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain, surf);
+					if (R_UseImmediateOpenGL()) {
+						R_AddDrawflatChainSurface(surf, false);
+					}
+					else {
+						chain_surfaces_simple(&cl.worldmodel->drawflat_chain, surf);
+					}
+					cl.worldmodel->drawflat_todo = true;
 				}
 				else {
 					clmodel->texturechains_have_lumas |= R_TextureAnimation(NULL, surf->texinfo->texture)->isLumaTexture;
-					chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain, surf);
+					if (R_UseImmediateOpenGL()) {
+						chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain, surf);
+					}
+					else {
+						chain_surfaces_simple(&surf->texinfo->texture->texturechain, surf);
+					}
 				}
 			}
 		}

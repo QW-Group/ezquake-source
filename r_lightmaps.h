@@ -25,5 +25,9 @@ qbool R_FullBrightAllowed(void);
 void R_CheckReloadLightmaps(void);
 void R_RenderAllDynamicLightmaps(struct model_s* model);
 void R_LightmapFrameInit(void);
+unsigned int R_LightmapCount(void);
+struct msurface_s* R_DrawflatLightmapChain(int i);
+void R_ClearDrawflatLightmapChain(int i);
+void R_AddDrawflatChainSurface(struct msurface_s* surf, qbool floor);
 
 #endif // EZQUAKE_R_LIGHTMAPS_HEADER

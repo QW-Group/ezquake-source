@@ -21,6 +21,8 @@ typedef struct lightmap_data_s {
 
 	texture_ref gl_texref;
 	glpoly_t* poly_chain;
+	msurface_t* drawflat_chain;
+	msurface_t** drawflat_chain_tail;
 	glRect_t change_area;
 	qbool modified;
 } lightmap_data_t;
