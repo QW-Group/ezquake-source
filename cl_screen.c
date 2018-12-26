@@ -59,6 +59,7 @@ void SCR_Draw_TeamInfo(void);
 void SCR_Draw_ShowNick(void);
 void SCR_DrawQTVBuffer(void);
 void SCR_DrawFPS(void);
+void SCR_DrawSpeed(void);
 qbool V_PreRenderView(void);
 
 int	glx, gly, glwidth, glheight;
@@ -97,10 +98,6 @@ cvar_t	scr_showturtle			= {"showturtle", "0"};
 cvar_t	scr_showpause			= {"showpause", "1"};
 
 cvar_t	scr_newHud              = {"scr_newhud", "0"};
-
-cvar_t	show_speed			    = {"show_speed", "0"};
-cvar_t	show_speed_x			= {"show_speed_x", "-1"};
-cvar_t	show_speed_y			= {"show_speed_y", "1"};
 
 cvar_t	show_velocity_3d		= {"show_velocity_3d", "0"};
 cvar_t	show_velocity_3d_offset_forward	= {"show_velocity_3d_offset_forward", "2.5"};
@@ -464,60 +461,6 @@ static void SCR_DrawNet(void)
 	Draw_Pic(scr_vrect.x + 64, scr_vrect.y, scr_net);
 }
 
-void SCR_DrawSpeed (void)
-{
-	double t;
-	int x, y, mynum;
-	char str[80];
-	vec3_t vel;
-	float speed;
-	static float maxspeed = 0, display_speed = -1;
-	static double lastframetime = 0;
-	static int lastmynum = -1;
-
-	if (!show_speed.value || scr_newHud.value == 1) {
-		// newHud has its own speed
-		return;
-	}
-
-	t = curtime;
-	if (!cl.spectator || (mynum = Cam_TrackNum()) == -1) {
-		mynum = cl.playernum;
-	}
-
-	if (mynum != lastmynum) {
-		lastmynum = mynum;
-		lastframetime = t;
-		display_speed = -1;
-		maxspeed = 0;
-	}
-
-	if (!cl.spectator || cls.demoplayback || mynum == cl.playernum) {
-		VectorCopy(cl.simvel, vel);
-	}
-	else {
-		VectorCopy(cl.frames[cl.validsequence & UPDATE_MASK].playerstate[mynum].velocity, vel);
-	}
-
-	vel[2] = 0;
-	speed = VectorLength(vel);
-
-	maxspeed = max(maxspeed, speed);
-
-	if (display_speed >= 0) {
-		snprintf(str, sizeof(str), "%3d%s", (int) display_speed, show_speed.value == 2 ? " SPD" : "");
-		x = ELEMENT_X_COORD(show_speed);
-		y = ELEMENT_Y_COORD(show_speed);
-		Draw_String (x, y, str);
-	}
-
-	if (t - lastframetime >= 0.1) {
-		lastframetime = t;
-		display_speed = maxspeed;
-		maxspeed = 0;
-	}
-}
-
 static void SCR_DrawPause (void) {
 	mpic_t *pic;
 
@@ -830,7 +773,6 @@ static void SCR_DrawElements(void)
 					if (!sb_showscores && !sb_showteamscores)
 					{ 
 						SCR_Draw_TeamInfo();
-						//SCR_Draw_WeaponStats();
 
 						SCR_Draw_ShowNick();
 
@@ -1133,10 +1075,6 @@ void SCR_Init (void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&scr_showturtle);
 	Cvar_Register (&scr_showpause);
-
-	Cvar_Register (&show_speed);
-	Cvar_Register (&show_speed_x);
-	Cvar_Register (&show_speed_y);
 
 	Cvar_Register (&show_velocity_3d);
 	Cvar_Register (&show_velocity_3d_offset_forward);

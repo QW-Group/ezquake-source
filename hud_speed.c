@@ -20,6 +20,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "common_draw.h"
 #include "hud.h"
 
+static cvar_t show_speed   = { "show_speed", "0" };
+static cvar_t show_speed_x = { "show_speed_x", "-1" };
+static cvar_t show_speed_y = { "show_speed_y", "1" };
+
 #define SPEED_GREEN				"52"
 #define SPEED_BROWN_RED			"100"
 #define SPEED_DARK_RED			"72"
@@ -713,4 +717,65 @@ void Speed_HudInit(void)
 		"proportional", "0",
 		NULL
 	);
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
+	Cvar_Register(&show_speed);
+	Cvar_Register(&show_speed_x);
+	Cvar_Register(&show_speed_y);
+	Cvar_ResetCurrentGroup();
+}
+
+void SCR_DrawSpeed(void)
+{
+	double t;
+	int x, y, mynum;
+	char str[80];
+	vec3_t vel;
+	float speed;
+	static float maxspeed = 0, display_speed = -1;
+	static double lastframetime = 0;
+	static int lastmynum = -1;
+	extern cvar_t scr_newHud;
+
+	if (!show_speed.integer || scr_newHud.integer == 1) {
+		// newHud has its own speed
+		return;
+	}
+
+	t = curtime;
+	if (!cl.spectator || (mynum = Cam_TrackNum()) == -1) {
+		mynum = cl.playernum;
+	}
+
+	if (mynum != lastmynum) {
+		lastmynum = mynum;
+		lastframetime = t;
+		display_speed = -1;
+		maxspeed = 0;
+	}
+
+	if (!cl.spectator || cls.demoplayback || mynum == cl.playernum) {
+		VectorCopy(cl.simvel, vel);
+	}
+	else {
+		VectorCopy(cl.frames[cl.validsequence & UPDATE_MASK].playerstate[mynum].velocity, vel);
+	}
+
+	vel[2] = 0;
+	speed = VectorLength(vel);
+
+	maxspeed = max(maxspeed, speed);
+
+	if (display_speed >= 0) {
+		snprintf(str, sizeof(str), "%3d%s", (int)display_speed, show_speed.value == 2 ? " SPD" : "");
+		x = ELEMENT_X_COORD(show_speed);
+		y = ELEMENT_Y_COORD(show_speed);
+		Draw_String(x, y, str);
+	}
+
+	if (t - lastframetime >= 0.1) {
+		lastframetime = t;
+		display_speed = maxspeed;
+		maxspeed = 0;
+	}
 }
