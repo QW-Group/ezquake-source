@@ -314,7 +314,9 @@ void R_BrushModelDrawEntity(entity_t *e)
 
 		// START shaman FIX for no simple textures on world brush models {
 		//draw the textures chains for the model
-		R_RenderAllDynamicLightmaps(clmodel);
+		if (clmodel->firstmodelsurface) {
+			R_RenderAllDynamicLightmaps(clmodel);
+		}
 
 		//R00k added contents point for underwater bmodels
 		if (gl_caustics.integer) {
