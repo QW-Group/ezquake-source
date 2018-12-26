@@ -137,8 +137,7 @@ extern cvar_t amf_part_traildetail;
 extern cvar_t amf_part_trailwidth;
 extern cvar_t amf_part_trailtype;
 
-void SCR_DrawAMFstats(void);
-int ParticleCount, ParticleCountHigh, CoronaCount, CoronaCountHigh;
+extern int ParticleCount, ParticleCountHigh, CoronaCount, CoronaCountHigh;
 
 void ParticleAlphaTrail(centity_t* cent, float size, float life);
 void ParticleNailTrail(centity_t* client_ent, float size, float life);

@@ -31,6 +31,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //VULT
 static float varray_vertex[16];
 
+int ParticleCount, ParticleCountHigh, CoronaCount, CoronaCountHigh;
+
 #define FLAME_FRAME_TOTAL      50  // how many sequences we have, per lifetime
 #define FLAME_GRAVITY          10  // how quickly it increases
 

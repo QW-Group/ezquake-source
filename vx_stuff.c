@@ -28,8 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 corona_texture_t corona_textures[CORONATEX_COUNT];
 
-cvar_t		amf_showstats = { "r_glstats", "0" };
-
 cvar_t		tei_lavafire = { "gl_surface_lava", "0" };
 cvar_t		tei_slime = { "gl_surface_slime", "0" };
 
@@ -252,39 +250,6 @@ void Draw_AMFStatLoss(int stat, hud_t* hud)
 	}
 }
 
-void SCR_DrawAMFstats(void)
-{
-	int x, y, numlines;
-	char st[80];
-
-	if (!amf_showstats.value)
-		return;
-
-	numlines = 6;
-	numlines += 2; //margins
-
-	snprintf(st, sizeof(st), "Particle Count: %3d ", ParticleCount);
-	x = vid.width - strlen(st) * 8 - 8;
-	y = vid.height*0.1;
-	Draw_AlphaWindow(x - 8, y - 8, x + strlen(st) * 8, y + numlines * 8 - 8, 1, 0.33);
-	Draw_String(x, y, st);
-
-	snprintf(st, sizeof(st), "Highest: %3d ", ParticleCountHigh);
-	x = vid.width - strlen(st) * 8 - 8;
-	y = y + 8;
-	Draw_String(x, y, st);
-
-	snprintf(st, sizeof(st), "Corona Count: %3d ", CoronaCount);
-	x = vid.width - strlen(st) * 8 - 8;
-	y = y + 8;
-	Draw_String(x, y, st);
-
-	snprintf(st, sizeof(st), "Highest: %3d ", CoronaCountHigh);
-	x = vid.width - strlen(st) * 8 - 8;
-	y = y + 8;
-	Draw_String(x, y, st);
-}
-
 void InitVXStuff(void)
 {
 	int flags = TEX_COMPLAIN | TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE;
@@ -326,10 +291,6 @@ void InitVXStuff(void)
 	Cvar_Register(&amf_camera_chase_dist);
 	Cvar_Register(&amf_camera_chase_height);
 	Cvar_Register(&amf_camera_death);
-	Cvar_ResetCurrentGroup();
-
-	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
-	Cvar_Register(&amf_showstats);
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);

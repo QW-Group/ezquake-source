@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tr_types.h"
 #include "r_framestats.h"
 #include "screen.h"
+#include "vx_stuff.h"
 
 cvar_t	show_fps = { "show_fps", "0" };
 static cvar_t	show_fps_x = { "show_fps_x", "-5" };
@@ -140,26 +141,32 @@ static void SCR_HUD_DrawVidLag(hud_t *hud)
 	}
 }
 
-static void FrameStats_AddLine(char content[2][64], const char* name, int value)
+#define MAX_FRAMESTATS_LINES 32
+static char content[MAX_FRAMESTATS_LINES][2][64];
+
+static void FrameStats_AddLine(int* line, const char* name, int value)
 {
-	strlcpy(content[0], name, sizeof(content[0]));
+	if (*line < 0 || *line >= MAX_FRAMESTATS_LINES) {
+		return;
+	}
+
+	strlcpy(content[*line][0], name, sizeof(content[*line][0]));
 	if (name[0]) {
-		snprintf(content[1], sizeof(content[1]), "%4d", value);
+		snprintf(content[*line][1], sizeof(content[*line][1]), "%4d", value);
 	}
 	else {
-		content[1][0] = '\0';
+		memset(content[*line][1], 0, sizeof(content[*line][1]));
 	}
+	++(*line);
 }
-
-#define MAX_FRAMESTATS_LINES 32
 
 static void FrameStats_DrawElement(hud_t *hud)
 {
 	static cvar_t
 		*hud_frameStats_style = NULL,
 		*hud_frameStats_scale,
-		*hud_frameStats_proportional;
-	static char content[MAX_FRAMESTATS_LINES][2][64];
+		*hud_frameStats_proportional,
+		*hud_frameStats_amfstats;
 
 	int height = 8;
 	int width = 0;
@@ -176,19 +183,27 @@ static void FrameStats_DrawElement(hud_t *hud)
 		hud_frameStats_style = HUD_FindVar(hud, "style");
 		hud_frameStats_scale = HUD_FindVar(hud, "scale");
 		hud_frameStats_proportional = HUD_FindVar(hud, "proportional");
+		hud_frameStats_amfstats = HUD_FindVar(hud, "amfstats");
 	}
 
-	FrameStats_AddLine(content[lines++], "Draw calls:", prevFrameStats.draw_calls);
-	FrameStats_AddLine(content[lines++], "Sub-draw calls:", prevFrameStats.subdraw_calls);
-	FrameStats_AddLine(content[lines++], "Texture switches:", prevFrameStats.texture_binds);
-	FrameStats_AddLine(content[lines++], "Lightmap uploads:", prevFrameStats.lightmap_updates);
+	FrameStats_AddLine(&lines, "Draw calls:", prevFrameStats.draw_calls);
+	FrameStats_AddLine(&lines, "Sub-draw calls:", prevFrameStats.subdraw_calls);
+	FrameStats_AddLine(&lines, "Texture switches:", prevFrameStats.texture_binds);
+	FrameStats_AddLine(&lines, "Lightmap uploads:", prevFrameStats.lightmap_updates);
 	if (frameStats.classic.polycount[polyTypeWorldModel]) {
-		FrameStats_AddLine(content[lines++], "", 0);
-		FrameStats_AddLine(content[lines++], "World-model polys:", frameStats.classic.polycount[polyTypeWorldModel]);
+		FrameStats_AddLine(&lines, "", 0);
+		FrameStats_AddLine(&lines, "World-model polys:", frameStats.classic.polycount[polyTypeWorldModel]);
 		if (cl.standby || com_serveractive) {
-			FrameStats_AddLine(content[lines++], "Alias-model polys:", frameStats.classic.polycount[polyTypeAliasModel]);
-			FrameStats_AddLine(content[lines++], "Brush-model polys:", frameStats.classic.polycount[polyTypeBrushModel]);
+			FrameStats_AddLine(&lines, "Alias-model polys:", frameStats.classic.polycount[polyTypeAliasModel]);
+			FrameStats_AddLine(&lines, "Brush-model polys:", frameStats.classic.polycount[polyTypeBrushModel]);
 		}
+	}
+	if (hud_frameStats_amfstats->integer) {
+		FrameStats_AddLine(&lines, "", 0);
+		FrameStats_AddLine(&lines, "AMF particle count:", ParticleCount);
+		FrameStats_AddLine(&lines, "AMF particle peak:", ParticleCountHigh);
+		FrameStats_AddLine(&lines, "Corona count:", CoronaCount);
+		FrameStats_AddLine(&lines, "Corona peak:", CoronaCountHigh);
 	}
 
 	height = lines * 8 * hud_frameStats_scale->value;
@@ -248,6 +263,7 @@ void Performance_HudInit(void)
 		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
 		"scale", "1",
 		"proportional", "0",
+		"amfstats", "0",
 		NULL
 	);
 

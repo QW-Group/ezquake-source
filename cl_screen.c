@@ -789,9 +789,6 @@ static void SCR_DrawElements(void)
 
 					MVD_Screen ();
 
-					// VULT STATS
-					SCR_DrawAMFstats();
-
 					// VULT DISPLAY KILLS
 					VX_TrackerThink();
 
