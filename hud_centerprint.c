@@ -25,7 +25,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 
 static cvar_t scr_centertime  = { "scr_centertime",  "2" };
 static cvar_t scr_centershift = { "scr_centershift", "0" };
-static cvar_t scr_printspeed  = { "scr_printspeed",  "8" };
+static cvar_t scr_centerspeed = { "scr_centerspeed", "8" };
 
 /**************************** CENTER PRINTING ********************************/
 
@@ -48,8 +48,10 @@ void SCR_CenterPrint_Init(void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register(&scr_centertime);
 	Cvar_Register(&scr_centershift);
-	Cvar_Register(&scr_printspeed);
+	Cvar_Register(&scr_centerspeed);
 	Cvar_ResetCurrentGroup();
+
+	Cmd_AddLegacyCommand("scr_printspeed", "scr_centerspeed");
 }
 
 // Called for important messages that should stay in the center of the screen for a few moments
@@ -75,7 +77,7 @@ static void SCR_DrawCenterString(void)
 	int l, j, x, y, remaining;
 
 	// the finale prints the characters one at a time
-	remaining = cl.intermission ? scr_printspeed.value * (cl.time - scr_centertime_start) : 9999;
+	remaining = cl.intermission ? max(scr_centerspeed.value, 1) * (cl.time - scr_centertime_start) : 9999;
 
 	scr_erase_center = 0;
 	start = scr_centerstring;
