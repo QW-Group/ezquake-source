@@ -31,6 +31,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_trace.h"
 #include "r_renderer.h"
 
+// Samplers
+static unsigned int nearest_sampler;
+static unsigned int linear_sampler;
+
 GLuint GL_TextureNameFromReference(texture_ref ref);
 GLenum GL_TextureTargetFromReference(texture_ref ref);
 
@@ -94,6 +98,7 @@ static glGetInternalformativ_t qglGetInternalformativ;
 void GL_LoadTextureManagementFunctions(void)
 {
 	glConfig.supported_features &= ~(R_SUPPORT_TEXTURE_ARRAYS | R_SUPPORT_TEXTURE_SAMPLERS);
+	nearest_sampler = linear_sampler = 0;
 
 	glConfig.preferred_format = glConfig.preferred_type = 0;
 	if (GL_VersionAtLeast(4, 3) || SDL_GL_ExtensionSupported("GL_ARB_internalformat_query2")) {
@@ -477,10 +482,6 @@ void GL_TextureMipmapGenerate(texture_ref texture)
 
 	GL_ProcessErrors("post-" __FUNCTION__);
 }
-
-// Samplers
-static unsigned int nearest_sampler;
-static unsigned int linear_sampler;
 
 void GLM_SamplerSetNearest(unsigned int texture_unit_number)
 {
