@@ -25,6 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
   cl_screen.c, sbar.c
 */
 
+#ifndef EZQUAKE_SCREEN_HEADER
+#define EZQUAKE_SCREEN_HEADER
 
 #define		SCR_NEED_CONSOLE_BACKGROUND		(cls.state < ca_active && !cl.intermission)
 
@@ -148,3 +150,4 @@ void SCR_DrawMultiviewIndividualElements(void);
 
 // end - scr_teaminfo
 
+#endif // EZQUAKE_SCREEN_HEADER

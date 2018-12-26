@@ -108,10 +108,6 @@ cvar_t	show_velocity_3d		= {"show_velocity_3d", "0"};
 cvar_t	show_velocity_3d_offset_forward	= {"show_velocity_3d_offset_forward", "2.5"};
 cvar_t	show_velocity_3d_offset_down	= {"show_velocity_3d_offset_down", "5"};
 
-cvar_t	show_fps				= {"show_fps", "0"};
-cvar_t	show_fps_x				= {"show_fps_x", "-5"};
-cvar_t	show_fps_y				= {"show_fps_y", "-1"};
-
 cvar_t	cl_hud					= {"cl_hud", "1"};	// QW262 HUD.
 
 cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1"};
@@ -468,24 +464,6 @@ static void SCR_DrawNet(void)
 	}
 
 	Draw_Pic(scr_vrect.x + 64, scr_vrect.y, scr_net);
-}
-
-void SCR_DrawFPS(void)
-{
-	int x, y;
-	char str[80];
-
-	if (!show_fps.value || scr_newHud.value == 1) {
-		// HUD -> hexum - newHud has its own fps
-		return;
-	}
-
-	// Multiview
-	snprintf(str, sizeof(str), "%3.1f", cls.fps + 0.05);
-
-	x = ELEMENT_X_COORD(show_fps);
-	y = ELEMENT_Y_COORD(show_fps);
-	Draw_String(x, y, str);
 }
 
 void SCR_DrawSpeed (void)
@@ -1206,10 +1184,6 @@ void SCR_Init (void)
 	Cvar_Register (&show_velocity_3d);
 	Cvar_Register (&show_velocity_3d_offset_forward);
 	Cvar_Register (&show_velocity_3d_offset_down);
-
-	Cvar_Register (&show_fps);
-	Cvar_Register (&show_fps_x);
-	Cvar_Register (&show_fps_y);
 
 	SCR_RegisterAutoIDCvars();
 

@@ -22,6 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "hud_common.h"
 #include "tr_types.h"
 #include "r_framestats.h"
+#include "screen.h"
+
+cvar_t	show_fps = { "show_fps", "0" };
+static cvar_t	show_fps_x = { "show_fps_x", "-5" };
+static cvar_t	show_fps_y = { "show_fps_y", "-1" };
 
 r_frame_stats_t prevFrameStats;
 r_frame_stats_t frameStats;
@@ -245,4 +250,29 @@ void Performance_HudInit(void)
 		"proportional", "0",
 		NULL
 	);
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
+	Cvar_Register(&show_fps);
+	Cvar_Register(&show_fps_x);
+	Cvar_Register(&show_fps_y);
+	Cvar_ResetCurrentGroup();
+}
+
+void SCR_DrawFPS(void)
+{
+	int x, y;
+	char str[80];
+	extern cvar_t scr_newHud;
+
+	if (!show_fps.integer || scr_newHud.integer == 1) {
+		// HUD -> hexum - newHud has its own fps
+		return;
+	}
+
+	// Multiview
+	snprintf(str, sizeof(str), "%3.1f", cls.fps + 0.05);
+
+	x = ELEMENT_X_COORD(show_fps);
+	y = ELEMENT_Y_COORD(show_fps);
+	Draw_String(x, y, str);
 }
