@@ -118,6 +118,7 @@ cvar_t  scr_showcrosshair       = {"scr_showcrosshair", "1"}; // so crosshair do
 cvar_t  scr_notifyalways        = {"scr_notifyalways", "0"}; // don't hide notification messages in intermission
 
 cvar_t  scr_fovmode             = {"scr_fovmode", "0"}; // When using reduced viewsize, reduce vertical fov or letterbox the screen
+cvar_t  r_drawhud               = {"r_drawhud", "1"};   // disables hud rendering
 
 qbool	scr_initialized;	// Ready to draw.
 
@@ -784,7 +785,7 @@ static void SCR_DrawElements(void)
 					}
 
 					// QW262
-					SCR_DrawHud ();
+					SCR_DrawHud();
 
 					MVD_Screen ();
 
@@ -965,16 +966,20 @@ void SCR_UpdateScreenPostPlayerView(void)
 	extern qbool  sb_showscores, sb_showteamscores;
 	extern cvar_t scr_menudrawhud;
 
-	R_TraceEnterNamedRegion("HUD");
-	if (scr_newHud.value != 1) {
-		SCR_DrawNewHudElements();
+	if (r_drawhud.integer) {
+		R_TraceEnterNamedRegion("HUD");
+		if (scr_newHud.value != 1) {
+			SCR_DrawNewHudElements();
+		}
+
+		SCR_DrawElements();
+
+		// Actual rendering...
+		if (r_drawhud.integer != 2) {
+			R_FlushImageDraw();
+		}
+		R_TraceLeaveNamedRegion();
 	}
-
-	SCR_DrawElements();
-
-	// Actual rendering...
-	R_FlushImageDraw();
-	R_TraceLeaveNamedRegion();
 
 	renderer.PostProcessScreen();
 
@@ -1088,6 +1093,7 @@ void SCR_Init (void)
 
 	// QW 262 HUD
 	Cvar_Register (&cl_hud);
+	Cvar_Register (&r_drawhud);
 
 	Cvar_Register (&scr_showcrosshair);
 	Cvar_Register (&scr_notifyalways);
