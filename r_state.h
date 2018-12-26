@@ -198,7 +198,6 @@ typedef enum {
 	r_state_default_2d,
 	r_state_brighten_screen,
 	r_state_line,
-	r_state_scene_blur,
 	r_state_hud_images_glc,
 	r_state_hud_images_alphatested_glc,
 	r_state_poly_blend,

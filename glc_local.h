@@ -26,7 +26,6 @@ void GLC_StateBeginDrawAliasFrameProgram(texture_ref texture, texture_ref fb_tex
 void GLC_StateBeginAliasModelShadow(void);
 void GLC_StateBeginFastTurbPoly(byte color[4]);
 void GLC_StateBeginBlendLightmaps(qbool use_buffers);
-void GLC_StateBeginSceneBlur(void);
 void GLC_StateBeginCausticsPolys(void);
 void GLC_StateBeginUnderwaterAliasModelCaustics(texture_ref base_texture, texture_ref caustics_texture);
 void GLC_StateEndUnderwaterAliasModelCaustics(void);

@@ -65,7 +65,6 @@ static void GLC_Begin2DRendering(void)
 #define GLC_LightmapShutdown               GLC_NoOperation
 #define GLC_ClearRenderingSurface          GL_Clear
 #define GLC_EnsureFinished                 GL_EnsureFinished
-#define GLC_RenderSceneBlur                GLC_RenderSceneBlurDo
 #define GLC_RenderView                     GLC_NoOperation
 #define GLC_Screenshot                     GL_Screenshot
 #define GLC_InitialiseVAOState             GL_InitialiseVAOState

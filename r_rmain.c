@@ -50,8 +50,6 @@ void GLM_SetupGL(void);
 void GLC_SetupGL(void);
 void GLM_PreRenderView(void);
 void GLC_PreRenderView(void);
-void GLM_RenderSceneBlurDo(float alpha);
-void GLC_RenderSceneBlurDo(float alpha);
 void GLM_DrawSpriteModel(entity_t *e);
 void GLC_DrawSpriteModel(entity_t *e);
 void GLM_PolyBlend(float v_blend[4]);
@@ -730,43 +728,9 @@ static void R_DrawVelocity3D(void)
 	renderer.DrawVelocity3D();
 }
 
-/*
-   Motion blur effect.
-   Stolen from FTE engine.
-*/
-static void R_RenderSceneBlur(void)
-{
-	if (!gl_motion_blur.integer) {
-		// Motion blur disabled entirely.
-		return;
-	}
-
-	// FIXME: Actually here should be some smoothing code for transaction from one case to another,
-	// since for example if we turned off blur for everything but hurt, when we feel pain we use blur, but when
-	// pain is ended we saddenly turning blur off, that does not look natural.
-	if (gl_motion_blur_dead.value && cl.stats[STAT_HEALTH] < 1) {
-		// We are dead.
-		renderer.RenderSceneBlur(gl_motion_blur_dead.value);
-	}
-	// We are alive, lets check different cases.
-	else if (gl_motion_blur_hurt.value && cl.hurtblur > cl.time) {
-		// Hurt.
-		renderer.RenderSceneBlur(gl_motion_blur_hurt.value);
-	}
-	else if (gl_motion_blur_norm.value) {
-		// Plain case.
-		renderer.RenderSceneBlur(gl_motion_blur_norm.value);
-	}
-	else {
-		// We do not really blur anything, just copy image, so if we start bluring it will be smooth transition.
-		renderer.RenderSceneBlur(-1);
-	}
-}
-
 void R_PostProcessScene(void)
 {
 	if (R_UseImmediateOpenGL()) {
-		R_RenderSceneBlur();
 		R_BloomBlend();
 	}
 }

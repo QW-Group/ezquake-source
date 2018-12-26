@@ -147,14 +147,6 @@ static void R_Initialise2DStates(void)
 		state->vao_id = vao_none;
 	}
 
-	state = R_InitRenderingState(r_state_scene_blur, true, "sceneBlurState", postprocess_vao);
-	state->depth.test_enabled = false;
-	state->cullface.enabled = false;
-	R_GLC_DisableAlphaTesting(state);
-	state->blendingEnabled = true;
-	state->blendFunc = r_blendfunc_premultiplied_alpha;
-	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
-
 	state = R_InitRenderingState(r_state_hud_images_glc, true, "glcImageDrawState", vao_hud_images);
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;

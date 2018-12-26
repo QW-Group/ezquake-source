@@ -493,14 +493,6 @@ void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness)
 	}
 }
 
-void GLC_StateBeginSceneBlur(void)
-{
-	R_ApplyRenderingState(r_state_scene_blur);
-
-	R_IdentityModelView();
-	R_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
-}
-
 void GLC_StateBeginDrawPolygon(void)
 {
 	R_ApplyRenderingState(r_state_line);

@@ -62,11 +62,6 @@ void GLM_DrawVelocity3D(void)
 	// MEAG: TODO
 }
 
-void GLM_RenderSceneBlurDo(float alpha)
-{
-	// MEAG: TODO
-}
-
 void GLM_PreRenderView(void)
 {
 	extern cvar_t gl_alphafont, gl_max_size;

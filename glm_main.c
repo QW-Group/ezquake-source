@@ -12,10 +12,6 @@ static void GLM_ConfigureFog(int contents)
 {
 }
 
-static void GLM_RenderSceneBlur(float alpha)
-{
-}
-
 static void R_Stubs_NoOperationEntity(entity_t* ent)
 {
 }

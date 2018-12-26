@@ -61,7 +61,6 @@ RENDERER_METHOD(qbool, IsFramebufferEnabled3D, void)
 RENDERER_METHOD(void, ConfigureFog, int contents)
 
 // Post-processing (scene)
-RENDERER_METHOD(void, RenderSceneBlur, float alpha)
 RENDERER_METHOD(void, RenderView, void)
 RENDERER_METHOD(void, PreRenderView, void)
 

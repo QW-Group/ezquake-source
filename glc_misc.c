@@ -27,8 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 
 // motion blur.
-texture_ref sceneblur_texture;
-
 void GLC_PolyBlend(float v_blend[4])
 {
 	GLC_StateBeginPolyBlend(v_blend);
@@ -169,68 +167,6 @@ void GLC_DrawVelocity3D(void)
 	*/
 }
 
-void GLC_RenderSceneBlurDo(float alpha)
-{
-	extern cvar_t gl_motion_blur_fps;
-	static double last_time;
-	double current_time = Sys_DoubleTime(), diff_time = current_time - last_time;
-	double fps = gl_motion_blur_fps.value > 0 ? gl_motion_blur_fps.value : 77;
-	qbool draw = (alpha >= 0); // negative alpha mean we don't draw anything but copy screen only.
-	float oldProjectionMatrix[16];
-	float oldModelviewMatrix[16];
-
-	int vwidth = 1, vheight = 1;
-	float vs, vt, cs, ct;
-
-	// alpha more than 0.5 are wrong.
-	alpha = bound(0.1, alpha, 0.5);
-
-	R_TextureSizeRoundUp(glwidth, glheight, &vwidth, &vheight);
-
-	// go 2d
-	R_PushProjectionMatrix(oldProjectionMatrix);
-	R_PushModelviewMatrix(oldModelviewMatrix);
-
-	GLC_StateBeginSceneBlur();
-
-	//blend the last frame onto the scene
-	//the maths is because our texture is over-sized (must be power of two)
-	cs = vs = (float)glwidth / vwidth * 0.5;
-	ct = vt = (float)glheight / vheight * 0.5;
-	// qqshka: I don't get what is gl_motionblurscale, so simply removed it.
-	vs *= 1;//gl_motionblurscale.value;
-	vt *= 1;//gl_motionblurscale.value;
-
-	renderer.TextureUnitBind(0, sceneblur_texture);
-	R_CustomColor(alpha, alpha, alpha, alpha);
-	if (draw) {
-		GLC_Begin(GL_QUADS);
-		glTexCoord2f(cs-vs, ct-vt);
-		GLC_Vertex2f(0, 0);
-		glTexCoord2f(cs+vs, ct-vt);
-		GLC_Vertex2f(glwidth, 0);
-		glTexCoord2f(cs+vs, ct+vt);
-		GLC_Vertex2f(glwidth, glheight);
-		glTexCoord2f(cs-vs, ct+vt);
-		GLC_Vertex2f(0, glheight);
-		GLC_End();
-	}
-
-	// Restore matrices.
-	R_PopProjectionMatrix(oldProjectionMatrix);
-	R_PopModelviewMatrix(oldModelviewMatrix);
-
-	// With high frame rate frames difference is soo smaaaal, so motion blur almost unnoticeable,
-	// so I copy frame not every frame.
-	if (diff_time >= 1.0 / fps) {
-		last_time = current_time;
-
-		//copy the image into the texture so that we can play with it next frame too!
-		glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 0, 0, vwidth, vheight, 0);
-		renderer.TextureSetFiltering(sceneblur_texture, texture_minification_linear, texture_magnification_linear);
-	}
-}
-
 void GLC_PreRenderView(void)
 {
 	// TODO
@@ -249,7 +185,4 @@ void GLC_Shutdown(qbool restarting)
 void GLC_TextureInitialiseState(void)
 {
 	GL_TextureInitialiseState();
-
-	// Motion blur.
-	renderer.TexturesCreate(texture_type_2d, 1, &sceneblur_texture);
 }
