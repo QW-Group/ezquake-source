@@ -28,6 +28,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern texture_ref particletexture;
 texture_ref particletexture_array;
 int particletexture_array_index;
+float particletexture_array_xpos_tr;
+float particletexture_array_ypos_tr;
 static float particletexture_scale_s;
 static float particletexture_scale_t;
 
@@ -56,6 +58,8 @@ void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags)
 		}
 
 		particletexture_array = array_ref->ref;
+		particletexture_array_xpos_tr = (R_TextureWidth(particletexture_array) - 1.0f) / R_TextureWidth(particletexture_array);
+		particletexture_array_ypos_tr = (R_TextureHeight(particletexture_array) - 1.0f) / R_TextureWidth(particletexture_array);
 		particletexture_array_index = array_ref->index;
 		particletexture_scale_s = array_ref->scale_s;
 		particletexture_scale_t = array_ref->scale_t;

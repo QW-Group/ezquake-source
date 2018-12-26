@@ -184,6 +184,8 @@ r_sprite3d_vert_t* R_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required
 void R_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index)
 {
 	extern int particletexture_array_index;
+	extern float particletexture_array_xpos_tr;
+	extern float particletexture_array_ypos_tr;
 
 	vert->color[0] = color[0];
 	vert->color[1] = color[1];
@@ -191,8 +193,8 @@ void R_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float
 	vert->color[3] = color[3];
 	VectorSet(vert->position, x, y, z);
 	if (texture_index < 0) {
-		vert->tex[0] = 0.99;
-		vert->tex[1] = 0.99;
+		vert->tex[0] = particletexture_array_xpos_tr;
+		vert->tex[1] = particletexture_array_ypos_tr;
 		vert->tex[2] = particletexture_array_index;
 	}
 	else {

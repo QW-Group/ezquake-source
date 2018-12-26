@@ -34,6 +34,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef RENDERER_OPTION_MODERN_OPENGL
 int particletexture_array_index = 0;
+float particletexture_array_xpos_tr = 0.9999f;
+float particletexture_array_ypos_tr = 0.9999f;
 #endif
 
 texture_ref particletexture;
