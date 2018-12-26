@@ -321,7 +321,7 @@ sources += [
 	'glc_misc.o',
 	'glc_screen.o',
 	'glc_sky.o',
-	'glc_sprite.o',
+	'glc_sprite3d.o',
 	'glc_surf.o',
 	'glc_turb_surface.o',
 	'glc_warp.o',

@@ -257,7 +257,6 @@ CLASSIC_OPENGL_OBJS := \
     glc_performance.o \
     glc_sdl.o \
     glc_sky.o \
-    glc_sprite.o \
     glc_sprite3d.o \
     glc_state.o \
     glc_surf.o \
