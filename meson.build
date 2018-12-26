@@ -366,6 +366,7 @@ sources += [
 	'hud_scores.o',
 	'hud_performance.o',
 	'hud_centerprint.o',
+	'hud_qtv.o',
 	'fonts.o'
 ]
 

@@ -57,6 +57,8 @@ void SCR_DrawClocks(void);
 void R_SetupFrame(void);
 void SCR_Draw_TeamInfo(void);
 void SCR_Draw_ShowNick(void);
+void SCR_DrawQTVBuffer(void);
+void SCR_DrawFPS(void);
 qbool V_PreRenderView(void);
 
 int	glx, gly, glwidth, glheight;
@@ -95,10 +97,6 @@ cvar_t	scr_showturtle			= {"showturtle", "0"};
 cvar_t	scr_showpause			= {"showpause", "1"};
 
 cvar_t	scr_newHud              = {"scr_newhud", "0"};
-
-cvar_t	scr_qtvbuffer			= {"scr_qtvbuffer", "0"};
-cvar_t	scr_qtvbuffer_x			= {"scr_qtvbuffer_x", "0"};
-cvar_t	scr_qtvbuffer_y			= {"scr_qtvbuffer_y", "-10"};
 
 cvar_t	show_speed			    = {"show_speed", "0"};
 cvar_t	show_speed_x			= {"show_speed_x", "-1"};
@@ -518,43 +516,6 @@ void SCR_DrawSpeed (void)
 		display_speed = maxspeed;
 		maxspeed = 0;
 	}
-}
-
-void SCR_DrawQTVBuffer (void)
-{
-	extern double Demo_GetSpeed(void);
-	extern unsigned char pb_buf[];
-	extern int	pb_cnt;
-
-	int x, y;
-	int ms, len;
-	char str[64];
-
-	switch(scr_qtvbuffer.integer)
-	{
-		case 0:
-			return;
-
-		case 1:
-			if (cls.mvdplayback != QTV_PLAYBACK)
-				return; // not qtv, ignore
-
-			break;
-
-		default:
-			if (!cls.mvdplayback)
-				return; // not mvd(that include qtv), ignore
-
-			break;
-	}
-
-	len = ConsistantMVDDataEx(pb_buf, pb_cnt, &ms);
-
-	snprintf(str, sizeof(str), "%6dms %5db %2.3f", ms, len, Demo_GetSpeed());
-
-	x = ELEMENT_X_COORD(scr_qtvbuffer);
-	y = ELEMENT_Y_COORD(scr_qtvbuffer);
-	Draw_String (x, y, str);
 }
 
 static void SCR_DrawPause (void) {
@@ -1172,10 +1133,6 @@ void SCR_Init (void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register (&scr_showturtle);
 	Cvar_Register (&scr_showpause);
-
-	Cvar_Register (&scr_qtvbuffer_x);
-	Cvar_Register (&scr_qtvbuffer_y);
-	Cvar_Register (&scr_qtvbuffer);
 
 	Cvar_Register (&show_speed);
 	Cvar_Register (&show_speed_x);

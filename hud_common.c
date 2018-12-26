@@ -77,6 +77,7 @@ void Face_HudInit(void);
 void Frags_HudInit(void);
 void Tracking_HudInit(void);
 void CenterPrint_HudInit(void);
+void Qtv_HudInit(void);
 
 hud_t *hud_netgraph = NULL;
 
@@ -979,4 +980,5 @@ void CommonDraw_Init(void)
 	Frags_HudInit();
 	Tracking_HudInit();
 	CenterPrint_HudInit();
+	Qtv_HudInit();
 }
