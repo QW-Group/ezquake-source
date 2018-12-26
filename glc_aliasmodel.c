@@ -688,16 +688,18 @@ static void GLC_DrawPowerupShell_Immediate(entity_t* ent, int pose1, int pose2, 
 	}
 }
 
-static void GLC_DrawPowerupShell(entity_t* ent, maliasframedesc_t *oldframe, maliasframedesc_t *frame, float fraclerp)
+static void GLC_DrawPowerupShell(entity_t* ent, maliasframedesc_t *oldframe, maliasframedesc_t *frame)
 {
-	int pose1 = R_AliasFramePose(oldframe);
-	int pose2 = R_AliasFramePose(frame);
+	int pose1, pose2;
+	float lerp;
+
+	R_AliasModelDeterminePoses(oldframe, frame, &pose1, &pose2, &lerp);
 
 	if (gl_program_aliasmodels.integer) {
-		GLC_DrawPowerupShell_Program(ent, pose1, fraclerp);
+		GLC_DrawPowerupShell_Program(ent, pose1, lerp);
 	}
 	else {
-		GLC_DrawPowerupShell_Immediate(ent, pose1, pose2, fraclerp);
+		GLC_DrawPowerupShell_Immediate(ent, pose1, pose2, lerp);
 	}
 }
 
@@ -839,7 +841,7 @@ void GLC_DrawAliasModelPowerupShell(entity_t *ent)
 	// FIXME: think need put it after caustics
 	R_PushModelviewMatrix(oldMatrix);
 	R_StateBeginDrawAliasModel(ent, paliashdr);
-	GLC_DrawPowerupShell(ent, oldframe, frame, r_framelerp);
+	GLC_DrawPowerupShell(ent, oldframe, frame);
 	R_PopModelviewMatrix(oldMatrix);
 
 	R_TraceLeaveRegion(true);
