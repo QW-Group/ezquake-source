@@ -12,6 +12,13 @@ cvar_t gl_program_turbsurfaces = { "gl_program_turbsurfaces", "1" };
 cvar_t gl_program_aliasmodels = { "gl_program_aliasmodels", "1", CVAR_LATCH };
 cvar_t gl_program_world = { "gl_program_world", "1" };
 
+static cvar_t* gl_program_cvars[] = {
+	&gl_program_sky,
+	&gl_program_turbsurfaces,
+	&gl_program_aliasmodels,
+	&gl_program_world,
+};
+
 void GL_Init(void);
 qbool GLC_InitialiseVAOHandling(void);
 void GL_InitialiseBufferHandling(api_buffers_t* buffers);
@@ -96,7 +103,8 @@ static void GLC_Begin2DRendering(void)
 
 void GLC_Initialise(void)
 {
-	#include "r_renderer_structure.h"
+	int i;
+#include "r_renderer_structure.h"
 
 	if (!host_initialized) {
 		Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
@@ -119,18 +127,22 @@ void GLC_Initialise(void)
 	GL_ProcessErrors("post-GL_InitialiseState");
 
 	if (!GL_Supported(R_SUPPORT_RENDERING_SHADERS)) {
-		Cvar_LatchedSetValue(&gl_program_aliasmodels, 0);
-		Cvar_SetValue(&gl_program_sky, 0);
-		Cvar_SetValue(&gl_program_turbsurfaces, 0);
-		Cvar_SetFlags(&gl_program_aliasmodels, Cvar_GetFlags(&gl_program_aliasmodels) | CVAR_ROM);
-		Cvar_SetFlags(&gl_program_sky, Cvar_GetFlags(&gl_program_sky) | CVAR_ROM);
-		Cvar_SetFlags(&gl_program_turbsurfaces, Cvar_GetFlags(&gl_program_turbsurfaces) | CVAR_ROM);
+		for (i = 0; i < sizeof(gl_program_cvars) / sizeof(gl_program_cvars[0]); ++i) {
+			int flags = Cvar_GetFlags(gl_program_cvars[i]);
+			if (flags & CVAR_LATCH) {
+				Cvar_LatchedSetValue(gl_program_cvars[i], 0);
+			}
+			else {
+				Cvar_SetValue(gl_program_cvars[i], 0);
+			}
+			Cvar_SetFlags(gl_program_cvars[i], flags | CVAR_ROM);
+		}
 		Con_Printf("&cf00ERROR&r: GLSL programs not supported.\n");
 	}
 	else {
-		Cvar_SetFlags(&gl_program_aliasmodels, Cvar_GetFlags(&gl_program_aliasmodels) & ~CVAR_ROM);
-		Cvar_SetFlags(&gl_program_sky, Cvar_GetFlags(&gl_program_sky) & ~CVAR_ROM);
-		Cvar_SetFlags(&gl_program_turbsurfaces, Cvar_GetFlags(&gl_program_turbsurfaces) & ~CVAR_ROM);
+		for (i = 0; i < sizeof(gl_program_cvars) / sizeof(gl_program_cvars[0]); ++i) {
+			Cvar_SetFlags(gl_program_cvars[i], Cvar_GetFlags(gl_program_cvars[i]) & ~CVAR_ROM);
+		}
 	}
 }
 

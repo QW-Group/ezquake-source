@@ -22,6 +22,7 @@ typedef enum {
 	r_program_aliasmodel_shell_glc,
 	r_program_aliasmodel_shadow_glc,
 	r_program_world_drawflat_glc,
+	r_program_world_textured_glc,
 
 	r_program_lightmap_compute,
 
@@ -80,6 +81,11 @@ typedef enum {
 	r_program_uniform_world_drawflat_glc_slimecolor,
 	r_program_uniform_world_drawflat_glc_lavacolor,
 	r_program_uniform_world_drawflat_glc_telecolor,
+	r_program_uniform_world_textured_glc_lightmapSampler,
+	r_program_uniform_world_textured_glc_texSampler,
+	r_program_uniform_world_textured_glc_lumaSampler,
+	r_program_uniform_world_textured_glc_causticSampler,
+	r_program_uniform_world_textured_glc_detailSampler,
 	r_program_uniform_count
 } r_program_uniform_id;
 
@@ -88,6 +94,7 @@ typedef enum {
 	r_program_attribute_aliasmodel_shell_glc_flags,
 	r_program_attribute_aliasmodel_shadow_glc_flags,
 	r_program_attribute_world_drawflat_style,
+	r_program_attribute_world_textured_style,
 
 	r_program_attribute_count
 } r_program_attribute_id;
@@ -103,6 +110,7 @@ int R_ProgramCustomOptions(r_program_id program_id);
 qbool R_ProgramReady(r_program_id program_id);
 void R_ProgramUse(r_program_id program_id);
 r_program_id R_ProgramInUse(void);
+r_program_id R_ProgramForAttribute(r_program_attribute_id attr_id);
 int R_ProgramCustomOptions(r_program_id program_id);
 void R_ProgramSetCustomOptions(r_program_id program_id, int options);
 

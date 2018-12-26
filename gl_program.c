@@ -215,6 +215,16 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_world_drawflat_glc, "lavacolor", 1, false },
 	// r_program_uniform_world_drawflat_glc_telecolor,
 	{ r_program_world_drawflat_glc, "telecolor", 1, false },
+	// r_program_uniform_world_textured_glc_lightmapSampler,
+	{ r_program_world_textured_glc, "lightmapSampler", 1, false },
+	// r_program_uniform_world_textured_glc_texSampler,
+	{ r_program_world_textured_glc, "texSampler", 1, false },
+	// r_program_uniform_world_textured_glc_lumaSampler,
+	{ r_program_world_textured_glc, "lumaSampler", 1, false },
+	// r_program_uniform_world_textured_glc_causticSampler
+	{ r_program_world_textured_glc, "causticSampler", 1, false },
+	// r_program_uniform_world_textured_glc_detailSampler
+	{ r_program_world_textured_glc, "detailSampler", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -238,6 +248,8 @@ static r_program_attribute_t program_attributes[] = {
 	{ r_program_aliasmodel_shadow_glc, "flags" },
 	// r_program_attribute_world_drawflat_style
 	{ r_program_world_drawflat_glc, "style" },
+	// r_program_attribute_world_textured_style
+	{ r_program_world_textured_glc, "style" },
 };
 
 #ifdef C_ASSERT
@@ -247,7 +259,7 @@ C_ASSERT(sizeof(program_attributes) / sizeof(program_attributes[0]) == r_program
 static gl_program_t program_data[r_program_count];
 
 // Cached OpenGL state
-static GLuint currentProgram = 0;
+static r_program_id currentProgram = 0;
 
 // Shader functions
 typedef GLuint(APIENTRY *glCreateShader_t)(GLenum shaderType);
@@ -823,11 +835,11 @@ void R_ProgramUse(r_program_id program_id)
 {
 	GLuint program = program_data[program_id].program;
 
-	if (program != currentProgram) {
+	if (program_id != currentProgram) {
 		qglUseProgram(program);
 		R_TraceLogAPICall("R_ProgramUse(%s)", program_data[program_id].friendly_name);
 
-		currentProgram = program;
+		currentProgram = program_id;
 	}
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
@@ -1041,6 +1053,7 @@ static void GL_BuildCoreDefinitions(void)
 	GL_DefineProgram_VF(r_program_aliasmodel_shell_glc, "aliasmodel-shell", true, glc_aliasmodel_shell, renderer_classic);
 	GL_DefineProgram_VF(r_program_aliasmodel_shadow_glc, "aliasmodel-shadow", true, glc_aliasmodel_shadow, renderer_classic);
 	GL_DefineProgram_VF(r_program_world_drawflat_glc, "drawflat-world", true, glc_world_drawflat, renderer_classic);
+	GL_DefineProgram_VF(r_program_world_textured_glc, "textured-world", true, glc_world_textured, renderer_classic);
 #endif
 }
 
@@ -1051,4 +1064,13 @@ int R_ProgramAttributeLocation(r_program_attribute_id attr_id)
 	}
 
 	return program_attributes[attr_id].location;
+}
+
+r_program_id R_ProgramForAttribute(r_program_attribute_id attr_id)
+{
+	if (attr_id < 0 || attr_id >= r_program_attribute_count) {
+		return r_program_none;
+	}
+
+	return program_attributes[attr_id].program_id;
 }

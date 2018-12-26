@@ -71,6 +71,7 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 			GLC_VAOEnableTextureCoordPointer(vao, 1, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
 			GLC_VAOEnableTextureCoordPointer(vao, 2, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 			GLC_VAOEnableCustomAttribute(vao, 0, r_program_attribute_world_drawflat_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
+			GLC_VAOEnableCustomAttribute(vao, 1, r_program_attribute_world_textured_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
 			break;
 		}
 		case vao_brushmodel_lm_unit1:
@@ -80,6 +81,8 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
 			GLC_VAOEnableTextureCoordPointer(vao, 1, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 			GLC_VAOEnableTextureCoordPointer(vao, 2, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
+			GLC_VAOEnableCustomAttribute(vao, 0, r_program_attribute_world_drawflat_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
+			GLC_VAOEnableCustomAttribute(vao, 1, r_program_attribute_world_textured_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
 			break;
 		}
 		case vao_brushmodel_details:
@@ -87,6 +90,8 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 			// tmus: [details]
 			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
 			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, detail_coords));
+			GLC_VAOEnableCustomAttribute(vao, 0, r_program_attribute_world_drawflat_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
+			GLC_VAOEnableCustomAttribute(vao, 1, r_program_attribute_world_textured_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
 			break;
 		}
 		case vao_brushmodel_lightmap_pass:
@@ -95,6 +100,7 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
 			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 			GLC_VAOEnableCustomAttribute(vao, 0, r_program_attribute_world_drawflat_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
+			GLC_VAOEnableCustomAttribute(vao, 1, r_program_attribute_world_textured_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
 			break;
 		}
 		case vao_brushmodel_simpletex:
@@ -102,6 +108,8 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 			// tmus: [material]
 			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
 			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
+			GLC_VAOEnableCustomAttribute(vao, 0, r_program_attribute_world_drawflat_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
+			GLC_VAOEnableCustomAttribute(vao, 1, r_program_attribute_world_textured_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
 			break;
 		}
 		default:
@@ -376,85 +384,108 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 	R_TraceLeaveFunctionRegion;
 }
 
-static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset)
+typedef struct texture_unit_allocation_s {
+	int matTextureUnit;
+	int fbTextureUnit;
+	int lmTextureUnit;
+	int detailTextureUnit;
+	int causticTextureUnit;
+	texture_ref null_fb_texture;
+
+	int texture_unit_count;
+	qbool couldUseLumaTextures;         // true if user requested lumas and is allowed
+	qbool useLumaTextures;              // true if lumas could be used, and model has them
+	qbool second_pass_caustics;         // draw caustics in second pass
+	qbool second_pass_detail;           // draw detail/noise texture in second pass
+	qbool second_pass_luma;             // draw fullbright/luma textures in second pass
+
+	r_state_id rendering_state;
+} texture_unit_allocation_t;
+
+static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations, model_t* model)
 {
+	extern cvar_t gl_lumatextures;
+
+	allocations->texture_unit_count = 1;
+	allocations->null_fb_texture = null_texture_reference;
+	allocations->couldUseLumaTextures = gl_lumatextures.integer && r_refdef2.allow_lumas;
+	allocations->useLumaTextures = allocations->couldUseLumaTextures && model->texturechains_have_lumas;
+	allocations->matTextureUnit = allocations->fbTextureUnit = allocations->lmTextureUnit = allocations->detailTextureUnit = allocations->causticTextureUnit = -1;
+
+	allocations->matTextureUnit = 0;
+	if (gl_mtexable) {
+		allocations->texture_unit_count = gl_textureunits >= 3 ? 3 : 2;
+
+		if (allocations->useLumaTextures && !gl_fb_bmodels.integer) {
+			// blend(material + fb, lightmap)
+			allocations->rendering_state = r_state_world_material_fb_lightmap;
+			allocations->null_fb_texture = solidblack_texture;
+			allocations->fbTextureUnit = 1;
+			allocations->lmTextureUnit = (gl_textureunits >= 3 ? 2 : -1);
+		}
+		else if (allocations->useLumaTextures) {
+			// blend(material, lightmap) + luma
+			allocations->rendering_state = r_state_world_material_lightmap_luma;
+			allocations->lmTextureUnit = 1;
+			allocations->fbTextureUnit = (gl_textureunits >= 3 ? 2 : -1);
+			allocations->null_fb_texture = solidblack_texture; // GL_ADD adds colors, multiplies alphas
+		}
+		else {
+			// blend(material, lightmap) 
+			allocations->rendering_state = r_state_world_material_lightmap;
+			allocations->lmTextureUnit = 1;
+			allocations->fbTextureUnit = -1;
+			allocations->null_fb_texture = solidblack_texture; // GL_ADD adds colors, multiplies alphas
+			allocations->texture_unit_count = 2;
+		}
+
+		if (gl_caustics.integer && !R_TextureReferenceIsValid(underwatertexture) && allocations->texture_unit_count < gl_textureunits) {
+			allocations->causticTextureUnit = allocations->texture_unit_count++;
+		}
+
+		if (gl_detail.integer && !R_TextureReferenceIsValid(detailtexture) && allocations->texture_unit_count < gl_textureunits) {
+			allocations->detailTextureUnit = allocations->texture_unit_count++;
+		}
+	}
+	else {
+		allocations->rendering_state = r_state_world_singletexture_glc;
+	}
+
+	allocations->second_pass_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer && allocations->causticTextureUnit < 0;
+	allocations->second_pass_detail = R_TextureReferenceIsValid(detailtexture) && gl_detail.integer && allocations->detailTextureUnit < 0;
+	allocations->second_pass_luma = allocations->useLumaTextures && allocations->fbTextureUnit < 0;
+}
+
+static void GLC_DrawTextureChainsImpl(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset)
+{
+	texture_unit_allocation_t allocations;
 	extern cvar_t gl_lumatextures;
 	extern cvar_t gl_textureless;
 	int index_count = 0;
-	r_state_id state = r_state_world_singletexture_glc;
 	texture_ref fb_texturenum = null_texture_reference;
 	int i, k;
 	msurface_t *s, *prev;
 	float *v;
 
-	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer;
-	qbool draw_details = R_TextureReferenceIsValid(detailtexture) && gl_detail.integer;
-	qbool isLumaTexture;
 	qbool use_vbo = buffers.supported && modelIndexes;
 
 	qbool drawfullbrights = false;
 	qbool drawlumas = false;
-	qbool useLumaTextures = gl_lumatextures.integer && r_refdef2.allow_lumas;
 
 	qbool texture_change;
 	texture_ref current_material = null_texture_reference;
 	texture_ref current_material_fb = null_texture_reference;
-	texture_ref null_fb_texture = null_texture_reference;
 	int current_lightmap = -1;
-	int fbTextureUnit = -1;
-	int lmTextureUnit = -1;
 
-	texture_ref desired_textures[4];
-	int texture_unit_count = 1;
+	texture_ref desired_textures[8] = { 0 };
 
 	qbool draw_textureless = gl_textureless.integer && model->isworldmodel;
 
-	// if (!gl_fb_bmodels)
-	//   (material + fullbright) * lightmap
-	// else
-	//   material * lightmap + fullbright
-
 	R_TraceEnterFunctionRegion;
 
-	// If there are no luma textures in the chain, disable luma textures (saves enabling 3rd unit etc)
-	useLumaTextures &= model->texturechains_have_lumas;
+	GLC_WorldAllocateTextureUnits(&allocations, model);
 
-	// For each texture we have to draw, it may or may not have a luma, so the old code changed
-	//   up the bindings/allocations with each texture (binding lightmap to each unit with luma textures on/off)
-	// Instead we keep 0 for material, 1 for (fullbright/lightmap), 2 for (fullbright/lightmap)
-	//   and if fullbright/luma texture not available, we enable/disable texture unit 1 or 2
-	// Default: no multi-texturing, each pass done at the bottom
-	if (gl_mtexable) {
-		texture_unit_count = gl_textureunits >= 3 ? 3 : 2;
-
-		if (useLumaTextures && !gl_fb_bmodels.integer) {
-			// blend(material + fb, lightmap)
-			state = r_state_world_material_fb_lightmap;
-			null_fb_texture = solidblack_texture;
-			fbTextureUnit = 1;
-			lmTextureUnit = (gl_textureunits >= 3 ? 2 : -1);
-		}
-		else if (useLumaTextures) {
-			// blend(material, lightmap) + luma
-			state = r_state_world_material_lightmap_luma;
-			lmTextureUnit = 1;
-			fbTextureUnit = (gl_textureunits >= 3 ? 2 : -1);
-			null_fb_texture = solidblack_texture; // GL_ADD adds colors, multiplies alphas
-		}
-		else {
-			// blend(material, lightmap) 
-			state = r_state_world_material_lightmap;
-			lmTextureUnit = 1;
-			fbTextureUnit = -1;
-			null_fb_texture = solidblack_texture; // GL_ADD adds colors, multiplies alphas
-			texture_unit_count = 2;
-		}
-	}
-	else {
-		state = r_state_world_singletexture_glc;
-	}
-
-	R_ApplyRenderingState(state);
+	R_ApplyRenderingState(allocations.rendering_state);
 	if (ent && ent->alpha) {
 		R_CustomColor(ent->alpha, ent->alpha, ent->alpha, ent->alpha);
 	}
@@ -467,16 +498,16 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 		if (use_vbo) {
 			// meag: better to have different states for this
 			R_GLC_DisableTexturePointer(0);
-			if (fbTextureUnit >= 0) {
-				R_GLC_DisableTexturePointer(fbTextureUnit);
+			if (allocations.fbTextureUnit >= 0) {
+				R_GLC_DisableTexturePointer(allocations.fbTextureUnit);
 			}
 		}
 
 		if (qglMultiTexCoord2f) {
 			qglMultiTexCoord2f(GL_TEXTURE0, 0, 0);
 
-			if (fbTextureUnit >= 0) {
-				qglMultiTexCoord2f(GL_TEXTURE0 + fbTextureUnit, 0, 0);
+			if (allocations.fbTextureUnit >= 0) {
+				qglMultiTexCoord2f(GL_TEXTURE0 + allocations.fbTextureUnit, 0, 0);
 			}
 		}
 		else {
@@ -492,14 +523,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 		}
 
 		t = R_TextureAnimation(ent, model->textures[i]);
-		if (t->isLumaTexture) {
-			isLumaTexture = useLumaTextures;
-			fb_texturenum = isLumaTexture ? t->fb_texturenum : null_fb_texture;
-		}
-		else {
-			isLumaTexture = false;
-			fb_texturenum = null_fb_texture;
-		}
+		fb_texturenum = (allocations.useLumaTextures && t->isLumaTexture ? t->fb_texturenum : allocations.null_fb_texture);
 
 		//bind the world texture
 		texture_change = !R_TextureReferenceEqual(t->gl_texturenum, current_material);
@@ -508,18 +532,18 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 		current_material = t->gl_texturenum;
 		current_material_fb = fb_texturenum;
 
-		desired_textures[0] = current_material;
-		if (fbTextureUnit >= 0) {
-			desired_textures[fbTextureUnit] = current_material_fb;
+		desired_textures[allocations.matTextureUnit] = current_material;
+		if (allocations.fbTextureUnit >= 0) {
+			desired_textures[allocations.fbTextureUnit] = current_material_fb;
 		}
 
 		s = model->textures[i]->texturechain;
 		while (s) {
 			if (!(s->texinfo->flags & TEX_SPECIAL)) {
-				if (lmTextureUnit >= 0) {
+				if (allocations.lmTextureUnit >= 0) {
 					texture_change |= (s->lightmaptexturenum != current_lightmap);
 
-					desired_textures[lmTextureUnit] = GLC_LightmapTexture(s->lightmaptexturenum);
+					desired_textures[allocations.lmTextureUnit] = GLC_LightmapTexture(s->lightmaptexturenum);
 					current_lightmap = s->lightmaptexturenum;
 				}
 				else {
@@ -532,9 +556,9 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 						index_count = 0;
 					}
 
-					renderer.TextureUnitMultiBind(0, texture_unit_count, desired_textures);
-					if (r_lightmap_lateupload.integer && lmTextureUnit >= 0) {
-						R_UploadLightMap(lmTextureUnit, current_lightmap);
+					renderer.TextureUnitMultiBind(0, allocations.texture_unit_count, desired_textures);
+					if (r_lightmap_lateupload.integer && allocations.lmTextureUnit >= 0) {
+						R_UploadLightMap(allocations.lmTextureUnit, current_lightmap);
 					}
 
 					texture_change = false;
@@ -548,16 +572,16 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 
 					GLC_Begin(GL_TRIANGLE_STRIP);
 					for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
-						if (lmTextureUnit >= 0) {
-							qglMultiTexCoord2f(GL_TEXTURE0 + lmTextureUnit, v[5], v[6]);
+						if (allocations.lmTextureUnit >= 0) {
+							qglMultiTexCoord2f(GL_TEXTURE0 + allocations.lmTextureUnit, v[5], v[6]);
 						}
 
 						if (!draw_textureless) {
 							if (qglMultiTexCoord2f) {
 								qglMultiTexCoord2f(GL_TEXTURE0, v[3], v[4]);
 
-								if (fbTextureUnit >= 0) {
-									qglMultiTexCoord2f(GL_TEXTURE0 + fbTextureUnit, v[3], v[4]);
+								if (allocations.fbTextureUnit >= 0) {
+									qglMultiTexCoord2f(GL_TEXTURE0 + allocations.fbTextureUnit, v[3], v[4]);
 								}
 							}
 							else {
@@ -570,18 +594,18 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 				}
 			}
 
-			if (draw_caustics && ((s->flags & SURF_UNDERWATER) || caustics)) {
+			if (allocations.second_pass_caustics && ((s->flags & SURF_UNDERWATER) || caustics)) {
 				s->polys->caustics_chain = caustics_polys;
 				caustics_polys = s->polys;
 			}
 
-			if (!(s->flags & SURF_UNDERWATER) && draw_details) {
+			if (allocations.second_pass_detail && !(s->flags & SURF_UNDERWATER)) {
 				s->polys->detail_chain = detail_polys;
 				detail_polys = s->polys;
 			}
 
-			if (!R_TextureReferenceEqual(fb_texturenum, null_fb_texture) && gl_fb_bmodels.integer && fbTextureUnit < 0) {
-				if (isLumaTexture) {
+			if (!R_TextureReferenceEqual(fb_texturenum, allocations.null_fb_texture) && gl_fb_bmodels.integer && allocations.fbTextureUnit < 0) {
+				if (allocations.useLumaTextures) {
 					s->polys->luma_chain = luma_polys[fb_texturenum.index];
 					luma_polys[fb_texturenum.index] = s->polys;
 					drawlumas = true;
@@ -604,7 +628,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 	}
 
 	if (gl_fb_bmodels.integer) {
-		if (lmTextureUnit < 0) {
+		if (allocations.lmTextureUnit < 0) {
 			GLC_BlendLightmaps();
 		}
 		if (drawfullbrights) {
@@ -621,7 +645,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 			GLC_RenderLumas();
 			drawlumas = false;
 		}
-		if (lmTextureUnit < 0) {
+		if (allocations.lmTextureUnit < 0) {
 			GLC_BlendLightmaps();
 		}
 		if (drawfullbrights) {
@@ -634,6 +658,247 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 	GLC_EmitDetailPolys(use_vbo);
 
 	R_TraceLeaveFunctionRegion;
+}
+
+#define GLC_WORLD_TEXTURELESS    1
+#define GLC_WORLD_FULLBRIGHTS    2
+#define GLC_WORLD_LUMATEXTURES   4
+#define GLC_WORLD_DETAIL         8
+#define GLC_WORLD_CAUSTICS      16
+#define GLC_WORLD_LIGHTMAPS     32
+
+static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocations, model_t* model)
+{
+	extern cvar_t gl_lumatextures, gl_textureless;
+	int options;
+	
+	GLC_WorldAllocateTextureUnits(allocations, model);
+	allocations->rendering_state = r_state_world_material_lightmap_luma;
+
+	options =
+		(gl_textureless.integer ? GLC_WORLD_TEXTURELESS : 0) |
+		(allocations->lmTextureUnit >= 0 ? GLC_WORLD_LIGHTMAPS : 0) |
+		(allocations->couldUseLumaTextures && gl_fb_bmodels.integer ? GLC_WORLD_LUMATEXTURES : 0) |
+		(allocations->couldUseLumaTextures && !gl_fb_bmodels.integer ? GLC_WORLD_FULLBRIGHTS : 0) |
+		(allocations->detailTextureUnit >= 0 ? GLC_WORLD_DETAIL : 0) |
+		(allocations->causticTextureUnit >= 0 ? GLC_WORLD_CAUSTICS : 0);
+
+	if (R_ProgramRecompileNeeded(r_program_world_textured_glc, options)) {
+		int sampler = 0;
+		char definitions[128] = { 0 };
+
+		allocations->matTextureUnit = 0;
+
+		if (options & GLC_WORLD_TEXTURELESS) {
+			strlcat(definitions, "#define DRAW_TEXTURELESS\n", sizeof(definitions));
+		}
+		if (options & GLC_WORLD_LUMATEXTURES) {
+			strlcat(definitions, "#define DRAW_LUMA_TEXTURES\n", sizeof(definitions));
+		}
+		if (options & GLC_WORLD_FULLBRIGHTS) {
+			strlcat(definitions, "#define DRAW_FULLBRIGHT_TEXTURES\n", sizeof(definitions));
+		}
+		if (options & (GLC_WORLD_LUMATEXTURES | GLC_WORLD_FULLBRIGHTS)) {
+			strlcat(definitions, "#define DRAW_EXTRA_TEXTURES\n", sizeof(definitions));
+		}
+		if (options & GLC_WORLD_CAUSTICS) {
+			strlcat(definitions, "#define DRAW_CAUSTICS\n", sizeof(definitions));
+		}
+		if (options & GLC_WORLD_DETAIL) {
+			strlcat(definitions, "#define DRAW_DETAIL\n", sizeof(definitions));
+		}
+		if (options & GLC_WORLD_LIGHTMAPS) {
+			strlcat(definitions, "#define DRAW_LIGHTMAPS\n", sizeof(definitions));
+		}
+
+		R_ProgramCompileWithInclude(r_program_world_textured_glc, definitions);
+
+		allocations->causticTextureUnit = allocations->causticTextureUnit >= 0 ? sampler++ : -1;
+		allocations->detailTextureUnit = allocations->detailTextureUnit >= 0 ? sampler++ : -1;
+		allocations->lmTextureUnit = allocations->lmTextureUnit >= 0 ? sampler++ : -1;
+		allocations->matTextureUnit = allocations->matTextureUnit >= 0 ? sampler++ : -1;
+		allocations->fbTextureUnit = allocations->fbTextureUnit >= 0 ? sampler++ : -1;
+
+		R_ProgramUniform1i(r_program_uniform_world_textured_glc_causticSampler, allocations->causticTextureUnit);
+		R_ProgramUniform1i(r_program_uniform_world_textured_glc_detailSampler, allocations->detailTextureUnit);
+		R_ProgramUniform1i(r_program_uniform_world_textured_glc_lightmapSampler, allocations->lmTextureUnit);
+		R_ProgramUniform1i(r_program_uniform_world_textured_glc_texSampler, allocations->matTextureUnit);
+		R_ProgramUniform1i(r_program_uniform_world_textured_glc_lumaSampler, allocations->fbTextureUnit);
+
+		R_ProgramSetCustomOptions(r_program_world_textured_glc, options);
+	}
+	else {
+		allocations->causticTextureUnit = R_ProgramUniformGet1i(r_program_uniform_world_textured_glc_causticSampler);
+		allocations->detailTextureUnit = R_ProgramUniformGet1i(r_program_uniform_world_textured_glc_detailSampler);
+		allocations->lmTextureUnit = R_ProgramUniformGet1i(r_program_uniform_world_textured_glc_lightmapSampler);
+		allocations->matTextureUnit = R_ProgramUniformGet1i(r_program_uniform_world_textured_glc_texSampler);
+		allocations->fbTextureUnit = R_ProgramUniformGet1i(r_program_uniform_world_textured_glc_lumaSampler);
+	}
+
+	return R_ProgramReady(r_program_world_textured_glc);
+}
+
+static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset, texture_unit_allocation_t* allocations)
+{
+	extern cvar_t gl_lumatextures;
+	extern cvar_t gl_textureless;
+	int index_count = 0;
+	int i;
+	msurface_t *s, *prev;
+
+	qbool draw_textureless = gl_textureless.integer && model->isworldmodel;
+	qbool requires_fullbright_pass = false;
+	qbool requires_luma_pass = false;
+
+	qbool texture_change;
+	texture_ref current_material = null_texture_reference;
+	texture_ref current_material_fb = null_texture_reference;
+	texture_ref desired_textures[8] = { 0 };
+	int current_lightmap = -1;
+
+	R_TraceEnterFunctionRegion;
+
+	R_ApplyRenderingState(allocations->rendering_state);
+	if (ent && ent->alpha) {
+		R_CustomColor(ent->alpha, ent->alpha, ent->alpha, ent->alpha);
+	}
+	if (polygonOffset) {
+		R_CustomPolygonOffset(r_polygonoffset_standard);
+	}
+
+	for (i = 0; i < model->numtextures; i++) {
+		texture_t* t;
+		texture_ref fb_texturenum = null_texture_reference;
+
+		if (!model->textures[i] || !model->textures[i]->texturechain) {
+			continue;
+		}
+
+		t = R_TextureAnimation(ent, model->textures[i]);
+		fb_texturenum = (allocations->useLumaTextures && t->isLumaTexture ? t->fb_texturenum : allocations->null_fb_texture);
+
+		//bind the world texture
+		texture_change = !R_TextureReferenceEqual(t->gl_texturenum, current_material);
+		texture_change |= !R_TextureReferenceEqual(fb_texturenum, current_material_fb);
+
+		current_material = t->gl_texturenum;
+		current_material_fb = fb_texturenum;
+
+		desired_textures[allocations->matTextureUnit] = current_material;
+		if (allocations->fbTextureUnit >= 0) {
+			desired_textures[allocations->fbTextureUnit] = current_material_fb;
+		}
+
+		s = model->textures[i]->texturechain;
+		while (s) {
+			if (!(s->texinfo->flags & TEX_SPECIAL)) {
+				if (allocations->lmTextureUnit >= 0) {
+					texture_change |= (s->lightmaptexturenum != current_lightmap);
+
+					desired_textures[allocations->lmTextureUnit] = GLC_LightmapTexture(s->lightmaptexturenum);
+					current_lightmap = s->lightmaptexturenum;
+				}
+				else {
+					GLC_AddToLightmapChain(s);
+				}
+
+				if (texture_change) {
+					if (index_count) {
+						GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+						index_count = 0;
+					}
+
+					renderer.TextureUnitMultiBind(0, allocations->texture_unit_count, desired_textures);
+					if (r_lightmap_lateupload.integer && allocations->lmTextureUnit >= 0) {
+						R_UploadLightMap(allocations->lmTextureUnit, current_lightmap);
+					}
+
+					texture_change = false;
+				}
+
+				index_count = GLC_DrawIndexedPoly(s->polys, modelIndexes, modelIndexMaximum, index_count);
+			}
+
+			if (allocations->second_pass_caustics && ((s->flags & SURF_UNDERWATER) || caustics)) {
+				s->polys->caustics_chain = caustics_polys;
+				caustics_polys = s->polys;
+			}
+
+			if (allocations->second_pass_detail && !(s->flags & SURF_UNDERWATER)) {
+				s->polys->detail_chain = detail_polys;
+				detail_polys = s->polys;
+			}
+
+			if (allocations->second_pass_luma && !R_TextureReferenceEqual(fb_texturenum, allocations->null_fb_texture)) {
+				if (allocations->useLumaTextures) {
+					s->polys->luma_chain = luma_polys[fb_texturenum.index];
+					luma_polys[fb_texturenum.index] = s->polys;
+					requires_luma_pass = true;
+				}
+				else {
+					s->polys->fb_chain = fullbright_polys[fb_texturenum.index];
+					fullbright_polys[fb_texturenum.index] = s->polys;
+					requires_fullbright_pass = true;
+				}
+			}
+
+			prev = s;
+			s = s->texturechain;
+			prev->texturechain = NULL;
+		}
+	}
+
+	if (index_count) {
+		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+	}
+
+	/*
+	if (gl_fb_bmodels.integer) {
+		if (allocations->lmTextureUnit < 0) {
+			GLC_BlendLightmaps_GLSL();
+		}
+		if (drawfullbrights) {
+			GLC_RenderFullbrights_GLSL();
+			drawfullbrights = false;
+		}
+		if (drawlumas) {
+			GLC_RenderLumas_GLSL();
+			drawlumas = false;
+		}
+	}
+	else {
+		if (drawlumas) {
+			GLC_RenderLumas_GLSL();
+			drawlumas = false;
+		}
+		if (allocations->lmTextureUnit < 0) {
+			GLC_BlendLightmaps_GLSL();
+		}
+		if (drawfullbrights) {
+			GLC_RenderFullbrights_GLSL();
+			drawfullbrights = false;
+		}
+	}*/
+
+	//GLC_EmitCausticsPolys_GLSL();
+	//GLC_EmitDetailPolys_GLSL();
+
+	R_TraceLeaveFunctionRegion;
+}
+
+static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset)
+{
+	extern cvar_t gl_program_world;
+	texture_unit_allocation_t allocations;
+
+	if (gl_program_world.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_WorldTexturedProgramCompile(&allocations, model)) {
+		R_ProgramUse(r_program_world_textured_glc);
+		GLC_DrawTextureChains_GLSL(ent, model, caustics, polygonOffset, &allocations);
+		R_ProgramUse(r_program_none);
+	}
+	else {
+		GLC_DrawTextureChainsImpl(ent, model, caustics, polygonOffset);
+	}
 }
 
 void GLC_DrawWorld(void)

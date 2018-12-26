@@ -316,8 +316,8 @@ void R_UploadLightMap(int textureUnit, int lightmapnum)
 {
 	lightmap_data_t* lm = &lightmaps[lightmapnum];
 
-	R_TraceEnterFunctionRegion;
 	if (lm->modified) {
+		R_TraceEnterFunctionRegion;
 		lm->modified = false;
 		renderer.UploadLightmap(textureUnit, lightmapnum);
 		lm->change_area.l = LIGHTMAP_WIDTH;
@@ -325,8 +325,8 @@ void R_UploadLightMap(int textureUnit, int lightmapnum)
 		lm->change_area.h = 0;
 		lm->change_area.w = 0;
 		++frameStats.lightmap_updates;
+		R_TraceLeaveFunctionRegion;
 	}
-	R_TraceLeaveFunctionRegion;
 }
 
 void R_RenderDynamicLightmaps(msurface_t *fa, qbool world)
