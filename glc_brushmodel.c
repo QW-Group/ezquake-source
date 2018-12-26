@@ -69,7 +69,7 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
 			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
 			GLC_VAOEnableTextureCoordPointer(vao, 1, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
-			GLC_VAOEnableTextureCoordPointer(vao, 2, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
+			GLC_VAOEnableTextureCoordPointer(vao, 2, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 			GLC_VAOEnableCustomAttribute(vao, 0, r_program_attribute_world_drawflat_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
 			GLC_VAOEnableCustomAttribute(vao, 1, r_program_attribute_world_textured_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
 			GLC_VAOEnableCustomAttribute(vao, 2, r_program_attribute_world_textured_detailCoord, 2, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, detail_coords));
@@ -80,7 +80,7 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 			// tmus: [material, lightmap, material2]
 			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
 			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
-			GLC_VAOEnableTextureCoordPointer(vao, 1, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
+			GLC_VAOEnableTextureCoordPointer(vao, 1, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 			GLC_VAOEnableTextureCoordPointer(vao, 2, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
 			GLC_VAOEnableCustomAttribute(vao, 0, r_program_attribute_world_drawflat_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
 			GLC_VAOEnableCustomAttribute(vao, 1, r_program_attribute_world_textured_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
@@ -101,7 +101,7 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 		{
 			// tmus: [lightmap]
 			GLC_VAOEnableVertexPointer(vao, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, position));
-			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
+			GLC_VAOEnableTextureCoordPointer(vao, 0, 3, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
 			GLC_VAOEnableCustomAttribute(vao, 0, r_program_attribute_world_drawflat_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
 			GLC_VAOEnableCustomAttribute(vao, 1, r_program_attribute_world_textured_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
 			GLC_VAOEnableCustomAttribute(vao, 2, r_program_attribute_world_textured_detailCoord, 2, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, detail_coords));
@@ -134,9 +134,18 @@ void GLC_RenderFullbrights_GLSL(void);
 
 static qbool GLC_DrawflatProgramCompile(void)
 {
-	if (R_ProgramRecompileNeeded(r_program_world_drawflat_glc, 0)) {
-		R_ProgramCompile(r_program_world_drawflat_glc);
-		R_ProgramSetCustomOptions(r_program_world_drawflat_glc, 0);
+	int flags = (glConfig.supported_features & R_SUPPORT_TEXTURE_ARRAYS) ? 1 : 0;
+
+	if (R_ProgramRecompileNeeded(r_program_world_drawflat_glc, flags)) {
+		char included_definitions[128];
+
+		included_definitions[0] = '\0';
+		if (flags) {
+			strlcpy(included_definitions, "#define EZ_USE_TEXTURE_ARRAYS\n", sizeof(included_definitions));
+		}
+		R_ProgramCompileWithInclude(r_program_world_drawflat_glc, included_definitions);
+
+		R_ProgramSetCustomOptions(r_program_world_drawflat_glc, flags);
 	}
 
 	return R_ProgramReady(r_program_world_drawflat_glc);
@@ -228,7 +237,10 @@ static void GLC_DrawFlat_GLSL(model_t* model, qbool polygonOffset)
 				R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
 			}
 
-			GLC_SetTextureLightmap(0, i);
+			if (GLC_SetTextureLightmap(0, i) && index_count) {
+				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+				index_count = 0;
+			}
 			while (surf) {
 				glpoly_t* p;
 
@@ -241,12 +253,12 @@ static void GLC_DrawFlat_GLSL(model_t* model, qbool polygonOffset)
 				prev->drawflatchain = NULL;
 			}
 			R_ClearDrawflatLightmapChain(i);
-
-			if (index_count) {
-				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-				index_count = 0;
-			}
 		}
+	}
+
+	if (index_count) {
+		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+		index_count = 0;
 	}
 	R_ProgramUse(r_program_none);
 }
@@ -325,7 +337,10 @@ static void GLC_DrawFlat_Immediate(model_t* model, qbool polygonOffset)
 		msurface_t* surf = R_DrawflatLightmapChain(i);
 
 		if (surf) {
-			GLC_SetTextureLightmap(0, i);
+			if (GLC_SetTextureLightmap(0, i) && index_count) {
+				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+				index_count = 0;
+			}
 			while (surf) {
 				glpoly_t* p;
 
@@ -367,11 +382,6 @@ static void GLC_DrawFlat_Immediate(model_t* model, qbool polygonOffset)
 				prev->drawflatchain = NULL;
 			}
 			R_ClearDrawflatLightmapChain(i);
-
-			if (index_count) {
-				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
-				index_count = 0;
-			}
 		}
 	}
 
@@ -575,9 +585,8 @@ static void GLC_DrawTextureChainsImpl(entity_t* ent, model_t *model, qbool caust
 		while (s) {
 			if (!(s->texinfo->flags & TEX_SPECIAL)) {
 				if (allocations.lmTextureUnit >= 0) {
-					texture_change |= (s->lightmaptexturenum != current_lightmap);
-
 					desired_textures[allocations.lmTextureUnit] = GLC_LightmapTexture(s->lightmaptexturenum);
+					texture_change |= !R_TextureReferenceEqual(desired_textures[allocations.lmTextureUnit], GLC_LightmapTexture(current_lightmap));
 					current_lightmap = s->lightmaptexturenum;
 				}
 				else {
@@ -739,6 +748,9 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		}
 		if (options & GLC_WORLD_LIGHTMAPS) {
 			strlcat(definitions, "#define DRAW_LIGHTMAPS\n", sizeof(definitions));
+		}
+		if (glConfig.supported_features & R_SUPPORT_TEXTURE_ARRAYS) {
+			strlcat(definitions, "#define EZ_USE_TEXTURE_ARRAYS\n", sizeof(definitions));
 		}
 
 		R_ProgramCompileWithInclude(r_program_world_textured_glc, definitions);
@@ -1237,6 +1249,7 @@ int GLC_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 	target->material_coords[1] = source[4];
 	target->lightmap_coords[0] = source[5];
 	target->lightmap_coords[1] = source[6];
+	target->lightmap_coords[2] = lightmap;
 	target->detail_coords[0] = source[7];
 	target->detail_coords[1] = source[8];
 	if (scaleS) {

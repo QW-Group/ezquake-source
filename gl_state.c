@@ -429,7 +429,7 @@ void GL_ApplyRenderingState(r_state_id id)
 GLuint GL_TextureNameFromReference(texture_ref ref);
 GLenum GL_TextureTargetFromReference(texture_ref ref);
 
-static void GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool always_select_unit)
+static qbool GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool always_select_unit)
 {
 	int unit_num = unit - GL_TEXTURE0;
 	GLuint texture = GL_TextureNameFromReference(reference);
@@ -441,7 +441,7 @@ static void GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool alw
 				if (always_select_unit) {
 					GL_SelectTexture(unit);
 				}
-				return;
+				return false;
 			}
 		}
 		else if (targetType == GL_TEXTURE_2D) {
@@ -449,14 +449,14 @@ static void GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool alw
 				if (always_select_unit) {
 					GL_SelectTexture(unit);
 				}
-				return;
+				return false;
 			}
 		}
 	}
 
 	GL_SelectTexture(unit);
 	GL_BindTexture(targetType, texture, true);
-	return;
+	return true;
 }
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
@@ -466,9 +466,9 @@ void GLM_ApplyRenderingState(r_state_id id)
 }
 #endif
 
-void GL_EnsureTextureUnitBound(int unit, texture_ref reference)
+qbool GL_EnsureTextureUnitBound(int unit, texture_ref reference)
 {
-	GL_BindTextureUnitImpl(GL_TEXTURE0 + unit, reference, false);
+	return GL_BindTextureUnitImpl(GL_TEXTURE0 + unit, reference, false);
 }
 
 void GL_BindTextureUnit(GLuint unit, texture_ref reference)

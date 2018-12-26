@@ -27,15 +27,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 #include "tr_types.h"
 
+// FIXME: Check required depth against GL_MAX_ARRAY_TEXTURE_LAYERS
+static texture_ref lightmap_texture_array;
+static unsigned int lightmap_depth = 0;
+
 void GLC_UploadLightmap(int textureUnit, int lightmapnum);
 
-void GLC_SetTextureLightmap(int textureUnit, int lightmap_num)
+qbool GLC_SetTextureLightmap(int textureUnit, int lightmap_num)
 {
 	//update lightmap if it has been modified by dynamic lights
-	if (lightmaps[lightmap_num].modified) {
-		GLC_UploadLightmap(textureUnit, lightmap_num);
+	R_UploadLightMap(textureUnit, lightmap_num);
+	if (R_TextureReferenceIsValid(lightmap_texture_array)) {
+		return renderer.TextureUnitBind(textureUnit, lightmap_texture_array);
 	}
-	renderer.TextureUnitBind(textureUnit, lightmaps[lightmap_num].gl_texref);
+	else {
+		return renderer.TextureUnitBind(textureUnit, lightmaps[lightmap_num].gl_texref);
+	}
+}
+
+void GLC_InvalidateLightmapTextures(void)
+{
+	R_TextureReferenceInvalidate(lightmap_texture_array);
+	lightmap_depth = 0;
 }
 
 void GLC_ClearLightmapPolys(void)
@@ -49,10 +62,15 @@ void GLC_ClearLightmapPolys(void)
 
 texture_ref GLC_LightmapTexture(int index)
 {
-	if (index < 0 || index >= lightmap_array_size) {
-		return lightmaps[0].gl_texref;
+	if (R_TextureReferenceIsValid(lightmap_texture_array)) {
+		return lightmap_texture_array;
 	}
-	return lightmaps[index].gl_texref;
+	else {
+		if (index < 0 || index >= lightmap_array_size) {
+			return lightmaps[0].gl_texref;
+		}
+		return lightmaps[index].gl_texref;
+	}
 }
 
 void GLC_CreateLightmapTextures(void)
@@ -60,11 +78,30 @@ void GLC_CreateLightmapTextures(void)
 	int i;
 	char name[64];
 
-	for (i = 0; i < lightmap_array_size; ++i) {
-		if (!R_TextureReferenceIsValid(lightmaps[i].gl_texref)) {
-			snprintf(name, sizeof(name), "lightmap-%03d", i);
+	if (glConfig.supported_features & R_SUPPORT_TEXTURE_ARRAYS) {
+		if (R_TextureReferenceIsValid(lightmap_texture_array) && lightmap_depth >= lightmap_array_size) {
+			return;
+		}
+		if (R_TextureReferenceIsValid(lightmap_texture_array)) {
+			R_DeleteTextureArray(&lightmap_texture_array);
+		}
+		GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_texture_array, "lightmap_texture_array");
+		GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, true);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+		R_SetTextureArraySize(lightmap_texture_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 4);
+		Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_texture_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 4, "lightmap_texture_array");
+#endif
+		renderer.TextureSetFiltering(lightmap_texture_array, texture_minification_linear, texture_magnification_linear);
+		renderer.TextureWrapModeClamp(lightmap_texture_array);
+		lightmap_depth = lightmap_array_size;
+	}
+	else {
+		for (i = 0; i < lightmap_array_size; ++i) {
+			if (!R_TextureReferenceIsValid(lightmaps[i].gl_texref)) {
+				snprintf(name, sizeof(name), "lightmap-%03d", i);
 
-			renderer.TextureCreate2D(&lightmaps[i].gl_texref, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, name, true);
+				renderer.TextureCreate2D(&lightmaps[i].gl_texref, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, name, true);
+			}
 		}
 	}
 }
@@ -99,17 +136,32 @@ int GLC_LightmapCount(void)
 
 void GLC_BuildLightmap(int i)
 {
-	GL_TexSubImage2D(
-		GL_TEXTURE0, lightmaps[i].gl_texref, 0, 0, 0,
-		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE,
-		lightmaps[i].rawdata
-	);
+	GLenum format = GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA;
+	GLenum type = GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE;
+
+	if (R_TextureReferenceIsValid(lightmap_texture_array)) {
+		GL_TexSubImage3D(GL_TEXTURE0, lightmap_texture_array, 0, 0, 0, i, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, format, type, lightmaps[i].rawdata);
+	}
+	else {
+		GL_TexSubImage2D(
+			GL_TEXTURE0, lightmaps[i].gl_texref, 0, 0, 0,
+			LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, format, type,
+			lightmaps[i].rawdata
+		);
+	}
 }
 
 void GLC_UploadLightmap(int textureUnit, int lightmapnum)
 {
 	const lightmap_data_t* lm = &lightmaps[lightmapnum];
 	const void* data_source = lm->rawdata + (lm->change_area.t) * LIGHTMAP_WIDTH * 4;
+	GLenum format = GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA;
+	GLenum type = GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE;
 
-	GL_TexSubImage2D(GL_TEXTURE0 + textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE, data_source);
+	if (R_TextureReferenceIsValid(lightmap_texture_array)) {
+		GL_TexSubImage3D(GL_TEXTURE0 + textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, format, type, data_source);
+	}
+	else {
+		GL_TexSubImage2D(GL_TEXTURE0 + textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, format, type, data_source);
+	}
 }

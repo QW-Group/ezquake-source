@@ -133,15 +133,16 @@ typedef struct vbo_world_vert_s {
 	byte flatcolor[3];
 } vbo_world_vert_t;
 
+// Trying to pad out to keep ATI/AMD happy (doesn't seem to make a difference?)
+// https://developer.amd.com/wordpress/media/2012/10/ATI_OpenGL_Programming_and_Optimization_Guide.pdf
 typedef struct glc_vbo_world_vert_s {
-	vec3_t position;
-
+	float position[4];
 	float material_coords[2];
-	float lightmap_coords[2];
 	float detail_coords[2];
+	float lightmap_coords[4];
 
 	float flatstyle;
-	float padding;
+	float padding[3];
 } glc_vbo_world_vert_t;
 
 // GLC only...

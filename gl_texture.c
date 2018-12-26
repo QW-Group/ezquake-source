@@ -243,7 +243,7 @@ qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot, int minimum_depth, int*
 	}
 	while (*depth >= minimum_depth) {
 		GL_Paranoid_Printf("Allocating %d x %d x %d, %d miplevels\n", slot->texture_width, slot->texture_height, *depth, slot->miplevels);
-		GL_TexStorage3D(GL_TEXTURE0, slot->reference, slot->miplevels, GL_StorageFormat(TEX_ALPHA), slot->texture_width, slot->texture_height, *depth);
+		GL_TexStorage3D(GL_TEXTURE0, slot->reference, slot->miplevels, GL_StorageFormat(TEX_ALPHA), slot->texture_width, slot->texture_height, *depth, false);
 
 		error = glGetError();
 		if (error == GL_OUT_OF_MEMORY && *depth > 2) {

@@ -123,7 +123,7 @@ void GLM_CreateLightmapTextures(void)
 	}
 
 	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_texture_array, "lightmap_texture_array");
-	GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
+	GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, true);
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	R_SetTextureArraySize(lightmap_texture_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 4);
 	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_texture_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 4, "lightmap_texture_array");
@@ -136,14 +136,14 @@ void GLM_CreateLightmapTextures(void)
 	}
 
 	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_source_array, "lightmap_source_array");
-	GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA32UI, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
+	GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA32UI, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, false);
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	R_SetTextureArraySize(lightmap_source_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 16);
 	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_source_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 16, "lightmap_source_array");
 #endif
 
 	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_data_array, "lightmap_data_array");
-	GL_TexStorage3D(GL_TEXTURE0, lightmap_data_array, 1, GL_RGBA32I, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size);
+	GL_TexStorage3D(GL_TEXTURE0, lightmap_data_array, 1, GL_RGBA32I, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, false);
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	R_SetTextureArraySize(lightmap_data_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 16);
 	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_data_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 16, "lightmap_data_array");
@@ -180,9 +180,11 @@ void GLM_RenderDynamicLightmaps(msurface_t* s, qbool world)
 
 void GLM_BuildLightmap(int i)
 {
+	GLenum format = GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA;
+	GLenum type = GL_UNSIGNED_INT_8_8_8_8_REV;
+
 	GL_TexSubImage3D(
-		0, lightmap_texture_array, 0, 0, 0, i,
-		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV,
+		0, lightmap_texture_array, 0, 0, 0, i, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, format, type,
 		lightmaps[i].rawdata
 	);
 
@@ -203,6 +205,8 @@ void GLM_UploadLightmap(int textureUnit, int lightmapnum)
 {
 	const lightmap_data_t* lm = &lightmaps[lightmapnum];
 	const void* data_source = lm->rawdata + (lm->change_area.t) * LIGHTMAP_WIDTH * 4;
+	GLenum format = GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA;
+	GLenum type = GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE;
 
-	GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : GL_RGBA, GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE, data_source);
+	GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, format, type, data_source);
 }

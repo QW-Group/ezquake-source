@@ -2,12 +2,21 @@
 
 #ezquake-definitions
 
+#ifdef EZ_USE_TEXTURE_ARRAYS
+#extension GL_EXT_texture_array : enable
+#endif
+
 uniform sampler2D texSampler;
 varying vec2 TextureCoord;
 
 #ifdef DRAW_LIGHTMAPS
+#ifdef EZ_USE_TEXTURE_ARRAYS
+uniform sampler2DArray lightmapSampler;
+varying vec3 LightmapCoord;
+#else
 uniform sampler2D lightmapSampler;
 varying vec2 LightmapCoord;
+#endif
 #endif
 
 #ifdef DRAW_EXTRA_TEXTURES
@@ -39,7 +48,11 @@ void main()
 #endif
 
 #ifdef DRAW_LIGHTMAPS
+#ifdef EZ_USE_TEXTURE_ARRAYS
+	gl_FragColor *= (vec4(1, 1, 1, 2) - texture2DArray(lightmapSampler, LightmapCoord));
+#else
 	gl_FragColor *= (vec4(1, 1, 1, 2) - texture2D(lightmapSampler, LightmapCoord));
+#endif
 #endif
 
 #ifdef DRAW_LUMA_TEXTURES

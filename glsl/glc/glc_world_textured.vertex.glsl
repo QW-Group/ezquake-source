@@ -6,7 +6,11 @@ varying vec2 TextureCoord;
 attribute float style;
 
 #ifdef DRAW_LIGHTMAPS
+#ifdef EZ_USE_TEXTURE_ARRAYS
+varying vec3 LightmapCoord;
+#else
 varying vec2 LightmapCoord;
+#endif
 #endif
 #ifdef DRAW_EXTRA_TEXTURES
 varying float lumaScale;
@@ -29,7 +33,11 @@ void main()
 	TextureCoord = gl_MultiTexCoord0.st;
 #endif
 #ifdef DRAW_LIGHTMAPS
+#ifdef EZ_USE_TEXTURE_ARRAYS
+	LightmapCoord = gl_MultiTexCoord1.xyz;
+#else
 	LightmapCoord = gl_MultiTexCoord1.st;
+#endif
 #endif
 
 #ifdef DRAW_EXTRA_TEXTURES

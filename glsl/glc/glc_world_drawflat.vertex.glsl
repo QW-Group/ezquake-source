@@ -4,7 +4,11 @@
 
 attribute float style;
 varying vec4 color;
+#ifdef EZ_USE_TEXTURE_ARRAYS
+varying vec3 TextureCoord;
+#else
 varying vec2 TextureCoord;
+#endif
 varying float lightmapScale;
 
 uniform vec4 wallcolor;
@@ -18,7 +22,11 @@ uniform vec4 telecolor;
 void main()
 {
 	gl_Position = ftransform();
+#ifdef EZ_USE_TEXTURE_ARRAYS
+	TextureCoord = gl_MultiTexCoord0.xyz;
+#else
 	TextureCoord = gl_MultiTexCoord0.st;
+#endif
 
 	float bitmask = style;
 

@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture_internal.h"
 
 // External API
-void GL_EnsureTextureUnitBound(int unit, texture_ref texture);
+qbool GL_EnsureTextureUnitBound(int unit, texture_ref texture);
 void GL_TextureMipmapGenerate(texture_ref texture);
 void GL_TextureAnistropyChanged(texture_ref texture);
 void GL_TextureGet(texture_ref tex, int buffer_size, byte* buffer, int bpp);

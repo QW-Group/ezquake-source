@@ -53,6 +53,7 @@ typedef void (APIENTRY *glTextureSubImage3D_t)(GLuint texture, GLint level, GLin
 typedef void (APIENTRY *glTexSubImage3D_t)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
 typedef void (APIENTRY *glTexStorage2D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
 typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
+typedef void (APIENTRY *glTexImage3D_t)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid* data);
 typedef void (APIENTRY *glGenerateMipmap_t)(GLenum target);
 
 typedef void (APIENTRY *glSamplerParameterf_t)(GLuint sampler, GLenum pname, GLfloat param);
@@ -80,6 +81,7 @@ static glTextureSubImage3D_t qglTextureSubImage3D;
 static glTexStorage2D_t qglTexStorage2D;
 static glTexSubImage3D_t qglTexSubImage3D;
 static glTexStorage3D_t qglTexStorage3D;
+static glTexImage3D_t qglTexImage3D;
 static glGenerateMipmap_t qglGenerateMipmap;
 
 static glGenSamplers_t qglGenSamplers;
@@ -113,13 +115,18 @@ void GL_LoadTextureManagementFunctions(void)
 		GL_LoadOptionalFunction(glTexStorage3D);
 	}
 
-	if (SDL_GL_ExtensionSupported("GL_ARB_sampler_objects")) {
+	if (GL_VersionAtLeast(3,0) || SDL_GL_ExtensionSupported("GL_EXT_texture_array")) {
 		qbool all_available = true;
 
 		// OpenGL 1.2
 		GL_LoadMandatoryFunctionExtension(glTexSubImage3D, all_available);
+		GL_LoadMandatoryFunctionExtension(glTexImage3D, all_available);
 
 		glConfig.supported_features |= (all_available ? R_SUPPORT_TEXTURE_ARRAYS : 0);
+	}
+
+	if (SDL_GL_ExtensionSupported("GL_ARB_sampler_objects")) {
+		qbool all_available = true;
 
 		// Texture samplers in 3.3
 		all_available = true;
@@ -158,6 +165,10 @@ void GL_LoadTextureManagementFunctions(void)
 		GL_LoadOptionalFunction(glGetTextureLevelParameteriv);
 	}
 
+	if (GL_VersionAtLeast(3, 3)) {
+		glConfig.supported_features |= R_SUPPORT_TEXTURE_ARRAYS;
+	}
+
 	if (GL_VersionAtLeast(4, 5)) {
 		GL_LoadOptionalFunction(glGetnTexImage);
 	}
@@ -188,7 +199,7 @@ void GL_TexSubImage3D(
 			qglTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 		}
 	}
-	R_TraceLogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", unit, GL_TextureNameFromReference(texture));
+	R_TraceLogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", unit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
 	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
@@ -272,19 +283,40 @@ void GL_TexStorage2D(
 	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
-void GL_TexStorage3D(
-	GLenum textureUnit, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth
-)
+void GL_TexStorage3D(GLenum textureUnit, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, qbool is_lightmap)
 {
 	GL_ProcessErrors("pre-" __FUNCTION__);
 
 	if (qglTextureStorage3D) {
 		qglTextureStorage3D(GL_TextureNameFromReference(texture), levels, internalformat, width, height, depth);
 	}
-	else {
+	else if (qglTexStorage3D) {
 		GLenum target = GL_TextureTargetFromReference(texture);
 		GL_BindTextureUnit(textureUnit, texture);
 		qglTexStorage3D(target, levels, internalformat, width, height, depth);
+	}
+	else {
+		int level, z;
+		GLenum target = GL_TextureTargetFromReference(texture);
+		GLenum format = (internalformat == GL_RGBA8 || internalformat == GL_SRGB8_ALPHA8 || internalformat == GL_RGBA16F ? GL_RGBA : GL_RGB);
+		GLenum type = (internalformat == GL_RGBA16F || internalformat == GL_RGB16F ? GL_FLOAT : GL_UNSIGNED_BYTE);
+
+		// this might be completely useless (we don't upload data anyway) but just to keep all calls to the texture consistent
+		format = (is_lightmap & GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : format);
+		type = (is_lightmap & GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : type);
+
+		for (z = 0; z < depth; ++z) {
+			GLsizei level_width = width;
+			GLsizei level_height = height;
+
+			for (level = 0; level < levels; ++level) {
+				qglTexImage3D(target, level, internalformat, level_width, level_height, z, 0, format, type, NULL);
+				GL_ProcessErrors("post-TexImage3D");
+
+				level_width = max(1, level_width / 2);
+				level_height = max(1, level_height / 2);
+			}
+		}
 	}
 
 	GL_ProcessErrors("post-" __FUNCTION__);

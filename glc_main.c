@@ -61,7 +61,6 @@ static void GLC_Begin2DRendering(void)
 #define GLC_PrintGfxInfo                   GL_PrintGfxInfo
 #define GLC_Viewport                       GL_Viewport
 #define GLC_RenderDynamicLightmaps         R_RenderDynamicLightmaps
-#define GLC_InvalidateLightmapTextures     GLC_NoOperation
 #define GLC_LightmapFrameInit              GLC_NoOperation
 #define GLC_LightmapShutdown               GLC_NoOperation
 #define GLC_ClearRenderingSurface          GL_Clear
