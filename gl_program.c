@@ -489,7 +489,7 @@ static int GL_InsertDefinitions(
 	extern unsigned char constants_glsl[], common_glsl[];
 	extern unsigned int constants_glsl_len, common_glsl_len;
 #else
-	unsigned char constants_glsl[] = "", common_glsl[] = "";
+	static unsigned char constants_glsl[] = "", common_glsl[] = "";
 	unsigned int constants_glsl_len = 0, common_glsl_len = 0;
 #endif
 	const char* break_point;
