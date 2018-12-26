@@ -848,21 +848,17 @@ static void SCR_DrawElements(void)
 
 		if( !(!scr_menudrawhud.integer && (m_state != m_none)) || (!scr_menudrawhud.integer && (m_state == m_proxy)) )
 		{
-			if (cl.intermission == 1)
-			{
-				Sbar_IntermissionOverlay ();
-				if (!scr_notifyalways.integer)
-				{
-					Con_ClearNotify ();
+			if (cl.intermission == 1) {
+				Sbar_IntermissionOverlay();
+				if (!scr_notifyalways.integer) {
+					Con_ClearNotify();
 				}
-			} 
-			else if (cl.intermission == 2)
-			{
-				Sbar_FinaleOverlay ();
-				SCR_CheckDrawCenterString ();
-				if (!scr_notifyalways.integer)
-				{
-					Con_ClearNotify ();
+			}
+			else if (cl.intermission == 2) {
+				Sbar_FinaleOverlay();
+				SCR_CenterString_Draw();
+				if (!scr_notifyalways.integer) {
+					Con_ClearNotify();
 				}
 			}
 
@@ -899,11 +895,11 @@ static void SCR_DrawElements(void)
 
 						SCR_Draw_ShowNick();
 
-						SCR_CheckDrawCenterString ();
-						SCR_DrawSpeed ();
+						SCR_CenterString_Draw();
+						SCR_DrawSpeed();
 						SCR_DrawClocks();
-						SCR_DrawQTVBuffer ();
-						SCR_DrawFPS ();
+						SCR_DrawQTVBuffer();
+						SCR_DrawFPS();
 					}
 
 					// QW262
