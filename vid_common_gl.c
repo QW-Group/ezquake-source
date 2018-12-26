@@ -241,11 +241,12 @@ static void GL_CheckExtensions(void)
 
 void GL_Init(void)
 {
+	GL_PopulateConfig();
+
 	if (!GL_InitialiseRenderer()) {
 		Sys_Error("Failed to initialise graphics renderer");
 	}
 
-	GL_PopulateConfig();
 	GL_CheckExtensions();
 
 #if !defined( _WIN32 ) && !defined( __linux__ ) /* we print this in different place on WIN and Linux */

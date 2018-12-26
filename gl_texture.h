@@ -37,4 +37,10 @@ qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot, int minimum_depth, int*
 void GL_AllocateStorage(gltexture_t* texture);
 void GL_AllocateTextureNames(gltexture_t* glt);
 
+// Samplers
+void GL_SamplerSetNearest(unsigned int texture_unit_number);
+void GL_SamplerSetLinear(unsigned int texture_unit_number);
+void GL_SamplerClear(unsigned int texture_unit_number);
+void GL_DeleteSamplers(void);
+
 #endif // EZQUAKE_GL_TEXTURE_H

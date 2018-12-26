@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_state.h"
 #include "r_texture.h"
 #include "r_renderer.h"
+#include "gl_texture.h"
 
 // motion blur.
 void GLC_PolyBlend(float v_blend[4])
@@ -180,6 +181,7 @@ void GLC_Shutdown(qbool restarting)
 {
 	GLC_FreeAliasPoseBuffer();
 	renderer.ProgramsShutdown(restarting);
+	GL_DeleteSamplers();
 }
 
 void GLC_TextureInitialiseState(void)

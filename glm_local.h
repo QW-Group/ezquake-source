@@ -5,11 +5,6 @@
 void GLM_BuildCommonTextureArrays(qbool vid_restart);
 void GLM_Shutdown(qbool restarting);
 
-void GLM_SamplerSetNearest(unsigned int texture_unit_number);
-void GLM_SamplerSetLinear(unsigned int texture_unit_number);
-void GLM_SamplerClear(unsigned int texture_unit_number);
-void GL_DeleteSamplers(void);
-
 // Reference cvars for 3D views...
 typedef struct uniform_block_frame_constants_s {
 	float modelViewMatrix[16];

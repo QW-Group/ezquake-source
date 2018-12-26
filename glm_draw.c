@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glm_local.h"
 #include "r_program.h"
 #include "r_renderer.h"
+#include "gl_texture.h"
 
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
 static void GLM_CreateMultiImageProgram(void);
@@ -79,10 +80,10 @@ static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, 
 void GLM_HudDrawComplete(void)
 {
 	if ((R_ProgramCustomOptions(r_program_hud_images) & GLM_HUDIMAGES_SMOOTHEVERYTHING) == 0) {
-		GLM_SamplerClear(0);
+		GL_SamplerClear(0);
 	}
 	else if ((R_ProgramCustomOptions(r_program_hud_images) & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
-		GLM_SamplerClear(1);
+		GL_SamplerClear(1);
 	}
 }
 
@@ -228,11 +229,11 @@ void GLM_HudPrepareImages(void)
 		buffers.Update(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount * 4, imageData.images);
 		if ((R_ProgramCustomOptions(r_program_hud_images) & GLM_HUDIMAGES_SMOOTHEVERYTHING) == 0) {
 			// Everything is GL_NEAREST, no smoothing
-			GLM_SamplerSetNearest(0);
+			GL_SamplerSetNearest(0);
 		}
 		else if ((R_ProgramCustomOptions(r_program_hud_images) & GLM_HUDIMAGES_SMOOTHEVERYTHING) != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
 			// Mixed, second texture unit for GL_NEAREST
-			GLM_SamplerSetNearest(1);
+			GL_SamplerSetNearest(1);
 		}
 	}
 }

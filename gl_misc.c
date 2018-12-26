@@ -184,7 +184,8 @@ void GL_PrintGfxInfo(void)
 	GL_PrintInfoLine("Shaders:", 15, "%s", GL_Supported(R_SUPPORT_RENDERING_SHADERS) ? "&c0f0available&r" : "&cf00unsupported&r");
 	GL_PrintInfoLine("Compute:", 15, "%s", GL_Supported(R_SUPPORT_COMPUTE_SHADERS) ? "&c0f0available&r" : "&cf00unsupported&r");
 	GL_PrintInfoLine("Framebuffers:", 15, "%s", GL_Supported(R_SUPPORT_FRAMEBUFFERS) ? "&c0f0available&r" : "&cf00unsupported&r");
-	GL_PrintInfoLine("Texture arrays:", 15, "%s", GL_Supported(R_SUPPORT_TEXTURE_ARRAYS) ? "&c0f0available&r" : "&cf00unsupported&r");
+	GL_PrintInfoLine("Tex arrays:", 15, "%s", GL_Supported(R_SUPPORT_TEXTURE_ARRAYS) ? "&c0f0available&r" : "&cf00unsupported&r");
+	GL_PrintInfoLine("Tex samplers:", 15, "%s", GL_Supported(R_SUPPORT_TEXTURE_SAMPLERS) ? "&c0f0available&r" : "&cf00unsupported&r");
 	GL_PrintInfoLine("HW lighting:", 15, "%s", GL_Supported(R_SUPPORT_FEATURE_HW_LIGHTING) ? "&c0f0available&r" : "&cf00unsupported&r");
 
 	if (SDL_GetCurrentDisplayMode(VID_DisplayNumber(r_fullscreen.value), &current) != 0) {

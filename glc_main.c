@@ -7,11 +7,12 @@
 #include "r_aliasmodel.h"
 #include "tr_types.h"
 
-cvar_t gl_program_sky = { "gl_program_sky", "1" };
-cvar_t gl_program_turbsurfaces = { "gl_program_turbsurfaces", "1" };
-cvar_t gl_program_aliasmodels = { "gl_program_aliasmodels", "1", CVAR_LATCH };
-cvar_t gl_program_world = { "gl_program_world", "1" };
-cvar_t gl_program_sprites = { "gl_program_sprites", "1" };
+cvar_t gl_program_sky          = { "gl_program_sky",           "1" };
+cvar_t gl_program_turbsurfaces = { "gl_program_turbsurfaces",  "1" };
+cvar_t gl_program_aliasmodels  = { "gl_program_aliasmodels",   "1", CVAR_LATCH };
+cvar_t gl_program_world        = { "gl_program_world",         "1" };
+cvar_t gl_program_sprites      = { "gl_program_sprites",       "1" };
+cvar_t gl_program_hud          = { "gl_program_hud",           "1" };
 
 static cvar_t* gl_program_cvars[] = {
 	&gl_program_sky,
@@ -19,6 +20,7 @@ static cvar_t* gl_program_cvars[] = {
 	&gl_program_aliasmodels,
 	&gl_program_world,
 	&gl_program_sprites,
+	&gl_program_hud,
 };
 
 void GL_Init(void);

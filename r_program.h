@@ -25,6 +25,7 @@ typedef enum {
 	r_program_world_textured_glc,
 	r_program_world_secondpass_glc,
 	r_program_sprites_glc,
+	r_program_hud_images_glc,
 
 	r_program_lightmap_compute,
 
@@ -91,6 +92,8 @@ typedef enum {
 	r_program_uniform_world_textured_glc_time,
 	r_program_uniform_sprites_glc_materialSampler,
 	r_program_uniform_sprites_glc_alphaThreshold,
+	r_program_uniform_hud_images_glc_primarySampler,
+	r_program_uniform_hud_images_glc_secondarySampler,
 	r_program_uniform_count
 } r_program_uniform_id;
 

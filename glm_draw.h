@@ -60,8 +60,9 @@ typedef struct glm_image_s {
 
 typedef struct glc_image_s {
 	float pos[2];
-	float tex[2];
+	float tex[4];
 	unsigned char colour[4];
+	float padding;
 } glc_image_t;
 
 typedef struct glm_image_framedata_s {

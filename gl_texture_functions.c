@@ -483,7 +483,7 @@ void GL_TextureMipmapGenerate(texture_ref texture)
 	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
-void GLM_SamplerSetNearest(unsigned int texture_unit_number)
+void GL_SamplerSetNearest(unsigned int texture_unit_number)
 {
 	GL_ProcessErrors("pre-" __FUNCTION__);
 
@@ -499,7 +499,7 @@ void GLM_SamplerSetNearest(unsigned int texture_unit_number)
 	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
-void GLM_SamplerSetLinear(unsigned int texture_unit_number)
+void GL_SamplerSetLinear(unsigned int texture_unit_number)
 {
 	GL_ProcessErrors("pre-" __FUNCTION__);
 
@@ -515,7 +515,7 @@ void GLM_SamplerSetLinear(unsigned int texture_unit_number)
 	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
-void GLM_SamplerClear(unsigned int texture_unit_number)
+void GL_SamplerClear(unsigned int texture_unit_number)
 {
 	GL_ProcessErrors("pre-" __FUNCTION__);
 
