@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void GL_EnsureTextureUnitBound(int unit, texture_ref texture);
 void GL_TextureMipmapGenerate(texture_ref texture);
 void GL_TextureAnistropyChanged(texture_ref texture);
-void GL_TextureGet(texture_ref tex, int buffer_size, byte* buffer);
+void GL_TextureGet(texture_ref tex, int buffer_size, byte* buffer, int bpp);
 void GL_TextureWrapModeClamp(texture_ref tex);
 void GL_UploadTexture(texture_ref texture, int mode, int width, int height, byte* newdata);
 void GL_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer);

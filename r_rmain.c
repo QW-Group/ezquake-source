@@ -1063,7 +1063,7 @@ static void R_DrawEntities(void)
 
 	R_TraceEnterNamedRegion("R_DrawEntities");
 
-	R_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, r_state_sprites_textured, r_state_sprites_textured, null_texture_reference, 0, r_primitive_triangle_strip);
+	R_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, r_state_sprites_textured, null_texture_reference, 0, r_primitive_triangle_strip);
 	qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
 	for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
 		R_DrawEntitiesOnList(&cl_visents, ent_type);

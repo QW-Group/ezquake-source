@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_buffers.h"
 #include "tr_types.h"
 #include "r_renderer.h"
+#include "r_texture.h"
 
 int indexes_start_quads, indexes_start_flashblend, indexes_start_sparks;
 
@@ -123,15 +124,13 @@ static gl_sprite3d_batch_t* BatchForType(sprite3d_batch_id type, qbool allocate)
 	return &batches[index - 1];
 }
 
-void R_Sprite3DInitialiseBatch(sprite3d_batch_id type, r_state_id textured_state, r_state_id untextured_state, texture_ref texture, int index, r_primitive_id primitive_type)
+void R_Sprite3DInitialiseBatch(sprite3d_batch_id type, r_state_id state, texture_ref texture, int index, r_primitive_id primitive_type)
 {
 	gl_sprite3d_batch_t* batch = BatchForType(type, true);
 
-	assert(textured_state != r_state_null);
-	assert(untextured_state != r_state_null);
+	assert(state != r_state_null);
 
-	batch->textured_rendering_state = textured_state;
-	batch->untextured_rendering_state = untextured_state;
+	batch->rendering_state = state;
 	batch->texture = texture;
 	batch->count = 0;
 	batch->primitive_id = primitive_type;
@@ -149,11 +148,6 @@ r_sprite3d_vert_t* R_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_
 	if (!batch || batch->count >= MAX_3DSPRITES_PER_BATCH || (batch->count + 1) * verts_required >= MAX_VERTS_PER_BATCH) {
 		return NULL;
 	}
-	if (!R_TextureReferenceIsValid(texture) && !R_TextureReferenceIsValid(batch->texture) && !batch->untextured_rendering_state) {
-		assert(false);
-		return NULL;
-	}
-
 	if (start + verts_required >= MAX_VERTS_PER_SCENE) {
 		return NULL;
 	}

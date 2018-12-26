@@ -113,7 +113,7 @@ void R_RenderDlight(dlight_t *light)
 	}
 
 	if (first_dlight) {
-		R_Sprite3DInitialiseBatch(SPRITE3D_FLASHBLEND_LIGHTS, r_state_light_bubble, r_state_light_bubble, null_texture_reference, 0, r_primitive_triangle_fan);
+		R_Sprite3DInitialiseBatch(SPRITE3D_FLASHBLEND_LIGHTS, r_state_light_bubble, null_texture_reference, 0, r_primitive_triangle_fan);
 
 		first_dlight = false;
 	}

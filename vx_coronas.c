@@ -164,7 +164,7 @@ void R_DrawCoronas(void)
 			continue;
 		}
 
-		R_Sprite3DInitialiseBatch(batch_id, r_state_coronas, r_state_coronas, R_UseModernOpenGL() ? texture->array_tex : texture->texnum, texture->array_index, r_primitive_triangle_strip);
+		R_Sprite3DInitialiseBatch(batch_id, r_state_coronas, R_UseModernOpenGL() ? texture->array_tex : texture->texnum, texture->array_index, r_primitive_triangle_strip);
 
 		for (c = r_corona_by_tex[tex]; c; c = c->next) {
 			r_sprite3d_vert_t* vert;

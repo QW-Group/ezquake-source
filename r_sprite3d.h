@@ -89,7 +89,7 @@ typedef enum {
 	r_primitive_count
 } r_primitive_id;
 
-void R_Sprite3DInitialiseBatch(sprite3d_batch_id type, r_state_id textured_state, r_state_id untextured_state, texture_ref texture, int index, r_primitive_id primitive_type);
+void R_Sprite3DInitialiseBatch(sprite3d_batch_id type, r_state_id rendering_state, texture_ref texture, int index, r_primitive_id primitive_type);
 r_sprite3d_vert_t* R_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required);
 r_sprite3d_vert_t* R_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int index);
 void R_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index);

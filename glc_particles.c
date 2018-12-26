@@ -29,7 +29,7 @@ void GLC_DrawClassicParticles(int particles_to_draw)
 	extern texture_ref particletexture;
 	r_sprite3d_vert_t* vert;
 
-	R_Sprite3DInitialiseBatch(SPRITE3D_PARTICLES_CLASSIC, r_state_particles_classic, r_state_particles_classic, particletexture, particletexture_array_index, r_primitive_triangles);
+	R_Sprite3DInitialiseBatch(SPRITE3D_PARTICLES_CLASSIC, r_state_particles_classic, particletexture, particletexture_array_index, r_primitive_triangles);
 	vert = R_Sprite3DAddEntry(SPRITE3D_PARTICLES_CLASSIC, 3 * particles_to_draw);
 	if (vert) {
 		extern r_sprite3d_vert_t glvertices[ABSOLUTE_MAX_PARTICLES * 3];

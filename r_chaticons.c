@@ -276,9 +276,9 @@ void R_DrawChatIcons(void)
 	VectorNegate(billboard2[2], billboard2[0]);
 	VectorNegate(billboard2[3], billboard2[1]);
 
-	R_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK_CHAT, r_state_chaticon, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), r_primitive_triangle_strip);
-	R_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK, r_state_chaticon, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_afk]), r_primitive_triangle_strip);
-	R_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_CHAT, r_state_chaticon, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_chat]), r_primitive_triangle_strip);
+	R_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK_CHAT, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_chat_afk]), r_primitive_triangle_strip);
+	R_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_AFK, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_afk]), r_primitive_triangle_strip);
+	R_Sprite3DInitialiseBatch(SPRITE3D_CHATICON_CHAT, r_state_chaticon, TEXTURE_DETAILS(ci_textures[citex_chat]), r_primitive_triangle_strip);
 
 	for (i = 0; i < ci_count; i++) {
 		p = &ci_clients[i];

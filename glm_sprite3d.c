@@ -143,7 +143,7 @@ void GLM_Draw3DSprites(void)
 		}
 		first_batch = false;
 
-		R_ApplyRenderingState(batch->textured_rendering_state);
+		R_ApplyRenderingState(batch->rendering_state);
 		if (R_TextureReferenceIsValid(batch->texture)) {
 			renderer.TextureUnitBind(0, batch->texture);
 		}

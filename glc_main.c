@@ -11,12 +11,14 @@ cvar_t gl_program_sky = { "gl_program_sky", "1" };
 cvar_t gl_program_turbsurfaces = { "gl_program_turbsurfaces", "1" };
 cvar_t gl_program_aliasmodels = { "gl_program_aliasmodels", "1", CVAR_LATCH };
 cvar_t gl_program_world = { "gl_program_world", "1" };
+cvar_t gl_program_sprites = { "gl_program_sprites", "1" };
 
 static cvar_t* gl_program_cvars[] = {
 	&gl_program_sky,
 	&gl_program_turbsurfaces,
 	&gl_program_aliasmodels,
 	&gl_program_world,
+	&gl_program_sprites,
 };
 
 void GL_Init(void);
@@ -108,14 +110,21 @@ void GLC_Initialise(void)
 
 	if (!host_initialized) {
 		Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
-		Cvar_Register(&gl_program_sky);
-		Cvar_Register(&gl_program_turbsurfaces);
-		Cvar_Register(&gl_program_world);
+		for (i = 0; i < sizeof(gl_program_cvars) / sizeof(gl_program_cvars[0]); ++i) {
+			if (!(gl_program_cvars[i]->flags & CVAR_LATCH)) {
+				Cvar_Register(gl_program_cvars[i]);
+			}
+		}
+
 		Cvar_ResetCurrentGroup();
 	}
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
-	Cvar_Register(&gl_program_aliasmodels);
+	for (i = 0; i < sizeof(gl_program_cvars) / sizeof(gl_program_cvars[0]); ++i) {
+		if (gl_program_cvars[i]->flags & CVAR_LATCH) {
+			Cvar_Register(gl_program_cvars[i]);
+		}
+	}
 	Cvar_ResetCurrentGroup();
 
 	GL_Init();

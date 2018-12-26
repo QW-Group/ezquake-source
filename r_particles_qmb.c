@@ -598,7 +598,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
+					R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
 					first = false;
 				}
 
@@ -638,7 +638,7 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (first) {
-					R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_fan);
+					R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_fan);
 					first = false;
 				}
 
@@ -688,7 +688,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
+						R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
 						first = false;
 					}
 
@@ -737,7 +737,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
+						R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
 						first = false;
 					}
 
@@ -789,7 +789,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
+						R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
 						first = false;
 					}
 
@@ -836,7 +836,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					}
 
 					if (first) {
-						R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
+						R_Sprite3DInitialiseBatch(pt->billboard_type, pt->state, TEXTURE_DETAILS(ptex), r_primitive_triangle_strip);
 						first = false;
 					}
 

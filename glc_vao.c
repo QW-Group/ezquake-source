@@ -122,10 +122,12 @@ void GLC_BindVertexArray(r_vao_id vao)
 		if (attr->enabled && R_ProgramInUse() == R_ProgramForAttribute(attr->attr_id)) {
 			GLint location = R_ProgramAttributeLocation(attr->attr_id);
 
-			qglEnableVertexAttribArray(location);
-			qglVertexAttribPointer(location, attr->size, attr->type, attr->normalized ? GL_TRUE : GL_FALSE, attr->stride, attr->pointer);
-			attributes[i].location = location;
-			attributes[i].enabled = true;
+			if (location >= 0) {
+				qglEnableVertexAttribArray(location);
+				qglVertexAttribPointer(location, attr->size, attr->type, attr->normalized ? GL_TRUE : GL_FALSE, attr->stride, attr->pointer);
+				attributes[i].location = location;
+				attributes[i].enabled = true;
+			}
 		}
 	}
 

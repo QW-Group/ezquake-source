@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "glc_local.h"
 #include "r_renderer.h"
+#include "r_texture.h"
 
 static void GLC_Create3DSpriteVAO(void)
 {
@@ -48,11 +49,7 @@ static void GLC_Create3DSpriteVAO(void)
 static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset, GLuint maximum_batch_size)
 {
 	if (R_TextureReferenceIsValid(batch->texture)) {
-		if (!batch->textured_rendering_state) {
-			assert(false);
-			return;
-		}
-		R_ApplyRenderingState(batch->textured_rendering_state);
+		R_ApplyRenderingState(batch->rendering_state);
 		renderer.TextureUnitBind(0, batch->texture);
 
 		// All batches are the same texture, so no issues
@@ -62,40 +59,23 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 		// Group by texture usage
 		int start = 0, end = 1;
 
+		R_ApplyRenderingState(batch->rendering_state);
 		if (R_TextureReferenceIsValid(batch->textures[start])) {
-			if (!batch->textured_rendering_state) {
-				assert(false);
-				return;
-			}
-
-			R_ApplyRenderingState(batch->textured_rendering_state);
 			renderer.TextureUnitBind(0, batch->textures[start]);
 		}
 		else {
-			if (!batch->untextured_rendering_state) {
-				assert(false);
-				return;
-			}
-			R_ApplyRenderingState(batch->untextured_rendering_state);
+			renderer.TextureUnitBind(0, solidwhite_texture);
 		}
 		for (end = 1; end < batch->count; ++end) {
 			if (!R_TextureReferenceEqual(batch->textures[start], batch->textures[end])) {
 				GL_DrawSequentialBatchImpl(batch, start, end, index_offset, maximum_batch_size);
 
+				R_ApplyRenderingState(batch->rendering_state);
 				if (R_TextureReferenceIsValid(batch->textures[end])) {
-					if (!batch->textured_rendering_state) {
-						assert(false);
-						return;
-					}
 					renderer.TextureUnitBind(0, batch->textures[end]);
-					R_ApplyRenderingState(batch->textured_rendering_state);
 				}
 				else {
-					if (!batch->untextured_rendering_state) {
-						assert(false);
-						return;
-					}
-					R_ApplyRenderingState(batch->untextured_rendering_state);
+					renderer.TextureUnitBind(0, solidwhite_texture);
 				}
 				start = end;
 			}
@@ -107,6 +87,18 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 	}
 }
 
+static qbool GLC_CompileSpriteProgram(void)
+{
+	if (R_ProgramRecompileNeeded(r_program_sprites_glc, 0)) {
+		R_ProgramCompile(r_program_sprites_glc);
+		R_ProgramSetCustomOptions(r_program_sprites_glc, 0);
+		R_ProgramUniform1i(r_program_uniform_sprites_glc_materialSampler, 0);
+		R_ProgramUniform1f(r_program_uniform_sprites_glc_alphaThreshold, 0);
+	}
+
+	return R_ProgramReady(r_program_sprites_glc);
+}
+
 void GLC_Draw3DSpritesInline(void)
 {
 	unsigned int i, j, k;
@@ -116,10 +108,16 @@ void GLC_Draw3DSpritesInline(void)
 	}
 
 	if (buffers.supported) {
+		extern cvar_t gl_program_sprites;
+
 		if (!R_VertexArrayCreated(vao_3dsprites)) {
 			GLC_Create3DSpriteVAO();
 		}
 		buffers.Update(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
+
+		if (gl_program_sprites.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_CompileSpriteProgram()) {
+			R_ProgramUse(r_program_sprites_glc);
+		}
 	}
 
 	for (i = 0; i < batchCount; ++i) {
@@ -131,16 +129,15 @@ void GLC_Draw3DSpritesInline(void)
 
 		if (buffers.supported) {
 			if (batch->count == 1) {
+				R_ApplyRenderingState(batch->rendering_state);
 				if (R_TextureReferenceIsValid(batch->textures[0])) {
 					renderer.TextureUnitBind(0, batch->textures[0]);
-					R_ApplyRenderingState(batch->textured_rendering_state);
 				}
 				else if (R_TextureReferenceIsValid(batch->texture)) {
 					renderer.TextureUnitBind(0, batch->texture);
-					R_ApplyRenderingState(batch->textured_rendering_state);
 				}
 				else {
-					R_ApplyRenderingState(batch->untextured_rendering_state);
+					renderer.TextureUnitBind(0, solidwhite_texture);
 				}
 				GL_DrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices[0], batch->numVertices[0]);
 			}
@@ -155,19 +152,19 @@ void GLC_Draw3DSpritesInline(void)
 			}
 			else if (R_TextureReferenceIsValid(batch->texture)) {
 				renderer.TextureUnitBind(0, batch->texture);
-				R_ApplyRenderingState(batch->textured_rendering_state);
+				R_ApplyRenderingState(batch->rendering_state);
 
 				GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, batch->count);
 			}
 			else {
 				int first = 0, last = 1;
 
+				R_ApplyRenderingState(batch->rendering_state);
 				if (R_TextureReferenceIsValid(batch->textures[0])) {
 					renderer.TextureUnitBind(0, batch->textures[0]);
-					R_ApplyRenderingState(batch->textured_rendering_state);
 				}
 				else {
-					R_ApplyRenderingState(batch->untextured_rendering_state);
+					renderer.TextureUnitBind(0, solidwhite_texture);
 				}
 
 				while (last < batch->count) {
@@ -176,10 +173,9 @@ void GLC_Draw3DSpritesInline(void)
 
 						if (R_TextureReferenceIsValid(batch->textures[last])) {
 							renderer.TextureUnitBind(0, batch->textures[last]);
-							R_ApplyRenderingState(batch->textured_rendering_state);
 						}
 						else {
-							R_ApplyRenderingState(batch->untextured_rendering_state);
+							renderer.TextureUnitBind(0, solidwhite_texture);
 						}
 						first = last;
 					}
@@ -190,22 +186,18 @@ void GLC_Draw3DSpritesInline(void)
 			}
 		}
 		else {
+			// Immediate mode, no VBOs
 			for (j = 0; j < batch->count; ++j) {
 				r_sprite3d_vert_t* v;
 
+				R_ApplyRenderingState(batch->rendering_state);
 				if (R_TextureReferenceIsValid(batch->textures[j])) {
 					renderer.TextureUnitBind(0, batch->textures[j]);
-					R_ApplyRenderingState(batch->textured_rendering_state);
-				}
-				else if (R_TextureReferenceIsValid(batch->texture)) {
-					renderer.TextureUnitBind(0, batch->texture);
-					R_ApplyRenderingState(batch->textured_rendering_state);
 				}
 				else {
-					R_ApplyRenderingState(batch->untextured_rendering_state);
+					renderer.TextureUnitBind(0, batch->texture);
 				}
 
-				// Immediate mode
 				GLC_Begin(glPrimitiveTypes[batch->primitive_id]);
 				v = &verts[batch->firstVertices[j]];
 				for (k = 0; k < batch->numVertices[j]; ++k, ++v) {
@@ -222,6 +214,7 @@ void GLC_Draw3DSpritesInline(void)
 
 	batchCount = vertexCount = 0;
 	memset(batchMapping, 0, sizeof(batchMapping));
+	R_ProgramUse(r_program_none);
 }
 
 void GLC_DrawSimpleItem(model_t* model, int skin, vec3_t org, float sprsize, vec3_t up, vec3_t right)

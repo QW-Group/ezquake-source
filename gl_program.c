@@ -227,6 +227,10 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_world_textured_glc, "detailSampler", 1, false },
 	// r_program_uniform_world_textured_glc_time
 	{ r_program_world_textured_glc, "time", 1, false },
+	// r_program_uniform_sprites_glc_materialSampler,
+	{ r_program_sprites_glc, "materialSampler", 1, false },
+	// r_program_uniform_sprites_glc_alphaThreshold,
+	{ r_program_sprites_glc, "alphaThreshold", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -1068,6 +1072,7 @@ static void GL_BuildCoreDefinitions(void)
 	GL_DefineProgram_VF(r_program_world_drawflat_glc, "drawflat-world", true, glc_world_drawflat, renderer_classic);
 	GL_DefineProgram_VF(r_program_world_textured_glc, "textured-world", true, glc_world_textured, renderer_classic);
 	GL_DefineProgram_VF(r_program_world_secondpass_glc, "secondpass-world", true, glc_world_secondpass, renderer_classic);
+	GL_DefineProgram_VF(r_program_sprites_glc, "3d-sprites", true, glc_draw_sprites, renderer_classic);
 #endif
 }
 
