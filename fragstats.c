@@ -191,23 +191,22 @@ static void InitFragDefs(qbool restart)
 
 static void LoadFragFile(char *filename, qbool quiet)
 {
-	int lowmark, c, line, i;
+	int c, line, i;
 	msgtype_t msgtype;
 	char save, *buffer = NULL, *start, *end, *token, fragfilename[MAX_OSPATH];
 	qbool gotversion = false, warned_flagmsg_overflow = false;
 
 	InitFragDefs(true);
 
-	lowmark = Hunk_LowMark();
 	strlcpy(fragfilename, filename, sizeof(fragfilename));
 	COM_ForceExtensionEx(fragfilename, ".dat", sizeof(fragfilename));
 
 	// if it fragfile.dat then try to load from ezquake dir first,
 	// because we have a bit different fragfile format comparing to fuhquake
-	if (!strcasecmp(fragfilename, "fragfile.dat") && (buffer = (char *) FS_LoadHunkFile("../ezquake/fragfile.dat", NULL)))
+	if (!strcasecmp(fragfilename, "fragfile.dat") && (buffer = (char *) FS_LoadHeapFile("../ezquake/fragfile.dat", NULL)))
 		strlcpy(fragfilename, "ezquake/fragfile.dat", sizeof(fragfilename));
 
-	if (!buffer && !(buffer = (char *) FS_LoadHunkFile(fragfilename, NULL))) {
+	if (!buffer && !(buffer = (char *)FS_LoadHeapFile(fragfilename, NULL))) {
 		if (!quiet)
 			Com_Printf("Couldn't load fragfile \"%s\"\n", fragfilename);
 		return;
@@ -446,7 +445,7 @@ nextline:
 	}
 
 end:
-	Hunk_FreeToLowMark(lowmark);
+	Q_free(buffer);
 	VX_TrackerInit();
 }
 

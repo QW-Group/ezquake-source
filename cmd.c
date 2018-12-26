@@ -444,7 +444,6 @@ void Cmd_Exec_f (void)
 {
 	char *f, name[MAX_OSPATH];
 	char reset_bindphysical[128];
-	int mark;
 	qbool server_command = false;
 
 	if (Cmd_Argc () != 2) {
@@ -457,14 +456,13 @@ void Cmd_Exec_f (void)
 #endif
 
 	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
-	mark = Hunk_LowMark();
-	if (!(f = (char *) FS_LoadHunkFile (name, NULL)))	{
+	if (!(f = (char *) FS_LoadHeapFile(name, NULL)))	{
 		const char *p;
 		p = COM_SkipPath (name);
 		if (!strchr (p, '.')) {
 			// no extension, so try the default (.cfg)
 			strlcat (name, ".cfg", sizeof (name));
-			f = (char *) FS_LoadHunkFile (name, NULL);
+			f = (char *)FS_LoadHeapFile(name, NULL);
 		}
 		if (!f) {
 			Com_Printf ("couldn't exec %s\n", Cmd_Argv(1));
@@ -492,7 +490,7 @@ void Cmd_Exec_f (void)
 		Cbuf_InsertTextEx(&cbuf_main, "con_bindphysical 1\n");
 	}
 	
-	Hunk_FreeToLowMark (mark);
+	Q_free(f);
 }
 
 //Just prints the rest of the line to the console

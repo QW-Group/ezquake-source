@@ -994,7 +994,6 @@ static void Draw_DeleteOldLevelshot(mpic_t* pic)
 void Draw_InitConback(void)
 {
 	qpic_t *cb;
-	int start;
 	mpic_t *pic_24bit;
 
 	// Level shots init. It's cache based so don't free!
@@ -1007,9 +1006,7 @@ void Draw_InitConback(void)
 		return;
 	}
 
-	start = Hunk_LowMark ();
-
-	if (!(cb = (qpic_t *)FS_LoadHunkFile("gfx/conback.lmp", NULL))) {
+	if (!(cb = (qpic_t *)FS_LoadHeapFile("gfx/conback.lmp", NULL))) {
 		Sys_Error("Couldn't load gfx/conback.lmp");
 	}
 	SwapPic (cb);
@@ -1030,7 +1027,7 @@ void Draw_InitConback(void)
 	Draw_AdjustConback();
 
 	// Free loaded console.
-	Hunk_FreeToLowMark (start);
+	Q_free(cb);
 }
 
 void Draw_ConsoleBackground(int lines)

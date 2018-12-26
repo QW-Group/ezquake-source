@@ -193,7 +193,7 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 				COM_StripExtension(skinfile, skinfile, sizeof(skinfile));
 				strlcat(skinfile, "_default.skin", sizeof(skinfile));
 
-				sfile = sfilestart = (char *)FS_LoadHunkFile(skinfile, NULL);
+				sfile = sfilestart = (char *)FS_LoadHeapFile(skinfile, NULL);
 
 				strlcpy(sinf->name, mod->name, sizeof(sinf->name)); //backup
 				COM_StripExtension(sinf->name, sinf->name, sizeof(sinf->name));
@@ -213,7 +213,7 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 						}
 						sfile = nl + 1;
 					}
-					// ?_Free(sfilestart);
+					Q_free(sfilestart);
 				}
 			}
 

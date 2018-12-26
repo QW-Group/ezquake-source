@@ -84,7 +84,7 @@ static void TP_AddLocNode(vec3_t coord, char *name)
 qbool TP_LoadLocFile(char *path, qbool quiet)
 {
 	char *buf, *p, locname[MAX_OSPATH] = { 0 }, location[MAX_LOC_NAME];
-	int i, n, sign, line, nameindex, mark, overflow;
+	int i, n, sign, line, nameindex, overflow;
 	vec3_t coord;
 
 	if (!*path) {
@@ -100,8 +100,7 @@ qbool TP_LoadLocFile(char *path, qbool quiet)
 	strlcat(locname, path, sizeof(locname) - strlen(locname));
 	COM_DefaultExtension(locname, ".loc");
 
-	mark = Hunk_LowMark();
-	if (!(buf = (char *)FS_LoadHunkFile(locname, NULL))) {
+	if (!(buf = (char *)FS_LoadHeapFile(locname, NULL))) {
 		if (!quiet) {
 			Com_Printf("Could not load %s\n", locname);
 		}
@@ -193,7 +192,7 @@ qbool TP_LoadLocFile(char *path, qbool quiet)
 	}
 _endoffile:
 
-	Hunk_FreeToLowMark(mark);
+	Q_free(buf);
 
 	if (loc_count) {
 		if (!quiet) {
