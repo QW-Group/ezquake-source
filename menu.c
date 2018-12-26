@@ -775,28 +775,27 @@ static void CheckSPGame (void) {
 }
 #endif	// !WITH_NQPROGS
 
-static void StartNewGame (void) {
+static void StartNewGame(void)
+{
 	extern cvar_t sv_progtype;
 
 	key_dest = key_game;
 	m_state = m_none;
-	Cvar_Set (&maxclients, "1");
-	Cvar_Set (&teamplay, "0");
-	Cvar_Set (&deathmatch, "0");
-	Cvar_Set (&coop, "0");
+	Cvar_Set(&maxclients, "1");
+	Cvar_Set(&teamplay, "0");
+	Cvar_Set(&deathmatch, "0");
+	Cvar_Set(&coop, "0");
 
-	Cvar_Set (&sv_progsname, "spprogs"); // force progsname
+	Cvar_Set(&sv_progsname, "spprogs"); // force progsname
 #ifdef USE_PR2
-	Cvar_Set (&sv_progtype, "0"); // force .dat
+	Cvar_Set(&sv_progtype, "0"); // force .dat
 #endif
 
-	if (com_serveractive)
-		Cbuf_AddText ("disconnect\n");
+	if (com_serveractive) {
+		Cbuf_AddText("disconnect\n");
+	}
 
-	progs = (dprograms_t *) FS_LoadHunkFile ("spprogs.dat", NULL);
-	//if (progs && !file_from_gamedir)
-	//	Cbuf_AddText ("gamedir qw\n");
-	Cbuf_AddText ("map start\n");
+	Cbuf_AddText("map start\n");
 }
 
 void M_SinglePlayer_Key (int key) {
