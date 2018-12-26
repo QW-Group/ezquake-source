@@ -74,7 +74,11 @@ void GLM_StateBeginPolygonDraw(void)
 
 void GLM_StateBeginAliasOutlineBatch(void)
 {
+	extern cvar_t gl_outline_width;
+
 	R_ApplyRenderingState(r_state_aliasmodel_outline);
+	// Limit outline width, since even width == 3 can be considered as cheat.
+	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 }
 
 void GLM_StateBeginAliasModelBatch(qbool translucent)

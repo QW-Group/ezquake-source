@@ -486,11 +486,6 @@ static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, in
 {
 	GLC_StateBeginAliasOutlineFrame();
 
-	// Limit outline width, since even width == 3 can be considered as cheat.
-	R_GLC_DisableColorPointer();
-	R_CustomColor(0, 0, 0, 1);
-	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
-
 	GL_DrawArrays(primitive, firstVert, verts);
 }
 
@@ -505,7 +500,6 @@ static void GLC_DrawAliasOutlineFrame_Immediate(entity_t* ent, model_t* model, i
 	qbool limit_lerp = r_lerpmuzzlehack.integer && (ent->model->renderfx & RF_LIMITLERP);
 
 	GLC_StateBeginAliasOutlineFrame();
-	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
 	lerpfrac = lerpfracDefault;
 
