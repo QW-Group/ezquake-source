@@ -124,6 +124,8 @@ static qbool Load_LMP_Charset(char *name, int flags, charset_t* charset)
 			charset->glyphs[i].th = charset->glyphs[i].tl + 8.0f / 256;
 		}
 
+		charset->custom_scale_x = charset->custom_scale_y = 1;
+
 		return true;
 	}
 	return false;
