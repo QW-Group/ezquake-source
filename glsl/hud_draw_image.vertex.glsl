@@ -22,10 +22,5 @@ void main()
 #ifdef MIXED_SAMPLING
 	IsNearest = (inFlags & IMAGEPROG_FLAGS_NEAREST) != 0 ? 1 : 0;
 #endif
-	if ((inFlags & IMAGEPROG_FLAGS_TEXT) != 0) {
-		AlphaTest = r_alphafont == 0 ? 1 : 0;
-	}
-	else {
-		AlphaTest = (inFlags & IMAGEPROG_FLAGS_ALPHATEST) != 0 ? 1 : 0;
-	}
+	AlphaTest = (inFlags & IMAGEPROG_FLAGS_TEXT) * r_alphatestfont + (inFlags & IMAGEPROG_FLAGS_ALPHATEST);
 }

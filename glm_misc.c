@@ -79,7 +79,7 @@ void GLM_PreRenderView(void)
 	frameConstants.time = cl.time;
 	frameConstants.gamma = bound(0.3, v_gamma.value, 3);
 	frameConstants.contrast = bound(1, v_contrast.value, 3);
-	frameConstants.r_alphafont = gl_alphafont.value;
+	frameConstants.r_alphatestfont = gl_alphafont.integer ? 0 : 1;
 	blend_alpha = (!vid_hwgamma_enabled || !gl_hwblend.value || cl.teamfortress) ? 0 : v_blend[3];
 	frameConstants.v_blend[0] = v_blend[0] * blend_alpha;
 	frameConstants.v_blend[1] = v_blend[1] * blend_alpha;

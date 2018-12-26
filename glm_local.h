@@ -35,7 +35,7 @@ typedef struct uniform_block_frame_constants_s {
 	float time;
 	float gamma;
 	float contrast;
-	int r_alphafont;
+	int r_alphatestfont;
 
 	// turb settings
 	float skySpeedscale;

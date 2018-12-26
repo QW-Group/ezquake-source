@@ -26,7 +26,7 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	float time;
 	float gamma;
 	float contrast;
-	int r_alphafont;
+	int r_alphatestfont;
 
 	// sky
 	float skySpeedscale;
