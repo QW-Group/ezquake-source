@@ -333,36 +333,6 @@ void Hud_Width_f(void)
 	}
 }
 
-/*
-void Hud_Elem_Font(hud_element_t *elem)
-{
-if (elem->flags & HUD_IMAGE)
-return;
-
-elem->charset = loadtexture_24bit (Cmd_Argv(2), LOADTEX_CHARS);
-
-}
-
-void Hud_Font_f(void)
-{
-hud_element_t *elem;
-char	*name = Cmd_Argv(1);
-
-if (Cmd_Argc() != 3)
-Com_Printf("Usage: hud_font <name> <font>\n");
-else if (IsRegexp(name)) {
-if(!ReSearchInit(name))
-return;
-Hud_ReSearch_do(Hud_Elem_Font);
-ReSearchDone();
-} else {
-if ((elem = Hud_FindElement(name)))
-Hud_Elem_Font(elem);
-else
-Com_Printf("HudElement \"%s\" not found\n", name);
-}
-}*/
-
 void Hud_Elem_Alpha(hud_element_t *elem)
 {
 	float alpha = atof(Cmd_Argv(2));
@@ -553,45 +523,7 @@ void Hud_BringToFront_f(void)
 	}
 }
 
-/*void Hud_Hover_f (void)
-{
-hud_element_t *elem;
-
-if (Cmd_Argc() != 3) {
-Com_Printf("hud_hover <name> <alias> : call alias when mouse is over hud\n");
-return;
-}
-
-elem = Hud_FindElement(Cmd_Argv(1));
-if (elem) {
-if (elem->f_hover)
-Q_free (elem->f_hover);
-elem->f_hover = Q_strdup (Cmd_Argv(2));
-} else {
-Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
-}
-}
-
-void Hud_Button_f (void)
-{
-hud_element_t *elem;
-
-if (Cmd_Argc() != 3) {
-Com_Printf("hud_button <name> <alias> : call alias when mouse button pressed on hud\n");
-return;
-}
-
-elem = Hud_FindElement(Cmd_Argv(1));
-if (elem) {
-if (elem->f_button)
-Q_free (elem->f_button);
-elem->f_button = Q_strdup (Cmd_Argv(2));
-} else {
-Com_Printf("HudElement \"%s\" not found\n", Cmd_Argv(1));
-}
-}*/
-
-qbool Hud_TranslateCoords(hud_element_t *elem, int *x, int *y)
+static qbool Hud_TranslateCoords(hud_element_t *elem, int *x, int *y)
 {
 	int l;
 
@@ -727,38 +659,6 @@ void SCR_DrawHud(void)
 			}
 		}
 	}
-	// Draw Input
-	/*	if (key_dest == key_message && chat_team == 100) {
-	extern float	con_cursorspeed;
-	extern int	chat_bufferpos;
-
-	int	i,j;
-	char	*s;
-	char	t;
-
-	x = input.x*8 + 1; // top left
-	y = input.y*8;
-
-	if (input.bg)
-	Draw_Fill(x, y, input.len*8, 8, input.bg);
-
-	s = chat_buffer[chat_edit];
-	t = chat_buffer[chat_edit][chat_bufferpos];
-	i = chat_bufferpos;
-
-	if (chat_bufferpos > (input.len - 1)) {
-	s += chat_bufferpos - (input.len -1);
-	i = input.len - 1;
-	}
-
-	j = 0;
-	while(s[j] && j<input.len)	{
-	Draw_Character ( x+(j<<3), y, s[j]);
-	j++;
-	}
-	Draw_Character ( x+(i<<3), y, 10+((int)(cls.realtime*con_cursorspeed)&1));
-	}*/
-
 }
 
 qbool Hud_CheckBounds(hud_element_t *elem, int x, int y)
@@ -780,44 +680,6 @@ qbool Hud_CheckBounds(hud_element_t *elem, int x, int y)
 	return true;
 }
 
-/*void Hud_MouseEvent (int x, int y, int buttons)
-{
-int mouse_buttons = 5;
-static int old_x, old_y, old_buttons;
-hud_element_t	*elem;
-int i;
-
-for (i=0 ; i < mouse_buttons ; i++)
-{
-if ((buttons & (1<<i)) && !(old_buttons & (1<<i)))
-break;
-}
-if (i < mouse_buttons)
-++i;
-else
-i = 0;
-
-for (elem = hud_list; elem; elem = elem->next)
-{
-if (!(elem->flags & HUD_ENABLED) || !elem->f_hover || !elem->f_button
-|| !elem->scr_width || !elem->scr_height)
-continue;
-
-if (Hud_CheckBounds (elem, x, y))
-{
-if (elem->f_hover && !Hud_CheckBounds (elem, old_x, old_y))
-Cbuf_AddText (va("%s 1 %s\n", elem->f_hover, elem->name));
-if (i && elem->f_button)
-Cbuf_AddText (va("%s %d %s\n", elem->f_button, i, elem->name));
-}
-else if (elem->f_hover && Hud_CheckBounds (elem, old_x, old_y))
-Cbuf_AddText (va("%s 0 %s\n", elem->f_hover, elem->name));
-}
-old_x = x;
-old_y = y;
-old_buttons = buttons;
-}*/
-
 // QW262 -->
 void Hud_262Init(void)
 {
@@ -830,15 +692,12 @@ void Hud_262Init(void)
 	Cmd_AddCommand("hud262_bg", Hud_Bg_f);
 	Cmd_AddCommand("hud262_move", Hud262_Move_f);
 	Cmd_AddCommand("hud262_width", Hud_Width_f);
-	//Cmd_AddCommandTrig ("hud_262font",Hud_Font_f);
 	Cmd_AddCommand("hud262_alpha", Hud_Alpha_f);
 	Cmd_AddCommand("hud262_blink", Hud_Blink_f);
 	Cmd_AddCommand("hud262_disable", Hud_Disable_f);
 	Cmd_AddCommand("hud262_enable", Hud_Enable_f);
 	Cmd_AddCommand("hud262_list", Hud_List_f);
 	Cmd_AddCommand("hud262_bringtofront", Hud_BringToFront_f);
-	//	Cmd_AddCommand ("hud262_hover",);
-	//	Cmd_AddCommand ("hud262_button",Hud_Button_f);
 }
 
 void Hud_262CatchStringsOnLoad(char *line)
