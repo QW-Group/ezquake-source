@@ -165,11 +165,11 @@ void main()
 #endif
 
 #ifdef DRAW_CAUSTIC_TEXTURES
-		frag_colour = vec4(mix(frag_colour.rgb, caustic.rgb * frag_colour.rgb * 1.8, min(1, Flags & EZQ_SURFACE_UNDERWATER)), frag_colour.a);
+		frag_colour = vec4(mix(frag_colour.rgb, caustic.rgb * frag_colour.rgb * 2.0, min(1, Flags & EZQ_SURFACE_UNDERWATER)), frag_colour.a);
 #endif
 
 #ifdef DRAW_DETAIL_TEXTURES
-		frag_colour = vec4(mix(frag_colour.rgb, detail.rgb * frag_colour.rgb * 1.8, min(1, Flags & EZQ_SURFACE_WORLD)), frag_colour.a);
+		frag_colour = vec4(mix(frag_colour.rgb, detail.rgb * frag_colour.rgb * 2.0, min(1, Flags & EZQ_SURFACE_WORLD)), frag_colour.a);
 #endif
 	}
 }

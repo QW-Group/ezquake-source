@@ -53,12 +53,12 @@ void main()
 	);
 	vec4 caustic = texture2D(causticsSampler, causticsCoord);
 
-	gl_FragColor = vec4(mix(gl_FragColor.rgb, caustic.rgb * gl_FragColor.rgb * 1.8, causticsScale), gl_FragColor.a);
+	gl_FragColor = vec4(mix(gl_FragColor.rgb, caustic.rgb * gl_FragColor.rgb * 2.0, causticsScale), gl_FragColor.a);
 #endif
 
 #ifdef DRAW_DETAIL
 	vec4 detail = texture2D(detailSampler, DetailCoord);
 
-	gl_FragColor = vec4(detail.rgb * gl_FragColor.rgb * 1.8, gl_FragColor.a);
+	gl_FragColor = vec4(detail.rgb * gl_FragColor.rgb * 2.0, gl_FragColor.a);
 #endif
 }

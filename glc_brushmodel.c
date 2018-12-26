@@ -515,6 +515,15 @@ static void GLC_DrawTextureChainsImpl(entity_t* ent, model_t *model, qbool caust
 		R_CustomPolygonOffset(r_polygonoffset_standard);
 	}
 
+	if (allocations.causticTextureUnit >= 0) {
+		allocations.causticTextureUnit = -1;
+		allocations.second_pass_caustics = true;
+	}
+	if (allocations.detailTextureUnit >= 0) {
+		allocations.detailTextureUnit = -1;
+		allocations.second_pass_detail = true;
+	}
+
 	//Tei: textureless for the world brush models (Qrack)
 	if (draw_textureless) {
 		if (use_vbo) {
