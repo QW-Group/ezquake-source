@@ -97,14 +97,13 @@ cvar_t	scr_showturtle			= {"showturtle", "0"};
 cvar_t	scr_showpause			= {"showpause", "1"};
 cvar_t	scr_printspeed			= {"scr_printspeed", "8"};
 
-cvar_t	scr_newHud = {"scr_newhud", "0"};
-cvar_t	scr_newHudClear = {"scr_newhud_clear", "0"};	// force clearing screen on every frame (necessary with viewsize)
+cvar_t	scr_newHud              = {"scr_newhud", "0"};
 
 cvar_t	scr_qtvbuffer			= {"scr_qtvbuffer", "0"};
 cvar_t	scr_qtvbuffer_x			= {"scr_qtvbuffer_x", "0"};
 cvar_t	scr_qtvbuffer_y			= {"scr_qtvbuffer_y", "-10"};
 
-cvar_t	show_speed			= {"show_speed", "0"};
+cvar_t	show_speed			    = {"show_speed", "0"};
 cvar_t	show_speed_x			= {"show_speed_x", "-1"};
 cvar_t	show_speed_y			= {"show_speed_y", "1"};
 
@@ -787,32 +786,32 @@ void SCR_DrawConsole (void) {
 
 /********************************* TILE CLEAR *********************************/
 
-void SCR_TileClear (void) {
-	int sb_lines_cleared = (scr_newHud.integer && scr_newHudClear.integer)
-		? 0 : sb_lines; // newhud does not (typically) have solid status bar, so clear the bottom of the screen
+void SCR_TileClear(void)
+{
+	int sb_lines_cleared = scr_newHud.integer ? 0 : sb_lines; // newhud does not (typically) have solid status bar, so clear the bottom of the screen
 
 	if (cls.state != ca_active && cl.intermission) {
-		Draw_TileClear (0, 0, vid.width, vid.height);
+		Draw_TileClear(0, 0, vid.width, vid.height);
 		return;
 	}
 
 	if (r_refdef.vrect.x > 0) {
 		// left
-		Draw_TileClear (0, 0, r_refdef.vrect.x, vid.height - sb_lines_cleared);
+		Draw_TileClear(0, 0, r_refdef.vrect.x, vid.height - sb_lines_cleared);
 		// right
-		Draw_TileClear (r_refdef.vrect.x + r_refdef.vrect.width, 0,
-				vid.width - (r_refdef.vrect.x + r_refdef.vrect.width), vid.height - sb_lines_cleared);
+		Draw_TileClear(r_refdef.vrect.x + r_refdef.vrect.width, 0,
+			vid.width - (r_refdef.vrect.x + r_refdef.vrect.width), vid.height - sb_lines_cleared);
 	}
 	if (r_refdef.vrect.y > 0) {
 		// top
-		Draw_TileClear (r_refdef.vrect.x, 0, r_refdef.vrect.width, r_refdef.vrect.y);
+		Draw_TileClear(r_refdef.vrect.x, 0, r_refdef.vrect.width, r_refdef.vrect.y);
 	}
 	if (r_refdef.vrect.y + r_refdef.vrect.height < vid.height - sb_lines_cleared) {
 		// bottom
-		Draw_TileClear (r_refdef.vrect.x,
-				r_refdef.vrect.y + r_refdef.vrect.height,
-				r_refdef.vrect.width,
-				vid.height - sb_lines_cleared - (r_refdef.vrect.height + r_refdef.vrect.y));
+		Draw_TileClear(r_refdef.vrect.x,
+			r_refdef.vrect.y + r_refdef.vrect.height,
+			r_refdef.vrect.width,
+			vid.height - sb_lines_cleared - (r_refdef.vrect.height + r_refdef.vrect.y));
 	}
 }
 
@@ -1110,7 +1109,7 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 	if ((v_contrast.value > 1 && !vid_hwgamma_enabled) || gl_clear.value) {
 		Sbar_Changed();
 	}
-	else if (scr_newHud.integer == 2 && scr_newHudClear.integer && scr_viewsize.value < 120) {
+	else if (scr_newHud.integer == 2 && scr_viewsize.value < 120) {
 		Sbar_Changed();
 	}
 
@@ -1285,8 +1284,7 @@ void SCR_Init (void)
 	Cvar_Register (&scr_fovmode);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
-	Cvar_Register (&scr_newHud);
-	Cvar_Register (&scr_newHudClear);
+	Cvar_Register(&scr_newHud);
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);

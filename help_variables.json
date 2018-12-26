@@ -18021,22 +18021,6 @@
         }
       ]
     },
-    "scr_newhud_clear": {
-      "default": "0",
-      "desc": "Force full screen refresh on low viewsize values to prevent uncleared HUD elements background.",
-      "group-id": "47",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "",
-          "name": "false"
-        },
-        {
-          "description": "",
-          "name": "true"
-        }
-      ]
-    },
     "scr_notifyalways": {
       "default": "0",
       "group-id": "40",
