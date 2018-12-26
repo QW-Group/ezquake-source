@@ -222,9 +222,11 @@ static r_program_uniform_t program_uniforms[] = {
 	// r_program_uniform_world_textured_glc_lumaSampler,
 	{ r_program_world_textured_glc, "lumaSampler", 1, false },
 	// r_program_uniform_world_textured_glc_causticSampler
-	{ r_program_world_textured_glc, "causticSampler", 1, false },
+	{ r_program_world_textured_glc, "causticsSampler", 1, false },
 	// r_program_uniform_world_textured_glc_detailSampler
 	{ r_program_world_textured_glc, "detailSampler", 1, false },
+	// r_program_uniform_world_textured_glc_time
+	{ r_program_world_textured_glc, "time", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -250,6 +252,8 @@ static r_program_attribute_t program_attributes[] = {
 	{ r_program_world_drawflat_glc, "style" },
 	// r_program_attribute_world_textured_style
 	{ r_program_world_textured_glc, "style" },
+	// r_program_attribute_world_textured_detailCoord
+	{ r_program_world_textured_glc, "detailCoordInput" },
 };
 
 #ifdef C_ASSERT
@@ -1000,9 +1004,12 @@ void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, const float* val
 	}
 }
 
-int R_ProgramUniformGet1i(r_program_uniform_id uniform_id)
+int R_ProgramUniformGet1i(r_program_uniform_id uniform_id, int default_value)
 {
-	return program_uniforms[uniform_id].int_value;
+	if (program_uniforms[uniform_id].location >= 0) {
+		return program_uniforms[uniform_id].int_value;
+	}
+	return default_value;
 }
 
 qbool R_ProgramCompile(r_program_id program_id)
@@ -1054,6 +1061,7 @@ static void GL_BuildCoreDefinitions(void)
 	GL_DefineProgram_VF(r_program_aliasmodel_shadow_glc, "aliasmodel-shadow", true, glc_aliasmodel_shadow, renderer_classic);
 	GL_DefineProgram_VF(r_program_world_drawflat_glc, "drawflat-world", true, glc_world_drawflat, renderer_classic);
 	GL_DefineProgram_VF(r_program_world_textured_glc, "textured-world", true, glc_world_textured, renderer_classic);
+	GL_DefineProgram_VF(r_program_world_secondpass_glc, "secondpass-world", true, glc_world_secondpass, renderer_classic);
 #endif
 }
 

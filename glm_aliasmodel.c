@@ -161,7 +161,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 		R_ProgramCompileWithInclude(r_program_aliasmodel, included_definitions);
 		R_ProgramSetCustomOptions(r_program_aliasmodel, drawAlias_desiredOptions);
 	}
-	cached_mode = R_ProgramUniformGet1i(r_program_uniform_aliasmodel_drawmode);
+	cached_mode = R_ProgramUniformGet1i(r_program_uniform_aliasmodel_drawmode, 0);
 
 	if (!R_BufferReferenceIsValid(vbo_aliasIndirectDraw)) {
 		vbo_aliasIndirectDraw = buffers.Create(buffertype_indirect, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, bufferusage_once_per_frame);

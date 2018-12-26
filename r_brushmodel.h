@@ -30,6 +30,7 @@ void GLC_StateBeginAlphaChain(void);
 void GLC_StateBeginAlphaChainSurface(msurface_t* s);
 
 // gl_rsurf.c
+void GLC_EmitDetailPolys_GLSL(void);
 void GLC_EmitDetailPolys(qbool use_vbo);
 void R_BrushModelDrawEntity(entity_t *e);
 void R_DrawWorld(void);

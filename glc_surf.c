@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_local.h"
 #include "r_brushmodel.h"
 #include "r_renderer.h"
+#include "r_program.h"
 
 // This is a chain of polys, only used in classic when multi-texturing not available
 glpoly_t *fullbright_polys[MAX_GLTEXTURES];
@@ -127,6 +128,37 @@ unsigned int GLC_DrawIndexedPoly(glpoly_t* p, unsigned int* modelIndexes, unsign
 	return index_count;
 }
 
+void GLC_RenderFullbrights_GLSL(void)
+{
+	int i;
+	glpoly_t *p;
+	texture_ref texture;
+
+	GLC_StateBeginRenderFullbrights();
+	R_ProgramUse(r_program_world_secondpass_glc);
+
+	for (i = 1; i < MAX_GLTEXTURES; i++) {
+		int index_count = 0;
+
+		if (!fullbright_polys[i]) {
+			continue;
+		}
+
+		texture.index = i;
+		renderer.TextureUnitBind(0, texture);
+
+		for (p = fullbright_polys[i]; p; p = p->fb_chain) {
+			index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+		}
+
+		if (index_count) {
+			GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+			index_count = 0;
+		}
+		fullbright_polys[i] = NULL;
+	}
+}
+
 void GLC_RenderFullbrights(void)
 {
 	int i;
@@ -159,6 +191,35 @@ void GLC_RenderFullbrights(void)
 			}
 		}
 		fullbright_polys[i] = NULL;
+	}
+}
+
+void GLC_RenderLumas_GLSL(void)
+{
+	int i;
+	glpoly_t *p;
+	texture_ref texture;
+	int index_count = 0;
+
+	GLC_StateBeginRenderLumas();
+	R_ProgramUse(r_program_world_secondpass_glc);
+
+	for (i = 1; i < MAX_GLTEXTURES; i++) {
+		if (!luma_polys[i]) {
+			continue;
+		}
+
+		texture.index = i;
+		renderer.TextureUnitBind(0, texture);
+
+		for (p = luma_polys[i]; p; p = p->luma_chain) {
+			index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+		}
+
+		if (index_count) {
+			GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+		}
+		luma_polys[i] = NULL;
 	}
 }
 
@@ -196,6 +257,30 @@ void GLC_RenderLumas(void)
 		}
 		luma_polys[i] = NULL;
 	}
+}
+
+void GLC_EmitDetailPolys_GLSL(void)
+{
+	glpoly_t *p;
+	GLuint index_count = 0;
+
+	if (!detail_polys) {
+		return;
+	}
+
+	GLC_StateBeginEmitDetailPolys();
+	R_ProgramUse(r_program_world_secondpass_glc);
+
+	for (p = detail_polys; p; p = p->detail_chain) {
+		index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+	}
+
+	if (index_count) {
+		GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+	}
+
+	R_ProgramUse(r_program_none);
+	detail_polys = NULL;
 }
 
 void GLC_EmitDetailPolys(qbool use_vbo)

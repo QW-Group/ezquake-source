@@ -160,10 +160,11 @@ static void GLC_EmitCausticPolys_Immediate(glpoly_t* caustics_polys)
 	}
 }
 
-void GLC_EmitCausticsPolys(qbool use_vbo)
+void GLC_EmitCausticsPolys(void)
 {
 	extern glpoly_t *caustics_polys;
 	extern cvar_t gl_program_turbsurfaces;
+	qbool use_vbo = buffers.supported && modelIndexes;
 
 	if (!caustics_polys) {
 		return;

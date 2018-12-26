@@ -23,6 +23,7 @@ typedef enum {
 	r_program_aliasmodel_shadow_glc,
 	r_program_world_drawflat_glc,
 	r_program_world_textured_glc,
+	r_program_world_secondpass_glc,
 
 	r_program_lightmap_compute,
 
@@ -86,6 +87,7 @@ typedef enum {
 	r_program_uniform_world_textured_glc_lumaSampler,
 	r_program_uniform_world_textured_glc_causticSampler,
 	r_program_uniform_world_textured_glc_detailSampler,
+	r_program_uniform_world_textured_glc_time,
 	r_program_uniform_count
 } r_program_uniform_id;
 
@@ -95,6 +97,7 @@ typedef enum {
 	r_program_attribute_aliasmodel_shadow_glc_flags,
 	r_program_attribute_world_drawflat_style,
 	r_program_attribute_world_textured_style,
+	r_program_attribute_world_textured_detailCoord,
 
 	r_program_attribute_count
 } r_program_attribute_id;
@@ -124,7 +127,7 @@ void R_ProgramUniform3fv(r_program_uniform_id uniform_id, const float* values);
 void R_ProgramUniform2fv(r_program_uniform_id uniform_id, const float* values);
 void R_ProgramUniform3fNormalize(r_program_uniform_id uniform_id, const byte* values);
 void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, const float* values);
-int R_ProgramUniformGet1i(r_program_uniform_id uniform_id);
+int R_ProgramUniformGet1i(r_program_uniform_id uniform_id, int default_value);
 
 int R_ProgramAttributeLocation(r_program_attribute_id attr_id);
 

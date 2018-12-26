@@ -3,12 +3,21 @@
 #ezquake-definitions
 
 varying vec2 TextureCoord;
+attribute float style;
+
 #ifdef DRAW_LIGHTMAPS
 varying vec2 LightmapCoord;
 #endif
 #ifdef DRAW_EXTRA_TEXTURES
-attribute float style;
 varying float lumaScale;
+#endif
+#ifdef DRAW_DETAIL
+attribute vec2 detailCoordInput;
+varying vec2 DetailCoord;
+#endif
+#ifdef DRAW_CAUSTICS
+attribute vec2 causticsCoord;
+varying float causticsScale;
 #endif
 
 void main()
@@ -24,6 +33,12 @@ void main()
 #endif
 
 #ifdef DRAW_EXTRA_TEXTURES
-	lumaScale = step(256, style);
+	lumaScale = mod(floor(style / 256), 2);
+#endif
+#ifdef DRAW_CAUSTICS
+	causticsScale = mod(floor(style / 512), 2);
+#endif
+#ifdef DRAW_DETAIL
+	DetailCoord = detailCoordInput;
 #endif
 }

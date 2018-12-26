@@ -230,7 +230,7 @@ void GLC_PolyBlend(float v_blend[4]);
 void GLC_BrightenScreen(void);
 //void GLC_DrawVelocity3D(void);
 void GLC_RenderSceneBlurDo(float alpha);
-void GLC_EmitCausticsPolys(qbool use_vbo);
+void GLC_EmitCausticsPolys(void);
 void GLC_DrawWorld(void);
 void GLC_ClearTextureChains(void);
 void GLC_SetTextureLightmap(int textureUnit, int lightmap_num);
