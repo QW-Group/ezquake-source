@@ -424,9 +424,10 @@ typedef struct texture_unit_allocation_s {
 	r_state_id rendering_state;
 } texture_unit_allocation_t;
 
-static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations, model_t* model)
+static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations, model_t* model, qbool program_compilation)
 {
 	extern cvar_t gl_lumatextures;
+	qbool lumas;
 
 	allocations->texture_unit_count = 1;
 	allocations->null_fb_texture = null_texture_reference;
@@ -434,18 +435,20 @@ static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations
 	allocations->useLumaTextures = allocations->couldUseLumaTextures && model->texturechains_have_lumas;
 	allocations->matTextureUnit = allocations->fbTextureUnit = allocations->lmTextureUnit = allocations->detailTextureUnit = allocations->causticTextureUnit = -1;
 
+	lumas = program_compilation ? allocations->couldUseLumaTextures : allocations->useLumaTextures;
+
 	allocations->matTextureUnit = 0;
 	if (gl_mtexable) {
 		allocations->texture_unit_count = gl_textureunits >= 3 ? 3 : 2;
 
-		if (allocations->useLumaTextures && !gl_fb_bmodels.integer) {
+		if (lumas && !gl_fb_bmodels.integer) {
 			// blend(material + fb, lightmap)
 			allocations->rendering_state = r_state_world_material_fb_lightmap;
 			allocations->null_fb_texture = solidblack_texture;
 			allocations->fbTextureUnit = 1;
 			allocations->lmTextureUnit = (gl_textureunits >= 3 ? 2 : -1);
 		}
-		else if (allocations->useLumaTextures) {
+		else if (lumas) {
 			// blend(material, lightmap) + luma
 			allocations->rendering_state = r_state_world_material_lightmap_luma;
 			allocations->lmTextureUnit = 1;
@@ -475,7 +478,7 @@ static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations
 
 	allocations->second_pass_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer && allocations->causticTextureUnit < 0;
 	allocations->second_pass_detail = R_TextureReferenceIsValid(detailtexture) && gl_detail.integer && allocations->detailTextureUnit < 0;
-	allocations->second_pass_luma = allocations->useLumaTextures && allocations->fbTextureUnit < 0;
+	allocations->second_pass_luma = lumas && allocations->fbTextureUnit < 0;
 }
 
 static void GLC_DrawTextureChainsImpl(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset)
@@ -505,7 +508,7 @@ static void GLC_DrawTextureChainsImpl(entity_t* ent, model_t *model, qbool caust
 
 	R_TraceEnterFunctionRegion;
 
-	GLC_WorldAllocateTextureUnits(&allocations, model);
+	GLC_WorldAllocateTextureUnits(&allocations, model, false);
 
 	R_ApplyRenderingState(allocations.rendering_state);
 	if (ent && ent->alpha) {
@@ -699,7 +702,7 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 	extern cvar_t gl_lumatextures, gl_textureless;
 	int options;
 	
-	GLC_WorldAllocateTextureUnits(allocations, model);
+	GLC_WorldAllocateTextureUnits(allocations, model, true);
 	allocations->rendering_state = r_state_world_material_lightmap_luma;
 
 	options =
@@ -761,6 +764,11 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		allocations->matTextureUnit = R_ProgramUniformGet1i(r_program_uniform_world_textured_glc_texSampler, -1);
 		allocations->fbTextureUnit = R_ProgramUniformGet1i(r_program_uniform_world_textured_glc_lumaSampler, -1);
 	}
+	R_TraceLogAPICall("... caustics   = %d", allocations->causticTextureUnit);
+	R_TraceLogAPICall("... detail     = %d", allocations->detailTextureUnit);
+	R_TraceLogAPICall("... lightmaps  = %d", allocations->lmTextureUnit);
+	R_TraceLogAPICall("... materials  = %d", allocations->matTextureUnit);
+	R_TraceLogAPICall("... fullbright = %d", allocations->fbTextureUnit);
 
 	if (R_ProgramRecompileNeeded(r_program_world_secondpass_glc, 0)) {
 		// we could make multiple copies of the standard textured program,

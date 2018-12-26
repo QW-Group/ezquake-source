@@ -142,8 +142,8 @@ const char* GL_TextureIdentifierByGLReference(GLuint texnum)
 {
 	static char name[256];
 
+	memset(name, 0, sizeof(name));
 	GL_TraceObjectLabelGet(GL_TEXTURE, texnum, sizeof(name), NULL, name);
-
 	if (!name[0]) {
 		R_TextureFindIdentifierByReference(texnum, name, sizeof(name));
 	}

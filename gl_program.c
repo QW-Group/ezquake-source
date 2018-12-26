@@ -914,6 +914,7 @@ void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value)
 			qglUniform1i(uniform->location, value);
 		}
 		uniform->int_value = value;
+		R_TraceLogAPICall("%s(%s/%s,%d)", __FUNCTION__, program_data[uniform->program_id].friendly_name, uniform->name, value);
 	}
 }
 
@@ -930,6 +931,7 @@ void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value)
 			qglUniform1f(uniform->location, value);
 		}
 		uniform->int_value = value;
+		R_TraceLogAPICall("%s(%s/%s,%f)", __FUNCTION__, program_data[uniform->program_id].friendly_name, uniform->name, value);
 	}
 }
 
@@ -945,6 +947,7 @@ void R_ProgramUniform2fv(r_program_uniform_id uniform_id, const float* values)
 			R_ProgramUse(uniform->program_id);
 			qglUniform2fv(uniform->location, uniform->count, values);
 		}
+		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, program_data[uniform->program_id].friendly_name, uniform->name);
 	}
 }
 
@@ -960,6 +963,7 @@ void R_ProgramUniform3fv(r_program_uniform_id uniform_id, const float* values)
 			R_ProgramUse(uniform->program_id);
 			qglUniform3fv(uniform->location, uniform->count, values);
 		}
+		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, program_data[uniform->program_id].friendly_name, uniform->name);
 	}
 }
 
@@ -986,6 +990,7 @@ void R_ProgramUniform4fv(r_program_uniform_id uniform_id, const float* values)
 			R_ProgramUse(uniform->program_id);
 			qglUniform4fv(uniform->location, uniform->count, values);
 		}
+		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, program_data[uniform->program_id].friendly_name, uniform->name);
 	}
 }
 
@@ -1001,6 +1006,7 @@ void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, const float* val
 			R_ProgramUse(uniform->program_id);
 			qglUniformMatrix4fv(uniform->location, uniform->count, uniform->transpose, values);
 		}
+		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, program_data[uniform->program_id].friendly_name, uniform->name);
 	}
 }
 
