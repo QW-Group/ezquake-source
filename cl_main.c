@@ -1053,7 +1053,6 @@ void SCR_ClearWeaponStats(void);
 void CL_ClearState (void) 
 {
 	int i;
-	extern float scr_centertime_off;
 	extern cshift_t	cshift_empty;
 	extern void CL_ProcessServerInfo (void);
 
@@ -1061,8 +1060,9 @@ void CL_ClearState (void)
 
 	Com_DPrintf ("Clearing memory\n");
 
-	if (!com_serveractive)
+	if (!com_serveractive) {
 		Host_ClearMemory();
+	}
 
 	CL_ClearTEnts ();
 	CL_ClearScene ();
@@ -1087,9 +1087,6 @@ void CL_ClearState (void)
 	// Set default viewheight for normal game/current pov.
 	cl.stats[STAT_VIEWHEIGHT] = DEFAULT_VIEWHEIGHT;
 
-	// Make sure no centerprint messages are left from previous level.
-	scr_centertime_off = 0;
-
 	// Allocate the efrags and chain together into a free list.
 	cl.free_efrags = cl_efrags;
 	for (i = 0; i < MAX_EFRAGS - 1; i++)
@@ -1106,6 +1103,8 @@ void CL_ClearState (void)
 
 	// Clear weapon stats structs
 	SCR_ClearWeaponStats();
+
+	SCR_CenterPrint_Clear();
 
 	if (!com_serveractive)
 		Cvar_ForceSet (&host_mapname, ""); // Notice mapname not valid yet.

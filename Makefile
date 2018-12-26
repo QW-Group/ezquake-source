@@ -356,7 +356,8 @@ HUD_OBJS := \
     hud_frags.o \
     hud_tracking.o \
     hud_scores.o \
-    hud_performance.o
+    hud_performance.o \
+    hud_centerprint.o
 
 OBJS_c := \
     $(COMMON_OBJS) \
