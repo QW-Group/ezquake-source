@@ -70,6 +70,7 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 			GLC_VAOEnableTextureCoordPointer(vao, 0, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
 			GLC_VAOEnableTextureCoordPointer(vao, 1, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, material_coords));
 			GLC_VAOEnableTextureCoordPointer(vao, 2, 2, GL_FLOAT, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, lightmap_coords));
+			GLC_VAOEnableCustomAttribute(vao, 0, r_program_attribute_world_drawflat_style, 1, GL_FLOAT, GL_FALSE, sizeof(glc_vbo_world_vert_t), VBO_FIELDOFFSET(glc_vbo_world_vert_t, flatstyle));
 			break;
 		}
 		case vao_brushmodel_lm_unit1:
@@ -966,11 +967,11 @@ void GLC_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 			}
 			else {
 				if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-					chain_surfaces_drawflat(&clmodel->drawflat_chain, psurf);
+					R_AddDrawflatChainSurface(psurf, false);
 					clmodel->drawflat_todo = true;
 				}
 				else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
-					chain_surfaces_drawflat(&clmodel->drawflat_chain, psurf);
+					R_AddDrawflatChainSurface(psurf, true);
 					clmodel->drawflat_todo = true;
 				}
 				else {

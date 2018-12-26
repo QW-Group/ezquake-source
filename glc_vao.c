@@ -118,9 +118,10 @@ void GLC_BindVertexArray(r_vao_id vao)
 
 	for (i = 0; i < MAX_GLC_ATTRIBUTES; ++i) {
 		glc_va_attribute_t* attr = &vaos[vao].attributes[i];
-		GLint location = R_ProgramAttributeLocation(attr->attr_id);
 
 		if (attr->enabled) {
+			GLint location = R_ProgramAttributeLocation(attr->attr_id);
+
 			qglEnableVertexAttribArray(location);
 			qglVertexAttribPointer(location, attr->size, attr->type, attr->normalized ? GL_TRUE : GL_FALSE, attr->stride, attr->pointer);
 			attributes[i].location = location;

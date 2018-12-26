@@ -59,6 +59,12 @@ void chain_surfaces_simple(msurface_t** chain_head, msurface_t* surf)
 	*chain_head = surf;
 }
 
+void chain_surfaces_simple_drawflat(msurface_t** chain_head, msurface_t* surf)
+{
+	surf->drawflatchain = *chain_head;
+	*chain_head = surf;
+}
+
 void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf)
 {
 	msurface_t* current = *chain_head;
@@ -292,7 +298,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 			alphaSurface = (surf->flags & SURF_DRAWALPHA);
 			if (surf->flags & SURF_DRAWSKY) {
 				if (r_fastsky.integer || R_UseModernOpenGL()) {
-					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain, surf);
+					chain_surfaces_simple_drawflat(&cl.worldmodel->drawflat_chain, surf);
 					cl.worldmodel->drawflat_todo = true;
 				}
 				else if (!r_fastsky.integer) {
@@ -301,7 +307,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 			}
 			else if (turbSurface) {
 				if (r_fastturb.integer && wateralpha == 1) {
-					chain_surfaces_drawflat(&cl.worldmodel->drawflat_chain, surf);
+					chain_surfaces_simple_drawflat(&cl.worldmodel->drawflat_chain, surf);
 					cl.worldmodel->drawflat_todo = true;
 				}
 				else if (solidTexTurb && R_UseModernOpenGL()) {

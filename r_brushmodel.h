@@ -50,6 +50,7 @@ qbool R_DrawWorldOutlines(void);
 	}
 void chain_surfaces_simple(msurface_t** chain_head, msurface_t* surf);
 void chain_surfaces_drawflat(msurface_t** chain_head, msurface_t* surf);
+void chain_surfaces_simple_drawflat(msurface_t** chain_head, msurface_t* surf);
 void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf);
 extern unsigned int* modelIndexes;
 extern unsigned int modelIndexMaximum;
