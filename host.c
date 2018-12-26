@@ -37,9 +37,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "EX_browser.h"
 #include "fs.h"
-#ifdef WITH_TCL
-#include "embed_tcl.h"
-#endif
 #include "modules.h"
 #include "gl_model.h"
 #include "rulesets.h"
@@ -641,11 +638,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	Host_InitMemory (default_memsize);
 
-#ifdef WITH_TCL
-	// interpreter should be initialized
-	// before any cvar definitions
-	TCL_InterpInit ();
-#endif
 	Cbuf_Init ();
 	Cmd_Init ();
 	Cvar_Init ();
@@ -699,11 +691,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Cvar_CleanUpTempVars ();
 
 	SYSINFO_Init();
-
-#ifdef WITH_TCL
-	if (!TCL_InterpLoaded())
-		Com_Printf_State (PRINT_FAIL, "Could not load "TCL_LIB_NAME", embedded Tcl disabled\n");
-#endif
 
 	Hunk_AllocName (0, "-HOST_HUNKLEVEL-");
 	host_hunklevel = Hunk_LowMark ();
@@ -799,9 +786,6 @@ void Host_Shutdown (void)
 	CL_Shutdown ();
 	NET_Shutdown ();
 	Con_Shutdown();
-#ifdef WITH_TCL
-	TCL_Shutdown ();
-#endif
 	qtvlist_deinit();
 	Cvar_Shutdown();
 	FS_Shutdown();

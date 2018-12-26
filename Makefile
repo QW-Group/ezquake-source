@@ -395,7 +395,6 @@ OBJS_c := \
     cl_pred.o \
     cl_screen.o \
     cl_slist.o \
-    cl_tcl.o \
     cl_tent.o \
     cl_view.o \
     common_draw.o \

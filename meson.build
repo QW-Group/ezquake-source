@@ -106,7 +106,6 @@ sources = [
 	'cl_screen.c',
 	'cl_skygroups.c',
 	'cl_slist.c',
-	'cl_tcl.c',
 	'cl_tent.c',
 	'cl_view.c',
 	'cmd.c',

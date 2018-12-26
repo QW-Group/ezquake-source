@@ -24,9 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 #include "quakedef.h"
-#ifdef WITH_TCL
-#include "embed_tcl.h"
-#endif
 #include "gl_model.h"
 #include "teamplay.h"
 #include "rulesets.h"
@@ -72,12 +69,6 @@ cbuf_t *cbuf_current = NULL;
 //This allows commands like: bind g "impulse 5 ; +attack ; wait ; -attack ; impulse 2"
 void Cmd_Wait_f (void)
 {
-#ifdef WITH_TCL
-	if (in_tcl) {
-			Com_Printf ("command wait cant be used with TCL\n");
-			return;
-	}
-#endif
 	if (cbuf_current)
 		cbuf_current->wait = true;
 
@@ -569,11 +560,9 @@ char *Cmd_AliasString (char *name)
 
 	key = Com_HashKey (name) % ALIAS_HASHPOOL_SIZE;
 	for (alias = cmd_alias_hash[key]; alias; alias = alias->hash_next) {
-		if (!strcasecmp(name, alias->name))
-#ifdef WITH_TCL
-			if (!(alias->flags & ALIAS_TCL))
-#endif
-				return alias->value;
+		if (!strcasecmp(name, alias->name)) {
+			return alias->value;
+		}
 	}
 	return NULL;
 }
@@ -600,29 +589,20 @@ void Cmd_Viewalias_f (void)
 
 			for (alias = cmd_alias, i=m=0; alias ; alias=alias->next, i++)
 				if (ReSearchMatch(alias->name)) {
-#ifdef WITH_TCL
-					if (alias->flags & ALIAS_TCL)
-						Com_Printf ("%s : Tcl procedure\n", alias->name);
-					else
-#endif
-						Com_Printf ("%s : %s\n", alias->name, alias->value);
+					Com_Printf ("%s : %s\n", alias->name, alias->value);
 					m++;
 				}
 
 			Com_Printf ("------------\n%i/%i aliases\n", m, i);
 			ReSearchDone();
-
-
-		} else 	{
-			if ((alias = Cmd_FindAlias(name)))
-#ifdef WITH_TCL
-				if (alias->flags & ALIAS_TCL)
-					Com_Printf ("%s : Tcl procedure\n", name);
-				else
-#endif
-					Com_Printf ("%s : \"%s\"\n", Cmd_Argv(i), alias->value);
-			else
-				Com_Printf ("No such alias: %s\n", Cmd_Argv(i));
+		}
+		else {
+			if ((alias = Cmd_FindAlias(name))) {
+				Com_Printf("%s : \"%s\"\n", Cmd_Argv(i), alias->value);
+			}
+			else {
+				Com_Printf("No such alias: %s\n", Cmd_Argv(i));
+			}
 		}
 	}
 }
@@ -1447,12 +1427,6 @@ void Cmd_AddMacroEx(macro_id id, char *(*f) (void), int teamplay)
 
 	macro_commands[id].func = f;
 	macro_commands[id].teamplay = teamplay;
-
-#ifdef WITH_TCL
-// disconnect: it seems macro are safe with TCL NOW
-//	if (!teamplay)	// don't allow teamplay protected macros since there's no protection for this in TCL yet
-		TCL_RegisterMacro (macro_commands + macro_count);
-#endif
 }
 
 void Cmd_AddMacro (macro_id id, char *(*f) (void))
@@ -1767,15 +1741,9 @@ checkaliases:
 	if ((a = Cmd_FindAlias(Cmd_Argv(0)))) {
 
 		// QW262 -->
-#ifdef WITH_TCL
-		if (a->flags & ALIAS_TCL)
-		{
-			TCL_ExecuteAlias (a);
-			goto done;
+		if (a->value[0] == '\0') {
+			goto done; // alias is empty.
 		}
-#endif
-
-		if (a->value[0]=='\0') goto done; // alias is empty.
 
 		if(a->flags & ALIAS_HAS_PARAMETERS) { // %parameters are given in alias definition
 			s=a->value;

@@ -26,9 +26,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define VAR_HASHPOOL_SIZE 32
 #else
 #include "common.h"
-#ifdef WITH_TCL
-#include "embed_tcl.h"
-#endif
 #include "teamplay.h"
 #include "rulesets.h"
 #include "keys.h"
@@ -431,10 +428,6 @@ void Cvar_Register(cvar_t *var)
 	var->next = cvar_vars;
 	cvar_vars = var;
 
-#ifdef WITH_TCL
-	TCL_RegisterVariable(var);
-#endif
-
 	Cvar_AddCvarToGroup(var);
 
 #ifndef CLIENTONLY
@@ -705,9 +698,6 @@ cvar_t *Cvar_Create(const char *name, const char *string, int cvarflags)
 	v->integer = Q_atoi(v->string);
 	StringToRGB_W(v->string, v->color);
 	v->modified = true;
-#ifdef WITH_TCL
-	TCL_RegisterVariable(v);
-#endif
 #endif
 
 	return v;
@@ -748,9 +738,6 @@ qbool Cvar_Delete(const char *name)
 				cvar_vars = var->next;
 			}
 #ifndef SERVERONLY
-#ifdef WITH_TCL
-			TCL_UnregisterVariable(name);
-#endif
 			Q_free(var->defaultvalue);
 #endif
 			// free
