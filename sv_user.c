@@ -2249,7 +2249,7 @@ static void Cmd_SetInfo_f (void)
 	if (Cmd_Argv(1)[0] == '*')
 		return;		// don't set priveledged values
 
-	if (strstr(Cmd_Argv(1), "\\") || strstr(Cmd_Argv(2), "\\"))
+	if (strchr(Cmd_Argv(1), '\\') || strchr(Cmd_Argv(2), '\\'))
 		return;		// illegal char
 
 	if (strstr(Cmd_Argv(1), "&c") || strstr(Cmd_Argv(1), "&r") || strstr(Cmd_Argv(2), "&c") || strstr(Cmd_Argv(2), "&r"))

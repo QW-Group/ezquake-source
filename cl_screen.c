@@ -807,7 +807,7 @@ void SCR_DrawGameClock (void) {
 	else
 		strlcpy (str, SecondsToHourString((int) abs(timelimit - cl.gametime + scr_gameclock_offset.value)), sizeof(str));
 
-	if ((scr_gameclock.value == 3 || scr_gameclock.value == 4) && (s = strstr(str, ":")))
+	if ((scr_gameclock.value == 3 || scr_gameclock.value == 4) && (s = strchr(str, ':')))
 		s++;		// or just use SecondsToMinutesString() ...
 	else
 		s = str;
