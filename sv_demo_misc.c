@@ -212,7 +212,7 @@ void Run_sv_demotxt_and_sv_onrecordfinish (const char *dest_name, const char *de
 		redirect_t old = sv_redirected;
 		char *p;
 	
-		if ((p = strstr(sv_onrecordfinish.string, " ")) != NULL)
+		if ((p = strchr(sv_onrecordfinish.string, ' ')) != NULL)
 			*p = 0; // strip parameters
 	
 		strlcpy(path, dest_name, sizeof(path));
