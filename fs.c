@@ -418,8 +418,8 @@ FS_SetUserDirectory
 void FS_SetUserDirectory (char *dir, char *type) {
 	char tmp[sizeof(com_gamedirfile)];
 
-	if (strstr(dir, "..") || strstr(dir, "/")
-	        || strstr(dir, "\\") || strstr(dir, ":") ) {
+	if (strstr(dir, "..") || strchr(dir, '/')
+	        || strchr(dir, '\\') || strchr(dir, ':') ) {
 		Com_Printf ("Userdir should be a single filename, not a path\n");
 		return;
 	}
@@ -587,8 +587,8 @@ void Draw_InitConback(void);
 void FS_SetGamedir (char *dir, qbool force)
 {
 	searchpath_t  *next;
-	if (strstr(dir, "..") || strstr(dir, "/")
-	 || strstr(dir, "\\") || strstr(dir, ":") ) 
+	if (strstr(dir, "..") || strchr(dir, '/')
+	 || strchr(dir, '\\') || strchr(dir, ':') ) 
 	{
 		Com_Printf ("Gamedir should be a single filename, not a path\n");
 		return;
