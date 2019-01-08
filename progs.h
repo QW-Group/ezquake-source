@@ -251,6 +251,7 @@ qbool PR1_ClientCmd(void);
 	#define PR_Init PR1_Init
 	//#define PR_GetString PR1_GetString
 	//#define PR_SetString PR1_SetString
+	#define PR_GetEntityString PR1_GetString
 	#define PR_SetEntityString(ent, target, value) PR1_SetString(&target, value)
 	#define PR_SetGlobalString(target, value) PR1_SetString(&target, value)
 	#define ED_FindFieldOffset ED1_FindFieldOffset
