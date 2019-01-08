@@ -86,7 +86,7 @@ int WINAMP_ParsePlaylist_EXTM3U(char *playlist_buf, unsigned int length,
 		// Parse the line starting with #EXTINF
 		else if (!strncmp(line, "#EXTINF:", 8)) 
 		{
-			if (!(s = strstr(line, ",")) || ++s - playlist_buf >= length) 
+			if (!(s = strchr(line, ',')) || ++s - playlist_buf >= length) 
 				break;
 
 			skip = 1; // Skip the next line that contains the path to this song

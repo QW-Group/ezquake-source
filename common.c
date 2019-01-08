@@ -757,7 +757,7 @@ char *Info_ValueForKey (char *s, char *key) {
 void Info_RemoveKey (char *s, char *key) {
 	char *start, pkey[512], value[512], *o;
 
-	if (strstr (key, "\\")) {
+	if (strchr (key, '\\')) {
 		Com_Printf ("Can't use a key with a \\\n");
 		return;
 	}
@@ -838,12 +838,12 @@ void Info_SetValueForStarKeyEx (char *s, char *key, char *value, int maxsize, qb
 //	extern cvar_t sv_highchars;
 #endif
 
-	if (strstr (key, "\\") || strstr (value, "\\") ) {
+	if (strchr (key, '\\') || strchr (value, '\\') ) {
 		Com_Printf ("Can't use keys or values with a \\\n");
 		return;
 	}
 
-	if (strstr (key, "\"") || strstr (value, "\"") ) {
+	if (strchr (key, '\"') || strchr (value, '\"') ) {
 		Com_Printf ("Can't use keys or values with a \"\n");
 		return;
 	}

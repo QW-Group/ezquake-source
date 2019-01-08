@@ -2378,7 +2378,7 @@ void CL_ParseVWepPrecache (char *str)
 			if (strstr(p, "..") || p[0] == '/' || p[0] == '\\')
 				Host_Error("CL_ParseVWepPrecache: illegal model name '%s'", p);
 
-			if (strstr(p, "/"))
+			if (strchr(p, '/'))
 			{
 				// A full path was specified.
 				strlcpy(cl.vw_model_name[i], p, sizeof(cl.vw_model_name[0]));
@@ -2391,7 +2391,7 @@ void CL_ParseVWepPrecache (char *str)
 			}
 
 			// Use default extension if not specified.
-			if (!strstr(p, "."))
+			if (!strchr(p, '.'))
 				strlcat(cl.vw_model_name[i], ".mdl", sizeof(cl.vw_model_name[0]));
 		}
 	}
