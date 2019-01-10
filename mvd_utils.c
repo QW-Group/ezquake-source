@@ -1313,8 +1313,8 @@ void MVD_Stats_Cleanup(void)
 		MVD_ClockList_Remove(mvd_clocklist);
 	}
 
-	memset(&mvd_new_info, 0, sizeof(mvd_new_info_t));
-	memset(&mvd_cg_info, 0, sizeof(mvd_cg_info_s));
+	memset(mvd_new_info, 0, sizeof(mvd_new_info));
+	memset(&mvd_cg_info, 0, sizeof(mvd_cg_info));
 	fixed_ordering = 0;
 }
 
@@ -2383,11 +2383,12 @@ void MVDAnnouncer_MatchStart(void)
 	int i;
 	int j;
 
+	MVD_Stats_Cleanup();
+	MVD_Init_Info(MAX_CLIENTS);
 	MVD_GameStart();
 	cl.mvd_ktx_markers = true;
 
 	// Clocklist should start as persistent timers from entity baselines
-	MVD_Stats_Cleanup();
 	if (mvd_autoadd_items.integer) {
 		for (i = 0; i < CL_MAX_EDICTS; i++) {
 			int modindex = cl_entities[i].baseline.modelindex;

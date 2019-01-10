@@ -403,28 +403,22 @@ void Cam_Track(usercmd_t *cmd)
 
 	frame = &cl.frames[cl.validsequence & UPDATE_MASK];
 
-	if (autocam && cls.mvdplayback)	
-	{
-		if (ideal_track != spec_track && cls.realtime - last_lock > 0.1 && 
-			frame->playerstate[ideal_track].messagenum == cl.parsecount)
-		{
+	if (autocam && cls.mvdplayback) {
+		if (ideal_track != spec_track && cls.realtime - last_lock > 0.1 && frame->playerstate[ideal_track].messagenum == cl.parsecount) {
 			Cam_Lock(ideal_track);
 		}
 
-		if (frame->playerstate[spec_track].messagenum != cl.parsecount)	
-		{
+		if (frame->playerstate[spec_track].messagenum != cl.parsecount || spec_track != ideal_track) {
 			int i;
 
-			for (i = 0; i < MAX_CLIENTS; i++) 
-			{
-				if (frame->playerstate[i].messagenum == cl.parsecount)
+			for (i = 0; i < MAX_CLIENTS - 1; i++) {
+				if (frame->playerstate[i].messagenum == cl.parsecount) {
 					break;
+				}
 			}
 
-			if (i < MAX_CLIENTS)
-			{
-				Cam_Lock(i);
-			}
+			Cam_Lock(i);
+			cls.findtrack = (i >= MAX_CLIENTS - 1);
 		}
 	}
 
