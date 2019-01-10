@@ -540,7 +540,7 @@ char *Player_StripNameColor(const char *name)
 	return stripped;
 }
 
-int Player_StringtoSlot(char *arg) 
+int Player_StringtoSlot(char *arg, qbool use_regular_expression)
 {
 	int i, slot, arg_length;
 
@@ -588,18 +588,18 @@ int Player_StringtoSlot(char *arg)
 		Q_free(stripped);
 	}
 
-	// Regexp match against stripped player name if previous attempts have failed
-	for (i = 0; i < MAX_CLIENTS; i++)
-	{
-		char *stripped = Player_StripNameColor(cl.players[i].name);
+	if (use_regular_expression) {
+		// Regexp match against stripped player name if previous attempts have failed
+		for (i = 0; i < MAX_CLIENTS; i++) {
+			char *stripped = Player_StripNameColor(cl.players[i].name);
 
-		if (cl.players[i].name[0] && Utils_RegExpMatch(arg, stripped))
-		{
+			if (cl.players[i].name[0] && Utils_RegExpMatch(arg, stripped)) {
+				Q_free(stripped);
+				return i;
+			}
+
 			Q_free(stripped);
-			return i;
 		}
-
-		Q_free(stripped);
 	}
 
 	// Check if the argument is a user id instead
@@ -670,7 +670,7 @@ int Player_GetSlot(char *arg)
 	int response;
 
 	// Try getting the slot by name or id.
-	if ((response = Player_StringtoSlot(arg)) >= 0 )
+	if ((response = Player_StringtoSlot(arg, false)) >= 0 )
 		//|| response == PLAYER_ID_NOMATCH)
 	{
 		return response;
