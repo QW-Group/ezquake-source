@@ -35,6 +35,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static texture_ref glc_last_texture_used;
 static buffer_ref imageVBO;
+static buffer_ref imageIndexBuffer;
+static int extraIndexesPerImage;
 extern float overall_alpha;
 extern float cachedMatrix[16];
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
@@ -127,45 +129,28 @@ void GLC_HudDrawPolygons(texture_ref texture, int start, int end)
 	}
 }
 
-static void GLC_SetCoordinates(glc_image_t* targ, float x1, float y1, float x2, float y2, float s, float tex_width, float t, float tex_height, qbool nearest)
+static void GLC_SetCoordinates(glc_image_t* targ, float x1, float y1, float x2, float y2, float s, float s_width, float t, float t_height, qbool nearest)
 {
 	float v1[4] = { x1, y1, 0, 1 };
 	float v2[4] = { x2, y2, 0, 1 };
-	byte color[4];
 
 	R_MultiplyVector(cachedMatrix, v1, v1);
 	R_MultiplyVector(cachedMatrix, v2, v2);
 
-	memcpy(color, targ->colour, 4);
-	targ->pos[0] = v1[0];
-	targ->pos[1] = v2[1];
-	targ->tex[0] = s;
-	targ->tex[1] = t + tex_height;
-	targ->tex[3] = nearest ? 0.0f : 1.0f;
+	// TL TL BR BR
+	targ[0].pos[0] = v1[0]; targ[0].tex[0] = s;
+	targ[1].pos[0] = v1[0]; targ[1].tex[0] = s;
+	targ[2].pos[0] = v2[0]; targ[2].tex[0] = s + s_width;
+	targ[3].pos[0] = v2[0]; targ[3].tex[0] = s + s_width;
+	// TL BR TL BR
+	targ[0].pos[1] = v1[1]; targ[0].tex[1] = t;
+	targ[1].pos[1] = v2[1]; targ[1].tex[1] = t + t_height;
+	targ[2].pos[1] = v1[1]; targ[2].tex[1] = t;
+	targ[3].pos[1] = v2[1]; targ[3].tex[1] = t + t_height;
 
-	++targ;
-	memcpy(targ->colour, color, 4);
-	targ->pos[0] = v1[0];
-	targ->pos[1] = v1[1];
-	targ->tex[0] = s;
-	targ->tex[1] = t;
-	targ->tex[3] = nearest ? 0.0f : 1.0f;
-
-	++targ;
-	memcpy(targ->colour, color, 4);
-	targ->pos[0] = v2[0];
-	targ->pos[1] = v1[1];
-	targ->tex[0] = s + tex_width;
-	targ->tex[1] = t;
-	targ->tex[3] = nearest ? 0.0f : 1.0f;
-
-	++targ;
-	memcpy(targ->colour, color, 4);
-	targ->pos[0] = v2[0];
-	targ->pos[1] = v2[1];
-	targ->tex[0] = s + tex_width;
-	targ->tex[1] = t + tex_height;
-	targ->tex[3] = nearest ? 0.0f : 1.0f;
+	if (R_ProgramReady(r_program_hud_images_glc)) {
+		targ[0].tex[3] = targ[1].tex[3] = targ[2].tex[3] = targ[3].tex[3] = nearest ? 0.0f : 1.0f;
+	}
 }
 
 void GLC_DrawRectangle(float x, float y, float width, float height, byte* color)
@@ -173,7 +158,7 @@ void GLC_DrawRectangle(float x, float y, float width, float height, byte* color)
 	texture_ref solid_texture;
 	float s, t;
 	float alpha;
-	int imageIndex;
+	glc_image_t* img = &imageData.glc_images[imageData.imageCount * 4];
 
 	if (imageData.imageCount >= MAX_MULTI_IMAGE_BATCH) {
 		return;
@@ -184,14 +169,13 @@ void GLC_DrawRectangle(float x, float y, float width, float height, byte* color)
 		return;
 	}
 
-	imageIndex = imageData.imageCount * 4;
 	alpha = (color[3] * overall_alpha / 255.0f);
 
-	imageData.glc_images[imageIndex].colour[0] = color[0] * alpha;
-	imageData.glc_images[imageIndex].colour[1] = color[1] * alpha;
-	imageData.glc_images[imageIndex].colour[2] = color[2] * alpha;
-	imageData.glc_images[imageIndex].colour[3] = color[3] * overall_alpha;
-	GLC_SetCoordinates(&imageData.glc_images[imageIndex], x, y, x + width, y + height, s, 0, t, 0, false);
+	img[0].colour[0] = img[1].colour[0] = img[2].colour[0] = img[3].colour[0] = color[0] * alpha;
+	img[0].colour[1] = img[1].colour[1] = img[2].colour[1] = img[3].colour[1] = color[1] * alpha;
+	img[0].colour[2] = img[1].colour[2] = img[2].colour[2] = img[3].colour[2] = color[2] * alpha;
+	img[0].colour[3] = img[1].colour[3] = img[2].colour[3] = img[3].colour[3] = color[3] * overall_alpha;
+	GLC_SetCoordinates(img, x, y, x + width, y + height, s, 0, t, 0, false);
 
 	++imageData.imageCount;
 }
@@ -202,11 +186,10 @@ void GLC_DrawImage(float x, float y, float width, float height, float tex_s, flo
 	glc_image_t* img = &imageData.glc_images[imageData.imageCount * 4];
 	float alpha = (color[3] * overall_alpha / 255.0f);
 
-	img->colour[0] = (img + 1)->colour[0] = (img + 2)->colour[0] = (img + 3)->colour[0] = color[0] * alpha;
-	img->colour[1] = (img + 1)->colour[1] = (img + 2)->colour[1] = (img + 3)->colour[1] = color[1] * alpha;
-	img->colour[2] = (img + 1)->colour[2] = (img + 2)->colour[2] = (img + 3)->colour[2] = color[2] * alpha;
-	img->colour[3] = (img + 1)->colour[3] = (img + 2)->colour[3] = (img + 3)->colour[3] = color[3] * overall_alpha;
-
+	img[0].colour[0] = img[1].colour[0] = img[2].colour[0] = img[3].colour[0] = color[0] * alpha;
+	img[0].colour[1] = img[1].colour[1] = img[2].colour[1] = img[3].colour[1] = color[1] * alpha;
+	img[0].colour[2] = img[1].colour[2] = img[2].colour[2] = img[3].colour[2] = color[2] * alpha;
+	img[0].colour[3] = img[1].colour[3] = img[2].colour[3] = img[3].colour[3] = color[3] * overall_alpha;
 	GLC_SetCoordinates(&imageData.glc_images[imageIndex], x, y, x + width, y + height, tex_s, tex_width, tex_t, tex_height, flags & IMAGEPROG_FLAGS_NEAREST);
 
 	imageData.images[imageData.imageCount].flags = flags;
@@ -231,6 +214,7 @@ static void GLC_CreateImageVAO(void)
 
 	if (gl_vbo_clientmemory.integer) {
 		R_GenVertexArray(vao_hud_images);
+		GLC_VAOSetIndexBuffer(vao_hud_images, imageIndexBuffer);
 		GLC_VAOEnableVertexPointer(vao_hud_images, 2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].pos);
 		GLC_VAOEnableTextureCoordPointer(vao_hud_images, 0, 4, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].tex);
 		GLC_VAOEnableColorPointer(vao_hud_images, 4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].colour);
@@ -238,6 +222,7 @@ static void GLC_CreateImageVAO(void)
 	}
 	else {
 		R_GenVertexArray(vao_hud_images);
+		GLC_VAOSetIndexBuffer(vao_hud_images, imageIndexBuffer);
 		GLC_VAOSetVertexBuffer(vao_hud_images, imageVBO);
 		GLC_VAOEnableVertexPointer(vao_hud_images, 2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, pos));
 		GLC_VAOEnableTextureCoordPointer(vao_hud_images, 0, 4, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, tex));
@@ -260,20 +245,49 @@ void GLC_HudPrepareImages(void)
 			buffers.Update(imageVBO, sizeof(imageData.glc_images[0]) * imageData.imageCount * 4, imageData.glc_images);
 		}
 	}
+
+	if (buffers.supported && !R_BufferReferenceIsValid(imageIndexBuffer)) {
+		R_BindVertexArray(vao_none);
+		if (!R_BufferReferenceIsValid(imageIndexBuffer)) {
+			unsigned int data[MAX_MULTI_IMAGE_BATCH * 6 * 3];
+			int pos, i;
+
+			for (i = 0, pos = 0; i < MAX_MULTI_IMAGE_BATCH * 3; ++i) {
+				if (i && !GL_Supported(R_SUPPORT_PRIMITIVERESTART)) {
+					data[pos++] = i * 4;
+				}
+				data[pos++] = i * 4;
+				data[pos++] = i * 4 + 1;
+				data[pos++] = i * 4 + 2;
+				data[pos++] = i * 4 + 3;
+				if (GL_Supported(R_SUPPORT_PRIMITIVERESTART)) {
+					data[pos++] = ~(unsigned int)0;
+				}
+				else {
+					data[pos++] = i * 4 + 3;
+				}
+			}
+			imageIndexBuffer = buffers.Create(buffertype_index, "hudimage-elements", pos * sizeof(unsigned int), data, bufferusage_constant_data);
+			extraIndexesPerImage = GL_Supported(R_SUPPORT_PRIMITIVERESTART) ? 1 : 2;
+		}
+	}
 }
 
 static void GLC_HudDrawImagesVertexArray(texture_ref ref, int start, int end)
 {
 	extern cvar_t gl_vbo_clientmemory;
-	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(imageVBO) / sizeof(imageData.glc_images[0]);
+	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(imageVBO) / (sizeof(imageData.glc_images[0]) * 4);
 	qbool nearest = (imageData.images[start].flags & IMAGEPROG_FLAGS_NEAREST);
 	int i;
 
+	R_ProgramUse(r_program_none);
 	renderer.TextureSetFiltering(ref, nearest ? texture_minification_nearest : texture_minification_linear, nearest ? texture_magnification_nearest : texture_magnification_linear);
 	renderer.TextureUnitBind(0, ref);
 	for (i = start; i < end; ++i) {
 		if (R_TextureReferenceIsValid(ref) && nearest != (imageData.images[i].flags & IMAGEPROG_FLAGS_NEAREST)) {
-			GL_DrawArrays(GL_QUADS, offset + start * 4, (i - start + 1) * 4);
+			if (i > start) {
+				GL_DrawElements(GL_TRIANGLE_STRIP, (i - start) * (4 + extraIndexesPerImage), GL_UNSIGNED_INT, (void*)((offset + start) * (4 + extraIndexesPerImage) * sizeof(GLuint)));
+			}
 
 			nearest = (imageData.images[i].flags & IMAGEPROG_FLAGS_NEAREST);
 			start = i;
@@ -282,7 +296,7 @@ static void GLC_HudDrawImagesVertexArray(texture_ref ref, int start, int end)
 		}
 	}
 
-	GL_DrawArrays(GL_QUADS, offset + start * 4, (end - start + 1) * 4);
+	GL_DrawElements(GL_TRIANGLE_STRIP, (end - start + 1) * (4 + extraIndexesPerImage), GL_UNSIGNED_INT, (void*)((offset + start) * (4 + extraIndexesPerImage) * sizeof(GLuint)));
 }
 
 #define GLC_PROGRAMFLAGS_SMOOTHCROSSHAIR     1
@@ -321,7 +335,7 @@ static qbool GLC_ProgramHudImagesCompile(void)
 static void GLC_HudDrawImagesProgram(texture_ref ref, int start, int end)
 {
 	extern cvar_t gl_vbo_clientmemory;
-	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(imageVBO) / sizeof(imageData.glc_images[0]);
+	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(imageVBO) / (sizeof(imageData.glc_images[0]) * 4);
 	int i;
 
 	R_ProgramUse(r_program_hud_images_glc);
@@ -340,8 +354,7 @@ static void GLC_HudDrawImagesProgram(texture_ref ref, int start, int end)
 			GL_SamplerSetNearest(1);
 		}
 
-		//GL_DrawElements()
-		GL_DrawArrays(GL_QUADS, offset + start * 4, (end - start + 1) * 4);
+		GL_DrawElements(GL_TRIANGLE_STRIP, (end - start + 1) * (4 + extraIndexesPerImage), GL_UNSIGNED_INT, (void*)((offset + start) * (4 + extraIndexesPerImage) * sizeof(GLuint)));
 
 		if (everything_nearest) {
 			GL_SamplerClear(0);
@@ -356,7 +369,7 @@ static void GLC_HudDrawImagesProgram(texture_ref ref, int start, int end)
 		renderer.TextureUnitBind(0, ref);
 		for (i = start; i < end; ++i) {
 			if (R_TextureReferenceIsValid(ref) && nearest != (imageData.images[i].flags & IMAGEPROG_FLAGS_NEAREST)) {
-				GL_DrawArrays(GL_QUADS, offset + start * 4, (i - start + 1) * 4);
+				GL_DrawElements(GL_TRIANGLE_STRIP, (i - start) * (4 + extraIndexesPerImage), GL_UNSIGNED_INT, (void*)((offset + start) * (4 + extraIndexesPerImage) * sizeof(GLuint)));
 
 				nearest = (imageData.images[i].flags & IMAGEPROG_FLAGS_NEAREST);
 				start = i;
@@ -365,7 +378,7 @@ static void GLC_HudDrawImagesProgram(texture_ref ref, int start, int end)
 			}
 		}
 
-		GL_DrawArrays(GL_QUADS, offset + start * 4, (i - start + 1) * 4);
+		GL_DrawElements(GL_TRIANGLE_STRIP, (end - start + 1) * (4 + extraIndexesPerImage), GL_UNSIGNED_INT, (void*)((offset + start) * (4 + extraIndexesPerImage) * sizeof(GLuint)));
 	}
 	R_ProgramUse(r_program_none);
 }
@@ -382,7 +395,7 @@ static void GLC_HudDrawImagesImmediate(texture_ref ref, int start, int end)
 	memcpy(current_color, imageData.glc_images[start * 4].colour, sizeof(current_color));
 	GLC_Begin(GL_QUADS);
 
-	for (i = start * 4; i <= 4 * end + 3; ++i) {
+	for (i = start * 4; i <= 4 * end + 3; i += 4) {
 		glc_image_t* next = &imageData.glc_images[i];
 
 		R_CustomColor4ubv(next->colour);
@@ -391,15 +404,19 @@ static void GLC_HudDrawImagesImmediate(texture_ref ref, int start, int end)
 			GLC_End();
 
 			nearest = (imageData.images[i / 4].flags & IMAGEPROG_FLAGS_NEAREST);
-			start = i;
-
 			renderer.TextureSetFiltering(ref, nearest ? texture_minification_nearest : texture_minification_linear, nearest ? texture_magnification_nearest : texture_magnification_linear);
 
 			GLC_Begin(GL_QUADS);
 		}
 
-		glTexCoord2f(next->tex[0], next->tex[1]);
-		GLC_Vertex2f(next->pos[0], next->pos[1]);
+		glTexCoord2f(next[0].tex[0], next[0].tex[1]);
+		GLC_Vertex2f(next[0].pos[0], next[0].pos[1]);
+		glTexCoord2f(next[2].tex[0], next[2].tex[1]);
+		GLC_Vertex2f(next[2].pos[0], next[2].pos[1]);
+		glTexCoord2f(next[3].tex[0], next[3].tex[1]);
+		GLC_Vertex2f(next[3].pos[0], next[3].pos[1]);
+		glTexCoord2f(next[1].tex[0], next[1].tex[1]);
+		GLC_Vertex2f(next[1].pos[0], next[1].pos[1]);
 	}
 
 	GLC_End();
@@ -409,7 +426,7 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 {
 	float modelviewMatrix[16];
 	float projectionMatrix[16];
-	extern cvar_t gl_program_hud, r_drawhud;
+	extern cvar_t gl_program_hud;
 
 	if (buffers.supported && !R_VertexArrayCreated(vao_hud_images)) {
 		GLC_CreateImageVAO();
