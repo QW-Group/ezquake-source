@@ -845,17 +845,17 @@ void GL_LoadProgramFunctions(void)
 
 void R_ProgramUse(r_program_id program_id)
 {
-	GLuint program = program_data[program_id].program;
-
 	if (program_id != currentProgram) {
-		qglUseProgram(program);
-		R_TraceLogAPICall("R_ProgramUse(%s)", program_data[program_id].friendly_name);
+		if (qglUseProgram) {
+			qglUseProgram(program_data[program_id].program);
+			R_TraceLogAPICall("R_ProgramUse(%s)", program_data[program_id].friendly_name);
+		}
 
 		currentProgram = program_id;
 	}
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
-	if (R_UseModernOpenGL() && program != r_program_none) {
+	if (R_UseModernOpenGL() && program_id != r_program_none) {
 		GLM_UploadFrameConstants();
 	}
 #endif
