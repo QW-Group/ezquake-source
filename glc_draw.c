@@ -432,12 +432,6 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 		GLC_CreateImageVAO();
 	}
 
-	R_PushModelviewMatrix(modelviewMatrix);
-	R_PushProjectionMatrix(projectionMatrix);
-
-	R_IdentityModelView();
-	R_IdentityProjectionView();
-
 	if (R_TextureReferenceIsValid(glc_last_texture_used) && !R_TextureReferenceEqual(glc_last_texture_used, ref)) {
 		renderer.TextureSetFiltering(glc_last_texture_used, texture_minification_linear, texture_magnification_linear);
 	}
@@ -454,7 +448,4 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 	else {
 		GLC_HudDrawImagesImmediate(ref, start, end);
 	}
-
-	R_PopProjectionMatrix(projectionMatrix);
-	R_PopModelviewMatrix(modelviewMatrix);
 }

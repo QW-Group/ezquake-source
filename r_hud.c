@@ -93,6 +93,9 @@ static void R_PrepareImageDraw(void)
 	hud.types[imagetype_polygon].Prepare();
 	hud.types[imagetype_circle].Prepare();
 	hud.types[imagetype_line].Prepare();
+
+	R_IdentityModelView();
+	R_IdentityProjectionView();
 }
 
 void R_DrawRectangle(float x, float y, float width, float height, byte* color);
