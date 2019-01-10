@@ -266,7 +266,6 @@ static void GLC_DrawFlat_GLSL(model_t* model, qbool polygonOffset)
 static void GLC_DrawFlat_Immediate(model_t* model, qbool polygonOffset)
 {
 	int i;
-	qbool first_lightmap_surf = true;
 	qbool first_surf = true;
 	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer;
 	qbool use_vbo = buffers.supported && modelIndexes;
@@ -801,7 +800,6 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 	int i;
 	msurface_t *s, *prev;
 
-	qbool draw_textureless = gl_textureless.integer && model->isworldmodel;
 	qbool requires_fullbright_pass = false;
 	qbool requires_luma_pass = false;
 

@@ -424,8 +424,6 @@ static void GLC_HudDrawImagesImmediate(texture_ref ref, int start, int end)
 
 void GLC_HudDrawImages(texture_ref ref, int start, int end)
 {
-	float modelviewMatrix[16];
-	float projectionMatrix[16];
 	extern cvar_t gl_program_hud;
 
 	if (buffers.supported && !R_VertexArrayCreated(vao_hud_images)) {
