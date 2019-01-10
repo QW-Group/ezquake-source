@@ -743,6 +743,9 @@ void R_TracePrintState(FILE* debug_frame_out, int debug_frame_depth)
 		if (current->alphaTesting.enabled) {
 			fprintf(debug_frame_out, "func %s(%f)\n", txtAlphaTestModeValues[current->alphaTesting.func], current->alphaTesting.value);
 		}
+		else {
+			fprintf(debug_frame_out, "\n");
+		}
 		fprintf(debug_frame_out, "%.*s   Texture units: [", debug_frame_depth, "                                                          ");
 		{
 			int i;

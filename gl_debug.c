@@ -206,11 +206,9 @@ void GL_TraceObjectLabelSet(GLenum identifier, GLuint name, int length, const ch
 
 void GL_TraceObjectLabelGet(GLenum identifier, GLuint name, int bufSize, int* length, char* label)
 {
+	label[0] = '\0';
 	if (qglGetObjectLabel) {
 		qglGetObjectLabel(identifier, name, bufSize, length, label);
-	}
-	else {
-		label[0] = '\0';
 	}
 }
 
