@@ -2423,6 +2423,8 @@ void MVDAnnouncer_ItemTaken(const char* s)
 		return;
 	}
 
+	cl.mvd_ktx_markers = true;
+
 	entity = atoi(Cmd_Argv(2));
 	respawn = atoi(Cmd_Argv(3));
 	player_ent = atoi(Cmd_Argv(4));
@@ -2474,6 +2476,7 @@ void MVDAnnouncer_StartTimer(const char* s)
 		return;
 	}
 
+	cl.mvd_ktx_markers = true;
 	entity = atoi(Cmd_Argv(2));
 	respawn = atoi(Cmd_Argv(3));
 
@@ -2506,6 +2509,7 @@ void MVDAnnouncer_PackDropped(const char* s)
 		return;
 	}
 
+	cl.mvd_ktx_markers = true;
 	entity = atoi(Cmd_Argv(2));
 	weapon = atoi(Cmd_Argv(3));
 	player_ent = atoi(Cmd_Argv(4));
@@ -2541,6 +2545,7 @@ void MVDAnnouncer_Expired(const char* s)
 		return;
 	}
 
+	cl.mvd_ktx_markers = true;
 	entity = atoi(Cmd_Argv(2));
 	if (entity >= 0 && entity < sizeof(cl_entities) / sizeof(cl_entities[0])) {
 		cl_entities[entity].contents = 0;
@@ -2564,6 +2569,7 @@ void MVDAnnouncer_BackpackPickup(const char* s)
 		return;
 	}
 
+	cl.mvd_ktx_markers = true;
 	entity = atoi(Cmd_Argv(2));
 	player_ent = atoi(Cmd_Argv(3));
 
