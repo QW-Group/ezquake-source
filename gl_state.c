@@ -628,33 +628,34 @@ void GL_InvalidateTextureReferences(GLuint texture)
 
 void GL_TextureUnitMultiBind(int first, int count, texture_ref* textures)
 {
-	GLuint glTextures[MAX_LOGGED_TEXTURE_UNITS];
-	qbool already_bound[MAX_LOGGED_TEXTURE_UNITS];
-	qbool is_array[MAX_LOGGED_TEXTURE_UNITS];
+	GLuint glTextures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
+	qbool already_bound[MAX_LOGGED_TEXTURE_UNITS] = { false };
+	qbool is_array[MAX_LOGGED_TEXTURE_UNITS] = { false };
 	int to_change = 0;
 	int i;
 
-	count = min(count, MAX_LOGGED_TEXTURE_UNITS);
+	if (first + count > MAX_LOGGED_TEXTURE_UNITS) {
+		qglBindTextures(first, count, glTextures);
+		memset(bound_arrays, 0, sizeof(bound_arrays));
+		memset(bound_textures, 0, sizeof(bound_textures));
+		return;
+	}
+
 	for (i = 0; i < count; ++i) {
+		GLenum target = GL_TextureTargetFromReference(textures[i]);
+
 		glTextures[i] = GL_TextureNameFromReference(textures[i]);
-		if (i + first < MAX_LOGGED_TEXTURE_UNITS) {
-			GLenum target = GL_TextureTargetFromReference(textures[i]);
+		is_array[i] = (target == GL_TEXTURE_2D_ARRAY);
 
-			is_array[i] = (target == GL_TEXTURE_2D_ARRAY);
-
-			if (is_array[i] || glTextures[i] == 0) {
-				if (!(already_bound[i] = (bound_arrays[i + first] == glTextures[i]))) {
-					++to_change;
-				}
-			}
-			if (!is_array[i] || glTextures[i] == 0) {
-				if (!(already_bound[i] = (bound_textures[i + first] == glTextures[i]))) {
-					++to_change;
-				}
+		if (is_array[i] || glTextures[i] == 0) {
+			if (!(already_bound[i] = (bound_arrays[i + first] == glTextures[i]))) {
+				++to_change;
 			}
 		}
-		else {
-			to_change = 999;
+		if (!is_array[i] || glTextures[i] == 0) {
+			if (!(already_bound[i] = (bound_textures[i + first] == glTextures[i]))) {
+				++to_change;
+			}
 		}
 	}
 
@@ -662,7 +663,10 @@ void GL_TextureUnitMultiBind(int first, int count, texture_ref* textures)
 		qglBindTextures(first, count, glTextures);
 
 		for (i = 0; i < count; ++i) {
-			if (is_array[i]) {
+			if (glTextures[i] == 0) {
+				bound_arrays[i + first] = bound_textures[i + first] = 0;
+			}
+			else if (is_array[i]) {
 				bound_arrays[i + first] = glTextures[i];
 			}
 			else {
@@ -685,7 +689,7 @@ void GL_TextureUnitMultiBind(int first, int count, texture_ref* textures)
 		}
 #endif
 	}
-	else if (to_change >= 1) {
+	else {
 		for (i = 0; i < count; ++i) {
 			if (!already_bound[i]) {
 				renderer.TextureUnitBind(first + i, textures[i]);

@@ -754,11 +754,11 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 
 		R_ProgramCompileWithInclude(r_program_world_textured_glc, definitions);
 
-		allocations->causticTextureUnit = allocations->causticTextureUnit >= 0 ? sampler++ : -1;
-		allocations->detailTextureUnit = allocations->detailTextureUnit >= 0 ? sampler++ : -1;
-		allocations->lmTextureUnit = allocations->lmTextureUnit >= 0 ? sampler++ : -1;
+		allocations->causticTextureUnit = (options & GLC_WORLD_CAUSTICS) && allocations->causticTextureUnit >= 0 ? sampler++ : -1;
+		allocations->detailTextureUnit = (options & GLC_WORLD_DETAIL) && allocations->detailTextureUnit >= 0 ? sampler++ : -1;
+		allocations->lmTextureUnit = (options & GLC_WORLD_LIGHTMAPS) && allocations->lmTextureUnit >= 0 ? sampler++ : -1;
 		allocations->matTextureUnit = allocations->matTextureUnit >= 0 ? sampler++ : -1;
-		allocations->fbTextureUnit = allocations->fbTextureUnit >= 0 ? sampler++ : -1;
+		allocations->fbTextureUnit = (options & (GLC_WORLD_LUMATEXTURES | GLC_WORLD_FULLBRIGHTS)) && allocations->fbTextureUnit >= 0 ? sampler++ : -1;
 
 		R_ProgramUniform1i(r_program_uniform_world_textured_glc_causticSampler, allocations->causticTextureUnit);
 		R_ProgramUniform1i(r_program_uniform_world_textured_glc_detailSampler, allocations->detailTextureUnit);
@@ -775,6 +775,7 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		allocations->matTextureUnit = R_ProgramUniformGet1i(r_program_uniform_world_textured_glc_texSampler, -1);
 		allocations->fbTextureUnit = R_ProgramUniformGet1i(r_program_uniform_world_textured_glc_lumaSampler, -1);
 	}
+	R_TraceLogAPICall("--- units      = %d", allocations->texture_unit_count);
 	R_TraceLogAPICall("... caustics   = %d", allocations->causticTextureUnit);
 	R_TraceLogAPICall("... detail     = %d", allocations->detailTextureUnit);
 	R_TraceLogAPICall("... lightmaps  = %d", allocations->lmTextureUnit);
