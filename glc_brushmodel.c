@@ -855,7 +855,7 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 		while (s) {
 			if (!(s->texinfo->flags & TEX_SPECIAL)) {
 				if (allocations->lmTextureUnit >= 0) {
-					texture_change |= (s->lightmaptexturenum != current_lightmap);
+					texture_change |= !R_TextureReferenceEqual(GLC_LightmapTexture(s->lightmaptexturenum), GLC_LightmapTexture(current_lightmap));
 
 					desired_textures[allocations->lmTextureUnit] = GLC_LightmapTexture(s->lightmaptexturenum);
 					current_lightmap = s->lightmaptexturenum;
