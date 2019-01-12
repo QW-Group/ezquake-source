@@ -307,17 +307,19 @@ void HUD_Sort_Scoreboard(int flags)
 			active_player_position = -1;
 			for (i = 0; i < n_players + n_spectators; ++i) {
 				if (sorted_players[i].playernum == active_player) {
+					active_player_position = i;
 					if (hud_sortrules_includeself.integer == 1 && i > 0) {
 						sort_players_info_t temp = sorted_players[0];
 						sorted_players[0] = sorted_players[i];
 						sorted_players[i] = temp;
+						active_player_position = 0;
 					}
 					else if (hud_sortrules_includeself.integer == 2 && i > 1) {
 						sort_players_info_t temp = sorted_players[1];
 						sorted_players[1] = sorted_players[i];
 						sorted_players[i] = temp;
+						active_player_position = 1;
 					}
-					active_player_position = i;
 				}
 			}
 		}
