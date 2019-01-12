@@ -371,7 +371,8 @@ int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qb
 	char *tmp;
 
 	// TODO: I'm no unix person, is this proper? -Nope. Fixme
-	tmp = tempnam(path, "ezq");
+	// tmp = tempnam(path, "ezq");
+	tmp = mkstemp("ezq");
 	if (!tmp)
 		return -1;
 

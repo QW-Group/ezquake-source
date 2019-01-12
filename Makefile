@@ -1,5 +1,14 @@
 ### ezQuake Makefile based on Q2PRO ###
 
+# Compiling requirements
+# Ubuntu: sudo aptitude install build-essentails elfutils
+
+## TODO
+# - Run Valgrind across the binary
+# - Compile Windows x64 binary (current is 32-bit)
+# Add in 'annobin' GCC plugin to test for hardened compile flags:  https://sourceware.org/git/?p=annobin.git;a=tree;f=scripts;h=7b395615d7638ec282799e9ce94b9df7eac34039;hb=HEAD
+##
+
 ifdef EZ_CONFIG_FILE
     -include $(EZ_CONFIG_FILE)
 else
@@ -8,7 +17,8 @@ endif
 
 ifdef CONFIG_WINDOWS
     CPU ?= x86
-    SYS ?= Win32
+    SYS ?= Win64
+    #SYS ?= Win32
 else
     ifndef CPU
         CPU := $(shell uname -m | sed -e s/i.86/i386/ -e s/amd64/x86_64/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/alpha/axp/)
@@ -34,13 +44,112 @@ RMDIR ?= rm -rf
 MKDIR ?= mkdir -p
 JSON2C ?= ./json2c.sh
 
-CFLAGS ?= -O2 -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -Wno-strict-aliasing -Werror=strict-prototypes -Werror=old-style-definition -g -MMD $(INCLUDES)
+## COMPILER/LINKER FLAGS ##
+# To see what flags your GCC version supports, run: "gcc -dumpspecs"
+
+# Set the blow CFLAGS to the CFLAGS variable if the options below are absent
+# Some fo the below CFLAGS are overwritten in the below CFLAGS varuables
+# Recommended compiler warnings
+CFLAGS ?= -O2 -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -Wno-strict-aliasing -Werror=strict-prototypes -Werror=old-style-definition -MMD $(INCLUDES)
 RCFLAGS ?=
 LDFLAGS ?=
 LIBS ?=
 
-#Temporarily disable tree vectorization optimization enabled at O3 due to gcc bug
-CFLAGS += -fno-tree-vectorize
+# Enable level 3 optimisations
+CFLAGS += -O3
+# Temporarily disable tree vectorization optimization enabled at "-O3" due to GCC bug
+#CFLAGS += -fno-tree-vectorize
+
+### DEBUG OPTIONS ###
+# Enable the below flag to compile the binary with debug symbols and additional debug info
+# Reference: https://www.owasp.org/index.php/C-Based_Toolchain_Hardening#Debug_Builds
+# When compiling a debug binary, disable code optimisations and add additional GCC debug options
+#CFLAGS += -DDEBUG=1 -UNDEBUG -O0 -g3 -fno-omit-frame-pointer --enable-concept-checks
+# -_GLIBCXX_DEBUG=1 -GLIBCXX_CONCEPT_CHECKS=1
+# Store compiler flags in debugging information
+#CFLAGS += -grecord-gcc-switches
+# 
+#CFLAGS += -fasynchronous-unwind-tables
+# Append the "debug" string to the binary to indicate it's compiled with debug symbols
+TARG_c = fortressone-build$(REV)-debug.exe
+###
+
+### Additional security hardening GCC flags ###
+# Some of these hardeining options require a GCC 7+
+# Reference: https://gist.github.com/jrelo/f5c976fdc602688a0fd40288fde6d886
+# Reference: https://developers.redhat.com/blog/2018/03/21/compiler-and-linker-flags-gcc/
+###
+
+# Full ASLR for executables/create a Position Independant Executable (PIE) binary
+CFLAGS += -fPIE -Wl,-pie
+# Show errors if Variable Length Arrays (VLA) are used
+CFLAGS += -Wvla
+# Run-time buffer overflow detection
+CFLAGS += -D_FORTIFY_SOURCE=2 
+# Notify on any type conversions (ie: int to float)
+CFLAGS += -Wconversion -Wformat 
+# Reject potentially unsafe format string arguents
+CFLAGS += -Wformat-security -ftrapv 
+
+## SEEMS TO WORK BELOW ##
+# No text relocations for shared libraries
+CFLAGS += -fpic -shared
+# Run-time bounds checking for C++ strings and containers
+CFLAGS += -D_GLIBCXX_ASSERTIONS
+# Increased reliability of backtraces
+CFLAGS +=-fasynchronous-unwind-tables
+# Enable table-based thread cancellation
+CFLAGS += -fexceptions
+# Avoid temporary files, speeding up builds
+CFLAGS += -pipe
+
+# Reject missing function prototypes
+CFLAGS += -Werror=implicit-function-declaration
+# Link-time optimization (LTO) - this can result in improved performance and smaller code, but may interfere with debugging
+CFLAGS += -flto
+# May be needed for compatibility with legacy applications (particularly on i686) which does not preserve stack alignment 
+CFLAGS += -mstackrealign
+
+# Prevents the stack-pointer from moving into another memory region without accessing the stack guard-page. The "-fstack-check" remediation has some expense. It touches each page using a 4K stride to ensure the guard page is touched.
+CFLAGS += -fstack-check
+
+## The below compile options are currently not working ##
+# Mitigate against kernel or cross-process memory disclosure classes of vulns (ie: Spectre/Meltdown)
+# Needs the latest GCC for this to work
+#CFLAGS += -mindirect-branch=thunk-extern 
+#CFLAGS += -mfunction-return=thunk
+
+# Enable AddressSanitizer, a fast memory error detector. Memory access instructions will be instrumented to help detect heap, stack, and global buffer overflows; as well as use-after-free bugs. Needs the GCC plugin installed to work.
+#-fsanitize=address
+# Enable ThreadSanitizer, a fast data race detector. Memory access instructions will be instrumented to detect data race bugs. Needs the GCC plugin installed to work.
+#-fsanitize=thread
+
+# Increased reliability of stack overflow detection
+#CFLAGS += -fstack-clash-protection
+# Control flow integrity protection
+#CFLAGS += -mcet -fcf-protection
+##
+
+# Optimise the compile based on the local CPU that will be doing the compiling
+# Reference: https://gcc.gnu.org/onlinedocs/gcc-4.5.3/gcc/i386-and-x86_002d64-Options.html
+CFLAGS += -march=native -mtune=native
+# Add in MMX/SSE/AVX instructions
+CFLAGS += -mmmx -msse -msse2 -msse3 -mssse3 -msse2avx
+
+# Strip the binary afterwards
+CFLAGS += -s
+
+### Linker options ###
+# Enable ASLR, DEP and Integrity (Windows only) on the resulting binary
+# Read-only segments after relocation, no executable stack or heap
+LDFLAGS_c += -Wl,--nxcompat,--dynamicbase,relro,--forceinteg,-z relro,-z noexecstack,-z noexecheap
+# Reduces the ability of an attacker to load, manipulate, and dump shared objects
+LDFLAGS_c += -Wl,-z,nodlopen and -Wl,-z,nodump
+# Detect and reject underlinking
+LDFLAGS_c += -Wl,-z,defs
+# Disable lazy binding
+LDFLAGS_c += -Wl,-z,now
+######
 
 CFLAGS_c :=
 RCFLAGS_c :=
@@ -60,7 +169,9 @@ else
     # Resolve all symbols at link time
     ifeq ($(SYS),Linux)
     	CFLAGS += -DX11_GAMMA_WORKAROUND
-        LDFLAGS_c += -Wl,--no-undefined
+		# Stack smashing protector
+        CFLAGS += -fstack-protector-all -fstack-protector-strong
+		LDFLAGS_c += -Wl,--no-undefined
     endif
 
     ifeq ($(SYS),Darwin)
@@ -386,9 +497,9 @@ endif
 ### Targets ###
 
 ifdef CONFIG_WINDOWS
-    TARG_c := fortressone.exe
+    TARG_c ?= fortressone-build$(REV).exe
 else
-    TARG_c := fortressone-$(LSYS)-$(CPU)
+    TARG_c ?= fortressone-$(LSYS)-$(CPU)-build$(REV)
 endif
 
 all: $(TARG_c)

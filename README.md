@@ -11,13 +11,13 @@ gameplay.
 
 ## Features
 
- * Modern graphics
+ * Modern graphics, with OpenGL and SDL support
  * [QuakeTV][qtv] support
  * Rich menus
  * Multiview support
  * Tons of features to serve latest pro-gaming needs
  * Built in server browser & MP3 player control
- * Recorded games browser
+ * Recorded/MVD games browser
  * Customization of all possible graphics elements of the game including Heads Up Display
  * All sorts of scripting possibilities
  * Windows, Linux, MacOSX and FreeBSD platforms supported (SDL2).
@@ -38,16 +38,16 @@ If you have found a bug, please report it [here][issues]
 
 ## Installation guide
 
-To play Quakeworld you need the files *pak0.pak* and *pak1.pak* from the original Quake-game.
+To play Quakeworld you need the files *pak0.pak* and *pak1.pak* from the original Quake game. We are enable to distribute these files as they are copywrited to the original game developers.
 
 ### Install ezQuake to an existing Quake-installation
-If you have an existing Quake-installation simply extract the ezQuake executable into your Quake-directory.
+If you have an existing Quake installation, simply extract the ezQuake executable into your Quake directory.
 
 A typical error message when installing ezQuake into a pre-existing directory is about *glide2x.dll* missing.
 To get rid of this error, remove the file *opengl32.dll* from your Quake directory.
 
 ### Upgrade an nQuake-installation
-If you have a version of [nQuake][nQuake] already installed you can upgrade ezQuake by extracting the new executable into the nQuake-directory.
+If you have a version of [nQuake][nQuake] already installed, you can upgrade ezQuake by extracting the new executable into the nQuake directory.
 
 ### Minimal clean installation
 If you want to make a clean installation of ezQuake you can do this by following these steps:
@@ -59,19 +59,19 @@ If you want to make a clean installation of ezQuake you can do this by following
 
 ## Compiling
 
-### Compiling a Windows binary
+### Compiling a Windows binary on Windows
 
-#### Using Ubuntu Bash
+#### Using Windows Services for Linux (WSL) running Ubuntu Bash
 
 You can use the new Ubuntu Bash feature in Windows 10 to compile ezQuake for Windows.
 
-To enable Bash for Windows, press the `Start` button and type `Turn Windows f` and select `Turn Windows features on or off`. Scroll down to `Windows Subsystem for Linux (Beta)` and enable it.
+To enable Bash for Windows, press the `Start` button and type `Turn Windows f` and select `Turn Windows features on or off`. Scroll down to `Windows Subsystem for Linux` and enable it.
 
 Now press WINDOWS+I, go to `Update & security` and then to the `For developers` tab. Enable `Developer mode`.
 
 Now press the `Start` button again and enter `bash`. Click it and install Bash.
 
-Enter the following command to install all required prerequisites to build ezQuake:
+Enter the following command to install all required prerequisites to build ezQuake on the Ubuntu Bash container:
 
 ```
 sudo apt-get install -y git mingw-w64 build-essential
@@ -86,24 +86,25 @@ git clone https://github.com/ezQuake/ezquake-source.git ezquake
 Now build the ezQuake executable:
 
 ```
-EZ_CONFIG_FILE=.config_windows make
+EZ_CONFIG_FILE=.config_windows make -j2
 ```
+You can add `-jN` as a parameter to `make` to build in parallell. Use number of cpu cores plus 1 (e.g. `-j5` if you have a quad core processor).
 
 Copy the compiled binary to your Quake folder, the binary is called `ezquake.exe`.
 
-#### Using a Linux system
+#### Using a Linux system to build a Windows binary
 
 Make sure you have mingw32 toolchain installed. On Arch Linux it's `mingw-w64` (select complete group).
 
 Build an executable using the following command:
 
 ```
-EZ_CONFIG_FILE=.config_windows make
+EZ_CONFIG_FILE=.config_windows make 
 ```
 
 You can add `-jN` as a parameter to `make` to build in parallell. Use number of cpu cores plus 1 (e.g. `-j5` if you have a quad core processor).
 
-### Compiling a Linux binary
+### Compiling a Linux binary on Linux
 
 _These instructions were tested on Ubuntu_
 
