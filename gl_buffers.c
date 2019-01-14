@@ -464,6 +464,7 @@ static void GL_BufferShutdown(void)
 	}
 	memset(buffer_data, 0, sizeof(buffer_data));
 	next_free_buffer = NULL;
+	buffer_count = 0;
 
 	for (i = 0; i < 3; ++i) {
 		if (tripleBufferSyncObjects[i]) {
