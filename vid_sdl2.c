@@ -409,7 +409,7 @@ static int VID_SetDeviceGammaRampReal(unsigned short *ramps)
 
 	if (once) {
 		if (glConfig.gammacrap.size < 0 || glConfig.gammacrap.size > 4096) {
-			Com_Printf("error: gamma size is broken, gamma won't work\n");
+			Com_Printf("error: gamma size is broken, gamma won't work (reported size %d)\n", glConfig.gammacrap.size);
 			once = 0;
 			return 0;
 		}
