@@ -1141,7 +1141,6 @@ static void VID_SDL_Init(void)
 		return;
 	}
 
-	Con_Printf("VID_SDL_Init()\n");
 	VID_SDL_InitSubSystem();
 
 	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
@@ -1210,7 +1209,6 @@ static void VID_SDL_Init(void)
 
 				if (sdl_window) {
 					// Try to create context and see what we get
-					Con_Printf("... window created, trying context\n");
 					sdl_context = VID_SDL_GL_SetupContextAttributes();
 
 					if (!sdl_context) {
