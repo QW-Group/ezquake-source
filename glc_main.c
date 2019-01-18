@@ -32,7 +32,7 @@ static void GLC_NoOperation(void)
 {
 }
 
-static void GLC_BindVertexArrayElementBuffer(r_vao_id vao, buffer_ref ref)
+static void GLC_BindVertexArrayElementBuffer(r_vao_id vao, r_buffer_id ref)
 {
 }
 
@@ -158,10 +158,10 @@ void GLC_Initialise(void)
 void GLC_PrepareModelRendering(qbool vid_restart)
 {
 	if (buffers.supported) {
-		buffer_ref instance_vbo = R_CreateInstanceVBO();
+		R_CreateInstanceVBO();
 
-		R_CreateAliasModelVBO(instance_vbo);
-		R_BrushModelCreateVBO(instance_vbo);
+		R_CreateAliasModelVBO();
+		R_BrushModelCreateVBO();
 	}
 
 	renderer.ProgramsInitialise();

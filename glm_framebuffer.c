@@ -34,15 +34,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_program.h"
 #include "r_renderer.h"
 
-static buffer_ref post_process_vbo;
-
 #define POST_PROCESS_PALETTE    1
 #define POST_PROCESS_3DONLY     2
 #define POST_PROCESS_TONEMAP    4
 
 qbool GLM_CompilePostProcessVAO(void)
 {
-	if (!R_BufferReferenceIsValid(post_process_vbo)) {
+	if (!R_BufferReferenceIsValid(r_buffer_postprocess_vertex_data)) {
 		float verts[4][5] = { { 0 } };
 
 		VectorSet(verts[0], -1, -1, 0);
@@ -61,14 +59,14 @@ qbool GLM_CompilePostProcessVAO(void)
 		verts[3][3] = 1;
 		verts[3][4] = 1;
 
-		post_process_vbo = buffers.Create(buffertype_vertex, "post-process-screen", sizeof(verts), verts, bufferusage_constant_data);
+		buffers.Create(r_buffer_postprocess_vertex_data, buffertype_vertex, "post-process-screen", sizeof(verts), verts, bufferusage_constant_data);
 	}
 
-	if (R_BufferReferenceIsValid(post_process_vbo) && !R_VertexArrayCreated(vao_postprocess)) {
+	if (R_BufferReferenceIsValid(r_buffer_postprocess_vertex_data) && !R_VertexArrayCreated(vao_postprocess)) {
 		R_GenVertexArray(vao_postprocess);
 
-		GLM_ConfigureVertexAttribPointer(vao_postprocess, post_process_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)0, 0);
-		GLM_ConfigureVertexAttribPointer(vao_postprocess, post_process_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float) * 3), 0);
+		GLM_ConfigureVertexAttribPointer(vao_postprocess, r_buffer_postprocess_vertex_data, 0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)0, 0);
+		GLM_ConfigureVertexAttribPointer(vao_postprocess, r_buffer_postprocess_vertex_data, 1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (void*)(sizeof(float) * 3), 0);
 
 		R_BindVertexArray(vao_none);
 	}

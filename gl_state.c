@@ -1001,7 +1001,7 @@ qbool R_VAOBound(void)
 	return currentVAO != vao_none;
 }
 
-void R_BindVertexArrayElementBuffer(buffer_ref ref)
+void R_BindVertexArrayElementBuffer(r_buffer_id ref)
 {
 	if (currentVAO != vao_none) {
 		renderer.BindVertexArrayElementBuffer(currentVAO, ref);
@@ -1009,7 +1009,7 @@ void R_BindVertexArrayElementBuffer(buffer_ref ref)
 }
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
-void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
+void R_GLC_VertexPointer(r_buffer_id buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
 {
 	if (enabled) {
 		glc_vertex_array_element_t* array = &opengl.rendering_state.vertex_array;
@@ -1039,7 +1039,7 @@ void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, i
 	}
 }
 
-void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
+void R_GLC_ColorPointer(r_buffer_id buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
 {
 	if (enabled) {
 		glc_vertex_array_element_t* array = &opengl.rendering_state.color_array;
@@ -1070,7 +1070,7 @@ void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, in
 	}
 }
 
-void R_GLC_NormalPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
+void R_GLC_NormalPointer(r_buffer_id buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
 {
 	if (enabled) {
 		glc_vertex_array_element_t* array = &opengl.rendering_state.normal_array;
@@ -1125,7 +1125,7 @@ void R_GLC_DisableTexturePointer(int unit)
 	}
 }
 
-void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
+void R_GLC_TexturePointer(r_buffer_id buf, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset)
 {
 	if (unit < 0 || unit >= sizeof(opengl.rendering_state.textureUnits) / sizeof(opengl.rendering_state.textureUnits[0])) {
 		return;
@@ -1254,23 +1254,23 @@ void R_GLC_ConfigureAlphaTesting(rendering_state_t* state, qbool enabled, r_alph
 
 #endif // RENDERER_OPTION_CLASSIC_OPENGL
 
-void R_BufferInvalidateBoundState(buffer_ref ref)
+void R_BufferInvalidateBoundState(r_buffer_id ref)
 {
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	int i;
 
 	if (R_BufferReferencesEqual(opengl.rendering_state.vertex_array.buf, ref)) {
-		opengl.rendering_state.vertex_array.buf = null_buffer_reference;
+		opengl.rendering_state.vertex_array.buf = r_buffer_none;
 	}
 	if (R_BufferReferencesEqual(opengl.rendering_state.color_array.buf, ref)) {
-		opengl.rendering_state.color_array.buf = null_buffer_reference;
+		opengl.rendering_state.color_array.buf = r_buffer_none;
 	}
 	if (R_BufferReferencesEqual(opengl.rendering_state.normal_array.buf, ref)) {
-		opengl.rendering_state.normal_array.buf = null_buffer_reference;
+		opengl.rendering_state.normal_array.buf = r_buffer_none;
 	}
 	for (i = 0; i < sizeof(opengl.rendering_state.textureUnits) / sizeof(opengl.rendering_state.textureUnits[0]); ++i) {
 		if (R_BufferReferencesEqual(opengl.rendering_state.textureUnits[i].va.buf, ref)) {
-			opengl.rendering_state.textureUnits[i].va.buf = null_buffer_reference;
+			opengl.rendering_state.textureUnits[i].va.buf = r_buffer_none;
 		}
 	}
 #endif

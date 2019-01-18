@@ -74,10 +74,6 @@ typedef struct aliasmodel_draw_data_s {
 static aliasmodel_draw_instructions_t alias_draw_instructions[aliasmodel_draw_max];
 static int alias_draw_count;
 
-#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
-static buffer_ref aliasModel_ssbo;
-#endif
-
 typedef struct uniform_block_aliasmodel_s {
 	float modelViewMatrix[16];
 	float color[4];
@@ -102,8 +98,6 @@ extern float r_framelerp;
 #define DRAW_REVERSED_DEPTH    4
 #define DRAW_LERP_MUZZLEHACK   8
 static uniform_block_aliasmodels_t aliasdata;
-static buffer_ref vbo_aliasDataBuffer;
-static buffer_ref vbo_aliasIndirectDraw;
 
 static int cached_mode;
 
@@ -163,27 +157,27 @@ static qbool GLM_CompileAliasModelProgram(void)
 	}
 	cached_mode = R_ProgramUniformGet1i(r_program_uniform_aliasmodel_drawmode, 0);
 
-	if (!R_BufferReferenceIsValid(vbo_aliasIndirectDraw)) {
-		vbo_aliasIndirectDraw = buffers.Create(buffertype_indirect, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, bufferusage_once_per_frame);
+	if (!R_BufferReferenceIsValid(r_buffer_aliasmodel_drawcall_indirect)) {
+		buffers.Create(r_buffer_aliasmodel_drawcall_indirect, buffertype_indirect, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, bufferusage_once_per_frame);
 	}
 
-	if (!R_BufferReferenceIsValid(vbo_aliasDataBuffer)) {
-		vbo_aliasDataBuffer = buffers.Create(buffertype_storage, "alias-data", sizeof(aliasdata), NULL, bufferusage_once_per_frame);
+	if (!R_BufferReferenceIsValid(r_buffer_aliasmodel_model_data)) {
+		buffers.Create(r_buffer_aliasmodel_model_data, buffertype_storage, "alias-data", sizeof(aliasdata), NULL, bufferusage_once_per_frame);
 	}
 
 	return R_ProgramReady(r_program_aliasmodel);
 }
 
-void GLM_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanceVBO)
+void GLM_CreateAliasModelVAO()
 {
 	R_GenVertexArray(vao_aliasmodel);
 
-	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, position), 0);
-	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords), 0);
-	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 2, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, normal), 0);
-	GLM_ConfigureVertexAttribIPointer(vao_aliasmodel, instanceVBO, 3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
-	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, aliasModelVBO, 4, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, direction), 0);
-	GLM_ConfigureVertexAttribIPointer(vao_aliasmodel, aliasModelVBO, 5, 1, GL_UNSIGNED_INT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags), 0);
+	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, r_buffer_aliasmodel_vertex_data, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, position), 0);
+	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, r_buffer_aliasmodel_vertex_data, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords), 0);
+	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, r_buffer_aliasmodel_vertex_data, 2, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, normal), 0);
+	GLM_ConfigureVertexAttribIPointer(vao_aliasmodel, r_buffer_instance_number, 3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
+	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, r_buffer_aliasmodel_vertex_data, 4, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, direction), 0);
+	GLM_ConfigureVertexAttribIPointer(vao_aliasmodel, r_buffer_aliasmodel_vertex_data, 5, 1, GL_UNSIGNED_INT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags), 0);
 
 	R_BindVertexArray(vao_none);
 }
@@ -397,8 +391,8 @@ void GLM_PrepareAliasModelBatches(void)
 	R_TraceEnterNamedRegion(__FUNCTION__);
 
 	// Update VBO with data about each entity
-	buffers.Update(vbo_aliasDataBuffer, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
-	buffers.BindRange(vbo_aliasDataBuffer, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA, buffers.BufferOffset(vbo_aliasDataBuffer), sizeof(aliasdata.models[0]) * alias_draw_count);
+	buffers.Update(r_buffer_aliasmodel_model_data, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
+	buffers.BindRange(r_buffer_aliasmodel_model_data, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA, buffers.BufferOffset(r_buffer_aliasmodel_model_data), sizeof(aliasdata.models[0]) * alias_draw_count);
 
 	// Build & update list of indirect calls
 	{
@@ -420,7 +414,7 @@ void GLM_PrepareAliasModelBatches(void)
 			}
 
 			size = sizeof(instr->indirect_buffer[0]) * total_cmds;
-			buffers.UpdateSection(vbo_aliasIndirectDraw, offset, size, instr->indirect_buffer);
+			buffers.UpdateSection(r_buffer_aliasmodel_drawcall_indirect, offset, size, instr->indirect_buffer);
 			offset += size;
 		}
 	}
@@ -440,8 +434,8 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	}
 
 	GLM_StateBeginAliasModelBatch(type != aliasmodel_draw_std);
-	buffers.Bind(vbo_aliasIndirectDraw);
-	extra_offset = buffers.BufferOffset(vbo_aliasIndirectDraw);
+	buffers.Bind(r_buffer_aliasmodel_drawcall_indirect);
+	extra_offset = buffers.BufferOffset(r_buffer_aliasmodel_drawcall_indirect);
 
 	if (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells) {
 		mode = EZQ_ALIAS_MODE_SHELLS;

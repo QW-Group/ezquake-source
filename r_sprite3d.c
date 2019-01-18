@@ -107,9 +107,6 @@ unsigned int batchCount;
 unsigned int vertexCount;
 static unsigned int indexData[INDEXES_MAX_QUADS * 4 + INDEXES_MAX_SPARKS * 9 + INDEXES_MAX_FLASHBLEND * 18 + (INDEXES_MAX_QUADS + INDEXES_MAX_SPARKS + INDEXES_MAX_FLASHBLEND) * 3];
 
-buffer_ref sprite3dVBO;
-buffer_ref sprite3dIndexes;
-
 static gl_sprite3d_batch_t* BatchForType(sprite3d_batch_id type, qbool allocate)
 {
 	unsigned int index = batchMapping[type];
@@ -152,7 +149,7 @@ r_sprite3d_vert_t* R_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_
 		return NULL;
 	}
 	batch->firstVertices[batch->count] = start;
-	batch->glFirstVertices[batch->count] = start + buffers.BufferOffset(sprite3dVBO) / sizeof(verts[0]);
+	batch->glFirstVertices[batch->count] = start + buffers.BufferOffset(r_buffer_sprite_vertex_data) / sizeof(verts[0]);
 	batch->numVertices[batch->count] = verts_required;
 	batch->textures[batch->count] = texture;
 	batch->textureIndexes[batch->count] = texture_index;
@@ -200,14 +197,14 @@ void R_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float
 
 void R_Sprite3DCreateVBO(void)
 {
-	if (!R_BufferReferenceIsValid(sprite3dVBO)) {
-		sprite3dVBO = buffers.Create(buffertype_vertex, "sprite3d-vbo", sizeof(verts), verts, bufferusage_once_per_frame);
+	if (!R_BufferReferenceIsValid(r_buffer_sprite_vertex_data)) {
+		buffers.Create(r_buffer_sprite_vertex_data, buffertype_vertex, "sprite3d-vbo", sizeof(verts), verts, bufferusage_once_per_frame);
 	}
 }
 
 void R_Sprite3DCreateIndexBuffer(void)
 {
-	if (!R_BufferReferenceIsValid(sprite3dIndexes)) {
+	if (!R_BufferReferenceIsValid(r_buffer_sprite_index_data)) {
 		// Meag: *3 is for case of primitive restart not being supported
 		int i, j;
 		int pos = 0;
@@ -264,7 +261,7 @@ void R_Sprite3DCreateIndexBuffer(void)
 			}
 		}
 
-		sprite3dIndexes = buffers.Create(buffertype_index, "3dsprite-indexes", sizeof(indexData), indexData, bufferusage_constant_data);
+		buffers.Create(r_buffer_sprite_index_data, buffertype_index, "3dsprite-indexes", sizeof(indexData), indexData, bufferusage_constant_data);
 	}
 }
 

@@ -33,10 +33,10 @@ static glVertexAttribPointer_t       qglVertexAttribPointer;
 static glDisableVertexAttribArray_t  qglDisableVertexAttribArray;
 static glEnableVertexAttribArray_t   qglEnableVertexAttribArray;
 
-void R_GLC_TexturePointer(buffer_ref buf, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
-void R_GLC_ColorPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
-void R_GLC_VertexPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
-void R_GLC_NormalPointer(buffer_ref buf, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
+void R_GLC_TexturePointer(r_buffer_id buffer_id, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
+void R_GLC_ColorPointer(r_buffer_id buffer_id, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
+void R_GLC_VertexPointer(r_buffer_id buffer_id, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
+void R_GLC_NormalPointer(r_buffer_id buffer_id, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
 
 // GLC uses vertex array, all client state
 typedef struct {
@@ -61,8 +61,8 @@ typedef struct glc_va_attribute_s {
 
 typedef struct glc_vao_s {
 	qbool initialised;
-	buffer_ref vertex_buffer;
-	buffer_ref element_index_buffer;
+	r_buffer_id vertex_buffer;
+	r_buffer_id element_index_buffer;
 
 	glc_va_element vertex_array;
 	glc_va_element normal_array;
@@ -94,7 +94,7 @@ void GLC_BindVertexArray(r_vao_id vao)
 	glc_va_element* vertexes = &vaos[vao].vertex_array;
 	glc_va_element* colors = &vaos[vao].color_array;
 	glc_va_element* normals = &vaos[vao].normal_array;
-	buffer_ref buf = vaos[vao].vertex_buffer;
+	r_buffer_id buf = vaos[vao].vertex_buffer;
 	int i;
 
 	// Unbind any active attributes
@@ -230,12 +230,12 @@ void GLC_VAODisableCustomAttribute(r_vao_id vao, int index)
 	attr->enabled = false;
 }
 
-void GLC_VAOSetVertexBuffer(r_vao_id vao, buffer_ref ref)
+void GLC_VAOSetVertexBuffer(r_vao_id vao, r_buffer_id ref)
 {
 	vaos[vao].vertex_buffer = ref;
 }
 
-void GLC_VAOSetIndexBuffer(r_vao_id vao, buffer_ref ref)
+void GLC_VAOSetIndexBuffer(r_vao_id vao, r_buffer_id ref)
 {
 	vaos[vao].element_index_buffer = ref;
 }

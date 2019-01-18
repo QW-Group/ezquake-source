@@ -48,7 +48,7 @@ void R_BindVertexArray(r_vao_id vao);
 qbool R_VertexArrayCreated(r_vao_id vao);
 void R_InitialiseVAOState(void);
 qbool R_VAOBound(void);
-void R_BindVertexArrayElementBuffer(buffer_ref ref);
+void R_BindVertexArrayElementBuffer(r_buffer_id ref);
 
 typedef struct r_vaos_api_s {
 	void(*Bind)(r_vao_id vao);

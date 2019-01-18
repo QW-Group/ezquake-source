@@ -39,15 +39,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
 static void GLM_CreateMultiImageProgram(void);
 
-static buffer_ref polygonVBO;
-static buffer_ref line_vbo;
-
-static buffer_ref imageIndexBuffer;
-static buffer_ref imageVBO;
 extern float overall_alpha;
 extern float cachedMatrix[16];
-
-static buffer_ref circleVBO;
 
 // Flags to detect when the user has changed settings
 #define GLM_HUDIMAGES_SMOOTHTEXT        1
@@ -90,7 +83,7 @@ void GLM_HudDrawComplete(void)
 void GLM_HudDrawPolygons(texture_ref texture, int start, int end)
 {
 	int i;
-	uintptr_t offset = buffers.BufferOffset(polygonVBO) / sizeof(polygonData.polygonVertices[0]);
+	uintptr_t offset = buffers.BufferOffset(r_buffer_hud_polygon_vertex_data) / sizeof(polygonData.polygonVertices[0]);
 
 	R_BindVertexArray(vao_hud_polygons);
 	R_ProgramUse(r_program_hud_polygon);
@@ -112,34 +105,34 @@ void GLM_HudPreparePolygons(void)
 		return;
 	}
 
-	if (!R_BufferReferenceIsValid(polygonVBO)) {
-		polygonVBO = buffers.Create(buffertype_vertex, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, bufferusage_once_per_frame);
+	if (!R_BufferReferenceIsValid(r_buffer_hud_polygon_vertex_data)) {
+		buffers.Create(r_buffer_hud_polygon_vertex_data, buffertype_vertex, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, bufferusage_once_per_frame);
 	}
 	else if (polygonData.polygonVerts[0]) {
-		buffers.Update(polygonVBO, polygonData.polygonCount * MAX_POLYGON_POINTS * sizeof(polygonData.polygonVertices[0]), polygonData.polygonVertices);
+		buffers.Update(r_buffer_hud_polygon_vertex_data, polygonData.polygonCount * MAX_POLYGON_POINTS * sizeof(polygonData.polygonVertices[0]), polygonData.polygonVertices);
 	}
 
 	if (!R_VertexArrayCreated(vao_hud_polygons)) {
 		R_GenVertexArray(vao_hud_polygons);
-		GLM_ConfigureVertexAttribPointer(vao_hud_polygons, polygonVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(polygonData.polygonVertices[0]), NULL, 0);
+		GLM_ConfigureVertexAttribPointer(vao_hud_polygons, r_buffer_hud_polygon_vertex_data, 0, 3, GL_FLOAT, GL_FALSE, sizeof(polygonData.polygonVertices[0]), NULL, 0);
 		R_BindVertexArray(vao_none);
 	}
 }
 
 void GLM_HudPrepareLines(void)
 {
-	if (!R_BufferReferenceIsValid(line_vbo)) {
-		line_vbo = buffers.Create(buffertype_vertex, "line", sizeof(lineData.line_points), lineData.line_points, bufferusage_once_per_frame);
+	if (!R_BufferReferenceIsValid(r_buffer_hud_line_vertex_data)) {
+		buffers.Create(r_buffer_hud_line_vertex_data, buffertype_vertex, "line", sizeof(lineData.line_points), lineData.line_points, bufferusage_once_per_frame);
 	}
 	else if (lineData.lineCount) {
-		buffers.Update(line_vbo, sizeof(lineData.line_points[0]) * lineData.lineCount * 2, lineData.line_points);
+		buffers.Update(r_buffer_hud_line_vertex_data, sizeof(lineData.line_points[0]) * lineData.lineCount * 2, lineData.line_points);
 	}
 
 	if (!R_VertexArrayCreated(vao_hud_lines)) {
 		R_GenVertexArray(vao_hud_lines);
 
-		GLM_ConfigureVertexAttribPointer(vao_hud_lines, line_vbo, 0, 2, GL_FLOAT, GL_FALSE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, position), 0);
-		GLM_ConfigureVertexAttribPointer(vao_hud_lines, line_vbo, 1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, color), 0);
+		GLM_ConfigureVertexAttribPointer(vao_hud_lines, r_buffer_hud_line_vertex_data, 0, 2, GL_FLOAT, GL_FALSE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, position), 0);
+		GLM_ConfigureVertexAttribPointer(vao_hud_lines, r_buffer_hud_line_vertex_data, 1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, color), 0);
 
 		R_BindVertexArray(vao_none);
 	}
@@ -153,7 +146,7 @@ void GLM_HudDrawLines(texture_ref texture, int start, int end)
 {
 	if (R_ProgramReady(r_program_hud_line) && R_VertexArrayCreated(vao_hud_lines)) {
 		int i;
-		uintptr_t offset = buffers.BufferOffset(line_vbo) / sizeof(glm_line_point_t);
+		uintptr_t offset = buffers.BufferOffset(r_buffer_hud_line_vertex_data) / sizeof(glm_line_point_t);
 
 		R_ProgramUse(r_program_hud_line);
 		R_ProgramUniformMatrix4fv(r_program_uniform_hud_line_matrix, R_ProjectionMatrix());
@@ -226,7 +219,7 @@ void GLM_HudPrepareImages(void)
 	GLM_CreateMultiImageProgram();
 
 	if (imageData.imageCount) {
-		buffers.Update(imageVBO, sizeof(imageData.images[0]) * imageData.imageCount * 4, imageData.images);
+		buffers.Update(r_buffer_hud_image_vertex_data, sizeof(imageData.images[0]) * imageData.imageCount * 4, imageData.images);
 		if ((R_ProgramCustomOptions(r_program_hud_images) & GLM_HUDIMAGES_SMOOTHEVERYTHING) == 0) {
 			// Everything is GL_NEAREST, no smoothing
 			GL_SamplerSetNearest(0);
@@ -263,14 +256,14 @@ static void GLM_CreateMultiImageProgram(void)
 		R_ProgramSetCustomOptions(r_program_hud_images, program_flags);
 	}
 
-	if (!R_BufferReferenceIsValid(imageVBO)) {
-		imageVBO = buffers.Create(buffertype_vertex, "image-vbo", sizeof(imageData.images), imageData.images, bufferusage_once_per_frame);
+	if (!R_BufferReferenceIsValid(r_buffer_hud_image_vertex_data)) {
+		buffers.Create(r_buffer_hud_image_vertex_data, buffertype_vertex, "image-vbo", sizeof(imageData.images), imageData.images, bufferusage_once_per_frame);
 	}
 
 	if (!R_VertexArrayCreated(vao_hud_images)) {
 		R_GenVertexArray(vao_hud_images);
 
-		if (!R_BufferReferenceIsValid(imageIndexBuffer)) {
+		if (!R_BufferReferenceIsValid(r_buffer_hud_image_index_data)) {
 			GLuint i;
 			int imageIndexLength = MAX_MULTI_IMAGE_BATCH * 5 * sizeof(GLuint);
 			GLuint* imageIndexData = Q_malloc(imageIndexLength);
@@ -283,15 +276,15 @@ static void GLM_CreateMultiImageProgram(void)
 				imageIndexData[i * 5 + 4] = ~(GLuint)0;
 			}
 
-			imageIndexBuffer = buffers.Create(buffertype_index, "image-indexes", imageIndexLength, imageIndexData, bufferusage_constant_data);
+			buffers.Create(r_buffer_hud_image_index_data, buffertype_index, "image-indexes", imageIndexLength, imageIndexData, bufferusage_constant_data);
 			Q_free(imageIndexData);
 		}
 
-		buffers.Bind(imageIndexBuffer);
-		GLM_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 0, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, pos), 0);
-		GLM_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 1, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, tex), 0);
-		GLM_ConfigureVertexAttribPointer(vao_hud_images, imageVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, colour), 0);
-		GLM_ConfigureVertexAttribIPointer(vao_hud_images, imageVBO, 3, 1, GL_INT, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, flags), 0);
+		buffers.Bind(r_buffer_hud_image_index_data);
+		GLM_ConfigureVertexAttribPointer(vao_hud_images, r_buffer_hud_image_vertex_data, 0, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, pos), 0);
+		GLM_ConfigureVertexAttribPointer(vao_hud_images, r_buffer_hud_image_vertex_data, 1, 2, GL_FLOAT, GL_FALSE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, tex), 0);
+		GLM_ConfigureVertexAttribPointer(vao_hud_images, r_buffer_hud_image_vertex_data, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, colour), 0);
+		GLM_ConfigureVertexAttribIPointer(vao_hud_images, r_buffer_hud_image_vertex_data, 3, 1, GL_INT, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, flags), 0);
 		R_BindVertexArray(vao_none);
 	}
 }
@@ -299,7 +292,7 @@ static void GLM_CreateMultiImageProgram(void)
 void GLM_HudDrawImages(texture_ref texture, int start, int end)
 {
 	uintptr_t index_offset = (start * 5 * sizeof(GLuint));
-	uintptr_t buffer_offset = buffers.BufferOffset(imageVBO) / sizeof(imageData.images[0]);
+	uintptr_t buffer_offset = buffers.BufferOffset(r_buffer_hud_image_vertex_data) / sizeof(imageData.images[0]);
 
 	R_ProgramUse(r_program_hud_images);
 	GLM_StateBeginImageDraw();
@@ -325,18 +318,18 @@ void GLM_HudPrepareCircles(void)
 	}
 
 	// Build VBO
-	if (!R_BufferReferenceIsValid(circleVBO)) {
-		circleVBO = buffers.Create(buffertype_vertex, "circle-vbo", sizeof(circleData.drawCirclePointData), circleData.drawCirclePointData, bufferusage_once_per_frame);
+	if (!R_BufferReferenceIsValid(r_buffer_hud_circle_vertex_data)) {
+		buffers.Create(r_buffer_hud_circle_vertex_data, buffertype_vertex, "circle-vbo", sizeof(circleData.drawCirclePointData), circleData.drawCirclePointData, bufferusage_once_per_frame);
 	}
 	else if (circleData.circleCount) {
-		buffers.Update(circleVBO, circleData.circleCount * FLOATS_PER_CIRCLE * sizeof(circleData.drawCirclePointData[0]), circleData.drawCirclePointData);
+		buffers.Update(r_buffer_hud_circle_vertex_data, circleData.circleCount * FLOATS_PER_CIRCLE * sizeof(circleData.drawCirclePointData[0]), circleData.drawCirclePointData);
 	}
 
 	// Build VAO
 	if (!R_VertexArrayCreated(vao_hud_circles)) {
 		R_GenVertexArray(vao_hud_circles);
 
-		GLM_ConfigureVertexAttribPointer(vao_hud_circles, circleVBO, 0, 2, GL_FLOAT, GL_FALSE, 0, NULL, 0);
+		GLM_ConfigureVertexAttribPointer(vao_hud_circles, r_buffer_hud_circle_vertex_data, 0, 2, GL_FLOAT, GL_FALSE, 0, NULL, 0);
 	}
 }
 
@@ -344,7 +337,7 @@ void GLM_HudDrawCircles(texture_ref texture, int start, int end)
 {
 	// FIXME: Not very efficient (but rarely used either)
 	int i;
-	uintptr_t offset = buffers.BufferOffset(circleVBO) / (sizeof(float) * 2);
+	uintptr_t offset = buffers.BufferOffset(r_buffer_hud_circle_vertex_data) / (sizeof(float) * 2);
 
 	start = max(0, start);
 	end = min(end, circleData.circleCount - 1);

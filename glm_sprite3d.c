@@ -38,14 +38,14 @@ static void GLM_Create3DSpriteVAO(void)
 		R_GenVertexArray(vao_3dsprites);
 
 		R_Sprite3DCreateIndexBuffer();
-		buffers.Bind(sprite3dIndexes);
+		buffers.Bind(r_buffer_sprite_index_data);
 
 		// position
-		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 0, 3, GL_FLOAT, GL_FALSE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, position), 0);
+		GLM_ConfigureVertexAttribPointer(vao_3dsprites, r_buffer_sprite_vertex_data, 0, 3, GL_FLOAT, GL_FALSE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, position), 0);
 		// texture coordinates
-		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 1, 3, GL_FLOAT, GL_FALSE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, tex), 0);
+		GLM_ConfigureVertexAttribPointer(vao_3dsprites, r_buffer_sprite_vertex_data, 1, 3, GL_FLOAT, GL_FALSE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, tex), 0);
 		// color
-		GLM_ConfigureVertexAttribPointer(vao_3dsprites, sprite3dVBO, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, color), 0);
+		GLM_ConfigureVertexAttribPointer(vao_3dsprites, r_buffer_sprite_vertex_data, 2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, color), 0);
 
 		R_BindVertexArray(vao_none);
 	}
@@ -103,8 +103,8 @@ void GLM_Prepare3DSprites(void)
 
 	GLM_Create3DSpriteVAO();
 
-	if (R_BufferReferenceIsValid(sprite3dVBO)) {
-		buffers.Update(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
+	if (R_BufferReferenceIsValid(r_buffer_sprite_vertex_data)) {
+		buffers.Update(r_buffer_sprite_vertex_data, vertexCount * sizeof(verts[0]), verts);
 	}
 
 	R_TraceLeaveNamedRegion();

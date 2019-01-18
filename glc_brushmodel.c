@@ -39,8 +39,6 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 #include "r_lightmaps.h"
 #include "r_trace.h"
 
-extern buffer_ref brushModel_vbo;
-
 extern glpoly_t *fullbright_polys[MAX_GLTEXTURES];
 extern glpoly_t *luma_polys[MAX_GLTEXTURES];
 
@@ -53,13 +51,13 @@ void GLC_EnsureVAOCreated(r_vao_id vao)
 		return;
 	}
 
-	if (!R_BufferReferenceIsValid(brushModel_vbo)) {
+	if (!R_BufferReferenceIsValid(r_buffer_brushmodel_vertex_data)) {
 		// TODO: vbo data in client memory
 		return;
 	}
 
 	R_GenVertexArray(vao);
-	GLC_VAOSetVertexBuffer(vao, brushModel_vbo);
+	GLC_VAOSetVertexBuffer(vao, r_buffer_brushmodel_vertex_data);
 	// TODO: index data _not_ in client memory
 
 	switch (vao) {

@@ -31,8 +31,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_lighting.h"
 #include "glc_state.h"
 
-buffer_ref brushModel_vbo;
-buffer_ref vbo_brushElements;
 unsigned int* modelIndexes;
 unsigned int modelIndexMaximum;
 
@@ -62,7 +60,7 @@ static int R_BrushModelMeasureIndexSize(model_t* m)
 	return (total_surf_verts)+(total_surfaces - 1);
 }
 
-void R_BrushModelCreateVBO(buffer_ref instance_vbo)
+void R_BrushModelCreateVBO(void)
 {
 	int i;
 	int size = 0;
@@ -103,17 +101,17 @@ void R_BrushModelCreateVBO(buffer_ref instance_vbo)
 	}
 
 	indexes += max_entity_indexes * MAX_STANDARD_ENTITIES;
-	if (!R_BufferReferenceIsValid(vbo_brushElements) || indexes > buffers.Size(vbo_brushElements) / sizeof(modelIndexes[0])) {
+	if (!R_BufferReferenceIsValid(r_buffer_brushmodel_index_data) || indexes > buffers.Size(r_buffer_brushmodel_index_data) / sizeof(modelIndexes[0])) {
 		Q_free(modelIndexes);
 		modelIndexMaximum = indexes;
 		modelIndexes = Q_malloc(sizeof(*modelIndexes) * modelIndexMaximum);
 
 		R_BindVertexArray(vao_none);
-		if (R_BufferReferenceIsValid(vbo_brushElements)) {
-			vbo_brushElements = buffers.Resize(vbo_brushElements, modelIndexMaximum * sizeof(modelIndexes[0]), NULL);
+		if (R_BufferReferenceIsValid(r_buffer_brushmodel_index_data)) {
+			buffers.Resize(r_buffer_brushmodel_index_data, modelIndexMaximum * sizeof(modelIndexes[0]), NULL);
 		}
 		else {
-			vbo_brushElements = buffers.Create(buffertype_index, "brushmodel-elements", modelIndexMaximum * sizeof(modelIndexes[0]), NULL, bufferusage_once_per_frame);
+			buffers.Create(r_buffer_brushmodel_index_data, buffertype_index, "brushmodel-elements", modelIndexMaximum * sizeof(modelIndexes[0]), NULL, bufferusage_once_per_frame);
 		}
 	}
 
@@ -137,7 +135,7 @@ void R_BrushModelCreateVBO(buffer_ref instance_vbo)
 	}
 
 	// Copy VBO buffer across
-	brushModel_vbo = buffers.Create(buffertype_vertex, "brushmodel-vbo", buffer_size, buffer, bufferusage_constant_data);
+	buffers.Create(r_buffer_brushmodel_vertex_data, buffertype_vertex, "brushmodel-vbo", buffer_size, buffer, bufferusage_constant_data);
 
 	Q_free(buffer);
 }

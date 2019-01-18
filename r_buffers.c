@@ -4,9 +4,8 @@
 #include "r_buffers.h"
 
 api_buffers_t buffers;
-const buffer_ref null_buffer_reference = { 0 };
 
-buffer_ref R_CreateInstanceVBO(void)
+void R_CreateInstanceVBO(void)
 {
 	unsigned int values[MAX_STANDARD_ENTITIES];
 	int i;
@@ -15,5 +14,5 @@ buffer_ref R_CreateInstanceVBO(void)
 		values[i] = i;
 	}
 
-	return buffers.Create(buffertype_vertex, "instance#", sizeof(values), values, bufferusage_constant_data);
+	buffers.Create(r_buffer_instance_number, buffertype_vertex, "instance#", sizeof(values), values, bufferusage_constant_data);
 }

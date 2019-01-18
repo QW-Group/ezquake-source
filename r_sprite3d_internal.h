@@ -37,7 +37,4 @@ extern unsigned int batchMapping[MAX_SPRITE3D_BATCHES];
 extern unsigned int batchCount;
 extern unsigned int vertexCount;
 
-extern buffer_ref sprite3dVBO;
-extern buffer_ref sprite3dIndexes;
-
 #endif

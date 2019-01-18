@@ -32,8 +32,8 @@ void GLC_VAOEnableNormalPointer(r_vao_id vao, int size, GLenum type, GLsizei str
 void GLC_VAODisableNormalPointer(r_vao_id vao);
 void GLC_VAOEnableTextureCoordPointer(r_vao_id vao, int index, int size, GLenum type, GLsizei stride, GLvoid* pointer);
 void GLC_VAODisableTextureCoordPointer(r_vao_id vao, int index);
-void GLC_VAOSetIndexBuffer(r_vao_id vao, buffer_ref ref);
-void GLC_VAOSetVertexBuffer(r_vao_id vao, buffer_ref ref);
+void GLC_VAOSetIndexBuffer(r_vao_id vao, r_buffer_id ref);
+void GLC_VAOSetVertexBuffer(r_vao_id vao, r_buffer_id ref);
 void GLC_VAOEnableCustomAttribute(r_vao_id vao, int index, r_program_attribute_id attr_id, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
 void GLC_VAODisableCustomAttribute(r_vao_id vao, int index);
 

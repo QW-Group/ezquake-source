@@ -34,8 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_texture.h"
 
 static texture_ref glc_last_texture_used;
-static buffer_ref imageVBO;
-static buffer_ref imageIndexBuffer;
 static int extraIndexesPerImage;
 extern float overall_alpha;
 extern float cachedMatrix[16];
@@ -214,7 +212,7 @@ static void GLC_CreateImageVAO(void)
 
 	if (gl_vbo_clientmemory.integer) {
 		R_GenVertexArray(vao_hud_images);
-		GLC_VAOSetIndexBuffer(vao_hud_images, imageIndexBuffer);
+		GLC_VAOSetIndexBuffer(vao_hud_images, r_buffer_hud_image_index_data);
 		GLC_VAOEnableVertexPointer(vao_hud_images, 2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].pos);
 		GLC_VAOEnableTextureCoordPointer(vao_hud_images, 0, 4, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].tex);
 		GLC_VAOEnableColorPointer(vao_hud_images, 4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].colour);
@@ -222,8 +220,8 @@ static void GLC_CreateImageVAO(void)
 	}
 	else {
 		R_GenVertexArray(vao_hud_images);
-		GLC_VAOSetIndexBuffer(vao_hud_images, imageIndexBuffer);
-		GLC_VAOSetVertexBuffer(vao_hud_images, imageVBO);
+		GLC_VAOSetIndexBuffer(vao_hud_images, r_buffer_hud_image_index_data);
+		GLC_VAOSetVertexBuffer(vao_hud_images, r_buffer_hud_image_vertex_data);
 		GLC_VAOEnableVertexPointer(vao_hud_images, 2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, pos));
 		GLC_VAOEnableTextureCoordPointer(vao_hud_images, 0, 4, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, tex));
 		GLC_VAOEnableColorPointer(vao_hud_images, 4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, colour));
@@ -238,17 +236,17 @@ void GLC_HudPrepareImages(void)
 	R_TextureReferenceInvalidate(glc_last_texture_used);
 
 	if (buffers.supported && !gl_vbo_clientmemory.integer) {
-		if (!R_BufferReferenceIsValid(imageVBO)) {
-			imageVBO = buffers.Create(buffertype_vertex, "image-vbo", sizeof(imageData.glc_images), imageData.glc_images, bufferusage_once_per_frame);
+		if (!R_BufferReferenceIsValid(r_buffer_hud_image_vertex_data)) {
+			buffers.Create(r_buffer_hud_image_vertex_data, buffertype_vertex, "image-vbo", sizeof(imageData.glc_images), imageData.glc_images, bufferusage_once_per_frame);
 		}
 		else {
-			buffers.Update(imageVBO, sizeof(imageData.glc_images[0]) * imageData.imageCount * 4, imageData.glc_images);
+			buffers.Update(r_buffer_hud_image_vertex_data, sizeof(imageData.glc_images[0]) * imageData.imageCount * 4, imageData.glc_images);
 		}
 	}
 
-	if (buffers.supported && !R_BufferReferenceIsValid(imageIndexBuffer)) {
+	if (buffers.supported && !R_BufferReferenceIsValid(r_buffer_hud_image_index_data)) {
 		R_BindVertexArray(vao_none);
-		if (!R_BufferReferenceIsValid(imageIndexBuffer)) {
+		if (!R_BufferReferenceIsValid(r_buffer_hud_image_index_data)) {
 			unsigned int data[MAX_MULTI_IMAGE_BATCH * 6 * 3];
 			int pos, i;
 
@@ -267,7 +265,7 @@ void GLC_HudPrepareImages(void)
 					data[pos++] = i * 4 + 3;
 				}
 			}
-			imageIndexBuffer = buffers.Create(buffertype_index, "hudimage-elements", pos * sizeof(unsigned int), data, bufferusage_constant_data);
+			buffers.Create(r_buffer_hud_image_index_data, buffertype_index, "hudimage-elements", pos * sizeof(unsigned int), data, bufferusage_constant_data);
 			extraIndexesPerImage = GL_Supported(R_SUPPORT_PRIMITIVERESTART) ? 1 : 2;
 		}
 	}
@@ -276,7 +274,7 @@ void GLC_HudPrepareImages(void)
 static void GLC_HudDrawImagesVertexArray(texture_ref ref, int start, int end)
 {
 	extern cvar_t gl_vbo_clientmemory;
-	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(imageVBO) / (sizeof(imageData.glc_images[0]) * 4);
+	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(r_buffer_hud_image_vertex_data) / (sizeof(imageData.glc_images[0]) * 4);
 	qbool nearest = (imageData.images[start].flags & IMAGEPROG_FLAGS_NEAREST);
 	int i;
 
@@ -335,7 +333,7 @@ static qbool GLC_ProgramHudImagesCompile(void)
 static void GLC_HudDrawImagesProgram(texture_ref ref, int start, int end)
 {
 	extern cvar_t gl_vbo_clientmemory;
-	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(imageVBO) / (sizeof(imageData.glc_images[0]) * 4);
+	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(r_buffer_hud_image_vertex_data) / (sizeof(imageData.glc_images[0]) * 4);
 	int i;
 
 	R_ProgramUse(r_program_hud_images_glc);

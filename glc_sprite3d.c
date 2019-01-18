@@ -38,8 +38,8 @@ static void GLC_Create3DSpriteVAO(void)
 		R_Sprite3DCreateVBO();
 		R_Sprite3DCreateIndexBuffer();
 
-		GLC_VAOSetIndexBuffer(vao_3dsprites, sprite3dIndexes);
-		GLC_VAOSetVertexBuffer(vao_3dsprites, sprite3dVBO);
+		GLC_VAOSetIndexBuffer(vao_3dsprites, r_buffer_sprite_index_data);
+		GLC_VAOSetVertexBuffer(vao_3dsprites, r_buffer_sprite_vertex_data);
 		GLC_VAOEnableVertexPointer(vao_3dsprites, 3, GL_FLOAT, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, position));
 		GLC_VAOEnableColorPointer(vao_3dsprites, 4, GL_UNSIGNED_BYTE, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, color));
 		GLC_VAOEnableTextureCoordPointer(vao_3dsprites, 0, 2, GL_FLOAT, sizeof(r_sprite3d_vert_t), VBO_FIELDOFFSET(r_sprite3d_vert_t, tex));
@@ -113,7 +113,7 @@ void GLC_Draw3DSpritesInline(void)
 		if (!R_VertexArrayCreated(vao_3dsprites)) {
 			GLC_Create3DSpriteVAO();
 		}
-		buffers.Update(sprite3dVBO, vertexCount * sizeof(verts[0]), verts);
+		buffers.Update(r_buffer_sprite_vertex_data, vertexCount * sizeof(verts[0]), verts);
 
 		if (gl_program_sprites.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_CompileSpriteProgram()) {
 			R_ProgramUse(r_program_sprites_glc);

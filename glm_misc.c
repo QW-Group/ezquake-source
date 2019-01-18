@@ -30,7 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 #include "gl_texture.h"
 
-static buffer_ref ubo_frameConstants;
 static uniform_block_frame_constants_t frameConstants;
 static qbool frameConstantsUploaded = false;
 
@@ -172,12 +171,12 @@ void GLM_SetupGL(void)
 void GLM_UploadFrameConstants(void)
 {
 	if (!frameConstantsUploaded) {
-		if (!R_BufferReferenceIsValid(ubo_frameConstants)) {
-			ubo_frameConstants = buffers.Create(buffertype_uniform, "frameConstants", sizeof(frameConstants), &ubo_frameConstants, bufferusage_once_per_frame);
+		if (!R_BufferReferenceIsValid(r_buffer_frame_constants)) {
+			buffers.Create(r_buffer_frame_constants, buffertype_uniform, "frameConstants", sizeof(frameConstants), &frameConstants, bufferusage_once_per_frame);
 		}
 
-		buffers.BindRange(ubo_frameConstants, EZQ_GL_BINDINGPOINT_FRAMECONSTANTS, buffers.BufferOffset(ubo_frameConstants), sizeof(frameConstants));
-		buffers.Update(ubo_frameConstants, sizeof(frameConstants), &frameConstants);
+		buffers.BindRange(r_buffer_frame_constants, EZQ_GL_BINDINGPOINT_FRAMECONSTANTS, buffers.BufferOffset(r_buffer_frame_constants), sizeof(frameConstants));
+		buffers.Update(r_buffer_frame_constants, sizeof(frameConstants), &frameConstants);
 		frameConstantsUploaded = true;
 	}
 }

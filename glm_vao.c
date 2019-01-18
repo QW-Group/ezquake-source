@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 typedef struct r_vao_s {
 	GLuint vao;
 
-	buffer_ref element_array_buffer;
+	r_buffer_id element_array_buffer;
 } glm_vao_t;
 
 static glm_vao_t vaos[vao_count];
@@ -88,7 +88,7 @@ void GLM_BindVertexArray(r_vao_id vao)
 	}
 }
 
-void GLM_ConfigureVertexAttribPointer(r_vao_id vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer, int divisor)
+void GLM_ConfigureVertexAttribPointer(r_vao_id vao, r_buffer_id vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer, int divisor)
 {
 	assert(vao);
 	assert(vaos[vao].vao);
@@ -106,7 +106,7 @@ void GLM_ConfigureVertexAttribPointer(r_vao_id vao, buffer_ref vbo, GLuint index
 	qglVertexAttribDivisor(index, divisor);
 }
 
-void GLM_ConfigureVertexAttribIPointer(r_vao_id vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor)
+void GLM_ConfigureVertexAttribIPointer(r_vao_id vao, r_buffer_id vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor)
 {
 	assert(vao);
 	assert(vaos[vao].vao);
@@ -124,7 +124,7 @@ void GLM_ConfigureVertexAttribIPointer(r_vao_id vao, buffer_ref vbo, GLuint inde
 	qglVertexAttribDivisor(index, divisor);
 }
 
-void GLM_SetVertexArrayElementBuffer(r_vao_id vao, buffer_ref ibo)
+void GLM_SetVertexArrayElementBuffer(r_vao_id vao, r_buffer_id ibo)
 {
 	assert(vao);
 	assert(vaos[vao].vao);
@@ -146,7 +146,7 @@ void GLM_GenVertexArray(r_vao_id vao, const char* name)
 	qglGenVertexArrays(1, &vaos[vao].vao);
 	R_BindVertexArray(vao);
 	GL_TraceObjectLabelSet(GL_VERTEX_ARRAY, vaos[vao].vao, -1, name);
-	buffers.SetElementArray(null_buffer_reference);
+	buffers.SetElementArray(r_buffer_none);
 }
 
 void GLM_DeleteVAOs(void)
@@ -172,7 +172,7 @@ qbool GLM_VertexArrayCreated(r_vao_id vao)
 	return vaos[vao].vao != 0;
 }
 
-void GLM_BindVertexArrayElementBuffer(r_vao_id vao, buffer_ref ref)
+void GLM_BindVertexArrayElementBuffer(r_vao_id vao, r_buffer_id ref)
 {
 	if (vaos[vao].vao) {
 		vaos[vao].element_array_buffer = ref;

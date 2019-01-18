@@ -34,7 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 
 // Hardware lighting: flag surfaces as we add them
-static buffer_ref ssbo_surfacesTodo;
 static texture_ref lightmap_texture_array;
 static texture_ref lightmap_data_array;
 static texture_ref lightmap_source_array;
@@ -42,7 +41,6 @@ static unsigned int lightmap_depth;
 static unsigned int* surfaceTodoData;
 static int surfaceTodoLength;
 static int maximumSurfaceNumber;
-static buffer_ref ssbo_lightingData;
 
 texture_ref GLM_LightmapArray(void)
 {
@@ -60,15 +58,15 @@ void GLM_ComputeLightmaps(void)
 		R_ProgramComputeSetMemoryBarrierFlag(r_program_lightmap_compute, r_program_memory_barrier_texture_access);
 	}
 
-	if (!R_BufferReferenceIsValid(ssbo_lightingData)) {
-		ssbo_lightingData = buffers.Create(buffertype_storage, "lightstyles", sizeof(d_lightstylevalue), d_lightstylevalue, bufferusage_once_per_frame);
+	if (!R_BufferReferenceIsValid(r_buffer_brushmodel_lightstyles_ssbo)) {
+		buffers.Create(r_buffer_brushmodel_lightstyles_ssbo, buffertype_storage, "lightstyles", sizeof(d_lightstylevalue), d_lightstylevalue, bufferusage_once_per_frame);
 	}
 	else {
-		buffers.Update(ssbo_lightingData, sizeof(d_lightstylevalue), d_lightstylevalue);
+		buffers.Update(r_buffer_brushmodel_lightstyles_ssbo, sizeof(d_lightstylevalue), d_lightstylevalue);
 	}
-	buffers.BindRange(ssbo_lightingData, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, buffers.BufferOffset(ssbo_lightingData), sizeof(d_lightstylevalue));
-	buffers.Update(ssbo_surfacesTodo, surfaceTodoLength, surfaceTodoData);
-	buffers.BindRange(ssbo_surfacesTodo, EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT, buffers.BufferOffset(ssbo_surfacesTodo), surfaceTodoLength);
+	buffers.BindRange(r_buffer_brushmodel_lightstyles_ssbo, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, buffers.BufferOffset(r_buffer_brushmodel_lightstyles_ssbo), sizeof(d_lightstylevalue));
+	buffers.Update(r_buffer_brushmodel_surfacestolight_ssbo, surfaceTodoLength, surfaceTodoData);
+	buffers.BindRange(r_buffer_brushmodel_surfacestolight_ssbo, EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT, buffers.BufferOffset(r_buffer_brushmodel_surfacestolight_ssbo), surfaceTodoLength);
 
 	GL_BindImageTexture(0, lightmap_source_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
 	GL_BindImageTexture(1, lightmap_texture_array, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
@@ -99,11 +97,11 @@ void GLM_CreateLightmapTextures(void)
 	surfaceTodoLength = ((maximumSurfaceNumber + 31) / 32) * sizeof(unsigned int);
 	Q_free(surfaceTodoData);
 	surfaceTodoData = (unsigned int*)Q_malloc(surfaceTodoLength);
-	if (!R_BufferReferenceIsValid(ssbo_surfacesTodo)) {
-		ssbo_surfacesTodo = buffers.Create(buffertype_storage, "surfaces-to-light", surfaceTodoLength, NULL, bufferusage_once_per_frame);
+	if (!R_BufferReferenceIsValid(r_buffer_brushmodel_surfacestolight_ssbo)) {
+		buffers.Create(r_buffer_brushmodel_surfacestolight_ssbo, buffertype_storage, "surfaces-to-light", surfaceTodoLength, NULL, bufferusage_once_per_frame);
 	}
 	else {
-		buffers.EnsureSize(ssbo_surfacesTodo, surfaceTodoLength);
+		buffers.EnsureSize(r_buffer_brushmodel_surfacestolight_ssbo, surfaceTodoLength);
 	}
 
 	if (R_TextureReferenceIsValid(lightmap_texture_array) && lightmap_depth >= lightmap_array_size) {

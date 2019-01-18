@@ -73,15 +73,13 @@ typedef struct glc_aliasmodel_vert_s {
 static glc_aliasmodel_vert_t* temp_aliasmodel_buffer;
 static int temp_aliasmodel_buffer_size;
 
-static buffer_ref aliasmodel_pose_vbo;
-
-static void GLC_ConfigureAliasModelState(buffer_ref vbo)
+static void GLC_ConfigureAliasModelState(void)
 {
 	extern cvar_t gl_vbo_clientmemory;
 
 	if (gl_program_aliasmodels.integer) {
 		R_GenVertexArray(vao_aliasmodel);
-		GLC_VAOSetVertexBuffer(vao_aliasmodel, vbo);
+		GLC_VAOSetVertexBuffer(vao_aliasmodel, r_buffer_aliasmodel_vertex_data);
 		GLC_VAOEnableVertexPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, position));
 		GLC_VAOEnableNormalPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, normal));
 		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 0, 2, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords));
@@ -100,7 +98,7 @@ static void GLC_ConfigureAliasModelState(buffer_ref vbo)
 		}
 		else {
 			R_GenVertexArray(vao_aliasmodel);
-			GLC_VAOSetVertexBuffer(vao_aliasmodel, aliasmodel_pose_vbo);
+			GLC_VAOSetVertexBuffer(vao_aliasmodel, r_buffer_aliasmodel_glc_pose_data);
 			GLC_VAOEnableVertexPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, position));
 			GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 0, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, texture_coords));
 			GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 1, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), VBO_FIELDOFFSET(glc_aliasmodel_vert_t, texture_coords));
@@ -113,7 +111,7 @@ static void GLC_ConfigureAliasModelState(buffer_ref vbo)
 	}
 }
 
-void GLC_AllocateAliasPoseBuffer(buffer_ref vbo)
+void GLC_AllocateAliasPoseBuffer(void)
 {
 	if (!gl_program_aliasmodels.integer) {
 		int max_verts = 0;
@@ -165,15 +163,15 @@ void GLC_AllocateAliasPoseBuffer(buffer_ref vbo)
 			temp_aliasmodel_buffer_size = max_verts;
 		}
 
-		if (R_BufferReferenceIsValid(aliasmodel_pose_vbo)) {
-			aliasmodel_pose_vbo = buffers.Resize(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL);
+		if (R_BufferReferenceIsValid(r_buffer_aliasmodel_glc_pose_data)) {
+			buffers.Resize(r_buffer_aliasmodel_glc_pose_data, sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL);
 		}
 		else {
-			aliasmodel_pose_vbo = buffers.Create(buffertype_vertex, "glc-alias-pose", sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL, bufferusage_reuse_per_frame);
+			buffers.Create(r_buffer_aliasmodel_glc_pose_data, buffertype_vertex, "glc-alias-pose", sizeof(temp_aliasmodel_buffer[0]) * max_verts, NULL, bufferusage_reuse_per_frame);
 		}
 	}
 
-	GLC_ConfigureAliasModelState(vbo);
+	GLC_ConfigureAliasModelState();
 }
 
 void GLC_FreeAliasPoseBuffer(void)
@@ -437,7 +435,7 @@ static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int 
 		} while (--count);
 
 		if (cache) {
-			buffers.Update(aliasmodel_pose_vbo, sizeof(temp_aliasmodel_buffer[0]) * position, temp_aliasmodel_buffer);
+			buffers.Update(r_buffer_aliasmodel_glc_pose_data, sizeof(temp_aliasmodel_buffer[0]) * position, temp_aliasmodel_buffer);
 			GL_DrawArrays(primitive, 0, position);
 		}
 		else {

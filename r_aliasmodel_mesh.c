@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glsl/constants.glsl"
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
-void GLM_CreateAliasModelVAO(buffer_ref aliasModelVBO, buffer_ref instanceVBO);
+void GLM_CreateAliasModelVAO(void);
 #endif
 
 static void GL_AliasModelSetVertexDirection(aliashdr_t* hdr, vbo_model_vert_t* vbo_buffer, int pose1, int pose2, qbool limit_lerp, int key_pose)
@@ -183,13 +183,12 @@ static void R_ImportModelToVBO(model_t* mod, vbo_model_vert_t* aliasmodel_data, 
 	}
 }
 
-void R_CreateAliasModelVBO(buffer_ref instanceVBO)
+void R_CreateAliasModelVBO(void)
 {
 	vbo_model_vert_t* aliasModelData;
 	int new_vbo_position = 0;
 	int required_vbo_length = 4;
 	int i;
-	buffer_ref vbo;
 
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
@@ -246,22 +245,21 @@ void R_CreateAliasModelVBO(buffer_ref instanceVBO)
 		}
 	}
 
-	vbo = buffers.Create(buffertype_vertex, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
+	buffers.Create(r_buffer_aliasmodel_vertex_data, buffertype_vertex, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
-		GLM_CreateAliasModelVAO(vbo, instanceVBO);
+		GLM_CreateAliasModelVAO();
 #ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
 		aliasModel_ssbo = buffers.Create(buffertype_storage, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
 		buffers.BindBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
 #endif
 	}
 #endif
-
 	Q_free(aliasModelData);
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
-		GLC_AllocateAliasPoseBuffer(vbo);
+		GLC_AllocateAliasPoseBuffer();
 	}
 #endif
 }

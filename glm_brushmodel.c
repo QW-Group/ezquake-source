@@ -36,31 +36,29 @@ typedef struct vbo_world_surface_s {
 	float tex_vecs1[4];
 } vbo_world_surface_t;
 
-buffer_ref worldModel_surfaces_ssbo;
-
-void GLM_CreateBrushModelVAO(buffer_ref brushModel_vbo, buffer_ref vbo_brushElements, buffer_ref instance_vbo)
+void GLM_CreateBrushModelVAO(void)
 {
 	int i;
 
-	if (!R_BufferReferenceIsValid(brushModel_vbo) || !R_BufferReferenceIsValid(vbo_brushElements)) {
+	if (!R_BufferReferenceIsValid(r_buffer_brushmodel_vertex_data) || !R_BufferReferenceIsValid(r_buffer_brushmodel_index_data)) {
 		return;
 	}
 
 	// Create vao
 	R_GenVertexArray(vao_brushmodel);
-	buffers.Bind(vbo_brushElements);
+	buffers.Bind(r_buffer_brushmodel_index_data);
 
-	GLM_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, position), 0);
-	GLM_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, material_coords), 0);
-	GLM_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 2, 2, GL_SHORT, GL_TRUE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, lightmap_coords), 0);
-	GLM_ConfigureVertexAttribPointer(vao_brushmodel, brushModel_vbo, 3, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, detail_coords), 0);
-	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 4, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, lightmap_index), 0);
-	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 5, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, material_index), 0);
+	GLM_ConfigureVertexAttribPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, position), 0);
+	GLM_ConfigureVertexAttribPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, material_coords), 0);
+	GLM_ConfigureVertexAttribPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 2, 2, GL_SHORT, GL_TRUE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, lightmap_coords), 0);
+	GLM_ConfigureVertexAttribPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 3, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, detail_coords), 0);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 4, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, lightmap_index), 0);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 5, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, material_index), 0);
 	// 
-	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, instance_vbo, 6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
-	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 7, 1, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flags), 0);
-	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 8, 3, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flatcolor), 0);
-	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, brushModel_vbo, 9, 1, GL_UNSIGNED_INT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, surface_num), 0);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_instance_number, 6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 7, 1, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flags), 0);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 8, 3, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flatcolor), 0);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 9, 1, GL_UNSIGNED_INT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, surface_num), 0);
 
 	R_BindVertexArray(vao_none);
 
@@ -75,9 +73,9 @@ void GLM_CreateBrushModelVAO(buffer_ref brushModel_vbo, buffer_ref vbo_brushElem
 			memcpy(surfaces[i].tex_vecs0, surf->texinfo->vecs[0], sizeof(surf->texinfo->vecs[0]));
 			memcpy(surfaces[i].tex_vecs1, surf->texinfo->vecs[1], sizeof(surf->texinfo->vecs[1]));
 		}
-		worldModel_surfaces_ssbo = buffers.Create(buffertype_storage, "brushmodel-surfs", cl.worldmodel->numsurfaces * sizeof(vbo_world_surface_t), surfaces, bufferusage_constant_data);
+		buffers.Create(r_buffer_brushmodel_surface_data, buffertype_storage, "brushmodel-surfs", cl.worldmodel->numsurfaces * sizeof(vbo_world_surface_t), surfaces, bufferusage_constant_data);
 		Q_free(surfaces);
-		buffers.BindBase(worldModel_surfaces_ssbo, EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES);
+		buffers.BindBase(r_buffer_brushmodel_surface_data, EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES);
 	}
 }
 

@@ -25,15 +25,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void GLM_BindVertexArray(r_vao_id vao);
 void GLM_GenVertexArray(r_vao_id vao, const char* name);
-void GLM_SetVertexArrayElementBuffer(r_vao_id vao, buffer_ref ibo);
+void GLM_SetVertexArrayElementBuffer(r_vao_id vao, r_buffer_id ibo);
 void GLM_DeleteVAOs(void);
 
 qbool GLM_InitialiseVAOHandling(void);
 qbool GLM_VertexArrayCreated(r_vao_id vao);
 
-void GLM_ConfigureVertexAttribPointer(r_vao_id vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer, int divisor);
-void GLM_ConfigureVertexAttribIPointer(r_vao_id vao, buffer_ref vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor);
+void GLM_ConfigureVertexAttribPointer(r_vao_id vao, r_buffer_id vbo, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer, int divisor);
+void GLM_ConfigureVertexAttribIPointer(r_vao_id vao, r_buffer_id vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor);
 
-void GLM_BindVertexArrayElementBuffer(r_vao_id, buffer_ref ref);
+void GLM_BindVertexArrayElementBuffer(r_vao_id, r_buffer_id ref);
 
 #endif // EZQUAKE_GLM_VAO_HEADER

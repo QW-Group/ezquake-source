@@ -95,7 +95,7 @@ RENDERER_METHOD(void, TextureLoadCubemapFace, texture_ref cubemap, r_cubemap_dir
 RENDERER_METHOD(void, DeleteVAOs, void)
 RENDERER_METHOD(void, GenVertexArray, r_vao_id vao, const char* name)
 RENDERER_METHOD(void, BindVertexArray, r_vao_id vao)
-RENDERER_METHOD(void, BindVertexArrayElementBuffer, r_vao_id vao, buffer_ref ref)
+RENDERER_METHOD(void, BindVertexArrayElementBuffer, r_vao_id vao, r_buffer_id ref)
 RENDERER_METHOD(qbool, VertexArrayCreated, r_vao_id vao)
 
 // Sprites
