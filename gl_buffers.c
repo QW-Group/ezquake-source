@@ -153,10 +153,12 @@ static glClientWaitSync_t qglClientWaitSync = NULL;
 static glDeleteSync_t     qglDeleteSync = NULL;
 
 // Cache OpenGL state
-static GLuint currentArrayBuffer;
-static GLuint currentUniformBuffer;
-static GLuint currentDrawIndirectBuffer;
-static GLuint currentElementArrayBuffer;
+static struct {
+	GLuint currentArrayBuffer;
+	GLuint currentUniformBuffer;
+	GLuint currentDrawIndirectBuffer;
+	GLuint currentElementArrayBuffer;
+} glBufferState;
 
 #define GL_BufferInvalidateReference(name, glref) { name = ((name) == (glref)) ? 0 : (name); }
 
@@ -167,10 +169,10 @@ static buffer_data_t* GL_BufferAllocateSlot(r_buffer_id id, buffertype_t type, c
 	assert(usage < bufferusage_count);
 
 	if (buffer->glref) {
-		GL_BufferInvalidateReference(currentArrayBuffer, buffer->glref);
-		GL_BufferInvalidateReference(currentUniformBuffer, buffer->glref);
-		GL_BufferInvalidateReference(currentDrawIndirectBuffer, buffer->glref);
-		GL_BufferInvalidateReference(currentElementArrayBuffer, buffer->glref);
+		GL_BufferInvalidateReference(glBufferState.currentArrayBuffer, buffer->glref);
+		GL_BufferInvalidateReference(glBufferState.currentUniformBuffer, buffer->glref);
+		GL_BufferInvalidateReference(glBufferState.currentDrawIndirectBuffer, buffer->glref);
+		GL_BufferInvalidateReference(glBufferState.currentElementArrayBuffer, buffer->glref);
 		if (buffer->type == buffertype_index) {
 			R_BindVertexArrayElementBuffer(r_buffer_none);
 		}
@@ -435,6 +437,7 @@ static void GL_BufferShutdown(void)
 		}
 	}
 	memset(tripleBufferSyncObjects, 0, sizeof(tripleBufferSyncObjects));
+	memset(&glBufferState, 0, sizeof(glBufferState));
 }
 
 static void GL_BindBufferBase(r_buffer_id id, unsigned int index)
@@ -463,30 +466,28 @@ static void GL_BindBufferRange(r_buffer_id id, unsigned int index, ptrdiff_t off
 static qbool GL_BindBufferImpl(GLenum target, GLuint buffer)
 {
 	if (target == GL_ARRAY_BUFFER) {
-		if (buffer == currentArrayBuffer) {
+		if (buffer == glBufferState.currentArrayBuffer) {
 			return false;
 		}
-		currentArrayBuffer = buffer;
+		glBufferState.currentArrayBuffer = buffer;
 	}
 	else if (target == GL_UNIFORM_BUFFER) {
-		if (buffer == currentUniformBuffer) {
+		if (buffer == glBufferState.currentUniformBuffer) {
 			return false;
 		}
-		currentUniformBuffer = buffer;
+		glBufferState.currentUniformBuffer = buffer;
 	}
 	else if (target == GL_DRAW_INDIRECT_BUFFER) {
-		if (buffer == currentDrawIndirectBuffer) {
+		if (buffer == glBufferState.currentDrawIndirectBuffer) {
 			return false;
 		}
-
-		currentDrawIndirectBuffer = buffer;
+		glBufferState.currentDrawIndirectBuffer = buffer;
 	}
 	else if (target == GL_ELEMENT_ARRAY_BUFFER) {
-		if (buffer == currentElementArrayBuffer) {
+		if (buffer == glBufferState.currentElementArrayBuffer) {
 			return false;
 		}
-
-		currentElementArrayBuffer = buffer;
+		glBufferState.currentElementArrayBuffer = buffer;
 	}
 
 	qglBindBuffer(target, buffer);
@@ -516,7 +517,7 @@ static void GL_BindBuffer(r_buffer_id id)
 
 static void GL_InitialiseBufferState(void)
 {
-	currentDrawIndirectBuffer = currentArrayBuffer = currentUniformBuffer = 0;
+	memset(&glBufferState, 0, sizeof(glBufferState));
 	R_BindVertexArrayElementBuffer(r_buffer_none);
 	R_InitialiseVAOState();
 }
@@ -537,10 +538,10 @@ static qbool GL_BufferValid(r_buffer_id id)
 static void GL_SetElementArrayBuffer(r_buffer_id id)
 {
 	if (GL_BufferValid(id)) {
-		currentElementArrayBuffer = buffer_data[id].glref;
+		glBufferState.currentElementArrayBuffer = buffer_data[id].glref;
 	}
 	else {
-		currentElementArrayBuffer = 0;
+		glBufferState.currentElementArrayBuffer = 0;
 	}
 }
 
@@ -596,13 +597,13 @@ static void GL_PrintBufferState(FILE* debug_frame_out, int debug_frame_depth)
 {
 	char label[64];
 
-	if (currentArrayBuffer) {
-		GL_TraceObjectLabelGet(GL_BUFFER, currentArrayBuffer, sizeof(label), NULL, label);
-		fprintf(debug_frame_out, "%.*s   ArrayBuffer: %u (%s)\n", debug_frame_depth, "                                                          ", currentArrayBuffer, label);
+	if (glBufferState.currentArrayBuffer) {
+		GL_TraceObjectLabelGet(GL_BUFFER, glBufferState.currentArrayBuffer, sizeof(label), NULL, label);
+		fprintf(debug_frame_out, "%.*s   ArrayBuffer: %u (%s)\n", debug_frame_depth, "                                                          ", glBufferState.currentArrayBuffer, label);
 	}
-	if (currentElementArrayBuffer) {
-		GL_TraceObjectLabelGet(GL_BUFFER, currentElementArrayBuffer, sizeof(label), NULL, label);
-		fprintf(debug_frame_out, "%.*s   ElementArray: %u (%s)\n", debug_frame_depth, "                                                          ", currentElementArrayBuffer, label);
+	if (glBufferState.currentElementArrayBuffer) {
+		GL_TraceObjectLabelGet(GL_BUFFER, glBufferState.currentElementArrayBuffer, sizeof(label), NULL, label);
+		fprintf(debug_frame_out, "%.*s   ElementArray: %u (%s)\n", debug_frame_depth, "                                                          ", glBufferState.currentElementArrayBuffer, label);
 	}
 }
 #endif
