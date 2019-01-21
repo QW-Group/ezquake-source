@@ -1737,7 +1737,7 @@ int VID_ScaledWidth3D(void)
 	else if (vid_framebuffer_width.integer > 0) {
 		return max(vid_framebuffer_width.integer, 320);
 	}
-	return 0;
+	return glConfig.vidWidth;
 }
 
 int VID_ScaledHeight3D(void)
@@ -1748,7 +1748,7 @@ int VID_ScaledHeight3D(void)
 	else if (vid_framebuffer_height.integer > 0) {
 		return max(vid_framebuffer_height.integer, 200);
 	}
-	return 0;
+	return glConfig.vidHeight;
 }
 
 int VID_RenderWidth2D(void)
