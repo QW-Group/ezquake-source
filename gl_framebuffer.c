@@ -30,6 +30,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "gl_texture_internal.h"
 #include "r_renderer.h"
 
+extern cvar_t vid_framebuffer;
+extern cvar_t vid_framebuffer_depthformat;
+extern cvar_t vid_framebuffer_palette;
+extern cvar_t vid_framebuffer_hdr;
+extern cvar_t vid_framebuffer_blit;
+extern cvar_t r_fx_geometry;
+
 #ifndef GL_NEGATIVE_ONE_TO_ONE
 #define GL_NEGATIVE_ONE_TO_ONE            0x935E
 #endif
@@ -150,9 +157,6 @@ C_ASSERT(sizeof(framebuffer_depth_buffer) / sizeof(framebuffer_depth_buffer[0]) 
 C_ASSERT(sizeof(glDepthFormats) / sizeof(glDepthFormats[0]) == r_depthformat_count);
 #endif
 
-extern cvar_t vid_framebuffer_depthformat;
-extern cvar_t vid_framebuffer_hdr;
-
 //
 // Initialize framebuffer stuff, Loads procadresses and such.
 //
@@ -208,6 +212,8 @@ void GL_InitialiseFramebufferHandling(void)
 		glConfig.supported_features |= SDL_GL_ExtensionSupported("GL_ARB_depth_buffer_float") ? R_SUPPORT_DEPTH32F : 0;
 	}
 
+	glConfig.supported_features |= SDL_GL_ExtensionSupported("GL_ARB_framebuffer_sRGB") ? R_SUPPORT_FRAMEBUFFERS_SRGB : 0;
+
 	if (GL_UseDirectStateAccess()) {
 		GL_LoadOptionalFunction(glNamedRenderbufferStorage);
 		GL_LoadOptionalFunction(glNamedFramebufferRenderbuffer);
@@ -232,9 +238,27 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	framebuffer_data_t* fb = NULL;
 	char label[128];
 	qbool hdr = (vid_framebuffer_hdr.integer && GL_VersionAtLeast(3, 0) && id == framebuffer_std);
+	GLenum framebuffer_format;
 
 	if (!GL_Supported(R_SUPPORT_FRAMEBUFFERS)) {
 		return false;
+	}
+
+	if (hdr) {
+		framebuffer_format = GL_RGB16F;
+	}
+	else if (vid_gammacorrection.integer) {
+		if (GL_Supported(R_SUPPORT_FRAMEBUFFERS_SRGB)) {
+			framebuffer_format = (id == framebuffer_std ? GL_SRGB8 : GL_SRGB8_ALPHA8);
+		}
+		else {
+			Con_Printf("sRGB framebuffers are not supported on your hardware.\n");
+			Cvar_LatchedSetValue(&vid_framebuffer, 0);
+			return false;
+		}
+	}
+	else {
+		framebuffer_format = (id == framebuffer_std ? GL_RGB8 : GL_RGBA8);
 	}
 
 	fb = &framebuffer_data[id];
@@ -252,7 +276,7 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	//
 	//R_AllocateTextureReferences(texture_type_2d, width, height, hdr ? TEX_NOSCALE | (id == framebuffer_std ? 0 : TEX_ALPHA), 1, &fb->texture[fbtex_standard]);
 	GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_standard], label);
-	GL_TexStorage2D(fb->texture[fbtex_standard], 1, hdr ? GL_RGB16F : (id == framebuffer_std ? GL_RGB8 : GL_RGBA8), width, height, false);
+	GL_TexStorage2D(fb->texture[fbtex_standard], 1, framebuffer_format, width, height, false);
 	renderer.TextureLabelSet(fb->texture[fbtex_standard], label);
 	renderer.TextureSetFiltering(fb->texture[fbtex_standard], texture_minification_linear, texture_minification_linear);
 	renderer.TextureWrapModeClamp(fb->texture[fbtex_standard]);
@@ -335,7 +359,6 @@ qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
 	framebuffer_data_t* fb = NULL;
 	GLenum buffers[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
 	float clearValue[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	extern cvar_t r_fx_geometry;
 
 	if (!r_fx_geometry.integer || !GL_Supported(R_SUPPORT_FRAMEBUFFERS)) {
 		return false;
@@ -561,10 +584,6 @@ void GL_FramebufferBlitSimple(framebuffer_id source_id, framebuffer_id destinati
 }
 
 // --- Wrapper functionality over, rendering logic below ---
-extern cvar_t vid_framebuffer;
-extern cvar_t vid_framebuffer_depthformat;
-extern cvar_t vid_framebuffer_palette;
-
 qbool GL_FramebufferEnabled3D(void)
 {
 	framebuffer_data_t* fb = &framebuffer_data[framebuffer_std];
@@ -585,8 +604,6 @@ static void VID_FramebufferFlip(void)
 	qbool flip2d = vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY && GL_FramebufferEnabled2D();
 
 	if (flip3d || flip2d) {
-		extern cvar_t vid_framebuffer_blit;
-
 		// Screen-wide framebuffer without any processing required, so we can just blit
 		qbool should_blit = (
 			vid_framebuffer_palette.integer == 0 &&
@@ -658,7 +675,6 @@ qbool GL_Framebuffer2DSwitch(void)
 
 void GL_FramebufferPostProcessScreen(void)
 {
-	extern cvar_t vid_framebuffer, vid_framebuffer_palette;
 	qbool framebuffer_active = GL_FramebufferEnabled3D() || GL_FramebufferEnabled2D();
 
 	if (framebuffer_active) {
