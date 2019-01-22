@@ -168,7 +168,7 @@ static qbool GLM_CompileAliasModelProgram(void)
 	return R_ProgramReady(r_program_aliasmodel);
 }
 
-void GLM_CreateAliasModelVAO()
+void GLM_CreateAliasModelVAO(void)
 {
 	R_GenVertexArray(vao_aliasmodel);
 

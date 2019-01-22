@@ -27,7 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qmb_particles.h"
 #include "r_brushmodel.h" // R_PointIsUnderwater only
 
-static const float particle_emit_time = 0.01; // 100 fps
 static vec3_t zerodir = { 22, 22, 22 };
 
 byte *ColorForParticle(part_type_t type)

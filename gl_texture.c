@@ -38,8 +38,6 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 const texture_ref null_texture_reference = { 0 };
 static GLenum gl_solid_format = GL_RGB8, gl_alpha_format = GL_RGBA8;
 
-static const texture_ref invalid_texture_reference = { 0 };
-
 extern unsigned d_8to24table2[256];
 
 extern int anisotropy_ext;

@@ -125,8 +125,6 @@ int GLM_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 void GLM_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 {
 	int i;
-	extern texture_ref underwatertexture;
-	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer;
 	msurface_t* psurf;
 	extern msurface_t* alphachain;
 	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1) && clmodel->isworldmodel;
