@@ -98,5 +98,6 @@ void R_Sprite3DRender(r_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t 
 // Internal for renderers
 void R_Sprite3DCreateIndexBuffer(void);
 void R_Sprite3DCreateVBO(void);
+void R_Sprite3DClearBatches(void);
 
 #endif // EZQUAKE_R_SPRITE3D_HEADER

@@ -106,6 +106,75 @@ unsigned int batchMapping[MAX_SPRITE3D_BATCHES];
 unsigned int batchCount;
 unsigned int vertexCount;
 static unsigned int indexData[INDEXES_MAX_QUADS * 4 + INDEXES_MAX_SPARKS * 9 + INDEXES_MAX_FLASHBLEND * 18 + (INDEXES_MAX_QUADS + INDEXES_MAX_SPARKS + INDEXES_MAX_FLASHBLEND) * 3];
+static int sprites_in_batch[sprite_vertpool_count];
+
+sprite_vertpool_id batch_to_vertpool[] = {
+	sprite_vertpool_game_entities, // SPRITE3D_ENTITIES,
+	sprite_vertpool_simple_particles, // SPRITE3D_PARTICLES_CLASSIC,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_spark,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_smoke,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_fire,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_bubble,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_lavasplash,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_gunblast,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_chunk,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_shockwave,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_inferno_flame,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_inferno_trail,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_sparkray,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_staticbubble,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_trailpart,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_dpsmoke,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_dpfire,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_teleflare,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_blood1,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_blood2,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_blood3,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_rain,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_alphatrail,
+	sprite_vertpool_game_annotations, // SPRITE3D_PARTICLES_NEW_p_railtrail,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_streak,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_streaktrail,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_streakwave,
+	sprite_vertpool_game_annotations, // SPRITE3D_PARTICLES_NEW_p_lightningbeam,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_vxblood,
+	sprite_vertpool_qmb_particles_environment, // SPRITE3D_PARTICLES_NEW_p_lavatrail,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_vxsmoke,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_vxsmoke_red,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_muzzleflash,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_inferno,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_2dshockwave,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_vxrocketsmoke,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_trailbleed,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_bleedspike,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_flame,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_bubble2,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_bloodcloud,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_chunkdir,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_smallspark,
+	sprite_vertpool_qmb_particles_environment, // SPRITE3D_PARTICLES_NEW_p_slimeglow,
+	sprite_vertpool_qmb_particles_environment, // SPRITE3D_PARTICLES_NEW_p_slimebubble,
+	sprite_vertpool_qmb_particles_environment, // SPRITE3D_PARTICLES_NEW_p_blacklavasmoke,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_PARTICLES_NEW_p_entitytrail,
+	sprite_vertpool_qmb_particles_environment, // SPRITE3D_PARTICLES_NEW_p_flametorch,
+	sprite_vertpool_game_annotations, // SPRITE3D_FLASHBLEND_LIGHTS,  (put it here as it's important to gameplay)
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_CORONATEX_STANDARD,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_CORONATEX_GUNFLASH,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_CORONATEX_EXPLOSIONFLASH1,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_CORONATEX_EXPLOSIONFLASH2,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_CORONATEX_EXPLOSIONFLASH3,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_CORONATEX_EXPLOSIONFLASH4,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_CORONATEX_EXPLOSIONFLASH5,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_CORONATEX_EXPLOSIONFLASH6,
+	sprite_vertpool_qmb_particles_normal, // SPRITE3D_CORONATEX_EXPLOSIONFLASH7,
+	sprite_vertpool_game_annotations, // SPRITE3D_CHATICON_AFK_CHAT,
+	sprite_vertpool_game_annotations, // SPRITE3D_CHATICON_CHAT,
+	sprite_vertpool_game_annotations, // SPRITE3D_CHATICON_AFK
+};
+
+#ifdef C_ASSERT
+C_ASSERT(sizeof(batch_to_vertpool) / sizeof(batch_to_vertpool[0]) == MAX_SPRITE3D_BATCHES);
+#endif
 
 static gl_sprite3d_batch_t* BatchForType(sprite3d_batch_id type, qbool allocate)
 {
@@ -141,8 +210,9 @@ r_sprite3d_vert_t* R_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_
 {
 	gl_sprite3d_batch_t* batch = BatchForType(type, false);
 	int start = vertexCount;
+	int sprite_count = sprites_in_batch[batch_to_vertpool[batch->id]];
 
-	if (!batch || batch->count >= MAX_3DSPRITES_PER_BATCH || (batch->count + 1) * verts_required >= MAX_VERTS_PER_BATCH) {
+	if (!batch || sprite_count >= MAX_3DSPRITES_PER_BATCH || (sprite_count + 1) * verts_required >= MAX_VERTS_PER_BATCH) {
 		return NULL;
 	}
 	if (start + verts_required >= MAX_VERTS_PER_SCENE) {
@@ -157,6 +227,7 @@ r_sprite3d_vert_t* R_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_
 	if (batch->count) {
 		batch->allSameNumber &= verts_required == batch->numVertices[0];
 	}
+	sprites_in_batch[batch_to_vertpool[batch->id]] += 1;
 	++batch->count;
 	vertexCount += verts_required;
 	return &verts[start];
@@ -284,4 +355,11 @@ void R_Sprite3DRender(r_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t 
 	R_Sprite3DSetVert(vert++, points[1][0], points[1][1], points[1][2], 0, t, color_white, index);
 	R_Sprite3DSetVert(vert++, points[2][0], points[2][1], points[2][2], s, 0, color_white, index);
 	R_Sprite3DSetVert(vert++, points[3][0], points[3][1], points[3][2], s, t, color_white, index);
+}
+
+void R_Sprite3DClearBatches(void)
+{
+	batchCount = vertexCount = 0;
+	memset(batchMapping, 0, sizeof(batchMapping));
+	memset(sprites_in_batch, 0, sizeof(sprites_in_batch));
 }

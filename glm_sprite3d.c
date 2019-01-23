@@ -194,6 +194,5 @@ void GLM_Draw3DSprites(void)
 
 	R_TraceLeaveNamedRegion();
 
-	batchCount = vertexCount = 0;
-	memset(batchMapping, 0, sizeof(batchMapping));
+	R_Sprite3DClearBatches();
 }

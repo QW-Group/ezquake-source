@@ -212,8 +212,7 @@ void GLC_Draw3DSpritesInline(void)
 		batch->count = 0;
 	}
 
-	batchCount = vertexCount = 0;
-	memset(batchMapping, 0, sizeof(batchMapping));
+	R_Sprite3DClearBatches();
 	R_ProgramUse(r_program_none);
 }
 
