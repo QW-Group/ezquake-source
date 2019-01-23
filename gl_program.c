@@ -509,18 +509,25 @@ static int GL_InsertDefinitions(
 	const char* definitions
 )
 {
-#ifdef RENDERER_OPTION_MODERN_OPENGL
-	extern unsigned char constants_glsl[], common_glsl[];
-	extern unsigned int constants_glsl_len, common_glsl_len;
-#else
-	static unsigned char constants_glsl[] = "", common_glsl[] = "";
-	unsigned int constants_glsl_len = 0, common_glsl_len = 0;
-#endif
+	static unsigned char *glsl_constants_glsl = "", *glsl_common_glsl = "";
+	unsigned int glsl_constants_glsl_len = 0, glsl_common_glsl_len = 0;
 	const char* break_point;
 
 	if (!strings[0] || !strings[0][0]) {
 		return 0;
 	}
+
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+	if (R_UseModernOpenGL()) {
+		extern unsigned char constants_glsl[], common_glsl[];
+		extern unsigned int constants_glsl_len, common_glsl_len;
+
+		glsl_constants_glsl = constants_glsl;
+		glsl_common_glsl = common_glsl;
+		glsl_constants_glsl_len = constants_glsl_len;
+		glsl_common_glsl_len = common_glsl_len;
+	}
+#endif
 
 	break_point = safe_strstr(strings[0], lengths[0], EZQUAKE_DEFINITIONS_STRING);
 	
@@ -530,14 +537,14 @@ static int GL_InsertDefinitions(
 		lengths[5] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
 		lengths[4] = definitions ? strlen(definitions) : 0;
 		lengths[3] = strlen(core_definitions);
-		lengths[2] = common_glsl_len;
-		lengths[1] = constants_glsl_len;
+		lengths[2] = glsl_common_glsl_len;
+		lengths[1] = glsl_constants_glsl_len;
 		lengths[0] = position;
 		strings[5] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
 		strings[4] = definitions ? definitions : "";
 		strings[3] = core_definitions;
-		strings[2] = (const char*)common_glsl;
-		strings[1] = (const char*)constants_glsl;
+		strings[2] = (const char*)glsl_common_glsl;
+		strings[1] = (const char*)glsl_constants_glsl;
 
 		return 6;
 	}
