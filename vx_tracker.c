@@ -1359,17 +1359,22 @@ void VX_TrackerInit(void)
 						// We got potential image name, treat image as two printable characters.
 						if (to - from < sizeof(imagename)) {
 							int base = (i * MAX_IMAGES_PER_WEAPON);
-							mpic_t* pic = &char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].glyphs[base + weapon_images[i]];
+							mpic_t* texture;
 
 							strncpy(imagename, start + from, to - from);
 							imagename[to - from] = '\0';
 
 							snprintf(fullpath, sizeof(fullpath), "textures/tracker/%s", imagename);
 
-							*pic = *R_LoadPicImage(fullpath, NULL, 0, 0, TEX_ALPHA);
-							pic->width = 16;
-							pic->height = 8;
-							++weapon_images[i];
+							texture = R_LoadPicImage(fullpath, NULL, 0, 0, TEX_ALPHA);
+							if (texture) {
+								mpic_t* pic = &char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].glyphs[base + weapon_images[i]];
+
+								*pic = *texture;
+								pic->width = 16;
+								pic->height = 8;
+								++weapon_images[i];
+							}
 						}
 					}
 
