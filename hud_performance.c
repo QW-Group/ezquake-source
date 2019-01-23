@@ -198,6 +198,7 @@ static void FrameStats_DrawElement(hud_t *hud)
 			FrameStats_AddLine(&lines, "Brush-model polys:", frameStats.classic.polycount[polyTypeBrushModel]);
 		}
 	}
+	FrameStats_AddLine(&lines, "Particles:", prevFrameStats.particle_count);
 	if (hud_frameStats_amfstats->integer) {
 		FrameStats_AddLine(&lines, "", 0);
 		FrameStats_AddLine(&lines, "AMF particle count:", ParticleCount);

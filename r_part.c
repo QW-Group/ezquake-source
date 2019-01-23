@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_state.h"
 #include "r_local.h"
 #include "r_renderer.h"
+#include "r_framestats.h"
 
 #ifndef RENDERER_OPTION_MODERN_OPENGL
 int particletexture_array_index = 0;
@@ -641,6 +642,8 @@ static void Classic_PrepareParticles(void)
 	if (r_numactiveparticles == 0 || (!r_drawparticles.integer && !Rulesets_RestrictParticles())) {
 		return;
 	}
+
+	frameStats.particle_count = r_numactiveparticles;
 
 	r_partscale = 0.004 * tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
 	VectorScale(vup, 1.5, up);

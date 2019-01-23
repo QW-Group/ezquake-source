@@ -30,6 +30,7 @@ typedef struct r_frame_stats_s {
 	int lightmap_updates;
 	int draw_calls;
 	int subdraw_calls;
+	int particle_count;
 
 	double start_time;
 	double end_time;
