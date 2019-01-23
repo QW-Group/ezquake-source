@@ -12,9 +12,10 @@ varying vec4 fsColor;
 
 void main()
 {
-	gl_FragColor = texture2D(primarySampler, TextureCoord.st) * TextureCoord.a;
+	gl_FragColor = texture2D(primarySampler, TextureCoord.st);
 
 #ifdef MIXED_SAMPLING
+	gl_FragColor *= TextureCoord.a;
 	gl_FragColor += texture2D(secondarySampler, TextureCoord.st) * (1 - TextureCoord.a);
 #endif
 
