@@ -26,10 +26,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "r_renderer.h"
 #include "gl_texture.h"
+#include "r_program.h"
 
 // motion blur.
 void GLC_PolyBlend(float v_blend[4])
 {
+	R_ProgramUse(r_program_none);
 	GLC_StateBeginPolyBlend(v_blend);
 
 	GLC_Begin(GL_QUADS);
@@ -55,6 +57,7 @@ void GLC_BrightenScreen(void)
 	f = min(v_contrast.value, 3);
 	f = pow(f, vid_gamma);
 
+	R_ProgramUse(r_program_none);
 	GLC_StateBeginBrightenScreen();
 
 	GLC_Begin(GL_QUADS);

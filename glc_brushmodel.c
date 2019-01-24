@@ -275,6 +275,7 @@ static void GLC_DrawFlat_Immediate(model_t* model, qbool polygonOffset)
 	float *v;
 
 	s = model->drawflat_chain;
+	R_ProgramUse(r_program_none);
 	while (s) {
 		GLC_SurfaceColor(s, desired);
 
@@ -488,7 +489,7 @@ static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations
 	allocations->second_pass_luma = lumas && allocations->fbTextureUnit < 0;
 }
 
-static void GLC_DrawTextureChainsImpl(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset)
+static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset)
 {
 	texture_unit_allocation_t allocations;
 	extern cvar_t gl_lumatextures;
@@ -556,6 +557,7 @@ static void GLC_DrawTextureChainsImpl(entity_t* ent, model_t *model, qbool caust
 		}
 	}
 
+	R_ProgramUse(r_program_none);
 	for (i = 0; i < model->numtextures; i++) {
 		texture_t* t;
 
@@ -957,7 +959,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 		R_ProgramUse(r_program_none);
 	}
 	else {
-		GLC_DrawTextureChainsImpl(ent, model, caustics, polygonOffset);
+		GLC_DrawTextureChains_Immediate(ent, model, caustics, polygonOffset);
 	}
 }
 
@@ -1167,6 +1169,7 @@ static void GLC_BlendLightmaps(void)
 	float *v;
 	qbool use_vbo = buffers.supported && modelIndexes;
 
+	R_ProgramUse(r_program_none);
 	GLC_StateBeginBlendLightmaps(use_vbo);
 	
 	for (i = 0; i < GLC_LightmapCount(); i++) {
@@ -1213,7 +1216,9 @@ void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType)
 		return;
 	}
 
+	R_ProgramUse(r_program_none);
 	GLC_StateBeginAlphaChain();
+
 	for (s = alphachain; s; s = s->texturechain) {
 		++frameStats.classic.polycount[polyType];
 		R_RenderDynamicLightmaps(s, false);

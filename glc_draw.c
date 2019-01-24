@@ -62,6 +62,7 @@ void GLC_HudDrawCircles(texture_ref texture, int start, int end)
 	start = max(0, start);
 	end = min(end, circleData.circleCount - 1);
 
+	R_ProgramUse(r_program_none);
 	for (i = start; i <= end; ++i) {
 		GLC_StateBeginDrawAlphaPieSliceRGB(circleData.drawCircleThickness[i]);
 		R_CustomColor(
@@ -95,6 +96,7 @@ void GLC_HudDrawLines(texture_ref texture, int start, int end)
 {
 	int i;
 
+	R_ProgramUse(r_program_none);
 	for (i = start; i <= end; ++i) {
 		R_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
 		GLC_Begin(GL_LINES);
@@ -110,8 +112,8 @@ void GLC_HudDrawPolygons(texture_ref texture, int start, int end)
 {
 	int i, j;
 
+	R_ProgramUse(r_program_none);
 	GLC_StateBeginDrawPolygon();
-
 	for (i = start; i <= end; ++i) {
 		R_CustomColor(
 			polygonData.polygonColor[i][0],
@@ -381,7 +383,7 @@ static void GLC_HudDrawImagesProgram(texture_ref ref, int start, int end)
 	R_ProgramUse(r_program_none);
 }
 
-static void GLC_HudDrawImagesImmediate(texture_ref ref, int start, int end)
+static void GLC_HudDrawImages_Immediate(texture_ref ref, int start, int end)
 {
 	int i;
 	byte current_color[4];
@@ -391,8 +393,9 @@ static void GLC_HudDrawImagesImmediate(texture_ref ref, int start, int end)
 	renderer.TextureUnitBind(0, ref);
 	R_CustomColor4ubv(imageData.glc_images[start * 4].colour);
 	memcpy(current_color, imageData.glc_images[start * 4].colour, sizeof(current_color));
+	
+	R_ProgramUse(r_program_none);
 	GLC_Begin(GL_QUADS);
-
 	for (i = start * 4; i <= 4 * end + 3; i += 4) {
 		glc_image_t* next = &imageData.glc_images[i];
 
@@ -442,6 +445,6 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 		GLC_HudDrawImagesVertexArray(ref, start, end);
 	}
 	else {
-		GLC_HudDrawImagesImmediate(ref, start, end);
+		GLC_HudDrawImages_Immediate(ref, start, end);
 	}
 }

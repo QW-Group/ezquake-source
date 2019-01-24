@@ -118,6 +118,12 @@ void GLC_Draw3DSpritesInline(void)
 		if (gl_program_sprites.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_CompileSpriteProgram()) {
 			R_ProgramUse(r_program_sprites_glc);
 		}
+		else {
+			R_ProgramUse(r_program_none);
+		}
+	}
+	else {
+		R_ProgramUse(r_program_none);
 	}
 
 	for (i = 0; i < batchCount; ++i) {

@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "r_aliasmodel.h"
 #include "glc_local.h"
 #include "r_renderer.h"
+#include "r_program.h"
 
 void GLC_SetPowerupShellColor(int layer_no, int effects);
 
@@ -100,6 +101,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 		lerpfrac = min(ent->framelerp, 1);
 	}
 
+	R_ProgramUse(r_program_none);
 	GLC_StateBeginMD3Draw(r_modelalpha, R_TextureReferenceIsValid(sinf->texnum));
 	if (R_TextureReferenceIsValid(sinf->texnum)) {
 		renderer.TextureUnitBind(0, sinf->texnum);
@@ -222,6 +224,7 @@ void GLC_DrawAlias3ModelPowerupShell(entity_t *ent)
 		lerpfrac = min(ent->framelerp, 1);
 	}
 
+	R_ProgramUse(r_program_none);
 	GLC_StateBeginAliasPowerupShell(ent->renderfx & RF_WEAPONMODEL);
 
 	for (layer_no = 0; layer_no <= 1; ++layer_no) {

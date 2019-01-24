@@ -194,6 +194,8 @@ void GLC_SkyDrawChainedSurfaces(void)
 		return;
 	}
 
+	// MEAG: Fixme
+	R_ProgramUse(r_program_none);
 	if (r_fastsky.integer || cl.worldmodel->bspversion == HL_BSPVERSION) {
 		GLC_StateBeginFastSky();
 		GLC_DrawFastSkyChain();
@@ -340,12 +342,14 @@ void GLC_DrawSky(void)
 		GLC_DrawSky_Program();
 	}
 	else if (r_fastsky.integer) {
+		R_ProgramUse(r_program_none);
 		GLC_StateBeginFastSky();
 		GLC_DrawFastSkyChain();
 	}
 	else if (r_skyboxloaded && R_UseCubeMapForSkyBox()) {
 		extern texture_ref skybox_cubeMap;
 
+		R_ProgramUse(r_program_none);
 		R_ApplyRenderingState(r_state_skybox);
 		renderer.TextureUnitBind(0, skybox_cubeMap);
 		glEnable(GL_TEXTURE_CUBE_MAP);
@@ -362,6 +366,7 @@ void GLC_DrawSky(void)
 	}
 	else if (R_DetermineSkyLimits(&ignore_z)) {
 		// draw a skybox or classic quake clouds
+		R_ProgramUse(r_program_none);
 		if (r_skyboxloaded) {
 			GLC_DrawSkyBox();
 		}

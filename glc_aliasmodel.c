@@ -362,6 +362,7 @@ static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int 
 	vec3_t interpolated_verts;
 	ez_trivertx_t *verts1, *verts2;
 
+	R_ProgramUse(r_program_none);
 	if (render_effects & RF_CAUSTICS) {
 		GLC_StateBeginUnderwaterAliasModelCaustics(texture, fb_texture);
 	}
@@ -612,6 +613,7 @@ static void GLC_DrawPowerupShell_Immediate(entity_t* ent, int pose1, int pose2, 
 	int position;
 	const float* scroll = GLC_PowerupShell_ScrollParams();
 
+	R_ProgramUse(r_program_none);
 	for (position = 0, layer_no = 0; layer_no <= 1; ++layer_no) {
 		// get the vertex count and primitive type
 		order = (int *)((byte *)paliashdr + paliashdr->commands);
@@ -751,6 +753,7 @@ static void GLC_DrawAliasModelShadowDrawCall_Immediate(entity_t* ent, int pose1,
 	verts += pose1 * paliashdr->poseverts;
 	order = (int *)((byte *)paliashdr + paliashdr->commands);
 
+	R_ProgramUse(r_program_none);
 	while ((count = *order++)) {
 		// get the vertex count and primitive type
 		if (count < 0) {
