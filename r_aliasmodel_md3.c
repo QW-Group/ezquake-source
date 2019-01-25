@@ -66,8 +66,10 @@ static int Mod_ReadFlagsFromMD1(char *name, int md3version)
 void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 {
 	char specifiedskinname[128];
+	char specifiedskinnameinfolder[128];
 	char skinfileskinname[128];
 	char tenebraeskinname[128];
+	char strippedmodelname[128];
 	int start, end, total;
 	int numsurfs;
 	int surfn;
@@ -123,6 +125,9 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 		mFrame->radius = LittleLong(mFrame->radius);
 	}
 
+	strlcpy(strippedmodelname, mod->name, sizeof(strippedmodelname));
+	COM_StripExtension(strippedmodelname, strippedmodelname, sizeof(strippedmodelname));
+
 	sinf = (surfinf_t*)((char *)pheader + pheader->surfinf);
 	{
 		surf = (md3Surface_t *)((char *)mem + mem->ofsSurfaces);
@@ -176,24 +181,35 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 
 			*specifiedskinname = *skinfileskinname = *tenebraeskinname = '\0';
 			strlcpy(specifiedskinname, sshad->name, sizeof(specifiedskinname));
+			strlcpy(specifiedskinnameinfolder, "textures/", sizeof(specifiedskinnameinfolder));
+			strlcat(specifiedskinnameinfolder, sshad->name, sizeof(specifiedskinnameinfolder));
 
-			// TODO: Have no idea how armor_0.tga would get picked up under this system,
-			//       or the armor.mdl I found just isn't configured correctly.  Shrug.
+			// MEAG: Changed the load order here, tenebraeskinname can be over-written by the .skin file
 			if (*sshad->name) {
 				strlcpy(tenebraeskinname, mod->name, sizeof(tenebraeskinname)); //backup
 				strcpy(COM_SkipPathWritable(tenebraeskinname), sshad->name);
 			}
-			else {
+
+			{
 				char *sfile, *sfilestart, *nl;
 				char skinfile[128] = { 0 };
 				int len;
 
 				//hmm. Look in skin file.
-				strlcpy(skinfile, mod->name, sizeof(skinfile));
-				COM_StripExtension(skinfile, skinfile, sizeof(skinfile));
-				strlcat(skinfile, "_default.skin", sizeof(skinfile));
-
+				//meag: again, _<surfnum>.skin over-rides _default.skin
+				snprintf(skinfile, sizeof(skinfile), "%s_%d.skin", strippedmodelname, surfn);
 				sfile = sfilestart = (char *)FS_LoadHeapFile(skinfile, NULL);
+
+				if (!sfile) {
+					snprintf(skinfile, sizeof(skinfile), "%s_default.skin", strippedmodelname);
+					sfile = sfilestart = (char *)FS_LoadHeapFile(skinfile, NULL);
+				}
+
+				if (!sfile && surfn) {
+					// The original might have more than 1 skin name
+					snprintf(skinfile, sizeof(skinfile), "%s_0.skin", strippedmodelname);
+					sfile = sfilestart = (char *)FS_LoadHeapFile(skinfile, NULL);
+				}
 
 				strlcpy(sinf->name, mod->name, sizeof(sinf->name)); //backup
 				COM_StripExtension(sinf->name, sinf->name, sizeof(sinf->name));
@@ -208,7 +224,13 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 							nl = sfile + strlen(sfile);
 						}
 						if (sfile[len] == ',' && !strncasecmp(surf->name, sfile, len)) {
-							strlcpy(skinfileskinname, sfile + len + 1, nl - (sfile + len) - 2);
+							memset(skinfileskinname, 0, sizeof(skinfileskinname));
+							strlcpy(skinfileskinname, sfile + len + 1, sizeof(skinfileskinname));
+							skinfileskinname[min(sizeof(skinfileskinname) - 1, nl - (sfile + len + 1))] = '\0';
+							nl = strchr(skinfileskinname, '\r');
+							if (nl) {
+								*nl = '\0';
+							}
 							break;
 						}
 						sfile = nl + 1;
@@ -222,6 +244,9 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 				strlcpy(sinf->name, skinfileskinname, sizeof(sinf->name));
 			}
 			else if (*specifiedskinname && R_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(specifiedskinname, specifiedskinname, 0, 0, 0))) {
+				strlcpy(sinf->name, specifiedskinname, sizeof(sinf->name));
+			}
+			else if (*specifiedskinname && R_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(specifiedskinnameinfolder, specifiedskinname, 0, 0, 0))) {
 				strlcpy(sinf->name, specifiedskinname, sizeof(sinf->name));
 			}
 			else if (*tenebraeskinname) {
