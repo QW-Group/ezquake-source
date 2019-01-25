@@ -37,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define POST_PROCESS_PALETTE    1
 #define POST_PROCESS_3DONLY     2
 
-static qbool GLC_CompilePostProcessProgram(void)
+qbool GLC_CompilePostProcessProgram(void)
 {
 	extern cvar_t vid_framebuffer_palette, vid_framebuffer;
 	int post_process_flags =

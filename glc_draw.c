@@ -304,7 +304,7 @@ static void GLC_HudDrawImagesVertexArray(texture_ref ref, int start, int end)
 #define GLC_PROGRAMFLAGS_SMOOTHTEXT          4
 #define GLC_PROGRAMFLAGS_SMOOTHEVERYTHING    (GLC_PROGRAMFLAGS_SMOOTHCROSSHAIR | GLC_PROGRAMFLAGS_SMOOTHIMAGES | GLC_PROGRAMFLAGS_SMOOTHTEXT)
 
-static qbool GLC_ProgramHudImagesCompile(void)
+qbool GLC_ProgramHudImagesCompile(void)
 {
 	extern cvar_t r_smoothtext, r_smoothcrosshair, r_smoothimages;
 	int flags =

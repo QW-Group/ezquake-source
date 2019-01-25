@@ -87,7 +87,7 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 	}
 }
 
-static qbool GLC_CompileSpriteProgram(void)
+qbool GLC_CompileSpriteProgram(void)
 {
 	if (R_ProgramRecompileNeeded(r_program_sprites_glc, 0)) {
 		R_ProgramCompile(r_program_sprites_glc);

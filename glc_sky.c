@@ -270,7 +270,7 @@ static qbool R_DetermineSkyLimits(qbool *ignore_z)
 
 #define PROGRAMFLAGS_SKYBOX 1
 
-static qbool GLC_SkyProgramCompile(void)
+qbool GLC_SkyProgramCompile(void)
 {
 	int flags = (r_skyboxloaded && R_UseCubeMapForSkyBox() ? PROGRAMFLAGS_SKYBOX : 0);
 

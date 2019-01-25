@@ -130,7 +130,7 @@ void GLC_RenderLumas(void);
 void GLC_RenderLumas_GLSL(void);
 void GLC_RenderFullbrights_GLSL(void);
 
-static qbool GLC_DrawflatProgramCompile(void)
+qbool GLC_DrawflatProgramCompile(void)
 {
 	int flags = (glConfig.supported_features & R_SUPPORT_TEXTURE_ARRAYS) ? 1 : 0;
 
@@ -961,6 +961,14 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 	else {
 		GLC_DrawTextureChains_Immediate(ent, model, caustics, polygonOffset);
 	}
+}
+
+qbool GLC_PreCompileWorldPrograms(void)
+{
+	extern cvar_t gl_program_world;
+	texture_unit_allocation_t allocations;
+
+	return (gl_program_world.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_WorldTexturedProgramCompile(&allocations, cl.worldmodel));
 }
 
 void GLC_DrawWorld(void)

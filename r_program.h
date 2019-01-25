@@ -146,4 +146,7 @@ qbool R_ProgramCompile(r_program_id program_id);
 // Compiles a program with custom includes based on user's config
 qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_definitions);
 
+// Asks all programs to compile themselves
+void R_ProgramCompileAll(void);
+
 #endif // EZQUAKE_R_PROGRAM_HEADER

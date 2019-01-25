@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern msurface_t* waterchain;
 void GLC_EmitWaterPoly(msurface_t* fa);
 
-static qbool GLC_TurbSurfaceProgramCompile(void)
+qbool GLC_TurbSurfaceProgramCompile(void)
 {
 	if (R_ProgramRecompileNeeded(r_program_turb_glc, 0)) {
 		R_ProgramCompile(r_program_turb_glc);

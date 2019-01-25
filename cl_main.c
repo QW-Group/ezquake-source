@@ -70,6 +70,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "menu_demo.h"
 #include "r_local.h"
 #include "r_renderer.h"
+#include "r_program.h"
 
 extern qbool ActiveApp, Minimized;
 
@@ -358,6 +359,8 @@ void CL_MakeActive(void)
 #endif
 	// last chance
 	CachePics_AtlasFrame();
+	// compile all programs
+	R_ProgramCompileAll();
 
 	cls.state = ca_active;
 	if (cls.demoplayback) 

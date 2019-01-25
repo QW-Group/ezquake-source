@@ -244,7 +244,7 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_
 #define DRAWFLAGS_CAUSTICS     1
 #define DRAWFLAGS_MUZZLEHACK   2
 
-static qbool GLC_AliasModelStandardCompile(void)
+qbool GLC_AliasModelStandardCompile(void)
 {
 	extern cvar_t r_lerpmuzzlehack;
 	int flags =
@@ -271,7 +271,7 @@ static qbool GLC_AliasModelStandardCompile(void)
 	return R_ProgramReady(r_program_aliasmodel_std_glc);
 }
 
-static qbool GLC_AliasModelShadowCompile(void)
+qbool GLC_AliasModelShadowCompile(void)
 {
 	int flags = 0;
 
@@ -283,7 +283,7 @@ static qbool GLC_AliasModelShadowCompile(void)
 	return R_ProgramReady(r_program_aliasmodel_shadow_glc);
 }
 
-static qbool GLC_AliasModelShellCompile(void)
+qbool GLC_AliasModelShellCompile(void)
 {
 	extern cvar_t r_lerpmuzzlehack;
 	int flags = (r_lerpmuzzlehack.integer ? DRAWFLAGS_MUZZLEHACK : 0);

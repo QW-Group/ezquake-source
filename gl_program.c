@@ -31,12 +31,13 @@ typedef enum {
 	renderer_modern,
 } renderer_id;
 
-#define GL_DefineProgram_VF(program_id, name, expect_params, sourcename, renderer) \
+#define GL_DefineProgram_VF(program_id, name, expect_params, sourcename, renderer, compile_function) \
 	{ \
 		extern unsigned char sourcename##_vertex_glsl[]; \
 		extern unsigned int sourcename##_vertex_glsl_len; \
 		extern unsigned char sourcename##_fragment_glsl[]; \
 		extern unsigned int sourcename##_fragment_glsl_len; \
+		extern qbool compile_function(void); \
 		memset(&program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
 		program_data[program_id].friendly_name = name; \
 		program_data[program_id].needs_params = expect_params; \
@@ -46,9 +47,10 @@ typedef enum {
 		program_data[program_id].shaders[shadertype_fragment].length = sourcename##_fragment_glsl_len; \
 		program_data[program_id].initialised = true; \
 		program_data[program_id].renderer_id = renderer; \
+		program_data[program_id].compile_func = compile_function; \
 	}
 
-#define GL_DefineProgram_CS(program_id, name, expect_params, sourcename, renderer) \
+#define GL_DefineProgram_CS(program_id, name, expect_params, sourcename, renderer, compile_func) \
 	{ \
 		extern unsigned char sourcename##_compute_glsl[]; \
 		extern unsigned int sourcename##_compute_glsl_len; \
@@ -59,6 +61,7 @@ typedef enum {
 		program_data[program_id].shaders[shadertype_compute].length = sourcename##_compute_glsl_len; \
 		program_data[program_id].initialised = true; \
 		program_data[program_id].renderer_id = renderer; \
+		program_data[program_id].compile_func = compile_func; \
 	}
 
 static void GL_BuildCoreDefinitions(void);
@@ -87,9 +90,12 @@ typedef struct gl_shader_def_s {
 	unsigned int length;
 } gl_shader_def_t;
 
+typedef qbool(*program_compile_func_t)(void);
+
 typedef struct gl_program_s {
 	const char* friendly_name;
 	qbool needs_params;
+	program_compile_func_t compile_func;
 	qbool initialised;
 	gl_shader_def_t shaders[shadertype_count];
 
@@ -509,7 +515,7 @@ static int GL_InsertDefinitions(
 	const char* definitions
 )
 {
-	static unsigned char *glsl_constants_glsl = "", *glsl_common_glsl = "";
+	static unsigned char *glsl_constants_glsl = (unsigned char *)"", *glsl_common_glsl = (unsigned char *)"";
 	unsigned int glsl_constants_glsl_len = 0, glsl_common_glsl_len = 0;
 	const char* break_point;
 
@@ -1073,18 +1079,18 @@ static void GL_BuildCoreDefinitions(void)
 #endif
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
-	GL_DefineProgram_VF(r_program_post_process_glc, "post-process-screen", true, glc_post_process_screen, renderer_classic);
-	GL_DefineProgram_VF(r_program_sky_glc, "sky-rendering", true, glc_sky, renderer_classic);
-	GL_DefineProgram_VF(r_program_turb_glc, "turb-rendering", true, glc_turbsurface, renderer_classic);
-	GL_DefineProgram_VF(r_program_caustics_glc, "caustics-rendering", true, glc_caustics, renderer_classic);
-	GL_DefineProgram_VF(r_program_aliasmodel_std_glc, "aliasmodel-std", true, glc_aliasmodel_std, renderer_classic);
-	GL_DefineProgram_VF(r_program_aliasmodel_shell_glc, "aliasmodel-shell", true, glc_aliasmodel_shell, renderer_classic);
-	GL_DefineProgram_VF(r_program_aliasmodel_shadow_glc, "aliasmodel-shadow", true, glc_aliasmodel_shadow, renderer_classic);
-	GL_DefineProgram_VF(r_program_world_drawflat_glc, "drawflat-world", true, glc_world_drawflat, renderer_classic);
-	GL_DefineProgram_VF(r_program_world_textured_glc, "textured-world", true, glc_world_textured, renderer_classic);
-	GL_DefineProgram_VF(r_program_world_secondpass_glc, "secondpass-world", true, glc_world_secondpass, renderer_classic);
-	GL_DefineProgram_VF(r_program_sprites_glc, "3d-sprites", true, glc_draw_sprites, renderer_classic);
-	GL_DefineProgram_VF(r_program_hud_images_glc, "hud-images", true, glc_hud_images, renderer_classic);
+	GL_DefineProgram_VF(r_program_post_process_glc, "post-process-screen", true, glc_post_process_screen, renderer_classic, GLC_CompilePostProcessProgram);
+	GL_DefineProgram_VF(r_program_sky_glc, "sky-rendering", true, glc_sky, renderer_classic, GLC_SkyProgramCompile);
+	GL_DefineProgram_VF(r_program_turb_glc, "turb-rendering", true, glc_turbsurface, renderer_classic, GLC_TurbSurfaceProgramCompile);
+	GL_DefineProgram_VF(r_program_caustics_glc, "caustics-rendering", true, glc_caustics, renderer_classic, GLC_CausticsProgramCompile);
+	GL_DefineProgram_VF(r_program_aliasmodel_std_glc, "aliasmodel-std", true, glc_aliasmodel_std, renderer_classic, GLC_AliasModelStandardCompile);
+	GL_DefineProgram_VF(r_program_aliasmodel_shell_glc, "aliasmodel-shell", true, glc_aliasmodel_shell, renderer_classic, GLC_AliasModelShellCompile);
+	GL_DefineProgram_VF(r_program_aliasmodel_shadow_glc, "aliasmodel-shadow", true, glc_aliasmodel_shadow, renderer_classic, GLC_AliasModelShadowCompile);
+	GL_DefineProgram_VF(r_program_world_drawflat_glc, "drawflat-world", true, glc_world_drawflat, renderer_classic, GLC_DrawflatProgramCompile);
+	GL_DefineProgram_VF(r_program_world_textured_glc, "textured-world", true, glc_world_textured, renderer_classic, GLC_PreCompileWorldPrograms);
+	GL_DefineProgram_VF(r_program_world_secondpass_glc, "secondpass-world", true, glc_world_secondpass, renderer_classic, GLC_PreCompileWorldPrograms);
+	GL_DefineProgram_VF(r_program_sprites_glc, "3d-sprites", true, glc_draw_sprites, renderer_classic, GLC_CompileSpriteProgram);
+	GL_DefineProgram_VF(r_program_hud_images_glc, "hud-images", true, glc_hud_images, renderer_classic, GLC_ProgramHudImagesCompile);
 #endif
 }
 
@@ -1104,4 +1110,15 @@ r_program_id R_ProgramForAttribute(r_program_attribute_id attr_id)
 	}
 
 	return program_attributes[attr_id].program_id;
+}
+
+void R_ProgramCompileAll(void)
+{
+	int i;
+
+	for (i = 0; i < r_program_count; ++i) {
+		if (program_data[i].initialised && program_data[i].compile_func) {
+			program_data[i].compile_func();
+		}
+	}
 }

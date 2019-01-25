@@ -100,7 +100,7 @@ void GLC_EmitWaterPoly(msurface_t* fa)
 }
 
 // Caustics
-static qbool GLC_CausticsProgramCompile(void)
+qbool GLC_CausticsProgramCompile(void)
 {
 	if (R_ProgramRecompileNeeded(r_program_caustics_glc, 0)) {
 		R_ProgramCompile(r_program_caustics_glc);

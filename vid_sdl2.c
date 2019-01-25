@@ -58,6 +58,7 @@ void Sys_ActiveAppChanged (void);
 #include "r_state.h"
 #include "r_buffers.h"
 #include "r_renderer.h"
+#include "r_program.h"
 
 SDL_GLContext GLM_SDL_CreateContext(SDL_Window* window);
 SDL_GLContext GLC_SDL_CreateContext(SDL_Window* window);
@@ -1558,6 +1559,11 @@ static void VID_Restart_f(void)
 
 	// window may be re-created, so caption need to be forced to update
 	CL_UpdateCaption(true);
+
+	// last chance
+	CachePics_AtlasFrame();
+	// compile all programs
+	R_ProgramCompileAll();
 }
 
 static void VID_DisplayList_f(void)
