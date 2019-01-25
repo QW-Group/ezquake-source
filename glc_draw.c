@@ -267,7 +267,7 @@ void GLC_HudPrepareImages(void)
 					data[pos++] = i * 4 + 3;
 				}
 			}
-			buffers.Create(r_buffer_hud_image_index_data, buffertype_index, "hudimage-elements", pos * sizeof(unsigned int), data, bufferusage_constant_data);
+			buffers.Create(r_buffer_hud_image_index_data, buffertype_index, "hudimage-elements", pos * sizeof(unsigned int), data, bufferusage_reuse_many_frames);
 			extraIndexesPerImage = GL_Supported(R_SUPPORT_PRIMITIVERESTART) ? 1 : 2;
 		}
 	}

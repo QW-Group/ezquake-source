@@ -332,7 +332,7 @@ void R_Sprite3DCreateIndexBuffer(void)
 			}
 		}
 
-		buffers.Create(r_buffer_sprite_index_data, buffertype_index, "3dsprite-indexes", sizeof(indexData), indexData, bufferusage_constant_data);
+		buffers.Create(r_buffer_sprite_index_data, buffertype_index, "3dsprite-indexes", sizeof(indexData), indexData, bufferusage_reuse_many_frames);
 	}
 }
 

@@ -290,7 +290,7 @@ qbool GLM_CreateMultiImageProgram(void)
 				imageIndexData[i * 5 + 4] = ~(GLuint)0;
 			}
 
-			buffers.Create(r_buffer_hud_image_index_data, buffertype_index, "image-indexes", imageIndexLength, imageIndexData, bufferusage_constant_data);
+			buffers.Create(r_buffer_hud_image_index_data, buffertype_index, "image-indexes", imageIndexLength, imageIndexData, bufferusage_reuse_many_frames);
 			Q_free(imageIndexData);
 		}
 

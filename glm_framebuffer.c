@@ -59,7 +59,7 @@ qbool GLM_CompilePostProcessVAO(void)
 		verts[3][3] = 1;
 		verts[3][4] = 1;
 
-		buffers.Create(r_buffer_postprocess_vertex_data, buffertype_vertex, "post-process-screen", sizeof(verts), verts, bufferusage_constant_data);
+		buffers.Create(r_buffer_postprocess_vertex_data, buffertype_vertex, "post-process-screen", sizeof(verts), verts, bufferusage_reuse_many_frames);
 	}
 
 	if (R_BufferReferenceIsValid(r_buffer_postprocess_vertex_data) && !R_VertexArrayCreated(vao_postprocess)) {

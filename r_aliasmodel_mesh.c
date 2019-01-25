@@ -245,7 +245,7 @@ void R_CreateAliasModelVBO(void)
 		}
 	}
 
-	buffers.Create(r_buffer_aliasmodel_vertex_data, buffertype_vertex, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
+	buffers.Create(r_buffer_aliasmodel_vertex_data, buffertype_vertex, "aliasmodel-vertex-data", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_reuse_many_frames);
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
 		GLM_CreateAliasModelVAO();

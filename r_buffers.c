@@ -14,5 +14,5 @@ void R_CreateInstanceVBO(void)
 		values[i] = i;
 	}
 
-	buffers.Create(r_buffer_instance_number, buffertype_vertex, "instance#", sizeof(values), values, bufferusage_constant_data);
+	buffers.Create(r_buffer_instance_number, buffertype_vertex, "instance#", sizeof(values), values, bufferusage_reuse_many_frames);
 }

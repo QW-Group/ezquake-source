@@ -135,7 +135,7 @@ void R_BrushModelCreateVBO(void)
 	}
 
 	// Copy VBO buffer across
-	buffers.Create(r_buffer_brushmodel_vertex_data, buffertype_vertex, "brushmodel-vbo", buffer_size, buffer, bufferusage_constant_data);
+	buffers.Create(r_buffer_brushmodel_vertex_data, buffertype_vertex, "brushmodel-vbo", buffer_size, buffer, bufferusage_reuse_many_frames);
 
 	Q_free(buffer);
 }
