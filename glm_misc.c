@@ -57,11 +57,6 @@ void GLM_PolyBlend(float v_blend[4])
 	Draw_AlphaRectangleRGB(r_refdef.vrect.x, r_refdef.vrect.y, r_refdef.vrect.width, r_refdef.vrect.height, 0.0f, true, v_blend_color);
 }
 
-void GLM_DrawVelocity3D(void)
-{
-	// MEAG: TODO
-}
-
 void GLM_PreRenderView(void)
 {
 	extern cvar_t gl_alphafont, gl_max_size;

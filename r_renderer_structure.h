@@ -34,7 +34,6 @@ RENDERER_METHOD(void, DrawImage, float x, float y, float width, float height, fl
 RENDERER_METHOD(void, DrawRectangle, float x, float y, float width, float height, byte* color)
 RENDERER_METHOD(void, AdjustImages, int first, int last, float x_offset)
 RENDERER_METHOD(void, DrawDisc, void)
-RENDERER_METHOD(void, DrawVelocity3D, void)
 
 // Lightmaps
 RENDERER_METHOD(void, UploadLightmap, int textureUnit, int lightmapnum)

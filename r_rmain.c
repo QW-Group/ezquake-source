@@ -715,19 +715,6 @@ static void R_Clear(void)
 	renderer.ClearRenderingSurface(clear_color);
 }
 
-// player velocity is drawn on screen
-// as 3d vector and its projections
-static void R_DrawVelocity3D(void)
-{
-	extern cvar_t show_velocity_3d;
-
-	if (!show_velocity_3d.integer) {
-		return;
-	}
-
-	renderer.DrawVelocity3D();
-}
-
 void R_PostProcessScene(void)
 {
 	if (R_UseImmediateOpenGL()) {
@@ -753,8 +740,6 @@ static void R_Render3DHud(void)
 	if (R_UseImmediateOpenGL()) {
 		R_DrawViewModel();
 	}
-
-	R_DrawVelocity3D();
 
 	// While still in 3D mode, calculate the location of labels to be printed in 2D
 	SCR_SetupAutoID();
