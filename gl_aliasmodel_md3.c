@@ -42,7 +42,7 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 	// Work out how many verts we are going to need to store in VBO
 	model->vertsInVBO = 0;
 	MD3_ForEachSurface(pheader, surf, surfnum) {
-		model->vertsInVBO += 3 * surf[surfnum].numTriangles;
+		model->vertsInVBO += 3 * surf->numTriangles;
 	}
 	model->vertsInVBO *= pheader->numFrames;
 
