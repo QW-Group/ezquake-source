@@ -954,15 +954,17 @@ void R_CheckReloadLightmaps(void)
 {
 	static qbool allowed;
 	static qbool hardware_lighting;
+	static float modulate;
 
 	// not changed, nothing to do
-	if (allowed == R_FullBrightAllowed() && hardware_lighting == R_HardwareLighting()) {
+	if (allowed == R_FullBrightAllowed() && hardware_lighting == R_HardwareLighting() && modulate == gl_modulate.value) {
 		return;
 	}
 
 	// ok, it changed, lets update all our light maps...
 	allowed = R_FullBrightAllowed();
 	hardware_lighting = R_HardwareLighting();
+	modulate = gl_modulate.value;
 
 	R_ForceReloadLightMaps();
 }
