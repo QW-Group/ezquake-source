@@ -113,7 +113,7 @@ static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL;
 static int TEXTURE_UNIT_CAUSTICS;
 
-static qbool GLM_CompileAliasModelProgram(void)
+qbool GLM_CompileAliasModelProgram(void)
 {
 	extern cvar_t gl_caustics, r_lerpmuzzlehack;
 

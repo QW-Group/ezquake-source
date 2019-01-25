@@ -50,10 +50,11 @@ typedef enum {
 		program_data[program_id].compile_func = compile_function; \
 	}
 
-#define GL_DefineProgram_CS(program_id, name, expect_params, sourcename, renderer, compile_func) \
+#define GL_DefineProgram_CS(program_id, name, expect_params, sourcename, renderer, compile_function) \
 	{ \
 		extern unsigned char sourcename##_compute_glsl[]; \
 		extern unsigned int sourcename##_compute_glsl_len; \
+		extern qbool compile_function(void); \
 		memset(program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
 		program_data[program_id].friendly_name = name; \
 		program_data[program_id].needs_params = expect_params; \
@@ -61,7 +62,7 @@ typedef enum {
 		program_data[program_id].shaders[shadertype_compute].length = sourcename##_compute_glsl_len; \
 		program_data[program_id].initialised = true; \
 		program_data[program_id].renderer_id = renderer; \
-		program_data[program_id].compile_func = compile_func; \
+		program_data[program_id].compile_func = compile_function; \
 	}
 
 static void GL_BuildCoreDefinitions(void);
@@ -1066,16 +1067,16 @@ static void GL_BuildCoreDefinitions(void)
 	memset(core_definitions, 0, sizeof(core_definitions));
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
-	GL_DefineProgram_VF(r_program_aliasmodel, "aliasmodel", true, draw_aliasmodel, renderer_modern);
-	GL_DefineProgram_VF(r_program_brushmodel, "brushmodel", true, draw_world, renderer_modern);
-	GL_DefineProgram_VF(r_program_sprite3d, "3d-sprites", false, draw_sprites, renderer_modern);
-	GL_DefineProgram_VF(r_program_hud_polygon, "polygon-draw", false, hud_draw_polygon, renderer_modern);
-	GL_DefineProgram_VF(r_program_hud_line, "line-draw", false, hud_draw_line, renderer_modern);
-	GL_DefineProgram_VF(r_program_hud_images, "image-draw", true, hud_draw_image, renderer_modern);
-	GL_DefineProgram_VF(r_program_hud_circles, "circle-draw", false, hud_draw_circle, renderer_modern);
-	GL_DefineProgram_VF(r_program_post_process, "post-process-screen", true, post_process_screen, renderer_modern);
-	GL_DefineProgram_CS(r_program_lightmap_compute, "lightmaps", false, lighting, renderer_modern);
-	GL_DefineProgram_VF(r_program_fx_world_geometry, "world-geometry", true, fx_world_geometry, renderer_modern);
+	GL_DefineProgram_VF(r_program_aliasmodel, "aliasmodel", true, draw_aliasmodel, renderer_modern, GLM_CompileAliasModelProgram);
+	GL_DefineProgram_VF(r_program_brushmodel, "brushmodel", true, draw_world, renderer_modern, GLM_CompileDrawWorldProgram);
+	GL_DefineProgram_VF(r_program_sprite3d, "3d-sprites", false, draw_sprites, renderer_modern, GLM_Compile3DSpriteProgram);
+	GL_DefineProgram_VF(r_program_hud_polygon, "polygon-draw", false, hud_draw_polygon, renderer_modern, GLM_CompileHudPolygonProgram);
+	GL_DefineProgram_VF(r_program_hud_line, "line-draw", false, hud_draw_line, renderer_modern, GLM_CompileHudLineProgram);
+	GL_DefineProgram_VF(r_program_hud_images, "image-draw", true, hud_draw_image, renderer_modern, GLM_CreateMultiImageProgram);
+	GL_DefineProgram_VF(r_program_hud_circles, "circle-draw", false, hud_draw_circle, renderer_modern, GLM_CompileHudCircleProgram);
+	GL_DefineProgram_VF(r_program_post_process, "post-process-screen", true, post_process_screen, renderer_modern, GLM_CompilePostProcessProgram);
+	GL_DefineProgram_CS(r_program_lightmap_compute, "lightmaps", false, lighting, renderer_modern, GLM_CompileLightmapComputeProgram);
+	GL_DefineProgram_VF(r_program_fx_world_geometry, "world-geometry", true, fx_world_geometry, renderer_modern, GLM_CompileWorldGeometryProgram);
 #endif
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL

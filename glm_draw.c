@@ -37,7 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_texture.h"
 
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
-static void GLM_CreateMultiImageProgram(void);
+qbool GLM_CreateMultiImageProgram(void);
 
 extern float overall_alpha;
 extern float cachedMatrix[16];
@@ -99,9 +99,18 @@ void GLM_HudDrawPolygons(texture_ref texture, int start, int end)
 	}
 }
 
+qbool GLM_CompileHudPolygonProgram(void)
+{
+	if (R_ProgramRecompileNeeded(r_program_hud_polygon, 0)) {
+		R_ProgramCompile(r_program_hud_polygon);
+	}
+
+	return R_ProgramReady(r_program_hud_polygon);
+}
+
 void GLM_HudPreparePolygons(void)
 {
-	if (R_ProgramRecompileNeeded(r_program_hud_polygon, 0) && !R_ProgramCompile(r_program_hud_polygon)) {
+	if (!GLM_CompileHudPolygonProgram()) {
 		return;
 	}
 
@@ -117,6 +126,15 @@ void GLM_HudPreparePolygons(void)
 		GLM_ConfigureVertexAttribPointer(vao_hud_polygons, r_buffer_hud_polygon_vertex_data, 0, 3, GL_FLOAT, GL_FALSE, sizeof(polygonData.polygonVertices[0]), NULL, 0);
 		R_BindVertexArray(vao_none);
 	}
+}
+
+qbool GLM_CompileHudLineProgram(void)
+{
+	if (R_ProgramRecompileNeeded(r_program_hud_line, 0)) {
+		R_ProgramCompile(r_program_hud_line);
+	}
+
+	return R_ProgramReady(r_program_hud_line);
 }
 
 void GLM_HudPrepareLines(void)
@@ -135,10 +153,6 @@ void GLM_HudPrepareLines(void)
 		GLM_ConfigureVertexAttribPointer(vao_hud_lines, r_buffer_hud_line_vertex_data, 1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, color), 0);
 
 		R_BindVertexArray(vao_none);
-	}
-
-	if (R_ProgramRecompileNeeded(r_program_hud_line, 0)) {
-		R_ProgramCompile(r_program_hud_line);
 	}
 }
 
@@ -231,7 +245,7 @@ void GLM_HudPrepareImages(void)
 	}
 }
 
-static void GLM_CreateMultiImageProgram(void)
+qbool GLM_CreateMultiImageProgram(void)
 {
 	extern cvar_t r_smoothtext, r_smoothcrosshair, r_smoothimages;
 
@@ -287,6 +301,8 @@ static void GLM_CreateMultiImageProgram(void)
 		GLM_ConfigureVertexAttribIPointer(vao_hud_images, r_buffer_hud_image_vertex_data, 3, 1, GL_INT, sizeof(imageData.images[0]), VBO_FIELDOFFSET(glm_image_t, flags), 0);
 		R_BindVertexArray(vao_none);
 	}
+
+	return R_ProgramReady(r_program_hud_images);
 }
 
 void GLM_HudDrawImages(texture_ref texture, int start, int end)
@@ -309,13 +325,17 @@ void GLM_HudDrawImages(texture_ref texture, int start, int end)
 	GL_DrawElementsBaseVertex(GL_TRIANGLE_STRIP, (end - start + 1) * 5, GL_UNSIGNED_INT, (GLvoid*)index_offset, buffer_offset);
 }
 
-void GLM_HudPrepareCircles(void)
+qbool GLM_CompileHudCircleProgram(void)
 {
 	if (R_ProgramRecompileNeeded(r_program_hud_circles, 0)) {
-		if (!R_ProgramCompile(r_program_hud_circles)) {
-			return;
-		}
+		R_ProgramCompile(r_program_hud_circles);
 	}
+
+	return R_ProgramReady(r_program_hud_circles);
+}
+
+void GLM_HudPrepareCircles(void)
+{
 
 	// Build VBO
 	if (!R_BufferReferenceIsValid(r_buffer_hud_circle_vertex_data)) {

@@ -75,7 +75,7 @@ qbool GLM_CompilePostProcessVAO(void)
 }
 
 // If this returns false then the framebuffer will be blitted instead
-static qbool GLM_CompilePostProcessProgram(void)
+qbool GLM_CompilePostProcessProgram(void)
 {
 	extern cvar_t vid_framebuffer_palette, vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap;
 	int post_process_flags =

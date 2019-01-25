@@ -51,11 +51,13 @@ static void GLM_Create3DSpriteVAO(void)
 	}
 }
 
-static void GLM_Compile3DSpriteProgram(void)
+qbool GLM_Compile3DSpriteProgram(void)
 {
 	if (R_ProgramRecompileNeeded(r_program_sprite3d, 0)) {
 		R_ProgramCompile(r_program_sprite3d);
 	}
+
+	return R_ProgramReady(r_program_sprite3d);
 }
 
 static qbool GLM_3DSpritesInit(void)

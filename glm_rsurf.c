@@ -116,7 +116,7 @@ static int TEXTURE_UNIT_SKYDOME_TEXTURE;
 static int TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE;
 
 // We re-compile whenever certain options change, to save texture bindings/lookups
-static void Compile_DrawWorldProgram(void)
+qbool GLM_CompileDrawWorldProgram(void)
 {
 	extern cvar_t gl_lumatextures;
 	extern cvar_t gl_textureless;
@@ -214,6 +214,8 @@ static void Compile_DrawWorldProgram(void)
 	if (!R_BufferReferenceIsValid(r_buffer_brushmodel_drawcall_indirect)) {
 		buffers.Create(r_buffer_brushmodel_drawcall_indirect, buffertype_indirect, "world-indirect", sizeof(drawcalls[0].worldmodel_requests) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
 	}
+
+	return R_ProgramReady(r_program_brushmodel);
 }
 
 static glm_worldmodel_req_t* GLM_CurrentRequest(void)
@@ -255,7 +257,7 @@ static void GL_StartWorldBatch(void)
 
 void GLM_EnterBatchedWorldRegion(void)
 {
-	Compile_DrawWorldProgram();
+	GLM_CompileDrawWorldProgram();
 
 	current_drawcall = 0;
 	index_count = 0;

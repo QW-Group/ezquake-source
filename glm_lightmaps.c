@@ -47,15 +47,20 @@ texture_ref GLM_LightmapArray(void)
 	return lightmap_texture_array;
 }
 
-void GLM_ComputeLightmaps(void)
+qbool GLM_CompileLightmapComputeProgram(void)
 {
-	if (R_ProgramRecompileNeeded(r_program_lightmap_compute, 0)) {
-		if (!R_ProgramCompile(r_program_lightmap_compute)) {
-			return;
-		}
-
+	if (R_ProgramRecompileNeeded(r_program_lightmap_compute, 0) && R_ProgramCompile(r_program_lightmap_compute)) {
 		R_ProgramComputeSetMemoryBarrierFlag(r_program_lightmap_compute, r_program_memory_barrier_image_access);
 		R_ProgramComputeSetMemoryBarrierFlag(r_program_lightmap_compute, r_program_memory_barrier_texture_access);
+	}
+
+	return R_ProgramReady(r_program_lightmap_compute);
+}
+
+void GLM_ComputeLightmaps(void)
+{
+	if (!GLM_CompileLightmapComputeProgram()) {
+		return;
 	}
 
 	if (!R_BufferReferenceIsValid(r_buffer_brushmodel_lightstyles_ssbo)) {

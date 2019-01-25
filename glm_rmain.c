@@ -38,7 +38,7 @@ texture_ref GL_FramebufferTextureReference(framebuffer_id id, fbtex_id tex_id);
 qbool GLM_CompilePostProcessVAO(void);
 
 // If this returns false then the framebuffer will be blitted instead
-static qbool GLM_CompileWorldGeometryProgram(void)
+qbool GLM_CompileWorldGeometryProgram(void)
 {
 	int post_process_flags = 0;
 
