@@ -42,6 +42,8 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 extern glpoly_t *fullbright_polys[MAX_GLTEXTURES];
 extern glpoly_t *luma_polys[MAX_GLTEXTURES];
 
+void GLC_LightmapArrayToggle(qbool use_array);
+
 glpoly_t *caustics_polys = NULL;
 glpoly_t *detail_polys = NULL;
 
@@ -177,6 +179,8 @@ static void GLC_DrawFlat_GLSL(model_t* model, qbool polygonOffset)
 	qbool first_lightmap_surf = true;
 	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer;
 
+	GLC_LightmapArrayToggle(true);
+
 	R_ProgramUse(r_program_world_drawflat_glc);
 	VectorScale(r_wallcolor.color, 1.0f / 255.0f, color);
 	R_ProgramUniform4fv(r_program_uniform_world_drawflat_glc_wallcolor, color);
@@ -273,6 +277,8 @@ static void GLC_DrawFlat_Immediate(model_t* model, qbool polygonOffset)
 	msurface_t *s, *prev;
 	int k;
 	float *v;
+
+	GLC_LightmapArrayToggle(false);
 
 	s = model->drawflat_chain;
 	R_ProgramUse(r_program_none);
@@ -515,6 +521,8 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 	qbool draw_textureless = gl_textureless.integer && model->isworldmodel;
 
 	R_TraceEnterFunctionRegion;
+
+	GLC_LightmapArrayToggle(false);
 
 	GLC_WorldAllocateTextureUnits(&allocations, model, false);
 
@@ -811,6 +819,8 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 	int current_lightmap = -1;
 
 	R_TraceEnterFunctionRegion;
+
+	GLC_LightmapArrayToggle(true);
 
 	R_ApplyRenderingState(allocations->rendering_state);
 	if (ent && ent->alpha) {

@@ -25,6 +25,7 @@ qbool R_FullBrightAllowed(void);
 void R_CheckReloadLightmaps(void);
 void R_RenderAllDynamicLightmaps(struct model_s* model);
 void R_LightmapFrameInit(void);
+void R_ForceReloadLightMaps(void);
 unsigned int R_LightmapCount(void);
 struct msurface_s* R_DrawflatLightmapChain(int i);
 void R_ClearDrawflatLightmapChain(int i);

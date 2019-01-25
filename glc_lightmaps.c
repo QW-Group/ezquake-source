@@ -26,10 +26,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_texture_internal.h"
 #include "r_renderer.h"
 #include "tr_types.h"
+#include "r_lightmaps.h"
 
 // FIXME: Check required depth against GL_MAX_ARRAY_TEXTURE_LAYERS
 static texture_ref lightmap_texture_array;
 static unsigned int lightmap_depth = 0;
+
+static void GLC_CreateLightmapTextureArray(void);
+static void GLC_CreateLightmapTexturesIndividual(void);
 
 void GLC_UploadLightmap(int textureUnit, int lightmapnum);
 
@@ -43,6 +47,28 @@ qbool GLC_SetTextureLightmap(int textureUnit, int lightmap_num)
 	else {
 		return renderer.TextureUnitBind(textureUnit, lightmaps[lightmap_num].gl_texref);
 	}
+}
+
+void GLC_LightmapArrayToggle(qbool use_array)
+{
+	qbool array_in_use = R_TextureReferenceIsValid(lightmap_texture_array);
+	use_array &= (glConfig.supported_features & R_SUPPORT_TEXTURE_ARRAYS) != 0;
+
+	if (array_in_use == use_array) {
+		return;
+	}
+
+	if (use_array && !array_in_use) {
+		GLC_CreateLightmapTextureArray();
+	}
+	else if (array_in_use && !use_array) {
+		GLC_CreateLightmapTexturesIndividual();
+		R_DeleteTextureArray(&lightmap_texture_array);
+		lightmap_depth = 0;
+	}
+
+	// Force all lightmaps to be updated
+	R_ForceReloadLightMaps();
 }
 
 void GLC_InvalidateLightmapTextures(void)
@@ -73,36 +99,50 @@ texture_ref GLC_LightmapTexture(int index)
 	}
 }
 
-void GLC_CreateLightmapTextures(void)
+static void GLC_CreateLightmapTextureArray(void)
+{
+	if (R_TextureReferenceIsValid(lightmap_texture_array) && lightmap_depth >= lightmap_array_size) {
+		return;
+	}
+	if (R_TextureReferenceIsValid(lightmap_texture_array)) {
+		R_DeleteTextureArray(&lightmap_texture_array);
+	}
+	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_texture_array, "lightmap_texture_array");
+	GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, true);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	R_SetTextureArraySize(lightmap_texture_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 4);
+	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_texture_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 4, "lightmap_texture_array");
+#endif
+	renderer.TextureSetFiltering(lightmap_texture_array, texture_minification_linear, texture_magnification_linear);
+	renderer.TextureWrapModeClamp(lightmap_texture_array);
+	lightmap_depth = lightmap_array_size;
+}
+
+static void GLC_CreateLightmapTexturesIndividual(void)
 {
 	int i;
 	char name[64];
 
-	if (glConfig.supported_features & R_SUPPORT_TEXTURE_ARRAYS) {
-		if (R_TextureReferenceIsValid(lightmap_texture_array) && lightmap_depth >= lightmap_array_size) {
-			return;
+	for (i = 0; i < lightmap_array_size; ++i) {
+		if (!R_TextureReferenceIsValid(lightmaps[i].gl_texref)) {
+			snprintf(name, sizeof(name), "lightmap-%03d", i);
+
+			renderer.TextureCreate2D(&lightmaps[i].gl_texref, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, name, true);
 		}
-		if (R_TextureReferenceIsValid(lightmap_texture_array)) {
-			R_DeleteTextureArray(&lightmap_texture_array);
-		}
-		GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_texture_array, "lightmap_texture_array");
-		GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, true);
-#ifdef DEBUG_MEMORY_ALLOCATIONS
-		R_SetTextureArraySize(lightmap_texture_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 4);
-		Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_texture_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 4, "lightmap_texture_array");
-#endif
-		renderer.TextureSetFiltering(lightmap_texture_array, texture_minification_linear, texture_magnification_linear);
-		renderer.TextureWrapModeClamp(lightmap_texture_array);
-		lightmap_depth = lightmap_array_size;
+	}
+}
+
+void GLC_CreateLightmapTextures(void)
+{
+	extern cvar_t gl_program_world;
+	qbool supported = (glConfig.supported_features & R_SUPPORT_TEXTURE_ARRAYS);
+	qbool requested = gl_program_world.integer;
+
+	if (supported && requested) {
+		GLC_CreateLightmapTextureArray();
 	}
 	else {
-		for (i = 0; i < lightmap_array_size; ++i) {
-			if (!R_TextureReferenceIsValid(lightmaps[i].gl_texref)) {
-				snprintf(name, sizeof(name), "lightmap-%03d", i);
-
-				renderer.TextureCreate2D(&lightmaps[i].gl_texref, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, name, true);
-			}
-		}
+		GLC_CreateLightmapTexturesIndividual();
 	}
 }
 

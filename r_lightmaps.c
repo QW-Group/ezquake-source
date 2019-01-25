@@ -921,7 +921,7 @@ void R_LightmapShutdown(void)
 }
 
 // mark all surfaces so ALL light maps will reload in R_RenderDynamicLightmaps()
-static void R_ForceReloadLightMaps(void)
+void R_ForceReloadLightMaps(void)
 {
 	model_t	*m;
 	int i, j;
