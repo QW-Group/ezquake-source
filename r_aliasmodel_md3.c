@@ -189,6 +189,7 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 	start = Hunk_LowMark();
 
 	mod->type = mod_alias3;
+	Mod_AddModelFlags(mod);
 
 	numsurfs = LittleLong(((md3Header_t *)buffer)->numSurfaces);
 
