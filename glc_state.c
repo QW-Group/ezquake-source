@@ -151,23 +151,18 @@ void GLC_StateBeginAliasPowerupShell(qbool weapon)
 	}
 }
 
-void GLC_StateBeginMD3Draw(float alpha, qbool textured)
+void GLC_StateBeginMD3Draw(float alpha, qbool textured, qbool weapon)
 {
-	if (textured) {
-		if (alpha < 1) {
-			R_ApplyRenderingState(r_state_aliasmodel_singletexture_transparent);
-		}
-		else {
-			R_ApplyRenderingState(r_state_aliasmodel_singletexture_opaque);
-		}
+	qbool transparent = (alpha < 1);
+
+	if (weapon) {
+		R_ApplyRenderingState(transparent ? r_state_weaponmodel_singletexture_transparent : r_state_weaponmodel_singletexture_opaque);
+	}
+	else if (textured) {
+		R_ApplyRenderingState(transparent ? r_state_aliasmodel_singletexture_transparent : r_state_aliasmodel_singletexture_opaque);
 	}
 	else {
-		if (alpha < 1) {
-			R_ApplyRenderingState(r_state_aliasmodel_notexture_transparent);
-		}
-		else {
-			R_ApplyRenderingState(r_state_aliasmodel_notexture_opaque);
-		}
+		R_ApplyRenderingState(transparent ? r_state_aliasmodel_notexture_transparent : r_state_aliasmodel_notexture_opaque);
 	}
 }
 

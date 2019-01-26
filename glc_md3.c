@@ -102,7 +102,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	}
 
 	R_ProgramUse(r_program_none);
-	GLC_StateBeginMD3Draw(r_modelalpha, R_TextureReferenceIsValid(sinf->texnum));
+	GLC_StateBeginMD3Draw(r_modelalpha, R_TextureReferenceIsValid(sinf->texnum), ent->renderfx & RF_WEAPONMODEL);
 	if (R_TextureReferenceIsValid(sinf->texnum)) {
 		renderer.TextureUnitBind(0, sinf->texnum);
 	}

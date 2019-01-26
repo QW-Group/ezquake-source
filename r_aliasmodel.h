@@ -37,7 +37,7 @@ extern qbool gl_mtexable;
 
 extern texture_ref shelltexture;
 
-void GLC_StateBeginMD3Draw(float alpha, qbool textured);
+void GLC_StateBeginMD3Draw(float alpha, qbool textured, qbool weapon);
 void R_StateBeginDrawAliasModel(const entity_t* e, aliashdr_t* paliashdr);
 
 // gl_mesh.c
