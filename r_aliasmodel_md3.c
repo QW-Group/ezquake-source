@@ -63,13 +63,116 @@ static int Mod_ReadFlagsFromMD1(char *name, int md3version)
 	return pinmodel->flags;
 }
 
+typedef struct md3_skin_list_entry_s {
+	surfinf_t surface_info;
+	int surface_number;
+	int skin_number;
+
+	struct md3_skin_list_entry_s* next;
+} md3_skin_list_entry_t;
+
+static void Mod_MD3LoadSkins(model_t* mod, md3Header_t* header, md3model_t* model)
+{
+	const char* alternative_names[] = { "default", "blue", "red", "green", "yellow" };
+	char skinfileskinname[128];
+	char strippedmodelname[128];
+	int found_skins = 0;
+	int surface = 0;
+	md3Surface_t* surf;
+	md3_skin_list_entry_t* skin_list = NULL;
+
+	strlcpy(strippedmodelname, mod->name, sizeof(strippedmodelname));
+	COM_StripExtension(strippedmodelname, strippedmodelname, sizeof(strippedmodelname));
+
+	*skinfileskinname = '\0';
+
+	// Load as many external skins as we can find
+	while (true) {
+		char *sfile, *sfilestart, *nl;
+		char skinfile[128] = { 0 };
+		int skinfile_length;
+
+		snprintf(skinfile, sizeof(skinfile), "%s_%d.skin", strippedmodelname, found_skins);
+		sfile = sfilestart = (char *)FS_LoadHeapFile(skinfile, &skinfile_length);
+
+		if (!sfile) {
+			// Try alternate name if we have one
+			if (found_skins < sizeof(alternative_names) / sizeof(alternative_names[0])) {
+				snprintf(skinfile, sizeof(skinfile), "%s_%s.skin", strippedmodelname, alternative_names[found_skins]);
+				sfile = sfilestart = (char *)FS_LoadHeapFile(skinfile, &skinfile_length);
+			}
+			
+			if (!sfile) {
+				break;
+			}
+		}
+
+		// Scan the file for the textures to use for each surface
+		MD3_ForEachSurface(header, surf, surface) {
+			int name_length = strlen(surf->name);
+			md3_skin_list_entry_t* new_skin = Q_malloc(sizeof(md3_skin_list_entry_t));
+
+			new_skin->next = skin_list;
+			skin_list = new_skin;
+			new_skin->surface_number = surface;
+			new_skin->skin_number = found_skins;
+
+			strlcpy(new_skin->surface_info.name, "textures/", sizeof(new_skin->surface_info.name));
+			strlcat(new_skin->surface_info.name, surf->name, sizeof(new_skin->surface_info.name));
+
+			// Search through the .skin file for the mapping from surface => texture
+			for (sfile = sfilestart; sfile < sfilestart + skinfile_length && sfile[0]; sfile = nl + 1) {
+				nl = strchr(sfile, '\n');
+				if (!nl) {
+					nl = sfile + skinfile_length;
+				}
+				if (sfile[name_length] == ',' && !strncasecmp(surf->name, sfile, name_length)) {
+					strlcpy(new_skin->surface_info.name, sfile + name_length + 1, sizeof(new_skin->surface_info.name));
+					new_skin->surface_info.name[min(sizeof(new_skin->surface_info.name) - 1, nl - (sfile + name_length + 1))] = '\0';
+					nl = strchr(new_skin->surface_info.name, '\r');
+					if (nl) {
+						*nl = '\0';
+					}
+					break;
+				}
+				sfile = nl + 1;
+			}
+		}
+		Q_free(sfilestart);
+
+		++found_skins;
+	}
+
+	// End: make sure we allocate at least as many skins as defined in the model
+	while (found_skins < max(header->numSkins, 1)) {
+		MD3_ForEachSurface(header, surf, surface) {
+			md3_skin_list_entry_t* new_skin = Q_malloc(sizeof(md3_skin_list_entry_t));
+			new_skin->next = skin_list;
+			skin_list = new_skin;
+			strlcpy(new_skin->surface_info.name, "textures/", sizeof(new_skin->surface_info.name));
+			strlcat(new_skin->surface_info.name, COM_SkipPath(surf->name), sizeof(new_skin->surface_info.name));
+			++found_skins;
+		}
+	}
+
+	header->numSkins = found_skins;
+
+	// Convert linked list to array so it's moveable & easier to access
+	surfinf_t* surface_info = Hunk_Alloc(sizeof(surfinf_t) * header->numSkins * header->numSurfaces);
+	model->surfinf = (int)((intptr_t)surface_info - (intptr_t)model);
+	while (skin_list) {
+		md3_skin_list_entry_t* next = skin_list->next;
+		int surf_info_index = skin_list->skin_number * header->numSurfaces + skin_list->surface_number;
+
+		surface_info[surf_info_index] = skin_list->surface_info;
+
+		Q_free(skin_list);
+		skin_list = next;
+	}
+}
+
 void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 {
-	char specifiedskinname[128];
-	char specifiedskinnameinfolder[128];
-	char skinfileskinname[128];
-	char tenebraeskinname[128];
-	char strippedmodelname[128];
 	int start, end, total;
 	int numsurfs;
 	int surfn;
@@ -89,9 +192,7 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 
 	numsurfs = LittleLong(((md3Header_t *)buffer)->numSurfaces);
 
-	pheader = (md3model_t *)Hunk_Alloc(sizeof(md3model_t) + numsurfs * sizeof(surfinf_t));
-
-	pheader->surfinf = sizeof(md3model_t);
+	pheader = (md3model_t *)Hunk_Alloc(sizeof(md3model_t));
 	mem = (md3Header_t *)Hunk_Alloc(filesize);
 	pheader->md3model = (char *)mem - (char *)pheader;
 	memcpy(mem, buffer, filesize);	//casually load the entire thing. As you do.
@@ -125,11 +226,9 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 		mFrame->radius = LittleLong(mFrame->radius);
 	}
 
-	strlcpy(strippedmodelname, mod->name, sizeof(strippedmodelname));
-	COM_StripExtension(strippedmodelname, strippedmodelname, sizeof(strippedmodelname));
-
-	sinf = (surfinf_t*)((char *)pheader + pheader->surfinf);
+	Mod_MD3LoadSkins(mod, mem, pheader);
 	{
+		sinf = (surfinf_t*)((char *)pheader + pheader->surfinf);
 		surf = (md3Surface_t *)((char *)mem + mem->ofsSurfaces);
 		for (surfn = 0; surfn < numsurfs; surfn++) {
 			md3Triangle_t	*tris;
@@ -176,95 +275,44 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 			}
 
 			sshad = (md3Shader_t *)((char *)surf + surf->ofsShaders);
-
 			sshad->shaderIndex = LittleLong(sshad->shaderIndex);
 
-			*specifiedskinname = *skinfileskinname = *tenebraeskinname = '\0';
-			strlcpy(specifiedskinname, sshad->name, sizeof(specifiedskinname));
-			strlcpy(specifiedskinnameinfolder, "textures/", sizeof(specifiedskinnameinfolder));
-			strlcat(specifiedskinnameinfolder, sshad->name, sizeof(specifiedskinnameinfolder));
+			for (i = 0; i < mem->numSkins; ++i) {
+				char specifiedskinnameinfolder[128] = { 0 };
+				char tenebraeskinname[128] = { 0 };
 
-			// MEAG: Changed the load order here, tenebraeskinname can be over-written by the .skin file
-			if (*sshad->name) {
-				strlcpy(tenebraeskinname, mod->name, sizeof(tenebraeskinname)); //backup
-				strcpy(COM_SkipPathWritable(tenebraeskinname), sshad->name);
-			}
+				// MEAG: Changed the load order here, tenebraeskinname can be over-written by the .skin file
+				const char* potential_textures[] = {
+					sinf->name,
+					sshad->name,
+					specifiedskinnameinfolder,
+					tenebraeskinname
+				};
 
-			{
-				char *sfile, *sfilestart, *nl;
-				char skinfile[128] = { 0 };
-				int len;
+				strlcpy(specifiedskinnameinfolder, "textures/", sizeof(specifiedskinnameinfolder));
+				strlcat(specifiedskinnameinfolder, sshad->name, sizeof(specifiedskinnameinfolder));
 
-				//hmm. Look in skin file.
-				//meag: again, _<surfnum>.skin over-rides _default.skin
-				snprintf(skinfile, sizeof(skinfile), "%s_%d.skin", strippedmodelname, surfn);
-				sfile = sfilestart = (char *)FS_LoadHeapFile(skinfile, NULL);
-
-				if (!sfile) {
-					snprintf(skinfile, sizeof(skinfile), "%s_default.skin", strippedmodelname);
-					sfile = sfilestart = (char *)FS_LoadHeapFile(skinfile, NULL);
+				if (sshad->name[0]) {
+					strlcpy(tenebraeskinname, mod->name, sizeof(tenebraeskinname)); //backup
+					COM_SkipPathWritable(tenebraeskinname)[0] = '\0';
+					strlcat(tenebraeskinname, sshad->name, sizeof(tenebraeskinname));
 				}
 
-				if (!sfile && surfn) {
-					// The original might have more than 1 skin name
-					snprintf(skinfile, sizeof(skinfile), "%s_0.skin", strippedmodelname);
-					sfile = sfilestart = (char *)FS_LoadHeapFile(skinfile, NULL);
-				}
-
-				strlcpy(sinf->name, mod->name, sizeof(sinf->name)); //backup
-				COM_StripExtension(sinf->name, sinf->name, sizeof(sinf->name));
-				strlcat(sinf->name, "_skin.tga", sizeof(sinf->name));
-
-				len = strlen(surf->name);
-
-				if (sfilestart) {
-					while (*sfile) {
-						nl = strchr(sfile, '\n');
-						if (!nl) {
-							nl = sfile + strlen(sfile);
-						}
-						if (sfile[len] == ',' && !strncasecmp(surf->name, sfile, len)) {
-							memset(skinfileskinname, 0, sizeof(skinfileskinname));
-							strlcpy(skinfileskinname, sfile + len + 1, sizeof(skinfileskinname));
-							skinfileskinname[min(sizeof(skinfileskinname) - 1, nl - (sfile + len + 1))] = '\0';
-							nl = strchr(skinfileskinname, '\r');
-							if (nl) {
-								*nl = '\0';
-							}
-							break;
-						}
-						sfile = nl + 1;
+				// Try and load
+				for (j = 0; j < sizeof(potential_textures) / sizeof(potential_textures[0]); ++j) {
+					if (potential_textures[j][0] && R_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(potential_textures[j], potential_textures[j], 0, 0, 0))) {
+						strlcpy(sinf->name, potential_textures[j], sizeof(sinf->name));
+						break;
 					}
-					Q_free(sfilestart);
 				}
-			}
-
-			//now work out which alternative is best, and load it.
-			if (*skinfileskinname && R_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(skinfileskinname, skinfileskinname, 0, 0, 0))) {
-				strlcpy(sinf->name, skinfileskinname, sizeof(sinf->name));
-			}
-			else if (*specifiedskinname && R_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(specifiedskinname, specifiedskinname, 0, 0, 0))) {
-				strlcpy(sinf->name, specifiedskinname, sizeof(sinf->name));
-			}
-			else if (*specifiedskinname && R_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(specifiedskinnameinfolder, specifiedskinname, 0, 0, 0))) {
-				strlcpy(sinf->name, specifiedskinname, sizeof(sinf->name));
-			}
-			else if (*tenebraeskinname) {
-				sinf->texnum = R_LoadTextureImage(tenebraeskinname, tenebraeskinname, 0, 0, 0);
-				strlcpy(sinf->name, tenebraeskinname, sizeof(sinf->name));
-			}
-			else if (*skinfileskinname) {
-				sinf->texnum = R_LoadTextureImage(skinfileskinname, skinfileskinname, 0, 0, 0);
-				strlcpy(sinf->name, skinfileskinname, sizeof(sinf->name));
-			}
-			else {
-				sinf->texnum = R_LoadTextureImage("dummy", "dummy", 0, 0, 0);
-				strlcpy(sinf->name, "dummy", sizeof(sinf->name));
+				if (!R_TextureReferenceIsValid(sinf->texnum)) {
+					sinf->texnum = R_LoadTextureImage("dummy", "dummy", 0, 0, 0);
+					strlcpy(sinf->name, "dummy", sizeof(sinf->name));
+				}
+				++sinf;
 			}
 
 			surf = (md3Surface_t *)((char *)surf + surf->ofsEnd);
-
-			sinf++;
 		}
 	}
 

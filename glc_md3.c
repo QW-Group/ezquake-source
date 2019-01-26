@@ -101,17 +101,23 @@ void GLC_DrawAlias3Model(entity_t *ent)
 		lerpfrac = min(ent->framelerp, 1);
 	}
 
-	R_ProgramUse(r_program_none);
-	GLC_StateBeginMD3Draw(r_modelalpha, R_TextureReferenceIsValid(sinf->texnum), ent->renderfx & RF_WEAPONMODEL);
-	if (R_TextureReferenceIsValid(sinf->texnum)) {
-		renderer.TextureUnitBind(0, sinf->texnum);
+	// players
+	if (ent->skinnum >= 0 && ent->skinnum < pheader->numSkins) {
+		sinf += ent->skinnum * pheader->numSurfaces;
 	}
 
+	R_ProgramUse(r_program_none);
+	GLC_StateBeginMD3Draw(r_modelalpha, R_TextureReferenceIsValid(sinf->texnum), ent->renderfx & RF_WEAPONMODEL);
+
 	surf = (md3Surface_t *)((char *)pheader + pheader->ofsSurfaces);
-	for (surfnum = 0; surfnum < pheader->numSurfaces; surfnum++) {
+	for (surfnum = 0; surfnum < pheader->numSurfaces; surfnum++, sinf++) {
 		// loop through the surfaces.
 		int pose1 = frame1 * surf->numVerts;
 		int pose2 = frame2 * surf->numVerts;
+
+		if (R_TextureReferenceIsValid(sinf->texnum)) {
+			renderer.TextureUnitBind(0, sinf->texnum);
+		}
 
 		//skin texture coords.
 		tc = (md3St_t *)((char *)surf + surf->ofsSt);
