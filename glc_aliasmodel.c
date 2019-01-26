@@ -614,6 +614,7 @@ static void GLC_DrawPowerupShell_Immediate(entity_t* ent, int pose1, int pose2, 
 	const float* scroll = GLC_PowerupShell_ScrollParams();
 
 	R_ProgramUse(r_program_none);
+	GLC_StateBeginAliasPowerupShell(ent->renderfx & RF_WEAPONMODEL);
 	for (position = 0, layer_no = 0; layer_no <= 1; ++layer_no) {
 		// get the vertex count and primitive type
 		order = (int *)((byte *)paliashdr + paliashdr->commands);
