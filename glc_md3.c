@@ -81,7 +81,6 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
-	ent->ambientlight = (gl_fb_models.integer ? 999999 : ent->ambientlight);
 
 	mhead = (md3model_t *)Mod_Extradata (mod);
 	sinf = (surfinf_t *)((char *)mhead + mhead->surfinf);

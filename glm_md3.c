@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void GLM_DrawAlias3Model(entity_t* ent)
 {
-	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_fb_models;
+	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes;
 	extern byte	*shadedots;
 	extern byte	r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS];
 	extern void R_AliasSetupLighting(entity_t* ent);
@@ -71,7 +71,6 @@ void GLM_DrawAlias3Model(entity_t* ent)
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 
-	ent->ambientlight = (gl_fb_models.integer ? 999999 : ent->ambientlight);
 	frame1 = min(frame1, pHeader->numFrames - 1);
 	frame2 = min(frame2, pHeader->numFrames - 1);
 
