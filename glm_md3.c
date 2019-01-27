@@ -75,11 +75,17 @@ void GLM_DrawAlias3Model(entity_t* ent)
 	frame1 = min(frame1, pHeader->numFrames - 1);
 	frame2 = min(frame2, pHeader->numFrames - 1);
 
-	if (!r_lerpframes.value || ent->framelerp < 0 || ent->oldframe == ent->frame) {
-		lerpfrac = 1.0;
+	if (!r_lerpframes.value || ent->framelerp < 0 || frame1 == frame2 || (frame2 != frame1 + 1 && frame2 != frame1 - 1)) {
+		lerpfrac = 1.0f;
 	}
 	else {
-		lerpfrac = min(ent->framelerp, 1);
+		lerpfrac = min(ent->framelerp, 1.0f);
+	}
+
+	if (frame2 == frame1 - 1) {
+		--frame1;
+		++frame2;
+		lerpfrac = 1.0f - lerpfrac;
 	}
 
 	if (lerpfrac == 1) {

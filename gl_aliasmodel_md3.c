@@ -25,6 +25,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "r_aliasmodel.h"
 #include "vx_vertexlights.h" 
 #include "r_matrix.h"
+#include "glsl/constants.glsl"
+
+void GL_AliasModelSetVertexDirection(int num_triangles, vbo_model_vert_t* vbo_buffer, int v1, int v2, qbool limit_lerp, int key_pose);
 
 void GLM_MakeAlias3DisplayLists(model_t* model)
 {
@@ -45,25 +48,24 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 		model->vertsInVBO += 3 * surf->numTriangles;
 	}
 	model->vertsInVBO *= pheader->numFrames;
-
 	model->temp_vbo_buffer = vbo = Q_malloc(sizeof(vbo_model_vert_t) * model->vertsInVBO);
 
 	// foreach frame
 	for (framenum = 0, v = 0; framenum < pheader->numFrames; ++framenum) {
 		// loop through the surfaces.
-		MD3_ForEachSurface(pheader, surf, surfnum)
-		{
+		MD3_ForEachSurface(pheader, surf, surfnum) {
 			int i, triangle;
 
 			texCoords = MD3_SurfaceTextureCoords(surf);
 			vertices = MD3_SurfaceVertices(surf);
-
 			triangles = MD3_SurfaceTriangles(surf);
 
 			for (triangle = 0; triangle < surf->numTriangles; ++triangle) {
 				for (i = 0; i < 3; ++i, ++v) {
 					int vertexNumber = framenum * surf->numVerts + triangles[triangle].indexes[i];
+					int nextVertexNumber = (framenum < pheader->numFrames - 1 ? framenum + 1 : 0) * surf->numVerts + triangles[triangle].indexes[i];
 					md3XyzNormal_t* vert = &vertices[vertexNumber];
+					md3XyzNormal_t* nextVert = &vertices[nextVertexNumber];
 					float s, t;
 
 					s = texCoords[triangles[triangle].indexes[i]].s;
@@ -81,6 +83,22 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 						vbo[v].texture_coords[0] = s;
 						vbo[v].texture_coords[1] = t;
 						vbo[v].flags = 0;
+					}
+
+					// Set direction
+					{
+						vec3_t next_position;
+
+						VectorScale(nextVert->xyz, MD3_XYZ_SCALE, next_position);
+						VectorSubtract(next_position, vbo[v].position, vbo[v].direction);
+
+						if (model->renderfx & RF_LIMITLERP) {
+							float distance = VectorDistance(vbo[v].position, next_position);
+
+							if (distance > ALIASMODEL_MAX_LERP_DISTANCE) {
+								vbo[v].flags |= AM_VERTEX_NOLERP;
+							}
+						}
 					}
 				}
 			}
