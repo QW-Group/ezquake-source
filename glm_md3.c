@@ -35,6 +35,7 @@ void GLM_DrawAlias3Model(entity_t* ent)
 
 	float lerpfrac = 1;
 	float oldMatrix[16];
+	int v1, v2;
 
 	int frame1 = ent->oldframe, frame2 = ent->frame;
 	model_t* mod = ent->model;
@@ -46,7 +47,11 @@ void GLM_DrawAlias3Model(entity_t* ent)
 
 	int vertsPerFrame = 0;
 	MD3_ForEachSurface(pHeader, surf, surfnum) {
-		vertsPerFrame += 3 * surf[surfnum].numTriangles;
+		vertsPerFrame += 3 * surf->numTriangles;
+	}
+
+	if (ent->skinnum >= 0 && ent->skinnum < pHeader->numSkins) {
+		surfaceInfo += ent->skinnum * pHeader->numSurfaces;
 	}
 
 	R_PushModelviewMatrix(oldMatrix);
@@ -82,10 +87,16 @@ void GLM_DrawAlias3Model(entity_t* ent)
 		frame1 = frame2;
 	}
 
-	GLM_DrawAliasModelFrame(
-		ent, mod, mod->vbo_start + vertsPerFrame * frame1, mod->vbo_start + vertsPerFrame * frame2, vertsPerFrame,
-		surfaceInfo[0].texnum, false, ent->effects, ent->renderfx, lerpfrac
-	);
+	v1 = mod->vbo_start + vertsPerFrame * frame1;
+	v2 = mod->vbo_start + vertsPerFrame * frame2;
+	MD3_ForEachSurface(pHeader, surf, surfnum) {
+		GLM_DrawAliasModelFrame(
+			ent, mod, v1, v2, 3 * surf->numTriangles,
+			surfaceInfo[surfnum].texnum, false, ent->effects, ent->renderfx, lerpfrac
+		);
+		v1 += 3 * surf->numTriangles;
+		v2 += 3 * surf->numTriangles;
+	}
 
 	R_PopModelviewMatrix(oldMatrix);
 }
