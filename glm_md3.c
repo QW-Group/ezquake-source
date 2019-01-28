@@ -64,9 +64,7 @@ void GLM_DrawAlias3Model(entity_t* ent)
 	//
 	ent->r_modelcolor[0] = -1;
 	ent->r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
-	if (ent->alpha) {
-		ent->r_modelalpha = ent->alpha;
-	}
+	ent->r_modelalpha = ent->alpha ? ent->alpha : ent->r_modelalpha;
 
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];

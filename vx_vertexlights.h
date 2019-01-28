@@ -17,5 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 float VLight_LerpLight(int index1, int index2, float ilerp, float apitch, float ayaw);
+float VLight_LerpLightByAngles(float pitchofs1, float yawofs1, float pitchofs2, float yawofs2, float ilerp, float apitch, float ayaw);
 
 void Init_VLights(void);

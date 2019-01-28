@@ -45,18 +45,14 @@ static float vlighttable[256][256];
 #endif
 #endif
 
-static float VLight_GetLightValue(int index, float apitch, float ayaw)
+static float VLight_GetLightValueByAngles(float pitchofs, float yawofs, float apitch, float ayaw)
 {
-	float pitchofs, yawofs;
 	int pitch, yaw;
 	float retval[4];
 	float weight[2], diff[2];
 
-	pitchofs = anorm_pitch[index] + (apitch * 256) / 360;
-	yawofs = anorm_yaw[index] + (ayaw * 256) / 360;
-
-	pitchofs = fabsf(pitchofs);
-	yawofs = fabsf(yawofs);
+	pitchofs = fabsf(pitchofs + (apitch * 256) / 360);
+	yawofs = fabsf(yawofs) + (ayaw * 256) / 360;
 
 	pitch = (unsigned int)pitchofs;
 	yaw = (unsigned int)yawofs;
@@ -75,6 +71,24 @@ static float VLight_GetLightValue(int index, float apitch, float ayaw)
 	retval[0] = (diff[0] + (diff[1] - diff[0]) * weight[1]);
 	retval[0] = max(retval[0], cl.minlight / 255.0f);
 	return bound(0, retval[0], 2);
+}
+
+static float VLight_GetLightValue(int index, float apitch, float ayaw)
+{
+	return VLight_GetLightValueByAngles(anorm_pitch[index], anorm_yaw[index], apitch, ayaw);
+}
+
+float VLight_LerpLightByAngles(float pitchofs1, float yawofs1, float pitchofs2, float yawofs2, float ilerp, float apitch, float ayaw)
+{
+	float lightval1, lightval2;
+
+	lightval1 = VLight_GetLightValueByAngles(pitchofs1, yawofs1, apitch, ayaw);
+	if (pitchofs1 == pitchofs2 && yawofs1 == yawofs2) {
+		return lightval1;
+	}
+
+	lightval2 = VLight_GetLightValueByAngles(pitchofs2, yawofs2, apitch, ayaw);
+	return (lightval2 * ilerp) + (lightval1 * (1 - ilerp));
 }
 
 float VLight_LerpLight(int index1, int index2, float ilerp, float apitch, float ayaw)
