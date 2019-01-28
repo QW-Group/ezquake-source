@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 void GLC_SetPowerupShellColor(int layer_no, int effects);
 qbool GLC_AliasModelStandardCompile(void);
 
-static void GLC_AliasModelLightPointMD3(float color[4], entity_t* ent, ezMd3XyzNormal_t* vert1, ezMd3XyzNormal_t* vert2, float lerpfrac)
+static void GLC_AliasModelLightPointMD3(float color[4], const entity_t* ent, ezMd3XyzNormal_t* vert1, ezMd3XyzNormal_t* vert2, float lerpfrac)
 {
 	float l;
 	extern cvar_t amf_lighting_vertex, amf_lighting_colour;
@@ -101,6 +101,62 @@ static void GLC_AliasModelLightPointMD3(float color[4], entity_t* ent, ezMd3XyzN
 	color[3] = ent->r_modelalpha;
 }
 
+static void GLC_DrawMD3Frame(const entity_t* ent, md3Header_t* pheader, int frame1, int frame2, float lerpfrac, const surfinf_t* surface_info, qbool invalidate_texture, qbool outline)
+{
+	md3Surface_t *surf;
+	int surfnum;
+	ezMd3XyzNormal_t *verts, *v1, *v2;
+	md3St_t *tc;
+	unsigned int* tris;
+	int numtris, i;
+	const int distance = MD3_INTERP_MAXDIST / MD3_XYZ_SCALE;
+
+	MD3_ForEachSurface(pheader, surf, surfnum) {
+		// loop through the surfaces.
+		int pose1 = frame1 * surf->numVerts;
+		int pose2 = frame2 * surf->numVerts;
+
+		if (R_TextureReferenceIsValid(surface_info[surfnum].texnum) && !invalidate_texture) {
+			renderer.TextureUnitBind(0, surface_info[surfnum].texnum);
+		}
+
+		//skin texture coords.
+		tc = MD3_SurfaceTextureCoords(surf);
+		verts = MD3_SurfaceVertices(surf);
+
+		tris = (unsigned int*)MD3_SurfaceTriangles(surf);
+		numtris = surf->numTriangles * 3;
+
+		GLC_Begin(GL_TRIANGLES);
+		for (i = 0; i < numtris; i++) {
+			float s, t;
+			float vertexColor[4], interpolated_verts[3];
+
+			v1 = verts + *tris + pose1;
+			v2 = verts + *tris + pose2;
+
+			s = tc[*tris].s;
+			t = tc[*tris].t;
+
+			lerpfrac = VectorL2Compare(v1->xyz, v2->xyz, distance) ? lerpfrac : 1;
+
+			if (!outline) {
+				GLC_AliasModelLightPointMD3(vertexColor, ent, v1, v2, lerpfrac);
+				R_CustomColor(vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
+			}
+
+			VectorInterpolate(v1->xyz, lerpfrac, v2->xyz, interpolated_verts);
+			glTexCoord2f(s, t);
+			GLC_Vertex3fv(interpolated_verts);
+
+			tris++;
+		}
+		GLC_End();
+
+		frameStats.classic.polycount[polyTypeAliasModel] += surf->numTriangles;
+	}
+}
+
 /*
 To draw, for each surface, run through the triangles, getting tex coords from s+t, 
 */
@@ -113,13 +169,11 @@ void GLC_DrawAlias3Model(entity_t *ent)
 
 	float lerpfrac;
 	float vertexColor[4];
-	int distance = MD3_INTERP_MAXDIST / MD3_XYZ_SCALE;
-	vec3_t interpolated_verts;
 
 	md3model_t *mhead;
 	md3Header_t *pheader;
 	model_t *mod;
-	int surfnum, numtris, i;
+	int surfnum;
 	md3Surface_t *surf;
 	qbool invalidate_texture = false;
 	extern cvar_t gl_program_aliasmodels, gl_outline;
@@ -127,7 +181,6 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	int frame1 = ent->oldframe, frame2 = ent->frame;
 	qbool outline;
 	surfinf_t* sinf;
-	unsigned int* tris;
 	float oldMatrix[16];
 
 	mod = ent->model;
@@ -213,53 +266,14 @@ void GLC_DrawAlias3Model(entity_t *ent)
 		R_ProgramUse(r_program_none);
 	}
 	else {
-		ezMd3XyzNormal_t *verts, *v1, *v2;
-		md3St_t *tc;
-
 		// Immediate mode
 		R_ProgramUse(r_program_none);
 		GLC_StateBeginMD3Draw(ent->r_modelalpha, R_TextureReferenceIsValid(sinf->texnum) && !invalidate_texture, ent->renderfx & RF_WEAPONMODEL);
-		MD3_ForEachSurface(pheader, surf, surfnum) {
-			// loop through the surfaces.
-			int pose1 = frame1 * surf->numVerts;
-			int pose2 = frame2 * surf->numVerts;
+		GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, invalidate_texture, false);
 
-			if (R_TextureReferenceIsValid(sinf->texnum) && !invalidate_texture) {
-				renderer.TextureUnitBind(0, sinf->texnum);
-			}
-
-			//skin texture coords.
-			tc = MD3_SurfaceTextureCoords(surf);
-			verts = MD3_SurfaceVertices(surf);
-
-			tris = (unsigned int*) MD3_SurfaceTriangles(surf);
-			numtris = surf->numTriangles * 3;
-
-			GLC_Begin(GL_TRIANGLES);
-			for (i = 0; i < numtris; i++) {
-				float s, t;
-
-				v1 = verts + *tris + pose1;
-				v2 = verts + *tris + pose2;
-
-				s = tc[*tris].s;
-				t = tc[*tris].t;
-
-				lerpfrac = VectorL2Compare(v1->xyz, v2->xyz, distance) ? lerpfrac : 1;
-
-				GLC_AliasModelLightPointMD3(vertexColor, ent, v1, v2, lerpfrac);
-				R_CustomColor(vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
-
-				VectorInterpolate(v1->xyz, lerpfrac, v2->xyz, interpolated_verts);
-				glTexCoord2f(s, t);
-				GLC_Vertex3fv(interpolated_verts);
-
-				tris++;
-			}
-			GLC_End();
-
-			frameStats.classic.polycount[polyTypeAliasModel] += surf->numTriangles;
-			++sinf;
+		if (outline) {
+			GLC_StateBeginAliasOutlineFrame();
+			GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, true, true);
 		}
 	}
 	R_PopModelviewMatrix(oldMatrix);
