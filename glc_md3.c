@@ -29,8 +29,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "glc_local.h"
 #include "r_renderer.h"
 #include "r_program.h"
+#include "tr_types.h"
 
 void GLC_SetPowerupShellColor(int layer_no, int effects);
+qbool GLC_AliasModelStandardCompile(void);
 
 static void GLC_AliasModelLightPointMD3(float color[4], entity_t* ent, ezMd3XyzNormal_t* vert1, ezMd3XyzNormal_t* vert2, float lerpfrac)
 {
@@ -119,6 +121,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	int surfnum, numtris, i;
 	md3Surface_t *surf;
 	qbool invalidate_texture = false;
+	extern cvar_t gl_program_aliasmodels;
 
 	int frame1 = ent->oldframe, frame2 = ent->frame;
 	ezMd3XyzNormal_t *verts, *v1, *v2;
@@ -135,7 +138,7 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	mod = ent->model;
 
 	R_PushModelviewMatrix(oldMatrix);
-	R_RotateForEntity (ent);
+	R_RotateForEntity(ent);
 	R_ScaleModelview((ent->renderfx & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1, 1, 1);
 
 	// 
@@ -144,11 +147,10 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	ent->r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
 
 	R_AliasSetupLighting(ent);
-	shadedots = r_avertexnormal_dots[((int) (ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
+	shadedots = r_avertexnormal_dots[((int)(ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 
-	mhead = (md3model_t *)Mod_Extradata (mod);
-	sinf = (surfinf_t *)((char *)mhead + mhead->surfinf);
-	pheader = (md3Header_t *)((char *)mhead + mhead->md3model);
+	mhead = (md3model_t *)Mod_Extradata(mod);
+	pheader = MD3_HeaderForModel(mhead);
 
 	frame1 = bound(0, frame1, pheader->numFrames - 1);
 	frame2 = bound(0, frame2, pheader->numFrames - 1);
@@ -160,59 +162,93 @@ void GLC_DrawAlias3Model(entity_t *ent)
 		lerpfrac = min(ent->framelerp, 1);
 	}
 
-	// players
+	if (lerpfrac == 1) {
+		lerpfrac = 0;
+		frame1 = frame2;
+	}
+
+	R_AliasModelColor(ent, vertexColor, &invalidate_texture);
+
+	sinf = MD3_ExtraSurfaceInfoForModel(mhead);
 	if (ent->skinnum >= 0 && ent->skinnum < pheader->numSkins) {
 		sinf += ent->skinnum * pheader->numSurfaces;
 	}
 
-	R_ProgramUse(r_program_none);
-	R_AliasModelColor(ent, vertexColor, &invalidate_texture);
-	GLC_StateBeginMD3Draw(ent->r_modelalpha, R_TextureReferenceIsValid(sinf->texnum) && !invalidate_texture, ent->renderfx & RF_WEAPONMODEL);
+	if (gl_program_aliasmodels.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompile()) {
+		float angle_radians = -ent->angles[YAW] * M_PI / 180.0;
+		vec3_t angle_vector = { cos(angle_radians), sin(angle_radians), 1 };
+		int vertsPerFrame = mod->vertsInVBO / pheader->numFrames;
+		int vert_index = mod->vbo_start + vertsPerFrame * frame1;
 
-	surf = MD3_FirstSurface(pheader);
-	for (surfnum = 0; surfnum < pheader->numSurfaces; surfnum++, sinf++) {
-		// loop through the surfaces.
-		int pose1 = frame1 * surf->numVerts;
-		int pose2 = frame2 * surf->numVerts;
+		R_ProgramUse(r_program_aliasmodel_std_glc);
+		R_ProgramUniform3fv(r_program_uniform_aliasmodel_std_glc_angleVector, angle_vector);
+		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_shadelight, ent->shadelight / 256.0f);
+		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_ambientlight, ent->ambientlight / 256.0f);
+		R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_fsTextureEnabled, invalidate_texture ? 0 : 1);
+		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsMinLumaMix, 1.0f - (ent->full_light ? bound(0, gl_fb_models.integer, 1) : 0));
+		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsCausticEffects, ent->renderfx & RF_CAUSTICS ? 1 : 0);
+		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_lerpFraction, lerpfrac);
+		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_time, cl.time);
 
-		if (R_TextureReferenceIsValid(sinf->texnum) && !invalidate_texture) {
-			renderer.TextureUnitBind(0, sinf->texnum);
+		GLC_StateBeginDrawAliasFrameProgram(sinf->texnum, null_texture_reference, ent->renderfx, ent->custom_model, ent->r_modelalpha);
+		R_CustomColor(vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
+		MD3_ForEachSurface(pheader, surf, surfnum) {
+			if (R_TextureReferenceIsValid(sinf[surfnum].texnum) && !invalidate_texture) {
+				renderer.TextureUnitBind(0, sinf[surfnum].texnum);
+			}
+
+			GL_DrawArrays(GL_TRIANGLES, vert_index, 3 * surf->numTriangles);
+			vert_index += 3 * surf->numTriangles;
 		}
-
-		//skin texture coords.
-		tc = MD3_SurfaceTextureCoords(surf);
-		verts = MD3_SurfaceVertices(surf);
-
-		tris = (unsigned int *)((char *)surf + surf->ofsTriangles);
-		numtris = surf->numTriangles * 3;
-
-		GLC_Begin(GL_TRIANGLES);
-		for (i = 0; i < numtris; i++) {
-			float s, t;
-
-			v1 = verts + *tris + pose1;
-			v2 = verts + *tris + pose2;
-
-			s = tc[*tris].s;
-			t = tc[*tris].t;
-
-			lerpfrac = VectorL2Compare(v1->xyz, v2->xyz, distance) ? lerpfrac : 1;
-
-			GLC_AliasModelLightPointMD3(vertexColor, ent, v1, v2, lerpfrac);
-			R_CustomColor(vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
-
-			VectorInterpolate(v1->xyz, lerpfrac, v2->xyz, interpolated_verts);
-			glTexCoord2f(s, t);
-			GLC_Vertex3fv(interpolated_verts);
-
-			tris++;
-		}
-		GLC_End();
-
-		frameStats.classic.polycount[polyTypeAliasModel] += surf->numTriangles;
-		surf = MD3_NextSurface(surf);
+		R_ProgramUse(r_program_none);
 	}
+	else {
+		// Immediate mode
+		R_ProgramUse(r_program_none);
+		GLC_StateBeginMD3Draw(ent->r_modelalpha, R_TextureReferenceIsValid(sinf->texnum) && !invalidate_texture, ent->renderfx & RF_WEAPONMODEL);
+		MD3_ForEachSurface(pheader, surf, surfnum) {
+			// loop through the surfaces.
+			int pose1 = frame1 * surf->numVerts;
+			int pose2 = frame2 * surf->numVerts;
 
+			if (R_TextureReferenceIsValid(sinf->texnum) && !invalidate_texture) {
+				renderer.TextureUnitBind(0, sinf->texnum);
+			}
+
+			//skin texture coords.
+			tc = MD3_SurfaceTextureCoords(surf);
+			verts = MD3_SurfaceVertices(surf);
+
+			tris = (unsigned int*) MD3_SurfaceTriangles(surf);
+			numtris = surf->numTriangles * 3;
+
+			GLC_Begin(GL_TRIANGLES);
+			for (i = 0; i < numtris; i++) {
+				float s, t;
+
+				v1 = verts + *tris + pose1;
+				v2 = verts + *tris + pose2;
+
+				s = tc[*tris].s;
+				t = tc[*tris].t;
+
+				lerpfrac = VectorL2Compare(v1->xyz, v2->xyz, distance) ? lerpfrac : 1;
+
+				GLC_AliasModelLightPointMD3(vertexColor, ent, v1, v2, lerpfrac);
+				R_CustomColor(vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
+
+				VectorInterpolate(v1->xyz, lerpfrac, v2->xyz, interpolated_verts);
+				glTexCoord2f(s, t);
+				GLC_Vertex3fv(interpolated_verts);
+
+				tris++;
+			}
+			GLC_End();
+
+			frameStats.classic.polycount[polyTypeAliasModel] += surf->numTriangles;
+			++sinf;
+		}
+	}
 	R_PopModelviewMatrix(oldMatrix);
 }
 
