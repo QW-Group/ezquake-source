@@ -185,6 +185,7 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 	md3Frame_t *mFrame;
 	int fr, i, j;
 	md3St_t *st;
+	ezMd3XyzNormal_t* output_vert;
 
 	start = Hunk_LowMark();
 
@@ -266,14 +267,26 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 				tris[j].indexes[2] = LittleLong(tris[j].indexes[2]);
 			}
 
-			// swap all the vertices
+			// swap all the vertices, convert to our format
 			vert = (md3XyzNormal_t *)((char *)surf + surf->ofsXyzNormals);
+			output_vert = (ezMd3XyzNormal_t*)Hunk_Alloc(surf->numVerts * surf->numFrames * sizeof(ezMd3XyzNormal_t));
 			for (j = 0; j < surf->numVerts * surf->numFrames; j++) {
 				vert[j].xyz[0] = LittleShort(vert[j].xyz[0]);
 				vert[j].xyz[1] = LittleShort(vert[j].xyz[1]);
 				vert[j].xyz[2] = LittleShort(vert[j].xyz[2]);
 				vert[j].normal = LittleShort(vert[j].normal);
+
+				VectorScale(vert[j].xyz, MD3_XYZ_SCALE, output_vert[j].xyz);
+				{
+					output_vert[j].normal_lat = ((vert[j].normal >> 8) & 255) * (2.0 * M_PI) / 255.0;
+					output_vert[j].normal_lng = (vert[j].normal & 255) * (2.0 * M_PI) / 255.0;
+
+					output_vert[j].normal[0] = cos(output_vert[j].normal_lat) * sin(output_vert[j].normal_lng);
+					output_vert[j].normal[1] = sin(output_vert[j].normal_lat) * sin(output_vert[j].normal_lng);
+					output_vert[j].normal[2] = cos(output_vert[j].normal_lng);
+				}
 			}
+			surf->ofsXyzNormals = (char*)output_vert - (char*)surf;
 
 			sshad = (md3Shader_t *)((char *)surf + surf->ofsShaders);
 			sshad->shaderIndex = LittleLong(sshad->shaderIndex);
@@ -398,9 +411,9 @@ md3St_t* MD3_SurfaceTextureCoords(md3Surface_t* surface)
 	return (md3St_t *)((uintptr_t)surface + surface->ofsSt);
 }
 
-md3XyzNormal_t* MD3_SurfaceVertices(md3Surface_t* surface)
+ezMd3XyzNormal_t* MD3_SurfaceVertices(md3Surface_t* surface)
 {
-	return (md3XyzNormal_t *)((uintptr_t)surface + surface->ofsXyzNormals);
+	return (ezMd3XyzNormal_t *)((uintptr_t)surface + surface->ofsXyzNormals);
 }
 
 md3Triangle_t* MD3_SurfaceTriangles(md3Surface_t* surface)

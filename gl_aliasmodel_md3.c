@@ -33,7 +33,7 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 {
 	md3Surface_t* surf;
 	md3St_t* texCoords;
-	md3XyzNormal_t* vertices;
+	ezMd3XyzNormal_t* vertices;
 	int surfnum;
 	int framenum;
 	md3Triangle_t* triangles;
@@ -64,36 +64,25 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 				for (i = 0; i < 3; ++i, ++v) {
 					int vertexNumber = framenum * surf->numVerts + triangles[triangle].indexes[i];
 					int nextVertexNumber = (framenum < pheader->numFrames - 1 ? framenum + 1 : 0) * surf->numVerts + triangles[triangle].indexes[i];
-					md3XyzNormal_t* vert = &vertices[vertexNumber];
-					md3XyzNormal_t* nextVert = &vertices[nextVertexNumber];
+					ezMd3XyzNormal_t* vert = &vertices[vertexNumber];
+					ezMd3XyzNormal_t* nextVert = &vertices[nextVertexNumber];
 					float s, t;
 
 					s = texCoords[triangles[triangle].indexes[i]].s;
 					t = texCoords[triangles[triangle].indexes[i]].t;
 
-					VectorScale(vert->xyz, MD3_XYZ_SCALE, vbo[v].position);
-					{
-						{
-							float lat = ((vert->normal >> 8) & 255) * (2.0 * M_PI) / 255.0;
-							float lng = (vert->normal & 255) * (2.0 * M_PI) / 255.0;
-							vbo[v].normal[0] = cos(lat) * sin(lng);
-							vbo[v].normal[1] = sin(lat) * sin(lng);
-							vbo[v].normal[2] = cos(lng);
-						}
-						vbo[v].texture_coords[0] = s;
-						vbo[v].texture_coords[1] = t;
-						vbo[v].flags = 0;
-					}
+					VectorCopy(vert->xyz, vbo[v].position);
+					VectorCopy(vert->normal, vbo[v].normal);
+					vbo[v].texture_coords[0] = s;
+					vbo[v].texture_coords[1] = t;
+					vbo[v].flags = 0;
 
 					// Set direction
 					{
-						vec3_t next_position;
-
-						VectorScale(nextVert->xyz, MD3_XYZ_SCALE, next_position);
-						VectorSubtract(next_position, vbo[v].position, vbo[v].direction);
+						VectorSubtract(nextVert->xyz, vert->xyz, vbo[v].direction);
 
 						if (model->renderfx & RF_LIMITLERP) {
-							float distance = VectorDistance(vbo[v].position, next_position);
+							float distance = VectorDistance(vert->xyz, nextVert->xyz);
 
 							if (distance > ALIASMODEL_MAX_LERP_DISTANCE) {
 								vbo[v].flags |= AM_VERTEX_NOLERP;

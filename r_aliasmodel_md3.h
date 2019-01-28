@@ -72,16 +72,23 @@ typedef struct {
 
 	int		ofsShaders;			// offset from start of md3Surface_t
 	int		ofsSt;				// texture coords are common for all frames
-	int		ofsXyzNormals;		// numVerts * numFrames
+	int		ofsXyzNormals;		// numVerts * numFrames (after loading this now points to ezMd3NormalXyz_t)
 
 	int		ofsEnd;				// next surface follows
 } md3Surface_t;
 
-//at surf+surf->ofsXyzNormals
+//at surf+surf->ofsXyzNormals (on initial load only, then that points to ezMd3NormalXyz_t)
 typedef struct {
 	short		xyz[3];
 	unsigned short normal;
 } md3XyzNormal_t;
+
+typedef struct {
+	vec3_t      xyz;
+	vec3_t      normal;
+	float       normal_lat;
+	float       normal_lng;
+} ezMd3XyzNormal_t;
 
 //surf->numTriangles at surf+surf->ofsTriangles
 typedef struct {
@@ -124,7 +131,7 @@ typedef struct {
 md3Surface_t* MD3_NextSurface(md3Surface_t* surf);
 md3Surface_t* MD3_FirstSurface(md3Header_t* header);
 md3St_t* MD3_SurfaceTextureCoords(md3Surface_t* surface);
-md3XyzNormal_t* MD3_SurfaceVertices(md3Surface_t* surface);
+ezMd3XyzNormal_t* MD3_SurfaceVertices(md3Surface_t* surface);
 md3Triangle_t* MD3_SurfaceTriangles(md3Surface_t* surface);
 surfinf_t* MD3_ExtraSurfaceInfoForModel(md3model_t* model);
 md3Header_t* MD3_HeaderForModel(md3model_t* model);
