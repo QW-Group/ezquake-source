@@ -3151,6 +3151,14 @@ void CL_ParseStufftext (void)
 
 		MVD_ParseUserCommand (s + sizeof("//ucmd ") - 1);
 	}
+	else if (!strncmp(s, "//finalscores ", sizeof("//finalscores ") - 1))
+	{
+		cmd_alias_t* alias = Cmd_FindAlias("f_qtvfinalscores");
+
+		if (alias) {
+			Cbuf_AddTextEx(&cbuf_svc, va("f_qtvfinalscores %s\n", s + sizeof("//finalscores ") - 1));
+		}
+	}
 	else
 	{
 		Cbuf_AddTextEx(&cbuf_svc, s);
