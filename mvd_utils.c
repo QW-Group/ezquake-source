@@ -643,12 +643,16 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int* wid
 				continue;
 			}
 
-			// Skip auto-added items that haven't spawned and have never spawned
-			if ((current->flags & MVDCLOCK_NEVERSPAWNED) && cl_entities[current->entity].current.modelindex == 0 && time <= 0) {
-				current = current->next;
-				continue;
+			if (current->flags & MVDCLOCK_NEVERSPAWNED) {
+				// Skip auto-added items that haven't spawned and have never spawned
+				if (cl_entities[current->entity].current.modelindex == 0 && time <= 0) {
+					current = current->next;
+					continue;
+				}
+
+				current->flags &= ~(MVDCLOCK_NEVERSPAWNED);
 			}
-			current->flags &= ~(MVDCLOCK_NEVERSPAWNED);
+
 		}
 
 		if (current->entity || current->clockval - cls.demotime < time_limit) {
@@ -2146,7 +2150,8 @@ static void MVDAnnouncer_RemoveItem(void)
 					}
 				}
 
-				// Didn't exist, so... never mind
+				// Create it and mark it as hidden to stop it re-appearing
+				MVD_ClockStartEntity(ent, mvd_wp_info[i].id, MVDCLOCK_PERSISTENT | MVDCLOCK_HIDDEN | MVDCLOCK_NEVERSPAWNED);
 				return;
 			}
 
@@ -2156,7 +2161,7 @@ static void MVDAnnouncer_RemoveItem(void)
 	}
 
 	Con_Printf("Invalid type specified\n");
-	return;
+	MVDAnnouncer_HelpListItems();
 }
 
 static void MVDAnnouncer_ListItems(void)
@@ -2210,12 +2215,12 @@ static void MVDAnnouncer_NameItem(void)
 					existing->flags &= ~(MVDCLOCK_HIDDEN);
 				}
 				else {
-					MVD_ClockStartEntity(ent, mvd_wp_info[i].id, MVDCLOCK_PERSISTENT);
+					MVD_ClockStartEntity(ent, mvd_wp_info[i].id, MVDCLOCK_PERSISTENT | MVDCLOCK_NEVERSPAWNED);
 				}
 				return;
 			}
 
-			Con_Printf("No entity found near that position\n");
+			Con_Printf("No entity of type %s found near %d %d %d\n", type, (int)pos[0], (int)pos[1], (int)pos[2]);
 			return;
 		}
 	}
