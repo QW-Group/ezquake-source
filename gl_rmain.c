@@ -120,7 +120,7 @@ cvar_t cl_mvinset                          = {"cl_mvinset", "0"};
 cvar_t cl_mvinsetcrosshair                 = {"cl_mvinsetcrosshair", "1"};
 cvar_t cl_mvinsethud                       = {"cl_mvinsethud", "1"};
 cvar_t cl_mvinset_offset_x                 = {"cl_mvinset_offset_x", "0"};
-cvar_t cl_mvinset_inset_offset_y           = {"cl_mvinset_inset_offset_y", "0"};
+cvar_t cl_mvinset_offset_y                 = {"cl_mvinset_offset_y", "0"};
 cvar_t cl_mvinset_size_x                   = {"cl_mvinset_size_x", "0.333"};
 cvar_t cl_mvinset_size_y                   = {"cl_mvinset_size_y", "0.333"};
 cvar_t cl_mvinset_top                      = {"cl_mvinset_top", "1"};
@@ -1841,10 +1841,10 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 		}
 		else if (CL_MultiviewCurrentView() == 1) {
 			int height = cl_sbar.integer ? h : glheight;
-			int inset_left = glx + x + (cl_multiview_inset_right.integer ? glwidth - cl_multiview_inset_size_x.value * glwidth : 0) + cl_multiview_inset_offset_x.value;
-			int inset_top = gly + y2 + (cl_multiview_inset_top.integer ? height - cl_multiview_inset_size_y.value * height : 0) - cl_multiview_inset_offset_y.value;
-			int inset_width = w * cl_multiview_inset_size_x.value;
-			int inset_height = h * cl_multiview_inset_size_y.value;
+			int inset_left = glx + x + (cl_mvinset_right.integer ? glwidth - cl_mvinset_size_x.value * glwidth : 0) + cl_mvinset_offset_x.value;
+			int inset_top = gly + y2 + (cl_mvinset_top.integer ? height - cl_mvinset_size_y.value * height : 0) - cl_mvinset_offset_y.value;
+			int inset_width = w * cl_mvinset_size_x.value;
+			int inset_height = h * cl_mvinset_size_y.value;
 
 			CL_MultiviewInsetSetScreenCoordinates(inset_left, inset_top, inset_width, inset_height);
 
@@ -2150,12 +2150,12 @@ void R_Init(void)
 	Cvar_Register(&cl_mvinsetcrosshair);
 	Cvar_Register(&cl_mvinsethud);
 
-	Cvar_Register(&cl_multiview_inset_offset_x);
-	Cvar_Register(&cl_multiview_inset_offset_y);
-	Cvar_Register(&cl_multiview_inset_size_x);
-	Cvar_Register(&cl_multiview_inset_size_y);
-	Cvar_Register(&cl_multiview_inset_top);
-	Cvar_Register(&cl_multiview_inset_right);
+	Cvar_Register(&cl_mvinset_offset_x);
+	Cvar_Register(&cl_mvinset_offset_y);
+	Cvar_Register(&cl_mvinset_size_x);
+	Cvar_Register(&cl_mvinset_size_y);
+	Cvar_Register(&cl_mvinset_top);
+	Cvar_Register(&cl_mvinset_right);
 
 	Cvar_ResetCurrentGroup();
 
