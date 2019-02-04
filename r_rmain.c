@@ -118,6 +118,13 @@ cvar_t cl_mvhudpos                         = {"cl_mvhudpos", "bottom center"};
 cvar_t cl_mvinset                          = {"cl_mvinset", "0"};
 cvar_t cl_mvinsetcrosshair                 = {"cl_mvinsetcrosshair", "1"};
 cvar_t cl_mvinsethud                       = {"cl_mvinsethud", "1"};
+cvar_t cl_mvinset_offset_x                 = {"cl_mvinset_offset_x", "0"};
+cvar_t cl_mvinset_offset_y                 = {"cl_mvinset_offset_y", "0"};
+cvar_t cl_mvinset_size_x                   = {"cl_mvinset_size_x", "0.333"};
+cvar_t cl_mvinset_size_y                   = {"cl_mvinset_size_y", "0.333"};
+cvar_t cl_mvinset_top                      = {"cl_mvinset_top", "1"};
+cvar_t cl_mvinset_right                    = {"cl_mvinset_right", "1"};
+
 cvar_t r_drawentities                      = {"r_drawentities", "1"};
 cvar_t r_lerpframes                        = {"r_lerpframes", "1"};
 cvar_t r_drawflame                         = {"r_drawflame", "1"};
@@ -365,13 +372,17 @@ void R_SetViewports(int glx, int x, int gly, int y2, int w, int h, float max)
 	}
 	else if (max == 2 && cl_mvinset.value) {
 		if (CL_MultiviewCurrentView() == 2) {
-			R_Viewport(glx + x, gly + y2, w, h);
+			glViewport(glx + x, gly + y2, w, h);
 		}
-		else if (CL_MultiviewCurrentView() == 1 && !cl_sbar.value) {
-			R_Viewport(glx + x + (glwidth / 3) * 2 + 2, gly + y2 + (glheight / 3) * 2, w / 3, h / 3);
-		}
-		else if (CL_MultiviewCurrentView() == 1 && cl_sbar.value) {
-			R_Viewport(glx + x + (glwidth / 3) * 2 + 2, gly + y2 + (h / 3) * 2, w / 3, h / 3);
+		else if (CL_MultiviewCurrentView() == 1) {
+			int height = cl_sbar.integer ? h : glheight;
+			int inset_left = glx + x + (cl_mvinset_right.integer ? glwidth - cl_mvinset_size_x.value * glwidth : 0) + cl_mvinset_offset_x.value;
+			int inset_top = gly + y2 + (cl_mvinset_top.integer ? height - cl_mvinset_size_y.value * height : 0) - cl_mvinset_offset_y.value;
+			int inset_width = w * cl_mvinset_size_x.value;
+			int inset_height = h * cl_mvinset_size_y.value;
+
+			CL_MultiviewInsetSetScreenCoordinates(inset_left, inset_top, inset_width, inset_height);
+			glViewport(inset_left, inset_top, inset_width, inset_height);
 		}
 		else {
 			Com_Printf("ERROR!\n");
@@ -630,6 +641,12 @@ void R_Init(void)
 	Cvar_Register(&cl_mvinset);
 	Cvar_Register(&cl_mvinsetcrosshair);
 	Cvar_Register(&cl_mvinsethud);
+	Cvar_Register(&cl_mvinset_offset_x);
+	Cvar_Register(&cl_mvinset_offset_y);
+	Cvar_Register(&cl_mvinset_size_x);
+	Cvar_Register(&cl_mvinset_size_y);
+	Cvar_Register(&cl_mvinset_top);
+	Cvar_Register(&cl_mvinset_right);
 
 	Cvar_ResetCurrentGroup();
 
