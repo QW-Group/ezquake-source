@@ -3970,46 +3970,6 @@ void SCR_Init (void)
 	ScrollBars_Init();
 }
 
-void SCR_DrawMultiviewBorders(void)
-{
-	//
-	// Draw black borders around the views.
-	//
-	if (cl_multiview.value == 2 && !cl_mvinset.value)
-	{
-		Draw_Fill(0, vid.height / 2, vid.width - 1, 1, 0);
-	}
-	else if (cl_multiview.value == 2 && cl_mvinset.value)
-	{
-		if (vid.width <= 512 && cl_sbar.value)
-		{
-			Draw_Fill(vid.width / 3 * 2 + 1, vid.height / 3 - sb_lines / 3, vid.width / 3 + 2, 1, 0);
-			Draw_Fill(vid.width / 3 * 2 + 1, 0, 1, vid.height / 3 - sb_lines / 3, 0);
-		}
-		else if ((vid.width > 512 && cl_sbar.value && !cl_mvinsethud.value) || (vid.width > 512 && cl_sbar.value && !cl_mvdisplayhud.value))
-		{
-			Draw_Fill(vid.width / 3 * 2, vid.height / 3 - sb_lines / 3, vid.width / 3, 1, 0);
-			Draw_Fill(vid.width / 3 * 2, 0, 1, vid.height / 3 - sb_lines/3, 0);
-		}
-		else
-		{
-			// sbar 0 and <= 512 conwidth
-			Draw_Fill(vid.width / 3 * 2 + 1, vid.height / 3, vid.width / 3 + 2, 1, 0);
-			Draw_Fill(vid.width / 3 * 2 + 1, 0, 1, vid.height / 3, 0);
-		}
-	}
-	else if (cl_multiview.value == 3)
-	{
-		Draw_Fill(vid.width / 2, vid.height / 2, 1, vid.height / 2, 0);
-		Draw_Fill(0, vid.height / 2, vid.width, 1, 0);
-	}
-	else if (cl_multiview.value == 4)
-	{
-		Draw_Fill(vid.width / 2, 0, 1, vid.height, 0);
-		Draw_Fill(0, vid.height / 2, vid.width, 1, 0);
-	}
-}
-
 mpic_t * SCR_GetWeaponIconByFlag (int flag)
 {
 	extern mpic_t *sb_weapons[7][8];  // sbar.c Weapon pictures.

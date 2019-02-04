@@ -21,6 +21,7 @@
 - Added macros $team1 & $team2 to access the first two teams on the server
 - `/ignore` can now contain a regular expression
 - `f_qtvfinalscores` trigger fired when `//finalscores` notification detected in qtv stream
+- In multiview, the position of the inset view (`cl_mvinset`) can be controlled
 
 ### Bugfixes
 
@@ -40,7 +41,6 @@
 
 - OSX: Dialog to find .pak files on initial installation could point to 'my computer' location on Mojave
 - Added azure-pipelines.yml
-- 
 - Server: can now be built without USE_PR2 defined
-- 
+
 
