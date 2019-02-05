@@ -845,7 +845,7 @@ void V_AddViewWeapon (float bob) {
 	int gunmodel = V_CurrentWeaponModel();
 	extern cvar_t scr_fov, scr_fovmode, scr_newHud;
 
-	cent = &cl.viewent;
+	cent = CL_WeaponModelForView();
 	TP_ParseWeaponModel(cl.model_precache[gunmodel]);
 
 	if (!cl_drawgun.value || (cl_drawgun.value == 2 && scr_fov.value > 90)
@@ -889,7 +889,7 @@ void V_AddViewWeapon (float bob) {
 	}
 
 	if (cent->current.modelindex != gunmodel) {
-		cl.viewent.frametime = -1;
+		cent->frametime = -1;
 	} else {
 		if (cent->current.frame != view_message.weaponframe) {
 			cent->frametime = cl.time;
@@ -908,7 +908,7 @@ void V_CalcIntermissionRefdef (void) {
 	VectorCopy (cl.simangles, r_refdef.viewangles);
 
 	// we don't draw weapon in intermission
-	cl.viewent.current.modelindex = 0;
+	CL_WeaponModelForView()->current.modelindex = 0;
 
 	// always idle in intermission
 	old = v_idlescale.value;

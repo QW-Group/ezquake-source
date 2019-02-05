@@ -225,7 +225,7 @@ int TP_IsAmmoLow(int weapon)
 int TP_TeamFortressEngineerSpanner(void)
 {
 	char *player_skin=Info_ValueForKey(cl.players[cl.playernum].userinfo,"skin");
-	char *model_name=cl.model_precache[cl.viewent.current.modelindex]->name;
+	char *model_name=cl.model_precache[CL_WeaponModelForView()->current.modelindex]->name;
 	if (cl.teamfortress && player_skin
 			&& (strcasecmp(player_skin, "tf_eng") == 0)
 			&& model_name

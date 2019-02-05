@@ -30,7 +30,8 @@
 - Added macros $team1 & $team2 to access the first two teams on the server (#256)
 - `/ignore` can now contain a regular expression
 - `f_qtvfinalscores` trigger fired when `//finalscores` notification detected in qtv stream
-- In multiview, the position of the inset view (`cl_mvinset`) can be controlled
+- `/cl_mvinset` position & size can be set by user (`/cl_mvinset_size_x` sets relative size compared to screen)
+- `/r_lerpframes` is no longer disabled when using multiview
 
 ### Bugfixes
 
@@ -42,6 +43,7 @@
 - `/ignore $name` (allow the player to ignore their own messages) produced output during certain teamplay messages (#257)
 - Toggling multiview with inset window should alway keeps the current player in the primary view
 - Multiview was trying to cause increase in frames rendered (`/cl_maxfps` multiplied for each extra view)
+- Multiview inset window border now correctly set regardless of console:screen ratio
 - `mvd_moreinfo` - multiple bugfixes
   - fix incorrect location name when reporting item pickups
   - pack drops are announced when the player dies, not when they respawn

@@ -1582,18 +1582,17 @@ void R_DrawEntitiesOnList(visentlist_t *vislist)
 
 void R_DrawViewModel(void)
 {
-	centity_t *cent;
+	centity_t *cent = CL_WeaponModelForView();
 	static entity_t gun;
 
 	//VULT CAMERA - Don't draw gun in external camera
 	if (cameratype != C_NORMAL)
 		return;
 
-	if (!r_drawentities.value || !cl.viewent.current.modelindex)
+	if (!r_drawentities.value || !cent->current.modelindex)
 		return;
 
 	memset(&gun, 0, sizeof(gun));
-	cent = &cl.viewent;
 	currententity = &gun;
 
 	if (!(gun.model = cl.model_precache[cent->current.modelindex]))
