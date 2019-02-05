@@ -109,9 +109,6 @@ qbool Rulesets_AllowAlternateModel (const char* modelName)
 
 float Rulesets_MaxFPS(void)
 {
-	if (CL_MultiviewEnabled())
-		return CL_MultiviewNumberViews()*rulesetDef.maxfps;
-
 	return rulesetDef.maxfps;
 }
 

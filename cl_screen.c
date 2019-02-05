@@ -686,14 +686,7 @@ void SCR_DrawFPS (void) {
 		return;
 
 	// Multiview
-	if (CL_MultiviewEnabled())
-	{
-		snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05)/CL_MultiviewNumberViews());
-	}
-	else
-	{
-		snprintf(str, sizeof(str), "%3.1f",  lastfps + 0.05);
-	}
+	snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05));
 
 	x = ELEMENT_X_COORD(show_fps);
 	y = ELEMENT_Y_COORD(show_fps);
