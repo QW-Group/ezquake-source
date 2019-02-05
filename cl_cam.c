@@ -914,10 +914,7 @@ void CL_Track (int trackview)
 		
 		// Multiview tracking:
 		// Set the specified track view to track the specified player.
-		if(trackview >= 0)
-		{
-			CL_MultiviewSetTrackSlot(trackview, slot);
-		}
+		CL_MultiviewSetTrackSlot(trackview, slot);
 
 		locked = true;
 
