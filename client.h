@@ -57,6 +57,8 @@ typedef enum {
 	skin_textures
 } skin_texture_t;
 
+#define MV_VIEWS 4
+
 typedef struct 
 {
 	char            name[16];
@@ -581,7 +583,7 @@ typedef struct {
 
 	int			cdtrack;			///< cd audio
 
-	centity_t	viewent;			///< weapon model
+	centity_t viewent[MV_VIEWS];	        // weapon models
 
 	// all player information
 	player_info_t	players[MAX_CLIENTS];
@@ -1032,6 +1034,9 @@ void CL_MultiviewDemoStart (void);
 void CL_MultiviewDemoFinish (void);
 void CL_MultiviewDemoStartRewind (void);
 void CL_MultiviewDemoStopRewind (void);
+
+// Weapons
+centity_t* CL_WeaponModelForView(void);
 
 // ===================================================================================
 // client side min_ping aka delay

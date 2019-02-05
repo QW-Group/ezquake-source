@@ -630,7 +630,7 @@ void R_AliasSetupLighting(entity_t *ent)
 void R_DrawViewModel(void)
 {
 	extern cvar_t cl_drawgun;
-	centity_t *cent;
+	centity_t *cent = CL_WeaponModelForView();
 	static entity_t gun;
 
 	//VULT CAMERA - Don't draw gun in external camera
@@ -638,12 +638,11 @@ void R_DrawViewModel(void)
 		return;
 	}
 
-	if (!r_drawentities.value || !cl.viewent.current.modelindex || cl_drawgun.value <= 0) {
+	if (!r_drawentities.value || !cent->current.modelindex || cl_drawgun.value <= 0) {
 		return;
 	}
 
 	memset(&gun, 0, sizeof(gun));
-	cent = &cl.viewent;
 
 	if (!(gun.model = cl.model_precache[cent->current.modelindex])) {
 		Host_Error("R_DrawViewModel: bad modelindex");

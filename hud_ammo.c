@@ -34,7 +34,7 @@ static int TP_TeamFortressEngineerSpanner(void)
 	if (cl.teamfortress) {
 		// MEAG: Fixme!
 		char *player_skin = Info_ValueForKey(cl.players[cl.playernum].userinfo, "skin");
-		char *model_name = cl.model_precache[cl.viewent.current.modelindex]->name;
+		char *model_name = cl.model_precache[CL_WeaponModelForView()->current.modelindex]->name;
 		if (player_skin && (strcasecmp(player_skin, "tf_eng") == 0) && model_name && (strcasecmp(model_name, "progs/v_span.mdl") == 0)) {
 			return 1;
 		}

@@ -286,7 +286,6 @@ void SCR_DrawFPS(void)
 		return;
 	}
 
-	// Multiview
 	snprintf(str, sizeof(str), "%3.1f", cls.fps + 0.05);
 
 	x = ELEMENT_X_COORD(show_fps);

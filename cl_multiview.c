@@ -29,8 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern int glx, gly, glwidth, glheight;
 
-#define MV_VIEWS 4
-
 #define	MV_VIEW1 0
 #define	MV_VIEW2 1
 #define	MV_VIEW3 2
@@ -40,7 +38,7 @@ static int      CURRVIEW;					// The current view being drawn in multiview mode.
 static qbool    bExitmultiview;				// Used when saving effect values on each frame.
 static int      nNumViews;					// The number of views in multiview mode.
 static int      nPlayernum;
-static int      mv_trackslots[4];			// The different track slots for each view.
+static int      mv_trackslots[MV_VIEWS];    // The different track slots for each view.
 static char     currteam[MAX_INFO_STRING];	// The name of the current team being tracked in multiview mode.
 static int      nSwapPov;					// Change in POV positive for next, negative for previous.
 static int      nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
@@ -105,7 +103,7 @@ void R_TranslatePlayerSkin (int playernum);
 void CL_Track (int trackview);
 static void CL_MultiviewOverrideValues (void);
 
-int CL_IncrLoop(int cview, int max)
+static int CL_IncrLoop(int cview, int max)
 {
 	return (cview >= max) ? 1 : ++cview;
 }
@@ -1333,14 +1331,11 @@ typedef struct mv_temp_cvar_s {
 	float   value;
 } mv_temp_cvar_t;
 
-extern cvar_t r_lerpframes;
-
 static mv_temp_cvar_t multiviewCvars[] = {
 	{ &scr_viewsize,      100.0f },
 	{ &cl_fakeshaft,        0.0f },
 	{ &gl_polyblend,        1.0f },
 	{ &gl_clear,            0.0f },
-	{ &r_lerpframes,        1.0f }
 };
 #define MV_CVAR_VIEWSIZE 0                 // we reference saved value when cl_mvinset specified
 
@@ -1388,9 +1383,6 @@ static void CL_MultiviewOverrideValues (void)
 
 	gl_polyblend.value = 0;
 	gl_clear.value = 0;
-
-	// stop weapon model lerping as it lerps with the other view
-	r_lerpframes.value = 0;
 }
 
 static qbool CL_MultiviewCvarResetRequired (void)
@@ -1762,4 +1754,11 @@ void CL_MultiviewInsetSetScreenCoordinates(int x, int y, int width, int height)
 	inset_y = y;
 	inset_width = width;
 	inset_height = height;
+}
+
+centity_t* CL_WeaponModelForView(void)
+{
+	int view = bound(0, CURRVIEW - 1, MV_VIEWS - 1);
+
+	return &cl.viewent[view];
 }
