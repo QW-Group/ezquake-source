@@ -1021,6 +1021,7 @@ int CL_MultiviewActiveViews (void);
 int CL_MultiviewCurrentView (void);
 int CL_MultiviewNextPlayer (void);
 int CL_MultiviewAutotrackSlot (void);
+int CL_MultiviewMainView(void);
 
 void CL_MultiviewSetTrackSlot (int trackNum, int player);
 void CL_MultiviewResetCvars (void);
