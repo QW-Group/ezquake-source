@@ -28,6 +28,7 @@
 - Loading a single player save file on 64-bit systems may cause crash shortly after resuming play (#297)
 - Dynamic lights correctly set during .dem playback (#298)
 - When viewing pre-selected weapon, the weapon only switches once the animation frame goes back to non-firing (#182)
+- Toggling multiview's inset window should alway keeps the current player in the primary view
 - QTV URLs can now include the QTV password (#295)
 - Gamma on screenshots was incorrect when system had more than 256 gamma ramps (linux) 
 - `/ignore $name` (allow the player to ignore their own messages) produced output during certain teamplay messages (#257)

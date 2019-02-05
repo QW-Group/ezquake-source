@@ -1580,7 +1580,7 @@ void CL_MultiviewSetTrackSlot (int trackSlot, int player)
 	if (trackSlot >= 0 && trackSlot < sizeof (mv_trackslots) / sizeof (mv_trackslots[0])) {
 		mv_trackslots[trackSlot] = player;
 	}
-	else if (CL_MultiviewInsetEnabled()) {
+	else {
 		nTrack1duel = player;
 		nTrack2duel = CL_NextPlayer (player);
 	}
