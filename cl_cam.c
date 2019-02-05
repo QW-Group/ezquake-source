@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sbar.h"
 #include "qtv.h"
 
+static int Cam_MainTrackNum(void);
 
 static vec3_t desired_position; // where the camera wants to be.
 static qbool locked = false;	// Is the spectator locked to a players view or free flying.
@@ -407,7 +408,7 @@ void Cam_Track(usercmd_t *cmd)
 			Cam_Lock(ideal_track);
 		}
 
-		if (frame->playerstate[spec_track].messagenum != cl.parsecount || spec_track != ideal_track) {
+		if (frame->playerstate[spec_track].messagenum != cl.parsecount || Cam_MainTrackNum() != ideal_track) {
 			int i;
 
 			for (i = 0; i < MAX_CLIENTS - 1; i++) {
@@ -816,14 +817,12 @@ void CL_InitCam(void)
 	CL_MultiviewInitialise ();
 }
 
-int Cam_MainTrackNum (void)
+static int Cam_MainTrackNum(void)
 {
-	extern int CL_MultiviewMainView (void);
-
-	if (CL_MultiviewInsetEnabled ()) {
-		return CL_MultiviewMainView ();
+	if (CL_MultiviewInsetEnabled()) {
+		return CL_MultiviewMainView();
 	}
-	return Cam_TrackNum ();
+	return Cam_TrackNum();
 }
 
 //
