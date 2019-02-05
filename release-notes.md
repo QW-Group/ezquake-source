@@ -41,6 +41,7 @@
 - Gamma on screenshots was incorrect when system had more than 256 gamma ramps (linux) (#296)
 - `/ignore $name` (allow the player to ignore their own messages) produced output during certain teamplay messages (#257)
 - Toggling multiview with inset window should alway keeps the current player in the primary view
+- Multiview was trying to cause increase in frames rendered (`/cl_maxfps` multiplied for each extra view)
 - `mvd_moreinfo` - multiple bugfixes
   - fix incorrect location name when reporting item pickups
   - pack drops are announced when the player dies, not when they respawn
@@ -52,5 +53,3 @@
 - OSX: Dialog to find .pak files on initial installation could point to 'my computer' location on Mojave
 - Added azure-pipelines.yml
 - Server: can now be built without USE_PR2 defined
-
-

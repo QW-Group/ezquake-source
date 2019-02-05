@@ -2036,15 +2036,7 @@ static double CL_MinFrameTime (void)
 			return 0;
 
 		// Multiview.
-		if (CL_MultiviewEnabled())
-		{
-			fps = max (30.0, cl_maxfps.value * CL_MultiviewNumberViews());
-		}
-		else
-		{
-			fps = max (30.0, cl_maxfps.value);
-		}
-
+		fps = max(30.0, cl_maxfps.value);
 	}
 	else
 	{
