@@ -36,6 +36,15 @@ typedef struct glyphinfo_s {
 	qbool loaded;
 } glyphinfo_t;
 
+#ifdef EZ_FREETYPE_SUPPORT_STATIC
+#define ezFT_Init_FreeType   FT_Init_FreeType
+#define ezFT_New_Face        FT_New_Face
+#define ezFT_Done_FreeType   FT_Done_FreeType
+#define ezFT_Set_Pixel_Sizes FT_Set_Pixel_Sizes
+#define ezFT_Load_Char       FT_Load_Char
+#define ezFT_Render_Glyph    FT_Render_Glyph
+#endif
+
 static glyphinfo_t glyphs[4096];
 static float max_glyph_width;
 static float max_num_glyph_width;
@@ -188,14 +197,30 @@ static qbool FontCreate(int grouping, const char* path)
 	int baseline_offset;
 	charset_t* charset;
 	int outline_width = bound(0, font_outline.integer, 4);
+#ifndef EZ_FREETYPE_SUPPORT_STATIC
+	// freetyped.lib;
+	DL_t dll = Sys_DLOpen("freetype.dll");
+	FT_Error(*ezFT_Init_FreeType)(FT_Library* library) = dll ? Sys_DLProc(dll, "FT_Init_FreeType") : NULL;
+	FT_Error(*ezFT_New_Face)(FT_Library library, const char* filepathname, FT_Long face_index, FT_Face* aface) = dll ? Sys_DLProc(dll, "FT_New_Face") : NULL;
+	FT_Error(*ezFT_Done_FreeType)(FT_Library library) = dll ? Sys_DLProc(dll, "FT_Done_FreeType") : NULL;
+	FT_Error(*ezFT_Set_Pixel_Sizes)(FT_Face face, FT_UInt pixel_width, FT_UInt pixel_height) = dll ? Sys_DLProc(dll, "FT_Set_Pixel_Sizes") : NULL;
+	FT_Error(*ezFT_Load_Char)(FT_Face face, FT_ULong char_code, FT_Int32 load_flags) = dll ? Sys_DLProc(dll, "FT_Load_Char") : NULL;
+	FT_Error(*ezFT_Render_Glyph)(FT_GlyphSlot slot, FT_Render_Mode render_mode) = dll ? Sys_DLProc(dll, "FT_Render_Glyph") : NULL;
 
-	error = FT_Init_FreeType(&library);
+	if (ezFT_Init_FreeType == NULL || ezFT_New_Face == NULL || ezFT_Done_FreeType == NULL ||
+		ezFT_Set_Pixel_Sizes == NULL || ezFT_Load_Char == NULL || ezFT_Render_Glyph == NULL) {
+		Con_Printf("Unable to load freetype library, proportional fonts not available\n");
+		return false;
+	}
+#endif
+
+	error = ezFT_Init_FreeType(&library);
 	if (error) {
 		Con_Printf("Error during freetype initialisation\n");
 		return false;
 	}
 
-	error = FT_New_Face(library, path, 0, &face);
+	error = ezFT_New_Face(library, path, 0, &face);
 	if (error == FT_Err_Unknown_File_Format) {
 		Con_Printf("Font file found, but format is unsupported\n");
 		return false;
@@ -228,7 +253,7 @@ static qbool FontCreate(int grouping, const char* path)
 	memset(glyphs, 0, sizeof(glyphs));
 	max_glyph_width = max_num_glyph_width = 0;
 
-	FT_Set_Pixel_Sizes(
+	ezFT_Set_Pixel_Sizes(
 		face,
 		base_font_width / 2 - 2 * outline_width,
 		base_font_height / 2 - 2 * outline_width
@@ -249,17 +274,17 @@ static qbool FontCreate(int grouping, const char* path)
 		}
 
 		if (ch < 32) {
-			glyph_index = FT_Load_Char(face, '0' + (ch - 18), FT_LOAD_RENDER);
+			glyph_index = ezFT_Load_Char(face, '0' + (ch - 18), FT_LOAD_RENDER);
 		}
 		else {
-			glyph_index = FT_Load_Char(face, ch, FT_LOAD_RENDER);
+			glyph_index = ezFT_Load_Char(face, ch, FT_LOAD_RENDER);
 		}
 
 		if (glyph_index) {
 			continue;
 		}
 
-		error = FT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
+		error = ezFT_Render_Glyph(face->glyph, FT_RENDER_MODE_NORMAL);
 		if (error) {
 			continue;
 		}
@@ -278,7 +303,10 @@ static qbool FontCreate(int grouping, const char* path)
 			}
 		}
 	}
-	FT_Done_FreeType(library);
+	ezFT_Done_FreeType(library);
+#ifndef EZ_FREETYPE_SUPPORT_STATIC
+	Sys_DLClose(dll);
+#endif
 
 	// Work out where the baseline is...
 	{
