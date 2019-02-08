@@ -49,7 +49,7 @@ static glyphinfo_t glyphs[4096];
 static float max_glyph_width;
 static float max_num_glyph_width;
 
-#define FONT_TEXTURE_SIZE 1024
+#define FONT_TEXTURE_SIZE 512
 charset_t proportional_fonts[MAX_CHARSETS];
 
 int Font_Load(const char* path);
@@ -358,6 +358,7 @@ static qbool FontCreate(int grouping, const char* path)
 		renderer.TextureReplaceSubImageRGBA(charset->master, original_left + xbase, original_top + ybase, base_font_width, base_font_height, temp_buffer);
 	}
 	Q_free(full_buffer);
+	charset->custom_scale_x = charset->custom_scale_y = 1;
 
 	CachePics_MarkAtlasDirty();
 
@@ -493,3 +494,14 @@ float FontCharacterWidth(char ch_, float scale, qbool proportional)
 	return 8 * char_textures[charset].custom_scale_x * scale;
 }
 
+void Draw_InitFont(void)
+{
+#ifdef EZ_FREETYPE_SUPPORT
+	if (!font_facepath.string[0]) {
+		FontClear(0);
+	}
+	else {
+		FontCreate(0, font_facepath.string);
+	}
+#endif
+}

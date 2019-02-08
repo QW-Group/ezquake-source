@@ -31,6 +31,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "r_draw.h"
 
 static void OnChange_gl_consolefont(cvar_t *, char *, qbool *);
+void Draw_InitFont(void);
 
 cvar_t gl_alphafont    = { "gl_alphafont", "1" };
 cvar_t gl_consolefont  = { "gl_consolefont", "povo5", 0, OnChange_gl_consolefont };
@@ -701,6 +702,8 @@ void Draw_InitCharset(void)
 	if (!R_TextureReferenceIsValid(char_textures[0].glyphs[0].texnum)) {
 		Sys_Error("Draw_InitCharset: Couldn't load charset");
 	}
+
+	Draw_InitFont();
 }
 
 void Draw_SetCrosshairTextMode(qbool enabled)
@@ -728,11 +731,9 @@ static float Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale,
 	if (proportional) {
 		extern charset_t proportional_fonts[MAX_CHARSETS];
 
-		if (R_TextureReferenceIsValid(proportional_fonts[new_charset].master) && R_TextureReferenceIsValid(proportional_fonts[new_charset].glyphs[ch & 0xFF].texnum)) {
+		proportional &= R_TextureReferenceIsValid(proportional_fonts[new_charset].glyphs[ch & 0xFF].texnum);
+		if (proportional) {
 			texture = &proportional_fonts[new_charset];
-		}
-		else {
-			proportional = false;
 		}
 	}
 #else
