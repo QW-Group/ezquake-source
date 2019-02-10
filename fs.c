@@ -551,26 +551,30 @@ static void FS_AddUserPaks(char *dir, searchpath_t *parent, FS_Load_File_Types l
 
 // <-- QW262
 
-void FS_AddUserDirectory ( char *dir ) {
+void FS_AddUserDirectory(char *dir)
+{
 	size_t dir_len;
 	char *malloc_dir;
 
-	if ( !UserdirSet )
+	if (!UserdirSet) {
 		return;
+	}
+
 	switch (userdir_type) {
-			case 0:	snprintf (com_userdir, sizeof(com_userdir), "%s/%s", com_gamedir, userdirfile); break;
-			case 1:	snprintf (com_userdir, sizeof(com_userdir), "%s/%s/%s", com_basedir, userdirfile, dir); break;
-			case 2: snprintf (com_userdir, sizeof(com_userdir), "%s/qw/%s/%s", com_basedir, userdirfile, dir); break;
-			case 3: snprintf (com_userdir, sizeof(com_userdir), "%s/qw/%s", com_basedir, userdirfile); break;
-			case 4: snprintf (com_userdir, sizeof(com_userdir), "%s/%s", com_basedir, userdirfile); break;
-			case 5: {
-				char* homedir = getenv("HOME");
-				if (homedir)
-					snprintf (com_userdir, sizeof(com_userdir), "%s/qw/%s", homedir, userdirfile);
-				break;
-			}
-			default:
-			return;
+	case 0:	snprintf(com_userdir, sizeof(com_userdir), "%s/%s", com_gamedir, userdirfile); break;
+	case 1:	snprintf(com_userdir, sizeof(com_userdir), "%s/%s/%s", com_basedir, userdirfile, dir); break;
+	case 2: snprintf(com_userdir, sizeof(com_userdir), "%s/qw/%s/%s", com_basedir, userdirfile, dir); break;
+	case 3: snprintf(com_userdir, sizeof(com_userdir), "%s/qw/%s", com_basedir, userdirfile); break;
+	case 4: snprintf(com_userdir, sizeof(com_userdir), "%s/%s", com_basedir, userdirfile); break;
+	case 5: {
+		const char* homedir = Sys_HomeDirectory();
+		if (homedir && homedir[0]) {
+			snprintf(com_userdir, sizeof(com_userdir), "%s/qw/%s", homedir, userdirfile);
+		}
+		break;
+	}
+	default:
+		return;
 	}
 
 	dir_len = strlen(com_userdir) + 2;
