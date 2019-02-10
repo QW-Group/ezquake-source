@@ -54,7 +54,7 @@ static glyphinfo_t glyphs[4096];
 static float max_glyph_width;
 static float max_num_glyph_width;
 
-#define FONT_TEXTURE_SIZE 512
+#define FONT_TEXTURE_SIZE 1024
 charset_t proportional_fonts[MAX_CHARSETS];
 
 int Font_Load(const char* path);
