@@ -60,6 +60,7 @@ qbool stdin_ready;
 int do_stdin = 1;
 
 cvar_t sys_nostdout = {"sys_nostdout", "0"};
+cvar_t sys_fontsdir = { "sys_fontsdir", "/usr/local/share/fonts/" };
 
 void Sys_Printf (char *fmt, ...)
 {
@@ -96,9 +97,11 @@ void Sys_Quit(void)
 void Sys_Init(void)
 {
 #ifdef __APPLE__
-       extern void init_url_handler( void );
-       init_url_handler();
+    extern void init_url_handler( void );
+    init_url_handler();
 #endif
+
+	Cvar_Register(&sys_fontsdir);
 }
 
 void Sys_Error(char *error, ...)
@@ -728,4 +731,18 @@ void *Sys_GetAddressForName(dllhandle_t *module, const char *exportname)
 	if (!module)
 		return NULL;
 	return dlsym(module, exportname);
+}
+
+const char* Sys_FontsDirectory(void)
+{
+	return sys_fontsdir.string;
+}
+
+const char* Sys_HomeDirectory(void)
+{
+	char *ev = getenv("HOME");
+	if (ev) {
+		return ev;
+	}
+	return "";
 }

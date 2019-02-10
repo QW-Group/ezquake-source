@@ -34,7 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #ifdef _WIN32
 #include <errno.h>
-#include <shlobj.h>
 #else
 #include <unistd.h>
 #include <strings.h>
@@ -681,9 +680,6 @@ void FS_ShutDown( void ) {
 
 void FS_InitFilesystemEx( qbool guess_cwd ) {
 	int i;
-#ifndef _WIN32
-	char *ev;
-#endif
 	char tmp_path[MAX_OSPATH];
 
 	FS_ShutDown();
@@ -732,25 +728,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	if (i >= 0 && com_basedir[i] == '/')
 		com_basedir[i] = 0;
 
-#ifdef _WIN32
-	// gets "C:\documents and settings\johnny\my documents" path
-	if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_PERSONAL, 0)) {
-		*com_homedir = 0;
-	}
-
-	// <Cokeman> yea, but it shouldn't be in My Documents
-	// <Cokeman> it should be in the application data dir
-	// c:\documents and settings\<user>\application data
-	//if (!SHGetSpecialFolderPath(0, com_homedir, CSIDL_APPDATA, 0)) {
-	//	*com_homedir = 0;
-	//}
-#else
-	ev = getenv("HOME");
-	if (ev)
-		strlcpy(com_homedir, ev, sizeof(com_homedir));
-	else
-		com_homedir[0] = 0;
-#endif
+	strlcpy(com_homedir, Sys_HomeDirectory(), sizeof(com_homedir));
 
 	if (COM_CheckParm(cmdline_param_filesystem_nohome)) {
 		com_homedir[0] = 0;

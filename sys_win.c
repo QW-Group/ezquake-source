@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "server.h"
 #include "pcre.h"
+#include <shlobj.h>
 
 #define MINIMUM_WIN_MEMORY	0x0c00000
 #define MAXIMUM_WIN_MEMORY	0x8000000
@@ -1578,4 +1579,34 @@ void Sys_CancelDeadKey (void)
 	input[0].ki.wVk = input[1].ki.wVk = VK_BACK;
 	input[1].ki.dwFlags = KEYEVENTF_KEYUP;
 	SendInput (2, input, sizeof (INPUT));
+}
+
+const char* Sys_FontsDirectory(void)
+{
+	static char path[MAX_OSPATH];
+
+	if (!SHGetSpecialFolderPath(NULL, path, CSIDL_FONTS, 0)) {
+		path[0] = 0;
+	}
+
+	return path;
+}
+
+const char* Sys_HomeDirectory(void)
+{
+	static char path[MAX_OSPATH];
+
+	// gets "C:\documents and settings\johnny\my documents" path
+	if (!SHGetSpecialFolderPath(0, path, CSIDL_PERSONAL, 0)) {
+		path[0] = 0;
+	}
+
+	// <Cokeman> yea, but it shouldn't be in My Documents
+	// <Cokeman> it should be in the application data dir
+	// c:\documents and settings\<user>\application data
+	//if (!SHGetSpecialFolderPath(0, path, CSIDL_APPDATA, 0)) {
+	//	path[0] = 0;
+	//}
+
+	return path;
 }

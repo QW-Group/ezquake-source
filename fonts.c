@@ -21,12 +21,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef EZ_FREETYPE_SUPPORT
 #include <ft2build.h>
 #include FT_FREETYPE_H
+#include "pcre.h"
 #endif
 #include "quakedef.h"
 #include "gl_model.h"
 #include "r_texture.h"
 #include "fonts.h"
 #include "r_renderer.h"
+#include "rulesets.h"
 
 #ifdef EZ_FREETYPE_SUPPORT
 typedef struct glyphinfo_s {
@@ -43,6 +45,9 @@ typedef struct glyphinfo_s {
 #define ezFT_Set_Pixel_Sizes FT_Set_Pixel_Sizes
 #define ezFT_Load_Char       FT_Load_Char
 #define ezFT_Render_Glyph    FT_Render_Glyph
+#define ezCloseFTDLL(x)
+#else
+#define ezCloseFTDLL(dll)      Sys_DLClose(dll)
 #endif
 
 static glyphinfo_t glyphs[4096];
@@ -183,8 +188,9 @@ static void FontClear(int grouping)
 	memset(charset, 0, sizeof(*charset));
 }
 
-static qbool FontCreate(int grouping, const char* path)
+static qbool FontCreate(int grouping, const char* userpath)
 {
+	char path[MAX_OSPATH];
 	FT_Library library;
 	FT_Error error;
 	FT_Face face;
@@ -199,17 +205,33 @@ static qbool FontCreate(int grouping, const char* path)
 	int outline_width = bound(0, font_outline.integer, 4);
 #ifndef EZ_FREETYPE_SUPPORT_STATIC
 	// freetyped.lib;
-	DL_t dll = Sys_DLOpen("freetype.dll");
-	FT_Error(*ezFT_Init_FreeType)(FT_Library* library) = dll ? Sys_DLProc(dll, "FT_Init_FreeType") : NULL;
-	FT_Error(*ezFT_New_Face)(FT_Library library, const char* filepathname, FT_Long face_index, FT_Face* aface) = dll ? Sys_DLProc(dll, "FT_New_Face") : NULL;
-	FT_Error(*ezFT_Done_FreeType)(FT_Library library) = dll ? Sys_DLProc(dll, "FT_Done_FreeType") : NULL;
-	FT_Error(*ezFT_Set_Pixel_Sizes)(FT_Face face, FT_UInt pixel_width, FT_UInt pixel_height) = dll ? Sys_DLProc(dll, "FT_Set_Pixel_Sizes") : NULL;
-	FT_Error(*ezFT_Load_Char)(FT_Face face, FT_ULong char_code, FT_Int32 load_flags) = dll ? Sys_DLProc(dll, "FT_Load_Char") : NULL;
-	FT_Error(*ezFT_Render_Glyph)(FT_GlyphSlot slot, FT_Render_Mode render_mode) = dll ? Sys_DLProc(dll, "FT_Render_Glyph") : NULL;
+	DL_t dll = NULL;
+	FT_Error(*ezFT_Init_FreeType)(FT_Library* library) = NULL;
+	FT_Error(*ezFT_New_Face)(FT_Library library, const char* filepathname, FT_Long face_index, FT_Face* aface) = NULL;
+	FT_Error(*ezFT_Done_FreeType)(FT_Library library) = NULL;
+	FT_Error(*ezFT_Set_Pixel_Sizes)(FT_Face face, FT_UInt pixel_width, FT_UInt pixel_height) = NULL;
+	FT_Error(*ezFT_Load_Char)(FT_Face face, FT_ULong char_code, FT_Int32 load_flags) = NULL;
+	FT_Error(*ezFT_Render_Glyph)(FT_GlyphSlot slot, FT_Render_Mode render_mode) = NULL;
+
+	if (Rulesets_RestrictPacket()) {
+		Con_Printf("Cannot change font during match\n");
+		return false;
+	}
+
+	dll = Sys_DLOpen("freetype.dll");
+	if (dll) {
+		ezFT_Init_FreeType = Sys_DLProc(dll, "FT_Init_FreeType");
+		ezFT_New_Face = Sys_DLProc(dll, "FT_New_Face");
+		ezFT_Done_FreeType = Sys_DLProc(dll, "FT_Done_FreeType");
+		ezFT_Set_Pixel_Sizes = Sys_DLProc(dll, "FT_Set_Pixel_Sizes");
+		ezFT_Load_Char = Sys_DLProc(dll, "FT_Load_Char");
+		ezFT_Render_Glyph = Sys_DLProc(dll, "FT_Render_Glyph");
+	}
 
 	if (ezFT_Init_FreeType == NULL || ezFT_New_Face == NULL || ezFT_Done_FreeType == NULL ||
 		ezFT_Set_Pixel_Sizes == NULL || ezFT_Load_Char == NULL || ezFT_Render_Glyph == NULL) {
 		Con_Printf("Unable to load freetype library, proportional fonts not available\n");
+		ezCloseFTDLL(dll);
 		return false;
 	}
 #endif
@@ -217,16 +239,25 @@ static qbool FontCreate(int grouping, const char* path)
 	error = ezFT_Init_FreeType(&library);
 	if (error) {
 		Con_Printf("Error during freetype initialisation\n");
+		ezCloseFTDLL(dll);
 		return false;
 	}
+
+	strlcpy(path, Sys_FontsDirectory(), sizeof(path));
+	strlcat(path, "/", sizeof(path));
+	strlcat(path, userpath, sizeof(path));
+	COM_DefaultExtension(path, ".ttf");
 
 	error = ezFT_New_Face(library, path, 0, &face);
 	if (error == FT_Err_Unknown_File_Format) {
 		Con_Printf("Font file found, but format is unsupported\n");
+		ezCloseFTDLL(dll);
 		return false;
 	}
 	else if (error) {
 		Con_Printf("Font file could not be opened\n");
+		Con_Printf("> Attempted path: %s\n", path);
+		ezCloseFTDLL(dll);
 		return false;
 	}
 
@@ -304,9 +335,7 @@ static qbool FontCreate(int grouping, const char* path)
 		}
 	}
 	ezFT_Done_FreeType(library);
-#ifndef EZ_FREETYPE_SUPPORT_STATIC
-	Sys_DLClose(dll);
-#endif
+	ezCloseFTDLL(dll);
 
 	// Work out where the baseline is...
 	{
@@ -344,18 +373,18 @@ static qbool FontCreate(int grouping, const char* path)
 			memset(temp_buffer, 0, yoffset * base_font_width * 4);
 		}
 
-		glyphs[ch].offsets[0] /= (base_font_width / 2);
-		glyphs[ch].offsets[1] /= (base_font_height / 2);
+glyphs[ch].offsets[0] /= (base_font_width / 2);
+glyphs[ch].offsets[1] /= (base_font_height / 2);
 
-		charset->glyphs[ch].width = width;
-		charset->glyphs[ch].height = height;
-		charset->glyphs[ch].sl = (original_left + xbase) * 1.0f / texture_width;
-		charset->glyphs[ch].tl = (original_top + ybase) * 1.0f / texture_height;
-		charset->glyphs[ch].sh = charset->glyphs[ch].sl + width * 1.0f / texture_width;
-		charset->glyphs[ch].th = charset->glyphs[ch].tl + height * 1.0f / texture_height;
-		charset->glyphs[ch].texnum = charset->master;
+charset->glyphs[ch].width = width;
+charset->glyphs[ch].height = height;
+charset->glyphs[ch].sl = (original_left + xbase) * 1.0f / texture_width;
+charset->glyphs[ch].tl = (original_top + ybase) * 1.0f / texture_height;
+charset->glyphs[ch].sh = charset->glyphs[ch].sl + width * 1.0f / texture_width;
+charset->glyphs[ch].th = charset->glyphs[ch].tl + height * 1.0f / texture_height;
+charset->glyphs[ch].texnum = charset->master;
 
-		renderer.TextureReplaceSubImageRGBA(charset->master, original_left + xbase, original_top + ybase, base_font_width, base_font_height, temp_buffer);
+renderer.TextureReplaceSubImageRGBA(charset->master, original_left + xbase, original_top + ybase, base_font_width, base_font_height, temp_buffer);
 	}
 	Q_free(full_buffer);
 	charset->custom_scale_x = charset->custom_scale_y = 1;
@@ -390,32 +419,79 @@ static void OnChange_font_facepath(cvar_t* cvar, char* newvalue, qbool* cancel)
 void Draw_LoadFont_f(void)
 {
 	switch (Cmd_Argc()) {
-		case 1:
-			if (font_facepath.string[0]) {
-				Com_Printf("Current proportional font is \"%s\"\n", font_facepath.string);
-				Com_Printf("To clear, use \"%s none\"\n", Cmd_Argv(0));
-			}
-			else {
-				Com_Printf("No proportional font loaded\n");
-			}
-			break;
-		case 2:
-			if (!strcmp(Cmd_Argv(1), "none")) {
-				Cvar_Set(&font_facepath, "");
-			}
-			else {
-				Cvar_Set(&font_facepath, Cmd_Argv(1));
-			}
-			break;
-		default:
-			Com_Printf("Usage: \"%s <path>\" or \"%s none\"\n", Cmd_Argv(0), Cmd_Argv(0));
-			break;
+	case 1:
+		if (font_facepath.string[0]) {
+			Com_Printf("Current proportional font is \"%s\"\n", font_facepath.string);
+			Com_Printf("To clear, use \"%s none\"\n", Cmd_Argv(0));
+		}
+		else {
+			Com_Printf("No proportional font loaded\n");
+		}
+		break;
+	case 2:
+		if (!strcmp(Cmd_Argv(1), "none")) {
+			Cvar_Set(&font_facepath, "");
+		}
+		else {
+			Cvar_Set(&font_facepath, Cmd_Argv(1));
+		}
+		break;
+	default:
+		Com_Printf("Usage: \"%s <path>\" or \"%s none\"\n", Cmd_Argv(0), Cmd_Argv(0));
+		break;
 	}
+}
+
+void Draw_ListFonts_f(void)
+{
+	char path[MAX_OSPATH];
+	dir_t dir;
+	int i, printed;
+	pcre* regexp = NULL;
+
+	strlcpy(path, Sys_FontsDirectory(), sizeof(path));
+
+	if (Cmd_Argc() > 1) {
+		const char* error = NULL;
+		int erroffset = 0;
+
+		regexp = pcre_compile(Cmd_Argv(1), PCRE_CASELESS, &error, &erroffset, NULL);
+		if (error) {
+			if (regexp) {
+				pcre_free(regexp);
+			}
+			Con_Printf("Error in regular expression: %s\n", error);
+			return;
+		}
+	}
+
+	dir = Sys_listdir(path, ".ttf", SORT_BY_NAME);
+	for (i = 0, printed = 0; i < dir.numfiles; ++i) {
+		if (dir.files[i].isdir) {
+			continue;
+		}
+		if (regexp) {
+			int offsets[3];  // pcre manual: must be multiple of 3
+
+			if (pcre_exec(regexp, NULL, dir.files[i].name, strlen(dir.files[i].name), 0, 0, offsets, sizeof(offsets) / sizeof(offsets[0])) <= 0) {
+				continue;
+			}
+		}
+		
+		Con_Printf("  %s\n", dir.files[i].name);
+		printed++;
+	}
+
+	if (regexp) {
+		pcre_free(regexp);
+	}
+	Con_Printf("Found %d/%d files in %s\n", printed, dir.numfiles, path);
 }
 
 void FontInitialise(void)
 {
-	Cmd_AddCommand("loadfont", Draw_LoadFont_f);
+	Cmd_AddCommand("fontload", Draw_LoadFont_f);
+	Cmd_AddCommand("fontlist", Draw_ListFonts_f);
 
 	Cvar_Register(&font_facepath);
 	Cvar_Register(&font_capitalize);

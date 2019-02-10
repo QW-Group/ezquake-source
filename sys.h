@@ -214,3 +214,6 @@ void Sys_CloseLibrary(dllhandle_t *lib);
 void *Sys_GetAddressForName(dllhandle_t *module, const char *exportname);
 
 void Sys_CvarInit(void);
+
+const char* Sys_FontsDirectory(void);
+const char* Sys_HomeDirectory(void);
