@@ -173,7 +173,9 @@ SERVER_OBJS := \
     pr2_cmds.o \
     pr2_edict.o \
     pr2_exec.o \
-    pr2_vm.o \
+    vm.o \
+    vm_interpreted.o \
+	vm_x86.o \
     sv_ccmds.o \
     sv_ents.o \
     sv_init.o \

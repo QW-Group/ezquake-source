@@ -24,9 +24,10 @@
 
 
 extern intptr_t sv_syscall(intptr_t arg, ...);
-extern int sv_sys_callex(byte *data, unsigned int len, int fn, pr2val_t*arg);
-typedef void (*pr2_trapcall_t)(byte* base, uintptr_t mask, pr2val_t* stack, pr2val_t*retval);
+//extern int sv_sys_callex(byte *data, unsigned int len, int fn, pr2val_t*arg);
+//typedef void (*pr2_trapcall_t)(byte* base, uintptr_t mask, pr2val_t* stack, pr2val_t*retval);
 
+intptr_t PR2_GameSystemCalls( intptr_t *args );
 //extern int usedll;
 extern cvar_t sv_progtype;
 extern vm_t* sv_vm;
@@ -68,7 +69,7 @@ void		PR2_EdictThink(func_t f);
 #define PR_EdictThink PR2_EdictThink
 void		PR2_EdictBlocked(func_t f);
 #define PR_EdictBlocked PR2_EdictBlocked
-qbool 		PR2_UserInfoChanged(void);
+qbool 		PR2_UserInfoChanged(int after);
 #define PR_UserInfoChanged PR2_UserInfoChanged
 void 		PR2_GameShutDown(void);
 #define PR_GameShutDown PR2_GameShutDown

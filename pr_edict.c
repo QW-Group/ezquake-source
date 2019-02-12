@@ -31,6 +31,7 @@ dstatement_t	*pr_statements;
 globalvars_t	*pr_global_struct;
 float			*pr_globals;			// same as pr_global_struct
 int				pr_edict_size;	// in bytes
+int				pr_edict_offset;	// in bytes
 
 #define NQ_PROGHEADER_CRC 5927
 
@@ -90,9 +91,9 @@ Sets everything to NULL
 */
 void ED_ClearEdict (edict_t *e)
 {
-	memset(&e->v, 0, pr_edict_size - sizeof(edict_t) + sizeof(entvars_t));
-	e->e->lastruntime = 0;
-	e->e->free = false;
+	memset(e->v, 0, pr_edict_size - pr_edict_offset);
+	e->e.lastruntime = 0;
+	e->e.free = false;
 	PR_ClearEdict(e);
 }
 
@@ -117,7 +118,7 @@ edict_t *ED_Alloc (void)
 		e = EDICT_NUM(i);
 		// the first couple seconds of server time can involve a lot of
 		// freeing and allocating, so relax the replacement policy
-		if (e->e->free && (e->e->freetime < 2 || sv.time - e->e->freetime > 0.5))
+		if (e->e.free && (e->e.freetime < 2 || sv.time - e->e.freetime > 0.5))
 		{
 			ED_ClearEdict(e);
 			return e;
@@ -154,21 +155,21 @@ void ED_Free (edict_t *ed)
 {
 	SV_UnlinkEdict (ed);		// unlink from world bsp
 
-	ed->e->free = true;
-	ed->v.model = 0;
-	ed->v.takedamage = 0;
-	ed->v.modelindex = 0;
-	ed->v.colormap = 0;
-	ed->v.skin = 0;
-	ed->v.frame = 0;
-	ed->v.health = 0;
-	ed->v.classname = 0;
-	VectorClear (ed->v.origin);
-	VectorClear (ed->v.angles);
-	ed->v.nextthink = -1;
-	ed->v.solid = 0;
+	ed->e.free = true;
+	ed->v->model = 0;
+	ed->v->takedamage = 0;
+	ed->v->modelindex = 0;
+	ed->v->colormap = 0;
+	ed->v->skin = 0;
+	ed->v->frame = 0;
+	ed->v->health = 0;
+	ed->v->classname = 0;
+	VectorClear (ed->v->origin);
+	VectorClear (ed->v->angles);
+	ed->v->nextthink = -1;
+	ed->v->solid = 0;
 
-	ed->e->freetime = sv.time;
+	ed->e.freetime = sv.time;
 }
 
 //===========================================================================
@@ -322,7 +323,7 @@ Done:
 	if (!def)
 		return NULL;
 
-	return (eval_t *)((char *)&ed->v + def->ofs*4);
+	return (eval_t *)((char *)ed->v + def->ofs*4);
 }
 
 /*
@@ -498,7 +499,7 @@ void ED_Print (edict_t *ed)
 	char	*name;
 	int		type;
 
-	if (ed->e->free)
+	if (ed->e.free)
 	{
 		Con_Printf ("FREE\n");
 		return;
@@ -511,7 +512,7 @@ void ED_Print (edict_t *ed)
 		if (name[strlen(name)-2] == '_')
 			continue;	// skip _x, _y, _z vars
 
-		v = (int *)((char *)&ed->v + d->ofs*4);
+		v = (int *)((char *)ed->v + d->ofs*4);
 
 		// if the value is still all 0, skip the field
 		type = d->type & ~DEF_SAVEGLOBAL;
@@ -548,7 +549,7 @@ void ED_Write (FILE *f, edict_t *ed)
 
 	fprintf (f, "{\n");
 
-	if (ed->e->free)
+	if (ed->e.free)
 	{
 		fprintf (f, "}\n");
 		return;
@@ -561,7 +562,7 @@ void ED_Write (FILE *f, edict_t *ed)
 		if (name[strlen(name)-2] == '_')
 			continue;	// skip _x, _y, _z vars
 
-		v = (int *)((char *)&ed->v + d->ofs*4);
+		v = (int *)((char *)ed->v + d->ofs*4);
 
 		// if the value is still all 0, skip the field
 		type = d->type & ~DEF_SAVEGLOBAL;
@@ -647,14 +648,14 @@ void ED_Count (void)
 	for (i=0 ; i<sv.num_edicts ; i++)
 	{
 		ent = EDICT_NUM(i);
-		if (ent->e->free)
+		if (ent->e.free)
 			continue;
 		active++;
-		if (ent->v.solid)
+		if (ent->v->solid)
 			solid++;
-		if (ent->v.model)
+		if (ent->v->model)
 			models++;
-		if (ent->v.movetype == MOVETYPE_STEP)
+		if (ent->v->movetype == MOVETYPE_STEP)
 			step++;
 	}
 
@@ -930,12 +931,12 @@ char *ED_ParseEdict (char *data, edict_t *ent)
 			snprintf (com_token, MAX_COM_TOKEN, "0 %s 0", temp);
 		}
 
-		if (!ED_ParseEpair ((void *)&ent->v, key, com_token))
+		if (!ED_ParseEpair ((void *)ent->v, key, com_token))
 			SV_Error ("ED_ParseEdict: parse error");
 	}
 
 	if (!init)
-		ent->e->free = true;
+		ent->e.free = true;
 
 	return data;
 }
@@ -985,16 +986,16 @@ void ED_LoadFromFile (char *data)
 		// remove things from different skill levels or deathmatch
 		if ((int)deathmatch.value)
 		{
-			if (((int)ent->v.spawnflags & SPAWNFLAG_NOT_DEATHMATCH))
+			if (((int)ent->v->spawnflags & SPAWNFLAG_NOT_DEATHMATCH))
 			{
 				ED_Free (ent);
 				inhibit++;
 				continue;
 			}
 		}
-		else if ((current_skill == 0 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_EASY))
-		         || (current_skill == 1 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_MEDIUM))
-		         || (current_skill >= 2 && ((int)ent->v.spawnflags & SPAWNFLAG_NOT_HARD)) )
+		else if ((current_skill == 0 && ((int)ent->v->spawnflags & SPAWNFLAG_NOT_EASY))
+		         || (current_skill == 1 && ((int)ent->v->spawnflags & SPAWNFLAG_NOT_MEDIUM))
+		         || (current_skill >= 2 && ((int)ent->v->spawnflags & SPAWNFLAG_NOT_HARD)) )
 		{
 			ED_Free (ent);
 			inhibit++;
@@ -1004,7 +1005,7 @@ void ED_LoadFromFile (char *data)
 		//
 		// immediately call spawn function
 		//
-		if (!ent->v.classname)
+		if (!ent->v->classname)
 		{
 			Con_Printf ("No classname for:\n");
 			ED_Print (ent);
@@ -1013,7 +1014,7 @@ void ED_LoadFromFile (char *data)
 		}
 
 		// look for the spawn function
-		func = ED_FindFunction ( PR1_GetString(ent->v.classname) );
+		func = ED_FindFunction ( PR1_GetString(ent->v->classname) );
 
 		if (!func)
 		{
@@ -1181,7 +1182,8 @@ void PR1_LoadProgs (void)
 	pr_global_struct = (globalvars_t *)((byte *)progs + progs->ofs_globals);
 	pr_globals = (float *)pr_global_struct;
 
-	pr_edict_size = progs->entityfields * 4 + sizeof (edict_t) - sizeof(entvars_t);
+	pr_edict_size = progs->entityfields * 4;
+    pr_edict_offset = 0;
 
 	// byte swap the lumps
 	for (i = 0; i < progs->numstatements; i++)
@@ -1226,7 +1228,7 @@ void PR1_LoadProgs (void)
 
 void PR1_InitProg(void)
 {
-	sv.edicts = (edict_t*) Hunk_AllocName (MAX_EDICTS * pr_edict_size, "edicts");
+	sv.game_edicts = (entvars_t*) Hunk_AllocName (MAX_EDICTS * pr_edict_size, "edicts");
 	sv.max_edicts = MAX_EDICTS;
 }
 
@@ -1254,7 +1256,7 @@ edict_t *EDICT_NUM(int n)
 {
 	if (n < 0 || n >= sv.max_edicts)
 		SV_Error ("EDICT_NUM: bad number %i", n);
-	return (edict_t *)((byte *)sv.edicts+ (n)*pr_edict_size);
+	return &sv.edicts[n];
 }
 
 int NUM_FOR_EDICT(edict_t *e)
@@ -1262,7 +1264,8 @@ int NUM_FOR_EDICT(edict_t *e)
 	int		b;
 
 	b = (byte *)e - (byte *)sv.edicts;
-	b /= pr_edict_size;
+	b /= sizeof( edict_t);
+    b = e->e.entnum;
 
 	if (b < 0 || b >= sv.num_edicts)
 		SV_Error ("NUM_FOR_EDICT: bad pointer");

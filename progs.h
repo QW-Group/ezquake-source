@@ -65,11 +65,11 @@ typedef struct sv_edict_s
 
 typedef struct edict_s
 {
-	sv_edict_t	*e;			// server side part of the edict_t,
+	sv_edict_t	e;			// server side part of the edict_t,
 							// basically we can get rid of this pointer at all, since we can access it via sv.sv_edicts[num]
 							// but this way it more friendly, I think.
 
-	entvars_t	v;			// C exported fields from progs
+	entvars_t	*v;			// C exported fields from progs
 	// other fields from progs come immediately after
 } edict_t;
 
@@ -85,6 +85,7 @@ extern	globalvars_t	*pr_global_struct;
 extern	float		*pr_globals;	// same as pr_global_struct
 
 extern	int         pr_edict_size;	// in bytes
+extern  int			pr_edict_offset;	// in bytes
 extern	cvar_t      sv_progsname; 
 #ifdef WITH_NQPROGS
 extern	cvar_t      sv_forcenqprogs;
@@ -142,25 +143,25 @@ void ED_LoadFromFile (char *data);
 edict_t *EDICT_NUM(int n);
 int NUM_FOR_EDICT(edict_t *e);
 
-#define	NEXT_EDICT(e) ((edict_t *)( (byte *)e + pr_edict_size))
+#define	NEXT_EDICT(e) ((edict_t *)( (byte *)e + sizeof(edict_t)))
 
-#define	EDICT_TO_PROG(e) ((byte *)e - (byte *)sv.edicts)
-#define PROG_TO_EDICT(e) ((edict_t *)((byte *)sv.edicts + e))
+#define	EDICT_TO_PROG(e) ((byte *)(e->v) - ( (byte *)sv.game_edicts  ))
+#define PROG_TO_EDICT(e) (&sv.edicts[(e)/pr_edict_size])
 
 //============================================================================
 
 #define	G_FLOAT(o) (pr_globals[o])
 #define	G_INT(o) (*(int *)&pr_globals[o])
-#define	G_EDICT(o) ((edict_t *)((byte *)sv.edicts+ *(int *)&pr_globals[o]))
+#define	G_EDICT(o) (&sv.edicts[(*(int *)&pr_globals[o]  )/pr_edict_size])
 #define G_EDICTNUM(o) NUM_FOR_EDICT(G_EDICT(o))
 #define	G_VECTOR(o) (&pr_globals[o])
 #define	G_STRING(o) (PR1_GetString(*(string_t *)&pr_globals[o]))
 #define	G_FUNCTION(o) (*(func_t *)&pr_globals[o])
 
-#define	E_FLOAT(e,o) (((float*)&e->v)[o])
-#define	E_INT(e,o) (*(int *)&((float*)&e->v)[o])
-#define	E_VECTOR(e,o) (&((float*)&e->v)[o])
-#define	E_STRING(e,o) (PR1_GetString(*(string_t *)&((float*)&e->v)[PR_FIELDOFS(o)]))
+#define	E_FLOAT(e,o) (((float*)e->v)[o])
+#define	E_INT(e,o) (*(int *)&((float*)e->v)[o])
+#define	E_VECTOR(e,o) (&((float*)e->v)[o])
+#define	E_STRING(e,o) (PR1_GetString(*(string_t *)&((float*)e->v)[PR_FIELDOFS(o)]))
 
 extern	int		type_size[8];
 
@@ -190,8 +191,8 @@ extern int fofs_visibility;
 extern int fofs_hide_players;
 extern int fofs_teleported;
 
-#define EdictFieldFloat(ed, fieldoffset) ((eval_t *)((byte *)&(ed)->v + (fieldoffset)))->_float
-#define EdictFieldVector(ed, fieldoffset) ((eval_t *)((byte *)&(ed)->v + (fieldoffset)))->vector
+#define EdictFieldFloat(ed, fieldoffset) ((eval_t *)((byte *)(ed)->v + (fieldoffset)))->_float
+#define EdictFieldVector(ed, fieldoffset) ((eval_t *)((byte *)(ed)->v + (fieldoffset)))->vector
 
 void PR_RunError (char *error, ...);
 

@@ -30,7 +30,31 @@
 //
 // g_public.h -- game module information visible to server
 
-#define	GAME_API_VERSION	15
+#define	GAME_API_VERSION	16
+/*
+ * Changes in GAME_API_VERSION 16
+ * qvm ported from q3
+ * server change string pointers in mod memory only in trapcall( strings passed from mod, and placed in mod memory)
+ * never use pointers to memory outside mod memory, this cannot work in qvm in 64 bit server
+ * SetString now work only for original dat mods
+ * mapname and client netnames getting by get_infokey trap
+ * ******** CHANGES in MOD for API 16 
+ * remove all server data from edict_t
+ * now it must be 
+ * typedef struct shared_edict_s { entvars_t       v;  } edict_t;
+ *
+ * mod must get client netname in GAME_CLIENT_CONNECT call 
+ *       self = PROG_TO_EDICT( g_globalvars.self );
+ *       self->s.v.netname = netnames[NUM_FOR_EDICT(self)-1]; //Init client names
+ *       infokey( self, "netname", self->s.v.netname,  32);
+ *
+ * mapname can obtain in  GAME_LOADENTS call
+ *       infokey( world, "mapname", mapname, sizeof(mapname) );
+ * 
+ * added parametr to GAME_CLIENT_USERINFO_CHANGED call
+ * called with 0 before changing, with 1 after changing
+ * mod must update client netname in call with param 1 and key = "name"
+ */
 
 
 //===============================================================
@@ -142,6 +166,7 @@ typedef enum
 	G_SETPAUSE,
 	G_SETUSERINFO,
 	G_MOVETOGOAL,
+    _G__LASTAPI
 } gameImport_t;
 
 // !!! new things comes to end of list !!!
@@ -215,14 +240,30 @@ typedef struct
 
 typedef struct
 {
-	edict_t         *ents;
-	int             sizeofent;
-	globalvars_t    *global;
-	field_t         *fields;
-	int             APIversion;
-	int             maxentities;
+	int   name;
+	int   ofs;
+	int   type;
+} field_vm_t;
+
+typedef struct
+{
+    intptr_t        ents;
+    int             sizeofent;
+    intptr_t        global;
+    intptr_t        fields;
+    int             APIversion;
+    int             maxentities;
 } gameData_t;
 
+typedef struct
+{
+    int         ents_p;
+    int         sizeofent;
+    int         global_p;
+    int         fields_p;
+    int         APIversion;
+    int         maxentities;
+} gameData_vm_t;
 typedef int		fileHandle_t;
 
 typedef enum {

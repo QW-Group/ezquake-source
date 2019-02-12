@@ -124,7 +124,7 @@ void PF_setorigin (void)
 
 	e = G_EDICT(OFS_PARM0);
 	org = G_VECTOR(OFS_PARM1);
-	VectorCopy (org, e->v.origin);
+	VectorCopy (org, e->v->origin);
 	SV_AntilagReset (e);
 	SV_LinkEdict (e, false);
 }
@@ -147,9 +147,9 @@ void PF_setsize (void)
 	e = G_EDICT(OFS_PARM0);
 	min = G_VECTOR(OFS_PARM1);
 	max = G_VECTOR(OFS_PARM2);
-	VectorCopy (min, e->v.mins);
-	VectorCopy (max, e->v.maxs);
-	VectorSubtract (max, min, e->v.size);
+	VectorCopy (min, e->v->mins);
+	VectorCopy (max, e->v->maxs);
+	VectorSubtract (max, min, e->v->size);
 	SV_LinkEdict (e, false);
 }
 
@@ -179,33 +179,33 @@ static void PF_setmodel (void)
 	PR_RunError ("PF_setmodel: no precache: %s\n", m);
 ok:
 
-	e->v.model = G_INT(OFS_PARM1);
-	e->v.modelindex = i;
+	e->v->model = G_INT(OFS_PARM1);
+	e->v->modelindex = i;
 
 // if it is an inline model, get the size information for it
 	if (m[0] == '*')
 	{
 		mod = CM_InlineModel (m);
-		VectorCopy (mod->mins, e->v.mins);
-		VectorCopy (mod->maxs, e->v.maxs);
-		VectorSubtract (mod->maxs, mod->mins, e->v.size);
+		VectorCopy (mod->mins, e->v->mins);
+		VectorCopy (mod->maxs, e->v->maxs);
+		VectorSubtract (mod->maxs, mod->mins, e->v->size);
 		SV_LinkEdict (e, false);
 	}
 	else if (pr_nqprogs)
 	{
 		// hacks to make NQ progs happy
-		if (!strcmp(PR1_GetString(e->v.model), "maps/b_explob.bsp"))
+		if (!strcmp(PR1_GetString(e->v->model), "maps/b_explob.bsp"))
 		{
-			VectorClear (e->v.mins);
-			VectorSet (e->v.maxs, 32, 32, 64);
+			VectorClear (e->v->mins);
+			VectorSet (e->v->maxs, 32, 32, 64);
 		}
 		else
 		{
 			// FTE does this, so we do, too; I'm not sure if it makes a difference
-			VectorSet (e->v.mins, -16, -16, -16);
-			VectorSet (e->v.maxs, 16, 16, 16);
+			VectorSet (e->v->mins, -16, -16, -16);
+			VectorSet (e->v->maxs, 16, 16, 16);
 		}
-		VectorSubtract (e->v.maxs, e->v.mins, e->v.size);
+		VectorSubtract (e->v->maxs, e->v->mins, e->v->size);
 		SV_LinkEdict (e, false);
 	}
 }
@@ -723,11 +723,11 @@ int PF_newcheckclient (int check)
 		if (i == check)
 			break;	// didn't find anything else
 
-		if (ent->e->free)
+		if (ent->e.free)
 			continue;
-		if (ent->v.health <= 0)
+		if (ent->v->health <= 0)
 			continue;
-		if ((int)ent->v.flags & FL_NOTARGET)
+		if ((int)ent->v->flags & FL_NOTARGET)
 			continue;
 
 	// anything that is a client, or has a client as an enemy
@@ -735,7 +735,7 @@ int PF_newcheckclient (int check)
 	}
 
 // get the PVS for the entity
-	VectorAdd (ent->v.origin, ent->v.view_ofs, org);
+	VectorAdd (ent->v->origin, ent->v->view_ofs, org);
 	checkpvs = CM_LeafPVS (CM_PointInLeaf(org));
 
 	return i;
@@ -773,7 +773,7 @@ static void PF_checkclient (void)
 
 // return check if it might be visible	
 	ent = EDICT_NUM(sv.lastcheck);
-	if (ent->e->free || ent->v.health <= 0)
+	if (ent->e.free || ent->v->health <= 0)
 	{
 		RETURN_EDICT(sv.edicts);
 		return;
@@ -781,7 +781,7 @@ static void PF_checkclient (void)
 
 // if current entity can't possibly see the check entity, return 0
 	self = PROG_TO_EDICT(pr_global_struct->self);
-	VectorAdd (self->v.origin, self->v.view_ofs, vieworg);
+	VectorAdd (self->v->origin, self->v->view_ofs, vieworg);
 	l = CM_Leafnum(CM_PointInLeaf(vieworg)) - 1;
 	if ( (l<0) || !(checkpvs[l>>3] & (1<<(l&7)) ) )
 	{
@@ -1224,15 +1224,15 @@ static void PF_findradius (void)
 	for (i = 0; i < numtouch; i++)
 	{
 		ent = touchlist[i];
-		if (ent->v.solid == SOLID_NOT)
+		if (ent->v->solid == SOLID_NOT)
 			continue;	// FIXME?
 
 		for (j = 0; j < 3; j++)
-			eorg[j] = org[j] - (ent->v.origin[j] + (ent->v.mins[j] + ent->v.maxs[j]) * 0.5);
+			eorg[j] = org[j] - (ent->v->origin[j] + (ent->v->mins[j] + ent->v->maxs[j]) * 0.5);
 		if (DotProduct(eorg, eorg) > rad_2)
 			continue;
 
-		ent->v.chain = EDICT_TO_PROG(chain);
+		ent->v->chain = EDICT_TO_PROG(chain);
 		chain = ent;
 	}
 
@@ -1311,7 +1311,7 @@ void PF_Find (void)
 	for (e++ ; e < sv.num_edicts ; e++)
 	{
 		ed = EDICT_NUM(e);
-		if (ed->e->free)
+		if (ed->e.free)
 			continue;
 		t = E_STRING(ed,f);
 		if (!t)
@@ -1453,7 +1453,7 @@ void PF_walkmove (void)
 	yaw = G_FLOAT(OFS_PARM0);
 	dist = G_FLOAT(OFS_PARM1);
 
-	if ( !( (int)ent->v.flags & (FL_ONGROUND|FL_FLY|FL_SWIM) ) )
+	if ( !( (int)ent->v->flags & (FL_ONGROUND|FL_FLY|FL_SWIM) ) )
 	{
 		G_FLOAT(OFS_RETURN) = 0;
 		return;
@@ -1492,19 +1492,19 @@ void PF_droptofloor (void)
 
 	ent = PROG_TO_EDICT(pr_global_struct->self);
 
-	VectorCopy (ent->v.origin, end);
+	VectorCopy (ent->v->origin, end);
 	end[2] -= 256;
 
-	trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, end, false, ent);
+	trace = SV_Trace (ent->v->origin, ent->v->mins, ent->v->maxs, end, false, ent);
 
 	if (trace.fraction == 1 || trace.allsolid)
 		G_FLOAT(OFS_RETURN) = 0;
 	else
 	{
-		VectorCopy (trace.endpos, ent->v.origin);
+		VectorCopy (trace.endpos, ent->v->origin);
 		SV_LinkEdict (ent, false);
-		ent->v.flags = (int)ent->v.flags | FL_ONGROUND;
-		ent->v.groundentity = EDICT_TO_PROG(trace.e.ent);
+		ent->v->flags = (int)ent->v->flags | FL_ONGROUND;
+		ent->v->groundentity = EDICT_TO_PROG(trace.e.ent);
 		G_FLOAT(OFS_RETURN) = 1;
 	}
 }
@@ -1620,7 +1620,7 @@ void PF_nextent (void)
 			return;
 		}
 		ent = EDICT_NUM(i);
-		if (!ent->e->free)
+		if (!ent->e.free)
 		{
 			RETURN_EDICT(ent);
 			return;
@@ -1654,9 +1654,9 @@ void PF_changeyaw (void)
 	float		ideal, current, move, speed;
 
 	ent = PROG_TO_EDICT(pr_global_struct->self);
-	current = anglemod( ent->v.angles[1] );
-	ideal = ent->v.ideal_yaw;
-	speed = ent->v.yaw_speed;
+	current = anglemod( ent->v->angles[1] );
+	ideal = ent->v->ideal_yaw;
+	speed = ent->v->yaw_speed;
 
 	if (current == ideal)
 		return;
@@ -1682,7 +1682,7 @@ void PF_changeyaw (void)
 			move = -speed;
 	}
 
-	ent->v.angles[1] = anglemod (current + move);
+	ent->v->angles[1] = anglemod (current + move);
 }
 
 /*
@@ -1881,9 +1881,9 @@ static void NQP_Process (void)
 			int i;
 			NQP_Flush (1);
 			for (i = 0; i < 3; i++)
-				MSG_WriteCoord (&sv.reliable_datagram, svs.clients[0].edict->v.origin[i]);
+				MSG_WriteCoord (&sv.reliable_datagram, svs.clients[0].edict->v->origin[i]);
 			for (i = 0; i < 3; i++)
-				MSG_WriteAngle (&sv.reliable_datagram, svs.clients[0].edict->v.angles[i]);
+				MSG_WriteAngle (&sv.reliable_datagram, svs.clients[0].edict->v->angles[i]);
 		}
 		else if (cmd == nq_svc_cutscene) {
 			byte *p = (byte *)memchr (nqp_buf_data + 1, 0, nqp_buf.cursize - 1);
@@ -2214,16 +2214,16 @@ void PF_makestatic (void)
 	s = &sv.static_entities[sv.static_entity_count];
 	memset(s, 0, sizeof(sv.static_entities[0]));
 	s->number = sv.static_entity_count + 1;
-	s->modelindex = SV_ModelIndex(PR_GetEntityString(ent->v.model));
+	s->modelindex = SV_ModelIndex(PR_GetEntityString(ent->v->model));
 	if (!s->modelindex) {
 		ED_Free (ent);
 		return;
 	}
-	s->frame = ent->v.frame;
-	s->colormap = ent->v.colormap;
-	s->skinnum = ent->v.skin;
-	VectorCopy(ent->v.origin, s->origin);
-	VectorCopy(ent->v.angles, s->angles);
+	s->frame = ent->v->frame;
+	s->colormap = ent->v->colormap;
+	s->skinnum = ent->v->skin;
+	VectorCopy(ent->v->origin, s->origin);
+	VectorCopy(ent->v->angles, s->angles);
 	++sv.static_entity_count;
 
 	// throw the entity away now

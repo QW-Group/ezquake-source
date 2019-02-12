@@ -411,11 +411,14 @@ com_tokentype_t com_tokentype;
 
 //Parse a token out of a string
 extern cvar_t cl_curlybraces;
-char *COM_Parse (char *data)
+char *COM_Parse_int (char *data, int server)
 {
 	unsigned char c;
 	int len;
 	int quotes;
+    int allow_curly;
+
+    allow_curly = cl_curlybraces.integer && !server;
 
 	len = 0;
 	com_token[0] = 0;
@@ -440,7 +443,7 @@ char *COM_Parse (char *data)
 	}
 
 	// handle quoted strings specially
-	if (c == '\"' || (c == '{' && cl_curlybraces.integer) ) {
+	if (c == '\"' || (c == '{' && allow_curly) ) {
 		if (c == '{')
 			quotes = 1;
 		else
@@ -453,9 +456,9 @@ char *COM_Parse (char *data)
 				if (c == '\"')
 					quotes++;
 			} else {
-				if (c == '}' && cl_curlybraces.integer)
+				if (c == '}' && allow_curly)
 					quotes--;
-				else if (c == '{' && cl_curlybraces.integer)
+				else if (c == '{' && allow_curly)
 					quotes++;
 			}
 
@@ -480,6 +483,11 @@ char *COM_Parse (char *data)
 
 	com_token[len] = 0;
 	return data;
+}
+
+char *COM_Parse (char *data)
+{
+    return COM_Parse_int( data, 0 );
 }
 
 #define DEFAULT_PUNCTUATION "(,{})(\':;=!><&|+"

@@ -19,11 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sys.h -- non-portable functions
 
-#ifdef _WIN32
-#define PATH_SEPARATOR "\\"
-#else
-#define PATH_SEPARATOR "/"
-#endif
+#include "q_platform.h"
 
 #ifdef _WIN32
 #define Sys_MSleep(x) Sleep(x)
@@ -42,10 +38,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define _MAX_DIR 1024
 
 typedef void *DL_t;
-#define DLEXT "so"
 #else
 typedef HMODULE DL_t;
-#define DLEXT "dll"
 #endif
 
 DL_t Sys_DLOpen(const char *path);
@@ -200,6 +194,17 @@ int		Sys_compare_by_name (const void *a, const void *b);
 #define SORT_NO			0
 #define SORT_BY_DATE	1
 #define SORT_BY_NAME	2
+
+
+typedef union floatint_u
+{
+	int i;
+	unsigned int u;
+	float f;
+	byte b[4];
+}floatint_t;
+
+#define ARRAY_LEN(x)		(sizeof(x) / sizeof(*(x)))
 
 
 // library loading.
