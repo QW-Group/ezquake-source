@@ -56,6 +56,14 @@ typedef enum {false, true} qbool;
 
 typedef unsigned char byte;
 
+typedef union floatint_u
+{
+	int i;
+	unsigned int u;
+	float f;
+	byte b[4];
+}floatint_t;
+
 #ifndef NULL
 #define NULL ((void *) 0)
 #endif

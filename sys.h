@@ -195,15 +195,6 @@ int		Sys_compare_by_name (const void *a, const void *b);
 #define SORT_BY_DATE	1
 #define SORT_BY_NAME	2
 
-
-typedef union floatint_u
-{
-	int i;
-	unsigned int u;
-	float f;
-	byte b[4];
-}floatint_t;
-
 #define ARRAY_LEN(x)		(sizeof(x) / sizeof(*(x)))
 
 
