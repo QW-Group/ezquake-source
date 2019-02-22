@@ -57,7 +57,7 @@ void GLM_CreateBrushModelVAO(void)
 	// 
 	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_instance_number, 6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
 	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 7, 1, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flags), 0);
-	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 8, 3, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flatcolor), 0);
+	GLM_ConfigureVertexAttribPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 8, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flatcolor), 0);
 	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 9, 1, GL_UNSIGNED_INT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, surface_num), 0);
 
 	R_BindVertexArray(vao_none);
@@ -105,6 +105,9 @@ int GLM_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 	}
 	else if (surf->flags & SURF_DRAWTURB) {
 		target->flags = (surf->texinfo->texture->turbType & EZQ_SURFACE_TYPE);
+		if (!target->flags) {
+			target->flags = TEXTURE_TURB_OTHER;
+		}
 	}
 	else if (mod->isworldmodel) {
 		target->flags = EZQ_SURFACE_WORLD;
@@ -116,7 +119,13 @@ int GLM_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 	}
 	target->flags |= (surf->flags & SURF_DRAWALPHA ? EZQ_SURFACE_ALPHATEST : 0);
 
-	memcpy(target->flatcolor, &surf->texinfo->texture->flatcolor3ub, sizeof(target->flatcolor));
+	{
+		byte rgba[4];
+
+		COLOR_TO_RGBA(surf->texinfo->texture->flatcolor3ub, rgba);
+
+		VectorCopy(rgba, target->flatcolor);
+	}
 	target->surface_num = mod->isworldmodel ? surf - mod->surfaces : 0;
 
 	return position + 1;

@@ -24,7 +24,8 @@
 #define TEXTURE_TURB_SLIME 2
 #define TEXTURE_TURB_LAVA  3
 #define TEXTURE_TURB_TELE  4
-#define TEXTURE_TURB_SKY   5
+#define TEXTURE_TURB_OTHER 5
+#define TEXTURE_TURB_SKY   6
 
 #define EZQ_SURFACE_IS_FLOOR   8    // should be drawn as floor for r_drawflat
 #define EZQ_SURFACE_UNDERWATER 16   // requires caustics, if enabled
