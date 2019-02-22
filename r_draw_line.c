@@ -36,6 +36,10 @@ void GLM_Draw_Line3D(byte* color, vec3_t start, vec3_t end)
 
 void R_Draw_LineRGB(float thickness, byte* color, float x_start, float y_start, float x_end, float y_end)
 {
+	extern float cachedMatrix[16];
+	float v1[4] = { x_start, y_start, 0, 1 };
+	float v2[4] = { x_end, y_end, 0, 1 };
+
 	if (lineData.lineCount >= MAX_LINES_PER_FRAME) {
 		return;
 	}
@@ -43,9 +47,12 @@ void R_Draw_LineRGB(float thickness, byte* color, float x_start, float y_start, 
 		return;
 	}
 
-	VectorSet(lineData.line_points[lineData.lineCount * 2 + 0].position, x_start, y_start, 0);
+	R_MultiplyVector(cachedMatrix, v1, v1);
+	R_MultiplyVector(cachedMatrix, v2, v2);
+
+	VectorSet(lineData.line_points[lineData.lineCount * 2 + 0].position, v1[0], v1[1], 0);
 	memcpy(lineData.line_points[lineData.lineCount * 2 + 0].color, color, sizeof(lineData.line_points[lineData.lineCount * 2 + 0].color));
-	VectorSet(lineData.line_points[lineData.lineCount * 2 + 1].position, x_end, y_end, 0);
+	VectorSet(lineData.line_points[lineData.lineCount * 2 + 1].position, v2[0], v2[1], 0);
 	memcpy(lineData.line_points[lineData.lineCount * 2 + 1].color, color, sizeof(lineData.line_points[lineData.lineCount * 2 + 0].color));
 	lineData.line_thickness[lineData.lineCount] = thickness;
 	++lineData.lineCount;
