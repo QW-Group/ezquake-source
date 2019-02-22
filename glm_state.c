@@ -69,7 +69,7 @@ void GLM_StateBeginImageDraw(void)
 
 void GLM_StateBeginPolygonDraw(void)
 {
-	R_ApplyRenderingState(r_state_hud_images_glm);
+	R_ApplyRenderingState(r_state_hud_polygons_glm);
 }
 
 void GLM_StateBeginAliasOutlineBatch(void)

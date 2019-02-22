@@ -201,6 +201,9 @@ static void R_Initialise2DStates(void)
 	R_GLC_DisableAlphaTesting(state);
 	state->blendingEnabled = r_blendfunc_premultiplied_alpha;
 
+	state = R_CopyRenderingState(r_state_hud_polygons_glm, r_state_hud_images_glm, "glmPolygonDrawState");
+	state->vao_id = vao_hud_polygons;
+
 	state = R_InitRenderingState(r_state_fx_world_geometry, true, "r_state_fx_world_geometry", postprocess_vao);
 	state->depth.test_enabled = false;
 	state->depth.mask_enabled = false;

@@ -134,10 +134,6 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_sprite3d, "alpha_test", 1, false },
 	// r_program_uniform_hud_polygon_color
 	{ r_program_hud_polygon, "color", 1, false },
-	// r_program_uniform_hud_polygon_matrix
-	{ r_program_hud_polygon, "matrix", 1, false },
-	// r_program_uniform_hud_line_matrix
-	{ r_program_hud_line, "matrix", 1, false },
 	// r_program_uniform_hud_circle_matrix
 	{ r_program_hud_circles, "matrix", 1, false },
 	// r_program_uniform_hud_circle_color

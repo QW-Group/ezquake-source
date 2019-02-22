@@ -202,6 +202,7 @@ typedef enum {
 	r_state_hud_images_alphatested_glc,
 	r_state_poly_blend,
 	r_state_hud_images_glm,
+	r_state_hud_polygons_glm,
 
 	r_state_sky_fast,
 	r_state_sky_fast_fogged,

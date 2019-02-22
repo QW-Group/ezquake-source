@@ -85,14 +85,10 @@ void GLM_HudDrawPolygons(texture_ref texture, int start, int end)
 	int i;
 	uintptr_t offset = buffers.BufferOffset(r_buffer_hud_polygon_vertex_data) / sizeof(polygonData.polygonVertices[0]);
 
-	R_BindVertexArray(vao_hud_polygons);
-	R_ProgramUse(r_program_hud_polygon);
-	R_ProgramUniformMatrix4fv(r_program_uniform_hud_polygon_matrix, R_ProjectionMatrix());
-
 	GLM_StateBeginPolygonDraw();
+	R_ProgramUse(r_program_hud_polygon);
 
 	for (i = start; i <= end; ++i) {
-		//R_TransformMatrix(R_ProjectionMatrix(), polygonData.polygonX[i], polygonData.polygonY[i], 0);
 		R_ProgramUniform4fv(r_program_uniform_hud_polygon_color, polygonData.polygonColor[i]);
 
 		GL_DrawArrays(GL_TRIANGLE_STRIP, offset + i * MAX_POLYGON_POINTS, polygonData.polygonVerts[i]);
@@ -154,6 +150,8 @@ void GLM_HudPrepareLines(void)
 
 		R_BindVertexArray(vao_none);
 	}
+
+	GLM_CompileHudLineProgram();
 }
 
 void GLM_HudDrawLines(texture_ref texture, int start, int end)
@@ -163,8 +161,6 @@ void GLM_HudDrawLines(texture_ref texture, int start, int end)
 		uintptr_t offset = buffers.BufferOffset(r_buffer_hud_line_vertex_data) / sizeof(glm_line_point_t);
 
 		R_ProgramUse(r_program_hud_line);
-		R_ProgramUniformMatrix4fv(r_program_uniform_hud_line_matrix, R_ProjectionMatrix());
-		R_BindVertexArray(vao_hud_lines);
 
 		for (i = start; i <= end; ++i) {
 			R_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
@@ -336,7 +332,6 @@ qbool GLM_CompileHudCircleProgram(void)
 
 void GLM_HudPrepareCircles(void)
 {
-
 	// Build VBO
 	if (!R_BufferReferenceIsValid(r_buffer_hud_circle_vertex_data)) {
 		buffers.Create(r_buffer_hud_circle_vertex_data, buffertype_vertex, "circle-vbo", sizeof(circleData.drawCirclePointData), circleData.drawCirclePointData, bufferusage_once_per_frame);

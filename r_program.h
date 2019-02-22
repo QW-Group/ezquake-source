@@ -40,8 +40,6 @@ typedef enum {
 	r_program_uniform_brushmodel_sampler,
 	r_program_uniform_sprite3d_alpha_test,
 	r_program_uniform_hud_polygon_color,
-	r_program_uniform_hud_polygon_matrix,
-	r_program_uniform_hud_line_matrix,
 	r_program_uniform_hud_circle_matrix,
 	r_program_uniform_hud_circle_color,
 	r_program_uniform_post_process_glc_gamma,
