@@ -707,6 +707,17 @@ void GL_ProgramsShutdown(qbool restarting)
 	}
 }
 
+static qbool GL_AppropriateRenderer(renderer_id renderer)
+{
+	if (R_UseImmediateOpenGL() && renderer == renderer_classic) {
+		return true;
+	}
+	if (R_UseModernOpenGL() && renderer == renderer_modern) {
+		return true;
+	}
+	return false;
+}
+
 // Called during vid_restart, as starting up again
 void GL_ProgramsInitialise(void)
 {
@@ -721,10 +732,7 @@ void GL_ProgramsInitialise(void)
 	program_data[r_program_none].friendly_name = "(none)";
 
 	for (p = r_program_none; p < r_program_count; ++p) {
-		if (R_UseImmediateOpenGL() && program_data[p].renderer_id != renderer_classic) {
-			continue;
-		}
-		if (R_UseModernOpenGL() && program_data[p].renderer_id != renderer_modern) {
+		if (!GL_AppropriateRenderer(program_data[p].renderer_id)) {
 			continue;
 		}
 
@@ -1118,6 +1126,10 @@ void R_ProgramCompileAll(void)
 	int i;
 
 	for (i = 0; i < r_program_count; ++i) {
+		if (!GL_AppropriateRenderer(program_data[i].renderer_id)) {
+			continue;
+		}
+
 		if (program_data[i].initialised && program_data[i].compile_func) {
 			program_data[i].compile_func();
 		}
