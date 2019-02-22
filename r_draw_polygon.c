@@ -29,6 +29,8 @@ glm_polygon_framedata_t polygonData;
 
 void R_Draw_Polygon(float x, float y, vec3_t *vertices, int num_vertices, color_t color)
 {
+	int i;
+
 	if (num_vertices < 0 || num_vertices > MAX_POLYGON_POINTS) {
 		return;
 	}
@@ -43,6 +45,13 @@ void R_Draw_Polygon(float x, float y, vec3_t *vertices, int num_vertices, color_
 	COLOR_TO_FLOATVEC_PREMULT(color, polygonData.polygonColor[polygonData.polygonCount]);
 	polygonData.polygonX[polygonData.polygonCount] = x;
 	polygonData.polygonY[polygonData.polygonCount] = y;
-	memcpy(polygonData.polygonVertices, vertices, sizeof(polygonData.polygonVertices[0]) * num_vertices);
+	for (i = 0; i < num_vertices; ++i) {
+		extern float cachedMatrix[16];
+		float v1[4] = { vertices[i][0], vertices[i][1], vertices[i][2], 1 };
+
+		R_MultiplyVector(cachedMatrix, v1, v1);
+
+		VectorCopy(v1, polygonData.polygonVertices[polygonData.polygonCount * MAX_POLYGON_POINTS + i]);
+	}
 	++polygonData.polygonCount;
 }
