@@ -53,8 +53,6 @@ static hud_api_t hud;
 	extern void prefix ## _HudDrawPolygons(texture_ref texture, int start, int end); \
 	extern void prefix ## _HudDrawImages(texture_ref texture, int start, int length); \
 	extern void prefix ## _HudPrepareCircles(void); \
-	extern void prefix ## _HudPrepareLines(void); \
-	extern void prefix ## _HudPreparePolygons(void); \
 	extern void prefix ## _HudPrepareImages(void); \
 	extern void prefix ## _HudDrawComplete(void); \
 \
@@ -63,9 +61,9 @@ static hud_api_t hud;
 	hud.types[imagetype_circle].Draw = prefix ## _HudDrawCircles; \
 	hud.types[imagetype_circle].Prepare = prefix ## _HudPrepareCircles; \
 	hud.types[imagetype_line].Draw = prefix ## _HudDrawLines; \
-	hud.types[imagetype_line].Prepare = prefix ## _HudPrepareLines; \
+	hud.types[imagetype_line].Prepare = NULL; \
 	hud.types[imagetype_polygon].Draw = prefix ## _HudDrawPolygons; \
-	hud.types[imagetype_polygon].Prepare = prefix ## _HudPreparePolygons; \
+	hud.types[imagetype_polygon].Prepare = NULL; \
 	hud.OnComplete = prefix ## _HudDrawComplete; \
 }
 
@@ -91,9 +89,7 @@ void R_Hud_Initialise(void)
 static void R_PrepareImageDraw(void)
 {
 	hud.types[imagetype_image].Prepare();
-	hud.types[imagetype_polygon].Prepare();
 	hud.types[imagetype_circle].Prepare();
-	hud.types[imagetype_line].Prepare();
 
 	R_IdentityModelView();
 	R_IdentityProjectionView();

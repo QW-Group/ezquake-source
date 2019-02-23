@@ -20,11 +20,9 @@ typedef enum {
 	r_buffer_sprite_vertex_data,
 	r_buffer_sprite_index_data,
 	r_buffer_instance_number,
-	r_buffer_hud_polygon_vertex_data,
 	r_buffer_hud_image_vertex_data,
 	r_buffer_hud_image_index_data,
 	r_buffer_hud_circle_vertex_data,
-	r_buffer_hud_line_vertex_data,
 	r_buffer_postprocess_vertex_data,
 	r_buffer_frame_constants,
 

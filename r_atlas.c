@@ -99,7 +99,9 @@ static void DeleteOldTextures(void)
 
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t)
 {
-	*ref = solid_texnum;
+	if (ref) {
+		*ref = solid_texnum;
+	}
 	*s = solid_s;
 	*t = solid_t;
 }

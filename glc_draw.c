@@ -37,7 +37,6 @@ static texture_ref glc_last_texture_used;
 static int extraIndexesPerImage;
 extern float overall_alpha;
 extern float cachedMatrix[16];
-void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
 
 void GLC_DrawDisc(void)
 {
@@ -81,14 +80,6 @@ void GLC_HudDrawCircles(texture_ref texture, int start, int end)
 }
 
 void GLC_HudPrepareCircles(void)
-{
-}
-
-void GLC_HudPrepareLines(void)
-{
-}
-
-void GLC_HudPreparePolygons(void)
 {
 }
 

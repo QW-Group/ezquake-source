@@ -446,7 +446,6 @@ void R_StateDefault3D(void)
 
 void R_StateBeginAlphaLineRGB(float thickness)
 {
-	R_ApplyRenderingState(r_state_line);
 	if (thickness > 0.0) {
 		R_CustomLineWidth(thickness);
 	}

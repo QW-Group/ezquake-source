@@ -132,8 +132,6 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_brushmodel, "SamplerNumber", 1, false },
 	// r_program_uniform_sprite3d_alpha_test
 	{ r_program_sprite3d, "alpha_test", 1, false },
-	// r_program_uniform_hud_polygon_color
-	{ r_program_hud_polygon, "color", 1, false },
 	// r_program_uniform_hud_circle_matrix
 	{ r_program_hud_circles, "matrix", 1, false },
 	// r_program_uniform_hud_circle_color
@@ -1074,8 +1072,6 @@ static void GL_BuildCoreDefinitions(void)
 	GL_DefineProgram_VF(r_program_aliasmodel, "aliasmodel", true, draw_aliasmodel, renderer_modern, GLM_CompileAliasModelProgram);
 	GL_DefineProgram_VF(r_program_brushmodel, "brushmodel", true, draw_world, renderer_modern, GLM_CompileDrawWorldProgram);
 	GL_DefineProgram_VF(r_program_sprite3d, "3d-sprites", false, draw_sprites, renderer_modern, GLM_Compile3DSpriteProgram);
-	GL_DefineProgram_VF(r_program_hud_polygon, "polygon-draw", false, hud_draw_polygon, renderer_modern, GLM_CompileHudPolygonProgram);
-	GL_DefineProgram_VF(r_program_hud_line, "line-draw", false, hud_draw_line, renderer_modern, GLM_CompileHudLineProgram);
 	GL_DefineProgram_VF(r_program_hud_images, "image-draw", true, hud_draw_image, renderer_modern, GLM_CreateMultiImageProgram);
 	GL_DefineProgram_VF(r_program_hud_circles, "circle-draw", false, hud_draw_circle, renderer_modern, GLM_CompileHudCircleProgram);
 	GL_DefineProgram_VF(r_program_post_process, "post-process-screen", true, post_process_screen, renderer_modern, GLM_CompilePostProcessProgram);

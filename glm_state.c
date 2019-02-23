@@ -67,11 +67,6 @@ void GLM_StateBeginImageDraw(void)
 	R_ApplyRenderingState(r_state_hud_images_glm);
 }
 
-void GLM_StateBeginPolygonDraw(void)
-{
-	R_ApplyRenderingState(r_state_hud_polygons_glm);
-}
-
 void GLM_StateBeginAliasOutlineBatch(void)
 {
 	extern cvar_t gl_outline_width;

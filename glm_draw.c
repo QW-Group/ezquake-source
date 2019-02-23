@@ -83,88 +83,30 @@ void GLM_HudDrawComplete(void)
 void GLM_HudDrawPolygons(texture_ref texture, int start, int end)
 {
 	int i;
-	uintptr_t offset = buffers.BufferOffset(r_buffer_hud_polygon_vertex_data) / sizeof(polygonData.polygonVertices[0]);
+	uintptr_t offset = buffers.BufferOffset(r_buffer_hud_image_vertex_data) / sizeof(imageData.images[0]);
 
-	GLM_StateBeginPolygonDraw();
-	R_ProgramUse(r_program_hud_polygon);
+	GLM_StateBeginImageDraw();
+	R_ProgramUse(r_program_hud_images);
+	renderer.TextureUnitBind(0, texture);
 
 	for (i = start; i <= end; ++i) {
-		R_ProgramUniform4fv(r_program_uniform_hud_polygon_color, polygonData.polygonColor[i]);
-
-		GL_DrawArrays(GL_TRIANGLE_STRIP, offset + i * MAX_POLYGON_POINTS, polygonData.polygonVerts[i]);
+		GL_DrawArrays(GL_TRIANGLE_STRIP, offset + polygonData.polygonImageIndexes[i], polygonData.polygonVerts[i]);
 	}
-}
-
-qbool GLM_CompileHudPolygonProgram(void)
-{
-	if (R_ProgramRecompileNeeded(r_program_hud_polygon, 0)) {
-		R_ProgramCompile(r_program_hud_polygon);
-	}
-
-	return R_ProgramReady(r_program_hud_polygon);
-}
-
-void GLM_HudPreparePolygons(void)
-{
-	if (!GLM_CompileHudPolygonProgram()) {
-		return;
-	}
-
-	if (!R_BufferReferenceIsValid(r_buffer_hud_polygon_vertex_data)) {
-		buffers.Create(r_buffer_hud_polygon_vertex_data, buffertype_vertex, "polygon-vbo", sizeof(polygonData.polygonVertices), polygonData.polygonVertices, bufferusage_once_per_frame);
-	}
-	else if (polygonData.polygonVerts[0]) {
-		buffers.Update(r_buffer_hud_polygon_vertex_data, polygonData.polygonCount * MAX_POLYGON_POINTS * sizeof(polygonData.polygonVertices[0]), polygonData.polygonVertices);
-	}
-
-	if (!R_VertexArrayCreated(vao_hud_polygons)) {
-		R_GenVertexArray(vao_hud_polygons);
-		GLM_ConfigureVertexAttribPointer(vao_hud_polygons, r_buffer_hud_polygon_vertex_data, 0, 3, GL_FLOAT, GL_FALSE, sizeof(polygonData.polygonVertices[0]), NULL, 0);
-		R_BindVertexArray(vao_none);
-	}
-}
-
-qbool GLM_CompileHudLineProgram(void)
-{
-	if (R_ProgramRecompileNeeded(r_program_hud_line, 0)) {
-		R_ProgramCompile(r_program_hud_line);
-	}
-
-	return R_ProgramReady(r_program_hud_line);
-}
-
-void GLM_HudPrepareLines(void)
-{
-	if (!R_BufferReferenceIsValid(r_buffer_hud_line_vertex_data)) {
-		buffers.Create(r_buffer_hud_line_vertex_data, buffertype_vertex, "line", sizeof(lineData.line_points), lineData.line_points, bufferusage_once_per_frame);
-	}
-	else if (lineData.lineCount) {
-		buffers.Update(r_buffer_hud_line_vertex_data, sizeof(lineData.line_points[0]) * lineData.lineCount * 2, lineData.line_points);
-	}
-
-	if (!R_VertexArrayCreated(vao_hud_lines)) {
-		R_GenVertexArray(vao_hud_lines);
-
-		GLM_ConfigureVertexAttribPointer(vao_hud_lines, r_buffer_hud_line_vertex_data, 0, 2, GL_FLOAT, GL_FALSE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, position), 0);
-		GLM_ConfigureVertexAttribPointer(vao_hud_lines, r_buffer_hud_line_vertex_data, 1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(glm_line_point_t), VBO_FIELDOFFSET(glm_line_point_t, color), 0);
-
-		R_BindVertexArray(vao_none);
-	}
-
-	GLM_CompileHudLineProgram();
 }
 
 void GLM_HudDrawLines(texture_ref texture, int start, int end)
 {
-	if (R_ProgramReady(r_program_hud_line) && R_VertexArrayCreated(vao_hud_lines)) {
+	if (R_ProgramReady(r_program_hud_images) && R_VertexArrayCreated(vao_hud_images)) {
 		int i;
-		uintptr_t offset = buffers.BufferOffset(r_buffer_hud_line_vertex_data) / sizeof(glm_line_point_t);
+		uintptr_t offset = buffers.BufferOffset(r_buffer_hud_image_vertex_data) / sizeof(imageData.images[0]);
 
-		R_ProgramUse(r_program_hud_line);
+		R_ApplyRenderingState(r_state_hud_images_glm);
+		R_ProgramUse(r_program_hud_images);
+		renderer.TextureUnitBind(0, texture);
 
 		for (i = start; i <= end; ++i) {
 			R_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
-			GL_DrawArrays(GL_LINES, offset + i * 2, 2);
+			GL_DrawArrays(GL_LINES, offset + lineData.imageIndex[i], 2);
 		}
 	}
 }

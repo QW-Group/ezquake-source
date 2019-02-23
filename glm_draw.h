@@ -10,8 +10,8 @@ typedef struct glm_line_point_s {
 } glm_line_point_t;
 
 typedef struct glm_line_framedata_s {
-	glm_line_point_t line_points[MAX_LINES_PER_FRAME * 2];
 	float line_thickness[MAX_LINES_PER_FRAME];
+	int imageIndex[MAX_LINES_PER_FRAME];
 	int lineCount;
 } glm_line_framedata_t;
 
@@ -30,14 +30,10 @@ typedef struct glm_circle_framedata_s {
 } glm_circle_framedata_t;
 
 #define MAX_POLYGONS_PER_FRAME 8
-#define MAX_POLYGON_POINTS     64
 
 typedef struct glm_polygon_framedata_s {
-	vec3_t polygonVertices[MAX_POLYGONS_PER_FRAME * MAX_POLYGON_POINTS];
-	float polygonColor[MAX_POLYGONS_PER_FRAME][4];
-	int polygonX[MAX_POLYGONS_PER_FRAME];
-	int polygonY[MAX_POLYGONS_PER_FRAME];
 	int polygonVerts[MAX_POLYGONS_PER_FRAME];
+	int polygonImageIndexes[MAX_POLYGONS_PER_FRAME];
 	int polygonCount;
 } glm_polygon_framedata_t;
 
@@ -56,6 +52,7 @@ typedef struct glm_image_s {
 	float tex[2];
 	unsigned char colour[4];
 	int flags;
+	int padding[2];
 } glm_image_t;
 
 typedef struct glc_image_s {

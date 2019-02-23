@@ -30,28 +30,38 @@ glm_polygon_framedata_t polygonData;
 void R_Draw_Polygon(float x, float y, vec3_t *vertices, int num_vertices, color_t color)
 {
 	int i;
+	texture_ref texture;
+	float texCoords[2];
 
-	if (num_vertices < 0 || num_vertices > MAX_POLYGON_POINTS) {
-		return;
-	}
 	if (polygonData.polygonCount >= MAX_POLYGONS_PER_FRAME) {
 		return;
 	}
-	if (!R_LogCustomImageType(imagetype_polygon, 0)) {
+	if (num_vertices < 0 || num_vertices >= 4 * (MAX_MULTI_IMAGE_BATCH - imageData.imageCount)) {
+		return;
+	}
+
+	Atlas_SolidTextureCoordinates(&texture, &texCoords[0], &texCoords[1]);
+
+	if (!R_LogCustomImageTypeWithTexture(imagetype_polygon, polygonData.polygonCount, texture)) {
 		return;
 	}
 
 	polygonData.polygonVerts[polygonData.polygonCount] = num_vertices;
-	COLOR_TO_FLOATVEC_PREMULT(color, polygonData.polygonColor[polygonData.polygonCount]);
-	polygonData.polygonX[polygonData.polygonCount] = x;
-	polygonData.polygonY[polygonData.polygonCount] = y;
+	polygonData.polygonImageIndexes[polygonData.polygonCount] = imageData.imageCount * 4;
+
 	for (i = 0; i < num_vertices; ++i) {
 		extern float cachedMatrix[16];
 		float v1[4] = { vertices[i][0], vertices[i][1], vertices[i][2], 1 };
+		glm_image_t* img = &imageData.images[imageData.imageCount * 4 + i];
 
 		R_MultiplyVector(cachedMatrix, v1, v1);
 
-		VectorCopy(v1, polygonData.polygonVertices[polygonData.polygonCount * MAX_POLYGON_POINTS + i]);
+		COLOR_TO_RGBA_PREMULT(color, img->colour);
+		img->tex[0] = texCoords[0];
+		img->tex[1] = texCoords[1];
+		img->pos[0] = v1[0];
+		img->pos[1] = v1[1];
 	}
+	imageData.imageCount += (num_vertices + 3) / 4;
 	++polygonData.polygonCount;
 }

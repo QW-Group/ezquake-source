@@ -314,6 +314,7 @@ extern wadpic_t wad_pictures[WADPIC_PIC_COUNT];
 void CachePics_CreateAtlas(void);
 void CachePics_AtlasFrame(void);
 void CachePics_MarkAtlasDirty(void);
+void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t);
 qbool Draw_IsConsoleBackground(mpic_t* pic);
 qbool Draw_KeepOffAtlas(const char* path);
 mpic_t* Mod_SimpleTextureForHint(int model_hint, int skinnum);

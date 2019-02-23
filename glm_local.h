@@ -110,7 +110,6 @@ void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset);
 void GLM_UploadFrameConstants(void);
 
 void GLM_StateBeginImageDraw(void);
-void GLM_StateBeginPolygonDraw(void);
 
 typedef enum {
 	opaque_world,
