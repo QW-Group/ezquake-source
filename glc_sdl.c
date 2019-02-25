@@ -26,6 +26,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "gl_local.h"
 
 static opengl_version_t versions[] = {
+	{ 4, 3, false, false },
+	{ 3, 2, false, false },
+	{ 0, 0, false, true },
+	{ 4, 3, true, false },
+	{ 3, 2, true, false },
 	{ 0, 0, false, true },
 };
 

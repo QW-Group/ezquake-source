@@ -33,6 +33,7 @@ GLuint GL_TextureNameFromReference(texture_ref ref);
 // <debug-functions (4.3)>
 //typedef void (APIENTRY *DEBUGPROC)(GLenum source, GLenum type, GLuint id, GLenum severity,  GLsizei length, const GLchar *message, const void *userParam);
 typedef void (APIENTRY *glDebugMessageCallback_t)(GLDEBUGPROC callback, void* userParam);
+typedef void (APIENTRY *glDebugMessageControl_t)(GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled);
 
 #ifdef WITH_RENDERING_TRACE
 typedef void (APIENTRY *glPushDebugGroup_t)(GLenum source, GLuint id, GLsizei length, const char* message);
@@ -90,11 +91,16 @@ void GL_InitialiseDebugging(void)
 	// During init, enable debug output
 	if (R_DebugProfileContext()) {
 		glDebugMessageCallback_t glDebugMessageCallback = (glDebugMessageCallback_t)SDL_GL_GetProcAddress("glDebugMessageCallback");
+		glDebugMessageControl_t glDebugMessageControl = (glDebugMessageControl_t)SDL_GL_GetProcAddress("glDebugMessageControl");
 
 		if (glDebugMessageCallback) {
 			glEnable(GL_DEBUG_OUTPUT);
 			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 			glDebugMessageCallback((GLDEBUGPROC)MessageCallback, 0);
+		}
+
+		if (glDebugMessageControl) {
+			glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 		}
 	}
 
