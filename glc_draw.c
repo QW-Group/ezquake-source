@@ -38,6 +38,8 @@ static int extraIndexesPerImage;
 extern float overall_alpha;
 extern float cachedMatrix[16];
 
+qbool GLC_ProgramHudImagesCompile(void);
+
 void GLC_DrawDisc(void)
 {
 	glDrawBuffer(GL_FRONT);
@@ -84,18 +86,19 @@ void GLC_HudPrepareCircles(void)
 
 }
 
-static void GLC_HudDrawLinesVertexArray(texture_ref texture, int start, int end)
+static void GLC_HudDrawLinesVertexArray(r_program_id program_id, texture_ref texture, int start, int end)
 {
 	extern cvar_t gl_vbo_clientmemory;
-	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(r_buffer_hud_image_vertex_data) / (sizeof(imageData.images[0]) * 4);
+	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(r_buffer_hud_image_vertex_data) / sizeof(imageData.images[0]);
 	int i;
 
-	R_ProgramUse(r_program_none);
+	R_ProgramUse(program_id);
+	R_ApplyRenderingState(r_state_hud_images_glc);
 	renderer.TextureUnitBind(0, texture);
 	for (i = start; i <= end; ++i) {
 		R_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
 
-		GL_DrawArrays(GL_LINES, lineData.imageIndex[i], 2);
+		GL_DrawArrays(GL_LINES, offset + lineData.imageIndex[i], 2);
 	}
 }
 
@@ -125,21 +128,19 @@ static void GLC_HudDrawLinesImmediate(texture_ref texture, int start, int end)
 void GLC_HudDrawLines(texture_ref texture, int start, int end)
 {
 	extern cvar_t gl_program_hud;
-	int i;
 
-	/*if (buffers.supported && gl_program_hud.integer && GLC_ProgramHudImagesCompile()) {
-		GLC_HudDrawImagesProgram(texture, start, end);
+	if (buffers.supported && gl_program_hud.integer && GLC_ProgramHudImagesCompile()) {
+		GLC_HudDrawLinesVertexArray(r_program_hud_images_glc, texture, start, end);
 	}
 	else if (R_VAOBound()) {
-		GLC_HudDrawImagesVertexArray(texture, start, end);
+		GLC_HudDrawLinesVertexArray(r_program_none, texture, start, end);
 	}
-	else*/ {
+	else {
 		GLC_HudDrawLinesImmediate(texture, start, end);
 	}
-
 }
 
-void GLC_HudDrawPolygons(texture_ref texture, int start, int end)
+static void GLC_HudDrawPolygonsImmediate(texture_ref texture, int start, int end)
 {
 	int i, j;
 
@@ -158,6 +159,36 @@ void GLC_HudDrawPolygons(texture_ref texture, int start, int end)
 			GLC_Vertex2fv(img[j].pos);
 		}
 		GLC_End();
+	}
+}
+
+static void GLC_HudDrawPolygonsVertexArray(r_program_id program_id, texture_ref texture, int start, int end)
+{
+	extern cvar_t gl_vbo_clientmemory;
+	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(r_buffer_hud_image_vertex_data) / sizeof(imageData.images[0]);
+	int i;
+
+	R_ProgramUse(program_id);
+	R_ApplyRenderingState(r_state_hud_images_glc);
+	renderer.TextureUnitBind(0, texture);
+
+	for (i = start; i <= end; ++i) {
+		GL_DrawArrays(GL_TRIANGLE_STRIP, offset + polygonData.polygonImageIndexes[i], polygonData.polygonVerts[i]);
+	}
+}
+
+void GLC_HudDrawPolygons(texture_ref texture, int start, int end)
+{
+	extern cvar_t gl_program_hud;
+
+	if (buffers.supported && gl_program_hud.integer && GLC_ProgramHudImagesCompile()) {
+		GLC_HudDrawPolygonsVertexArray(r_program_hud_images_glc, texture, start, end);
+	}
+	else if (R_VAOBound()) {
+		GLC_HudDrawPolygonsVertexArray(r_program_none, texture, start, end);
+	}
+	else {
+		GLC_HudDrawPolygonsImmediate(texture, start, end);
 	}
 }
 

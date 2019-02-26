@@ -36,7 +36,7 @@ void R_Draw_Polygon(float x, float y, vec3_t *vertices, int num_vertices, color_
 	if (polygonData.polygonCount >= MAX_POLYGONS_PER_FRAME) {
 		return;
 	}
-	if (num_vertices < 0 || num_vertices >= 4 * (MAX_MULTI_IMAGE_BATCH - imageData.imageCount)) {
+	if (num_vertices <= 2 || num_vertices >= 4 * (MAX_MULTI_IMAGE_BATCH - imageData.imageCount)) {
 		return;
 	}
 
