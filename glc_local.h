@@ -32,7 +32,6 @@ void GLC_StateEndUnderwaterAliasModelCaustics(void);
 void GLC_StateBeginBloomDraw(texture_ref texture);
 void GLC_StateBeginImageDraw(qbool is_text);
 void GLC_StateBeginPolyBlend(float v_blend[4]);
-void GLC_StateBeginDrawPolygon(void);
 void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness);
 
 void GLC_Begin(GLenum primitive);

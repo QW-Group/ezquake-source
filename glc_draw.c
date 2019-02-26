@@ -88,13 +88,20 @@ void GLC_HudDrawLines(texture_ref texture, int start, int end)
 	int i;
 
 	R_ProgramUse(r_program_none);
+	R_ApplyRenderingState(r_state_hud_images_glc);
+	renderer.TextureUnitBind(0, texture);
+
 	for (i = start; i <= end; ++i) {
+		glm_image_t* img = &imageData.images[lineData.imageIndex[i]];
+
 		R_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
+		glTexCoord2f(img[0].tex[0], img[0].tex[1]);
+
 		GLC_Begin(GL_LINES);
-		R_CustomColor4ubv(lineData.line_points[i * 2 + 0].color);
-		GLC_Vertex3fv(lineData.line_points[i * 2 + 0].position);
-		R_CustomColor4ubv(lineData.line_points[i * 2 + 1].color);
-		GLC_Vertex3fv(lineData.line_points[i * 2 + 1].position);
+		R_CustomColor4ubv(img[0].colour);
+		GLC_Vertex2fv(img[0].pos);
+		R_CustomColor4ubv(img[1].colour);
+		GLC_Vertex2fv(img[1].pos);
 		GLC_End();
 	}
 }
@@ -104,17 +111,18 @@ void GLC_HudDrawPolygons(texture_ref texture, int start, int end)
 	int i, j;
 
 	R_ProgramUse(r_program_none);
-	GLC_StateBeginDrawPolygon();
+	R_ApplyRenderingState(r_state_hud_images_glc);
+	renderer.TextureUnitBind(0, texture);
+
 	for (i = start; i <= end; ++i) {
-		R_CustomColor(
-			polygonData.polygonColor[i][0],
-			polygonData.polygonColor[i][1],
-			polygonData.polygonColor[i][2],
-			polygonData.polygonColor[i][3]
-		);
+		glm_image_t* img = &imageData.images[polygonData.polygonImageIndexes[i]];
+
+		R_CustomColor4ubv(img[0].colour);
+		glTexCoord2f(img[0].tex[0], img[0].tex[1]);
+
 		GLC_Begin(GL_TRIANGLE_STRIP);
 		for (j = 0; j < polygonData.polygonVerts[i]; j++) {
-			GLC_Vertex3fv(polygonData.polygonVertices[j + i * MAX_POLYGON_POINTS]);
+			GLC_Vertex2fv(img[j].pos);
 		}
 		GLC_End();
 	}

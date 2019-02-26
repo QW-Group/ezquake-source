@@ -488,11 +488,6 @@ void GLC_StateBeginDrawAlphaPieSliceRGB(float thickness)
 	}
 }
 
-void GLC_StateBeginDrawPolygon(void)
-{
-	R_ApplyRenderingState(r_state_line);
-}
-
 void GLC_StateBeginBloomDraw(texture_ref texture)
 {
 	R_ApplyRenderingState(r_state_postprocess_bloom_draweffect);
