@@ -81,9 +81,25 @@ void GLC_HudDrawCircles(texture_ref texture, int start, int end)
 
 void GLC_HudPrepareCircles(void)
 {
+
 }
 
-void GLC_HudDrawLines(texture_ref texture, int start, int end)
+static void GLC_HudDrawLinesVertexArray(texture_ref texture, int start, int end)
+{
+	extern cvar_t gl_vbo_clientmemory;
+	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(r_buffer_hud_image_vertex_data) / (sizeof(imageData.images[0]) * 4);
+	int i;
+
+	R_ProgramUse(r_program_none);
+	renderer.TextureUnitBind(0, texture);
+	for (i = start; i <= end; ++i) {
+		R_StateBeginAlphaLineRGB(lineData.line_thickness[i]);
+
+		GL_DrawArrays(GL_LINES, lineData.imageIndex[i], 2);
+	}
+}
+
+static void GLC_HudDrawLinesImmediate(texture_ref texture, int start, int end)
 {
 	int i;
 
@@ -104,6 +120,23 @@ void GLC_HudDrawLines(texture_ref texture, int start, int end)
 		GLC_Vertex2fv(img[1].pos);
 		GLC_End();
 	}
+}
+
+void GLC_HudDrawLines(texture_ref texture, int start, int end)
+{
+	extern cvar_t gl_program_hud;
+	int i;
+
+	/*if (buffers.supported && gl_program_hud.integer && GLC_ProgramHudImagesCompile()) {
+		GLC_HudDrawImagesProgram(texture, start, end);
+	}
+	else if (R_VAOBound()) {
+		GLC_HudDrawImagesVertexArray(texture, start, end);
+	}
+	else*/ {
+		GLC_HudDrawLinesImmediate(texture, start, end);
+	}
+
 }
 
 void GLC_HudDrawPolygons(texture_ref texture, int start, int end)
@@ -128,7 +161,7 @@ void GLC_HudDrawPolygons(texture_ref texture, int start, int end)
 	}
 }
 
-static void GLC_SetCoordinates(glc_image_t* targ, float x1, float y1, float x2, float y2, float s, float s_width, float t, float t_height, qbool nearest)
+static void GLC_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, float y2, float s, float s_width, float t, float t_height, qbool nearest)
 {
 	float v1[4] = { x1, y1, 0, 1 };
 	float v2[4] = { x2, y2, 0, 1 };
@@ -157,7 +190,7 @@ void GLC_DrawRectangle(float x, float y, float width, float height, byte* color)
 	texture_ref solid_texture;
 	float s, t;
 	float alpha;
-	glc_image_t* img = &imageData.glc_images[imageData.imageCount * 4];
+	glm_image_t* img = &imageData.images[imageData.imageCount * 4];
 
 	if (imageData.imageCount >= MAX_MULTI_IMAGE_BATCH) {
 		return;
@@ -182,14 +215,14 @@ void GLC_DrawRectangle(float x, float y, float width, float height, byte* color)
 void GLC_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, int flags)
 {
 	int imageIndex = imageData.imageCount * 4;
-	glc_image_t* img = &imageData.glc_images[imageData.imageCount * 4];
+	glm_image_t* img = &imageData.images[imageData.imageCount * 4];
 	float alpha = (color[3] * overall_alpha / 255.0f);
 
 	img[0].colour[0] = img[1].colour[0] = img[2].colour[0] = img[3].colour[0] = color[0] * alpha;
 	img[0].colour[1] = img[1].colour[1] = img[2].colour[1] = img[3].colour[1] = color[1] * alpha;
 	img[0].colour[2] = img[1].colour[2] = img[2].colour[2] = img[3].colour[2] = color[2] * alpha;
 	img[0].colour[3] = img[1].colour[3] = img[2].colour[3] = img[3].colour[3] = color[3] * overall_alpha;
-	GLC_SetCoordinates(&imageData.glc_images[imageIndex], x, y, x + width, y + height, tex_s, tex_width, tex_t, tex_height, flags & IMAGEPROG_FLAGS_NEAREST);
+	GLC_SetCoordinates(&imageData.images[imageIndex], x, y, x + width, y + height, tex_s, tex_width, tex_t, tex_height, flags & IMAGEPROG_FLAGS_NEAREST);
 
 	imageData.images[imageData.imageCount].flags = flags;
 	++imageData.imageCount;
@@ -200,10 +233,10 @@ void GLC_AdjustImages(int first, int last, float x_offset)
 	int i;
 
 	for (i = first; i < last; ++i) {
-		imageData.glc_images[i * 4 + 0].pos[0] += x_offset;
-		imageData.glc_images[i * 4 + 1].pos[0] += x_offset;
-		imageData.glc_images[i * 4 + 2].pos[0] += x_offset;
-		imageData.glc_images[i * 4 + 3].pos[0] += x_offset;
+		imageData.images[i * 4 + 0].pos[0] += x_offset;
+		imageData.images[i * 4 + 1].pos[0] += x_offset;
+		imageData.images[i * 4 + 2].pos[0] += x_offset;
+		imageData.images[i * 4 + 3].pos[0] += x_offset;
 	}
 }
 
@@ -214,18 +247,18 @@ static void GLC_CreateImageVAO(void)
 	if (gl_vbo_clientmemory.integer) {
 		R_GenVertexArray(vao_hud_images);
 		GLC_VAOSetIndexBuffer(vao_hud_images, r_buffer_hud_image_index_data);
-		GLC_VAOEnableVertexPointer(vao_hud_images, 2, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].pos);
-		GLC_VAOEnableTextureCoordPointer(vao_hud_images, 0, 4, GL_FLOAT, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].tex);
-		GLC_VAOEnableColorPointer(vao_hud_images, 4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), (GLvoid*)&imageData.glc_images[0].colour);
+		GLC_VAOEnableVertexPointer(vao_hud_images, 2, GL_FLOAT, sizeof(glm_image_t), (GLvoid*)&imageData.images[0].pos);
+		GLC_VAOEnableTextureCoordPointer(vao_hud_images, 0, 4, GL_FLOAT, sizeof(glm_image_t), (GLvoid*)&imageData.images[0].tex);
+		GLC_VAOEnableColorPointer(vao_hud_images, 4, GL_UNSIGNED_BYTE, sizeof(glm_image_t), (GLvoid*)&imageData.images[0].colour);
 		R_BindVertexArray(vao_none);
 	}
 	else {
 		R_GenVertexArray(vao_hud_images);
 		GLC_VAOSetIndexBuffer(vao_hud_images, r_buffer_hud_image_index_data);
 		GLC_VAOSetVertexBuffer(vao_hud_images, r_buffer_hud_image_vertex_data);
-		GLC_VAOEnableVertexPointer(vao_hud_images, 2, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, pos));
-		GLC_VAOEnableTextureCoordPointer(vao_hud_images, 0, 4, GL_FLOAT, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, tex));
-		GLC_VAOEnableColorPointer(vao_hud_images, 4, GL_UNSIGNED_BYTE, sizeof(glc_image_t), VBO_FIELDOFFSET(glc_image_t, colour));
+		GLC_VAOEnableVertexPointer(vao_hud_images, 2, GL_FLOAT, sizeof(glm_image_t), VBO_FIELDOFFSET(glm_image_t, pos));
+		GLC_VAOEnableTextureCoordPointer(vao_hud_images, 0, 4, GL_FLOAT, sizeof(glm_image_t), VBO_FIELDOFFSET(glm_image_t, tex));
+		GLC_VAOEnableColorPointer(vao_hud_images, 4, GL_UNSIGNED_BYTE, sizeof(glm_image_t), VBO_FIELDOFFSET(glm_image_t, colour));
 		R_BindVertexArray(vao_none);
 	}
 }
@@ -238,10 +271,10 @@ void GLC_HudPrepareImages(void)
 
 	if (buffers.supported && !gl_vbo_clientmemory.integer) {
 		if (!R_BufferReferenceIsValid(r_buffer_hud_image_vertex_data)) {
-			buffers.Create(r_buffer_hud_image_vertex_data, buffertype_vertex, "image-vbo", sizeof(imageData.glc_images), imageData.glc_images, bufferusage_once_per_frame);
+			buffers.Create(r_buffer_hud_image_vertex_data, buffertype_vertex, "image-vbo", sizeof(imageData.images), imageData.images, bufferusage_once_per_frame);
 		}
 		else {
-			buffers.Update(r_buffer_hud_image_vertex_data, sizeof(imageData.glc_images[0]) * imageData.imageCount * 4, imageData.glc_images);
+			buffers.Update(r_buffer_hud_image_vertex_data, sizeof(imageData.images[0]) * imageData.imageCount * 4, imageData.images);
 		}
 	}
 
@@ -275,7 +308,7 @@ void GLC_HudPrepareImages(void)
 static void GLC_HudDrawImagesVertexArray(texture_ref ref, int start, int end)
 {
 	extern cvar_t gl_vbo_clientmemory;
-	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(r_buffer_hud_image_vertex_data) / (sizeof(imageData.glc_images[0]) * 4);
+	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(r_buffer_hud_image_vertex_data) / (sizeof(imageData.images[0]) * 4);
 	qbool nearest = (imageData.images[start].flags & IMAGEPROG_FLAGS_NEAREST);
 	int i;
 
@@ -334,7 +367,7 @@ qbool GLC_ProgramHudImagesCompile(void)
 static void GLC_HudDrawImagesProgram(texture_ref ref, int start, int end)
 {
 	extern cvar_t gl_vbo_clientmemory;
-	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(r_buffer_hud_image_vertex_data) / (sizeof(imageData.glc_images[0]) * 4);
+	uintptr_t offset = gl_vbo_clientmemory.integer ? 0 : buffers.BufferOffset(r_buffer_hud_image_vertex_data) / (sizeof(imageData.images[0]) * 4);
 	int i;
 
 	R_ProgramUse(r_program_hud_images_glc);
@@ -390,13 +423,13 @@ static void GLC_HudDrawImages_Immediate(texture_ref ref, int start, int end)
 
 	renderer.TextureSetFiltering(ref, nearest ? texture_minification_nearest : texture_minification_linear, nearest ? texture_magnification_nearest : texture_magnification_linear);
 	renderer.TextureUnitBind(0, ref);
-	R_CustomColor4ubv(imageData.glc_images[start * 4].colour);
-	memcpy(current_color, imageData.glc_images[start * 4].colour, sizeof(current_color));
+	R_CustomColor4ubv(imageData.images[start * 4].colour);
+	memcpy(current_color, imageData.images[start * 4].colour, sizeof(current_color));
 	
 	R_ProgramUse(r_program_none);
 	GLC_Begin(GL_QUADS);
 	for (i = start * 4; i <= 4 * end + 3; i += 4) {
-		glc_image_t* next = &imageData.glc_images[i];
+		glm_image_t* next = &imageData.images[i];
 
 		R_CustomColor4ubv(next->colour);
 

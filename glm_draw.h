@@ -49,22 +49,13 @@ typedef enum {
 
 typedef struct glm_image_s {
 	float pos[2];
-	float tex[2];
-	unsigned char colour[4];
-	int flags;
-	int padding[2];
-} glm_image_t;
-
-typedef struct glc_image_s {
-	float pos[2];
 	float tex[4];
 	unsigned char colour[4];
-	float padding;
-} glc_image_t;
+	int flags;
+} glm_image_t;
 
 typedef struct glm_image_framedata_s {
 	glm_image_t images[MAX_MULTI_IMAGE_BATCH * 4];
-	glc_image_t glc_images[MAX_MULTI_IMAGE_BATCH * 4];
 
 	int imageCount;
 } glm_image_framedata_t;
@@ -77,10 +68,5 @@ extern glm_line_framedata_t lineData;
 qbool R_LogCustomImageType(r_image_type_t type, int index);
 qbool R_LogCustomImageTypeWithTexture(r_image_type_t type, int index, texture_ref texture);
 void R_HudUndoLastElement(void);
-
-void GLM_PreparePolygons(void);
-void GLM_PrepareLines(void);
-void GLM_PrepareImages(void);
-void GLM_PrepareCircles(void);
 
 #endif
