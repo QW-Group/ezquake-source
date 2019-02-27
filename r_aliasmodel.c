@@ -959,3 +959,44 @@ void R_AliasModelColor(const entity_t* ent, float* color, qbool* invalidate_text
 	VectorScale(color, ent->r_modelalpha, color);
 	color[3] = ent->r_modelalpha;
 }
+
+void R_AliasModelPrepare(entity_t* ent, int* frame1_, int* frame2_, float* lerpfrac)
+{
+	extern cvar_t r_viewmodelsize, cl_drawgun;
+	int frame1 = ent->oldframe;
+	int frame2 = ent->frame;
+
+	R_RotateForEntity(ent);
+	if ((ent->renderfx & RF_WEAPONMODEL) && r_viewmodelsize.value < 1) {
+		// perform scalling for r_viewmodelsize
+		R_ScaleModelview(0.5 + bound(0, r_viewmodelsize.value, 1) / 2, 1, 1);
+	}
+
+	//
+	ent->r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
+	ent->r_modelalpha = (ent->alpha ? ent->alpha : ent->r_modelalpha);
+	ent->r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
+
+	R_AliasSetupLighting(ent);
+
+	if (!r_lerpframes.value || ent->framelerp < 0 || frame1 == frame2 || (frame2 != frame1 + 1 && frame2 != frame1 - 1)) {
+		*lerpfrac = 1.0f;
+	}
+	else {
+		*lerpfrac = min(ent->framelerp, 1.0f);
+	}
+
+	if (frame2 == frame1 - 1) {
+		--frame1;
+		++frame2;
+		*lerpfrac = 1.0f - *lerpfrac;
+	}
+
+	if (*lerpfrac == 1) {
+		*lerpfrac = 0;
+		frame1 = frame2;
+	}
+
+	*frame1_ = frame1;
+	*frame2_ = frame2;
+}

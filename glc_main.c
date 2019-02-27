@@ -151,7 +151,7 @@ void GLC_Initialise(void)
 		Con_Printf("&cf00ERROR&r: GLSL programs not supported.\n");
 		glConfig.supported_features |= R_SUPPORT_IMMEDIATEMODE;
 	}
-	else if (vid_gl_core_profile.integer) {
+	else if (vid_gl_core_profile.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS)) {
 		// Force GLSL
 		for (i = 0; i < sizeof(gl_program_cvars) / sizeof(gl_program_cvars[0]); ++i) {
 			int flags = Cvar_GetFlags(gl_program_cvars[i]);

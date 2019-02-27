@@ -545,7 +545,7 @@ static void GLC_DrawAliasOutlineFrame_Immediate(entity_t* ent, model_t* model, i
 	}
 }
 
-static void GLC_PowerupShellColor(int layer_no, int effects, float* color)
+void GLC_PowerupShellColor(int layer_no, int effects, float* color)
 {
 	// set color: alpha so we can see colour underneath still
 	float base_level = bound(0, (layer_no == 0 ? gl_powerupshells_base1level.value : gl_powerupshells_base2level.value), 1);
@@ -567,7 +567,7 @@ void GLC_SetPowerupShellColor(int layer_no, int effects)
 	R_CustomColor(color[0], color[1], color[2], color[3]);
 }
 
-static const float* GLC_PowerupShell_ScrollParams(void)
+const float* GLC_PowerupShell_ScrollParams(void)
 {
 	static float scroll[4];
 

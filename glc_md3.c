@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "glc_local.h"
 #include "r_aliasmodel_md3.h"
 #include "vx_vertexlights.h" 
 #include "r_matrix.h"
@@ -32,8 +33,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tr_types.h"
 #include "rulesets.h"
 
+const float* GLC_PowerupShell_ScrollParams(void);
 void GLC_SetPowerupShellColor(int layer_no, int effects);
+void GLC_PowerupShellColor(int layer_no, int effects, float* color);
 qbool GLC_AliasModelStandardCompile(void);
+qbool GLC_AliasModelShellCompile(void);
 
 static void GLC_AliasModelLightPointMD3(float color[4], const entity_t* ent, ezMd3XyzNormal_t* vert1, ezMd3XyzNormal_t* vert2, float lerpfrac)
 {
@@ -157,201 +161,155 @@ static void GLC_DrawMD3Frame(const entity_t* ent, md3Header_t* pheader, int fram
 	}
 }
 
+static void GLC_DrawAlias3ModelProgram(entity_t* ent, int frame1, qbool invalidate_texture, float* vertexColor, float lerpfrac, qbool outline)
+{
+	model_t *mod = ent->model;
+	md3model_t *mhead = (md3model_t *)Mod_Extradata(mod);
+	md3Header_t *pheader = MD3_HeaderForModel(mhead);
+	float angle_radians = -ent->angles[YAW] * M_PI / 180.0;
+	vec3_t angle_vector = { cos(angle_radians), sin(angle_radians), 1 };
+	int vertsPerFrame = mod->vertsInVBO / pheader->numFrames;
+	int first_vert = mod->vbo_start + vertsPerFrame * frame1;
+	int vert_index;
+	surfinf_t* sinf = MD3_ExtraSurfaceInfoForModel(mhead);
+	md3Surface_t* surf;
+	int surfnum;
+
+	if (ent->skinnum >= 0 && ent->skinnum < pheader->numSkins) {
+		sinf += ent->skinnum * pheader->numSurfaces;
+	}
+
+	// Temporarily disable caustics
+	R_ProgramUse(r_program_aliasmodel_std_glc);
+	R_ProgramUniform3fv(r_program_uniform_aliasmodel_std_glc_angleVector, angle_vector);
+	R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_shadelight, ent->shadelight / 256.0f);
+	R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_ambientlight, ent->ambientlight / 256.0f);
+	R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_fsTextureEnabled, invalidate_texture ? 0 : 1);
+	R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsMinLumaMix, 1.0f - (ent->full_light ? bound(0, gl_fb_models.integer, 1) : 0));
+	R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsCausticEffects, 0 /*ent->renderfx & RF_CAUSTICS ? 1 : 0*/);
+	R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_lerpFraction, lerpfrac);
+	R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_time, cl.time);
+
+	GLC_StateBeginDrawAliasFrameProgram(sinf->texnum, null_texture_reference, ent->renderfx, ent->custom_model, ent->r_modelalpha);
+	R_CustomColor(vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
+	vert_index = first_vert;
+	MD3_ForEachSurface(pheader, surf, surfnum) {
+		if (R_TextureReferenceIsValid(sinf[surfnum].texnum) && !invalidate_texture) {
+			renderer.TextureUnitBind(0, sinf[surfnum].texnum);
+		}
+
+		GL_DrawArrays(GL_TRIANGLES, vert_index, 3 * surf->numTriangles);
+		vert_index += 3 * surf->numTriangles;
+	}
+	if (outline) {
+		if (ent->renderfx & RF_CAUSTICS) {
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsCausticEffects, 0);
+		}
+		GLC_StateBeginAliasOutlineFrame();
+		vert_index = first_vert;
+		MD3_ForEachSurface(pheader, surf, surfnum)
+		{
+			GL_DrawArrays(GL_TRIANGLES, vert_index, 3 * surf->numTriangles);
+			vert_index += 3 * surf->numTriangles;
+		}
+	}
+	R_ProgramUse(r_program_none);
+}
+
+static void GLC_DrawAlias3ModelImmediate(entity_t* ent, int frame1, int frame2, qbool invalidate_texture, float* vertexColor, float lerpfrac, qbool outline)
+{
+	model_t* mod = ent->model;
+	md3model_t* mhead = (md3model_t *)Mod_Extradata(mod);
+	md3Header_t* pheader = MD3_HeaderForModel(mhead);
+	surfinf_t* sinf = MD3_ExtraSurfaceInfoForModel(mhead);
+
+	// Immediate mode
+	R_ProgramUse(r_program_none);
+	GLC_StateBeginMD3Draw(ent->r_modelalpha, R_TextureReferenceIsValid(sinf->texnum) && !invalidate_texture, ent->renderfx & RF_WEAPONMODEL);
+	GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, invalidate_texture, false);
+
+	if (outline) {
+		GLC_StateBeginAliasOutlineFrame();
+		GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, true, true);
+	}
+}
+
 /*
 To draw, for each surface, run through the triangles, getting tex coords from s+t, 
 */
 void GLC_DrawAlias3Model(entity_t *ent)
 {
-	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_fb_models;
-	extern byte	*shadedots;
-	extern byte	r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS];
-	extern void R_AliasSetupLighting(entity_t *ent);
+	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_fb_models, gl_program_aliasmodels, gl_outline;
 
 	float lerpfrac;
 	float vertexColor[4];
 
-	md3model_t *mhead;
-	md3Header_t *pheader;
-	model_t *mod;
-	int surfnum;
-	md3Surface_t *surf;
+	model_t *mod = ent->model;
+	md3model_t *mhead = (md3model_t *)Mod_Extradata(mod);
+	md3Header_t *pheader = MD3_HeaderForModel(mhead);
 	qbool invalidate_texture = false;
-	extern cvar_t gl_program_aliasmodels, gl_outline;
 
-	int frame1 = ent->oldframe, frame2 = ent->frame;
-	qbool outline;
-	surfinf_t* sinf;
+	int frame1 = bound(0, ent->oldframe, pheader->numFrames - 1);
+	int frame2 = bound(0, ent->frame, pheader->numFrames - 1);
+	qbool outline = ((gl_outline.integer & 1) && ent->r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
 	float oldMatrix[16];
 
-	mod = ent->model;
-
 	R_PushModelviewMatrix(oldMatrix);
-	R_RotateForEntity(ent);
-	R_ScaleModelview((ent->renderfx & RF_WEAPONMODEL) ? bound(0.5, r_viewmodelsize.value, 1) : 1, 1, 1);
-
-	// 
-	ent->r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
-	ent->r_modelalpha = (ent->alpha ? ent->alpha : ent->r_modelalpha);
-	ent->r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
-
-	R_AliasSetupLighting(ent);
-	shadedots = r_avertexnormal_dots[((int)(ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
-
-	mhead = (md3model_t *)Mod_Extradata(mod);
-	pheader = MD3_HeaderForModel(mhead);
-
-	frame1 = bound(0, frame1, pheader->numFrames - 1);
-	frame2 = bound(0, frame2, pheader->numFrames - 1);
-
-	if (!r_lerpframes.value || ent->framelerp < 0 || ent->oldframe == ent->frame) {
-		lerpfrac = 1.0;
-	}
-	else {
-		lerpfrac = min(ent->framelerp, 1);
-	}
-
-	if (lerpfrac == 1) {
-		lerpfrac = 0;
-		frame1 = frame2;
-	}
-
+	R_AliasModelPrepare(ent, &frame1, &frame2, &lerpfrac);
 	R_AliasModelColor(ent, vertexColor, &invalidate_texture);
-	outline = ((gl_outline.integer & 1) && ent->r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
-
-	sinf = MD3_ExtraSurfaceInfoForModel(mhead);
-	if (ent->skinnum >= 0 && ent->skinnum < pheader->numSkins) {
-		sinf += ent->skinnum * pheader->numSurfaces;
-	}
 
 	if (gl_program_aliasmodels.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompile()) {
-		float angle_radians = -ent->angles[YAW] * M_PI / 180.0;
-		vec3_t angle_vector = { cos(angle_radians), sin(angle_radians), 1 };
-		int vertsPerFrame = mod->vertsInVBO / pheader->numFrames;
-		int first_vert = mod->vbo_start + vertsPerFrame * frame1;
-		int vert_index;
-
-		// Temporarily disable caustics
-		R_ProgramUse(r_program_aliasmodel_std_glc);
-		R_ProgramUniform3fv(r_program_uniform_aliasmodel_std_glc_angleVector, angle_vector);
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_shadelight, ent->shadelight / 256.0f);
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_ambientlight, ent->ambientlight / 256.0f);
-		R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_fsTextureEnabled, invalidate_texture ? 0 : 1);
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsMinLumaMix, 1.0f - (ent->full_light ? bound(0, gl_fb_models.integer, 1) : 0));
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsCausticEffects, 0 /*ent->renderfx & RF_CAUSTICS ? 1 : 0*/);
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_lerpFraction, lerpfrac);
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_time, cl.time);
-
-		GLC_StateBeginDrawAliasFrameProgram(sinf->texnum, null_texture_reference, ent->renderfx, ent->custom_model, ent->r_modelalpha);
-		R_CustomColor(vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
-		vert_index = first_vert;
-		MD3_ForEachSurface(pheader, surf, surfnum) {
-			if (R_TextureReferenceIsValid(sinf[surfnum].texnum) && !invalidate_texture) {
-				renderer.TextureUnitBind(0, sinf[surfnum].texnum);
-			}
-
-			GL_DrawArrays(GL_TRIANGLES, vert_index, 3 * surf->numTriangles);
-			vert_index += 3 * surf->numTriangles;
-		}
-		if (outline) {
-			if (ent->renderfx & RF_CAUSTICS) {
-				R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsCausticEffects, 0);
-			}
-			GLC_StateBeginAliasOutlineFrame();
-			vert_index = first_vert;
-			MD3_ForEachSurface(pheader, surf, surfnum) {
-				GL_DrawArrays(GL_TRIANGLES, vert_index, 3 * surf->numTriangles);
-				vert_index += 3 * surf->numTriangles;
-			}
-		}
-		R_ProgramUse(r_program_none);
+		GLC_DrawAlias3ModelProgram(ent, frame1, invalidate_texture, vertexColor, lerpfrac, outline);
 	}
-	else {
-		// Immediate mode
-		R_ProgramUse(r_program_none);
-		GLC_StateBeginMD3Draw(ent->r_modelalpha, R_TextureReferenceIsValid(sinf->texnum) && !invalidate_texture, ent->renderfx & RF_WEAPONMODEL);
-		GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, invalidate_texture, false);
-
-		if (outline) {
-			GLC_StateBeginAliasOutlineFrame();
-			GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, true, true);
-		}
+	else if (GL_Supported(R_SUPPORT_IMMEDIATEMODE)) {
+		GLC_DrawAlias3ModelImmediate(ent, frame1, frame2, invalidate_texture, vertexColor, lerpfrac, outline);
 	}
 	R_PopModelviewMatrix(oldMatrix);
 }
 
-/*
-To draw, for each surface, run through the triangles, getting tex coords from s+t,
-*/
-void GLC_DrawAlias3ModelPowerupShell(entity_t *ent)
+static void GLC_DrawAlias3ModelPowerupShellProgram(model_t * mod, md3Header_t * pheader, int frame1, entity_t * ent, float lerpfrac)
 {
-	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_fb_models;
-	extern byte	*shadedots;
-	extern byte	r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS];
-	extern void R_AliasSetupLighting(entity_t *ent);
+	int vertsPerFrame = mod->vertsInVBO / pheader->numFrames;
+	int first_vert = mod->vbo_start + vertsPerFrame * frame1;
+	float color1[4], color2[4];
 
-	float lerpfrac;
-	int distance = MD3_INTERP_MAXDIST / MD3_XYZ_SCALE;
-	vec3_t interpolated_verts;
+	GLC_PowerupShellColor(0, ent->effects, color1);
+	GLC_PowerupShellColor(1, ent->effects, color2);
 
-	md3model_t *mhead;
-	md3Header_t *pheader;
-	model_t *mod;
-	int surfnum, numtris, i;
-	md3Surface_t *surf;
+	R_ProgramUse(r_program_aliasmodel_shell_glc);
+	R_ProgramUniform4fv(r_program_uniform_aliasmodel_shell_glc_fsBaseColor1, color1);
+	R_ProgramUniform4fv(r_program_uniform_aliasmodel_shell_glc_fsBaseColor2, color2);
+	R_ProgramUniform4fv(r_program_uniform_aliasmodel_shell_glc_scroll, GLC_PowerupShell_ScrollParams());
+	R_ProgramUniform1f(r_program_uniform_aliasmodel_shell_glc_lerpFraction, lerpfrac);
+	GL_DrawArrays(GL_TRIANGLES, first_vert, vertsPerFrame);
+	R_ProgramUse(r_program_none);
+}
 
-	int frame1 = ent->oldframe, frame2 = ent->frame;
-	ezMd3XyzNormal_t *verts, *v1, *v2;
-
-	unsigned int	*tris;
-	md3St_t *tc;
-
-	//	float ang;
-	float oldMatrix[16];
+static void GLC_DrawAlias3ModelPowerupShellImmediate(model_t * mod, md3Header_t * pheader, int frame1, int frame2, entity_t * ent, float lerpfrac)
+{
 	float scroll[4];
 	int layer_no;
+	const int distance = MD3_INTERP_MAXDIST / MD3_XYZ_SCALE;
 
-	mod = ent->model;
 	scroll[0] = cos(cl.time * 1.5);
 	scroll[1] = sin(cl.time * 1.1);
 	scroll[2] = cos(cl.time * -0.5);
 	scroll[3] = sin(cl.time * -0.5);
 
-	R_PushModelviewMatrix(oldMatrix);
-	R_RotateForEntity(ent);
-
-	// 
-	ent->r_modelalpha = ((ent->renderfx & RF_WEAPONMODEL) && gl_mtexable) ? bound(0, cl_drawgun.value, 1) : 1;
-	ent->r_modelalpha = ent->alpha ? ent->alpha : ent->r_modelalpha;
-
-	if (ent->renderfx & RF_WEAPONMODEL) {
-		R_ScaleModelview(0.5 + bound(0, r_viewmodelsize.value, 1) / 2, 1, 1);
-	}
-
-	R_AliasSetupLighting(ent);
-	shadedots = r_avertexnormal_dots[((int)(ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
-
-	mhead = (md3model_t *)Mod_Extradata(mod);
-	pheader = (md3Header_t *)((char *)mhead + mhead->md3model);
-
-	frame1 = bound(0, frame1, pheader->numFrames - 1);
-	frame2 = bound(0, frame2, pheader->numFrames - 1);
-
-	if (!r_lerpframes.integer || ent->framelerp < 0 || ent->oldframe == ent->frame) {
-		lerpfrac = 1.0;
-	}
-	else {
-		lerpfrac = min(ent->framelerp, 1);
-	}
-
 	R_ProgramUse(r_program_none);
-	GLC_StateBeginAliasPowerupShell(ent->renderfx & RF_WEAPONMODEL);
 
 	for (layer_no = 0; layer_no <= 1; ++layer_no) {
-		surf = MD3_FirstSurface(pheader);
-		for (surfnum = 0; surfnum < pheader->numSurfaces; surfnum++) {
+		md3Surface_t* surf;
+		int surfnum;
+		 
+		MD3_ForEachSurface(pheader, surf, surfnum) {
 			// loop through the surfaces.
 			int pose1 = frame1 * surf->numVerts;
 			int pose2 = frame2 * surf->numVerts;
+			int numtris, i;
+			unsigned int* tris;
+			md3St_t* tc;
+			ezMd3XyzNormal_t* verts;
 
 			//skin texture coords.
 			tc = MD3_SurfaceTextureCoords(surf);
@@ -364,7 +322,8 @@ void GLC_DrawAlias3ModelPowerupShell(entity_t *ent)
 			GLC_Begin(GL_TRIANGLES);
 			for (i = 0; i < numtris; i++) {
 				float s, t;
-				vec3_t vec1pos, vec2pos;
+				vec3_t vec1pos, vec2pos, interpolated_verts;
+				ezMd3XyzNormal_t *v1, *v2;
 
 				v1 = verts + *tris + pose1;
 				v2 = verts + *tris + pose2;
@@ -383,10 +342,33 @@ void GLC_DrawAlias3ModelPowerupShell(entity_t *ent)
 				tris++;
 			}
 			GLC_End();
-
-			//NEXT!   Getting cocky!
-			surf = (md3Surface_t *)((char *)surf + surf->ofsEnd);
 		}
+	}
+}
+
+/*
+To draw, for each surface, run through the triangles, getting tex coords from s+t,
+*/
+void GLC_DrawAlias3ModelPowerupShell(entity_t *ent)
+{
+	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_fb_models, gl_program_aliasmodels;
+	model_t *mod = ent->model;
+	md3model_t *mhead = (md3model_t *)Mod_Extradata(mod);
+	md3Header_t *pheader = MD3_HeaderForModel(mhead);
+	float oldMatrix[16];
+	int frame1 = bound(0, ent->oldframe, pheader->numFrames - 1);
+	int frame2 = bound(0, ent->frame, pheader->numFrames - 1);;
+	float lerpfrac;
+
+	R_PushModelviewMatrix(oldMatrix);
+	R_AliasModelPrepare(ent, &frame1, &frame2, &lerpfrac);
+
+	GLC_StateBeginAliasPowerupShell(ent->renderfx & RF_WEAPONMODEL);
+	if (gl_program_aliasmodels.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelShellCompile()) {
+		GLC_DrawAlias3ModelPowerupShellProgram(mod, pheader, frame1, ent, lerpfrac);
+	}
+	else if (GL_Supported(R_SUPPORT_IMMEDIATEMODE)) {
+		GLC_DrawAlias3ModelPowerupShellImmediate(mod, pheader, frame1, frame2, ent, lerpfrac);
 	}
 
 	R_PopModelviewMatrix(oldMatrix);
