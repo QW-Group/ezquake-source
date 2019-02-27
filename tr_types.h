@@ -61,6 +61,7 @@ typedef enum {
 #define R_SUPPORT_SEAMLESS_CUBEMAPS   (1 << 13)     // filtering works across faces of the cubemap
 #define R_SUPPORT_DEPTH32F            (1 << 14)     // floating point 32-bit depth buffers
 #define R_SUPPORT_FRAMEBUFFERS_SRGB   (1 << 15)     // framebuffers support sRGB
+#define R_SUPPORT_IMMEDIATEMODE       (1 << 16)     // immediate-mode rendering (doesn't require programs)
 
 #define R_SUPPORT_FEATURE_HW_LIGHTING (R_SUPPORT_TEXTURE_ARRAYS | R_SUPPORT_COMPUTE_SHADERS | R_SUPPORT_IMAGE_PROCESSING)
 

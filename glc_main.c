@@ -106,6 +106,7 @@ static void GLC_Begin2DRendering(void)
 void GLC_Initialise(void)
 {
 	int i;
+	extern cvar_t vid_gl_core_profile;
 #include "r_renderer_structure.h"
 
 	if (!host_initialized) {
@@ -136,6 +137,7 @@ void GLC_Initialise(void)
 	GL_ProcessErrors("post-GL_InitialiseState");
 
 	if (!GL_Supported(R_SUPPORT_RENDERING_SHADERS)) {
+		// GLSL not supported for some reason
 		for (i = 0; i < sizeof(gl_program_cvars) / sizeof(gl_program_cvars[0]); ++i) {
 			int flags = Cvar_GetFlags(gl_program_cvars[i]);
 			if (flags & CVAR_LATCH) {
@@ -147,11 +149,27 @@ void GLC_Initialise(void)
 			Cvar_SetFlags(gl_program_cvars[i], flags | CVAR_ROM);
 		}
 		Con_Printf("&cf00ERROR&r: GLSL programs not supported.\n");
+		glConfig.supported_features |= R_SUPPORT_IMMEDIATEMODE;
+	}
+	else if (vid_gl_core_profile.integer) {
+		// Force GLSL
+		for (i = 0; i < sizeof(gl_program_cvars) / sizeof(gl_program_cvars[0]); ++i) {
+			int flags = Cvar_GetFlags(gl_program_cvars[i]);
+			if (flags & CVAR_LATCH) {
+				Cvar_LatchedSetValue(gl_program_cvars[i], 1);
+			}
+			else {
+				Cvar_SetValue(gl_program_cvars[i], 1);
+			}
+			Cvar_SetFlags(gl_program_cvars[i], flags | CVAR_ROM);
+		}
+		Con_Printf("&c0f0INFO&r: immediate-mode rendering disabled.\n");
 	}
 	else {
 		for (i = 0; i < sizeof(gl_program_cvars) / sizeof(gl_program_cvars[0]); ++i) {
 			Cvar_SetFlags(gl_program_cvars[i], Cvar_GetFlags(gl_program_cvars[i]) & ~CVAR_ROM);
 		}
+		glConfig.supported_features |= R_SUPPORT_IMMEDIATEMODE;
 	}
 }
 

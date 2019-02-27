@@ -99,9 +99,96 @@ qbool GLC_CompileSpriteProgram(void)
 	return R_ProgramReady(r_program_sprites_glc);
 }
 
+static void GLC_Draw3DSpritesVertexArray(gl_sprite3d_batch_t* batch)
+{
+	if (batch->count == 1) {
+		R_ApplyRenderingState(batch->rendering_state);
+		if (R_TextureReferenceIsValid(batch->textures[0])) {
+			renderer.TextureUnitBind(0, batch->textures[0]);
+		}
+		else if (R_TextureReferenceIsValid(batch->texture)) {
+			renderer.TextureUnitBind(0, batch->texture);
+		}
+		else {
+			renderer.TextureUnitBind(0, solidwhite_texture);
+		}
+		GL_DrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices[0], batch->numVertices[0]);
+	}
+	else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 4 && batch->primitive_id == r_primitive_triangle_strip) {
+		GLC_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
+	}
+	else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 9 && GL_Supported(R_SUPPORT_PRIMITIVERESTART)) {
+		GLC_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
+	}
+	else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 18 && GL_Supported(R_SUPPORT_PRIMITIVERESTART)) {
+		GLC_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
+	}
+	else if (R_TextureReferenceIsValid(batch->texture)) {
+		renderer.TextureUnitBind(0, batch->texture);
+		R_ApplyRenderingState(batch->rendering_state);
+
+		GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, batch->count);
+	}
+	else {
+		int first = 0, last = 1;
+
+		R_ApplyRenderingState(batch->rendering_state);
+		if (R_TextureReferenceIsValid(batch->textures[0])) {
+			renderer.TextureUnitBind(0, batch->textures[0]);
+		}
+		else {
+			renderer.TextureUnitBind(0, solidwhite_texture);
+		}
+
+		while (last < batch->count) {
+			if (!R_TextureReferenceEqual(batch->textures[first], batch->textures[last])) {
+				GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
+
+				if (R_TextureReferenceIsValid(batch->textures[last])) {
+					renderer.TextureUnitBind(0, batch->textures[last]);
+				}
+				else {
+					renderer.TextureUnitBind(0, solidwhite_texture);
+				}
+				first = last;
+			}
+			++last;
+		}
+
+		GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
+	}
+}
+
+static void GLC_Draw3DSpritesImmediate(gl_sprite3d_batch_t* batch)
+{
+	int j, k;
+
+	// Immediate mode, no VBOs
+	for (j = 0; j < batch->count; ++j) {
+		r_sprite3d_vert_t* v;
+
+		R_ApplyRenderingState(batch->rendering_state);
+		if (R_TextureReferenceIsValid(batch->textures[j])) {
+			renderer.TextureUnitBind(0, batch->textures[j]);
+		}
+		else {
+			renderer.TextureUnitBind(0, batch->texture);
+		}
+
+		GLC_Begin(glPrimitiveTypes[batch->primitive_id]);
+		v = &verts[batch->firstVertices[j]];
+		for (k = 0; k < batch->numVertices[j]; ++k, ++v) {
+			glTexCoord2fv(v->tex);
+			R_CustomColor4ubv(v->color);
+			GLC_Vertex3fv(v->position);
+		}
+		GLC_End();
+	}
+}
+
 void GLC_Draw3DSpritesInline(void)
 {
-	unsigned int i, j, k;
+	unsigned int i;
 
 	if (!batchCount || !vertexCount || (batchCount == 1 && !batches[0].count)) {
 		return;
@@ -134,85 +221,10 @@ void GLC_Draw3DSpritesInline(void)
 		}
 
 		if (buffers.supported) {
-			if (batch->count == 1) {
-				R_ApplyRenderingState(batch->rendering_state);
-				if (R_TextureReferenceIsValid(batch->textures[0])) {
-					renderer.TextureUnitBind(0, batch->textures[0]);
-				}
-				else if (R_TextureReferenceIsValid(batch->texture)) {
-					renderer.TextureUnitBind(0, batch->texture);
-				}
-				else {
-					renderer.TextureUnitBind(0, solidwhite_texture);
-				}
-				GL_DrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices[0], batch->numVertices[0]);
-			}
-			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 4 && batch->primitive_id == r_primitive_triangle_strip) {
-				GLC_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
-			}
-			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 9 && GL_Supported(R_SUPPORT_PRIMITIVERESTART)) {
-				GLC_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
-			}
-			else if (GL_DrawElementsBaseVertexAvailable() && batch->allSameNumber && batch->numVertices[0] == 18 && GL_Supported(R_SUPPORT_PRIMITIVERESTART)) {
-				GLC_DrawSequentialBatch(batch, indexes_start_flashblend, INDEXES_MAX_FLASHBLEND);
-			}
-			else if (R_TextureReferenceIsValid(batch->texture)) {
-				renderer.TextureUnitBind(0, batch->texture);
-				R_ApplyRenderingState(batch->rendering_state);
-
-				GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, batch->count);
-			}
-			else {
-				int first = 0, last = 1;
-
-				R_ApplyRenderingState(batch->rendering_state);
-				if (R_TextureReferenceIsValid(batch->textures[0])) {
-					renderer.TextureUnitBind(0, batch->textures[0]);
-				}
-				else {
-					renderer.TextureUnitBind(0, solidwhite_texture);
-				}
-
-				while (last < batch->count) {
-					if (!R_TextureReferenceEqual(batch->textures[first], batch->textures[last])) {
-						GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
-
-						if (R_TextureReferenceIsValid(batch->textures[last])) {
-							renderer.TextureUnitBind(0, batch->textures[last]);
-						}
-						else {
-							renderer.TextureUnitBind(0, solidwhite_texture);
-						}
-						first = last;
-					}
-					++last;
-				}
-
-				GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
-			}
+			GLC_Draw3DSpritesVertexArray(batch);
 		}
 		else {
-			// Immediate mode, no VBOs
-			for (j = 0; j < batch->count; ++j) {
-				r_sprite3d_vert_t* v;
-
-				R_ApplyRenderingState(batch->rendering_state);
-				if (R_TextureReferenceIsValid(batch->textures[j])) {
-					renderer.TextureUnitBind(0, batch->textures[j]);
-				}
-				else {
-					renderer.TextureUnitBind(0, batch->texture);
-				}
-
-				GLC_Begin(glPrimitiveTypes[batch->primitive_id]);
-				v = &verts[batch->firstVertices[j]];
-				for (k = 0; k < batch->numVertices[j]; ++k, ++v) {
-					glTexCoord2fv(v->tex);
-					R_CustomColor4ubv(v->color);
-					GLC_Vertex3fv(v->position);
-				}
-				GLC_End();
-			}
+			GLC_Draw3DSpritesImmediate(batch);
 		}
 
 		batch->count = 0;
