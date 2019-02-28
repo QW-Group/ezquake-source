@@ -599,6 +599,8 @@ extern model_t* cl_custommodels[custom_model_count];
 
 model_t* Mod_CustomModel(custom_model_id_t id, qbool crash);
 
+int Mod_ExpectedNextFrame(model_t* mod, int framenum, int framecount);
+
 // aliasmodels
 #define NUMVERTEXNORMALS    162
 #define SHADEDOT_QUANT       64

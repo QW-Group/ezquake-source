@@ -960,11 +960,13 @@ void R_AliasModelColor(const entity_t* ent, float* color, qbool* invalidate_text
 	color[3] = ent->r_modelalpha;
 }
 
-void R_AliasModelPrepare(entity_t* ent, int* frame1_, int* frame2_, float* lerpfrac)
+void R_AliasModelPrepare(entity_t* ent, int framecount, int* frame1_, int* frame2_, float* lerpfrac)
 {
 	extern cvar_t r_viewmodelsize, cl_drawgun;
-	int frame1 = ent->oldframe;
-	int frame2 = ent->frame;
+	int frame1 = bound(0, ent->oldframe, framecount - 1);
+	int frame2 = bound(0, ent->frame, framecount - 1);
+	int expected1 = Mod_ExpectedNextFrame(ent->model, frame1, framecount);
+	int expected2 = Mod_ExpectedNextFrame(ent->model, frame2, framecount);
 
 	R_RotateForEntity(ent);
 	if ((ent->renderfx & RF_WEAPONMODEL) && r_viewmodelsize.value < 1) {
@@ -979,16 +981,17 @@ void R_AliasModelPrepare(entity_t* ent, int* frame1_, int* frame2_, float* lerpf
 
 	R_AliasSetupLighting(ent);
 
-	if (!r_lerpframes.value || ent->framelerp < 0 || frame1 == frame2 || (frame2 != frame1 + 1 && frame2 != frame1 - 1)) {
+	if (!r_lerpframes.value || ent->framelerp < 0 || frame1 == frame2 || (frame2 != expected1 && frame1 != expected2)) {
 		*lerpfrac = 1.0f;
 	}
 	else {
 		*lerpfrac = min(ent->framelerp, 1.0f);
 	}
 
-	if (frame2 == frame1 - 1) {
-		--frame1;
-		++frame2;
+	if (frame2 != expected1 && frame1 == expected2) {
+		int temp = frame1;
+		frame1 = frame2;
+		frame2 = temp;
 		*lerpfrac = 1.0f - *lerpfrac;
 	}
 

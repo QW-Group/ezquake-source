@@ -76,10 +76,13 @@ void GLM_StateBeginAliasOutlineBatch(void)
 	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 }
 
-void GLM_StateBeginAliasModelBatch(qbool translucent)
+void GLM_StateBeginAliasModelBatch(qbool translucent, qbool additive)
 {
 	if (translucent) {
 		R_ApplyRenderingState(r_state_aliasmodel_translucent_batch);
+	}
+	else if (additive) {
+		R_ApplyRenderingState(r_state_aliasmodel_additive_batch);
 	}
 	else {
 		R_ApplyRenderingState(r_state_aliasmodel_opaque_batch);

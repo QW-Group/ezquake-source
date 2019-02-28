@@ -40,9 +40,7 @@ void GL_AliasModelSetVertexDirection(int num_triangles, vbo_model_vert_t* vbo_bu
 
 			vbo_buffer[v1].flags = 0;
 			if (limit_lerp) {
-				float distance = VectorDistance(vbo_buffer[v1].position, vbo_buffer[v2].position);
-
-				if (distance > ALIASMODEL_MAX_LERP_DISTANCE) {
+				if ((vbo_buffer[v1].position[0] > 0) != (vbo_buffer[v2].position[0] > 0)) {
 					vbo_buffer[v1].flags |= AM_VERTEX_NOLERP;
 				}
 			}

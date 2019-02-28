@@ -63,7 +63,8 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 			for (triangle = 0; triangle < surf->numTriangles; ++triangle) {
 				for (i = 0; i < 3; ++i, ++v) {
 					int vertexNumber = framenum * surf->numVerts + triangles[triangle].indexes[i];
-					int nextVertexNumber = (framenum < pheader->numFrames - 1 ? framenum + 1 : 0) * surf->numVerts + triangles[triangle].indexes[i];
+					int nextFrame = Mod_ExpectedNextFrame(model, framenum, pheader->numFrames);
+					int nextVertexNumber = nextFrame * surf->numVerts + triangles[triangle].indexes[i];
 					ezMd3XyzNormal_t* vert = &vertices[vertexNumber];
 					ezMd3XyzNormal_t* nextVert = &vertices[nextVertexNumber];
 					float s, t;
@@ -80,9 +81,7 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 					// Set direction
 					VectorSubtract(nextVert->xyz, vert->xyz, vbo[v].direction);
 					if (model->renderfx & RF_LIMITLERP) {
-						float distance = VectorDistance(vert->xyz, nextVert->xyz);
-
-						if (distance > ALIASMODEL_MAX_LERP_DISTANCE) {
+						if ((vert->xyz[0] > 0) != (nextVert->xyz[0] > 0)) {
 							vbo[v].flags |= AM_VERTEX_NOLERP;
 						}
 					}

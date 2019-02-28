@@ -685,3 +685,21 @@ model_t* Mod_CustomModel(custom_model_id_t id, qbool crash)
 	}
 	return NULL;
 }
+
+// Used for lerping between frames
+int Mod_ExpectedNextFrame(model_t* mod, int framenum, int framecount)
+{
+	if (framenum < framecount - 1) {
+		return framenum + 1;
+	}
+
+	if (!mod->modhint == MOD_VMODEL) {
+		return 0;
+	}
+
+	// check for continuous-fire weapons
+	if (!strcmp(mod->name, "progs/v_nail.mdl") || !strcmp(mod->name, "progs/v_nail2.mdl") || !strcmp(mod->name, "progs/v_light.mdl")) {
+		return 1;
+	}
+	return 0;
+}

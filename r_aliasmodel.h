@@ -56,7 +56,7 @@ qbool R_FilterEntity(entity_t* ent);
 qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);
 
 void R_DrawAliasModel(entity_t *ent);
-void R_AliasModelPrepare(entity_t* ent, int* frame1, int* frame2, float* lerpfrac);
+void R_AliasModelPrepare(entity_t* ent, int framecount, int* frame1, int* frame2, float* lerpfrac);
 int R_AliasFramePose(const maliasframedesc_t* frame);
 maliasframedesc_t* R_AliasModelFindFrame(aliashdr_t* hdr, const char* framename, int framenumber);
 void R_AliasModelColor(const entity_t* ent, float* color, qbool* invalidate_texture);

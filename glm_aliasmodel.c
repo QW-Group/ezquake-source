@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_program.h"
 #include "r_renderer.h"
 
-void GLM_StateBeginAliasModelBatch(qbool translucent);
+void GLM_StateBeginAliasModelBatch(qbool translucent, qbool additive);
 void GLM_StateBeginAliasOutlineBatch(void);
 
 #define MAXIMUM_ALIASMODEL_DRAWCALLS MAX_STANDARD_ENTITIES   // ridiculous
@@ -45,6 +45,7 @@ typedef enum aliasmodel_draw_type_s {
 	aliasmodel_draw_outlines,
 	aliasmodel_draw_shells,
 	aliasmodel_draw_postscene,
+	aliasmodel_draw_postscene_additive,
 	aliasmodel_draw_postscene_shells,
 
 	aliasmodel_draw_max
@@ -271,6 +272,11 @@ static void GLM_QueueAliasModelDrawImpl(
 		shelltype = aliasmodel_draw_postscene_shells;
 		outline = false;
 	}
+	else if (render_effects & RF_ADDITIVEBLEND) {
+		type = aliasmodel_draw_postscene_additive;
+		shell = false;
+		outline = false;
+	}
 	else if (color[3] < 1) {
 		type = aliasmodel_draw_alpha;
 		outline = false;
@@ -433,7 +439,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		return;
 	}
 
-	GLM_StateBeginAliasModelBatch(type != aliasmodel_draw_std);
+	GLM_StateBeginAliasModelBatch(type != aliasmodel_draw_std && type != aliasmodel_draw_postscene_additive, type == aliasmodel_draw_postscene_additive);
 	buffers.Bind(r_buffer_aliasmodel_drawcall_indirect);
 	extra_offset = buffers.BufferOffset(r_buffer_aliasmodel_drawcall_indirect);
 
@@ -491,6 +497,7 @@ void GLM_DrawAliasModelBatches(void)
 void GLM_DrawAliasModelPostSceneBatches(void)
 {
 	GLM_RenderPreparedEntities(aliasmodel_draw_postscene);
+	GLM_RenderPreparedEntities(aliasmodel_draw_postscene_additive);
 	GLM_RenderPreparedEntities(aliasmodel_draw_postscene_shells);
 }
 

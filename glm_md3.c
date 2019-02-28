@@ -25,11 +25,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "r_aliasmodel.h"
 #include "vx_vertexlights.h" 
 #include "r_matrix.h"
+#include "rulesets.h"
 
 void GLM_DrawAlias3Model(entity_t* ent)
 {
-	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes;
-	extern byte	r_avertexnormal_dots[SHADEDOT_QUANT][NUMVERTEXNORMALS];
+	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_outline;
 	extern void R_AliasSetupLighting(entity_t* ent);
 
 	float lerpfrac = 1;
@@ -41,8 +41,7 @@ void GLM_DrawAlias3Model(entity_t* ent)
 	surfinf_t* surfaceInfo = MD3_ExtraSurfaceInfoForModel(md3Model);
 	md3Header_t* pHeader = MD3_HeaderForModel(md3Model);
 	md3Surface_t* surf;
-	int frame1 = bound(0, ent->oldframe, pHeader->numFrames - 1);
-	int frame2 = bound(0, ent->frame, pHeader->numFrames - 1);
+	int frame1, frame2;
 	int surfnum;
 	int vertsPerFrame = 0;
 
@@ -55,7 +54,7 @@ void GLM_DrawAlias3Model(entity_t* ent)
 	}
 
 	R_PushModelviewMatrix(oldMatrix);
-	R_AliasModelPrepare(ent, &frame1, &frame2, &lerpfrac);
+	R_AliasModelPrepare(ent, pHeader->numFrames, &frame1, &frame2, &lerpfrac);
 
 	v1 = mod->vbo_start + vertsPerFrame * frame1;
 	v2 = mod->vbo_start + vertsPerFrame * frame2;

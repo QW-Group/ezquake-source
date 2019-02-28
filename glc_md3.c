@@ -249,13 +249,12 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	md3Header_t *pheader = MD3_HeaderForModel(mhead);
 	qbool invalidate_texture = false;
 
-	int frame1 = bound(0, ent->oldframe, pheader->numFrames - 1);
-	int frame2 = bound(0, ent->frame, pheader->numFrames - 1);
+	int frame1, frame2;
 	qbool outline = ((gl_outline.integer & 1) && ent->r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
 	float oldMatrix[16];
 
 	R_PushModelviewMatrix(oldMatrix);
-	R_AliasModelPrepare(ent, &frame1, &frame2, &lerpfrac);
+	R_AliasModelPrepare(ent, pheader->numFrames, &frame1, &frame2, &lerpfrac);
 	R_AliasModelColor(ent, vertexColor, &invalidate_texture);
 
 	if (gl_program_aliasmodels.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompile()) {
@@ -356,12 +355,11 @@ void GLC_DrawAlias3ModelPowerupShell(entity_t *ent)
 	md3model_t *mhead = (md3model_t *)Mod_Extradata(mod);
 	md3Header_t *pheader = MD3_HeaderForModel(mhead);
 	float oldMatrix[16];
-	int frame1 = bound(0, ent->oldframe, pheader->numFrames - 1);
-	int frame2 = bound(0, ent->frame, pheader->numFrames - 1);;
+	int frame1, frame2;
 	float lerpfrac;
 
 	R_PushModelviewMatrix(oldMatrix);
-	R_AliasModelPrepare(ent, &frame1, &frame2, &lerpfrac);
+	R_AliasModelPrepare(ent, pheader->numFrames, &frame1, &frame2, &lerpfrac);
 
 	GLC_StateBeginAliasPowerupShell(ent->renderfx & RF_WEAPONMODEL);
 	if (gl_program_aliasmodels.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelShellCompile()) {
