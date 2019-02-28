@@ -689,17 +689,29 @@ model_t* Mod_CustomModel(custom_model_id_t id, qbool crash)
 // Used for lerping between frames
 int Mod_ExpectedNextFrame(model_t* mod, int framenum, int framecount)
 {
+	// axe has 0, 1...4, 5...8
+	if (!strcmp(mod->name, cl_modelnames[mi_weapon1]) && framenum == 4) {
+		return 0;
+	}
+
+	// assume it's increasing
 	if (framenum < framecount - 1) {
 		return framenum + 1;
 	}
 
-	if (!mod->modhint == MOD_VMODEL) {
-		return 0;
+	// check for continuous-fire weapons
+	if (mod->modhint == MOD_VMODEL) {
+		if (!strcmp(mod->name, cl_modelnames[mi_weapon4])) {
+			return 1;
+		}
+		if (!strcmp(mod->name, cl_modelnames[mi_weapon5])) {
+			return 1;
+		}
+		if (!strcmp(mod->name, cl_modelnames[mi_weapon8])) {
+			return 1;
+		}
 	}
 
-	// check for continuous-fire weapons
-	if (!strcmp(mod->name, "progs/v_nail.mdl") || !strcmp(mod->name, "progs/v_nail2.mdl") || !strcmp(mod->name, "progs/v_light.mdl")) {
-		return 1;
-	}
+	// back to the start
 	return 0;
 }

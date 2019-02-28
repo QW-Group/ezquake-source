@@ -116,7 +116,7 @@ void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 			// Find next frame's pose
 			maliasframedesc_t* frame2 = R_AliasModelFindFrame(hdr, frame->groupname, frame->groupnumber + 1);
 			if (!frame2) {
-				frame2 = R_AliasModelFindFrame(hdr, frame->groupname, 1);
+				frame2 = R_AliasModelFindFrame(hdr, frame->groupname, 1 + Mod_ExpectedNextFrame(m, frame->groupnumber, hdr->numframes));
 			}
 
 			if (frame2) {
