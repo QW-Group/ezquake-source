@@ -239,7 +239,7 @@ To draw, for each surface, run through the triangles, getting tex coords from s+
 */
 void GLC_DrawAlias3Model(entity_t *ent)
 {
-	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_fb_models, gl_program_aliasmodels, gl_outline;
+	extern cvar_t gl_fb_models, gl_program_aliasmodels;
 
 	float lerpfrac;
 	float vertexColor[4];
@@ -250,11 +250,11 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	qbool invalidate_texture = false;
 
 	int frame1, frame2;
-	qbool outline = ((gl_outline.integer & 1) && ent->r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
+	qbool outline;
 	float oldMatrix[16];
 
 	R_PushModelviewMatrix(oldMatrix);
-	R_AliasModelPrepare(ent, pheader->numFrames, &frame1, &frame2, &lerpfrac);
+	R_AliasModelPrepare(ent, pheader->numFrames, &frame1, &frame2, &lerpfrac, &outline);
 	R_AliasModelColor(ent, vertexColor, &invalidate_texture);
 
 	if (gl_program_aliasmodels.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompile()) {
@@ -350,16 +350,17 @@ To draw, for each surface, run through the triangles, getting tex coords from s+
 */
 void GLC_DrawAlias3ModelPowerupShell(entity_t *ent)
 {
-	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_fb_models, gl_program_aliasmodels;
+	extern cvar_t gl_fb_models, gl_program_aliasmodels;
 	model_t *mod = ent->model;
 	md3model_t *mhead = (md3model_t *)Mod_Extradata(mod);
 	md3Header_t *pheader = MD3_HeaderForModel(mhead);
 	float oldMatrix[16];
 	int frame1, frame2;
 	float lerpfrac;
+	qbool outline;
 
 	R_PushModelviewMatrix(oldMatrix);
-	R_AliasModelPrepare(ent, pheader->numFrames, &frame1, &frame2, &lerpfrac);
+	R_AliasModelPrepare(ent, pheader->numFrames, &frame1, &frame2, &lerpfrac, &outline);
 
 	GLC_StateBeginAliasPowerupShell(ent->renderfx & RF_WEAPONMODEL);
 	if (gl_program_aliasmodels.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelShellCompile()) {

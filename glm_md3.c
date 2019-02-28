@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void GLM_DrawAlias3Model(entity_t* ent)
 {
-	extern cvar_t cl_drawgun, r_viewmodelsize, r_lerpframes, gl_outline;
 	extern void R_AliasSetupLighting(entity_t* ent);
 
 	float lerpfrac = 1;
@@ -41,9 +40,8 @@ void GLM_DrawAlias3Model(entity_t* ent)
 	surfinf_t* surfaceInfo = MD3_ExtraSurfaceInfoForModel(md3Model);
 	md3Header_t* pHeader = MD3_HeaderForModel(md3Model);
 	md3Surface_t* surf;
-	int frame1, frame2;
-	int surfnum;
-	int vertsPerFrame = 0;
+	int frame1, frame2, surfnum, vertsPerFrame = 0;
+	qbool outline;
 
 	MD3_ForEachSurface(pHeader, surf, surfnum) {
 		vertsPerFrame += 3 * surf->numTriangles;
@@ -54,14 +52,16 @@ void GLM_DrawAlias3Model(entity_t* ent)
 	}
 
 	R_PushModelviewMatrix(oldMatrix);
-	R_AliasModelPrepare(ent, pHeader->numFrames, &frame1, &frame2, &lerpfrac);
+	R_AliasModelPrepare(ent, pHeader->numFrames, &frame1, &frame2, &lerpfrac, &outline);
 
 	v1 = mod->vbo_start + vertsPerFrame * frame1;
 	v2 = mod->vbo_start + vertsPerFrame * frame2;
 	MD3_ForEachSurface(pHeader, surf, surfnum) {
+		int extra_fx = ((mod->modhint & MOD_VMODEL) && surfnum >= 1 ? RF_ADDITIVEBLEND : 0);
+
 		GLM_DrawAliasModelFrame(
 			ent, mod, v1, v2, 3 * surf->numTriangles,
-			surfaceInfo[surfnum].texnum, false, ent->effects, ent->renderfx, lerpfrac
+			surfaceInfo[surfnum].texnum, outline, ent->effects, ent->renderfx | extra_fx, lerpfrac
 		);
 		v1 += 3 * surf->numTriangles;
 		v2 += 3 * surf->numTriangles;

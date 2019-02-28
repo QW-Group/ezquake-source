@@ -262,6 +262,8 @@ typedef enum {
 	r_state_aliasmodel_opaque_batch,
 	r_state_aliasmodel_translucent_batch,
 
+	r_state_aliasmodel_additive_batch,
+
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	r_state_postprocess_bloom1,
 	r_state_postprocess_bloom2,

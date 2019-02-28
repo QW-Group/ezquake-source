@@ -960,7 +960,7 @@ void R_AliasModelColor(const entity_t* ent, float* color, qbool* invalidate_text
 	color[3] = ent->r_modelalpha;
 }
 
-void R_AliasModelPrepare(entity_t* ent, int framecount, int* frame1_, int* frame2_, float* lerpfrac)
+void R_AliasModelPrepare(entity_t* ent, int framecount, int* frame1_, int* frame2_, float* lerpfrac, qbool* outline)
 {
 	extern cvar_t r_viewmodelsize, cl_drawgun;
 	int frame1 = bound(0, ent->oldframe, framecount - 1);
@@ -1002,4 +1002,9 @@ void R_AliasModelPrepare(entity_t* ent, int framecount, int* frame1_, int* frame
 
 	*frame1_ = frame1;
 	*frame2_ = frame2;
+
+	// Check for outline on models.
+	// We don't support outline for transparent models,
+	// and we also check for ruleset, since we don't want outline on eyes.
+	*outline = ((gl_outline.integer & 1) && ent->r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
 }

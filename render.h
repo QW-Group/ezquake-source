@@ -32,13 +32,14 @@ typedef struct efrag_s {
 	struct efrag_s		*entnext;
 } efrag_t;
 
-#define RF_WEAPONMODEL  1
-#define RF_NOSHADOW     2
-#define RF_LIMITLERP    4
-#define RF_PLAYERMODEL  8
-#define RF_NORMALENT    16
-#define RF_CAUSTICS     32
-#define RF_ALPHABLEND   64   // bit of a hack - always enable blending (used for 2nd pass when multi-texturing disabled)
+#define RF_WEAPONMODEL      1
+#define RF_NOSHADOW         2
+#define RF_LIMITLERP        4
+#define RF_PLAYERMODEL      8
+#define RF_NORMALENT       16
+#define RF_CAUSTICS        32
+#define RF_ALPHABLEND      64   // bit of a hack - always enable blending (used for 2nd pass when multi-texturing disabled)
+#define RF_ADDITIVEBLEND  128
 
 typedef struct custom_model_color_s {
 	cvar_t color_cvar;
