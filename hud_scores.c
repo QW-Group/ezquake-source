@@ -26,6 +26,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "mvd_utils_common.h"
 #include "sbar.h"
 
+qbool TP_ReadMacroFormat(char* s, int* fixed_width, int* alignment, char** new_s);
+char* TP_AlignMacroText(char* text, int fixed_width, int alignment);
+
 static cvar_t hud_sortrules_teamsort = { "hud_sortrules_teamsort", "0" };
 static cvar_t hud_sortrules_playersort = { "hud_sortrules_playersort", "1" };
 static cvar_t hud_sortrules_includeself = { "hud_sortrules_includeself", "1" };
@@ -587,6 +590,14 @@ static void SCR_HUD_DrawScoresBar(hud_t *hud)
 
 			while ((c = *in++) && (out - buf < MAX_MACRO_STRING - 1)) {
 				if ((c == '%') && *in) {
+					int fixed_width = 0, alignment = 0;
+
+					if (in[0] == '<') {
+						--in;
+						TP_ReadMacroFormat(in, &fixed_width, &alignment, &in);
+						++in;
+					}
+
 					switch ((c = *in++)) {
 						case '%':
 							temp = "%";
@@ -615,6 +626,9 @@ static void SCR_HUD_DrawScoresBar(hud_t *hud)
 						default:
 							temp = va("%%%c", c);
 							break;
+					}
+					if (fixed_width) {
+						temp = TP_AlignMacroText(temp, fixed_width, alignment);
 					}
 					strlcpy(out, temp, sizeof(buf) - (out - buf));
 					out += strlen(temp);

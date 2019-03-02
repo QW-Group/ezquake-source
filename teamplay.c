@@ -1305,6 +1305,47 @@ static void TP_SetDefaultMacroCharFormat(qbool extended, char character, int* fi
 	TP_SetDefaultMacroFormat(cvar_ext, fixed_width, alignment);
 }
 
+qbool TP_ReadMacroFormat(char* s, int* fixed_width, int* alignment, char** new_s)
+{
+	*new_s = s;
+	*fixed_width = 0;
+	*alignment = TP_MACRO_ALIGNMENT_LEFT;
+
+	if (s[0] && s[1] == '<') {
+		s += 2;
+
+		while (s[0] && s[0] != '>') {
+			if (s[0] >= '0' && s[0] <= '9') {
+				*fixed_width = (*fixed_width) * 10 + (s[0] - '0');
+			}
+			else if ((s[0] == 'l' || s[0] == 'L') && s[1] == '>') {
+				*alignment = TP_MACRO_ALIGNMENT_LEFT;
+			}
+			else if ((s[0] == 'r' || s[0] == 'R') && s[1] == '>') {
+				*alignment = TP_MACRO_ALIGNMENT_RIGHT;
+			}
+			else if ((s[0] == 'c' || s[0] == 'C') && s[1] == '>') {
+				*alignment = TP_MACRO_ALIGNMENT_CENTERED;
+			}
+			else {
+				break;
+			}
+			++s;
+		}
+
+		// not valid string
+		if (s[0] != '>') {
+			*fixed_width = *alignment = 0;
+			return false;
+		}
+
+		*new_s = s;
+		return true;
+	}
+
+	return false;
+}
+
 //Parses %a-like expressions
 char *TP_ParseMacroString (char *s)
 {
@@ -1332,36 +1373,7 @@ char *TP_ParseMacroString (char *s)
 		qbool explicit_format = false;
 
 		// check for %<size[alignment]>
-		if (is_macro_indicator && s[1] == '<') {
-			char* start = s;
-
-			s += 2;
-			
-			while (s[0] && s[0] != '>')
-			{
-				if (s[0] >= '0' && s[0] <= '9')
-					fixed_width = fixed_width * 10 + (s[0] - '0');
-				else if ((s[0] == 'l' || s[0] == 'L') && s[1] == '>')
-					alignment = TP_MACRO_ALIGNMENT_LEFT;
-				else if ((s[0] == 'r' || s[0] == 'R') && s[1] == '>')
-					alignment = TP_MACRO_ALIGNMENT_RIGHT;
-				else if ((s[0] == 'c' || s[0] == 'C') && s[1] == '>')
-					alignment = TP_MACRO_ALIGNMENT_CENTERED;
-				else
-					break;
-
-				++s;
-			}
-
-			// not valid string
-			if (s[0] != '>') {
-				s = start;
-				buf[i++] = *s++;
-				continue;
-			}
-
-			explicit_format = true;
-		}
+		explicit_format = is_macro_indicator && TP_ReadMacroFormat(s, &fixed_width, &alignment, &s);
 
 		// check %[P], etc
 		if (is_macro_indicator && s[1]=='[' && s[2] && s[3]==']') {
