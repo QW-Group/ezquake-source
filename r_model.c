@@ -600,7 +600,7 @@ texture_ref Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 	}
 
 	// well, it have nothing with luma, but quite same restrictions...
-	if ((mod->modhint != MOD_BACKPACK) && !Ruleset_IsLumaAllowed(mod)) {
+	if (RuleSets_DisallowSimpleTexture(mod)) {
 		return null_texture_reference;
 	}
 
