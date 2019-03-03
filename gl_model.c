@@ -32,7 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fmod.h"
 #include "utils.h"
 
-
 //VULT MODELS
 void Mod_AddModelFlags(model_t *mod);
 
@@ -1897,8 +1896,6 @@ void Mod_FloodFillSkin( byte *skin, int skinwidth, int skinheight ) {
 	}
 }
 
-extern qbool RuleSets_DisallowExternalTexture(model_t *mod);
-
 static qbool Mod_IsLumaAllowed(model_t *mod)
 {
 	switch (mod->modhint)
@@ -2601,15 +2598,17 @@ int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 	int tex = 0, texmode = 0;
 	char basename[64], indentifier[64];
 
-	if (!mod)
+	if (!mod) {
 		return 0;
+	}
 
-	if (RuleSets_DisallowExternalTexture(mod))
+	if (RuleSets_DisallowExternalTexture(mod)) {
 		return 0;
+	}
 
-	// well, it have nothing with luma, but quite same restrictions...
-	if ( (mod->modhint != MOD_BACKPACK) && !Mod_IsLumaAllowed(mod) )
+	if (RuleSets_DisallowSimpleTexture(mod)) {
 		return 0;
+	}
 
 	COM_StripExtension(COM_SkipPath(mod->name), basename, sizeof(basename));
 

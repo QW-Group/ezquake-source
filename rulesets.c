@@ -45,9 +45,27 @@ qbool RuleSets_DisallowExternalTexture(model_t *mod)
 		case MOD_EYES:
 			return true;
 		case MOD_BACKPACK:
-			return rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_thunderdome || rulesetDef.ruleset == rs_qcon;
+			return rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_qcon;
 		default:
 			return false;
+	}
+}
+
+qbool RuleSets_DisallowSimpleTexture(model_t* mod)
+{
+	switch (mod->modhint) {
+		case MOD_EYES:
+		case MOD_PLAYER:
+		case MOD_SENTRYGUN: // tf
+		case MOD_DETPACK:   // tf
+			return true; // no replacement allowed
+
+		case MOD_BACKPACK:
+			// Now allowed in Thunderdome...
+			return rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_qcon;
+
+		default:
+			return false; // replacement always allowed
 	}
 }
 

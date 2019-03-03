@@ -32,6 +32,7 @@
 - `f_qtvfinalscores` trigger fired when `//finalscores` notification detected in qtv stream
 - `/cl_mvinset` position & size can be set by user (`/cl_mvinset_size_x` sets relative size compared to screen)
 - `/r_lerpframes` is no longer disabled when using multiview
+- `/ruleset thunderdome` allows simple-item backpacks & texture replacements for backpacks
 
 ### Bugfixes
 

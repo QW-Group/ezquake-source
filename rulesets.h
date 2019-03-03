@@ -68,6 +68,8 @@ qbool Ruleset_BlockHudPicChange(void);
 qbool Ruleset_AllowPolygonOffset(entity_t* ent);
 qbool Rulesets_AllowAlternateModel(const char* modelName);
 qbool RuleSets_DisallowModelOutline(struct model_s *mod);
+qbool RuleSets_DisallowExternalTexture(struct model_s *mod);
+qbool RuleSets_DisallowSimpleTexture(struct model_s *mod);
 
 // OnChange functions controling when a variable value changes
 void Rulesets_OnChange_indphys (cvar_t *var, char *value, qbool *cancel);
