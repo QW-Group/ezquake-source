@@ -803,60 +803,63 @@ char *Macro_Point_LED(void)
 		return tp_name_status_blue.string;
 }
 
-char *Macro_Team1(void)
+int strcmp2(const char * s1, const char * s2);
+
+static int Macro_TeamSort(const void* lhs_, const void* rhs_)
 {
-	static char buffer[MAX_MACRO_VALUE];
-	int i;
-	const char* team1 = "team1";
+	const char* lhs = *(const char**)lhs_;
+	const char* rhs = *(const char**)rhs_;
+
+	return strcmp2(lhs, rhs);
+}
+
+static const char* Macro_TeamPick(int team_number, const char* default_teamname)
+{
+	int i, j;
+	int team_count = 0;
+	const char* teamnames[MAX_CLIENTS];
 
 	for (i = 0; i < sizeof(cl.players) / sizeof(cl.players[0]); ++i) {
 		if (cl.players[i].name[0] && !cl.players[i].spectator) {
-			if (cl.teamplay && cl.players[i].team[0]) {
-				team1 = cl.players[i].team;
-				break;
+			const char* team = (cl.teamplay ? cl.players[i].team : cl.players[i].name);
+
+			for (j = 0; j < team_count; ++j) {
+				if (!strcmp(team, teamnames[j])) {
+					break;
+				}
 			}
-			else if (!cl.teamplay) {
-				team1 = cl.players[i].name;
-				break;
+
+			if (j >= team_count && team_count < sizeof(teamnames) / sizeof(teamnames[0])) {
+				teamnames[team_count++] = team;
 			}
 		}
 	}
 
-	strlcpy(buffer, team1, sizeof(buffer));
+	if (team_count > team_number) {
+		qsort((void*)teamnames, team_count, sizeof(teamnames[0]), Macro_TeamSort);
+
+		return teamnames[team_number];
+	}
+	else {
+		return default_teamname;
+	}
+}
+
+char *Macro_Team1(void)
+{
+	static char buffer[MAX_MACRO_VALUE];
+
+	strlcpy(buffer, Macro_TeamPick(0, "team1"), sizeof(buffer));
+
 	return buffer;
 }
 
 char *Macro_Team2(void)
 {
-	int i;
 	static char buffer[MAX_MACRO_VALUE];
-	const char* team1 = NULL;
-	const char* team2 = "team2";
 
-	for (i = 0; i < sizeof(cl.players) / sizeof(cl.players[0]); ++i) {
-		if (cl.players[i].name[0] && !cl.players[i].spectator) {
-			if (cl.teamplay && cl.players[i].team[0]) {
-				if (team1 && strcmp(team1, cl.players[i].team)) {
-					team2 = cl.players[i].team;
-					break;
-				}
-				else if (!team1) {
-					team1 = cl.players[i].team;
-				}
-			}
-			else if (!cl.teamplay) {
-				if (team1) {
-					team2 = cl.players[i].name;
-					break;
-				}
-				else {
-					team1 = cl.players[i].name;
-				}
-			}
-		}
-	}
+	strlcpy(buffer, Macro_TeamPick(1, "team2"), sizeof(buffer));
 
-	strlcpy(buffer, team2, sizeof(buffer));
 	return buffer;
 }
 
