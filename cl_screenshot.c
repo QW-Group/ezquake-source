@@ -173,27 +173,11 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 
 #ifdef WITH_PNG
 	if (format == IMAGE_PNG) {
-#ifndef WITH_PNG_STATIC
-		if (QLib_isModuleLoaded(qlib_libpng)) {
-#endif
-			applyHWGamma(buffer, buffersize);
-			success = Image_WritePNG(
-				name, image_png_compression_level.value,
-				buffer + buffersize - 3 * target_params->width, -target_params->width, target_params->height
-			) ? SSHOT_SUCCESS : SSHOT_FAILED;
-#ifndef WITH_PNG_STATIC
-		}
-		else {
-			if (!Movie_IsCapturing()) {
-				Com_Printf("Can't take a PNG screenshot without libpng.");
-				if (SShot_FormatForName("noext") == IMAGE_PNG) {
-					Com_Printf(" Try changing \"%s\" to another image format.", scr_sshot_format.name);
-				}
-				Com_Printf("\n");
-			}
-			success = SSHOT_FAILED_QUIET;
-		}
-#endif
+		applyHWGamma(buffer, buffersize);
+		success = Image_WritePNG(
+			name, image_png_compression_level.value,
+			buffer + buffersize - 3 * target_params->width, -target_params->width, target_params->height
+		) ? SSHOT_SUCCESS : SSHOT_FAILED;
 	}
 #endif
 
