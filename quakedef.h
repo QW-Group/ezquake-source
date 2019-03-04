@@ -25,12 +25,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef  __QUAKEDEF_H__
 #define  __QUAKEDEF_H__
 
-#ifdef WITH_JPEG
-#ifndef WITH_JPEG_STATIC
-#define WITH_JPEG_STATIC
-#endif
-#endif
-
 #if defined(WITH_WINAMP) || defined(WITH_AUDACIOUS) || defined(WITH_XMMS) \
 	|| defined (WITH_XMMS2) || defined(WITH_MPD)
 #define WITH_MP3_PLAYER

@@ -183,27 +183,11 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 
 #ifdef WITH_JPEG
 	if (format == IMAGE_JPEG) {
-#ifndef WITH_JPEG_STATIC
-		if (QLib_isModuleLoaded(qlib_libjpeg)) {
-#endif
-			applyHWGamma(buffer, buffersize);
-			success = Image_WriteJPEG(
-				name, image_jpeg_quality_level.value,
-				buffer + buffersize - 3 * target_params->width, -target_params->width, target_params->height
-			) ? SSHOT_SUCCESS : SSHOT_FAILED;
-#ifndef WITH_JPEG_STATIC
-		}
-		else {
-			if (!Movie_IsCapturing()) {
-				Com_Printf("Can't take a JPEG screenshot without libjpeg.");
-				if (SShot_FormatForName("noext") == IMAGE_JPEG) {
-					Com_Printf(" Try changing \"%s\" to another image format.", scr_sshot_format.name);
-				}
-				Com_Printf("\n");
-			}
-			success = SSHOT_FAILED_QUIET;
-		}
-#endif
+		applyHWGamma(buffer, buffersize);
+		success = Image_WriteJPEG(
+			name, image_jpeg_quality_level.value,
+			buffer + buffersize - 3 * target_params->width, -target_params->width, target_params->height
+		) ? SSHOT_SUCCESS : SSHOT_FAILED;
 	}
 #endif
 
@@ -346,18 +330,11 @@ void SCR_RSShot_f(void)
 	renderer.Screenshot(base, glwidth * glheight * 3);
 	Image_Resample(base, glwidth, glheight, pixels, width, height, 3, 0);
 #ifdef WITH_JPEG
-#ifndef WITH_JPEG_STATIC
-	if (QLib_isModuleLoaded(qlib_libjpeg)) {
+	success = Image_WriteJPEG(filename, 70, pixels + 3 * width * (height - 1), -width, height) ? SSHOT_SUCCESS : SSHOT_FAILED;
 #endif
-		success = Image_WriteJPEG(filename, 70, pixels + 3 * width * (height - 1), -width, height)
-			? SSHOT_SUCCESS : SSHOT_FAILED;
-#ifndef WITH_JPEG_STATIC
+	if (success == SSHOT_FAILED) {
+		success = Image_WriteTGA(filename, pixels, width, height) ? SSHOT_SUCCESS : SSHOT_FAILED;
 	}
-	else
-#endif
-#endif
-		success = Image_WriteTGA(filename, pixels, width, height)
-		? SSHOT_SUCCESS : SSHOT_FAILED;
 
 	Q_free(base);
 
