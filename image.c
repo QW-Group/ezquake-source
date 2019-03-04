@@ -1189,189 +1189,6 @@ int Image_WriteTGA (char *filename, byte *pixels, int width, int height)
 /*********************************** JPEG ************************************/
 
 #ifdef WITH_JPEG
-#ifndef WITH_JPEG_STATIC
-
-static QLIB_HANDLETYPE_T jpeg_handle = NULL;
-
-#define qjpeg_create_compress(cinfo) \
-    qjpeg_CreateCompress((cinfo), JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_compress_struct))
-
-static struct jpeg_error_mgr *(*qjpeg_std_error)(struct jpeg_error_mgr *);
-static void (*qjpeg_destroy_compress)(j_compress_ptr);
-static void (*qjpeg_set_defaults)(j_compress_ptr);
-static void (*qjpeg_set_quality)(j_compress_ptr, int, boolean);
-static void (*qjpeg_start_compress)(j_compress_ptr, boolean);
-static JDIMENSION (*qjpeg_write_scanlines)(j_compress_ptr, JSAMPARRAY, JDIMENSION);
-static void (*qjpeg_finish_compress)(j_compress_ptr);
-static void (*qjpeg_CreateCompress)(j_compress_ptr, int, size_t);
-
-#define NUM_JPEGPROCS	(sizeof(jpegprocs)/sizeof(jpegprocs[0]))
-
-qlib_dllfunction_t jpegprocs[] = {
-	{"jpeg_std_error", (void **) &qjpeg_std_error},
-	{"jpeg_destroy_compress", (void **) &qjpeg_destroy_compress},
-	{"jpeg_set_defaults", (void **) &qjpeg_set_defaults},
-	{"jpeg_set_quality", (void **) &qjpeg_set_quality},
-	{"jpeg_start_compress", (void **) &qjpeg_start_compress},
-	{"jpeg_write_scanlines", (void **) &qjpeg_write_scanlines},
-	{"jpeg_finish_compress", (void **) &qjpeg_finish_compress},
-	{"jpeg_CreateCompress", (void **) &qjpeg_CreateCompress},
-};
-
-static void JPEG_FreeLibrary(void) {
-	if (jpeg_handle)
-		QLIB_FREELIBRARY(jpeg_handle);
-}
-
-static qbool JPEG_LoadLibrary(void) {
-	if (COM_CheckParm("-nolibjpeg"))
-		return false;
-
-#ifdef _WIN32
-	if (!(jpeg_handle = LoadLibrary("libjpeg.dll"))) {
-#else
-#ifdef __APPLE__
-	if (!(jpeg_handle = dlopen("libjpeg.62.dylib", RTLD_NOW))) {
-#else
-	if (!(jpeg_handle = dlopen("libjpeg.so.62", RTLD_NOW)) && !(jpeg_handle = dlopen("libjpeg.so", RTLD_NOW))) {
-#endif
-#endif
-		QLib_MissingModuleError(QLIB_ERROR_MODULE_NOT_FOUND, "libjpeg", "-nolibjpeg", "jpeg image features");
-		jpeg_handle = NULL;
-		return false;
-	}
-
-	if (!QLib_ProcessProcdef(jpeg_handle, jpegprocs, NUM_JPEGPROCS)) {
-		JPEG_FreeLibrary();
-		QLib_MissingModuleError(QLIB_ERROR_MODULE_MISSING_PROC, "libjpeg", "-nolibjpeg", "jpeg image features");
-		jpeg_handle = NULL;
-		return false;
-	}
-
-	return true;
-}
-
-
-typedef struct {
-  struct jpeg_destination_mgr pub; 
-  vfsfile_t *outfile;
-  JOCTET *buffer;
-} my_destination_mgr;
-
-typedef my_destination_mgr *my_dest_ptr;
-
-#define JPEG_OUTPUT_BUF_SIZE  4096
-
-static qbool jpeg_in_error = false;
-
-static void JPEG_IO_init_destination(j_compress_ptr cinfo) {
-	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
-	dest->buffer = (JOCTET *) (cinfo->mem->alloc_small)
-		((j_common_ptr) cinfo, JPOOL_IMAGE, JPEG_OUTPUT_BUF_SIZE * sizeof(JOCTET));
-	dest->pub.next_output_byte = dest->buffer;
-	dest->pub.free_in_buffer = JPEG_OUTPUT_BUF_SIZE;
-}
-
-static boolean JPEG_IO_empty_output_buffer (j_compress_ptr cinfo) {
-	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
-
-	if (fwrite(dest->buffer, 1, JPEG_OUTPUT_BUF_SIZE, dest->outfile) != JPEG_OUTPUT_BUF_SIZE) {
-		jpeg_in_error = true;
-		return false;
-	}
-	dest->pub.next_output_byte = dest->buffer;
-	dest->pub.free_in_buffer = JPEG_OUTPUT_BUF_SIZE;
-	return true;
-}
-
-static void JPEG_IO_term_destination (j_compress_ptr cinfo) {
-	my_dest_ptr dest = (my_dest_ptr) cinfo->dest;
-	size_t datacount = JPEG_OUTPUT_BUF_SIZE - dest->pub.free_in_buffer;
-
-	if (datacount > 0) {
-		if (fwrite(dest->buffer, 1, datacount, dest->outfile) != datacount) {
-			jpeg_in_error = true;
-			return;
-		}
-	}
-	fflush(dest->outfile);
-}
-
-static void JPEG_IO_set_dest (j_compress_ptr cinfo, vfsfile_t *outfile) {
-	my_dest_ptr dest;
-
-	if (!cinfo->dest) {
-		cinfo->dest = (struct jpeg_destination_mgr *) (cinfo->mem->alloc_small)(
-							(j_common_ptr) cinfo,JPOOL_PERMANENT, sizeof(my_destination_mgr));
-	}
-
-	dest = (my_dest_ptr) cinfo->dest;
-	dest->pub.init_destination = JPEG_IO_init_destination;
-	dest->pub.empty_output_buffer = JPEG_IO_empty_output_buffer;
-	dest->pub.term_destination = JPEG_IO_term_destination;
-	dest->outfile = outfile;
-}
-
-typedef struct my_error_mgr {
-  struct jpeg_error_mgr pub;
-  jmp_buf setjmp_buffer;
-} jpeg_error_mgr_wrapper;
-
-void jpeg_error_exit (j_common_ptr cinfo) {	
-  longjmp(((jpeg_error_mgr_wrapper *) cinfo->err)->setjmp_buffer, 1);
-}
-
-
-int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int height) {
-	char name[MAX_PATH];
-	FILE *outfile;
-	jpeg_error_mgr_wrapper jerr;
-	struct jpeg_compress_struct cinfo;
-	JSAMPROW row_pointer[1];
-
-	if (!jpeg_handle)
-		return false;
-
-	snprintf (name, sizeof(name), "%s", filename);
-	if (!(outfile = fopen (name, "wb"))) {
-		COM_CreatePath (name);
-		if (!(outfile = fopen (name, "wb")))
-			return false;
-	}
-
-	cinfo.err = qjpeg_std_error(&jerr.pub);
-	jerr.pub.error_exit = jpeg_error_exit;
-	if (setjmp(jerr.setjmp_buffer)) {
-		fclose(outfile);
-		return false;
-	}
-	qjpeg_create_compress(&cinfo);
-
-	jpeg_in_error = false;
-	JPEG_IO_set_dest(&cinfo, outfile);
-
-	cinfo.image_width = abs(width); 	
-	cinfo.image_height = height;
-	cinfo.input_components = 3;
-	cinfo.in_color_space = JCS_RGB;
-	qjpeg_set_defaults(&cinfo);
-	qjpeg_set_quality (&cinfo, bound(0, quality, 100), true);
-	qjpeg_start_compress(&cinfo, true);
-
-	while (cinfo.next_scanline < height) {
-	    *row_pointer = &pixels[(int)cinfo.next_scanline * width * 3];
-	    qjpeg_write_scanlines(&cinfo, row_pointer, 1);
-		if (jpeg_in_error)
-			break;
-	}
-
-	qjpeg_finish_compress(&cinfo);
-	fclose(outfile);
-	qjpeg_destroy_compress(&cinfo);
-	return true;
-}
-
-#else
 
 #define jpeg_create_compress(cinfo) \
     jpeg_CreateCompress((cinfo), JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_compress_struct))
@@ -1764,7 +1581,6 @@ badjpeg:
 	return mem;
 }
 
-#endif // WITH_JPEG_STATIC
 #endif // WITH_JPEG
 
 /************************************ PCX ************************************/
@@ -1999,17 +1815,13 @@ void Image_Init(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREENSHOTS);
 
-	#ifdef WITH_PNG
+#ifdef WITH_PNG
 	Cvar_Register (&image_png_compression_level);
-	#endif // WITH_PNG
+#endif // WITH_PNG
 
-	#ifdef WITH_JPEG
-	#ifndef WITH_JPEG_STATIC
-	if (JPEG_LoadLibrary())
-		QLib_RegisterModule(qlib_libjpeg, JPEG_FreeLibrary);
-	#endif // WITH_JPEG_STATIC
+#ifdef WITH_JPEG
 	Cvar_Register (&image_jpeg_quality_level);
-	#endif // WITH_JPEG
+#endif // WITH_JPEG
 
 	Cvar_ResetCurrentGroup();
 }

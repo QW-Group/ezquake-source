@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <dlfcn.h>
 #endif
 
-#if (!defined WITH_JPEG_STATIC || defined WITH_MP3_PLAYER)
+#if (defined WITH_MP3_PLAYER)
 extern char _temp_modulename[MAX_OSPATH];
 
 

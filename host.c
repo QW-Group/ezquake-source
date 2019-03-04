@@ -624,7 +624,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	NET_InitClient ();
 	Netchan_Init ();
 
-#if (!defined WITH_JPEG_STATIC || defined WITH_MP3_PLAYER)
+#if (defined WITH_MP3_PLAYER)
 	QLib_Init();
 #endif
 
@@ -729,10 +729,6 @@ void Host_Shutdown (void)
 
 #ifndef CLIENTONLY
 	SV_Shutdown ("Server quit\n");
-#endif
-
-#if (!defined WITH_JPEG_STATIC)
-	QLib_Shutdown();
 #endif
 
 	CL_Shutdown ();
