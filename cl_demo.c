@@ -2146,8 +2146,18 @@ static void OnChange_demo_dir(cvar_t *var, char *string, qbool *cancel)
 	}
 
 	// Change to the new folder in the demo browser.
-	// FIXME: this did't work
-	Menu_Demo_NewHome(string);
+	if (cl_mediaroot.integer == 2) {
+		Menu_Demo_NewHome(string);
+	}
+	else {
+		char buf[MAX_OSPATH];
+
+		strlcpy(buf, com_basedir, sizeof(buf));
+		strlcat(buf, "/", sizeof(buf));
+		strlcat(buf, string, sizeof(buf));
+
+		Menu_Demo_NewHome(buf);
+	}
 }
 
 #ifdef _WIN32
