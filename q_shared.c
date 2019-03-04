@@ -927,3 +927,25 @@ char *Q_strdup (const char *src)
 	return p;
 }
 
+// case insensitive and red-insensitive compare
+int Q_strcmp2(const char * s1, const char * s2)
+{
+	if (s1 == NULL && s2 == NULL)
+		return 0;
+
+	if (s1 == NULL)
+		return -1;
+
+	if (s2 == NULL)
+		return 1;
+
+	while (*s1 || *s2) {
+		if (tolower(*s1 & 0x7f) != tolower(*s2 & 0x7f)) {
+			return tolower(*s1 & 0x7f) - tolower(*s2 & 0x7f);
+		}
+		s1++;
+		s2++;
+	}
+
+	return 0;
+}

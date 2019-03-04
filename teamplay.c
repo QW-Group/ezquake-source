@@ -803,14 +803,12 @@ char *Macro_Point_LED(void)
 		return tp_name_status_blue.string;
 }
 
-int strcmp2(const char * s1, const char * s2);
-
 static int Macro_TeamSort(const void* lhs_, const void* rhs_)
 {
 	const char* lhs = *(const char**)lhs_;
 	const char* rhs = *(const char**)rhs_;
 
-	return strcmp2(lhs, rhs);
+	return Q_strcmp2(lhs, rhs);
 }
 
 static const char* Macro_TeamPick(int team_number, const char* default_teamname)

@@ -2328,8 +2328,6 @@ static void SCR_HUD_Groups_Draw(hud_t *hud)
 	SCR_HUD_DrawGroup(hud, width[idx]->value, height[idx]->value, hud_group_pics[idx], pic_scalemode[idx]->value, pic_alpha[idx]->value);
 }
 
-int strcmp2(const char * s1, const char * s2);
-
 static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 {
 	const sort_players_info_t *p1 = vp1;
@@ -2346,7 +2344,7 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 		r = 1;
 	}
 	else if (i1->spectator && i2->spectator) {
-		r = strcmp2(i1->name, i2->name);
+		r = Q_strcmp2(i1->name, i2->name);
 	}
 	else {
 		//
@@ -2361,13 +2359,13 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 			}
 
 			// sort on team name only.
-			r = (r == 0) ? -strcmp2(p1->team->name, p2->team->name) : r;
+			r = (r == 0) ? -Q_strcmp2(p1->team->name, p2->team->name) : r;
 		}
 
 		if (hud_sortrules_playersort.integer & 1) {
 			r = (r == 0) ? i1->frags - i2->frags : r;
 		}
-		r = (r == 0) ? -strcmp2(i1->name, i2->name) : r;
+		r = (r == 0) ? -Q_strcmp2(i1->name, i2->name) : r;
 	}
 
 	r = (r == 0) ? (p1->playernum - p2->playernum) : r;
@@ -2386,7 +2384,7 @@ static int HUD_CompareTeams(const void *vt1, const void *vt2)
 	if (hud_sortrules_teamsort.integer == 1) {
 		r = (t1->frags - t2->frags);
 	}
-	r = !r ? -strcmp2(t1->name, t2->name) : r;
+	r = !r ? -Q_strcmp2(t1->name, t2->name) : r;
 
 	// qsort() sorts ascending by default, we want descending.
 	// So negate the result.
