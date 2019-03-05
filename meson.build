@@ -184,18 +184,10 @@ sources = [
 	'menu.c',
 	'menu_demo.c',
 	'menu_ingame.c',
-	'menu_mp3player.c',
 	'menu_multiplayer.c',
 	'menu_options.c',
 	'menu_proxy.c',
-	'modules.c',
 	'movie.c',
-	'mp3_audacious.c',
-	'mp3_mpd.c',
-	'mp3_player.c',
-	'mp3_winamp.c',
-	'mp3_xmms2.c',
-	'mp3_xmms.c',
 	'mvd_autotrack.c',
 	'mvd_utils.c',
 	'mvd_xmlstats.c',
@@ -418,7 +410,6 @@ if host_machine.system() == 'windows'
 	deps += meson.get_compiler('c').find_library('ws2_32')
 	deps += meson.get_compiler('c').find_library('comctl32')
 	deps += meson.get_compiler('c').find_library('winmm')
-	c_args += '-DWITH_WINAMP'
 elif host_machine.system() == 'darwin'
 	add_languages('objc')
 	sources += [
