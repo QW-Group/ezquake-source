@@ -22,6 +22,7 @@ pool:
 
 steps:
 - script: |
+    sudo apt-get -y update
     sudo apt install git build-essential mingw-w64 libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev
     make && make strip
     tar -cvzf ezquake-latest-linux64.zip ezquake-*-* LICENSE
