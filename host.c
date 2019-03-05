@@ -40,7 +40,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef WITH_TCL
 #include "embed_tcl.h"
 #endif
-#include "modules.h"
 #include "gl_model.h"
 #include "gl_local.h"
 #include "rulesets.h"
@@ -623,10 +622,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Con_Init ();
 	NET_InitClient ();
 	Netchan_Init ();
-
-#if (defined WITH_MP3_PLAYER)
-	QLib_Init();
-#endif
 
 	Sys_Init ();
 	Sys_CvarInit();

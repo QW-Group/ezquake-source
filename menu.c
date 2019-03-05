@@ -41,7 +41,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 #include "keys.h"
 #include "common_draw.h"
-#include "menu_mp3player.h"
 
 
 qbool vid_windowedmouse = true;
@@ -60,9 +59,6 @@ void M_Menu_Main_f (void);
 		void M_Menu_Demos_f (void);
 		void M_Menu_GameOptions_f (void);
 	void M_Menu_Options_f (void);
-#ifdef WITH_MP3_PLAYER
-	void M_Menu_MP3_Control_f (void);
-#endif // WITH_MP3_PLAYER
 	void M_Menu_Quit_f (void);
 
 void M_Main_Draw (void);
@@ -397,9 +393,6 @@ bigmenu_items_t mainmenu_items[] = {
 	{"Multiplayer", M_Menu_MultiPlayer_f},
 	{"Options", M_Menu_Options_f},
 	{"Demos", M_Menu_Demos_f},
-#ifdef WITH_MP3_PLAYER
-	{"MP3 Player", M_Menu_MP3_Control_f},
-#endif
 	{"Help", M_Menu_Help_f},
 	{"Quit", M_Menu_Quit_f}
 };
@@ -476,9 +469,6 @@ static void M_Main_Enter(const unsigned int entry)
 		case 0: M_Menu_SinglePlayer_f (); break;
 		case 1:	M_Menu_MultiPlayer_f (); break;
 		case 2: M_Menu_Options_f (); break;
-#ifdef WITH_MP3_PLAYER
-		case 3: M_Menu_MP3_Control_f(); break;
-#endif // WITH_MP3_PLAYER
 		case 4: M_Menu_Quit_f (); break;
 		}
 	}
@@ -1302,10 +1292,6 @@ void M_Init (void) {
 #endif
 	Cmd_AddCommand ("menu_multiplayer", M_Menu_MultiPlayer_f);
 	Cmd_AddCommand ("menu_slist", M_Menu_MultiPlayer_f);
-#ifdef WITH_MP3_PLAYER
-	Cmd_AddCommand ("menu_mp3_control", M_Menu_MP3_Control_f);
-	Cmd_AddCommand ("menu_mp3_playlist", M_Menu_MP3_Playlist_f);
-#endif
 	Cmd_AddCommand ("menu_demos", M_Menu_Demos_f);
 	Cmd_AddCommand ("menu_options", M_Menu_Options_f);
 	Cmd_AddCommand ("help", M_Menu_Help_f);
@@ -1376,10 +1362,6 @@ void M_Draw (void) {
 		case m_help:			M_Help_Draw(); break;
 		case m_quit:			M_Quit_Draw(); break;
 		case m_demos:			Menu_Demo_Draw(); break;
-#ifdef WITH_MP3_PLAYER
-		case m_mp3_control:		M_Menu_MP3_Control_Draw(); break;
-		case m_mp3_playlist:	M_Menu_MP3_Playlist_Draw(); break;
-#endif
 	}
 
 	if (scr_scaleMenu.value) {
@@ -1440,10 +1422,6 @@ void M_Keydown (int key, wchar unichar) {
 		case m_help:			Menu_Help_Key(key, unichar); return;
 		case m_quit:			M_Quit_Key(key); return;
 		case m_demos:			Menu_Demo_Key(key, unichar); break;
-#ifdef WITH_MP3_PLAYER
-		case m_mp3_control: 	M_Menu_MP3_Control_Key(key); break;
-		case m_mp3_playlist: 	M_Menu_MP3_Playlist_Key(key); break;
-#endif
 	}
 }
 
@@ -1472,10 +1450,6 @@ qbool Menu_Mouse_Event(const mouse_state_t* ms)
 	case m_options:			return Menu_Options_Mouse_Event(ms);
 	case m_demos:			return Menu_Demo_Mouse_Event(ms);
 	case m_ingame:			return Menu_Ingame_Mouse_Event(ms);
-#ifdef WITH_MP3_PLAYER
-	case m_mp3_control:		return M_Menu_MP3_Control_Mouse_Event(ms);
-	case m_mp3_playlist:	return M_Menu_MP3_Playlist_Mouse_Event(ms);
-#endif
 	case m_help:			return Menu_Help_Mouse_Event(ms);
 	case m_none: default:	return false;
 	}
