@@ -349,7 +349,6 @@ HUD_OBJS := \
     hud_clock.o \
     hud_ammo.o \
     hud_items.o \
-    hud_mp3.o \
     hud_net.o \
     hud_guns.o \
     hud_groups.o \
@@ -423,18 +422,10 @@ OBJS_c := \
     menu.o \
     menu_demo.o \
     menu_ingame.o \
-    menu_mp3player.o \
     menu_multiplayer.o \
     menu_options.o \
     menu_proxy.o \
-    modules.o \
     movie.o \
-    mp3_player.o \
-    mp3_audacious.o \
-    mp3_xmms.o \
-    mp3_xmms2.o \
-    mp3_mpd.o \
-    mp3_winamp.o \
     mvd_autotrack.o \
     mvd_utils.o \
     mvd_xmlstats.o \

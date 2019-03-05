@@ -37,7 +37,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "EX_browser.h"
 #include "fs.h"
-#include "modules.h"
 #include "gl_model.h"
 #include "rulesets.h"
 #include "teamplay.h"
@@ -673,10 +672,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Con_Init ();
 	NET_InitClient ();
 	Netchan_Init ();
-
-#if (defined WITH_MP3_PLAYER)
-	QLib_Init();
-#endif
 
 	Sys_Init ();
 	Sys_CvarInit();

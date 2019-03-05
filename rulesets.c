@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "gl_model.h"
 #include "rulesets.h"
-#include "mp3_player.h"
 #include "input.h"
 
 /* FIXME: Figure out a nicer way to do all this */
@@ -291,8 +290,6 @@ static void Rulesets_Qcon(qbool enable)
 		rulesetDef.restrictSound = true;
 		rulesetDef.restrictLogging = true;
 		rulesetDef.ruleset = rs_qcon;
-
-		MP3_Shutdown ();
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);

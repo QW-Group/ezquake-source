@@ -41,7 +41,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_GROUP_INPUT_MISC               "Input - Misc"
 #define CVAR_GROUP_INPUT_MOUSE              "Input - Mouse"
 #define CVAR_GROUP_INPUT_KEYBOARD           "Input - Keyboard"
-#define CVAR_GROUP_MP3                      "MP3 Settings"
 #define CVAR_GROUP_SOUND                    "Sound Settings"
 #define CVAR_GROUP_VIDEO                    "Video Settings"
 #define CVAR_GROUP_SYSTEM_SETTINGS          "System Settings"
@@ -89,7 +88,6 @@ char *cvar_groups_list[] = {
 	CVAR_GROUP_INPUT_MISC,
 	CVAR_GROUP_INPUT_MOUSE,
 	CVAR_GROUP_INPUT_KEYBOARD,
-	CVAR_GROUP_MP3,
 	CVAR_GROUP_SOUND,
 	CVAR_GROUP_VIDEO,
 	CVAR_GROUP_SYSTEM_SETTINGS,

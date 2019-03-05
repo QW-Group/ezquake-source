@@ -64,7 +64,6 @@ void TeamHold_HudInit(void);
 void Clock_HudInit(void);
 void Ammo_HudInit(void);
 void Items_HudInit(void);
-void MP3_HudInit(void);
 void Net_HudInit(void);
 void Guns_HudInit(void);
 void Groups_HudInit(void);
@@ -968,7 +967,6 @@ void CommonDraw_Init(void)
 	Items_HudInit();
 	Ammo_HudInit();
 	Armor_HudInit();
-	MP3_HudInit();
 	Scores_HudInit();
 	Face_HudInit();
 	GameSummary_HudInit();
