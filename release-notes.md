@@ -51,6 +51,10 @@
   - weapon dropped now based on active weapon when dying, not last weapon fired
   - {} white-text wasn't stripped from item name cvars
 
+### Other changes
+
+- Removed functionality to control external MP3 player through ezQuake
+
 ### Build/meta
 
 - OSX: Dialog to find .pak files on initial installation could point to 'my computer' location on Mojave
