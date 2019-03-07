@@ -439,7 +439,6 @@ OBJS_c := \
     snd_main.o \
     snd_mem.o \
     snd_mix.o \
-    snd_ov.o \
     stats_grid.o \
     teamplay.o \
     teamplay_locfiles.o \
@@ -525,12 +524,12 @@ else
     endif
 endif
 
-ifdef CONFIG_OGG
-    OGG_CFLAGS ?= $(shell pkg-config vorbisfile --cflags) -DWITH_OGG_VORBIS
-    OGG_LIBS ?= $(shell pkg-config vorbisfile --libs)
-    CFLAGS_c += $(OGG_CFLAGS)
-    LIBS_c += $(OGG_LIBS)
-endif
+#ifdef CONFIG_OGG
+#    OGG_CFLAGS ?= $(shell pkg-config vorbisfile --cflags) -DWITH_OGG_VORBIS
+#    OGG_LIBS ?= $(shell pkg-config vorbisfile --libs)
+#    CFLAGS_c += $(OGG_CFLAGS)
+#    LIBS_c += $(OGG_LIBS)
+#endif
 
 ifeq ($(USE_SYSTEM_MINIZIP),1)
 	MINIZIP_CFLAGS ?= $(shell pkg-config --cflags minizip)
