@@ -79,12 +79,12 @@ if speex.found() and speexdsp.found()
 	c_args += '-DWITH_SPEEX'
 endif
 
-vorbis = dependency('vorbisfile', required : false)
-if vorbis.found()
-	deps += vorbis
+#vorbis = dependency('vorbisfile', required : false)
+#if vorbis.found()
+#	deps += vorbis
 # crashed on a quick test
 #	c_args += '-DWITH_OGG_VORBIS'
-endif
+#endif
 
 zlib = dependency('zlib', required : false)
 if zlib.found()
@@ -213,7 +213,6 @@ sources = [
 	'snd_main.c',
 	'snd_mem.c',
 	'snd_mix.c',
-	'snd_ov.c',
 	'snd_voip.c',
 	'stats_grid.c',
 	'sv_ccmds.c',
