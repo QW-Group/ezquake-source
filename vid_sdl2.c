@@ -691,17 +691,24 @@ static void HandleEvents(void)
 			break;
 		case SDL_MOUSEMOTION:
 			if (mouse_active && !SDL_GetRelativeMouseMode()) {
-				mx = old_x - event.motion.x;
-				my = old_y - event.motion.y;
-				old_x = event.motion.x;
-				old_y = event.motion.y;
-				cursor_x = min(max(0, cursor_x + event.motion.x - glConfig.vidWidth / 2), glConfig.vidWidth);
-				cursor_y = min(max(0, cursor_y + event.motion.y - glConfig.vidHeight / 2), glConfig.vidHeight);
+				float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
+
+				mx = event.motion.x - old_x;
+				my = event.motion.y - old_y;
+				cursor_x = min(max(0, cursor_x + (event.motion.x - glConfig.vidWidth / 2) * factor), glConfig.vidWidth);
+				cursor_y = min(max(0, cursor_y + (event.motion.y - glConfig.vidHeight / 2) * factor), glConfig.vidHeight);
 				SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
+				old_x = glConfig.vidWidth / 2;
+				old_y = glConfig.vidHeight / 2;
 			}
 			else {
-				cursor_x = event.motion.x;
-				cursor_y = event.motion.y;
+				float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
+
+				cursor_x += event.motion.xrel * factor;
+				cursor_y += event.motion.yrel * factor;
+
+				cursor_x = bound(0, cursor_x, glConfig.vidWidth);
+				cursor_y = bound(0, cursor_y, glConfig.vidHeight);
 			}
 			break;
 		case SDL_MOUSEBUTTONDOWN:

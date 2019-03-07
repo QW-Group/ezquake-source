@@ -42,6 +42,8 @@
 - QTV URLs can now include the QTV password (must have '/' separating command and password) (#295)
 - Gamma on screenshots was incorrect when system had more than 256 gamma ramps (linux) (#296)
 - `/ignore $name` (allow the player to ignore their own messages) produced output during certain teamplay messages (#257)
+- `/in_raw 0` - mouse input fixed (#308)
+- `/scr_cursor_sensitivity` is now functional again
 - Toggling multiview with inset window should alway keeps the current player in the primary view
 - Multiview was trying to cause increase in frames rendered (`/cl_maxfps` multiplied for each extra view)
 - Multiview inset window border now correctly set regardless of console:screen ratio
