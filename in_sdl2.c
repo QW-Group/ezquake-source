@@ -109,6 +109,10 @@ void IN_MouseMove (usercmd_t *cmd)
 			cmd->forwardmove -= m_forward.value * mouse_y;
 		}
 	}
+	else {
+		old_mouse_x = mx * cursor_sensitivity.value;
+		old_mouse_y = my * cursor_sensitivity.value;
+	}
 
 	mx = my = 0; // clear for next update
 }
