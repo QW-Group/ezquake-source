@@ -26,8 +26,9 @@
 - In-game backpacks can be colored according to their contents (`/gl_custom_rlpack_color`, `/gl_custom_lgpack_color`) (QTV/MVD only, KTX 1.38+ only)
 - Failed [ServeMe] connections will be removed from the playerlist (caused by `nospecs`)
 - Teaminfo hud element can include frags (%f/%F)
-- In KTX race mode, other players can be silenced with `s_silent_racing` cvar
+- In KTX race mode, other players can be silenced with `/s_silent_racing` cvar
 - Added macros $team1 & $team2 to access the first two teams on the server (#256)
+- Demo capture can produce animated .png files (`/sshot_format apng`)
 - `/ignore` can now contain a regular expression
 - `f_qtvfinalscores` trigger fired when `//finalscores` notification detected in qtv stream
 - `/cl_mvinset` position & size can be set by user (`/cl_mvinset_size_x` sets relative size compared to screen)
@@ -47,7 +48,7 @@
 - Toggling multiview with inset window should alway keeps the current player in the primary view
 - Multiview was trying to cause increase in frames rendered (`/cl_maxfps` multiplied for each extra view)
 - Multiview inset window border now correctly set regardless of console:screen ratio
-- `mvd_moreinfo` - multiple bugfixes
+- `/mvd_moreinfo` - multiple bugfixes
   - fix incorrect location name when reporting item pickups
   - pack drops are announced when the player dies, not when they respawn
   - weapon dropped now based on active weapon when dying, not last weapon fired

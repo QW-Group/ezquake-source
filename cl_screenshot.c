@@ -80,7 +80,7 @@ static image_format_t SShot_FormatForName(char *name)
 #endif
 
 #ifdef WITH_PNG
-	else if (!strcasecmp(scr_sshot_format.string, "png"))
+	else if (!strcasecmp(scr_sshot_format.string, "png") || !strcasecmp(ext, "apng"))
 		return IMAGE_PNG;
 #endif
 
@@ -135,7 +135,7 @@ static void applyHWGamma(byte *buffer, int size)
 	}
 }
 
-int SCR_Screenshot(char *name)
+int SCR_Screenshot(char *name, qbool movie_capture)
 {
 	scr_sshot_target_t* target_params = Q_malloc(sizeof(scr_sshot_target_t));
 
@@ -155,7 +155,7 @@ int SCR_Screenshot(char *name)
 
 	renderer.Screenshot(target_params->buffer, glwidth * glheight * 3);
 
-	if (Movie_BackgroundCapture(target_params)) {
+	if (movie_capture && Movie_BackgroundCapture(target_params)) {
 		return SSHOT_SUCCESS;
 	}
 
@@ -292,7 +292,7 @@ void SCR_ScreenShot_f(void)
 	for (filename = name; *filename == '/' || *filename == '\\'; filename++)
 		;
 
-	success = SCR_Screenshot(va("%s/%s", sshot_dir, filename));
+	success = SCR_Screenshot(va("%s/%s", sshot_dir, filename), false);
 
 	if (success != SSHOT_FAILED_QUIET) {
 		Com_Printf("%s %s\n", success == SSHOT_SUCCESS ? "Wrote" : "Couldn't write", name);
@@ -405,7 +405,7 @@ void SCR_CheckAutoScreenshot(void)
 
 	renderer.EnsureFinished();
 
-	if ((SCR_Screenshot(fullsavedname)) == SSHOT_SUCCESS) {
+	if ((SCR_Screenshot(fullsavedname, false)) == SSHOT_SUCCESS) {
 		Com_Printf("Match scoreboard saved to %s\n", savedname);
 	}
 }
@@ -456,13 +456,13 @@ void SCR_Movieshot(char *name)
 	}
 	else {
 		// We're just capturing images.
-		SCR_Screenshot(name);
+		SCR_Screenshot(name, true);
 	}
 
 #else // _WIN32
 
 	// Capturing to avi only supported in windows yet.
-	SCR_Screenshot(name);
+	SCR_Screenshot(name, true);
 
 #endif // _WIN32
 }
