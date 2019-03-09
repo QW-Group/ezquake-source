@@ -1065,12 +1065,15 @@ typedef struct scr_sshot_target_s {
 	char fileName[128];
 	byte* buffer;
 	qbool freeMemory;
+	qbool movie_capture;
 	int width;
 	int height;
 	image_format_t format;
 } scr_sshot_target_t;
 
 int SCR_ScreenshotWrite(scr_sshot_target_t* target_params);
+
+qbool Movie_AnimatedPNG(void);
 
 qbool Movie_BackgroundCapture(scr_sshot_target_t* params);
 byte* Movie_TempBuffer(int width, int height);

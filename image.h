@@ -50,11 +50,13 @@ png_data *Image_LoadPNG_All (vfsfile_t *vin, const char *filename, int matchwidt
 byte *Image_LoadPCX_As32Bit (vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
 
 int Image_WritePNG(char *filename, int compression, byte *pixels, int width, int height);
-int Image_WritePNGPLTE (char *filename, int compression, byte *pixels,
-						int width, int height, byte *palette);
 int Image_WriteTGA(char *filename, byte *pixels, int width, int height);
 int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int height);
-int Image_WritePCX (char *filename, byte *data, int width, int height, byte *palette);
+int Image_WritePCX(char *filename, byte *data, int width, int height, byte *palette);
+
+qbool Image_OpenAPNG(char* filename, int compression, int width, int height, int frames);
+qbool Image_WriteAPNGFrame(byte* pixels, int width, int height, int fps);
+qbool Image_CloseAPNG(void);
 
 extern cvar_t image_jpeg_quality_level, image_png_compression_level;
 

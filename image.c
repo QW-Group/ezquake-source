@@ -504,6 +504,12 @@ void Image_MipReduce (const byte *in, byte *out, int *width, int *height, int bp
 /************************************ PNG ************************************/
 #ifdef WITH_PNG
 
+static vfsfile_t* apng_fp;
+static png_structp apng_ptr;
+static png_infop apng_info_ptr;
+static int apng_framenumber;
+static int apng_compression;
+
 static void PNG_IO_user_read_data(png_structp png_ptr, png_bytep data, png_size_t length) {
 	vfsfile_t *v = (vfsfile_t *) png_get_io_ptr(png_ptr);
 	vfserrno_t err;
@@ -512,10 +518,52 @@ static void PNG_IO_user_read_data(png_structp png_ptr, png_bytep data, png_size_
 
 static void PNG_IO_user_write_data(png_structp png_ptr, png_bytep data, png_size_t length) {
 	vfsfile_t *v = (vfsfile_t *) png_get_io_ptr(png_ptr);
+
 	VFS_WRITE(v, data, length);
 }
 
-static void PNG_IO_user_flush_data(png_structp png_ptr) {
+static byte* apng_data = NULL;
+static unsigned int apng_data_limit = 0;
+static unsigned int apng_data_length = 0;
+
+static void PNG_IO_user_write_data_apng_discard(png_structp png_ptr, png_bytep data, png_size_t length)
+{
+	// do nothing
+}
+
+static void PNG_IO_user_flush_data_apng_discard(png_structp png_ptr)
+{
+	// do nothing
+}
+
+static void PNG_IO_user_write_data_apng(png_structp png_ptr, png_bytep data, png_size_t length)
+{
+	vfsfile_t *v = (vfsfile_t *)png_get_io_ptr(png_ptr);
+
+	if ((png_get_io_state(png_ptr) & PNG_IO_MASK_LOC) == PNG_IO_CHUNK_DATA) {
+		if (!apng_data) {
+			apng_data_limit = 256 * 1024;
+			apng_data_length = 0;
+			apng_data = Q_malloc(apng_data_limit);
+		}
+
+		if (apng_data_length + length > apng_data_limit) {
+			apng_data_limit += max(length + 4, 64 * 1024);
+			apng_data = Q_realloc(apng_data, apng_data_limit);
+		}
+
+		if (apng_data_length == 0) {
+			*(unsigned int*)apng_data = htonl(apng_framenumber);
+			apng_data_length += 4;
+		}
+
+		memcpy(apng_data + apng_data_length, data, length);
+		apng_data_length += length;
+	}
+}
+
+static void PNG_IO_user_flush_data(png_structp png_ptr)
+{
 	vfsfile_t *v = (vfsfile_t *) png_get_io_ptr(png_ptr);
 	VFS_FLUSH(v);
 }
@@ -883,67 +931,154 @@ int Image_WritePNG (char *filename, int compression, byte *pixels, int width, in
 	return true;
 }
 
-int Image_WritePNGPLTE (char *filename, int compression,
-	byte *pixels, int width, int height, byte *palette)
+qbool Image_OpenAPNG(char* filename, int compression, int width, int height, int frames)
 {
-	int rowbytes = width;
-
-	int i;
 	char name[MAX_PATH];
-	vfsfile_t *fp;
-	png_structp png_ptr;
-	png_infop info_ptr;
-	png_byte **rowpointers;
+	int bpp = 3, pngformat, width_sign;
 
-	snprintf (name, sizeof(name), "%s", filename);
-	
+	snprintf(name, sizeof(name), "%s", filename);
 
-	if (!(fp = FS_OpenVFS(name, "wb", FS_NONE_OS))) {
-		FS_CreatePath (name);
-		if (!(fp = FS_OpenVFS(name, "wb", FS_NONE_OS)))
+	width_sign = (width < 0) ? -1 : 1;
+	width = abs(width);
+
+	if (!(apng_fp = FS_OpenVFS(name, "wb", FS_NONE_OS))) {
+		FS_CreatePath(name);
+		if (!(apng_fp = FS_OpenVFS(name, "wb", FS_NONE_OS))) {
 			return false;
+		}
 	}
 
-	if (!(png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) {
-		VFS_CLOSE(fp);
+	if (!(apng_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) {
+		VFS_CLOSE(apng_fp);
+		apng_fp = NULL;
 		return false;
 	}
 
-	if (!(info_ptr = png_create_info_struct(png_ptr))) {
-		png_destroy_write_struct(&png_ptr, (png_infopp) NULL);
-		VFS_CLOSE(fp);
+	if (!(apng_info_ptr = png_create_info_struct(apng_ptr))) {
+		png_destroy_write_struct(&apng_ptr, (png_infopp)NULL);
+		VFS_CLOSE(apng_fp);
+		apng_fp = NULL;
 		return false;
 	}
 
-#if 0
-	if (setjmp(png_ptr->jmpbuf)) {
-		png_destroy_write_struct(&png_ptr, &info_ptr);
-		VFS_CLOSE(fp);
-		return false;
+	png_set_write_fn(apng_ptr, apng_fp, PNG_IO_user_write_data, PNG_IO_user_flush_data);
+	png_set_compression_level(apng_ptr, bound(Z_NO_COMPRESSION, compression, Z_BEST_COMPRESSION));
+	pngformat = (bpp == 4) ? PNG_COLOR_TYPE_RGBA : PNG_COLOR_TYPE_RGB;
+	png_set_IHDR(apng_ptr, apng_info_ptr, width, height, 8, pngformat, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+	png_write_info(apng_ptr, apng_info_ptr);
+
+	// write acTL block
+	{
+		byte acTL[] = { 'a', 'c', 'T', 'L' };
+		unsigned int actldata[2] = { htonl(frames), htonl(0) };
+
+		png_write_chunk(apng_ptr, acTL, (png_const_bytep) actldata, sizeof(actldata));
 	}
-#endif
 
-    png_set_write_fn(png_ptr, fp, PNG_IO_user_write_data, PNG_IO_user_flush_data);
-	png_set_compression_level(png_ptr, bound(Z_NO_COMPRESSION, compression, Z_BEST_COMPRESSION));
-
-	png_set_IHDR(png_ptr, info_ptr, width, height, 8, PNG_COLOR_TYPE_PALETTE,
-		PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
-	png_set_PLTE(png_ptr, info_ptr, (png_color *) palette, 256);
-
-	png_write_info(png_ptr, info_ptr);
-
-	rowpointers = (png_byte **) Q_malloc (height * sizeof(*rowpointers));
-	for (i = 0; i < height; i++)
-		rowpointers[i] = pixels + i * rowbytes;
-	png_write_image(png_ptr, rowpointers);
-	png_write_end(png_ptr, info_ptr);
-	Q_free(rowpointers);
-	png_destroy_write_struct(&png_ptr, &info_ptr);
-
-	VFS_CLOSE(fp);
+	apng_framenumber = 0;
+	apng_compression = compression;
 	return true;
 }
-#endif
+
+qbool Image_WriteAPNGFrame(byte* pixels, int width, int height, int fps)
+{
+	png_byte **rowpointers = (png_byte **)Q_malloc(height * sizeof(*rowpointers));
+	int i, width_sign, bpp = 3;
+
+	width_sign = (width < 0) ? -1 : 1;
+	width = abs(width);
+
+	// Write fcTL chunk
+	{
+		struct {
+			unsigned int sequence_number;
+			unsigned int width;
+			unsigned int height;
+			unsigned int x_offset;
+			unsigned int y_offset;
+			unsigned short delay_num;
+			unsigned short delay_den;
+			byte dispose_op;
+			byte blend_op;
+		} fcTL_chunk;
+		byte header[4] = { 'f', 'c', 'T', 'L' };
+
+		fcTL_chunk.sequence_number = htonl(apng_framenumber);
+		fcTL_chunk.width = htonl(width);
+		fcTL_chunk.height = htonl(height);
+		fcTL_chunk.x_offset = htonl(0);
+		fcTL_chunk.y_offset = htonl(0);
+		fcTL_chunk.delay_num = htons(1);
+		fcTL_chunk.delay_den = htons(fps);
+		fcTL_chunk.dispose_op = 0;       // APNG_DISPOSE_OP_NONE
+		fcTL_chunk.blend_op = 0;         // APNG_BLEND_OP_SOURCE
+
+		png_write_chunk(apng_ptr, header, (png_const_bytep)&fcTL_chunk, 26);
+
+		++apng_framenumber;
+	}
+
+	for (i = 0; i < height; i++) {
+		rowpointers[i] = pixels + i * width_sign * width * bpp;
+	}
+	if (apng_framenumber >= 2) {
+		// Create a pretend 'new' .png so the IDAT is correct
+		byte fdAT[4] = { 'f', 'd', 'A', 'T' };
+		{
+			png_structp fake_apng_ptr;
+			png_infop fake_apng_info_ptr;
+
+			fake_apng_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+			fake_apng_info_ptr = png_create_info_struct(fake_apng_ptr);
+
+			png_set_write_fn(fake_apng_ptr, NULL, PNG_IO_user_write_data_apng_discard, PNG_IO_user_flush_data_apng_discard);
+			png_set_compression_level(fake_apng_ptr, bound(Z_NO_COMPRESSION, apng_compression, Z_BEST_COMPRESSION));
+			png_set_IHDR(fake_apng_ptr, fake_apng_info_ptr, width, height, 8, PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+			png_write_info(fake_apng_ptr, fake_apng_info_ptr);
+
+			png_write_flush(fake_apng_ptr);
+			png_set_write_fn(fake_apng_ptr, NULL, PNG_IO_user_write_data_apng, PNG_IO_user_flush_data);
+			apng_data_length = 0;
+			png_write_image(fake_apng_ptr, rowpointers);
+			png_write_flush(fake_apng_ptr);
+			png_destroy_write_struct(&fake_apng_ptr, &fake_apng_info_ptr);
+		}
+
+		png_write_chunk(apng_ptr, fdAT, apng_data, apng_data_length);
+
+		++apng_framenumber;
+	}
+	else {
+		byte IDAT[4] = { 'I', 'D', 'A', 'T' };
+
+		png_write_flush(apng_ptr);
+		png_set_write_fn(apng_ptr, apng_fp, PNG_IO_user_write_data_apng, PNG_IO_user_flush_data);
+		apng_data_length = 0;
+		png_write_image(apng_ptr, rowpointers);
+		png_write_flush(apng_ptr);
+		png_set_write_fn(apng_ptr, apng_fp, PNG_IO_user_write_data, PNG_IO_user_flush_data);
+
+		// Skip first four bytes, contains our sequence number
+		png_write_chunk(apng_ptr, IDAT, apng_data + 4, apng_data_length - 4);
+	}
+
+	apng_data_length = 0;
+	return true;
+}
+
+qbool Image_CloseAPNG(void)
+{
+	png_write_end(apng_ptr, apng_info_ptr);
+	png_destroy_write_struct(&apng_ptr, &apng_info_ptr);
+	VFS_CLOSE(apng_fp);
+	apng_fp = NULL;
+	Q_free(apng_data);
+	apng_data_limit = apng_data_length = 0;
+
+	return true;
+}
+
+#endif // WITH_PNG
 
 /************************************ TGA ************************************/
 

@@ -3349,7 +3349,7 @@ static image_format_t SShot_FormatForName(char *name) {
 #endif
 
 #ifdef WITH_PNG
-	else if (!strcasecmp(scr_sshot_format.string, "png"))
+	else if (!strcasecmp(scr_sshot_format.string, "png") || !strcasecmp(scr_sshot_format.string, "apng"))
 		return IMAGE_PNG;
 #endif
 
@@ -3399,7 +3399,7 @@ static void applyHWGamma(byte *buffer, int size) {
 	}
 }
 
-int SCR_Screenshot(char *name)
+int SCR_Screenshot(char *name, qbool movie_capture)
 {
 	scr_sshot_target_t* target_params = Q_malloc(sizeof(scr_sshot_target_t));
 
@@ -3416,10 +3416,11 @@ int SCR_Screenshot(char *name)
 		target_params->buffer = Q_malloc(glwidth * glheight * 3);
 		target_params->freeMemory = true;
 	}
+	target_params->movie_capture = movie_capture;
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glReadPixels(glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, target_params->buffer);
 
-	if (Movie_BackgroundCapture(target_params)) {
+	if (movie_capture && Movie_BackgroundCapture(target_params)) {
 		return SSHOT_SUCCESS;
 	}
 
@@ -3438,10 +3439,18 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 #ifdef WITH_PNG
 	if (format == IMAGE_PNG) {
 		applyHWGamma(buffer, buffersize);
-		success = Image_WritePNG(
-			name, image_png_compression_level.value,
-			buffer + buffersize - 3 * glwidth, -glwidth, glheight
-		) ? SSHOT_SUCCESS : SSHOT_FAILED;
+
+		if (target_params->movie_capture && Movie_AnimatedPNG()) {
+			extern cvar_t movie_fps;
+
+			Image_WriteAPNGFrame(buffer + buffersize - 3 * glwidth, -glwidth, glheight, movie_fps.integer);
+		}
+		else {
+			success = Image_WritePNG(
+				name, image_png_compression_level.value,
+				buffer + buffersize - 3 * glwidth, -glwidth, glheight
+			) ? SSHOT_SUCCESS : SSHOT_FAILED;
+		}
 	}
 #endif
 
@@ -3485,7 +3494,7 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 
 	// Find a file name to save it to
 #ifdef WITH_PNG
-	if (!strcasecmp(scr_sshot_format.string, "png"))
+	if (!strcasecmp(scr_sshot_format.string, "png") || !strcasecmp(scr_sshot_format.string, "apng"))
 	{
 		strlcpy(ext, "png", 4);
 	}
@@ -3568,7 +3577,7 @@ void SCR_ScreenShot_f (void)
 	for (filename = name; *filename == '/' || *filename == '\\'; filename++)
 		;
 
-	success = SCR_Screenshot(va("%s/%s", sshot_dir, filename));
+	success = SCR_Screenshot(va("%s/%s", sshot_dir, filename), false);
 
 	if (success != SSHOT_FAILED_QUIET)
 	{
@@ -3676,7 +3685,7 @@ static void SCR_CheckAutoScreenshot(void) {
 
 	glFinish();
 
-	if ((SCR_Screenshot(fullsavedname)) == SSHOT_SUCCESS)
+	if ((SCR_Screenshot(fullsavedname, false)) == SSHOT_SUCCESS)
 		Com_Printf("Match scoreboard saved to %s\n", savedname);
 }
 
@@ -3730,13 +3739,13 @@ void SCR_Movieshot(char *name)
 	else
 	{
 		// We're just capturing images.
-		SCR_Screenshot (name);
+		SCR_Screenshot(name, true);
 	}
 
 #else // _WIN32
 
 	// Capturing to avi only supported in windows yet.
-	SCR_Screenshot (name);
+	SCR_Screenshot(name, true);
 
 #endif // _WIN32
 }
