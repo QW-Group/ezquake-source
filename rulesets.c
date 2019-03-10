@@ -668,6 +668,8 @@ qbool Ruleset_BlockHudPicChange(void)
 {
 	switch (rulesetDef.ruleset) {
 	case rs_qcon:
+	case rs_smackdown:
+	case rs_thunderdome:
 		return cls.state != ca_disconnected && !(cl.standby || cl.spectator || cls.demoplayback);
 	default:
 		return false;
