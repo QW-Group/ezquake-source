@@ -38,6 +38,7 @@
 
 - `thunderdome` allows simple-item backpacks & texture replacements for backpacks
 - `thunderdome`, `smackdown` & `qcon` all block hud group-picture changes during the match
+- `thunderdome`, `smackdown` & `qcon` all block `/gl_outline` as it can lead to seeing items through walls
 
 ### Bugfixes
 
