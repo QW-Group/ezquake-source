@@ -179,9 +179,10 @@ void Movie_Stop(qbool restarting)
 	movie_is_capturing = restarting;
 }
 
-void Movie_Demo_Capture_f(void) {
+void Movie_Demo_Capture_f(void)
+{
 	int argc;
-	double time;
+	double duration;
 	char *error;
 	extern cvar_t scr_sshot_format;
 
@@ -215,7 +216,7 @@ void Movie_Demo_Capture_f(void) {
 		Com_Printf("%s : Must be playing a demo to capture\n", Cmd_Argv(0));
 		return;
 	}
-	if ((time = Q_atof(Cmd_Argv(2))) <= 0) {
+	if ((duration = Q_atof(Cmd_Argv(2))) <= 0) {
 		Com_Printf("%s : Time argument must be positive\n", Cmd_Argv(0));
 		return;
 	}
@@ -243,15 +244,19 @@ void Movie_Demo_Capture_f(void) {
 		time_t t;
 		t = time(NULL);
 		localtime_r(&t, &movie_start_date);
+
+		snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/capture.png",
+			movie_dir.string, movie_start_date.tm_mday, movie_start_date.tm_mon, movie_start_date.tm_year,
+			movie_start_date.tm_hour, movie_start_date.tm_min, movie_start_date.tm_sec);
 #else
 		GetLocalTime(&movie_start_date);
-#endif
 
 		snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/capture.png",
 			movie_dir.string, movie_start_date.wDay, movie_start_date.wMonth, movie_start_date.wYear,
 			movie_start_date.wHour, movie_start_date.wMinute, movie_start_date.wSecond);
+#endif
 
-		apng_expected_frames = time * movie_fps.integer;
+		apng_expected_frames = duration * movie_fps.integer;
 		capturing_apng = Image_OpenAPNG(fname, image_png_compression_level.integer, glwidth, glheight, apng_expected_frames);
 
 		if (!capturing_apng) {
@@ -261,7 +266,7 @@ void Movie_Demo_Capture_f(void) {
 	else {
 		Movie_BackgroundInitialise();
 	}
-	Movie_Start(time);
+	Movie_Start(duration);
 }
 
 #ifdef _WIN32
