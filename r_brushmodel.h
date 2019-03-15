@@ -56,4 +56,7 @@ extern unsigned int* modelIndexes;
 extern unsigned int modelIndexMaximum;
 void R_BrushModelCreateVBO(void);
 
+#define BRUSHMODEL_MAX_SURFACE_EXTENTS +999999999
+#define BRUSHMODEL_MIN_SURFACE_EXTENTS -999999999
+
 #endif // R_BRUSHMODEL_HEADER

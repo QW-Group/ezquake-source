@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "glsl/constants.glsl"
 #include "r_local.h"
+#include "r_brushmodel.h"
 #include "utils.h"
 
 extern model_t *loadmodel;
@@ -34,15 +35,15 @@ static void R_WarpSurfaceBoundPoly(int numverts, float *verts, vec3_t mins, vec3
 	int i, j;
 	float *v;
 
-	mins[0] = mins[1] = mins[2] = 9999;
-	maxs[0] = maxs[1] = maxs[2] = -9999;
+	mins[0] = mins[1] = mins[2] = BRUSHMODEL_MAX_SURFACE_EXTENTS;
+	maxs[0] = maxs[1] = maxs[2] = BRUSHMODEL_MIN_SURFACE_EXTENTS;
 	v = verts;
-	for (i=0 ; i<numverts ; i++) {
+	for (i = 0; i < numverts; i++) {
 		for (j = 0; j < 3; j++, v++) {
-			if (*v < mins[j]) {
+			if (i == 0 || *v < mins[j]) {
 				mins[j] = *v;
 			}
-			if (*v > maxs[j]) {
+			if (i == 0 || *v > maxs[j]) {
 				maxs[j] = *v;
 			}
 		}
