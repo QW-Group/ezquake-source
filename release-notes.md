@@ -47,6 +47,7 @@
 - When viewing pre-selected weapon, the weapon only switches once the animation frame goes back to non-firing (#182)
 - QTV URLs can now include the QTV password (must have '/' separating command and password) (#295)
 - Gamma on screenshots was incorrect when system had more than 256 gamma ramps (linux) (#296)
+- BSP2 maps: fix crash when turb surfaces outside -9999/+9999 bounds (#323)
 - `/ignore $name` (allow the player to ignore their own messages) produced output during certain teamplay messages (#257)
 - `/in_raw 0` - mouse input fixed (#308)
 - `/scr_cursor_sensitivity` is now functional again
@@ -68,3 +69,4 @@
 - OSX: Dialog to find .pak files on initial installation could point to 'my computer' location on Mojave
 - Added azure-pipelines.yml
 - Server: can now be built without USE_PR2 defined
+- .exe exports fields that AMD/nvidia drivers can use to always use accelerated graphics
