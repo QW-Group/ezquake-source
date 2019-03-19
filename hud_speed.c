@@ -280,6 +280,10 @@ static void SCR_DrawHUDSpeed(
 		}
 	}
 
+	if (text_align == SPEED_TEXT_ALIGN_NONE) {
+		return;
+	}
+
 	if (split) {
 		snprintf(speed_text, sizeof(speed_text), "%4d %4d %4d", (int)velocity[0], (int)velocity[1], (int)velocity[2]);
 	}
