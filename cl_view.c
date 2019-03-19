@@ -800,23 +800,26 @@ static int V_CurrentWeaponModel(void) {
 	extern int IN_BestWeaponReal(void);
 	extern cvar_t cl_weaponpreselect;
 	int bestgun;
-	static int lastfired = 0;
-	static int lastviewplayernum = 0;
 	int realw = cl.stats[STAT_WEAPON];
 
 	if (cls.demoplayback && r_viewlastfired.integer) {
-		if (view_message.weaponframe) {
-			lastfired = realw;
-			lastviewplayernum = cl.viewplayernum;
+		if (realw == 0) {
+			cl.lastfired = realw;
+			cl.lastviewplayernum = cl.viewplayernum;
 			return realw;
 		}
-		else if (lastfired) {
-			if (lastviewplayernum == cl.viewplayernum) {
-				return lastfired;
+		if (view_message.weaponframe) {
+			cl.lastfired = realw;
+			cl.lastviewplayernum = cl.viewplayernum;
+			return realw;
+		}
+		else if (cl.lastfired) {
+			if (cl.lastviewplayernum == cl.viewplayernum) {
+				return cl.lastfired;
 			}
 			else {
-				lastfired = realw;
-				lastviewplayernum = cl.viewplayernum;
+				cl.lastfired = realw;
+				cl.lastviewplayernum = cl.viewplayernum;
 				return realw;
 			}
 		}

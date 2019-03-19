@@ -103,6 +103,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	IT_SUIT                 2097152
 #define	IT_QUAD                 4194304
 
+#define IT_ALL_WEAPONS          (IT_AXE | IT_SHOTGUN | IT_SUPER_SHOTGUN | IT_NAILGUN | IT_SUPER_NAILGUN | IT_GRENADE_LAUNCHER | IT_ROCKET_LAUNCHER | IT_LIGHTNING | IT_SUPER_LIGHTNING)
+
 #define	IT_SIGIL1               (1<<28)
 #define	IT_SIGIL2               (1<<29)
 #define	IT_SIGIL3               (1<<30)

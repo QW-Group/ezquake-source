@@ -624,6 +624,10 @@ typedef struct {
 
 	int         scoring_system;
 	qbool       mvd_ktx_markers;
+
+	// r_viewmodellastfired
+	int         lastfired;
+	int         lastviewplayernum;
 } clientState_t;
 
 #define SCORING_SYSTEM_DEFAULT   0

@@ -3179,12 +3179,20 @@ void CL_SetStat (int stat, int value)
 	// Set the stat value for the current player we're parsing in the MVD.
 	if (cls.mvdplayback)
 	{
+		int old_value = cl.players[cls.lastto].stats[stat];
+
 		cl.players[cls.lastto].stats[stat] = value;
 
 		// If we're not tracking the active player,
 		// then don't update sbar and such.
-		if ( Cam_TrackNum() != cls.lastto )
+		if (Cam_TrackNum() != cls.lastto) {
 			return;
+		}
+
+		if (stat == STAT_ITEMS && (old_value & IT_ALL_WEAPONS) > (value & IT_ALL_WEAPONS)) {
+			// Weapons removed, reset last fired
+			cl.lastfired = 0;
+		}
 	}
 
 	Sbar_Changed();
