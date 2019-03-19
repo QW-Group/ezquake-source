@@ -47,7 +47,7 @@ typedef struct glyphinfo_s {
 #define ezFT_Render_Glyph    FT_Render_Glyph
 #define ezCloseFTDLL(x)
 #else
-#define ezCloseFTDLL(dll)      Sys_DLClose(dll)
+#define ezCloseFTDLL(dll)    if (dll) { Sys_DLClose(dll); }
 #endif
 
 static glyphinfo_t glyphs[4096];

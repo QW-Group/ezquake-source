@@ -142,6 +142,10 @@ ifndef CONFIG_WINDOWS
         FREETYPE_CFLAGS ?= $(shell pkg-config freetype2 --cflags)
         FREETYPE_LIBS ?= $(shell pkg-config freetype2 --libs)
     endif
+
+    ifdef FREETYPE_LIBS
+        CFLAGS_c += -DEZ_FREETYPE_SUPPORT_STATIC
+    endif
 endif
 
 ifdef FREETYPE_LIBS
