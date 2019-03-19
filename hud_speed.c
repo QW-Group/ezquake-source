@@ -324,21 +324,16 @@ static void SCR_DrawHUDSpeed(
 		}
 	}
 	else {
-		// Align the text accordingly.
-		switch (text_align) {
-			case SPEED_TEXT_ALIGN_FAR:
-				x = x + width - Draw_StringLength(speed_text, 4, scale, true);
-				break;
-			case SPEED_TEXT_ALIGN_CENTER:
-				x = Q_rint(x + width / 2.0 - Draw_StringLength(speed_text, 4, scale, true) / 2);
-				break;
-			case SPEED_TEXT_ALIGN_CLOSE:
-			case SPEED_TEXT_ALIGN_NONE:
-			default:
-				break;
+		text_alignment_t alignment = text_align_left;
+
+		if (text_align == SPEED_TEXT_ALIGN_FAR) {
+			alignment = text_align_right;
+		}
+		else if (text_align == SPEED_TEXT_ALIGN_CENTER) {
+			alignment = text_align_center;
 		}
 
-		Draw_SString(x, Q_rint(y + height / 2.0 - 4 * scale), speed_text, scale, proportional);
+		Draw_SStringAligned(x, y + height / 2.0 - 4 * scale, speed_text, scale, 1.0f, proportional, alignment, x + width);
 	}
 }
 
