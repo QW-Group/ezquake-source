@@ -632,6 +632,10 @@ typedef struct {
 
 	char        fixed_team_names[4][16];
 	qbool       mvd_ktx_markers;
+
+	// r_viewmodellastfired
+	int         lastfired;
+	int         lastviewplayernum;
 } clientState_t;
 
 #define SCORING_SYSTEM_DEFAULT   0

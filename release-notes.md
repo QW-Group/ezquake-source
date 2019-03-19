@@ -45,6 +45,7 @@
 - Loading a single player save file on 64-bit systems may cause crash shortly after resuming play (#297)
 - Dynamic lights correctly set during .dem playback (#298)
 - When viewing pre-selected weapon, the weapon only switches once the animation frame goes back to non-firing (#182)
+- `/r_viewmodellastfired` no longer shows last-fired weapon when starting match, moving to a new map or dying while not firing
 - QTV URLs can now include the QTV password (must have '/' separating command and password) (#295)
 - Gamma on screenshots was incorrect when system had more than 256 gamma ramps (linux) (#296)
 - BSP2 maps: fix crash when turb surfaces outside -9999/+9999 bounds (#323)
