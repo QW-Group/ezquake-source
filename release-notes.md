@@ -33,6 +33,7 @@
 - `f_qtvfinalscores` trigger fired when `//finalscores` notification detected in qtv stream
 - `/cl_mvinset` position & size can be set by user (`/cl_mvinset_size_x` sets relative size compared to screen)
 - `/r_lerpframes` is no longer disabled when using multiview
+- Team fortress grenade models should be flagged as grenades now (`/gl_custom_grenade_color` etc should work)
 
 ### Ruleset changes
 

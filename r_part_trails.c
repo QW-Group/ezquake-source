@@ -204,7 +204,7 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, 
 				ParticleNailTrail(cent, 2, 0.4f);
 			}
 		}
-		else if (model->modhint == MOD_TF_TRAIL && amf_extratrails.integer) {
+		else if (model->modhint_trail == MOD_TF_TRAIL && amf_extratrails.integer) {
 			// VULT TRAILS
 			ParticleAlphaTrail(cent, 4, 0.4);
 		}

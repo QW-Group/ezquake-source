@@ -401,6 +401,31 @@ float RadiusFromBounds (vec3_t mins, vec3_t maxs)
 void Mod_AddModelFlags(model_t *mod)
 {
 	mod->renderfx = 0;
+	mod->modhint = mod->modhint_trail = MOD_NORMAL;
+	if (!strcmp(mod->name, "progs/caltrop.mdl") ||
+		!strcmp(mod->name, "progs/biggren.mdl") ||
+/*		!strcmp(mod->name, "progs/detpack.mdl") ||
+		!strcmp(mod->name, "progs/detpack2.mdl") ||*/
+/*		!strcmp(mod->name, "progs/dgib.mdl") ||
+		!strcmp(mod->name, "progs/dgib2.mdl") ||
+		!strcmp(mod->name, "progs/dgib3.mdl") ||*/
+		!strcmp(mod->name, "progs/flare.mdl") ||
+		!strcmp(mod->name, "progs/gren1.bsp") ||
+		//!strcmp(mod->name, "progs/grenade.mdl") ||
+		//!strcmp(mod->name, "progs/grenade2.mdl") ||
+		!strcmp(mod->name, "progs/grenade3.mdl") ||
+		!strcmp(mod->name, "progs/hook.mdl") ||
+/*		!strcmp(mod->name, "progs/tesgib1.mdl") ||
+		!strcmp(mod->name, "progs/tesgib2.mdl") ||
+		!strcmp(mod->name, "progs/tesgib3.mdl") ||
+		!strcmp(mod->name, "progs/tesgib4.mdl") ||
+//		!strcmp(mod->name, "progs/turrgun.mdl") || //turrets have dodgy origins, after all
+		!strcmp(mod->name, "progs/tgib1.mdl") ||
+		!strcmp(mod->name, "progs/tgib2.mdl") ||
+		!strcmp(mod->name, "progs/tgib3.mdl") ||*/
+		!strcmp(mod->name, "progs/hgren2.mdl")) {
+		mod->modhint_trail = MOD_TF_TRAIL;
+	}
 
 	//modhints
 	if (!strcmp(mod->name, "progs/player.mdl")) {
@@ -446,30 +471,6 @@ void Mod_AddModelFlags(model_t *mod)
 		!strcmp(mod->name, "progs/s_spike.mdl") ||
 		!strcmp(mod->name, "progs/amf_spike.mdl")) {
 		mod->modhint = MOD_SPIKE;
-	}
-	else if (!strcmp(mod->name, "progs/caltrop.mdl") ||
-		!strcmp(mod->name, "progs/biggren.mdl") ||
-/*		!strcmp(mod->name, "progs/detpack.mdl") ||
-		!strcmp(mod->name, "progs/detpack2.mdl") ||*/
-/*		!strcmp(mod->name, "progs/dgib.mdl") ||
-		!strcmp(mod->name, "progs/dgib2.mdl") ||
-		!strcmp(mod->name, "progs/dgib3.mdl") ||*/
-		!strcmp(mod->name, "progs/flare.mdl") ||
-		!strcmp(mod->name, "progs/gren1.bsp") ||
-		//!strcmp(mod->name, "progs/grenade.mdl") ||
-		//!strcmp(mod->name, "progs/grenade2.mdl") ||
-		!strcmp(mod->name, "progs/grenade3.mdl") ||
-		!strcmp(mod->name, "progs/hook.mdl") ||
-/*		!strcmp(mod->name, "progs/tesgib1.mdl") ||
-		!strcmp(mod->name, "progs/tesgib2.mdl") ||
-		!strcmp(mod->name, "progs/tesgib3.mdl") ||
-		!strcmp(mod->name, "progs/tesgib4.mdl") ||
-//		!strcmp(mod->name, "progs/turrgun.mdl") || //turrets have dodgy origins, after all
-		!strcmp(mod->name, "progs/tgib1.mdl") ||
-		!strcmp(mod->name, "progs/tgib2.mdl") ||
-		!strcmp(mod->name, "progs/tgib3.mdl") ||*/
-		!strcmp(mod->name, "progs/hgren2.mdl")) {
-		mod->modhint = MOD_TF_TRAIL;
 	}
 	else if (!strcmp(mod->name, "progs/coil.mdl") || !strcmp(mod->name, "progs/tesla.mdl")) {
 		mod->modhint = MOD_TESLA;
@@ -550,7 +551,13 @@ void Mod_AddModelFlags(model_t *mod)
 	else if (!strcmp(mod->name, "progs/missile.mdl")) {
 		mod->modhint = MOD_ROCKET;
 	}
-	else if (!strcmp(mod->name, "progs/grenade.mdl")) {
+	else if (!strcmp(mod->name, "progs/grenade.mdl") ||
+		!strcmp(mod->name, "progs/flare.mdl") ||
+		!strcmp(mod->name, "progs/hgren2.mdl") ||
+		!strcmp(mod->name, "progs/biggren.mdl") ||
+		!strcmp(mod->name, "progs/grenade2.mdl") ||
+		!strcmp(mod->name, "progs/grenade3.mdl") ||
+		!strcmp(mod->name, "progs/caltrop.mdl")) {
 		mod->modhint = MOD_GRENADE;
 	}
 	else if (!strcmp(mod->name, "progs/g_rock2.mdl")) {
