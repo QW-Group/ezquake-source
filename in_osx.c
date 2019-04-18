@@ -35,7 +35,7 @@ struct osx_mouse_data
 	int mouse_y;
 };
 
-struct osx_mouse_data *mdata;
+struct osx_mouse_data *mdata = NULL;
 
 static void input_callback(void *unused, IOReturn result, void *sender, IOHIDValueRef value)
 {
