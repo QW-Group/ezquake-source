@@ -482,7 +482,7 @@ void MVD_ClockList_RemoveExpired(void)
 				continue;
 			}
 
-			// 
+			//
 			if (current->entity && !(current->flags & MVDCLOCK_BACKPACK_REMOVED)) {
 				int mod = cl_entities[current->entity].current.modelindex;
 				if (mod <= 0 || mod >= sizeof(cl.model_precache) / sizeof(cl.model_precache[0])) {
@@ -518,7 +518,7 @@ void MVD_ClockList_RemoveExpired(void)
 
 int MVD_ClockList_GetLongestName(void)
 {
-	int i, current, longest = 0;	
+	int i, current, longest = 0;
 	int items[] = {
 		IT_AXE, IT_SHOTGUN, IT_SUPER_SHOTGUN, IT_NAILGUN, IT_SUPER_NAILGUN,
 		IT_GRENADE_LAUNCHER, IT_ROCKET_LAUNCHER, IT_LIGHTNING, IT_INVISIBILITY,
@@ -549,7 +549,7 @@ static double MVD_ClockList_SortTime(mvd_clock_t* c)
 	return t;
 }
 
-// Moves persistent 
+// Moves persistent
 static int MVD_ClockList_Compare(mvd_clock_t* c, mvd_clock_t* n)
 {
 	double c_time = MVD_ClockList_SortTime(c);
@@ -1401,7 +1401,7 @@ static qbool MVD_Weapon_From_Backpack(int weapon, int taken, int *ammotaken)
 		if (ammotaken[0] > 0 || ammotaken[1] > 0 || ammotaken[2] > 0 || ammotaken[3] != 15) {
 			return true;
 		}
-	}		 
+	}
 
 	for (i = SSG_INFO; i <= LG_INFO; i++) {
 		if ((taken & (1 << i)) && i != weapon) {
@@ -1747,7 +1747,7 @@ void MVD_Status (void){
 				mvd_new_info[id].mvdinfo.itemstats[GL_INFO].count,\
 				mvd_new_info[id].mvdinfo.itemstats[RA_INFO].count,\
 				mvd_new_info[id].mvdinfo.itemstats[YA_INFO].count,\
-				mvd_new_info[id].mvdinfo.itemstats[RA_INFO].count),sizeof(str));
+				mvd_new_info[id].mvdinfo.itemstats[GA_INFO].count),sizeof(str));
 	strlcpy(str,Make_Red(str,1),sizeof(str));
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 	strlcpy(str,va("Ring: %i Quad: %i Pent: %i MH: %i",\
@@ -2402,7 +2402,7 @@ void MVDAnnouncer_ItemTaken(const char* s)
 	entity = atoi(Cmd_Argv(2));
 	respawn = atoi(Cmd_Argv(3));
 	player_ent = atoi(Cmd_Argv(4));
-	
+
 	clock_entry = MVD_ClockFindEntity(entity);
 	if (clock_entry) {
 		clock_entry->last_taken = cls.demotime;
@@ -2558,4 +2558,3 @@ void MVDAnnouncer_BackpackPickup(const char* s)
 		cl_entities[entity].contents = 0;
 	}
 }
-
