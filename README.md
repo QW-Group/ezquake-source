@@ -1,6 +1,10 @@
 # ezQuake — Modern QuakeWorld Client
 [![Build Status](https://travis-ci.org/ezQuake/ezquake-source.svg?branch=master)](https://travis-ci.org/ezQuake/ezquake-source)
 
+Homepage: [https://ezquake.github.io/][homepage]
+
+Community discord: [http://discord.quake.world][discord]
+
 This is the right place to start playing QuakeWorld&reg; — the fastest first
 person shooter action game ever.
 
@@ -28,8 +32,9 @@ custom configurations, maps, textures and more, try using the [nQuake][nQuake]-i
 
 ## Support
 
-Need help with using ezQuake? Visit us on IRC at QuakeNet, channel #ezQuake:
-[webchat][webchat] or [IRC][IRC].
+Need help with using ezQuake? Try #dev-corner on [discord][discord]
+
+Or (less populated these days) visit us on IRC at QuakeNet, channel #ezQuake: [webchat][webchat] or [IRC][IRC].
 
 Sometimes help from other users of ezQuake might be more useful to you so you
 can also try visiting the [quakeworld.nu Client Talk-forums][forum].
@@ -183,3 +188,5 @@ Nightly builds for Windows can be found [here][nightly]
  [nightly]: http://uttergrottan.localghost.net/ezquake/dev/nightlybuilds/win32/
  [releases]: https://github.com/ezQuake/ezquake-source/releases
  [issues]: https://github.com/ezQuake/ezquake-source/issues
+ [homepage]: https://ezquake.github.io/
+ [discord]: http://discord.quake.world/
