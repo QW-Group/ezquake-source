@@ -42,21 +42,21 @@ mvd_gt_info_t mvd_gt_info[mvd_gt_types] = {
 mvd_cg_info_s mvd_cg_info;
 
 mvd_wp_info_t mvd_wp_info[mvd_info_types] = {
-	{AXE_INFO,"axe",IT_AXE,"axe", 0, 0},
-	{SG_INFO,"sg",IT_SHOTGUN,"sg", 0, 0},
-	{SSG_INFO,"ssg",IT_SUPER_SHOTGUN,"&cf0fssg&r", 0},
-	{NG_INFO,"ng",IT_NAILGUN,"&cf0fng&r", 0, 0},
-	{SNG_INFO,"sng",IT_SUPER_NAILGUN,"&cf0fsng&r", 0, 0},
-	{GL_INFO,"gl",IT_GRENADE_LAUNCHER,"&cf0fgl&r", 0, 0},
-	{RL_INFO,"rl",IT_ROCKET_LAUNCHER,"&cf0frl&r", MOD_ROCKETLAUNCHER, 0},
-	{LG_INFO,"lg",IT_LIGHTNING,"&cf0flg&r", MOD_LIGHTNINGGUN, 0},
-	{RING_INFO,"ring",IT_INVISIBILITY,"&cff0ring&r", MOD_RING, 0},
-	{QUAD_INFO,"quad",IT_QUAD,"&c00fquad&r", MOD_QUAD, 0},
-	{PENT_INFO,"pent",IT_INVULNERABILITY,"&cf00pent&r", MOD_PENT, 0},
-	{GA_INFO,"ga",IT_ARMOR1,"&c0f0ga&r", MOD_ARMOR, 0},
-	{YA_INFO,"ya",IT_ARMOR2,"&cff0ya&r", MOD_ARMOR, 1},
-	{RA_INFO,"ra",IT_ARMOR3,"&cf00ra&r", MOD_ARMOR, 2},
-	{MH_INFO,"mh",IT_SUPERHEALTH,"&c00fmh&r", MOD_MEGAHEALTH, 0},
+	{AXE_INFO,	"axe",	IT_AXE,				"axe", 			0, 					0, 0xDA,0xDA,0xDA},
+	{SG_INFO,	"sg",	IT_SHOTGUN,			"sg", 			0, 					0, 0xDA,0xDA,0xDA},
+	{SSG_INFO,	"ssg",	IT_SUPER_SHOTGUN,	"&cf0fssg&r", 	0,					0, 0xDA,0xDA,0xDA},
+	{NG_INFO,	"ng",	IT_NAILGUN,			"&cf0fng&r", 	0, 					0, 0xDA,0xDA,0xDA},
+	{SNG_INFO,	"sng",	IT_SUPER_NAILGUN,	"&cf0fsng&r", 	0, 					0, 0xDA,0xDA,0xDA},
+	{GL_INFO,	"gl",	IT_GRENADE_LAUNCHER,"&cf0fgl&r", 	0, 					0, 0xDA,0xDA,0xDA},
+	{RL_INFO,	"rl",	IT_ROCKET_LAUNCHER,	"&cf0frl&r", 	MOD_ROCKETLAUNCHER, 0, 0xDA,0xDA,0xDA},
+	{LG_INFO,	"lg",	IT_LIGHTNING,		"&cf0flg&r", 	MOD_LIGHTNINGGUN, 	0, 0xDA,0xDA,0xDA},
+	{RING_INFO,	"rg",	IT_INVISIBILITY,	"&cff0ring&r", 	MOD_RING, 			0, 0xA6,0xA6,0x00},
+	{QUAD_INFO,	"qd",	IT_QUAD,			"&c00fquad&r", 	MOD_QUAD, 			0, 0x4D,0x45,0xC9},
+	{PENT_INFO,	"pt",	IT_INVULNERABILITY,	"&cf00pent&r", 	MOD_PENT, 			0, 0x91,0x01,0x01},
+	{GA_INFO,	"ga",	IT_ARMOR1,			"&c0f0ga&r", 	MOD_ARMOR, 			0, 0x00,0x72,0x36},
+	{YA_INFO,	"ya",	IT_ARMOR2,			"&cff0ya&r", 	MOD_ARMOR, 			1, 0xA6,0xA6,0x00},
+	{RA_INFO,	"ra",	IT_ARMOR3,			"&cf00ra&r", 	MOD_ARMOR, 			2, 0x91,0x01,0x01},
+	{MH_INFO,	"mh",	IT_SUPERHEALTH,		"&c00fmh&r", 	MOD_MEGAHEALTH, 	0, 0xAD,0x54,0x2A},
 };
 
 typedef struct mvd_clock_t {
@@ -433,6 +433,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 	char clockitem[32];
 	char temp[16];
 	int base_x = x;
+	int barWidth;
 
 	while (current && current->clockval - cls.demotime < time_limit) {
 		int time = (int) ((current->clockval - cls.demotime) + 1);
@@ -444,6 +445,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 			continue;
 		}
 
+		//add first the item name
 		if (style == 1) {
 			// tp_name_*
 			strlcpy(clockitem, TP_ItemName(mvd_wp_info[current->itemtype].it), sizeof(clockitem));
@@ -460,11 +462,40 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 			clockitem[0] = '\0';
 			y += LETTERHEIGHT * scale / 2;
 		}
+		else if (style == 4) {
+			// progress bar countdown
+			strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
+
+			barWidth = (round(67*scale)/time_limit) * (time_limit - time + 1);
+			if (time == 0) {
+				barWidth = (round(67*scale)/time_limit) * time_limit;
+			}
+
+			Draw_AlphaFillRGB(x-1, y, barWidth, 10*scale,
+							  RGBA_TO_COLOR(mvd_wp_info[current->itemtype].Rcolor,
+									  	  	mvd_wp_info[current->itemtype].Gcolor,
+											mvd_wp_info[current->itemtype].Bcolor, 128));
+		}
+		else if (style == 5) {
+			// progress bar countdown, but itemname not in bar
+			strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
+
+			barWidth = (round(44*scale)/time_limit) * (time_limit - time + 1);
+			if (time == 0) {
+				barWidth = (round(44*scale)/time_limit) * time_limit;
+			}
+
+			Draw_AlphaFillRGB(x+(22*scale), y, barWidth, 10*scale,
+							  RGBA_TO_COLOR(mvd_wp_info[current->itemtype].Rcolor,
+									  	    mvd_wp_info[current->itemtype].Gcolor,
+											mvd_wp_info[current->itemtype].Bcolor, 128));
+		}
 		else {
 			// built-in color(GL) or simple white (software)
 			strlcpy(clockitem, mvd_wp_info[current->itemtype].colored_name, sizeof(clockitem));
 		}
 
+		//add the time
 		if (time > 0) {
 			snprintf(temp, sizeof(temp), " %d", time);
 			strlcat(clockitem, temp, sizeof(clockitem));
@@ -479,6 +510,9 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 		y += LETTERHEIGHT * scale;
 		if (style == 3) {
 			y += LETTERHEIGHT * scale / 2;
+		}
+		else if ((style == 4) || (style == 5)) {
+			y += round(4 * scale);
 		}
 	}
 }

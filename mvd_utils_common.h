@@ -187,6 +187,9 @@ typedef struct mvd_wp_info_s {
 	const char *colored_name;
 	int     model_hint;
 	int     skin_number;
+	byte    Rcolor;
+	byte    Gcolor;
+	byte    Bcolor;
 } mvd_wp_info_t;
 
 extern mvd_wp_info_t mvd_wp_info[mvd_info_types];
