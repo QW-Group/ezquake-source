@@ -42,21 +42,21 @@ mvd_gt_info_t mvd_gt_info[mvd_gt_types] = {
 mvd_cg_info_s mvd_cg_info;
 
 mvd_wp_info_t mvd_wp_info[mvd_info_types] = {
-	{AXE_INFO,	"axe",	IT_AXE,				"axe", 			0, 					0, 0xDA,0xDA,0xDA},
-	{SG_INFO,	"sg",	IT_SHOTGUN,			"sg", 			0, 					0, 0xDA,0xDA,0xDA},
-	{SSG_INFO,	"ssg",	IT_SUPER_SHOTGUN,	"&cf0fssg&r", 	0,					0, 0xDA,0xDA,0xDA},
-	{NG_INFO,	"ng",	IT_NAILGUN,			"&cf0fng&r", 	0, 					0, 0xDA,0xDA,0xDA},
-	{SNG_INFO,	"sng",	IT_SUPER_NAILGUN,	"&cf0fsng&r", 	0, 					0, 0xDA,0xDA,0xDA},
-	{GL_INFO,	"gl",	IT_GRENADE_LAUNCHER,"&cf0fgl&r", 	0, 					0, 0xDA,0xDA,0xDA},
-	{RL_INFO,	"rl",	IT_ROCKET_LAUNCHER,	"&cf0frl&r", 	MOD_ROCKETLAUNCHER, 0, 0xDA,0xDA,0xDA},
-	{LG_INFO,	"lg",	IT_LIGHTNING,		"&cf0flg&r", 	MOD_LIGHTNINGGUN, 	0, 0xDA,0xDA,0xDA},
-	{RING_INFO,	"rg",	IT_INVISIBILITY,	"&cff0ring&r", 	MOD_RING, 			0, 0xA6,0xA6,0x00},
-	{QUAD_INFO,	"qd",	IT_QUAD,			"&c00fquad&r", 	MOD_QUAD, 			0, 0x4D,0x45,0xC9},
-	{PENT_INFO,	"pt",	IT_INVULNERABILITY,	"&cf00pent&r", 	MOD_PENT, 			0, 0x91,0x01,0x01},
-	{GA_INFO,	"ga",	IT_ARMOR1,			"&c0f0ga&r", 	MOD_ARMOR, 			0, 0x00,0x72,0x36},
-	{YA_INFO,	"ya",	IT_ARMOR2,			"&cff0ya&r", 	MOD_ARMOR, 			1, 0xA6,0xA6,0x00},
-	{RA_INFO,	"ra",	IT_ARMOR3,			"&cf00ra&r", 	MOD_ARMOR, 			2, 0x91,0x01,0x01},
-	{MH_INFO,	"mh",	IT_SUPERHEALTH,		"&c00fmh&r", 	MOD_MEGAHEALTH, 	0, 0xAD,0x54,0x2A},
+    {AXE_INFO,  "axe",  IT_AXE,              "axe",         0,                  0, 0xDA, 0xDA, 0xDA},
+    {SG_INFO,   "sg",   IT_SHOTGUN,          "sg",          0,                  0, 0xDA, 0xDA, 0xDA},
+    {SSG_INFO,  "ssg",  IT_SUPER_SHOTGUN,    "&cf0fssg&r",  0,                  0, 0xDA, 0xDA, 0xDA},
+    {NG_INFO,   "ng",   IT_NAILGUN,          "&cf0fng&r",   0,                  0, 0xDA, 0xDA, 0xDA},
+    {SNG_INFO,  "sng",  IT_SUPER_NAILGUN,    "&cf0fsng&r",  0,                  0, 0xDA, 0xDA, 0xDA},
+    {GL_INFO,   "gl",   IT_GRENADE_LAUNCHER, "&cf0fgl&r",   0,                  0, 0xDA, 0xDA, 0xDA},
+    {RL_INFO,   "rl",   IT_ROCKET_LAUNCHER,  "&cf0frl&r",   MOD_ROCKETLAUNCHER, 0, 0xDA, 0xDA, 0xDA},
+    {LG_INFO,   "lg",   IT_LIGHTNING,        "&cf0flg&r",   MOD_LIGHTNINGGUN,   0, 0xDA, 0xDA, 0xDA},
+    {RING_INFO, "rg",   IT_INVISIBILITY,     "&cff0ring&r", MOD_RING,           0, 0xA6, 0xA6, 0x00},
+    {QUAD_INFO, "qd",   IT_QUAD,             "&c00fquad&r", MOD_QUAD,           0, 0x4D, 0x45, 0xC9},
+    {PENT_INFO, "pt",   IT_INVULNERABILITY,  "&cf00pent&r", MOD_PENT,           0, 0x91, 0x01, 0x01},
+    {GA_INFO,   "ga",   IT_ARMOR1,           "&c0f0ga&r",   MOD_ARMOR,          0, 0x00, 0x72, 0x36},
+    {YA_INFO,   "ya",   IT_ARMOR2,           "&cff0ya&r",   MOD_ARMOR,          1, 0xA6, 0xA6, 0x00},
+    {RA_INFO,   "ra",   IT_ARMOR3,           "&cf00ra&r",   MOD_ARMOR,          2, 0x91, 0x01, 0x01},
+    {MH_INFO,   "mh",   IT_SUPERHEALTH,      "&c00fmh&r",   MOD_MEGAHEALTH,     0, 0xAD, 0x54, 0x2A},
 };
 
 typedef struct mvd_clock_t {
@@ -462,7 +462,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 			clockitem[0] = '\0';
 			y += LETTERHEIGHT * scale / 2;
 		}
-		else if (style == 4) {
+		else if (style == 6) {
 			// progress bar countdown
 			strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
 
@@ -476,7 +476,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 									  	  	mvd_wp_info[current->itemtype].Gcolor,
 											mvd_wp_info[current->itemtype].Bcolor, 128));
 		}
-		else if (style == 5) {
+		else if (style == 7) {
 			// progress bar countdown, but itemname not in bar
 			strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
 
