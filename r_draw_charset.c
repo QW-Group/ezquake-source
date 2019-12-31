@@ -443,7 +443,7 @@ void Draw_SAlt_String(float x, float y, const char *text, float scale, qbool pro
 	Draw_StringBase(x, y, text, NULL, 0, true, scale, 1, false, 0, proportional, 0);
 }
 
-float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *color, int text_length, int red, float scale, qbool proportional)
+int Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *color, int text_length, int red, float scale, qbool proportional)
 {
 	const qbool bigchar = false;
 	byte rgba[4];
@@ -469,7 +469,7 @@ float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *color, 
 
 	// Draw the string.
 	R_Draw_StringBase_StartString(x, y, scale);
-	for (i = 0; (text_length ? i < text_length : text[i]); i++) {
+	for (i = 0; text[i] != 0 && text[i] != 0x80 && (text_length <= 0 || i < text_length); i++) {
 		// If we didn't get a color array, check for color codes in the text instead.
 		if (!color) {
 			if (text[i] == '&') {
@@ -535,7 +535,7 @@ float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *color, 
 	}
 	Draw_ResetCharGLState();
 
-	return x - original_x;
+	return i;
 }
 
 void Draw_ColoredString3(float x, float y, const char *text, clrinfo_t *color, int color_count, int red)

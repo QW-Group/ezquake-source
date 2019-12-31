@@ -129,7 +129,7 @@ float Draw_SColoredAlphaString(float x, float y, const char *text, clrinfo_t *co
 void Draw_SAlt_String(float x, float y, const char *text, float scale, qbool proportional);
 float Draw_SString(float x, float y, const char *str, float scale, qbool proportional);
 
-float Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale, qbool proportional);
+int Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *clr, int clr_cnt, int red, float scale, qbool proportional);
 float Draw_StringLengthW(const wchar *text, int length, float scale, qbool proportional);
 float Draw_StringLength(const char *text, int length, float scale, qbool proportional);
 float Draw_StringLengthColors(const char *text, int length, float scale, qbool proportional);

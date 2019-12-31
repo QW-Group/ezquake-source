@@ -842,6 +842,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 	v = 0;
 	if (notifyLines) {
 		int first_line = Con_FirstNotifyLine(notifyLines, timeout);
+
 		for (i = first_line; i <= con.current; i++) {
 			if (i < 0) {
 				continue;
@@ -859,8 +860,19 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 			clearnotify = 0;
 			scr_copytop = 1;
 
-			Draw_ConsoleString(posX, v + posY, con.text + idx, con.clr + idx, notifyCols, 0, scale, proportional);
-			v += (8 * scale);
+			int printed = 0;
+			int last = idx + con_linewidth - 1;
+			while (last > idx && (con.text + last)[0] == 32)
+				--last;
+
+			while (last > idx) {
+				printed = Draw_ConsoleString(posX, v + posY, con.text + idx, con.clr + idx, min(notifyCols, last - idx + 1), 0, scale, proportional);
+				idx += printed;
+				v += (8 * scale);
+				if (con.text[idx] == 0) {
+					break;
+				}
+			}
 		}
 	}
 
