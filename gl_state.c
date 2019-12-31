@@ -262,8 +262,11 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	{
 		int i;
+
+		memset(state->textureUnits, 0, sizeof(state->textureUnits));
+		memset(state->glc_attributes, 0, sizeof(state->glc_attributes));
+
 		for (i = 0; i < sizeof(state->textureUnits) / sizeof(state->textureUnits[0]); ++i) {
-			state->textureUnits[i].enabled = false;
 			state->textureUnits[i].mode = r_texunit_mode_modulate;
 		}
 	}
@@ -503,7 +506,7 @@ void R_GetViewport(int* view)
 void GL_InitialiseState(void)
 {
 	R_InitRenderingState(r_state_default_opengl, false, "opengl", vao_none);
-	R_ApplyRenderingState(r_state_default_opengl);
+	opengl.rendering_state = states[r_state_default_opengl];
 	R_InitialiseStates();
 
 	R_SetIdentityMatrix(R_ProjectionMatrix());

@@ -166,6 +166,7 @@ void R_TraceLogAPICallDirect(const char* format, ...)
 		va_end(argptr);
 
 		fprintf(debug_frame_out, "API:   %.*s %s\n", debug_frame_depth, "                                                          ", msg);
+		fflush(debug_frame_out);
 	}
 }
 
