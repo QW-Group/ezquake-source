@@ -90,6 +90,7 @@ void Draw_Init(void);
 void Draw_Shutdown(void);
 void Draw_Character(float x, float y, int num);
 void Draw_CharacterW(float x, float y, wchar num);
+float Draw_CharacterWSP(float x, float y, wchar num, float scale, qbool proportional);
 void Draw_SubPic(float x, float y, mpic_t *pic, int srcx, int srcy, int width, int height);
 void Draw_Pic(float x, float y, mpic_t *pic);
 void Draw_TransPic(float x, float y, mpic_t *pic);

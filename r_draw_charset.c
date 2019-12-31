@@ -272,6 +272,13 @@ float Draw_SCharacterP(float x, float y, int num, float scale, qbool proportiona
 	return new_x;
 }
 
+float Draw_CharacterWSP(float x, float y, wchar num, float scale, qbool proportional)
+{
+	float new_x = Draw_CharacterBaseW(x, y, num, scale, true, false, true, proportional);
+	Draw_ResetCharGLState();
+	return new_x;
+}
+
 void Draw_CharacterW(float x, float y, wchar num)
 {
 	Draw_CharacterBaseW(x, y, num, 1, true, false, true, false);

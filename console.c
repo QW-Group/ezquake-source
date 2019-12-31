@@ -802,7 +802,7 @@ static qbool Con_NotifyMessageLine(float posX, float posY, float width, float he
 
 		x = 0;
 		while (s[x] && posX < width) {
-			float char_width = Draw_SCharacterP(posX, posY + bound(0, con_shift.value, 8), s[x], scale, proportional);
+			float char_width = Draw_CharacterWSP(posX, posY + bound(0, con_shift.value, 8), s[x], scale, proportional);
 
 			if (display_cursor && x == chat_linepos) {
 				Draw_SCharacterP(posX, posY + bound(0, con_shift.value, 8), 11, scale, proportional);
