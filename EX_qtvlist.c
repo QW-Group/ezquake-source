@@ -257,7 +257,7 @@ static void qtvlist_find_player(const char *name, qbool list_all)
 
 				player_name = json_string_value(json_object_get(player_entry, "Name"));
 				if (player_name) {
-					if (list_all || strstr(player_name, name) != NULL) {
+					if (list_all || strstri(player_name, name) != NULL) {
 						found++;
 						Com_Printf("&cff4%15s&r - %s:%" JSON_INTEGER_FORMAT "\n", player_name, json_string_value(json_object_get(gs_entry, "Hostname")), json_integer_value(json_object_get(gs_entry, "Port")));
 					}
