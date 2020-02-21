@@ -91,7 +91,7 @@ static void GLM_CheckDrawCallSize(void)
 {
 	if (current_drawcall >= maximum_drawcalls) {
 		maximum_drawcalls += GLM_DRAWCALL_INCREMENT;
-		drawcalls = realloc(drawcalls, sizeof(glm_brushmodel_drawcall_t) * maximum_drawcalls);
+		drawcalls = Q_realloc(drawcalls, sizeof(glm_brushmodel_drawcall_t) * maximum_drawcalls);
 	}
 }
 
@@ -575,10 +575,13 @@ static void GLM_DrawWorldModelOutlines(const glm_brushmodel_drawcall_t* drawcall
 
 static glm_brushmodel_drawcall_t* GL_FlushWorldModelBatch(void)
 {
-	const glm_brushmodel_drawcall_t* prev = &drawcalls[current_drawcall++];
-	glm_brushmodel_drawcall_t* current = &drawcalls[current_drawcall];
+	const glm_brushmodel_drawcall_t* prev;
+	glm_brushmodel_drawcall_t* current;
 
 	GLM_CheckDrawCallSize();
+
+	prev = &drawcalls[current_drawcall++];
+	current = &drawcalls[current_drawcall];
 
 	memset(current, 0, sizeof(*current));
 	current->type = prev->type;

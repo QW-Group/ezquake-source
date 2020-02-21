@@ -42,7 +42,7 @@ static size_t qtvlist_curl_callback(char *content, size_t size, size_t nmemb, vo
 		return -1;
 	}
 
-	tmpstr = realloc(buf->str, buf->len + realsize + 1);
+	tmpstr = Q_realloc(buf->str, buf->len + realsize + 1);
 	if (tmpstr == NULL) {
 		Com_Printf("error: Out of memory (realloc returned NULL)\n");
 		return 0;
