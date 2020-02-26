@@ -1114,6 +1114,12 @@ void CL_ClearState (void)
 
 	cl.fakeshaft_policy = 1;
 
+	// Default teamnames for TF
+	strlcpy(cl.fixed_team_names[0], "red", sizeof(cl.fixed_team_names[0]));
+	strlcpy(cl.fixed_team_names[1], "blue", sizeof(cl.fixed_team_names[1]));
+	strlcpy(cl.fixed_team_names[2], "yell", sizeof(cl.fixed_team_names[2]));
+	strlcpy(cl.fixed_team_names[3], "gren", sizeof(cl.fixed_team_names[3]));
+
 	CL_ProcessServerInfo(); // Force set some default variables, because server may not sent fullserverinfo.
 }
 

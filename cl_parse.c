@@ -2070,6 +2070,21 @@ void CL_ProcessUserInfo(int slot, player_info_t *player, char *key)
 	Skin_UserInfoChange(slot, player, key);
 
 	strlcpy(player->_team, player->team, sizeof (player->_team));
+
+	// Fix the team color in scoreboard when using TF
+	player->known_team_color = 0;
+	if (!stricmp(player->team, cl.fixed_team_names[0])) {
+		player->known_team_color = 4;
+	}
+	else if (!stricmp(player->team, cl.fixed_team_names[1])) {
+		player->known_team_color = 13;
+	}
+	else if (!stricmp(player->team, cl.fixed_team_names[2])) {
+		player->known_team_color = 12;
+	}
+	else if (!stricmp(player->team, cl.fixed_team_names[3])) {
+		player->known_team_color = 11;
+	}
 }
 
 void CL_NotifyOnFull(void)

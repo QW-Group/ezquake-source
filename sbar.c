@@ -401,15 +401,24 @@ int	Sbar_ColorForMap (int m) {
 }
 
 // HUD -> hexum
-
 int Sbar_TopColor(player_info_t *player)
 {
-	return Sbar_ColorForMap(player->topcolor);
+	return Sbar_ColorForMap(cl.teamfortress ? player->known_team_color : player->topcolor);
+}
+
+int Sbar_TopColorScoreboard(player_info_t* player)
+{
+	return Sbar_ColorForMap(cl.teamfortress ? player->known_team_color : (scr_scoreboard_forcecolors.integer ? player->topcolor : player->real_topcolor));
 }
 
 int Sbar_BottomColor(player_info_t *player)
 {
-	return Sbar_ColorForMap(player->bottomcolor);
+	return Sbar_ColorForMap(cl.teamfortress ? player->known_team_color : player->bottomcolor);
+}
+
+int Sbar_BottomColorScoreboard(player_info_t* player)
+{
+	return Sbar_ColorForMap(cl.teamfortress ? player->known_team_color : (scr_scoreboard_forcecolors.integer ? player->bottomcolor : player->real_bottomcolor));
 }
 
 // ** HUD -> hexum
@@ -1160,7 +1169,7 @@ static void Sbar_DeathmatchOverlay(int start)
 {
 	int stats_basic, stats_team, stats_touches, stats_caps, playerstats[7];
 	int scoreboardsize, colors_thickness, statswidth, stats_xoffset = 0;
-	int i, k, top, bottom, x, y, xofs, total, p, skip = 10, fragsint;
+	int i, k, x, y, xofs, total, p, skip = 10, fragsint;
 	int rank_width, leftover, startx, tempx, mynum;
 	char num[12];
 	char myminutes[11];
@@ -1351,8 +1360,6 @@ static void Sbar_DeathmatchOverlay(int start)
 		}
 
 		//render the main background transparencies behind players row
-		top = scr_scoreboard_forcecolors.value ? s->topcolor : s->real_topcolor;
-		bottom = scr_scoreboard_forcecolors.value ? s->bottomcolor : s->real_bottomcolor;
 		if (k == mynum) {
 			bk_alpha = 1.7 * SCOREBOARD_ALPHA;
 			bk_alpha = min(alpha, 0.75);
@@ -1366,7 +1373,7 @@ static void Sbar_DeathmatchOverlay(int start)
 			c = 2;
 		}
 		else {
-			c = Sbar_ColorForMap(bottom);
+			c = Sbar_BottomColorScoreboard(s);
 		}
 
 		if (S_Voip_Speaking(k)) {
@@ -1454,8 +1461,8 @@ static void Sbar_DeathmatchOverlay(int start)
 		}
 
 		// print the shirt/pants colour bars
-		Draw_Fill(cl.teamplay ? tempx - 40 : tempx, y + 4 - colors_thickness, 40, colors_thickness, Sbar_ColorForMap(top));
-		Draw_Fill(cl.teamplay ? tempx - 40 : tempx, y + 4, 40, 4, Sbar_ColorForMap(bottom));
+		Draw_Fill(cl.teamplay ? tempx - 40 : tempx, y + 4 - colors_thickness, 40, colors_thickness, Sbar_TopColorScoreboard(s));
+		Draw_Fill(cl.teamplay ? tempx - 40 : tempx, y + 4, 40, 4, Sbar_BottomColorScoreboard(s));
 
 		// frags
 		if (Sbar_ShowScoreboardIndicator() && k == mynum) {

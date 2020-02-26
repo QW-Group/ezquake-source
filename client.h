@@ -148,6 +148,7 @@ typedef struct player_info_s
 	char	userinfo[MAX_INFO_STRING];
 	char	team[MAX_INFO_STRING];
 	char	_team[MAX_INFO_STRING];
+	int     known_team_color;
 
 	// 
 	double  max_health_last_set;
@@ -623,6 +624,8 @@ typedef struct {
 	int         cif_flags;
 
 	int         scoring_system;
+
+	char        fixed_team_names[4][16];
 } clientState_t;
 
 #define SCORING_SYSTEM_DEFAULT   0

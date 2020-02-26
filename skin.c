@@ -579,12 +579,14 @@ static void Skin_Blend(byte* original, skin_t* skin, int skin_number)
 	int i;
 	byte* specific;
 	char texture_name[128];
+	qbool block_adjustments = (cl.teamfortress || (cl.fpd & (FPD_NO_FORCE_SKIN | FPD_NO_FORCE_COLOR)));
 
 	// FIXME: Delete old, don't leave lying around.  Watch out for solidtexture references
 	memset(skin->texnum, 0, sizeof(skin->texnum));
 
 	// If config says no color adjustments, load as normal skin
-	if ((!r_teamskincolor.string[0] && !r_enemyskincolor.string[0]) || (r_skincolormodedead.integer <= 0 && r_skincolormode.integer == 0)) {
+	block_adjustments &= (!r_teamskincolor.string[0] && !r_enemyskincolor.string[0]) || (r_skincolormodedead.integer <= 0 && r_skincolormode.integer == 0);
+	if (block_adjustments) {
 		snprintf(texture_name, sizeof(texture_name), "%s-%02d", types[skin_base], skin_number);
 		skin->texnum[skin_base] = R_LoadTexture(texture_name, skin->width, skin->height, original, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
 		return;
@@ -862,12 +864,15 @@ void R_SetSkinForPlayerEntity(entity_t* ent, texture_ref* texture, texture_ref* 
 		}
 
 		if (is_player_model && R_TextureReferenceEqual(*texture, solidwhite_texture)) {
-			cvar_t* cv = &r_enemyskincolor;
-			if (cl.teamplay && strcmp(cl.players[playernum].team, TP_SkinForcingTeam()) == 0) {
-				cv = &r_teamskincolor;
-			}
-			if (cv->string[0]) {
-				*color32bit = cv->color;
+			qbool custom_skins_blocked = cl.teamfortress || (cl.fpd & (FPD_NO_FORCE_SKIN | FPD_NO_FORCE_COLOR));
+			if (!custom_skins_blocked) {
+				cvar_t* cv = &r_enemyskincolor;
+				if (cl.teamplay && !strcmp(cl.players[playernum].team, TP_SkinForcingTeam())) {
+					cv = &r_teamskincolor;
+				}
+				if (cv->string[0]) {
+					*color32bit = cv->color;
+				}
 			}
 		}
 	}
