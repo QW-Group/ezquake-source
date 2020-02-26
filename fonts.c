@@ -556,9 +556,9 @@ float FontCharacterWidth(char ch_, float scale, qbool proportional)
 	int charset = 0;
 
 #ifdef EZ_FREETYPE_SUPPORT
-	unsigned char ch = (unsigned char)(ch_);
+	int ch = (unsigned char)(ch_);
 
-	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch_].loaded) {
+	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
 		return 8 * glyphs[ch].advance[0] * scale;
 	}
 #endif

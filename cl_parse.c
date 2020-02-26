@@ -2073,16 +2073,16 @@ void CL_ProcessUserInfo(int slot, player_info_t *player, char *key)
 
 	// Fix the team color in scoreboard when using TF
 	player->known_team_color = 0;
-	if (!stricmp(player->team, cl.fixed_team_names[0])) {
+	if (!strcasecmp(player->team, cl.fixed_team_names[0])) {
 		player->known_team_color = 4;
 	}
-	else if (!stricmp(player->team, cl.fixed_team_names[1])) {
+	else if (!strcasecmp(player->team, cl.fixed_team_names[1])) {
 		player->known_team_color = 13;
 	}
-	else if (!stricmp(player->team, cl.fixed_team_names[2])) {
+	else if (!strcasecmp(player->team, cl.fixed_team_names[2])) {
 		player->known_team_color = 12;
 	}
-	else if (!stricmp(player->team, cl.fixed_team_names[3])) {
+	else if (!strcasecmp(player->team, cl.fixed_team_names[3])) {
 		player->known_team_color = 11;
 	}
 }

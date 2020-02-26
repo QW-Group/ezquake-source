@@ -460,7 +460,6 @@ int Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *color, in
 	int color_index = 0;
 	color_t last_color = COLOR_WHITE;
 	int color_count = color ? text_length : 0;
-	int original_x = x;
 
 	// Nothing to draw.
 	if (!*text) {
