@@ -1212,6 +1212,10 @@ void R_DrawAliasModel(entity_t *ent)
 		color32bit = cv->color;
 
 	r_modelcolor[0] = -1;  // by default no solid fill color for model, using texture
+	if (cl.teamfortress || cl.fpd & (FPD_NO_FORCE_COLOR | FPD_NO_FORCE_SKIN)) {
+		color32bit = NULL;
+		local_skincolormode = 0;
+	}
 
 	// Check for outline on models.
 	// We don't support outline for transparent models,

@@ -1158,25 +1158,15 @@ static char *Utils_TF_ColorToTeam_Failsafe(int color) {
 }
 
 char *Utils_TF_ColorToTeam(int color) {
-	char *s;
-
 	switch (color) {
 		case 13:
-			if (*(s = Info_ValueForKey(cl.serverinfo, "team1")) || *(s = Info_ValueForKey(cl.serverinfo, "t1")))
-				return s;
-			break;
+			return cl.fixed_team_names[0];
 		case 4:
-			if (*(s = Info_ValueForKey(cl.serverinfo, "team2")) || *(s = Info_ValueForKey(cl.serverinfo, "t2")))
-				return s;
-			break;
+			return cl.fixed_team_names[1];
 		case 12:
-			if (*(s = Info_ValueForKey(cl.serverinfo, "team3")) || *(s = Info_ValueForKey(cl.serverinfo, "t3")))
-				return s;
-			break;
+			return cl.fixed_team_names[2];
 		case 11:
-			if (*(s = Info_ValueForKey(cl.serverinfo, "team4")) || *(s = Info_ValueForKey(cl.serverinfo, "t4")))
-				return s;
-			break;
+			return cl.fixed_team_names[3];
 		default:
 			return "";
 	}
