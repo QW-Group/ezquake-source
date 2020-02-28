@@ -299,7 +299,7 @@ void HUD_Sort_Scoreboard(int flags)
 	if (flags & HUD_SCOREBOARD_SORT_PLAYERS) {
 		qsort(sorted_players, n_players + n_spectators, sizeof(sort_players_info_t), HUD_ComparePlayers);
 
-		if (hud_sortrules_includeself.integer && !cl.teamplay) {
+		if (!cl.teamplay) {
 			// Re-find player
 			active_player_position = -1;
 			for (i = 0; i < n_players + n_spectators; ++i) {
