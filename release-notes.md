@@ -1,4 +1,4 @@
-# Changes in 3.2-dev
+# Changes in 3.2
 
 ### Improvements
 
@@ -40,6 +40,8 @@
 - `thunderdome` allows simple-item backpacks & texture replacements for backpacks
 - `thunderdome`, `smackdown` & `qcon` all block hud group-picture changes during the match
 - `thunderdome`, `smackdown` & `qcon` all block `/gl_outline` as it can lead to seeing items through walls
+- `r_skincolormode`, `r_enemyskincolor`, `r_teamskincolor` blocked in TF games or if server blocks skin/color forcing
+- Team Fortress: scoreboard always color players by their teamname
 
 ### Bugfixes
 
@@ -61,6 +63,8 @@
   - pack drops are announced when the player dies, not when they respawn
   - weapon dropped now based on active weapon when dying, not last weapon fired
   - {} white-text wasn't stripped from item name cvars
+- Halflife maps had wrong bounding box sizes
+- `hud_sortrules_includeself 0` could lead to player not being included in visible list
 
 ### Other changes
 
