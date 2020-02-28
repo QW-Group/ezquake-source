@@ -425,8 +425,8 @@ int Sbar_BottomColorScoreboard(player_info_t* player)
 
 /********************************* FRAG SORT *********************************/
 
-int		fragsort[MAX_CLIENTS];
-int		scoreboardlines;
+static int fragsort[MAX_CLIENTS];
+static int scoreboardlines;
 
 #define SCR_TEAM_T_MAXTEAMSIZE	(16 + 1)
 
@@ -436,12 +436,13 @@ typedef struct {
 	int players;
 	int plow, phigh, ptotal;
 	int topcolor, bottomcolor;
+	int known_team_number;
 	qbool myteam;
 } team_t;
-team_t teams[MAX_CLIENTS];
+static team_t teams[MAX_CLIENTS];
 
-int teamsort[MAX_CLIENTS];
-int scoreboardteams;
+static int teamsort[MAX_CLIENTS];
+static int scoreboardteams;
 
 static __inline int Sbar_PlayerNum(void) {
 	int mynum = cl.playernum;
@@ -558,6 +559,7 @@ static void Sbar_SortTeams (void) {
 
 			teams[j].frags = s->frags;
 			teams[j].players = 1;
+			teams[j].known_team_number = s->known_team_color;
 			if (cl.teamfortress) {
 				teams[j].topcolor = teams[j].bottomcolor = Utils_TF_TeamToColor(t);
 			} else {
@@ -690,35 +692,36 @@ static void Sbar_SortTeamsAndFrags(qbool specs) {
 
 
 /********************************* INVENTORY *********************************/
-
-static void Sbar_DrawInventory (void) {
+static void Sbar_DrawInventory(void)
+{
 	int i, flashon;
 	char num[6];
 	float time;
 	qbool headsup, hudswap;
 
 	headsup = !Sbar_IsStandardBar();
-	hudswap = cl_hudswap.value; // Get that nasty float out :)
+	hudswap = cl_hudswap.integer;
 
-	if (!headsup)
-	{
+	if (!headsup) {
 		Draw_TileClear (sbar_xofs, vid.height - sb_lines, sbar_xofs + 320, 24);
 		Sbar_DrawPic (0, -24, sb_ibar);
 	}
 
 	// weapons
-	if (sbar_drawguns.value)    // kazik
-	{
+	if (sbar_drawguns.integer) { // kazik
 		for (i = 0; i < 7; i++) {
 			if (cl.stats[STAT_ITEMS] & (IT_SHOTGUN << i) ) {
 				time = cl.item_gettime[i];
 				flashon = (int)((cl.time - time) * 10);
-				if (flashon < 0)
+				if (flashon < 0) {
 					flashon = 0;
-				if (flashon >= 10)
-					flashon = (cl.stats[STAT_ACTIVEWEAPON] == (IT_SHOTGUN << i) ) ? 1 : 0;
-				else
+				}
+				if (flashon >= 10) {
+					flashon = (cl.stats[STAT_ACTIVEWEAPON] == (IT_SHOTGUN << i)) ? 1 : 0;
+				}
+				else {
 					flashon = (flashon % 5) + 2;
+				}
 
 				if (headsup) {
 					if (i || vid.height > 200)
@@ -733,9 +736,9 @@ static void Sbar_DrawInventory (void) {
 			}
 		}
 	}
+
 	// ammo counts
-	if (sbar_drawammocounts.value)  // kazik
-	{
+	if (sbar_drawammocounts.integer) { // kazik
 		for (i = 0; i < 4; i++) {
 			snprintf (num, sizeof(num), "%3i", cl.stats[STAT_SHELLS + i]);
 			if (headsup) {
@@ -746,7 +749,8 @@ static void Sbar_DrawInventory (void) {
 					Draw_Character (hudswap ? 15: vid.width - 27, vid.height - SBAR_HEIGHT - 24 - (4 - i) * 11, 18 + num[1] - '0');
 				if (num[2] != ' ')
 					Draw_Character (hudswap ? 23: vid.width - 19, vid.height - SBAR_HEIGHT - 24 - (4 - i) * 11, 18 + num[2] - '0');
-			} else {
+			}
+			else {
 				if (num[0] != ' ')
 					Sbar_DrawCharacter ((6 * i + 1) * 8 - 2, -24, 18 + num[0] - '0');
 				if (num[1] != ' ')
@@ -756,39 +760,44 @@ static void Sbar_DrawInventory (void) {
 			}
 		}
 	}
-	flashon = 0;
+
 	// items
-	if (sbar_drawitems.value)   // kazik
-	{
+	flashon = 0;
+	if (sbar_drawitems.integer) { // kazik
 		for (i = 0; i < 6; i++) {
 			if (cl.stats[STAT_ITEMS] & (1 << (17 + i))) {
 				time = cl.item_gettime[17 + i];
-				if (time &&	time > cl.time - 2 && flashon)
+				if (time && time > cl.time - 2 && flashon) {
 					// flash frame
 					sb_updates = 0;
-				else
-					Sbar_DrawPic (192 + i * 16, -16, sb_items[i]);
+				}
+				else {
+					Sbar_DrawPic(192 + i * 16, -16, sb_items[i]);
+				}
 
-				if (time &&	time > cl.time - 2)
+				if (time && time > cl.time - 2) {
 					sb_updates = 0;
+				}
 			}
 		}
 	}
 
 	// sigils
-	if (sbar_drawsigils.value)  // kazik
-	{
+	if (sbar_drawsigils.integer) { // kazik
 		for (i = 0; i < 4; i++) {
 			if (cl.stats[STAT_ITEMS] & (1 << (28 + i)))	{
 				time = cl.item_gettime[28 + i];
-				if (time &&	time > cl.time - 2 && flashon )
+				if (time && time > cl.time - 2 && flashon) {
 					// flash frame
 					sb_updates = 0;
-				else
-					Sbar_DrawPic (320 - 32 + i * 8, -16, sb_sigil[i]);
+				}
+				else {
+					Sbar_DrawPic(320 - 32 + i * 8, -16, sb_sigil[i]);
+				}
 
-				if (time &&	time > cl.time - 2)
+				if (time && time > cl.time - 2) {
 					sb_updates = 0;
+				}
 			}
 		}
 	}
@@ -796,15 +805,16 @@ static void Sbar_DrawInventory (void) {
 
 /************************************ HUD ************************************/
 
-static void Sbar_DrawFrags_DrawCell(int x, int y, int topcolor, int bottomcolor, int frags, int brackets) {
+static void Sbar_DrawFrags_DrawCellPlayer(int x, int y, player_info_t* player, int brackets)
+{
 	char num[4];
 
 	// draw background
-	Draw_Fill (sbar_xofs + x * 8 + 10, y, 28, 4, Sbar_ColorForMap (topcolor));
-	Draw_Fill (sbar_xofs + x * 8 + 10, y + 4, 28, 3, Sbar_ColorForMap (bottomcolor));
+	Draw_Fill (sbar_xofs + x * 8 + 10, y, 28, 4, Sbar_TopColorScoreboard(player));
+	Draw_Fill (sbar_xofs + x * 8 + 10, y + 4, 28, 3, Sbar_BottomColorScoreboard(player));
 
 	// draw number
-	snprintf (num, sizeof(num), "%3i", frags);
+	snprintf (num, sizeof(num), "%3i", bound(-99, player->frags, 999));
 
 	Sbar_DrawCharacter ((x + 1) * 8 , -24, num[0]);
 	Sbar_DrawCharacter ((x + 2) * 8 , -24, num[1]);
@@ -816,8 +826,34 @@ static void Sbar_DrawFrags_DrawCell(int x, int y, int topcolor, int bottomcolor,
 	}
 }
 
+static void Sbar_DrawFrags_DrawTeamCell(int x, int y, team_t* team)
+{
+	char num[4];
+	int frags = team->frags;
+	player_info_t p = { 0 };
+	p.topcolor = team->topcolor;
+	p.bottomcolor = team->bottomcolor;
+	p.known_team_color = team->known_team_number;
+
+	// draw background
+	Draw_Fill(sbar_xofs + x * 8 + 10, y, 28, 4, Sbar_TopColorScoreboard(&p));
+	Draw_Fill(sbar_xofs + x * 8 + 10, y + 4, 28, 3, Sbar_BottomColorScoreboard(&p));
+
+	// draw number
+	snprintf(num, sizeof(num), "%3i", bound(-99, frags, 999));
+
+	Sbar_DrawCharacter((x + 1) * 8, -24, num[0]);
+	Sbar_DrawCharacter((x + 2) * 8, -24, num[1]);
+	Sbar_DrawCharacter((x + 3) * 8, -24, num[2]);
+
+	if (team->myteam) {
+		Sbar_DrawCharacter(x * 8 + 2, -24, 16);
+		Sbar_DrawCharacter((x + 4) * 8 - 4, -24, 17);
+	}
+}
+
 static void Sbar_DrawFrags (void) {
-	int i, k, l, top, bottom, x, y, mynum, myteam = -1;
+	int i, k, l, x, y, mynum, myteam = -1;
 	player_info_t *s;
 	team_t *tm;
 	qbool drawn_self = false, drawn_self_team = false;
@@ -831,34 +867,31 @@ static void Sbar_DrawFrags (void) {
 	mynum = Sbar_PlayerNum();
 
 	if (!cl.teamplay || scr_drawHFrags.value == 1) {
-
 		Sbar_SortFrags (false);
 		l = min(scoreboardlines, 4);
 
 		for (i = 0; i < l; i++) {
-			if (i + 1 == l && !drawn_self && !Sbar_IsSpectator(mynum))
+			if (i + 1 == l && !drawn_self && !Sbar_IsSpectator(mynum)) {
 				k = mynum;
-			else
+			}
+			else {
 				k = fragsort[i];
+			}
 
 			s = &cl.players[k];
 
-			if (!s->name[0] || s->spectator)
+			if (!s->name[0] || s->spectator) {
 				continue;
+			}
 
-			top = scr_scoreboard_forcecolors.value ? s->topcolor : s->real_topcolor;
-			bottom = scr_scoreboard_forcecolors.value ? s->bottomcolor : s->real_bottomcolor;
-			top = bound(0, top, 13);
-			bottom = bound(0, bottom, 13);
+			Sbar_DrawFrags_DrawCellPlayer(x, y, s, k == mynum);
 
-			Sbar_DrawFrags_DrawCell(x, y, top, bottom, s->frags, k == mynum);
-
-			if (k == mynum)
-				drawn_self = true;
+			drawn_self |= (k == mynum);
 
 			x += 4;
 		}
-	} else {
+	}
+	else {
 		Sbar_SortTeams();
 
 		for (i = 0; i < scoreboardteams; i++) {
@@ -876,7 +909,7 @@ static void Sbar_DrawFrags (void) {
 				k = teamsort[i];
 
 			tm = &teams[k];
-			Sbar_DrawFrags_DrawCell(x, y, tm->topcolor, tm->bottomcolor, tm->frags, tm->myteam);
+			Sbar_DrawFrags_DrawTeamCell(x, y, tm);
 
 			if (k == myteam)
 				drawn_self_team = true;
@@ -890,12 +923,7 @@ static void Sbar_DrawFrags (void) {
 
 			s = &cl.players[mynum];
 
-			top = scr_scoreboard_forcecolors.value ? s->topcolor : s->real_topcolor;
-			bottom = scr_scoreboard_forcecolors.value ? s->bottomcolor : s->real_bottomcolor;
-			top = bound(0, top, 13);
-			bottom = bound(0, bottom, 13);
-
-			Sbar_DrawFrags_DrawCell(x, y, top, bottom, s->frags, 1);
+			Sbar_DrawFrags_DrawCellPlayer(x, y, s, 1);
 		}
 	}
 }
@@ -1752,7 +1780,7 @@ static void Sbar_TeamOverlay(void)
 
 
 static void Sbar_MiniDeathmatchOverlay (void) {
-	int i, k, top, bottom, x, y, mynum, numlines;
+	int i, k, x, y, mynum, numlines;
 	char num[4 + 1], name[16 + 1], team[4 + 1];
 	player_info_t *s;
 	team_t *tm;
@@ -1802,26 +1830,22 @@ static void Sbar_MiniDeathmatchOverlay (void) {
 		k = fragsort[i];
 		s = &cl.players[k];
 
-		if (!s->name[0])
+		if (!s->name[0]) {
 			continue;
+		}
 
-		top = scr_scoreboard_forcecolors.value ? s->topcolor : s->real_topcolor;
-		bottom = scr_scoreboard_forcecolors.value ? s->bottomcolor : s->real_bottomcolor;
-
-		Draw_Fill (x, y + 1, 40, 3, Sbar_ColorForMap (top));
-		Draw_Fill (x, y + 4, 40, 4, Sbar_ColorForMap (bottom));
+		Draw_Fill(x, y + 1, 40, 3, Sbar_TopColorScoreboard(s));
+		Draw_Fill(x, y + 4, 40, 4, Sbar_BottomColorScoreboard(s));
 
 		// draw number
-		snprintf (num, sizeof(num), "%3i", s->frags);
+		snprintf (num, sizeof(num), "%3i", bound(-99, s->frags, 999));
 
 		Draw_Character (x + 8 , y, num[0]);
 		Draw_Character (x + 16, y, num[1]);
 		Draw_Character (x + 24, y, num[2]);
 
-		if (Sbar_ShowScoreboardIndicator())
-		{
-			if (k == mynum)
-			{
+		if (Sbar_ShowScoreboardIndicator()) {
+			if (k == mynum) {
 				Draw_Character (x, y, 16);
 				Draw_Character (x + 32, y, 17);
 			}
@@ -1835,26 +1859,31 @@ static void Sbar_MiniDeathmatchOverlay (void) {
 
 		// draw name
 		strlcpy (name, s->name, sizeof(name));
-		if (cl.teamplay)
-			Draw_String (x + 48 + 40, y, name);
-		else
-			Draw_String (x + 48, y, name);
+		if (cl.teamplay) {
+			Draw_String(x + 48 + 40, y, name);
+		}
+		else {
+			Draw_String(x + 48, y, name);
+		}
 
 		y += 8;
 	}
 
 	// draw teams if room
-	if (vid.width < 640 || !cl.teamplay)
+	if (vid.width < 640 || !cl.teamplay) {
 		return;
+	}
 
 	Sbar_SortTeams();
-	if (!scoreboardteams)
+	if (!scoreboardteams) {
 		return;
+	}
 
 	// draw seperator
 	x += 208;
-	for (y = vid.height - sb_lines; y < vid.height - 6; y += 2)
+	for (y = vid.height - sb_lines; y < vid.height - 6; y += 2) {
 		Draw_Character(x, y, 14);
+	}
 
 	x += 16;
 
@@ -1867,21 +1896,21 @@ drawteams:
 		tm = teams + k;
 
 		//draw name
-		strlcpy (team, tm->team, sizeof(team));
-		Draw_String (x, y, team);
+		strlcpy(team, tm->team, sizeof(team));
+		Draw_String(x, y, team);
 
 		// draw total
-		Draw_Fill (x + 40, y + 1, 48, 3, Sbar_ColorForMap (tm->topcolor));
-		Draw_Fill (x + 40, y + 4, 48, 4, Sbar_ColorForMap (tm->bottomcolor));
-		snprintf (num, sizeof(num), "%4i", tm->frags);
-		Draw_Character (x + 40 + 8 , y, num[0]);
-		Draw_Character (x + 40 + 16, y, num[1]);
-		Draw_Character (x + 40 + 24, y, num[2]);
-		Draw_Character (x + 40 + 32, y, num[3]);
+		Draw_Fill(x + 40, y + 1, 48, 3, Sbar_ColorForMap(tm->topcolor));
+		Draw_Fill(x + 40, y + 4, 48, 4, Sbar_ColorForMap(tm->bottomcolor));
+		snprintf(num, sizeof(num), "%4i", bound(-999, tm->frags, 9999));
+		Draw_Character(x + 40 + 8, y, num[0]);
+		Draw_Character(x + 40 + 16, y, num[1]);
+		Draw_Character(x + 40 + 24, y, num[2]);
+		Draw_Character(x + 40 + 32, y, num[3]);
 
 		if (tm->myteam) {
-			Draw_Character (x + 40, y, 16);
-			Draw_Character (x + 40 + 40, y, 17);
+			Draw_Character(x + 40, y, 16);
+			Draw_Character(x + 40 + 40, y, 17);
 		}
 
 		y += 8;

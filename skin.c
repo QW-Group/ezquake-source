@@ -585,7 +585,7 @@ static void Skin_Blend(byte* original, skin_t* skin, int skin_number)
 	memset(skin->texnum, 0, sizeof(skin->texnum));
 
 	// If config says no color adjustments, load as normal skin
-	block_adjustments &= (!r_teamskincolor.string[0] && !r_enemyskincolor.string[0]) || (r_skincolormodedead.integer <= 0 && r_skincolormode.integer == 0);
+	block_adjustments |= (!r_teamskincolor.string[0] && !r_enemyskincolor.string[0]) || (r_skincolormodedead.integer <= 0 && r_skincolormode.integer == 0);
 	if (block_adjustments) {
 		snprintf(texture_name, sizeof(texture_name), "%s-%02d", types[skin_base], skin_number);
 		skin->texnum[skin_base] = R_LoadTexture(texture_name, skin->width, skin->height, original, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);

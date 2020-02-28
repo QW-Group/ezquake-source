@@ -2074,10 +2074,10 @@ void CL_ProcessUserInfo(int slot, player_info_t *player, char *key)
 	// Fix the team color in scoreboard when using TF
 	player->known_team_color = 0;
 	if (!strcasecmp(player->team, cl.fixed_team_names[0])) {
-		player->known_team_color = 4;
+		player->known_team_color = 13;
 	}
 	else if (!strcasecmp(player->team, cl.fixed_team_names[1])) {
-		player->known_team_color = 13;
+		player->known_team_color = 4;
 	}
 	else if (!strcasecmp(player->team, cl.fixed_team_names[2])) {
 		player->known_team_color = 12;
@@ -2320,6 +2320,24 @@ void CL_ProcessServerInfo (void)
 	cl.fpd = newfpd;
 	if (skin_refresh)
 		TP_RefreshSkins();
+
+	// Set fixed teamnames if broadcast by server
+	{
+		const char* s = NULL;
+
+		if (*(s = Info_ValueForKey(cl.serverinfo, "team1")) || *(s = Info_ValueForKey(cl.serverinfo, "t1"))) {
+			strlcpy(cl.fixed_team_names[0], s, sizeof(cl.fixed_team_names[0]));
+		}
+		if (*(s = Info_ValueForKey(cl.serverinfo, "team2")) || *(s = Info_ValueForKey(cl.serverinfo, "t2"))) {
+			strlcpy(cl.fixed_team_names[1], s, sizeof(cl.fixed_team_names[1]));
+		}
+		if (*(s = Info_ValueForKey(cl.serverinfo, "team3")) || *(s = Info_ValueForKey(cl.serverinfo, "t3"))) {
+			strlcpy(cl.fixed_team_names[2], s, sizeof(cl.fixed_team_names[2]));
+		}
+		if (*(s = Info_ValueForKey(cl.serverinfo, "team4")) || *(s = Info_ValueForKey(cl.serverinfo, "t4"))) {
+			strlcpy(cl.fixed_team_names[3], s, sizeof(cl.fixed_team_names[3]));
+		}
+	}
 }
 
 // Parse a string looking like this: //vwep vwplayer w_axe w_shot w_shot2
