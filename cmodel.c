@@ -615,11 +615,11 @@ static void CM_LoadSubmodels (lump_t *l)
 
 		if (map_halflife)
 		{
-			VectorSet (out->hulls[1].clip_mins, -16, -16, -32);
-			VectorSet (out->hulls[1].clip_maxs, 16, 16, 32);
+			VectorSet (out->hulls[1].clip_mins, -16, -16, -36);
+			VectorSet (out->hulls[1].clip_maxs, 16, 16, 36);
 
-			VectorSet (out->hulls[2].clip_mins, -32, -32, -32);
-			VectorSet (out->hulls[2].clip_maxs, 32, 32, 32);
+			VectorSet (out->hulls[2].clip_mins, -32, -32, -36);
+			VectorSet (out->hulls[2].clip_maxs, 32, 32, 36);
 			// not really used
 			VectorSet (out->hulls[3].clip_mins, -16, -16, -18);
 			VectorSet (out->hulls[3].clip_maxs, 16, 16, 18);
