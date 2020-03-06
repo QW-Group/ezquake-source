@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ ! -d /source/ezquake-source ]; then
 	# We need to initialize the build environment
