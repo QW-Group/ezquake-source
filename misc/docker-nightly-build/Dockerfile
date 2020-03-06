@@ -1,11 +1,10 @@
-FROM base/archlinux
+FROM debian:buster
 
-MAINTAINER Anders Lindmark <anders.lindmark@gmail.com>
+LABEL authors="Anders Lindmark <anders.lindmark@gmail.com>,Andreas Beisler <eb@subdevice.org>"
 
-# Install prerequisites
-RUN pacman-key --init && pacman-key --refresh-keys
-RUN pacman --noconfirm -Syu && pacman-db-upgrade
-RUN pacman --noconfirm -S gcc git make pkg-config p7zip sdl2 libpng jansson libjpeg-turbo mingw-w64-gcc
+RUN apt-get update && \
+    apt-get install -y git build-essential mingw-w64 libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev p7zip-full && \
+    apt-get clean
 
 # Add buildscript
 ADD mk_nightly.sh /
