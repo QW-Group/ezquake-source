@@ -952,9 +952,12 @@ void *Q_realloc(void *p, size_t newsize)
 #endif
 {
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-	ezquake_memory_block_t* block = MEMORY_BLOCK_FOR_PTR(p);
+	ezquake_memory_block_t* block = NULL;
 
-	Sys_Printf("\nmemory,free(realloc),%u,%s,%d,%u,%s,%d\n", block->allocation_number, block->filename, block->line_number, block->size, file, line);
+	if (p) {
+		block = MEMORY_BLOCK_FOR_PTR(p);
+		Sys_Printf("\nmemory,free(realloc),%u,%s,%d,%u,%s,%d\n", block->allocation_number, block->filename, block->line_number, block->size, file, line);
+	}
 	Sys_Printf("\nmemory,alloc(realloc),%u,%s,%d,%u,%s\n", allocation_number, file, line, newsize, label ? label : "");
 
 	block = p = realloc(block, newsize + sizeof(ezquake_memory_block_t));
