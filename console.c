@@ -869,7 +869,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 				printed = Draw_ConsoleString(posX, v + posY, con.text + idx, con.clr + idx, min(notifyCols, last - idx + 1), 0, scale, proportional);
 				idx += printed;
 				v += (8 * scale);
-				if (con.text[idx] == 0) {
+				if (printed == 0 || con.text[idx] == 0 || con.text[idx] == 0x80) {
 					break;
 				}
 			}
