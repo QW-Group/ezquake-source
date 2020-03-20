@@ -7256,7 +7256,7 @@
       "type": "float"
     },
     "hud_frags_extra_spec_info": {
-      "desc": "Enables to see what people have rocket launchers, powerups and how much health and armor they have using icons next to the frags. Works while watching MVD demo.",
+      "desc": "Enables to see when people have rocket launchers, lightning guns, powerups and how much health and armor they have using icons next to the frags. Works while watching MVD demo.",
       "group-id": "19",
       "type": "string",
       "values": [
@@ -7265,41 +7265,46 @@
           "name": "0"
         },
         {
-          "description": "Show RL, powerups armor and health.",
-          "name": "1"
+          "description": "Show RL, LG, powerups armor and health.",
+          "name": "ALL"
         },
         {
-          "description": "Show powerups, armor and health. (No RL's)",
-          "name": "2"
+          "description": "Show powerups, armor and health. (No RLs/LGs)",
+          "name": "POWERUPARMORHEALTH"
         },
         {
-          "description": "Show RL, powerups and health. (No armor)",
-          "name": "3"
+          "description": "Show RL, LG, powerups and health. (No armor)",
+          "name": "RLLGPOWERUPHEALTH"
         },
         {
-          "description": "Show RL, powerups and armor. (No health)",
-          "name": "4"
+          "description": "Show RL, LG, powerups and armor. (No health)",
+          "name": "RLLGPOWERUPARMOR"
         },
         {
-          "description": "Show RL, armor and health. (No powerups)",
-          "name": "5"
+          "description": "Show RL, LG, armor and health. (No powerups)",
+          "name": "RLLGARMORHEALTH"
         },
         {
           "description": "Show only powerups.",
-          "name": "6"
+          "name": "POWERUP"
         },
         {
           "description": "Show only health.",
-          "name": "7"
+          "name": "HEALTH"
         },
         {
           "description": "Show only armor.",
-          "name": "8"
+          "name": "ARMOR"
         },
         {
-          "description": "Show only RL.",
-          "name": "9"
+          "description": "Show horizontal health meter.",
+          "name": "HMETER"
+        },
+        {
+          "description": "Show horizontal power meter.",
+          "name": "PMETER"
         }
+
       ]
     },
     "hud_frags_fliptext": {

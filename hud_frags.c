@@ -39,6 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 static qbool hud_frags_extra_spec_info = true;
 static qbool hud_frags_show_rl = true;
+static qbool hud_frags_show_lg = true;
 static qbool hud_frags_show_armor = true;
 static qbool hud_frags_show_health = true;
 static qbool hud_frags_show_powerup = true;
@@ -455,6 +456,7 @@ static void Frags_OnChangeExtraSpecInfo(cvar_t *var, char *s, qbool *cancel)
 {
 	// Parse the extra spec info.
 	hud_frags_show_rl = Utils_RegExpMatch("RL|ALL", s);
+	hud_frags_show_lg = Utils_RegExpMatch("LG|ALL", s);
 	hud_frags_show_armor = Utils_RegExpMatch("ARMOR|ALL", s);
 	hud_frags_show_health = Utils_RegExpMatch("HEALTH|ALL", s);
 	hud_frags_show_powerup = Utils_RegExpMatch("POWERUP|ALL", s);
@@ -462,7 +464,7 @@ static void Frags_OnChangeExtraSpecInfo(cvar_t *var, char *s, qbool *cancel)
 	hud_frags_horiz_health = Utils_RegExpMatch("HMETER", s);
 	hud_frags_horiz_power = Utils_RegExpMatch("PMETER", s);
 
-	hud_frags_extra_spec_info = (hud_frags_show_rl || hud_frags_show_armor || hud_frags_show_health || hud_frags_show_powerup);
+	hud_frags_extra_spec_info = (hud_frags_show_rl || hud_frags_show_lg || hud_frags_show_armor || hud_frags_show_health || hud_frags_show_powerup);
 }
 
 static int Frags_DrawExtraSpecInfo(player_info_t *info,
@@ -473,6 +475,7 @@ static int Frags_DrawExtraSpecInfo(player_info_t *info,
 {
 	extern mpic_t *sb_weapons[7][8];		// sbar.c ... Used for displaying the RL.
 	mpic_t *rl_picture = sb_weapons[0][5];	// Picture of RL.
+	mpic_t *lg_picture = sb_weapons[0][6];	// Picture of LG.
 
 	float	armor_height = 0.0;
 	int		armor = 0;
@@ -486,8 +489,16 @@ static int Frags_DrawExtraSpecInfo(player_info_t *info,
 	}
 
 	// Set width based on text or picture.
-	if (hud_frags_show_armor || hud_frags_show_rl || hud_frags_show_powerup) {
-		weapon_width = (!hud_frags_textonly ? rl_picture->width : 24);
+	if (hud_frags_show_armor || hud_frags_show_rl || hud_frags_show_lg || hud_frags_show_powerup) {
+		if (hud_frags_show_rl && hud_frags_show_lg) {
+			weapon_width = (!hud_frags_textonly ? rl_picture->width + lg_picture->width : 24 * 2);
+		}
+		else if (hud_frags_show_rl) {
+			weapon_width = (!hud_frags_textonly ? rl_picture->width : 24);
+		}
+		else {
+			weapon_width = (!hud_frags_textonly ? lg_picture->width : 24);
+		}
 	}
 
 	// Draw health bar. (flipped)
@@ -542,7 +553,25 @@ static int Frags_DrawExtraSpecInfo(player_info_t *info,
 		}
 	}
 
-	// Only draw powerups is the current player has it and the style allows it.
+	// Draw the lg if the current player has it and the style allows it.
+	if ((info->stats[STAT_ITEMS] & IT_LIGHTNING) && hud_frags_show_lg) {
+		if (!hud_frags_textonly) {
+			// Draw the lg-pic.
+			Draw_SSubPic(
+				hud_frags_show_rl ? px + rl_picture->width + 24 : px,
+				py + Q_rint((cell_height / 2.0)) - (lg_picture->height / 2.0),
+				lg_picture, 0, 0,
+				lg_picture->width,
+				lg_picture->height, 1
+			);
+		}
+		else {
+			// Just print "LG" instead.
+			Draw_String(hud_frags_show_rl ? px + 8 + 24 : px + 12 - 8, py + Q_rint((cell_height / 2.0)) - 4, "LG");
+		}
+	}
+
+	// Only draw powerups if the current player has one and the style allows it.
 	if (hud_frags_show_powerup) {
 		//float powerups_x = px + (spec_extra_weapon_w / 2.0);
 		float powerups_x = px + (weapon_width / 2.0);
