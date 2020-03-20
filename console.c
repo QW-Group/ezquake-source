@@ -669,7 +669,7 @@ void Con_PrintW(wchar *txt)
 				}
 				y = con.current % con_totallines;
 				idx = y * con_linewidth + con.x;
-				con.text[idx] = c | (c <= 0x7F ? mask | con_ormask : 0);	// only apply mask if in 'standard' charset
+				con.text[idx] = c | (c > 0 && c <= 0x7F ? (mask | con_ormask) : 0);	// only apply mask if in 'standard' charset
 				memset(&con.clr[idx], 0, sizeof(clrinfo_t)); // zeroing whole struct
 				con.clr[idx].c = color;
 				con.clr[idx].i = idx; // no, that not stupid :P

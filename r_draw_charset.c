@@ -475,7 +475,7 @@ int Draw_ConsoleString(float x, float y, const wchar *text, clrinfo_t *color, in
 
 	// Draw the string.
 	R_Draw_StringBase_StartString(x, y, scale);
-	for (i = 0; text[i] != 0 && text[i] != 0x80 && (text_length <= 0 || i < text_length); i++) {
+	for (i = 0; text[i] != 0 && (text_length <= 0 || i < text_length); i++) {
 		// If we didn't get a color array, check for color codes in the text instead.
 		if (!color) {
 			if (text[i] == '&') {
