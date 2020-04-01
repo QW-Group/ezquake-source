@@ -1176,51 +1176,6 @@ void Config_TroubleShoot_f(void)
 	}
 }
 
-void Config_LegacyQuake_f(void)
-{
-	qbool specific = Cmd_Argc() > 1;
-	const char *ver = NULL;
-	
-	if (specific) {
-		ver = Cmd_Argv(1);
-	}
-	
-	if (!specific || (strcmp("2.1", ver) == 0)) {
-		Cbuf_AddText(
-			"hide itemsclock;echo hiding the itemsclock hud element (undo: show itemsclock);"
-			"\n"
-			);
-	}
-
-	if (!specific || (strcmp("2.1", ver) == 0)) {
-		Cbuf_AddText(
-			"cl_physfps_spectator 0;turning off spectator smoothing (undo: cl_physfps_spectator 30);"
-			"\n"
-			);
-	}
-
-	if (!specific || (strcmp("1.9", ver) == 0)) {
-		Cbuf_AddText(
-			"hide ownfrags;echo hiding the ownfrags hud element (undo: show ownfrags);"
-			"menu_ingame 0;echo turning off ingame menu (undo: menu_ingame 1);"
-			"gl_powerupshells 0;echo turning off powerup shell (undo: gl_powerupshells 1);"
-			"r_drawvweps 0;echo turning off vweps (undo: r_drawvweps 1);"
-			"\n"
-			);
-	}
-
-	if (!specific || (strcmp("1.8", ver) == 0)) {
-		Cbuf_AddText(
-			"r_tracker_messages 0;echo turning off tracker messages (undo: r_tracker_messages);"
-			"frags extra_spec_info 0;echo disabling extra spec info for frags hud element (undo: frags extra_spec_info 1);"
-			"teamfrags extra_spec_info 0;echo disabling extra spec info for teamfrags hud element (undo: teamfrags extra_spec_info 1);"
-			"hide radar;echo hiding the radar hud element (undo: show rader);"
-			"\n"
-		// "r_chaticons_alpha 0;echo chaticon drawing disabled;"
-		);
-	}
-}
-
 void ConfigManager_Init(void)
 {
 	Cmd_AddCommand("cfg_save", SaveConfig_f);
@@ -1230,7 +1185,6 @@ void ConfigManager_Init(void)
 	if (IsDeveloperMode()) {
 		Cmd_AddCommand("dev_dump_defaults", DumpVariablesDefaults_f);
 	}
-	Cmd_AddCommand("legacyquake", Config_LegacyQuake_f);
 	Cmd_AddCommand("troubleshoot", Config_TroubleShoot_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONFIG);
