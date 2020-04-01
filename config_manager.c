@@ -1227,7 +1227,6 @@ void ConfigManager_Init(void)
 	Cmd_AddCommand("cfg_load", LoadConfig_f);
 	Cmd_AddCommand("cfg_reset",	ResetConfigs_f);
 	Cmd_AddCommand("hud_export", DumpHUD_f);
-	Cmd_AddCommand("meagtest", Cfg_ExecuteDefaultConfig);
 	if (IsDeveloperMode()) {
 		Cmd_AddCommand("dev_dump_defaults", DumpVariablesDefaults_f);
 	}
