@@ -1158,7 +1158,6 @@ void Config_TroubleShoot_f(void)
 
 	if (in_raw.integer != 1) {
 		Config_TroubleShoot_Tip("in_raw is not set to 1",
-			"in_raw 3 enables Raw Input, the smoothest mouse input method. "
 			"It is the recommended setting for mouse input",
 			"set in_raw to 1", 0);
 		problems++;
