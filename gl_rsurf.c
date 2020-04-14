@@ -839,7 +839,7 @@ static void R_ClearTextureChains(model_t *clmodel) {
 	CHAIN_RESET(alphachain);
 }
 
-void DrawTextureChains(model_t *model, int contents, qbool lightmaps_rendered)
+void DrawTextureChains (model_t *model, int contents)
 {
 	extern cvar_t  gl_lumaTextures;
 
@@ -987,12 +987,9 @@ void DrawTextureChains(model_t *model, int contents, qbool lightmaps_rendered)
 				}
 				else
 				{
+
 					s->polys->chain = lightmap_polys[s->lightmaptexturenum];
 					lightmap_polys[s->lightmaptexturenum] = s->polys;
-
-					if (!lightmaps_rendered) {
-						R_RenderDynamicLightmaps(s);
-					}
 				}
 
                 glBegin (GL_POLYGON);
@@ -1265,7 +1262,6 @@ void R_DrawBrushModel (entity_t *e) {
 	mplane_t *pplane;
 	model_t *clmodel;
 	qbool rotated;
-	qbool lightmaps_rendered = false;
 
 	currententity = e;
 	currenttexture = -1;
@@ -1366,10 +1362,7 @@ void R_DrawBrushModel (entity_t *e) {
 
 	// START shaman FIX for no simple textures on world brush models {
 	//draw the textures chains for the model
-	if (gl_textureunits >= 2 || r_drawflat.integer) {
-		R_RenderAllDynamicLightmaps(clmodel);
-		lightmaps_rendered = true;
-	}
+	R_RenderAllDynamicLightmaps(clmodel);
 	if (r_drawflat.value != 0 && clmodel->isworldmodel)
 		if(r_drawflat.integer==1)
 		{
@@ -1377,12 +1370,12 @@ void R_DrawBrushModel (entity_t *e) {
 		}
 		else
 		{
-			DrawTextureChains (clmodel,(TruePointContents(e->origin)), lightmaps_rendered);//R00k added contents point for underwater bmodels
+			DrawTextureChains (clmodel,(TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
 			R_DrawFlat(clmodel);
 		}
 	else
 	{
-		DrawTextureChains (clmodel,(TruePointContents(e->origin)), lightmaps_rendered);//R00k added contents point for underwater bmodels
+		DrawTextureChains (clmodel,(TruePointContents(e->origin)));//R00k added contents point for underwater bmodels
 	}
 	// } END shaman FIX for no simple textures on world brush models
 
@@ -1491,7 +1484,6 @@ void R_DrawWorld (void)
 {
 	entity_t ent;
 	extern cvar_t gl_outline;
-	qbool lightmaps_rendered = false;
 
 	memset (&ent, 0, sizeof(ent));
 	ent.model = cl.worldmodel;
@@ -1512,10 +1504,7 @@ void R_DrawWorld (void)
 	R_DrawEntitiesOnList (&cl_firstpassents);
 
 	//draw the world
-	if (gl_textureunits >= 2 || r_drawflat.integer) {
-		R_RenderAllDynamicLightmaps(cl.worldmodel);
-		lightmaps_rendered = true;
-	}
+	R_RenderAllDynamicLightmaps(cl.worldmodel);
 	if (r_drawflat.value)
 	{
 		if(r_drawflat.integer==1)
@@ -1524,13 +1513,13 @@ void R_DrawWorld (void)
 		}
 		else
 		{
-			DrawTextureChains (cl.worldmodel, 0, lightmaps_rendered);
+			DrawTextureChains (cl.worldmodel,0);
 			R_DrawFlat(cl.worldmodel);
 		}
 	}
 	else
 	{
-		DrawTextureChains (cl.worldmodel, 0, lightmaps_rendered);
+		DrawTextureChains (cl.worldmodel, 0);
 	}
 
 	if ((gl_outline.integer & 2) && !RuleSets_DisallowModelOutline(NULL)) {
