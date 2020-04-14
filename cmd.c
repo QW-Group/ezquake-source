@@ -1435,7 +1435,7 @@ void Cmd_CmdList_re_f (void)
 	Cmd_CmdList (true);
 }
 
-#define MAX_MACROS 70
+#define MAX_MACROS 64
 
 static macro_command_t macro_commands[MAX_MACROS];
 static int macro_count = 0;

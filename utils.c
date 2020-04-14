@@ -530,7 +530,7 @@ char *Player_StripNameColor(const char *name)
 	return stripped;
 }
 
-int Player_StringtoSlot(char *arg, qbool use_regular_expression)
+int Player_StringtoSlot(char *arg) 
 {
 	int i, slot, arg_length;
 
@@ -576,20 +576,6 @@ int Player_StringtoSlot(char *arg, qbool use_regular_expression)
 		}
 
 		Q_free(stripped);
-	}
-
-	if (use_regular_expression) {
-		// Regexp match against stripped player name if previous attempts have failed
-		for (i = 0; i < MAX_CLIENTS; i++) {
-			char *stripped = Player_StripNameColor(cl.players[i].name);
-
-			if (cl.players[i].name[0] && Utils_RegExpMatch(arg, stripped)) {
-				Q_free(stripped);
-				return i;
-			}
-
-			Q_free(stripped);
-		}
 	}
 
 	// Check if the argument is a user id instead
@@ -660,7 +646,7 @@ int Player_GetSlot(char *arg)
 	int response;
 
 	// Try getting the slot by name or id.
-	if ((response = Player_StringtoSlot(arg, false)) >= 0 )
+	if ((response = Player_StringtoSlot(arg)) >= 0 )
 		//|| response == PLAYER_ID_NOMATCH)
 	{
 		return response;
@@ -1158,15 +1144,25 @@ static char *Utils_TF_ColorToTeam_Failsafe(int color) {
 }
 
 char *Utils_TF_ColorToTeam(int color) {
+	char *s;
+
 	switch (color) {
 		case 13:
-			return cl.fixed_team_names[0];
+			if (*(s = Info_ValueForKey(cl.serverinfo, "team1")) || *(s = Info_ValueForKey(cl.serverinfo, "t1")))
+				return s;
+			break;
 		case 4:
-			return cl.fixed_team_names[1];
+			if (*(s = Info_ValueForKey(cl.serverinfo, "team2")) || *(s = Info_ValueForKey(cl.serverinfo, "t2")))
+				return s;
+			break;
 		case 12:
-			return cl.fixed_team_names[2];
+			if (*(s = Info_ValueForKey(cl.serverinfo, "team3")) || *(s = Info_ValueForKey(cl.serverinfo, "t3")))
+				return s;
+			break;
 		case 11:
-			return cl.fixed_team_names[3];
+			if (*(s = Info_ValueForKey(cl.serverinfo, "team4")) || *(s = Info_ValueForKey(cl.serverinfo, "t4")))
+				return s;
+			break;
 		default:
 			return "";
 	}

@@ -5,11 +5,7 @@
 #include "draw.h"           // RGBA macros
 #include "teamplay.h"       // FPD_NO_FORCE_COLOR
 
-// meag: for switching back to 3d resolution to draw the multiview outlines
-#include "gl_model.h"
-#include "gl_local.h"
-
-extern int glx, gly, glwidth, glheight;
+#define MV_VIEWS 4
 
 #define	MV_VIEW1 0
 #define	MV_VIEW2 1
@@ -20,17 +16,11 @@ static int      CURRVIEW;					// The current view being drawn in multiview mode.
 static qbool    bExitmultiview;				// Used when saving effect values on each frame.
 static int      nNumViews;					// The number of views in multiview mode.
 static int      nPlayernum;
-static int      mv_trackslots[MV_VIEWS];    // The different track slots for each view.
+static int      mv_trackslots[4];			// The different track slots for each view.
 static char     currteam[MAX_INFO_STRING];	// The name of the current team being tracked in multiview mode.
 static int      nSwapPov;					// Change in POV positive for next, negative for previous.
 static int      nTrack1duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the main view.
 static int      nTrack2duel;				// When cl_multiview = 2 and mvinset is on this is the tracking slot for the mvinset view.
-
-// temporary storage (essentially caching OpenGL viewport state, can get rid of this in 3.5)
-static int inset_x;
-static int inset_y;
-static int inset_width;
-static int inset_height;
 
 // Temporary storage so we keep same settings during demo rewind
 static int rewind_trackslots[4];
@@ -50,10 +40,6 @@ extern cvar_t scr_autoid_healthbar_unnatural_color;
 extern cvar_t scr_autoid_armorbar_green_armor;
 extern cvar_t scr_autoid_armorbar_yellow_armor;
 extern cvar_t scr_autoid_armorbar_red_armor;
-
-extern cvar_t cl_multiview_inset_offset_x, cl_multiview_inset_offset_y;
-extern cvar_t cl_multiview_inset_size_x, cl_multiview_inset_size_y;
-extern cvar_t cl_multiview_inset_top, cl_multiview_inset_right;
 
 #define ALPHA_COLOR(x, y) RGBA_TO_COLOR((x)[0],(x)[1],(x)[2],(y))
 
@@ -85,7 +71,7 @@ void R_TranslatePlayerSkin (int playernum);
 void CL_Track (int trackview);
 static void CL_MultiviewOverrideValues (void);
 
-static int CL_IncrLoop(int cview, int max)
+int CL_IncrLoop(int cview, int max)
 {
 	return (cview >= max) ? 1 : ++cview;
 }
@@ -649,7 +635,7 @@ void SCR_SetMVStatusTwoViewRect (mv_viewrect_t *view)
 	}
 }
 
-void SCR_SetMVStatusTwoInsetViewRect(mv_viewrect_t *view)
+void SCR_SetMVStatusTwoInsetViewRect (mv_viewrect_t *view)
 {
 	if (CURRVIEW == 2) {
 		// Main.
@@ -659,14 +645,11 @@ void SCR_SetMVStatusTwoInsetViewRect(mv_viewrect_t *view)
 		view->height = vid.height;
 	}
 	else if (CURRVIEW == 1) {
-		float ratio_x = (vid.width * 1.0f) / glwidth;
-		float ratio_y = (vid.height * 1.0f) / glheight;
-
-		// inset window
-		view->x = inset_x * ratio_x;
-		view->y = (glheight - (inset_y + inset_height)) * ratio_y; // reversed for 2d/3d rendering
-		view->width = ceil(inset_width * ratio_x);
-		view->height = ceil(inset_height * ratio_y);
+		// Top right.
+		view->width = (vid.width / 3);
+		view->height = (vid.height / 3);
+		view->x = (vid.width / 3) * 2;
+		view->y = 0;
 	}
 }
 
@@ -752,7 +735,7 @@ void SCR_DrawMVStatus (void)
 				return;
 			}
 
-			SCR_SetMVStatusTwoInsetViewRect(&view);
+			SCR_SetMVStatusTwoInsetViewRect (&view);
 		}
 		else {
 			SCR_SetMVStatusTwoViewRect (&view);
@@ -1020,14 +1003,11 @@ void SCR_DrawMVStatusStrings (void)
 				yd = vid.height / 2 - sb_lines - 8;
 			}
 			else if (CURRVIEW == 1) {
-				mv_viewrect_t view;
-
-				SCR_SetMVStatusTwoInsetViewRect(&view);
-
-				xb = (view.x + view.width) - strlen (strng) * 8; // hud
-				yb = (view.y + view.height) - 16;
-				xd = (view.x + view.width) - strlen (weapons) * 8 - 70; // weapons
-				yd = (view.y + view.height) - 8;
+				// Top right
+				xb = vid.width - strlen (strng) * 8; // hud
+				yb = vid.height / 3 - 16;
+				xd = vid.width - strlen (weapons) * 8 - 70; // weapons
+				yd = vid.height / 3 - 8;
 			}
 		}
 	}
@@ -1089,6 +1069,16 @@ void SCR_DrawMVStatusStrings (void)
 		memcpy (cl.stats, cl.players[nTrack1duel].stats, sizeof (cl.stats));
 	}
 
+	// Fill the void
+	if (cl_sbar.value && cl_multiview.value == 2 && cl_mvinset.value && cl_mvinsethud.value && cl_mvdisplayhud.value) {
+		if (vid.width > 512) {
+			Draw_Fill (vid.width / 3 * 2 + 1, vid.height / 3 - sb_lines / 3 + 1, vid.width / 3 + 2, sb_lines / 3 - 1, 0);
+		}
+		else {
+			Draw_Fill (vid.width / 3 * 2 + 1, vid.height / 3 - sb_lines / 3 + 1, vid.width / 3 + 2, sb_lines / 6 + 1, 0);
+		}
+	}
+
 	// Hud info
 	if ((cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2)
 		|| (cl_mvdisplayhud.value && cl_multiview.value != 2)) {
@@ -1102,11 +1092,8 @@ void SCR_DrawMVStatusStrings (void)
 			// <= 512 mvinset, just draw the name
 			int var, limit;
 			char namestr[16];
-			mv_viewrect_t view;
 
-			SCR_SetMVStatusTwoInsetViewRect(&view);
-
-			var = ((view.x + view.width) - 320) * 0.05;
+			var = (vid.width - 320) * 0.05;
 			var--;
 			var |= (var >> 1);
 			var |= (var >> 2);
@@ -1115,10 +1102,15 @@ void SCR_DrawMVStatusStrings (void)
 			var |= (var >> 16);
 			var++;
 
-			limit = bound(0, view.width / 8.0f, sizeof(namestr));
-			strlcpy(namestr, name, limit);
+			limit = ceil (7.0 / 192 * vid.width + 4 / 3); // linearly limit length of name for 320->512 conwidth to fit in inset
+			strlcpy (namestr, name, limit);
 
-			Draw_String((view.x + view.width) - strlen(namestr) * 8 - var - 2, yb + (cl_sbar.integer ? 1 : 4), namestr);
+			if (cl_sbar.value) {
+				Draw_String (vid.width - strlen (namestr) * 8 - var - 2, yb + 1, namestr);
+			}
+			else {
+				Draw_String (vid.width - strlen (namestr) * 8 - var - 2, yb + 4, namestr);
+			}
 		}
 	}
 
@@ -1243,7 +1235,7 @@ static void CL_Multiview (void)
 					&& cl.players[j].name[0]
 					&& !strcmp (currteam, cl.players[j].team)) {
 					// Find the player slot to track.
-					mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[j].name, false);
+					mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[j].name);
 					team_slot_count++;
 				}
 
@@ -1313,11 +1305,14 @@ typedef struct mv_temp_cvar_s {
 	float   value;
 } mv_temp_cvar_t;
 
+extern cvar_t r_lerpframes;
+
 static mv_temp_cvar_t multiviewCvars[] = {
 	{ &scr_viewsize,      100.0f },
 	{ &cl_fakeshaft,        0.0f },
 	{ &gl_polyblend,        1.0f },
 	{ &gl_clear,            0.0f },
+	{ &r_lerpframes,        1.0f }
 };
 #define MV_CVAR_VIEWSIZE 0                 // we reference saved value when cl_mvinset specified
 
@@ -1365,6 +1360,9 @@ static void CL_MultiviewOverrideValues (void)
 
 	gl_polyblend.value = 0;
 	gl_clear.value = 0;
+
+	// stop weapon model lerping as it lerps with the other view
+	r_lerpframes.value = 0;
 }
 
 static qbool CL_MultiviewCvarResetRequired (void)
@@ -1531,12 +1529,12 @@ void CL_TrackTeam_f (void)
 		// Find the player slot to track.
 		if (!cl.players[i].spectator && strcmp (cl.players[i].name, "")
 			&& teamchoice == 1 && !strcmp (currteam, cl.players[i].team)) {
-			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name, false);
+			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name);
 			team_slot_count++;
 		}
 		else if (!cl.players[i].spectator && strcmp (cl.players[i].name, "")
 			&& teamchoice == 2 && strcmp (currteam, cl.players[i].team)) {
-			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name, false);
+			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name);
 			team_slot_count++;
 		}
 
@@ -1554,7 +1552,7 @@ void CL_MultiviewSetTrackSlot (int trackSlot, int player)
 	if (trackSlot >= 0 && trackSlot < sizeof (mv_trackslots) / sizeof (mv_trackslots[0])) {
 		mv_trackslots[trackSlot] = player;
 	}
-	else {
+	else if (CL_MultiviewInsetEnabled()) {
 		nTrack1duel = player;
 		nTrack2duel = CL_NextPlayer (player);
 	}
@@ -1590,6 +1588,7 @@ int CL_MultiviewAutotrackSlot (void)
 qbool CL_MultiviewGetCrosshairCoordinates(qbool use_screen_coords, float* cross_x, float* cross_y, qbool* half_size)
 {
 	extern vrect_t	scr_vrect;
+	extern int glx, gly, glwidth, glheight;
 
 	float x, y;
 	float min_x = scr_vrect.x;
@@ -1694,54 +1693,4 @@ qbool CL_MultiviewGetCrosshairCoordinates(qbool use_screen_coords, float* cross_
 	*cross_x = x;
 	*cross_y = y;
 	return true;
-}
-
-void SCR_DrawMultiviewBorders(void)
-{
-	//
-	// Draw black borders around the views.
-	//
-	if (cl_multiview.value == 2 && !cl_mvinset.value)
-	{
-		Draw_Fill(0, vid.height / 2, vid.width - 1, 1, 0);
-	}
-	else if (cl_multiview.value == 2 && cl_mvinset.value)
-	{
-		extern byte color_black[4];
-
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0, glwidth, 0, glheight, -99999, 99999);
-
-		Draw_AlphaRectangleRGB(inset_x, inset_y, inset_width, inset_height, 1.0f, false, RGBAVECT_TO_COLOR(color_black));
-
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0, vid.width, vid.height, 0, -99999, 99999);
-	}
-	else if (cl_multiview.value == 3)
-	{
-		Draw_Fill(vid.width / 2, vid.height / 2, 1, vid.height / 2, 0);
-		Draw_Fill(0, vid.height / 2, vid.width, 1, 0);
-	}
-	else if (cl_multiview.value == 4)
-	{
-		Draw_Fill(vid.width / 2, 0, 1, vid.height, 0);
-		Draw_Fill(0, vid.height / 2, vid.width, 1, 0);
-	}
-}
-
-void CL_MultiviewInsetSetScreenCoordinates(int x, int y, int width, int height)
-{
-	inset_x = x;
-	inset_y = y;
-	inset_width = width;
-	inset_height = height;
-}
-
-centity_t* CL_WeaponModelForView(void)
-{
-	int view = bound(0, CURRVIEW - 1, MV_VIEWS - 1);
-
-	return &cl.viewent[view];
 }

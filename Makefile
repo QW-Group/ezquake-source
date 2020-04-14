@@ -258,10 +258,18 @@ OBJS_c := \
     menu.o \
     menu_demo.o \
     menu_ingame.o \
+    menu_mp3player.o \
     menu_multiplayer.o \
     menu_options.o \
     menu_proxy.o \
+    modules.o \
     movie.o \
+    mp3_player.o \
+    mp3_audacious.o \
+    mp3_xmms.o \
+    mp3_xmms2.o \
+    mp3_mpd.o \
+    mp3_winamp.o \
     mvd_autotrack.o \
     mvd_utils.o \
     mvd_xmlstats.o \
@@ -276,6 +284,7 @@ OBJS_c := \
     snd_main.o \
     snd_mem.o \
     snd_mix.o \
+    snd_ov.o \
     stats_grid.o \
     teamplay.o \
     tp_msgs.o \
@@ -357,12 +366,12 @@ else
     endif
 endif
 
-#ifdef CONFIG_OGG
-#    OGG_CFLAGS ?= $(shell pkg-config vorbisfile --cflags) -DWITH_OGG_VORBIS
-#    OGG_LIBS ?= $(shell pkg-config vorbisfile --libs)
-#    CFLAGS_c += $(OGG_CFLAGS)
-#    LIBS_c += $(OGG_LIBS)
-#endif
+ifdef CONFIG_OGG
+    OGG_CFLAGS ?= $(shell pkg-config vorbisfile --cflags) -DWITH_OGG_VORBIS
+    OGG_LIBS ?= $(shell pkg-config vorbisfile --libs)
+    CFLAGS_c += $(OGG_CFLAGS)
+    LIBS_c += $(OGG_LIBS)
+endif
 
 ifeq ($(USE_SYSTEM_MINIZIP),1)
 	MINIZIP_CFLAGS ?= $(shell pkg-config --cflags minizip)

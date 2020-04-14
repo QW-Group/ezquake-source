@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "gl_local.h"
 #include "rulesets.h"
+#include "mp3_player.h"
 #include "input.h"
 
 /* FIXME: Figure out a nicer way to do all this */
@@ -44,27 +45,9 @@ qbool RuleSets_DisallowExternalTexture(model_t *mod)
 		case MOD_EYES:
 			return true;
 		case MOD_BACKPACK:
-			return rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_qcon;
+			return rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_thunderdome || rulesetDef.ruleset == rs_qcon;
 		default:
 			return false;
-	}
-}
-
-qbool RuleSets_DisallowSimpleTexture(model_t* mod)
-{
-	switch (mod->modhint) {
-		case MOD_EYES:
-		case MOD_PLAYER:
-		case MOD_SENTRYGUN: // tf
-		case MOD_DETPACK:   // tf
-			return true; // no replacement allowed
-
-		case MOD_BACKPACK:
-			// Now allowed in Thunderdome...
-			return rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_qcon;
-
-		default:
-			return false; // replacement always allowed
 	}
 }
 
@@ -80,8 +63,10 @@ qbool RuleSets_DisallowModelOutline(struct model_s *mod)
 			return true;
 		case MOD_THUNDERBOLT:
 			return true;
-		default:
+		case MOD_BACKPACK:
 			return rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_thunderdome;
+		default:
+			return rulesetDef.ruleset == rs_qcon;
 	}
 }
 
@@ -124,6 +109,9 @@ qbool Rulesets_AllowAlternateModel (const char* modelName)
 
 float Rulesets_MaxFPS(void)
 {
+	if (CL_MultiviewEnabled())
+		return CL_MultiviewNumberViews()*rulesetDef.maxfps;
+
 	return rulesetDef.maxfps;
 }
 
@@ -274,6 +262,8 @@ static void Rulesets_Qcon(qbool enable)
 		rulesetDef.restrictParticles = true;
 		rulesetDef.restrictSound = true;
 		rulesetDef.ruleset = rs_qcon;
+
+		MP3_Shutdown ();
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
@@ -666,8 +656,6 @@ qbool Ruleset_BlockHudPicChange(void)
 {
 	switch (rulesetDef.ruleset) {
 	case rs_qcon:
-	case rs_smackdown:
-	case rs_thunderdome:
 		return cls.state != ca_disconnected && !(cl.standby || cl.spectator || cls.demoplayback);
 	default:
 		return false;

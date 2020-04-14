@@ -48,8 +48,6 @@ extern cvar_t cl_demoteamplay;
 #define ISPAUSED (cl.paused || (!cl_demospeed.value && cls.demoplayback && cls.mvdplayback != QTV_PLAYBACK && !cls.timedemo))
 #define	MAX_PROJECTILES	32
 
-#define MV_VIEWS 4
-
 typedef struct 
 {
 	char			name[16];
@@ -139,7 +137,6 @@ typedef struct player_info_s
 	char	userinfo[MAX_INFO_STRING];
 	char	team[MAX_INFO_STRING];
 	char	_team[MAX_INFO_STRING];
-	int     known_team_color;
 
 	// 
 	double  max_health_last_set;
@@ -211,8 +208,6 @@ typedef struct
 
 	int				old_vw_index;	// player entities only
 	int				old_vw_frame;	// player entities only
-
-	int             contents;
 } centity_t;
 
 #define CENT_TRAILDRAWN		1
@@ -441,7 +436,6 @@ typedef struct
 	float		qtv_svversion;		///< version of qtvsv/proxy, note it float
 	int			qtv_ezquake_ext;	///< qtv ezquake extensions supported by qtvsv/proxy
 	qbool		qtv_donotbuffer;	///< do not try buffering even if not enough data
-	char        qtv_source[128];    ///< last qtv source sent (so we can re-send with challenge response)
 
 	/// \brief Tells which players are affected by a demo message.
 	///	- If multiple players are affected (dem_multiple) this will be a
@@ -578,7 +572,7 @@ typedef struct {
 
 	int			cdtrack;			///< cd audio
 
-	centity_t viewent[MV_VIEWS];	        // weapon models
+	centity_t	viewent;			///< weapon model
 
 	// all player information
 	player_info_t	players[MAX_CLIENTS];
@@ -624,13 +618,6 @@ typedef struct {
 	int         cif_flags;
 
 	int         scoring_system;
-	qbool       mvd_ktx_markers;
-
-	// r_viewmodellastfired
-	int         lastfired;
-	int         lastviewplayernum;
-
-	char        fixed_team_names[4][16];
 } clientState_t;
 
 #define SCORING_SYSTEM_DEFAULT   0
@@ -996,7 +983,6 @@ int CL_MultiviewActiveViews (void);
 int CL_MultiviewCurrentView (void);
 int CL_MultiviewNextPlayer (void);
 int CL_MultiviewAutotrackSlot (void);
-int CL_MultiviewMainView(void);
 
 void CL_MultiviewSetTrackSlot (int trackNum, int player);
 void CL_MultiviewResetCvars (void);
@@ -1010,9 +996,6 @@ void CL_MultiviewDemoStart (void);
 void CL_MultiviewDemoFinish (void);
 void CL_MultiviewDemoStartRewind (void);
 void CL_MultiviewDemoStopRewind (void);
-
-// Weapons
-centity_t* CL_WeaponModelForView(void);
 
 // ===================================================================================
 // client side min_ping aka delay
@@ -1072,15 +1055,12 @@ typedef struct scr_sshot_target_s {
 	char fileName[128];
 	byte* buffer;
 	qbool freeMemory;
-	qbool movie_capture;
 	int width;
 	int height;
 	image_format_t format;
 } scr_sshot_target_t;
 
 int SCR_ScreenshotWrite(scr_sshot_target_t* target_params);
-
-qbool Movie_AnimatedPNG(void);
 
 qbool Movie_BackgroundCapture(scr_sshot_target_t* params);
 byte* Movie_TempBuffer(int width, int height);

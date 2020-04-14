@@ -1107,16 +1107,6 @@ void CL_LinkPacketEntities(void)
 			continue;
 		}
 
-		ent.renderfx &= ~(RF_BACKPACK_FLAGS);
-		if (cls.mvdplayback && model->modhint == MOD_BACKPACK) {
-			if (cent->contents == IT_ROCKET_LAUNCHER) {
-				ent.renderfx |= RF_ROCKETPACK;
-			}
-			else if (cent->contents == IT_LIGHTNING) {
-				ent.renderfx |= RF_LGPACK;
-			}
-		}
-
 		CL_AddEntity (&ent);
 	}
 }
@@ -2516,7 +2506,7 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, vec3_t* old_origin, cus
 				ParticleAlphaTrail(*old_origin, ent->origin, &cent->trail_origin, 2, 0.4);
 			}
 		}
-		else if (model->modhint_trail == MOD_TF_TRAIL && amf_extratrails.value)
+		else if (model->modhint == MOD_TF_TRAIL && amf_extratrails.value)
 		{
 			// VULT TRAILS
 			ParticleAlphaTrail(*old_origin, ent->origin, &cent->trail_origin, 4, 0.4);

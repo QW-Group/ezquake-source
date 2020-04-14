@@ -214,7 +214,6 @@ char *Q_ftos (float value); // removes trailing zero chars
 
 char *Q_strcpy( char *to, char *from );
 char *Q_strlwr( char *s1 );
-int Q_strcmp2(const char * s1, const char * s2);
 
 // Added by VVD {
 #ifdef _MSC_VER

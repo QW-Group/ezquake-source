@@ -6937,6 +6937,230 @@
         { "name": "true", "description": "" }
       ]
     },
+    "hud_mp3_time_align_x": {
+      "group-id": "19",
+      "desc": "Sets mp3_time HUD element horizontal alignment.",
+      "remarks": "See HUD manual for more info.",
+      "type": "string",
+      "values": [
+        { "name": "*", "description": "left, center, right, before, after" }
+      ]
+    },
+    "hud_mp3_time_align_y": {
+      "group-id": "19",
+      "desc": "Sets mp3_time HUD element vertical alignment.",
+      "remarks": "See HUD manual for more info.",
+      "type": "string",
+      "values": [
+        { "name": "*", "description": "top, center, bottom, console, before, after" }
+      ]
+    },
+    "hud_mp3_time_frame": {
+      "group-id": "19",
+      "desc": "Sets frame visibility and style for this HUD element.",
+      "type": "float",
+      "values": [
+        { "name": "*", "description": "Use floating point values from range 0..1 to get alpha transparent background or 2 to get bevel frame." }
+      ]
+    },
+    "hud_mp3_time_frame_color": {
+      "group-id": "19",
+      "desc": "Defines the color of the background of the mp3_time HUD element. See HUD manual for more info.",
+      "type": "string"
+    },
+    "hud_mp3_time_item_opacity": {
+      "group-id": "19",
+      "type": "float"
+    },
+    "hud_mp3_time_on_scoreboard": {
+      "group-id": "19",
+      "desc": "Toggles whether HUD element 'mp3_time' will be drawn even if scoreboard is displayed.",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "Hides mp3_time HUD element when scoreboard is ON." },
+        { "name": "true", "description": "Draws mp3_time HUD element even if scoreboard is ON." }
+      ]
+    },
+    "hud_mp3_time_order": {
+      "group-id": "19",
+      "desc": "This defines the order of drawing the HUD elements. That means you can change will be drawn on top of other elements. See HUD manual for more info",
+      "type": "integer"
+    },
+    "hud_mp3_time_place": {
+      "group-id": "19",
+      "desc": "Sets placement for this HUD element. You can align some elements relative to other elements.",
+      "remarks": "First you have to decide, if the element that you are locating now (element B) is to be positioned inside another element (element A) or outside it. See HUD manual for more info.",
+      "type": "string",
+      "values": [
+        { "name": "*", "description": "to place this element inside element B set this variable to \"@B\", to place it outside B element set this variable to \"B\"" }
+      ]
+    },
+    "hud_mp3_time_pos_x": {
+      "group-id": "19",
+      "desc": "Sets horizontal position of this HUD element.",
+      "type": "float"
+    },
+    "hud_mp3_time_pos_y": {
+      "group-id": "19",
+      "desc": "Sets vertical position of this HUD element.",
+      "type": "float"
+    },
+    "hud_mp3_time_show": {
+      "group-id": "19",
+      "desc": "Toggles visibility of this HUD element.",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "Do not draw this element" },
+        { "name": "true", "description": "Draw this element" }
+      ]
+    },
+    "hud_mp3_time_style": {
+      "group-id": "19",
+      "desc": "Changes displayed informations for 'mp3_time' HUD element.",
+      "remarks": "Note that display of seconds is disabled in ruleset smackdown.",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "Played time / total time of track, golden brackets around." },
+        { "name": "1", "description": "Remaining time / total time of track, golden brackets around." },
+        { "name": "2", "description": "Remaining time only, golden brackets around." },
+        { "name": "3", "description": "Played time only, golden brackets around." },
+        { "name": "4", "description": "Same as 0, without golden brackets." },
+        { "name": "5", "description": "Same as 1, without golden brackets." },
+        { "name": "6", "description": "Same as 2, without golden brackets." },
+        { "name": "7", "description": "Same as 3, without golden brackets." }
+      ]
+    },
+    "hud_mp3_title_align_x": {
+      "group-id": "19",
+      "desc": "Sets mp3_title HUD element horizontal alignment.",
+      "remarks": "See HUD manual for more info.",
+      "type": "string",
+      "values": [
+        { "name": "*", "description": "left, center, right, before, after" }
+      ]
+    },
+    "hud_mp3_title_align_y": {
+      "group-id": "19",
+      "desc": "Sets mp3_title HUD element vertical alignment.",
+      "remarks": "See HUD manual for more info.",
+      "type": "string",
+      "values": [
+        { "name": "*", "description": "top, center, bottom, console, before, after" }
+      ]
+    },
+    "hud_mp3_title_frame": {
+      "group-id": "19",
+      "desc": "Sets frame visibility and style for this HUD element.",
+      "type": "float",
+      "values": [
+        { "name": "*", "description": "Use floating point values from range 0..1 to get alpha transparent background or 2 to get bevel frame." }
+      ]
+    },
+    "hud_mp3_title_frame_color": {
+      "group-id": "19",
+      "desc": "Defines the color of the background of the mp3_title HUD element. See HUD manual for more info.",
+      "type": "string"
+    },
+    "hud_mp3_title_height": {
+      "group-id": "19",
+      "desc": "Sets height of 'mp3_title' HUD element.",
+      "type": "integer",
+      "values": [
+        { "name": "*", "description": "8, 16, 24, 32 - one, two, three, four rows of text usually." }
+      ]
+    },
+    "hud_mp3_title_item_opacity": {
+      "group-id": "19",
+      "type": "float"
+    },
+    "hud_mp3_title_on_scoreboard": {
+      "group-id": "19",
+      "desc": "Toggles whether HUD element 'mp3_title' will be drawn even if scoreboard is displayed.",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "Hides mp3_title HUD element when scoreboard is ON." },
+        { "name": "true", "description": "Draws mp3_title HUD element even if scoreboard is ON." }
+      ]
+    },
+    "hud_mp3_title_order": {
+      "group-id": "19",
+      "desc": "This defines the order of drawing the HUD elements. That means you can change will be drawn on top of other elements. See HUD manual for more info",
+      "type": "integer"
+    },
+    "hud_mp3_title_place": {
+      "group-id": "19",
+      "desc": "Sets placement for this HUD element. You can align some elements relative to other elements.",
+      "remarks": "First you have to decide, if the element that you are locating now (element B) is to be positioned inside another element (element A) or outside it. See HUD manual for more info.",
+      "type": "string",
+      "values": [
+        { "name": "*", "description": "to place this element inside element B set this variable to \"@B\", to place it outside B element set this variable to \"B\"" }
+      ]
+    },
+    "hud_mp3_title_pos_x": {
+      "group-id": "19",
+      "desc": "Sets horizontal position of this HUD element.",
+      "type": "float"
+    },
+    "hud_mp3_title_pos_y": {
+      "group-id": "19",
+      "desc": "Sets vertical position of this HUD element.",
+      "type": "float"
+    },
+    "hud_mp3_title_scroll": {
+      "group-id": "19",
+      "desc": "Toggles scrolling of mp3_title text.",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "Scrolling disabled." },
+        { "name": "true", "description": "Scrolling enabled." }
+      ]
+    },
+    "hud_mp3_title_scroll_delay": {
+      "group-id": "19",
+      "desc": "Sets speed of text scrolling in mp3_title HUD element.",
+      "remarks": "Use 'hud mp3_title scroll 1'.",
+      "type": "float",
+      "values": [
+        { "name": "*", "description": "The lower the value is the faster scrolling you get." }
+      ]
+    },
+    "hud_mp3_title_show": {
+      "group-id": "19",
+      "desc": "Toggles visibility of this HUD element.",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "Do not draw this element" },
+        { "name": "true", "description": "Draw this element" }
+      ]
+    },
+    "hud_mp3_title_style": {
+      "group-id": "19",
+      "desc": "Sets format of text of 'mp3_title' HUD element.",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "Shows just winamp song information." },
+        { "name": "1", "description": "Same as 0 but shows 'Playing: ' before the song information." },
+        { "name": "2", "description": "Same as 0 but shows 'Playing' in golden brackets before the song information." }
+      ]
+    },
+    "hud_mp3_title_width": {
+      "group-id": "19",
+      "desc": "Sets width of mp3_title HUD element.",
+      "type": "integer",
+      "values": [
+        { "name": "*", "description": "8 = one char with standard console settings." }
+      ]
+    },
+    "hud_mp3_title_wordwrap": {
+      "group-id": "19",
+      "desc": "Toggles word wrapping inside mp3_title element.",
+      "remarks": "See 'mp3_title height'.",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "Don't wrap words, scroll if necessary and allowed." },
+        { "name": "true", "description": "Wrap words if more lines are allowed." }
+      ]
+    },
     "hud_net_align_x": {
       "group-id": "19",
       "desc": "Sets horizontal align of net statistics",
@@ -9913,6 +10137,43 @@
       "desc": "Speed of menu entry highlight flashing. Zero disables the flashing effect.",
       "type": "float"
     },
+    "mp3_player": {
+      "group-id": "18",
+      "desc": "Selects the MP3 player that will be controlled within EzQuake.",
+      "remarks": "Windows - winamp supported\nLinux - audacious, xmms2, xmms, mpd supported\nMac - None",
+      "type": "string",
+      "values": [
+        { "name": "audacious", "description": "" },
+        { "name": "mpd", "description": "" },
+        { "name": "winamp", "description": "" },
+        { "name": "xmms", "description": "" },
+        { "name": "xmms2", "description": "" }
+      ]
+    },
+    "mp3_scrolltitle": {
+      "group-id": "18",
+      "desc": "Toggles scrolling of the song info in mp3 player control window.",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "Do not scroll song info text." },
+        { "name": "true", "description": "Enable song info scrolling." }
+      ]
+    },
+    "mp3_showtime": {
+      "group-id": "18",
+      "desc": "Toggles displaying song time information in mp3 player control window.",
+      "type": "enum",
+      "values": [
+        { "name": "0", "description": "Do not display song time information." },
+        { "name": "1", "description": "Display song time and total time of currently played song." },
+        { "name": "2", "description": "Display remaining time only." }
+      ]
+    },
+    "mp3_winamp_dir": {
+      "group-id": "18",
+      "desc": "Tells your client the path where it should look for your external music player.",
+      "type": "string"
+    },
     "msg": {
       "group-id": "37",
       "type": "enum",
@@ -11595,11 +11856,6 @@
         { "name": "2", "description": "Print the volume in left/right speakers, name of sound file playing, and number of sounds playing." }
       ]
     },
-    "s_silent_racing": {
-      "group-id": "45",
-      "desc": "Toggles whether or not you can hear other players when racing.",
-      "type": "boolean"
-    },
     "s_spec_file": {
       "group-id": "45",
       "desc": "You can specify notification sound for spectator messages.",
@@ -11609,6 +11865,16 @@
       "group-id": "45",
       "desc": "You can specify volume of notification sound for spectator messages.",
       "type": "float"
+    },
+    "s_stereo": {
+      "group-id": "26",
+      "desc": "Use stereo or mono sound",
+      "remarks": "Linux only.\nUse s_restart after you change it.",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "mono" },
+        { "name": "true", "description": "stereo" }
+      ]
     },
     "s_swapstereo": {
       "group-id": "45",

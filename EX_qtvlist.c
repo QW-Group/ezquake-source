@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "EX_qtvlist.h"
 
-cvar_t qtv_api_url = {"qtv_api_url", "http://qtvapi.quakeworld.nu/api/v1/servers"};
+cvar_t qtv_api_url = {"qtv_api_url", "http://metaqtv.duelmania.net/api/v1/servers"};
 
 static json_t *root;
 static SDL_mutex *qtvlist_mutex;
@@ -256,7 +256,7 @@ static void qtvlist_find_player(const char *name, qbool list_all)
 
 				player_name = json_string_value(json_object_get(player_entry, "Name"));
 				if (player_name) {
-					if (list_all || strstri(player_name, name) != NULL) {
+					if (list_all || strstr(player_name, name) != NULL) {
 						found++;
 						Com_Printf("&cff4%15s&r - %s:%" JSON_INTEGER_FORMAT "\n", player_name, json_string_value(json_object_get(gs_entry, "Hostname")), json_integer_value(json_object_get(gs_entry, "Port")));
 					}

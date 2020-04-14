@@ -1057,8 +1057,6 @@ static void Draw_StringBase (int x, int y, const wchar *text, clrinfo_t *color, 
 	if (!*text)
 		return;
 
-	Draw_SetColor(color_white, alpha);
-
 	// Turn on alpha transparency.
 	if (gl_alphafont.value || (overall_alpha < 1.0))
 	{
@@ -1181,11 +1179,6 @@ void Draw_SColoredString (int x, int y, const wchar *text, clrinfo_t *color, int
 void Draw_SString (int x, int y, const char *text, float scale)
 {
 	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, scale, 1, false, 0);
-}
-
-void Draw_SStringAlpha(int x, int y, const char *text, float scale, float alpha)
-{
-	Draw_StringBase(x, y, str2wcs(text), NULL, 0, false, scale, alpha, false, 0);
 }
 
 void Draw_SAlt_String (int x, int y, const char *text, float scale)

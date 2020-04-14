@@ -23,7 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "utils.h"
 #include "qsound.h"
-#include "image.h"
 #ifdef _WIN32
 #include "movie_avi.h"	//joe: capturing to avi
 #include <windows.h>
@@ -34,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static void OnChange_movie_dir(cvar_t *var, char *string, qbool *cancel);
 static void WAVCaptureStop (void);
 static void WAVCaptureStart (void);
-int SCR_Screenshot(char * name, qbool movie_capture);
+int SCR_Screenshot(char *);
 void SCR_Movieshot (char *);	//joe: capturing to avi
 
 //joe: capturing audio
@@ -77,8 +76,6 @@ static double movie_start_time;
 static double movie_len;
 static int movie_frame_count;
 static char image_ext[4];
-static qbool capturing_apng;
-static int apng_expected_frames;
 
 
 #ifdef _WIN32
@@ -143,9 +140,6 @@ static void Movie_Start(double _time)
 		{
 			strlcpy(image_ext, scr_sshot_format.string, sizeof(image_ext));		
 		}
-		else if (!strcmp(scr_sshot_format.string, "apng")) {
-			strlcpy(image_ext, "png", sizeof(image_ext));
-		}
 		else
 		{
 			strlcpy (image_ext, "tga", sizeof (image_ext));
@@ -156,11 +150,7 @@ static void Movie_Start(double _time)
 	movie_real_start_time = Sys_DoubleTime ();
 }
 
-void Movie_Stop(qbool restarting)
-{
-	if (Movie_AnimatedPNG()) {
-		Image_CloseAPNG();
-	}
+void Movie_Stop (qbool restarting) {
 #ifdef _WIN32
 	if (movie_is_avi) { //joe: capturing to avi
 		Capture_Close ();
@@ -179,12 +169,10 @@ void Movie_Stop(qbool restarting)
 	movie_is_capturing = restarting;
 }
 
-void Movie_Demo_Capture_f(void)
-{
+void Movie_Demo_Capture_f(void) {
 	int argc;
-	double duration;
+	double time;
 	char *error;
-	extern cvar_t scr_sshot_format;
 
 #ifdef _WIN32
 	error = va("Usage: %s (\"start\" time [avifile]) | \"stop\"\n", Cmd_Argv(0));
@@ -216,11 +204,10 @@ void Movie_Demo_Capture_f(void)
 		Com_Printf("%s : Must be playing a demo to capture\n", Cmd_Argv(0));
 		return;
 	}
-	if ((duration = Q_atof(Cmd_Argv(2))) <= 0) {
+	if ((time = Q_atof(Cmd_Argv(2))) <= 0) {
 		Com_Printf("%s : Time argument must be positive\n", Cmd_Argv(0));
 		return;
 	}
-	capturing_apng = false;
 #ifdef _WIN32
 	//joe: capturing to avi
 	if (argc == 4) {
@@ -236,37 +223,10 @@ void Movie_Demo_Capture_f(void)
 	}
 	else
 #endif
-	if (!strcasecmp(scr_sshot_format.string, "apng")) {
-		char fname[MAX_OSPATH];
-		extern cvar_t image_png_compression_level;
-		extern int glwidth, glheight;
-#ifndef _WIN32
-		time_t t;
-		t = time(NULL);
-		localtime_r(&t, &movie_start_date);
-
-		snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/capture.png",
-			movie_dir.string, movie_start_date.tm_mday, movie_start_date.tm_mon, movie_start_date.tm_year,
-			movie_start_date.tm_hour, movie_start_date.tm_min, movie_start_date.tm_sec);
-#else
-		GetLocalTime(&movie_start_date);
-
-		snprintf(fname, sizeof(fname), "%s/capture_%02d-%02d-%04d_%02d-%02d-%02d/capture.png",
-			movie_dir.string, movie_start_date.wDay, movie_start_date.wMonth, movie_start_date.wYear,
-			movie_start_date.wHour, movie_start_date.wMinute, movie_start_date.wSecond);
-#endif
-
-		apng_expected_frames = duration * movie_fps.integer;
-		capturing_apng = Image_OpenAPNG(fname, image_png_compression_level.integer, glwidth, glheight, apng_expected_frames);
-
-		if (!capturing_apng) {
-			Movie_BackgroundInitialise();
-		}
-	}
-	else {
+	{
 		Movie_BackgroundInitialise();
 	}
-	Movie_Start(duration);
+	Movie_Start(time);
 }
 
 #ifdef _WIN32
@@ -391,12 +351,7 @@ void Movie_FinishFrame(void)
 		con_suppress = false;
 	}
 
-	if (Movie_AnimatedPNG()) {
-		if (movie_frame_count >= apng_expected_frames) {
-			Movie_Stop(false);
-		}
-	}
-	else if (cls.realtime >= movie_start_time + movie_len) {
+	if (cls.realtime >= movie_start_time + movie_len) {
 		Movie_Stop (false);
 	}
 }
@@ -676,9 +631,4 @@ qbool Movie_BackgroundCapture(scr_sshot_target_t* params)
 	}
 
 	return false;
-}
-
-qbool Movie_AnimatedPNG(void)
-{
-	return Movie_IsCapturing() && capturing_apng;
 }

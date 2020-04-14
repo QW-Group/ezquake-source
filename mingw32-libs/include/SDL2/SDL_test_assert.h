@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2018 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2016 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -33,8 +33,8 @@
  *
  */
 
-#ifndef SDL_test_assert_h_
-#define SDL_test_assert_h_
+#ifndef _SDL_test_assert_h
+#define _SDL_test_assert_h
 
 #include "begin_code.h"
 /* Set up for C function definitions, even when using C++ */
@@ -80,12 +80,12 @@ void SDLTest_AssertPass(SDL_PRINTF_FORMAT_STRING const char *assertDescription, 
 /**
  * \brief Resets the assert summary counters to zero.
  */
-void SDLTest_ResetAssertSummary(void);
+void SDLTest_ResetAssertSummary();
 
 /**
  * \brief Logs summary of all assertions (total, pass, fail) since last reset as INFO or ERROR.
  */
-void SDLTest_LogAssertSummary(void);
+void SDLTest_LogAssertSummary();
 
 
 /**
@@ -93,13 +93,13 @@ void SDLTest_LogAssertSummary(void);
  *
  * \returns TEST_RESULT_PASSED, TEST_RESULT_FAILED, or TEST_RESULT_NO_ASSERT
  */
-int SDLTest_AssertSummaryToTestResult(void);
+int SDLTest_AssertSummaryToTestResult();
 
 #ifdef __cplusplus
 }
 #endif
 #include "close_code.h"
 
-#endif /* SDL_test_assert_h_ */
+#endif /* _SDL_test_assert_h */
 
 /* vi: set ts=4 sw=4 expandtab: */

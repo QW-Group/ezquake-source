@@ -764,6 +764,7 @@ static void COM_CharBias (signed char *c, int size)
 	}
 }
 
+#ifndef WITH_OGG_VORBIS
 sfxcache_t *S_LoadSound (sfx_t *s)
 {
 	char namebuffer[256];
@@ -802,6 +803,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
 	return s->buf;
 }
+#endif // WITH_OGG_VORBIS
 
 int SND_Rate(int rate)
 {

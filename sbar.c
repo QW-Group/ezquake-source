@@ -400,25 +400,17 @@ int	Sbar_ColorForMap (int m) {
 }
 
 // HUD -> hexum
+
 int Sbar_TopColor(player_info_t *player)
 {
-	return Sbar_ColorForMap(cl.teamfortress ? player->known_team_color : player->topcolor);
-}
-
-int Sbar_TopColorScoreboard(player_info_t* player)
-{
-	return Sbar_ColorForMap(cl.teamfortress ? player->known_team_color : (scr_scoreboard_forcecolors.integer ? player->topcolor : player->real_topcolor));
+	return Sbar_ColorForMap(player->topcolor);
 }
 
 int Sbar_BottomColor(player_info_t *player)
 {
-	return Sbar_ColorForMap(cl.teamfortress ? player->known_team_color : player->bottomcolor);
+	return Sbar_ColorForMap(player->bottomcolor);
 }
 
-int Sbar_BottomColorScoreboard(player_info_t* player)
-{
-	return Sbar_ColorForMap(cl.teamfortress ? player->known_team_color : (scr_scoreboard_forcecolors.integer ? player->bottomcolor : player->real_bottomcolor));
-}
 // ** HUD -> hexum
 
 /********************************* FRAG SORT *********************************/
@@ -434,13 +426,12 @@ typedef struct {
 	int players;
 	int plow, phigh, ptotal;
 	int topcolor, bottomcolor;
-	int known_team_number;
 	qbool myteam;
 } team_t;
-static team_t teams[MAX_CLIENTS];
+team_t teams[MAX_CLIENTS];
 
-static int teamsort[MAX_CLIENTS];
-static int scoreboardteams;
+int teamsort[MAX_CLIENTS];
+int scoreboardteams;
 
 static __inline int Sbar_PlayerNum(void) {
 	int mynum = cl.playernum;
@@ -557,7 +548,6 @@ static void Sbar_SortTeams (void) {
 
 			teams[j].frags = s->frags;
 			teams[j].players = 1;
-			teams[j].known_team_number = s->known_team_color;
 			if (cl.teamfortress) {
 				teams[j].topcolor = teams[j].bottomcolor = Utils_TF_TeamToColor(t);
 			} else {
@@ -796,15 +786,15 @@ static void Sbar_DrawInventory (void) {
 
 /************************************ HUD ************************************/
 
-static void Sbar_DrawFrags_DrawCellPlayer(int x, int y, player_info_t *player, qbool brackets) {
+static void Sbar_DrawFrags_DrawCell(int x, int y, int topcolor, int bottomcolor, int frags, int brackets) {
 	char num[4];
 
 	// draw background
-	Draw_Fill (sbar_xofs + x * 8 + 10, y, 28, 4, Sbar_TopColorScoreboard(player));
-	Draw_Fill (sbar_xofs + x * 8 + 10, y + 4, 28, 3, Sbar_BottomColorScoreboard(player));
+	Draw_Fill (sbar_xofs + x * 8 + 10, y, 28, 4, Sbar_ColorForMap (topcolor));
+	Draw_Fill (sbar_xofs + x * 8 + 10, y + 4, 28, 3, Sbar_ColorForMap (bottomcolor));
 
 	// draw number
-	snprintf (num, sizeof(num), "%3i", player->frags);
+	snprintf (num, sizeof(num), "%3i", frags);
 
 	Sbar_DrawCharacter ((x + 1) * 8 , -24, num[0]);
 	Sbar_DrawCharacter ((x + 2) * 8 , -24, num[1]);
@@ -816,34 +806,8 @@ static void Sbar_DrawFrags_DrawCellPlayer(int x, int y, player_info_t *player, q
 	}
 }
 
-static void Sbar_DrawFrags_DrawTeamCell(int x, int y, team_t* team)
-{
-	char num[4];
-	int frags = team->frags;
-	player_info_t p = { 0 };
-	p.topcolor = team->topcolor;
-	p.bottomcolor = team->bottomcolor;
-	p.known_team_color = team->known_team_number;
-
-	// draw background
-	Draw_Fill(sbar_xofs + x * 8 + 10, y, 28, 4, Sbar_TopColorScoreboard(&p));
-	Draw_Fill(sbar_xofs + x * 8 + 10, y + 4, 28, 3, Sbar_BottomColorScoreboard(&p));
-
-	// draw number
-	snprintf(num, sizeof(num), "%3i", frags);
-
-	Sbar_DrawCharacter((x + 1) * 8, -24, num[0]);
-	Sbar_DrawCharacter((x + 2) * 8, -24, num[1]);
-	Sbar_DrawCharacter((x + 3) * 8, -24, num[2]);
-
-	if (team->myteam) {
-		Sbar_DrawCharacter(x * 8 + 2, -24, 16);
-		Sbar_DrawCharacter((x + 4) * 8 - 4, -24, 17);
-	}
-}
-
 static void Sbar_DrawFrags (void) {
-	int i, k, l, x, y, mynum, myteam = -1;
+	int i, k, l, top, bottom, x, y, mynum, myteam = -1;
 	player_info_t *s;
 	team_t *tm;
 	qbool drawn_self = false, drawn_self_team = false;
@@ -872,7 +836,12 @@ static void Sbar_DrawFrags (void) {
 			if (!s->name[0] || s->spectator)
 				continue;
 
-			Sbar_DrawFrags_DrawCellPlayer(x, y, s, k == mynum);
+			top = scr_scoreboard_forcecolors.value ? s->topcolor : s->real_topcolor;
+			bottom = scr_scoreboard_forcecolors.value ? s->bottomcolor : s->real_bottomcolor;
+			top = bound(0, top, 13);
+			bottom = bound(0, bottom, 13);
+
+			Sbar_DrawFrags_DrawCell(x, y, top, bottom, s->frags, k == mynum);
 
 			if (k == mynum)
 				drawn_self = true;
@@ -897,7 +866,7 @@ static void Sbar_DrawFrags (void) {
 				k = teamsort[i];
 
 			tm = &teams[k];
-			Sbar_DrawFrags_DrawTeamCell(x, y, tm);
+			Sbar_DrawFrags_DrawCell(x, y, tm->topcolor, tm->bottomcolor, tm->frags, tm->myteam);
 
 			if (k == myteam)
 				drawn_self_team = true;
@@ -911,7 +880,12 @@ static void Sbar_DrawFrags (void) {
 
 			s = &cl.players[mynum];
 
-			Sbar_DrawFrags_DrawCellPlayer(x, y, s, 1);
+			top = scr_scoreboard_forcecolors.value ? s->topcolor : s->real_topcolor;
+			bottom = scr_scoreboard_forcecolors.value ? s->bottomcolor : s->real_bottomcolor;
+			top = bound(0, top, 13);
+			bottom = bound(0, bottom, 13);
+
+			Sbar_DrawFrags_DrawCell(x, y, top, bottom, s->frags, 1);
 		}
 	}
 }
@@ -1186,7 +1160,7 @@ static qbool Sbar_ShowTeamKills(void)
 static void Sbar_DeathmatchOverlay (int start) {
 	int stats_basic, stats_team, stats_touches, stats_caps, playerstats[7];
 	int scoreboardsize, colors_thickness, statswidth, stats_xoffset = 0;
-	int i, k, x, y, xofs, total, p, skip = 10, fragsint;
+	int i, k, top, bottom, x, y, xofs, total, p, skip = 10, fragsint;
 	int rank_width, leftover, startx, tempx, mynum;
 	char num[12], scorerow[64], team[5], name[MAX_SCOREBOARDNAME];
 	char myminutes[11];
@@ -1348,6 +1322,9 @@ static void Sbar_DeathmatchOverlay (int start) {
 			continue;
 
 		//render the main background transparencies behind players row
+		top = scr_scoreboard_forcecolors.value ? s->topcolor : s->real_topcolor;
+		bottom = scr_scoreboard_forcecolors.value ? s->bottomcolor : s->real_bottomcolor;
+
 		if (k == mynum)
 		{
 			alpha = 1.7 * SCOREBOARD_ALPHA;
@@ -1367,7 +1344,7 @@ static void Sbar_DeathmatchOverlay (int start) {
 		}
 		else
 		{
-			c = Sbar_BottomColorScoreboard(s);
+			c = Sbar_ColorForMap(bottom);
 		}
 
 		if (S_Voip_Speaking (k)) {
@@ -1464,8 +1441,8 @@ static void Sbar_DeathmatchOverlay (int start) {
 		}
 
 		// print the shirt/pants colour bars
-		Draw_Fill (cl.teamplay ? tempx - 40 : tempx, y + 4 - colors_thickness, 40, colors_thickness, Sbar_TopColorScoreboard(s));
-		Draw_Fill (cl.teamplay ? tempx - 40 : tempx, y + 4, 40, 4, Sbar_BottomColorScoreboard(s));
+		Draw_Fill (cl.teamplay ? tempx - 40 : tempx, y + 4 - colors_thickness, 40, colors_thickness, Sbar_ColorForMap (top));
+		Draw_Fill (cl.teamplay ? tempx - 40 : tempx, y + 4, 40, 4, Sbar_ColorForMap (bottom));
 
 		// name
 		strlcpy(name, s->name, sizeof(name));
@@ -1672,7 +1649,7 @@ static void Sbar_TeamOverlay (void) {
 
 
 static void Sbar_MiniDeathmatchOverlay (void) {
-	int i, k, x, y, mynum, numlines;
+	int i, k, top, bottom, x, y, mynum, numlines;
 	char num[4 + 1], name[16 + 1], team[4 + 1];
 	player_info_t *s;
 	team_t *tm;
@@ -1725,8 +1702,11 @@ static void Sbar_MiniDeathmatchOverlay (void) {
 		if (!s->name[0])
 			continue;
 
-		Draw_Fill (x, y + 1, 40, 3, Sbar_TopColorScoreboard(s));
-		Draw_Fill (x, y + 4, 40, 4, Sbar_BottomColorScoreboard(s));
+		top = scr_scoreboard_forcecolors.value ? s->topcolor : s->real_topcolor;
+		bottom = scr_scoreboard_forcecolors.value ? s->bottomcolor : s->real_bottomcolor;
+
+		Draw_Fill (x, y + 1, 40, 3, Sbar_ColorForMap (top));
+		Draw_Fill (x, y + 4, 40, 4, Sbar_ColorForMap (bottom));
 
 		// draw number
 		snprintf (num, sizeof(num), "%3i", s->frags);

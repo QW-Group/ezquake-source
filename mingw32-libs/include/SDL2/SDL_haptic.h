@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2018 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2016 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -22,12 +22,12 @@
 /**
  *  \file SDL_haptic.h
  *
- *  \brief The SDL haptic subsystem allows you to control haptic (force feedback)
+ *  \brief The SDL Haptic subsystem allows you to control haptic (force feedback)
  *         devices.
  *
  *  The basic usage is as follows:
- *   - Initialize the subsystem (::SDL_INIT_HAPTIC).
- *   - Open a haptic device.
+ *   - Initialize the Subsystem (::SDL_INIT_HAPTIC).
+ *   - Open a Haptic Device.
  *    - SDL_HapticOpen() to open from index.
  *    - SDL_HapticOpenFromJoystick() to open from an existing joystick.
  *   - Create an effect (::SDL_HapticEffect).
@@ -104,8 +104,8 @@
  * \endcode
  */
 
-#ifndef SDL_haptic_h_
-#define SDL_haptic_h_
+#ifndef _SDL_haptic_h
+#define _SDL_haptic_h
 
 #include "SDL_stdinc.h"
 #include "SDL_error.h"
@@ -282,7 +282,7 @@ typedef struct _SDL_Haptic SDL_Haptic;
 /**
  *  \brief Device can be queried for effect status.
  *
- *  Device supports querying effect status.
+ *  Device can be queried for effect status.
  *
  *  \sa SDL_HapticGetEffectStatus
  */
@@ -290,8 +290,6 @@ typedef struct _SDL_Haptic SDL_Haptic;
 
 /**
  *  \brief Device can be paused.
- *
- *  Devices supports being paused.
  *
  *  \sa SDL_HapticPause
  *  \sa SDL_HapticUnpause
@@ -446,7 +444,7 @@ typedef struct SDL_HapticDirection
 /**
  *  \brief A structure containing a template for a Constant effect.
  *
- *  This struct is exclusively for the ::SDL_HAPTIC_CONSTANT effect.
+ *  The struct is exclusive to the ::SDL_HAPTIC_CONSTANT effect.
  *
  *  A constant effect applies a constant force in the specified direction
  *  to the joystick.
@@ -678,8 +676,6 @@ typedef struct SDL_HapticLeftRight
 /**
  *  \brief A structure containing a template for the ::SDL_HAPTIC_CUSTOM effect.
  *
- *  This struct is exclusively for the ::SDL_HAPTIC_CUSTOM effect.
- *
  *  A custom force feedback effect is much like a periodic effect, where the
  *  application can define its exact shape.  You will have to allocate the
  *  data yourself.  Data should consist of channels * samples Uint16 samples.
@@ -808,7 +804,7 @@ typedef union SDL_HapticEffect
 extern DECLSPEC int SDLCALL SDL_NumHaptics(void);
 
 /**
- *  \brief Get the implementation dependent name of a haptic device.
+ *  \brief Get the implementation dependent name of a Haptic device.
  *
  *  This can be called before any joysticks are opened.
  *  If no name can be found, this function returns NULL.
@@ -821,9 +817,9 @@ extern DECLSPEC int SDLCALL SDL_NumHaptics(void);
 extern DECLSPEC const char *SDLCALL SDL_HapticName(int device_index);
 
 /**
- *  \brief Opens a haptic device for use.
+ *  \brief Opens a Haptic device for usage.
  *
- *  The index passed as an argument refers to the N'th haptic device on this
+ *  The index passed as an argument refers to the N'th Haptic device on this
  *  system.
  *
  *  When opening a haptic device, its gain will be set to maximum and
@@ -889,15 +885,15 @@ extern DECLSPEC SDL_Haptic *SDLCALL SDL_HapticOpenFromMouse(void);
  *  \brief Checks to see if a joystick has haptic features.
  *
  *  \param joystick Joystick to test for haptic capabilities.
- *  \return SDL_TRUE if the joystick is haptic, SDL_FALSE if it isn't
- *          or -1 if an error occurred.
+ *  \return 1 if the joystick is haptic, 0 if it isn't
+ *          or -1 if an error ocurred.
  *
  *  \sa SDL_HapticOpenFromJoystick
  */
 extern DECLSPEC int SDLCALL SDL_JoystickIsHaptic(SDL_Joystick * joystick);
 
 /**
- *  \brief Opens a haptic device for use from a joystick device.
+ *  \brief Opens a Haptic device for usage from a Joystick device.
  *
  *  You must still close the haptic device separately.  It will not be closed
  *  with the joystick.
@@ -917,7 +913,7 @@ extern DECLSPEC SDL_Haptic *SDLCALL SDL_HapticOpenFromJoystick(SDL_Joystick *
                                                                joystick);
 
 /**
- *  \brief Closes a haptic device previously opened with SDL_HapticOpen().
+ *  \brief Closes a Haptic device previously opened with SDL_HapticOpen().
  *
  *  \param haptic Haptic device to close.
  */
@@ -961,7 +957,7 @@ extern DECLSPEC int SDLCALL SDL_HapticNumEffectsPlaying(SDL_Haptic * haptic);
  *  Example:
  *  \code
  *  if (SDL_HapticQuery(haptic) & SDL_HAPTIC_CONSTANT) {
- *      printf("We have constant haptic effect!\n");
+ *      printf("We have constant haptic effect!");
  *  }
  *  \endcode
  *
@@ -1000,7 +996,7 @@ extern DECLSPEC int SDLCALL SDL_HapticEffectSupported(SDL_Haptic * haptic,
  *
  *  \param haptic Haptic device to create the effect on.
  *  \param effect Properties of the effect to create.
- *  \return The identifier of the effect on success or -1 on error.
+ *  \return The id of the effect on success or -1 on error.
  *
  *  \sa SDL_HapticUpdateEffect
  *  \sa SDL_HapticRunEffect
@@ -1012,13 +1008,13 @@ extern DECLSPEC int SDLCALL SDL_HapticNewEffect(SDL_Haptic * haptic,
 /**
  *  \brief Updates the properties of an effect.
  *
- *  Can be used dynamically, although behavior when dynamically changing
+ *  Can be used dynamically, although behaviour when dynamically changing
  *  direction may be strange.  Specifically the effect may reupload itself
  *  and start playing from the start.  You cannot change the type either when
  *  running SDL_HapticUpdateEffect().
  *
  *  \param haptic Haptic device that has the effect.
- *  \param effect Identifier of the effect to update.
+ *  \param effect Effect to update.
  *  \param data New effect properties to use.
  *  \return 0 on success or -1 on error.
  *
@@ -1222,6 +1218,6 @@ extern DECLSPEC int SDLCALL SDL_HapticRumbleStop(SDL_Haptic * haptic);
 #endif
 #include "close_code.h"
 
-#endif /* SDL_haptic_h_ */
+#endif /* _SDL_haptic_h */
 
 /* vi: set ts=4 sw=4 expandtab: */

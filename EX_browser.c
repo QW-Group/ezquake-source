@@ -312,6 +312,29 @@ static void Observe_Server (server_data *s)
 	SB_Browser_Hide(s);
 }
 
+// case insensitive and red-insensitive compare
+static int strcmp2 (const char * s1, const char * s2)
+{
+	if (s1 == NULL  &&  s2 == NULL)
+		return 0;
+
+	if (s1 == NULL)
+		return -1;
+
+	if (s2 == NULL)
+		return 1;
+
+	while (*s1  ||  *s2)
+	{
+		if (tolower(*s1 & 0x7f) != tolower(*s2 & 0x7f))
+			return tolower(*s1 & 0x7f) - tolower(*s2 & 0x7f);
+		s1++;
+		s2++;
+	}
+
+	return 0;
+}
+
 static void CopyServerToClipboard (server_data *s)
 {
 	char buf[2048];
@@ -2850,19 +2873,19 @@ int Servers_Compare_Func(const void * p_s1, const void * p_s2)
 				d = Servers_Compare_Ping_Func(s1, s2);
 				break;
 			case '4':
-				d = Q_strcmp2(s1->display.gamedir, s2->display.gamedir);
+				d = strcmp2(s1->display.gamedir, s2->display.gamedir);
 				break;
 			case '5':
-				d = Q_strcmp2(s1->display.map, s2->display.map);
+				d = strcmp2(s1->display.map, s2->display.map);
 				break;
 			case '6':
 				d = s1->playersn - s2->playersn;
 				break;
 			case '7':
-				d = Q_strcmp2(s1->display.fraglimit, s2->display.fraglimit);
+				d = strcmp2(s1->display.fraglimit, s2->display.fraglimit);
 				break;
 			case '8':
-				d = Q_strcmp2(s1->display.timelimit, s2->display.timelimit);
+				d = strcmp2(s1->display.timelimit, s2->display.timelimit);
 				 break;
 			default:
 				d = s1 - s2;
@@ -2972,19 +2995,19 @@ int All_Players_Compare_Func(const void * p_p1, const void * p_p2)
 				d = s1->ping - s2->ping;
 				break;
 			case '4':
-				d = Q_strcmp2(s1->display.gamedir, s2->display.gamedir);
+				d = strcmp2(s1->display.gamedir, s2->display.gamedir);
 				break;
 			case '5':
-				d = Q_strcmp2(s1->display.map, s2->display.map);
+				d = strcmp2(s1->display.map, s2->display.map);
 				break;
 			case '6':
 				d = s1->playersn - s2->playersn;
 				break;
 			case '7':
-				d = Q_strcmp2(s1->display.fraglimit, s2->display.fraglimit);
+				d = strcmp2(s1->display.fraglimit, s2->display.fraglimit);
 				break;
 			case '8':
-				d = Q_strcmp2(s1->display.timelimit, s2->display.timelimit);
+				d = strcmp2(s1->display.timelimit, s2->display.timelimit);
 				break;
 			case '9':
 				d = funcmp(p1->name, p2->name);

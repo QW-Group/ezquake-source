@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "ignore.h"
 #include "fchecks.h"
 #include "config_manager.h"
+#include "mp3_player.h"
 #include "mvd_utils.h"
 #include "EX_browser.h"
 #include "EX_qtvlist.h"
@@ -44,6 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "version.h"
 #include "stats_grid.h"
 #include "fmod.h"
+#include "modules.h"
 #include "sbar.h"
 #include "utils.h"
 #include "qsound.h"
@@ -351,7 +353,7 @@ void CL_MakeActive(void)
 	if (!cls.demoseeking) {
 		Con_ClearNotify ();
 	}
-	TP_ExecTrigger("f_spawn");
+	TP_ExecTrigger ("f_spawn");
 }
 
 // Cvar system calls this when a CVAR_USERINFO cvar changes
@@ -740,16 +742,9 @@ void CL_QWURL_f (void)
 	}
 	else if (!strncasecmp(command, "qtv", 3))
 	{
-		char *password = command + 3;
+		char *password = command + 4;
 
-		if (*password == '/') {
-			*password = ' ';
-		}
-		else {
-			*password = '\0';
-		}
-
-		Cbuf_AddText(va("qtvplay %s%s\n", connection_str, password));
+		Cbuf_AddText(va("qtvplay %s%s\n", connection_str, ((*password) ? va(" %s", password) : "")));
 	}
 	else
 	{
@@ -1144,12 +1139,6 @@ void CL_ClearState (void)
 		Cvar_ForceSet (&host_mapname, ""); // Notice mapname not valid yet.
 
 	cl.fakeshaft_policy = 1;
-
-	// Default teamnames for TF
-	strlcpy(cl.fixed_team_names[0], "blue", sizeof(cl.fixed_team_names[0]));
-	strlcpy(cl.fixed_team_names[1], "red", sizeof(cl.fixed_team_names[1]));
-	strlcpy(cl.fixed_team_names[2], "yell", sizeof(cl.fixed_team_names[2]));
-	strlcpy(cl.fixed_team_names[3], "gren", sizeof(cl.fixed_team_names[3]));
 
 	CL_ProcessServerInfo(); // Force set some default variables, because server may not sent fullserverinfo.
 }
@@ -1974,6 +1963,7 @@ void CL_Init (void)
 	// moved to host.c:Host_Init()
 	//ConfigManager_Init();
 	Stats_Init();
+	MP3_Init();
 	SB_RootInit();
 #ifdef WITH_IRC	
 	IRC_Init();
@@ -2041,7 +2031,15 @@ static double CL_MinFrameTime (void)
 			return 0;
 
 		// Multiview.
-		fps = max(30.0, cl_maxfps.value);
+		if (CL_MultiviewEnabled())
+		{
+			fps = max (30.0, cl_maxfps.value * CL_MultiviewNumberViews());
+		}
+		else
+		{
+			fps = max (30.0, cl_maxfps.value);
+		}
+
 	}
 	else
 	{
@@ -2509,6 +2507,7 @@ void CL_Shutdown (void)
 	SList_Shutdown();
 	CDAudio_Shutdown();
 	S_Shutdown();
+	MP3_Shutdown();
 	IN_Shutdown ();
 	Log_Shutdown();
 	if (host_basepal)

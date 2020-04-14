@@ -48,7 +48,6 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "Ctrl.h"
 #include "qtv.h"
 #include "demo_controls.h"
-#include "tr_types.h"
 
 #ifndef CLIENTONLY
 #include "server.h"
@@ -686,7 +685,14 @@ void SCR_DrawFPS (void) {
 		return;
 
 	// Multiview
-	snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05));
+	if (CL_MultiviewEnabled())
+	{
+		snprintf(str, sizeof(str), "%3.1f", (lastfps + 0.05)/CL_MultiviewNumberViews());
+	}
+	else
+	{
+		snprintf(str, sizeof(str), "%3.1f",  lastfps + 0.05);
+	}
 
 	x = ELEMENT_X_COORD(show_fps);
 	y = ELEMENT_Y_COORD(show_fps);
@@ -800,7 +806,7 @@ void SCR_DrawGameClock (void) {
 	else
 		strlcpy (str, SecondsToHourString((int) abs(timelimit - cl.gametime + scr_gameclock_offset.value)), sizeof(str));
 
-	if ((scr_gameclock.value == 3 || scr_gameclock.value == 4) && (s = strchr(str, ':')))
+	if ((scr_gameclock.value == 3 || scr_gameclock.value == 4) && (s = strstr(str, ":")))
 		s++;		// or just use SecondsToMinutesString() ...
 	else
 		s = str;
@@ -3349,7 +3355,7 @@ static image_format_t SShot_FormatForName(char *name) {
 #endif
 
 #ifdef WITH_PNG
-	else if (!strcasecmp(scr_sshot_format.string, "png") || !strcasecmp(scr_sshot_format.string, "apng"))
+	else if (!strcasecmp(scr_sshot_format.string, "png"))
 		return IMAGE_PNG;
 #endif
 
@@ -3381,25 +3387,14 @@ static void applyHWGamma(byte *buffer, int size) {
 
 	if (vid_hwgamma_enabled) {
 		for (i = 0; i < size; i += 3) {
-			int r = buffer[i + 0];
-			int g = buffer[i + 1];
-			int b = buffer[i + 2];
-
-#ifdef X11_GAMMA_WORKAROUND
-			if (glConfig.gammacrap.size >= 256 && glConfig.gammacrap.size <= 4096) {
-				r = (int)(r / 256.0f * glConfig.gammacrap.size);
-				g = (int)(g / 256.0f * glConfig.gammacrap.size);
-				b = (int)(b / 256.0f * glConfig.gammacrap.size);
-			}
-#endif
-			buffer[i + 0] = ramps[0][r] >> 8;
-			buffer[i + 1] = ramps[1][g] >> 8;
-			buffer[i + 2] = ramps[2][b] >> 8;
+			buffer[i + 0] = ramps[0][buffer[i + 0]] >> 8;
+			buffer[i + 1] = ramps[1][buffer[i + 1]] >> 8;
+			buffer[i + 2] = ramps[2][buffer[i + 2]] >> 8;
 		}
 	}
 }
 
-int SCR_Screenshot(char *name, qbool movie_capture)
+int SCR_Screenshot(char *name)
 {
 	scr_sshot_target_t* target_params = Q_malloc(sizeof(scr_sshot_target_t));
 
@@ -3416,11 +3411,10 @@ int SCR_Screenshot(char *name, qbool movie_capture)
 		target_params->buffer = Q_malloc(glwidth * glheight * 3);
 		target_params->freeMemory = true;
 	}
-	target_params->movie_capture = movie_capture;
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glReadPixels(glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, target_params->buffer);
 
-	if (movie_capture && Movie_BackgroundCapture(target_params)) {
+	if (Movie_BackgroundCapture(target_params)) {
 		return SSHOT_SUCCESS;
 	}
 
@@ -3438,29 +3432,53 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 
 #ifdef WITH_PNG
 	if (format == IMAGE_PNG) {
-		applyHWGamma(buffer, buffersize);
-
-		if (target_params->movie_capture && Movie_AnimatedPNG()) {
-			extern cvar_t movie_fps;
-
-			Image_WriteAPNGFrame(buffer + buffersize - 3 * glwidth, -glwidth, glheight, movie_fps.integer);
-		}
-		else {
+#ifndef WITH_PNG_STATIC
+		if (QLib_isModuleLoaded(qlib_libpng)) {
+#endif
+			applyHWGamma(buffer, buffersize);
 			success = Image_WritePNG(
 				name, image_png_compression_level.value,
 				buffer + buffersize - 3 * glwidth, -glwidth, glheight
 			) ? SSHOT_SUCCESS : SSHOT_FAILED;
+#ifndef WITH_PNG_STATIC
 		}
+		else {
+			if (!Movie_IsCapturing()) {
+				Com_Printf("Can't take a PNG screenshot without libpng.");
+				if (SShot_FormatForName("noext") == IMAGE_PNG) {
+					Com_Printf(" Try changing \"%s\" to another image format.", scr_sshot_format.name);
+				}
+				Com_Printf("\n");
+			}
+			success = SSHOT_FAILED_QUIET;
+		}
+#endif
 	}
 #endif
 
 #ifdef WITH_JPEG
 	if (format == IMAGE_JPEG) {
-		applyHWGamma(buffer, buffersize);
-		success = Image_WriteJPEG(
-			name, image_jpeg_quality_level.value,
-			buffer + buffersize - 3 * glwidth, -glwidth, glheight
-		) ? SSHOT_SUCCESS : SSHOT_FAILED;
+#ifndef WITH_JPEG_STATIC
+		if (QLib_isModuleLoaded(qlib_libjpeg)) {
+#endif
+			applyHWGamma(buffer, buffersize);
+			success = Image_WriteJPEG(
+				name, image_jpeg_quality_level.value,
+				buffer + buffersize - 3 * glwidth, -glwidth, glheight
+			) ? SSHOT_SUCCESS : SSHOT_FAILED;
+#ifndef WITH_JPEG_STATIC
+		}
+		else {
+			if (!Movie_IsCapturing()) {
+				Com_Printf("Can't take a JPEG screenshot without libjpeg.");
+				if (SShot_FormatForName("noext") == IMAGE_JPEG) {
+					Com_Printf(" Try changing \"%s\" to another image format.", scr_sshot_format.name);
+				}
+				Com_Printf("\n");
+			}
+			success = SSHOT_FAILED_QUIET;
+		}
+#endif
 	}
 #endif
 
@@ -3494,7 +3512,7 @@ int SCR_GetScreenShotName (char *name, int name_size, char *sshot_dir)
 
 	// Find a file name to save it to
 #ifdef WITH_PNG
-	if (!strcasecmp(scr_sshot_format.string, "png") || !strcasecmp(scr_sshot_format.string, "apng"))
+	if (!strcasecmp(scr_sshot_format.string, "png"))
 	{
 		strlcpy(ext, "png", 4);
 	}
@@ -3577,7 +3595,7 @@ void SCR_ScreenShot_f (void)
 	for (filename = name; *filename == '/' || *filename == '\\'; filename++)
 		;
 
-	success = SCR_Screenshot(va("%s/%s", sshot_dir, filename), false);
+	success = SCR_Screenshot(va("%s/%s", sshot_dir, filename));
 
 	if (success != SSHOT_FAILED_QUIET)
 	{
@@ -3615,10 +3633,17 @@ void SCR_RSShot_f (void) {
 	glReadPixels (glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, base);
 	Image_Resample (base, glwidth, glheight, pixels, width, height, 3, 0);
 #ifdef WITH_JPEG
-	success = Image_WriteJPEG (filename, 70, pixels + 3 * width * (height - 1), -width, height) ? SSHOT_SUCCESS : SSHOT_FAILED;
-#else
-	success = Image_WriteTGA(filename, pixels, width, height) ? SSHOT_SUCCESS : SSHOT_FAILED;
+#ifndef WITH_JPEG_STATIC
+	if (QLib_isModuleLoaded(qlib_libjpeg)) {
 #endif
+		success = Image_WriteJPEG (filename, 70, pixels + 3 * width * (height - 1), -width, height)
+			? SSHOT_SUCCESS : SSHOT_FAILED;
+#ifndef WITH_JPEG_STATIC
+	} else
+#endif
+#endif
+		success = Image_WriteTGA (filename, pixels, width, height)
+			? SSHOT_SUCCESS : SSHOT_FAILED;
 
 	Q_free(base);
 
@@ -3685,7 +3710,7 @@ static void SCR_CheckAutoScreenshot(void) {
 
 	glFinish();
 
-	if ((SCR_Screenshot(fullsavedname, false)) == SSHOT_SUCCESS)
+	if ((SCR_Screenshot(fullsavedname)) == SSHOT_SUCCESS)
 		Com_Printf("Match scoreboard saved to %s\n", savedname);
 }
 
@@ -3739,13 +3764,13 @@ void SCR_Movieshot(char *name)
 	else
 	{
 		// We're just capturing images.
-		SCR_Screenshot(name, true);
+		SCR_Screenshot (name);
 	}
 
 #else // _WIN32
 
 	// Capturing to avi only supported in windows yet.
-	SCR_Screenshot(name, true);
+	SCR_Screenshot (name);
 
 #endif // _WIN32
 }
@@ -3931,6 +3956,46 @@ void SCR_Init (void)
 	scr_initialized = true;
 
 	ScrollBars_Init();
+}
+
+void SCR_DrawMultiviewBorders(void)
+{
+	//
+	// Draw black borders around the views.
+	//
+	if (cl_multiview.value == 2 && !cl_mvinset.value)
+	{
+		Draw_Fill(0, vid.height / 2, vid.width - 1, 1, 0);
+	}
+	else if (cl_multiview.value == 2 && cl_mvinset.value)
+	{
+		if (vid.width <= 512 && cl_sbar.value)
+		{
+			Draw_Fill(vid.width / 3 * 2 + 1, vid.height / 3 - sb_lines / 3, vid.width / 3 + 2, 1, 0);
+			Draw_Fill(vid.width / 3 * 2 + 1, 0, 1, vid.height / 3 - sb_lines / 3, 0);
+		}
+		else if ((vid.width > 512 && cl_sbar.value && !cl_mvinsethud.value) || (vid.width > 512 && cl_sbar.value && !cl_mvdisplayhud.value))
+		{
+			Draw_Fill(vid.width / 3 * 2, vid.height / 3 - sb_lines / 3, vid.width / 3, 1, 0);
+			Draw_Fill(vid.width / 3 * 2, 0, 1, vid.height / 3 - sb_lines/3, 0);
+		}
+		else
+		{
+			// sbar 0 and <= 512 conwidth
+			Draw_Fill(vid.width / 3 * 2 + 1, vid.height / 3, vid.width / 3 + 2, 1, 0);
+			Draw_Fill(vid.width / 3 * 2 + 1, 0, 1, vid.height / 3, 0);
+		}
+	}
+	else if (cl_multiview.value == 3)
+	{
+		Draw_Fill(vid.width / 2, vid.height / 2, 1, vid.height / 2, 0);
+		Draw_Fill(0, vid.height / 2, vid.width, 1, 0);
+	}
+	else if (cl_multiview.value == 4)
+	{
+		Draw_Fill(vid.width / 2, 0, 1, vid.height, 0);
+		Draw_Fill(0, vid.height / 2, vid.width, 1, 0);
+	}
 }
 
 mpic_t * SCR_GetWeaponIconByFlag (int flag)

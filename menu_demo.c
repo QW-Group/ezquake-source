@@ -874,7 +874,12 @@ CTabPage_Handlers_t demo_options_handlers = {
 // set new initial dir
 void Menu_Demo_NewHome(const char *homedir)
 {
-	FL_SetCurrentDir(&demo_filelist, homedir);
+    char buf[MAX_OSPATH];
+
+    strlcpy(buf, com_basedir, sizeof(buf)); 
+    strlcat(buf, "/", sizeof(buf));
+    strlcat(buf, homedir, sizeof(buf));
+	FL_SetCurrentDir(&demo_filelist, buf);
 }
 
 void Menu_Demo_Init(void)

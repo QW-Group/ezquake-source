@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fmod.h"
 #include "utils.h"
 
+
 //VULT MODELS
 void Mod_AddModelFlags(model_t *mod);
 
@@ -1118,9 +1119,9 @@ void CalcSurfaceExtents (msurface_t *s) {
 				v->position[1] * tex->vecs[j][1] +
 				v->position[2] * tex->vecs[j][2] +
 				tex->vecs[j][3];
-			if (i == 0 || val < mins[j])
+			if (val < mins[j])
 				mins[j] = val;
-			if (i == 0 || val > maxs[j])
+			if (val > maxs[j])
 				maxs[j] = val;
 		}
 	}
@@ -1896,6 +1897,8 @@ void Mod_FloodFillSkin( byte *skin, int skinwidth, int skinheight ) {
 	}
 }
 
+extern qbool RuleSets_DisallowExternalTexture(model_t *mod);
+
 static qbool Mod_IsLumaAllowed(model_t *mod)
 {
 	switch (mod->modhint)
@@ -2436,32 +2439,6 @@ void Mod_LoadSpriteModel (model_t *mod, void *buffer) {
 //It was used in one of the older versions when it supported Q2 Models.
 void Mod_AddModelFlags(model_t *mod)
 {
-	mod->modhint = mod->modhint_trail = MOD_NORMAL;
-	if (!strcmp(mod->name, "progs/caltrop.mdl") ||
-		!strcmp(mod->name, "progs/biggren.mdl") ||
-/*		!strcmp(mod->name, "progs/detpack.mdl") ||
-		!strcmp(mod->name, "progs/detpack2.mdl") ||*/
-/*		!strcmp(mod->name, "progs/dgib.mdl") ||
-		!strcmp(mod->name, "progs/dgib2.mdl") ||
-		!strcmp(mod->name, "progs/dgib3.mdl") ||*/
-		!strcmp(mod->name, "progs/flare.mdl") ||
-		!strcmp(mod->name, "progs/gren1.bsp") ||
-		//!strcmp(mod->name, "progs/grenade.mdl") ||
-		//!strcmp(mod->name, "progs/grenade2.mdl") ||
-		!strcmp(mod->name, "progs/grenade3.mdl") ||
-		!strcmp(mod->name, "progs/hook.mdl") ||
-/*		!strcmp(mod->name, "progs/tesgib1.mdl") ||
-		!strcmp(mod->name, "progs/tesgib2.mdl") ||
-		!strcmp(mod->name, "progs/tesgib3.mdl") ||
-		!strcmp(mod->name, "progs/tesgib4.mdl") ||
-//		!strcmp(mod->name, "progs/turrgun.mdl") || //turrets have dodgy origins, after all
-		!strcmp(mod->name, "progs/tgib1.mdl") ||
-		!strcmp(mod->name, "progs/tgib2.mdl") ||
-		!strcmp(mod->name, "progs/tgib3.mdl") ||*/
-		!strcmp(mod->name, "progs/hgren2.mdl")) {
-		mod->modhint_trail = MOD_TF_TRAIL;
-	}
-
 	//modhints
 	if (!strcmp(mod->name, "progs/player.mdl")) {
 		mod->modhint = MOD_PLAYER;
@@ -2497,6 +2474,30 @@ void Mod_AddModelFlags(model_t *mod)
 		!strcmp(mod->name, "progs/s_spike.mdl") ||
 		!strcmp(mod->name, "progs/amf_spike.mdl")) {
 		mod->modhint = MOD_SPIKE;
+	}
+	else if (!strcmp(mod->name, "progs/caltrop.mdl") ||
+		!strcmp(mod->name, "progs/biggren.mdl") ||
+/*		!strcmp(mod->name, "progs/detpack.mdl") ||
+		!strcmp(mod->name, "progs/detpack2.mdl") ||*/
+/*		!strcmp(mod->name, "progs/dgib.mdl") ||
+		!strcmp(mod->name, "progs/dgib2.mdl") ||
+		!strcmp(mod->name, "progs/dgib3.mdl") ||*/
+		!strcmp(mod->name, "progs/flare.mdl") ||
+		!strcmp(mod->name, "progs/gren1.bsp") ||
+		//!strcmp(mod->name, "progs/grenade.mdl") ||
+		//!strcmp(mod->name, "progs/grenade2.mdl") ||
+		!strcmp(mod->name, "progs/grenade3.mdl") ||
+		!strcmp(mod->name, "progs/hook.mdl") ||
+/*		!strcmp(mod->name, "progs/tesgib1.mdl") ||
+		!strcmp(mod->name, "progs/tesgib2.mdl") ||
+		!strcmp(mod->name, "progs/tesgib3.mdl") ||
+		!strcmp(mod->name, "progs/tesgib4.mdl") ||
+//		!strcmp(mod->name, "progs/turrgun.mdl") || //turrets have dodgy origins, after all
+		!strcmp(mod->name, "progs/tgib1.mdl") ||
+		!strcmp(mod->name, "progs/tgib2.mdl") ||
+		!strcmp(mod->name, "progs/tgib3.mdl") ||*/
+		!strcmp(mod->name, "progs/hgren2.mdl")) {
+		mod->modhint = MOD_TF_TRAIL;
 	}
 	else if (!strcmp(mod->name, "progs/coil.mdl") || !strcmp(mod->name, "progs/tesla.mdl")) {
 		mod->modhint = MOD_TESLA;
@@ -2564,13 +2565,7 @@ void Mod_AddModelFlags(model_t *mod)
 	else if (!strcmp(mod->name, "progs/missile.mdl")) {
 		mod->modhint = MOD_ROCKET;
 	}
-	else if (!strcmp(mod->name, "progs/grenade.mdl") ||
-		!strcmp(mod->name, "progs/flare.mdl") ||
-		!strcmp(mod->name, "progs/hgren2.mdl") ||
-		!strcmp(mod->name, "progs/biggren.mdl") ||
-		!strcmp(mod->name, "progs/grenade2.mdl") ||
-		!strcmp(mod->name, "progs/grenade3.mdl") ||
-		!strcmp(mod->name, "progs/caltrop.mdl")) {
+	else if (!strcmp(mod->name, "progs/grenade.mdl")) {
 		mod->modhint = MOD_GRENADE;
 	}
 	else if (!strcmp(mod->name, "progs/g_rock2.mdl")) {
@@ -2606,17 +2601,15 @@ int Mod_LoadSimpleTexture(model_t *mod, int skinnum)
 	int tex = 0, texmode = 0;
 	char basename[64], indentifier[64];
 
-	if (!mod) {
+	if (!mod)
 		return 0;
-	}
 
-	if (RuleSets_DisallowExternalTexture(mod)) {
+	if (RuleSets_DisallowExternalTexture(mod))
 		return 0;
-	}
 
-	if (RuleSets_DisallowSimpleTexture(mod)) {
+	// well, it have nothing with luma, but quite same restrictions...
+	if ( (mod->modhint != MOD_BACKPACK) && !Mod_IsLumaAllowed(mod) )
 		return 0;
-	}
 
 	COM_StripExtension(COM_SkipPath(mod->name), basename, sizeof(basename));
 

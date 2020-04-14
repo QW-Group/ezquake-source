@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2018 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2016 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -25,8 +25,8 @@
  *  Header for the enumerated pixel format definitions.
  */
 
-#ifndef SDL_pixels_h_
-#define SDL_pixels_h_
+#ifndef _SDL_pixels_h
+#define _SDL_pixels_h
 
 #include "SDL_stdinc.h"
 #include "SDL_endian.h"
@@ -287,9 +287,7 @@ enum
     SDL_PIXELFORMAT_NV12 =      /**< Planar mode: Y + U/V interleaved  (2 planes) */
         SDL_DEFINE_PIXELFOURCC('N', 'V', '1', '2'),
     SDL_PIXELFORMAT_NV21 =      /**< Planar mode: Y + V/U interleaved  (2 planes) */
-        SDL_DEFINE_PIXELFOURCC('N', 'V', '2', '1'),
-    SDL_PIXELFORMAT_EXTERNAL_OES =      /**< Android video texture format */
-        SDL_DEFINE_PIXELFOURCC('O', 'E', 'S', ' ')
+        SDL_DEFINE_PIXELFOURCC('N', 'V', '2', '1')
 };
 
 typedef struct SDL_Color
@@ -465,6 +463,6 @@ extern DECLSPEC void SDLCALL SDL_CalculateGammaRamp(float gamma, Uint16 * ramp);
 #endif
 #include "close_code.h"
 
-#endif /* SDL_pixels_h_ */
+#endif /* _SDL_pixels_h */
 
 /* vi: set ts=4 sw=4 expandtab: */

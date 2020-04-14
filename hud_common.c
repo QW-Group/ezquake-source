@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quakedef.h"
 #include "common_draw.h"
+#include "mp3_player.h"
 #ifdef WITH_PNG
 #include <png.h>
 #endif
@@ -224,7 +225,7 @@ int TP_IsAmmoLow(int weapon)
 int TP_TeamFortressEngineerSpanner(void)
 {
 	char *player_skin=Info_ValueForKey(cl.players[cl.playernum].userinfo,"skin");
-	char *model_name=cl.model_precache[CL_WeaponModelForView()->current.modelindex]->name;
+	char *model_name=cl.model_precache[cl.viewent.current.modelindex]->name;
 	if (cl.teamfortress && player_skin
 			&& (strcasecmp(player_skin, "tf_eng") == 0)
 			&& model_name
@@ -2343,7 +2344,7 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 		r = 1;
 	}
 	else if (i1->spectator && i2->spectator) {
-		r = Q_strcmp2(i1->name, i2->name);
+		r = strcmp(i1->name, i2->name);
 	}
 	else {
 		//
@@ -2358,13 +2359,13 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 			}
 
 			// sort on team name only.
-			r = (r == 0) ? -Q_strcmp2(p1->team->name, p2->team->name) : r;
+			r = (r == 0) ? -strcasecmp(p1->team->name, p2->team->name) : r;
 		}
 
 		if (hud_sortrules_playersort.integer & 1) {
 			r = (r == 0) ? i1->frags - i2->frags : r;
 		}
-		r = (r == 0) ? -Q_strcmp2(i1->name, i2->name) : r;
+		r = (r == 0) ? -strcasecmp(i1->name, i2->name) : r;
 	}
 
 	r = (r == 0) ? (p1->playernum - p2->playernum) : r;
@@ -2383,7 +2384,7 @@ static int HUD_CompareTeams(const void *vt1, const void *vt2)
 	if (hud_sortrules_teamsort.integer == 1) {
 		r = (t1->frags - t2->frags);
 	}
-	r = !r ? -Q_strcmp2(t1->name, t2->name) : r;
+	r = !r ? -strcasecmp(t1->name, t2->name) : r;
 
 	// qsort() sorts ascending by default, we want descending.
 	// So negate the result.
@@ -2427,10 +2428,6 @@ static void HUD_Sort_Scoreboard(int flags)
 
 		for (i=0; i < MAX_CLIENTS; i++) {
 			if (cl.players[i].name[0] && !cl.players[i].spectator) {
-				if (cl.players[i].frags == 0 && cl.players[i].team[0] == '\0' && !strcmp(cl.players[i].name, "[ServeMe]")) {
-					continue;
-				}
-
 				// Find players team
 				for (team = 0; team < n_teams; team++) {
 					if (cl.teamplay && !strcmp(cl.players[i].team, sorted_teams[team].name) && sorted_teams[team].name[0]) {
@@ -2557,14 +2554,9 @@ static void HUD_Sort_Scoreboard(int flags)
 			// Find players team.
 			for (team = 0; team < n_teams; team++) {
 				if (!strcmp(player->team, sorted_teams[team].name) && sorted_teams[team].name[0]) {
-					if (hud_sortrules_includeself.integer == 1 && team > 0) {
+					if (hud_sortrules_includeself.integer == 2 && team != 0) {
 						sort_teams_info_t temp = sorted_teams[0];
 						sorted_teams[0] = sorted_teams[team];
-						sorted_teams[team] = temp;
-					}
-					else if (hud_sortrules_includeself.integer == 2 && team > 1) {
-						sort_teams_info_t temp = sorted_teams[1];
-						sorted_teams[1] = sorted_teams[team];
 						sorted_teams[team] = temp;
 					}
 					break;
@@ -2595,24 +2587,17 @@ static void HUD_Sort_Scoreboard(int flags)
 	if (flags & HUD_SCOREBOARD_SORT_PLAYERS) {
 		qsort(sorted_players, n_players + n_spectators, sizeof(sort_players_info_t), HUD_ComparePlayers);
 
-		if (!cl.teamplay) {
+		if (hud_sortrules_includeself.integer) {
 			// Re-find player
 			active_player_position = -1;
 			for (i = 0; i < n_players + n_spectators; ++i) {
 				if (sorted_players[i].playernum == active_player) {
-					active_player_position = i;
-					if (hud_sortrules_includeself.integer == 1 && i > 0) {
-						sort_players_info_t temp = sorted_players[0];
-						sorted_players[0] = sorted_players[i];
-						sorted_players[i] = temp;
-						active_player_position = 0;
-					}
-					else if (hud_sortrules_includeself.integer == 2 && i > 1) {
+					if (hud_sortrules_includeself.integer == 2 && i > 0) {
 						sort_players_info_t temp = sorted_players[1];
 						sorted_players[1] = sorted_players[i];
 						sorted_players[i] = temp;
-						active_player_position = 1;
 					}
+					active_player_position = i;
 				}
 			}
 		}
@@ -4072,6 +4057,207 @@ void SCR_HUD_DrawTeamFrags(hud_t *hud)
 	}
 }
 
+char *Get_MP3_HUD_style(float style, char *st)
+{
+	static char HUD_style[32];
+	if(style == 1.0)
+	{
+		strlcpy(HUD_style, va("%s:", st), sizeof(HUD_style));
+	}
+	else if(style == 2.0)
+	{
+		strlcpy(HUD_style, va("\x10%s\x11", st), sizeof(HUD_style));
+	}
+	else
+	{
+		strlcpy(HUD_style, "", sizeof(HUD_style));
+	}
+	return HUD_style;
+}
+
+// Draws MP3 Title.
+void SCR_HUD_DrawMP3_Title(hud_t *hud)
+{
+	int x=0, y=0/*, n=1*/;
+	int width = 64;
+	int height = 8;
+
+#ifdef WITH_MP3_PLAYER
+	//int width_as_text = 0;
+	static int title_length = 0;
+	//int row_break = 0;
+	//int i=0;
+	int status = 0;
+	static char title[MP3_MAXSONGTITLE];
+	double t;		// current time
+	static double lastframetime;	// last refresh
+
+	static cvar_t *style = NULL, 
+		*width_var, *height_var, *scroll, *scroll_delay, 
+		*on_scoreboard, *wordwrap, *scale;
+
+	if (style == NULL)  // first time called
+	{
+		style = HUD_FindVar(hud, "style");
+		width_var = HUD_FindVar(hud, "width");
+		height_var = HUD_FindVar(hud, "height");
+		scroll = HUD_FindVar(hud, "scroll");
+		scroll_delay = HUD_FindVar(hud, "scroll_delay");
+		on_scoreboard = HUD_FindVar(hud, "on_scoreboard");
+		wordwrap = HUD_FindVar(hud, "wordwrap");
+		scale = HUD_FindVar(hud, "scale");
+	}
+
+	if(on_scoreboard->value)
+	{
+		hud->flags |= HUD_ON_SCORES;
+	}
+	else if((int)on_scoreboard->value & HUD_ON_SCORES)
+	{
+		hud->flags -= HUD_ON_SCORES;
+	}
+
+	width = (int)width_var->value * scale->value;
+	height = (int)height_var->value * scale->value;
+
+	if(width < 0) width = 0;
+	if(width > vid.width) width = vid.width;
+	if(height < 0) height = 0;
+	if(height > vid.width) height = vid.height;
+
+	t = Sys_DoubleTime();
+
+	if ((t - lastframetime) >= 2) { // 2 sec refresh rate
+		lastframetime = t;
+		status = MP3_GetStatus();
+
+		switch(status)
+		{
+			case MP3_PLAYING :
+				title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Playing"), MP3_Macro_MP3Info());
+				break;
+			case MP3_PAUSED :
+				title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Paused"), MP3_Macro_MP3Info());
+				break;
+			case MP3_STOPPED :
+				title_length = snprintf(title, sizeof(title)-1, "%s %s", Get_MP3_HUD_style(style->value, "Stopped"), MP3_Macro_MP3Info());
+				break;
+			case MP3_NOTRUNNING	:
+			default :
+				status = MP3_NOTRUNNING;
+				title_length = snprintf (title, sizeof (title), "%s is not running.", mp3_player->PlayerName_AllCaps);
+				break;
+		}
+
+		if(title_length < 0)
+		{
+			snprintf(title, sizeof (title), "Error retrieving current song.");
+		}
+	}
+
+	if (HUD_PrepareDraw(hud, width , height, &x, &y))
+	{
+		SCR_DrawWordWrapString(x, y, 8 * scale->value, width, height, (int)wordwrap->value, (int)scroll->value, (float)scroll_delay->value, title, scale->value);
+	}
+#else
+	HUD_PrepareDraw(hud, width , height, &x, &y);
+#endif
+}
+
+// Draws MP3 Time as a HUD-element.
+void SCR_HUD_DrawMP3_Time(hud_t *hud)
+{
+	int x = 0, y = 0, width = 0, height = 0;
+#ifdef WITH_MP3_PLAYER
+	int elapsed = 0;
+	int remain = 0;
+	int total = 0;
+	static char time_string[MP3_MAXSONGTITLE];
+	static char elapsed_string[MP3_MAXSONGTITLE];
+	double t; // current time
+	static double lastframetime; // last refresh
+
+	static cvar_t *style = NULL, *on_scoreboard, *scale;
+
+	if (style == NULL) {
+		style = HUD_FindVar(hud, "style");
+		on_scoreboard = HUD_FindVar(hud, "on_scoreboard");
+		scale = HUD_FindVar(hud, "scale");
+	}
+
+	if (on_scoreboard->value) {
+		hud->flags |= HUD_ON_SCORES;
+	}
+	else if ((int)on_scoreboard->value & HUD_ON_SCORES) {
+		hud->flags -= HUD_ON_SCORES;
+	}
+
+	t = Sys_DoubleTime();
+	if ((t - lastframetime) >= 2) { // 2 sec refresh rate
+		lastframetime = t;
+
+		if(!MP3_GetOutputtime(&elapsed, &total) || elapsed < 0 || total < 0) {
+			snprintf (time_string, sizeof (time_string), "\x10-:-\x11");
+		}
+		else {
+			switch((int)style->value)
+			{
+				case 1 :
+					remain = total - elapsed;
+					strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
+					snprintf (time_string, sizeof (time_string), "\x10-%s/%s\x11", elapsed_string, SecondsToMinutesString (total));
+					break;
+				case 2 :
+					remain = total - elapsed;
+					snprintf (time_string, sizeof (time_string), "\x10-%s\x11", SecondsToMinutesString (remain));
+					break;
+				case 3 :
+					snprintf (time_string, sizeof (time_string), "\x10%s\x11", SecondsToMinutesString (elapsed));
+					break;
+				case 4 :
+					remain = total - elapsed;
+					strlcpy (elapsed_string, SecondsToMinutesString (remain), sizeof (elapsed_string));
+					snprintf (time_string, sizeof (time_string), "%s/%s", elapsed_string, SecondsToMinutesString (total));
+					break;
+				case 5 :
+					strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
+					snprintf (time_string, sizeof (time_string), "-%s/%s", elapsed_string, SecondsToMinutesString (total));
+					break;
+				case 6 :
+					remain = total - elapsed;
+					snprintf (time_string, sizeof (time_string), "-%s", SecondsToMinutesString (remain));
+					break;
+				case 7 :
+					snprintf (time_string, sizeof (time_string), "%s", SecondsToMinutesString (elapsed));
+					break;
+				case 0 :
+				default :
+					strlcpy (elapsed_string, SecondsToMinutesString (elapsed), sizeof (elapsed_string));
+					snprintf (time_string, sizeof (time_string), "\x10%s/%s\x11", elapsed_string, SecondsToMinutesString (total));
+					break;
+			}
+		}
+
+	}
+
+	// Don't allow showing the timer if ruleset disallows it
+	// It could be used for timing powerups
+	// Use same check that is used for any external communication
+	if (Rulesets_RestrictPacket()) {
+		snprintf(time_string, sizeof(time_string), "\x10%s\x11", "Not allowed");
+	}
+
+	width = strlen (time_string) * 8 * scale->value;
+	height = 8 * scale->value;
+
+	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
+		Draw_SString(x, y, time_string, scale->value);
+	}
+#else
+	HUD_PrepareDraw(hud, width , height, &x, &y);
+#endif
+}
+
 #define TEMPHUD_NAME "_temphud"
 #define TEMPHUD_FULLPATH "configs/"TEMPHUD_NAME".cfg"
 
@@ -4799,26 +4985,6 @@ void SCR_HUD_DrawTeamHoldInfo(hud_t *hud)
 
 static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxname, int maxloc, qbool width_only, hud_t *hud);
 
-static int HUD_CompareTeamInfoSlots(const void* lhs_, const void* rhs_)
-{
-	int lhs = *(const int*)lhs_;
-	int rhs = *(const int*)rhs_;
-	int lhs_pos = -1;
-	int rhs_pos = -1;
-	int i;
-
-	for (i = 0; i < n_players; ++i) {
-		if (sorted_players[i].playernum == lhs) {
-			lhs_pos = i;
-		}
-		if (sorted_players[i].playernum == rhs) {
-			rhs_pos = i;
-		}
-	}
-
-	return lhs_pos - rhs_pos;
-}
-
 void SCR_HUD_DrawTeamInfo(hud_t *hud)
 {
 	int x, y, _y, width, height;
@@ -4882,8 +5048,6 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		slots[slots_num++] = i;
 	}
 
-	qsort(slots, slots_num, sizeof(slots[0]), HUD_CompareTeamInfoSlots);
-
 	// well, better use fixed loc length
 	maxloc  = bound(0, hud_teaminfo_loc_width->integer, 100);
 	// limit name length
@@ -4902,7 +5066,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	if (!cl.teamplay)  // non teamplay mode
 		return;
 
-	if (!HUD_PrepareDraw(hud, width, height, &x, &y))
+	if (!HUD_PrepareDraw(hud, width , height, &x, &y))
 		return;
 
 	_y = y ;
@@ -4915,8 +5079,8 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		while (sorted_teams[k].name)
 		{
 			Draw_SString (x, _y, sorted_teams[k].name, hud_teaminfo_scale->value);
-			sprintf(tmp,"%s %4i", TP_ParseFunChars("$.",false), sorted_teams[k].frags);
-			Draw_SString(x + width - 6 * FONTWIDTH * hud_teaminfo_scale->value, _y, tmp, hud_teaminfo_scale->value);
+			sprintf(tmp,"%s %i",TP_ParseFunChars("$.",false), sorted_teams[k].frags);
+			Draw_SString (x+(strlen(sorted_teams[k].name)+1)*FONTWIDTH, _y, tmp, hud_teaminfo_scale->value);
 			_y += FONTWIDTH * hud_teaminfo_scale->value;
 			for ( j = 0; j < slots_num; j++ ) 
 			{
@@ -5034,15 +5198,6 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 						x += 3 * FONTWIDTH * scale;
 
 						break;
-					case 'f': // draw frags, space on left side
-					case 'F': // draw frags, space on right side
-						if (!width_only) {
-							snprintf(tmp, sizeof(tmp), (s[0] == 'f' ? "%3d" : "%-3d"), cl.players[i].frags);
-							Draw_SString(x, y, tmp, scale);
-						}
-						x += 3 * FONTWIDTH * scale;
-						break;
-
 					case 'a': // draw armor, padded with space on left side
 					case 'A': // draw armor, padded with space on right side
 
@@ -5224,16 +5379,13 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, int x, int y, int maxna
 void SCR_HUD_DrawItemsClock(hud_t *hud)
 {
 	extern qbool hud_editor;
-	extern const char* MVD_AnnouncerString(int line, int total, float* alpha);
 	int width, height;
 	int x, y;
-
 	static cvar_t
 		*hud_itemsclock_timelimit = NULL,
 		*hud_itemsclock_style = NULL,
 		*hud_itemsclock_scale = NULL,
-		*hud_itemsclock_filter = NULL,
-		*hud_itemsclock_backpacks = NULL;
+		*hud_itemsclock_filter = NULL;
 
 	if (hud_itemsclock_timelimit == NULL) {
 		char val[256];
@@ -5242,7 +5394,6 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		hud_itemsclock_style = HUD_FindVar(hud, "style");
 		hud_itemsclock_scale = HUD_FindVar(hud, "scale");
 		hud_itemsclock_filter = HUD_FindVar(hud, "filter");
-		hud_itemsclock_backpacks = HUD_FindVar(hud, "backpacks");
 
 		// Unecessary to parse the item filter string on each frame.
 		hud_itemsclock_filter->OnChange = ItemsClock_OnChangeItemFilter;
@@ -5252,7 +5403,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 		Cvar_Set(hud_itemsclock_filter, val);
 	}
 
-	MVD_ClockList_TopItems_DimensionsGet(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, &width, &height, hud_itemsclock_scale->value, hud_itemsclock_backpacks->integer);
+	MVD_ClockList_TopItems_DimensionsGet(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, &width, &height, hud_itemsclock_scale->value);
 
 	if (hud_editor)
 		HUD_PrepareDraw(hud, width, LETTERHEIGHT * hud_itemsclock_scale->value, &x, &y);
@@ -5263,7 +5414,7 @@ void SCR_HUD_DrawItemsClock(hud_t *hud)
 	if (!HUD_PrepareDraw(hud, width, height, &x, &y))
 		return;
 
-	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value, itemsclock_filter, hud_itemsclock_backpacks->integer);
+	MVD_ClockList_TopItems_Draw(hud_itemsclock_timelimit->value, hud_itemsclock_style->integer, x, y, hud_itemsclock_scale->value, itemsclock_filter);
 }
 
 static qbool SCR_Hud_GetScores (int* team, int* enemy, char** teamName, char** enemyName)
@@ -6553,6 +6704,28 @@ void CommonDraw_Init(void)
 			"powerup_style","1",
 			NULL);
 
+	HUD_Register("mp3_title", NULL, "Shows current mp3 playing.",
+		HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Title,
+		"0", "top", "right", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"style", "2",
+		"width", "512",
+		"height", "8",
+		"scroll", "1",
+		"scroll_delay", "0.5",
+		"on_scoreboard", "0",
+		"wordwrap", "0",
+		"scale", "1",
+		NULL
+	);
+
+	HUD_Register("mp3_time", NULL, "Shows the time of the current mp3 playing.",
+		HUD_PLUSMINUS, ca_disconnected, 0, SCR_HUD_DrawMP3_Time,
+		"0", "top", "left", "bottom", "0", "0", "0", "0 0 0", NULL,
+		"style",	"0",
+		"on_scoreboard", "0",
+		"scale", "1",
+		NULL);
+
 	HUD_Register(
 		"teamholdbar", NULL, "Shows how much of the level (in percent) that is currently being held by either team.",
 		HUD_PLUSMINUS, ca_active, 0, SCR_HUD_DrawTeamHoldBar,
@@ -6610,7 +6783,6 @@ void CommonDraw_Init(void)
 		"style", "0",
 		"scale", "1",
 		"filter", "",
-		"backpacks", "0",
 		NULL
 	);
 
@@ -6928,12 +7100,4 @@ static void SCR_Hud_GameSummary(hud_t* hud)
 			x += icon_size * hud_gamesummary_scale->value;
 		}
 	}
-}
-
-const char* HUD_FirstTeam(void)
-{
-	if (n_teams) {
-		return sorted_teams[0].name;
-	}
-	return "";
 }

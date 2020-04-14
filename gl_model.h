@@ -382,7 +382,6 @@ typedef struct model_s {
 	int					simpletexture[MAX_SIMPLE_TEXTURES]; // for simpleitmes
 
 	modhint_t			modhint;
-	modhint_t			modhint_trail;
 
 	modtype_t			type;
 	int					numframes;

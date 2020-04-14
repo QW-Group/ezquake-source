@@ -803,63 +803,7 @@ char *Macro_Point_LED(void)
 		return tp_name_status_blue.string;
 }
 
-static int Macro_TeamSort(const void* lhs_, const void* rhs_)
-{
-	const char* lhs = *(const char**)lhs_;
-	const char* rhs = *(const char**)rhs_;
 
-	return Q_strcmp2(lhs, rhs);
-}
-
-static const char* Macro_TeamPick(int team_number, const char* default_teamname)
-{
-	int i, j;
-	int team_count = 0;
-	const char* teamnames[MAX_CLIENTS];
-
-	for (i = 0; i < sizeof(cl.players) / sizeof(cl.players[0]); ++i) {
-		if (cl.players[i].name[0] && !cl.players[i].spectator) {
-			const char* team = (cl.teamplay ? cl.players[i].team : cl.players[i].name);
-
-			for (j = 0; j < team_count; ++j) {
-				if (!strcmp(team, teamnames[j])) {
-					break;
-				}
-			}
-
-			if (j >= team_count && team_count < sizeof(teamnames) / sizeof(teamnames[0])) {
-				teamnames[team_count++] = team;
-			}
-		}
-	}
-
-	if (team_count > team_number) {
-		qsort((void*)teamnames, team_count, sizeof(teamnames[0]), Macro_TeamSort);
-
-		return teamnames[team_number];
-	}
-	else {
-		return default_teamname;
-	}
-}
-
-char *Macro_Team1(void)
-{
-	static char buffer[MAX_MACRO_VALUE];
-
-	strlcpy(buffer, Macro_TeamPick(0, "team1"), sizeof(buffer));
-
-	return buffer;
-}
-
-char *Macro_Team2(void)
-{
-	static char buffer[MAX_MACRO_VALUE];
-
-	strlcpy(buffer, Macro_TeamPick(1, "team2"), sizeof(buffer));
-
-	return buffer;
-}
 
 char *Macro_MyStatus_LED(void)
 {
@@ -996,11 +940,6 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
 
 	if (cls.demoplayback)
 		return;
-
-	// Player is ignoring themselves
-	if (cl.players[cl.playernum].ignored) {
-		return;
-	}
 
 	name = Info_ValueForKey (cl.players[cl.playernum].userinfo, "name");
 	if (strlen(name) >= 32)
@@ -1154,8 +1093,6 @@ void TP_AddMacros (void)
 	Cmd_AddMacro ("ping", Macro_Latency);
 	Cmd_AddMacro ("time", Macro_Time);
 	Cmd_AddMacro ("date", Macro_Date);
-	Cmd_AddMacro ("team1", Macro_Team1);
-	Cmd_AddMacro ("team2", Macro_Team2);
 
 	Cmd_AddMacroEx ("health", Macro_Health, teamplay);
 	Cmd_AddMacroEx ("armortype", Macro_ArmorType, teamplay);
@@ -1707,13 +1644,7 @@ char *TP_SkinForcingTeam(void)
 		return cl.players[cl.playernum].team;
 	}
 	else if (cl_teamlock.integer == 1) {
-		extern const char* HUD_FirstTeam(void);
 		int i;
-
-		if (cls.mvdplayback && HUD_FirstTeam()[0]) {
-			return (char*) HUD_FirstTeam();
-		}
-
 		for (i = 0; i < MAX_CLIENTS; i++) {
 			if (cl.players[i].name[0] && !cl.players[i].spectator && cl.players[i].team[0]) {
 				return cl.players[i].team;

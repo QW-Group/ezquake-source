@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2018 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2016 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -25,8 +25,8 @@
  *  Header file for ::SDL_Surface definition and management functions.
  */
 
-#ifndef SDL_surface_h_
-#define SDL_surface_h_
+#ifndef _SDL_surface_h
+#define _SDL_surface_h
 
 #include "SDL_stdinc.h"
 #include "SDL_pixels.h"
@@ -94,19 +94,8 @@ typedef struct SDL_Surface
 /**
  * \brief The type of function used for surface blitting functions.
  */
-typedef int (SDLCALL *SDL_blit) (struct SDL_Surface * src, SDL_Rect * srcrect,
-                                 struct SDL_Surface * dst, SDL_Rect * dstrect);
-
-/**
- * \brief The formula used for converting between YUV and RGB
- */
-typedef enum
-{
-    SDL_YUV_CONVERSION_JPEG,        /**< Full range JPEG */
-    SDL_YUV_CONVERSION_BT601,       /**< BT.601 (the default) */
-    SDL_YUV_CONVERSION_BT709,       /**< BT.709 */
-    SDL_YUV_CONVERSION_AUTOMATIC    /**< BT.601 for SD content, BT.709 for HD content */
-} SDL_YUV_CONVERSION_MODE;
+typedef int (*SDL_blit) (struct SDL_Surface * src, SDL_Rect * srcrect,
+                         struct SDL_Surface * dst, SDL_Rect * dstrect);
 
 /**
  *  Allocate and free an RGB surface.
@@ -129,11 +118,8 @@ typedef enum
 extern DECLSPEC SDL_Surface *SDLCALL SDL_CreateRGBSurface
     (Uint32 flags, int width, int height, int depth,
      Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask);
-
-/* !!! FIXME for 2.1: why does this ask for depth? Format provides that. */
 extern DECLSPEC SDL_Surface *SDLCALL SDL_CreateRGBSurfaceWithFormat
     (Uint32 flags, int width, int height, int depth, Uint32 format);
-
 extern DECLSPEC SDL_Surface *SDLCALL SDL_CreateRGBSurfaceFrom(void *pixels,
                                                               int width,
                                                               int height,
@@ -370,11 +356,6 @@ extern DECLSPEC SDL_bool SDLCALL SDL_SetClipRect(SDL_Surface * surface,
 extern DECLSPEC void SDLCALL SDL_GetClipRect(SDL_Surface * surface,
                                              SDL_Rect * rect);
 
-/*
- * Creates a new surface identical to the existing surface
- */
-extern DECLSPEC SDL_Surface *SDLCALL SDL_DuplicateSurface(SDL_Surface * surface);
-
 /**
  *  Creates a new surface of the specified format, and then copies and maps
  *  the given surface to it so the blit of the converted surface will be as
@@ -520,20 +501,6 @@ extern DECLSPEC int SDLCALL SDL_LowerBlitScaled
     (SDL_Surface * src, SDL_Rect * srcrect,
     SDL_Surface * dst, SDL_Rect * dstrect);
 
-/**
- *  \brief Set the YUV conversion mode
- */
-extern DECLSPEC void SDLCALL SDL_SetYUVConversionMode(SDL_YUV_CONVERSION_MODE mode);
-
-/**
- *  \brief Get the YUV conversion mode
- */
-extern DECLSPEC SDL_YUV_CONVERSION_MODE SDLCALL SDL_GetYUVConversionMode(void);
-
-/**
- *  \brief Get the YUV conversion mode, returning the correct mode for the resolution when the current conversion mode is SDL_YUV_CONVERSION_AUTOMATIC
- */
-extern DECLSPEC SDL_YUV_CONVERSION_MODE SDLCALL SDL_GetYUVConversionModeForResolution(int width, int height);
 
 /* Ends C function definitions when using C++ */
 #ifdef __cplusplus
@@ -541,6 +508,6 @@ extern DECLSPEC SDL_YUV_CONVERSION_MODE SDLCALL SDL_GetYUVConversionModeForResol
 #endif
 #include "close_code.h"
 
-#endif /* SDL_surface_h_ */
+#endif /* _SDL_surface_h */
 
 /* vi: set ts=4 sw=4 expandtab: */

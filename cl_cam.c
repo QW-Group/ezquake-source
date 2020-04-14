@@ -34,7 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "sbar.h"
 #include "qtv.h"
 
-static int Cam_MainTrackNum(void);
 
 static vec3_t desired_position; // where the camera wants to be.
 static qbool locked = false;	// Is the spectator locked to a players view or free flying.
@@ -403,22 +402,28 @@ void Cam_Track(usercmd_t *cmd)
 
 	frame = &cl.frames[cl.validsequence & UPDATE_MASK];
 
-	if (autocam && cls.mvdplayback) {
-		if (ideal_track != spec_track && cls.realtime - last_lock > 0.1 && frame->playerstate[ideal_track].messagenum == cl.parsecount) {
+	if (autocam && cls.mvdplayback)	
+	{
+		if (ideal_track != spec_track && cls.realtime - last_lock > 0.1 && 
+			frame->playerstate[ideal_track].messagenum == cl.parsecount)
+		{
 			Cam_Lock(ideal_track);
 		}
 
-		if (frame->playerstate[spec_track].messagenum != cl.parsecount || Cam_MainTrackNum() != ideal_track) {
+		if (frame->playerstate[spec_track].messagenum != cl.parsecount)	
+		{
 			int i;
 
-			for (i = 0; i < MAX_CLIENTS - 1; i++) {
-				if (frame->playerstate[i].messagenum == cl.parsecount) {
+			for (i = 0; i < MAX_CLIENTS; i++) 
+			{
+				if (frame->playerstate[i].messagenum == cl.parsecount)
 					break;
-				}
 			}
 
-			Cam_Lock(i);
-			cls.findtrack = (i >= MAX_CLIENTS - 1);
+			if (i < MAX_CLIENTS)
+			{
+				Cam_Lock(i);
+			}
 		}
 	}
 
@@ -817,12 +822,14 @@ void CL_InitCam(void)
 	CL_MultiviewInitialise ();
 }
 
-static int Cam_MainTrackNum(void)
+int Cam_MainTrackNum (void)
 {
-	if (CL_MultiviewInsetEnabled()) {
-		return CL_MultiviewMainView();
+	extern int CL_MultiviewMainView (void);
+
+	if (CL_MultiviewInsetEnabled ()) {
+		return CL_MultiviewMainView ();
 	}
-	return Cam_TrackNum();
+	return Cam_TrackNum ();
 }
 
 //
@@ -913,7 +920,10 @@ void CL_Track (int trackview)
 		
 		// Multiview tracking:
 		// Set the specified track view to track the specified player.
-		CL_MultiviewSetTrackSlot(trackview, slot);
+		if(trackview >= 0)
+		{
+			CL_MultiviewSetTrackSlot(trackview, slot);
+		}
 
 		locked = true;
 

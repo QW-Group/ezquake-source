@@ -800,26 +800,23 @@ static int V_CurrentWeaponModel(void) {
 	extern int IN_BestWeaponReal(void);
 	extern cvar_t cl_weaponpreselect;
 	int bestgun;
+	static int lastfired = 0;
+	static int lastviewplayernum = 0;
 	int realw = cl.stats[STAT_WEAPON];
 
 	if (cls.demoplayback && r_viewlastfired.integer) {
-		if (realw == 0) {
-			cl.lastfired = realw;
-			cl.lastviewplayernum = cl.viewplayernum;
-			return realw;
-		}
 		if (view_message.weaponframe) {
-			cl.lastfired = realw;
-			cl.lastviewplayernum = cl.viewplayernum;
+			lastfired = realw;
+			lastviewplayernum = cl.viewplayernum;
 			return realw;
 		}
-		else if (cl.lastfired) {
-			if (cl.lastviewplayernum == cl.viewplayernum) {
-				return cl.lastfired;
+		else if (lastfired) {
+			if (lastviewplayernum == cl.viewplayernum) {
+				return lastfired;
 			}
 			else {
-				cl.lastfired = realw;
-				cl.lastviewplayernum = cl.viewplayernum;
+				lastfired = realw;
+				lastviewplayernum = cl.viewplayernum;
 				return realw;
 			}
 		}
@@ -828,14 +825,12 @@ static int V_CurrentWeaponModel(void) {
 		}
 	}
 	else {
-		if (ShowPreselectedWeap() && r_viewpreselgun.integer && !view_message.weaponframe) {
+		if (ShowPreselectedWeap() && r_viewpreselgun.value)
+		{
 			bestgun = IN_BestWeaponReal();
-			if (bestgun == 1) {
-				return cl_modelindices[mi_vaxe];
-			}
-			if (bestgun > 1 && bestgun <= 8) {
+			if (bestgun == 1) return cl_modelindices[mi_vaxe];
+			if (bestgun > 1 && bestgun <= 8)
 				return cl_modelindices[mi_weapon1 - 1 + bestgun];
-			}
 		}
 		return cl.stats[STAT_WEAPON];
 	}
@@ -848,7 +843,7 @@ void V_AddViewWeapon (float bob) {
 	int gunmodel = V_CurrentWeaponModel();
 	extern cvar_t scr_fov, scr_fovmode, scr_newHud;
 
-	cent = CL_WeaponModelForView();
+	cent = &cl.viewent;
 	TP_ParseWeaponModel(cl.model_precache[gunmodel]);
 
 	if (!cl_drawgun.value || (cl_drawgun.value == 2 && scr_fov.value > 90)
@@ -892,7 +887,7 @@ void V_AddViewWeapon (float bob) {
 	}
 
 	if (cent->current.modelindex != gunmodel) {
-		cent->frametime = -1;
+		cl.viewent.frametime = -1;
 	} else {
 		if (cent->current.frame != view_message.weaponframe) {
 			cent->frametime = cl.time;
@@ -911,7 +906,7 @@ void V_CalcIntermissionRefdef (void) {
 	VectorCopy (cl.simangles, r_refdef.viewangles);
 
 	// we don't draw weapon in intermission
-	CL_WeaponModelForView()->current.modelindex = 0;
+	cl.viewent.current.modelindex = 0;
 
 	// always idle in intermission
 	old = v_idlescale.value;
