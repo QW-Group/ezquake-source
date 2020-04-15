@@ -183,17 +183,20 @@ typedef struct mvd_gt_info_s {
 extern mvd_gt_info_t mvd_gt_info[mvd_gt_types];
 
 typedef struct mvd_wp_info_s {
-	int		id;
-	char	*name;
-	int		it;
-	const char *colored_name;
-	int     model_hint;
-	int     skin_number;
-	byte    Rcolor;
-	byte    Gcolor;
-	byte    Bcolor;
+	int           id;
+	char*         name;
+	int           it;
+	const char*   colored_name;
+	int           model_hint;
+	int           skin_number;
+	byte          Rcolor;
+	byte          Gcolor;
+	byte          Bcolor;
 	const cvar_t* name_cvar;
-	const char* color_string;
+	const char*   color_string;
+	const char*   colored_packname;
+	qbool         add_clock;
+	qbool         show_held;
 } mvd_wp_info_t;
 
 extern mvd_wp_info_t mvd_wp_info[mvd_info_types];

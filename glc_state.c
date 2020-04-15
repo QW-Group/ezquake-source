@@ -196,7 +196,7 @@ void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, q
 {
 	R_TraceEnterFunctionRegion;
 
-	if (!weapon_model && (!R_TextureReferenceIsValid(texture) || (custom_model && custom_model->fullbright_cvar.integer))) {
+	if (!weapon_model && (!R_TextureReferenceIsValid(texture) || (custom_model && (custom_model->fullbright_cvar.integer || custom_model->disable_texturing)))) {
 		R_ApplyRenderingState(alpha_blend ? r_state_aliasmodel_notexture_transparent : r_state_aliasmodel_notexture_opaque);
 	}
 	else if (custom_model == NULL && R_TextureReferenceIsValid(fb_texture) && mtex) {

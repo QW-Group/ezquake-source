@@ -40,12 +40,18 @@ typedef struct efrag_s {
 #define RF_CAUSTICS        32
 #define RF_ALPHABLEND      64   // bit of a hack - always enable blending (used for 2nd pass when multi-texturing disabled)
 #define RF_ADDITIVEBLEND  128
+#define RF_ROCKETPACK     256
+#define RF_LGPACK         512
+
+#define RF_BACKPACK_FLAGS (RF_ROCKETPACK | RF_LGPACK)
 
 typedef struct custom_model_color_s {
 	cvar_t color_cvar;
 	cvar_t fullbright_cvar;
 	cvar_t* amf_cvar;
 	int model_hint;
+	int renderfx;
+	qbool disable_texturing;
 } custom_model_color_t;
 
 typedef struct entity_s {

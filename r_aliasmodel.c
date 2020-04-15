@@ -100,28 +100,36 @@ static custom_model_color_t custom_model_colors[] = {
 		{ "gl_custom_lg_color", "", CVAR_COLOR },
 		{ "gl_custom_lg_fullbright", "1" },
 		&amf_lightning,
-		MOD_THUNDERBOLT
+		MOD_THUNDERBOLT,
+		0,
+		true
 	},
 	// Rockets
 	{
 		{ "gl_custom_rocket_color", "", CVAR_COLOR },
 		{ "gl_custom_rocket_fullbright", "1" },
 		NULL,
-		MOD_ROCKET
+		MOD_ROCKET,
+		0,
+		true
 	},
 	// Grenades
 	{
 		{ "gl_custom_grenade_color", "", CVAR_COLOR },
 		{ "gl_custom_grenade_fullbright", "1" },
 		NULL,
-		MOD_GRENADE
+		MOD_GRENADE,
+		0,
+		true
 	},
 	// Spikes
 	{
 		{ "gl_custom_spike_color", "", CVAR_COLOR },
 		{ "gl_custom_spike_fullbright", "1" },
 		&amf_part_spikes,
-		MOD_SPIKE
+		MOD_SPIKE,
+		0,
+		true
 	}
 };
 
@@ -954,7 +962,7 @@ void R_AliasModelColor(const entity_t* ent, float* color, qbool* invalidate_text
 	else {
 		VectorScale(ent->custom_model->color_cvar.color, 1.0f / 255, color);
 
-		*invalidate_texture = ent->custom_model->fullbright_cvar.integer;
+		*invalidate_texture = (ent->custom_model->fullbright_cvar.integer || ent->custom_model->disable_texturing);
 	}
 	VectorScale(color, ent->r_modelalpha, color);
 	color[3] = ent->r_modelalpha;

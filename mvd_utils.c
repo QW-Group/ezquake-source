@@ -22,6 +22,7 @@ $Id: mvd_utils.c,v 1.57 2007-10-11 17:56:47 johnnycz Exp $
 // core module of the group of MVD tools: mvd_utils, mvd_xmlstats, mvd_autotrack
 
 #include "quakedef.h"
+#include <math.h>
 #include "parser.h"
 #include "localtime.h"
 #include "gl_model.h"
@@ -45,6 +46,9 @@ static char announcer_line_strings[MAX_ANNOUNCER_LINES][256];
 static double announcer_line_times[MAX_ANNOUNCER_LINES];
 static int announcer_lines;
 
+static qbool mvd_ktx_markers = false;
+static const char* MVD_AnnouncerTeamPlayerName(player_info_t* info);
+
 // Can contain 'pack'
 #define MVD_ANNOUNCER_ITEM_LENGTH 9
 
@@ -62,28 +66,43 @@ mvd_gt_info_t mvd_gt_info[mvd_gt_types] = {
 mvd_cg_info_s mvd_cg_info;
 
 mvd_wp_info_t mvd_wp_info[mvd_info_types] = {
-    {AXE_INFO,  "axe",  IT_AXE,              "axe",         0,                  0, 0xDA, 0xDA, 0xDA, NULL,          "&cf0f"},
-    {SG_INFO,   "sg",   IT_SHOTGUN,          "sg",          0,                  0, 0xDA, 0xDA, 0xDA, NULL,          "&cf0f"},
-    {SSG_INFO,  "ssg",  IT_SUPER_SHOTGUN,    "&cf0fssg&r",  0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_ssg,  "&cf0f"},
-    {NG_INFO,   "ng",   IT_NAILGUN,          "&cf0fng&r",   0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_ng,   "&cf0f"},
-    {SNG_INFO,  "sng",  IT_SUPER_NAILGUN,    "&cf0fsng&r",  0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_sng,  "&cf0f"},
-    {GL_INFO,   "gl",   IT_GRENADE_LAUNCHER, "&cf0fgl&r",   0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_gl,   "&cf0f"},
-    {RL_INFO,   "rl",   IT_ROCKET_LAUNCHER,  "&cf0frl&r",   MOD_ROCKETLAUNCHER, 0, 0xDA, 0xDA, 0xDA, &tp_name_rl,   "&cf0f"},
-    {LG_INFO,   "lg",   IT_LIGHTNING,        "&cf0flg&r",   MOD_LIGHTNINGGUN,   0, 0xDA, 0xDA, 0xDA, &tp_name_lg,   "&cf0f"},
-    {RING_INFO, "rg",   IT_INVISIBILITY,     "&cff0ring&r", MOD_RING,           0, 0xA6, 0xA6, 0x00, &tp_name_ring, "&cff0"},
-    {QUAD_INFO, "qd",   IT_QUAD,             "&c00fquad&r", MOD_QUAD,           0, 0x4D, 0x45, 0xC9, &tp_name_quad, "&c00f"},
-    {PENT_INFO, "pt",   IT_INVULNERABILITY,  "&cf00pent&r", MOD_PENT,           0, 0x91, 0x01, 0x01, &tp_name_pent, "&cf00"},
-    {GA_INFO,   "ga",   IT_ARMOR1,           "&c0f0ga&r",   MOD_ARMOR,          0, 0x00, 0x72, 0x36, &tp_name_ga,   "&c0f0"},
-    {YA_INFO,   "ya",   IT_ARMOR2,           "&cff0ya&r",   MOD_ARMOR,          1, 0xA6, 0xA6, 0x00, &tp_name_ya,   "&cff0"},
-    {RA_INFO,   "ra",   IT_ARMOR3,           "&cf00ra&r",   MOD_ARMOR,          2, 0x91, 0x01, 0x01, &tp_name_ra,   "&cf00"},
-    {MH_INFO,   "mh",   IT_SUPERHEALTH,      "&c00fmh&r",   MOD_MEGAHEALTH,     0, 0xAD, 0x54, 0x2A, &tp_name_mh,   "&c00f"},
+    {AXE_INFO,  "axe",  IT_AXE,              "axe",         0,                  0, 0xDA, 0xDA, 0xDA, NULL,          "&cf0f", "axe",             false, false },
+    {SG_INFO,   "sg",   IT_SHOTGUN,          "sg",          0,                  0, 0xDA, 0xDA, 0xDA, NULL,          "&cf0f", "sg",              false, false },
+    {SSG_INFO,  "ssg",  IT_SUPER_SHOTGUN,    "&cf0fssg&r",  0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_ssg,  "&cf0f", "&cf0fssg pack&r", false, false },
+    {NG_INFO,   "ng",   IT_NAILGUN,          "&cf0fng&r",   0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_ng,   "&cf0f", "&cf0fng pack&r",  false, false },
+    {SNG_INFO,  "sng",  IT_SUPER_NAILGUN,    "&cf0fsng&r",  0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_sng,  "&cf0f", "&cf0fsng pack&r", false, false },
+    {GL_INFO,   "gl",   IT_GRENADE_LAUNCHER, "&cf0fgl&r",   0,                  0, 0xDA, 0xDA, 0xDA, &tp_name_gl,   "&cf0f", "&cf0fgl pack&r",  false, false },
+    {RL_INFO,   "rl",   IT_ROCKET_LAUNCHER,  "&cf0frl&r",   MOD_ROCKETLAUNCHER, 0, 0xDA, 0xDA, 0xDA, &tp_name_rl,   "&cf0f", "&cf0frl pack&r",  true,  false },
+    {LG_INFO,   "lg",   IT_LIGHTNING,        "&cf0flg&r",   MOD_LIGHTNINGGUN,   0, 0xDA, 0xDA, 0xDA, &tp_name_lg,   "&cf0f", "&cf0flg pack&r",  true,  false },
+    {RING_INFO, "rg",   IT_INVISIBILITY,     "&cff0ring&r", MOD_RING,           0, 0xA6, 0xA6, 0x00, &tp_name_ring, "&cff0", "",                true,  true  },
+    {QUAD_INFO, "qd",   IT_QUAD,             "&c00fquad&r", MOD_QUAD,           0, 0x4D, 0x45, 0xC9, &tp_name_quad, "&c00f", "",                true,  true  },
+    {PENT_INFO, "pt",   IT_INVULNERABILITY,  "&cf00pent&r", MOD_PENT,           0, 0x91, 0x01, 0x01, &tp_name_pent, "&cf00", "",                true,  true  },
+    {GA_INFO,   "ga",   IT_ARMOR1,           "&c0f0ga&r",   MOD_ARMOR,          0, 0x00, 0x72, 0x36, &tp_name_ga,   "&c0f0", "",                true,  false },
+    {YA_INFO,   "ya",   IT_ARMOR2,           "&cff0ya&r",   MOD_ARMOR,          1, 0xA6, 0xA6, 0x00, &tp_name_ya,   "&cff0", "",                true,  false },
+    {RA_INFO,   "ra",   IT_ARMOR3,           "&cf00ra&r",   MOD_ARMOR,          2, 0x91, 0x01, 0x01, &tp_name_ra,   "&cf00", "",                true,  false },
+    {MH_INFO,   "mh",   IT_SUPERHEALTH,      "&c00fmh&r",   MOD_MEGAHEALTH,     0, 0xAD, 0x54, 0x2A, &tp_name_mh,   "&c00f", "",                true,  false },
 };
 static int item_counts[mvd_info_types];
+
+#define MVDCLOCK_PERSISTENT        1
+#define MVDCLOCK_BACKPACK          2
+#define MVDCLOCK_BACKPACK_REMOVED  4
+
+#define ITEMSCLOCK_TAKEN_PAUSE     4    // in seconds
 
 typedef struct mvd_clock_t {
 	int itemtype;                       // RA, Quad, RL, ...
 	double clockval;                    // time when the clock expires
 	char location[MAX_MACRO_STRING];    // Player location when the object was picked up
+	int flags;                          // flags
+	int entity;                         // entity number
+	int last_taken_by;                  // player entity item was last taken by (0 for unknown)
+	int dropped_by;                     // player entity who dropped it (0 for unknown)
+	double last_taken;                  // time when item was last taken
+	double old_clockval;                // used to briefly keep items in same order as they're taken
+	float hold_clockval;                // time when the player's hold-time will expire
+	int order;                          // for static ordering
+
 	struct mvd_clock_t *next;           // next item in the linked list
 	struct mvd_clock_t *prev;           // prev item in the linked list
 } mvd_clock_t;
@@ -176,6 +195,7 @@ int quad_mentioned = 0;
 int powerup_cam_active = 0;
 int cam_1,cam_2,cam_3,cam_4;
 static qbool was_standby = true;
+static int fixed_ordering = 0;
 
 
 extern cvar_t tp_name_none, tp_weapon_order;
@@ -221,6 +241,8 @@ cvar_t mvd_pc_view_3 = {"mvd_pc_view_3",""};
 cvar_t mvd_pc_view_4 = {"mvd_pc_view_4",""};
 
 cvar_t mvd_moreinfo = {"mvd_moreinfo","0"};
+cvar_t mvd_autoadd_items = { "mvd_autoadd_items", "1" };
+cvar_t mvd_sortitems = { "mvd_sortitems", "1" };
 
 typedef struct bp_var_s{
 	int id;
@@ -424,16 +446,80 @@ static void MVD_ClockStart(int itemtype, vec3_t origin)
 	if (origin) {
 		strlcpy(newclock->location, TP_LocationName(origin), sizeof(newclock->location));
 	}
+	newclock->order = 0;
 	MVD_ClockList_Insert(newclock);
+}
+
+static mvd_clock_t* MVD_ClockStartEntity(int entity, int itemtype, int flags)
+{
+	mvd_clock_t* newclock = (mvd_clock_t*) Q_malloc(sizeof(mvd_clock_t));
+	newclock->clockval = 0;
+	newclock->itemtype = itemtype;
+	strlcpy(newclock->location, TP_LocationName(cl_entities[entity].baseline.origin), sizeof(newclock->location));
+	newclock->flags = flags;
+	newclock->entity = entity;
+	newclock->order = ++fixed_ordering;
+	MVD_ClockList_Insert(newclock);
+	return newclock;
+}
+
+static mvd_clock_t* MVD_ClockFindEntity(int entity)
+{
+	mvd_clock_t *current;
+
+	for (current = mvd_clocklist; current; current = current->next) {
+		if (current->entity == entity) {
+			return current;
+		}
+	}
+
+	return NULL;
 }
 
 void MVD_ClockList_RemoveExpired(void)
 {
-	mvd_clock_t *current = mvd_clocklist;
+	mvd_clock_t *current;
 
-	while (current && current->clockval + 1 < cls.demotime) {
-		// we keep the item there for 1 second so that "spawn" is displayed
-		current = MVD_ClockList_Remove(current);
+	for (current = mvd_clocklist; current; ) {
+		// We don't remove persistent counters
+		if (!(current->flags & MVDCLOCK_PERSISTENT)) {
+			// Expired
+			if (current->clockval + 1 < cls.demotime) {
+				current = MVD_ClockList_Remove(current);
+				continue;
+			}
+
+			// 
+			if (current->entity && !(current->flags & MVDCLOCK_BACKPACK_REMOVED)) {
+				int mod = cl_entities[current->entity].current.modelindex;
+				if (mod <= 0 || mod >= sizeof(cl.model_precache) / sizeof(cl.model_precache[0])) {
+					if (current->last_taken) {
+						// Backpack has been picked up, disconnect from entity
+						current->flags &= ~(MVDCLOCK_BACKPACK);
+						current->flags |= MVDCLOCK_BACKPACK_REMOVED;
+						current->entity = 0;
+					}
+					else {
+						current = MVD_ClockList_Remove(current);
+					}
+					continue;
+				}
+
+				if (cl_entities[current->entity].sequence < cl.validsequence) {
+					// Backpack has been picked up or disappeared, disconnect from entity and let expire
+					current->flags &= ~(MVDCLOCK_BACKPACK);
+					current->flags |= MVDCLOCK_BACKPACK_REMOVED;
+					current->entity = 0;
+				}
+				else if (cl.model_precache[mod] == NULL || cl.model_precache[mod]->modhint != MOD_BACKPACK) {
+					// No longer a backpack, remove
+					current = MVD_ClockList_Remove(current);
+					continue;
+				}
+			}
+		}
+
+		current = current->next;
 	}
 }
 
@@ -454,14 +540,112 @@ int MVD_ClockList_GetLongestName(void)
 	return longest;
 }
 
+static double MVD_ClockList_SortTime(mvd_clock_t* c)
+{
+	double t = c->clockval;
+
+	if (c->last_taken && cls.demotime - c->last_taken < ITEMSCLOCK_TAKEN_PAUSE) {
+		// item has just been taken, keep to the start of the list
+		t = -1 - c->old_clockval;
+	}
+	else if (c->last_taken && t == -1) {
+		// megahealth still held by player, put to end of list
+		t = cls.demotime + c->last_taken + 1000;
+	}
+
+	return t;
+}
+
+// Moves persistent 
+static int MVD_ClockList_Compare(mvd_clock_t* c, mvd_clock_t* n)
+{
+	double c_time = MVD_ClockList_SortTime(c);
+	double n_time = MVD_ClockList_SortTime(n);
+	qbool c_persistent = c->flags & MVDCLOCK_PERSISTENT;
+	qbool n_persistent = n->flags & MVDCLOCK_PERSISTENT;
+
+	if (c_persistent && !n_persistent) {
+		return 1;
+	}
+	if (!c_persistent && n_persistent) {
+		return -1;
+	}
+
+	if (mvd_sortitems.integer) {
+		return c_time - n_time;
+	}
+	else {
+		return c->order - n->order;
+	}
+}
+
+static void MVD_ClockList_Sort(void)
+{
+	qbool any_change = true;
+
+	while (any_change) {
+		mvd_clock_t *c = mvd_clocklist;
+
+		any_change = false;
+		while (c) {
+			mvd_clock_t *n = c->next;
+			int comparison;
+
+			if (!n) {
+				break;
+			}
+
+			comparison = MVD_ClockList_Compare(c, n);
+			if (comparison > 0) {
+				c->next = n->next;
+				n->prev = c->prev;
+				c->prev = n;
+				n->next = c;
+
+				if (n->prev) {
+					n->prev->next = n;
+				}
+				if (c->next) {
+					c->next->prev = c;
+				}
+
+				if (c == mvd_clocklist) {
+					mvd_clocklist = n;
+				}
+
+				any_change = true;
+			}
+			else {
+				c = n;
+			}
+		}
+	}
+}
+
 // MEAG: Deliberately not taking 'proportional' argument into account here, don't think we should measure by item type either...
-void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *width, int *height, float scale, qbool proportional)
+void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int* width, int* height, float scale, qbool proportional)
 {
 	int lines = 0;
 	mvd_clock_t *current = mvd_clocklist;
+	int length = 0;
+	int persistent = 0, temporary = 0;
 
-	while (current && current->clockval - cls.demotime < time_limit) {
-		lines++;
+	if (style == 5) {
+		MVD_ClockList_Sort();
+
+		current = mvd_clocklist;
+	}
+
+	while (current) {
+		if (current->entity || current->clockval - cls.demotime < time_limit) {
+			if (current->flags & MVDCLOCK_PERSISTENT) {
+				++persistent;
+			}
+			else {
+				++temporary;
+			}
+			lines++;
+		}
 		current = current->next;
 	}
 
@@ -472,131 +656,254 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *wid
 	else if (style == 3) {
 		*width = LETTERWIDTH * (2 + sizeof(" spawn") - 1) * scale;
 	}
+	else if (style == 4) {
+		*width = LETTERWIDTH * (2 + sizeof(" spawn") - 1) * scale;
+	}
 	else {
 		*width = LETTERWIDTH * (sizeof("QUAD spawn") - 1) * scale;
 	}
 
+	if (persistent && temporary) {
+		lines++;
+	}
+
 	*height = LETTERHEIGHT * lines * scale * (style == 3 ? 2 : 1);
+}
+
+static qbool MVD_ClockIsHeld(mvd_clock_t* current, qbool test_held, float* alpha)
+{
+	double time_since;
+
+	if (alpha) {
+		*alpha = 1.0f;
+	}
+
+	if (!current->entity || (test_held && current->hold_clockval <= cls.demotime)) {
+		return false;
+	}
+
+	if (current->last_taken_by <= 0 || current->last_taken_by > MAX_CLIENTS || !cl.players[current->last_taken_by - 1].name[0]) {
+		return false;
+	}
+
+	if (test_held && (cl.players[current->last_taken_by - 1].stats[STAT_ITEMS] & mvd_wp_info[current->itemtype].it)) {
+		return true;
+	}
+
+	if (!current->last_taken || current->last_taken > cls.demotime) {
+		return false;
+	}
+
+	time_since = (cls.demotime - current->last_taken);
+	if (alpha) {
+		if (time_since > ITEMSCLOCK_TAKEN_PAUSE - 1 && time_since < ITEMSCLOCK_TAKEN_PAUSE) {
+			*alpha = (ITEMSCLOCK_TAKEN_PAUSE - time_since);
+		}
+		else if (time_since >= ITEMSCLOCK_TAKEN_PAUSE && time_since < ITEMSCLOCK_TAKEN_PAUSE + 1) {
+			*alpha = (time_since - ITEMSCLOCK_TAKEN_PAUSE);
+		}
+	}
+	return time_since < ITEMSCLOCK_TAKEN_PAUSE;
 }
 
 void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, float scale, int filter, qbool proportional)
 {
 	mvd_clock_t *current = mvd_clocklist;
 	char clockitem[128];
-	char temp[16];
+	char temp[128];
 	int base_x = x;
+	qbool was_persistent = true;
 	int barWidth;
 
-	while (current && current->clockval - cls.demotime < time_limit) {
-		int time = (int) ((current->clockval - cls.demotime) + 1);
-		mpic_t* texture = Mod_SimpleTextureForHint(mvd_wp_info[current->itemtype].model_hint, mvd_wp_info[current->itemtype].skin_number);
-
+	while (current) {
+		float alpha = 1.0f;
 		x = base_x;
-		if (filter & mvd_wp_info[current->itemtype].it) {
-			current = current->next;
-			continue;
-		}
 
-		//add first the item name
-		if (style == 1) {
-			// tp_name_*
-			strlcpy(clockitem, TP_ItemName(mvd_wp_info[current->itemtype].it), sizeof(clockitem));
-		}
-		else if (style == 2) {
-			// brown + white
-			strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
-			CharsToBrown(clockitem, clockitem + strlen(clockitem));
-		}
-		else if (style == 3 && texture) {
-			// simpleitem
-			Draw_FitPic(x, y, 2 * LETTERWIDTH * scale, 2 * LETTERHEIGHT * scale, texture);
-			x += 2 * LETTERWIDTH * scale;
-			clockitem[0] = '\0';
-			y += LETTERHEIGHT * scale / 2;
-		}
-		else if (style == 4) {
-			char item_name[MAX_MACRO_STRING];
+		if (current->entity || current->clockval - cls.demotime < time_limit) {
+			int time = (int)((current->clockval - cls.demotime) + 1);
+			int texture = Mod_SimpleTextureForHint(mvd_wp_info[current->itemtype].model_hint, mvd_wp_info[current->itemtype].skin_number);
 
-			if (mvd_wp_info[current->itemtype].name_cvar && mvd_wp_info[current->itemtype].name_cvar->string[0]) {
-				Util_SkipChars(mvd_wp_info[current->itemtype].name_cvar->string, "{}", item_name, sizeof(item_name));
+			if (filter & mvd_wp_info[current->itemtype].it) {
+				current = current->next;
+				continue;
+			}
+
+			if ((current->flags & MVDCLOCK_PERSISTENT) && !was_persistent) {
+				y += LETTERHEIGHT * scale;
+			}
+			was_persistent = (current->flags & MVDCLOCK_PERSISTENT);
+
+			if (style == 1) {
+				// tp_name_*
+				strlcpy(clockitem, TP_ItemName(mvd_wp_info[current->itemtype].it), sizeof(clockitem));
+			}
+			else if (style == 2) {
+				// brown + white
+				strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
+				CharsToBrown(clockitem, clockitem + strlen(clockitem));
+			}
+			else if (style == 3 && texture) {
+				// simpleitem
+				strlcpy(clockitem, "  ", sizeof(clockitem));
+				Draw_2dAlphaTexture(x, y, 2 * LETTERWIDTH * scale, 2 * LETTERHEIGHT * scale, texture, 1.0f);
+				y += LETTERHEIGHT * scale / 2;
+			}
+			else if (style == 4) {
+				char item_name[MAX_MACRO_STRING];
+
+				if (mvd_wp_info[current->itemtype].name_cvar && mvd_wp_info[current->itemtype].name_cvar->string[0]) {
+					Util_SkipChars(mvd_wp_info[current->itemtype].name_cvar->string, "{}", item_name, sizeof(item_name));
+				}
+				else {
+					strlcpy(item_name, mvd_wp_info[current->itemtype].colored_name, sizeof(item_name));
+				}
+
+				snprintf(clockitem, sizeof(clockitem), "%*s", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(item_name) - strlen_color(item_name)), item_name);
+
+				strlcat(clockitem, " \034", sizeof(clockitem));
+			}
+			else if (style == 5) {
+				char item_name[MAX_MACRO_STRING];
+
+				if (current->flags & (MVDCLOCK_BACKPACK | MVDCLOCK_BACKPACK_REMOVED)) {
+					const char* name = mvd_wp_info[current->itemtype].colored_packname;
+
+					snprintf(item_name, sizeof(item_name) - 1, "%*s", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(name) - strlen_color(name)), name);
+				}
+				else {
+					const char* color = mvd_wp_info[current->itemtype].color_string;
+
+					snprintf(item_name, sizeof(item_name) - 1, "%s%*s&r", color ? color : "", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(current->location) - strlen_color(current->location)), current->location);
+				}
+
+				strlcpy(clockitem, item_name, sizeof(clockitem));
+				strlcat(clockitem, " \034", sizeof(clockitem));
+				Draw_SString(x, y, clockitem, scale);
+
+				x += strlen_color(clockitem) * 8;
+				clockitem[0] = '\0';
+			}
+			else if (style == 6) {
+				// progress bar countdown
+				strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
+
+				barWidth = (round(67 * scale) / time_limit) * (time_limit - time + 1);
+				if (time == 0) {
+					barWidth = (round(67 * scale) / time_limit) * time_limit;
+				}
+
+				Draw_AlphaFillRGB(x - 1, y, barWidth, 10 * scale,
+					RGBA_TO_COLOR(mvd_wp_info[current->itemtype].Rcolor,
+						mvd_wp_info[current->itemtype].Gcolor,
+						mvd_wp_info[current->itemtype].Bcolor, 128));
+			}
+			else if (style == 7) {
+				// progress bar countdown, but itemname not in bar
+				strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
+
+				barWidth = (round(44 * scale) / time_limit) * (time_limit - time + 1);
+				if (time == 0) {
+					barWidth = (round(44 * scale) / time_limit) * time_limit;
+				}
+
+				Draw_AlphaFillRGB(x + (22 * scale), y, barWidth, 10 * scale,
+					RGBA_TO_COLOR(mvd_wp_info[current->itemtype].Rcolor,
+						mvd_wp_info[current->itemtype].Gcolor,
+						mvd_wp_info[current->itemtype].Bcolor, 128));
 			}
 			else {
-				strlcpy(item_name, mvd_wp_info[current->itemtype].colored_name, sizeof(item_name));
+				// built-in color(GL) or simple white (software)
+				if (mvd_wp_info[current->itemtype].name_cvar) {
+					strlcpy(clockitem, mvd_wp_info[current->itemtype].colored_name, sizeof(clockitem));
+				}
+				else {
+					strlcpy(clockitem, mvd_wp_info[current->itemtype].colored_name, sizeof(clockitem));
+				}
 			}
 
-			snprintf(clockitem, sizeof(clockitem), "%*s", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(item_name) - strlen_color(item_name)), item_name);
+			if (current->flags & MVDCLOCK_BACKPACK_REMOVED) {
+				if (current->location[0]) {
+					strlcat(clockitem, " ", sizeof(clockitem));
+					strlcat(clockitem, current->location, sizeof(clockitem));
+				}
 
-			strlcat(clockitem, " \034", sizeof(clockitem));
-		}
-		else if (style == 6) {
-			// progress bar countdown
-			strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
-
-			barWidth = (round(67 * scale) / time_limit) * (time_limit - time + 1);
-			if (time == 0) {
-				barWidth = (round(67 * scale) / time_limit) * time_limit;
+				if (current->dropped_by && current->last_taken_by) {
+					strlcat(clockitem, " (", sizeof(clockitem));
+					strlcat(clockitem, MVD_AnnouncerTeamPlayerName(&cl.players[current->dropped_by - 1]), sizeof(clockitem));
+					strlcat(clockitem, " \015 ", sizeof(clockitem));
+					strlcat(clockitem, MVD_AnnouncerTeamPlayerName(&cl.players[current->last_taken_by - 1]), sizeof(clockitem));
+					strlcat(clockitem, ")", sizeof(clockitem));
+				}
+				else {
+					current = MVD_ClockList_Remove(current);
+					continue;
+				}
 			}
+			else if (time > 0) {
+				if (current->flags & MVDCLOCK_BACKPACK) {
+					strlcpy(current->location, TP_LocationName(cl_entities[current->entity].current.origin), sizeof(current->location));
 
-			Draw_AlphaFillRGB(x - 1, y, barWidth, 10 * scale,
-				RGBA_TO_COLOR(mvd_wp_info[current->itemtype].Rcolor,
-					mvd_wp_info[current->itemtype].Gcolor,
-					mvd_wp_info[current->itemtype].Bcolor, 128));
-		}
-		else if (style == 7) {
-			// progress bar countdown, but itemname not in bar
-			strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
+					snprintf(temp, sizeof(temp), " %s", current->location);
 
-			barWidth = (round(44 * scale) / time_limit) * (time_limit - time + 1);
-			if (time == 0) {
-				barWidth = (round(44 * scale) / time_limit) * time_limit;
+					if (current->dropped_by) {
+						strlcat(temp, " (", sizeof(temp));
+						strlcat(temp, MVD_AnnouncerTeamPlayerName(&cl.players[current->dropped_by - 1]), sizeof(temp));
+						strlcat(temp, ")", sizeof(temp));
+					}
+				}
+				else if (MVD_ClockIsHeld(current, mvd_wp_info[current->itemtype].show_held, &alpha)) {
+					snprintf(temp, sizeof(temp), " %s", MVD_AnnouncerTeamPlayerName(&cl.players[current->last_taken_by - 1]));
+				}
+				else if (style == 5) {
+					if (time >= 60) {
+						snprintf(temp, sizeof(temp), " %d:%02d", time / 60, time % 60);
+					}
+					else {
+						snprintf(temp, sizeof(temp), " %d", time);
+					}
+				}
+				else {
+					snprintf(temp, sizeof(temp), " %*d", time_limit >= 10 ? 2 : 1, time);
+				}
+				strlcat(clockitem, temp, sizeof(clockitem));
 			}
+			else if (current->flags & MVDCLOCK_PERSISTENT) {
+				strlcpy(temp, " up", sizeof(temp));
 
-			Draw_AlphaFillRGB(x + (22 * scale), y, barWidth, 10 * scale,
-				RGBA_TO_COLOR(mvd_wp_info[current->itemtype].Rcolor,
-					mvd_wp_info[current->itemtype].Gcolor,
-					mvd_wp_info[current->itemtype].Bcolor, 128));
-		}
-		else {
-			// built-in color(GL) or simple white (software)
-			if (mvd_wp_info[current->itemtype].name_cvar) {
-				strlcpy(clockitem, mvd_wp_info[current->itemtype].colored_name, sizeof(clockitem));
+				// If a player is holding the item, use their name instead
+				if (MVD_ClockIsHeld(current, true, NULL)) {
+					snprintf(temp, sizeof(temp), " %s", MVD_AnnouncerTeamPlayerName(&cl.players[current->last_taken_by - 1]));
+				}
+
+				strlcat(clockitem, temp, sizeof(clockitem));
 			}
 			else {
-				strlcpy(clockitem, mvd_wp_info[current->itemtype].colored_name, sizeof(clockitem));
+				strlcat(clockitem, " spawn", sizeof(clockitem));
 			}
-		}
 
-		//add the time
-		if (time > 0) {
-			snprintf(temp, sizeof(temp), " %d", time);
-			strlcat(clockitem, temp, sizeof(clockitem));
-		}
-		else {
-			strlcat(clockitem, " spawn", sizeof(clockitem));
-		}
+			if (style == 4 && item_counts[current->itemtype] != 1 && current->location[0]) {
+				strlcat(clockitem, " \020", sizeof(clockitem));
+				strlcat(clockitem, current->location, sizeof(clockitem));
+				strlcat(clockitem, "\021", sizeof(clockitem));
+			}
 
-		if (style == 4 && item_counts[current->itemtype] != 1 && current->location[0]) {
-			strlcat(clockitem, " \020", sizeof(clockitem));
-			strlcat(clockitem, current->location, sizeof(clockitem));
-			strlcat(clockitem, "\021", sizeof(clockitem));
-		}
+			Draw_SStringAlpha(x, y, clockitem, scale, alpha, proportional);
 
-		Draw_SString(x, y, clockitem, scale, proportional);
-
-		current = current->next;
-		y += LETTERHEIGHT * scale;
-		if (style == 3) {
-			y += LETTERHEIGHT * scale / 2;
+			y += LETTERHEIGHT * scale;
+			if (style == 3) {
+				y += LETTERHEIGHT * scale / 2;
+			}
 		}
 		else if ((style == 4) || (style == 5)) {
 			y += round(4 * scale);
 		}
+		current = current->next;
 	}
 }
 
 static void MVD_Took(int player, int item, qbool addclock)
 {
-	if (mvd_new_info[player].mvdinfo.initialized) {
+	if (mvd_new_info[player].mvdinfo.initialized && !mvd_ktx_markers) {
 		if (addclock) {
 			MVD_ClockStart(item, mvd_new_info[player].p_state ? mvd_new_info[player].p_state->origin : NULL);
 		}
@@ -815,35 +1122,47 @@ const char* MVD_AnnouncerString(int line, int total, float* alpha)
 	}
 }
 
-static const char* MVD_AnnouncerPlayerName(int i)
+static const char* MVD_AnnouncerTeamPlayerName(player_info_t* info)
 {
 	if (cl.teamplay) {
-		int player_color = Sbar_BottomColor(mvd_new_info[i].p_info);
+		int player_color = Sbar_BottomColor(info);
 
 		byte red = host_basepal[player_color * 3];
 		byte green = host_basepal[player_color * 3 + 1];
 		byte blue = host_basepal[player_color * 3 + 2];
+		char* buf;
 
-		if (mvd_new_info[i].p_info->bottomcolor == 3) {
+		if (info->bottomcolor == 3) {
 			red = 99;
 			green = 255;
 			blue = 120;
 		}
-		else if (mvd_new_info[i].p_info->bottomcolor == 12) {
+		else if (info->bottomcolor == 12) {
 			red = green = 255;
 			blue = 0;
 		}
 
-		return va("&c%x%x%x%s&r", (unsigned int)(red / 16), (unsigned int)(green / 16), (unsigned int)(blue / 16), mvd_new_info[i].p_info->name);
+		buf = va("&c%x%x%x%s&r", (unsigned int)(red / 16), (unsigned int)(green / 16), (unsigned int)(blue / 16), info->name);
+		CharsToWhite(buf, buf + strlen(buf));
+		return buf;
 	}
 	else {
-		return mvd_new_info[i].p_info->name;
+		return info->name;
 	}
+}
+
+static const char* MVD_AnnouncerPlayerName(int i)
+{
+	return MVD_AnnouncerTeamPlayerName(mvd_new_info[i].p_info);
 }
 
 void MVD_Status_Announcer(int i, int z){
 	//char *pn = mvd_new_info[i].p_info->name;
 	vec3_t *pl = &mvd_new_info[i].p_state->origin;
+
+	if (mvd_ktx_markers) {
+		return;
+	}
 
 	if (mvd_new_info[i].mvdinfo.itemstats[z].mention > 0) {
 		int mention = mvd_new_info[i].mvdinfo.itemstats[z].mention;
@@ -954,11 +1273,12 @@ void MVD_Status_WP(int i, int *taken){
 
 }
 
-void MVD_Stats_Cleanup (void){
-	quad_is_active=0;
-	pent_is_active=0;
-	powerup_cam_active=0;
-	cam_1=cam_2=cam_3=cam_4=0;
+void MVD_Stats_Cleanup(void)
+{
+	quad_is_active = 0;
+	pent_is_active = 0;
+	powerup_cam_active = 0;
+	cam_1 = cam_2 = cam_3 = cam_4 = 0;
 	was_standby = true;
 	while (mvd_clocklist) {
 		MVD_ClockList_Remove(mvd_clocklist);
@@ -966,6 +1286,7 @@ void MVD_Stats_Cleanup (void){
 
 	memset(&mvd_new_info, 0, sizeof(mvd_new_info_t));
 	memset(&mvd_cg_info, 0, sizeof(mvd_cg_info_s));
+	fixed_ordering = 0;
 }
 
 void MVD_Set_Armor_Stats(int z,int i){
@@ -1182,7 +1503,9 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 		int megas = mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has;
 		while (megas > 0) {
 			--megas;
-			MVD_ClockStart(MH_INFO, megas < MAX_MEGAS_PER_PLAYER ? mvd_new_info[i].mega_locations[megas] : NULL);
+			if (!mvd_ktx_markers) {
+				MVD_ClockStart(MH_INFO, megas < MAX_MEGAS_PER_PLAYER ? mvd_new_info[i].mega_locations[megas] : NULL);
+			}
 		}
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has = 0;
 	}
@@ -1726,6 +2049,151 @@ void MVD_Powerup_Cams(void){
 	}
 }
 
+static void MVDAnnouncer_HelpListItems(void)
+{
+	int i;
+
+	Con_Printf("Valid types: ");
+	for (i = 0; i < sizeof(mvd_wp_info) / sizeof(mvd_wp_info[0]); ++i) {
+		if (i) {
+			Con_Printf(",");
+		}
+		Con_Printf("%s", mvd_wp_info[i].name);
+	}
+	Con_Printf("\n");
+}
+
+static int MVDAnnouncer_FindEntity(const vec3_t pos, int type)
+{
+	int j;
+
+	for (j = 0; j < CL_MAX_EDICTS; j++) {
+		int modindex = cl_entities[j].baseline.modelindex;
+		int skin = cl_entities[j].baseline.skinnum;
+
+		if (modindex >= 0 && modindex < sizeof(cl.model_precache) / sizeof(cl.model_precache[0]) && cl.model_precache[modindex]) {
+			if (cl.model_precache[modindex]->modhint == mvd_wp_info[type].model_hint && skin == mvd_wp_info[type].skin_number) {
+				vec3_t distance;
+				VectorSubtract(cl_entities[j].baseline.origin, pos, distance);
+				if (VectorLength(distance) < 50) {
+					return j;
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+static void MVDAnnouncer_RemoveItem(void)
+{
+	vec3_t pos;
+	const char* type;
+	int i;
+	mvd_clock_t* clock_entry;
+
+	if (Cmd_Argc() < 5) {
+		Con_Printf("Removes a persistent item clock for item at given position\n");
+		Con_Printf("Usage: %s <x> <y> <z> <type>\n", Cmd_Argv(0));
+		MVDAnnouncer_HelpListItems();
+		return;
+	}
+
+	pos[0] = atof(Cmd_Argv(1));
+	pos[1] = atof(Cmd_Argv(2));
+	pos[2] = atof(Cmd_Argv(3));
+
+	type = Cmd_Argv(4);
+
+	for (i = 0; i < sizeof(mvd_wp_info) / sizeof(mvd_wp_info[0]); ++i) {
+		if (!strcmp(type, mvd_wp_info[i].name)) {
+			int ent = MVDAnnouncer_FindEntity(pos, i);
+
+			if (ent) {
+				for (clock_entry = mvd_clocklist; clock_entry; clock_entry = clock_entry->next) {
+					if ((clock_entry->flags & MVDCLOCK_PERSISTENT) && clock_entry->entity == ent) {
+						MVD_ClockList_Remove(clock_entry);
+						return;
+					}
+				}
+
+				// Didn't exist, so... never mind
+				return;
+			}
+
+			Con_Printf("No item found at specified location\n");
+			return;
+		}
+	}
+
+	Con_Printf("Invalid type specified\n");
+	return;
+}
+
+static void MVDAnnouncer_ListItems(void)
+{
+	mvd_clock_t* clock_entry;
+
+	for (clock_entry = mvd_clocklist; clock_entry; clock_entry = clock_entry->next) {
+		if ((clock_entry->flags & MVDCLOCK_PERSISTENT) && clock_entry->entity) {
+			Con_Printf("mvd_name_item %d %d %d %s \"%s\" // entity %d\n",
+				(int)cl_entities[clock_entry->entity].baseline.origin[0],
+				(int)cl_entities[clock_entry->entity].baseline.origin[1],
+				(int)cl_entities[clock_entry->entity].baseline.origin[2],
+				mvd_wp_info[clock_entry->itemtype].name,
+				clock_entry->location,
+				clock_entry->entity
+			);
+		}
+	}
+}
+
+static void MVDAnnouncer_NameItem(void)
+{
+	vec3_t pos;
+	const char* type;
+	const char* label;
+	int i;
+
+	if (Cmd_Argc() < 6) {
+		Con_Printf("Creates a persistent item clock for item at given position\n");
+		Con_Printf("Usage: %s <x> <y> <z> <type> <label>\n", Cmd_Argv(0));
+		MVDAnnouncer_HelpListItems();
+		return;
+	}
+
+	pos[0] = atof(Cmd_Argv(1));
+	pos[1] = atof(Cmd_Argv(2));
+	pos[2] = atof(Cmd_Argv(3));
+
+	type = Cmd_Argv(4);
+	label = Cmd_Argv(5);
+
+	for (i = 0; i < sizeof(mvd_wp_info) / sizeof(mvd_wp_info[0]); ++i) {
+		if (!strcmp(type, mvd_wp_info[i].name)) {
+			int ent = MVDAnnouncer_FindEntity(pos, i);
+			if (ent) {
+				mvd_clock_t* existing = MVD_ClockFindEntity(ent);
+				if (existing) {
+					strlcpy(existing->location, label, sizeof(existing->location));
+					// We move to bottom of the list to allow the user to list every item and dictate order
+					existing->order = ++fixed_ordering;
+				}
+				else {
+					MVD_ClockStartEntity(ent, mvd_wp_info[i].id, MVDCLOCK_PERSISTENT);
+				}
+				return;
+			}
+
+			Con_Printf("No entity found near that position\n");
+			return;
+		}
+	}
+
+	Con_Printf("Invalid type specified '%s'\n", type);
+	MVDAnnouncer_HelpListItems();
+}
+
 void MVD_Utils_Init (void) {
 	MVD_AutoTrack_Init();
 	MVD_XMLStats_Init();
@@ -1757,6 +2225,11 @@ void MVD_Utils_Init (void) {
 	Cvar_Register (&mvd_pc_view_4);
 
 	Cvar_Register (&mvd_moreinfo);
+	Cvar_Register (&mvd_autoadd_items);
+	Cvar_Register(&mvd_sortitems);
+	Cmd_AddCommand("mvd_name_item", MVDAnnouncer_NameItem);
+	Cmd_AddCommand("mvd_remove_item", MVDAnnouncer_RemoveItem);
+	Cmd_AddCommand("mvd_list_items", MVDAnnouncer_ListItems);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -1835,13 +2308,16 @@ void MVD_Initialise(void)
 {
 	memset(mvd_new_info, 0, sizeof(mvd_new_info));
 	memset(&mvd_cg_info, 0, sizeof(mvd_cg_info));
+	mvd_ktx_markers = false;
 }
 
 void MVD_GameStart(void)
 {
 	int i;
 
-	MVD_Initialise();
+	if (!mvd_ktx_markers) {
+		MVD_Initialise();
+	}
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		if (!cl.players[i].name[0] || cl.players[i].spectator == 1) {
@@ -1851,3 +2327,189 @@ void MVD_GameStart(void)
 		MVD_Init_Info(i);
 	}
 }
+
+// ktx matchstart (no args)
+void MVDAnnouncer_MatchStart(void)
+{
+	int i;
+	int j;
+
+	MVD_GameStart();
+	mvd_ktx_markers = true;
+
+	// Clocklist should start as persistent timers from entity baselines
+	MVD_Stats_Cleanup();
+	if (mvd_autoadd_items.integer) {
+		for (i = 0; i < CL_MAX_EDICTS; i++) {
+			int modindex = cl_entities[i].baseline.modelindex;
+			int skin = cl_entities[i].baseline.skinnum;
+
+			if (modindex >= 0 && modindex < sizeof(cl.model_precache) / sizeof(cl.model_precache[0]) && cl.model_precache[modindex]) {
+				for (j = 0; j < sizeof(mvd_wp_info) / sizeof(mvd_wp_info[0]); ++j) {
+					if (mvd_wp_info[j].add_clock && cl.model_precache[modindex]->modhint == mvd_wp_info[j].model_hint && skin == mvd_wp_info[j].skin_number) {
+						MVD_ClockStartEntity(i, mvd_wp_info[j].id, MVDCLOCK_PERSISTENT);
+					}
+				}
+			}
+		}
+	}
+	TP_ExecTrigger("f_demomatchstart");
+
+	was_standby = false;
+}
+
+// Signifies an item has been taken
+// ktx took <entity-num> <respawn-period> <plr-entnum>
+void MVDAnnouncer_ItemTaken(const char* s)
+{
+	int entity, respawn, player_ent;
+	mvd_clock_t* clock_entry;
+
+	Cmd_TokenizeString((char*)s);
+
+	if (Cmd_Argc() < 5) {
+		Com_DPrintf("//ktx took: expected 5 args, found %d\n", Cmd_Argc());
+		return;
+	}
+
+	entity = atoi(Cmd_Argv(2));
+	respawn = atoi(Cmd_Argv(3));
+	player_ent = atoi(Cmd_Argv(4));
+	
+	clock_entry = MVD_ClockFindEntity(entity);
+	if (clock_entry) {
+		clock_entry->last_taken = cls.demotime;
+		clock_entry->old_clockval = clock_entry->clockval;
+		if (respawn > 0) {
+			clock_entry->clockval = cls.demotime + respawn;
+			if (clock_entry->itemtype == QUAD_INFO || clock_entry->itemtype == PENT_INFO || clock_entry->itemtype == RING_INFO) {
+				clock_entry->hold_clockval = cls.demotime + 30;
+			}
+			else {
+				clock_entry->hold_clockval = 0;
+			}
+		}
+		else {
+			// Hold indefinitely
+			clock_entry->clockval = -1;
+			clock_entry->hold_clockval = HUGE_VAL;
+		}
+
+		if (player_ent >= 1 && player_ent <= MAX_CLIENTS) {
+			clock_entry->last_taken_by = player_ent;
+		}
+	}
+}
+
+// Used to manually start a countdown if it was indefinitely held in the past (e.g. mega-health worn off)
+// ktx timer <entity-num> <respawn-period>
+void MVDAnnouncer_StartTimer(const char* s)
+{
+	int entity, respawn;
+	mvd_clock_t* clock_entry;
+
+	Cmd_TokenizeString((char*)s);
+
+	if (Cmd_Argc() < 4) {
+		Com_DPrintf("//ktx timer: expected 4 args, found %d\n", Cmd_Argc());
+		return;
+	}
+
+	entity = atoi(Cmd_Argv(2));
+	respawn = atoi(Cmd_Argv(3));
+
+	clock_entry = MVD_ClockFindEntity(entity);
+	if (clock_entry) {
+		clock_entry->old_clockval = clock_entry->clockval;
+		clock_entry->clockval = cls.demotime + respawn;
+		clock_entry->last_taken_by = 0;
+		clock_entry->last_taken = 0;
+	}
+}
+
+// ktx drop <entity-num> <weapon-it> <plr-entnum>
+void MVDAnnouncer_PackDropped(const char* s)
+{
+	int entity, weapon, player_ent, i;
+	mvd_clock_t* clock_entry;
+
+	Cmd_TokenizeString((char*)s);
+
+	if (Cmd_Argc() < 5) {
+		Com_DPrintf("//ktx drop: expected 5 args, found %d\n", Cmd_Argc());
+		return;
+	}
+
+	entity = atoi(Cmd_Argv(2));
+	weapon = atoi(Cmd_Argv(3));
+	player_ent = atoi(Cmd_Argv(4));
+
+	if (entity >= 0 && entity < sizeof(cl_entities) / sizeof(cl_entities[0])) {
+		cl_entities[entity].contents = weapon;
+
+		clock_entry = MVD_ClockFindEntity(entity);
+		if (clock_entry) {
+			MVD_ClockList_Remove(clock_entry);
+		}
+
+		for (i = 0; i < sizeof(mvd_wp_info) / sizeof(mvd_wp_info[0]); ++i) {
+			if (mvd_wp_info[i].it == weapon) {
+				clock_entry = MVD_ClockStartEntity(entity, i, MVDCLOCK_BACKPACK);
+				clock_entry->clockval = cls.demotime + 120;
+				clock_entry->dropped_by = player_ent;
+			}
+		}
+	}
+}
+
+// ktx expire <entity-num>
+void MVDAnnouncer_Expired(const char* s)
+{
+	int entity;
+	mvd_clock_t* clock_entry;
+
+	Cmd_TokenizeString((char*)s);
+
+	if (Cmd_Argc() < 3) {
+		Com_DPrintf("//ktx expire: expected 3 args, found %d\n", Cmd_Argc());
+		return;
+	}
+
+	entity = atoi(Cmd_Argv(2));
+	if (entity >= 0 && entity < sizeof(cl_entities) / sizeof(cl_entities[0])) {
+		cl_entities[entity].contents = 0;
+
+		clock_entry = MVD_ClockFindEntity(entity);
+		if (clock_entry) {
+			MVD_ClockList_Remove(clock_entry);
+		}
+	}
+}
+
+// ktx bp <entnum> <plr-entnum>
+void MVDAnnouncer_BackpackPickup(const char* s)
+{
+	int entity, player_ent;
+	mvd_clock_t* clock_entry;
+
+	Cmd_TokenizeString((char*)s);
+	if (Cmd_Argc() < 4) {
+		Com_DPrintf("//ktx bp: expected 4 args, found %d\n", Cmd_Argc());
+		return;
+	}
+
+	entity = atoi(Cmd_Argv(2));
+	player_ent = atoi(Cmd_Argv(3));
+
+	clock_entry = MVD_ClockFindEntity(entity);
+	if (clock_entry) {
+		clock_entry->last_taken_by = player_ent;
+		clock_entry->clockval = cls.demotime + ITEMSCLOCK_TAKEN_PAUSE;
+		clock_entry->last_taken = cls.demotime;
+	}
+
+	if (entity >= 0 && entity < sizeof(cl_entities) / sizeof(cl_entities[0])) {
+		cl_entities[entity].contents = 0;
+	}
+}
+

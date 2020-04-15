@@ -985,3 +985,13 @@ void CommonDraw_Init(void)
 	CenterPrint_HudInit();
 	Qtv_HudInit();
 }
+
+const char* HUD_FirstTeam(void)
+{
+	if (n_teams) {
+		return sorted_teams[0].name;
+	}
+	else {
+		return "";
+	}
+}

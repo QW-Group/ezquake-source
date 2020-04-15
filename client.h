@@ -212,6 +212,8 @@ typedef struct
 	int				old_vw_index;	// player entities only
 	int				old_vw_frame;	// player entities only
 
+	int             contents;
+
 	centity_trail_t trails[4];
 	float           particle_emittime;
 	int             trail_number;   // this changes as trails are killed and entity re-used (can be used to detect reset)
