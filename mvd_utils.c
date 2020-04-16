@@ -627,7 +627,6 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int* wid
 {
 	int lines = 0;
 	mvd_clock_t *current = mvd_clocklist;
-	int length = 0;
 	int persistent = 0, temporary = 0;
 
 	if (style == 5) {
@@ -721,7 +720,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 
 		if (current->entity || current->clockval - cls.demotime < time_limit) {
 			int time = (int)((current->clockval - cls.demotime) + 1);
-			int texture = Mod_SimpleTextureForHint(mvd_wp_info[current->itemtype].model_hint, mvd_wp_info[current->itemtype].skin_number);
+			mpic_t* texture = Mod_SimpleTextureForHint(mvd_wp_info[current->itemtype].model_hint, mvd_wp_info[current->itemtype].skin_number);
 
 			if (filter & mvd_wp_info[current->itemtype].it) {
 				current = current->next;
@@ -742,10 +741,10 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 				strlcpy(clockitem, mvd_wp_info[current->itemtype].name, sizeof(clockitem));
 				CharsToBrown(clockitem, clockitem + strlen(clockitem));
 			}
-			else if (style == 3 && texture) {
+			else if (style == 3 && texture && R_TextureReferenceIsValid(texture->texnum)) {
 				// simpleitem
 				strlcpy(clockitem, "  ", sizeof(clockitem));
-				Draw_2dAlphaTexture(x, y, 2 * LETTERWIDTH * scale, 2 * LETTERHEIGHT * scale, texture, 1.0f);
+				Draw_2dAlphaTexture(x, y, 2 * LETTERWIDTH * scale, 2 * LETTERHEIGHT * scale, texture->texnum, 1.0f);
 				y += LETTERHEIGHT * scale / 2;
 			}
 			else if (style == 4) {
@@ -778,7 +777,7 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 
 				strlcpy(clockitem, item_name, sizeof(clockitem));
 				strlcat(clockitem, " \034", sizeof(clockitem));
-				Draw_SString(x, y, clockitem, scale);
+				Draw_SString(x, y, clockitem, scale, proportional);
 
 				x += strlen_color(clockitem) * 8;
 				clockitem[0] = '\0';
@@ -1188,7 +1187,6 @@ void MVD_Status_Announcer(int i, int z){
 			strlcpy(location_name, TP_ParseFunChars(TP_LocationName(*pl), false), sizeof(location_name));
 			if (mention == MENTION_PICKED_UP_ITEM) {
 				qbool names_match = !strcmp(location_name, simple_item_name);
-				int len = strlen(simple_item_name);
 
 				if (item_counts[z] == 1 || names_match) {
 					MVD_AddString(va("%*s \015 %s\n", MVD_ANNOUNCER_ITEM_LENGTH + (strlen(item_name) - strlen_color(item_name)), item_name, MVD_AnnouncerPlayerName(i)));
