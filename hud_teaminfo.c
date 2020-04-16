@@ -171,8 +171,8 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	if (hud_teaminfo_show_enemies->integer) {
 		while (sorted_teams[k].name) {
 			int width = Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer);
-			sprintf(tmp, "%s %i", TP_ParseFunChars("$.", false), sorted_teams[k].frags);
-			Draw_SString(x + width + hud_teaminfo_scale->value * 8, _y, tmp, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer);
+			snprintf(tmp, sizeof(tmp), "%s %4i", TP_ParseFunChars("$.", false), sorted_teams[k].frags);
+			Draw_SStringAligned(x, y, tmp, 1.0f, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer, text_align_right, x + width);
 			_y += FONTWIDTH * hud_teaminfo_scale->value;
 			for (j = 0; j < slots_num; j++) {
 				i = slots[j];
@@ -282,6 +282,15 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 							Draw_SStringAligned(x, y, tmp, scale, 1.0, proportional, (s[0] == 'h' ? text_align_right : text_align_left), x + 3 * font_width);
 						}
 						x += 3 * font_width;
+						break;
+
+					case 'f': // draw frags, space on left side
+					case 'F': // draw frags, space on right side
+						if (!width_only) {
+							snprintf(tmp, sizeof(tmp), (s[0] == 'f' ? "%3d" : "%-3d"), cl.players[i].frags);
+							Draw_SStringAligned(x, y, tmp, scale, 1.0, proportional, (s[0] == 'f' ? text_align_right : text_align_left), x + 3 * font_width);
+						}
+						x += 3 * FONTWIDTH * scale;
 						break;
 
 					case 'a': // draw armor, padded with space on left side
