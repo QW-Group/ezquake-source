@@ -1022,6 +1022,7 @@ int CL_MultiviewCurrentView (void);
 int CL_MultiviewNextPlayer (void);
 int CL_MultiviewAutotrackSlot (void);
 int CL_MultiviewMainView(void);
+void CL_MultiviewInsetSetScreenCoordinates(int x, int y, int width, int height);
 
 void CL_MultiviewSetTrackSlot (int trackNum, int player);
 void CL_MultiviewResetCvars (void);
