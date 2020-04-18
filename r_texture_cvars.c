@@ -166,21 +166,25 @@ void R_TextureRegisterCvars(void)
 	int i;
 	cvar_t* cv;
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
-	Cvar_Register(&gl_max_size);
-	Cvar_Register(&gl_scaleModelTextures);
-	Cvar_Register(&gl_scaleModelSimpleTextures);
-	Cvar_Register(&gl_mipmap_viewmodels);
-	Cvar_Register(&gl_scaleTurbTextures);
-	Cvar_Register(&gl_scaleskytextures);
-	Cvar_Register(&gl_miptexLevel);
-	Cvar_Register(&gl_no24bit);
-	Cvar_Register(&gl_picmip);
-	Cvar_Register(&gl_lerpimages);
-	Cvar_Register(&gl_texturemode);
-	Cvar_Register(&gl_anisotropy);
-	Cvar_Register(&gl_externalTextures_world);
-	Cvar_Register(&gl_externalTextures_bmodels);
+	if (!host_initialized) {
+		Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
+		Cvar_Register(&gl_max_size);
+		Cvar_Register(&gl_scaleModelTextures);
+		Cvar_Register(&gl_scaleModelSimpleTextures);
+		Cvar_Register(&gl_mipmap_viewmodels);
+		Cvar_Register(&gl_scaleTurbTextures);
+		Cvar_Register(&gl_scaleskytextures);
+		Cvar_Register(&gl_miptexLevel);
+		Cvar_Register(&gl_no24bit);
+		Cvar_Register(&gl_picmip);
+		Cvar_Register(&gl_lerpimages);
+		Cvar_Register(&gl_texturemode);
+		Cvar_Register(&gl_anisotropy);
+		Cvar_Register(&gl_externalTextures_world);
+		Cvar_Register(&gl_externalTextures_bmodels);
+	}
+
+	// latch cvars
 	Cvar_Register(&gl_wicked_luma_level);
 
 	// This way user can specify gl_max_size in his cfg.

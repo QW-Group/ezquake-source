@@ -47,13 +47,15 @@ void SCR_CenterPrint_Clear(void)
 
 void SCR_CenterPrint_Init(void)
 {
-	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
-	Cvar_Register(&scr_centertime);
-	Cvar_Register(&scr_centershift);
-	Cvar_Register(&scr_centerspeed);
-	Cvar_ResetCurrentGroup();
+	if (!host_initialized) {
+		Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
+		Cvar_Register(&scr_centertime);
+		Cvar_Register(&scr_centershift);
+		Cvar_Register(&scr_centerspeed);
+		Cvar_ResetCurrentGroup();
 
-	Cmd_AddLegacyCommand("scr_printspeed", "scr_centerspeed");
+		Cmd_AddLegacyCommand("scr_printspeed", "scr_centerspeed");
+	}
 }
 
 // Called for important messages that should stay in the center of the screen for a few moments

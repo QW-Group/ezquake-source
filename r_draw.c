@@ -553,25 +553,27 @@ void Draw_Init (void)
 
 	Draw_Charset_Init();
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
-	Cvar_Register (&scr_conalpha);
-	Cvar_Register (&scr_conback);
-	Cvar_Register (&scr_conpicture);
-	Cvar_Register (&r_smoothtext);
+	if (!host_initialized) {
+		Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
+		Cvar_Register(&scr_conalpha);
+		Cvar_Register(&scr_conback);
+		Cvar_Register(&scr_conpicture);
+		Cvar_Register(&r_smoothtext);
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
-	Cvar_Register (&scr_menualpha);
-	Cvar_Register (&scr_menudrawhud);
-	Cvar_Register (&r_smoothimages);
+		Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
+		Cvar_Register(&scr_menualpha);
+		Cvar_Register(&scr_menudrawhud);
+		Cvar_Register(&r_smoothimages);
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_CROSSHAIR);
-	Cvar_Register (&crosshairimage);
-	Cvar_Register (&crosshairalpha);
-	Cvar_Register (&crosshairscale);
-	Cvar_Register (&crosshairscalemethod);
-	Cvar_Register (&r_smoothcrosshair);
+		Cvar_SetCurrentGroup(CVAR_GROUP_CROSSHAIR);
+		Cvar_Register(&crosshairimage);
+		Cvar_Register(&crosshairalpha);
+		Cvar_Register(&crosshairscale);
+		Cvar_Register(&crosshairscalemethod);
+		Cvar_Register(&r_smoothcrosshair);
 
-	Cvar_ResetCurrentGroup();
+		Cvar_ResetCurrentGroup();
+	}
 
 	draw_disc = draw_backtile = NULL;
 

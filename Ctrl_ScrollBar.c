@@ -60,7 +60,9 @@ PScrollBar ScrollBar_Create(ScrollPos_setter pos_setter, const char* name)
 {
     PScrollBar scb_new = Q_malloc_named(sizeof(ScrollBar), name);
 
-    if (!scb_new) return NULL;
+    if (!scb_new) {
+        return NULL;
+    }
 
     scb_new->curpos = 0;
     scb_new->mouselocked = false;

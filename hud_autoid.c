@@ -341,20 +341,22 @@ void SCR_DrawAutoID(void)
 
 void SCR_RegisterAutoIDCvars(void)
 {
-	Cvar_Register(&scr_autoid);
-	Cvar_Register(&scr_autoid_weapons);
-	Cvar_Register(&scr_autoid_namelength);
-	Cvar_Register(&scr_autoid_barlength);
-	Cvar_Register(&scr_autoid_weaponicon);
-	Cvar_Register(&scr_autoid_scale);
-	Cvar_Register(&scr_autoid_healthbar_bg_color);
-	Cvar_Register(&scr_autoid_healthbar_normal_color);
-	Cvar_Register(&scr_autoid_healthbar_mega_color);
-	Cvar_Register(&scr_autoid_healthbar_two_mega_color);
-	Cvar_Register(&scr_autoid_healthbar_unnatural_color);
-	Cvar_Register(&scr_autoid_proportional);
+	if (!host_initialized) {
+		Cvar_Register(&scr_autoid);
+		Cvar_Register(&scr_autoid_weapons);
+		Cvar_Register(&scr_autoid_namelength);
+		Cvar_Register(&scr_autoid_barlength);
+		Cvar_Register(&scr_autoid_weaponicon);
+		Cvar_Register(&scr_autoid_scale);
+		Cvar_Register(&scr_autoid_healthbar_bg_color);
+		Cvar_Register(&scr_autoid_healthbar_normal_color);
+		Cvar_Register(&scr_autoid_healthbar_mega_color);
+		Cvar_Register(&scr_autoid_healthbar_two_mega_color);
+		Cvar_Register(&scr_autoid_healthbar_unnatural_color);
+		Cvar_Register(&scr_autoid_proportional);
 
-	Cvar_Register(&scr_autoid_armorbar_green_armor);
-	Cvar_Register(&scr_autoid_armorbar_yellow_armor);
-	Cvar_Register(&scr_autoid_armorbar_red_armor);
+		Cvar_Register(&scr_autoid_armorbar_green_armor);
+		Cvar_Register(&scr_autoid_armorbar_yellow_armor);
+		Cvar_Register(&scr_autoid_armorbar_red_armor);
+	}
 }

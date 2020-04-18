@@ -242,6 +242,8 @@ void WeaponStats_HUDInit(void)
 
 void WeaponStats_CommandInit(void)
 {
-	Cmd_AddCommand ("+cl_wp_stats", SCR_MvdWeaponStatsOn_f);
-	Cmd_AddCommand ("-cl_wp_stats", SCR_MvdWeaponStatsOff_f);
+	if (!host_initialized) {
+		Cmd_AddCommand("+cl_wp_stats", SCR_MvdWeaponStatsOn_f);
+		Cmd_AddCommand("-cl_wp_stats", SCR_MvdWeaponStatsOff_f);
+	}
 }

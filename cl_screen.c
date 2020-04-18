@@ -1054,62 +1054,62 @@ void SCR_Init (void)
 	scr_turtle = Draw_CacheWadPic ("turtle", WADPIC_TURTLE);
 	scr_cursor = SCR_LoadCursorImage("gfx/cursor");
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_VIEW);
-	Cvar_Register (&scr_fov);
-	Cvar_Register (&default_fov);
-	Cvar_Register (&scr_viewsize);
-	Cvar_Register (&scr_fovmode);
+	if (!host_initialized) {
+		Cvar_SetCurrentGroup(CVAR_GROUP_VIEW);
+		Cvar_Register(&scr_fov);
+		Cvar_Register(&default_fov);
+		Cvar_Register(&scr_viewsize);
+		Cvar_Register(&scr_fovmode);
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
-	Cvar_Register(&scr_newHud);
-	Cvar_ResetCurrentGroup();
+		Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
+		Cvar_Register(&scr_newHud);
+		Cvar_ResetCurrentGroup();
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
-	Cvar_Register (&scr_consize);
-	Cvar_Register (&scr_conspeed);
+		Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
+		Cvar_Register(&scr_consize);
+		Cvar_Register(&scr_conspeed);
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
-	Cvar_Register (&gl_triplebuffer);
+		Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
+		Cvar_Register(&gl_triplebuffer);
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
-	Cvar_Register (&r_chaticons_alpha);
+		Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
+		Cvar_Register(&r_chaticons_alpha);
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
-	Cvar_Register (&scr_showturtle);
-	Cvar_Register (&scr_showpause);
+		Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
+		Cvar_Register(&scr_showturtle);
+		Cvar_Register(&scr_showpause);
 
-	Cvar_Register (&show_velocity_3d);
-	Cvar_Register (&show_velocity_3d_offset_forward);
-	Cvar_Register (&show_velocity_3d_offset_down);
+		Cvar_Register(&show_velocity_3d);
+		Cvar_Register(&show_velocity_3d_offset_forward);
+		Cvar_Register(&show_velocity_3d_offset_down);
+
+		Cvar_Register(&scr_coloredfrags);
+
+		Cmd_AddCommand("calc_fov", tmp_calc_fov);
+
+		// QW 262 HUD
+		Cvar_Register(&cl_hud);
+		Cvar_Register(&r_drawhud);
+
+		Cvar_Register(&scr_showcrosshair);
+		Cvar_Register(&scr_notifyalways);
+		Cvar_ResetCurrentGroup();
+
+		Cvar_SetCurrentGroup(CVAR_GROUP_MENU);
+		Cvar_Register(&scr_cursor_scale);
+		Cvar_Register(&scr_cursor_iconoffset_x);
+		Cvar_Register(&scr_cursor_iconoffset_y);
+		Cvar_Register(&scr_cursor_alpha);
+		Cvar_ResetCurrentGroup();
+
+		Cmd_AddCommand("sizeup", SCR_SizeUp_f);
+		Cmd_AddCommand("sizedown", SCR_SizeDown_f);
+		Cmd_AddCommand("+zoom", SCR_ZoomIn_f);
+		Cmd_AddCommand("-zoom", SCR_ZoomOut_f);
+	}
 
 	SCR_RegisterAutoIDCvars();
-
-	Cvar_Register (&scr_coloredfrags);
-
-	Cmd_AddCommand("calc_fov", tmp_calc_fov);
-
-	// QW 262 HUD
-	Cvar_Register (&cl_hud);
-	Cvar_Register (&r_drawhud);
-
-	Cvar_Register (&scr_showcrosshair);
-	Cvar_Register (&scr_notifyalways);
-	Cvar_ResetCurrentGroup();
-
-	Cvar_SetCurrentGroup(CVAR_GROUP_MENU);
-	Cvar_Register (&scr_cursor_scale);
-	Cvar_Register (&scr_cursor_iconoffset_x);
-	Cvar_Register (&scr_cursor_iconoffset_y);
-	Cvar_Register (&scr_cursor_alpha);
-	Cvar_ResetCurrentGroup();
-
 	SShot_RegisterCvars();
-
-	Cmd_AddCommand ("sizeup", SCR_SizeUp_f);
-	Cmd_AddCommand ("sizedown", SCR_SizeDown_f);
-	Cmd_AddCommand ("+zoom", SCR_ZoomIn_f);
-	Cmd_AddCommand ("-zoom", SCR_ZoomOut_f);
-
 	WeaponStats_CommandInit();
 	SCR_CenterPrint_Init();
 

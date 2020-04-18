@@ -474,12 +474,14 @@ static void OnChange_scr_allowsnap(cvar_t *var, char *s, qbool *cancel)
 
 void SShot_RegisterCvars(void)
 {
-	Cvar_SetCurrentGroup(CVAR_GROUP_SCREENSHOTS);
-	Cvar_Register(&scr_allowsnap);
-	Cvar_Register(&scr_sshot_autoname);
-	Cvar_Register(&scr_sshot_format);
-	Cvar_Register(&scr_sshot_dir);
-	Cvar_ResetCurrentGroup();
+	if (!host_initialized) {
+		Cvar_SetCurrentGroup(CVAR_GROUP_SCREENSHOTS);
+		Cvar_Register(&scr_allowsnap);
+		Cvar_Register(&scr_sshot_autoname);
+		Cvar_Register(&scr_sshot_format);
+		Cvar_Register(&scr_sshot_dir);
+		Cvar_ResetCurrentGroup();
 
-	Cmd_AddCommand("screenshot", SCR_ScreenShot_f);
+		Cmd_AddCommand("screenshot", SCR_ScreenShot_f);
+	}
 }

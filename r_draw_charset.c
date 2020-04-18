@@ -674,17 +674,19 @@ int Draw_CharacterFit(const char* text, float width, float scale, qbool proporti
 // Called during initialisation, before R_Texture_Init
 void Draw_Charset_Init(void)
 {
-	Cmd_AddCommand("loadcharset", Draw_LoadCharset_f);
+	if (!host_initialized) {
+		Cmd_AddCommand("loadcharset", Draw_LoadCharset_f);
 #ifdef EZ_FREETYPE_SUPPORT
-	FontInitialise();
+		FontInitialise();
 #endif
 
-	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
-	Cvar_Register(&gl_consolefont);
-	Cvar_Register(&gl_alphafont);
-	Cvar_Register(&gl_charsets_min);
-	Cvar_Register(&scr_coloredText);
-	Cvar_ResetCurrentGroup();
+		Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
+		Cvar_Register(&gl_consolefont);
+		Cvar_Register(&gl_alphafont);
+		Cvar_Register(&gl_charsets_min);
+		Cvar_Register(&scr_coloredText);
+		Cvar_ResetCurrentGroup();
+	}
 
 	draw_chars = NULL;
 }
