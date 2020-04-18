@@ -39,7 +39,7 @@
 
 - `thunderdome` allows simple-item backpacks & texture replacements for backpacks
 - `thunderdome`, `smackdown` & `qcon` all block hud group-picture changes during the match
-- `thunderdome`, `smackdown` & `qcon` all block `/gl_outline` as it can lead to seeing items through walls
+- `thunderdome`, `smackdown` & `qcon` all block `/gl_outline` as it can lead to seeing items & players through walls
 - `r_skincolormode`, `r_enemyskincolor`, `r_teamskincolor` blocked in TF games or if server blocks skin/color forcing
 - Team Fortress: scoreboard always color players by their teamname
 
