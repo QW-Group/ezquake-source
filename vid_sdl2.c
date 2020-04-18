@@ -915,7 +915,7 @@ static void VID_SetupResolution(void)
 	SDL_DisplayMode display_mode;
 	int display_nbr;
 
-	if (r_fullscreen.integer == 1) {
+	if (r_fullscreen.integer) {
 		display_nbr = VID_DisplayNumber(true);
 		if (vid_usedesktopres.integer == 1) {
 			if (SDL_GetDesktopDisplayMode(display_nbr, &display_mode) == 0) {
@@ -1085,7 +1085,8 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 		VID_AbsolutePositionFromRelative(&xpos, &ypos, &displayNumber);
 
 		return SDL_CreateWindow(WINDOW_CLASS_NAME, xpos, ypos, glConfig.vidWidth, glConfig.vidHeight, flags);
-	} else {
+	}
+	else {
 		int windowWidth = glConfig.vidWidth;
 		int windowHeight = glConfig.vidHeight;
 		int windowX = SDL_WINDOWPOS_CENTERED;
@@ -1140,6 +1141,52 @@ static void VID_X11_GetGammaRampSize(void)
 	}
 }
 #endif
+
+static void VID_SetWindowResolution(void)
+{
+	if (r_fullscreen.integer > 0 && vid_usedesktopres.integer != 1) {
+		int index = VID_GetCurrentModeIndex();
+
+		if (index < 0) {
+			Com_Printf("Couldn't find a matching video mode for the selected values, check video settings!\n");
+			if (last_working_values == true) {
+				Com_Printf("Using last known working settings: %dx%d@%dHz\n", last_working_width, last_working_height, last_working_hz);
+				Cvar_LatchedSetValue(&vid_width, (float)last_working_width);
+				Cvar_LatchedSetValue(&vid_height, (float)last_working_height);
+				Cvar_LatchedSetValue(&r_displayRefresh, (float)last_working_hz);
+				Cvar_LatchedSetValue(&vid_displayNumber, (float)last_working_display);
+				Cvar_AutoSetInt(&vid_width, last_working_width);
+				Cvar_AutoSetInt(&vid_height, last_working_height);
+				Cvar_AutoSetInt(&r_displayRefresh, last_working_hz);
+				Cvar_AutoSetInt(&vid_displayNumber, last_working_display);
+			}
+			else {
+				Com_Printf("Using desktop resolution as fallback\n");
+				Cvar_LatchedSet(&vid_usedesktopres, "1");
+				Cvar_AutoSet(&vid_usedesktopres, "1");
+			}
+			VID_SetupResolution();
+		}
+		else {
+			if (SDL_SetWindowDisplayMode(sdl_window, &modelist[index]) != 0) {
+				Com_Printf("sdl error: %s\n", SDL_GetError());
+			}
+			else {
+				last_working_width = (&modelist[index])->w;
+				last_working_height = (&modelist[index])->h;
+				last_working_hz = (&modelist[index])->refresh_rate;
+				last_working_display = vid_displayNumber.integer;
+				last_working_values = true;
+			}
+		}
+
+		if (SDL_SetWindowFullscreen(sdl_window, SDL_WINDOW_FULLSCREEN) < 0) {
+			Com_Printf("Failed to change to fullscreen mode\n");
+		}
+	}
+
+	SDL_SetWindowMinimumSize(sdl_window, 320, 240);
+}
 
 static void VID_SDL_Init(void)
 {
@@ -1216,6 +1263,8 @@ static void VID_SDL_Init(void)
 				sdl_window = VID_SDL_CreateWindow(flags);
 
 				if (sdl_window) {
+					VID_SetWindowResolution();
+
 					// Try to create context and see what we get
 					sdl_context = VID_SDL_GL_SetupContextAttributes();
 
@@ -1267,52 +1316,9 @@ static void VID_SDL_Init(void)
 		}
 	}
 
-	if (r_fullscreen.integer > 0 && vid_usedesktopres.integer != 1) {
-		int index = VID_GetCurrentModeIndex();
-
-		if (index < 0) {
-			Com_Printf("Couldn't find a matching video mode for the selected values, check video settings!\n");
-			if (last_working_values == true) {
-				Com_Printf("Using last known working settings: %dx%d@%dHz\n", last_working_width, last_working_height, last_working_hz);
-				Cvar_LatchedSetValue(&vid_width, (float)last_working_width);
-				Cvar_LatchedSetValue(&vid_height, (float)last_working_height);
-				Cvar_LatchedSetValue(&r_displayRefresh, (float)last_working_hz);
-				Cvar_LatchedSetValue(&vid_displayNumber, (float)last_working_display);
-				Cvar_AutoSetInt(&vid_width, last_working_width);
-				Cvar_AutoSetInt(&vid_height, last_working_height);
-				Cvar_AutoSetInt(&r_displayRefresh, last_working_hz);
-				Cvar_AutoSetInt(&vid_displayNumber, last_working_display);
-			}
-			else {
-				Com_Printf("Using desktop resolution as fallback\n");
-				Cvar_LatchedSet(&vid_usedesktopres, "1");
-				Cvar_AutoSet(&vid_usedesktopres, "1");
-			}
-			VID_SetupResolution();
-		}
-		else {
-			if (SDL_SetWindowDisplayMode(sdl_window, &modelist[index]) != 0) {
-				Com_Printf("sdl error: %s\n", SDL_GetError());
-			}
-			else {
-				last_working_width = (&modelist[index])->w;
-				last_working_height = (&modelist[index])->h;
-				last_working_hz = (&modelist[index])->refresh_rate;
-				last_working_display = vid_displayNumber.integer;
-				last_working_values = true;
-			}
-		}
-
-		if (SDL_SetWindowFullscreen(sdl_window, SDL_WINDOW_FULLSCREEN) < 0) {
-			Com_Printf("Failed to change to fullscreen mode\n");
-		}
-	}
-
 	if (VID_SetWindowIcon(sdl_window) < 0) {
 		Com_Printf("Failed to set window icon");
 	}
-
-	SDL_SetWindowMinimumSize(sdl_window, 320, 240);
 
 	v_gamma.modified = true;
 	r_swapInterval.modified = true;
@@ -1487,6 +1493,10 @@ static void VID_ParseCmdLine(void)
 
 	if ((i = COM_CheckParm(cmdline_param_client_video_bpp)) && i + 1 < COM_Argc()) {
 		Cvar_LatchedSetValue(&r_colorbits, Q_atoi(COM_Argv(i + 1)));
+	}
+
+	if (COM_CheckParm(cmdline_param_client_video_nodesktopres)) {
+		Cvar_LatchedSetValue(&vid_usedesktopres, 0);
 	}
 
 	w = ((i = COM_CheckParm(cmdline_param_client_video_width))  && i + 1 < COM_Argc()) ? Q_atoi(COM_Argv(i + 1)) : 0;
