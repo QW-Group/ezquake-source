@@ -65,6 +65,7 @@
   - {} white-text wasn't stripped from item name cvars
 - Halflife maps had wrong bounding box sizes
 - `hud_sortrules_includeself 0` could lead to player not being included in visible list
+- `aliasedit` could result in the end of previously entered text to appear at end of line
 
 ### Other changes
 

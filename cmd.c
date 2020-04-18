@@ -712,16 +712,15 @@ void Cmd_EditAlias_f (void)
 	}
 
 	a = Cmd_FindAlias(Cmd_Argv(1));
-	if ( a == NULL ) {
-		s = Q_strdup("");
-	} else {
-		s = Q_strdup(a->value);
-	}
+	s = (a ? a->value : "");
 
-	snprintf(final_string, sizeof(final_string), "/alias \"%s\" \"%s\"", Cmd_Argv(1), s);
+	strlcpy(final_string, "/alias \"", sizeof(final_string));
+	strlcat(final_string, Cmd_Argv(1), sizeof(final_string));
+	strlcat(final_string, "\" \"", sizeof(final_string));
+	strlcat(final_string, s, sizeof(final_string));
+	strlcat(final_string, "\"", sizeof(final_string));
 	Key_ClearTyping();
-	memcpy (key_lines[edit_line]+1, str2wcs(final_string), strlen(final_string)*sizeof(wchar));
-	Q_free(s);
+	memcpy(key_lines[edit_line]+1, str2wcs(final_string), (strlen(final_string) + 1) * sizeof(wchar));
 }
 
 static cmd_alias_t* Cmd_AliasCreate (char* name)
