@@ -1217,14 +1217,6 @@ static void GL_SwapBuffersWithVsyncFix(void)
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
-    // MacOS vsync fix
-    #ifdef __APPLE__
-    if (r_swapInterval.integer == 0) {
-        GLint                       sync = 0;
-        CGLContextObj               ctx = CGLGetCurrentContext();
-        CGLSetParameter(ctx, kCGLCPSwapInterval, &sync);
-    }
-    #endif
 
 	*x = *y = 0;
 	*width  = glConfig.vidWidth;
@@ -1242,6 +1234,12 @@ void GL_EndRendering (void)
 			if (SDL_GL_SetSwapInterval(0)) {
 				Con_Printf("vsync: Failed to disable vsync...\n");
 			}
+            // MacOS vsync fix
+            #ifdef __APPLE__
+            GLint                       sync = 0;
+            CGLContextObj               ctx = CGLGetCurrentContext();
+            CGLSetParameter(ctx, kCGLCPSwapInterval, &sync);
+            #endif
 		} else if (r_swapInterval.integer == -1) {
 			if (SDL_GL_SetSwapInterval(-1)) {
 				Con_Printf("vsync: Failed to enable late swap tearing (vid_vsync -1), setting vid_vsync 1 instead...\n");
