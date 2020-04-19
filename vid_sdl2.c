@@ -38,6 +38,7 @@ void Sys_ActiveAppChanged (void);
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
+#include <OpenGL/OpenGL.h>
 #include "in_osx.h"
 #else
 #include <GL/gl.h>
@@ -1216,6 +1217,14 @@ static void GL_SwapBuffersWithVsyncFix(void)
 
 void GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
+    // MacOS vsync fix
+    #ifdef __APPLE__
+    GLint                       sync = 0;
+    CGLContextObj               ctx = CGLGetCurrentContext();
+
+    CGLSetParameter(ctx, kCGLCPSwapInterval, &sync);
+    #endif
+
 	*x = *y = 0;
 	*width  = glConfig.vidWidth;
 	*height = glConfig.vidHeight;
