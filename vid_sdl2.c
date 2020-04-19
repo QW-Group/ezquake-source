@@ -1219,10 +1219,11 @@ void GL_BeginRendering (int *x, int *y, int *width, int *height)
 {
     // MacOS vsync fix
     #ifdef __APPLE__
-    GLint                       sync = 0;
-    CGLContextObj               ctx = CGLGetCurrentContext();
-
-    CGLSetParameter(ctx, kCGLCPSwapInterval, &sync);
+    if (r_swapInterval.integer == 0) {
+        GLint                       sync = 0;
+        CGLContextObj               ctx = CGLGetCurrentContext();
+        CGLSetParameter(ctx, kCGLCPSwapInterval, &sync);
+    }
     #endif
 
 	*x = *y = 0;
