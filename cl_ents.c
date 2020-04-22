@@ -2102,6 +2102,7 @@ static float MVD_AdjustAngle(float current, float ideal, float fraction) {
 
 static void MVD_InitInterpolation(void) {
 	player_state_t *state, *oldstate;
+	qbool dead_body, was_dead_body;
 	int i, tracknum;
 	frame_t	*frame, *oldframe;
 	vec3_t dist;
@@ -2155,8 +2156,19 @@ static void MVD_InitInterpolation(void) {
 		if (oldstate->messagenum != cl.oldparsecount || !oldstate->messagenum)
 			continue;	// not present last frame
 
-		if (!ISDEAD(state->frame) && ISDEAD(oldstate->frame))
+		// Identify dead bodies
+		dead_body = (state->modelindex == cl_modelindices[mi_player] && ISDEAD(state->frame)) || state->modelindex == cl_modelindices[mi_h_player];
+		was_dead_body = (oldstate->modelindex == cl_modelindices[mi_player] && ISDEAD(oldstate->frame)) || oldstate->modelindex == cl_modelindices[mi_h_player];
+
+		// Don't lerp if respawning
+		if (!dead_body && was_dead_body) {
 			continue;
+		}
+
+		// Don't lerp if first frame being gibbed
+		if (state->modelindex == cl_modelindices[mi_h_player] && !was_dead_body) {
+			continue;
+		}
 
 		VectorSubtract(state->origin, oldstate->origin, dist);
 		if (DotProduct(dist, dist) > 22500)
