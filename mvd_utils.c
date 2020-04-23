@@ -778,8 +778,9 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 			}
 			else if (style == 3 && texture && R_TextureReferenceIsValid(texture->texnum)) {
 				// simpleitem
-				strlcpy(clockitem, "  ", sizeof(clockitem));
-				Draw_2dAlphaTexture(x, y, 2 * LETTERWIDTH * scale, 2 * LETTERHEIGHT * scale, texture->texnum, 1.0f);
+				Draw_FitPic(x, y, 2 * LETTERWIDTH * scale, 2 * LETTERHEIGHT * scale, texture);
+				x += 2 * LETTERWIDTH * scale;
+				clockitem[0] = '\0';
 				y += LETTERHEIGHT * scale / 2;
 			}
 			else if (style == 4) {
