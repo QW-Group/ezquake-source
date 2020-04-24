@@ -131,6 +131,7 @@ void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, const float* val
 int R_ProgramUniformGet1i(r_program_uniform_id uniform_id, int default_value);
 
 int R_ProgramAttributeLocation(r_program_attribute_id attr_id);
+#define R_ProgramUniformValid(attr_id) (R_ProgramAttributeLocation(attr_id) >= 0)
 
 // Check if a program needs to be recompiled
 qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options);

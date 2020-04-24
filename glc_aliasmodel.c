@@ -252,7 +252,7 @@ qbool GLC_AliasModelStandardCompile(void)
 		(r_lerpmuzzlehack.integer ? DRAWFLAGS_MUZZLEHACK : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_aliasmodel_std_glc, flags)) {
-		char included_definitions[128];
+		char included_definitions[512];
 
 		included_definitions[0] = '\0';
 		if (flags & DRAWFLAGS_CAUSTICS) {
@@ -289,7 +289,7 @@ qbool GLC_AliasModelShellCompile(void)
 	int flags = (r_lerpmuzzlehack.integer ? DRAWFLAGS_MUZZLEHACK : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_aliasmodel_shell_glc, flags)) {
-		char included_definitions[128];
+		char included_definitions[512];
 
 		included_definitions[0] = '\0';
 		if (flags & DRAWFLAGS_MUZZLEHACK) {

@@ -137,7 +137,7 @@ qbool GLC_DrawflatProgramCompile(void)
 	int flags = (glConfig.supported_features & R_SUPPORT_TEXTURE_ARRAYS) ? 1 : 0;
 
 	if (R_ProgramRecompileNeeded(r_program_world_drawflat_glc, flags)) {
-		char included_definitions[128];
+		char included_definitions[512];
 
 		included_definitions[0] = '\0';
 		if (flags) {
@@ -537,10 +537,12 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 	if (allocations.causticTextureUnit >= 0) {
 		allocations.causticTextureUnit = -1;
 		allocations.second_pass_caustics = true;
+		--allocations.texture_unit_count;
 	}
 	if (allocations.detailTextureUnit >= 0) {
 		allocations.detailTextureUnit = -1;
 		allocations.second_pass_detail = true;
+		--allocations.texture_unit_count;
 	}
 
 	//Tei: textureless for the world brush models (Qrack)
@@ -718,6 +720,7 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 	extern cvar_t gl_lumatextures, gl_textureless;
 	int options;
 	
+	memset(allocations, 0, sizeof(allocations));
 	GLC_WorldAllocateTextureUnits(allocations, model, true);
 	allocations->rendering_state = r_state_world_material_lightmap_luma;
 
@@ -731,7 +734,7 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 
 	if (R_ProgramRecompileNeeded(r_program_world_textured_glc, options)) {
 		int sampler = 0;
-		char definitions[128] = { 0 };
+		char definitions[512] = { 0 };
 
 		allocations->matTextureUnit = 0;
 
@@ -782,6 +785,13 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		allocations->lmTextureUnit = R_ProgramUniformGet1i(r_program_uniform_world_textured_glc_lightmapSampler, -1);
 		allocations->matTextureUnit = R_ProgramUniformGet1i(r_program_uniform_world_textured_glc_texSampler, -1);
 		allocations->fbTextureUnit = R_ProgramUniformGet1i(r_program_uniform_world_textured_glc_lumaSampler, -1);
+
+		allocations->texture_unit_count =
+			(allocations->causticTextureUnit >= 0 ? 1 : 0) +
+			(allocations->detailTextureUnit >= 0 ? 1 : 0) +
+			(allocations->lmTextureUnit >= 0 ? 1 : 0) +
+			(allocations->matTextureUnit >= 0 ? 1 : 0) +
+			(allocations->fbTextureUnit >= 0 ? 1 : 0);
 	}
 	R_TraceLogAPICall("--- units      = %d", allocations->texture_unit_count);
 	R_TraceLogAPICall("... caustics   = %d", allocations->causticTextureUnit);
