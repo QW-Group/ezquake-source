@@ -53,6 +53,11 @@ static void GL_EnsureBufferSize(r_buffer_id id, int size);
 
 static qbool GL_BindBufferImpl(GLenum target, GLuint buffer);
 
+static qbool R_Stub_BufferNotValid(r_buffer_id id)
+{
+	return false;
+}
+
 typedef struct buffer_data_s {
 	GLuint glref;
 	char name[64];
@@ -674,6 +679,7 @@ void GL_InitialiseBufferHandling(api_buffers_t* api)
 	api->supported = buffers_supported;
 	if (!api->supported) {
 		api->FrameReady = R_Stub_True;
+		api->IsValid = R_Stub_BufferNotValid;
 		api->InitialiseState = api->Shutdown = R_Stub_NoOperation;
 		api->StartFrame = api->EndFrame = R_Stub_NoOperation;
 		api->BufferOffset = R_Stub_BufferZero;
