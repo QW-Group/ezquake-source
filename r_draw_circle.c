@@ -25,10 +25,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_state.h"
 #include "r_matrix.h"
 #include "r_buffers.h"
+#include "r_renderer.h"
 
 glm_circle_framedata_t circleData;
 
 extern float overall_alpha;
+
+static void SetCirclePoint(float* points, float x, float y)
+{
+	float v[4] = { x, y, 0, 1 };
+	extern float cachedMatrix[16];
+
+	R_MultiplyVector(cachedMatrix, v, v);
+
+	points[0] = v[0];
+	points[1] = v[1];
+}
 
 void R_Draw_AlphaPieSliceRGB(float x, float y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color)
 {
@@ -69,35 +81,30 @@ void R_Draw_AlphaPieSliceRGB(float x, float y, float radius, float startangle, f
 	++circleData.circleCount;
 
 	// Create a vertex at the exact position specified by the start angle.
-	pointData[points * 2 + 0] = x + radius * cos(startangle);
-	pointData[points * 2 + 1] = y - radius * sin(startangle);
+	SetCirclePoint(&pointData[points * 2], x + radius * cos(startangle), y - radius * sin(startangle));
 	++points;
 
 	// TODO: Use lookup table for sin/cos?
 	for (i = start; i < end; i++) {
 		angle = (i * 2 * M_PI) / CIRCLE_LINE_COUNT;
-		pointData[points * 2 + 0] = x + radius * cos(angle);
-		pointData[points * 2 + 1] = y - radius * sin(angle);
+		SetCirclePoint(&pointData[points * 2], x + radius * cos(angle), y - radius * sin(angle));
 		++points;
 
 		// When filling we're drawing triangles so we need to
-		// create a vertex in the middle of the vertex to fill
+		// create a vertex in the middle of the circle to fill
 		// the entire pie slice/circle.
 		if (fill) {
-			pointData[points * 2 + 0] = x;
-			pointData[points * 2 + 1] = y;
+			SetCirclePoint(&pointData[points * 2], x, y);
 			++points;
 		}
 	}
 
-	pointData[points * 2 + 0] = x + radius * cos(endangle);
-	pointData[points * 2 + 1] = y - radius * sin(endangle);
+	SetCirclePoint(&pointData[points * 2], x + radius * cos(endangle), y - radius * sin(endangle));
 	++points;
 
 	// Create a vertex for the middle point if we're not drawing a complete circle.
 	if (endangle - startangle < 2 * M_PI) {
-		pointData[points * 2 + 0] = x;
-		pointData[points * 2 + 1] = y;
+		SetCirclePoint(&pointData[points * 2], x, y);
 		++points;
 	}
 
