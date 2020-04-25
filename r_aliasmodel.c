@@ -130,6 +130,24 @@ static custom_model_color_t custom_model_colors[] = {
 		MOD_SPIKE,
 		0,
 		true
+	},
+	// Backpacks with RL inside
+	{
+		{ "gl_custom_rlpack_color", "255 64 64", CVAR_COLOR },
+		{ "", "0" },
+		NULL,
+		MOD_BACKPACK,
+		RF_ROCKETPACK,
+		false
+	},
+	// Backpacks with LG inside
+	{
+		{ "gl_custom_lgpack_color", "64 64 255", CVAR_COLOR },
+		{ "", "0" },
+		NULL,
+		MOD_BACKPACK,
+		RF_LGPACK,
+		false
 	}
 };
 
@@ -541,7 +559,7 @@ void R_AliasSetupLighting(entity_t *ent)
 	ent->ambientlight = ent->shadelight = 0;
 	for (i = 0; i < sizeof(custom_model_colors) / sizeof(custom_model_colors[0]); ++i) {
 		custom_model_color_t* test = &custom_model_colors[i];
-		if (test->model_hint == clmodel->modhint) {
+		if (test->model_hint && test->model_hint == clmodel->modhint && (test->renderfx == 0 || test->renderfx == ent->renderfx)) {
 			if (test->color_cvar.string[0] && (test->amf_cvar == NULL || test->amf_cvar->integer == 0)) {
 				ent->custom_model = &custom_model_colors[i];
 			}
