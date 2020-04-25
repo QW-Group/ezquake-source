@@ -148,6 +148,7 @@ int SCR_Screenshot(char *name, qbool movie_capture)
 	target_params->height = glheight;
 
 	target_params->buffer = Movie_TempBuffer(glwidth, glheight);
+	target_params->movie_capture = movie_capture;
 	if (!target_params->buffer) {
 		target_params->buffer = Q_malloc(glwidth * glheight * 3);
 		target_params->freeMemory = true;
@@ -174,10 +175,18 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 #ifdef WITH_PNG
 	if (format == IMAGE_PNG) {
 		applyHWGamma(buffer, buffersize);
-		success = Image_WritePNG(
-			name, image_png_compression_level.value,
-			buffer + buffersize - 3 * target_params->width, -target_params->width, target_params->height
-		) ? SSHOT_SUCCESS : SSHOT_FAILED;
+
+		if (target_params->movie_capture && Movie_AnimatedPNG()) {
+			extern cvar_t movie_fps;
+
+			Image_WriteAPNGFrame(buffer + buffersize - 3 * glwidth, -glwidth, glheight, movie_fps.integer);
+		}
+		else {
+			success = Image_WritePNG(
+				name, image_png_compression_level.value,
+				buffer + buffersize - 3 * target_params->width, -target_params->width, target_params->height
+			) ? SSHOT_SUCCESS : SSHOT_FAILED;
+		}
 	}
 #endif
 
