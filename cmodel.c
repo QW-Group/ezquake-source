@@ -1448,9 +1448,10 @@ void CM_PhysicsNormalDump(FILE* out, float rampjump, float maxgroundspeed)
 
 mphysicsnormal_t CM_PhysicsNormal(int num)
 {
-	static mphysicsnormal_t null_physicsnormal = { 0 };
-	mphysicsnormal_t ret = null_physicsnormal;
+	mphysicsnormal_t ret;
 	qbool inverse = num < 0;
+
+	memset(&ret, 0, sizeof(ret));
 
 	num = abs(num);
 

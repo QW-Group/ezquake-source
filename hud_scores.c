@@ -281,8 +281,6 @@ void HUD_Sort_Scoreboard(int flags)
 			// Find players team.
 			for (team = 0; team < n_teams; team++) {
 				if (!strcmp(player->team, sorted_teams[team].name) && sorted_teams[team].name[0]) {
-					qbool needs_switch = hud_sortrules_includeself.integer == 1 && team != 0;
-
 					sorted_players[i].team = &sorted_teams[team];
 					if (sorted_players[i].playernum == active_player) {
 						active_team_position = team;

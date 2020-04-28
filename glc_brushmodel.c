@@ -516,7 +516,7 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 	texture_ref current_material_fb = null_texture_reference;
 	int current_lightmap = -1;
 
-	texture_ref desired_textures[8] = { 0 };
+	texture_ref desired_textures[8] = { { 0 } };
 
 	qbool draw_textureless = gl_textureless.integer && model->isworldmodel;
 
@@ -720,7 +720,7 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 	extern cvar_t gl_lumatextures, gl_textureless;
 	int options;
 	
-	memset(allocations, 0, sizeof(allocations));
+	memset(allocations, 0, sizeof(*allocations));
 	GLC_WorldAllocateTextureUnits(allocations, model, true);
 	allocations->rendering_state = r_state_world_material_lightmap_luma;
 
@@ -825,7 +825,7 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 	qbool texture_change;
 	texture_ref current_material = null_texture_reference;
 	texture_ref current_material_fb = null_texture_reference;
-	texture_ref desired_textures[8] = { 0 };
+	texture_ref desired_textures[8] = { { 0 } };
 	int current_lightmap = -1;
 
 	R_TraceEnterFunctionRegion;
