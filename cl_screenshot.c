@@ -29,6 +29,9 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "utils.h"
 #include "r_local.h"
 #include "r_renderer.h"
+#ifdef X11_GAMMA_WORKAROUND
+#include "tr_types.h"
+#endif
 
 #define	DEFAULT_SSHOT_FORMAT "png"
 
