@@ -1232,6 +1232,7 @@ static void VID_SDL_Init(void)
 			// 
 			VID_ACCELERATED | VID_DEPTHBUFFER24 | VID_GAMMACORRECTED,
 			VID_ACCELERATED | VID_GAMMACORRECTED,
+			VID_ACCELERATED,
 			// Un-accelerated and at this point we're desperate
 			VID_DEPTHBUFFER24,
 			VID_GAMMACORRECTED,
