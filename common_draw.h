@@ -67,7 +67,7 @@ void HUD_AfterDraw(void);
 
 qbool Draw_BigFontAvailable(void);
 
-int *gameclockoffset;  // hud_gameclock time offset in seconds
+extern int *gameclockoffset;  // hud_gameclock time offset in seconds
 
 void SCR_DrawWadString(int x, int y, float scale, const char *t);
 void SCR_HUD_DrawBar(int direction, int value, float max_value, byte *color, int x, int y, int width, int height);

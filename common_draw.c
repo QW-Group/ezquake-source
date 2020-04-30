@@ -28,6 +28,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "gl_model.h"
 
+// FIXME: this is horrible - points to &hud_gameclock_offset->integer
+int* gameclockoffset;
+
 #if 0
 void Draw_CenterString (int y, char *str)
 {

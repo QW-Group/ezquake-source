@@ -465,5 +465,5 @@ typedef struct temp_entity_list_s
 	int				count;
 } temp_entity_list_t;
 
-temp_entity_list_t	temp_entities;
+extern temp_entity_list_t temp_entities;
 

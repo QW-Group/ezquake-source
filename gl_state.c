@@ -45,7 +45,7 @@ typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLu
 typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 static glBindImageTexture_t     qglBindImageTexture;
 static glBindTextures_t         qglBindTextures;
-glActiveTexture_t               qglActiveTexture;
+extern glActiveTexture_t        qglActiveTexture;
 
 void R_InitialiseStates(void);
 
