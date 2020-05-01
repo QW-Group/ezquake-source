@@ -306,6 +306,10 @@ void Cvar_Register (cvar_t *var)
 	int key;
 	cvar_t *old = Cvar_Find (var->name);
 
+	// All variables must be named :)
+	if (var->name[0] == '\0')
+		return;
+
 #ifdef SERVERONLY
 	char* value;
 
