@@ -730,6 +730,10 @@ void Cmd_Alias_f (void)
 		Com_Printf ("Alias name is too long\n");
 		return;
 	}
+	else if (s[0] == '\0') {
+		Com_Printf("Alias name must be specified\n");
+		return;
+	}
 
 	key = Com_HashKey(s) % ALIAS_HASHPOOL_SIZE;
 

@@ -294,7 +294,7 @@ qbool CheckForCommand (void)
 		;
 	*s = 0;
 
-	return (Cvar_Find(command) || Cmd_FindCommand(command) || Cmd_FindAlias(command) || Cmd_IsLegacyCommand(command));
+	return command[0] && (Cvar_Find(command) || Cmd_FindCommand(command) || Cmd_FindAlias(command) || Cmd_IsLegacyCommand(command));
 }
 
 //===================================================================
