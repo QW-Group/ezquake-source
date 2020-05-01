@@ -31,6 +31,7 @@ static void GLM_Begin2DRendering(void)
 
 #define GLM_PrintGfxInfo                   GL_PrintGfxInfo
 #define GLM_Viewport                       GL_Viewport
+#define GLM_InvalidateViewport             GL_InvalidateViewport
 #define GLM_ClearRenderingSurface          GL_Clear
 #define GLM_EnsureFinished                 GL_EnsureFinished
 #define GLM_Screenshot                     GL_Screenshot

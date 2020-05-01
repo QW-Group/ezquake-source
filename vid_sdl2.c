@@ -519,6 +519,8 @@ static void window_event(SDL_WindowEvent *event)
 				if (!r_conwidth.integer || !r_conheight.integer)
 					VID_UpdateConRes();
 			}
+			if (renderer.InvalidateViewport)
+				renderer.InvalidateViewport();
 			break;
 	}
 }
