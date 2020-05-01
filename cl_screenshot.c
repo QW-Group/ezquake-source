@@ -119,16 +119,14 @@ static void applyHWGamma(byte *buffer, int size)
 	if (vid_hwgamma_enabled) {
 		for (i = 0; i < size; i += 3) {
 			int r = buffer[i + 0];
-			buffer[i + 1] = ramps[1][buffer[i + 1]] >> 8;
 			int g = buffer[i + 1];
-			buffer[i + 2] = ramps[2][buffer[i + 2]] >> 8;
 			int b = buffer[i + 2];
 
 #ifdef X11_GAMMA_WORKAROUND
 			if (glConfig.gammacrap.size >= 256 && glConfig.gammacrap.size <= 4096) {
-				r = (int)(r / 256.0f * glConfig.gammacrap.size);
-				g = (int)(g / 256.0f * glConfig.gammacrap.size);
-				b = (int)(b / 256.0f * glConfig.gammacrap.size);
+				r = (int)((r * glConfig.gammacrap.size) / 256.0f);
+				g = (int)((g * glConfig.gammacrap.size) / 256.0f);
+				b = (int)((b * glConfig.gammacrap.size) / 256.0f);
 			}
 #endif
 			buffer[i + 0] = ramps[0][r] >> 8;
