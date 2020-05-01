@@ -144,6 +144,7 @@ void Classic_LoadParticleTexures(int width, int height)
 	// TEX_NOSCALE - so no affect from gl_picmip and gl_maxsize
 	byte* data = Classic_CreateParticleTexture(width, height);
 	particletexture = R_LoadTexture("particles:classic", width, height, data, TEX_MIPMAP | TEX_ALPHA | TEX_NOSCALE, 4);
+	renderer.TextureWrapModeClamp(particletexture);
 	Q_free(data);
 
 	if (!R_TextureReferenceIsValid(particletexture)) {
