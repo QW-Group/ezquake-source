@@ -116,6 +116,7 @@ static glmode_t modes[] = {
 
 static texture_minification_id gl_filter_min = texture_minification_linear_mipmap_nearest;
 static texture_magnification_id gl_filter_max = texture_magnification_linear;
+static const texture_minification_id gl_filter_min_2d = texture_minification_linear;
 static const texture_magnification_id gl_filter_max_2d = texture_magnification_linear;   // no longer controlled by cvar
 
 void R_TextureModeChanged(texture_ref tex, qbool mipmap)
@@ -124,7 +125,7 @@ void R_TextureModeChanged(texture_ref tex, qbool mipmap)
 		renderer.TextureSetFiltering(tex, gl_filter_min, gl_filter_max);
 	}
 	else {
-		renderer.TextureSetFiltering(tex, gl_filter_max_2d, gl_filter_max_2d);
+		renderer.TextureSetFiltering(tex, gl_filter_min_2d, gl_filter_max_2d);
 	}
 }
 

@@ -57,10 +57,6 @@ static void SetTextureFlags(model_t* mod, msurface_t* out, int surfnum)
 
 	out->texinfo->surfaces++;
 
-	if (surfnum == 259) {
-		surfnum = surfnum;
-	}
-
 	// set the drawing flags flag
 	// sky, turb and alpha should be mutually exclusive
 	if (Mod_IsSkyTextureName(mod, out->texinfo->texture->name)) {	// sky

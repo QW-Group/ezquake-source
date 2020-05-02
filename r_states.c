@@ -199,7 +199,8 @@ static void R_Initialise2DStates(void)
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;
 	R_GLC_DisableAlphaTesting(state);
-	state->blendingEnabled = r_blendfunc_premultiplied_alpha;
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_premultiplied_alpha;
 
 	state = R_CopyRenderingState(r_state_hud_polygons_glm, r_state_hud_images_glm, "glmPolygonDrawState");
 	state->vao_id = vao_hud_polygons;

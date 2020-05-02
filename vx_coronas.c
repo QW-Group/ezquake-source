@@ -67,10 +67,6 @@ void R_UpdateCoronas(void)
 	for (i = 0; i < MAX_CORONAS; i++) {
 		c = &r_corona[i];
 
-		if (c->origin[1] == -2054) {
-			c = c;
-		}
-
 		if (c->type == C_FREE) {
 			continue;
 		}
