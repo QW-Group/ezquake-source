@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 // Code to display .md3 files
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 
 #include "quakedef.h"
 #include "gl_model.h"
@@ -69,3 +70,5 @@ void GLM_DrawAlias3Model(entity_t* ent)
 
 	R_PopModelviewMatrix(oldMatrix);
 }
+
+#endif // #ifdef RENDERER_OPTION_MODERN_OPENGL

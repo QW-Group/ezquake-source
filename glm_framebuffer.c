@@ -17,6 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+
 // GLM_FrameBuffer.c
 // Framebuffer support in OpenGL core
 
@@ -128,3 +130,5 @@ void GLM_RenderFramebuffers(void)
 		GL_DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	}
 }
+
+#endif // #ifdef RENDERER_OPTION_MODERN_OPENGL

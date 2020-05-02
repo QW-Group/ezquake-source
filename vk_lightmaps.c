@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#ifdef RENDERER_OPTION_VULKAN
+
 void VK_CreateLightmapTextures(void)
 {
 }
@@ -31,3 +33,4 @@ void VK_BuildLightmap(int lightmapnum)
 {
 }
 
+#endif // #ifdef RENDERER_OPTION_VULKAN

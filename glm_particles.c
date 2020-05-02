@@ -17,6 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+
 #include "quakedef.h"
 #include "glm_particles.h"
 #include "gl_model.h"
@@ -92,3 +94,5 @@ void GLM_DrawClassicParticles(int particles_to_draw)
 		memcpy(vert, glvertices, particles_to_draw * 3 * sizeof(glvertices[0]));
 	}
 }
+
+#endif // #ifdef RENDERER_OPTION_MODERN_OPENGL

@@ -17,6 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+
 // 3D sprites
 #include "quakedef.h"
 #include "gl_model.h"
@@ -298,3 +300,5 @@ void GLC_DrawSpriteModel(entity_t* e)
 		R_Sprite3DSetVert(vert++, points[3][0], points[3][1], points[3][2], 1, 1, color_white, 0);
 	}
 }
+
+#endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

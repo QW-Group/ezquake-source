@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+
 #include <SDL.h>
 #include "quakedef.h"
 #include "gl_local.h"
@@ -38,3 +40,5 @@ SDL_GLContext GLC_SDL_CreateContext(SDL_Window* window)
 {
 	return GL_SDL_CreateBestContext(window, versions, sizeof(versions) / sizeof(versions[0]));
 }
+
+#endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

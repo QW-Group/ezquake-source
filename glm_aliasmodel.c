@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 // Alias model rendering (modern)
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 
 #include "quakedef.h"
 #include "gl_model.h"
@@ -512,3 +513,5 @@ void GLM_AliasModelShadow(entity_t* ent)
 	// MEAG: TODO
 	// aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 }
+
+#endif // RENDERER_OPTION_MODERN_OPENGL

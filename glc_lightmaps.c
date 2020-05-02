@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
@@ -205,3 +207,5 @@ void GLC_UploadLightmap(int textureUnit, int lightmapnum)
 		GL_TexSubImage2D(GL_TEXTURE0 + textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, format, type, data_source);
 	}
 }
+
+#endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

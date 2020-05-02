@@ -4,6 +4,8 @@
 #include "r_renderer.h"
 #include "gl_framebuffer.h"
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+
 void GL_Init(void);
 void GL_InitialiseBufferHandling(api_buffers_t* api);
 void GL_InitialiseState(void);
@@ -85,3 +87,5 @@ void GLM_Initialise(void)
 	GL_InitialiseBufferHandling(&buffers);
 	GL_InitialiseState();
 }
+
+#endif // #ifdef RENDERER_OPTION_MODERN_OPENGL

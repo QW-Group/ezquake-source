@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 
 // glc_bloom.c: 2D lighting post process effect (immediate-mode OpenGL only)
 
@@ -538,3 +539,6 @@ void GLC_BloomRegisterCvars(void)
 	Cvar_Register(&r_bloom_fast_sample);
 	Cvar_ResetCurrentGroup();
 }
+
+#endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL
+

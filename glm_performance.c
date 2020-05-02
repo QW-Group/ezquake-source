@@ -20,6 +20,8 @@ $Id: gl_rmisc.c,v 1.27 2007-09-17 19:37:55 qqshka Exp $
 */
 // gl_rmisc.c
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
@@ -61,3 +63,4 @@ void GLM_TimeRefresh(void)
 	R_EndRendering();
 }
 
+#endif // #ifdef RENDERER_OPTION_MODERN_OPENGL

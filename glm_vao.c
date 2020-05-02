@@ -17,6 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
@@ -178,3 +180,5 @@ void GLM_BindVertexArrayElementBuffer(r_vao_id vao, r_buffer_id ref)
 		vaos[vao].element_array_buffer = ref;
 	}
 }
+
+#endif // #ifdef RENDERER_OPTION_MODERN_OPENGL

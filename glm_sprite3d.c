@@ -17,6 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+
 // 3D sprites
 #include "quakedef.h"
 #include "gl_model.h"
@@ -198,3 +200,5 @@ void GLM_Draw3DSprites(void)
 
 	R_Sprite3DClearBatches();
 }
+
+#endif // #ifdef RENDERER_OPTION_MODERN_OPENGL

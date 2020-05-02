@@ -17,6 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
@@ -749,3 +751,5 @@ static void R_SkyClearVisibleLimits(void)
 		skymaxs[0][i] = skymaxs[1][i] = -9999;
 	}
 }
+
+#endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

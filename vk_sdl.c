@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
+#ifdef RENDERER_OPTION_VULKAN
+
 #include <SDL.h>
 #include "quakedef.h"
 
@@ -28,3 +30,5 @@ void VK_SDL_SetupAttributes(void)
 {
 	// Do nothing at the moment...
 }
+
+#endif // #ifdef RENDERER_OPTION_VULKAN

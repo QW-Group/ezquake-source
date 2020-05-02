@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 // glc_turb_surface.c: surface-related refresh code
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 
 #include "quakedef.h"
 #include "gl_model.h"
@@ -117,3 +118,4 @@ void GLC_DrawWaterSurfaces(void)
 	waterchain = NULL;
 }
 
+#endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

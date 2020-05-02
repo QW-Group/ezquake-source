@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // glm_surf.c: surface-related refresh code (modern OpenGL)
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
@@ -838,3 +840,5 @@ void GLM_DrawWorld(void)
 	GLM_EnterBatchedWorldRegion();
 	GLM_DrawBrushModel(&ent, false, false);
 }
+
+#endif // #ifdef RENDERER_OPTION_MODERN_OPENGL

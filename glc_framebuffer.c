@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // GLM_FrameBuffer.c
 // Framebuffer support in OpenGL core
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+
 // For the moment, also contains general framebuffer code as immediate-mode isn't supported
 
 #include "quakedef.h"
@@ -127,3 +129,5 @@ void GLC_RenderFramebuffers(void)
 		R_ProgramUse(r_program_none);
 	}
 }
+
+#endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

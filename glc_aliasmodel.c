@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // Alias model (.mdl) rendering, classic (immediate mode) GL only
 // Most code taken from gl_rmain.c
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 
 #include "quakedef.h"
 #include "gl_model.h"
@@ -848,3 +849,5 @@ void GLC_DrawAliasModelPowerupShell(entity_t *ent)
 
 	R_TraceLeaveRegion(true);
 }
+
+#endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

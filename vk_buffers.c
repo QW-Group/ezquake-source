@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // vk_buffers.c
 // - Vulkan buffer handling
 
+#ifdef RENDERER_OPTION_VULKAN
+
 #include <vulkan/vulkan.h>
 #include "quakedef.h"
 
@@ -205,3 +207,5 @@ void VK_InitialiseBufferHandling(api_buffers_t* api)
 	api->PrintState = VK_PrintBufferState;
 #endif
 }
+
+#endif // #ifdef RENDERER_OPTION_VULKAN

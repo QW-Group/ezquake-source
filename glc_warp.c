@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+
 #include "quakedef.h"
 #include "vx_stuff.h"
 #include "gl_model.h"
@@ -185,3 +187,5 @@ void GLC_EmitCausticsPolys(void)
 	caustics_polys = NULL;
 	R_TraceLeaveRegion(true);
 }
+
+#endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

@@ -18,6 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Code to display MD3 models (classic GL/immediate-mode)
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
@@ -372,3 +374,5 @@ void GLC_DrawAlias3ModelPowerupShell(entity_t *ent)
 
 	R_PopModelviewMatrix(oldMatrix);
 }
+
+#endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

@@ -17,6 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+
 #include "quakedef.h"
 #include "gl_model.h"
 #include "gl_local.h"
@@ -191,3 +193,5 @@ void GLM_Shutdown(qbool restarting)
 	renderer.ProgramsShutdown(restarting);
 	GL_DeleteSamplers();
 }
+
+#endif

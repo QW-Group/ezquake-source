@@ -21,6 +21,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 // gl_model.c  -- model loading and caching
 
 // models are the only shared resource between a client and server running on the same machine.
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 
 #include "quakedef.h"
 #include "gl_model.h"
@@ -1376,3 +1377,5 @@ void GLC_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 		}
 	}
 }
+
+#endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

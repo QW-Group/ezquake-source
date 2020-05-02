@@ -17,6 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+
 #include "quakedef.h"
 #include "gl_local.h"
 #include "glc_state.h"
@@ -523,3 +525,5 @@ void GLC_StateBeginAliasOutlineFrame(void)
 	R_CustomColor(0, 0, 0, 1);
 	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 }
+
+#endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

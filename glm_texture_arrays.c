@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 // glm_texture_arrays.c
+#ifdef RENDERER_OPTION_MODERN_OPENGL
 
 // gathers textures of common size into arrays so we can pack more references into fewer samplers
 
@@ -639,3 +640,5 @@ void GLM_BuildCommonTextureArrays(qbool vid_restart)
 	Q_free(emptyTextureBuffer);
 	emptyTextureBufferSize = tempTextureBufferSize = 0;
 }
+
+#endif // #ifdef RENDERER_OPTION_MODERN_OPENGL
