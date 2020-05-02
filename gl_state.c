@@ -1281,9 +1281,9 @@ void R_BufferInvalidateBoundState(r_buffer_id ref)
 
 void GL_InvalidateViewport(void)
 {
-	SDL_Window* window = SDL_GL_GetCurrentWindow();
 	rendering_state_t* state = &opengl.rendering_state;
 	state->currentViewportX = 0;
 	state->currentViewportY = 0;
-	SDL_GL_GetDrawableSize(window, &state->currentViewportWidth, &state->currentViewportHeight);
+	state->currentViewportWidth = 0;
+	state->currentViewportHeight = 0;
 }
