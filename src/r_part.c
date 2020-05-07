@@ -49,6 +49,7 @@ const int default_size = 32;
 
 extern cvar_t gl_part_blood;
 extern cvar_t gl_part_gunshots;
+extern cvar_t gl_part_bloodtrails;
 extern cvar_t gl_part_trails;
 extern cvar_t gl_part_spikes;
 extern cvar_t gl_part_explosions;
@@ -812,21 +813,47 @@ void R_RunParticleEffect(vec3_t org, vec3_t dir, int color, int count)
 // Used for temporary entities and untrackable effects
 void R_ParticleTrail(vec3_t start, vec3_t end, trail_type_t type)
 {
-	if (qmb_initialized && gl_part_trails.integer) {
-		QMB_ParticleTrail(start, end, type);
-	}
-	else {
-		Classic_ParticleTrail(start, end, NULL, type);
+	switch(type){
+		case BLOOD_TRAIL:
+		case BIG_BLOOD_TRAIL:
+		if (qmb_initialized && gl_part_bloodtrails.integer) {
+			QMB_ParticleTrail(start, end, type);
+		}
+		else {
+			Classic_ParticleTrail(start, end, NULL, type);
+		}
+		break;
+		default:
+		if (qmb_initialized && gl_part_trails.integer) {
+			QMB_ParticleTrail(start, end, type);
+		}
+		else {
+			Classic_ParticleTrail(start, end, NULL, type);
+		}
+		break;
 	}
 }
 
 void R_EntityParticleTrail(centity_t* cent, trail_type_t type)
 {
-	if (qmb_initialized && gl_part_trails.integer) {
-		QMB_EntityParticleTrail(cent, type);
-	}
-	else {
-		Classic_ParticleTrail(cent->trails[0].stop, cent->lerp_origin, &cent->trails[0].stop, type);
+	switch(type){
+		case BLOOD_TRAIL:
+		case BIG_BLOOD_TRAIL:
+		if (qmb_initialized && gl_part_bloodtrails.integer) {
+			QMB_EntityParticleTrail(cent, type);
+		}
+		else {
+			Classic_ParticleTrail(cent->trails[0].stop, cent->lerp_origin, &cent->trails[0].stop, type);
+		}
+		break;
+		default:
+		if (qmb_initialized && gl_part_trails.integer) {
+			QMB_EntityParticleTrail(cent, type);
+		}
+		else {
+			Classic_ParticleTrail(cent->trails[0].stop, cent->lerp_origin, &cent->trails[0].stop, type);
+		}
+		break;
 	}
 }
 

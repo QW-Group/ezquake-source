@@ -182,6 +182,7 @@ cvar_t gl_oldlitscaling                    = {"gl_oldlitscaling", "0"};
 cvar_t gl_colorlights                      = {"gl_colorlights", "1"};
 cvar_t gl_squareparticles                  = {"gl_squareparticles", "0", 0, OnSquareParticleChange};
 cvar_t gl_part_explosions                  = {"gl_part_explosions", "0"}; // 1
+cvar_t gl_part_bloodtrails                 = {"gl_part_bloodtrails", "0"}; // 1
 cvar_t gl_part_trails                      = {"gl_part_trails", "0"}; // 1
 cvar_t gl_part_tracer1_color               = {"gl_part_tracer1_color", "0 124 0", CVAR_COLOR};
 cvar_t gl_part_tracer2_color               = {"gl_part_tracer2_color", "255 77 0", CVAR_COLOR};
@@ -619,6 +620,7 @@ void R_Init(void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 	Cvar_Register(&gl_part_explosions);
+	Cvar_Register(&gl_part_bloodtrails);
 	Cvar_Register(&gl_part_trails);
 	Cvar_Register(&gl_part_tracer1_color);
 	Cvar_Register(&gl_part_tracer1_size);

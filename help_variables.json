@@ -5178,6 +5178,21 @@
       "group-id": "36",
       "type": "boolean"
     },
+    "gl_part_bloodtrails": {
+      "default": "0",
+      "group-id": "36",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Disable.",
+          "name": "false"
+        },
+        {
+          "description": "Determines particles used for blood trails (gibs).",
+          "name": "true"
+        }
+      ]
+    },
     "gl_part_bubble": {
       "default": "1",
       "desc": "Advanced particles for bubbles (drowning effect).",
