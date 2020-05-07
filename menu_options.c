@@ -853,7 +853,7 @@ setting settplayer_arr[] = {
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Fullbright Skins", r_fullbrightSkins),
+	ADDSET_NUMBER	("Fullbright Skins", r_fullbrightSkins, 0, 1, 0.05),
 	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
 	ADDSET_BASIC_SECTION(),
 	
@@ -957,7 +957,7 @@ setting settfps_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NAMED	("Rocket Trail", r_rockettrail, rockettrail_enum),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Rocket Light", r_rocketlight),
+	ADDSET_NUMBER	("Rocket Light", r_rocketlight, 0, 1, 0.05),
 	ADDSET_NAMED	("Grenade Trail", r_grenadetrail, grenadetrail_enum),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Fakeshaft", cl_fakeshaft, 0, 1, 0.05),
