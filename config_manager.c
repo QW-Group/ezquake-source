@@ -792,21 +792,27 @@ static void ResetConfigs(qbool resetall, qbool read_legacy_configs)
 	}
 }
 
+void Cfg_GetConfigPath(char* path, size_t max_length, const char* name)
+{
+	const char* default_gamedir = (cfg_use_home.integer ? "" : "ezquake");
+	const char* base_directory = (cfg_use_home.integer ? com_homedir : com_basedir);
+
+	strlcpy(path, base_directory, max_length);
+	strlcat(path, "/", max_length);
+	strlcat(path, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? default_gamedir : com_gamedirfile, max_length);
+	strlcat(path, "/", max_length);
+	strlcat(path, name, max_length);
+}
+
 void DumpConfig(char *name)
 {
-	FILE	*f;
-	char	*outfile, *newlines = "\n";
+	char outfile[MAX_OSPATH];
+	FILE* f;
+	char* newlines = "\n";
 
-	if (cfg_use_home.integer) {
-		// homedir
-		outfile = va("%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "" : com_gamedirfile, name);
-	}
-	else {
-		// basedir
-		outfile = va("%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "ezquake" : com_gamedirfile, name);
-	}
+	Cfg_GetConfigPath(outfile, sizeof(outfile) / sizeof(outfile[0]), name);
 
-	if (!(f	= fopen	(outfile, "w"))) {
+	if (!(f	= fopen(outfile, "w"))) {
 		FS_CreatePath(outfile);
 		if (!(f	= fopen	(outfile, "w"))) {
 			Com_Printf ("Couldn't write	%s.\n",	name);
@@ -913,33 +919,37 @@ extern qbool filesystemchanged; // fix bug 2359900
 
 void SaveConfig(const char *cfgname)
 {
-	char filename[MAX_PATH] = {0}, *filename_ext, *backupname_ext;
-	size_t len;
+	char filename[MAX_PATH] = {0};
 	FILE *f;
 
 	snprintf(filename, sizeof(filename) - 4, "%s", cfgname[0] ? cfgname : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
-
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
 
 	if (cfg_backup.integer) {
-		if (cfg_use_home.integer)	// homedir
-			filename_ext = va("%s/%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "" : com_gamedirfile, filename);
-		else	// basedir
-			filename_ext = va("%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? "ezquake" : com_gamedirfile, filename);
+		char backupname_ext[MAX_PATH];
+		char filename_ext[MAX_OSPATH];
+
+		Cfg_GetConfigPath(filename_ext, sizeof(filename_ext) / sizeof(filename_ext[0]), filename);
 
 		if ((f = fopen(filename_ext, "r"))) {
 			fclose(f);
-			len = strlen(filename_ext) + 5;
-			backupname_ext = (char *) Q_malloc(len);
-			snprintf (backupname_ext, len, "%s.bak", filename_ext);
+			strlcpy(backupname_ext, filename_ext, sizeof(backupname_ext));
+			strlcat(backupname_ext, ".bak", sizeof(backupname_ext));
 
 			if ((f = fopen(backupname_ext, "r"))) {
 				fclose(f);
-				remove(backupname_ext);
+				if (remove(backupname_ext)) {
+					Con_Printf("Failed to delete old backup file %s - save cancelled\n", backupname_ext);
+					Con_Printf("  If you want to save config without a backup, set %s 0\n", cfg_backup.name);
+					return;
+				}
 			}
 
-			rename(filename_ext, backupname_ext);
-			Q_free(backupname_ext);
+			if (rename(filename_ext, backupname_ext)) {
+				Con_Printf("Failed to backup config file %s - save cancelled\n", filename_ext);
+				Con_Printf("  If you want to save config without a backup, set %s 0\n", cfg_backup.name);
+				return;
+			}
 		}
 	}
 
