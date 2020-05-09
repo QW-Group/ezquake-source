@@ -798,9 +798,16 @@ void Cfg_GetConfigPath(char* path, size_t max_length, const char* name)
 	const char* base_directory = (cfg_use_home.integer ? com_homedir : com_basedir);
 
 	strlcpy(path, base_directory, max_length);
-	strlcat(path, "/", max_length);
+	if (path[0]) {
+		strlcat(path, "/", max_length);
+	}
 	strlcat(path, (strcmp(com_gamedirfile, "qw") == 0 || !cfg_use_gamedir.integer) ? default_gamedir : com_gamedirfile, max_length);
-	strlcat(path, "/", max_length);
+	if (path[0]) {
+		strlcat(path, "/", max_length);
+	}
+	if (!cfg_use_home.integer) {
+		strlcat(path, "configs/", max_length);
+	}
 	strlcat(path, name, max_length);
 }
 
