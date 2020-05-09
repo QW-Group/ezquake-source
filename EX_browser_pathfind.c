@@ -101,7 +101,9 @@ typedef struct proxy_request_queue_t {
 
 static ping_node_t ping_nodes[MAX_SERVERS];
 static nodeid_t ping_nodes_count = 0;
-static ping_neighbour_t ping_neighbours[MAX_SERVERS*MAX_NONLEAVES];
+#define MAX_SERVERS_BLOCKSIZE (MAX_SERVERS*MAX_NONLEAVES)
+static ping_neighbour_t* ping_neighbours;
+static unsigned long ping_neighbours_max;
 static nodeid_t ping_neighbours_count = 0;
 
 static nodeid_t startnode_id = 0;
@@ -117,8 +119,13 @@ static void SB_PingTree_Assertions(void)
 		Sys_Error("EX_Browser_pathfind: max nodes count reached");
 	}
 
-	if (ping_neighbours_count >= MAX_SERVERS*MAX_NONLEAVES) {
-		Sys_Error("EX_Browser_pathfind: max neighbours count reached");
+	if (ping_neighbours_count >= ping_neighbours_max) {
+		while (ping_neighbours_count >= ping_neighbours_max)
+			ping_neighbours_max += MAX_SERVERS_BLOCKSIZE;
+		ping_neighbours = Q_realloc(ping_neighbours, ping_neighbours_max * sizeof(ping_neighbour_t));
+		if (!ping_neighbours) {
+			Sys_Error("EX_Browser_pathfind: max neighbours count reached");
+		}
 	}
 
 	if (startnode_id != 0) {
