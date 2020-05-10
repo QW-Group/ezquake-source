@@ -192,9 +192,12 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	k = 0;
 	if (hud_teaminfo_show_enemies->integer) {
 		while (sorted_teams[k].name) {
-			int width = Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer);
+			// hmx : different name/scores alignment options are possible in the header
+			// in which case, make sure to differentiate name width vs teaminfo width
+			// i.e int name_width = Draw_SString()
+			Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer);
 			snprintf(tmp, sizeof(tmp), "%s %4i", TP_ParseFunChars("$.", false), sorted_teams[k].frags);
-			Draw_SStringAligned(x, y, tmp, 1.0f, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer, text_align_right, x + width);
+			Draw_SStringAligned(x, _y, tmp, hud_teaminfo_scale->value, 1.0f, hud_teaminfo_proportional->integer, text_align_right, x + width);
 			_y += FONTWIDTH * hud_teaminfo_scale->value;
 			for (j = 0; j < slots_num; j++) {
 				i = slots[j];
