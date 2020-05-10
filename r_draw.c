@@ -1054,7 +1054,9 @@ void Draw_ConsoleBackground(int lines)
 				last_lvlshot->width  = conback.width;
 				last_lvlshot->height = conback.height;
 			}
-			Draw_DeleteOldLevelshot(old_levelshot);
+			if (last_lvlshot != old_levelshot) {
+				Draw_DeleteOldLevelshot(old_levelshot);
+			}
 
 			strlcpy(last_mapname, host_mapname.string, sizeof(last_mapname)); // Save.
 		}
