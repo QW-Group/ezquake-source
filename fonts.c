@@ -518,8 +518,8 @@ qbool FontAlterCharCoordsWide(float* x, float* y, wchar ch, qbool bigchar, float
 		return false;
 	}
 
-	// Space.
-	if (ch == 32) {
+	// Space (& 'red' version).
+	if (ch == 32 || ch == (32 | 128)) {
 		*x += FontCharacterWidthWide(ch, scale, proportional);
 		return false;
 	}
