@@ -94,7 +94,6 @@ m_state_t m_state;
 
 qbool    m_entersound;          // play after drawing a frame, so caching
                                 // won't disrupt the sound
-qbool    m_recursiveDraw;
 int            m_topmenu;       // set if a submenu was entered via a
                                 // menu_* command
 #define    SLIDER_RANGE    10
@@ -1309,23 +1308,18 @@ void M_Draw(void)
 		return;
 	}
 
-	if (!m_recursiveDraw) {
-		scr_copyeverything = 1;
+	scr_copyeverything = 1;
 
-		if (SCR_NEED_CONSOLE_BACKGROUND) {
-			Draw_ConsoleBackground(scr_con_current);
-		}
-		else {
-			// if you don't like fade in ingame menu, uncomment this
-			// if (m_state != m_ingame && m_state != m_democtrl)
-			Draw_FadeScreen(scr_menualpha.value);
-		}
-
-		scr_fullupdate = 0;
+	if (SCR_NEED_CONSOLE_BACKGROUND) {
+		Draw_ConsoleBackground(scr_con_current);
 	}
 	else {
-		m_recursiveDraw = false;
+		// if you don't like fade in ingame menu, uncomment this
+		// if (m_state != m_ingame && m_state != m_democtrl)
+		Draw_FadeScreen(scr_menualpha.value);
 	}
+
+	scr_fullupdate = 0;
 
 	if (scr_scaleMenu.value) {
 		if (vid.aspect > 1.0) {

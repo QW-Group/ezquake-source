@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "irc.h"
 #include "fonts.h"
 #include "rulesets.h"
+#include "menu.h"
 
 #define     MINIMUM_CONBUFSIZE     (1 << 15)
 #define     DEFAULT_CONBUFSIZE     (1 << 16)
@@ -131,6 +132,14 @@ void Date_f (void)
     con_ormask = 128;
     Com_Printf ("%s %s %02d, %2d:%02d %d\n", day, month, tm.wDay, tm.wHour, tm.wMinute, tm.wYear);
     con_ormask = 0;
+}
+
+static qbool Con_MenuWillDrawConsole(void)
+{
+	if (m_state == m_none || key_dest != key_menu || m_state == m_proxy) {
+		return false;
+	}
+	return (SCR_NEED_CONSOLE_BACKGROUND);
 }
 
 void MakeStringRed(char *s)
@@ -890,7 +899,7 @@ void Con_DrawConsole (int lines) {
 	int i, j, x, y, n=0, rows, row, idx;
 	char *text, dlbar[1024];
 
-	if (lines <= 0)
+	if (lines <= 0 || Con_MenuWillDrawConsole())
 		return;
 
 	// draw the background
