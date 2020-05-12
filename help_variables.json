@@ -15511,22 +15511,23 @@
     },
     "r_rocketLight": {
       "default": "1",
+      "desc": "Enables rocket lights. Values from 0-1 can be used to scale the light.",
       "group-id": "8",
-      "type": "boolean",
+      "type": "float",
       "values": [
         {
-          "description": "Turn off dynamic lighting of rockets.",
-          "name": "false"
+          "description": "Disable dynamic rocket lights.",
+          "name": "0"
         },
         {
-          "description": "Turn on dynamic lighting of rockets.",
-          "name": "true"
+          "description": "Enable dynamic rocket lights, maximum scale.",
+          "name": "1"
         }
       ]
     },
     "r_rocketLightColor": {
       "default": "0",
-      "desc": "Determines the color of the rocket light.",
+      "desc": "Determines the color of the rocket lights.",
       "group-id": "8",
       "type": "enum",
       "values": [
