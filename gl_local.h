@@ -23,11 +23,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef __APPLE__
 
 #include <OpenGL/gl.h>
-#ifdef TRAVIS_BUILD
-#include "opengl/glext.h"
-#else
-#include <OpenGL/glext.h>
+#ifdef GL_GLEXT_VERSION
+#undef GL_GLEXT_VERSION
 #endif
+#ifdef GL_DRAW_FRAMEBUFFER_BINDING
+#undef GL_DRAW_FRAMEBUFFER_BINDING
+#endif
+#include "opengl/glext.h"  // Should be <OpenGL/glext.h> but appears broken on newer macOS
 
 #else // __APPLE__
 
