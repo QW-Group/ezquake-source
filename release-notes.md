@@ -4,6 +4,7 @@
 
 ### Bugs
 
+- Fix crash to desktop when finding best routes to server and number of proxies too high (old bug)
 - When using non-desktop resolution and running fullscreen, image was cropped (3.5 bug, reported by bgnr)
 - HUD renders circles again (affects speed2, radar, itemsclock with certain settings) (3.5 bug, reported by numerous people)
 - Fixed visual artifact around classic particles in classic OpenGL (3.5 bug, reported by hemostick)
@@ -12,10 +13,14 @@
 - NULL pointer dereference if OpenGL implementation didn't support buffers (3.5 bug)
 - Corrupt lightmap rendering when lots of options enabled for world-drawing GLSL (3.5 bug)
 - Gamma adjustment on screenshots led to them being colored incorrectly (old bug revisited)
+- Stop levelshot (console background) from potentially being deleted too early (3.5 bug)
+- Don't draw hud/console, then full console background then server browser (old)
+- Skip rendering glyphs for spaces when the line has been turned red (old, affected server browser)
 
-### Demo playback
+### Other changes
 
 - MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
+- `cfg_backup` will now not save the config if backup cannot be taken
 
 ### Build/meta
 
