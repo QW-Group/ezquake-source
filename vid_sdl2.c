@@ -193,6 +193,7 @@ cvar_t vid_framebuffer_palette     = {"vid_framebuffer_palette",       "0",     
 cvar_t vid_framebuffer_depthformat = {"vid_framebuffer_depthformat",   "0",       CVAR_NO_RESET | CVAR_LATCH };
 cvar_t vid_framebuffer_hdr         = {"vid_framebuffer_hdr",           "0",       CVAR_NO_RESET | CVAR_LATCH };
 cvar_t vid_framebuffer_hdr_tonemap = {"vid_framebuffer_hdr_tonemap",   "0" };
+cvar_t vid_framebuffer_smooth      = {"vid_framebuffer_smooth",        "1",       CVAR_NO_RESET | CVAR_LATCH };
 
 //
 // function declaration
@@ -848,6 +849,7 @@ static void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_framebuffer_palette);
 	Cvar_Register(&vid_framebuffer_depthformat);
 	Cvar_Register(&vid_framebuffer_hdr);
+	Cvar_Register(&vid_framebuffer_smooth);
 
 #ifdef X11_GAMMA_WORKAROUND
 	Cvar_Register(&vid_gamma_workaround);
