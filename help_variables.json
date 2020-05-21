@@ -2313,7 +2313,7 @@
       "type": "float"
     },
     "cl_physfps_spectator": {
-      "default": "30",
+      "default": "77",
       "desc": "Amount of updates the client will send/receive while being spectator. Lower values make the client smooth-out the field of view movement greatly.",
       "group-id": "8",
       "remarks": "This can increase your ping (only) when you are a spectator.",

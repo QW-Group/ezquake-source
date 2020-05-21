@@ -118,7 +118,7 @@ cvar_t	cl_sbar		= {"cl_sbar", "0"};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0"};
 cvar_t	cl_maxfps	= {"cl_maxfps", "0"};
 cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
-cvar_t	cl_physfps_spectator = {"cl_physfps_spectator", "30"};
+cvar_t	cl_physfps_spectator = {"cl_physfps_spectator", "77"};
 cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, Rulesets_OnChange_indphys};
 
 cvar_t	cl_predict_players = {"cl_predict_players", "1"};
