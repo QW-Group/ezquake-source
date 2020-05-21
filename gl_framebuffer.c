@@ -35,6 +35,7 @@ extern cvar_t vid_framebuffer_depthformat;
 extern cvar_t vid_framebuffer_palette;
 extern cvar_t vid_framebuffer_hdr;
 extern cvar_t vid_framebuffer_blit;
+extern cvar_t vid_framebuffer_smooth;
 extern cvar_t r_fx_geometry;
 
 #ifndef GL_NEGATIVE_ONE_TO_ONE
@@ -273,24 +274,13 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	strlcat(label, "/", sizeof(label));
 	strlcat(label, framebuffer_texture_names[fbtex_standard], sizeof(label));
 
-	//
-	//R_AllocateTextureReferences(texture_type_2d, width, height, hdr ? TEX_NOSCALE | (id == framebuffer_std ? 0 : TEX_ALPHA), 1, &fb->texture[fbtex_standard]);
 	GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_standard], label);
 	GL_TexStorage2D(fb->texture[fbtex_standard], 1, framebuffer_format, width, height, false);
 	renderer.TextureLabelSet(fb->texture[fbtex_standard], label);
-	renderer.TextureSetFiltering(fb->texture[fbtex_standard], texture_minification_linear, texture_minification_linear);
+	const texture_minification_id min_filter = vid_framebuffer_smooth.integer ? texture_minification_linear : texture_minification_nearest;
+	const texture_magnification_id mag_filter = vid_framebuffer_smooth.integer ? texture_magnification_linear : texture_magnification_nearest;
+	renderer.TextureSetFiltering(fb->texture[fbtex_standard], min_filter, mag_filter);
 	renderer.TextureWrapModeClamp(fb->texture[fbtex_standard]);
-
-	/*if (id == framebuffer_std) {
-		strlcpy(label, framebuffer_names[id], sizeof(label));
-		strlcat(label, "/", sizeof(label));
-		strlcat(label, framebuffer_texture_names[fbtex_bloom], sizeof(label));
-
-		R_AllocateTextureReferences(texture_type_2d, width, height, TEX_NOSCALE | TEX_MIPMAP, 1, &fb->texture[fbtex_bloom]);
-		renderer.TextureLabelSet(fb->texture[fbtex_bloom], label);
-		renderer.TextureSetFiltering(fb->texture[fbtex_bloom], texture_minification_linear, texture_minification_linear);
-		renderer.TextureWrapModeClamp(fb->texture[fbtex_bloom]);
-	}*/
 
 	// Create frame buffer with texture & depth
 	GL_GenFramebuffers(1, &fb->glref);
@@ -319,7 +309,7 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 
 		GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_depth], label);
 		GL_TexStorage2D(fb->texture[fbtex_depth], 1, depthFormat, width, height, false);
-		renderer.TextureSetFiltering(fb->texture[fbtex_depth], texture_minification_linear, texture_minification_linear);
+		renderer.TextureSetFiltering(fb->texture[fbtex_depth], min_filter, mag_filter);
 		renderer.TextureWrapModeClamp(fb->texture[fbtex_depth]);
 
 		GL_FramebufferTexture(fb->glref, GL_DEPTH_ATTACHMENT, GL_TextureNameFromReference(fb->texture[fbtex_depth]), 0);
