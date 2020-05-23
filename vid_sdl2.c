@@ -82,6 +82,7 @@ extern void TP_ExecTrigger(const char *);
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel);
 static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *cancel);
 static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel);
+static void framebuffer_smooth_changed_callback(cvar_t* var, char* string, qbool* cancel);
 static void GrabMouse(qbool grab, qbool raw);
 static void HandleEvents(void);
 static void VID_UpdateConRes(void);
@@ -193,7 +194,7 @@ cvar_t vid_framebuffer_palette     = {"vid_framebuffer_palette",       "0",     
 cvar_t vid_framebuffer_depthformat = {"vid_framebuffer_depthformat",   "0",       CVAR_NO_RESET | CVAR_LATCH };
 cvar_t vid_framebuffer_hdr         = {"vid_framebuffer_hdr",           "0",       CVAR_NO_RESET | CVAR_LATCH };
 cvar_t vid_framebuffer_hdr_tonemap = {"vid_framebuffer_hdr_tonemap",   "0" };
-cvar_t vid_framebuffer_smooth      = {"vid_framebuffer_smooth",        "1",       CVAR_NO_RESET | CVAR_LATCH };
+cvar_t vid_framebuffer_smooth      = {"vid_framebuffer_smooth",        "1",       CVAR_NO_RESET, framebuffer_smooth_changed_callback };
 
 //
 // function declaration
@@ -1693,6 +1694,13 @@ static void VID_UpdateConRes(void)
 	vid.numpages = 2; // ??
 	Draw_AdjustConback();
 	vid.recalc_refdef = 1;
+}
+
+void GL_FramebufferSetFiltering(qbool linear);
+
+static void framebuffer_smooth_changed_callback(cvar_t* var, char* string, qbool* cancel)
+{
+	GL_FramebufferSetFiltering(var->integer);
 }
 
 static void conres_changed_callback(cvar_t *var, char *string, qbool *cancel)

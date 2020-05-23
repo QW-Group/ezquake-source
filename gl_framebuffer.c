@@ -234,6 +234,18 @@ void GL_InitialiseFramebufferHandling(void)
 	memset(framebuffer_data, 0, sizeof(framebuffer_data));
 }
 
+void GL_FramebufferSetFiltering(qbool linear)
+{
+	texture_ref tex = framebuffer_data[framebuffer_std].texture[fbtex_standard];
+
+	if (R_TextureReferenceIsValid(tex)) {
+		texture_minification_id min_filter = linear ? texture_minification_linear : texture_minification_nearest;
+		texture_magnification_id mag_filter = linear ? texture_magnification_linear : texture_magnification_nearest;
+
+		renderer.TextureSetFiltering(tex, min_filter, mag_filter);
+	}
+}
+
 qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 {
 	framebuffer_data_t* fb = NULL;
@@ -277,9 +289,7 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_standard], label);
 	GL_TexStorage2D(fb->texture[fbtex_standard], 1, framebuffer_format, width, height, false);
 	renderer.TextureLabelSet(fb->texture[fbtex_standard], label);
-	const texture_minification_id min_filter = vid_framebuffer_smooth.integer ? texture_minification_linear : texture_minification_nearest;
-	const texture_magnification_id mag_filter = vid_framebuffer_smooth.integer ? texture_magnification_linear : texture_magnification_nearest;
-	renderer.TextureSetFiltering(fb->texture[fbtex_standard], min_filter, mag_filter);
+	GL_FramebufferSetFiltering(vid_framebuffer_smooth.integer);
 	renderer.TextureWrapModeClamp(fb->texture[fbtex_standard]);
 	R_TextureSetFlag(fb->texture[fbtex_standard], R_TextureGetFlag(fb->texture[fbtex_standard]) | TEX_NO_TEXTUREMODE);
 
