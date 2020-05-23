@@ -371,7 +371,7 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 	int health_amount_width = 0;
 
 	health = min (100, health);
-	health_amount_width = Q_rint (abs ((MV_HUD_HEALTH_WIDTH * health) / 100.0));
+	health_amount_width = Q_rint (fabs((MV_HUD_HEALTH_WIDTH * health) / 100.0f));
 
 	if (health > 0) {
 		Draw_AlphaFillRGB (x, y, health_amount_width, 8, ALPHA_COLOR (scr_autoid_healthbar_normal_color.color, 2 * MV_HEALTH_OPACITY));
@@ -381,13 +381,13 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 
 	if (health > 100 && health <= 200) {
 		// Mega health.
-		health_amount_width = Q_rint ((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 100));
+		health_amount_width = Q_rint ((MV_HUD_HEALTH_WIDTH / 100.0f) * (health - 100));
 
 		Draw_AlphaFillRGB (x, y, health_amount_width, 8, ALPHA_COLOR (scr_autoid_healthbar_mega_color.color, MV_HEALTH_OPACITY));
 	}
 	else if (health > 200 && health <= 250) {
 		// Super health.
-		health_amount_width = Q_rint ((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 200));
+		health_amount_width = Q_rint ((MV_HUD_HEALTH_WIDTH / 100.0f) * (health - 200));
 
 		Draw_AlphaFillRGB (x, y, MV_HUD_HEALTH_WIDTH, 8, ALPHA_COLOR (scr_autoid_healthbar_mega_color.color, MV_HEALTH_OPACITY));
 		Draw_AlphaFillRGB (x, y, health_amount_width, 8, ALPHA_COLOR (scr_autoid_healthbar_two_mega_color.color, MV_HEALTH_OPACITY));

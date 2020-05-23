@@ -428,7 +428,7 @@ static void Render_Pre(document_rendering_context_t *cx, document_tag_pre_t *pre
             continue;
 
         // copy character to output
-        *d++ = c=='\n' ? '\n'+128 : c;
+        *d++ = c=='\n' ? (char)('\n' + 128) : c;
 
         // check line width
         if (c == '\n')

@@ -551,10 +551,10 @@ void CL_Rcon_f (void) {
 	extern cvar_t	rcon_password, rcon_address, cl_crypt_rcon;
 	time_t		client_time;
 
-	message[0] = 255;
-	message[1] = 255;
-	message[2] = 255;
-	message[3] = 255;
+	message[0] = (char)255;
+	message[1] = (char)255;
+	message[2] = (char)255;
+	message[3] = (char)255;
 	message[4] = 0;
 	strlcat (message, "rcon ", sizeof(message));
 

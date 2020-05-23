@@ -313,19 +313,17 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 	}
 
 	// try other directions
-	if ( ((rand()&3) & 1) ||  abs(deltay)>abs(deltax))
+	if ( ((rand()&3) & 1) || fabs(deltay) > fabs(deltax))
 	{
 		tdir=d[1];
 		d[1]=d[2];
 		d[2]=tdir;
 	}
 
-	if (d[1]!=DI_NODIR && d[1]!=turnaround
-	        && SV_StepDirection(actor, d[1], dist))
+	if (d[1] != DI_NODIR && d[1] != turnaround && SV_StepDirection(actor, d[1], dist))
 		return;
 
-	if (d[2]!=DI_NODIR && d[2]!=turnaround
-	        && SV_StepDirection(actor, d[2], dist))
+	if (d[2] != DI_NODIR && d[2] != turnaround && SV_StepDirection(actor, d[2], dist))
 		return;
 
 	/* there is no direct path to the player, so pick another direction */

@@ -239,7 +239,7 @@ static void SCR_DrawGameClock(void)
 		strlcpy(str, SecondsToHourString(timelimit), sizeof(str));
 	}
 	else {
-		strlcpy(str, SecondsToHourString((int)abs(timelimit - cl.gametime + scr_gameclock_offset.value)), sizeof(str));
+		strlcpy(str, SecondsToHourString((int)fabs(timelimit - cl.gametime + scr_gameclock_offset.value)), sizeof(str));
 	}
 
 	if ((scr_gameclock.value == 3 || scr_gameclock.value == 4) && (s = strchr(str, ':'))) {

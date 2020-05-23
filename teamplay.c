@@ -978,7 +978,7 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
 	while ((c = *s++) && (c != '\x7f')) {
 		if (c == '\xff') {
 			if ((hide = !hide)) {
-				*d++ = (*s == 'z') ? 'x' : 139;
+				*d++ = (*s == 'z') ? 'x' : (char)139;
 				s++;
 				memmove(s - 2, s, strlen(s) + 1);
 				s -= 2;

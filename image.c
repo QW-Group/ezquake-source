@@ -1390,11 +1390,11 @@ static boolean JPEG_IO_empty_output_buffer (j_compress_ptr cinfo)
 	if (VFS_WRITE(dest->outfile, dest->buffer, JPEG_OUTPUT_BUF_SIZE) != JPEG_OUTPUT_BUF_SIZE)
 	{
 		jpeg_in_error = true;
-		return false;
+		return (boolean)false;
 	}
 	dest->pub.next_output_byte = dest->buffer;
 	dest->pub.free_in_buffer = JPEG_OUTPUT_BUF_SIZE;
-	return true;
+	return (boolean)true;
 }
 
 static void JPEG_IO_term_destination (j_compress_ptr cinfo)
@@ -1470,8 +1470,8 @@ int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int he
 	cinfo.input_components = 3;
 	cinfo.in_color_space = JCS_RGB;
 	jpeg_set_defaults(&cinfo);
-	jpeg_set_quality (&cinfo, bound(0, quality, 100), true);
-	jpeg_start_compress(&cinfo, true);
+	jpeg_set_quality (&cinfo, bound(0, quality, 100), (boolean)true);
+	jpeg_start_compress(&cinfo, (boolean)true);
 
 	while (cinfo.next_scanline < height) {
 	    *row_pointer = &pixels[(int)cinfo.next_scanline * width * 3];

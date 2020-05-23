@@ -668,14 +668,14 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 	scale = max(0, scale);
 
 	i = 0;
-	line1[i++] = b.attack  ? 'x' + 128 : 'x';
-	line1[i++] = b.forward ? '^' + 128 : '^';
-	line1[i++] = b.jump    ? 'J' + 128 : 'J';
+	line1[i++] = b.attack  ? (char)('x' + 128) : 'x';
+	line1[i++] = b.forward ? (char)('^' + 128) : '^';
+	line1[i++] = b.jump    ? (char)('J' + 128) : 'J';
 	line1[i++] = '\0';
 	i = 0;
-	line2[i++] = b.left    ? '<' + 128 : '<';
-	line2[i++] = b.back    ? '_' + 128 : '_';
-	line2[i++] = b.right   ? '>' + 128 : '>';
+	line2[i++] = b.left    ? (char)('<' + 128) : '<';
+	line2[i++] = b.back    ? (char)('_' + 128) : '_';
+	line2[i++] = b.right   ? (char)('>' + 128) : '>';
 	line2[i++] = '\0';
 
 	width = LETTERWIDTH * strlen(line1) * scale;

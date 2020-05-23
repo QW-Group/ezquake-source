@@ -1922,7 +1922,7 @@ void FL_Draw(filelist_t *fl, int x, int y, int w, int h)
 		// Draw a cursor character at the start of the line.
 		if (filenum == fl->current_entry)
 		{
-			line[0] = 141;
+			line[0] = (char)141;
 			UI_DrawGrayBox(x, y + rowh * (i + 2) + inter_dn, w, rowh);
 		}
 
