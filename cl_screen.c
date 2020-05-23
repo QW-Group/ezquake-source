@@ -637,9 +637,12 @@ static void SCR_DrawCursor(void)
 
 static void SCR_UpdateCursor(void)
 {
+	int max_x = VID_RenderWidth2D();
+	int max_y = VID_RenderHeight2D();
+
 	// vid_sdl2 updates absolute cursor position when not locked
-	scr_pointer_state.x = max(0, min(scr_pointer_state.x_old + (VID_ConsoleX(cursor_x) - scr_pointer_state.x_old), glwidth));
-	scr_pointer_state.y = max(0, min(scr_pointer_state.y_old + (VID_ConsoleY(cursor_y) - scr_pointer_state.y_old), glheight));
+	scr_pointer_state.x = bound(0, (cursor_x * vid.conwidth) / max_x, max_x - 1);
+	scr_pointer_state.y = bound(0, (cursor_y * vid.conheight) / max_y, max_y - 1);
 
 	if (IN_MouseTrackingRequired() && (scr_pointer_state.x != scr_pointer_state.x_old || scr_pointer_state.y != scr_pointer_state.y_old)) {
 		Mouse_MoveEvent();

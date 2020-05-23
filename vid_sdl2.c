@@ -731,8 +731,8 @@ static void HandleEvents(void)
 
 				mx = event.motion.x - old_x;
 				my = event.motion.y - old_y;
-				cursor_x = min(max(0, cursor_x + (event.motion.x - glConfig.vidWidth / 2) * factor), glConfig.vidWidth);
-				cursor_y = min(max(0, cursor_y + (event.motion.y - glConfig.vidHeight / 2) * factor), glConfig.vidHeight);
+				cursor_x = min(max(0, cursor_x + (event.motion.x - glConfig.vidWidth / 2) * factor), VID_RenderWidth2D());
+				cursor_y = min(max(0, cursor_y + (event.motion.y - glConfig.vidHeight / 2) * factor), VID_RenderHeight2D());
 				SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
 				old_x = glConfig.vidWidth / 2;
 				old_y = glConfig.vidHeight / 2;
@@ -743,8 +743,8 @@ static void HandleEvents(void)
 				cursor_x += event.motion.xrel * factor;
 				cursor_y += event.motion.yrel * factor;
 
-				cursor_x = bound(0, cursor_x, glConfig.vidWidth);
-				cursor_y = bound(0, cursor_y, glConfig.vidHeight);
+				cursor_x = bound(0, cursor_x, VID_RenderWidth2D());
+				cursor_y = bound(0, cursor_y, VID_RenderHeight2D());
 			}
 			break;
 		case SDL_MOUSEBUTTONDOWN:
