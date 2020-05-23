@@ -280,6 +280,7 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	renderer.TextureLabelSet(fb->texture[fbtex_standard], label);
 	renderer.TextureSetFiltering(fb->texture[fbtex_standard], texture_minification_linear, texture_minification_linear);
 	renderer.TextureWrapModeClamp(fb->texture[fbtex_standard]);
+	R_TextureSetFlag(fb->texture[fbtex_standard], R_TextureGetFlag(fb->texture[fbtex_standard]) | TEX_NO_TEXTUREMODE);
 
 	/*if (id == framebuffer_std) {
 		strlcpy(label, framebuffer_names[id], sizeof(label));

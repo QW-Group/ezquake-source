@@ -218,11 +218,27 @@ const char* R_TextureIdentifier(texture_ref ref)
 {
 	assert(ref.index < sizeof(gltextures) / sizeof(gltextures[0]));
 
-	if (ref.index == 0) {
+	if (ref.index <= 0 || ref.index >= sizeof(gltextures) / sizeof(gltextures[0])) {
 		return "null-texture";
 	}
 
 	return gltextures[ref.index].identifier[0] ? gltextures[ref.index].identifier : "unnamed-texture";
+}
+
+void R_TextureSetFlag(texture_ref ref, int mode)
+{
+	if (ref.index <= 0 || ref.index >= sizeof(gltextures) / sizeof(gltextures[0]))
+		return;
+
+	gltextures[ref.index].texmode = mode;
+}
+
+int R_TextureGetFlag(texture_ref ref)
+{
+	if (ref.index <= 0 || ref.index >= sizeof(gltextures) / sizeof(gltextures[0]))
+		return 0;
+
+	return gltextures[ref.index].texmode;
 }
 
 void R_TextureSetDimensions(texture_ref ref, int width, int height)

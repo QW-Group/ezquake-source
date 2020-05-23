@@ -138,6 +138,8 @@ void R_AllocateTextureReferences(r_texture_type_id type_id, int width, int heigh
 void R_TextureRescaleOverlay(byte** overlay_pixels, int* overlay_width, int* overlay_height, int underlying_width, int underlying_height);
 int R_TextureCount(void);
 void R_TextureFindIdentifierByReference(unsigned int ref, char* label, int labelsize);
+int R_TextureGetFlag(texture_ref ref);
+void R_TextureSetFlag(texture_ref ref, int mode);
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 void R_SetTextureArraySize(texture_ref tex, int width, int height, int depth, int bpp);
