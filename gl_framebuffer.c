@@ -712,3 +712,43 @@ const char* GL_FramebufferZBufferString(framebuffer_id ref)
 		return "unknown z-buffer";
 	}
 }
+
+static qbool GL_ScreenshotFramebuffer(void)
+{
+	extern cvar_t vid_framebuffer_sshotmode;
+
+	return vid_framebuffer_sshotmode.integer && vid_framebuffer.integer == USE_FRAMEBUFFER_SCREEN && GL_FramebufferEnabled3D();
+}
+
+void GL_Screenshot(byte* buffer, size_t size)
+{
+	size_t width = renderer.ScreenshotWidth();
+	size_t height = renderer.ScreenshotHeight();
+
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	if (qglBindFramebuffer) {
+		if (GL_ScreenshotFramebuffer()) {
+			qglBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer_data[framebuffer_std].glref);
+		}
+		else {
+			qglBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+		}
+	}
+	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+}
+
+size_t GL_ScreenshotWidth(void)
+{
+	if (GL_ScreenshotFramebuffer()) {
+		return framebuffer_data[framebuffer_std].width;
+	}
+	return glConfig.vidWidth;
+}
+
+size_t GL_ScreenshotHeight(void)
+{
+	if (GL_ScreenshotFramebuffer()) {
+		return framebuffer_data[framebuffer_std].height;
+	}
+	return glConfig.vidHeight;
+}

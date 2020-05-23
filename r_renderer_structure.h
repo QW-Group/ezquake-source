@@ -73,6 +73,8 @@ RENDERER_METHOD(void, TimeRefresh, void)
 
 // Misc
 RENDERER_METHOD(void, Screenshot, byte* buffer, size_t size)
+RENDERER_METHOD(size_t, ScreenshotWidth, void)
+RENDERER_METHOD(size_t, ScreenshotHeight, void)
 
 // Textures
 RENDERER_METHOD(void, TextureInitialiseState, void)

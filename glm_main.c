@@ -37,6 +37,8 @@ static void GLM_Begin2DRendering(void)
 #define GLM_ClearRenderingSurface          GL_Clear
 #define GLM_EnsureFinished                 GL_EnsureFinished
 #define GLM_Screenshot                     GL_Screenshot
+#define GLM_ScreenshotWidth                GL_ScreenshotWidth
+#define GLM_ScreenshotHeight               GL_ScreenshotHeight
 #define GLM_InitialiseVAOState             GL_InitialiseVAOState
 #define GLM_DescriptiveString              GL_DescriptiveString
 #define GLM_Draw3DSpritesInline            R_Stubs_NoOperation

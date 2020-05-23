@@ -90,6 +90,8 @@ static void GLC_Begin2DRendering(void)
 #define GLC_EnsureFinished                 GL_EnsureFinished
 #define GLC_RenderView                     GLC_NoOperation
 #define GLC_Screenshot                     GL_Screenshot
+#define GLC_ScreenshotWidth                GL_ScreenshotWidth
+#define GLC_ScreenshotHeight               GL_ScreenshotHeight
 #define GLC_InitialiseVAOState             GL_InitialiseVAOState
 #define GLC_DescriptiveString              GL_DescriptiveString
 #define GLC_Draw3DSprites                  GLC_NoOperation
