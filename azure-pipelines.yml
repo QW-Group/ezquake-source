@@ -29,7 +29,7 @@ steps:
     make clean
     EZ_CONFIG_FILE=.config_windows make
     EZ_CONFIG_FILE=.config_windows make strip
-    zip ezquake-latest-win32.zip ezquake.exe LICENSE
+    zip ezquake-latest-win32.zip ezquake.exe LICENSE release-notes.md
   displayName: 'make (linux/win32)'
   condition: eq( variables['Agent.OS'], 'Linux' )
 - script: |
@@ -43,6 +43,10 @@ steps:
 - task: CopyFiles@2
   inputs:
     contents: ezquake-latest-*.zip
+    targetFolder: $(Build.ArtifactStagingDirectory)/distributableBinaries/
+- task: CopyFiles@2
+  inputs:
+    contents: release-notes.md
     targetFolder: $(Build.ArtifactStagingDirectory)/distributableBinaries/
 - task: PublishBuildArtifacts@1
   inputs:
@@ -58,5 +62,5 @@ steps:
     assets: $(Build.ArtifactStagingDirectory)/distributableBinaries/*
     isPreRelease: true
     assetUploadMode: replace
-    addChangeLog: false,
-    
+    addChangeLog: false
+    releaseNotesFile: 'release-notes.md'
