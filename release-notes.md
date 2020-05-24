@@ -8,19 +8,24 @@
 - When using non-desktop resolution and running fullscreen, image was cropped (3.5 bug, reported by bgnr)
 - HUD renders circles again (affects speed2, radar, itemsclock with certain settings) (3.5 bug, reported by numerous people)
 - Fixed visual artifact around classic particles in classic OpenGL (3.5 bug, reported by hemostick)
-- Space prefix in console didn't send remaining text as chat (reported by ciscon, BLooD_DoG, VVD)
-- OpenGL viewport state invalidated if window is resized (reported by blindcant)
+- Space prefix in console didn't send remaining text as chat (3.2 bug, reported by ciscon, BLooD_DoG & VVD)
+- OpenGL viewport state invalidated if window is resized (3.5 bug, reported by blindcant)
 - NULL pointer dereference if OpenGL implementation didn't support buffers (3.5 bug)
 - Corrupt lightmap rendering when lots of options enabled for world-drawing GLSL (3.5 bug)
-- Gamma adjustment on screenshots led to them being colored incorrectly (old bug revisited)
+- Gamma adjustment on screenshots led to them being colored incorrectly (3.1/3.5 bug re-introduced during merge)
 - Stop levelshot (console background) from potentially being deleted too early (3.5 bug)
 - Don't draw hud/console, then full console background then server browser (old)
 - Skip rendering glyphs for spaces when the line has been turned red (old, affected server browser)
+- `/gl_texturemode` doesn't affect the texture used for framebuffers (3.5 bug, reported by hemostx)
+- When using scaled framebuffer, mouse cursor co-ordinates are correct (3.5 bug, reported by hemostx)
+- When using scaled framebuffer, screenshots use correct dimensions (3.5 bug, reported by homestx)
 
 ### Other changes
 
 - MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
-- `cfg_backup` will now not save the config if backup cannot be taken
+- `/cfg_backup` will now not save the config if backup cannot be taken
+- `/vid_framebuffer_smooth` controls linear or nearest filtering (thanks to Calinou)
+- `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
 
 ### Build/meta
 
