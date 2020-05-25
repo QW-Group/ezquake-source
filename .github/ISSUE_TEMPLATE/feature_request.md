@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-Please ensure that your request is predominantly client-based, and not better suited to being logged with the server or mod aspects of QuakeWorld (e.g. [mvdsv](https://github.com/deurk/mvdsv/) or [ktx](https://github.com/deurk/ktx/))
+Please ensure that your request is predominantly client-based, and not better suited to being logged with the server or mod aspects of QuakeWorld (e.g. mvdsv or ktx)
 
 **Is your feature request related to a problem? Please describe.**
 A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]

@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-Please [search](https://github.com/ezQuake/ezquake-source/issues?q=is%3Aissue) existing issues for potential duplicates before filing yours:
+Please search for existing issues and check for potential duplicates before filing yours.
 
 **ezQuake version:**
 (Specify the Git commit hash if using a non-stable build - this is available through the `/version` command)
