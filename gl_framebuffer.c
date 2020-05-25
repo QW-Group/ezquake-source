@@ -384,8 +384,9 @@ qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
 		}
 
 		GL_TexStorage2D(fb->texture[fbtex_worldnormals], 1, GL_RGBA16F, fb->width, fb->height, false);
-		renderer.TextureSetFiltering(fb->texture[fbtex_worldnormals], texture_minification_nearest, texture_minification_nearest);
+		renderer.TextureSetFiltering(fb->texture[fbtex_worldnormals], texture_minification_nearest, texture_magnification_nearest);
 		renderer.TextureWrapModeClamp(fb->texture[fbtex_worldnormals]);
+		R_TextureSetFlag(fb->texture[fbtex_worldnormals], R_TextureGetFlag(fb->texture[fbtex_worldnormals]) | TEX_NO_TEXTUREMODE);
 	}
 
 	GL_FramebufferTexture(fb->glref, GL_COLOR_ATTACHMENT1, GL_TextureNameFromReference(fb->texture[fbtex_worldnormals]), 0);
