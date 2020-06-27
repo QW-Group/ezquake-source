@@ -41,7 +41,7 @@ void Check_Gamma(unsigned char *pal)
 			vid_gamma = bound(0.3, Q_atof(COM_Argv(i + 1)), 1);
 		}
 		else {
-			vid_gamma = 1;
+			vid_gamma = atof(v_gamma.string);
 		}
 
 		Cvar_SetDefaultAndValue(&v_gamma, vid_gamma, old || string == '0' ? old : vid_gamma);
