@@ -1788,7 +1788,9 @@ static void CL_InitLocal (void)
 	Cvar_ForceSet (&cl_cmdline, com_args_original);
 	Cvar_ResetCurrentGroup();
 
-	snprintf(st, sizeof(st), "ezQuake %i", REVISION);
+	char *hwid = Sys_HardwareID();
+
+	snprintf(st, sizeof(st), "ezQuake %i %s", REVISION, hwid);
 
 	if (COM_CheckParm (cmdline_param_client_norjscripts) || COM_CheckParm (cmdline_param_client_noscripts))
 		Cvar_SetValue (&allow_scripts, 0);

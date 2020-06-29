@@ -1637,3 +1637,39 @@ const char* Sys_HomeDirectory(void)
 
 	return path;
 }
+
+char* Sys_HardwareID(void)
+{
+	char buffer[37] = {0};
+	buffer[0]='0';
+	char *hwid = malloc(sizeof(char)*255);
+
+	HKEY keyhandle;
+
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Cryptography", 0, KEY_READ + KEY_WOW64_64KEY, &keyhandle) == ERROR_SUCCESS)
+	{
+		char keybuf[37];
+		memset(keybuf, 0, sizeof(keybuf));
+		DWORD cbData = 37;
+
+		if(RegGetValue(keyhandle, "", "MachineGUID", RRF_RT_ANY, NULL, keybuf, &cbData) == ERROR_SUCCESS) {
+			int i=0;
+			char *c=keybuf;
+			while(*c++){
+				if(*c == '-') {
+					continue;
+				}
+				buffer[i]=*c;
+				i++;
+			}
+		}
+	}
+
+	memcpy(hwid, buffer, sizeof(buffer));
+
+	if (keyhandle) {
+		RegCloseKey(keyhandle);
+	}
+
+	return hwid;
+}

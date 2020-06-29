@@ -746,3 +746,22 @@ const char* Sys_HomeDirectory(void)
 	}
 	return "";
 }
+
+char* Sys_HardwareID(void)
+{
+        FILE *f;
+        char buffer[255] = {0};
+	buffer[0] = '0';
+	char *hwid = malloc(sizeof(char)*255);
+
+        if (f = fopen("/etc/machine-id", "r")) {
+                buffer[fread (buffer, 1, sizeof(buffer) - 1, f)] = '\0';
+                fclose (f);
+        } else if (f = fopen("/etc/hostid", "r")) {
+                buffer[fread (buffer, 1, sizeof(buffer) - 1, f)] = '\0';
+                fclose (f);
+        }
+	memcpy(hwid, buffer, sizeof(buffer));
+
+	return hwid;
+}
