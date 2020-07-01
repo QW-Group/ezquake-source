@@ -34,6 +34,7 @@ cvar_t gl_program_world        = { "gl_program_world",         "1" };
 cvar_t gl_program_sprites      = { "gl_program_sprites",       "1" };
 cvar_t gl_program_hud          = { "gl_program_hud",           "1" };
 
+static qbool glc_program_cvars_initialized = false;
 static cvar_t* gl_program_cvars[] = {
 	&gl_program_sky,
 	&gl_program_turbsurfaces,
@@ -132,7 +133,7 @@ void GLC_Initialise(void)
 	extern cvar_t vid_gl_core_profile;
 #include "r_renderer_structure.h"
 
-	if (!host_initialized) {
+	if (!glc_program_cvars_initialized) {
 		Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
 		for (i = 0; i < sizeof(gl_program_cvars) / sizeof(gl_program_cvars[0]); ++i) {
 			if (!(gl_program_cvars[i]->flags & CVAR_LATCH)) {

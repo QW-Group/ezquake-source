@@ -470,6 +470,12 @@ static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations
 			allocations->fbTextureUnit = (gl_textureunits >= 3 ? 2 : -1);
 			allocations->null_fb_texture = solidblack_texture; // GL_ADD adds colors, multiplies alphas
 		}
+		else if (gl_fb_bmodels.integer) {
+			allocations->rendering_state = r_state_world_material_lightmap_luma;
+			allocations->lmTextureUnit = 1;
+			allocations->fbTextureUnit = (gl_textureunits >= 3 ? 2 : -1);
+			allocations->null_fb_texture = transparent_texture; // GL_ADD adds colors, multiplies alphas
+		}
 		else {
 			// blend(material, lightmap) 
 			allocations->rendering_state = r_state_world_material_lightmap;
@@ -715,6 +721,9 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 #define GLC_WORLD_DETAIL         8
 #define GLC_WORLD_CAUSTICS      16
 #define GLC_WORLD_LIGHTMAPS     32
+#define GLC_WORLD_FB_NOLUMA     64
+
+#define GLC_USE_FULLBRIGHT_TEX  (GLC_WORLD_LUMATEXTURES | GLC_WORLD_FULLBRIGHTS | GLC_WORLD_FB_NOLUMA)
 
 static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocations, model_t* model)
 {
@@ -730,6 +739,7 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		(allocations->lmTextureUnit >= 0 ? GLC_WORLD_LIGHTMAPS : 0) |
 		(allocations->couldUseLumaTextures && gl_fb_bmodels.integer ? GLC_WORLD_LUMATEXTURES : 0) |
 		(allocations->couldUseLumaTextures && !gl_fb_bmodels.integer ? GLC_WORLD_FULLBRIGHTS : 0) |
+		(!allocations->couldUseLumaTextures && gl_fb_bmodels.integer ? GLC_WORLD_FB_NOLUMA : 0) |
 		(allocations->detailTextureUnit >= 0 ? GLC_WORLD_DETAIL : 0) |
 		(allocations->causticTextureUnit >= 0 ? GLC_WORLD_CAUSTICS : 0);
 
@@ -737,6 +747,7 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		int sampler = 0;
 		char definitions[512] = { 0 };
 
+		Con_Printf("Recompiling, options %d\n", options);
 		allocations->matTextureUnit = 0;
 
 		if (options & GLC_WORLD_TEXTURELESS) {
@@ -748,7 +759,10 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		if (options & GLC_WORLD_FULLBRIGHTS) {
 			strlcat(definitions, "#define DRAW_FULLBRIGHT_TEXTURES\n", sizeof(definitions));
 		}
-		if (options & (GLC_WORLD_LUMATEXTURES | GLC_WORLD_FULLBRIGHTS)) {
+		if (options & GLC_WORLD_FB_NOLUMA) {
+			strlcat(definitions, "#define DRAW_FULLBRIGHT_TEXTURES_DECAL\n", sizeof(definitions));
+		}
+		if (options & GLC_USE_FULLBRIGHT_TEX) {
 			strlcat(definitions, "#define DRAW_EXTRA_TEXTURES\n", sizeof(definitions));
 		}
 		if (options & GLC_WORLD_CAUSTICS) {
@@ -770,7 +784,7 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		allocations->detailTextureUnit = (options & GLC_WORLD_DETAIL) && allocations->detailTextureUnit >= 0 ? sampler++ : -1;
 		allocations->lmTextureUnit = (options & GLC_WORLD_LIGHTMAPS) && allocations->lmTextureUnit >= 0 ? sampler++ : -1;
 		allocations->matTextureUnit = allocations->matTextureUnit >= 0 ? sampler++ : -1;
-		allocations->fbTextureUnit = (options & (GLC_WORLD_LUMATEXTURES | GLC_WORLD_FULLBRIGHTS)) && allocations->fbTextureUnit >= 0 ? sampler++ : -1;
+		allocations->fbTextureUnit = (options & GLC_USE_FULLBRIGHT_TEX) && allocations->fbTextureUnit >= 0 ? sampler++ : -1;
 
 		R_ProgramUniform1i(r_program_uniform_world_textured_glc_causticSampler, allocations->causticTextureUnit);
 		R_ProgramUniform1i(r_program_uniform_world_textured_glc_detailSampler, allocations->detailTextureUnit);
