@@ -134,7 +134,7 @@ qbool GLM_CompileDrawWorldProgram(void)
 		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(luma_textures ? DRAW_LUMA_TEXTURES : 0) |
-		(luma_textures && gl_fb_bmodels.integer ? DRAW_LUMA_TEXTURES_FB : 0) |
+		(gl_fb_bmodels.integer ? DRAW_LUMA_TEXTURES_FB : 0) |
 		(skybox ? DRAW_SKYBOX : (skydome ? DRAW_SKYDOME : 0)) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
@@ -297,7 +297,8 @@ static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
 
 	drawcall->mappings[index].samplerIndex = sampler;
 	drawcall->mappings[index].arrayIndex = texture->gl_texture_index;
-	drawcall->mappings[index].flags = R_TextureReferenceIsValid(texture->fb_texturenum) ? EZQ_SURFACE_HAS_LUMA : 0;
+	drawcall->mappings[index].flags = R_TextureReferenceIsValid(texture->fb_texturenum) && texture->isLumaTexture ? EZQ_SURFACE_HAS_LUMA : 0;
+	drawcall->mappings[index].flags |= R_TextureReferenceIsValid(texture->fb_texturenum) && !texture->isLumaTexture ? EZQ_SURFACE_HAS_FB : 0;
 	return true;
 }
 

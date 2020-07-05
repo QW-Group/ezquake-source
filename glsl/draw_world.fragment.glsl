@@ -149,7 +149,6 @@ void main()
 		lumaColor = mix(lumaColor, vec4(0, 0, 0, 0), mix_floor);
 	#endif
 #elif defined(DRAW_FLATWALLS)
-		//texColor = vec4(mix(r_wallcolor.rgb, texColor.rgb, min(1, (Flags & EZQ_SURFACE_IS_FLOOR))), texColor.a);
 		texColor = vec4(mix(texColor.rgb, r_wallcolor.rgb, mix_wall), texColor.a);
 	#ifdef DRAW_LUMA_TEXTURES
 		lumaColor = mix(lumaColor, vec4(0, 0, 0, 0), mix_wall);
@@ -162,6 +161,10 @@ void main()
 		frag_colour = vec4(lmColor.rgb, 1) * texColor;
 #if defined(DRAW_LUMA_TEXTURES) && defined(DRAW_LUMA_TEXTURES_FB)
 		frag_colour = vec4(mix(frag_colour.rgb, frag_colour.rgb + lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_LUMA)), frag_colour.a);
+		frag_colour = vec4(mix(frag_colour.rgb, lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_FB) * lumaColor.a), frag_colour.a);
+#elif !defined(DRAW_LUMA_TEXTURES) && defined(DRAW_LUMA_TEXTURES_FB)
+		// GL_DECAL
+		frag_colour = vec4(mix(frag_colour.rgb, lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_FB) * lumaColor.a), frag_colour.a);
 #endif
 
 #ifdef DRAW_CAUSTIC_TEXTURES

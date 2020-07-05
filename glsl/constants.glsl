@@ -32,6 +32,7 @@
 #define EZQ_SURFACE_HAS_LUMA   32   // surface has luma texture in next array index
 #define EZQ_SURFACE_WORLD      64   // world-surface (should have detail textures applied)
 #define EZQ_SURFACE_ALPHATEST  128  // alpha-testing should take place when rendering
+#define EZQ_SURFACE_HAS_FB     256  // surface has fb texture in next array index
 
 #define MAX_SAMPLER_MAPPINGS 256
 
