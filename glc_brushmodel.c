@@ -436,17 +436,17 @@ typedef struct texture_unit_allocation_s {
 	qbool second_pass_detail;           // draw detail/noise texture in second pass
 	qbool second_pass_luma;             // draw fullbright/luma textures in second pass
 
-	r_state_id rendering_state;
+	r_state_id rendering_state;         // basic rendering state
 } texture_unit_allocation_t;
 
-static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations, model_t* model, qbool program_compilation)
+static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations, model_t* model, qbool program_compilation, qbool allow_lumas)
 {
 	extern cvar_t gl_lumatextures;
 	qbool lumas;
 
 	allocations->texture_unit_count = 1;
 	allocations->null_fb_texture = null_texture_reference;
-	allocations->couldUseLumaTextures = gl_lumatextures.integer && r_refdef2.allow_lumas;
+	allocations->couldUseLumaTextures = allow_lumas && gl_lumatextures.integer && r_refdef2.allow_lumas;
 	allocations->useLumaTextures = allocations->couldUseLumaTextures && model->texturechains_have_lumas;
 	allocations->matTextureUnit = allocations->fbTextureUnit = allocations->lmTextureUnit = allocations->detailTextureUnit = allocations->causticTextureUnit = -1;
 
@@ -471,10 +471,11 @@ static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations
 			allocations->null_fb_texture = solidblack_texture; // GL_ADD adds colors, multiplies alphas
 		}
 		else if (gl_fb_bmodels.integer) {
-			allocations->rendering_state = r_state_world_material_lightmap_luma;
+			// blend(blend(material, lightmap), fb)
+			allocations->rendering_state = r_state_world_material_lightmap_fb;
 			allocations->lmTextureUnit = 1;
 			allocations->fbTextureUnit = (gl_textureunits >= 3 ? 2 : -1);
-			allocations->null_fb_texture = transparent_texture; // GL_ADD adds colors, multiplies alphas
+			allocations->null_fb_texture = transparent_texture; // GL_DECAL mixes color by alpha
 		}
 		else {
 			// blend(material, lightmap) 
@@ -502,7 +503,7 @@ static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations
 	allocations->second_pass_luma = lumas && allocations->fbTextureUnit < 0;
 }
 
-static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset)
+static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset, qbool lumas_only)
 {
 	texture_unit_allocation_t allocations;
 	extern cvar_t gl_lumatextures;
@@ -529,10 +530,11 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 
 	R_TraceEnterFunctionRegion;
 
+	GLC_WorldAllocateTextureUnits(&allocations, model, false, lumas_only);
+	if (lumas_only && !allocations.useLumaTextures)
+		return;
+
 	GLC_LightmapArrayToggle(false);
-
-	GLC_WorldAllocateTextureUnits(&allocations, model, false);
-
 	R_ApplyRenderingState(allocations.rendering_state);
 	if (ent && ent->alpha) {
 		R_CustomColor(ent->alpha, ent->alpha, ent->alpha, ent->alpha);
@@ -583,7 +585,18 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 		}
 
 		t = R_TextureAnimation(ent, model->textures[i]);
-		fb_texturenum = (allocations.useLumaTextures && t->isLumaTexture ? t->fb_texturenum : allocations.null_fb_texture);
+		if (lumas_only && !t->isLumaTexture)
+			continue;
+
+		if (allocations.useLumaTextures && t->isLumaTexture) {
+			fb_texturenum = t->fb_texturenum;
+		}
+		else if (!t->isLumaTexture && R_TextureReferenceIsValid(t->fb_texturenum)) {
+			fb_texturenum = t->fb_texturenum;
+		}
+		else {
+			fb_texturenum = allocations.null_fb_texture;
+		}
 
 		//bind the world texture
 		texture_change = !R_TextureReferenceEqual(t->gl_texturenum, current_material);
@@ -721,25 +734,26 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 #define GLC_WORLD_DETAIL         8
 #define GLC_WORLD_CAUSTICS      16
 #define GLC_WORLD_LIGHTMAPS     32
-#define GLC_WORLD_FB_NOLUMA     64
 
-#define GLC_USE_FULLBRIGHT_TEX  (GLC_WORLD_LUMATEXTURES | GLC_WORLD_FULLBRIGHTS | GLC_WORLD_FB_NOLUMA)
+#define GLC_USE_FULLBRIGHT_TEX  (GLC_WORLD_LUMATEXTURES | GLC_WORLD_FULLBRIGHTS)
 
 static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocations, model_t* model)
 {
 	extern cvar_t gl_lumatextures, gl_textureless;
 	int options;
+	qbool drawLumas = false;
 	
 	memset(allocations, 0, sizeof(*allocations));
-	GLC_WorldAllocateTextureUnits(allocations, model, true);
+	GLC_WorldAllocateTextureUnits(allocations, model, true, true);
 	allocations->rendering_state = r_state_world_material_lightmap_luma;
+
+	drawLumas = allocations->couldUseLumaTextures;
 
 	options =
 		(gl_textureless.integer ? GLC_WORLD_TEXTURELESS : 0) |
 		(allocations->lmTextureUnit >= 0 ? GLC_WORLD_LIGHTMAPS : 0) |
-		(allocations->couldUseLumaTextures && gl_fb_bmodels.integer ? GLC_WORLD_LUMATEXTURES : 0) |
-		(allocations->couldUseLumaTextures && !gl_fb_bmodels.integer ? GLC_WORLD_FULLBRIGHTS : 0) |
-		(!allocations->couldUseLumaTextures && gl_fb_bmodels.integer ? GLC_WORLD_FB_NOLUMA : 0) |
+		(drawLumas ? GLC_WORLD_LUMATEXTURES : 0) |
+		(allocations->fbTextureUnit >= 0 && gl_fb_bmodels.integer ? GLC_WORLD_FULLBRIGHTS : 0) |
 		(allocations->detailTextureUnit >= 0 ? GLC_WORLD_DETAIL : 0) |
 		(allocations->causticTextureUnit >= 0 ? GLC_WORLD_CAUSTICS : 0);
 
@@ -747,7 +761,6 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		int sampler = 0;
 		char definitions[512] = { 0 };
 
-		Con_Printf("Recompiling, options %d\n", options);
 		allocations->matTextureUnit = 0;
 
 		if (options & GLC_WORLD_TEXTURELESS) {
@@ -758,9 +771,6 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		}
 		if (options & GLC_WORLD_FULLBRIGHTS) {
 			strlcat(definitions, "#define DRAW_FULLBRIGHT_TEXTURES\n", sizeof(definitions));
-		}
-		if (options & GLC_WORLD_FB_NOLUMA) {
-			strlcat(definitions, "#define DRAW_FULLBRIGHT_TEXTURES_DECAL\n", sizeof(definitions));
 		}
 		if (options & GLC_USE_FULLBRIGHT_TEX) {
 			strlcat(definitions, "#define DRAW_EXTRA_TEXTURES\n", sizeof(definitions));
@@ -837,11 +847,12 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 	qbool requires_fullbright_pass = false;
 	qbool requires_luma_pass = false;
 
-	qbool texture_change;
+	qbool texture_change, uniform_change;
 	texture_ref current_material = null_texture_reference;
 	texture_ref current_material_fb = null_texture_reference;
 	texture_ref desired_textures[8] = { { 0 } };
 	int current_lightmap = -1;
+	float current_lumaScale = -1, current_fbScale = -1;
 
 	R_TraceEnterFunctionRegion;
 
@@ -866,20 +877,35 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 	for (i = 0; i < model->numtextures; i++) {
 		texture_t* t;
 		texture_ref fb_texturenum = null_texture_reference;
+		float lumaScale = 0.0f, fbScale = 0.0f;
 
 		if (!model->textures[i] || !model->textures[i]->texturechain) {
 			continue;
 		}
 
 		t = R_TextureAnimation(ent, model->textures[i]);
-		fb_texturenum = (allocations->useLumaTextures && t->isLumaTexture ? t->fb_texturenum : allocations->null_fb_texture);
+		if (allocations->useLumaTextures && t->isLumaTexture && gl_fb_bmodels.integer) {
+			fb_texturenum = t->fb_texturenum;
+			lumaScale = 1.0f;
+			//fbScale = 1.0f;
+		}
+		else if (allocations->fbTextureUnit >= 0 && R_TextureReferenceIsValid(t->fb_texturenum)) {
+			fb_texturenum = t->fb_texturenum;
+			lumaScale = (allocations->useLumaTextures && t->isLumaTexture && !gl_fb_bmodels.integer ? 1.0f : 0);
+			fbScale = (t->isLumaTexture ? 0.0f : 1.0f);
+		}
+		else {
+			fb_texturenum = allocations->null_fb_texture;
+		}
 
 		//bind the world texture
 		texture_change = !R_TextureReferenceEqual(t->gl_texturenum, current_material);
 		texture_change |= !R_TextureReferenceEqual(fb_texturenum, current_material_fb);
-
 		current_material = t->gl_texturenum;
 		current_material_fb = fb_texturenum;
+
+		uniform_change = (current_lumaScale != lumaScale);
+		uniform_change |= (current_fbScale != fbScale);
 
 		desired_textures[allocations->matTextureUnit] = current_material;
 		if (allocations->fbTextureUnit >= 0) {
@@ -911,6 +937,14 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 					}
 
 					texture_change = false;
+				}
+				if (uniform_change) {
+					if (index_count) {
+						GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
+						index_count = 0;
+					}
+					R_ProgramUniform1f(r_program_uniform_world_textured_glc_lumaScale, current_lumaScale = lumaScale);
+					R_ProgramUniform1f(r_program_uniform_world_textured_glc_fbScale, current_fbScale = fbScale);
 				}
 
 				index_count = GLC_DrawIndexedPoly(s->polys, modelIndexes, modelIndexMaximum, index_count);
@@ -994,7 +1028,10 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 		R_ProgramUse(r_program_none);
 	}
 	else {
-		GLC_DrawTextureChains_Immediate(ent, model, caustics, polygonOffset);
+		if (model->texturechains_have_lumas) {
+			GLC_DrawTextureChains_Immediate(ent, model, caustics, polygonOffset, true);
+		}
+		GLC_DrawTextureChains_Immediate(ent, model, caustics, polygonOffset, false);
 	}
 }
 
@@ -1285,7 +1322,7 @@ void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType)
 	alphachain = NULL;
 }
 
-int GLC_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position, float* source, int lightmap, int material, float scaleS, float scaleT, msurface_t* surf, qbool has_luma_texture)
+int GLC_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position, float* source, int lightmap, int material, float scaleS, float scaleT, msurface_t* surf, qbool has_fb_texture, qbool has_luma_texture)
 {
 	glc_vbo_world_vert_t* target = (glc_vbo_world_vert_t*)vbo_buffer_ + position;
 
@@ -1334,6 +1371,7 @@ int GLC_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 
 	target->flatstyle += (has_luma_texture ? 256 : 0);
 	target->flatstyle += (surf->flags & SURF_UNDERWATER) ? 512 : 0;
+	target->flatstyle += (has_fb_texture/* && !has_luma_texture*/ ? 1024 : 0);
 
 	return position + 1;
 }

@@ -22,6 +22,7 @@ varying vec2 LightmapCoord;
 #ifdef DRAW_EXTRA_TEXTURES
 uniform sampler2D lumaSampler;
 varying float lumaScale;
+varying float fbScale;
 #endif
 
 #ifdef DRAW_CAUSTICS
@@ -43,20 +44,39 @@ void main()
 	gl_FragColor = texture2D(texSampler, TextureCoord);
 #endif
 
-#ifdef DRAW_FULLBRIGHT_TEXTURES
-	gl_FragColor += lumaScale * texture2D(lumaSampler, TextureCoord);
+#ifdef DRAW_EXTRA_TEXTURES
+	vec4 lumaColor = texture2D(lumaSampler, TextureCoord);
+#endif
+
+#ifdef DRAW_LUMA_TEXTURES
+#ifndef DRAW_FULLBRIGHT_TEXTURES
+	// Luma textures enabled but fullbright bmodels disabled - so we mix in the luma texture pre-lightmap (qqshka 2008)
+	gl_FragColor = vec4(mix(gl_FragColor.rgb, gl_FragColor.rgb + lumaColor.rgb, lumaScale * lumaColor.a), gl_FragColor.a);
+#endif
 #endif
 
 #ifdef DRAW_LIGHTMAPS
 #ifdef EZ_USE_TEXTURE_ARRAYS
+	// Apply lightmap from texture array
 	gl_FragColor *= (vec4(1, 1, 1, 2) - texture2DArray(lightmapSampler, LightmapCoord));
 #else
+	// Apply lightmap from simple atlas
 	gl_FragColor *= (vec4(1, 1, 1, 2) - texture2D(lightmapSampler, LightmapCoord));
 #endif
 #endif
 
 #ifdef DRAW_LUMA_TEXTURES
-	gl_FragColor += texture2D(lumaSampler, TextureCoord);
+#ifdef DRAW_FULLBRIGHT_TEXTURES
+	// Lumas enabled, fullbrights enabled - mix in the luma post-lightmap
+	gl_FragColor = vec4(mix(gl_FragColor.rgb, gl_FragColor.rgb + lumaColor.rgb, lumaScale * lumaColor.a), gl_FragColor.a);
+	// Fullbrights - simple mix no add
+	gl_FragColor = vec4(mix(gl_FragColor.rgb, lumaColor.rgb, fbScale * lumaColor.a), gl_FragColor.a);
+#endif
+#else
+#ifdef DRAW_FULLBRIGHT_TEXTURES
+	// Fullbrights, lumas disabled
+	gl_FragColor = vec4(mix(gl_FragColor.rgb, lumaColor.rgb, fbScale * lumaColor.a), gl_FragColor.a);
+#endif
 #endif
 
 #ifdef DRAW_CAUSTICS

@@ -85,6 +85,8 @@ typedef enum {
 	r_program_uniform_world_textured_glc_causticSampler,
 	r_program_uniform_world_textured_glc_detailSampler,
 	r_program_uniform_world_textured_glc_time,
+	r_program_uniform_world_textured_glc_lumaScale,
+	r_program_uniform_world_textured_glc_fbScale,
 	r_program_uniform_sprites_glc_materialSampler,
 	r_program_uniform_sprites_glc_alphaThreshold,
 	r_program_uniform_hud_images_glc_primarySampler,

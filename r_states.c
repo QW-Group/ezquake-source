@@ -386,6 +386,10 @@ static void R_InitialiseBrushModelStates(void)
 	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_blend);
 	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_add);
 
+	// r_state_world_material_lightmap_fb
+	current = R_CopyRenderingState(r_state_world_material_lightmap_fb, r_state_world_material_lightmap_luma, "r_state_world_material_lightmap_fb");
+	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_decal);
+
 	// no fullbrights, 3 units: blend(material + luma, lightmap) 
 	current = R_InitRenderingState(r_state_world_material_fb_lightmap, true, "r_state_world_material_fb_lightmap", vao_brushmodel);
 	current->fog.enabled = true;

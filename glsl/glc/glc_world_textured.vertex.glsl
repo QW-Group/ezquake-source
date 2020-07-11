@@ -13,7 +13,10 @@ varying vec2 LightmapCoord;
 #endif
 #endif
 #ifdef DRAW_EXTRA_TEXTURES
+uniform float lumaMultiplier;
+uniform float fbMultiplier;
 varying float lumaScale;
+varying float fbScale;
 #endif
 #ifdef DRAW_DETAIL
 attribute vec2 detailCoordInput;
@@ -41,7 +44,8 @@ void main()
 #endif
 
 #ifdef DRAW_EXTRA_TEXTURES
-	lumaScale = mod(floor(style / 256), 2);
+	lumaScale = lumaMultiplier * mod(floor(style / 256), 2);
+	fbScale = fbMultiplier * mod(floor(style / 1024), 2);
 #endif
 #ifdef DRAW_CAUSTICS
 	causticsScale = mod(floor(style / 512), 2);

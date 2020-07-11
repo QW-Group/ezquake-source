@@ -4,7 +4,7 @@
 
 ### Bugs
 
-- Fix crash to desktop when finding best routes to server and number of proxies too high (old bug)
+- Fix crash to desktop when finding best routes to server and number of proxies too high (old bug, also fixed in 3.5-alpha24 and 3.2.1)
 - When using non-desktop resolution and running fullscreen, image was cropped (3.5 bug, reported by bgnr)
 - HUD renders circles again (affects speed2, radar, itemsclock with certain settings) (3.5 bug, reported by numerous people)
 - Fixed visual artifact around classic particles in classic OpenGL (3.5 bug, reported by hemostick)
@@ -19,6 +19,7 @@
 - `/gl_texturemode` doesn't affect the texture used for framebuffers (3.5 bug, reported by hemostx)
 - When using scaled framebuffer, mouse cursor co-ordinates are correct (3.5 bug, reported by hemostx)
 - When using scaled framebuffer, screenshots use correct dimensions (3.5 bug, reported by homestx)
+- Fix rendering of fullbright textures that aren't luma/external-32bit textures (3.5 bug, reported by ciscon & lurq)
 
 ### Other changes
 

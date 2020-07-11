@@ -232,6 +232,7 @@ typedef enum {
 	r_state_world_singletexture_glc,
 	r_state_world_material_lightmap,
 	r_state_world_material_lightmap_luma,
+	r_state_world_material_lightmap_fb,
 	r_state_world_material_fb_lightmap,
 	r_state_world_material_luma_lightmap,
 

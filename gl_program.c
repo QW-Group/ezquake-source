@@ -228,6 +228,10 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_world_textured_glc, "detailSampler", 1, false },
 	// r_program_uniform_world_textured_glc_time
 	{ r_program_world_textured_glc, "time", 1, false },
+	// r_program_uniform_world_textured_glc_lumaScale
+	{ r_program_world_textured_glc, "lumaMultiplier", 1, false },
+	// r_program_uniform_world_textured_glc_fbScale
+	{ r_program_world_textured_glc, "fbMultiplier", 1, false },
 	// r_program_uniform_sprites_glc_materialSampler,
 	{ r_program_sprites_glc, "materialSampler", 1, false },
 	// r_program_uniform_sprites_glc_alphaThreshold,

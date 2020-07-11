@@ -82,7 +82,7 @@ void GLM_CreateBrushModelVAO(void)
 }
 
 // 'source' is from GLC's float[VERTEXSIZE]
-int GLM_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position, float* source, int lightmap, int material, float scaleS, float scaleT, msurface_t* surf, qbool has_luma_texture)
+int GLM_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position, float* source, int lightmap, int material, float scaleS, float scaleT, msurface_t* surf, qbool has_fb_texture, qbool has_luma_texture)
 {
 	vbo_world_vert_t* target = (vbo_world_vert_t*)vbo_buffer_ + position;
 
