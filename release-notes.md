@@ -27,6 +27,8 @@
 - `/cfg_backup` will now not save the config if backup cannot be taken
 - `/vid_framebuffer_smooth` controls linear or nearest filtering (thanks to Calinou)
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
+- Clarified descriptions around `/enemyforceskins` reporting in `f_ruleset` and `f_skins` responses (reported by Ake_Vader)
+- Cannot change `/enemyforceskins` during match (old)
 
 ### Build/meta
 

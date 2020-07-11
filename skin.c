@@ -946,11 +946,16 @@ void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel)
 	}
 
 	if (var == &enemyforceskins && (!cl.spectator && cls.state != ca_disconnected)) {
-		if (Q_atoi(string)) {
-			Cbuf_AddText("say Forcing enemy skins\n");
+		if (!cl.standby && !cl.countdown) {
+			Con_Printf("%s cannot be changed during match\n", var->name);
+			return;
 		}
-		else {
-			Cbuf_AddText("say Not forcing enemy skins\n");
+
+		if (Q_atoi(string)) {
+			Cbuf_AddText("say Individual enemy skins: enabled\n");
+		}
+		else if (strcmp(var->string, string)) {
+			Cbuf_AddText("say Individual enemy skins: disabled\n");
 		}
 	}
 
