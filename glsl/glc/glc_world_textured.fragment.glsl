@@ -2,6 +2,49 @@
 
 #ezquake-definitions
 
+varying float mix_floor;
+varying float mix_wall;
+
+// Drawflat mode TINTED... Amend texture color based on floor/wall
+// FIXME: common with glsl, do some kind of #include support
+#ifdef DRAW_DRAWFLAT_TINTED
+uniform vec3 r_wallcolor;
+uniform vec3 r_floorcolor;
+
+vec4 applyColorTinting(vec4 frag_colour)
+{
+#if defined(DRAW_FLATFLOORS) && defined(DRAW_FLATWALLS)
+	vec3 inter = mix(frag_colour.rgb, frag_colour.rgb * r_floorcolor.rgb, mix_floor);
+	frag_colour = vec4(mix(inter, inter * r_wallcolor.rgb, mix_wall), frag_colour.a);
+#elif defined(DRAW_FLATWALLS)
+	frag_colour = vec4(mix(frag_colour.rgb, frag_colour.rgb * r_wallcolor.rgb, mix_wall), frag_colour.a);
+#elif defined(DRAW_FLATFLOORS)
+	frag_colour = vec4(mix(frag_colour.rgb, frag_colour.rgb * r_floorcolor.rgb, mix_floor), frag_colour.a);
+#endif
+	return frag_colour;
+}
+#elif defined(DRAW_DRAWFLAT_BRIGHT)
+uniform vec3 r_wallcolor;
+uniform vec3 r_floorcolor;
+
+vec4 applyColorTinting(vec4 frag_colour)
+{
+	// evaluate brightness as per lightmap scaling ("// kudos to Darel Rex Finley for his HSP color model")
+	float brightness = sqrt(frag_colour.r * frag_colour.r * 0.241 + frag_colour.g * frag_colour.g * 0.691 + frag_colour.b * frag_colour.b * 0.068);
+
+#if defined(DRAW_FLATWALLS)
+	frag_colour = vec4(mix(frag_colour.rgb, r_wallcolor.rgb * brightness, mix_wall), frag_colour.a);
+#endif
+#if defined(DRAW_FLATFLOORS)
+	frag_colour = vec4(mix(frag_colour.rgb, r_floorcolor.rgb * brightness, mix_floor), frag_colour.a);
+#endif
+
+	return frag_colour;
+}
+#else
+#define applyColorTinting(x) (x)
+#endif
+
 #ifdef EZ_USE_TEXTURE_ARRAYS
 #extension GL_EXT_texture_array : enable
 #endif
@@ -65,8 +108,13 @@ void main()
 #endif
 #endif
 
+	// Apply color tinting 
+	gl_FragColor = applyColorTinting(gl_FragColor);
+
 #ifdef DRAW_LUMA_TEXTURES
 #ifdef DRAW_FULLBRIGHT_TEXTURES
+	// Apply color tinting before merging
+	lumaColor = applyColorTinting(lumaColor);
 	// Lumas enabled, fullbrights enabled - mix in the luma post-lightmap
 	gl_FragColor = vec4(mix(gl_FragColor.rgb, gl_FragColor.rgb + lumaColor.rgb, lumaScale * lumaColor.a), gl_FragColor.a);
 	// Fullbrights - simple mix no add
@@ -74,7 +122,9 @@ void main()
 #endif
 #else
 #ifdef DRAW_FULLBRIGHT_TEXTURES
-	// Fullbrights, lumas disabled
+	// Apply color tinting before merging
+	lumaColor = applyColorTinting(lumaColor);
+	// Fullbrights, lumas disabled (GL_DECAL)
 	gl_FragColor = vec4(mix(gl_FragColor.rgb, lumaColor.rgb, fbScale * lumaColor.a), gl_FragColor.a);
 #endif
 #endif

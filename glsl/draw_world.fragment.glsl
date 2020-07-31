@@ -43,9 +43,46 @@ in vec3 Normal;
 in vec4 UnClipped;
 #endif
 
+in float mix_floor;
+in float mix_wall;
+
 layout(location=0) out vec4 frag_colour;
 #ifdef DRAW_GEOMETRY
 layout(location=1) out vec4 normal_texture;
+#endif
+
+// Drawflat mode TINTED... Amend texture color based on floor/wall
+// FIXME: common with glsl, do some kind of #include support
+#ifdef DRAW_DRAWFLAT_TINTED
+vec4 applyColorTinting(vec4 frag_colour)
+{
+#if defined(DRAW_FLATFLOORS) && defined(DRAW_FLATWALLS)
+	vec3 inter = mix(frag_colour.rgb, frag_colour.rgb * r_floorcolor.rgb, mix_floor);
+	frag_colour = vec4(mix(inter, inter * r_wallcolor.rgb, mix_wall), frag_colour.a);
+#elif defined(DRAW_FLATWALLS)
+	frag_colour = vec4(mix(frag_colour.rgb, frag_colour.rgb * r_wallcolor.rgb, mix_wall), frag_colour.a);
+#elif defined(DRAW_FLATFLOORS)
+	frag_colour = vec4(mix(frag_colour.rgb, frag_colour.rgb * r_floorcolor.rgb, mix_floor), frag_colour.a);
+#endif
+	return frag_colour;
+}
+#elif defined(DRAW_DRAWFLAT_BRIGHT)
+vec4 applyColorTinting(vec4 frag_colour)
+{
+	// evaluate brightness as per lightmap scaling ("// kudos to Darel Rex Finley for his HSP color model")
+	float brightness = sqrt(frag_colour.r * frag_colour.r * 0.241 + frag_colour.g * frag_colour.g * 0.691 + frag_colour.b * frag_colour.b * 0.068);
+
+#if defined(DRAW_FLATWALLS)
+	frag_colour = vec4(mix(frag_colour.rgb, r_wallcolor.rgb * brightness, mix_wall), frag_colour.a);
+#endif
+#if defined(DRAW_FLATFLOORS)
+	frag_colour = vec4(mix(frag_colour.rgb, r_floorcolor.rgb * brightness, mix_floor), frag_colour.a);
+#endif
+
+	return frag_colour;
+}
+#else
+#define applyColorTinting(x) (x)
 #endif
 
 void main()
@@ -133,22 +170,17 @@ void main()
 	}
 	else {
 		// Typical material
-#if defined(DRAW_FLATFLOORS) || defined(DRAW_FLATWALLS)
-		float mix_floor = min(1, (Flags & EZQ_SURFACE_WORLD) * (Flags & EZQ_SURFACE_IS_FLOOR));
-		float mix_wall = min(1, (Flags & EZQ_SURFACE_WORLD) * (1 - mix_floor));
-#endif
-
-#if defined(DRAW_FLATFLOORS) && defined(DRAW_FLATWALLS)
+#if defined(DRAW_DRAWFLAT_NORMAL) && defined(DRAW_FLATFLOORS) && defined(DRAW_FLATWALLS)
 		texColor = vec4(mix(mix(texColor.rgb, r_floorcolor.rgb, mix_floor), r_wallcolor.rgb, mix_wall), texColor.a);
 	#ifdef DRAW_LUMA_TEXTURES
 		lumaColor = vec4(0, 0, 0, 0);
 	#endif
-#elif defined(DRAW_FLATFLOORS)
+#elif defined(DRAW_DRAWFLAT_NORMAL) && defined(DRAW_FLATFLOORS)
 		texColor = vec4(mix(texColor.rgb, r_floorcolor.rgb, mix_floor), texColor.a);
 	#ifdef DRAW_LUMA_TEXTURES
 		lumaColor = mix(lumaColor, vec4(0, 0, 0, 0), mix_floor);
 	#endif
-#elif defined(DRAW_FLATWALLS)
+#elif defined(DRAW_DRAWFLAT_NORMAL) && defined(DRAW_FLATWALLS)
 		texColor = vec4(mix(texColor.rgb, r_wallcolor.rgb, mix_wall), texColor.a);
 	#ifdef DRAW_LUMA_TEXTURES
 		lumaColor = mix(lumaColor, vec4(0, 0, 0, 0), mix_wall);
@@ -158,12 +190,15 @@ void main()
 #if defined(DRAW_LUMA_TEXTURES) && !defined(DRAW_LUMA_TEXTURES_FB)
 		texColor = vec4(mix(texColor.rgb, texColor.rgb + lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_LUMA)), texColor.a);
 #endif
+		texColor = applyColorTinting(texColor);
 		frag_colour = vec4(lmColor.rgb, 1) * texColor;
 #if defined(DRAW_LUMA_TEXTURES) && defined(DRAW_LUMA_TEXTURES_FB)
+		lumaColor = applyColorTinting(lumaColor);
 		frag_colour = vec4(mix(frag_colour.rgb, frag_colour.rgb + lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_LUMA)), frag_colour.a);
 		frag_colour = vec4(mix(frag_colour.rgb, lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_FB) * lumaColor.a), frag_colour.a);
 #elif !defined(DRAW_LUMA_TEXTURES) && defined(DRAW_LUMA_TEXTURES_FB)
 		// GL_DECAL
+		lumaColor = applyColorTinting(lumaColor);
 		frag_colour = vec4(mix(frag_colour.rgb, lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_FB) * lumaColor.a), frag_colour.a);
 #endif
 

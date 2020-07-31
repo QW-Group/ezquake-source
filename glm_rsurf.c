@@ -107,6 +107,9 @@ static void GLM_CheckDrawCallSize(void)
 #define DRAW_LUMA_TEXTURES_FB    128
 #define DRAW_TEXTURELESS         256
 #define DRAW_GEOMETRY            512
+#define DRAW_DRAWFLAT_NORMAL    1024
+#define DRAW_DRAWFLAT_TINTED    2048
+#define DRAW_DRAWFLAT_BRIGHT    4096
 
 static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
@@ -136,13 +139,16 @@ qbool GLM_CompileDrawWorldProgram(void)
 		(luma_textures ? DRAW_LUMA_TEXTURES : 0) |
 		(gl_fb_bmodels.integer ? DRAW_LUMA_TEXTURES_FB : 0) |
 		(skybox ? DRAW_SKYBOX : (skydome ? DRAW_SKYDOME : 0)) |
+		(r_drawflat_mode.integer == 0 && r_drawflat.integer != 0 ? DRAW_DRAWFLAT_NORMAL : 0) |
+		(r_drawflat_mode.integer == 1 && r_drawflat.integer != 0 ? DRAW_DRAWFLAT_TINTED : 0) |
+		(r_drawflat_mode.integer == 2 && r_drawflat.integer != 0 ? DRAW_DRAWFLAT_BRIGHT : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
 		(gl_textureless.integer ? DRAW_TEXTURELESS : 0) |
 		(r_fx_geometry.integer ? DRAW_GEOMETRY : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_brushmodel, drawworld_desiredOptions)) {
-		static char included_definitions[1024];
+		static char included_definitions[2048];
 		int samplers = 0;
 
 		memset(included_definitions, 0, sizeof(included_definitions));
@@ -158,7 +164,7 @@ qbool GLM_CompileDrawWorldProgram(void)
 			strlcat(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_CAUSTIC_TEXTURE %d\n", TEXTURE_UNIT_CAUSTICS), sizeof(included_definitions));
 		}
-		if (r_drawflat.integer != 1) {
+		if (r_drawflat.integer != 1 || r_drawflat_mode.integer != 0) {
 			if (luma_textures) {
 				strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES\n", sizeof(included_definitions));
 			}
@@ -166,6 +172,16 @@ qbool GLM_CompileDrawWorldProgram(void)
 				strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES_FB\n", sizeof(included_definitions));
 			}
 		}
+		if (drawworld_desiredOptions & DRAW_DRAWFLAT_NORMAL) {
+			strlcat(included_definitions, "#define DRAW_DRAWFLAT_NORMAL\n", sizeof(included_definitions));
+		}
+		else if (drawworld_desiredOptions & DRAW_DRAWFLAT_TINTED) {
+			strlcat(included_definitions, "#define DRAW_DRAWFLAT_TINTED\n", sizeof(included_definitions));
+		}
+		else if (drawworld_desiredOptions & DRAW_DRAWFLAT_BRIGHT) {
+			strlcat(included_definitions, "#define DRAW_DRAWFLAT_BRIGHT\n", sizeof(included_definitions));
+		}
+
 		if (skybox) {
 			TEXTURE_UNIT_SKYBOX = samplers++;
 

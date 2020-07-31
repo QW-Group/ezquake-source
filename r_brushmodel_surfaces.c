@@ -181,7 +181,7 @@ void OnChange_r_drawflat (cvar_t *var, char *value, qbool *cancel) {
 void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 {
 	float wateralpha = R_WaterAlpha();
-	extern cvar_t r_fastturb, r_drawflat, r_fastsky;
+	extern cvar_t r_fastturb, r_drawflat, r_drawflat_mode, r_fastsky;
 	model_t* clmodel = cl.worldmodel;
 
 	int c, side, clipped;
@@ -189,8 +189,8 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 	msurface_t *surf, **mark;
 	mleaf_t *pleaf;
 	float dot;
-	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
-	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
+	qbool drawFlatFloors = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 2 || r_drawflat.integer == 1);
+	qbool drawFlatWalls = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 3 || r_drawflat.integer == 1);
 	qbool solidTexTurb = (!r_fastturb.integer && wateralpha == 1);
 
 	if (node->contents == CONTENTS_SOLID || node->visframe != r_visframecount) {

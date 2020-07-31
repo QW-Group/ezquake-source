@@ -98,6 +98,7 @@ extern	cvar_t	r_fullbrightSkins;
 extern	cvar_t	r_fastsky;
 extern	cvar_t	r_skycolor;
 extern	cvar_t	r_drawflat;
+extern	cvar_t	r_drawflat_mode;
 extern	cvar_t	r_wallcolor;
 extern	cvar_t	r_floorcolor;
 extern	cvar_t	r_bloom;

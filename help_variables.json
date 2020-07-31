@@ -14779,24 +14779,44 @@
       "default": "0",
       "desc": "Disables textures and walls and floors them with a solid color (/r_wallcolor or /r_floorcolor) depending on the angle.",
       "group-id": "50",
-      "remarks": "Usually used for performance improvements at the expense of eyecandy. See r_wallcolor and r_floorcolor.",
+      "remarks": "Usually used for performance improvements at the expense of eyecandy. See /r_wallcolor, /r_floorcolor & /r_drawflat_mode.",
       "type": "enum",
       "values": [
         {
-          "description": "Use textures for walls and floors.",
+          "description": "Use basic textures for walls and floors.",
           "name": "0"
         },
         {
-          "description": "Use a solid color for walls and floors",
+          "description": "Use color-adjusted walls and floors",
           "name": "1"
         },
         {
-          "description": "Use solid floors and textured walls.",
+          "description": "Use colored floors and textured walls.",
           "name": "2"
         },
         {
-          "description": "Use solid walls and textured floors.",
+          "description": "Use colored walls and textured floors.",
           "name": "3"
+        }
+      ]
+    },
+    "r_drawflat_mode": {
+      "default": "0",
+      "desc": "Sets the method used to adjust wall & floor textures (/r_drawflat) by the corresponding color (/r_wallcolor & /r_floorcolor)",
+      "remarks": "Works in GLSL modes only (see /gl_program_world)\nMode 0 will give best performance, mode 2 is the recommended setting for different colors",
+      "type": "enum",
+      "values": [
+        {
+          "name": "0",
+          "description": "Walls/floors will be solid color, as per /r_drawflat setting"
+        },
+        {
+          "name": "1",
+          "description": "Walls/floors will be textured but then scaled as per /r_wallcolor & /r_floorcolor settings"
+        },
+        {
+          "name": "2",
+          "description": "Walls/floors will be solid color (see /r_wallcolor & /r_floorcolor), but brightness will be set by the underlying texture"
         }
       ]
     },

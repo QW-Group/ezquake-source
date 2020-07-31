@@ -239,10 +239,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 	float oldMatrix[16];
 	extern cvar_t gl_brush_polygonoffset;
 	qbool caustics = false;
-	extern cvar_t r_drawflat, gl_caustics, gl_flashblend;
-
-	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
-	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
+	extern cvar_t gl_caustics, gl_flashblend;
 
 	// Get rid of Z-fighting for textures by offsetting the
 	// drawing of entity models compared to normal polygons.
@@ -253,9 +250,6 @@ void R_BrushModelDrawEntity(entity_t *e)
 	if (!clmodel->nummodelsurfaces) {
 		return;
 	}
-
-	drawFlatFloors &= clmodel->isworldmodel;
-	drawFlatWalls &= clmodel->isworldmodel;
 
 	if (e->angles[0] || e->angles[1] || e->angles[2]) {
 		rotated = true;

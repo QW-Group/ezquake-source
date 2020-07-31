@@ -734,8 +734,14 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 #define GLC_WORLD_DETAIL         8
 #define GLC_WORLD_CAUSTICS      16
 #define GLC_WORLD_LIGHTMAPS     32
+#define GLC_WORLD_DF_NORMAL     64
+#define GLC_WORLD_DF_TINTED    128
+#define GLC_WORLD_DF_BRIGHT    256
+#define GLC_WORLD_DF_FLOORS    512
+#define GLC_WORLD_DF_WALLS    1024
 
 #define GLC_USE_FULLBRIGHT_TEX  (GLC_WORLD_LUMATEXTURES | GLC_WORLD_FULLBRIGHTS)
+#define GLC_USE_DRAWFLAT        (GLC_WORLD_DF_NORMAL | GLC_WORLD_DF_TINTED | GLC_WORLD_DF_BRIGHT)
 
 static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocations, model_t* model)
 {
@@ -755,11 +761,16 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		(drawLumas ? GLC_WORLD_LUMATEXTURES : 0) |
 		(allocations->fbTextureUnit >= 0 && gl_fb_bmodels.integer ? GLC_WORLD_FULLBRIGHTS : 0) |
 		(allocations->detailTextureUnit >= 0 ? GLC_WORLD_DETAIL : 0) |
-		(allocations->causticTextureUnit >= 0 ? GLC_WORLD_CAUSTICS : 0);
+		(allocations->causticTextureUnit >= 0 ? GLC_WORLD_CAUSTICS : 0) |
+		(r_drawflat.integer && r_drawflat_mode.integer == 0 ? GLC_WORLD_DF_NORMAL : 0) |
+		(r_drawflat.integer && r_drawflat_mode.integer == 1 ? GLC_WORLD_DF_TINTED : 0) |
+		(r_drawflat.integer && r_drawflat_mode.integer == 2 ? GLC_WORLD_DF_BRIGHT : 0) |
+		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? GLC_WORLD_DF_FLOORS : 0) |
+		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? GLC_WORLD_DF_WALLS : 0); 
 
 	if (R_ProgramRecompileNeeded(r_program_world_textured_glc, options)) {
 		int sampler = 0;
-		char definitions[512] = { 0 };
+		char definitions[2048] = { 0 };
 
 		allocations->matTextureUnit = 0;
 
@@ -786,6 +797,21 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		}
 		if (glConfig.supported_features & R_SUPPORT_TEXTURE_ARRAYS) {
 			strlcat(definitions, "#define EZ_USE_TEXTURE_ARRAYS\n", sizeof(definitions));
+		}
+		if (options & GLC_WORLD_DF_NORMAL) {
+			strlcat(definitions, "#define DRAW_DF_NORMAL\n", sizeof(definitions));
+		}
+		else if (options & GLC_WORLD_DF_TINTED) {
+			strlcat(definitions, "#define DRAW_DRAWFLAT_TINTED\n", sizeof(definitions));
+		}
+		else if (options & GLC_WORLD_DF_BRIGHT) {
+			strlcat(definitions, "#define DRAW_DRAWFLAT_BRIGHT\n", sizeof(definitions));
+		}
+		if (options & GLC_WORLD_DF_FLOORS) {
+			strlcat(definitions, "#define DRAW_FLATFLOORS\n", sizeof(definitions));
+		}
+		if (options & GLC_WORLD_DF_WALLS) {
+			strlcat(definitions, "#define DRAW_FLATWALLS\n", sizeof(definitions));
 		}
 
 		R_ProgramCompileWithInclude(r_program_world_textured_glc, definitions);
@@ -943,8 +969,12 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 						GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 						index_count = 0;
 					}
-					R_ProgramUniform1f(r_program_uniform_world_textured_glc_lumaScale, current_lumaScale = lumaScale);
-					R_ProgramUniform1f(r_program_uniform_world_textured_glc_fbScale, current_fbScale = fbScale);
+					if (current_lumaScale != lumaScale) {
+						R_ProgramUniform1f(r_program_uniform_world_textured_glc_lumaScale, current_lumaScale = lumaScale);
+					}
+					if (current_fbScale != fbScale) {
+						R_ProgramUniform1f(r_program_uniform_world_textured_glc_fbScale, current_fbScale = fbScale);
+					}
 				}
 
 				index_count = GLC_DrawIndexedPoly(s->polys, modelIndexes, modelIndexMaximum, index_count);
@@ -1024,6 +1054,9 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 	if (gl_program_world.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_WorldTexturedProgramCompile(&allocations, model)) {
 		R_ProgramUse(r_program_world_textured_glc);
 		R_ProgramUniform1f(r_program_uniform_world_textured_glc_time, cl.time);
+		R_ProgramUniform3f(r_program_uniform_world_textured_glc_r_floorcolor, r_floorcolor.color[0] / 255.0f, r_floorcolor.color[1] / 255.0f, r_floorcolor.color[2] / 255.0f);
+		R_ProgramUniform3f(r_program_uniform_world_textured_glc_r_wallcolor, r_wallcolor.color[0] / 255.0f, r_wallcolor.color[1] / 255.0f, r_wallcolor.color[2] / 255.0f);
+
 		GLC_DrawTextureChains_GLSL(ent, model, caustics, polygonOffset, &allocations);
 		R_ProgramUse(r_program_none);
 	}
@@ -1049,7 +1082,7 @@ void GLC_DrawWorld(void)
 
 	R_TraceEnterFunctionRegion;
 
-	if (r_drawflat.integer != 1) {
+	if (r_drawflat.integer != 1 || r_drawflat_mode.integer != 0) {
 		GLC_DrawTextureChains(NULL, cl.worldmodel, false, false);
 	}
 	if (cl.worldmodel->drawflat_todo) {
@@ -1071,7 +1104,7 @@ void GLC_DrawBrushModel(entity_t* e, qbool polygonOffset, qbool caustics)
 	extern msurface_t* alphachain;
 	model_t* clmodel = e->model;
 
-	if (r_drawflat.integer && clmodel->isworldmodel) {
+	if (r_drawflat_mode.integer == 0 && r_drawflat.integer && clmodel->isworldmodel) {
 		if (r_drawflat.integer == 1) {
 			GLC_DrawFlat(clmodel, polygonOffset);
 		}
@@ -1362,16 +1395,13 @@ int GLC_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 			target->flatstyle = 32;
 		}
 	}
-	else if (surf->flags & SURF_DRAWFLAT_FLOOR) {
-		target->flatstyle = 64;
-	}
-	else {
-		target->flatstyle = 128;
+	else if (mod->isworldmodel) {
+		target->flatstyle = (surf->flags & SURF_DRAWFLAT_FLOOR ? 64 : 128);
 	}
 
 	target->flatstyle += (has_luma_texture ? 256 : 0);
-	target->flatstyle += (surf->flags & SURF_UNDERWATER) ? 512 : 0;
-	target->flatstyle += (has_fb_texture/* && !has_luma_texture*/ ? 1024 : 0);
+	target->flatstyle += (mod->isworldmodel && (surf->flags & SURF_UNDERWATER)) ? 512 : 0;
+	target->flatstyle += (has_fb_texture ? 1024 : 0);
 
 	return position + 1;
 }
@@ -1382,8 +1412,8 @@ void GLC_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 	qbool glc_first_water_poly = true;
 	msurface_t* psurf;
 	int i;
-	qbool drawFlatFloors = clmodel->isworldmodel && (r_drawflat.integer == 2 || r_drawflat.integer == 1);
-	qbool drawFlatWalls = clmodel->isworldmodel && (r_drawflat.integer == 3 || r_drawflat.integer == 1);
+	qbool drawFlatFloors = clmodel->isworldmodel && (r_drawflat.integer == 2 || r_drawflat.integer == 1) && r_drawflat_mode.integer == 0;
+	qbool drawFlatWalls = clmodel->isworldmodel && (r_drawflat.integer == 3 || r_drawflat.integer == 1) && r_drawflat_mode.integer == 0;
 	extern msurface_t* skychain;
 	extern msurface_t* alphachain;
 

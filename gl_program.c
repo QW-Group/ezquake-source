@@ -232,6 +232,10 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_world_textured_glc, "lumaMultiplier", 1, false },
 	// r_program_uniform_world_textured_glc_fbScale
 	{ r_program_world_textured_glc, "fbMultiplier", 1, false },
+	// r_program_uniform_world_textured_glc_r_floorcolor
+	{ r_program_world_textured_glc, "r_floorcolor", 1, false },
+	// r_program_uniform_world_textured_glc_r_wallcolor
+	{ r_program_world_textured_glc, "r_wallcolor", 1, false },
 	// r_program_uniform_sprites_glc_materialSampler,
 	{ r_program_sprites_glc, "materialSampler", 1, false },
 	// r_program_uniform_sprites_glc_alphaThreshold,
@@ -977,6 +981,13 @@ void R_ProgramUniform2fv(r_program_uniform_id uniform_id, const float* values)
 		}
 		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, program_data[uniform->program_id].friendly_name, uniform->name);
 	}
+}
+
+void R_ProgramUniform3f(r_program_uniform_id uniform_id, float x, float y, float z)
+{
+	float vec[3] = { x, y, z };
+
+	R_ProgramUniform3fv(uniform_id, vec);
 }
 
 void R_ProgramUniform3fv(r_program_uniform_id uniform_id, const float* values)

@@ -27,8 +27,9 @@
 - `/cfg_backup` will now not save the config if backup cannot be taken
 - `/vid_framebuffer_smooth` controls linear or nearest filtering (thanks to Calinou)
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
-- Clarified descriptions around `/enemyforceskins` reporting in `f_ruleset` and `f_skins` responses (reported by Ake_Vader)
-- Cannot change `/enemyforceskins` during match (old)
+- `/enemyforceskins` descriptions in `f_ruleset` and `f_skins` responses has been clarified to specify individuals will be identifiable (reported by Ake_Vader)
+- `/enemyforceskins` fixed during match (old)
+- `/r_drawflat_mode` allows textures to be shaded rather than solid color (GLSL only)
 
 ### Build/meta
 

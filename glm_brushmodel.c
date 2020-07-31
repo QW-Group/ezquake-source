@@ -138,8 +138,8 @@ void GLM_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 	int i;
 	msurface_t* psurf;
 	extern msurface_t* alphachain;
-	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1) && clmodel->isworldmodel;
-	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1) && clmodel->isworldmodel;
+	qbool drawFlatFloors = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 2 || r_drawflat.integer == 1) && clmodel->isworldmodel;
+	qbool drawFlatWalls = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 3 || r_drawflat.integer == 1) && clmodel->isworldmodel;
 
 	// GLSL mode - always render the whole model, the surfaces will be re-used if there is
 	//   another entity with the same model later in the scene

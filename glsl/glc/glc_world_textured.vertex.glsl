@@ -27,6 +27,9 @@ attribute vec2 causticsCoord;
 varying float causticsScale;
 #endif
 
+varying float mix_floor;
+varying float mix_wall;
+
 void main()
 {
 	gl_Position = ftransform();
@@ -53,4 +56,7 @@ void main()
 #ifdef DRAW_DETAIL
 	DetailCoord = detailCoordInput;
 #endif
+
+	mix_floor = mod(floor(style / 64), 2);
+	mix_wall = mod(floor(style / 128), 2);
 }

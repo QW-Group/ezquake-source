@@ -87,6 +87,8 @@ typedef enum {
 	r_program_uniform_world_textured_glc_time,
 	r_program_uniform_world_textured_glc_lumaScale,
 	r_program_uniform_world_textured_glc_fbScale,
+	r_program_uniform_world_textured_glc_r_floorcolor,
+	r_program_uniform_world_textured_glc_r_wallcolor,
 	r_program_uniform_sprites_glc_materialSampler,
 	r_program_uniform_sprites_glc_alphaThreshold,
 	r_program_uniform_hud_images_glc_primarySampler,
@@ -126,6 +128,7 @@ void R_ProgramComputeSetMemoryBarrierFlag(r_program_id program_id, r_program_mem
 void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value);
 void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value);
 void R_ProgramUniform4fv(r_program_uniform_id uniform_id, const float* values);
+void R_ProgramUniform3f(r_program_uniform_id uniform_id, float x, float y, float z);
 void R_ProgramUniform3fv(r_program_uniform_id uniform_id, const float* values);
 void R_ProgramUniform2fv(r_program_uniform_id uniform_id, const float* values);
 void R_ProgramUniform3fNormalize(r_program_uniform_id uniform_id, const byte* values);

@@ -145,6 +145,7 @@ cvar_t r_lavacolor                         = {"r_lavacolor", "80 0 0", CVAR_COLO
 cvar_t r_slimecolor                        = {"r_slimecolor", "10 60 10", CVAR_COLOR};
 cvar_t r_watercolor                        = {"r_watercolor", "10 50 80", CVAR_COLOR};
 cvar_t r_drawflat                          = {"r_drawflat", "0", 0, OnChange_r_drawflat};
+cvar_t r_drawflat_mode                     = {"r_drawflat_mode", "0", 0, OnChange_r_drawflat};
 cvar_t r_wallcolor                         = {"r_wallcolor", "255 255 255", CVAR_COLOR, OnChange_r_drawflat};
 cvar_t r_floorcolor                        = {"r_floorcolor", "50 100 150", CVAR_COLOR, OnChange_r_drawflat};
 cvar_t gl_textureless                      = {"gl_textureless", "0", 0, OnChange_r_drawflat}; //Qrack
@@ -604,6 +605,7 @@ void R_Init(void)
 	Cvar_Register(&gl_subdivide_size);
 	Cvar_Register(&gl_lumatextures);
 	Cvar_Register(&r_drawflat);
+	Cvar_Register(&r_drawflat_mode);
 	Cvar_Register(&r_wallcolor);
 	Cvar_Register(&r_floorcolor);
 	Cvar_Register(&gl_textureless); //Qrack

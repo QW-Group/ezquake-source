@@ -33,6 +33,9 @@ layout(std140, binding = EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface
 };
 #endif
 
+out float mix_floor;
+out float mix_wall;
+
 layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA) buffer WorldCvars {
 	WorldDrawInfo drawInfo[];
 };
@@ -69,6 +72,9 @@ void main()
 #if defined(DRAW_LUMA_TEXTURES) || defined(DRAW_LUMA_TEXTURES_FB)
 		LumaCoord = TextureCoord;
 #endif
+
+		mix_floor = 0;
+		mix_wall = 0;
 	}
 	else {
 #ifdef DRAW_TEXTURELESS
@@ -84,5 +90,8 @@ void main()
 #ifdef DRAW_DETAIL_TEXTURES
 		DetailCoord = detailCoord;
 #endif
+
+		mix_floor = min(1, (Flags & EZQ_SURFACE_WORLD) * (Flags & EZQ_SURFACE_IS_FLOOR));
+		mix_wall = min(1, (Flags & EZQ_SURFACE_WORLD) * (1 - mix_floor));
 	}
 }
