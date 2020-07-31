@@ -896,7 +896,8 @@ void CL_InitTEntsCvar(void);
 void CL_ClearTEnts (void);
 void CL_ParseTEnt (void);
 void CL_ExplosionSprite (vec3_t);
-void CL_UpdateTEnts (void);
+void CL_ClearPlayerBeams(void);
+void CL_UpdateTEnts(void);
 
 // cl_ents.c
 typedef enum cl_modelindex_s {

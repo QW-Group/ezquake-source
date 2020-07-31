@@ -162,6 +162,10 @@ static void CL_ParseBeam(int type)
 	if (CL_Demo_SkipMessage(true))
 		return;
 
+	if (cl.intermission && ent >= 1 && ent <= MAX_CLIENTS) {
+		return;
+	}
+
     // an experimental protocol extension:
     // TE_LIGHTNING1 with entity num in -512..-1 range is a rail trail
     if (type == 1 && (ent >= -512 && ent <= -1)) 
@@ -739,7 +743,7 @@ static float fakeshaft_policy (void)
 	}
 }
 
-void CL_UpdateBeams(void) 
+static void CL_UpdateBeams(void)
 {
 	int i;
 	beam_t *b;	
@@ -765,6 +769,9 @@ void CL_UpdateBeams(void)
 		sparks = false;
 
 		if (!b->model || b->endtime < cl.time) {
+			continue;
+		}
+		if (b->entity >= 1 && b->entity <= MAX_CLIENTS && cl.intermission) {
 			continue;
 		}
 
@@ -913,7 +920,8 @@ void CL_UpdateBeams(void)
 	}
 }
 
-void CL_UpdateExplosions (void) {
+static void CL_UpdateExplosions(void)
+{
 	int f;
 	explosion_t	*ex, *next, *hnode;
 	entity_t ent;
@@ -941,7 +949,7 @@ void CL_UpdateExplosions (void) {
 
 void CL_UpdateTEnts (void)
 {
-	CL_UpdateBeams ();
-	CL_UpdateExplosions ();
+	CL_UpdateBeams();
+	CL_UpdateExplosions();
 }
 
