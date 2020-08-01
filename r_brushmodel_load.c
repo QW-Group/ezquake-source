@@ -81,6 +81,7 @@ static void SetTextureFlags(model_t* mod, msurface_t* out, int surfnum)
 	if (Mod_IsAlphaTextureName(mod, out->texinfo->texture->name)) {
 		out->flags |= SURF_DRAWALPHA;
 		out->texinfo->skippable = false;
+		out->texinfo->texture->isAlphaTested = true;
 	}
 }
 

@@ -28,6 +28,7 @@ typedef enum {
 	r_program_lightmap_compute,
 
 	r_program_fx_world_geometry,
+	r_program_brushmodel_alphatested,
 
 	r_program_count
 } r_program_id;
@@ -93,6 +94,8 @@ typedef enum {
 	r_program_uniform_sprites_glc_alphaThreshold,
 	r_program_uniform_hud_images_glc_primarySampler,
 	r_program_uniform_hud_images_glc_secondarySampler,
+	r_program_uniform_brushmodel_alphatested_outlines,
+	r_program_uniform_brushmodel_alphatested_sampler,
 	r_program_uniform_count
 } r_program_uniform_id;
 

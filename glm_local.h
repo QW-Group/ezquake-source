@@ -112,7 +112,7 @@ void GLM_UploadFrameConstants(void);
 void GLM_StateBeginImageDraw(void);
 
 typedef enum {
-	opaque_world,
+	opaque_world,      // also contains alpha-tested
 	alpha_surfaces
 } glm_brushmodel_drawcall_type;
 

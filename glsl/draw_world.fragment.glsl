@@ -124,9 +124,11 @@ void main()
 	lmColor = texture(lightmapTex, TexCoordLightmap);
 	texColor = texture(materialTex[SamplerNumber], tex);
 
+#ifdef DRAW_ALPHATEST_ENABLED
 	if ((Flags & EZQ_SURFACE_ALPHATEST) == EZQ_SURFACE_ALPHATEST && texColor.a < 0.333) {
 		discard;
 	}
+#endif
 
 	turbType = Flags & EZQ_SURFACE_TYPE;
 	if (turbType != 0) {

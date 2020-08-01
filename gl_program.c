@@ -244,6 +244,10 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_hud_images_glc, "primarySampler", 1, false },
 	// r_program_uniform_hud_images_glc_secondarySampler
 	{ r_program_hud_images_glc, "secondarySampler", 1, false },
+	// r_program_uniform_brushmodel_alphatested_outlines,
+	{ r_program_brushmodel_alphatested, "draw_outlines", 1, false },
+	// r_program_uniform_brushmodel_alphatested_sampler,
+	{ r_program_brushmodel_alphatested, "SamplerNumber", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -1086,6 +1090,7 @@ static void GL_BuildCoreDefinitions(void)
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	GL_DefineProgram_VF(r_program_aliasmodel, "aliasmodel", true, draw_aliasmodel, renderer_modern, GLM_CompileAliasModelProgram);
 	GL_DefineProgram_VF(r_program_brushmodel, "brushmodel", true, draw_world, renderer_modern, GLM_CompileDrawWorldProgram);
+	GL_DefineProgram_VF(r_program_brushmodel_alphatested, "brushmodel-alphatested", true, draw_world, renderer_modern, GLM_CompileDrawWorldProgramAlphaTested);
 	GL_DefineProgram_VF(r_program_sprite3d, "3d-sprites", false, draw_sprites, renderer_modern, GLM_Compile3DSpriteProgram);
 	GL_DefineProgram_VF(r_program_hud_images, "image-draw", true, hud_draw_image, renderer_modern, GLM_CreateMultiImageProgram);
 	GL_DefineProgram_VF(r_program_hud_circles, "circle-draw", false, hud_draw_circle, renderer_modern, GLM_CompileHudCircleProgram);

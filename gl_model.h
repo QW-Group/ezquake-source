@@ -65,7 +65,8 @@ typedef struct texture_s {
 	unsigned int        offsets[MIPLEVELS];         //four mip maps stored
 	unsigned int        flatcolor3ub;               //just for r_fastturb's sake
 	qbool               loaded;                     //help speed up vid_restart, actual only for brush models
-	int	                isLumaTexture;
+	int                 isLumaTexture;              //fb is luma texture, rather than normal fb
+	qbool               isAlphaTested;              //texture is flagged for alpha-testing
 	int                 turbType;
 
 	int                 gl_width;
