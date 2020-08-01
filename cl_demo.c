@@ -1849,8 +1849,18 @@ static qbool CL_DemoShouldWeReadNextMessage(double demotime)
 			key_dest = key_game;
 		}
 
-		cl.gametime += (demotime - cls.demotime);
-		cls.demotime = demotime; // Warp.
+		if (cls.timedemo == TIMEDEMO_CLASSIC || (cls.state != ca_active)) {
+			// Warp - will render as many frames as there are in the demo
+			cl.gametime += (demotime - cls.demotime);
+			cls.demotime = demotime;
+		}
+		else if (nextdemotime >= demotime) {
+			// No warping, fixed fps
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 	else if (!(cl.paused & PAUSED_SERVER) && (cls.state == ca_active)) // Always grab until fully connected.
 	{
@@ -2013,8 +2023,7 @@ qbool CL_GetDemoMessage (void)
 		playback_recordtime = demotime;
 
 		// Decide if it is time to grab the next message from the demo yet.
-		if (!CL_DemoShouldWeReadNextMessage(demotime))
-		{
+		if (!CL_DemoShouldWeReadNextMessage(demotime)) {
 			return false;
 		}
 		
@@ -3198,8 +3207,6 @@ void CL_StopPlayback (void)
 		int frames;
 		float time;
 
-		cls.timedemo = false;
-
 		//
 		// Calculate the time it took to render the frames.
 		//
@@ -3207,7 +3214,11 @@ void CL_StopPlayback (void)
 		time = Sys_DoubleTime() - cls.td_starttime;
 		if (time <= 0)
 			time = 1;
-		Com_Printf ("%i frames %5.1f seconds %5.1f fps\n", frames, time, frames / time);
+		Com_Printf("%i frames %5.1f seconds %5.1f fps\n", frames, time, frames / time);
+		if (cls.timedemo == TIMEDEMO_FIXEDFPS && cls.td_frametime > 0) {
+			Com_Printf("  simulated @ %5.1f fps\n", 1.0 / cls.td_frametime);
+		}
+		cls.timedemo = false;
 		if (demo_benchmarkdumps.integer)
 			CL_Demo_DumpBenchmarkResult(frames, time);
 	}
@@ -3531,10 +3542,7 @@ char *CL_Macro_DemoLength_f (void)
 	return macrobuf;
 }
 
-//
-// Starts playback of a demo.
-//
-void CL_Play_f (void)
+static void CL_StartDemoCommand(void)
 {
 	keydest_t failure_dest = KeyDestStartupDemo(key_dest) ? key_console : key_dest;
 	#ifndef WITH_VFS_ARCHIVE_LOADING
@@ -3547,12 +3555,8 @@ void CL_Play_f (void)
 	char name[MAX_OSPATH], **s;
 	static char *ext[] = {"qwd", "mvd", "dem", NULL};
 
-	// Show usage.
-	if (Cmd_Argc() != 2)
-	{
-		Com_Printf ("Usage: %s <demoname>\n", Cmd_Argv(0));
-		key_dest = failure_dest;
-		return;
+	if (Cmd_Argc() < 2) {
+		return; // internal error
 	}
 
 	// Save the name the user specified.
@@ -3717,6 +3721,24 @@ void CL_Play_f (void)
 	Com_Printf("Playing demo from %s\n", COM_SkipPath(name));
 }
 
+//
+// Starts playback of a demo.
+//
+static void CL_Play_f(void)
+{
+	// Show usage.
+	if (Cmd_Argc() != 2)
+	{
+		keydest_t failure_dest = KeyDestStartupDemo(key_dest) ? key_console : key_dest;
+
+		Com_Printf("Usage: %s <demoname>\n", Cmd_Argv(0));
+		key_dest = failure_dest;
+		return;
+	}
+
+	CL_StartDemoCommand();
+}
+
 static vfsfile_t* CL_Open_Demo_File(char* name, qbool searchpaks, char** fullPath)
 {
 	static char fullname[MAX_OSPATH];
@@ -3759,24 +3781,47 @@ static vfsfile_t* CL_Open_Demo_File(char* name, qbool searchpaks, char** fullPat
 //
 // Renders a demo as quickly as possible.
 //
-void CL_TimeDemo_f (void)
+void CL_TimeDemo_f(void)
 {
-	if (Cmd_Argc() != 2)
+	const char* command = Cmd_Argv(0);
+	qbool classic = !strcasecmp(command, "timedemo");
+
+	if (classic && Cmd_Argc() != 2)
 	{
-		Com_Printf ("timedemo <demoname> : gets demo speeds\n");
+		Com_Printf("%s <demoname> : gets demo speeds\n", Cmd_Argv(0));
 		return;
 	}
+	else if (!classic)
+	{
+		int desired_fps = TIMEDEMO_FIXEDFPS_DEFAULT;
 
-	CL_Play_f ();
+		if (Cmd_Argc() < 2) {
+			Com_Printf("%s <demoname> [<fps>]: gets demo speeds (default fps %d) \n", Cmd_Argv(0), desired_fps);
+			return;
+		}
+
+		if (Cmd_Argc() >= 3) {
+			desired_fps = atoi(Cmd_Argv(2));
+			if (desired_fps < TIMEDEMO_FIXEDFPS_MINIMUM || desired_fps > TIMEDEMO_FIXEDFPS_MAXIMUM) {
+				Com_Printf("Desired FPS must be between %d and %d\n", TIMEDEMO_FIXEDFPS_MINIMUM, TIMEDEMO_FIXEDFPS_MAXIMUM);
+				return;
+			}
+		}
+
+		cls.td_frametime = 1.0 / desired_fps;
+	}
+
+	CL_StartDemoCommand();
 
 	// We failed to start demoplayback.
-	if (cls.state != ca_demostart)
+	if (cls.state != ca_demostart) {
 		return;
+	}
 
 	// cls.td_starttime will be grabbed at the second frame of the demo,
 	// so all the loading time doesn't get counted.
 
-	cls.timedemo = true;
+	cls.timedemo = (classic ? TIMEDEMO_CLASSIC : TIMEDEMO_FIXEDFPS);
 	cls.td_starttime = 0;
 	cls.td_startframe = cls.framecount;
 	cls.td_lastframe = -1;		// Get a new message this frame.
@@ -5141,6 +5186,7 @@ void CL_Demo_Init(void)
 	Cmd_AddCommand ("stopqwd", CL_Stop_f);
 	Cmd_AddCommand ("playdemo", CL_Play_f);
 	Cmd_AddCommand ("timedemo", CL_TimeDemo_f);
+	Cmd_AddCommand ("timedemo2", CL_TimeDemo_f);
 	Cmd_AddCommand ("easyrecord", CL_EasyRecord_f);
 
 	Cmd_AddCommand("demo_setspeed", CL_Demo_SetSpeed_f);

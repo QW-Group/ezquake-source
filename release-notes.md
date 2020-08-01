@@ -29,6 +29,7 @@
 - `/enemyforceskins` descriptions in `f_ruleset` and `f_skins` responses has been clarified to specify individuals will be identifiable (reported by Ake_Vader)
 - `/enemyforceskins` fixed during match (old)
 - `/r_drawflat_mode` allows textures to be shaded rather than solid color (GLSL only)
+- `/timedemo2` command renders demo in stop-motion at a particular fps
 - MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
 - Player LG beams hidden during intermission
 

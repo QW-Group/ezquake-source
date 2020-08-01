@@ -56,7 +56,7 @@ int SCR_DrawDemoStatus(void)
     int w, i;
     int mins, secs;
 
-    if (cls.timedemo  ||  !cls.demoplayback)
+    if (cls.timedemo || !cls.demoplayback)
         return 0;
 
     if (!cls.demopaused  &&  (realtime - cls.demobartime > demo_statustime.value  ||  cls.demobartime < 0))

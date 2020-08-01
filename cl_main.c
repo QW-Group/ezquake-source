@@ -2263,6 +2263,9 @@ void CL_Frame(double time)
 		else if (!cls.timedemo) {
 			cls.frametime *= Demo_GetSpeed();
 		}
+		else if (cls.timedemo == TIMEDEMO_FIXEDFPS) {
+			cls.frametime = cls.td_frametime;
+		}
 
 		if (!host_skipframe) {
 			cls.demotime += cls.frametime;

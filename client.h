@@ -325,6 +325,14 @@ typedef struct {
 	demoseekingstatus_condition_t *conditions;
 } demoseekingstatus_t;
 
+#define TIMEDEMO_OFF      0
+#define TIMEDEMO_CLASSIC  1
+#define TIMEDEMO_FIXEDFPS 2
+
+#define TIMEDEMO_FIXEDFPS_DEFAULT (308)
+#define TIMEDEMO_FIXEDFPS_MINIMUM (20)
+#define TIMEDEMO_FIXEDFPS_MAXIMUM (10000)
+
 /// A structure that is persistent through an arbitrary number of server connections.
 typedef struct
 {
@@ -418,17 +426,18 @@ typedef struct
 	// Demo recording info must be here, because record
 	// is started before entering a map (and clearing clientState_t)
 	//
-	qbool		demorecording;
-	qbool		demoplayback;
+	qbool       demorecording;
+	qbool       demoplayback;
 	demoseekingtype_t demoseeking;
 	demoseekingstatus_t demoseekingstatus;
-	qbool		demorewinding;
-	char		demoname[MAX_PATH];
-	qbool		nqdemoplayback;
-	qbool		timedemo;
-	double		td_lastframe;       ///< To meter out one message a frame.
-	int			td_startframe;      ///< cls.framecount at start
-	double		td_starttime;       ///< Realtime at second frame of timedemo.
+	qbool       demorewinding;
+	char        demoname[MAX_PATH];
+	qbool       nqdemoplayback;
+	int         timedemo;
+	double      td_lastframe;       ///< To meter out one message a frame.
+	int         td_startframe;      ///< cls.framecount at start
+	double      td_starttime;       ///< Realtime at second frame of timedemo.
+	double      td_frametime;       ///< frametime for stop-motion timedemo (timedemo2)
 
 	qbool		mvdrecording;		///< this is not real mvd recording, but just cut particular moment of mvd stream
 
