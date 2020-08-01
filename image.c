@@ -540,8 +540,8 @@ static void PNG_IO_user_write_data(png_structp png_ptr, png_bytep data, png_size
 
 #ifdef WITH_APNG
 static byte* apng_data = NULL;
-static unsigned int apng_data_limit = 0;
-static unsigned int apng_data_length = 0;
+static size_t apng_data_limit = 0;
+static size_t apng_data_length = 0;
 
 static void PNG_IO_user_write_data_apng_discard(png_structp png_ptr, png_bytep data, png_size_t length)
 {

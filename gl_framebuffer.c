@@ -735,7 +735,7 @@ void GL_Screenshot(byte* buffer, size_t size)
 			qglBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 		}
 	}
-	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+	glReadPixels(0, 0, (GLsizei)width, (GLsizei)height, GL_RGB, GL_UNSIGNED_BYTE, buffer);
 }
 
 size_t GL_ScreenshotWidth(void)
