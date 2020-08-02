@@ -1664,8 +1664,7 @@ void SV_Gamedir_f (void)
 
 	dir = Cmd_Argv(1);
 
-	if (strstr(dir, "..") || strchr(dir, '/')
-	        || strchr(dir, '\\') || strchr(dir, ':') )
+	if (strstr(dir, "..") || strchr(dir, '/') || strchr(dir, '\\') || strchr(dir, ':') )
 	{
 		Con_Printf ("Gamedir should be a single filename, not a path\n");
 		return;

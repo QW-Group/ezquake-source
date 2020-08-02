@@ -1010,6 +1010,7 @@ void Draw_InitConback(void)
 
 	if (!(cb = (qpic_t *)FS_LoadHeapFile("gfx/conback.lmp", NULL))) {
 		Sys_Error("Couldn't load gfx/conback.lmp");
+		return;
 	}
 	SwapPic (cb);
 

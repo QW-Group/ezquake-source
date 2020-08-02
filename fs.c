@@ -586,20 +586,25 @@ void FS_AddUserDirectory(char *dir)
 void Draw_InitConback(void);
 
 // Sets the gamedir and path to a different directory.
-void FS_SetGamedir (char *dir, qbool force)
+void FS_SetGamedir(char* dir, qbool force)
 {
-	searchpath_t  *next;
-	if (strstr(dir, "..") || strchr(dir, '/')
-	 || strchr(dir, '\\') || strchr(dir, ':') ) 
-	{
-		Com_Printf ("Gamedir should be a single filename, not a path\n");
+	searchpath_t* next;
+
+	if (dir == NULL || !dir[0]) {
+		dir = "qw";
+	}
+
+	if (strstr(dir, "..") || strchr(dir, '/') || strchr(dir, '\\') || strchr(dir, ':')) {
+		Com_Printf("Gamedir should be a single filename, not a path\n");
 		return;
 	}
 
-	if (!force && !strcmp(com_gamedirfile, dir))
-		return;		// Still the same.
-	
-	strlcpy (com_gamedirfile, dir, sizeof(com_gamedirfile));
+	if (!force && !strcmp(com_gamedirfile, dir)) {
+		// Still the same
+		return;
+	}
+
+	strlcpy(com_gamedirfile, dir, sizeof(com_gamedirfile));
 
 	// Free up any current game dir info.
 	FS_FlushFSHash();
@@ -609,14 +614,14 @@ void FS_SetGamedir (char *dir, qbool force)
 	{
 		fs_searchpaths->funcs->ClosePath(fs_searchpaths->handle);
 		next = fs_searchpaths->next;
-		Q_free (fs_searchpaths);
+		Q_free(fs_searchpaths);
 		fs_searchpaths = next;
 	}
 
-	filesystemchanged=true;
+	filesystemchanged = true;
 
 	// Flush all data, so it will be forced to reload.
-	Cache_Flush ();
+	Cache_Flush();
 
 	snprintf(com_gamedir, sizeof(com_gamedir), "%s/%s", com_basedir, dir);
 
