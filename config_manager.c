@@ -1049,18 +1049,33 @@ void LoadConfig_f(void)
 	snprintf(fullname, sizeof(fullname), "%s/%s%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "" : va("%s/", com_gamedirfile), filename);
 	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/%s", com_homedir, filename);
 
-	if(use_home && !((f = fopen(fullname, "rb")) && cfg_use_gamedir.integer) && !(f = fopen(fullname_moddefault, "rb")))
-	{
-		use_home = false;
+	if (use_home) {
+		if (cfg_use_gamedir.integer) {
+			f = fopen(fullname, "rb");
+		}
+		if (f == NULL) {
+			f = fopen(fullname_moddefault, "rb");
+		}
+		if (f == NULL) {
+			use_home = false;
+		}
 	}
 
 	// basedir
 	snprintf(fullname, sizeof(fullname), "%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
 	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/ezquake/configs/%s", com_basedir, filename);
 
-	if(!use_home && !((f = fopen(fullname, "rb")) && cfg_use_gamedir.integer) && !(f = fopen(fullname_moddefault, "rb")))
-	{
-		Com_Printf("Couldn't load %s %s\n", filename, (cfg_use_gamedir.integer) ? "(using gamedir search)": "(not using gamedir search)");
+	if(!use_home) {
+		if (cfg_use_gamedir.integer) {
+			f = fopen(fullname, "rb");
+		}
+		if (f == NULL) {
+			f = fopen(fullname_moddefault, "rb");
+		}
+	}
+
+	if (f == NULL) {
+		Com_Printf("Couldn't load %s %s\n", filename, (cfg_use_gamedir.integer) ? "(using gamedir search)" : "(not using gamedir search)");
 		return;
 	}
 
