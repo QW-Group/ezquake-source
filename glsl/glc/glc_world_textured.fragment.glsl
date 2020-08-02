@@ -2,6 +2,10 @@
 
 #ezquake-definitions
 
+#ifdef EZ_USE_TEXTURE_ARRAYS
+#extension GL_EXT_texture_array : enable
+#endif
+
 varying float mix_floor;
 varying float mix_wall;
 
@@ -43,10 +47,6 @@ vec4 applyColorTinting(vec4 frag_colour)
 }
 #else
 #define applyColorTinting(x) (x)
-#endif
-
-#ifdef EZ_USE_TEXTURE_ARRAYS
-#extension GL_EXT_texture_array : enable
 #endif
 
 uniform sampler2D texSampler;
