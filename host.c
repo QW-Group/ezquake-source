@@ -47,6 +47,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "config_manager.h"
 #include "EX_qtvlist.h"
 #include "r_renderer.h"
+#include "central.h"
 
 double		curtime;
 
@@ -465,6 +466,8 @@ void Host_Frame (double time)
 	curtime += time;
 
 	CL_Frame (time);	// will also call SV_Frame
+
+	Central_ProcessResponses();
 }
 
 char *Host_PrintBars(char *s, int len)
@@ -682,6 +685,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	SV_Init ();
 #endif
 	CL_Init ();
+	Central_Init();
 
 	Cvar_CleanUpTempVars ();
 
@@ -774,6 +778,7 @@ void Host_Shutdown (void)
 	SV_Shutdown ("Server quit\n");
 #endif
 
+	Central_Shutdown();
 	CL_Shutdown ();
 	NET_Shutdown ();
 	Con_Shutdown();

@@ -500,6 +500,11 @@ else
     CFLAGS += -DCLIENTONLY
 endif
 
+ifdef CURL_LIBS
+    OBJS_c += \
+        central.o
+endif
+
 ifdef CONFIG_WINDOWS
     OBJS_c += \
         movie_avi.o \

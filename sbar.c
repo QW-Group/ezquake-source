@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sbar.c -- status bar code
 
 #include "quakedef.h"
+#include <jansson.h>
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
@@ -28,12 +29,33 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud_common.h"
 #include "vx_stuff.h"
 #include "gl_model.h"
+#include "r_texture.h"
 #include "teamplay.h"
 #include "utils.h"
 #include "sbar.h"
 #include "keys.h"
 
 #include "qsound.h"
+
+int CL_LoginImageId(const char* name);
+static int JSON_readint(json_t* json);
+static const char* JSON_readstring(json_t* json);
+static mpic_t* CL_LoginFlag(int id);
+qbool CL_LoginImageLoad(const char* path);
+static void OnChange_scr_scoreboard_login_flagfile(cvar_t*, char*, qbool*);
+
+typedef struct loginimage_s {
+	char name[16];
+	mpic_t pic;
+} loginimage_t;
+
+static struct {
+	loginimage_t* images;
+	int image_count;
+	int bot_image_index;
+	int max_width;
+	int max_height;
+} login_image_data;
 
 #define FONT_WIDTH                 8 // Used for allocating space for scoreboard columns
 #define SHORT_SPECTATOR_NAME_LEN   5 // if it's not teamplay, there is only room for 4 characters here
@@ -56,10 +78,15 @@ cvar_t  sbar_drawarmor      = {"scr_sbar_drawarmor",        "1"};
 cvar_t  sbar_drawammo       = {"scr_sbar_drawammo",         "1"};
 cvar_t  sbar_lowammo        = {"scr_sbar_lowammo",          "5"};
 
-cvar_t  hud_centerranking   = {"scr_scoreboard_centered",   "1"};
-cvar_t  hud_rankingpos_y    = {"scr_scoreboard_posy",       "0"};
-cvar_t  hud_rankingpos_x    = {"scr_scoreboard_posx",       "0"};
-cvar_t  hud_faderankings    = {"scr_scoreboard_fadescreen", "0"};
+cvar_t  hud_centerranking              = { "scr_scoreboard_centered",   "1" };
+cvar_t  hud_rankingpos_y               = { "scr_scoreboard_posy",       "0" };
+cvar_t  hud_rankingpos_x               = { "scr_scoreboard_posx",       "0" };
+cvar_t  hud_faderankings               = { "scr_scoreboard_fadescreen", "0" };
+cvar_t  scr_scoreboard_login_names     = { "scr_scoreboard_login_names", "1" };
+cvar_t  scr_scoreboard_login_indicator = { "scr_scoreboard_login_indicator", "&cffc*&r" };
+cvar_t  scr_scoreboard_login_color     = { "scr_scoreboard_login_color", "255 255 192" };
+cvar_t  scr_scoreboard_login_flagfile  = { "scr_scoreboard_login_flagfile", "flags", 0, OnChange_scr_scoreboard_login_flagfile };
+
 //cvar_t  hud_ranks_separate  = {"scr_ranks_separate",   "1"};
 // <-- mqwcl 0.96 oldhud customisation
 
@@ -275,6 +302,10 @@ void Sbar_Init(void)
 	Cvar_Register(&hud_rankingpos_y);
 	Cvar_Register(&hud_rankingpos_x);
 	Cvar_Register(&hud_faderankings);
+	Cvar_Register(&scr_scoreboard_login_names);
+	Cvar_Register(&scr_scoreboard_login_indicator);
+	Cvar_Register(&scr_scoreboard_login_color);
+	Cvar_Register(&scr_scoreboard_login_flagfile);
 	//Cvar_Register (&hud_ranks_separate);
 	// <-- mqwcl 0.96 oldhud customisation
 
@@ -300,6 +331,8 @@ void Sbar_Init(void)
 
 	Cmd_AddCommand("+showteamscores", Sbar_ShowTeamScores);
 	Cmd_AddCommand("-showteamscores", Sbar_DontShowTeamScores);
+
+	CL_LoginImageLoad(scr_scoreboard_login_flagfile.string);
 }
 
 void Request_Pings (void)
@@ -1207,6 +1240,7 @@ static void Sbar_DeathmatchOverlay(int start)
 	float scale = 1.0f;
 	float alpha = 1.0f;
 	qbool proportional = scr_scoreboard_proportional.integer;
+	qbool any_flags = false;
 
 	if (!start && hud_faderankings.value) {
 		Draw_FadeScreen(hud_faderankings.value);
@@ -1295,6 +1329,17 @@ static void Sbar_DeathmatchOverlay(int start)
 		}
 	}
 
+	for (i = 0; i < scoreboardlines && y <= SCOREBOARD_LASTROW; i++) {
+		k = fragsort[i];
+		s = &cl.players[k];
+
+		if (!s->name[0]) {
+			continue;
+		}
+
+		any_flags |= (s->loginname[0] && scr_scoreboard_login_indicator.string[0]);
+	}
+
 	y = start;
 
 	if (!scr_scoreboard_borderless.value) {
@@ -1318,8 +1363,11 @@ static void Sbar_DeathmatchOverlay(int start)
 		Draw_SStringAligned(x, y - 8, "team", scale, alpha, proportional, text_align_center, x + FONT_WIDTH * 4);
 		x += 5 * FONT_WIDTH;
 	}
+	if (any_flags) {
+		x += FONT_WIDTH;
+	}
 	Draw_SStringAligned(x, y - 8, "name", scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
-	x += 16 * FONT_WIDTH;
+	x += (any_flags ? 15 : 16) * FONT_WIDTH;
 	if (statswidth) {
 		stats_xoffset = x;
 
@@ -1481,6 +1529,18 @@ static void Sbar_DeathmatchOverlay(int start)
 
 			x += (cl.teamplay ? 11 : 6) * FONT_WIDTH; // move across to print the name
 
+			if (s->loginname[0] && scr_scoreboard_login_indicator.string[0]) {
+				mpic_t* flag = CL_LoginFlag(s->loginflag_id);
+				if (s->loginflag[0] && flag) {
+					Draw_FitPicAlphaCenter(x - FONT_WIDTH * 0.75, y, FONT_WIDTH * 1.6, FONT_WIDTH, flag, 1.0f);
+				}
+				else {
+					Draw_SStringAligned(x - FONT_WIDTH * 0.75, y, scr_scoreboard_login_indicator.string, scale, alpha, proportional, text_align_center, x + FONT_WIDTH * 1.6);
+				}
+			}
+			if (any_flags) {
+				x += FONT_WIDTH;
+			}
 			Draw_SStringAligned(x, y, s->name, scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
 
 			y += skip;
@@ -1512,7 +1572,30 @@ static void Sbar_DeathmatchOverlay(int start)
 			x += 5 * FONT_WIDTH;
 		}
 
-		Draw_SStringAligned(x, y, s->name, scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+		if (s->loginname[0] && scr_scoreboard_login_indicator.string[0]) {
+			mpic_t* flag = CL_LoginFlag(s->loginflag_id);
+			if (s->loginflag[0] && flag) {
+				Draw_FitPicAlphaCenter(x - FONT_WIDTH * 0.75, y, FONT_WIDTH * 1.6, FONT_WIDTH, flag, 1.0f);
+			}
+			else {
+				Draw_SStringAligned(x - FONT_WIDTH * 0.75, y, scr_scoreboard_login_indicator.string, scale, alpha, proportional, text_align_center, x + FONT_WIDTH * 1.6);
+			}
+		}
+		if (any_flags) {
+			x += FONT_WIDTH;
+		}
+		if (s->loginname[0] && scr_scoreboard_login_names.integer) {
+			if (scr_scoreboard_login_color.string[0]) {
+				color.c = RGBAVECT_TO_COLOR(scr_scoreboard_login_color.color);
+				Draw_SColoredStringAligned(x, y, s->loginname, &color, 1, scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+			}
+			else {
+				Draw_SStringAligned(x, y, s->loginname, scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+			}
+		}
+		else {
+			Draw_SStringAligned(x, y, s->name, scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+		}
 
 		if (statswidth) {
 			x = stats_xoffset;
@@ -2109,4 +2192,155 @@ void Sbar_Draw(void) {
 	{
 		Sbar_MiniDeathmatchOverlay ();
 	}
+}
+
+int CL_LoginImageId(const char* name)
+{
+	int index = -1, i;
+
+	if (name[0]) {
+		for (i = 0; i < login_image_data.image_count; ++i) {
+			if (!strcasecmp(name, login_image_data.images[i].name)) {
+				return i;
+			}
+		}
+	}
+	return index;
+}
+
+int CL_LoginImageBot(void)
+{
+	return login_image_data.bot_image_index;
+}
+
+qbool CL_LoginImageLoad(const char* path)
+{
+	json_error_t error;
+	char truepath[MAX_OSPATH];
+	json_t* json;
+	loginimage_t* new_login_images;
+	int new_login_image_count = 0, new_login_bot_image = -1;
+	int i, tex_width, tex_height, max_width = 0, max_height = 0;
+	json_t* val;
+
+	if (!path[0]) {
+		Q_free(login_image_data.images);
+		login_image_data.image_count = 0;
+		login_image_data.bot_image_index = -1;
+		return true;
+	}
+
+	strlcpy(truepath, "textures/scoreboard/", sizeof(truepath));
+	strlcat(truepath, path, sizeof(truepath));
+	COM_ForceExtensionEx(truepath, ".json", sizeof(truepath));
+	{
+		int json_len;
+		char* json_bytes = FS_LoadHeapFile(truepath, &json_len);
+		if (!json_bytes) {
+			Con_Printf("Unable to load %s\n", truepath);
+			return false;
+		}
+
+		json = json_loadb(json_bytes, json_len, 0, &error);
+		Q_free(json_bytes);
+	}
+	if (!json || !json_is_array(json)) {
+		Con_Printf("Invalid json file %s\n", truepath);
+		if (json) {
+			json_decref(json);
+		}
+		return false;
+	}
+
+	new_login_image_count = json_array_size(json);
+	new_login_images = Q_malloc(sizeof(new_login_images[0]) * new_login_image_count);
+	json_array_foreach(json, i, val) {
+		const char* code = JSON_readstring(json_object_get(val, "code"));
+		const char* path = JSON_readstring(json_object_get(val, "file"));
+		int x = JSON_readint(json_object_get(val, "x"));
+		int y = JSON_readint(json_object_get(val, "y"));
+		int width = JSON_readint(json_object_get(val, "width"));
+		int height = JSON_readint(json_object_get(val, "height"));
+		texture_ref texture;
+
+		strlcpy(truepath, "textures/scoreboard/", sizeof(truepath));
+		strlcat(truepath, path, sizeof(truepath));
+		COM_StripExtension(truepath, truepath, sizeof(truepath));
+
+		if (code == NULL || !code[0]) {
+			Q_free(new_login_images);
+			Con_Printf("Failed to load screenshot flags: json error on element#%d\n", i);
+			return false;
+		}
+
+		texture = R_LoadTextureImage(truepath, truepath, 0, 0, TEX_ALPHA | TEX_PREMUL_ALPHA | TEX_NOSCALE);
+		if (!R_TextureReferenceIsValid(texture)) {
+			Con_Printf("Unable to load %s\n", truepath);
+			return false;
+		}
+		tex_width = R_TextureWidth(texture);
+		tex_height = R_TextureHeight(texture);
+
+		x = max(x, 0);
+		y = max(y, 0);
+		width = (width < 0 ? tex_width : width);
+		height = (height < 0 ? tex_height : height);
+
+		width = min(width, tex_width - x);
+		height = min(height, tex_height - y);
+
+		strlcpy(new_login_images[i].name, code, sizeof(new_login_images[i].name));
+		new_login_images[i].pic.width = width;
+		new_login_images[i].pic.height = height;
+		new_login_images[i].pic.texnum = texture;
+		new_login_images[i].pic.sl = (1.0f * x) / tex_width;
+		new_login_images[i].pic.tl = (1.0f * y) / tex_height;
+		new_login_images[i].pic.sh = (1.0f * width) / tex_width;
+		new_login_images[i].pic.th = (1.0f * height) / tex_height;
+
+		max_width = max(width, max_width);
+		max_height = max(height, max_height);
+	}
+
+	login_image_data.images = new_login_images;
+	login_image_data.image_count = new_login_image_count;
+	login_image_data.bot_image_index = new_login_bot_image;
+	login_image_data.max_width = max_width;
+	login_image_data.max_width = max_height;
+
+	for (i = 0; i < sizeof(cl.players) / sizeof(cl.players[0]); ++i) {
+		cl.players[i].loginflag_id = CL_LoginImageId(cl.players[i].loginflag);
+	}
+
+	json_decref(json);
+	return true;
+}
+
+static void OnChange_scr_scoreboard_login_flagfile(cvar_t* cv, char* newvalue, qbool* cancel)
+{
+	*cancel = CL_LoginImageLoad(newvalue);
+}
+
+static mpic_t* CL_LoginFlag(int id)
+{
+	if (id < 0 || id >= login_image_data.image_count) {
+		return NULL;
+	}
+	return &login_image_data.images[id].pic;
+}
+
+static int JSON_readint(json_t* json)
+{
+	if (json_is_integer(json)) {
+		return (int)json_integer_value(json);
+	}
+	return -1;
+}
+
+static const char* JSON_readstring(json_t* json)
+{
+	if (json_is_string(json)) {
+		return json_string_value(json);
+	}
+	return "";
 }

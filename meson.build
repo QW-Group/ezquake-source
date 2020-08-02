@@ -93,6 +93,7 @@ if zlib.found()
 endif
 
 sources = [
+	'central.c',
 	'cl_cam.c',
 	'cl_cmd.c',
 	'cl_demo.c',
