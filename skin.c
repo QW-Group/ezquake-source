@@ -107,6 +107,7 @@ static char* Skin_AsNameOrId(player_info_t *sc)
 	switch (Skin_ForcingType(sc->team)) {
 	case 1: // get skin as player name
 		Util_ToValidFileName(sc->name, name, sizeof(name));
+		Q_strlwr(name);
 		return name;
 		break;
 
