@@ -1450,7 +1450,7 @@ void VID_NotifyActivity(void)
 
 int VID_SetDeviceGammaRamp(unsigned short *ramps)
 {
-	if (!sdl_window || COM_CheckParm(cmdline_param_client_nohardwaregamma)) {
+	if (!sdl_window || (COM_CheckParm(cmdline_param_client_nohardwaregamma) && Ruleset_AllowNoHardwareGamma())) {
 		return 0;
 	}
 

@@ -31,6 +31,7 @@
 - `/r_drawflat_mode` allows textures to be shaded rather than solid color (GLSL only)
 - `/timedemo2` command renders demo in stop-motion at a particular fps
 - `/enemyforceskins 1` will search for player names in lower case (#345)
+- Gamma-shifting is forced on when using MTFL
 - MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
 - Player LG beams hidden during intermission (no more beams in screenshots)
 
