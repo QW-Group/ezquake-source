@@ -36,10 +36,18 @@ void GLC_EmitWaterPoly(msurface_t* fa);
 
 qbool GLC_TurbSurfaceProgramCompile(void)
 {
-	if (R_ProgramRecompileNeeded(r_program_turb_glc, 0)) {
-		R_ProgramCompile(r_program_turb_glc);
-		R_ProgramUniform1i(r_program_uniform_turb_glc_texSampler, 0);
-		R_ProgramSetCustomOptions(r_program_turb_glc, 0);
+	extern cvar_t r_fastturb;
+	int option = (r_fastturb.integer ? 1 : 0);
+
+	if (R_ProgramRecompileNeeded(r_program_turb_glc, option)) {
+		if (option) {
+			R_ProgramCompileWithInclude(r_program_turb_glc, "#define FLAT_COLOR");
+		}
+		else {
+			R_ProgramCompile(r_program_turb_glc);
+			R_ProgramUniform1i(r_program_uniform_turb_glc_texSampler, 0);
+		}
+		R_ProgramSetCustomOptions(r_program_turb_glc, option);
 	}
 
 	return R_ProgramReady(r_program_turb_glc);
@@ -51,9 +59,13 @@ static void GLC_DrawWaterSurfaces_Program(void)
 	msurface_t* fa;
 	texture_ref prev_tex = null_texture_reference;
 	int index_count = 0;
+	float water_alpha = R_WaterAlpha();
 
 	R_ProgramUse(r_program_turb_glc);
-	R_ProgramUniform1f(r_program_uniform_turb_glc_time, cl.time);
+	if (!R_ProgramCustomOptions(r_program_turb_glc)) {
+		R_ProgramUniform1f(r_program_uniform_turb_glc_time, cl.time);
+		R_ProgramUniform1f(r_program_uniform_turb_glc_alpha, water_alpha);
+	}
 
 	for (fa = waterchain; fa; fa = fa->texturechain) {
 		glpoly_t *p;
@@ -65,7 +77,20 @@ static void GLC_DrawWaterSurfaces_Program(void)
 				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 				index_count = 0;
 			}
-			renderer.TextureUnitBind(0, prev_tex);
+			if (!R_ProgramCustomOptions(r_program_turb_glc)) {
+				renderer.TextureUnitBind(0, prev_tex);
+			}
+			else {
+				byte* base = SurfaceFlatTurbColor(fa->texinfo->texture);
+				float color[4];
+
+				color[0] = (base[0] / 255.0f) * water_alpha;
+				color[1] = (base[1] / 255.0f) * water_alpha;
+				color[2] = (base[2] / 255.0f) * water_alpha;
+				color[3] = water_alpha;
+
+				R_ProgramUniform4fv(r_program_uniform_turb_glc_color, color);
+			}
 		}
 
 		if (use_vbo) {

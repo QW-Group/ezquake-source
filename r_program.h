@@ -96,6 +96,8 @@ typedef enum {
 	r_program_uniform_hud_images_glc_secondarySampler,
 	r_program_uniform_brushmodel_alphatested_outlines,
 	r_program_uniform_brushmodel_alphatested_sampler,
+	r_program_uniform_turb_glc_alpha,
+	r_program_uniform_turb_glc_color,
 	r_program_uniform_count
 } r_program_uniform_id;
 

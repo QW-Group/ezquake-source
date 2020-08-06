@@ -248,6 +248,10 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_brushmodel_alphatested, "draw_outlines", 1, false },
 	// r_program_uniform_brushmodel_alphatested_sampler,
 	{ r_program_brushmodel_alphatested, "SamplerNumber", 1, false },
+	// r_program_uniform_turb_glc_alpha
+	{ r_program_turb_glc, "alpha", 1, false },
+	// r_program_uniform_turb_glc_color
+	{ r_program_turb_glc, "color", 1, false },
 };
 
 #ifdef C_ASSERT

@@ -70,8 +70,15 @@ static void R_InitialiseWorldStates(void)
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
 	state = R_CopyRenderingState(r_state_world_translucent_water, r_state_world_fast_opaque_water, "translucentWaterSurfacesState");
+	state->blendFunc = r_blendfunc_premultiplied_alpha;
+	state->blendingEnabled = true;
 	state->depth.mask_enabled = false; // FIXME: water-alpha < 0.9 only?
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
+
+	state = R_CopyRenderingState(r_state_world_fast_translucent_water, r_state_world_translucent_water, "translucentFastWater");
+	state->blendFunc = r_blendfunc_premultiplied_alpha;
+	state->blendingEnabled = true;
+	R_GLC_TextureUnitSet(state, 0, false, r_texunit_mode_replace);
 
 	state = R_InitRenderingState(r_state_world_alpha_surfaces, true, "alphaChainState", vao_brushmodel);
 	R_GLC_ConfigureAlphaTesting(state, true, r_alphatest_func_greater, 0.333f);
