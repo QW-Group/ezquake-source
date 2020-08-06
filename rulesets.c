@@ -403,6 +403,7 @@ static void Rulesets_MTFL(qbool enable)
 		}
 
 		rulesetDef.ruleset = rs_mtfl;
+		v_gamma.modified = true;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
@@ -414,6 +415,7 @@ static void Rulesets_MTFL(qbool enable)
 			Cvar_SetFlags(limited_min_cvars[i].var, Cvar_GetFlags(limited_min_cvars[i].var) & ~CVAR_RULESET_MIN);
 
 		rulesetDef.ruleset = rs_default;
+		v_gamma.modified = true;
 	}
 }
 
