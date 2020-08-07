@@ -33,15 +33,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // motion blur.
 void GLC_PolyBlend(float v_blend[4])
 {
-	R_ProgramUse(r_program_none);
-	GLC_StateBeginPolyBlend(v_blend);
+	color_t v_blend_color = RGBA_TO_COLOR(
+		bound(0, v_blend[0], 1) * 255,
+		bound(0, v_blend[1], 1) * 255,
+		bound(0, v_blend[2], 1) * 255,
+		bound(0, v_blend[3], 1) * 255
+	);
 
-	GLC_Begin(GL_QUADS);
-	GLC_Vertex2f(r_refdef.vrect.x, r_refdef.vrect.y);
-	GLC_Vertex2f(r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y);
-	GLC_Vertex2f(r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y + r_refdef.vrect.height);
-	GLC_Vertex2f(r_refdef.vrect.x, r_refdef.vrect.y + r_refdef.vrect.height);
-	GLC_End();
+	R_ApplyRenderingState(r_state_poly_blend);
+	Draw_AlphaRectangleRGB(r_refdef.vrect.x, r_refdef.vrect.y, r_refdef.vrect.width, r_refdef.vrect.height, 0.0f, true, v_blend_color);
 }
 
 void GLC_BrightenScreen(void)

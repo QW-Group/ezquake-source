@@ -497,12 +497,6 @@ void GLC_StateBeginBloomDraw(texture_ref texture)
 	renderer.TextureUnitBind(0, texture);
 }
 
-void GLC_StateBeginPolyBlend(float v_blend[4])
-{
-	R_ApplyRenderingState(r_state_poly_blend);
-	R_CustomColor(v_blend[0] * v_blend[3], v_blend[1] * v_blend[3], v_blend[2] * v_blend[3], v_blend[3]);
-}
-
 void GLC_StateBeginImageDraw(qbool is_text)
 {
 	extern cvar_t gl_alphafont;

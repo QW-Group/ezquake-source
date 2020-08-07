@@ -292,9 +292,7 @@ void V_ParseDamage (void)
 	if (cl.cshifts[CSHIFT_DAMAGE].percent > 150)
 		cl.cshifts[CSHIFT_DAMAGE].percent = 150;
 
-	fraction = v_damagecshift.value;
-	if (fraction < 0) fraction = 0;
-	if (fraction > 1) fraction = 1;
+	fraction = bound(0, v_damagecshift.value, 1);
 	cl.cshifts[CSHIFT_DAMAGE].percent *= fraction;
 
 	if (armor > blood) {
@@ -527,8 +525,8 @@ void V_CalcPowerupCshift(void)
 
 void V_CalcBlend (void)
 {
-	float r, g, b, a, a2;
-	int j;
+	float r, g, b, a, a2, t;
+	int j, old;
 	extern cvar_t gl_polyblend;
 
 	r = g = b = a= 0;
@@ -542,7 +540,9 @@ void V_CalcBlend (void)
 	}
 
 	// drop the damage value
-	cl.cshifts[CSHIFT_DAMAGE].percent -= cls.frametime * 150;
+	old = cl.cshifts[CSHIFT_DAMAGE].percent;
+	t = cls.frametime * 150;
+	cl.cshifts[CSHIFT_DAMAGE].percent -= t;
 	if (cl.cshifts[CSHIFT_DAMAGE].percent <= 0) {
 		cl.cshifts[CSHIFT_DAMAGE].percent = 0;
 	}
@@ -643,8 +643,9 @@ void V_UpdatePalette (void)
 		old_hwblend = gl_hwblend.value;
 	}
 
-	if (!new)
+	if (!new) {
 		return;
+	}
 
 	a = v_blend[3];
 
