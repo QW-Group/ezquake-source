@@ -106,6 +106,7 @@ extern int r_framecount;
 // palette
 void Check_Gamma(unsigned char *pal);
 void VID_SetPalette(unsigned char *palette);
+qbool R_OldGammaBehaviour(void);
 
 void R_Initialise(void);
 float R_WaterAlpha(void);

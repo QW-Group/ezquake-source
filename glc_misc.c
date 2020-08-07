@@ -46,7 +46,6 @@ void GLC_PolyBlend(float v_blend[4])
 
 void GLC_BrightenScreen(void)
 {
-	extern float vid_gamma;
 	float f;
 
 	if (vid_hwgamma_enabled) {
@@ -57,7 +56,11 @@ void GLC_BrightenScreen(void)
 	}
 
 	f = min(v_contrast.value, 3);
-	f = pow(f, vid_gamma);
+	if (R_OldGammaBehaviour()) {
+		extern float vid_gamma;
+
+		f = pow(f, vid_gamma);
+	}
 
 	R_ProgramUse(r_program_none);
 	GLC_StateBeginBrightenScreen();

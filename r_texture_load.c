@@ -393,7 +393,7 @@ texture_ref R_LoadTexturePixels(byte *data, const char *identifier, int width, i
 		R_ImagePreMultiplyAlpha(data, width, height, mode & TEX_ZERO_ALPHA);
 	}
 
-	if (gamma) {
+	if (R_OldGammaBehaviour() && gamma) {
 		for (i = 0; i < image_size; i++) {
 			data[4 * i] = vid_gamma_table[data[4 * i]];
 			data[4 * i + 1] = vid_gamma_table[data[4 * i + 1]];

@@ -393,7 +393,7 @@ void Cvar_Register(cvar_t *var)
 	}
 
 	if (var->defaultvalue) {
-		Sys_Error("Cvar_Register: defaultvalue alredy set for %s", var->name);
+		Sys_Error("Cvar_Register: defaultvalue already set for %s", var->name);
 	}
 
 	var->defaultvalue = Q_strdup_named(var->string, var->name);

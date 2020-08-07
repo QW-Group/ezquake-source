@@ -652,7 +652,7 @@ void V_UpdatePalette (void)
 		a = 0;
 	}
 
-	if (vid_gamma != 1.0) {
+	if (R_OldGammaBehaviour() && vid_gamma != 1.0) {
 		current_contrast = pow(current_contrast, vid_gamma);
 		current_gamma = current_gamma / vid_gamma;
 	}
@@ -1119,8 +1119,25 @@ void V_Init (void) {
 	Cvar_Register (&gl_hwblend);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
-	Cvar_Register (&v_gamma);
-	Cvar_Register (&v_contrast);
+	Cvar_Register(&v_gamma);
+	Cvar_Register(&v_contrast);
 
+	// we do not need this after host initialized
+	if (!host_initialized) {
+		char string = v_gamma.string[0];
+		int i;
+		float def_gamma = v_gamma.value;
+		extern float vid_gamma;
+
+		if ((i = COM_CheckParm(cmdline_param_client_gamma)) != 0 && i + 1 < COM_Argc()) {
+			def_gamma = Q_atof(COM_Argv(i + 1));
+		}
+
+		def_gamma = bound(0.3, def_gamma, 3);
+		Cvar_SetDefaultAndValue(&v_gamma, def_gamma, def_gamma);
+		v_gamma.modified = true;
+
+		vid_gamma = def_gamma;
+	}
 	Cvar_ResetCurrentGroup();
 }
