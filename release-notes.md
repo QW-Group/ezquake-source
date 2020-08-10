@@ -21,6 +21,7 @@
 - When using scaled framebuffer, screenshots use correct dimensions (3.5 bug, reported by homestx)
 - Fix rendering of fullbright textures that aren't luma/external-32bit textures (3.5 bug, reported by ciscon & lurq)
 - `-gamma` command line option now sets `/gl_gamma` default, rather than also setting the gamma adjustment on some in-game textures (old, very old)
+- `gl_detpacklights` now controls if coronas created on detpacks in TF (very old bug, reported by Trickle)
 
 ### Other changes
 
@@ -36,6 +37,7 @@
 - MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
 - Player LG beams hidden during intermission (no more beams in screenshots)
 - `-oldgamma` command line option to re-instate old `-gamma` behaviour
+- GLSL gamma now supported in classic renderer
 
 ### Build/meta
 

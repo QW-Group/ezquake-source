@@ -223,7 +223,7 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, 
 		}
 		else if (model->modhint == MOD_DETPACK) {
 			// VULT CORONAS
-			if (qmb_initialized) {
+			if (qmb_initialized && amf_detpacklights.integer) {
 				vec3_t liteorg, forward, right, up;
 				VectorCopy(ent->origin, liteorg);
 				AngleVectors(ent->angles, forward, right, up);
