@@ -526,7 +526,7 @@ void V_CalcPowerupCshift(void)
 void V_CalcBlend (void)
 {
 	float r, g, b, a, a2, t;
-	int j, old;
+	int j;
 	extern cvar_t gl_polyblend;
 
 	r = g = b = a= 0;
@@ -540,7 +540,6 @@ void V_CalcBlend (void)
 	}
 
 	// drop the damage value
-	old = cl.cshifts[CSHIFT_DAMAGE].percent;
 	t = cls.frametime * 150;
 	cl.cshifts[CSHIFT_DAMAGE].percent -= t;
 	if (cl.cshifts[CSHIFT_DAMAGE].percent <= 0) {
@@ -1125,7 +1124,6 @@ void V_Init (void) {
 
 	// we do not need this after host initialized
 	if (!host_initialized) {
-		char string = v_gamma.string[0];
 		int i;
 		float def_gamma = v_gamma.value;
 		extern float vid_gamma;

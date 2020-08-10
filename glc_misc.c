@@ -74,10 +74,10 @@ void GLC_BrightenScreen(void)
 			R_CustomColor(f - 1, f - 1, f - 1, 1);
 		}
 
-		GLC_Vertex2f(0, 0);
-		GLC_Vertex2f(vid.width, 0);
-		GLC_Vertex2f(vid.width, vid.height);
-		GLC_Vertex2f(0, vid.height);
+		GLC_Vertex2f(-1, -1);
+		GLC_Vertex2f(-1, 1);
+		GLC_Vertex2f(1, -1);
+		GLC_Vertex2f(1, 1);
 
 		f *= 0.5;
 	}

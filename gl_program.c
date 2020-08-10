@@ -252,6 +252,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_turb_glc, "alpha", 1, false },
 	// r_program_uniform_turb_glc_color
 	{ r_program_turb_glc, "color", 1, false },
+	// r_program_uniform_simple_color
+	{ r_program_simple, "color", 1, false }
 };
 
 #ifdef C_ASSERT
@@ -1101,6 +1103,7 @@ static void GL_BuildCoreDefinitions(void)
 	GL_DefineProgram_VF(r_program_post_process, "post-process-screen", true, post_process_screen, renderer_modern, GLM_CompilePostProcessProgram);
 	GL_DefineProgram_CS(r_program_lightmap_compute, "lightmaps", false, lighting, renderer_modern, GLM_CompileLightmapComputeProgram);
 	GL_DefineProgram_VF(r_program_fx_world_geometry, "world-geometry", true, fx_world_geometry, renderer_modern, GLM_CompileWorldGeometryProgram);
+	GL_DefineProgram_VF(r_program_simple, "simple", false, simple, renderer_modern, GLM_CompileSimpleProgram);
 #endif
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL

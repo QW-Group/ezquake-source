@@ -35,10 +35,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_state.h"
 #include "r_program.h"
 #include "r_renderer.h"
+#include "r_texture.h"
 
 #define POST_PROCESS_PALETTE    1
 #define POST_PROCESS_3DONLY     2
 #define POST_PROCESS_TONEMAP    4
+
+static texture_ref non_framebuffer_screen_texture;
 
 qbool GLM_CompilePostProcessVAO(void)
 {
@@ -79,9 +82,9 @@ qbool GLM_CompilePostProcessVAO(void)
 // If this returns false then the framebuffer will be blitted instead
 qbool GLM_CompilePostProcessProgram(void)
 {
-	extern cvar_t vid_framebuffer_palette, vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap;
+	extern cvar_t vid_software_palette, vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap;
 	int post_process_flags =
-		(vid_framebuffer_palette.integer ? POST_PROCESS_PALETTE : 0) |
+		(vid_software_palette.integer ? POST_PROCESS_PALETTE : 0) |
 		(vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY ? POST_PROCESS_3DONLY : 0) |
 		(vid_framebuffer_hdr.integer && vid_framebuffer_hdr_tonemap.integer ? POST_PROCESS_TONEMAP : 0);
 
@@ -108,6 +111,15 @@ qbool GLM_CompilePostProcessProgram(void)
 	return R_ProgramReady(r_program_post_process) && GLM_CompilePostProcessVAO();
 }
 
+qbool GLM_CompileSimpleProgram(void)
+{
+	if (R_ProgramRecompileNeeded(r_program_simple, 0)) {
+		R_ProgramCompile(r_program_post_process);
+	}
+
+	return R_ProgramReady(r_program_simple) && GLM_CompilePostProcessVAO();
+}
+
 void GLM_RenderFramebuffers(void)
 {
 	qbool flip2d = GL_FramebufferEnabled2D();
@@ -127,7 +139,68 @@ void GLM_RenderFramebuffers(void)
 		else if (flip2d) {
 			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(framebuffer_hud, fbtex_standard));
 		}
+		else {
+			// Create screen texture if required
+			if (!R_TextureReferenceIsValid(non_framebuffer_screen_texture) || R_TextureWidth(non_framebuffer_screen_texture) != glwidth || R_TextureHeight(non_framebuffer_screen_texture) != glheight) {
+				if (R_TextureReferenceIsValid(non_framebuffer_screen_texture)) {
+					renderer.TextureDelete(non_framebuffer_screen_texture);
+				}
+				non_framebuffer_screen_texture = R_LoadTexture("glm:postprocess", glwidth, glheight, NULL, TEX_NOCOMPRESS | TEX_NOSCALE | TEX_NO_TEXTUREMODE, 4);
+				if (R_TextureReferenceIsValid(non_framebuffer_screen_texture))
+					renderer.TextureSetFiltering(non_framebuffer_screen_texture, texture_minification_nearest, texture_magnification_nearest);
+			}
+
+			if (!R_TextureReferenceIsValid(non_framebuffer_screen_texture)) {
+				return;
+			}
+
+			// Copy from screen to texture
+			renderer.TextureUnitBind(0, non_framebuffer_screen_texture);
+			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, glwidth, glheight);
+		}
 		GL_DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	}
+}
+
+void GLM_BrightenScreen(void)
+{
+	float f;
+
+	if (vid_hwgamma_enabled) {
+		return;
+	}
+	if (v_contrast.value <= 1.0) {
+		return;
+	}
+
+	f = min(v_contrast.value, 3);
+	if (R_OldGammaBehaviour()) {
+		extern float vid_gamma;
+
+		f = pow(f, vid_gamma);
+	}
+
+	if (GLM_CompileSimpleProgram()) {
+		R_ProgramUse(r_program_simple);
+		R_BindVertexArray(vao_postprocess);
+		R_ApplyRenderingState(r_state_brighten_screen);
+
+		while (f > 1) {
+			if (f >= 2) {
+				float white[4] = { 1, 1, 1, 1 };
+
+				R_ProgramUniform4fv(r_program_uniform_simple_color, white);
+			}
+			else {
+				float shade[4] = { f - 1, f - 1, f - 1, f - 1 };
+
+				R_ProgramUniform4fv(r_program_uniform_simple_color, shade);
+			}
+
+			GL_DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+			f *= 0.5;
+		}
 	}
 }
 

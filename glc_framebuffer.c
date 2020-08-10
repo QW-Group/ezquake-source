@@ -35,15 +35,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_program.h"
 #include "r_renderer.h"
 #include "r_matrix.h"
+#include "r_texture.h"
 
 #define POST_PROCESS_PALETTE    1
 #define POST_PROCESS_3DONLY     2
 
+static texture_ref non_framebuffer_screen_texture;
+
 qbool GLC_CompilePostProcessProgram(void)
 {
-	extern cvar_t vid_framebuffer_palette, vid_framebuffer;
+	extern cvar_t vid_software_palette, vid_framebuffer;
 	int post_process_flags =
-		(vid_framebuffer_palette.integer ? POST_PROCESS_PALETTE : 0) |
+		(vid_software_palette.integer ? POST_PROCESS_PALETTE : 0) |
 		(vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY ? POST_PROCESS_3DONLY : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_post_process_glc, post_process_flags)) {
@@ -103,6 +106,25 @@ void GLC_RenderFramebuffers(void)
 			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(framebuffer_hud, fbtex_standard));
 
 			R_ProgramUniform1i(r_program_uniform_post_process_glc_overlay, 0);
+		}
+		else {
+			// Create screen texture if required
+			if (!R_TextureReferenceIsValid(non_framebuffer_screen_texture) || R_TextureWidth(non_framebuffer_screen_texture) != glwidth || R_TextureHeight(non_framebuffer_screen_texture) != glheight) {
+				if (R_TextureReferenceIsValid(non_framebuffer_screen_texture)) {
+					renderer.TextureDelete(non_framebuffer_screen_texture);
+				}
+				non_framebuffer_screen_texture = R_LoadTexture("glc:postprocess", glwidth, glheight, NULL, TEX_NOCOMPRESS | TEX_NOSCALE | TEX_NO_TEXTUREMODE, 4);
+				if (R_TextureReferenceIsValid(non_framebuffer_screen_texture))
+					renderer.TextureSetFiltering(non_framebuffer_screen_texture, texture_minification_nearest, texture_magnification_nearest);
+			}
+
+			if (!R_TextureReferenceIsValid(non_framebuffer_screen_texture)) {
+				return;
+			}
+
+			// Copy from screen to texture
+			renderer.TextureUnitBind(0, non_framebuffer_screen_texture);
+			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, glwidth, glheight);
 		}
 
 		R_IdentityModelView();

@@ -184,13 +184,13 @@ cvar_t r_verbose                  = {"vid_verbose",                "0",       CV
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
 cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH | CVAR_AUTO }; // It's here because it needs to be registered before window creation
 cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "0",       CVAR_LATCH };
+cvar_t vid_software_palette       = {"vid_software_palette",       "0",       CVAR_NO_RESET | CVAR_LATCH };
 
 cvar_t vid_framebuffer             = {"vid_framebuffer",               "0",       CVAR_NO_RESET | CVAR_LATCH, conres_changed_callback };
 cvar_t vid_framebuffer_blit        = {"vid_framebuffer_blit",          "0",       CVAR_NO_RESET };
 cvar_t vid_framebuffer_width       = {"vid_framebuffer_width",         "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
 cvar_t vid_framebuffer_height      = {"vid_framebuffer_height",        "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
 cvar_t vid_framebuffer_scale       = {"vid_framebuffer_scale",         "1",       CVAR_NO_RESET, conres_changed_callback };
-cvar_t vid_framebuffer_palette     = {"vid_framebuffer_palette",       "0",       CVAR_NO_RESET | CVAR_LATCH };
 cvar_t vid_framebuffer_depthformat = {"vid_framebuffer_depthformat",   "0",       CVAR_NO_RESET | CVAR_LATCH };
 cvar_t vid_framebuffer_hdr         = {"vid_framebuffer_hdr",           "0",       CVAR_NO_RESET | CVAR_LATCH };
 cvar_t vid_framebuffer_hdr_tonemap = {"vid_framebuffer_hdr_tonemap",   "0" };
@@ -848,7 +848,8 @@ static void VID_RegisterLatchCvars(void)
 #endif
 	Cvar_Register(&vid_gl_core_profile);
 	Cvar_Register(&vid_framebuffer);
-	Cvar_Register(&vid_framebuffer_palette);
+	Cvar_Register(&vid_software_palette);
+	Cmd_AddLegacyCommand("vid_framebuffer_palette", vid_software_palette.name);
 	Cvar_Register(&vid_framebuffer_depthformat);
 	Cvar_Register(&vid_framebuffer_hdr);
 	Cvar_Register(&vid_framebuffer_smooth);

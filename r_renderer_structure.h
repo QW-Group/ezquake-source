@@ -66,6 +66,7 @@ RENDERER_METHOD(void, PreRenderView, void)
 
 // Post-processing (screen)
 RENDERER_METHOD(void, PostProcessScreen, void)
+RENDERER_METHOD(void, BrightenScreen, void)
 RENDERER_METHOD(void, PolyBlend, float v_blend[4])
 
 // Performance

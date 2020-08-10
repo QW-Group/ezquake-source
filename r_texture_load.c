@@ -450,6 +450,9 @@ texture_ref R_LoadTexture(const char *identifier, int width, int height, byte *d
 	if (glt && !new_texture) {
 		return glt->reference;
 	}
+	else if (!glt) {
+		return null_texture_reference;
+	}
 
 	if (data) {
 		R_LoadTextureData(glt, width, height, data, mode, bpp);
