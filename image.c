@@ -1095,7 +1095,11 @@ qbool Image_CloseAPNG(void)
 
 	return true;
 }
-#else // WITH_APNG
+#endif // WITH_APNG
+#endif // WITH_PNG
+
+#ifndef WITH_APNG
+// This might be because IO-state isn't supported, or we're building without PNG support
 qbool Image_OpenAPNG(char* filename, int compression, int width, int height, int frames)
 {
 	return false;
@@ -1111,8 +1115,6 @@ qbool Image_CloseAPNG(void)
 	return false;
 }
 #endif
-
-#endif // WITH_PNG
 
 /************************************ TGA ************************************/
 
