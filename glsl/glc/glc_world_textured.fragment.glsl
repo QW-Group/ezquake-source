@@ -81,11 +81,7 @@ varying vec2 DetailCoord;
 
 void main()
 {
-#ifdef DRAW_TEXTURELESS
-	gl_FragColor = texture2D(texSampler, vec2(0, 0));
-#else
 	gl_FragColor = texture2D(texSampler, TextureCoord);
-#endif
 
 #ifdef DRAW_EXTRA_TEXTURES
 	vec4 lumaColor = texture2D(lumaSampler, TextureCoord);

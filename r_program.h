@@ -100,6 +100,7 @@ typedef enum {
 	r_program_uniform_turb_glc_alpha,
 	r_program_uniform_turb_glc_color,
 	r_program_uniform_simple_color,
+	r_program_uniform_world_textures_glc_texture_multiplier,
 	r_program_uniform_count
 } r_program_uniform_id;
 

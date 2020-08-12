@@ -27,17 +27,17 @@ attribute vec2 causticsCoord;
 varying float causticsScale;
 #endif
 
+// 0 for textureless, 1 for normal
+uniform float texture_multiplier;
+
 varying float mix_floor;
 varying float mix_wall;
 
 void main()
 {
 	gl_Position = ftransform();
-#ifdef DRAW_TEXTURELESS
-	TextureCoord = vec2(0, 0);
-#else
-	TextureCoord = gl_MultiTexCoord0.st;
-#endif
+	TextureCoord = gl_MultiTexCoord0.st * texture_multiplier;
+
 #ifdef DRAW_LIGHTMAPS
 #ifdef EZ_USE_TEXTURE_ARRAYS
 	LightmapCoord = gl_MultiTexCoord1.xyz;

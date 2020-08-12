@@ -253,7 +253,9 @@ static r_program_uniform_t program_uniforms[] = {
 	// r_program_uniform_turb_glc_color
 	{ r_program_turb_glc, "color", 1, false },
 	// r_program_uniform_simple_color
-	{ r_program_simple, "color", 1, false }
+	{ r_program_simple, "color", 1, false },
+	// r_program_uniform_world_textures_glc_texture_multiplier
+	{ r_program_world_textured_glc, "texture_multiplier", 1, false },
 };
 
 #ifdef C_ASSERT

@@ -18,10 +18,11 @@
 - Skip rendering glyphs for spaces when the line has been turned red (old, affected server browser)
 - `/gl_texturemode` doesn't affect the texture used for framebuffers (3.5 bug, reported by hemostx)
 - When using scaled framebuffer, mouse cursor co-ordinates are correct (3.5 bug, reported by hemostx)
-- When using scaled framebuffer, screenshots use correct dimensions (3.5 bug, reported by homestx)
+- When using scaled framebuffer, screenshots use correct dimensions (3.5 bug, reported by hemostx)
 - Fix rendering of fullbright textures that aren't luma/external-32bit textures (3.5 bug, reported by ciscon & lurq)
 - `-gamma` command line option now sets `/gl_gamma` default, rather than also setting the gamma adjustment on some in-game textures (old, very old)
-- `gl_detpacklights` now controls if coronas created on detpacks in TF (very old bug, reported by Trickle)
+- `/gl_detpacklights` now controls if coronas created on detpacks in TF (very old bug, reported by Trickle)
+- When using `/gl_textureless 1` & glsl path in classic renderer, bmodel entities rendered textureless (3.5 bug, reported by hemostx)
 
 ### Other changes
 
@@ -250,7 +251,7 @@
   - weapon dropped now based on active weapon when dying, not last weapon fired
   - {} white-text wasn't stripped from item name cvars
 - Halflife maps had wrong bounding box sizes
-- `hud_sortrules_includeself 0` could lead to player not being included in visible list
+- `/hud_sortrules_includeself 0` could lead to player not being included in visible list
 
 ### Other changes
 

@@ -1125,6 +1125,7 @@ void R_GLC_DisableTexturePointer(int unit)
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		R_TraceLogAPICall("glDisableClientState[unit %d](GL_TEXTURE_COORD_ARRAY)", unit);
 		opengl.rendering_state.textureUnits[unit].va.enabled = false;
+		opengl.rendering_state.glc_vao_force_rebind = true;
 	}
 }
 

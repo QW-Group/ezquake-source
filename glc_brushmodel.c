@@ -528,11 +528,12 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 
 	qbool draw_textureless = gl_textureless.integer && model->isworldmodel;
 
-	R_TraceEnterFunctionRegion;
-
 	GLC_WorldAllocateTextureUnits(&allocations, model, false, lumas_only);
-	if (lumas_only && !allocations.useLumaTextures)
+	if (lumas_only && !allocations.useLumaTextures) {
 		return;
+	}
+
+	R_TraceEnterFunctionRegion;
 
 	GLC_LightmapArrayToggle(false);
 	R_ApplyRenderingState(allocations.rendering_state);
@@ -728,7 +729,7 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 	R_TraceLeaveFunctionRegion;
 }
 
-#define GLC_WORLD_TEXTURELESS    1
+//#define GLC_WORLD_TEXTURELESS    1
 #define GLC_WORLD_FULLBRIGHTS    2
 #define GLC_WORLD_LUMATEXTURES   4
 #define GLC_WORLD_DETAIL         8
@@ -756,7 +757,6 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 	drawLumas = allocations->couldUseLumaTextures;
 
 	options =
-		(gl_textureless.integer ? GLC_WORLD_TEXTURELESS : 0) |
 		(allocations->lmTextureUnit >= 0 ? GLC_WORLD_LIGHTMAPS : 0) |
 		(drawLumas ? GLC_WORLD_LUMATEXTURES : 0) |
 		(allocations->fbTextureUnit >= 0 && gl_fb_bmodels.integer ? GLC_WORLD_FULLBRIGHTS : 0) |
@@ -774,9 +774,6 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 
 		allocations->matTextureUnit = 0;
 
-		if (options & GLC_WORLD_TEXTURELESS) {
-			strlcat(definitions, "#define DRAW_TEXTURELESS\n", sizeof(definitions));
-		}
 		if (options & GLC_WORLD_LUMATEXTURES) {
 			strlcat(definitions, "#define DRAW_LUMA_TEXTURES\n", sizeof(definitions));
 		}
@@ -865,7 +862,6 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset, texture_unit_allocation_t* allocations)
 {
 	extern cvar_t gl_lumatextures;
-	extern cvar_t gl_textureless;
 	int index_count = 0;
 	int i;
 	msurface_t *s, *prev;
@@ -1048,7 +1044,7 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 
 static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset)
 {
-	extern cvar_t gl_program_world;
+	extern cvar_t gl_program_world, gl_textureless;
 	texture_unit_allocation_t allocations;
 
 	if (gl_program_world.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_WorldTexturedProgramCompile(&allocations, model)) {
@@ -1056,6 +1052,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 		R_ProgramUniform1f(r_program_uniform_world_textured_glc_time, cl.time);
 		R_ProgramUniform3f(r_program_uniform_world_textured_glc_r_floorcolor, r_floorcolor.color[0] / 255.0f, r_floorcolor.color[1] / 255.0f, r_floorcolor.color[2] / 255.0f);
 		R_ProgramUniform3f(r_program_uniform_world_textured_glc_r_wallcolor, r_wallcolor.color[0] / 255.0f, r_wallcolor.color[1] / 255.0f, r_wallcolor.color[2] / 255.0f);
+		R_ProgramUniform1f(r_program_uniform_world_textures_glc_texture_multiplier, model->isworldmodel && gl_textureless.integer ? 0.0f : 1.0f);
 
 		GLC_DrawTextureChains_GLSL(ent, model, caustics, polygonOffset, &allocations);
 		R_ProgramUse(r_program_none);
