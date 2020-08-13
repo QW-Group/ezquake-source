@@ -533,6 +533,7 @@ static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, const char *desc)
 fail:
 	// Q_free is safe to call on NULL pointers
 	Q_free(funcs);
+	Q_free(zip->handle);
 	Q_free(zip->files);
 	Q_free(zip);
 	return NULL;
