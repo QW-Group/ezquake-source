@@ -565,18 +565,34 @@ static glm_worldmodel_req_t* GLM_DrawTexturedChain(glm_worldmodel_req_t* req, ms
 	return req;
 }
 
+qbool GLM_CompilePostProcessVAO(void);
+
+qbool GLM_CompileSimple3dProgram(void)
+{
+	if (R_ProgramRecompileNeeded(r_program_simple3d, 0)) {
+		R_ProgramCompile(r_program_simple3d);
+	}
+
+	return R_ProgramReady(r_program_simple3d) && GLM_CompilePostProcessVAO();
+}
+
 static void GLM_DrawWorldModelOutlines(const glm_brushmodel_drawcall_t* drawcall)
 {
 	int begin = -1;
 	int i;
 	uintptr_t extra_offset = buffers.BufferOffset(r_buffer_brushmodel_drawcall_indirect);
+	float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+	if (!GLM_CompileSimple3dProgram()) {
+		return;
+	}
 
 	//
-	R_ProgramUniform1i(r_program_uniform_brushmodel_outlines, 1);
-
 	GLM_StateBeginDrawWorldOutlines();
+	R_ProgramUse(r_program_simple3d);
+	R_ProgramUniform4fv(r_program_uniform_simple3d_color, color);
 
-	for (i = 0; i <= drawcall->batch_count; ++i) {
+	for (i = 0; i < drawcall->batch_count; ++i) {
 		if (!drawcall->worldmodel_requests[i].worldmodel) {
 			if (begin >= 0) {
 				// Draw outline models so far
@@ -605,9 +621,6 @@ static void GLM_DrawWorldModelOutlines(const glm_brushmodel_drawcall_t* drawcall
 			sizeof(drawcall->worldmodel_requests[0])
 		);
 	}
-
-	// Valid to reset the uniforms here as this is the only code that expects it
-	R_ProgramUniform1i(r_program_uniform_brushmodel_outlines, 0);
 }
 
 static glm_brushmodel_drawcall_t* GL_FlushWorldModelBatch(void)

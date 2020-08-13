@@ -107,9 +107,12 @@ static void R_InitialiseWorldStates(void)
 
 	state = R_InitRenderingState(r_state_world_outline, true, "mapOutlineState", vao_brushmodel);
 	state->polygonOffset.option = r_polygonoffset_outlines;
+	state->polygonMode = r_polygonmode_line;
 	state->depth.mask_enabled = false;
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_premultiplied_alpha;
 
 	state = R_InitRenderingState(r_state_alpha_surfaces_offset_glm, true, "glmAlphaOffsetWorldState", vao_brushmodel);
 	state->polygonOffset.option = r_polygonoffset_standard;

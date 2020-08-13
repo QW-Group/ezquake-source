@@ -114,7 +114,7 @@ qbool GLM_CompilePostProcessProgram(void)
 qbool GLM_CompileSimpleProgram(void)
 {
 	if (R_ProgramRecompileNeeded(r_program_simple, 0)) {
-		R_ProgramCompile(r_program_post_process);
+		R_ProgramCompile(r_program_simple);
 	}
 
 	return R_ProgramReady(r_program_simple) && GLM_CompilePostProcessVAO();
