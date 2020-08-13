@@ -910,7 +910,6 @@ static void CM_LoadClipnodesBSP2(lump_t *l)
 
 static qbool CM_LoadPhysicsNormalsData(byte* data, int datalength)
 {
-	extern cvar_t pm_rampjump;
 	mphysicsnormal_t* in = (mphysicsnormal_t*)(data + 8);
 	float* cvars = (float*)data;
 	int i;
@@ -919,7 +918,12 @@ static qbool CM_LoadPhysicsNormalsData(byte* data, int datalength)
 		return false;
 	}
 
-	Cvar_SetValue(&pm_rampjump, LittleFloat(cvars[0]));
+#ifndef CLIENTONLY
+	{
+		extern cvar_t pm_rampjump;
+		Cvar_SetValue(&pm_rampjump, LittleFloat(cvars[0]));
+	}
+#endif
 	// Meag: previously the maximum speed was set here but I don't think it should be map-specific (?)
 
 	for (i = 0; i < numclipnodes; ++i) {
@@ -937,12 +941,16 @@ static void CM_LoadPhysicsNormals(int filelen)
 	//   As client-side movement prediction will be incorrect if physics normals don't
 	//     match, I strongly recommend the .bspx solution
 	bspx_header_t* bspx;
-	extern cvar_t pm_rampjump;
 	int i;
 	qbool bspx_loaded = false;
 
 	// Allocate memory, all maps default to rampjump off
-	Cvar_SetValue(&pm_rampjump, 0);
+#ifndef CLIENTONLY
+	{
+		extern cvar_t pm_rampjump;
+		Cvar_SetValue(&pm_rampjump, 0);
+	}
+#endif
 	map_physicsnormals = Hunk_AllocName(numclipnodes * sizeof(map_physicsnormals[0]), loadname);
 
 	// Try and load from BSPX lump

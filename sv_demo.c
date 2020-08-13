@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // sv_demo.c - mvd demo related code
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 // minimal cache which can be used for demos, must be few times greater than DEMO_FLUSH_CACHE_IF_LESS_THAN_THIS
@@ -1839,3 +1840,5 @@ const char* SV_MVDDemoName(void)
 
 	return NULL;
 }
+
+#endif // CLIENTONLY

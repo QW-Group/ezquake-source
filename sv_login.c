@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	
 */
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 #define MAX_ACCOUNTS 1000
@@ -682,3 +683,5 @@ void SV_LoginCheckTimeOut(client_t *cl)
 		SV_DropClient(cl);
 	}
 }
+
+#endif // CLIENTONLY

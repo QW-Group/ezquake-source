@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sv_move.c -- monster movement
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 #define	STEPSIZE	18
@@ -411,3 +412,5 @@ void SV_MoveToGoal (void)
 		SV_NewChaseDir (ent, goal, dist);
 	}
 }
+
+#endif // CLIENTONLY

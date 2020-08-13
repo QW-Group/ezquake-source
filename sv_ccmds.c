@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	
 */
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 cvar_t	sv_cheats = {"sv_cheats", "0"};
@@ -1886,3 +1887,5 @@ void SV_InitOperatorCommands (void)
 
 	Cmd_AddCommand ("master_rcon_password", SV_MasterPassword_f);
 }
+
+#endif // CLIENTONLY

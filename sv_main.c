@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qwsvdef.h"
 
+#ifndef CLIENTONLY
 #ifdef SERVERONLY
 
 qbool       host_initialized;
@@ -4005,3 +4006,5 @@ int Sys_compare_by_name (const void *a, const void *b)
 {
 	return strncmp(((file_t *)a)->name, ((file_t *)b)->name, MAX_DEMO_NAME);
 }
+
+#endif // CLIENTONLY

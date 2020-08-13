@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // sv_save.c
 
+#ifndef CLIENTONLY
 #ifdef SERVERONLY
 #include "qwsvdef.h"
 #else
@@ -305,3 +306,5 @@ void SV_LoadGame_f(void)
 		svs.clients->spawn_parms[i] = spawn_parms[i];
 }
 
+
+#endif // CLIENTONLY

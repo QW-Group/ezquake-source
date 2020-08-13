@@ -20,6 +20,7 @@
  *  
  */
 
+#ifndef CLIENTONLY
 #ifdef USE_PR2
 
 #include "qwsvdef.h"
@@ -87,3 +88,5 @@ void ED2_PrintEdicts (void)
 }
 
 #endif /* USE_PR2 */
+
+#endif // CLIENTONLY

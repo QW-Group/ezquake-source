@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // world.c -- world query functions
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 /*
@@ -771,3 +772,5 @@ trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, 
 
 	return clip.trace;
 }
+
+#endif // CLIENTONLY

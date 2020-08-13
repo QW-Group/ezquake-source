@@ -20,6 +20,7 @@
  *  
  */
 
+#ifndef CLIENTONLY
 #ifdef USE_PR2
 
 #include "qwsvdef.h"
@@ -572,3 +573,5 @@ void PR2_ClearEdict(edict_t* e)
 }
 
 #endif /* USE_PR2 */
+
+#endif // CLIENTONLY

@@ -72,9 +72,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern qbool ActiveApp, Minimized;
 
+#ifndef CLIENTONLY
 static void Dev_PhysicsNormalSet(void);
 static void Dev_PhysicsNormalSave(void);
 static void Dev_PhysicsNormalShow(void);
+#endif
 
 static void Cl_Reset_Min_fps_f(void);
 void CL_QWURL_ProcessChallenge(const char *parameters);
@@ -1846,11 +1848,13 @@ static void CL_InitLocal (void)
 	}
 #endif
 
+#ifndef CLIENTONLY
 	if (IsDeveloperMode()) {
 		Cmd_AddCommand("dev_physicsnormalset", Dev_PhysicsNormalSet);
 		Cmd_AddCommand("dev_physicsnormalshow", Dev_PhysicsNormalShow);
 		Cmd_AddCommand("dev_physicsnormalsave", Dev_PhysicsNormalSave);
 	}
+#endif
 
 	{
 		extern void GL_BenchmarkLightmapFormats(void);
@@ -2581,6 +2585,7 @@ void OnChangeDemoTeamplay (cvar_t *var, char *value, qbool *cancel)
 
 
 
+#ifndef CLIENTONLY
 
 void Dev_PhysicsNormalShow(void)
 {
@@ -2704,6 +2709,8 @@ void Dev_PhysicsNormalSave(void)
 
 	Con_Printf("Wrote %s\n", filename);
 }
+
+#endif // !CLIENTONLY
 
 void Cache_Flush(void)
 {

@@ -20,8 +20,8 @@
  *  
  */
 
+#ifndef CLIENTONLY
 #ifdef USE_PR2
-
 #include "qwsvdef.h"
 
 #define SETUSERINFO_STAR          (1<<0) // allow set star keys
@@ -3039,3 +3039,5 @@ void PR2_InitProg(void)
 	}
 }
 #endif /* USE_PR2 */
+
+#endif // CLIENTONLY

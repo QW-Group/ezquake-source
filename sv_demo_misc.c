@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // sv_demo_misc.c - misc demo related stuff, helpers
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 #ifndef SERVERONLY
 #include "pcre.h"
@@ -1070,3 +1071,5 @@ char *quote (char *str)
 	*s = '\0';
 	return out;
 }
+
+#endif // CLIENTONLY

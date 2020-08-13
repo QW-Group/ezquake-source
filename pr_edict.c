@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sv_edict.c -- entity dictionary
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 dprograms_t		*progs;
@@ -1269,3 +1270,5 @@ int NUM_FOR_EDICT(edict_t *e)
 
 	return b;
 }
+
+#endif // CLIENTONLY

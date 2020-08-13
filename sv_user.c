@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sv_user.c -- server code for moving users
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 edict_t	*sv_player;
@@ -4038,3 +4039,5 @@ void SV_UserInit (void)
 	Cvar_Register (&sv_voip_record);
 #endif
 }
+
+#endif // CLIENTONLY

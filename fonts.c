@@ -442,6 +442,8 @@ void Draw_LoadFont_f(void)
 	}
 }
 
+// FIXME, should be in client but relies on Sys_listdir
+#ifndef CLIENTONLY
 void Draw_ListFonts_f(void)
 {
 	char path[MAX_OSPATH];
@@ -487,11 +489,14 @@ void Draw_ListFonts_f(void)
 	}
 	Con_Printf("Found %d/%d files in %s\n", printed, dir.numfiles, path);
 }
+#endif
 
 void FontInitialise(void)
 {
 	Cmd_AddCommand("fontload", Draw_LoadFont_f);
+#ifndef CLIENTONLY // FIXME
 	Cmd_AddCommand("fontlist", Draw_ListFonts_f);
+#endif
 
 	Cvar_Register(&font_facepath);
 	Cvar_Register(&font_capitalize);
