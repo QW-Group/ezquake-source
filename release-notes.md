@@ -24,9 +24,11 @@
 - `/gl_detpacklights` now controls if coronas created on detpacks in TF (very old bug, reported by Trickle)
 - When using `/gl_textureless 1` & glsl path in classic renderer, bmodel entities rendered textureless (3.5 bug, reported by hemostx)
 - `/gl_outline 2` fixed (3.5 bug, reported by fourier)
+- Fixed bug causing read-only file handle to config being kept open, preventing backup from being taken (old bug)
 
 ### Other changes
 
+- ruleset `thunderdome` now allows `/gl_outline` (requested by VVD)
 - `/cfg_backup` will now not save the config if backup cannot be taken
 - `/vid_framebuffer_smooth` controls linear or nearest filtering (thanks to Calinou)
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
