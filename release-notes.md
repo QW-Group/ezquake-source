@@ -23,6 +23,7 @@
 - `-gamma` command line option now sets `/gl_gamma` default, rather than also setting the gamma adjustment on some in-game textures (old, very old)
 - `/gl_detpacklights` now controls if coronas created on detpacks in TF (very old bug, reported by Trickle)
 - When using `/gl_textureless 1` & glsl path in classic renderer, bmodel entities rendered textureless (3.5 bug, reported by hemostx)
+- `/gl_outline 2` fixed (3.5 bug, reported by fourier)
 
 ### Other changes
 

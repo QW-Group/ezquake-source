@@ -179,6 +179,7 @@ static void GLC_DrawFlat_GLSL(model_t* model, qbool polygonOffset)
 	unsigned int lightmap_count = R_LightmapCount();
 	qbool first_lightmap_surf = true;
 	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer;
+	qbool clear_chains = !R_DrawWorldOutlines();
 
 	GLC_LightmapArrayToggle(true);
 
@@ -218,16 +219,23 @@ static void GLC_DrawFlat_GLSL(model_t* model, qbool polygonOffset)
 			}
 			// } END shaman FIX /r_drawflat + /gl_caustics
 
-			prev = s;
-			s = s->drawflatchain;
-			prev->drawflatchain = NULL;
+			if (clear_chains) {
+				prev = s;
+				s = s->drawflatchain;
+				prev->drawflatchain = NULL;
+			}
+			else {
+				s = s->drawflatchain;
+			}
 		}
 		if (index_count) {
 			GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 			index_count = 0;
 		}
 
-		model->drawflat_chain = NULL;
+		if (clear_chains) {
+			model->drawflat_chain = NULL;
+		}
 	}
 
 	// go through lightmap chains
@@ -251,11 +259,18 @@ static void GLC_DrawFlat_GLSL(model_t* model, qbool polygonOffset)
 					index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
 				}
 
-				prev = surf;
-				surf = surf->drawflatchain;
-				prev->drawflatchain = NULL;
+				if (clear_chains) {
+					prev = surf;
+					surf = surf->drawflatchain;
+					prev->drawflatchain = NULL;
+				}
+				else {
+					surf = surf->drawflatchain;
+				}
 			}
-			R_ClearDrawflatLightmapChain(i);
+			if (clear_chains) {
+				R_ClearDrawflatLightmapChain(i);
+			}
 		}
 	}
 
@@ -272,6 +287,7 @@ static void GLC_DrawFlat_Immediate(model_t* model, qbool polygonOffset)
 	qbool first_surf = true;
 	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer;
 	qbool use_vbo = buffers.supported && modelIndexes;
+	qbool clear_chains = !R_DrawWorldOutlines();
 	byte current[3] = { 255, 255, 255 }, desired[4] = { 255, 255, 255, 255 };
 	unsigned int lightmap_count = R_LightmapCount();
 	int index_count = 0;
@@ -327,9 +343,17 @@ static void GLC_DrawFlat_Immediate(model_t* model, qbool polygonOffset)
 		}
 		// } END shaman FIX /r_drawflat + /gl_caustics
 
-		prev = s;
-		s = s->drawflatchain;
-		prev->drawflatchain = NULL;
+		if (clear_chains) {
+			prev = s;
+			s = s->drawflatchain;
+			prev->drawflatchain = NULL;
+		}
+		else {
+			s = s->drawflatchain;
+		}
+	}
+	if (clear_chains) {
+		model->drawflat_chain = NULL;
 	}
 
 	if (index_count) {
@@ -382,11 +406,18 @@ static void GLC_DrawFlat_Immediate(model_t* model, qbool polygonOffset)
 					}
 				}
 
-				prev = surf;
-				surf = surf->drawflatchain;
-				prev->drawflatchain = NULL;
+				if (clear_chains) {
+					prev = surf;
+					surf = surf->drawflatchain;
+					prev->drawflatchain = NULL;
+				}
+				else {
+					surf = surf->drawflatchain;
+				}
 			}
-			R_ClearDrawflatLightmapChain(i);
+			if (clear_chains) {
+				R_ClearDrawflatLightmapChain(i);
+			}
 		}
 	}
 
@@ -518,6 +549,7 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 
 	qbool drawfullbrights = false;
 	qbool drawlumas = false;
+	qbool clear_chains = !R_DrawWorldOutlines();
 
 	qbool texture_change;
 	texture_ref current_material = null_texture_reference;
@@ -690,9 +722,14 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 				}
 			}
 
-			prev = s;
-			s = s->texturechain;
-			prev->texturechain = NULL;
+			if (clear_chains) {
+				prev = s;
+				s = s->texturechain;
+				prev->texturechain = NULL;
+			}
+			else {
+				s = s->texturechain;
+			}
 		}
 	}
 
@@ -868,6 +905,7 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 
 	qbool requires_fullbright_pass = false;
 	qbool requires_luma_pass = false;
+	qbool clear_chains = !R_DrawWorldOutlines();
 
 	qbool texture_change, uniform_change;
 	texture_ref current_material = null_texture_reference;
@@ -999,9 +1037,14 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 				}
 			}
 
-			prev = s;
-			s = s->texturechain;
-			prev->texturechain = NULL;
+			if (clear_chains) {
+				prev = s;
+				s = s->texturechain;
+				prev->texturechain = NULL;
+			}
+			else {
+				s = s->texturechain;
+			}
 		}
 	}
 
