@@ -38,16 +38,21 @@ typedef enum {
 		extern unsigned char sourcename##_fragment_glsl[]; \
 		extern unsigned int sourcename##_fragment_glsl_len; \
 		extern qbool compile_function(void); \
-		memset(&program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
-		program_data[program_id].friendly_name = name; \
-		program_data[program_id].needs_params = expect_params; \
-		program_data[program_id].shaders[shadertype_vertex].text = (const char*)sourcename##_vertex_glsl; \
-		program_data[program_id].shaders[shadertype_vertex].length = sourcename##_vertex_glsl_len; \
-		program_data[program_id].shaders[shadertype_fragment].text = (const char*)sourcename##_fragment_glsl; \
-		program_data[program_id].shaders[shadertype_fragment].length = sourcename##_fragment_glsl_len; \
-		program_data[program_id].initialised = true; \
-		program_data[program_id].renderer_id = renderer; \
-		program_data[program_id].compile_func = compile_function; \
+		int i; \
+\
+		for (i = 0; i < MAX_SUBPROGRAMS; ++i) { \
+			gl_program_t* prog = R_SpecificSubProgram((program_id), i); \
+			memset(&prog->shaders, 0, sizeof(prog->shaders)); \
+			strlcpy(prog->friendly_name, va("%s[%d]", (name), i), sizeof(prog->friendly_name)); \
+			prog->needs_params = expect_params; \
+			prog->shaders[shadertype_vertex].text = (const char*)sourcename##_vertex_glsl; \
+			prog->shaders[shadertype_vertex].length = sourcename##_vertex_glsl_len; \
+			prog->shaders[shadertype_fragment].text = (const char*)sourcename##_fragment_glsl; \
+			prog->shaders[shadertype_fragment].length = sourcename##_fragment_glsl_len; \
+			prog->initialised = true; \
+			prog->renderer_id = renderer; \
+			prog->compile_func = compile_function; \
+		} \
 	}
 
 #define GL_DefineProgram_CS(program_id, name, expect_params, sourcename, renderer, compile_function) \
@@ -55,18 +60,22 @@ typedef enum {
 		extern unsigned char sourcename##_compute_glsl[]; \
 		extern unsigned int sourcename##_compute_glsl_len; \
 		extern qbool compile_function(void); \
-		memset(program_data[program_id].shaders, 0, sizeof(program_data[program_id].shaders)); \
-		program_data[program_id].friendly_name = name; \
-		program_data[program_id].needs_params = expect_params; \
-		program_data[program_id].shaders[shadertype_compute].text = (const char*)sourcename##_compute_glsl; \
-		program_data[program_id].shaders[shadertype_compute].length = sourcename##_compute_glsl_len; \
-		program_data[program_id].initialised = true; \
-		program_data[program_id].renderer_id = renderer; \
-		program_data[program_id].compile_func = compile_function; \
+		int i; \
+\
+		for (i = 0; i < MAX_SUBPROGRAMS; ++i) { \
+			gl_program_t* prog = R_SpecificSubProgram((program_id), i); \
+			memset(prog->shaders, 0, sizeof(prog->shaders)); \
+			strlcat(prog->friendly_name, name, sizeof(prog->friendly_name)); \
+			prog->needs_params = expect_params; \
+			prog->shaders[shadertype_compute].text = (const char*)sourcename##_compute_glsl; \
+			prog->shaders[shadertype_compute].length = sourcename##_compute_glsl_len; \
+			prog->initialised = true; \
+			prog->renderer_id = renderer; \
+			prog->compile_func = compile_function; \
+		} \
 	}
 
 static void GL_BuildCoreDefinitions(void);
-static qbool GL_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, unsigned int length);
 
 static const GLenum glBarrierFlags[] = {
 	GL_SHADER_IMAGE_ACCESS_BARRIER_BIT,
@@ -93,8 +102,23 @@ typedef struct gl_shader_def_s {
 
 typedef qbool(*program_compile_func_t)(void);
 
+#define MAX_SUBPROGRAMS 32
+#define R_CurrentSubProgram(program_id) (&program_data[(program_id)][program_currentSubProgram[(program_id)]])
+#define R_SpecificSubProgram(program_id, sub_id) (&program_data[(program_id)][(sub_id)])
+
+typedef struct {
+	qbool found;
+	int location;
+	int int_value;
+} gl_program_uniform_t;
+
+typedef struct {
+	qbool found;
+	GLint location;
+} gl_program_attribute_t;
+
 typedef struct gl_program_s {
-	const char* friendly_name;
+	char friendly_name[128];
 	qbool needs_params;
 	program_compile_func_t compile_func;
 	qbool initialised;
@@ -105,7 +129,8 @@ typedef struct gl_program_s {
 	GLbitfield memory_barrier;
 
 	char* included_definitions;
-	qbool uniforms_found;
+	gl_program_uniform_t uniforms[r_program_uniform_count];
+	gl_program_attribute_t attributes[r_program_attribute_count];
 
 	unsigned int custom_options;
 	qbool force_recompile;
@@ -117,10 +142,6 @@ typedef struct {
 	const char* name;
 	int count;
 	qbool transpose;
-
-	qbool found;
-	int location;
-	int int_value;
 } r_program_uniform_t;
 
 static r_program_uniform_t program_uniforms[] = {
@@ -267,9 +288,6 @@ C_ASSERT(sizeof(program_uniforms) / sizeof(program_uniforms[0]) == r_program_uni
 typedef struct r_program_attribute_s {
 	r_program_id program_id;
 	const char* name;
-
-	qbool found;
-	GLint location;
 } r_program_attribute_t;
 
 static r_program_attribute_t program_attributes[] = {
@@ -291,10 +309,14 @@ static r_program_attribute_t program_attributes[] = {
 C_ASSERT(sizeof(program_attributes) / sizeof(program_attributes[0]) == r_program_attribute_count);
 #endif
 
-static gl_program_t program_data[r_program_count];
+static qbool GL_CompileComputeShaderProgram(gl_program_t* prog, const char* shadertext, unsigned int length);
+
+static gl_program_t program_data[r_program_count][MAX_SUBPROGRAMS];
+static int program_currentSubProgram[r_program_count];
 
 // Cached OpenGL state
 static r_program_id currentProgram = 0;
+static int currentProgramOptionSet = 0;
 
 // Shader functions
 typedef GLuint(APIENTRY *glCreateShader_t)(GLenum shaderType);
@@ -420,17 +442,19 @@ static void GL_ConPrintProgramLog(GLuint program)
 }
 
 // Uniform utility functions
-static r_program_uniform_t* GL_ProgramUniformFind(r_program_uniform_id uniform_id)
+static gl_program_uniform_t* GL_ProgramUniformFind(r_program_uniform_id uniform_id)
 {
 	r_program_uniform_t* uniform = &program_uniforms[uniform_id];
 	r_program_id program_id = uniform->program_id;
+	gl_program_t* program = R_CurrentSubProgram(program_id);
+	gl_program_uniform_t* program_uniform = &program->uniforms[uniform_id];
 
-	if (program_data[program_id].program && !uniform->found) {
-		uniform->location = qglGetUniformLocation(program_data[program_id].program, uniform->name);
-		uniform->found = true;
+	if (program->program && !program_uniform->found) {
+		program_uniform->location = qglGetUniformLocation(program->program, uniform->name);
+		program_uniform->found = true;
 	}
 
-	return uniform;
+	return program_uniform;
 }
 
 static void R_ProgramFindUniformsForProgram(r_program_id program_id)
@@ -439,7 +463,6 @@ static void R_ProgramFindUniformsForProgram(r_program_id program_id)
 
 	for (u = 0; u < r_program_uniform_count; ++u) {
 		if (program_uniforms[u].program_id == program_id) {
-			program_uniforms[u].found = false;
 			GL_ProgramUniformFind(u);
 		}
 	}
@@ -449,10 +472,12 @@ static r_program_attribute_t* GL_ProgramAttributeFind(r_program_attribute_id att
 {
 	r_program_attribute_t* attribute = &program_attributes[attribute_id];
 	r_program_id program_id = attribute->program_id;
+	gl_program_t* program = R_CurrentSubProgram(program_id);
+	gl_program_attribute_t* program_attr = &program->attributes[attribute_id];
 
-	if (program_data[program_id].program && !attribute->found) {
-		attribute->location = qglGetAttribLocation(program_data[program_id].program, attribute->name);
-		attribute->found = true;
+	if (program->program && !program_attr->found) {
+		program_attr->location = qglGetAttribLocation(program->program, attribute->name);
+		program_attr->found = true;
 	}
 
 	return attribute;
@@ -464,7 +489,7 @@ static void R_ProgramFindAttributesForProgram(r_program_id program_id)
 
 	for (a = 0; a < r_program_attribute_count; ++a) {
 		if (program_attributes[a].program_id == program_id) {
-			program_attributes[a].found = false;
+			R_CurrentSubProgram(program_id)->attributes[a].found = false;
 			GL_ProgramAttributeFind(a);
 		}
 	}
@@ -595,7 +620,7 @@ static qbool GL_CompileProgram(
 	const char* fragment_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].text, "", "", "", "", "" };
 	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].length, 0, 0, 0, 0, 0 };
 
-	Con_Printf("Compiling: %s\n", friendlyName);
+	Con_DPrintf("Compiling: %s\n", friendlyName);
 
 	vertex_components = GL_InsertDefinitions(vertex_shader_text, vertex_shader_text_length, program->included_definitions);
 	geometry_components = GL_InsertDefinitions(geometry_shader_text, geometry_shader_text_length, program->included_definitions);
@@ -634,7 +659,8 @@ static qbool GL_CompileProgram(
 						Con_DPrintf("ShaderProgram.Link() was successful\n");
 						memcpy(program->shader_handles, shaders, sizeof(shaders));
 						program->program = program_handle;
-						program->uniforms_found = false;
+						memset(program->uniforms, 0, sizeof(program->uniforms));
+						memset(program->attributes, 0, sizeof(program->attributes));
 						program->force_recompile = false;
 
 						GL_TraceObjectLabelSet(GL_PROGRAM, program->program, -1, program->friendly_name);
@@ -683,44 +709,43 @@ static void GL_CleanupShader(GLuint program, GLuint shader)
 void GL_ProgramsShutdown(qbool restarting)
 {
 	r_program_id p;
-	r_program_uniform_id u;
-	r_program_attribute_id a;
 	gl_program_t* prog;
+	int sub_program;
 
 	R_ProgramUse(r_program_none);
 
 	// Detach & delete shaders
-	for (p = r_program_none, prog = &program_data[p]; p < r_program_count; ++p, ++prog) {
-		int i;
+	for (p = r_program_none; p < r_program_count; ++p) {
+		for (sub_program = 0; sub_program < MAX_SUBPROGRAMS; ++sub_program) {
+			int i;
 
-		for (i = 0; i < sizeof(prog->shaders) / sizeof(prog->shaders[0]); ++i) {
-			GL_CleanupShader(prog->program, prog->shader_handles[i]);
-			prog->shader_handles[i] = 0;
+			prog = R_SpecificSubProgram(p, sub_program);
+			for (i = 0; i < sizeof(prog->shaders) / sizeof(prog->shaders[0]); ++i) {
+				GL_CleanupShader(prog->program, prog->shader_handles[i]);
+				prog->shader_handles[i] = 0;
+			}
 		}
 	}
 
-	for (p = r_program_none, prog = &program_data[p]; p < r_program_count; ++p, ++prog) {
-		if (prog->program) {
-			qglDeleteProgram(prog->program);
-			prog->program = 0;
+	for (p = r_program_none; p < r_program_count; ++p) {
+		for (sub_program = 0; sub_program < MAX_SUBPROGRAMS; ++sub_program) {
+			prog = R_SpecificSubProgram(p, sub_program);
+			if (prog->program) {
+				qglDeleteProgram(prog->program);
+				prog->program = 0;
+			}
+
+			if (!restarting) {
+				// Keep definitions if we're about to recompile after restart
+				Q_free(prog->included_definitions);
+			}
+
+			memset(prog->uniforms, 0, sizeof(prog->uniforms));
+			memset(prog->attributes, 0, sizeof(prog->attributes));
 		}
-
-		if (!restarting) {
-			// Keep definitions if we're about to recompile after restart
-			Q_free(prog->included_definitions);
-		}
 	}
 
-	for (u = 0; u < r_program_uniform_count; ++u) {
-		program_uniforms[u].found = false;
-		program_uniforms[u].location = -1;
-		program_uniforms[u].int_value = 0;
-	}
-
-	for (a = 0; a < r_program_attribute_count; ++a) {
-		program_attributes[a].found = false;
-		program_attributes[a].location = -1;
-	}
+	memset(program_currentSubProgram, 0, sizeof(program_currentSubProgram));
 }
 
 static qbool GL_AppropriateRenderer(renderer_id renderer)
@@ -738,6 +763,7 @@ static qbool GL_AppropriateRenderer(renderer_id renderer)
 void GL_ProgramsInitialise(void)
 {
 	r_program_id p;
+	int i;
 
 	if (!(glConfig.supported_features & R_SUPPORT_RENDERING_SHADERS)) {
 		return;
@@ -745,31 +771,41 @@ void GL_ProgramsInitialise(void)
 
 	GL_BuildCoreDefinitions();
 
-	program_data[r_program_none].friendly_name = "(none)";
+	for (i = 0; i < MAX_SUBPROGRAMS; ++i) {
+		gl_program_t* prog = R_SpecificSubProgram(r_program_none, i);
+
+		strlcpy(prog->friendly_name, "(none)", sizeof(prog->friendly_name));
+	}
 
 	for (p = r_program_none; p < r_program_count; ++p) {
-		if (!GL_AppropriateRenderer(program_data[p].renderer_id)) {
-			continue;
-		}
+		for (i = 0; i < MAX_SUBPROGRAMS; ++i) {
+			gl_program_t* prog = R_SpecificSubProgram(p, i);
 
-		if (!program_data[p].program && !program_data[p].needs_params && program_data[p].initialised) {
-			gl_shader_def_t* compute = &program_data[p].shaders[shadertype_compute];
-			if (compute->length) {
-				GL_CompileComputeShaderProgram(p, compute->text, compute->length);
+			if (!GL_AppropriateRenderer(prog->renderer_id)) {
+				continue;
 			}
-			else {
-				GL_CompileProgram(&program_data[p]);
+
+			if (!prog->program && !prog->needs_params && prog->initialised) {
+				gl_shader_def_t* compute = &prog->shaders[shadertype_compute];
+				if (compute->length) {
+					GL_CompileComputeShaderProgram(prog, compute->text, compute->length);
+				}
+				else {
+					GL_CompileProgram(prog);
+				}
+				R_ProgramFindUniformsForProgram(p);
+				R_ProgramFindAttributesForProgram(p);
 			}
-			R_ProgramFindUniformsForProgram(p);
-			R_ProgramFindAttributesForProgram(p);
 		}
 	}
+
+	memset(program_currentSubProgram, 0, sizeof(program_currentSubProgram));
 }
 
 qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options)
 {
 	//
-	const gl_program_t* program = &program_data[program_id];
+	const gl_program_t* program = R_CurrentSubProgram(program_id);
 
 	return (!program->program) || program->force_recompile || program->custom_options != options;
 }
@@ -777,17 +813,19 @@ qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options)
 void GL_CvarForceRecompile(void)
 {
 	r_program_id p;
+	int i;
 
 	for (p = r_program_none; p < r_program_count; ++p) {
-		program_data[p].force_recompile = true;
+		for (i = 0; i < MAX_SUBPROGRAMS; ++i) {
+			R_SpecificSubProgram(p, i)->force_recompile = true;
+		}
 	}
 
 	GL_BuildCoreDefinitions();
 }
 
-static qbool GL_CompileComputeShaderProgram(r_program_id program_id, const char* shadertext, unsigned int length)
+static qbool GL_CompileComputeShaderProgram(gl_program_t* program, const char* shadertext, unsigned int length)
 {
-	gl_program_t* program = &program_data[program_id];
 	const char* shader_text[MAX_SHADER_COMPONENTS] = { shadertext, "", "", "", "", "" };
 	GLint shader_text_length[MAX_SHADER_COMPONENTS] = { length, 0, 0, 0, 0, 0 };
 	int components;
@@ -809,7 +847,8 @@ static qbool GL_CompileComputeShaderProgram(r_program_id program_id, const char*
 				Con_DPrintf("ShaderProgram.Link() was successful\n");
 				program->shader_handles[shadertype_compute] = shader;
 				program->program = shader_program;
-				program->uniforms_found = false;
+				memset(program->uniforms, 0, sizeof(program->uniforms));
+				memset(program->attributes, 0, sizeof(program->attributes));
 				program->force_recompile = false;
 
 				GL_TraceObjectLabelSet(GL_PROGRAM, program->program, -1, program->friendly_name);
@@ -883,13 +922,14 @@ void GL_LoadProgramFunctions(void)
 
 void R_ProgramUse(r_program_id program_id)
 {
-	if (program_id != currentProgram) {
+	if (program_id != currentProgram || currentProgramOptionSet != program_currentSubProgram[program_id]) {
 		if (qglUseProgram) {
-			qglUseProgram(program_data[program_id].program);
-			R_TraceLogAPICall("R_ProgramUse(%s)", program_data[program_id].friendly_name);
+			qglUseProgram(R_CurrentSubProgram(program_id)->program);
+			R_TraceLogAPICall("R_ProgramUse(%s[%d])", R_CurrentSubProgram(program_id)->friendly_name, program_currentSubProgram[program_id]);
 		}
 
 		currentProgram = program_id;
+		currentProgramOptionSet = program_currentSubProgram[program_id];
 	}
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
@@ -916,8 +956,8 @@ static void GL_ProgramComputeDispatch(r_program_id program_id, unsigned int num_
 {
 	R_ProgramUse(program_id);
 	qglDispatchCompute(num_groups_x, num_groups_y, num_groups_z);
-	if (program_data[program_id].memory_barrier) {
-		qglMemoryBarrier(program_data[program_id].memory_barrier);
+	if (R_CurrentSubProgram(program_id)->memory_barrier) {
+		qglMemoryBarrier(R_CurrentSubProgram(program_id)->memory_barrier);
 	}
 }
 
@@ -928,72 +968,78 @@ void R_ProgramComputeDispatch(r_program_id program_id, unsigned int num_groups_x
 
 void R_ProgramComputeSetMemoryBarrierFlag(r_program_id program_id, r_program_memory_barrier_id barrier_id)
 {
-	program_data[program_id].memory_barrier |= glBarrierFlags[barrier_id];
+	R_CurrentSubProgram(program_id)->memory_barrier |= glBarrierFlags[barrier_id];
 }
 
 // Wrappers
 int R_ProgramCustomOptions(r_program_id program_id)
 {
-	return program_data[program_id].custom_options;
+	return R_CurrentSubProgram(program_id)->custom_options;
 }
 
 void R_ProgramSetCustomOptions(r_program_id program_id, int options)
 {
-	program_data[program_id].custom_options = options;
+	R_CurrentSubProgram(program_id)->custom_options = options;
 }
 
 qbool R_ProgramReady(r_program_id program_id)
 {
-	return program_data[program_id].program != 0;
+	return R_CurrentSubProgram(program_id)->program != 0;
 }
 
 void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value)
 {
-	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
+	r_program_uniform_t* base_uniform = &program_uniforms[uniform_id];
+	gl_program_uniform_t* program_uniform = GL_ProgramUniformFind(uniform_id);
+	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
-	if (uniform->location >= 0) {
+	if (program_uniform->location >= 0) {
 		if (qglProgramUniform1i) {
-			qglProgramUniform1i(program_data[uniform->program_id].program, uniform->location, value);
+			qglProgramUniform1i(prog->program, program_uniform->location, value);
 		}
 		else {
-			R_ProgramUse(uniform->program_id);
-			qglUniform1i(uniform->location, value);
+			R_ProgramUse(base_uniform->program_id);
+			qglUniform1i(program_uniform->location, value);
 		}
-		uniform->int_value = value;
-		R_TraceLogAPICall("%s(%s/%s,%d)", __FUNCTION__, program_data[uniform->program_id].friendly_name, uniform->name, value);
+		program_uniform->int_value = value;
+		R_TraceLogAPICall("%s(%s/%s,%d)", __FUNCTION__, prog->friendly_name, base_uniform->name, value);
 	}
 }
 
 void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value)
 {
-	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
+	r_program_uniform_t* base_uniform = &program_uniforms[uniform_id];
+	gl_program_uniform_t* program_uniform = GL_ProgramUniformFind(uniform_id);
+	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
-	if (uniform->location >= 0) {
+	if (program_uniform->location >= 0) {
 		if (qglProgramUniform1f) {
-			qglProgramUniform1f(program_data[uniform->program_id].program, uniform->location, value);
+			qglProgramUniform1f(prog->program, program_uniform->location, value);
 		}
 		else {
-			R_ProgramUse(uniform->program_id);
-			qglUniform1f(uniform->location, value);
+			R_ProgramUse(base_uniform->program_id);
+			qglUniform1f(program_uniform->location, value);
 		}
-		uniform->int_value = value;
-		R_TraceLogAPICall("%s(%s/%s,%f)", __FUNCTION__, program_data[uniform->program_id].friendly_name, uniform->name, value);
+		program_uniform->int_value = value;
+		R_TraceLogAPICall("%s(%s/%s,%f)", __FUNCTION__, prog->friendly_name, base_uniform->name, value);
 	}
 }
 
 void R_ProgramUniform2fv(r_program_uniform_id uniform_id, const float* values)
 {
-	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
+	r_program_uniform_t* base_uniform = &program_uniforms[uniform_id];
+	gl_program_uniform_t* program_uniform = GL_ProgramUniformFind(uniform_id);
+	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
-	if (uniform->location >= 0) {
+	if (program_uniform->location >= 0) {
 		if (qglProgramUniform2fv) {
-			qglProgramUniform2fv(program_data[uniform->program_id].program, uniform->location, uniform->count, values);
+			qglProgramUniform2fv(prog->program, program_uniform->location, base_uniform->count, values);
 		}
 		else {
-			R_ProgramUse(uniform->program_id);
-			qglUniform2fv(uniform->location, uniform->count, values);
+			R_ProgramUse(base_uniform->program_id);
+			qglUniform2fv(program_uniform->location, base_uniform->count, values);
 		}
-		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, program_data[uniform->program_id].friendly_name, uniform->name);
+		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
 	}
 }
 
@@ -1006,17 +1052,19 @@ void R_ProgramUniform3f(r_program_uniform_id uniform_id, float x, float y, float
 
 void R_ProgramUniform3fv(r_program_uniform_id uniform_id, const float* values)
 {
-	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
+	r_program_uniform_t* base_uniform = &program_uniforms[uniform_id];
+	gl_program_uniform_t* program_uniform = GL_ProgramUniformFind(uniform_id);
+	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
-	if (uniform->location >= 0) {
+	if (program_uniform->location >= 0) {
 		if (qglProgramUniform3fv) {
-			qglProgramUniform3fv(program_data[uniform->program_id].program, uniform->location, uniform->count, values);
+			qglProgramUniform3fv(prog->program, program_uniform->location, base_uniform->count, values);
 		}
 		else {
-			R_ProgramUse(uniform->program_id);
-			qglUniform3fv(uniform->location, uniform->count, values);
+			R_ProgramUse(base_uniform->program_id);
+			qglUniform3fv(program_uniform->location, base_uniform->count, values);
 		}
-		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, program_data[uniform->program_id].friendly_name, uniform->name);
+		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
 	}
 }
 
@@ -1033,40 +1081,46 @@ void R_ProgramUniform3fNormalize(r_program_uniform_id uniform_id, const byte* va
 
 void R_ProgramUniform4fv(r_program_uniform_id uniform_id, const float* values)
 {
-	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
+	r_program_uniform_t* base_uniform = &program_uniforms[uniform_id];
+	gl_program_uniform_t* program_uniform = GL_ProgramUniformFind(uniform_id);
+	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
-	if (uniform->location >= 0) {
+	if (program_uniform->location >= 0) {
 		if (qglProgramUniform4fv) {
-			qglProgramUniform4fv(program_data[uniform->program_id].program, uniform->location, uniform->count, values);
+			qglProgramUniform4fv(prog->program, program_uniform->location, base_uniform->count, values);
 		}
 		else {
-			R_ProgramUse(uniform->program_id);
-			qglUniform4fv(uniform->location, uniform->count, values);
+			R_ProgramUse(base_uniform->program_id);
+			qglUniform4fv(program_uniform->location, base_uniform->count, values);
 		}
-		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, program_data[uniform->program_id].friendly_name, uniform->name);
+		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
 	}
 }
 
 void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, const float* values)
 {
-	r_program_uniform_t* uniform = GL_ProgramUniformFind(uniform_id);
+	r_program_uniform_t* base_uniform = &program_uniforms[uniform_id];
+	gl_program_uniform_t* program_uniform = GL_ProgramUniformFind(uniform_id);
+	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
-	if (uniform->location >= 0) {
+	if (program_uniform->location >= 0) {
 		if (qglProgramUniformMatrix4fv) {
-			qglProgramUniformMatrix4fv(program_data[uniform->program_id].program, uniform->location, uniform->count, uniform->transpose, values);
+			qglProgramUniformMatrix4fv(prog->program, program_uniform->location, base_uniform->count, base_uniform->transpose, values);
 		}
 		else {
-			R_ProgramUse(uniform->program_id);
-			qglUniformMatrix4fv(uniform->location, uniform->count, uniform->transpose, values);
+			R_ProgramUse(base_uniform->program_id);
+			qglUniformMatrix4fv(program_uniform->location, base_uniform->count, base_uniform->transpose, values);
 		}
-		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, program_data[uniform->program_id].friendly_name, uniform->name);
+		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
 	}
 }
 
 int R_ProgramUniformGet1i(r_program_uniform_id uniform_id, int default_value)
 {
-	if (program_uniforms[uniform_id].location >= 0) {
-		return program_uniforms[uniform_id].int_value;
+	gl_program_uniform_t* program_uniform = GL_ProgramUniformFind(uniform_id);
+
+	if (program_uniform->location >= 0) {
+		return program_uniform->int_value;
 	}
 	return default_value;
 }
@@ -1078,7 +1132,7 @@ qbool R_ProgramCompile(r_program_id program_id)
 
 qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_definitions)
 {
-	gl_program_t* program = &program_data[program_id];
+	gl_program_t* program = R_CurrentSubProgram(program_id);
 
 	memset(program->shader_handles, 0, sizeof(program->shader_handles));
 	Q_free(program->included_definitions);
@@ -1129,11 +1183,21 @@ static void GL_BuildCoreDefinitions(void)
 
 int R_ProgramAttributeLocation(r_program_attribute_id attr_id)
 {
-	if (attr_id < 0 || attr_id >= r_program_attribute_count || !program_attributes[attr_id].found) {
+	r_program_id program_id;
+	gl_program_attribute_t* attr;
+
+	// FIXME: why is this is in release build?
+	if (attr_id < 0 || attr_id >= r_program_attribute_count) {
 		return -1;
 	}
 
-	return program_attributes[attr_id].location;
+	program_id = program_attributes[attr_id].program_id;
+	attr = &(R_CurrentSubProgram(program_id)->attributes[attr_id]);
+	if (!attr->found) {
+		return -1;
+	}
+
+	return attr->location;
 }
 
 r_program_id R_ProgramForAttribute(r_program_attribute_id attr_id)
@@ -1148,14 +1212,26 @@ r_program_id R_ProgramForAttribute(r_program_attribute_id attr_id)
 void R_ProgramCompileAll(void)
 {
 	int i;
+	int sub_program;
 
 	for (i = 0; i < r_program_count; ++i) {
-		if (!GL_AppropriateRenderer(program_data[i].renderer_id)) {
-			continue;
-		}
+		for (sub_program = 0; sub_program < MAX_SUBPROGRAMS; ++sub_program) {
+			gl_program_t* prog = R_SpecificSubProgram(i, sub_program);
 
-		if (program_data[i].initialised && program_data[i].compile_func) {
-			program_data[i].compile_func();
+			R_ProgramSetSubProgram(i, sub_program);
+			if (!GL_AppropriateRenderer(prog->renderer_id)) {
+				continue;
+			}
+
+			if (prog->initialised && prog->compile_func) {
+				prog->compile_func();
+			}
 		}
+		R_ProgramSetSubProgram(i, 0);
 	}
+}
+
+void R_ProgramSetSubProgram(r_program_id program_id, int sub_index)
+{
+	program_currentSubProgram[program_id] = sub_index;
 }

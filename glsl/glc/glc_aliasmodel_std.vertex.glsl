@@ -4,11 +4,16 @@
 
 attribute float flags;
 
+#if defined(TEXTURING_ENABLED) || defined(DRAW_CAUSTIC_TEXTURES)
 varying vec2 fsTextureCoord;
+#endif
 varying vec4 fsBaseColor;
+
+#ifndef FULLBRIGHT_MODELS
 uniform vec3 angleVector;        // normalized
 uniform float shadelight;        // divided by 256 in C
 uniform float ambientlight;      // divided by 256 in C
+#endif
 uniform float lerpFraction;      // 0 to 1
 
 #define AM_VERTEX_NOLERP 1
@@ -21,11 +26,17 @@ void main()
 #endif
 
 	gl_Position = gl_ModelViewProjectionMatrix * (gl_Vertex + lerpFrac * vec4(gl_MultiTexCoord1.xyz, 0));
+#if defined(TEXTURING_ENABLED) || defined(DRAW_CAUSTIC_TEXTURES)
 	fsTextureCoord = gl_MultiTexCoord0.st;
+#endif
 
+#ifdef FULLBRIGHT_MODELS
+	fsBaseColor = gl_Color;
+#else
 	// Lighting: this is rough approximation
 	//   Credit to mh @ http://forums.insideqc.com/viewtopic.php?f=3&t=2983
 	float l = (1 - step(1000, shadelight)) * min((dot(gl_Normal, angleVector) + 1) * shadelight + ambientlight, 1);
 
 	fsBaseColor = vec4(gl_Color.rgb * l, gl_Color.a);
+#endif
 }

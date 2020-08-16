@@ -243,33 +243,59 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_
 }
 
 #define DRAWFLAGS_CAUSTICS     1
-#define DRAWFLAGS_MUZZLEHACK   2
+#define DRAWFLAGS_TEXTURED     2
+#define DRAWFLAGS_FULLBRIGHT   4
+#define DRAWFLAGS_MUZZLEHACK   8
+#define DRAWFLAGS_MAXIMUM      (DRAWFLAGS_CAUSTICS | DRAWFLAGS_TEXTURED | DRAWFLAGS_FULLBRIGHT | DRAWFLAGS_MUZZLEHACK)
 
-qbool GLC_AliasModelStandardCompile(void)
+int GLC_AliasModelSubProgramIndex(qbool textured, qbool fullbright, qbool caustics, qbool muzzlehack)
 {
-	extern cvar_t r_lerpmuzzlehack;
-	int flags =
-		(gl_caustics.integer ? DRAWFLAGS_CAUSTICS : 0) |
-		(r_lerpmuzzlehack.integer ? DRAWFLAGS_MUZZLEHACK : 0);
+	return
+		(textured ? DRAWFLAGS_TEXTURED : 0) | 
+		(fullbright ? DRAWFLAGS_FULLBRIGHT : 0) | 
+		(caustics ? DRAWFLAGS_CAUSTICS : 0) | 
+		(muzzlehack ? DRAWFLAGS_MUZZLEHACK : 0);
+}
 
-	if (R_ProgramRecompileNeeded(r_program_aliasmodel_std_glc, flags)) {
+qbool GLC_AliasModelStandardCompileSpecific(int subprogram_index)
+{
+	R_ProgramSetSubProgram(r_program_aliasmodel_std_glc, subprogram_index);
+	if (R_ProgramRecompileNeeded(r_program_aliasmodel_std_glc, subprogram_index)) {
 		char included_definitions[512];
 
 		included_definitions[0] = '\0';
-		if (flags & DRAWFLAGS_CAUSTICS) {
+		if (subprogram_index & DRAWFLAGS_TEXTURED) {
+			strlcat(included_definitions, "#define TEXTURING_ENABLED\n", sizeof(included_definitions));
+		}
+		if (subprogram_index & DRAWFLAGS_FULLBRIGHT) {
+			strlcat(included_definitions, "#define FULLBRIGHT_MODELS\n", sizeof(included_definitions));
+		}
+		if (subprogram_index & DRAWFLAGS_CAUSTICS) {
 			strlcat(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
 		}
-		if (flags & DRAWFLAGS_MUZZLEHACK) {
+		if (subprogram_index & DRAWFLAGS_MUZZLEHACK) {
 			strlcat(included_definitions, "#define EZQ_ALIASMODEL_MUZZLEHACK\n", sizeof(included_definitions));
 		}
 
 		R_ProgramCompileWithInclude(r_program_aliasmodel_std_glc, included_definitions);
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_texSampler, 0);
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_causticsSampler, 1);
-		R_ProgramSetCustomOptions(r_program_aliasmodel_std_glc, flags);
+		R_ProgramSetCustomOptions(r_program_aliasmodel_std_glc, subprogram_index);
 	}
 
 	return R_ProgramReady(r_program_aliasmodel_std_glc);
+}
+
+// Only called from vid system startup, not from rendering loop
+qbool GLC_AliasModelStandardCompile(void)
+{
+	int i;
+
+	for (i = 0; i < DRAWFLAGS_MAXIMUM; ++i) {
+		GLC_AliasModelStandardCompileSpecific(i);
+	}
+
+	return true;
 }
 
 qbool GLC_AliasModelShadowCompile(void)
@@ -309,17 +335,24 @@ static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int po
 {
 	extern cvar_t r_lerpmuzzlehack, gl_program_aliasmodels;
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
+	float color[4];
+	qbool invalidate_texture;
+	float angle_radians = -ent->angles[YAW] * M_PI / 180.0;
+	vec3_t angle_vector = { cos(angle_radians), sin(angle_radians), 1 };
+	int firstVert = model->vbo_start + pose1 * paliashdr->vertsPerPose;
+	int subprogram;
 
-	if (buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompile()) {
-		float color[4];
-		qbool invalidate_texture;
-		float angle_radians = -ent->angles[YAW] * M_PI / 180.0;
-		vec3_t angle_vector = { cos(angle_radians), sin(angle_radians), 1 };
-		int firstVert = model->vbo_start + pose1 * paliashdr->vertsPerPose;
+	VectorNormalize(angle_vector);
+	R_AliasModelColor(ent, color, &invalidate_texture);
 
-		VectorNormalize(angle_vector);
-		R_AliasModelColor(ent, color, &invalidate_texture);
+	subprogram = GLC_AliasModelSubProgramIndex(
+		!invalidate_texture,
+		ent->full_light,
+		gl_caustics.integer && (render_effects & RF_CAUSTICS),
+		r_lerpmuzzlehack.integer && (render_effects & RF_WEAPONMODEL)
+	);
 
+	if (buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompileSpecific(subprogram)) {
 		R_ProgramUse(r_program_aliasmodel_std_glc);
 		R_ProgramUniform3fv(r_program_uniform_aliasmodel_std_glc_angleVector, angle_vector);
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_shadelight, ent->shadelight / 256.0f);

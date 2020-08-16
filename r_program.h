@@ -160,4 +160,7 @@ qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_
 // Asks all programs to compile themselves
 void R_ProgramCompileAll(void);
 
+// Switches between sub-programs (allows multiple copies of the same program with different flags)
+void R_ProgramSetSubProgram(r_program_id program_id, int sub_index);
+
 #endif // EZQUAKE_R_PROGRAM_HEADER

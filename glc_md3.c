@@ -38,7 +38,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 const float* GLC_PowerupShell_ScrollParams(void);
 void GLC_SetPowerupShellColor(int layer_no, int effects);
 void GLC_PowerupShellColor(int layer_no, int effects, float* color);
-qbool GLC_AliasModelStandardCompile(void);
+qbool GLC_AliasModelStandardCompileSpecific(int subprogram_index);
+int GLC_AliasModelSubProgramIndex(qbool textured, qbool fullbright, qbool caustics, qbool muzzlehack);
 qbool GLC_AliasModelShellCompile(void);
 
 static void GLC_AliasModelLightPointMD3(float color[4], const entity_t* ent, ezMd3XyzNormal_t* vert1, ezMd3XyzNormal_t* vert2, float lerpfrac)
@@ -254,12 +255,17 @@ void GLC_DrawAlias3Model(entity_t *ent)
 	int frame1, frame2;
 	qbool outline;
 	float oldMatrix[16];
+	int subprogram;
+	extern cvar_t r_lerpmuzzlehack;
+	int render_effects = ent->renderfx;
 
 	R_PushModelviewMatrix(oldMatrix);
 	R_AliasModelPrepare(ent, pheader->numFrames, &frame1, &frame2, &lerpfrac, &outline);
 	R_AliasModelColor(ent, vertexColor, &invalidate_texture);
 
-	if (gl_program_aliasmodels.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompile()) {
+	subprogram = GLC_AliasModelSubProgramIndex(!invalidate_texture, ent->full_light, gl_caustics.integer && (ent->renderfx & RF_CAUSTICS), r_lerpmuzzlehack.integer && (render_effects & RF_WEAPONMODEL));
+
+	if (gl_program_aliasmodels.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompileSpecific(subprogram)) {
 		GLC_DrawAlias3ModelProgram(ent, frame1, invalidate_texture, vertexColor, lerpfrac, outline);
 	}
 	else if (GL_Supported(R_SUPPORT_IMMEDIATEMODE)) {
