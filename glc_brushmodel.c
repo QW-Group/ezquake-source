@@ -1009,6 +1009,7 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 					if (current_fbScale != fbScale) {
 						R_ProgramUniform1f(r_program_uniform_world_textured_glc_fbScale, current_fbScale = fbScale);
 					}
+					uniform_change = false;
 				}
 
 				index_count = GLC_DrawIndexedPoly(s->polys, modelIndexes, modelIndexMaximum, index_count);
