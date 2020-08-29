@@ -142,6 +142,11 @@ typedef struct {
 
 	float           cos_time;
 	float           sin_time;
+
+	float           wateralpha;
+	qbool           drawFlatFloors;
+	qbool           drawFlatWalls;
+	qbool           solidTexTurb;
 } refdef2_t;
 
 

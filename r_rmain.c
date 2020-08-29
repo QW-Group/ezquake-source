@@ -126,6 +126,7 @@ cvar_t cl_mvinset_top                      = {"cl_mvinset_top", "1"};
 cvar_t cl_mvinset_right                    = {"cl_mvinset_right", "1"};
 
 cvar_t r_drawentities                      = {"r_drawentities", "1"};
+cvar_t r_drawworld                         = {"r_drawworld", "1"};
 cvar_t r_lerpframes                        = {"r_lerpframes", "1"};
 cvar_t r_drawflame                         = {"r_drawflame", "1"};
 cvar_t r_drawdisc                          = {"r_drawdisc", "1"};
@@ -331,8 +332,6 @@ void R_SetupFrame(void)
 	renderer.ConfigureFog(r_viewleaf->contents);
 	V_CalcBlend();
 
-	memcpy(&prevFrameStats, &frameStats, sizeof(prevFrameStats));
-	memset(&frameStats, 0, sizeof(frameStats));
 	R_LightmapFrameInit();
 }
 
@@ -514,6 +513,7 @@ void R_Init(void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register(&r_drawentities);
+	Cvar_Register(&r_drawworld);
 	Cvar_Register(&r_lerpframes);
 	Cvar_Register(&r_drawflame);
 	Cvar_Register(&r_drawdisc);
@@ -683,19 +683,6 @@ void R_Init(void)
 	R_InitBloomTextures();
 }
 
-static void R_RenderScene(void)
-{
-	R_TraceEnterNamedRegion("R_DrawWorld");
-	R_DrawWorld();		// adds static entities to the list
-	R_TraceLeaveNamedRegion();
-
-	if (R_WaterAlpha() == 1) {
-		renderer.DrawWaterSurfaces();
-	}
-
-	R_DrawEntities();
-}
-
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 	byte *color;
 	char buf[MAX_COM_TOKEN];
@@ -776,14 +763,19 @@ void R_RenderView(void)
 	}
 
 	R_SetFrustum();
-
 	R_SetupGL();
 	R_Clear();
 	R_MarkLeaves();	// done here so we know if we're in water
 	R_CreateWorldTextureChains();
 
-	// render normal view (world & entities)
-	R_RenderScene();
+	// render normal view
+	R_DrawWorld();		// adds static entities to the list
+
+	if (R_WaterAlpha() == 1) {
+		renderer.DrawWaterSurfaces();
+	}
+
+	R_DrawEntities();
 
 	// Adds 3d effects (particles, lights, chat icons etc)
 	R_Render3DEffects();
@@ -798,8 +790,6 @@ void R_RenderView(void)
 	R_Render3DHud();
 
 	renderer.RenderView();
-
-	R_PerformanceEndFrame();
 }
 
 qbool R_PointIsUnderwater(vec3_t point)

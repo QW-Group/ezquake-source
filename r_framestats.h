@@ -24,6 +24,12 @@ typedef struct r_frame_stats_s {
 	r_frame_stats_classic_t classic;
 	r_frame_stats_modern_t modern;
 
+	qbool hotloop;
+	int hotloop_mallocs;
+	int mallocs;
+	int hotloop_stringops;
+	int stringops;
+
 	int texture_binds;
 	unsigned int lightmap_min_changed;
 	unsigned int lightmap_max_changed;

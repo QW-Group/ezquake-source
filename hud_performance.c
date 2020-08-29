@@ -198,6 +198,11 @@ static void FrameStats_DrawElement(hud_t *hud)
 			FrameStats_AddLine(&lines, "Brush-model polys:", frameStats.classic.polycount[polyTypeBrushModel]);
 		}
 	}
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	FrameStats_AddLine(&lines, "Mallocs:", prevFrameStats.mallocs);
+	FrameStats_AddLine(&lines, "HotMallocs:", prevFrameStats.hotloop_mallocs);
+#endif
+
 	FrameStats_AddLine(&lines, "Particles:", prevFrameStats.particle_count);
 	if (hud_frameStats_amfstats->integer) {
 		FrameStats_AddLine(&lines, "", 0);

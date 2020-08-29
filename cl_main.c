@@ -68,6 +68,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "menu_demo.h"
 #include "r_local.h"
 #include "r_renderer.h"
+#include "r_performance.h"
 #include "r_program.h"
 
 extern qbool ActiveApp, Minimized;
@@ -2446,6 +2447,7 @@ void CL_Frame(double time)
 		qbool draw_next_view = true;
 		qbool first_view = true;
 
+		R_PerformanceBeginFrame();
 		if (SCR_UpdateScreenPrePlayerView()) {
 			renderer.ScreenDrawStart();
 
@@ -2478,11 +2480,14 @@ void CL_Frame(double time)
 		else {
 			VID_RenderFrameEnd();
 		}
+		R_PerformanceEndFrame();
 	}
 	else {
 		CL_LinkEntities();
 
+		R_PerformanceBeginFrame();
 		SCR_UpdateScreen();
+		R_PerformanceEndFrame();
 
 		CL_SoundFrame();
 	}

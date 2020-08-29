@@ -434,10 +434,12 @@ typedef struct
 	char        demoname[MAX_PATH];
 	qbool       nqdemoplayback;
 	int         timedemo;
-	double      td_lastframe;       ///< To meter out one message a frame.
-	int         td_startframe;      ///< cls.framecount at start
-	double      td_starttime;       ///< Realtime at second frame of timedemo.
-	double      td_frametime;       ///< frametime for stop-motion timedemo (timedemo2)
+	double      td_lastframe;              ///< To meter out one message a frame.
+	int         td_startframe;             ///< cls.framecount at start
+	double      td_starttime;              ///< Realtime at second frame of timedemo.
+	double      td_frametime;              ///< frametime for stop-motion timedemo (timedemo2)
+	int         td_frametime_stats[1000];  ///< keep track of performance (to 0.1ms level, if it's over 100ms we're in bad shape)
+	double      td_nonrendering;           ///< time not in the rendering hot loop
 
 	qbool		mvdrecording;		///< this is not real mvd recording, but just cut particular moment of mvd stream
 

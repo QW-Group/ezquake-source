@@ -3204,23 +3204,82 @@ void CL_StopPlayback (void)
 	//
 	if (cls.timedemo)
 	{
-		int frames;
-		float time;
+		int frames, i, frames2, worst_ms_count;
+		double stddev = 0;
+		double renderTime = 0;
+		float time, worst_ms = 0;
+		double avg_ms = 0;
 
 		//
 		// Calculate the time it took to render the frames.
 		//
 		frames = cls.framecount - cls.td_startframe - 1;
 		time = Sys_DoubleTime() - cls.td_starttime;
-		if (time <= 0)
+		if (time <= 0) {
 			time = 1;
+		}
+		if (frames <= 0) {
+			frames = 1;
+		}
+		avg_ms = (time * 1000.0) / frames;
 		Com_Printf("%i frames %5.1f seconds %5.1f fps\n", frames, time, frames / time);
 		if (cls.timedemo == TIMEDEMO_FIXEDFPS && cls.td_frametime > 0) {
 			Com_Printf("  simulated @ %5.1f fps\n", 1.0 / cls.td_frametime);
 		}
+
+		frames2 = 0;
+		for (i = 0; i < sizeof(cls.td_frametime_stats) / sizeof(cls.td_frametime_stats[0]); ++i) {
+			if (cls.td_frametime_stats[i]) {
+				stddev += cls.td_frametime_stats[i] * (i / 10.0 - avg_ms) * (i / 10.0 - avg_ms);
+				worst_ms = i / 10.0;
+				worst_ms_count = cls.td_frametime_stats[i];
+				frames2 += cls.td_frametime_stats[i];
+				renderTime += cls.td_frametime_stats[i] * (i / 10000.0);
+			}
+		}
+		stddev = sqrt(stddev / frames2);
+		Com_Printf("... avg frametime %0.3fms, std dev %0.3fms\n", avg_ms, stddev);
+		Com_Printf("... %d frames vs %d\n", frames2, frames);
+		Com_Printf("... %5.1fs vs %5.1fs\n", renderTime, time);
+		Com_Printf("... non-rendering time %5.1fs\n", cls.td_nonrendering);
+		if (worst_ms) {
+			Com_Printf("... worst frametime %0.3fms, %0.1ffps (%d frames)\n", worst_ms, 1 / (worst_ms / 1000.0f), worst_ms_count);
+		}
+		// Create bins
+		{
+#define TIMEDEMO_BIN_COUNT 10
+#define TIMEDEMO_BIN_OFFSET (TIMEDEMO_BIN_COUNT - 4)
+			double bin_percentages[TIMEDEMO_BIN_COUNT] = { 0.0 };
+			unsigned long bin_thresholds[TIMEDEMO_BIN_COUNT] = { 0 };
+			double total_samples = 0;
+			unsigned long bin_ms[TIMEDEMO_BIN_COUNT] = { 0 };
+			int j;
+
+			for (i = 0; i < TIMEDEMO_BIN_COUNT; ++i) {
+				bin_percentages[i] = 1.0 - pow(2, TIMEDEMO_BIN_OFFSET - i) * 0.01;
+				bin_thresholds[i] = bin_percentages[i] * frames2;
+			}
+			bin_percentages[TIMEDEMO_BIN_COUNT - 1] = 1.0;
+
+			for (i = 0; i < sizeof(cls.td_frametime_stats) / sizeof(cls.td_frametime_stats[0]); ++i) {
+				total_samples += cls.td_frametime_stats[i];
+
+				for (j = 0; j < sizeof(bin_percentages) / sizeof(bin_percentages[0]); ++j) {
+					if (total_samples <= bin_thresholds[j]) {
+						bin_ms[j] = i;
+					}
+				}
+			}
+			bin_ms[TIMEDEMO_BIN_COUNT - 1] = worst_ms * 10.0;
+
+			for (j = 0; j < TIMEDEMO_BIN_COUNT; ++j) {
+				Con_Printf("  %6.3f%: %4.1fms\n", bin_percentages[j], (bin_ms[j] / 10.0));
+			}
+		}
 		cls.timedemo = false;
-		if (demo_benchmarkdumps.integer)
+		if (demo_benchmarkdumps.integer) {
 			CL_Demo_DumpBenchmarkResult(frames, time);
+		}
 	}
 
 	// Go to the next demo in the demo playlist.
@@ -3825,6 +3884,8 @@ void CL_TimeDemo_f(void)
 	cls.td_starttime = 0;
 	cls.td_startframe = cls.framecount;
 	cls.td_lastframe = -1;		// Get a new message this frame.
+	cls.td_nonrendering = 0;
+	memset(cls.td_frametime_stats, 0, sizeof(cls.td_frametime_stats));
 }
 
 void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen);

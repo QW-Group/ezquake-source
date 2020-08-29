@@ -1038,6 +1038,16 @@ qbool V_PreRenderView(void)
 			r_refdef2.max_fbskins = *(p = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(p), 1) : (cl.teamfortress ? 0 : 1);
 			r_refdef2.max_watervis = *(p = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, Q_atof(p), 1) : 0;
 		}
+
+		// time-savers
+		{
+			extern cvar_t r_drawflat_mode, r_drawflat, r_fastturb;
+
+			r_refdef2.wateralpha = R_WaterAlpha();
+			r_refdef2.drawFlatFloors = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 2 || r_drawflat.integer == 1);
+			r_refdef2.drawFlatWalls = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 3 || r_drawflat.integer == 1);
+			r_refdef2.solidTexTurb = (!r_fastturb.integer && r_refdef2.wateralpha == 1);
+		}
 	}
 
 	renderer.PreRenderView();

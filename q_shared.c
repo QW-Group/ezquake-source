@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "q_shared.h"
+#include "r_framestats.h"
 
 /*
 ============================================================================
@@ -877,6 +878,19 @@ typedef struct ezquake_memory_block_s {
 #define MEMORY_BLOCK_FOR_PTR(ptr) ((ezquake_memory_block_t*) (((intptr_t)ptr) - sizeof(ezquake_memory_block_t)));
 #define PTR_FOR_MEMORY_BLOCK(block) (void*)(((intptr_t)block) + sizeof(ezquake_memory_block_t))
 
+static void Q_malloc_register(const char* file, int line)
+{
+	if (frameStats.hotloop) {
+		++frameStats.hotloop_mallocs;
+		if (developer.integer) {
+			frameStats.hotloop = false;
+			Com_Printf("HotMalloc: %s[%d]\n", file, line);
+			frameStats.hotloop = true;
+		}
+	}
+	++frameStats.mallocs;
+}
+
 #endif
 
 /*
@@ -900,6 +914,7 @@ void* Q_malloc(size_t size)
 
 	if (!block) {
 		Sys_Error("Q_malloc: Not enough memory free; check disk space\n");
+		return NULL;
 	}
 
 	strlcpy(block->filename, file, sizeof(block->filename));
@@ -909,6 +924,8 @@ void* Q_malloc(size_t size)
 	block->line_number = line;
 	block->size = size;
 	block->allocation_number = allocation_number++;
+
+	Q_malloc_register(file, line);
 
 	p = PTR_FOR_MEMORY_BLOCK(block);
 #else
@@ -969,6 +986,7 @@ void *Q_realloc(void *p, size_t newsize)
 	if (label) {
 		strlcpy(block->label, label, sizeof(block->label));
 	}
+	Q_malloc_register(file, line);
 
 	return (void*)(((intptr_t)p) + sizeof(ezquake_memory_block_t));
 #else
@@ -1035,6 +1053,7 @@ char *Q_wcs2str_malloc(const wchar *ws)
 	size_t len = qwcslen(ws);
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	char *buf = (char *)Q_malloc_debug(len + 1, file, line, NULL);
+	Q_malloc_register(file, line);
 #else
 	char *buf = (char *)Q_malloc(len + 1);
 #endif
