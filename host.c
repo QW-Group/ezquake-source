@@ -303,8 +303,8 @@ void SYSINFO_Init(void)
 {
 	char cpu_model[256];
 
-	int mib[2], val;
-	unsigned long val_ul;
+	int mib[2];
+	unsigned long long val;
 	size_t len;
 	unsigned long long old_tsc, tsc_freq;
 	struct timeval tp, old_tp;
@@ -320,9 +320,9 @@ void SYSINFO_Init(void)
 // VVD: We can use HW_REALMEM (hw.realmem) for RELENG_5/6/7 for getting exact result,
 // but RELENG_4 have only HW_PHYSMEM (hw.physmem).
 	len = sizeof(val);
-	sysctl(mib, sizeof(mib) / sizeof(mib[0]), &val_ul, &len, NULL, 0);
+	sysctl(mib, sizeof(mib) / sizeof(mib[0]), &val, &len, NULL, 0);
 
-	SYSINFO_memory = val_ul;
+	SYSINFO_memory = val;
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_MODEL;
@@ -351,7 +351,7 @@ void SYSINFO_Init(void)
 		SYSINFO_3D_description = Q_strdup(gl_renderer);
 	}
 
-	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory / 1024. / 1024. + .5));
+	snprintf(f_system_string, sizeof(f_system_string), "%lluMB", (int)(SYSINFO_memory / 1024LLU / 1024LLU));
 
 	if (SYSINFO_processor_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
