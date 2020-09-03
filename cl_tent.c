@@ -52,6 +52,7 @@ typedef struct explosion_s
 	model_t *model;
 } explosion_t;
 
+temp_entity_list_t temp_entities;
 
 // cl_free_explosions = linear linked list of free explosions
 explosion_t	cl_explosions[MAX_EXPLOSIONS];

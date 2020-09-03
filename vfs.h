@@ -131,7 +131,7 @@ vfsfile_t *FS_OpenTCP(char *name);
 // GZIP (*.gz) Support
 //=====================
 #ifdef WITH_ZLIB
-searchpathfuncs_t gzipfilefuncs;
+extern searchpathfuncs_t gzipfilefuncs;
 #endif // WITH_ZLIB
 
 //=====================

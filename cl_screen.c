@@ -3369,10 +3369,11 @@ static char *Sshot_SshotDirectory(void) {
 	return dir;
 }
 
+// defined in cl_view
 #ifdef X11_GAMMA_WORKAROUND
-unsigned short ramps[3][4096];
+extern unsigned short ramps[3][4096];
 #else
-unsigned short  ramps[3][256];
+extern unsigned short  ramps[3][256];
 #endif
 
 //applies hwgamma to RGB data

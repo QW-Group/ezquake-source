@@ -49,15 +49,15 @@ void InitCoronas(void);
 void InitVXStuff(void);
 void NewStaticLightCorona (coronatype_t type, vec3_t origin, entity_t *serialhint);
 
-int	coronatexture;
-int	gunflashtexture;
-int	explosionflashtexture1;
-int	explosionflashtexture2;
-int	explosionflashtexture3;
-int	explosionflashtexture4;
-int	explosionflashtexture5;
-int	explosionflashtexture6;
-int	explosionflashtexture7;
+extern int coronatexture;
+extern int gunflashtexture;
+extern int explosionflashtexture1;
+extern int explosionflashtexture2;
+extern int explosionflashtexture3;
+extern int explosionflashtexture4;
+extern int explosionflashtexture5;
+extern int explosionflashtexture6;
+extern int explosionflashtexture7;
 
 float CL_TraceLine (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal);
 void WeatherEffect(void);
@@ -126,7 +126,7 @@ extern cvar_t amf_part_trailwidth;
 extern cvar_t amf_part_trailtype;
 
 void SCR_DrawAMFstats(void);
-int ParticleCount, ParticleCountHigh, CoronaCount, CoronaCountHigh, MotionBlurCount, MotionBlurCountHigh;
+extern int ParticleCount, ParticleCountHigh, CoronaCount, CoronaCountHigh, MotionBlurCount, MotionBlurCountHigh;
 void CL_CreateBlurs (vec3_t start, vec3_t end, entity_t *ent);
 void CL_UpdateBlurs (void);
 

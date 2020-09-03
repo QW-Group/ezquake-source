@@ -27,6 +27,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 int GL_LoadTextureImage (char * , char *, int, int, int);
 int coronatexture;
+int	gunflashtexture;
+int	explosionflashtexture1;
+int	explosionflashtexture2;
+int	explosionflashtexture3;
+int	explosionflashtexture4;
+int	explosionflashtexture5;
+int	explosionflashtexture6;
+int	explosionflashtexture7;
 
 extern cvar_t gl_bounceparticles;
 

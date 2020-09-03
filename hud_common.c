@@ -56,6 +56,9 @@ hud_t *hud_netgraph = NULL;
 // Items to be filtered out
 static int itemsclock_filter = 0;
 
+// ugh
+int* gameclockoffset;  // hud_gameclock time offset in seconds
+
 // ----------------
 // HUD planning
 //

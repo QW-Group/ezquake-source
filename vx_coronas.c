@@ -45,6 +45,7 @@ typedef struct
 #define MAX_CORONAS 300
 
 corona_t	r_corona[MAX_CORONAS];
+int ParticleCount, ParticleCountHigh, CoronaCount, CoronaCountHigh, MotionBlurCount, MotionBlurCountHigh;
 
 #define CORONA_SCALE 130
 #define CORONA_ALPHA 1
