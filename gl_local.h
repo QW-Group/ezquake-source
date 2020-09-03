@@ -285,7 +285,7 @@ void GL_MakeAliasModelDisplayLists (model_t *m, aliashdr_t *hdr);
 
 // gl_rsurf.c
 
-#define	MAX_LIGHTMAPS		192
+#define	MAX_LIGHTMAPS		1024
 
 void EmitDetailPolys (void);
 void R_DrawBrushModel (entity_t *e);
