@@ -25,6 +25,7 @@
 - When using `/gl_textureless 1` & glsl path in classic renderer, bmodel entities rendered textureless (3.5 bug, reported by hemostx)
 - `/gl_outline 2` fixed (3.5 bug, reported by fourier)
 - Fixed bug causing read-only file handle to config being kept open, preventing backup from being taken (old bug)
+- Fixed bug causing MVD-stats code to cause `/tp_loadloc` to effectively always be forced to 1
 
 ### Ruleset-related changes
 
