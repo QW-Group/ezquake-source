@@ -3097,7 +3097,9 @@ static void SCR_DrawElements(void)
 					// QW262
 					SCR_DrawHud ();
 
-					MVD_Screen ();
+					if (cls.mvdplayback) {
+						MVD_Screen();
+					}
 
 					// VULT STATS
 					SCR_DrawAMFstats();
