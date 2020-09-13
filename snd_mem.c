@@ -793,6 +793,11 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 		return NULL;
 	}
 
+	if (info.dataofs + info.samples * info.channels > filesize) {
+		Com_Printf("%s is corrupt/truncated, delete and re-download\n", s->name);
+		return NULL;
+	}
+
 	if (info.width == 1)
 		COM_CharBias((signed char*)data + info.dataofs, info.samples * info.channels);
 	else if (info.width == 2)
