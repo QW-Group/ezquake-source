@@ -26,6 +26,7 @@
 - `/gl_outline 2` fixed (3.5 bug, reported by fourier)
 - Fixed bug causing read-only file handle to config being kept open, preventing backup from being taken (old bug)
 - Fixed bug causing MVD-stats code to cause `/tp_loadloc` to effectively always be forced to 1
+- Fixed bug causing multiple item timers to spawn when using `/demo_jump` (3.2 bug, reported by Milton)
 
 ### Ruleset-related changes
 
@@ -50,6 +51,7 @@
 - `-oldgamma` command line option to re-instate old `-gamma` behaviour
 - GLSL gamma now supported in classic renderer
 - ezQuake will re-calculate normals on shared vertices as model is loaded (bug in models with normals set per-surface)
+- When gameplay-related protocols are enabled but not supported by server, you will be warned during connection
 
 ### Build/meta
 
