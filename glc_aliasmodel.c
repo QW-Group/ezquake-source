@@ -347,7 +347,7 @@ static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int po
 
 	subprogram = GLC_AliasModelSubProgramIndex(
 		!invalidate_texture,
-		ent->full_light,
+		gl_fb_models.integer,
 		gl_caustics.integer && (render_effects & RF_CAUSTICS),
 		r_lerpmuzzlehack.integer && (render_effects & RF_WEAPONMODEL)
 	);

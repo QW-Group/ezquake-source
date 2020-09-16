@@ -3204,7 +3204,7 @@ void CL_StopPlayback (void)
 	//
 	if (cls.timedemo)
 	{
-		int frames, i, frames2, worst_ms_count;
+		int frames, i, frames2, worst_ms_count = 0;
 		double stddev = 0;
 		double renderTime = 0;
 		float time, worst_ms = 0;

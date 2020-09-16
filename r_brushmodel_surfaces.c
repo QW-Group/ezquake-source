@@ -180,7 +180,7 @@ void OnChange_r_drawflat (cvar_t *var, char *value, qbool *cancel) {
 
 void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 {
-	extern cvar_t r_fastturb, r_drawflat, r_drawflat_mode, r_fastsky;
+	extern cvar_t r_fastturb, r_fastsky;
 	model_t* clmodel = cl.worldmodel;
 
 	int c, side, clipped;
