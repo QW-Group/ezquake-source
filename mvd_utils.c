@@ -434,7 +434,7 @@ mvd_clock_t *MVD_ClockList_Remove(mvd_clock_t *item)
 static void MVD_ClockStart(int itemtype, vec3_t origin)
 {
 	mvd_clock_t *newclock = (mvd_clock_t *) Q_malloc(sizeof (mvd_clock_t));
-	newclock->clockval = cls.demotime + MVD_RespawnTimeGet(itemtype);
+	newclock->clockval = cls.demopackettime + MVD_RespawnTimeGet(itemtype);
 	newclock->itemtype = itemtype;
 	if (origin) {
 		strlcpy(newclock->location, TP_LocationName(origin), sizeof(newclock->location));
@@ -477,7 +477,7 @@ void MVD_ClockList_RemoveExpired(void)
 		// We don't remove persistent counters
 		if (!(current->flags & MVDCLOCK_PERSISTENT)) {
 			// Expired
-			if (current->clockval + 1 < cls.demotime) {
+			if (current->clockval + 1 < cls.demopackettime) {
 				current = MVD_ClockList_Remove(current);
 				continue;
 			}
@@ -537,13 +537,13 @@ static double MVD_ClockList_SortTime(mvd_clock_t* c)
 {
 	double t = c->clockval;
 
-	if (c->last_taken && cls.demotime - c->last_taken < ITEMSCLOCK_TAKEN_PAUSE) {
+	if (c->last_taken && cls.demopackettime - c->last_taken < ITEMSCLOCK_TAKEN_PAUSE) {
 		// item has just been taken, keep to the start of the list
 		t = -1 - c->old_clockval;
 	}
 	else if (c->last_taken && t == -1) {
 		// megahealth still held by player, put to end of list
-		t = cls.demotime + c->last_taken + 1000;
+		t = cls.demopackettime + c->last_taken + 1000;
 	}
 
 	return t;
@@ -628,7 +628,7 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *wid
 	}
 
 	while (current) {
-		int time = (int)((current->clockval - cls.demotime) + 1);
+		int time = (int)((current->clockval - cls.demopackettime) + 1);
 
 		// Skip if it's a backpack and the config turns these off
 		if (!backpacks && (current->flags & (MVDCLOCK_BACKPACK | MVDCLOCK_BACKPACK_REMOVED))) {
@@ -655,8 +655,8 @@ void MVD_ClockList_TopItems_DimensionsGet(double time_limit, int style, int *wid
 
 		}
 
-		if (current->entity || current->clockval - cls.demotime < time_limit) {
-			int time = (int)((current->clockval - cls.demotime) + 1);
+		if (current->entity || current->clockval - cls.demopackettime < time_limit) {
+			int time = (int)((current->clockval - cls.demopackettime) + 1);
 
 			if (current->flags & MVDCLOCK_PERSISTENT) {
 				if (cl_entities[current->entity].current.modelindex != 0 || time >= 0) {
@@ -700,7 +700,7 @@ static qbool MVD_ClockIsHeld(mvd_clock_t* current, qbool test_held, float* alpha
 		*alpha = 1.0f;
 	}
 
-	if (!current->entity || (test_held && current->hold_clockval <= cls.demotime)) {
+	if (!current->entity || (test_held && current->hold_clockval <= cls.demopackettime)) {
 		return false;
 	}
 
@@ -712,11 +712,11 @@ static qbool MVD_ClockIsHeld(mvd_clock_t* current, qbool test_held, float* alpha
 		return true;
 	}
 
-	if (!current->last_taken || current->last_taken > cls.demotime) {
+	if (!current->last_taken || current->last_taken > cls.demopackettime) {
 		return false;
 	}
 
-	time_since = (cls.demotime - current->last_taken);
+	time_since = (cls.demopackettime - current->last_taken);
 	if (alpha) {
 		if (time_since > ITEMSCLOCK_TAKEN_PAUSE - 1 && time_since < ITEMSCLOCK_TAKEN_PAUSE) {
 			*alpha = (ITEMSCLOCK_TAKEN_PAUSE - time_since);
@@ -752,8 +752,8 @@ void MVD_ClockList_TopItems_Draw(double time_limit, int style, int x, int y, flo
 			continue;
 		}
 
-		if (current->entity || current->clockval - cls.demotime < time_limit) {
-			int time = (int)((current->clockval - cls.demotime) + 1);
+		if (current->entity || current->clockval - cls.demopackettime < time_limit) {
+			int time = (int)((current->clockval - cls.demopackettime) + 1);
 			int texture = Mod_SimpleTextureForHint(mvd_wp_info[current->itemtype].model_hint, mvd_wp_info[current->itemtype].skin_number);
 
 			if (filter & mvd_wp_info[current->itemtype].it) {
@@ -1314,8 +1314,8 @@ void MVD_Stats_CalcAvgRuns(void)
 	static double lastupdate = 0;
 
 	// no need to recalculate the values in every frame
-	if (cls.demotime - lastupdate < 0.5) return;
-	else lastupdate = cls.demotime;
+	if (cls.demopackettime - lastupdate < 0.5) return;
+	else lastupdate = cls.demopackettime;
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
 		mvd_info_t *pi = &mvd_new_info[i].mvdinfo;
@@ -1431,13 +1431,13 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 				mvd_new_info[i].mvdinfo.itemstats[x].count++;
 				mvd_new_info[i].mvdinfo.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
 				mvd_new_info[i].mvdinfo.itemstats[x].has=1;
-				mvd_new_info[i].mvdinfo.itemstats[x].starttime = cls.demotime;
+				mvd_new_info[i].mvdinfo.itemstats[x].starttime = cls.demopackettime;
 			}
 
 			if (mvd_new_info[i].mvdinfo.itemstats[x].lost < mvd_new_info[i].p_info->stats[STAT_ARMOR]) {
 				taken |= (1 << x);
 				mvd_new_info[i].mvdinfo.itemstats[x].count++;
-				mvd_new_info[i].mvdinfo.itemstats[x].starttime = cls.demotime;
+				mvd_new_info[i].mvdinfo.itemstats[x].starttime = cls.demopackettime;
 			}
 			mvd_new_info[i].mvdinfo.itemstats[x].lost=mvd_new_info[i].p_info->stats[STAT_ARMOR];
 		}
@@ -1457,7 +1457,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 				quad_is_active=1;
 				powerup_cam_active-=1;
 			}
-			mvd_new_info[i].mvdinfo.itemstats[x].starttime = cls.demotime;
+			mvd_new_info[i].mvdinfo.itemstats[x].starttime = cls.demopackettime;
 			mvd_new_info[i].mvdinfo.itemstats[x].count++;
 		}
 		if (mvd_new_info[i].mvdinfo.itemstats[x].has && !(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it)){
@@ -1469,7 +1469,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 				pent_is_active=0;
 			}
 			mvd_new_info[i].mvdinfo.itemstats[x].runs[mvd_new_info[i].mvdinfo.itemstats[x].run].starttime = mvd_new_info[i].mvdinfo.itemstats[x].starttime;
-			mvd_new_info[i].mvdinfo.itemstats[x].runs[mvd_new_info[i].mvdinfo.itemstats[x].run].time = cls.demotime - mvd_new_info[i].mvdinfo.itemstats[x].starttime;
+			mvd_new_info[i].mvdinfo.itemstats[x].runs[mvd_new_info[i].mvdinfo.itemstats[x].run].time = cls.demopackettime - mvd_new_info[i].mvdinfo.itemstats[x].starttime;
 			mvd_new_info[i].mvdinfo.itemstats[x].run++;
 		}
 	}
@@ -1482,7 +1482,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 		VectorCopy(mvd_new_info[i].p_state->origin, mvd_new_info[i].mega_locations[0]);
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has = 1;
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].count++;
-		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].starttime = cls.demotime;
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].starttime = cls.demopackettime;
 		MVD_Status_Announcer(i, MH_INFO);
 	}
 	else if (has_mega && mvd_new_info[i].mvdinfo.itemstats[MH_INFO].lost < mvd_new_info[i].p_info->stats[STAT_HEALTH] && mvd_new_info[i].p_info->stats[STAT_HEALTH] > 100) {
@@ -1493,7 +1493,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 		}
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].has++;
 		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].count++;
-		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].starttime = cls.demotime;
+		mvd_new_info[i].mvdinfo.itemstats[MH_INFO].starttime = cls.demopackettime;
 		MVD_Status_Announcer(i, MH_INFO);
 	}
 	mvd_new_info[i].mvdinfo.itemstats[MH_INFO].lost = mvd_new_info[i].p_info->stats[STAT_HEALTH];
@@ -1513,7 +1513,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 	for (z=RING_INFO;z<=PENT_INFO;z++){
 		if (mvd_new_info[i].mvdinfo.itemstats[z].has == 1){
 			mvd_new_info[i].mvdinfo.itemstats[z].runs[mvd_new_info[i].mvdinfo.itemstats[z].run].starttime = mvd_new_info[i].mvdinfo.itemstats[z].starttime;
-			mvd_new_info[i].mvdinfo.itemstats[z].runs[mvd_new_info[i].mvdinfo.itemstats[z].run].time = cls.demotime - mvd_new_info[i].mvdinfo.itemstats[z].starttime;
+			mvd_new_info[i].mvdinfo.itemstats[z].runs[mvd_new_info[i].mvdinfo.itemstats[z].run].time = cls.demopackettime - mvd_new_info[i].mvdinfo.itemstats[z].starttime;
 		}
 	}
 
@@ -1552,7 +1552,7 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 		mvd_new_info[i].mvdinfo.lastfrags = mvd_new_info[i].p_info->frags ;
 	}
 
-	mvd_new_info[i].mvdinfo.runs[mvd_new_info[i].mvdinfo.run].time=cls.demotime - mvd_new_info[i].mvdinfo.das.alivetimestart;
+	mvd_new_info[i].mvdinfo.runs[mvd_new_info[i].mvdinfo.run].time=cls.demopackettime - mvd_new_info[i].mvdinfo.das.alivetimestart;
 
 	if (mvd_new_info[i].mvdinfo.lfw == -1){
 		if (mvd_new_info[i].mvdinfo.lastfrags > mvd_new_info[i].p_info->frags ){
@@ -1613,23 +1613,23 @@ int MVD_Stats_Gather(void)
 	for ( i=0; i<mvd_cg_info.pcount ; i++ ){
 		if (quad_time == pent_time && quad_time == 0 && !mvd_new_info[i].mvdinfo.firstrun){
 			powerup_cam_active = 3;
-			quad_time=pent_time=cls.demotime;
+			quad_time=pent_time=cls.demopackettime;
 		}
 
 		if (mvd_new_info[i].mvdinfo.firstrun == 0){
-			mvd_new_info[i].mvdinfo.das.alivetimestart = cls.demotime;
-			gamestart_time = cls.demotime;
+			mvd_new_info[i].mvdinfo.das.alivetimestart = cls.demopackettime;
+			gamestart_time = cls.demopackettime;
 			mvd_new_info[i].mvdinfo.firstrun = 1;
 			mvd_new_info[i].mvdinfo.lfw = -1;
 		}
 		// death alive stats
 		if (mvd_new_info[i].p_info->stats[STAT_HEALTH]>0 && mvd_new_info[i].mvdinfo.das.isdead == 1){
 			mvd_new_info[i].mvdinfo.das.isdead = 0;
-			mvd_new_info[i].mvdinfo.das.alivetimestart = cls.demotime;
+			mvd_new_info[i].mvdinfo.das.alivetimestart = cls.demopackettime;
 			mvd_new_info[i].mvdinfo.lfw = -1;
 		}
 
-		mvd_new_info[i].mvdinfo.das.alivetime = cls.demotime - mvd_new_info[i].mvdinfo.das.alivetimestart;
+		mvd_new_info[i].mvdinfo.das.alivetime = cls.demopackettime - mvd_new_info[i].mvdinfo.das.alivetimestart;
 		if (mvd_new_info[i].p_info->stats[STAT_HEALTH]<=0 && mvd_new_info[i].mvdinfo.das.isdead != 1){
 			mvd_new_info[i].mvdinfo.das.isdead = 1;
 			mvd_new_info[i].mvdinfo.das.deathcount++;
@@ -1658,7 +1658,7 @@ int MVD_Stats_Gather(void)
 				}*/
 
 				if (x == QUAD_INFO && mvd_new_info[i].mvdinfo.itemstats[QUAD_INFO].has) {
-					if (mvd_new_info[i].mvdinfo.itemstats[x].starttime - cls.demotime < 30) {
+					if (mvd_new_info[i].mvdinfo.itemstats[x].starttime - cls.demopackettime < 30) {
 						quad_is_active = 0;
 					}
 					mvd_new_info[i].mvdinfo.itemstats[x].run++;
@@ -1680,7 +1680,7 @@ int MVD_Stats_Gather(void)
 			}
 		}
 
-		if ((((pent_time + 300) - cls.demotime) < 5) && !pent_is_active){
+		if ((((pent_time + 300) - cls.demopackettime) < 5) && !pent_is_active){
 			if(!pent_mentioned){
 				pent_mentioned = 1;
 				// fixme
@@ -1691,7 +1691,7 @@ int MVD_Stats_Gather(void)
 			else if (powerup_cam_active == 0)
 				powerup_cam_active = 2;
 		}
-		if ((((quad_time + 60) - cls.demotime) < 5) && !quad_is_active){
+		if ((((quad_time + 60) - cls.demopackettime) < 5) && !quad_is_active){
 			if(!quad_mentioned){
 				quad_mentioned = 1;
 				// fixme
@@ -1758,8 +1758,8 @@ void MVD_Status (void){
 	Draw_ColoredString (x, y+((z++)*8),str,1);
 
 	//	Com_Printf("%f %f %f \n",lasttime,mvd_new_info[id].mvdinfo.das.alivetimestart, mvd_new_info[id].mvdinfo.das.alivetime);
-	if (cls.demotime >+ lasttime + .1){
-		lasttime=cls.demotime;
+	if (cls.demopackettime >+ lasttime + .1){
+		lasttime=cls.demopackettime;
 		lasttime1=mvd_new_info[id].mvdinfo.das.alivetime;
 	}
 
@@ -2244,7 +2244,7 @@ void MVD_Screen (void){
 void MVD_FlushUserCommands (void)
 {
 	int i;
-	float targettime = cls.demotime + cl.mvd_time_offset;
+	float targettime = cls.demopackettime + cl.mvd_time_offset;
 
 	for (i = 1; i < sizeof (cl.mvd_user_cmd) / sizeof (cl.mvd_user_cmd[0]); ++i) {
 		if (cl.mvd_user_cmd_time[i] && cl.mvd_user_cmd_time[i] <= targettime) {
@@ -2282,7 +2282,7 @@ void MVD_ParseUserCommand (const char* s)
 	}
 
 	if (! cl.mvd_time_offset) {
-		cl.mvd_time_offset = time - cls.demotime;
+		cl.mvd_time_offset = time - cls.demopackettime;
 	}
 
 	MVD_FlushUserCommands ();
@@ -2404,12 +2404,12 @@ void MVDAnnouncer_ItemTaken(const char* s)
 
 	clock_entry = MVD_ClockFindEntity(entity);
 	if (clock_entry) {
-		clock_entry->last_taken = cls.demotime;
+		clock_entry->last_taken = cls.demopackettime;
 		clock_entry->old_clockval = clock_entry->clockval;
 		if (respawn > 0) {
-			clock_entry->clockval = cls.demotime + respawn;
+			clock_entry->clockval = cls.demopackettime + respawn;
 			if (clock_entry->itemtype == QUAD_INFO || clock_entry->itemtype == PENT_INFO || clock_entry->itemtype == RING_INFO) {
-				clock_entry->hold_clockval = cls.demotime + 30;
+				clock_entry->hold_clockval = cls.demopackettime + 30;
 			}
 			else {
 				clock_entry->hold_clockval = 0;
@@ -2456,7 +2456,7 @@ void MVDAnnouncer_StartTimer(const char* s)
 	clock_entry = MVD_ClockFindEntity(entity);
 	if (clock_entry) {
 		clock_entry->old_clockval = clock_entry->clockval;
-		clock_entry->clockval = cls.demotime + respawn;
+		clock_entry->clockval = cls.demopackettime + respawn;
 		clock_entry->last_taken_by = 0;
 		clock_entry->last_taken = 0;
 	}
@@ -2498,7 +2498,7 @@ void MVDAnnouncer_PackDropped(const char* s)
 		for (i = 0; i < sizeof(mvd_wp_info) / sizeof(mvd_wp_info[0]); ++i) {
 			if (mvd_wp_info[i].it == weapon) {
 				clock_entry = MVD_ClockStartEntity(entity, i, MVDCLOCK_BACKPACK);
-				clock_entry->clockval = cls.demotime + 120;
+				clock_entry->clockval = cls.demopackettime + 120;
 				clock_entry->dropped_by = player_ent;
 			}
 		}
@@ -2549,8 +2549,8 @@ void MVDAnnouncer_BackpackPickup(const char* s)
 	clock_entry = MVD_ClockFindEntity(entity);
 	if (clock_entry) {
 		clock_entry->last_taken_by = player_ent;
-		clock_entry->clockval = cls.demotime + ITEMSCLOCK_TAKEN_PAUSE;
-		clock_entry->last_taken = cls.demotime;
+		clock_entry->clockval = cls.demopackettime + ITEMSCLOCK_TAKEN_PAUSE;
+		clock_entry->last_taken = cls.demopackettime;
 	}
 
 	if (entity >= 0 && entity < sizeof(cl_entities) / sizeof(cl_entities[0])) {
