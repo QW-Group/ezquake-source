@@ -1130,18 +1130,20 @@ void V_Init (void) {
 	// we do not need this after host initialized
 	if (!host_initialized) {
 		int i;
-		float def_gamma = v_gamma.value;
+		float def_gamma = 1.0f;
 		extern float vid_gamma;
 
 		if ((i = COM_CheckParm(cmdline_param_client_gamma)) != 0 && i + 1 < COM_Argc()) {
 			def_gamma = Q_atof(COM_Argv(i + 1));
+			def_gamma = bound(0.3, def_gamma, 3);
+			Cvar_SetDefaultAndValue(&v_gamma, def_gamma, def_gamma);
+			vid_gamma = def_gamma;
+		}
+		else {
+			vid_gamma = 1.0;
 		}
 
-		def_gamma = bound(0.3, def_gamma, 3);
-		Cvar_SetDefaultAndValue(&v_gamma, def_gamma, def_gamma);
 		v_gamma.modified = true;
-
-		vid_gamma = def_gamma;
 	}
 	Cvar_ResetCurrentGroup();
 }
