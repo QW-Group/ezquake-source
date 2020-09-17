@@ -324,6 +324,10 @@ void IN_FireDown(void)
 		cl.weapon_order[i - 1] = 0;
 	}
 
+	if (cl_pext_serversideweapon.integer) {
+		cl.weapon_order_sequence_set = cls.netchan.outgoing_sequence;
+	}
+
 	SetNextImpulse(IN_BestWeapon(), true);
 
 	KeyDown_common(&in_attack, key_code);
@@ -909,7 +913,8 @@ void CL_FinishMove(usercmd_t *cmd)
 
 	if (!cl.spectator && CL_INPUT_WEAPONHIDE_DUE_TO_DEATH(cl.stats[STAT_HEALTH])) {
 		cl.weapon_order[0] = in_next_impulse = (cl_weaponhide_axe.integer ? 1 : 2);
-		cl.weapon_order[1] = 0;
+		cl.weapon_order[1] = 1;
+		cl.weapon_order[2] = 0;
 	}
 
 	// shaman RFE 1030281 {
@@ -922,11 +927,6 @@ void CL_FinishMove(usercmd_t *cmd)
 	) {
 		cmd->impulse = 0;
 	}
-/*#ifdef MVD_PEXT1_SERVERSIDEWEAPON
-	else if ((cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) && cl_pext_serversideweapon.integer && cmd->impulse <= 8) {
-		cmd->impulse = 0;
-	}
-#endif*/
 	else {
 		cmd->impulse = in_next_impulse;
 	}
