@@ -246,41 +246,6 @@ byte MSG_EncodeMVDSVWeaponFlags(int deathmatch, int weaponmode, int weaponhide, 
 void MSG_DecodeMVDSVWeaponFlags(int flags, int* weaponmode, int* weaponhide, qbool* forgetorder, int* sequence);
 #endif
 
-#ifdef MVD_PEXT1_CLIENTMOVE
-#define clc_mvd_move  201
-
-#define mvdsv_move_packet_loss1     (1 << 0)
-#define mvdsv_move_packet_loss2     (2 << 0)
-#define mvdsv_move_packet_specific  (3 << 0)
-#define mvdsv_move_msec_12_12_12    (0 << 2)
-#define mvdsv_move_msec_12_12_13    (1 << 2)
-#define mvdsv_move_msec_12_13_12    (2 << 2)
-#define mvdsv_move_msec_12_13_13    (3 << 2)
-#define mvdsv_move_msec_13_12_12    (4 << 2)
-#define mvdsv_move_msec_13_12_13    (5 << 2)
-#define mvdsv_move_msec_13_13_12    (6 << 2)
-#define mvdsv_move_msec_specific    (7 << 2)
-#define mvdsv_move_msec_decode(x)   ((x >> 2) & 7)
-
-int mvdsv_move_msec_encode(int msec1, int msec2, int msec3);
-
-#define mvdsv_ucmd_xnegative_move   (1 << 0)
-#define mvdsv_ucmd_xpositive_move   (1 << 1)
-#define mvdsv_ucmd_ynegative_move   (1 << 2)
-#define mvdsv_ucmd_ypositive_move   (1 << 3)
-#define mvdsv_ucmd_znegative_move   (1 << 4)
-#define mvdsv_ucmd_zpositive_move   (1 << 5)
-#define mvdsv_ucmd_buttons_attack   (1 << 6)
-#define mvdsv_ucmd_buttons_jump     (1 << 7)
-#define mvdsv_ucmd_buttons_use      (1 << 8)
-#define mvdsv_ucmd_buttons_attack2  (1 << 9)
-#define mvdsv_ucmd_impulse_bits     ((1 << 10) | (1 << 11) | (1 << 12) | (1 << 13))
-#define mvdsv_ucmd_angle1           (1 << 14)
-#define mvdsv_ucmd_angle2           (1 << 15)
-
-//#define mvdsv_ucmd_impulse_specific mvdsv_ucmd_impulse_bits
-#endif
-
 //==============================================
 
 // playerinfo flags from server
@@ -478,21 +443,12 @@ typedef struct packet_entities_s {
 	entity_state_t	entities[MAX_MVD_PACKET_ENTITIES];
 } packet_entities_t;
 
-typedef struct weaponrank_s {
-	byte    ordering[8];
-	byte    length;
-	qbool   send;
-	byte    offset;
-} weaponrank_t;
-
 typedef struct usercmd_s {
 	byte	msec;
 	vec3_t	angles;
 	short	forwardmove, sidemove, upmove;
 	byte	buttons;
 	byte	impulse;
-
-	weaponrank_t weaponrank;
 } usercmd_t;
 
 // usercmd button bits
