@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "fmod.h"
 #include "qsound.h"
+#ifndef OLD_WAV_LOADING
+#include "sndfile.h"
+#endif
 
 #define LINEARUPSCALE(in, inrate, insamps, out, outrate, outlshift, outrshift) \
 	{ \
@@ -586,9 +589,152 @@ static void ResampleSfx (sfx_t *sfx, int inrate, int inchannels, int inwidth, in
 		s_linearresample.integer);
 }
 
+#ifndef OLD_WAV_LOADING
+
 /*
 ===============================================================================
 WAV loading
+===============================================================================
+*/
+
+typedef struct sfviodata_s {
+	char *path;
+	int filesize;
+	int position;
+	unsigned char *data;
+} sfviodata_t;
+
+sf_count_t SFVIO_GetFilelen(void *user_data)
+{
+	sfviodata_t *sfviodata;
+
+	sfviodata = user_data;
+	return sfviodata->filesize;
+}
+
+sf_count_t SFVIO_Seek(sf_count_t offset, int whence, void *user_data)
+{
+	sfviodata_t *sfviodata;
+
+	sfviodata = user_data;
+	if (whence == SEEK_CUR)
+	{
+		sfviodata->position += offset;
+	}
+	else if (whence == SEEK_SET)
+	{
+		sfviodata->position = offset;
+	}
+	else if (whence == SEEK_END)
+	{
+		sfviodata->position = sfviodata->filesize + offset;
+	}
+	if (sfviodata->position > sfviodata->filesize)
+	{
+		sfviodata->position = sfviodata->filesize;
+	}
+	else if (sfviodata->position < 0)
+	{
+		sfviodata->position = 0;
+	}
+	return sfviodata->position;
+}
+
+sf_count_t SFVIO_Read(void *ptr, sf_count_t count, void *user_data)
+{
+	int i = 0;
+	sfviodata_t *sfviodata;
+
+	sfviodata = user_data;
+	for (i = 0; i < count; ++i)
+	{
+		if (sfviodata->position == sfviodata->filesize)
+		{
+			return i;
+		}
+		((char *)ptr)[i] = sfviodata->data[sfviodata->position];
+		sfviodata->position++;
+	}
+	return count;
+}
+
+sf_count_t SFVIO_Tell(void *user_data)
+{
+	sfviodata_t *sfviodata;
+
+	sfviodata = user_data;
+	return sfviodata->position;
+}
+
+sfxcache_t *S_LoadSound (sfx_t *s)
+{
+	char namebuffer[256];
+	unsigned char *data;
+	int filesize;
+	SF_VIRTUAL_IO sfvio;
+	SF_INFO sfinfo;
+	sfviodata_t sfviodata;
+	short *buf; 
+	uint32_t cue_count;
+	int loopstart;
+	SF_CUES sfcues;
+	SNDFILE *sndfile;
+
+	// see if allocated
+	if (s->buf)
+		return s->buf;
+
+	// load it in
+	snprintf(namebuffer, sizeof(namebuffer), "sound/%s", s->name);
+
+	if (!(data = FS_LoadTempFile(namebuffer, &filesize))) {
+		Com_Printf ("Couldn't load %s\n", namebuffer);
+		return NULL;
+	}
+
+	FMod_CheckModel(namebuffer, data, filesize);
+
+	sfvio.get_filelen = SFVIO_GetFilelen;
+	sfvio.seek = SFVIO_Seek;
+	sfvio.read = SFVIO_Read;
+	sfvio.tell = SFVIO_Tell;
+
+	sfinfo.format = 0;
+
+	sfviodata.path = namebuffer;
+	sfviodata.position = 0;
+	sfviodata.data = data;
+	sfviodata.filesize = filesize;
+
+	sndfile = sf_open_virtual(&sfvio, SFM_READ, &sfinfo, &sfviodata);
+
+	buf = (short *)Q_malloc(sfinfo.frames * sfinfo.channels * sizeof(short));
+	sf_readf_short(sndfile, buf, sfinfo.frames);
+	cue_count = 0;
+        sf_command(sndfile, SFC_GET_CUE_COUNT, &cue_count, sizeof(cue_count));
+	loopstart = -1;
+	if (cue_count != 0)
+	{
+        	sf_command(sndfile, SFC_GET_CUE, &sfcues, sizeof(sfcues)) ;
+		loopstart = sfcues.cue_points[0].position;
+	}
+	sf_close(sndfile);
+
+	if (sfinfo.channels < 1 || sfinfo.channels > 2) {
+		Com_Printf("%s has an unsupported number of channels (%i)\n", s->name, sfinfo.channels);
+		return NULL;
+	}
+
+	ResampleSfx (s, sfinfo.samplerate, sfinfo.channels, sizeof(short), sfinfo.frames, loopstart, (byte *)buf);
+
+	return s->buf;
+}
+
+#else
+
+/*
+===============================================================================
+Old WAV loading
 ===============================================================================
 */
 
@@ -832,3 +978,5 @@ int SND_Rate(int rate)
 			return 11025;
 	}
 }
+
+#endif

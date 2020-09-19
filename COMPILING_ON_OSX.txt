@@ -9,7 +9,7 @@ Make sure you run the 'brew doctor' as instructed before doing anything else.
 
 Then run:
 
-brew install sdl2 sdl2_net sdl2_image sdl2_gfx sdl2_mixer pcre jansson pkg-config speex speexdsp freetype
+brew install sdl2 sdl2_net sdl2_image sdl2_gfx sdl2_mixer pcre jansson pkg-config speex speexdsp freetype libsndfile
 
 When it's done, just hit make and it should compile without errors
 
