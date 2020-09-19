@@ -716,9 +716,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Com_Printf("http://ezquake.github.io/\n");
 	Com_Printf("\n");
 //	Com_Printf(Host_PrintBars("ezQuake\x9c" "SourceForge\x9c" "net", 38));
-	Com_Printf("ezQuake %s\n", VersionStringColour());
+	Com_Printf("unezQuake %s\n", VersionStringColour());
 	Com_Printf("\n");
-	Com_Printf(Host_PrintBars("&c1e1ezQuake Initialized&r", 38));
+	Com_Printf(Host_PrintBars("&c1e1unezQuake Initialized&r", 38));
 	Com_Printf("\n");
 	Com_Printf("Type /help to access the manual.\nUse /describe for help on commands.\n\n", VersionString());
 
