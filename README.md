@@ -1,3 +1,7 @@
+# unezQuake — Modernizing QuakeWorld Standards For Interested Parties
+unezQuake is a fork of the ezQuake client that aims to bring more permissive standards and features to Quakeworld to help the game evolve in a positive way.
+
+
 # ezQuake — Modern QuakeWorld Client
 [![Build Status](https://travis-ci.org/ezQuake/ezquake-source.svg?branch=master)](https://travis-ci.org/ezQuake/ezquake-source)
 
