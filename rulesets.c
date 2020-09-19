@@ -101,6 +101,7 @@ qbool Rulesets_AllowTimerefresh(void)
 	switch(rulesetDef.ruleset) {
 		case rs_smackdown:
 		case rs_thunderdome:
+		case rs_modern2020:
 		case rs_qcon:
 			return (cl.standby || cl.spectator || cls.demoplayback);
 		default:
@@ -114,6 +115,7 @@ qbool Rulesets_AllowNoShadows(void)
 		case rs_mtfl:
 		case rs_smackdown:
 		case rs_thunderdome:
+		case rs_modern2020:
 		case rs_qcon:
 			return false;
 		default:
@@ -175,6 +177,7 @@ qbool Rulesets_RestrictTCL(void)
 	switch(rulesetDef.ruleset) {
 		case rs_smackdown:
 		case rs_thunderdome:
+		case rs_modern2020:
 		case rs_qcon:
 			return true;
 		case rs_mtfl:
@@ -194,6 +197,8 @@ const char *Rulesets_Ruleset(void)
 			return "thunderdome";
 		case rs_qcon:
 			return "qcon";
+		case rs_2020:
+			return "modern2020";
 		default:
 			return "default";
 	}
@@ -353,6 +358,49 @@ static void Rulesets_Thunderdome(qbool enable)
 		rulesetDef.ruleset = rs_default;
 	}
 }
+static void Rulesets_Modern2020(qbool enable)
+{
+	extern cvar_t cl_independentPhysics, cl_c2spps;
+	extern cvar_t allow_scripts;
+	int i;
+
+	locked_cvar_t disabled_cvars[] = {
+		{&allow_scripts, "0"},  // disable movement scripting
+	};
+
+	if (enable) {
+		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
+			Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value, 2);
+			Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
+			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
+		}
+
+		if (cl_independentPhysics.value) {
+			Cvar_Set(&cl_c2spps, "0"); // people were complaining that player move is jerky with this. however this has not much to do with independent physics, but people are too paranoid about it
+			Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) | CVAR_ROM);
+		}
+
+		rulesetDef.maxfps = 77;
+		rulesetDef.restrictTriggers = true;
+		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
+		rulesetDef.restrictParticles = false;
+		rulesetDef.restrictLogging = true;
+		rulesetDef.ruleset = rs_thunderdome;
+	} else {
+		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
+			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
+
+		if (cl_independentPhysics.value)
+			Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) & ~CVAR_ROM);
+
+		rulesetDef.maxfps = 72.0;
+		rulesetDef.restrictTriggers = false;
+		rulesetDef.restrictPacket = false;
+		rulesetDef.restrictParticles = false;
+		rulesetDef.restrictLogging = false;
+		rulesetDef.ruleset = rs_default;
+	}
+}
 static void Rulesets_MTFL(qbool enable)
 {
 	/* TODO:
@@ -437,6 +485,9 @@ void Rulesets_Init(void)
 			return;
 		} else if (!strcasecmp(COM_Argv(temp + 1), "thunderdome")) {
 			Cvar_Set(&ruleset, "thunderdome");
+			return;
+		} else if (!strcasecmp(COM_Argv(temp + 1), "modern2020")) {
+			Cvar_Set(&ruleset, "modern2020");
 			return;
 		} else if (!strcasecmp(COM_Argv(temp + 1), "mtfl")) {
 			Cvar_Set(&ruleset, "mtfl");
@@ -616,6 +667,7 @@ static void Rulesets_OnChange_ruleset(cvar_t *var, char *value, qbool *cancel)
 
 	if (strncasecmp(value, "smackdown", sizeof("smackdown")) &&
 			strncasecmp(value, "thunderdome", sizeof("thunderdome")) &&
+			strncasecmp(value, "modern2020", sizeof("modern2020")) &&
 			strncasecmp(value, "mtfl", sizeof("mtfl")) &&
 			strncasecmp(value, "qcon", sizeof("qcon")) &&
 			strncasecmp(value, "default", sizeof("default"))) {
@@ -638,6 +690,9 @@ static void Rulesets_OnChange_ruleset(cvar_t *var, char *value, qbool *cancel)
 		case rs_thunderdome:
 			Rulesets_Thunderdome(false);
 			break;
+		case rs_modern2020:
+			Rulesets_Modern2020(false);
+			break;
 		case rs_default:
 			break;
 		default:
@@ -656,6 +711,9 @@ static void Rulesets_OnChange_ruleset(cvar_t *var, char *value, qbool *cancel)
 	} else if (!strncasecmp(value, "thunderdome", sizeof("thunderdome"))) {
 		Rulesets_Thunderdome(true);
 		Com_Printf_State(PRINT_OK, "Ruleset Thunderdome initialized\n");
+	} else if (!strncasecmp(value, "modern2020", sizeof("modern2020"))) {
+		Rulesets_Modern2020(true);
+		Com_Printf_State(PRINT_OK, "Ruleset Modern2020 initialized\n");
 	} else if (!strncasecmp(value, "qcon", sizeof("qcon"))) {
 		Rulesets_Qcon(true);
 		Com_Printf_State(PRINT_OK, "Ruleset Qcon initialized\n");
@@ -689,6 +747,7 @@ qbool Ruleset_BlockHudPicChange(void)
 	case rs_qcon:
 	case rs_smackdown:
 	case rs_thunderdome:
+	case rs_modern2020:
 		return cls.state != ca_disconnected && !(cl.standby || cl.spectator || cls.demoplayback);
 	default:
 		return false;
