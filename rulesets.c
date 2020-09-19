@@ -197,7 +197,7 @@ const char *Rulesets_Ruleset(void)
 			return "thunderdome";
 		case rs_qcon:
 			return "qcon";
-		case rs_2020:
+		case rs_modern2020:
 			return "modern2020";
 		default:
 			return "default";
