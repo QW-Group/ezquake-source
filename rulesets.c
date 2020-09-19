@@ -385,7 +385,7 @@ static void Rulesets_Modern2020(qbool enable)
 		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
 		rulesetDef.restrictParticles = false;
 		rulesetDef.restrictLogging = true;
-		rulesetDef.ruleset = rs_thunderdome;
+		rulesetDef.ruleset = rs_modern2020;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
