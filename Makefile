@@ -111,7 +111,7 @@ EXPAT_LIBS ?= $(shell pkg-config expat --libs)
 CFLAGS_c += $(EXPAT_CFLAGS)
 LIBS_c += $(EXPAT_LIBS)
 
-PNG_CFLAGS ?= $(shell pkg-config libpng --cflags) -DWITH_PNG -D__Q_PNG14__
+PNG_CFLAGS ?= $(shell pkg-config libpng --cflags) -DWITH_PNG
 PNG_LIBS ?= $(shell pkg-config libpng --libs)
 CFLAGS_c += $(PNG_CFLAGS)
 LIBS_c += $(PNG_LIBS)
