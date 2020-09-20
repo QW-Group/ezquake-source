@@ -381,7 +381,7 @@ static void Rulesets_Modern2020(qbool enable)
 		}
 
 		rulesetDef.maxfps = 77;
-		rulesetDef.restrictTriggers = true;
+		rulesetDef.restrictTriggers = false;
 		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
 		rulesetDef.restrictParticles = false;
 		rulesetDef.restrictLogging = true;
