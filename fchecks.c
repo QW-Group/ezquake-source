@@ -38,7 +38,6 @@ f_version_reply_time,
 f_skins_reply_time,
 f_server_reply_time;
 
-cvar_t allow_f_system  = {"allow_f_system",  "1"};
 cvar_t allow_f_cmdline = {"allow_f_cmdline", "1"};
 
 extern cvar_t enemyforceskins;
@@ -52,7 +51,7 @@ extern cvar_t cl_iDrive;
 
 static void FChecks_VersionResponse (void)
 {
-	Cbuf_AddText (va("say ezQuake %s " QW_PLATFORM ":" QW_RENDERER "\n", VersionString()));
+	Cbuf_AddText (va("say unezQuake %s " QW_PLATFORM ":" QW_RENDERER "\n", VersionString()));
 }
 
 static char *FChecks_FServerResponse_Text(void)
@@ -75,7 +74,7 @@ static void FChecks_FServerResponse (void)
 	if (!text)
 		return;
 
-	Cbuf_AddText(va("say ezQuake f_server response: %s\n", text));
+	Cbuf_AddText(va("say unezQuake f_server response: %s\n", text));
 }
 
 static void FChecks_SkinsResponse (float fbskins)
@@ -217,32 +216,34 @@ void FChecks_RulesetFeatureAppend(qbool on, const char *code, char *feat_on_buf,
 // format: [+<enabled features>][-<disabled features>]
 const char* FChecks_RulesetAdditionString(void)
 {
-	char feat_on_buf[16] = "+";
-	char feat_off_buf[16] = "-";
-	static char features[32] = "";
+	char feat_on_buf[50] = " MODIFIED:";
+	char feat_off_buf[50] = "-";
+	static char features[100] = "";
 
 	*features = '\0';
 
 	#define APPENDFEATURE(on,code) FChecks_RulesetFeatureAppend((on),(code),feat_on_buf,sizeof (feat_on_buf),feat_off_buf,sizeof (feat_off_buf))
 	// modified models or sounds
-	APPENDFEATURE((strcmp(FMod_Response_Text(), "all models ok") != 0),"m");
+	APPENDFEATURE((strcmp(FMod_Response_Text(), "all models ok") != 0)," models");
 
 	// movement scripts enabled
-	APPENDFEATURE((allow_scripts.integer),"s");
+	APPENDFEATURE((allow_scripts.integer)," scripts");
 
 	// enemy skin forcing enabled
-	APPENDFEATURE((enemyforceskins.integer),"f");
+	APPENDFEATURE((enemyforceskins.integer)," eskins");
 
 	// cl_iDrive - strafing aid
-	APPENDFEATURE((cl_iDrive.integer),"i");
+	APPENDFEATURE((cl_iDrive.integer)," idrive");
 	#undef APPENDFEATURE
 
-	if (strlen(feat_on_buf) > 1) {
+	if (strlen(feat_on_buf) > 10) {
 		strlcat(features, feat_on_buf, sizeof (features));
+	} else {
+		strlcat(features, " nominal", sizeof (features));
 	}
-	if (strlen(feat_off_buf) > 1) {
-		strlcat(features, feat_off_buf, sizeof (features));
-	}
+	// if (strlen(feat_off_buf) > 1) {
+	// 	strlcat(features, feat_off_buf, sizeof (features));
+	// }
 
 	return features;
 }
@@ -262,10 +263,10 @@ static qbool FChecks_CheckFRulesetRequest (const char *s)
 	char *fServer;
 	const char *features;
 	char *emptystring = "";
-	char *brief_version = "ezq" VERSION_NUMBER;
+	char *brief_version = "unezq" VERSION_NUMBER;
 	const char *ruleset = Rulesets_Ruleset();
 	size_t name_len = strlen(cl.players[cl.playernum].name);
-	size_t pad_len = 15 - min(name_len, 15);
+	size_t pad_len = 12 - min(name_len, 12);
 
 	if (cl.spectator || (f_ruleset_reply_time && cls.realtime - f_ruleset_reply_time < 20))
 		return false;
@@ -292,13 +293,7 @@ void FChecks_FRuleset_cmd(void)
 		Com_Printf("Purpose:\n  "
 			"All clients on the server should respond to \"f_ruleset\" message with their client settings in the reply\n"
 			"Usage:\n  f_ruleset - prints this help\n"
-			"  f_ruleset check - sends check message to all players on the server\n"
-			"Flags:\n  End of the reply is ruleset name + flags denoting enabled and disabled features:\n"
-			"  m - modified models or sounds\n"
-			"  s - movement scripts\n"
-			"  f - enemy skin forcing\n"
-			"  i - side step aid (strafescript)\n"
-			"  flags that start with + mean feature is enabled, - means disabled\n");
+			"  f_ruleset check - sends check message to all players on the server\n");
 	}
 	else {
 		Cbuf_AddText("say \"f_ruleset\"\n");
@@ -334,7 +329,7 @@ static qbool FChecks_SystemRequest (const char *s)
 	if (Util_F_Match(s, "f_system")) {
 		char *sys_string;
 
-		sys_string = (allow_f_system.integer) ? SYSINFO_GetString() : "disabled";
+		sys_string = SYSINFO_GetString();
 
 		//if (sys_string != NULL && sys_string[0]) {
 		Cbuf_AddText("say ");
@@ -370,7 +365,6 @@ void FChecks_CheckRequest (const char *s)
 void FChecks_Init (void)
 {
 	Cvar_SetCurrentGroup (CVAR_GROUP_CHAT);
-	Cvar_Register (&allow_f_system);
 	Cvar_Register (&allow_f_cmdline);
 	Cvar_ResetCurrentGroup();
 
