@@ -40,6 +40,7 @@ typedef enum {
 	rs_default,
 	rs_smackdown,
 	rs_thunderdome,
+	rs_modern2020,
 	rs_qcon,
 	rs_mtfl
 } ruleset_t;
