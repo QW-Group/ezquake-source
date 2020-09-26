@@ -213,7 +213,7 @@ cvar_t  team                    = {"team", "", CVAR_USERINFO};
 cvar_t  topcolor                = {"topcolor","", CVAR_USERINFO};
 cvar_t  bottomcolor             = {"bottomcolor","", CVAR_USERINFO};
 cvar_t  skin                    = {"skin", "", CVAR_USERINFO};
-cvar_t  rate                    = {"rate", "5760", CVAR_USERINFO};
+cvar_t  rate                    = {"rate", "25000", CVAR_USERINFO};
 void OnChange_AppliedAfterReconnect (cvar_t *var, char *value, qbool *cancel);
 cvar_t  mtu                     = {"mtu", "", CVAR_USERINFO, OnChange_AppliedAfterReconnect};
 cvar_t  msg                     = {"msg", "1", CVAR_USERINFO};

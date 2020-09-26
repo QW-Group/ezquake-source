@@ -10,7 +10,7 @@ HOW TO BUILD ON LINUX:
  $ sudo apt-get install git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev libfreetype6-dev libsndfile-dev
 
 - For Fedora 25+:
- $ sudo dnf install pcre-devel mesa-libGL-devel SDL2-devel make gcc jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel
+ $ sudo dnf install pcre-devel mesa-libGL-devel SDL2-devel make gcc jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libXxf86vm-devel
 
 2) Clone the git repository
  $ git clone https://github.com/ezQuake/ezquake-source.git
