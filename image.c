@@ -1360,8 +1360,10 @@ int Image_WriteTGA (char *filename, byte *pixels, int width, int height)
 /*********************************** JPEG ************************************/
 
 #ifdef WITH_JPEG
+#if !defined(jpeg_create_compress)
 #define jpeg_create_compress(cinfo) \
     jpeg_CreateCompress((cinfo), JPEG_LIB_VERSION, (size_t) sizeof(struct jpeg_compress_struct))
+#endif
 
 typedef struct 
 {

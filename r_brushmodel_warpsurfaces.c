@@ -35,8 +35,8 @@ static void R_WarpSurfaceBoundPoly(int numverts, float *verts, vec3_t mins, vec3
 	int i, j;
 	float *v;
 
-	mins[0] = mins[1] = mins[2] = BRUSHMODEL_MAX_SURFACE_EXTENTS;
-	maxs[0] = maxs[1] = maxs[2] = BRUSHMODEL_MIN_SURFACE_EXTENTS;
+	mins[0] = mins[1] = mins[2] = (float)BRUSHMODEL_MAX_SURFACE_EXTENTS;
+	maxs[0] = maxs[1] = maxs[2] = (float)BRUSHMODEL_MIN_SURFACE_EXTENTS;
 	v = verts;
 	for (i = 0; i < numverts; i++) {
 		for (j = 0; j < 3; j++, v++) {

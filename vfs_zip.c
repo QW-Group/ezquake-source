@@ -183,8 +183,8 @@ static int VFSZIP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestore
 
 //	if (vfsz->iscompressed)
 //	{
-		VFSZIP_MakeActive(vfsz);
-		read = unzReadCurrentFile(vfsz->parent->handle, buffer, bytestoread);
+	VFSZIP_MakeActive(vfsz);
+	read = unzReadCurrentFile(vfsz->parent->handle, buffer, bytestoread);
 //	}
 //	else
 //	{

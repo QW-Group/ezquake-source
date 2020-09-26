@@ -326,13 +326,13 @@ int CL_CalcNetStatistics(
     samples_delta = 0;  // packets with delta compression applied
 
     ping_sum = 0;
-    ping_min =  99999999;
-    ping_max = -99999999;
+    ping_min =  (float)99999999;
+    ping_max = (float)-99999999;
     ping_dev_sum = 0;
 
     f_sum = 0;
-    f_min =  99999999;
-    f_max = -99999999;
+    f_min =  (float)99999999;
+    f_max = (float)-99999999;
     f_dev_sum = 0;
 
     lost_lost = 0;

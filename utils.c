@@ -1361,7 +1361,7 @@ float f_rnd( float from, float to )
 	if ( from >= to )
 		return from;
 
-	r = from + (to - from) * ((float)rand() / RAND_MAX);
+	r = from + (to - from) * ((float)rand() / (float)RAND_MAX);
 
 	return bound(from, r, to);
 }
@@ -1373,7 +1373,7 @@ int i_rnd( int from, int to )
 	if ( from >= to )
 		return from;
 
-	r = (int)(from + (1.0 + to - from) * ((float)rand() / RAND_MAX));
+	r = (int)(from + (1.0 + to - from) * ((float)rand() / (float)RAND_MAX));
 
 	return bound(from, r, to);
 }

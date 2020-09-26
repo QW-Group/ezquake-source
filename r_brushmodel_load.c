@@ -151,8 +151,8 @@ static void CalcSurfaceExtents(model_t* loadmodel, msurface_t *s) {
 	mvertex_t *v;
 	mtexinfo_t *tex;
 
-	mins[0] = mins[1] = BRUSHMODEL_MAX_SURFACE_EXTENTS;
-	maxs[0] = maxs[1] = BRUSHMODEL_MIN_SURFACE_EXTENTS;
+	mins[0] = mins[1] = (float)BRUSHMODEL_MAX_SURFACE_EXTENTS;
+	maxs[0] = maxs[1] = (float)BRUSHMODEL_MIN_SURFACE_EXTENTS;
 
 	tex = s->texinfo;
 
