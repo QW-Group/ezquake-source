@@ -344,6 +344,7 @@ static void Rulesets_Thunderdome(qbool enable)
 static void Rulesets_Modern2020(qbool enable)
 {
 	extern cvar_t cl_independentPhysics, cl_c2spps;
+	extern cvar_t cl_rollangle;
 	extern cvar_t allow_scripts;
 	int i;
 
@@ -351,11 +352,20 @@ static void Rulesets_Modern2020(qbool enable)
 		{&allow_scripts, "0"},  // disable movement scripting
 	};
 
+	limited_cvar_max_t limited_max_cvars[] = {
+		{&cl_rollangle, "10"},	// limit rollangle to 10 to avoid rollalpha abuse
+	};
+
 	if (enable) {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++) {
 			Cvar_RulesetSet(disabled_cvars[i].var, disabled_cvars[i].value, 2);
 			Cvar_Set(disabled_cvars[i].var, disabled_cvars[i].value);
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) | CVAR_ROM);
+		}
+
+		for (i = 0; i < (sizeof(limited_max_cvars) / sizeof(limited_max_cvars[0])); i++) {
+			Cvar_RulesetSet(limited_max_cvars[i].var, limited_max_cvars[i].maxrulesetvalue, 1);
+			Cvar_SetFlags(limited_max_cvars[i].var, Cvar_GetFlags(limited_max_cvars[i].var) | CVAR_RULESET_MAX);
 		}
 
 		if (cl_independentPhysics.value) {
@@ -371,6 +381,9 @@ static void Rulesets_Modern2020(qbool enable)
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
+
+		for (i = 0; i < (sizeof(limited_max_cvars) / sizeof(limited_max_cvars[0])); i++)
+			Cvar_SetFlags(limited_max_cvars[i].var, Cvar_GetFlags(limited_max_cvars[i].var) & ~CVAR_RULESET_MAX);
 
 		if (cl_independentPhysics.value)
 			Cvar_SetFlags(&cl_c2spps, Cvar_GetFlags(&cl_c2spps) & ~CVAR_ROM);
