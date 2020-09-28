@@ -81,7 +81,7 @@ qbool RuleSets_DisallowModelOutline(struct model_s *mod)
 		case MOD_THUNDERBOLT:
 			return true;
 		default:
-			return rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_thunderdome || rulesetDef.ruleset == rs_modern2020;
+			return rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown;
 	}
 }
 
