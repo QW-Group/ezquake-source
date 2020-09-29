@@ -154,6 +154,15 @@ ifdef FREETYPE_LIBS
     CFLAGS += $(FREETYPE_CFLAGS)
 endif
 
+ifdef OLD_WAV_LOADING
+    CFLAGS_c += -DOLD_WAV_LOADING
+else
+    SNDFILE_CFLAGS ?= $(shell pkg-config sndfile --cflags)
+    SNDFILE_LIBS ?= $(shell pkg-config sndfile --libs)
+    CFLAGS += $(SNDFILE_CFLAGS)
+    LIBS_c += $(SNDFILE_LIBS)
+endif
+
 # windres needs special quoting...
 RCFLAGS_c += -DREVISION=$(REV) -DVERSION='\"$(VER)\"'
 
