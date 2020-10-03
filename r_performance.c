@@ -61,10 +61,15 @@ void R_PerformanceEndFrame(void)
 	if (r_speeds.integer || frameStatsVisible || cls.timedemo) {
 		frameStats.end_time = Sys_DoubleTime();
 
-		if (cls.timedemo) {
+		if (cls.timedemo && cls.td_starttime) {
 			int ms = (int)ceil((frameStats.end_time - frameStats.start_time) * 10000.0);
 
 			ms = bound(0, ms, sizeof(cls.td_frametime_stats) / sizeof(cls.td_frametime_stats[0]) - 1);
+
+			if (ms > cls.td_frametime_max) {
+				cls.td_frametime_max = ms;
+				cls.td_frametime_max_frame = cls.framecount - cls.td_startframe - 1;
+			}
 
 			++cls.td_frametime_stats[ms];
 		}
