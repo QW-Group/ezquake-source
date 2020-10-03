@@ -196,7 +196,6 @@ void HUD_NewRadarMap(void)
 		memset (&radar_pic, 0, sizeof(radar_pic));
 		radar_pic_found = false;
 		conversion_formula_found = false;
-		Con_Printf("No radar pic found\n");
 	}
 
 	// Free the path string to the radar png.
