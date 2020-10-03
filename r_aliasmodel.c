@@ -85,6 +85,7 @@ cvar_t    gl_powerupshells_effect1level = { "gl_powerupshells_effect1level", "0.
 cvar_t    gl_powerupshells_base1level = { "gl_powerupshells_base1level", "0.05" };
 cvar_t    gl_powerupshells_effect2level = { "gl_powerupshells_effect2level", "0.4" };
 cvar_t    gl_powerupshells_base2level = { "gl_powerupshells_base2level", "0.1" };
+cvar_t    gl_custom_grenade_tf = { "gl_custom_grenade_tf", "1" };
 
 float     r_framelerp;
 
@@ -567,6 +568,10 @@ void R_AliasSetupLighting(entity_t *ent)
 		}
 	}
 
+	if (clmodel->modhint == MOD_GRENADE && !gl_custom_grenade_tf.integer && cl.teamfortress) {
+		ent->custom_model = NULL;
+	}
+
 	if (ent->custom_model && ent->custom_model->fullbright_cvar.integer) {
 		ent->ambientlight = 4096;
 		ent->shadelight = 0;
@@ -727,6 +732,7 @@ void R_InitAliasModelCvars(void)
 	Cvar_Register(&gl_powerupshells_effect1level);
 	Cvar_Register(&gl_powerupshells_base2level);
 	Cvar_Register(&gl_powerupshells_effect2level);
+	Cvar_Register(&gl_custom_grenade_tf);
 }
 
 void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* loadname)
