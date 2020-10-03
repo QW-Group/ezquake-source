@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define TIMETYPE_GAMECLOCK 1
 #define TIMETYPE_GAMECLOCKINV 2
 #define TIMETYPE_DEMOCLOCK 3
+#define TIMETYPE_HOSTCLOCK 4
 
 void CommonDraw_Init(void);
 
