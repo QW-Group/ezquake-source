@@ -17,11 +17,13 @@ layout(std430, binding=EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT) buffer todolist_da
 	uint surfaces_to_light[];
 };
 
+uniform int firstLightmap;
+
 void main()
 {
 	int i;
 
-	ivec3 coord = ivec3(gl_WorkGroupID.xy * HW_LIGHTING_BLOCK_SIZE + gl_LocalInvocationID.xy, gl_WorkGroupID.z);
+	ivec3 coord = ivec3(gl_WorkGroupID.xy * HW_LIGHTING_BLOCK_SIZE + gl_LocalInvocationID.xy, gl_WorkGroupID.z + firstLightmap);
 	uvec4 blocklight = imageLoad(sourceBlocklights, coord);
 	ivec4 srcData = imageLoad(sourceLightmapData, coord);
 
