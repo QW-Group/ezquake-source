@@ -24,10 +24,14 @@
 #ifndef SERVER_ONLY
 // Have set this to read-only to stop this accidentally on-purpose being set to another site by someone else's config
 static cvar_t cl_www_address = { "cl_www_address", "https://badplace.eu/", CVAR_ROM };
-#endif
+#else
 static cvar_t sv_www_address = { "sv_www_address", "" };
 static cvar_t sv_www_authkey = { "sv_www_authkey", "" };
 static cvar_t sv_www_checkin_period = { "sv_www_checkin_period", "60" };
+
+static void Web_ConstructServerURL(char* url, const char* path, int sizeof_url);
+static void Web_SubmitRequestFormServer(const char* url, struct curl_httppost* first_form_ptr, struct curl_httppost* last_form_ptr, web_response_func_t callback, const char* requestId, void* internal_data);
+#endif
 
 static CURLM* curl_handle = NULL;
 
@@ -38,8 +42,6 @@ static double last_checkin_time;
 struct web_request_data_s;
 
 typedef void(*web_response_func_t)(struct web_request_data_s* req, qbool valid);
-static void Web_ConstructServerURL(char* url, const char* path, int sizeof_url);
-static void Web_SubmitRequestFormServer(const char* url, struct curl_httppost *first_form_ptr, struct curl_httppost *last_form_ptr, web_response_func_t callback, const char* requestId, void* internal_data);
 
 typedef struct web_request_data_s {
 	CURL*               handle;
@@ -61,33 +63,9 @@ typedef struct web_request_data_s {
 	struct web_request_data_s* next;
 } web_request_data_t;
 
-static int utf8Encode(char in, char* out1, char* out2) {
-	if (in <= 0x7F) {
-		// <= 127 is encoded as single byte, no translation
-		*out1 = in;
-		return 1;
-	}
-	else {
-		// Two byte characters... 5 bits then 6
-		*out1 = 0xC0 | ((in >> 6) & 0x1F);
-		*out2 = 0x80 | (in & 0x3F);
-		return 2;
-	}
-}
-
 static web_request_data_t* web_requests;
 
-static qbool CheckFileExists(const char* path)
-{
-	FILE* f;
-	if (!(f = fopen(path, "rb"))) {
-		return false;
-	}
-	fclose(f);
-	return true;
-}
-
-size_t Web_StandardTokenWrite(void* buffer, size_t size, size_t nmemb, void* userp)
+static size_t Web_StandardTokenWrite(void* buffer, size_t size, size_t nmemb, void* userp)
 {
 	web_request_data_t* data = (web_request_data_t*)userp;
 	size_t available = sizeof(data->response) - data->response_length;
@@ -103,6 +81,32 @@ size_t Web_StandardTokenWrite(void* buffer, size_t size, size_t nmemb, void* use
 	}
 	return size * nmemb;
 }
+
+static void Web_SubmitRequestFormGeneric(const char* url, struct curl_httppost* first_form_ptr, struct curl_httppost* last_form_ptr, web_response_func_t callback, const char* requestId, void* internal_data)
+{
+	CURL* req = curl_easy_init();
+	web_request_data_t* data = (web_request_data_t*)Q_malloc(sizeof(web_request_data_t));
+
+	data->onCompleteCallback = callback;
+	data->time_sent = curtime;
+	data->internal_data = internal_data;
+	data->handle = req;
+	data->request_id = requestId && requestId[0] ? Q_strdup(requestId) : NULL;
+	data->first_form_ptr = first_form_ptr;
+
+	curl_easy_setopt(req, CURLOPT_URL, url);
+	curl_easy_setopt(req, CURLOPT_WRITEDATA, data);
+	curl_easy_setopt(req, CURLOPT_WRITEFUNCTION, Web_StandardTokenWrite);
+	if (first_form_ptr) {
+		curl_easy_setopt(req, CURLOPT_POST, 1);
+		curl_easy_setopt(req, CURLOPT_HTTPPOST, first_form_ptr);
+	}
+
+	curl_multi_add_handle(curl_handle, req);
+	data->next = web_requests;
+	web_requests = data;
+}
+
 
 typedef struct response_field_s {
 	const char* name;
@@ -152,7 +156,22 @@ static int ProcessWebResponse(web_request_data_t* req, response_field_t* fields,
 	return total_fields;
 }
 
-void Auth_GenerateChallengeResponse(web_request_data_t* req, qbool valid)
+#ifdef SERVER_ONLY
+static int utf8Encode(char in, char* out1, char* out2) {
+	if (in <= 0x7F) {
+		// <= 127 is encoded as single byte, no translation
+		*out1 = in;
+		return 1;
+	}
+	else {
+		// Two byte characters... 5 bits then 6
+		*out1 = 0xC0 | ((in >> 6) & 0x1F);
+		*out2 = 0x80 | (in & 0x3F);
+		return 2;
+	}
+}
+
+static void Auth_GenerateChallengeResponse(web_request_data_t* req, qbool valid)
 {
 	client_t* client = (client_t*) req->internal_data;
 	const char* response = NULL;
@@ -193,6 +212,49 @@ void Auth_GenerateChallengeResponse(web_request_data_t* req, qbool valid)
 	}
 }
 
+// Initial stage of login: ask server to create challenge/response pair
+// Connected client to supply the response in order to prove identity
+void Central_GenerateChallenge(client_t* client, const char* username, qbool during_login)
+{
+	char url[512];
+	struct curl_httppost* first_form_ptr = NULL;
+	struct curl_httppost* last_form_ptr = NULL;
+	CURLFORMcode code;
+
+	if (!sv_www_address.string[0]) {
+		SV_ClientPrintf2(client, PRINT_HIGH, "Remote logins not supported on this server\n");
+		return;
+	}
+
+	Web_ConstructServerURL(url, GENERATE_CHALLENGE_PATH, sizeof(url));
+
+	code = curl_formadd(&first_form_ptr, &last_form_ptr,
+		CURLFORM_PTRNAME, "userName",
+		CURLFORM_COPYCONTENTS, username,
+		CURLFORM_END
+	);
+
+	if (code != CURL_FORMADD_OK) {
+		SV_ClientPrintf2(client, PRINT_HIGH, "Failed to generate challenge (0: %u)\n", code);
+		return;
+	}
+
+	code = curl_formadd(&first_form_ptr, &last_form_ptr,
+		CURLFORM_PTRNAME, "status",
+		CURLFORM_COPYCONTENTS, during_login ? 0 : 1,
+		CURLFORM_END
+	);
+
+	if (code != CURL_FORMADD_OK) {
+		SV_ClientPrintf2(client, PRINT_HIGH, "Failed to generate challenge (1: %u)\n", code);
+		return;
+	}
+
+	client->login_request_time = curtime;
+	Web_SubmitRequestFormServer(url, first_form_ptr, last_form_ptr, Auth_GenerateChallengeResponse, NULL, client);
+}
+
+// Final stage of login: verify challenge/response with central server
 void Auth_ProcessLoginAttempt(web_request_data_t* req, qbool valid)
 {
 	client_t* client = (client_t*) req->internal_data;
@@ -250,6 +312,57 @@ void Auth_ProcessLoginAttempt(web_request_data_t* req, qbool valid)
 		SV_ClientPrintf2(client, PRINT_HIGH, "Error: unknown error (invalid response from server)\n");
 		SV_LoginWebFailed(client);
 	}
+}
+
+// Final stage of login: client has supplied response to challenge, now check with central server
+void Central_VerifyChallengeResponse(client_t* client, const char* challenge, const char* response)
+{
+	char url[512];
+	struct curl_httppost* first_form_ptr = NULL;
+	struct curl_httppost* last_form_ptr = NULL;
+	CURLFORMcode code;
+
+	if (!sv_www_address.string[0]) {
+		SV_ClientPrintf2(client, PRINT_HIGH, "Remote logins not supported on this server\n");
+		return;
+	}
+
+	code = curl_formadd(&first_form_ptr, &last_form_ptr,
+		CURLFORM_PTRNAME, "challenge",
+		CURLFORM_COPYCONTENTS, challenge,
+		CURLFORM_END
+	);
+
+	if (code != CURL_FORMADD_OK) {
+		SV_ClientPrintf2(client, PRINT_HIGH, "Failed to generate request (1: %u)\n", code);
+		return;
+	}
+
+	code = curl_formadd(&first_form_ptr, &last_form_ptr,
+		CURLFORM_PTRNAME, "response",
+		CURLFORM_COPYCONTENTS, response,
+		CURLFORM_END
+	);
+
+	if (code != CURL_FORMADD_OK) {
+		SV_ClientPrintf2(client, PRINT_HIGH, "Failed to generate request (2: %u)\n", code);
+		return;
+	}
+
+	Web_ConstructServerURL(url, VERIFY_RESPONSE_PATH, sizeof(url));
+
+	client->login_request_time = curtime;
+	Web_SubmitRequestFormServer(url, first_form_ptr, last_form_ptr, Auth_ProcessLoginAttempt, NULL, client);
+}
+
+static qbool CheckFileExists(const char* path)
+{
+	FILE* f;
+	if (!(f = fopen(path, "rb"))) {
+		return false;
+	}
+	fclose(f);
+	return true;
 }
 
 void Web_PostResponse(web_request_data_t* req, qbool valid)
@@ -333,31 +446,6 @@ void Web_PostResponse(web_request_data_t* req, qbool valid)
 	}
 }
 
-static void Web_SubmitRequestFormGeneric(const char* url, struct curl_httppost* first_form_ptr, struct curl_httppost* last_form_ptr, web_response_func_t callback, const char* requestId, void* internal_data)
-{
-	CURL* req = curl_easy_init();
-	web_request_data_t* data = (web_request_data_t*)Q_malloc(sizeof(web_request_data_t));
-
-	data->onCompleteCallback = callback;
-	data->time_sent = sv.time;
-	data->internal_data = internal_data;
-	data->handle = req;
-	data->request_id = requestId && requestId[0] ? Q_strdup(requestId) : NULL;
-	data->first_form_ptr = first_form_ptr;
-
-	curl_easy_setopt(req, CURLOPT_URL, url);
-	curl_easy_setopt(req, CURLOPT_WRITEDATA, data);
-	curl_easy_setopt(req, CURLOPT_WRITEFUNCTION, Web_StandardTokenWrite);
-	if (first_form_ptr) {
-		curl_easy_setopt(req, CURLOPT_POST, 1);
-		curl_easy_setopt(req, CURLOPT_HTTPPOST, first_form_ptr);
-	}
-
-	curl_multi_add_handle(curl_handle, req);
-	data->next = web_requests;
-	web_requests = data;
-}
-
 static void Web_SubmitRequestFormServer(const char* url, struct curl_httppost *first_form_ptr, struct curl_httppost *last_form_ptr, web_response_func_t callback, const char* requestId, void* internal_data)
 {
 	curl_formadd(&first_form_ptr, &last_form_ptr,
@@ -369,98 +457,6 @@ static void Web_SubmitRequestFormServer(const char* url, struct curl_httppost *f
 	Web_SubmitRequestFormGeneric(url, first_form_ptr, last_form_ptr, callback, requestId, internal_data);
 }
 
-void Central_VerifyChallengeResponse(client_t* client, const char* challenge, const char* response)
-{
-	char url[512];
-	struct curl_httppost *first_form_ptr = NULL;
-	struct curl_httppost *last_form_ptr = NULL;
-	CURLFORMcode code;
-
-	if (!sv_www_address.string[0]) {
-		SV_ClientPrintf2(client, PRINT_HIGH, "Remote logins not supported on this server\n");
-		return;
-	}
-
-	code = curl_formadd(&first_form_ptr, &last_form_ptr,
-		CURLFORM_PTRNAME, "challenge",
-		CURLFORM_COPYCONTENTS, challenge,
-		CURLFORM_END
-	);
-
-	if (code != CURL_FORMADD_OK) {
-		SV_ClientPrintf2(client, PRINT_HIGH, "Failed to generate request (1: %u)\n", code);
-		return;
-	}
-
-	code = curl_formadd(&first_form_ptr, &last_form_ptr,
-		CURLFORM_PTRNAME, "response",
-		CURLFORM_COPYCONTENTS, response,
-		CURLFORM_END
-	);
-
-	if (code != CURL_FORMADD_OK) {
-		SV_ClientPrintf2(client, PRINT_HIGH, "Failed to generate request (2: %u)\n", code);
-		return;
-	}
-
-	Web_ConstructServerURL(url, VERIFY_RESPONSE_PATH, sizeof(url));
-
-	client->login_request_time = sv.time;
-	Web_SubmitRequestFormServer(url, first_form_ptr, last_form_ptr, Auth_ProcessLoginAttempt, NULL, client);
-}
-
-void Central_GenerateChallenge(client_t* client, const char* username, qbool during_login)
-{
-	char url[512];
-	struct curl_httppost *first_form_ptr = NULL;
-	struct curl_httppost *last_form_ptr = NULL;
-	CURLFORMcode code;
-
-	if (!sv_www_address.string[0]) {
-		SV_ClientPrintf2(client, PRINT_HIGH, "Remote logins not supported on this server\n");
-		return;
-	}
-
-	Web_ConstructServerURL(url, GENERATE_CHALLENGE_PATH, sizeof(url));
-
-	code = curl_formadd(&first_form_ptr, &last_form_ptr,
-		CURLFORM_PTRNAME, "userName",
-		CURLFORM_COPYCONTENTS, username,
-		CURLFORM_END
-	);
-
-	if (code != CURL_FORMADD_OK) {
-		SV_ClientPrintf2(client, PRINT_HIGH, "Failed to generate challenge (0: %u)\n", code);
-		return;
-	}
-
-	code = curl_formadd(&first_form_ptr, &last_form_ptr,
-		CURLFORM_PTRNAME, "status",
-		CURLFORM_COPYCONTENTS, during_login ? 0 : 1,
-		CURLFORM_END
-	);
-
-	if (code != CURL_FORMADD_OK) {
-		SV_ClientPrintf2(client, PRINT_HIGH, "Failed to generate challenge (1: %u)\n", code);
-		return;
-	}
-
-	client->login_request_time = sv.time;
-	Web_SubmitRequestFormServer(url, first_form_ptr, last_form_ptr, Auth_GenerateChallengeResponse, NULL, client);
-}
-
-static void Web_ConstructGenericURL(const char* base_url, char* url, const char* path, int sizeof_url)
-{
-	strlcpy(url, base_url, sizeof_url);
-	if (url[strlen(url) - 1] != '/') {
-		strlcat(url, "/", sizeof_url);
-	}
-	while (*path == '/') {
-		++path;
-	}
-	strlcat(url, path, sizeof_url);
-}
-
 static void Web_ConstructServerURL(char* url, const char* path, int sizeof_url)
 {
 	Web_ConstructGenericURL(sv_www_address.string, url, path, sizeof_url);
@@ -468,8 +464,8 @@ static void Web_ConstructServerURL(char* url, const char* path, int sizeof_url)
 
 static void Web_SendRequest(qbool post)
 {
-	struct curl_httppost *first_form_ptr = NULL;
-	struct curl_httppost *last_form_ptr = NULL;
+	struct curl_httppost* first_form_ptr = NULL;
+	struct curl_httppost* last_form_ptr = NULL;
 	char url[512];
 	char* requestId = NULL;
 	int i;
@@ -531,8 +527,8 @@ static void Web_PostRequest_f(void)
 
 static void Web_PostFileRequest_f(void)
 {
-	struct curl_httppost *first_form_ptr = NULL;
-	struct curl_httppost *last_form_ptr = NULL;
+	struct curl_httppost* first_form_ptr = NULL;
+	struct curl_httppost* last_form_ptr = NULL;
 	char* requestId = NULL;
 	char url[512];
 	char path[MAX_OSPATH];
@@ -577,7 +573,7 @@ static void Web_PostFileRequest_f(void)
 
 	requestId = Cmd_Argv(2);
 
-	if (! CheckFileExists(path)) {
+	if (!CheckFileExists(path)) {
 		Con_Printf("Failed to open file\n");
 		return;
 	}
@@ -596,12 +592,42 @@ static void Web_PostFileRequest_f(void)
 	Web_SubmitRequestFormServer(url, first_form_ptr, last_form_ptr, Web_PostResponse, requestId, NULL);
 }
 
+static void Web_PeriodicCheck(qbool server_busy)
+{
+	if (sv_www_address.string[0] && !server_busy && curtime - last_checkin_time > max(MIN_CHECKIN_PERIOD, sv_www_checkin_period.value)) {
+		char url[512];
+
+		Web_ConstructServerURL(url, CHECKIN_PATH, sizeof(url));
+
+		Web_SubmitRequestFormServer(url, NULL, NULL, Web_PostResponse, NULL, NULL);
+
+		last_checkin_time = curtime;
+	}
+	else if (server_busy) {
+		last_checkin_time = curtime;
+	}
+}
+#else
+#define Web_PeriodicCheck(...)
+#endif // SERVER_ONLY
+
+static void Web_ConstructGenericURL(const char* base_url, char* url, const char* path, int sizeof_url)
+{
+	strlcpy(url, base_url, sizeof_url);
+	if (url[strlen(url) - 1] != '/') {
+		strlcat(url, "/", sizeof_url);
+	}
+	while (*path == '/') {
+		++path;
+	}
+	strlcat(url, path, sizeof_url);
+}
+
 void Central_ProcessResponses(void)
 {
 	CURLMsg* msg;
 	int running_handles = 0;
 	int messages_in_queue = 0;
-	qbool server_busy = false;
 
 	if (!last_checkin_time) {
 		last_checkin_time = curtime;
@@ -609,8 +635,6 @@ void Central_ProcessResponses(void)
 	}
 
 	curl_multi_perform(curl_handle, &running_handles);
-
-	server_busy = running_handles || GameStarted();
 
 	while ((msg = curl_multi_info_read(curl_handle, &messages_in_queue))) {
 		if (msg->msg == CURLMSG_DONE) {
@@ -660,18 +684,8 @@ void Central_ProcessResponses(void)
 		}
 	}
 
-	if (sv_www_address.string[0] && !server_busy && curtime - last_checkin_time > max(MIN_CHECKIN_PERIOD, sv_www_checkin_period.value)) {
-		char url[512];
-
-		Web_ConstructServerURL(url, CHECKIN_PATH, sizeof(url));
-
-		Web_SubmitRequestFormServer(url, NULL, NULL, Web_PostResponse, NULL, NULL);
-
-		last_checkin_time = curtime;
-	}
-	else if (server_busy) {
-		last_checkin_time = curtime;
-	}
+	// Periodically check in when idle
+	Web_PeriodicCheck(running_handles || GameStarted());
 }
 
 void Central_Shutdown(void)
@@ -689,22 +703,24 @@ void Central_Init(void)
 	curl_global_init(CURL_GLOBAL_DEFAULT);
 
 // TODO: client-only version
-//#ifndef CLIENT_ONLY
+#ifdef SERVER_ONLY
 	Cvar_Register(&sv_www_address);
 	Cvar_Register(&sv_www_authkey);
 	Cvar_Register(&sv_www_checkin_period);
-//#endif
+#endif
 #ifndef SERVER_ONLY
 	Cvar_Register(&cl_www_address);
 #endif
 
 	curl_handle = curl_multi_init();
 
+#ifdef SERVER_ONLY
 	if (curl_handle) {
 		Cmd_AddCommand("sv_web_get", Web_GetRequest_f);
 		Cmd_AddCommand("sv_web_post", Web_PostRequest_f);
 		Cmd_AddCommand("sv_web_postfile", Web_PostFileRequest_f);
 	}
+#endif
 }
 
 #ifndef SERVER_ONLY

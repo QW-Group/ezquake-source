@@ -2235,7 +2235,7 @@ qbool CL_LoginImageLoad(const char* path)
 	COM_ForceExtensionEx(truepath, ".json", sizeof(truepath));
 	{
 		int json_len;
-		char* json_bytes = FS_LoadHeapFile(truepath, &json_len);
+		char* json_bytes = (char*)FS_LoadHeapFile(truepath, &json_len);
 		if (!json_bytes) {
 			Con_Printf("Unable to load %s\n", truepath);
 			return false;
