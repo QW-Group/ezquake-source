@@ -406,6 +406,7 @@ void SV_DropClient (client_t *drop)
 
 	drop->state = cs_zombie;		// become free in a few seconds
 	drop->connection_started = realtime;	// for zombie timeout
+	drop->connection_started_curtime = curtime;
 
 // MD -->
 	if (drop == WatcherId)

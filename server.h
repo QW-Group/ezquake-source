@@ -238,8 +238,9 @@ typedef struct client_s
 
 	char			stufftext_buf[MAX_STUFFTEXT];
 
-	double			connection_started;		// or time of disconnect for zombies
-	qbool			send_message;			// set on frames a datagram arived on
+	double          connection_started;          // or time of disconnect for zombies
+	double          connection_started_curtime;  // like connection_started but curtime (not affected by pause)
+	qbool           send_message;                // set on frames a datagram arrived on
 
 // { sv_antilag related
 	laggedentinfo_t	laggedents[MAX_CLIENTS];

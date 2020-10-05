@@ -2507,6 +2507,7 @@ void PF2_Add_Bot( byte * base, uintptr_t mask, pr2val_t * stack, pr2val_t * retv
 	newcl->spectator = 0;
 	newcl->isBot = 1;
 	newcl->connection_started = realtime;
+	newcl->connection_started_curtime = curtime;
 	strlcpy(newcl->name, name, sizeof(newcl->name));
 
 	newcl->entgravity = 1.0;

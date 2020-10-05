@@ -157,8 +157,10 @@ static void Cmd_New_f (void)
 	if (sv_client->state == cs_spawned)
 		return;
 
-	if (!sv_client->connection_started || sv_client->state == cs_connected)
+	if (!sv_client->connection_started || sv_client->state == cs_connected) {
 		sv_client->connection_started = realtime;
+		sv_client->connection_started_curtime = curtime;
+	}
 
 	sv_client->spawncount = svs.spawncount;
 
@@ -2590,6 +2592,7 @@ static void Cmd_Join_f (void)
 	// turn the spectator into a player
 	sv_client->old_frags = 0;
 	sv_client->connection_started = realtime;
+	sv_client->connection_started_curtime = curtime;
 	sv_client->spectator = false;
 	sv_client->spec_track = 0;
 	Info_Remove (&sv_client->_userinfo_ctx_, "*spectator");
@@ -2675,6 +2678,7 @@ static void Cmd_Observe_f (void)
 	// turn the player into a spectator
 	sv_client->old_frags = 0;
 	sv_client->connection_started = realtime;
+	sv_client->connection_started_curtime = curtime;
 	sv_client->spectator = true;
 	sv_client->spec_track = 0;
 	Info_SetStar (&sv_client->_userinfo_ctx_, "*spectator", "1");
