@@ -25,6 +25,7 @@
 - `/gl_textureless 1` on glsl path in classic renderer caused bmodel entities to be rendered textureless (3.5 bug, reported by hemostx)
 - `/gl_outline 2` fixed (3.5 bug, reported by fourier)
 - `/gl_shaftlight 0` fixed on glsl path in classic renderer (3.5 bug, reported by maniac)
+- `/r_dynamic 2` was calculating too many lightmaps (3.5 bug, reported by ciscon)
 - Fixed bug causing read-only file handle to config being kept open, preventing backup from being taken (old bug)
 - Fixed bug causing MVD-stats code to cause `/tp_loadloc` to effectively always be forced to 1
 - Fixed bug causing multiple item timers to spawn when using `/demo_jump` (3.2 bug, reported by Milton)
@@ -41,6 +42,11 @@
 
 - `/cl_pext_serversideweapon` - protocol extension to move weapon selection to server (requires updated mvdsv)
 - `/cl_weaponforgetondeath` - resets weapon to shotgun when respawning
+- `/cl_username` & `/authenticate` to support optional logins via badplace.eu (see )
+- `/scr_scoreboard_login_names` will replace player's name with login when it is sent by server
+- `/scr_scoreboard_login_flagfile` maps player flags to graphics to be shown next to player's name when they are logged in
+- `/scr_scoreboard_login_indicator` will be shown next to a player's name when they are logged in (if flag not available)
+- `/scr_scoreboard_login_color` controls the color of a player's name when they are logged in
 - `/cfg_backup` will now not save the config if backup cannot be taken
 - `/vid_framebuffer_smooth` controls linear or nearest filtering (thanks to Calinou)
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
