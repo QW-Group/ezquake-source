@@ -2474,6 +2474,7 @@ void CL_Frame(double time)
 
 		R_PerformanceBeginFrame();
 		if (SCR_UpdateScreenPrePlayerView()) {
+			qbool two_pass_rendering = GL_FramebufferEnabled2D();
 			renderer.ScreenDrawStart();
 
 			while (draw_next_view) {
@@ -2488,9 +2489,14 @@ void CL_Frame(double time)
 
 				SCR_CalcRefdef();
 
-				SCR_UpdateScreenPlayerView(draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS);
+				SCR_UpdateScreenPlayerView((draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS) | (two_pass_rendering ? UPDATESCREEN_3D_ONLY : 0));
 
-				SCR_DrawMultiviewIndividualElements();
+				if (!two_pass_rendering) {
+					SCR_DrawMultiviewIndividualElements();
+				}
+				else {
+					SCR_SaveAutoID();
+				}
 
 				if (CL_MultiviewCurrentView() == 2 || (CL_MultiviewCurrentView() == 1 && CL_MultiviewActiveViews() == 1)) {
 					CL_SoundFrame();
@@ -2498,6 +2504,24 @@ void CL_Frame(double time)
 
 				// Multiview: advance to next player
 				CL_MultiviewFrameFinish();
+			}
+
+			if (two_pass_rendering) {
+				buffers.EndFrame();
+
+				draw_next_view = true;
+				while (draw_next_view) {
+					draw_next_view = CL_MultiviewAdvanceView();
+
+					// Need to call this again to keep autoid correct
+					SCR_RestoreAutoID();
+
+					SCR_UpdateScreenPlayerView(UPDATESCREEN_2D_ONLY);
+					SCR_DrawMultiviewIndividualElements();
+
+					// Multiview: advance to next player
+					CL_MultiviewFrameFinish();
+				}
 			}
 
 			SCR_UpdateScreenPostPlayerView();

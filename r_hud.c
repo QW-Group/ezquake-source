@@ -131,7 +131,7 @@ void R_FlushImageDraw(void)
 {
 	R_PrepareImageDraw();
 
-	if (hud.count && glConfig.initialized) {
+	if (hud.count > 0 && glConfig.initialized) {
 		texture_ref currentTexture = null_texture_reference;
 		r_image_type_t type = imagetype_image;
 		int start = 0;
@@ -152,9 +152,7 @@ void R_FlushImageDraw(void)
 			type = hud.elements[i].type;
 		}
 
-		if (hud.count - start) {
-			hud.types[type].Draw(currentTexture, hud.elements[start].index, hud.elements[hud.count - 1].index);
-		}
+		hud.types[type].Draw(currentTexture, hud.elements[start].index, hud.elements[hud.count - 1].index);
 	}
 
 	R_EmptyImageQueue();

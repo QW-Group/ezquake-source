@@ -896,35 +896,42 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 
 void SCR_UpdateScreenPlayerView(int flags)
 {
+	qbool draw_2d = !(flags & UPDATESCREEN_3D_ONLY);
+	qbool draw_3d = !(flags & UPDATESCREEN_2D_ONLY);
+
 	R_TraceResetRegion(true);
 
-	R_CheckReloadLightmaps();
+	if (draw_3d) {
+		R_CheckReloadLightmaps();
 
-	// preache skins if needed
-	Skins_PreCache();
+		// preache skins if needed
+		Skins_PreCache();
 
-	SCR_SetUpToDrawConsole();
+		SCR_SetUpToDrawConsole();
 
-	R_SetupChatIcons();
+		R_BeginRendering(&glx, &gly, &glwidth, &glheight);
 
-	R_BeginRendering(&glx, &gly, &glwidth, &glheight);
+		if (V_PreRenderView()) {
+			R_SetupFrame();
 
-	if (V_PreRenderView()) {
-		R_SetupFrame();
+			R_RenderView();
 
-		R_RenderView();
-
-		if (flags & UPDATESCREEN_POSTPROCESS) {
-			R_PostProcessScene();
+			if (flags & UPDATESCREEN_POSTPROCESS) {
+				R_PostProcessScene();
+			}
 		}
 	}
 
-	R_Set2D();
+	if (draw_2d) {
+		R_SetupChatIcons();
 
-	R_PolyBlend();
+		R_Set2D();
 
-	// draw any areas not covered by the refresh
-	SCR_TileClear();
+		R_PolyBlend();
+
+		// draw any areas not covered by the refresh
+		SCR_TileClear();
+	}
 }
 
 void SCR_HUD_WeaponStats(hud_t* hud);
@@ -963,11 +970,8 @@ static void SCR_DrawNewHudElements(void)
 	}
 }
 
-void SCR_UpdateScreenPostPlayerView(void)
+void SCR_UpdateScreenHudOnly(void)
 {
-	extern qbool  sb_showscores, sb_showteamscores;
-	extern cvar_t scr_menudrawhud;
-
 	if (r_drawhud.integer) {
 		R_TraceEnterNamedRegion("HUD");
 		if (scr_newHud.value != 1) {
@@ -982,6 +986,11 @@ void SCR_UpdateScreenPostPlayerView(void)
 		}
 		R_TraceLeaveNamedRegion();
 	}
+}
+
+void SCR_UpdateScreenPostPlayerView(void)
+{
+	SCR_UpdateScreenHudOnly();
 
 	renderer.PostProcessScreen();
 

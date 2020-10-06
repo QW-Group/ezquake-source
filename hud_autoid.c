@@ -53,6 +53,10 @@ typedef struct player_autoid_s {
 	player_info_t *player;
 } autoid_player_t;
 
+// For 2-pass multiview... [<view-num>][<other-player>]
+static autoid_player_t saved_autoids[4][MAX_CLIENTS];
+static int saved_autoid_count[4];
+
 static autoid_player_t autoids[MAX_CLIENTS];
 static int autoid_count;
 
@@ -64,6 +68,22 @@ static int autoid_count;
 
 #define AUTOID_WEAPON_OFFSET_Y				AUTOID_HEALTHBAR_OFFSET_Y
 #define AUTOID_WEAPON_OFFSET_X				2
+
+void SCR_SaveAutoID(void)
+{
+	int view_num = CL_MultiviewCurrentView();
+
+	memcpy(saved_autoids[view_num], autoids, sizeof(saved_autoids[view_num]));
+	saved_autoid_count[view_num] = autoid_count;
+}
+
+void SCR_RestoreAutoID(void)
+{
+	int view_num = CL_MultiviewCurrentView();
+
+	memcpy(autoids, saved_autoids[view_num], sizeof(autoids));
+	autoid_count = saved_autoid_count[view_num];
+}
 
 void SCR_SetupAutoID(void)
 {
