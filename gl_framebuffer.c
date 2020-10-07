@@ -669,6 +669,7 @@ qbool GL_Framebuffer2DSwitch(void)
 
 		if (VID_FramebufferInit(framebuffer_hud, glConfig.vidWidth, glConfig.vidHeight)) {
 			R_Viewport(0, 0, glConfig.vidWidth, glConfig.vidHeight);
+			R_ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 			return true;
 		}
