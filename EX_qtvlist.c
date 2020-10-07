@@ -72,7 +72,7 @@ static char* qtvlist_get_jsondata(void)
 		return NULL;
 	}
 
-	buf.str = Q_calloc_untracked(1, 128); /*  Initially set to 128 bytes, will grow if necessary */
+	buf.str = Q_calloc(1, 128); /*  Initially set to 128 bytes, will grow if necessary */
 
 	res += curl_easy_setopt(handle, CURLOPT_URL, qtv_api_url.string);
 	res += curl_easy_setopt(handle, CURLOPT_WRITEDATA, (void*)&buf);
@@ -82,7 +82,7 @@ static char* qtvlist_get_jsondata(void)
 
 	if (res != CURLE_OK) {
 		Com_Printf("error: Failed to fetch qtv list JSON data\n");
-		Q_free_untracked(buf.str); /* Will set to NULL */
+		Q_free(buf.str); /* Will set to NULL */
 	}
 	
 	curl_easy_cleanup(handle);
@@ -428,7 +428,7 @@ static int qtvlist_update(void *unused)
 	}
 
 	qtvlist_json_load_and_verify_string(jsondata);
-	Q_free_untracked(jsondata);
+	Q_free(jsondata);
 
 	if (root == NULL) {
 		goto out;
