@@ -14978,7 +14978,7 @@
     },
     "r_explosionType": {
       "default": "1",
-      "desc": "0 = Fire + sparks\n1 = Fire only\n2 = Teleport\n3 = Blood\n4 = Big blood\n5 = Double gunshot\n6 = Blob effect\n7 = Big explosion\n8 = Fuel Rod Gun Explosion\n9 = Sparks",
+      "desc": "0 = Fire + sparks\n1 = Fire only\n2 = Teleport\n3 = Blood\n4 = Big blood\n5 = Double gunshot\n6 = Blob effect\n7 = Big explosion\n8 = Fuel Rod Gun Explosion\n9 = Sparks\n10 = Off",
       "group-id": "8",
       "type": "float"
     },
