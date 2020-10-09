@@ -81,7 +81,8 @@ void Cmd_ForwardToServer (void) {
 // don't forward the first argument
 void CL_ForwardToServer_f (void) {
 // Added by VVD {
-	char		*server_string, client_time_str[9];
+	char* server_string;
+	char client_time_str[sizeof(time_t) * 2 + 1] = { 0 };
 	int		i, server_string_len;
 	extern cvar_t	cl_crypt_rcon;
 	time_t		client_time;
@@ -545,11 +546,12 @@ void CL_QStat_f (void)
 //Send the rest of the command line over as an unconnected command.
 void CL_Rcon_f (void) {
 
-	char	message[1024], client_time_str[9];
-	int		i, i_from;
-	netadr_t	to;
-	extern cvar_t	rcon_password, rcon_address, cl_crypt_rcon;
-	time_t		client_time;
+	char message[1024];
+	char client_time_str[sizeof(time_t) * 2 + 1];
+	int	i, i_from;
+	netadr_t to;
+	extern cvar_t rcon_password, rcon_address, cl_crypt_rcon;
+	time_t client_time;
 
 	message[0] = (char)255;
 	message[1] = (char)255;

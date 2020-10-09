@@ -19,6 +19,7 @@
 - `/gl_texturemode` doesn't affect the texture used for framebuffers (3.5 bug, reported by hemostx)
 - When using scaled framebuffer, mouse cursor co-ordinates are correct (3.5 bug, reported by hemostx)
 - When using scaled framebuffer, screenshots use correct dimensions (3.5 bug, reported by hemostx)
+- When using 2d&3d framebuffers, world-view was being over-written during 2d draw (3.5 bug, reported by hemostx)
 - Fix rendering of fullbright textures that aren't luma/external-32bit textures (3.5 bug, reported by ciscon & lurq)
 - `-gamma` command line option now sets `/gl_gamma` default, rather than also setting the gamma adjustment on some in-game textures (old, very old)
 - `/gl_detpacklights` now controls if coronas created on detpacks in TF (very old bug, reported by Trickle)
@@ -30,6 +31,7 @@
 - Fixed bug causing MVD-stats code to cause `/tp_loadloc` to effectively always be forced to 1
 - Fixed bug causing multiple item timers to spawn when using `/demo_jump` (3.2 bug, reported by Milton)
 - Fixed bug causing buffer-overrun if loading a corrupt/truncated .wav file (old bug)
+- Fixed bug causing `rcon` timestamps to be truncated when using `/cl_crypt_rcon` and server has `/sv_timestamplen` set (old bug)
 
 ### Ruleset-related changes
 
