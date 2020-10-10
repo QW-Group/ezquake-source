@@ -85,6 +85,8 @@ void CL_QWURL_ProcessChallenge(const char *parameters);
 // cl_input.c
 void onchange_pext_serversideweapon(cvar_t* var, char* value, qbool* cancel);
 
+static void AuthUsernameChanged(cvar_t* var, char* value, qbool* cancel);
+
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
 cvar_t	rcon_password = {"rcon_password", ""};
 cvar_t	rcon_address = {"rcon_address", ""};
@@ -234,6 +236,10 @@ cvar_t cl_verify_qwprotocol     = {"cl_verify_qwprotocol", "1"};
 #endif // WIN32
 
 cvar_t demo_autotrack           = {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
+
+// Authentication
+cvar_t cl_username              = {"cl_username", "", 0, AuthUsernameChanged};
+static void CL_Authenticate_f(void);
 
 /// persistent client state
 clientPersistent_t	cls;
@@ -1807,6 +1813,9 @@ static void CL_InitLocal (void)
 	Cvar_ForceSet (&cl_cmdline, com_args_original);
 	Cvar_ResetCurrentGroup();
 
+	Cvar_Register (&cl_username);
+	Cmd_AddCommand("authenticate", CL_Authenticate_f);
+
 	snprintf(st, sizeof(st), "ezQuake %i", REVISION);
 
 	if (COM_CheckParm (cmdline_param_client_norjscripts) || COM_CheckParm (cmdline_param_client_noscripts))
@@ -2737,4 +2746,92 @@ void Cache_Flush(void)
 {
 	Skin_Clear(false);
 	Mod_FreeAllCachedData();
+}
+
+static void AuthUsernameChanged(cvar_t* var, char* value, qbool* cancel)
+{
+	char path[MAX_PATH];
+	char filename[MAX_PATH];
+	byte* auth_token;
+	int auth_token_length;
+	int len = strlen(value);
+	int i;
+
+	// Don't validate if no changes
+	if (!strcmp(var->string, value)) {
+		return;
+	}
+
+	// Validate new name
+	for (i = 0; i < len; ++i) {
+		if (isalpha(value[i]) || isdigit(value[i]))
+			continue;
+		if (value[i] == '_' || value[i] == '[' || value[i] == ']' || value[i] == '(' || value[i] == ')' || value[i] == '.' || value[i] == '-')
+			continue;
+		// TODO: others
+
+		// Illegal
+		Com_Printf("Illegal character %c in username\n", value[i]);
+		*cancel = true;
+		return;
+	}
+
+	if (!value[0]) {
+		// Logging out...
+		if (cls.state == ca_active && cl.players[cl.playernum].loginname[0]) {
+			Cbuf_AddTextEx(&cbuf_main, "cmd logout\n");
+		}
+		memset(cls.auth_logintoken, 0, sizeof(cls.auth_logintoken));
+		return;
+	}
+	
+	// FIXME: server-side, treat new login request as logout?
+	if (cls.state == ca_active && cl.players[cl.playernum].loginname[0]) {
+		Com_Printf("You are logged in to the server & must logout first\n");
+		*cancel = true;
+		return;
+	}
+
+	// Try and load login token
+	strlcpy(filename, value, sizeof(filename));
+	COM_ForceExtensionEx(filename, ".apikey", sizeof(filename));
+
+	Cfg_GetConfigPath(path, sizeof(path), filename);
+
+	auth_token = FS_LoadTempFile(path, &auth_token_length);
+	if (auth_token == 0) {
+		Com_Printf("Unable to load authentication token for '%s'\n", value);
+		*cancel = true;
+		return;
+	}
+	else {
+		strlcpy(cls.auth_logintoken, (const char*)auth_token, sizeof(cls.auth_logintoken));
+		memset(cl.auth_challenge, 0, sizeof(cl.auth_challenge));
+		if (cls.state == ca_active) {
+			Cbuf_AddTextEx(&cbuf_main, va("cmd login %s\n", value));
+		}
+	}
+}
+
+static void CL_Authenticate_f(void)
+{
+	if (!cls.auth_logintoken[0] || !cl_username.string[0]) {
+		Com_Printf("You must load a login token by setting cl_username first.\n");
+		Com_Printf("Login tokens must be located in your configuration directory\n");
+		return;
+	}
+
+	if (cls.state != ca_active) {
+		Com_Printf("Cannot authenticate, not connected\n");
+		return;
+	}
+
+	if (cl.players[cl.playernum].loginname[0]) {
+		Com_Printf("Logging out...\n");
+		Cbuf_AddTextEx(&cbuf_main, "cmd logout\n");
+		return;
+	}
+
+	Com_Printf("Starting authentication process...\n");
+	Cbuf_AddTextEx(&cbuf_main, va("cmd login \"%s\"\n", cl_username.string));
 }

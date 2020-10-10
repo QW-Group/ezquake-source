@@ -157,8 +157,10 @@ static void Cmd_New_f (void)
 	if (sv_client->state == cs_spawned)
 		return;
 
-	if (!sv_client->connection_started || sv_client->state == cs_connected)
+	if (!sv_client->connection_started || sv_client->state == cs_connected) {
 		sv_client->connection_started = realtime;
+		sv_client->connection_started_curtime = curtime;
+	}
 
 	sv_client->spawncount = svs.spawncount;
 
@@ -2590,6 +2592,7 @@ static void Cmd_Join_f (void)
 	// turn the spectator into a player
 	sv_client->old_frags = 0;
 	sv_client->connection_started = realtime;
+	sv_client->connection_started_curtime = curtime;
 	sv_client->spectator = false;
 	sv_client->spec_track = 0;
 	Info_Remove (&sv_client->_userinfo_ctx_, "*spectator");
@@ -2675,6 +2678,7 @@ static void Cmd_Observe_f (void)
 	// turn the player into a spectator
 	sv_client->old_frags = 0;
 	sv_client->connection_started = realtime;
+	sv_client->connection_started_curtime = curtime;
 	sv_client->spectator = true;
 	sv_client->spec_track = 0;
 	Info_SetStar (&sv_client->_userinfo_ctx_, "*spectator", "1");
@@ -3060,7 +3064,7 @@ void Cmd_Login_f(void)
 		return;
 	}
 
-	if (sv.time - sv_client->login_request_time < LOGIN_MIN_RETRY_TIME) {
+	if (curtime - sv_client->login_request_time < LOGIN_MIN_RETRY_TIME) {
 		MSG_WriteByte (&sv_client->netchan.message, svc_print);
 		MSG_WriteByte (&sv_client->netchan.message, PRINT_HIGH);
 		MSG_WriteString (&sv_client->netchan.message, "Please wait and try again\n");
@@ -3081,7 +3085,7 @@ void Cmd_ChallengeResponse_f(void)
 		return;
 	}
 
-	if (sv.time - sv_client->login_request_time < LOGIN_MIN_RETRY_TIME || !sv_client->challenge[0]) {
+	if (curtime - sv_client->login_request_time < LOGIN_MIN_RETRY_TIME || !sv_client->challenge[0]) {
 		MSG_WriteByte (&sv_client->netchan.message, svc_print);
 		MSG_WriteByte (&sv_client->netchan.message, PRINT_HIGH);
 		MSG_WriteString (&sv_client->netchan.message, "Please wait and try again\n");

@@ -769,6 +769,13 @@ char* SCR_GetDemoTime(void)
 	return str;
 }
 
+char* SCR_GetHostTime(void)
+{
+	static char str[9]; // '01:02:03\0'
+	strlcpy(str, SecondsToMinutesString((int)curtime), sizeof(str));
+	return str;
+}
+
 int SCR_GetClockStringWidth(const char *s, qbool big, float scale, qbool proportional)
 {
 	int w = 0;
@@ -804,7 +811,11 @@ const char* SCR_GetTimeString(int timetype, const char *format)
 		case TIMETYPE_DEMOCLOCK:
 			return SCR_GetDemoTime();
 
-		case TIMETYPE_CLOCK: default:
+		case TIMETYPE_HOSTCLOCK:
+			return SCR_GetHostTime();
+
+		case TIMETYPE_CLOCK:
+		default:
 			return SCR_GetTime(format);
 	}
 }

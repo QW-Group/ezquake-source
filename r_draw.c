@@ -952,6 +952,15 @@ void Draw_FitPicAlpha(float x, float y, int fit_width, int fit_height, mpic_t *g
 	Draw_SAlphaPic(x, y, gl, alpha, min(sw, sh));
 }
 
+void Draw_FitPicAlphaCenter(float x, float y, int fit_width, int fit_height, mpic_t* gl, float alpha)
+{
+	float sw, sh, scale;
+	sw = (float)fit_width / (float)gl->width;
+	sh = (float)fit_height / (float)gl->height;
+	scale = min(sw, sh);
+	Draw_SAlphaPic(x + (fit_width - scale * gl->width) / 2.0f, y + (fit_height - scale * gl->height) / 2.0f, gl, alpha, scale);
+}
+
 void Draw_STransPic(float x, float y, mpic_t *pic, float scale)
 {
     Draw_SPic(x, y, pic, scale);

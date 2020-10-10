@@ -3226,6 +3226,9 @@ void CL_StopPlayback (void)
 		if (cls.timedemo == TIMEDEMO_FIXEDFPS && cls.td_frametime > 0) {
 			Com_Printf("  simulated @ %5.1f fps\n", 1.0 / cls.td_frametime);
 		}
+		if (cls.td_frametime_max) {
+			Com_Printf("Worst frametime %dms @ frame %d\n", cls.td_frametime_max, cls.td_frametime_max_frame);
+		}
 
 		frames2 = 0;
 		for (i = 0; i < sizeof(cls.td_frametime_stats) / sizeof(cls.td_frametime_stats[0]); ++i) {
@@ -3885,6 +3888,7 @@ void CL_TimeDemo_f(void)
 	cls.td_startframe = cls.framecount;
 	cls.td_lastframe = -1;		// Get a new message this frame.
 	cls.td_nonrendering = 0;
+	cls.td_frametime_max_frame = cls.td_frametime_max = 0;
 	memset(cls.td_frametime_stats, 0, sizeof(cls.td_frametime_stats));
 }
 

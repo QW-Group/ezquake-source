@@ -911,7 +911,6 @@ static void CM_LoadClipnodesBSP2(lump_t *l)
 static qbool CM_LoadPhysicsNormalsData(byte* data, int datalength)
 {
 	mphysicsnormal_t* in = (mphysicsnormal_t*)(data + 8);
-	float* cvars = (float*)data;
 	int i;
 
 	if (datalength != 8 + sizeof(map_physicsnormals[0]) * numclipnodes) {
@@ -920,7 +919,9 @@ static qbool CM_LoadPhysicsNormalsData(byte* data, int datalength)
 
 #ifndef CLIENTONLY
 	{
+		float* cvars = (float*)data;
 		extern cvar_t pm_rampjump;
+
 		Cvar_SetValue(&pm_rampjump, LittleFloat(cvars[0]));
 	}
 #endif

@@ -103,6 +103,7 @@ typedef enum {
 	r_program_uniform_simple_color,
 	r_program_uniform_world_textures_glc_texture_multiplier,
 	r_program_uniform_simple3d_color,
+	r_program_uniform_lighting_firstLightmap,
 	r_program_uniform_count
 } r_program_uniform_id;
 
@@ -133,6 +134,7 @@ int R_ProgramCustomOptions(r_program_id program_id);
 void R_ProgramSetCustomOptions(r_program_id program_id, int options);
 
 void R_ProgramComputeDispatch(r_program_id program_id, unsigned int num_groups_x, unsigned int num_groups_y, unsigned int num_groups_z);
+void R_ProgramMemoryBarrier(r_program_id program_id);
 void R_ProgramComputeSetMemoryBarrierFlag(r_program_id program_id, r_program_memory_barrier_id barrier_id);
 
 void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value);

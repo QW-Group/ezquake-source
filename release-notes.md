@@ -22,11 +22,14 @@
 - Fix rendering of fullbright textures that aren't luma/external-32bit textures (3.5 bug, reported by ciscon & lurq)
 - `-gamma` command line option now sets `/gl_gamma` default, rather than also setting the gamma adjustment on some in-game textures (old, very old)
 - `/gl_detpacklights` now controls if coronas created on detpacks in TF (very old bug, reported by Trickle)
-- When using `/gl_textureless 1` & glsl path in classic renderer, bmodel entities rendered textureless (3.5 bug, reported by hemostx)
+- `/gl_textureless 1` on glsl path in classic renderer caused bmodel entities to be rendered textureless (3.5 bug, reported by hemostx)
 - `/gl_outline 2` fixed (3.5 bug, reported by fourier)
+- `/gl_shaftlight 0` fixed on glsl path in classic renderer (3.5 bug, reported by maniac)
+- `/r_dynamic 2` was calculating too many lightmaps (3.5 bug, reported by ciscon)
 - Fixed bug causing read-only file handle to config being kept open, preventing backup from being taken (old bug)
 - Fixed bug causing MVD-stats code to cause `/tp_loadloc` to effectively always be forced to 1
 - Fixed bug causing multiple item timers to spawn when using `/demo_jump` (3.2 bug, reported by Milton)
+- Fixed bug causing buffer-overrun if loading a corrupt/truncated .wav file (old bug)
 
 ### Ruleset-related changes
 
@@ -39,6 +42,11 @@
 
 - `/cl_pext_serversideweapon` - protocol extension to move weapon selection to server (requires updated mvdsv)
 - `/cl_weaponforgetondeath` - resets weapon to shotgun when respawning
+- `/cl_username` & `/authenticate` to support optional logins via badplace.eu (see )
+- `/scr_scoreboard_login_names` will replace player's name with login when it is sent by server
+- `/scr_scoreboard_login_flagfile` maps player flags to graphics to be shown next to player's name when they are logged in
+- `/scr_scoreboard_login_indicator` will be shown next to a player's name when they are logged in (if flag not available)
+- `/scr_scoreboard_login_color` controls the color of a player's name when they are logged in
 - `/cfg_backup` will now not save the config if backup cannot be taken
 - `/vid_framebuffer_smooth` controls linear or nearest filtering (thanks to Calinou)
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
@@ -46,6 +54,9 @@
 - `/timedemo2` command renders demo in stop-motion at a particular fps
 - `/timedemo` commands show extra info at end to try and highlight stutter (measuring worst frametimes)
 - `/enemyforceskins 1` will search for player names in lower case (#345)
+- `/register_qwurl_protocol` reports success if run from command line (or rather, run without 'quiet' as 1st argument)
+- `/hud_clock_content 1` changes output to show the uptime of the client
+- `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
 - MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
 - Player LG beams hidden during intermission (no more beams in screenshots)
 - `-oldgamma` command line option to re-instate old `-gamma` behaviour
@@ -55,6 +66,7 @@
 
 ### Build/meta
 
+- Uses libsndfile to load .wav files, if available (if using version < 1.025, set OLD_WAV_LOADING=1 during build to use old custom .wav-loading)
 - Duplicate declarations fixed (supports -fno-common, reported by ciscon)
 - Updated Azure Pipelines builds to latest ubuntu/macos
 

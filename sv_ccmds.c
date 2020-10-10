@@ -799,7 +799,6 @@ void SV_Kick_f (void)
 	client_t	*cl;
 	int			uid;
 	int			c;
-	int			saved_state;
 	char		reason[80] = "";
 
 	c = Cmd_Argc ();
@@ -840,18 +839,23 @@ void SV_Kick_f (void)
 					strlcat (reason, ")", sizeof(reason));
 			}
 
-			saved_state = cl->state;
-			cl->state = cs_free; // HACK: don't broadcast to this client
-			SV_BroadcastPrintf (PRINT_HIGH, "%s was kicked%s\n", cl->name, reason);
-			cl->state = (sv_client_state_t) saved_state;
-			SV_ClientPrintf (cl, PRINT_HIGH, "You were kicked from the game%s\n", reason);
-			SV_LogPlayer(cl, va("kick%s\n", reason), 1); //bliP: logging
-			SV_DropClient (cl);
+			SV_KickClient(cl, reason);
 			return;
 		}
 	}
 
 	Con_Printf ("Couldn't find user number %i\n", uid);
+}
+
+void SV_KickClient(client_t* cl, const char* reason)
+{
+	sv_client_state_t saved_state = cl->state;
+	cl->state = cs_free; // HACK: don't broadcast to this client
+	SV_BroadcastPrintf(PRINT_HIGH, "%s was kicked%s\n", cl->name, reason);
+	cl->state = (sv_client_state_t)saved_state;
+	SV_ClientPrintf(cl, PRINT_HIGH, "You were kicked from the game%s\n", reason);
+	SV_LogPlayer(cl, va("kick%s\n", reason), 1); //bliP: logging
+	SV_DropClient(cl);
 }
 
 //bliP: mute, cuff ->

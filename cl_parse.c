@@ -44,6 +44,9 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 #include "input.h"
 #include "qtv.h"
 #include "r_brushmodel_sky.h"
+#include "central.h"
+
+int CL_LoginImageId(const char* name);
 
 void R_TranslatePlayerSkin (int playernum);
 
@@ -2096,6 +2099,10 @@ void CL_ProcessUserInfo(int slot, player_info_t *player, char *key)
 	else if (!strcasecmp(player->team, cl.fixed_team_names[3])) {
 		player->known_team_color = 11;
 	}
+
+	strlcpy(player->loginname, Info_ValueForKey(player->userinfo, "*auth"), sizeof(player->loginname));
+	strlcpy(player->loginflag, Info_ValueForKey(player->userinfo, "*flag"), sizeof(player->loginflag));
+	player->loginflag_id = CL_LoginImageId(player->loginflag);
 }
 
 void CL_NotifyOnFull(void)
@@ -2121,8 +2128,7 @@ void CL_PlayerEnterSlot(player_info_t *player)
 {
 	extern player_state_t oldplayerstates[MAX_CLIENTS];
 
-	player->ignored = player->validated = false;
-	player->f_server[0] = 0;
+	player->ignored = false;
 	memset(&oldplayerstates[player - cl.players], 0, sizeof(player_state_t));
 	Stats_EnterSlot(player - cl.players);
 	CL_NotifyOnFull();
@@ -3169,6 +3175,29 @@ void CL_ParseStufftext (void)
 			Cbuf_AddTextEx(&cbuf_svc, va("f_qtvfinalscores %s\n", s + sizeof("//finalscores ") - 1));
 		}
 	}
+	else if (!strcmp(s, "//authprompt\n")) {
+		if (!cls.demoplayback) {
+			extern cvar_t cl_username;
+
+			if (cls.auth_logintoken[0] && cl_username.string[0]) {
+				Cbuf_AddTextEx(&cbuf_main, va("cmd login %s\n", cl_username.string));
+			}
+		}
+	}
+	else if (!strncmp(s, "//challenge ", sizeof("//challenge ") - 1)) {
+		if (!cls.demoplayback) {
+			Cmd_TokenizeString(s + 2);
+
+			if (Cmd_Argc() >= 2) {
+				strlcpy(cl.auth_challenge, Cmd_Argv(1), sizeof(cl.auth_challenge));
+
+				if (cls.auth_logintoken[0]) {
+					Central_FindChallengeResponse(cls.auth_logintoken, cl.auth_challenge);
+				}
+			}
+		}
+	}
+
 	else
 	{
 		Cbuf_AddTextEx(&cbuf_svc, s);

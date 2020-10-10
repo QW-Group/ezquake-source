@@ -715,7 +715,7 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 
 		if (colortype == PNG_COLOR_TYPE_GRAY && bitdepth < 8) 
 		{
-#ifdef __Q_PNG14__
+#if PNG_LIBPNG_VER >= 10209
 			png_set_expand_gray_1_2_4_to_8(png_ptr);
 #else
 			png_set_gray_1_2_4_to_8(png_ptr);

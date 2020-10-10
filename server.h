@@ -177,6 +177,7 @@ typedef struct
 #define	CLIENT_LOGIN_LEN            16
 #define	CLIENT_NAME_LEN             32
 #define LOGIN_CHALLENGE_LENGTH     128
+#define LOGIN_FLAG_LENGTH            8
 #define LOGIN_MIN_RETRY_TIME         5    // 1 login attempt per x seconds
 
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
@@ -237,8 +238,9 @@ typedef struct client_s
 
 	char			stufftext_buf[MAX_STUFFTEXT];
 
-	double			connection_started;		// or time of disconnect for zombies
-	qbool			send_message;			// set on frames a datagram arived on
+	double          connection_started;          // or time of disconnect for zombies
+	double          connection_started_curtime;  // like connection_started but curtime (not affected by pause)
+	qbool           send_message;                // set on frames a datagram arrived on
 
 // { sv_antilag related
 	laggedentinfo_t	laggedents[MAX_CLIENTS];
@@ -285,8 +287,11 @@ typedef struct client_s
 	qbool			remote_snap;
 
 	char			login[CLIENT_LOGIN_LEN];
+	char            login_alias[CLIENT_NAME_LEN];
+	char            login_flag[LOGIN_FLAG_LENGTH];
 	char            challenge[LOGIN_CHALLENGE_LENGTH];
 	int				logged;
+	qbool           logged_in_via_web;
 	double          login_request_time;
 
 	int				spawncount;			// for tracking map changes during downloading
@@ -890,6 +895,7 @@ void SV_VoiceSendPacket(client_t *client, sizebuf_t *buf);
 void SV_Status_f (void);
 void SV_ServerinfoChanged (char *key, char *string);
 void SV_SendServerInfoChange (char *key, char *value);
+void SV_KickClient(client_t* client, const char* reason);
 
 //
 // sv_ents.c
@@ -1027,6 +1033,8 @@ qbool SV_Login(client_t *cl);
 void SV_Logout(client_t *cl);
 void SV_ParseLogin(client_t *cl);
 void SV_LoginCheckTimeOut(client_t *cl);
+void SV_LoginWebCheck(client_t* cl);
+void SV_LoginWebFailed(client_t* cl);
 
 // sv_master.c
 void SV_SetMaster_f (void);

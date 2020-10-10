@@ -279,6 +279,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_world_textured_glc, "texture_multiplier", 1, false },
 	// r_program_uniform_simple3d_color
 	{ r_program_simple3d, "color", 1, false },
+	// r_program_uniform_lighting_firstLightmap,
+	{ r_program_lightmap_compute, "firstLightmap", 1, false }
 };
 
 #ifdef C_ASSERT
@@ -956,9 +958,18 @@ static void GL_ProgramComputeDispatch(r_program_id program_id, unsigned int num_
 {
 	R_ProgramUse(program_id);
 	qglDispatchCompute(num_groups_x, num_groups_y, num_groups_z);
+}
+
+static void GL_ProgramMemoryBarrier(r_program_id program_id)
+{
 	if (R_CurrentSubProgram(program_id)->memory_barrier) {
 		qglMemoryBarrier(R_CurrentSubProgram(program_id)->memory_barrier);
 	}
+}
+
+void R_ProgramMemoryBarrier(r_program_id program_id)
+{
+	GL_ProgramMemoryBarrier(program_id);
 }
 
 void R_ProgramComputeDispatch(r_program_id program_id, unsigned int num_groups_x, unsigned int num_groups_y, unsigned int num_groups_z)
