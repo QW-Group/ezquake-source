@@ -1,3 +1,5 @@
+# PSA: This fork is for the purposes of submitting pull requests
+
 # unezQuake — Modernizing QuakeWorld Standards For Interested Parties
 unezQuake is a fork of the ezQuake client that aims to bring more permissive standards and features to Quakeworld to help the game evolve in a positive way.
 

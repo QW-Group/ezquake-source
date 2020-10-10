@@ -1,4 +1,4 @@
-### ezQuake Makefile based on Q2PRO ###
+### unezQuake Makefile based on Q2PRO ###
 
 ifdef EZ_CONFIG_FILE
     -include $(EZ_CONFIG_FILE)
@@ -558,9 +558,9 @@ endif
 ### Targets ###
 
 ifdef CONFIG_WINDOWS
-    TARG_c := ezquake$(EZ_POSTFIX).exe
+    TARG_c := unezquake$(EZ_POSTFIX).exe
 else
-    TARG_c := ezquake-$(LSYS)-$(CPU)$(EZ_POSTFIX)
+    TARG_c := unezquake-$(LSYS)-$(CPU)$(EZ_POSTFIX)
 endif
 
 all: $(TARG_c)
@@ -579,7 +579,7 @@ else
 endif
 
 # Temporary build directories
-BUILD_c := .ezquake
+BUILD_c := .unezquake
 
 # Rewrite paths to build directories
 OBJS_c := $(patsubst %,$(BUILD_c)/%,$(OBJS_c))
