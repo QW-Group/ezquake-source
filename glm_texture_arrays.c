@@ -462,6 +462,10 @@ void GLM_BuildCommonTextureArrays(qbool vid_restart)
 	GL_DeleteExistingTextureArrays(!vid_restart);
 	R_ClearModelTextureData();
 
+	if (cls.state == ca_disconnected) {
+		return;
+	}
+
 	for (i = 1; i < MAX_MODELS; ++i) {
 		model_t* mod = cl.model_precache[i];
 

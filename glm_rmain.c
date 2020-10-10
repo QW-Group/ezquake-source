@@ -98,9 +98,9 @@ void GLM_RenderView(void)
 
 void GLM_PrepareModelRendering(qbool vid_restart)
 {
-	if (cls.state != ca_disconnected) {
-		GLM_BuildCommonTextureArrays(vid_restart);
+	GLM_BuildCommonTextureArrays(vid_restart);
 
+	if (cls.state != ca_disconnected) {
 		R_CreateInstanceVBO();
 		R_CreateAliasModelVBO();
 		R_BrushModelCreateVBO();

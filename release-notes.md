@@ -32,6 +32,7 @@
 - Fixed bug causing multiple item timers to spawn when using `/demo_jump` (3.2 bug, reported by Milton)
 - Fixed bug causing buffer-overrun if loading a corrupt/truncated .wav file (old bug)
 - Fixed bug causing `rcon` timestamps to be truncated when using `/cl_crypt_rcon` and server has `/sv_timestamplen` set (old bug)
+- Fixed bug causing invalid texture references to be used if `/vid_restart` issued while disconnect (3.5 bug)
 
 ### Ruleset-related changes
 
