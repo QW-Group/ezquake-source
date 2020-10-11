@@ -1703,7 +1703,13 @@ void GL_FramebufferSetFiltering(qbool linear);
 
 static void framebuffer_smooth_changed_callback(cvar_t* var, char* string, qbool* cancel)
 {
-	GL_FramebufferSetFiltering(var->integer);
+	if (string[0] == '\0' || string[1] != '\0' || !(string[0] == '0' || string[0] == '1')) {
+		Com_Printf("Value of %s must be 0 or 1\n", var->name);
+		*cancel = true;
+		return;
+	}
+
+	GL_FramebufferSetFiltering(string[0] == '1');
 }
 
 static void conres_changed_callback(cvar_t *var, char *string, qbool *cancel)
