@@ -39,6 +39,7 @@ cvar_t cl_nodelta             = {"cl_nodelta","0"};
 cvar_t cl_pitchspeed          = {"cl_pitchspeed","150"};
 cvar_t cl_upspeed             = {"cl_upspeed","400"};
 cvar_t cl_sidespeed           = {"cl_sidespeed","400"};
+cvar_t cl_smartspawn 		  = {"cl_smartspawn", "0"};
 cvar_t cl_yawspeed            = {"cl_yawspeed","140"};
 cvar_t cl_weaponhide          = {"cl_weaponhide", "0"};
 cvar_t cl_weaponpreselect     = {"cl_weaponpreselect", "0"};
@@ -881,8 +882,15 @@ void CL_FinishMove(usercmd_t *cmd)
 	}
 
 	// figure button bits
-	if ( in_attack.state & 3 )
-		cmd->buttons |= 1;
+	if ( in_attack.state & 3 ) {
+		if (cl_smartspawn.integer && (cl.stats[STAT_HEALTH] <= 0)) {
+			// Treat +attack as +jump while player is dead with cl_smartspawn.
+			cmd->buttons |= BUTTON_JUMP;
+			IN_AttackUp();
+		} else {
+			cmd->buttons |= BUTTON_ATTACK;
+		}
+	}
 	in_attack.state &= ~2;
 
 	if (in_jump.state & 3)
@@ -1242,6 +1250,7 @@ void CL_InitInput(void)
 	Cvar_Register(&cl_forwardspeed);
 	Cvar_Register(&cl_backspeed);
 	Cvar_Register(&cl_sidespeed);
+	Cvar_Register(&cl_smartspawn);
 	Cvar_Register(&cl_movespeedkey);
 	Cvar_Register(&cl_yawspeed);
 	Cvar_Register(&cl_pitchspeed);
