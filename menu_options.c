@@ -866,6 +866,7 @@ setting settplayer_arr[] = {
 	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum forward speed at all times."),
 	ADDSET_ADVANCED_SECTION(),
     ADDSET_BOOL		("Smart Jump", cl_smartjump),
+	ADDSET_BOOL		("Smart Spawn", cl_smartspawn),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
 	ADDSET_BASIC_SECTION(),
 	

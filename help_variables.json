@@ -2548,6 +2548,23 @@
         }
       ]
     },
+    "cl_smartspawn": {
+      "default": "0",
+      "desc": "When dead, +attack will spawn and immediately -attack to prevent weapon firing when spawning.",
+      "group-id": "9",
+      "remarks": "Spawning by jumping is preferred. This helps prevent unintentional +attack spawns.",
+      "type": "enum",
+      "values": [
+        {
+          "description": "+attack will spawn and potentially fire weapon",
+          "name": "0"
+        },
+        {
+          "description": "+attack will spawn and not fire weapon",
+          "name": "1"
+        }
+      ]
+    },
     "cl_solid_players": {
       "default": "1",
       "desc": "If not set then client will not perform collision detection against other players.",
