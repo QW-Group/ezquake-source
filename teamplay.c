@@ -3746,6 +3746,7 @@ void TP_Init (void)
 	Cmd_AddCommand ("enemycolor", TP_EnemyColor_f);
 
 	Cmd_AddCommand ("tp_msgreport", TP_Msg_Report_f);
+	Cmd_AddCommand ("tp_msgreportinlay", TP_Msg_Report_Inlay_f);
 	Cmd_AddCommand ("tp_msgcoming", TP_Msg_Coming_f);
     Cmd_AddCommand ("tp_msglost", TP_Msg_Lost_f);
     Cmd_AddCommand ("tp_msgenemypwr", TP_Msg_EnemyPowerup_f);

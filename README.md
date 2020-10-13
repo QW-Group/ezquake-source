@@ -157,7 +157,7 @@ Make sure you run the `brew doctor` as instructed before doing anything else.
 Then run:
 
 ```
-brew install sdl2 sdl2_net sdl2_image sdl2_gfx sdl2_mixer pcre jansson pkg-config speex speexdsp
+brew install sdl2 sdl2_net sdl2_image sdl2_gfx sdl2_mixer pcre jansson pkg-config speex speexdsp libsndfile
 ```
 
 When it's done, just run `make` and it should compile without errors.

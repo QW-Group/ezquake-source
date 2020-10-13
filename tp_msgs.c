@@ -27,6 +27,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quakedef.h"
 #include "teamplay.h"
+#include "server.h"
+#include "tp_msgs.h"
 
 #define GLOBAL /* */
 #define LOCAL static
@@ -73,7 +75,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define NEED(x) (vars.needflags & it_##x)
 
 typedef const char * MSGPART;
- 
+
+LOCAL void OnChange_TeamInlay_Message(cvar_t *var, char *value, qbool *cancel);
+
+int inlay_last_message_update_time = 0;
+cvar_t teaminlay_msg = {"teaminlay_msg", "", 0, OnChange_TeamInlay_Message}; // Extra message with inlay update.
+cvar_t teaminlay_msg_duration = {"teaminlay_msg_duration", "5" }; // How long to keep the extra message.
+
+LOCAL void OnChange_TeamInlay_Message(cvar_t *var, char *value, qbool *cancel)
+{
+	inlay_last_message_update_time = r_refdef2.time;
+}
+
+LOCAL void TP_SetInlayMessageWithDuration(int duration, const char* msg)
+{
+	inlay_last_message_update_time = r_refdef2.time;
+
+	teaminlay_msg.string = (char*)msg;
+	teaminlay_msg_duration.integer = duration;
+
+	TP_Msg_Report_Inlay_f();
+}
+
 extern cvar_t cl_fakename;
 // will return short version of player's nick for teamplay messages
 LOCAL char *TP_ShortNick(void)
@@ -89,7 +112,7 @@ LOCAL char *TP_ShortNick(void)
 		}
 		return buf;
 	}
-}      
+}
  
 // wrapper for snprintf & Cbuf_AddText that will add say_team nick part
 LOCAL void TP_Send_TeamSay(char *format, ...)
@@ -116,6 +139,8 @@ LOCAL void TP_Send_TeamSay(char *format, ...)
 
 GLOBAL void TP_Msg_Lost_f (void)
 {
+	TP_SetInlayMessageWithDuration(3, "{&cf00lost&cfff} $x10%l$x11");
+
     MSGPART quad = "";
 	MSGPART over = "";
 	MSGPART dropped_or_lost = "";
@@ -142,8 +167,60 @@ GLOBAL void TP_Msg_Lost_f (void)
 	TP_Send_TeamSay("%s%s%s%s", quad, over, dropped_or_lost, location_enemy);
 }
 
+GLOBAL void TP_MSG_Report_Inlay(char* prefix)
+{
+	extern cvar_t tp_name_rlg, tp_name_lg, tp_name_rl, tp_name_gl, tp_name_sng, tp_name_ssg;
+
+	qbool in_game = GameStarted() && !(cl.standby || cl.countdown);
+	MSGPART armor = in_game ? "$colored_armor" : "999";
+	MSGPART health = in_game ? "%h" : "999";
+	MSGPART weapon = "";
+	MSGPART powerups = in_game ? "$colored_powerups" : "";
+	MSGPART location = "%l";
+	MSGPART message = "";
+
+	// Weapon.
+	if (HAVE_RL() && HAVE_LG()) {
+		weapon = tp_name_rlg.string;
+	} else if (HAVE_RL()) {
+		weapon = tp_name_rl.string;
+	} else if (HAVE_LG()) {
+		weapon = tp_name_lg.string;
+	} else if (HAVE_GL()) {
+		weapon = tp_name_gl.string;
+	} else if (HAVE_SNG()) {
+		weapon = tp_name_sng.string;
+	} else if (HAVE_SSG()) {
+		weapon = tp_name_ssg.string;
+	}
+
+	// Extra message.
+	if (teaminlay_msg.string) {
+		int seconds_per_update = bound(1, teaminlay_msg_duration.integer, 10);
+		if (inlay_last_message_update_time) {
+			if ((inlay_last_message_update_time + seconds_per_update) > r_refdef2.time) {
+				message = teaminlay_msg.string;
+			} else {
+				// Message has expired, clear it.
+				inlay_last_message_update_time = 0;
+				teaminlay_msg.string = Q_strdup("");
+			}
+		}
+	}
+
+	// <prefix> <armor>,<health>,<weapon>,<powerups>,<location>,<msg>
+	TP_Send_TeamSay("%s %s,%s,%s,%s,%s,%s", prefix, armor, health, weapon, powerups, location, message);
+}
+
+GLOBAL void TP_Msg_Report_Inlay_f (void)
+{
+	TP_MSG_Report_Inlay("#inlay#");
+}
+
 GLOBAL void TP_Msg_Report_f (void)
 {
+	TP_Msg_Report_Inlay_f();
+
 	extern cvar_t tp_name_lg, tp_name_rl, tp_name_gl, tp_name_sng, tp_name_ssg;
 	MSGPART powerup = "";
 	MSGPART armor_health = "$colored_armor/%h";
@@ -332,7 +409,7 @@ GLOBAL void TP_Msg_GetPent_f (void) { TP_Msg_GetPentQuad(false); }
 GLOBAL void TP_Msg_QuadDead_f (void)
 {
 	extern cvar_t tp_name_quad;
-    MSGPART quad = tp_name_quad.string;
+	MSGPART quad = tp_name_quad.string;
 	MSGPART dead = "dead/over";
 
 	TP_FindPoint();
@@ -507,6 +584,8 @@ GLOBAL void TP_Msg_Need_f (void)
 
 GLOBAL void TP_Msg_Safe_f (void)
 {
+	TP_SetInlayMessageWithDuration(3, "{&c0b0safe&cfff}");
+
 	extern cvar_t tp_name_rlg, tp_name_separator;
 	MSGPART armor = "";
 	MSGPART separator = "";
@@ -537,6 +616,8 @@ GLOBAL void TP_Msg_Safe_f (void)
 
 GLOBAL void TP_Msg_KillMe_f (void)
 {
+	TP_SetInlayMessageWithDuration(3, "{&cfffkill me&cfff}");
+
 	extern cvar_t tp_name_rl, tp_name_lg;
 	MSGPART point = "";
 	MSGPART kill_me = "{&cb1akill me [&cfff}{%l}{&cf2a]&cfff}";
@@ -586,11 +667,15 @@ GLOBAL void TP_Msg_YouTake_f (void)
 
 GLOBAL void TP_Msg_Help_f (void)
 {
+	TP_SetInlayMessageWithDuration(3, "{&cff0help&cfff}");
+
 	TP_Send_TeamSay("%s%s", (HAVE_POWERUP() ? "$colored_powerups " : ""), "{&cff0help&cfff} {&cff0[&cfff}{%l}{&cff0]&cfff} {%e}"); // yellow help
 }
 
 // The following define allows us to make as many functions as we want and get the message "powerup message location"
-#define TP_MSG_GENERIC(type) TP_Send_TeamSay("%s" type " $[{%%l}$]", (HAVE_POWERUP() ? "$colored_powerups " : ""))
+#define TP_MSG_GENERIC(type) \
+	TP_SetInlayMessageWithDuration(3, (type)); \
+	TP_Send_TeamSay("%s" type " $[{%%l}$]", (HAVE_POWERUP() ? "$colored_powerups " : ""));
 
 GLOBAL void TP_Msg_YesOk_f (void)		{ TP_MSG_GENERIC("{yes/ok}"); }
 GLOBAL void TP_Msg_NoCancel_f (void)	{ TP_MSG_GENERIC("{&cf00no/cancel&cfff}"); } //red no/cancel

@@ -68,6 +68,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern qbool ActiveApp, Minimized;
 
 static void Cl_Reset_Min_fps_f(void);
+void Inlay_Update(void);
 
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
 cvar_t	rcon_password = {"rcon_password", ""};
@@ -1082,6 +1083,7 @@ void CL_DNS_f(void)
 
 void SCR_ClearShownick(void);
 void SCR_ClearTeamInfo(void);
+void SCR_ClearInlay(void);
 void SCR_ClearWeaponStats(void);
 
 void CL_ClearState (void) 
@@ -1136,6 +1138,7 @@ void CL_ClearState (void)
 
 	// Clear teaminfo structs
 	SCR_ClearTeamInfo();
+	SCR_ClearInlay();
 
 	// Clear weapon stats structs
 	SCR_ClearWeaponStats();
@@ -2495,6 +2498,8 @@ void CL_Frame (double time)
 #ifdef WITH_IRC
 	IRC_Update();
 #endif
+
+	Inlay_Update();
 
 	SB_ExecuteQueuedTriggers();
 

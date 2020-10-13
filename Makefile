@@ -245,6 +245,7 @@ OBJS_c := \
     help_files.o \
     hud.o \
     hud_common.o \
+    hud_inlay.o \
     hud_weapon_stats.o \
     hud_radar.o \
     hud_editor.o \

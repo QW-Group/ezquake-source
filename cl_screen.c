@@ -55,6 +55,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #endif
 
 void WeaponStats_CommandInit(void);
+void SCR_Draw_Inlay(void);
 
 int				glx, gly, glwidth, glheight;
 
@@ -3081,6 +3082,7 @@ static void SCR_DrawElements(void)
 					if (!sb_showscores && !sb_showteamscores)
 					{ 
 						SCR_Draw_TeamInfo();
+						SCR_Draw_Inlay();
 						//SCR_Draw_WeaponStats();
 
 						SCR_Draw_ShowNick();

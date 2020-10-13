@@ -50,6 +50,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 void SCR_HUD_WeaponStats(hud_t *hud);
 void WeaponStats_HUDInit(void);
+void Inlay_HudInit(void);
 
 hud_t *hud_netgraph = NULL;
 
@@ -6745,6 +6746,8 @@ void CommonDraw_Init(void)
 
 	Radar_HudInit();
 	WeaponStats_HUDInit();
+	Inlay_HudInit();
+
 	/* hexum -> FIXME? this is used only for debug purposes, I wont bother to port it (it shouldnt be too difficult if anyone cares)
 #ifdef _DEBUG
 HUD_Register("framegraph", NULL, "Shows different frame times for debug/profiling purposes.",

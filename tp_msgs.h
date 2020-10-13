@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 extern void TP_Msg_Lost_f (void);
 extern void TP_Msg_Report_f (void);
+extern void TP_Msg_Report_Inlay_f (void);
 extern void TP_Msg_Coming_f (void);
 extern void TP_Msg_EnemyPowerup_f (void);
 extern void TP_Msg_Safe_f (void);
@@ -51,6 +52,8 @@ extern void TP_Msg_Replace_f (void);
 extern void TP_Msg_Trick_f (void);
 //TF messages
 extern void TP_Msg_TFConced_f (void);
+
+extern void TP_MSG_Report_Inlay(char*);
 
 extern const char* TP_MSG_Colored_Armor(void);
 extern const char * TP_MSG_Colored_Powerup(void);
