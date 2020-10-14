@@ -2,6 +2,8 @@
 
 3.6 merges 3.2 and the un-released 3.5 - changes listed here are relative to those versions.
 
+(if viewing on github, download links are at bottom of page)
+
 ### Bugs
 
 - Fix crash to desktop when finding best routes to server and number of proxies too high (old bug, also fixed in 3.5-alpha24 and 3.2.1)

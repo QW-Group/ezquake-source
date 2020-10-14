@@ -258,7 +258,7 @@ void GLC_DrawSpriteModel(entity_t* e)
 	psprite = (msprite2_t*)Mod_Extradata(e->model);	//locate the proper data
 	frame = R_GetSpriteFrame(e, psprite);
 
-	if (!frame)
+	if (!frame || !R_TextureReferenceIsValid(frame->gl_texturenum))
 		return;
 
 	if (psprite->type == SPR_ORIENTED) {
