@@ -927,15 +927,9 @@ void DeleteServerAliases(void)
 =============================================================================
 */
 
-typedef struct legacycmd_s
-{
-	char *oldname, *newname;
-	struct legacycmd_s *next;
-} legacycmd_t;
+legacycmd_t *legacycmds = NULL;
 
-static legacycmd_t *legacycmds = NULL;
-
-void Cmd_AddLegacyCommand (char *oldname, char *newname)
+void Cmd_AddLegacyCommand(char *oldname, char *newname)
 {
 	legacycmd_t *cmd;
 	cmd = (legacycmd_t *) Q_malloc(sizeof(legacycmd_t));
@@ -944,6 +938,7 @@ void Cmd_AddLegacyCommand (char *oldname, char *newname)
 
 	cmd->oldname = oldname;
 	cmd->newname = newname;
+	cmd->dummy_cmd.name = oldname;
 }
 
 qbool Cmd_IsLegacyCommand (char *oldname)
@@ -1294,6 +1289,7 @@ char *Cmd_CompleteCommand (char *partial)
 	cmd_function_t *cmd;
 	int len;
 	cmd_alias_t *alias;
+	legacycmd_t* legacy_cmd;
 
 	len = strlen(partial);
 
@@ -1307,6 +1303,11 @@ char *Cmd_CompleteCommand (char *partial)
 	for (alias = cmd_alias; alias; alias = alias->next)
 		if (!strcasecmp (partial, alias->name))
 			return alias->name;
+	for (legacy_cmd = legacycmds; legacy_cmd; legacy_cmd = legacy_cmd->next) {
+		if (!strcasecmp(partial, legacy_cmd->oldname)) {
+			return legacy_cmd->oldname;
+		}
+	}
 
 	// check for partial match
 	for (cmd = cmd_functions; cmd; cmd = cmd->next)
@@ -1315,6 +1316,11 @@ char *Cmd_CompleteCommand (char *partial)
 	for (alias = cmd_alias; alias; alias = alias->next)
 		if (!strncasecmp (partial, alias->name, len))
 			return alias->name;
+	for (legacy_cmd = legacycmds; legacy_cmd; legacy_cmd = legacy_cmd->next) {
+		if (!strncasecmp(partial, legacy_cmd->oldname, len)) {
+			return legacy_cmd->oldname;
+		}
+	}
 
 	return NULL;
 }
@@ -1322,15 +1328,25 @@ char *Cmd_CompleteCommand (char *partial)
 int Cmd_CompleteCountPossible (char *partial)
 {
 	cmd_function_t *cmd;
+	legacycmd_t* legacy_cmd;
 	int len, c = 0;
 
 	len = strlen(partial);
 	if (!len)
 		return 0;
 
-	for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		if (!strncasecmp (partial, cmd->name, len))
+	for (cmd = cmd_functions; cmd; cmd = cmd->next) {
+		if (!strncasecmp(partial, cmd->name, len)) {
 			c++;
+		}
+	}
+
+	// Also check legacy commands
+	for (legacy_cmd = legacycmds; legacy_cmd; legacy_cmd = legacy_cmd->next) {
+		if (!strncasecmp(partial, legacy_cmd->oldname, len)) {
+			++c;
+		}
+	}
 
 	return c;
 }

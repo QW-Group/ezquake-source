@@ -215,3 +215,13 @@ void Cmd_AddMacroEx(macro_id id, char *(*f)(void), int teamplay);
 char* Cmd_MacroString(const char *s, int *macro_length);
 const char* Cmd_MacroName(macro_id id);
 qbool Cmd_MacroTeamplayRestricted(macro_id id);
+
+// only here for enumerating from keys.c (tab-complete) - move to cmd.c
+typedef struct legacycmd_s
+{
+	char* oldname, * newname;
+	cmd_function_t dummy_cmd;
+	struct legacycmd_s* next;
+} legacycmd_t;
+
+extern legacycmd_t* legacycmds;

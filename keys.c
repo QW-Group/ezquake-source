@@ -543,29 +543,41 @@ void CompleteCommandNew (void)
 
 			if (c)
 			{
-				if (con_completion_format.integer)
-					Com_Printf ("&c%sCommands (%d):&r\n", con_completion_color_title.string, c);
-				else
-					Com_Printf ("\x02" "Commands (%d):\n", c);
+				legacycmd_t* lcmd;
 
-				for (s_c = cmd_functions, s_count = 0; s_c && s_count < MAX_SORTED_CMDS; s_c = s_c->next, s_count++)
-					sorted_cmds[s_count] = s_c;
+				if (con_completion_format.integer) {
+					Com_Printf("&c%sCommands (%d):&r\n", con_completion_color_title.string, c);
+				}
+				else {
+					Com_Printf("\x02" "Commands (%d):\n", c);
+				}
 
-				qsort(sorted_cmds, s_count, sizeof (cmd_function_t *), Cmd_CommandCompare);
 				escaped = escape_regex(s);
 				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escaped);
 				Q_free(escaped);
 
-				for (i = 0; i < s_count; i++) {
-					if (Utils_RegExpMatch(completebuff, sorted_cmds[i]->name))
-					{
-						PaddedPrint (sorted_cmds[i]->name);
-						FindCommonSubString (sorted_cmds[i]->name);
-						jogi_avail_complete[count].name = sorted_cmds[i]->name;
-						jogi_avail_complete[count].type = "command";
-						count++;
-						count_cmd++;
+				for (s_c = cmd_functions, s_count = 0; s_c && s_count < MAX_SORTED_CMDS; s_c = s_c->next) {
+					if (Utils_RegExpMatch(completebuff, s_c->name)) {
+						sorted_cmds[s_count++] = s_c;
 					}
+				}
+
+				// Legacy commands
+				for (lcmd = legacycmds; lcmd; lcmd = lcmd->next) {
+					if (Utils_RegExpMatch(completebuff, lcmd->dummy_cmd.name)) {
+						sorted_cmds[s_count++] = &lcmd->dummy_cmd;
+					}
+				}
+
+				qsort(sorted_cmds, s_count, sizeof (cmd_function_t *), Cmd_CommandCompare);
+
+				for (i = 0; i < s_count; i++) {
+					PaddedPrint (sorted_cmds[i]->name);
+					FindCommonSubString (sorted_cmds[i]->name);
+					jogi_avail_complete[count].name = sorted_cmds[i]->name;
+					jogi_avail_complete[count].type = "command";
+					count++;
+					count_cmd++;
 				}
 
 				if (con.x)
@@ -579,24 +591,25 @@ void CompleteCommandNew (void)
 				else
 					Com_Printf ("\x02" "Variables (%d):\n", v);
 
-				for (s_v = cvar_vars, s_count = 0; s_v && s_count < MAX_SORTED_CVARS; s_v = s_v->next, s_count++)
-					sorted_cvars[s_count] = s_v;
-
-				qsort(sorted_cvars, s_count, sizeof (cvar_t *), Cvar_CvarCompare);
 				escaped = escape_regex(s);
 				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escaped);
 				Q_free(escaped);
 
-				for (i = 0; i < s_count; i++) {
-					if (Utils_RegExpMatch(completebuff, sorted_cvars[i]->name))
-					{
-						PaddedPrintValue (sorted_cvars[i]->name, sorted_cvars[i]->string, sorted_cvars[i]->defaultvalue);
-						FindCommonSubString (sorted_cvars[i]->name);
-						jogi_avail_complete[count].name = sorted_cvars[i]->name;
-						jogi_avail_complete[count].type = "variable";
-						count++;
-						count_cvar++;
+				for (s_v = cvar_vars, s_count = 0; s_v && s_count < MAX_SORTED_CVARS; s_v = s_v->next) {
+					if (Utils_RegExpMatch(completebuff, s_v->name)) {
+						sorted_cvars[s_count++] = s_v;
 					}
+				}
+
+				qsort(sorted_cvars, s_count, sizeof (cvar_t *), Cvar_CvarCompare);
+
+				for (i = 0; i < s_count; i++) {
+					PaddedPrintValue (sorted_cvars[i]->name, sorted_cvars[i]->string, sorted_cvars[i]->defaultvalue);
+					FindCommonSubString (sorted_cvars[i]->name);
+					jogi_avail_complete[count].name = sorted_cvars[i]->name;
+					jogi_avail_complete[count].type = "variable";
+					count++;
+					count_cvar++;
 				}
 
 				if (con.x)
@@ -610,28 +623,30 @@ void CompleteCommandNew (void)
 				else
 					Com_Printf ("\x02" "Aliases (%d):\n", a);
 
-				for (s_a = cmd_alias, s_count = 0; s_a && s_count < MAX_SORTED_ALIASES; s_a = s_a->next, s_count++)
-					sorted_aliases[s_count] = s_a;
-
-				qsort(sorted_aliases, s_count, sizeof (cmd_alias_t *), Cmd_AliasCompare);				
 				escaped = escape_regex(s);
-				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escaped);				
+				snprintf(completebuff, sizeof(completebuff), "^((?i)%s)", escaped);
 				Q_free(escaped);
 
-				for (i = 0; i < s_count; i++) {
-					if (Utils_RegExpMatch(completebuff, sorted_aliases[i]->name))
-					{
-						PaddedPrintValue(sorted_aliases[i]->name, sorted_aliases[i]->value, sorted_aliases[i]->name);
-						FindCommonSubString(sorted_aliases[i]->name);
-						jogi_avail_complete[count].name = sorted_aliases[i]->name;
-						jogi_avail_complete[count].type = "alias";
-						count++;
-						count_alias++;
+				for (s_a = cmd_alias, s_count = 0; s_a && s_count < MAX_SORTED_ALIASES; s_a = s_a->next) {
+					if (Utils_RegExpMatch(completebuff, s_a->name)) {
+						sorted_aliases[s_count++] = s_a;
 					}
 				}
 
-				if (con.x)
-					Com_Printf ("\n");
+				qsort(sorted_aliases, s_count, sizeof (cmd_alias_t *), Cmd_AliasCompare);				
+
+				for (i = 0; i < s_count; i++) {
+					PaddedPrintValue(sorted_aliases[i]->name, sorted_aliases[i]->value, sorted_aliases[i]->name);
+					FindCommonSubString(sorted_aliases[i]->name);
+					jogi_avail_complete[count].name = sorted_aliases[i]->name;
+					jogi_avail_complete[count].type = "alias";
+					count++;
+					count_alias++;
+				}
+
+				if (con.x) {
+					Com_Printf("\n");
+				}
 			}
 		}
 
