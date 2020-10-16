@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vx_stuff.h"
 #include "utils.h"
 #include "gl_model.h"
-#include "fonts.h"
+#include "draw.h"
 
 #define FONT_WIDTH 8
 
@@ -56,7 +56,6 @@ static cvar_t scr_teaminlay_x               = { "scr_teaminlay_x",           "-3
 static cvar_t scr_teaminlay_loc_width       = { "scr_teaminlay_loc_width",   "5" };
 static cvar_t scr_teaminlay_name_width      = { "scr_teaminlay_name_width",  "6" };
 static cvar_t scr_teaminlay_show_self       = { "scr_teaminlay_show_self",   "1" }; // FIXME: 1 for debugging
-static cvar_t scr_teaminlay_proportional    = { "scr_teaminlay_proportional", "0"};
 
 cvar_t scr_teaminlay = { "scr_teaminlay", "1" }; // Enable / disable hud elements.
 cvar_t teaminlay = { "teaminlay", "1" }; // Enable / disable sending updates.
@@ -186,7 +185,7 @@ void Inlay_Update(void)
     }
 }
 
-static int SCR_HudDrawInlayPlayer(inlay_player_t *player, float x, int y, int maxname, int maxloc, qbool width_only, float scale, qbool proportional)
+static int SCR_HudDrawInlayPlayer(inlay_player_t *player, float x, int y, int maxname, int maxloc, qbool width_only, float scale)
 {
     if (!player)
         return 0;
@@ -197,6 +196,8 @@ static int SCR_HudDrawInlayPlayer(inlay_player_t *player, float x, int y, int ma
 
     float x_in = x;
     float font_width = scale * FONT_WIDTH;
+    
+    char tmp[1024];
 
     // Powerups.
 	if (!width_only) {
@@ -220,8 +221,10 @@ static int SCR_HudDrawInlayPlayer(inlay_player_t *player, float x, int y, int ma
 
     // Name.
     float name_width = maxname * font_width;
-    if (!width_only)
-        Draw_SStringAligned(x, y, TP_ParseFunChars(cl.players[clientid].name, false), scale, 1, proportional, text_align_right, x + name_width);
+    if (!width_only) {
+        str_align_right(tmp, sizeof(tmp), TP_ParseFunChars(cl.players[clientid].name, false), maxname);
+        Draw_ColoredString(x, y, tmp, false);
+    }
     x += name_width;
 
     // Space.
@@ -230,13 +233,15 @@ static int SCR_HudDrawInlayPlayer(inlay_player_t *player, float x, int y, int ma
     // Location.
     float loc_width = maxloc * font_width;
     if (!width_only)
-        Draw_SString(x, y, TP_ParseFunChars("$x10", false), scale, proportional);
+        Draw_ColoredString(x, y, TP_ParseFunChars("$x10", false), false);
     x += font_width;
-    if (!width_only)
-        Draw_SStringAligned(x, y, TP_ParseFunChars(player->location, false), scale, 1.0, proportional, text_align_left, x + loc_width);
+    if (!width_only) {
+        str_align_right(tmp, sizeof(tmp), TP_ParseFunChars(player->location, false), maxloc);
+        Draw_ColoredString(x, y, tmp, false);
+    }
     x += loc_width;
     if (!width_only)
-        Draw_SString(x, y, TP_ParseFunChars("$x11", false), scale, proportional);
+        Draw_ColoredString(x, y, TP_ParseFunChars("$x11", false), false);
     x += font_width;
 
     // Space.
@@ -247,18 +252,18 @@ static int SCR_HudDrawInlayPlayer(inlay_player_t *player, float x, int y, int ma
         char *armor_str = player->armor;
         char armor_white_stripped[32];
         Util_SkipChars(armor_str, "{}", armor_white_stripped, 32);
-        Draw_SStringAligned(x, y, armor_white_stripped, scale, 1.0f, proportional, text_align_right, x + 3 * font_width);
+        Draw_ColoredString(x, y, armor_white_stripped, false);
     }
     x += 3 * font_width;
 
     // Divider.
     if (!width_only)
-        Draw_SString(x, y, "/", scale, proportional);
+        Draw_ColoredString(x, y, "/", false);
     x += font_width;
 
     // Health.
     if (!width_only)
-        Draw_SStringAligned(x, y, TP_ParseFunChars(player->health, false), scale, 1.0, proportional, text_align_left, x + 3 * font_width);
+        Draw_ColoredString(x, y, TP_ParseFunChars(player->health, false), false);
     x += 3 * font_width;
 
     // Space.
@@ -269,7 +274,7 @@ static int SCR_HudDrawInlayPlayer(inlay_player_t *player, float x, int y, int ma
         char *weap_str = player->weapon;
         char weap_white_stripped[32];
         Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-        Draw_SString(x, y, weap_white_stripped, scale, proportional);
+        Draw_ColoredString(x, y, weap_white_stripped, false);
     }
     x += 3 * font_width;
 
@@ -280,7 +285,7 @@ static int SCR_HudDrawInlayPlayer(inlay_player_t *player, float x, int y, int ma
         Util_SkipChars(msg_str, "{}", msg_white_stripped, 32);
         float msg_width = strlen_color(msg_white_stripped) * font_width;
         float overflow_x = x_in - font_width - msg_width;
-        Draw_SString(overflow_x, y, msg_white_stripped, scale, proportional);
+        Draw_ColoredString(overflow_x, y, msg_white_stripped, false);
     }
 
     return x - x_in;
@@ -339,7 +344,7 @@ void SCR_Draw_Inlay(void)
 
     // Calculate positions.
     int y = vid.height * 0.6 + scr_teaminlay_y.value;
-    int w = SCR_HudDrawInlayPlayer(&inlay_clients[slots[0]], 0, 0, max_name_length, max_loc_length, true, scale, scr_teaminlay_proportional.integer);
+    int w = SCR_HudDrawInlayPlayer(&inlay_clients[slots[0]], 0, 0, max_name_length, max_loc_length, true, scale);
     int h = slots_len * scale;
 
     // Update horizontal position.
@@ -353,7 +358,7 @@ void SCR_Draw_Inlay(void)
     // Draw player info lines..
     for (int i = 0; i < slots_len; ++i) {
         int slot = slots[i];
-        SCR_HudDrawInlayPlayer(&inlay_clients[slot], x, y, max_name_length, max_loc_length, false, scale, scr_teaminlay_proportional.integer);
+        SCR_HudDrawInlayPlayer(&inlay_clients[slot], x, y, max_name_length, max_loc_length, false, scale);
         y += FONTWIDTH * scale;
     }
 }
@@ -393,7 +398,6 @@ void Inlay_HudInit(void)
     Cvar_Register(&scr_teaminlay_loc_width);
     Cvar_Register(&scr_teaminlay_name_width);
     Cvar_Register(&scr_teaminlay_show_self);
-    Cvar_Register(&scr_teaminlay_proportional);
     Cvar_Register(&scr_teaminlay);
 
     Cvar_Register(&teaminlay);
@@ -414,7 +418,6 @@ void Inlay_HudInit(void)
     //     "show_self", "1",
     //     "scale", "1",
     //     "powerup_style", "1",
-    //     "proportional", "0",
     //     NULL
     // );
 }
