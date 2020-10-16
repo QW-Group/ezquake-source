@@ -34,6 +34,7 @@ cvar_t cl_c2spps            = {"cl_c2spps","0"};
 cvar_t cl_c2sImpulseBackup  = {"cl_c2sImpulseBackup","3"};
 cvar_t cl_forwardspeed      = {"cl_forwardspeed","400"};
 cvar_t cl_smartjump         = {"cl_smartjump", "1"};
+cvar_t cl_smartspawn        = {"cl_smartspawn", "0"};
 cvar_t cl_iDrive            = {"cl_iDrive", "0", 0, Rulesets_OnChange_cl_iDrive};
 cvar_t cl_movespeedkey      = {"cl_movespeedkey","2.0"};
 cvar_t cl_nodelta           = {"cl_nodelta","0"};
@@ -838,8 +839,16 @@ void CL_FinishMove(usercmd_t *cmd)
 	}
 
 	// figure button bits
-	if ( in_attack.state & 3 )
-		cmd->buttons |= 1;
+	if ( in_attack.state & 3 ) {
+		if (cl_smartspawn.integer && !cl.spectator && (cl.stats[STAT_HEALTH] <= 0)) {
+			// Treat +attack as a jump while player is dead with cl_smartspawn
+			// and immediately -attack to prevent shooting.
+			cmd->buttons |= BUTTON_JUMP;
+			IN_AttackUp();
+		} else {
+			cmd->buttons |= BUTTON_ATTACK;
+		}
+	}
 	in_attack.state &= ~2;
 
 	if (in_jump.state & 3)
@@ -1135,6 +1144,7 @@ void CL_InitInput(void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
 
 	Cvar_Register(&cl_smartjump);
+	Cvar_Register(&cl_smartspawn);
 	Cvar_Register(&cl_weaponhide);
 	Cvar_Register(&cl_weaponpreselect);
 	Cvar_Register(&cl_weaponforgetorder);
