@@ -9,8 +9,8 @@
 # there will also be an ezquake.zip which basically just zips up the .app.
 #
 
-BUNDLE_NAME=ezQuake.app
-BINARY=ezquake-darwin-x86_64
+BUNDLE_NAME=unezQuake.app
+BINARY=unezquake-darwin-x86_64
 ICON_FILE=ezquake.icns
 
 if [ -d $BUNDLE_NAME ]; then

@@ -377,9 +377,9 @@ endif
 ### Targets ###
 
 ifdef CONFIG_WINDOWS
-    TARG_c := ezquake.exe
+    TARG_c := unezquake.exe
 else
-    TARG_c := ezquake-$(LSYS)-$(CPU)
+    TARG_c := unezquake-$(LSYS)-$(CPU)
 endif
 
 all: $(TARG_c)
