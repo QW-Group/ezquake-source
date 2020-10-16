@@ -117,7 +117,7 @@ void OSX_Mouse_Shutdown(void)
 		return;
 
 #warning Race conditions'r'us
-	CFRunLoopStop(mdata->threadrunloop);
+	// CFRunLoopStop(mdata->threadrunloop);
 
 	SDL_WaitThread(mdata->thread, NULL);
 
