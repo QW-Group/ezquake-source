@@ -135,6 +135,7 @@ cvar_t	cl_solid_players = {"cl_solid_players", "1"};
 cvar_t	cl_predict_half = {"cl_predict_half", "0"};
 
 cvar_t	hud_fps_min_reset_interval = {"hud_fps_min_reset_interval", "30"};
+cvar_t  hud_frametime_max_reset_interval = { "hud_frametime_max_reset_interval", "30" };
 
 cvar_t  localid = {"localid", ""};
 
@@ -1696,6 +1697,7 @@ static void CL_InitLocal (void)
 	Cvar_Register (&cl_maxfps);
 	Cvar_Register (&cl_physfps);
 	Cvar_Register (&hud_fps_min_reset_interval);
+	Cvar_Register (&hud_frametime_max_reset_interval);
 	Cvar_Register (&cl_physfps_spectator);
 	Cvar_Register (&cl_independentPhysics);
 	Cvar_Register (&cl_deadbodyfilter);
@@ -1934,6 +1936,7 @@ void CL_Init (void)
 
 	cls.state = ca_disconnected;
 	cls.min_fps = 999999;
+	cls.max_frametime = 1;
 
 	SZ_Init(&cls.cmdmsg, cls.cmdmsg_data, sizeof(cls.cmdmsg_data));
 	cls.cmdmsg.allowoverflow = true;
@@ -2103,14 +2106,17 @@ static double MinPhysFrameTime (void)
 void CL_CalcFPS(void)
 {
 	static double lastfps;
+	static double lastframetime;
 	static double last_frame_time;
 	static double time_of_last_minfps_update;
+	static double time_of_last_maxframetime_update;
 
 	double t = Sys_DoubleTime();
 
 	if ((t - last_frame_time) >= 1.0)
 	{
 		lastfps = (double)fps_count / (t - last_frame_time);
+		lastframetime = (t - last_frame_time) / max(fps_count, 1);
 		fps_count = 0;
 		last_frame_time = t;
 	}
@@ -2120,6 +2126,12 @@ void CL_CalcFPS(void)
 	if ((lastfps > 10.0 && lastfps < cls.min_fps) || ((t - time_of_last_minfps_update) > hud_fps_min_reset_interval.value)) { 
 		cls.min_fps = lastfps;
 		time_of_last_minfps_update = t;
+	}
+
+	cls.avg_frametime = lastframetime;
+	if ((lastframetime < 2.0f && lastframetime > cls.max_frametime) || ((t - time_of_last_maxframetime_update) > hud_frametime_max_reset_interval.value)) {
+		cls.max_frametime = lastframetime;
+		time_of_last_maxframetime_update = t;
 	}
 }
 

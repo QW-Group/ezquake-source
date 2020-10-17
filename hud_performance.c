@@ -92,6 +92,65 @@ static void SCR_HUD_DrawFPS(hud_t *hud)
 	}
 }
 
+// DrawFrameTime
+static void SCR_HUD_DrawFrameTime(hud_t* hud)
+{
+	int x, y;
+	char st[128];
+
+	static cvar_t
+		* hud_frametime_show_max = NULL,
+		* hud_frametime_style,
+		* hud_frametime_title,
+		* hud_frametime_spike,
+		* hud_frametime_scale,
+		* hud_frametime_proportional;
+
+	if (hud_frametime_show_max == NULL) {
+		// first time called
+		hud_frametime_show_max = HUD_FindVar(hud, "show_max");
+		hud_frametime_style = HUD_FindVar(hud, "style");
+		hud_frametime_title = HUD_FindVar(hud, "title");
+		hud_frametime_spike = HUD_FindVar(hud, "spike");
+		hud_frametime_scale = HUD_FindVar(hud, "scale");
+		hud_frametime_proportional = HUD_FindVar(hud, "proportional");
+	}
+
+	if (hud_frametime_show_max->value) {
+		snprintf(st, sizeof(st), "%3.1f\xf%3.1f", cls.max_frametime * 1000, cls.avg_frametime * 1000);
+	}
+	else {
+		snprintf(st, sizeof(st), "%3.1f", cls.avg_frametime * 1000);
+	}
+
+	if (hud_frametime_title->value) {
+		strlcat(st, " ms", sizeof(st));
+	}
+
+	if (HUD_PrepareDraw(hud, Draw_StringLength(st, -1, hud_frametime_scale->value, hud_frametime_proportional->integer), 8 * hud_frametime_scale->value, &x, &y)) {
+		switch (hud_frametime_style->integer) {
+		case 1:
+			Draw_SAlt_String(x, y, st, hud_frametime_scale->value, hud_frametime_proportional->integer);;
+			break;
+		case 2:
+			// if frametime is greater than a user-set value, then show it
+			if ((hud_frametime_spike->value) <= cls.max_frametime * 1000) {
+				Draw_SString(x, y, st, hud_frametime_scale->value, hud_frametime_proportional->integer);
+			}
+			break;
+		case 3:
+			// if frametime is greater than a user-set value, then show it
+			if ((hud_frametime_spike->value) <= cls.max_frametime * 1000) {
+				Draw_SAlt_String(x, y, st, hud_frametime_scale->value, hud_frametime_proportional->integer);
+			}
+			break;
+		default:
+			Draw_SString(x, y, st, hud_frametime_scale->value, hud_frametime_proportional->integer);
+			break;
+		}
+	}
+}
+
 static void SCR_HUD_DrawVidLag(hud_t *hud)
 {
 	int x, y;
@@ -247,6 +306,22 @@ void Performance_HudInit(void)
 		"title", "1",
 		"scale", "1",
 		"drop", "70",
+		"proportional", "0",
+		NULL
+	);
+
+	// frametime
+	HUD_Register(
+		"frametime", NULL,
+		"Shows your current frametime in ms."
+		"This can also show the maximum frametime that occured in the last measured period.",
+		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFrameTime,
+		"1", "fps", "center", "after", "0", "0", "0", "0 0 0", NULL,
+		"show_max", "1",
+		"style", "0",
+		"title", "1",
+		"scale", "1",
+		"spike", "10",
 		"proportional", "0",
 		NULL
 	);

@@ -453,8 +453,10 @@ typedef struct
 	byte		demomessage_data[MAX_MSGLEN * 2];
 	sizebuf_t	demomessage;
 
-	double		fps;
-	double		min_fps;
+	double      fps;
+	double      min_fps;
+	double      avg_frametime;
+	double      max_frametime;
 
 	int			challenge;
 
