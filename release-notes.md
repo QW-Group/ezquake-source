@@ -36,6 +36,7 @@
 - Fixed bug causing `rcon` timestamps to be truncated when using `/cl_crypt_rcon` and server has `/sv_timestamplen` set (old bug)
 - Fixed bug causing invalid texture references to be used if `/vid_restart` issued while disconnect (3.5 bug)
 - Fixed bug causing team & player sorting to be different (3.2 bug)
+- Fixed bug causing stats hud display to be incorrect if cl_mvdisplayhud not set to 1 and multiview inset view enabled (old bug)
 
 ### Ruleset-related changes
 

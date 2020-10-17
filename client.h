@@ -1084,6 +1084,9 @@ void CL_MultiviewDemoFinish (void);
 void CL_MultiviewDemoStartRewind (void);
 void CL_MultiviewDemoStopRewind (void);
 
+// Restore stats for main view hud
+void CL_MultiviewInsetRestoreStats(void);
+
 // Weapons
 centity_t* CL_WeaponModelForView(void);
 

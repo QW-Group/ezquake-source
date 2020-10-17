@@ -708,13 +708,15 @@ void SCR_DrawMultiviewIndividualElements(void)
 	if (cl_mvdisplayhud.integer) {
 		if (cl_mvdisplayhud.integer >= 2) {
 			// Graphical with icons.
-			SCR_DrawMVStatus ();
+			SCR_DrawMVStatus();
 		}
 		else {
 			// Only strings.
-			SCR_DrawMVStatusStrings ();
+			SCR_DrawMVStatusStrings();
 		}
 	}
+
+	CL_MultiviewInsetRestoreStats();
 }
 
 static void SCR_DrawElements(void) 

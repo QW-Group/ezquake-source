@@ -1103,10 +1103,6 @@ void SCR_DrawMVStatusStrings (void)
 		}
 	}
 
-	if (cl_multiview.value == 2 && cl_mvinset.value) {
-		memcpy (cl.stats, cl.players[nTrack1duel].stats, sizeof (cl.stats));
-	}
-
 	// Hud info
 	if ((cl_mvdisplayhud.value && !cl_mvinset.value && cl_multiview.value == 2)
 		|| (cl_mvdisplayhud.value && cl_multiview.value != 2)) {
@@ -1761,4 +1757,11 @@ centity_t* CL_WeaponModelForView(void)
 	int view = bound(0, CURRVIEW - 1, MV_VIEWS - 1);
 
 	return &cl.viewent[view];
+}
+
+void CL_MultiviewInsetRestoreStats(void)
+{
+	if (cl_multiview.value == 2 && cl_mvinset.integer) {
+		memcpy(cl.stats, cl.players[nTrack1duel].stats, sizeof(cl.stats));
+	}
 }
