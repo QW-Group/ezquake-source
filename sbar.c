@@ -496,24 +496,30 @@ static __inline qbool Sbar_IsSpectator(int mynum) {
 	return (mynum == cl.playernum) ? cl.spectator : cl.players[mynum].spectator;
 }
 
-static void Sbar_SortFrags(qbool spec) {
+static qbool Sbar_SortFrags(qbool spec) {
 	int i, j, k;
 	static int lastframecount = 0;
+	static qbool any_flags = false;
 
-	if (!spec && lastframecount && lastframecount == cls.framecount)
-		return;
+	if (!spec && lastframecount && lastframecount == cls.framecount) {
+		return any_flags;
+	}
 
-
+	any_flags = false;
 	lastframecount = spec ? 0 : cls.framecount;
 
 	// sort by frags
 	scoreboardlines = 0;
 	for (i = 0; i < MAX_CLIENTS; i++) {
-		if (cl.players[i].name[0] && (spec || !cl.players[i].spectator)) {
-			fragsort[scoreboardlines] = i;
-			scoreboardlines++;
-			if (cl.players[i].spectator)
-				cl.players[i].frags = -999;
+		if (cl.players[i].name[0]) {
+			if (spec || !cl.players[i].spectator) {
+				fragsort[scoreboardlines] = i;
+				scoreboardlines++;
+				if (cl.players[i].spectator) {
+					cl.players[i].frags = -999;
+				}
+			}
+			any_flags |= cl.players[i].loginname[0];
 		}
 	}
 
@@ -526,6 +532,8 @@ static void Sbar_SortFrags(qbool spec) {
 			}
 		}
 	}
+
+	return any_flags;
 }
 
 static void Sbar_SortTeams (void) {
@@ -689,23 +697,27 @@ static int Sbar_SortTeamsAndFrags_Compare(int a, int b) {
 	}
 }
 
-static void Sbar_SortTeamsAndFrags(qbool specs) {
+static qbool Sbar_SortTeamsAndFrags(qbool specs) {
 	int i, j, k;
 	qbool real_teamplay;
+	qbool any_flags = false;
 
 	real_teamplay = cl.teamplay && (TP_CountPlayers() > 2);
 
 	if (!real_teamplay || !scr_scoreboard_teamsort.value) {
-		Sbar_SortFrags(specs);
-		return;
+		return Sbar_SortFrags(specs);
 	}
 
 	scoreboardlines = 0;
 	for (i = 0; i < MAX_CLIENTS; i++) {
-		if (cl.players[i].name[0] && (specs || !cl.players[i].spectator)) {
-			fragsort[scoreboardlines++] = i;
-			if (cl.players[i].spectator)
-				cl.players[i].frags = -999;
+		if (cl.players[i].name[0]) {
+			if (specs || !cl.players[i].spectator) {
+				fragsort[scoreboardlines++] = i;
+				if (cl.players[i].spectator) {
+					cl.players[i].frags = -999;
+				}
+			}
+			any_flags |= cl.players[i].loginname[0];
 		}
 	}
 
@@ -720,6 +732,7 @@ static void Sbar_SortTeamsAndFrags(qbool specs) {
 			}
 		}
 	}
+	return any_flags;
 }
 
 
@@ -1541,7 +1554,18 @@ static void Sbar_DeathmatchOverlay(int start)
 			if (any_flags) {
 				x += FONT_WIDTH;
 			}
-			Draw_SStringAligned(x, y, s->name, scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+			if (s->loginname[0] && scr_scoreboard_login_names.integer) {
+				if (scr_scoreboard_login_color.string[0]) {
+					color.c = RGBAVECT_TO_COLOR(scr_scoreboard_login_color.color);
+					Draw_SColoredStringAligned(x, y, s->loginname, &color, 1, scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+				}
+				else {
+					Draw_SStringAligned(x, y, s->loginname, scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+				}
+			}
+			else {
+				Draw_SStringAligned(x, y, s->name, scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+			}
 
 			y += skip;
 			x = startx;
