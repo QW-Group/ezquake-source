@@ -44,10 +44,12 @@ qbool GLC_ProgramHudImagesCompile(void);
 
 void GLC_DrawDisc(void)
 {
-	glDrawBuffer(GL_FRONT);
-	Draw_Pic(vid.width - 24, 0, draw_disc);
-	R_EmptyImageQueue();
-	glDrawBuffer(GL_BACK);
+	if (!GL_FramebufferEnabled2D()) {
+		glDrawBuffer(GL_FRONT);
+		Draw_Pic(vid.width - 24, 0, draw_disc);
+		R_EmptyImageQueue();
+		glDrawBuffer(GL_BACK);
+	}
 }
 
 void GLC_HudDrawComplete(void)
