@@ -47,6 +47,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_MOD_CREATED     (1<<15) // Cvar created by the mod issuing 'set' command
 #define CVAR_RECOMPILE_PROGS (1<<16) // Flag all programs to be recompiled if the value changes
 #define CVAR_TRACKERCOLOR    (1<<17) // Convert the string from tracker format (0-9)(0-9)(0-9)
+#define CVAR_QUEUED_TRIGGER  (1<<18) // Found in config and then registered...
 
 typedef struct cvar_s {
 	char    *name;
@@ -175,4 +176,7 @@ void Cvar_CleanUpTempVars (void);	// clean up afterwards
 
 char* Cvar_ServerInfoValue(char* key, char* value);
 
+void Cvar_ExecuteQueuedChanges(void);
+
 #endif /* !__CVAR_H__ */
+

@@ -33,6 +33,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "parser.h"
 #include "r_renderer.h"
 
+static void Cvar_ApplyLatchedUpdate(cvar_t* var);
+
 extern void CL_UserinfoChanged (char *key, char *value);
 extern void SV_ServerinfoChanged (char *key, char *value);
 extern void Help_DescribeCvar (cvar_t *v);
@@ -366,16 +368,7 @@ void Cvar_Register(cvar_t *var)
 		// allow re-register latched cvar
 		if (old->flags & CVAR_LATCH) {
 			// if we have a latched string, take that value now
-			if (old->latchedString) {
-				// I did't want bother with all this CVAR_ROM and OnChange handler, just set value
-				Q_free(old->string);
-				old->string = old->latchedString;
-				old->latchedString = NULL;
-				old->value = Q_atof(old->string);
-				old->integer = Q_atoi(old->string);
-				StringToRGB_W(old->string, old->color);
-				old->modified = true;
-			}
+			Cvar_ApplyLatchedUpdate(old);
 			Cvar_AutoReset(old);
 
 			return;
@@ -399,9 +392,17 @@ void Cvar_Register(cvar_t *var)
 	var->defaultvalue = Q_strdup_named(var->string, var->name);
 	if (old) {
 		char string[512];
+		qbool queued_replace;
+
+		// Trigger change later if this is a proper cvar replacing a user one
+		queued_replace = (old->flags & CVAR_USER_CREATED) && (var->flags & CVAR_QUEUED_TRIGGER) && !(var->flags & CVAR_USER_CREATED);
+		if (queued_replace) {
+			// Created by executing config, now we have the 'proper' cvar - store old value to trigger later
+			var->latchedString = Q_strdup_named(old->string, var->name);
+		}
 
 		var->flags |= old->flags & ~(CVAR_USER_CREATED | CVAR_TEMP);
-		strlcpy(string, (var->flags & CVAR_ROM) ? var->string : old->string, sizeof(string));
+		strlcpy(string, (var->flags & CVAR_ROM) || queued_replace ? var->string : old->string, sizeof(string));
 		Cvar_Delete(old->name);
 		var->string = Q_strdup_named(string, var->name);
 	}
@@ -444,6 +445,20 @@ void Cvar_Register(cvar_t *var)
 		CL_UserinfoChanged(var->name, var->string);
 	}
 #endif // !SERVERONLY
+}
+
+static void Cvar_ApplyLatchedUpdate(cvar_t* var)
+{
+	if (var->latchedString) {
+		// I did't want bother with all this CVAR_ROM and OnChange handler, just set value
+		Q_free(var->string);
+		var->string = var->latchedString;
+		var->latchedString = NULL;
+		var->value = Q_atof(var->string);
+		var->integer = Q_atoi(var->string);
+		StringToRGB_W(var->string, var->color);
+		var->modified = true;
+	}
 }
 
 qbool Cvar_Command (void)
@@ -1589,4 +1604,23 @@ void Cvar_Shutdown(void)
 		Q_free(group);
 	}
 #endif
+}
+
+void Cvar_ExecuteQueuedChanges(void)
+{
+	cvar_t* cvar;
+	for (cvar = cvar_vars; cvar; cvar = cvar->next) {
+		if ((cvar->flags & CVAR_QUEUED_TRIGGER) && cvar->latchedString) {
+			if (cvar->OnChange) {
+				qbool cancel = false;
+
+				cvar->OnChange(cvar, cvar->latchedString, &cancel);
+				if (!cancel) {
+					Cvar_ApplyLatchedUpdate(cvar);
+				}
+			}
+
+			Q_free(cvar->latchedString);
+		}
+	}
 }

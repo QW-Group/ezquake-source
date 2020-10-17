@@ -238,7 +238,7 @@ cvar_t cl_verify_qwprotocol     = {"cl_verify_qwprotocol", "1"};
 cvar_t demo_autotrack           = {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
 
 // Authentication
-cvar_t cl_username              = {"cl_username", "", 0, AuthUsernameChanged};
+cvar_t cl_username              = {"cl_username", "", CVAR_QUEUED_TRIGGER, AuthUsernameChanged};
 static void CL_Authenticate_f(void);
 
 /// persistent client state

@@ -751,6 +751,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 		}
 	}
 
+	// Trigger changes config has made to defaults
+	Cvar_ExecuteQueuedChanges();
+
 	host_everything_loaded = true;
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	Sys_Printf("\nevent,init\n");
