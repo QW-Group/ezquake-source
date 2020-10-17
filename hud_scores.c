@@ -256,7 +256,8 @@ void HUD_Sort_Scoreboard(int flags)
 
 			// Find players team.
 			for (team = 0; team < n_teams; team++) {
-				if (!strcmp(player->team, sorted_teams[team].name) && sorted_teams[team].name[0]) {
+				const char* team_name = (cl.teamplay ? player->team : player->name);
+				if (!strcmp(team_name, sorted_teams[team].name) && sorted_teams[team].name[0]) {
 					if (hud_sortrules_includeself.integer == 1 && team > 0) {
 						sort_teams_info_t temp = sorted_teams[0];
 						sorted_teams[0] = sorted_teams[team];

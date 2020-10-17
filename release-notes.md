@@ -35,6 +35,7 @@
 - Fixed bug causing buffer-overrun if loading a corrupt/truncated .wav file (old bug)
 - Fixed bug causing `rcon` timestamps to be truncated when using `/cl_crypt_rcon` and server has `/sv_timestamplen` set (old bug)
 - Fixed bug causing invalid texture references to be used if `/vid_restart` issued while disconnect (3.5 bug)
+- Fixed bug causing team & player sorting to be different (3.2 bug)
 
 ### Ruleset-related changes
 
