@@ -198,8 +198,10 @@ static void CL_Messages_f(void)
 
 		svc = messages[i].svc;
 
-		if (svc < 0 || svc >= NUMMSG)
+		if (svc < 0 || svc >= NUMMSG) {
 			Sys_Error("CL_Messages_f: svc < 0 || svc >= NUMMSG");
+			return;
+		}
 
 		svc_name = ( svc < num_svc_strings ? svc_strings[svc] : "unknown" );
 
@@ -3212,8 +3214,10 @@ void CL_SetStat (int stat, int value)
 {
 	int	j;
 
-	if (stat < 0 || stat >= MAX_CL_STATS)
-		Host_Error ("CL_SetStat: %i is invalid", stat);
+	if (stat < 0 || stat >= MAX_CL_STATS) {
+		Host_Error("CL_SetStat: %i is invalid", stat);
+		return;
+	}
 
 	// Set the stat value for the current player we're parsing in the MVD.
 	if (cls.mvdplayback)

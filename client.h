@@ -338,6 +338,16 @@ typedef struct {
 #define TIMEDEMO_FIXEDFPS_MINIMUM (20)
 #define TIMEDEMO_FIXEDFPS_MAXIMUM (10000)
 
+typedef struct {
+	double last_snapshot_time;
+	double last_run_time;
+	double lastfps_value;
+	double lastframetime_value;
+	double time_of_last_minfps_update;
+	double time_of_last_maxframetime_update;
+	int fps_count;
+} perfinfo_t;
+
 /// A structure that is persistent through an arbitrary number of server connections.
 typedef struct
 {
@@ -457,6 +467,9 @@ typedef struct
 	double      min_fps;
 	double      avg_frametime;
 	double      max_frametime;
+
+	// FPS stats for performance info
+	perfinfo_t  fps_stats;
 
 	int			challenge;
 

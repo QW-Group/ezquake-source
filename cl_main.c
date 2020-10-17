@@ -84,6 +84,7 @@ void CL_QWURL_ProcessChallenge(const char *parameters);
 
 // cl_input.c
 void onchange_pext_serversideweapon(cvar_t* var, char* value, qbool* cancel);
+void onchange_hud_performance_average(cvar_t* var, char* value, qbool* cancel);
 
 static void AuthUsernameChanged(cvar_t* var, char* value, qbool* cancel);
 
@@ -136,6 +137,7 @@ cvar_t	cl_predict_half = {"cl_predict_half", "0"};
 
 cvar_t	hud_fps_min_reset_interval = {"hud_fps_min_reset_interval", "30"};
 cvar_t  hud_frametime_max_reset_interval = { "hud_frametime_max_reset_interval", "30" };
+cvar_t  hud_performance_average = { "hud_performance_average", "1", 0, onchange_hud_performance_average };
 
 cvar_t  localid = {"localid", ""};
 
@@ -266,7 +268,6 @@ qbool	host_skipframe;			// used in demo playback
 byte		*host_basepal = NULL;
 byte		*host_colormap = NULL;
 
-int		fps_count;
 qbool physframe;
 double physframetime;
 
@@ -1698,6 +1699,7 @@ static void CL_InitLocal (void)
 	Cvar_Register (&cl_physfps);
 	Cvar_Register (&hud_fps_min_reset_interval);
 	Cvar_Register (&hud_frametime_max_reset_interval);
+	Cvar_Register (&hud_performance_average);
 	Cvar_Register (&cl_physfps_spectator);
 	Cvar_Register (&cl_independentPhysics);
 	Cvar_Register (&cl_deadbodyfilter);
@@ -2103,41 +2105,65 @@ static double MinPhysFrameTime (void)
 	return 1 / fpscap;
 }
 
+void onchange_hud_performance_average(cvar_t* var, char* value, qbool* cancel)
+{
+	// Reset on change
+	if (strcmp(var->string, value)) {
+		Cl_Reset_Min_fps_f();
+	}
+}
+
 void CL_CalcFPS(void)
 {
-	static double lastfps;
-	static double lastframetime;
-	static double last_frame_time;
-	static double time_of_last_minfps_update;
-	static double time_of_last_maxframetime_update;
-
 	double t = Sys_DoubleTime();
+	perfinfo_t* stats = &cls.fps_stats;
+	double frametime = stats->last_run_time == 0 ? 0 : t - stats->last_run_time;
+	double time_since_snapshot = (t - stats->last_snapshot_time);
+	stats->last_run_time = t;
 
-	if ((t - last_frame_time) >= 1.0)
+	// Average over previous second
+	if (time_since_snapshot >= 1.0)
 	{
-		lastfps = (double)fps_count / (t - last_frame_time);
-		lastframetime = (t - last_frame_time) / max(fps_count, 1);
-		fps_count = 0;
-		last_frame_time = t;
+		stats->lastfps_value = (double)stats->fps_count / time_since_snapshot;
+		stats->lastframetime_value = time_since_snapshot / max(stats->fps_count, 1);
+		stats->fps_count = 0;
+		stats->last_snapshot_time = t;
 	}
 
-	cls.fps = lastfps;
-	// update min_fps if last fps is less than our lowest accepted minfps (10.0) or greater than min_reset_interval
-	if ((lastfps > 10.0 && lastfps < cls.min_fps) || ((t - time_of_last_minfps_update) > hud_fps_min_reset_interval.value)) { 
-		cls.min_fps = lastfps;
-		time_of_last_minfps_update = t;
-	}
+	cls.fps = stats->lastfps_value;
+	cls.avg_frametime = stats->lastframetime_value;
 
-	cls.avg_frametime = lastframetime;
-	if ((lastframetime < 2.0f && lastframetime > cls.max_frametime) || ((t - time_of_last_maxframetime_update) > hud_frametime_max_reset_interval.value)) {
-		cls.max_frametime = lastframetime;
-		time_of_last_maxframetime_update = t;
+	if (hud_performance_average.integer) {
+		// update min_fps if last fps is less than our lowest accepted minfps (10.0) or greater than min_reset_interval
+		if ((stats->lastfps_value > 10.0 && stats->lastfps_value < cls.min_fps) || ((t - stats->time_of_last_minfps_update) > hud_fps_min_reset_interval.value)) {
+			cls.min_fps = stats->lastfps_value;
+			stats->time_of_last_minfps_update = t;
+		}
+		if ((stats->lastframetime_value < 2.0f && stats->lastframetime_value > cls.max_frametime) || ((t - stats->time_of_last_maxframetime_update) > hud_frametime_max_reset_interval.value)) {
+			cls.max_frametime = stats->lastframetime_value;
+			stats->time_of_last_maxframetime_update = t;
+		}
+	}
+	else if (frametime > 0) {
+		double this_fps = 1.0f / frametime;
+
+		// update min_fps if last fps is less than our lowest accepted minfps (10.0) or greater than min_reset_interval
+		if (stats->lastfps_value < cls.min_fps || ((t - stats->time_of_last_minfps_update) > hud_fps_min_reset_interval.value)) {
+			cls.min_fps = stats->lastfps_value;
+			stats->time_of_last_minfps_update = t;
+		}
+		if (frametime > cls.max_frametime || ((t - stats->time_of_last_maxframetime_update) > hud_frametime_max_reset_interval.value)) {
+			cls.max_frametime = frametime;
+			stats->time_of_last_maxframetime_update = t;
+		}
 	}
 }
 
 void Cl_Reset_Min_fps_f(void)
 {
-	cls.min_fps = 9999;
+	cls.min_fps = 9999.0f;
+	cls.max_frametime = 0.0f;
+
 	CL_CalcFPS();
 }
 
@@ -2564,7 +2590,7 @@ void CL_Frame(double time)
 	}
 
 	cls.framecount++;
-	fps_count++;
+	cls.fps_stats.fps_count++;
 	CL_CalcFPS();
 
 	VFS_TICK(); // VFS hook for updating some systems
