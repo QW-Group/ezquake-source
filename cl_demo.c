@@ -3028,7 +3028,6 @@ int CL_Demo_Compress(char* qwdname)
 double		demostarttime;
 
 #ifdef WITH_ZIP
-#ifndef WITH_VFS_ARCHIVE_LOADING
 //
 // [IN]		play_path = The compressed demo file that needs to be extracted to play it.
 // [OUT]	unpacked_path = The path to the decompressed file.
@@ -3123,7 +3122,6 @@ static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unp
 
 	return retval;
 }
-#endif // WITH_VFS_ARCHIVE_LOADING
 #endif // WITH_ZIP
 
 void CL_Demo_DumpBenchmarkResult(int frames, float timet)
@@ -3607,11 +3605,9 @@ char *CL_Macro_DemoLength_f (void)
 static void CL_StartDemoCommand(void)
 {
 	keydest_t failure_dest = KeyDestStartupDemo(key_dest) ? key_console : key_dest;
-	#ifndef WITH_VFS_ARCHIVE_LOADING
 	#ifdef WITH_ZIP
 	char unpacked_path[MAX_OSPATH];
 	#endif // WITH_ZIP
-	#endif // WITH_VFS_ARCHIVE_LOADING
 
 	char *real_name;
 	char name[MAX_OSPATH], **s;
@@ -3635,7 +3631,6 @@ static void CL_StartDemoCommand(void)
 	Host_EndGame();
 
 	// VFS-FIXME: This will affect playing qwz inside a zip
-	#ifndef WITH_VFS_ARCHIVE_LOADING 
 	#ifdef WITH_ZIP
 	//
 	// Unpack the demo if it's zipped or gzipped. And get the path to the unpacked demo file.
@@ -3645,7 +3640,6 @@ static void CL_StartDemoCommand(void)
 		real_name = unpacked_path;
 	}
 	#endif // WITH_ZIP
-	#endif // WITH_VFS_ARCHIVE_LOADING
 
 	strlcpy(name, real_name, sizeof(name));
 
@@ -3669,7 +3663,6 @@ static void CL_StartDemoCommand(void)
 	else
 	#endif // WIN32
 
-	#ifndef WITH_VFS_ARCHIVE_LOADING
 	{
 		//
 		// Find the demo path, trying different extensions if needed.
@@ -3692,48 +3685,6 @@ static void CL_StartDemoCommand(void)
 			playbackfile = CL_Open_Demo_File(name, true, NULL);
 		}
 	}
-	#else // WITH_VFS_ARCHIVE_LOADING
-	{
-		char *file_ext = COM_FileExtension(Cmd_Argv(1));
-		if (!playbackfile)
-		{
-			// Check the file extension is valid
-			for (s = ext; *s; s++) 
-			{
-				if (strcmp(*s, file_ext) == 0)
-					break;
-			}
-			if (*s != NULL)
-			{
-				strlcpy (name, real_name, sizeof(name));
-				if (!strncmp(name, "../", 3) || !strncmp(name, "..\\", 3))
-				{
-					playbackfile = FS_OpenVFS(va("%s/%s", com_basedir, name + 3), "rb", FS_NONE_OS);
-				}
-				else
-				{
-					// Search demo on quake file system, even in paks.
-					playbackfile = FS_OpenVFS(name, "rb", FS_ANY);
-				}
-
-				// Look in the demo dir (user specified).
-				if (!playbackfile)
-				{
-					playbackfile = FS_OpenVFS(va("%s/%s", CL_DemoDirectory(), name), "rb", FS_NONE_OS);
-				}
-
-				// Check the full system path (Run a demo anywhere on the file system).
-				if (!playbackfile)
-				{
-					playbackfile = FS_OpenVFS(name, "rb", FS_NONE_OS);
-				}
-
-				if (playbackfile)
-					strlcpy(name, Cmd_Argv(1), sizeof(name));
-			}
-		}
-	}
-	#endif // WITH_VFS_ARCHIVE_LOADING else
 
 	// Read the file completely into memory
 	if (playbackfile) 

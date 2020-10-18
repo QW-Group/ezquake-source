@@ -945,70 +945,6 @@ qbool VFS_COPYPROTECTED(struct vfsfile_s *vf) {
 // some general function to open VFS file, except VFSTCP
 //
 
-
-#ifdef WITH_VFS_ARCHIVE_LOADING
-/* 
- * ====================
- * FS_ExtensionToSearchFunctions
- * ====================
- * Given a file extension the search 
- * functions for operating on that file type
- * is returned.
- * If the file type is unknown, NULL is returned.
- */
-searchpathfuncs_t *FS_FileNameToSearchFunctions(const char *filename) {
-	char *ext = COM_FileExtension(filename);
-	if (strcmp(ext, "pak") == 0) {
-		return &packfilefuncs;
-	} else if (strcmp(ext, "tar") == 0) {
-		return &tarfilefuncs;
-#ifdef WITH_ZLIB
-	} else if (strcmp(ext, "zip") == 0 || strcmp(ext, "pk3") == 0) {
-		return &zipfilefuncs;
-	} else if (strcmp(ext, "gz") == 0) {
-		return &gzipfilefuncs;
-#endif // WITH_ZLIB
-	} else {
-		return NULL;
-	}
-}
-
-/* ===================
- * FS_BreakUpArchivePath
- * ===================
- * Given the following path /opt/zip1.zip/zip2.zip/file
- * ext     = "zip"
- * archive = "/opt/zip1.zip/zip2.zip"
- * inside  = "file"
- *
- * Return = true if the files contain a 
- * file inside an archive otherwise false
- */
-int FS_BreakUpArchivePath(const char *filename, 
-		char *archive, size_t archive_len,
-		char *inside, size_t inside_len) {
-	int i;
-	int first_slash = 0;
-	int first_dot   = 0;
-
-	for (i = strlen(filename); i >= 0; i--) {
-		if (filename[i] == '/') {
-			first_slash = i;
-		} else if (first_slash && filename[i] == '.') {
-			first_dot = i;
-			break;
-		}
-	}
-	if (i == -1)
-		return 0;
-
-	strlcpy(inside, filename+first_slash+1, inside_len);
-	strlcpy(archive, filename, min(first_slash+1, archive_len)); // +1 room for \0
-	return 1;
-}
-
-#endif // WITH_VFS_ARCHIVE_LOADING
-
 /* ================
  * FS_OpenVFS
  * ================
@@ -1033,44 +969,7 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 			if (strcmp(mode, "ab"))
 				return NULL; //urm, unable to write/append
 
-#if WITH_VFS_ARCHIVE_LOADING
-	/* This allows opening of files with paths like
-     * file.zip/file_inside_zip.qwd */
-	{
-		int r;
-		char archive[MAX_OSPATH], inside[MAX_OSPATH];
-		r = FS_BreakUpArchivePath(filename, archive, sizeof(archive),
-				inside,  sizeof(inside));
-		if (r) {
-			searchpathfuncs_t *funcs;
-			void *file_handle = NULL;
-			vfsfile_t *vfs_archive = NULL;
-			memset(&loc, 0, sizeof(loc));
-
-			vfs = FS_OpenVFS(archive, mode, relativeto);
-			if (!vfs) goto archive_fail;
-
-			funcs = FS_FileNameToSearchFunctions(archive);
-			if (!funcs) goto archive_fail;
-
-			file_handle = funcs->OpenNew(vfs, archive);
-			if (!file_handle) goto archive_fail;
-			if (!funcs->FindFile(file_handle, &loc, inside, NULL))  goto archive_fail;
-				
-			vfs_archive = funcs->OpenVFS(file_handle, &loc, mode);
-			if (!vfs_archive) goto archive_fail;
-
-			return vfs_archive;
-
-archive_fail:
-			if (file_handle)
-				funcs->ClosePath(file_handle); // Also closes the vfs for us
-			else if (vfs)
-				VFS_CLOSE(vfs);
-			return NULL;
-		}
 	}
-#endif // WITH_VFS_ARCHIVE_LOADING
 
 	/* General opening of files */
 	switch (relativeto)
@@ -1659,7 +1558,6 @@ int FS_ZipBreakupArchivePath (char *archive_extension,			// The extension of the
 	return -1;
 }
 
-#ifndef WITH_VFS_ARCHIVE_LOADING
 //
 // Does the given path point to a zip file?
 //
@@ -1667,24 +1565,6 @@ qbool FS_IsArchive (char *zip_path)
 {
 	return (!strcasecmp(COM_FileExtension (zip_path), "zip"));
 }
-#else
-// VFS-FIXME: exts should be placed somewhere obvious so it can be updated
-// if any other extensions are added
-// VFS-FIXME: this doesn't allow for the different ifdefs to be used
-qbool FS_IsArchive(char *arch_path)
-{
-	char *ext = COM_FileExtension(arch_path);
-	char *exts[] = {"zip", "pk3", "pak", "tar", "gz", NULL};
-	char **e;
-
-	for (e = exts; *e; e++) {
-		if (strcasecmp(ext, *e) == 0) {
-			return true;
-		}
-	}
-	return false;
-}
-#endif
 
 unzFile FS_ZipUnpackOpenFile (const char *zip_path)
 {

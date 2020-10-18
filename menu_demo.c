@@ -529,33 +529,6 @@ void Demo_AddZipToPlaylist (const char *zip_path)
 		Demo_AddDirToPlaylist (temp_path);
 	}
 }
-
-#ifdef WITH_VFS_ARCHIVE_LOADING
-// VFS-FIXME: This is probably the wrong thing to do
-// AddDir to playlist adds the whole directory, not just the current
-// file
-void Demo_AddArchiveToPlayList(const char *archive_path) {
-	searchpathfuncs_t *funcs;
-	vfsfile_t *vfs = NULL;
-	void  *archive_handle = NULL;
-
-	vfs = FS_OpenVFS(archive_path, "rb", FS_NONE_OS);
-	funcs = FS_FileNameToSearchFunctions(archive_path);
-	if (!funcs) goto fail;
-
-	archive_handle = funcs->OpenNew(vfs, archive_path);
-	if (!archive_handle) goto fail;
-
-	return;
-
-fail:
-	if (archive_handle)
-		funcs->ClosePath(archive_handle); // This closes vfs aswell
-	else if (vfs)
-		VFS_CLOSE(vfs);
-	return;
-}
-#endif // WITH_VFS_ARCHIVE_LOADING
 #endif // WITH_ZIP
 
 // ==============================
@@ -893,10 +866,6 @@ void Menu_Demo_Init(void)
 	FL_AddFileType(&demo_filelist, 1, ".qwz");
 	FL_AddFileType(&demo_filelist, 2, ".mvd");
 	FL_AddFileType(&demo_filelist, 3, ".dem");
-	#ifdef WITH_VFS_ARCHIVE_LOADING
-	FL_AddFileType(&demo_filelist, 4, ".tar");
-	FL_AddFileType(&demo_filelist, 4, ".pak");
-	#endif // WITH_VFS_ARCHIVE_LOADING
 	#ifdef WITH_ZLIB
 	FL_AddFileType(&demo_filelist, 4, ".gz");
 	#endif // WITH_ZLIB
