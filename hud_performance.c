@@ -316,7 +316,7 @@ void Performance_HudInit(void)
 		"Shows your current frametime in ms."
 		"This can also show the maximum frametime that occured in the last measured period.",
 		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFrameTime,
-		"1", "fps", "center", "after", "0", "0", "0", "0 0 0", NULL,
+		"0", "fps", "center", "after", "0", "0", "0", "0 0 0", NULL,
 		"show_max", "1",
 		"style", "0",
 		"title", "1",
