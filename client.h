@@ -827,6 +827,7 @@ void Demo_AdjustSpeed(void);
 qbool CL_IsDemoExtension(const char *filename);
 qbool CL_Demo_SkipMessage(qbool skip_if_seeking);
 qbool CL_Demo_NotForTrackedPlayer(void);
+qbool CL_DemoExtensionMatch(const char* path);
 
 void CL_AutoRecord_StopMatch(void);
 void CL_AutoRecord_CancelMatch(void);

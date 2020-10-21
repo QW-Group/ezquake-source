@@ -136,6 +136,7 @@ extern searchpathfuncs_t tarfilefuncs;
 // Memory Mapped files
 //=====================
 vfsfile_t *FSMMAP_OpenVFS(void *buf, size_t buf_len);
+qbool FSMMAP_IsMemoryMapped(vfsfile_t* file);
 
 //=====================
 // Doomwad Support

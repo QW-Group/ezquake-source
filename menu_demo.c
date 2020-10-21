@@ -463,16 +463,15 @@ void Menu_Demo_Draw (void)
 // </draw pages>
 // =============
 
-void Demo_AddDemoToPlaylist (char *display_name, char *path)
+static void Demo_AddDemoToPlaylist(const char* display_name, const char* path)
 {
-	if (demo_playlist_num >= DEMO_PLAYLIST_MAX)
-	{
-		Com_Printf ("Playlist is full, cannot add \"%s\" to it. Max allowed demos in playlist is %d\n", display_name, DEMO_PLAYLIST_MAX);
+	if (demo_playlist_num >= DEMO_PLAYLIST_MAX) {
+		Com_Printf("Playlist is full, cannot add \"%s\" to it. Max allowed demos in playlist is %d\n", display_name, DEMO_PLAYLIST_MAX);
 		return;
 	}
 
-	snprintf (demo_playlist[demo_playlist_num].name, sizeof((*demo_playlist).name), "%s", display_name);
-	snprintf (demo_playlist[demo_playlist_num].path, sizeof((*demo_playlist).path), "%s", path);
+	snprintf(demo_playlist[demo_playlist_num].name, sizeof((*demo_playlist).name), "%s", display_name);
+	snprintf(demo_playlist[demo_playlist_num].path, sizeof((*demo_playlist).path), "%s", path);
 	demo_playlist_num++;
 }
 
@@ -482,8 +481,7 @@ void Demo_AddDirToPlaylist (char *dir_path)
 	int i;
 	filelist_t dir_filelist;
 
-	if (!dir_path)
-	{
+	if (!dir_path) {
 		return;
 	}
 
@@ -515,18 +513,39 @@ void Demo_AddDirToPlaylist (char *dir_path)
 }
 
 #ifdef WITH_ZIP
-void Demo_AddZipToPlaylist (const char *zip_path)
+void Demo_AddZipToPlaylist(const char *zip_path)
 {
-	char temp_path[MAX_PATH] = {0};
+	unz_global_info global_info;
+	unzFile         zip_file;
+	char            filename[MAX_PATH_LENGTH];
+	unz_file_info   file_info;
+	char            full_queued_path[MAX_PATH_LENGTH];
 
 	// Unpack the files to a temp path.
-	unzFile zip_file = FS_ZipUnpackOpenFile (zip_path);
-	FS_ZipUnpackToTemp (zip_file, false, false, NULL, temp_path, sizeof(temp_path));
-	FS_ZipUnpackCloseFile (zip_file);
+	zip_file = FS_ZipUnpackOpenFile(zip_path);
 
-	if (temp_path[0])
-	{
-		Demo_AddDirToPlaylist (temp_path);
+	// Get the number of files in the zip archive.
+	if (unzGetGlobalInfo(zip_file, &global_info) == UNZ_OK) {
+		int i;
+
+		for (i = 0; i < global_info.number_entry; ++i) {
+			if (i && unzGoToNextFile(zip_file) != UNZ_OK) {
+				break;
+			}
+
+			if (unzGetCurrentFileInfo(zip_file, &file_info, filename, sizeof(filename), NULL, 0, NULL, 0) != UNZ_OK) {
+				break;
+			}
+
+			if (!CL_DemoExtensionMatch(filename)) {
+				continue;
+			}
+
+			strlcpy(full_queued_path, zip_path, sizeof(full_queued_path));
+			strlcat(full_queued_path, "/", sizeof(full_queued_path));
+			strlcat(full_queued_path, filename, sizeof(full_queued_path));
+			Demo_AddDemoToPlaylist(COM_SkipPath(filename), filename);
+		}
 	}
 }
 #endif // WITH_ZIP

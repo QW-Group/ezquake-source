@@ -168,4 +168,9 @@ vfsfile_t *FSMMAP_OpenVFS(void *buf, size_t buf_len)
 	return (vfsfile_t *)mmapfile;
 }
 
+qbool FSMMAP_IsMemoryMapped(vfsfile_t* file)
+{
+	return file->ReadBytes == VFSMMAP_ReadBytes;
+}
+
 //#endif // WITH_VFS_MMAP

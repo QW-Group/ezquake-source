@@ -88,7 +88,7 @@ int fs_hash_files;
 
 cvar_t fs_cache = {"fs_cache", "1"};
 
-void FS_CreatePathRelative(char *pname, int relativeto);
+static void FS_CreatePathRelative(const char *pname, int relativeto);
 void FS_ForceToPure(char *str, char *crcs, int seed);
 int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
 void FS_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
@@ -206,7 +206,7 @@ int FS_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 }
 
 //The filename will be prefixed by com_basedir
-qbool FS_WriteFileRelative(char *filename, void *data, int len, int relativeto)
+static qbool FS_WriteFileRelative(const char *filename, const void *data, int len, int relativeto)
 {
 	vfsfile_t *f;
 
@@ -233,14 +233,14 @@ FS_WriteFile
 The filename will be prefixed by the current game directory
 ============
 */
-qbool FS_WriteFile (char *filename, void *data, int len)
+qbool FS_WriteFile(const char *filename, const void *data, int len)
 {
 	Sys_Printf ("FS_WriteFile: %s\n", filename);
 	return FS_WriteFileRelative(filename, data, len, FS_GAME_OS);
 }
 
 //The filename used as is
-qbool FS_WriteFile_2 (char *filename, void *data, int len)
+qbool FS_WriteFile_2(const char *filename, const void *data, int len)
 {
 	Sys_Printf ("FS_WriteFile_2: %s\n", filename);
 	return FS_WriteFileRelative(filename, data, len, FS_NONE_OS);
@@ -964,11 +964,8 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 	if (Sys_PathProtection(filename)) 
 		return NULL;
 
-	if (strcmp(mode, "rb"))
-		if (strcmp(mode, "wb"))
-			if (strcmp(mode, "ab"))
-				return NULL; //urm, unable to write/append
-
+	if (strcmp(mode, "rb") && strcmp(mode, "wb") && strcmp(mode, "ab")) {
+		return NULL; //urm, unable to write/append
 	}
 
 	/* General opening of files */
@@ -1220,20 +1217,18 @@ int FS_GZipUnpack (char *source_path,		// The path to the compressed source file
 
 	// Check if the destination file exists and
 	// if we're allowed to overwrite it.
-	if (COM_FileExists (destination_path) && !overwrite)
-	{
+	if (COM_FileExists(destination_path) && !overwrite) {
 		return 0;
 	}
 
 	// Create the path for the destination.
-	FS_CreatePath (COM_SkipPathWritable (destination_path));
+	FS_CreatePath(COM_SkipPathWritable(destination_path));
 
 	// Open destination.
-	dest = fopen (destination_path, "wb");
+	dest = fopen(destination_path, "wb");
 
 	// Failed to open the file for writing.
-	if (!dest)
-	{
+	if (!dest) {
 		return 0;
 	}
 
@@ -1241,11 +1236,13 @@ int FS_GZipUnpack (char *source_path,		// The path to the compressed source file
 	{
 		unsigned char out[CHUNK];
 		gzFile gzip_file = gzopen (source_path, "rb");
-		if (gzip_file == NULL)
+		if (gzip_file == NULL) {
+			fclose(dest);
+			Sys_remove(destination_path);
 			return 0;
+		}
 
-		while ((retval = gzread (gzip_file, out, CHUNK)) > 0)
-		{
+		while ((retval = gzread (gzip_file, out, CHUNK)) > 0) {
 			fwrite (out, 1, retval, dest);
 		}
 
@@ -1256,44 +1253,55 @@ int FS_GZipUnpack (char *source_path,		// The path to the compressed source file
 	return 1;
 }
 
-//
-// Unpack a .gz file to a temp file.
-//
-int FS_GZipUnpackToTemp (char *source_path,		// The compressed source file.
-						  char *unpack_path,		// A buffer that will contain the path to the unpacked file.
-						  int unpack_path_size,		// The size of the buffer.
-						  char *append_extension)	// The extension if any that should be appended to the filename.
+#define GZIP_MEMORY_DEFAULT   (4 * 1024 * 1024)
+#define GZIP_MEMORY_INCREMENT (2 * 1024 * 1024)
+
+void* FS_GZipUnpackToMemory(char* source_path, size_t* unpacked_length)
 {
-	int retval;
-	// Get a unique temp filename.
-	if (COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true) < 0)
+	byte* memory = NULL;
+	size_t actual_length = 0;
+	size_t allocated_length = 0;
+	gzFile gzip_file;
+
+	gzip_file = gzopen(source_path, "rb");
+	if (gzip_file == NULL) {
+		return NULL;
+	}
+
+	// Unpack.
+	memory = Q_malloc_named(GZIP_MEMORY_DEFAULT, source_path);
+	allocated_length = GZIP_MEMORY_DEFAULT;
 	{
-		return 0;
-	}
+		unsigned char out[CHUNK];
+		int retval; // bytes output
 
-	// Delete the existing temp file (it is created when the filename is received above).
-	retval = unlink (unpack_path);
-	if (retval == -1 && qerrno != ENOENT)
-	{
-		unpack_path[0] = 0;
-		return 0;
-	}
+		while ((retval = gzread(gzip_file, out, CHUNK)) > 0) {
+			if (actual_length + retval > allocated_length) {
+				// Need to increase memory buffer
+				byte* new_memory = Q_realloc_named(memory, allocated_length + GZIP_MEMORY_INCREMENT, source_path);
 
-	// Append the extension if any.
-	if (append_extension != NULL) {
-		char tmp_path[MAX_OSPATH];
-		snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", unpack_path, append_extension);
-		strlcpy (unpack_path, tmp_path, unpack_path_size);
-	}
+				// Failed to reallocate, clean-up and error
+				if (new_memory == NULL) {
+					gzclose(gzip_file);
+					Q_free(memory);
+					return NULL;
+				}
 
-	// Unpack the file.
-	if (!FS_GZipUnpack (source_path, unpack_path, true))
-	{
-		unpack_path[0] = 0;
-		return 0;
-	}
+				// Carry on
+				memory = new_memory;
+				allocated_length = allocated_length + GZIP_MEMORY_INCREMENT;
+			}
+			memcpy(memory + actual_length, out, retval);
+			actual_length += retval;
+		}
 
-	return 1;
+		gzclose(gzip_file);
+
+		if (unpacked_length) {
+			*unpacked_length = actual_length;
+		}
+		return memory;
+	}
 }
 
 //
@@ -1422,6 +1430,7 @@ int FS_ZlibUnpack (char *source_path,		// The path to the compressed source file
 	return (retval != Z_OK) ? 0 : 1;
 }
 
+/*
 //
 // Unpack a zlib file to a temp file... NOT the same as gzip!
 //
@@ -1462,6 +1471,7 @@ int FS_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 
 	return 1;
 }
+*/
 
 #endif // WITH_ZLIB
 
@@ -1469,58 +1479,78 @@ int FS_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 
 #define ZIP_WRITEBUFFERSIZE (8192)
 
-/*
-[19:23:40] <@disconnect|bla> Cokeman: how do you delete temporary files on windows? =:-)
-[19:23:51] <@Cokeman> I don't :D
-[19:23:52] Cokeman hides
-[19:23:55] <@disconnect|bla> zomfg :E
-[19:24:04] <@disconnect|bla> OK. Linux have same behavior now.
-*/
-int FS_ZipUnpackOneFileToTemp (unzFile zip_file,
-						  const char *filename_inzip,
-						  qbool case_sensitive,
-						  qbool keep_path,
-						  const char *password,
-						  char *unpack_path,			// The path where the file was unpacked.
-						  int unpack_path_size)			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.
+void* FS_ZipUnpackOneFileToMemory(
+	unzFile zip_file,
+	const char *filename_inzip,
+	qbool case_sensitive,
+	qbool keep_path,
+	const char *password,
+	size_t* unpacked_length
+)
 {
-	int retval;
+	char			filename[MAX_PATH_LENGTH];
+	unz_file_info	file_info;
+	byte*           extracted_file = NULL;
+	size_t          position = 0;
 
-
-	// Get a unique temp filename.
-	if (COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true) < 0) {
-		return UNZ_ERRNO;
+	if (filename_inzip == NULL || zip_file == NULL) {
+		return NULL;
 	}
 
-	// Delete the temp file if it exists (it is created when the filename is received above).
-	retval = unlink (unpack_path);
-	if (retval == -1 && qerrno != ENOENT) {
-		return UNZ_ERRNO;
+	// Locate the file.
+	if (unzLocateFile(zip_file, filename_inzip, case_sensitive) != UNZ_OK) {
+		return NULL;
 	}
 
-	// Make sure we create a directory for the destination path.
-	#ifdef WIN32
-	strlcat (unpack_path, "\\", unpack_path_size);
-	#else
-	strlcat (unpack_path, "/", unpack_path_size);
-	#endif
+	// unzLocateFile has set the current file
+	if (unzGetCurrentFileInfo(zip_file, &file_info, filename, sizeof(filename), NULL, 0, NULL, 0) != UNZ_OK) {
+		return NULL;
+	}
 
-	// Unpack the file
-	retval = FS_ZipUnpackOneFile (zip_file, filename_inzip, unpack_path, case_sensitive, keep_path, true, password);
+	extracted_file = Q_malloc(file_info.uncompressed_size);
+	if (extracted_file == NULL) {
+		return NULL;
+	}
+	*unpacked_length = file_info.uncompressed_size;
 
-	if (retval == UNZ_OK) {
-		char tmp_path[MAX_OSPATH];
-		if (keep_path) {
-			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", unpack_path, filename_inzip);
-		} else {
-			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", unpack_path, COM_SkipPath(filename_inzip));
+	//
+	// Extract the file.
+	//
+	{
+#define	EXPECTED_BYTES_READ	1
+		int	bytes_read = 0;
+
+		//
+		// Open the zip file.
+		//
+		if (unzOpenCurrentFilePassword(zip_file, password) != UNZ_OK) {
+			return NULL;
 		}
-		strlcpy (unpack_path, tmp_path, unpack_path_size);
-	} else {
-		unpack_path[0] = 0;
+
+		//
+		// Write the decompressed file to the destination.
+		//
+		do
+		{
+			if (position >= file_info.uncompressed_size) {
+				break;
+			}
+
+			// Read the decompressed data from the zip file.
+			bytes_read = unzReadCurrentFile(zip_file, extracted_file + position, file_info.uncompressed_size - position);
+
+			if (bytes_read > 0) {
+				position += bytes_read;
+			}
+		} while (bytes_read > 0);
+
+		//
+		// Close the zip file
+		//
+		unzCloseCurrentFile(zip_file);
 	}
 
-	return retval;
+	return extracted_file;
 }
 
 int FS_ZipBreakupArchivePath (char *archive_extension,			// The extension of the archive type we're looking fore "zip" for example.
@@ -1607,12 +1637,14 @@ static void FS_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_in
 	ent->hidden = 0;
 }
 
-int FS_ZipUnpack (unzFile zip_file,
-				   char *destination_path,
-				   qbool case_sensitive,
-				   qbool keep_path,
-				   qbool overwrite,
-				   const char *password)
+int FS_ZipUnpack(
+	unzFile zip_file,
+	char *destination_path,
+	qbool case_sensitive,
+	qbool keep_path,
+	qbool overwrite,
+	const char *password
+)
 {
 	int error = UNZ_OK;
 	unsigned long file_num = 0;
@@ -1647,45 +1679,6 @@ int FS_ZipUnpack (unzFile zip_file,
 	}
 
 	return error;
-}
-
-int FS_ZipUnpackToTemp (unzFile zip_file,
-				   qbool case_sensitive,
-				   qbool keep_path,
-				   const char *password,
-				   char *unpack_path,			// The path where the file was unpacked.
-				   int unpack_path_size)		// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.)
-{
-	int	retval = UNZ_OK;
-
-	// Get a unique temp filename.
-	if (COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true) < 0)
-	{
-		return UNZ_ERRNO;
-	}
-
-	// Delete the existing temp file (it is created when the filename is received above).
-	if (unlink (unpack_path))
-	{
-		return UNZ_ERRNO;
-	}
-
-	// Make sure we create a directory for the destination path since we're unpacking an entire zip.
-	#ifdef WIN32
-	strlcat (unpack_path, "\\", unpack_path_size);
-	#else
-	strlcat (unpack_path, "/", unpack_path_size);
-	#endif
-
-	// Unpack the file.
-	retval = FS_ZipUnpack (zip_file, unpack_path, case_sensitive, keep_path, true, password);
-
-	if (retval != UNZ_OK)
-	{
-		unpack_path[0] = 0;
-	}
-
-	return retval;
 }
 
 int FS_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with FS_ZipUnpackOpenFile(..)
@@ -2632,12 +2625,13 @@ int FS_Remove(char *fname, int relativeto)
 		break;
 	default:
 		Sys_Error("FS_Rename case not handled\n");
+		return 0;
 	}
 
 	return unlink (fullname);
 }
 
-void FS_CreatePathRelative(char *pname, int relativeto)
+static void FS_CreatePathRelative(const char *pname, int relativeto)
 {
 	char fullname[MAX_OSPATH];
 	switch (relativeto)

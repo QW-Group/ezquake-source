@@ -72,6 +72,7 @@
 - When gameplay-related protocols are enabled but not supported by server, you will be warned during connection
 - IP addresses with 5-character TLDs are detected - fixes .world addresses (thanks to bogojoker)
 - Added hud element 'frametime', similar to fps but measuring (max) frametime
+- Changed file-handling when viewing demos from within .zip|.gz to reduce temporary files being left on hard drive
 
 ### Build/meta
 

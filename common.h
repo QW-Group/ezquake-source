@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "protocol.h"
 #include "cmodel.h"
 #include "cmdline_params.h"
+#include "fs.h"
 
 #ifdef _WIN64
 int Q_strlen(const char* s);
@@ -218,8 +219,9 @@ void COM_ForceExtension (char *path, char *extension);
 // a bit extended version of COM_ForceExtension(), we suply size of path, so append safe, sure if u provide right path size
 void COM_ForceExtensionEx (char *path, char *extension, size_t path_size);
 int COM_GetTempDir(char *buf, int bufsize);
-int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qbool verify_exists);
-qbool COM_FileExists (char *path);
+qbool COM_WriteToUniqueTempFile(char* path, int path_buffer_size, const char* ext, const byte* buffer, size_t bytes);
+qbool COM_WriteToUniqueTempFileVFS(char* path, int path_buffer_size, const char* ext, vfsfile_t* input);
+qbool COM_FileExists(char *path);
 void COM_StoreOriginalCmdline(int argc, char **argv);
 
 extern char *SYSINFO_GetString(void);
@@ -250,8 +252,8 @@ int FS_FOpenPathFile (const char *filename, FILE **file);
 byte *FS_LoadTempFile (char *path, int *len);
 byte *FS_LoadHunkFile (char *path, int *len);
 byte *FS_LoadHeapFile (const char *path, int *len);
-qbool FS_WriteFile (char *filename, void *data, int len); //The filename will be prefixed by com_basedir
-qbool FS_WriteFile_2 (char *filename, void *data, int len); //The filename used as is
+qbool FS_WriteFile(const char *filename, const void *data, int len); //The filename will be prefixed by com_basedir
+qbool FS_WriteFile_2(const char *filename, const void *data, int len); //The filename used as is
 void FS_CreatePath (char *path);
 int FS_FCreateFile (char *filename, FILE **file, char *path, char *mode);
 char *FS_LegacyDir (char *media_dir);

@@ -85,11 +85,13 @@ static void		OnChange_demo_format(cvar_t*, char*, qbool*);
 cvar_t			demo_format = {"demo_format", "qwz", 0, OnChange_demo_format};
 
 static HANDLE hQizmoProcess = NULL;
-static char tempqwd_name[256] = {0}; // This file must be deleted after playback is finished.
+static HANDLE hQizmoThread = NULL;
+static char tempqwd_name[MAX_PATH] = { 0 }; // This file must be deleted after playback is finished.
+static char tempqwz_name[MAX_PATH] = { 0 };
 int CL_Demo_Compress(char*);
 #endif
 
-static vfsfile_t *CL_Open_Demo_File(char *name, qbool searchpaks, char **fullpath);
+static vfsfile_t *CL_Open_Demo_File(const char *name, qbool searchpaks, char **fullpath);
 static void OnChange_demo_dir(cvar_t *var, char *string, qbool *cancel);
 cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 cvar_t demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
@@ -2798,10 +2800,10 @@ void CL_Demo_RemoveCompressed(void)
 //
 static void StopQWZPlayback (void)
 {
-	if (!hQizmoProcess && tempqwd_name[0])
-	{
-		if (remove (tempqwd_name) != 0)
-			Com_Printf ("Error: Couldn't delete %s\n", tempqwd_name);
+	if (!hQizmoProcess && tempqwd_name[0]) {
+		if (remove(tempqwd_name) != 0) {
+			Com_Printf("Error: Couldn't delete %s\n", tempqwd_name);
+		}
 		tempqwd_name[0] = 0;
 	}
 	qwz_playback = false;
@@ -2837,23 +2839,32 @@ void CL_CheckQizmoCompletion (void)
 		return;
 	}
 
-	if (ExitCode == STILL_ACTIVE)
+	if (ExitCode == STILL_ACTIVE) {
 		return;
+	}
 
+	CloseHandle(hQizmoThread);
+	CloseHandle(hQizmoProcess);
+	hQizmoThread = NULL;
 	hQizmoProcess = NULL;
 
-	if (!qwz_packing && (!qwz_unpacking || !cls.demoplayback))
-	{
-		StopQWZPlayback ();
+	if (!qwz_packing && (!qwz_unpacking || !cls.demoplayback)) {
+		StopQWZPlayback();
 		return;
 	}
 
 	if (qwz_unpacking)
 	{
+		byte* data = NULL;
+		int length = 0;
+
 		qwz_unpacking = false;
 
-		if (!(playbackfile = FS_OpenVFS (tempqwd_name, "rb", FS_NONE_OS)))
-		{
+		Sys_remove(tempqwz_name);
+		tempqwz_name[0] = 0;
+
+		data = FS_LoadHeapFile(tempqwd_name, &length);
+		if (data == NULL) {
 			Com_Printf ("Error: Couldn't open %s\n", tempqwd_name);
 			qwz_playback = false;
 			cls.demoplayback = cls.timedemo = false;
@@ -2861,6 +2872,11 @@ void CL_CheckQizmoCompletion (void)
 			return;
 		}
 
+		Sys_remove(tempqwd_name);
+		tempqwd_name[0] = 0;
+		qwz_playback = false;
+
+		playbackfile = FSMMAP_OpenVFS(data, length);
 		Com_Printf("Decompression completed...playback starting\n");
 	}
 	else if (qwz_packing)
@@ -2885,47 +2901,57 @@ void CL_CheckQizmoCompletion (void)
 //
 //
 //
-static void PlayQWZDemo (void)
+static void PlayQWZDemo(const char* name)
 {
 	extern cvar_t qizmo_dir;
 	STARTUPINFO si;
 	PROCESS_INFORMATION	pi;
-	char *name, qwz_name[MAX_PATH], cmdline[512], *p;
+	char qwz_name[MAX_PATH], cmdline[512], *p;
 	DWORD res;
 
-	if (hQizmoProcess)
-	{
+	if (hQizmoProcess) {
 		Com_Printf ("Cannot unpack -- Qizmo still running!\n");
 		return;
 	}
 
-	name = Cmd_Argv(1);
-
+	//
 	char* initialName = NULL;
-	if (!(playbackfile = CL_Open_Demo_File(name, false, &initialName)))
-	{
-		Com_Printf ("Error: Couldn't open %s\n", name);
-		return;
+	memset(tempqwz_name, 0, sizeof(tempqwz_name));
+	if (playbackfile) {
+		COM_WriteToUniqueTempFileVFS(qwz_name, sizeof(qwz_name), ".qwz", playbackfile);
+
+		// Store the temporary path here so we can delete it when decompression is finished
+		strlcpy(tempqwz_name, qwz_name, sizeof(tempqwz_name));
+	}
+	else {
+		// Try opening direct from disk
+		if (!(playbackfile = CL_Open_Demo_File(name, false, &initialName))) {
+			Com_Printf("Error: Couldn't open %s\n", name);
+			return;
+		}
+
+		// Convert to system path
+		Sys_fullpath(qwz_name, initialName, MAX_PATH);
 	}
 
-	// Convert to system path
-	Sys_fullpath(qwz_name, initialName, MAX_PATH);
-
-	VFS_CLOSE (playbackfile);
+	VFS_CLOSE(playbackfile);
 	playbackfile = NULL;
 
 	strlcpy (tempqwd_name, qwz_name, sizeof(tempqwd_name) - 4);
 
 	// the way Qizmo does it, sigh
-	if (!(p = strstr (tempqwd_name, ".qwz")))
-		p = strstr (tempqwd_name, ".QWZ");
-	if (!p)
+	if (!(p = strstr(tempqwd_name, ".qwz"))) {
+		p = strstr(tempqwd_name, ".QWZ");
+	}
+	if (!p) {
 		p = tempqwd_name + strlen(tempqwd_name);
-	strcpy (p, ".qwd");
+	}
+	strcpy(p, ".qwd");
 
 	// If .qwd already exists, just play it.
-	if ((playbackfile = FS_OpenVFS(tempqwd_name, "rb", FS_NONE_OS)))
+	if ((playbackfile = FS_OpenVFS(tempqwd_name, "rb", FS_NONE_OS))) {
 		return;
+	}
 
 	Com_Printf ("Unpacking %s...\n", COM_SkipPath(name));
 
@@ -2935,7 +2961,8 @@ static void PlayQWZDemo (void)
 	si.wShowWindow = SW_SHOWMINNOACTIVE;
 	si.dwFlags = STARTF_USESHOWWINDOW;
 
-	strlcpy (cmdline, va("%s/%s/qizmo.exe -q -u -3 -D \"%s\"", com_basedir, qizmo_dir.string, qwz_name), sizeof(cmdline));
+	strlcpy(cmdline, va("%s/%s/qizmo.exe -q -u -3 -D \"%s\"", com_basedir, qizmo_dir.string, qwz_name), sizeof(cmdline));
+	Com_Printf("&cf00qizmo&r: %s\n", cmdline);
 
 	if (!CreateProcess (NULL, cmdline, NULL, NULL,
 		FALSE, GetPriorityClass(GetCurrentProcess()),
@@ -2952,6 +2979,7 @@ static void PlayQWZDemo (void)
 	}
 
 	hQizmoProcess = pi.hProcess;
+	hQizmoThread = pi.hThread;
 	qwz_unpacking = true;
 	qwz_playback = true;
 }
@@ -3015,6 +3043,7 @@ int CL_Demo_Compress(char* qwdname)
 	strlcpy(tempqwd_name, qwdname, sizeof(tempqwd_name));
 
 	hQizmoProcess = pi.hProcess;
+	hQizmoThread = pi.hThread;
 	qwz_packing = true;
 	return 1;
 }
@@ -3030,97 +3059,72 @@ double		demostarttime;
 #ifdef WITH_ZIP
 //
 // [IN]		play_path = The compressed demo file that needs to be extracted to play it.
-// [OUT]	unpacked_path = The path to the decompressed file.
+// [RETURN]	The open file handle, or NULL on failure.
 //
-static int CL_GetUnpackedDemoPath (char *play_path, char *unpacked_path, int unpacked_path_size)
+static qbool CL_UnpackAndOpenDemo(char *play_path, char* unpacked_path, int unpacked_path_length)
 {
 	//
 	// Check if the demo is in a zip file and if so, try to extract it before playing.
 	//
-	int retval = 0;
 	char archive_path[MAX_PATH];
 	char inzip_path[MAX_PATH];
 
 	//
 	// Is it a GZip file?
 	//
-	if (!strcmp (COM_FileExtension (play_path), "gz"))
+	if (!strcmp(COM_FileExtension(play_path), "gz"))
 	{
-		int i = 0;
-		int ext_len = 0;
-		char ext[5];
+		// Unpack to memory and open file
+		size_t unpacked_length;
+		void* unpacked_bytes = FS_GZipUnpackToMemory(play_path, &unpacked_length);
 
-		//
-		// Find the extension with .gz removed.
-		//
-		{
-			for (i = strlen(play_path) - 4; i > 0; i--)
-			{
-				if (play_path[i] == '.' || ext_len >= 4)
-				{
-					break;
-				}
-
-				ext_len++;
+		if (unpacked_bytes) {
+			playbackfile = FSMMAP_OpenVFS(unpacked_bytes, unpacked_length);
+			COM_StripExtension(play_path, unpacked_path, unpacked_path_length);
+			// If it doesn't have an extension, default to .mvd
+			if (!COM_FileExtension(unpacked_path)[0]) {
+				COM_ForceExtensionEx(unpacked_path, ".mvd", unpacked_path_length);
 			}
-
-			if (ext_len <= 4)
-			{
-				strlcpy (ext, play_path + strlen(play_path) - 4 - ext_len, sizeof(ext));
-			}
-			else
-			{
-				// Default to MVD.
-				strlcpy (ext, ".mvd", sizeof(ext));
-			}
+			return true;
 		}
 
-		// Unpack the file.
-		if (!FS_GZipUnpackToTemp (play_path, unpacked_path, unpacked_path_size, ext))
-		{
-			return 0;
-		}
-
-		return 1;
+		return false;
 	}
 
 	//
 	// Check if the path is in the format "c:\quake\bla\demo.zip\some_demo.mvd" and split it up.
 	//
-	if (FS_ZipBreakupArchivePath ("zip", play_path, archive_path, sizeof(archive_path), inzip_path, sizeof(inzip_path)) < 0)
-	{
-		return retval;
+	if (FS_ZipBreakupArchivePath("zip", play_path, archive_path, sizeof(archive_path), inzip_path, sizeof(inzip_path)) < 0) {
+		return false;
 	}
 
 	//
 	// Extract the ZIP file.
 	//
 	{
-		char temp_path[MAX_PATH];
-
+		void* unpacked_bytes = NULL;
+		size_t unpacked_length = 0;
 		// Open the zip file.
-		unzFile zip_file = FS_ZipUnpackOpenFile (archive_path);
+		unzFile zip_file = FS_ZipUnpackOpenFile(archive_path);
 
 		// Try extracting the zip file.
-		if(FS_ZipUnpackOneFileToTemp (zip_file, inzip_path, false, false, NULL, temp_path, sizeof(temp_path)) != UNZ_OK)
-		{
-			Com_Printf ("Failed to unpack the demo file \"%s\" to the temp path \"%s\"\n", inzip_path, temp_path);
-			unpacked_path[0] = 0;
-		}
-		else
-		{
-			// Successfully unpacked the demo.
-			retval = 1;
+		unpacked_bytes = FS_ZipUnpackOneFileToMemory(zip_file, inzip_path, false, false, NULL, &unpacked_length);
 
-			// Copy the path of the unpacked file to the return string.
-			strlcpy (unpacked_path, temp_path, unpacked_path_size);
-		}
+		strlcpy(unpacked_path, COM_SkipPath(inzip_path), unpacked_path_length);
 
 		// Close the zip file.
-		FS_ZipUnpackCloseFile (zip_file);
-	}
+		FS_ZipUnpackCloseFile(zip_file);
 
-	return retval;
+		if (unpacked_bytes != NULL) {
+			playbackfile = FSMMAP_OpenVFS(unpacked_bytes, unpacked_length);
+
+			// Successfully unpacked the demo.
+			return true;
+		}
+
+		Com_Printf("Failed to unpack the demo file \"%s\" to memory\n", inzip_path);
+		return false;
+	}
 }
 #endif // WITH_ZIP
 
@@ -3193,8 +3197,9 @@ void CL_StopPlayback (void)
 
 	// Stop Qizmo demo playback.
 	#ifdef WIN32
-	if (qwz_playback)
-		StopQWZPlayback ();
+	if (qwz_playback) {
+		StopQWZPlayback();
+	}
 	#endif
 
 	//
@@ -3605,13 +3610,9 @@ char *CL_Macro_DemoLength_f (void)
 static void CL_StartDemoCommand(void)
 {
 	keydest_t failure_dest = KeyDestStartupDemo(key_dest) ? key_console : key_dest;
-	#ifdef WITH_ZIP
-	char unpacked_path[MAX_OSPATH];
-	#endif // WITH_ZIP
 
 	char *real_name;
-	char name[MAX_OSPATH], **s;
-	static char *ext[] = {"qwd", "mvd", "dem", NULL};
+	char name[MAX_OSPATH];
 
 	if (Cmd_Argc() < 2) {
 		return; // internal error
@@ -3632,25 +3633,29 @@ static void CL_StartDemoCommand(void)
 
 	// VFS-FIXME: This will affect playing qwz inside a zip
 	#ifdef WITH_ZIP
-	//
-	// Unpack the demo if it's zipped or gzipped. And get the path to the unpacked demo file.
-	//
-	if (CL_GetUnpackedDemoPath (Cmd_Argv(1), unpacked_path, sizeof(unpacked_path)))
 	{
-		real_name = unpacked_path;
+		//
+		// Unpack the demo if it's zipped or gzipped. And get the path to the unpacked demo file.
+		//
+		char unpacked_path[MAX_OSPATH];
+		if (CL_UnpackAndOpenDemo(Cmd_Argv(1), unpacked_path, sizeof(unpacked_path))) {
+			real_name = unpacked_path;
+		}
 	}
 	#endif // WITH_ZIP
 
 	strlcpy(name, real_name, sizeof(name));
 
-	#ifdef WIN32
 	//
 	// Decompress QWZ demos to QWD before playing it (using an external app).
 	//
-
 	if (strlen(name) > 4 && !strcasecmp(COM_FileExtension(name), "qwz"))
 	{
-		PlayQWZDemo();
+#ifdef WIN32
+		int length = 0;
+		byte* data;
+
+		PlayQWZDemo(Cmd_Argv(1));
 
 		// We failed to extract the QWZ demo.
 		if (!playbackfile && !qwz_playback) {
@@ -3658,37 +3663,43 @@ static void CL_StartDemoCommand(void)
 			return;
 		}
 
-		playbackfile = FS_OpenVFS (tempqwd_name, "rb", FS_NONE_OS);
+		data = FS_LoadHeapFile(tempqwd_name, &length);
+		if (data) {
+			playbackfile = FSMMAP_OpenVFS(data, length);
+		}
+#else
+		// FIXME
+		Con_Printf("Playback of Qizmo-compressed files not supported on this system\n");
+#endif // WIN32
 	}
-	else
-	#endif // WIN32
+	else if (!playbackfile) {
+		int i;
+		static char* demo_file_extensions[] = { "qwd", "mvd", "dem" };
 
-	{
 		//
 		// Find the demo path, trying different extensions if needed.
 		//
 
 		// If they specified a valid extension, try that first
-		for (s = ext; *s && !playbackfile; ++s) {
-			if (!strcasecmp(COM_FileExtension(name), *s)) {
+		for (i = 0; playbackfile == NULL && i < sizeof(demo_file_extensions) / sizeof(demo_file_extensions[0]); ++i) {
+			if (!strcasecmp(COM_FileExtension(name), demo_file_extensions[i])) {
 				playbackfile = CL_Open_Demo_File(name, true, NULL);
 			}
 		}
 
-		for (s = ext; *s && !playbackfile; s++) {
+		for (i = 0; playbackfile == NULL && i < sizeof(demo_file_extensions) / sizeof(demo_file_extensions[0]); ++i) {
 			// Strip the extension from the specified filename and append
 			// the one we're currently checking for.
 			COM_StripExtension(name, name, sizeof(name));
 			strlcat(name, ".", sizeof(name));
-			strlcat(name, *s, sizeof(name));
+			strlcat(name, demo_file_extensions[i], sizeof(name));
 
 			playbackfile = CL_Open_Demo_File(name, true, NULL);
 		}
 	}
 
 	// Read the file completely into memory
-	if (playbackfile) 
-	{
+	if (playbackfile && !FSMMAP_IsMemoryMapped(playbackfile)) {
 		unsigned long len;
 		void *buf;
 		vfsfile_t *mmap_file;
@@ -3711,8 +3722,7 @@ static void CL_StartDemoCommand(void)
 	}
 
 	// Failed to open the demo from any path :(
-	if (!playbackfile)
-	{
+	if (!playbackfile) {
 		Com_Printf ("Error: Couldn't open %s\n", Cmd_Argv(1));
 		key_dest = failure_dest;
 		return;
@@ -3734,6 +3744,22 @@ static void CL_StartDemoCommand(void)
 	Com_Printf("Playing demo from %s\n", COM_SkipPath(name));
 }
 
+qbool CL_DemoExtensionMatch(const char* path)
+{
+	const char* file_ext = COM_FileExtension(path);
+	const char* demo_file_extensions[] = {
+		"qwd", "mvd", "dem", "qwz"
+	};
+	int i;
+
+	for (i = 0; i < sizeof(demo_file_extensions) / sizeof(demo_file_extensions[0]); ++i) {
+		if (!strcasecmp(file_ext, demo_file_extensions[i])) {
+			return true;
+		}
+	}
+	return false;
+}
+
 //
 // Starts playback of a demo.
 //
@@ -3752,7 +3778,7 @@ static void CL_Play_f(void)
 	CL_StartDemoCommand();
 }
 
-static vfsfile_t* CL_Open_Demo_File(char* name, qbool searchpaks, char** fullPath)
+static vfsfile_t* CL_Open_Demo_File(const char* name, qbool searchpaks, char** fullPath)
 {
 	static char fullname[MAX_OSPATH];
 	vfsfile_t *file = NULL;

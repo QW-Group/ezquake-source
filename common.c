@@ -322,82 +322,116 @@ void COM_ForceExtensionEx (char *path, char *extension, size_t path_size)
 int COM_GetTempDir(char *buf, int bufsize)
 {
 	int returnval = 0;
-	#ifdef WIN32
-
+#ifdef WIN32
 	returnval = GetTempPath (bufsize, buf);
 
-	if (returnval > bufsize || returnval == 0)
-	{
+	if (returnval > bufsize || returnval == 0) {
 		return -1;
 	}
-	#else // UNIX
+#else // UNIX
 	char *tmp;
 	if (!(tmp = getenv ("TMPDIR")))
 		tmp = P_tmpdir; // defined at <stdio.h>
 
 	returnval = strlen (tmp);
 
-	if (returnval > bufsize || returnval == 0)
-	{
+	if (returnval > bufsize || returnval == 0) {
 		return -1;
 	}
 
 	strlcpy (buf, tmp, bufsize);
-	#endif // WIN32
+#endif // WIN32
 
 	return returnval;
+}
+
+qbool COM_WriteToUniqueTempFileVFS(char* path, int path_buffer_size, const char* ext, vfsfile_t* input)
+{
+	size_t bytes = VFS_GETLEN(input);
+	byte* buffer = Q_malloc(bytes);
+	vfserrno_t err;
+	qbool result;
+
+	if (!buffer) {
+		return false;
+	}
+	VFS_READ(input, buffer, bytes, &err);
+	VFS_SEEK(input, 0, SEEK_SET);
+
+	result = COM_WriteToUniqueTempFile(path, path_buffer_size, ext, buffer, bytes);
+	Q_free(buffer);
+	return result;
 }
 
 //
 // Get a unique temp filename.
 // Returns negative value on failure.
 //
-int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qbool verify_exists)
+qbool COM_WriteToUniqueTempFile(char *path, int path_buffer_size, const char* ext, const byte* buffer, size_t bytes)
 {
-	int retval = 0;
-	#ifdef WIN32
-	char tmp[MAX_PATH];
-	char *p = NULL;
-	char real_path[MAX_PATH];
+	char temp_path[MAX_OSPATH];
+	char* dot = "";
 
-	// If no path is specified we need to find it ourself.
-	// (This is done automatically in unix)
-	if (path == NULL)
+	if (ext == NULL) {
+		ext = "";
+	}
+	dot = (ext[0] && ext[0] != '.' ? "." : "");
+
+	// Get the path to temporary directory
+	if (COM_GetTempDir(temp_path, sizeof(temp_path)) < 0) {
+		return false;
+	}
+
+#ifdef _WIN32
 	{
-		if (COM_GetTempDir(real_path, MAX_PATH) < 0)
-		{
-			return -1;
+		GUID guid;
+
+		if (path_buffer_size < MAX_PATH) {
+			return false;
 		}
 
-		p = real_path;
+		if (CoCreateGuid(&guid) == S_OK) {
+			if (path_buffer_size > snprintf(path, path_buffer_size, "%s\\%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X%s%s", temp_path, guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7], dot, ext)) {
+				FS_WriteFile_2(path, buffer, bytes);
+				return true;
+			}
+		}
+
+		return false;
 	}
-	else
+#else
 	{
-		p = path;
+		int fd = 0;
+		strlcat(path, "/ezquakeXXXXXX", path_buffer_size);
+		if (ext[0]) {
+			int ext_len = 0;
+			int fd = 0;
+
+			if (ext[0] != '.') {
+				strlcat(path, ".", path_buffer_size);
+				strlcat(path, ext, path_buffer_size);
+				ext_len = strlen(ext) + 1;
+			}
+			else {
+				strlcat(path, ext, path_buffer_size);
+				ext_len = strlen(ext);
+			}
+			fd = mkstemps(path, ext_len);
+		}
+		else {
+			fd = mkstemp(path);
+		}
+
+		if (fd < 0) {
+			return false;
+		}
+
+		write(fd, buffer, bytes);
+
+		close(fd);
+		return true;
 	}
-
-	retval = GetTempFileName (p, "ezq", !verify_exists, tmp);
-
-	if (!retval)
-	{
-		return -1;
-	}
-
-	strlcpy (filename, tmp, filename_size);
-	#else
-	char *tmp;
-
-	// TODO: I'm no unix person, is this proper? -Nope. Fixme
-	tmp = tempnam(path, "ezq");
-	if (!tmp)
-		return -1;
-
-	strlcpy (filename, tmp, filename_size);
-	Q_free (tmp);
-	retval = strlen(filename);
-	#endif
-
-	return retval;
+#endif
 }
 
 qbool COM_FileExists (char *path)
