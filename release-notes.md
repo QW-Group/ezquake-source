@@ -37,7 +37,7 @@
 - Fixed bug causing invalid texture references to be used if `/vid_restart` issued while disconnect (3.5 bug)
 - Fixed bug causing team & player sorting to be different (3.2 bug)
 - Fixed bug causing stats hud display to be incorrect if cl_mvdisplayhud not set to 1 and multiview inset view enabled (old bug)
-- Fixed bug causing oblique particles if sprite array dimensions were unmatched (width != height)
+- Fixed bug causing oblique particles if sprite array dimensions were unmatched (width != height) (3.5 bug)
 
 ### Ruleset-related changes
 
@@ -74,6 +74,7 @@
 - IP addresses with 5-character TLDs are detected - fixes .world addresses (thanks to bogojoker)
 - Added hud element 'frametime', similar to fps but measuring (max) frametime
 - Changed file-handling when viewing demos from within .zip|.gz to reduce temporary files being left on hard drive
+- `/r_rockettrail` & `/r_grenadetrail` options requiring QMB particles degrade to '1' if QMB not initialised
 
 ### Build/meta
 
