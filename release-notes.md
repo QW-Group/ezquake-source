@@ -81,6 +81,7 @@
 - Uses libsndfile to load .wav files, if available (if using version < 1.025, set OLD_WAV_LOADING=1 during build to use old custom .wav-loading)
 - Duplicate declarations fixed (supports -fno-common, reported by ciscon)
 - Updated Azure Pipelines builds to latest ubuntu/macos
+- Visual Studio project, Azure Pipelines builds windows binaries (64-bit binaries are VERY beta, not recommended)
 
 # Changes in 3.5 (not released, based on 3.1)
 

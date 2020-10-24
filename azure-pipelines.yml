@@ -5,62 +5,177 @@
 
 # at pipeline level, set 'ezquake.githubconnection' & 'ezquake.githubreponame' variables
 
-strategy:
-  matrix:
-    linux:
-      imageName: 'ubuntu-latest'
-    mac:
-      imageName: 'macos-latest'
-    #windows:
-    #  imageName: 'windows-latest'
-
 trigger:
 - master
 
-pool:
-  vmImage: $(imageName)
-
-steps:
-- script: |
-    sudo apt-get -y update
-    sudo apt install git build-essential mingw-w64 libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev
-    make && make strip
-    tar -cvzf ezquake-latest-linux64.zip ezquake-*-* LICENSE
-    make clean
-    EZ_CONFIG_FILE=.config_windows make
-    EZ_CONFIG_FILE=.config_windows make strip
-    zip ezquake-latest-win32.zip ezquake.exe LICENSE release-notes.md
-  displayName: 'make (linux/win32)'
-  condition: eq( variables['Agent.OS'], 'Linux' )
-- script: |
-    brew update
-    brew install pkgconfig pcre sdl2 sdl2_net sdl2_image sdl2_gfx sdl2_mixer jansson speex speexdsp
-    make && make strip
-    sh ./misc/install/create_osx_bundle.sh
-    mv ezquake.zip ezquake-latest-osx.zip
-  displayName: 'make (osx)'
-  condition: eq( variables['Agent.OS'], 'Darwin' )
-- task: CopyFiles@2
-  inputs:
-    contents: ezquake-latest-*.zip
-    targetFolder: $(Build.ArtifactStagingDirectory)/distributableBinaries/
-- task: CopyFiles@2
-  inputs:
-    contents: release-notes.md
-    targetFolder: $(Build.ArtifactStagingDirectory)/distributableBinaries/
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathtoPublish: '$(Build.ArtifactStagingDirectory)/distributableBinaries/'
-    artifactName: 'latest-build'
-- task: GitHubRelease@0
-  displayName: 'Edit GitHub Release'
-  inputs:
-    gitHubConnection: '$(ezquake.githubconnection)'
-    repositoryName: '$(ezquake.githubreponame)'
-    action: edit
-    tag: latest
-    assets: $(Build.ArtifactStagingDirectory)/distributableBinaries/*
-    isPreRelease: true
-    assetUploadMode: replace
-    addChangeLog: false
-    releaseNotesFile: 'release-notes.md'
+stages:
+- stage: build
+  jobs:
+  - job: build_linux
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+      # Linux build
+      - script: |
+          sudo apt-get -y update
+          sudo apt install git build-essential mingw-w64 libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev libfreetype6-dev libsndfile-dev
+          make -j5 && make strip
+          tar -cvzf ezquake-latest-linux64.zip ezquake-*-* LICENSE
+      # Windows build, through mingw
+      - script: |
+          make clean
+          EZ_CONFIG_FILE=.config_windows make -j5
+          EZ_CONFIG_FILE=.config_windows make strip
+          mv ezquake.exe ezquake-multi-mingw-x32.exe
+          zip ezquake-latest-win32.zip ezquake-multi-mingw-x32.exe LICENSE release-notes.md
+      # Copy all zip files & release notes to distribution directory
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: ezquake-latest-linux64.zip
+          artifactName: linux
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: ezquake-latest-win32.zip
+          artifactName: mingw
+      - task: CopyFiles@2
+        inputs:
+          contents: ezquake-latest-win32.zip
+          targetFolder: $(Build.ArtifactStagingDirectory)/distributableBinaries/
+  - job: build_osx
+    pool:
+      vmImage: 'macos-latest'
+    steps:
+      # Build in OSX/whatever it is called now
+      - script: |
+          brew update
+          brew install pkgconfig pcre sdl2 sdl2_net sdl2_image sdl2_gfx sdl2_mixer jansson speex speexdsp freetype libsndfile
+          make -j5 && make strip
+          sh ./misc/install/create_osx_bundle.sh
+          mv ezquake.zip ezquake-latest-osx.zip
+      # Copy all zip files & release notes to distribution directory
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: ezquake-latest-osx.zip
+          artifactName: osx
+  - job: build_windows
+    pool:
+      vmImage: 'windows-latest'
+    steps:
+      # Create temporary dir for everything we want to zip
+      - task: CmdLine@2
+        inputs:
+          script: 'md tozip'
+      - task: DeleteFiles@1
+        inputs:
+          SourceFolder: 'tozip'
+          Contents: '**/*'        # all files and folders
+          RemoveSourceFolder: false
+      # Build in Visual Studio (classic, 32 bit)
+      - task: VSBuild@1
+        inputs:
+          solution: 'ezQuake.sln' 
+          configuration: 'rls-classic' # Optional
+          platform: 'x86'
+          clean: true # Optional
+          msbuildArchitecture: 'x86' # Optional. Options: x86, x64
+      - task: CmdLine@2
+        condition: eq( variables['Agent.OS'], 'Windows_NT' )
+        inputs:
+          script: 'copy /y ezquake.exe tozip\ezquake-std-vs-x86.exe'
+      # Build in Visual Studio (modern, 32 bit)
+      - task: VSBuild@1
+        inputs:
+          solution: 'ezQuake.sln' 
+          configuration: 'rls-modern' # Optional
+          platform: 'x86'
+          clean: true # Optional
+          msbuildArchitecture: 'x86' # Optional. Options: x86, x64
+      - task: CmdLine@2
+        condition: eq( variables['Agent.OS'], 'Windows_NT' )
+        inputs:
+          script: 'copy /y ezquake.exe tozip\ezquake-glsl-vs-x86.exe'
+      # Build in Visual Studio (classic, 64 bit)
+      - task: VSBuild@1
+        inputs:
+          solution: 'ezQuake.sln' 
+          configuration: 'rls-classic' # Optional
+          platform: 'x64'
+          clean: true # Optional
+          msbuildArchitecture: 'x86' # Optional. Options: x86, x64
+      - task: CmdLine@2
+        condition: eq( variables['Agent.OS'], 'Windows_NT' )
+        inputs:
+          script: 'copy /y ezquake.exe tozip\ezquake-std-vs-x64.exe'
+      # Build in Visual Studio (modern, 64 bit)
+      - task: VSBuild@1
+        inputs:
+          solution: 'ezQuake.sln' 
+          configuration: 'rls-modern' # Optional
+          platform: 'x64'
+          clean: true # Optional
+          msbuildArchitecture: 'x86' # Optional. Options: x86, x64
+      - task: CmdLine@2
+        condition: eq( variables['Agent.OS'], 'Windows_NT' )
+        inputs:
+          script: 'copy /y ezquake.exe tozip\ezquake-glsl-vs-x64.exe'
+      # Move misc other files to zippable directory
+      - task: CopyFiles@2
+        inputs:
+          targetFolder: 'tozip'
+          contents: |
+            release-notes.md
+            LICENSE
+      - task: ArchiveFiles@2
+        inputs:
+          rootFolderOrFile: 'tozip'
+          includeRootFolder: false
+          archiveType: 'zip'
+          archiveFile: ezquake-latest-windows-vstudio.zip
+          replaceExistingArchive: true
+      # Copy all zip files & release notes to distribution directory
+      - task: PublishPipelineArtifact@1
+        inputs:
+          targetPath: ezquake-latest-windows-vstudio.zip
+          artifactName: windows
+# Upload to github once previous stage complete
+- stage: upload
+  jobs:
+  - job: upload
+    steps:
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifact: windows
+        path: $(Build.ArtifactStagingDirectory)/distributableBinaries/
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifact: linux
+        path: $(Build.ArtifactStagingDirectory)/distributableBinaries/
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifact: mingw
+        path: $(Build.ArtifactStagingDirectory)/distributableBinaries/
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        artifact: osx
+        path: $(Build.ArtifactStagingDirectory)/distributableBinaries/
+    - task: CopyFiles@2
+      inputs:
+        contents: release-notes.md
+        targetFolder: $(Build.ArtifactStagingDirectory)/distributableBinaries/
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathtoPublish: '$(Build.ArtifactStagingDirectory)/distributableBinaries/'
+        artifactName: 'latest-build'
+    # Publish to GitHub
+    - task: GitHubRelease@0
+      displayName: 'Edit GitHub Release'
+      inputs:
+        gitHubConnection: '$(ezquake.githubconnection)'
+        repositoryName: '$(ezquake.githubreponame)'
+        action: edit
+        tag: latest
+        assets: $(Build.ArtifactStagingDirectory)/distributableBinaries/*
+        isPreRelease: true
+        assetUploadMode: replace
+        addChangeLog: false
+        releaseNotesFile: 'release-notes.md'
