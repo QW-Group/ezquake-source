@@ -883,7 +883,7 @@ void CL_FinishMove(usercmd_t *cmd)
 
 	// figure button bits
 	if ( in_attack.state & 3 ) {
-		if (cl_smartspawn.integer && (cl.stats[STAT_HEALTH] <= 0)) {
+		if (cl_smartspawn.integer && !cl.spectator && (cl.stats[STAT_HEALTH] <= 0)) {
 			// Treat +attack as +jump while player is dead with cl_smartspawn
 			// and immediately -attack to prevent shooting.
 			cmd->buttons |= BUTTON_JUMP;
