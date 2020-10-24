@@ -37,6 +37,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int particletexture_array_index = 0;
 float particletexture_array_xpos_tr = 0.9999f;
 float particletexture_array_ypos_tr = 0.9999f;
+float particletexture_array_max_s = 1.0f;
+float particletexture_array_max_t = 1.0f;
+#else
+extern float particletexture_array_max_s;
+extern float particletexture_array_max_t;
 #endif
 
 texture_ref particletexture;
@@ -622,8 +627,8 @@ void Classic_ReScaleParticles(void)
 		float scale = glpart->gl_scale = dist_precalc + DotProduct(glpart->gl_org, scaled_vpn);
 
 		R_Sprite3DSetVert(vert, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, vert->color, particletexture_array_index);
-		R_Sprite3DSetVert(vert + 1, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, vert->color, particletexture_array_index);
-		R_Sprite3DSetVert(vert + 2, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, vert->color, particletexture_array_index);
+		R_Sprite3DSetVert(vert + 1, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, particletexture_array_max_s, 0, vert->color, particletexture_array_index);
+		R_Sprite3DSetVert(vert + 2, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, particletexture_array_max_t, vert->color, particletexture_array_index);
 	}
 }
 
@@ -693,12 +698,12 @@ static void Classic_PrepareParticles(void)
 			++vert;
 
 			*((unsigned int*)vert->color) = *(unsigned int*)glpart->gl_color;
-			VectorSet(vert->tex, 1, 0, particletexture_array_index);
+			VectorSet(vert->tex, particletexture_array_max_s, 0, particletexture_array_index);
 			VectorSet(vert->position, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale);
 			++vert;
 
 			*((unsigned int*)vert->color) = *(unsigned int*)glpart->gl_color;
-			VectorSet(vert->tex, 0, 1, particletexture_array_index);
+			VectorSet(vert->tex, 0, particletexture_array_max_t, particletexture_array_index);
 			VectorSet(vert->position, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale);
 			++vert;
 
