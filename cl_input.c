@@ -107,7 +107,7 @@ kbutton_t in_up, in_down;
 static int in_next_impulse;
 static qbool suppress_hide;
 
-static void SetNextImpulse(int impulse, qbool from_weapon_script)
+static void SetNextImpulse(int impulse, qbool from_weapon_script, qbool set_best_weapon)
 {
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 	if (from_weapon_script && (cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) && cl_pext_serversideweapon.integer) {
@@ -119,6 +119,18 @@ static void SetNextImpulse(int impulse, qbool from_weapon_script)
 
 	suppress_hide = !from_weapon_script;
 	in_next_impulse = impulse;
+
+	if (set_best_weapon) {
+		if (cl_weaponforgetorder.integer) {
+			cl.weapon_order[0] = impulse;
+
+			if (cl_weaponforgetorder.integer == 2) {
+				cl.weapon_order[1] = (cl_weaponhide_axe.integer ? 1 : 2);
+				cl.weapon_order[2] = 1;
+				cl.weapon_order[3] = 0;
+			}
+		}
+	}
 }
 
 #define VOID_KEY (-1)
@@ -286,7 +298,7 @@ void IN_AttackDown(void)
 {
 	int best;
 	if (cl_weaponpreselect.value && (best = IN_BestWeapon())) {
-		SetNextImpulse(best, true);
+		SetNextImpulse(best, true, true);
 	}
 
 	KeyDown(&in_attack);
@@ -328,7 +340,7 @@ void IN_FireDown(void)
 		cl.weapon_order_sequence_set = cls.netchan.outgoing_sequence;
 	}
 
-	SetNextImpulse(IN_BestWeapon(), true);
+	SetNextImpulse(IN_BestWeapon(), true, true);
 
 	KeyDown_common(&in_attack, key_code);
 }
@@ -338,13 +350,13 @@ void IN_AttackUp_CommonHide(void)
 	if (CL_INPUT_WEAPONHIDE(cl.stats[STAT_HEALTH])) {
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 		if (cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) {
-			SetNextImpulse(0, false);
+			SetNextImpulse(0, false, false);
 			return;
 		}
 #endif
 		if (cl_weaponhide_axe.integer) {
 			// always switch to axe because user wants to
-			SetNextImpulse(1, false);
+			SetNextImpulse(1, false, false);
 			return;
 		}
 
@@ -352,7 +364,7 @@ void IN_AttackUp_CommonHide(void)
 		// that means: if player has shotgun and shells, select shotgun, otherwise select axe
 		qbool can_shotgun = ((cl.stats[STAT_ITEMS] & IT_SHOTGUN) && cl.stats[STAT_SHELLS] >= 1);
 		can_shotgun |= (CL_INPUT_WEAPONHIDE_DUE_TO_DEATH(cl.stats[STAT_HEALTH]));
-		SetNextImpulse(can_shotgun ? 2 : 1, false);
+		SetNextImpulse(can_shotgun ? 2 : 1, false, false);
 	}
 }
 
@@ -506,7 +518,7 @@ void IN_Impulse(void)
 	int best;
 	int first = Q_atoi(Cmd_Argv(1));
 
-	SetNextImpulse(first, false);
+	SetNextImpulse(first, false, false);
 	if (Cmd_Argc() <= 2) {
 		return;
 	}
@@ -514,10 +526,10 @@ void IN_Impulse(void)
 	// If more than one argument, select immediately the best weapon.
 	IN_RememberWpOrder();
 	if ((best = IN_BestWeapon())) {
-		SetNextImpulse(best, true);
+		SetNextImpulse(best, true, true);
 	}
 	else {
-		SetNextImpulse(first, true);
+		SetNextImpulse(first, true, false);
 	}
 }
 
@@ -595,7 +607,7 @@ void IN_Weapon(void)
 		case 2:
 			if ((in_attack.state & 3) && best) {
 				// user is holding +attack and there is some weapon available
-				SetNextImpulse(best, true);
+				SetNextImpulse(best, true, true);
 			}
 			break;
 		case 1:
@@ -603,7 +615,7 @@ void IN_Weapon(void)
 		default:
 		case 0:	// no pre-selection
 			if (best) {
-				SetNextImpulse(best, true);
+				SetNextImpulse(best, true, true);
 			}
 			break;
 	}
