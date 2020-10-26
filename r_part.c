@@ -87,7 +87,7 @@ byte* Classic_CreateParticleTexture(int width, int height)
 	byte* data = Q_malloc(sizeof(byte) * width * height * 4);
 	int x, y;
 	int size = min(width, height);
-	float quarter = size / 4 - 0.5f;
+	float quarter = size / 4.0f - 0.5f;
 	extern cvar_t gl_squareparticles;
 
 	// draw a circle in the top left corner or square, depends of cvar
@@ -132,8 +132,8 @@ byte* Classic_CreateParticleTexture(int width, int height)
 	}
 
 	// draw a square in top-right
-	for (x = size - 4; x < size; ++x) {
-		for (y = size - 4; y < size; ++y) {
+	for (x = width - 4; x < width; ++x) {
+		for (y = height - 4; y < height; ++y) {
 			data[(x + y * width) * 4 + 0] = 255;
 			data[(x + y * width) * 4 + 1] = 255;
 			data[(x + y * width) * 4 + 2] = 255;

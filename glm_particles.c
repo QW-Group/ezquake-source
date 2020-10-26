@@ -67,7 +67,7 @@ void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags)
 
 			particletexture_array = array_ref->ref;
 			particletexture_array_xpos_tr = (width - 1.0f) / width;
-			particletexture_array_ypos_tr = (height - 1.0f) / width;
+			particletexture_array_ypos_tr = (height - 1.0f) / height;
 			particletexture_array_max_s = min(width, height) / width;
 			particletexture_array_max_t = min(width, height) / height;
 			particletexture_array_index = array_ref->index;

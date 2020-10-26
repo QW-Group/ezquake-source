@@ -34,10 +34,11 @@
 - Fixed bug causing multiple item timers to spawn when using `/demo_jump` (3.2 bug, reported by Milton)
 - Fixed bug causing buffer-overrun if loading a corrupt/truncated .wav file (old bug)
 - Fixed bug causing `rcon` timestamps to be truncated when using `/cl_crypt_rcon` and server has `/sv_timestamplen` set (old bug)
-- Fixed bug causing invalid texture references to be used if `/vid_restart` issued while disconnect (3.5 bug)
+- Fixed bug causing invalid texture references to be used if `/vid_restart` issued while disconnected (3.5 bug)
 - Fixed bug causing team & player sorting to be different (3.2 bug)
 - Fixed bug causing stats hud display to be incorrect if cl_mvdisplayhud not set to 1 and multiview inset view enabled (old bug)
-- Fixed bug causing oblique particles if sprite array dimensions were unmatched (width != height) (3.5 bug)
+- Fixed bug causing oblique particles if sprite array dimensions were unmatched (width != height) (3.5 bug - reported by ciscon)
+- Fixed bug causing flashblend to render as transparent if sprite array dimensions were unmatched (width != height) (3.5 bug - reported by ciscon)
 
 ### Ruleset-related changes
 
