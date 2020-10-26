@@ -86,6 +86,7 @@
 - `/in_ignore_touch_events` added - allows mouse clicks from touch input devices
 - `/in_ignore_unfocused_keyb` added - should ignore keyboard events immediately after receiving input focus (linux only)
 - `/menu_botmatch_gamedir` added - allows packages to customise the directory when starting a bot match
+- `/menu_botmatch_mod_old` added - controls if newer features should be disabled when starting a bot match (to support fbca, lgc etc)
 - `/net_tcp_timeout` added - allows timeout period to be set when connecting to QTV etc
 - `/qtv_adjustbuffer 2` added - targets a specific delay period, rather than % of buffer being full
 - `/r_drawflat_mode` allows textures to be shaded rather than solid color (GLSL only)

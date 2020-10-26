@@ -13743,6 +13743,18 @@
         }
       ]
     },
+    "menu_botmatch_gamedir": {
+      "default": "fbca",
+      "desc": "The gamedir that ezQuake will switch to when starting a botmatch through the multiplayer menu",
+      "group-id": "17",
+      "type": "string"
+    },
+    "menu_botmatch_mod_old": {
+      "default": "1",
+      "desc": "If set, starting a botmatch through multiplayer menu will disable features that cause problems for older mods that spawn bots as non-clients",
+      "group-id": "17",
+      "type": "boolean"
+    },
     "menu_ingame": {
       "default": "1",
       "desc": "Enables/disables ingame menu - menu that typically appears if you press Esc key during the game.",
