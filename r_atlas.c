@@ -435,8 +435,8 @@ static void DeleteCharsetTextures(void)
 		else {
 			R_TraceAPI("- some glyphs not on atlas", i);
 		}
-#endif
 	}
+#endif
 	R_TraceLeaveFunctionRegion;
 }
 
