@@ -1150,8 +1150,8 @@ typedef struct scr_sshot_target_s {
 	byte* buffer;
 	qbool freeMemory;
 	qbool movie_capture;
-	int width;
-	int height;
+	size_t width;
+	size_t height;
 	image_format_t format;
 } scr_sshot_target_t;
 
@@ -1160,7 +1160,7 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params);
 qbool Movie_AnimatedPNG(void);
 
 qbool Movie_BackgroundCapture(scr_sshot_target_t* params);
-byte* Movie_TempBuffer(int width, int height);
+byte* Movie_TempBuffer(size_t width, size_t height);
 qbool Movie_BackgroundInitialise(void);
 void Movie_BackgroundShutdown(void);
 

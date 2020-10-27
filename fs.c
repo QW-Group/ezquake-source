@@ -888,6 +888,7 @@ int VFS_READ (struct vfsfile_s *vf, void *buffer, int bytestoread, vfserrno_t *e
 	return vf->ReadBytes(vf, buffer, bytestoread, err);
 }
 
+// FIXME: bytestowrite should be size_t
 int VFS_WRITE (struct vfsfile_s *vf, const void *buffer, int bytestowrite) {
 	assert(vf);
 	VFS_CHECKCALL(vf, vf->WriteBytes, "VFS_WRITE");
@@ -1491,7 +1492,7 @@ void* FS_ZipUnpackOneFileToMemory(
 	char			filename[MAX_PATH_LENGTH];
 	unz_file_info	file_info;
 	byte*           extracted_file = NULL;
-	size_t          position = 0;
+	unsigned int    position = 0;
 
 	if (filename_inzip == NULL || zip_file == NULL) {
 		return NULL;

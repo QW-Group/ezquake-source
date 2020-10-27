@@ -355,7 +355,7 @@ qbool COM_WriteToUniqueTempFileVFS(char* path, int path_buffer_size, const char*
 	if (!buffer) {
 		return false;
 	}
-	VFS_READ(input, buffer, bytes, &err);
+	VFS_READ(input, buffer, (int)bytes, &err);
 	VFS_SEEK(input, 0, SEEK_SET);
 
 	result = COM_WriteToUniqueTempFile(path, path_buffer_size, ext, buffer, bytes);
@@ -392,7 +392,7 @@ qbool COM_WriteToUniqueTempFile(char *path, int path_buffer_size, const char* ex
 
 		if (CoCreateGuid(&guid) == S_OK) {
 			if (path_buffer_size > snprintf(path, path_buffer_size, "%s\\%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X%s%s", temp_path, guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7], dot, ext)) {
-				FS_WriteFile_2(path, buffer, bytes);
+				FS_WriteFile_2(path, buffer, (int)bytes);
 				return true;
 			}
 		}

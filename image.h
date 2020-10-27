@@ -49,13 +49,13 @@ png_data *Image_LoadPNG_All (vfsfile_t *vin, const char *filename, int matchwidt
 // this does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture
 byte *Image_LoadPCX_As32Bit (vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
 
-int Image_WritePNG(char *filename, int compression, byte *pixels, int width, int height);
-int Image_WriteTGA(char *filename, byte *pixels, int width, int height);
+int Image_WritePNG(char *filename, int compression, byte *pixels, size_t width, size_t height);
+int Image_WriteTGA(char *filename, byte *pixels, size_t width, size_t height);
 int Image_WriteJPEG(char *filename, int quality, byte *pixels, int width, int height);
 int Image_WritePCX(char *filename, byte *data, int width, int height, byte *palette);
 
 qbool Image_OpenAPNG(char* filename, int compression, int width, int height, int frames);
-qbool Image_WriteAPNGFrame(byte* pixels, int width, int height, int fps);
+qbool Image_WriteAPNGFrame(byte* pixels, size_t width, size_t height, int fps);
 qbool Image_CloseAPNG(void);
 
 extern cvar_t image_jpeg_quality_level, image_png_compression_level;

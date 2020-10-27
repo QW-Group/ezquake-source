@@ -51,7 +51,7 @@ typedef struct loginimage_s {
 
 static struct {
 	loginimage_t* images;
-	int image_count;
+	size_t image_count;
 	int bot_image_index;
 	int max_width;
 	int max_height;
@@ -2220,7 +2220,8 @@ void Sbar_Draw(void) {
 
 int CL_LoginImageId(const char* name)
 {
-	int index = -1, i;
+	int index = -1;
+	int i;
 
 	if (name[0]) {
 		for (i = 0; i < login_image_data.image_count; ++i) {
@@ -2243,7 +2244,8 @@ qbool CL_LoginImageLoad(const char* path)
 	char truepath[MAX_OSPATH];
 	json_t* json;
 	loginimage_t* new_login_images;
-	int new_login_image_count = 0, new_login_bot_image = -1;
+	size_t new_login_image_count = 0;
+	int new_login_bot_image = -1;
 	int i, tex_width, tex_height, max_width = 0, max_height = 0;
 	json_t* val;
 
