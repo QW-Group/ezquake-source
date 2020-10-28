@@ -1892,7 +1892,6 @@ msversion.bat</Command>
     </ClCompile>
     <ClCompile Include="gl_aliasmodel_md3.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-classic|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="gl_debug.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|Win32'">true</ExcludedFromBuild>
@@ -2466,7 +2465,9 @@ msversion.bat</Command>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|x64'">/Qvec-report:2 </AdditionalOptions>
     </ClCompile>
     <ClCompile Include="r_main.c" />
-    <ClCompile Include="r_matrix.c" />
+    <ClCompile Include="r_matrix.c">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='rls-classic|x64'">/Qvec-report:2 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
     <ClCompile Include="r_misc.c" />
     <ClCompile Include="r_model.c" />
     <ClCompile Include="r_netgraph.c" />
