@@ -38,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // This can't be increased without changing private use image reservations (PRIVATE_USE_IMAGES_TRACKERIMAGES_BASE etc)
 #define MAX_IMAGES_PER_WEAPON 4
+#define TEXTFLAG_WEAPON 1
 
 typedef struct weapon_label_s {
 	char label[64];
@@ -96,7 +97,7 @@ cvar_t amf_tracker_frags                         = {"r_tracker_frags", "1"};
 cvar_t amf_tracker_streaks                       = {"r_tracker_streaks", "0"};
 cvar_t amf_tracker_time                          = {"r_tracker_time", "4"};
 cvar_t amf_tracker_messages                      = {"r_tracker_messages", "20"};
-cvar_t amf_tracker_pickups                       = {"r_tracker_pickups", "0"};
+static cvar_t amf_tracker_pickups                = {"r_tracker_pickups", "0"};
 cvar_t amf_tracker_align_right                   = {"r_tracker_align_right", "1"};
 cvar_t amf_tracker_scale                         = {"r_tracker_scale", "1"};
 static cvar_t amf_tracker_inconsole              = {"r_tracker_inconsole", "0"};
@@ -135,6 +136,7 @@ typedef struct
 
 	// Pre-parse now, don't do this every frame
 	char text[MAX_SEGMENTS_PER_LINE][64];
+	int text_flags[MAX_SEGMENTS_PER_LINE];
 	byte colors[MAX_SEGMENTS_PER_LINE][4];
 	mpic_t* images[MAX_SEGMENTS_PER_LINE];
 	text_alignment_t alignment[MAX_SEGMENTS_PER_LINE];
@@ -417,13 +419,19 @@ static trackmsg_t* VX_NewTrackerMsg(void)
 	return &trackermsg[active_track++];
 }
 
-static void VX_TrackerAddTextSegment(trackmsg_t* msg, const char* text, const byte* color)
+static void VX_TrackerAddFlaggedTextSegment(trackmsg_t* msg, const char* text, const byte* color, int flags)
 {
 	if (text && text[0] && color) {
 		memcpy(msg->colors[msg->segments], color, sizeof(msg->colors[msg->segments]));
 		strlcpy(msg->text[msg->segments], text, sizeof(msg->text[msg->segments]));
+		msg->text_flags[msg->segments] = flags;
 		++msg->segments;
 	}
+}
+
+static void VX_TrackerAddTextSegment(trackmsg_t* msg, const char* text, const byte* color)
+{
+	VX_TrackerAddFlaggedTextSegment(msg, text, color, 0);
 }
 
 static void VX_TrackerAddImageSegment(trackmsg_t* msg, mpic_t* pic)
@@ -512,7 +520,7 @@ static void VX_TrackerAddWeaponTextSplit(const char* lhs_text, int weapon, const
 	trackmsg_t* msg;
 	int i;
 
-	if ((!lhs_text && !rhs_text) || (!lhs_text[0] && !rhs_text[0]) || CL_Demo_SkipMessage(true)) {
+	if (((!lhs_text || !lhs_text[0]) && (!rhs_text || !rhs_text[0])) || CL_Demo_SkipMessage(true)) {
 		return;
 	}
 
@@ -525,10 +533,10 @@ static void VX_TrackerAddWeaponTextSplit(const char* lhs_text, int weapon, const
 	VX_TrackerAddTextSegment(msg, lhs_text, color_white);
 	for (i = 0; i < weapon_labels[weapon].count; ++i) {
 		if (weapon_labels[weapon].colors[i][3]) {
-			VX_TrackerAddTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_labels[weapon].colors[i]);
+			VX_TrackerAddFlaggedTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_labels[weapon].colors[i], TEXTFLAG_WEAPON);
 		}
 		else {
-			VX_TrackerAddTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_color);
+			VX_TrackerAddFlaggedTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_color, TEXTFLAG_WEAPON);
 		}
 	}
 	VX_TrackerAddTextSegment(msg, rhs_text, color_white);
@@ -693,7 +701,7 @@ void VX_TrackerDeath(int player, int weapon, int count)
 		return;
 	}
 
-	if (amf_tracker_frags.value == 2) {
+	if (amf_tracker_frags.integer == 2) {
 		char player_name[MAX_SCOREBOARDNAME];
 
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
@@ -731,7 +739,7 @@ void VX_TrackerSuicide(int player, int weapon, int count)
 		return;
 	}
 
-	if (amf_tracker_frags.value == 2) {
+	if (amf_tracker_frags.integer == 2) {
 		char player_name[MAX_SCOREBOARDNAME];
 
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
@@ -775,7 +783,7 @@ void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, i
 		return;
 	}
 
-	if (amf_tracker_frags.value == 2) {
+	if (amf_tracker_frags.integer == 2) {
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
 		VX_Name(killer, killer_name, MAX_SCOREBOARDNAME);
 
@@ -836,7 +844,7 @@ void VX_TrackerOddFrag(int player, int weapon, int wcount)
 		return;
 	}
 
-	if (amf_tracker_frags.value == 2) {
+	if (amf_tracker_frags.integer == 2) {
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
 
 		if (cl_useimagesinfraglog.integer) {
@@ -877,7 +885,7 @@ void VX_TrackerTK_XvsY(int player, int killer, int weapon, int p_count, int p_ic
 		return;
 	}
 
-	if (amf_tracker_frags.value == 2) {
+	if (amf_tracker_frags.integer == 2) {
 		byte* color = TeamKillColor(player);
 
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
@@ -931,7 +939,7 @@ void VX_TrackerOddTeamkill(int player, int weapon, int count)
 		return;
 	}
 
-	if (amf_tracker_frags.value == 2) {
+	if (amf_tracker_frags.integer == 2) {
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
 
 		if (cl_useimagesinfraglog.integer) {
@@ -1192,7 +1200,7 @@ void VXSCR_MeasureTracker(float* width, float* height, float scale, qbool propor
 				x += 8 * 2 * scale;
 			}
 			else {
-				if (trackermsg[i].pad && padded_width) {
+				if (trackermsg[i].pad && padded_width && !trackermsg[i].text_flags[s]) {
 					x += padded_width;
 				}
 				else {
@@ -1213,7 +1221,7 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 {
 	int		x, y;
 	int		i, printable_chars, s;
-	float	alpha = 1;
+	float	alpha = 1, width_one_char;
 	int     padded_width = 8 * bound(name_width, 0, MAX_SCOREBOARDNAME - 1) * scale;
 
 	scale = bound(0.1, scale, 10);
@@ -1221,6 +1229,8 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 	if (!active_track) {
 		return;
 	}
+
+	width_one_char = FontFixedWidth(1, scale, false, proportional);
 
 	// Draw the max allowed trackers allowed at the same time
 	// the latest ones are always shown.
@@ -1240,7 +1250,7 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 		}
 
 		// Place the tracker.
-		x = x_pos + (align_right ? width - FontFixedWidth(printable_chars, scale, false, proportional) - FontFixedWidth(1, scale, false, proportional) : FontFixedWidth(1, scale, false, proportional));
+		x = x_pos + (align_right ? width - (printable_chars - 1) * width_one_char : width_one_char);
 
 		// Draw the segments.
 		for (s = 0; s < trackermsg[i].segments; ++s) {
@@ -1264,7 +1274,7 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 				clr.c = RGBAVECT_TO_COLOR_PREMULT_SPECIFIC(trackermsg[i].colors[s], alpha);
 				clr.i = 0;
 
-				if (trackermsg[i].pad && padded_width) {
+				if (trackermsg[i].pad && padded_width && !trackermsg[i].text_flags[s]) {
 					Draw_SColoredStringAligned(x, y, trackermsg[i].text[s], &clr, 1, scale, alpha, proportional, trackermsg[i].alignment[s], x + padded_width);
 					x += padded_width;
 				}
@@ -1293,7 +1303,7 @@ static void VX_PreProcessMessage(trackmsg_t* msg)
 		else  {
 			int length = 0;
 
-			if (msg->pad && padded_chars) {
+			if (msg->pad && !msg->text_flags[s] && padded_chars) {
 				length = padded_chars;
 			}
 			else {
