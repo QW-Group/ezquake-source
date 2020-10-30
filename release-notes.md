@@ -33,6 +33,7 @@
 - Fixed bug causing MVD-stats code to cause `/tp_loadloc` to effectively always be forced to 1 (old bug)
 - Fixed bug causing multiple item timers to spawn when using `/demo_jump` (3.2 bug, reported by Milton)
 - Fixed bug causing buffer-overrun if loading a corrupt/truncated .wav file (old bug)
+- Fixed bug causing buffer-overrun if loading a .mdl file with invalid vertex indexes (old bug, reported by Pulseczar1)
 - Fixed bug causing `rcon` timestamps to be truncated when using `/cl_crypt_rcon` and server has `/sv_timestamplen` set (old bug)
 - Fixed bug causing invalid texture references to be used if `/vid_restart` issued while disconnected (3.5 bug)
 - Fixed bug causing team & player sorting to be different (3.2 bug)
