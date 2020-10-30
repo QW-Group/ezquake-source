@@ -65,7 +65,7 @@ char *CL_DemoDirectory(void);
 
 static char *MT_CleanString(char *string, qbool allow_spaces_and_slashes) {
 	byte *in, *out, c, d, *disallowed;
-	static byte buf[MAX_STATIC_STRING], badchars[] = {' ', '\\', '/', '?', '*', ':', '<', '>', '"', '|'};
+	static byte buf[MAX_STATIC_STRING], badchars[] = {' ', '\\', '/', '?', '*', ':', '<', '>', '"', '|', '\0'};
 	extern char readableChars[];
 
 	disallowed = allow_spaces_and_slashes ? badchars + 3 : badchars;
