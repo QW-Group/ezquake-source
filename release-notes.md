@@ -40,6 +40,7 @@
 - Fixed bug causing stats hud display to be incorrect if cl_mvdisplayhud not set to 1 and multiview inset view enabled (old bug)
 - Fixed bug causing oblique particles if sprite array dimensions were unmatched (width != height) (3.5 bug - reported by ciscon)
 - Fixed bug causing flashblend to render as transparent if sprite array dimensions were unmatched (width != height) (3.5 bug - reported by ciscon)
+- Fixed bug causing crash to desktop if invalid .png found (now be told of path before terminating, still not great) (old bug, #317)
 
 ### Ruleset-related changes
 
@@ -67,17 +68,19 @@
 - `/register_qwurl_protocol` reports success if run from command line (or rather, run without 'quiet' as 1st argument)
 - `/hud_clock_content 1` changes output to show the uptime of the client
 - `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
-- MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
-- Player LG beams hidden during intermission (no more beams in screenshots)
+- `/r_rockettrail` & `/r_grenadetrail` options requiring QMB particles degrade to '1' if QMB not initialised
+- '/cl_weaponforgetorder 2' - sets the best weapon then falls back to sg or axe (as per `/cl_weaponhide_axe`)
+- `/r_smoothalphahack 1` - during hud rendering, shader will apply lerped alpha to lerped color (behaves as per ezquake < 3.5)
 - `-oldgamma` command line option to re-instate old `-gamma` behaviour
 - GLSL gamma now supported in classic renderer
+- MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
+- Player LG beams hidden during intermission (no more beams in screenshots)
 - ezQuake will re-calculate normals on shared vertices as model is loaded (bug in models with normals set per-surface)
 - When gameplay-related protocols are enabled but not supported by server, you will be warned during connection
 - IP addresses with 5-character TLDs are detected - fixes .world addresses (thanks to bogojoker)
 - Added hud element 'frametime', similar to fps but measuring (max) frametime
 - Changed file-handling when viewing demos from within .zip|.gz to reduce temporary files being left on hard drive
-- `/r_rockettrail` & `/r_grenadetrail` options requiring QMB particles degrade to '1' if QMB not initialised
-- '/cl_weaponforgetorder 2' - sets the best weapon then falls back to sg or axe (as per `/cl_weaponhide_axe`)
+- PNG warning messages now printed to console rather than stdout
 
 ### Build/meta
 

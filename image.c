@@ -604,6 +604,34 @@ static qbool PNG_HasHeader (vfsfile_t *fin)
 	return true;
 }
 
+static void Image_PngErrorHandler(png_structp png_ptr, png_const_charp error_msg)
+{
+	const char* filename = (const char*)png_get_error_ptr(png_ptr);
+
+	if (filename == NULL || !filename[0]) {
+		filename = "(unknown path)";
+	}
+	if (error_msg == NULL || !error_msg[0]) {
+		error_msg = "unknown error";
+	}
+
+	Sys_Error("Invalid PNG detected: %s (%s)\n", filename, error_msg);
+}
+
+static void Image_PngWarningHandler(png_structp png_ptr, png_const_charp error_msg)
+{
+	const char* filename = (const char*)png_get_error_ptr(png_ptr);
+
+	if (filename == NULL || !filename[0]) {
+		filename = "(unknown path)";
+	}
+	if (error_msg == NULL || !error_msg[0]) {
+		error_msg = "unknown error";
+	}
+
+	Con_Printf("&cdd0libpng&r: %s (%s)\n", filename, error_msg);
+}
+
 png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height)
 {
 	byte **rowpointers = NULL;
@@ -632,7 +660,7 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 	}
 
 	// Try creating a PNG structure for reading the file.
-	if (!(png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL))) 
+	if (!(png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, (void*)filename, Image_PngErrorHandler, Image_PngWarningHandler))) 
 	{
 		VFS_CLOSE(fin);
 		fin = NULL;
