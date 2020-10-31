@@ -1150,6 +1150,9 @@ qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_
 	program->included_definitions = included_definitions ? Q_strdup(included_definitions) : NULL;
 
 	if (GL_CompileProgram(program)) {
+		if (program_id == currentProgram && qglUseProgram) {
+			qglUseProgram(R_CurrentSubProgram(program_id)->program);
+		}
 		R_ProgramFindUniformsForProgram(program_id);
 		R_ProgramFindAttributesForProgram(program_id);
 		return true;
