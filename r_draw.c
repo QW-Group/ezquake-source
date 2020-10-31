@@ -56,6 +56,7 @@ cvar_t	scr_menudrawhud		= {"scr_menudrawhud", "0"};
 cvar_t  r_smoothtext        = { "r_smoothtext",      "1" };
 cvar_t  r_smoothcrosshair   = { "r_smoothcrosshair", "1" };
 cvar_t  r_smoothimages      = { "r_smoothimages",    "1" };
+cvar_t  r_smoothalphahack   = { "r_smoothalphahack", "0" };
 
 void OnChange_crosshairimage(cvar_t *, char *, qbool *);
 static cvar_t crosshairimage          = {"crosshairimage", "", 0, OnChange_crosshairimage};
@@ -564,6 +565,7 @@ void Draw_Init (void)
 		Cvar_Register(&scr_menualpha);
 		Cvar_Register(&scr_menudrawhud);
 		Cvar_Register(&r_smoothimages);
+		Cvar_Register(&r_smoothalphahack);
 
 		Cvar_SetCurrentGroup(CVAR_GROUP_CROSSHAIR);
 		Cvar_Register(&crosshairimage);

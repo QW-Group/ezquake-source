@@ -48,6 +48,7 @@ extern float cachedMatrix[16];
 #define GLM_HUDIMAGES_SMOOTHTEXT        1
 #define GLM_HUDIMAGES_SMOOTHCROSSHAIR   2
 #define GLM_HUDIMAGES_SMOOTHIMAGES      4
+#define GLM_HUDIMAGES_ALPHAHACK         8
 #define GLM_HUDIMAGES_SMOOTHEVERYTHING  (GLM_HUDIMAGES_SMOOTHTEXT | GLM_HUDIMAGES_SMOOTHCROSSHAIR | GLM_HUDIMAGES_SMOOTHIMAGES)
 
 static void GLM_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, float y2, float s, float s_width, float t, float t_height, int flags)
@@ -187,21 +188,27 @@ void GLM_HudPrepareImages(void)
 
 qbool GLM_CreateMultiImageProgram(void)
 {
-	extern cvar_t r_smoothtext, r_smoothcrosshair, r_smoothimages;
+	extern cvar_t r_smoothtext, r_smoothcrosshair, r_smoothimages, r_smoothalphahack;
 
 	int program_flags =
 		(r_smoothtext.integer ? GLM_HUDIMAGES_SMOOTHTEXT : 0) |
 		(r_smoothcrosshair.integer ? GLM_HUDIMAGES_SMOOTHCROSSHAIR : 0) |
-		(r_smoothimages.integer ? GLM_HUDIMAGES_SMOOTHIMAGES : 0);
+		(r_smoothimages.integer ? GLM_HUDIMAGES_SMOOTHIMAGES : 0) |
+		(r_smoothalphahack.integer ? GLM_HUDIMAGES_ALPHAHACK : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_hud_images, program_flags)) {
 		char included_definitions[512];
+		int smooth_flags = (program_flags & GLM_HUDIMAGES_SMOOTHEVERYTHING);
+		qbool mixed_sampling = smooth_flags != 0 && smooth_flags != GLM_HUDIMAGES_SMOOTHEVERYTHING;
 
 		included_definitions[0] = '\0';
 
-		if (program_flags != 0 && program_flags != GLM_HUDIMAGES_SMOOTHEVERYTHING) {
+		if (mixed_sampling) {
 			// depends on flags on individual elements
-			strlcpy(included_definitions, "#define MIXED_SAMPLING", sizeof(included_definitions));
+			strlcpy(included_definitions, "#define MIXED_SAMPLING\n", sizeof(included_definitions));
+		}
+		if (program_flags & GLM_HUDIMAGES_ALPHAHACK) {
+			strlcpy(included_definitions, "#define PREMULT_ALPHA_HACK\n", sizeof(included_definitions));
 		}
 
 		// Initialise program for drawing image

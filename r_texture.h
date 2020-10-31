@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TEX_LUMA            (1<<3)  // do not apply gamma adjustment to texture when loading
 #define TEX_FULLBRIGHT      (1<<4)  // make all non-fullbright colours transparent (8-bit only).
 #define TEX_NOSCALE         (1<<5)  // do no use gl_max_size or gl_picmap variables while loading texture
-#define TEX_BRIGHTEN        (1<<6)  // ??
+#define TEX_BRIGHTEN        (1<<6)  // use brighter 8bit => 24bit conversion during load
 #define TEX_NOCOMPRESS      (1<<7)  // do not use texture compression extension
 #define TEX_NO_PCX          (1<<8)  // do not load pcx images
 #define TEX_NO_TEXTUREMODE  (1<<9)  // ignore gl_texturemode* changes for texture

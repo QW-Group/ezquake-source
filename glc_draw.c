@@ -369,23 +369,29 @@ static void GLC_HudDrawImagesVertexArray(texture_ref ref, int start, int end)
 #define GLC_PROGRAMFLAGS_SMOOTHCROSSHAIR     1
 #define GLC_PROGRAMFLAGS_SMOOTHIMAGES        2
 #define GLC_PROGRAMFLAGS_SMOOTHTEXT          4
+#define GLC_PROGRAMFLAGS_ALPHAHACK           8
 #define GLC_PROGRAMFLAGS_SMOOTHEVERYTHING    (GLC_PROGRAMFLAGS_SMOOTHCROSSHAIR | GLC_PROGRAMFLAGS_SMOOTHIMAGES | GLC_PROGRAMFLAGS_SMOOTHTEXT)
 
 qbool GLC_ProgramHudImagesCompile(void)
 {
-	extern cvar_t r_smoothtext, r_smoothcrosshair, r_smoothimages;
+	extern cvar_t r_smoothtext, r_smoothcrosshair, r_smoothimages, r_smoothalphahack;
 	int flags =
 		(r_smoothtext.integer ? GLC_PROGRAMFLAGS_SMOOTHTEXT : 0) |
 		(r_smoothcrosshair.integer ? GLC_PROGRAMFLAGS_SMOOTHCROSSHAIR : 0) |
-		(r_smoothimages.integer ? GLC_PROGRAMFLAGS_SMOOTHIMAGES : 0);
+		(r_smoothimages.integer ? GLC_PROGRAMFLAGS_SMOOTHIMAGES : 0) |
+		(r_smoothalphahack.integer ? GLC_PROGRAMFLAGS_ALPHAHACK : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_hud_images_glc, flags)) {
 		static char included_definitions[512];
-		qbool mixed_sampling = GL_Supported(R_SUPPORT_TEXTURE_SAMPLERS) && (flags & GLC_PROGRAMFLAGS_SMOOTHEVERYTHING) != 0 && (flags & GLC_PROGRAMFLAGS_SMOOTHEVERYTHING) != GLC_PROGRAMFLAGS_SMOOTHEVERYTHING;
+		int smooth_flags = (flags & GLC_PROGRAMFLAGS_SMOOTHEVERYTHING);
+		qbool mixed_sampling = GL_Supported(R_SUPPORT_TEXTURE_SAMPLERS) && smooth_flags != 0 && smooth_flags != GLC_PROGRAMFLAGS_SMOOTHEVERYTHING;
 
 		memset(included_definitions, 0, sizeof(included_definitions));
 		if (mixed_sampling) {
 			strlcat(included_definitions, "#define MIXED_SAMPLING\n", sizeof(included_definitions));
+		}
+		if (flags & GLC_PROGRAMFLAGS_ALPHAHACK) {
+			strlcat(included_definitions, "#define PREMULT_ALPHA_HACK\n", sizeof(included_definitions));
 		}
 
 		R_ProgramCompileWithInclude(r_program_hud_images_glc, included_definitions);
