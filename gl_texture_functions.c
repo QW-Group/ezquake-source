@@ -271,8 +271,8 @@ void GL_TexStorage2D(
 			GLenum type = (internalformat == GL_RGBA16F || internalformat == GL_RGB16F ? GL_FLOAT : GL_UNSIGNED_BYTE);
 
 			// this might be completely useless (we don't upload data anyway) but just to keep all calls to the texture consistent
-			format = (is_lightmap & GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : format);
-			type = (is_lightmap & GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : type);
+			format = (is_lightmap && GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : format);
+			type = (is_lightmap && GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : type);
 
 			for (level = 0; level < levels; ++level) {
 				glTexImage2D(target, level, internalformat, level_width, level_height, 0, format, type, NULL);
@@ -307,8 +307,8 @@ void GL_TexStorage3D(GLenum textureUnit, texture_ref texture, GLsizei levels, GL
 		GLenum type = (internalformat == GL_RGBA16F || internalformat == GL_RGB16F ? GL_FLOAT : GL_UNSIGNED_BYTE);
 
 		// this might be completely useless (we don't upload data anyway) but just to keep all calls to the texture consistent
-		format = (is_lightmap & GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : format);
-		type = (is_lightmap & GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : type);
+		format = (is_lightmap && GL_Supported(R_SUPPORT_BGRA_LIGHTMAPS) ? GL_BGRA : format);
+		type = (is_lightmap && GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : type);
 
 		for (z = 0; z < depth; ++z) {
 			GLsizei level_width = width;

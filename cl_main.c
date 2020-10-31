@@ -2145,8 +2145,6 @@ void CL_CalcFPS(void)
 		}
 	}
 	else if (frametime > 0) {
-		double this_fps = 1.0f / frametime;
-
 		// update min_fps if last fps is less than our lowest accepted minfps (10.0) or greater than min_reset_interval
 		if (stats->lastfps_value < cls.min_fps || ((t - stats->time_of_last_minfps_update) > hud_fps_min_reset_interval.value)) {
 			cls.min_fps = stats->lastfps_value;
