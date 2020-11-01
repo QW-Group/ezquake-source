@@ -74,6 +74,7 @@
 - `/r_smoothalphahack 1` - during hud rendering, shader will apply lerped alpha to lerped color (behaves as per ezquake < 3.5)
 - `/cl_keypad 2` - keypad will behave as `/cl_keypad 0` in-game, but `/cl_keypad 1` in console etc
 - `/cl_keypad 1` - keypad works as cursor keys in menu
+- `/menu_botmatch_gamedir` added - allows packages to customise the directory when starting a bot match
 - `-oldgamma` command line option to re-instate old `-gamma` behaviour
 - GLSL gamma now supported in classic renderer
 - MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
