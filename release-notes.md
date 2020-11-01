@@ -91,6 +91,7 @@
 - Duplicate declarations fixed (supports -fno-common, reported by ciscon)
 - Updated Azure Pipelines builds to latest ubuntu/macos
 - Visual Studio project, Azure Pipelines builds windows binaries (64-bit binaries are VERY beta, not recommended)
+- meson build updated (out of date on 3.5)
 
 # Changes in 3.5 (not released, based on 3.1)
 
