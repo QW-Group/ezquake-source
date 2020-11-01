@@ -563,7 +563,7 @@ byte Key_ScancodeToQuakeCode(int scancode)
 	else if (scancode >= 224 && scancode < 224 + 8)
 		quakeCode = scantokey[scancode - 104];
 
-	if (!cl_keypad.integer) {
+	if (cl_keypad.integer == 0 || key_dest == key_menu || (cl_keypad.integer == 2 && !(key_dest == key_console || key_dest == key_message))) {
 		// compatibility mode without knowledge about keypad-keys:
 		switch (quakeCode)
 		{
@@ -585,6 +585,12 @@ byte Key_ScancodeToQuakeCode(int scancode)
 		case KP_DEL:         quakeCode = K_DEL;            break;
 		case KP_ENTER:       quakeCode = K_ENTER;          break;
 		default:                                           break;
+		}
+	}
+	else if (cl_keypad.integer == 1 && key_dest != key_game) {
+		// Treat as normal return key
+		if (quakeCode == KP_ENTER) {
+			quakeCode = K_ENTER;
 		}
 	}
 

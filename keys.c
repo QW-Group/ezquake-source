@@ -2010,11 +2010,12 @@ static qbool Key_ConsoleKey(int key)
 	qbool con_key = (con_tilde_mode.integer && con_toggle && (con_tilde_mode.integer == 1 || !CONSOLE_LINE_EMPTY())) ? true : consolekeys[key];
 	qbool hud_key = (con_tilde_mode.integer && con_toggle) ? true : hudeditorkeys[key];
 	qbool demo_controls_key = (con_tilde_mode.integer && con_toggle) ? true : democontrolskey[key];
+	qbool con_keypad_key = cl_keypad.integer && key >= KP_HOME && key <= KP_ENTER;
 
 	if (key_dest == key_menu && Menu_ExecuteKey(key))
 		return false;
 
-	if ((key_dest == key_console || key_dest == key_message) && !con_key)
+	if ((key_dest == key_console || key_dest == key_message) && !con_key && !con_keypad_key)
 		return false;
 
 	if (key_dest == key_game && (cls.state == ca_active || !con_key))

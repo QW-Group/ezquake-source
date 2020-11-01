@@ -1674,15 +1674,19 @@
     "cl_keypad": {
       "default": "1",
       "group-id": "9",
-      "type": "boolean",
+      "type": "enum",
       "values": [
         {
           "description": "QW compatibility: all keypad keys treated as though equivalent button pushed, eg KP_8 acts like uparrow would.",
-          "name": "false"
+          "name": "0"
         },
         {
           "description": "You will be able to bind all numpad keys independently of standard keys.  Use kp_enter, kp_8 etc to differentiate from standard keys.",
-          "name": "true"
+          "name": "1"
+        },
+        {
+          "description": "As 'cl_keypad 0' in game, 'cl_keypad 1' when in menus/console etc",
+          "name": "2"
         }
       ]
     },
