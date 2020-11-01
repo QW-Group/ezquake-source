@@ -98,8 +98,11 @@ void Sys_Quit (void);
 double Sys_DoubleTime (void);
 
 
-// Perform Key_Event () callbacks until the input que is empty
+// Perform Key_Event() callbacks until the input que is empty
 void Sys_SendKeyEvents (void);
+// Some events (mouse wheel in particular) we won't get a secondary 'up/stop' event, so
+//   we flag & execute them here, after any commands have been sent to the server
+void Sys_SendDeferredKeyEvents(void);
 
 void Sys_Init (void);
 

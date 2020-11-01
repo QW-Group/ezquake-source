@@ -120,6 +120,10 @@ static int last_working_hz;
 static int last_working_display;
 static qbool last_working_values = false;
 
+// deferred events (Sys_SendDeferredKeyEvents)
+static qbool wheelup_deferred = false;
+static qbool wheeldown_deferred = false;
+
 //
 // OS dependent cvar defaults
 //
@@ -295,17 +299,19 @@ void IN_DeactivateMouse(void)
 	GrabMouse(false, in_raw.integer);
 }
 
-void IN_Frame(void)
+static void IN_Frame(void)
 {
-	if (!sdl_window)
+	if (!sdl_window) {
 		return;
+	}
 
 	HandleEvents();
 
 	if (!ActiveApp || Minimized || IN_OSMouseCursorRequired()) {
 		IN_DeactivateMouse();
 		return;
-	} else {
+	}
+	else {
 		IN_ActivateMouse();
 	}
 
@@ -317,6 +323,18 @@ void IN_Frame(void)
 #endif
 	}
 	
+}
+
+void Sys_SendDeferredKeyEvents(void)
+{
+	if (wheelup_deferred) {
+		Key_Event(K_MWHEELUP, false);
+		wheelup_deferred = false;
+	}
+	if (wheeldown_deferred) {
+		Key_Event(K_MWHEELDOWN, false);
+		wheeldown_deferred = false;
+	}
 }
 
 void Sys_SendKeyEvents(void)
@@ -677,11 +695,18 @@ static void mouse_button_event(SDL_MouseButtonEvent *event)
 static void mouse_wheel_event(SDL_MouseWheelEvent *event)
 {
 	if (event->y > 0) {
+		if (wheelup_deferred) {
+			Key_Event(K_MWHEELUP, false);
+		}
 		Key_Event(K_MWHEELUP, true);
-		Key_Event(K_MWHEELUP, false);
-	} else if (event->y < 0) {
+		wheelup_deferred = true;
+	}
+	else if (event->y < 0) {
+		if (wheeldown_deferred) {
+			Key_Event(K_MWHEELDOWN, false);
+		}
 		Key_Event(K_MWHEELDOWN, true);
-		Key_Event(K_MWHEELDOWN, false);
+		wheeldown_deferred = true;
 	}
 }
 

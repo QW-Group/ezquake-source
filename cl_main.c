@@ -2398,16 +2398,16 @@ void CL_Frame(double time)
 
 		// We need to move the mouse also when disconnected
 		// to get the cursor working properly.
-		if(cls.state == ca_disconnected)
-		{
+		if (cls.state == ca_disconnected) {
 			usercmd_t dummy;
 			IN_Move(&dummy);
 		}
+
+		Sys_SendDeferredKeyEvents();
 	}
 	else 
 	{
-		if (physframe)
-		{
+		if (physframe) {
 			Sys_SendKeyEvents();
 
 			// allow mice or other external controllers to add commands
@@ -2442,14 +2442,15 @@ void CL_Frame(double time)
 
 			CL_SendToServer();
 
-			if (cls.state == ca_disconnected) // We need to move the mouse also when disconnected
-			{
+			// We need to move the mouse also when disconnected
+			if (cls.state == ca_disconnected) {
 				usercmd_t dummy;
 				IN_Move(&dummy);
 			}
+
+			Sys_SendDeferredKeyEvents();
 		}
-		else
-		{
+		else {
 			if (need_server_frame && com_serveractive) {
 				CL_ServerFrame(0);
 			}

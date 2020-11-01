@@ -42,6 +42,7 @@
 - Fixed bug causing flashblend to render as transparent if sprite array dimensions were unmatched (width != height) (3.5 bug - reported by ciscon)
 - Fixed bug causing crash to desktop if invalid .png found (now be told of path before terminating, still not great) (old bug, #317)
 - Fixed bug causing keypad binds to be executed in console when `/cl_keypad 1` set, also enter key is treated as return in console (#319, 3.2 bug)
+- Fixed bug causing mouse wheel start & stop events to be fired in the same frame (3.x bug, #200)
 
 ### Ruleset-related changes
 
