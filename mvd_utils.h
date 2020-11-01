@@ -19,8 +19,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 $Id: mvd_utils.h,v 1.5 2007-09-24 21:41:17 johnnycz Exp $
 */
 
-// main header for a group of MVD tools: mvd_utils, mvd_xmlstats, mvd_autotrack
+#ifndef MVDUTILS_HEADER
+#define MVDUTILS_HEADER
 
+// main header for a group of MVD tools: mvd_utils, mvd_xmlstats, mvd_autotrack
 void MVD_Screen (void);
 
 // initialize the module, add variables and commands
@@ -43,5 +45,8 @@ void MVDAnnouncer_PackDropped(const char* s);
 void MVDAnnouncer_Expired(const char* s);
 void MVDAnnouncer_BackpackPickup(const char* s);
 
-extern int powerup_cam_active,cam_1,cam_2,cam_3,cam_4;
-extern cvar_t mvd_pc_view_1,mvd_pc_view_2,mvd_pc_view_3,mvd_pc_view_4;
+// Powerup cams
+qbool MVD_PowerupCam_Enabled(int view_number);
+void MVD_PowerupCam_Frame(void);
+
+#endif // MVDUTILS_HEADER

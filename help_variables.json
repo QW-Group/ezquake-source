@@ -3239,28 +3239,6 @@
       "group-id": "5",
       "type": "float"
     },
-    "con_particles_alpha": {
-      "desc": "Sets the transparency of con_particles_images.",
-      "group-id": "31",
-      "type": "float",
-      "values": [
-        {
-          "description": "From 0....1. 0 is invisible, 1 is completely solid.",
-          "name": "*"
-        }
-      ]
-    },
-    "con_particles_images": {
-      "desc": "Set the number of images you have in /textures/conpart.png.",
-      "group-id": "22",
-      "type": "integer",
-      "values": [
-        {
-          "description": "Each image should take up 64x64 pixels.",
-          "name": "*"
-        }
-      ]
-    },
     "con_prompt_charcode": {
       "default": "93",
       "desc": "ASCII code of prompt character.",
