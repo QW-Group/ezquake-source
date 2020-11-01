@@ -105,6 +105,13 @@ typedef struct
 } player_state_t;
 
 #define	MAX_SCOREBOARDNAME	16
+typedef enum {
+	gender_unknown = 0,
+	gender_male,
+	gender_female,
+	gender_neutral
+} gender_id;
+
 typedef struct player_info_s 
 {
 	int		userid;
@@ -162,6 +169,10 @@ typedef struct player_info_s
 	char	loginname[MAX_SCOREBOARDNAME];
 	char    loginflag[8];
 	int     loginflag_id;
+
+	// extracted from userinfo
+	int           chatflag;
+	gender_id     gender;
 } __attribute__((aligned(64))) player_info_t;
 
 

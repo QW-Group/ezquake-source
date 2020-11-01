@@ -1519,7 +1519,7 @@ static void Sbar_DeathmatchOverlay(int start)
 		color.c = RGBA_TO_COLOR(255, 255, 255, 255);
 		myminutes[0] = '\0';
 		snprintf(myminutes, sizeof(myminutes), "%i", total);
-		if (scr_scoreboard_afk.integer && (Q_atoi(Info_ValueForKey(s->userinfo, "chat")) & CIF_AFK)) {
+		if (scr_scoreboard_afk.integer && (s->chatflag & CIF_AFK)) {
 			color.c = RGBA_TO_COLOR(0xFF, 0x11, 0x11, 0xFF);
 			if (scr_scoreboard_afk_style.integer == 1) {
 				snprintf(myminutes, sizeof(myminutes), "afk");

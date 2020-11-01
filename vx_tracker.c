@@ -1081,36 +1081,21 @@ void VX_TrackerStreakEnd(int player, int killer, int count)
 
 	if (player == killer) {
 		// streak ends due to suicide
-		char gender;
-		char* userinfo_gender = Info_ValueForKey(cl.players[player].userinfo, "gender");
-		if (!*userinfo_gender) {
-			userinfo_gender = Info_ValueForKey(cl.players[player].userinfo, "g");
-		}
-
-		gender = userinfo_gender[0];
-		if (gender == '0' || gender == 'M') {
-			gender = 'm';
-		}
-		else if (gender == '1' || gender == 'F') {
-			gender = 'f';
-		}
-		else if (gender == '2' || gender == 'N') {
-			gender = 'n';
-		}
+		gender_id gender = cl.players[player].gender;
 
 		if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
 			snprintf(outstring, sizeof(outstring), "You were looking good until you killed yourself (%i kills)", count);
 			VX_TrackerAddSimpleText(outstring, color940);
 		}
-		else if (gender == 'm') {
+		else if (gender == gender_male) {
 			snprintf(outstring, sizeof(outstring), " was looking good until he killed himself (%i kills)", count);
 			VX_TrackerAddSegmented(cl.players[player].name, color_white, outstring, color940, "", NULL);
 		}
-		else if (gender == 'f') {
+		else if (gender == gender_female) {
 			snprintf(outstring, sizeof(outstring), " was looking good until she killed herself (%i kills)", count);
 			VX_TrackerAddSegmented(cl.players[player].name, color_white, outstring, color940, "", NULL);
 		}
-		else if (gender == 'n') {
+		else if (gender == gender_neutral) {
 			snprintf(outstring, sizeof(outstring), " was looking good until it killed itself (%i kills)", count);
 			VX_TrackerAddSegmented(cl.players[player].name, color_white, outstring, color940, "", NULL);
 		}

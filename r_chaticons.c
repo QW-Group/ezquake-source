@@ -187,7 +187,7 @@ void R_SetupChatIcons(void)
 			continue;
 		}
 
-		if (!*(s = Info_ValueForKey(info->userinfo, "chat"))) {
+		if (!info->chatflag) {
 			continue; // user not chatting, so ignore
 		}
 
@@ -212,7 +212,7 @@ void R_SetupChatIcons(void)
 		id->rotangle = 5 * sin(2 * r_refdef2.time); // may be set to 0, if u dislike rolling
 		id->color[0] = id->color[1] = id->color[2] = id->color[3] = 255 * bound(0, r_chaticons_alpha.value, 1) * fade; // pre-multiplied alpha
 
-		id->flags = Q_atoi(s) & (CIF_CHAT | CIF_AFK); // get known flags
+		id->flags = info->chatflag & (CIF_CHAT | CIF_AFK); // get known flags
 		id->flags = (id->flags ? id->flags : CIF_CHAT); // use chat as default if we got some unknown "chat" value
 
 		ci_count++;
