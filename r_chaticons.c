@@ -159,7 +159,6 @@ void R_SetupChatIcons(void)
 	player_info_t *info;
 	ci_player_t *id;
 	centity_t *cent;
-	char *s;
 
 	ci_count = 0;
 
