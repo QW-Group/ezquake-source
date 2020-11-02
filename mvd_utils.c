@@ -189,10 +189,8 @@ double gamestart_time;
 
 double quad_time = 0;
 double pent_time = 0;
-int quad_is_active = 0;
-int pent_is_active = 0;
-int pent_mentioned = 0;
-int quad_mentioned = 0;
+qbool quad_is_active = false;
+qbool pent_is_active = false;
 powerup_cam_status_id powerup_cam_status = powerup_cam_inactive;
 qbool powerup_cam_active[4];
 
@@ -228,15 +226,15 @@ cvar_t			mvd_status_x = { "mvd_status_x","0" };
 cvar_t			mvd_status_y = { "mvd_status_y","0" };
 
 // Powerup cams
-cvar_t mvd_powerup_cam = { "mvd_powerup_cam","0" };
+static cvar_t mvd_powerup_cam = { "mvd_powerup_cam", "0" };
 
-cvar_t mvd_pc_quad_1 = { "mvd_pc_quad_1","1010 -300 150 13 135" };
-cvar_t mvd_pc_quad_2 = { "mvd_pc_quad_2","350 -20 157 34 360" };
-cvar_t mvd_pc_quad_3 = { "mvd_pc_quad_3","595 360 130 17 360" };
+static cvar_t mvd_pc_quad_1 = { "mvd_pc_quad_1", "" };
+static cvar_t mvd_pc_quad_2 = { "mvd_pc_quad_2", "" };
+static cvar_t mvd_pc_quad_3 = { "mvd_pc_quad_3", "" };
 
-cvar_t mvd_pc_pent_1 = { "mvd_pc_pent_1","1010 -300 150 13 135" };
-cvar_t mvd_pc_pent_2 = { "mvd_pc_pent_2","1010 -300 150 13 135" };
-cvar_t mvd_pc_pent_3 = { "mvd_pc_pent_3","1010 -300 150 13 135" };
+static cvar_t mvd_pc_pent_1 = { "mvd_pc_pent_1", "" };
+static cvar_t mvd_pc_pent_2 = { "mvd_pc_pent_2", "" };
+static cvar_t mvd_pc_pent_3 = { "mvd_pc_pent_3", "" };
 
 static cvar_t powerup_cam_cvars[4] = {
 	{ "mvd_pc_view_1", "" }, 
@@ -1321,10 +1319,11 @@ void MVD_Status_WP(int i, int* taken) {
 
 void MVD_Stats_Cleanup(void)
 {
-	quad_is_active = 0;
-	pent_is_active = 0;
+	quad_is_active = false;
+	pent_is_active = false;
 	powerup_cam_status = powerup_cam_inactive;
 	memset(powerup_cam_active, 0, sizeof(powerup_cam_active));
+	pent_time = quad_time = 0;
 	was_standby = true;
 	while (mvd_clocklist) {
 		MVD_ClockList_Remove(mvd_clocklist);
@@ -1501,14 +1500,14 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 			item->has = 1;
 
 			if (x == PENT_INFO && (powerup_cam_status == powerup_cam_quadpent_active || powerup_cam_status == powerup_cam_pent_active)) {
-				pent_mentioned = 0;
-				pent_is_active = 1;
+				pent_is_active = true;
 				powerup_cam_status -= powerup_cam_pent_active;
+				pent_time = cls.demopackettime;
 			}
 			if (x == QUAD_INFO && (powerup_cam_status == powerup_cam_quadpent_active || powerup_cam_status == powerup_cam_quad_active)) {
-				quad_mentioned = 0;
-				quad_is_active = 1;
+				quad_is_active = true;
 				powerup_cam_status -= powerup_cam_quad_active;
+				quad_time = cls.demopackettime;
 			}
 			mvd_new_info[i].mvdinfo.itemstats[x].starttime = cls.demopackettime;
 			mvd_new_info[i].mvdinfo.itemstats[x].count++;
@@ -1516,10 +1515,10 @@ static void MVD_Stats_Gather_AlivePlayer(int player_index)
 		if (mvd_new_info[i].mvdinfo.itemstats[x].has && !(mvd_new_info[i].p_info->stats[STAT_ITEMS] & mvd_wp_info[x].it)) {
 			mvd_new_info[i].mvdinfo.itemstats[x].has = 0;
 			if (x == QUAD_INFO && quad_is_active) {
-				quad_is_active = 0;
+				quad_is_active = false;
 			}
 			if (x == PENT_INFO && pent_is_active) {
-				pent_is_active = 0;
+				pent_is_active = false;
 			}
 			mvd_new_info[i].mvdinfo.itemstats[x].runs[mvd_new_info[i].mvdinfo.itemstats[x].run].starttime = mvd_new_info[i].mvdinfo.itemstats[x].starttime;
 			mvd_new_info[i].mvdinfo.itemstats[x].runs[mvd_new_info[i].mvdinfo.itemstats[x].run].time = cls.demopackettime - mvd_new_info[i].mvdinfo.itemstats[x].starttime;
@@ -1715,7 +1714,7 @@ int MVD_Stats_Gather(void)
 
 				if (x == QUAD_INFO && mvd_new_info[i].mvdinfo.itemstats[QUAD_INFO].has) {
 					if (mvd_new_info[i].mvdinfo.itemstats[x].starttime - cls.demopackettime < 30) {
-						quad_is_active = 0;
+						quad_is_active = false;
 					}
 					mvd_new_info[i].mvdinfo.itemstats[x].run++;
 					mvd_new_info[i].mvdinfo.itemstats[x].lost++;
@@ -1737,17 +1736,9 @@ int MVD_Stats_Gather(void)
 		}
 
 		if ((((pent_time + 300) - cls.demopackettime) < 5) && !pent_is_active) {
-			if (!pent_mentioned) {
-				pent_mentioned = 1;
-				// fixme
-				// Com_Printf("pent in 5 secs\n");
-			}
 			powerup_cam_status |= powerup_cam_pent_active;
 		}
 		if ((((quad_time + 60) - cls.demopackettime) < 5) && !quad_is_active) {
-			if (!quad_mentioned) {
-				quad_mentioned = 1;
-			}
 			powerup_cam_status |= powerup_cam_quad_active;
 		}
 		mvd_new_info[i].mvdinfo.initialized = true;
@@ -2017,17 +2008,18 @@ static qbool MVD_PowerupCam_Process(cvar_t* cvar)
 		qbool found = false;
 
 		for (i = 0; i < 6; i++) {
-			if (!(cam_id[i].filter & powerup_cam_status)) {
-				continue;
-			}
-
 			if (!strcmp(cvar->string, cam_id[i].tag)) {
-				VectorCopy(cam_id[i].cam.angles, r_refdef.viewangles);
-				VectorCopy(cam_id[i].cam.org, r_refdef.vieworg);
-				active = true;
+				found = true;
+
+				if (cam_id[i].filter & powerup_cam_status) {
+					VectorCopy(cam_id[i].cam.angles, r_refdef.viewangles);
+					VectorCopy(cam_id[i].cam.org, r_refdef.vieworg);
+					active = true;
+				}
+				break;
 			}
 		}
-		if (!active) {
+		if (!found) {
 			Cvar_Set(cvar, "");
 			Com_Printf("wrong tag for %s\n", cvar->name);
 		}
@@ -2036,12 +2028,28 @@ static qbool MVD_PowerupCam_Process(cvar_t* cvar)
 	return active;
 }
 
-qbool MVD_PowerupCam_Enabled(int view_number)
+// If powerup cam configured but not currently enabled
+qbool MVD_PowerupCam_Hidden(void)
 {
-	if (view_number < 0 || view_number >= sizeof(powerup_cam_cvars) / sizeof(powerup_cam_cvars[0])) {
+	int view_number = CL_MultiviewCurrentView();
+
+	if (view_number < 1 || view_number > sizeof(powerup_cam_active) / sizeof(powerup_cam_active[0])) {
 		return false;
 	}
 
+	--view_number;
+	return powerup_cam_cvars[view_number].string && powerup_cam_cvars[view_number].string[0] && !(powerup_cam_status && powerup_cam_active[view_number]);
+}
+
+qbool MVD_PowerupCam_Enabled(void)
+{
+	int view_number = CL_MultiviewCurrentView();
+
+	if (view_number < 1 || view_number > sizeof(powerup_cam_active) / sizeof(powerup_cam_active[0])) {
+		return false;
+	}
+
+	--view_number;
 	return powerup_cam_cvars[view_number].string && powerup_cam_cvars[view_number].string[0] && powerup_cam_status && powerup_cam_active[view_number];
 }
 
@@ -2049,7 +2057,12 @@ void MVD_PowerupCam_Frame(void)
 {
 	int view_number = CL_MultiviewCurrentView();
 
-	if (view_number < 0 || view_number >= sizeof(powerup_cam_active) / sizeof(powerup_cam_active[0]) || !mvd_powerup_cam.integer || powerup_cam_status == powerup_cam_inactive) {
+	if (view_number < 1 || view_number > sizeof(powerup_cam_active) / sizeof(powerup_cam_active[0])) {
+		return;
+	}
+
+	--view_number;
+	if (!mvd_powerup_cam.integer || powerup_cam_status == powerup_cam_inactive) {
 		memset(powerup_cam_active, 0, sizeof(powerup_cam_active));
 		return;
 	}

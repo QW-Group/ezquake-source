@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "hud.h"
 #include "hud_common.h"
+#include "mvd_utils.h"
 
 #ifdef X11_GAMMA_WORKAROUND
 #include "tr_types.h"
@@ -889,7 +890,8 @@ static void V_AddViewWeapon(float bob)
 	cent->current.frame = view_message.weaponframe;
 }
 
-void V_CalcIntermissionRefdef (void) {
+static void V_CalcIntermissionRefdef(void)
+{
 	float old;
 
 	VectorCopy (cl.simorg, r_refdef.vieworg);
@@ -905,7 +907,7 @@ void V_CalcIntermissionRefdef (void) {
 	v_idlescale.value = old;
 }
 
-void V_CalcRefdef(void)
+static void V_CalcRefdef(void)
 {
 	vec3_t forward;
 	float bob;
@@ -963,8 +965,9 @@ void V_CalcRefdef(void)
 		r_refdef.viewangles[PITCH] += cl.punchangle * 0.5;
 	}
 
-	if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0))
+	if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0)) {
 		r_refdef.viewangles[ROLL] = 80;	// dead view angle
+	}
 
 	//VULT CAMERAS
 	CameraUpdate(view_message.flags & PF_DEAD);
@@ -1019,6 +1022,8 @@ qbool V_PreRenderView(void)
 		else {
 			V_CalcRefdef();
 		}
+
+		MVD_PowerupCam_Frame();
 
 		R_PushDlights();
 

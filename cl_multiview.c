@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // meag: for switching back to 3d resolution to draw the multiview outlines
 #include "gl_model.h"
 #include "gl_local.h"
+#include "mvd_utils.h"
 
 extern int glx, gly, glwidth, glheight;
 

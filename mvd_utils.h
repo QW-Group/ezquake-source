@@ -46,7 +46,7 @@ void MVDAnnouncer_Expired(const char* s);
 void MVDAnnouncer_BackpackPickup(const char* s);
 
 // Powerup cams
-qbool MVD_PowerupCam_Enabled(int view_number);
+qbool MVD_PowerupCam_Enabled(void);
 void MVD_PowerupCam_Frame(void);
 
 #endif // MVDUTILS_HEADER
