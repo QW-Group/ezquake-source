@@ -53,29 +53,30 @@
 
 ### Other changes
 
+- `/cfg_backup` will now not save the config if backup cannot be taken
+- `/cl_keypad 1` - keypad works as cursor keys in menu
+- `/cl_keypad 2` - keypad will behave as `/cl_keypad 0` in-game, but `/cl_keypad 1` in console etc
 - `/cl_pext_serversideweapon` - protocol extension to move weapon selection to server (requires updated mvdsv)
 - `/cl_weaponforgetondeath` - resets weapon to shotgun when respawning
+- '/cl_weaponforgetorder 2' - sets the best weapon then falls back to sg or axe (as per `/cl_weaponhide_axe`)
 - `/cl_username` & `/authenticate` to support optional logins via badplace.eu (see [guide](https://github.com/ezQuake/ezquake-source/wiki/Authentication))
+- `/enemyforceskins 1` will search for player names in lower case (#345)
+- `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
+- `/hud_clock_content 1` changes output to show the uptime of the client
+- `/in_ignore_touch_events` added - allows mouse clicks from touch input devices
+- `/menu_botmatch_gamedir` added - allows packages to customise the directory when starting a bot match
+- `/r_drawflat_mode` allows textures to be shaded rather than solid color (GLSL only)
+- `/register_qwurl_protocol` reports success if run from command line (or rather, run without 'quiet' as 1st argument)
+- `/r_rockettrail` & `/r_grenadetrail` options requiring QMB particles degrade to '1' if QMB not initialised
+- `/r_smoothalphahack 1` - during hud rendering, shader will apply lerped alpha to lerped color (behaves as per ezquake < 3.5)
 - `/scr_scoreboard_login_names` will replace player's name with login when it is sent by server
 - `/scr_scoreboard_login_flagfile` maps player flags to graphics to be shown next to player's name when they are logged in
 - `/scr_scoreboard_login_indicator` will be shown next to a player's name when they are logged in (if flag not available)
 - `/scr_scoreboard_login_color` controls the color of a player's name when they are logged in
-- `/cfg_backup` will now not save the config if backup cannot be taken
+- `/timedemo` commands show extra info at end to try and highlight stutter (measuring worst frametimes)
+- `/timedemo2` command renders demo in stop-motion at a particular fps
 - `/vid_framebuffer_smooth` controls linear or nearest filtering (thanks to Calinou)
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
-- `/r_drawflat_mode` allows textures to be shaded rather than solid color (GLSL only)
-- `/timedemo2` command renders demo in stop-motion at a particular fps
-- `/timedemo` commands show extra info at end to try and highlight stutter (measuring worst frametimes)
-- `/enemyforceskins 1` will search for player names in lower case (#345)
-- `/register_qwurl_protocol` reports success if run from command line (or rather, run without 'quiet' as 1st argument)
-- `/hud_clock_content 1` changes output to show the uptime of the client
-- `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
-- `/r_rockettrail` & `/r_grenadetrail` options requiring QMB particles degrade to '1' if QMB not initialised
-- '/cl_weaponforgetorder 2' - sets the best weapon then falls back to sg or axe (as per `/cl_weaponhide_axe`)
-- `/r_smoothalphahack 1` - during hud rendering, shader will apply lerped alpha to lerped color (behaves as per ezquake < 3.5)
-- `/cl_keypad 2` - keypad will behave as `/cl_keypad 0` in-game, but `/cl_keypad 1` in console etc
-- `/cl_keypad 1` - keypad works as cursor keys in menu
-- `/menu_botmatch_gamedir` added - allows packages to customise the directory when starting a bot match
 - `-oldgamma` command line option to re-instate old `-gamma` behaviour
 - GLSL gamma now supported in classic renderer
 - MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)

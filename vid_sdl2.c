@@ -172,6 +172,7 @@ cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CV
 #endif
 
 cvar_t in_release_mouse_modes     = {"in_release_mouse_modes",     "2",       CVAR_SILENT };
+cvar_t in_ignore_touch_events     = {"in_ignore_touch_events",     "1",       CVAR_SILENT };
 cvar_t vid_vsync_lag_fix          = {"vid_vsync_lag_fix",          "0"                    };
 cvar_t vid_vsync_lag_tweak        = {"vid_vsync_lag_tweak",        "1.0"                  };
 cvar_t r_swapInterval             = {"vid_vsync",                  "0",       CVAR_SILENT };
@@ -283,6 +284,7 @@ void IN_StartupMouse(void)
 	Cvar_Register(&in_raw);
 	Cvar_Register(&in_grab_windowed_mouse);
 	Cvar_Register(&in_release_mouse_modes);
+	Cvar_Register(&in_ignore_touch_events);
 
 	mouseinitialized = true;
 
@@ -781,10 +783,14 @@ static void HandleEvents(void)
 			break;
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:
-			mouse_button_event(&event.button);
+			if (event.button.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
+				mouse_button_event(&event.button);
+			}
 			break;
 		case SDL_MOUSEWHEEL:
-			mouse_wheel_event(&event.wheel);
+			if (event.wheel.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
+				mouse_wheel_event(&event.wheel);
+			}
 			break;
 		case SDL_DROPFILE:
 			/* TODO: Add handling for different file types */

@@ -12944,6 +12944,12 @@
       "group-id": "11",
       "type": "boolean"
     },
+    "in_ignore_touch_events": {
+      "default": "1",
+      "desc": "If set, will ignore events from touch inputs (events from a real mouse should be unaffected)",
+      "group-id": "11",
+      "type": "boolean"
+    },
     "in_m_os_parameters": {
       "desc": "Allows you to use your system mouse settings in the client",
       "group-id": "28",
