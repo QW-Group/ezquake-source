@@ -308,7 +308,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -361,7 +361,7 @@ msversion.bat</Command>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;DEBUG_MEMORY_ALLOCATIONS;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_CLASSIC_OPENGL;DEBUG_MEMORY_ALLOCATIONS;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -414,7 +414,7 @@ msversion.bat</Command>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;WITH_PNG;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;WITH_PNG;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -467,7 +467,7 @@ msversion.bat</Command>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_VULKAN;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_VULKAN;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -522,7 +522,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <PreBuildEvent>
       <Message>Setting version based on git history...</Message>
@@ -565,7 +565,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <PreBuildEvent>
       <Message>Setting version based on git history...</Message>
@@ -608,7 +608,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <PreBuildEvent>
       <Message>Setting version based on git history...</Message>
@@ -651,7 +651,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <PreBuildEvent>
       <Message>Setting version based on git history...</Message>
@@ -694,7 +694,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;SUPPORT_FRAMEBUFFERS;USE_MEDIA_FOUNDATION;WITH_NQPROGS;WITH_SPEEX;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;SUPPORT_FRAMEBUFFERS;USE_MEDIA_FOUNDATION;WITH_NQPROGS;WITH_SPEEX;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <AdditionalOptions>/Qvec-report:2 %(AdditionalOptions)</AdditionalOptions>
@@ -745,7 +745,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;SUPPORT_FRAMEBUFFERS;USE_MEDIA_FOUNDATION;WITH_NQPROGS;WITH_SPEEX;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;SUPPORT_FRAMEBUFFERS;USE_MEDIA_FOUNDATION;WITH_NQPROGS;WITH_SPEEX;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
@@ -796,7 +796,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_NQPROGS;WITH_SPEEX;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;WITH_SPEEX;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -849,7 +849,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;EZ_FREETYPE_SUPPORT;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
     </ClCompile>
@@ -897,7 +897,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
     </ClCompile>
@@ -945,7 +945,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
     </ClCompile>
