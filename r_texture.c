@@ -194,7 +194,7 @@ int R_TextureDepth(texture_ref ref)
 	return gltextures[ref.index].depth;
 }
 
-void R_TextureModeForEach(void(*func)(texture_ref tex, qbool mipmap))
+void R_TextureModeForEach(void(*func)(texture_ref tex, qbool mipmap, qbool viewmodel))
 {
 	int i;
 	gltexture_t* glt;
@@ -210,7 +210,7 @@ void R_TextureModeForEach(void(*func)(texture_ref tex, qbool mipmap))
 						// for example charset which rather controlled by gl_smoothfont.
 		}
 
-		func(glt->reference, glt->texmode & TEX_MIPMAP);
+		func(glt->reference, glt->texmode & TEX_MIPMAP, glt->texmode & TEX_VIEWMODEL);
 	}
 }
 

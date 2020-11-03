@@ -91,7 +91,8 @@ static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, te
 		return texnum;
 	}
 
-	texmode |= (loadmodel->modhint != MOD_VMODEL || gl_mipmap_viewmodels.integer) ? TEX_MIPMAP : 0;
+	texmode |= TEX_MIPMAP;
+	texmode |= (loadmodel->modhint == MOD_VMODEL ? TEX_VIEWMODEL : 0);
 	texmode |= (!gl_scaleModelTextures.value ? TEX_NOSCALE : 0);
 	luma_texmode = texmode | TEX_FULLBRIGHT | TEX_ALPHA | TEX_LUMA;
 
@@ -154,7 +155,8 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 
 	COM_StripExtension(COM_SkipPath(loadmodel->name), basename, sizeof(basename));
 
-	texmode |= (loadmodel->modhint != MOD_VMODEL || gl_mipmap_viewmodels.integer) ? TEX_MIPMAP : 0;
+	texmode |= TEX_MIPMAP;
+	texmode |= (loadmodel->modhint == MOD_VMODEL ? TEX_VIEWMODEL : 0);
 	texmode |= (!gl_scaleModelTextures.value && !loadmodel->isworldmodel) ? TEX_NOSCALE : 0;
 
 	for (i = 0; i < numskins; i++) {
@@ -165,6 +167,7 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 			if (loadmodel->modhint == MOD_PLAYER) {
 				if (s > sizeof(player_8bit_texels)) {
 					Host_Error("Mod_LoadAllSkins: Player skin too large (model %s)", loadmodel->name);
+					return NULL;
 				}
 				memcpy(player_8bit_texels, (byte *)(pskintype + 1), s);
 			}

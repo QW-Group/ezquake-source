@@ -36,6 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TEX_ZERO_ALPHA      (1<<11) // after pre-multiplying alpha, set alpha to 0 (additive blending)
 #define TEX_MERGED_LUMA     (1<<12) // alpha channel signifies luma %
 #define TEX_FLOAT           (1<<13) // floating point texture format
+#define TEX_VIEWMODEL       (1<<14) // use viewmodel texture mode, not normal
 
 #define MAX_GLTEXTURES 8192	//dimman: old value 1024 isn't enough when using high framecount sprites (according to Spike)
 #define MAX_CHARSETS 256
@@ -91,7 +92,7 @@ extern texture_api_t textures;
 
 void R_Texture_Init(void);
 
-void R_TextureAnisotropyChanged(texture_ref tex, qbool mipmap);
+void R_TextureAnisotropyChanged(texture_ref tex, qbool mipmap, qbool viewmodel);
 
 mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
 byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
@@ -128,7 +129,7 @@ void R_TextureSizeRoundUp(int orig_width, int orig_height, int* width, int* heig
 const char* R_TextureIdentifier(texture_ref ref);
 #endif
 
-extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_scaleModelSimpleTextures, gl_miptexLevel, gl_mipmap_viewmodels, gl_scaleskytextures;
+extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_scaleModelSimpleTextures, gl_miptexLevel, gl_scaleskytextures;
 extern cvar_t gl_no24bit;
 extern texture_ref underwatertexture, detailtexture, solidwhite_texture, solidblack_texture, transparent_texture;
 

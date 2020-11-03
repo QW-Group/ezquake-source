@@ -4877,23 +4877,6 @@
       "group-id": "50",
       "type": "float"
     },
-    "gl_mipmap_viewmodels": {
-      "default": "0",
-      "desc": "Toggles mipmapping of viewmodel (weapon) textures.",
-      "group-id": "54",
-      "remarks": "The color of muzzle flash can bleed onto the edges of weapon textures if this option is enabled.",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Don't mipmap weapon textures",
-          "name": "false"
-        },
-        {
-          "description": "Mipmap weapon textures",
-          "name": "true"
-        }
-      ]
-    },
     "gl_miptexLevel": {
       "default": "0",
       "desc": "It is essentially a GL 'equivalent' to d_mipcap in software.  It has no affect when loading external 24bit textures.",
@@ -5804,6 +5787,38 @@
       ]
     },
     "gl_texturemode": {
+      "default": "GL_LINEAR_MIPMAP_LINEAR",
+      "group-id": "50",
+      "remarks": "GL_NEAREST* modes are often used with gl_miptexlevel 3",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Linear filtering, no blending.",
+          "name": "GL_LINEAR"
+        },
+        {
+          "description": "Trilinear interpolation. Highest quality, lowest performance.",
+          "name": "GL_LINEAR_MIPMAP_LINEAR"
+        },
+        {
+          "description": "Bilinear interpolation.",
+          "name": "GL_LINEAR_MIPMAP_NEAREST"
+        },
+        {
+          "description": "Point sampled (software-like). Lowest quality, highest performance.",
+          "name": "GL_NEAREST"
+        },
+        {
+          "description": "GL_NEAREST but with even more quality for far objects.",
+          "name": "GL_NEAREST_MIPMAP_LINEAR"
+        },
+        {
+          "description": "GL_NEAREST but with a bit more quality for far objects.",
+          "name": "GL_NEAREST_MIPMAP_NEAREST"
+        }
+      ]
+    },
+    "gl_texturemode_viewmodels": {
       "default": "GL_LINEAR_MIPMAP_LINEAR",
       "group-id": "50",
       "remarks": "GL_NEAREST* modes are often used with gl_miptexlevel 3",

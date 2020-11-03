@@ -63,6 +63,7 @@
 - `/cl_username` & `/authenticate` to support optional logins via badplace.eu (see [guide](https://github.com/ezQuake/ezquake-source/wiki/Authentication))
 - `/enemyforceskins 1` will search for player names in lower case (#345)
 - `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
+` `/gl_mipmap_viewmodels` removed, replaced with `/gl_texturemode_viewmodels`
 - `/hud_clock_content 1` changes output to show the uptime of the client
 - `/in_ignore_touch_events` added - allows mouse clicks from touch input devices
 - `/menu_botmatch_gamedir` added - allows packages to customise the directory when starting a bot match
