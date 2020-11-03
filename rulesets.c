@@ -162,7 +162,7 @@ qbool Rulesets_RestrictSound(const char* name)
 
 qbool Rulesets_RestrictPacket(void)
 {
-	return !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictPacket;
+	return cls.state == ca_active && !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictPacket;
 }
 
 qbool Rulesets_RestrictParticles(void)

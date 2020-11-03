@@ -29,6 +29,7 @@
 - `/gl_outline 2` fixed (3.5 bug, reported by fourier)
 - `/gl_shaftlight 0` fixed on glsl path in classic renderer (3.5 bug, reported by maniac)
 - `/r_dynamic 2` was calculating too many lightmaps (3.5 bug, reported by ciscon)
+- `/packet` command is now only blocked when active on server (old bug)
 - Fixed bug causing read-only file handle to config being kept open, preventing backup from being taken (old bug)
 - Fixed bug causing MVD-stats code to cause `/tp_loadloc` to effectively always be forced to 1 (old bug)
 - Fixed bug causing multiple item timers to spawn when using `/demo_jump` (3.2 bug, reported by Milton)

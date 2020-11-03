@@ -402,7 +402,7 @@ void CL_Packet_f(void) {
 	}
 
 	if (cbuf_current && cbuf_current != &cbuf_svc && Rulesets_RestrictPacket()) {
-		Com_Printf("Packet commands is disabled during match\n");
+		Com_Printf("Packet command is disabled during match\n");
 		return;
 	}
 
@@ -418,7 +418,6 @@ void CL_Packet_f(void) {
 
 	in = Cmd_Argv(2);
 	out = send + 4;
-
 
 	while (*in && out - send < sizeof(send) - 2) {
 		if (in[0] == '\\' && in[1]) {
