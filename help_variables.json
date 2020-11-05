@@ -17781,6 +17781,16 @@
         }
       ]
     },
+    "scr_sbar_drawarmor666": {
+      "group-id": "47",
+      "desc": "Turns on/off drawing of armor as 666 when holding pent.",
+      "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
+      "type": "boolean",
+      "values": [
+        { "name": "false", "description": "Do not draw armor as 666 and instead draw current armor value." },
+        { "name": "true", "description": "Draw armor as 666." }
+      ]
+    },
     "scr_sbar_drawarmoricon": {
       "default": "1",
       "desc": "Turns drawing of armor icon on/off.",
