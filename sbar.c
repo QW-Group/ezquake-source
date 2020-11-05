@@ -75,6 +75,7 @@ cvar_t  sbar_drawitems      = {"scr_sbar_drawitems",        "1"};
 cvar_t  sbar_drawsigils     = {"scr_sbar_drawsigils",       "1"};
 cvar_t  sbar_drawhealth     = {"scr_sbar_drawhealth",       "1"};
 cvar_t  sbar_drawarmor      = {"scr_sbar_drawarmor",        "1"};
+cvar_t  sbar_drawarmor666   = {"scr_sbar_drawarmor666",     "1"};
 cvar_t  sbar_drawammo       = {"scr_sbar_drawammo",         "1"};
 cvar_t  sbar_lowammo        = {"scr_sbar_lowammo",          "5"};
 
@@ -296,6 +297,7 @@ void Sbar_Init(void)
 	Cvar_Register(&sbar_drawsigils);
 	Cvar_Register(&sbar_drawhealth);
 	Cvar_Register(&sbar_drawarmor);
+	Cvar_Register(&sbar_drawarmor666);
 	Cvar_Register(&sbar_drawammo);
 	Cvar_Register(&sbar_lowammo);
 	Cvar_Register(&hud_centerranking);
@@ -1000,7 +1002,7 @@ static void Sbar_DrawNormal (void)
 		Sbar_DrawPic (0, 0, sb_sbar);
 
 	// armor
-	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)	{
+	if ((cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) && sbar_drawarmor666.value)	{
 		if (sbar_drawarmor.value)
 			Sbar_DrawNum (24, 0, 666, 3, 1);
 		if (sbar_drawarmoricon.value)
@@ -1060,7 +1062,7 @@ static void Sbar_DrawCompact_WithIcons(void) {
 	old_sbar_xofs = sbar_xofs;
 	sbar_xofs = scr_centerSbar.value ? (vid.width - 158) >> 1: 0;
 
-	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
+	if ((cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) && sbar_drawarmor666.value)
 		Sbar_DrawNum (2, 0, 666, 3, 1);
 	else
 		Sbar_DrawNum (2, 0, cl.stats[STAT_ARMOR], 3, cl.stats[STAT_ARMOR] <= 25);
@@ -1104,7 +1106,7 @@ static void Sbar_DrawCompact(void) {
 	old_sbar_xofs = sbar_xofs;
 	sbar_xofs = scr_centerSbar.value ? (vid.width - 306) >> 1: 0;
 
-	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
+	if ((cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) && sbar_drawarmor666.value)
 		Sbar_DrawNum (2, 0, 666, 3, 1);
 	else
 		Sbar_DrawNum (2, 0, cl.stats[STAT_ARMOR], 3, cl.stats[STAT_ARMOR] <= 25);
@@ -1141,7 +1143,7 @@ static void Sbar_DrawCompact_TF(void) {
 	sbar_xofs = scr_centerSbar.value ? (vid.width - 222) >> 1: 0;
 
 	align = scr_compactHudAlign.value ? 1 : 0;
-	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
+	if ((cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) && sbar_drawarmor666.value)
 		Sbar_DrawNum (2, 0, 666, 3, 1);
 	else
 		Sbar_DrawNum (2, 0, cl.stats[STAT_ARMOR], 3, cl.stats[STAT_ARMOR] <= 25);
@@ -1165,7 +1167,7 @@ static void Sbar_DrawCompact_Bare (void) {
 	old_sbar_xofs = sbar_xofs;
 	sbar_xofs = scr_centerSbar.value ? (vid.width - 158) >> 1: 0;
 
-	if (cl.stats[STAT_ITEMS] & IT_INVULNERABILITY)
+	if ((cl.stats[STAT_ITEMS] & IT_INVULNERABILITY) && sbar_drawarmor666.value)
 		Sbar_DrawNum (2, 0, 666, 3, 1);
 	else
 		Sbar_DrawNum (2, 0, cl.stats[STAT_ARMOR], 3, cl.stats[STAT_ARMOR] <= 25);
