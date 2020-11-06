@@ -235,3 +235,5 @@ void TP_LocFiles_NewMap(void);
 void TP_LocFiles_Shutdown(void);
 
 char *TP_ItemName(int item_flag);
+
+void TP_AutoShowNick(void);

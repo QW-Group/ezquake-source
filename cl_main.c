@@ -2545,6 +2545,8 @@ void CL_Frame(double time)
 	R_ParticleEndFrame();
 
 	CL_UpdateCaption(false);
+
+	TP_AutoShowNick();
 }
 
 //============================================================================
