@@ -2137,88 +2137,126 @@ void DumpFlagCommands(FILE *f)
 	DumpFlagCommand(f, "tp_point    ", pointflags, default_pointflags);
 }
 
-static void FlagCommand (unsigned int *flags, unsigned int defaultflags)
+static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 {
-	int i, j, c;
+	int i, j, c, offset = 0;
 	unsigned int flag;
-	char *p, str[255] = {0};
+	char* p, str[255] = { 0 };
 	qbool removeflag = false;
 
-	c = Cmd_Argc ();
-	if (c == 1)	{
+	c = Cmd_Argc();
+	if (c == 1) {
 		qbool notfirst = false;
 		if (!*flags)
-			strlcpy (str, "none", sizeof (str));
-		for (i = 0 ; i < NUM_ITEMFLAGS ; i++)
-			if (*flags & (1 << i)) {
-				if (notfirst)
-					Com_Printf(" ");
-					//strlcat (str, " ", sizeof (str) - strlen (str));
+			strlcpy(str, "none", sizeof(str));
 
-				notfirst = true;
-				Com_Printf("%s", pknames[i]);
-				//strlcat (str, pknames[i], sizeof (str) - strlen (str));
+		if (tp_pointpriorities.integer) {
+			int p;
+			for (p = 0; p < NUM_ITEMFLAGS; ++p) {
+				for (i = 0; i < NUM_ITEMFLAGS; i++) {
+					if (pointpriorities[i] == p && (*flags & (1 << i))) {
+						if (notfirst) {
+							Com_Printf(" ");
+						}
+
+						notfirst = true;
+						Com_Printf("%s", pknames[i]);
+					}
+				}
 			}
-		Com_Printf ("\n");
+		}
+		else {
+			for (i = 0; i < NUM_ITEMFLAGS; i++) {
+				if (*flags & (1 << i)) {
+					if (notfirst) {
+						Com_Printf(" ");
+					}
+
+					notfirst = true;
+					Com_Printf("%s", pknames[i]);
+				}
+			}
+		}
+		Com_Printf("\n");
 		return;
 	}
 
 	if (c == 2 && !strcasecmp(Cmd_Argv(1), "none")) {
 		*flags = 0;
+		memset(pointpriorities, 0, sizeof(pointpriorities));
 		return;
 	}
 
-	if (*Cmd_Argv(1) != '+' && *Cmd_Argv(1) != '-')
+	if (*Cmd_Argv(1) != '+' && *Cmd_Argv(1) != '-') {
 		*flags = 0;
+		memset(pointpriorities, 0, sizeof(pointpriorities));
+	}
+	else if (*Cmd_Argv(1) == '+') {
+		for (i = 0; i < NUM_ITEMFLAGS; ++i) {
+			if (*flags & (1 << i)) {
+				++offset;
+			}
+		}
+	}
 
 	for (i = 1; i < c; i++) {
-		p = Cmd_Argv (i);
+		p = Cmd_Argv(i);
 		if (*p == '+') {
 			removeflag = false;
 			p++;
-		} else if (*p == '-') {
+		}
+		else if (*p == '-') {
 			removeflag = true;
 			p++;
 		}
 
 		flag = 0;
-		for (j=0 ; j<NUM_ITEMFLAGS ; j++) {
-			if (!strcasecmp (p, pknames[j])) {
-				flag = 1<<j;
+		for (j = 0; j < NUM_ITEMFLAGS; j++) {
+			if (!strcasecmp(p, pknames[j])) {
+				flag = 1 << j;
 				break;
 			}
 		}
 
 		if (!flag) {
-			if (!strcasecmp (p, "armor"))
+			if (!strcasecmp(p, "armor"))
 				flag = it_armor;
-			else if (!strcasecmp (p, "weapons"))
+			else if (!strcasecmp(p, "weapons"))
 				flag = it_weapons;
-			else if (!strcasecmp (p, "powerups"))
+			else if (!strcasecmp(p, "powerups"))
 				flag = it_powerups;
-			else if (!strcasecmp (p, "ammo"))
+			else if (!strcasecmp(p, "ammo"))
 				flag = it_ammo;
-			else if (!strcasecmp (p, "players"))
+			else if (!strcasecmp(p, "players"))
 				flag = it_players;
-			else if (!strcasecmp (p, "default"))
+			else if (!strcasecmp(p, "default"))
 				flag = defaultflags;
-			else if (!strcasecmp (p, "runes"))
+			else if (!strcasecmp(p, "runes"))
 				flag = it_runes;
-			else if (!strcasecmp (p, "all"))
+			else if (!strcasecmp(p, "all"))
 				flag = UINT_MAX; //(1 << NUM_ITEMFLAGS); //-1;
 		}
 
+		if (flags != &pointflags) {
+			flag &= ~(it_sentry | it_disp | it_players);
+		}
 
-		if (flags != &pointflags)
-			flag &= ~(it_sentry|it_disp|it_players);
-
-		if (removeflag)
+		if (removeflag) {
 			*flags &= ~flag;
-		else {
+
+			for (j = 1; j <= NUM_ITEMFLAGS; j++) {
+				if (flag & (1 << (j - 1))) {
+					pointpriorities[j - 1] = 0;
+				}
+			}
+		}
+		else if (flag) {
 			*flags |= flag;
-			for (j = 1; j < NUM_ITEMFLAGS; j++) {
-				if (flag & (1 << (j-1)))
-					pointpriorities[j] = i;
+
+			for (j = 1; j <= NUM_ITEMFLAGS; j++) {
+				if (flag & (1 << (j - 1))) {
+					pointpriorities[j - 1] = i + offset;
+				}
 			}
 		}
 	}

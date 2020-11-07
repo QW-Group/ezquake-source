@@ -78,6 +78,7 @@
 - `/scr_scoreboard_login_color` controls the color of a player's name when they are logged in
 - `/timedemo` commands show extra info at end to try and highlight stutter (measuring worst frametimes)
 - `/timedemo2` command renders demo in stop-motion at a particular fps
+- `/tp_point` will show targets in priority order, if `/tp_pointpriorities` is enabled
 - `/vid_framebuffer_smooth` controls linear or nearest filtering (thanks to Calinou)
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
 - `-oldgamma` command line option to re-instate old `-gamma` behaviour
