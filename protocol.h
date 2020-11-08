@@ -96,9 +96,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //=========================================
 
-#define	PORT_CLIENT	27001
-#define	PORT_MASTER	27000
-#define	PORT_SERVER	27500
+// #define PORT_CLIENT  27001   // now a cvar in net.c (/cl_net_clientport)
+#define PORT_MASTER  27000
+#define PORT_SERVER  27500
 #define PORT_QUAKETV 27900
 
 //=========================================

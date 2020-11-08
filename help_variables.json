@@ -2017,6 +2017,13 @@
         }
       ]
     },
+    "cl_net_clientport": {
+      "default": "27001",
+      "desc": "The UDP port opened by the client for communication with the server.",
+      "group-id": "21",
+      "remarks": "Can set to 0 to use a dynamically allocated port",
+      "type": "integer"
+    },
     "cl_newlerp": {
       "default": "0",
       "desc": "Experimental rockets/grenades/spikes smoothing code.\nDefault value 0.1 means: use 90% of our 'vision' and 10% of server 'vision'. Should be OK for most case, but floating ping (see remarks)",
@@ -17791,8 +17798,14 @@
       "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
       "type": "boolean",
       "values": [
-        { "name": "false", "description": "Do not draw armor as 666 and instead draw current armor value." },
-        { "name": "true", "description": "Draw armor as 666." }
+        {
+          "name": "false",
+          "description": "Do not draw armor as 666 and instead draw current armor value."
+        },
+        {
+          "name": "true",
+          "description": "Draw armor as 666."
+        }
       ]
     },
     "scr_sbar_drawarmoricon": {

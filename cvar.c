@@ -211,6 +211,7 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 		qbool cancel = false;
 
 		changing = true;
+		var->flags &= ~(CVAR_AUTOSETRECENT);
 		var->OnChange(var, value, &cancel);
 		changing = false;
 
@@ -237,9 +238,10 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 	else {
 		StringToRGB_W(var->string, var->color);
 	}
-	if (!same_value) {
+	if (!same_value && !(var->flags & CVAR_AUTOSETRECENT)) {
 		Cvar_AutoReset (var);
 	}
+	var->flags &= ~(CVAR_AUTOSETRECENT);
 	var->modified = true;
 #endif
 
@@ -977,6 +979,7 @@ void Cvar_AutoSet(cvar_t *var, char *value)
 	Q_free(var->autoString);
 
 	var->autoString = Q_strdup(value);
+	var->flags |= CVAR_AUTOSETRECENT;
 }
 
 void Cvar_AutoSetInt(cvar_t *var, int value)
@@ -992,6 +995,7 @@ void Cvar_AutoSetInt(cvar_t *var, int value)
 	snprintf(&val[0], sizeof(val), "%d", value);
 
 	var->autoString = Q_strdup_named(val, var->name);
+	var->flags |= CVAR_AUTOSETRECENT;
 }
 
 void Cvar_AutoReset(cvar_t *var)

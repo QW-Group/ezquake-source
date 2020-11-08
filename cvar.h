@@ -48,6 +48,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_RECOMPILE_PROGS (1<<16) // Flag all programs to be recompiled if the value changes
 #define CVAR_TRACKERCOLOR    (1<<17) // Convert the string from tracker format (0-9)(0-9)(0-9)
 #define CVAR_QUEUED_TRIGGER  (1<<18) // Found in config and then registered...
+#define CVAR_AUTOSETRECENT   (1<<19) // Ugh... temporary flag so Cvar_SetEx() knows if auto-value set during on-change event
 
 typedef struct cvar_s {
 	char    *name;

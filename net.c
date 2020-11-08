@@ -37,6 +37,9 @@ WSADATA winsockdata;
 netadr_t	net_local_cl_ipadr;
 
 void NET_CloseClient (void);
+
+static void cl_net_clientport_changed(cvar_t* var, char* value, qbool* cancel);
+static cvar_t cl_net_clientport = { "cl_net_clientport", "27001", CVAR_AUTO, cl_net_clientport_changed };  // Was PORT_CLIENT in protocol.h
 #endif
 
 #ifndef CLIENTONLY
@@ -1275,6 +1278,8 @@ void NET_Init (void)
 // TCPCONNECT -->
 	cls.sockettcp = INVALID_SOCKET;
 // <--TCPCONNECT
+
+	Cvar_Register(&cl_net_clientport);
 #endif
 
 #ifndef CLIENTONLY
@@ -1309,32 +1314,113 @@ void NET_Shutdown (void)
 }
 
 #ifndef SERVERONLY
-void NET_InitClient(void)
+static void cl_net_clientport_changed(cvar_t* var, char* value, qbool* cancel)
 {
-	int port = PORT_CLIENT;
-	int p;
+	int new_socket = INVALID_SOCKET;
+	int new_port = atoi(value);
+	qbool set_auto = false;
 
-	p = COM_CheckParm (cmdline_param_net_clientport);
-	if (p && p < COM_Argc()) {
-		port = atoi(COM_Argv(p+1));
+	// No change
+	if (new_port == var->integer) {
+		*cancel = true;
+		return;
 	}
 
-	if (cls.socketip == INVALID_SOCKET)
-		cls.socketip = UDP_OpenSocket (port);
+#ifndef CLIENTONLY
+	// FIXME: Technically this could be changed on the command line or dynamically allocated
+	//        no damage done if they do this when disconnected 
+	if (new_port == PORT_SERVER) {
+		*cancel = true;
+		Con_Printf("Port %i is reserved for the internal server.\n", new_port);
+		return;
+	}
+#endif
 
-	if (cls.socketip == INVALID_SOCKET)
-		cls.socketip = UDP_OpenSocket (PORT_ANY); // any dynamic port
+	// In theory you could be connected to mvd...
+	if (cls.state != ca_disconnected) {
+		Con_Printf("You must be disconnected to change %s.\n", var->name);
+		*cancel = true;
+		return;
+	}
 
-	if (cls.socketip == INVALID_SOCKET)
-		Sys_Error ("Couldn't allocate client socket");
+	if (new_port > 0) {
+		new_socket = UDP_OpenSocket(new_port);
+
+		if (new_socket == INVALID_SOCKET) {
+			Con_Printf("Unable to open new socket on port %d\n", new_port);
+			*cancel = true;
+			return;
+		}
+	}
+	if (new_socket == INVALID_SOCKET) {
+		new_socket = UDP_OpenSocket(PORT_ANY);
+		set_auto = true;
+	}
+	
+	if (new_socket == INVALID_SOCKET) {
+		Con_Printf("Unable to open new socket\n");
+		*cancel = true;
+		return;
+	}
+
+	if (cls.socketip != INVALID_SOCKET) {
+		closesocket(cls.socketip);
+	}
+
+	cls.socketip = new_socket;
+	NET_GetLocalAddress(cls.socketip, &net_local_cl_ipadr);
+	if (set_auto) {
+		Com_Printf("Client port allocated: %i\n", ntohs(net_local_cl_ipadr.port));
+		Cvar_AutoSetInt(var, ntohs(net_local_cl_ipadr.port));
+	}
+	else {
+		Cvar_AutoReset(var);
+	}
+}
+
+// This is called after config loaded
+void NET_InitClient(void)
+{
+	int port = cl_net_clientport.integer;
+	qbool set_auto = false;
+	qbool set = (cls.socketip == INVALID_SOCKET);
+	int p;
+
+	// Allow user to override the config file
+	p = COM_CheckParm(cmdline_param_net_clientport);
+	if (p && p < COM_Argc()) {
+		port = atoi(COM_Argv(p + 1));
+		set_auto = true;
+	}
+
+	if (cls.socketip == INVALID_SOCKET && port > 0)
+		cls.socketip = UDP_OpenSocket(port);
+
+	if (cls.socketip == INVALID_SOCKET) {
+		cls.socketip = UDP_OpenSocket(PORT_ANY); // any dynamic port
+		set_auto = true;
+	}
+
+	if (cls.socketip == INVALID_SOCKET) {
+		Sys_Error("Couldn't allocate client socket");
+		return;
+	}
 
 	// init the message buffer
-	SZ_Init (&net_message, net_message_buffer, sizeof(net_message_buffer));
+	SZ_Init(&net_message, net_message_buffer, sizeof(net_message_buffer));
 
 	// determine my name & address
-	NET_GetLocalAddress (cls.socketip, &net_local_cl_ipadr);
+	NET_GetLocalAddress(cls.socketip, &net_local_cl_ipadr);
+	if (set) {
+		if (set_auto) {
+			Cvar_AutoSetInt(&cl_net_clientport, ntohs(net_local_cl_ipadr.port));
+		}
+		else {
+			Cvar_AutoReset(&cl_net_clientport);
+		}
+	}
 
-	Com_Printf_State (PRINT_OK, "Client port Initialized\n");
+	Com_Printf_State(PRINT_OK, "Client port initialized: %i\n", ntohs(net_local_cl_ipadr.port));
 }
 
 void NET_CloseClient (void)
