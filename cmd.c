@@ -1456,19 +1456,29 @@ char *Cmd_MacroString (const char* s, int *macro_length)
 {
 	int i;
 	macro_command_t	*macro;
+	int best = -1;
+	int best_length = -1;
 
 	*macro_length = 0;
 	for (i = 0; i < num_macros; i++) {
 		macro = &macro_commands[i];
 		if (macro->func) {
-			if (!strncasecmp(s, macro->name, strlen(macro->name))) {
-				if (cbuf_current == &cbuf_main && (macro->teamplay == MACRO_DISALLOWED)) {
-					cbuf_current = &cbuf_formatted_comms;
+			int name_length = strlen(macro->name);
+			if (!strncasecmp(s, macro->name, name_length)) {
+				if (best_length == -1 || best_length < name_length) {
+					best = i;
+					best_length = name_length;
 				}
-				*macro_length = strlen(macro->name);
-				return macro->func();
 			}
 		}
+	}
+
+	if (best >= 0) {
+		if (cbuf_current == &cbuf_main && (macro->teamplay == MACRO_DISALLOWED)) {
+			cbuf_current = &cbuf_formatted_comms;
+		}
+		*macro_length = best_length;
+		return macro_commands[best].func();
 	}
 
 	return NULL;

@@ -485,7 +485,18 @@ char *Macro_Date (void)
 	return macro_buf;
 }
 
+char* Macro_TimeStamp(void)
+{
+	time_t t;
+	struct tm* ptm;
 
+	time(&t);
+	if (!(ptm = localtime(&t)))
+		return "_baddate_";
+
+	strftime(macro_buf, sizeof(macro_buf) - 1, "%Y%m%d-%H%M%S", ptm);
+	return macro_buf;
+}
 
 // returns the last item picked up
 char *Macro_Took (void)
@@ -1158,6 +1169,7 @@ void TP_AddMacros(void)
 	Cmd_AddMacro(macro_qt, Macro_Quote_f);
 	Cmd_AddMacro(macro_latency, Macro_Latency);
 	Cmd_AddMacro(macro_ping, Macro_Latency);
+	Cmd_AddMacro(macro_timestamp, Macro_TimeStamp);
 	Cmd_AddMacro(macro_time, Macro_Time);
 	Cmd_AddMacro(macro_date, Macro_Date);
 
