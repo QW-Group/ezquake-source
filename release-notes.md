@@ -56,6 +56,7 @@
 ### Other changes
 
 - `/cfg_backup` will now not save the config if backup cannot be taken
+- `/cfg_save` will now accept subdirectories (e.g. `/cfg_save backups/test1.cfg`)  Absolute paths are still blocked.
 - `/cl_keypad 1` - keypad works as cursor keys in menu
 - `/cl_keypad 2` - keypad will behave as `/cl_keypad 0` in-game, but `/cl_keypad 1` in console etc
 - `/cl_pext_serversideweapon` - protocol extension to move weapon selection to server (requires updated mvdsv)
@@ -93,6 +94,7 @@
 - Added hud element 'frametime', similar to fps but measuring (max) frametime
 - Changed file-handling when viewing demos from within .zip|.gz to reduce temporary files being left on hard drive
 - PNG warning messages now printed to console rather than stdout
+- Added macro $timestamp, which is in format YYYYMMDD-hhmmss
 
 ### Build/meta
 

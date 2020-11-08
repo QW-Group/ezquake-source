@@ -924,10 +924,15 @@ void DumpHUD(const char *name)
 
 extern qbool filesystemchanged; // fix bug 2359900
 
-void SaveConfig(const char *cfgname)
+static void SaveConfig(const char *cfgname)
 {
 	char filename[MAX_PATH] = {0};
 	FILE *f;
+
+	if (cfgname[0] && FS_UnsafeFilename(cfgname)) {
+		Con_Printf("Invalid/unsafe filename, config not saved.\n");
+		return;
+	}
 
 	snprintf(filename, sizeof(filename) - 4, "%s", cfgname[0] ? cfgname : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
@@ -966,7 +971,7 @@ void SaveConfig(const char *cfgname)
 
 void SaveConfig_f(void)
 {
-	SaveConfig(COM_SkipPath(Cmd_Argv(1)));
+	SaveConfig(Cmd_Argv(1));
 }
 
 void Config_QuitSave(void)
