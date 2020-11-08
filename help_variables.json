@@ -2888,7 +2888,7 @@
       "desc": "Choose different window caption formats for your taskbar when you play in windowed mode or when the client is minimized in the taskbar.",
       "group-id": "40",
       "remarks": "The caption doesn't refresh regularly on some configurations. We recommend to use vid_flashonactivity 1 as well.",
-      "type": "boolean",
+      "type": "enum",
       "values": [
         {
           "description": "Format: ezQuake: address",
@@ -2897,6 +2897,10 @@
         {
           "description": "Format: <server state> - pl: <number of players> - <map>",
           "name": "1"
+        },
+        {
+          "description": "Fixed: ezQuake",
+          "name": "2"
         }
       ]
     },

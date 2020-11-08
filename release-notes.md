@@ -61,6 +61,7 @@
 - `/cl_pext_serversideweapon` - protocol extension to move weapon selection to server (requires updated mvdsv)
 - `/cl_weaponforgetondeath` - resets weapon to shotgun when respawning
 - '/cl_weaponforgetorder 2' - sets the best weapon then falls back to sg or axe (as per `/cl_weaponhide_axe`)
+- `/cl_window_caption 2` - window title will be 'ezQuake' and will not change with connection status
 - `/cl_username` & `/authenticate` to support optional logins via badplace.eu (see [guide](https://github.com/ezQuake/ezquake-source/wiki/Authentication))
 - `/enemyforceskins 1` will search for player names in lower case (#345)
 - `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress

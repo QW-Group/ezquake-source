@@ -2640,23 +2640,25 @@ void CL_Shutdown (void)
 
 void CL_UpdateCaption(qbool force)
 {
-	static char caption[512] = {0};
-	char str[512] = {0};
+	static char caption[512] = { 0 };
+	char str[512] = { 0 };
 
-	if (!cl_window_caption.value)
-	{
-		if (!cls.demoplayback && (cls.state == ca_active))
+	if (!cl_window_caption.value) {
+		if (!cls.demoplayback && (cls.state == ca_active)) {
 			snprintf(str, sizeof(str), "ezQuake: %s", cls.servername);
-		else
+		}
+		else {
 			snprintf(str, sizeof(str), "ezQuake");
+		}
 	}
-	else
-	{
+	else if (cl_window_caption.integer == 1) {
 		snprintf(str, sizeof(str), "%s - %s", CL_Macro_Serverstatus(), MT_ShortStatus());
 	}
+	else if (cl_window_caption.integer == 2) {
+		snprintf(str, sizeof(str), "ezQuake");
+	}
 
-	if (force || strcmp(str, caption))
-	{
+	if (force || strcmp(str, caption)) {
 		VID_SetCaption(str);
 		strlcpy(caption, str, sizeof(caption));
 	}
