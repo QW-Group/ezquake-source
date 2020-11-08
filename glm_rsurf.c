@@ -880,6 +880,10 @@ static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall)
 		int sampler = drawcall->mappings[mappingIndex].samplerIndex;
 
 		thisReq->nonDynamicSampler = sampler;
+
+		if (thisReq->polygonOffset && drawcall->polygonOffsetSplit > i) {
+			drawcall->polygonOffsetSplit = i;
+		}
 	}
 
 	qsort(drawcall->worldmodel_requests, drawcall->batch_count, sizeof(drawcall->worldmodel_requests[0]), GL_DrawCallComparison);

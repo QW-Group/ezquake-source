@@ -44,6 +44,7 @@
 - Fixed bug causing crash to desktop if invalid .png found (now be told of path before terminating, still not great) (old bug, #317)
 - Fixed bug causing keypad binds to be executed in console when `/cl_keypad 1` set, also enter key is treated as return in console (#319, 3.2 bug)
 - Fixed bug causing mouse wheel start & stop events to be fired in the same frame (3.x bug, #200)
+- Fixed bug causing `/gl_brush_polygonoffset` not to work in modern-glsl renderer (3.5 bug, #404)
 
 ### Ruleset-related changes
 
