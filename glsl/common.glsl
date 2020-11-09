@@ -44,7 +44,7 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	float r_lerpmodels;
 
 	// powerup shells round alias models
-	float shellSize;
+	float shellSize_unused;               // Replace
 	float shell_base_level1;
 	float shell_base_level2;
 	float shell_effect_level1;
