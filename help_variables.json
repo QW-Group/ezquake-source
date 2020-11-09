@@ -14467,16 +14467,20 @@
       "default": "1",
       "desc": "Enables balancing of the buffer length of the QTV stream. When turned on, the size of the stream buffer (the delay from the actual action) will be auto-adjusted (by changing the playback speed when necessary) so that it stays on the same level most of the time.",
       "group-id": "38",
-      "remarks": "When turned on, the speed of the playback may change sometimes - that's how the buffer length is balanced. But usually you want to have this turned on when you are watching a shoutcast-commentated game because you want to stay synchronized with the commentary.",
-      "type": "boolean",
+      "remarks": "When turned on, the speed of the playback may change sometimes - that's how the buffer length is balanced. But usually you want to have this turned on when you are watching a shoutcast-commentated game because you want to stay synchronized with the commentary.\nSee qtv_buffer hud element for monitoring",
+      "type": "enum",
       "values": [
         {
           "description": "Do not adjust buffer size, always play at 100% speed",
-          "name": "false"
+          "name": "0"
         },
         {
-          "description": "Auto-adjust buffer size",
-          "name": "true"
+          "description": "Auto-adjust buffer size, to stay within % of total buffer length (see /qtv_buffertime, /qtv_adjustlowstart, /qtv_adjusthighstart)",
+          "name": "1"
+        },
+        {
+          "description": "Auto-adjust buffer size, to stay close to total buffer length (see /qtv_buffertime)",
+          "name": "2"
         }
       ]
     },
@@ -14550,7 +14554,7 @@
       "type": "float",
       "values": [
         {
-          "description": "in seconds, values below 0.2 are treated as 0.2",
+          "description": "in seconds, values below 0.5 are treated as 0.5",
           "name": "*"
         }
       ]
@@ -14602,6 +14606,19 @@
       "desc": "Number of seconds to wait before timing out a pending QTV connection.",
       "group-id": "43",
       "type": "float"
+    },
+    "qtv_prebuffertime": {
+      "default": "0",
+      "desc": "Number of seconds to buffer before starting playback from QTV, or 0 to use /qtv_buffertime",
+      "group-id": "38",
+      "remarks": "See /qtv_buffertime",
+      "type": "float",
+      "values": [
+        {
+          "description": "in seconds, values below 0.5 are treated as 0.5",
+          "name": "*"
+        }
+      ]
     },
     "qtv_say_team": {
       "default": "0",

@@ -1540,12 +1540,12 @@ void CL_RecordMvd_f(void)
 //								DEMO READING
 //=============================================================================
 
-vfsfile_t *playbackfile = NULL;			// The demo file used for playback.
-float demo_time_length = 0;				// The length of the demo.
+vfsfile_t *playbackfile = NULL;         // The demo file used for playback.
+float demo_time_length = 0;             // The length of the demo.
 
-unsigned char pb_buf[1024*32];			// Playback buffer.
-int		pb_cnt = 0;						// How many bytes we've have in playback buffer.
-qbool	pb_eof = false;					// Have we reached the end of the playback buffer?
+unsigned char pb_buf[1024*256];         // Playback buffer.
+int     pb_cnt = 0;                     // How many bytes we've have in playback buffer.
+qbool   pb_eof = false;                 // Have we reached the end of the playback buffer?
 
 //
 // Inits the demo playback buffer.
@@ -1646,7 +1646,7 @@ qbool pb_ensure(void)
 	// Set the buffering time if it hasn't been set already.
 	if (cls.mvdplayback == QTV_PLAYBACK && !bufferingtime && !cls.qtv_donotbuffer)
 	{
-		double prebufferseconds = QTVBUFFERTIME;
+		double prebufferseconds = QTVPREBUFFERTIME;
 
 		bufferingtime = Sys_DoubleTime() + prebufferseconds;
 
@@ -5077,12 +5077,17 @@ double Demo_GetSpeed(void)
 	return bound(0, cl_demospeed.value, 20);
 }
 
+qbool qtv_playback_paused;
+
 void Demo_AdjustSpeed(void)
 {
-	if (cls.mvdplayback == QTV_PLAYBACK)
-	{
-		if (qtv_adjustbuffer.integer)
-		{
+	if (cls.mvdplayback == QTV_PLAYBACK) {
+		if (qtv_playback_paused) {
+			qtv_demospeed = 0;
+			return;
+		}
+
+		if (qtv_adjustbuffer.integer) {
 			extern	unsigned char pb_buf[];
 			extern	int		pb_cnt;
 
@@ -5094,12 +5099,38 @@ void Demo_AdjustSpeed(void)
 			desired = max(0.5, QTVBUFFERTIME); // well, we need some reserve for adjusting
 			current = 0.001 * ms;
 
-			// qqshka: this is linear version
-			demospeed = current / desired;
+			// adjustbuffer 1 (original): adjustments are made based on % of buffer filled
+			if (qtv_adjustbuffer.integer == 1) {
+				// qqshka: this is linear version
+				demospeed = current / desired;
 
-			// if you unwilling constant speed change, then you can set range with qtv_adjustlowstart and qtv_adjusthighstart
-			if (demospeed > bound(0, qtv_adjustlowstart.value, 1) && demospeed < max(1, qtv_adjusthighstart.value))
-				demospeed = 1;
+				// if you unwilling constant speed change, then you can set range with qtv_adjustlowstart and qtv_adjusthighstart
+				if (demospeed > bound(0, qtv_adjustlowstart.value, 1) && demospeed < max(1, qtv_adjusthighstart.value)) {
+					demospeed = 1;
+				}
+			}
+			else if (qtv_adjustbuffer.integer == 2) {
+				// adjustments made to keep within 0.5 seconds of target buffertime
+				float minimum = max(0.5, desired - 0.5);
+				float maximum = minimum + 1.0;
+				float diff;
+
+				current = bound(minimum, current, maximum);
+
+				// Smootherstep
+				if (current < desired) {
+					// Slow down
+					diff = desired - current;
+					diff = diff * diff * diff * (diff * (diff * 6 - 15) + 10);
+					demospeed = 1 - diff;
+				}
+				else {
+					// Speed up
+					diff = current - desired;
+					diff = diff * diff * diff * (diff * (diff * 6 - 15) + 10);
+					demospeed = 1 + diff;
+				}
+			}
 
 			// bound demospeed
 			demospeed = bound(qtv_adjustminspeed.value, demospeed, qtv_adjustmaxspeed.value);

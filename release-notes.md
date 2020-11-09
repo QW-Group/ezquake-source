@@ -73,6 +73,7 @@
 - `/in_ignore_touch_events` added - allows mouse clicks from touch input devices
 - `/menu_botmatch_gamedir` added - allows packages to customise the directory when starting a bot match
 - `/net_tcp_timeout` added - allows timeout period to be set when connecting to QTV etc
+- `/qtv_adjustbuffer 2` added - targets a specific delay period, rather than % of buffer being full
 - `/r_drawflat_mode` allows textures to be shaded rather than solid color (GLSL only)
 - `/register_qwurl_protocol` reports success if run from command line (or rather, run without 'quiet' as 1st argument)
 - `/r_rockettrail` & `/r_grenadetrail` options requiring QMB particles degrade to '1' if QMB not initialised
@@ -89,6 +90,7 @@
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
 - `-oldgamma` command line option to re-instate old `-gamma` behaviour
 - `-r-trace` command line option in debug build - writes out API calls for each frame to qw/trace/ directory (will kill fps, just for debugging)
+- `+qtv_delay` command, to be used with `/qtv_adjustbuffer 2`... pauses QTV stream.  When released, QTV buffer length set to length of buffer
 - GLSL gamma now supported in classic renderer
 - MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
 - Player LG beams hidden during intermission (no more beams in screenshots)
