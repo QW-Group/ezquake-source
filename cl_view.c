@@ -1031,6 +1031,12 @@ qbool V_PreRenderView(void)
 		r_refdef2.sin_time = sin(r_refdef2.time);
 		r_refdef2.cos_time = cos(r_refdef2.time);
 
+		// scroll parameters for powerup shells
+		r_refdef2.powerup_scroll_params[0] = cos(cl.time * 1.5);
+		r_refdef2.powerup_scroll_params[1] = sin(cl.time * 1.1);
+		r_refdef2.powerup_scroll_params[2] = cos(cl.time * -0.5);
+		r_refdef2.powerup_scroll_params[3] = sin(cl.time * -0.5);
+
 		// restrictions
 		r_refdef2.allow_cheats = cls.demoplayback || (Info_ValueForKey(cl.serverinfo, "*cheats")[0] && com_serveractive);
 		if (cls.demoplayback || cl.spectator) {

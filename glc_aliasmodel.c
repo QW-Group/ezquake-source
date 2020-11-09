@@ -603,14 +603,7 @@ void GLC_SetPowerupShellColor(int layer_no, int effects)
 
 const float* GLC_PowerupShell_ScrollParams(void)
 {
-	static float scroll[4];
-
-	scroll[0] = cos(cl.time * 1.5);
-	scroll[1] = sin(cl.time * 1.1);
-	scroll[2] = cos(cl.time * -0.5);
-	scroll[3] = sin(cl.time * -0.5);
-
-	return scroll;
+	return r_refdef2.powerup_scroll_params;
 }
 
 static void GLC_DrawPowerupShell_Program(entity_t* ent, int pose1, float fraclerp)

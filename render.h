@@ -147,6 +147,8 @@ typedef struct {
 	qbool           drawFlatFloors;
 	qbool           drawFlatWalls;
 	qbool           solidTexTurb;
+
+	float           powerup_scroll_params[4];
 } refdef2_t;
 
 
