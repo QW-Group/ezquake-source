@@ -615,7 +615,6 @@ const float* GLC_PowerupShell_ScrollParams(void)
 
 static void GLC_DrawPowerupShell_Program(entity_t* ent, int pose1, float fraclerp)
 {
-	GLC_StateBeginAliasPowerupShell(ent->renderfx & RF_WEAPONMODEL);
 	if (buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelShellCompile()) {
 		aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(ent->model);
 		int firstVert = ent->model->vbo_start + pose1 * paliashdr->vertsPerPose;
@@ -625,6 +624,8 @@ static void GLC_DrawPowerupShell_Program(entity_t* ent, int pose1, float fracler
 		GLC_PowerupShellColor(1, ent->effects, color2);
 
 		R_ProgramUse(r_program_aliasmodel_shell_glc);
+		GLC_StateBeginAliasPowerupShell(ent->renderfx & RF_WEAPONMODEL);
+		GLC_BindVertexArrayAttributes(vao_aliasmodel);
 		R_ProgramUniform4fv(r_program_uniform_aliasmodel_shell_glc_fsBaseColor1, color1);
 		R_ProgramUniform4fv(r_program_uniform_aliasmodel_shell_glc_fsBaseColor2, color2);
 		R_ProgramUniform4fv(r_program_uniform_aliasmodel_shell_glc_scroll, GLC_PowerupShell_ScrollParams());
@@ -768,6 +769,7 @@ static void GLC_DrawAliasModelShadowDrawCall_Program(entity_t* ent, int pose1, f
 		int firstVert = ent->model->vbo_start + pose1 * paliashdr->vertsPerPose;
 
 		R_ProgramUse(r_program_aliasmodel_shadow_glc);
+		GLC_BindVertexArrayAttributes(vao_aliasmodel);
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_shadow_glc_lerpFraction, lerpfrac);
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_shadow_glc_lheight, lheight);
 		R_ProgramUniform2fv(r_program_uniform_aliasmodel_shadow_glc_shadevector, shadevector);

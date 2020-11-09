@@ -91,6 +91,33 @@ qbool GLC_InitialiseVAOHandling(void)
 
 static glc_attribute_t attributes[MAX_GLC_ATTRIBUTES];
 
+void GLC_BindVertexArrayAttributes(r_vao_id vao)
+{
+	int i;
+	for (i = 0; i < MAX_GLC_ATTRIBUTES; ++i) {
+		glc_va_attribute_t* attr = &vaos[vao].attributes[i];
+
+		if (attr->enabled && R_ProgramInUse() == R_ProgramForAttribute(attr->attr_id)) {
+			GLint location = R_ProgramAttributeLocation(attr->attr_id);
+
+			if (location >= 0) {
+				qglEnableVertexAttribArray(location);
+				qglVertexAttribPointer(location, attr->size, attr->type, attr->normalized ? GL_TRUE : GL_FALSE, attr->stride, attr->pointer);
+				attributes[i].location = location;
+				attributes[i].enabled = true;
+			}
+			else {
+				qglDisableVertexAttribArray(attributes[i].location);
+				attributes[i].enabled = false;
+			}
+		}
+		else {
+			qglDisableVertexAttribArray(attributes[i].location);
+			attributes[i].enabled = false;
+		}
+	}
+}
+
 void GLC_BindVertexArray(r_vao_id vao)
 {
 	glc_va_element* vertexes = &vaos[vao].vertex_array;
