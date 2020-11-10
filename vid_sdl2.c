@@ -886,7 +886,6 @@ static void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_gl_core_profile);
 	Cvar_Register(&vid_framebuffer);
 	Cvar_Register(&vid_software_palette);
-	Cmd_AddLegacyCommand("vid_framebuffer_palette", vid_software_palette.name);
 	Cvar_Register(&vid_framebuffer_depthformat);
 	Cvar_Register(&vid_framebuffer_hdr);
 	Cvar_Register(&vid_framebuffer_smooth);
@@ -1664,6 +1663,7 @@ void VID_RegisterCommands(void)
 		Cmd_AddCommand("vid_restart", VID_Restart_f);
 		Cmd_AddCommand("vid_displaylist", VID_DisplayList_f);
 		Cmd_AddCommand("vid_modelist", VID_ModeList_f);
+		Cmd_AddLegacyCommand("vid_framebuffer_palette", vid_software_palette.name);
 	}
 }
 
