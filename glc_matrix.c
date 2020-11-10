@@ -31,23 +31,24 @@ static qbool glc_pause_updates;
 void GLC_RotateModelview(float angle, float x, float y, float z)
 {
 	if (!glc_pause_updates) {
+		R_TraceLogAPICall("%s()", __FUNCTION__);
 		glMatrixMode(GL_MODELVIEW);
 		glRotatef(angle, x, y, z);
-		R_TraceLogAPICall("GL_RotateModelview()");
 	}
 }
 
 void GLC_IdentityModelview(void)
 {
 	if (!glc_pause_updates) {
+		R_TraceLogAPICall("%s()", __FUNCTION__);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		R_TraceLogAPICall("GL_IdentityModelView(modelview)");
 	}
 }
 
 void GLC_OrthographicProjection(float left, float right, float top, float bottom, float zNear, float zFar)
 {
+	R_TraceLogAPICall("%s()", __FUNCTION__);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(left, right, top, bottom, zNear, zFar);
@@ -55,38 +56,38 @@ void GLC_OrthographicProjection(float left, float right, float top, float bottom
 
 void GLC_IdentityProjectionView(void)
 {
+	R_TraceLogAPICall("%s()", __FUNCTION__);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	R_TraceLogAPICall("GL_Identity(projection)");
 }
 
 void GLC_PopModelviewMatrix(const float* matrix)
 {
+	R_TraceLogAPICall("%s()", __FUNCTION__);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf(matrix);
-	R_TraceLogAPICall("R_PopModelviewMatrix()");
 }
 
 void GLC_PopProjectionMatrix(const float* matrix)
 {
+	R_TraceLogAPICall("%s()", __FUNCTION__);
 	glMatrixMode(GL_PROJECTION);
 	glLoadMatrixf(matrix);
-	R_TraceLogAPICall("R_PopProjectionMatrix()");
 }
 
 void GLC_ScaleModelview(float xScale, float yScale, float zScale)
 {
 	if (!glc_pause_updates) {
+		R_TraceLogAPICall("%s()", __FUNCTION__);
 		glMatrixMode(GL_MODELVIEW);
 		glScalef(xScale, yScale, zScale);
-		R_TraceLogAPICall("GL_ScaleModelviewMatrix()");
 	}
 }
 
 void GLC_Frustum(double left, double right, double bottom, double top, double zNear, double zFar)
 {
+	R_TraceLogAPICall("%s()", __FUNCTION__);
 	glFrustum(left, right, bottom, top, zNear, zFar);
-	R_TraceLogAPICall("glFrustum()");
 }
 
 void GLC_PauseMatrixUpdate(void)
@@ -101,6 +102,7 @@ void GLC_ResumeMatrixUpdate(void)
 
 void GLC_BeginCausticsTextureMatrix(void)
 {
+	R_TraceLogAPICall("%s()", __FUNCTION__);
 	GL_SelectTexture(GL_TEXTURE1);
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
@@ -112,6 +114,7 @@ void GLC_BeginCausticsTextureMatrix(void)
 
 void GLC_EndCausticsTextureMatrix(void)
 {
+	R_TraceLogAPICall("%s()", __FUNCTION__);
 	GL_SelectTexture(GL_TEXTURE1);
 	glMatrixMode(GL_TEXTURE);
 	glLoadIdentity();
@@ -121,17 +124,17 @@ void GLC_EndCausticsTextureMatrix(void)
 void GLC_TranslateModelview(float x, float y, float z)
 {
 	if (!glc_pause_updates) {
+		R_TraceLogAPICall("%s()", __FUNCTION__);
 		glMatrixMode(GL_MODELVIEW);
 		glTranslatef(x, y, z);
-		R_TraceLogAPICall("GL_TranslateModelview()");
 	}
 }
 
 void GLC_LoadModelviewMatrix(void)
 {
+	R_TraceLogAPICall("%s()", __FUNCTION__);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadMatrixf(R_ModelviewMatrix());
-	R_TraceLogAPICall("glLoadMatrixf(modelview)");
 }
 
 #endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

@@ -105,6 +105,8 @@ static void GLC_DrawFlatSkyPoly(glpoly_t* p, qbool texture)
 {
 	int i;
 
+	R_TraceAPI("%s()", __FUNCTION__);
+
 	GLC_Begin(GL_TRIANGLE_STRIP);
 	for (i = 0; i < p->numverts; ++i) {
 		float* v = p->verts[i];
@@ -150,6 +152,7 @@ static void GLC_EmitSkyPolys(msurface_t *fa, skypoly_mode_id mode)
 	int i;
 	vec3_t dir;
 
+	R_TraceAPI("%s()", __FUNCTION__);
 	for (p = fa->polys; p; p = p->next) {
 		GLC_Begin(GL_TRIANGLE_STRIP);
 		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
@@ -170,8 +173,8 @@ static void GLC_EmitSkyPolys(msurface_t *fa, skypoly_mode_id mode)
 
 			switch (mode) {
 				case skypoly_mode_mtex:
-					qglMultiTexCoord2f(GL_TEXTURE0, s, t);
-					qglMultiTexCoord2f(GL_TEXTURE1, ss, tt);
+					GLC_MultiTexCoord2f(GL_TEXTURE0, s, t);
+					GLC_MultiTexCoord2f(GL_TEXTURE1, ss, tt);
 					break;
 				case skypoly_mode_sky:
 					glTexCoord2f(s, t);
@@ -310,6 +313,7 @@ static void GLC_DrawSky_Program(void)
 	skySpeedscale /= 128.0f;
 	skySpeedscale2 /= 128.0f;
 
+	R_TraceAPI("%s()", __FUNCTION__);
 	R_ProgramUse(r_program_sky_glc);
 	R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale, skySpeedscale);
 	R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale2, skySpeedscale2);
@@ -340,6 +344,7 @@ void GLC_DrawSky(void)
 	extern msurface_t *skychain;
 	extern cvar_t gl_program_sky;
 
+	R_TraceAPI("%s()", __FUNCTION__);
 	if (gl_program_sky.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_SkyProgramCompile()) {
 		GLC_DrawSky_Program();
 	}
@@ -354,7 +359,7 @@ void GLC_DrawSky(void)
 		R_ProgramUse(r_program_none);
 		R_ApplyRenderingState(r_state_skybox);
 		renderer.TextureUnitBind(0, skybox_cubeMap);
-		glEnable(GL_TEXTURE_CUBE_MAP);
+		GL_BuiltinProcedure(glEnable, "cap=GL_TEXTURE_CUBE_MAP", GL_TEXTURE_CUBE_MAP);
 
 		for (fa = skychain; fa; fa = fa->texturechain) {
 			glpoly_t *p;
@@ -364,7 +369,7 @@ void GLC_DrawSky(void)
 			}
 		}
 
-		glDisable(GL_TEXTURE_CUBE_MAP);
+		GL_BuiltinProcedure(glDisable, "cap=GL_TEXTURE_CUBE_MAP", GL_TEXTURE_CUBE_MAP);
 	}
 	else if (R_DetermineSkyLimits(&ignore_z)) {
 		// draw a skybox or classic quake clouds
@@ -405,9 +410,9 @@ static void EmitSkyVert(vec3_t v, qbool multitexture)
 	dir[1] *= length;
 
 	if (multitexture) {
-		qglMultiTexCoord2f(GL_TEXTURE0, (speedscale + dir[0]) * (1.0 / 128), (speedscale + dir[1]) * (1.0 / 128));
+		GLC_MultiTexCoord2f(GL_TEXTURE0, (speedscale + dir[0]) * (1.0 / 128), (speedscale + dir[1]) * (1.0 / 128));
 
-		qglMultiTexCoord2f(GL_TEXTURE1, (speedscale2 + dir[0]) * (1.0 / 128), (speedscale2 + dir[1]) * (1.0 / 128));
+		GLC_MultiTexCoord2f(GL_TEXTURE1, (speedscale2 + dir[0]) * (1.0 / 128), (speedscale2 + dir[1]) * (1.0 / 128));
 	}
 	else {
 		glTexCoord2f((speedscale + dir[0]) * (1.0 / 128), (speedscale + dir[1]) * (1.0 / 128));

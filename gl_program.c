@@ -112,10 +112,12 @@ typedef struct {
 	int int_value;
 } gl_program_uniform_t;
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 typedef struct {
 	qbool found;
 	GLint location;
 } gl_program_attribute_t;
+#endif
 
 typedef struct gl_program_s {
 	char friendly_name[128];
@@ -130,7 +132,9 @@ typedef struct gl_program_s {
 
 	char* included_definitions;
 	gl_program_uniform_t uniforms[r_program_uniform_count];
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	gl_program_attribute_t attributes[r_program_attribute_count];
+#endif
 
 	unsigned int custom_options;
 	qbool force_recompile;
@@ -287,6 +291,7 @@ static r_program_uniform_t program_uniforms[] = {
 C_ASSERT(sizeof(program_uniforms) / sizeof(program_uniforms[0]) == r_program_uniform_count);
 #endif
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 typedef struct r_program_attribute_s {
 	r_program_id program_id;
 	const char* name;
@@ -309,7 +314,12 @@ static r_program_attribute_t program_attributes[] = {
 
 #ifdef C_ASSERT
 C_ASSERT(sizeof(program_attributes) / sizeof(program_attributes[0]) == r_program_attribute_count);
-#endif
+#endif // C_ASSERT
+
+static void R_ProgramFindAttributesForProgram(r_program_id program_id);
+#else // RENDERER_OPTION_CLASSIC_OPENGL
+#define R_ProgramFindAttributesForProgram(x)
+#endif // !RENDERER_OPTION_CLASSIC_OPENGL
 
 static qbool GL_CompileComputeShaderProgram(gl_program_t* prog, const char* shadertext, unsigned int length);
 
@@ -321,86 +331,53 @@ static r_program_id currentProgram = 0;
 static int currentProgramOptionSet = 0;
 
 // Shader functions
-typedef GLuint(APIENTRY *glCreateShader_t)(GLenum shaderType);
-typedef void (APIENTRY *glShaderSource_t)(GLuint shader, GLsizei count, const GLchar **string, const GLint *length);
-typedef void (APIENTRY *glCompileShader_t)(GLuint shader);
-typedef void (APIENTRY *glDeleteShader_t)(GLuint shader);
-typedef void (APIENTRY *glGetShaderInfoLog_t)(GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
-typedef void (APIENTRY *glGetShaderiv_t)(GLuint shader, GLenum pname, GLint* params);
-typedef void (APIENTRY *glGetShaderSource_t)(GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* source);
+GL_StaticFunctionDeclaration(glCreateShader, "shaderType=%u", "returned=%u", GLuint, GLenum shaderType)
+GL_StaticFunctionWrapperBody(glCreateShader, GLuint, shaderType)
+GL_StaticProcedureDeclaration(glShaderSource, "shader=%u, count=%d, string=%p, length=%p", GLuint shader, GLsizei count, const GLchar** string, const GLint* length)
+GL_StaticProcedureDeclaration(glCompileShader, "shader=%u", GLuint shader)
+GL_StaticProcedureDeclaration(glDeleteShader, "shader=%u", GLuint shader)
+GL_StaticProcedureDeclaration(glGetShaderInfoLog, "shader=%u, maxLength=%d, length=%p, infoLog=%p", GLuint shader, GLsizei maxLength, GLsizei* length, GLchar* infoLog)
+GL_StaticProcedureDeclaration(glGetShaderiv, "shader=%u, pname=%u, params=%p", GLuint shader, GLenum pname, GLint* params)
+GL_StaticProcedureDeclaration(glGetShaderSource, "shader=%u, bufSize=%d, length=%p, source=%p", GLuint shader, GLsizei bufSize, GLsizei* length, GLchar* source)
 
 // Program functions
-typedef GLuint(APIENTRY *glCreateProgram_t)(void);
-typedef void (APIENTRY *glLinkProgram_t)(GLuint program);
-typedef void (APIENTRY *glDeleteProgram_t)(GLuint program);
-typedef void (APIENTRY *glGetProgramInfoLog_t)(GLuint program, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
-typedef void (APIENTRY *glUseProgram_t)(GLuint program);
-typedef void (APIENTRY *glAttachShader_t)(GLuint program, GLuint shader);
-typedef void (APIENTRY *glDetachShader_t)(GLuint program, GLuint shader);
-typedef void (APIENTRY *glGetProgramiv_t)(GLuint program, GLenum pname, GLint* params);
+GL_StaticFunctionDeclaration(glCreateProgram, "", "result=%u", GLuint, void)
+GL_StaticFunctionWrapperBody(glCreateProgram, GLuint)
+
+GL_StaticProcedureDeclaration(glLinkProgram, "program=%u", GLuint program)
+GL_StaticProcedureDeclaration(glDeleteProgram, "program=%u", GLuint program)
+GL_StaticProcedureDeclaration(glGetProgramInfoLog, "program=%u, maxLength=%d, length=%p, infoLog=%p", GLuint program, GLsizei maxLength, GLsizei* length, GLchar* infoLog)
+GL_StaticProcedureDeclaration(glUseProgram, "program=%u", GLuint program)
+GL_StaticProcedureDeclaration(glAttachShader, "program=%u, shader=%u", GLuint program, GLuint shader)
+GL_StaticProcedureDeclaration(glDetachShader, "program=%u, shader=%u", GLuint program, GLuint shader)
+GL_StaticProcedureDeclaration(glGetProgramiv, "program=%u, pname=%u, params=%p", GLuint program, GLenum pname, GLint* params)
 
 // Uniforms
-typedef GLint(APIENTRY *glGetUniformLocation_t)(GLuint program, const GLchar* name);
-typedef void (APIENTRY *glUniform1i_t)(GLint location, GLint v0);
-typedef void (APIENTRY *glUniform1f_t)(GLint location, GLfloat value);
-typedef void (APIENTRY *glUniform2fv_t)(GLint location, GLsizei count, const GLfloat *value);
-typedef void (APIENTRY *glUniform3fv_t)(GLint location, GLsizei count, const GLfloat *value);
-typedef void (APIENTRY *glUniform4fv_t)(GLint location, GLsizei count, const GLfloat *value);
-typedef void (APIENTRY *glUniformMatrix4fv_t)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
-typedef void (APIENTRY *glProgramUniform1i_t)(GLuint program, GLuint location, GLint v0);
-typedef void (APIENTRY *glProgramUniform1f_t)(GLuint program, GLuint location, GLfloat value);
-typedef void (APIENTRY *glProgramUniform2fv_t)(GLuint program, GLuint location, GLsizei count, const GLfloat *value);
-typedef void (APIENTRY *glProgramUniform3fv_t)(GLuint program, GLuint location, GLsizei count, const GLfloat *value);
-typedef void (APIENTRY *glProgramUniform4fv_t)(GLuint program, GLuint location, GLsizei count, const GLfloat *value);
-typedef void (APIENTRY *glProgramUniformMatrix4fv_t)(GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
+GL_StaticFunctionDeclaration(glGetUniformLocation, "program=%u, name=%s", "result=%d", GLint, GLuint program, const GLchar* name)
+GL_StaticFunctionWrapperBody(glGetUniformLocation, GLint, program, name)
 
+GL_StaticProcedureDeclaration(glUniform1i, "location=%d, v0=%d", GLint location, GLint v0)
+GL_StaticProcedureDeclaration(glUniform1f, "location=%d, value=%f", GLint location, GLfloat value)
+GL_StaticProcedureDeclaration(glUniform2fv, "location=%d, count=%d, value=%p", GLint location, GLsizei count, const GLfloat* value)
+GL_StaticProcedureDeclaration(glUniform3fv, "location=%d, count=%d, value=%p", GLint location, GLsizei count, const GLfloat* value)
+GL_StaticProcedureDeclaration(glUniform4fv, "location=%d, count=%d, value=%p", GLint location, GLsizei count, const GLfloat* value)
+GL_StaticProcedureDeclaration(glUniformMatrix4fv, "location=%d, count=%d, transpose=%d, value=%p", GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+GL_StaticProcedureDeclaration(glProgramUniform1i, "program=%u, location=%u, v0=%d", GLuint program, GLuint location, GLint v0)
+GL_StaticProcedureDeclaration(glProgramUniform1f, "program=%u, location=%u, value=%f", GLuint program, GLuint location, GLfloat value)
+GL_StaticProcedureDeclaration(glProgramUniform2fv, "program=%u, location=%u, count=%d, value=%p", GLuint program, GLuint location, GLsizei count, const GLfloat* value)
+GL_StaticProcedureDeclaration(glProgramUniform3fv, "program=%u, location=%u, count=%d, value=%p", GLuint program, GLuint location, GLsizei count, const GLfloat* value)
+GL_StaticProcedureDeclaration(glProgramUniform4fv, "program=%u, location=%u, count=%d, value=%p", GLuint program, GLuint location, GLsizei count, const GLfloat* value)
+GL_StaticProcedureDeclaration(glProgramUniformMatrix4fv, "program=%u, location=%d, count=%d, transpose=%d, value=%p", GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 // Attributes
-typedef GLint (APIENTRY *glGetAttribLocation_t)(GLuint program, const GLchar* name);
+GL_StaticFunctionDeclaration(glGetAttribLocation, "program=%u, name=%s", "result=%d", GLint, GLuint program, const GLchar* name)
+GL_StaticFunctionWrapperBody(glGetAttribLocation, GLint, program, name)
+#endif
 
 // Compute shaders
-typedef void (APIENTRY *glDispatchCompute_t)(GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
-typedef void (APIENTRY *glMemoryBarrier_t)(GLbitfield barriers);
-
-// Shader functions
-static glCreateShader_t      qglCreateShader = NULL;
-static glShaderSource_t      qglShaderSource = NULL;
-static glCompileShader_t     qglCompileShader = NULL;
-static glDeleteShader_t      qglDeleteShader = NULL;
-static glGetShaderInfoLog_t  qglGetShaderInfoLog = NULL;
-static glGetShaderSource_t   qglGetShaderSource = NULL;
-static glGetShaderiv_t       qglGetShaderiv = NULL;
-
-// Program functions
-static glCreateProgram_t     qglCreateProgram = NULL;
-static glLinkProgram_t       qglLinkProgram = NULL;
-static glDeleteProgram_t     qglDeleteProgram = NULL;
-static glGetProgramiv_t      qglGetProgramiv = NULL;
-static glGetProgramInfoLog_t qglGetProgramInfoLog = NULL;
-static glUseProgram_t        qglUseProgram = NULL;
-static glAttachShader_t      qglAttachShader = NULL;
-static glDetachShader_t      qglDetachShader = NULL;
-
-// Uniform functions
-static glGetUniformLocation_t      qglGetUniformLocation = NULL;
-static glUniform1i_t               qglUniform1i;
-static glUniform1f_t               qglUniform1f;
-static glUniform2fv_t              qglUniform2fv;
-static glUniform3fv_t              qglUniform3fv;
-static glUniform4fv_t              qglUniform4fv;
-static glUniformMatrix4fv_t        qglUniformMatrix4fv;
-static glProgramUniform1i_t        qglProgramUniform1i;
-static glProgramUniform1f_t        qglProgramUniform1f;
-static glProgramUniform2fv_t       qglProgramUniform2fv;
-static glProgramUniform3fv_t       qglProgramUniform3fv;
-static glProgramUniform4fv_t       qglProgramUniform4fv;
-static glProgramUniformMatrix4fv_t qglProgramUniformMatrix4fv;
-
-// Attribute functions
-static glGetAttribLocation_t         qglGetAttribLocation;
-
-// Compute shaders
-static glDispatchCompute_t         qglDispatchCompute;
-static glMemoryBarrier_t           qglMemoryBarrier;
+GL_StaticProcedureDeclaration(glDispatchCompute, "num_groups_x=%u, num_groups_y=%u, num_groups_z=%u", GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z)
+GL_StaticProcedureDeclaration(glMemoryBarrier, "barriers=%u", GLbitfield barriers)
 
 #define MAX_SHADER_COMPONENTS 6
 #define EZQUAKE_DEFINITIONS_STRING "#ezquake-definitions"
@@ -414,13 +391,13 @@ static void GL_ConPrintShaderLog(GLuint shader)
 	GLint src_length;
 	char* buffer;
 
-	qglGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_length);
-	qglGetShaderiv(shader, GL_SHADER_SOURCE_LENGTH, &src_length);
+	GL_Procedure(glGetShaderiv, shader, GL_INFO_LOG_LENGTH, &log_length);
+	GL_Procedure(glGetShaderiv, shader, GL_SHADER_SOURCE_LENGTH, &src_length);
 	if (log_length) {
 		GLsizei written;
 
 		buffer = Q_malloc(max(log_length, src_length));
-		qglGetShaderInfoLog(shader, log_length, &written, buffer);
+		GL_Procedure(glGetShaderInfoLog, shader, log_length, &written, buffer);
 		Con_Printf(buffer);
 
 		Q_free(buffer);
@@ -432,12 +409,12 @@ static void GL_ConPrintProgramLog(GLuint program)
 	GLint log_length;
 	char* buffer;
 
-	qglGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_length);
+	GL_Procedure(glGetProgramiv, program, GL_INFO_LOG_LENGTH, &log_length);
 	if (log_length) {
 		GLsizei written;
 
 		buffer = Q_malloc(log_length);
-		qglGetProgramInfoLog(program, log_length, &written, buffer);
+		GL_Procedure(glGetProgramInfoLog, program, log_length, &written, buffer);
 		Con_Printf(buffer);
 		Q_free(buffer);
 	}
@@ -452,7 +429,7 @@ static gl_program_uniform_t* GL_ProgramUniformFind(r_program_uniform_id uniform_
 	gl_program_uniform_t* program_uniform = &program->uniforms[uniform_id];
 
 	if (program->program && !program_uniform->found) {
-		program_uniform->location = qglGetUniformLocation(program->program, uniform->name);
+		program_uniform->location = GL_Function(glGetUniformLocation, program->program, uniform->name);
 		program_uniform->found = true;
 	}
 
@@ -470,44 +447,17 @@ static void R_ProgramFindUniformsForProgram(r_program_id program_id)
 	}
 }
 
-static r_program_attribute_t* GL_ProgramAttributeFind(r_program_attribute_id attribute_id)
-{
-	r_program_attribute_t* attribute = &program_attributes[attribute_id];
-	r_program_id program_id = attribute->program_id;
-	gl_program_t* program = R_CurrentSubProgram(program_id);
-	gl_program_attribute_t* program_attr = &program->attributes[attribute_id];
-
-	if (program->program && !program_attr->found) {
-		program_attr->location = qglGetAttribLocation(program->program, attribute->name);
-		program_attr->found = true;
-	}
-
-	return attribute;
-}
-
-static void R_ProgramFindAttributesForProgram(r_program_id program_id)
-{
-	r_program_attribute_id a;
-
-	for (a = 0; a < r_program_attribute_count; ++a) {
-		if (program_attributes[a].program_id == program_id) {
-			R_CurrentSubProgram(program_id)->attributes[a].found = false;
-			GL_ProgramAttributeFind(a);
-		}
-	}
-}
-
 static qbool GL_CompileShader(GLsizei shaderComponents, const char* shaderText[], GLint shaderTextLength[], GLenum shaderType, GLuint* shaderId)
 {
 	GLuint shader;
 	GLint result;
 
 	*shaderId = 0;
-	shader = qglCreateShader(shaderType);
+	shader = GL_Function(glCreateShader, shaderType);
 	if (shader) {
-		qglShaderSource(shader, shaderComponents, shaderText, shaderTextLength);
-		qglCompileShader(shader);
-		qglGetShaderiv(shader, GL_COMPILE_STATUS, &result);
+		GL_Procedure(glShaderSource, shader, shaderComponents, shaderText, shaderTextLength);
+		GL_Procedure(glCompileShader, shader);
+		GL_Procedure(glGetShaderiv, shader, GL_COMPILE_STATUS, &result);
 		if (result) {
 			*shaderId = shader;
 			return true;
@@ -515,7 +465,7 @@ static qbool GL_CompileShader(GLsizei shaderComponents, const char* shaderText[]
 
 		Con_Printf("Shader->Compile(%X) failed\n", shaderType);
 		GL_ConPrintShaderLog(shader);
-		qglDeleteShader(shader);
+		GL_Procedure(glDeleteShader, shader);
 	}
 	else {
 		Con_Printf("glCreateShader failed\n");
@@ -552,6 +502,22 @@ static const char* safe_strstr(const char* source, size_t max_length, const char
 
 	return NULL;
 }
+
+#if 0
+void Sys_Printf_Direct(const char* text);
+static void GL_DebugPrintShaderText(GLuint shader)
+{
+	int length = 0, n;
+	char* src;
+
+	GL_Procedure(glGetShaderiv, shader, GL_SHADER_SOURCE_LENGTH, &length);
+	src = Q_malloc(length + 1);
+	GL_Procedure(glGetShaderSource, shader, length, NULL, src);
+
+	Sys_Printf_Direct(src);
+	Q_free(src);
+}
+#endif
 
 static int GL_InsertDefinitions(
 	const char* strings[],
@@ -633,36 +599,24 @@ static qbool GL_CompileProgram(
 			if (GL_CompileShader(fragment_components, fragment_shader_text, fragment_shader_text_length, GL_FRAGMENT_SHADER, &shaders[shadertype_fragment])) {
 				Con_DPrintf("Shader compilation completed successfully\n");
 
-				program_handle = qglCreateProgram();
+				program_handle = GL_Function(glCreateProgram);
 				if (program_handle) {
-					qglAttachShader(program_handle, shaders[shadertype_fragment]);
-					qglAttachShader(program_handle, shaders[shadertype_vertex]);
+					GL_Procedure(glAttachShader, program_handle, shaders[shadertype_fragment]);
+					GL_Procedure(glAttachShader, program_handle, shaders[shadertype_vertex]);
 					if (shaders[shadertype_geometry]) {
-						qglAttachShader(program_handle, shaders[shadertype_geometry]);
+						GL_Procedure(glAttachShader, program_handle, shaders[shadertype_geometry]);
 					}
-					qglLinkProgram(program_handle);
-					qglGetProgramiv(program_handle, GL_LINK_STATUS, &result);
-
-#if 0
-					{
-						int length = 0;
-						char* src;
-
-						qglGetShaderiv(fragment_shader, GL_SHADER_SOURCE_LENGTH, &length);
-						src = Q_malloc(length + 1);
-						qglGetShaderSource(fragment_shader, length, NULL, src);
-
-						Con_Printf("Fragment-shader\n%s", src);
-						Q_free(src);
-					}
-#endif
+					GL_Procedure(glLinkProgram, program_handle);
+					GL_Procedure(glGetProgramiv, program_handle, GL_LINK_STATUS, &result);
 
 					if (result) {
 						Con_DPrintf("ShaderProgram.Link() was successful\n");
 						memcpy(program->shader_handles, shaders, sizeof(shaders));
 						program->program = program_handle;
 						memset(program->uniforms, 0, sizeof(program->uniforms));
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 						memset(program->attributes, 0, sizeof(program->attributes));
+#endif
 						program->force_recompile = false;
 
 						GL_TraceObjectLabelSet(GL_PROGRAM, program->program, -1, program->friendly_name);
@@ -687,11 +641,11 @@ static qbool GL_CompileProgram(
 	}
 
 	if (program_handle) {
-		qglDeleteProgram(program_handle);
+		GL_Procedure(glDeleteProgram, program_handle);
 	}
 	for (i = 0; i < sizeof(shaders) / sizeof(shaders[0]); ++i) {
 		if (shaders[i]) {
-			qglDeleteShader(shaders[i]);
+			GL_Procedure(glDeleteShader, shaders[i]);
 		}
 	}
 	return false;
@@ -701,9 +655,9 @@ static void GL_CleanupShader(GLuint program, GLuint shader)
 {
 	if (shader) {
 		if (program) {
-			qglDetachShader(program, shader);
+			GL_Procedure(glDetachShader, program, shader);
 		}
-		qglDeleteShader(shader);
+		GL_Procedure(glDeleteShader, shader);
 	}
 }
 
@@ -733,7 +687,7 @@ void GL_ProgramsShutdown(qbool restarting)
 		for (sub_program = 0; sub_program < MAX_SUBPROGRAMS; ++sub_program) {
 			prog = R_SpecificSubProgram(p, sub_program);
 			if (prog->program) {
-				qglDeleteProgram(prog->program);
+				GL_Procedure(glDeleteProgram, prog->program);
 				prog->program = 0;
 			}
 
@@ -743,7 +697,9 @@ void GL_ProgramsShutdown(qbool restarting)
 			}
 
 			memset(prog->uniforms, 0, sizeof(prog->uniforms));
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 			memset(prog->attributes, 0, sizeof(prog->attributes));
+#endif
 		}
 	}
 
@@ -837,20 +793,22 @@ static qbool GL_CompileComputeShaderProgram(gl_program_t* program, const char* s
 
 	components = GL_InsertDefinitions(shader_text, shader_text_length, "");
 	if (GL_CompileShader(components, shader_text, shader_text_length, GL_COMPUTE_SHADER, &shader)) {
-		GLuint shader_program = qglCreateProgram();
+		GLuint shader_program = GL_Function(glCreateProgram);
 		if (shader_program) {
 			GLint result;
 
-			qglAttachShader(shader_program, shader);
-			qglLinkProgram(shader_program);
-			qglGetProgramiv(shader_program, GL_LINK_STATUS, &result);
+			GL_Procedure(glAttachShader, shader_program, shader);
+			GL_Procedure(glLinkProgram, shader_program);
+			GL_Procedure(glGetProgramiv, shader_program, GL_LINK_STATUS, &result);
 
 			if (result) {
 				Con_DPrintf("ShaderProgram.Link() was successful\n");
 				program->shader_handles[shadertype_compute] = shader;
 				program->program = shader_program;
 				memset(program->uniforms, 0, sizeof(program->uniforms));
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 				memset(program->attributes, 0, sizeof(program->attributes));
+#endif
 				program->force_recompile = false;
 
 				GL_TraceObjectLabelSet(GL_PROGRAM, program->program, -1, program->friendly_name);
@@ -898,7 +856,9 @@ void GL_LoadProgramFunctions(void)
 		GL_LoadMandatoryFunctionExtension(glUniform4fv, rendering_shaders_support);
 		GL_LoadMandatoryFunctionExtension(glUniformMatrix4fv, rendering_shaders_support);
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 		GL_LoadMandatoryFunctionExtension(glGetAttribLocation, rendering_shaders_support);
+#endif
 
 		glConfig.supported_features |= (rendering_shaders_support ? R_SUPPORT_RENDERING_SHADERS : 0);
 	}
@@ -925,9 +885,9 @@ void GL_LoadProgramFunctions(void)
 void R_ProgramUse(r_program_id program_id)
 {
 	if (program_id != currentProgram || currentProgramOptionSet != program_currentSubProgram[program_id]) {
-		if (qglUseProgram) {
-			qglUseProgram(R_CurrentSubProgram(program_id)->program);
+		if (GL_Available(glUseProgram)) {
 			R_TraceLogAPICall("R_ProgramUse(%s[%d])", R_CurrentSubProgram(program_id)->friendly_name, program_currentSubProgram[program_id]);
+			GL_Procedure(glUseProgram, R_CurrentSubProgram(program_id)->program);
 		}
 
 		currentProgram = program_id;
@@ -957,13 +917,13 @@ void R_ProgramInitialiseState(void)
 static void GL_ProgramComputeDispatch(r_program_id program_id, unsigned int num_groups_x, unsigned int num_groups_y, unsigned int num_groups_z)
 {
 	R_ProgramUse(program_id);
-	qglDispatchCompute(num_groups_x, num_groups_y, num_groups_z);
+	GL_Procedure(glDispatchCompute, num_groups_x, num_groups_y, num_groups_z);
 }
 
 static void GL_ProgramMemoryBarrier(r_program_id program_id)
 {
 	if (R_CurrentSubProgram(program_id)->memory_barrier) {
-		qglMemoryBarrier(R_CurrentSubProgram(program_id)->memory_barrier);
+		GL_Procedure(glMemoryBarrier, R_CurrentSubProgram(program_id)->memory_barrier);
 	}
 }
 
@@ -1005,15 +965,15 @@ void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value)
 	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
 	if (program_uniform->location >= 0) {
-		if (qglProgramUniform1i) {
-			qglProgramUniform1i(prog->program, program_uniform->location, value);
+		R_TraceLogAPICall("%s(%s/%s,%d)", __FUNCTION__, prog->friendly_name, base_uniform->name, value);
+		if (GL_Available(glProgramUniform1i)) {
+			GL_Procedure(glProgramUniform1i, prog->program, program_uniform->location, value);
 		}
 		else {
 			R_ProgramUse(base_uniform->program_id);
-			qglUniform1i(program_uniform->location, value);
+			GL_Procedure(glUniform1i, program_uniform->location, value);
 		}
 		program_uniform->int_value = value;
-		R_TraceLogAPICall("%s(%s/%s,%d)", __FUNCTION__, prog->friendly_name, base_uniform->name, value);
 	}
 }
 
@@ -1024,15 +984,15 @@ void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value)
 	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
 	if (program_uniform->location >= 0) {
-		if (qglProgramUniform1f) {
-			qglProgramUniform1f(prog->program, program_uniform->location, value);
+		R_TraceLogAPICall("%s(%s/%s,%f)", __FUNCTION__, prog->friendly_name, base_uniform->name, value);
+		if (GL_Available(glProgramUniform1f)) {
+			GL_Procedure(glProgramUniform1f, prog->program, program_uniform->location, value);
 		}
 		else {
 			R_ProgramUse(base_uniform->program_id);
-			qglUniform1f(program_uniform->location, value);
+			GL_Procedure(glUniform1f, program_uniform->location, value);
 		}
 		program_uniform->int_value = value;
-		R_TraceLogAPICall("%s(%s/%s,%f)", __FUNCTION__, prog->friendly_name, base_uniform->name, value);
 	}
 }
 
@@ -1043,14 +1003,14 @@ void R_ProgramUniform2fv(r_program_uniform_id uniform_id, const float* values)
 	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
 	if (program_uniform->location >= 0) {
-		if (qglProgramUniform2fv) {
-			qglProgramUniform2fv(prog->program, program_uniform->location, base_uniform->count, values);
+		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
+		if (GL_Available(glProgramUniform2fv)) {
+			GL_Procedure(glProgramUniform2fv, prog->program, program_uniform->location, base_uniform->count, values);
 		}
 		else {
 			R_ProgramUse(base_uniform->program_id);
-			qglUniform2fv(program_uniform->location, base_uniform->count, values);
+			GL_Procedure(glUniform2fv, program_uniform->location, base_uniform->count, values);
 		}
-		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
 	}
 }
 
@@ -1068,14 +1028,14 @@ void R_ProgramUniform3fv(r_program_uniform_id uniform_id, const float* values)
 	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
 	if (program_uniform->location >= 0) {
-		if (qglProgramUniform3fv) {
-			qglProgramUniform3fv(prog->program, program_uniform->location, base_uniform->count, values);
+		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
+		if (GL_Available(glProgramUniform3fv)) {
+			GL_Procedure(glProgramUniform3fv, prog->program, program_uniform->location, base_uniform->count, values);
 		}
 		else {
 			R_ProgramUse(base_uniform->program_id);
-			qglUniform3fv(program_uniform->location, base_uniform->count, values);
+			GL_Procedure(glUniform3fv, program_uniform->location, base_uniform->count, values);
 		}
-		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
 	}
 }
 
@@ -1097,14 +1057,14 @@ void R_ProgramUniform4fv(r_program_uniform_id uniform_id, const float* values)
 	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
 	if (program_uniform->location >= 0) {
-		if (qglProgramUniform4fv) {
-			qglProgramUniform4fv(prog->program, program_uniform->location, base_uniform->count, values);
+		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
+		if (GL_Available(glProgramUniform4fv)) {
+			GL_Procedure(glProgramUniform4fv, prog->program, program_uniform->location, base_uniform->count, values);
 		}
 		else {
 			R_ProgramUse(base_uniform->program_id);
-			qglUniform4fv(program_uniform->location, base_uniform->count, values);
+			GL_Procedure(glUniform4fv, program_uniform->location, base_uniform->count, values);
 		}
-		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
 	}
 }
 
@@ -1115,14 +1075,14 @@ void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, const float* val
 	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
 	if (program_uniform->location >= 0) {
-		if (qglProgramUniformMatrix4fv) {
-			qglProgramUniformMatrix4fv(prog->program, program_uniform->location, base_uniform->count, base_uniform->transpose, values);
+		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
+		if (GL_Available(glProgramUniformMatrix4fv)) {
+			GL_Procedure(glProgramUniformMatrix4fv, prog->program, program_uniform->location, base_uniform->count, base_uniform->transpose, values);
 		}
 		else {
 			R_ProgramUse(base_uniform->program_id);
-			qglUniformMatrix4fv(program_uniform->location, base_uniform->count, base_uniform->transpose, values);
+			GL_Procedure(glUniformMatrix4fv, program_uniform->location, base_uniform->count, base_uniform->transpose, values);
 		}
-		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
 	}
 }
 
@@ -1150,8 +1110,8 @@ qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_
 	program->included_definitions = included_definitions ? Q_strdup(included_definitions) : NULL;
 
 	if (GL_CompileProgram(program)) {
-		if (program_id == currentProgram && qglUseProgram) {
-			qglUseProgram(R_CurrentSubProgram(program_id)->program);
+		if (program_id == currentProgram && GL_Available(glUseProgram)) {
+			GL_Procedure(glUseProgram, R_CurrentSubProgram(program_id)->program);
 		}
 		R_ProgramFindUniformsForProgram(program_id);
 		R_ProgramFindAttributesForProgram(program_id);
@@ -1195,6 +1155,7 @@ static void GL_BuildCoreDefinitions(void)
 #endif
 }
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 int R_ProgramAttributeLocation(r_program_attribute_id attr_id)
 {
 	r_program_id program_id;
@@ -1222,6 +1183,34 @@ r_program_id R_ProgramForAttribute(r_program_attribute_id attr_id)
 
 	return program_attributes[attr_id].program_id;
 }
+
+static r_program_attribute_t* GL_ProgramAttributeFind(r_program_attribute_id attribute_id)
+{
+	r_program_attribute_t* attribute = &program_attributes[attribute_id];
+	r_program_id program_id = attribute->program_id;
+	gl_program_t* program = R_CurrentSubProgram(program_id);
+	gl_program_attribute_t* program_attr = &program->attributes[attribute_id];
+
+	if (program->program && !program_attr->found) {
+		program_attr->location = GL_Function(glGetAttribLocation, program->program, attribute->name);
+		program_attr->found = true;
+	}
+
+	return attribute;
+}
+
+static void R_ProgramFindAttributesForProgram(r_program_id program_id)
+{
+	r_program_attribute_id a;
+
+	for (a = 0; a < r_program_attribute_count; ++a) {
+		if (program_attributes[a].program_id == program_id) {
+			R_CurrentSubProgram(program_id)->attributes[a].found = false;
+			GL_ProgramAttributeFind(a);
+		}
+	}
+}
+#endif
 
 void R_ProgramCompileAll(void)
 {

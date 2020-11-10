@@ -82,6 +82,30 @@ stages:
         condition: eq( variables['Agent.OS'], 'Windows_NT' )
         inputs:
           script: 'copy /y ezquake.exe tozip\ezquake-std-vs-x86.exe'
+      # Build in Visual Studio (classic, 32 bit - debug)
+      - task: VSBuild@1
+        inputs:
+          solution: 'ezQuake.sln'
+          configuration: 'dbg-classic' # Optional
+          platform: 'x86'
+          clean: true # Optional
+          msbuildArchitecture: 'x86' # Optional. Options: x86, x64
+      - task: CmdLine@2
+        condition: eq( variables['Agent.OS'], 'Windows_NT' )
+        inputs:
+          script: 'copy /y ezquake.exe tozip\ezquake-std-vs-x86-debug.exe'
+      # Build in Visual Studio (modern, 32 bit - debug)
+      - task: VSBuild@1
+        inputs:
+          solution: 'ezQuake.sln'
+          configuration: 'dbg-modern' # Optional
+          platform: 'x86'
+          clean: true # Optional
+          msbuildArchitecture: 'x86' # Optional. Options: x86, x64
+      - task: CmdLine@2
+        condition: eq( variables['Agent.OS'], 'Windows_NT' )
+        inputs:
+          script: 'copy /y ezquake.exe tozip\ezquake-glsl-vs-x86-debug.exe'
       # Build in Visual Studio (modern, 32 bit)
       - task: VSBuild@1
         inputs:

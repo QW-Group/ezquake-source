@@ -45,10 +45,10 @@ qbool GLC_ProgramHudImagesCompile(void);
 void GLC_DrawDisc(void)
 {
 	if (!GL_FramebufferEnabled2D()) {
-		glDrawBuffer(GL_FRONT);
+		GL_BuiltinProcedure(glDrawBuffer, "mode=GL_FRONT", GL_FRONT);
 		Draw_Pic(vid.width - 24, 0, draw_disc);
 		R_EmptyImageQueue();
-		glDrawBuffer(GL_BACK);
+		GL_BuiltinProcedure(glDrawBuffer, "mode=GL_BACK", GL_BACK);
 	}
 }
 

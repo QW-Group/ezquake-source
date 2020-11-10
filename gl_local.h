@@ -191,14 +191,6 @@ void R_InitOtherTextures(void);
 #define GL_SRGB8_ALPHA8 0x8C43
 #define GL_FRAMEBUFFER_SRGB 0x8DB9
 
-typedef void (APIENTRY *glMultiTexCoord2f_t)(GLenum target, GLfloat s, GLfloat t);
-typedef void (APIENTRY *glActiveTexture_t)(GLenum target);
-typedef void (APIENTRY *glClientActiveTexture_t)(GLenum target);
-
-extern glMultiTexCoord2f_t qglMultiTexCoord2f;
-extern glActiveTexture_t qglActiveTexture;
-extern glClientActiveTexture_t qglClientActiveTexture;
-
 extern byte color_white[4], color_black[4];
 extern qbool gl_mtexable;
 extern int gl_textureunits;
@@ -242,6 +234,7 @@ void GLC_LightmapUpdate(int index);
 glpoly_t* GLC_LightmapChain(int i);
 int GLC_LightmapCount(void);
 void GLC_DrawMapOutline(model_t *model);
+void GLC_MultiTexCoord2f(GLenum target, float s, float t);
 
 void GLM_DrawSpriteModel(entity_t* e);
 void GLM_PolyBlend(float v_blend[4]);
@@ -250,15 +243,6 @@ void GLM_PostProcessScreen(void);
 void GLM_RenderView(void);
 void GLM_UploadFrameConstants(void);
 void GLM_PrepareWorldModelBatch(void);
-
-#ifdef GL_PARANOIA
-void GL_ProcessErrors(const char* message);
-#define GL_Paranoid_Printf(...) Con_Printf(__VA_ARGS__)
-#else
-#define GL_ProcessErrors(...)
-#define GL_Paranoid_Printf(...)
-#endif
-//void GL_DeleteVAOs(void);
 
 void GL_InitialiseState(void);
 
@@ -283,22 +267,151 @@ qbool GL_DrawElementsBaseVertexAvailable(void);
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
 
+#ifdef WITH_RENDERING_TRACE
+GLenum GL_ProcessErrors(const char* message);
+
+#define GL_LoadRequiredFunction(varName, functionName)           (((varName) = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL)
+#define GL_LoadMandatoryFunction(functionName,testFlag)          { testFlag &= ((q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
+#define GL_LoadMandatoryFunctionEXT(functionName,testFlag)       { testFlag &= ((q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName "EXT")) != NULL); }
+#define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { testFlag &= ((q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
+#define GL_LoadOptionalFunction(functionName)    { q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName); }
+#define GL_LoadOptionalFunctionEXT(functionName) { q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName "EXT"); }
+#define GL_LoadOptionalFunctionARB(functionName) { q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName "ARB"); }
+#define GL_UseDirectStateAccess() (SDL_GL_ExtensionSupported("GL_ARB_direct_state_access"))
+#define GL_StaticProcedureDeclaration(name, formatString, ...) \
+	typedef void (APIENTRY *name ## _t)(__VA_ARGS__); \
+	static name ## _t    q ## name ## _impl; \
+	static const char* q ## name ## _formatString = formatString;
+#define GL_StaticFunctionDeclaration(name, formatString, resultFormatString, returnType, ...)\
+	typedef returnType (APIENTRY *name ## _t)(__VA_ARGS__); \
+	static name ## _t    q ## name ## _impl; \
+	static const char* q ## name ## _formatString = formatString; \
+	static const char* q ## name ## _resultString = resultFormatString; \
+	static returnType GL_Wrapper_ ## name(__VA_ARGS__)
+
+#define GL_StaticFunctionWrapperBody(name, returnType, ...) \
+{ \
+	returnType result; \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		const char* args = va(q ## name ## _formatString, __VA_ARGS__); \
+\
+		R_TraceAPI("%s(%s)@%s,%d", #name, args, __FILE__, __LINE__); \
+	} \
+	result = q ## name ## _impl(__VA_ARGS__); \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		GL_ProcessErrors(#name); \
+		R_TraceAPI(q ## name ## _resultString, result); \
+	} \
+\
+	return result; \
+}
+
+#define GL_Procedure(name, ...) \
+{ \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		const char* ez_gldebug_args = va(q ## name ## _formatString, __VA_ARGS__); \
+\
+		R_TraceAPI("%s(%s)@%s,%d", #name, ez_gldebug_args, __FILE__, __LINE__); \
+	} \
+	q ## name ## _impl(__VA_ARGS__); \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		GL_ProcessErrors(#name); \
+	} \
+}
+
+#define GL_ProcedureReturnError(name, ...) \
+{ \
+	GLenum ez_gl_error = GL_NO_ERROR; \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		const char* ez_gldebug_args = va(q ## name ## _formatString, __VA_ARGS__); \
+\
+		R_TraceAPI("%s(%s)@%s,%d", #name, ez_gldebug_args, __FILE__, __LINE__); \
+	} \
+	q ## name ## _impl(__VA_ARGS__); \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		ez_gl_error = GL_ProcessErrors(#name); \
+	} \
+	else { \
+		ez_gl_error = glGetError(); \
+	} \
+	return ez_gl_error; \
+}
+
+#define GL_ProcedureReturnIfError(name, ...) \
+{ \
+	GLenum ez_gl_error = GL_NO_ERROR; \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		const char* ez_gldebug_args = va(q ## name ## _formatString, __VA_ARGS__); \
+\
+		R_TraceAPI("%s(%s)@%s,%d", #name, ez_gldebug_args, __FILE__, __LINE__); \
+	} \
+	q ## name ## _impl(__VA_ARGS__); \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		ez_gl_error = GL_ProcessErrors(#name); \
+	} \
+	else { \
+		ez_gl_error = glGetError(); \
+	} \
+	if (ez_gl_error != GL_NO_ERROR) { \
+		return ez_gl_error; \
+	} \
+}
+
+#define GL_BuiltinProcedure(name, formatString, ...) \
+{ \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		const char* ez_gldebug_args = va(formatString, __VA_ARGS__); \
+\
+		R_TraceAPI("%s(%s)@%s,%d", #name, ez_gldebug_args, __FILE__, __LINE__); \
+	} \
+	name(__VA_ARGS__); \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		GL_ProcessErrors(#name); \
+	} \
+}
+#define GL_Function(name, ...)    GL_Wrapper_ ## name(__VA_ARGS__)
+#define GL_Available(name)        ((q ## name ## _impl) != NULL)
+#else
+// No direct tracing
 #ifndef EZ_OPENGL_NO_EXTENSIONS
 #define GL_LoadRequiredFunction(varName, functionName) (((varName) = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL)
-#define GL_LoadMandatoryFunction(functionName,testFlag) { testFlag &= ((q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
-#define GL_LoadMandatoryFunctionEXT(functionName,testFlag) { testFlag &= ((q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName "EXT")) != NULL); }
-#define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { testFlag &= ((q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
-#define GL_LoadOptionalFunction(functionName) { q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName); }
-#define GL_LoadOptionalFunctionEXT(functionName) { q##functionName = (functionName##_t)SDL_GL_GetProcAddress(#functionName "EXT"); }
+#define GL_LoadMandatoryFunction(functionName,testFlag) { testFlag &= ((q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
+#define GL_LoadMandatoryFunctionEXT(functionName,testFlag) { testFlag &= ((q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName "EXT")) != NULL); }
+#define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { testFlag &= ((q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
+#define GL_LoadOptionalFunction(functionName) { q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName); }
+#define GL_LoadOptionalFunctionEXT(functionName) { q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName "EXT"); }
+#define GL_LoadOptionalFunctionARB(functionName) { q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName "ARB"); }
 #define GL_UseDirectStateAccess() (SDL_GL_ExtensionSupported("GL_ARB_direct_state_access"))
 #else
-#define GL_LoadMandatoryFunction(functionName,testFlag) { q##functionName = NULL; testFlag = false; }
-#define GL_LoadMandatoryFunctionEXT(functionName,testFlag) { q##functionName = NULL; testFlag = false; }
-#define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { q##functionName = NULL; testFlag = false; }
-#define GL_LoadOptionalFunction(functionName) { q##functionName = NULL; }
+#define GL_LoadMandatoryFunction(functionName,testFlag) { q##functionName##_impl = NULL; testFlag = false; }
+#define GL_LoadMandatoryFunctionEXT(functionName,testFlag) { q##functionName##_impl = NULL; testFlag = false; }
+#define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { q##functionName##_impl = NULL; testFlag = false; }
+#define GL_LoadOptionalFunction(functionName) { q##functionName##_impl = NULL; }
 #define GL_LoadOptionalFunctionEXT() { q##functionName = NULL; }
 #define GL_UseDirectStateAccess() (false)
 #endif
+#define GL_StaticProcedureDeclaration(name, formatString, ...) \
+	typedef void (APIENTRY *name ## _t)(__VA_ARGS__); \
+	static name ## _t    q ## name ## _impl;
+#define GL_StaticFunctionDeclaration(name, formatString, resultFormatString, returnType, ...) \
+	typedef returnType (APIENTRY *name ## _t)(__VA_ARGS__); \
+	static name ## _t    q ## name ## _impl;
+#define GL_StaticFunctionWrapperBody(...)
+#define GL_Procedure(name, ...)   { q ## name ## _impl(__VA_ARGS__); }
+#define GL_BuiltinProcedure(name, formatString, ...) { name(__VA_ARGS__); }
+#define GL_Function(name, ...) q ## name ## _impl(__VA_ARGS__)
+#define GL_Available(name) ((q ## name ## _impl) != NULL)
+#define GL_ProcedureReturnError(name, ...) { q ## name ## _impl(__VA_ARGS__); return glGetError(); }
+#define GL_ProcedureReturnIfError(name, ...) { \
+	GLenum ez_gl_error; \
+	q ## name ## _impl(__VA_ARGS__); \
+	ez_gl_error = glGetError(); \
+	if (ez_gl_error != GL_NO_ERROR) { \
+		return ez_gl_error; \
+	} \
+}
+#define GL_ProcessErrors(text)
+#endif // 
 
 void GLC_ClientActiveTexture(GLenum texture_unit);
 

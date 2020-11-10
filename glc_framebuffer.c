@@ -124,7 +124,7 @@ void GLC_RenderFramebuffers(void)
 
 			// Copy from screen to texture
 			renderer.TextureUnitBind(0, non_framebuffer_screen_texture);
-			glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, glwidth, glheight);
+			GL_BuiltinProcedure(glCopyTexSubImage2D, "mode=GL_TEXTURE_2D(%u), level=%d, xoffset=%d, yoffset=%d, x=%d, y=%d, width=%d, height=%d", GL_TEXTURE_2D, 0, 0, 0, 0, 0, glwidth, glheight);
 		}
 
 		R_IdentityModelView();

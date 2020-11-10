@@ -34,14 +34,11 @@ int anisotropy_ext = 0;
 
 qbool gl_mtexable = false;
 int gl_textureunits = 1;
-glMultiTexCoord2f_t qglMultiTexCoord2f = NULL;
-glActiveTexture_t qglActiveTexture = NULL;
-glClientActiveTexture_t qglClientActiveTexture = NULL;
 
 byte color_white[4] = {255, 255, 255, 255};
 byte color_black[4] = {0, 0, 0, 255};
 
-static void GL_CheckMultiTextureExtensions(void);
+void GL_CheckMultiTextureExtensions(void);
 static void OnChange_gl_ext_texture_compression(cvar_t *, char *, qbool *);
 
 static cvar_t gl_ext_texture_compression = {"gl_ext_texture_compression", "0", CVAR_SILENT, OnChange_gl_ext_texture_compression};
@@ -67,6 +64,59 @@ static qbool GL_InitialiseRenderer(void)
 	}
 	if ((glConfig.preferred_type == 0 && GL_VersionAtLeast(1, 2)) || glConfig.preferred_type == GL_UNSIGNED_INT_8_8_8_8_REV) {
 		glConfig.supported_features |= R_SUPPORT_INT8888R_LIGHTMAPS;
+	}
+
+	R_TraceAPI("Supported features:");
+	if (glConfig.supported_features & R_SUPPORT_FRAMEBUFFERS) {
+		R_TraceAPI("... rendering to framebuffers");
+	}
+	if (glConfig.supported_features & R_SUPPORT_RENDERING_SHADERS) {
+		R_TraceAPI("... rendering using shaders");
+	}
+	if (glConfig.supported_features & R_SUPPORT_COMPUTE_SHADERS) {
+		R_TraceAPI("... non-rendering shaders");
+	}
+	if (glConfig.supported_features & R_SUPPORT_PRIMITIVERESTART) {
+		R_TraceAPI("... primitive restart indexes");
+	}
+	if (glConfig.supported_features & R_SUPPORT_MULTITEXTURING) {
+		R_TraceAPI("... multi-texturing (some people still disable this...)");
+	}
+	if (glConfig.supported_features & R_SUPPORT_IMAGE_PROCESSING) {
+		R_TraceAPI("... reading/writing to images");
+	}
+	if (glConfig.supported_features & R_SUPPORT_TEXTURE_SAMPLERS) {
+		R_TraceAPI("... texture samplers");
+	}
+	if (glConfig.supported_features & R_SUPPORT_TEXTURE_ARRAYS) {
+		R_TraceAPI("... 3D images (texture arrays)");
+	}
+	if (glConfig.supported_features & R_SUPPORT_INDIRECT_RENDERING) {
+		R_TraceAPI("... indirect rendering (api parameters stored in buffer)");
+	}
+	if (glConfig.supported_features & R_SUPPORT_INSTANCED_RENDERING) {
+		R_TraceAPI("... instanced rendering");
+	}
+	if (glConfig.supported_features & R_SUPPORT_FRAMEBUFFERS_BLIT) {
+		R_TraceAPI("... blit from one framebuffer to another");
+	}
+	if (glConfig.supported_features & R_SUPPORT_BGRA_LIGHTMAPS) {
+		R_TraceAPI("... BGRA lightmaps (if optimal format)");
+	}
+	if (glConfig.supported_features & R_SUPPORT_INT8888R_LIGHTMAPS) {
+		R_TraceAPI("... Lightmaps uploaded as UINT8888R rather than UNSIGNED_BYTE");
+	}
+	if (glConfig.supported_features & R_SUPPORT_SEAMLESS_CUBEMAPS) {
+		R_TraceAPI("... filtering works across faces of the cubemap");
+	}
+	if (glConfig.supported_features & R_SUPPORT_DEPTH32F) {
+		R_TraceAPI("... floating point 32-bit depth buffers");
+	}
+	if (glConfig.supported_features & R_SUPPORT_FRAMEBUFFERS_SRGB) {
+		R_TraceAPI("... framebuffers support sRGB");
+	}
+	if (glConfig.supported_features & R_SUPPORT_IMMEDIATEMODE) {
+		R_TraceAPI("... immediate-mode rendering (doesn't require programs)");
 	}
 
 	if (R_UseModernOpenGL() && shaders_supported) {
@@ -155,12 +205,34 @@ static void GL_PopulateConfig(void)
 			}
 		}
 	}
+
+	R_TraceAPI("---Config---");
+	if (glConfig.renderer_string) {
+		R_TraceAPI("Renderer: %s", glConfig.renderer_string);
+	}
+	if (glConfig.vendor_string) {
+		R_TraceAPI("Vendor: %s", glConfig.vendor_string);
+	}
+	if (glConfig.version_string) {
+		R_TraceAPI("Version: %s", glConfig.version_string);
+	}
+	if (glConfig.glsl_version) {
+		R_TraceAPI("GLSL: %s", glConfig.glsl_version);
+	}
+
+	R_TraceAPI("OpenGL version: %d.%d", glConfig.majorVersion, glConfig.minorVersion);
+	R_TraceAPI("Color/depth/stencil: %d/%d/%d", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits);
+	R_TraceAPI("Hardware type: %d", glConfig.hardwareType);
+	R_TraceAPI("Max sizes: %d %d %d", glConfig.gl_max_size_default, glConfig.max_3d_texture_size, glConfig.max_texture_depth);
+	R_TraceAPI("Texture units: %d", glConfig.texture_units);
+	R_TraceAPI("Alignments: ubo(%d) ssb(%d)", glConfig.uniformBufferOffsetAlignment, glConfig.shaderStorageBufferOffsetAlignment);
 }
 
 // meag: EXT => ARB didn't change value of constants, so still using _EXT versions
 static void GL_CheckAnisotropyExtensions(void)
 {
 	anisotropy_ext = 0;
+	R_TraceAPI("Checking for anisotropic filtering...");
 	if (GL_VersionAtLeast(4, 6) || SDL_GL_ExtensionSupported("GL_ARB_texture_filter_anisotropic") || SDL_GL_ExtensionSupported("GL_EXT_texture_filter_anisotropic")) {
 		int gl_anisotropy_factor_max;
 
@@ -169,13 +241,16 @@ static void GL_CheckAnisotropyExtensions(void)
 		glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_anisotropy_factor_max);
 
 		Com_Printf_State(PRINT_OK, "Anisotropic Filtering Extension Found (%d max)\n", gl_anisotropy_factor_max);
+		R_TraceAPI("... filtering extension found (max level %d)", gl_anisotropy_factor_max);
 	}
 }
 
 static void GL_CheckTextureCompressionExtensions(void)
 {
+	R_TraceAPI("Checking for texture compression...");
 	if (GL_VersionAtLeast(1, 3) || SDL_GL_ExtensionSupported("GL_ARB_texture_compression")) {
 		Com_Printf_State(PRINT_OK, "Texture compression extensions found\n");
+		R_TraceAPI("... texture compression extensions found");
 		Cvar_SetCurrentGroup(CVAR_GROUP_TEXTURES);
 		Cvar_Register(&gl_ext_texture_compression);
 		Cvar_ResetCurrentGroup();
@@ -192,43 +267,7 @@ static void GL_CheckNPOTTextureExtensions(void)
 
 	R_SetNonPowerOfTwoSupport(supported);
 	Com_Printf_State(PRINT_OK, "GL_ARB_texture_non_power_of_two extension %s\n", supported ? "found" : "not found");
-}
-
-static void GL_CheckMultiTextureExtensions(void)
-{
-	if (!COM_CheckParm(cmdline_param_client_nomultitexturing) && SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
-		qglMultiTexCoord2f = SDL_GL_GetProcAddress("glMultiTexCoord2f");
-		if (!qglMultiTexCoord2f) {
-			qglMultiTexCoord2f = SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
-		}
-		qglActiveTexture = SDL_GL_GetProcAddress("glActiveTexture");
-		if (!qglActiveTexture) {
-			qglActiveTexture = SDL_GL_GetProcAddress("glActiveTextureARB");
-		}
-		qglClientActiveTexture = SDL_GL_GetProcAddress("glClientActiveTexture");
-		if (!qglMultiTexCoord2f || !qglActiveTexture || !qglClientActiveTexture) {
-			return;
-		}
-		Com_Printf_State(PRINT_OK, "Multitexture extensions found\n");
-		gl_mtexable = true;
-	}
-
-	gl_textureunits = min(glConfig.texture_units, 4);
-
-	if (COM_CheckParm(cmdline_param_client_maximum2textureunits)) {
-		gl_textureunits = min(gl_textureunits, 2);
-	}
-
-	if (gl_textureunits < 2) {
-		gl_mtexable = false;
-	}
-
-	if (!gl_mtexable) {
-		gl_textureunits = 1;
-	}
-	else {
-		Com_Printf_State(PRINT_OK, "Enabled %i texture units on hardware\n", gl_textureunits);
-	}
+	R_TraceAPI("Non-power-of-two textures: %s", supported ? "supported" : "not supported (!)");
 }
 
 static void GL_CheckExtensions(void)

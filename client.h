@@ -1178,3 +1178,10 @@ void Movie_BackgroundShutdown(void);
 void Cache_Flush(void);
 
 #define DEFAULT_CHAT_SOUND "misc/talk.wav"
+
+#ifdef WITH_RENDERING_TRACE
+void Dev_VidFrameStart(void);
+void Dev_VidFrameTrace(void);
+void Dev_VidTextureDump(void);
+void Dev_TextureList(void);
+#endif

@@ -1695,31 +1695,27 @@ void SCR_DrawMultiviewBorders(void)
 	//
 	// Draw black borders around the views.
 	//
-	if (cl_multiview.value == 2 && !cl_mvinset.value)
-	{
+	if (cl_multiview.integer == 2 && !cl_mvinset.integer) {
 		Draw_Fill(0, vid.height / 2, vid.width - 1, 1, 0);
 	}
-	else if (cl_multiview.value == 2 && cl_mvinset.value)
-	{
+	else if (cl_multiview.integer == 2 && cl_mvinset.integer) {
 		extern byte color_black[4];
 
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0, glwidth, 0, glheight, -99999, 99999);
+		GL_BuiltinProcedure(glMatrixMode, "mode=PROJECTION", GL_PROJECTION);
+		GL_BuiltinProcedure(glLoadIdentity, "");
+		GL_BuiltinProcedure(glOrtho, "left=%f, right=%f, bottom=%f, top=%f, near=%f, far=%f", 0, glwidth, 0, glheight, -99999, 99999);
 
 		Draw_AlphaRectangleRGB(inset_x, inset_y, inset_width, inset_height, 1.0f, false, RGBAVECT_TO_COLOR(color_black));
 
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0, vid.width, vid.height, 0, -99999, 99999);
+		GL_BuiltinProcedure(glMatrixMode, "mode=PROJECTION", GL_PROJECTION);
+		GL_BuiltinProcedure(glLoadIdentity, "");
+		GL_BuiltinProcedure(glOrtho, "left=%f, right=%f, bottom=%f, top=%f, near=%f, far=%f", 0, vid.width, vid.height, 0, -99999, 99999);
 	}
-	else if (cl_multiview.value == 3)
-	{
+	else if (cl_multiview.integer == 3) {
 		Draw_Fill(vid.width / 2, vid.height / 2, 1, vid.height / 2, 0);
 		Draw_Fill(0, vid.height / 2, vid.width, 1, 0);
 	}
-	else if (cl_multiview.value == 4)
-	{
+	else if (cl_multiview.integer == 4) {
 		Draw_Fill(vid.width / 2, 0, 1, vid.height, 0);
 		Draw_Fill(0, vid.height / 2, vid.width, 1, 0);
 	}

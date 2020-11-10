@@ -40,60 +40,33 @@ GLenum GL_TextureTargetFromReference(texture_ref ref);
 
 // <DSA-functions (4.5)>
 // These allow modification of textures without binding (-bind-to-edit)
-typedef void (APIENTRY *glCreateTextures_t)(GLenum target, GLsizei n, GLuint* textures);
-typedef void (APIENTRY *glGetnTexImage_t)(GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* pixels);
-typedef void (APIENTRY *glGetTextureImage_t)(GLuint texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void *pixels);
-typedef void (APIENTRY *glGetTextureLevelParameterfv_t)(GLuint texture, GLint level, GLenum pname, GLfloat *params);
-typedef void (APIENTRY *glGetTextureLevelParameteriv_t)(GLuint texture, GLint level, GLenum pname, GLint *params);
-typedef void (APIENTRY *glTextureParameteri_t)(GLuint texture, GLenum pname, GLint param);
-typedef void (APIENTRY *glTextureParameterf_t)(GLuint texture, GLenum pname, GLfloat param);
-typedef void (APIENTRY *glTextureParameterfv_t)(GLuint texture, GLenum pname, const GLfloat *params);
-typedef void (APIENTRY *glTextureParameteriv_t)(GLuint texture, GLenum pname, const GLint *params);
-typedef void (APIENTRY *glGenerateTextureMipmap_t)(GLuint texture);
-typedef void (APIENTRY *glTextureStorage3D_t)(GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
-typedef void (APIENTRY *glTextureStorage2D_t)(GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRY *glTextureSubImage2D_t)(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
-typedef void (APIENTRY *glTextureSubImage3D_t)(GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
-typedef void (APIENTRY *glTexSubImage3D_t)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
-typedef void (APIENTRY *glTexStorage2D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRY *glTexStorage3D_t)(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
-typedef void (APIENTRY *glTexImage3D_t)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid* data);
-typedef void (APIENTRY *glGenerateMipmap_t)(GLenum target);
+GL_StaticProcedureDeclaration(glGetTextureLevelParameterfv, "texture=%u, level=%d, pname=%u, params=%p", GLuint texture, GLint level, GLenum pname, GLfloat* params)
+GL_StaticProcedureDeclaration(glGetTextureLevelParameteriv, "texture=%u, level=%d, pname=%u, params=%p", GLuint texture, GLint level, GLenum pname, GLint* params)
+GL_StaticProcedureDeclaration(glGenerateTextureMipmap, "texture=%u", GLuint texture)
+GL_StaticProcedureDeclaration(glGetTextureImage, "texture=%u, level=%d, format=%u, type=%u, bufSize=%d, pixels=%p", GLuint texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* pixels)
+GL_StaticProcedureDeclaration(glCreateTextures, "target=%u, n=%d, textures=%p", GLenum target, GLsizei n, GLuint* textures)
+GL_StaticProcedureDeclaration(glGetnTexImage, "target=%u, level=%d, format=%u, type=%u, bufSize=%d, pixels=%p", GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* pixels)
+GL_StaticProcedureDeclaration(glTextureParameteri, "texture=%u, pname=%u, param=%d", GLuint texture, GLenum pname, GLint param)
+GL_StaticProcedureDeclaration(glTextureParameterf, "texture=%u, pname=%u, param=%f", GLuint texture, GLenum pname, GLfloat param)
+GL_StaticProcedureDeclaration(glTextureParameterfv, "texture=%u, pname=%u, params=%p", GLuint texture, GLenum pname, const GLfloat* params)
+GL_StaticProcedureDeclaration(glTextureParameteriv, "texture=%u, pname=%u, params=%p", GLuint texture, GLenum pname, const GLint* params)
+GL_StaticProcedureDeclaration(glTextureStorage3D, "texture=%u, levels=%d, internalformat=%u, width=%d, height=%d, depth=%d", GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
+GL_StaticProcedureDeclaration(glTextureStorage2D, "texture=%u, levels=%d, internalformat=%u, width=%d, height=%d", GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
+GL_StaticProcedureDeclaration(glTextureSubImage2D, "texture=%u, level=%d, xoffset=%d, yoffset=%d, width=%d, height=%d, format=%u, type=%u, pixels=%p", GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels)
+GL_StaticProcedureDeclaration(glTextureSubImage3D, "texture=%u, level=%d, xoffset=%d, yoffset=%d, zoffset=%d, width=%d, height=%d, depth=%d, format=%u, type=%u, pixels=%p", GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* pixels)
 
-typedef void (APIENTRY *glSamplerParameterf_t)(GLuint sampler, GLenum pname, GLfloat param);
-typedef void (APIENTRY *glGenSamplers_t)(GLsizei n, GLuint* samplers);
-typedef void (APIENTRY *glDeleteSamplers_t)(GLsizei n, const GLuint* samplers);
-typedef void (APIENTRY *glBindSampler_t)(GLuint unit, GLuint sampler);
+GL_StaticProcedureDeclaration(glTexStorage2D, "target=%u, levels=%d, internalformat=%u, width=%d, height=%d", GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height)
+GL_StaticProcedureDeclaration(glTexSubImage3D, "target=%u, level=%d, xoffset=%d, yoffset=%d, zoffset=%d, width=%d, height=%d, depth=%d, format=%u, type=%u, pixels=%p", GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* pixels)
+GL_StaticProcedureDeclaration(glTexStorage3D, "target=%u, levels=%d, internalformat=%u, width=%d, height=%d, depth=%d", GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth)
+GL_StaticProcedureDeclaration(glTexImage3D, "target=%u, level=%d, internalformat=%d, width=%d, height=%d, depth=%d, border=%d, format=%u, type=%u, data=%p", GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid* data)
+GL_StaticProcedureDeclaration(glGenerateMipmap, "target=%u", GLenum target)
 
-typedef void (APIENTRY *glGetInternalformativ_t)(GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params);
+GL_StaticProcedureDeclaration(glGenSamplers, "n=%d, samplers=%p", GLsizei n, GLuint* samplers)
+GL_StaticProcedureDeclaration(glDeleteSamplers, "n=%d, samplers=%p", GLsizei n, const GLuint* samplers)
+GL_StaticProcedureDeclaration(glSamplerParameterf, "sampler=%u, pname=%u, param=%f", GLuint sampler, GLenum pname, GLfloat param)
+GL_StaticProcedureDeclaration(glBindSampler, "unit=%u, sampler=%u", GLuint unit, GLuint sampler)
 
-static glGetTextureLevelParameterfv_t qglGetTextureLevelParameterfv;
-static glGetTextureLevelParameteriv_t qglGetTextureLevelParameteriv;
-static glGenerateTextureMipmap_t qglGenerateTextureMipmap;
-static glGetTextureImage_t qglGetTextureImage;
-static glCreateTextures_t qglCreateTextures;
-static glGetnTexImage_t qglGetnTexImage;
-static glTextureParameteri_t qglTextureParameteri;
-static glTextureParameterf_t qglTextureParameterf;
-static glTextureParameterfv_t qglTextureParameterfv;
-static glTextureParameteriv_t qglTextureParameteriv;
-static glTextureStorage3D_t qglTextureStorage3D;
-static glTextureStorage2D_t qglTextureStorage2D;
-static glTextureSubImage2D_t qglTextureSubImage2D;
-static glTextureSubImage3D_t qglTextureSubImage3D;
-
-static glTexStorage2D_t qglTexStorage2D;
-static glTexSubImage3D_t qglTexSubImage3D;
-static glTexStorage3D_t qglTexStorage3D;
-static glTexImage3D_t qglTexImage3D;
-static glGenerateMipmap_t qglGenerateMipmap;
-
-static glGenSamplers_t qglGenSamplers;
-static glDeleteSamplers_t qglDeleteSamplers;
-static glSamplerParameterf_t qglSamplerParameterf;
-static glBindSampler_t qglBindSampler;
-
-static glGetInternalformativ_t qglGetInternalformativ;
+GL_StaticProcedureDeclaration(glGetInternalformativ, "target=%u, internalformat=%u, pname=%u, bufSize=%d, params=%p", GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params)
 
 void GL_LoadTextureManagementFunctions(void)
 {
@@ -104,11 +77,11 @@ void GL_LoadTextureManagementFunctions(void)
 	if (GL_VersionAtLeast(4, 3) || SDL_GL_ExtensionSupported("GL_ARB_internalformat_query2")) {
 		GL_LoadOptionalFunction(glGetInternalformativ);
 
-		if (qglGetInternalformativ) {
+		if (GL_Available(glGetInternalformativ)) {
 			GLint tempFormat = 0, tempType = 0;
 
-			qglGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_FORMAT, 1, &tempFormat);
-			qglGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_TYPE, 1, &tempType);
+			GL_Procedure(glGetInternalformativ, GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_FORMAT, 1, &tempFormat);
+			GL_Procedure(glGetInternalformativ, GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_TYPE, 1, &tempType);
 
 			glConfig.preferred_format = tempFormat;
 			glConfig.preferred_type = tempType;
@@ -147,9 +120,9 @@ void GL_LoadTextureManagementFunctions(void)
 		GL_LoadOptionalFunction(glGenerateMipmap);
 	}
 	else if (SDL_GL_ExtensionSupported("GL_EXT_framebuffer_object")) {
-		qglGenerateMipmap = (glGenerateMipmap_t)SDL_GL_GetProcAddress("glGenerateMipmap");
-		if (!qglGenerateMipmap) {
-			qglGenerateMipmap = (glGenerateMipmap_t)SDL_GL_GetProcAddress("glGenerateMipmapEXT");
+		GL_LoadOptionalFunction(glGenerateMipmap);
+		if (!GL_Available(glGenerateMipmap)) {
+			GL_LoadOptionalFunctionEXT(glGenerateMipmap);
 		}
 	}
 
@@ -191,21 +164,19 @@ void GL_TexSubImage3D(
 {
 	GLenum target = GL_TextureTargetFromReference(texture);
 
-	GL_ProcessErrors("pre-" __FUNCTION__);
-	if (target != GL_TEXTURE_CUBE_MAP && qglTextureSubImage3D) {
-		qglTextureSubImage3D(GL_TextureNameFromReference(texture), level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
+	R_TraceLogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", unit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
+	if (target != GL_TEXTURE_CUBE_MAP && GL_Available(glTextureSubImage3D)) {
+		GL_Procedure(glTextureSubImage3D, GL_TextureNameFromReference(texture), level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
 	else {
 		renderer.TextureUnitBind(unit, texture);
 		if (target == GL_TEXTURE_CUBE_MAP) {
-			glTexSubImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + zoffset, level, xoffset, yoffset, width, height, format, type, pixels);
+			GL_BuiltinProcedure(glTexSubImage2D, "target=%u, level=%d, xoffset=%d, yoffset=%d, width=%d, height=%d, format=%u, type=%u, pixels=%p", GL_TEXTURE_CUBE_MAP_POSITIVE_X + zoffset, level, xoffset, yoffset, width, height, format, type, pixels);
 		}
 		else {
-			qglTexSubImage3D(target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
+			GL_Procedure(glTexSubImage3D, target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 		}
 	}
-	R_TraceLogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", unit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TexSubImage2D(
@@ -213,31 +184,15 @@ void GL_TexSubImage2D(
 	GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels
 )
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-	if (qglTextureSubImage2D) {
-		qglTextureSubImage2D(GL_TextureNameFromReference(texture), level, xoffset, yoffset, width, height, format, type, pixels);
+	R_TraceLogAPICall("GL_TexSubImage2D(unit=GL_TEXTURE%d, texture=%u)", textureUnit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
+	if (GL_Available(glTextureSubImage2D)) {
+		GL_Procedure(glTextureSubImage2D, GL_TextureNameFromReference(texture), level, xoffset, yoffset, width, height, format, type, pixels);
 	}
 	else {
 		GLenum target = GL_TextureTargetFromReference(texture);
 		GL_BindTextureUnit(textureUnit, texture);
-#ifdef GL_PARANOIA
-		{
-			int glWidth, glHeight;
-			int fullWidth, fullHeight;
-
-			glGetTexLevelParameteriv(target, 0, GL_TEXTURE_WIDTH, &fullWidth);
-			glGetTexLevelParameteriv(target, 0, GL_TEXTURE_HEIGHT, &fullHeight);
-
-			glGetTexLevelParameteriv(target, level, GL_TEXTURE_WIDTH, &glWidth);
-			glGetTexLevelParameteriv(target, level, GL_TEXTURE_HEIGHT, &glHeight);
-
-			assert(glWidth >= width && glHeight >= height);
-		}
-#endif
-		glTexSubImage2D(target, level, xoffset, yoffset, width, height, format, type, pixels);
+		GL_BuiltinProcedure(glTexSubImage2D, "target=%u, level=%d, xoffset=%d, yoffset=%d, width=%d, height=%d, format=%u, type=%u, pixels=%p", target, level, xoffset, yoffset, width, height, format, type, pixels);
 	}
-	R_TraceLogAPICall("GL_TexSubImage2D(unit=GL_TEXTURE%d, texture=%u)", textureUnit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TexStorage2D(
@@ -251,17 +206,16 @@ void GL_TexStorage2D(
 
 	R_TextureSizeRoundUp(tempWidth, tempHeight, &width, &height);
 
-	if (qglTextureStorage2D) {
-		qglTextureStorage2D(GL_TextureNameFromReference(texture), levels, internalformat, width, height);
+	if (GL_Available(glTextureStorage2D)) {
+		GL_Procedure(glTextureStorage2D, GL_TextureNameFromReference(texture), levels, internalformat, width, height);
 	}
 	else {
 		GLenum textureUnit = GL_TEXTURE0;
 		GLenum target = GL_TextureTargetFromReference(texture);
 
 		GL_BindTextureUnit(textureUnit, texture);
-		if (qglTexStorage2D) {
-			qglTexStorage2D(target, levels, internalformat, width, height);
-			GL_ProcessErrors("post-glTexStorage2D");
+		if (GL_Available(glTexStorage2D)) {
+			GL_Procedure(glTexStorage2D, target, levels, internalformat, width, height);
 		}
 		else {
 			int level;
@@ -275,8 +229,7 @@ void GL_TexStorage2D(
 			type = (is_lightmap && GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : type);
 
 			for (level = 0; level < levels; ++level) {
-				glTexImage2D(target, level, internalformat, level_width, level_height, 0, format, type, NULL);
-				GL_ProcessErrors("post-TexImage2D");
+				GL_BuiltinProcedure(glTexImage2D, "target=%u, level=%d, internalformat=%d, width=%d, height=%d, border=%d, format=%u, type=%u, pixels=%p", target, level, internalformat, level_width, level_height, 0, format, type, NULL);
 
 				level_width = max(1, level_width / 2);
 				level_height = max(1, level_height / 2);
@@ -284,21 +237,17 @@ void GL_TexStorage2D(
 		}
 	}
 	R_TextureSetDimensions(texture, width, height);
-
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
-void GL_TexStorage3D(GLenum textureUnit, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, qbool is_lightmap)
+GLenum GL_TexStorage3D(GLenum textureUnit, texture_ref texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, qbool is_lightmap)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
-	if (qglTextureStorage3D) {
-		qglTextureStorage3D(GL_TextureNameFromReference(texture), levels, internalformat, width, height, depth);
+	if (GL_Available(glTextureStorage3D)) {
+		GL_ProcedureReturnError(glTextureStorage3D, GL_TextureNameFromReference(texture), levels, internalformat, width, height, depth);
 	}
-	else if (qglTexStorage3D) {
+	else if (GL_Available(glTexStorage3D)) {
 		GLenum target = GL_TextureTargetFromReference(texture);
 		GL_BindTextureUnit(textureUnit, texture);
-		qglTexStorage3D(target, levels, internalformat, width, height, depth);
+		GL_ProcedureReturnError(glTexStorage3D, target, levels, internalformat, width, height, depth);
 	}
 	else {
 		int level, z;
@@ -315,149 +264,119 @@ void GL_TexStorage3D(GLenum textureUnit, texture_ref texture, GLsizei levels, GL
 			GLsizei level_height = height;
 
 			for (level = 0; level < levels; ++level) {
-				qglTexImage3D(target, level, internalformat, level_width, level_height, z, 0, format, type, NULL);
-				GL_ProcessErrors("post-TexImage3D");
+				GL_ProcedureReturnIfError(glTexImage3D, target, level, internalformat, level_width, level_height, z, 0, format, type, NULL);
 
 				level_width = max(1, level_width / 2);
 				level_height = max(1, level_height / 2);
 			}
 		}
+		return GL_NO_ERROR;
 	}
-
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TexParameterf(GLenum textureUnit, texture_ref texture, GLenum pname, GLfloat param)
 {
-	if (qglTextureParameterf) {
-		qglTextureParameterf(GL_TextureNameFromReference(texture), pname, param);
+	if (GL_Available(glTextureParameterf)) {
+		GL_Procedure(glTextureParameterf, GL_TextureNameFromReference(texture), pname, param);
 	}
 	else {
 		GLenum target = GL_TextureTargetFromReference(texture);
 		GL_BindTextureUnit(textureUnit, texture);
-		glTexParameterf(target, pname, param);
+		GL_BuiltinProcedure(glTexParameterf, "target=%u, pname=%u, param=%f", target, pname, param);
 	}
-
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TexParameterfv(GLenum textureUnit, texture_ref texture, GLenum pname, const GLfloat *params)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
-	if (qglTextureParameterfv) {
-		qglTextureParameterfv(GL_TextureNameFromReference(texture), pname, params);
+	if (GL_Available(glTextureParameterfv)) {
+		GL_Procedure(glTextureParameterfv, GL_TextureNameFromReference(texture), pname, params);
 	}
 	else {
 		GLenum target = GL_TextureTargetFromReference(texture);
 		GL_BindTextureUnit(textureUnit, texture);
-		glTexParameterfv(target, pname, params);
+		GL_BuiltinProcedure(glTexParameterfv, "target=%u, pname=%u, params=%p", target, pname, params);
 	}
-
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TexParameteri(GLenum textureUnit, texture_ref texture, GLenum pname, GLint param)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
-	if (qglTextureParameteri) {
-		qglTextureParameteri(GL_TextureNameFromReference(texture), pname, param);
+	if (GL_Available(glTextureParameteri)) {
+		GL_Procedure(glTextureParameteri, GL_TextureNameFromReference(texture), pname, param);
 	}
 	else {
 		GLenum target = GL_TextureTargetFromReference(texture);
 		GL_BindTextureUnit(textureUnit, texture);
-		glTexParameteri(target, pname, param);
+		GL_BuiltinProcedure(glTexParameteri, "target=%u, pname=%u, param=%d", target, pname, param);
 	}
-
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TexParameteriv(GLenum textureUnit, texture_ref texture, GLenum pname, const GLint *params)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
-	if (qglTextureParameteriv) {
-		qglTextureParameteriv(GL_TextureNameFromReference(texture), pname, params);
+	if (GL_Available(glTextureParameteriv)) {
+		GL_Procedure(glTextureParameteriv, GL_TextureNameFromReference(texture), pname, params);
 	}
 	else {
 		GLenum target = GL_TextureTargetFromReference(texture);
 		GL_BindTextureUnit(textureUnit, texture);
-		glTexParameteriv(target, pname, params);
+		GL_BuiltinProcedure(glTexParameteriv, "target=%u, pname=%u, params=%p", target, pname, params);
 	}
-
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_CreateTextureNames(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
-	if (qglCreateTextures) {
-		qglCreateTextures(target, n, textures);
+	if (GL_Available(glCreateTextures)) {
+		GL_Procedure(glCreateTextures, target, n, textures);
 	}
 	else {
 		int i;
 
-		glGenTextures(n, textures);
+		GL_BuiltinProcedure(glGenTextures, "n=%d, textures=%p", n, textures);
 		for (i = 0; i < n; ++i) {
 			GL_SelectTexture(textureUnit);
-			glBindTexture(target, textures[i]);
+			GL_BuiltinProcedure(glBindTexture, "target=%u, texture=%u", target, textures[i]);
 		}
 	}
-
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_GetTexLevelParameteriv(GLenum textureUnit, texture_ref texture, GLint level, GLenum pname, GLint* params)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
-	if (qglGetTextureLevelParameteriv) {
-		qglGetTextureLevelParameteriv(GL_TextureNameFromReference(texture), level, pname, params);
+	if (GL_Available(glGetTextureLevelParameteriv)) {
+		GL_Procedure(glGetTextureLevelParameteriv, GL_TextureNameFromReference(texture), level, pname, params);
 	}
 	else {
 		GLenum target = GL_TextureTargetFromReference(texture);
 		GL_BindTextureUnit(textureUnit, texture);
-		glGetTexLevelParameteriv(target, level, pname, params);
+		GL_BuiltinProcedure(glGetTexLevelParameteriv, "target=%u, level=%d, pname=%u, params=%p", target, level, pname, params);
 	}
-
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_GetTexImage(GLenum textureUnit, texture_ref texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
-	if (qglGetTextureImage) {
-		qglGetTextureImage(GL_TextureNameFromReference(texture), level, format, type, bufSize, buffer);
+	if (GL_Available(glGetTextureImage)) {
+		GL_Procedure(glGetTextureImage, GL_TextureNameFromReference(texture), level, format, type, bufSize, buffer);
 	}
 	else {
 		GLenum target = GL_TextureTargetFromReference(texture);
 		GL_BindTextureUnit(textureUnit, texture);
-		if (qglGetnTexImage) {
-			qglGetnTexImage(target, level, format, type, bufSize, buffer);
+		if (GL_Available(glGetnTexImage)) {
+			GL_Procedure(glGetnTexImage, target, level, format, type, bufSize, buffer);
 		}
 		else {
-			glGetTexImage(target, level, format, type, buffer);
+			GL_BuiltinProcedure(glGetTexImage, "target=%u, level=%d, format=%u, type=%u, buffer=%p", target, level, format, type, buffer);
 		}
 	}
-
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TextureMipmapGenerateWithData(GLenum textureUnit, texture_ref texture, byte* newdata, int width, int height, GLint internal_format)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
-	if (qglGenerateTextureMipmap) {
-		qglGenerateTextureMipmap(GL_TextureNameFromReference(texture));
+	if (GL_Available(glGenerateTextureMipmap)) {
+		GL_Procedure(glGenerateTextureMipmap, GL_TextureNameFromReference(texture));
 	}
 	else {
 		GLenum target = GL_TextureTargetFromReference(texture);
 		GL_BindTextureUnit(textureUnit, texture);
-		if (qglGenerateMipmap) {
-			qglGenerateMipmap(target);
+		if (GL_Available(glGenerateMipmap)) {
+			GL_Procedure(glGenerateMipmap, target);
 		}
 		else if (newdata) {
 			int miplevel = 0;
@@ -470,78 +389,52 @@ void GL_TextureMipmapGenerateWithData(GLenum textureUnit, texture_ref texture, b
 			}
 		}
 	}
-
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_TextureMipmapGenerate(texture_ref texture)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
 	GL_TextureMipmapGenerateWithData(GL_TEXTURE0, texture, NULL, 0, 0, 0);
-
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 void GL_SamplerSetNearest(unsigned int texture_unit_number)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
 	if (!nearest_sampler) {
-		qglGenSamplers(1, &nearest_sampler);
+		GL_Procedure(glGenSamplers, 1, &nearest_sampler);
 
-		qglSamplerParameterf(nearest_sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		qglSamplerParameterf(nearest_sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		GL_Procedure(glSamplerParameterf, nearest_sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		GL_Procedure(glSamplerParameterf, nearest_sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
 
-	qglBindSampler(texture_unit_number, nearest_sampler);
-
-	GL_ProcessErrors("post-" __FUNCTION__);
+	GL_Procedure(glBindSampler, texture_unit_number, nearest_sampler);
 }
 
 void GL_SamplerSetLinear(unsigned int texture_unit_number)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
 	if (!linear_sampler) {
-		qglGenSamplers(1, &linear_sampler);
+		GL_Procedure(glGenSamplers, 1, &linear_sampler);
 
-		qglSamplerParameterf(linear_sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		qglSamplerParameterf(linear_sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		GL_Procedure(glSamplerParameterf, linear_sampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		GL_Procedure(glSamplerParameterf, linear_sampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	}
 
-	qglBindSampler(texture_unit_number, linear_sampler);
-
-	GL_ProcessErrors("post-" __FUNCTION__);
+	GL_Procedure(glBindSampler, texture_unit_number, linear_sampler);
 }
 
 void GL_SamplerClear(unsigned int texture_unit_number)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
-	qglBindSampler(texture_unit_number, 0);
-
-	GL_ProcessErrors("post-" __FUNCTION__);
+	GL_Procedure(glBindSampler, texture_unit_number, 0);
 }
 
 void GL_DeleteSamplers(void)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
-	if (qglDeleteSamplers) {
-		qglDeleteSamplers(1, &nearest_sampler);
+	if (GL_Available(glDeleteSamplers)) {
+		GL_Procedure(glDeleteSamplers, 1, &nearest_sampler);
 	}
 	nearest_sampler = 0;
-
-	GL_ProcessErrors("post-" __FUNCTION__);
 }
 
 // meag: *RGBA is bit ugly, just trying to keep OpenGL enums out of the way for now
 void GL_TextureReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer)
 {
-	GL_ProcessErrors("pre-" __FUNCTION__);
-
 	GL_TexSubImage2D(GL_TEXTURE0, ref, 0, offsetx, offsety, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
-
-	GL_ProcessErrors("post-" __FUNCTION__);
 }

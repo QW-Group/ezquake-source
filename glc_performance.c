@@ -37,7 +37,7 @@ void GLC_TimeRefresh(void)
 #ifndef __APPLE__
 		if (glConfig.hardwareType != GLHW_INTEL) {
 			// Causes the console to flicker on Intel cards.
-			glDrawBuffer(GL_FRONT);
+			GL_BuiltinProcedure(glDrawBuffer, "mode=GL_FRONT", GL_FRONT)
 		}
 #endif
 	}
@@ -59,7 +59,7 @@ void GLC_TimeRefresh(void)
 	if (!GL_FramebufferEnabled2D()) {
 #ifndef __APPLE__
 		if (glConfig.hardwareType != GLHW_INTEL) {
-			glDrawBuffer(GL_BACK);
+			GL_BuiltinProcedure(glDrawBuffer, "mode=GL_BACK", GL_BACK)
 		}
 #endif
 	}

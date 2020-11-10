@@ -291,6 +291,7 @@ void GLC_End(void)
 		count_name = "primitives";
 	}
 	R_TraceLogAPICall("glEnd(%s: %d %s)", glcPrimitiveName, primitives, count_name);
+	GL_ProcessErrors("glEnd");
 #endif
 }
 

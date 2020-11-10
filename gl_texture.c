@@ -217,7 +217,7 @@ void GL_TextureDelete(texture_ref texture)
 	Sys_Printf("\nopengl-texture,free,%u,%d,%d,%d,%s\n", texture.index, slot->texture_width, slot->texture_height, slot->texture_width * slot->texture_height * max(slot->depth,1) * slot->bpp, slot->identifier);
 #endif
 
-	glDeleteTextures(1, &slot->texnum);
+	GL_BuiltinProcedure(glDeleteTextures, "n=%d, textures=%p", 1, &slot->texnum);
 
 	// Might have been bound when deleted, update state
 	GL_InvalidateTextureReferences(gltextures[texture.index].texnum);
@@ -236,28 +236,24 @@ qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot, int minimum_depth, int*
 {
 	GLenum error;
 
-	while ((error = glGetError()) != GL_NO_ERROR) {
-		Com_Printf("Prior-texture-array-creation: OpenGL error %u\n", error);
-	}
 	while (*depth >= minimum_depth) {
-		GL_Paranoid_Printf("Allocating %d x %d x %d, %d miplevels\n", slot->texture_width, slot->texture_height, *depth, slot->miplevels);
-		GL_TexStorage3D(GL_TEXTURE0, slot->reference, slot->miplevels, GL_StorageFormat(TEX_ALPHA), slot->texture_width, slot->texture_height, *depth, false);
+		R_TraceAPI("Allocating %d x %d x %d, %d miplevels\n", slot->texture_width, slot->texture_height, *depth, slot->miplevels);
+		error = GL_TexStorage3D(GL_TEXTURE0, slot->reference, slot->miplevels, GL_StorageFormat(TEX_ALPHA), slot->texture_width, slot->texture_height, *depth, false);
 
-		error = glGetError();
 		if (error == GL_OUT_OF_MEMORY && *depth > 2) {
 			*depth /= 2;
-			GL_Paranoid_Printf("Array allocation failed (memory), reducing size...\n");
+			R_TraceAPI("Array allocation failed (memory), reducing size to %d...\n", *depth);
 			continue;
 		}
 		else if (error != GL_NO_ERROR) {
-#ifdef GL_PARANOIA
+#ifdef WITH_RENDERING_TRACE
 			int array_width, array_height, array_depth;
 			array_width = R_TextureWidth(slot->reference);
 			array_height = R_TextureHeight(slot->reference);
 			array_depth = R_TextureDepth(slot->reference);
 
-			GL_Paranoid_Printf("Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, slot->miplevels, slot->texture_width, slot->texture_height, *depth);
-			GL_Paranoid_Printf(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
+			R_TraceAPI("Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, slot->miplevels, slot->texture_width, slot->texture_height, *depth);
+			R_TraceAPI(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
 #endif
 			return false;
 		}

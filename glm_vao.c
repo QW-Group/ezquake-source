@@ -34,22 +34,13 @@ typedef struct r_vao_s {
 static glm_vao_t vaos[vao_count];
 
 // VAOs
-typedef void (APIENTRY *glGenVertexArrays_t)(GLsizei n, GLuint* arrays);
-typedef void (APIENTRY *glBindVertexArray_t)(GLuint arrayNum);
-typedef void (APIENTRY *glDeleteVertexArrays_t)(GLsizei n, const GLuint* arrays);
-typedef void (APIENTRY *glEnableVertexAttribArray_t)(GLuint index);
-typedef void (APIENTRY *glVertexAttribPointer_t)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
-typedef void (APIENTRY *glVertexAttribIPointer_t)(GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
-typedef void (APIENTRY *glVertexAttribDivisor_t)(GLuint index, GLuint divisor);
-
-// VAO functions
-static glGenVertexArrays_t         qglGenVertexArrays = NULL;
-static glBindVertexArray_t         qglBindVertexArray = NULL;
-static glEnableVertexAttribArray_t qglEnableVertexAttribArray = NULL;
-static glDeleteVertexArrays_t      qglDeleteVertexArrays = NULL;
-static glVertexAttribPointer_t     qglVertexAttribPointer = NULL;
-static glVertexAttribIPointer_t    qglVertexAttribIPointer = NULL;
-static glVertexAttribDivisor_t     qglVertexAttribDivisor = NULL;
+GL_StaticProcedureDeclaration(glGenVertexArrays, "size=%d, arrays=%p", GLsizei n, GLuint* arrays)
+GL_StaticProcedureDeclaration(glBindVertexArray, "arrayNum=%u", GLuint arrayNum)
+GL_StaticProcedureDeclaration(glDeleteVertexArrays, "n=%d, arrays=%p", GLsizei n, const GLuint* arrays)
+GL_StaticProcedureDeclaration(glEnableVertexAttribArray, "index=%u", GLuint index)
+GL_StaticProcedureDeclaration(glVertexAttribPointer, "index=%u, size=%d, type=%u, normalized=%d, stride=%d, pointer=%p", GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer)
+GL_StaticProcedureDeclaration(glVertexAttribIPointer, "index=%u, size=%d, type=%u, stride=%d, pointer=%p", GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+GL_StaticProcedureDeclaration(glVertexAttribDivisor, "index=%u, divisor=%u", GLuint index, GLuint divisor)
 
 qbool GLM_InitialiseVAOHandling(void)
 {
@@ -84,7 +75,7 @@ qbool GLM_InitialiseVAOHandling(void)
 
 void GLM_BindVertexArray(r_vao_id vao)
 {
-	qglBindVertexArray(vaos[vao].vao);
+	GL_Procedure(glBindVertexArray, vaos[vao].vao);
 	if (vao) {
 		buffers.SetElementArray(vaos[vao].element_array_buffer);
 	}
@@ -103,9 +94,9 @@ void GLM_ConfigureVertexAttribPointer(r_vao_id vao, r_buffer_id vbo, GLuint inde
 		buffers.UnBind(buffertype_vertex);
 	}
 
-	qglEnableVertexAttribArray(index);
-	qglVertexAttribPointer(index, size, type, normalized, stride, pointer);
-	qglVertexAttribDivisor(index, divisor);
+	GL_Procedure(glEnableVertexAttribArray, index);
+	GL_Procedure(glVertexAttribPointer, index, size, type, normalized, stride, pointer);
+	GL_Procedure(glVertexAttribDivisor, index, divisor);
 }
 
 void GLM_ConfigureVertexAttribIPointer(r_vao_id vao, r_buffer_id vbo, GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer, int divisor)
@@ -121,9 +112,9 @@ void GLM_ConfigureVertexAttribIPointer(r_vao_id vao, r_buffer_id vbo, GLuint ind
 		buffers.UnBind(buffertype_vertex);
 	}
 
-	qglEnableVertexAttribArray(index);
-	qglVertexAttribIPointer(index, size, type, stride, pointer);
-	qglVertexAttribDivisor(index, divisor);
+	GL_Procedure(glEnableVertexAttribArray, index);
+	GL_Procedure(glVertexAttribIPointer, index, size, type, stride, pointer);
+	GL_Procedure(glVertexAttribDivisor, index, divisor);
 }
 
 void GLM_SetVertexArrayElementBuffer(r_vao_id vao, r_buffer_id ibo)
@@ -143,9 +134,9 @@ void GLM_SetVertexArrayElementBuffer(r_vao_id vao, r_buffer_id ibo)
 void GLM_GenVertexArray(r_vao_id vao, const char* name)
 {
 	if (vaos[vao].vao) {
-		qglDeleteVertexArrays(1, &vaos[vao].vao);
+		GL_Procedure(glDeleteVertexArrays, 1, &vaos[vao].vao);
 	}
-	qglGenVertexArrays(1, &vaos[vao].vao);
+	GL_Procedure(glGenVertexArrays, 1, &vaos[vao].vao);
 	R_BindVertexArray(vao);
 	GL_TraceObjectLabelSet(GL_VERTEX_ARRAY, vaos[vao].vao, -1, name);
 	buffers.SetElementArray(r_buffer_none);
@@ -155,14 +146,14 @@ void GLM_DeleteVAOs(void)
 {
 	r_vao_id id;
 
-	if (qglBindVertexArray) {
-		qglBindVertexArray(0);
+	if (GL_Available(glBindVertexArray)) {
+		GL_Procedure(glBindVertexArray, 0);
 	}
 
 	for (id = 0; id < vao_count; ++id) {
 		if (vaos[id].vao) {
-			if (qglDeleteVertexArrays) {
-				qglDeleteVertexArrays(1, &vaos[id].vao);
+			if (GL_Available(glDeleteVertexArrays)) {
+				GL_Procedure(glDeleteVertexArrays, 1, &vaos[id].vao);
 			}
 			vaos[id].vao = 0;
 		}

@@ -191,8 +191,10 @@ int ParseFloats(char *s, float *f, int *f_size) {
 	int i, argc;
 	tokenizecontext_t ctx;
 
-	if (!s || !f || !f_size)
+	if (!s || !f || !f_size) {
 		Sys_Error("ParseFloats() wrong params");
+		return 0;
+	}
 
 	if (f_size[0] <= 0)
 		return (f_size[0] = 0); // array have no size, unusual but no crime
@@ -249,8 +251,10 @@ int strlen_color(const char *str)
 // skip ezquake color sequence
 void Util_SkipEZColors(char *dst, const char *src, size_t size)
 {
-	if ( !dst || !src )
+	if (!dst || !src) {
 		Sys_Error("Util_SkipColors: invalid input params");
+		return;
+	}
 
 	if ( !size )
 		return; // no space

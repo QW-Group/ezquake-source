@@ -26,29 +26,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_vao.h"
 
 // <draw-functions (various)>
-typedef void (APIENTRY *glMultiDrawArrays_t)(GLenum mode, const GLint * first, const GLsizei* count, GLsizei drawcount);
-typedef void (APIENTRY *glMultiDrawElements_t)(GLenum mode, const GLsizei * count, GLenum type, const GLvoid * const * indices, GLsizei drawcount);
-typedef void (APIENTRY *glDrawElementsBaseVertex_t)(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex);
-typedef void (APIENTRY *glPrimitiveRestartIndex_t)(GLuint index);
-
-static glMultiDrawArrays_t                               qglMultiDrawArrays;
-static glMultiDrawElements_t                             qglMultiDrawElements;
-static glDrawElementsBaseVertex_t                        qglDrawElementsBaseVertex;
-static glPrimitiveRestartIndex_t                         qglPrimitiveRestartIndex;
+GL_StaticProcedureDeclaration(glMultiDrawArrays, "mode=%u, first=%p, count=%p, drawcount=%d", GLenum mode, const GLint* first, const GLsizei* count, GLsizei drawcount)
+GL_StaticProcedureDeclaration(glMultiDrawElements, "mode=%u, count=%p, type=%u, indices=%p, drawcount=%d", GLenum mode, const GLsizei* count, GLenum type, const GLvoid* const* indices, GLsizei drawcount)
+GL_StaticProcedureDeclaration(glDrawElementsBaseVertex, "mode=%u, count=%d, type=%u, indices=%p, basevertex=%d", GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex)
+GL_StaticProcedureDeclaration(glPrimitiveRestartIndex, "index=%u", GLuint index)
 
 // (modern/4.3+)
-typedef void (APIENTRY *glDrawArraysInstanced_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
-typedef void (APIENTRY *glMultiDrawArraysIndirect_t)(GLenum mode, const void *indirect, GLsizei drawcount, GLsizei stride);
-typedef void (APIENTRY *glMultiDrawElementsIndirect_t)(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride);
-typedef void (APIENTRY *glDrawArraysInstancedBaseInstance_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount, GLuint baseinstance);
-typedef void (APIENTRY *glDrawElementsInstancedBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount, GLuint baseinstance);
-typedef void (APIENTRY *glDrawElementsInstancedBaseVertexBaseInstance_t)(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance);
-
-static glMultiDrawArraysIndirect_t                       qglMultiDrawArraysIndirect;
-static glMultiDrawElementsIndirect_t                     qglMultiDrawElementsIndirect;
-static glDrawArraysInstancedBaseInstance_t               qglDrawArraysInstancedBaseInstance;
-static glDrawElementsInstancedBaseInstance_t             qglDrawElementsInstancedBaseInstance;
-static glDrawElementsInstancedBaseVertexBaseInstance_t   qglDrawElementsInstancedBaseVertexBaseInstance;
+// typedef void (APIENTRY *glDrawArraysInstanced_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
+GL_StaticProcedureDeclaration(glMultiDrawArraysIndirect, "mode=%u, indirect=%p, drawcount=%d, stride=%d", GLenum mode, const void* indirect, GLsizei drawcount, GLsizei stride)
+GL_StaticProcedureDeclaration(glMultiDrawElementsIndirect, "mode=%u, type=%u, indirect=%p, drawcount=%d, stride=%d", GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride)
+GL_StaticProcedureDeclaration(glDrawArraysInstancedBaseInstance, "mode=%u, first=%d, count=%d, primcount=%d, baseinstance=%u", GLenum mode, GLint first, GLsizei count, GLsizei primcount, GLuint baseinstance)
+GL_StaticProcedureDeclaration(glDrawElementsInstancedBaseInstance, "mode=%u, count=%d, type=%u, indices=%p, primcount=%d, baseinstance=%d", GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount, GLuint baseinstance)
+GL_StaticProcedureDeclaration(glDrawElementsInstancedBaseVertexBaseInstance, "mode=%u, count=%d, type=%u, indices=%p, primcount=%d, basevertex=%d, baseinstance=%u", GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance)
 // </draw-functions>
 
 void GL_LoadDrawFunctions(void)
@@ -85,13 +74,13 @@ void GL_LoadDrawFunctions(void)
 	glConfig.supported_features &= ~R_SUPPORT_PRIMITIVERESTART;
 	if (R_UseModernOpenGL() || GL_VersionAtLeast(3, 1)) {
 		GL_LoadOptionalFunction(glPrimitiveRestartIndex);
-		if (qglPrimitiveRestartIndex) {
+		if (GL_Available(glPrimitiveRestartIndex)) {
 			glEnable(GL_PRIMITIVE_RESTART);
 			if (GL_VersionAtLeast(4, 3)) {
 				glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
 			}
 			else {
-				qglPrimitiveRestartIndex(~(GLuint)0);
+				GL_Procedure(glPrimitiveRestartIndex, (~(GLuint)0));
 			}
 			glConfig.supported_features |= R_SUPPORT_PRIMITIVERESTART;
 		}
@@ -101,11 +90,10 @@ void GL_LoadDrawFunctions(void)
 // Wrappers around drawing functions
 void GL_MultiDrawArrays(GLenum mode, GLint* first, GLsizei* count, GLsizei primcount)
 {
-	if (qglMultiDrawArrays) {
-		qglMultiDrawArrays(mode, first, count, primcount);
+	if (GL_Available(glMultiDrawArrays)) {
+		GL_Procedure(glMultiDrawArrays, mode, first, count, primcount);
 		++frameStats.draw_calls;
 		frameStats.subdraw_calls += primcount;
-		R_TraceLogAPICall("glMultiDrawElements(%d sub-draws)", primcount);
 	}
 	else {
 		int i;
@@ -117,6 +105,7 @@ void GL_MultiDrawArrays(GLenum mode, GLint* first, GLsizei* count, GLsizei primc
 
 void GL_DrawArrays(GLenum mode, GLint first, GLsizei count)
 {
+	R_TraceLogAPICall("glDrawArrays(%d verts)", count);
 	assert(R_VAOBound());
 	if (!R_VAOBound()) {
 		Con_Printf("GL_DrawArrays() with no VAO bound\n");
@@ -124,55 +113,50 @@ void GL_DrawArrays(GLenum mode, GLint first, GLsizei count)
 	}
 	glDrawArrays(mode, first, count);
 	++frameStats.draw_calls;
-	R_TraceLogAPICall("glDrawArrays(%d verts)", count);
 }
 
 void GL_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex)
 {
-	if (basevertex && !qglDrawElementsBaseVertex) {
+	if (basevertex && !GL_Available(glDrawElementsBaseVertex)) {
 		Sys_Error("glDrawElementsBaseVertex called, not supported");
 	}
-	else if (qglDrawElementsBaseVertex) {
-		qglDrawElementsBaseVertex(mode, count, type, indices, basevertex);
+	else if (GL_Available(glDrawElementsBaseVertex)) {
+		GL_Procedure(glDrawElementsBaseVertex, mode, count, type, indices, basevertex);
 	}
 	else {
-		glDrawElements(mode, count, type, indices);
+		GL_BuiltinProcedure(glDrawElements, "mode=%u, count=%d, type=%u, indices=%p", mode, count, type, indices);
 	}
 	++frameStats.draw_calls;
-	R_TraceLogAPICall("glDrawElements(%d verts)", count);
 }
 
 qbool GL_DrawElementsBaseVertexAvailable(void)
 {
-	return qglDrawElementsBaseVertex != NULL;
+	return GL_Available(glDrawElementsBaseVertex);
 }
 
 void GL_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices)
 {
+	R_TraceLogAPICall("glDrawElements(%d verts)", count);
 	glDrawElements(mode, count, type, indices);
 	++frameStats.draw_calls;
-	R_TraceLogAPICall("glDrawElements(%d verts)", count);
 }
 
 void GL_MultiDrawArraysIndirect(GLenum mode, const void* indirect, GLsizei drawcount, GLsizei stride)
 {
-	qglMultiDrawArraysIndirect(mode, indirect, drawcount, stride);
+	GL_Procedure(glMultiDrawArraysIndirect, mode, indirect, drawcount, stride);
 	++frameStats.draw_calls;
 	frameStats.subdraw_calls += drawcount;
-	R_TraceLogAPICall("glMultiDrawArraysIndirect(%d subdraws)", drawcount);
 }
 
 void GL_MultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride)
 {
-	qglMultiDrawElementsIndirect(mode, type, indirect, drawcount, stride);
+	GL_Procedure(glMultiDrawElementsIndirect, mode, type, indirect, drawcount, stride);
 	++frameStats.draw_calls;
 	frameStats.subdraw_calls += drawcount;
-	R_TraceLogAPICall("glMultiDrawElementsIndirect(%d subdraws)", drawcount);
 }
 
 void GL_DrawElementsInstancedBaseVertexBaseInstance(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance)
 {
-	qglDrawElementsInstancedBaseVertexBaseInstance(mode, count, type, indices, primcount, basevertex, baseinstance);
+	GL_Procedure(glDrawElementsInstancedBaseVertexBaseInstance, mode, count, type, indices, primcount, basevertex, baseinstance);
 	++frameStats.draw_calls;
-	R_TraceLogAPICall("glDrawElementsInstancedBaseVertexBaseInstance()");
 }

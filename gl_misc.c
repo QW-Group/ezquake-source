@@ -83,16 +83,36 @@ void GL_EnsureFinished(void)
 	glFinish();
 }
 
-#ifdef GL_PARANOIA
-void GL_ProcessErrors(const char* message)
+#ifdef WITH_RENDERING_TRACE
+GLenum GL_ProcessErrors(const char* message)
 {
 	GLenum error = glGetError();
+	GLenum firstError = error;
+
 	while (error != GL_NO_ERROR) {
-		Con_Printf("%s> = %X\n", message, error);
+		if (error == GL_INVALID_ENUM) {
+			R_TraceLogAPICall("  ERROR: %s (GL_INVALID_ENUM)\n", message);
+		}
+		else if (error == GL_INVALID_VALUE) {
+			R_TraceLogAPICall("  ERROR: %s (GL_INVALID_VALUE)\n", message);
+		}
+		else if (error == GL_STACK_OVERFLOW) {
+			R_TraceLogAPICall("  ERROR: %s (GL_STACK_OVERFLOW)\n", message);
+		}
+		else if (error == GL_STACK_UNDERFLOW) {
+			R_TraceLogAPICall("  ERROR: %s (GL_STACK_UNDERFLOW)\n", message);
+		}
+		else if (error == GL_OUT_OF_MEMORY) {
+			R_TraceLogAPICall("  ERROR: %s (GL_OUT_OF_MEMORY)\n", message);
+		}
+		else {
+			R_TraceLogAPICall("  ERROR: %s (UNKNOWN_ERROR 0x%X)\n", message, error);
+		}
 		error = glGetError();
 	}
+	return firstError;
 }
-#endif
+#endif // WITH_RENDERING_TRACE
 
 static void GL_PrintInfoLine(const char* label, int labelsize, const char* fmt, ...)
 {
@@ -238,9 +258,6 @@ void GL_BenchmarkLightmapFormats(void)
 	byte data[LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 16];
 	lightmap_benchmark_t results[(sizeof(image_formats) / sizeof(image_formats[0])) * (sizeof(image_types) / sizeof(image_types[0]))];
 	int count = 0, i;
-
-	while (glGetError() != GL_NO_ERROR) {
-	}
 
 	for (format = 0; format < sizeof(image_formats) / sizeof(image_formats[0]); ++format) {
 		for (type = 0; type < sizeof(image_types) / sizeof(image_types[0]); ++type) {

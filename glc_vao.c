@@ -28,12 +28,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_buffers.h"
 #include "r_program.h"
 
-typedef void (APIENTRY *glVertexAttribPointer_t)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer);
-typedef void (APIENTRY *glDisableVertexAttribArray_t)(GLuint index);
-typedef void (APIENTRY *glEnableVertexAttribArray_t)(GLuint index);
-static glVertexAttribPointer_t       qglVertexAttribPointer;
-static glDisableVertexAttribArray_t  qglDisableVertexAttribArray;
-static glEnableVertexAttribArray_t   qglEnableVertexAttribArray;
+GL_StaticProcedureDeclaration(glVertexAttribPointer, "index=%u, size=%d, type=%u, normalized=%d, stride=%d, pointer=%p", GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer)
+GL_StaticProcedureDeclaration(glDisableVertexAttribArray, "index=%u", GLuint index)
+GL_StaticProcedureDeclaration(glEnableVertexAttribArray, "index=%u", GLuint index)
 
 void R_GLC_TexturePointer(r_buffer_id buffer_id, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
 void R_GLC_ColorPointer(r_buffer_id buffer_id, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
@@ -101,18 +98,18 @@ void GLC_BindVertexArrayAttributes(r_vao_id vao)
 			GLint location = R_ProgramAttributeLocation(attr->attr_id);
 
 			if (location >= 0) {
-				qglEnableVertexAttribArray(location);
-				qglVertexAttribPointer(location, attr->size, attr->type, attr->normalized ? GL_TRUE : GL_FALSE, attr->stride, attr->pointer);
+				GL_Procedure(glEnableVertexAttribArray, location);
+				GL_Procedure(glVertexAttribPointer, location, attr->size, attr->type, attr->normalized ? GL_TRUE : GL_FALSE, attr->stride, attr->pointer);
 				attributes[i].location = location;
 				attributes[i].enabled = true;
 			}
 			else {
-				qglDisableVertexAttribArray(attributes[i].location);
+				GL_Procedure(glDisableVertexAttribArray, attributes[i].location);
 				attributes[i].enabled = false;
 			}
 		}
 		else {
-			qglDisableVertexAttribArray(attributes[i].location);
+			GL_Procedure(glDisableVertexAttribArray, attributes[i].location);
 			attributes[i].enabled = false;
 		}
 	}
@@ -129,7 +126,7 @@ void GLC_BindVertexArray(r_vao_id vao)
 	// Unbind any active attributes
 	for (i = 0; i < MAX_GLC_ATTRIBUTES; ++i) {
 		if (attributes[i].enabled) {
-			qglDisableVertexAttribArray(attributes[i].location);
+			GL_Procedure(glDisableVertexAttribArray, attributes[i].location);
 			attributes[i].enabled = false;
 		}
 	}
@@ -152,8 +149,8 @@ void GLC_BindVertexArray(r_vao_id vao)
 			GLint location = R_ProgramAttributeLocation(attr->attr_id);
 
 			if (location >= 0) {
-				qglEnableVertexAttribArray(location);
-				qglVertexAttribPointer(location, attr->size, attr->type, attr->normalized ? GL_TRUE : GL_FALSE, attr->stride, attr->pointer);
+				GL_Procedure(glEnableVertexAttribArray, location);
+				GL_Procedure(glVertexAttribPointer, location, attr->size, attr->type, attr->normalized ? GL_TRUE : GL_FALSE, attr->stride, attr->pointer);
 				attributes[i].location = location;
 				attributes[i].enabled = true;
 			}

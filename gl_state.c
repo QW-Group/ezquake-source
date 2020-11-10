@@ -41,11 +41,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static rendering_state_t states[r_state_count];
 
 // Texture functions
-typedef void (APIENTRY *glBindTextures_t)(GLuint first, GLsizei count, const GLuint* format);
-typedef void (APIENTRY *glBindImageTexture_t)(GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
-static glBindImageTexture_t     qglBindImageTexture;
-static glBindTextures_t         qglBindTextures;
-extern glActiveTexture_t        qglActiveTexture;
+GL_StaticProcedureDeclaration(glBindTextures, "first=%u, count=%d, format=%p", GLuint first, GLsizei count, const GLuint* format)
+GL_StaticProcedureDeclaration(glBindImageTexture, "unit=%u, texture=%u, level=%d, layered=%d, layer=%d, access=%u, format=%u", GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format)
+GL_StaticProcedureDeclaration(glActiveTexture, "target=%u", GLenum target)
+
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+GL_StaticProcedureDeclaration(glMultiTexCoord2f, "target=%u, s=%f, t=%f", GLenum target, GLfloat s, GLfloat t)
+GL_StaticProcedureDeclaration(glClientActiveTexture, "target=%u", GLenum target)
+#endif
 
 void R_InitialiseStates(void);
 
@@ -528,44 +531,31 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 	assert(targetType);
 	assert(texnum);
 
-#ifdef GL_PARANOIA
-	if (warning && !glIsTexture(texnum)) {
-		Con_Printf("ERROR: Non-texture %d passed to GL_BindTexture\n", texnum);
-		return;
-	}
-
-	GL_ProcessErrors("glBindTexture/Prior");
-#endif
-
 	if (targetType == GL_TEXTURE_2D) {
 		if (bound_textures[currentTextureUnit - GL_TEXTURE0] == texnum) {
 			return;
 		}
 
-		bound_textures[currentTextureUnit - GL_TEXTURE0] = texnum;
-		glBindTexture(GL_TEXTURE_2D, texnum);
 		R_TraceLogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
+		bound_textures[currentTextureUnit - GL_TEXTURE0] = texnum;
+		GL_BuiltinProcedure(glBindTexture, "target=%u, texnum=%u", GL_TEXTURE_2D, texnum);
 	}
 	else if (targetType == GL_TEXTURE_2D_ARRAY) {
 		if (bound_arrays[currentTextureUnit - GL_TEXTURE0] == texnum) {
 			return;
 		}
 
-		bound_arrays[currentTextureUnit - GL_TEXTURE0] = texnum;
-		glBindTexture(GL_TEXTURE_2D_ARRAY, texnum);
 		R_TraceLogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D_ARRAY, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
+		bound_arrays[currentTextureUnit - GL_TEXTURE0] = texnum;
+		GL_BuiltinProcedure(glBindTexture, "target=%u, texnum=%u", GL_TEXTURE_2D_ARRAY, texnum);
 	}
 	else {
 		// No caching...
-		glBindTexture(targetType, texnum);
 		R_TraceLogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=<other>, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
+		GL_BuiltinProcedure(glBindTexture, "target=%u, texnum=%u", targetType, texnum);
 	}
 
 	++frameStats.texture_binds;
-
-#ifdef GL_PARANOIA
-	GL_ProcessErrors("glBindTexture/After");
-#endif
 }
 
 void GL_SelectTexture(GLenum textureUnit)
@@ -574,18 +564,12 @@ void GL_SelectTexture(GLenum textureUnit)
 		return;
 	}
 
-#ifdef GL_PARANOIA
-	GL_ProcessErrors("glActiveTexture/Prior");
-#endif
-	if (qglActiveTexture) {
-		qglActiveTexture(textureUnit);
+	R_TraceLogAPICall("glActiveTexture(GL_TEXTURE%d)", textureUnit - GL_TEXTURE0);
+	if (GL_Available(glActiveTexture)) {
+		GL_Procedure(glActiveTexture, textureUnit);
 	}
-#ifdef GL_PARANOIA
-	GL_ProcessErrors("glActiveTexture/After");
-#endif
 
 	currentTextureUnit = textureUnit;
-	R_TraceLogAPICall("glActiveTexture(GL_TEXTURE%d)", textureUnit - GL_TEXTURE0);
 }
 
 void GL_TextureInitialiseState(void)
@@ -638,7 +622,7 @@ void GL_TextureUnitMultiBind(int first, int count, texture_ref* textures)
 	int i;
 
 	if (first + count > MAX_LOGGED_TEXTURE_UNITS) {
-		qglBindTextures(first, count, glTextures);
+		GL_Procedure(glBindTextures, first, count, glTextures);
 		memset(bound_arrays, 0, sizeof(bound_arrays));
 		memset(bound_textures, 0, sizeof(bound_textures));
 		return;
@@ -662,8 +646,8 @@ void GL_TextureUnitMultiBind(int first, int count, texture_ref* textures)
 		}
 	}
 
-	if (qglBindTextures && to_change >= 2) {
-		qglBindTextures(first, count, glTextures);
+	if (GL_Available(glBindTextures) && to_change >= 2) {
+		GL_Procedure(glBindTextures, first, count, glTextures);
 
 		for (i = 0; i < count; ++i) {
 			if (glTextures[i] == 0) {
@@ -727,7 +711,7 @@ void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolea
 		}
 	}
 
-	qglBindImageTexture(unit, glRef, level, layered, layer, access, format);
+	GL_Procedure(glBindImageTexture, unit, glRef, level, layered, layer, access, format);
 }
 
 #ifdef WITH_RENDERING_TRACE
@@ -809,11 +793,11 @@ void GL_LoadStateFunctions(void)
 	glConfig.supported_features &= ~(R_SUPPORT_MULTITEXTURING | R_SUPPORT_IMAGE_PROCESSING);
 
 	GL_LoadOptionalFunction(glActiveTexture);
-	glConfig.supported_features |= (qglActiveTexture != NULL ? R_SUPPORT_MULTITEXTURING : 0);
+	glConfig.supported_features |= (GL_Available(glActiveTexture) ? R_SUPPORT_MULTITEXTURING : 0);
 
 	if (SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store")) {
 		GL_LoadOptionalFunction(glBindImageTexture);
-		glConfig.supported_features |= (qglBindImageTexture != NULL ? R_SUPPORT_IMAGE_PROCESSING : 0);
+		glConfig.supported_features |= (GL_Available(glBindImageTexture) ? R_SUPPORT_IMAGE_PROCESSING : 0);
 	}
 
 	// 4.4 - binds textures to consecutive texture units
@@ -822,15 +806,17 @@ void GL_LoadStateFunctions(void)
 	}
 }
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 void GLC_ClientActiveTexture(GLenum texture_unit)
 {
-	if (qglClientActiveTexture) {
-		qglClientActiveTexture(texture_unit);
+	if (GL_Available(glClientActiveTexture)) {
+		GL_Procedure(glClientActiveTexture, texture_unit);
 	}
 	else {
 		assert(texture_unit == GL_TEXTURE0);
 	}
 }
+#endif // RENDERER_OPTION_CLASSIC_OPENGL
 
 void R_ApplyRenderingState(r_state_id state)
 {
@@ -983,9 +969,10 @@ qbool R_VertexArrayCreated(r_vao_id vao)
 void R_BindVertexArray(r_vao_id vao)
 {
 	if (currentVAO != vao || opengl.rendering_state.glc_vao_force_rebind) {
+		R_TraceEnterRegion(va("R_BindVertexArray(%s)", vaoNames[vao]), true);
+
 		assert(vao == vao_none || R_VertexArrayCreated(vao));
 
-		R_TraceEnterRegion(va("R_BindVertexArray(%s)", vaoNames[vao]), true);
 		renderer.BindVertexArray(vao);
 
 		currentVAO = vao;
@@ -1188,24 +1175,24 @@ void GLC_ApplyRenderingState(r_state_id id)
 	for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]) && i < glConfig.texture_units; ++i) {
 		if (state->textureUnits[i].enabled != current->textureUnits[i].enabled) {
 			if ((current->textureUnits[i].enabled = state->textureUnits[i].enabled)) {
+				R_TraceLogAPICall("Enabling texturing on unit %d", i);
 				GL_SelectTexture(GL_TEXTURE0 + i);
 				glEnable(GL_TEXTURE_2D);
-				R_TraceLogAPICall("Enabled texturing on unit %d", i);
 				if (state->textureUnits[i].mode != current->textureUnits[i].mode) {
-					glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
 					R_TraceLogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
+					glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
 				}
 			}
 			else {
+				R_TraceLogAPICall("Disabling texturing on unit %d", i);
 				GL_SelectTexture(GL_TEXTURE0 + i);
 				glDisable(GL_TEXTURE_2D);
-				R_TraceLogAPICall("Disabled texturing on unit %d", i);
 			}
 		}
 		else if (current->textureUnits[i].enabled && state->textureUnits[i].mode != current->textureUnits[i].mode) {
+			R_TraceLogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
 			GL_SelectTexture(GL_TEXTURE0 + i);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, glTextureEnvModeValues[current->textureUnits[i].mode = state->textureUnits[i].mode]);
-			R_TraceLogAPICall("texture unit mode[%d] = %s", i, txtTextureEnvModeValues[state->textureUnits[i].mode]);
 		}
 	}
 	GL_ProcessErrors("Post-GLC_ApplyRenderingState(texture-units)");
@@ -1288,3 +1275,66 @@ void GL_InvalidateViewport(void)
 	state->currentViewportWidth = 0;
 	state->currentViewportHeight = 0;
 }
+
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+void GLC_MultiTexCoord2f(GLenum target, float s, float t)
+{
+	if (GL_Available(glMultiTexCoord2f)) {
+		GL_Procedure(glMultiTexCoord2f, target, s, t);
+	}
+}
+
+void GL_CheckMultiTextureExtensions(void)
+{
+	if (!COM_CheckParm(cmdline_param_client_nomultitexturing) && SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
+		GL_LoadOptionalFunction(glMultiTexCoord2f);
+		if (!GL_Available(glMultiTexCoord2f)) {
+			GL_LoadOptionalFunctionARB(glMultiTexCoord2f);
+		}
+		GL_LoadOptionalFunction(glActiveTexture);
+		if (!GL_Available(glActiveTexture)) {
+			GL_LoadOptionalFunctionARB(glActiveTexture);
+		}
+		GL_LoadOptionalFunction(glClientActiveTexture);
+		if (!GL_Available(glMultiTexCoord2f) || !GL_Available(glActiveTexture) || !GL_Available(glClientActiveTexture)) {
+			return;
+		}
+		Com_Printf_State(PRINT_OK, "Multitexture extensions found\n");
+		gl_mtexable = true;
+	}
+
+	gl_textureunits = min(glConfig.texture_units, 4);
+
+	if (COM_CheckParm(cmdline_param_client_maximum2textureunits)) {
+		gl_textureunits = min(gl_textureunits, 2);
+	}
+
+	if (gl_textureunits < 2) {
+		gl_mtexable = false;
+	}
+
+	if (!gl_mtexable) {
+		gl_textureunits = 1;
+	}
+	else {
+		Com_Printf_State(PRINT_OK, "Enabled %i texture units on hardware\n", gl_textureunits);
+	}
+}
+#else
+void GL_CheckMultiTextureExtensions(void)
+{
+	if (!SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
+		Sys_Error("Required extension not supported: GL_ARB_multitexture");
+		return;
+	}
+
+	GL_LoadOptionalFunction(glActiveTexture);
+	if (!GL_Available(glActiveTexture)) {
+		Sys_Error("Required OpenGL function not supported: glActiveTexture");
+		return;
+	}
+
+	gl_textureunits = min(glConfig.texture_units, 4);
+	gl_mtexable = true;
+}
+#endif

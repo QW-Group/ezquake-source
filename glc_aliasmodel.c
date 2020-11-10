@@ -455,8 +455,8 @@ static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int 
 			else {
 				// texture coordinates come from the draw list
 				if (mtex) {
-					qglMultiTexCoord2f(GL_TEXTURE0, s, t);
-					qglMultiTexCoord2f(GL_TEXTURE1, s, t);
+					GLC_MultiTexCoord2f(GL_TEXTURE0, s, t);
+					GLC_MultiTexCoord2f(GL_TEXTURE1, s, t);
 				}
 				else {
 					glTexCoord2f(s, t);

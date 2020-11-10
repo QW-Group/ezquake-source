@@ -226,7 +226,7 @@ void COM_StoreOriginalCmdline(int argc, char **argv);
 
 extern char *SYSINFO_GetString(void);
 
-char *va(char *format, ...); // does a varargs printf into a temp buffer
+char *va(const char *format, ...); // does a varargs printf into a temp buffer
 
 //============================================================================
 // Quake File System

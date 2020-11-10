@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "image.h"
 #include "crc.h"
 #include "gl_texture.h"
+#include "r_trace.h"
 
 static void R_LoadTextureData(gltexture_t* glt, int width, int height, byte *data, int mode, int bpp);
 
@@ -64,6 +65,7 @@ texture_ref R_LoadTextureImage(const char *filename, const char *identifier, int
 	int image_width = -1, image_height = -1;
 	gltexture_t *gltexture;
 
+	R_TraceAPI("R_LoadTextureImage(filename=%s, identifier=%s, matchwidth=%d, matchheight=%d, mode=%d)", filename, identifier, matchwidth, matchheight, mode);
 	if (Block24BitTextures) {
 		return invalid_texture_reference;
 	}
@@ -118,6 +120,7 @@ mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int match
 	// this is 2D texture loading so it must not have MIP MAPS
 	mode &= ~TEX_MIPMAP;
 
+	R_TraceAPI("R_LoadPicImage(filename=%s, identifier=%s, matchwidth=%d, matchheight=%d, mode=%d)", filename, id, matchwidth, matchheight, mode);
 	if (Block24BitTextures) {
 		return NULL;
 	}
@@ -193,6 +196,7 @@ qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t*
 	byte *data, *buf = NULL, *dest, *src;
 	texture_ref tex;
 
+	R_TraceAPI("R_LoadCharsetImage(filename=%s, identifier=%s, flags=%d)", filename, identifier, flags);
 	if (Block24BitTextures) {
 		return false;
 	}
@@ -447,6 +451,7 @@ texture_ref R_LoadTexture(const char *identifier, int width, int height, byte *d
 	qbool new_texture = false;
 	gltexture_t *glt = R_TextureAllocateSlot(texture_type_2d, identifier, width, height, 0, bpp, mode, crc, &new_texture);
 
+	R_TraceAPI("R_LoadTexture(id=%s, width=%d, height=%d, mode=%d, bpp=%d)", identifier, width, height, mode, bpp);
 	if (glt && !new_texture) {
 		return glt->reference;
 	}

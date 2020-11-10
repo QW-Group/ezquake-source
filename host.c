@@ -649,6 +649,13 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	FS_InitFilesystem ();
 	NET_Init ();
 
+#ifdef WITH_RENDERING_TRACE
+	// Start immediately: (have to wait until filesystem is started up so we know where to save files)
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) {
+		Dev_VidFrameStart();
+	}
+#endif
+
 	Commands_For_Configs_Init ();
 	Host_RegisterLegacyCvars();
 	Browser_Init2();

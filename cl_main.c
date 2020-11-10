@@ -1868,10 +1868,6 @@ static void CL_InitLocal (void)
 
 #ifdef WITH_RENDERING_TRACE
 	if (R_DebugProfileContext()) {
-		extern void Dev_VidFrameTrace(void);
-		extern void Dev_VidTextureDump(void);
-		extern void Dev_TextureList(void);
-
 		Cmd_AddCommand("dev_gfxtrace", Dev_VidFrameTrace);
 		Cmd_AddCommand("dev_gfxtexturedump", Dev_VidTextureDump);
 		Cmd_AddCommand("dev_gfxtexturelist", Dev_TextureList);

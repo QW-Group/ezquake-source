@@ -101,52 +101,29 @@ static framebuffer_data_t framebuffer_data[framebuffer_count];
 static int framebuffers;
 
 // 
-typedef void (APIENTRY *glGenFramebuffers_t)(GLsizei n, GLuint* ids);
-typedef void (APIENTRY *glDeleteFramebuffers_t)(GLsizei n, GLuint* ids);
-typedef void (APIENTRY *glBindFramebuffer_t)(GLenum target, GLuint framebuffer);
+GL_StaticProcedureDeclaration(glGenFramebuffers, "n=%d, ids=%p", GLsizei n, GLuint* ids)
+GL_StaticProcedureDeclaration(glDeleteFramebuffers, "n=%d, ids=%p", GLsizei n, GLuint* ids)
+GL_StaticProcedureDeclaration(glBindFramebuffer, "target=%u, framebuffer=%u", GLenum target, GLuint framebuffer)
 
-typedef void (APIENTRY *glGenRenderbuffers_t)(GLsizei n, GLuint* ids);
-typedef void (APIENTRY *glDeleteRenderbuffers_t)(GLsizei n, GLuint* ids);
-typedef void (APIENTRY *glBindRenderbuffer_t)(GLenum target, GLuint renderbuffer);
-typedef void (APIENTRY *glRenderbufferStorage_t)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRY *glNamedRenderbufferStorage_t)(GLuint renderbuffer, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRY *glFramebufferRenderbuffer_t)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-typedef void (APIENTRY *glNamedFramebufferRenderbuffer_t)(GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+GL_StaticProcedureDeclaration(glGenRenderbuffers, "n=%d, ids=%p", GLsizei n, GLuint* ids)
+GL_StaticProcedureDeclaration(glDeleteRenderbuffers, "n=%d, ids=%p", GLsizei n, GLuint* ids)
+GL_StaticProcedureDeclaration(glBindRenderbuffer, "target=%u, renderbuffer=%u", GLenum target, GLuint renderbuffer)
+GL_StaticProcedureDeclaration(glRenderbufferStorage, "target=%u, internalformat=%u, width=%d, height=%d", GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
+GL_StaticProcedureDeclaration(glNamedRenderbufferStorage, "renderbuffer=%u, internalformat=%u, width=%d, height=%d", GLuint renderbuffer, GLenum internalformat, GLsizei width, GLsizei height)
+GL_StaticProcedureDeclaration(glFramebufferRenderbuffer, "target=%u, attachment=%u, renderbuffertarget=%u, renderbuffer=%u", GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
+GL_StaticProcedureDeclaration(glNamedFramebufferRenderbuffer, "framebuffer=%u, attachment=%u, renderbuffertarget=%u, renderbuffer=%u", GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
 
-typedef void (APIENTRY *glFramebufferTexture_t)(GLenum target, GLenum attachment, GLuint texture, GLint level);
-typedef void (APIENTRY *glNamedFramebufferTexture_t)(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
-typedef GLenum (APIENTRY *glCheckFramebufferStatus_t)(GLenum target);
-typedef GLenum (APIENTRY *glCheckNamedFramebufferStatus_t)(GLuint framebuffer, GLenum target);
-typedef void (APIENTRY *glBlitFramebuffer_t)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-typedef void (APIENTRY *glBlitNamedFramebuffer_t)(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-typedef void (APIENTRY *glDrawBuffers_t)(GLsizei n, const GLenum* bufs);
-typedef void (APIENTRY *glClearBufferfv_t)(GLenum buffer, GLint drawbuffer, const GLfloat* value);
-
-typedef void (APIENTRY *glClipControl_t)(GLenum origin, GLenum depth);
-
-static glGenFramebuffers_t qglGenFramebuffers;
-static glDeleteFramebuffers_t qglDeleteFramebuffers;
-static glBindFramebuffer_t qglBindFramebuffer;
-
-static glGenRenderbuffers_t qglGenRenderbuffers;
-static glDeleteRenderbuffers_t qglDeleteRenderbuffers;
-static glBindRenderbuffer_t qglBindRenderbuffer;
-static glRenderbufferStorage_t qglRenderbufferStorage;
-static glNamedRenderbufferStorage_t qglNamedRenderbufferStorage;
-static glFramebufferRenderbuffer_t qglFramebufferRenderbuffer;
-static glNamedFramebufferRenderbuffer_t qglNamedFramebufferRenderbuffer;
-
-static glFramebufferTexture_t qglFramebufferTexture;
-static glNamedFramebufferTexture_t qglNamedFramebufferTexture;
-static glCheckFramebufferStatus_t qglCheckFramebufferStatus;
-static glCheckNamedFramebufferStatus_t qglCheckNamedFramebufferStatus;
-static glDrawBuffers_t qglDrawBuffers;
-static glClearBufferfv_t qglClearBufferfv;
-
-static glBlitFramebuffer_t qglBlitFramebuffer;
-static glBlitNamedFramebuffer_t qglBlitNamedFramebuffer;
-
-static glClipControl_t qglClipControl;
+GL_StaticProcedureDeclaration(glFramebufferTexture, "target=%u, attachment=%u, texture=%u, level=%d", GLenum target, GLenum attachment, GLuint texture, GLint level);
+GL_StaticProcedureDeclaration(glNamedFramebufferTexture, "framebuffer=%u, attachment=%u, texture=%u, level=%d", GLuint framebuffer, GLenum attachment, GLuint texture, GLint level)
+GL_StaticFunctionDeclaration(glCheckFramebufferStatus, "target=%u", "result=%u", GLenum, GLenum target)
+GL_StaticFunctionWrapperBody(glCheckFramebufferStatus, GLenum, target)
+GL_StaticFunctionDeclaration(glCheckNamedFramebufferStatus, "framebuffer=%u, target=%u", "result=%u", GLenum, GLuint framebuffer, GLenum target)
+GL_StaticFunctionWrapperBody(glCheckNamedFramebufferStatus, GLenum, framebuffer, target)
+GL_StaticProcedureDeclaration(glBlitFramebuffer, "srcX0=%d, srcY0=%d, srcX1=%d, srcY1=%d, dstX0=%d, dstY0=%d, dstX1=%d, dstY1=%d, mask=%u, filter=%u", GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter)
+GL_StaticProcedureDeclaration(glBlitNamedFramebuffer, "readFrameBuffer=%u, drawFramebuffer=%u, srcX0=%d, srcY0=%d, srcX1=%d, srcY1=%d, dstX0=%d, dstY0=%d, dstX1=%d, dstY1=%d, mask=%u, filter=%u", GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter)
+GL_StaticProcedureDeclaration(glDrawBuffers, "n=%d, bufs=%p", GLsizei n, const GLenum* bufs)
+GL_StaticProcedureDeclaration(glClearBufferfv, "buffer=%u, drawbuffer=%d, value=%p", GLenum buffer, GLint drawbuffer, const GLfloat* value)
+GL_StaticProcedureDeclaration(glClipControl, "origin=%u, depth=%u", GLenum origin, GLenum depth)
 
 static GLenum glDepthFormats[] = { 0, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT32F };
 typedef enum { r_depthformat_best, r_depthformat_16bit, r_depthformat_24bit, r_depthformat_32bit, r_depthformat_32bit_float, r_depthformat_count } r_depthformat;
@@ -209,7 +186,7 @@ void GL_InitialiseFramebufferHandling(void)
 		GL_LoadMandatoryFunctionEXT(glClearBufferfv, framebuffers_supported);
 
 		glConfig.supported_features |= (framebuffers_supported ? (R_SUPPORT_FRAMEBUFFERS) : 0);
-		glConfig.supported_features |= (framebuffers_supported && (qglBlitFramebuffer != NULL) ? (R_SUPPORT_FRAMEBUFFERS_BLIT) : 0);
+		glConfig.supported_features |= (framebuffers_supported && GL_Available(glBlitFramebuffer) ? (R_SUPPORT_FRAMEBUFFERS_BLIT) : 0);
 		glConfig.supported_features |= SDL_GL_ExtensionSupported("GL_ARB_depth_buffer_float") ? R_SUPPORT_DEPTH32F : 0;
 	}
 
@@ -223,7 +200,6 @@ void GL_InitialiseFramebufferHandling(void)
 		GL_LoadOptionalFunction(glCheckNamedFramebufferStatus);
 	}
 
-	qglClipControl = NULL;
 	// meag: disabled (classic needs glFrustum replaced, modern needs non-rubbish viewweapon
 	//                 depth hack, and near-plane clipping issues when the player is gibbed)
 	/*if (GL_VersionAtLeast(4, 5) || SDL_GL_ExtensionSupported("GL_ARB_clip_control")) {
@@ -301,7 +277,7 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	if (framebuffer_depth_buffer[id]) {
 		GLenum depthFormat = glDepthFormats[bound(0, vid_framebuffer_depthformat.integer, r_depthformat_count - 1)];
 		if (depthFormat == 0) {
-			depthFormat = qglClipControl ? GL_DEPTH_COMPONENT32F : GL_DEPTH_COMPONENT32;
+			depthFormat = GL_Available(glClipControl) ? GL_DEPTH_COMPONENT32F : GL_DEPTH_COMPONENT32;
 		}
 		if (depthFormat == GL_DEPTH_COMPONENT32F && !GL_Supported(R_SUPPORT_DEPTH32F)) {
 			depthFormat = GL_DEPTH_COMPONENT32;
@@ -326,14 +302,14 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 		GL_FramebufferTexture(fb->glref, GL_DEPTH_ATTACHMENT, GL_TextureNameFromReference(fb->texture[fbtex_depth]), 0);
 #endif
 
-		if (qglClipControl) {
+		if (GL_Available(glClipControl)) {
 			if (depthFormat == GL_DEPTH_COMPONENT32F) {
-				qglClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+				GL_Procedure(glClipControl, GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 				glClearDepth(0.0f);
 				glConfig.reversed_depth = true;
 			}
 			else {
-				qglClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
+				GL_Procedure(glClipControl, GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
 				glClearDepth(1.0f);
 				glConfig.reversed_depth = false;
 			}
@@ -350,7 +326,7 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	fb->width = width;
 	fb->height = height;
 
-	qglBindFramebuffer(GL_FRAMEBUFFER, 0);
+	GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, 0);
 
 	return fb->status == GL_FRAMEBUFFER_COMPLETE;
 }
@@ -390,8 +366,8 @@ qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
 	}
 
 	GL_FramebufferTexture(fb->glref, GL_COLOR_ATTACHMENT1, GL_TextureNameFromReference(fb->texture[fbtex_worldnormals]), 0);
-	qglDrawBuffers(2, buffers);
-	qglClearBufferfv(GL_COLOR, 1, clearValue);
+	GL_Procedure(glDrawBuffers, 2, buffers);
+	GL_Procedure(glClearBufferfv, GL_COLOR, 1, clearValue);
 	return true;
 }
 
@@ -410,7 +386,7 @@ qbool GL_FramebufferEndWorldNormals(framebuffer_id id)
 	}
 
 	GL_FramebufferTexture(fb->glref, GL_COLOR_ATTACHMENT1, 0, 0);
-	qglDrawBuffers(1, &buffer);
+	GL_Procedure(glDrawBuffers, 1, &buffer);
 	return true;
 }
 
@@ -421,7 +397,7 @@ void GL_FramebufferDelete(framebuffer_id id)
 
 	if (id != framebuffer_none && fb->glref) {
 		if (fb->depthBuffer) {
-			qglDeleteRenderbuffers(1, &fb->depthBuffer);
+			GL_Procedure(glDeleteRenderbuffers, 1, &fb->depthBuffer);
 		}
 		for (i = 0; i < sizeof(fb->texture) / sizeof(fb->texture[0]); ++i) {
 			if (R_TextureReferenceIsValid(fb->texture[i])) {
@@ -429,7 +405,7 @@ void GL_FramebufferDelete(framebuffer_id id)
 			}
 		}
 		if (fb->glref) {
-			qglDeleteFramebuffers(1, &fb->glref);
+			GL_Procedure(glDeleteFramebuffers, 1, &fb->glref);
 		}
 
 		memset(fb, 0, sizeof(*fb));
@@ -438,12 +414,12 @@ void GL_FramebufferDelete(framebuffer_id id)
 
 void GL_FramebufferStartUsing(framebuffer_id id)
 {
-	qglBindFramebuffer(GL_FRAMEBUFFER, framebuffer_data[id].glref);
+	GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, framebuffer_data[id].glref);
 }
 
 void GL_FramebufferStartUsingScreen(void)
 {
-	qglBindFramebuffer(GL_FRAMEBUFFER, 0);
+	GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, 0);
 }
 
 texture_ref GL_FramebufferTextureReference(framebuffer_id id, fbtex_id tex_id)
@@ -455,12 +431,12 @@ texture_ref GL_FramebufferTextureReference(framebuffer_id id, fbtex_id tex_id)
 #ifdef GL_USE_RENDER_BUFFERS
 static void GL_RenderBufferStorage(GLuint renderBuffer, GLenum internalformat, GLsizei width, GLsizei height)
 {
-	if (qglNamedRenderbufferStorage) {
-		qglNamedRenderbufferStorage(renderBuffer, internalformat, width, height);
+	if (GL_Available(glNamedRenderbufferStorage)) {
+		GL_Procedure(glNamedRenderbufferStorage, renderBuffer, internalformat, width, height);
 	}
-	else if (qglBindRenderbuffer && qglRenderbufferStorage) {
-		qglBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
-		qglRenderbufferStorage(GL_RENDERBUFFER, internalformat, width, height);
+	else if (GL_Available(glBindRenderbuffer) && GL_Available(glRenderbufferStorage)) {
+		GL_Procedure(glBindRenderbuffer, GL_RENDERBUFFER, renderBuffer);
+		GL_Procedure(glRenderbufferStorage, GL_RENDERBUFFER, internalformat, width, height);
 	}
 	else {
 		Sys_Error("ERROR: %s called without driver support", __FUNCTION__);
@@ -469,12 +445,12 @@ static void GL_RenderBufferStorage(GLuint renderBuffer, GLenum internalformat, G
 
 static void GL_FramebufferRenderbuffer(GLuint fbref, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
 {
-	if (qglNamedFramebufferRenderbuffer) {
-		qglNamedFramebufferRenderbuffer(fbref, attachment, renderbuffertarget, renderbuffer);
+	if (GL_Available(glNamedFramebufferRenderbuffer)) {
+		GL_Procedure(glNamedFramebufferRenderbuffer, fbref, attachment, renderbuffertarget, renderbuffer);
 	}
-	else if (qglBindFramebuffer && qglFramebufferRenderbuffer) {
-		qglBindFramebuffer(GL_FRAMEBUFFER, fbref);
-		qglFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, renderbuffertarget, renderbuffer);
+	else if (GL_Available(glBindFramebuffer) && GL_Available(glFramebufferRenderbuffer)) {
+		GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, fbref);
+		GL_Procedure(glFramebufferRenderbuffer, GL_FRAMEBUFFER, attachment, renderbuffertarget, renderbuffer);
 	}
 	else {
 		Sys_Error("ERROR: %s called without driver support", __FUNCTION__);
@@ -485,22 +461,22 @@ static void GL_GenRenderBuffers(GLsizei n, GLuint* buffers)
 {
 	int i;
 
-	qglGenRenderbuffers(n, buffers);
+	GL_Procedure(glGenRenderbuffers, n, buffers);
 
 	for (i = 0; i < n; ++i) {
-		qglBindRenderbuffer(GL_RENDERBUFFER, buffers[i]);
+		GL_Procedure(glBindRenderbuffer, GL_RENDERBUFFER, buffers[i]);
 	}
 }
 #endif
 
 static GLenum GL_CheckFramebufferStatus(GLuint fbref)
 {
-	if (qglCheckNamedFramebufferStatus) {
-		return qglCheckNamedFramebufferStatus(fbref, GL_FRAMEBUFFER);
+	if (GL_Available(glCheckNamedFramebufferStatus)) {
+		return GL_Function(glCheckNamedFramebufferStatus, fbref, GL_FRAMEBUFFER);
 	}
-	else if (qglBindFramebuffer && qglCheckFramebufferStatus) {
-		qglBindFramebuffer(GL_FRAMEBUFFER, fbref);
-		return qglCheckFramebufferStatus(GL_FRAMEBUFFER);
+	else if (GL_Available(glBindFramebuffer) && GL_Available(glCheckFramebufferStatus)) {
+		GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, fbref);
+		return GL_Function(glCheckFramebufferStatus, GL_FRAMEBUFFER);
 	}
 	else {
 		Sys_Error("ERROR: %s called without driver support", __FUNCTION__);
@@ -510,12 +486,12 @@ static GLenum GL_CheckFramebufferStatus(GLuint fbref)
 
 static void GL_FramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level)
 {
-	if (qglNamedFramebufferTexture) {
-		qglNamedFramebufferTexture(framebuffer, attachment, texture, level);
+	if (GL_Available(glNamedFramebufferTexture)) {
+		GL_Procedure(glNamedFramebufferTexture, framebuffer, attachment, texture, level);
 	}
-	else if (qglBindFramebuffer && qglFramebufferTexture) {
-		qglBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-		qglFramebufferTexture(GL_FRAMEBUFFER, attachment, texture, level);
+	else if (GL_Available(glBindFramebuffer) && GL_Available(glFramebufferTexture)) {
+		GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, framebuffer);
+		GL_Procedure(glFramebufferTexture, GL_FRAMEBUFFER, attachment, texture, level);
 	}
 	else {
 		Sys_Error("ERROR: %s called without driver support", __FUNCTION__);
@@ -526,10 +502,9 @@ static void GL_GenFramebuffers(GLsizei n, GLuint* buffers)
 {
 	int i;
 
-	qglGenFramebuffers(n, buffers);
-
+	GL_Procedure(glGenFramebuffers, n, buffers);
 	for (i = 0; i < n; ++i) {
-		qglBindFramebuffer(GL_FRAMEBUFFER, buffers[i]);
+		GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, buffers[i]);
 	}
 }
 
@@ -561,20 +536,21 @@ void GL_FramebufferBlitSimple(framebuffer_id source_id, framebuffer_id destinati
 		filter = GL_LINEAR;
 	}
 
-	if (qglBlitNamedFramebuffer) {
-		qglBlitNamedFramebuffer(
-			src->glref, dest->glref,
+	if (GL_Available(glBlitNamedFramebuffer)) {
+		GL_Procedure(
+			glBlitNamedFramebuffer, src->glref, dest->glref,
 			srcTL[0], srcTL[1], srcTL[0] + srcSize[0], srcTL[1] + srcSize[1],
 			destTL[0], destTL[1], destTL[0] + destSize[0], destTL[1] + destSize[1],
 			GL_COLOR_BUFFER_BIT, filter
 		);
 	}
-	else if (qglBlitFramebuffer) {
+	else if (GL_Available(glBlitFramebuffer)) {
 		// ARB_framebuffer
-		qglBindFramebuffer(GL_READ_FRAMEBUFFER, src->glref);
-		qglBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest->glref);
+		GL_Procedure(glBindFramebuffer, GL_READ_FRAMEBUFFER, src->glref);
+		GL_Procedure(glBindFramebuffer, GL_DRAW_FRAMEBUFFER, dest->glref);
 
-		qglBlitFramebuffer(
+		GL_Procedure(
+			glBlitFramebuffer,
 			srcTL[0], srcTL[1], srcTL[0] + srcSize[0], srcTL[1] + srcSize[1],
 			destTL[0], destTL[1], destTL[0] + destSize[0], destTL[1] + destSize[1],
 			GL_COLOR_BUFFER_BIT, filter
@@ -735,12 +711,12 @@ void GL_Screenshot(byte* buffer, size_t size)
 	size_t height = renderer.ScreenshotHeight();
 
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	if (qglBindFramebuffer) {
+	if (GL_Available(glBindFramebuffer)) {
 		if (GL_ScreenshotFramebuffer()) {
-			qglBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer_data[framebuffer_std].glref);
+			GL_Procedure(glBindFramebuffer, GL_READ_FRAMEBUFFER, framebuffer_data[framebuffer_std].glref);
 		}
 		else {
-			qglBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+			GL_Procedure(glBindFramebuffer, GL_READ_FRAMEBUFFER, 0);
 		}
 	}
 	glReadPixels(0, 0, (GLsizei)width, (GLsizei)height, GL_RGB, GL_UNSIGNED_BYTE, buffer);

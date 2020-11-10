@@ -754,7 +754,7 @@ void COM_Init(void)
 }
 
 //does a varargs printf into a temp buffer, so I don't need to have varargs versions of all text functions.
-char *va (char *format, ...)
+char *va(const char *format, ...)
 {
 	va_list argptr;
 	static char string[32][2048];

@@ -597,11 +597,11 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 			}
 		}
 
-		if (qglMultiTexCoord2f) {
-			qglMultiTexCoord2f(GL_TEXTURE0, 0, 0);
+		if (GL_Supported(R_SUPPORT_MULTITEXTURING)) {
+			GLC_MultiTexCoord2f(GL_TEXTURE0, 0, 0);
 
 			if (allocations.fbTextureUnit >= 0) {
-				qglMultiTexCoord2f(GL_TEXTURE0 + allocations.fbTextureUnit, 0, 0);
+				GLC_MultiTexCoord2f(GL_TEXTURE0 + allocations.fbTextureUnit, 0, 0);
 			}
 		}
 		else {
@@ -678,15 +678,15 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 					GLC_Begin(GL_TRIANGLE_STRIP);
 					for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
 						if (allocations.lmTextureUnit >= 0) {
-							qglMultiTexCoord2f(GL_TEXTURE0 + allocations.lmTextureUnit, v[5], v[6]);
+							GLC_MultiTexCoord2f(GL_TEXTURE0 + allocations.lmTextureUnit, v[5], v[6]);
 						}
 
 						if (!draw_textureless) {
-							if (qglMultiTexCoord2f) {
-								qglMultiTexCoord2f(GL_TEXTURE0, v[3], v[4]);
+							if (GL_Supported(R_SUPPORT_MULTITEXTURING)) {
+								GLC_MultiTexCoord2f(GL_TEXTURE0, v[3], v[4]);
 
 								if (allocations.fbTextureUnit >= 0) {
-									qglMultiTexCoord2f(GL_TEXTURE0 + allocations.fbTextureUnit, v[3], v[4]);
+									GLC_MultiTexCoord2f(GL_TEXTURE0 + allocations.fbTextureUnit, v[3], v[4]);
 								}
 							}
 							else {
@@ -1383,8 +1383,8 @@ void GLC_DrawAlphaChain(msurface_t* alphachain, frameStatsPolyType polyType)
 		v = s->polys->verts[0];
 		for (k = 0; k < s->polys->numverts; k++, v += VERTEXSIZE) {
 			if (gl_mtexable) {
-				qglMultiTexCoord2f(GL_TEXTURE0, v[3], v[4]);
-				qglMultiTexCoord2f(GL_TEXTURE1, v[5], v[6]);
+				GLC_MultiTexCoord2f(GL_TEXTURE0, v[3], v[4]);
+				GLC_MultiTexCoord2f(GL_TEXTURE1, v[5], v[6]);
 			}
 			else {
 				glTexCoord2f(v[3], v[4]);
