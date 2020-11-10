@@ -83,6 +83,8 @@ qbool GLC_InitialiseVAOHandling(void)
 	GL_LoadMandatoryFunctionExtension(glDisableVertexAttribArray, vaos_supported);
 	GL_LoadMandatoryFunctionExtension(glVertexAttribPointer, vaos_supported);
 
+	R_TraceAPI("VAOs supported: %s", vaos_supported ? "yes" : "no (!)");
+
 	return vaos_supported;
 }
 

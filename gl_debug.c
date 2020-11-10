@@ -80,6 +80,7 @@ void APIENTRY MessageCallback(GLenum source,
 #ifdef WITH_RENDERING_TRACE
 		if (debug_frame_out) {
 			fprintf(debug_frame_out, "%s", buffer);
+			fflush(debug_frame_out);
 		}
 #endif
 #ifdef _WIN32
@@ -126,6 +127,7 @@ void R_TraceEnterRegion(const char* regionName, qbool trace_only)
 {
 	if (debug_frame_out) {
 		fprintf(debug_frame_out, "Enter: %.*s %s {\n", debug_frame_depth, "                                                          ", regionName);
+		fflush(debug_frame_out);
 		debug_frame_depth += DEBUG_FRAME_DEPTH_CHARS;
 	}
 	else if (R_UseModernOpenGL()) {
@@ -144,6 +146,7 @@ void R_TraceLeaveRegion(qbool trace_only)
 		debug_frame_depth -= DEBUG_FRAME_DEPTH_CHARS;
 		debug_frame_depth = max(debug_frame_depth, 0);
 		fprintf(debug_frame_out, "Leave: %.*s }\n", debug_frame_depth, "                                                          ");
+		fflush(debug_frame_out);
 	}
 	else if (R_UseModernOpenGL()) {
 		if (!trace_only && GL_Available(glPopDebugGroup)) {
@@ -210,11 +213,25 @@ void R_TraceResetRegion(qbool start)
 				 com_basedir, COM_CheckParm(cmdline_param_client_video_r_trace) ? "trace/" : "", 1900 + date.tm_year, 1 + date.tm_mon, date.tm_mday, date.tm_hour, date.tm_min, date.tm_sec);
 #else
 		SYSTEMTIME date;
+		int i;
+
 		GetLocalTime(&date);
 
-		snprintf(fileName, sizeof(fileName), "%s/qw/%s/frame_%04d-%02d-%02d_%02d-%02d-%02d.txt",
-				 com_basedir, COM_CheckParm(cmdline_param_client_video_r_trace) ? "trace/" : "", date.wYear, date.wMonth, date.wDay, date.wHour, date.wMinute, date.wSecond);
+		for (i = 0; i < 1000; ++i) {
+			FILE* temp;
+
+			snprintf(fileName, sizeof(fileName), "%s/qw/%s/frame_%04d-%02d-%02d_%02d-%02d-%02d_%04d.txt",
+				com_basedir, COM_CheckParm(cmdline_param_client_video_r_trace) ? "trace/" : "", date.wYear, date.wMonth, date.wDay, date.wHour, date.wMinute, date.wSecond, i);
+
+			if ((temp = fopen(fileName, "rt"))) {
+				fclose(temp);
+				continue;
+			}
+
+			break;
+		}
 #endif
+
 		if (COM_CheckParm(cmdline_param_client_video_r_trace)) {
 			Sys_mkdir(va("%s/qw/trace", com_basedir));
 		}
@@ -225,6 +242,7 @@ void R_TraceResetRegion(qbool start)
 
 	if (debug_frame_out) {
 		fprintf(debug_frame_out, "---Reset---\n");
+		fflush(debug_frame_out);
 		debug_frame_depth = 0;
 	}
 }

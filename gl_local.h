@@ -387,7 +387,8 @@ GLenum GL_ProcessErrors(const char* message);
 #define GL_LoadMandatoryFunctionEXT(functionName,testFlag) { q##functionName##_impl = NULL; testFlag = false; }
 #define GL_LoadMandatoryFunctionExtension(functionName,testFlag) { q##functionName##_impl = NULL; testFlag = false; }
 #define GL_LoadOptionalFunction(functionName) { q##functionName##_impl = NULL; }
-#define GL_LoadOptionalFunctionEXT() { q##functionName = NULL; }
+#define GL_LoadOptionalFunctionEXT(functionName) { q##functionName##_impl = NULL; }
+#define GL_LoadOptionalFunctionARB(functionName) { q##functionName##_impl = NULL; }
 #define GL_UseDirectStateAccess() (false)
 #endif
 #define GL_StaticProcedureDeclaration(name, formatString, ...) \

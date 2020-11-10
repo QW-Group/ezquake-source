@@ -373,7 +373,9 @@ void CL_MakeActive(void)
 	// last chance
 	CachePics_AtlasFrame();
 	// compile all programs
-	R_ProgramCompileAll();
+	if (GL_Supported(R_SUPPORT_RENDERING_SHADERS)) {
+		R_ProgramCompileAll();
+	}
 
 	cls.state = ca_active;
 	if (cls.demoplayback) 

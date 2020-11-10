@@ -279,6 +279,8 @@ static void GLC_CreateImageVAO(void)
 {
 	extern cvar_t gl_vbo_clientmemory;
 
+	R_TraceEnterFunctionRegion;
+	R_TraceAPI("clientmemory: %s", gl_vbo_clientmemory.integer ? "true" : "false");
 	if (gl_vbo_clientmemory.integer) {
 		R_GenVertexArray(vao_hud_images);
 		GLC_VAOSetIndexBuffer(vao_hud_images, r_buffer_hud_image_index_data);
@@ -296,6 +298,7 @@ static void GLC_CreateImageVAO(void)
 		GLC_VAOEnableColorPointer(vao_hud_images, 4, GL_UNSIGNED_BYTE, sizeof(glm_image_t), VBO_FIELDOFFSET(glm_image_t, colour));
 		R_BindVertexArray(vao_none);
 	}
+	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_HudPrepareImages(void)
@@ -500,6 +503,8 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 {
 	extern cvar_t gl_program_hud;
 
+	R_TraceEnterFunctionRegion;
+	R_TraceAPI("%s pre-check: %s, %s", __FUNCTION__, (buffers.supported ? "buffers-supported" : "no-buffers"), R_VertexArrayCreated(vao_hud_images) ? "vao-created" : "vao-not-created");
 	if (buffers.supported && !R_VertexArrayCreated(vao_hud_images)) {
 		GLC_CreateImageVAO();
 	}
@@ -520,6 +525,7 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 	else {
 		GLC_HudDrawImages_Immediate(ref, start, end);
 	}
+	R_TraceLeaveFunctionRegion;
 }
 
 #endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

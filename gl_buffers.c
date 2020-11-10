@@ -621,6 +621,8 @@ void GL_InitialiseBufferHandling(api_buffers_t* api)
 	GL_LoadMandatoryFunctionExtension(glDeleteBuffers, buffers_supported);
 	GL_LoadMandatoryFunctionExtension(glUnmapBuffer, buffers_supported);
 
+	R_TraceAPI("Buffers supported: %s", buffers_supported ? "yes" : "no (!)");
+
 	// OpenGL 3.0 onwards, for 4.3+ support only
 	if (GL_VersionAtLeast(3, 0)) {
 		GL_LoadOptionalFunction(glBindBufferBase);
