@@ -72,6 +72,7 @@
 - `/hud_clock_content 1` changes output to show the uptime of the client
 - `/in_ignore_touch_events` added - allows mouse clicks from touch input devices
 - `/menu_botmatch_gamedir` added - allows packages to customise the directory when starting a bot match
+- `/net_tcp_timeout` added - allows timeout period to be set when connecting to QTV etc
 - `/r_drawflat_mode` allows textures to be shaded rather than solid color (GLSL only)
 - `/register_qwurl_protocol` reports success if run from command line (or rather, run without 'quiet' as 1st argument)
 - `/r_rockettrail` & `/r_grenadetrail` options requiring QMB particles degrade to '1' if QMB not initialised

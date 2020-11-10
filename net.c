@@ -31,7 +31,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef _WIN32
 WSADATA winsockdata;
+#define EZ_TCP_WOULDBLOCK (WSAEWOULDBLOCK)
+#else
+#define EZ_TCP_WOULDBLOCK (EINPROGRESS)
 #endif
+
 
 #ifndef SERVERONLY
 netadr_t	net_local_cl_ipadr;
@@ -40,6 +44,11 @@ void NET_CloseClient (void);
 
 static void cl_net_clientport_changed(cvar_t* var, char* value, qbool* cancel);
 static cvar_t cl_net_clientport = { "cl_net_clientport", "27001", CVAR_AUTO, cl_net_clientport_changed };  // Was PORT_CLIENT in protocol.h
+
+#define MIN_TCP_TIMEOUT  500
+#define MAX_TCP_TIMEOUT 5000
+
+static cvar_t net_tcp_timeout = { "net_tcp_timeout", "2000" };
 #endif
 
 #ifndef CLIENTONLY
@@ -1025,7 +1034,7 @@ qbool TCP_Set_KEEPALIVE(int sock)
 	return true;
 }
 
-int TCP_OpenStream (netadr_t remoteaddr)
+int TCP_OpenStream(netadr_t remoteaddr)
 {
 	unsigned long _true = true;
 	int newsocket;
@@ -1035,29 +1044,64 @@ int TCP_OpenStream (netadr_t remoteaddr)
 	NetadrToSockadr(&remoteaddr, &qs);
 	temp = sizeof(struct sockaddr_in);
 
-	if ((newsocket = socket (((struct sockaddr_in*)&qs)->sin_family, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
-		Con_Printf ("TCP_OpenStream: socket: (%i): %s\n", qerrno, strerror(qerrno));
+	if ((newsocket = socket(((struct sockaddr_in*)&qs)->sin_family, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
+		Con_Printf("TCP_OpenStream: socket: (%i): %s\n", qerrno, strerror(qerrno));
 		return INVALID_SOCKET;
 	}
 
-	if (connect (newsocket, (struct sockaddr *)&qs, temp) == INVALID_SOCKET) {
-		Con_Printf ("TCP_OpenStream: connect: (%i): %s\n", qerrno, strerror(qerrno));
-		closesocket(newsocket);
-		return INVALID_SOCKET;
-	}
-
-#ifndef _WIN32
-	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
-		Con_Printf ("TCP_OpenStream: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
+	// Set socket to non-blocking
+#if !defined(_WIN32)
+	if ((fcntl(newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
+		Con_Printf("TCP_OpenStream: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
 #endif
 
-	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1) { // make asynchronous
-		Con_Printf ("TCP_OpenStream: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
+	if (ioctlsocket(newsocket, FIONBIO, &_true) == -1) { // make asynchronous
+		Con_Printf("TCP_OpenStream: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
+	}
+
+	if (connect (newsocket, (struct sockaddr *)&qs, temp) == INVALID_SOCKET) {
+		// Socket is non-blocking, so check if the error is just because it would block
+		if (qerrno == EZ_TCP_WOULDBLOCK) {
+			struct timeval t;
+			fd_set socket_set;
+
+			t.tv_sec = bound(MIN_TCP_TIMEOUT, net_tcp_timeout.integer, MAX_TCP_TIMEOUT) / 1000;
+			t.tv_usec = (bound(MIN_TCP_TIMEOUT, net_tcp_timeout.integer, MAX_TCP_TIMEOUT) % 1000) * 1000;
+
+			FD_ZERO(&socket_set);
+			FD_SET(newsocket, &socket_set);
+
+			if (select(newsocket + 1, NULL, &socket_set, NULL, &t) <= 0) {
+				Con_Printf("TCP_OpenStream: connection timeout\n");
+				closesocket(newsocket);
+				return INVALID_SOCKET;
+			}
+			else {
+				int error = SOCKET_ERROR;
+#ifdef _WIN32
+				int len = sizeof(error);
+#else
+				socklen_t len = sizeof(error);
+#endif
+
+				getsockopt(newsocket, SOL_SOCKET, SO_ERROR, (char*)&error, &len);
+				if (error != 0) {
+					Con_Printf("TCP_OpenStream: connect: (%i): %s\n", error, strerror(error));
+					closesocket(newsocket);
+					return INVALID_SOCKET;
+				}
+			}
+		}
+		else {
+			Con_Printf("TCP_OpenStream: connect: (%i): %s\n", qerrno, strerror(qerrno));
+			closesocket(newsocket);
+			return INVALID_SOCKET;
+		}
 	}
 
 	return newsocket;
@@ -1280,6 +1324,7 @@ void NET_Init (void)
 // <--TCPCONNECT
 
 	Cvar_Register(&cl_net_clientport);
+	Cvar_Register(&net_tcp_timeout);
 #endif
 
 #ifndef CLIENTONLY
