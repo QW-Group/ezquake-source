@@ -808,12 +808,18 @@ unsigned short BuffLittleShort (const unsigned char *buffer)
 
 //===========================================================================
 
-void SZ_InitEx (sizebuf_t *buf, byte *data, int length, qbool allowoverflow)
+void SZ_InitEx2(sizebuf_t* buf, byte* data, int length, qbool allowoverflow, sizebuf_overflow_handler_func_t overflow_handler)
 {
-	memset (buf, 0, sizeof (*buf));
+	memset(buf, 0, sizeof(*buf));
 	buf->data = data;
 	buf->maxsize = length;
 	buf->allowoverflow = allowoverflow;
+	buf->overflow_handler = overflow_handler;
+}
+
+void SZ_InitEx (sizebuf_t *buf, byte *data, int length, qbool allowoverflow)
+{
+	SZ_InitEx2(buf, data, length, allowoverflow, NULL);
 }
 
 void SZ_Init (sizebuf_t *buf, byte *data, int length)
@@ -828,6 +834,10 @@ void SZ_Clear (sizebuf_t *buf) {
 
 void *SZ_GetSpace (sizebuf_t *buf, int length) {
 	void *data;
+
+	if (buf->cursize + length > buf->maxsize && buf->overflow_handler) {
+		buf->overflow_handler(buf, length);
+	}
 
 	if (buf->cursize + length > buf->maxsize) {
 		if (!buf->allowoverflow)

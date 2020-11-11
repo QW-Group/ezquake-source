@@ -471,7 +471,6 @@ typedef struct
 
 	qbool		mvdrecording;		///< this is not real mvd recording, but just cut particular moment of mvd stream
 
-	byte		demomessage_data[MAX_MSGLEN * 2];
 	sizebuf_t	demomessage;
 
 	double      fps;

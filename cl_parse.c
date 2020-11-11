@@ -4032,11 +4032,25 @@ void CL_ParseServerMessage (void)
 	CL_SetSolidEntities ();
 }
 
+static void CL_DemoMessageBufferOverflow(struct sizebuf_s* buf, int length)
+{
+	int newsize = buf->maxsize + MAX_MSGLEN * 2;
+	byte* mem = Q_realloc(buf->data, newsize);
+
+	if (mem) {
+		buf->maxsize = newsize;
+		buf->data = mem;
+	}
+}
+
 static void CL_InitialiseDemoMessageIfRequired(void)
 {
-	if (!cls.demomessage.cursize)
-	{
-		SZ_Init(&cls.demomessage, cls.demomessage_data, sizeof(cls.demomessage_data));
+	if (!cls.demomessage.maxsize) {
+		byte* data = Q_malloc(MAX_MSGLEN * 2);
+
+		SZ_InitEx2(&cls.demomessage, data, MAX_MSGLEN * 2, false, CL_DemoMessageBufferOverflow);
+	}
+	if (!cls.demomessage.cursize) {
 		SZ_Write(&cls.demomessage, net_message.data, 8);
 	}
 }

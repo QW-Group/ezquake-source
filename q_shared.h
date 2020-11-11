@@ -91,22 +91,26 @@ typedef unsigned char byte;
 
 //============================================================================
 
+typedef void (*sizebuf_overflow_handler_func_t)(struct sizebuf_s*, int);
+
 typedef struct sizebuf_s {
 	qbool	allowoverflow;	// if false, do a Sys_Error
 	qbool	overflowed;		// set to true if the buffer size failed
 	byte	*data;
 	int		maxsize;
 	int		cursize;
+	sizebuf_overflow_handler_func_t overflow_handler;
 } sizebuf_t;
 
 extern char *com_args_original;
 
-void SZ_Init (sizebuf_t *buf, byte *data, int length);
-void SZ_InitEx (sizebuf_t *buf, byte *data, int length, qbool allowoverflow);
-void SZ_Clear (sizebuf_t *buf);
-void *SZ_GetSpace (sizebuf_t *buf, int length);
-void SZ_Write (sizebuf_t *buf, const void *data, int length);
-void SZ_Print (sizebuf_t *buf, char *data);	// strcats onto the sizebuf
+void SZ_Init(sizebuf_t *buf, byte *data, int length);
+void SZ_InitEx(sizebuf_t *buf, byte *data, int length, qbool allowoverflow);
+void SZ_InitEx2(sizebuf_t* buf, byte* data, int length, qbool allowoverflow, sizebuf_overflow_handler_func_t overflow_handler);
+void SZ_Clear(sizebuf_t *buf);
+void *SZ_GetSpace(sizebuf_t *buf, int length);
+void SZ_Write(sizebuf_t *buf, const void *data, int length);
+void SZ_Print(sizebuf_t *buf, char *data);	// strcats onto the sizebuf
 
 //============================================================================
 
