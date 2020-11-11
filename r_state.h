@@ -214,6 +214,12 @@ typedef enum {
 	r_state_skydome_zbuffer_pass_fogged,
 	r_state_skybox,
 
+	r_state_sky_fast_bmodel,
+	r_state_sky_fast_fogged_bmodel,
+	r_state_skydome_single_pass_bmodel,
+	r_state_skydome_cloud_pass_bmodel,
+	r_state_skydome_background_pass_bmodel,
+
 	r_state_world_texture_chain,
 	r_state_world_texture_chain_fullbright,
 	r_state_world_blend_lightmaps,

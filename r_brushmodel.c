@@ -240,6 +240,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 	extern cvar_t gl_brush_polygonoffset;
 	qbool caustics = false;
 	extern cvar_t gl_caustics, gl_flashblend;
+	extern msurface_t* skychain;
 
 	// Get rid of Z-fighting for textures by offsetting the
 	// drawing of entity models compared to normal polygons.
@@ -301,29 +302,31 @@ void R_BrushModelDrawEntity(entity_t *e)
 	R_BrushModelClearTextureChains(clmodel);
 	renderer.ChainBrushModelSurfaces(clmodel, e);
 
-	if (clmodel->last_texture_chained >= 0 || clmodel->drawflat_todo) {
+	if (clmodel->last_texture_chained >= 0 || clmodel->drawflat_todo || skychain) {
 		R_PushModelviewMatrix(oldMatrix);
 		R_RotateForEntity(e);
 
 		// START shaman FIX for no simple textures on world brush models {
 		//draw the textures chains for the model
-		if (clmodel->firstmodelsurface) {
-			R_RenderAllDynamicLightmaps(clmodel);
-		}
-
-		//R00k added contents point for underwater bmodels
-		if (gl_caustics.integer) {
-			if (clmodel->isworldmodel) {
-				vec3_t midpoint;
-
-				VectorAdd(clmodel->mins, clmodel->maxs, midpoint);
-				VectorScale(midpoint, 0.5f, midpoint);
-				VectorAdd(midpoint, e->origin, midpoint);
-
-				caustics = R_PointIsUnderwater(midpoint);
+		if (clmodel->last_texture_chained >= 0 || clmodel->drawflat_todo) {
+			if (clmodel->firstmodelsurface) {
+				R_RenderAllDynamicLightmaps(clmodel);
 			}
-			else {
-				caustics = R_PointIsUnderwater(e->origin);
+
+			//R00k added contents point for underwater bmodels
+			if (gl_caustics.integer) {
+				if (clmodel->isworldmodel) {
+					vec3_t midpoint;
+
+					VectorAdd(clmodel->mins, clmodel->maxs, midpoint);
+					VectorScale(midpoint, 0.5f, midpoint);
+					VectorAdd(midpoint, e->origin, midpoint);
+
+					caustics = R_PointIsUnderwater(midpoint);
+				}
+				else {
+					caustics = R_PointIsUnderwater(e->origin);
+				}
 			}
 		}
 

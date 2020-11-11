@@ -341,6 +341,12 @@ void GLC_InitialiseSkyStates(void)
 	state->depth.test_enabled = false;
 	state->fog.enabled = true;
 
+	state = R_CopyRenderingState(r_state_sky_fast_bmodel, r_state_sky_fast, "fastSkyState_bmodel");
+	state->depth.test_enabled = true;
+
+	state = R_CopyRenderingState(r_state_sky_fast_fogged_bmodel, r_state_sky_fast_fogged, "fastSkyStateFogged_bmodel");
+	state->depth.test_enabled = true;
+
 	state = R_InitRenderingState(r_state_skydome_zbuffer_pass, true, "skyDomeZPassState", vao_brushmodel);
 	state->depth.test_enabled = true;
 	state->blendingEnabled = true;
@@ -360,12 +366,18 @@ void GLC_InitialiseSkyStates(void)
 	state->textureUnits[0].enabled = true;
 	state->textureUnits[0].mode = r_texunit_mode_replace;
 
+	state = R_CopyRenderingState(r_state_skydome_background_pass_bmodel, r_state_skydome_background_pass, "skyDomeFirstPassState_bmodel");
+	state->depth.test_enabled = true;
+
 	state = R_InitRenderingState(r_state_skydome_cloud_pass, true, "skyDomeCloudPassState", vao_none);
 	state->depth.test_enabled = false;
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 	state->textureUnits[0].enabled = true;
 	state->textureUnits[0].mode = r_texunit_mode_replace;
+
+	state = R_CopyRenderingState(r_state_skydome_cloud_pass_bmodel, r_state_skydome_cloud_pass, "skyDomeCloudPassState_bmodel");
+	state->depth.test_enabled = true;
 
 	// Used when rendering the skydome/cloud background, prior to z-pass
 	state = R_InitRenderingState(r_state_skydome_single_pass, true, "skyDomeSinglePassState", vao_brushmodel);
@@ -379,19 +391,23 @@ void GLC_InitialiseSkyStates(void)
 	// Used when rendering the polys directly (like r_fastsky) but texturing
 	state = R_CopyRenderingState(r_state_skydome_single_pass_program, r_state_skydome_single_pass, "skyDomeSinglePass(program)");
 	state->depth.test_enabled = true;
+
+	// Deliberately not using r_state_skydome_single_pass_program just so we can tie it to vbo etc in future
+	state = R_CopyRenderingState(r_state_skydome_single_pass_bmodel, r_state_skydome_single_pass, "skyDomeSinglePass(bmodel)");
+	state->depth.test_enabled = true;
 }
 
-void GLC_StateBeginFastSky(void)
+void GLC_StateBeginFastSky(qbool world)
 {
 	extern cvar_t gl_fogsky, gl_fogenable, r_skycolor;
 
 	R_TraceEnterFunctionRegion;
 
 	if (gl_fogsky.integer && gl_fogenable.integer) {
-		R_ApplyRenderingState(r_state_sky_fast_fogged);
+		R_ApplyRenderingState(world ? r_state_sky_fast_fogged : r_state_sky_fast_fogged_bmodel);
 	}
 	else {
-		R_ApplyRenderingState(r_state_sky_fast);
+		R_ApplyRenderingState(world ? r_state_sky_fast : r_state_sky_fast_bmodel);
 	}
 	R_CustomColor(r_skycolor.color[0] / 255.0f, r_skycolor.color[1] / 255.0f, r_skycolor.color[2] / 255.0f, 1.0f);
 
@@ -450,7 +466,7 @@ void GLC_StateBeginMultiTextureSkyChain(void)
 {
 	R_TraceEnterFunctionRegion;
 
-	R_ApplyRenderingState(r_state_skydome_single_pass);
+	R_ApplyRenderingState(r_state_skydome_single_pass_bmodel);
 	renderer.TextureUnitBind(0, solidskytexture);
 	renderer.TextureUnitBind(1, alphaskytexture);
 
@@ -461,7 +477,7 @@ void GLC_StateBeginSingleTextureSkyPass(void)
 {
 	R_TraceEnterFunctionRegion;
 
-	R_ApplyRenderingState(r_state_skydome_background_pass);
+	R_ApplyRenderingState(r_state_skydome_background_pass_bmodel);
 	renderer.TextureUnitBind(0, solidskytexture);
 
 	R_TraceLeaveFunctionRegion;
@@ -471,7 +487,7 @@ void GLC_StateBeginSingleTextureCloudPass(void)
 {
 	R_TraceEnterFunctionRegion;
 
-	R_ApplyRenderingState(r_state_skydome_cloud_pass);
+	R_ApplyRenderingState(r_state_skydome_cloud_pass_bmodel);
 	renderer.TextureUnitBind(0, alphaskytexture);
 
 	R_TraceLeaveFunctionRegion;

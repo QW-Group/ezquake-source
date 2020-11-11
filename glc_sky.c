@@ -202,7 +202,7 @@ void GLC_SkyDrawChainedSurfaces(void)
 	// MEAG: Fixme
 	R_ProgramUse(r_program_none);
 	if (r_fastsky.integer || cl.worldmodel->bspversion == HL_BSPVERSION) {
-		GLC_StateBeginFastSky();
+		GLC_StateBeginFastSky(false);
 		GLC_DrawFastSkyChain();
 	}
 	else if (gl_mtexable) {
@@ -350,7 +350,7 @@ void GLC_DrawSky(void)
 	}
 	else if (r_fastsky.integer) {
 		R_ProgramUse(r_program_none);
-		GLC_StateBeginFastSky();
+		GLC_StateBeginFastSky(true);
 		GLC_DrawFastSkyChain();
 	}
 	else if (r_skyboxloaded && R_UseCubeMapForSkyBox()) {
