@@ -46,6 +46,8 @@
 - Fixed bug causing mouse wheel start & stop events to be fired in the same frame (3.x bug, #200)
 - Fixed bug causing `/gl_brush_polygonoffset` not to work in modern-glsl renderer (3.5 bug, #404)
 - Fixed bug causing powerup shell to not obey `/r_lerpframes` when aliasmodel VAO already bound pre-draw (3.5 bug, #421)
+- Fixed bug causing radar texture to wrap edges (old bug, #424, reported by hemostx) 
+- Fixed bug causing gunshot positions on radar to always be displayed around the origin (old bug, #425, reported by hemostx)
 
 ### Ruleset-related changes
 

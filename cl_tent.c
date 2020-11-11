@@ -142,10 +142,10 @@ void CL_FreeExplosion(explosion_t *ex)
 	cl_free_explosions = ex;
 }
 
-static void CL_ParseBeam(int type) 
+static void CL_ParseBeam(int type, vec3_t end)
 {
 	int ent, i;
-	vec3_t start, end;
+	vec3_t start;
 	beam_t *b;
 	struct model_s *m;
 
@@ -523,10 +523,9 @@ static void CL_Parse_TE_TELEPORT(vec3_t pos)
 	}
 }
 
-static void CL_Parse_TE_GUNSHOT(void)
+static void CL_Parse_TE_GUNSHOT(vec3_t pos)
 {
 	int count;
-	vec3_t pos;
 
 	if (cls.nqdemoplayback) {
 		count = 1;
@@ -551,14 +550,12 @@ static void CL_Parse_TE_GUNSHOT(void)
 	}
 }
 
-static void CL_Parse_TE_BLOOD(void)
+static void CL_Parse_TE_BLOOD(vec3_t pos)
 {
 	int count;
-	vec3_t pos;
 	dlight_t *dl;
 	
-	if (cls.nqdemoplayback)
-	{
+	if (cls.nqdemoplayback) {
 		// NQ_TE_EXPLOSION2
 		pos[0] = MSG_ReadCoord();
 		pos[1] = MSG_ReadCoord();
@@ -566,8 +563,9 @@ static void CL_Parse_TE_BLOOD(void)
 		MSG_ReadByte(); // colorStart
 		MSG_ReadByte(); // colorLength
 
-		if (CL_Demo_SkipMessage(true))
+		if (CL_Demo_SkipMessage(true)) {
 			return;
+		}
 
 		dl = CL_AllocDlight(0);
 		VectorCopy(pos, dl->origin);
@@ -583,28 +581,25 @@ static void CL_Parse_TE_BLOOD(void)
 	pos[1] = MSG_ReadCoord();
 	pos[2] = MSG_ReadCoord();
 
-	if (CL_Demo_SkipMessage(true))
+	if (CL_Demo_SkipMessage(true)) {
 		return;
+	}
 
-	if (amf_part_blood.value)
+	if (amf_part_blood.value) {
 		VXBlood(pos, 5 * count * amf_part_blood.value);
-	else
-	{
+	}
+	else {
 		R_RunParticleEffect(pos, vec3_origin, 73, 20 * count);
 	}
 }
 
-static void CL_Parse_TE_LIGHTNINGBLOOD(void)
+static void CL_Parse_TE_LIGHTNINGBLOOD(vec3_t pos)
 {
-	vec3_t pos;
-
-	if (cls.nqdemoplayback) 
-	{
+	if (cls.nqdemoplayback) {
 		// NQ_TE_BEAM - grappling hook beam
-		CL_ParseBeam(4);
+		CL_ParseBeam(4, pos);
 	}
-	else
-	{
+	else {
 		extern cvar_t gl_part_blood;
 
 		pos[0] = MSG_ReadCoord();
@@ -634,35 +629,35 @@ void CL_ParseTEnt (void)
 	{
 		// Lightning bolts.
 		case TE_LIGHTNING1:			
-			CL_ParseBeam(1);
+			CL_ParseBeam(1, pos);
 			parsed = true;
 			break;
 
 		case TE_LIGHTNING2:
-			CL_ParseBeam(2);
+			CL_ParseBeam(2, pos);
 			parsed = true;
 			break;
 
 		case TE_LIGHTNING3:
-			CL_ParseBeam(3);
+			CL_ParseBeam(3, pos);
 			parsed = true;
 			break;
 
 		// Bullet hitting wall.
 		case TE_GUNSHOT:
-			CL_Parse_TE_GUNSHOT();
+			CL_Parse_TE_GUNSHOT(pos);
 			parsed = true;
 			break;
 
 		// Bullets hitting body.
 		case TE_BLOOD: 
-			CL_Parse_TE_BLOOD();
+			CL_Parse_TE_BLOOD(pos);
 			parsed = true;
 			break;
 
 		// Lightning hitting body
 		case TE_LIGHTNINGBLOOD: 
-			CL_Parse_TE_LIGHTNINGBLOOD();
+			CL_Parse_TE_LIGHTNINGBLOOD(pos);
 			parsed = true;
 			break;
 	}
@@ -674,8 +669,9 @@ void CL_ParseTEnt (void)
 		pos[1] = MSG_ReadCoord();
 		pos[2] = MSG_ReadCoord();
 
-		if (CL_Demo_SkipMessage(true))
+		if (CL_Demo_SkipMessage(true)) {
 			return;
+		}
 		
 		switch (type) 
 		{
@@ -720,6 +716,9 @@ void CL_ParseTEnt (void)
 			default:
 				Host_Error("CL_ParseTEnt: unknown type %d", type);
 		}
+	}
+	else if (CL_Demo_SkipMessage(true)) {
+		return;
 	}
 
 	// Save the temp entities.

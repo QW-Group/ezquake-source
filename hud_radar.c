@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <png.h>
 #include "sbar.h"
 #include "r_texture.h"
+#include "r_renderer.h"
 
 // What stats to draw.
 #define HUD_RADAR_STATS_NONE				0
@@ -139,6 +140,8 @@ void HUD_NewRadarMap(void)
 	if ((radar_pic_p = R_LoadPicImage (radar_filename, host_mapname.string, 0, 0, TEX_ALPHA)) != NULL) {
 		radar_pic = *radar_pic_p;
 		radar_pic_found = true;
+
+		renderer.TextureWrapModeClamp(radar_pic.texnum);
 
 		// Calculate the height of the map.
 		map_height_diff = fabs((float)(cl.worldmodel->maxs[2] - cl.worldmodel->mins[2]));
