@@ -117,9 +117,9 @@ static int TEXTURE_UNIT_CAUSTICS;
 
 qbool GLM_CompileAliasModelProgram(void)
 {
-	extern cvar_t gl_caustics, r_lerpmuzzlehack;
+	extern cvar_t r_lerpmuzzlehack;
 
-	qbool caustic_textures = gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture);
+	qbool caustic_textures = r_refdef2.drawCaustics;
 	unsigned int drawAlias_desiredOptions =
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(glConfig.reversed_depth ? DRAW_REVERSED_DEPTH : 0) |
@@ -360,10 +360,8 @@ void GLM_DrawAliasModelFrame(
 		R_TextureReferenceInvalidate(texture);
 	}
 
-	if (gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture)) {
-		if (R_PointIsUnderwater(ent->origin)) {
-			render_effects |= RF_CAUSTICS;
-		}
+	if (r_refdef2.drawCaustics && R_PointIsUnderwater(ent->origin)) {
+		render_effects |= RF_CAUSTICS;
 	}
 
 	GLM_QueueAliasModelDrawImpl(

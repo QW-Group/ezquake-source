@@ -348,7 +348,7 @@ static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int po
 	subprogram = GLC_AliasModelSubProgramIndex(
 		!invalidate_texture,
 		gl_fb_models.integer && (ent->ambientlight == 4096 && ent->shadelight == 4096),
-		gl_caustics.integer && (render_effects & RF_CAUSTICS),
+		r_refdef2.drawCaustics && (render_effects & RF_CAUSTICS),
 		r_lerpmuzzlehack.integer && (render_effects & RF_WEAPONMODEL)
 	);
 
@@ -493,7 +493,7 @@ static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int 
 
 void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfrac)
 {
-	qbool draw_caustics = gl_caustics.integer && (R_TextureReferenceIsValid(underwatertexture) && gl_mtexable && R_PointIsUnderwater(ent->origin));
+	qbool draw_caustics = r_refdef2.drawCaustics && gl_mtexable && R_PointIsUnderwater(ent->origin);
 
 	if (gl_program_aliasmodels.integer) {
 		GLC_DrawAliasFrameImpl_Program(ent, model, pose1, pose2, texture, fb_texture, outline, effects, render_effects | (draw_caustics ? RF_CAUSTICS : 0), lerpfrac);

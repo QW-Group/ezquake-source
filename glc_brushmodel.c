@@ -178,8 +178,8 @@ static void GLC_DrawFlat_GLSL(model_t* model, qbool polygonOffset)
 	int i;
 	unsigned int lightmap_count = R_LightmapCount();
 	qbool first_lightmap_surf = true;
-	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer;
-	qbool clear_chains = !R_DrawWorldOutlines();
+	qbool draw_caustics = r_refdef2.drawCaustics;
+	qbool clear_chains = !r_refdef2.drawWorldOutlines;
 
 	GLC_LightmapArrayToggle(true);
 
@@ -285,9 +285,9 @@ static void GLC_DrawFlat_Immediate(model_t* model, qbool polygonOffset)
 {
 	int i;
 	qbool first_surf = true;
-	qbool draw_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer;
+	qbool draw_caustics = r_refdef2.drawCaustics;
 	qbool use_vbo = buffers.supported && modelIndexes;
-	qbool clear_chains = !R_DrawWorldOutlines();
+	qbool clear_chains = !r_refdef2.drawWorldOutlines;
 	byte current[3] = { 255, 255, 255 }, desired[4] = { 255, 255, 255, 255 };
 	unsigned int lightmap_count = R_LightmapCount();
 	int index_count = 0;
@@ -430,6 +430,10 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 {
 	extern cvar_t gl_program_world;
 
+	if (!model->drawflat_todo) {
+		return;
+	}
+
 	R_TraceEnterFunctionRegion;
 
 	if (gl_program_world.integer && buffers.supported && modelIndexes && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_DrawflatProgramCompile()) {
@@ -443,7 +447,7 @@ static void GLC_DrawFlat(model_t *model, qbool polygonOffset)
 	model->drawflat_todo = false;
 
 	// START shaman FIX /r_drawflat + /gl_caustics {
-	if (gl_caustics.integer && caustics_polys && R_TextureReferenceIsValid(underwatertexture)) {
+	if (r_refdef2.drawCaustics && caustics_polys) {
 		GLC_EmitCausticsPolys();
 	}
 	caustics_polys = NULL;
@@ -517,7 +521,7 @@ static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations
 			allocations->texture_unit_count = 2;
 		}
 
-		if (gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture) && allocations->texture_unit_count < gl_textureunits) {
+		if (r_refdef2.drawCaustics && allocations->texture_unit_count < gl_textureunits) {
 			allocations->causticTextureUnit = allocations->texture_unit_count++;
 		}
 
@@ -529,7 +533,7 @@ static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations
 		allocations->rendering_state = r_state_world_singletexture_glc;
 	}
 
-	allocations->second_pass_caustics = R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer && allocations->causticTextureUnit < 0;
+	allocations->second_pass_caustics = r_refdef2.drawCaustics && allocations->causticTextureUnit < 0;
 	allocations->second_pass_detail = R_TextureReferenceIsValid(detailtexture) && gl_detail.integer && allocations->detailTextureUnit < 0;
 	allocations->second_pass_luma = lumas && allocations->fbTextureUnit < 0;
 }
@@ -549,7 +553,7 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 
 	qbool drawfullbrights = false;
 	qbool drawlumas = false;
-	qbool clear_chains = !R_DrawWorldOutlines();
+	qbool clear_chains = !r_refdef2.drawWorldOutlines;
 
 	qbool texture_change;
 	texture_ref current_material = null_texture_reference;
@@ -905,7 +909,7 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 
 	qbool requires_fullbright_pass = false;
 	qbool requires_luma_pass = false;
-	qbool clear_chains = !R_DrawWorldOutlines();
+	qbool clear_chains = !r_refdef2.drawWorldOutlines;
 
 	qbool texture_change, uniform_change;
 	texture_ref current_material = null_texture_reference;
@@ -1091,6 +1095,11 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 	extern cvar_t gl_program_world, gl_textureless;
 	texture_unit_allocation_t allocations;
 
+	if (r_drawflat.integer == 1 && r_drawflat_mode.integer == 0) {
+		// Guaranteed to be no texturing
+		return;
+	}
+
 	if (gl_program_world.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_WorldTexturedProgramCompile(&allocations, model)) {
 		R_ProgramUse(r_program_world_textured_glc);
 		R_ProgramUniform1f(r_program_uniform_world_textured_glc_time, cl.time);
@@ -1117,24 +1126,19 @@ qbool GLC_PreCompileWorldPrograms(void)
 	return (gl_program_world.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_WorldTexturedProgramCompile(&allocations, cl.worldmodel));
 }
 
+// This is now very similar to GLC_DrawBrushModel, but we don't draw sky surfaces at this stage
+//  (they've already been drawn)
+// Also water surfaces are drawn immediately after if opaque, but after entities if not (on sub/instanced models
+//   water surfaces are always drawn during the texture chaining phase, which is something to fix)
 void GLC_DrawWorld(void)
 {
 	extern msurface_t* alphachain;
 
 	R_TraceEnterFunctionRegion;
 
-	if (r_drawflat.integer != 1 || r_drawflat_mode.integer != 0) {
-		GLC_DrawTextureChains(NULL, cl.worldmodel, false, false);
-	}
-	if (cl.worldmodel->drawflat_todo) {
-		GLC_DrawFlat(cl.worldmodel, false);
-	}
-
-	if (R_DrawWorldOutlines()) {
-		GLC_DrawMapOutline(cl.worldmodel);
-	}
-
-	//draw the world alpha textures
+	GLC_DrawTextureChains(NULL, cl.worldmodel, false, false);
+	GLC_DrawFlat(cl.worldmodel, false);
+	GLC_DrawMapOutline(cl.worldmodel);
 	GLC_DrawAlphaChain(alphachain, polyTypeWorldModel);
 
 	R_TraceLeaveFunctionRegion;
@@ -1143,19 +1147,10 @@ void GLC_DrawWorld(void)
 void GLC_DrawBrushModel(entity_t* e, qbool polygonOffset, qbool caustics)
 {
 	extern msurface_t* alphachain;
-	model_t* clmodel = e->model;
 
-	if (r_drawflat.integer != 1 || r_drawflat_mode.integer != 0) {
-		GLC_DrawTextureChains(e, e->model, caustics, polygonOffset);
-	}
-	if (clmodel->drawflat_todo) {
-		GLC_DrawFlat(e->model, polygonOffset);
-	}
-
-	if (clmodel->isworldmodel && R_DrawWorldOutlines()) {
-		GLC_DrawMapOutline(clmodel);
-	}
-
+	GLC_DrawTextureChains(e, e->model, caustics, polygonOffset);
+	GLC_DrawFlat(e->model, polygonOffset);
+	GLC_DrawMapOutline(e->model);
 	GLC_SkyDrawChainedSurfaces();
 	GLC_DrawAlphaChain(alphachain, polyTypeBrushModel);
 }
@@ -1457,6 +1452,7 @@ void GLC_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 		// find which side of the node we are on
 		mplane_t* pplane = psurf->plane;
 		float dot = PlaneDiff(modelorg, pplane);
+		qbool isFloor = (psurf->flags & SURF_DRAWFLAT_FLOOR);
 
 		//draw the water surfaces now, and setup sky/normal chains
 		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
@@ -1481,11 +1477,11 @@ void GLC_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 				CHAIN_SURF_B2F(psurf, alphachain);
 			}
 			else {
-				if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
+				if (drawFlatFloors && isFloor) {
 					R_AddDrawflatChainSurface(psurf, false);
 					clmodel->drawflat_todo = true;
 				}
-				else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
+				else if (drawFlatWalls && !isFloor) {
 					R_AddDrawflatChainSurface(psurf, true);
 					clmodel->drawflat_todo = true;
 				}

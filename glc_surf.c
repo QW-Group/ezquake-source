@@ -84,10 +84,14 @@ void GLC_DrawChainOutline(msurface_t* surf, qbool texture_chains)
 void GLC_DrawMapOutline(model_t *model)
 {
 	int i;
-	unsigned int lightmap_count = R_LightmapCount();
+	unsigned int lightmap_count;
 
+	if (!(model->isworldmodel && r_refdef2.drawWorldOutlines)) {
+		return;
+	}
+
+	lightmap_count = R_LightmapCount();
 	GLC_StateBeginDrawMapOutline();
-
 	for (i = 0; i < model->numtextures; i++) {
 		texture_t* t;
 

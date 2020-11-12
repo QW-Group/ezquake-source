@@ -130,7 +130,7 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 	extern cvar_t r_fx_geometry;
 
 	qbool detail_textures = gl_detail.integer && R_TextureReferenceIsValid(detailtexture);
-	qbool caustic_textures = gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture);
+	qbool caustic_textures = r_refdef2.drawCaustics;
 	qbool luma_textures = gl_lumatextures.integer && r_refdef2.allow_lumas;
 	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
 	qbool skydome = !skybox && !r_fastsky.integer && R_TextureReferenceIsValid(solidskytexture);

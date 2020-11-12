@@ -33,6 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 #include "r_local.h"
 #include "r_renderer.h"
+#include "r_brushmodel.h"
 
 /*
 The view is allowed to move slightly from its true position for bobbing,
@@ -1052,12 +1053,16 @@ qbool V_PreRenderView(void)
 
 		// time-savers
 		{
-			extern cvar_t r_drawflat_mode, r_drawflat, r_fastturb;
+			extern cvar_t r_drawflat_mode, r_drawflat, r_fastturb, gl_caustics;
+			extern texture_ref underwatertexture;
 
 			r_refdef2.wateralpha = R_WaterAlpha();
 			r_refdef2.drawFlatFloors = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 2 || r_drawflat.integer == 1);
 			r_refdef2.drawFlatWalls = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 3 || r_drawflat.integer == 1);
 			r_refdef2.solidTexTurb = (!r_fastturb.integer && r_refdef2.wateralpha == 1);
+
+			r_refdef2.drawCaustics = (R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer);
+			r_refdef2.drawWorldOutlines = R_DrawWorldOutlines();
 		}
 	}
 

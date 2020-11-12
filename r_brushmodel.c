@@ -239,7 +239,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 	float oldMatrix[16];
 	extern cvar_t gl_brush_polygonoffset;
 	qbool caustics = false;
-	extern cvar_t gl_caustics, gl_flashblend;
+	extern cvar_t gl_flashblend;
 	extern msurface_t* skychain;
 
 	// Get rid of Z-fighting for textures by offsetting the
@@ -314,7 +314,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 			}
 
 			//R00k added contents point for underwater bmodels
-			if (gl_caustics.integer) {
+			if (r_refdef2.drawCaustics) {
 				if (clmodel->isworldmodel) {
 					vec3_t midpoint;
 
