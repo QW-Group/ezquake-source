@@ -51,6 +51,10 @@ typedef enum {
 	skypoly_mode_clouds,
 } skypoly_mode_id;
 
+static void GLC_DrawSky_Program(void);
+qbool GLC_SkyProgramCompile(void);
+extern cvar_t gl_program_sky;
+
 /*
 ==============
 R_DrawSkyBox
@@ -199,41 +203,45 @@ void GLC_SkyDrawChainedSurfaces(void)
 		return;
 	}
 
-	// MEAG: Fixme
-	R_ProgramUse(r_program_none);
-	if (r_fastsky.integer || cl.worldmodel->bspversion == HL_BSPVERSION) {
-		GLC_StateBeginFastSky(false);
-		GLC_DrawFastSkyChain();
-	}
-	else if (gl_mtexable) {
-		GLC_StateBeginMultiTextureSkyChain();
-
-		speedscale = r_refdef2.time * 8;
-		speedscale -= (int)speedscale & ~127;
-		speedscale2 = r_refdef2.time * 16;
-		speedscale2 -= (int)speedscale2 & ~127;
-
-		for (fa = skychain; fa; fa = fa->texturechain) {
-			GLC_EmitSkyPolys(fa, skypoly_mode_mtex);
-		}
+	if (gl_program_sky.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_SkyProgramCompile()) {
+		GLC_DrawSky_Program();
 	}
 	else {
-		GLC_StateBeginSingleTextureSkyPass();
-
-		speedscale = r_refdef2.time * 8;
-		speedscale -= (int)speedscale & ~127;
-
-		for (fa = skychain; fa; fa = fa->texturechain) {
-			GLC_EmitSkyPolys(fa, skypoly_mode_sky);
+		R_ProgramUse(r_program_none);
+		if (r_fastsky.integer || cl.worldmodel->bspversion == HL_BSPVERSION) {
+			GLC_StateBeginFastSky(false);
+			GLC_DrawFastSkyChain();
 		}
+		else if (gl_mtexable) {
+			GLC_StateBeginMultiTextureSkyChain();
 
-		GLC_StateBeginSingleTextureCloudPass();
+			speedscale = r_refdef2.time * 8;
+			speedscale -= (int)speedscale & ~127;
+			speedscale2 = r_refdef2.time * 16;
+			speedscale2 -= (int)speedscale2 & ~127;
 
-		speedscale = r_refdef2.time * 16;
-		speedscale -= (int)speedscale & ~127;
+			for (fa = skychain; fa; fa = fa->texturechain) {
+				GLC_EmitSkyPolys(fa, skypoly_mode_mtex);
+			}
+		}
+		else {
+			GLC_StateBeginSingleTextureSkyPass();
 
-		for (fa = skychain; fa; fa = fa->texturechain) {
-			GLC_EmitSkyPolys(fa, skypoly_mode_clouds);
+			speedscale = r_refdef2.time * 8;
+			speedscale -= (int)speedscale & ~127;
+
+			for (fa = skychain; fa; fa = fa->texturechain) {
+				GLC_EmitSkyPolys(fa, skypoly_mode_sky);
+			}
+
+			GLC_StateBeginSingleTextureCloudPass();
+
+			speedscale = r_refdef2.time * 16;
+			speedscale -= (int)speedscale & ~127;
+
+			for (fa = skychain; fa; fa = fa->texturechain) {
+				GLC_EmitSkyPolys(fa, skypoly_mode_clouds);
+			}
 		}
 	}
 
@@ -342,7 +350,6 @@ void GLC_DrawSky(void)
 	msurface_t	*fa;
 	qbool		ignore_z;
 	extern msurface_t *skychain;
-	extern cvar_t gl_program_sky;
 
 	R_TraceAPI("%s()", __FUNCTION__);
 	if (gl_program_sky.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_SkyProgramCompile()) {

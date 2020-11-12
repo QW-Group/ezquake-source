@@ -48,8 +48,9 @@
 - Fixed bug causing powerup shell to not obey `/r_lerpframes` when aliasmodel VAO already bound pre-draw (3.5 bug, #421)
 - Fixed bug causing radar texture to wrap edges (old bug, #424, reported by hemostx) 
 - Fixed bug causing gunshot positions on radar to always be displayed around the origin (old bug, #425, reported by hemostx)
-- Fixed bug causing sky surfaces on instanced models to be displayed without z-buffer enabled (3.5 bug, #426, reported by Pulseczar1)
-- Fixed bug causing instanced bmodels to not be displayed if only surfaces visible were sky textures (3.5 bug)
+- Fixed bug causing sky surfaces on submodels to be displayed without z-buffer enabled (3.5 bug, #426, reported by Pulseczar1)
+- Fixed bug causing submodels to not be displayed if only surfaces visible were sky textures (3.5 bug)
+- Fixed bug causing sky surfaces on submodels to not be drawn as skybox, if loaded (old bug)
 
 ### Ruleset-related changes
 

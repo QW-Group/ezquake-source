@@ -1145,17 +1145,11 @@ void GLC_DrawBrushModel(entity_t* e, qbool polygonOffset, qbool caustics)
 	extern msurface_t* alphachain;
 	model_t* clmodel = e->model;
 
-	if (r_drawflat_mode.integer == 0 && r_drawflat.integer && clmodel->isworldmodel) {
-		if (r_drawflat.integer == 1) {
-			GLC_DrawFlat(clmodel, polygonOffset);
-		}
-		else {
-			GLC_DrawTextureChains(e, clmodel, caustics, polygonOffset);
-			GLC_DrawFlat(clmodel, polygonOffset);
-		}
+	if (r_drawflat.integer != 1 || r_drawflat_mode.integer != 0) {
+		GLC_DrawTextureChains(e, e->model, caustics, polygonOffset);
 	}
-	else {
-		GLC_DrawTextureChains(e, clmodel, caustics, polygonOffset);
+	if (clmodel->drawflat_todo) {
+		GLC_DrawFlat(e->model, polygonOffset);
 	}
 
 	if (clmodel->isworldmodel && R_DrawWorldOutlines()) {
@@ -1468,7 +1462,13 @@ void GLC_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 		if (((psurf->flags & SURF_PLANEBACK) && (dot < -BACKFACE_EPSILON)) ||
 			(!(psurf->flags & SURF_PLANEBACK) && (dot > BACKFACE_EPSILON))) {
 			if (psurf->flags & SURF_DRAWSKY) {
-				CHAIN_SURF_B2F(psurf, skychain);
+				if (r_fastsky.integer) {
+					CHAIN_SURF_B2F(psurf, clmodel->drawflat_chain);
+					clmodel->drawflat_todo = true;
+				}
+				else {
+					CHAIN_SURF_B2F(psurf, skychain);
+				}
 			}
 			else if (psurf->flags & SURF_DRAWTURB) {
 				if (glc_first_water_poly) {
