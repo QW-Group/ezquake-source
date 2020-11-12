@@ -341,6 +341,11 @@ void GLC_HudPrepareImages(void)
 			extraIndexesPerImage = GL_Supported(R_SUPPORT_PRIMITIVERESTART) ? 1 : 2;
 		}
 	}
+
+	R_TraceAPI("%s pre-check: %s, %s", __FUNCTION__, (buffers.supported ? "buffers-supported" : "no-buffers"), R_VertexArrayCreated(vao_hud_images) ? "vao-created" : "vao-not-created");
+	if (buffers.supported && !R_VertexArrayCreated(vao_hud_images)) {
+		GLC_CreateImageVAO();
+	}
 }
 
 static void GLC_HudDrawImagesVertexArray(texture_ref ref, int start, int end)
@@ -504,11 +509,6 @@ void GLC_HudDrawImages(texture_ref ref, int start, int end)
 	extern cvar_t gl_program_hud;
 
 	R_TraceEnterFunctionRegion;
-	R_TraceAPI("%s pre-check: %s, %s", __FUNCTION__, (buffers.supported ? "buffers-supported" : "no-buffers"), R_VertexArrayCreated(vao_hud_images) ? "vao-created" : "vao-not-created");
-	if (buffers.supported && !R_VertexArrayCreated(vao_hud_images)) {
-		GLC_CreateImageVAO();
-	}
-
 	if (R_TextureReferenceIsValid(glc_last_texture_used) && !R_TextureReferenceEqual(glc_last_texture_used, ref)) {
 		renderer.TextureSetFiltering(glc_last_texture_used, texture_minification_linear, texture_magnification_linear);
 	}
