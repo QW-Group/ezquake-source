@@ -368,6 +368,11 @@ void CachePics_CreateAtlas(void)
 	int i, j;
 	double start_time = Sys_DoubleTime();
 
+	if (COM_CheckParm(cmdline_param_client_noatlas)) {
+		atlas_refresh = false;
+		return;
+	}
+
 	// Delete old atlas textures
 	atlas_texels = Q_malloc(ATLAS_SIZE_IN_BYTES);
 	prev_atlas_texels = Q_malloc(ATLAS_SIZE_IN_BYTES);
