@@ -63,6 +63,13 @@ void Sys_ActiveAppChanged (void);
 SDL_GLContext GLM_SDL_CreateContext(SDL_Window* window);
 SDL_GLContext GLC_SDL_CreateContext(SDL_Window* window);
 
+#ifdef __linux__
+// This is hack to ignore keyboard events we receive between FOCUS_GAINED & TAKE_FOCUS
+// Without it the keys you press to switch back to ezQuake will fire, which is probably not desired
+// Affects X11 only - might also be needed on FreeBSD/OSX?
+static qbool block_keyboard_input = false;
+#endif
+
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
 #define VID_RENDERER_MIN 0
@@ -173,6 +180,9 @@ cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CV
 
 cvar_t in_release_mouse_modes     = {"in_release_mouse_modes",     "2",       CVAR_SILENT };
 cvar_t in_ignore_touch_events     = {"in_ignore_touch_events",     "1",       CVAR_SILENT };
+#ifdef __linux__
+cvar_t in_ignore_unfocused_keyb   = {"in_ignore_unfocused_keyb",   "0",       CVAR_SILENT };
+#endif
 cvar_t vid_vsync_lag_fix          = {"vid_vsync_lag_fix",          "0"                    };
 cvar_t vid_vsync_lag_tweak        = {"vid_vsync_lag_tweak",        "1.0"                  };
 cvar_t r_swapInterval             = {"vid_vsync",                  "0",       CVAR_SILENT };
@@ -488,6 +498,9 @@ static void window_event(SDL_WindowEvent *event)
 
 		case SDL_WINDOWEVENT_FOCUS_LOST:
 			ActiveApp = false;
+#ifdef __linux__
+			block_keyboard_input = in_ignore_unfocused_keyb.integer;
+#endif
 #ifdef X11_GAMMA_WORKAROUND
 			if (vid_gamma_workaround.integer) {
 				if (Minimized || vid_hwgammacontrol.integer != 3) {
@@ -545,6 +558,14 @@ static void window_event(SDL_WindowEvent *event)
 			if (renderer.InvalidateViewport)
 				renderer.InvalidateViewport();
 			break;
+
+#ifdef __linux__
+		case SDL_WINDOWEVENT_TAKE_FOCUS:
+			// On X, sequence is FOCUS_GAINED, [Keyboard 'down' events], TAKE_FOCUS
+			// On Windows, it's just FOCUS_GAINED then TAKE_FOCUS, so nothing to block really
+			block_keyboard_input = false;
+			break;
+#endif
 	}
 }
 
@@ -642,6 +663,12 @@ static void keyb_textinputevent(char* text)
 	if (!*text)
 		return;
 
+#ifdef __linux__
+	if (block_keyboard_input) {
+		return;
+	}
+#endif
+
 	len = strlen(text);
 	for (i = 0; i < len; ++i)
 	{
@@ -661,6 +688,12 @@ static void keyb_event(SDL_KeyboardEvent *event)
 		return;
 	}
 
+#ifdef __linux__
+	if (block_keyboard_input) {
+		Com_DPrintf("%s: scan-code %d, qchar %d: suppressed\n", __func__, event->keysym.scancode, result);
+		return;
+	}
+#endif
 	Key_Event(result, event->state);
 }
 
@@ -917,6 +950,9 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&vid_flashonactivity);
 	Cvar_Register(&r_showextensions);
 	Cvar_Register(&vid_win_displayNumber);
+#ifdef __linux__
+	Cvar_Register(&in_ignore_unfocused_keyb);
+#endif
 
 	Cvar_Register(&vid_framebuffer_blit);
 	Cvar_Register(&vid_framebuffer_width);

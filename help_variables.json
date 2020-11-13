@@ -12995,6 +12995,13 @@
       "group-id": "11",
       "type": "boolean"
     },
+    "in_ignore_unfocused_keyb": {
+      "default": "0",
+      "desc": "If set, will ignore keyboard events received immediately after regaining focus.  Should stop shortcut keys from firing in-game",
+      "remarks": "X11 systems only.",
+      "group-id": "11",
+      "type": "boolean"
+    },
     "in_m_os_parameters": {
       "desc": "Allows you to use your system mouse settings in the client",
       "group-id": "28",

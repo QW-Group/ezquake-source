@@ -79,6 +79,7 @@
 - `/hud_clock_content 1` changes output to show the uptime of the client
 - `/hud_clock_content 2` changes output to show time connected to the server (should match `/cl_clock 1` in oldhud)
 - `/in_ignore_touch_events` added - allows mouse clicks from touch input devices
+- `/in_ignore_unfocused_keyb` added - should ignore keyboard events immediately after receiving input focus (linux only)
 - `/menu_botmatch_gamedir` added - allows packages to customise the directory when starting a bot match
 - `/net_tcp_timeout` added - allows timeout period to be set when connecting to QTV etc
 - `/qtv_adjustbuffer 2` added - targets a specific delay period, rather than % of buffer being full
