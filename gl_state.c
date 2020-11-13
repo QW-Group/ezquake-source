@@ -68,7 +68,8 @@ static const char* vaoNames[] = {
 	"brushmodel_details",
 	"brushmodel_lightmap_pass",
 	"brushmodel_lm_unit1",
-	"brushmodel_simpletex"
+	"brushmodel_simpletex",
+	"vao_hud_images_non_glsl"
 };
 
 #ifdef C_ASSERT

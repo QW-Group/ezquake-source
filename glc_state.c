@@ -526,6 +526,18 @@ void GLC_StateBeginImageDraw(qbool is_text)
 	}
 }
 
+void GLC_StateBeginImageDrawNonGLSL(qbool is_text)
+{
+	extern cvar_t gl_alphafont;
+
+	if (is_text && !gl_alphafont.integer) {
+		R_ApplyRenderingState(r_state_hud_images_alphatested_glc_non_glsl);
+	}
+	else {
+		R_ApplyRenderingState(r_state_hud_images_glc_non_glsl);
+	}
+}
+
 void GLC_StateBeginAliasOutlineFrame(void)
 {
 	extern cvar_t gl_outline_width;

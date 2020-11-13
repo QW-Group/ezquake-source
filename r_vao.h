@@ -39,6 +39,7 @@ typedef enum {
 	vao_brushmodel_lightmap_pass,
 	vao_brushmodel_lm_unit1,
 	vao_brushmodel_simpletex,
+	vao_hud_images_non_glsl,
 
 	vao_count
 } r_vao_id;

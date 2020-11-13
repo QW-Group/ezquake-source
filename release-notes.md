@@ -52,6 +52,7 @@
 - Fixed bug causing submodels to not be displayed if only surfaces visible were sky textures (3.5 bug)
 - Fixed bug causing sky surfaces on submodels to not be drawn as skybox, if loaded (old bug)
 - Fixed bug causing corrupt rendering if HUD contained lines but no images (3.5 bug)
+- Fixed bug causing corrupt HUD rendering until GLSL HUD enabled or enabled but disabled and then r_smooth option disabled (3.5 bug)
 
 ### Ruleset-related changes
 
