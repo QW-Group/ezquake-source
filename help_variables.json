@@ -6820,6 +6820,25 @@
       "group-id": "19",
       "type": "float"
     },
+    "hud_clock_content": {
+      "desc": "Controls what time to display",
+      "group-id": "19",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Local system time",
+          "name": "0"
+        },
+        {
+          "description": "Client uptime",
+          "name": "1"
+        },
+        {
+          "description": "Time spent on server",
+          "name": "2"
+        }
+      ]
+    },
     "hud_clock_format": {
       "desc": "Controls in what format the clock is displayed",
       "group-id": "19",

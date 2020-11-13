@@ -73,6 +73,9 @@ static void SCR_HUD_DrawClock(hud_t *hud)
 	if (hud_clock_content->integer == 1) {
 		t = SCR_GetTimeString(TIMETYPE_HOSTCLOCK, SCR_HUD_ClockFormat(hud_clock_format->integer));
 	}
+	else if (hud_clock_content->integer == 2) {
+		t = SCR_GetTimeString(TIMETYPE_CONNECTEDCLOCK, SCR_HUD_ClockFormat(hud_clock_format->integer));
+	}
 	else {
 		t = SCR_GetTimeString(TIMETYPE_CLOCK, SCR_HUD_ClockFormat(hud_clock_format->integer));
 	}
@@ -218,8 +221,7 @@ static void SCR_DrawClock(void)
 		strlcpy(str, SCR_GetTimeString(TIMETYPE_HOSTCLOCK, SCR_HUD_ClockFormat(scr_clock_format.integer)), sizeof(str));
 	}
 	else {
-		float time = (cl.servertime_works) ? cl.servertime : cls.realtime;
-		strlcpy(str, SecondsToHourString((int)time), sizeof(str));
+		strlcpy(str, SCR_GetTimeString(TIMETYPE_CONNECTEDCLOCK, SCR_HUD_ClockFormat(scr_clock_format.integer)), sizeof(str));
 	}
 
 	x = ELEMENT_X_COORD(scr_clock);

@@ -19,7 +19,7 @@
 - Don't draw hud/console, then full console background then server browser (old)
 - Skip rendering glyphs for spaces when the line has been turned red (old, affected server browser)
 - `/gl_texturemode` doesn't affect the texture used for framebuffers (3.5 bug, reported by hemostx)
-- When using scaled framebuffer, mouse cursor co-ordinates are correct (3.5 bug, reported by hemostx)
+- When using scaled framebuffer, mouse cursor co-ordinates are incorrect (3.5 bug, reported by hemostx)
 - When using scaled framebuffer, screenshots use correct dimensions (3.5 bug, reported by hemostx)
 - When using 2d&3d framebuffers, world-view was being over-written during 2d draw (3.5 bug, reported by hemostx)
 - Fix rendering of fullbright textures that aren't luma/external-32bit textures (3.5 bug, reported by ciscon & lurq)
@@ -63,20 +63,21 @@
 
 ### Other changes
 
-- `/cfg_backup` will now not save the config if backup cannot be taken
+- `/cfg_backup` will now not save the config if backup cannot be taken (previous behaviour was to over-write)
 - `/cfg_save` will now accept subdirectories (e.g. `/cfg_save backups/test1.cfg`)  Absolute paths are still blocked.
 - `/cl_keypad 1` - keypad works as cursor keys in menu
 - `/cl_keypad 2` - keypad will behave as `/cl_keypad 0` in-game, but `/cl_keypad 1` in console etc
 - `/cl_net_clientport` - allows the network client port to be specified in-game (rather than just `-clientport` command line switch)
 - `/cl_pext_serversideweapon` - protocol extension to move weapon selection to server (requires updated mvdsv)
 - `/cl_weaponforgetondeath` - resets weapon to shotgun when respawning
-- '/cl_weaponforgetorder 2' - sets the best weapon then falls back to sg or axe (as per `/cl_weaponhide_axe`)
+- `/cl_weaponforgetorder 2` - sets the best weapon then falls back to sg or axe (as per `/cl_weaponhide_axe`)
 - `/cl_window_caption 2` - window title will be 'ezQuake' and will not change with connection status
 - `/cl_username` & `/authenticate` to support optional logins via badplace.eu (see [guide](https://github.com/ezQuake/ezquake-source/wiki/Authentication))
 - `/enemyforceskins 1` will search for player names in lower case (#345)
 - `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
 ` `/gl_mipmap_viewmodels` removed, replaced with `/gl_texturemode_viewmodels`
 - `/hud_clock_content 1` changes output to show the uptime of the client
+- `/hud_clock_content 2` changes output to show time connected to the server (should match `/cl_clock 1` in oldhud)
 - `/in_ignore_touch_events` added - allows mouse clicks from touch input devices
 - `/menu_botmatch_gamedir` added - allows packages to customise the directory when starting a bot match
 - `/net_tcp_timeout` added - allows timeout period to be set when connecting to QTV etc
