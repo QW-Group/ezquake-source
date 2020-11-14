@@ -2592,6 +2592,13 @@
         }
       ]
     },
+    "cl_sv_packetsync": {
+      "default": "1",
+      "desc": "Determines if internal server should process packets as soon as received from client",
+      "remarks": "Should only affect playing on local server, when cl_delay_packet is enabled.\nRecommend to disable for older mods which fake players (frogbots) and leave enabled for KTX.",
+      "group-id": "43",
+      "type": "boolean"
+    },
     "cl_textencoding": {
       "default": "0",
       "desc": "Determines method used to encoding non-standard characters in outgoing messages.",

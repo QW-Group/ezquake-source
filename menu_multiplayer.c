@@ -206,6 +206,7 @@ episode_t    episodes[] = {
 		if (menu_botmatch_gamedir.string[0]) {
 			Cbuf_AddText(va("gamedir \"%s\";", menu_botmatch_gamedir.string));
 		}
+		Cbuf_AddText("cl_sv_packetsync 0\n");
 		Cbuf_AddText(va("exec configs/%s.cfg;map %s\n",cfg,map));
 		M_LeaveMenus();
 	}

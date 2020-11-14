@@ -124,6 +124,14 @@ cvar_t  cl_pext_floatcoords  = {"cl_pext_floatcoords", "1"};
 cvar_t cl_pext_alpha = {"cl_pext_alpha", "1"};
 #endif
 
+#ifdef CLIENTONLY
+#define PROCESS_SERVERPACKETS_IMMEDIATELY (0)
+#else
+static cvar_t cl_sv_packetsync = { "cl_sv_packetsync", "1" };
+#define PROCESS_SERVERPACKETS_IMMEDIATELY (cl_sv_packetsync.integer)
+#endif
+
+
 cvar_t	cl_sbar		= {"cl_sbar", "0"};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0"};
 cvar_t	cl_maxfps	= {"cl_maxfps", "0"};
@@ -1650,7 +1658,7 @@ void CL_Fog_f (void)
 	Cvar_SetValue (&gl_fogblue, atof(Cmd_Argv(3)));
 }
 
-static void CL_InitLocal (void) 
+static void CL_InitLocal(void)
 {
 	char st[256];
 
@@ -1659,142 +1667,142 @@ static void CL_InitLocal (void)
 	Cl_Messages_Init();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CHAT);
-	Cvar_Register (&cl_parseWhiteText);
-	Cvar_Register (&cl_chatsound);
-	Cvar_Register (&cl_fakename);
-	Cvar_Register (&cl_fakename_suffix);
+	Cvar_Register(&cl_parseWhiteText);
+	Cvar_Register(&cl_chatsound);
+	Cvar_Register(&cl_fakename);
+	Cvar_Register(&cl_fakename_suffix);
 
-	Cvar_Register (&cl_restrictions);
+	Cvar_Register(&cl_restrictions);
 
-	Cvar_Register (&cl_floodprot);
-	Cvar_Register (&cl_fp_messages);
-	Cvar_Register (&cl_fp_persecond);
+	Cvar_Register(&cl_floodprot);
+	Cvar_Register(&cl_fp_messages);
+	Cvar_Register(&cl_fp_persecond);
 
-	Cvar_Register (&msg_filter);
+	Cvar_Register(&msg_filter);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
-	Cvar_Register (&cl_shownet);
-	Cvar_Register (&cl_confirmquit);
-	Cvar_Register (&cl_window_caption);
-	Cvar_Register (&cl_onload);
+	Cvar_Register(&cl_shownet);
+	Cvar_Register(&cl_confirmquit);
+	Cvar_Register(&cl_window_caption);
+	Cvar_Register(&cl_onload);
 
-	#ifdef WIN32
-	Cvar_Register (&cl_verify_qwprotocol);
-	#endif // WIN32
+#ifdef WIN32
+	Cvar_Register(&cl_verify_qwprotocol);
+#endif // WIN32
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
-	Cvar_Register (&cl_sbar);
-	Cvar_Register (&cl_hudswap);
+	Cvar_Register(&cl_sbar);
+	Cvar_Register(&cl_hudswap);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIEWMODEL);
-	Cvar_Register (&cl_filterdrawviewmodel);
+	Cvar_Register(&cl_filterdrawviewmodel);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
-	Cvar_Register (&cl_model_bobbing);
-	Cvar_Register (&cl_nolerp);
-	Cvar_Register (&cl_nolerp_on_entity);
-	Cvar_Register (&cl_newlerp);
-	Cvar_Register (&cl_lerp_monsters);
-	Cvar_Register (&cl_maxfps);
-	Cvar_Register (&cl_physfps);
-	Cvar_Register (&hud_fps_min_reset_interval);
-	Cvar_Register (&hud_frametime_max_reset_interval);
-	Cvar_Register (&hud_performance_average);
-	Cvar_Register (&cl_physfps_spectator);
-	Cvar_Register (&cl_independentPhysics);
-	Cvar_Register (&cl_deadbodyfilter);
-	Cvar_Register (&cl_gibfilter);
-	Cvar_Register (&cl_backpackfilter);
-	Cvar_Register (&cl_muzzleflash);
-	Cvar_Register (&cl_rocket2grenade);
-	Cvar_Register (&r_explosiontype);
-	Cvar_Register (&r_lightflicker);
-	Cvar_Register (&r_lightmap_lateupload);
-	Cvar_Register (&r_lightmap_packbytexture);
-	Cvar_Register (&r_rockettrail);
-	Cvar_Register (&r_grenadetrail);
-	Cvar_Register (&r_railtrail);
-	Cvar_Register (&r_instagibtrail);
-	Cvar_Register (&r_powerupglow);
-	Cvar_Register (&cl_novweps);
-	Cvar_Register (&r_drawvweps);
-	Cvar_Register (&r_rocketlight);
-	Cvar_Register (&r_explosionlight);
-	Cvar_Register (&r_rocketlightcolor);
-	Cvar_Register (&r_explosionlightcolor);
-	Cvar_Register (&r_flagcolor);
-	Cvar_Register (&cl_fakeshaft);
-	Cvar_Register (&cl_fakeshaft_extra_updates);
-	Cvar_Register (&r_telesplash);
-	Cvar_Register (&r_shaftalpha);
-	Cvar_Register (&r_lightdecayrate);
+	Cvar_Register(&cl_model_bobbing);
+	Cvar_Register(&cl_nolerp);
+	Cvar_Register(&cl_nolerp_on_entity);
+	Cvar_Register(&cl_newlerp);
+	Cvar_Register(&cl_lerp_monsters);
+	Cvar_Register(&cl_maxfps);
+	Cvar_Register(&cl_physfps);
+	Cvar_Register(&hud_fps_min_reset_interval);
+	Cvar_Register(&hud_frametime_max_reset_interval);
+	Cvar_Register(&hud_performance_average);
+	Cvar_Register(&cl_physfps_spectator);
+	Cvar_Register(&cl_independentPhysics);
+	Cvar_Register(&cl_deadbodyfilter);
+	Cvar_Register(&cl_gibfilter);
+	Cvar_Register(&cl_backpackfilter);
+	Cvar_Register(&cl_muzzleflash);
+	Cvar_Register(&cl_rocket2grenade);
+	Cvar_Register(&r_explosiontype);
+	Cvar_Register(&r_lightflicker);
+	Cvar_Register(&r_lightmap_lateupload);
+	Cvar_Register(&r_lightmap_packbytexture);
+	Cvar_Register(&r_rockettrail);
+	Cvar_Register(&r_grenadetrail);
+	Cvar_Register(&r_railtrail);
+	Cvar_Register(&r_instagibtrail);
+	Cvar_Register(&r_powerupglow);
+	Cvar_Register(&cl_novweps);
+	Cvar_Register(&r_drawvweps);
+	Cvar_Register(&r_rocketlight);
+	Cvar_Register(&r_explosionlight);
+	Cvar_Register(&r_rocketlightcolor);
+	Cvar_Register(&r_explosionlightcolor);
+	Cvar_Register(&r_flagcolor);
+	Cvar_Register(&cl_fakeshaft);
+	Cvar_Register(&cl_fakeshaft_extra_updates);
+	Cvar_Register(&r_telesplash);
+	Cvar_Register(&r_shaftalpha);
+	Cvar_Register(&r_lightdecayrate);
 
 	Skin_RegisterCvars();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
-	Cvar_Register (&cl_demospeed);
-	Cvar_Register (&cl_demoPingInterval);
-	Cvar_Register (&qizmo_dir);
-	Cvar_Register (&qwdtools_dir);
-	Cvar_Register (&demo_getpings);
-	Cvar_Register (&demo_autotrack);
-	Cvar_Register (&cl_demoteamplay);
+	Cvar_Register(&cl_demospeed);
+	Cvar_Register(&cl_demoPingInterval);
+	Cvar_Register(&qizmo_dir);
+	Cvar_Register(&qwdtools_dir);
+	Cvar_Register(&demo_getpings);
+	Cvar_Register(&demo_autotrack);
+	Cvar_Register(&cl_demoteamplay);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
-	Cvar_Register (&cl_staticsounds);
+	Cvar_Register(&cl_staticsounds);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_USERINFO);
-	Cvar_Register (&team);
-	Cvar_Register (&spectator);
-	Cvar_Register (&skin);
-	Cvar_Register (&rate);
-	Cvar_Register (&mtu);
-	Cvar_Register (&name);
-	Cvar_Register (&msg);
-	Cvar_Register (&noaim);
-	Cvar_Register (&topcolor);
-	Cvar_Register (&bottomcolor);
-	Cvar_Register (&w_switch);
-	Cvar_Register (&b_switch);
-	Cvar_Register (&railcolor);
-	Cvar_Register (&gender);
+	Cvar_Register(&team);
+	Cvar_Register(&spectator);
+	Cvar_Register(&skin);
+	Cvar_Register(&rate);
+	Cvar_Register(&mtu);
+	Cvar_Register(&name);
+	Cvar_Register(&msg);
+	Cvar_Register(&noaim);
+	Cvar_Register(&topcolor);
+	Cvar_Register(&bottomcolor);
+	Cvar_Register(&w_switch);
+	Cvar_Register(&b_switch);
+	Cvar_Register(&railcolor);
+	Cvar_Register(&gender);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
-	Cvar_Register (&cl_predict_players);
-	Cvar_Register (&cl_solid_players);
-	Cvar_Register (&cl_predict_half);
-	Cvar_Register (&cl_timeout);
-	Cvar_Register (&cl_useproxy);
-	Cvar_Register (&cl_proxyaddr);
-	Cvar_Register (&cl_crypt_rcon);
-	Cvar_Register (&cl_fix_mvd);
+	Cvar_Register(&cl_predict_players);
+	Cvar_Register(&cl_solid_players);
+	Cvar_Register(&cl_predict_half);
+	Cvar_Register(&cl_timeout);
+	Cvar_Register(&cl_useproxy);
+	Cvar_Register(&cl_proxyaddr);
+	Cvar_Register(&cl_crypt_rcon);
+	Cvar_Register(&cl_fix_mvd);
 
-	Cvar_Register (&cl_delay_packet);
-	Cvar_Register (&cl_delay_packet_dev);
-	Cvar_Register (&cl_earlypackets);
+	Cvar_Register(&cl_delay_packet);
+	Cvar_Register(&cl_delay_packet_dev);
+	Cvar_Register(&cl_earlypackets);
 
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
-	Cvar_Register (&cl_pext);
-	Cvar_Register (&cl_pext_limits);
-	Cvar_Register (&cl_pext_other);
-	Cvar_Register (&cl_pext_warndemos);
+	Cvar_Register(&cl_pext);
+	Cvar_Register(&cl_pext_limits);
+	Cvar_Register(&cl_pext_other);
+	Cvar_Register(&cl_pext_warndemos);
 #ifdef MVD_PEXT1_HIGHLAGTELEPORT
-	Cvar_Register (&cl_pext_lagteleport);
+	Cvar_Register(&cl_pext_lagteleport);
 #endif
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
-	Cvar_Register (&cl_pext_serversideweapon);
+	Cvar_Register(&cl_pext_serversideweapon);
 #endif
 #endif // PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_256PACKETENTITIES
-	Cvar_Register (&cl_pext_256packetentities);
+	Cvar_Register(&cl_pext_256packetentities);
 #endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
-	Cvar_Register (&cl_pext_chunkeddownloads);
-	Cvar_Register (&cl_chunksperframe);
+	Cvar_Register(&cl_pext_chunkeddownloads);
+	Cvar_Register(&cl_chunksperframe);
 #endif
 
 #ifdef FTE_PEXT_FLOATCOORDS
-	Cvar_Register (&cl_pext_floatcoords);
+	Cvar_Register(&cl_pext_floatcoords);
 #endif
 
 #ifdef FTE_PEXT_TRANS
@@ -1802,10 +1810,15 @@ static void CL_InitLocal (void)
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
-	Cvar_Register (&allow_scripts);
+	Cvar_Register(&allow_scripts);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
-	Cvar_Register (&cl_mediaroot);
+	Cvar_Register(&cl_mediaroot);
+
+#ifndef CLIENTONLY
+	Cvar_SetCurrentGroup(CVAR_GROUP_COMMUNICATION);
+	Cvar_Register(&cl_sv_packetsync);
+#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
 	Cvar_Register (&password);
@@ -2257,7 +2270,7 @@ void CL_Frame(double time)
 			need_server_frame = CL_UnqueOutputPacket(false);
 		}
 
-		if (need_server_frame && com_serveractive) {
+		if (need_server_frame && PROCESS_SERVERPACKETS_IMMEDIATELY) {
 			CL_ServerFrame(0);
 		}
 
@@ -2270,7 +2283,7 @@ void CL_Frame(double time)
 	}
 
 	if (VID_VSyncLagFix()) {
-		if (need_server_frame && com_serveractive) {
+		if (need_server_frame && PROCESS_SERVERPACKETS_IMMEDIATELY) {
 			CL_ServerFrame(0);
 		}
 		return;
@@ -2447,7 +2460,7 @@ void CL_Frame(double time)
 			Sys_SendDeferredKeyEvents();
 		}
 		else {
-			if (need_server_frame && com_serveractive) {
+			if (need_server_frame && PROCESS_SERVERPACKETS_IMMEDIATELY) {
 				CL_ServerFrame(0);
 			}
 
