@@ -40,6 +40,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
+#ifndef _WIN32
+#include <sys/types.h>
+#include <sys/wait.h>
+#endif
 
 /* FIXME Move these to a proper header file and included that */
 void Cam_Unlock(void);
@@ -47,7 +51,7 @@ void Cam_Unlock(void);
 // TODO: Create states for demo_recording, demo_playback, and so on and put all related vars into these.
 // Right now with global vars for everything is a mess. Also renaming some of the time vars to be less
 // confusing is probably good. demotime, olddemotime, nextdemotime, prevtime...
-
+/*
 typedef struct demo_state_s
 {
 	float		olddemotime;
@@ -58,14 +62,12 @@ typedef struct demo_state_s
 	sizebuf_t	democache;
 	qbool		democache_available;
 
-	#ifdef _WIN32
 	qbool		qwz_unpacking;
 	qbool		qwz_playback;
 	qbool		qwz_packing;
 	char		tempqwd_name[256];
-	#endif // _WIN32
 } demo_state_t;
-
+*/
 double olddemotime, nextdemotime; // TODO: Put in a demo struct.
 
 double bufferingtime; // if we stream from QTV, this is non zero when we trying fill our buffer
@@ -74,7 +76,22 @@ double bufferingtime; // if we stream from QTV, this is non zero when we trying 
 // Vars related to QIZMO compressed demos.
 // (Only available in Win32 since we need to use an external app)
 //
-#ifdef _WIN32
+typedef enum {
+	qizmo_not_running,
+	qizmo_still_active,
+	qizmo_terminated_ok,
+	qizmo_terminated_unexpected,
+	qizmo_terminated_failure
+} qizmo_status_t;
+
+static void CL_Demo_RemoveQWD(void);
+static void CL_Demo_GetCompressedName(char* cdemo_name);
+static void CL_Demo_RemoveCompressed(void);
+static void StopQWZPlayback(void);
+static void PlayQWZDemo(const char* name);
+static qbool CL_Demo_Compress(char* qwdname);
+static void CL_DemoStartPlayback(const char* name);
+
 static qbool	qwz_unpacking = false;
 static qbool	qwz_playback = false;
 static qbool	qwz_packing = false;
@@ -84,12 +101,8 @@ static qbool	qwz_packing = false;
 static void		OnChange_demo_format(cvar_t*, char*, qbool*);
 cvar_t			demo_format = {"demo_format", "qwz", 0, OnChange_demo_format};
 
-static HANDLE hQizmoProcess = NULL;
-static HANDLE hQizmoThread = NULL;
 static char tempqwd_name[MAX_PATH] = { 0 }; // This file must be deleted after playback is finished.
 static char tempqwz_name[MAX_PATH] = { 0 };
-int CL_Demo_Compress(char*);
-#endif
 
 static vfsfile_t *CL_Open_Demo_File(const char *name, qbool searchpaks, char **fullpath);
 static void OnChange_demo_dir(cvar_t *var, char *string, qbool *cancel);
@@ -1929,21 +1942,18 @@ qbool CL_GetDemoMessage (void)
 	byte message_type;
 
 	// Don't try to play while QWZ is being unpacked.
-	#ifdef _WIN32
-	if (qwz_unpacking)
+	if (qwz_unpacking) {
 		return false;
-	#endif
+	}
 
 	// Demo paused, don't read anything.
-	if (cl.paused & PAUSED_DEMO)
-	{
+	if (cl.paused & PAUSED_DEMO) {
 		pb_ensure();	// Make sure we keep the QTV connection alive by reading from the socket.
 		return false;
 	}
 
 	// We're not ready to parse since we're buffering for QTV.
-	if (bufferingtime && (bufferingtime > Sys_DoubleTime()))
-	{
+	if (bufferingtime && (bufferingtime > Sys_DoubleTime())) {
 		extern qbool	host_skipframe;
 
 		pb_ensure();			// Fill the buffer for QTV.
@@ -1955,8 +1965,7 @@ qbool CL_GetDemoMessage (void)
 	bufferingtime = 0;
 
 	// DEMO REWIND.
-	if (!cls.mvdplayback || cls.mvdplayback != QTV_PLAYBACK)
-	{
+	if (!cls.mvdplayback || cls.mvdplayback != QTV_PLAYBACK) {
 		CL_Demo_Check_For_Rewind(nextdemotime);
 	}
 
@@ -1979,15 +1988,17 @@ qbool CL_GetDemoMessage (void)
 	while (true)
 	{
 		// Make sure we have enough data in the buffer.
-		if (!pb_ensure())
-			return false;
+		if (!pb_ensure()) {
+ 			return false;
+		}
 
 		// Read the time of the next message in the demo.
 		demotime = CL_PeekDemoTime();
 
 		// Keep gameclock up-to-date if we are seeking
-		if (cls.demoseeking && demotime > cls.demopackettime)
+		if (cls.demoseeking && demotime > cls.demopackettime) {
 			cl.gametime += demotime - cls.demopackettime;
+		}
 
 		// Keep MVD features such as itemsclock up-to-date during seeking
 		if (cls.demoseeking && cls.mvdplayback) {
@@ -1998,8 +2009,9 @@ qbool CL_GetDemoMessage (void)
 			cls.demotime = tmp;
 		}
 
-		if (cls.demoseeking == DST_SEEKING_STATUS)
+		if (cls.demoseeking == DST_SEEKING_STATUS) {
 			CL_Demo_Jump_Status_Check();
+		}
 
 		// If we found demomark, we should stop seeking, so reset time to the proper value.
 		if (cls.demoseeking == DST_SEEKING_FOUND) {
@@ -2171,7 +2183,6 @@ static void OnChange_demo_dir(cvar_t *var, char *string, qbool *cancel)
 	}
 }
 
-#ifdef _WIN32
 static void OnChange_demo_format(cvar_t *var, char *string, qbool *cancel)
 {
 	char* allowed_formats[5] = { "qwd", "qwz", "mvd", "mvd.gz", "qwd.gz" };
@@ -2192,7 +2203,6 @@ static void OnChange_demo_format(cvar_t *var, char *string, qbool *cancel)
 
 	*cancel = true;
 }
-#endif
 
 //
 // Writes a "pimp message" for ezQuake at the end of a demo.
@@ -2272,14 +2282,12 @@ void CL_Stop_f (void)
 	if (autorecording)
 	{
 		CL_AutoRecord_StopMatch();
-#ifdef _WIN32
 	}
 	else if (easyrecording)
 	{
 		CL_StopRecording();
 		CL_Demo_Compress(fulldemoname);
 		easyrecording = false;
-#endif
 	}
 	else
 	{
@@ -2733,28 +2741,21 @@ void CL_AutoRecord_SaveMatch(void)
 		error = rename(tempname, fullsavedname);
 	}
 
-#ifdef _WIN32
-
 	// If the file type is not QWD we need to conver it using external apps.
-	if (!strcmp(demo_format.string, "qwz") || !strcmp(demo_format.string, "mvd"))
-	{
+	if (!strcmp(demo_format.string, "qwz") || !strcmp(demo_format.string, "mvd")) {
 		Com_Printf("Converting QWD to %s format.\n", demo_format.string);
 
 		// Convert the file to either MVD or QWZ.
-		if (CL_Demo_Compress(fullsavedname))
-		{
+		if (CL_Demo_Compress(fullsavedname)) {
 			return;
 		}
-		else
-		{
-			qwz_packing = false;
-		}
+
+		qwz_packing = false;
 	}
 
-#endif
-
-	if (!error)
+	if (!error) {
 		Com_Printf("Match demo saved to %s\n", savedname);
+	}
 }
 
 //=============================================================================
@@ -2762,37 +2763,243 @@ void CL_AutoRecord_SaveMatch(void)
 //=============================================================================
 
 #ifdef _WIN32
+#define QIZMO_EXECUTABLE_NAME       "qizmo.exe"
+#define QWDTOOLS_EXECUTABLE_NAME    "qwdtools.exe"
+static HANDLE hQizmoProcess = NULL;
+static HANDLE hQizmoThread = NULL;
+
+qbool Sys_QizmoRunning(void)
+{
+	return hQizmoProcess != NULL;
+}
+
+qbool Sys_LaunchExternalDemoProcess(const char* cmdline, const char* path)
+{
+	STARTUPINFO si;
+	PROCESS_INFORMATION	pi;
+	char cmdline_[MAX_OSPATH];
+	DWORD dwCreationFlags = GetPriorityClass(GetCurrentProcess());
+
+	strlcpy(cmdline_, cmdline, sizeof(cmdline_));
+
+	memset(&si, 0, sizeof(si));
+	si.cb = sizeof(si);
+	si.wShowWindow = SW_SHOWMINNOACTIVE;
+	si.dwFlags = STARTF_USESHOWWINDOW;
+
+	if (!CreateProcess(NULL, cmdline_, NULL, NULL, FALSE, dwCreationFlags, NULL, path, &si, &pi)) {
+		return false;
+	}
+
+	// Might not actually be Qizmo (could be demotools)...
+	hQizmoProcess = pi.hProcess;
+	hQizmoThread = pi.hThread;
+
+	return true;
+}
+
+qizmo_status_t Sys_QizmoStatus(void)
+{
+	DWORD ExitCode;
+	if (hQizmoProcess == NULL) {
+		return qizmo_not_running;
+	}
+
+	if (!GetExitCodeProcess(hQizmoProcess, &ExitCode)) {
+		hQizmoProcess = NULL;
+		return qizmo_terminated_unexpected;
+	}
+
+	if (ExitCode == STILL_ACTIVE) {
+		return qizmo_still_active;
+	}
+
+	CloseHandle(hQizmoThread);
+	CloseHandle(hQizmoProcess);
+	hQizmoThread = NULL;
+	hQizmoProcess = NULL;
+
+	if (ExitCode == 0) {
+		return qizmo_terminated_ok;
+	}
+
+	return qizmo_terminated_failure;
+}
+#elif defined(__linux__)
+#define QIZMO_EXECUTABLE_NAME       "qizmo"
+#define QWDTOOLS_EXECUTABLE_NAME    "qwdtools"
+
+static pid_t qizmo_process_id = 0;
+
+qbool Sys_QizmoRunning(void)
+{
+	return qizmo_process_id != 0;
+}
+
+static qbool Sys_LaunchExternalDemoProcess(const char* cmdline, const char* path)
+{
+	int child;
+
+	child = fork();
+	if (child == -1) {
+		Con_Printf("Failed to create sub-process\n");
+		return false;
+	}
+
+	if (child == 0) {
+		// TODO: can we redirect stdout for the system() call?
+
+		// child process: change to qizmo dir so it can find compress.dat
+		if (chdir(path) != 0) {
+			_exit(EXIT_FAILURE);
+		}
+
+		// execute & terminate with success/failure
+		if (system(cmdline) == 0) {
+			_exit(EXIT_SUCCESS);
+		}
+		_exit(EXIT_FAILURE);
+	}
+
+	// parent process, store and check back later
+	qizmo_process_id = child;
+	return true;
+}
+
+qizmo_status_t Sys_QizmoStatus(void)
+{
+	int wait_result;
+	int status = 0;
+
+	if (qizmo_process_id == 0) {
+		return qizmo_not_running;
+	}
+
+	wait_result = waitpid(qizmo_process_id, &status, WNOHANG);
+	if (wait_result == 0) {
+		// child exists but hasn't changed state
+		return qizmo_still_active;
+	}
+	else if (wait_result < 0) {
+		// child no longer exists...
+		qizmo_process_id = 0;
+		return qizmo_terminated_unexpected;
+	}
+	else {
+		// status has changed
+		if (WIFEXITED(status)) {
+			qizmo_process_id = 0;
+			return WEXITSTATUS(status) == 0 ? qizmo_terminated_ok : qizmo_terminated_failure;
+		}
+		else {
+			Con_Printf("Unknown status: %d\n", status);
+			return qizmo_still_active;
+		}
+	}
+}
+#else
+// Other operating systems - not supported yet
+#define QIZMO_EXECUTABLE_NAME       "qizmo"
+#define QWDTOOLS_EXECUTABLE_NAME    "qwdtools"
+
+qbool Sys_QizmoRunning(void)
+{
+	return false;
+}
+
+static qbool Sys_LaunchExternalDemoProcess(const char* cmdline, const char* path)
+{
+	Con_Printf("Not supported on this system.");
+	return false;
+}
+
+qizmo_status_t Sys_QizmoStatus(void)
+{
+	return qizmo_not_running;
+}
+#endif
+
+static qbool CL_CompressExternally(const char* qwdname)
+{
+	char cmdline[MAX_OSPATH];
+	char workingDirectory[MAX_OSPATH];
+	extern cvar_t qizmo_dir, qwdtools_dir;
+	const char* appname = NULL;
+	const char* shortname = NULL;
+	const char* parameters = NULL;
+	const char* path = NULL;
+	char outputpath[MAX_OSPATH];
+
+	if (!strcmp(demo_format.string, "qwz")) {
+		appname = QIZMO_EXECUTABLE_NAME;
+		shortname = "qizmo";
+		parameters = "-q -C";
+		path = qizmo_dir.string;
+		outputpath[0] = 0;
+	}
+	else if (!strcmp(demo_format.string, "mvd")) {
+		appname = QWDTOOLS_EXECUTABLE_NAME;
+		shortname = "qwdtools";
+		parameters = "-c -o * -od";
+		path = qwdtools_dir.string;
+		strlcpy(outputpath, qwdname, COM_SkipPath(qwdname) - qwdname);
+	}
+	else {
+		Com_Printf("%s demo format not yet supported.\n", demo_format.string);
+		return false;
+	}
+
+	strlcpy(workingDirectory, va("%s/%s", com_basedir, path), sizeof(workingDirectory));
+	strlcpy(cmdline, va("\"%s/%s/%s\" %s \"%s\" \"%s\"", com_basedir, path, appname, parameters, outputpath, qwdname), sizeof(cmdline));
+	Com_Printf("&cf00%s&r: %s\n", shortname, cmdline);
+
+	return Sys_LaunchExternalDemoProcess(cmdline, workingDirectory);
+}
+
+// Qizmo only
+static qbool CL_DecompressExternally(const char* qwz_name)
+{
+	char cmdline[MAX_OSPATH];
+	char workingDirectory[MAX_OSPATH];
+	extern cvar_t qizmo_dir;
+
+	strlcpy(workingDirectory, va("%s/%s", com_basedir, qizmo_dir.string), sizeof(workingDirectory));
+	strlcpy(cmdline, va("%s/%s/%s -q -u -3 -D \"%s\"", com_basedir, qizmo_dir.string, QIZMO_EXECUTABLE_NAME, qwz_name), sizeof(cmdline));
+
+	Com_Printf("&cf00qizmo&r: %s\n", cmdline);
+
+	return Sys_LaunchExternalDemoProcess(cmdline, workingDirectory);
+}
 
 //
 //
 //
-void CL_Demo_RemoveQWD(void)
+static void CL_Demo_RemoveQWD(void)
 {
-	unlink(tempqwd_name);
+	Sys_remove(tempqwd_name);
 }
 
 //
 // cdemo_name is assumed to be 255 chars long
 //
-void CL_Demo_GetCompressedName (char* cdemo_name)
+static void CL_Demo_GetCompressedName(char* cdemo_name)
 {
-	size_t namelen = strlen (tempqwd_name);
+	size_t namelen = strlen(tempqwd_name);
 
-	if (strlen (demo_format.string) && namelen)
-	{
-		strlcpy (cdemo_name, tempqwd_name, 255);
-		strlcpy (cdemo_name + namelen - 3, demo_format.string, 255 - namelen + 3);
+	if (strlen(demo_format.string) && namelen) {
+		strlcpy(cdemo_name, tempqwd_name, 255);
+		strlcpy(cdemo_name + namelen - 3, demo_format.string, 255 - namelen + 3);
 	}
 }
 
 //
 //
 //
-void CL_Demo_RemoveCompressed(void)
+static void CL_Demo_RemoveCompressed(void)
 {
 	char cdemo_name[255];
-	CL_Demo_GetCompressedName (cdemo_name);
-	unlink(cdemo_name);
+	CL_Demo_GetCompressedName(cdemo_name);
+	Sys_remove(cdemo_name);
 }
 
 //
@@ -2800,8 +3007,8 @@ void CL_Demo_RemoveCompressed(void)
 //
 static void StopQWZPlayback (void)
 {
-	if (!hQizmoProcess && tempqwd_name[0]) {
-		if (remove(tempqwd_name) != 0) {
+	if (!Sys_QizmoRunning() && tempqwd_name[0]) {
+		if (Sys_remove(tempqwd_name) != 0) {
 			Com_Printf("Error: Couldn't delete %s\n", tempqwd_name);
 		}
 		tempqwd_name[0] = 0;
@@ -2813,48 +3020,39 @@ static void StopQWZPlayback (void)
 //
 //
 //
-void CL_CheckQizmoCompletion (void)
+void CL_CheckQizmoCompletion(void)
 {
-	DWORD ExitCode;
+	qizmo_status_t state = Sys_QizmoStatus();
 
-	if (!hQizmoProcess)
+	if (state == qizmo_not_running) {
 		return;
+	}
 
-	if (!GetExitCodeProcess (hQizmoProcess, &ExitCode))
-	{
-		Com_Printf ("WARINING: CL_CheckQizmoCompletion: GetExitCodeProcess failed\n");
-		hQizmoProcess = NULL;
-		if (qwz_unpacking)
-		{
+	if (state == qizmo_terminated_unexpected) {
+		Com_Printf ("WARNING: CL_CheckQizmoCompletion: unexpected termination\n");
+		if (qwz_unpacking) {
 			qwz_unpacking = false;
 			qwz_playback = false;
 			cls.demoplayback = cls.timedemo = false;
 			StopQWZPlayback();
 		}
-		else if (qwz_packing)
-		{
+		else if (qwz_packing) {
 			qwz_packing = false;
 			CL_Demo_RemoveCompressed();
 		}
 		return;
 	}
 
-	if (ExitCode == STILL_ACTIVE) {
+	if (state == qizmo_still_active) {
 		return;
 	}
 
-	CloseHandle(hQizmoThread);
-	CloseHandle(hQizmoProcess);
-	hQizmoThread = NULL;
-	hQizmoProcess = NULL;
-
-	if (!qwz_packing && (!qwz_unpacking || !cls.demoplayback)) {
+	if (!qwz_packing && !qwz_unpacking) {
 		StopQWZPlayback();
 		return;
 	}
 
-	if (qwz_unpacking)
-	{
+	if (qwz_unpacking) {
 		byte* data = NULL;
 		int length = 0;
 
@@ -2865,34 +3063,34 @@ void CL_CheckQizmoCompletion (void)
 
 		data = FS_LoadHeapFile(tempqwd_name, &length);
 		if (data == NULL) {
-			Com_Printf ("Error: Couldn't open %s\n", tempqwd_name);
+			Com_Printf("Error: Couldn't open %s\n", tempqwd_name);
 			qwz_playback = false;
 			cls.demoplayback = cls.timedemo = false;
 			tempqwd_name[0] = 0;
 			return;
 		}
 
+		playbackfile = FSMMAP_OpenVFS(data, length);
+		Com_Printf("Decompression complete...\n");
+
+		CL_DemoStartPlayback(tempqwd_name);
+
 		Sys_remove(tempqwd_name);
 		tempqwd_name[0] = 0;
 		qwz_playback = false;
-
-		playbackfile = FSMMAP_OpenVFS(data, length);
-		Com_Printf("Decompression completed...playback starting\n");
 	}
-	else if (qwz_packing)
-	{
+	else if (qwz_packing) {
 		FILE* tempfile;
 		char newname[255];
-		CL_Demo_GetCompressedName (newname);
+
+		CL_Demo_GetCompressedName(newname);
 		qwz_packing = false;
 
-		if ((tempfile = fopen(newname, "rb")) && (FS_FileLength(tempfile) > 0) && fclose(tempfile) != EOF)
-		{
+		if ((tempfile = fopen(newname, "rb")) && (FS_FileLength(tempfile) > 0) && fclose(tempfile) != EOF) {
 			Com_Printf("Demo saved to %s\n", newname + strlen(com_basedir));
 			CL_Demo_RemoveQWD();
 		}
-		else
-		{
+		else {
 			Com_Printf("Compression failed, demo saved as QWD.\n");
 		}
 	}
@@ -2903,13 +3101,9 @@ void CL_CheckQizmoCompletion (void)
 //
 static void PlayQWZDemo(const char* name)
 {
-	extern cvar_t qizmo_dir;
-	STARTUPINFO si;
-	PROCESS_INFORMATION	pi;
-	char qwz_name[MAX_PATH], cmdline[512], *p;
-	DWORD res;
+	char qwz_name[MAX_PATH], *p;
 
-	if (hQizmoProcess) {
+	if (Sys_QizmoRunning()) {
 		Com_Printf ("Cannot unpack -- Qizmo still running!\n");
 		return;
 	}
@@ -2937,7 +3131,7 @@ static void PlayQWZDemo(const char* name)
 	VFS_CLOSE(playbackfile);
 	playbackfile = NULL;
 
-	strlcpy (tempqwd_name, qwz_name, sizeof(tempqwd_name) - 4);
+	strlcpy(tempqwd_name, qwz_name, sizeof(tempqwd_name) - 4);
 
 	// the way Qizmo does it, sigh
 	if (!(p = strstr(tempqwd_name, ".qwz"))) {
@@ -2953,33 +3147,13 @@ static void PlayQWZDemo(const char* name)
 		return;
 	}
 
-	Com_Printf ("Unpacking %s...\n", COM_SkipPath(name));
+	Com_Printf("Unpacking %s...\n", COM_SkipPath(name));
 
 	// Start Qizmo to unpack the demo.
-	memset (&si, 0, sizeof(si));
-	si.cb = sizeof(si);
-	si.wShowWindow = SW_SHOWMINNOACTIVE;
-	si.dwFlags = STARTF_USESHOWWINDOW;
-
-	strlcpy(cmdline, va("%s/%s/qizmo.exe -q -u -3 -D \"%s\"", com_basedir, qizmo_dir.string, qwz_name), sizeof(cmdline));
-	Com_Printf("&cf00qizmo&r: %s\n", cmdline);
-
-	if (!CreateProcess (NULL, cmdline, NULL, NULL,
-		FALSE, GetPriorityClass(GetCurrentProcess()),
-		NULL, va("%s/%s", com_basedir, qizmo_dir.string), &si, &pi))
-	{
-		Com_Printf ("Couldn't execute %s/%s/qizmo.exe\n", com_basedir, qizmo_dir.string);
-		return;
-	}
-	
-	res = WaitForSingleObject(pi.hProcess, QWZ_DECOMPRESSION_TIMEOUT_MS);
-	if (res == WAIT_TIMEOUT) {
-		Com_Printf("Decompression took too long, aborting\n");
+	if (!CL_DecompressExternally(qwz_name)) {
 		return;
 	}
 
-	hQizmoProcess = pi.hProcess;
-	hQizmoThread = pi.hThread;
 	qwz_unpacking = true;
 	qwz_playback = true;
 }
@@ -2987,68 +3161,22 @@ static void PlayQWZDemo(const char* name)
 //
 //
 //
-int CL_Demo_Compress(char* qwdname)
+static qbool CL_Demo_Compress(char* qwdname)
 {
-	extern cvar_t qizmo_dir;
-	extern cvar_t qwdtools_dir;
-	STARTUPINFO si;
-	PROCESS_INFORMATION	pi;
-	char cmdline[1024];
-	char *path, outputpath[255];
-	char *appname;
-	char *parameters;
-
-	if (hQizmoProcess)
-	{
-		Com_Printf ("Cannot compress -- Qizmo still running!\n");
-		return 0;
+	if (Sys_QizmoRunning()) {
+		Com_Printf("Cannot compress -- Qizmo still running!\n");
+		return false;
 	}
 
-	memset (&si, 0, sizeof(si));
-	si.cb = sizeof(si);
-	si.wShowWindow = SW_SHOWMINNOACTIVE;
-	si.dwFlags = STARTF_USESHOWWINDOW;
-
-	if (!strcmp(demo_format.string, "qwz"))
-	{
-		appname = "qizmo.exe";
-		parameters = "-q -C";
-		path = qizmo_dir.string;
-		outputpath[0] = 0;
-	}
-	else if (!strcmp(demo_format.string, "mvd"))
-	{
-		appname = "qwdtools.exe";
-		parameters = "-c -o * -od";
-		path = qwdtools_dir.string;
-		strlcpy(outputpath, qwdname, COM_SkipPath(qwdname) - qwdname);
-	}
-	else
-	{
-		Com_Printf("%s demo format not yet supported.\n", demo_format.string);
-		return 0;
-	}
-
-	strlcpy (cmdline, va("\"%s/%s/%s\" %s \"%s\" \"%s\"", com_basedir, path, appname, parameters, outputpath, qwdname), sizeof(cmdline));
-	Com_DPrintf("Executing ---\n%s\n---\n", cmdline);
-
-	if (!CreateProcess (NULL, cmdline, NULL, NULL,
-		FALSE, GetPriorityClass(GetCurrentProcess()),
-		NULL, va("%s/%s", com_basedir, path), &si, &pi))
-	{
-		Com_Printf ("Couldn't execute %s/%s/%s\n", com_basedir, path, appname);
-		return 0;
+	if (!CL_CompressExternally(qwdname)) {
+		Com_Printf("Failed to compress %s\n", qwdname);
+		return false;
 	}
 
 	strlcpy(tempqwd_name, qwdname, sizeof(tempqwd_name));
-
-	hQizmoProcess = pi.hProcess;
-	hQizmoThread = pi.hThread;
 	qwz_packing = true;
-	return 1;
+	return true;
 }
-
-#endif // _WIN32
 
 //=============================================================================
 //							DEMO PLAYBACK
@@ -3651,7 +3779,6 @@ static void CL_StartDemoCommand(void)
 	//
 	if (strlen(name) > 4 && !strcasecmp(COM_FileExtension(name), "qwz"))
 	{
-#ifdef WIN32
 		int length = 0;
 		byte* data;
 
@@ -3667,10 +3794,10 @@ static void CL_StartDemoCommand(void)
 		if (data) {
 			playbackfile = FSMMAP_OpenVFS(data, length);
 		}
-#else
-		// FIXME
-		Con_Printf("Playback of Qizmo-compressed files not supported on this system\n");
-#endif // WIN32
+		else if (qwz_playback) {
+			Com_Printf("Decompression in progress...\n");
+			return;
+		}
 	}
 	else if (!playbackfile) {
 		int i;
@@ -3728,6 +3855,11 @@ static void CL_StartDemoCommand(void)
 		return;
 	}
 
+	CL_DemoStartPlayback(name);
+}
+
+static void CL_DemoStartPlayback(const char* name)
+{
 	strlcpy(cls.demoname, name, sizeof(cls.demoname));
 
 	// Reset multiview track slots.
@@ -4353,14 +4485,14 @@ void CL_QTVPlay_f (void)
 	char stream_host[1024] = {0}, *stream, *host;
 
 	// Show usage.
-	if (Cmd_Argc() < 2)
-	{
+	if (Cmd_Argc() < 2) {
 		Com_Printf("Usage: qtvplay [stream@]hostname[:port] [password]\n");
 		return;
 	}
 
-	if (CL_QTVPlay_URL_format())
+	if (CL_QTVPlay_URL_format()) {
 		return;
+	}
 
 	strlcpy(qtvpassword, Cmd_Argv(2), sizeof(qtvpassword));
 
@@ -5100,7 +5232,7 @@ void Demo_AdjustSpeed(void)
 			current = 0.001 * ms;
 
 			// adjustbuffer 1 (original): adjustments are made based on % of buffer filled
-			if (qtv_adjustbuffer.integer == 1) {
+			if (qtv_adjustbuffer.integer != 2) {
 				// qqshka: this is linear version
 				demospeed = current / desired;
 
@@ -5109,7 +5241,7 @@ void Demo_AdjustSpeed(void)
 					demospeed = 1;
 				}
 			}
-			else if (qtv_adjustbuffer.integer == 2) {
+			else {
 				// adjustments made to keep within 0.5 seconds of target buffertime
 				float minimum = max(0.5, desired - 0.5);
 				float maximum = minimum + 1.0;
@@ -5288,9 +5420,7 @@ void CL_Demo_Init(void)
 	Cmd_AddMacro (macro_demolength, CL_Macro_DemoLength_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
-#ifdef _WIN32
 	Cvar_Register(&demo_format);
-#endif
 	Cvar_Register(&demo_dir);
 	Cvar_Register(&demo_benchmarkdumps);
 	Cvar_Register(&cl_startupdemo);

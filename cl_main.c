@@ -1517,9 +1517,7 @@ void CL_ConnectionlessPacket (void)
 // Handles playback of demos, on top of NET_ code
 qbool CL_GetMessage (void) 
 {
-	#ifdef _WIN32
 	CL_CheckQizmoCompletion ();
-	#endif
 
 	if (cls.demoplayback)
 		return CL_GetDemoMessage();

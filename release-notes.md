@@ -73,6 +73,7 @@
 - `/cl_weaponforgetorder 2` - sets the best weapon then falls back to sg or axe (as per `/cl_weaponhide_axe`)
 - `/cl_window_caption 2` - window title will be 'ezQuake' and will not change with connection status
 - `/cl_username` & `/authenticate` to support optional logins via badplace.eu (see [guide](https://github.com/ezQuake/ezquake-source/wiki/Authentication))
+- `/demo_format` supported in non-Windows builds
 - `/enemyforceskins 1` will search for player names in lower case (#345)
 - `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
 ` `/gl_mipmap_viewmodels` removed, replaced with `/gl_texturemode_viewmodels`
@@ -111,6 +112,7 @@
 - Changed file-handling when viewing demos from within .zip|.gz to reduce temporary files being left on hard drive
 - PNG warning messages now printed to console rather than stdout
 - Added macro $timestamp, which is in format YYYYMMDD-hhmmss
+- Qizmo-compressed files can be played back in Qizmo
 
 ### Build/meta
 
