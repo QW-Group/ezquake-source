@@ -628,6 +628,9 @@ static void Image_PngWarningHandler(png_structp png_ptr, png_const_charp error_m
 	if (error_msg == NULL || !error_msg[0]) {
 		error_msg = "unknown error";
 	}
+	if (strstr(error_msg, "known incorrect sRGB profile")) {
+		return; // only matters if we would subsequently save the .png
+	}
 
 	Con_Printf("&cdd0libpng&r: %s (%s)\n", filename, error_msg);
 }
