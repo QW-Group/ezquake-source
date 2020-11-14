@@ -1235,7 +1235,7 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 		}
 
 		// Place the tracker.
-		x = x_pos + (align_right ? width - (printable_chars - 1) * width_one_char : width_one_char);
+		x = x_pos + (align_right ? width - (printable_chars + 1) * width_one_char : width_one_char);
 
 		// Draw the segments.
 		for (s = 0; s < trackermsg[i].segments; ++s) {
