@@ -7673,6 +7673,55 @@
         }
       ]
     },
+    "hud_gamesummary_format": {
+      "default": "RYM myr",
+      "desc": "Sets the content of the gamesummary hud element.",
+      "group-id": "19",
+      "type": "string",
+      "remarks": "MVD playback only.  if the letter is in upper-case, it refers to the first team, otherwise the second",
+      "values": [
+        {
+          "description": "number of megahealths taken",
+          "name": "m"
+        },
+        {
+          "description": "number of red armors taken",
+          "name": "r"
+        },
+        {
+          "description": "number of yellow armors taken",
+          "name": "y"
+        },
+        {
+          "description": "number of green armors taken",
+          "name": "g"
+        },
+        {
+          "description": "number of players with rocket launchers on current team",
+          "name": "o"
+        },
+        {
+          "description": "number of players with lightning gun on current team",
+          "name": "l"
+        },
+        {
+          "description": "number of players with rocket launcher or lightning gun on current team",
+          "name": "w"
+        },
+        {
+          "description": "number of quads taken",
+          "name": "q"
+        },
+        {
+          "description": "number of pents taken",
+          "name": "p"
+        },
+        {
+          "description": "number of rings taken",
+          "name": "r"
+        }
+      ]
+    },
     "hud_group1_align_x": {
       "desc": "Sets horizontal align of grouping object 1",
       "group-id": "19",
