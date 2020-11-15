@@ -211,28 +211,31 @@ void OnDefaultFovChange (cvar_t *var, char *value, qbool *cancel)
 	}
 }
 
+// Much above this for fovx and we'd need to change the visibility calculations, getting hall of mirrors effect
+#define FOVX_SANITY_LIMIT 165
+#define FOVY_SANITY_LIMIT 140
+
 static void CalcFov(float fov, float *fov_x, float *fov_y, float width, float height, float view_width, float view_height, qbool reduce_vertfov)
 {
 	float t;
 	float fovx;
 	float fovy;
 
-	if (fov < 10)
-		fov = 10;
-	else if (fov > 140)
-		fov = 140;
+	fov = bound(10, fov, 140);
 
-	if (width / 4 < height /3)
-	{
+	if (width / 4 < height / 3) {
 		fovx = fov;
 		t = width / tan(fovx / 360 * M_PI);
 		fovy = atan (height / t) * 360 / M_PI;
 	}
-	else
-	{
+	else {
 		fovx = fov;
+
+		// Work out what the vertical FOV would be on 4:3 display
 		t = 4.0 / tan(fovx / 360 * M_PI);
 		fovy = atan (3.0 / t) * 360 / M_PI;
+
+		// Now work out what the correct FOV is
 		t = height / tan(fovy / 360 * M_PI);
 		fovx = atan (width / t) * 360 / M_PI;
 
@@ -243,30 +246,30 @@ static void CalcFov(float fov, float *fov_x, float *fov_y, float width, float he
 		}
 	}
 
-	if (fovx < 10 || fovx > 140)
+	if ((fovx < 10 || fovx > FOVX_SANITY_LIMIT))
 	{
-		if (fovx < 10)
-			fovx = 10;
-		else if (fovx > 140)
-			fovx = 140;
+		Con_DPrintf("Limiting fovx (was %f)\n", fovx);
+		fovx = bound(10, fovx, FOVX_SANITY_LIMIT);
 
 		t = width / tan(fovx / 360 * M_PI);
 		fovy = atan (height / t) * 360 / M_PI;
 	}
 
-	if (fovy < 10 || fovy > 140)
+	if (fovy < 10 || fovy > FOVY_SANITY_LIMIT)
 	{
-		if (fovy < 10)
-			fovy = 10;
-		else if (fovy > 140)
-			fovy = 140;
+		Con_DPrintf("Limiting FOVY (was %f)\n", fovy);
+		fovy = bound(10, fovy, FOVY_SANITY_LIMIT);
 
 		t = height / tan(fovy / 360 * M_PI);
 		fovx = atan (width / t) * 360 / M_PI;
 	}
 
-	if (fovx < 1 || fovx > 179 || fovy < 1 || fovy > 179)
-		Sys_Error ("CalcFov: Bad fov (%f, %f)", fovx, fovy);
+	if (fovx < 1 || fovx > FOVX_SANITY_LIMIT || fovy < 1 || fovy > FOVY_SANITY_LIMIT) {
+		Sys_Error("CalcFov: Bad fov (%f, %f)", fovx, fovy);
+	}
+	else {
+		Con_DPrintf("fov: %f %f\n", fovx, fovy);
+	}
 
 	*fov_x = fovx;
 	*fov_y = fovy;
