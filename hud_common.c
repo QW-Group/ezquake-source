@@ -223,9 +223,9 @@ void SCR_HUD_DrawNotify(hud_t* hud)
 //
 
 // status numbers
-void SCR_HUD_DrawNum(
+void SCR_HUD_DrawNum2(
 	hud_t *hud, int num, qbool low,
-	float scale, int style, int digits, char *s_align, qbool proportional
+	float scale, int style, int digits, char *s_align, qbool proportional, qbool draw_content
 )
 {
 	extern mpic_t *sb_nums[2][11];
@@ -334,7 +334,7 @@ void SCR_HUD_DrawNum(
 	{
 		case 1:
 		case 3:
-			if (!HUD_PrepareDraw(hud, width, height, &x, &y)) {
+			if (!HUD_PrepareDraw(hud, width, height, &x, &y) || !draw_content) {
 				return;
 			}
 			switch (align)
@@ -355,7 +355,7 @@ void SCR_HUD_DrawNum(
 		case 0:
 		case 2:
 		default:
-			if (!HUD_PrepareDraw(hud, width, height, &x, &y)) {
+			if (!HUD_PrepareDraw(hud, width, height, &x, &y) || !draw_content) {
 				return;
 			}
 
@@ -377,6 +377,14 @@ void SCR_HUD_DrawNum(
 			}
 			break;
 	}
+}
+
+void SCR_HUD_DrawNum(
+	hud_t* hud, int num, qbool low,
+	float scale, int style, int digits, char* s_align, qbool proportional
+)
+{
+	SCR_HUD_DrawNum2(hud, num, low, scale, style, digits, s_align, proportional, true);
 }
 
 #define TEMPHUD_NAME "_temphud"
