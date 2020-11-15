@@ -1139,35 +1139,37 @@ void Cvar_Set_tp_f(void)
 	}
 }
 
-void Cvar_Set_ex_f (void)
+static void Cvar_Set_ex_f(void)
 {
-	cvar_t	*var;
-	char	*var_name;
-	char	*st = NULL;
+	cvar_t* var;
+	char* var_name;
+	char* st = NULL;
 	char	text_exp[1024];
+	qbool   parse_funchars = !strcasecmp(Cmd_Argv(0), "set_ex");
 
 	if (Cmd_Argc() != 3) {
-		Com_Printf ("usage: set_ex <cvar> <value>\n");
+		Com_Printf("usage: %s <cvar> <value>\n", Cmd_Argv(0));
 		return;
 	}
 
-	var_name = Cmd_Argv (1);
-	var = Cvar_Find (var_name);
+	var_name = Cmd_Argv(1);
+	var = Cvar_Find(var_name);
 
-
-	if ( !var ) {
+	if (!var) {
 		if (Cmd_Exists(var_name)) {
-			Com_Printf ("\"%s\" is a command\n", var_name);
+			Com_Printf("\"%s\" is a command\n", var_name);
 			return;
 		}
 		var = Cvar_Create(var_name, "", 0);
 	}
 
-	Cmd_ExpandString( Cmd_Argv(2), text_exp);
-	st = TP_ParseMacroString( text_exp );
-	st = TP_ParseFunChars(st, false);
+	Cmd_ExpandString(Cmd_Argv(2), text_exp);
+	st = TP_ParseMacroString(text_exp);
+	if (parse_funchars) {
+		st = TP_ParseFunChars(st, false);
+	}
 
-	Cvar_Set (var, st );
+	Cvar_Set(var, st);
 }
 
 void Cvar_Set_Alias_Str_f (void)
@@ -1558,6 +1560,7 @@ void Cvar_Init(void)
 #ifndef SERVERONLY
 	Cmd_AddCommand("set_tp", Cvar_Set_tp_f);
 	Cmd_AddCommand("set_ex", Cvar_Set_ex_f);
+	Cmd_AddCommand("set_ex2", Cvar_Set_ex_f);
 	Cmd_AddCommand("set_alias_str", Cvar_Set_Alias_Str_f);
 	Cmd_AddCommand("set_bind_str", Cvar_Set_Bind_Str_f);
 	Cmd_AddCommand("unset", Cvar_UnSet_f);

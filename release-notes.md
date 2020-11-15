@@ -98,6 +98,7 @@
 - `/scr_scoreboard_login_flagfile` maps player flags to graphics to be shown next to player's name when they are logged in
 - `/scr_scoreboard_login_indicator` will be shown next to a player's name when they are logged in (if flag not available)
 - `/scr_scoreboard_login_color` controls the color of a player's name when they are logged in
+- `/set_ex2` command added, same functionality as `/set_ex` but doesn't resolve funchars - useful if script needs to compare value later (#428)
 - `/timedemo` commands show extra info at end to try and highlight stutter (measuring worst frametimes)
 - `/timedemo2` command renders demo in stop-motion at a particular fps
 - `/tp_point` will show targets in priority order, if `/tp_pointpriorities` is enabled
