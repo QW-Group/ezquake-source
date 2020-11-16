@@ -379,6 +379,12 @@
     ],
     "teamplay-restricted": true
   },
+  "tp_powerups": {
+    "description": "$colored_powerups or $colored_short_powerups, depending on value of tp_poweruptextstyle",
+    "type": "boolean",
+    "related-cvars": [ "tp_poweruptextstyle" ],
+    "teamplay-restricted": true
+  },
   "triggermatch": {
     "flags": [
       "incomplete"

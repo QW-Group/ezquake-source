@@ -20312,6 +20312,22 @@
       "group-id": "14",
       "type": "float"
     },
+    "tp_poweruptextstyle": {
+      "default": "0",
+      "desc": "Controls whether $tp_powerups (used in built-in binds) uses long or short-form powerup names",
+      "group-id": "14",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Long-form names (quad, pent, ring)",
+          "name": "false"
+        },
+        {
+          "description": "Short-form names (q, p, r)",
+          "name": "true"
+        }
+      ]
+    },
     "tp_pointpriorities": {
       "default": "0",
       "desc": "You can choose the way the client decides what object you want to point with $point macro.",
