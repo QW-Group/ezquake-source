@@ -91,6 +91,8 @@ typedef unsigned char byte;
 
 //============================================================================
 
+struct sizebuf_s;
+
 typedef void (*sizebuf_overflow_handler_func_t)(struct sizebuf_s*, int);
 
 typedef struct sizebuf_s {
