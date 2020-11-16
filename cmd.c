@@ -1474,7 +1474,7 @@ char *Cmd_MacroString (const char* s, int *macro_length)
 	}
 
 	if (best >= 0) {
-		if (cbuf_current == &cbuf_main && (macro->teamplay == MACRO_DISALLOWED)) {
+		if (cbuf_current == &cbuf_main && (macro_commands[best].teamplay == MACRO_DISALLOWED)) {
 			cbuf_current = &cbuf_formatted_comms;
 		}
 		*macro_length = best_length;
