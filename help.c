@@ -378,7 +378,7 @@ static void Help_DescribeMacro(const json_macro_t* macro)
 		con_margin = CONSOLE_HELP_MARGIN;
 		json_array_foreach(macro->related_cvars, i, cvar) {
 			if (json_is_string(cvar)) {
-				Com_Printf("%s\n", cvar);
+				Com_Printf("%s\n", json_string_value(cvar));
 			}
 		}
 		con_margin = 0;
