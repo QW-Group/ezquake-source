@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "tr_types.h"
 #include "r_texture.h"
 #include "r_local.h"
+#include "r_trace.h"
 #include "r_renderer.h"
 
 #define MAXIMUM_ATLAS_TEXTURE_WIDTH  4096
@@ -66,14 +67,24 @@ static void AddTextureToDeleteList(texture_ref tex)
 	if (R_TextureReferenceIsValid(tex) && atlas_delete_count < sizeof(atlas_deletable_textures) / sizeof(atlas_deletable_textures[0])) {
 		atlas_deletable_textures[atlas_delete_count].original = tex;
 		atlas_deletable_textures[atlas_delete_count].moved_to_atlas = false;
+		R_TraceAPI("[atlas] adding texture to delete list: %d [%s], pos %d", tex.index, R_TextureIdentifier(tex), atlas_delete_count);
 		atlas_delete_count++;
+	}
+	else if (R_TextureReferenceIsValid(tex)) {
+		R_TraceAPI("[atlas] !! attempted to add invalid texture reference to delete list");
+	}
+	else {
+		R_TraceAPI("[atlas] !! failed to add texture to delete list (overflow) %d [%s]", tex.index, R_TextureIdentifier(tex));
 	}
 }
 
 static void AddToDeleteList(mpic_t* src)
 {
-	if (src->sl == 0 && src->tl == 0 && src->th == 1 && src->sh == 1) {
+	if (!R_TextureReferenceEqual(atlas_texnum, src->texnum) && src->sl == 0 && src->tl == 0 && src->th == 1 && src->sh == 1) {
 		AddTextureToDeleteList(src->texnum);
+	}
+	else if (!R_TextureReferenceEqual(atlas_texnum, src->texnum)) {
+		R_TraceAPI("[atlas] !! not adding %d [%s] to delete list (incomplete texture): %.2f %.2f %.2f %.2f", src->texnum.index, R_TextureIdentifier(src->texnum), src->sl, src->sh, src->tl, src->th);
 	}
 }
 
@@ -83,6 +94,7 @@ static void ConfirmDeleteTexture(texture_ref tex)
 	for (i = 0; i < atlas_delete_count; ++i) {
 		if (R_TextureReferenceEqual(atlas_deletable_textures[i].original, tex)) {
 			atlas_deletable_textures[i].moved_to_atlas = true;
+			R_TraceAPI("[atlas] marking deletable %d (%d/%s) as moved to atlas", i, atlas_deletable_textures[i].original.index, R_TextureIdentifier(atlas_deletable_textures[i].original));
 		}
 	}
 }
@@ -90,11 +102,15 @@ static void ConfirmDeleteTexture(texture_ref tex)
 static void DeleteOldTextures(void)
 {
 	int i;
+
+	R_TraceEnterFunctionRegion;
 	for (i = 0; i < atlas_delete_count; ++i) {
 		if (atlas_deletable_textures[i].moved_to_atlas) {
+			R_TraceAPI("[atlas] deleting %d (%d/%s)", i, atlas_deletable_textures[i].original.index, R_TextureIdentifier(atlas_deletable_textures[i].original));
 			R_DeleteTexture(&atlas_deletable_textures[i].original);
 		}
 	}
+	R_TraceLeaveFunctionRegion;
 }
 
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t)
@@ -221,6 +237,7 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 
 		CachePics_CopyToBuffer(pic, x_pos, y_pos, atlas_texture_width, input_image, atlas_texels);
 
+		R_TraceAPI("  moved to atlas: %d,%d => %d,%d", x_pos, y_pos, x_pos + width, y_pos + height);
 		pic->sl = (x_pos) / (float)atlas_texture_width;
 		pic->sh = (x_pos + width) / (float)atlas_texture_width;
 		pic->tl = (y_pos) / (float)atlas_texture_height;
@@ -232,10 +249,14 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 	else if (R_TextureReferenceEqual(atlas_texnum, pic->texnum)) {
 		// Was on texture but no longer fits - need to create new texture
 		CachePics_CopyToBuffer(pic, 0, 0, width, prev_atlas_texels, buffer);
+		R_TraceAPI("  !moved from atlas: %d,%d => %d,%d", x_pos, y_pos, x_pos + width, y_pos + height);
 
 		pic->tl = pic->sl = 0;
 		pic->th = pic->sh = 1;
 		pic->texnum = R_LoadTexturePixels(buffer, "", width, height, TEX_ALPHA);
+	}
+	else {
+		R_TraceAPI("  !unable to move to atlas");
 	}
 
 	return -1;
@@ -252,8 +273,10 @@ void CachePics_AtlasFrame(void)
 void CachePics_AtlasUpload(void)
 {
 	if (atlas_dirty) {
+		R_TraceEnterFunctionRegion;
 		atlas_texnum = R_LoadTexture("cachepics:atlas", atlas_texture_width, atlas_texture_height, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
 		renderer.TextureSetFiltering(atlas_texnum, texture_minification_linear, texture_magnification_linear);
+		R_TraceLeaveFunctionRegion;
 	}
 	atlas_dirty = false;
 }
@@ -266,7 +289,7 @@ void CachePics_Init(void)
 	CachePics_AtlasUpload();
 }
 
-void CachePics_InsertBySize(cachepic_node_t** sized_list, cachepic_node_t* node)
+static void CachePics_InsertBySize(cachepic_node_t** sized_list, cachepic_node_t* node)
 {
 	int size_node;
 	cachepic_node_t* current = *sized_list;
@@ -360,6 +383,63 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 	AddToDeleteList(ibar);
 }
 
+static void DeleteCharsetTextures(void)
+{
+	int i;
+
+	R_TraceEnterFunctionRegion;
+	for (i = 0; i < MAX_CHARSETS; ++i) {
+		charset_t* charset = &char_textures[i];
+		int j;
+		qbool all_on_atlas = true;
+
+		if (!R_TextureReferenceIsValid(charset->master)) {
+			continue;
+		}
+
+		R_TraceAPI("Checking normal charset %03d is on atlas...", i);
+		for (j = 0; j < 256 && all_on_atlas; ++j) {
+			texture_ref glyph_tex = charset->glyphs[j].texnum;
+
+			all_on_atlas &= (!R_TextureReferenceIsValid(glyph_tex) || R_TextureReferenceEqual(glyph_tex, atlas_texnum));
+		}
+		if (all_on_atlas && R_TextureReferenceIsValid(charset->master)) {
+			R_TraceAPI("- all on atlas, deleting...", i);
+			R_DeleteTexture(&charset->master);
+			R_TextureReferenceInvalidate(charset->master);
+		}
+		else {
+			R_TraceAPI("- some glyphs not on atlas", i);
+		}
+	}
+
+#ifdef EZ_FREETYPE_SUPPORT
+	for (i = 0; i < MAX_CHARSETS; ++i) {
+		extern charset_t proportional_fonts[MAX_CHARSETS];
+		charset_t* charset = &proportional_fonts[i];
+		int j;
+		qbool all_on_atlas = true;
+
+		if (!R_TextureReferenceIsValid(charset->master)) {
+			continue;
+		}
+
+		R_TraceAPI("Checking proportional charset %03d is on atlas...", i);
+		for (j = 0; j < 256 && all_on_atlas; ++j) {
+			all_on_atlas &= R_TextureReferenceEqual(charset->glyphs[j].texnum, atlas_texnum);
+		}
+		if (all_on_atlas && R_TextureReferenceIsValid(charset->master)) {
+			R_TraceAPI("- all on atlas, deleting...", i);
+			R_DeleteTexture(&charset->master);
+		}
+		else {
+			R_TraceAPI("- some glyphs not on atlas", i);
+		}
+#endif
+	}
+	R_TraceLeaveFunctionRegion;
+}
+
 void CachePics_CreateAtlas(void)
 {
 	cachepic_node_t* sized_list = NULL;
@@ -372,6 +452,8 @@ void CachePics_CreateAtlas(void)
 		atlas_refresh = false;
 		return;
 	}
+
+	R_TraceEnterFunctionRegion;
 
 	// Delete old atlas textures
 	atlas_texels = Q_malloc(ATLAS_SIZE_IN_BYTES);
@@ -423,10 +505,6 @@ void CachePics_CreateAtlas(void)
 				CachePics_InsertBySize(&sized_list, &charsetpics[i * 256 + j]);
 			}
 		}
-		if (R_TextureReferenceIsValid(charset->master)) {
-			AddTextureToDeleteList(charset->master);
-		}
-		R_TextureReferenceInvalidate(charset->master);
 
 #ifdef EZ_FREETYPE_SUPPORT
 		charset = &proportional_fonts[i];
@@ -437,10 +515,6 @@ void CachePics_CreateAtlas(void)
 				CachePics_InsertBySize(&sized_list, &fontpics[i * 256 + j]);
 			}
 		}
-		if (R_TextureReferenceIsValid(charset->master)) {
-			AddTextureToDeleteList(charset->master);
-		}
-		R_TextureReferenceInvalidate(charset->master);
 #endif
 	}
 
@@ -504,19 +578,22 @@ void CachePics_CreateAtlas(void)
 		}
 	}
 
+	// Actually copy to the atlas texture
 	buffer = Q_malloc(ATLAS_SIZE_IN_BYTES);
 	for (cur = sized_list; cur; cur = cur->size_order) {
 		texture_ref original = cur->data.pic->texnum;
+		R_TraceAPI("Texture %d/%s", original.index, R_TextureIdentifier(original));
 		if (CachePics_AddToAtlas(cur->data.pic) >= 0) {
 			ConfirmDeleteTexture(original);
 		}
 	}
 	CachePics_AllocateSolidTexture();
 
-	// Upload atlas textures
+	// Upload atlas texture
 	CachePics_AtlasUpload();
 
 	DeleteOldTextures();
+	DeleteCharsetTextures();
 
 	Q_free(atlas_texels);
 	Q_free(prev_atlas_texels);
@@ -525,6 +602,8 @@ void CachePics_CreateAtlas(void)
 
 	// Make sure we don't reference any old textures
 	R_EmptyImageQueue();
+
+	R_TraceLeaveFunctionRegion;
 
 	atlas_refresh = false;
 }

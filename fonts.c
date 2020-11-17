@@ -373,18 +373,18 @@ static qbool FontCreate(int grouping, const char* userpath)
 			memset(temp_buffer, 0, yoffset * base_font_width * 4);
 		}
 
-glyphs[ch].offsets[0] /= (base_font_width / 2);
-glyphs[ch].offsets[1] /= (base_font_height / 2);
+		glyphs[ch].offsets[0] /= (base_font_width / 2);
+		glyphs[ch].offsets[1] /= (base_font_height / 2);
 
-charset->glyphs[ch].width = width;
-charset->glyphs[ch].height = height;
-charset->glyphs[ch].sl = (original_left + xbase) * 1.0f / texture_width;
-charset->glyphs[ch].tl = (original_top + ybase) * 1.0f / texture_height;
-charset->glyphs[ch].sh = charset->glyphs[ch].sl + width * 1.0f / texture_width;
-charset->glyphs[ch].th = charset->glyphs[ch].tl + height * 1.0f / texture_height;
-charset->glyphs[ch].texnum = charset->master;
+		charset->glyphs[ch].width = width;
+		charset->glyphs[ch].height = height;
+		charset->glyphs[ch].sl = (original_left + xbase) * 1.0f / texture_width;
+		charset->glyphs[ch].tl = (original_top + ybase) * 1.0f / texture_height;
+		charset->glyphs[ch].sh = charset->glyphs[ch].sl + width * 1.0f / texture_width;
+		charset->glyphs[ch].th = charset->glyphs[ch].tl + height * 1.0f / texture_height;
+		charset->glyphs[ch].texnum = charset->master;
 
-renderer.TextureReplaceSubImageRGBA(charset->master, original_left + xbase, original_top + ybase, base_font_width, base_font_height, temp_buffer);
+		renderer.TextureReplaceSubImageRGBA(charset->master, original_left + xbase, original_top + ybase, base_font_width, base_font_height, temp_buffer);
 	}
 	Q_free(full_buffer);
 	charset->custom_scale_x = charset->custom_scale_y = 1;

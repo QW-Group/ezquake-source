@@ -212,15 +212,17 @@ void GL_TextureSetAnisotropy(texture_ref texture, int anisotropy)
 void GL_TextureDelete(texture_ref texture)
 {
 	gltexture_t* slot = &gltextures[texture.index];
+	GLuint texture_num = slot->texnum;
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	Sys_Printf("\nopengl-texture,free,%u,%d,%d,%d,%s\n", texture.index, slot->texture_width, slot->texture_height, slot->texture_width * slot->texture_height * max(slot->depth,1) * slot->bpp, slot->identifier);
 #endif
 
-	GL_BuiltinProcedure(glDeleteTextures, "n=%d, textures=%p", 1, &slot->texnum);
+	GL_BuiltinProcedure(glDeleteTextures, "n=%d, textures=%p", 1, &texture_num);
 
 	// Might have been bound when deleted, update state
-	GL_InvalidateTextureReferences(gltextures[texture.index].texnum);
+	GL_InvalidateTextureReferences(texture_num);
+	slot->texnum = 0;
 }
 
 void GL_AllocateStorage(gltexture_t* texture)
@@ -242,7 +244,7 @@ qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot, int minimum_depth, int*
 
 		if (error == GL_OUT_OF_MEMORY && *depth > 2) {
 			*depth /= 2;
-			R_TraceAPI("Array allocation failed (memory), reducing size to %d...\n", *depth);
+			R_TraceAPI("!!ERROR Array allocation failed (memory), reducing size to %d...\n", *depth);
 			continue;
 		}
 		else if (error != GL_NO_ERROR) {
@@ -252,7 +254,7 @@ qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot, int minimum_depth, int*
 			array_height = R_TextureHeight(slot->reference);
 			array_depth = R_TextureDepth(slot->reference);
 
-			R_TraceAPI("Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, slot->miplevels, slot->texture_width, slot->texture_height, *depth);
+			R_TraceAPI("!!ERROR Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, slot->miplevels, slot->texture_width, slot->texture_height, *depth);
 			R_TraceAPI(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
 #endif
 			return false;

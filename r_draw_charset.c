@@ -29,6 +29,7 @@ $Id: gl_draw.c,v 1.104 2007-10-18 05:28:23 dkure Exp $
 #include "fonts.h"
 #include "r_texture.h"
 #include "r_draw.h"
+#include "r_trace.h"
 
 static void OnChange_gl_consolefont(cvar_t *, char *, qbool *);
 void Draw_InitFont(void);
@@ -125,6 +126,7 @@ static qbool Load_LMP_Charset(char *name, int flags, charset_t* charset)
 			charset->glyphs[i].th = charset->glyphs[i].tl + 8.0f / 256;
 		}
 
+		charset->master = tex;
 		charset->custom_scale_x = charset->custom_scale_y = 1;
 
 		return true;
@@ -143,6 +145,7 @@ static qbool Load_Locale_Charset(const char *name, const char *locale, unsigned 
 		return 0;
 	}
 
+	R_TraceEnterFunctionRegion;
 	memset(&char_textures[num], 0, sizeof(char_textures[num]));
 
 	COM_StripExtension(name, basename, sizeof(basename));
@@ -158,6 +161,7 @@ static qbool Load_Locale_Charset(const char *name, const char *locale, unsigned 
 	else if (Load_LMP_Charset(lmp, flags, &char_textures[num])) {
 		char_mapping[num] = num;
 	}
+	R_TraceLeaveFunctionRegion;
 
 	return char_mapping[num];
 }
