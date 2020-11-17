@@ -54,6 +54,7 @@
 - Fixed bug causing corrupt rendering if HUD contained lines but no images (3.5 bug)
 - Fixed bug causing corrupt HUD rendering until GLSL HUD enabled or enabled but disabled and then r_smooth option disabled (3.5 bug)
 - Fixed bug causing program to terminate when recording demo and next packetsize exceeded limits (old bug)
+- Fixed bug causing crash with old-hud rendering and `r_damagestats` enabled (3.5 bug, #432, reported by eb)
 
 ### Ruleset-related changes
 

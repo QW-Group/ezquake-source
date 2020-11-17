@@ -192,18 +192,14 @@ void Draw_AMFStatLoss(int stat, hud_t* hud)
 {
 	static int *vxdmgcnt, *vxdmgcnt_t, *vxdmgcnt_o;
 	static int x;
-	static cvar_t *scale = NULL, *style, *digits, *align, *duration, *proportional;
-	float effect_duration = hud && duration ? duration->value : amf_stat_loss.value;
-
-	if (scale == NULL) {
-		// first time called
-		scale = HUD_FindVar(hud, "scale");
-		style = HUD_FindVar(hud, "style");
-		digits = HUD_FindVar(hud, "digits");
-		align = HUD_FindVar(hud, "align");
-		duration = HUD_FindVar(hud, "duration");
-		proportional = HUD_FindVar(hud, "proportional");
-	}
+	static cvar_t* scale[2] = { NULL, NULL };
+	static cvar_t* style[2];
+	static cvar_t* digits[2];
+	static cvar_t* align[2];
+	static cvar_t* duration[2];
+	static cvar_t* proportional[2];
+	int index = (stat == STAT_HEALTH ? 0 : 1);
+	float effect_duration;
 
 	if (cl.spectator && Cam_TrackNum() != vxdamagepov) {
 		Amf_Reset_DamageStats();
@@ -221,6 +217,17 @@ void Draw_AMFStatLoss(int stat, hud_t* hud)
 		vxdmgcnt_o = &vxdamagecountarmour_oldhealth;
 		x = 24;
 	}
+
+	if (scale[index] == NULL && hud) {
+		// first time called
+		scale[index] = HUD_FindVar(hud, "scale");
+		style[index] = HUD_FindVar(hud, "style");
+		digits[index] = HUD_FindVar(hud, "digits");
+		align[index] = HUD_FindVar(hud, "align");
+		duration[index] = HUD_FindVar(hud, "duration");
+		proportional[index] = HUD_FindVar(hud, "proportional");
+	}
+	effect_duration = hud && duration[index] ? duration[index]->value : amf_stat_loss.value;
 
 	//VULT STAT LOSS
 	//Pretty self explanitory, I just thought it would be a nice feature to go with my "what the hell is going on?" theme
@@ -241,7 +248,7 @@ void Draw_AMFStatLoss(int stat, hud_t* hud)
 		float alpha = min(1, (*vxdmgcnt_t - cl.time));
 		float old_alpha = Draw_MultiplyOverallAlpha(alpha);
 		if (hud) {
-			SCR_HUD_DrawNum(hud, abs(*vxdmgcnt), 1, scale->value, style->value, digits->integer, align->string, proportional->integer);
+			SCR_HUD_DrawNum(hud, abs(*vxdmgcnt), 1, scale[index]->value, style[index]->value, digits[index]->integer, align[index]->string, proportional[index]->integer);
 		}
 		else {
 			Sbar_DrawNum(x, -24, abs(*vxdmgcnt), 3, (*vxdmgcnt) > 0);
