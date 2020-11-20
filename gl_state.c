@@ -273,8 +273,18 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 
 		for (i = 0; i < sizeof(state->textureUnits) / sizeof(state->textureUnits[0]); ++i) {
 			state->textureUnits[i].mode = r_texunit_mode_modulate;
+			state->textureUnits[i].va.size = 4;
+			state->textureUnits[i].va.type = GL_FLOAT;
 		}
 	}
+
+	state->vertex_array.size = 4;
+	state->vertex_array.type = GL_FLOAT;
+
+	state->color_array.size = 4;
+	state->color_array.type = GL_FLOAT;
+
+	state->normal_array.type = GL_FLOAT;
 #endif
 
 	state->vao_id = vao;
