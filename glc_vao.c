@@ -78,6 +78,13 @@ qbool GLC_InitialiseVAOHandling(void)
 
 	memset(&vaos, 0, sizeof(vaos));
 
+	if (COM_CheckParm(cmdline_param_client_novao)) {
+		GL_InvalidateFunction(glEnableVertexAttribArray);
+		GL_InvalidateFunction(glDisableVertexAttribArray);
+		GL_InvalidateFunction(glVertexAttribPointer);
+		return false;
+	}
+
 	// OpenGL 2.0
 	GL_LoadMandatoryFunctionExtension(glEnableVertexAttribArray, vaos_supported);
 	GL_LoadMandatoryFunctionExtension(glDisableVertexAttribArray, vaos_supported);

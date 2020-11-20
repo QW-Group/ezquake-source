@@ -234,6 +234,7 @@ void GLC_Begin(GLenum primitive)
 	glcBaseVertsPerPrimitive = 0;
 	glcPrimitiveName = "?";
 
+	GL_ProcessErrors("glBegin");
 	switch (primitive) {
 		case GL_QUADS:
 			glcVertsPerPrimitive = 4;

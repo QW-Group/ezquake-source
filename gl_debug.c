@@ -104,13 +104,13 @@ void GL_InitialiseDebugging(void)
 		GL_LoadOptionalFunction(glDebugMessageCallback);
 		GL_LoadOptionalFunction(glDebugMessageControl);
 
-		if (GL_Available(glDebugMessageCallback)) {
+		if (GL_Available(glDebugMessageCallback) && !COM_CheckParm(cmdline_param_client_nocallback)) {
 			glEnable(GL_DEBUG_OUTPUT);
 			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 			GL_Procedure(glDebugMessageCallback, (GLDEBUGPROC)MessageCallback, 0);
 		}
 
-		if (GL_Available(glDebugMessageControl)) {
+		if (GL_Available(glDebugMessageControl) && !COM_CheckParm(cmdline_param_client_nocallback)) {
 			GL_Procedure(glDebugMessageControl, GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
 		}
 	}

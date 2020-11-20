@@ -106,6 +106,9 @@ static qbool GL_InitialiseRenderer(void)
 	if (glConfig.supported_features & R_SUPPORT_INT8888R_LIGHTMAPS) {
 		R_TraceAPI("... Lightmaps uploaded as UINT8888R rather than UNSIGNED_BYTE");
 	}
+	if (glConfig.supported_features & R_SUPPORT_CUBE_MAPS) {
+		R_TraceAPI("... cube maps");
+	}
 	if (glConfig.supported_features & R_SUPPORT_SEAMLESS_CUBEMAPS) {
 		R_TraceAPI("... filtering works across faces of the cubemap");
 	}
@@ -117,6 +120,9 @@ static qbool GL_InitialiseRenderer(void)
 	}
 	if (glConfig.supported_features & R_SUPPORT_IMMEDIATEMODE) {
 		R_TraceAPI("... immediate-mode rendering (doesn't require programs)");
+	}
+	if (glConfig.supported_features & R_SUPPORT_FOG) {
+		R_TraceAPI("... fog");
 	}
 
 	if (R_UseModernOpenGL() && shaders_supported) {

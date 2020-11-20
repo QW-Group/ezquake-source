@@ -155,6 +155,14 @@ void GL_LoadTextureManagementFunctions(void)
 		glConfig.supported_features |= R_SUPPORT_SEAMLESS_CUBEMAPS;
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	}
+
+	if (GL_VersionAtLeast(1, 3)) {
+		glConfig.supported_features |= R_SUPPORT_CUBE_MAPS;
+	}
+
+	if (GL_VersionAtLeast(1, 4)) {
+		glConfig.supported_features |= R_SUPPORT_FOG;
+	}
 }
 
 void GL_TexSubImage3D(

@@ -1427,17 +1427,36 @@ static r_buffer_id GL_VerifyBufferState(GLenum name)
 	return r_buffer_none; // FIXME
 }
 
+static qbool GL_IsEnabled_(GLenum pname, const char* name)
+{
+	qbool result;
+
+	R_TraceAPI("glIsEnabled(%s)", name);
+	result = glIsEnabled(pname);
+	GL_ProcessErrors(va("glIsEnabled(%s)", name));
+	return result;
+}
+
+#define GL_IsEnabled(pname) GL_IsEnabled_(pname, #pname)
+
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 static void GLC_VerifyArray(glc_vertex_array_element_t* arr, GLenum enabled, GLenum bufferBinding, GLenum pointer, GLenum size, GLenum stride, GLenum type)
 {
-	arr->enabled = glIsEnabled(enabled);
-	arr->buf = GL_VerifyBufferState(bufferBinding);
-	GL_BuiltinProcedure(glGetPointerv, "name=%u, output=%p", pointer, &arr->pointer_or_offset);
-	if (size) {
-		GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", size, &arr->size);
+	if (renderer.vaos_supported) {
+		arr->enabled = GL_IsEnabled(enabled);
+		arr->buf = GL_VerifyBufferState(bufferBinding);
+		GL_BuiltinProcedure(glGetPointerv, "name=%u, output=%p", pointer, &arr->pointer_or_offset);
+		if (size) {
+			GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", size, &arr->size);
+		}
+		GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", stride, &arr->stride);
+		GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", type, &arr->type);
 	}
-	GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", stride, &arr->stride);
-	GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", type, &arr->type);
+	else {
+		memset(arr, 0, sizeof(*arr));
+		arr->size = (enabled == GL_NORMAL_ARRAY ? 0 : 4);
+		arr->type = GL_FLOAT;
+	}
 }
 
 static void GLC_DownloadVAOState(rendering_state_t* state)
@@ -1453,13 +1472,22 @@ static void GLC_DownloadVAOState(rendering_state_t* state)
 		// normal array
 		GLC_VerifyArray(&state->normal_array, GL_NORMAL_ARRAY, GL_NORMAL_ARRAY_BUFFER_BINDING, GL_NORMAL_ARRAY_POINTER, 0, GL_NORMAL_ARRAY_STRIDE, GL_NORMAL_ARRAY_TYPE);
 
-		for (i = 0; i < 4; ++i) {
-			GLC_ClientActiveTexture(GL_TEXTURE0 + i);
-			GLC_VerifyArray(&state->textureUnits[i].va, GL_TEXTURE_COORD_ARRAY, GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING, GL_TEXTURE_COORD_ARRAY_POINTER, GL_TEXTURE_COORD_ARRAY_SIZE, GL_TEXTURE_COORD_ARRAY_STRIDE, GL_TEXTURE_COORD_ARRAY_TYPE);
-			GL_SelectTexture(GL_TEXTURE0 + i);
-			glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &texture_modes[i]);
-			state->textureUnits[i].mode = GL_FindSpecificInEnum(texture_modes[i], glTextureEnvModeValues, sizeof(glTextureEnvModeValues) / sizeof(glTextureEnvModeValues[0]));
-			state->textureUnits[i].enabled = glIsEnabled(GL_TEXTURE_2D);
+		state->textureUnits[i].mode = r_texunit_mode_modulate;
+		state->textureUnits[i].va.type = GL_FLOAT;
+		state->textureUnits[i].enabled = false;
+		for (i = 0; i < sizeof(state->textureUnits) / sizeof(state->textureUnits[0]); ++i) {
+			if (i < glConfig.texture_units) {
+				GLC_ClientActiveTexture(GL_TEXTURE0 + i);
+				GLC_VerifyArray(&state->textureUnits[i].va, GL_TEXTURE_COORD_ARRAY, GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING, GL_TEXTURE_COORD_ARRAY_POINTER, GL_TEXTURE_COORD_ARRAY_SIZE, GL_TEXTURE_COORD_ARRAY_STRIDE, GL_TEXTURE_COORD_ARRAY_TYPE);
+				GL_SelectTexture(GL_TEXTURE0 + i);
+				GL_BuiltinProcedure(glGetTexEnviv, "target=%u, pname=%u, params=%p", GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &texture_modes[i]);
+				state->textureUnits[i].mode = GL_FindSpecificInEnum(texture_modes[i], glTextureEnvModeValues, sizeof(glTextureEnvModeValues) / sizeof(glTextureEnvModeValues[0]));
+				state->textureUnits[i].enabled = GL_IsEnabled(GL_TEXTURE_2D);
+			}
+			else {
+				state->textureUnits[i].va.size = 4;
+				state->textureUnits[i].va.type = GL_FLOAT;
+			}
 		}
 	}
 }
@@ -1467,7 +1495,7 @@ static void GLC_DownloadVAOState(rendering_state_t* state)
 static void GLC_DownloadAlphaTestingState(rendering_state_t* state)
 {
 	if (R_UseImmediateOpenGL()) {
-		state->alphaTesting.enabled = glIsEnabled(GL_ALPHA_TEST);
+		state->alphaTesting.enabled = GL_IsEnabled(GL_ALPHA_TEST);
 		state->alphaTesting.func = GL_FindIntegerInEnum(GL_ALPHA_TEST_FUNC, glAlphaTestModeValues, sizeof(glAlphaTestModeValues) / sizeof(glAlphaTestModeValues[0]));
 		state->alphaTesting.value = GL_GetFloat(GL_ALPHA_TEST_REF);
 	}
@@ -1551,7 +1579,9 @@ static void GL_DownloadTextureUnitState(GLuint* bound_textures, GLuint* bound_ar
 		if (GL_Supported(R_SUPPORT_TEXTURE_ARRAYS)) {
 			glGetIntegerv(GL_TEXTURE_BINDING_2D_ARRAY, &bound_arrays[i]);
 		}
-		glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP, &bound_cubemaps[i]);
+		if (GL_Supported(R_SUPPORT_CUBE_MAPS)) {
+			glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP, &bound_cubemaps[i]);
+		}
 	}
 }
 
@@ -1575,10 +1605,10 @@ static void GL_DownloadState(rendering_state_t* state, GLuint* gl_bound2d, GLuin
 			}
 		}
 	}
-	state->blendingEnabled = glIsEnabled(GL_BLEND);
+	state->blendingEnabled = GL_IsEnabled(GL_BLEND);
 
 	// Colors
-	glGetFloatv(GL_COLOR_CLEAR_VALUE, state->clearColor);
+	GL_BuiltinProcedure(glGetFloatv, "pname=%u, params=%p", GL_COLOR_CLEAR_VALUE, state->clearColor);
 	{
 		GLint colorMask_[4];
 		GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", GL_COLOR_WRITEMASK, colorMask_);
@@ -1588,20 +1618,20 @@ static void GL_DownloadState(rendering_state_t* state, GLuint* gl_bound2d, GLuin
 		state->colorMask[3] = colorMask_[3];
 	}
 	if (R_UseImmediateOpenGL()) {
-		glGetFloatv(GL_CURRENT_COLOR, state->color);
+		GL_BuiltinProcedure(glGetFloatv, "pname=%u, params=%p", GL_CURRENT_COLOR, state->color);
 	}
 	else {
 		state->color[0] = state->color[1] = state->color[2] = state->color[3] = 1.0f;
 	}
 
 	// cullface
-	state->cullface.enabled = glIsEnabled(GL_CULL_FACE);
+	state->cullface.enabled = GL_IsEnabled(GL_CULL_FACE);
 	state->cullface.mode = GL_FindIntegerInEnum(GL_CULL_FACE_MODE, glCullFaceValues, sizeof(glCullFaceValues) / sizeof(glCullFaceValues[0]));
 
 	{
 		GLint viewport[4];
 
-		glGetIntegerv(GL_VIEWPORT, viewport);
+		GL_BuiltinProcedure(glGetIntegerv, "pname=%u, params=%p", GL_VIEWPORT, viewport);
 		state->currentViewportX = viewport[0];
 		state->currentViewportY = viewport[1];
 		state->currentViewportWidth = viewport[2];
@@ -1620,20 +1650,28 @@ static void GL_DownloadState(rendering_state_t* state, GLuint* gl_bound2d, GLuin
 		glGetIntegerv(GL_DEPTH_WRITEMASK, &glInt);
 		state->depth.mask_enabled = (glInt != GL_FALSE);
 		state->depth.nearRange = range[0];
-		state->depth.test_enabled = glIsEnabled(GL_DEPTH_TEST);
+		state->depth.test_enabled = GL_IsEnabled(GL_DEPTH_TEST);
 	}
 
 	// fog
-	state->fog.enabled = glIsEnabled(GL_FOG);
+	if (GL_Supported(R_SUPPORT_FOG)) {
+		state->fog.enabled = GL_IsEnabled(GL_FOG);
+	}
 
 	//
-	state->framebuffer_srgb = glIsEnabled(GL_FRAMEBUFFER_SRGB);
+	if (GL_Supported(R_SUPPORT_FRAMEBUFFERS_SRGB)) {
+		state->framebuffer_srgb = GL_IsEnabled(GL_FRAMEBUFFER_SRGB);
+	}
+	else {
+		state->framebuffer_srgb = false;
+	}
 
 	// TODO: GLC attributes
 
 	// line
-	state->line.smooth = glIsEnabled(GL_LINE_SMOOTH);
+	state->line.smooth = GL_IsEnabled(GL_LINE_SMOOTH);
 	glGetFloatv(GL_LINE_WIDTH, &state->line.width);
+	GL_ProcessErrors("VerifyState[end-3]");
 
 	// 
 	{
@@ -1643,13 +1681,16 @@ static void GL_DownloadState(rendering_state_t* state, GLuint* gl_bound2d, GLuin
 	}
 
 	// polygon offset
-	glGetFloatv(GL_POLYGON_OFFSET_FACTOR, &state->polygonOffset.factor);
-	state->polygonOffset.fillEnabled = glIsEnabled(GL_POLYGON_OFFSET_FILL);
-	state->polygonOffset.lineEnabled = glIsEnabled(GL_POLYGON_OFFSET_LINE);
-	glGetFloatv(GL_POLYGON_OFFSET_UNITS, &state->polygonOffset.units);
+	GL_BuiltinProcedure(glGetFloatv, "pname=%u, params=%p", GL_POLYGON_OFFSET_FACTOR, &state->polygonOffset.factor);
+	state->polygonOffset.fillEnabled = GL_IsEnabled(GL_POLYGON_OFFSET_FILL);
+	state->polygonOffset.lineEnabled = GL_IsEnabled(GL_POLYGON_OFFSET_LINE);
+	GL_BuiltinProcedure(glGetFloatv, "pname=%u, params=%p", GL_POLYGON_OFFSET_UNITS, &state->polygonOffset.units);
 
+	GL_ProcessErrors("VerifyState[end-2]");
 	GLC_DownloadVAOState(state);
+	GL_ProcessErrors("VerifyState[end-1]");
 	GL_DownloadTextureUnitState(gl_bound2d, gl_bound3d, gl_boundCubemaps);
+	GL_ProcessErrors("VerifyState[end]");
 }
 
 static qbool GL_CompareBlending(FILE* output, const rendering_state_t* expected, const rendering_state_t* found)
@@ -1820,6 +1861,7 @@ void GL_VerifyState(FILE* output)
 	GLuint gl_boundCubemap[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
 
 	R_TraceEnterFunctionRegion;
+	GL_ProcessErrors(__FUNCTION__);
 	GL_DownloadState(&from_gl, gl_bound2d, gl_bound3d, gl_boundCubemap);
 
 	GLC_AssumeState(normal_array.buf);
