@@ -34,6 +34,7 @@ static int debug_frame_depth = 0;
 static unsigned long regions_trace_only;
 static qbool dev_frame_debug_queued;
 static FILE* debug_frame_out;
+void GL_VerifyState(FILE* output);
 
 #define DEBUG_FRAME_DEPTH_CHARS 2
 #endif
@@ -287,6 +288,9 @@ void R_TraceDebugState(void)
 {
 	if (debug_frame_out) {
 		R_TracePrintState(debug_frame_out, debug_frame_depth);
+	}
+	if (COM_CheckParm(cmdline_param_client_verify_glstate)) {
+		GL_VerifyState(debug_frame_out);
 	}
 }
 

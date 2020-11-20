@@ -269,7 +269,6 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 		int i;
 
 		memset(state->textureUnits, 0, sizeof(state->textureUnits));
-		memset(state->glc_attributes, 0, sizeof(state->glc_attributes));
 
 		for (i = 0; i < sizeof(state->textureUnits) / sizeof(state->textureUnits[0]); ++i) {
 			state->textureUnits[i].mode = r_texunit_mode_modulate;
@@ -1384,5 +1383,456 @@ void GL_CheckMultiTextureExtensions(void)
 
 	gl_textureunits = min(glConfig.texture_units, 4);
 	gl_mtexable = true;
+}
+#endif
+
+#ifdef WITH_RENDERING_TRACE
+static int GL_FindSpecificInEnum(GLenum value, GLenum* enum_array, int length)
+{
+	int i;
+
+	for (i = 0; i < length; ++i) {
+		if (value == enum_array[i]) {
+			return i;
+		}
+	}
+
+	return length;
+}
+
+static int GL_FindIntegerInEnum(GLenum name, GLenum* enum_array, int length)
+{
+	GLint glInt = 0;
+
+	GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", name, &glInt);
+
+	return GL_FindSpecificInEnum(glInt, enum_array, length);
+}
+
+static float GL_GetFloat(GLenum name)
+{
+	float result = NAN;
+
+	GL_BuiltinProcedure(glGetFloatv, "name=%u, output=%p", name, &result);
+
+	return result;
+}
+
+static r_buffer_id GL_VerifyBufferState(GLenum name)
+{
+	GLint glInt = 0;
+
+	GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", name, &glInt);
+
+	return r_buffer_none; // FIXME
+}
+
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+static void GLC_VerifyArray(glc_vertex_array_element_t* arr, GLenum enabled, GLenum bufferBinding, GLenum pointer, GLenum size, GLenum stride, GLenum type)
+{
+	arr->enabled = glIsEnabled(enabled);
+	arr->buf = GL_VerifyBufferState(bufferBinding);
+	GL_BuiltinProcedure(glGetPointerv, "name=%u, output=%p", pointer, &arr->pointer_or_offset);
+	if (size) {
+		GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", size, &arr->size);
+	}
+	GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", stride, &arr->stride);
+	GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", type, &arr->type);
+}
+
+static void GLC_DownloadVAOState(rendering_state_t* state)
+{
+	GLenum texture_modes[4] = { 0 };
+	int i = 0;
+
+	if (R_UseImmediateOpenGL()) {
+		// vertex array
+		GLC_VerifyArray(&state->vertex_array, GL_VERTEX_ARRAY, GL_VERTEX_ARRAY_BUFFER_BINDING, GL_VERTEX_ARRAY_POINTER, GL_VERTEX_ARRAY_SIZE, GL_VERTEX_ARRAY_STRIDE, GL_VERTEX_ARRAY_TYPE);
+		// color array
+		GLC_VerifyArray(&state->color_array, GL_COLOR_ARRAY, GL_COLOR_ARRAY_BUFFER_BINDING, GL_COLOR_ARRAY_POINTER, GL_COLOR_ARRAY_SIZE, GL_COLOR_ARRAY_STRIDE, GL_COLOR_ARRAY_TYPE);
+		// normal array
+		GLC_VerifyArray(&state->normal_array, GL_NORMAL_ARRAY, GL_NORMAL_ARRAY_BUFFER_BINDING, GL_NORMAL_ARRAY_POINTER, 0, GL_NORMAL_ARRAY_STRIDE, GL_NORMAL_ARRAY_TYPE);
+
+		for (i = 0; i < 4; ++i) {
+			GLC_ClientActiveTexture(GL_TEXTURE0 + i);
+			GLC_VerifyArray(&state->textureUnits[i].va, GL_TEXTURE_COORD_ARRAY, GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING, GL_TEXTURE_COORD_ARRAY_POINTER, GL_TEXTURE_COORD_ARRAY_SIZE, GL_TEXTURE_COORD_ARRAY_STRIDE, GL_TEXTURE_COORD_ARRAY_TYPE);
+			GL_SelectTexture(GL_TEXTURE0 + i);
+			glGetTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, &texture_modes[i]);
+			state->textureUnits[i].mode = GL_FindSpecificInEnum(texture_modes[i], glTextureEnvModeValues, sizeof(glTextureEnvModeValues) / sizeof(glTextureEnvModeValues[0]));
+			state->textureUnits[i].enabled = glIsEnabled(GL_TEXTURE_2D);
+		}
+	}
+}
+
+static void GLC_DownloadAlphaTestingState(rendering_state_t* state)
+{
+	if (R_UseImmediateOpenGL()) {
+		state->alphaTesting.enabled = glIsEnabled(GL_ALPHA_TEST);
+		state->alphaTesting.func = GL_FindIntegerInEnum(GL_ALPHA_TEST_FUNC, glAlphaTestModeValues, sizeof(glAlphaTestModeValues) / sizeof(glAlphaTestModeValues[0]));
+		state->alphaTesting.value = GL_GetFloat(GL_ALPHA_TEST_REF);
+	}
+}
+
+static qbool GLC_CompareAlphaTesting(FILE* output, const rendering_state_t* expected, const rendering_state_t* found)
+{
+	if (memcmp(&expected->alphaTesting, &found->alphaTesting, sizeof(expected->alphaTesting))) {
+		R_TraceAPI(
+			"!ALPHA-TESTING: expected %d,%d,%f found %d,%d,%f",
+			expected->alphaTesting.enabled, expected->alphaTesting.func, expected->alphaTesting.value,
+			found->alphaTesting.enabled, found->alphaTesting.func, found->alphaTesting.value
+		);
+		return true;
+	}
+	return false;
+}
+
+static qbool GLC_CompareVertexArray(FILE* output, const glc_vertex_array_element_t* expected, const glc_vertex_array_element_t* found, const char* name)
+{
+	if (memcmp(expected, found, sizeof(*expected))) {
+		R_TraceAPI("!%s: expected enabled(%d),p_offset(%p),buf(%d),size(%d),stride(%d),type(%d), found enabled(%d),p_offset(%p),buf(%d),size(%d),stride(%d),type(%d)", name,
+			expected->enabled, expected->pointer_or_offset, expected->buf, expected->size, expected->stride, expected->type,
+			found->enabled, found->pointer_or_offset, found->buf, found->size, found->stride, found->type
+		);
+		return false;
+	}
+	return false;
+}
+
+static qbool GLC_CompareVertexArrays(FILE* output, const rendering_state_t* expected, const rendering_state_t* found)
+{
+	qbool problem = false;
+
+	problem = GLC_CompareVertexArray(output, &expected->vertex_array, &found->vertex_array, "VertexArray") || problem;
+	problem = GLC_CompareVertexArray(output, &expected->color_array, &found->color_array, "ColorArray") || problem;
+	problem = GLC_CompareVertexArray(output, &expected->normal_array, &found->normal_array, "NormalArray") || problem;
+	problem = GLC_CompareVertexArray(output, &expected->textureUnits[0].va, &found->textureUnits[0].va, "TextureArray0") || problem;
+	problem = GLC_CompareVertexArray(output, &expected->textureUnits[1].va, &found->textureUnits[1].va, "TextureArray1") || problem;
+	problem = GLC_CompareVertexArray(output, &expected->textureUnits[2].va, &found->textureUnits[2].va, "TextureArray2") || problem;
+	problem = GLC_CompareVertexArray(output, &expected->textureUnits[3].va, &found->textureUnits[3].va, "TextureArray3") || problem;
+
+	return problem;
+}
+
+static qbool GLC_CompareTextureUnitState(FILE* output, const rendering_state_t* expected, const rendering_state_t* found)
+{
+	int i;
+	qbool problem = false;
+
+	for (i = 0; i < 4; ++i) {
+		if (expected->textureUnits[i].mode != found->textureUnits[i].mode || expected->textureUnits[i].enabled != found->textureUnits[i].enabled) {
+			R_TraceAPI("!TEXSTATE%d: expected %d,%d found %d,%d", i, expected->textureUnits[i].mode, found->polygonMode);
+			problem = true;
+		}
+	}
+
+	return problem;
+}
+
+// Adjust for what OpenGL doesn't know about
+#define GLC_AssumeState(state) { from_gl.state = opengl.rendering_state.state; }
+#else
+#define GLC_DownloadAlphaTestingState(...)
+#define GLC_DownloadVAOState(...)
+#define GLC_CompareAlphaTesting(...) (false)
+#define GLC_CompareVertexArrays(...) (false)
+#define GLC_AssumeState(...)
+#endif
+
+static void GL_DownloadTextureUnitState(GLuint* bound_textures, GLuint* bound_arrays, GLuint* bound_cubemaps)
+{
+	int i;
+	int units = min(glConfig.texture_units, MAX_LOGGED_TEXTURE_UNITS);
+
+	for (i = 0; i < units; ++i) {
+		bound_cubemaps[i] = bound_textures[i] = bound_arrays[i] = 0;
+
+		GL_SelectTexture(GL_TEXTURE0 + i);
+		glGetIntegerv(GL_TEXTURE_BINDING_2D, &bound_textures[i]);
+		if (GL_Supported(R_SUPPORT_TEXTURE_ARRAYS)) {
+			glGetIntegerv(GL_TEXTURE_BINDING_2D_ARRAY, &bound_arrays[i]);
+		}
+		glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP, &bound_cubemaps[i]);
+	}
+}
+
+static void GL_DownloadState(rendering_state_t* state, GLuint* gl_bound2d, GLuint* gl_bound3d, GLuint* gl_boundCubemaps)
+{
+	memset(state, 0, sizeof(*state));
+
+	GLC_DownloadAlphaTestingState(state);
+
+	// Blending - we use a single enum for the pairing of src & dst
+	{
+		GLint src, dst;
+		int i;
+
+		GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", GL_BLEND_SRC, &src);
+		GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", GL_BLEND_DST, &dst);
+
+		for (i = 0; i < sizeof(glBlendFuncValuesSource) / sizeof(glBlendFuncValuesSource[0]); ++i) {
+			if (glBlendFuncValuesSource[i] == src && glBlendFuncValuesDestination[i] == dst) {
+				state->blendFunc = i;
+			}
+		}
+	}
+	state->blendingEnabled = glIsEnabled(GL_BLEND);
+
+	// Colors
+	glGetFloatv(GL_COLOR_CLEAR_VALUE, state->clearColor);
+	{
+		GLint colorMask_[4];
+		GL_BuiltinProcedure(glGetIntegerv, "name=%u, output=%p", GL_COLOR_WRITEMASK, colorMask_);
+		state->colorMask[0] = colorMask_[0];
+		state->colorMask[1] = colorMask_[1];
+		state->colorMask[2] = colorMask_[2];
+		state->colorMask[3] = colorMask_[3];
+	}
+	if (R_UseImmediateOpenGL()) {
+		glGetFloatv(GL_CURRENT_COLOR, state->color);
+	}
+	else {
+		state->color[0] = state->color[1] = state->color[2] = state->color[3] = 1.0f;
+	}
+
+	// cullface
+	state->cullface.enabled = glIsEnabled(GL_CULL_FACE);
+	state->cullface.mode = GL_FindIntegerInEnum(GL_CULL_FACE_MODE, glCullFaceValues, sizeof(glCullFaceValues) / sizeof(glCullFaceValues[0]));
+
+	{
+		GLint viewport[4];
+
+		glGetIntegerv(GL_VIEWPORT, viewport);
+		state->currentViewportX = viewport[0];
+		state->currentViewportY = viewport[1];
+		state->currentViewportWidth = viewport[2];
+		state->currentViewportHeight = viewport[3];
+	}
+
+	// depth buffer
+	{
+		float range[2];
+		GLint glInt = 0;
+
+		glGetFloatv(GL_DEPTH_RANGE, range);
+
+		state->depth.farRange = range[1];
+		state->depth.func = GL_FindIntegerInEnum(GL_DEPTH_FUNC, glDepthFunctions, sizeof(glDepthFunctions) / sizeof(glDepthFunctions[0]));
+		glGetIntegerv(GL_DEPTH_WRITEMASK, &glInt);
+		state->depth.mask_enabled = (glInt != GL_FALSE);
+		state->depth.nearRange = range[0];
+		state->depth.test_enabled = glIsEnabled(GL_DEPTH_TEST);
+	}
+
+	// fog
+	state->fog.enabled = glIsEnabled(GL_FOG);
+
+	//
+	state->framebuffer_srgb = glIsEnabled(GL_FRAMEBUFFER_SRGB);
+
+	// TODO: GLC attributes
+
+	// line
+	state->line.smooth = glIsEnabled(GL_LINE_SMOOTH);
+	glGetFloatv(GL_LINE_WIDTH, &state->line.width);
+
+	// 
+	{
+		GLint polygonModes[2];
+		glGetIntegerv(GL_POLYGON_MODE, polygonModes);
+		state->polygonMode = GL_FindSpecificInEnum(polygonModes[0], glPolygonModeValues, sizeof(glPolygonModeValues) / sizeof(glPolygonModeValues[0]));
+	}
+
+	// polygon offset
+	glGetFloatv(GL_POLYGON_OFFSET_FACTOR, &state->polygonOffset.factor);
+	state->polygonOffset.fillEnabled = glIsEnabled(GL_POLYGON_OFFSET_FILL);
+	state->polygonOffset.lineEnabled = glIsEnabled(GL_POLYGON_OFFSET_LINE);
+	glGetFloatv(GL_POLYGON_OFFSET_UNITS, &state->polygonOffset.units);
+
+	GLC_DownloadVAOState(state);
+	GL_DownloadTextureUnitState(gl_bound2d, gl_bound3d, gl_boundCubemaps);
+}
+
+static qbool GL_CompareBlending(FILE* output, const rendering_state_t* expected, const rendering_state_t* found)
+{
+	if (expected->blendingEnabled != found->blendingEnabled || expected->blendFunc != found->blendFunc) {
+		R_TraceAPI(
+			"!BLENDING: expected %d,%d found %d,%d",
+			expected->blendingEnabled, expected->blendFunc,
+			found->blendingEnabled, found->blendFunc
+		);
+		return true;
+	}
+	return false;
+}
+
+static qbool GL_CompareColors(FILE* output, const rendering_state_t* expected, const rendering_state_t* found)
+{
+	qbool problem = false;
+	if (memcmp(expected->clearColor, found->clearColor, sizeof(expected->clearColor))) {
+		R_TraceAPI(
+			"!CLEARCOLOR: expected %f,%f,%f,%f found %f,%f,%f,%f",
+			expected->clearColor[0], expected->clearColor[1], expected->clearColor[2], expected->clearColor[3],
+			found->clearColor[0], found->clearColor[1], found->clearColor[2], found->clearColor[3]
+		);
+		problem = true;
+	}
+	if (memcmp(expected->colorMask, found->colorMask, sizeof(expected->colorMask))) {
+		R_TraceAPI(
+			"!COLORMASK: expected %d,%d,%d,%d found %d,%d,%d,%d",
+			expected->colorMask[0], expected->colorMask[1], expected->colorMask[2], expected->colorMask[3],
+			found->colorMask[0], found->colorMask[1], found->colorMask[2], found->colorMask[3]
+		);
+		problem = true;
+	}
+	if (memcmp(expected->color, found->color, sizeof(expected->color))) {
+		R_TraceAPI(
+			"!COLOR: expected %f,%f,%f,%f found %f,%f,%f,%f",
+			expected->color[0], expected->color[1], expected->color[2], expected->color[3],
+			found->color[0], found->color[1], found->color[2], found->color[3]
+		);
+		problem = true;
+	}
+	return problem;
+}
+
+static qbool GL_CompareCulling(FILE* output, const rendering_state_t* expected, const rendering_state_t* found)
+{
+	if (memcmp(&expected->cullface, &found->cullface, sizeof(expected->cullface))) {
+		R_TraceAPI(
+			"!CULLING: expected %d,%d found %d,%d",
+			expected->cullface.enabled, expected->cullface.mode,
+			found->cullface.enabled, found->cullface.mode
+		);
+		return true;
+	}
+	return false;
+}
+
+static qbool GL_CompareViewport(FILE* output, const rendering_state_t* expected, const rendering_state_t* found)
+{
+	if (expected->currentViewportX != found->currentViewportX ||
+		expected->currentViewportHeight != found->currentViewportHeight ||
+		expected->currentViewportWidth != found->currentViewportWidth ||
+		expected->currentViewportY != found->currentViewportY)
+	{
+		R_TraceAPI(
+			"!VIEWPORT: expected %d,%d,%d,%d found %d,%d,%d,%d",
+			expected->currentViewportX, expected->currentViewportY, expected->currentViewportWidth, expected->currentViewportHeight,
+			found->currentViewportX, found->currentViewportY, found->currentViewportWidth, found->currentViewportHeight
+		);
+		return true;
+	}
+	return false;
+}
+
+static qbool GL_CompareDepth(FILE* output, const rendering_state_t* expected, const rendering_state_t* found)
+{
+	if (memcmp(&expected->depth, &found->depth, sizeof(expected->depth))) {
+		R_TraceAPI(
+			"!DEPTH: expected %d,%d,%d,%f,%f found %d,%d,%d,%f,%f",
+			expected->depth.test_enabled, expected->depth.mask_enabled, expected->depth.func, expected->depth.nearRange, expected->depth.farRange,
+			found->depth.test_enabled, found->depth.mask_enabled, found->depth.func, found->depth.nearRange, found->depth.farRange
+		);
+		return true;
+	}
+	return false;
+}
+
+static qbool GL_CompareLine(FILE* output, const rendering_state_t* expected, const rendering_state_t* found)
+{
+	if (expected->line.smooth != found->line.smooth || expected->line.width != found->line.width) {
+		R_TraceAPI(
+			"!LINE: expected %d,%f found %d,%f",
+			expected->line.smooth, expected->line.width,
+			found->line.smooth, found->line.width
+		);
+		return true;
+	}
+	return false;
+}
+
+static qbool GL_CompareMisc(FILE* output, const rendering_state_t* expected, const rendering_state_t* found)
+{
+	qbool problem = false;
+	if (expected->fog.enabled != found->fog.enabled) {
+		R_TraceAPI("!FOG: expected %d, found %d", expected->fog.enabled, found->fog.enabled);
+	}
+	if (expected->framebuffer_srgb != found->framebuffer_srgb) {
+		R_TraceAPI("!SRGB: expected %d, found %d", expected->framebuffer_srgb, found->framebuffer_srgb);
+	}
+	if (expected->polygonMode != found->polygonMode) {
+		R_TraceAPI("!POLYMODE: expected %d, found %d", expected->polygonMode, found->polygonMode);
+	}
+	return problem;
+}
+
+
+static qbool GL_CompareBoundTextures(FILE* output, const GLuint* expected, const GLuint* found, const char* name)
+{
+	int units = min(MAX_LOGGED_TEXTURE_UNITS, glConfig.texture_units);
+	int i;
+	qbool problem = false;
+
+	for (i = 0; i < units; ++i) {
+		if (expected[i] != found[i]) {
+			R_TraceAPI("!%s%d: expected %u, found %u", name, i, expected[i], found[i]);
+			problem = true;
+		}
+	}
+
+	return problem;
+}
+
+static void GL_CompareState(FILE* output, const rendering_state_t* found, const GLuint* gl_bound2d, const GLuint* gl_bound3d, const GLuint* gl_boundCubemap)
+{
+	qbool problems = false;
+	const rendering_state_t* expected = &opengl.rendering_state;
+
+	problems = GL_CompareBlending(output, expected, found) || problems;
+	problems = GL_CompareColors(output, expected, found) || problems;
+	problems = GL_CompareCulling(output, expected, found) || problems;
+	problems = GL_CompareViewport(output, expected, found) || problems;
+	problems = GL_CompareDepth(output, expected, found) || problems;
+	problems = GL_CompareLine(output, expected, found) || problems;
+	problems = GL_CompareMisc(output, expected, found) || problems;
+
+	if (R_UseImmediateOpenGL()) {
+		problems = GLC_CompareAlphaTesting(output, expected, found) || problems;
+		problems = GLC_CompareVertexArrays(output, expected, found) || problems;
+	}
+
+	problems = GL_CompareBoundTextures(output, bound_textures, gl_bound2d, "2DTEXTURE") || problems;
+	problems = GL_CompareBoundTextures(output, bound_arrays, gl_bound3d, "TEXTUREARRAY") || problems;
+	problems = GL_CompareBoundTextures(output, bound_cubemaps, gl_boundCubemap, "CUBEMAP") || problems;
+
+	if (problems) {
+		Con_Printf("*** PROBLEM ***\n");
+	}
+
+	return;
+}
+
+void GL_VerifyState(FILE* output)
+{
+	rendering_state_t from_gl;
+	GLuint gl_bound2d[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
+	GLuint gl_bound3d[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
+	GLuint gl_boundCubemap[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
+
+	R_TraceEnterFunctionRegion;
+	GL_DownloadState(&from_gl, gl_bound2d, gl_bound3d, gl_boundCubemap);
+
+	GLC_AssumeState(normal_array.buf);
+	GLC_AssumeState(normal_array.size);
+	GLC_AssumeState(color_array.buf);
+	GLC_AssumeState(vertex_array.buf);
+	GLC_AssumeState(textureUnits[0].va.buf);
+	GLC_AssumeState(textureUnits[1].va.buf);
+	GLC_AssumeState(textureUnits[2].va.buf);
+	GLC_AssumeState(textureUnits[3].va.buf);
+
+	// Compare
+	GL_CompareState(output, &from_gl, gl_bound2d, gl_bound3d, gl_boundCubemap);
+	R_TraceLeaveFunctionRegion;
 }
 #endif

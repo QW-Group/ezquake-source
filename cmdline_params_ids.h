@@ -43,6 +43,7 @@ CMDLINE_DEF(client_video_nodesktopres, "-nodesktopres"),
 CMDLINE_DEF(client_cd_audio, "-cdaudio"),
 CMDLINE_DEF(client_cd_device, "-cddev"),
 CMDLINE_DEF(client_noatlas, "-noatlas"),
+CMDLINE_DEF(client_verify_glstate, "-r-verify"),
 
 CMDLINE_DEF(filesystem_basedir, "-basedir"),
 CMDLINE_DEF(filesystem_nohome, "-nohome"),
