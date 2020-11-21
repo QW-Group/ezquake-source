@@ -259,8 +259,7 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 	state->polygonOffset.fillEnabled = false;
 	state->polygonOffset.lineEnabled = false;
 	state->polygonMode = r_polygonmode_fill;
-	state->clearColor[0] = state->clearColor[1] = state->clearColor[2] = 0;
-	state->clearColor[3] = 1;
+	state->clearColor[0] = state->clearColor[1] = state->clearColor[2] = state->clearColor[3] = 0;
 	state->color[0] = state->color[1] = state->color[2] = state->color[3] = 1;
 	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = true;
 
@@ -298,17 +297,11 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 		state->depth.test_enabled = true;
 		state->depth.mask_enabled = true;
 
-#ifndef __APPLE__
 		state->clearColor[0] = 0;
 		state->clearColor[1] = 0;
 		state->clearColor[2] = 0;
 		state->clearColor[3] = 1;
-#else
-		state->clearColor[0] = 0.2;
-		state->clearColor[1] = 0.2;
-		state->clearColor[2] = 0.2;
-		state->clearColor[3] = 1;
-#endif
+
 		state->polygonMode = r_polygonmode_fill;
 		state->blendFunc = r_blendfunc_premultiplied_alpha;
 		R_GLC_TextureUnitSet(state, 0, false, r_texunit_mode_replace);
@@ -986,10 +979,20 @@ void R_DisableScissorTest(void)
 void R_ClearColor(float r, float g, float b, float a)
 {
 	if (R_UseImmediateOpenGL()) {
-		glClearColor(r, g, b, a);
+		glClearColor(
+			opengl.rendering_state.clearColor[0] = r,
+			opengl.rendering_state.clearColor[1] = g,
+			opengl.rendering_state.clearColor[2] = b,
+			opengl.rendering_state.clearColor[3] = a
+		);
 	}
 	else if (R_UseModernOpenGL()) {
-		glClearColor(r, g, b, a);
+		glClearColor(
+			opengl.rendering_state.clearColor[0] = r,
+			opengl.rendering_state.clearColor[1] = g,
+			opengl.rendering_state.clearColor[2] = b,
+			opengl.rendering_state.clearColor[3] = a
+		);
 	}
 }
 
