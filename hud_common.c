@@ -994,8 +994,24 @@ void CommonDraw_Init(void)
 
 const char* HUD_FirstTeam(void)
 {
-	if (n_teams) {
-		return sorted_teams[0].name;
+	if (!cl.teamlock1_teamname[0] && n_teams) {
+		// setting for the first time when we have teams
+		strlcpy(cl.teamlock1_teamname, sorted_teams[0].name, sizeof(cl.teamlock1_teamname));
 	}
-	return "";
+	else if (n_teams) {
+		// check that the team still exists
+		int i;
+		for (i = 0; i < n_teams; ++i) {
+			if (!strcmp(sorted_teams[i].name, cl.teamlock1_teamname)) {
+				return cl.teamlock1_teamname; // found
+			}
+		}
+		// not found, reset to first time
+		strlcpy(cl.teamlock1_teamname, sorted_teams[0].name, sizeof(cl.teamlock1_teamname));
+	}
+	else {
+		// no teams, clear and set again in the future
+		memset(cl.teamlock1_teamname, 0, sizeof(cl.teamlock1_teamname));
+	}
+	return cl.teamlock1_teamname;
 }

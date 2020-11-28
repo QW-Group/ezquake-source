@@ -1739,17 +1739,18 @@ char *TP_SkinForcingTeam(void)
 {
 	int tracknum;
 
+	// FIXME: teams with names 0 & 1 will clash with this - teamlock & the team name should be diff cvars
 	if (!cl.spectator)
 	{
 		// Normal player.
 		return cl.players[cl.playernum].team;
 	}
-	else if (cl_teamlock.integer == 1) {
+	else if (cl_teamlock.string[0] == '1' && cl_teamlock.string[1] == '\0') {
 		extern const char* HUD_FirstTeam(void);
 		int i;
 
 		if (cls.mvdplayback && HUD_FirstTeam()[0]) {
-			return (char*) HUD_FirstTeam();
+			return (char*)HUD_FirstTeam();
 		}
 
 		for (i = 0; i < MAX_CLIENTS; i++) {
@@ -1758,7 +1759,8 @@ char *TP_SkinForcingTeam(void)
 			}
 		}
 	}
-	else if (cl_teamlock.string[0] && strcmp(cl_teamlock.string, "0")) {
+	else if (!(cl_teamlock.string[0] == '0' && cl_teamlock.string[1] == '\0')) {
+		// anything that isn't "0" to disable
 		return cl_teamlock.string;
 	}
 	else if ((tracknum = Cam_TrackNum()) != -1)

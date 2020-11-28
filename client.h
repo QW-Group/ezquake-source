@@ -686,6 +686,9 @@ typedef struct {
 	int         weapon_order[MAXWEAPONS];
 	int         weapon_order_sequence_set;
 
+	// When teamlock 1 is specified, lock in the selected team and don't change again
+	char        teamlock1_teamname[16];
+
 	// authenticating via web server
 	char        auth_challenge[128];
 } clientState_t;
