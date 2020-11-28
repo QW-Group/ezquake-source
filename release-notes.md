@@ -62,6 +62,7 @@
 - `/vid_hwgammacontrol` is now forced on when using ruleset `mtfl` (3.0 bug that this was removed)
 - `/enemyforceskins` descriptions in `f_ruleset` and `f_skins` responses has been clarified to specify individuals will be identifiable (reported by Ake_Vader)
 - `/enemyforceskins` cannot be changed during match (old)
+- sign of value movement speed cvars is ignored (old - used to create `/cl_idrive`-like movement scripts)
 
 ### Other changes
 
@@ -108,6 +109,7 @@
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
 - `-oldgamma` command line option to re-instate old `-gamma` behaviour
 - `-r-trace` command line option in debug build - writes out API calls for each frame to qw/trace/ directory (will kill fps, just for debugging)
+- `-r-verify` command line option in debug build - regularly downloads GL state from driver, for use with -r-trace
 - `-noatlas` command line option to stop the system building a 2D atlas at startup
 - `+qtv_delay` command, to be used with `/qtv_adjustbuffer 2`... pauses QTV stream.  When released, QTV buffer length set to length of buffer
 - GLSL gamma now supported in classic renderer
@@ -184,7 +186,7 @@
   - HUD notify no longer loses last character on line if that is also last character on screen - SF#513
   - 2D elements no longer rounded to integer coordinates before rendering - SF#397
   - `score_bar` attributes can have formatting applied (`%<10r>T` etc)
-  - `/loadfont` added: proportional font support if freetype available (Windows requires freetype.dll)
+  - `/fontload` added: proportional font support if freetype available (Windows requires freetype.dll)
   - `/fontlist` enumerates fonts available on system
   - `/gl_smoothfont` removed: now use `/r_smoothcrosshair`, `/r_smoothtext`, `/r_smoothimages`
   - `/gl_charsets_min` added: restricts to basic & cyrillic fonts during startup (vastly reduces number of attempted file opens)
