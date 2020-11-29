@@ -312,13 +312,12 @@ void SCR_HUD_DrawAmmoIcon(hud_t *hud, int num, float scale, int style)
 void SCR_HUD_DrawAmmoIconCurrent(hud_t *hud)
 {
 	int num;
-	static cvar_t *scale = NULL, *style, *show_always;
+	static cvar_t *scale = NULL, *style;
 
 	if (scale == NULL)  // first time called
 	{
 		scale = HUD_FindVar(hud, "scale");
 		style = HUD_FindVar(hud, "style");
-		show_always = HUD_FindVar(hud, "show_always");
 	}
 
 	if (ShowPreselectedWeap()) {
