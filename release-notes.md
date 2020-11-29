@@ -56,6 +56,7 @@
 - Fixed bug causing program to terminate when recording demo and next packetsize exceeded limits (old bug)
 - Fixed bug causing crash with old-hud rendering and `r_damagestats` enabled (3.5 bug, #432, reported by eb)
 - Fixed bug causing friendly/enemy teams to switch mid-demo when using `teamlock 1` (3.2 bug)
+- Fixed bug causing rendering issue when using `/gl_contrast` to brighten screen in classic renderer (3.5 bug, #442, reported by hammer)
 
 ### Ruleset-related changes
 

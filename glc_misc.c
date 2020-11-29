@@ -76,8 +76,8 @@ void GLC_BrightenScreen(void)
 
 		GLC_Vertex2f(-1, -1);
 		GLC_Vertex2f(-1, 1);
-		GLC_Vertex2f(1, -1);
 		GLC_Vertex2f(1, 1);
+		GLC_Vertex2f(1, -1);
 
 		f *= 0.5;
 	}
