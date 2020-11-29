@@ -360,6 +360,7 @@ void GL_GetTexLevelParameteriv(GLenum textureUnit, texture_ref texture, GLint le
 
 void GL_GetTexImage(GLenum textureUnit, texture_ref texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer)
 {
+	GL_PackAlignment(1);
 	if (GL_Available(glGetTextureImage)) {
 		GL_Procedure(glGetTextureImage, GL_TextureNameFromReference(texture), level, format, type, bufSize, buffer);
 	}

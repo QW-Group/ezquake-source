@@ -710,7 +710,7 @@ void GL_Screenshot(byte* buffer, size_t size)
 	size_t width = renderer.ScreenshotWidth();
 	size_t height = renderer.ScreenshotHeight();
 
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	GL_PackAlignment(1);
 	if (GL_Available(glBindFramebuffer)) {
 		if (GL_ScreenshotFramebuffer()) {
 			GL_Procedure(glBindFramebuffer, GL_READ_FRAMEBUFFER, framebuffer_data[framebuffer_std].glref);

@@ -440,4 +440,6 @@ typedef struct opengl_version_s {
 
 SDL_GLContext GL_SDL_CreateBestContext(SDL_Window* window, const opengl_version_t* versions, int count);
 
+void GL_PackAlignment(int alignment_in_bytes);
+
 #endif /* !__GL_LOCAL_H__ */

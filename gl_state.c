@@ -285,6 +285,9 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 	state->normal_array.type = GL_FLOAT;
 #endif
 
+	// Not applied each time, kept distinct
+	state->pack_alignment = 4;
+
 	state->vao_id = vao;
 
 	if (default_state) {
@@ -306,6 +309,8 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 		state->blendFunc = r_blendfunc_premultiplied_alpha;
 		R_GLC_TextureUnitSet(state, 0, false, r_texunit_mode_replace);
 		state->framebuffer_srgb = true;
+
+		state->pack_alignment = 1;
 	}
 
 	state->initialized = true;
@@ -1326,6 +1331,14 @@ void GL_InvalidateViewport(void)
 	state->currentViewportHeight = 0;
 }
 
+void GL_PackAlignment(int alignment_in_bytes)
+{
+	if (opengl.rendering_state.pack_alignment != alignment_in_bytes) {
+		glPixelStorei(GL_PACK_ALIGNMENT, alignment_in_bytes);
+		opengl.rendering_state.pack_alignment = alignment_in_bytes;
+	}
+}
+
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 void GLC_MultiTexCoord2f(GLenum target, float s, float t)
 {
@@ -1688,6 +1701,9 @@ static void GL_DownloadState(rendering_state_t* state, GLuint* gl_bound2d, GLuin
 	state->polygonOffset.fillEnabled = GL_IsEnabled(GL_POLYGON_OFFSET_FILL);
 	state->polygonOffset.lineEnabled = GL_IsEnabled(GL_POLYGON_OFFSET_LINE);
 	GL_BuiltinProcedure(glGetFloatv, "pname=%u, params=%p", GL_POLYGON_OFFSET_UNITS, &state->polygonOffset.units);
+
+	// pack offset
+	glGetIntegerv(GL_PACK_ALIGNMENT, &state->pack_alignment);
 
 	GL_ProcessErrors("VerifyState[end-2]");
 	GLC_DownloadVAOState(state);

@@ -180,6 +180,9 @@ typedef struct rendering_state_s {
 	// always false if not classic
 	qbool glc_vao_force_rebind;
 
+	// misc (texture downloads, screenshots & atlas building)
+	int pack_alignment;
+
 	// meta
 	qbool initialized;
 	char name[32];
