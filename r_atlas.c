@@ -491,13 +491,8 @@ void CachePics_CreateAtlas(void)
 	}
 
 	for (i = 0; i < MAX_CHARSETS; ++i) {
-#ifdef EZ_FREETYPE_SUPPORT
-		extern charset_t proportional_fonts[MAX_CHARSETS];
-#endif
-		charset_t* charset;
-		int j;
+		charset_t* charset = &char_textures[i];
 
-		charset = &char_textures[i];
 		for (j = 0; j < 256; ++j) {
 			if (R_TextureReferenceIsValid(charset->glyphs[j].texnum)) {
 				charsetpics[i * 256 + j].data.pic = &charset->glyphs[j];
@@ -505,9 +500,13 @@ void CachePics_CreateAtlas(void)
 				CachePics_InsertBySize(&sized_list, &charsetpics[i * 256 + j]);
 			}
 		}
+	}
 
 #ifdef EZ_FREETYPE_SUPPORT
-		charset = &proportional_fonts[i];
+	for (i = 0; i < MAX_CHARSETS; ++i) {
+		extern charset_t proportional_fonts[MAX_CHARSETS];
+		charset_t* charset = &proportional_fonts[i];
+
 		for (j = 0; j < 256; ++j) {
 			if (R_TextureReferenceIsValid(charset->glyphs[j].texnum)) {
 				fontpics[i * 256 + j].data.pic = &charset->glyphs[j];
@@ -515,8 +514,8 @@ void CachePics_CreateAtlas(void)
 				CachePics_InsertBySize(&sized_list, &fontpics[i * 256 + j]);
 			}
 		}
-#endif
 	}
+#endif
 
 	// Copy crosshairs
 	{

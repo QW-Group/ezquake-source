@@ -775,6 +775,15 @@ static float Draw_TextCacheAddCharacter(float x, float y, wchar ch, float scale,
 		texture = &char_textures[0];
 		pic = &texture->glyphs['*'];
 	}
+	R_TraceAPI("R_DrawChar(%d %c = %d[%d], pic[%d/%s] %0.3f %0.3f, %0.3f", ch, (ch < 256 ? ch : '?'), new_charset, ch & 0xFF, pic->texnum.index, R_TextureIdentifier(pic->texnum), texture->custom_scale_x, texture->custom_scale_y, scale);
+	R_TraceAPI(
+		"-> %f,%f %f,%f [%d,%d %d,%d]",
+		pic->sl, pic->tl, pic->sh - pic->sl, pic->th - pic->tl,
+		(int)(pic->sl * R_TextureWidth(pic->texnum)),
+		(int)(pic->tl * R_TextureHeight(pic->texnum)),
+		(int)((pic->sh - pic->sl) * R_TextureWidth(pic->texnum)),
+		(int)((pic->th - pic->tl) * R_TextureHeight(pic->texnum))
+	);
 	R_DrawImage(x, y, texture->custom_scale_x * scale * 8, texture->custom_scale_y * scale * 8, pic->sl, pic->tl, pic->sh - pic->sl, pic->th - pic->tl, cache_currentColor, false, pic->texnum, true, nextCharacterIsCrosshair);
 	return FontCharacterWidthWide(ch, scale, proportional);
 }
