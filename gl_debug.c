@@ -298,8 +298,10 @@ void Dev_VidTextureDump(void)
 {
 	char folder[MAX_PATH];
 	byte* buffer = NULL;
+	byte* row = NULL;
 	int buffer_size = 0;
-	int i;
+	int row_size = 0;
+	int i, j;
 #ifndef _WIN32
 	time_t t;
 	struct tm date;
@@ -323,6 +325,7 @@ void Dev_VidTextureDump(void)
 		texture_ref ref = { i };
 
 		if (R_TextureReferenceIsValid(ref)) {
+			int row_length = R_TextureWidth(ref) * 4;
 			int size = R_TextureWidth(ref) * R_TextureHeight(ref) * 4;
 			if (size > buffer_size) {
 				Q_free(buffer);
@@ -331,6 +334,12 @@ void Dev_VidTextureDump(void)
 			}
 			else if (buffer_size) {
 				memset(buffer, 0, buffer_size);
+			}
+
+			if (row_length > row_size) {
+				Q_free(row);
+				row = Q_malloc(row_length);
+				row_size = row_length;
 			}
 
 			if (!size) {
@@ -360,6 +369,16 @@ void Dev_VidTextureDump(void)
 					strlcat(sshot_params->fileName, filename, sizeof(sshot_params->fileName));
 					sshot_params->width = R_TextureWidth(ref);
 					sshot_params->height = R_TextureHeight(ref);
+
+					for (j = 0; j < sshot_params->height / 2; ++j) {
+						int row_bytes = sshot_params->width * 3;
+						byte* this_row = &buffer[j * row_bytes];
+						byte* flipped_row = &buffer[(sshot_params->height - j - 1) * row_bytes];
+
+						memcpy(row, this_row, row_bytes);
+						memcpy(this_row, flipped_row, row_bytes);
+						memcpy(flipped_row, row, row_bytes);
+					}
 					SCR_ScreenshotWrite(sshot_params);
 				}
 				else if (R_TextureType(ref) == texture_type_cubemap) {
@@ -392,6 +411,7 @@ void Dev_VidTextureDump(void)
 	}
 
 	Q_free(buffer);
+	Q_free(row);
 }
 
 #endif // WITH_RENDERING_TRACE
