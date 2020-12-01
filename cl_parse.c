@@ -3774,7 +3774,7 @@ void CL_ParseServerMessage (void)
 					if (cls.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2)
 						CL_ParseStatic(true);
 					else
-						Host_Error("CL_ParseServerMessage: svc_fte_modellistshort without FTE_PEXT_SPAWNSTATIC2");
+						Host_Error("CL_ParseServerMessage: svc_fte_spawnstatic2 without FTE_PEXT_SPAWNSTATIC2");
 					break;
 				}
 #endif // PROTOCOL_VERSION_FTE
