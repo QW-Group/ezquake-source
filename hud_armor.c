@@ -82,8 +82,9 @@ static void SCR_HUD_DrawArmor(hud_t *hud)
 		level = 0;
 		low = true;
 	}
-
-	SCR_HUD_DrawNum(hud, level, low, scale->value, style->value, digits->value, align->string, proportional->integer);
+	if (cl.spectator == autocam) {
+		SCR_HUD_DrawNum(hud, level, low, scale->value, style->value, digits->value, align->string, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawArmorIcon(hud_t *hud)
@@ -108,57 +109,59 @@ static void SCR_HUD_DrawArmorIcon(hud_t *hud)
 
 	height = (style ? 8 : 24) * scale;
 
-	if (style) {
-		int c;
+	if (cl.spectator == autocam) {
+		if (style) {
+			int c;
 
-		if (!HUD_PrepareDraw(hud, FontFixedWidth(1, scale, 0, v_proportional->integer), height, &x, &y)) {
-			return;
-		}
+			if (!HUD_PrepareDraw(hud, FontFixedWidth(1, scale, 0, v_proportional->integer), height, &x, &y)) {
+				return;
+			}
 
-		if (HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY) {
-			c = '@';
-		}
-		else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3) {
-			c = 'r';
-		}
-		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2) {
-			c = 'y';
-		}
-		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1) {
-			c = 'g';
+			if (HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY) {
+				c = '@';
+			}
+			else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3) {
+				c = 'r';
+			}
+			else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2) {
+				c = 'y';
+			}
+			else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1) {
+				c = 'g';
+			}
+			else {
+				return;
+			}
+
+			c += 128;
+
+			Draw_SCharacterP(x, y, c, scale, v_proportional->integer);
 		}
 		else {
-			return;
-		}
+			mpic_t* pic;
 
-		c += 128;
+			if (!HUD_PrepareDraw(hud, 24 * scale, height, &x, &y)) {
+				return;
+			}
 
-		Draw_SCharacterP(x, y, c, scale, v_proportional->integer);
-	}
-	else {
-		mpic_t  *pic;
+			if (HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY) {
+				pic = draw_disc;
+			}
+			else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3) {
+				pic = sb_armor[2];
+			}
+			else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2) {
+				pic = sb_armor[1];
+			}
+			else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1) {
+				pic = sb_armor[0];
+			}
+			else {
+				return;
+			}
 
-		if (!HUD_PrepareDraw(hud, 24 * scale, height, &x, &y)) {
-			return;
+			Draw_SPic(x, y, pic, scale);
 		}
-
-		if (HUD_Stats(STAT_ITEMS) & IT_INVULNERABILITY) {
-			pic = draw_disc;
-		}
-		else  if (HUD_Stats(STAT_ITEMS) & IT_ARMOR3) {
-			pic = sb_armor[2];
-		}
-		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR2) {
-			pic = sb_armor[1];
-		}
-		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1) {
-			pic = sb_armor[0];
-		}
-		else {
-			return;
-		}
-
-		Draw_SPic(x, y, pic, scale);
 	}
 }
 
@@ -186,7 +189,7 @@ void SCR_HUD_DrawBarArmor(hud_t *hud)
 		color_unnatural = HUD_FindVar(hud, "color_unnatural");
 	}
 
-	if (HUD_PrepareDraw(hud, width->integer, height->integer, &x, &y)) {
+	if (HUD_PrepareDraw(hud, width->integer, height->integer, &x, &y) && (cl.spectator == autocam)) {
 		if (!width->integer || !height->integer) {
 			return;
 		}
