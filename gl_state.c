@@ -468,7 +468,7 @@ static qbool GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool al
 			}
 		}
 		else if (targetType == GL_TEXTURE_CUBE_MAP) {
-			if (bound_textures[unit_num] == texture) {
+			if (bound_cubemaps[unit_num] == texture) {
 				if (always_select_unit) {
 					GL_SelectTexture(unit);
 				}
