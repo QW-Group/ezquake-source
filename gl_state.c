@@ -656,7 +656,14 @@ void GL_TextureUnitMultiBind(int first, int count, texture_ref* textures)
 	int i;
 
 	if (first + count > MAX_LOGGED_TEXTURE_UNITS) {
-		GL_Procedure(glBindTextures, first, count, glTextures);
+		if (GL_Available(glBindTextures)) {
+			GL_Procedure(glBindTextures, first, count, glTextures);
+		}
+		else {
+			for (i = 0; i < count; ++i) {
+				renderer.TextureUnitBind(first + i, textures[i]);
+			}
+		}
 		memset(bound_arrays, 0, sizeof(bound_arrays));
 		memset(bound_textures, 0, sizeof(bound_textures));
 		memset(bound_cubemaps, 0, sizeof(bound_cubemaps));
