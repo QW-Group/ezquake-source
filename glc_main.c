@@ -190,8 +190,14 @@ void GLC_Initialise(void)
 		Con_Printf("&c0f0INFO&r: immediate-mode rendering disabled.\n");
 	}
 	else {
+		// make optional
 		for (i = 0; i < sizeof(gl_program_cvars) / sizeof(gl_program_cvars[0]); ++i) {
 			Cvar_SetFlags(gl_program_cvars[i], Cvar_GetFlags(gl_program_cvars[i]) & ~CVAR_ROM);
+		}
+		if (!renderer.vaos_supported) {
+			// disable aliasmodel program rendering, it requires attributes
+			Cvar_LatchedSetValue(&gl_program_aliasmodels, 0);
+			Cvar_SetFlags(&gl_program_aliasmodels, Cvar_GetFlags(&gl_program_aliasmodels) | CVAR_ROM);
 		}
 		glConfig.supported_features |= R_SUPPORT_IMMEDIATEMODE;
 	}
