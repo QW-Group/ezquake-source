@@ -853,7 +853,8 @@ void GL_LoadStateFunctions(void)
 	}
 
 	// 4.4 - binds textures to consecutive texture units
-	if (SDL_GL_ExtensionSupported("GL_ARB_multi_bind")) {
+	GL_InvalidateFunction(glBindTextures);
+	if (SDL_GL_ExtensionSupported("GL_ARB_multi_bind") && !COM_CheckParm(cmdline_param_client_nomultibind)) {
 		GL_LoadOptionalFunction(glBindTextures);
 	}
 }

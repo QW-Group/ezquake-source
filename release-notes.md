@@ -30,6 +30,7 @@
 - `/gl_shaftlight 0` fixed on glsl path in classic renderer (3.5 bug, reported by maniac)
 - `/r_dynamic 2` was calculating too many lightmaps (3.5 bug, reported by ciscon)
 - `/packet` command is now only blocked when active on server (old bug)
+- `/scr_newhud` elements are hidden when free-floating in spectator mode (old, thanks to hemostx)
 - Fixed bug causing read-only file handle to config being kept open, preventing backup from being taken (old bug)
 - Fixed bug causing MVD-stats code to cause `/tp_loadloc` to effectively always be forced to 1 (old bug)
 - Fixed bug causing multiple item timers to spawn when using `/demo_jump` (3.2 bug, reported by Milton)
@@ -57,6 +58,7 @@
 - Fixed bug causing crash with old-hud rendering and `r_damagestats` enabled (3.5 bug, #432, reported by eb)
 - Fixed bug causing friendly/enemy teams to switch mid-demo when using `teamlock 1` (3.2 bug)
 - Fixed bug causing rendering issue when using `/gl_contrast` to brighten screen in classic renderer (3.5 bug, #442, reported by hammer)
+- Fixed bug causing no rendering of aliasmodels when VAs not supported but `/gl_program_aliasmodels` set (3.5 bug)
 
 ### Ruleset-related changes
 
@@ -113,6 +115,7 @@
 - `-r-trace` command line option in debug build - writes out API calls for each frame to qw/trace/ directory (will kill fps, just for debugging)
 - `-r-verify` command line option in debug build - regularly downloads GL state from driver, for use with -r-trace
 - `-noatlas` command line option to stop the system building a 2D atlas at startup
+- `-r-nomultibind` command line option to disable calls to glBindTextures
 - `+qtv_delay` command, to be used with `/qtv_adjustbuffer 2`... pauses QTV stream.  When released, QTV buffer length set to length of buffer
 - GLSL gamma now supported in classic renderer
 - MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
