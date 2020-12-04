@@ -136,6 +136,7 @@
 - Updated Azure Pipelines builds to latest ubuntu/macos
 - Visual Studio project, Azure Pipelines builds windows binaries (64-bit binaries are VERY beta, not recommended)
 - meson build updated (out of date on 3.5)
+- Fixed build on FreeBSD/powerpc64 (thanks to pkubaj)
 
 # Changes in 3.5 (not released, based on 3.1)
 

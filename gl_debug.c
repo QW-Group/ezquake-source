@@ -64,6 +64,12 @@ void APIENTRY MessageCallback(GLenum source,
 							  const void* userParam
 )
 {
+	// FIXME: think this is caused by having fixed maximum array of samplers
+	// - either bind to solidblack or have multiple programs and switch depending on # of texture units being used
+	if (severity == GL_DEBUG_SEVERITY_LOW && strstr(message, "texture object (0) bound to")) {
+		return;
+	}
+
 	if (source != GL_DEBUG_SOURCE_APPLICATION) {
 		char buffer[1024] = { 0 };
 
