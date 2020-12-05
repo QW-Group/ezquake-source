@@ -276,6 +276,7 @@ void CachePics_AtlasUpload(void)
 		R_TraceEnterFunctionRegion;
 		atlas_texnum = R_LoadTexture("cachepics:atlas", atlas_texture_width, atlas_texture_height, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
 		renderer.TextureSetFiltering(atlas_texnum, texture_minification_linear, texture_magnification_linear);
+		renderer.TextureWrapModeClamp(atlas_texnum);
 		R_TraceLeaveFunctionRegion;
 	}
 	atlas_dirty = false;
