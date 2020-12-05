@@ -2880,6 +2880,11 @@ void CL_ProcessPrint (int level, char* s0)
 			return;
 		}
 
+		if (flags == 2 && strstr(s0, "#inlay#") ) {
+			Com_DPrintf("Ignoring unezQuake inlay message: %s\n", s0);
+			return;
+		}
+
 		if (flags == 2 && !TP_FilterMessage (s + offset)) {
 			Com_DPrintf("Filtered message: %s\n", s0);
 			return;
