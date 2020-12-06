@@ -58,7 +58,7 @@ static void GLM_DrawWorldOutlines(void)
 {
 	texture_ref normals = GL_FramebufferTextureReference(framebuffer_std, fbtex_worldnormals);
 
-	if (R_TextureReferenceIsValid(normals) && developer.integer == 0 && GLM_CompileWorldGeometryProgram()) {
+	if (R_TextureReferenceIsValid(normals) && GLM_CompileWorldGeometryProgram()) {
 		renderer.TextureUnitBind(0, normals);
 
 		R_ProgramUse(r_program_fx_world_geometry);

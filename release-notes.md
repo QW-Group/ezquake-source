@@ -60,6 +60,7 @@
 - Fixed bug causing rendering issue when using `/gl_contrast` to brighten screen in classic renderer (3.5 bug, #442, reported by hammer)
 - Fixed bug causing no rendering of aliasmodels when VAs not supported but `/gl_program_aliasmodels` set (3.5 bug)
 - Fixed bug causing atlas textures to not be rendered when using ATI drivers reporting version x.y.13399 (seems to be driver issue? #416)
+- Fixed bug causing geometry-edge overlay to not be aligned when using framebuffer scaling (3.5 bug, reported by hemostx)
 
 ### Ruleset-related changes
 
