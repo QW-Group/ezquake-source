@@ -332,17 +332,20 @@ void GL_TexParameteriv(GLenum textureUnit, texture_ref texture, GLenum pname, co
 
 void GL_CreateTextureNames(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures)
 {
+	int i;
+
 	if (GL_Available(glCreateTextures)) {
 		GL_Procedure(glCreateTextures, target, n, textures);
 	}
 	else {
-		int i;
-
 		GL_BuiltinProcedure(glGenTextures, "n=%d, textures=%p", n, textures);
-		for (i = 0; i < n; ++i) {
-			GL_SelectTexture(textureUnit);
-			GL_BuiltinProcedure(glBindTexture, "target=%u, texture=%u", target, textures[i]);
-		}
+	}
+
+	// glCreateTextures() shouldn't require this, but textures can't be sampled from buggy AMD drivers (reporting x.y.13399) otherwise
+	// see https://github.com/ezQuake/ezquake-source/issues/416
+	for (i = 0; i < n; ++i) {
+		GL_SelectTexture(textureUnit);
+		GL_BuiltinProcedure(glBindTexture, "target=%u, texture=%u", target, textures[i]);
 	}
 }
 

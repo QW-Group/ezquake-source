@@ -498,29 +498,25 @@ static const char* cache_pic_paths[] = {
 qbool Draw_KeepOffAtlas(const char* path)
 {
 	int i;
+	qbool result = false;
 
 	// Tiled backgrounds: atlas not suitable for tiling, so keep off atlas
-	for (i = CACHEPIC_BOX_TL; i <= CACHEPIC_BOX_BR; ++i) {
-		if (!strcmp(path, cache_pic_paths[i])) {
-			return true;
-		}
+	for (i = CACHEPIC_BOX_TL; i <= CACHEPIC_BOX_BR && !result; ++i) {
+		result |= !strcmp(path, cache_pic_paths[i]);
 	}
 
 	// Single-player & main menu items - take up too much space for no high-performance path
-	for (i = CACHEPIC_TTL_MAIN; i <= CACHEPIC_P_MULTI; ++i) {
-		if (!strcmp(path, cache_pic_paths[i])) {
-			return true;
-		}
+	for (i = CACHEPIC_TTL_MAIN; i <= CACHEPIC_P_MULTI && !result; ++i) {
+		result |= !strcmp(path, cache_pic_paths[i]);
 	}
 
 	// Single-player intermission titles
-	for (i = CACHEPIC_COMPLETE; i <= CACHEPIC_FINALE; ++i) {
-		if (!strcmp(path, cache_pic_paths[i])) {
-			return true;
-		}
+	for (i = CACHEPIC_COMPLETE; i <= CACHEPIC_FINALE && !result; ++i) {
+		result |= !strcmp(path, cache_pic_paths[i]);
 	}
 
-	return false;
+	R_TraceAPI("Draw_KeepOffAtlas(%s) = %s\n", path, result ? "true" : "false");
+	return result;
 }
 
 mpic_t *Draw_CachePic(cache_pic_id_t id)

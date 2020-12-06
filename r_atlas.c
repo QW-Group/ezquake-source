@@ -582,7 +582,7 @@ void CachePics_CreateAtlas(void)
 	buffer = Q_malloc(ATLAS_SIZE_IN_BYTES);
 	for (cur = sized_list; cur; cur = cur->size_order) {
 		texture_ref original = cur->data.pic->texnum;
-		R_TraceAPI("Texture %d/%s", original.index, R_TextureIdentifier(original));
+		R_TraceAPI("[atlas] attempting to add %d/%s to atlas", original.index, R_TextureIdentifier(original));
 		if (CachePics_AddToAtlas(cur->data.pic) >= 0) {
 			ConfirmDeleteTexture(original);
 		}
