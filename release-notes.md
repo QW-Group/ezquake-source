@@ -62,6 +62,7 @@
 - Fixed bug causing atlas textures to not be rendered when using ATI drivers reporting version x.y.13399 (seems to be driver issue? #416)
 - Fixed bug causing geometry-edge overlay to not be aligned when using framebuffer scaling (3.5 bug, reported by hemostx)
 - Fixed bug causing spectator issue when tracking player on server, reconnecting and then tracking again (old bug)
+- Fixed bug causing crash when tracker fills up when minimised (3.5 bug)
 
 ### Ruleset-related changes
 

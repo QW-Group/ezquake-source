@@ -394,6 +394,10 @@ static qbool VX_TrackerStringPrintSegmentsWithImage(const char* text1, const byt
 
 static trackmsg_t* VX_NewTrackerMsg(void)
 {
+	if (!max_active_tracks) {
+		return NULL;
+	}
+
 	// free space by removing the oldest one
 	if (active_track >= max_active_tracks) {
 		int i;
@@ -421,7 +425,7 @@ static trackmsg_t* VX_NewTrackerMsg(void)
 
 static void VX_TrackerAddFlaggedTextSegment(trackmsg_t* msg, const char* text, const byte* color, int flags)
 {
-	if (text && text[0] && color) {
+	if (text && text[0] && color && msg->segments < sizeof(msg->colors) / sizeof(msg->colors[0])) {
 		memcpy(msg->colors[msg->segments], color, sizeof(msg->colors[msg->segments]));
 		strlcpy(msg->text[msg->segments], text, sizeof(msg->text[msg->segments]));
 		msg->text_flags[msg->segments] = flags;
@@ -456,8 +460,10 @@ static void VX_TrackerAddSimpleText(const char* text, const byte* color)
 	}
 
 	msg = VX_NewTrackerMsg();
-	VX_TrackerAddTextSegment(msg, text, color);
-	VX_PreProcessMessage(msg);
+	if (msg) {
+		VX_TrackerAddTextSegment(msg, text, color);
+		VX_PreProcessMessage(msg);
+	}
 }
 
 static void VX_TrackerAddSegmented4(const char* lhs_text, const byte* lhs_color, const char* center_text, const byte* center_color, const char* rhs_text, const byte* rhs_color, const char* extra_text, const byte* extra_color)
@@ -473,11 +479,13 @@ static void VX_TrackerAddSegmented4(const char* lhs_text, const byte* lhs_color,
 	}
 
 	msg = VX_NewTrackerMsg();
-	VX_TrackerAddTextSegment(msg, lhs_text, lhs_color);
-	VX_TrackerAddTextSegment(msg, center_text, center_color);
-	VX_TrackerAddTextSegment(msg, rhs_text, rhs_color);
-	VX_TrackerAddTextSegment(msg, extra_text, extra_color);
-	VX_PreProcessMessage(msg);
+	if (msg) {
+		VX_TrackerAddTextSegment(msg, lhs_text, lhs_color);
+		VX_TrackerAddTextSegment(msg, center_text, center_color);
+		VX_TrackerAddTextSegment(msg, rhs_text, rhs_color);
+		VX_TrackerAddTextSegment(msg, extra_text, extra_color);
+		VX_PreProcessMessage(msg);
+	}
 }
 
 static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_color, int weapon, const char* rhs_text, const byte* rhs_color)
@@ -502,17 +510,19 @@ static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_
 	}
 
 	msg = VX_NewTrackerMsg();
-	msg->pad = lhs_text && rhs_text && lhs_text[0] && rhs_text[0];
-	VX_TrackerAddTextSegment(msg, lhs_text, lhs_color);
-	for (i = 0; i < weapon_images[weapon]; ++i) {
-		mpic_t* pic = &char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].glyphs[weapon * MAX_IMAGES_PER_WEAPON + i];
+	if (msg) {
+		msg->pad = lhs_text && rhs_text && lhs_text[0] && rhs_text[0];
+		VX_TrackerAddTextSegment(msg, lhs_text, lhs_color);
+		for (i = 0; i < weapon_images[weapon]; ++i) {
+			mpic_t* pic = &char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].glyphs[weapon * MAX_IMAGES_PER_WEAPON + i];
 
-		if (R_TextureReferenceIsValid(pic->texnum)) {
-			VX_TrackerAddImageSegment(msg, pic);
+			if (R_TextureReferenceIsValid(pic->texnum)) {
+				VX_TrackerAddImageSegment(msg, pic);
+			}
 		}
+		VX_TrackerAddTextSegment(msg, rhs_text, rhs_color);
+		VX_PreProcessMessage(msg);
 	}
-	VX_TrackerAddTextSegment(msg, rhs_text, rhs_color);
-	VX_PreProcessMessage(msg);
 }
 
 static void VX_TrackerAddWeaponTextSplit(const char* lhs_text, int weapon, const byte* weapon_color, const char* rhs_text)
@@ -529,18 +539,20 @@ static void VX_TrackerAddWeaponTextSplit(const char* lhs_text, int weapon, const
 	}
 
 	msg = VX_NewTrackerMsg();
-	msg->pad = lhs_text && rhs_text && lhs_text[0] && rhs_text[0];
-	VX_TrackerAddTextSegment(msg, lhs_text, color_white);
-	for (i = 0; i < weapon_labels[weapon].count; ++i) {
-		if (weapon_labels[weapon].colors[i][3]) {
-			VX_TrackerAddFlaggedTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_labels[weapon].colors[i], TEXTFLAG_WEAPON);
+	if (msg) {
+		msg->pad = lhs_text && rhs_text && lhs_text[0] && rhs_text[0];
+		VX_TrackerAddTextSegment(msg, lhs_text, color_white);
+		for (i = 0; i < weapon_labels[weapon].count; ++i) {
+			if (weapon_labels[weapon].colors[i][3]) {
+				VX_TrackerAddFlaggedTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_labels[weapon].colors[i], TEXTFLAG_WEAPON);
+			}
+			else {
+				VX_TrackerAddFlaggedTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_color, TEXTFLAG_WEAPON);
+			}
 		}
-		else {
-			VX_TrackerAddFlaggedTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_color, TEXTFLAG_WEAPON);
-		}
+		VX_TrackerAddTextSegment(msg, rhs_text, color_white);
+		VX_PreProcessMessage(msg);
 	}
-	VX_TrackerAddTextSegment(msg, rhs_text, color_white);
-	VX_PreProcessMessage(msg);
 }
 
 static void VX_TrackerLinkStrings(void)
