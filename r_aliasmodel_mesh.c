@@ -168,7 +168,7 @@ void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 extern cvar_t gl_program_aliasmodels;
-#define R_GLSLAliasModelRendering() (gl_program_aliasmodels.integer)
+#define R_GLSLAliasModelRendering() ((!R_UseImmediateOpenGL()) || gl_program_aliasmodels.integer)
 #else
 #define R_GLSLAliasModelRendering() (1)
 #endif
