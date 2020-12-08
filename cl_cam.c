@@ -165,7 +165,6 @@ void Cam_Lock(int playernum)
 	}
 
 	snprintf(st, sizeof (st), "ptrack %i", playernum);
-	Com_Printf("%s\n", st);
 	if (cls.mvdplayback == QTV_PLAYBACK) {
 		// its not setinfo extension, but adding new extension just for this is stupid IMO
 		QTV_Cmd_Printf(QTV_EZQUAKE_EXT_SETINFO, st);
