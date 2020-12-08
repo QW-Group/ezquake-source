@@ -695,6 +695,8 @@ typedef struct {
 	// camera tracking
 	int         autocam;              // CAM_NONE or CAM_TRACK
 	int         spec_track;           // player# of who we are tracking
+	int         ideal_track;          // The currently tracked player.
+	qbool       spec_locked;          // Is the spectator locked to a players view or free flying.
 } clientState_t;
 
 #define SCORING_SYSTEM_DEFAULT   0
