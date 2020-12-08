@@ -153,10 +153,14 @@ typedef struct glc_vbo_world_vert_s {
 
 typedef struct vbo_model_vert_s {
 	vec3_t position;
+	int lightnormalindex;
 	vec3_t normal;
+	int padding2;
 	vec3_t direction;
+	int padding3;
 	float texture_coords[2];
 	unsigned int flags;
+	int padding4;
 } vbo_model_vert_t;
 
 typedef struct glpoly_s {

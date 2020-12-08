@@ -134,6 +134,7 @@ void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 				vbo_buffer[v].texture_coords[1] = t;
 				VectorCopy(r_avertexnormals[l], vbo_buffer[v].normal);
 				vbo_buffer[v].flags = 0;
+				vbo_buffer[v].lightnormalindex = l;
 			}
 		}
 
@@ -167,7 +168,10 @@ void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 
 void R_AliasModelPopulateVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position)
 {
-	if (mod->temp_vbo_buffer) {
+	extern cvar_t gl_program_aliasmodels;
+
+	// Don't delete if using immediate mode as we loop over them ourselves
+	if (mod->temp_vbo_buffer && gl_program_aliasmodels.integer) {
 		memcpy(aliasModelBuffer + position, mod->temp_vbo_buffer, mod->vertsInVBO * sizeof(vbo_model_vert_t));
 
 		mod->vbo_start = position;

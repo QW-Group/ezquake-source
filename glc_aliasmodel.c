@@ -181,7 +181,7 @@ void GLC_FreeAliasPoseBuffer(void)
 	temp_aliasmodel_buffer_size = 0;
 }
 
-static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, ez_trivertx_t *verts1, ez_trivertx_t *verts2, float lerpfrac)
+static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, vbo_model_vert_t* verts1, vbo_model_vert_t* verts2, float lerpfrac)
 {
 	float l;
 
@@ -386,15 +386,16 @@ static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int 
 
 	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
 	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
-	GLenum primitive = GL_TRIANGLE_STRIP;
+	GLenum primitive = GL_TRIANGLES;
 	qbool mtex = R_TextureReferenceIsValid(fb_texture) && gl_mtexable;
 	qbool limit_lerp = r_lerpmuzzlehack.integer && (ent->model->renderfx & RF_LIMITLERP);
-	int position = 0;
+	int position = 0, i;
 	float lerpFracDefault = lerpfrac;
+	vbo_model_vert_t* vbo_buffer = (vbo_model_vert_t*)model->temp_vbo_buffer;
 
 	int *order, count;
 	vec3_t interpolated_verts;
-	ez_trivertx_t *verts1, *verts2;
+	vbo_model_vert_t*verts1, *verts2;
 
 	R_ProgramUse(r_program_none);
 	if (render_effects & RF_CAUSTICS) {
@@ -404,78 +405,47 @@ static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int 
 		GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, (render_effects & RF_ALPHABLEND) || ent->r_modelalpha < 1, ent->custom_model, ent->renderfx & RF_WEAPONMODEL);
 	}
 
-	verts2 = verts1 = (ez_trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
-	verts1 += pose1 * paliashdr->poseverts;
-	verts2 += pose2 * paliashdr->poseverts;
+	verts1 = &vbo_buffer[pose1 * paliashdr->poseverts];
+	verts2 = &vbo_buffer[pose2 * paliashdr->poseverts];
 
-	order = (int *)((byte *)paliashdr + paliashdr->commands);
+	if (!cache) {
+		GLC_Begin(primitive);
+	}
+	for (i = 0; i < paliashdr->vertsPerPose; ++i, ++verts1, ++verts2) {
+		float color[4];
+		float s = verts1->texture_coords[0];
+		float t = verts1->texture_coords[1];
 
-	for (; ; ) {
-		count = *order++;
-		if (!count) {
-			break;
-		}
-
-		if (count < 0) {
-			primitive = GL_TRIANGLE_FAN;
-			count = -count;
+		GLC_AliasModelLightPoint(color, ent, verts1, verts2, lerpfrac);
+		VectorInterpolate(verts1->position, lerpfrac, verts2->position, interpolated_verts);
+		if (cache) {
+			temp_aliasmodel_buffer[i].texture_coords[0] = s;
+			temp_aliasmodel_buffer[i].texture_coords[1] = t;
+			temp_aliasmodel_buffer[i].color[0] = color[0] * 255;
+			temp_aliasmodel_buffer[i].color[1] = color[1] * 255;
+			temp_aliasmodel_buffer[i].color[2] = color[2] * 255;
+			temp_aliasmodel_buffer[i].color[3] = color[3] * 255;
+			VectorCopy(interpolated_verts, temp_aliasmodel_buffer[i].position);
 		}
 		else {
-			primitive = GL_TRIANGLE_STRIP;
-		}
-
-		if (!cache) {
-			GLC_Begin(primitive);
-		}
-
-		do {
-			float color[4];
-			float s = ((float *)order)[0];
-			float t = ((float *)order)[1];
-			order += 2;
-
-			lerpfrac = lerpFracDefault;
-			if (limit_lerp && !VectorL2Compare(verts1->v, verts2->v, ALIASMODEL_MAX_LERP_DISTANCE)) {
-				lerpfrac = 1;
-			}
-			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
-
-			GLC_AliasModelLightPoint(color, ent, verts1, verts2, lerpfrac);
-			if (cache) {
-				temp_aliasmodel_buffer[position].texture_coords[0] = s;
-				temp_aliasmodel_buffer[position].texture_coords[1] = t;
-				temp_aliasmodel_buffer[position].color[0] = color[0] * 255;
-				temp_aliasmodel_buffer[position].color[1] = color[1] * 255;
-				temp_aliasmodel_buffer[position].color[2] = color[2] * 255;
-				temp_aliasmodel_buffer[position].color[3] = color[3] * 255;
-				VectorCopy(interpolated_verts, temp_aliasmodel_buffer[position].position);
-
-				++position;
+			// texture coordinates come from the draw list
+			if (mtex) {
+				GLC_MultiTexCoord2f(GL_TEXTURE0, s, t);
+				GLC_MultiTexCoord2f(GL_TEXTURE1, s, t);
 			}
 			else {
-				// texture coordinates come from the draw list
-				if (mtex) {
-					GLC_MultiTexCoord2f(GL_TEXTURE0, s, t);
-					GLC_MultiTexCoord2f(GL_TEXTURE1, s, t);
-				}
-				else {
-					glTexCoord2f(s, t);
-				}
-				R_CustomColor(color[0], color[1], color[2], color[3]);
-				GLC_Vertex3fv(interpolated_verts);
+				glTexCoord2f(s, t);
 			}
-
-			verts1++;
-			verts2++;
-		} while (--count);
-
-		if (cache) {
-			buffers.Update(r_buffer_aliasmodel_glc_pose_data, sizeof(temp_aliasmodel_buffer[0]) * position, temp_aliasmodel_buffer);
-			GL_DrawArrays(primitive, 0, position);
+			R_CustomColor(color[0], color[1], color[2], color[3]);
+			GLC_Vertex3fv(interpolated_verts);
 		}
-		else {
-			GLC_End();
-		}
+	}
+	if (cache) {
+		buffers.Update(r_buffer_aliasmodel_glc_pose_data, sizeof(temp_aliasmodel_buffer[0]) * paliashdr->vertsPerPose, temp_aliasmodel_buffer);
+		GL_DrawArrays(primitive, 0, paliashdr->vertsPerPose);
+	}
+	else {
+		GLC_End();
 	}
 
 	if (render_effects & RF_CAUSTICS) {
