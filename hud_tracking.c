@@ -33,7 +33,7 @@ static void SCR_HUD_DrawTracking(hud_t *hud)
 {
 	int x = 0, y = 0, width = 0, height = 0;
 	char track_string[MAX_TRACKING_STRING];
-	int player = spec_track;
+	int player = cl.spec_track;
 
 	static cvar_t
 		*hud_tracking_format = NULL,
@@ -54,7 +54,7 @@ static void SCR_HUD_DrawTracking(hud_t *hud)
 	width = Draw_StringLength(track_string, -1, hud_tracking_scale->value, hud_tracking_proportional->integer);
 
 	if (HUD_PrepareDraw(hud, width, height, &x, &y)) {
-		if (cl.spectator && autocam == CAM_TRACK) {
+		if (cl.spectator && cl.autocam == CAM_TRACK) {
 			// Normal
 			Draw_SString(x, y, track_string, hud_tracking_scale->value, hud_tracking_proportional->integer);
 		}
@@ -98,10 +98,10 @@ void Sbar_DrawTrackingString(void)
 	// If showing ammo on top of status, display higher up
 	int y_coordinate = (Sbar_IsStandardBar() ? SBAR_HEIGHT - sb_lines : 0) - 8;
 
-	if (sb_lines > 0 && scr_newHud.value != 1 && cl.spectator && autocam == CAM_TRACK) {
+	if (sb_lines > 0 && scr_newHud.value != 1 && cl.spectator && cl.autocam == CAM_TRACK) {
 		strlcpy(st, scr_tracking.string, sizeof(st));
 
-		Replace_In_String(st, sizeof(st), '%', 2, "n", cl.players[spec_track].name, "t", cl.teamplay ? cl.players[spec_track].team : "");
+		Replace_In_String(st, sizeof(st), '%', 2, "n", cl.players[cl.spec_track].name, "t", cl.teamplay ? cl.players[cl.spec_track].team : "");
 
 		// Multiview
 		// Fix displaying "tracking .." for both players with inset on

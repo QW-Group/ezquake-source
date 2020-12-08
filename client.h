@@ -691,6 +691,10 @@ typedef struct {
 
 	// authenticating via web server
 	char        auth_challenge[128];
+
+	// camera tracking
+	int         autocam;              // CAM_NONE or CAM_TRACK
+	int         spec_track;           // player# of who we are tracking
 } clientState_t;
 
 #define SCORING_SYSTEM_DEFAULT   0
@@ -1006,9 +1010,6 @@ void CL_PredictUsercmd(player_state_t *from, player_state_t *to, usercmd_t *u);
 void vectoangles(vec3_t vec, vec3_t ang);
 #define CAM_NONE	0
 #define CAM_TRACK	1
-
-extern int	autocam;
-extern int	spec_track; // player# of who we are tracking
 
 int WhoIsSpectated (void);
 void CL_Cam_SetKiller(int killernum, int victimnum);

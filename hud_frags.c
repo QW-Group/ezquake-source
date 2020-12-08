@@ -975,7 +975,7 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 				drawBrackets = (sorted_players[num].playernum == cl.playernum);
 			}
 			else if (cls.demoplayback || cl.spectator) {
-				drawBrackets = (spec_track == sorted_players[num].playernum && Cam_TrackNum() >= 0);
+				drawBrackets = (cl.spec_track == sorted_players[num].playernum && Cam_TrackNum() >= 0);
 			}
 			else {
 				drawBrackets = (sorted_players[num].playernum == cl.playernum);
@@ -1301,7 +1301,7 @@ static void SCR_HUD_DrawTeamFrags(hud_t *hud)
 			}
 			else if (cls.demoplayback || cl.spectator) {
 				// MVD playback / spectating.
-				if (!strcmp(cl.players[spec_track].team, sorted_teams[num].name) && Cam_TrackNum() >= 0) {
+				if (!strcmp(cl.players[cl.spec_track].team, sorted_teams[num].name) && Cam_TrackNum() >= 0) {
 					drawBrackets = 1;
 				}
 			}

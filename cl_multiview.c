@@ -1374,7 +1374,7 @@ int CL_MultiviewNextPlayer (void)
 	if (next_spec_track >= 0) {
 		return next_spec_track;
 	}
-	return spec_track;
+	return cl.spec_track;
 }
 
 int CL_MultiviewCurrentView (void)
@@ -1432,7 +1432,7 @@ void CL_MultiviewFrameStart (void)
 void CL_MultiviewFrameFinish (void)
 {
 	if (next_spec_track >= 0) {
-		spec_track = next_spec_track;
+		cl.spec_track = next_spec_track;
 	}
 }
 

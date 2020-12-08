@@ -2019,7 +2019,7 @@ void CL_NewTranslation (int slot)
 		qbool teammate = false;
 
 		// it's me or it's teamplay and he's my teammate
-		if (cl.spectator && slot == spec_track && !lockedTeams) {
+		if (cl.spectator && slot == cl.spec_track && !lockedTeams) {
 			teammate = true;
 		}
 		else if (!cl.spectator && slot == cl.playernum) {

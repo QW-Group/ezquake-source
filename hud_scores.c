@@ -115,7 +115,7 @@ void HUD_Sort_Scoreboard(int flags)
 		active_player = cl.playernum;
 	}
 	else if ((cls.demoplayback || cl.spectator) && Cam_TrackNum() >= 0) {
-		active_player = spec_track;
+		active_player = cl.spec_track;
 	}
 	else {
 		active_player = cl.playernum;

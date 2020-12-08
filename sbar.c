@@ -2129,7 +2129,7 @@ void Sbar_Draw(void) {
 	// Top line. Do not show with +showscores
 	if (sb_lines > 24 && scr_newHud.value != 1 && !sb_showscores && !sb_showteamscores) 
 	{ 
-		if (!cl.spectator || autocam == CAM_TRACK)
+		if (!cl.spectator || cl.autocam == CAM_TRACK)
 			Sbar_DrawInventory();
 
 		if (cl.gametype == GAME_DEATHMATCH && (!headsup || vid.width < 512 || (vid.width >= 512 && scr_centerSbar.value )))
@@ -2139,7 +2139,7 @@ void Sbar_Draw(void) {
 	// main area
 	if (sb_lines > 0 && scr_newHud.value != 1) {  // HUD -> hexum
 		if (cl.spectator) {
-			if (autocam != CAM_TRACK) {
+			if (cl.autocam != CAM_TRACK) {
 				Sbar_DrawSpectatorMessage();
 			}
 			else {
@@ -2209,7 +2209,7 @@ void Sbar_Draw(void) {
 			Draw_TileClear (0, vid.height - sb_lines, sbar_xofs, sb_lines);
 		Draw_TileClear (320 + sbar_xofs, vid.height - sb_lines, vid.width - (320 + sbar_xofs), sb_lines);	// right
 	}
-	if (!headsup && cl.spectator && autocam != CAM_TRACK && sb_lines > SBAR_HEIGHT)
+	if (!headsup && cl.spectator && cl.autocam != CAM_TRACK && sb_lines > SBAR_HEIGHT)
 		Draw_TileClear (sbar_xofs, vid.height - sb_lines, 320, sb_lines - SBAR_HEIGHT);
 
 	if (vid.width >= 512 && sb_lines > 0 

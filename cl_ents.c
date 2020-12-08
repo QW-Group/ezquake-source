@@ -1276,7 +1276,7 @@ void CL_ParsePlayerinfo (void)
 		if (cls.findtrack && info->name[0] && !info->spectator)
 		{
 			extern int ideal_track;
-			autocam = CAM_TRACK;
+			cl.autocam = CAM_TRACK;
 			Cam_Lock(num);
 			ideal_track = num;
 			cls.findtrack = false;

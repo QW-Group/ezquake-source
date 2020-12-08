@@ -1765,7 +1765,7 @@ void MVD_Status(void)
 		return;
 
 	for (i = 0; i < mvd_cg_info.pcount; i++) {
-		if (mvd_new_info[i].id == spec_track) {
+		if (mvd_new_info[i].id == cl.spec_track) {
 			id = i;
 		}
 	}
@@ -2301,7 +2301,7 @@ void MVD_ParseUserCommand(const char* s)
 	command = atoi(Cmd_Argv(1));
 	plr = Cmd_Argc() >= 3 ? atoi(Cmd_Argv(2)) : 0;
 
-	if (plr != 0 && spec_track != plr - 1) {
+	if (plr != 0 && cl.spec_track != plr - 1) {
 		return;
 	}
 

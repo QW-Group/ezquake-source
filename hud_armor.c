@@ -82,7 +82,7 @@ static void SCR_HUD_DrawArmor(hud_t *hud)
 		level = 0;
 		low = true;
 	}
-	if (cl.spectator == autocam) {
+	if (cl.spectator == cl.autocam) {
 		SCR_HUD_DrawNum(hud, level, low, scale->value, style->value, digits->value, align->string, proportional->integer);
 	}
 }
@@ -109,7 +109,7 @@ static void SCR_HUD_DrawArmorIcon(hud_t *hud)
 
 	height = (style ? 8 : 24) * scale;
 
-	if (cl.spectator == autocam) {
+	if (cl.spectator == cl.autocam) {
 		if (style) {
 			int c;
 
@@ -189,7 +189,7 @@ void SCR_HUD_DrawBarArmor(hud_t *hud)
 		color_unnatural = HUD_FindVar(hud, "color_unnatural");
 	}
 
-	if (HUD_PrepareDraw(hud, width->integer, height->integer, &x, &y) && (cl.spectator == autocam)) {
+	if (HUD_PrepareDraw(hud, width->integer, height->integer, &x, &y) && (cl.spectator == cl.autocam)) {
 		if (!width->integer || !height->integer) {
 			return;
 		}
