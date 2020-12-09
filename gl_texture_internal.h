@@ -56,5 +56,6 @@ void GL_BindTextureUnit(GLuint unit, texture_ref reference);
 qbool GL_EnsureTextureUnitBound(int unit, texture_ref reference);
 
 void GL_CreateTextureNames(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures);
+void GL_BindTextureToTarget(GLenum textureUnit, GLenum targetType, GLuint name);
 
 #endif // GL_TEXTURE_INTERNAL_HEADER

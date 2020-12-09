@@ -63,6 +63,7 @@
 - Fixed bug causing geometry-edge overlay to not be aligned when using framebuffer scaling (3.5 bug, reported by hemostx)
 - Fixed bug causing spectator issue when tracking player on server, reconnecting and then tracking again (old bug)
 - Fixed bug causing crash when tracker fills up when minimised (3.5 bug)
+- Fixed bug causing incorrect texture to be bound when rendering once new texture created (#452, 3.5 bug, reported by pattah)
 
 ### Ruleset-related changes
 

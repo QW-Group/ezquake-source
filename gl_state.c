@@ -444,6 +444,12 @@ void GL_ApplyRenderingState(r_state_id id)
 GLuint GL_TextureNameFromReference(texture_ref ref);
 GLenum GL_TextureTargetFromReference(texture_ref ref);
 
+void GL_BindTextureToTarget(GLenum textureUnit, GLenum targetType, GLuint name)
+{
+	GL_SelectTexture(textureUnit);
+	GL_BindTexture(targetType, name, true);
+}
+
 static qbool GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool always_select_unit)
 {
 	int unit_num = unit - GL_TEXTURE0;
