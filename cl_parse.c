@@ -2075,6 +2075,7 @@ void CL_ProcessUserInfo(int slot, player_info_t *player, char *key)
 
 	if (slot == cl.playernum && player->name[0]) {
 		if (cl.spectator != player->spectator) {
+			Cam_Reset();
 			cl.spectator = player->spectator;
 			TP_RefreshSkins();
 		}

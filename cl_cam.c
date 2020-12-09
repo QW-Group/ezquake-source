@@ -607,6 +607,7 @@ void Cam_Reset(void)
 	cl.autocam = CAM_NONE;
 	cl.spec_track = 0;
 	cl.ideal_track = 0;
+	cl.spec_locked = false;
 }
 
 //Fixes spectator chasecam demos
