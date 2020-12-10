@@ -403,11 +403,11 @@ void Cam_Track(usercmd_t *cmd)
 			Cam_Lock(cl.ideal_track);
 		}
 
-		if (frame->playerstate[cl.spec_track].messagenum != cl.parsecount || Cam_MainTrackNum() != cl.ideal_track) {
+		if ((frame->playerstate[cl.spec_track].messagenum != cl.parsecount && frame->playerstate[cl.spec_track].messagenum != cl.oldparsecount) || Cam_MainTrackNum() != cl.ideal_track) {
 			int i;
 
 			for (i = 0; i < MAX_CLIENTS - 1; i++) {
-				if (frame->playerstate[i].messagenum == cl.parsecount) {
+				if ((frame->playerstate[i].messagenum == cl.parsecount || frame->playerstate[i].messagenum == cl.oldparsecount)) {
 					break;
 				}
 			}
