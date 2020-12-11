@@ -539,15 +539,13 @@ void GLC_StateBeginImageDrawNonGLSL(qbool is_text)
 	}
 }
 
-void GLC_StateBeginAliasOutlineFrame(void)
+void GLC_StateBeginAliasOutlineFrame(qbool weaponmodel)
 {
 	extern cvar_t gl_outline_width;
 
-	R_ApplyRenderingState(r_state_aliasmodel_outline);
-	// Limit outline width, since even width == 3 can be considered as cheat.
+	R_ApplyRenderingState(weaponmodel ? r_state_weaponmodel_outline : r_state_aliasmodel_outline);
 	R_GLC_DisableColorPointer();
 	R_CustomColor(0, 0, 0, 1);
-	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 }
 
 #endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL

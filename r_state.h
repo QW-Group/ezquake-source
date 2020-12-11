@@ -268,6 +268,7 @@ typedef enum {
 
 	r_state_aliasmodel_shadows,
 	r_state_aliasmodel_outline,
+	r_state_weaponmodel_outline,
 
 	r_state_aliasmodel_opaque_batch,
 	r_state_aliasmodel_translucent_batch,

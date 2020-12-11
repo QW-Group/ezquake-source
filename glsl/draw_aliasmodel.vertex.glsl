@@ -62,7 +62,7 @@ void main()
 		}
 	}
 	else if (mode == EZQ_ALIAS_MODE_OUTLINES) {
-		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position, 1);
+		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position + models[_instanceId].outlineNormalScale * normalCoords, 1);
 	}
 	else {
 		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position + normalCoords * 0.5, 1);

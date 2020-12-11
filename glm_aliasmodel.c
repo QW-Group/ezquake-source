@@ -78,6 +78,7 @@ static int alias_draw_count;
 
 typedef struct uniform_block_aliasmodel_s {
 	float modelViewMatrix[16];
+	// offset: 16 * float
 	float color[4];
 	int amFlags;
 	float yaw_angle_rad;
@@ -86,7 +87,7 @@ typedef struct uniform_block_aliasmodel_s {
 	int materialSamplerMapping;
 	float lerpFraction;
 	float minLumaMix;
-	int unused_space;
+	float outline_normal_scale;
 } uniform_block_aliasmodel_t;
 
 typedef struct block_aliasmodels_s {
@@ -325,6 +326,7 @@ static void GLM_QueueAliasModelDrawImpl(
 	uniform->color[3] = color[3];
 	uniform->materialSamplerMapping = textureSampler;
 	uniform->minLumaMix = 1.0f - (ent->full_light ? bound(0, gl_fb_models.integer, 1) : 0);
+	uniform->outline_normal_scale = ent->outlineScale;
 
 	// Add to queues
 	GLM_QueueDrawCall(type, vbo_start, vbo_count, alias_draw_count);

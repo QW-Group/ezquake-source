@@ -291,14 +291,13 @@ static qbool R_CanDrawModelShadow(entity_t* ent)
 	return (r_shadows.integer && !ent->full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha;
 }
 
-void R_DrawAliasModel(entity_t *ent)
+void R_DrawAliasModel(entity_t *ent, qbool outline)
 {
 	int anim, skinnum;
 	texture_ref texture, fb_texture;
 	aliashdr_t* paliashdr;
 	maliasframedesc_t *oldframe, *frame;
 	byte *color32bit = NULL;
-	qbool outline = false;
 	float oldMatrix[16];
 
 	if (R_FilterEntity(ent)) {
@@ -312,7 +311,7 @@ void R_DrawAliasModel(entity_t *ent)
 	if (amf_coronas.integer) {
 		if (IsFlameModel(ent->model)) {
 			//FIXME: This is slow and pathetic as hell, really we should just check the entity
-			//alternativley add some kind of permanent client side TE for the torch
+			//alternatively add some kind of permanent client side TE for the torch
 			NewStaticLightCorona(C_FIRE, ent->origin, ent->entity_id);
 		}
 		else if (ent->model->modhint == MOD_TELEPORTDESTINATION) {
@@ -346,6 +345,13 @@ void R_DrawAliasModel(entity_t *ent)
 	shadedots = r_avertexnormal_dots[((int)(ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 	ent->r_modelalpha = (ent->alpha ? ent->alpha : 1);
 
+	if (ent->r_modelalpha != 1 && outline) {
+		// todo
+		R_PopModelviewMatrix(oldMatrix);
+		R_TraceLeaveRegion(true);
+		return;
+	}
+
 	anim = (int)(r_refdef2.time * 10) & 3;
 	skinnum = ent->skinnum;
 	if (skinnum >= paliashdr->numskins || skinnum < 0) {
@@ -357,14 +363,7 @@ void R_DrawAliasModel(entity_t *ent)
 	fb_texture = paliashdr->glc_fb_texturenum[skinnum][anim];
 
 	R_OverrideModelTextures(ent, &texture, &fb_texture, &color32bit);
-
-	// Check for outline on models.
-	// We don't support outline for transparent models,
-	// and we also check for ruleset, since we don't want outline on eyes.
-	outline = ((gl_outline.integer & 1) && ent->r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
-
 	R_RenderAliasModelEntity(ent, paliashdr, color32bit, texture, fb_texture, oldframe, frame, outline, ent->effects);
-
 	R_PopModelviewMatrix(oldMatrix);
 
 	// VULT MOTION TRAILS - No shadows on motion trails
@@ -699,13 +698,14 @@ void R_DrawViewModel(void)
 
 	switch (gun.model->type) {
 		case mod_alias:
-			R_DrawAliasModel(&gun);
+			// don't support outlining weaponmodel just yet
+			R_DrawAliasModel(&gun, false);
 			if (gun.effects) {
 				renderer.DrawAliasModelPowerupShell(&gun);
 			}
 			break;
 		case mod_alias3:
-			renderer.DrawAlias3Model(&gun);
+			renderer.DrawAlias3Model(&gun, false);
 			if (gun.effects) {
 				renderer.DrawAlias3ModelPowerupShell(&gun);
 			}
@@ -1042,8 +1042,6 @@ void R_AliasModelPrepare(entity_t* ent, int framecount, int* frame1_, int* frame
 	*frame1_ = frame1;
 	*frame2_ = frame2;
 
-	// Check for outline on models.
 	// We don't support outline for transparent models,
-	// and we also check for ruleset, since we don't want outline on eyes.
-	*outline = ((gl_outline.integer & 1) && ent->r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
+	*outline &= ent->r_modelalpha == 1;
 }

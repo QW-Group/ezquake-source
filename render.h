@@ -95,6 +95,9 @@ typedef struct entity_s {
 	int       entity_id;
 	int       corona_id;
 	double    particle_time;
+
+	// outlining
+	float     outlineScale;
 } entity_t;
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
@@ -149,6 +152,10 @@ typedef struct {
 	qbool           solidTexTurb;
 	qbool           drawCaustics;
 	qbool           drawWorldOutlines;
+	float           distanceScale;
+
+	vec3_t          outline_vpn;
+	float           outlineBase;
 
 	float           powerup_scroll_params[4];
 } refdef2_t;

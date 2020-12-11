@@ -93,7 +93,7 @@ struct AliasModel {
 	int materialTextureMapping;
 	float lerpFraction;
 	float minLumaMix;
-	int unused_space;
+	float outlineNormalScale;
 };
 
 struct model_surface {

@@ -972,7 +972,7 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 						renderer.DrawAliasModelPowerupShell(&todraw->ent);
 					}
 					else {
-						R_DrawAliasModel(&todraw->ent);
+						R_DrawAliasModel(&todraw->ent, type == visent_outlines);
 					}
 					break;
 				case mod_alias3:
@@ -980,7 +980,7 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 						renderer.DrawAlias3ModelPowerupShell(&todraw->ent);
 					}
 					else {
-						renderer.DrawAlias3Model(&todraw->ent);
+						renderer.DrawAlias3Model(&todraw->ent, type == visent_outlines);
 					}
 					break;
 				case mod_unknown:
@@ -1023,7 +1023,7 @@ static void R_DrawEntities(void)
 
 	R_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, r_state_sprites_textured, null_texture_reference, 0, r_primitive_triangle_strip);
 	qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
-	for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
+	for (ent_type = 0; ent_type < visent_max; ++ent_type) {
 		R_DrawEntitiesOnList(&cl_visents, ent_type);
 	}
 	if (R_UseModernOpenGL() || R_UseVulkan()) {

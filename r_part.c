@@ -638,7 +638,7 @@ static void Classic_PrepareParticles(void)
 	qparticle_t* p;
 	unsigned char *at;
 	float theAlpha;
-	float scale, r_partscale;
+	float scale;
 	vec3_t up, right;
 	int i;
 	float dist_precalc;
@@ -651,10 +651,9 @@ static void Classic_PrepareParticles(void)
 
 	frameStats.particle_count = r_numactiveparticles;
 
-	r_partscale = 0.004 * tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
 	VectorScale(vup, 1.5, up);
 	VectorScale(vright, 1.5, right);
-	VectorScale(vpn, r_partscale, scaled_vpn);
+	VectorScale(vpn, 0.004 * r_refdef2.distanceScale, scaled_vpn);
 
 	// load texture if not done yet
 	if (!R_TextureReferenceIsValid(particletexture)) {

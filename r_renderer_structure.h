@@ -20,7 +20,7 @@ RENDERER_METHOD(void, DrawWorld, void)
 
 // Entities
 RENDERER_METHOD(void, DrawAliasFrame, entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfrac)
-RENDERER_METHOD(void, DrawAlias3Model, entity_t *ent)
+RENDERER_METHOD(void, DrawAlias3Model, entity_t *ent, qbool outline)
 RENDERER_METHOD(void, DrawAliasModelShadow, entity_t* ent)
 RENDERER_METHOD(void, DrawAliasModelPowerupShell, entity_t *ent)
 RENDERER_METHOD(void, DrawAlias3ModelPowerupShell, entity_t *ent)

@@ -50,7 +50,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static void GLC_DrawAliasOutlineFrame_Immediate(entity_t* ent, model_t* model, int pose1, int pose2, float lerpFracDefault);
 static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, vec3_t shadevector);
-static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int firstVert, int verts);
+static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int firstVert, int verts, qbool weaponmodel);
 
 extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 
@@ -331,6 +331,26 @@ qbool GLC_AliasModelShellCompile(void)
 	return R_ProgramReady(r_program_aliasmodel_shell_glc);
 }
 
+qbool GLC_AliasModelOutlineCompile(void)
+{
+	extern cvar_t r_lerpmuzzlehack;
+	int flags = (r_lerpmuzzlehack.integer ? DRAWFLAGS_MUZZLEHACK : 0);
+
+	if (R_ProgramRecompileNeeded(r_program_aliasmodel_outline_glc, flags)) {
+		char included_definitions[512];
+
+		strlcpy(included_definitions, "#define BACKFACE_PASS\n", sizeof(included_definitions));
+		if (flags & DRAWFLAGS_MUZZLEHACK) {
+			strlcat(included_definitions, "#define EZQ_ALIASMODEL_MUZZLEHACK\n", sizeof(included_definitions));
+		}
+
+		R_ProgramCompileWithInclude(r_program_aliasmodel_outline_glc, included_definitions);
+		R_ProgramSetCustomOptions(r_program_aliasmodel_outline_glc, flags);
+	}
+
+	return R_ProgramReady(r_program_aliasmodel_outline_glc);
+}
+
 static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfrac)
 {
 	extern cvar_t r_lerpmuzzlehack, gl_program_aliasmodels;
@@ -342,41 +362,44 @@ static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int po
 	int firstVert = model->vbo_start + pose1 * paliashdr->vertsPerPose;
 	int subprogram;
 
-	VectorNormalize(angle_vector);
-	R_AliasModelColor(ent, color, &invalidate_texture);
-
-	subprogram = GLC_AliasModelSubProgramIndex(
-		!invalidate_texture,
-		gl_fb_models.integer && (ent->ambientlight == 4096 && ent->shadelight == 4096),
-		r_refdef2.drawCaustics && (render_effects & RF_CAUSTICS),
-		r_lerpmuzzlehack.integer && (render_effects & RF_WEAPONMODEL)
-	);
-
-	if (buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompileSpecific(subprogram)) {
-		R_ProgramUse(r_program_aliasmodel_std_glc);
-		R_ProgramUniform3fv(r_program_uniform_aliasmodel_std_glc_angleVector, angle_vector);
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_shadelight, ent->shadelight / 256.0f);
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_ambientlight, ent->ambientlight / 256.0f);
-		R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_fsTextureEnabled, invalidate_texture ? 0 : 1);
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsMinLumaMix, 1.0f - (ent->full_light ? bound(0, gl_fb_models.integer, 1) : 0));
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsCausticEffects, render_effects & RF_CAUSTICS ? 1 : 0);
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_lerpFraction, lerpfrac);
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_time, cl.time);
-
-		GLC_StateBeginDrawAliasFrameProgram(texture, underwatertexture, render_effects, ent->custom_model, ent->r_modelalpha);
-		R_CustomColor(color[0], color[1], color[2], color[3]);
-		GL_DrawArrays(GL_TRIANGLES, firstVert, paliashdr->vertsPerPose);
-		if (render_effects & RF_CAUSTICS) {
-			GLC_StateEndUnderwaterAliasModelCaustics();
+	if (outline) {
+		if (buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelOutlineCompile()) {
+			R_ProgramUse(r_program_aliasmodel_outline_glc);
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_outline_glc_lerpFraction, lerpfrac);
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_outline_glc_outlineScale, ent->outlineScale);
+			GLC_DrawCachedAliasOutlineFrame(model, GL_TRIANGLES, firstVert, paliashdr->vertsPerPose, ent->renderfx & RF_WEAPONMODEL);
 		}
+	}
+	else {
+		VectorNormalize(angle_vector);
+		R_AliasModelColor(ent, color, &invalidate_texture);
 
-		if (outline) {
+		subprogram = GLC_AliasModelSubProgramIndex(
+			!invalidate_texture,
+			gl_fb_models.integer && (ent->ambientlight == 4096 && ent->shadelight == 4096),
+			r_refdef2.drawCaustics && (render_effects & RF_CAUSTICS),
+			r_lerpmuzzlehack.integer && (render_effects & RF_WEAPONMODEL)
+		);
+
+		if (buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompileSpecific(subprogram)) {
+			R_ProgramUse(r_program_aliasmodel_std_glc);
+			R_ProgramUniform3fv(r_program_uniform_aliasmodel_std_glc_angleVector, angle_vector);
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_shadelight, ent->shadelight / 256.0f);
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_ambientlight, ent->ambientlight / 256.0f);
+			R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_fsTextureEnabled, invalidate_texture ? 0 : 1);
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsMinLumaMix, 1.0f - (ent->full_light ? bound(0, gl_fb_models.integer, 1) : 0));
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsCausticEffects, render_effects & RF_CAUSTICS ? 1 : 0);
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_lerpFraction, lerpfrac);
+			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_time, cl.time);
+
+			GLC_StateBeginDrawAliasFrameProgram(texture, underwatertexture, render_effects, ent->custom_model, ent->r_modelalpha);
+			R_CustomColor(color[0], color[1], color[2], color[3]);
+			GL_DrawArrays(GL_TRIANGLES, firstVert, paliashdr->vertsPerPose);
 			if (render_effects & RF_CAUSTICS) {
-				R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fsCausticEffects, 0);
+				GLC_StateEndUnderwaterAliasModelCaustics();
 			}
-			GLC_DrawCachedAliasOutlineFrame(model, GL_TRIANGLES, firstVert, paliashdr->vertsPerPose);
+			R_ProgramUse(r_program_none);
 		}
-		R_ProgramUse(r_program_none);
 	}
 }
 
@@ -393,12 +416,14 @@ static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int 
 	float lerpFracDefault = lerpfrac;
 	vbo_model_vert_t* vbo_buffer = (vbo_model_vert_t*)model->temp_vbo_buffer;
 
-	int *order, count;
 	vec3_t interpolated_verts;
-	vbo_model_vert_t*verts1, *verts2;
+	vbo_model_vert_t *verts1, *verts2;
 
 	R_ProgramUse(r_program_none);
-	if (render_effects & RF_CAUSTICS) {
+	if (outline) {
+		GLC_StateBeginAliasOutlineFrame(render_effects & RF_WEAPONMODEL);
+	}
+	else if (render_effects & RF_CAUSTICS) {
 		GLC_StateBeginUnderwaterAliasModelCaustics(texture, fb_texture);
 	}
 	else {
@@ -417,7 +442,17 @@ static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int 
 		float t = verts1->texture_coords[1];
 
 		GLC_AliasModelLightPoint(color, ent, verts1, verts2, lerpfrac);
-		VectorInterpolate(verts1->position, lerpfrac, verts2->position, interpolated_verts);
+		if (outline) {
+			vec3_t v1, v2;
+			int firstVert = model->vbo_start + pose1 * paliashdr->vertsPerPose;
+			
+			VectorMA(verts1->position, ent->outlineScale, verts1->normal, v1);
+			VectorMA(verts2->position, ent->outlineScale, verts2->normal, v2);
+			VectorInterpolate(v1, lerpfrac, v2, interpolated_verts);
+		}
+		else {
+			VectorInterpolate(verts1->position, lerpfrac, verts2->position, interpolated_verts);
+		}
 		if (cache) {
 			temp_aliasmodel_buffer[i].texture_coords[0] = s;
 			temp_aliasmodel_buffer[i].texture_coords[1] = t;
@@ -451,14 +486,6 @@ static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int 
 	if (render_effects & RF_CAUSTICS) {
 		GLC_StateEndUnderwaterAliasModelCaustics();
 	}
-	if (outline) {
-		if (cache) {
-			GLC_DrawCachedAliasOutlineFrame(model, primitive, 0, position);
-		}
-		else {
-			GLC_DrawAliasOutlineFrame_Immediate(ent, model, pose1, pose2, lerpFracDefault);
-		}
-	}
 }
 
 void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfrac)
@@ -467,6 +494,9 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, tex
 
 	if (gl_program_aliasmodels.integer) {
 		GLC_DrawAliasFrameImpl_Program(ent, model, pose1, pose2, texture, fb_texture, outline, effects, render_effects | (draw_caustics ? RF_CAUSTICS : 0), lerpfrac);
+	}
+	else if (outline) {
+		GLC_DrawAliasFrameImpl_Immediate(ent, model, pose1, pose2, texture, fb_texture, outline, effects, render_effects, lerpfrac);
 	}
 	else {
 		if (R_TextureReferenceIsValid(fb_texture) && gl_mtexable) {
@@ -487,9 +517,9 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, tex
 }
 
 // This can be used with program or immediate mode
-static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int firstVert, int verts)
+static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int firstVert, int verts, qbool weaponmodel)
 {
-	GLC_StateBeginAliasOutlineFrame();
+	GLC_StateBeginAliasOutlineFrame(weaponmodel);
 
 	GL_DrawArrays(primitive, firstVert, verts);
 }
@@ -497,14 +527,13 @@ static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, in
 static void GLC_DrawAliasOutlineFrame_Immediate(entity_t* ent, model_t* model, int pose1, int pose2, float lerpfracDefault)
 {
 	int *order, count;
-	vec3_t interpolated_verts;
 	float lerpfrac;
 	ez_trivertx_t *verts1, *verts2;
 	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
 	extern cvar_t r_lerpmuzzlehack;
 	qbool limit_lerp = r_lerpmuzzlehack.integer && (ent->model->renderfx & RF_LIMITLERP);
 
-	GLC_StateBeginAliasOutlineFrame();
+	GLC_StateBeginAliasOutlineFrame(ent->renderfx & RF_WEAPONMODEL);
 
 	lerpfrac = lerpfracDefault;
 
@@ -531,6 +560,8 @@ static void GLC_DrawAliasOutlineFrame_Immediate(entity_t* ent, model_t* model, i
 		}
 
 		do {
+			vec3_t v1, v2, v;
+
 			order += 2;
 
 			lerpfrac = lerpfracDefault;
@@ -538,8 +569,11 @@ static void GLC_DrawAliasOutlineFrame_Immediate(entity_t* ent, model_t* model, i
 				lerpfrac = 1;
 			}
 
-			VectorInterpolate(verts1->v, lerpfrac, verts2->v, interpolated_verts);
-			GLC_Vertex3fv(interpolated_verts);
+			VectorMA(verts1->v, 0.5f, r_avertexnormals[verts1->lightnormalindex], v1);
+			VectorMA(verts2->v, 0.5f, r_avertexnormals[verts2->lightnormalindex], v2);
+			VectorInterpolate(v1, lerpfrac, v2, v);
+
+			GLC_Vertex3fv(v);
 
 			verts1++;
 			verts2++;

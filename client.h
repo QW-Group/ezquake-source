@@ -706,6 +706,7 @@ typedef struct {
 extern	clientState_t	cl;
 
 typedef enum visentlist_entrytype_s {
+	visent_outlines,
 	visent_firstpass,
 	visent_normal,
 	visent_alpha,

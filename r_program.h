@@ -19,6 +19,7 @@ typedef enum {
 	r_program_aliasmodel_std_glc,
 	r_program_aliasmodel_shell_glc,
 	r_program_aliasmodel_shadow_glc,
+	r_program_aliasmodel_outline_glc,
 	r_program_world_drawflat_glc,
 	r_program_world_textured_glc,
 	r_program_world_secondpass_glc,
@@ -96,6 +97,8 @@ typedef enum {
 	r_program_uniform_sprites_glc_alphaThreshold,
 	r_program_uniform_hud_images_glc_primarySampler,
 	r_program_uniform_hud_images_glc_secondarySampler,
+	r_program_uniform_aliasmodel_outline_glc_lerpFraction,
+	r_program_uniform_aliasmodel_outline_glc_outlineScale,
 	r_program_uniform_brushmodel_alphatested_outlines,
 	r_program_uniform_brushmodel_alphatested_sampler,
 	r_program_uniform_turb_glc_alpha,
@@ -148,7 +151,6 @@ void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, const float* val
 int R_ProgramUniformGet1i(r_program_uniform_id uniform_id, int default_value);
 
 int R_ProgramAttributeLocation(r_program_attribute_id attr_id);
-#define R_ProgramUniformValid(attr_id) (R_ProgramAttributeLocation(attr_id) >= 0)
 
 // Check if a program needs to be recompiled
 qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options);

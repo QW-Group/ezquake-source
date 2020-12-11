@@ -166,12 +166,17 @@ void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 	}
 }
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+extern cvar_t gl_program_aliasmodels;
+#define R_GLSLAliasModelRendering() (gl_program_aliasmodels.integer)
+#else
+#define R_GLSLAliasModelRendering() (1)
+#endif
+
 void R_AliasModelPopulateVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position)
 {
-	extern cvar_t gl_program_aliasmodels;
-
 	// Don't delete if using immediate mode as we loop over them ourselves
-	if (mod->temp_vbo_buffer && gl_program_aliasmodels.integer) {
+	if (mod->temp_vbo_buffer && R_GLSLAliasModelRendering()) {
 		memcpy(aliasModelBuffer + position, mod->temp_vbo_buffer, mod->vertsInVBO * sizeof(vbo_model_vert_t));
 
 		mod->vbo_start = position;
