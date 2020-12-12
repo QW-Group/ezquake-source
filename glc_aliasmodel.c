@@ -48,7 +48,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "tr_types.h"
 #include "r_renderer.h"
 
-static void GLC_DrawAliasOutlineFrame_Immediate(entity_t* ent, model_t* model, int pose1, int pose2, float lerpFracDefault);
 static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, vec3_t shadevector);
 static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int firstVert, int verts, qbool weaponmodel);
 

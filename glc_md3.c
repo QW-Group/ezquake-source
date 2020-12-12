@@ -42,6 +42,8 @@ qbool GLC_AliasModelStandardCompileSpecific(int subprogram_index);
 int GLC_AliasModelSubProgramIndex(qbool textured, qbool fullbright, qbool caustics, qbool muzzlehack);
 qbool GLC_AliasModelShellCompile(void);
 
+#if 0
+// FIXME: get rid of cos/sin lookups etc
 static void GLC_AliasModelLightPointMD3(float color[4], const entity_t* ent, vbo_model_vert_t* vert1, vbo_model_vert_t* vert2, float lerpfrac)
 {
 	float l;
@@ -107,6 +109,7 @@ static void GLC_AliasModelLightPointMD3(float color[4], const entity_t* ent, vbo
 	color[2] *= ent->r_modelalpha;
 	color[3] = ent->r_modelalpha;
 }
+#endif
 
 static void GLC_DrawMD3Frame(const entity_t* ent, const float* modelColor, md3Header_t* pheader, int frame1, int frame2, float lerpfracDefault, const surfinf_t* surface_info, qbool invalidate_texture, qbool outline, qbool additive_pass)
 {
@@ -114,7 +117,6 @@ static void GLC_DrawMD3Frame(const entity_t* ent, const float* modelColor, md3He
 	md3Surface_t *surf;
 	int surfnum;
 	int numverts, i;
-	float normalScale = 0;
 	vbo_model_vert_t* vbo_buffer = (vbo_model_vert_t*)ent->model->temp_vbo_buffer;
 	int vertsPerFrame = ent->model->vertsInVBO / pheader->numFrames;
 	int first_vert_f1 = vertsPerFrame * frame1;
