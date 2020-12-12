@@ -25,14 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void GLM_StateBeginDrawWorldOutlines(void)
 {
-	extern cvar_t gl_outline_width;
-
 	R_TraceEnterFunctionRegion;
 
 	// FIXME: This was different for GLC & GLM, why?  // disable depth-test
 	R_ApplyRenderingState(r_state_world_outline);
-	// limit outline width, since even width == 3 can be considered as cheat.
-	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 
 	R_TraceLeaveFunctionRegion;
 }
@@ -69,11 +65,7 @@ void GLM_StateBeginImageDraw(void)
 
 void GLM_StateBeginAliasOutlineBatch(void)
 {
-	extern cvar_t gl_outline_width;
-
 	R_ApplyRenderingState(r_state_aliasmodel_outline);
-	// Limit outline width, since even width == 3 can be considered as cheat.
-	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 }
 
 void GLM_StateBeginAliasModelBatch(qbool translucent, qbool additive)

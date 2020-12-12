@@ -56,7 +56,6 @@ extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 
 extern cvar_t    r_lerpframes;
 extern cvar_t    gl_outline;
-extern cvar_t    gl_outline_width;
 extern cvar_t    gl_program_aliasmodels;
 
 extern float     r_framelerp;

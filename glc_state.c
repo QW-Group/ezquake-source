@@ -134,10 +134,7 @@ void GLC_StateBeginEmitDetailPolys(void)
 
 void GLC_StateBeginDrawMapOutline(void)
 {
-	extern cvar_t gl_outline_width;
-
 	R_ApplyRenderingState(r_state_world_outline);
-	R_CustomLineWidth(bound(0.1, gl_outline_width.value, 3.0));
 }
 
 void GLC_StateBeginAliasPowerupShell(qbool weapon)
@@ -557,8 +554,6 @@ void GLC_StateBeginImageDrawNonGLSL(qbool is_text)
 
 void GLC_StateBeginAliasOutlineFrame(qbool weaponmodel)
 {
-	extern cvar_t gl_outline_width;
-
 	R_ApplyRenderingState(weaponmodel ? r_state_weaponmodel_outline : r_state_aliasmodel_outline);
 	R_GLC_DisableColorPointer();
 	R_CustomColor(0, 0, 0, 1);

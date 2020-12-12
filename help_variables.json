@@ -5060,12 +5060,6 @@
         }
       ]
     },
-    "gl_outline_width": {
-      "default": "2",
-      "desc": "Determines outline width when gl_outline enabled.  Limits of 0.1 to 3.0",
-      "group-id": "35",
-      "type": "float"
-    },
     "gl_part_blobs": {
       "default": "0",
       "group-id": "36",

@@ -93,7 +93,6 @@ extern float     bubblecolor[NUM_DLIGHTTYPES][4];
 
 extern cvar_t    r_lerpframes;
 extern cvar_t    gl_outline;
-extern cvar_t    gl_outline_width;
 
 static custom_model_color_t custom_model_colors[] = {
 	// LG beam

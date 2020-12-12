@@ -213,7 +213,6 @@ cvar_t gl_motion_blur_hurt                 = {"gl_motion_blur_hurt", "0.5"};
 cvar_t gl_motion_blur_dead                 = {"gl_motion_blur_dead", "0.5"};
 cvar_t gl_modulate                         = {"gl_modulate", "1"};
 cvar_t gl_outline                          = {"gl_outline", "0"};
-cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
 cvar_t r_fx_geometry                       = {"r_fx_geometry", "0"};
 
 cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0", CVAR_LATCH};
@@ -621,7 +620,6 @@ void R_Init(void)
 	Cvar_Register(&gl_modulate);
 
 	Cvar_Register(&gl_outline);
-	Cvar_Register(&gl_outline_width);
 
 	Cvar_Register(&r_fx_geometry);
 
