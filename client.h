@@ -711,6 +711,7 @@ typedef enum visentlist_entrytype_s {
 	visent_normal,
 	visent_alpha,
 	visent_shells,
+	visent_additive,
 
 	visent_max
 } visentlist_entrytype_t;

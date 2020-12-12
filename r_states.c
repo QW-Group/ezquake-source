@@ -317,6 +317,7 @@ static void R_InitialiseEntityStates(void)
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 	R_GLC_TextureUnitSet(state, 1, true, r_texunit_mode_decal);
 
+	// transparent
 	state = R_CopyRenderingState(r_state_aliasmodel_notexture_transparent, r_state_aliasmodel_notexture_opaque, "transparentAliasModelNoTex");
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
@@ -327,16 +328,27 @@ static void R_InitialiseEntityStates(void)
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 
+	// additive
+	state = R_CopyRenderingState(r_state_aliasmodel_notexture_additive, r_state_aliasmodel_notexture_opaque, "additiveAliasModelNoTex");
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_additive_blending;
+	state = R_CopyRenderingState(r_state_aliasmodel_singletexture_additive, r_state_aliasmodel_singletexture_opaque, "additiveAliasModelSingleTex");
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_additive_blending;
+
 	state = R_CopyRenderingState(r_state_weaponmodel_singletexture_opaque, r_state_aliasmodel_singletexture_opaque, "weaponModelSingleOpaque");
 	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
-
-	state = R_CopyRenderingState(r_state_weaponmodel_singletexture_transparent, r_state_aliasmodel_singletexture_transparent, "weaponModelSingleTransparent");
-	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
-
 	state = R_CopyRenderingState(r_state_weaponmodel_multitexture_opaque, r_state_weaponmodel_singletexture_opaque, "weaponModelMultiOpaque");
 	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
 
-	state = R_CopyRenderingState(r_state_weaponmodel_multitexture_transparent, r_state_weaponmodel_singletexture_transparent, "weaponModelMultiOpaque");
+	// transparent
+	state = R_CopyRenderingState(r_state_weaponmodel_singletexture_transparent, r_state_aliasmodel_singletexture_transparent, "weaponModelSingleTransparent");
+	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
+	state = R_CopyRenderingState(r_state_weaponmodel_multitexture_transparent, r_state_weaponmodel_singletexture_transparent, "weaponModelMultiTransparent");
+	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
+
+	// additive
+	state = R_CopyRenderingState(r_state_weaponmodel_singletexture_additive, r_state_aliasmodel_singletexture_additive, "weaponModelSingleAdditive");
 	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
 
 	state = R_InitRenderingState(r_state_aliasmodel_shadows, true, "aliasModelShadowState", vao_aliasmodel);

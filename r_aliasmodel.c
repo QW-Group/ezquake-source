@@ -705,10 +705,11 @@ void R_DrawViewModel(void)
 			}
 			break;
 		case mod_alias3:
-			renderer.DrawAlias3Model(&gun, false);
+			renderer.DrawAlias3Model(&gun, false, false);
 			if (gun.effects) {
 				renderer.DrawAlias3ModelPowerupShell(&gun);
 			}
+			renderer.DrawAlias3Model(&gun, false, true);
 			break;
 		default:
 			Com_Printf("Not drawing view model of type %i\n", gun.model->type);

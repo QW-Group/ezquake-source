@@ -108,7 +108,7 @@ static void GLC_AliasModelLightPointMD3(float color[4], const entity_t* ent, ezM
 	color[3] = ent->r_modelalpha;
 }
 
-static void GLC_DrawMD3Frame(const entity_t* ent, md3Header_t* pheader, int frame1, int frame2, float lerpfrac, const surfinf_t* surface_info, qbool invalidate_texture, qbool outline)
+static void GLC_DrawMD3Frame(const entity_t* ent, md3Header_t* pheader, int frame1, int frame2, float lerpfrac, const surfinf_t* surface_info, qbool invalidate_texture, qbool outline, qbool additive_pass)
 {
 	md3Surface_t *surf;
 	int surfnum;
@@ -120,6 +120,12 @@ static void GLC_DrawMD3Frame(const entity_t* ent, md3Header_t* pheader, int fram
 	float normalScale = 0;
 
 	MD3_ForEachSurface(pheader, surf, surfnum) {
+		// FIXME: hack for not reading shader types
+		qbool additive_surface = ((ent->model && ent->model->modhint & MOD_VMODEL) && surfnum >= 1);
+		if (additive_surface != additive_pass) {
+			continue;
+		}
+
 		// loop through the surfaces.
 		int pose1 = frame1 * surf->numVerts;
 		int pose2 = frame2 * surf->numVerts;
@@ -154,6 +160,7 @@ static void GLC_DrawMD3Frame(const entity_t* ent, md3Header_t* pheader, int fram
 			}
 			else {
 				// TODO: add normals
+
 			}
 
 			VectorInterpolate(v1->xyz, lerpfrac, v2->xyz, interpolated_verts);
@@ -168,7 +175,7 @@ static void GLC_DrawMD3Frame(const entity_t* ent, md3Header_t* pheader, int fram
 	}
 }
 
-static void GLC_DrawAlias3ModelProgram(entity_t* ent, int frame1, qbool invalidate_texture, float* vertexColor, float lerpfrac, qbool outline)
+static void GLC_DrawAlias3ModelProgram(entity_t* ent, int frame1, qbool invalidate_texture, float* vertexColor, float lerpfrac, qbool outline, qbool additive_pass)
 {
 	model_t *mod = ent->model;
 	md3model_t *mhead = (md3model_t *)Mod_Extradata(mod);
@@ -194,8 +201,15 @@ static void GLC_DrawAlias3ModelProgram(entity_t* ent, int frame1, qbool invalida
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_outline_glc_outlineScale, ent->outlineScale);
 		GLC_StateBeginAliasOutlineFrame(weaponmodel);
 		vert_index = first_vert;
-		MD3_ForEachSurface(pheader, surf, surfnum)
-		{
+		MD3_ForEachSurface(pheader, surf, surfnum) {
+			// FIXME: hack for not reading shader types
+			qbool additive_surface = ((mod->modhint & MOD_VMODEL) && surfnum >= 1);
+
+			// don't outline these
+			if (additive_surface) {
+				continue;
+			}
+
 			GL_DrawArrays(GL_TRIANGLES, vert_index, 3 * surf->numTriangles);
 			vert_index += 3 * surf->numTriangles;
 		}
@@ -212,44 +226,53 @@ static void GLC_DrawAlias3ModelProgram(entity_t* ent, int frame1, qbool invalida
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_lerpFraction, lerpfrac);
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_time, cl.time);
 
-		GLC_StateBeginDrawAliasFrameProgram(sinf->texnum, null_texture_reference, ent->renderfx, ent->custom_model, ent->r_modelalpha);
+		GLC_StateBeginDrawAliasFrameProgram(sinf->texnum, null_texture_reference, ent->renderfx, ent->custom_model, ent->r_modelalpha, additive_pass);
 		R_CustomColor(vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
 		vert_index = first_vert;
 		MD3_ForEachSurface(pheader, surf, surfnum) {
-			if (R_TextureReferenceIsValid(sinf[surfnum].texnum) && !invalidate_texture) {
-				renderer.TextureUnitBind(0, sinf[surfnum].texnum);
-			}
+			// FIXME: hack for not reading shader types
+			qbool additive_surface = ((mod->modhint & MOD_VMODEL) && surfnum >= 1);
 
-			GL_DrawArrays(GL_TRIANGLES, vert_index, 3 * surf->numTriangles);
+			if (additive_surface == additive_pass) {
+				if (R_TextureReferenceIsValid(sinf[surfnum].texnum) && !invalidate_texture) {
+					renderer.TextureUnitBind(0, sinf[surfnum].texnum);
+				}
+
+				GL_DrawArrays(GL_TRIANGLES, vert_index, 3 * surf->numTriangles);
+			}
 			vert_index += 3 * surf->numTriangles;
 		}
 		R_ProgramUse(r_program_none);
 	}
 }
 
-static void GLC_DrawAlias3ModelImmediate(entity_t* ent, int frame1, int frame2, qbool invalidate_texture, float* vertexColor, float lerpfrac, qbool outline)
+static void GLC_DrawAlias3ModelImmediate(entity_t* ent, int frame1, int frame2, qbool invalidate_texture, float* vertexColor, float lerpfrac, qbool outline, qbool additive_pass)
 {
 	model_t* mod = ent->model;
 	md3model_t* mhead = (md3model_t *)Mod_Extradata(mod);
 	md3Header_t* pheader = MD3_HeaderForModel(mhead);
 	surfinf_t* sinf = MD3_ExtraSurfaceInfoForModel(mhead);
 
+	if (additive_pass && outline) {
+		return;
+	}
+
 	// Immediate mode
 	R_ProgramUse(r_program_none);
 	if (outline) {
 		GLC_StateBeginAliasOutlineFrame(ent->renderfx & RF_WEAPONMODEL);
-		GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, true, true);
+		GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, true, true, additive_pass);
 	}
 	else {
-		GLC_StateBeginMD3Draw(ent->r_modelalpha, R_TextureReferenceIsValid(sinf->texnum) && !invalidate_texture, ent->renderfx & RF_WEAPONMODEL);
-		GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, invalidate_texture, false);
+		GLC_StateBeginMD3Draw(ent->r_modelalpha, R_TextureReferenceIsValid(sinf->texnum) && !invalidate_texture, ent->renderfx & RF_WEAPONMODEL, additive_pass);
+		GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, invalidate_texture, false, additive_pass);
 	}
 }
 
 /*
 To draw, for each surface, run through the triangles, getting tex coords from s+t, 
 */
-void GLC_DrawAlias3Model(entity_t *ent, qbool outline)
+void GLC_DrawAlias3Model(entity_t *ent, qbool outline, qbool additive_pass)
 {
 	extern cvar_t gl_fb_models, gl_program_aliasmodels;
 
@@ -274,10 +297,10 @@ void GLC_DrawAlias3Model(entity_t *ent, qbool outline)
 	subprogram = GLC_AliasModelSubProgramIndex(!invalidate_texture, ent->full_light, gl_caustics.integer && (ent->renderfx & RF_CAUSTICS), r_lerpmuzzlehack.integer && (render_effects & RF_WEAPONMODEL));
 
 	if (gl_program_aliasmodels.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompileSpecific(subprogram)) {
-		GLC_DrawAlias3ModelProgram(ent, frame1, invalidate_texture, vertexColor, lerpfrac, outline);
+		GLC_DrawAlias3ModelProgram(ent, frame1, invalidate_texture, vertexColor, lerpfrac, outline, additive_pass);
 	}
 	else if (GL_Supported(R_SUPPORT_IMMEDIATEMODE)) {
-		GLC_DrawAlias3ModelImmediate(ent, frame1, frame2, invalidate_texture, vertexColor, lerpfrac, outline);
+		GLC_DrawAlias3ModelImmediate(ent, frame1, frame2, invalidate_texture, vertexColor, lerpfrac, outline, additive_pass);
 	}
 	R_PopModelviewMatrix(oldMatrix);
 }

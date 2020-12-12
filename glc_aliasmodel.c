@@ -392,7 +392,7 @@ static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int po
 			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_lerpFraction, lerpfrac);
 			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_time, cl.time);
 
-			GLC_StateBeginDrawAliasFrameProgram(texture, underwatertexture, render_effects, ent->custom_model, ent->r_modelalpha);
+			GLC_StateBeginDrawAliasFrameProgram(texture, underwatertexture, render_effects, ent->custom_model, ent->r_modelalpha, false);
 			R_CustomColor(color[0], color[1], color[2], color[3]);
 			GL_DrawArrays(GL_TRIANGLES, firstVert, paliashdr->vertsPerPose);
 			if (render_effects & RF_CAUSTICS) {

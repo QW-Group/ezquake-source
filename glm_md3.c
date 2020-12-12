@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "r_matrix.h"
 #include "rulesets.h"
 
-void GLM_DrawAlias3Model(entity_t* ent, qbool outline)
+void GLM_DrawAlias3Model(entity_t* ent, qbool outline, qbool additive_pass)
 {
 	extern void R_AliasSetupLighting(entity_t* ent);
 
@@ -57,6 +57,7 @@ void GLM_DrawAlias3Model(entity_t* ent, qbool outline)
 	v1 = mod->vbo_start + vertsPerFrame * frame1;
 	v2 = mod->vbo_start + vertsPerFrame * frame2;
 	MD3_ForEachSurface(pHeader, surf, surfnum) {
+		// FIXME: hack for not reading different shader types
 		int extra_fx = ((mod->modhint & MOD_VMODEL) && surfnum >= 1 ? RF_ADDITIVEBLEND : 0);
 
 		GLM_DrawAliasModelFrame(

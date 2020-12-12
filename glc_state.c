@@ -153,11 +153,14 @@ void GLC_StateBeginAliasPowerupShell(qbool weapon)
 	}
 }
 
-void GLC_StateBeginMD3Draw(float alpha, qbool textured, qbool weapon)
+void GLC_StateBeginMD3Draw(float alpha, qbool textured, qbool weapon, qbool additive_pass)
 {
 	qbool transparent = (alpha < 1);
 
-	if (weapon) {
+	if (additive_pass) {
+		R_ApplyRenderingState(weapon ? r_state_weaponmodel_singletexture_additive : textured ? r_state_aliasmodel_singletexture_additive : r_state_aliasmodel_notexture_additive);
+	}
+	else if (weapon) {
 		R_ApplyRenderingState(transparent ? r_state_weaponmodel_singletexture_transparent : r_state_weaponmodel_singletexture_opaque);
 	}
 	else if (textured) {
@@ -168,18 +171,26 @@ void GLC_StateBeginMD3Draw(float alpha, qbool textured, qbool weapon)
 	}
 }
 
-void GLC_StateBeginDrawAliasFrameProgram(texture_ref texture, texture_ref fb_texture, int render_effects, struct custom_model_color_s* custom_model, float ent_alpha)
+void GLC_StateBeginDrawAliasFrameProgram(texture_ref texture, texture_ref fb_texture, int render_effects, struct custom_model_color_s* custom_model, float ent_alpha, qbool additive_pass)
 {
 	qbool weapon_model = render_effects & RF_WEAPONMODEL;
 	qbool alpha_blend = (render_effects & RF_ALPHABLEND) || ent_alpha < 1;
+	qbool no_texture = !weapon_model && (!R_TextureReferenceIsValid(texture) || (custom_model && custom_model->fullbright_cvar.integer));
+	qbool multi_texture = custom_model == NULL && R_TextureReferenceIsValid(fb_texture);
 
 	R_TraceEnterFunctionRegion;
 
-	if (!weapon_model && (!R_TextureReferenceIsValid(texture) || (custom_model && custom_model->fullbright_cvar.integer))) {
-		R_ApplyRenderingState(alpha_blend ? r_state_aliasmodel_notexture_transparent : r_state_aliasmodel_notexture_opaque);
+	if (no_texture) {
+		R_ApplyRenderingState(additive_pass ? r_state_aliasmodel_notexture_additive : alpha_blend ? r_state_aliasmodel_notexture_transparent : r_state_aliasmodel_notexture_opaque);
 	}
-	else if (custom_model == NULL && R_TextureReferenceIsValid(fb_texture)) {
-		R_ApplyRenderingState(weapon_model ? (alpha_blend ? r_state_weaponmodel_multitexture_transparent : r_state_weaponmodel_multitexture_opaque) : (alpha_blend ? r_state_aliasmodel_multitexture_transparent : r_state_aliasmodel_multitexture_opaque));
+	else if (multi_texture) {
+		// meag: no additive_pass here yet as .mdl has multitexture, .md3 has additive surfaces
+		if (weapon_model) {
+			R_ApplyRenderingState(alpha_blend ? r_state_weaponmodel_multitexture_transparent : r_state_weaponmodel_multitexture_opaque);
+		}
+		else {
+			R_ApplyRenderingState(alpha_blend ? r_state_aliasmodel_multitexture_transparent : r_state_aliasmodel_multitexture_opaque);
+		}
 		renderer.TextureUnitBind(0, texture);
 		if (render_effects & RF_CAUSTICS) {
 			GLC_BeginCausticsTextureMatrix();
@@ -187,7 +198,12 @@ void GLC_StateBeginDrawAliasFrameProgram(texture_ref texture, texture_ref fb_tex
 		renderer.TextureUnitBind(1, fb_texture);
 	}
 	else {
-		R_ApplyRenderingState(weapon_model ? (alpha_blend ? r_state_weaponmodel_singletexture_transparent : r_state_weaponmodel_singletexture_opaque) : (alpha_blend ? r_state_aliasmodel_singletexture_transparent : r_state_aliasmodel_singletexture_opaque));
+		if (weapon_model) {
+			R_ApplyRenderingState(additive_pass ? r_state_weaponmodel_singletexture_additive : alpha_blend ? r_state_weaponmodel_singletexture_transparent : r_state_weaponmodel_singletexture_opaque);
+		}
+		else {
+			R_ApplyRenderingState(additive_pass ? r_state_aliasmodel_singletexture_additive : alpha_blend ? r_state_aliasmodel_singletexture_transparent : r_state_aliasmodel_singletexture_opaque);
+		}
 		renderer.TextureUnitBind(0, texture);
 	}
 

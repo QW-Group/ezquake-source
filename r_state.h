@@ -255,14 +255,18 @@ typedef enum {
 	r_state_aliasmodel_powerupshell,
 	r_state_weaponmodel_powerupshell,
 
+	// meag: no multitexture_additive: multitex currently only for .mdl files, additive only for .md3
 	r_state_aliasmodel_notexture_opaque,
 	r_state_aliasmodel_notexture_transparent,
+	r_state_aliasmodel_notexture_additive,
 	r_state_aliasmodel_singletexture_opaque,
 	r_state_aliasmodel_singletexture_transparent,
+	r_state_aliasmodel_singletexture_additive,
 	r_state_aliasmodel_multitexture_opaque,
 	r_state_aliasmodel_multitexture_transparent,
 	r_state_weaponmodel_singletexture_opaque,
 	r_state_weaponmodel_singletexture_transparent,
+	r_state_weaponmodel_singletexture_additive,
 	r_state_weaponmodel_multitexture_opaque,
 	r_state_weaponmodel_multitexture_transparent,
 

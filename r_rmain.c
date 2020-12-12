@@ -968,11 +968,13 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 					}
 					break;
 				case mod_alias:
-					if (type == visent_shells) {
-						renderer.DrawAliasModelPowerupShell(&todraw->ent);
-					}
-					else {
-						R_DrawAliasModel(&todraw->ent, type == visent_outlines);
+					if (type != visent_additive) {
+						if (type == visent_shells) {
+							renderer.DrawAliasModelPowerupShell(&todraw->ent);
+						}
+						else {
+							R_DrawAliasModel(&todraw->ent, type == visent_outlines);
+						}
 					}
 					break;
 				case mod_alias3:
@@ -980,7 +982,7 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 						renderer.DrawAlias3ModelPowerupShell(&todraw->ent);
 					}
 					else {
-						renderer.DrawAlias3Model(&todraw->ent, type == visent_outlines);
+						renderer.DrawAlias3Model(&todraw->ent, type == visent_outlines, type == visent_additive);
 					}
 					break;
 				case mod_unknown:
