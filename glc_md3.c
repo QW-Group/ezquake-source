@@ -42,13 +42,13 @@ qbool GLC_AliasModelStandardCompileSpecific(int subprogram_index);
 int GLC_AliasModelSubProgramIndex(qbool textured, qbool fullbright, qbool caustics, qbool muzzlehack);
 qbool GLC_AliasModelShellCompile(void);
 
-static void GLC_AliasModelLightPointMD3(float color[4], const entity_t* ent, ezMd3XyzNormal_t* vert1, ezMd3XyzNormal_t* vert2, float lerpfrac)
+static void GLC_AliasModelLightPointMD3(float color[4], const entity_t* ent, vbo_model_vert_t* vert1, vbo_model_vert_t* vert2, float lerpfrac)
 {
 	float l;
 	extern cvar_t amf_lighting_vertex, amf_lighting_colour;
 
 	// VULT VERTEX LIGHTING
-	if (amf_lighting_vertex.integer && !ent->full_light) {
+	/*if (amf_lighting_vertex.integer && !ent->full_light) {
 		vec3_t lc;
 
 		l = VLight_LerpLightByAngles(vert1->normal_lat, vert1->normal_lng, vert2->normal_lat, vert2->normal_lng, lerpfrac, ent->angles[0], ent->angles[1]);
@@ -76,7 +76,7 @@ static void GLC_AliasModelLightPointMD3(float color[4], const entity_t* ent, ezM
 			color[2] = ent->r_modelcolor[2] * lc[2];
 		}
 	}
-	else {
+	else*/ {
 		float yaw_rad = ent->angles[YAW] * M_PI / 180.0;
 		vec3_t angleVector = { cos(-yaw_rad), sin(yaw_rad), 1 };
 
@@ -112,62 +112,52 @@ static void GLC_DrawMD3Frame(const entity_t* ent, md3Header_t* pheader, int fram
 {
 	md3Surface_t *surf;
 	int surfnum;
-	ezMd3XyzNormal_t *verts, *v1, *v2;
-	md3St_t *tc;
-	unsigned int* tris;
-	int numtris, i;
+	int numverts, i;
 	const int distance = MD3_INTERP_MAXDIST / MD3_XYZ_SCALE;
 	float normalScale = 0;
+	vbo_model_vert_t* vbo_buffer = (vbo_model_vert_t*)ent->model->temp_vbo_buffer;
+	int vertsPerFrame = ent->model->vertsInVBO / pheader->numFrames;
+	int first_vert_f1 = vertsPerFrame * frame1;
+	int first_vert_f2 = vertsPerFrame * frame2;
+	vbo_model_vert_t* verts1 = &vbo_buffer[first_vert_f1];
+	vbo_model_vert_t* verts2 = &vbo_buffer[first_vert_f2];
+
+	if (!vbo_buffer) {
+		return;
+	}
 
 	MD3_ForEachSurface(pheader, surf, surfnum) {
+		vec3_t interpolated_verts;
 		// FIXME: hack for not reading shader types
 		qbool additive_surface = ((ent->model && ent->model->modhint & MOD_VMODEL) && surfnum >= 1);
 		if (additive_surface != additive_pass) {
 			continue;
 		}
 
-		// loop through the surfaces.
-		int pose1 = frame1 * surf->numVerts;
-		int pose2 = frame2 * surf->numVerts;
-
 		if (R_TextureReferenceIsValid(surface_info[surfnum].texnum) && !invalidate_texture) {
 			renderer.TextureUnitBind(0, surface_info[surfnum].texnum);
 		}
 
-		//skin texture coords.
-		tc = MD3_SurfaceTextureCoords(surf);
-		verts = MD3_SurfaceVertices(surf);
-
-		tris = (unsigned int*)MD3_SurfaceTriangles(surf);
-		numtris = surf->numTriangles * 3;
-
+		numverts = surf->numTriangles * 3;
 		GLC_Begin(GL_TRIANGLES);
-		for (i = 0; i < numtris; i++) {
-			float s, t;
-			float vertexColor[4], interpolated_verts[3];
-
-			v1 = verts + *tris + pose1;
-			v2 = verts + *tris + pose2;
-
-			s = tc[*tris].s;
-			t = tc[*tris].t;
-
-			lerpfrac = VectorL2Compare(v1->xyz, v2->xyz, distance) ? lerpfrac : 1;
-
-			if (!outline) {
-				GLC_AliasModelLightPointMD3(vertexColor, ent, v1, v2, lerpfrac);
-				R_CustomColor(vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
+		for (i = 0; i < numverts; ++i) {
+			if (outline) {
+				vec3_t v1, v2;
+				VectorMA(verts1->position, ent->outlineScale, verts1->normal, v1);
+				VectorMA(verts2->position, ent->outlineScale, verts2->normal, v2);
+				VectorInterpolate(v1, lerpfrac, v2, interpolated_verts);
 			}
 			else {
-				// TODO: add normals
-
+				float vertexColor[4];
+				VectorInterpolate(verts1->position, lerpfrac, verts2->position, interpolated_verts);
+				GLC_AliasModelLightPointMD3(vertexColor, ent, verts1, verts2, lerpfrac);
+				R_CustomColor(vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
 			}
-
-			VectorInterpolate(v1->xyz, lerpfrac, v2->xyz, interpolated_verts);
-			glTexCoord2f(s, t);
+			glTexCoord2f(verts1->texture_coords[0], verts1->texture_coords[1]);
 			GLC_Vertex3fv(interpolated_verts);
 
-			tris++;
+			++verts1;
+			++verts2;
 		}
 		GLC_End();
 
@@ -264,6 +254,9 @@ static void GLC_DrawAlias3ModelImmediate(entity_t* ent, int frame1, int frame2, 
 		GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, true, true, additive_pass);
 	}
 	else {
+		if (ent->skinnum >= 0 && ent->skinnum < pheader->numSkins) {
+			sinf += ent->skinnum * pheader->numSurfaces;
+		}
 		GLC_StateBeginMD3Draw(ent->r_modelalpha, R_TextureReferenceIsValid(sinf->texnum) && !invalidate_texture, ent->renderfx & RF_WEAPONMODEL, additive_pass);
 		GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, invalidate_texture, false, additive_pass);
 	}

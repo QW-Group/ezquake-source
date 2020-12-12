@@ -64,6 +64,7 @@
 - Fixed bug causing spectator issue when tracking player on server, reconnecting and then tracking again (old bug)
 - Fixed bug causing crash when tracker fills up when minimised (3.5 bug)
 - Fixed bug causing incorrect texture to be bound when rendering once new texture created (#452, 3.5 bug, reported by pattah)
+- Fixed bug causing differences in rendering md3 viewmodels in glsl vs std renderer (explosion surface is additive - same awful hack until we support shaders) (3.5 bug but 3.2 was even worse)
 
 ### Ruleset-related changes
 
@@ -72,6 +73,7 @@
 - `/enemyforceskins` descriptions in `f_ruleset` and `f_skins` responses has been clarified to specify individuals will be identifiable (reported by Ake_Vader)
 - `/enemyforceskins` cannot be changed during match (old)
 - sign of value movement speed cvars is ignored (old - used to create `/cl_idrive`-like movement scripts)
+- `/gl_outline` changed to render by projecting backfaces away by surface normal (rather than lines) - to be tested
 
 ### Other changes
 
@@ -132,7 +134,7 @@
 - Changed file-handling when viewing demos from within .zip|.gz to reduce temporary files being left on hard drive
 - PNG warning messages now printed to console rather than stdout
 - Added macro $timestamp, which is in format YYYYMMDD-hhmmss
-- Qizmo-compressed files can be played back in Qizmo
+- Qizmo-compressed files can be played back using Qizmo on linux
 
 ### Build/meta
 

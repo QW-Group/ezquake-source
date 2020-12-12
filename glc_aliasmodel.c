@@ -444,8 +444,6 @@ static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int 
 		GLC_AliasModelLightPoint(color, ent, verts1, verts2, lerpfrac);
 		if (outline) {
 			vec3_t v1, v2;
-			int firstVert = model->vbo_start + pose1 * paliashdr->vertsPerPose;
-			
 			VectorMA(verts1->position, ent->outlineScale, verts1->normal, v1);
 			VectorMA(verts2->position, ent->outlineScale, verts2->normal, v2);
 			VectorInterpolate(v1, lerpfrac, v2, interpolated_verts);
