@@ -302,14 +302,8 @@ static void GLC_DrawAlias3ModelPowerupShellProgram(model_t * mod, md3Header_t * 
 
 static void GLC_DrawAlias3ModelPowerupShellImmediate(model_t * mod, md3Header_t * pheader, int frame1, int frame2, entity_t * ent, float lerpfrac)
 {
-	float scroll[4];
 	int layer_no;
 	const int distance = MD3_INTERP_MAXDIST / MD3_XYZ_SCALE;
-
-	scroll[0] = cos(cl.time * 1.5);
-	scroll[1] = sin(cl.time * 1.1);
-	scroll[2] = cos(cl.time * -0.5);
-	scroll[3] = sin(cl.time * -0.5);
 
 	R_ProgramUse(r_program_none);
 
@@ -343,8 +337,8 @@ static void GLC_DrawAlias3ModelPowerupShellImmediate(model_t * mod, md3Header_t 
 				v1 = verts + *tris + pose1;
 				v2 = verts + *tris + pose2;
 
-				s = tc[*tris].s * 2.0f + scroll[layer_no * 2];
-				t = tc[*tris].t * 2.0f + scroll[layer_no * 2 + 1];
+				s = tc[*tris].s * 2.0f + r_refdef2.powerup_scroll_params[layer_no * 2];
+				t = tc[*tris].t * 2.0f + r_refdef2.powerup_scroll_params[layer_no * 2 + 1];
 
 				lerpfrac = VectorL2Compare(v1->xyz, v2->xyz, distance) ? lerpfrac : 1;
 				VectorAdd(v1->normal, v1->xyz, vec1pos);
