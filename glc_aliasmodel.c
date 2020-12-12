@@ -402,7 +402,7 @@ static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int po
 	}
 }
 
-static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfrac)
+static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfracDefault)
 {
 	extern cvar_t r_lerpmuzzlehack;
 
@@ -410,13 +410,12 @@ static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int 
 	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
 	GLenum primitive = GL_TRIANGLES;
 	qbool mtex = R_TextureReferenceIsValid(fb_texture) && gl_mtexable;
-	qbool limit_lerp = r_lerpmuzzlehack.integer && (ent->model->renderfx & RF_LIMITLERP);
-	int position = 0, i;
-	float lerpFracDefault = lerpfrac;
+	int i;
 	vbo_model_vert_t* vbo_buffer = (vbo_model_vert_t*)model->temp_vbo_buffer;
 
 	vec3_t interpolated_verts;
 	vbo_model_vert_t *verts1, *verts2;
+	qbool limit_lerp = r_lerpmuzzlehack.integer && (ent->model->renderfx & RF_LIMITLERP);
 
 	R_ProgramUse(r_program_none);
 	if (outline) {
@@ -439,6 +438,11 @@ static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int 
 		float color[4];
 		float s = verts1->texture_coords[0];
 		float t = verts1->texture_coords[1];
+		float lerpfrac = lerpfracDefault;
+
+		if (limit_lerp && !VectorL2Compare(verts1->position, verts2->position, ALIASMODEL_MAX_LERP_DISTANCE)) {
+			lerpfrac = 1;
+		}
 
 		GLC_AliasModelLightPoint(color, ent, verts1, verts2, lerpfrac);
 		if (outline) {
@@ -519,65 +523,6 @@ static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, in
 	GLC_StateBeginAliasOutlineFrame(weaponmodel);
 
 	GL_DrawArrays(primitive, firstVert, verts);
-}
-
-static void GLC_DrawAliasOutlineFrame_Immediate(entity_t* ent, model_t* model, int pose1, int pose2, float lerpfracDefault)
-{
-	int *order, count;
-	float lerpfrac;
-	ez_trivertx_t *verts1, *verts2;
-	aliashdr_t* paliashdr = (aliashdr_t*) Mod_Extradata(model);
-	extern cvar_t r_lerpmuzzlehack;
-	qbool limit_lerp = r_lerpmuzzlehack.integer && (ent->model->renderfx & RF_LIMITLERP);
-
-	GLC_StateBeginAliasOutlineFrame(ent->renderfx & RF_WEAPONMODEL);
-
-	lerpfrac = lerpfracDefault;
-
-	verts2 = verts1 = (ez_trivertx_t *)((byte *)paliashdr + paliashdr->posedata);
-
-	verts1 += pose1 * paliashdr->poseverts;
-	verts2 += pose2 * paliashdr->poseverts;
-
-	order = (int *)((byte *)paliashdr + paliashdr->commands);
-
-	for (;;) {
-		count = *order++;
-
-		if (!count) {
-			break;
-		}
-
-		if (count < 0) {
-			count = -count;
-			GLC_Begin(GL_TRIANGLE_FAN);
-		}
-		else {
-			GLC_Begin(GL_TRIANGLE_STRIP);
-		}
-
-		do {
-			vec3_t v1, v2, v;
-
-			order += 2;
-
-			lerpfrac = lerpfracDefault;
-			if (limit_lerp && !VectorL2Compare(verts1->v, verts2->v, ALIASMODEL_MAX_LERP_DISTANCE)) {
-				lerpfrac = 1;
-			}
-
-			VectorMA(verts1->v, 0.5f, r_avertexnormals[verts1->lightnormalindex], v1);
-			VectorMA(verts2->v, 0.5f, r_avertexnormals[verts2->lightnormalindex], v2);
-			VectorInterpolate(v1, lerpfrac, v2, v);
-
-			GLC_Vertex3fv(v);
-
-			verts1++;
-			verts2++;
-		} while (--count);
-
-		GLC_End();
-	}
 }
 
 void GLC_PowerupShellColor(int layer_no, int effects, float* color)

@@ -108,12 +108,12 @@ static void GLC_AliasModelLightPointMD3(float color[4], const entity_t* ent, vbo
 	color[3] = ent->r_modelalpha;
 }
 
-static void GLC_DrawMD3Frame(const entity_t* ent, md3Header_t* pheader, int frame1, int frame2, float lerpfrac, const surfinf_t* surface_info, qbool invalidate_texture, qbool outline, qbool additive_pass)
+static void GLC_DrawMD3Frame(const entity_t* ent, const float* modelColor, md3Header_t* pheader, int frame1, int frame2, float lerpfracDefault, const surfinf_t* surface_info, qbool invalidate_texture, qbool outline, qbool additive_pass)
 {
+	extern cvar_t r_lerpmuzzlehack;
 	md3Surface_t *surf;
 	int surfnum;
 	int numverts, i;
-	const int distance = MD3_INTERP_MAXDIST / MD3_XYZ_SCALE;
 	float normalScale = 0;
 	vbo_model_vert_t* vbo_buffer = (vbo_model_vert_t*)ent->model->temp_vbo_buffer;
 	int vertsPerFrame = ent->model->vertsInVBO / pheader->numFrames;
@@ -121,6 +121,7 @@ static void GLC_DrawMD3Frame(const entity_t* ent, md3Header_t* pheader, int fram
 	int first_vert_f2 = vertsPerFrame * frame2;
 	vbo_model_vert_t* verts1 = &vbo_buffer[first_vert_f1];
 	vbo_model_vert_t* verts2 = &vbo_buffer[first_vert_f2];
+	qbool limit_lerp = false; // r_lerpmuzzlehack.integer && (ent->model->renderfx & RF_LIMITLERP);
 
 	if (!vbo_buffer) {
 		return;
@@ -130,7 +131,11 @@ static void GLC_DrawMD3Frame(const entity_t* ent, md3Header_t* pheader, int fram
 		vec3_t interpolated_verts;
 		// FIXME: hack for not reading shader types
 		qbool additive_surface = ((ent->model && ent->model->modhint & MOD_VMODEL) && surfnum >= 1);
+		numverts = surf->numTriangles * 3;
+
 		if (additive_surface != additive_pass) {
+			verts1 += numverts;
+			verts2 += numverts;
 			continue;
 		}
 
@@ -138,9 +143,14 @@ static void GLC_DrawMD3Frame(const entity_t* ent, md3Header_t* pheader, int fram
 			renderer.TextureUnitBind(0, surface_info[surfnum].texnum);
 		}
 
-		numverts = surf->numTriangles * 3;
 		GLC_Begin(GL_TRIANGLES);
 		for (i = 0; i < numverts; ++i) {
+			float lerpfrac = lerpfracDefault;
+
+			if (limit_lerp && !VectorL2Compare(verts1->position, verts2->position, ALIASMODEL_MAX_LERP_DISTANCE)) {
+				lerpfrac = 1;
+			}
+
 			if (outline) {
 				vec3_t v1, v2;
 				VectorMA(verts1->position, ent->outlineScale, verts1->normal, v1);
@@ -148,10 +158,15 @@ static void GLC_DrawMD3Frame(const entity_t* ent, md3Header_t* pheader, int fram
 				VectorInterpolate(v1, lerpfrac, v2, interpolated_verts);
 			}
 			else {
-				float vertexColor[4];
 				VectorInterpolate(verts1->position, lerpfrac, verts2->position, interpolated_verts);
-				GLC_AliasModelLightPointMD3(vertexColor, ent, verts1, verts2, lerpfrac);
-				R_CustomColor(vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
+				// FIXME: another hack!
+				if (!additive_pass) {
+					//GLC_AliasModelLightPointMD3(vertexColor, ent, verts1, verts2, lerpfrac);
+					R_CustomColor(modelColor[0], modelColor[1], modelColor[2], modelColor[3]);
+				}
+				else {
+					R_CustomColor(ent->r_modelalpha, ent->r_modelalpha, ent->r_modelalpha, ent->r_modelalpha);
+				}
 			}
 			glTexCoord2f(verts1->texture_coords[0], verts1->texture_coords[1]);
 			GLC_Vertex3fv(interpolated_verts);
@@ -217,13 +232,18 @@ static void GLC_DrawAlias3ModelProgram(entity_t* ent, int frame1, qbool invalida
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_time, cl.time);
 
 		GLC_StateBeginDrawAliasFrameProgram(sinf->texnum, null_texture_reference, ent->renderfx, ent->custom_model, ent->r_modelalpha, additive_pass);
-		R_CustomColor(vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
 		vert_index = first_vert;
 		MD3_ForEachSurface(pheader, surf, surfnum) {
 			// FIXME: hack for not reading shader types
 			qbool additive_surface = ((mod->modhint & MOD_VMODEL) && surfnum >= 1);
 
 			if (additive_surface == additive_pass) {
+				if (additive_pass) {
+					R_CustomColor(ent->r_modelalpha, ent->r_modelalpha, ent->r_modelalpha, ent->r_modelalpha);
+				}
+				else {
+					R_CustomColor(vertexColor[0], vertexColor[1], vertexColor[2], vertexColor[3]);
+				}
 				if (R_TextureReferenceIsValid(sinf[surfnum].texnum) && !invalidate_texture) {
 					renderer.TextureUnitBind(0, sinf[surfnum].texnum);
 				}
@@ -251,14 +271,14 @@ static void GLC_DrawAlias3ModelImmediate(entity_t* ent, int frame1, int frame2, 
 	R_ProgramUse(r_program_none);
 	if (outline) {
 		GLC_StateBeginAliasOutlineFrame(ent->renderfx & RF_WEAPONMODEL);
-		GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, true, true, additive_pass);
+		GLC_DrawMD3Frame(ent, vertexColor, pheader, frame1, frame2, lerpfrac, sinf, true, true, additive_pass);
 	}
 	else {
 		if (ent->skinnum >= 0 && ent->skinnum < pheader->numSkins) {
 			sinf += ent->skinnum * pheader->numSurfaces;
 		}
 		GLC_StateBeginMD3Draw(ent->r_modelalpha, R_TextureReferenceIsValid(sinf->texnum) && !invalidate_texture, ent->renderfx & RF_WEAPONMODEL, additive_pass);
-		GLC_DrawMD3Frame(ent, pheader, frame1, frame2, lerpfrac, sinf, invalidate_texture, false, additive_pass);
+		GLC_DrawMD3Frame(ent, vertexColor, pheader, frame1, frame2, lerpfrac, sinf, invalidate_texture, false, additive_pass);
 	}
 }
 
