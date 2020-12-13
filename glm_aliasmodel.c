@@ -120,9 +120,8 @@ qbool GLM_CompileAliasModelProgram(void)
 {
 	extern cvar_t r_lerpmuzzlehack;
 
-	qbool caustic_textures = r_refdef2.drawCaustics;
 	unsigned int drawAlias_desiredOptions =
-		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
+		(r_refdef2.drawCaustics ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(glConfig.reversed_depth ? DRAW_REVERSED_DEPTH : 0) |
 		(r_lerpmuzzlehack.integer ? DRAW_LERP_MUZZLEHACK : 0);
 
@@ -452,6 +451,9 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	R_SetAliasModelUniform(mode);
 
 	// We have prepared the draw calls earlier in the frame so very trival logic here
+	if (r_refdef2.drawCaustics) {
+		renderer.TextureUnitBind(TEXTURE_UNIT_CAUSTICS, underwatertexture);
+	}
 	for (i = 0; i < instr->num_calls; ++i) {
 		if (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells) {
 			renderer.TextureUnitBind(TEXTURE_UNIT_MATERIAL, shelltexture);
