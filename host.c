@@ -670,6 +670,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	ConfigManager_Init();
 	ResetBinds();
 	Cfg_ExecuteDefaultConfig();
+	Cbuf_Execute();
 
 	i = COM_FindParm("+cfg_load");
 

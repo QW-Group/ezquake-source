@@ -784,6 +784,7 @@ static void ResetConfigs(qbool resetall, qbool read_legacy_configs)
 	{
 		Cbuf_AddText ("cl_warncmd 0\n");
 		Cfg_ExecuteDefaultConfig();
+		Cbuf_Execute();
 		if ((v = FS_OpenVFS("autoexec.cfg", "rb", FS_ANY))) {
 			Cbuf_AddText ("exec autoexec.cfg\n");
 			VFS_CLOSE(v);
