@@ -219,13 +219,13 @@ cvar_t r_lightmap_packbytexture = {"r_lightmap_packbytexture", "2"};
 
 // info mirrors
 cvar_t  password                = {"password", "", CVAR_USERINFO};
-cvar_t  spectator               = {"spectator", "", CVAR_USERINFO};
+cvar_t  spectator               = {"spectator", "", CVAR_USERINFO_NO_CFG_RESET };
 void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel);
 cvar_t  name                    = {"name", "player", CVAR_USERINFO, CL_OnChange_name_validate};
-cvar_t  team                    = {"team", "", CVAR_USERINFO};
-cvar_t  topcolor                = {"topcolor","", CVAR_USERINFO};
-cvar_t  bottomcolor             = {"bottomcolor","", CVAR_USERINFO};
-cvar_t  skin                    = {"skin", "", CVAR_USERINFO};
+cvar_t  team                    = {"team", "", CVAR_USERINFO_NO_CFG_RESET };
+cvar_t  topcolor                = {"topcolor","", CVAR_USERINFO_NO_CFG_RESET };
+cvar_t  bottomcolor             = {"bottomcolor","", CVAR_USERINFO_NO_CFG_RESET };
+cvar_t  skin                    = {"skin", "", CVAR_USERINFO_NO_CFG_RESET };
 cvar_t  rate                    = {"rate", "25000", CVAR_USERINFO};
 void OnChange_AppliedAfterReconnect (cvar_t *var, char *value, qbool *cancel);
 cvar_t  mtu                     = {"mtu", "", CVAR_USERINFO, OnChange_AppliedAfterReconnect};
