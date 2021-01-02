@@ -353,7 +353,7 @@ void SCR_DrawAutoID(void)
 		}
 
 		// We only have health/armor info for all players when in demo playback.
-		if (cls.demoplayback && scr_autoid.value >= 2) {
+		if (cls.mvdplayback && scr_autoid.value >= 2) {
 			SCR_DrawAutoIDStatus(&autoids[i], x, y, scale, proportional);
 		}
 	}

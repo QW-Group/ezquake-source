@@ -31,6 +31,7 @@
 - `/r_dynamic 2` was calculating too many lightmaps (3.5 bug, reported by ciscon)
 - `/packet` command is now only blocked when active on server (old bug)
 - `/scr_newhud` elements are hidden when free-floating in spectator mode (old, thanks to hemostx)
+- `/scr_autoid` only shows extended info when in mvd playback (old)
 - Fixed bug causing read-only file handle to config being kept open, preventing backup from being taken (old bug)
 - Fixed bug causing MVD-stats code to cause `/tp_loadloc` to effectively always be forced to 1 (old bug)
 - Fixed bug causing multiple item timers to spawn when using `/demo_jump` (3.2 bug, reported by Milton)
