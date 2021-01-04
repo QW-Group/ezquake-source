@@ -122,6 +122,11 @@ sudo apt-get install git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-de
 ```
 sudo apt install git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev
 ```
+- For *openSUSE Tumbleweed*
+```
+sudo zypper install -t pattern devel_C_C++
+sudo zypper install git pcre-devel Mesa-libGL-devel libSDL2-devel libjansson-devel libexpat-devel libcurl-devel libpng16-devel libjpeg8-devel libjpeg-turbo libsndfile-devel speex-devel speexdsp-devel libXxf86vm-devel
+```
 
 Clone the git repository:
 ```
