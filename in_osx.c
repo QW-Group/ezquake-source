@@ -22,20 +22,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <IOKit/hid/IOHIDLib.h>
 #include <IOKit/hidsystem/event_status_driver.h>
 
-struct osx_mouse_data
-{
-	SDL_Thread *thread;
-	SDL_mutex *mouse_mutex;
+static SDL_Thread *thread;
+static SDL_mutex *mouse_mutex;
 
-	CFRunLoopRef threadrunloop;
+static SDL_mutex *start_mutex;
+static SDL_cond *start_cond;
 
-	IOHIDManagerRef hid_manager;
+static IOHIDManagerRef hid_manager;
+static CFRunLoopRef runloop;
 
-	int mouse_x;
-	int mouse_y;
-};
-
-struct osx_mouse_data *mdata;
+static int mouse_x;
+static int mouse_y;
 
 static void input_callback(void *unused, IOReturn result, void *sender, IOHIDValueRef value)
 {
@@ -47,14 +44,14 @@ static void input_callback(void *unused, IOReturn result, void *sender, IOHIDVal
 	if (page == kHIDPage_GenericDesktop) {
 		switch (usage) {
 			case kHIDUsage_GD_X:
-				SDL_LockMutex(mdata->mouse_mutex);
-				mdata->mouse_x += val;
-				SDL_UnlockMutex(mdata->mouse_mutex);
+				SDL_LockMutex(mouse_mutex);
+				mouse_x += val;
+				SDL_UnlockMutex(mouse_mutex);
 				break;
 			case kHIDUsage_GD_Y:
-				SDL_LockMutex(mdata->mouse_mutex);
-				mdata->mouse_y += val;
-				SDL_UnlockMutex(mdata->mouse_mutex);
+				SDL_LockMutex(mouse_mutex);
+				mouse_y += val;
+				SDL_UnlockMutex(mouse_mutex);
 				break;
 			default:
 				break;
@@ -64,82 +61,102 @@ static void input_callback(void *unused, IOReturn result, void *sender, IOHIDVal
 
 static int OSX_Mouse_Thread(void *inarg)
 {
-	IOReturn tIOReturn;
+	SDL_LockMutex(start_mutex);
 
-	mdata->threadrunloop = CFRunLoopGetCurrent();
+	hid_manager = IOHIDManagerCreate(kCFAllocatorSystemDefault, kIOHIDOptionsTypeNone);
 
-	mdata->hid_manager = IOHIDManagerCreate(kCFAllocatorSystemDefault, kIOHIDOptionsTypeNone);
-	if (mdata->hid_manager)
-	{
-		IOHIDManagerSetDeviceMatching(mdata->hid_manager, NULL);
-		IOHIDManagerRegisterInputValueCallback(mdata->hid_manager, input_callback, NULL);
-		IOHIDManagerScheduleWithRunLoop(mdata->hid_manager, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+	IOHIDManagerSetDeviceMatching(hid_manager, NULL);
+	IOHIDManagerRegisterInputValueCallback(hid_manager, input_callback, NULL);
+	IOHIDManagerScheduleWithRunLoop(hid_manager, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 
-		tIOReturn = IOHIDManagerOpen(mdata->hid_manager, kIOHIDOptionsTypeNone);
-		if (tIOReturn == kIOReturnSuccess)
-			CFRunLoopRun();
+	// This may fail if the process running does not have 'Input Monitoring' permissions granted.
+	if (IOHIDManagerOpen(hid_manager, kIOHIDOptionsTypeNone) != kIOReturnSuccess) {
+		IOHIDManagerUnscheduleFromRunLoop(hid_manager, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 
-		IOHIDManagerUnscheduleFromRunLoop(mdata->hid_manager, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+		CFRelease(hid_manager);
+		hid_manager = NULL;
 
+		SDL_CondSignal(start_cond);
+		SDL_UnlockMutex(start_mutex);
+
+		return -1;
 	}
 
-	CFRelease(mdata->hid_manager);
+	runloop = CFRunLoopGetCurrent();
+
+	SDL_CondSignal(start_cond);
+	SDL_UnlockMutex(start_mutex);
+
+	CFRunLoopRun();
+
+	IOHIDManagerUnscheduleFromRunLoop(hid_manager, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+
+	CFRelease(hid_manager);
+	hid_manager = NULL;
 
 	return 0;
 }
 
 int OSX_Mouse_Init(void)
 {
-	if (!mdata)
-		mdata = malloc(sizeof(struct osx_mouse_data));
+	mouse_x = 0;
+	mouse_y = 0;
 
-	if (!mdata)
+	start_mutex = SDL_CreateMutex();
+	start_cond = SDL_CreateCond();
+
+	SDL_LockMutex(start_mutex);
+
+	mouse_mutex = SDL_CreateMutex();
+	thread = SDL_CreateThread(OSX_Mouse_Thread, "OSX_Mouse_Thread", NULL);
+
+	SDL_CondWait(start_cond, start_mutex);
+	SDL_UnlockMutex(start_mutex);
+
+	SDL_DestroyMutex(start_mutex);
+	start_mutex = NULL;
+
+	SDL_DestroyCond(start_cond);
+	start_cond = NULL;
+
+	if (!runloop)
+	{
+		SDL_WaitThread(thread, NULL);
+		thread = NULL;
+
+		SDL_DestroyMutex(mouse_mutex);
+		mouse_mutex = NULL;
+
 		return -1;
-
-	memset(mdata, 0, sizeof(struct osx_mouse_data));
-
-	if ((mdata->mouse_mutex = SDL_CreateMutex()) != NULL) {
-		if ((mdata->thread = SDL_CreateThread(OSX_Mouse_Thread, "OSX_Mouse_Thread", (void*)mdata)) != NULL)
-			return 0;
-
-		SDL_DestroyMutex(mdata->mouse_mutex);
 	}
 
-	free(mdata);
-	mdata = NULL;
-
-	return -1;
+	return 0;
 }
 
 void OSX_Mouse_Shutdown(void)
 {
-	if (!mdata)
+	if (!runloop)
 		return;
 
-#warning Race conditions'r'us
-	CFRunLoopStop(mdata->threadrunloop);
+	CFRunLoopStop(runloop);
+	runloop = NULL;
 
-	SDL_WaitThread(mdata->thread, NULL);
+	SDL_WaitThread(thread, NULL);
+	thread = NULL;
 
-	SDL_DestroyMutex(mdata->mouse_mutex);
-
-	free(mdata);
-	mdata = NULL;
+	SDL_DestroyMutex(mouse_mutex);
+	mouse_mutex = NULL;
 }
 
-void OSX_Mouse_GetMouseMovement(int *mouse_x, int *mouse_y)
+void OSX_Mouse_GetMouseMovement(int *m_x, int *m_y)
 {
-	if (!mdata)
-		return;
+	SDL_LockMutex(mouse_mutex);
 
-	SDL_LockMutex(mdata->mouse_mutex);
+	*m_x = mouse_x;
+	*m_y = mouse_y;
 
-	*mouse_x = mdata->mouse_x;
-	*mouse_y = mdata->mouse_y;
+	mouse_x = 0;
+	mouse_y = 0;
 
-	mdata->mouse_x = 0;
-	mdata->mouse_y = 0;
-
-	SDL_UnlockMutex(mdata->mouse_mutex);
+	SDL_UnlockMutex(mouse_mutex);
 }
-
