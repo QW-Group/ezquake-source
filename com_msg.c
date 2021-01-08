@@ -710,7 +710,7 @@ void MSG_ReadSkip(int bytes)
 }
 
 #ifndef SERVERONLY
-byte MSG_EncodeMVDSVWeaponFlags(int deathmatch, int weaponmode, int weaponhide, qbool weaponhide_axe, qbool forgetorder, qbool forgetondeath)
+byte MSG_EncodeMVDSVWeaponFlags(int deathmatch, int weaponmode, int weaponhide, qbool weaponhide_axe, qbool forgetorder, qbool forgetondeath, int max_impulse)
 {
 	byte flags = clc_mvd_weapon_switching;
 	qbool hide = ((weaponhide == 1) || ((weaponhide == 2) && (deathmatch == 1)));
@@ -743,6 +743,8 @@ byte MSG_EncodeMVDSVWeaponFlags(int deathmatch, int weaponmode, int weaponhide, 
 	}
 
 	flags |= (forgetondeath ? clc_mvd_weapon_reset_on_death : 0);
+
+	flags |= (max_impulse >= 16 ? clc_mvd_weapon_full_impulse : 0);
 
 	return flags;
 }

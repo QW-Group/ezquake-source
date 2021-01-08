@@ -1001,7 +1001,16 @@ void IN_SendServerSideWeaponSwitch(sizebuf_t* buffer)
 
 	// build flags
 	if (cl_pext_serversideweapon.integer) {
-		flags = MSG_EncodeMVDSVWeaponFlags(cl.deathmatch, cl_weaponpreselect.integer, (suppress_hide ? 0 : cl_weaponhide.integer), cl_weaponhide_axe.integer, cl_weaponforgetorder.integer, cl_weaponforgetondeath.integer);
+		int max_impulse = 0;
+
+		if (cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON2) {
+			// lookup highest impulse used to see if we need full impulses
+			for (i = 0; i < MAXWEAPONS; ++i) {
+				max_impulse = max(cl.weapon_order[i], max_impulse);
+			}
+		}
+
+		flags = MSG_EncodeMVDSVWeaponFlags(cl.deathmatch, cl_weaponpreselect.integer, (suppress_hide ? 0 : cl_weaponhide.integer), cl_weaponhide_axe.integer, cl_weaponforgetorder.integer, cl_weaponforgetondeath.integer, max_impulse);
 	}
 
 	// send data
@@ -1011,13 +1020,23 @@ void IN_SendServerSideWeaponSwitch(sizebuf_t* buffer)
 		MSG_WriteByte(buffer, min(cls.netchan.outgoing_sequence - cl.weapon_order_sequence_set, 255));
 	}
 	if (cl_pext_serversideweapon.integer) {
-		for (i = 0; i < MAXWEAPONS; i += 2) {
-			int lhs = bound(0, cl.weapon_order[i], 15);
-			int rhs = bound(0, cl.weapon_order[i + 1], 15);
+		if (flags & clc_mvd_weapon_full_impulse) {
+			for (i = 0; i < MAXWEAPONS; ++i) {
+				MSG_WriteByte(buffer, cl.weapon_order[i]);
+				if (!cl.weapon_order[i]) {
+					break;
+				}
+			}
+		}
+		else {
+			for (i = 0; i < MAXWEAPONS; i += 2) {
+				int lhs = bound(0, cl.weapon_order[i], 15);
+				int rhs = bound(0, cl.weapon_order[i + 1], 15);
 
-			MSG_WriteByte(buffer, (lhs << 4) | rhs);
-			if (!lhs || !rhs) {
-				break;
+				MSG_WriteByte(buffer, (lhs << 4) | rhs);
+				if (!lhs || !rhs) {
+					break;
+				}
 			}
 		}
 	}

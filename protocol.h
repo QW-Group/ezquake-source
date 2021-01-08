@@ -242,7 +242,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define clc_mvd_weapon_reset_on_death   32   // on death, go back to 2 1
 #define clc_mvd_weapon_switching        64   // if not set, disable all server-side weapon switching
 
-byte MSG_EncodeMVDSVWeaponFlags(int deathmatch, int weaponmode, int weaponhide, qbool weaponhide_axe, qbool forgetorder, qbool forgetondeath);
+// others
+#define clc_mvd_weapon_full_impulse     128  // if set, each weapon set as a byte, rather than packing two into one
+
+byte MSG_EncodeMVDSVWeaponFlags(int deathmatch, int weaponmode, int weaponhide, qbool weaponhide_axe, qbool forgetorder, qbool forgetondeath, int max_impulse);
 void MSG_DecodeMVDSVWeaponFlags(int flags, int* weaponmode, int* weaponhide, qbool* forgetorder, int* sequence);
 #endif
 
