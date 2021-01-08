@@ -67,6 +67,7 @@
 - Fixed bug causing incorrect texture to be bound when rendering once new texture created (#452, 3.5 bug, reported by pattah)
 - Fixed bug causing differences in rendering md3 viewmodels in glsl vs std renderer (explosion surface is additive - same awful hack until we support shaders) (3.5 bug but 3.2 was even worse)
 - Fixed bug causing aliasmodels to be rendered with the normal map overlaid instead of caustics texture (#457, 3.5 bug, reported by hammer)
+- Fixed bug causing `show net` to not show valid information when playing back .qwd files
 
 ### Ruleset-related changes
 
@@ -126,6 +127,7 @@
 - `-noatlas` command line option to stop the system building a 2D atlas at startup
 - `-r-nomultibind` command line option to disable calls to glBindTextures
 - `+qtv_delay` command, to be used with `/qtv_adjustbuffer 2`... pauses QTV stream.  When released, QTV buffer length set to length of buffer
+- On startup, `default.cfg` is executed before config is loaded (nQuake configs really need to change now that default.cfg works tho...)
 - GLSL gamma now supported in classic renderer
 - MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
 - Player LG beams hidden during intermission (no more beams in screenshots)
@@ -146,6 +148,7 @@
 - Visual Studio project, Azure Pipelines builds windows binaries (64-bit binaries are VERY beta, not recommended)
 - meson build updated (out of date on 3.5)
 - Fixed build on FreeBSD/powerpc64 (thanks to pkubaj)
+- remove unsupported 666-deflect message from fragfile.dat (reported by eb, #461)
 
 # Changes in 3.5 (not released, based on 3.1)
 

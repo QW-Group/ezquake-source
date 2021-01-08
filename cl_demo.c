@@ -1749,6 +1749,7 @@ static void CL_DemoReadDemCmd(void)
 
 	// Get which frame we should read the cmd into from the demo.
 	int i = cls.netchan.outgoing_sequence & UPDATE_MASK;
+	int s = cls.netchan.outgoing_sequence & NETWORK_STATS_MASK;
 	int j;
 
 	// Read the user cmd from the demo.
@@ -1767,6 +1768,8 @@ static void CL_DemoReadDemCmd(void)
 	// how many net messages have been sent.
 	cl.frames[i].senttime = cls.demopackettime;
 	cl.frames[i].receivedtime = -1;		// We haven't gotten a reply yet.
+	network_stats[s].senttime = cls.realtime;
+	network_stats[s].sentsize = sizeof(*pcmd) + 12; // complete lie, compared to the original
 	cls.netchan.outgoing_sequence++;
 
 	// Read the viewangles from the demo and convert them to correct byte order.

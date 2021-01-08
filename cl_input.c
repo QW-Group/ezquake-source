@@ -1059,6 +1059,7 @@ void CL_SendCmd(void)
 	static int dropcount = 0;
 
 	if (cls.demoplayback && !cls.mvdplayback) {
+		CL_CalcNet();
 		return; // sendcmds come from the demo
 	}
 
