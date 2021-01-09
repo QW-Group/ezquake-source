@@ -107,6 +107,7 @@ typedef struct packet_queue_s {
 	cl_delayed_packet_t packets[CL_MAX_DELAYED_PACKETS];
 	int head;
 	int tail;
+	qbool outgoing;
 } packet_queue_t;
 
 static packet_queue_t delay_queue_get;
@@ -145,18 +146,54 @@ static qbool NET_PacketQueueRemove(packet_queue_t* queue, sizebuf_t* buffer, net
 static qbool NET_PacketQueueAdd(packet_queue_t* queue, byte* data, int size, netadr_t addr)
 {
 	cl_delayed_packet_t* next = &queue->packets[queue->tail];
-	double time = Sys_DoubleTime();
-	float deviation = f_rnd(-bound(0, cl_delay_packet_dev.integer, CL_MAX_PACKET_DELAY_DEVIATION), bound(0, cl_delay_packet_dev.integer, CL_MAX_PACKET_DELAY_DEVIATION));
+	float deviation = 0;
+	float ms_delay;
+
+	if (cl_delay_packet_dev.integer) {
+		deviation = f_rnd(-bound(0, cl_delay_packet_dev.integer, CL_MAX_PACKET_DELAY_DEVIATION), bound(0, cl_delay_packet_dev.integer, CL_MAX_PACKET_DELAY_DEVIATION));
+	}
 
 	// If buffer is full, can't prevent packet loss - drop this packet
 	if (next->time && queue->head == queue->tail) {
 		return false;
 	}
 
+	// calculate delay based on settings
+	if (cls.state != ca_active) {
+		// not yet connected, go as fast as possible
+		ms_delay = 0;
+	}
+	else if (cl_delay_packet_target.integer && *(int*)data != -1) {
+		if (!queue->outgoing) {
+			// dynamically change delay to target a particular latency
+			int sequence, sequence_ack;
+			int sequencemod;
+			double expected_latency;
+
+			MSG_BeginReading();
+			sequence = MSG_ReadLong();
+			sequence_ack = MSG_ReadLong();
+			sequence_ack &= ~(1 << 31);
+
+			sequencemod = sequence_ack & UPDATE_MASK;
+			expected_latency = (cls.realtime - cl.frames[sequencemod].senttime) * 1000.0;
+
+			ms_delay = max(0, cl_delay_packet_target.value - expected_latency + deviation);
+		}
+		else {
+			// push some of the delay onto outgoing
+			ms_delay = cls.latency / 2;
+		}
+	}
+	else {
+		// delay by constant amount
+		ms_delay = bound(0, 0.5 * cl_delay_packet.integer + deviation, CL_MAX_PACKET_DELAY);
+	}
+
 	memmove(next->data, data, size);
 	next->length = size;
 	next->addr = addr;
-	next->time = time + 0.001 * bound(0, 0.5 * cl_delay_packet.integer + deviation, CL_MAX_PACKET_DELAY);
+	next->time = Sys_DoubleTime() + 0.001 * ms_delay;
 
 	NET_PacketQueueSetNextIndex(&queue->tail);
 	return true;
@@ -796,7 +833,7 @@ qbool NET_GetPacket (netsrc_t netsrc)
 #ifdef SERVERONLY
 	qbool delay = false;
 #else
-	qbool delay = (netsrc == NS_CLIENT && cl_delay_packet.integer);
+	qbool delay = (netsrc == NS_CLIENT && (cl_delay_packet.integer || cl_delay_packet_target.integer));
 #endif
 
 	return NET_GetPacketEx (netsrc, delay);
@@ -1325,6 +1362,8 @@ void NET_Init (void)
 
 	Cvar_Register(&cl_net_clientport);
 	Cvar_Register(&net_tcp_timeout);
+
+	delay_queue_send.outgoing = true;
 #endif
 
 #ifndef CLIENTONLY

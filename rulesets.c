@@ -533,15 +533,27 @@ void Rulesets_OnChange_cl_delay_packet(cvar_t *var, char *value, qbool *cancel)
 		return;
 	}
 
+	if (var == &cl_delay_packet_target && (ival < 0 || ival > CL_MAX_PACKET_DELAY_TARGET)) {
+		Com_Printf("%s must be between 0 and %d\n", var->name, CL_MAX_PACKET_DELAY_TARGET);
+		*cancel = true;
+		return;
+	}
+
 	if (cls.state == ca_active) {
 		if ((cl.standby) || (cl.teamfortress)) {
 			char announce[128];
+			int delay_target_ms = (var == &cl_delay_packet_target ? ival : cl_delay_packet_target.integer);
+			int delay_deviation = (var == &cl_delay_packet_dev ? ival : cl_delay_packet_dev.integer);
+			int delay_constant = (var == &cl_delay_packet ? ival : cl_delay_packet.integer);
 
-			if (var == &cl_delay_packet) {
-				snprintf(announce, sizeof(announce), "say delay packet: %d ms (%d dev)\n", ival, cl_delay_packet_dev.integer);
+			if (delay_target_ms) {
+				snprintf(announce, sizeof(announce), "say delay packet: target ping %d ms (%dms dev)\n", delay_target_ms, delay_deviation);
+			}
+			else if (delay_constant) {
+				snprintf(announce, sizeof(announce), "say delay packet: adding %d ms (%dms dev)\n", delay_constant, delay_deviation);
 			}
 			else {
-				snprintf(announce, sizeof(announce), "say delay packet: %d ms (%d dev)\n", cl_delay_packet.integer, ival);
+				snprintf(announce, sizeof(announce), "say delay packet: off\n");
 			}
 
 			// allow in standby or teamfortress. For teamfortress, more often than not

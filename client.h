@@ -1113,11 +1113,13 @@ centity_t* CL_WeaponModelForView(void);
 // client side min_ping aka delay
 
 extern cvar_t cl_delay_packet;
+extern cvar_t cl_delay_packet_target;
 extern cvar_t cl_delay_packet_dev;
 
 #define CL_MAX_DELAYED_PACKETS 16 /* 13 * 16 = 208 ms, should be enough */
 #define CL_MAX_PACKET_DELAY 75 /* total delay two times more */
 #define CL_MAX_PACKET_DELAY_DEVIATION 5
+#define CL_MAX_PACKET_DELAY_TARGET 155
 
 typedef struct cl_delayed_packet_s
 {
