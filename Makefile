@@ -116,8 +116,8 @@ PNG_LIBS ?= $(shell pkg-config libpng --libs)
 CFLAGS_c += $(PNG_CFLAGS)
 LIBS_c += $(PNG_LIBS)
 
-JPEG_CFLAGS ?= -DWITH_JPEG
-JPEG_LIBS ?= -ljpeg
+JPEG_CFLAGS ?= $(shell pkg-config libjpeg --cflags) -DWITH_JPEG
+JPEG_LIBS ?= $(shell pkg-config libjpeg --libs)
 CFLAGS_c += $(JPEG_CFLAGS)
 LIBS_c += $(JPEG_LIBS)
 
@@ -133,7 +133,7 @@ LIBS_c += $(JANSSON_LIBS)
 
 SPEEX_LIBS ?= $(shell pkg-config speex --libs) $(shell pkg-config speexdsp --libs)
 ifdef SPEEX_LIBS
-    CFLAGS_c += -DWITH_SPEEX
+    CFLAGS_c += $(shell pkg-config speex --cflags) $(shell pkg-config speexdsp --cflags) -DWITH_SPEEX
 endif
 LIBS_c += $(SPEEX_LIBS)
 
