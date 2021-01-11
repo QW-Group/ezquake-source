@@ -477,6 +477,20 @@ qbool MVDWrite_Begin (byte type, int to, int size)
 	return (sv.mvdrecording ? true : false);
 }
 
+qbool MVDWrite_HiddenBlockBegin(int length)
+{
+	return MVDWrite_Begin(dem_multiple, 0, length);
+}
+
+qbool MVDWrite_HiddenBlock(const void* data, int length)
+{
+	if (MVDWrite_HiddenBlockBegin(length)) {
+		MVD_SZ_Write(data, length);
+		return true;
+	}
+	return false;
+}
+
 /*
 ====================
 MVD_FrameDeltaTime

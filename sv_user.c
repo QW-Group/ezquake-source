@@ -51,6 +51,23 @@ cvar_t sv_voip_record = {"sv_voip_record", "0"};
 cvar_t sv_voip_echo = {"sv_voip_echo", "0"};
 #endif
 
+#ifdef MVD_PEXT1_DEBUG
+typedef struct {
+	int playernum;
+	int msec;
+	vec3_t pos;
+} mvdsv_antilag_client_info_t;
+
+typedef struct {
+	mvdsv_antilag_client_info_t clients[MAX_CLIENTS];
+	int num_clients;
+} client_antilag_info_t;
+
+static struct {
+	client_antilag_info_t antilag;
+} debug_info;
+#endif
+
 static void SV_UserSetWeaponRank(client_t* cl, const char* new_wrank);
 
 extern	vec3_t	player_mins;
@@ -3942,7 +3959,7 @@ Sets wrank userinfo for mods to pick best weapon based on user's preferences
 */
 static void SV_UserSetWeaponRank(client_t* cl, const char* new_wrank)
 {
-	char old_wrank[16] = { 0 };
+	char old_wrank[128] = { 0 };
 	strlcpy(old_wrank, Info_Get(&cl->_userinfo_ctx_, "wrank"), sizeof(old_wrank));
 	if (strcmp(old_wrank, new_wrank)) {
 		Info_Set(&cl->_userinfo_ctx_, "wrank", new_wrank);
@@ -3974,6 +3991,10 @@ void SV_ExecuteClientMessage (client_t *cl)
 	int		checksumIndex;
 	byte		checksum, calculatedChecksum;
 	int		seq_hash;
+
+#ifdef MVD_PEXT1_DEBUG
+	client_antilag_info_t* debug = &debug_info.antilag;
+#endif
 
 	if (!Netchan_Process(&cl->netchan))
 		return;
@@ -4089,6 +4110,9 @@ void SV_ExecuteClientMessage (client_t *cl)
 	// other players
 	cl->localtime = sv.time;
 	cl->delta_sequence = -1;	// no delta unless requested
+#ifdef MVD_PEXT1_DEBUG
+	memset(&debug, 0, sizeof(debug));
+#endif
 	while (1)
 	{
 		if (msg_badread)
@@ -4116,6 +4140,41 @@ void SV_ExecuteClientMessage (client_t *cl)
 			cl->delta_sequence = MSG_ReadByte ();
 			break;
 
+#ifdef MVD_PEXT1_DEBUG
+		case clc_mvd_debug:
+		{
+			byte type = MSG_ReadByte();
+			if (type == clc_mvd_debug_type_antilag) {
+				int players = MSG_ReadByte();
+				int i;
+
+				for (i = 0; i < players; ++i) {
+					int num = MSG_ReadByte();
+					int msec = MSG_ReadByte();
+					float x = LittleFloat(MSG_ReadFloat());
+					float y = LittleFloat(MSG_ReadFloat());
+					float z = LittleFloat(MSG_ReadFloat());
+
+					if (num >= 0 && num < MAX_CLIENTS) {
+						mvdsv_antilag_client_info_t* p = &debug->clients[num];
+
+						p->playernum = num;
+						p->msec = msec;
+						VectorSet(p->pos, x, y, z);
+					}
+				}
+			}
+			else if (type == clc_mvd_debug_type_weapon) {
+
+			}
+			else {
+				Con_Printf("SV_ReadClientMessage: unknown debug message type %d\n", type);
+				SV_DropClient(cl);
+			}
+			break;
+		}
+#endif
+
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 		case clc_mvd_weapon:
 		{
@@ -4126,6 +4185,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 			int weapon_hide_selection = 0;
 			int new_selections[MAX_WEAPONSWITCH_OPTIONS] = { 0 };
 			char new_wrank[MAX_WEAPONSWITCH_OPTIONS + 1] = { 0 };
+			int wrank_index = 0;
 
 			// This might be a duplicate that should be ignored
 			if (flags & clc_mvd_weapon_forget_ranking) {
@@ -4137,23 +4197,34 @@ void SV_ExecuteClientMessage (client_t *cl)
 			}
 
 			while ((weap = MSG_ReadByte()) > 0) {
-				int weap1 = (weap >> 4) & 15;
-				int weap2 = (weap & 15);
-
-				weap1 = bound(0, weap1, 9);
-				weap2 = bound(0, weap2, 9);
-
-				if (weap1 && write && w < MAX_WEAPONSWITCH_OPTIONS) {
-					new_wrank[w] = '0' + weap1;
-					new_selections[w++] = weap1;
+				if (flags & clc_mvd_weapon_full_impulse) {
+					if (weap && write && w < MAX_WEAPONSWITCH_OPTIONS) {
+						// only add 1-8 to the wrank weapon preference string...
+						if (weap >= 1 && weap <= 8 && wrank_index < MAX_WEAPONSWITCH_OPTIONS) {
+							new_wrank[wrank_index++] = '0' + weap;
+						}
+						new_selections[w++] = weap;
+					}
 				}
-				if (weap1 && weap2 && write && w < MAX_WEAPONSWITCH_OPTIONS) {
-					new_wrank[w] = '0' + weap2;
-					new_selections[w++] = weap2;
-				}
+				else {
+					int weap1 = (weap >> 4) & 15;
+					int weap2 = (weap & 15);
 
-				if (!weap1 || !weap2) {
-					break;
+					weap1 = bound(0, weap1, 9);
+					weap2 = bound(0, weap2, 9);
+
+					if (weap1 && write && w < MAX_WEAPONSWITCH_OPTIONS) {
+						new_wrank[w] = '0' + weap1;
+						new_selections[w++] = weap1;
+					}
+					if (weap1 && weap2 && write && w < MAX_WEAPONSWITCH_OPTIONS) {
+						new_wrank[w] = '0' + weap2;
+						new_selections[w++] = weap2;
+					}
+
+					if (!weap1 || !weap2) {
+						break;
+					}
 				}
 			}
 			if (flags & clc_mvd_weapon_hide_axe) {
@@ -4238,8 +4309,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 
 			if (calculatedChecksum != checksum)
 			{
-				Con_DPrintf ("Failed command checksum for %s(%d) (%d != %d)\n",
-					cl->name, cl->netchan.incoming_sequence, checksum, calculatedChecksum);
+				Con_DPrintf ("Failed command checksum for %s(%d) (%d != %d)\n", cl->name, cl->netchan.incoming_sequence, checksum, calculatedChecksum);
 				return;
 			}
 

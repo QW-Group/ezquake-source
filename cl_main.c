@@ -86,6 +86,11 @@ void CL_QWURL_ProcessChallenge(const char *parameters);
 void onchange_pext_serversideweapon(cvar_t* var, char* value, qbool* cancel);
 void onchange_hud_performance_average(cvar_t* var, char* value, qbool* cancel);
 
+#ifdef MVD_PEXT1_HIDDEN_MESSAGES
+// cl_parse.c
+void CL_ParseHiddenDataMessage(void);
+#endif
+
 static void AuthUsernameChanged(cvar_t* var, char* value, qbool* cancel);
 
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
@@ -252,6 +257,17 @@ cvar_t demo_autotrack           = {"demo_autotrack", "0"}; // use or not autotra
 // Authentication
 cvar_t cl_username              = {"cl_username", "", CVAR_QUEUED_TRIGGER, AuthUsernameChanged};
 static void CL_Authenticate_f(void);
+
+// antilag debugging
+cvar_t cl_debug_antilag_view    = { "cl_debug_antilag_view", "0" };
+cvar_t cl_debug_antilag_ghost   = { "cl_debug_antilag_ghost", "0" };
+cvar_t cl_debug_antilag_self    = { "cl_debug_antilag_self", "0" };
+cvar_t cl_debug_antilag_lines   = { "cl_debug_antilag_lines", "0" };
+cvar_t cl_debug_antilag_send    = { "cl_debug_antilag_send", "0" };
+
+// weapon-switching debugging
+cvar_t cl_debug_weapon_send     = { "cl_debug_weapon_send", "0" };
+cvar_t cl_debug_weapon_view     = { "cl_debug_weapon_view", "0" };
 
 /// persistent client state
 clientPersistent_t	cls;
@@ -526,6 +542,18 @@ unsigned int CL_SupportedMVDExtensions1(void)
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 	if (cl_pext_serversideweapon.integer) {
 		extensions_supported |= MVD_PEXT1_SERVERSIDEWEAPON;
+	}
+#endif
+
+#ifdef MVD_PEXT1_DEBUG_ANTILAG
+	if (cl_debug_antilag_send.integer) {
+		extensions_supported |= MVD_PEXT1_DEBUG_ANTILAG;
+	}
+#endif
+
+#ifdef MVD_PEXT1_DEBUG_WEAPON
+	if (cl_debug_weapon_send.integer) {
+		extensions_supported |= MVD_PEXT1_DEBUG_WEAPON;
 	}
 #endif
 
@@ -1578,6 +1606,15 @@ static void CL_ReadPackets(void)
 				continue; // Wasn't accepted for some reason.
 		}
 
+		if (cls.lastto == 0 && cls.lasttype == dem_multiple) {
+#ifdef MVD_PEXT1_HIDDEN_MESSAGES
+			if (cls.mvdprotocolextensions1 & MVD_PEXT1_HIDDEN_MESSAGES) {
+				CL_ParseHiddenDataMessage();
+			}
+#endif
+			continue;
+		}
+
 		CL_ParseServerMessage();
 	}
 
@@ -1834,6 +1871,17 @@ static void CL_InitLocal(void)
 
 	Cvar_Register (&cl_username);
 	Cmd_AddCommand("authenticate", CL_Authenticate_f);
+
+	// debugging antilag
+	Cvar_Register(&cl_debug_antilag_view);
+	Cvar_Register(&cl_debug_antilag_ghost);
+	Cvar_Register(&cl_debug_antilag_self);
+	Cvar_Register(&cl_debug_antilag_lines);
+	Cvar_Register(&cl_debug_antilag_send);
+
+	// debugging weapons
+	Cvar_Register(&cl_debug_weapon_view);
+	Cvar_Register(&cl_debug_weapon_send);
 
 	snprintf(st, sizeof(st), "ezQuake %i", REVISION);
 

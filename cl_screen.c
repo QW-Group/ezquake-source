@@ -764,11 +764,13 @@ static void SCR_DrawElements(void)
 				if (!sb_showscores && !sb_showteamscores) 
 				{ 
 					// Do not show if +showscores
-					SCR_DrawPause ();
+					SCR_DrawPause();
 
-					SCR_DrawAutoID ();
+					SCR_DrawAutoID();
 
-					SCR_VoiceMeter ();
+					SCR_DrawAntilagIndicators();
+
+					SCR_VoiceMeter();
 				}
 
 				if (!cl.intermission) 

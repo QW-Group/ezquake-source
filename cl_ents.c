@@ -46,6 +46,9 @@ static struct predicted_player {
 	vec3_t	oldv;
 	player_state_t *oldstate;
 
+	qbool drawn;
+	vec3_t drawn_origin;
+	int msec;
 } predicted_players[MAX_CLIENTS];
 
 char *cl_modelnames[cl_num_modelindices];
@@ -1234,9 +1237,6 @@ void SetupPlayerEntity(int num, player_state_t *state)
 	cent->old_vw_index = state->vw_index;
 }
 
-extern int parsecountmod;
-extern double parsecounttime;
-
 player_state_t oldplayerstates[MAX_CLIENTS];	
 
 static int MVD_WeaponModelNumber (int cweapon)
@@ -1270,7 +1270,7 @@ void CL_ParsePlayerinfo (void)
 		Host_Error ("CL_ParsePlayerinfo: num >= MAX_CLIENTS");
 
 	info = &cl.players[num];
-	state = &cl.frames[parsecountmod].playerstate[num];
+	state = &cl.frames[cl.parsecountmod].playerstate[num];
 	cent = &cl_entities[num + 1];
 
 	if (cls.mvdplayback)
@@ -1303,7 +1303,7 @@ void CL_ParsePlayerinfo (void)
 
 		state->frame = MSG_ReadByte ();
 
-		state->state_time = parsecounttime;
+		state->state_time = cl.parsecounttime;
 		state->command.msec = 0;
 
 		for (i = 0; i < 3; i++) 
@@ -1364,11 +1364,11 @@ void CL_ParsePlayerinfo (void)
 		if (flags & PF_MSEC) 
 		{
 			msec = MSG_ReadByte ();
-			state->state_time = parsecounttime - msec * 0.001;
+			state->state_time = cl.parsecounttime - msec * 0.001;
 		} 
 		else
 		{
-			state->state_time = parsecounttime;
+			state->state_time = cl.parsecounttime;
 		}
 
 		if (flags & PF_COMMAND) 
@@ -1660,6 +1660,7 @@ void CL_LinkPlayers (void)
 	centity_t *cent;
 	frame_t *frame;
 	customlight_t cst_lt = {0};
+	extern cvar_t cl_debug_antilag_ghost, cl_debug_antilag_view;
 
 	frame = &cl.frames[cl.parsecount & UPDATE_MASK];
 	memset (&ent, 0, sizeof(entity_t));
@@ -1669,6 +1670,8 @@ void CL_LinkPlayers (void)
 		info = &cl.players[j];
 		state = &frame->playerstate[j];
 		cent = &cl_entities[j + 1];
+
+		predicted_players[j].drawn = false;
 
 		if (state->messagenum != cl.parsecount)
 			continue;	// not present this frame
@@ -1813,22 +1816,25 @@ void CL_LinkPlayers (void)
 
 		// only predict half the move to minimize overruns
 		msec = (cl_predict_half.value ? 500 : 1000) * (playertime - state->state_time);
-		if (msec <= 0 || !cl_predict_players.value || cls.mvdplayback)
-		{		
+		if (msec <= 0 || !cl_predict_players.value || cls.mvdplayback) {
 			VectorCopy (state->origin, ent.origin);
-		} 
-		else
-		{
+			VectorCopy(ent.origin, predicted_players[j].drawn_origin);
+			predicted_players[j].msec = 0;
+			predicted_players[j].drawn = true;
+		}
+		else {
 			// predict players movement
-			if (msec > 255)
-				msec = 255;
+			msec = min(msec, 255);
 			state->command.msec = msec;
 
 			oldphysent = pmove.numphysent;
-			CL_SetSolidPlayers (j);
-			CL_PredictUsercmd (state, &exact, &state->command);
+			CL_SetSolidPlayers(j);
+			CL_PredictUsercmd(state, &exact, &state->command);
 			pmove.numphysent = oldphysent;
-			VectorCopy (exact.origin, ent.origin);
+			VectorCopy(exact.origin, ent.origin);
+			VectorCopy(exact.origin, predicted_players[j].drawn_origin);
+			predicted_players[j].msec = msec;
+			predicted_players[j].drawn = true;
 		}
 
 		if (state->effects & (EF_FLAG1|EF_FLAG2))
@@ -1851,6 +1857,40 @@ void CL_LinkPlayers (void)
 		// Set alpha after origin determined
 		if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing && !CL_SetAlphaByDistance(&ent)) {
 			continue;
+		}
+
+		// Add mvd ghost
+		if (cls.mvdplayback && cl_debug_antilag_ghost.integer != cl_debug_antilag_view.integer) {
+			vec3_t temp;
+			float old_alpha;
+
+			VectorCopy(ent.origin, temp);
+			old_alpha = ent.alpha;
+
+			ent.alpha = 0.2f;
+			switch (cl_debug_antilag_ghost.integer) {
+			case 0:
+				if (state->antilag_flags & dbg_antilag_position_set) {
+					VectorCopy(state->current_origin, ent.origin);
+					CL_AddEntity(&ent);
+				}
+				break;
+			case 1:
+				if (state->antilag_flags & dbg_antilag_rewind_present) {
+					VectorCopy(state->rewind_origin, ent.origin);
+					CL_AddEntity(&ent);
+				}
+				break;
+			case 2:
+				if (state->antilag_flags & dbg_antilag_client_present) {
+					VectorCopy(state->client_origin, ent.origin);
+					CL_AddEntity(&ent);
+				}
+				break;
+			}
+
+			VectorCopy(temp, ent.origin);
+			ent.alpha = old_alpha;
 		}
 
 		VectorCopy (ent.origin, cent->lerp_origin);
@@ -1925,7 +1965,7 @@ void CL_SetSolidEntities (void)
 	pmove.physents[0].info = 0;
 	pmove.numphysent = 1;
 
-	frame = &cl.frames[parsecountmod];
+	frame = &cl.frames[cl.parsecountmod];
 	pak = &frame->packet_entities;
 
 	for (i = 0; i < pak->num_entities; i++) 
@@ -2206,7 +2246,8 @@ static void MVD_InitInterpolation(void) {
 	}
 }
 
-void MVD_Interpolate(void) {
+void MVD_Interpolate(void)
+{
 	int i, j;
 	float f;
 	frame_t	*frame, *oldframe;
@@ -2256,6 +2297,10 @@ void MVD_Interpolate(void) {
 
 	// interpolate clients
 	for (i = 0; i < MAX_CLIENTS; i++) {
+		extern cvar_t cl_debug_antilag_view;
+		extern cvar_t cl_debug_antilag_ghost;
+		extern cvar_t cl_debug_antilag_self;
+
 		pplayer = &predicted_players[i];
 		state = &frame->playerstate[i];
 		oldstate = &oldframe->playerstate[i];
@@ -2265,6 +2310,33 @@ void MVD_Interpolate(void) {
 				state->viewangles[j] = MVD_AdjustAngle(oldstate->command.angles[j], pplayer->olda[j], f);
 				state->origin[j] = oldstate->origin[j] + f * (pplayer->oldo[j] - oldstate->origin[j]);
 				state->velocity[j] = oldstate->velocity[j] + f * (pplayer->oldv[j] - oldstate->velocity[j]);
+			}
+		}
+
+		// copy the antilag values for currently viewed client
+		VectorCopy(state->origin, state->current_origin);
+		VectorCopy(cl.antilag_positions[i].pos, state->rewind_origin);
+		VectorCopy(cl.antilag_positions[i].clientpos, state->client_origin);
+		state->antilag_flags = (cl.antilag_positions[i].present ? dbg_antilag_rewind_present : 0) | (cl.antilag_positions[i].clientpresent ? dbg_antilag_client_present : 0);
+
+		if (i == cl.viewplayernum && !cl_debug_antilag_self.integer) {
+			// only move the other players, not the current view
+			continue;
+		}
+
+		// show the antilagged positions from the current player's point of view
+		if (cl_debug_antilag_view.integer && cl.spectator == cl.autocam) {
+			if (cl_debug_antilag_view.integer == 1) {
+				if (cl.antilag_positions[i].present) {
+					VectorCopy(cl.antilag_positions[i].pos, state->origin);
+					state->antilag_flags |= dbg_antilag_position_set;
+				}
+			}
+			else if (cl_debug_antilag_view.integer == 2) {
+				if (cl.antilag_positions[i].clientpresent) {
+					VectorCopy(cl.antilag_positions[i].clientpos, state->origin);
+					state->antilag_flags |= dbg_antilag_position_set;
+				}
 			}
 		}
 	}
@@ -2300,4 +2372,15 @@ void CL_CalcPlayerFPS(player_info_t *info, int msec)
 		info->fps_frames = 0;
 		info->fps_measure_time += 1.0;
     }
+}
+
+qbool CL_DrawnPlayerPosition(int player_num, float* pos, int* msec)
+{
+	if (pos) {
+		VectorCopy(predicted_players[player_num].drawn_origin, pos);
+	}
+	if (msec) {
+		*msec = predicted_players[player_num].msec;
+	}
+	return predicted_players[player_num].drawn;
 }

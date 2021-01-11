@@ -117,7 +117,7 @@ static void SCR_HUD_DrawAmmo(
 
 		if (ShowPreselectedWeap()) {
 			// using weapon pre-selection so show info for current best pre-selected weapon ammo
-			num = State_AmmoNumForWeapon(IN_BestWeapon());
+			num = State_AmmoNumForWeapon(IN_BestWeapon(true));
 		}
 		else {
 			// not using weapon pre-selection or player is dead so show current selected ammo
@@ -334,7 +334,7 @@ void SCR_HUD_DrawAmmoIconCurrent(hud_t *hud)
 
 	if (ShowPreselectedWeap()) {
 		// using weapon pre-selection so show info for current best pre-selected weapon ammo
-		num = State_AmmoNumForWeapon(IN_BestWeapon());
+		num = State_AmmoNumForWeapon(IN_BestWeapon(true));
 	}
 	else {
 		// not using weapon pre-selection or player is dead so show current selected ammo

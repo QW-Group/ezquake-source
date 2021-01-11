@@ -936,6 +936,8 @@ void MVD_MSG_WriteAngle  (const float f);
 void MVD_SZ_Write        (const void *data, int length);
 
 qbool MVDWrite_Begin(byte type, int to, int size);
+qbool MVDWrite_HiddenBlockBegin(int length);
+qbool MVDWrite_HiddenBlock(const void* data, int length);
 
 void SV_MVD_Record_f (void);
 void SV_MVDEasyRecord_f (void);

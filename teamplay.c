@@ -230,10 +230,9 @@ char *Macro_WeaponAndAmmo (void)
 char *Macro_WeaponNum (void)
 {
 	extern cvar_t cl_weaponpreselect;
-	int IN_BestWeapon (void);
 	int best;
 
-	if (cl_weaponpreselect.integer && (best = IN_BestWeapon())) {
+	if (cl_weaponpreselect.integer && (best = IN_BestWeapon(true))) {
 		char buf[4];
 		snprintf(buf, sizeof(buf), "%d", best);
 		strlcpy(macro_buf, buf, sizeof(macro_buf));

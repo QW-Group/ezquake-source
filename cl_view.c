@@ -781,8 +781,8 @@ void V_CalcViewRoll (void) {
 // if user wish so, weapon pre-selection is also taken in account
 // todo: if user selects different weapon while the current one is still
 // firing, wait until the animation is finished
-static int V_CurrentWeaponModel(void) { 
-	extern int IN_BestWeaponReal(void);
+static int V_CurrentWeaponModel(void)
+{
 	extern cvar_t cl_weaponpreselect;
 	int bestgun;
 	int realw = cl.stats[STAT_WEAPON];
@@ -814,7 +814,7 @@ static int V_CurrentWeaponModel(void) {
 	}
 	else {
 		if (ShowPreselectedWeap() && r_viewpreselgun.integer && !view_message.weaponframe) {
-			bestgun = IN_BestWeaponReal();
+			bestgun = IN_BestWeaponReal(true);
 			if (bestgun == 1) {
 				return cl_modelindices[mi_vaxe];
 			}

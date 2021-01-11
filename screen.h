@@ -115,6 +115,7 @@ void SCR_SaveAutoID(void);
 void SCR_SetupAutoID(void);
 void SCR_RegisterAutoIDCvars(void);
 void SCR_DrawAutoID(void);
+void SCR_DrawAntilagIndicators(void);
 void SShot_RegisterCvars(void);
 qbool SCR_TakingAutoScreenshot(void);
 void SCR_CheckAutoScreenshot(void);

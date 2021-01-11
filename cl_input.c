@@ -27,6 +27,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pmove.h"		// PM_FLY etc
 #include "rulesets.h"
 
+#ifdef MVD_PEXT1_DEBUG_WEAPON
+static void IN_SendWeaponSelection(int items, int* stats, int* weapon_list, int weapon_choice);
+#else
+#define IN_SendWeaponSelection(...)
+#endif
+
 cvar_t cl_anglespeedkey       = {"cl_anglespeedkey","1.5"};
 cvar_t cl_backspeed           = {"cl_backspeed","400"};
 cvar_t cl_c2spps              = {"cl_c2spps","0"};
@@ -134,8 +140,6 @@ static void SetNextImpulse(int impulse, qbool from_weapon_script, qbool set_best
 }
 
 #define VOID_KEY (-1)
-
-int IN_BestWeapon (void);
 
 void KeyDown_common (kbutton_t *b, int k)
 {
@@ -297,7 +301,7 @@ qbool Key_TryMovementProtected(const char *cmd, qbool down, int key)
 void IN_AttackDown(void)
 {
 	int best;
-	if (cl_weaponpreselect.value && (best = IN_BestWeapon())) {
+	if (cl_weaponpreselect.value && (best = IN_BestWeapon(false))) {
 		SetNextImpulse(best, true, true);
 	}
 
@@ -340,7 +344,7 @@ void IN_FireDown(void)
 		cl.weapon_order_sequence_set = cls.netchan.outgoing_sequence;
 	}
 
-	SetNextImpulse(IN_BestWeapon(), true, true);
+	SetNextImpulse(IN_BestWeapon(false), true, true);
 
 	KeyDown_common(&in_attack, key_code);
 }
@@ -442,26 +446,26 @@ void IN_RememberWpOrder (void)
 	}
 }
 
-static int IN_BestWeapon_Common(int implicit, int* weapon_order);
+static int IN_BestWeapon_Common(int implicit, int* weapon_order, qbool rendering_only);
 
 // picks the best available (carried & having some ammunition) weapon according to users current preference
 // or if the intersection (wished * carried) is empty
 // select the top wished weapon
-int IN_BestWeapon(void)
+int IN_BestWeapon(qbool rendering_only)
 {
-	return IN_BestWeapon_Common(cl.weapon_order[0], cl.weapon_order);
+	return IN_BestWeapon_Common(cl.weapon_order[0], cl.weapon_order, rendering_only);
 }
 
 // picks the best available (carried & having some ammunition) weapon according to users current preference
 // or if the intersection (wished * carried) is empty
 // select the current weapon
-int IN_BestWeaponReal(void)
+int IN_BestWeaponReal(qbool rendering_only)
 {
-	return IN_BestWeapon_Common(in_next_impulse, cl.weapon_order);
+	return IN_BestWeapon_Common(in_next_impulse, cl.weapon_order, rendering_only);
 }
 
 // finds the best weapon from the carried weapons; if none is found, returns implicit
-static int IN_BestWeapon_Common(int implicit, int* weapon_order)
+static int IN_BestWeapon_Common(int implicit, int* weapon_order, qbool rendering_only)
 {
 	int i, imp, items;
 	int best = implicit;
@@ -510,6 +514,9 @@ static int IN_BestWeapon_Common(int implicit, int* weapon_order)
 		}
 	}
 
+	if (!rendering_only) {
+		IN_SendWeaponSelection(items, cl.stats, cl.weapon_order, best);
+	}
 	return best;
 }
 
@@ -525,7 +532,7 @@ void IN_Impulse(void)
 
 	// If more than one argument, select immediately the best weapon.
 	IN_RememberWpOrder();
-	if ((best = IN_BestWeapon())) {
+	if ((best = IN_BestWeapon(false))) {
 		SetNextImpulse(best, true, true);
 	}
 	else {
@@ -545,46 +552,48 @@ void IN_Weapon(void)
 
 	first = Q_atoi (Cmd_Argv (1));
 	if (first == 10) {
+		int temp = IN_BestWeapon(false);
 		int temp_order[10] = {
-			IN_BestWeapon () % 8 + 1,
-			(IN_BestWeapon () + 1) % 8 + 1,
-			(IN_BestWeapon () + 2) % 8 + 1,
-			(IN_BestWeapon () + 3) % 8 + 1,
-			(IN_BestWeapon () + 4) % 8 + 1,
-			(IN_BestWeapon () + 5) % 8 + 1,
-			(IN_BestWeapon () + 6) % 8 + 1,
-			(IN_BestWeapon () + 7) % 8 + 1,
+			temp % 8 + 1,
+			(temp + 1) % 8 + 1,
+			(temp + 2) % 8 + 1,
+			(temp + 3) % 8 + 1,
+			(temp + 4) % 8 + 1,
+			(temp + 5) % 8 + 1,
+			(temp + 6) % 8 + 1,
+			(temp + 7) % 8 + 1,
 			0,
 			0
 		};
 
-		cl.weapon_order[0] = best = IN_BestWeapon_Common(1, temp_order);
+		cl.weapon_order[0] = best = IN_BestWeapon_Common(1, temp_order, false);
 		if (cl_pext_serversideweapon.integer) {
 			cl.weapon_order_sequence_set = cls.netchan.outgoing_sequence;
 		}
 	}
 	else if (first == 12) {
+		int temp = IN_BestWeapon(false);
 		int temp_order[10] = {
-			8 - ((8 - IN_BestWeapon() + 1) % 8),
-			8 - ((8 - IN_BestWeapon() + 2) % 8),
-			8 - ((8 - IN_BestWeapon() + 3) % 8),
-			8 - ((8 - IN_BestWeapon() + 4) % 8),
-			8 - ((8 - IN_BestWeapon() + 5) % 8),
-			8 - ((8 - IN_BestWeapon() + 6) % 8),
-			8 - ((8 - IN_BestWeapon() + 7) % 8),
-			8 - ((8 - IN_BestWeapon() + 8) % 8),
+			8 - ((8 - temp + 1) % 8),
+			8 - ((8 - temp + 2) % 8),
+			8 - ((8 - temp + 3) % 8),
+			8 - ((8 - temp + 4) % 8),
+			8 - ((8 - temp + 5) % 8),
+			8 - ((8 - temp + 6) % 8),
+			8 - ((8 - temp + 7) % 8),
+			8 - ((8 - temp + 8) % 8),
 			0,
 			0
 		};
 
-		cl.weapon_order[0] = best = IN_BestWeapon_Common(1, temp_order);
+		cl.weapon_order[0] = best = IN_BestWeapon_Common(1, temp_order, false);
 		cl.weapon_order_sequence_set = cls.netchan.outgoing_sequence;
 	}
 	else {
 		// read user input
 		IN_RememberWpOrder ();
 
-		best = IN_BestWeapon();
+		best = IN_BestWeapon(false);
 	}
 
 	mode = (int) cl_weaponpreselect.value;
@@ -984,11 +993,86 @@ void CL_SendClientCommand(qbool reliable, char *format, ...)
 	}
 }
 
+#ifdef MVD_PEXT1_DEBUG_ANTILAG
+void IN_SendPredictedPlayerPositions(sizebuf_t* buffer)
+{
+	extern cvar_t cl_debug_antilag_send;
+	byte players = 0;
+	int i, msec[MAX_CLIENTS];
+	vec3_t pos[MAX_CLIENTS];
+	qbool present[MAX_CLIENTS];
+
+	if (!(cls.mvdprotocolextensions1 & MVD_PEXT1_DEBUG_ANTILAG)) {
+		return;
+	}
+
+	for (i = 0; i < MAX_CLIENTS; ++i) {
+		if (i == cl.playernum) {
+			present[i] = true;
+			VectorCopy(cl.simorg, pos[i]);
+			msec[i] = 0;
+		}
+		else {
+			present[i] = CL_DrawnPlayerPosition(i, pos[i], &msec[i]);
+			msec[i] = bound(0, msec[i], 255);
+		}
+
+		if (present[i]) {
+			++players;
+		}
+	}
+
+	MSG_WriteByte(buffer, clc_mvd_debug);
+	MSG_WriteByte(buffer, clc_mvd_debug_type_antilag);
+	MSG_WriteByte(buffer, players);
+	for (i = 0; i < MAX_CLIENTS; ++i) {
+		if (present[i]) {
+			MSG_WriteByte(buffer, i);
+			MSG_WriteByte(buffer, msec[i]);
+			MSG_WriteByte(buffer, 0);           // model: for future use to determine the prediction model used
+			MSG_WriteFloat(buffer, LittleFloat(pos[i][0]));
+			MSG_WriteFloat(buffer, LittleFloat(pos[i][1]));
+			MSG_WriteFloat(buffer, LittleFloat(pos[i][2]));
+		}
+	}
+}
+#endif
+
+#ifdef MVD_PEXT1_DEBUG_WEAPON
+static void IN_SendWeaponSelection(int items, int* stats, int* weapon_list, int weapon_choice)
+{
+	int i;
+
+	if (!(cls.mvdprotocolextensions1 & MVD_PEXT1_DEBUG_WEAPON)) {
+		return;
+	}
+
+	MSG_WriteByte(&cls.netchan.message, clc_mvd_debug);
+	MSG_WriteByte(&cls.netchan.message, clc_mvd_debug_type_weapon);
+	MSG_WriteLong(&cls.netchan.message, LittleLong(items));
+	MSG_WriteByte(&cls.netchan.message, min(255, stats[STAT_SHELLS]));
+	MSG_WriteByte(&cls.netchan.message, min(255, stats[STAT_NAILS]));
+	MSG_WriteByte(&cls.netchan.message, min(255, stats[STAT_ROCKETS]));
+	MSG_WriteByte(&cls.netchan.message, min(255, stats[STAT_CELLS]));
+	MSG_WriteByte(&cls.netchan.message, weapon_choice);
+	for (i = 0; i < MAXWEAPONS; ++i) {
+		MSG_WriteByte(&cls.netchan.message, weapon_list[i]);
+		if (!weapon_list[i]) {
+			break;
+		}
+	}
+	if (i >= MAXWEAPONS) {
+		MSG_WriteByte(&cls.netchan.message, 0);
+	}
+}
+#endif
+
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 void IN_SendServerSideWeaponSwitch(sizebuf_t* buffer)
 {
 	int i = 0;
 	int flags = 0;
+	qbool debug = false;
 
 	if (!(cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON)) {
 		return;
@@ -1017,7 +1101,8 @@ void IN_SendServerSideWeaponSwitch(sizebuf_t* buffer)
 	MSG_WriteByte(buffer, clc_mvd_weapon);
 	MSG_WriteByte(buffer, flags);
 	if (flags & clc_mvd_weapon_forget_ranking) {
-		MSG_WriteByte(buffer, min(cls.netchan.outgoing_sequence - cl.weapon_order_sequence_set, 255));
+		int offset = min(cls.netchan.outgoing_sequence - cl.weapon_order_sequence_set, 255);
+		MSG_WriteByte(buffer, offset);
 	}
 	if (cl_pext_serversideweapon.integer) {
 		if (flags & clc_mvd_weapon_full_impulse) {
@@ -1118,6 +1203,9 @@ void CL_SendCmd(void)
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 	// Send this before the clc_move command
 	IN_SendServerSideWeaponSwitch(&buf);
+#endif
+#ifdef MVD_PEXT1_DEBUG_ANTILAG
+	IN_SendPredictedPlayerPositions(&buf);
 #endif
 
 	// begin a client move command

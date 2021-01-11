@@ -85,7 +85,6 @@ extern int n_spectators;
 
 int HUD_Stats(int stat_num);
 extern cvar_t cl_weaponpreselect;
-int IN_BestWeapon(void);
 
 #define HUD_SCOREBOARD_ALL			0xffffffff
 #define HUD_SCOREBOARD_SORT_TEAMS	(1 << 0)

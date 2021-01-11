@@ -165,7 +165,7 @@ static void CL_Demo_Close(void)
 //
 // Writes a chunk of data to the currently opened demo record file.
 //
-static void CL_Demo_Write(void *data, int size)
+static void CL_Demo_Write(const void *data, int size)
 {
 	if (democache_available)
 	{
@@ -1812,6 +1812,12 @@ static qbool CL_DemoReadDemRead(void)
 
 	// Skip over any dem_multiple packets sent to no-one
 	if (cls.mvdplayback && cls.lasttype == dem_multiple && cls.lastto == 0) {
+#ifdef MVD_PEXT1_HIDDEN_MESSAGES
+		// Don't skip these if they're in parseable format
+		if (cls.mvdprotocolextensions1 & MVD_PEXT1_HIDDEN_MESSAGES) {
+			return false;
+		}
+#endif
 		return true;
 	}
 

@@ -64,9 +64,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef PROTOCOL_VERSION_MVD1
 
-#define MVD_PEXT1_FLOATCOORDS       0x00000001 // FTE_PEXT_FLOATCOORDS but for entity/player coords only
-#define MVD_PEXT1_HIGHLAGTELEPORT   0x00000002 // Adjust movement direction for frames following teleport
-#define MVD_PEXT1_SERVERSIDEWEAPON  0x00000004 // Server-side weapon selection
+#define MVD_PEXT1_FLOATCOORDS       (1 <<  0) // FTE_PEXT_FLOATCOORDS but for entity/player coords only
+#define MVD_PEXT1_HIGHLAGTELEPORT   (1 <<  1) // Adjust movement direction for frames following teleport
+#define MVD_PEXT1_SERVERSIDEWEAPON  (1 <<  2) // Server-side weapon selection
+#define MVD_PEXT1_DEBUG_WEAPON      (1 <<  3) // Send weapon-choice explanation to server for logging
+#define MVD_PEXT1_DEBUG_ANTILAG     (1 <<  4) // Send predicted positions to server (compare to antilagged positions)
+#define MVD_PEXT1_HIDDEN_MESSAGES   (1 <<  5) // dem_multiple(0) packets are in format (<length> <type-id>+ <packet-data>)*
+#define MVD_PEXT1_SERVERSIDEWEAPON2 (1 <<  6) // Server-side weapon selection supports clc_mvd_weapon_full_impulse
 
 #endif
 
@@ -247,6 +251,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 byte MSG_EncodeMVDSVWeaponFlags(int deathmatch, int weaponmode, int weaponhide, qbool weaponhide_axe, qbool forgetorder, qbool forgetondeath, int max_impulse);
 void MSG_DecodeMVDSVWeaponFlags(int flags, int* weaponmode, int* weaponhide, qbool* forgetorder, int* sequence);
+#endif
+
+#if defined(MVD_PEXT1_DEBUG_ANTILAG) || defined(MVD_PEXT1_DEBUG_WEAPON)
+#define MVD_PEXT1_DEBUG
+#define MVD_PEXT1_ANTILAG_CLIENTPOS       128 // flag set on the playernum if the client positions are also included
+
+#define clc_mvd_debug 201
+
+#define clc_mvd_debug_type_antilag 1
+#define clc_mvd_debug_type_weapon  2
 #endif
 
 //==============================================
@@ -487,6 +501,49 @@ typedef struct temp_entity_list_s
 	temp_entity_t	list[MAX_TEMP_ENTITIES];
 	int				count;
 } temp_entity_list_t;
+
+#ifdef MVD_PEXT1_HIDDEN_MESSAGES
+// hidden messages inserted into .mvd files
+// embedded in dem_multiple(0) - should be safely skipped in clients
+// format is <length> <type>*   where <type> is duplicated if 0xFFFF.  <length> is length of the data packet, not the header
+enum {
+	mvdhidden_antilag_position          = 0x0000,  // mvdhidden_antilag_position_header_t mvdhidden_antilag_position_t*
+	mvdhidden_usercmd                   = 0x0001,  // <byte: source playernum> <todo>
+	mvdhidden_usercmd_weapons           = 0x0002,  // <byte: source playernum> <int: items> <byte[4]: ammo> <byte: result> <byte*: weapon priority (nul terminated)>
+	mvdhidden_demoinfo                  = 0x0003,  // <short: block#> <byte[] content>
+	mvdhidden_commentary_track          = 0x0004,  // <byte: track#> <byte: audioformat> <string: short-name> <string: author(s)> <float: start-offset>
+	mvdhidden_commentary_data           = 0x0005,  // <byte: track#> [format-specific]
+	mvdhidden_commentary_text_segment   = 0x0006,  // <byte: track#> <float: duration> <string: text (utf8)>
+	mvdhidden_dmgdone                   = 0x0007,  // <byte: damaging ent#> <byte: damaged ent#> <byte: damage>
+	mvdhidden_usercmd_weapons_ss        = 0x0008,  // <byte: source playernum> <int: items> <byte[4]: ammo> <byte: result> <byte*: weapon priority (nul terminated)>
+
+	mvdhidden_extended                  = 0xFFFF   // doubt we'll ever get here: read next short...
+};
+typedef unsigned short mvdhidden_type_t;
+
+#pragma pack(push, 1)
+typedef struct {
+	int                 length;    // this is the number of bytes in the packet, not including this header
+	mvdhidden_type_t    type_id;   // If 0xFFFF, read again to extend range
+} mvdhidden_block_header_t;
+
+typedef struct {
+	byte playernum;
+	byte players;
+	unsigned int incoming_seq;
+	float server_time;
+	float target_time;
+} mvdhidden_antilag_position_header_t;
+
+typedef struct {
+	float clientpos[3];
+	float pos[3];
+	byte playernum;
+	byte msec;
+	byte predmodel;
+} mvdhidden_antilag_position_t;
+#pragma pack(pop)
+#endif // #ifdef MVD_PEXT1_HIDDEN_MESSAGES
 
 extern temp_entity_list_t temp_entities;
 

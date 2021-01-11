@@ -293,7 +293,7 @@ static void SCR_HUD_DrawGunCurrent(hud_t *hud)
 
 	if (ShowPreselectedWeap()) {
 		// using weapon pre-selection so show info for current best pre-selected weapon
-		gun = IN_BestWeapon();
+		gun = IN_BestWeapon(true);
 		if (gun < 2) {
 			return;
 		}

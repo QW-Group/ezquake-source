@@ -89,11 +89,21 @@ void vectoangles(vec3_t vec, vec3_t ang) {
 	ang[2] = 0;
 }
 
-void Cam_SetViewPlayer (void) {
-	if (cl.spectator && cl.autocam && cl.spec_locked && cl_chasecam.value)
-		cl.viewplayernum = cl.spec_track;
-	else
-		cl.viewplayernum = cl.playernum;
+void Cam_SetViewPlayer (void)
+{
+	int new_track;
+
+	if (cl.spectator && cl.autocam && cl.spec_locked && cl_chasecam.value) {
+		new_track = cl.spec_track;
+	}
+	else {
+		new_track = cl.playernum;
+	}
+
+	if (new_track != cl.viewplayernum) {
+		memset(cl.antilag_positions, 0, sizeof(cl.antilag_positions));
+	}
+	cl.viewplayernum = new_track;
 }
 
 // returns true if weapon model should be drawn in camera mode
