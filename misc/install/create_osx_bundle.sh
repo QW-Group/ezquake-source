@@ -9,8 +9,10 @@
 # there will also be an ezquake.zip which basically just zips up the .app.
 #
 
+ARCH=$(uname -m | sed -e s/i.86/i386/ -e s/amd64/x86_64/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/alpha/axp/)
+
 BUNDLE_NAME=ezQuake.app
-BINARY=ezquake-darwin-x86_64
+BINARY=ezquake-darwin-${ARCH}
 ICON_FILE=ezquake.icns
 
 if [ -d $BUNDLE_NAME ]; then
