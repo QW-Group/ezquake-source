@@ -427,8 +427,6 @@ sources += gen.process(
 	'help_cmdline_params.json'
 )
 
-# meag: change this to 'all .glsl files in directory'
-# (https://github.com/mesonbuild/meson/blob/master/docs/markdown/FAQ.md#but-i-really-want-to-use-wildcards)
 sources += gen.process(
 	'glsl/common.glsl',
 	'glsl/constants.glsl',
@@ -438,6 +436,8 @@ sources += gen.process(
 	'glsl/draw_sprites.vertex.glsl',
 	'glsl/draw_world.fragment.glsl',
 	'glsl/draw_world.vertex.glsl',
+	'glsl/fx_world_geometry.fragment.glsl',
+	'glsl/fx_world_geometry.vertex.glsl',
 	'glsl/hud_draw_circle.fragment.glsl',
 	'glsl/hud_draw_circle.vertex.glsl',
 	'glsl/hud_draw_image.fragment.glsl',
@@ -448,10 +448,13 @@ sources += gen.process(
 	'glsl/hud_draw_polygon.vertex.glsl',
 	'glsl/lighting.compute.glsl',
 	'glsl/post_process_screen.fragment.glsl',
-	'glsl/post_process_screen.vertex.glsl'
+	'glsl/post_process_screen.vertex.glsl',
+	'glsl/simple.fragment.glsl',
+	'glsl/simple.vertex.glsl',
+	'glsl/simple3d.fragment.glsl',
+	'glsl/simple3d.vertex.glsl',
 )
 
-# also change this to 'all .glsl files in directory'
 sources += gen.process(
 	'glsl/glc/glc_aliasmodel_shadow.fragment.glsl',
 	'glsl/glc/glc_aliasmodel_shadow.vertex.glsl',
@@ -476,7 +479,7 @@ sources += gen.process(
 	'glsl/glc/glc_world_secondpass.fragment.glsl',
 	'glsl/glc/glc_world_secondpass.vertex.glsl',
 	'glsl/glc/glc_world_textured.fragment.glsl',
-	'glsl/glc/glc_world_textured.vertex.glsl'
+	'glsl/glc/glc_world_textured.vertex.glsl',
 )
 
 link_args = []
@@ -518,7 +521,7 @@ else # Otherwise assume a roughly POSIX compliant OS with X11.
 	c_args += '-DX11_GAMMA_WORKAROUND'
 endif
 
-c_args += '-DRENDERER_OPTION_CLASSIC_OPENGL -DRENDERER_OPTION_MODERN_OPENGL'
+c_args += ['-DRENDERER_OPTION_CLASSIC_OPENGL', '-DRENDERER_OPTION_MODERN_OPENGL']
 
 executable('ezquake-' + host_machine.system() + '-' + host_machine.cpu(), sources,
 	dependencies : deps,
