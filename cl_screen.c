@@ -46,6 +46,8 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "r_local.h"
 #include "r_chaticons.h"
 #include "r_renderer.h"
+#include "r_matrix.h"
+#include "qsound.h"
 
 #ifndef CLIENTONLY
 #include "server.h"
@@ -61,6 +63,11 @@ void SCR_DrawQTVBuffer(void);
 void SCR_DrawFPS(void);
 void SCR_DrawSpeed(void);
 qbool V_PreRenderView(void);
+
+static void SCR_DrawDamageIndicators(void);
+void SCR_SetupDamageIndicators(void);
+static void SCR_RegisterDamageIndicatorCvars(void);
+void CL_SpawnDamageIndicator(int deathtype, int targ_ent, int damage, qbool splash_damage, qbool team_damage);
 
 int	glx, gly, glwidth, glheight;
 
@@ -698,6 +705,7 @@ void SCR_DrawMultiviewIndividualElements(void)
 	// Show autoid in all views
 	if (!sb_showscores && !sb_showteamscores) {
 		SCR_DrawAutoID();
+		SCR_DrawDamageIndicators();
 	}
 
 	// Crosshair
@@ -769,6 +777,8 @@ static void SCR_DrawElements(void)
 					SCR_DrawAutoID();
 
 					SCR_DrawAntilagIndicators();
+
+					SCR_DrawDamageIndicators();
 
 					SCR_VoiceMeter();
 				}
@@ -1133,6 +1143,7 @@ void SCR_Init (void)
 	SShot_RegisterCvars();
 	WeaponStats_CommandInit();
 	SCR_CenterPrint_Init();
+	SCR_RegisterDamageIndicatorCvars();
 
 	scr_initialized = true;
 
@@ -1175,3 +1186,200 @@ mpic_t * SCR_GetWeaponIconByFlag (int flag)
 	return NULL;
 }
 
+static cvar_t  scr_damage_proportional     = { "scr_damage_proportional", "0" };
+static cvar_t  scr_damage_floating         = { "scr_damage_floating", "0" };
+static cvar_t  scr_damage_hitbeep          = { "scr_damage_hitbeep", "0" };
+static cvar_t  scr_damage_scale            = { "scr_damage_scale", "1" };
+static cvar_t  scr_damage_offset_spectator = { "scr_damage_offset_spectator", "28" };
+static cvar_t  scr_damage_offset_ingame    = { "scr_damage_offset_ingame", "14" };
+
+static float DAMAGE_INITIAL_VELOCITY[2] = { 250, 200 };
+#define DAMAGE_VERTICAL_OFFSET_INGAME 16
+#define DAMAGE_VERTICAL_OFFSET_SPECTATOR 32
+#define DAMAGE_GRAVITY 400
+
+static int direction_order = 0;
+
+void SCR_SetupDamageIndicators(void)
+{
+	vec3_t r;
+	float winz;
+	int i;
+
+	if (cl.intermission || !scr_damage_floating.integer) {
+		memset(cl.damage_notifications, 0, sizeof(cl.damage_notifications));
+		return;
+	}
+
+	if (cls.state != ca_active || !cl.validsequence) {
+		return;
+	}
+
+	for (i = 0; i < MAX_DAMAGE_NOTIFICATIONS; ++i) {
+		scr_damage_t* dmg = &cl.damage_notifications[i];
+
+		dmg->visible = false;
+		if (!dmg->time || cls.realtime - dmg->time >= MAX_DAMAGE_NOTIFICATION_TIME) {
+			dmg->time = 0;
+			continue;
+		}
+
+		dmg->vel[1] -= cls.frametime * DAMAGE_GRAVITY;
+
+		VectorScale(vright, dmg->vel[0], r);
+		VectorMA(dmg->origin, cls.frametime, r, dmg->origin);
+		dmg->origin[2] += dmg->vel[1] * cls.frametime;
+
+		if (R_CullSphere(dmg->origin, 0)) {
+			continue;
+		}
+
+		dmg->visible = R_Project3DCoordinates(dmg->origin[0], dmg->origin[1], dmg->origin[2] + 28, &dmg->x, &dmg->y, &winz);
+	}
+}
+
+static void SCR_DrawDamageIndicators(void)
+{
+	int i;
+
+	if (cl.intermission || !scr_damage_floating.integer) {
+		return;
+	}
+
+	for (i = 0; i < MAX_DAMAGE_NOTIFICATIONS; ++i) {
+		scr_damage_t * dmg = &cl.damage_notifications[i];
+
+		if (dmg->visible) {
+			float x = dmg->x * vid.width / glwidth;
+			float y = (glheight - dmg->y) * vid.height / glheight;
+			float scale = (scr_damage_scale.value > 0 ? scr_damage_scale.value : 1.0);
+			float age = (cls.realtime - dmg->time);
+			float alpha = 1.0f;
+
+			if (age > MAX_DAMAGE_NOTIFICATION_TIME / 2) {
+				alpha = 1 - 2 * age / MAX_DAMAGE_NOTIFICATION_TIME;
+			}
+			Draw_SStringAligned(x - 5 * 8 * scale, y - 8 * scale, dmg->text, scale, alpha, scr_damage_proportional.integer, text_align_center, x + 5 * 8 * scale);
+		}
+	}
+}
+
+static void SCR_DamageInit(scr_damage_t * dmg, int damage, vec3_t origin, qbool team, qbool splash)
+{
+	const char* color = "&c7f7"; // direct/projectile
+	float distance;
+
+	if (team) {
+		color = "&cf55";
+	}
+	else if (splash) {
+		color = "&cff5";
+	}
+
+	distance = VectorDistance(origin, cl.simorg) / 300.0f;
+	distance = bound(0.1f, distance, 1.0f);
+
+	dmg->time = cls.realtime;
+	snprintf(dmg->text, sizeof(dmg->text), "%s%d", color, damage);
+	VectorCopy(origin, dmg->origin);
+	dmg->origin[2] += (cl.spectator ? scr_damage_offset_spectator.value : scr_damage_offset_ingame.value);
+	switch (direction_order % 4) {
+	case 0:
+		dmg->vel[0] = DAMAGE_INITIAL_VELOCITY[0];
+		break;
+	case 1:
+		dmg->vel[0] = -DAMAGE_INITIAL_VELOCITY[0];
+		break;
+	case 2:
+		dmg->vel[0] = DAMAGE_INITIAL_VELOCITY[0] / 3;
+		break;
+	case 3:
+		dmg->vel[0] = -DAMAGE_INITIAL_VELOCITY[0] / 3;
+		break;
+	}
+	dmg->vel[0] *= distance;
+	dmg->vel[1] = DAMAGE_INITIAL_VELOCITY[1] * distance;
+	VectorCopy(dmg->origin, origin);
+	++direction_order;
+}
+
+static void CL_SpawnDamageIndicatorDirect(int deathtype, vec3_t origin, int damage, qbool splash_damage, qbool team_damage)
+{
+	if (scr_damage_hitbeep.integer) {
+		S_LocalSound("dmg-notification.wav");
+	}
+
+	if (scr_damage_floating.integer) {
+		int i;
+		double earliest_time;
+		int earliest_slot;
+
+		earliest_time = cls.realtime;
+		earliest_slot = -1;
+		for (i = 0; i < MAX_DAMAGE_NOTIFICATIONS; ++i) {
+			scr_damage_t* dmg = &cl.damage_notifications[i];
+
+			if (dmg->time == 0 || dmg->time < cls.realtime - MAX_DAMAGE_NOTIFICATION_TIME) {
+				SCR_DamageInit(dmg, damage, origin, team_damage, splash_damage);
+				return;
+			}
+
+			if (earliest_time > dmg->time) {
+				earliest_time = dmg->time;
+				earliest_slot = i;
+			}
+		}
+
+		if (earliest_slot >= 0) {
+			SCR_DamageInit(&cl.damage_notifications[earliest_slot], damage, origin, team_damage, splash_damage);
+		}
+	}
+}
+
+void CL_SpawnDamageIndicator(int deathtype, int targ_ent, int damage, qbool splash_damage, qbool team_damage)
+{
+	if (!(scr_damage_floating.integer || scr_damage_hitbeep.integer) || damage == 0) {
+		return;
+	}
+
+	if (targ_ent == 0 || targ_ent >= sizeof(cl_entities) / sizeof(cl_entities[0])) {
+		return;
+	}
+
+	CL_SpawnDamageIndicatorDirect(deathtype, cl_entities[targ_ent].current.origin, damage, splash_damage, team_damage);
+}
+
+void CL_ReadKtxDamageIndicatorString(const char* s)
+{
+	vec3_t origin;
+	int deathtype;
+	int damage;
+	qbool splash_damage;
+	qbool team_damage;
+
+	Cmd_TokenizeString((char*)s);
+
+	if (Cmd_Argc() == 9) {
+		origin[0] = atoi(Cmd_Argv(2));
+		origin[1] = atoi(Cmd_Argv(3));
+		origin[2] = atoi(Cmd_Argv(4));
+		deathtype = atoi(Cmd_Argv(5));
+		damage = atoi(Cmd_Argv(6));
+		splash_damage = atoi(Cmd_Argv(7));
+		team_damage = atoi(Cmd_Argv(8));
+
+		CL_SpawnDamageIndicatorDirect(deathtype, origin, damage, splash_damage, team_damage);
+	}
+}
+
+static void SCR_RegisterDamageIndicatorCvars(void)
+{
+	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
+	Cvar_Register(&scr_damage_proportional);
+	Cvar_Register(&scr_damage_floating);
+	Cvar_Register(&scr_damage_hitbeep);
+	Cvar_Register(&scr_damage_scale);
+	Cvar_Register(&scr_damage_offset_spectator);
+	Cvar_Register(&scr_damage_offset_ingame);
+	Cvar_ResetCurrentGroup();
+}

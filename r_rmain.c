@@ -73,6 +73,8 @@ static void R_SetupGL(void);
 
 void GLM_RenderView(void);
 
+void SCR_SetupDamageIndicators(void);
+
 extern msurface_t *alphachain;
 
 texture_t *r_notexture_mip = NULL;
@@ -747,6 +749,7 @@ static void R_Render3DHud(void)
 
 	// While still in 3D mode, calculate the location of labels to be printed in 2D
 	SCR_SetupAutoID();
+	SCR_SetupDamageIndicators();
 }
 
 void R_RenderView(void)

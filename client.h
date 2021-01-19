@@ -538,6 +538,20 @@ typedef struct antilag_stats_s {
 #define PAUSED_SERVER		1
 #define PAUSED_DEMO			2
 
+#define MAX_DAMAGE_NOTIFICATION_TIME 1.5
+#define MAX_DAMAGE_NOTIFICATIONS ((int)(10 * MAX_DAMAGE_NOTIFICATION_TIME))
+
+typedef struct scr_damage_s {
+	char text[64];
+	double time;
+	vec3_t origin;
+	vec3_t offset;
+	float vel[2];
+
+	// position on screen
+	float x, y;
+	qbool visible;
+} scr_damage_t;
 
 /// a structure that is wiped completely at every server signon
 typedef struct {
@@ -733,6 +747,9 @@ typedef struct {
 	// demoinfo (stats file embedded in demo)
 	int         demoinfo_blocknumber;
 	int         demoinfo_bytes;
+
+	// damage notifications
+	scr_damage_t damage_notifications[MAX_DAMAGE_NOTIFICATIONS];
 } clientState_t;
 
 #define SCORING_SYSTEM_DEFAULT   0

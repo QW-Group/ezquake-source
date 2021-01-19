@@ -488,6 +488,7 @@ typedef struct usercmd_s {
 // Used for saving a temporary list of temp entities.
 // 
 
+#ifndef SERVERONLY
 #define	MAX_TEMP_ENTITIES 32
 typedef struct temp_entity_s
 {
@@ -501,6 +502,7 @@ typedef struct temp_entity_list_s
 	temp_entity_t	list[MAX_TEMP_ENTITIES];
 	int				count;
 } temp_entity_list_t;
+#endif // !SERVERONLY
 
 #ifdef MVD_PEXT1_HIDDEN_MESSAGES
 // hidden messages inserted into .mvd files
@@ -511,17 +513,15 @@ enum {
 	mvdhidden_usercmd                   = 0x0001,  // <byte: source playernum> <todo>
 	mvdhidden_usercmd_weapons           = 0x0002,  // <byte: source playernum> <int: items> <byte[4]: ammo> <byte: result> <byte*: weapon priority (nul terminated)>
 	mvdhidden_demoinfo                  = 0x0003,  // <short: block#> <byte[] content>
-	mvdhidden_commentary_track          = 0x0004,  // <byte: track#> <byte: audioformat> <string: short-name> <string: author(s)> <float: start-offset>
-	mvdhidden_commentary_data           = 0x0005,  // <byte: track#> [format-specific]
-	mvdhidden_commentary_text_segment   = 0x0006,  // <byte: track#> <float: duration> <string: text (utf8)>
+	mvdhidden_commentary_track          = 0x0004,  // <byte: track#> [todo... <byte: audioformat> <string: short-name> <string: author(s)> <float: start-offset>?]
+	mvdhidden_commentary_data           = 0x0005,  // <byte: track#> [todo... format-specific]
+	mvdhidden_commentary_text_segment   = 0x0006,  // <byte: track#> [todo... <float: duration> <string: text (utf8)>]
 	mvdhidden_dmgdone                   = 0x0007,  // <byte: damaging ent#> <byte: damaged ent#> <byte: damage>
-	mvdhidden_usercmd_weapons_ss        = 0x0008,  // <byte: source playernum> <int: items> <byte[4]: ammo> <byte: result> <byte*: weapon priority (nul terminated)>
-
+	mvdhidden_usercmd_weapons_ss        = 0x0008,  // (same format as mvdhidden_usercmd_weapons)
 	mvdhidden_extended                  = 0xFFFF   // doubt we'll ever get here: read next short...
 };
 typedef unsigned short mvdhidden_type_t;
 
-#pragma pack(push, 1)
 typedef struct {
 	int                 length;    // this is the number of bytes in the packet, not including this header
 	mvdhidden_type_t    type_id;   // If 0xFFFF, read again to extend range
@@ -535,6 +535,8 @@ typedef struct {
 	float target_time;
 } mvdhidden_antilag_position_header_t;
 
+#define sizeof_mvdhidden_antilag_position_header_t (1 + 1 + 4 + 4 + 4)
+
 typedef struct {
 	float clientpos[3];
 	float pos[3];
@@ -542,7 +544,11 @@ typedef struct {
 	byte msec;
 	byte predmodel;
 } mvdhidden_antilag_position_t;
-#pragma pack(pop)
+
+#define sizeof_mvdhidden_antilag_position_t (12 + 12 + 1 + 1 + 1)
+
+#define MVDHIDDEN_DMGDONE_SPLASHDAMAGE    (1 << 15)
+
 #endif // #ifdef MVD_PEXT1_HIDDEN_MESSAGES
 
 extern temp_entity_list_t temp_entities;

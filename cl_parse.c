@@ -47,9 +47,13 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 #include "central.h"
 
 int CL_LoginImageId(const char* name);
+
+#ifdef MVD_PEXT1_HIDDEN_MESSAGES
 static void CL_ParseAntilagPosition(int size);
 static void CL_ParseDemoInfo(int size);
-static void CL_ParseDemoWeapon(int size);
+static void CL_ParseDemoWeapon(int size, qbool server_side);
+static void CL_ParseDamageDone(int size);
+#endif // MVD_PEXT1_HIDDEN_MESSAGES
 
 void R_TranslatePlayerSkin (int playernum);
 
@@ -3094,6 +3098,12 @@ void CL_ParseStufftext (void)
 				MVDAnnouncer_BackpackPickup(s + 2);
 			}
 		}
+		else if (!strncmp(s, "//ktx di ", sizeof("//ktx di ") - 1)) {
+			if (cl.standby && !CL_Demo_SkipMessage(true)) {
+				// Ignore if not the tracked player
+				CL_ReadKtxDamageIndicatorString(s + 2);
+			}
+		}
 	}
 
 	// Any processing after this point will be ignored if not tracking the target player
@@ -4094,7 +4104,13 @@ void CL_ParseHiddenDataMessage(void)
 			CL_ParseDemoInfo(size);
 			break;
 		case mvdhidden_usercmd_weapons:
-			CL_ParseDemoWeapon(size);
+			CL_ParseDemoWeapon(size, false);
+			break;
+		case mvdhidden_usercmd_weapons_ss:
+			CL_ParseDemoWeapon(size, true);
+			break;
+		case mvdhidden_dmgdone:
+			CL_ParseDamageDone(size);
 			break;
 		default:
 			MSG_ReadSkip(size);
@@ -4155,8 +4171,8 @@ static void CL_ParseAntilagPosition(int size)
 	header.target_time = LittleFloat(MSG_ReadFloat());
 
 	size -= (msg_readcount - old_readcount);
-	if (size != header.players * sizeof(mvdhidden_antilag_position_t)) {
-		Con_DPrintf("unexpected size: %d vs %d (%d players)\n", size, header.players * sizeof(mvdhidden_antilag_position_t), header.players);
+	if (size != header.players * sizeof_mvdhidden_antilag_position_t) {
+		Con_DPrintf("unexpected size: %d vs %d (%d players)\n", size, header.players * sizeof_mvdhidden_antilag_position_t, header.players);
 		MSG_ReadSkip(size);
 	}
 	else if (header.playernum != cl.viewplayernum) {
@@ -4193,7 +4209,7 @@ static void CL_ParseAntilagPosition(int size)
 	}
 }
 
-static void CL_ParseDemoWeapon(int size)
+static void CL_ParseDemoWeapon(int size, qbool server_side)
 {
 	extern cvar_t cl_debug_weapon_view;
 	byte playernum = MSG_ReadByte();
@@ -4204,13 +4220,18 @@ static void CL_ParseDemoWeapon(int size)
 	byte cells = MSG_ReadByte();
 	byte choice = MSG_ReadByte();
 	char* str = MSG_ReadString();
+	char indicator = (server_side ? 'S' : 'C');
 
 	if (cl_debug_weapon_view.integer && playernum == cl.viewplayernum) {
 		char weapons_held[10] = { 0 };
-		char script_options[64] = { 0 };
+		char script_options[128] = { 0 };
 		const int flags[] = { IT_SHOTGUN, IT_SUPER_SHOTGUN, IT_NAILGUN, IT_SUPER_NAILGUN, IT_GRENADE_LAUNCHER, IT_ROCKET_LAUNCHER, IT_LIGHTNING };
 		int i;
 		int weapon_count = 0;
+		const char* has_weapon = "&c0f0";
+		const char* no_weapon = "&cf00";
+		const char* unknown_weapon = "&cff0";
+		qbool previous_short = true;
 
 		for (i = 0; i < sizeof(flags) / sizeof(flags[0]); ++i) {
 			if (items & flags[i]) {
@@ -4219,11 +4240,73 @@ static void CL_ParseDemoWeapon(int size)
 		}
 
 		while (*str) {
-			strlcat(script_options, va("%d,", str[0]), sizeof(script_options));
+			const char* prefix = unknown_weapon;
+			const char* postfix = (previous_short && *str >= 1 && *str <= 8) ? "" : ",";
+			switch (*str) {
+			case 1:
+				prefix = (items & IT_AXE) ? has_weapon : no_weapon;
+				break;
+			case 2:
+				prefix = (items & IT_SHOTGUN) && shells > 0 ? has_weapon : no_weapon;
+				break;
+			case 3:
+				prefix = (items & IT_SUPER_SHOTGUN) && shells > 1 ? has_weapon : no_weapon;
+				break;
+			case 4:
+				prefix = (items & IT_NAILGUN) && nails > 0 ? has_weapon : no_weapon;
+				break;
+			case 5:
+				prefix = (items & IT_SUPER_NAILGUN) && nails > 1 ? has_weapon : no_weapon;
+				break;
+			case 6:
+				prefix = (items & IT_GRENADE_LAUNCHER) && rockets > 0 ? has_weapon : no_weapon;
+				break;
+			case 7:
+				prefix = (items & IT_ROCKET_LAUNCHER) && rockets > 0 ? has_weapon : no_weapon;
+				break;
+			case 8:
+				prefix = (items & IT_LIGHTNING) && cells > 0 ? has_weapon : no_weapon;
+				break;
+			}
+			strlcat(script_options, va("%s%d&r%s", prefix, str[0], postfix), sizeof(script_options));
 			str++;
+			previous_short = !postfix[0];
 		}
 
-		Con_Printf("S %s/%s, A %d,%d,%d,%d => %d\n", script_options, weapons_held, shells, nails, rockets, cells, choice);
+		Con_Printf("WS(%c) %s/%s, A %d,%d,%d,%d => %d\n", indicator, script_options, weapons_held, shells, nails, rockets, cells, choice);
+	}
+}
+
+void CL_SpawnDamageIndicator(int deathtype, int targ_ent, int damage, qbool splash_damage, qbool team_damage);
+
+static void CL_ParseDamageDone(int size)
+{
+	short deathtype;
+	short attacker_ent;
+	short targ_ent;
+	short damage;
+	qbool splash_damage;
+	int player = Cam_TrackNum();
+
+	if (size != 8) {
+		// Unknown
+		MSG_ReadSkip(size);
+		return;
+	}
+
+	deathtype = MSG_ReadShort();
+	attacker_ent = MSG_ReadShort();
+	targ_ent = MSG_ReadShort();
+	damage = MSG_ReadShort();
+
+	splash_damage = (deathtype & MVDHIDDEN_DMGDONE_SPLASHDAMAGE);
+	deathtype &= ~MVDHIDDEN_DMGDONE_SPLASHDAMAGE;
+
+	// Don't trigger for self damage
+	if (player + 1 == attacker_ent && player + 1 != targ_ent) {
+		qbool team_damage = (targ_ent >= 1 && targ_ent <= MAX_CLIENTS && cl.players[targ_ent - 1].teammate);
+
+		CL_SpawnDamageIndicator(deathtype, targ_ent, damage, splash_damage, team_damage);
 	}
 }
 
