@@ -793,25 +793,32 @@ static void HandleEvents(void)
 			keyb_textinputevent(event.text.text);
 			break;
 		case SDL_MOUSEMOTION:
-			if (mouse_active && !SDL_GetRelativeMouseMode()) {
-				float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
+			if (event.motion.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
+#ifdef __APPLE__
+				if (developer.integer == 2) {
+					Con_Printf("motion event, which = %d\n", event.motion.which);
+				}
+#endif
+				if (mouse_active && !SDL_GetRelativeMouseMode()) {
+					float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
 
-				mx = event.motion.x - old_x;
-				my = event.motion.y - old_y;
-				cursor_x = min(max(0, cursor_x + (event.motion.x - glConfig.vidWidth / 2) * factor), VID_RenderWidth2D());
-				cursor_y = min(max(0, cursor_y + (event.motion.y - glConfig.vidHeight / 2) * factor), VID_RenderHeight2D());
-				SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-				old_x = glConfig.vidWidth / 2;
-				old_y = glConfig.vidHeight / 2;
-			}
-			else {
-				float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
+					mx = event.motion.x - old_x;
+					my = event.motion.y - old_y;
+					cursor_x = min(max(0, cursor_x + (event.motion.x - glConfig.vidWidth / 2) * factor), VID_RenderWidth2D());
+					cursor_y = min(max(0, cursor_y + (event.motion.y - glConfig.vidHeight / 2) * factor), VID_RenderHeight2D());
+					SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
+					old_x = glConfig.vidWidth / 2;
+					old_y = glConfig.vidHeight / 2;
+				}
+				else {
+					float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
 
-				cursor_x += event.motion.xrel * factor;
-				cursor_y += event.motion.yrel * factor;
+					cursor_x += event.motion.xrel * factor;
+					cursor_y += event.motion.yrel * factor;
 
-				cursor_x = bound(0, cursor_x, VID_RenderWidth2D());
-				cursor_y = bound(0, cursor_y, VID_RenderHeight2D());
+					cursor_x = bound(0, cursor_x, VID_RenderWidth2D());
+					cursor_y = bound(0, cursor_y, VID_RenderHeight2D());
+				}
 			}
 			break;
 		case SDL_MOUSEBUTTONDOWN:
