@@ -53,6 +53,7 @@ static void CL_ParseAntilagPosition(int size);
 static void CL_ParseDemoInfo(int size);
 static void CL_ParseDemoWeapon(int size, qbool server_side);
 static void CL_ParseDamageDone(int size);
+static void CL_ParseDemoWeaponInstruction(int size);
 #endif // MVD_PEXT1_HIDDEN_MESSAGES
 
 void R_TranslatePlayerSkin (int playernum);
@@ -4112,6 +4113,9 @@ void CL_ParseHiddenDataMessage(void)
 		case mvdhidden_dmgdone:
 			CL_ParseDamageDone(size);
 			break;
+		case mvdhidden_usercmd_weapon_instruction:
+			CL_ParseDemoWeaponInstruction(size);
+			break;
 		default:
 			MSG_ReadSkip(size);
 			break;
@@ -4135,10 +4139,8 @@ static void CL_ParseDemoInfo(int size)
 	}
 
 	if (block_number == cl.demoinfo_blocknumber + 1 || block_number == 0) {
-		int i;
-		for (i = 0; i < size; ++i) {
-			demoinfo_buffer[cl.demoinfo_bytes++] = MSG_ReadByte();
-		}
+		MSG_ReadData(demoinfo_buffer + cl.demoinfo_bytes, size);
+		cl.demoinfo_bytes += size;
 		cl.demoinfo_blocknumber = block_number;
 	}
 	else {
@@ -4209,6 +4211,62 @@ static void CL_ParseAntilagPosition(int size)
 	}
 }
 
+static void CL_ParseDemoWeaponInstruction(int size)
+{
+	extern cvar_t cl_debug_weapon_view;
+
+	byte playernum = MSG_ReadByte();
+	byte flags = MSG_ReadByte();
+	int sequence_set = LittleLong(MSG_ReadLong());
+	int mode = LittleLong(MSG_ReadLong());
+	byte weaponlist[10];
+
+	MSG_ReadData(weaponlist, sizeof(weaponlist));
+
+	if (cl_debug_weapon_view.integer && playernum == cl.viewplayernum) {
+		char description[128] = { 0 };
+		int i;
+
+		strlcat(description, "WS(I) ", sizeof(description));
+		if (flags & MVDHIDDEN_SSWEAPON_HIDE_AXE) {
+			strlcat(description, "hide(1) ", sizeof(description));
+		}
+		if (flags & MVDHIDDEN_SSWEAPON_HIDE_SG) {
+			strlcat(description, "hide(2) ", sizeof(description));
+		}
+		if (flags & MVDHIDDEN_SSWEAPON_HIDEONDEATH) {
+			strlcat(description, "hod ", sizeof(description));
+		}
+		if (flags & MVDHIDDEN_SSWEAPON_ENABLED) {
+			strlcat(description, "enabled ", sizeof(description));
+		}
+		else {
+			strlcat(description, "disabled ", sizeof(description));
+		}
+		if (flags & MVDHIDDEN_SSWEAPON_FORGETORDER) {
+			strlcat(description, "forget ", sizeof(description));
+		}
+		if (mode & clc_mvd_weapon_mode_presel) {
+			strlcat(description, "presel ", sizeof(description));
+		}
+		if (mode & clc_mvd_weapon_mode_iffiring) {
+			strlcat(description, "iffiring ", sizeof(description));
+		}
+
+		strlcat(description, "[", sizeof(description));
+		for (i = 0; i < sizeof(weaponlist) / sizeof(weaponlist[0]); ++i) {
+			if (!weaponlist[i]) {
+				break;
+			}
+
+			strlcat(description, va("%s%d", (i ? "," : ""), weaponlist[i]), sizeof(description));
+		}
+		strlcat(description, "]", sizeof(description));
+
+		Con_Printf("%s\n", description);
+	}
+}
+
 static void CL_ParseDemoWeapon(int size, qbool server_side)
 {
 	extern cvar_t cl_debug_weapon_view;
@@ -4223,57 +4281,52 @@ static void CL_ParseDemoWeapon(int size, qbool server_side)
 	char indicator = (server_side ? 'S' : 'C');
 
 	if (cl_debug_weapon_view.integer && playernum == cl.viewplayernum) {
-		char weapons_held[10] = { 0 };
 		char script_options[128] = { 0 };
-		const int flags[] = { IT_SHOTGUN, IT_SUPER_SHOTGUN, IT_NAILGUN, IT_SUPER_NAILGUN, IT_GRENADE_LAUNCHER, IT_ROCKET_LAUNCHER, IT_LIGHTNING };
-		int i;
 		int weapon_count = 0;
 		const char* has_weapon = "&c0f0";
 		const char* no_weapon = "&cf00";
-		const char* unknown_weapon = "&cff0";
+		const char* no_ammo = "&cff0";
+		const char* unknown_weapon = "[";
 		qbool previous_short = true;
-
-		for (i = 0; i < sizeof(flags) / sizeof(flags[0]); ++i) {
-			if (items & flags[i]) {
-				weapons_held[weapon_count++] = ('2' + i);
-			}
-		}
 
 		while (*str) {
 			const char* prefix = unknown_weapon;
-			const char* postfix = (previous_short && *str >= 1 && *str <= 8) ? "" : ",";
+			const char* postfix = "";
 			switch (*str) {
 			case 1:
 				prefix = (items & IT_AXE) ? has_weapon : no_weapon;
 				break;
 			case 2:
-				prefix = (items & IT_SHOTGUN) && shells > 0 ? has_weapon : no_weapon;
+				prefix = (items & IT_SHOTGUN) ? (shells > 0 ? has_weapon : no_ammo) : no_weapon;
 				break;
 			case 3:
-				prefix = (items & IT_SUPER_SHOTGUN) && shells > 1 ? has_weapon : no_weapon;
+				prefix = (items & IT_SUPER_SHOTGUN) ? (shells > 1 ? has_weapon : no_ammo) : no_weapon;
 				break;
 			case 4:
-				prefix = (items & IT_NAILGUN) && nails > 0 ? has_weapon : no_weapon;
+				prefix = (items & IT_NAILGUN) ? (nails > 0 ? has_weapon : no_ammo) : no_weapon;
 				break;
 			case 5:
-				prefix = (items & IT_SUPER_NAILGUN) && nails > 1 ? has_weapon : no_weapon;
+				prefix = (items & IT_SUPER_NAILGUN) ? (nails > 1 ? has_weapon : no_ammo) : no_weapon;
 				break;
 			case 6:
-				prefix = (items & IT_GRENADE_LAUNCHER) && rockets > 0 ? has_weapon : no_weapon;
+				prefix = (items & IT_GRENADE_LAUNCHER) ? (rockets > 0 ? has_weapon : no_ammo) : no_weapon;
 				break;
 			case 7:
-				prefix = (items & IT_ROCKET_LAUNCHER) && rockets > 0 ? has_weapon : no_weapon;
+				prefix = (items & IT_ROCKET_LAUNCHER) ? (rockets > 0 ? has_weapon : no_ammo) : no_weapon;
 				break;
 			case 8:
-				prefix = (items & IT_LIGHTNING) && cells > 0 ? has_weapon : no_weapon;
+				prefix = (items & IT_LIGHTNING) ? (rockets > 0 ? has_weapon : no_ammo) : no_weapon;
 				break;
+			default:
+				prefix = "[";
+				postfix = "]";
 			}
 			strlcat(script_options, va("%s%d&r%s", prefix, str[0], postfix), sizeof(script_options));
 			str++;
 			previous_short = !postfix[0];
 		}
 
-		Con_Printf("WS(%c) %s/%s, A %d,%d,%d,%d => %d\n", indicator, script_options, weapons_held, shells, nails, rockets, cells, choice);
+		Con_Printf("WS(%c) %s, A %d,%d,%d,%d => %d\n", indicator, script_options, shells, nails, rockets, cells, choice);
 	}
 }
 

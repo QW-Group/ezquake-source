@@ -509,16 +509,17 @@ typedef struct temp_entity_list_s
 // embedded in dem_multiple(0) - should be safely skipped in clients
 // format is <length> <type>*   where <type> is duplicated if 0xFFFF.  <length> is length of the data packet, not the header
 enum {
-	mvdhidden_antilag_position          = 0x0000,  // mvdhidden_antilag_position_header_t mvdhidden_antilag_position_t*
-	mvdhidden_usercmd                   = 0x0001,  // <byte: source playernum> <todo>
-	mvdhidden_usercmd_weapons           = 0x0002,  // <byte: source playernum> <int: items> <byte[4]: ammo> <byte: result> <byte*: weapon priority (nul terminated)>
-	mvdhidden_demoinfo                  = 0x0003,  // <short: block#> <byte[] content>
-	mvdhidden_commentary_track          = 0x0004,  // <byte: track#> [todo... <byte: audioformat> <string: short-name> <string: author(s)> <float: start-offset>?]
-	mvdhidden_commentary_data           = 0x0005,  // <byte: track#> [todo... format-specific]
-	mvdhidden_commentary_text_segment   = 0x0006,  // <byte: track#> [todo... <float: duration> <string: text (utf8)>]
-	mvdhidden_dmgdone                   = 0x0007,  // <byte: damaging ent#> <byte: damaged ent#> <byte: damage>
-	mvdhidden_usercmd_weapons_ss        = 0x0008,  // (same format as mvdhidden_usercmd_weapons)
-	mvdhidden_extended                  = 0xFFFF   // doubt we'll ever get here: read next short...
+	mvdhidden_antilag_position           = 0x0000,  // mvdhidden_antilag_position_header_t mvdhidden_antilag_position_t*
+	mvdhidden_usercmd                    = 0x0001,  // <byte: source playernum> <todo>
+	mvdhidden_usercmd_weapons            = 0x0002,  // <byte: source playernum> <int: items> <byte[4]: ammo> <byte: result> <byte*: weapon priority (nul terminated)>
+	mvdhidden_demoinfo                   = 0x0003,  // <short: block#> <byte[] content>
+	mvdhidden_commentary_track           = 0x0004,  // <byte: track#> [todo... <byte: audioformat> <string: short-name> <string: author(s)> <float: start-offset>?]
+	mvdhidden_commentary_data            = 0x0005,  // <byte: track#> [todo... format-specific]
+	mvdhidden_commentary_text_segment    = 0x0006,  // <byte: track#> [todo... <float: duration> <string: text (utf8)>]
+	mvdhidden_dmgdone                    = 0x0007,  // <byte: damaging ent#> <byte: damaged ent#> <byte: damage>
+	mvdhidden_usercmd_weapons_ss         = 0x0008,  // (same format as mvdhidden_usercmd_weapons)
+	mvdhidden_usercmd_weapon_instruction = 0x0009,  // <byte: playernum> <byte: flags> <int: sequence#> <int: mode> <byte[10]: weaponlist>
+	mvdhidden_extended                   = 0xFFFF   // doubt we'll ever get here: read next short...
 };
 typedef unsigned short mvdhidden_type_t;
 
@@ -548,6 +549,15 @@ typedef struct {
 #define sizeof_mvdhidden_antilag_position_t (12 + 12 + 1 + 1 + 1)
 
 #define MVDHIDDEN_DMGDONE_SPLASHDAMAGE    (1 << 15)
+
+// mvdhidden_usercmd_weapon_instruction
+#define MVDHIDDEN_SSWEAPON_PENDING        1
+#define MVDHIDDEN_SSWEAPON_HIDE_AXE       2
+#define MVDHIDDEN_SSWEAPON_HIDE_SG        4
+#define MVDHIDDEN_SSWEAPON_HIDEONDEATH    8
+#define MVDHIDDEN_SSWEAPON_WASFIRING     16
+#define MVDHIDDEN_SSWEAPON_ENABLED       32
+#define MVDHIDDEN_SSWEAPON_FORGETORDER   64
 
 #endif // #ifdef MVD_PEXT1_HIDDEN_MESSAGES
 
