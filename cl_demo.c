@@ -1428,34 +1428,19 @@ void CL_StopMvd_f(void)
 
 	if (mvdrecordfile)
 	{
-		char *quotes[] = {
-	       " Make love not WarCraft\n"
-	       " Get quake at http://nquake.sf.net\n",
-	       " ez come ez go\n"
-	       " Get ezQuake at http://ezQuake.sf.net\n",
-	       " In the name of fun\n"
-	       " Visit http://quakeworld.nu\n"
-		};
-
-		char str[1024];
 		sizebuf_t	buf;
 		unsigned char buf_data[MAX_MSGLEN];
 
 		SZ_Init (&buf, buf_data, sizeof(buf_data));
 
 		// Print offensive message.
-		snprintf(str, sizeof(str),
-				"\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f\n"
-		        "%s"
-				"\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f\n",
-				quotes[i_rnd( 0, sizeof(quotes)/sizeof(quotes[0]) - 1 )]);
-
+#ifdef EZ_MVD_SIGNOFF
 		MSG_WriteByte(&buf, svc_print);
 		MSG_WriteByte(&buf, 2);
-		MSG_WriteString(&buf, str);
+		MSG_WriteString(&buf, EZ_MVD_SIGNOFF);
+#endif
 
 		// Add disconnect.
-
 		MSG_WriteByte (&buf, svc_disconnect);
 		MSG_WriteString (&buf, "EndOfDemo");
 
@@ -2218,32 +2203,17 @@ static void OnChange_demo_format(cvar_t *var, char *string, qbool *cancel)
 //
 static void CL_WriteDemoPimpMessage(void)
 {
-	int i;
-	char pimpmessage[256], border[64];
-
-	if (cls.demoplayback)
+	if (cls.demoplayback) {
 		return;
+	}
 
-	strlcpy (border, "\x1d", sizeof (border));
-
-	for (i = 0; i < 34; i++)
-		strlcat (border, "\x1e", sizeof (border));
-
-	strlcat (border, "\x1f", sizeof (border));
-
-	snprintf (pimpmessage, sizeof(pimpmessage), "\n%s\n%s\n%s\n",
-		border,
-		"\x1d\x1e\x1e\x1e\x1e\x1e\x1e Recorded by ezQuake \x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f",
-		border
-	);
-
-	SZ_Clear (&net_message);
-	MSG_WriteLong (&net_message, cls.netchan.incoming_sequence + 1);
-	MSG_WriteLong (&net_message, cls.netchan.incoming_acknowledged | (cls.netchan.incoming_reliable_acknowledged << 31));
-	MSG_WriteByte (&net_message, svc_print);
-	MSG_WriteByte (&net_message, PRINT_HIGH);
-	MSG_WriteString (&net_message, pimpmessage);
-	CL_WriteDemoMessage (&net_message);
+	SZ_Clear(&net_message);
+	MSG_WriteLong(&net_message, cls.netchan.incoming_sequence + 1);
+	MSG_WriteLong(&net_message, cls.netchan.incoming_acknowledged | (cls.netchan.incoming_reliable_acknowledged << 31));
+	MSG_WriteByte(&net_message, svc_print);
+	MSG_WriteByte(&net_message, PRINT_HIGH);
+	MSG_WriteString(&net_message, EZ_QWD_SIGNOFF);
+	CL_WriteDemoMessage(&net_message);
 }
 
 //
