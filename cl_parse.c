@@ -3667,14 +3667,19 @@ void CL_ParseServerMessage (void)
 						newangles[i] = MSG_ReadAngle();
 					}
 
-					if (CL_Demo_SkipMessage (true))
+					if (CL_Demo_SkipMessage(true)) {
 						break;
+					}
+
+					CL_DisableLerpMove();
 
 					if (cls.mvdplayback) 
 					{
 						mvd_fixangle |= 1 << j;
-						if (j == Cam_TrackNum())
+
+						if (j == Cam_TrackNum()) {
 							VectorCopy(newangles, cl.viewangles);
+						}
 					} 
 					else {
 						VectorCopy (newangles, cl.viewangles);

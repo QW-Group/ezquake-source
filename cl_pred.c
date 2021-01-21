@@ -153,6 +153,12 @@ void CL_CalcCrouch (void) {
 	}
 }
 
+static qbool	nolerp[2];
+
+void CL_DisableLerpMove(void)
+{
+	nolerp[0] = nolerp[1] = true;
+}
 
 static void CL_LerpMove (qbool angles_lerp)
 {	
@@ -160,7 +166,6 @@ static void CL_LerpMove (qbool angles_lerp)
 	static vec3_t	lerp_angles[3];
 	static vec3_t	lerp_origin[3];
 	static double	lerp_times[3];
-	static qbool	nolerp[2];
 	static double	demo_latency = 0.01;
 	float	frac;
 	double	simtime;
@@ -219,8 +224,14 @@ static void CL_LerpMove (qbool angles_lerp)
 
 		if (i < 3)
 		{
+			extern cvar_t cl_earlypackets;
+
 			// a teleport or something
-			nolerp[0] = true;	
+			nolerp[0] = true;
+
+			// cl.simangles will already be set, don't lerp there either
+			// (gives a flash of looking in wrong direction at teleport entrance)
+			nolerp[1] |= (cl_earlypackets.integer);
 		}
 	}
 

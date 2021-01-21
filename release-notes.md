@@ -67,7 +67,8 @@
 - Fixed bug causing incorrect texture to be bound when rendering once new texture created (#452, 3.5 bug, reported by pattah)
 - Fixed bug causing differences in rendering md3 viewmodels in glsl vs std renderer (explosion surface is additive - same awful hack until we support shaders) (3.5 bug but 3.2 was even worse)
 - Fixed bug causing aliasmodels to be rendered with the normal map overlaid instead of caustics texture (#457, 3.5 bug, reported by hammer)
-- Fixed bug causing `show net` to not show valid information when playing back .qwd files
+- Fixed bug causing `show net` to not show valid information when playing back .qwd files (old bug)
+- Fixed bug causing `/cl_earlypackets` to cause frames to be rendered at teleport entrance position but player pointing at teleport exit angle (old bug)
 
 ### Ruleset-related changes
 
