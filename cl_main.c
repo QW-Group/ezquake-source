@@ -1138,8 +1138,20 @@ void CL_ClearState (void)
 
 	CL_ClearPredict();
 
-	// Wipe the entire cl structure.
-	memset(&cl, 0, sizeof(cl));
+	if (cls.state == ca_active) {
+		int ideal_track = cl.ideal_track;
+		int autocam = cl.autocam;
+
+		// Wipe the entire cl structure.
+		memset(&cl, 0, sizeof(cl));
+
+		cl.ideal_track = ideal_track;
+		cl.autocam = autocam;
+	}
+	else {
+		// Wipe the entire cl structure.
+		memset(&cl, 0, sizeof(cl));
+	}
 
 	SZ_Clear (&cls.netchan.message);
 
