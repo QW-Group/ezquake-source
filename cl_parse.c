@@ -54,6 +54,7 @@ static void CL_ParseDemoInfo(int size);
 static void CL_ParseDemoWeapon(int size, qbool server_side);
 static void CL_ParseDamageDone(int size);
 static void CL_ParseDemoWeaponInstruction(int size);
+static void CL_ParseUserCommand(int size);
 #endif // MVD_PEXT1_HIDDEN_MESSAGES
 
 void R_TranslatePlayerSkin (int playernum);
@@ -3157,7 +3158,6 @@ void CL_ParseStufftext (void)
 	}
 	else if (!strncmp(s, "//sn ", sizeof("//sn ") - 1))
 	{
-		// TODO : Don't require GL for this.
 		extern void Parse_Shownick(char *s)	;
 		Parse_Shownick( s + 2 );
 	}
@@ -3216,9 +3216,9 @@ void CL_ParseStufftext (void)
 	}
 	else if (!strncmp(s, "//ucmd ", sizeof("//ucmd ") - 1))
 	{
-		extern void MVD_ParseUserCommand (const char* s);
+		extern void MVD_ParseUserCommand(const char* s);
 
-		MVD_ParseUserCommand (s + sizeof("//ucmd ") - 1);
+		MVD_ParseUserCommand(s + sizeof("//ucmd ") - 1);
 	}
 	else if (!strncmp(s, "//finalscores ", sizeof("//finalscores ") - 1))
 	{
@@ -4115,6 +4115,9 @@ void CL_ParseHiddenDataMessage(void)
 		case mvdhidden_usercmd_weapons_ss:
 			CL_ParseDemoWeapon(size, true);
 			break;
+		case mvdhidden_usercmd:
+			CL_ParseUserCommand(size);
+			break;
 		case mvdhidden_dmgdone:
 			CL_ParseDamageDone(size);
 			break;
@@ -4365,6 +4368,54 @@ static void CL_ParseDamageDone(int size)
 		qbool team_damage = (targ_ent >= 1 && targ_ent <= MAX_CLIENTS && cl.players[targ_ent - 1].teammate);
 
 		CL_SpawnDamageIndicator(deathtype, targ_ent, damage, splash_damage, team_damage);
+	}
+}
+
+static void CL_ParseUserCommand(int size)
+{
+	byte playernum, dropnum, msec;
+	vec3_t angles;
+	short forward, side, up;
+	byte buttons, impulse;
+	frame_t* frame;
+
+	if (size != sizeof_mvdhidden_block_header_t_usercmd) {
+		MSG_ReadSkip(size);
+		return;
+	}
+
+	playernum = MSG_ReadByte();
+	dropnum = MSG_ReadByte();
+	msec = MSG_ReadByte();
+	angles[0] = MSG_ReadFloat();
+	angles[1] = MSG_ReadFloat();
+	angles[2] = MSG_ReadFloat();
+	forward = MSG_ReadShort();
+	side = MSG_ReadShort();
+	up = MSG_ReadShort();
+	buttons = MSG_ReadByte();
+	impulse = MSG_ReadByte();
+
+	if (playernum >= MAX_CLIENTS) {
+		return;
+	}
+
+	if (dropnum != 0) {
+		// replaying an old packet due to loss in this frame
+		return;
+	}
+
+	frame = &cl.frames[cl.validsequence & UPDATE_MASK];
+	if (frame->playerstate[playernum].messagenum == cl.parsecount || frame->playerstate[playernum].messagenum == cl.oldparsecount) {
+		usercmd_t* cmd = &frame->playerstate[playernum].command;
+
+		VectorCopy(angles, cmd->angles);
+		cmd->buttons = buttons;
+		cmd->forwardmove = forward;
+		cmd->sidemove = side;
+		cmd->upmove = up;
+		cmd->impulse = impulse;
+		cmd->msec = msec;
 	}
 }
 

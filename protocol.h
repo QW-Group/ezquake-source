@@ -536,8 +536,6 @@ typedef struct {
 	float target_time;
 } mvdhidden_antilag_position_header_t;
 
-#define sizeof_mvdhidden_antilag_position_header_t (1 + 1 + 4 + 4 + 4)
-
 typedef struct {
 	float clientpos[3];
 	float pos[3];
@@ -546,7 +544,9 @@ typedef struct {
 	byte predmodel;
 } mvdhidden_antilag_position_t;
 
+#define sizeof_mvdhidden_antilag_position_header_t (1 + 1 + 4 + 4 + 4)
 #define sizeof_mvdhidden_antilag_position_t (12 + 12 + 1 + 1 + 1)
+#define sizeof_mvdhidden_block_header_t_usercmd (1 + 1 + 1 + 3 * 4 + 3 * 2 + 1 + 1)
 
 #define MVDHIDDEN_DMGDONE_SPLASHDAMAGE    (1 << 15)
 
