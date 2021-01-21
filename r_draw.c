@@ -608,6 +608,7 @@ void Draw_Crosshair (void)
 	extern vrect_t scr_vrect;
 	float crosshair_scale = (crosshairscalemethod.integer ? 1 : ((float)glwidth / 320));
 	int crosshair_pixel_size = CrosshairPixelSize();
+	qbool half_size = false;
 
 	if (current_crosshair_pixel_size != crosshair_pixel_size) {
 		BuildBuiltinCrosshairs();
@@ -616,7 +617,6 @@ void Draw_Crosshair (void)
 	if ((crosshair.value >= 2 && crosshair.value <= NUMCROSSHAIRS + 1) ||
 		((customcrosshair_loaded & CROSSHAIR_TXT) && crosshair.value == 1) ||
 		(customcrosshair_loaded & CROSSHAIR_IMAGE)) {
-		qbool half_size = false;
 		texture_ref texnum;
 		int width2d = VID_RenderWidth2D();
 		int height2d = VID_RenderHeight2D();
@@ -676,12 +676,20 @@ void Draw_Crosshair (void)
 		Draw_SetCrosshairTextMode(true);
 		if (CL_MultiviewInsetEnabled()) {
 			if (CL_MultiviewInsetView()) {
-				if (cl_sbar.value) {
-					Draw_Character(vid.width - (vid.width / 3) / 2 - 4, ((vid.height / 3) - sb_lines / 3) / 2 - 2, '+');
+				int width2d = VID_RenderWidth2D();
+				int height2d = VID_RenderHeight2D();
+
+				if (!CL_MultiviewGetCrosshairCoordinates(true, &x, &y, &half_size)) {
+					return;
 				}
-				else {
-					Draw_Character(vid.width - (vid.width / 3) / 2 - 4, (vid.height / 3) / 2 - 2, '+');
-				}
+
+				// convert from 3d to 2d
+				x = (x * vid.width) / width2d;
+				y = (y * vid.height) / height2d;
+
+				// x = vid.width - (vid.width / 3) / 2 - 4
+				// y = (vid.height / 3) / 2 - 2,
+				Draw_Character(x - 4, y - 4, '+');
 			}
 			else {
 				Draw_Character(scr_vrect.x + scr_vrect.width / 2 - 4 + cl_crossx.value, scr_vrect.y + scr_vrect.height / 2 - 4 + cl_crossy.value, '+');

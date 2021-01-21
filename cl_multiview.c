@@ -1615,13 +1615,11 @@ qbool CL_MultiviewGetCrosshairCoordinates(qbool use_screen_coords, float* cross_
 						return false;
 					}
 
-					x = min_x + 5.0f * width / 6.0f;
-					if (cl_sbar.value) {
-						y = min_y + (height / 3 - sb_lines / 3) / 2;
-					}
-					else {
-						y = min_y + height / 6; // no sbar
-					}
+					x = inset_x + inset_width / 2.0f;
+					y = inset_y + inset_height / 2.0f;
+
+					// y is flipped in 2d world...
+					y = VID_RenderHeight2D() - y;
 
 					*half_size = true;
 				}
