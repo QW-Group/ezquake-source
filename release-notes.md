@@ -140,6 +140,7 @@
 - PNG warning messages now printed to console rather than stdout
 - Added macro $timestamp, which is in format YYYYMMDD-hhmmss
 - Qizmo-compressed files can be played back using Qizmo on linux
+- When watching mvd/qtv, `/record` & `/stop` become `/mvdrecord` and `/mvdstop` respectively (suggested by hangtime)
 
 ### Build/meta
 

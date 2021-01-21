@@ -2253,6 +2253,11 @@ void CL_Stop_f (void)
 	}
 #endif
 
+	if (cls.mvdplayback && cls.mvdrecording) {
+		CL_StopMvd_f();
+		return;
+	}
+
 	if (!cls.demorecording)
 	{
 		Com_Printf ("Not recording a demo\n");
@@ -2301,6 +2306,11 @@ void CL_Record_f (void)
 	}
 #endif
 
+	if (cls.mvdplayback) {
+		CL_RecordMvd_f();
+		return;
+	}
+
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2)
 	if (cls.fteprotocolextensions &~ (FTE_PEXT_CHUNKEDDOWNLOADS|FTE_PEXT_256PACKETENTITIES))
 	{
@@ -2333,12 +2343,6 @@ void CL_Record_f (void)
 		// Start recording to the specified demo name.
 		//
 		{
-			if (cls.mvdplayback)
-			{
-				Com_Printf ("Cannot record during mvd playback\n");
-				return;
-			}
-
 			if (cls.state != ca_active && cls.state != ca_disconnected)
 			{
 				Com_Printf ("Cannot record whilst connecting\n");
@@ -3685,8 +3689,7 @@ static void CL_DemoPlaybackInit(void)
 	CL_ClearPredict();
 
 	// Recording not allowed during mvdplayback.
-	if (cls.mvdplayback && cls.demorecording)
-	{
+	if (cls.mvdplayback && cls.demorecording) {
 		CL_Stop_f();
 	}
 	MVD_Initialise();
@@ -4397,8 +4400,7 @@ void CL_QTVPlay (vfsfile_t *newf, void *buf, int buflen)
 	CL_ClearPredict();
 
 	// Recording not allowed during mvdplayback.
-	if (cls.mvdplayback && cls.demorecording)
-	{
+	if (cls.mvdplayback && cls.demorecording) {
 		CL_Stop_f();
 	}
 
