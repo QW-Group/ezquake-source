@@ -521,12 +521,16 @@ enum {
 	mvdhidden_usercmd_weapon_instruction = 0x0009,  // <byte: playernum> <byte: flags> <int: sequence#> <int: mode> <byte[10]: weaponlist>
 	mvdhidden_extended                   = 0xFFFF   // doubt we'll ever get here: read next short...
 };
-typedef unsigned short mvdhidden_type_t;
+
+#define sizeof_mvdhidden_block_header_t_usercmd (1 + 1 + 1 + 3 * 4 + 3 * 2 + 1 + 1)
+#define sizeof_mvdhidden_usercmd_weapon_instruction (1 + 1 + 4 + 4 + 10)
 
 typedef struct {
 	int                 length;    // this is the number of bytes in the packet, not including this header
-	mvdhidden_type_t    type_id;   // If 0xFFFF, read again to extend range
+	unsigned short      type_id;   // If 0xFFFF, read again to extend range
 } mvdhidden_block_header_t;
+
+#define sizeof_mvdhidden_block_header_t_range0 (4 + 2)
 
 typedef struct {
 	byte playernum;
@@ -536,6 +540,8 @@ typedef struct {
 	float target_time;
 } mvdhidden_antilag_position_header_t;
 
+#define sizeof_mvdhidden_antilag_position_header_t (1 + 1 + 4 + 4 + 4)
+
 typedef struct {
 	float clientpos[3];
 	float pos[3];
@@ -544,9 +550,7 @@ typedef struct {
 	byte predmodel;
 } mvdhidden_antilag_position_t;
 
-#define sizeof_mvdhidden_antilag_position_header_t (1 + 1 + 4 + 4 + 4)
 #define sizeof_mvdhidden_antilag_position_t (12 + 12 + 1 + 1 + 1)
-#define sizeof_mvdhidden_block_header_t_usercmd (1 + 1 + 1 + 3 * 4 + 3 * 2 + 1 + 1)
 
 #define MVDHIDDEN_DMGDONE_SPLASHDAMAGE    (1 << 15)
 

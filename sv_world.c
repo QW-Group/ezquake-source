@@ -634,9 +634,9 @@ void SV_AntilagClipSetUp ( areanode_t *node, moveclip_t *clip )
 	if (entnum && entnum <= MAX_CLIENTS && !svs.clients[entnum - 1].isBot)
 	{
 		clip->type |= MOVE_LAGGED;
-		w.lagents = svs.clients[passedict->e->entnum-1].laggedents;
-		w.maxlagents = svs.clients[passedict->e->entnum-1].laggedents_count;
-		w.lagentsfrac = svs.clients[passedict->e->entnum-1].laggedents_frac;
+		w.lagents = svs.clients[entnum - 1].laggedents;
+		w.maxlagents = svs.clients[entnum - 1].laggedents_count;
+		w.lagentsfrac = svs.clients[entnum - 1].laggedents_frac;
 	}
 	else if (passedict->v.owner)
 	{
@@ -645,9 +645,9 @@ void SV_AntilagClipSetUp ( areanode_t *node, moveclip_t *clip )
 		if (owner && owner <= MAX_CLIENTS && !svs.clients[owner - 1].isBot)
 		{
 			clip->type |= MOVE_LAGGED;
-			w.lagents = svs.clients[owner-1].laggedents;
-			w.maxlagents = svs.clients[owner-1].laggedents_count;
-			w.lagentsfrac = svs.clients[owner-1].laggedents_frac;
+			w.lagents = svs.clients[owner - 1].laggedents;
+			w.maxlagents = svs.clients[owner - 1].laggedents_count;
+			w.lagentsfrac = svs.clients[owner - 1].laggedents_frac;
 		}
 	}
 }
@@ -774,4 +774,4 @@ trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, 
 	return clip.trace;
 }
 
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

@@ -3332,7 +3332,7 @@ void SV_InitLocal (void)
 	// qws = QuakeWorld Server information
 	static cvar_t qws_name = { "qws_name", SERVER_NAME, CVAR_ROM };
 	static cvar_t qws_fullname = { "qws_fullname", SERVER_FULLNAME, CVAR_ROM };
-	static cvar_t qws_version = { "qws_version", VERSION_NUMBER, CVAR_ROM };
+	static cvar_t qws_version = { "qws_version", SERVER_VERSION, CVAR_ROM };
 	static cvar_t qws_buildnum = { "qws_buildnum", "unknown", CVAR_ROM };
 	static cvar_t qws_platform = { "qws_platform", QW_PLATFORM_SHORT, CVAR_ROM };
 	static cvar_t qws_builddate = { "qws_builddate", BUILD_DATE, CVAR_ROM };
@@ -3571,7 +3571,7 @@ void SV_InitLocal (void)
 	svs.mvdprotocolextension1 |= MVD_PEXT1_SERVERSIDEWEAPON2;
 #endif
 
-	Info_SetValueForStarKey (svs.info, "*version", SERVER_NAME " " VERSION_NUMBER, MAX_SERVERINFO_STRING);
+	Info_SetValueForStarKey (svs.info, "*version", SERVER_NAME " " SERVER_VERSION, MAX_SERVERINFO_STRING);
 	Info_SetValueForStarKey (svs.info, "*z_ext", va("%i", SERVER_EXTENSIONS), MAX_SERVERINFO_STRING);
 
 	// init fraglog stuff
@@ -3796,7 +3796,7 @@ void COM_Init (void)
 	Cvar_Register (&version);
 	Cvar_Register (&sys_simulation);
 
-	Cvar_SetROM(&version, SERVER_NAME " " VERSION_NUMBER);
+	Cvar_SetROM(&version, SERVER_NAME " " SERVER_VERSION);
 }
 
 //Free hunk memory up to host_hunklevel

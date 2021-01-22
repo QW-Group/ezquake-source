@@ -466,5 +466,8 @@ char *Q_normalizetext(char *str);
 unsigned char *Q_redtext(unsigned char *str);
 unsigned char *Q_yelltext(unsigned char *str);
 
+// Name comparison: case insensitive, red/white text insensitive
+int Q_namecmp(const char* s1, const char* s2);
+
 #endif /* !__COMMON_H__ */
 

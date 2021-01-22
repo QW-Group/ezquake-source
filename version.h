@@ -85,13 +85,16 @@ char *VersionString(void);
 char *VersionStringColour(void);
 char *VersionStringFull(void);
 
+#ifndef SERVERONLY
 #define SERVER_NAME         "EZQUAKE"
+#else
+#define SERVER_NAME         "MVDSV"
+#endif
 
 // MVDSV compatibility
 #define	QW_VERSION			"2.40"
-#define VERSION_NUMBER      "0.34-beta"
-#define VERSION_NUM         0.33
-#define SERVER_NAME         "MVDSV"
+#define SERVER_VERSION      "0.34-beta"
+#define SERVER_VERSION_NUM  0.33
 #define SERVER_FULLNAME     "MVDSV: MultiView Demo SerVer"
 #define SERVER_HOME_URL     "https://mvdsv.deurk.net"
 #define VERSION_NUM         3.6
