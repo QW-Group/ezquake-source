@@ -31,10 +31,11 @@ cvar_t	sv_spectalk = {"sv_spectalk", "1"};
 cvar_t	sv_sayteam_to_spec = {"sv_sayteam_to_spec", "1"};
 cvar_t	sv_mapcheck = {"sv_mapcheck", "1"};
 cvar_t	sv_minping = {"sv_minping", "0"};
+cvar_t	sv_maxping = {"sv_maxping", "0"};
 cvar_t	sv_enable_cmd_minping = {"sv_enable_cmd_minping", "1"};
 
 cvar_t	sv_kickuserinfospamtime = {"sv_kickuserinfospamtime", "3"};
-cvar_t	sv_kickuserinfospamcount = {"sv_kickuserinfospamcount", "30"};
+cvar_t	sv_kickuserinfospamcount = {"sv_kickuserinfospamcount", "300"};
 
 cvar_t	sv_maxuploadsize = {"sv_maxuploadsize", "1048576"};
 
@@ -51,24 +52,33 @@ cvar_t sv_voip_record = {"sv_voip_record", "0"};
 cvar_t sv_voip_echo = {"sv_voip_echo", "0"};
 #endif
 
-#ifdef MVD_PEXT1_DEBUG
-typedef struct {
-	int playernum;
-	int msec;
-	vec3_t pos;
-} mvdsv_antilag_client_info_t;
-
-typedef struct {
-	mvdsv_antilag_client_info_t clients[MAX_CLIENTS];
-	int num_clients;
-} client_antilag_info_t;
-
-static struct {
-	client_antilag_info_t antilag;
-} debug_info;
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+static qbool SV_ClientExtensionWeaponSwitch(client_t* cl);
 #endif
 
+#ifdef MVD_PEXT1_DEBUG
+typedef struct {
+	int msec;
+	byte model;
+	vec3_t pos;
+	qbool present;
+} antilag_client_info_t;
+
+static struct {
+	antilag_client_info_t antilag_clients[MAX_CLIENTS];
+} debug_info;
+
+static void SV_DebugServerSideWeaponScript(client_t* cl, int best_impulse);
+static void SV_DebugServerSideWeaponInstruction(client_t* cl);
+cvar_t sv_debug_weapons = { "sv_debug_weapons", "0" };
+#endif
+
+// These don't need any protocol extensions
+cvar_t sv_debug_usercmd = { "sv_debug_usercmd", "0" };
+cvar_t sv_debug_antilag = { "sv_debug_antilag", "0" };
+
 static void SV_UserSetWeaponRank(client_t* cl, const char* new_wrank);
+static void SV_DebugClientCommand(byte playernum, const usercmd_t* cmd, int dropnum_);
 
 extern	vec3_t	player_mins;
 
@@ -155,6 +165,26 @@ sv_client and sv_player will be valid.
 */
 
 /*
+==================
+PlayerCheckPing
+
+Check that player's ping falls below sv_maxping value
+==================
+*/
+qbool PlayerCheckPing()
+{
+	int maxping = Q_atof(sv_maxping.string);
+	int playerping = sv_client->frames[sv_client->netchan.incoming_acknowledged & UPDATE_MASK].ping_time * 1000;
+
+	if (maxping && playerping > maxping)
+	{
+		SV_ClientPrintf(sv_client, PRINT_HIGH, "\nYour ping is too high for this server!  Maximum ping is set to %i, your ping is %i.\nForcing spectator.\n\n", maxping, playerping);
+		return false;
+	}
+	return true;
+}
+
+/*
 ================
 Cmd_New_f
 
@@ -167,16 +197,14 @@ static void Cmd_New_f (void)
 {
 	char		*gamedir;
 	int			playernum;
-	extern cvar_t sv_login;
 	extern cvar_t sv_serverip;
 	extern cvar_t sv_getrealip;
 
 	if (sv_client->state == cs_spawned)
 		return;
 
-	if (!sv_client->connection_started || sv_client->state == cs_connected) {
-		sv_client->connection_started = realtime;
-		sv_client->connection_started_curtime = curtime;
+	if (!SV_ClientConnectedTime(sv_client) || sv_client->state == cs_connected) {
+		SV_SetClientConnectionTime(sv_client);
 	}
 
 	sv_client->spawncount = svs.spawncount;
@@ -214,18 +242,16 @@ static void Cmd_New_f (void)
 								 va("packet %s \"ip %d %d\"\ncmd new\n", server_ip,
 									sv_client - svs.clients, sv_client->realip_num));
 			}
-			if (realtime - sv_client->connection_started > 3 || sv_client->realip_count > 10)
-			{
-				if ((int)sv_getrealip.value == 2)
-				{
-					Netchan_OutOfBandPrint (NS_SERVER, net_from,
-						"%c\nFailed to validate client's IP.\n\n", A2C_PRINT);
+			if (SV_ClientConnectedTime(sv_client) > 3 || sv_client->realip_count > 10) {
+				if ((int)sv_getrealip.value == 2) {
+					Netchan_OutOfBandPrint (NS_SERVER, net_from, "%c\nFailed to validate client's IP.\n\n", A2C_PRINT);
 					sv_client->rip_vip = 2;
 				}
 				sv_client->state = cs_connected;
 			}
-			else
+			else {
 				return;
+			}
 		}
 	}
 
@@ -268,8 +294,10 @@ static void Cmd_New_f (void)
 		if (!SV_Login(sv_client))
 			return;
 
-		if (!sv_client->logged && (int)sv_login.value)
-			return; // not so fast;
+		// If logins are mandatory, check
+		if (SV_LoginRequired(sv_client)) {
+			return;
+		}
 
 		//bliP: cuff, mute ->
 		sv_client->lockedtill = SV_RestorePenaltyFilter(sv_client, ft_mute);
@@ -383,6 +411,17 @@ static void Cmd_New_f (void)
 	MSG_WriteFloat(&sv_client->netchan.message, movevars.friction);
 	MSG_WriteFloat(&sv_client->netchan.message, movevars.waterfriction);
 	MSG_WriteFloat(&sv_client->netchan.message, /* sv_client->entgravity */ movevars.entgravity); // FIXME: this does't work, Tonik?
+
+	if (!sv_client->spectator) {
+		if (!PlayerCheckPing()) {
+			sv_client->old_frags = 0;
+			SV_SetClientConnectionTime(sv_client);
+			sv_client->spectator = true;
+			sv_client->spec_track = 0;
+			Info_SetStar(&sv_client->_userinfo_ctx_, "*spectator", "1");
+			Info_SetStar(&sv_client->_userinfoshort_ctx_, "*spectator", "1");
+		}
+	}
 
 	if (sv_client->rip_vip)
 	{
@@ -1742,7 +1781,7 @@ static void SV_Say (qbool team)
 		snprintf(text, sizeof(text), "%s\n", p);
 	}
 
-	if (!sv_client->logged)
+	if (!sv_client->logged && !sv_client->logged_in_via_web)
 	{
 		SV_ParseLogin(sv_client);
 		return;
@@ -2205,6 +2244,7 @@ char *shortinfotbl[] =
 #endif
 	"gender",
 	"*auth",
+	"*flag",
 	//"*client",
 	//"*spectator",
 	//"*VIP",
@@ -2301,25 +2341,25 @@ static void Cmd_SetInfo_f (void)
 		//bliP: mute ->
 		if (realtime < sv_client->lockedtill)
 		{
-			SV_ClientPrintf(sv_client, PRINT_CHAT,
-			                "You can't change your name while you're muted\n");
+			SV_ClientPrintf(sv_client, PRINT_CHAT, "You can't change your name while you're muted\n");
 			return;
 		}
 		//<-
 		//VVD: forcenick ->
-		if ((int)sv_forcenick.value && (int)sv_login.value && sv_client->login[0])
+		//meag: removed sv_login check to allow optional logins... sv_forcenick should still take effect
+		if ((int)sv_forcenick.value && /*(int)sv_login.value &&*/ sv_client->login[0])
 		{
-			SV_ClientPrintf(sv_client, PRINT_CHAT,
-			                "You can't change your name while logged in on this server.\n");
-			Info_Set (&sv_client->_userinfo_ctx_, "name", sv_client->login);
-			strlcpy (sv_client->name, sv_client->login, CLIENT_NAME_LEN);
-			MSG_WriteByte (&sv_client->netchan.message, svc_stufftext);
-			MSG_WriteString (&sv_client->netchan.message,
-			                 va("name %s\n", sv_client->login));
-			MSG_WriteByte (&sv_client->netchan.message, svc_stufftext);
-			MSG_WriteString (&sv_client->netchan.message,
-			                 va("setinfo name %s\n", sv_client->login));
-			return;
+			// allow differences in case, redtext
+			if (Q_namecmp(sv_client->login, Cmd_Argv(2))) {
+				SV_ClientPrintf(sv_client, PRINT_CHAT, "You can't change your name while logged in on this server.\n");
+				Info_Set(&sv_client->_userinfo_ctx_, "name", sv_client->login);
+				strlcpy(sv_client->name, sv_client->login, CLIENT_NAME_LEN);
+				MSG_WriteByte(&sv_client->netchan.message, svc_stufftext);
+				MSG_WriteString(&sv_client->netchan.message, va("name %s\n", sv_client->login));
+				MSG_WriteByte(&sv_client->netchan.message, svc_stufftext);
+				MSG_WriteString(&sv_client->netchan.message, va("setinfo name %s\n", sv_client->login));
+				return;
+			}
 		}
 		//<-
 	}
@@ -2327,10 +2367,10 @@ static void Cmd_SetInfo_f (void)
 	//bliP: kick top ->
 	if ((int)sv_kicktop.value && !strcmp(Cmd_Argv(1), "topcolor"))
 	{
-		if (!sv_client->lasttoptime || realtime - sv_client->lasttoptime > 8)
+		if (!sv_client->lasttoptime || curtime - sv_client->lasttoptime > 8)
 		{
 			sv_client->lasttopcount = 0;
-			sv_client->lasttoptime = realtime;
+			sv_client->lasttoptime = curtime;
 		}
 		else if (sv_client->lasttopcount++ > 5)
 		{
@@ -2560,7 +2600,6 @@ Set client to player mode without reconnecting
 */
 static void Cmd_Join_f (void)
 {
-	extern cvar_t sv_login;
 	int i;
 	int clients;
 
@@ -2581,22 +2620,23 @@ static void Cmd_Join_f (void)
 	}
 
 	// Might have been 'not necessary' for spectator but needed for player
-	if (sv_client->logged <= 0 && (int)sv_login.value) {
-		SV_ClientPrintf (sv_client, PRINT_HIGH, "This server requires users to login.  Please disconnect and reconnect as a player.\n");
+	if (SV_LoginBlockJoinRequest(sv_client)) {
 		return;
 	}
 
-	if (realtime - sv_client->connection_started < 5)
-	{
-		SV_ClientPrintf (sv_client, PRINT_HIGH, "Wait %d seconds\n", 5 - (int)(realtime - sv_client->connection_started));
+	if (SV_ClientConnectedTime(sv_client) < 5) {
+		SV_ClientPrintf(sv_client, PRINT_HIGH, "Wait %d seconds\n", 5 - (int)SV_ClientConnectedTime(sv_client));
 		return;
 	}
 
 	// count players already on server
 	CountPlayersSpecsVips(&clients, NULL, NULL, NULL);
-	if (!PlayerCanConnect(clients))
-	{
+	if (!PlayerCanConnect(clients)) {
 		SV_ClientPrintf (sv_client, PRINT_HIGH, "Can't join, all player slots full\n");
+		return;
+	}
+
+	if (!PlayerCheckPing()) {
 		return;
 	}
 
@@ -2608,12 +2648,11 @@ static void Cmd_Join_f (void)
 	// this is like SVC_DirectConnect.
 	// turn the spectator into a player
 	sv_client->old_frags = 0;
-	sv_client->connection_started = realtime;
-	sv_client->connection_started_curtime = curtime;
+	SV_SetClientConnectionTime(sv_client);
 	sv_client->spectator = false;
 	sv_client->spec_track = 0;
-	Info_Remove (&sv_client->_userinfo_ctx_, "*spectator");
-	Info_Remove (&sv_client->_userinfoshort_ctx_, "*spectator");
+	Info_Remove(&sv_client->_userinfo_ctx_, "*spectator");
+	Info_Remove(&sv_client->_userinfoshort_ctx_, "*spectator");
 
 	// like Cmd_Spawn_f()
 	SetUpClientEdict (sv_client, sv_client->edict);
@@ -2671,9 +2710,9 @@ static void Cmd_Observe_f (void)
 		return;
 	}
 
-	if (realtime - sv_client->connection_started < 5)
+	if (SV_ClientConnectedTime(sv_client) < 5)
 	{
-		SV_ClientPrintf (sv_client, PRINT_HIGH, "Wait %d seconds\n", 5 - (int)(realtime - sv_client->connection_started));
+		SV_ClientPrintf (sv_client, PRINT_HIGH, "Wait %d seconds\n", 5 - (int)SV_ClientConnectedTime(sv_client));
 		return;
 	}
 
@@ -2694,8 +2733,7 @@ static void Cmd_Observe_f (void)
 	// this is like SVC_DirectConnect.
 	// turn the player into a spectator
 	sv_client->old_frags = 0;
-	sv_client->connection_started = realtime;
-	sv_client->connection_started_curtime = curtime;
+	SV_SetClientConnectionTime(sv_client);
 	sv_client->spectator = true;
 	sv_client->spec_track = 0;
 	Info_SetStar (&sv_client->_userinfo_ctx_, "*spectator", "1");
@@ -2849,7 +2887,13 @@ void SV_VoiceReadPacket(void)
 				(ring->receiver[1]<<8) |
 				(ring->receiver[2]<<16) |
 				(ring->receiver[3]<<24);
-			MVDWrite_Begin (dem_multiple, cls, ring->datalen+6);
+
+			if (!cls) {
+				// prevent dem_multiple(0) being sent
+				return;
+			}
+
+			MVDWrite_Begin(dem_multiple, cls, ring->datalen + 6);
 		}
 
 		MVD_MSG_WriteByte( svc_fte_voicechat);
@@ -3072,54 +3116,76 @@ void Cmd_PEXT_f(void)
 // { Central login
 void Cmd_Login_f(void)
 {
-	extern void Central_GenerateChallenge(client_t* client, const char* username);
+	extern cvar_t sv_login;
+
+	if (sv_client->state != cs_spawned && !(int)sv_login.value) {
+		SV_ClientPrintf2(sv_client, PRINT_HIGH, "Cannot login during connection\n");
+		return;
+	}
 
 	if (Cmd_Argc() != 2) {
-		MSG_WriteByte (&sv_client->netchan.message, svc_print);
-		MSG_WriteByte (&sv_client->netchan.message, PRINT_HIGH);
-		MSG_WriteString (&sv_client->netchan.message, "Usage: login <username>\n");
+		SV_ClientPrintf2(sv_client, PRINT_HIGH, "Usage: login <username>\n");
 		return;
 	}
 
 	if (curtime - sv_client->login_request_time < LOGIN_MIN_RETRY_TIME) {
-		MSG_WriteByte (&sv_client->netchan.message, svc_print);
-		MSG_WriteByte (&sv_client->netchan.message, PRINT_HIGH);
-		MSG_WriteString (&sv_client->netchan.message, "Please wait and try again\n");
+		SV_ClientPrintf2(sv_client, PRINT_HIGH, "Please wait and try again\n");
 		return;
 	}
 
-	Central_GenerateChallenge(sv_client, Cmd_Argv(1));
+	if (sv_client->logged_in_via_web) {
+		SV_ClientPrintf2(sv_client, PRINT_HIGH, "You are already logged in as '%s'\n", sv_client->login);
+		return;
+	}
+
+	if (sv_client->state != cs_spawned) {
+		SV_ParseWebLogin(sv_client);
+	}
+	else {
+		Central_GenerateChallenge(sv_client, Cmd_Argv(1), false);
+	}
 }
 
 void Cmd_ChallengeResponse_f(void)
 {
-	extern void Central_VerifyChallengeResponse(client_t* client, const char* challenge, const char* response);
-
 	if (Cmd_Argc() != 2) {
-		MSG_WriteByte (&sv_client->netchan.message, svc_print);
-		MSG_WriteByte (&sv_client->netchan.message, PRINT_HIGH);
-		MSG_WriteString (&sv_client->netchan.message, "Usage: challenge-response <response>\n");
+		MSG_WriteByte(&sv_client->netchan.message, svc_print);
+		MSG_WriteByte(&sv_client->netchan.message, PRINT_HIGH);
+		MSG_WriteString(&sv_client->netchan.message, "Usage: challenge-response <response>\n");
 		return;
 	}
 
-	if (curtime - sv_client->login_request_time < LOGIN_MIN_RETRY_TIME || !sv_client->challenge[0]) {
-		MSG_WriteByte (&sv_client->netchan.message, svc_print);
-		MSG_WriteByte (&sv_client->netchan.message, PRINT_HIGH);
-		MSG_WriteString (&sv_client->netchan.message, "Please wait and try again\n");
+	if (!sv_client->login_challenge[0]) {
+		MSG_WriteByte(&sv_client->netchan.message, svc_print);
+		MSG_WriteByte(&sv_client->netchan.message, PRINT_HIGH);
+		MSG_WriteString(&sv_client->netchan.message, "Please wait and try again\n");
 		return;
 	}
 
-	Central_VerifyChallengeResponse(sv_client, sv_client->challenge, Cmd_Argv(1));
+	Central_VerifyChallengeResponse(sv_client, sv_client->login_challenge, Cmd_Argv(1));
 }
 
 void Cmd_Logout_f(void)
 {
-	if (sv_client->login[0]) {
-		SV_BroadcastPrintf(PRINT_HIGH, "%s logged out\n", sv_client->name);
+	extern cvar_t sv_login;
+
+	if (sv_client->logged_in_via_web) {
+		if (sv_client->login[0]) {
+			SV_BroadcastPrintf(PRINT_HIGH, "%s logged out\n", sv_client->name);
+		}
+
+		SV_Logout(sv_client);
+
+		// 
+		if (!(int)sv_login.value || ((int)sv_login.value == 1 && sv_client->spectator)) {
+			sv_client->logged = -1;
+		}
 	}
 
-	sv_client->login[0] = '\0';
-	sv_client->logged = 0;
+	// If logins are mandatory then treat as disconnect
+	if ((int)sv_login.value > 1 || ((int)sv_login.value == 1 && !sv_client->spectator)) {
+		SV_DropClient(sv_client);
+	}
 }
 // } Central login
 #endif
@@ -3489,7 +3555,7 @@ void SV_RunCmd (usercmd_t *ucmd, qbool inside, qbool second_attempt) //bliP: 24/
 		EdictFieldVector(sv_player, fofs_movement)[2] = ucmd->upmove;
 	}
 	//bliP: cuff
-	if (sv_client->cuff_time > realtime)
+	if (sv_client->cuff_time > curtime)
 		sv_player->v.button0 = sv_player->v.impulse = 0;
 	//<-
 
@@ -3776,7 +3842,6 @@ void SV_PostRunCmd(void)
 	{
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 		if ((sv_client->mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) && sv_client->weaponswitch_enabled) {
-			entvars_t* ent = &sv_client->edict->v;
 			int best_weapon, best_impulse, hide_impulse;
 			qbool switch_to_best_weapon = false;
 			int mode = sv_client->weaponswitch_mode;
@@ -3800,6 +3865,8 @@ void SV_PostRunCmd(void)
 			if (switch_to_best_weapon && sv_client->weaponswitch_pending && sv_client->weaponswitch_forgetorder) {
 				char new_wrank[16] = { 0 };
 
+				SV_DebugServerSideWeaponScript(sv_client, best_impulse);
+
 				// Over-write the list sent with the result
 				if (Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1') {
 					SV_ClientPrintf(sv_client, PRINT_HIGH, "Best: %d, forgetting rest\n", best_impulse);
@@ -3817,6 +3884,8 @@ void SV_PostRunCmd(void)
 			else if (ent->health <= 0.0f && sv_client->weaponswitch_hide_on_death) {
 				char new_wrank[16] = { 0 };
 
+				SV_DebugServerSideWeaponScript(sv_client, best_impulse);
+
 				new_wrank[0] = '0' + hide_impulse;
 				sv_client->weaponswitch_priority[0] = hide_impulse;
 				sv_client->weaponswitch_priority[1] = 0;
@@ -3832,6 +3901,8 @@ void SV_PostRunCmd(void)
 			if (!ent->impulse) {
 				if (switch_to_best_weapon) {
 					if (best_impulse && ent->weapon != best_weapon) {
+						SV_DebugServerSideWeaponScript(sv_client, best_impulse);
+
 						if (Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1') {
 							SV_ClientPrintf(sv_client, PRINT_HIGH, "Switching to best weapon: %d\n", best_impulse);
 						}
@@ -3898,22 +3969,40 @@ void SV_PostRunCmd(void)
 	}
 }
 
+/*
+SV_UserSetWeaponRank
+Sets wrank userinfo for mods to pick best weapon based on user's preferences
+*/
+static void SV_UserSetWeaponRank(client_t* cl, const char* new_wrank)
+{
+	char old_wrank[128] = { 0 };
+	strlcpy(old_wrank, Info_Get(&cl->_userinfo_ctx_, "wrank"), sizeof(old_wrank));
+	if (strcmp(old_wrank, new_wrank)) {
+		Info_Set(&cl->_userinfo_ctx_, "wrank", new_wrank);
+		ProcessUserInfoChange(cl, "wrank", old_wrank);
+
+		if (Info_Get(&cl->_userinfo_ctx_, "dev")[0] == '1') {
+			SV_ClientPrintf(cl, PRINT_HIGH, "Setting new wrank: %s\n", new_wrank);
+		}
+	}
+}
+
 // SV_RotateCmd
 // Rotates client command so a high-ping player can better control direction as they exit teleporters on high-ping
-void SV_RotateCmd(client_t* cl, usercmd_t* cmd)
+void SV_RotateCmd(client_t* cl, usercmd_t* cmd_)
 {
 	if (cl->lastteleport_teleport) {
 		static vec3_t up = { 0, 0, 1 };
-		vec3_t direction = { cmd->sidemove, cmd->forwardmove, 0 };
+		vec3_t direction = { cmd_->sidemove, cmd_->forwardmove, 0 };
 		vec3_t result;
 
 		RotatePointAroundVector(result, up, direction, cl->lastteleport_teleportyaw);
 
-		cmd->sidemove = result[0];
-		cmd->forwardmove = result[1];
+		cmd_->sidemove = result[0];
+		cmd_->forwardmove = result[1];
 	}
 	else {
-		cmd->angles[YAW] = (cl->edict)->v.angles[YAW];
+		cmd_->angles[YAW] = (cl->edict)->v.angles[YAW];
 	}
 }
 
@@ -3925,53 +4014,199 @@ Run one or more client move commands (more than one if some
 packets were dropped)
 ===================
 */
-static void SV_ExecuteClientMove (client_t *cl, usercmd_t oldest, usercmd_t oldcmd, usercmd_t newcmd)
+static void SV_ExecuteClientMove(client_t* cl, usercmd_t oldest, usercmd_t oldcmd, usercmd_t newcmd)
 {
 	int net_drop;
+	int playernum = cl - svs.clients;
 
-	if (sv.paused)
+	if (sv.paused) {
 		return;
+	}
 
 	SV_PreRunCmd();
 
 	net_drop = cl->netchan.dropped;
-	if (net_drop < 20)
-	{
-		while (net_drop > 2)
-		{
-			SV_RunCmd (&cl->lastcmd, false, false);
+	if (net_drop < 20) {
+		while (net_drop > 2) {
+			SV_DebugClientCommand(playernum, &cl->lastcmd, net_drop);
+			SV_RunCmd(&cl->lastcmd, false, false);
 			net_drop--;
 		}
 	}
-	if (net_drop > 1)
-		SV_RunCmd (&oldest, false, false);
-	if (net_drop > 0)
-		SV_RunCmd (&oldcmd, false, false);
-	SV_RunCmd (&newcmd, false, false);
-	
+	if (net_drop > 1) {
+		SV_DebugClientCommand(playernum, &oldest, 2);
+		SV_RunCmd(&oldest, false, false);
+	}
+	if (net_drop > 0) {
+		SV_DebugClientCommand(playernum, &oldcmd, 1);
+		SV_RunCmd(&oldcmd, false, false);
+	}
+	SV_DebugClientCommand(playernum, &newcmd, 0);
+	SV_RunCmd(&newcmd, false, false);
+
 	SV_PostRunCmd();
 }
 
+#ifdef MVD_PEXT1_DEBUG_ANTILAG
 /*
-SV_UserSetWeaponRank
+SV_DebugWriteServerAntilagPositions
 
-Sets wrank userinfo for mods to pick best weapon based on user's preferences
+Writes the position of clients, as rewound by antilag
 */
-static void SV_UserSetWeaponRank(client_t* cl, const char* new_wrank)
+static void SV_DebugWriteServerAntilagPositions(client_t* cl, int present)
 {
-	char old_wrank[128] = { 0 };
-	strlcpy(old_wrank, Info_Get(&cl->_userinfo_ctx_, "wrank"), sizeof(old_wrank));
-	if (strcmp(old_wrank, new_wrank)) {
-		Info_Set(&cl->_userinfo_ctx_, "wrank", new_wrank);
-		ProcessUserInfoChange(sv_client, "wrank", old_wrank);
+	mvdhidden_block_header_t header;
+	mvdhidden_antilag_position_header_t antilag_header;
+	int i;
+	float target_time = cl->laggedents_time;
 
-#ifdef _DEBUG
-		if (Info_Get(&cl->_userinfo_ctx_, "dev")[0] == '1') {
-			SV_ClientPrintf(sv_client, PRINT_HIGH, "Setting new wrank: %s\n", new_wrank);
-		}
+	header.type_id = mvdhidden_antilag_position;
+	header.length = sizeof_mvdhidden_antilag_position_header_t + present * sizeof_mvdhidden_antilag_position_t;
+
+	antilag_header.incoming_seq = LittleLong(cl->netchan.incoming_sequence);
+	antilag_header.playernum = cl - svs.clients;
+	antilag_header.players = present;
+	antilag_header.server_time = LittleFloat(sv.time);
+	antilag_header.target_time = LittleFloat(target_time);
+
+	if (MVDWrite_HiddenBlockBegin(sizeof_mvdhidden_block_header_t_range0 + header.length)) {
+		header.length = LittleLong(header.length);
+		MVD_SZ_Write(&header.length, sizeof(header.length));
+		MVD_SZ_Write(&header.type_id, sizeof(header.type_id));
+		MVD_SZ_Write(&antilag_header.playernum, sizeof(antilag_header.playernum));
+		MVD_SZ_Write(&antilag_header.players, sizeof(antilag_header.players));
+		MVD_SZ_Write(&antilag_header.incoming_seq, sizeof(antilag_header.incoming_seq));
+		MVD_SZ_Write(&antilag_header.server_time, sizeof(antilag_header.server_time));
+		MVD_SZ_Write(&antilag_header.target_time, sizeof(antilag_header.target_time));
+		for (i = 0; i < MAX_CLIENTS; i++) {
+			if (cl->laggedents[i].present) {
+				mvdhidden_antilag_position_t pos = { 0 };
+				int j;
+
+				pos.playernum = i;
+#ifdef MVD_PEXT1_DEBUG
+				if (debug_info.antilag_clients[i].present) {
+					pos.playernum |= MVD_PEXT1_ANTILAG_CLIENTPOS;
+					pos.msec = debug_info.antilag_clients[i].msec;
+					pos.predmodel = debug_info.antilag_clients[i].model;
+					VectorCopy(debug_info.antilag_clients[i].pos, pos.clientpos);
+				}
 #endif
+				MVD_SZ_Write(&pos.playernum, sizeof(pos.playernum));
+				for (j = 0; j < 3; ++j) {
+					pos.pos[j] = LittleFloat(cl->laggedents[i].laggedpos[j]);
+					MVD_SZ_Write(&pos.pos[j], sizeof(pos.pos[j]));
+				}
+				MVD_SZ_Write(&pos.msec, sizeof(pos.msec));
+				MVD_SZ_Write(&pos.predmodel, sizeof(pos.predmodel));
+				for (j = 0; j < 3; ++j) {
+					pos.clientpos[j] = LittleFloat(pos.clientpos[j]);
+					MVD_SZ_Write(&pos.clientpos[j], sizeof(pos.clientpos[j]));
+				}
+			}
+		}
 	}
 }
+#endif // MVD_PEXT1_DEBUG_ANTILAG
+
+#ifdef MVD_PEXT1_DEBUG_WEAPON
+static void SV_DebugWriteWeaponScript(byte playernum, qbool server_side, int items, byte shells, byte nails, byte rockets, byte cells, byte choice, const char* weaponlist)
+{
+	if (sv_debug_weapons.value >= 1) {
+		mvdhidden_block_header_t header;
+
+		// Write out immediately
+		header.type_id = (server_side ? mvdhidden_usercmd_weapons_ss : mvdhidden_usercmd_weapons);
+		header.length = LittleLong(10 + strlen(weaponlist) + 1);
+
+		if (MVDWrite_HiddenBlockBegin(sizeof_mvdhidden_block_header_t_range0 + header.length)) {
+			MVD_SZ_Write(&header.length, sizeof(header.length));
+			MVD_SZ_Write(&header.type_id, sizeof(header.type_id));
+			MVD_SZ_Write(&playernum, sizeof(playernum));
+			MVD_SZ_Write(&items, sizeof(items));
+			MVD_SZ_Write(&shells, sizeof(shells));
+			MVD_SZ_Write(&nails, sizeof(nails));
+			MVD_SZ_Write(&rockets, sizeof(rockets));
+			MVD_SZ_Write(&cells, sizeof(cells));
+			MVD_SZ_Write(&choice, sizeof(choice));
+			MVD_SZ_Write(weaponlist, strlen(weaponlist) + 1);
+		}
+	}
+}
+
+static void SV_DebugClientSideWeaponScript(client_t* cl)
+{
+	byte playernum = cl - svs.clients;
+	int items = LittleLong(MSG_ReadLong());
+	byte shells = MSG_ReadByte();
+	byte nails = MSG_ReadByte();
+	byte rockets = MSG_ReadByte();
+	byte cells = MSG_ReadByte();
+	byte choice = MSG_ReadByte();
+	const char* weaponlist = MSG_ReadString();
+
+	SV_DebugWriteWeaponScript(playernum, false, items, shells, nails, rockets, cells, choice, weaponlist);
+}
+
+static void SV_DebugServerSideWeaponInstruction(client_t* cl)
+{
+	if (sv_debug_weapons.value >= 1) {
+		mvdhidden_block_header_t header;
+
+		// Write out immediately
+		header.type_id = mvdhidden_usercmd_weapon_instruction;
+		header.length = sizeof_mvdhidden_usercmd_weapon_instruction;
+
+		if (MVDWrite_HiddenBlockBegin(sizeof_mvdhidden_block_header_t_range0 + header.length)) {
+			byte playernum = cl - svs.clients;
+			byte flags = 0;
+			int sequence_set = cl->weaponswitch_sequence_set;
+			int mode = cl->weaponswitch_mode;
+			byte weaponlist[10] = { 0 };
+
+			flags |= (cl->weaponswitch_pending ? MVDHIDDEN_SSWEAPON_PENDING : 0);
+			flags |= (cl->weaponswitch_hide == 1 ? MVDHIDDEN_SSWEAPON_HIDE_AXE : (cl->weaponswitch_hide == 2 ? MVDHIDDEN_SSWEAPON_HIDE_SG : 0));
+			flags |= (cl->weaponswitch_hide_on_death ? MVDHIDDEN_SSWEAPON_HIDEONDEATH : 0);
+			flags |= (cl->weaponswitch_wasfiring ? MVDHIDDEN_SSWEAPON_WASFIRING : 0);
+			flags |= (cl->weaponswitch_enabled ? MVDHIDDEN_SSWEAPON_ENABLED : 0);
+			flags |= (cl->weaponswitch_forgetorder ? MVDHIDDEN_SSWEAPON_FORGETORDER : 0);
+
+			memcpy(weaponlist, cl->weaponswitch_priority, min(10, sizeof(cl->weaponswitch_priority)));
+
+			MVD_SZ_Write(&header.length, sizeof(header.length));
+			MVD_SZ_Write(&header.type_id, sizeof(header.type_id));
+			MVD_SZ_Write(&playernum, sizeof(playernum));
+			MVD_SZ_Write(&flags, sizeof(flags));
+			MVD_SZ_Write(&sequence_set, sizeof(sequence_set));
+			MVD_SZ_Write(&mode, sizeof(mode));
+			MVD_SZ_Write(weaponlist, sizeof(weaponlist));
+		}
+	}
+}
+
+static void SV_DebugServerSideWeaponScript(client_t* cl, int best_impulse)
+{
+	if (sv_debug_weapons.value >= 1) {
+		char old_wrank[128] = { 0 };
+		char encoded[128] = { 0 };
+		char* w;
+		char* o;
+		entvars_t* ent = &cl->edict->v;
+
+		strlcpy(old_wrank, Info_Get(&cl->_userinfo_ctx_, "wrank"), sizeof(old_wrank));
+
+		w = old_wrank;
+		o = encoded;
+		while (*w) {
+			*o = (*w - '0');
+			++w;
+			++o;
+		}
+
+		SV_DebugWriteWeaponScript(cl - svs.clients, true, ent->items, ent->ammo_shells, ent->ammo_nails, ent->ammo_rockets, ent->ammo_cells, best_impulse, encoded);
+	}
+}
+#endif
 
 /*
 ===================
@@ -3993,7 +4228,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 	int		seq_hash;
 
 #ifdef MVD_PEXT1_DEBUG
-	client_antilag_info_t* debug = &debug_info.antilag;
+	int             antilag_players_present = 0;
 #endif
 
 	if (!Netchan_Process(&cl->netchan))
@@ -4010,7 +4245,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 
 	// calc ping time
 	frame = &cl->frames[cl->netchan.incoming_acknowledged & UPDATE_MASK];
-	frame->ping_time = realtime - frame->senttime;
+	frame->ping_time = curtime - frame->senttime;
 
 	// update delay based on ping and sv_minping
 	if (!cl->spectator && !sv.paused)
@@ -4060,6 +4295,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 			}
 
 			cl->laggedents[i].present = true;
+			++antilag_players_present;
 
 			// target player's movement commands are late, extrapolate his position based on velocity
 			if (target_time > target_cl->localtime) {
@@ -4088,6 +4324,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 		}
 
 		cl->laggedents_count = MAX_CLIENTS; // FIXME: well, FTE do it a bit different way...
+		cl->laggedents_time = target_time;
 	}
 
 	// make sure the reply sequence number matches the incoming
@@ -4098,7 +4335,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 		cl->send_message = false;	// don't reply, sequences have slipped
 
 	// save time for ping calculations
-	cl->frames[cl->netchan.outgoing_sequence & UPDATE_MASK].senttime = realtime;
+	cl->frames[cl->netchan.outgoing_sequence & UPDATE_MASK].senttime = curtime;
 	cl->frames[cl->netchan.outgoing_sequence & UPDATE_MASK].ping_time = -1;
 
 	sv_client = cl;
@@ -4111,7 +4348,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 	cl->localtime = sv.time;
 	cl->delta_sequence = -1;	// no delta unless requested
 #ifdef MVD_PEXT1_DEBUG
-	memset(&debug, 0, sizeof(debug));
+	memset(&debug_info, 0, sizeof(debug_info));
 #endif
 	while (1)
 	{
@@ -4146,26 +4383,25 @@ void SV_ExecuteClientMessage (client_t *cl)
 			byte type = MSG_ReadByte();
 			if (type == clc_mvd_debug_type_antilag) {
 				int players = MSG_ReadByte();
-				int i;
 
 				for (i = 0; i < players; ++i) {
 					int num = MSG_ReadByte();
 					int msec = MSG_ReadByte();
+					int model = MSG_ReadByte();
 					float x = LittleFloat(MSG_ReadFloat());
 					float y = LittleFloat(MSG_ReadFloat());
 					float z = LittleFloat(MSG_ReadFloat());
 
 					if (num >= 0 && num < MAX_CLIENTS) {
-						mvdsv_antilag_client_info_t* p = &debug->clients[num];
-
-						p->playernum = num;
-						p->msec = msec;
-						VectorSet(p->pos, x, y, z);
+						debug_info.antilag_clients[num].present = true;
+						debug_info.antilag_clients[num].model = model;
+						debug_info.antilag_clients[num].msec = msec;
+						VectorSet(debug_info.antilag_clients[num].pos, x, y, z);
 					}
 				}
 			}
 			else if (type == clc_mvd_debug_type_weapon) {
-
+				SV_DebugClientSideWeaponScript(cl);
 			}
 			else {
 				Con_Printf("SV_ReadClientMessage: unknown debug message type %d\n", type);
@@ -4178,77 +4414,11 @@ void SV_ExecuteClientMessage (client_t *cl)
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 		case clc_mvd_weapon:
 		{
-			int flags = MSG_ReadByte();
-			int weap = 0, w = 0;
-			qbool write = true;
-			int sequence_set = cl->netchan.incoming_sequence;
-			int weapon_hide_selection = 0;
-			int new_selections[MAX_WEAPONSWITCH_OPTIONS] = { 0 };
-			char new_wrank[MAX_WEAPONSWITCH_OPTIONS + 1] = { 0 };
-			int wrank_index = 0;
-
-			// This might be a duplicate that should be ignored
-			if (flags & clc_mvd_weapon_forget_ranking) {
-				int age = MSG_ReadByte();
-
-				sequence_set = cl->netchan.incoming_sequence - age;
-
-				write = (sequence_set > cl->weaponswitch_sequence_set);
+			if (!SV_ClientExtensionWeaponSwitch(cl)) {
+				Con_Printf("SV_ClientExtensionWeaponSwitch: corrupt data string\n");
+				SV_DropClient(cl);
+				return;
 			}
-
-			while ((weap = MSG_ReadByte()) > 0) {
-				if (flags & clc_mvd_weapon_full_impulse) {
-					if (weap && write && w < MAX_WEAPONSWITCH_OPTIONS) {
-						// only add 1-8 to the wrank weapon preference string...
-						if (weap >= 1 && weap <= 8 && wrank_index < MAX_WEAPONSWITCH_OPTIONS) {
-							new_wrank[wrank_index++] = '0' + weap;
-						}
-						new_selections[w++] = weap;
-					}
-				}
-				else {
-					int weap1 = (weap >> 4) & 15;
-					int weap2 = (weap & 15);
-
-					weap1 = bound(0, weap1, 9);
-					weap2 = bound(0, weap2, 9);
-
-					if (weap1 && write && w < MAX_WEAPONSWITCH_OPTIONS) {
-						new_wrank[w] = '0' + weap1;
-						new_selections[w++] = weap1;
-					}
-					if (weap1 && weap2 && write && w < MAX_WEAPONSWITCH_OPTIONS) {
-						new_wrank[w] = '0' + weap2;
-						new_selections[w++] = weap2;
-					}
-
-					if (!weap1 || !weap2) {
-						break;
-					}
-				}
-			}
-			if (flags & clc_mvd_weapon_hide_axe) {
-				weapon_hide_selection = 1;
-			}
-			else if (flags & clc_mvd_weapon_hide_sg) {
-				weapon_hide_selection = 2;
-			}
-
-			cl->weaponswitch_enabled = (flags & clc_mvd_weapon_switching);
-			if (write) {
-				cl->weaponswitch_sequence_set = sequence_set;
-				cl->weaponswitch_forgetorder = (flags & clc_mvd_weapon_forget_ranking);
-				cl->weaponswitch_mode = (flags & (clc_mvd_weapon_mode_presel | clc_mvd_weapon_mode_iffiring));
-				cl->weaponswitch_hide = weapon_hide_selection;
-				cl->weaponswitch_hide_on_death = (flags & clc_mvd_weapon_reset_on_death);
-				memcpy(cl->weaponswitch_priority, new_selections, sizeof(cl->weaponswitch_priority));
-
-				if (!cl->weaponswitch_forgetorder) {
-					SV_UserSetWeaponRank(cl, new_wrank);
-				}
-			}
-			cl->weaponswitch_pending |= write;
-			cl->weaponswitch_sequence_set = sequence_set;
 			break;
 		}
 #endif
@@ -4305,7 +4475,8 @@ void SV_ExecuteClientMessage (client_t *cl)
 			calculatedChecksum = COM_BlockSequenceCRCByte(
 				net_message.data + checksumIndex + 1,
 				MSG_GetReadCount() - checksumIndex - 1,
-				seq_hash);
+				seq_hash
+			);
 
 			if (calculatedChecksum != checksum)
 			{
@@ -4376,7 +4547,104 @@ void SV_ExecuteClientMessage (client_t *cl)
 #endif
 		}
 	}
+
+#ifdef MVD_PEXT1_DEBUG_ANTILAG
+	if (antilag_players_present && sv_debug_antilag.value) {
+		SV_DebugWriteServerAntilagPositions(cl, antilag_players_present);
+	}
+#endif
 }
+
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+static qbool SV_ClientExtensionWeaponSwitch(client_t* cl)
+{
+	int flags = MSG_ReadByte();
+	int weap = 0, w = 0;
+	qbool write = true;
+	int sequence_set = cl->netchan.incoming_sequence;
+	int weapon_hide_selection = 0;
+	byte new_selections[MAX_WEAPONSWITCH_OPTIONS] = { 0 };
+	char new_wrank[MAX_WEAPONSWITCH_OPTIONS + 1] = { 0 };
+	int wrank_index = 0;
+
+	if (flags == -1) {
+		return false;
+	}
+
+	// This might be a duplicate that should be ignored
+	if (flags & clc_mvd_weapon_forget_ranking) {
+		int age = MSG_ReadByte();
+
+		if (age < 0) {
+			return false;
+		}
+
+		sequence_set = cl->netchan.incoming_sequence - age;
+
+		write = (sequence_set > cl->weaponswitch_sequence_set);
+	}
+
+	while ((weap = MSG_ReadByte()) > 0) {
+		if (flags & clc_mvd_weapon_full_impulse) {
+			if (weap && write && w < MAX_WEAPONSWITCH_OPTIONS) {
+				// only add 1-8 to the wrank weapon preference string...
+				if (weap >= 1 && weap <= 8 && wrank_index < MAX_WEAPONSWITCH_OPTIONS) {
+					new_wrank[wrank_index++] = '0' + weap;
+				}
+				new_selections[w++] = weap;
+			}
+		}
+		else {
+			int weap1 = (weap >> 4) & 15;
+			int weap2 = (weap & 15);
+
+			weap1 = bound(0, weap1, 9);
+			weap2 = bound(0, weap2, 9);
+
+			if (weap1 && write && w < MAX_WEAPONSWITCH_OPTIONS) {
+				new_wrank[w] = '0' + weap1;
+				new_selections[w++] = weap1;
+			}
+			if (weap1 && weap2 && write && w < MAX_WEAPONSWITCH_OPTIONS) {
+				new_wrank[w] = '0' + weap2;
+				new_selections[w++] = weap2;
+			}
+
+			if (!weap1 || !weap2) {
+				break;
+			}
+		}
+	}
+	if (flags & clc_mvd_weapon_hide_axe) {
+		weapon_hide_selection = 1;
+	}
+	else if (flags & clc_mvd_weapon_hide_sg) {
+		weapon_hide_selection = 2;
+	}
+
+	if (weap < 0) {
+		return false;
+	}
+
+	cl->weaponswitch_enabled = (flags & clc_mvd_weapon_switching);
+	if (write) {
+		cl->weaponswitch_sequence_set = sequence_set;
+		cl->weaponswitch_forgetorder = (flags & clc_mvd_weapon_forget_ranking);
+		cl->weaponswitch_mode = (flags & (clc_mvd_weapon_mode_presel | clc_mvd_weapon_mode_iffiring));
+		cl->weaponswitch_hide = weapon_hide_selection;
+		cl->weaponswitch_hide_on_death = (flags & clc_mvd_weapon_reset_on_death);
+		memcpy(cl->weaponswitch_priority, new_selections, sizeof(new_selections));
+		SV_DebugServerSideWeaponInstruction(cl);
+
+		if (!cl->weaponswitch_forgetorder) {
+			SV_UserSetWeaponRank(cl, new_wrank);
+		}
+	}
+	cl->weaponswitch_pending |= write;
+	cl->weaponswitch_sequence_set = sequence_set;
+	return true;
+}
+#endif // MVD_PEXT1_SERVERSIDEWEAPON
 
 /*
 ==============
@@ -4389,6 +4657,7 @@ void SV_UserInit (void)
 	Cvar_Register (&sv_sayteam_to_spec);
 	Cvar_Register (&sv_mapcheck);
 	Cvar_Register (&sv_minping);
+	Cvar_Register (&sv_maxping);
 	Cvar_Register (&sv_enable_cmd_minping);
 	Cvar_Register (&sv_kickuserinfospamtime);
 	Cvar_Register (&sv_kickuserinfospamcount);
@@ -4402,6 +4671,44 @@ void SV_UserInit (void)
 	Cvar_Register (&sv_voip_echo);
 	Cvar_Register (&sv_voip_record);
 #endif
+
+#ifdef MVD_PEXT1_DEBUG
+	Cvar_Register(&sv_debug_weapons);
+#endif
+	Cvar_Register(&sv_debug_antilag);
+	Cvar_Register(&sv_debug_usercmd);
 }
 
-#endif // CLIENTONLY
+static void SV_DebugClientCommand(byte playernum, const usercmd_t* usercmd, int dropnum_)
+{
+	if (playernum >= MAX_CLIENTS) {
+		return;
+	}
+
+	if (sv_debug_usercmd.value >= 1 || svs.clients[playernum].mvd_write_usercmds) {
+		mvdhidden_block_header_t header;
+		byte dropnum = min(dropnum_, 255);
+
+		header.type_id = mvdhidden_usercmd;
+		header.length = sizeof_mvdhidden_block_header_t_usercmd;
+
+		if (MVDWrite_HiddenBlockBegin(sizeof_mvdhidden_block_header_t_range0 + header.length)) {
+			MVD_SZ_Write(&header.length, sizeof(header.length));
+			MVD_SZ_Write(&header.type_id, sizeof(header.type_id));
+
+			MVD_SZ_Write(&playernum, sizeof(playernum));
+			MVD_SZ_Write(&dropnum, sizeof(dropnum));
+			MVD_SZ_Write(&usercmd->msec, sizeof(usercmd->msec));
+			MVD_SZ_Write(&usercmd->angles[0], sizeof(usercmd->angles[0]));
+			MVD_SZ_Write(&usercmd->angles[1], sizeof(usercmd->angles[1]));
+			MVD_SZ_Write(&usercmd->angles[2], sizeof(usercmd->angles[2]));
+			MVD_SZ_Write(&usercmd->forwardmove, sizeof(usercmd->forwardmove));
+			MVD_SZ_Write(&usercmd->sidemove, sizeof(usercmd->sidemove));
+			MVD_SZ_Write(&usercmd->upmove, sizeof(usercmd->upmove));
+			MVD_SZ_Write(&usercmd->buttons, sizeof(usercmd->buttons));
+			MVD_SZ_Write(&usercmd->impulse, sizeof(usercmd->impulse));
+		}
+	}
+}
+
+#endif // !CLIENTONLY

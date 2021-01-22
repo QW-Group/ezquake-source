@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
 
+static void SV_BotWriteDamage(client_t* c, int i);
+
 #define CHAN_AUTO   0
 #define CHAN_WEAPON 1
 #define CHAN_VOICE  2
@@ -401,12 +403,13 @@ MULTICAST_PHS	send to clients potentially hearable from org
 */
 void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key)
 {
-	client_t	*client;
-	byte		*mask;
-	int		leafnum;
-	int		j;
-	qbool		reliable;
-	vec3_t		vieworg;
+	client_t*   client;
+	byte*       mask;
+	int         leafnum;
+	int         j;
+	qbool       reliable;
+	vec3_t      vieworg;
+	qbool       mvd_only = false;
 
 	reliable = false;
 
@@ -429,6 +432,10 @@ void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key)
 	case MULTICAST_PVS:
 		mask = CM_LeafPVS (CM_PointInLeaf (origin));
 		break;
+	case MULTICAST_MVD_HIDDEN:
+		mask = NULL;
+		mvd_only = true;
+		break;
 
 	default:
 		mask = NULL;
@@ -436,7 +443,7 @@ void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key)
 	}
 
 	// send the data to all relevent clients
-	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++)
+	for (j = 0, client = svs.clients; j < MAX_CLIENTS && !mvd_only; j++, client++)
 	{
 		int trackent = 0;
 
@@ -495,19 +502,27 @@ inrange:
 			SZ_Write (&client->datagram, sv.multicast.data, sv.multicast.cursize);
 	}
 
-	if (sv.mvdrecording)
-	{
-		if (reliable)
-		{
-			if (MVDWrite_Begin(dem_all, 0, sv.multicast.cursize))
-			{
+	if (sv.mvdrecording) {
+		if (mvd_only) {
+			mvdhidden_block_header_t header;
+			header.length = sv.multicast.cursize - 2;
+			// header.type_id = ...; < up to the mod to fill this part in
+
+			// write to dem_multiple(0), which will be skipped by all major clients (ezQuake, FTE, fod)
+			if (MVDWrite_HiddenBlockBegin(sv.multicast.cursize + sizeof(header.length))) {
+				MVD_SZ_Write(&header.length, sizeof(header.length));
 				MVD_SZ_Write(sv.multicast.data, sv.multicast.cursize);
 			}
 		}
-		else
+		else if (reliable) {
+			if (MVDWrite_Begin(dem_all, 0, sv.multicast.cursize)) {
+				MVD_SZ_Write(sv.multicast.data, sv.multicast.cursize);
+			}
+		}
+		else {
 			SZ_Write(&demo.datagram, sv.multicast.data, sv.multicast.cursize);
+		}
 	}
-
 
 	SZ_Clear (&sv.multicast);
 }
@@ -605,7 +620,7 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 
 	if ( sound_num == MAX_SOUNDS || !sv.sound_precache[sound_num] )
 	{
-		Con_Printf ("SV_StartSound: %s not precacheed\n", sample);
+		Con_Printf ("SV_StartSound: %s not precached\n", sample);
 		return;
 	}
 
@@ -1137,14 +1152,16 @@ void SV_SendClientMessages (void)
 		}
 
 #ifdef USE_PR2
-		if(c->isBot)
-		{
-			SZ_Clear (&c->netchan.message);
-			SZ_Clear (&c->datagram);
+		if (c->isBot) {
+			// Write damage to bot clients too (for mvd playback)
+			SV_BotWriteDamage(c, i);
+
+			SZ_Clear(&c->netchan.message);
+			SZ_Clear(&c->datagram);
 			c->num_backbuf = 0;
 
 			// Need to tell mod what the bot would have seen
-			SV_SetVisibleEntitiesForBot (c);
+			SV_SetVisibleEntitiesForBot(c);
 			continue;
 		}
 #endif
@@ -1177,6 +1194,30 @@ void SV_SendClientMessages (void)
 		else {
 			Netchan_Transmit (&c->netchan, c->datagram.cursize, c->datagram.data);	// just update reliable
 			c->datagram.cursize = 0;
+		}
+	}
+}
+
+static void SV_BotWriteDamage(client_t* c, int i)
+{
+	edict_t* ent = c->edict;
+
+	if (c->edict->v.dmg_take || c->edict->v.dmg_save) {
+		if (ent->v.dmg_take || ent->v.dmg_save) {
+			int length = 3 + 3 * msg_coordsize;
+
+			if (MVDWrite_Begin(dem_single, i, length)) {
+				edict_t* other = PROG_TO_EDICT(ent->v.dmg_inflictor);
+
+				MVD_MSG_WriteByte(svc_damage);
+				MVD_MSG_WriteByte(ent->v.dmg_save);
+				MVD_MSG_WriteByte(ent->v.dmg_take);
+				for (i = 0; i < 3; i++)
+					MVD_MSG_WriteCoord(other->v.origin[i] + 0.5 * (other->v.mins[i] + other->v.maxs[i]));
+			}
+
+			ent->v.dmg_take = 0;
+			ent->v.dmg_save = 0;
 		}
 	}
 }
@@ -1413,5 +1454,4 @@ void SV_SendMessagesToAll (void)
 	SV_SendClientMessages ();
 }
 
-
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

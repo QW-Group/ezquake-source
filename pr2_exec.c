@@ -59,7 +59,7 @@ void PR2_Init(void)
 	Cvar_Register(&sv_enableprofile);
 #endif
 
-	p = COM_CheckParm (cmdline_param_server_progtype);
+	p = SV_CommandLineProgTypeArgument();
 
 	if (p && p < COM_Argc())
 	{
@@ -574,4 +574,4 @@ void PR2_ClearEdict(edict_t* e)
 
 #endif /* USE_PR2 */
 
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

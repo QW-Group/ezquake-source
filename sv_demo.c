@@ -965,7 +965,7 @@ void SV_MVDStop (int reason, qbool mvdonly)
 				SV_BroadcastPrintf (PRINT_CHAT, "Server recording completed\n");
 		}
 		else
-			SV_BroadcastPrintf (PRINT_CHAT, "Server recording stoped\nMax demo size exceeded\n");
+			SV_BroadcastPrintf (PRINT_CHAT, "Server recording stopped\nMax demo size exceeded\n");
 	}
 
 	Cvar_SetROM(&serverdemo, "");
@@ -1151,27 +1151,23 @@ qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange)
 	return true;
 }
 
-void SV_MVD_SendInitialGamestate(mvddest_t *dest)
+void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 {
 	sizebuf_t	buf;
 	unsigned char buf_data[MAX_MSGLEN];
 	unsigned int n;
-	char *s, info[MAX_EXT_INFO_STRING];
+	char* s, info[MAX_EXT_INFO_STRING];
 
-	client_t *player;
-	edict_t *ent;
-	char *gamedir;
+	client_t* player;
+	edict_t* ent;
+	char* gamedir;
 	int i;
 
 	if (!demo.dest)
 		return;
 
 	sv.mvdrecording = true; // NOTE:  afaik set to false on map change, so restore it here
-	
-	
 	demo.pingtime = demo.time = sv.time;
-
-
 	singledest = dest;
 
 	/*-------------------------------------------------*/
@@ -1184,11 +1180,11 @@ void SV_MVD_SendInitialGamestate(mvddest_t *dest)
 
 	// send the serverdata
 
-	gamedir = Info_ValueForKey (svs.info, "*gamedir");
+	gamedir = Info_ValueForKey(svs.info, "*gamedir");
 	if (!gamedir[0])
 		gamedir = "qw";
 
-	MSG_WriteByte (&buf, svc_serverdata);
+	MSG_WriteByte(&buf, svc_serverdata);
 
 #ifdef FTE_PEXT_FLOATCOORDS
 	//fix up extensions to match sv_bigcoords correctly. sorry for old clients not working.
@@ -1211,6 +1207,15 @@ void SV_MVD_SendInitialGamestate(mvddest_t *dest)
 	{
 		MSG_WriteLong(&buf, PROTOCOL_VERSION_FTE2);
 		MSG_WriteLong(&buf, demo.recorder.fteprotocolextensions2);
+	}
+#endif
+
+#ifdef PROTOCOL_VERSION_MVD1
+	demo.recorder.mvdprotocolextensions1 |= MVD_PEXT1_HIDDEN_MESSAGES;
+	if (demo.recorder.mvdprotocolextensions1)
+	{
+		MSG_WriteLong(&buf, PROTOCOL_VERSION_MVD1);
+		MSG_WriteLong(&buf, demo.recorder.mvdprotocolextensions1);
 	}
 #endif
 
@@ -1426,7 +1431,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t *dest)
 
 		MSG_WriteByte (&buf, svc_updateentertime);
 		MSG_WriteByte (&buf, i);
-		MSG_WriteFloat (&buf, realtime - player->connection_started);
+		MSG_WriteFloat (&buf, SV_ClientGameTime(player));
 
 		Info_ReverseConvert(&player->_userinfoshort_ctx_, info, sizeof(info));
 		Info_RemovePrefixedKeys (info, '_');	// server passwords, etc
@@ -1783,7 +1788,7 @@ static void MVD_Init (void)
 
 	Cvar_Register (&extralogname);
 
-	p = COM_CheckParm (cmdline_param_server_democache_kb);
+	p = SV_CommandLineDemoCacheArgument();
 	if (p)
 	{
 		if (p < COM_Argc()-1)
@@ -1802,7 +1807,47 @@ static void MVD_Init (void)
 	CleanName_Init();
 }
 
-void SV_MVDInit (void)
+void SV_UserCmdTrace_f(void)
+{
+	const char* user = Cmd_Argv(1);
+	const char* option_ = Cmd_Argv(2);
+	qbool option = false;
+	int uid, i;
+
+	if (Cmd_Argc() != 3) {
+		Con_Printf("Usage: %s userid (on | off)\n", Cmd_Argv(0));
+		return;
+	}
+
+	if (!strcmp(option_, "on")) {
+		option = true;
+	}
+	else if (strcmp(option_, "off")) {
+		Con_Printf("Usage: %s userid (on | off)\n", Cmd_Argv(0));
+		return;
+	}
+
+	uid = atoi(user);
+	if (!uid) {
+		Con_Printf("Usage: %s userid (on | off)\n", Cmd_Argv(0));
+		return;
+	}
+
+	for (i = 0; i < MAX_CLIENTS; i++) {
+		if (!svs.clients[i].state) {
+			continue;
+		}
+		if (svs.clients[i].userid == uid) {
+			svs.clients[i].mvd_write_usercmds = option;
+			return;
+		}
+	}
+
+	Con_Printf("Couldn't find userid %d\n", uid);
+	return;
+}
+
+void SV_MVDInit(void)
 {
 	MVD_Init();
 
@@ -1833,8 +1878,11 @@ void SV_MVDInit (void)
 	Cmd_AddCommand ("sv_demoinfoadd",	SV_MVDInfoAdd_f);
 	Cmd_AddCommand ("sv_demoinforemove",SV_MVDInfoRemove_f);
 	Cmd_AddCommand ("sv_demoinfo",		SV_MVDInfo_f);
+	Cmd_AddCommand ("sv_demoembedinfo", SV_MVDEmbedInfo_f);
 	// not prefixed.
 	Cmd_AddCommand ("script",			SV_Script_f);
+
+	Cmd_AddCommand ("sv_usercmdtrace",  SV_UserCmdTrace_f);
 
 	SV_QTV_Init();
 }
@@ -1855,4 +1903,4 @@ const char* SV_MVDDemoName(void)
 	return NULL;
 }
 
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

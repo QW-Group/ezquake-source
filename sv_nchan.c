@@ -192,4 +192,4 @@ void SV_ClearReliable (client_t *cl)
 	SV_ClearBackbuf (cl);
 }
 
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

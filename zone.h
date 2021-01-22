@@ -97,7 +97,7 @@ void *Hunk_TempAlloc (int size);
 
 void Hunk_Check (void);
 
-#if 0
+#ifdef SERVERONLY
 typedef struct cache_user_s
 {
 	void *data;
@@ -110,7 +110,6 @@ void *Cache_Check (cache_user_t *c);
 // if present, otherwise returns NULL
 
 void Cache_Free(cache_user_t *c);
-void Cache_FreeSafe(cache_user_t* c);
 
 void *Cache_Alloc (cache_user_t *c, int size, const char *name);
 // Returns NULL if all purgeable data was tossed and there still

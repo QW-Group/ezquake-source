@@ -22,6 +22,7 @@
 
 #ifndef CLIENTONLY
 #ifdef USE_PR2
+
 #include "qwsvdef.h"
 
 #define SETUSERINFO_STAR          (1<<0) // allow set star keys
@@ -2507,8 +2508,7 @@ void PF2_Add_Bot( byte * base, uintptr_t mask, pr2val_t * stack, pr2val_t * retv
 	newcl->datagram.maxsize = sizeof( newcl->datagram_buf );
 	newcl->spectator = 0;
 	newcl->isBot = 1;
-	newcl->connection_started = realtime;
-	newcl->connection_started_curtime = curtime;
+	SV_SetClientConnectionTime(newcl);
 	strlcpy(newcl->name, name, sizeof(newcl->name));
 
 	newcl->entgravity = 1.0;
@@ -3042,4 +3042,4 @@ void PR2_InitProg(void)
 }
 #endif /* USE_PR2 */
 
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

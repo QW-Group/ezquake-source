@@ -178,4 +178,4 @@ char *parse_mod_string(char *str)
 	return ret;
 }
 
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

@@ -679,7 +679,7 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 		return NULL;
 	}
 
-	// Set the return adress that PNGLib should return to if
+	// Set the return address that PNGLib should return to if
 	// an error occurs during reading.
 #if 0
 	if (setjmp(png_ptr->jmpbuf)) 

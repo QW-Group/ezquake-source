@@ -489,7 +489,7 @@ int oldPingHosts(server_data *servs[], int servsn, int count)
     ping_number = 0;
     randomizer = (int)(Sys_DoubleTime() * 10);
 
-	// Ping all adresses in the host list we just created.
+	// Ping all addresses in the host list we just created.
     while (!abort_ping)
     {
         int bwrote;

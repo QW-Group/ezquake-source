@@ -238,7 +238,8 @@ typedef struct client_s
 
 	char			stufftext_buf[MAX_STUFFTEXT];
 
-	double          connection_started;          // or time of disconnect for zombies
+	// Use SV_ClientConnectedTime & SV_ClientGameTime instead
+	double          connection_started_realtime; // or time of disconnect for zombies
 	double          connection_started_curtime;  // like connection_started but curtime (not affected by pause)
 	qbool           send_message;                // set on frames a datagram arrived on
 
@@ -246,6 +247,7 @@ typedef struct client_s
 	laggedentinfo_t	laggedents[MAX_CLIENTS];
 	unsigned int	laggedents_count;
 	float			laggedents_frac;
+	float           laggedents_time;
 // }
 
 	// spawn parms are carried from level to level
@@ -289,7 +291,8 @@ typedef struct client_s
 	char			login[CLIENT_LOGIN_LEN];
 	char            login_alias[CLIENT_NAME_LEN];
 	char            login_flag[LOGIN_FLAG_LENGTH];
-	char            challenge[LOGIN_CHALLENGE_LENGTH];
+	char            login_confirmation[LOGIN_CHALLENGE_LENGTH];
+	char            login_challenge[LOGIN_CHALLENGE_LENGTH];
 	int				logged;
 	qbool           logged_in_via_web;
 	double          login_request_time;
@@ -373,8 +376,10 @@ typedef struct client_s
 	qbool           weaponswitch_enabled;      // allow user to disable while connected
 	int             weaponswitch_mode;         // user preference
 	qbool           weaponswitch_forgetorder;  // if set, decide best weapon immediately and don't rank on fire
-	int             weaponswitch_priority[MAX_WEAPONSWITCH_OPTIONS];
+	byte            weaponswitch_priority[MAX_WEAPONSWITCH_OPTIONS];
 #endif
+
+	qbool           mvd_write_usercmds;
 } client_t;
 
 // a client can leave the server in one of four ways:
@@ -673,6 +678,9 @@ typedef struct
 #define	MULTICAST_PHS_R			4
 #define	MULTICAST_PVS_R			5
 
+#define MULTICAST_KTX1_EXT      6  // Only send to those using ktx1 protocol extension (todo)
+#define MULTICAST_MVD_HIDDEN    7  // Insert into MVD stream only, as dem_multiple(0)
+
 #define MAX_LOCALINFOS			10000
 // maps in localinfo {
 #define LOCALINFO_MAPS_LIST_START	1000
@@ -801,7 +809,7 @@ typedef struct
 	char str[128];
 } date_t;
 
-void SV_TimeOfDay(date_t *date, char* timeformat);
+void SV_TimeOfDay(date_t *date, char *timeformat);
 
 
 //bliP: init ->
@@ -1004,6 +1012,7 @@ void	SV_MVDInfoRemove_f (void);
 void	SV_MVDInfo_f (void);
 void	SV_LastScores_f (void);
 char*   SV_MVDName2Txt (const char *name);
+void SV_MVDEmbedInfo_f(void);
 
 //
 // sv_demo_qtv.c
@@ -1033,10 +1042,13 @@ void SV_ListAccount_f (void);
 void Login_Init (void);
 qbool SV_Login(client_t *cl);
 void SV_Logout(client_t *cl);
+void SV_ParseWebLogin(client_t* cl);
 void SV_ParseLogin(client_t *cl);
 void SV_LoginCheckTimeOut(client_t *cl);
 void SV_LoginWebCheck(client_t* cl);
 void SV_LoginWebFailed(client_t* cl);
+qbool SV_LoginRequired(client_t* cl);
+qbool SV_LoginBlockJoinRequest(client_t* cl);
 
 // sv_master.c
 void SV_SetMaster_f (void);
@@ -1057,6 +1069,33 @@ qbool SV_SkipCommsBotMessage(client_t* client);
 #include "central.h"
 #else
 extern qbool server_cfg_done;
+#endif
+
+// These functions tell us how much time has passed since the client connected
+// Sometimes this should be affected by pause (scoreboards) and sometimes not (spam, networking)
+// GameTime() stops while game is paused, Connected() continues as normal
+// Both return 0 if client hasn't connected yet
+double SV_ClientConnectedTime(client_t* client);    // real-world time passed
+double SV_ClientGameTime(client_t* client);         // affected by pause
+void SV_SetClientConnectionTime(client_t* client);
+
+#ifdef SERVERONLY
+// mvdsv not changed over to enums yet, which was more about documentation
+#define SV_CommandLineEnableCheats() (COM_CheckParm("-cheats"))
+#define SV_CommandLineEnableLocalCommand() (COM_CheckParm("-enablelocalcommand"))
+#define SV_CommandLineDemoCacheArgument() (COM_CheckParm("-democache"))
+#define SV_CommandLineProgTypeArgument() (COM_CheckParm("-progtype"))
+#define SV_CommandLineUseMinimumMemory() (COM_CheckParm("-minmemory"))
+#define SV_CommandLineHeapSizeMemoryKB() (COM_CheckParm("-heapsize"))
+#define SV_CommandLineHeapSizeMemoryMB() (COM_CheckParm("-mem"))
+#else
+#define SV_CommandLineEnableCheats() (COM_CheckParm(cmdline_param_server_enablecheats))
+#define SV_CommandLineEnableLocalCommand() (COM_CheckParm(cmdline_param_server_enablelocalcommand))
+#define SV_CommandLineDemoCacheArgument() (COM_CheckParm(cmdline_param_server_democache_kb))
+#define SV_CommandLineProgTypeArgument() (COM_CheckParm(cmdline_param_server_progtype))
+#define SV_CommandLineUseMinimumMemory() (COM_CheckParm(cmdline_param_host_memory_minimum))
+#define SV_CommandLineHeapSizeMemoryKB() (COM_CheckParm(cmdline_param_host_memory_kb))
+#define SV_CommandLineHeapSizeMemoryMB() (COM_CheckParm(cmdline_param_host_memory_mb))
 #endif
 
 #endif /* !__SERVER_H__ */

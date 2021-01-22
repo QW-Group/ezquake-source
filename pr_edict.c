@@ -44,15 +44,16 @@ static int pr_globaloffsetpatch_nq[62] = {0,0,0,0,0,666,-4,-4,8,8,
 8,8,8,8,8,8,8,8,8,8, 8,8,8,8,8,8,8,8,8,8, 8,8};
 #endif
 
-int	type_size[8] = {
-	1,					// void
-	1,	                // string_t
-	1,					// float
-	3,					// vector
-	1,					// entity
-	1,					// field
-	1,              	// func_t
-	1 	                // pointer (its an int index)
+static int type_size[8] =
+{
+	1,                  // void
+	1,                  // string_t
+	1,                  // float
+	3,                  // vector
+	1,                  // entity
+	1,                  // field
+	1,                  // func_t
+	1                   // pointer (its an int index)
 };
 
 ddef_t *ED_FieldAtOfs (int ofs);
@@ -517,16 +518,20 @@ void ED_Print (edict_t *ed)
 		// if the value is still all 0, skip the field
 		type = d->type & ~DEF_SAVEGLOBAL;
 
-		for (j=0 ; j<type_size[type] ; j++)
-			if (v[j])
+		for (j = 0; j < type_size[type]; j++) {
+			if (v[j]) {
 				break;
-		if (j == type_size[type])
+			}
+		}
+		if (j == type_size[type]) {
 			continue;
+		}
 
 		Con_Printf ("%s",name);
 		l = strlen (name);
-		while (l++ < 15)
-			Con_Printf (" ");
+		while (l++ < 15) {
+			Con_Printf(" ");
+		}
 
 		Con_Printf ("%s\n", PR_ValueString((etype_t)d->type, (eval_t *)v));
 	}
@@ -1271,4 +1276,4 @@ int NUM_FOR_EDICT(edict_t *e)
 	return b;
 }
 
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

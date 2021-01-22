@@ -596,7 +596,7 @@ void SV_MVD_RunPendingConnections (void)
 					else if (!versiontouse)
 					{
 						e = ("QTVSV 1\n"
-							 "PERROR: Incompatable version (valid version is v1)\n\n");
+							 "PERROR: Incompatible version (valid version is v1)\n\n");
 					}
 					else if (raw)
 					{
@@ -1441,4 +1441,4 @@ void SV_QTV_Init(void)
 	Cmd_AddCommand ("qtv_status", Qtv_Status_f);
 }
 
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

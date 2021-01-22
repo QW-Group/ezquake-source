@@ -274,7 +274,7 @@ void HUD_Sort_Scoreboard(int flags)
 		}
 
 		// BUGFIX, this needs to happen AFTER the team array has been sorted, otherwise the
-		// players might be pointing to the incorrect team adress.
+		// players might be pointing to the incorrect team address.
 		for (i = 0; i < MAX_CLIENTS; i++) {
 			player_info_t *player = &cl.players[sorted_players[i].playernum];
 			sorted_players[i].team = NULL;

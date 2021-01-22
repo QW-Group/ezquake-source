@@ -874,5 +874,4 @@ void PR1_UnLoadProgs(void)
 	}
 }
 
-
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

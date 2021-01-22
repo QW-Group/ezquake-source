@@ -329,7 +329,7 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 
 	/* there is no direct path to the player, so pick another direction */
 
-	if (olddir!=DI_NODIR && SV_StepDirection(actor, olddir, dist))
+	if (olddir != DI_NODIR && SV_StepDirection(actor, olddir, dist))
 		return;
 
 	if (rand()&1) 	/*randomly determine direction of search*/
@@ -413,4 +413,4 @@ void SV_MoveToGoal (void)
 	}
 }
 
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

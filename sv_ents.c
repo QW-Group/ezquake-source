@@ -1037,4 +1037,4 @@ qbool SV_SkipCommsBotMessage(client_t* client)
 	return sv_serveme_fix.value && client->spectator && !strcmp(client->name, "[ServeMe]");
 }
 
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

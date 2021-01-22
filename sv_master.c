@@ -141,5 +141,4 @@ void Master_Shutdown (void)
 		}
 }
 
-
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

@@ -374,6 +374,50 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 		svs.mvdprotocolextension1 &= ~MVD_PEXT1_HIGHLAGTELEPORT;
 	}
 #endif
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+	{
+		extern cvar_t sv_pext_mvdsv_serversideweapon;
+
+		// Cheap 'ktx' detection
+		if (sv_pext_mvdsv_serversideweapon.value && strstr(Cvar_String("qwm_name"), "KTX")) {
+			svs.mvdprotocolextension1 |= MVD_PEXT1_SERVERSIDEWEAPON;
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON2
+			svs.mvdprotocolextension1 |= MVD_PEXT1_SERVERSIDEWEAPON2;
+#endif
+		}
+		else {
+			svs.mvdprotocolextension1 &= ~MVD_PEXT1_SERVERSIDEWEAPON;
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON2
+			svs.mvdprotocolextension1 &= ~MVD_PEXT1_SERVERSIDEWEAPON2;
+#endif
+		}
+
+	}
+#endif
+#ifdef MVD_PEXT1_DEBUG_ANTILAG
+	{
+		extern cvar_t sv_debug_antilag;
+
+		if (sv_debug_antilag.value) {
+			svs.mvdprotocolextension1 |= MVD_PEXT1_DEBUG_ANTILAG;
+		}
+		else {
+			svs.mvdprotocolextension1 &= ~MVD_PEXT1_DEBUG_ANTILAG;
+		}
+	}
+#endif
+#ifdef MVD_PEXT1_DEBUG_WEAPON
+	{
+		extern cvar_t sv_debug_weapons;
+
+		if (sv_debug_weapons.value) {
+			svs.mvdprotocolextension1 |= MVD_PEXT1_DEBUG_WEAPON;
+		}
+		else {
+			svs.mvdprotocolextension1 &= ~MVD_PEXT1_DEBUG_WEAPON;
+		}
+	}
+#endif
 
 	// find optional QC-exported functions.
 	// we have it here, so we set it to NULL in case of PR2 progs.
@@ -591,5 +635,4 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 #endif
 }
 
-
-#endif // CLIENTONLY
+#endif // !CLIENTONLY

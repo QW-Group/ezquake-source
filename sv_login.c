@@ -38,14 +38,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t sv_login = { "sv_login", "0" };	// if enabled, login required
 #ifdef WEBSITE_LOGIN_SUPPORT
-cvar_t sv_login_web = { "sv_login_web", "1" }; // if enabled, login via website, rather than local files
-#define LoginModeFileBased() (sv_login_web.value == 0)
-#define LoginModeOptionalWeb() (sv_login_web.value == 1)
-#define LoginModeMandatoryWeb() (sv_login_web.value == 2)
+cvar_t sv_login_web = { "sv_login_web", "1" }; // 0=local files, 1=auth via website (bans can be in local files), 2=mandatory auth (must have account in local files)
+#define LoginModeFileBased() ((int)sv_login_web.value == 0)
+#define LoginModeOptionalWeb() ((int)sv_login_web.value == 1)
+#define LoginModeMandatoryWeb() ((int)sv_login_web.value == 2)
+#define LoginMustHaveLocalAccount() (LoginModeMandatoryWeb() || LoginModeFileBased())
+#define WebLoginsEnabled() (!LoginModeFileBased())
 #else
 #define LoginModeFileBased() (1)
 #define LoginModeOptionalWeb() (0)
 #define LoginModeMandatoryWeb() (0)
+#define LoginMustHaveLocalAccount() (1)
+#define WebLoginsEnabled() (0)
 #endif
 
 extern cvar_t sv_hashpasswords;
@@ -224,10 +228,7 @@ void SV_LoadAccounts(void)
 		cl->logged = 0;
 		cl->login[0] = 0;
 	}
-
 }
-
-
 
 /*
 =================
@@ -238,7 +239,6 @@ if password is not given, login will be used for password
 login/pass has to be max 16 chars and at least 3, only regular chars are acceptable
 =================
 */
-
 void SV_CreateAccount_f(void)
 {
 	int i, spot, c;
@@ -353,7 +353,7 @@ void SV_RemoveAccount_f(void)
 			// Logout anyone using this login
 			if ((int)sv_login.value == 1) {
 				// Mandatory web logins, or using local files
-				if (LoginModeMandatoryWeb() || LoginModeFileBased()) {
+				if (LoginMustHaveLocalAccount()) {
 					for (j = 0; j < MAX_CLIENTS; ++j) {
 						client_t* cl = &svs.clients[j];
 
@@ -429,7 +429,6 @@ SV_blockAccount
 blocks/unblocks an account
 =================
 */
-
 void SV_blockAccount(qbool block)
 {
 	int i, j;
@@ -520,14 +519,14 @@ static int checklogin(char* log1, char* pass, quse_t use)
 				return -2;
 
 			// Only do logins/failures if using file-based login list
-			if (LoginModeFileBased()) {
+			if (LoginMustHaveLocalAccount()) {
 				if (accounts[i].inuse && accounts[i].use == use_log) {
 					return -1;
 				}
 
 				if (use == use_ip ||
-					(!(int)sv_hashpasswords.value && !strcasecmp(pass, accounts[i].pass)) ||
-					((int)sv_hashpasswords.value && !strcasecmp(SHA1(pass), accounts[i].pass)))
+					(!(int)sv_hashpasswords.value && !strcasecmp(pass,       accounts[i].pass)) ||
+					( (int)sv_hashpasswords.value && !strcasecmp(SHA1(pass), accounts[i].pass)))
 				{
 					accounts[i].failures = 0;
 					accounts[i].inuse++;
@@ -577,7 +576,6 @@ SV_Login
 called on connect after cmd new is issued
 ===============
 */
-
 qbool SV_Login(client_t* cl)
 {
 	extern cvar_t sv_registrationinfo;
@@ -585,8 +583,11 @@ qbool SV_Login(client_t* cl)
 
 	// is sv_login is disabled, login is not necessery
 	if (!(int)sv_login.value) {
-		SV_Logout(cl);
-		cl->logged = -1;
+		// If using local files then logout
+		if (!cl->logged_in_via_web) {
+			SV_Logout(cl);
+			cl->logged = -1;
+		}
 		return true;
 	}
 
@@ -618,8 +619,7 @@ qbool SV_Login(client_t* cl)
 	if (sv_registrationinfo.string[0])
 		SV_ClientPrintf2(cl, PRINT_HIGH, "%s\n", sv_registrationinfo.string);
 
-#ifdef WEBSITE_LOGIN_SUPPORT
-	if ((int)sv_login_web.value) {
+	if (WebLoginsEnabled()) {
 		char buffer[128];
 		strlcpy(buffer, "//authprompt\n", sizeof(buffer));
 
@@ -628,9 +628,7 @@ qbool SV_Login(client_t* cl)
 
 		SV_ClientPrintf2(cl, PRINT_HIGH, "Enter username:\n");
 	}
-	else
-#endif
-	{
+	else {
 		SV_ClientPrintf2(cl, PRINT_HIGH, "Enter login & password:\n");
 	}
 
@@ -643,15 +641,22 @@ void SV_Logout(client_t* cl)
 		accounts[cl->logged - 1].inuse--;
 	}
 
+	Info_SetStar(&cl->_userinfo_ctx_, "*auth", "");
+	Info_SetStar(&cl->_userinfo_ctx_, "*flag", "");
+	ProcessUserInfoChange(cl, "*auth", cl->login);
+	ProcessUserInfoChange(cl, "*flag", cl->login_flag);
+
 	memset(cl->login, 0, sizeof(cl->login));
 	memset(cl->login_alias, 0, sizeof(cl->login_alias));
 	memset(cl->login_flag, 0, sizeof(cl->login_flag));
+	memset(cl->login_challenge, 0, sizeof(cl->login_challenge));
+	memset(cl->login_confirmation, 0, sizeof(cl->login_confirmation));
 	cl->logged = 0;
 	cl->logged_in_via_web = false;
 }
 
 #ifdef WEBSITE_LOGIN_SUPPORT
-static void SV_ParseWebLogin(client_t* cl)
+void SV_ParseWebLogin(client_t* cl)
 {
 	char parameter[128] = { 0 };
 	char* p;
@@ -665,9 +670,9 @@ static void SV_ParseWebLogin(client_t* cl)
 		return;
 	}
 
-	if (cl->challenge[0]) {
+	if (cl->login_challenge[0]) {
 		// This is response to challenge, treat as password
-		Central_VerifyChallengeResponse(cl, cl->challenge, parameter);
+		Central_VerifyChallengeResponse(cl, cl->login_challenge, parameter);
 
 		SV_ClientPrintf2(cl, PRINT_HIGH, "Challenge received, please wait...\n");
 	}
@@ -681,18 +686,20 @@ static void SV_ParseWebLogin(client_t* cl)
 		SV_ClientPrintf2(cl, PRINT_HIGH, "Generating challenge, please wait...\n");
 	}
 }
+#else
+void SV_ParseWebLogin(client_t* cl)
+{
+}
 #endif
 
 void SV_ParseLogin(client_t* cl)
 {
-	char* log1, * pass;
+	char *log1, *pass;
 
-#ifdef WEBSITE_LOGIN_SUPPORT
-	if (sv_login_web.value) {
+	if (WebLoginsEnabled()) {
 		SV_ParseWebLogin(cl);
 		return;
 	}
-#endif
 
 	if (Cmd_Argc() > 2)
 	{
@@ -803,12 +810,15 @@ static void SV_ForceClientName(client_t* cl, const char* forced_name)
 			continue;
 		}
 
-		if (!strcasecmp(other->name, forced_name)) {
+		if (!Q_namecmp(other->name, forced_name)) {
 			SV_KickClient(other, " (using authenticated user's name)");
 		}
 	}
 
-	// Set server-side name
+	// Set server-side name: allow colors/case changes
+	if (!Q_namecmp(cl->name, forced_name)) {
+		return;
+	}
 	strlcpy(oldval, cl->name, MAX_EXT_INFO_STRING);
 	Info_Set(&cl->_userinfo_ctx_, "name", forced_name);
 	ProcessUserInfoChange(cl, "name", oldval);
@@ -820,7 +830,9 @@ static void SV_ForceClientName(client_t* cl, const char* forced_name)
 
 void SV_LoginCheckTimeOut(client_t* cl)
 {
-	if (cl->connection_started_curtime && curtime - cl->connection_started_curtime > 60)
+	double connected = SV_ClientConnectedTime(cl);
+
+	if (connected && connected > 60)
 	{
 		Sys_Printf("Login time out for %s\n", cl->name);
 
@@ -837,7 +849,7 @@ void SV_LoginWebCheck(client_t* cl)
 		// Server admin explicitly blocked this account
 		SV_BlockedLogin(cl);
 	}
-	else if (status == 0 && LoginModeMandatoryWeb()) {
+	else if (status == 0 && LoginMustHaveLocalAccount()) {
 		// Server admin needs to create accounts for people to use
 		SV_BlockedLogin(cl);
 	}
@@ -849,7 +861,7 @@ void SV_LoginWebCheck(client_t* cl)
 
 void SV_LoginWebFailed(client_t* cl)
 {
-	memset(cl->challenge, 0, sizeof(cl->challenge));
+	memset(cl->login_challenge, 0, sizeof(cl->login_challenge));
 	cl->login_request_time = 0;
 
 	SV_ClientPrintf2(cl, PRINT_HIGH, "Challenge response failed.\n");
@@ -858,4 +870,36 @@ void SV_LoginWebFailed(client_t* cl)
 	}
 }
 
-#endif // CLIENTONLY
+qbool SV_LoginRequired(client_t* cl)
+{
+	int login = (int)sv_login.value;
+
+	if (login == 2 || (login == 1 && !cl->spectator)) {
+		if (WebLoginsEnabled()) {
+			return !cl->logged_in_via_web;
+		}
+		else {
+			return !cl->logged;
+		}
+	}
+	return false;
+}
+
+qbool SV_LoginBlockJoinRequest(client_t* cl)
+{
+	if (WebLoginsEnabled()) {
+		if (!cl->logged_in_via_web && (int)sv_login.value) {
+			SV_ClientPrintf(cl, PRINT_HIGH, "This server requires users to login.  Please authenticate first (/cmd login <username>).\n");
+			return true;
+		}
+	}
+	else if (cl->logged <= 0 && (int)sv_login.value) {
+		SV_ClientPrintf(cl, PRINT_HIGH, "This server requires users to login.  Please disconnect and reconnect as a player.\n");
+		return true;
+	}
+
+	// Allow
+	return false;
+}
+
+#endif // !CLIENTONLY

@@ -22,43 +22,51 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
-#define	QW_VERSION			"2.40"
-
 #if defined(_WIN32)
-
+// Warning: this is different from mvdsv (no 64-bit check)
 #if defined(_WIN64)
 	#define QW_PLATFORM			"Win64"
 #else
 	#define QW_PLATFORM			"Win32"
 #endif
+#define QW_PLATFORM_SHORT	"w"
 
 #elif defined(__FreeBSD__)
 #define QW_PLATFORM			"FreeBSD"
+#define QW_PLATFORM_SHORT	"f"
 
 #elif defined(__OpenBSD__)
 #define QW_PLATFORM			"OpenBSD"
+#define QW_PLATFORM_SHORT	"o"
 
 #elif defined(__NetBSD__)
 #define QW_PLATFORM			"NetBSD"
+#define QW_PLATFORM_SHORT	"n"
 
 #elif defined(__DragonFly__)
 #define QW_PLATFORM			"DragonFly"
+#define QW_PLATFORM_SHORT	"d"
 
 #elif defined(__linux__)
+// Warning: this is different from mvdsv (no 64-bit check)
 	#ifdef __x86_64__
 		#define QW_PLATFORM	"Linux64"
 	#else
 		#define QW_PLATFORM	"Linux32"
 	#endif
+#define QW_PLATFORM_SHORT	"l"
 
 #elif defined(__sun__)
 #define QW_PLATFORM			"SunOS"
+#define QW_PLATFORM_SHORT	"s"
 
 #elif defined(__APPLE__)
 #define QW_PLATFORM			"MacOSX"
+#define QW_PLATFORM_SHORT	"m"
 
 #else
 #define QW_PLATFORM			"Unknown"
+#define QW_PLATFORM_SHORT	"u"
 #endif
 
 #define QW_RENDERER			"GL"
@@ -78,12 +86,17 @@ char *VersionStringColour(void);
 char *VersionStringFull(void);
 
 #define SERVER_NAME         "EZQUAKE"
-#define VERSION_NUM         3.6
 
 // MVDSV compatibility
-#define QWE_VERSION			"0.28"
-#define QWE_VERNUM			0.28
-#define QWE_SERVER_NAME		"MVDSV"
+#define	QW_VERSION			"2.40"
+#define VERSION_NUMBER      "0.34-beta"
+#define VERSION_NUM         0.33
+#define SERVER_NAME         "MVDSV"
+#define SERVER_FULLNAME     "MVDSV: MultiView Demo SerVer"
+#define SERVER_HOME_URL     "https://mvdsv.deurk.net"
+#define VERSION_NUM         3.6
+#define BUILD_DATE          __DATE__ ", " __TIME__
+#define GIT_COMMIT          ""
 
 // ezQuake URLs etc
 #define EZ_VERSION_WEBSITE "http://www.ezquake.com/"

@@ -136,7 +136,7 @@ C_ASSERT(sizeof(glDepthFormats) / sizeof(glDepthFormats[0]) == r_depthformat_cou
 #endif
 
 //
-// Initialize framebuffer stuff, Loads procadresses and such.
+// Initialize framebuffer stuff, Loads procaddresses and such.
 //
 void GL_InitialiseFramebufferHandling(void)
 {

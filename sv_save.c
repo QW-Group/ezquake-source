@@ -245,6 +245,7 @@ void SV_LoadGame_f(void)
 			fclose (f);
 			return;
 		}
+		str[sizeof(str) - 1] = '\0';
 		length = strlen(str) + 1;
 		sv.lightstyles[i] = (char *) Hunk_Alloc (length);
 		strlcpy (sv.lightstyles[i], str, length);
@@ -306,5 +307,4 @@ void SV_LoadGame_f(void)
 		svs.clients->spawn_parms[i] = spawn_parms[i];
 }
 
-
-#endif // CLIENTONLY
+#endif // !CLIENTONLY
