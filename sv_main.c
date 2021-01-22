@@ -3883,7 +3883,7 @@ void SV_Init (void)
 SV_TimeOfDay
 ============
 */
-void SV_TimeOfDay(date_t *date)
+void SV_TimeOfDay(date_t *date, char* timeformat)
 {
 	struct tm *newtime;
 	time_t long_time;
@@ -3911,7 +3911,7 @@ void SV_TimeOfDay(date_t *date)
 	date->hour = newtime->tm_hour;
 	date->min = newtime->tm_min;
 	date->sec = newtime->tm_sec;
-	strftime(date->str, sizeof(date->str)-1, "%a %b %d, %H:%M:%S %Y", newtime);
+	strftime(date->str, sizeof(date->str)-1, timeformat, newtime);
 }
 
 //bliP: player logging ->
@@ -3959,7 +3959,7 @@ void SV_Write_Log(int sv_log, int level, char *msg)
 	if (logs[sv_log].log_level < level)
 		return;
 
-	SV_TimeOfDay(&date);
+	SV_TimeOfDay(&date, "%a %b %d, %H:%M:%S %Y");
 
 	switch (sv_log)
 	{

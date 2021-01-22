@@ -438,7 +438,7 @@ void SV_Map (qbool now)
 		{
 			//bliP: date check ->
 			date_t date;
-			SV_TimeOfDay(&date);
+			SV_TimeOfDay(&date, "%a %b %d, %H:%M:%S %Y");
 			s = va("\\newmap\\%s\\\\\\\\%d-%d-%d %d:%d:%d\\\n",
 			       level,
 			       date.year,

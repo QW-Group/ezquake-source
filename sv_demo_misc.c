@@ -247,7 +247,7 @@ char *SV_PrintTeams (void)
 	static char		lastscores[2048];
 	extern cvar_t	teamplay;
 	date_t			date;
-	SV_TimeOfDay(&date);
+	SV_TimeOfDay(&date, "%a %b %d, %H:%M:%S %Y");
 
 	// count teams and players
 	for (i=0; i < MAX_CLIENTS; i++)

@@ -1123,7 +1123,7 @@ void PF_calltimeofday (void)
 	{
 		date_t date;
 
-		SV_TimeOfDay(&date);
+		SV_TimeOfDay(&date, "%a %b %d, %H:%M:%S %Y");
 
 		G_FLOAT(OFS_PARM0) = (float)date.sec;
 		G_FLOAT(OFS_PARM1) = (float)date.min;

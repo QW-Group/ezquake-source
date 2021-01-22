@@ -1780,7 +1780,7 @@ void PF2_infokey(byte* base, uintptr_t mask, pr2val_t* stack, pr2val_t*retval)
 		else if (!strcmp(key, "date_str")) { // qqshka - qvm does't have any time builtin support, so add this
 			date_t date;
 
-			SV_TimeOfDay(&date);
+			SV_TimeOfDay(&date, "%a %b %d, %H:%M:%S %Y");
 			snprintf(ov, sizeof(ov), "%s", date.str);
 		}
 		else if ((value = Info_ValueForKey(svs.info, key)) == NULL || !*value)

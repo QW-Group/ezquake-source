@@ -73,16 +73,16 @@ void CM_PhysicsNormalDump(FILE* out, float rampjump, float maxgroundspeed);
 #endif
 
 typedef struct {
-	qbool	allsolid;			// if true, plane is not valid
-	qbool	startsolid;			// if true, the initial point was in a solid area
-	qbool	inopen, inwater;
-	float	fraction;			// time completed, 1.0 = didn't hit anything
-	vec3_t	endpos;				// final position
-	plane_t	plane;				// surface normal at impact
+	qbool   allsolid;           // if true, plane is not valid
+	qbool   startsolid;         // if true, the initial point was in a solid area
+	qbool   inopen, inwater;
+	float   fraction;           // time completed, 1.0 = didn't hit anything
+	vec3_t  endpos;             // final position
+	plane_t plane;              // surface normal at impact
 	int     physicsnormal;      // surface normal for physics
-	union {						// entity the surface is on
-		int		entnum;			// for pmove
-		struct edict_s	*ent;	// for sv_world
+	union {                     // entity the surface is on
+		int entnum;             // for pmove
+		struct edict_s *ent;    // for sv_world
 	} e;
 } trace_t;
 
@@ -94,7 +94,7 @@ typedef struct {
 
 hull_t *CM_HullForBox (vec3_t mins, vec3_t maxs);
 int CM_HullPointContents (hull_t *hull, int num, vec3_t p);
-int CM_CachedHullPointContents(hull_t *hull, int num, vec3_t p, float* min_dist);
+int CM_CachedHullPointContents(hull_t* hull, int num, vec3_t p, float* min_dist);
 trace_t CM_HullTrace (hull_t *hull, vec3_t start, vec3_t end);
 struct cleaf_s *CM_PointInLeaf (const vec3_t p);
 int CM_Leafnum (const struct cleaf_s *leaf);
@@ -115,7 +115,7 @@ typedef struct bspx_header_s {
 	int numlumps;
 } bspx_header_t;
 
-void* Mod_BSPX_FindLump(bspx_header_t* bspx_header, char *lumpname, int *plumpsize, byte* mod_base);
+void* Mod_BSPX_FindLump(bspx_header_t* bspx_header, char* lumpname, int* plumpsize, byte* mod_base);
 bspx_header_t* Mod_LoadBSPX(int filesize, byte* mod_base);
 
 #endif /* !__CMODEL_H__ */

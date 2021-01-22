@@ -801,7 +801,7 @@ typedef struct
 	char str[128];
 } date_t;
 
-void SV_TimeOfDay(date_t *date);
+void SV_TimeOfDay(date_t *date, char* timeformat);
 
 
 //bliP: init ->

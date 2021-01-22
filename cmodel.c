@@ -135,10 +135,10 @@ hull_t *CM_HullForBox (vec3_t mins, vec3_t maxs)
 	return &box_hull;
 }
 
-int CM_CachedHullPointContents(hull_t *hull, int num, vec3_t p, float* min_dist)
+int CM_CachedHullPointContents(hull_t* hull, int num, vec3_t p, float* min_dist)
 {
-	mclipnode_t *node;
-	mplane_t *plane;
+	mclipnode_t* node;
+	mplane_t* plane;
 	float d;
 
 	*min_dist = 999;
@@ -962,7 +962,7 @@ static void CM_LoadPhysicsNormals(int filelen)
 
 		bspx_loaded = CM_LoadPhysicsNormalsData(data, lumpsize);
 		if (bspx_loaded) {
-			Com_Printf("Loading BSPX physics normals\n");
+			Con_Printf("Loading BSPX physics normals\n");
 		}
 	}
 
@@ -986,16 +986,15 @@ static void CM_LoadPhysicsNormals(int filelen)
 		data = FS_LoadHunkFile(extfile, &extfilesize);
 		if (data) {
 			if (CM_LoadPhysicsNormalsData(data, extfilesize)) {
-				Com_Printf("Loading external physics normals\n");
+				Con_Printf("Loading external physics normals\n");
 			}
 			else {
-				Com_Printf("%s is corrupt or wrong size\n", extfile);
+				Con_Printf("%s is corrupt or wrong size\n", extfile);
 			}
 			Hunk_FreeToLowMark(mark);
 		}
 	}
 }
-
 
 /*
 =================
