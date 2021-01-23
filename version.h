@@ -78,7 +78,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 // Note: for server mods to detect version, change VERSION_NUM below
-#define VERSION_NUMBER "3.6-dev-alpha5"
+#define VERSION_NUMBER "3.6-dev-alpha6"
 
 void CL_Version_f(void);
 char *VersionString(void);
