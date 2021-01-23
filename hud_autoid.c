@@ -78,18 +78,22 @@ static int autoid_count;
 
 void SCR_SaveAutoID(void)
 {
-	int view_num = CL_MultiviewCurrentView();
+	int view_num = CL_MultiviewCurrentView() - 1;
 
-	memcpy(saved_autoids[view_num], autoids, sizeof(saved_autoids[view_num]));
-	saved_autoid_count[view_num] = autoid_count;
+	if (view_num >= 0 && view_num < 4) {
+		memcpy(saved_autoids[view_num], autoids, sizeof(saved_autoids[view_num]));
+		saved_autoid_count[view_num] = autoid_count;
+	}
 }
 
 void SCR_RestoreAutoID(void)
 {
-	int view_num = CL_MultiviewCurrentView();
+	int view_num = CL_MultiviewCurrentView() - 1;
 
-	memcpy(autoids, saved_autoids[view_num], sizeof(autoids));
-	autoid_count = saved_autoid_count[view_num];
+	if (view_num >= 0 && view_num < 4) {
+		memcpy(autoids, saved_autoids[view_num], sizeof(autoids));
+		autoid_count = saved_autoid_count[view_num];
+	}
 }
 
 void SCR_SetupAutoID(void)
