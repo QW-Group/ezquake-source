@@ -92,10 +92,10 @@ qbool RuleSets_DisallowModelOutline(struct model_s *mod)
 		case MOD_THUNDERBOLT:
 			return true;
 		case MOD_BACKPACK:
-			return rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown;
+			return !cls.demoplayback && (rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown);
 		default:
 			// return to just rs_qcon once backface outlining tested
-			return rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown;
+			return !cls.demoplayback && (rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown);
 	}
 }
 
