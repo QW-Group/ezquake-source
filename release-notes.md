@@ -69,6 +69,7 @@
 - Fixed bug causing aliasmodels to be rendered with the normal map overlaid instead of caustics texture (#457, 3.5 bug, reported by hammer)
 - Fixed bug causing `show net` to not show valid information when playing back .qwd files (old bug)
 - Fixed bug causing `/cl_earlypackets` to cause frames to be rendered at teleport entrance position but player pointing at teleport exit angle (old bug)
+- Fixed bug causing `/cl_mvinsetcrosshair 1` crosshair to not move with the inset view (#462, 3.2 bug, reported by ptdev)
 - Fixed bug causing `score_enemy`/`score_difference` hud elements to use next player depending on sort rules, rather than best opponent (#469, 3.2 bug, reported by doomie)
 
 ### Ruleset-related changes
@@ -80,12 +81,23 @@
 - sign of value movement speed cvars is ignored (old - used to create `/cl_idrive`-like movement scripts)
 - `/gl_outline` changed to render by projecting backfaces away by surface normal (rather than lines) - to be tested
 
+### Debugging protocol changes (weapon scripts)
+
+- `/cl_debug_weapon_send`: sends information about client-side weapon selection, which is stored in .mvd on supported servers
+- `/cl_debug_weapon_view`: views the client-side weapon debugging messages, if stored in .mvd
+
+- `/cl_debug_antilag_send`: sends location of opponents, which is stored in .mvd on supported servers
+- `/cl_debug_antilag_view`: chooses which location is used when rendering players on supported .mvd/qtv streams (0 = normal, 1 = antilag-rewind, 2 = client position)
+- `/cl_debug_antilag_ghost`: allows rendering a translucent copy of player position on support .mvd/qtv streams (0 = normal, 1 = antilag-rewind, 2 = client position)
+- `/cl_debug_antilag_lines`: chooses if lines are drawn between the different player positions on supported .mvd/qtv streams
+
 ### Other changes
 
 - `/cfg_backup` will now not save the config if backup cannot be taken (previous behaviour was to over-write)
 - `/cfg_save` will now accept subdirectories (e.g. `/cfg_save backups/test1.cfg`)  Absolute paths are still blocked.
 - `/cl_keypad 1` - keypad works as cursor keys in menu
 - `/cl_keypad 2` - keypad will behave as `/cl_keypad 0` in-game, but `/cl_keypad 1` in console etc
+- `/cl_delay_packet_target` - like cl_delay_packet, but half delay is applied to outgoing and the incoming delay is flexible to match the value
 - `/cl_net_clientport` - allows the network client port to be specified in-game (rather than just `-clientport` command line switch)
 - `/cl_pext_serversideweapon` - protocol extension to move weapon selection to server (requires updated mvdsv)
 - `/cl_sv_packetsync` - when using internal server & delay packet, controls if server processes packets as they are received (fixes #292)
@@ -101,6 +113,7 @@
 - `/hud_clock_content 2` changes output to show time connected to the server (should match `/cl_clock 1` in oldhud)
 - `/hud_ammo_show_always 1` stops the hud element from being hidden when axe is selected
 - `/hud_iammo_show_always 1` stops the hud element from being hidden when axe is selected
+-` /hud_keys` supports user commands hidden in .mvd files & qtv streams
 - `/in_ignore_touch_events` added - allows mouse clicks from touch input devices
 - `/in_ignore_unfocused_keyb` added - should ignore keyboard events immediately after receiving input focus (linux only)
 - `/menu_botmatch_gamedir` added - allows packages to customise the directory when starting a bot match
@@ -112,6 +125,8 @@
 - `/r_rockettrail` & `/r_grenadetrail` options requiring QMB particles degrade to '1' if QMB not initialised
 - `/r_smoothalphahack 1` - during hud rendering, shader will apply lerped alpha to lerped color (behaves as per ezquake < 3.5)
 - `/scr_sbar_drawarmor666` - `/hud_armor_pent_666` for oldhud (controls if '666' or armor value is shown when player has pent)
+- `/scr_damage_hitbeep` - will play `dmg-notification.wav` when current player does damage (on supported .mvd files & qtv streams)
+- `/scr_damage_floating` - will display floating damage numbers when current player does damage (on supported .mvd files & qtv streams)
 - `/scr_scoreboard_login_names` will replace player's name with login when it is sent by server
 - `/scr_scoreboard_login_flagfile` maps player flags to graphics to be shown next to player's name when they are logged in
 - `/scr_scoreboard_login_indicator` will be shown next to a player's name when they are logged in (if flag not available)
@@ -142,6 +157,7 @@
 - Added macro $timestamp, which is in format YYYYMMDD-hhmmss
 - Qizmo-compressed files can be played back using Qizmo on linux
 - When watching mvd/qtv, `/record` & `/stop` become `/mvdrecord` and `/mvdstop` respectively (suggested by hangtime)
+- Internal server has been updated to match latest mvdsv codebase
 
 ### Build/meta
 
@@ -151,7 +167,8 @@
 - Visual Studio project, Azure Pipelines builds windows binaries (64-bit binaries are VERY beta, not recommended)
 - meson build updated (out of date on 3.5)
 - Fixed build on FreeBSD/powerpc64 (thanks to pkubaj)
-- remove unsupported 666-deflect message from fragfile.dat (reported by eb, #461)
+- Remove unsupported 666-deflect message from fragfile.dat (reported by eb, #461)
+- Demo signoff messages are no longer random
 
 # Changes in 3.5 (not released, based on 3.1)
 
