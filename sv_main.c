@@ -1412,8 +1412,7 @@ static void SVC_DirectConnect (void)
 	// }
 
 	// JACK: Init the floodprot stuff.
-	for (i=0; i<10; i++)
-		newcl->whensaid[i] = 0.0;
+	memset(newcl->whensaid, 0, sizeof(newcl->whensaid));
 	newcl->whensaidhead = 0;
 	newcl->lockedtill = 0;
 	newcl->disable_updates_stop = -1.0; // Vladis
@@ -2866,7 +2865,7 @@ void SV_SavePenaltyFilter (client_t *cl, filtertype_t type, double pentime)
 {
 	int i;
 
-	if (pentime < realtime)   // no point
+	if (pentime < curtime)   // no point
 		return;
 
 	for (i = 0; i < numpenfilters; i++)

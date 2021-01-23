@@ -84,12 +84,12 @@ extern	vec3_t	player_mins;
 
 extern int	fp_messages, fp_persecond, fp_secondsdead;
 extern char	fp_msg[];
-extern cvar_t	pausable;
-extern cvar_t	pm_bunnyspeedcap;
-extern cvar_t	pm_ktjump;
-extern cvar_t	pm_slidefix;
-extern cvar_t	pm_airstep;
-extern cvar_t	pm_pground;
+extern cvar_t   pausable;
+extern cvar_t   pm_bunnyspeedcap;
+extern cvar_t   pm_ktjump;
+extern cvar_t   pm_slidefix;
+extern cvar_t   pm_airstep;
+extern cvar_t   pm_pground;
 extern cvar_t   pm_rampjump;
 extern double	sv_frametime;
 
@@ -1809,34 +1809,28 @@ static void SV_Say (qbool team)
 		strlcpy(text, va("%s: %s", sv_client->name, text), sizeof(text));
 	}
 
-	if (fp_messages)
-	{
-		if (!sv.paused && realtime<sv_client->lockedtill)
-		{
-			SV_ClientPrintf(sv_client, PRINT_CHAT,
-			                "You can't talk for %d more seconds\n",
-			                (int) (sv_client->lockedtill - realtime));
+	if (fp_messages) {
+		if (curtime < sv_client->lockedtill) {
+			SV_ClientPrintf(sv_client, PRINT_CHAT, "You can't talk for %d more seconds\n", (int) (sv_client->lockedtill - curtime));
 			return;
 		}
 		tmp = sv_client->whensaidhead - fp_messages + 1;
 		if (tmp < 0)
 			tmp = 10+tmp;
-		if (!sv.paused &&
-			sv_client->whensaid[tmp] && (realtime-sv_client->whensaid[tmp] < fp_persecond))
-		{
-			sv_client->lockedtill = realtime + fp_secondsdead;
-			if (fp_msg[0])
-				SV_ClientPrintf(sv_client, PRINT_CHAT,
-				                "FloodProt: %s\n", fp_msg);
-			else
-				SV_ClientPrintf(sv_client, PRINT_CHAT,
-				                "FloodProt: You can't talk for %d seconds.\n", fp_secondsdead);
+		if (sv_client->whensaid[tmp] && (curtime - sv_client->whensaid[tmp] < fp_persecond)) {
+			sv_client->lockedtill = curtime + fp_secondsdead;
+			if (fp_msg[0]) {
+				SV_ClientPrintf(sv_client, PRINT_CHAT, "FloodProt: %s\n", fp_msg);
+			}
+			else {
+				SV_ClientPrintf(sv_client, PRINT_CHAT, "FloodProt: You can't talk for %d seconds.\n", fp_secondsdead);
+			}
 			return;
 		}
 		sv_client->whensaidhead++;
 		if (sv_client->whensaidhead > 9)
 			sv_client->whensaidhead = 0;
-		sv_client->whensaid[sv_client->whensaidhead] = realtime;
+		sv_client->whensaid[sv_client->whensaidhead] = curtime;
 	}
 
 	Sys_Printf ("%s", text);
@@ -2253,7 +2247,7 @@ char *shortinfotbl[] =
 
 static void Cmd_SetInfo_f (void)
 {
-	extern cvar_t sv_forcenick, sv_login;
+	extern cvar_t sv_forcenick;
 	sv_client_state_t saved_state;
 	char oldval[MAX_EXT_INFO_STRING];
 	char info[MAX_EXT_INFO_STRING];
@@ -2339,7 +2333,7 @@ static void Cmd_SetInfo_f (void)
 	if (!strcmp(Cmd_Argv(1), "name"))
 	{
 		//bliP: mute ->
-		if (realtime < sv_client->lockedtill)
+		if (curtime < sv_client->lockedtill)
 		{
 			SV_ClientPrintf(sv_client, PRINT_CHAT, "You can't change your name while you're muted\n");
 			return;
@@ -2813,13 +2807,11 @@ void SV_VoiceReadPacket(void)
 	/*read the data from the client*/
 	bytes = MSG_ReadShort();
 	ring = &voice.ring[voice.write & (VOICE_RING_SIZE-1)];
-	if (bytes > sizeof(ring->data) || realtime < host_client->lockedtill || !sv_voip.ival)
-	{
+	if (bytes > sizeof(ring->data) || curtime < host_client->lockedtill || !sv_voip.ival) {
 		MSG_ReadSkip(bytes);
 		return;
 	}
-	else
-	{
+	else {
 		voice.write++;
 		MSG_ReadData(ring->data, bytes);
 	}
@@ -4217,15 +4209,15 @@ The current net_message is parsed for the given client
 */
 void SV_ExecuteClientMessage (client_t *cl)
 {
-	int		c, i;
-	char		*s;
-	usercmd_t	oldest, oldcmd, newcmd;
-	client_frame_t	*frame;
-	vec3_t 		o;
-	qbool		move_issued = false; //only allow one move command
-	int		checksumIndex;
-	byte		checksum, calculatedChecksum;
-	int		seq_hash;
+	int             c, i;
+	char            *s;
+	usercmd_t       oldest, oldcmd, newcmd;
+	client_frame_t  *frame;
+	vec3_t          o;
+	qbool           move_issued = false; //only allow one move command
+	int             checksumIndex;
+	byte            checksum, calculatedChecksum;
+	int             seq_hash;
 
 #ifdef MVD_PEXT1_DEBUG
 	int             antilag_players_present = 0;

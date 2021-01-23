@@ -919,7 +919,7 @@ void SV_Cuff_f (void)
 			continue;
 		if (cl->userid == uid)
 		{
-			cl->cuff_time = realtime + (mins * 60.0);
+			cl->cuff_time = curtime + (mins * 60.0);
 			done = true;
 			break;
 		}
@@ -1006,7 +1006,7 @@ void SV_Mute_f (void)
 			continue;
 		if (cl->userid == uid)
 		{
-			cl->lockedtill = realtime + (mins * 60.0);
+			cl->lockedtill = curtime + (mins * 60.0);
 			done = true;
 			break;
 		}
@@ -1086,13 +1086,13 @@ void SV_ListPenalty_f (void)
 		if (!cl->state)
 			continue;
 
-		if (cl->lockedtill >= realtime)
+		if (cl->lockedtill >= curtime)
 		{
-			Con_Printf ("%i %s mute (remaining: %d)\n", cl->userid, cl->name, (cl->lockedtill) ? (int)(cl->lockedtill - realtime) : 0);
+			Con_Printf ("%i %s mute (remaining: %d)\n", cl->userid, cl->name, (cl->lockedtill) ? (int)(cl->lockedtill - curtime) : 0);
 		}
-		if (cl->cuff_time >= realtime)
+		if (cl->cuff_time >= curtime)
 		{
-			Con_Printf ("%i %s cuff (remaining: %d)\n", cl->userid, cl->name, (cl->cuff_time) ? (int)(cl->cuff_time - realtime) : 0);
+			Con_Printf ("%i %s cuff (remaining: %d)\n", cl->userid, cl->name, (cl->cuff_time) ? (int)(cl->cuff_time - curtime) : 0);
 		}
 	}
 
