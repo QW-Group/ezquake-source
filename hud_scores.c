@@ -33,6 +33,9 @@ static cvar_t hud_sortrules_teamsort = { "hud_sortrules_teamsort", "0" };
 static cvar_t hud_sortrules_playersort = { "hud_sortrules_playersort", "1" };
 static cvar_t hud_sortrules_includeself = { "hud_sortrules_includeself", "1" };
 
+static int playersort_rules;
+static int teamsort_rules;
+
 static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 {
 	const sort_players_info_t *p1 = vp1;
@@ -55,11 +58,11 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 		//
 		// Both are players.
 		//
-		if ((hud_sortrules_playersort.integer & 2) && cl.teamplay && p1->team && p2->team) {
+		if ((playersort_rules & 2) && cl.teamplay && p1->team && p2->team) {
 			// Leading team on top, sort players inside of the teams.
 
 			// Teamsort 1, first sort on team frags.
-			if (hud_sortrules_teamsort.integer == 1) {
+			if (teamsort_rules == 1) {
 				r = p1->team->frags - p2->team->frags;
 			}
 
@@ -67,7 +70,7 @@ static int HUD_ComparePlayers(const void *vp1, const void *vp2)
 			r = (r == 0) ? -Q_strcmp2(p1->team->name, p2->team->name) : r;
 		}
 
-		if (hud_sortrules_playersort.integer & 1) {
+		if (playersort_rules & 1) {
 			r = (r == 0) ? i1->frags - i2->frags : r;
 		}
 		r = (r == 0) ? -Q_strcmp2(i1->name, i2->name) : r;
@@ -109,6 +112,9 @@ void HUD_Sort_Scoreboard(int flags)
 	n_teams = 0;
 	n_players = 0;
 	n_spectators = 0;
+
+	playersort_rules = hud_sortrules_playersort.integer;
+	teamsort_rules = hud_sortrules_teamsort.integer;
 
 	// This taken from score_bar logic
 	if (cls.demoplayback && !cl.spectator && !cls.mvdplayback) {
@@ -292,6 +298,17 @@ void HUD_Sort_Scoreboard(int flags)
 		}
 	}
 
+	// Sort players by frags only
+	if (flags & HUD_SCOREBOARD_SORT_PLAYERS) {
+		int oldrules = playersort_rules;
+
+		playersort_rules = 1;
+		qsort(sorted_players, n_players + n_spectators, sizeof(sort_players_info_t), HUD_ComparePlayers);
+		playersort_rules = oldrules;
+
+		memcpy(sorted_players_by_frags, sorted_players, sizeof(sorted_players_by_frags));
+	}
+
 	// Sort players.
 	if (flags & HUD_SCOREBOARD_SORT_PLAYERS) {
 		qsort(sorted_players, n_players + n_spectators, sizeof(sort_players_info_t), HUD_ComparePlayers);
@@ -424,6 +441,20 @@ static void SCR_HUD_DrawScoresEnemy(hud_t *hud)
 
 	SCR_Hud_GetScores(&teamFrags, &enemyFrags, &teamName, &enemyName);
 
+	if (!cl.teamplay) {
+		// Ignore enemyFrags now, and go by highest opponent that isn't current player
+		if (n_players > 1) {
+			if (!strcmp(cl.players[sorted_players_by_frags[0].playernum].name, teamName)) {
+				enemyFrags = cl.players[sorted_players_by_frags[1].playernum].frags;
+				enemyName = cl.players[sorted_players_by_frags[1].playernum].name;
+			}
+			else {
+				enemyFrags = cl.players[sorted_players_by_frags[0].playernum].frags;
+				enemyName = cl.players[sorted_players_by_frags[0].playernum].name;
+			}
+		}
+	}
+
 	SCR_HUD_DrawNum(hud, enemyFrags, (colorize->integer) ? (enemyFrags < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string, proportional->integer);
 }
 
@@ -444,6 +475,20 @@ static void SCR_HUD_DrawScoresDifference(hud_t *hud)
 	}
 
 	SCR_Hud_GetScores(&teamFrags, &enemyFrags, &teamName, &enemyName);
+
+	if (!cl.teamplay) {
+		// Ignore enemyFrags now, and go by highest opponent that isn't current player
+		if (n_players > 1) {
+			if (!strcmp(cl.players[sorted_players_by_frags[0].playernum].name, teamName)) {
+				enemyFrags = cl.players[sorted_players_by_frags[1].playernum].frags;
+				enemyName = cl.players[sorted_players_by_frags[1].playernum].name;
+			}
+			else {
+				enemyFrags = cl.players[sorted_players_by_frags[0].playernum].frags;
+				enemyName = cl.players[sorted_players_by_frags[0].playernum].name;
+			}
+		}
+	}
 
 	SCR_HUD_DrawNum(hud, teamFrags - enemyFrags, (colorize->integer) ? ((teamFrags - enemyFrags) < 0 || colorize->integer > 1) : false, scale->value, style->value, digits->value, align->string, proportional->integer);
 }

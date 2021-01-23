@@ -104,6 +104,7 @@ cvar_t hud_planmode = {"hud_planmode",   "0"};
 cvar_t mvd_autohud = {"mvd_autohud", "0", 0, OnAutoHudChange};
 cvar_t hud_digits_trim = {"hud_digits_trim", "1"};
 
+sort_players_info_t		sorted_players_by_frags[MAX_CLIENTS];
 sort_players_info_t		sorted_players[MAX_CLIENTS];
 sort_teams_info_t		sorted_teams[MAX_CLIENTS];
 int       n_teams;

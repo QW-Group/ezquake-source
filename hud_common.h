@@ -77,6 +77,7 @@ typedef struct sort_players_info_s {
 }
 sort_players_info_t;
 
+extern sort_players_info_t sorted_players_by_frags[MAX_CLIENTS];
 extern sort_players_info_t sorted_players[MAX_CLIENTS];
 extern sort_teams_info_t   sorted_teams[MAX_CLIENTS];
 extern int n_teams;

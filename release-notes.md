@@ -69,6 +69,7 @@
 - Fixed bug causing aliasmodels to be rendered with the normal map overlaid instead of caustics texture (#457, 3.5 bug, reported by hammer)
 - Fixed bug causing `show net` to not show valid information when playing back .qwd files (old bug)
 - Fixed bug causing `/cl_earlypackets` to cause frames to be rendered at teleport entrance position but player pointing at teleport exit angle (old bug)
+- Fixed bug causing `score_enemy`/`score_difference` hud elements to use next player depending on sort rules, rather than best opponent (#469, 3.2 bug, reported by doomie)
 
 ### Ruleset-related changes
 
