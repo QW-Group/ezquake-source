@@ -4158,12 +4158,16 @@ static void CL_ParseDemoInfo(int size)
 	}
 
 	if (block_number == 0 && cl.demoinfo_bytes > 0) {
-		// finished
+		// finished, parse stats and do something useful here
+#if 0
 		FILE* file = fopen("qw/demoinfo.txt", "wb");
 		if (file) {
 			fwrite(demoinfo_buffer, 1, cl.demoinfo_bytes, file);
 			fclose(file);
 		}
+#endif
+		Q_free(demoinfo_buffer);
+		demoinfo_buffer_size = 0;
 		cl.demoinfo_bytes = 0;
 		cl.demoinfo_blocknumber = 0;
 	}
