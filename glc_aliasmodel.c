@@ -86,6 +86,7 @@ static void GLC_ConfigureAliasModelState(void)
 		GLC_VAOEnableCustomAttribute(vao_aliasmodel, 0, r_program_attribute_aliasmodel_std_glc_flags, 1, GL_INT, false, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags));
 		GLC_VAOEnableCustomAttribute(vao_aliasmodel, 1, r_program_attribute_aliasmodel_shell_glc_flags, 1, GL_INT, false, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags));
 		GLC_VAOEnableCustomAttribute(vao_aliasmodel, 2, r_program_attribute_aliasmodel_shadow_glc_flags, 1, GL_INT, false, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags));
+		GLC_VAOEnableCustomAttribute(vao_aliasmodel, 3, r_program_attribute_aliasmodel_outline_glc_flags, 1, GL_INT, false, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags));
 	}
 	else {
 		if (gl_vbo_clientmemory.integer) {

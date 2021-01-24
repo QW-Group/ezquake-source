@@ -114,6 +114,7 @@ typedef enum {
 	r_program_attribute_aliasmodel_std_glc_flags,
 	r_program_attribute_aliasmodel_shell_glc_flags,
 	r_program_attribute_aliasmodel_shadow_glc_flags,
+	r_program_attribute_aliasmodel_outline_glc_flags,
 	r_program_attribute_world_drawflat_style,
 	r_program_attribute_world_textured_style,
 	r_program_attribute_world_textured_detailCoord,
