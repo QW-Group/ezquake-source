@@ -1002,7 +1002,7 @@ void R_CustomColor4ubv(const byte* color)
 
 void R_EnableScissorTest(int x, int y, int width, int height)
 {
-	if (R_UseImmediateOpenGL()) {
+	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
 		glEnable(GL_SCISSOR_TEST);
 		glScissor(x, y, width, height);
 	}
@@ -1010,7 +1010,7 @@ void R_EnableScissorTest(int x, int y, int width, int height)
 
 void R_DisableScissorTest(void)
 {
-	if (R_UseImmediateOpenGL()) {
+	if (R_UseImmediateOpenGL() || R_UseModernOpenGL()) {
 		glDisable(GL_SCISSOR_TEST);
 	}
 }

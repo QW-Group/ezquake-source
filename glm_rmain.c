@@ -64,9 +64,12 @@ static void GLM_DrawWorldOutlines(void)
 		int fullscreen_viewport[4];
 
 		// If we are only rendering to a section of the screen then that is the only part of the texture that will be filled in
-		R_GetViewport(viewport);
-		R_GetFullScreenViewport(fullscreen_viewport);
-		R_Viewport(fullscreen_viewport[0], fullscreen_viewport[1], fullscreen_viewport[2], fullscreen_viewport[3]);
+		if (CL_MultiviewEnabled()) {
+			R_GetViewport(viewport);
+			R_GetFullScreenViewport(fullscreen_viewport);
+			R_Viewport(fullscreen_viewport[0], fullscreen_viewport[1], fullscreen_viewport[2], fullscreen_viewport[3]);
+			R_EnableScissorTest(viewport[0], viewport[1], viewport[2], viewport[3]);
+		}
 
 		renderer.TextureUnitBind(0, normals);
 
@@ -75,7 +78,11 @@ static void GLM_DrawWorldOutlines(void)
 
 		GL_DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-		R_Viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+		// Restore viewport
+		if (CL_MultiviewEnabled()) {
+			R_Viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+			R_DisableScissorTest();
+		}
 	}
 }
 
