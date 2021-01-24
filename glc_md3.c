@@ -113,7 +113,6 @@ static void GLC_AliasModelLightPointMD3(float color[4], const entity_t* ent, vbo
 
 static void GLC_DrawMD3Frame(const entity_t* ent, const float* modelColor, md3Header_t* pheader, int frame1, int frame2, float lerpfracDefault, const surfinf_t* surface_info, qbool invalidate_texture, qbool outline, qbool additive_pass)
 {
-	extern cvar_t r_lerpmuzzlehack;
 	md3Surface_t *surf;
 	int surfnum;
 	int numverts, i;

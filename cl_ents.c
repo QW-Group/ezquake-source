@@ -173,7 +173,7 @@ void CL_AddEntityToList(visentlist_t* list, visentlist_entrytype_t vistype, enti
 		list->list[cl_visents.count].draw[vistype] = true;
 
 		ent->outlineScale = 0.5f * (r_refdef2.outlineBase + DotProduct(ent->origin, r_refdef2.outline_vpn));
-		ent->outlineScale = clamp(ent->outlineScale, 0, 2);
+		ent->outlineScale = bound(ent->outlineScale, 0, 2);
 
 		++list->typecount[vistype];
 		if (shell) {

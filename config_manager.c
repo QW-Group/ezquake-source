@@ -533,7 +533,6 @@ void DumpHUD262(FILE *f)
 static void ResetVariables(int cvar_flags, qbool resetting_before_load)
 {
 	cvar_t *var;
-	qbool check_userinfos = false;
 
 	if (resetting_before_load) {
 		if (!cfg_save_userinfo.integer) {

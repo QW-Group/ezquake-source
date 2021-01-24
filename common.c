@@ -370,12 +370,10 @@ qbool COM_WriteToUniqueTempFileVFS(char* path, int path_buffer_size, const char*
 qbool COM_WriteToUniqueTempFile(char *path, int path_buffer_size, const char* ext, const byte* buffer, size_t bytes)
 {
 	char temp_path[MAX_OSPATH];
-	char* dot = "";
 
 	if (ext == NULL) {
 		ext = "";
 	}
-	dot = (ext[0] && ext[0] != '.' ? "." : "");
 
 	// Get the path to temporary directory
 	if (COM_GetTempDir(temp_path, sizeof(temp_path)) < 0) {
@@ -385,6 +383,9 @@ qbool COM_WriteToUniqueTempFile(char *path, int path_buffer_size, const char* ex
 #ifdef _WIN32
 	{
 		GUID guid;
+		char* dot = "";
+
+		dot = (ext[0] && ext[0] != '.' ? "." : "");
 
 		if (path_buffer_size < MAX_PATH) {
 			return false;
@@ -405,7 +406,6 @@ qbool COM_WriteToUniqueTempFile(char *path, int path_buffer_size, const char* ex
 		strlcat(path, "/ezquakeXXXXXX", path_buffer_size);
 		if (ext[0]) {
 			int ext_len = 0;
-			int fd = 0;
 
 			if (ext[0] != '.') {
 				strlcat(path, ".", path_buffer_size);

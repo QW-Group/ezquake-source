@@ -996,7 +996,6 @@ void CL_SendClientCommand(qbool reliable, char *format, ...)
 #ifdef MVD_PEXT1_DEBUG_ANTILAG
 void IN_SendPredictedPlayerPositions(sizebuf_t* buffer)
 {
-	extern cvar_t cl_debug_antilag_send;
 	byte players = 0;
 	int i, msec[MAX_CLIENTS];
 	vec3_t pos[MAX_CLIENTS];
@@ -1072,7 +1071,6 @@ void IN_SendServerSideWeaponSwitch(sizebuf_t* buffer)
 {
 	int i = 0;
 	int flags = 0;
-	qbool debug = false;
 
 	if (!(cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON)) {
 		return;

@@ -171,7 +171,7 @@ PlayerCheckPing
 Check that player's ping falls below sv_maxping value
 ==================
 */
-qbool PlayerCheckPing()
+qbool PlayerCheckPing(void)
 {
 	int maxping = Q_atof(sv_maxping.string);
 	int playerping = sv_client->frames[sv_client->netchan.incoming_acknowledged & UPDATE_MASK].ping_time * 1000;

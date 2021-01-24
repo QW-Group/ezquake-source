@@ -4294,12 +4294,10 @@ static void CL_ParseDemoWeapon(int size, qbool server_side)
 
 	if (cl_debug_weapon_view.integer && playernum == cl.viewplayernum) {
 		char script_options[128] = { 0 };
-		int weapon_count = 0;
 		const char* has_weapon = "&c0f0";
 		const char* no_weapon = "&cf00";
 		const char* no_ammo = "&cff0";
 		const char* unknown_weapon = "[";
-		qbool previous_short = true;
 
 		while (*str) {
 			const char* prefix = unknown_weapon;
@@ -4335,7 +4333,6 @@ static void CL_ParseDemoWeapon(int size, qbool server_side)
 			}
 			strlcat(script_options, va("%s%d&r%s", prefix, str[0], postfix), sizeof(script_options));
 			str++;
-			previous_short = !postfix[0];
 		}
 
 		Con_Printf("WS(%c) %s, A %d,%d,%d,%d => %d\n", indicator, script_options, shells, nails, rockets, cells, choice);

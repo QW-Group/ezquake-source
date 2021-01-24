@@ -539,7 +539,7 @@ typedef struct antilag_stats_s {
 #define PAUSED_DEMO			2
 
 #define MAX_DAMAGE_NOTIFICATION_TIME 1.5
-#define MAX_DAMAGE_NOTIFICATIONS ((int)(10 * MAX_DAMAGE_NOTIFICATION_TIME))
+#define MAX_DAMAGE_NOTIFICATIONS 15 // ((int)(10 * MAX_DAMAGE_NOTIFICATION_TIME))
 
 typedef struct scr_damage_s {
 	char text[64];
