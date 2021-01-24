@@ -474,6 +474,7 @@ static void R_SetupViewport(void)
 	h = y - y2;
 
 	// Multiview
+	R_SetFullScreenViewport(glx + x, gly + y2, w, h);
 	if (CL_MultiviewEnabled() && CL_MultiviewCurrentView() != 0) {
 		R_SetViewports(glx, x, gly, y2, w, h, cl_multiview.value);
 	}

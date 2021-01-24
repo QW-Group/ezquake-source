@@ -120,6 +120,9 @@ typedef struct rendering_state_s {
 	int currentViewportX, currentViewportY;
 	int currentViewportWidth, currentViewportHeight;
 
+	int fullScreenViewportX, fullScreenViewportY;
+	int fullScreenViewportWidth, fullScreenViewportHeight;
+
 	qbool framebuffer_srgb;
 
 	struct {
@@ -323,5 +326,7 @@ void R_CustomPolygonOffset(r_polygonoffset_t mode);
 void R_Hud_Initialise(void);
 
 void R_Viewport(int x, int y, int width, int height);
+void R_SetFullScreenViewport(int x, int y, int width, int height);
+void R_GetFullScreenViewport(int* viewport);
 
 #endif // EZQUAKE_R_STATE_HEADER

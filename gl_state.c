@@ -529,6 +529,26 @@ void R_GetViewport(int* view)
 	view[3] = state->currentViewportHeight;
 }
 
+void R_SetFullScreenViewport(int x, int y, int width, int height)
+{
+	rendering_state_t* state = &opengl.rendering_state;
+
+	state->fullScreenViewportX = x;
+	state->fullScreenViewportY = y;
+	state->fullScreenViewportWidth = width;
+	state->fullScreenViewportHeight = height;
+}
+
+void R_GetFullScreenViewport(int* viewport)
+{
+	rendering_state_t* state = &opengl.rendering_state;
+
+	viewport[0] = state->fullScreenViewportX;
+	viewport[1] = state->fullScreenViewportY;
+	viewport[2] = state->fullScreenViewportWidth;
+	viewport[3] = state->fullScreenViewportHeight;
+}
+
 void GL_InitialiseState(void)
 {
 	R_InitRenderingState(r_state_default_opengl, false, "opengl", vao_none);
