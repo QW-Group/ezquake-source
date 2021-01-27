@@ -47,6 +47,9 @@
   "+moveup": {
     "description": "When active the player will swim up when in the water."
   },
+  "+qtv_delay": {
+    "system-generated": true
+  },
   "+right": {
     "description": "When active the player will turn right."
   },
@@ -118,6 +121,9 @@
   },
   "-moveup": {
     "description": "When used the player will stop moving up if \"+moveup\" is active."
+  },
+  "-qtv_delay": {
+    "system-generated": true
   },
   "-right": {
     "description": "When used the player will stop turning right if \"+right\" is active."
@@ -218,6 +224,9 @@
   },
   "allskins": {
     "description": "Downloads all skins that is currently in use. Useful for refreshing skins without  exiting the level"
+  },
+  "authenticate": {
+    "system-generated": true
   },
   "autotrack": {
     "description": "Toggles auto-tracking. Auto-tracking switches views for you when you are a spectator or when you are watching a demo or a broadcasted QTV match. It chooses the best available autotrack - if you are spectator, looks for server-side command autotrack, if you are watching a demo or QTV stream, turns on both demo_autotrack and mvd_autotrack, mvd_autotrack will get turned off as soon as demo_autotrack data are found. As a last resort if all previous autotrack are not available, cl_hightrack will be used."
@@ -440,6 +449,9 @@
   "dev_dump_defaults": {
     "system-generated": true
   },
+  "dev_gfxbenchmarklightmaps": {
+    "system-generated": true
+  },
   "dev_gfxtrace": {
     "system-generated": true
   },
@@ -450,6 +462,15 @@
     "system-generated": true
   },
   "dev_hunk_print": {
+    "system-generated": true
+  },
+  "dev_physicsnormalsave": {
+    "system-generated": true
+  },
+  "dev_physicsnormalset": {
+    "system-generated": true
+  },
+  "dev_physicsnormalshow": {
     "system-generated": true
   },
   "dev_pointfile": {
@@ -553,6 +574,12 @@
     "description": "Changes color of fog.",
     "syntax": "R G B"
   },
+  "fontlist": {
+    "system-generated": true
+  },
+  "fontload": {
+    "system-generated": true
+  },
   "force_centerview": {
     "description": "This command centers the player's screen. It was created because the original  \"centerview\" command did not work when \"+mlook\" was enabled. This command will  center the screen in any mode no matter commands are active."
   },
@@ -560,6 +587,21 @@
     "description": "Enables logging of kills to a file. Useful for external frag polling programs.  The file name is frag_##.log"
   },
   "fs_diff": {
+    "system-generated": true
+  },
+  "fs_dir": {
+    "system-generated": true
+  },
+  "fs_loadpak": {
+    "system-generated": true
+  },
+  "fs_locate": {
+    "system-generated": true
+  },
+  "fs_path": {
+    "system-generated": true
+  },
+  "fs_removepak": {
     "system-generated": true
   },
   "fs_restart": {
@@ -935,6 +977,21 @@
   "locate": {
     "system-generated": true
   },
+  "locations_add": {
+    "system-generated": true
+  },
+  "locations_clearall": {
+    "system-generated": true
+  },
+  "locations_loadfile": {
+    "system-generated": true
+  },
+  "locations_remove": {
+    "system-generated": true
+  },
+  "locations_savefile": {
+    "system-generated": true
+  },
   "locname": {
     "description": "Create a new location in the current spot."
   },
@@ -1126,6 +1183,15 @@
   },
   "mvd_dumpstats": {
     "description": "Will dump statistics gathered from a MVD demo into a \"stats.xml\" file in the current working directory"
+  },
+  "mvd_list_items": {
+    "system-generated": true
+  },
+  "mvd_name_item": {
+    "system-generated": true
+  },
+  "mvd_remove_item": {
+    "system-generated": true
   },
   "mvdrecord": {
     "system-generated": true
@@ -1548,6 +1614,9 @@
     "description": "assigns a new value to a variable, expansion of %macros and variables is performed even in case if a parameter is inside the dual quotation marks.",
     "syntax": "<cvar> <value>"
   },
+  "set_ex2": {
+    "system-generated": true
+  },
   "set_tp": {
     "system-generated": true
   },
@@ -1616,6 +1685,9 @@
   "sv_demoeasyrecord": {
     "system-generated": true
   },
+  "sv_demoembedinfo": {
+    "system-generated": true
+  },
   "sv_demoinfo": {
     "system-generated": true
   },
@@ -1650,6 +1722,9 @@
     "description": "Displays or determines the value of the serverinfo *gamedir variable.   This is the directory clients will use.  Note: Useful when the physical gamedir directory has a different  name than the widely accepted gamedir directory.  Examples:  gamedir tf2_5; sv_gamedir fortress  gamedir ctf4_2; sv_gamedir ctf  gamedir ktffa;  sv_gamedir qw  // FFA servers should use default *gamedir"
   },
   "sv_lastscores": {
+    "system-generated": true
+  },
+  "sv_usercmdtrace": {
     "system-generated": true
   },
   "svadmin": {
@@ -1696,6 +1771,9 @@
   "timedemo": {
     "description": "This command will load and play a demo at full speed. It will then divide the total number of frames in the demo by the total time it took finish, and calculate the average frames-per-second rate. Example: timedemo demoname",
     "syntax": "(filename)"
+  },
+  "timedemo2": {
+    "system-generated": true
   },
   "timerefresh": {
     "description": "This command will perform a 360 degree turn and calculate the frames-per-second  rate."
