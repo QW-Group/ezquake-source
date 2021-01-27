@@ -4595,7 +4595,7 @@
       "desc": "Allows color of grenades to be set without requiring a texture change.",
       "group-id": "35",
       "remarks": "Leave blank to disable.  See gl_custom_grenade_fullbright.",
-      "type": "color"
+      "type": "string"
     },
     "gl_custom_grenade_fullbright": {
       "default": "1",
@@ -4615,7 +4615,7 @@
       "desc": "Allows color of lightning shaft to be set without requiring a texture change.",
       "group-id": "35",
       "remarks": "Leave blank to disable.  Has no effect if particle shaft is enabled.",
-      "type": "color"
+      "type": "string"
     },
     "gl_custom_lg_fullbright": {
       "default": "1",
@@ -4643,7 +4643,7 @@
       "desc": "Allows color of rockets to be set without requiring a texture change.",
       "group-id": "35",
       "remarks": "Leave blank to disable.  See gl_custom_rocket_fullbright.",
-      "type": "color"
+      "type": "string"
     },
     "gl_custom_rocket_fullbright": {
       "default": "1",
@@ -4657,7 +4657,7 @@
       "desc": "Allows color of spikes/nails to be set without requiring a texture change.",
       "group-id": "35",
       "remarks": "Leave blank to disable.  See gl_custom_spike_fullbright.",
-      "type": "color"
+      "type": "string"
     },
     "gl_custom_spike_fullbright": {
       "default": "1",
