@@ -4047,6 +4047,7 @@
     },
     "download_map_url": {
       "default": "",
+      "desc": "MVDSV : URL announced to clients for faster map downloads over HTTP.",
       "group-id": "43",
       "type": "string"
     },
