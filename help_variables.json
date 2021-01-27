@@ -1078,6 +1078,11 @@
       "group-id": "54",
       "type": "float"
     },
+    "cl_bobhead": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
     "cl_bobup": {
       "default": "0.0",
       "desc": "This variable controls how long your weapon stays up before cycling when walking.",
@@ -1216,7 +1221,7 @@
       ]
     },
     "cl_clock_format": {
-      "default": "%H:%M:%S",
+      "default": "0",
       "desc": "Changes the format of the clock which is displayed if cl_clock is non-zero.",
       "group-id": "40",
       "remarks": "This was changed to an enumerated type in ezQuake 3.5, to match hud_clock_format.",
@@ -1332,6 +1337,41 @@
         }
       ]
     },
+    "cl_debug_antilag_ghost": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "cl_debug_antilag_lines": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "cl_debug_antilag_self": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "cl_debug_antilag_send": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "cl_debug_antilag_view": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "cl_debug_weapon_send": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "cl_debug_weapon_view": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
     "cl_delay_packet": {
       "default": "0",
       "desc": "Client will delay incoming and outgoing packets, allowing user to increase his ping in the game.",
@@ -1345,6 +1385,11 @@
       "group-id": "21",
       "remarks": "Specified in ms.  Makes /cl_delay_packet better simulate high-ping connections.",
       "type": "integer"
+    },
+    "cl_delay_packet_target": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
     },
     "cl_demo_qwd_delta": {
       "default": "1",
@@ -1973,6 +2018,36 @@
         }
       ]
     },
+    "cl_mvinset_offset_x": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "cl_mvinset_offset_y": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "cl_mvinset_right": {
+      "default": "1",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "cl_mvinset_size_x": {
+      "default": "0.333",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "cl_mvinset_size_y": {
+      "default": "0.333",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "cl_mvinset_top": {
+      "default": "1",
+      "group-id": "0",
+      "system-generated": true
+    },
     "cl_mvinsetcrosshair": {
       "default": "1",
       "desc": "Turn crosshair in inset POV in multiview on/off.",
@@ -2320,6 +2395,11 @@
         }
       ]
     },
+    "cl_pext_serversideweapon": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
     "cl_pext_warndemos": {
       "default": "1",
       "desc": "If set, warning will be displayed when recording a demo that is not backwards compatible with old clients.",
@@ -2605,8 +2685,8 @@
     "cl_sv_packetsync": {
       "default": "1",
       "desc": "Determines if internal server should process packets as soon as received from client",
-      "remarks": "Should only affect playing on local server, when cl_delay_packet is enabled.\nRecommend to disable for older mods which fake players (frogbots) and leave enabled for KTX.",
       "group-id": "43",
+      "remarks": "Should only affect playing on local server, when cl_delay_packet is enabled.\nRecommend to disable for older mods which fake players (frogbots) and leave enabled for KTX.",
       "type": "boolean"
     },
     "cl_textencoding": {
@@ -2674,6 +2754,11 @@
           "name": "true"
         }
       ]
+    },
+    "cl_username": {
+      "default": "",
+      "group-id": "0",
+      "system-generated": true
     },
     "cl_verify_qwprotocol": {
       "default": "1",
@@ -2822,6 +2907,11 @@
       "group-id": "5",
       "type": "boolean"
     },
+    "cl_weaponforgetondeath": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
     "cl_weaponforgetorder": {
       "default": "0",
       "group-id": "9",
@@ -2928,6 +3018,11 @@
           "name": "2"
         }
       ]
+    },
+    "cl_www_address": {
+      "default": "https://badplace.eu/",
+      "group-id": "0",
+      "system-generated": true
     },
     "cl_yawspeed": {
       "default": "140",
@@ -4115,6 +4210,11 @@
       "group-id": "17",
       "type": "boolean"
     },
+    "file_browser_sort_archives": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
     "file_browser_sort_mode": {
       "default": "1",
       "desc": "Determines sort order of files in the file browser.",
@@ -4503,6 +4603,11 @@
       "remarks": "Has no effect if gl_custom_grenade_color is blank.",
       "type": "boolean"
     },
+    "gl_custom_grenade_tf": {
+      "default": "1",
+      "group-id": "0",
+      "system-generated": true
+    },
     "gl_custom_lg_color": {
       "default": "",
       "desc": "Allows color of lightning shaft to be set without requiring a texture change.",
@@ -4516,6 +4621,16 @@
       "group-id": "35",
       "remarks": "Has no effect if gl_custom_lg_color is blank.",
       "type": "boolean"
+    },
+    "gl_custom_lgpack_color": {
+      "default": "64 64 255",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "gl_custom_rlpack_color": {
+      "default": "255 64 64",
+      "group-id": "0",
+      "system-generated": true
     },
     "gl_custom_rocket_color": {
       "default": "",
@@ -4736,7 +4851,7 @@
       "type": "float"
     },
     "gl_gamma": {
-      "default": "1",
+      "default": "1.0",
       "desc": "Change GL gamma.",
       "group-id": "40",
       "type": "float"
@@ -4881,12 +4996,6 @@
         }
       ]
     },
-    "gl_lumatextures": {
-      "default": "1",
-      "desc": "Turns using of luma textures (named *_luma) ON when set to 1 and allowed by server.",
-      "group-id": "50",
-      "type": "float"
-    },
     "gl_luma_level": {
       "default": "1",
       "desc": "Some luma textures have black (in RGB format its 0,0,0) non-transparent pixels. This can make them transparent.",
@@ -4899,6 +5008,12 @@
           "name": "*"
         }
       ]
+    },
+    "gl_lumatextures": {
+      "default": "1",
+      "desc": "Turns using of luma textures (named *_luma) ON when set to 1 and allowed by server.",
+      "group-id": "50",
+      "type": "float"
     },
     "gl_max_size": {
       "default": "32768",
@@ -5570,39 +5685,28 @@
     "gl_program_sky": {
       "default": "1",
       "desc": "Determines if GLSL will be used to render skybox/skydome surfaces.\nr_fastsky does not use this setting.",
-      "remarks": "Applies to classic OpenGL renderer only",
       "group-id": "35",
-      "type": "integer",
-      "renderers": [ "classic" ]
+      "remarks": "Applies to classic OpenGL renderer only",
+      "renderers": [
+        "classic"
+      ],
+      "type": "integer"
     },
     "gl_program_turbsurfaces": {
       "default": "1",
       "desc": "Determines if GLSL will be used to render skybox/skydome surfaces.\nr_fastturb does not use this setting.",
-      "remarks": "Applies to classic OpenGL renderer only",
       "group-id": "35",
-      "type": "integer",
-      "renderers": [ "classic" ]
+      "remarks": "Applies to classic OpenGL renderer only",
+      "renderers": [
+        "classic"
+      ],
+      "type": "integer"
     },
     "gl_rl_globe": {
       "default": "0",
       "desc": "Helps customize rocket light independant of gl_flashblend.\n0 - treated as feature off.\n1 - rocket light looks like with gl_flashblend 2, but no dynamic lighting.\n2 - rocket light looks like with gl_flashblend 0 or 1.\n3 - rocket light looks like with gl_flashblend 2, with dynamic lighting, exactly the same.",
       "group-id": "15",
       "type": "integer"
-    },
-    "gl_scaleModelTextures": {
-      "default": "0",
-      "group-id": "50",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable scale model textures.",
-          "name": "false"
-        },
-        {
-          "description": "Enable",
-          "name": "true"
-        }
-      ]
     },
     "gl_scaleModelSimpleTextures": {
       "default": "0",
@@ -5619,17 +5723,17 @@
         }
       ]
     },
-    "gl_scaleskytextures": {
+    "gl_scaleModelTextures": {
       "default": "0",
       "group-id": "50",
       "type": "boolean",
       "values": [
         {
-          "description": "Disable gl_picmip/gl_max_size/gl_miptexlevel affecting sky textures (skydome and skybox).",
+          "description": "Disable scale model textures.",
           "name": "false"
         },
         {
-          "description": "Enable.",
+          "description": "Enable",
           "name": "true"
         }
       ]
@@ -5641,6 +5745,21 @@
       "values": [
         {
           "description": "Disable gl_picmip/gl_max_size/gl_miptexLevel affect turb textures (lava, water, slime, teleports).",
+          "name": "false"
+        },
+        {
+          "description": "Enable.",
+          "name": "true"
+        }
+      ]
+    },
+    "gl_scaleskytextures": {
+      "default": "0",
+      "group-id": "50",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Disable gl_picmip/gl_max_size/gl_miptexlevel affecting sky textures (skydome and skybox).",
           "name": "false"
         },
         {
@@ -5842,7 +5961,7 @@
       ]
     },
     "gl_texturemode_viewmodels": {
-      "default": "GL_LINEAR_MIPMAP_LINEAR",
+      "default": "GL_LINEAR",
       "group-id": "50",
       "remarks": "GL_NEAREST* modes are often used with gl_miptexlevel 3",
       "type": "enum",
@@ -7347,7 +7466,6 @@
           "description": "Show horizontal power meter.",
           "name": "PMETER"
         }
-
       ]
     },
     "hud_frags_fliptext": {
@@ -7682,8 +7800,8 @@
       "default": "RYM myr",
       "desc": "Sets the content of the gamesummary hud element.",
       "group-id": "19",
-      "type": "string",
       "remarks": "MVD playback only.  if the letter is in upper-case, it refers to the first team, otherwise the second",
+      "type": "string",
       "values": [
         {
           "description": "number of megahealths taken",
@@ -13066,8 +13184,8 @@
     "in_ignore_unfocused_keyb": {
       "default": "0",
       "desc": "If set, will ignore keyboard events received immediately after regaining focus.  Should stop shortcut keys from firing in-game",
-      "remarks": "X11 systems only.",
       "group-id": "11",
+      "remarks": "X11 systems only.",
       "type": "boolean"
     },
     "in_m_os_parameters": {
@@ -13916,6 +14034,11 @@
         }
       ]
     },
+    "mvd_autoadd_items": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
     "mvd_autohud": {
       "default": "0",
       "desc": "Will load different Head Up Display settings when watching MultiView Demos.",
@@ -14171,37 +14294,37 @@
       "type": "string"
     },
     "mvd_pc_pent_1": {
-      "default": "1010 -300 150 13 135",
+      "default": "",
       "desc": "Describes the position and viewing angles of the p1 cam.\nx y z rot_x rot_y",
       "group-id": "20",
       "type": "string"
     },
     "mvd_pc_pent_2": {
-      "default": "1010 -300 150 13 135",
+      "default": "",
       "desc": "Describes the position and viewing angles of the p2 cam.\nx y z rot_x rot_y",
       "group-id": "20",
       "type": "string"
     },
     "mvd_pc_pent_3": {
-      "default": "1010 -300 150 13 135",
+      "default": "",
       "desc": "Describes the position and viewing angles of the p3 cam.\nx y z rot_x rot_y",
       "group-id": "20",
       "type": "string"
     },
     "mvd_pc_quad_1": {
-      "default": "1010 -300 150 13 135",
+      "default": "",
       "desc": "Describes the position and viewing angles of the q1 cam.\nx y z rot_x rot_y",
       "group-id": "20",
       "type": "string"
     },
     "mvd_pc_quad_2": {
-      "default": "350 -20 157 34 360",
+      "default": "",
       "desc": "Describes the position and viewing angles of the q2 cam.\nx y z rot_x rot_y",
       "group-id": "20",
       "type": "string"
     },
     "mvd_pc_quad_3": {
-      "default": "595 360 130 17 360",
+      "default": "",
       "desc": "Describes the position and viewing angles of the q3 cam.\nx y z rot_x rot_y",
       "group-id": "20",
       "type": "string"
@@ -14367,6 +14490,11 @@
         }
       ]
     },
+    "mvd_sortitems": {
+      "default": "1",
+      "group-id": "0",
+      "system-generated": true
+    },
     "mvd_status": {
       "default": "0",
       "desc": "Shows information of the player you are currently tracking.\nInformation includes.\ntaken/dropped items and powerups\nlast 3 runs (including the current one) run is from powerup-took/spawn to powerup-end/death",
@@ -14420,8 +14548,8 @@
       "default": "2000",
       "desc": "Timeout (in ms) when making TCP connections (such as connecting to QTV)",
       "group-id": "21",
-      "type": "integer",
-      "remarks": "Must be between 500 and 5000 (0.5s to 5s)"
+      "remarks": "Must be between 500 and 5000 (0.5s to 5s)",
+      "type": "integer"
     },
     "noaim": {
       "default": "1",
@@ -14519,6 +14647,11 @@
       "group-id": "34",
       "remarks": "This extension makes use of Z_EXT_PF_ONGROUND to ensure correct movement prediction by clients. Prediction errors shouldn't be very noticeable anyway even with old clients.",
       "type": "integer"
+    },
+    "pm_rampjump": {
+      "default": "",
+      "group-id": "0",
+      "system-generated": true
     },
     "pm_slidefix": {
       "desc": "When set to 1, Upon decsension from a sloped surface, the player doesn't \"drop\" (which is a bug in QW), but smoothly slides, as it was in NQ.",
@@ -14647,7 +14780,7 @@
       "type": "boolean"
     },
     "qtv_api_url": {
-      "default": "http://metaqtv.duelmania.net/api/v1/servers",
+      "default": "http://qtvapi.quakeworld.nu/api/v1/servers",
       "desc": "URL used by /qtv command to resolve servers to QTV addresses and vice versa",
       "group-id": "38",
       "type": "string"
@@ -14784,6 +14917,76 @@
           "name": "*"
         }
       ]
+    },
+    "qwm_builddate": {
+      "default": "",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "qwm_buildnum": {
+      "default": "",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "qwm_fullname": {
+      "default": "",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "qwm_homepage": {
+      "default": "",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "qwm_name": {
+      "default": "",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "qwm_platform": {
+      "default": "",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "qwm_version": {
+      "default": "",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "qws_builddate": {
+      "default": "Jan 24 2021, 15:34:11",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "qws_buildnum": {
+      "default": "unknown",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "qws_fullname": {
+      "default": "MVDSV: MultiView Demo SerVer",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "qws_homepage": {
+      "default": "https://mvdsv.deurk.net",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "qws_name": {
+      "default": "EZQUAKE",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "qws_platform": {
+      "default": "w",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "qws_version": {
+      "default": "0.34-beta",
+      "group-id": "0",
+      "system-generated": true
     },
     "r_aliastransadj": {
       "desc": "Not much is known about this variable except for that increasing the value will\ncause the player models to be displayed smaller.",
@@ -14955,18 +15158,23 @@
       "type": "enum",
       "values": [
         {
-          "name": "0",
-          "description": "Walls/floors will be solid color, as per /r_drawflat setting"
+          "description": "Walls/floors will be solid color, as per /r_drawflat setting",
+          "name": "0"
         },
         {
-          "name": "1",
-          "description": "Walls/floors will be textured but then scaled as per /r_wallcolor & /r_floorcolor settings"
+          "description": "Walls/floors will be textured but then scaled as per /r_wallcolor & /r_floorcolor settings",
+          "name": "1"
         },
         {
-          "name": "2",
-          "description": "Walls/floors will be solid color (see /r_wallcolor & /r_floorcolor), but brightness will be set by the underlying texture"
+          "description": "Walls/floors will be solid color (see /r_wallcolor & /r_floorcolor), but brightness will be set by the underlying texture",
+          "name": "2"
         }
       ]
+    },
+    "r_drawhud": {
+      "default": "1",
+      "group-id": "0",
+      "system-generated": true
     },
     "r_drawparticles": {
       "default": "1",
@@ -15018,6 +15226,11 @@
           "name": "true"
         }
       ]
+    },
+    "r_drawworld": {
+      "default": "1",
+      "group-id": "0",
+      "system-generated": true
     },
     "r_dspeeds": {
       "group-id": "31",
@@ -15241,6 +15454,11 @@
         }
       ]
     },
+    "r_fx_geometry": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
     "r_glstats": {
       "default": "0",
       "desc": "When enabled, it creates a window in the top right of the screen showing the number of particles and etc. in use.",
@@ -15439,6 +15657,16 @@
         }
       ]
     },
+    "r_lightmap_lateupload": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "r_lightmap_packbytexture": {
+      "default": "2",
+      "group-id": "0",
+      "system-generated": true
+    },
     "r_max_size_1": {
       "group-id": "31",
       "type": "enum",
@@ -15468,7 +15696,7 @@
       "type": "float"
     },
     "r_nearclip": {
-      "default": "1",
+      "default": "2",
       "desc": "Distance of clipping nearest objects (v_models).",
       "group-id": "53",
       "remarks": "See also: r_farclip",
@@ -15891,6 +16119,11 @@
       "group-id": "51",
       "type": "string"
     },
+    "r_smoothalphahack": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
     "r_smoothcrosshair": {
       "default": "1",
       "group-id": "0",
@@ -15954,6 +16187,11 @@
           "name": "true"
         }
       ]
+    },
+    "r_tracker": {
+      "default": "1",
+      "group-id": "0",
+      "system-generated": true
     },
     "r_tracker_align_right": {
       "default": "1",
@@ -16096,7 +16334,7 @@
       ]
     },
     "r_tracker_messages": {
-      "default": "10",
+      "default": "20",
       "desc": "Maximum number of custom frag messages to be displayed in extra frag messages window.",
       "group-id": "40",
       "remarks": "See other r_tracker_*, cl_parseFrags and cl_loadFragFiles variables description for further info.",
@@ -16113,6 +16351,11 @@
       "desc": "Text to show before frag messages relating to the current player",
       "group-id": "40",
       "type": "string"
+    },
+    "r_tracker_pickups": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
     },
     "r_tracker_positive_enemy_suicide": {
       "default": "0",
@@ -16340,7 +16583,7 @@
       ]
     },
     "rate": {
-      "default": "5760",
+      "default": "25000",
       "desc": "Sets the maximum amount of bytes per second that the server should send to the client.",
       "group-id": "37",
       "type": "float"
@@ -16746,8 +16989,8 @@
     },
     "s_silent_racing": {
       "default": "0",
-      "group-id": "45",
       "desc": "Toggles whether or not you can hear other players when racing.",
+      "group-id": "45",
       "type": "boolean"
     },
     "s_spec_file": {
@@ -17503,6 +17746,11 @@
         }
       ]
     },
+    "scr_centerspeed": {
+      "default": "8",
+      "group-id": "0",
+      "system-generated": true
+    },
     "scr_centertime": {
       "default": "2",
       "desc": "This variable sets the amount of time in seconds that centerprinted messages \nstay on the screen.",
@@ -17687,6 +17935,36 @@
       "desc": "Mouse sensitivity for the cursor used in menus and HUD editor.",
       "group-id": "17",
       "type": "float"
+    },
+    "scr_damage_floating": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "scr_damage_hitbeep": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "scr_damage_offset_ingame": {
+      "default": "14",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "scr_damage_offset_spectator": {
+      "default": "28",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "scr_damage_proportional": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "scr_damage_scale": {
+      "default": "1",
+      "group-id": "0",
+      "system-generated": true
     },
     "scr_drawHFrags": {
       "default": "1",
@@ -17916,18 +18194,19 @@
       ]
     },
     "scr_sbar_drawarmor666": {
-      "group-id": "47",
+      "default": "1",
       "desc": "Turns on/off drawing of armor as 666 when holding pent.",
+      "group-id": "47",
       "remarks": "This variable applies for old HUD <= 'scr_newhud 0'.",
       "type": "boolean",
       "values": [
         {
-          "name": "false",
-          "description": "Do not draw armor as 666 and instead draw current armor value."
+          "description": "Do not draw armor as 666 and instead draw current armor value.",
+          "name": "false"
         },
         {
-          "name": "true",
-          "description": "Draw armor as 666."
+          "description": "Draw armor as 666.",
+          "name": "true"
         }
       ]
     },
@@ -18160,6 +18439,26 @@
         }
       ]
     },
+    "scr_scoreboard_login_color": {
+      "default": "255 255 192",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "scr_scoreboard_login_flagfile": {
+      "default": "flags",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "scr_scoreboard_login_indicator": {
+      "default": "&cffc*&r",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "scr_scoreboard_login_names": {
+      "default": "1",
+      "group-id": "0",
+      "system-generated": true
+    },
     "scr_scoreboard_posx": {
       "default": "0",
       "desc": "Controls the X-offset of the scoreboard.",
@@ -18257,6 +18556,11 @@
       "desc": "Format string for results of '/shownick 1' in KTX",
       "group-id": "40",
       "type": "string"
+    },
+    "scr_shownick_proportional": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
     },
     "scr_shownick_scale": {
       "default": "1",
@@ -20317,22 +20621,6 @@
       "group-id": "14",
       "type": "float"
     },
-    "tp_poweruptextstyle": {
-      "default": "0",
-      "desc": "Controls whether $tp_powerups (used in built-in binds) uses long or short-form powerup names",
-      "group-id": "14",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Long-form names (quad, pent, ring)",
-          "name": "false"
-        },
-        {
-          "description": "Short-form names (q, p, r)",
-          "name": "true"
-        }
-      ]
-    },
     "tp_pointpriorities": {
       "default": "0",
       "desc": "You can choose the way the client decides what object you want to point with $point macro.",
@@ -20355,6 +20643,22 @@
       "desc": "Time (in seconds) before the last pointed item (%j) is cleared.",
       "group-id": "49",
       "type": "float"
+    },
+    "tp_poweruptextstyle": {
+      "default": "0",
+      "desc": "Controls whether $tp_powerups (used in built-in binds) uses long or short-form powerup names",
+      "group-id": "14",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Long-form names (quad, pent, ring)",
+          "name": "false"
+        },
+        {
+          "description": "Short-form names (q, p, r)",
+          "name": "true"
+        }
+      ]
     },
     "tp_soundtrigger": {
       "default": "~",
@@ -20704,6 +21008,21 @@
       "group-id": "0",
       "system-generated": true
     },
+    "vid_framebuffer_depthformat": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "vid_framebuffer_hdr": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "vid_framebuffer_hdr_tonemap": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
+    },
     "vid_framebuffer_height": {
       "default": "0",
       "group-id": "0",
@@ -20715,6 +21034,16 @@
       "system-generated": true
     },
     "vid_framebuffer_scale": {
+      "default": "1",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "vid_framebuffer_smooth": {
+      "default": "1",
+      "group-id": "0",
+      "system-generated": true
+    },
+    "vid_framebuffer_sshotmode": {
       "default": "1",
       "group-id": "0",
       "system-generated": true
@@ -20824,8 +21153,8 @@
     "vid_renderer": {
       "default": "0",
       "desc": "Selects which rendering mode to use",
-      "remarks": "(variable only available if multiple renderers available)",
       "group-id": "52",
+      "remarks": "(variable only available if multiple renderers available)",
       "type": "enum",
       "values": [
         {
@@ -20858,6 +21187,11 @@
       "desc": "If set, GL_EXTENSIONS string will be displayed when printing graphics info.",
       "group-id": "52",
       "type": "boolean"
+    },
+    "vid_software_palette": {
+      "default": "0",
+      "group-id": "0",
+      "system-generated": true
     },
     "vid_stencilbits": {
       "group-id": "31",

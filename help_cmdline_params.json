@@ -157,10 +157,16 @@
       "incomplete"
     ]
   },
+  "-noatlas": {
+    "system-generated": true
+  },
   "-noconinput": {
     "flags": [
       "incomplete"
     ]
+  },
+  "-nodesktopres": {
+    "system-generated": true
   },
   "-nohome": {
     "flags": [
@@ -207,6 +213,9 @@
       "incomplete"
     ]
   },
+  "-nonpot": {
+    "system-generated": true
+  },
   "-nopriority": {
     "flags": [
       "incomplete"
@@ -232,6 +241,9 @@
       "incomplete"
     ]
   },
+  "-oldgamma": {
+    "system-generated": true
+  },
   "-particles": {
     "flags": [
       "incomplete"
@@ -246,6 +258,24 @@
     "flags": [
       "incomplete"
     ]
+  },
+  "-r-debug": {
+    "system-generated": true
+  },
+  "-r-nocallback": {
+    "system-generated": true
+  },
+  "-r-nomultibind": {
+    "system-generated": true
+  },
+  "-r-novao": {
+    "system-generated": true
+  },
+  "-r-trace": {
+    "system-generated": true
+  },
+  "-r-verify": {
+    "system-generated": true
   },
   "-ruleset": {
     "flags": [
