@@ -15483,8 +15483,10 @@
     },
     "r_fx_geometry": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Outlines the world based on surface normals.",
+      "group-id": "35",
+      "remarks": "Requires vid_framebuffer 1|2 and Modern OpenGL (vid_renderer 1).",
+      "type": "boolean"
     },
     "r_glstats": {
       "default": "0",
