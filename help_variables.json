@@ -3412,8 +3412,9 @@
     },
     "con_proportional": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enable TrueType fonts on console text.",
+      "group-id": "5",
+      "type": "boolean"
     },
     "con_shift": {
       "default": "-10",
@@ -4308,63 +4309,75 @@
     },
     "font_capitalize": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Draw all TrueType text in capital letters.",
+      "group-id": "5",
+      "type": "boolean"
     },
     "font_facepath": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Current TrueType font file.",
+      "group-id": "5",
+      "type": "string"
     },
     "font_gradient_alternate_color1": {
       "default": "175 120 52",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Top color in Alternate TrueType text.",
+      "group-id": "5",
+      "type": "string"
     },
     "font_gradient_alternate_color2": {
       "default": "75 52 22",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Bottom color in Alternate TrueType text.",
+      "group-id": "5",
+      "type": "string"
     },
     "font_gradient_alternate_percent": {
       "default": "0.4",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Slope of the gradient for Alternate TrueType text.",
+      "group-id": "5",
+      "type": "float"
     },
     "font_gradient_normal_color1": {
       "default": "255 255 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Top color in Normal TrueType text.",
+      "group-id": "5",
+      "type": "string"
     },
     "font_gradient_normal_color2": {
       "default": "107 98 86",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Bottom color in Normal TrueType text.",
+      "group-id": "5",
+      "type": "string"
     },
     "font_gradient_normal_percent": {
       "default": "0.2",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Slope of the gradient for Normal TrueType text.",
+      "group-id": "5",
+      "type": "float"
     },
     "font_gradient_number_color1": {
       "default": "255 255 150",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Top color in Number TrueType text.",
+      "group-id": "5",
+      "type": "string"
     },
     "font_gradient_number_color2": {
       "default": "218 132 7",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Bottom color in Number TrueType text.",
+      "group-id": "5",
+      "type": "string"
     },
     "font_gradient_number_percent": {
       "default": "0.2",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Slope of the gradient for Number TrueType text.",
+      "group-id": "5",
+      "type": "float"
     },
     "font_outline_width": {
       "default": "2",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Scale of the outline around TrueType text.",
+      "group-id": "5",
+      "type": "integer"
     },
     "fov": {
       "default": "90",
@@ -16409,8 +16422,9 @@
     },
     "r_tracker_proportional": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enable TrueType fonts on tracker text.",
+      "group-id": "5",
+      "type": "boolean"
     },
     "r_tracker_scale": {
       "default": "1",
@@ -17687,8 +17701,9 @@
     },
     "scr_autoid_proportional": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enable TrueType fonts on autoID text.",
+      "group-id": "5",
+      "type": "boolean"
     },
     "scr_autoid_scale": {
       "default": "1",
@@ -18002,8 +18017,9 @@
     },
     "scr_damage_proportional": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enable TrueType fonts on damage text.",
+      "group-id": "5",
+      "type": "boolean"
     },
     "scr_damage_scale": {
       "default": "1",
@@ -18529,8 +18545,9 @@
     },
     "scr_scoreboard_proportional": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enable TrueType fonts on the scoreboard.",
+      "group-id": "5",
+      "type": "boolean"
     },
     "scr_scoreboard_showfrags": {
       "default": "1",
@@ -18603,8 +18620,9 @@
     },
     "scr_shownick_proportional": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enable TrueType fonts on shownick text.",
+      "group-id": "5",
+      "type": "boolean"
     },
     "scr_shownick_scale": {
       "default": "1",
@@ -18786,8 +18804,9 @@
     },
     "scr_teaminfo_proportional": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enable TrueType fonts on teaminfo text.",
+      "group-id": "5",
+      "type": "boolean"
     },
     "scr_teaminfo_scale": {
       "default": "1",

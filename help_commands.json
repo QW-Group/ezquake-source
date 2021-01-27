@@ -575,10 +575,10 @@
     "syntax": "R G B"
   },
   "fontlist": {
-    "system-generated": true
+    "description": "Lists TrueType fonts available on the system."
   },
   "fontload": {
-    "system-generated": true
+    "description": "Loads specified TrueType font for use where _proportional is set."
   },
   "force_centerview": {
     "description": "This command centers the player's screen. It was created because the original  \"centerview\" command did not work when \"+mlook\" was enabled. This command will  center the screen in any mode no matter commands are active."
