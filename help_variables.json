@@ -4626,13 +4626,17 @@
     },
     "gl_custom_lgpack_color": {
       "default": "64 64 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Color lightning gun backpacks with this value.",
+      "group-id": "35",
+      "remarks": "Leave blank to disable. QTV/MVD only, KTX 1.38+ only.",
+      "type": "string"
     },
     "gl_custom_rlpack_color": {
       "default": "255 64 64",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Tints rocket launcher backpacks with this value.",
+      "group-id": "35",
+      "remarks": "Leave blank to disable. QTV/MVD only, KTX 1.38+ only.",
+      "type": "string"
     },
     "gl_custom_rocket_color": {
       "default": "",
