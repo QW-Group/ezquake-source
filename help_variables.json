@@ -1339,38 +1339,73 @@
     },
     "cl_debug_antilag_ghost": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Allows rendering a translucent copy of player position on supported .mvd/qtv streams.",
+      "group-id": "21",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Normal",
+          "name": "0"
+        },
+        {
+          "description": "Antilag-rewind",
+          "name": "1"
+        },
+        {
+          "description": "Client position",
+          "name": "2"
+        }
+      ]
     },
     "cl_debug_antilag_lines": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Chooses if lines are drawn between the different player positions on supported .mvd/qtv streams.",
+      "group-id": "21",
+      "type": "boolean"
     },
     "cl_debug_antilag_self": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Chooses whether to include the currently tracked player in antilag debugging.",
+      "group-id": "21",
+      "type": "boolean"
     },
     "cl_debug_antilag_send": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Sends location of opponents, which is stored in .mvd on supported servers.",
+      "group-id": "21",
+      "type": "boolean"
     },
     "cl_debug_antilag_view": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Chooses which location is used when rendering players on supported .mvd/qtv streams.",
+      "group-id": "21",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Normal",
+          "name": "0"
+        },
+        {
+          "description": "Antilag-rewind",
+          "name": "1"
+        },
+        {
+          "description": "Client position",
+          "name": "2"
+        }
+      ]
     },
     "cl_debug_weapon_send": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Sends information about client-side weapon selection, which is stored in .mvd on supported servers.",
+      "group-id": "21",
+      "type": "boolean"
     },
     "cl_debug_weapon_view": {
       "default": "0",
+      "desc": "Views the client-side weapon debugging messages, if stored in .mvd.",
       "group-id": "0",
-      "system-generated": true
+      "type": "boolean"
     },
     "cl_delay_packet": {
       "default": "0",
