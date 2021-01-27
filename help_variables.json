@@ -1388,8 +1388,9 @@
     },
     "cl_delay_packet_target": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Targets a particular ping, rather than specifying the additional delay.  Adds half the ping to the outgoing packet and the remainder to incoming",
+      "group-id": "21",
+      "type": "integer"
     },
     "cl_demo_qwd_delta": {
       "default": "1",
