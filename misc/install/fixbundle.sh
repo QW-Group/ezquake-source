@@ -54,7 +54,7 @@ if [ ! -d "$FRAMEWORK_DIR" ]; then
 fi
 
 function get_deps {
-	echo $(otool -L "$1" | grep local | awk '{print $1}')
+	echo $(otool -L "$1" | grep 'local\|homebrew' | awk '{print $1}')
 }
 
 # readlink -f
