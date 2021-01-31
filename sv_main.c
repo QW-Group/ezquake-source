@@ -3120,8 +3120,8 @@ int SV_BoundRate (qbool dl, int rate)
 
 	if (rate < 500)
 		rate = 500;
-	if (rate > 100000)
-		rate = 100000;
+	if (rate > 100000 * MAX_DUPLICATE_PACKETS)
+		rate = 100000 * MAX_DUPLICATE_PACKETS;
 
 	return rate;
 }
@@ -3725,6 +3725,12 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 	// rate
 	val = Info_Get (&cl->_userinfo_ctx_, cl->download ? "drate" : "rate");
 	cl->netchan.rate = 1.0 / SV_BoundRate (cl->download != NULL, Q_atoi(*val ? val : "99999"));
+
+	// s2c packet dupes
+	val = Info_Get(&cl->_userinfo_ctx_, "dupe");
+	cl->dupe = atoi(val);
+	cl->dupe = (int)bound(0, cl->dupe, MAX_DUPLICATE_PACKETS); // 0=1 packet (aka: no dupes)
+	cl->netchan.dupe = (cl->download ? 0 : cl->dupe);
 
 	// message level
 	val = Info_Get (&cl->_userinfo_ctx_, "msg");

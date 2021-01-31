@@ -263,6 +263,7 @@ typedef struct client_s
 	client_frame_t	frames[UPDATE_BACKUP];		// updates can be deltad from here
 
 	vfsfile_t		*download;			// file being downloaded
+	int             dupe;               // duplicate packets requested
 #ifdef PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	int				download_chunks_perframe;

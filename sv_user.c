@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
 
+static void SV_ClientDownloadComplete(client_t* cl);
+
 edict_t	*sv_player;
 
 usercmd_t	cmd;
@@ -1062,17 +1064,11 @@ This is a sub routine for  SV_NextDownload(), called when download complete, we 
 void SV_CompleteDownoload(void)
 {
 	unsigned char download_completed[] = "Download completed.\n";
-	char *val;
 
 	if (!sv_client->download)
 		return;
 
-	VFS_CLOSE(sv_client->download);
-	sv_client->download = NULL;
-	sv_client->file_percent = 0; //bliP: file percent
-	// qqshka: set normal rate
-	val = Info_Get (&sv_client->_userinfo_ctx_, "rate");
-	sv_client->netchan.rate = 1. / SV_BoundRate(false,	Q_atoi(*val ? val : "99999"));
+	SV_ClientDownloadComplete(sv_client);
 
 	Con_Printf((char *)Q_redtext(download_completed));
 
@@ -1416,7 +1412,7 @@ static void Cmd_Download_f(void)
 	   	|| ( name[0] && name[1] == ':' && ((*name >= 'a' && *name <= 'z') || (*name >= 'A' && *name <= 'Z')))
 #endif //_WIN32
 	   )
-		goto deny_download;		
+		goto deny_download;
 
 	if (sv_client->special)
 		allow_dl = true; // NOTE: user used techlogin, allow dl anything in quake dir in such case!
@@ -1440,14 +1436,7 @@ static void Cmd_Download_f(void)
 	if (!allow_dl)
 		goto deny_download;
 
-	if (sv_client->download)
-	{
-		VFS_CLOSE(sv_client->download);
-		sv_client->download = NULL;
-		// set normal rate
-		val = Info_Get (&sv_client->_userinfo_ctx_, "rate");
-		sv_client->netchan.rate = 1.0 / SV_BoundRate(false, Q_atoi(*val ? val : "99999"));
-	}
+	SV_ClientDownloadComplete(sv_client);
 
 	memset(alternative_path, 0, sizeof(alternative_path));
 	if ( !strncmp(name, "demos/", 6) && sv_demoDir.string[0])
@@ -1520,10 +1509,8 @@ static void Cmd_Download_f(void)
 	// if not techlogin, perform extra check to block .pak maps
 	if (!sv_client->special) {
 		// special check for maps that came from a pak file
-		if (sv_client->download && !strncmp(name, "maps/", 5) && VFS_COPYPROTECTED(sv_client->download) && !(int)allow_download_pakmaps.value)
-		{
-			VFS_CLOSE(sv_client->download);
-			sv_client->download = NULL;
+		if (sv_client->download && !strncmp(name, "maps/", 5) && VFS_COPYPROTECTED(sv_client->download) && !(int)allow_download_pakmaps.value) {
+			SV_ClientDownloadComplete(sv_client);
 			goto deny_download;
 		}
 	}
@@ -1537,6 +1524,8 @@ static void Cmd_Download_f(void)
 	// set donwload rate
 	val = Info_Get (&sv_client->_userinfo_ctx_, "drate");
 	sv_client->netchan.rate = 1. / SV_BoundRate(true, Q_atoi(*val ? val : "99999"));
+	// disable duplicate packet setting while downloading
+	sv_client->netchan.dupe = 0;
 
 	// all checks passed, start downloading
 
@@ -1701,18 +1690,13 @@ Cmd_StopDownload_f
 static void Cmd_StopDownload_f(void)
 {
 	unsigned char	download_stopped[] = "Download stopped and download queue cleared.\n";
-	char *val;
 
 	if (!sv_client->download)
 		return;
 
 	sv_client->downloadcount = sv_client->downloadsize;
-	VFS_CLOSE(sv_client->download);
-	sv_client->download = NULL;
-	sv_client->file_percent = 0; //bliP: file percent
-	// qqshka: set normal rate
-	val = Info_Get (&sv_client->_userinfo_ctx_, "rate");
-	sv_client->netchan.rate = 1. / SV_BoundRate(false, Q_atoi(*val ? val : "99999"));
+	SV_ClientDownloadComplete(sv_client);
+
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (sv_client->fteprotocolextensions & FTE_PEXT_CHUNKEDDOWNLOADS)
 	{
@@ -4700,6 +4684,22 @@ static void SV_DebugClientCommand(byte playernum, const usercmd_t* usercmd, int 
 			MVD_SZ_Write(&usercmd->buttons, sizeof(usercmd->buttons));
 			MVD_SZ_Write(&usercmd->impulse, sizeof(usercmd->impulse));
 		}
+	}
+}
+
+static void SV_ClientDownloadComplete(client_t* cl)
+{
+	if (cl->download) {
+		const char* val;
+
+		VFS_CLOSE(cl->download);
+		cl->download = NULL;
+		cl->file_percent = 0; //bliP: file percent
+		// set normal rate
+		val = Info_Get(&cl->_userinfo_ctx_, "rate");
+		cl->netchan.rate = 1.0 / SV_BoundRate(false, Q_atoi(*val ? val : "99999"));
+		// set normal duplicate packets
+		cl->netchan.dupe = cl->dupe;
 	}
 }
 

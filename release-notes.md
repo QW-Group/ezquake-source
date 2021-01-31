@@ -96,6 +96,7 @@
 
 - `/cfg_backup` will now not save the config if backup cannot be taken (previous behaviour was to over-write)
 - `/cfg_save` will now accept subdirectories (e.g. `/cfg_save backups/test1.cfg`)  Absolute paths are still blocked.
+- `/cl_c2sdupe` will send duplicate packets to the server (a little like Qizmo) (credit to mushi & Spike)
 - `/cl_keypad 1` - keypad works as cursor keys in menu
 - `/cl_keypad 2` - keypad will behave as `/cl_keypad 0` in-game, but `/cl_keypad 1` in console etc
 - `/cl_delay_packet_target` - like cl_delay_packet, but half delay is applied to outgoing and the incoming delay is flexible to match the value
