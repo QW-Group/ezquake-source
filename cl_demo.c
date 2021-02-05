@@ -110,6 +110,7 @@ cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 cvar_t demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
 cvar_t cl_startupdemo = {"cl_startupdemo", ""};
 cvar_t demo_jump_rewind = { "demo_jump_rewind", "-10" };
+cvar_t cl_demo_qwd_delta = { "cl_demo_qwd_delta", "1" };
 
 // Used to save track status when rewinding.
 static vec3_t rewind_angle;
@@ -1753,6 +1754,7 @@ static void CL_DemoReadDemCmd(void)
 	// how many net messages have been sent.
 	cl.frames[i].senttime = cls.demopackettime;
 	cl.frames[i].receivedtime = -1;		// We haven't gotten a reply yet.
+	cl.frames[i].delta_sequence = cl.delta_sequence;
 	network_stats[s].senttime = cls.realtime;
 	network_stats[s].sentsize = sizeof(*pcmd) + 12; // complete lie, compared to the original
 	cls.netchan.outgoing_sequence++;
@@ -5406,6 +5408,7 @@ void CL_Demo_Init(void)
 	Cvar_Register(&demo_benchmarkdumps);
 	Cvar_Register(&cl_startupdemo);
 	Cvar_Register(&demo_jump_rewind);
+	Cvar_Register(&cl_demo_qwd_delta);
 
 	Cvar_ResetCurrentGroup();
 }

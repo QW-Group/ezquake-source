@@ -1346,6 +1346,12 @@
       "remarks": "Specified in ms.  Makes /cl_delay_packet better simulate high-ping connections.",
       "type": "integer"
     },
+    "cl_demo_qwd_delta": {
+      "default": "1",
+      "desc": "Whether or not to write delta packets for entities into .qwd files.  Older clients may not be able to play these back.",
+      "group-id": "7",
+      "type": "boolean"
+    },
     "cl_demoPingInterval": {
       "default": "5",
       "desc": "How often to request ping updates when recording demos. This variable doesn't affect ping updates when the scoreboard is shown (they are always one update per 2 seconds).",

@@ -202,18 +202,20 @@ typedef struct
 typedef struct 
 {
 	// Generated on client side.
-	usercmd_t			cmd;				// Cmd that generated the frame.
-	double				senttime;			// Time cmd was sent off.
-	int					delta_sequence;		// Sequence number to delta from, -1 = full update.
-	int					sentsize;
+	usercmd_t           cmd;                        // Cmd that generated the frame.
+	double              senttime;                   // Time cmd was sent off.
+	int                 delta_sequence;             // Sequence number to delta from, -1 = full update.
+	int                 sentsize;
 
 	// Received from server.
-	double				receivedtime;		// Time message was received, or -1.
-	player_state_t		playerstate[MAX_CLIENTS];	// Message received that reflects performing the usercmd.
-	packet_entities_t	packet_entities;
-	qbool				invalid;			// True if the packet_entities delta was invalid
-	int					receivedsize;
-	int					seq_when_received;
+	double              receivedtime;               // Time message was received, or -1.
+	player_state_t      playerstate[MAX_CLIENTS];   // Message received that reflects performing the usercmd.
+	packet_entities_t   packet_entities;
+	qbool               invalid;                    // True if the packet_entities delta was invalid
+	int                 receivedsize;
+	int                 seq_when_received;
+
+	qbool               in_qwd;
 } frame_t;
 
 typedef struct centity_trail_s {

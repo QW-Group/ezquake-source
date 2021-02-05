@@ -4031,7 +4031,20 @@ void CL_ParseServerMessage (void)
 			// Write the change in entities to the demo being recorded
 			// or the net message we just received.
 			if (cmd == svc_deltapacketentities) {
-				CL_WriteDemoEntities();
+				extern cvar_t cl_demo_qwd_delta;
+				int newpacket = cls.netchan.incoming_sequence & UPDATE_MASK;
+				int deltaseq = cl.frames[newpacket].delta_sequence;
+				qbool delta_valid = deltaseq > 0 && !cl.frames[deltaseq & UPDATE_MASK].invalid && cl.frames[deltaseq & UPDATE_MASK].in_qwd;
+
+				// Only write if it was parsed correctly and we've written the original packet to qwd
+				if (cl_demo_qwd_delta.integer && cl.validsequence == cls.netchan.incoming_sequence && delta_valid) {
+					SZ_Write(&cls.demomessage, net_message.data + msg_svc_start, msg_readcount - msg_svc_start);
+				}
+				else {
+					// Write from baselines instead (old way)
+					CL_WriteDemoEntities();
+				}
+				cl.frames[newpacket].in_qwd = true;
 			}
 			else if (cmd == svc_download) {
 				// there's no point in writing it to the demo

@@ -602,6 +602,7 @@ void CL_ParsePacketEntities (qbool delta)
 	newpacket = cls.netchan.incoming_sequence & UPDATE_MASK;
 	newp = &cl.frames[newpacket].packet_entities;
 	cl.frames[newpacket].invalid = false;
+	cl.frames[newpacket].in_qwd = false;
 
 	if (delta) 
 	{
@@ -621,7 +622,7 @@ void CL_ParsePacketEntities (qbool delta)
 
 		if ((from & UPDATE_MASK) != (oldpacket & UPDATE_MASK)) 
 		{
-			Com_DPrintf ("WARNING: from mismatch\n");
+			Com_DPrintf ("WARNING: from mismatch (%d vs %d, %d vs %d)\n", (from & UPDATE_MASK), (oldpacket & UPDATE_MASK), from, oldpacket);
 			FlushEntityPacket();
 			cl.validsequence = 0;
 			return;
