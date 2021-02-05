@@ -339,7 +339,7 @@ void Sbar_Init(void)
 
 void Request_Pings (void)
 {
-	if (cls.realtime - cl.last_ping_request > 2)
+	if (cls.state == ca_active && cls.realtime - cl.last_ping_request > 2)
 	{
 		cl.last_ping_request = cls.realtime;
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
