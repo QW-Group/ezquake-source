@@ -1174,9 +1174,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 
 	// serverdata
 	// send the info about the new client to all connected clients
-	memset(&buf, 0, sizeof(buf));
-	buf.data = buf_data;
-	buf.maxsize = sizeof(buf_data);
+	SZ_Init(&buf, buf_data, sizeof(buf_data));
 
 	// send the serverdata
 

@@ -907,11 +907,7 @@ void SV_SendClientDatagram (client_t *client, int client_num)
 	sizebuf_t	msg;
 	//	packet_t	*pack;
 
-	msg.data = buf;
-	msg.maxsize = sizeof(buf);
-	msg.cursize = 0;
-	msg.allowoverflow = true;
-	msg.overflowed = false;
+	SZ_InitEx(&msg, buf, sizeof(buf), true);
 
 	// for faster downloading skip half the frames
 	/*if (client->download && client->netchan.outgoing_sequence & 1)
