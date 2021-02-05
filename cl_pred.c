@@ -35,6 +35,9 @@ static vec3_t saved_angles;
 qbool clpred_newpos = false;
 #endif
 
+static qbool nolerp[2];
+static qbool nolerp_nextpos;
+
 void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) {
 	// split up very long moves
 	if (u->msec > 50) {
@@ -104,13 +107,14 @@ void CL_CategorizePosition (void) {
 
 //Smooth out stair step ups.
 //Called before CL_EmitEntities so that the player's lightning model origin is updated properly
-void CL_CalcCrouch (void) {
+void CL_CalcCrouch (void)
+{
 	qbool teleported;
 	static vec3_t oldorigin = {0, 0, 0};
 	static float oldz = 0, extracrouch = 0, crouchspeed = 100;
 
-	teleported = !VectorL2Compare(cl.simorg, oldorigin, 48);
-	VectorCopy (cl.simorg, oldorigin);
+	teleported = nolerp[0] || !VectorL2Compare(cl.simorg, oldorigin, 48);
+	VectorCopy(cl.simorg, oldorigin);
 
 	if (teleported) {
 		// possibly teleported or respawned
@@ -118,7 +122,6 @@ void CL_CalcCrouch (void) {
 		extracrouch = 0;
 		crouchspeed = 100;
 		cl.crouch = 0;
-		VectorCopy (cl.simorg, oldorigin);
 		return;
 	}
 
@@ -142,7 +145,8 @@ void CL_CalcCrouch (void) {
 		extracrouch = max(extracrouch, 0);
 
 		cl.crouch = oldz - cl.simorg[2];
-	} else {
+	}
+	else {
 		// in air or moving down
 		oldz = cl.simorg[2];
 		cl.crouch += cls.frametime * 150;
@@ -153,11 +157,9 @@ void CL_CalcCrouch (void) {
 	}
 }
 
-static qbool	nolerp[2];
-
 void CL_DisableLerpMove(void)
 {
-	nolerp[0] = nolerp[1] = true;
+	nolerp[0] = nolerp[1] = nolerp_nextpos = true;
 }
 
 static void CL_LerpMove (qbool angles_lerp)
@@ -194,7 +196,7 @@ static void CL_LerpMove (qbool angles_lerp)
 	}
 
 	// Independent physics.
-	if (physframe) 
+	if (physframe)
 	{
 		lastsequence = cls.netchan.outgoing_sequence;
 
@@ -212,7 +214,8 @@ static void CL_LerpMove (qbool angles_lerp)
 		VectorCopy (cl.simangles, lerp_angles[0]);
 
 		nolerp[1] = nolerp[0];
-		nolerp[0] = false;
+		nolerp[0] = nolerp_nextpos;
+		nolerp_nextpos = false;
 
 		for (i = 0; i < 3; i++)
 		{
@@ -256,33 +259,28 @@ static void CL_LerpMove (qbool angles_lerp)
 	}
 
 	// decide where to lerp from
-	if (simtime > lerp_times[1]) 
-	{
+	if (simtime > lerp_times[1]) {
 		from = 1;
 		to = 0;
 	} 
-	else 
-	{
+	else {
 		from = 2;
 		to = 1;
 	}
 
-	if (nolerp[to])
-	{
+	if (nolerp[to]) {
 		return;
 	}
 
     frac = (simtime - lerp_times[from]) / (lerp_times[to] - lerp_times[from]);
     frac = bound (0, frac, 1);
 
-	if ((cl.spectator && cl.viewplayernum != cl.playernum) || angles_lerp)
-	{
+	if ((cl.spectator && cl.viewplayernum != cl.playernum) || angles_lerp) {
 		// we track someone, so lerp angles
 		AngleInterpolate(lerp_angles[from], frac, lerp_angles[to], cl.simangles);
 	}
 
-	for (i = 0; i < 3; i++)
-	{
+	for (i = 0; i < 3; i++)	{
 		cl.simorg[i] = lerp_origin[from][i] + (lerp_origin[to][i] - lerp_origin[from][i]) * frac;
 	}
 }
