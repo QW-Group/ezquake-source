@@ -4240,11 +4240,16 @@ static void CL_ParseDemoWeaponInstruction(int size)
 {
 	extern cvar_t cl_debug_weapon_view;
 
-	byte playernum = MSG_ReadByte();
-	byte flags = MSG_ReadByte();
-	int sequence_set = LittleLong(MSG_ReadLong());
-	int mode = LittleLong(MSG_ReadLong());
+	byte playernum;
+	byte flags;
+	int sequence_set;
+	int mode;
 	byte weaponlist[10];
+
+	playernum = MSG_ReadByte();
+	flags = MSG_ReadByte();
+	LittleLong(MSG_ReadLong()); // sequence_set =
+	mode = LittleLong(MSG_ReadLong());
 
 	MSG_ReadData(weaponlist, sizeof(weaponlist));
 
