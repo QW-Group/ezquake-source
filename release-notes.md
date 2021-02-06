@@ -73,6 +73,7 @@
 - Fixed bug causing `score_enemy`/`score_difference` hud elements to use next player depending on sort rules, rather than best opponent (#469, 3.2 bug, reported by doomie)
 - Fixed bug causing geometry outlines to be rendered incorrectly in sub-views when multiview enabled (3.5 bug)
 - Fixed bug causing 'crouch' step-smoothing to kick in when respawning at a (very) nearby spawn point (old bug)
+- Fixed bug causing "Unset entity number" message & program termination as entnum overwritten from local baselines after avoiding buffer overflow in previous frame (reported during sdCup2 on Discord)
 
 ### Ruleset-related changes
 

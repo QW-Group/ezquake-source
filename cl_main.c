@@ -1162,6 +1162,11 @@ void CL_ClearState (void)
 	memset(cl_entities, 0, sizeof(cl_entities));
 	memset(cl_static_entities, 0, sizeof(cl_static_entities));
 
+	// Set entnum for all entity baselines
+	for (i = 0; i < sizeof(cl_entities) / sizeof(cl_entities[0]); ++i) {
+		cl_entities[i].baseline.number = i;
+	}
+
 	// Set default viewheight for mvd, we copy cl.players[].stats[] to cl_stats[] in Cam_Lock() when pov changes.
 	for (i = 0; i < MAX_CLIENTS; i++)
 		cl.players[i].stats[STAT_VIEWHEIGHT] = DEFAULT_VIEWHEIGHT;

@@ -172,9 +172,14 @@ void SV_WriteDelta(client_t* client, entity_state_t *from, entity_state_t *to, s
 		bits |= U_SOLID;
 
 	// Taken from FTE
-	if (msg->cursize + 40 > msg->maxsize)
-	{	//not enough space in the buffer, don't send the entity this frame. (not sending means nothing changes, and it takes no bytes!!)
+	if (msg->cursize + 40 > msg->maxsize && !msg->overflow_handler)
+	{
+		// not enough space in the buffer, don't send the entity this frame. (not sending means nothing changes, and it takes no bytes!!)
+		int oldnum = to->number;
 		*to = *from;
+		if (oldnum && !from->number) {
+			to->number = oldnum;
+		}
 		return;
 	}
 
