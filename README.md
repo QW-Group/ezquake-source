@@ -79,7 +79,7 @@ Now press the `Start` button again and enter `bash`. Click it and install Bash.
 Enter the following command to install all required prerequisites to build ezQuake:
 
 ```
-sudo apt-get install -y git mingw-w64 build-essential libspeexdsp-dev dos2unix
+sudo apt-get install -y git mingw-w64 build-essential libspeexdsp-dev dos2unix pkg-config
 ```
 
 Now clone the ezQuake source code:
