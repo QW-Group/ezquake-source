@@ -2074,6 +2074,8 @@ void CL_ProcessUserInfo(int slot, player_info_t *player, char *key)
 		strlcpy(player->name, " ", sizeof(player->name));
 	}
 
+	CL_RemovePrefixFromName(slot);
+
 	player->real_topcolor = atoi(Info_ValueForKey(player->userinfo, "topcolor"));
 	player->real_bottomcolor = atoi(Info_ValueForKey(player->userinfo, "bottomcolor"));
 

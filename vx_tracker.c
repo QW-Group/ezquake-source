@@ -116,7 +116,6 @@ static cvar_t amf_tracker_string_died            = {"r_tracker_string_died",    
 static cvar_t amf_tracker_string_teammate        = {"r_tracker_string_teammate", "teammate"};
 static cvar_t amf_tracker_string_enemy           = {"r_tracker_string_enemy",    "enemy"};
 static cvar_t amf_tracker_name_width             = {"r_tracker_name_width",      "0", 0, OnChange_TrackerNameWidth};
-static cvar_t amf_tracker_name_remove_prefixes   = {"r_tracker_name_remove_prefixes", ""};
 static cvar_t amf_tracker_own_frag_prefix        = {"r_tracker_own_frag_prefix", "You fragged "};
 static cvar_t amf_tracker_positive_enemy_suicide = {"r_tracker_positive_enemy_suicide", "0"};	// Medar wanted it to be customizable
 static cvar_t amf_tracker_proportional           = {"r_tracker_proportional", "0"};
@@ -211,7 +210,6 @@ void InitTracker(void)
 	Cvar_Register(&amf_tracker_string_enemy);
 
 	Cvar_Register(&amf_tracker_name_width);
-	Cvar_Register(&amf_tracker_name_remove_prefixes);
 	Cvar_Register(&amf_tracker_own_frag_prefix);
 	Cvar_Register(&amf_tracker_positive_enemy_suicide);
 	Cvar_Register(&amf_tracker_proportional);
@@ -561,44 +559,9 @@ static void VX_TrackerLinkStrings(void)
 	}
 }
 
-static char *VX_RemovePrefix(int player)
-{
-	size_t skip;
-	char *prefixes, *prefix, *name;
-
-	if (amf_tracker_name_remove_prefixes.string[0] == 0)
-		return cl.players[player].name;
-
-	skip = 0;
-	prefixes = Q_normalizetext(Q_strdup(amf_tracker_name_remove_prefixes.string));
-	prefix = strtok(prefixes, " ");
-	name = Q_normalizetext(Q_strdup(cl.players[player].name));
-
-	while (prefix != NULL) {
-		if (strlen(prefix) > skip && strlen(name) > strlen(prefix) && strncasecmp(prefix, name, strlen(prefix)) == 0) {
-			skip = strlen(prefix);
-			// remove spaces from the new start of the name
-			while (name[skip] == ' ') {
-				skip++;
-			}
-			// if it would skip the whole name, just use the whole name
-			if (name[skip] == 0) {
-				skip = 0;
-				break;
-			}
-		}
-		prefix = strtok(NULL, " ");
-	}
-
-	Q_free(prefixes);
-	Q_free(name);
-
-	return cl.players[player].name + skip;
-}
-
 static char* VX_Name(int player, char* buffer, int max_length)
 {
-	strlcpy(buffer, VX_RemovePrefix(player), max_length);
+	strlcpy(buffer, cl.players[player].shortname, max_length);
 
 	return buffer;
 }

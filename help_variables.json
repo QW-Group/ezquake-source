@@ -10057,6 +10057,13 @@
         }
       ]
     },
+    "hud_name_remove_prefixes": {
+      "default": "",
+      "desc": "Space-separated list of prefixes to remove from player names before displaying in the tracker & teaminfo",
+      "group-id": "40",
+      "remarks": "Useful if one team has clan prefixes that stop the names appearing fully",
+      "type": "string"
+    },
     "hud_net_align_x": {
       "desc": "Sets horizontal align of net statistics",
       "group-id": "19",
@@ -16094,13 +16101,6 @@
       "group-id": "40",
       "remarks": "See other r_tracker_*, cl_parseFrags and cl_loadFragFiles variables description for further info.",
       "type": "integer"
-    },
-    "r_tracker_name_remove_prefixes": {
-      "default": "",
-      "desc": "Space-separated list of prefixes to remove from player names before displaying in the tracker",
-      "group-id": "40",
-      "remarks": "Useful if one team has clan prefixes that stop the names appearing fully",
-      "type": "string"
     },
     "r_tracker_name_width": {
       "default": "0",

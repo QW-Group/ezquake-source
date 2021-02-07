@@ -132,6 +132,7 @@ typedef struct player_info_s
 
 	// Scoreboard information.
 	char	name[MAX_SCOREBOARDNAME];
+	char    shortname[MAX_SCOREBOARDNAME];           // used in tracker, when user wants to remove prefixes
 	float	entertime;
 	int		frags;
 	int		ping;
