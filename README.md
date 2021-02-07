@@ -66,7 +66,7 @@ If you want to make a clean installation of ezQuake you can do this by following
 
 ### Compiling a Windows binary
 
-#### Using Ubuntu Bash
+#### Using Ubuntu Bash (WSL)
 
 You can use the new Ubuntu Bash feature in Windows 10 to compile ezQuake for Windows.
 
@@ -79,13 +79,19 @@ Now press the `Start` button again and enter `bash`. Click it and install Bash.
 Enter the following command to install all required prerequisites to build ezQuake:
 
 ```
-sudo apt-get install -y git mingw-w64 build-essential
+sudo apt-get install -y git mingw-w64 build-essential libspeexdsp-dev dos2unix
 ```
 
 Now clone the ezQuake source code:
 
 ```
 git clone https://github.com/ezQuake/ezquake-source.git ezquake
+```
+
+Make sure line endings are not CRLF:
+
+```
+dos2unix *.sh
 ```
 
 Now build the ezQuake executable:
