@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -163,7 +163,7 @@ void CL_DisableLerpMove(void)
 }
 
 static void CL_LerpMove (qbool angles_lerp)
-{	
+{
 	static int		lastsequence = 0;
 	static vec3_t	lerp_angles[3];
 	static vec3_t	lerp_origin[3];
@@ -181,13 +181,13 @@ static void CL_LerpMove (qbool angles_lerp)
 	double  current_lerp_time = cls.demoplayback ? cls.demopackettime : (cmdtime_msec * 0.001);
 	qbool   physframe = cls.netchan.outgoing_sequence != lastsequence;
 
-	if ((cl_nolerp.value || cl_nolerp_on_entity_flag)) 
+	if ((cl_nolerp.value || cl_nolerp_on_entity_flag))
 	{
 		lastsequence = ((unsigned)-1) >> 1;	//reset
 		return;
 	}
 
-	if (cls.netchan.outgoing_sequence < lastsequence) 
+	if (cls.netchan.outgoing_sequence < lastsequence)
 	{
 		// reset
 		lastsequence = -1;
@@ -241,16 +241,16 @@ static void CL_LerpMove (qbool angles_lerp)
 	simtime = current_time - demo_latency;
 
 	// Adjust latency
-	if (simtime > lerp_times[0]) 
+	if (simtime > lerp_times[0])
 	{
 		// High clamp
 		demo_latency = current_time - lerp_times[0];
 	}
-	else if (simtime < lerp_times[2]) 
+	else if (simtime < lerp_times[2])
 	{
 		// Low clamp
 		demo_latency = current_time - lerp_times[2];
-	} 
+	}
 	else
 	{
 		// slowly drift down till corrected
@@ -262,7 +262,7 @@ static void CL_LerpMove (qbool angles_lerp)
 	if (simtime > lerp_times[1]) {
 		from = 1;
 		to = 0;
-	} 
+	}
 	else {
 		from = 2;
 		to = 1;
@@ -294,13 +294,15 @@ static void check_standing_on_entity(void)
   extern cvar_t cl_nolerp;
   extern cvar_t cl_nolerp_on_entity;
   extern cvar_t cl_independentPhysics;
-  cl_nolerp_on_entity_flag = 
+  cl_nolerp_on_entity_flag =
        (pmove.onground && pmove.groundent > 0 &&
         cl_nolerp_on_entity.value &&
         cl_independentPhysics.value);
 }
 
 void CL_PredictMove (qbool physframe) {
+	extern qbool em_touch_wall, em_jump_held;
+
 	int i, oldphysent;
 	frame_t *from = NULL, *to;
 	qbool angles_lerp = false;
@@ -378,6 +380,9 @@ void CL_PredictMove (qbool physframe) {
 		VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
 		cl.onground = pmove.onground;
 		cl.waterlevel = pmove.waterlevel;
+		em_touch_wall = pmove.touch_wall;
+		em_jump_held = pmove.jump_held;
+
 		check_standing_on_entity();
 	}
 
@@ -412,17 +417,18 @@ void CL_PredictMove (qbool physframe) {
 		VectorMA (pstate->origin, -cam_dist.value, fw, cl.simorg);
 	}
 #endif	// JSS_CAM
-	
+
 }
 
 void CL_InitPrediction (void) {
+	extern cvar_t cl_easymove, cl_autohop;
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register(&cl_nopred);
 	Cvar_Register(&cl_pushlatency);
 
 	Cvar_ResetCurrentGroup();
 
-#ifdef JSS_CAM	
+#ifdef JSS_CAM
 	Cvar_SetCurrentGroup(CVAR_GROUP_SPECTATOR);
 	Cvar_Register(&cam_thirdperson);
 	Cvar_Register(&cam_dist);
@@ -430,5 +436,6 @@ void CL_InitPrediction (void) {
 	Cvar_Register(&cam_lockpos);
 	Cvar_ResetCurrentGroup();
 #endif
+	Cvar_Register(&cl_easymove);
+	Cvar_Register(&cl_autohop);
 }
- 

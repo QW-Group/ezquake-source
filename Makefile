@@ -401,6 +401,7 @@ OBJS_c := \
     cl_cmd.o \
     cl_demo.o \
     cl_nqdemo.o \
+    cl_easymove.o \
     cl_ents.o \
     cl_input.o \
     cl_main.o \

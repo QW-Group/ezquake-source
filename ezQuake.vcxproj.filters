@@ -104,6 +104,9 @@
     <ClCompile Include="cl_demo.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cl_easymove.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="cl_ents.c">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -897,6 +897,7 @@ int MakeChar(int i)
 	return i;
 }
 
+extern void CL_EasyMove(usercmd_t *cmd);
 void CL_FinishMove(usercmd_t *cmd)
 {
 	int i, ms;
@@ -939,6 +940,8 @@ void CL_FinishMove(usercmd_t *cmd)
 	cmd->msec = ms;
 
 	VectorCopy (cl.viewangles, cmd->angles);
+
+	CL_EasyMove(cmd);
 
 	if (!cl.spectator && CL_INPUT_WEAPONHIDE_DUE_TO_DEATH(cl.stats[STAT_HEALTH])) {
 		cl.weapon_order[0] = in_next_impulse = (cl_weaponhide_axe.integer ? 1 : 2);
@@ -1382,7 +1385,7 @@ void CL_InitInput(void)
 	Cvar_Register(&lookstrafe);
 	Cvar_Register(&sensitivity);
 	Cvar_Register(&freelook);
-	
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_MENU);
 	Cvar_Register(&cursor_sensitivity);
 
@@ -1431,4 +1434,3 @@ void onchange_pext_serversideweapon(cvar_t* var, char* value, qbool* cancel)
 {
 	cl.weapon_order_sequence_set = cls.netchan.outgoing_sequence;
 }
-

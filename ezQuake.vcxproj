@@ -1052,6 +1052,7 @@ msversion.bat</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='rls-all|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="cl_easymove.c" />
     <ClCompile Include="cl_ents.c" />
     <ClCompile Include="cl_input.c" />
     <ClCompile Include="cl_main.c">
