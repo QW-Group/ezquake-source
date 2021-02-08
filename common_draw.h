@@ -74,6 +74,4 @@ extern int *gameclockoffset;  // hud_gameclock time offset in seconds
 void SCR_DrawWadString(int x, int y, float scale, const char *t);
 void SCR_HUD_DrawBar(int direction, int value, float max_value, byte *color, int x, int y, int width, int height);
 
-void CL_RemovePrefixFromName(int player);
-
 #endif  // __COMMON_DRAW__H__

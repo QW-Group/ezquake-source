@@ -1257,4 +1257,7 @@ void Dev_TextureList(void);
 int IN_BestWeapon(qbool rendering_only);
 int IN_BestWeaponReal(qbool rendering_only);
 
+// hud_common.c
+void CL_RemovePrefixFromName(int player);
+
 #endif // EZQUAKE_CLIENT_HEADER
