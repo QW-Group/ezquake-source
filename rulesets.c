@@ -35,16 +35,18 @@ typedef struct rulesetDef_s {
 	qbool restrictParticles;
 	qbool restrictSound;
 	qbool restrictLogging;
+	qbool restrictRollAngle;
 } rulesetDef_t;
 
 static rulesetDef_t rulesetDef = {
-	rs_default,
-	72.0,
-	false,
-	false,
-	false,
-	false,
-	false
+	rs_default,    // ruleset
+	72.0,          // maxfps
+	false,         // restrict triggers
+	false,         // restrict /packet command
+	false,         // restrict particles
+	false,         // restrict sound
+	false,         // restrict logging
+	false          // restrict rollangle
 };
 
 cvar_t ruleset = {"ruleset", "default", 0, Rulesets_OnChange_ruleset};
@@ -237,6 +239,7 @@ static void Rulesets_Smackdown(qbool enable)
 		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
 		rulesetDef.restrictParticles = true;
 		rulesetDef.restrictLogging = true;
+		rulesetDef.restrictRollAngle = true;
 		rulesetDef.ruleset = rs_smackdown;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
@@ -250,6 +253,7 @@ static void Rulesets_Smackdown(qbool enable)
 		rulesetDef.restrictPacket = false;
 		rulesetDef.restrictParticles = false;
 		rulesetDef.restrictLogging = false;
+		rulesetDef.restrictRollAngle = false;
 		rulesetDef.ruleset = rs_default;
 	}
 }
@@ -290,6 +294,7 @@ static void Rulesets_Qcon(qbool enable)
 		rulesetDef.restrictParticles = true;
 		rulesetDef.restrictSound = true;
 		rulesetDef.restrictLogging = true;
+		rulesetDef.restrictRollAngle = true;
 		rulesetDef.ruleset = rs_qcon;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
@@ -304,6 +309,7 @@ static void Rulesets_Qcon(qbool enable)
 		rulesetDef.restrictParticles = false;
 		rulesetDef.restrictSound = false;
 		rulesetDef.restrictLogging = false;
+		rulesetDef.restrictRollAngle = false;
 		rulesetDef.ruleset = rs_default;
 	}
 }
@@ -340,6 +346,7 @@ static void Rulesets_Thunderdome(qbool enable)
 		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
 		rulesetDef.restrictParticles = false;
 		rulesetDef.restrictLogging = true;
+		rulesetDef.restrictRollAngle = true;
 		rulesetDef.ruleset = rs_thunderdome;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
@@ -353,6 +360,7 @@ static void Rulesets_Thunderdome(qbool enable)
 		rulesetDef.restrictPacket = false;
 		rulesetDef.restrictParticles = false;
 		rulesetDef.restrictLogging = false;
+		rulesetDef.restrictRollAngle = false;
 		rulesetDef.ruleset = rs_default;
 	}
 }
@@ -405,6 +413,7 @@ static void Rulesets_MTFL(qbool enable)
 			Cvar_SetFlags(limited_min_cvars[i].var, Cvar_GetFlags(limited_min_cvars[i].var) | CVAR_RULESET_MIN);
 		}
 
+		rulesetDef.restrictRollAngle = false;
 		rulesetDef.ruleset = rs_mtfl;
 		v_gamma.modified = true;
 	} else {
@@ -418,6 +427,7 @@ static void Rulesets_MTFL(qbool enable)
 			Cvar_SetFlags(limited_min_cvars[i].var, Cvar_GetFlags(limited_min_cvars[i].var) & ~CVAR_RULESET_MIN);
 
 		rulesetDef.ruleset = rs_default;
+		rulesetDef.restrictRollAngle = false;
 		v_gamma.modified = true;
 	}
 }
@@ -781,4 +791,15 @@ qbool Ruleset_CanLogConsole(void)
 qbool Ruleset_AllowNoHardwareGamma(void)
 {
 	return rulesetDef.ruleset != rs_mtfl;
+}
+
+float Ruleset_RollAngle(void)
+{
+	extern cvar_t cl_rollangle;
+
+	if (cls.demoplayback || cl.spectator || !rulesetDef.restrictRollAngle) {
+		return fabs(cl_rollangle.value);
+	}
+
+	return bound(0.0f, cl_rollangle.value, 5.0f);
 }

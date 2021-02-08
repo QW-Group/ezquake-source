@@ -78,3 +78,4 @@ qbool Rulesets_FullbrightModel(struct model_s* model, qbool local_singleplayer_g
 const char* Ruleset_BlockPlayerCountMacros(void);
 
 qbool Ruleset_CanLogConsole(void);
+float Ruleset_RollAngle(void);

@@ -78,11 +78,12 @@
 ### Ruleset-related changes
 
 - `/gl_outline` now allowed in ruleset `thunderdome` (requested by VVD)
-- `/vid_hwgammacontrol` is now forced on when using ruleset `mtfl` (3.0 bug that this was removed)
 - `/enemyforceskins` descriptions in `f_ruleset` and `f_skins` responses has been clarified to specify individuals will be identifiable (reported by Ake_Vader)
 - `/enemyforceskins` cannot be changed during match (old)
-- sign of value movement speed cvars is ignored (old - used to create `/cl_idrive`-like movement scripts)
+- `/cl_rollangle` is now limited to a maximum of 5 when using rulesets `smackdown`, `qcon` & `thunderdome` (requested by VVD)
 - `/gl_outline` changed to render by projecting backfaces away by surface normal (rather than lines) - to be tested
+- `/vid_hwgammacontrol` is now forced on when using ruleset `mtfl` (3.0 bug that this was removed)
+- sign of value movement speed cvars is ignored (old - used to create `/cl_idrive`-like movement scripts)
 
 ### Debugging protocol changes (weapon scripts)
 

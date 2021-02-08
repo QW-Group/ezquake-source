@@ -906,7 +906,7 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("View Size (fov)", scr_fov, 40, 140, 2),
 	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 30, 2),
+	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 10, 1),
 	ADDSET_NUMBER	("Rollspeed", cl_rollspeed, 0, 30, 2),
 	ADDSET_BOOL		("Gun Kick", v_gunkick),
 	ADDSET_NUMBER	("Kick Pitch", v_kickpitch, 0, 10, 0.5),

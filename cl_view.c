@@ -111,7 +111,7 @@ float V_CalcRoll (vec3_t angles, vec3_t velocity) {
 	sign = side < 0 ? -1 : 1;
 	side = fabs(side);
 
-	side = (side < cl_rollspeed.value) ? side * cl_rollangle.value / cl_rollspeed.value : cl_rollangle.value;
+	side = (side < cl_rollspeed.value) ? side * Ruleset_RollAngle() / cl_rollspeed.value : Ruleset_RollAngle();
 
 	if (side > 45)
 		side = 45;
@@ -758,7 +758,7 @@ void V_CalcViewRoll (void) {
 	float side, adjspeed;
 
 	side = V_CalcRoll (cl.simangles, cl.simvel);
-	adjspeed = cl_rollalpha.value * bound (2, fabs(cl_rollangle.value), 45);
+	adjspeed = cl_rollalpha.value * bound (2, Ruleset_RollAngle(), 45);
 	if (side > cl.rollangle) {
 		cl.rollangle += cls.frametime * adjspeed;
 		if (cl.rollangle > side)
