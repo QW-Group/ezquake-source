@@ -829,15 +829,15 @@ void SV_MVDEmbedInfo_f(void)
 
 	Con_Printf("Embedding (%s):\n", path);
 
-	// embed in .mvd/qtv
-	{
+	// embed in .mvd/qtv (sanity check limits)
+	if (sz < 2 * 1024 * 1024) {
 		mvdhidden_block_header_t header;
 		byte* data = buf;
 		short block_number = 1;
 
 		while (sz > 0) {
 			int prefix_length = sizeof_mvdhidden_block_header_t_range0 + sizeof(block_number);
-			int length = min(sz + prefix_length, MAX_MVD_SIZE);
+			int length = (int)min(sz + prefix_length, MAX_MVD_SIZE);
 
 			if (MVDWrite_HiddenBlockBegin(length)) {
 				length -= prefix_length;

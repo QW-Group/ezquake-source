@@ -4244,7 +4244,6 @@ static void CL_ParseDemoWeaponInstruction(int size)
 
 	byte playernum;
 	byte flags;
-	int sequence_set;
 	int mode;
 	byte weaponlist[10];
 
