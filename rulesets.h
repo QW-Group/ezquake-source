@@ -51,6 +51,7 @@ typedef struct rulesetDef_s {
 	qbool restrictPacket;
 	qbool restrictParticles;
 	qbool restrictSound;
+	qbool restrictRollAngle;
 } rulesetDef_t;
 
 void  Rulesets_Init(void);
@@ -78,3 +79,5 @@ void Rulesets_OnChange_allow_scripts (cvar_t *var, char *value, qbool *cancel);
 void Rulesets_OnChange_cl_fakeshaft (cvar_t *var, char *value, qbool *cancel);
 void Rulesets_OnChange_cl_delay_packet(cvar_t *var, char *value, qbool *cancel);
 void Rulesets_OnChange_cl_iDrive(cvar_t *var, char *value, qbool *cancel);
+
+float Ruleset_RollAngle(void);
