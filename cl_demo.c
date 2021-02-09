@@ -841,6 +841,10 @@ static void CL_WriteStartupData (void)
 	CL_WriteStartupDemoMessage (&buf, seq++);
 
 	CL_WriteSetDemoMessage();
+
+	for (i = 0; i < sizeof(cl.frames) / sizeof(cl.frames[0]); ++i) {
+		cl.frames[i].in_qwd = false;
+	}
 }
 
 //=========================================================
@@ -2358,8 +2362,9 @@ void CL_Record_f (void)
 			}
 
 			// Stop any recording in progress.
-			if (cls.demorecording)
+			if (cls.demorecording) {
 				CL_Stop_f();
+			}
 
 			// Make sure the filename doesn't contain any invalid characters.
 			if (!Util_Is_Valid_Filename(Cmd_Argv(1)))
@@ -2384,8 +2389,9 @@ void CL_Record_f (void)
 			cls.demorecording = true;
 
 			// If we're active, write startup data right away.
-			if (cls.state == ca_active)
+			if (cls.state == ca_active) {
 				CL_WriteStartupData();
+			}
 
 			// Save the demoname for later use.
 			strlcpy(demoname, nameext, sizeof(demoname));
