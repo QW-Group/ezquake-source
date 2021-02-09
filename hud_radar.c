@@ -22,7 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "hud.h"
 #include "gl_model.h"
 #include "image.h"
+#if defined(WITH_PNG)
 #include <png.h>
+#endif
 #include "sbar.h"
 #include "r_texture.h"
 #include "r_renderer.h"

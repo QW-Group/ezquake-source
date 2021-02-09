@@ -21,7 +21,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef _IMAGE_H
 
 #define _IMAGE_H
-#include <png.h>
 
 #if defined(WITH_PNG) && !defined(WITH_ZLIB)
 #error WITH_PNG requires WITH_ZLIB
@@ -33,6 +32,9 @@ void Image_Resample (void *indata, int inwidth, int inheight,
 					 void *outdata, int outwidth, int outheight, int bpp, int quality);
 void Image_MipReduce (const byte *in, byte *out, int *width, int *height, int bpp);
 
+#if defined(WITH_PNG)
+#include <png.h>
+
 typedef struct
 {
 	byte *data;
@@ -41,11 +43,13 @@ typedef struct
 } png_data;
 
 png_textp Image_LoadPNG_Comments (char *filename, int *text_count);
+png_data *Image_LoadPNG_All (vfsfile_t *vin, const char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height);
+#endif
+
 byte *Image_LoadPNG (vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
 byte *Image_LoadTGA (vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
 byte *Image_LoadPCX (vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
 byte *Image_LoadJPEG(vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
-png_data *Image_LoadPNG_All (vfsfile_t *vin, const char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height);
 // this does't load 32bit pcx, just convert 8bit color buffer to 32bit buffer, so we can make from this texture
 byte *Image_LoadPCX_As32Bit (vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);
 
