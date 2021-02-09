@@ -97,8 +97,8 @@ void QTV_Init(void);
 
 #define		dem_mask	(7)
 
-int			ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms);
-int			ConsistantMVDData(unsigned char *buffer, int remaining);
+int			ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms, int max_packets);
+int			ConsistantMVDData(unsigned char *buffer, int remaining, int max_packets);
 
 //======================================
 // qtv clc list

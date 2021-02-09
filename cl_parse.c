@@ -3583,15 +3583,15 @@ void CL_ParseServerMessage (void)
 						break;
 					}
 
-					if (cls.mvdplayback == true) // MVD playback, but not QTV stream.
-					{
-						extern	int		pb_cnt;
-
+					if (cls.mvdplayback == MVD_FILE_PLAYBACK) {
+						// MVD playback, but not QTV stream.
 						// We still have some data, so lets try ignore disconnect since it probably multy map MVD.
-						if (pb_cnt > 0)
-						{
-							if (net_message.cursize > msg_readcount && strcmp(s = MSG_ReadString(), "EndOfDemo"))
+						int ms;
+
+						if (Demo_BufferSize(&ms)) {
+							if (net_message.cursize > msg_readcount && strcmp(s = MSG_ReadString(), "EndOfDemo")) {
 								Com_Printf("WARNING: Non-standard disconnect message in MVD '%s'\n", s);
+							}
 
 							Com_DPrintf("Ignoring Server disconnect\n");
 							break;

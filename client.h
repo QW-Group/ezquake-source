@@ -49,7 +49,8 @@ typedef struct
 extern cvar_t cl_demospeed;
 extern cvar_t cl_demoteamplay;
 
-#define QTV_PLAYBACK		2			// cls.mvdplayback == QTV_PLAYBACK if QTV playback
+#define MVD_FILE_PLAYBACK   1
+#define QTV_PLAYBACK        2           // cls.mvdplayback == QTV_PLAYBACK if QTV playback
 #define ISPAUSED (cl.paused || (!cl_demospeed.value && cls.demoplayback && cls.mvdplayback != QTV_PLAYBACK && !cls.timedemo))
 #define	MAX_PROJECTILES	32
 
@@ -911,6 +912,9 @@ void CL_AutoRecord_CancelMatch(void);
 void CL_AutoRecord_StartMatch(char *demoname);
 qbool CL_AutoRecord_Status(void);
 void CL_AutoRecord_SaveMatch(void);
+
+qbool SCR_QTVBufferToBeDrawn(int options);
+int Demo_BufferSize(int* ms);
 
 extern double demostarttime;
 extern double nextdemotime, olddemotime;

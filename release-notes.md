@@ -112,6 +112,7 @@
 - `/cl_window_caption 2` - window title will be 'ezQuake' and will not change with connection status
 - `/cl_username` & `/authenticate` to support optional logins via badplace.eu (see [guide](https://github.com/ezQuake/ezquake-source/wiki/Authentication))
 - `/demo_format` supported in non-Windows builds
+- `/demo_jump` during demo playback should now be faster (#453)
 - `/enemyforceskins 1` will search for player names in lower case (#345)
 - `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
 ` `/gl_mipmap_viewmodels` removed, replaced with `/gl_texturemode_viewmodels`

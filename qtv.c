@@ -95,20 +95,19 @@ char *QTV_CL_HEADER(float qtv_ver, int qtv_ezquake_ext)
 // ripped from FTEQTV, original name is SV_ConsistantMVDData
 // return non zero if we have at least one message
 // ms - will contain ms
-int ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms)
+int ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms, int max_messages)
 {
 	qbool warn = true;
 	int lengthofs;
 	int length;
 	int available = 0;
 
-	if (ms)
+	if (ms) {
 		ms[0] = 0;
+	}
 
-	while( 1 )
-	{
-		if (remaining < 2)
-		{
+	while ( 1 ) {
+		if (remaining < 2) {
 			return available;
 		}
 
@@ -127,15 +126,13 @@ int ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms)
 			break;
 		}
 
-		if (lengthofs+4 > remaining)
-		{
+		if (lengthofs+4 > remaining) {
 			return available;
 		}
 
 		length = (buffer[lengthofs]<<0) + (buffer[lengthofs+1]<<8) + (buffer[lengthofs+2]<<16) + (buffer[lengthofs+3]<<24);
 
-		if (length > MAX_MVD_SIZE && warn)
-		{
+		if (length > MAX_MVD_SIZE && warn) {
 			Com_Printf("Corrupt mvd, length: %d\n", length);
 			warn = false;
 		}
@@ -143,23 +140,27 @@ int ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms)
 		length += lengthofs+4;
 
 gottotallength:
-		if (remaining < length)
-		{
+		if (remaining < length) {
 			return available;
 		}
 
-		if (ms)
+		if (ms) {
 			ms[0] += buffer[0];
+		}
 			
 		remaining -= length;
 		available += length;
 		buffer    += length;
+
+		if (max_messages && available >= max_messages) {
+			return available;
+		}
 	}
 }
 
-int ConsistantMVDData(unsigned char *buffer, int remaining)
+int ConsistantMVDData(unsigned char *buffer, int remaining, int max_packets)
 {
-	return ConsistantMVDDataEx(buffer, remaining, NULL);
+	return ConsistantMVDDataEx(buffer, remaining, NULL, max_packets);
 }
 
 //=================================================
@@ -566,11 +567,9 @@ void QtvStartDelay_f(void)
 
 void QtvEndDelay_f(void)
 {
-	extern unsigned char pb_buf[];
-	extern int	pb_cnt;
 	int ms;
 
-	if (ConsistantMVDDataEx(pb_buf, pb_cnt, &ms)) {
+	if (Demo_BufferSize(&ms)) {
 		Cvar_SetValue(&qtv_buffertime, ms / 1000.0f);
 		Con_Printf("QTV delay set to %3.1fs.\n", qtv_buffertime.value);
 	}
