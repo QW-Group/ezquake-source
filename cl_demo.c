@@ -1612,11 +1612,12 @@ int CL_Demo_Read(void *buf, int size, qbool peek)
 
 	if (FSMMAP_IsMemoryMapped(playbackfile)) {
 		vfserrno_t err;
+		unsigned long pos = VFS_TELL(playbackfile);
 
 		need = VFS_READ(playbackfile, buf, size, &err);
 
 		if (peek) {
-			VFS_SEEK(playbackfile, -size, SEEK_CUR);
+			VFS_SEEK(playbackfile, pos, SEEK_SET);
 		}
 	}
 	else {
