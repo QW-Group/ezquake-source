@@ -172,7 +172,7 @@ void GL_TexSubImage3D(
 {
 	GLenum target = GL_TextureTargetFromReference(texture);
 
-	R_TraceLogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", unit - GL_TEXTURE0, GL_TextureNameFromReference(texture));
+	R_TraceLogAPICall("GL_TexSubImage3D(unit=GL_TEXTURE%d, texture=%u)", unit, GL_TextureNameFromReference(texture));
 	if (target != GL_TEXTURE_CUBE_MAP && GL_Available(glTextureSubImage3D)) {
 		GL_Procedure(glTextureSubImage3D, GL_TextureNameFromReference(texture), level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels);
 	}
