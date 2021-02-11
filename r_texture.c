@@ -487,6 +487,7 @@ void R_SetTextureArraySize(texture_ref tex, int width, int height, int depth, in
 	gltextures[tex.index].texture_width = width;
 	gltextures[tex.index].texture_height = height;
 	gltextures[tex.index].depth = depth;
+	gltextures[tex.index].is_array = true;
 }
 
 // We could flag the textures as they're created and then move all 2d>3d to this module?
