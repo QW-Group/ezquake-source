@@ -492,12 +492,13 @@ void R_SetTextureArraySize(texture_ref tex, int width, int height, int depth, in
 
 // We could flag the textures as they're created and then move all 2d>3d to this module?
 // FIXME: Ensure not called in immediate-mode OpenGL
-texture_ref R_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth)
+texture_ref R_CreateTextureArray(const char* identifier, int width, int height, int depth, int mode)
 {
 	qbool new_texture = false;
-	gltexture_t* slot = R_TextureAllocateSlot(texture_type_2d_array, identifier, width, height, *depth, 4, mode | TEX_NOSCALE, 0, &new_texture);
+	gltexture_t* slot;
 	texture_ref gl_texturenum;
 
+	slot = R_TextureAllocateSlot(texture_type_2d_array, identifier, width, height, depth, 4, mode | TEX_NOSCALE, 0, &new_texture);
 	if (!slot) {
 		return invalid_texture_reference;
 	}
@@ -510,15 +511,16 @@ texture_ref R_CreateTextureArray(const char* identifier, int width, int height, 
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
-		renderer.TextureUnitBind(0, gl_texturenum);
-		if (GLM_TextureAllocateArrayStorage(slot, minimum_depth, depth)) {
+		texture_ref tex = slot->reference;
+
+		renderer.TextureUnitBind(0, tex);
+		if (GLM_TextureAllocateArrayStorage(slot)) {
 			R_TextureUtil_SetFiltering(slot->reference);
+			return tex;
 		}
-		else {
-			texture_ref tex = slot->reference;
-			R_DeleteTexture(&tex);
-			return null_texture_reference;
-		}
+
+		R_DeleteTexture(&tex);
+		return null_texture_reference;
 	}
 #endif
 #ifdef RENDERER_OPTION_VULKAN

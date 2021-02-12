@@ -234,37 +234,32 @@ void GL_AllocateStorage(gltexture_t* texture)
 }
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
-qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot, int minimum_depth, int* depth)
+qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot)
 {
 	GLenum error;
 
-	while (*depth >= minimum_depth) {
-		R_TraceAPI("Allocating %d x %d x %d, %d miplevels\n", slot->texture_width, slot->texture_height, *depth, slot->miplevels);
-		error = GL_TexStorage3D(GL_TEXTURE0, slot->reference, slot->miplevels, GL_StorageFormat(TEX_ALPHA), slot->texture_width, slot->texture_height, *depth, false);
+	R_TraceAPI("Allocating %d x %d x %d, %d miplevels\n", slot->texture_width, slot->texture_height, slot->depth, slot->miplevels);
+	GL_ProcessErrors("GLM_TextureAllocateArrayStorage flush");
+	error = GL_TexStorage3D(GL_TEXTURE0, slot->reference, slot->miplevels, GL_StorageFormat(TEX_ALPHA), slot->texture_width, slot->texture_height, slot->depth, false);
 
-		if (error == GL_OUT_OF_MEMORY && *depth > 2) {
-			*depth /= 2;
-			R_TraceAPI("!!ERROR Array allocation failed (memory), reducing size to %d...\n", *depth);
-			continue;
-		}
-		else if (error != GL_NO_ERROR) {
+	if (error != GL_NO_ERROR) {
 #ifdef WITH_RENDERING_TRACE
-			int array_width, array_height, array_depth;
-			array_width = R_TextureWidth(slot->reference);
-			array_height = R_TextureHeight(slot->reference);
-			array_depth = R_TextureDepth(slot->reference);
+		int array_width, array_height, array_depth;
 
-			R_TraceAPI("!!ERROR Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, slot->miplevels, slot->texture_width, slot->texture_height, *depth);
-			R_TraceAPI(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
+		array_width = R_TextureWidth(slot->reference);
+		array_height = R_TextureHeight(slot->reference);
+		array_depth = R_TextureDepth(slot->reference);
+
+		R_TraceAPI("!!ERROR Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, slot->miplevels, slot->texture_width, slot->texture_height, slot->depth);
+		R_TraceAPI(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
 #endif
-			return false;
-		}
-		break;
+		return false;
 	}
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", slot->reference.index, slot->texture_width, slot->texture_height, slot->texture_width * slot->texture_height * slot->depth * (slot->texmode & TEX_ALPHA ? 4 : 3), slot->identifier);
 #endif
+
 	return true;
 }
 #endif // RENDERER_OPTION_MODERN_OPENGL

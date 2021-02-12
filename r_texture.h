@@ -103,7 +103,7 @@ texture_ref R_LoadTexture(const char *identifier, int width, int height, byte *d
 texture_ref R_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
 texture_ref R_LoadTexturePixels(byte *data, const char *identifier, int width, int height, int mode);
 texture_ref R_LoadTextureImage(const char *filename, const char *identifier, int matchwidth, int matchheight, int mode);
-texture_ref R_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth);
+texture_ref R_CreateTextureArray(const char* identifier, int width, int height, int depth, int mode);
 texture_ref R_CreateCubeMap(const char* identifier, int width, int height, int mode);
 void R_DeleteTextureArray(texture_ref* texture);
 void R_DeleteCubeMap(texture_ref* texture);

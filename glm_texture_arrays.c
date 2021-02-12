@@ -442,10 +442,102 @@ static void GL_ImportTexturesForModel(model_t* mod)
 	}
 }
 
+static int GLM_FindPotentialSizes(int i, int* potential_sizes, int flagged_type, qbool maximise, int* req_width, int* req_height)
+{
+	int size_index = 0;
+	int j;
+	int width = R_TextureWidth(texture_flags[i].ref);
+	int height = R_TextureHeight(texture_flags[i].ref);
+
+	potential_sizes[size_index++] = 1 + texture_flags[i].subsequent;
+
+	// Count how many textures of the same size we have
+	for (j = i + 1; j < MAX_GLTEXTURES; ++j) {
+		if (!(texture_flags[j].flags & (1 << flagged_type))) {
+			break;
+		}
+
+		if (maximise) {
+			width = max(width, R_TextureWidth(texture_flags[j].ref));
+			height = max(height, R_TextureHeight(texture_flags[j].ref));
+		}
+		else if (R_TextureWidth(texture_flags[j].ref) != width || R_TextureHeight(texture_flags[j].ref) != height) {
+			break;
+		}
+
+		potential_sizes[size_index] = potential_sizes[size_index - 1] + 1 + texture_flags[j].subsequent;
+		++size_index;
+	}
+
+	*req_width = width;
+	*req_height = height;
+	return size_index;
+}
+
+static void GLM_CopyTexturesToArray(texture_ref array_ref, int flagged_type, int min_index, int max_index, int width, int height)
+{
+	int array_index = 0;
+	int k;
+
+	// texture created ok
+	if (flagged_type == TEXTURETYPES_SPRITES) {
+		renderer.TextureWrapModeClamp(array_ref);
+	}
+
+	// Copy the 2D textures across
+	for (k = min_index; k <= max_index; ++k) {
+		texture_ref ref_2d = texture_flags[k].ref;
+
+		// TODO: compression: flag as ANYSIZE and set scale_s/scale_t accordingly
+		GL_AddTextureToArray(array_ref, array_index, ref_2d, false);
+		texture_flags[k].array_ref[flagged_type].ref = array_ref;
+		texture_flags[k].array_ref[flagged_type].index = array_index;
+		texture_flags[k].array_ref[flagged_type].scale_s = (R_TextureWidth(ref_2d) * 1.0f) / width;
+		texture_flags[k].array_ref[flagged_type].scale_t = (R_TextureHeight(ref_2d) * 1.0f) / height;
+
+		// (subsequent are the luma textures on brush models)
+		array_index += 1 + texture_flags[k].subsequent;
+	}
+}
+
+static int GLM_CreateArrayFromPotentialSizes(int i, int* potential_sizes, int size_index_max, qbool return_on_failure, int width, int height)
+{
+	int size_attempt, depth;
+
+	const char* textureTypeNames[] = {
+		"aliasmodel",
+		"brushmodel",
+		"worldmodel",
+		"sprites",
+	};
+
+	for (size_attempt = size_index_max - 1; size_attempt >= 0; --size_attempt) {
+		// create array of desired size
+		char name[64];
+		texture_ref array_ref;
+
+		R_TextureReferenceInvalidate(array_ref);
+		depth = potential_sizes[size_attempt];
+		snprintf(name, sizeof(name), "%s_%d[%dx%dx%d]", textureTypeNames[flagged_type], i, width, height, depth);
+
+		array_ref = R_CreateTextureArray(name, width, height, depth, TEX_MIPMAP | TEX_ALPHA);
+		if (R_TextureReferenceIsValid(array_ref)) {
+			GLM_CopyTexturesToArray(array_ref, flagged_type, i, i + size_attempt, width, height);
+			return size_attempt;
+		}
+	}
+
+	if (!return_on_failure) {
+		Sys_Error("Failed to create array size %dx%dx%d\n", width, height, potential_sizes[size_index_max - 1]);
+	}
+	return -1;
+}
+
 // Called from R_NewMap
 void GLM_BuildCommonTextureArrays(qbool vid_restart)
 {
 	int i;
+	int potential_sizes[MAX_GLTEXTURES];
 
 	GL_DeleteExistingTextureArrays(!vid_restart);
 	R_ClearModelTextureData();
@@ -491,82 +583,22 @@ void GLM_BuildCommonTextureArrays(qbool vid_restart)
 		qsort(texture_flags, MAX_GLTEXTURES, sizeof(texture_flags[0]), SortFlaggedTextures);
 
 		for (i = 0; i < MAX_GLTEXTURES; ++i) {
-			int same_size = 0;
-			int width, height;
-			int j;
-			int depth;
+			int size_index_max = 0;
+			int extra_slots_added;
+			int req_width, req_height;
 
 			if (!(texture_flags[i].flags & (1 << flagged_type))) {
 				continue;
 			}
 
-			width = R_TextureWidth(texture_flags[i].ref);
-			height = R_TextureHeight(texture_flags[i].ref);
-			same_size = 1 + texture_flags[i].subsequent;
-
-			// Count how many textures of the same size we have
-			for (j = i + 1; j < MAX_GLTEXTURES; ++j) {
-				if (!(texture_flags[j].flags & (1 << flagged_type))) {
-					break;
-				}
-
-				if (flagged_type == TEXTURETYPES_SPRITES) {
-					width = max(width, R_TextureWidth(texture_flags[j].ref));
-					height = max(height, R_TextureHeight(texture_flags[j].ref));
-				}
-				else if (R_TextureWidth(texture_flags[j].ref) != width || R_TextureHeight(texture_flags[j].ref) != height) {
-					break;
-				}
-
-				same_size += 1 + texture_flags[j].subsequent;
+			size_index_max = GLM_FindPotentialSizes(i, potential_sizes, flagged_type, flagged_type == TEXTURETYPES_SPRITES, &req_width, &req_height);
+			extra_slots_added = GLM_CreateArrayFromPotentialSizes(i, potential_sizes, size_index_max, flagged_type == TEXTURETYPES_SPRITES, req_width, req_height);
+			if (extra_slots_added == -1) {
+				// try again without maximising
+				GLM_FindPotentialSizes(i, potential_sizes, flagged_type, false, &req_width, &req_height);
+				extra_slots_added = GLM_CreateArrayFromPotentialSizes(i, potential_sizes, size_index_max, false, req_width, req_height);
 			}
-
-			// Create an array of that size
-			while (same_size > 0) {
-				texture_ref array_ref;
-				int index = 0;
-				int k;
-				char name[64];
-				const char* textureTypeNames[] = {
-					"aliasmodel",
-					"brushmodel",
-					"worldmodel",
-					"sprites",
-				};
-
-				snprintf(name, sizeof(name), "%s[%dx%dx%d]", textureTypeNames[flagged_type], width, height, same_size);
-
-				depth = same_size;
-				array_ref = R_CreateTextureArray(name, width, height, &depth, TEX_MIPMAP | TEX_ALPHA, 1);
-				if (!R_TextureReferenceIsValid(array_ref)) {
-					Sys_Error("Failed to create array size %dx%dx%d\n", width, height, depth);
-				}
-
-				if (flagged_type == TEXTURETYPES_SPRITES) {
-					renderer.TextureWrapModeClamp(array_ref);
-				}
-
-				// Copy the 2D textures across
-				for (k = i; k < j; ++k) {
-					texture_ref ref_2d = texture_flags[k].ref;
-
-					// TODO: compression: flag as ANYSIZE and set scale_s/scale_t accordingly
-					GL_AddTextureToArray(array_ref, index, ref_2d, false);
-					texture_flags[k].array_ref[flagged_type].ref = array_ref;
-					texture_flags[k].array_ref[flagged_type].index = index++;
-					texture_flags[k].array_ref[flagged_type].scale_s = (R_TextureWidth(ref_2d) * 1.0f) / width;
-					texture_flags[k].array_ref[flagged_type].scale_t = (R_TextureHeight(ref_2d) * 1.0f) / height;
-
-					// Skip these and fill them in later
-					index += texture_flags[k].subsequent;
-				}
-
-				//R_GenerateMipmapsIfNeeded(array_ref);
-				same_size -= depth;
-				i = j;
-			}
-
-			i--;
+			i += extra_slots_added;
 		}
 	}
 

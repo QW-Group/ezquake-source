@@ -33,7 +33,7 @@ void GL_UploadTexture(texture_ref texture, int mode, int width, int height, byte
 void GL_ReplaceSubImageRGBA(texture_ref ref, int offsetx, int offsety, int width, int height, byte* buffer);
 
 // Internal
-qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot, int minimum_depth, int* depth);
+qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot);
 void GL_AllocateStorage(gltexture_t* texture);
 void GL_AllocateTextureNames(gltexture_t* glt);
 
