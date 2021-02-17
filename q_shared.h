@@ -104,6 +104,8 @@ typedef struct sizebuf_s {
 	sizebuf_overflow_handler_func_t overflow_handler;
 } sizebuf_t;
 
+#define MSG_HasOverflowHandler(m) ((m)->overflow_handler != NULL)
+
 extern char *com_args_original;
 
 void SZ_Init(sizebuf_t *buf, byte *data, int length);
