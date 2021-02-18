@@ -141,7 +141,7 @@ char *Cmd_ArgsEx (tokenizecontext_t *ctx);
 char *Cmd_MakeArgsEx (tokenizecontext_t *ctx, int start);
 
 //Parses the given string into command line tokens.
-void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, char *text);
+void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, const char *text);
 
 int	Cmd_Argc (void);
 char *Cmd_Argv (int arg);
@@ -162,7 +162,7 @@ void Cmd_ExpandString (const char *data, char *dest);
 // Expands all $cvar or $macro expressions.
 // dest should point to a 1024-byte buffer
 
-void Cmd_TokenizeString (char *text);
+void Cmd_TokenizeString (const char *text);
 // Takes a null terminated string.  Does not need to be /n terminated.
 // breaks the string up into arg tokens.
 
