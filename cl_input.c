@@ -114,12 +114,28 @@ kbutton_t in_up, in_down;
 static int in_next_impulse;
 static qbool suppress_hide;
 
+// Over-writes weapon selection list
+// Called even if server-side weapon switching is enabled
+static void ForgetWeaponOrder(int impulse)
+{
+	cl.weapon_order[0] = impulse;
+
+	if (cl_weaponforgetorder.integer == 2) {
+		cl.weapon_order[1] = (cl_weaponhide_axe.integer ? 1 : 2);
+		cl.weapon_order[2] = 1;
+		cl.weapon_order[3] = 0;
+	}
+}
+
 static void SetNextImpulse(int impulse, qbool from_weapon_script, qbool set_best_weapon)
 {
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 	if (from_weapon_script && (cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) && cl_pext_serversideweapon.integer) {
 		in_next_impulse = 0;
 		suppress_hide = false;
+		if (set_best_weapon && cl_weaponforgetorder.integer) {
+			ForgetWeaponOrder(impulse);
+		}
 		return;
 	}
 #endif
@@ -127,16 +143,8 @@ static void SetNextImpulse(int impulse, qbool from_weapon_script, qbool set_best
 	suppress_hide = !from_weapon_script;
 	in_next_impulse = impulse;
 
-	if (set_best_weapon) {
-		if (cl_weaponforgetorder.integer) {
-			cl.weapon_order[0] = impulse;
-
-			if (cl_weaponforgetorder.integer == 2) {
-				cl.weapon_order[1] = (cl_weaponhide_axe.integer ? 1 : 2);
-				cl.weapon_order[2] = 1;
-				cl.weapon_order[3] = 0;
-			}
-		}
+	if (set_best_weapon && cl_weaponforgetorder.integer) {
+		ForgetWeaponOrder(impulse);
 	}
 }
 
