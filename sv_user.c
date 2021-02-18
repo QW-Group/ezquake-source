@@ -3952,13 +3952,13 @@ Sets wrank userinfo for mods to pick best weapon based on user's preferences
 static void SV_UserSetWeaponRank(client_t* cl, const char* new_wrank)
 {
 	char old_wrank[128] = { 0 };
-	strlcpy(old_wrank, Info_Get(&cl->_userinfo_ctx_, "wrank"), sizeof(old_wrank));
+	strlcpy(old_wrank, Info_Get(&cl->_userinfo_ctx_, "w_rank"), sizeof(old_wrank));
 	if (strcmp(old_wrank, new_wrank)) {
-		Info_Set(&cl->_userinfo_ctx_, "wrank", new_wrank);
-		ProcessUserInfoChange(cl, "wrank", old_wrank);
+		Info_Set(&cl->_userinfo_ctx_, "w_rank", new_wrank);
+		ProcessUserInfoChange(cl, "w_rank", old_wrank);
 
 		if (Info_Get(&cl->_userinfo_ctx_, "dev")[0] == '1') {
-			SV_ClientPrintf(cl, PRINT_HIGH, "Setting new wrank: %s\n", new_wrank);
+			SV_ClientPrintf(cl, PRINT_HIGH, "Setting new w_rank: %s\n", new_wrank);
 		}
 	}
 }
