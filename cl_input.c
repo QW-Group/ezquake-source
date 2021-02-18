@@ -1440,3 +1440,27 @@ void onchange_pext_serversideweapon(cvar_t* var, char* value, qbool* cancel)
 	cl.weapon_order_sequence_set = cls.netchan.outgoing_sequence;
 }
 
+void IN_ServerSideWeaponSelectionResponse(const char* s)
+{
+	if ((cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) && cl_pext_serversideweapon.integer && cl_weaponforgetorder.integer) {
+		int sequence_set, best_impulse;
+
+		Cmd_TokenizeString(s);
+
+		// expected args: <sequence-set> <best-weapon-impulse>
+		if (Cmd_Argc() < 2) {
+			return;
+		}
+
+		sequence_set = atoi(Cmd_Argv(0));
+		best_impulse = atoi(Cmd_Argv(1));
+
+		if (sequence_set == cl.weapon_order_sequence_set && best_impulse) {
+			Con_DPrintf("Confirmed best selection: %d vs %d\n", best_impulse, cl.weapon_order[0]);
+			cl.weapon_order[0] = best_impulse;
+		}
+		else if (sequence_set != cl.weapon_order_sequence_set) {
+			Con_DPrintf("Out of date response: %d vs %d\n", sequence_set, cl.weapon_order_sequence_set);
+		}
+	}
+}

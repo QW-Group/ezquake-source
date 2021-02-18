@@ -48,6 +48,8 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 
 int CL_LoginImageId(const char* name);
 
+void IN_ServerSideWeaponSelectionResponse(const char* s);
+
 #ifdef MVD_PEXT1_HIDDEN_MESSAGES
 static void CL_ParseAntilagPosition(int size);
 static void CL_ParseDemoInfo(int size);
@@ -3252,7 +3254,11 @@ void CL_ParseStufftext (void)
 			}
 		}
 	}
-
+	else if (!strncmp(s, "//mvdsv_ssw ", sizeof("//mvdsv_ssw ") - 1)) {
+		if (!cls.demoplayback && !cl.spectator) {
+			IN_ServerSideWeaponSelectionResponse(s + sizeof("//mvdsv_ssw ") - 1);
+		}
+	}
 	else
 	{
 		Cbuf_AddTextEx(&cbuf_svc, s);
