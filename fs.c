@@ -89,7 +89,7 @@ int fs_hash_files;
 cvar_t fs_cache = {"fs_cache", "1"};
 
 static void FS_CreatePathRelative(const char *pname, int relativeto);
-void FS_ForceToPure(char *str, char *crcs, int seed);
+void FS_ForceToPure(char *str, const char *crcs, int seed);
 int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
 void FS_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
 int FS_FileOpenRead (char *path, FILE **hndl);
@@ -2832,7 +2832,7 @@ void FS_AddHomeDirectory (char *dir, FS_Load_File_Types loadstuff)
 
 //space-seperate pk3 names followed by space-seperated crcs
 //note that we'll need to reorder and filter out files that don't match the crc.
-void FS_ForceToPure(char *str, char *crcs, int seed)
+void FS_ForceToPure(char *str, const char *crcs, int seed)
 {
 	//pure files are more important than non-pure.
 

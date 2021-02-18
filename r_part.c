@@ -197,7 +197,7 @@ void R_ReadPointFile_f(void)
 {
 	vfsfile_t *v;
 	char line[1024];
-	char *s;
+	const char *s;
 	vec3_t org;
 	int c;
 	qparticle_t *p;

@@ -159,7 +159,8 @@ void SV_SaveGame_f(void)
 
 void SV_LoadGame_f(void)
 {
-	char name[MAX_OSPATH], mapname[MAX_QPATH], str[32 * 1024], *start;
+	char name[MAX_OSPATH], mapname[MAX_QPATH], str[32 * 1024];
+	const char* start;
 	FILE *f;
 	float time, tfloat, spawn_parms[NUM_SPAWN_PARMS];
 	edict_t *ent;

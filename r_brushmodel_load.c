@@ -783,7 +783,7 @@ static void Mod_LoadMarksurfaces(model_t* loadmodel, lump_t* l, byte* mod_base)
 
 static void Mod_ParseWadsFromEntityLump(model_t* loadmodel, lump_t* l, byte* mod_base)
 {
-	char *data;
+	const char *data;
 	char *s, key[1024], value[1024];
 	int i, j, k;
 

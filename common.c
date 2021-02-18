@@ -462,7 +462,7 @@ com_tokentype_t com_tokentype;
 
 //Parse a token out of a string
 extern cvar_t cl_curlybraces;
-char *COM_Parse (char *data)
+const char *COM_Parse (const char *data)
 {
 	unsigned char c;
 	int len;

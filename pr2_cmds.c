@@ -32,8 +32,8 @@
 #define Cbuf_ExecuteEx(x) Cbuf_Execute()
 #endif
 
-char	*pr2_ent_data_ptr;
-vm_t	*sv_vm = NULL;
+const char*    pr2_ent_data_ptr;
+vm_t*          sv_vm = NULL;
 
 /*
 ============

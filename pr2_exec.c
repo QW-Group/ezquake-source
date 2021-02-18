@@ -279,7 +279,7 @@ void PR2_SetGlobalString(string_t* target, char* s)
 PR2_LoadEnts
 =================
 */
-extern char *pr2_ent_data_ptr;
+extern const char *pr2_ent_data_ptr;
 
 void PR2_LoadEnts(char *data)
 {
