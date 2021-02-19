@@ -142,8 +142,6 @@ void R_TextureFindIdentifierByReference(unsigned int ref, char* label, int label
 int R_TextureGetFlag(texture_ref ref);
 void R_TextureSetFlag(texture_ref ref, int mode);
 
-#ifdef DEBUG_MEMORY_ALLOCATIONS
 void R_SetTextureArraySize(texture_ref tex, int width, int height, int depth, int bpp);
-#endif
 
 #endif	// EZQUAKE_R_TEXTURE_H
