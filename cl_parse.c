@@ -4014,10 +4014,13 @@ void CL_ParseServerMessage (void)
 					else
 						cl.paused &= ~PAUSED_SERVER;
 
-					if (ISPAUSED)
+					if (ISPAUSED) {
 						CDAudio_Pause();
-					else
+						CL_StorePausePredictionLocations();
+					}
+					else {
 						CDAudio_Resume();
+					}
 					break;
 				}
 			case svc_qizmovoice:

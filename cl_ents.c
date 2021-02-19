@@ -49,6 +49,7 @@ static struct predicted_player {
 	qbool drawn;
 	vec3_t drawn_origin;
 	int msec;
+	float paused_sec;
 } predicted_players[MAX_CLIENTS];
 
 char *cl_modelnames[cl_num_modelindices];
@@ -1645,11 +1646,22 @@ static double CL_PlayerTime (void)
 	double current_time = (cls.demoplayback && !cls.mvdplayback) ? cls.demotime : cls.realtime;
 	double playertime = current_time - cls.latency + 0.02;
 
-	return min (playertime, current_time);
+	return min(playertime, current_time);
+}
+
+void CL_StorePausePredictionLocations(void)
+{
+	int i;
+	frame_t* frame = &cl.frames[cl.parsecount & UPDATE_MASK];
+	double playertime = CL_PlayerTime();
+
+	for (i = 0; i < MAX_CLIENTS; ++i) {
+		predicted_players[i].paused_sec = playertime - frame->playerstate[i].state_time;
+	}
 }
 
 // Create visible entities in the correct position for all current players
-void CL_LinkPlayers (void) 
+static void CL_LinkPlayers(void)
 {
 	int j, msec, i, flicker, oldphysent;
 	float *org;
@@ -1816,7 +1828,7 @@ void CL_LinkPlayers (void)
 		ent.angles[ROLL] = 4 * V_CalcRoll (ent.angles, state->velocity);
 
 		// only predict half the move to minimize overruns
-		msec = (cl_predict_half.value ? 500 : 1000) * (playertime - state->state_time);
+		msec = (cl_predict_half.value ? 500 : 1000) * (cl.paused ? predicted_players[j].paused_sec : (playertime - state->state_time));
 		if (msec <= 0 || !cl_predict_players.value || cls.mvdplayback) {
 			VectorCopy (state->origin, ent.origin);
 			VectorCopy(ent.origin, predicted_players[j].drawn_origin);
@@ -2108,7 +2120,7 @@ void CL_EmitEntities (void)
 		return;
 
 	CL_ClearScene ();
-	
+
 	if (cls.nqdemoplayback) {
 		NQD_LinkEntities();
 	}
