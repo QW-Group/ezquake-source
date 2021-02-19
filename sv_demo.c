@@ -163,9 +163,9 @@ void DestClose (mvddest_t *d, qbool destroyfiles)
 }
 
 //
-// compleate - just force flush for chached dests (dest->desttype == DEST_BUFFEREDFILE)
+// complete - just force flush for cached dests (dest->desttype == DEST_BUFFEREDFILE)
 //
-void DestFlush (qbool compleate)
+void DestFlush (qbool complete)
 {
 	int len;
 	mvddest_t *d, *t;
@@ -196,7 +196,7 @@ void DestFlush (qbool compleate)
 			break;
 
 		case DEST_BUFFEREDFILE:
-			if (d->cacheused + DEMO_FLUSH_CACHE_IF_LESS_THAN_THIS > d->maxcachesize || compleate)
+			if (d->cacheused + DEMO_FLUSH_CACHE_IF_LESS_THAN_THIS > d->maxcachesize || complete)
 			{
 				len = (int)fwrite(d->cache, 1, d->cacheused, d->file);
 				if (len != d->cacheused)

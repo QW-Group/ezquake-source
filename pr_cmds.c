@@ -916,7 +916,7 @@ float tokenize(string)
 
 void PF_tokenize (void)
 {
-	char *str;
+	const char *str;
 
 	str = G_STRING(OFS_PARM0);
 	Cmd_TokenizeStringEx(&pr1_tokencontext, str);
