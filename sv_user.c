@@ -1961,6 +1961,20 @@ static void Cmd_Kill_f (void)
 	PR_ClientKill();
 }
 
+static void SV_NotifyStreamsOfPause(void)
+{
+	if (sv.mvdrecording) {
+		sizebuf_t		msg;
+		byte			msg_buf[20];
+
+		SZ_InitEx(&msg, msg_buf, sizeof(msg_buf), true);
+		MSG_WriteByte(&msg, svc_setpause);
+		MSG_WriteByte(&msg, sv.paused ? 1 : 0);
+
+		DemoWriteQTV(&msg);
+	}
+}
+
 /*
 ==================
 SV_TogglePause
@@ -1992,6 +2006,9 @@ void SV_TogglePause (const char *msg, int bit)
 
 		cl->lastservertimeupdate = -99; // force an update to be sent
 	}
+
+	// send notification to all streams
+	SV_NotifyStreamsOfPause();
 }
 
 
