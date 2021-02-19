@@ -1336,21 +1336,24 @@ void SV_SendDemoMessage(void)
 		cls |= 1 << i;
 	}
 
-	// if no players, use idle fps
-	if (cls)
+	// if no players or paused, use idle fps
+	if (cls && !sv.paused)
 		min_fps = max(4.0, (int)sv_demofps.value ? (int)sv_demofps.value : 20.0);
 	else
 		min_fps = bound(4.0, (int)sv_demoIdlefps.value, 30);
 
-	if (sv.time - demo.time < 1.0/min_fps)
+	if (curtime - demo.curtime < 1.0 / min_fps) {
 		return;
+	}
+
+	SZ_InitEx(&msg, msg_buf, sizeof(msg_buf), true);
 
 	if ((int)sv_demoPings.value)
 	{
-		if (sv.time - demo.pingtime > sv_demoPings.value)
+		if (curtime - demo.pingtime > sv_demoPings.value)
 		{
 			SV_MVDPings();
-			demo.pingtime = sv.time;
+			demo.pingtime = curtime;
 		}
 	}
 
@@ -1359,7 +1362,6 @@ void SV_SendDemoMessage(void)
 	// send over all the objects that are in the PVS
 	// this will include clients, a packetentities, and
 	// possibly a nails update
-	SZ_InitEx(&msg, msg_buf, sizeof(msg_buf), true);
 
 	if (!demo.recorder.delta_sequence)
 		demo.recorder.delta_sequence = -1;
@@ -1404,11 +1406,14 @@ void SV_SendDemoMessage(void)
 
 	demo.recorder.delta_sequence = demo.recorder.netchan.incoming_sequence&255;
 	demo.recorder.netchan.incoming_sequence++;
-	demo.frames[demo.parsecount&UPDATE_MASK].time = demo.time = sv.time;
+	demo.frames[demo.parsecount & UPDATE_MASK].time = sv.time;
+	demo.frames[demo.parsecount & UPDATE_MASK].paused = sv.paused;
+	demo.frames[demo.parsecount & UPDATE_MASK].pause_duration = (int)bound(0, (curtime - demo.curtime) * 1000.0f, 255);
+	demo.curtime = curtime;
+	demo.time = sv.time;
 
-//	if (demo.parsecount - demo.lastwritten > 60) // that's a backup of 3sec in 20fps, should be enough
-	if (demo.parsecount - demo.lastwritten > 5)  // lets not wait so much time
-	{
+	// let's not wait so much time (was 60)
+	if (demo.parsecount - demo.lastwritten > 5) {
 		SV_MVDWritePackets(1);
 	}
 

@@ -519,6 +519,7 @@ enum {
 	mvdhidden_dmgdone                    = 0x0007,  // <byte: damaging ent#> <byte: damaged ent#> <byte: damage>
 	mvdhidden_usercmd_weapons_ss         = 0x0008,  // (same format as mvdhidden_usercmd_weapons)
 	mvdhidden_usercmd_weapon_instruction = 0x0009,  // <byte: playernum> <byte: flags> <int: sequence#> <int: mode> <byte[10]: weaponlist>
+	mvdhidden_paused_duration            = 0x000A,  // <byte: msec> ... actual time elapsed, not gametime (can be used to keep stream running) ... expected to be QTV only
 	mvdhidden_extended                   = 0xFFFF   // doubt we'll ever get here: read next short...
 };
 

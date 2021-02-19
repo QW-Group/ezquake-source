@@ -556,6 +556,31 @@ static qbool MVD_WriteMessage (sizebuf_t *msg, byte msec)
 	return (sv.mvdrecording ? true : false);
 }
 
+static void SV_MVDWritePausedTimeToStreams(demo_frame_t* frame)
+{
+	// When writing out a paused frame, send a packet to let QTV keep delay in sync
+	if (frame->paused) {
+		mvddest_t* d;
+		sizebuf_t msg;
+		byte msg_buffer[128];
+		byte duration = frame->pause_duration;
+
+		SZ_Init(&msg, msg_buffer, sizeof(msg_buffer));
+		MSG_WriteByte(&msg, 0);                                           //     0: duration == 0, for demos
+		MSG_WriteByte(&msg, dem_multiple);                                //     1: target of the packet
+		MSG_WriteLong(&msg, 0);                                           //  2- 5: 0 ... demo_multiple(0) => hidden packet
+		MSG_WriteLong(&msg, LittleLong(sizeof(short) + sizeof(byte)));    //  6-10: length = <short> + <byte>
+		MSG_WriteShort(&msg, LittleShort(mvdhidden_paused_duration));     // 11-12: tell QTV how much time has really passed
+		MSG_WriteByte(&msg, duration);                                    //    13: true ms value, as demo packets will have 0
+
+		for (d = demo.dest; d; d = d->nextdest) {
+			if (d->desttype == DEST_STREAM) {
+				DemoWriteDest(msg.data, msg.cursize, d);
+			}
+		}
+	}
+}
+
 /*
 ====================
 SV_MVDWritePackets
@@ -564,7 +589,6 @@ Interpolates to get exact players position for current frame
 and writes packets to the disk/memory
 ====================
 */
-
 static qbool SV_MVDWritePacketsEx (int num)
 {
 	demo_frame_t	*frame, *nextframe;
@@ -594,6 +618,8 @@ static qbool SV_MVDWritePacketsEx (int num)
 		frame = &demo.frames[demo.lastwritten&UPDATE_MASK];
 		time1 = frame->time;
 		nextframe = frame;
+
+		SV_MVDWritePausedTimeToStreams(frame);
 
 		// find two frames
 		// one before the exact time (time - msec) and one after,

@@ -412,6 +412,8 @@ typedef struct
 {
 	demo_client_t	clients[MAX_CLIENTS];
 	double			time;
+	qbool           paused;
+	byte            pause_duration;
 
 // { reset each time frame wroten with SV_MVDWritePackets()
 	sizebuf_t		_buf_;
@@ -498,8 +500,9 @@ typedef struct
 	sizebuf_t		datagram;
 	byte			datagram_data[MAX_MVD_SIZE]; // data without mvd header
 
-	double			time;
-	double			pingtime;
+	double          time;             // sv.time
+	double          curtime;          // curtime
+	double          pingtime;         // compare to curtime
 
 	// Something like time of last mvd message, so we can guess delta milliseconds for next message.
 	// you better not relay on this variable...
