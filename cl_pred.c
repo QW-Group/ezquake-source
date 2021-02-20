@@ -22,7 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 cvar_t	cl_nopred	= {"cl_nopred", "0"};
-cvar_t cl_pushlatency = {"pushlatency", "-999"};
 
 extern cvar_t cl_independentPhysics;
 
@@ -415,14 +414,13 @@ void CL_PredictMove (qbool physframe) {
 	
 }
 
-void CL_InitPrediction (void) {
+void CL_InitPrediction(void)
+{
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register(&cl_nopred);
-	Cvar_Register(&cl_pushlatency);
-
 	Cvar_ResetCurrentGroup();
 
-#ifdef JSS_CAM	
+#ifdef JSS_CAM
 	Cvar_SetCurrentGroup(CVAR_GROUP_SPECTATOR);
 	Cvar_Register(&cam_thirdperson);
 	Cvar_Register(&cam_dist);

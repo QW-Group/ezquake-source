@@ -14729,12 +14729,6 @@
         }
       ]
     },
-    "pushlatency": {
-      "default": "-999",
-      "desc": "This variable is outdated and exists for compatibility with old configs.",
-      "group-id": "21",
-      "type": "integer"
-    },
     "qconsole_log_say": {
       "default": "0",
       "desc": "Log chat messages into the main server console log.",

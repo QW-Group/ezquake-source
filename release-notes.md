@@ -392,6 +392,7 @@
 ### Other changes
 
 - Removed functionality to control external MP3 player through ezQuake
+- Removed unused cvar `/pushlatency`
 
 ### Build/meta
 
