@@ -114,7 +114,6 @@ static void SCR_HUD_DrawAmmo(
 
 	num_old = num;
 	if (num < 1 || num > 4) {	// draw 'current' ammo, which one is it?
-
 		if (ShowPreselectedWeap()) {
 			// using weapon pre-selection so show info for current best pre-selected weapon ammo
 			num = State_AmmoNumForWeapon(IN_BestWeapon(true));
@@ -142,24 +141,24 @@ static void SCR_HUD_DrawAmmo(
 		}
 	}
 
-	if (!num) {
-		if (always) {
-			if (style < 2) {
-				// use this to calculate sizes, but draw_content is false
-				SCR_HUD_DrawNum2(hud, 0, false, scale, style, digits, s_align, proportional, false);
-			}
-			else {
-				int x_, y;
+	// 'New HUD' used to just return - instead draw blank space so other objects can be placed
+	// If user has specified 'show_always', carry on and show current value of STAT_AMMO
+	if (!num && !always) {
+		if (style < 2) {
+			// use this to calculate sizes, but draw_content is false
+			SCR_HUD_DrawNum2(hud, 0, false, scale, style, digits, s_align, proportional, false);
+		}
+		else {
+			int x_, y;
 
-				// calculate sizes but draw nothing
-				HUD_PrepareDraw(hud, 42 * scale, 11 * scale, &x_, &y);
-			}
+			// calculate sizes but draw nothing
+			HUD_PrepareDraw(hud, 42 * scale, 11 * scale, &x_, &y);
 		}
 		return;
 	}
 
 	low = HUD_AmmoLowByWeapon(num * 2);
-	if (num_old == 0 && (!ShowPreselectedWeap() || cl.standby)) {
+	if (num < 1 || num > 4 || (num_old == 0 && (!ShowPreselectedWeap() || cl.standby))) {
 		// this check is here to display a feature from KTPRO/KTX where you can see received damage in prewar
 		// also we make sure this applies only to 'ammo' element
 		// weapon preselection must always use HUD_Stats()
