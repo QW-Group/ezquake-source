@@ -27,6 +27,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pmove.h"		// PM_FLY etc
 #include "rulesets.h"
 
+static int IN_BestWeapon_Common(int implicit, int* weapon_order, qbool rendering_only);
+#ifdef C_ASSERT
+C_ASSERT(sizeof(cl.weapon_order_clientside) == sizeof(cl.weapon_order));
+#endif
+
 #ifdef MVD_PEXT1_DEBUG_WEAPON
 static void IN_SendWeaponSelection(int items, int* stats, int* weapon_list, int weapon_choice);
 #else
@@ -116,14 +121,14 @@ static qbool suppress_hide;
 
 // Over-writes weapon selection list
 // Called even if server-side weapon switching is enabled
-static void ForgetWeaponOrder(int impulse)
+static void ForgetWeaponOrder(int impulse, int* weapon_order)
 {
-	cl.weapon_order[0] = impulse;
+	weapon_order[0] = impulse;
 
 	if (cl_weaponforgetorder.integer == 2) {
-		cl.weapon_order[1] = (cl_weaponhide_axe.integer ? 1 : 2);
-		cl.weapon_order[2] = 1;
-		cl.weapon_order[3] = 0;
+		weapon_order[1] = (cl_weaponhide_axe.integer ? 1 : 2);
+		weapon_order[2] = 1;
+		weapon_order[3] = 0;
 	}
 }
 
@@ -134,7 +139,10 @@ static void SetNextImpulse(int impulse, qbool from_weapon_script, qbool set_best
 		in_next_impulse = 0;
 		suppress_hide = false;
 		if (set_best_weapon && cl_weaponforgetorder.integer) {
-			ForgetWeaponOrder(impulse);
+			// we can't over-write cl.weapon_order so keep a copy and use that until the server confirms best selection
+			memcpy(cl.weapon_order_clientside, cl.weapon_order, sizeof(cl.weapon_order_clientside));
+			cl.weapon_order_use_clientside = true;
+			ForgetWeaponOrder(impulse, cl.weapon_order_clientside);
 		}
 		return;
 	}
@@ -144,7 +152,7 @@ static void SetNextImpulse(int impulse, qbool from_weapon_script, qbool set_best
 	in_next_impulse = impulse;
 
 	if (set_best_weapon && cl_weaponforgetorder.integer) {
-		ForgetWeaponOrder(impulse);
+		ForgetWeaponOrder(impulse, cl.weapon_order);
 	}
 }
 
@@ -455,8 +463,6 @@ void IN_RememberWpOrder (void)
 	}
 }
 
-static int IN_BestWeapon_Common(int implicit, int* weapon_order, qbool rendering_only);
-
 // picks the best available (carried & having some ammunition) weapon according to users current preference
 // or if the intersection (wished * carried) is empty
 // select the top wished weapon
@@ -470,6 +476,9 @@ int IN_BestWeapon(qbool rendering_only)
 // select the current weapon
 int IN_BestWeaponReal(qbool rendering_only)
 {
+	if (cl.weapon_order_use_clientside && rendering_only) {
+		return IN_BestWeapon_Common(in_next_impulse, cl.weapon_order_clientside, rendering_only);
+	}
 	return IN_BestWeapon_Common(in_next_impulse, cl.weapon_order, rendering_only);
 }
 
@@ -1442,25 +1451,31 @@ void onchange_pext_serversideweapon(cvar_t* var, char* value, qbool* cancel)
 
 void IN_ServerSideWeaponSelectionResponse(const char* s)
 {
-	if ((cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) && cl_pext_serversideweapon.integer && cl_weaponforgetorder.integer) {
-		int sequence_set, best_impulse;
+	if ((cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) && cl_pext_serversideweapon.integer) {
+		if (cl_weaponforgetorder.integer) {
+			int sequence_set, best_impulse;
 
-		Cmd_TokenizeString(s);
+			Cmd_TokenizeString(s);
 
-		// expected args: <sequence-set> <best-weapon-impulse>
-		if (Cmd_Argc() < 2) {
-			return;
+			// expected args: <sequence-set> <best-weapon-impulse>
+			if (Cmd_Argc() < 2) {
+				return;
+			}
+
+			sequence_set = atoi(Cmd_Argv(0));
+			best_impulse = atoi(Cmd_Argv(1));
+
+			if (sequence_set == cl.weapon_order_sequence_set && best_impulse) {
+				Con_DPrintf("Confirmed best selection: %d vs %d\n", best_impulse, cl.weapon_order[0]);
+				cl.weapon_order[0] = best_impulse;
+				cl.weapon_order_use_clientside = false;
+			}
+			else if (sequence_set != cl.weapon_order_sequence_set) {
+				Con_DPrintf("Out of date response: %d vs %d\n", sequence_set, cl.weapon_order_sequence_set);
+			}
 		}
-
-		sequence_set = atoi(Cmd_Argv(0));
-		best_impulse = atoi(Cmd_Argv(1));
-
-		if (sequence_set == cl.weapon_order_sequence_set && best_impulse) {
-			Con_DPrintf("Confirmed best selection: %d vs %d\n", best_impulse, cl.weapon_order[0]);
-			cl.weapon_order[0] = best_impulse;
-		}
-		else if (sequence_set != cl.weapon_order_sequence_set) {
-			Con_DPrintf("Out of date response: %d vs %d\n", sequence_set, cl.weapon_order_sequence_set);
+		else {
+			cl.weapon_order_use_clientside = false;
 		}
 	}
 }

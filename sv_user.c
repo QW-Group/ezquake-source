@@ -3926,13 +3926,21 @@ void SV_PostRunCmd(void)
 						ent->impulse = best_impulse;
 						impulse_set = 2;
 					}
-				}
-				else if (hiding && ent->weapon != hide_weapon) {
-					if (Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1') {
-						SV_ClientPrintf(sv_client, PRINT_HIGH, "Hiding: %d\n", hide_impulse);
+					else {
+						sv_client->weaponswitch_pending = false;
 					}
-					ent->impulse = hide_impulse;
-					impulse_set = 1;
+				}
+				else if (hiding) {
+					if (ent->weapon != hide_weapon) {
+						if (Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1') {
+							SV_ClientPrintf(sv_client, PRINT_HIGH, "Hiding: %d\n", hide_impulse);
+						}
+						ent->impulse = hide_impulse;
+						impulse_set = 1;
+					}
+					else {
+						sv_client->weaponswitch_pending = false;
+					}
 				}
 			}
 			else {
@@ -3971,11 +3979,11 @@ void SV_PostRunCmd(void)
 
 			sv_client->weaponswitch_pending &=
 				// Tried to hide and failed
-				(impulse_set == 1 && sv_client->edict->v.weapon != hide_weapon) ||
+				(impulse_set == 1 && ent->weapon != hide_weapon) ||
 				// Tried to pick best and failed
-				(impulse_set == 2 && sv_client->edict->v.weapon != best_weapon);
+				(impulse_set == 2 && ent->weapon != best_weapon);
 		}
-		if (hiding && sv_client->edict->v.weapon == hide_weapon) {
+		if (hiding && ent->weapon == hide_weapon) {
 			if (Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1') {
 				SV_ClientPrintf(sv_client, PRINT_HIGH, "Hide successful\n");
 			}

@@ -730,7 +730,9 @@ typedef struct {
 
 	// Weapon preferences
 	int         weapon_order[MAXWEAPONS];
+	int         weapon_order_clientside[MAXWEAPONS];
 	int         weapon_order_sequence_set;
+	qbool       weapon_order_use_clientside;
 
 	// When teamlock 1 is specified, lock in the selected team and don't change again
 	char        teamlock1_teamname[16];
