@@ -832,7 +832,8 @@ void SZ_Clear (sizebuf_t *buf) {
 	buf->overflowed = false;
 }
 
-void *SZ_GetSpace (sizebuf_t *buf, int length) {
+void *SZ_GetSpace(sizebuf_t *buf, int length)
+{
 	void *data;
 
 	if (buf->cursize + length > buf->maxsize && buf->overflow_handler) {
@@ -857,19 +858,23 @@ void *SZ_GetSpace (sizebuf_t *buf, int length) {
 	return data;
 }
 
-void SZ_Write (sizebuf_t *buf, const void *data, int length) {
-	memcpy (SZ_GetSpace(buf,length),data,length);
+void SZ_Write(sizebuf_t *buf, const void *data, int length)
+{
+	byte* dest = SZ_GetSpace(buf, length);
+
+	memcpy(dest, data, length);
 }
 
-void SZ_Print (sizebuf_t *buf, char *data) {
-	int len;
+void SZ_Print(sizebuf_t *buf, char *data)
+{
+	int len = strlen(data) + 1;
 
-	len = strlen(data) + 1;
+	// Remove trailing '\0'
+	if (buf->cursize && !buf->data[buf->cursize - 1]) {
+		--buf->cursize;
+	}
 
-	if (!buf->cursize || buf->data[buf->cursize-1])
-		memcpy ((byte *)SZ_GetSpace(buf, len),data,len); // no trailing 0
-	else
-		memcpy ((byte *)SZ_GetSpace(buf, len-1)-1,data,len); // write over trailing 0
+	SZ_Write(buf, data, len);
 }
 
 //============================================================================

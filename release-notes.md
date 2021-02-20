@@ -77,6 +77,7 @@
 - Fixed bug causing player to suddenly rotate when game was unpaused as mouse movement during pause suddenly took effect (old bug)
 - Fixed bug causing other players to move around on screen when game is paused (old bug)
 - Fixed bug causing parts of the screen covered by turb surfaces to not be redrawn when translucent with no map support (#473, old bug, reported by HangTime)
+- Fixed bug causing writing to invalid memory when buffer overflows when printing string (very old bug)
 
 ### Ruleset-related changes
 
