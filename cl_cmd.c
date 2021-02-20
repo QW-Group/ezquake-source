@@ -34,9 +34,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 void SCR_RSShot_f (void);
-void CL_ProcessServerInfo (void);
-void SV_Serverinfo_f (void);
-void S_StopAllSounds (qbool clear);
+void CL_ProcessServerInfo(void);
+void SV_Serverinfo_f(void);
+void S_StopAllSounds(void);
 
 
 cvar_t cl_sayfilter_coloredtext = {"cl_sayfilter_coloredtext", "0"};
@@ -989,7 +989,7 @@ void CL_Changing_f (void) {
 		return;
 	}
 
-	S_StopAllSounds (true);
+	S_StopAllSounds();
 
 	// MVDs starting during map change can have /changing from the previous map
 	if (!(cls.mvdplayback && cls.state == ca_onserver)) {
