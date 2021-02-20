@@ -359,7 +359,7 @@ void R_DrawWorld(void)
 
 	renderer.DrawWorld();
 
-	if (R_WaterAlpha() == 1) {
+	if (r_refdef2.wateralpha == 1) {
 		renderer.DrawWaterSurfaces();
 	}
 	R_TraceLeaveNamedRegion();

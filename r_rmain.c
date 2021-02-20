@@ -773,7 +773,7 @@ void R_RenderView(void)
 	// render normal view
 	R_DrawWorld();		// adds static entities to the list
 
-	if (R_WaterAlpha() == 1) {
+	if (r_refdef2.wateralpha == 1) {
 		renderer.DrawWaterSurfaces();
 	}
 

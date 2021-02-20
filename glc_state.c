@@ -33,7 +33,7 @@ extern texture_ref solidskytexture, alphaskytexture;
 
 void GLC_StateBeginFastTurbPoly(byte color[4])
 {
-	float wateralpha = R_WaterAlpha();
+	float wateralpha = r_refdef2.wateralpha;
 	wateralpha = bound(0, wateralpha, 1);
 
 	R_TraceEnterFunctionRegion;
@@ -72,7 +72,7 @@ void GLC_StateEndUnderwaterAliasModelCaustics(void)
 void GLC_StateBeginWaterSurfaces(void)
 {
 	extern cvar_t r_fastturb;
-	float wateralpha = R_WaterAlpha();
+	float wateralpha = r_refdef2.wateralpha;
 
 	if (r_fastturb.integer) {
 		if (wateralpha < 1.0) {

@@ -59,7 +59,7 @@ static void GLC_DrawWaterSurfaces_Program(void)
 	msurface_t* fa;
 	texture_ref prev_tex = null_texture_reference;
 	int index_count = 0;
-	float water_alpha = R_WaterAlpha();
+	float water_alpha = r_refdef2.wateralpha;
 
 	R_ProgramUse(r_program_turb_glc);
 	if (!R_ProgramCustomOptions(r_program_turb_glc)) {

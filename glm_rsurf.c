@@ -466,7 +466,7 @@ void GLM_DrawWaterSurfaces(void)
 		return;
 	}
 
-	alpha = R_WaterAlpha();
+	alpha = r_refdef2.wateralpha;
 
 	// Waterchain has list of alpha-blended surfaces
 	R_TraceEnterNamedRegion(__FUNCTION__);

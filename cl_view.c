@@ -1044,12 +1044,22 @@ qbool V_PreRenderView(void)
 		if (cls.demoplayback || cl.spectator) {
 			r_refdef2.allow_lumas = true;
 			r_refdef2.max_fbskins = 1;
-			r_refdef2.max_watervis = 1;
 		}
 		else {
 			r_refdef2.allow_lumas = !strcmp(Info_ValueForKey(cl.serverinfo, "24bit_fbs"), "0") ? false : true;
 			r_refdef2.max_fbskins = *(p = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(p), 1) : (cl.teamfortress ? 0 : 1);
+		}
+
+		// Only allow alpha water if the server allows it, or they are spectator and have novis enabled
+		{
+			extern cvar_t r_novis;
+
 			r_refdef2.max_watervis = *(p = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, Q_atof(p), 1) : 0;
+			if ((cls.demoplayback || cl.spectator) && (r_novis.integer || r_refdef2.max_watervis > 0)) {
+				// ignore server limit
+				r_refdef2.max_watervis = 1;
+			}
+			r_refdef2.wateralpha = R_WaterAlpha();  // relies on r_refdef2.max_watervis
 		}
 
 		// time-savers
@@ -1057,7 +1067,6 @@ qbool V_PreRenderView(void)
 			extern cvar_t r_drawflat_mode, r_drawflat, r_fastturb, gl_caustics;
 			extern texture_ref underwatertexture;
 
-			r_refdef2.wateralpha = R_WaterAlpha();
 			r_refdef2.drawFlatFloors = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 2 || r_drawflat.integer == 1);
 			r_refdef2.drawFlatWalls = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 3 || r_drawflat.integer == 1);
 			r_refdef2.solidTexTurb = (!r_fastturb.integer && r_refdef2.wateralpha == 1);

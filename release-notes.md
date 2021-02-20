@@ -76,6 +76,7 @@
 - Fixed bug causing "Unset entity number" message & program termination as entnum overwritten from local baselines after avoiding buffer overflow in previous frame (reported during sdCup2 on Discord)
 - Fixed bug causing player to suddenly rotate when game was unpaused as mouse movement during pause suddenly took effect (old bug)
 - Fixed bug causing other players to move around on screen when game is paused (old bug)
+- Fixed bug causing parts of the screen covered by turb surfaces to not be redrawn when translucent with no map support (#473, old bug, reported by HangTime)
 
 ### Ruleset-related changes
 
