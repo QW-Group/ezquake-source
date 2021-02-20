@@ -153,7 +153,7 @@
 - `-noatlas` command line option to stop the system building a 2D atlas at startup
 - `-r-nomultibind` command line option to disable calls to glBindTextures
 - `+qtv_delay` command, to be used with `/qtv_adjustbuffer 2`... pauses QTV stream.  When released, QTV buffer length set to length of buffer
-- On startup, `default.cfg` is executed before config is loaded (nQuake configs really need to change now that default.cfg works tho...)
+- On startup, `default.cfg` is executed before config is loaded (nQuake's default.cfg will be ignored)
 - GLSL gamma now supported in classic renderer
 - MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
 - Player LG beams hidden during intermission (no more beams in screenshots)
@@ -168,6 +168,7 @@
 - When watching mvd/qtv, `/record` & `/stop` become `/mvdrecord` and `/mvdstop` respectively (suggested by hangtime)
 - Internal server has been updated to match latest mvdsv codebase
 - Removed chaticons limitation where source image had to be 256x256 pixels (#477, reported by timbergeron)
+- Demo signoff messages are no longer random
 
 ### Build/meta
 
@@ -178,7 +179,6 @@
 - meson build updated (out of date on 3.5)
 - Fixed build on FreeBSD/powerpc64 (thanks to pkubaj)
 - Remove unsupported 666-deflect message from fragfile.dat (reported by eb, #461)
-- Demo signoff messages are no longer random
 
 # Changes in 3.5 (not released, based on 3.1)
 
@@ -312,7 +312,7 @@
 - Context creation changed, if context can't be created msaa/24bit-depth/hw-accel/srgb then various fallbacks attempted (previously only msaa), rather than falling back directly to software rendering
 - cvars limited by ruleset max/min values weren't checked during application-startup
 - toggling console exits hud_editor mode
-- default.cfg executes on config load/reset (default.cfg in id1/pak0.pak is ignored)
+- default.cfg executes on config load/reset (default.cfg in id1/pak0.pak & nQuake is ignored)
 
 ### Changeover issues/notes
 

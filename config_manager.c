@@ -751,18 +751,22 @@ static void Config_PrintPreamble(FILE *f)
 
 /************************************ MAIN FUCTIONS	************************************/
 
-// Executes default.cfg as long as it isn't the one from pak0.pak
+// Executes default.cfg as long as it isn't the one from pak0.pak or nQuake's default (which is executed from autoexec.cfg ...)
 void Cfg_ExecuteDefaultConfig(void)
 {
 	flocation_t loc;
 
 	if (FS_FLocateFile("default.cfg", FSLFRT_IFFOUND, &loc)) {
 		char pak0default[MAX_OSPATH];
+		char nquakedefault[MAX_OSPATH];
 
 		strlcpy(pak0default, com_basedir, sizeof(pak0default));
 		strlcat(pak0default, "/id1/pak0.pak/default.cfg", sizeof(pak0default));
 
-		if (strcmp(pak0default, loc.rawname)) {
+		strlcpy(nquakedefault, com_basedir, sizeof(nquakedefault));
+		strlcat(nquakedefault, "/qw/nquake.pk3", sizeof(nquakedefault));
+
+		if (strcmp(pak0default, loc.rawname) && strcmp(nquakedefault, loc.rawname)) {
 			Cbuf_AddText("exec default.cfg\n");
 		}
 	}
