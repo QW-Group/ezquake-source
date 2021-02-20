@@ -377,7 +377,7 @@ void Dev_VidTextureDump(void)
 					sshot_params->height = R_TextureHeight(ref);
 
 					for (j = 0; j < sshot_params->height / 2; ++j) {
-						int row_bytes = sshot_params->width * 3;
+						size_t row_bytes = sshot_params->width * 3;
 						byte* this_row = &buffer[j * row_bytes];
 						byte* flipped_row = &buffer[(sshot_params->height - j - 1) * row_bytes];
 
