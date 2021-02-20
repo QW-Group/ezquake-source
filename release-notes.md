@@ -168,6 +168,7 @@
 - Qizmo-compressed files can be played back using Qizmo on linux
 - When watching mvd/qtv, `/record` & `/stop` become `/mvdrecord` and `/mvdstop` respectively (suggested by hangtime)
 - Internal server has been updated to match latest mvdsv codebase
+- Removed chaticons limitation where source image had to be 256x256 pixels (#477, reported by timbergeron)
 
 ### Build/meta
 

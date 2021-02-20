@@ -93,11 +93,6 @@ static void R_LoadChatIconTextureSubImage(ci_tex_t tex, const char* id, const by
 	int width = sub_x2 - sub_x;
 	int height = sub_y2 - sub_y;
 
-	width = (width * full_width) / 256;
-	height = (height * full_height) / 256;
-	sub_x = (sub_x * full_width) / 256;
-	sub_y = (sub_y * full_height) / 256;
-
 	for (y = 0; y < height; ++y) {
 		const byte* source = pixels + ((sub_y + y) * full_width + sub_x) * 4;
 		byte* target = temp_buffer + y * width * 4;
@@ -234,15 +229,15 @@ void R_InitChatIcons(void)
 		byte* original;
 		byte* temp_buffer;
 
-		original = R_LoadImagePixels("textures/chaticons", FONT_SIZE, FONT_SIZE, texmode, &real_width, &real_height);
+		original = R_LoadImagePixels("textures/chaticons", 0, 0, texmode, &real_width, &real_height);
 		if (!original) {
 			return;
 		}
 
 		temp_buffer = Q_malloc(real_width * real_height * 4);
-		R_LoadChatIconTextureSubImage(citex_chat, "ci:chat", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, 64, 64);
-		R_LoadChatIconTextureSubImage(citex_afk, "ci:afk", original, temp_buffer, real_width, real_height, 0, 1, 64, 0, 128, 64);
-		R_LoadChatIconTextureSubImage(citex_chat_afk, "ci:chat-afk", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, 128, 64);
+		R_LoadChatIconTextureSubImage(citex_chat, "ci:chat", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, real_width / 4, real_height / 4);
+		R_LoadChatIconTextureSubImage(citex_afk, "ci:afk", original, temp_buffer, real_width, real_height, 0, 1, real_width / 4, 0, real_width / 2, real_height / 4);
+		R_LoadChatIconTextureSubImage(citex_chat_afk, "ci:chat-afk", original, temp_buffer, real_width, real_height, 0, 1, 0, 0, real_width / 2, real_height / 4);
 		Q_free(temp_buffer);
 		Q_free(original);
 	}
