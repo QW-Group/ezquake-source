@@ -3812,12 +3812,22 @@ void SV_ServerSideWeaponRank(client_t* client, int* best_weapon, int* best_impul
 	return;
 }
 
+static void SV_NotifyUserOfBestWeapon(client_t* sv_client, int new_impulse)
+{
+	char stuffcmd_buffer[64];
+
+	strlcpy(stuffcmd_buffer, va("//mvdsv_ssw %d %d\n", sv_client->weaponswitch_sequence_set, new_impulse), sizeof(stuffcmd_buffer));
+
+	ClientReliableWrite_Begin(sv_client, svc_stufftext, 2 + strlen(stuffcmd_buffer));
+	ClientReliableWrite_String(sv_client, stuffcmd_buffer);
+}
+
 static void SV_ExecuteServerSideWeaponForgetOrder(client_t* sv_client, int best_impulse, int hide_impulse)
 {
 	char new_wrank[16] = { 0 };
-	char stuffcmd_buffer[64];
 
 	SV_DebugServerSideWeaponScript(sv_client, best_impulse);
+	SV_NotifyUserOfBestWeapon(sv_client, best_impulse);
 
 	// Over-write the list sent with the result
 	{
@@ -3825,14 +3835,10 @@ static void SV_ExecuteServerSideWeaponForgetOrder(client_t* sv_client, int best_
 			SV_ClientPrintf(sv_client, PRINT_HIGH, "Best: %d, forgetorder enabled\n", best_impulse);
 		}
 
-		strlcpy(stuffcmd_buffer, va("//mvdsv_ssw %d %d\n", sv_client->weaponswitch_sequence_set, best_impulse), sizeof(stuffcmd_buffer));
-
-		ClientReliableWrite_Begin(sv_client, svc_stufftext, 2 + strlen(stuffcmd_buffer));
-		ClientReliableWrite_String(sv_client, stuffcmd_buffer);
 	}
 	sv_client->weaponswitch_priority[0] = best_impulse;
-	sv_client->weaponswitch_priority[1] = (sv_client->weaponswitch_hide == 1 || best_impulse == 2 ? 1 : 2);
-	sv_client->weaponswitch_priority[2] = 1;
+	sv_client->weaponswitch_priority[1] = (hide_impulse == 1 || best_impulse == 2 ? 1 : 2);
+	sv_client->weaponswitch_priority[2] = (sv_client->weaponswitch_priority[1] != 1 ? 1 : 0);
 	sv_client->weaponswitch_priority[3] = 0;
 
 	new_wrank[0] = '0' + best_impulse;
@@ -3848,6 +3854,32 @@ static void SV_ExecuteServerSideWeaponForgetOrder(client_t* sv_client, int best_
 	}
 
 	SV_UserSetWeaponRank(sv_client, new_wrank);
+}
+
+static void SV_ExecuteServerSideWeaponHideOnDeath(client_t* sv_client, int hide_impulse, int hide_weapon)
+{
+	char new_wrank[16] = { 0 };
+
+	if (sv_client->edict->v.health > 0.0f || !sv_client->weaponswitch_hide_on_death) {
+		return;
+	}
+
+	// might not have general hiding enabled...
+	hide_impulse = (hide_impulse == 1 ? 1 : 2);
+	hide_weapon = (hide_impulse == 1 ? IT_AXE : IT_SHOTGUN);
+	new_wrank[0] = (hide_impulse == 1 ? '1' : '2');
+	new_wrank[1] = (hide_impulse == 1 ? '0' : '1');
+	sv_client->weaponswitch_priority[0] = (hide_impulse == 1 ? 1 : 2);
+	sv_client->weaponswitch_priority[1] = (hide_impulse == 1 ? 1 : 2);
+	sv_client->weaponswitch_priority[2] = 0;
+
+	SV_DebugServerSideWeaponScript(sv_client, hide_impulse);
+	SV_NotifyUserOfBestWeapon(sv_client, hide_impulse);
+	SV_UserSetWeaponRank(sv_client, new_wrank);
+
+	if (Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1' && sv_client->edict->v.weapon != hide_weapon) {
+		SV_ClientPrintf(sv_client, PRINT_HIGH, "Hiding on death: %d\n", hide_impulse);
+	}
 }
 #endif
 
@@ -3893,25 +3925,11 @@ void SV_PostRunCmd(void)
 			hiding = (sv_client->weaponswitch_wasfiring && !firing && hide_impulse);
 			sv_client->weaponswitch_wasfiring |= firing;
 
-			if (switch_to_best_weapon && /*sv_client->weaponswitch_pending &&*/ sv_client->weaponswitch_forgetorder) {
+			if (switch_to_best_weapon && sv_client->weaponswitch_forgetorder) {
 				SV_ExecuteServerSideWeaponForgetOrder(sv_client, best_impulse, hide_impulse);
 			}
-			else if (ent->health <= 0.0f && sv_client->weaponswitch_hide_on_death) {
-				char new_wrank[16] = { 0 };
-
-				SV_DebugServerSideWeaponScript(sv_client, best_impulse);
-
-				new_wrank[0] = '0' + hide_impulse;
-				new_wrank[1] = '1';
-				sv_client->weaponswitch_priority[0] = hide_impulse;
-				sv_client->weaponswitch_priority[1] = 0;
-
-				if (Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1' && ent->weapon != hide_weapon) {
-					SV_ClientPrintf(sv_client, PRINT_HIGH, "Hiding on death: %d\n", hide_impulse);
-				}
-
-				SV_UserSetWeaponRank(sv_client, new_wrank);
-				hiding = true;
+			else {
+				SV_ExecuteServerSideWeaponHideOnDeath(sv_client, hide_impulse, hide_weapon);
 			}
 
 			if (!ent->impulse) {
@@ -4229,7 +4247,7 @@ static void SV_DebugServerSideWeaponScript(client_t* cl, int best_impulse)
 		char* o;
 		entvars_t* ent = &cl->edict->v;
 
-		strlcpy(old_wrank, Info_Get(&cl->_userinfo_ctx_, "wrank"), sizeof(old_wrank));
+		strlcpy(old_wrank, Info_Get(&cl->_userinfo_ctx_, "w_rank"), sizeof(old_wrank));
 
 		w = old_wrank;
 		o = encoded;
