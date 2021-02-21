@@ -124,12 +124,9 @@ static qbool suppress_hide;
 static void ForgetWeaponOrder(int impulse, int* weapon_order)
 {
 	weapon_order[0] = impulse;
-
-	if (cl_weaponforgetorder.integer == 2) {
-		weapon_order[1] = (cl_weaponhide_axe.integer ? 1 : 2);
-		weapon_order[2] = 1;
-		weapon_order[3] = 0;
-	}
+	weapon_order[1] = (cl_weaponhide_axe.integer || impulse == 2 ? 1 : 2);
+	weapon_order[2] = (weapon_order[1] == 1 ? 0 : 1);
+	weapon_order[3] = 0;
 }
 
 static void SetNextImpulse(int impulse, qbool from_weapon_script, qbool set_best_weapon)

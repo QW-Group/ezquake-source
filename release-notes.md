@@ -112,7 +112,7 @@
 - `/cl_pext_serversideweapon` - protocol extension to move weapon selection to server (requires updated mvdsv)
 - `/cl_sv_packetsync` - when using internal server & delay packet, controls if server processes packets as they are received (fixes #292)
 - `/cl_weaponforgetondeath` - resets weapon to shotgun when respawning
-- `/cl_weaponforgetorder 2` - sets the best weapon then falls back to sg or axe (as per `/cl_weaponhide_axe`)
+- `/cl_weaponforgetorder` - now sets the best weapon then falls back to sg or axe (as per `/cl_weaponhide_axe`)
 - `/cl_window_caption 2` - window title will be 'ezQuake' and will not change with connection status
 - `/cl_username` & `/authenticate` to support optional logins via badplace.eu (see [guide](https://github.com/ezQuake/ezquake-source/wiki/Authentication))
 - `/demo_format` supported in non-Windows builds

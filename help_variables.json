@@ -2957,19 +2957,15 @@
     "cl_weaponforgetorder": {
       "default": "0",
       "group-id": "9",
-      "type": "enum",
+      "type": "boolean",
       "values": [
         {
           "description": "weapon/impulse command sets best weapon order, will select best weapon as ammo or weapon obtained",
           "name": "0"
         },
         {
-          "description": "weapon/impulse command picks best weapon out of those available at the time of the command",
-          "name": "1"
-        },
-        {
           "description": "weapon/impulse command picks best weapon at the time of command, with fallback to axe or sg (see /cl_weaponhide_axe)",
-          "name": "2"
+          "name": "1"
         }
       ]
     },
