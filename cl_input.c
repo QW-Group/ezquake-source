@@ -83,7 +83,7 @@ extern qbool physframe;
 extern double physframetime;
 
 #define CL_INPUT_WEAPONHIDE_DUE_TO_DEATH(health) ( \
-	(cl_weaponforgetondeath.integer && cl_weaponhide.integer && (health) <= 0) \
+	(cl_weaponforgetondeath.integer && (health) <= 0) \
 )
 #define CL_INPUT_WEAPONHIDE(health) ( \
 	(cl_weaponhide.integer == 1) || \
