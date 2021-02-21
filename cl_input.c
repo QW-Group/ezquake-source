@@ -957,11 +957,17 @@ void CL_FinishMove(usercmd_t *cmd)
 
 	VectorCopy (cl.viewangles, cmd->angles);
 
-	if (!cl.spectator && CL_INPUT_WEAPONHIDE_DUE_TO_DEATH(cl.stats[STAT_HEALTH])) {
-		cl.weapon_order[0] = in_next_impulse = (cl_weaponhide_axe.integer ? 1 : 2);
-		cl.weapon_order[1] = 1;
-		cl.weapon_order[2] = 0;
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+	if (!(cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON)) {
+#endif
+		if (!cl.spectator && CL_INPUT_WEAPONHIDE_DUE_TO_DEATH(cl.stats[STAT_HEALTH])) {
+			cl.weapon_order[0] = in_next_impulse = (cl_weaponhide_axe.integer ? 1 : 2);
+			cl.weapon_order[1] = 1;
+			cl.weapon_order[2] = 0;
+		}
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
 	}
+#endif
 
 	// shaman RFE 1030281 {
 	// KTPro's KFJump == impulse 156
