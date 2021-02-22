@@ -787,6 +787,11 @@ static void HandleEvents(void)
 			break;
 		case SDL_KEYDOWN:
 		case SDL_KEYUP:
+#ifdef __APPLE__
+			if (developer.integer == 2) {
+				Con_Printf("key%s event, scan=%d, sym=%d, mod=%d\n", event.type == SDL_KEYDOWN ? "down" : "up", event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod);
+			}
+#endif
 			keyb_event(&event.key);
 			break;
 		case SDL_TEXTINPUT:
@@ -796,7 +801,7 @@ static void HandleEvents(void)
 			if (event.motion.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
 #ifdef __APPLE__
 				if (developer.integer == 2) {
-					Con_Printf("motion event, which = %d\n", event.motion.which);
+					Con_Printf("motion event, which=%d\n", event.motion.which);
 				}
 #endif
 				if (mouse_active && !SDL_GetRelativeMouseMode()) {
@@ -823,6 +828,11 @@ static void HandleEvents(void)
 			break;
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:
+#ifdef __APPLE__
+			if (developer.integer == 2) {
+				Con_Printf("mouse%s event, which=%d, button=%d\n", event.type == SDL_MOUSEBUTTONDOWN ? "down" : "up", event.button.which, event.button.button);
+			}
+#endif
 			if (event.button.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
 				mouse_button_event(&event.button);
 			}
