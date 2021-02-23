@@ -493,6 +493,9 @@ void SV_Map (qbool now)
 
 	changed = true;
 #ifndef SERVERONLY
+	if (!com_serveractive) {
+		Host_EndGame();
+	}
 	com_serveractive = true;
 #endif
 }
