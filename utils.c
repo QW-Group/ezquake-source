@@ -544,13 +544,37 @@ char *Player_StripNameColor(const char *name)
 	return stripped;
 }
 
-int Player_StringtoSlot(char *arg, qbool use_regular_expression)
+int Player_IdStringToSlot(const char* arg)
+{
+	int i;
+
+	// Check if the argument is a user id instead
+	// Make sure all chars in the given arg are digits in that case.
+	for (i = 0; arg[i]; i++)
+	{
+		if (!isdigit(arg[i])) {
+			return PLAYER_NAME_NOMATCH;
+		}
+	}
+
+	// Get player ID.
+	return Player_IdtoSlot(Q_atoi(arg));
+}
+
+int Player_StringtoSlot(char *arg, qbool use_regular_expression, qbool prioritise_user_id)
 {
 	int i, slot, arg_length;
 
-	if (!arg[0])
-	{
+	if (!arg[0]) {
 		return PLAYER_NAME_NOMATCH;
+	}
+
+	if (prioritise_user_id) {
+		slot = Player_IdStringToSlot(arg);
+
+		if (slot >= 0) {
+			return slot;
+		}
 	}
 
 	// Match on partial names by only comparing the
@@ -620,19 +644,7 @@ int Player_StringtoSlot(char *arg, qbool use_regular_expression)
 		Q_free(stripped);
 	}
 
-	// Check if the argument is a user id instead
-	// Make sure all chars in the given arg are digits in that case.
-	for (i = 0; arg[i]; i++)
-	{
-		if (!isdigit(arg[i]))
-		{
-			return PLAYER_NAME_NOMATCH;
-		}
-	}
-
-	// Get player ID.
-	slot = Player_IdtoSlot(Q_atoi(arg));
-
+	slot = Player_IdStringToSlot(arg);
 	return (slot >= 0) ? slot : PLAYER_ID_NOMATCH;
 }
 
@@ -683,12 +695,12 @@ int Player_GetTrackId(int player_id)
 }
 
 
-int Player_GetSlot(char *arg) 
+int Player_GetSlot(char *arg, qbool prioritise_user_id)
 {
 	int response;
 
 	// Try getting the slot by name or id.
-	if ((response = Player_StringtoSlot(arg, false)) >= 0 )
+	if ((response = Player_StringtoSlot(arg, false, prioritise_user_id)) >= 0 )
 		//|| response == PLAYER_ID_NOMATCH)
 	{
 		return response;

@@ -1237,7 +1237,7 @@ static void CL_Multiview (void)
 					&& cl.players[j].name[0]
 					&& !strcmp (currteam, cl.players[j].team)) {
 					// Find the player slot to track.
-					mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[j].name, false);
+					mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[j].name, false, false);
 					team_slot_count++;
 				}
 
@@ -1525,12 +1525,12 @@ void CL_TrackTeam_f (void)
 		// Find the player slot to track.
 		if (!cl.players[i].spectator && strcmp (cl.players[i].name, "")
 			&& teamchoice == 1 && !strcmp (currteam, cl.players[i].team)) {
-			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name, false);
+			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name, false, false);
 			team_slot_count++;
 		}
 		else if (!cl.players[i].spectator && strcmp (cl.players[i].name, "")
 			&& teamchoice == 2 && strcmp (currteam, cl.players[i].team)) {
-			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name, false);
+			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name, false, false);
 			team_slot_count++;
 		}
 

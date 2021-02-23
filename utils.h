@@ -73,9 +73,9 @@ void Util_ToValidFileName(const char* input, char* output, size_t buffersize);
 int Player_IdtoSlot (int id);
 int Player_SlottoId (int slot);
 int Player_NametoSlot(char *name);
-int Player_StringtoSlot(char *arg, qbool use_regular_expressions);
+int Player_StringtoSlot(char *arg, qbool use_regular_expressions, qbool prioritise_user_id);
 int Player_NumtoSlot (int num);
-int Player_GetSlot(char *arg);
+int Player_GetSlot(char *arg, qbool prioritise_user_id);
 int Player_GetTrackId(int player_id);
 char *Player_MyName(void);
 

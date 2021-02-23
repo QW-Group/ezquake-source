@@ -874,17 +874,17 @@ void CL_Track (int trackview)
 		if (trackview < 0)
 		{
 			// Normal track.
-			Com_Printf("Usage: %s <name | userid>\n", Cmd_Argv(0));
+			Com_Printf("Usage: %s <userid> | <name>\n", Cmd_Argv(0));
 		}
 		else
 		{
 			// Multiview track.
-			Com_Printf("Usage: %s <name | userid | off>\n", Cmd_Argv(0));
+			Com_Printf("Usage: %s <userid> | <name> | <off>\n", Cmd_Argv(0));
 		}
 		return;
 	}
 
-	slot = Player_GetSlot(arg = Cmd_Argv(1));
+	slot = Player_GetSlot(arg = Cmd_Argv(1), true);
 
 	//
 	// The specified player wasn't found.

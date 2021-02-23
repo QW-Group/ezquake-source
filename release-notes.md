@@ -79,6 +79,7 @@
 - Fixed bug causing parts of the screen covered by turb surfaces to not be redrawn when translucent with no map support (#473, old bug, reported by HangTime)
 - Fixed bug causing writing to invalid memory when buffer overflows when printing string (very old bug)
 - Fixed bug causing client to keep reading from stream after `/map <mapname>` while connected to QTV (linked to #488, reported by HangTime)
+- Fixed bug causing client to prioritise player with userid in name rather than the userid in `/track`, `/ignore`, `/unignore` (affected autotrack - reported by andeh, exploited by an1k vs userID 1 henu)
 
 ### Ruleset-related changes
 
