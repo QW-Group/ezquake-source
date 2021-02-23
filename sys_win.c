@@ -525,12 +525,12 @@ void Sys_Printf (char *fmt, ...)
 		va_end(argptr);
 
 		if (n >= sizeof(text)) {
-			byte* buffer = Q_malloc(n + 1);
+			char* buffer = (char*)Q_malloc(n + 1);
 			va_start(argptr, fmt);
 			vsnprintf(buffer, n, fmt, argptr);
 			va_end(argptr);
 
-			WriteFile(houtput, buffer, strlen(buffer), &dummy, NULL);
+			WriteFile(houtput, (byte*)buffer, strlen(buffer), &dummy, NULL);
 			Q_free(buffer);
 		}
 		else {

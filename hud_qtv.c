@@ -50,8 +50,6 @@ void SCR_DrawQTVBuffer(void)
 static void SCR_HUD_DrawQTVBuffer(hud_t* hud)
 {
 	extern double Demo_GetSpeed(void);
-	extern unsigned char pb_buf[];
-	extern int pb_cnt;
 
 	int x, y;
 	int ms, len;
