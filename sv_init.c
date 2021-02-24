@@ -22,6 +22,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
 
+#ifndef SERVERONLY
+void CL_ClearState(void);
+void CL_ClearQueuedPackets(void);
+#endif
+
 server_static_t	svs;				// persistent server info
 server_t		sv;					// local server
 demo_t			demo;				// server demo struct
@@ -214,9 +219,6 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	char oldmap[MAP_NAME_LEN];
 	extern qbool	sv_allow_cheats;
 	extern cvar_t	sv_cheats, sv_paused, sv_bigcoords;
-#ifndef SERVERONLY
-	extern void CL_ClearState (void);
-#endif
 
 	// store old map name
 	snprintf (oldmap, MAP_NAME_LEN, "%s", sv.mapname);
@@ -631,7 +633,8 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	SV_MVD_Record(NULL, true);
 
 #ifndef SERVERONLY
-	CL_ClearState ();
+	CL_ClearState();
+	CL_ClearQueuedPackets();
 #endif
 }
 

@@ -394,9 +394,10 @@ void Host_EndGame (void)
 #ifndef CLIENTONLY
 	SV_Shutdown ("Server was killed");
 #endif
-	CL_Disconnect ();
+	CL_Disconnect();
 	// clear disconnect messages from loopback
-	NET_ClearLoopback ();
+	CL_ClearQueuedPackets();
+	NET_ClearLoopback();
 }
 
 //This shuts down both the client and server

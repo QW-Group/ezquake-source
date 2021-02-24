@@ -1530,6 +1530,13 @@ qbool CL_QueInputPacket(void)
 
 	return NET_PacketQueueAdd(&delay_queue_get, net_message.data, net_message.cursize, net_from);
 }
+
+void CL_ClearQueuedPackets(void)
+{
+	memset(&delay_queue_get, 0, sizeof(delay_queue_get));
+	memset(&delay_queue_send, 0, sizeof(delay_queue_send));
+	delay_queue_send.outgoing = true;
+}
 #endif
 
 #ifndef CLIENTONLY

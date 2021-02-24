@@ -1198,6 +1198,7 @@ typedef struct cl_delayed_packet_s
 
 qbool CL_QueInputPacket(void);
 qbool CL_UnqueOutputPacket(qbool sendall);
+void CL_ClearQueuedPackets(void);
 
 // ===================================================================================
 
