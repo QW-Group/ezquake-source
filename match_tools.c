@@ -59,8 +59,6 @@ cvar_t match_name_on = {"match_name_on", "on"};
 cvar_t match_name_nick = {"match_name_nick", ""};			
 cvar_t match_name_spec = {"match_name_spec", "(SPEC)"};		
 
-int loc_loaded = 0;
-
 char *CL_DemoDirectory(void);
 
 static char *MT_CleanString(char *string, qbool allow_spaces_and_slashes) {
@@ -754,7 +752,6 @@ void MT_NewMap(void)
 {
 	MT_CancelMatch();
 	MT_ClearClientState();
-	loc_loaded=0;
 }
 
 void MT_Disconnect(void)

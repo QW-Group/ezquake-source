@@ -200,7 +200,6 @@ static int fixed_ordering = 0;
 
 extern cvar_t tp_name_none, tp_weapon_order;
 char mvd_info_best_weapon[20];
-extern int loc_loaded;
 
 extern qbool TP_LoadLocFile(char* path, qbool quiet);
 extern char* TP_LocationName(vec3_t location);
@@ -1045,7 +1044,6 @@ char* MVD_BestAmmo(int i) {
 	}
 }
 
-
 void MVD_Info(void) {
 	char str[1024];
 	char mvd_info_final_string[1024], mvd_info_powerups[20], mvd_info_header_string[1024];
@@ -1058,12 +1056,6 @@ void MVD_Info(void) {
 #endif
 
 	z = 1;
-
-	if (loc_loaded == 0) {
-		char* mapname = TP_MapName();
-		TP_LoadLocFile(mapname, true);
-		loc_loaded = 1;
-	}
 
 	if (!mvd_info.value)
 		return;
