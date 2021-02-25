@@ -62,30 +62,16 @@ chmod u+x $BUNDLE_NAME/Contents/MacOS/ezquake
 /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" $BUNDLE_NAME/Contents/Info.plist
 /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string qw" $BUNDLE_NAME/Contents/Info.plist
 
-# .mvd file type support
+# .mvd/.qwd/.dem file type support
 /usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes array" $BUNDLE_NAME/Contents/Info.plist
 /usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0 dict" $BUNDLE_NAME/Contents/Info.plist
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeName string MVD demo" $BUNDLE_NAME/Contents/Info.plist
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeName string Quake demo" $BUNDLE_NAME/Contents/Info.plist
 /usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeRole string Viewer" $BUNDLE_NAME/Contents/Info.plist
 /usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeIconFile string $ICON_FILE" $BUNDLE_NAME/Contents/Info.plist
 /usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeExtensions array" $BUNDLE_NAME/Contents/Info.plist
 /usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeExtensions:0 string mvd" $BUNDLE_NAME/Contents/Info.plist
-
-# .dem file type support
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:1 dict" $BUNDLE_NAME/Contents/Info.plist
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:1:CFBundleTypeName string DEM demo" $BUNDLE_NAME/Contents/Info.plist
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:1:CFBundleTypeRole string Viewer" $BUNDLE_NAME/Contents/Info.plist
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:1:CFBundleTypeIconFile string $ICON_FILE" $BUNDLE_NAME/Contents/Info.plist
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:1:CFBundleTypeExtensions array" $BUNDLE_NAME/Contents/Info.plist
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:1:CFBundleTypeExtensions:0 string dem" $BUNDLE_NAME/Contents/Info.plist
-
-# .qwd file type support
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:2 dict" $BUNDLE_NAME/Contents/Info.plist
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:2:CFBundleTypeName string QWD demo" $BUNDLE_NAME/Contents/Info.plist
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:2:CFBundleTypeRole string Viewer" $BUNDLE_NAME/Contents/Info.plist
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:2:CFBundleTypeIconFile string $ICON_FILE" $BUNDLE_NAME/Contents/Info.plist
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:2:CFBundleTypeExtensions array" $BUNDLE_NAME/Contents/Info.plist
-/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:2:CFBundleTypeExtensions:0 string qwd" $BUNDLE_NAME/Contents/Info.plist
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeExtensions:1 string qwd" $BUNDLE_NAME/Contents/Info.plist
+/usr/libexec/PlistBuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeExtensions:2 string dem" $BUNDLE_NAME/Contents/Info.plist
 
 sh $(dirname $0)/fixbundle.sh $BUNDLE_NAME $BUNDLE_NAME/Contents/MacOS/$BINARY
 ditto -c -k --keepParent --arch x86_64 --arch arm64 $BUNDLE_NAME ezquake.zip
