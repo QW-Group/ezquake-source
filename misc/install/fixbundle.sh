@@ -89,7 +89,9 @@ done
 
 function fix_symbols {
 	for DEP in $(get_deps "$1"); do
+		codesign --remove-signature "$1"
 		install_name_tool -change "$DEP" "@executable_path/../Frameworks/$(basename $(realpath $DEP))" "$1"
+		codesign -s - "$1"
 	done
 }
 
