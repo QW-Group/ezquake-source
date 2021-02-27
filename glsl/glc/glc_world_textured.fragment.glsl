@@ -94,6 +94,9 @@ void main()
 #endif
 #endif
 
+	// Apply color tinting
+	gl_FragColor = applyColorTinting(gl_FragColor);
+
 #ifdef DRAW_LIGHTMAPS
 #ifdef EZ_USE_TEXTURE_ARRAYS
 	// Apply lightmap from texture array
@@ -103,9 +106,6 @@ void main()
 	gl_FragColor *= (vec4(1, 1, 1, 2) - texture2D(lightmapSampler, LightmapCoord));
 #endif
 #endif
-
-	// Apply color tinting 
-	gl_FragColor = applyColorTinting(gl_FragColor);
 
 #ifdef DRAW_LUMA_TEXTURES
 #ifdef DRAW_FULLBRIGHT_TEXTURES
