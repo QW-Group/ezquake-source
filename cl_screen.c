@@ -117,7 +117,7 @@ cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
 cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
 
 cvar_t	scr_cursor_scale		= {"scr_cursor_scale", "0.2"};			// The mouse cursor scale.
-cvar_t	scr_cursor_iconoffset_x	= {"scr_cursor_iconoffset_x", "10"};	// How much the cursor icon should be offseted from the cursor.
+cvar_t	scr_cursor_iconoffset_x	= {"scr_cursor_iconoffset_x", "0"};	// How much the cursor icon should be offseted from the cursor.
 cvar_t	scr_cursor_iconoffset_y	= {"scr_cursor_iconoffset_y", "0"};
 cvar_t	scr_cursor_alpha		= {"scr_cursor_alpha", "1"};
 
@@ -624,7 +624,7 @@ static void SCR_DrawCursor(void)
 		float y_coord = scr_pointer_state.y;
 
 		if (scr_cursor && R_TextureReferenceIsValid(scr_cursor->texnum)) {
-			Draw_SAlphaPic(x_coord, y_coord, scr_cursor, scr_cursor_alpha.value, scale);
+			Draw_SAlphaPic(x_coord + scr_cursor_iconoffset_x.value, y_coord + scr_cursor_iconoffset_y.value, scr_cursor, scr_cursor_alpha.value, scale);
 
 			if (scr_cursor_icon && R_TextureReferenceIsValid(scr_cursor_icon->texnum)) {
 				Draw_SAlphaPic(x_coord + scr_cursor_iconoffset_x.value, y_coord + scr_cursor_iconoffset_y.value, scr_cursor_icon, scr_cursor_alpha.value, scale);
