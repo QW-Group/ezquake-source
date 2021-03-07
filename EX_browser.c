@@ -1190,7 +1190,7 @@ void Serverinfo_Help_Draw(int x, int y, int wPixels)
 {
 	int wLetters = wPixels / 8;
 
-	if (vid.conheight < 384 || vid.conwidth < 512) {
+	if (vid.conheight < 216 || vid.conwidth < 384) {
 		return;
 	}
 
