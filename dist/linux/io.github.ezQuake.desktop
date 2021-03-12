@@ -1,0 +1,11 @@
+[Desktop Entry]
+Comment=A modern QuakeWorld client focused on competitive online play
+Categories=Game;Shooter;
+Exec=ezquake.sh
+Icon=io.github.ezQuake
+Name=ezQuake
+StartupNotify=true
+PrefersNonDefaultGPU=true
+Terminal=false
+Type=Application
+Keywords=quake;first;person;shooter;multiplayer;
