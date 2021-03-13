@@ -27,7 +27,6 @@
 - Fixed bug causing program to terminate when recording demo and next packetsize exceeded limits (old bug)
 - Fixed bug causing spectator issue when tracking player on server, reconnecting and then tracking again (old bug)
 - Fixed bug causing `show net` to not show valid information when playing back .qwd files (old bug)
-- Fixed bug causing `/cl_mvinsetcrosshair 1` crosshair to not move with the inset view (#462, 3.2 bug, reported by ptdev)
 - Fixed bug causing 'crouch' step-smoothing to kick in when respawning at a (very) nearby spawn point (old bug)
 - Fixed bug causing player to suddenly rotate when game was unpaused as mouse movement during pause suddenly took effect (old bug)
 - Fixed bug causing other players to move around on screen when game is paused (old bug)
@@ -36,6 +35,7 @@
 - Fixed bug causing writing to invalid memory when buffer overflows when printing string (very old bug)
 - Fixed bug causing client to keep reading from stream after `/map <mapname>` while connected to QTV (linked to #488, reported by HangTime)
 - Fixed bug causing client to prioritise player with userid in name rather than the userid in `/track`, `/ignore`, `/unignore` (affected autotrack - reported by andeh, exploited by an1k vs userID 1 henu)
+- Fixed bug causing client to receive playerinfo packet before knowing which protocol extensions are enabled when using `/cl_delay_packet` on local server (#488, reported by pattah)
 
 ### Bugs which affected 3.x
 
@@ -47,6 +47,8 @@
 - Fixed bug causing friendly/enemy teams to switch mid-demo when using `teamlock 1` (3.2 bug)
 - Fixed bug causing `score_enemy`/`score_difference` hud elements to use next player depending on sort rules, rather than best opponent (#469, 3.2 bug, reported by doomie)
 - Fixed bug causing "Unset entity number" message & program termination as entnum overwritten from local baselines after avoiding buffer overflow in previous frame (reported during sdCup2 on Discord)
+- Fixed bug causing `/cl_mvinsetcrosshair 1` crosshair to not move with the inset view (#462, 3.2 bug, reported by ptdev)
+- Fixed bug causing `/scr_cursor_iconoffset_x` & `/scr_cursor_iconoffset_y` to have no effect (3.x bug, fix by ciscon)
 
 #### Bugs which affected 3.5 (typically related to renderer rewrite)
 
