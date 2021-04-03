@@ -4096,7 +4096,21 @@ static void SV_ExecuteClientMove(client_t* cl, usercmd_t oldest, usercmd_t oldcm
 		SV_RunCmd(&oldcmd, false, false);
 	}
 	SV_DebugClientCommand(playernum, &newcmd, 0);
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+	{
+		// This is necessary to interrupt LG/SNG where the firing takes place inside animation frames
+		if (sv_client->weaponswitch_enabled && sv_client->weaponswitch_pending && !sv_client->edict->v.impulse) {
+			sv_client->edict->v.impulse = 255;
+			SV_RunCmd(&newcmd, false, false);
+			sv_client->edict->v.impulse = 0;
+		}
+		else {
+			SV_RunCmd(&newcmd, false, false);
+		}
+	}
+#else
 	SV_RunCmd(&newcmd, false, false);
+#endif
 
 	SV_PostRunCmd();
 }
