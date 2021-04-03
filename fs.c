@@ -37,6 +37,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
 #include <unistd.h>
 #include <strings.h>
+#if defined(__APPLE__)
+#include <libproc.h>
+#elif defined(__FreeBSD__)
+#include <sys/sysctl.h>
+#endif
 #endif
 
 static void FS_RebuildFSHash(void);
@@ -703,8 +708,16 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 #elif defined(__linux__)
 		if (!Sys_fullpath(com_basedir, "/proc/self/exe", sizeof(com_basedir)))
 			Sys_Error("FS_InitFilesystemEx: Sys_fullpath failed");
+#elif defined(__APPLE__)
+		if (proc_pidpath(getpid(), com_basedir, (uint32_t)sizeof(com_basedir)) != 0)
+			Sys_Error("FS_InitFilesystemEx: proc_pidpath failed");
+#elif defined(__FreeBSD__)
+		int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
+		size_t com_basedirlen = sizeof(com_basedir);
+		if (sysctl(mib, 4, com_basedir, &com_basedirlen, NULL, 0) < 0)
+			Sys_Error("FS_InitFilesystemEx: sysctl failed");
 #else
-		com_basedir[0] = 0; // FIXME: MAC / FreeBSD
+		com_basedir[0] = 0; // FIXME: others
 #endif
 
 		// strip ezquake*.exe, we need only path
