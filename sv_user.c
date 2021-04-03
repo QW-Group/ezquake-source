@@ -4004,15 +4004,12 @@ void SV_PostRunCmd(void)
 {
 	vec3_t originalvel;
 	qbool onground;
-	// run post-think
-#ifdef MVD_PEXT1_SERVERSIDEWEAPON
-	entvars_t* ent = &sv_client->edict->v;
-	ssw_info_t ssw = { 0 };
-#endif
 
+	// run post-think
 	if (!sv_client->spectator)
 	{
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
+		ssw_info_t ssw = { 0 };
 		SV_ServerSideWeaponLogic_PrePostThink(sv_client, &ssw);
 #endif
 
