@@ -367,7 +367,7 @@ void IN_AttackUp_CommonHide(void)
 {
 	if (CL_INPUT_WEAPONHIDE(cl.stats[STAT_HEALTH])) {
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
-		if (cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) {
+		if ((cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) && cl_pext_serversideweapon.integer) {
 			SetNextImpulse(0, false, false);
 			return;
 		}
