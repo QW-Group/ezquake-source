@@ -3716,6 +3716,14 @@ FIXME
 }
 
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
+typedef struct ssw_info_s {
+	int impulse_set;
+	int hide_weapon;
+	int best_weapon;
+	qbool hiding;
+	qbool firing;
+} ssw_info_t;
+
 // Ranks best weapon for player
 void SV_ServerSideWeaponRank(client_t* client, int* best_weapon, int* best_impulse, int* hide_weapon, int* hide_impulse)
 {
@@ -3881,6 +3889,109 @@ static void SV_ExecuteServerSideWeaponHideOnDeath(client_t* sv_client, int hide_
 		SV_ClientPrintf(sv_client, PRINT_HIGH, "Hiding on death: %d\n", hide_impulse);
 	}
 }
+
+static void SV_ServerSideWeaponLogic_PrePostThink(client_t* sv_client, ssw_info_t* ssw)
+{
+	entvars_t* ent = &sv_client->edict->v;
+	qbool dev_trace = (Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1');
+
+	ssw->firing = (ent->button0 != 0);
+
+	if ((sv_client->mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) && sv_client->weaponswitch_enabled) {
+		int best_impulse, hide_impulse;
+		qbool switch_to_best_weapon = false;
+		int mode = sv_client->weaponswitch_mode;
+
+		// modes: 0 immediately choose best, 1 preselect (wait until fire), 2 immediate if firing
+		// mode 2 = "preselect(1) when not holding +attack, else immediate(0)"
+		if (mode == 2) {
+			mode = (ssw->firing ? 0 : 1);
+		}
+
+		// by this point we should be down to 0 or 1
+		switch_to_best_weapon = (mode == 0 && sv_client->weaponswitch_pending) || (ssw->firing && !sv_client->weaponswitch_wasfiring);
+		switch_to_best_weapon &= (ent->health >= 1.0f); // Don't try and switch if dead
+
+		SV_ServerSideWeaponRank(sv_client, &ssw->best_weapon, &best_impulse, &ssw->hide_weapon, &hide_impulse);
+
+		ssw->hiding = (sv_client->weaponswitch_wasfiring && !ssw->firing && hide_impulse);
+		sv_client->weaponswitch_wasfiring |= ssw->firing;
+
+		if (switch_to_best_weapon && sv_client->weaponswitch_forgetorder) {
+			SV_ExecuteServerSideWeaponForgetOrder(sv_client, best_impulse, hide_impulse);
+		}
+		else {
+			SV_ExecuteServerSideWeaponHideOnDeath(sv_client, hide_impulse, ssw->hide_weapon);
+		}
+
+		if (!ent->impulse) {
+			if (switch_to_best_weapon) {
+				if (best_impulse && ent->weapon != ssw->best_weapon) {
+					SV_DebugServerSideWeaponScript(sv_client, best_impulse);
+
+					if (dev_trace) {
+						SV_ClientPrintf(sv_client, PRINT_HIGH, "Switching to best weapon: %d\n", best_impulse);
+					}
+
+					ent->impulse = best_impulse;
+					ssw->impulse_set = 2;
+				}
+				else {
+					sv_client->weaponswitch_pending = false;
+				}
+			}
+			else if (ssw->hiding) {
+				if (ent->weapon != ssw->hide_weapon) {
+					if (dev_trace) {
+						SV_ClientPrintf(sv_client, PRINT_HIGH, "Hiding: %d\n", hide_impulse);
+					}
+					ent->impulse = hide_impulse;
+					ssw->impulse_set = 1;
+				}
+				else {
+					sv_client->weaponswitch_pending = false;
+				}
+			}
+		}
+		else {
+			if (dev_trace) {
+				SV_ClientPrintf(sv_client, PRINT_HIGH, "Non-wp impulse: %f\n", ent->impulse);
+			}
+		}
+		sv_client->weaponswitch_pending &= (ent->health >= 1.0f);
+	}
+}
+
+static void SV_ServerSideWeaponLogic_PostPostThink(client_t* sv_client, ssw_info_t* ssw)
+{
+	entvars_t* ent = &sv_client->edict->v;
+	qbool dev_trace = (Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1');
+
+	if (ssw->impulse_set) {
+		qbool hide_failed = (ssw->impulse_set == 1 && ent->weapon != ssw->hide_weapon);
+		qbool pickbest_failed = (ssw->impulse_set == 2 && ent->weapon != ssw->best_weapon);
+
+		ent->impulse = 0;
+
+		if (dev_trace) {
+			SV_ClientPrintf(sv_client, PRINT_HIGH, "... %s failed, will try again\n", ssw->impulse_set == 1 ? "hide" : "pickbest");
+		}
+
+		sv_client->weaponswitch_pending &= (hide_failed || pickbest_failed);
+	}
+	if (ssw->hiding && ent->weapon == ssw->hide_weapon) {
+		if (dev_trace) {
+			SV_ClientPrintf(sv_client, PRINT_HIGH, "Hide successful\n");
+		}
+		sv_client->weaponswitch_wasfiring = false;
+	}
+	else if (!(ssw->hiding || ssw->firing)) {
+		if (sv_client->weaponswitch_wasfiring && dev_trace) {
+			SV_ClientPrintf(sv_client, PRINT_HIGH, "No longer firing...\n");
+		}
+		sv_client->weaponswitch_wasfiring = false;
+	}
+}
 #endif
 
 /*
@@ -3895,79 +4006,14 @@ void SV_PostRunCmd(void)
 	qbool onground;
 	// run post-think
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
-	int impulse_set = 0;
 	entvars_t* ent = &sv_client->edict->v;
-	int hide_weapon = 0, best_weapon = 0;
-	qbool hiding = false;
-	qbool firing = (ent->button0 != 0);
+	ssw_info_t ssw = { 0 };
 #endif
 
 	if (!sv_client->spectator)
 	{
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
-		if ((sv_client->mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) && sv_client->weaponswitch_enabled) {
-			int best_impulse, hide_impulse;
-			qbool switch_to_best_weapon = false;
-			int mode = sv_client->weaponswitch_mode;
-
-			// modes: 0 immediately choose best, 1 preselect (wait until fire), 2 immediate if firing
-			// mode 2 = "preselect(1) when not holding +attack, else immediate(0)"
-			if (mode == 2) {
-				mode = (firing ? 0 : 1);
-			}
-
-			// by this point we should be down to 0 or 1
-			switch_to_best_weapon = (mode == 0 && sv_client->weaponswitch_pending) || (firing && !sv_client->weaponswitch_wasfiring);
-			switch_to_best_weapon &= (ent->health >= 1.0f); // Don't try and switch if dead
-
-			SV_ServerSideWeaponRank(sv_client, &best_weapon, &best_impulse, &hide_weapon, &hide_impulse);
-
-			hiding = (sv_client->weaponswitch_wasfiring && !firing && hide_impulse);
-			sv_client->weaponswitch_wasfiring |= firing;
-
-			if (switch_to_best_weapon && sv_client->weaponswitch_forgetorder) {
-				SV_ExecuteServerSideWeaponForgetOrder(sv_client, best_impulse, hide_impulse);
-			}
-			else {
-				SV_ExecuteServerSideWeaponHideOnDeath(sv_client, hide_impulse, hide_weapon);
-			}
-
-			if (!ent->impulse) {
-				if (switch_to_best_weapon) {
-					if (best_impulse && ent->weapon != best_weapon) {
-						SV_DebugServerSideWeaponScript(sv_client, best_impulse);
-
-						if (Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1') {
-							SV_ClientPrintf(sv_client, PRINT_HIGH, "Switching to best weapon: %d\n", best_impulse);
-						}
-
-						ent->impulse = best_impulse;
-						impulse_set = 2;
-					}
-					else {
-						sv_client->weaponswitch_pending = false;
-					}
-				}
-				else if (hiding) {
-					if (ent->weapon != hide_weapon) {
-						if (Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1') {
-							SV_ClientPrintf(sv_client, PRINT_HIGH, "Hiding: %d\n", hide_impulse);
-						}
-						ent->impulse = hide_impulse;
-						impulse_set = 1;
-					}
-					else {
-						sv_client->weaponswitch_pending = false;
-					}
-				}
-			}
-			else {
-				if (Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1') {
-					SV_ClientPrintf(sv_client, PRINT_HIGH, "Non-wp impulse: %f\n", ent->impulse);
-				}
-			}
-			sv_client->weaponswitch_pending &= (ent->health >= 1.0f);
-		}
+		SV_ServerSideWeaponLogic_PrePostThink(sv_client, &ssw);
 #endif
 
 		onground = (int) sv_player->v.flags & FL_ONGROUND;
@@ -3992,27 +4038,7 @@ void SV_PostRunCmd(void)
 			SV_RunNewmis ();
 
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
-		if (impulse_set) {
-			ent->impulse = 0;
-
-			sv_client->weaponswitch_pending &=
-				// Tried to hide and failed
-				(impulse_set == 1 && ent->weapon != hide_weapon) ||
-				// Tried to pick best and failed
-				(impulse_set == 2 && ent->weapon != best_weapon);
-		}
-		if (hiding && ent->weapon == hide_weapon) {
-			if (Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1') {
-				SV_ClientPrintf(sv_client, PRINT_HIGH, "Hide successful\n");
-			}
-			sv_client->weaponswitch_wasfiring = false;
-		}
-		else if (!(hiding || firing)) {
-			if (sv_client->weaponswitch_wasfiring && Info_Get(&sv_client->_userinfo_ctx_, "dev")[0] == '1') {
-				SV_ClientPrintf(sv_client, PRINT_HIGH, "No longer firing...\n");
-			}
-			sv_client->weaponswitch_wasfiring = false;
-		}
+		SV_ServerSideWeaponLogic_PostPostThink(sv_client, &ssw);
 #endif
 	}
 	else
