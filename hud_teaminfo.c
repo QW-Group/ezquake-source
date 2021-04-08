@@ -99,6 +99,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		*hud_teaminfo_name_width,
 		*hud_teaminfo_show_enemies,
 		*hud_teaminfo_show_self,
+		*hud_teaminfo_show_headers,
 		*hud_teaminfo_scale,
 		*hud_teaminfo_armor_style,
 		*hud_teaminfo_powerup_style,
@@ -114,6 +115,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		hud_teaminfo_name_width = HUD_FindVar(hud, "name_width");
 		hud_teaminfo_show_enemies = HUD_FindVar(hud, "show_enemies");
 		hud_teaminfo_show_self = HUD_FindVar(hud, "show_self");
+		hud_teaminfo_show_headers = HUD_FindVar(hud, "show_headers");
 		hud_teaminfo_scale = HUD_FindVar(hud, "scale");
 		hud_teaminfo_armor_style = HUD_FindVar(hud, "armor_style");
 		hud_teaminfo_powerup_style = HUD_FindVar(hud, "powerup_style");
@@ -166,7 +168,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 
 	// this doesn't draw anything, just calculate width
 	width = SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer, hud_teaminfo_proportional->integer);
-	height = FONTWIDTH * hud_teaminfo_scale->value * (hud_teaminfo_show_enemies->integer ? slots_num + n_teams : slots_num);
+	height = FONTWIDTH * hud_teaminfo_scale->value * (hud_teaminfo_show_enemies->integer && hud_teaminfo_show_headers->integer ? slots_num + n_teams : slots_num);
 
 	if (hud_editor) {
 		HUD_PrepareDraw(hud, width, FONTWIDTH, &x, &y);
@@ -195,10 +197,12 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 			// hmx : different name/scores alignment options are possible in the header
 			// in which case, make sure to differentiate name width vs teaminfo width
 			// i.e int name_width = Draw_SString()
-			Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer);
-			snprintf(tmp, sizeof(tmp), "%s %4i", TP_ParseFunChars("$.", false), sorted_teams[k].frags);
-			Draw_SStringAligned(x, _y, tmp, hud_teaminfo_scale->value, 1.0f, hud_teaminfo_proportional->integer, text_align_right, x + width);
-			_y += FONTWIDTH * hud_teaminfo_scale->value;
+			if (hud_teaminfo_show_headers->integer) {
+				Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer);
+				snprintf(tmp, sizeof(tmp), "%s %4i", TP_ParseFunChars("$.", false), sorted_teams[k].frags);
+				Draw_SStringAligned(x, _y, tmp, hud_teaminfo_scale->value, 1.0f, hud_teaminfo_proportional->integer, text_align_right, x + width);
+				_y += FONTWIDTH * hud_teaminfo_scale->value;
+			}
 			for (j = 0; j < slots_num; j++) {
 				i = slots[j];
 				if (!strcmp(cl.players[i].team, sorted_teams[k].name)) {
@@ -698,6 +702,7 @@ void TeamInfo_HudInit(void)
 		"weapon_style", "0",
 		"show_enemies", "0",
 		"show_self", "1",
+		"show_headers", "1",
 		"scale", "1",
 		"powerup_style", "1",
 		"proportional", "0",
