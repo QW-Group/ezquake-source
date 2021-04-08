@@ -1209,7 +1209,35 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 		}
 
 		// Place the tracker.
-		x = x_pos + (align_right ? width - (printable_chars + 1) * width_one_char : width_one_char);
+		if (!proportional) {
+			x = x_pos + (align_right ? width - (printable_chars + 1) * width_one_char : width_one_char);
+		}
+		else {
+			int offset = 0;
+			if (align_right) {
+				for (s = 0; s < trackermsg[i].segments; ++s) {
+					void* pic = trackermsg[i].images[s];
+
+					if (pic) {
+						offset += 8 * 2 * scale;
+					}
+					else {
+						if (trackermsg[i].pad && padded_width && !trackermsg[i].text_flags[s]) {
+							offset += padded_width;
+						}
+						else {
+							offset += Draw_StringLength(trackermsg[i].text[s], -1, scale, proportional);
+						}
+					}
+
+					offset += 8 * scale;
+				}
+				x = x_pos + (width - offset);
+			}
+			else {
+				x = x_pos + width_one_char;
+			}
+		}
 
 		// Draw the segments.
 		for (s = 0; s < trackermsg[i].segments; ++s) {
