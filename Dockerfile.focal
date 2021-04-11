@@ -1,8 +1,9 @@
 FROM ubuntu:20.04 as builder
 
 ENV TZ=ETC/Utc
+# hadolint ignore=DL3008
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
     curl \
