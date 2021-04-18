@@ -1224,7 +1224,7 @@ setting settsystem_arr[] = {
 
 	//Video
 	ADDSET_SEPARATOR("Video"),
-	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
+	ADDSET_NUMBER	("Gamma", v_gamma, 0.3, 3.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Clear Video Buffer", gl_clear),
