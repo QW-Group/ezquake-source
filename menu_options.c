@@ -53,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 extern cvar_t r_farclip, gl_max_size, gl_miptexLevel;
 extern cvar_t r_bloom;
-extern cvar_t gl_flashblend, r_dynamic, gl_lightmode;
+extern cvar_t gl_flashblend, r_dynamic, gl_lightmode, gl_modulate;
 
 typedef enum {
 	OPTPG_MISC,
@@ -1227,6 +1227,7 @@ setting settsystem_arr[] = {
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.3, 3.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_NUMBER	("Lightmap Intensity", gl_modulate, 0.5, 3.0, 0.1),
 	ADDSET_BOOL		("Clear Video Buffer", gl_clear),
 	ADDSET_NUMBER	("Anisotropy Filter", gl_anisotropy, 0, 16, 1),
 	ADDSET_ENUM		("Quality Mode", gl_texturemode, gl_texturemode_enum),
