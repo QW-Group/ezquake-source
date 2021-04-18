@@ -26,6 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include <jansson.h>
 
+extern void CharsToBrown(char*, char*);
+extern char* CharsToBrownStatic(char* in);
+
 typedef enum {
 	t_boolean,
 	t_enum,         // "value1, value2, value_wih_spaces"
@@ -275,7 +278,7 @@ static void Help_DescribeVar(const json_variable_t *var)
 
 		Com_Printf("\n");
 		con_ormask = 128;
-		Com_Printf("value\n");
+		Com_Printf("values\n");
 		con_ormask = 0;
 		con_margin = CONSOLE_HELP_MARGIN;
 		for (i = 0; i < valueCount; ++i) {
@@ -545,16 +548,14 @@ void Help_DescribeCvar (cvar_t *v)
 
 void Help_VarDescription (const char *varname, char* buf, size_t bufsize)
 {
-	extern void CharsToBrown(char*, char*);
 	extern cvar_t menu_advanced;
 	const json_variable_t *var;
 
 	var = JSON_Variable_Load (varname);
 	
 	if(menu_advanced.integer && strlen(varname)){
-		strlcat(buf, "Variable name: ", bufsize);
+		strlcat(buf, CharsToBrownStatic("Variable Name: "), bufsize);
 		strlcat(buf, varname, bufsize);
-		CharsToBrown(buf, buf + strlen (buf) - strlen(varname));
 		strlcat(buf, "\n", bufsize);
 	}
 	
@@ -566,19 +567,14 @@ void Help_VarDescription (const char *varname, char* buf, size_t bufsize)
 		strlcat (buf, "\n", bufsize);
 	}
 
-	if (var->remarks) {
-		strlcat (buf, "remarks: ", bufsize);
-		strlcat (buf, var->remarks, bufsize);
-		strlcat (buf, "\n", bufsize);
-	}
-
 	if (var->values)
 	{
 		size_t valueCount = json_array_size(var->values);
 		size_t i = 0;
 
 		strlcat (buf, "\n", bufsize);
-		strlcat (buf, "value\n", bufsize);
+		strlcat (buf, CharsToBrownStatic("values"), bufsize);
+		strlcat (buf, "\n", bufsize);
 		for (i = 0; i < valueCount; ++i) {
 			const json_t* value = json_array_get(var->values, i);
 			const char*   name = json_string_value(json_object_get(value, "name"));
@@ -596,18 +592,25 @@ void Help_VarDescription (const char *varname, char* buf, size_t bufsize)
 			case t_enum:
 			default:
 				if (var->value_type == t_boolean && !strcmp(name, "false"))
-					strlcat (buf, "0", bufsize);
+					strlcat (buf, CharsToBrownStatic("0"), bufsize);
 				else if (var->value_type == t_boolean && !strcmp(name, "true"))
-					strlcat (buf, "1", bufsize);
+					strlcat (buf, CharsToBrownStatic("1"), bufsize);
 				else
-					strlcat (buf, name, bufsize);
+					strlcat (buf, CharsToBrownStatic((char*)name), bufsize);
 
-				strlcat (buf, ": ", bufsize);
+				strlcat (buf, " - ", bufsize);
 				strlcat (buf, description, bufsize);
 				strlcat (buf, "\n", bufsize);
 				break;
 			}
 		}
+	}
+
+	if (var->remarks) {
+		strlcat(buf, CharsToBrownStatic("remarks"), bufsize);
+		strlcat(buf, "\n", bufsize);
+		strlcat(buf, var->remarks, bufsize);
+		strlcat(buf, "\n", bufsize);
 	}
 }
 
