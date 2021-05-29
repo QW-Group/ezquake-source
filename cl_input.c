@@ -154,19 +154,24 @@ static void SetNextImpulse(int impulse, qbool from_weapon_script, qbool set_best
 }
 
 #define VOID_KEY (-1)
+#define NULL_KEY (-2)
 
 void KeyDown_common (kbutton_t *b, int k)
 {
-	if (k == b->down[0] || k == b->down[1])
-		return;		// repeating key
+	if (k != NULL_KEY) {
+		if (k == b->down[0] || k == b->down[1])
+			return;		// repeating key
 
-	if (!b->down[0]) {
-		b->down[0] = k;
-	} else if (!b->down[1]) {
-		b->down[1] = k;
-	} else {
-		Com_Printf ("Three keys down for a button!\n");
-		return;
+		if (!b->down[0]) {
+			b->down[0] = k;
+		}
+		else if (!b->down[1]) {
+			b->down[1] = k;
+		}
+		else {
+			Com_Printf("Three keys down for a button!\n");
+			return;
+		}
 	}
 
 	if (b->state & 1)
@@ -177,7 +182,7 @@ void KeyDown_common (kbutton_t *b, int k)
 
 qbool KeyUp_common (kbutton_t *b, int k)
 {
-	if (k == VOID_KEY) { // typed manually at the console, assume for unsticking, so clear all
+	if (k == VOID_KEY || k == NULL_KEY) { // typed manually at the console, assume for unsticking, so clear all
 		b->down[0] = b->down[1] = 0;
 		b->state &= ~1;		// now up
 		b->state |= 4; 		// impulse up
@@ -329,11 +334,72 @@ static qbool IN_IsLastArgKeyCode(void)
 	return atoi(Cmd_Argv(Cmd_Argc() - 1)) >= 32;
 }
 
+static void IN_AntiRolloverFireKeyDown(int key_code)
+{
+	// Actual firing has already happened in +fire_ar handler, so just store here...
+
+	if (key_code) {
+		int i;
+
+		// shouldn't happen, but prevent duplicates
+		for (i = 0; i < cl.ar_count; ++i) {
+			if (cl.ar_keycodes[i] == key_code) {
+				Com_Printf("Duplicate AR found %d @ %d\n", key_code, i);
+				return;
+			}
+		}
+
+		// add to the stack
+		if (cl.ar_count < sizeof(cl.ar_keycodes) / sizeof(cl.ar_keycodes[0])) {
+			cl.ar_keycodes[cl.ar_count] = key_code;
+			memcpy(cl.ar_weapon_orders[cl.ar_count], cl.weapon_order, sizeof(cl.ar_weapon_orders[cl.ar_count]));
+			Com_Printf("Inserted AR %d @ %d\n", key_code, i);
+			++cl.ar_count;
+		}
+	}
+}
+
+static void IN_AntiRolloverFireKeyUp(int key_code)
+{
+	int i;
+
+	if (cl.ar_count > 0 && cl.ar_keycodes[cl.ar_count - 1] == key_code) {
+		// Found in most recent position: use weaponlist from previously pressed button
+		--cl.ar_count;
+
+		if (cl.ar_count > 0) {
+			int prev = cl.ar_count - 1;
+
+			memcpy(cl.weapon_order, cl.ar_weapon_orders[prev], sizeof(cl.weapon_order));
+			if (cl_pext_serversideweapon.integer) {
+				cl.weapon_order_sequence_set = cls.netchan.outgoing_sequence;
+			}
+			SetNextImpulse(IN_BestWeapon(false), true, true);
+			KeyDown_common(&in_attack, NULL_KEY);
+		}
+		else {
+			KeyUp_common(&in_attack, NULL_KEY);
+		}
+	}
+	else {
+		// Not the most recent, so just remove from the list silently
+		for (i = 0; i < cl.ar_count - 1; ++i) {
+			if (cl.ar_keycodes[i] == key_code) {
+				memcpy(&cl.ar_keycodes[i], &cl.ar_keycodes[i + 1], sizeof(cl.ar_keycodes[0]) * (cl.ar_count - 1 - i));
+				memcpy(&cl.ar_weapon_orders[i], &cl.ar_weapon_orders[i + 1], sizeof(cl.ar_weapon_orders[0]) * (cl.ar_count - 1 - i));
+				--i;
+				--cl.ar_count;
+			}
+		}
+	}
+}
+
 void IN_FireDown(void)
 {
 	int key_code = VOID_KEY;
 	int last_arg_idx = Cmd_Argc() - 1;
 	int i;
+	qbool anti_rollover = !strcasecmp(Cmd_Argv(0), "+fire_ar");
 
 	if (Cmd_Argc() < 2) {
 		Com_Printf("Usage: %s <weapon number>\n", Cmd_Argv(0));
@@ -360,7 +426,13 @@ void IN_FireDown(void)
 
 	SetNextImpulse(IN_BestWeapon(false), true, true);
 
-	KeyDown_common(&in_attack, key_code);
+	if (anti_rollover && key_code) {
+		KeyDown_common(&in_attack, NULL_KEY);
+		IN_AntiRolloverFireKeyDown(key_code);
+	}
+	else {
+		KeyDown_common(&in_attack, key_code);
+	}
 }
 
 void IN_AttackUp_CommonHide(void)
@@ -389,12 +461,16 @@ void IN_AttackUp_CommonHide(void)
 void IN_FireUp(void)
 {
 	int key_code = VOID_KEY;
+	qbool anti_rollover = !strcasecmp(Cmd_Argv(0), "-fire_ar");
 
 	if (IN_IsLastArgKeyCode()) {
 		key_code = Q_atoi(Cmd_Argv(Cmd_Argc() - 1));
 	}
 
-	if (KeyUp_common(&in_attack, key_code)) {
+	if (key_code && anti_rollover) {
+		IN_AntiRolloverFireKeyUp(key_code);
+	}
+	else if (KeyUp_common(&in_attack, key_code)) {
 		IN_AttackUp_CommonHide();
 	}
 }
@@ -1365,6 +1441,8 @@ void CL_InitInput(void)
 	Cmd_AddCommand("-attack", IN_AttackUp);
 	Cmd_AddCommand("+fire", IN_FireDown);
 	Cmd_AddCommand("-fire", IN_FireUp);
+	Cmd_AddCommand("+fire_ar", IN_FireDown);
+	Cmd_AddCommand("-fire_ar", IN_FireUp);
 	Cmd_AddCommand("+attack2", IN_Attack2Down);
 	Cmd_AddCommand("-attack2", IN_Attack2Up);
 	Cmd_AddCommand("+use", IN_UseDown);

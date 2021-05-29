@@ -36,6 +36,7 @@ $Id: client.h,v 1.74 2007-10-12 00:08:42 cokeman1982 Exp $
 #endif
 
 #define MAXWEAPONS 10
+#define MAX_ANTIROLLOVER_LEVELS 32
 
 #define MAX_STATIC_SOUNDS 256
 typedef struct
@@ -733,6 +734,11 @@ typedef struct {
 	int         weapon_order_clientside[MAXWEAPONS];
 	int         weapon_order_sequence_set;
 	qbool       weapon_order_use_clientside;
+
+	// anti-rollover weapon firing
+	int         ar_weapon_orders[MAX_ANTIROLLOVER_LEVELS][MAXWEAPONS];
+	int         ar_keycodes[MAX_ANTIROLLOVER_LEVELS];
+	int         ar_count;
 
 	// When teamlock 1 is specified, lock in the selected team and don't change again
 	char        teamlock1_teamname[16];
