@@ -71,7 +71,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MVD_PEXT1_DEBUG_ANTILAG     (1 <<  4) // Send predicted positions to server (compare to antilagged positions)
 #define MVD_PEXT1_HIDDEN_MESSAGES   (1 <<  5) // dem_multiple(0) packets are in format (<length> <type-id>+ <packet-data>)*
 #define MVD_PEXT1_SERVERSIDEWEAPON2 (1 <<  6) // Server-side weapon selection supports clc_mvd_weapon_full_impulse
-#define MVD_PEXT1_WEAPONPREDICTION (1 <<  7) // Send weapon and attack related data for weapon prediction
+#define MVD_PEXT1_WEAPONPREDICTION	(1 <<  7) // Send weapon and attack related data for weapon prediction
 
 #endif
 
