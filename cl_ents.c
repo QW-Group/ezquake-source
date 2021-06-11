@@ -1420,29 +1420,34 @@ void CL_ParsePlayerinfo (void)
 			state->effects = 0;
 
 		if (flags & PF_WEAPONFRAME)
-			state->weaponframe = MSG_ReadByte ();
+		{
+			state->weaponframe = MSG_ReadByte();
+
+			if (cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+			{
+				if (MSG_ReadByte())
+				{
+					state->impulse = MSG_ReadByte();
+					state->weapon = MSG_ReadShort();
+					state->items = cl.stats[STAT_ITEMS];
+
+					state->client_time = MSG_ReadFloat();
+					state->attack_finished = MSG_ReadFloat();
+
+					state->ammo_shells = MSG_ReadByte();
+					state->ammo_nails = MSG_ReadByte();
+					state->ammo_rockets = MSG_ReadByte();
+					state->ammo_cells = MSG_ReadByte();
+				}
+			}
+			else
+			{
+				state->weapon = cl.stats[STAT_ACTIVEWEAPON];
+				state->items = cl.stats[STAT_ITEMS];
+			}
+		}
 		else
 			state->weaponframe = 0;
-
-		if (cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
-		{
-			state->impulse = MSG_ReadByte();
-			state->weapon = MSG_ReadShort();
-			state->items = cl.stats[STAT_ITEMS];
-
-			state->client_time = MSG_ReadFloat();
-			state->attack_finished = MSG_ReadFloat();
-
-			state->ammo_shells = MSG_ReadByte();
-			state->ammo_nails = MSG_ReadByte();
-			state->ammo_rockets = MSG_ReadByte();
-			state->ammo_cells = MSG_ReadByte();
-		}
-		else
-		{
-			state->weapon = cl.stats[STAT_ACTIVEWEAPON];
-			state->items = cl.stats[STAT_ITEMS];
-		}
 
 		state->alpha = 255;
 #ifdef FTE_PEXT_TRANS

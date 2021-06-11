@@ -660,9 +660,10 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 		if (client->spec_track && client->spec_track - 1 == j && ent->v.weaponframe)
 			pflags |= PF_WEAPONFRAME;
 
+		int send_wepprediction = false;
 		if (client->mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION && ent == self_ent)
 		{
-			pflags |= PF_WEAPONPRED;
+			send_wepprediction = true;
 			pflags |= PF_WEAPONFRAME;
 		}
 
@@ -735,24 +736,31 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 			MSG_WriteByte (msg, TranslateEffects(ent));
 
 		if (pflags & PF_WEAPONFRAME)
-			MSG_WriteByte (msg, ent->v.weaponframe);
-
-		if (client->mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
 		{
-			MSG_WriteByte(msg, (byte)ent->v.impulse);
-			MSG_WriteShort(msg, (short)ent->v.weapon);
+			MSG_WriteByte(msg, ent->v.weaponframe);
 
-			if (fofs_client_time)
-				MSG_WriteFloat(msg, EdictFieldFloat(ent, fofs_client_time));
-			else
-				MSG_WriteFloat(msg, sv.time);
+			if (client->mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+			{
+				MSG_WriteByte(msg, send_wepprediction);
 
-			MSG_WriteFloat(msg, EdictFieldFloat(ent, fofs_attack_finished));
+				if (send_wepprediction)
+				{
+					MSG_WriteByte(msg, (byte)ent->v.impulse);
+					MSG_WriteShort(msg, (short)ent->v.weapon);
 
-			MSG_WriteByte(msg, (byte)ent->v.ammo_shells);
-			MSG_WriteByte(msg, (byte)ent->v.ammo_nails);
-			MSG_WriteByte(msg, (byte)ent->v.ammo_rockets);
-			MSG_WriteByte(msg, (byte)ent->v.ammo_cells);
+					if (fofs_client_time)
+						MSG_WriteFloat(msg, EdictFieldFloat(ent, fofs_client_time));
+					else
+						MSG_WriteFloat(msg, sv.time);
+
+					MSG_WriteFloat(msg, EdictFieldFloat(ent, fofs_attack_finished));
+
+					MSG_WriteByte(msg, (byte)ent->v.ammo_shells);
+					MSG_WriteByte(msg, (byte)ent->v.ammo_nails);
+					MSG_WriteByte(msg, (byte)ent->v.ammo_rockets);
+					MSG_WriteByte(msg, (byte)ent->v.ammo_cells);
+				}
+			}
 		}
 	}
 }
