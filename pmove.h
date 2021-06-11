@@ -51,6 +51,23 @@ typedef struct {
 	float		waterjumptime;
 	int			pm_type;
 
+	int			weapon;
+	int			weapon_index;
+	int			weaponframe;
+
+	int			current_ammo;
+	int			items;
+	int			impulse;
+	float		client_time;
+	float		attack_finished;
+
+	int			effect_frame;
+
+	short		ammo_shells;
+	short		ammo_nails;
+	short		ammo_rockets;
+	short		ammo_cells;
+
 	// world state
 	int			numphysent;
 	physent_t	physents[MAX_PHYSENTS]; // 0 should be the world
@@ -88,10 +105,13 @@ typedef struct {
 	int     rampjump; // if set, all vertical velocity clipped by groundplane during jump frame.  If 0, only when falling (standard jumpfix)
 } movevars_t;
 
+int pmove_playeffects;
+
 extern movevars_t movevars;
 extern playermove_t pmove;
 
 int PM_PlayerMove (void);
+void PM_PlayerWeapon (void);
 
 int PM_PointContents (vec3_t point);
 int PM_PointContents_AllBSPs (vec3_t p);

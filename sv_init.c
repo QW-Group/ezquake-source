@@ -45,6 +45,8 @@ int fofs_trackent;
 int fofs_visibility;
 int fofs_hide_players;
 int fofs_teleported;
+int	fofs_client_time;
+int	fofs_attack_finished;
 
 /*
 ================
@@ -394,6 +396,12 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 #endif
 		}
 
+	}
+#endif
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+	{
+		fofs_client_time = ED_FindFieldOffset("client_time");
+		fofs_attack_finished = ED_FindFieldOffset("attack_finished");
 	}
 #endif
 #ifdef MVD_PEXT1_DEBUG_ANTILAG

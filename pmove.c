@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qwsvdef.h"
 #else
 #include "quakedef.h"
+#include "qsound.h"
 #include "pmove.h"
 #endif
 
@@ -960,3 +961,223 @@ int PM_PlayerMove(void)
 
 	return blocked;
 }
+
+
+
+void PM_SoundEffect(sfx_t *sample)
+{
+	if (!pmove_playeffects)
+		return;
+
+	S_StartSound(cl.playernum + 1, 1, sample, pmove.origin, 1, 0);
+}
+
+void W_SetCurrentAmmo(void)
+{
+	switch (pmove.weapon)
+	{
+		case IT_AXE: {
+			pmove.current_ammo = 0;
+			pmove.weapon_index = 1;
+		} break;
+		case IT_SHOTGUN: {
+			pmove.current_ammo = pmove.ammo_shells;
+			pmove.weapon_index = 2;
+		} break;
+		case IT_SUPER_SHOTGUN: {
+			pmove.current_ammo = pmove.ammo_shells;
+			pmove.weapon_index = 3;
+		} break;
+		case IT_NAILGUN: {
+			pmove.current_ammo = pmove.ammo_nails;
+			pmove.weapon_index = 4;
+		} break;
+		case IT_SUPER_NAILGUN: {
+			pmove.current_ammo = pmove.ammo_nails;
+			pmove.weapon_index = 5;
+		} break;
+		case IT_GRENADE_LAUNCHER: {
+			pmove.current_ammo = pmove.ammo_rockets;
+			pmove.weapon_index = 6;
+		} break;
+		case IT_ROCKET_LAUNCHER: {
+			pmove.current_ammo = pmove.ammo_rockets;
+			pmove.weapon_index = 7;
+		} break;
+		case IT_LIGHTNING: {
+			pmove.current_ammo = pmove.ammo_cells;
+			pmove.weapon_index = 8;
+		} break;
+	}
+}
+
+int W_CheckNoAmmo()
+{
+	if (pmove.current_ammo > 0)
+	{
+		return true;
+	}
+
+	if ((pmove.weapon == IT_AXE))
+	{
+		return true;
+	}
+
+	//self->s.v.weapon = W_BestWeapon();
+
+	W_SetCurrentAmmo();
+
+	//	drop the weapon down
+	return false;
+}
+
+void W_ChangeWeapon(int impulse)
+{
+	int fl = 0;
+	int am = 0;
+
+	switch (impulse)
+	{
+		case 1: {
+			fl = IT_AXE;
+			am = 1;
+		} break;
+
+		case 2: {
+			fl = IT_SHOTGUN;
+			if (pmove.ammo_shells >= 2)
+				am = 1;
+		} break;
+
+		case 3: {
+			fl = IT_SUPER_SHOTGUN;
+			if (pmove.ammo_shells >= 2)
+				am = 1;
+		} break;
+
+		case 4: {
+			fl = IT_NAILGUN;
+			if (pmove.ammo_nails >= 1)
+				am = 1;
+		} break;
+
+		case 5: {
+			fl = IT_SUPER_NAILGUN;
+			if (pmove.ammo_nails >= 2)
+				am = 1;
+		} break;
+
+		case 6: {
+			fl = IT_GRENADE_LAUNCHER;
+			if (pmove.ammo_rockets >= 1)
+				am = 1;
+		} break;
+
+		case 7: {
+			fl = IT_ROCKET_LAUNCHER;
+			if (pmove.ammo_rockets >= 1)
+				am = 1;
+		} break;
+
+		case 8: {
+			fl = IT_LIGHTNING;
+			if (pmove.ammo_cells >= 1)
+				am = 1;
+		} break;
+	}
+
+	if (pmove.items & fl && am)
+	{
+		if (pmove.weapon != fl)
+		{
+			pmove.weaponframe = 0;
+		}
+
+		pmove.weapon = fl;
+	}
+}
+
+void ImpulseCommands(void)
+{
+	if (((pmove.impulse >= 1) && (pmove.impulse <= 8)) || (pmove.impulse == 22))
+	{
+		W_ChangeWeapon(pmove.impulse);
+	}
+
+	pmove.impulse = 0;
+}
+
+
+sfx_t	*cl_sfx_ax1, *cl_sfx_sg, *cl_sfx_ssg, *cl_sfx_ng, *cl_sfx_sng, *cl_sfx_gl, *cl_sfx_rl, *cl_sfx_lg;
+void W_Attack()
+{
+	if (!W_CheckNoAmmo())
+	{
+		return;
+	}
+
+	switch (pmove.weapon)
+	{
+		case IT_AXE: {
+			pmove.attack_finished = pmove.client_time + 0.5;
+			PM_SoundEffect(cl_sfx_ax1);
+		} break;
+		case IT_SHOTGUN: {
+			pmove.attack_finished = pmove.client_time + 0.5;
+			PM_SoundEffect(cl_sfx_sg);
+		} break;
+		case IT_SUPER_SHOTGUN: {
+			pmove.attack_finished = pmove.client_time + 0.7;
+			PM_SoundEffect(cl_sfx_ssg);
+		} break;
+		case IT_NAILGUN: {
+			pmove.attack_finished = pmove.client_time + 0.2;
+			PM_SoundEffect(cl_sfx_ng);
+		} break;
+		case IT_SUPER_NAILGUN: {
+			pmove.attack_finished = pmove.client_time + 0.2;
+			PM_SoundEffect(cl_sfx_sng);
+		} break;
+		case IT_GRENADE_LAUNCHER: {
+			pmove.attack_finished = pmove.client_time + 0.6;
+			PM_SoundEffect(cl_sfx_gl);
+		} break;
+		case IT_ROCKET_LAUNCHER: {
+			pmove.attack_finished = pmove.client_time + 0.8;
+			PM_SoundEffect(cl_sfx_rl);
+		} break;
+		case IT_LIGHTNING: {
+			pmove.attack_finished = pmove.client_time + 0.1;
+			PM_SoundEffect(cl_sfx_lg);
+		} break;
+	}
+}
+
+void PM_PlayerWeapon(void)
+{
+	if (pmove.pm_type == PM_DEAD)
+	{
+		pmove.impulse = 0;
+		pmove.attack_finished = pmove.client_time + 0.05;
+		return;
+	}
+
+	if (pmove.cmd.impulse)
+		pmove.impulse = pmove.cmd.impulse;
+
+	pmove.client_time += (float)pmove.cmd.msec / 1000;
+
+	if (pmove.client_time >= pmove.attack_finished)
+		ImpulseCommands();
+
+	W_SetCurrentAmmo(); // We need to run this regardless because it sets our model. Don't want any ugly prediction errors
+
+	if (pmove.client_time < pmove.attack_finished)
+		return;
+
+	if (pmove.cmd.buttons & 1)
+	{
+		W_Attack();
+	}
+}
+

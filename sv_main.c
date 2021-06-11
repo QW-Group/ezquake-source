@@ -3563,6 +3563,9 @@ void SV_InitLocal (void)
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 	svs.mvdprotocolextension1 |= MVD_PEXT1_SERVERSIDEWEAPON;
 #endif
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+	svs.mvdprotocolextension1 |= MVD_PEXT1_WEAPONPREDICTION;
+#endif
 #ifdef MVD_PEXT1_HIDDEN_MESSAGES
 	svs.mvdprotocolextension1 |= MVD_PEXT1_HIDDEN_MESSAGES;
 #endif

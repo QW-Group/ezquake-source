@@ -1912,7 +1912,7 @@ void CL_ParseStaticSound (void)
 ACTION MESSAGES
 =====================================================================
 */
-
+cvar_t cl_nopred_weapon;
 void CL_ParseStartSoundPacket(void)
 {
     vec3_t pos;
@@ -1936,6 +1936,13 @@ void CL_ParseStartSoundPacket(void)
 
 	if (ent > CL_MAX_EDICTS)
 		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
+
+	// Skip weapon sounds if we're predicting them
+	if (ent == cl.playernum + 1 && channel == 1)
+	{
+		if (!cl_nopred_weapon.integer && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+			return;
+	}
 
 	// MVD Playback
     if (cls.mvdplayback)

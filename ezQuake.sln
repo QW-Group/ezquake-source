@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30611.23
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.329
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ezQuake", "ezQuake.vcxproj", "{5147CA71-1D3D-4F61-9847-87B36421C323}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -83,8 +83,8 @@ Global
 		{5147CA71-1D3D-4F61-9847-87B36421C323}.dbg-vulkan|x86.Build.0 = dbg-vulkan|Win32
 		{5147CA71-1D3D-4F61-9847-87B36421C323}.rls-all|Any CPU.ActiveCfg = dbg-all|Win32
 		{5147CA71-1D3D-4F61-9847-87B36421C323}.rls-all|Any CPU.Build.0 = dbg-all|Win32
-		{5147CA71-1D3D-4F61-9847-87B36421C323}.rls-all|ARM.ActiveCfg = Release|Win32
-		{5147CA71-1D3D-4F61-9847-87B36421C323}.rls-all|ARM64.ActiveCfg = Release|Win32
+		{5147CA71-1D3D-4F61-9847-87B36421C323}.rls-all|ARM.ActiveCfg = rls-all|Win32
+		{5147CA71-1D3D-4F61-9847-87B36421C323}.rls-all|ARM64.ActiveCfg = rls-all|Win32
 		{5147CA71-1D3D-4F61-9847-87B36421C323}.rls-all|x64.ActiveCfg = dbg-all|x64
 		{5147CA71-1D3D-4F61-9847-87B36421C323}.rls-all|x64.Build.0 = dbg-all|x64
 		{5147CA71-1D3D-4F61-9847-87B36421C323}.rls-all|x86.ActiveCfg = dbg-all|Win32

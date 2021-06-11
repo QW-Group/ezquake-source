@@ -71,6 +71,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MVD_PEXT1_DEBUG_ANTILAG     (1 <<  4) // Send predicted positions to server (compare to antilagged positions)
 #define MVD_PEXT1_HIDDEN_MESSAGES   (1 <<  5) // dem_multiple(0) packets are in format (<length> <type-id>+ <packet-data>)*
 #define MVD_PEXT1_SERVERSIDEWEAPON2 (1 <<  6) // Server-side weapon selection supports clc_mvd_weapon_full_impulse
+#define MVD_PEXT1_WEAPONPREDICTION (1 <<  7) // Send weapon and attack related data for weapon prediction
 
 #endif
 
@@ -284,6 +285,7 @@ void MSG_DecodeMVDSVWeaponFlags(int flags, int* weaponmode, int* weaponhide, qbo
 #define	PF_PMC_MASK		7
 #define	PF_ONGROUND		(1<<14)			// ZQuake extension
 #define	PF_SOLID		(1<<15)			// ZQuake extension
+#define PF_WEAPONPRED	(1<<20)			// Reki weapon prediction
 
 // encoded player move types
 #define PMC_NORMAL				0		// normal ground movement

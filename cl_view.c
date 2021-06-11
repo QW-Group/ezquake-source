@@ -57,6 +57,7 @@ cvar_t	v_kickpitch = {"v_kickpitch", "0.0"};
 cvar_t	v_gunkick = {"v_gunkick", "0"};
 cvar_t	v_viewheight = {"v_viewheight", "0"};
 
+cvar_t	cl_nopred_weapon;
 cvar_t	cl_drawgun = {"r_drawviewmodel", "1"};
 cvar_t  r_nearclip = {"r_nearclip", "2", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, R_MINIMUM_NEARCLIP, R_MAXIMUM_FARCLIP, R_MINIMUM_NEARCLIP };
 cvar_t	r_viewmodelsize = {"r_viewmodelSize", "1"};
@@ -822,6 +823,12 @@ static int V_CurrentWeaponModel(void)
 				return cl_modelindices[mi_weapon1 - 1 + bestgun];
 			}
 		}
+		else if (!cl_nopred_weapon.integer && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION) {
+			if (cl.simwep == 1)
+				return cl_modelindices[mi_vaxe];
+			else if (cl.simwep > 1 && cl.simwep <= 8)
+				return cl_modelindices[mi_weapon1 - 1 + cl.simwep];
+		}
 		return cl.stats[STAT_WEAPON];
 	}
 }
@@ -889,7 +896,11 @@ static void V_AddViewWeapon(float bob)
 	}
 
 	cent->current.modelindex = gunmodel;
-	cent->current.frame = view_message.weaponframe;
+
+	if (!cl_nopred_weapon.integer && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+		cent->current.frame = cl.simwepframe;
+	else
+		cent->current.frame = view_message.weaponframe;
 }
 
 static void V_CalcIntermissionRefdef(void)

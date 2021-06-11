@@ -96,6 +96,17 @@ typedef struct
 	vec3_t		viewangles;		// Only for demos, not from server.
 	vec3_t		velocity;
 	int			weaponframe;
+	int			weapon;
+	int			items;
+	int			impulse;
+
+	byte		ammo_shells;
+	byte		ammo_nails;
+	byte		ammo_rockets;
+	byte		ammo_cells;
+
+	float		attack_finished;
+	float		client_time;
 
 	int			modelindex;
 	int			frame;
@@ -627,6 +638,8 @@ typedef struct {
 	vec3_t		simorg;
 	vec3_t		simvel;
 	vec3_t		simangles;
+	int			simwep;
+	int			simwepframe;
 
 	// pitch drifting vars
 	float		pitchvel;

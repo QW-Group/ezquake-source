@@ -19,9 +19,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "quakedef.h"
 #include "pmove.h"
-
+#include "qsound.h"
 
 cvar_t	cl_nopred	= {"cl_nopred", "0"};
+cvar_t	cl_nopred_weapon = { "cl_nopred_weapon", "0" };
 
 extern cvar_t cl_independentPhysics;
 
@@ -36,6 +37,19 @@ qbool clpred_newpos = false;
 
 static qbool nolerp[2];
 static qbool nolerp_nextpos;
+
+sfx_t	*cl_sfx_ax1, *cl_sfx_sg, *cl_sfx_ssg, *cl_sfx_ng, *cl_sfx_sng, *cl_sfx_gl, *cl_sfx_rl, *cl_sfx_lg;
+void CL_InitWepSounds(void)
+{
+	cl_sfx_ax1 = S_PrecacheSound("weapons/ax1.wav");
+	cl_sfx_sg = S_PrecacheSound("weapons/guncock.wav");
+	cl_sfx_ssg = S_PrecacheSound("weapons/shotgn2.wav");
+	cl_sfx_ng = S_PrecacheSound("weapons/rocket1i.wav");
+	cl_sfx_sng = S_PrecacheSound("weapons/spike2.wav");
+	cl_sfx_gl = S_PrecacheSound("weapons/grenade.wav");
+	cl_sfx_rl = S_PrecacheSound("weapons/sgun1.wav");
+	cl_sfx_lg = S_PrecacheSound("weapons/lstart.wav");
+}
 
 void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) {
 	// split up very long moves
@@ -54,6 +68,21 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	VectorCopy (from->origin, pmove.origin);
 	VectorCopy (u->angles, pmove.angles);
 	VectorCopy (from->velocity, pmove.velocity);
+
+	pmove.client_time = from->client_time;
+	pmove.attack_finished = from->attack_finished;
+
+	pmove.weapon = from->weapon;
+	pmove.items = from->items;
+
+	pmove.ammo_shells = from->ammo_shells;
+	pmove.ammo_nails = from->ammo_nails;
+	pmove.ammo_rockets = from->ammo_rockets;
+	pmove.ammo_cells = from->ammo_cells;
+
+	pmove.impulse = from->impulse;
+
+	pmove.weaponframe = from->weaponframe;
 
 	pmove.jump_msec = (cl.z_ext & Z_EXT_PM_TYPE) ? 0 : from->jump_msec;
 	pmove.jump_held = from->jump_held;
@@ -76,6 +105,25 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	movevars.bunnyspeedcap = cl.bunnyspeedcap;
 
 	PM_PlayerMove();
+
+	if (!cl_nopred_weapon.integer && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+	{
+		PM_PlayerWeapon();
+	}
+
+	to->client_time = pmove.client_time;
+	to->attack_finished = pmove.attack_finished;
+
+	to->ammo_shells = pmove.ammo_shells;
+	to->ammo_nails = pmove.ammo_nails;
+	to->ammo_rockets = pmove.ammo_rockets;
+	to->ammo_cells = pmove.ammo_cells;
+
+	to->weaponframe = pmove.weaponframe;
+	to->weapon = pmove.weapon;
+	to->items = pmove.items;
+
+	to->impulse = pmove.impulse;
 
 	to->waterjumptime = pmove.waterjumptime;
 	to->pm_type = pmove.pm_type;
@@ -363,8 +411,16 @@ void CL_PredictMove (qbool physframe) {
 		oldphysent = pmove.numphysent;
 		CL_SetSolidPlayers (cl.playernum);
 
+		pmove_playeffects = false;
+
 		// run frames
 		for (i = 1; i < UPDATE_BACKUP - 1 && cl.validsequence + i < cls.netchan.outgoing_sequence; i++) {
+			if (cl.validsequence + i > pmove.effect_frame)
+			{
+				pmove_playeffects = true;
+				pmove.effect_frame = cl.validsequence + i;
+			}
+
 			from = to;
 			to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
 			CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd);
@@ -375,6 +431,8 @@ void CL_PredictMove (qbool physframe) {
 		// save results
 		VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
 		VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
+		cl.simwep = pmove.weapon_index;
+		cl.simwepframe = pmove.weaponframe;
 		cl.onground = pmove.onground;
 		cl.waterlevel = pmove.waterlevel;
 		check_standing_on_entity();
@@ -418,7 +476,10 @@ void CL_InitPrediction(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register(&cl_nopred);
+	Cvar_Register(&cl_nopred_weapon);
 	Cvar_ResetCurrentGroup();
+
+	CL_InitWepSounds();
 
 #ifdef JSS_CAM
 	Cvar_SetCurrentGroup(CVAR_GROUP_SPECTATOR);
