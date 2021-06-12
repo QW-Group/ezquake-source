@@ -751,7 +751,8 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 					MSG_WriteFloat(msg, EdictFieldFloat(ent, fofs_client_time));
 					MSG_WriteFloat(msg, EdictFieldFloat(ent, fofs_attack_finished));
 					MSG_WriteFloat(msg, EdictFieldFloat(ent, fofs_client_nextthink));
-					MSG_WriteByte(msg, (byte)EdictFieldFloat(ent, fofs_client_thinkindex));
+					MSG_WriteByte(msg, EdictFieldFloat(ent, fofs_client_thinkindex));
+					MSG_WriteByte(msg, EdictFieldFloat(ent, fofs_client_ping));
 
 					MSG_WriteByte(msg, (byte)ent->v.ammo_shells);
 					MSG_WriteByte(msg, (byte)ent->v.ammo_nails);
