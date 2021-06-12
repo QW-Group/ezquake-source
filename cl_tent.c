@@ -145,6 +145,7 @@ fproj_t *CL_AllocFakeProjectile(void)
 	return &cl_fakeprojectiles[0];
 }
 
+#define WEAPONPRED_MAXLATENCY 0.1
 fproj_t *CL_CreateFakeNail(void)
 {
 	fproj_t *newmis = CL_AllocFakeProjectile();
@@ -153,7 +154,7 @@ fproj_t *CL_CreateFakeNail(void)
 	float latency = (float)pmove.client_ping / 1000;
 	latency = min(latency, 0.25);
 
-	newmis->starttime = cl.time + max(latency - 0.115, 0);
+	newmis->starttime = cl.time + max((latency - 0.013) - WEAPONPRED_MAXLATENCY, 0);
 	newmis->endtime = cl.time + latency;
 	
 	return newmis;
@@ -167,7 +168,7 @@ fproj_t *CL_CreateFakeSuperNail(void)
 	float latency = (float)pmove.client_ping / 1000;
 	latency = min(latency, 0.25);
 
-	newmis->starttime = cl.time + max(latency - 0.115, 0);
+	newmis->starttime = cl.time + max((latency - 0.013) - WEAPONPRED_MAXLATENCY, 0);
 	newmis->endtime = cl.time + latency;
 
 	return newmis;
@@ -181,7 +182,7 @@ fproj_t *CL_CreateFakeGrenade(void)
 	float latency = (float)pmove.client_ping / 1000;
 	latency = min(latency, 0.25);
 
-	newmis->starttime = cl.time + max(latency - 0.115, 0);
+	newmis->starttime = cl.time + max((latency - 0.013) - WEAPONPRED_MAXLATENCY, 0);
 	newmis->endtime = cl.time + latency;
 
 	newmis->type = 1;
@@ -202,7 +203,7 @@ fproj_t *CL_CreateFakeRocket(void)
 	float latency = (float)pmove.client_ping / 1000;
 	latency = min(latency, 0.25);
 
-	newmis->starttime = cl.time + max(latency - 0.115, 0);
+	newmis->starttime = cl.time + max((latency - 0.013) - WEAPONPRED_MAXLATENCY, 0);
 	newmis->endtime = cl.time + latency;
 
 	newmis->effects = EF_ROCKET;
