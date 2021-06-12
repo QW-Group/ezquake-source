@@ -24,8 +24,8 @@ typedef struct
 {
 	model_t *model;
 	int type, effects;
-	float starttime, endtime;
-	vec3_t start, vel, angs;
+	float starttime, endtime, parttime;
+	vec3_t start, vel, angs, org, partorg;
 } fproj_t;
 
 fproj_t *CL_CreateFakeNail(void);
@@ -33,4 +33,6 @@ fproj_t *CL_CreateFakeSuperNail(void);
 fproj_t *CL_CreateFakeGrenade(void);
 fproj_t *CL_CreateFakeRocket(void);
 
+//r_part_trails.c
+void R_MissileTrail(centity_t *cent, int trail_num);
 

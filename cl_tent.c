@@ -205,6 +205,7 @@ fproj_t *CL_CreateFakeRocket(void)
 
 	newmis->starttime = cl.time + max((latency - 0.013) - WEAPONPRED_MAXLATENCY, 0);
 	newmis->endtime = cl.time + latency;
+	newmis->parttime = newmis->starttime + 0.013; //delay trail a tiny bit, otherwise it looks funny
 
 	newmis->effects = EF_ROCKET;
 
@@ -1020,6 +1021,10 @@ static void CL_UpdateFakeProjectiles(void)
 	int i;
 	fproj_t	*prj;
 	entity_t ent;
+	centity_t cent;
+	entity_state_t centstate;
+	memset(&centstate, 0, sizeof(entity_state_t));
+	cent.current = centstate;
 
 	memset(&ent, 0, sizeof(entity_t));
 	ent.colormap = vid.colormap;
@@ -1037,6 +1042,28 @@ static void CL_UpdateFakeProjectiles(void)
 		VectorScale(prj->vel, (cl.time - prj->starttime) + 0.026, traveled);
 		VectorAdd(ent.origin, traveled, ent.origin);
 		VectorCopy(prj->angs, ent.angles);
+		
+		if (prj->effects)
+		{
+			if (cl.time >= prj->parttime)
+			{
+				prj->parttime = cl.time + 0.013;
+				if (!VectorLength(prj->partorg))
+					VectorCopy(prj->org, prj->partorg);
+
+				VectorCopy(prj->partorg, cent.old_origin);
+				VectorCopy(cent.trails[0].stop, cent.trails[1].stop);
+				VectorCopy(prj->partorg, cent.trails[0].stop);
+				VectorCopy(ent.origin, cent.current.origin);
+				VectorCopy(ent.origin, cent.lerp_origin);
+				VectorCopy(ent.origin, prj->partorg);
+
+				if (prj->effects & EF_ROCKET)
+					R_MissileTrail(&cent, r_rockettrail.integer);
+			}
+		}
+
+		VectorCopy(ent.origin, prj->org);
 
 		trace_t trace = PM_TraceLine(prj->start, ent.origin);
 		if (trace.fraction < 1)
