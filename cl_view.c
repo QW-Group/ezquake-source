@@ -885,6 +885,9 @@ static void V_AddViewWeapon(float bob)
 			cent->current.origin[2] += 0.5;
 	}
 
+	if (!cl_nopred_weapon.integer && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+		view_message.weaponframe = cl.simwepframe;
+
 	if (cent->current.modelindex != gunmodel) {
 		cent->frametime = -1;
 	}
@@ -896,11 +899,7 @@ static void V_AddViewWeapon(float bob)
 	}
 
 	cent->current.modelindex = gunmodel;
-
-	if (!cl_nopred_weapon.integer && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
-		cent->current.frame = cl.simwepframe;
-	else
-		cent->current.frame = view_message.weaponframe;
+	cent->current.frame = view_message.weaponframe;
 }
 
 static void V_CalcIntermissionRefdef(void)
