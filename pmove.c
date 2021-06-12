@@ -1115,16 +1115,21 @@ void launch_spike(float off)
 {
 	if (pmove_playeffects)
 	{
+		fproj_t *newmis;
 		if (pmove.weapon == IT_SUPER_NAILGUN)
 		{
 			off = 0;
 			PM_SoundEffect(cl_sfx_sng);
+			newmis = CL_CreateFakeSuperNail();
 		}
 		else
+		{
 			PM_SoundEffect(cl_sfx_ng);
+			newmis = CL_CreateFakeNail();
+		}
 
 
-		fproj_t *newmis = CL_CreateFakeNail();
+		
 		vec3_t forward, right;
 		AngleVectors(pmove.cmd.angles, forward, right, NULL);
 		VectorScale(forward, 1000, newmis->vel);

@@ -163,7 +163,7 @@ fproj_t *CL_CreateFakeNail(void)
 fproj_t *CL_CreateFakeSuperNail(void)
 {
 	fproj_t *newmis = CL_AllocFakeProjectile();
-	newmis->model = cl.model_precache[cl_modelindices[mi_spike]];
+	newmis->model = cl.model_precache[cl_modelindices[mi_s_spike]];
 
 	float latency = (float)pmove.client_ping / 1000;
 	latency = min(latency, 0.25);

@@ -61,6 +61,7 @@ void CL_InitEnts(void) {
 	memset(cl_modelnames, 0, sizeof(cl_modelnames));
 
 	cl_modelnames[mi_spike] = "progs/spike.mdl";
+	cl_modelnames[mi_s_spike] = "progs/s_spike.mdl";
 	cl_modelnames[mi_player] = "progs/player.mdl";
 	cl_modelnames[mi_eyes] = "progs/eyes.mdl";
 	cl_modelnames[mi_flag] = "progs/flag.mdl";
