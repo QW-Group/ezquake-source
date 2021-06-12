@@ -28,38 +28,22 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "qsound.h"
 #include "qmb_particles.h"
+#include "cl_tent.h"
 
 extern cvar_t gl_no24bit;
 
 temp_entity_list_t temp_entities;
-
-#define	MAX_BEAMS 32
-typedef struct 
-{
-	int entity;
-	model_t *model;
-	float endtime;
-	vec3_t start, end;
-} beam_t;
 
 beam_t cl_beams[MAX_BEAMS];
 
 static vec3_t playerbeam_end;
 static qbool playerbeam_update;
 
-#define MAX_EXPLOSIONS 32
-typedef struct explosion_s 
-{
-	struct explosion_s *prev, *next;
-	vec3_t origin;
-	float start;
-	model_t *model;
-} explosion_t;
-
-
 // cl_free_explosions = linear linked list of free explosions
 explosion_t	cl_explosions[MAX_EXPLOSIONS];
 explosion_t cl_explosions_headnode, *cl_free_explosions;
+
+fproj_t cl_fakeprojectiles[MAX_FAKEPROJ];
 
 static model_t	*cl_explo_mod, *cl_bolt1_mod, *cl_bolt2_mod, *cl_bolt3_mod, *cl_beam_mod;
 
@@ -95,6 +79,7 @@ void CL_ClearTEnts(void)
 
 	memset (&cl_beams, 0, sizeof(cl_beams));
 	memset (&cl_explosions, 0, sizeof(cl_explosions));
+	memset (&cl_fakeprojectiles, 0, sizeof(cl_fakeprojectiles));
 
 	// link explosions 
 	cl_free_explosions = cl_explosions; 
@@ -140,6 +125,89 @@ void CL_FreeExplosion(explosion_t *ex)
 	// Insert into front linked free list.
 	ex->next = cl_free_explosions;
 	cl_free_explosions = ex;
+}
+
+fproj_t *CL_AllocFakeProjectile(void)
+{
+	fproj_t *prj;
+	int i;
+
+	for (i = 0, prj = cl_fakeprojectiles; i < MAX_FAKEPROJ; i++, prj++)
+	{
+		if (prj->endtime < cl.time)
+		{
+			memset(prj, 0, sizeof(fproj_t));
+			return prj;
+		}
+	}
+
+	memset(&cl_fakeprojectiles[0], 0, sizeof(fproj_t));
+	return &cl_fakeprojectiles[0];
+}
+
+fproj_t *CL_CreateFakeNail(void)
+{
+	fproj_t *newmis = CL_AllocFakeProjectile();
+	newmis->model = cl.model_precache[cl_modelindices[mi_spike]];
+
+	float latency = (float)pmove.client_ping / 1000;
+	latency = min(latency, 0.25);
+
+	newmis->starttime = cl.time + max(latency - 0.115, 0);
+	newmis->endtime = cl.time + latency;
+	
+	return newmis;
+}
+
+fproj_t *CL_CreateFakeSuperNail(void)
+{
+	fproj_t *newmis = CL_AllocFakeProjectile();
+	newmis->model = cl.model_precache[cl_modelindices[mi_spike]];
+
+	float latency = (float)pmove.client_ping / 1000;
+	latency = min(latency, 0.25);
+
+	newmis->starttime = cl.time + max(latency - 0.115, 0);
+	newmis->endtime = cl.time + latency;
+
+	return newmis;
+}
+
+fproj_t *CL_CreateFakeGrenade(void)
+{
+	fproj_t *newmis = CL_AllocFakeProjectile();
+	newmis->model = cl.model_precache[cl_modelindices[mi_grenade]];
+
+	float latency = (float)pmove.client_ping / 1000;
+	latency = min(latency, 0.25);
+
+	newmis->starttime = cl.time + max(latency - 0.115, 0);
+	newmis->endtime = cl.time + latency;
+
+	newmis->type = 1;
+	newmis->effects = EF_GRENADE;
+
+	return newmis;
+}
+
+extern cvar_t cl_rocket2grenade;
+fproj_t *CL_CreateFakeRocket(void)
+{
+	fproj_t *newmis = CL_AllocFakeProjectile();
+	newmis->model = cl.model_precache[cl_modelindices[mi_rocket]];
+	if (cl_rocket2grenade.integer)
+		newmis->model = cl.model_precache[cl_modelindices[mi_grenade]];
+
+
+	float latency = (float)pmove.client_ping / 1000;
+	latency = min(latency, 0.25);
+
+	newmis->starttime = cl.time + max(latency - 0.115, 0);
+	newmis->endtime = cl.time + latency;
+
+	newmis->effects = EF_ROCKET;
+
+	return newmis;
 }
 
 static void CL_ParseBeam(int type, vec3_t end)
@@ -946,9 +1014,44 @@ static void CL_UpdateExplosions(void)
 	}
 }
 
+static void CL_UpdateFakeProjectiles(void)
+{
+	int i;
+	fproj_t	*prj;
+	entity_t ent;
+
+	memset(&ent, 0, sizeof(entity_t));
+	ent.colormap = vid.colormap;
+
+	for (i = 0; i < MAX_FAKEPROJ; i++) {
+		prj = &cl_fakeprojectiles[i];
+
+		if (cl.time >= prj->endtime || cl.time <= prj->starttime) {
+			continue;
+		}
+
+		VectorCopy(prj->start, ent.origin);
+
+		vec3_t traveled;
+		VectorScale(prj->vel, (cl.time - prj->starttime) + 0.026, traveled);
+		VectorAdd(ent.origin, traveled, ent.origin);
+		VectorCopy(prj->angs, ent.angles);
+
+		trace_t trace = PM_TraceLine(prj->start, ent.origin);
+		if (trace.fraction < 1)
+			prj->endtime = cl.time;
+
+		ent.model = prj->model;
+		ent.effects = prj->effects;
+
+		CL_AddEntity(&ent);
+	}
+}
+
 void CL_UpdateTEnts (void)
 {
 	CL_UpdateBeams();
 	CL_UpdateExplosions();
+	CL_UpdateFakeProjectiles();
 }
 

@@ -60,6 +60,9 @@ typedef struct {
 	int			impulse;
 	float		client_time;
 	float		attack_finished;
+	float		client_nextthink;
+	byte		client_thinkindex;
+	byte		client_ping;
 
 	int			effect_frame;
 

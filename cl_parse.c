@@ -2087,7 +2087,6 @@ void CL_ProcessUserInfo(int slot, player_info_t *player, char *key)
 
 	player->real_topcolor = atoi(Info_ValueForKey(player->userinfo, "topcolor"));
 	player->real_bottomcolor = atoi(Info_ValueForKey(player->userinfo, "bottomcolor"));
-
 	strlcpy(player->team, Info_ValueForKey(player->userinfo, "team"), sizeof(player->team));
 
 	if (atoi(Info_ValueForKey(player->userinfo, "*spectator"))) {

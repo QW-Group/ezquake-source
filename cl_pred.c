@@ -71,6 +71,9 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 
 	pmove.client_time = from->client_time;
 	pmove.attack_finished = from->attack_finished;
+	pmove.client_nextthink = from->client_nextthink;
+	pmove.client_thinkindex = from->client_thinkindex;
+	pmove.client_ping = from->client_ping;
 
 	pmove.weapon = from->weapon;
 	pmove.items = from->items;
@@ -105,14 +108,14 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	movevars.bunnyspeedcap = cl.bunnyspeedcap;
 
 	PM_PlayerMove();
-
 	if (!cl_nopred_weapon.integer && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
-	{
 		PM_PlayerWeapon();
-	}
 
 	to->client_time = pmove.client_time;
 	to->attack_finished = pmove.attack_finished;
+	to->client_nextthink = pmove.client_nextthink;
+	to->client_thinkindex = pmove.client_thinkindex;
+	to->client_ping = from->client_ping;
 
 	to->ammo_shells = pmove.ammo_shells;
 	to->ammo_nails = pmove.ammo_nails;
@@ -135,8 +138,6 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	VectorCopy (pmove.angles, to->viewangles);
 	VectorCopy (pmove.velocity, to->velocity);
 	to->onground = pmove.onground;
-
-	to->weaponframe = from->weaponframe;
 }
 
 //Used when cl_nopred is 1 to determine whether we are on ground, otherwise stepup smoothing code produces ugly jump physics

@@ -107,6 +107,9 @@ typedef struct
 
 	float		attack_finished;
 	float		client_time;
+	float		client_nextthink;
+	int			client_thinkindex;
+	int			client_ping;
 
 	int			modelindex;
 	int			frame;

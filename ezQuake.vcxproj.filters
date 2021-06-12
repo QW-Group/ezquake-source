@@ -1765,6 +1765,9 @@
     <ClInclude Include="central.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="cl_tent.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="glsl\common.glsl">

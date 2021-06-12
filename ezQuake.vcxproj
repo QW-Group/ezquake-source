@@ -3160,6 +3160,7 @@ msversion.bat</Command>
     <ClInclude Include="anorms.h" />
     <ClInclude Include="anorm_dots.h" />
     <ClInclude Include="central.h" />
+    <ClInclude Include="cl_tent.h" />
     <ClInclude Include="cmdline_params.h" />
     <ClInclude Include="cmdline_params_ids.h" />
     <ClInclude Include="EX_browser_ping.h" />

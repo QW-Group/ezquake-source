@@ -47,6 +47,8 @@ int fofs_hide_players;
 int fofs_teleported;
 int	fofs_client_time;
 int	fofs_attack_finished;
+int	fofs_client_nextthink;
+int	fofs_client_thinkindex;
 
 /*
 ================
@@ -402,6 +404,8 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	{
 		fofs_client_time = ED_FindFieldOffset("client_time");
 		fofs_attack_finished = ED_FindFieldOffset("attack_finished");
+		fofs_client_nextthink = ED_FindFieldOffset("client_nextthink");
+		fofs_client_thinkindex = ED_FindFieldOffset("client_thinkindex");
 	}
 #endif
 #ifdef MVD_PEXT1_DEBUG_ANTILAG

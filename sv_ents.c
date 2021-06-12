@@ -748,12 +748,10 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 					MSG_WriteByte(msg, (byte)ent->v.impulse);
 					MSG_WriteShort(msg, (short)ent->v.weapon);
 
-					if (fofs_client_time)
-						MSG_WriteFloat(msg, EdictFieldFloat(ent, fofs_client_time));
-					else
-						MSG_WriteFloat(msg, sv.time);
-
+					MSG_WriteFloat(msg, EdictFieldFloat(ent, fofs_client_time));
 					MSG_WriteFloat(msg, EdictFieldFloat(ent, fofs_attack_finished));
+					MSG_WriteFloat(msg, EdictFieldFloat(ent, fofs_client_nextthink));
+					MSG_WriteByte(msg, (byte)EdictFieldFloat(ent, fofs_client_thinkindex));
 
 					MSG_WriteByte(msg, (byte)ent->v.ammo_shells);
 					MSG_WriteByte(msg, (byte)ent->v.ammo_nails);
