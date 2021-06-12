@@ -1032,6 +1032,9 @@ void	CL_SendChunkDownloadReq(void);
 
 #endif // FTE_PEXT_CHUNKEDDOWNLOADS
 
+// cl_pred.c
+void CL_InitWepSounds(void);
+
 // cl_tent.c
 void CL_InitTEnts (void);
 void CL_InitTEntsCvar(void);
