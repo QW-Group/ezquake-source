@@ -39,10 +39,11 @@ qbool clpred_newpos = false;
 static qbool nolerp[2];
 static qbool nolerp_nextpos;
 
-sfx_t	*cl_sfx_ax1, *cl_sfx_sg, *cl_sfx_ssg, *cl_sfx_ng, *cl_sfx_sng, *cl_sfx_gl, *cl_sfx_rl, *cl_sfx_lg;
+sfx_t	*cl_sfx_ax1, *cl_sfx_axhit1, *cl_sfx_sg, *cl_sfx_ssg, *cl_sfx_ng, *cl_sfx_sng, *cl_sfx_gl, *cl_sfx_rl, *cl_sfx_lg;
 void CL_InitWepSounds(void)
 {
 	cl_sfx_ax1 = S_PrecacheSound("weapons/ax1.wav");
+	cl_sfx_axhit1 = S_PrecacheSound("player/axhit2.wav");
 	cl_sfx_sg = S_PrecacheSound("weapons/guncock.wav");
 	cl_sfx_ssg = S_PrecacheSound("weapons/shotgn2.wav");
 	cl_sfx_ng = S_PrecacheSound("weapons/rocket1i.wav");
