@@ -64,6 +64,7 @@ typedef struct {
 	byte		client_thinkindex;
 	byte		client_ping;
 
+	int			last_frame;
 	int			effect_frame;
 
 	short		ammo_shells;

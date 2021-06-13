@@ -426,6 +426,7 @@ void CL_PredictMove (qbool physframe) {
 			if (cl.validsequence + i > pmove.effect_frame)
 			{
 				pmove_playeffects = true;
+				pmove.last_frame = pmove.effect_frame;
 				pmove.effect_frame = cl.validsequence + i;
 			}
 

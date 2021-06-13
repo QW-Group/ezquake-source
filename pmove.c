@@ -1493,6 +1493,7 @@ void PM_PlayerWeapon(void)
 	{
 		pmove.impulse = 0;
 		pmove.attack_finished = pmove.client_time + 0.05;
+		pmove.effect_frame = pmove.last_frame;
 		return;
 	}
 	
