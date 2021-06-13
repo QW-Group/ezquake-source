@@ -71,6 +71,8 @@ typedef struct {
 	short		ammo_rockets;
 	short		ammo_cells;
 
+	float		t_width;
+
 	// world state
 	int			numphysent;
 	physent_t	physents[MAX_PHYSENTS]; // 0 should be the world
@@ -109,6 +111,7 @@ typedef struct {
 } movevars_t;
 
 int pmove_playeffects;
+cvar_t cl_nopred_weapon;
 
 extern movevars_t movevars;
 extern playermove_t pmove;

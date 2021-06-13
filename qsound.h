@@ -30,6 +30,8 @@ typedef struct sfx_s {
 	void *buf;
 } sfx_t;
 
+sfx_t	*cl_sfx_ax1, *cl_sfx_axhit1, *cl_sfx_sg, *cl_sfx_ssg, *cl_sfx_ng, *cl_sfx_sng, *cl_sfx_gl, *cl_sfx_rl, *cl_sfx_lg, *cl_sfx_lghit;
+
 // FIXME: REMOVE ME PLZ
 typedef struct snd_format_s {
 	unsigned int speed;

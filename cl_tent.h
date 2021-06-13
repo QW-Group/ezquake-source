@@ -28,6 +28,7 @@ typedef struct
 	vec3_t start, vel, angs, org, partorg;
 } fproj_t;
 
+void CL_CreateBeam(int type, int ent, vec3_t start, vec3_t end);
 fproj_t *CL_CreateFakeNail(void);
 fproj_t *CL_CreateFakeSuperNail(void);
 fproj_t *CL_CreateFakeGrenade(void);

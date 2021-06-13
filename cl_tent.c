@@ -214,10 +214,8 @@ fproj_t *CL_CreateFakeRocket(void)
 
 static void CL_ParseBeam(int type, vec3_t end)
 {
-	int ent, i;
+	int ent;
 	vec3_t start;
-	beam_t *b;
-	struct model_s *m;
 
 	ent = MSG_ReadShort();
 
@@ -228,6 +226,21 @@ static void CL_ParseBeam(int type, vec3_t end)
 	end[0] = MSG_ReadCoord();
 	end[1] = MSG_ReadCoord();
 	end[2] = MSG_ReadCoord();
+
+	if (ent == cl.playernum + 1)
+	{
+		if (!cl_nopred_weapon.integer && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+			return;
+	}
+
+	CL_CreateBeam(type, ent, start, end);
+}
+
+void CL_CreateBeam(int type, int ent, vec3_t start, vec3_t end)
+{
+	int i;
+	beam_t *b;
+	struct model_s *m;
 
 	if (CL_Demo_SkipMessage(true))
 		return;

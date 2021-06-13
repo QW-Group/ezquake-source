@@ -39,7 +39,6 @@ qbool clpred_newpos = false;
 static qbool nolerp[2];
 static qbool nolerp_nextpos;
 
-sfx_t	*cl_sfx_ax1, *cl_sfx_axhit1, *cl_sfx_sg, *cl_sfx_ssg, *cl_sfx_ng, *cl_sfx_sng, *cl_sfx_gl, *cl_sfx_rl, *cl_sfx_lg;
 void CL_InitWepSounds(void)
 {
 	cl_sfx_ax1 = S_PrecacheSound("weapons/ax1.wav");
@@ -51,6 +50,7 @@ void CL_InitWepSounds(void)
 	cl_sfx_gl = S_PrecacheSound("weapons/grenade.wav");
 	cl_sfx_rl = S_PrecacheSound("weapons/sgun1.wav");
 	cl_sfx_lg = S_PrecacheSound("weapons/lstart.wav");
+	cl_sfx_lghit = S_PrecacheSound("weapons/lhit.wav");
 }
 
 void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) {

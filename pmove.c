@@ -967,13 +967,12 @@ int PM_PlayerMove(void)
 
 
 
-sfx_t	*cl_sfx_ax1, *cl_sfx_axhit1, *cl_sfx_sg, *cl_sfx_ssg, *cl_sfx_ng, *cl_sfx_sng, *cl_sfx_gl, *cl_sfx_rl, *cl_sfx_lg;
-void PM_SoundEffect(sfx_t *sample)
+void PM_SoundEffect(sfx_t *sample, int chan)
 {
 	if (!pmove_playeffects)
 		return;
 
-	S_StartSound(cl.playernum + 1, 1, sample, pmove.origin, 1, 0);
+	S_StartSound(cl.playernum + 1, chan, sample, pmove.origin, 1, 0);
 }
 
 void W_SetCurrentAmmo(void)
@@ -1127,7 +1126,7 @@ void W_FireAxe(void)
 	trace_t walltrace = PM_TraceLine(start, end);
 
 	if (walltrace.fraction < 1)
-		PM_SoundEffect(cl_sfx_axhit1);
+		PM_SoundEffect(cl_sfx_axhit1, 1);
 }
 
 void launch_spike(float off)
@@ -1138,12 +1137,12 @@ void launch_spike(float off)
 		if (pmove.weapon == IT_SUPER_NAILGUN)
 		{
 			off = 0;
-			PM_SoundEffect(cl_sfx_sng);
+			PM_SoundEffect(cl_sfx_sng, 1);
 			newmis = CL_CreateFakeSuperNail();
 		}
 		else
 		{
-			PM_SoundEffect(cl_sfx_ng);
+			PM_SoundEffect(cl_sfx_ng, 1);
 			newmis = CL_CreateFakeNail();
 		}
 		
@@ -1232,6 +1231,98 @@ void anim_nailgun(void)
 		player_nail2();
 }
 
+
+void player_light1(void)
+{
+	pmove.client_nextthink = pmove.client_time + 0.1;
+	pmove.client_thinkindex = 2;
+
+	if (!(pmove.cmd.buttons & 1) || pmove.impulse)
+	{
+		player_run();
+		return;
+	}
+
+	pmove.weaponframe = pmove.weaponframe + 1;
+	if (pmove.weaponframe >= 5)
+	{
+		pmove.weaponframe = 1;
+	}
+
+	pmove.attack_finished = pmove.client_time + 0.2;
+
+	if (!pmove_playeffects)
+		return;
+
+	if (pmove.client_time >= pmove.t_width)
+	{
+		pmove.t_width = pmove.client_time + 0.6;
+		PM_SoundEffect(cl_sfx_lghit, 1);
+	}
+
+	vec3_t start, end, forward;
+	VectorCopy(pmove.origin, start);
+	start[2] += 16;
+	VectorCopy(start, end);
+
+	AngleVectors(pmove.cmd.angles, forward, NULL, NULL);
+	VectorScale(forward, 600, forward);
+	VectorAdd(end, forward, end);
+
+	trace_t hittrace = PM_TraceLine(start, end);
+	CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
+}
+
+void player_light2(void)
+{
+	pmove.client_nextthink = pmove.client_time + 0.1;
+	pmove.client_thinkindex = 1;
+
+	if (!(pmove.cmd.buttons & 1) || pmove.impulse)
+	{
+		player_run();
+		return;
+	}
+
+	pmove.weaponframe = pmove.weaponframe + 1;
+	if (pmove.weaponframe >= 5)
+	{
+		pmove.weaponframe = 1;
+	}
+
+	pmove.attack_finished = pmove.client_time + 0.2;
+
+	if (!pmove_playeffects)
+		return;
+
+	if (pmove.client_time >= pmove.t_width)
+	{
+		pmove.t_width = pmove.client_time + 0.6;
+		PM_SoundEffect(cl_sfx_lghit, 1);
+	}
+
+	vec3_t start, end, forward;
+	VectorCopy(pmove.origin, start);
+	start[2] += 16;
+	VectorCopy(start, end);
+
+	AngleVectors(pmove.cmd.angles, forward, NULL, NULL);
+	VectorScale(forward, 600, forward);
+	VectorAdd(end, forward, end);
+
+	trace_t hittrace = PM_TraceLine(start, end);
+	CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
+
+}
+
+void anim_lightning(void)
+{
+	if (pmove.client_thinkindex < 2)
+		player_light1();
+	else
+		player_light2();
+}
+
 void anim_rocket(void)
 {
 	pmove.client_nextthink = pmove.client_time + 0.1;
@@ -1302,7 +1393,7 @@ void W_Attack(void)
 	{
 		case IT_AXE: {
 			pmove.attack_finished = pmove.client_time + 0.5;
-			PM_SoundEffect(cl_sfx_ax1);
+			PM_SoundEffect(cl_sfx_ax1, 1);
 
 			float r = fabs((((int)(pmove.client_time * 931.75) << 11) + ((int)(pmove.client_time) >> 6)) % 1000) / 1000;
 			if (r < 0.25)
@@ -1326,13 +1417,13 @@ void W_Attack(void)
 		} break;
 		case IT_SHOTGUN: {
 			pmove.attack_finished = pmove.client_time + 0.5;
-			PM_SoundEffect(cl_sfx_sg);
+			PM_SoundEffect(cl_sfx_sg, 1);
 			pmove.client_thinkindex = 1;
 			anim_shotgun();
 		} break;
 		case IT_SUPER_SHOTGUN: {
 			pmove.attack_finished = pmove.client_time + 0.7;
-			PM_SoundEffect(cl_sfx_ssg);
+			PM_SoundEffect(cl_sfx_ssg, 1);
 			pmove.client_thinkindex = 1;
 			anim_shotgun();
 		} break;
@@ -1344,13 +1435,13 @@ void W_Attack(void)
 		} break;
 		case IT_GRENADE_LAUNCHER: {
 			pmove.attack_finished = pmove.client_time + 0.6;
-			PM_SoundEffect(cl_sfx_gl);
+			PM_SoundEffect(cl_sfx_gl, 1);
 			pmove.client_thinkindex = 1;
 			anim_rocket();
 		} break;
 		case IT_ROCKET_LAUNCHER: {
 			pmove.attack_finished = pmove.client_time + 0.8;
-			PM_SoundEffect(cl_sfx_rl);
+			PM_SoundEffect(cl_sfx_rl, 1);
 
 			if (pmove_playeffects)
 			{
@@ -1370,7 +1461,7 @@ void W_Attack(void)
 			anim_rocket();
 		} break;
 		case IT_LIGHTNING: {
-			PM_SoundEffect(cl_sfx_lg);
+			PM_SoundEffect(cl_sfx_lg, 0);
 			anim_lightning();
 		} break;
 	}
