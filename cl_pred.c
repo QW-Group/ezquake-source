@@ -416,7 +416,10 @@ void CL_PredictMove (qbool physframe) {
 
 		pmove_playeffects = false;
 		if (pmove.effect_frame > cls.netchan.outgoing_sequence) // HACK! this is to fix when things go horribly wrong, or you just reconnected
+		{
 			pmove.effect_frame = 0;
+			pmove.t_width = 0;
+		}
 
 		// run frames
 		for (i = 1; i < UPDATE_BACKUP - 1 && cl.validsequence + i < cls.netchan.outgoing_sequence; i++) {
