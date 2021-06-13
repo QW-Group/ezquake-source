@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "vx_stuff.h"
 #include "pmove.h"
+#include "cl_tent.h"
 #include "utils.h"
 #include "qmb_particles.h"
 #include "rulesets.h"
@@ -958,7 +959,13 @@ void CL_LinkPacketEntities(void)
 		{
 			if (cl_rocket2grenade.value && cl_modelindices[mi_grenade] != -1)
 				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
+			CL_MatchFakeProjectile(cent);
+		} 
+		else if (state->modelindex == cl_modelindices[mi_grenade])
+		{
+			CL_MatchFakeProjectile(cent);
 		}
+
 
 		ent.skinnum = state->skinnum;
 

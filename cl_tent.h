@@ -26,9 +26,11 @@ typedef struct
 	int type, effects, flags;
 	float starttime, endtime, parttime;
 	vec3_t start, vel, avel, angs, org, partorg;
+	centity_trail_t trails[4];
 } fproj_t;
 
 void Fproj_Physics_Bounce(fproj_t *proj, float dt);
+void CL_MatchFakeProjectile(centity_t *cent);
 void CL_CreateBeam(int type, int ent, vec3_t start, vec3_t end);
 fproj_t *CL_CreateFakeNail(void);
 fproj_t *CL_CreateFakeSuperNail(void);

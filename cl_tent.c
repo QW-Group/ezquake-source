@@ -127,6 +127,33 @@ void CL_FreeExplosion(explosion_t *ex)
 	cl_free_explosions = ex;
 }
 
+void CL_MatchFakeProjectile(centity_t *cent)
+{
+	fproj_t *prj;
+	int i;
+
+	for (i = 0, prj = cl_fakeprojectiles; i < MAX_FAKEPROJ; i++, prj++)
+	{
+		// only do this for fake projectiles that ended recently (or will end soon)
+		if (prj->endtime >= cl.time && prj->endtime <= cl.time + 0.08)
+		{
+			vec3_t diff;
+			VectorSubtract(cent->lerp_origin, prj->org, diff);
+
+			if (VectorLength(diff) < 16)
+			{
+				VectorCopy(prj->partorg, cent->trails[0].stop);
+				VectorCopy(prj->partorg, cent->trails[1].stop);
+				VectorCopy(prj->partorg, cent->trails[2].stop);
+				VectorCopy(prj->partorg, cent->trails[3].stop);
+
+				memset(prj, 0, sizeof(fproj_t));
+				return;
+			}
+		}
+	}
+}
+
 fproj_t *CL_AllocFakeProjectile(void)
 {
 	fproj_t *prj;
@@ -234,7 +261,6 @@ void Fproj_Physics_Bounce(fproj_t *proj, float dt)
 		d = DotProduct(phytrace.plane.normal, proj->vel);
 		if (phytrace.plane.normal[2] > 0.7 && d < bouncestp && d > -bouncestp)
 		{
-			Con_Printf("YEEEET\n");
 			proj->flags |= 512;
 			VectorClear(proj->vel);
 			VectorClear(proj->avel);
@@ -280,7 +306,7 @@ fproj_t *CL_CreateFakeRocket(void)
 	latency = min(latency, 0.25);
 
 	newmis->starttime = cl.time + max((latency - 0.013) - WEAPONPRED_MAXLATENCY, 0);
-	newmis->endtime = cl.time + latency;
+	newmis->endtime = cl.time + latency + 0.015;
 	newmis->parttime = newmis->starttime + 0.013; //delay trail a tiny bit, otherwise it looks funny
 
 	newmis->effects = EF_ROCKET;
@@ -1156,10 +1182,12 @@ static void CL_UpdateFakeProjectiles(void)
 			{
 				prj->parttime = cl.time + 0.013;
 				if (!VectorLength(prj->partorg))
-					VectorCopy(sframe_org, prj->partorg);
+					VectorCopy(prj->org, prj->partorg);
 
 				VectorCopy(prj->partorg, cent.old_origin);
-				VectorCopy(cent.trails[0].stop, cent.trails[1].stop);
+				VectorCopy(prj->partorg, cent.trails[3].stop);
+				VectorCopy(prj->partorg, cent.trails[2].stop);
+				VectorCopy(prj->partorg, cent.trails[1].stop);
 				VectorCopy(prj->partorg, cent.trails[0].stop);
 				VectorCopy(ent.origin, cent.current.origin);
 				VectorCopy(ent.origin, cent.lerp_origin);

@@ -1474,6 +1474,7 @@ void W_Attack(void)
 				newmis->start[0] += forward[0] * 8;
 				newmis->start[1] += forward[1] * 8;
 				newmis->start[2] += 16 + forward[2] * 8;
+				VectorCopy(newmis->start, newmis->org);
 				VectorCopy(pmove.cmd.angles, newmis->angs);
 				newmis->angs[0] = -newmis->angs[0];
 			}
