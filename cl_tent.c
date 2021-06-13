@@ -174,6 +174,81 @@ fproj_t *CL_CreateFakeSuperNail(void)
 	return newmis;
 }
 
+#define MAX_CLIP_PLANES 5
+vec3_t bounce_retvec;
+void Fproj_Physics_ClipVelocity(vec3_t vel, vec3_t norm, float f)
+{
+	vec3_t vel2;
+	VectorScale(norm, DotProduct(vel, norm), vel2);
+	VectorScale(vel2, f, vel2);
+	VectorSubtract(vel, vel2, vel);
+
+	if (vel[0] > -0.1 && vel[0] < 0.1) vel[0] = 0;
+	if (vel[1] > -0.1 && vel[1] < 0.1) vel[1] = 0;
+	if (vel[2] > -0.1 && vel[2] < 0.1) vel[2] = 0;
+
+	VectorCopy(vel, bounce_retvec);
+}
+
+void Fproj_Physics_Bounce(fproj_t *proj, float dt)
+{
+	float gravity_value = movevars.gravity;
+
+	if (proj->flags & 512)
+	{
+		if (proj->vel[2] >= 1 / 32)
+			proj->flags = proj->flags &~512;
+	}
+
+	proj->vel[2] -= 0.5 * dt * gravity_value;
+	
+	VectorMA(proj->angs, dt, proj->avel, proj->angs);
+
+	float movetime, bump;
+	movetime = dt;
+	for (bump = 0; bump < MAX_CLIP_PLANES && movetime > 0; ++bump)
+	{
+		vec3_t move;
+		VectorScale(proj->vel, movetime, move);
+
+		vec3_t to;
+		VectorAdd(proj->org, move, to);
+		//VectorMA(proj->vel, dt, to, to);
+		trace_t phytrace = PM_TraceLine(proj->org, to);
+		VectorCopy(phytrace.endpos, proj->org);
+
+		if (phytrace.fraction == 1)
+			break;
+
+		movetime *= 1 - min(1, phytrace.fraction);
+
+		float d, bouncefac, bouncestp;
+
+		bouncefac = 0.5;
+		bouncestp = 60 / 800;
+		bouncestp *= gravity_value;
+
+		Fproj_Physics_ClipVelocity(proj->vel, phytrace.plane.normal, 1 + bouncefac);
+		VectorCopy(bounce_retvec, proj->vel);
+
+		d = DotProduct(phytrace.plane.normal, proj->vel);
+		if (phytrace.plane.normal[2] > 0.7 && d < bouncestp && d > -bouncestp)
+		{
+			Con_Printf("YEEEET\n");
+			proj->flags |= 512;
+			VectorClear(proj->vel);
+			VectorClear(proj->avel);
+		}
+		else
+			proj->flags -= proj->flags & 512;
+	}
+
+	if (!(proj->flags & 512))
+	{
+		proj->vel[2] -= 0.5 * dt * gravity_value;
+	}
+}
+
 fproj_t *CL_CreateFakeGrenade(void)
 {
 	fproj_t *newmis = CL_AllocFakeProjectile();
@@ -184,6 +259,7 @@ fproj_t *CL_CreateFakeGrenade(void)
 
 	newmis->starttime = cl.time + max((latency - 0.013) - WEAPONPRED_MAXLATENCY, 0);
 	newmis->endtime = cl.time + latency;
+	newmis->parttime = newmis->starttime + 0.013;
 
 	newmis->type = 1;
 	newmis->effects = EF_GRENADE;
@@ -1049,20 +1125,38 @@ static void CL_UpdateFakeProjectiles(void)
 			continue;
 		}
 
-		VectorCopy(prj->start, ent.origin);
+		vec3_t sframe_org;
+		VectorCopy(prj->org, sframe_org);
 
-		vec3_t traveled;
-		VectorScale(prj->vel, (cl.time - prj->starttime) + 0.026, traveled);
-		VectorAdd(ent.origin, traveled, ent.origin);
-		VectorCopy(prj->angs, ent.angles);
-		
+
+		if (prj->type == 1)
+		{
+			Fproj_Physics_Bounce(prj, cls.frametime);
+
+			VectorCopy(prj->org, ent.origin);
+			VectorCopy(prj->angs, ent.angles);
+		}
+		else
+		{
+			VectorCopy(prj->start, ent.origin);
+			vec3_t traveled;
+			VectorScale(prj->vel, (cl.time - prj->starttime) + 0.026, traveled);
+			VectorAdd(ent.origin, traveled, ent.origin);
+			VectorCopy(prj->angs, ent.angles);
+			VectorCopy(ent.origin, prj->org);
+
+			trace_t trace = PM_TraceLine(prj->start, ent.origin);
+			if (trace.fraction < 1)
+				prj->endtime = cl.time;
+		}
+
 		if (prj->effects)
 		{
 			if (cl.time >= prj->parttime)
 			{
 				prj->parttime = cl.time + 0.013;
 				if (!VectorLength(prj->partorg))
-					VectorCopy(prj->org, prj->partorg);
+					VectorCopy(sframe_org, prj->partorg);
 
 				VectorCopy(prj->partorg, cent.old_origin);
 				VectorCopy(cent.trails[0].stop, cent.trails[1].stop);
@@ -1073,17 +1167,12 @@ static void CL_UpdateFakeProjectiles(void)
 
 				if (prj->effects & EF_ROCKET)
 					R_MissileTrail(&cent, r_rockettrail.integer);
+				if (prj->effects & EF_GRENADE)
+					R_MissileTrail(&cent, fix_trail_num_for_grens(r_grenadetrail.integer));
 			}
 		}
 
-		VectorCopy(ent.origin, prj->org);
-
-		trace_t trace = PM_TraceLine(prj->start, ent.origin);
-		if (trace.fraction < 1)
-			prj->endtime = cl.time;
-
 		ent.model = prj->model;
-		ent.effects = prj->effects;
 
 		CL_AddEntity(&ent);
 	}

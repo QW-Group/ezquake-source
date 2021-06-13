@@ -975,6 +975,8 @@ void PM_SoundEffect(sfx_t *sample, int chan)
 	S_StartSound(cl.playernum + 1, chan, sample, pmove.origin, 1, 0);
 }
 
+
+
 void W_SetCurrentAmmo(void)
 {
 	switch (pmove.weapon)
@@ -1436,6 +1438,25 @@ void W_Attack(void)
 		case IT_GRENADE_LAUNCHER: {
 			pmove.attack_finished = pmove.client_time + 0.6;
 			PM_SoundEffect(cl_sfx_gl, 1);
+			if (pmove_playeffects)
+			{
+				float r1 = 0, r2 = 0;
+				fproj_t *newmis = CL_CreateFakeGrenade();
+				vec3_t forward, right, up;
+				AngleVectors(pmove.cmd.angles, forward, right, up);
+
+				newmis->vel[0] = forward[0] * 600 + up[0] * 200;
+				newmis->vel[1] = forward[1] * 600 + up[1] * 200;
+				newmis->vel[2] = forward[2] * 600 + up[2] * 200;
+
+				VectorCopy(pmove.origin, newmis->start);
+				VectorCopy(pmove.origin, newmis->org);
+				Fproj_Physics_Bounce(newmis, 0.026);
+
+				vectoangles(newmis->vel, newmis->angs);
+				VectorSet(newmis->avel, 300, 300, 300);
+			}
+
 			pmove.client_thinkindex = 1;
 			anim_rocket();
 		} break;

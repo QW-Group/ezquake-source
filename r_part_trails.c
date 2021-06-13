@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "vx_stuff.h"
 #include "qmb_particles.h"
 
-static int fix_trail_num_for_grens(int trail_num)
+int fix_trail_num_for_grens(int trail_num)
 {
 	//trails for rockets and grens are the same
 	//only nums 1 and 2 must be swapped
