@@ -1440,7 +1440,6 @@ void W_Attack(void)
 			PM_SoundEffect(cl_sfx_gl, 1);
 			if (pmove_playeffects)
 			{
-				float r1 = 0, r2 = 0;
 				fproj_t *newmis = CL_CreateFakeGrenade();
 				vec3_t forward, right, up;
 				AngleVectors(pmove.cmd.angles, forward, right, up);
