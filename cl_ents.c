@@ -1880,7 +1880,7 @@ static void CL_LinkPlayers(void)
 
 			oldphysent = pmove.numphysent;
 			CL_SetSolidPlayers(j);
-			CL_PredictUsercmd(state, &exact, &state->command);
+			CL_PredictUsercmd(state, &exact, &state->command, false);
 			pmove.numphysent = oldphysent;
 			VectorCopy(exact.origin, ent.origin);
 			VectorCopy(exact.origin, predicted_players[j].drawn_origin);
@@ -2096,7 +2096,7 @@ void CL_SetUpPlayerPrediction(qbool dopred)
 					msec = 255;
 				state->command.msec = msec;
 
-				CL_PredictUsercmd (state, &exact, &state->command);
+				CL_PredictUsercmd (state, &exact, &state->command, false);
 				VectorCopy (exact.origin, pplayer->origin);
 			}
 		}

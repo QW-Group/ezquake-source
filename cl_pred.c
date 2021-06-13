@@ -55,7 +55,7 @@ void CL_InitWepSounds(void)
 	cl_sfx_hook = S_PrecacheSound("weapons/chain1.wav");
 }
 
-void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) {
+void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u, int local) {
 	// split up very long moves
 	if (u->msec > 50) {
 		player_state_t temp;
@@ -64,8 +64,8 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 		split = *u;
 		split.msec /= 2;
 
-		CL_PredictUsercmd (from, &temp, &split);
-		CL_PredictUsercmd (&temp, to, &split);
+		CL_PredictUsercmd (from, &temp, &split, local);
+		CL_PredictUsercmd (&temp, to, &split, local);
 		return;
 	}
 
@@ -73,24 +73,28 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	VectorCopy (u->angles, pmove.angles);
 	VectorCopy (from->velocity, pmove.velocity);
 
-	pmove.client_time = from->client_time;
-	pmove.attack_finished = from->attack_finished;
-	pmove.client_nextthink = from->client_nextthink;
-	pmove.client_thinkindex = from->client_thinkindex;
-	pmove.client_ping = from->client_ping;
-	pmove.client_predflags = from->client_predflags;
+	// We only care about these values for our local player
+	if (local)
+	{
+		pmove.client_time = from->client_time;
+		pmove.attack_finished = from->attack_finished;
+		pmove.client_nextthink = from->client_nextthink;
+		pmove.client_thinkindex = from->client_thinkindex;
+		pmove.client_ping = from->client_ping;
+		pmove.client_predflags = from->client_predflags;
 
-	pmove.weapon = from->weapon;
-	pmove.items = from->items;
+		pmove.weapon = from->weapon;
+		pmove.items = from->items;
 
-	pmove.ammo_shells = from->ammo_shells;
-	pmove.ammo_nails = from->ammo_nails;
-	pmove.ammo_rockets = from->ammo_rockets;
-	pmove.ammo_cells = from->ammo_cells;
+		pmove.ammo_shells = from->ammo_shells;
+		pmove.ammo_nails = from->ammo_nails;
+		pmove.ammo_rockets = from->ammo_rockets;
+		pmove.ammo_cells = from->ammo_cells;
 
-	pmove.impulse = from->impulse;
+		pmove.impulse = from->impulse;
 
-	pmove.weaponframe = from->weaponframe;
+		pmove.weaponframe = from->weaponframe;
+	}
 
 	pmove.jump_msec = (cl.z_ext & Z_EXT_PM_TYPE) ? 0 : from->jump_msec;
 	pmove.jump_held = from->jump_held;
@@ -113,26 +117,30 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	movevars.bunnyspeedcap = cl.bunnyspeedcap;
 
 	PM_PlayerMove();
-	if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
-		PM_PlayerWeapon();
 
-	to->client_time = pmove.client_time;
-	to->attack_finished = pmove.attack_finished;
-	to->client_nextthink = pmove.client_nextthink;
-	to->client_thinkindex = pmove.client_thinkindex;
-	to->client_ping = from->client_ping;
-	to->client_predflags = from->client_predflags;
+	if (local)
+	{
+		if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+			PM_PlayerWeapon();
 
-	to->ammo_shells = pmove.ammo_shells;
-	to->ammo_nails = pmove.ammo_nails;
-	to->ammo_rockets = pmove.ammo_rockets;
-	to->ammo_cells = pmove.ammo_cells;
+		to->client_time = pmove.client_time;
+		to->attack_finished = pmove.attack_finished;
+		to->client_nextthink = pmove.client_nextthink;
+		to->client_thinkindex = pmove.client_thinkindex;
+		to->client_ping = from->client_ping;
+		to->client_predflags = from->client_predflags;
 
-	to->weaponframe = pmove.weaponframe;
-	to->weapon = pmove.weapon;
-	to->items = pmove.items;
+		to->ammo_shells = pmove.ammo_shells;
+		to->ammo_nails = pmove.ammo_nails;
+		to->ammo_rockets = pmove.ammo_rockets;
+		to->ammo_cells = pmove.ammo_cells;
 
-	to->impulse = pmove.impulse;
+		to->weaponframe = pmove.weaponframe;
+		to->weapon = pmove.weapon;
+		to->items = pmove.items;
+
+		to->impulse = pmove.impulse;
+	}
 
 	to->waterjumptime = pmove.waterjumptime;
 	to->pm_type = pmove.pm_type;
@@ -438,7 +446,7 @@ void CL_PredictMove (qbool physframe) {
 
 			from = to;
 			to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
-			CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd);
+			CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd, true);
 		}
 
 		pmove.numphysent = oldphysent;

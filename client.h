@@ -1091,7 +1091,7 @@ void CL_ParseProjectiles(qbool indexed);
 // cl_pred.c
 void CL_InitPrediction(void);
 void CL_PredictMove(qbool physframe);
-void CL_PredictUsercmd(player_state_t *from, player_state_t *to, usercmd_t *u);
+void CL_PredictUsercmd(player_state_t *from, player_state_t *to, usercmd_t *u, int local);
 void CL_DisableLerpMove(void);
 
 // cl_cam.c
