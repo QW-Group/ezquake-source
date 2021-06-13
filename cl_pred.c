@@ -51,6 +51,8 @@ void CL_InitWepSounds(void)
 	cl_sfx_rl = S_PrecacheSound("weapons/sgun1.wav");
 	cl_sfx_lg = S_PrecacheSound("weapons/lstart.wav");
 	cl_sfx_lghit = S_PrecacheSound("weapons/lhit.wav");
+	cl_sfx_coil = S_PrecacheSound("weapons/coilgun.wav");
+	cl_sfx_hook = S_PrecacheSound("weapons/chain1.wav");
 }
 
 void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) {
@@ -76,6 +78,7 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	pmove.client_nextthink = from->client_nextthink;
 	pmove.client_thinkindex = from->client_thinkindex;
 	pmove.client_ping = from->client_ping;
+	pmove.client_predflags = from->client_predflags;
 
 	pmove.weapon = from->weapon;
 	pmove.items = from->items;
@@ -110,7 +113,7 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	movevars.bunnyspeedcap = cl.bunnyspeedcap;
 
 	PM_PlayerMove();
-	if (!cl_nopred_weapon.integer && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+	if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
 		PM_PlayerWeapon();
 
 	to->client_time = pmove.client_time;
@@ -118,6 +121,7 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u) 
 	to->client_nextthink = pmove.client_nextthink;
 	to->client_thinkindex = pmove.client_thinkindex;
 	to->client_ping = from->client_ping;
+	to->client_predflags = from->client_predflags;
 
 	to->ammo_shells = pmove.ammo_shells;
 	to->ammo_nails = pmove.ammo_nails;
@@ -420,6 +424,8 @@ void CL_PredictMove (qbool physframe) {
 			pmove.effect_frame = 0;
 			pmove.t_width = 0;
 		}
+
+		pmove_nopred_weapon = (cl_nopred_weapon.integer || pmove.client_predflags == PRDFL_FORCEOFF);
 
 		// run frames
 		for (i = 1; i < UPDATE_BACKUP - 1 && cl.validsequence + i < cls.netchan.outgoing_sequence; i++) {

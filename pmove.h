@@ -63,6 +63,7 @@ typedef struct {
 	float		client_nextthink;
 	byte		client_thinkindex;
 	byte		client_ping;
+	byte		client_predflags;
 
 	int			last_frame;
 	int			effect_frame;
@@ -112,10 +113,15 @@ typedef struct {
 } movevars_t;
 
 int pmove_playeffects;
+int pmove_nopred_weapon;
 cvar_t cl_nopred_weapon;
 
 extern movevars_t movevars;
 extern playermove_t pmove;
+
+#define PRDFL_MIDAIR	1
+#define PRDFL_COILGUN	2
+#define PRDFL_FORCEOFF	255
 
 int PM_PlayerMove (void);
 void PM_PlayerWeapon (void);

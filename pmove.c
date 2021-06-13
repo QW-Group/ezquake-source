@@ -967,6 +967,12 @@ int PM_PlayerMove(void)
 
 
 
+
+//
+//	Weapon Prediction
+//
+#define IT_HOOK			8388608
+
 void PM_SoundEffect(sfx_t *sample, int chan)
 {
 	if (!pmove_playeffects)
@@ -974,8 +980,6 @@ void PM_SoundEffect(sfx_t *sample, int chan)
 
 	S_StartSound(cl.playernum + 1, chan, sample, pmove.origin, 1, 0);
 }
-
-
 
 void W_SetCurrentAmmo(void)
 {
@@ -987,7 +991,10 @@ void W_SetCurrentAmmo(void)
 		} break;
 		case IT_SHOTGUN: {
 			pmove.current_ammo = pmove.ammo_shells;
-			pmove.weapon_index = 2;
+			if (pmove.client_predflags & PRDFL_COILGUN)
+				pmove.weapon_index = 9;
+			else
+				pmove.weapon_index = 2;
 		} break;
 		case IT_SUPER_SHOTGUN: {
 			pmove.current_ammo = pmove.ammo_shells;
@@ -1013,6 +1020,10 @@ void W_SetCurrentAmmo(void)
 			pmove.current_ammo = pmove.ammo_cells;
 			pmove.weapon_index = 8;
 		} break;
+		case IT_HOOK: {
+			pmove.current_ammo = 0;
+			pmove.weapon_index = 10;
+		} break;
 	}
 }
 
@@ -1023,7 +1034,7 @@ int W_CheckNoAmmo(void)
 		return true;
 	}
 
-	if ((pmove.weapon == IT_AXE))
+	if ((pmove.weapon == IT_AXE) || (pmove.weapon == IT_HOOK))
 	{
 		return true;
 	}
@@ -1045,12 +1056,15 @@ void W_ChangeWeapon(int impulse)
 	{
 		case 1: {
 			fl = IT_AXE;
+			if (pmove.items & IT_HOOK && pmove.weapon == IT_AXE)
+				fl = IT_HOOK;
+
 			am = 1;
 		} break;
 
 		case 2: {
 			fl = IT_SHOTGUN;
-			if (pmove.ammo_shells >= 2)
+			if (pmove.ammo_shells >= 1)
 				am = 1;
 		} break;
 
@@ -1088,6 +1102,11 @@ void W_ChangeWeapon(int impulse)
 			fl = IT_LIGHTNING;
 			if (pmove.ammo_cells >= 1)
 				am = 1;
+		} break;
+
+		case 22: {
+			fl = IT_HOOK;
+			am = 1;
 		} break;
 	}
 
@@ -1232,7 +1251,6 @@ void anim_nailgun(void)
 	else
 		player_nail2();
 }
-
 
 void player_light1(void)
 {
@@ -1381,6 +1399,9 @@ void execute_clientthink(void)
 	case IT_LIGHTNING: {
 		anim_lightning();
 	} break;
+	case IT_HOOK: {
+		anim_shotgun();
+	} break;
 	}
 }
 
@@ -1418,8 +1439,20 @@ void W_Attack(void)
 			anim_axe();
 		} break;
 		case IT_SHOTGUN: {
-			pmove.attack_finished = pmove.client_time + 0.5;
-			PM_SoundEffect(cl_sfx_sg, 1);
+			if (pmove.client_predflags & PRDFL_COILGUN)
+			{
+				if (pmove.client_predflags & PRDFL_MIDAIR)
+					pmove.attack_finished = pmove.client_time + 0.7;
+				else
+					pmove.attack_finished = pmove.client_time + 0.5;
+				PM_SoundEffect(cl_sfx_coil, 1);
+			}
+			else
+			{
+				pmove.attack_finished = pmove.client_time + 0.5;
+				PM_SoundEffect(cl_sfx_sg, 1);
+			}
+
 			pmove.client_thinkindex = 1;
 			anim_shotgun();
 		} break;
@@ -1468,7 +1501,16 @@ void W_Attack(void)
 				fproj_t *newmis = CL_CreateFakeRocket();
 				vec3_t forward;
 				AngleVectors(pmove.cmd.angles, forward, NULL, NULL);
-				VectorScale(forward, 1000, newmis->vel);
+
+				if (pmove.client_predflags & PRDFL_MIDAIR)
+				{
+					VectorScale(forward, 2000, newmis->vel);
+				}
+				else
+				{
+					VectorScale(forward, 1000, newmis->vel);
+				}
+
 
 				VectorCopy(pmove.origin, newmis->start);
 				newmis->start[0] += forward[0] * 8;
@@ -1484,6 +1526,10 @@ void W_Attack(void)
 		case IT_LIGHTNING: {
 			PM_SoundEffect(cl_sfx_lg, 0);
 			anim_lightning();
+		} break;
+		case IT_HOOK: {
+			PM_SoundEffect(cl_sfx_hook, 1);
+			pmove.attack_finished = pmove.client_time + 0.1;
 		} break;
 	}
 }

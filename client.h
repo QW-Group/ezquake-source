@@ -1053,7 +1053,7 @@ typedef enum cl_modelindex_s {
 	mi_flame,	//joe: for changing flame/flame0 models
 	mi_monster1,mi_m2,mi_m3,mi_m4,mi_m5,mi_m6,mi_m7,mi_m8,mi_m9,mi_m10,mi_m11,mi_m12,
 	mi_m13, mi_m14, mi_m15, mi_m16, mi_m17,
-	mi_weapon1, mi_weapon2, mi_weapon3, mi_weapon4, mi_weapon5, mi_weapon6, mi_weapon7, mi_weapon8,
+	mi_weapon1, mi_weapon2, mi_weapon3, mi_weapon4, mi_weapon5, mi_weapon6, mi_weapon7, mi_weapon8, mi_coilgun, mi_hook,
 	cl_num_modelindices,
 } cl_modelindex_t;
 

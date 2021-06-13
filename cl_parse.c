@@ -1939,7 +1939,7 @@ void CL_ParseStartSoundPacket(void)
 	// Skip weapon sounds if we're predicting them
 	if (ent == cl.playernum + 1)
 	{
-		if (!cl_nopred_weapon.integer && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+		if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
 		{
 			if (channel == 1)
 				return;

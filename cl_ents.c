@@ -88,6 +88,8 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_weapon6] = "progs/v_rock.mdl";
 	cl_modelnames[mi_weapon7] = "progs/v_rock2.mdl";
 	cl_modelnames[mi_weapon8] = "progs/v_light.mdl";
+	cl_modelnames[mi_coilgun] = "progs/v_coil.mdl";
+	cl_modelnames[mi_hook] = "progs/v_star.mdl";
 
 	cl_modelnames[mi_vaxe] = "progs/v_axe.mdl";
 	cl_modelnames[mi_vbio] = "progs/v_bio.mdl";
