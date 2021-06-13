@@ -1146,7 +1146,7 @@ void W_FireAxe(void)
 	VectorAdd(end, start, end);
 	trace_t walltrace = PM_TraceLine(start, end);
 
-	if (walltrace.fraction < 1)
+	if (walltrace.fraction < 1 && walltrace.e.entnum == 0)
 		PM_SoundEffect(cl_sfx_axhit1, 1);
 }
 

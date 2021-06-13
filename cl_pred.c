@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t	cl_nopred	= {"cl_nopred", "0"};
 cvar_t	cl_nopred_weapon = { "cl_nopred_weapon", "0" };
+cvar_t	cl_predict_smoothview = { "cl_predict_smoothview", "1" };
 
 extern cvar_t cl_independentPhysics;
 
@@ -447,6 +448,16 @@ void CL_PredictMove (qbool physframe) {
 			from = to;
 			to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
 			CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd, true);
+
+			if ((cl.validsequence + i) == cl.simerr_frame)
+			{
+				vec3_t diff;
+				VectorSubtract(cl.simerr_org, to->playerstate[cl.playernum].origin, diff);
+				if (VectorLength(diff) > 4 && VectorLength(diff) < 64)
+				{
+					VectorAdd(diff, cl.simerr_nudge, cl.simerr_nudge);
+				}
+			}
 		}
 
 		pmove.numphysent = oldphysent;
@@ -454,6 +465,36 @@ void CL_PredictMove (qbool physframe) {
 		// save results
 		VectorCopy (to->playerstate[cl.playernum].velocity, cl.simvel);
 		VectorCopy (to->playerstate[cl.playernum].origin, cl.simorg);
+
+		//
+		// error smoothing
+		if (cl_predict_smoothview.integer)
+		{
+			cl.simerr_frame = cl.validsequence + i - 1;
+			VectorCopy(to->playerstate[cl.playernum].origin, cl.simerr_org);
+			float nudge = VectorLength(cl.simerr_nudge);
+			vec3_t nudge_norm; VectorCopy(cl.simerr_nudge, nudge_norm);
+			VectorNormalize(nudge_norm);
+
+			nudge = min(nudge, 64);
+			if (nudge < 250 * cls.frametime)
+				nudge = 0;
+			else if (nudge < 8)
+				nudge -= 200 * cls.frametime;
+			else if (nudge < 16)
+				nudge -= 500 * cls.frametime;
+			else if (nudge < 32)
+				nudge -= 800 * cls.frametime;
+			else
+				nudge -= 1200 * cls.frametime;
+			nudge = max(0, nudge); // in case we overshot due to low framerate or something
+
+			VectorScale(nudge_norm, nudge, cl.simerr_nudge);
+			VectorAdd(cl.simorg, cl.simerr_nudge, cl.simorg);
+		}
+		//
+		//
+
 		cl.simwep = pmove.weapon_index;
 		cl.simwepframe = pmove.weaponframe;
 		cl.onground = pmove.onground;
@@ -500,6 +541,7 @@ void CL_InitPrediction(void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register(&cl_nopred);
 	Cvar_Register(&cl_nopred_weapon);
+	Cvar_Register(&cl_predict_smoothview);
 	Cvar_ResetCurrentGroup();
 
 	CL_InitWepSounds();
