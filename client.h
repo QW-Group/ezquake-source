@@ -110,6 +110,7 @@ typedef struct
 	float		client_nextthink;
 	int			client_thinkindex;
 	int			client_ping;
+	int			client_predflags;
 
 	int			modelindex;
 	int			frame;

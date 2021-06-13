@@ -1444,6 +1444,7 @@ void CL_ParsePlayerinfo (void)
 					state->client_nextthink = MSG_ReadFloat();
 					state->client_thinkindex = MSG_ReadByte();
 					state->client_ping = MSG_ReadByte();
+					state->client_predflags = MSG_ReadByte();
 
 					state->ammo_shells = MSG_ReadByte();
 					state->ammo_nails = MSG_ReadByte();
