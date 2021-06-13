@@ -175,6 +175,9 @@ fproj_t *CL_AllocFakeProjectile(void)
 #define WEAPONPRED_MAXLATENCY 0.1
 fproj_t *CL_CreateFakeNail(void)
 {
+	if (pmove.client_ping == 0)
+		return &cl_fakeprojectiles[0];
+
 	fproj_t *newmis = CL_AllocFakeProjectile();
 	newmis->model = cl.model_precache[cl_modelindices[mi_spike]];
 
@@ -189,6 +192,9 @@ fproj_t *CL_CreateFakeNail(void)
 
 fproj_t *CL_CreateFakeSuperNail(void)
 {
+	if (pmove.client_ping == 0)
+		return &cl_fakeprojectiles[0];
+
 	fproj_t *newmis = CL_AllocFakeProjectile();
 	newmis->model = cl.model_precache[cl_modelindices[mi_s_spike]];
 
@@ -277,6 +283,9 @@ void Fproj_Physics_Bounce(fproj_t *proj, float dt)
 
 fproj_t *CL_CreateFakeGrenade(void)
 {
+	if (pmove.client_ping == 0)
+		return &cl_fakeprojectiles[0];
+
 	fproj_t *newmis = CL_AllocFakeProjectile();
 	newmis->model = cl.model_precache[cl_modelindices[mi_grenade]];
 
@@ -296,11 +305,13 @@ fproj_t *CL_CreateFakeGrenade(void)
 extern cvar_t cl_rocket2grenade;
 fproj_t *CL_CreateFakeRocket(void)
 {
+	if (pmove.client_ping == 0)
+		return &cl_fakeprojectiles[0];
+
 	fproj_t *newmis = CL_AllocFakeProjectile();
 	newmis->model = cl.model_precache[cl_modelindices[mi_rocket]];
 	if (cl_rocket2grenade.integer)
 		newmis->model = cl.model_precache[cl_modelindices[mi_grenade]];
-
 
 	float latency = (float)pmove.client_ping / 1000;
 	latency = min(latency, 0.25);
