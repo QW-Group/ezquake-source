@@ -78,7 +78,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 // Note: for server mods to detect version, change VERSION_NUM below
-#define VERSION_NUMBER "3.6-dev-alpha7"
+#define VERSION_NUMBER "3.6-dev-alpha7-RekiFork"
 
 void CL_Version_f(void);
 char *VersionString(void);
@@ -93,7 +93,7 @@ char *VersionStringFull(void);
 
 // MVDSV compatibility
 #define	QW_VERSION			"2.40"
-#define SERVER_VERSION      "0.34-beta"
+#define SERVER_VERSION      "0.34-beta-RekiFork"
 #define SERVER_VERSION_NUM  0.33
 #define SERVER_FULLNAME     "MVDSV: MultiView Demo SerVer"
 #define SERVER_HOME_URL     "https://mvdsv.deurk.net"
