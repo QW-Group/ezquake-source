@@ -1682,7 +1682,7 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int old_vw_frame)
 static double CL_PlayerTime (void)
 {
 	double current_time = (cls.demoplayback && !cls.mvdplayback) ? cls.demotime : cls.realtime;
-	double playertime = current_time - cls.latency;
+	double playertime = current_time - cls.latency + 0.02;
 
 	return min(playertime, current_time);
 }
