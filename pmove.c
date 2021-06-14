@@ -971,7 +971,7 @@ int PM_PlayerMove(void)
 //
 //	Weapon Prediction
 //
-#define IT_HOOK			8388608
+#define IT_HOOK			32768
 
 void PM_SoundEffect(sfx_t *sample, int chan)
 {

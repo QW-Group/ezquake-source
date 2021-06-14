@@ -123,6 +123,8 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u, 
 	{
 		if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
 			PM_PlayerWeapon();
+		else
+			pmove.impulse = 0;
 
 		to->client_time = pmove.client_time;
 		to->attack_finished = pmove.attack_finished;

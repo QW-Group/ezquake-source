@@ -746,7 +746,11 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 				if (send_wepprediction)
 				{
 					MSG_WriteByte(msg, (byte)ent->v.impulse);
-					MSG_WriteShort(msg, (short)ent->v.weapon);
+
+					short wep_data = (short)ent->v.weapon;
+					if (wep_data < ent->v.weapon)
+						wep_data = 32768;
+					MSG_WriteShort(msg, wep_data);
 
 					MSG_WriteFloat(msg, EdictFieldFloat(ent, fofs_client_time));
 					MSG_WriteFloat(msg, EdictFieldFloat(ent, fofs_attack_finished));
