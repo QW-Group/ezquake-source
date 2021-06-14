@@ -1027,6 +1027,101 @@ void W_SetCurrentAmmo(void)
 	}
 }
 
+int W_BestWeapon(void)
+{
+	int it = pmove.items;
+	char *w_rank = Info_ValueForKey(cls.userinfo, "w_rank");
+
+	if (w_rank != NULL)
+	{
+		while (*w_rank)
+		{
+			int weapon = (*w_rank - '0');
+
+			if ((weapon == 8) && (it & IT_LIGHTNING) && (pmove.ammo_cells >= 1))
+			{
+				return IT_LIGHTNING;
+			}
+
+			if ((weapon == 7) && (it & IT_ROCKET_LAUNCHER) && (pmove.ammo_rockets >= 1))
+			{
+				return IT_ROCKET_LAUNCHER;
+			}
+
+			if ((weapon == 6) && (it & IT_GRENADE_LAUNCHER) && (pmove.ammo_rockets >= 1))
+			{
+				return IT_GRENADE_LAUNCHER;
+			}
+
+			if ((weapon == 5) && (it & IT_SUPER_NAILGUN) && (pmove.ammo_nails >= 2))
+			{
+				return IT_SUPER_NAILGUN;
+			}
+
+			if ((weapon == 4) && (it & IT_NAILGUN) && (pmove.ammo_nails >= 1))
+			{
+				return IT_NAILGUN;
+			}
+
+			if ((weapon == 3) && (it & IT_SUPER_SHOTGUN) && (pmove.ammo_shells >= 2))
+			{
+				return IT_SUPER_SHOTGUN;
+			}
+
+			if ((weapon == 2) && (it & IT_SHOTGUN) && (pmove.ammo_shells >= 1))
+			{
+				return IT_SHOTGUN;
+			}
+
+			if ((weapon == 1) && (it & IT_AXE))
+			{
+				return IT_AXE;
+			}
+
+			++w_rank;
+		}
+
+		if (it & IT_AXE)
+		{
+			return IT_AXE;
+		}
+
+		return 0;
+	}
+
+	// Standard behaviour
+	if ((pmove.waterlevel <= 1) && (pmove.ammo_cells >= 1) && (it & IT_LIGHTNING))
+	{
+		return IT_LIGHTNING;
+	}
+	else if ((pmove.ammo_nails >= 2) && (it & IT_SUPER_NAILGUN))
+	{
+		return IT_SUPER_NAILGUN;
+	}
+	else if ((pmove.ammo_shells >= 2) && (it & IT_SUPER_SHOTGUN))
+	{
+		return IT_SUPER_SHOTGUN;
+	}
+	else if ((pmove.ammo_nails >= 1) && (it & IT_NAILGUN))
+	{
+		return IT_NAILGUN;
+	}
+	else if ((pmove.ammo_shells >= 1) && (it & IT_SHOTGUN))
+	{
+		return IT_SHOTGUN;
+	}
+
+	/*
+	 if(self.ammo_rockets >= 1 && (it & IT_ROCKET_LAUNCHER) )
+	 return IT_ROCKET_LAUNCHER;
+	 else if(self.ammo_rockets >= 1 && (it & IT_GRENADE_LAUNCHER) )
+	 return IT_GRENADE_LAUNCHER;
+
+	 */
+
+	return (it & IT_AXE ? IT_AXE : 0);
+}
+
 int W_CheckNoAmmo(void)
 {
 	if (pmove.current_ammo > 0)
@@ -1039,7 +1134,7 @@ int W_CheckNoAmmo(void)
 		return true;
 	}
 
-	//self->s.v.weapon = W_BestWeapon();
+	pmove.weapon = W_BestWeapon();
 
 	W_SetCurrentAmmo();
 
@@ -1047,7 +1142,212 @@ int W_CheckNoAmmo(void)
 	return false;
 }
 
-void W_ChangeWeapon(int impulse)
+/*
+ ============
+ CycleWeaponCommand
+
+ Go to the next weapon with ammo
+ ============
+ */
+int CycleWeaponCommand(void)
+{
+	int i, it, am;
+
+	if (pmove.client_time < pmove.attack_finished)
+	{
+		return false;
+	}
+
+	it = pmove.items;
+
+	for (i = 0; i < 20; i++) // qqshka, 20 is just from head, but prevent infinite loop
+	{
+		am = 0;
+		switch (pmove.weapon)
+		{
+		case IT_LIGHTNING:
+			pmove.weapon = IT_AXE;
+			break;
+
+		case IT_AXE:
+			pmove.weapon = IT_HOOK;
+			break;
+
+		case IT_HOOK:
+			pmove.weapon = IT_SHOTGUN;
+			if (pmove.ammo_shells < 1)
+			{
+				am = 1;
+			}
+			break;
+
+		case IT_SHOTGUN:
+			pmove.weapon = IT_SUPER_SHOTGUN;
+			if (pmove.ammo_shells < 2)
+			{
+				am = 1;
+			}
+			break;
+
+		case IT_SUPER_SHOTGUN:
+			pmove.weapon = IT_NAILGUN;
+			if (pmove.ammo_nails < 1)
+			{
+				am = 1;
+			}
+			break;
+
+		case IT_NAILGUN:
+			pmove.weapon = IT_SUPER_NAILGUN;
+			if (pmove.ammo_nails < 2)
+			{
+				am = 1;
+			}
+			break;
+
+		case IT_SUPER_NAILGUN:
+			pmove.weapon = IT_GRENADE_LAUNCHER;
+			if (pmove.ammo_rockets < 1)
+			{
+				am = 1;
+			}
+			break;
+
+		case IT_GRENADE_LAUNCHER:
+			pmove.weapon = IT_ROCKET_LAUNCHER;
+			if (pmove.ammo_rockets < 1)
+			{
+				am = 1;
+			}
+			break;
+
+		case IT_ROCKET_LAUNCHER:
+			pmove.weapon = IT_LIGHTNING;
+			if (pmove.ammo_cells < 1)
+			{
+				am = 1;
+			}
+			break;
+		}
+
+		if ((it & pmove.weapon) && (am == 0))
+		{
+			W_SetCurrentAmmo();
+
+			return true;
+		}
+	}
+
+	return true;
+}
+
+/*
+ ============
+ CycleWeaponReverseCommand
+
+ Go to the prev weapon with ammo
+ ============
+ */
+int CycleWeaponReverseCommand(void)
+{
+	int i, it, am;
+
+	if (pmove.client_time < pmove.attack_finished)
+	{
+		return false;
+	}
+
+	it = pmove.items;
+
+	for (i = 0; i < 20; i++) // qqshka, 20 is just from head, but prevent infinite loop
+	{
+		am = 0;
+		switch (pmove.weapon)
+		{
+		case IT_LIGHTNING:
+			pmove.weapon = IT_ROCKET_LAUNCHER;
+			if (pmove.ammo_rockets < 1)
+			{
+				am = 1;
+			}
+
+			break;
+
+		case IT_ROCKET_LAUNCHER:
+			pmove.weapon = IT_GRENADE_LAUNCHER;
+			if (pmove.ammo_rockets < 1)
+			{
+				am = 1;
+			}
+
+			break;
+
+		case IT_GRENADE_LAUNCHER:
+			pmove.weapon = IT_SUPER_NAILGUN;
+			if (pmove.ammo_nails < 2)
+			{
+				am = 1;
+			}
+
+			break;
+
+		case IT_SUPER_NAILGUN:
+			pmove.weapon = IT_NAILGUN;
+			if (pmove.ammo_nails < 1)
+			{
+				am = 1;
+			}
+
+			break;
+
+		case IT_NAILGUN:
+			pmove.weapon = IT_SUPER_SHOTGUN;
+			if (pmove.ammo_shells < 2)
+			{
+				am = 1;
+			}
+
+			break;
+
+		case IT_SUPER_SHOTGUN:
+			pmove.weapon = IT_SHOTGUN;
+			if (pmove.ammo_shells < 1)
+			{
+				am = 1;
+			}
+
+			break;
+
+		case IT_SHOTGUN:
+			pmove.weapon = IT_HOOK;
+			break;
+
+		case IT_HOOK:
+			pmove.weapon = IT_AXE;
+			break;
+
+		case IT_AXE:
+			pmove.weapon = IT_LIGHTNING;
+			if (pmove.ammo_cells < 1)
+			{
+				am = 1;
+			}
+
+			break;
+		}
+
+		if ((it & pmove.weapon) && (am == 0))
+		{
+			W_SetCurrentAmmo();
+
+			return true;
+		}
+	}
+
+	return true;
+}
+
+int W_ChangeWeapon(int impulse)
 {
 	int fl = 0;
 	int am = 0;
@@ -1119,16 +1419,28 @@ void W_ChangeWeapon(int impulse)
 
 		pmove.weapon = fl;
 	}
+
+	return true;
 }
 
 void ImpulseCommands(void)
 {
+	int clear = false;
 	if (((pmove.impulse >= 1) && (pmove.impulse <= 8)) || (pmove.impulse == 22))
 	{
-		W_ChangeWeapon(pmove.impulse);
+		clear = W_ChangeWeapon(pmove.impulse);
+	}
+	else if (pmove.impulse == 10)
+	{
+		clear = CycleWeaponCommand();
+	}
+	else if (pmove.impulse == 12)
+	{
+		clear = CycleWeaponReverseCommand();
 	}
 
-	pmove.impulse = 0;
+	if (clear)
+		pmove.impulse = 0;
 }
 
 void W_FireAxe(void)
@@ -1219,6 +1531,7 @@ void player_nail1(void)
 		pmove.weaponframe = 1;
 	}
 
+	pmove.current_ammo = pmove.ammo_nails -= 1;
 	pmove.attack_finished = pmove.client_time + 0.2;
 	launch_spike(4);
 }
@@ -1240,6 +1553,7 @@ void player_nail2(void)
 		pmove.weaponframe = 1;
 	}
 
+	pmove.current_ammo = pmove.ammo_nails -= 1;
 	pmove.attack_finished = pmove.client_time + 0.2;
 	launch_spike(-4);
 }
@@ -1289,6 +1603,7 @@ void player_light1(void)
 	VectorScale(forward, 600, forward);
 	VectorAdd(end, forward, end);
 
+	pmove.current_ammo = pmove.ammo_cells -= 1;
 	trace_t hittrace = PM_TraceLine(start, end);
 	CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
 }
@@ -1330,9 +1645,9 @@ void player_light2(void)
 	VectorScale(forward, 600, forward);
 	VectorAdd(end, forward, end);
 
+	pmove.current_ammo = pmove.ammo_cells -= 1;
 	trace_t hittrace = PM_TraceLine(start, end);
 	CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
-
 }
 
 void anim_lightning(void)
@@ -1449,6 +1764,7 @@ void W_Attack(void)
 			}
 			else
 			{
+				pmove.current_ammo = pmove.ammo_shells -= 1;
 				pmove.attack_finished = pmove.client_time + 0.5;
 				PM_SoundEffect(cl_sfx_sg, 1);
 			}
@@ -1459,6 +1775,7 @@ void W_Attack(void)
 		case IT_SUPER_SHOTGUN: {
 			pmove.attack_finished = pmove.client_time + 0.7;
 			PM_SoundEffect(cl_sfx_ssg, 1);
+			pmove.current_ammo = pmove.ammo_shells -= 1;
 			pmove.client_thinkindex = 1;
 			anim_shotgun();
 		} break;
@@ -1470,6 +1787,7 @@ void W_Attack(void)
 		} break;
 		case IT_GRENADE_LAUNCHER: {
 			pmove.attack_finished = pmove.client_time + 0.6;
+			pmove.current_ammo = pmove.ammo_rockets -= 1;
 			PM_SoundEffect(cl_sfx_gl, 1);
 			if (pmove_playeffects)
 			{
@@ -1494,6 +1812,7 @@ void W_Attack(void)
 		} break;
 		case IT_ROCKET_LAUNCHER: {
 			pmove.attack_finished = pmove.client_time + 0.8;
+			pmove.current_ammo = pmove.ammo_rockets -= 1;
 			PM_SoundEffect(cl_sfx_rl, 1);
 
 			if (pmove_playeffects)
@@ -1528,7 +1847,7 @@ void W_Attack(void)
 			anim_lightning();
 		} break;
 		case IT_HOOK: {
-			PM_SoundEffect(cl_sfx_hook, 1);
+			//PM_SoundEffect(cl_sfx_hook, 1);
 			pmove.attack_finished = pmove.client_time + 0.1;
 		} break;
 	}
@@ -1536,11 +1855,12 @@ void W_Attack(void)
 
 void PM_PlayerWeapon(void)
 {
-	if (pmove.pm_type == PM_DEAD)
+	if (pmove.pm_type == PM_DEAD || pmove.pm_type == PM_NONE || pmove.pm_type == PM_LOCK)
 	{
 		pmove.impulse = 0;
 		pmove.attack_finished = pmove.client_time + 0.05;
 		pmove.effect_frame = pmove.last_frame;
+		W_SetCurrentAmmo();
 		return;
 	}
 	
@@ -1548,6 +1868,13 @@ void PM_PlayerWeapon(void)
 
 	if (pmove.cmd.impulse)
 		pmove.impulse = pmove.cmd.impulse;
+
+	if ((pmove.client_time > pmove.attack_finished) && (pmove.current_ammo == 0)
+		&& (pmove.weapon != IT_AXE) && (pmove.weapon != IT_HOOK))
+	{
+		pmove.weapon = W_BestWeapon();
+		W_SetCurrentAmmo();
+	}
 
 	if (pmove.client_nextthink && pmove.client_time >= pmove.client_nextthink)
 	{
