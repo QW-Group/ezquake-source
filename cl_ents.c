@@ -2396,6 +2396,8 @@ void MVD_Interpolate(void)
 void CL_ClearPredict(void) {
 	memset(predicted_players, 0, sizeof(predicted_players));
 	mvd_fixangle = 0;
+	pmove.effect_frame = 0;
+	pmove.t_width = 0;
 }
 
 void CL_CalcPlayerFPS(player_info_t *info, int msec)

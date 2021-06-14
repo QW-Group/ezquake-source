@@ -428,12 +428,6 @@ void CL_PredictMove (qbool physframe) {
 		CL_SetSolidPlayers (cl.playernum);
 
 		pmove_playeffects = false;
-		if (pmove.effect_frame > cls.netchan.outgoing_sequence) // HACK! this is to fix when things go horribly wrong, or you just reconnected
-		{
-			pmove.effect_frame = 0;
-			pmove.t_width = 0;
-		}
-
 		pmove_nopred_weapon = (cl_nopred_weapon.integer || pmove.client_predflags == PRDFL_FORCEOFF);
 
 		// run frames
