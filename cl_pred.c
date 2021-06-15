@@ -464,7 +464,7 @@ void CL_PredictMove (qbool physframe) {
 
 		//
 		// error smoothing
-		if (cl_predict_smoothview.integer)
+		if (cl_predict_smoothview.integer && !cl.spectator)
 		{
 			cl.simerr_frame = cl.validsequence + i - 1;
 			VectorCopy(to->playerstate[cl.playernum].origin, cl.simerr_org);
