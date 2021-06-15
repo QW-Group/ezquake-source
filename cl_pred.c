@@ -472,17 +472,20 @@ void CL_PredictMove (qbool physframe) {
 			vec3_t nudge_norm; VectorCopy(cl.simerr_nudge, nudge_norm);
 			VectorNormalize(nudge_norm);
 
+			float check_deltatime = cl.time - cl.simerr_lastcheck;
+			cl.simerr_lastcheck = cl.time;
+
 			nudge = min(nudge, 64);
-			if (nudge < 250 * cls.frametime)
+			if (nudge < 250 * check_deltatime)
 				nudge = 0;
 			else if (nudge < 8)
-				nudge -= 200 * cls.frametime;
+				nudge -= 200 * check_deltatime;
 			else if (nudge < 16)
-				nudge -= 500 * cls.frametime;
+				nudge -= 500 * check_deltatime;
 			else if (nudge < 32)
-				nudge -= 800 * cls.frametime;
+				nudge -= 800 * check_deltatime;
 			else
-				nudge -= 1200 * cls.frametime;
+				nudge -= 1200 * check_deltatime;
 			nudge = max(0, nudge); // in case we overshot due to low framerate or something
 
 			VectorScale(nudge_norm, nudge, cl.simerr_nudge);
