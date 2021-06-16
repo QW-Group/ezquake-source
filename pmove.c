@@ -52,6 +52,15 @@ vec3_t	player_maxs = {16, 16, 32};
 
 #define MAX_JUMPFIX_DOTPRODUCT -0.1
 
+// Play a predicted sound
+void PM_SoundEffect(sfx_t *sample, int chan)
+{
+	if (!pmove_playeffects)
+		return;
+
+	S_StartSound(cl.playernum + 1, chan, sample, pmove.origin, 1, 0);
+}
+
 // Add an entity to touch list, discarding duplicates
 static void PM_AddTouchedEnt (int num)
 {
@@ -715,6 +724,8 @@ static void PM_CheckJump (void)
 	if (pmove.jump_held && !pmove.jump_msec)
 		return; // don't pogo stick
 
+	PM_SoundEffect(cl_sfx_jump, 4);
+
 	if (!movevars.pground) {
 		// check for jump bug
 		// groundplane normal was set in the call to PM_CategorizePosition
@@ -972,14 +983,6 @@ int PM_PlayerMove(void)
 //	Weapon Prediction
 //
 #define IT_HOOK			32768
-
-void PM_SoundEffect(sfx_t *sample, int chan)
-{
-	if (!pmove_playeffects)
-		return;
-
-	S_StartSound(cl.playernum + 1, chan, sample, pmove.origin, 1, 0);
-}
 
 void W_SetCurrentAmmo(void)
 {

@@ -42,6 +42,7 @@ static qbool nolerp_nextpos;
 
 void CL_InitWepSounds(void)
 {
+	cl_sfx_jump = S_PrecacheSound("player/plyrjmp8.wav");
 	cl_sfx_ax1 = S_PrecacheSound("weapons/ax1.wav");
 	cl_sfx_axhit1 = S_PrecacheSound("player/axhit2.wav");
 	cl_sfx_sg = S_PrecacheSound("weapons/guncock.wav");
