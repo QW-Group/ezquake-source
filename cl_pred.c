@@ -490,7 +490,11 @@ void CL_PredictMove (qbool physframe) {
 			nudge = max(0, nudge); // in case we overshot due to low framerate or something
 
 			VectorScale(nudge_norm, nudge, cl.simerr_nudge);
-			VectorAdd(cl.simorg, cl.simerr_nudge, cl.simorg);
+
+			vec3_t goal;
+			VectorAdd(cl.simorg, cl.simerr_nudge, goal);
+			trace_t checktrace = PM_PlayerTrace(cl.simorg, goal);
+			VectorCopy(checktrace.endpos, cl.simorg);
 		}
 		//
 		//
