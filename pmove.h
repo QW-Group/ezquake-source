@@ -114,7 +114,10 @@ typedef struct {
 
 int pmove_playeffects;
 int pmove_nopred_weapon;
+cvar_t cl_nopred;
 cvar_t cl_nopred_weapon;
+cvar_t cl_predict_smoothview;
+cvar_t cl_predict_jump;
 
 extern movevars_t movevars;
 extern playermove_t pmove;

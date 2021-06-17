@@ -1950,7 +1950,11 @@ void CL_ParseStartSoundPacket(void)
 				if (strcmp(cl.sound_precache[sound_num]->name, "weapons/lstart.wav") == 0)
 					return;
 			}
-			else if (channel == 4)
+		}
+
+		if (cl_predict_jump.integer && !cl_nopred.integer)
+		{
+			if (channel == 4)
 			{
 				if (strcmp(cl.sound_precache[sound_num]->name, "player/plyrjmp8.wav") == 0)
 					return;

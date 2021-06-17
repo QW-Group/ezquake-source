@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 cvar_t	cl_nopred	= {"cl_nopred", "0"};
 cvar_t	cl_nopred_weapon = { "cl_nopred_weapon", "0" };
 cvar_t	cl_predict_smoothview = { "cl_predict_smoothview", "1" };
+cvar_t	cl_predict_jump = { "cl_predict_jump", "1" };
 
 extern cvar_t cl_independentPhysics;
 
@@ -552,6 +553,7 @@ void CL_InitPrediction(void)
 	Cvar_Register(&cl_nopred);
 	Cvar_Register(&cl_nopred_weapon);
 	Cvar_Register(&cl_predict_smoothview);
+	Cvar_Register(&cl_predict_jump);
 	Cvar_ResetCurrentGroup();
 
 	CL_InitWepSounds();

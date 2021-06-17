@@ -724,7 +724,8 @@ static void PM_CheckJump (void)
 	if (pmove.jump_held && !pmove.jump_msec)
 		return; // don't pogo stick
 
-	PM_SoundEffect(cl_sfx_jump, 4);
+	if (cl_predict_jump.integer)
+		PM_SoundEffect(cl_sfx_jump, 4);
 
 	if (!movevars.pground) {
 		// check for jump bug
