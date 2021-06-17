@@ -1437,7 +1437,11 @@ void CL_ParsePlayerinfo (void)
 			{
 				if (MSG_ReadByte())
 				{
-					state->impulse = MSG_ReadByte();
+					int data_impulse = MSG_ReadByte();
+					if (!(cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON))
+						state->impulse = data_impulse;
+
+
 					state->weapon = MSG_ReadShort();
 					state->items = cl.stats[STAT_ITEMS];
 

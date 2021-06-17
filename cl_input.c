@@ -117,6 +117,7 @@ kbutton_t in_strafe, in_speed, in_use, in_jump, in_attack, in_attack2;
 kbutton_t in_up, in_down;
 
 static int in_next_impulse;
+static int in_next_impulse_pred;
 static qbool suppress_hide;
 
 // Over-writes weapon selection list
@@ -131,6 +132,8 @@ static void ForgetWeaponOrder(int impulse, int* weapon_order)
 
 static void SetNextImpulse(int impulse, qbool from_weapon_script, qbool set_best_weapon)
 {
+	in_next_impulse_pred = impulse;
+
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 	if (from_weapon_script && (cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON) && cl_pext_serversideweapon.integer) {
 		in_next_impulse = 0;
@@ -975,12 +978,16 @@ void CL_FinishMove(usercmd_t *cmd)
 		)
 	) {
 		cmd->impulse = 0;
+		cmd->impulse_pred = 0;
 	}
 	else {
 		cmd->impulse = in_next_impulse;
+		cmd->impulse_pred = in_next_impulse_pred;
 	}
+
 	// } shaman RFE 1030281
 	in_next_impulse = 0;
+	in_next_impulse_pred = 0;
 
 	// chop down so no extra bits are kept that the server wouldn't get
 	cmd->forwardmove = MakeChar(cmd->forwardmove);

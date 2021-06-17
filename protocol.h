@@ -467,6 +467,7 @@ typedef struct usercmd_s {
 	short	forwardmove, sidemove, upmove;
 	byte	buttons;
 	byte	impulse;
+	byte	impulse_pred; //this is our impulse, even if it was overrode by serversideweapon
 } usercmd_t;
 
 // usercmd button bits
