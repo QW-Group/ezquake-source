@@ -1274,6 +1274,7 @@ void CL_ParsePlayerinfo (void)
 
 	player_state_t *prevstate, dummy;
 	int num, i;
+	int wep_predict;
 
 	extern void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);
 
@@ -1435,7 +1436,8 @@ void CL_ParsePlayerinfo (void)
 
 			if (cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
 			{
-				if (MSG_ReadByte())
+				wep_predict = MSG_ReadByte();
+				if (wep_predict)
 				{
 					int data_impulse = MSG_ReadByte();
 					if (!(cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON))
@@ -1563,7 +1565,31 @@ guess_pm_type:
 			if (flags & PF_EFFECTS)
 				MSG_WriteByte(&cls.demomessage, state->effects);
 			if (flags & PF_WEAPONFRAME)
+			{
 				MSG_WriteByte(&cls.demomessage, state->weaponframe);
+
+				if (cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+				{
+					MSG_WriteByte(&cls.demomessage, wep_predict);
+					if (wep_predict)
+					{
+						MSG_WriteByte(&cls.demomessage, state->impulse);
+						MSG_WriteShort(&cls.demomessage, state->weapon);
+
+						MSG_WriteFloat(&cls.demomessage, state->client_time);
+						MSG_WriteFloat(&cls.demomessage, state->attack_finished);
+						MSG_WriteFloat(&cls.demomessage, state->client_nextthink);
+						MSG_WriteByte(&cls.demomessage, state->client_thinkindex);
+						MSG_WriteByte(&cls.demomessage, state->client_ping);
+						MSG_WriteByte(&cls.demomessage, state->client_predflags);
+
+						MSG_WriteByte(&cls.demomessage, state->ammo_shells);
+						MSG_WriteByte(&cls.demomessage, state->ammo_nails);
+						MSG_WriteByte(&cls.demomessage, state->ammo_rockets);
+						MSG_WriteByte(&cls.demomessage, state->ammo_cells);
+					}
+				}
+			}
 #ifdef FTE_PEXT_TRANS
 			if (flags & PF_TRANS_Z && cls.fteprotocolextensions & FTE_PEXT_TRANS)
 				MSG_WriteByte(&cls.demomessage, state->alpha);		
