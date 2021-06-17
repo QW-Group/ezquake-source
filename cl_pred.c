@@ -101,7 +101,7 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u, 
 				from->impulse = pmove.impulse;
 		}
 
-			pmove.impulse = from->impulse;
+		pmove.impulse = from->impulse;
 	}
 
 	pmove.jump_msec = (cl.z_ext & Z_EXT_PM_TYPE) ? 0 : from->jump_msec;

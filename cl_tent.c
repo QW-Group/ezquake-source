@@ -186,6 +186,7 @@ fproj_t *CL_CreateFakeNail(void)
 
 	newmis->starttime = cl.time + max((latency - 0.013) - WEAPONPRED_MAXLATENCY, 0);
 	newmis->endtime = cl.time + latency;
+	newmis->effects = EF_TRACER;
 	
 	return newmis;
 }
@@ -203,6 +204,7 @@ fproj_t *CL_CreateFakeSuperNail(void)
 
 	newmis->starttime = cl.time + max((latency - 0.013) - WEAPONPRED_MAXLATENCY, 0);
 	newmis->endtime = cl.time + latency;
+	newmis->effects = EF_TRACER2;
 
 	return newmis;
 }
@@ -1208,6 +1210,21 @@ static void CL_UpdateFakeProjectiles(void)
 					R_MissileTrail(&cent, r_rockettrail.integer);
 				if (prj->effects & EF_GRENADE)
 					R_MissileTrail(&cent, fix_trail_num_for_grens(r_grenadetrail.integer));
+				if (prj->effects & EF_TRACER || prj->effects & EF_TRACER2)
+				{
+					if (amf_nailtrail.integer && !gl_no24bit.integer) {
+						// VULT NAILTRAIL
+						if (amf_nailtrail_plasma.integer) {
+							byte color[3];
+							color[0] = 0; color[1] = 70; color[2] = 255;
+							FireballTrail(&cent, color, 0.6, 0.3);
+						}
+						else {
+							//TODO: fix this
+							//ParticleNailTrail(&cent, 2, 0.4f);
+						}
+					}
+				}
 			}
 		}
 
