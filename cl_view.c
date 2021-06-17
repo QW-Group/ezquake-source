@@ -820,6 +820,9 @@ static int V_CurrentWeaponModel(void)
 				return cl_modelindices[mi_vaxe];
 			}
 			if (bestgun > 1 && bestgun <= 8) {
+				if (pmove.client_predflags & PRDFL_COILGUN)
+					if (bestgun == 2) { bestgun = 9; }
+
 				return cl_modelindices[mi_weapon1 - 1 + bestgun];
 			}
 		}
