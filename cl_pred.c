@@ -431,14 +431,7 @@ void CL_PredictMove (qbool physframe) {
 		CL_SetSolidPlayers (cl.playernum);
 
 		pmove_playeffects = false;
-		pmove_nopred_weapon = (cl_nopred_weapon.integer || pmove.client_predflags == PRDFL_FORCEOFF);
-
-		/*
-		player_state_t *chek = &cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum];
-		Con_Printf("s wep: %i\n", chek->weapon);
-		chek = &cl.frames[cl.validsequence + 1 & UPDATE_MASK].playerstate[cl.playernum];
-		Con_Printf("s1 wep: %i\n", chek->weapon);
-		*/
+		pmove_nopred_weapon = (cl_nopred_weapon.integer || pmove.client_predflags == PRDFL_FORCEOFF || cl.spectator);
 
 		// run frames
 		for (i = 1; i < UPDATE_BACKUP - 1 && cl.validsequence + i < cls.netchan.outgoing_sequence; i++) {
