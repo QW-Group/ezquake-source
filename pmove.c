@@ -1342,7 +1342,6 @@ int CycleWeaponReverseCommand(void)
 		if ((it & pmove.weapon) && (am == 0))
 		{
 			W_SetCurrentAmmo();
-
 			return true;
 		}
 	}
@@ -1421,6 +1420,7 @@ int W_ChangeWeapon(int impulse)
 		}
 
 		pmove.weapon = fl;
+		W_SetCurrentAmmo();
 	}
 
 	return true;
@@ -1858,6 +1858,7 @@ void W_Attack(void)
 
 void PM_PlayerWeapon(void)
 {
+	W_SetCurrentAmmo(); // We need to run this regardless because it sets our model. Don't want any ugly prediction errors
 	if (pmove.pm_type == PM_DEAD || pmove.pm_type == PM_NONE || pmove.pm_type == PM_LOCK)
 	{
 		pmove.impulse = 0;
@@ -1866,7 +1867,7 @@ void PM_PlayerWeapon(void)
 		W_SetCurrentAmmo();
 		return;
 	}
-	
+
 	pmove.client_time += (float)pmove.cmd.msec / 1000;
 
 	if (pmove.cmd.impulse)
@@ -1891,8 +1892,6 @@ void PM_PlayerWeapon(void)
 
 	if (pmove.client_time >= pmove.attack_finished)
 		ImpulseCommands();
-
-	W_SetCurrentAmmo(); // We need to run this regardless because it sets our model. Don't want any ugly prediction errors
 
 	if (pmove.client_time < pmove.attack_finished)
 		return;

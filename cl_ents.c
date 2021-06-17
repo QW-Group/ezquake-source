@@ -2398,6 +2398,7 @@ void CL_ClearPredict(void) {
 	mvd_fixangle = 0;
 	pmove.effect_frame = 0;
 	pmove.t_width = 0;
+	pmove.impulse = 0;
 }
 
 void CL_CalcPlayerFPS(player_info_t *info, int msec)

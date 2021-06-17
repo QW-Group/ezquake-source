@@ -85,17 +85,16 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u, 
 		pmove.client_ping = from->client_ping;
 		pmove.client_predflags = from->client_predflags;
 
-		pmove.weapon = from->weapon;
-		pmove.items = from->items;
-
 		pmove.ammo_shells = from->ammo_shells;
 		pmove.ammo_nails = from->ammo_nails;
 		pmove.ammo_rockets = from->ammo_rockets;
 		pmove.ammo_cells = from->ammo_cells;
 
-		pmove.impulse = from->impulse;
-
 		pmove.weaponframe = from->weaponframe;
+		pmove.weapon = from->weapon;
+		pmove.items = from->items;
+
+		pmove.impulse = from->impulse;
 	}
 
 	pmove.jump_msec = (cl.z_ext & Z_EXT_PM_TYPE) ? 0 : from->jump_msec;
@@ -432,6 +431,13 @@ void CL_PredictMove (qbool physframe) {
 
 		pmove_playeffects = false;
 		pmove_nopred_weapon = (cl_nopred_weapon.integer || pmove.client_predflags == PRDFL_FORCEOFF);
+
+		/*
+		player_state_t *chek = &cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum];
+		Con_Printf("s wep: %i\n", chek->weapon);
+		chek = &cl.frames[cl.validsequence + 1 & UPDATE_MASK].playerstate[cl.playernum];
+		Con_Printf("s1 wep: %i\n", chek->weapon);
+		*/
 
 		// run frames
 		for (i = 1; i < UPDATE_BACKUP - 1 && cl.validsequence + i < cls.netchan.outgoing_sequence; i++) {
