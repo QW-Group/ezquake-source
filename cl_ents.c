@@ -1274,7 +1274,7 @@ void CL_ParsePlayerinfo (void)
 
 	player_state_t *prevstate, dummy;
 	int num, i;
-	int wep_predict;
+	int wep_predict = 0;
 
 	extern void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);
 
