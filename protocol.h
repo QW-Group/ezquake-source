@@ -285,6 +285,7 @@ void MSG_DecodeMVDSVWeaponFlags(int flags, int* weaponmode, int* weaponhide, qbo
 #define	PF_PMC_MASK		7
 #define	PF_ONGROUND		(1<<14)			// ZQuake extension
 #define	PF_SOLID		(1<<15)			// ZQuake extension
+#define	PF_FTE_EXTRA	(1<<15)			// FTE extension
 
 // encoded player move types
 #define PMC_NORMAL				0		// normal ground movement

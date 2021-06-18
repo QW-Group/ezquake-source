@@ -1310,6 +1310,7 @@ void CL_ParsePlayerinfo (void)
 		}
 
 		flags = MSG_ReadShort ();
+
 		state->flags = MVD_TranslateFlags(flags);
 
 		state->messagenum = cl.parsecount;
@@ -1357,7 +1358,15 @@ void CL_ParsePlayerinfo (void)
 	} 
 	else 
 	{
-		flags = state->flags = MSG_ReadShort ();
+		flags = state->flags = (unsigned short)MSG_ReadShort ();
+
+#if defined(FTE_PEXT_TRANS) // and any other fte extension that uses this... (we don't support those yet)
+		if (cls.fteprotocolextensions & (FTE_PEXT_TRANS))
+		{
+			if (flags & PF_FTE_EXTRA)
+				flags |= MSG_ReadByte() << 16;
+		}
+#endif
 
 		state->messagenum = cl.parsecount;
 		if (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
@@ -1757,6 +1766,7 @@ static void CL_LinkPlayers(void)
 		if (state->messagenum != cl.parsecount)
 			continue;	// not present this frame
 
+
 		// spawn light flashes, even ones coming from invisible objects
 		if (r_powerupglow.value && !(r_powerupglow.value == 2 && j == cl.viewplayernum)) 
 		{
@@ -1877,6 +1887,7 @@ static void CL_LinkPlayers(void)
 		ent.scoreboard = (state->modelindex == cl_modelindices[mi_player]) ? info : NULL;
 		ent.frame = state->frame;
 		ent.effects = state->effects; // Electro - added for shells
+		ent.alpha = (float)state->alpha / 255;
 
 		if (cent->frametime >= 0 && cent->frametime <= cl.time) 
 		{
