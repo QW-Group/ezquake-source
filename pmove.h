@@ -52,6 +52,7 @@ typedef struct {
 	int			pm_type;
 
 	int			weapon;
+	int			weapon_serverstate;
 	int			weapon_index;
 	int			weaponframe;
 
@@ -116,7 +117,9 @@ int pmove_playeffects;
 int pmove_nopred_weapon;
 cvar_t cl_nopred;
 cvar_t cl_nopred_weapon;
+cvar_t cl_predict_weaponsound;
 cvar_t cl_predict_smoothview;
+cvar_t cl_predict_beam;
 cvar_t cl_predict_jump;
 
 extern movevars_t movevars;

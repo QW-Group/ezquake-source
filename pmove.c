@@ -61,6 +61,19 @@ void PM_SoundEffect(sfx_t *sample, int chan)
 	S_StartSound(cl.playernum + 1, chan, sample, pmove.origin, 1, 0);
 }
 
+void PM_SoundEffect_Weapon(sfx_t *sample, int chan, int weap)
+{
+	if (cl_predict_weaponsound.integer == 0)
+		return;
+
+	if (cl_predict_weaponsound.integer & weap)
+		return;
+
+	PM_SoundEffect(sample, chan);
+}
+
+
+
 // Add an entity to touch list, discarding duplicates
 static void PM_AddTouchedEnt (int num)
 {
@@ -1463,7 +1476,7 @@ void W_FireAxe(void)
 	trace_t walltrace = PM_TraceLine(start, end);
 
 	if (walltrace.fraction < 1 && walltrace.e.entnum == 0)
-		PM_SoundEffect(cl_sfx_axhit1, 1);
+		PM_SoundEffect_Weapon(cl_sfx_axhit1, 1, 2);
 }
 
 void launch_spike(float off)
@@ -1474,12 +1487,12 @@ void launch_spike(float off)
 		if (pmove.weapon == IT_SUPER_NAILGUN)
 		{
 			off = 0;
-			PM_SoundEffect(cl_sfx_sng, 1);
+			PM_SoundEffect_Weapon(cl_sfx_sng, 1, 32);
 			newmis = CL_CreateFakeSuperNail();
 		}
 		else
 		{
-			PM_SoundEffect(cl_sfx_ng, 1);
+			PM_SoundEffect_Weapon(cl_sfx_ng, 1, 16);
 			newmis = CL_CreateFakeNail();
 		}
 		
@@ -1595,7 +1608,7 @@ void player_light1(void)
 	if (pmove.client_time >= pmove.t_width)
 	{
 		pmove.t_width = pmove.client_time + 0.6;
-		PM_SoundEffect(cl_sfx_lghit, 1);
+		PM_SoundEffect_Weapon(cl_sfx_lghit, 1, 256);
 	}
 
 	vec3_t start, end, forward;
@@ -1609,7 +1622,8 @@ void player_light1(void)
 
 	pmove.current_ammo = pmove.ammo_cells -= 1;
 	trace_t hittrace = PM_TraceLine(start, end);
-	CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
+	if (cl_predict_beam.integer)
+		CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
 }
 
 void player_light2(void)
@@ -1637,7 +1651,7 @@ void player_light2(void)
 	if (pmove.client_time >= pmove.t_width)
 	{
 		pmove.t_width = pmove.client_time + 0.6;
-		PM_SoundEffect(cl_sfx_lghit, 1);
+		PM_SoundEffect_Weapon(cl_sfx_lghit, 1, 256);
 	}
 
 	vec3_t start, end, forward;
@@ -1651,7 +1665,8 @@ void player_light2(void)
 
 	pmove.current_ammo = pmove.ammo_cells -= 1;
 	trace_t hittrace = PM_TraceLine(start, end);
-	CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
+	if (cl_predict_beam.integer)
+		CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
 }
 
 void anim_lightning(void)
@@ -1735,7 +1750,7 @@ void W_Attack(void)
 	{
 	case IT_AXE: {
 		pmove.attack_finished = pmove.client_time + 0.5;
-		PM_SoundEffect(cl_sfx_ax1, 1);
+		PM_SoundEffect_Weapon(cl_sfx_ax1, 1, 2);
 
 		float r = fabs((((int)(pmove.client_time * 931.75) << 11) + ((int)(pmove.client_time) >> 6)) % 1000) / 1000;
 		if (r < 0.25)
@@ -1764,13 +1779,13 @@ void W_Attack(void)
 				pmove.attack_finished = pmove.client_time + 0.7;
 			else
 				pmove.attack_finished = pmove.client_time + 0.5;
-			PM_SoundEffect(cl_sfx_coil, 1);
+			PM_SoundEffect_Weapon(cl_sfx_coil, 1, 4);
 		}
 		else
 		{
 			pmove.current_ammo = pmove.ammo_shells -= 1;
 			pmove.attack_finished = pmove.client_time + 0.5;
-			PM_SoundEffect(cl_sfx_sg, 1);
+			PM_SoundEffect_Weapon(cl_sfx_sg, 1, 4);
 		}
 
 		pmove.client_thinkindex = 1;
@@ -1778,7 +1793,7 @@ void W_Attack(void)
 	} break;
 	case IT_SUPER_SHOTGUN: {
 		pmove.attack_finished = pmove.client_time + 0.7;
-		PM_SoundEffect(cl_sfx_ssg, 1);
+		PM_SoundEffect_Weapon(cl_sfx_ssg, 1, 8);
 		pmove.current_ammo = pmove.ammo_shells -= 1;
 		pmove.client_thinkindex = 1;
 		anim_shotgun();
@@ -1792,7 +1807,7 @@ void W_Attack(void)
 	case IT_GRENADE_LAUNCHER: {
 		pmove.attack_finished = pmove.client_time + 0.6;
 		pmove.current_ammo = pmove.ammo_rockets -= 1;
-		PM_SoundEffect(cl_sfx_gl, 1);
+		PM_SoundEffect_Weapon(cl_sfx_gl, 1, 64);
 		if (pmove_playeffects)
 		{
 			fproj_t *newmis = CL_CreateFakeGrenade();
@@ -1817,7 +1832,7 @@ void W_Attack(void)
 	case IT_ROCKET_LAUNCHER: {
 		pmove.attack_finished = pmove.client_time + 0.8;
 		pmove.current_ammo = pmove.ammo_rockets -= 1;
-		PM_SoundEffect(cl_sfx_rl, 1);
+		PM_SoundEffect_Weapon(cl_sfx_rl, 1, 128);
 
 		if (pmove_playeffects)
 		{
@@ -1847,7 +1862,7 @@ void W_Attack(void)
 		anim_rocket();
 	} break;
 	case IT_LIGHTNING: {
-		PM_SoundEffect(cl_sfx_lg, 0);
+		PM_SoundEffect_Weapon(cl_sfx_lg, 0, 256);
 		anim_lightning();
 	} break;
 	case IT_HOOK: {

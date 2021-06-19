@@ -344,7 +344,7 @@ static void CL_ParseBeam(int type, vec3_t end)
 
 	if (ent == cl.playernum + 1)
 	{
-		if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+		if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION && cl_predict_beam.integer)
 			return;
 	}
 

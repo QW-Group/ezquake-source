@@ -24,7 +24,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t	cl_nopred	= {"cl_nopred", "0"};
 cvar_t	cl_nopred_weapon = { "cl_nopred_weapon", "0" };
+cvar_t	cl_predict_weaponsound = { "cl_predict_weaponsound", "1" };
 cvar_t	cl_predict_smoothview = { "cl_predict_smoothview", "1" };
+cvar_t	cl_predict_beam = { "cl_predict_beam", "1" };
 cvar_t	cl_predict_jump = { "cl_predict_jump", "1" };
 
 extern cvar_t cl_independentPhysics;
@@ -452,6 +454,9 @@ void CL_PredictMove (qbool physframe) {
 			to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
 			CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd, true);
 
+			if (i == 1)
+				pmove.weapon_serverstate = to->playerstate[cl.playernum].weapon;
+
 			if ((cl.validsequence + i) == cl.simerr_frame)
 			{
 				vec3_t diff;
@@ -551,7 +556,9 @@ void CL_InitPrediction(void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register(&cl_nopred);
 	Cvar_Register(&cl_nopred_weapon);
+	Cvar_Register(&cl_predict_weaponsound);
 	Cvar_Register(&cl_predict_smoothview);
+	Cvar_Register(&cl_predict_beam);
 	Cvar_Register(&cl_predict_jump);
 	Cvar_ResetCurrentGroup();
 

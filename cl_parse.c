@@ -1939,16 +1939,34 @@ void CL_ParseStartSoundPacket(void)
 	// Skip weapon sounds if we're predicting them
 	if (ent == cl.playernum + 1)
 	{
-		if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+		if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION && cl_predict_weaponsound.integer != 0)
 		{
 			if (channel == 1)
-				return;
+			{
+				int predict_sound = TRUE;
+
+				if (cl_predict_weaponsound.integer == 0)
+				{
+					predict_sound = FALSE;
+				}
+				else if (cl_predict_weaponsound.integer > 1)
+				{
+					if ((cl_predict_weaponsound.integer & 2 && pmove.weapon_serverstate == 4096) || (cl_predict_weaponsound.integer & (pmove.weapon_serverstate << 2)))
+						predict_sound = FALSE;
+				}
+
+				if (predict_sound)
+					return;
+			}
 
 			//  yuck! nasty hacks to ignore certain channel sounds we don't want
 			if (channel == 0)
 			{
-				if (strcmp(cl.sound_precache[sound_num]->name, "weapons/lstart.wav") == 0)
-					return;
+				if (!(cl_predict_weaponsound.integer & 256))
+				{
+					if (strcmp(cl.sound_precache[sound_num]->name, "weapons/lstart.wav") == 0)
+						return;
+				}
 			}
 		}
 
