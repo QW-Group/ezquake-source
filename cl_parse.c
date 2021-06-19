@@ -1943,7 +1943,8 @@ void CL_ParseStartSoundPacket(void)
 		{
 			if (channel == 1)
 			{
-				int predict_sound = TRUE;
+				int predict_sound;
+				predict_sound = TRUE;
 
 				if (cl_predict_weaponsound.integer == 0)
 				{
