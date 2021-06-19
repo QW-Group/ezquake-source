@@ -1944,16 +1944,16 @@ void CL_ParseStartSoundPacket(void)
 			if (channel == 1)
 			{
 				int predict_sound;
-				predict_sound = TRUE;
+				predict_sound = true;
 
 				if (cl_predict_weaponsound.integer == 0)
 				{
-					predict_sound = FALSE;
+					predict_sound = false;
 				}
 				else if (cl_predict_weaponsound.integer > 1)
 				{
 					if ((cl_predict_weaponsound.integer & 2 && pmove.weapon_serverstate == 4096) || (cl_predict_weaponsound.integer & (pmove.weapon_serverstate << 2)))
-						predict_sound = FALSE;
+						predict_sound = false;
 				}
 
 				if (predict_sound)
