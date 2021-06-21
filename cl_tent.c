@@ -142,10 +142,13 @@ void CL_MatchFakeProjectile(centity_t *cent)
 
 			if (VectorLength(diff) < 16)
 			{
-				VectorCopy(prj->partorg, cent->trails[0].stop);
-				VectorCopy(prj->partorg, cent->trails[1].stop);
-				VectorCopy(prj->partorg, cent->trails[2].stop);
-				VectorCopy(prj->partorg, cent->trails[3].stop);
+				if (prj->partcount)
+				{
+					VectorCopy(prj->partorg, cent->trails[0].stop);
+					VectorCopy(prj->partorg, cent->trails[1].stop);
+					VectorCopy(prj->partorg, cent->trails[2].stop);
+					VectorCopy(prj->partorg, cent->trails[3].stop);
+				}
 
 				memset(prj, 0, sizeof(fproj_t));
 				return;
@@ -1197,6 +1200,7 @@ static void CL_UpdateFakeProjectiles(void)
 				if (!VectorLength(prj->partorg))
 					VectorCopy(prj->org, prj->partorg);
 
+				prj->partcount++;
 				VectorCopy(prj->partorg, cent.old_origin);
 				VectorCopy(prj->partorg, cent.trails[3].stop);
 				VectorCopy(prj->partorg, cent.trails[2].stop);

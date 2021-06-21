@@ -23,7 +23,7 @@ typedef struct explosion_s
 typedef struct
 {
 	model_t *model;
-	int type, effects, flags;
+	int type, effects, flags, partcount;
 	float starttime, endtime, parttime;
 	vec3_t start, vel, avel, angs, org, partorg;
 	centity_trail_t trails[4];
