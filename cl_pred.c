@@ -463,6 +463,10 @@ void CL_PredictMove (qbool physframe) {
 				VectorSubtract(cl.simerr_org, to->playerstate[cl.playernum].origin, diff);
 				if (VectorLength(diff) > 4 && VectorLength(diff) < 64)
 				{
+					float mult;
+					mult = min(13 / cls.latency, 1);
+					VectorScale(diff, mult, diff);
+
 					VectorAdd(diff, cl.simerr_nudge, cl.simerr_nudge);
 				}
 			}
