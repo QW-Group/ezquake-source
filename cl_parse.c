@@ -1952,8 +1952,7 @@ void CL_ParseStartSoundPacket(void)
 				}
 				else if (cl_predict_weaponsound.integer > 1)
 				{
-					if ((cl_predict_weaponsound.integer & 2 && pmove.weapon_serverstate == 4096) || (cl_predict_weaponsound.integer & (pmove.weapon_serverstate << 2)))
-						predict_sound = false;
+					predict_sound = PM_FilterWeaponSound(sound_num);
 				}
 
 				if (predict_sound)

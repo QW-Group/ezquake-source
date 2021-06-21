@@ -480,7 +480,7 @@ void CL_PredictMove (qbool physframe) {
 
 		//
 		// error smoothing
-		if (cl_predict_smoothview.integer && !cl.spectator)
+		if (cl_predict_smoothview.value >= 0.1 && !cl.spectator)
 		{
 			cl.simerr_frame = cl.validsequence + i - 1;
 			VectorCopy(to->playerstate[cl.playernum].origin, cl.simerr_org);
@@ -491,17 +491,19 @@ void CL_PredictMove (qbool physframe) {
 			float check_deltatime = cl.time - cl.simerr_lastcheck;
 			cl.simerr_lastcheck = cl.time;
 
+			float nudge_mult = bound(0.1, 2 - cl_predict_smoothview.value, 2);
+
 			nudge = min(nudge, 64);
-			if (nudge < 250 * check_deltatime)
+			if (nudge < 220 * nudge_mult * check_deltatime)
 				nudge = 0;
 			else if (nudge < 8)
-				nudge -= 200 * check_deltatime;
+				nudge -= 200 * nudge_mult * check_deltatime;
 			else if (nudge < 16)
-				nudge -= 500 * check_deltatime;
+				nudge -= 500 * nudge_mult * check_deltatime;
 			else if (nudge < 32)
-				nudge -= 800 * check_deltatime;
+				nudge -= 800 * nudge_mult * check_deltatime;
 			else
-				nudge -= 1200 * check_deltatime;
+				nudge -= 1400 * nudge_mult * check_deltatime;
 			nudge = max(0, nudge); // in case we overshot due to low framerate or something
 
 			VectorScale(nudge_norm, nudge, cl.simerr_nudge);

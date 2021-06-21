@@ -998,6 +998,36 @@ int PM_PlayerMove(void)
 //
 #define IT_HOOK			32768
 
+int PM_FilterWeaponSound(byte sound_num)
+{
+	if (cl_predict_weaponsound.integer & 2)
+		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/lstart.wav") == 0)
+			return false;
+	if (cl_predict_weaponsound.integer & 4)
+		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/guncock.wav") == 0)
+			return false;
+	if (cl_predict_weaponsound.integer & 8)
+		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/shotgn2.wav") == 0)
+			return false;
+	if (cl_predict_weaponsound.integer & 16)
+		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/rocket1i.wav") == 0)
+			return false;
+	if (cl_predict_weaponsound.integer & 32)
+		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/spike2.wav") == 0)
+			return false;
+	if (cl_predict_weaponsound.integer & 64)
+		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/grenade.wav") == 0)
+			return false;
+	if (cl_predict_weaponsound.integer & 128)
+		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/sgun1.wav") == 0)
+			return false;
+	if (cl_predict_weaponsound.integer & 256)
+		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/lhit.wav") == 0)
+			return false;
+
+	return true;
+}
+
 void W_SetCurrentAmmo(void)
 {
 	switch (pmove.weapon)
