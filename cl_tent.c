@@ -140,7 +140,7 @@ void CL_MatchFakeProjectile(centity_t *cent)
 			vec3_t diff;
 			VectorSubtract(cent->lerp_origin, prj->org, diff);
 
-			if (VectorLength(diff) < 16)
+			if (VectorLength(diff) < 24)
 			{
 				if (prj->partcount)
 				{
@@ -184,10 +184,10 @@ fproj_t *CL_CreateFakeNail(void)
 	fproj_t *newmis = CL_AllocFakeProjectile();
 	newmis->model = cl.model_precache[cl_modelindices[mi_spike]];
 
-	float latency = (float)pmove.client_ping / 1000;
+	float latency = cls.latency;
 	latency = min(latency, 0.25);
 
-	newmis->starttime = cl.time + max((latency - 0.013) - WEAPONPRED_MAXLATENCY, 0);
+	newmis->starttime = cl.time + max((latency - 0.013) - (pmove.client_ping/1000), 0);
 	newmis->endtime = cl.time + latency;
 	newmis->effects = EF_TRACER;
 	
@@ -202,10 +202,10 @@ fproj_t *CL_CreateFakeSuperNail(void)
 	fproj_t *newmis = CL_AllocFakeProjectile();
 	newmis->model = cl.model_precache[cl_modelindices[mi_s_spike]];
 
-	float latency = (float)pmove.client_ping / 1000;
+	float latency = cls.latency;
 	latency = min(latency, 0.25);
 
-	newmis->starttime = cl.time + max((latency - 0.013) - WEAPONPRED_MAXLATENCY, 0);
+	newmis->starttime = cl.time + max((latency - 0.013) - (pmove.client_ping / 1000), 0);
 	newmis->endtime = cl.time + latency;
 	newmis->effects = EF_TRACER2;
 
@@ -294,10 +294,10 @@ fproj_t *CL_CreateFakeGrenade(void)
 	fproj_t *newmis = CL_AllocFakeProjectile();
 	newmis->model = cl.model_precache[cl_modelindices[mi_grenade]];
 
-	float latency = (float)pmove.client_ping / 1000;
+	float latency = cls.latency;
 	latency = min(latency, 0.25);
 
-	newmis->starttime = cl.time + max((latency - 0.013) - WEAPONPRED_MAXLATENCY, 0);
+	newmis->starttime = cl.time + max((latency - 0.013) - (pmove.client_ping / 1000), 0);
 	newmis->endtime = cl.time + latency;
 	newmis->parttime = newmis->starttime + 0.013;
 
@@ -318,10 +318,10 @@ fproj_t *CL_CreateFakeRocket(void)
 	if (cl_rocket2grenade.integer)
 		newmis->model = cl.model_precache[cl_modelindices[mi_grenade]];
 
-	float latency = (float)pmove.client_ping / 1000;
+	float latency = cls.latency;
 	latency = min(latency, 0.25);
 
-	newmis->starttime = cl.time + max((latency - 0.013) - WEAPONPRED_MAXLATENCY, 0);
+	newmis->starttime = cl.time + max((latency - 0.013) - (pmove.client_ping / 1000), 0);
 	newmis->endtime = cl.time + latency + 0.015;
 	newmis->parttime = newmis->starttime + 0.013; //delay trail a tiny bit, otherwise it looks funny
 
