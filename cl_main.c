@@ -542,7 +542,7 @@ unsigned int CL_SupportedMVDExtensions1(void)
 
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 	if (cl_pext_serversideweapon.integer) {
-		extensions_supported |= MVD_PEXT1_SERVERSIDEWEAPON;
+		//extensions_supported |= MVD_PEXT1_SERVERSIDEWEAPON;
 	}
 #endif
 
