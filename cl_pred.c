@@ -464,9 +464,8 @@ void CL_PredictMove (qbool physframe) {
 				if (VectorLength(diff) > 4 && VectorLength(diff) < 64)
 				{
 					float mult;
-					mult = min(13 / cls.latency, 1);
+					mult = 1 - min(0.013 / cls.latency, 1);
 					VectorScale(diff, mult, diff);
-
 					VectorAdd(diff, cl.simerr_nudge, cl.simerr_nudge);
 				}
 			}
