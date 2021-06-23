@@ -510,6 +510,7 @@ void CL_PredictMove (qbool physframe) {
 			vec3_t goal;
 			VectorAdd(cl.simorg, cl.simerr_nudge, goal);
 			trace_t checktrace = PM_PlayerTrace(cl.simorg, goal);
+			VectorSubtract(checktrace.endpos, cl.simorg, cl.simerr_nudge);
 			VectorCopy(checktrace.endpos, cl.simorg);
 		}
 		//
