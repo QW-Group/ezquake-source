@@ -829,7 +829,7 @@ static int V_CurrentWeaponModel(void)
 		else if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION) {
 			if (cl.simwep == 1)
 				return cl_modelindices[mi_vaxe];
-			else if (cl.simwep > 1 && cl.simwep <= 10)
+			else if (cl.simwep > 1 && cl.simwep <= 9)
 				return cl_modelindices[mi_weapon1 - 1 + cl.simwep];
 		}
 		return cl.stats[STAT_WEAPON];
