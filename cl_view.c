@@ -79,6 +79,9 @@ cvar_t	crosshairsize	= {"crosshairsize", "1"};
 cvar_t  cl_crossx = {"cl_crossx", "0"};
 cvar_t  cl_crossy = {"cl_crossy", "0"};
 
+// gamma updates are expensive in hw: update at lower fps, otherwise drops are severe
+static cvar_t vid_hwgamma_fps = { "vid_hwgamma_fps", "60" };
+
 // QW262: less flash grenade effect in demos
 cvar_t	cl_demoplay_flash = {"cl_demoplay_flash", ".33"};
 
@@ -611,9 +614,15 @@ void V_UpdatePalette (void)
 	float current_gamma, current_contrast, a, rgb[3];
 	static float prev_blend[4];
 	static float old_gamma, old_contrast, old_hwblend;
+	static double last_set = 0;
 	extern float vid_gamma;
 
 	new = false;
+
+	// don't check (or update 'prev' vars) if not enough time has passed
+	if (vid_hwgamma_enabled && vid_hwgamma_fps.integer && curtime < last_set + (1.0f / max(10, vid_hwgamma_fps.integer))) {
+		return;
+	}
 
 	for (i = 0; i < 4; i++) {
 		if (v_blend[i] != prev_blend[i]) {
@@ -645,6 +654,7 @@ void V_UpdatePalette (void)
 	}
 
 	a = v_blend[3];
+	last_set = curtime;
 
 	if (!vid_hwgamma_enabled || !gl_hwblend.value || cl.teamfortress) {
 		a = 0;
@@ -1151,6 +1161,7 @@ void V_Init (void) {
 	Cvar_Register (&v_dlightcshift);
 	Cvar_Register (&gl_cshiftpercent);
 	Cvar_Register (&gl_hwblend);
+	Cvar_Register (&vid_hwgamma_fps);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register(&v_gamma);

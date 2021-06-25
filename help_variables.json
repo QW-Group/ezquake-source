@@ -21443,6 +21443,12 @@
         }
       ]
     },
+    "vid_hwgamma_fps": {
+      "default": "60",
+      "desc": "If set, ezQuake will only change hardware gamma at specified frequency.  This reduces fps drops when playing at high fps",
+      "group-id": "52",
+      "type": "integer"
+    },
     "vid_minimize_on_focus_loss": {
       "default": "1",
       "desc": "If set, ezQuake will minimise when running in fullscreen mode and it loses focus (e.g. alt-tab)",
