@@ -1117,6 +1117,8 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Move Backward", "+back"),
 	ADDSET_BIND("Strafe Left", "+moveleft"),
 	ADDSET_BIND("Strafe Right", "+moveright"),
+	ADDSET_BIND("Turn Left", "+left"),
+	ADDSET_BIND("Turn Right", "+right"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Swim Up", "+moveup"),
 	ADDSET_BIND("Swim Down", "+movedown"),

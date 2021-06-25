@@ -36,6 +36,7 @@
 - Fixed bug causing client to keep reading from stream after `/map <mapname>` while connected to QTV (linked to #488, reported by HangTime)
 - Fixed bug causing client to prioritise player with userid in name rather than the userid in `/track`, `/ignore`, `/unignore` (affected autotrack - reported by andeh, exploited by an1k vs userID 1 henu)
 - Fixed bug causing client to receive playerinfo packet before knowing which protocol extensions are enabled when using `/cl_delay_packet` on local server (#488, reported by pattah)
+- Fixed bug causing fps to affect `/cl_yawspeed`/`+left`/`+right` commands (keyboard turning) (old bug, #550, reported by veganaize)
 
 ### Bugs which affected 3.x
 
