@@ -7507,7 +7507,7 @@
       "type": "integer"
     },
     "hud_fps_drop": {
-      "desc": "Sets the value which will trigger displaying the fps (requires hud_fps_style 2 or 3). For example, with value hud_fps_drop 70, the fps will only be displayed if it drops to 70 or below. For fps values greater than 70, the fps will not be displayed.",
+      "desc": "Sets the value which will trigger displaying the fps (requires hud_fps_style 2 or 3). For example, with value hud_fps_drop 70, the fps will only be displayed if it drops to 70 or below. For fps values greater than 70, the fps will not be displayed.\nCan also be set to a negative value, interpretted as relative to cl_maxfps",
       "group-id": "19",
       "type": "float"
     },

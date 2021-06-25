@@ -130,9 +130,10 @@
 - `/enemyforceskins 1` will search for player names in lower case (#345)
 - `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
 ` `/gl_mipmap_viewmodels` removed, replaced with `/gl_texturemode_viewmodels`
+- `/hud_ammo_show_always 1` (and equivalent `iammo`) shows current ammo when non-ammo weapon is selected (#206, suggested by VianTORISU)
 - `/hud_clock_content 1` changes output to show the uptime of the client
 - `/hud_clock_content 2` changes output to show time connected to the server (should match `/cl_clock 1` in oldhud)
-- `/hud_ammo_show_always 1` (and equivalent `iammo`) shows current ammo when non-ammo weapon is selected (#206, suggested by VianTORISU)
+- `/hud_fps_drop <negative>` will be treated as relative to `cl_maxfps`, e.g. `/hud_fps_drop -5;/cl_maxfps 1001` will show when fps drops to 996
 -` /hud_keys` supports user commands hidden in .mvd files & qtv streams
 - `/in_ignore_touch_events` added - allows mouse clicks from touch input devices
 - `/in_ignore_unfocused_keyb` added - should ignore keyboard events immediately after receiving input focus (linux only)
