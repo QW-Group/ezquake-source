@@ -1063,9 +1063,6 @@ void MVD_Info(void) {
 	if (!cls.mvdplayback)
 		return;
 
-	x = ELEMENT_X_COORD(mvd_info);
-	y = ELEMENT_Y_COORD(mvd_info);
-
 	if (mvd_info_show_header.value) {
 		strlcpy(mvd_info_header_string, mvd_info_setup.string, sizeof(mvd_info_header_string));
 		Replace_In_String(mvd_info_header_string, sizeof(mvd_info_header_string), '%', \
@@ -1081,6 +1078,9 @@ void MVD_Info(void) {
 			"w", "Cur.Weap.", \
 			"W", "Best Weap.");
 		strlcpy(mvd_info_header_string, Make_Red(mvd_info_header_string, 0), sizeof(mvd_info_header_string));
+		strlcpy(str, mvd_info_final_string, sizeof(str));
+		x = ELEMENT_X_COORD(mvd_info);
+		y = ELEMENT_Y_COORD(mvd_info);
 		Draw_String(x, y + ((z++) * 8), mvd_info_header_string);
 	}
 
@@ -1116,6 +1116,8 @@ void MVD_Info(void) {
 			"p", mvd_info_powerups, \
 			"v", va("%f", mvd_new_info[i].value));
 		strlcpy(str, mvd_info_final_string, sizeof(str));
+		x = ELEMENT_X_COORD(mvd_info);
+		y = ELEMENT_Y_COORD(mvd_info);
 		Draw_String(x, y + ((z++) * 8), str);
 
 #ifdef DEBUG
