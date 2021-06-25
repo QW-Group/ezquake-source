@@ -793,7 +793,7 @@ void CL_AdjustAngles(void)
 {
 	float basespeed, speed, up, down, frametime;
 
-	frametime = cls.trueframetime;
+	frametime = (cl_independentPhysics.value == 0 ? cls.trueframetime : physframetime);
 	if (Movie_IsCapturing()) {
 		frametime = Movie_InputFrametime();
 	}
