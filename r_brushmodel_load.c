@@ -587,23 +587,25 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 
 #define	ANIM_CYCLE	2
 		// link them all together
-		for (j = 0; j < max; j++) {
+		for (j = 0; j < max && j < sizeof(anims) / sizeof(anims[0]); j++) {
 			tx2 = anims[j];
 			if (!tx2) {
 				Host_Error("Mod_LoadTextures: Missing frame %i of %s", j, tx->name);
+				return;
 			}
 			tx2->anim_total = max * ANIM_CYCLE;
 			tx2->anim_min = j * ANIM_CYCLE;
 			tx2->anim_max = (j + 1) * ANIM_CYCLE;
-			tx2->anim_next = anims[ (j + 1)%max ];
+			tx2->anim_next = anims[(j + 1) % max];
 			if (altmax) {
 				tx2->alternate_anims = altanims[0];
 			}
 		}
-		for (j = 0; j < altmax; j++) {
+		for (j = 0; j < altmax && j < sizeof(altanims) / sizeof(altanims[0]); j++) {
 			tx2 = altanims[j];
 			if (!tx2) {
 				Host_Error("Mod_LoadTextures: Missing frame %i of %s", j, tx->name);
+				return;
 			}
 			tx2->anim_total = altmax * ANIM_CYCLE;
 			tx2->anim_min = j * ANIM_CYCLE;
