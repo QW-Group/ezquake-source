@@ -208,11 +208,6 @@ cvar_t gl_fogsky                           = {"gl_fogsky", "1"};
 cvar_t gl_simpleitems                      = {"gl_simpleitems", "0"};
 cvar_t gl_simpleitems_size                 = {"gl_simpleitems_size", "16"};
 cvar_t gl_simpleitems_orientation          = {"gl_simpleitems_orientation", "2"};
-cvar_t gl_motion_blur                      = {"gl_motion_blur", "0"};
-cvar_t gl_motion_blur_fps                  = {"gl_motion_blur_fps", "77"};
-cvar_t gl_motion_blur_norm                 = {"gl_motion_blur_norm", "0.5"};
-cvar_t gl_motion_blur_hurt                 = {"gl_motion_blur_hurt", "0.5"};
-cvar_t gl_motion_blur_dead                 = {"gl_motion_blur_dead", "0.5"};
 cvar_t gl_modulate                         = {"gl_modulate", "1"};
 cvar_t gl_outline                          = {"gl_outline", "0"};
 cvar_t r_fx_geometry                       = {"r_fx_geometry", "0"};
@@ -525,12 +520,6 @@ void R_Init(void)
 	Cvar_Register(&gl_simpleitems);
 	Cvar_Register(&gl_simpleitems_size);
 	Cvar_Register(&gl_simpleitems_orientation);
-
-	Cvar_Register(&gl_motion_blur);
-	Cvar_Register(&gl_motion_blur_fps);
-	Cvar_Register(&gl_motion_blur_norm);
-	Cvar_Register(&gl_motion_blur_hurt);
-	Cvar_Register(&gl_motion_blur_dead);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 	Cvar_Register(&gl_part_explosions);
