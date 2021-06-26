@@ -40,6 +40,8 @@ cvar_t		amf_detpacklights = { "gl_detpacklights", "0" }; // 1
 cvar_t		amf_buildingsparks = { "gl_buildingsparks", "0" }; // 1
 cvar_t		amf_cutf_tesla_effect = { "gl_cutf_tesla_effect", "0" }; // 1
 cvar_t		amf_underwater_trails = { "gl_turb_trails", "0" }; // 1
+cvar_t      amf_underwater_fire = { "gl_turb_fire", "1" };
+cvar_t      amf_underwater_effects = { "gl_turb_effects", "1" };
 
 cvar_t		amf_hidenails = { "cl_hidenails", "0" };
 cvar_t		amf_hiderockets = { "cl_hiderockets", "0" };
@@ -344,6 +346,8 @@ void InitVXStuff(void)
 	Cvar_Register(&amf_weather_rain);
 	Cvar_Register(&amf_weather_rain_fast);
 	Cvar_Register(&amf_underwater_trails);
+	Cvar_Register(&amf_underwater_fire);
+	Cvar_Register(&amf_underwater_effects);
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);

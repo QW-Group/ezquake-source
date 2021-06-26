@@ -27,6 +27,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qmb_particles.h"
 #include "r_brushmodel.h" // R_PointIsUnderwater only
 
+static qbool QMB_InWaterEffect(vec3_t org, qbool isFire)
+{
+	extern cvar_t amf_underwater_fire;
+	extern cvar_t amf_underwater_effects;
+
+	if ((isFire ? amf_underwater_fire.integer : amf_underwater_effects.integer)) {
+		return R_PointIsUnderwater(org);
+	}
+	return false;
+}
+
 static vec3_t zerodir = { 22, 22, 22 };
 
 byte *ColorForParticle(part_type_t type)
@@ -433,7 +444,6 @@ void FuelRodExplosion(vec3_t org)
 void ParticleTorchFire(entity_t* ent)
 {
 	col_t color = { 255,100,25, 128 };
-	int	contents;
 
 	if (ent->entity_id) {
 		entity_t* sent = &cl_static_entities[ent->entity_id - 1];
@@ -445,8 +455,7 @@ void ParticleTorchFire(entity_t* ent)
 		AddParticleEnt(p_flametorch, ent->origin, 1, 7, 0.8f, color, zerodir, -ent->entity_id);
 	}
 	else {
-		contents = TruePointContents(ent->origin);
-		if (ISUNDERWATER(contents)) {
+		if (QMB_InWaterEffect(ent->origin, true)) {
 			AddParticle(p_bubble, ent->origin, 1, 2.8, 2.5, NULL, zerodir);
 		}
 		else {
@@ -466,8 +475,8 @@ void ParticleTorchFire(entity_t* ent)
 void ParticleFire(vec3_t org)
 {
 	col_t color = { 255,100,25, 128 };
-	int	contents = TruePointContents(org);
-	if (ISUNDERWATER(contents)) {
+
+	if (QMB_InWaterEffect(org, true)) {
 		AddParticle(p_bubble, org, 1, 2.8, 2.5, NULL, zerodir);
 	}
 	else {
@@ -675,10 +684,7 @@ void VX_LightningTrail(vec3_t start, vec3_t end)
 
 void QMB_ParticleExplosion(vec3_t org)
 {
-	int contents;
-
-	contents = TruePointContents(org);
-	if (ISUNDERWATER(contents)) {
+	if (QMB_InWaterEffect(org, true)) {
 		if (r_explosiontype.value != 9) {
 			AddParticle(p_fire, org, 12, 14, 0.8, NULL, zerodir);
 		}
@@ -917,7 +923,7 @@ void QMB_TeleportSplash(vec3_t org)
 
 void QMB_DetpackExplosion(vec3_t org)
 {
-	int i, j, contents;
+	int i, j;
 	float theta;
 	vec3_t neworg, angle = { 0, 0, 0 };
 	extern cvar_t gl_part_detpackexplosion_fire_color, gl_part_detpackexplosion_ray_color;
@@ -925,8 +931,7 @@ void QMB_DetpackExplosion(vec3_t org)
 	byte *f_color = (gl_part_detpackexplosion_fire_color.string[0] ? gl_part_detpackexplosion_fire_color.color : ColorForParticle(p_inferno_flame));
 	byte *r_color = (gl_part_detpackexplosion_ray_color.string[0] ? gl_part_detpackexplosion_ray_color.color : NULL);
 
-	contents = TruePointContents(org);
-	if (ISUNDERWATER(contents)) {
+	if (QMB_InWaterEffect(org, true)) {
 		AddParticle(p_bubble, org, 8, 2.8, 2.5, NULL, zerodir);
 		AddParticle(p_bubble, org, 6, 2.2, 2.5, NULL, zerodir);
 		AddParticle(p_fire, org, 10, 25, 0.75, f_color, zerodir);
@@ -1079,7 +1084,6 @@ void VXGunshot(vec3_t org, float count)
 	col_t color = { 255,80,10, 128 };
 	vec3_t dir, neworg;
 	int a, i;
-	int contents;
 
 	if (amf_part_gunshot_type.value == 2 || amf_part_gunshot_type.value == 3) {
 		color[0] = 255;
@@ -1135,8 +1139,7 @@ void VXGunshot(vec3_t org, float count)
 		}
 	}
 
-	contents = TruePointContents(org);
-	if (ISUNDERWATER(contents)) {
+	if (QMB_InWaterEffect(org, false)) {
 		AddParticle(p_bubble, org, count / 5, 2.35, 2.5, NULL, zerodir);
 	}
 }
@@ -1147,7 +1150,6 @@ void VXNailhit(vec3_t org, float count)
 	col_t color;
 	vec3_t dir, neworg;
 	int a, i;
-	int contents;
 	if (amf_nailtrail_plasma.integer) {
 		color[0] = 10;
 		color[1] = 80;
@@ -1221,8 +1223,7 @@ void VXNailhit(vec3_t org, float count)
 		}
 	}
 
-	contents = TruePointContents(org);
-	if (ISUNDERWATER(contents)) {
+	if (QMB_InWaterEffect(org, false)) {
 		AddParticle(p_bubble, org, count / 5, 2.35, 2.5, NULL, zerodir);
 	}
 
@@ -1234,12 +1235,10 @@ void VXExplosion(vec3_t org)
 	col_t color = { 255,100,25, 128 };
 	vec3_t dir;
 	int a, i;
-	int contents;
 	float theta;
 	vec3_t angle;
 
-	contents = TruePointContents(org);
-	if (ISUNDERWATER(contents)) {
+	if (QMB_InWaterEffect(org, true)) {
 		if (r_explosiontype.value != 9) {
 			AddParticle(p_fire, org, 12, 14, 0.8, NULL, zerodir);
 		}

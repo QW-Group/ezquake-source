@@ -130,7 +130,9 @@
 - `/demo_jump` during demo playback should now be faster (#453)
 - `/enemyforceskins 1` will search for player names in lower case (#345)
 - `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
-` `/gl_mipmap_viewmodels` removed, replaced with `/gl_texturemode_viewmodels`
+- `/gl_mipmap_viewmodels` removed, replaced with `/gl_texturemode_viewmodels`
+- `/gl_turb_fire` added, controls if QMB explosions/fire spawn bubbles underwater
+- `/gl_turb_effects` added, controls if other QMB effects (impact points for nails & shotguns) spawn bubbles underwater
 - `/hud_ammo_show_always 1` (and equivalent `iammo`) shows current ammo when non-ammo weapon is selected (#206, suggested by VianTORISU)
 - `/hud_clock_content 1` changes output to show the uptime of the client
 - `/hud_clock_content 2` changes output to show time connected to the server (should match `/cl_clock 1` in oldhud)
