@@ -1256,7 +1256,7 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 			// shift into correct location, now we know where it ended
 			int new_draw_position = Draw_ImagePosition();
 
-			Draw_AdjustImages(initial_position, new_draw_position, width - width_one_char - x);
+			Draw_AdjustImages(initial_position, new_draw_position, width - (x - x_pos));
 		}
 
 		y += 8 * scale;	// Next line.
