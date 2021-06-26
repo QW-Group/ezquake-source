@@ -248,6 +248,7 @@ static void Frags_DrawHorizontalHealthBar(player_info_t* info, int x, int y, int
 			Draw_AlphaFillRGB(x + width - (int)health_width - (int)max_health_width, y, max_health_width, health_height, RGBA_TO_COLOR(255, 0, 0, 128));
 		}
 
+		Draw_AlphaFillRGB(x, y + health_height, width, armor_height, RGBAVECT_TO_COLOR(armor_color_noarmor->color));
 		if (armor_width > 0 && health > 0) {
 			Draw_AlphaFillRGB(x + width - (int)armor_width, y + health_height, armor_width, armor_height, armor_color);
 		}
