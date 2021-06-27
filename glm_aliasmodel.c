@@ -394,7 +394,7 @@ void GLM_PrepareAliasModelBatches(void)
 		return;
 	}
 
-	R_TraceEnterNamedRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__func__);
 
 	// Update VBO with data about each entity
 	buffers.Update(r_buffer_aliasmodel_model_data, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);

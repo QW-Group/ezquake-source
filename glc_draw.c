@@ -357,7 +357,7 @@ void GLC_HudPrepareImages(void)
 		}
 	}
 
-	R_TraceAPI("%s pre-check: %s, %s", __FUNCTION__, (buffers.supported ? "buffers-supported" : "no-buffers"), R_VertexArrayCreated(vao_hud_images) ? "vao-created" : "vao-not-created");
+	R_TraceAPI("%s pre-check: %s, %s", __func__, (buffers.supported ? "buffers-supported" : "no-buffers"), R_VertexArrayCreated(vao_hud_images) ? "vao-created" : "vao-not-created");
 	if (buffers.supported && !R_VertexArrayCreated(vao_hud_images)) {
 		GLC_CreateImageVAO();
 	}

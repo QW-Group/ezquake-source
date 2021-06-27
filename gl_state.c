@@ -1914,7 +1914,7 @@ void GL_VerifyState(FILE* output)
 	GLuint gl_boundCubemap[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
 
 	R_TraceEnterFunctionRegion;
-	GL_ProcessErrors(__FUNCTION__);
+	GL_ProcessErrors(__func__);
 	GL_DownloadState(&from_gl, gl_bound2d, gl_bound3d, gl_boundCubemap);
 
 	GLC_AssumeState(normal_array.buf);

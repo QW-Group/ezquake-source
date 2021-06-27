@@ -307,6 +307,21 @@ GLenum GL_ProcessErrors(const char* message);
 	return result; \
 }
 
+#define GL_StaticFunctionWrapperBodyNoArgs(name, returnType) \
+{ \
+	returnType result; \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		R_TraceAPI("%s()@%s,%d", #name, __FILE__, __LINE__); \
+	} \
+	result = q ## name ## _impl(); \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		GL_ProcessErrors(#name); \
+		R_TraceAPI(q ## name ## _resultString, result); \
+	} \
+\
+	return result; \
+}
+
 #define GL_Procedure(name, ...) \
 { \
 	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
@@ -315,6 +330,17 @@ GLenum GL_ProcessErrors(const char* message);
 		R_TraceAPI("%s(%s)@%s,%d", #name, ez_gldebug_args, __FILE__, __LINE__); \
 	} \
 	q ## name ## _impl(__VA_ARGS__); \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		GL_ProcessErrors(#name); \
+	} \
+}
+
+#define GL_ProcedureNoArgs(name) \
+{ \
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+		R_TraceAPI("%s()@%s,%d", #name, __FILE__, __LINE__); \
+	} \
+	q ## name ## _impl(); \
 	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
 		GL_ProcessErrors(#name); \
 	} \
@@ -371,6 +397,7 @@ GLenum GL_ProcessErrors(const char* message);
 	} \
 }
 #define GL_Function(name, ...)    GL_Wrapper_ ## name(__VA_ARGS__)
+#define GL_FunctionNoArgs(name)   GL_Wrapper_ ## name()
 #define GL_BuiltinFunction(name, returnType, ...)
 #define GL_Available(name)        ((q ## name ## _impl) != NULL)
 #else
@@ -401,9 +428,12 @@ GLenum GL_ProcessErrors(const char* message);
 	typedef returnType (APIENTRY *name ## _t)(__VA_ARGS__); \
 	static name ## _t    q ## name ## _impl;
 #define GL_StaticFunctionWrapperBody(...)
+#define GL_StaticFunctionWrapperBodyNoArgs(...)
 #define GL_Procedure(name, ...)   { q ## name ## _impl(__VA_ARGS__); }
+#define GL_ProcedureNoArgs(name)  { q ## name ## _impl(); }
 #define GL_BuiltinProcedure(name, formatString, ...) { name(__VA_ARGS__); }
 #define GL_Function(name, ...) q ## name ## _impl(__VA_ARGS__)
+#define GL_FunctionNoArgs(name)   q ## name ## _impl()
 #define GL_Available(name) ((q ## name ## _impl) != NULL)
 #define GL_ProcedureReturnError(name, ...) { q ## name ## _impl(__VA_ARGS__); return glGetError(); }
 #define GL_ProcedureReturnIfError(name, ...) { \

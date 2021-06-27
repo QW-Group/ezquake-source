@@ -439,7 +439,7 @@ static void GL_RenderBufferStorage(GLuint renderBuffer, GLenum internalformat, G
 		GL_Procedure(glRenderbufferStorage, GL_RENDERBUFFER, internalformat, width, height);
 	}
 	else {
-		Sys_Error("ERROR: %s called without driver support", __FUNCTION__);
+		Sys_Error("ERROR: %s called without driver support", __func__);
 	}
 }
 
@@ -453,7 +453,7 @@ static void GL_FramebufferRenderbuffer(GLuint fbref, GLenum attachment, GLenum r
 		GL_Procedure(glFramebufferRenderbuffer, GL_FRAMEBUFFER, attachment, renderbuffertarget, renderbuffer);
 	}
 	else {
-		Sys_Error("ERROR: %s called without driver support", __FUNCTION__);
+		Sys_Error("ERROR: %s called without driver support", __func__);
 	}
 }
 
@@ -479,7 +479,7 @@ static GLenum GL_CheckFramebufferStatus(GLuint fbref)
 		return GL_Function(glCheckFramebufferStatus, GL_FRAMEBUFFER);
 	}
 	else {
-		Sys_Error("ERROR: %s called without driver support", __FUNCTION__);
+		Sys_Error("ERROR: %s called without driver support", __func__);
 		return 0;
 	}
 }
@@ -494,7 +494,7 @@ static void GL_FramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint 
 		GL_Procedure(glFramebufferTexture, GL_FRAMEBUFFER, attachment, texture, level);
 	}
 	else {
-		Sys_Error("ERROR: %s called without driver support", __FUNCTION__);
+		Sys_Error("ERROR: %s called without driver support", __func__);
 	}
 }
 

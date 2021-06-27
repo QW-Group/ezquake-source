@@ -103,7 +103,7 @@ void GLM_Prepare3DSprites(void)
 		return;
 	}
 
-	R_TraceEnterNamedRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__func__);
 
 	GLM_Create3DSpriteVAO();
 
@@ -124,7 +124,7 @@ void GLM_Draw3DSprites(void)
 		return;
 	}
 
-	R_TraceEnterNamedRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__func__);
 
 	if (!GLM_3DSpritesInit()) {
 		R_TraceLeaveNamedRegion();

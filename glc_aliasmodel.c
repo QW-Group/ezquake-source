@@ -813,7 +813,7 @@ void GLC_DrawAliasModelPowerupShell(entity_t *ent)
 
 	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
 
-	R_TraceEnterRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
+	R_TraceEnterRegion(va("%s(%s)", __func__, ent->model->name), true);
 
 	// FIXME: think need put it after caustics
 	R_PushModelviewMatrix(oldMatrix);

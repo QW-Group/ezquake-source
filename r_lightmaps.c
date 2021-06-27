@@ -455,7 +455,7 @@ void R_UploadChangedLightmaps(void)
 		return;
 	}
 
-	R_TraceEnterNamedRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__func__);
 	if (R_HardwareLighting()) {
 		if (R_FullBrightAllowed() || !cl.worldmodel || !cl.worldmodel->lightdata) {
 			int i;
@@ -734,13 +734,13 @@ static void R_LightmapCreateForSurface(msurface_t *surf, int surfnum)
 	tmax = (surf->extents[1] >> 4) + 1;
 
 	if (smax > LIGHTMAP_WIDTH) {
-		Host_Error("%s: smax = %d > BLOCK_WIDTH", __FUNCTION__, smax);
+		Host_Error("%s: smax = %d > BLOCK_WIDTH", __func__, smax);
 	}
 	if (tmax > LIGHTMAP_HEIGHT) {
-		Host_Error("%s: tmax = %d > BLOCK_HEIGHT", __FUNCTION__, tmax);
+		Host_Error("%s: tmax = %d > BLOCK_HEIGHT", __func__, tmax);
 	}
 	if (smax * tmax > MAX_LIGHTMAP_SIZE) {
-		Host_Error("%s: smax * tmax = %d > MAX_LIGHTMAP_SIZE", __FUNCTION__, smax * tmax);
+		Host_Error("%s: smax * tmax = %d > MAX_LIGHTMAP_SIZE", __func__, smax * tmax);
 	}
 
 	surf->lightmaptexturenum = LightmapAllocBlock(smax, tmax, &surf->light_s, &surf->light_t);

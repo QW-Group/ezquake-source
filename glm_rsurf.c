@@ -469,7 +469,7 @@ void GLM_DrawWaterSurfaces(void)
 	alpha = r_refdef2.wateralpha;
 
 	// Waterchain has list of alpha-blended surfaces
-	R_TraceEnterNamedRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__func__);
 
 	GL_StartWaterSurfaceBatch();
 	for (surf = waterchain; surf; surf = surf->texturechain) {
@@ -653,7 +653,7 @@ void GLM_PrepareWorldModelBatch(void)
 	int batchOffset = 0;
 	int draw, i;
 
-	R_TraceEnterNamedRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__func__);
 	buffers.Update(r_buffer_brushmodel_index_data, sizeof(modelIndexes[0]) * index_count, modelIndexes);
 	buffers.EnsureSize(r_buffer_brushmodel_drawcall_indirect, sizeof(drawcalls[0].worldmodel_requests) * maximum_drawcalls);
 	buffers.EnsureSize(r_buffer_brushmodel_drawcall_data, sizeof(drawcalls[0].calls) * maximum_drawcalls);
@@ -755,7 +755,7 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 		}
 
 		if (first) {
-			R_TraceEnterNamedRegion(__FUNCTION__);
+			R_TraceEnterNamedRegion(__func__);
 			GL_StartWorldBatch(alphablended);
 			buffers.Bind(r_buffer_brushmodel_index_data);
 			buffers.Bind(r_buffer_brushmodel_drawcall_indirect);
