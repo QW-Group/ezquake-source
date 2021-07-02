@@ -103,14 +103,21 @@ texture_ref GLC_LightmapTexture(int index)
 
 static void GLC_CreateLightmapTextureArray(void)
 {
+	GLenum error;
+
 	if (R_TextureReferenceIsValid(lightmap_texture_array) && lightmap_depth >= lightmap_array_size) {
+		// Nothing to do
 		return;
 	}
 	if (R_TextureReferenceIsValid(lightmap_texture_array)) {
 		R_DeleteTextureArray(&lightmap_texture_array);
 	}
 	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_texture_array, "lightmap_texture_array");
-	GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, true);
+	error = GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, true);
+	if (error != GL_NO_ERROR) {
+		Sys_Error("Unable to create lightmap texture array: error %u\n", error);
+		return;
+	}
 	R_SetTextureArraySize(lightmap_texture_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 4);
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_texture_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 4, "lightmap_texture_array");
@@ -182,7 +189,7 @@ void GLC_BuildLightmap(int i)
 	GLenum type = GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE;
 
 	if (R_TextureReferenceIsValid(lightmap_texture_array)) {
-		GL_TexSubImage3D(GL_TEXTURE0, lightmap_texture_array, 0, 0, 0, i, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, format, type, lightmaps[i].rawdata);
+		GL_TexSubImage3D(0, lightmap_texture_array, 0, 0, 0, i, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, format, type, lightmaps[i].rawdata);
 	}
 	else {
 		GL_TexSubImage2D(
@@ -201,7 +208,7 @@ void GLC_UploadLightmap(int textureUnit, int lightmapnum)
 	GLenum type = GL_Supported(R_SUPPORT_INT8888R_LIGHTMAPS) ? GL_UNSIGNED_INT_8_8_8_8_REV : GL_UNSIGNED_BYTE;
 
 	if (R_TextureReferenceIsValid(lightmap_texture_array)) {
-		GL_TexSubImage3D(GL_TEXTURE0 + textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, format, type, data_source);
+		GL_TexSubImage3D(textureUnit, lightmap_texture_array, 0, 0, lm->change_area.t, lightmapnum, LIGHTMAP_WIDTH, lm->change_area.h, 1, format, type, data_source);
 	}
 	else {
 		GL_TexSubImage2D(GL_TEXTURE0 + textureUnit, lm->gl_texref, 0, 0, lm->change_area.t, LIGHTMAP_WIDTH, lm->change_area.h, format, type, data_source);

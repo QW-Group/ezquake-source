@@ -78,6 +78,7 @@ mleaf_t *Mod_PointInLeaf(vec3_t p, model_t *model)
 
 	if (!model || !model->nodes) {
 		Sys_Error("Mod_PointInLeaf: bad model");
+		return NULL;
 	}
 
 	node = model->nodes;
