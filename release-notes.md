@@ -136,10 +136,11 @@
 - `/hud_ammo_show_always 1` (and equivalent `iammo`) shows current ammo when non-ammo weapon is selected (#206, suggested by VianTORISU)
 - `/hud_clock_content 1` changes output to show the uptime of the client
 - `/hud_clock_content 2` changes output to show time connected to the server (should match `/cl_clock 1` in oldhud)
-- `/hud_fps_drop <negative>` will be treated as relative to `cl_maxfps`, e.g. `/hud_fps_drop -5;/cl_maxfps 1001` will show when fps drops to 996
+- `/hud_fps_drop <negative>` will be treated as relative to `/cl_maxfps`, e.g. `/hud_fps_drop -5;/cl_maxfps 1001` will show when fps drops to 996
 -` /hud_keys` supports user commands hidden in .mvd files & qtv streams
 - `/in_ignore_touch_events` added - allows mouse clicks from touch input devices
 - `/in_ignore_unfocused_keyb` added - should ignore keyboard events immediately after receiving input focus (linux only)
+- `/in_ignore_deadkeys` added - essentially `/in_builtin_keyboard 1` when option key held down (macos only, #111, reported by bogojoker)
 - `/menu_botmatch_gamedir` added - allows packages to customise the directory when starting a bot match
 - `/menu_botmatch_mod_old` added - controls if newer features should be disabled when starting a bot match (to support fbca, lgc etc)
 - `/net_tcp_timeout` added - allows timeout period to be set when connecting to QTV etc

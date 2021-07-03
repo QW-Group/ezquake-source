@@ -13409,6 +13409,18 @@
       "group-id": "11",
       "type": "boolean"
     },
+    "in_ignore_deadkeys": {
+      "default": "1",
+      "desc": "Ignores operating-system interpretation of keypresses while deadkey is held down",
+      "group-id": "11",
+      "type": "enum",
+      "systems": [ "macos" ],
+      "values": [
+        { "name": "0", "description": "Disabled" },
+        { "name": "1", "description": "Enabled when option keys are held down" },
+        { "name": "2", "description": "Enabled when alt keys are held down (for standard keyboard on MacOS)" }
+      ]
+    },
     "in_ignore_touch_events": {
       "default": "1",
       "desc": "If set, will ignore events from touch inputs (events from a real mouse should be unaffected)",
@@ -13420,7 +13432,8 @@
       "desc": "If set, will ignore keyboard events received immediately after regaining focus.  Should stop shortcut keys from firing in-game.",
       "group-id": "11",
       "remarks": "X11 systems only.",
-      "type": "boolean"
+      "type": "boolean",
+      "systems": ["linux"]
     },
     "in_m_os_parameters": {
       "desc": "Allows you to use your system mouse settings in the client.",
