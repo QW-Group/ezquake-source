@@ -663,15 +663,9 @@ void GL_FramebufferPostProcessScreen(void)
 		R_Viewport(glx, gly, glConfig.vidWidth, glConfig.vidHeight);
 
 		VID_FramebufferFlip();
-
-		if (!vid_software_palette.integer) {
-			renderer.BrightenScreen();
-
-			// Hardware palette changes
-			V_UpdatePalette();
-		}
 	}
-	else if (!vid_software_palette.integer) {
+
+	if (!vid_software_palette.integer) {
 		renderer.BrightenScreen();
 
 		// Hardware palette changes

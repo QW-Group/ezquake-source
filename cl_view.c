@@ -610,67 +610,67 @@ void V_AddLightBlend (float r, float g, float b, float a2)
 void V_UpdatePalette (void)
 {
 	int i, j, c;
-	qbool new;
 	float current_gamma, current_contrast, a, rgb[3];
-	static float prev_blend[4];
-	static float old_gamma, old_contrast, old_hwblend;
+	static float prev_blend[4] = { 0, 0, 0, 0 };
+	static float old_gamma = 1, old_contrast = 1;
+	static qbool old_change_palette = false;
 	static double last_set = 0;
 	extern float vid_gamma;
+	float hw_vblend[4];
+	// whether or not to include content/damage palette shifts as part of the hw gamma
+	qbool change_palette = (vid_hwgamma_enabled && gl_hwblend.value && !cl.teamfortress);
+	int change_flags = 0;
 
-	new = false;
+	if (change_palette) {
+		memcpy(hw_vblend, v_blend, sizeof(hw_vblend));
+	}
+	else {
+		memset(hw_vblend, 0, sizeof(hw_vblend));
+	}
+	current_gamma = (vid_hwgamma_enabled ? bound(0.3, v_gamma.value, 3) : 1);
+	current_contrast = (vid_hwgamma_enabled ? bound(1, v_contrast.value, 3) : 1);
 
-	// don't check (or update 'prev' vars) if not enough time has passed
-	if (vid_hwgamma_enabled && vid_hwgamma_fps.integer && curtime < last_set + (1.0f / max(10, vid_hwgamma_fps.integer))) {
+	change_flags |= (memcmp(hw_vblend, prev_blend, sizeof(hw_vblend)) ? 1 : 0);
+	change_flags |= (current_gamma != old_gamma || v_gamma.modified ? 2 : 0);
+	change_flags |= (current_contrast != old_contrast ? 4 : 0);
+	change_flags |= (change_palette != old_change_palette ? 8 : 0);
+
+	if (!change_flags) {
 		return;
 	}
 
-	for (i = 0; i < 4; i++) {
-		if (v_blend[i] != prev_blend[i]) {
-			new = true;
-			prev_blend[i] = v_blend[i];
-		}
-	}
-
-	current_gamma = bound (0.3, v_gamma.value, 3);
-	if (current_gamma != old_gamma || v_gamma.modified) {
-		v_gamma.modified = false;
-		old_gamma = current_gamma;
-		new = true;
-	}
-
-	current_contrast = bound (1, v_contrast.value, 3);
-	if (current_contrast != old_contrast) {
-		old_contrast = current_contrast;
-		new = true;
-	}
-
-	if (gl_hwblend.value != old_hwblend) {
-		new = true;
-		old_hwblend = gl_hwblend.value;
-	}
-
-	if (!new) {
+	// don't update if not enough time has passed & only palette updating
+	if (change_flags == 1 && vid_hwgamma_fps.integer && curtime < last_set + (1.0f / max(10, vid_hwgamma_fps.integer))) {
 		return;
 	}
 
-	a = v_blend[3];
+	// store flags
+	old_change_palette = change_palette;
+	prev_blend[0] = hw_vblend[0];
+	prev_blend[1] = hw_vblend[1];
+	prev_blend[2] = hw_vblend[2];
+	prev_blend[3] = hw_vblend[3];
+	old_gamma = current_gamma;
+	old_contrast = current_contrast;
 	last_set = curtime;
-
-	if (!vid_hwgamma_enabled || !gl_hwblend.value || cl.teamfortress) {
-		a = 0;
+	v_gamma.modified = false;
+	if (developer.integer == 3) {
+		Con_DPrintf("palette: change_flags %d [%d %d %d %d] %.2f %.2f\n", change_flags, (int)(hw_vblend[0] * 255), (int)(hw_vblend[1] * 255), (int)(hw_vblend[2] * 255), (int)(hw_vblend[3] * 255), current_gamma, current_contrast);
 	}
 
+	a = hw_vblend[3];
 	if (R_OldGammaBehaviour() && vid_gamma != 1.0) {
 		current_contrast = pow(current_contrast, vid_gamma);
 		current_gamma = current_gamma / vid_gamma;
 	}
 
+	// Have to do this in a loop these days as certain color ranges will be blocked by OS
 	do {
 		float std_alpha;
 
-		rgb[0] = 255 * v_blend[0] * a;
-		rgb[1] = 255 * v_blend[1] * a;
-		rgb[2] = 255 * v_blend[2] * a;
+		rgb[0] = 255 * hw_vblend[0] * a;
+		rgb[1] = 255 * hw_vblend[1] * a;
+		rgb[2] = 255 * hw_vblend[2] * a;
 
 		std_alpha = 1 - a;
 
