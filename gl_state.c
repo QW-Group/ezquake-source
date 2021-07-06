@@ -500,6 +500,11 @@ qbool GL_EnsureTextureUnitBound(int unit, texture_ref reference)
 	return GL_BindTextureUnitImpl(GL_TEXTURE0 + unit, reference, false);
 }
 
+qbool GL_EnsureTextureUnitBoundAndSelect(int unit, texture_ref reference)
+{
+	return GL_BindTextureUnitImpl(GL_TEXTURE0 + unit, reference, true);
+}
+
 void GL_BindTextureUnit(GLuint unit, texture_ref reference)
 {
 	GL_BindTextureUnitImpl(unit, reference, true);
