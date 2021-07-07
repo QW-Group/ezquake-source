@@ -158,8 +158,8 @@ void main()
 			// Flatten it out
 			vec3 dir = normalize(vec3(Direction.x, Direction.y, 3 * Direction.z));
 
-			vec4 skyColor = texture2D(skyDomeTex, vec2(skySpeedscale + dir.x * len, skySpeedscale + dir.y * len));
-			vec4 cloudColor = texture2D(skyDomeCloudTex, vec2(skySpeedscale2 + dir.x * len, skySpeedscale2 + dir.y * len));
+			vec4 skyColor = texture(skyDomeTex, vec2(skySpeedscale + dir.x * len, skySpeedscale + dir.y * len));
+			vec4 cloudColor = texture(skyDomeCloudTex, vec2(skySpeedscale2 + dir.x * len, skySpeedscale2 + dir.y * len));
 
 			frag_colour = mix(skyColor, cloudColor, cloudColor.a);
 #else
