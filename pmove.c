@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qsound.h"
 #include "cl_tent.h"
+#include "keys.h"
 
 movevars_t      movevars;
 playermove_t    pmove;
@@ -1945,7 +1946,7 @@ void PM_PlayerWeapon(void)
 
 	if (pmove.client_time >= pmove.attack_finished)
 	{
-		if (pmove.cmd.buttons & 1)
+		if (pmove.cmd.buttons & 1 && key_dest == key_game)
 		{
 			W_Attack();
 			W_SetCurrentAmmo();
