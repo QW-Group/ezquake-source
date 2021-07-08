@@ -1174,7 +1174,7 @@ static void CL_UpdateFakeProjectiles(void)
 		{
 			VectorCopy(prj->start, ent.origin);
 			vec3_t traveled;
-			VectorScale(prj->vel, (cl.time - prj->starttime) + 0.026, traveled);
+			VectorScale(prj->vel, (cl.time - prj->starttime) + 0.02, traveled);
 			VectorAdd(ent.origin, traveled, ent.origin);
 			VectorCopy(prj->angs, ent.angles);
 			VectorCopy(ent.origin, prj->org);

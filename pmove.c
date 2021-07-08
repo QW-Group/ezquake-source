@@ -1851,7 +1851,7 @@ void W_Attack(void)
 
 			VectorCopy(pmove.origin, newmis->start);
 			VectorCopy(pmove.origin, newmis->org);
-			Fproj_Physics_Bounce(newmis, 0.026);
+			Fproj_Physics_Bounce(newmis, 0.02);
 
 			vectoangles(newmis->vel, newmis->angs);
 			VectorSet(newmis->avel, 300, 300, 300);
