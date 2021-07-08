@@ -968,7 +968,7 @@ void MVD_Demo_Track(void) {
 	printf("MVD_Demo_Track Started\n");
 #endif
 
-
+	track_name[15] = '\0';
 	if (strlen(track_name))
 	{
 		if (FindBestNick(track_name, FBN_IGNORE_SPECS | FBN_IGNORE_QTVSPECS, track_player, sizeof(track_player)))
@@ -1063,9 +1063,6 @@ void MVD_Info(void) {
 	if (!cls.mvdplayback)
 		return;
 
-	x = ELEMENT_X_COORD(mvd_info);
-	y = ELEMENT_Y_COORD(mvd_info);
-
 	if (mvd_info_show_header.value) {
 		strlcpy(mvd_info_header_string, mvd_info_setup.string, sizeof(mvd_info_header_string));
 		Replace_In_String(mvd_info_header_string, sizeof(mvd_info_header_string), '%', \
@@ -1081,6 +1078,9 @@ void MVD_Info(void) {
 			"w", "Cur.Weap.", \
 			"W", "Best Weap.");
 		strlcpy(mvd_info_header_string, Make_Red(mvd_info_header_string, 0), sizeof(mvd_info_header_string));
+		strlcpy(str, mvd_info_final_string, sizeof(str));
+		x = ELEMENT_X_COORD(mvd_info);
+		y = ELEMENT_Y_COORD(mvd_info);
 		Draw_String(x, y + ((z++) * 8), mvd_info_header_string);
 	}
 
@@ -1116,6 +1116,8 @@ void MVD_Info(void) {
 			"p", mvd_info_powerups, \
 			"v", va("%f", mvd_new_info[i].value));
 		strlcpy(str, mvd_info_final_string, sizeof(str));
+		x = ELEMENT_X_COORD(mvd_info);
+		y = ELEMENT_Y_COORD(mvd_info);
 		Draw_String(x, y + ((z++) * 8), str);
 
 #ifdef DEBUG
@@ -1131,14 +1133,11 @@ static void MVD_AddString(const char* line)
 	if (announcer_lines == MAX_ANNOUNCER_LINES) {
 		memmove(&announcer_line_strings[0], &announcer_line_strings[1], sizeof(announcer_line_strings[0]) * (MAX_ANNOUNCER_LINES - 1));
 		memmove(&announcer_line_times[0], &announcer_line_times[1], sizeof(announcer_line_times[0]) * (MAX_ANNOUNCER_LINES - 1));
-		strlcpy(announcer_line_strings[announcer_lines - 1], line, sizeof(announcer_line_strings[announcer_lines - 1]));
-		announcer_line_times[announcer_lines - 1] = cl.time;
+		announcer_lines = MAX_ANNOUNCER_LINES - 1;
 	}
-	else {
-		strlcpy(announcer_line_strings[announcer_lines], line, sizeof(announcer_line_strings[announcer_lines]));
-		announcer_line_times[announcer_lines] = cl.time;
-		++announcer_lines;
-	}
+	strlcpy(announcer_line_strings[announcer_lines], line, sizeof(announcer_line_strings[announcer_lines]));
+	announcer_line_times[announcer_lines] = cl.time;
+	++announcer_lines;
 }
 
 const char* MVD_AnnouncerString(int line, int total, float* alpha)

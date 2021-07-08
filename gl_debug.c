@@ -157,7 +157,7 @@ void R_TraceLeaveRegion(qbool trace_only)
 	}
 	else if (R_UseModernOpenGL()) {
 		if (!trace_only && GL_Available(glPopDebugGroup)) {
-			GL_Procedure(glPopDebugGroup);
+			GL_ProcedureNoArgs(glPopDebugGroup);
 		}
 	}
 }

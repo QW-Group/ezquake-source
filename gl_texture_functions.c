@@ -210,7 +210,7 @@ void GL_TexStorage2D(
 	int tempWidth = width;
 	int tempHeight = height;
 
-	GL_ProcessErrors("pre-" __FUNCTION__);
+	GL_ProcessErrors(va("pre-%s", __func__));
 
 	R_TextureSizeRoundUp(tempWidth, tempHeight, &width, &height);
 

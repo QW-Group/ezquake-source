@@ -487,7 +487,7 @@ void R_StateBeginDrawAliasModel(const entity_t* ent, aliashdr_t* paliashdr)
 {
 	extern cvar_t r_viewmodelsize;
 
-	R_TraceEnterRegion(__FUNCTION__, true);
+	R_TraceEnterRegion(__func__, true);
 
 	R_RotateForEntity(ent);
 	if (ent->renderfx & RF_WEAPONMODEL) {

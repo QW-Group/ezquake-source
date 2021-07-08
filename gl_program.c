@@ -348,7 +348,7 @@ GL_StaticProcedureDeclaration(glGetShaderSource, "shader=%u, bufSize=%d, length=
 
 // Program functions
 GL_StaticFunctionDeclaration(glCreateProgram, "", "result=%u", GLuint, void)
-GL_StaticFunctionWrapperBody(glCreateProgram, GLuint)
+GL_StaticFunctionWrapperBodyNoArgs(glCreateProgram, GLuint)
 
 GL_StaticProcedureDeclaration(glLinkProgram, "program=%u", GLuint program)
 GL_StaticProcedureDeclaration(glDeleteProgram, "program=%u", GLuint program)
@@ -605,7 +605,7 @@ static qbool GL_CompileProgram(
 			if (GL_CompileShader(fragment_components, fragment_shader_text, fragment_shader_text_length, GL_FRAGMENT_SHADER, &shaders[shadertype_fragment])) {
 				Con_DPrintf("Shader compilation completed successfully\n");
 
-				program_handle = GL_Function(glCreateProgram);
+				program_handle = GL_FunctionNoArgs(glCreateProgram);
 				if (program_handle) {
 					GL_Procedure(glAttachShader, program_handle, shaders[shadertype_fragment]);
 					GL_Procedure(glAttachShader, program_handle, shaders[shadertype_vertex]);
@@ -799,7 +799,7 @@ static qbool GL_CompileComputeShaderProgram(gl_program_t* program, const char* s
 
 	components = GL_InsertDefinitions(shader_text, shader_text_length, "");
 	if (GL_CompileShader(components, shader_text, shader_text_length, GL_COMPUTE_SHADER, &shader)) {
-		GLuint shader_program = GL_Function(glCreateProgram);
+		GLuint shader_program = GL_FunctionNoArgs(glCreateProgram);
 		if (shader_program) {
 			GLint result;
 
@@ -971,7 +971,7 @@ void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value)
 	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
 	if (program_uniform->location >= 0) {
-		R_TraceLogAPICall("%s(%s/%s,%d)", __FUNCTION__, prog->friendly_name, base_uniform->name, value);
+		R_TraceLogAPICall("%s(%s/%s,%d)", __func__, prog->friendly_name, base_uniform->name, value);
 		if (GL_Available(glProgramUniform1i)) {
 			GL_Procedure(glProgramUniform1i, prog->program, program_uniform->location, value);
 		}
@@ -990,7 +990,7 @@ void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value)
 	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
 	if (program_uniform->location >= 0) {
-		R_TraceLogAPICall("%s(%s/%s,%f)", __FUNCTION__, prog->friendly_name, base_uniform->name, value);
+		R_TraceLogAPICall("%s(%s/%s,%f)", __func__, prog->friendly_name, base_uniform->name, value);
 		if (GL_Available(glProgramUniform1f)) {
 			GL_Procedure(glProgramUniform1f, prog->program, program_uniform->location, value);
 		}
@@ -1009,7 +1009,7 @@ void R_ProgramUniform2fv(r_program_uniform_id uniform_id, const float* values)
 	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
 	if (program_uniform->location >= 0) {
-		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
+		R_TraceLogAPICall("%s(%s/%s)", __func__, prog->friendly_name, base_uniform->name);
 		if (GL_Available(glProgramUniform2fv)) {
 			GL_Procedure(glProgramUniform2fv, prog->program, program_uniform->location, base_uniform->count, values);
 		}
@@ -1034,7 +1034,7 @@ void R_ProgramUniform3fv(r_program_uniform_id uniform_id, const float* values)
 	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
 	if (program_uniform->location >= 0) {
-		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
+		R_TraceLogAPICall("%s(%s/%s)", __func__, prog->friendly_name, base_uniform->name);
 		if (GL_Available(glProgramUniform3fv)) {
 			GL_Procedure(glProgramUniform3fv, prog->program, program_uniform->location, base_uniform->count, values);
 		}
@@ -1063,7 +1063,7 @@ void R_ProgramUniform4fv(r_program_uniform_id uniform_id, const float* values)
 	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
 	if (program_uniform->location >= 0) {
-		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
+		R_TraceLogAPICall("%s(%s/%s)", __func__, prog->friendly_name, base_uniform->name);
 		if (GL_Available(glProgramUniform4fv)) {
 			GL_Procedure(glProgramUniform4fv, prog->program, program_uniform->location, base_uniform->count, values);
 		}
@@ -1081,7 +1081,7 @@ void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, const float* val
 	gl_program_t* prog = R_CurrentSubProgram(base_uniform->program_id);
 
 	if (program_uniform->location >= 0) {
-		R_TraceLogAPICall("%s(%s/%s)", __FUNCTION__, prog->friendly_name, base_uniform->name);
+		R_TraceLogAPICall("%s(%s/%s)", __func__, prog->friendly_name, base_uniform->name);
 		if (GL_Available(glProgramUniformMatrix4fv)) {
 			GL_Procedure(glProgramUniformMatrix4fv, prog->program, program_uniform->location, base_uniform->count, base_uniform->transpose, values);
 		}

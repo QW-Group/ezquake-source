@@ -96,6 +96,9 @@ GLenum GL_ProcessErrors(const char* message)
 		else if (error == GL_INVALID_VALUE) {
 			R_TraceLogAPICall("  ERROR: %s (GL_INVALID_VALUE)\n", message);
 		}
+		else if (error == GL_INVALID_OPERATION) {
+			R_TraceLogAPICall("  ERROR: %s (GL_INVALID_OPERATION)\n", message);
+		}
 		else if (error == GL_STACK_OVERFLOW) {
 			R_TraceLogAPICall("  ERROR: %s (GL_STACK_OVERFLOW)\n", message);
 		}

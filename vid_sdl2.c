@@ -69,6 +69,13 @@ SDL_GLContext GLC_SDL_CreateContext(SDL_Window* window);
 // Affects X11 only - might also be needed on FreeBSD/OSX?
 static qbool block_keyboard_input = false;
 #endif
+#ifdef __APPLE__
+static int deadkey_modifiers_held_down = 0;
+static cvar_t in_ignore_deadkeys = { "in_ignore_deadkeys", "1" };
+
+#define APPLE_RALT_HELD_DOWN 1
+#define APPLE_LALT_HELD_DOWN 2
+#endif
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
@@ -295,6 +302,9 @@ void IN_StartupMouse(void)
 	Cvar_Register(&in_grab_windowed_mouse);
 	Cvar_Register(&in_release_mouse_modes);
 	Cvar_Register(&in_ignore_touch_events);
+#ifdef __APPLE__
+	Cvar_Register(&in_ignore_deadkeys);
+#endif
 
 	mouseinitialized = true;
 
@@ -663,6 +673,13 @@ static void keyb_textinputevent(char* text)
 	if (!*text)
 		return;
 
+#ifdef __APPLE__
+	// operating system is sending deadkey-modified input... ignore
+	if (deadkey_modifiers_held_down) {
+		return;
+	}
+#endif
+
 #ifdef __linux__
 	if (block_keyboard_input) {
 		return;
@@ -682,7 +699,24 @@ static void keyb_textinputevent(char* text)
 static void keyb_event(SDL_KeyboardEvent *event)
 {
 	byte result = Key_ScancodeToQuakeCode(event->keysym.scancode);
-	
+
+#ifdef __APPLE__
+	if (in_ignore_deadkeys.integer) {
+		// Apologies for the guesswork, no Apple keyboard...
+		int left_alt = (in_ignore_deadkeys.integer == 2 ? SDLK_LALT : SDLK_LGUI);
+		int right_alt = (in_ignore_deadkeys.integer == 2 ? SDLK_RALT : SDLK_RGUI);
+
+		if (event->keysym.sym == left_alt) {
+			deadkey_modifiers_held_down ^= APPLE_LALT_HELD_DOWN;
+			deadkey_modifiers_held_down |= (event->state ? APPLE_LALT_HELD_DOWN : 0);
+		}
+		else if (event->keysym.sym == right_alt) {
+			deadkey_modifiers_held_down ^= APPLE_RALT_HELD_DOWN;
+			deadkey_modifiers_held_down |= (event->state ? APPLE_RALT_HELD_DOWN : 0);
+		}
+	}
+#endif
+
 	if (result == 0) {
 		Com_DPrintf("%s: unknown scancode %d\n", __func__, event->keysym.scancode);
 		return;

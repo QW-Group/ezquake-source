@@ -1486,7 +1486,7 @@
         {
           "description": "Flash effects disabled",
           "name": "0"
-    },
+        },
         {
           "description": "Original",
           "name": "1"
@@ -3740,7 +3740,7 @@
         {
           "description": "Weapons disappear after pickup (used in 4on4)",
           "name": "1"
-    },
+        },
         {
           "description": "Weapons stay after pickup, ammo/armor does not (not used)",
           "name": "2"
@@ -5655,7 +5655,7 @@
         {
           "description": "Disabled",
           "name": "false"
-    },
+        },
         {
           "description": "Enabled",
           "name": "true"
@@ -5855,7 +5855,7 @@
         {
           "description": "Rocket light controlled by gl_flashblend",
           "name": "0"
-    },
+        },
         {
           "description": "Rocket light looks like with gl_flashblend 2, but no dynamic lighting",
           "name": "1"
@@ -6171,6 +6171,20 @@
         }
       ]
     },
+    "gl_turb_effects": {
+      "default": "1",
+      "desc": "Controls if shotgun/nailgun impact points will spawn bubbles underwater",
+      "remarks": "Requires QMB particles to be enabled (corresponding gl_particle_xxx option enabled)",
+      "group-id": "51",
+      "type": "boolean"
+    },
+    "gl_turb_fire": {
+      "default": "1",
+      "desc": "Controls if explosions/fire will spawn bubbles underwater",
+      "remarks": "Requires QMB particles to be enabled (corresponding gl_particle_xxx option enabled)",
+      "group-id": "51",
+      "type": "boolean"
+    },
     "gl_turb_trails": {
       "default": "0",
       "desc": "This gives rockets/grenades/nails and other things an alternate underwater trail.\nVery nice to have nailgun fights underwater...",
@@ -6297,7 +6311,7 @@
         {
           "description": "Default",
           "name": "0"
-    },
+        },
         {
           "description": "Turn off all splashes",
           "name": "1"
@@ -7507,7 +7521,7 @@
       "type": "integer"
     },
     "hud_fps_drop": {
-      "desc": "Sets the value which will trigger displaying the fps (requires hud_fps_style 2 or 3). For example, with value hud_fps_drop 70, the fps will only be displayed if it drops to 70 or below. For fps values greater than 70, the fps will not be displayed.",
+      "desc": "Sets the value which will trigger displaying the fps (requires hud_fps_style 2 or 3). For example, with value hud_fps_drop 70, the fps will only be displayed if it drops to 70 or below. For fps values greater than 70, the fps will not be displayed.\nCan also be set to a negative value, interpretted as relative to cl_maxfps",
       "group-id": "19",
       "type": "float"
     },
@@ -13395,6 +13409,18 @@
       "group-id": "11",
       "type": "boolean"
     },
+    "in_ignore_deadkeys": {
+      "default": "1",
+      "desc": "Ignores operating-system interpretation of keypresses while deadkey is held down",
+      "group-id": "11",
+      "type": "enum",
+      "systems": [ "macos" ],
+      "values": [
+        { "name": "0", "description": "Disabled" },
+        { "name": "1", "description": "Enabled when option keys are held down" },
+        { "name": "2", "description": "Enabled when alt keys are held down (for standard keyboard on MacOS)" }
+      ]
+    },
     "in_ignore_touch_events": {
       "default": "1",
       "desc": "If set, will ignore events from touch inputs (events from a real mouse should be unaffected)",
@@ -13406,7 +13432,8 @@
       "desc": "If set, will ignore keyboard events received immediately after regaining focus.  Should stop shortcut keys from firing in-game.",
       "group-id": "11",
       "remarks": "X11 systems only.",
-      "type": "boolean"
+      "type": "boolean",
+      "systems": ["linux"]
     },
     "in_m_os_parameters": {
       "desc": "Allows you to use your system mouse settings in the client.",
@@ -15599,7 +15626,7 @@
         },
         {
           "description": "None",
-          "name":  "10"
+          "name": "10"
         }
       ]
     },
@@ -21442,6 +21469,12 @@
           "name": "3"
         }
       ]
+    },
+    "vid_hwgamma_fps": {
+      "default": "60",
+      "desc": "If set, ezQuake will only change hardware gamma at specified frequency.  This reduces fps drops when playing at high fps",
+      "group-id": "52",
+      "type": "integer"
     },
     "vid_minimize_on_focus_loss": {
       "default": "1",

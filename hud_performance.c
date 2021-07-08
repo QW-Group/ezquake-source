@@ -38,6 +38,8 @@ static void SCR_HUD_DrawFPS(hud_t *hud)
 {
 	int x, y;
 	char st[128];
+	qbool drop_triggered = false;
+	extern cvar_t cl_maxfps;
 
 	static cvar_t
 		*hud_fps_show_min = NULL,
@@ -57,6 +59,9 @@ static void SCR_HUD_DrawFPS(hud_t *hud)
 		hud_fps_proportional = HUD_FindVar(hud, "proportional");
 	}
 
+	drop_triggered = (hud_fps_drop->integer > 0 && (hud_fps_drop->value) >= cls.fps);
+	drop_triggered |= (hud_fps_drop->integer < 0 && cl_maxfps.integer && (cl_maxfps.integer + hud_fps_drop->value) >= cls.fps);
+
 	if (hud_fps_show_min->value) {
 		snprintf(st, sizeof(st), "%3d\xf%3d", (int)(cls.min_fps + 0.25), (int)(cls.fps + 0.25));
 	}
@@ -75,13 +80,13 @@ static void SCR_HUD_DrawFPS(hud_t *hud)
 				break;
 			case 2:
 				// if fps is less than a user-set value, then show it
-				if ((hud_fps_drop->value) >= cls.fps) {
+				if (drop_triggered) {
 					Draw_SString(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
 				}
 				break;
 			case 3:
 				// if fps is less than a user-set value, then show it
-				if ((hud_fps_drop->value) >= cls.fps) {
+				if (drop_triggered) {
 					Draw_SAlt_String(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
 				}
 				break;

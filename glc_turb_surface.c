@@ -128,7 +128,7 @@ void GLC_DrawWaterSurfaces(void)
 		return;
 	}
 
-	R_TraceEnterRegion(__FUNCTION__, true);
+	R_TraceEnterRegion(__func__, true);
 	GLC_StateBeginWaterSurfaces();
 
 	if (gl_program_turbsurfaces.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_TurbSurfaceProgramCompile()) {

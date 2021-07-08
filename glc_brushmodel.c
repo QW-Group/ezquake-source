@@ -1095,7 +1095,7 @@ static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics,
 	extern cvar_t gl_program_world, gl_textureless;
 	texture_unit_allocation_t allocations;
 
-	if (r_drawflat.integer == 1 && r_drawflat_mode.integer == 0) {
+	if (r_drawflat.integer == 1 && r_drawflat_mode.integer == 0 && model->isworldmodel) {
 		// Guaranteed to be no texturing
 		return;
 	}

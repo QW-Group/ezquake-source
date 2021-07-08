@@ -335,7 +335,7 @@ void R_DrawAliasModel(entity_t *ent, qbool outline)
 
 	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
 
-	R_TraceEnterRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
+	R_TraceEnterRegion(va("%s(%s)", __func__, ent->model->name), true);
 	R_PushModelviewMatrix(oldMatrix);
 	R_StateBeginDrawAliasModel(ent, paliashdr);
 

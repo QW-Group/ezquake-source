@@ -268,7 +268,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 		}
 	}
 
-	R_TraceEnterRegion(va("%s(%s)", __FUNCTION__, e->model->name), true);
+	R_TraceEnterRegion(va("%s(%s)", __func__, e->model->name), true);
 
 	VectorSubtract(r_refdef.vieworg, e->origin, modelorg);
 	if (rotated) {

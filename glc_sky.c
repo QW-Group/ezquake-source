@@ -109,7 +109,7 @@ static void GLC_DrawFlatSkyPoly(glpoly_t* p, qbool texture)
 {
 	int i;
 
-	R_TraceAPI("%s()", __FUNCTION__);
+	R_TraceAPI("%s()", __func__);
 
 	GLC_Begin(GL_TRIANGLE_STRIP);
 	for (i = 0; i < p->numverts; ++i) {
@@ -156,7 +156,7 @@ static void GLC_EmitSkyPolys(msurface_t *fa, skypoly_mode_id mode)
 	int i;
 	vec3_t dir;
 
-	R_TraceAPI("%s()", __FUNCTION__);
+	R_TraceAPI("%s()", __func__);
 	for (p = fa->polys; p; p = p->next) {
 		GLC_Begin(GL_TRIANGLE_STRIP);
 		for (i = 0, v = p->verts[0]; i < p->numverts; i++, v += VERTEXSIZE) {
@@ -321,7 +321,7 @@ static void GLC_DrawSky_Program(void)
 	skySpeedscale /= 128.0f;
 	skySpeedscale2 /= 128.0f;
 
-	R_TraceAPI("%s()", __FUNCTION__);
+	R_TraceAPI("%s()", __func__);
 	R_ProgramUse(r_program_sky_glc);
 	R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale, skySpeedscale);
 	R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale2, skySpeedscale2);
@@ -351,7 +351,7 @@ void GLC_DrawSky(void)
 	qbool		ignore_z;
 	extern msurface_t *skychain;
 
-	R_TraceAPI("%s()", __FUNCTION__);
+	R_TraceAPI("%s()", __func__);
 	if (gl_program_sky.integer && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_SkyProgramCompile()) {
 		GLC_DrawSky_Program();
 	}
