@@ -1653,7 +1653,7 @@ void player_light1(void)
 
 	pmove.current_ammo = pmove.ammo_cells -= 1;
 	trace_t hittrace = PM_TraceLine(start, end);
-	if (cl_predict_beam.integer)
+	if (cl_predict_beam.integer && pmove.waterlevel <= 1)
 		CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
 }
 
@@ -1696,7 +1696,7 @@ void player_light2(void)
 
 	pmove.current_ammo = pmove.ammo_cells -= 1;
 	trace_t hittrace = PM_TraceLine(start, end);
-	if (cl_predict_beam.integer)
+	if (cl_predict_beam.integer && pmove.waterlevel <= 1)
 		CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
 }
 
