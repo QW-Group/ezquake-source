@@ -577,9 +577,15 @@ static int LightmapAllocBlock(int w, int h, int *x, int *y)
 		lightmaps = Q_realloc(lightmaps, sizeof(lightmaps[0]) * new_size);
 		if (!lightmaps) {
 			Sys_Error("AllocBlock: full");
+			return 0;
 		}
 		memset(lightmaps + lightmap_array_size, 0, sizeof(lightmaps[0]) * LIGHTMAP_ARRAY_GROWTH);
 		lightmap_array_size = new_size;
+
+		// Memory pointers might now be invalid afer realloc()
+		for (i = 0; i < new_size; ++i) {
+			lightmaps[i].drawflat_chain_tail = &lightmaps[i].drawflat_chain;
+		}
 	}
 	return LightmapAllocBlock(w, h, x, y);
 }
@@ -790,12 +796,17 @@ void R_BuildLightmaps(void)
 
 	if (lightmaps) {
 		for (i = 0; i < lightmap_array_size; ++i) {
+			lightmaps[i].drawflat_chain = NULL;
+			lightmaps[i].drawflat_chain_tail = &lightmaps[i].drawflat_chain;
 			memset(lightmaps[i].allocated, 0, sizeof(lightmaps[i].allocated));
 		}
 	}
 	else {
 		lightmaps = Q_malloc(sizeof(*lightmaps) * LIGHTMAP_ARRAY_GROWTH);
 		lightmap_array_size = LIGHTMAP_ARRAY_GROWTH;
+		for (i = 0; i < lightmap_array_size; ++i) {
+			lightmaps[i].drawflat_chain_tail = &lightmaps[i].drawflat_chain;
+		}
 	}
 	last_lightmap_updated = 0;
 

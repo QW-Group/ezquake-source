@@ -89,6 +89,7 @@
 - Fixed bug causing differences in rendering md3 viewmodels in glsl vs std renderer (explosion surface is additive - same awful hack until we support shaders) (3.5 bug but 3.2 was even worse)
 - Fixed bug causing aliasmodels to be rendered with the normal map overlaid instead of caustics texture (#457, 3.5 bug, reported by hammer)
 - Fixed bug causing geometry outlines to be rendered incorrectly in sub-views when multiview enabled (3.5 bug)
+- Fixed bug causing invalid lightmap rendering when using drawflat and map load caused number of lightmaps to increase (3.5 bug, found during #540)
 
 ### Ruleset-related changes
 
