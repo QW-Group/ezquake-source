@@ -599,6 +599,7 @@ void CL_ParsePacketEntities (qbool delta)
 	qbool full;
 	byte from;
 	int maxentities = MAX_MVD_PACKET_ENTITIES; // allow as many as we can handle
+	qbool copy = (cls.netchan.incoming_sequence == 0 && cls.mvdplayback);
 
 	newpacket = cls.netchan.incoming_sequence & UPDATE_MASK;
 	newp = &cl.frames[newpacket].packet_entities;
@@ -610,8 +611,9 @@ void CL_ParsePacketEntities (qbool delta)
 		from = MSG_ReadByte ();
 
 		oldpacket = cl.frames[newpacket].delta_sequence;
-		if (cls.mvdplayback)	
+		if (cls.mvdplayback) {
 			from = oldpacket = cls.netchan.incoming_sequence - 1;
+		}
 
 		if (cls.netchan.outgoing_sequence - cls.netchan.incoming_sequence >= UPDATE_BACKUP - 1) 
 		{
@@ -800,6 +802,10 @@ void CL_ParsePacketEntities (qbool delta)
 	}
 
 	newp->num_entities = newindex;
+	if (copy) {
+		// do this incase it's FTE demo...
+		memcpy(&cl.frames[1], &cl.frames[0], sizeof(cl.frames[1]));
+	}
 
 	if (cls.state == ca_onserver) {
 		// we can now render a frame
