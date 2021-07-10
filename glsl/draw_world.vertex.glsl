@@ -15,6 +15,9 @@ layout(location = 9) in int surfaceNumber;
 
 out vec3 TexCoordLightmap;
 out vec3 TextureCoord;
+#ifdef DRAW_TEXTURELESS
+out vec3 TextureLessCoord;
+#endif
 #if defined(DRAW_LUMA_TEXTURES) || defined(DRAW_LUMA_TEXTURES_FB)
 out vec3 LumaCoord;
 #endif
@@ -77,8 +80,11 @@ void main()
 		mix_wall = 0;
 	}
 	else {
-#ifdef DRAW_TEXTURELESS
+#if defined(DRAW_TEXTURELESS) && !defined(DRAW_ALPHATEST_ENABLED)
 		TextureCoord = vec3(mix(tex, vec2(0, 0), min(Flags & EZQ_SURFACE_WORLD, 1)), materialArrayIndex);
+#elif defined(DRAW_TEXTURELESS)
+		TextureLessCoord = vec3(mix(tex, vec2(0, 0), min(Flags & EZQ_SURFACE_WORLD, 1)), materialArrayIndex);
+		TextureCoord = vec3(tex, materialArrayIndex);
 #else
 		TextureCoord = vec3(tex, materialArrayIndex);
 #endif

@@ -88,10 +88,17 @@ uniform sampler2D detailSampler;
 varying vec2 DetailCoord;
 #endif
 
+#if defined(DRAW_ALPHATEST_ENABLED)
+// 0 for textureless, 1 for normal
+uniform float texture_multiplier;
+#endif
+
 void main()
 {
 	gl_FragColor = texture2D(texSampler, TextureCoord);
 #ifdef DRAW_ALPHATEST_ENABLED
+	gl_FragColor = vec4(texture2D(texSampler, TextureCoord * texture_multiplier).rgb, gl_FragColor.a);
+
 	if (gl_FragColor.a < 0.333) {
 		discard;
 	}
