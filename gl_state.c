@@ -450,6 +450,26 @@ void GL_BindTextureToTarget(GLenum textureUnit, GLenum targetType, GLuint name)
 	GL_BindTexture(targetType, name, true);
 }
 
+qbool GL_IsTextureBound(GLuint unit, texture_ref reference)
+{
+	int unit_num = unit - GL_TEXTURE0;
+	GLuint texture = GL_TextureNameFromReference(reference);
+	GLenum targetType = GL_TextureTargetFromReference(reference);
+
+	if (unit_num >= 0 && unit_num < sizeof(bound_arrays) / sizeof(bound_arrays[0])) {
+		if (targetType == GL_TEXTURE_2D_ARRAY) {
+			return (bound_arrays[unit_num] == texture);
+		}
+		else if (targetType == GL_TEXTURE_2D) {
+			return (bound_textures[unit_num] == texture);
+		}
+		else if (targetType == GL_TEXTURE_CUBE_MAP) {
+			return (bound_cubemaps[unit_num] == texture);
+		}
+	}
+	return false;
+}
+
 static qbool GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool always_select_unit)
 {
 	int unit_num = unit - GL_TEXTURE0;

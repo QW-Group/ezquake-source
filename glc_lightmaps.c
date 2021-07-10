@@ -39,6 +39,16 @@ static void GLC_CreateLightmapTexturesIndividual(void);
 
 void GLC_UploadLightmap(int textureUnit, int lightmapnum);
 
+qbool GLC_IsLightmapBound(int textureUnit, int lightmap_num)
+{
+	if (R_TextureReferenceIsValid(lightmap_texture_array)) {
+		return renderer.TextureIsUnitBound(textureUnit, lightmap_texture_array);
+	}
+	else {
+		return renderer.TextureIsUnitBound(textureUnit, lightmaps[lightmap_num].gl_texref);
+	}
+}
+
 qbool GLC_SetTextureLightmap(int textureUnit, int lightmap_num)
 {
 	//update lightmap if it has been modified by dynamic lights

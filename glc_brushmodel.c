@@ -248,10 +248,12 @@ static void GLC_DrawFlat_GLSL(model_t* model, qbool polygonOffset)
 				R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
 			}
 
-			if (GLC_SetTextureLightmap(0, i) && index_count) {
+			if (index_count && !GLC_IsLightmapBound(0, i)) {
 				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 				index_count = 0;
 			}
+			GLC_SetTextureLightmap(0, i);
+
 			while (surf) {
 				glpoly_t* p;
 
@@ -366,10 +368,12 @@ static void GLC_DrawFlat_Immediate(model_t* model, qbool polygonOffset)
 		msurface_t* surf = R_DrawflatLightmapChain(i);
 
 		if (surf) {
-			if (GLC_SetTextureLightmap(0, i) && index_count) {
+			if (index_count && !GLC_IsLightmapBound(0, i)) {
 				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 				index_count = 0;
 			}
+			GLC_SetTextureLightmap(0, i);
+
 			while (surf) {
 				glpoly_t* p;
 

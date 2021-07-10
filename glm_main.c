@@ -71,7 +71,7 @@ static void GLM_Begin2DRendering(void)
 #define GLM_ProgramsShutdown               GL_ProgramsShutdown
 #define GLM_DrawSky                        R_Stubs_NoOperation
 #define GLM_PrepareAliasModel              GL_PrepareAliasModel
-
+#define GLM_TextureIsUnitBound             GL_IsTextureBound
 #define GLM_FramebufferCreate              GL_FramebufferCreate
 
 #define RENDERER_METHOD(returntype, name, ...) \

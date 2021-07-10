@@ -106,6 +106,7 @@ static void GLC_Begin2DRendering(void)
 #else
 #define GLC_TextureLabelSet                GLC_TextureLabelSetNull
 #endif
+#define GLC_TextureIsUnitBound             GL_IsTextureBound
 #define GLC_TextureUnitBind                GL_EnsureTextureUnitBoundAndSelect
 #define GLC_TextureGet                     GL_TextureGet
 #define GLC_TextureCompressionSet          GL_TextureCompressionSet

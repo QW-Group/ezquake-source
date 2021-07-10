@@ -227,6 +227,7 @@ void GLC_EmitCausticsPolys(void);
 void GLC_DrawWorld(void);
 void GLC_ClearTextureChains(void);
 qbool GLC_SetTextureLightmap(int textureUnit, int lightmap_num);
+qbool GLC_IsLightmapBound(int textureUnit, int lightmap_num);
 texture_ref GLC_LightmapTexture(int index);
 void GLC_ClearLightmapPolys(void);
 void GLC_AddToLightmapChain(msurface_t* s);
