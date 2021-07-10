@@ -206,16 +206,18 @@ static void GLC_DrawFlat_GLSL(model_t* model, qbool polygonOffset)
 		// drawflat_chain has no lightmaps
 		s = model->drawflat_chain;
 		while (s) {
-			glpoly_t *p;
+			if (s->polys) {
+				glpoly_t* p;
 
-			for (p = s->polys; p; p = p->next) {
-				index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
-			}
+				for (p = s->polys; p; p = p->next) {
+					index_count = GLC_DrawIndexedPoly(p, modelIndexes, modelIndexMaximum, index_count);
+				}
 
-			// START shaman FIX /r_drawflat + /gl_caustics {
-			if ((s->flags & SURF_UNDERWATER) && draw_caustics) {
-				s->polys->caustics_chain = caustics_polys;
-				caustics_polys = s->polys;
+				// START shaman FIX /r_drawflat + /gl_caustics {
+				if ((s->flags & SURF_UNDERWATER) && draw_caustics) {
+					s->polys->caustics_chain = caustics_polys;
+					caustics_polys = s->polys;
+				}
 			}
 			// } END shaman FIX /r_drawflat + /gl_caustics
 
@@ -246,6 +248,7 @@ static void GLC_DrawFlat_GLSL(model_t* model, qbool polygonOffset)
 			if (first_lightmap_surf) {
 				R_ApplyRenderingState(r_state_drawflat_with_lightmaps_glc);
 				R_CustomPolygonOffset(polygonOffset ? r_polygonoffset_standard : r_polygonoffset_disabled);
+				first_lightmap_surf = false;
 			}
 
 			if (index_count && !GLC_IsLightmapBound(0, i)) {
@@ -542,7 +545,7 @@ static void GLC_WorldAllocateTextureUnits(texture_unit_allocation_t* allocations
 	allocations->second_pass_luma = lumas && allocations->fbTextureUnit < 0;
 }
 
-static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset, qbool lumas_only)
+static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset, qbool lumas_only, qbool alpha_surfaces)
 {
 	texture_unit_allocation_t allocations;
 	extern cvar_t gl_lumatextures;
@@ -566,7 +569,7 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 
 	texture_ref desired_textures[8] = { { 0 } };
 
-	qbool draw_textureless = gl_textureless.integer && model->isworldmodel;
+	qbool draw_textureless = gl_textureless.integer && model->isworldmodel && !alpha_surfaces;
 
 	GLC_WorldAllocateTextureUnits(&allocations, model, false, lumas_only);
 	if (lumas_only && !allocations.useLumaTextures) {
@@ -582,6 +585,9 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 	}
 	if (polygonOffset) {
 		R_CustomPolygonOffset(r_polygonoffset_standard);
+	}
+	if (alpha_surfaces) {
+		GLC_CustomAlphaTesting(true);
 	}
 
 	if (allocations.causticTextureUnit >= 0) {
@@ -626,8 +632,12 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 		}
 
 		t = R_TextureAnimation(ent, model->textures[i]);
-		if (lumas_only && !t->isLumaTexture)
+		if (lumas_only && !t->isLumaTexture) {
 			continue;
+		}
+		if (alpha_surfaces != t->isAlphaTested) {
+			continue;
+		}
 
 		if (allocations.useLumaTextures && t->isLumaTexture) {
 			fb_texturenum = t->fb_texturenum;
@@ -771,6 +781,10 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 	GLC_EmitCausticsPolys();
 	GLC_EmitDetailPolys(use_vbo);
 
+	if (alpha_surfaces) {
+		GLC_CustomAlphaTesting(false);
+	}
+
 	R_TraceLeaveFunctionRegion;
 }
 
@@ -789,7 +803,7 @@ static void GLC_DrawTextureChains_Immediate(entity_t* ent, model_t *model, qbool
 #define GLC_USE_FULLBRIGHT_TEX  (GLC_WORLD_LUMATEXTURES | GLC_WORLD_FULLBRIGHTS)
 #define GLC_USE_DRAWFLAT        (GLC_WORLD_DF_NORMAL | GLC_WORLD_DF_TINTED | GLC_WORLD_DF_BRIGHT)
 
-static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocations, model_t* model)
+static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocations, model_t* model, qbool alpha_surfaces)
 {
 	extern cvar_t gl_lumatextures, gl_textureless;
 	int options;
@@ -811,8 +825,9 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		(r_drawflat.integer && r_drawflat_mode.integer == 1 ? GLC_WORLD_DF_TINTED : 0) |
 		(r_drawflat.integer && r_drawflat_mode.integer == 2 ? GLC_WORLD_DF_BRIGHT : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? GLC_WORLD_DF_FLOORS : 0) |
-		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? GLC_WORLD_DF_WALLS : 0); 
+		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? GLC_WORLD_DF_WALLS : 0);
 
+	R_ProgramSetSubProgram(r_program_world_textured_glc, (alpha_surfaces ? 1 : 0));
 	if (R_ProgramRecompileNeeded(r_program_world_textured_glc, options)) {
 		int sampler = 0;
 		char definitions[2048] = { 0 };
@@ -841,7 +856,7 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 			strlcat(definitions, "#define EZ_USE_TEXTURE_ARRAYS\n", sizeof(definitions));
 		}
 		if (options & GLC_WORLD_DF_NORMAL) {
-			strlcat(definitions, "#define DRAW_DF_NORMAL\n", sizeof(definitions));
+			strlcat(definitions, "#define DRAW_DRAWFLAT_NORMAL\n", sizeof(definitions));
 		}
 		else if (options & GLC_WORLD_DF_TINTED) {
 			strlcat(definitions, "#define DRAW_DRAWFLAT_TINTED\n", sizeof(definitions));
@@ -854,6 +869,9 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		}
 		if (options & GLC_WORLD_DF_WALLS) {
 			strlcat(definitions, "#define DRAW_FLATWALLS\n", sizeof(definitions));
+		}
+		if (alpha_surfaces) {
+			strlcat(definitions, "#define DRAW_ALPHATEST_ENABLED\n", sizeof(definitions));
 		}
 
 		R_ProgramCompileWithInclude(r_program_world_textured_glc, definitions);
@@ -869,7 +887,6 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		R_ProgramUniform1i(r_program_uniform_world_textured_glc_lightmapSampler, allocations->lmTextureUnit);
 		R_ProgramUniform1i(r_program_uniform_world_textured_glc_texSampler, allocations->matTextureUnit);
 		R_ProgramUniform1i(r_program_uniform_world_textured_glc_lumaSampler, allocations->fbTextureUnit);
-
 		R_ProgramSetCustomOptions(r_program_world_textured_glc, options);
 	}
 	else {
@@ -904,7 +921,7 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 	return R_ProgramReady(r_program_world_textured_glc) && R_ProgramReady(r_program_world_secondpass_glc);
 }
 
-static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset, texture_unit_allocation_t* allocations)
+static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset, texture_unit_allocation_t* allocations, qbool alpha_surfaces)
 {
 	extern cvar_t gl_lumatextures;
 	int index_count = 0;
@@ -948,6 +965,9 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 		float lumaScale = 0.0f, fbScale = 0.0f;
 
 		if (!model->textures[i] || !model->textures[i]->texturechain) {
+			continue;
+		}
+		if (model->textures[i]->isAlphaTested != alpha_surfaces) {
 			continue;
 		}
 
@@ -1094,31 +1114,37 @@ static void GLC_DrawTextureChains_GLSL(entity_t* ent, model_t *model, qbool caus
 	R_TraceLeaveFunctionRegion;
 }
 
-static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset)
+static void GLC_DrawTextureChains(entity_t* ent, model_t *model, qbool caustics, qbool polygonOffset, qbool alpha_surfaces)
 {
 	extern cvar_t gl_program_world, gl_textureless;
 	texture_unit_allocation_t allocations;
 
-	if (r_drawflat.integer == 1 && r_drawflat_mode.integer == 0 && model->isworldmodel) {
+	if (alpha_surfaces) {
+		// No alpha surfaces to draw
+		if (!model->alphapass_todo) {
+			return;
+		}
+	}
+	else if (r_drawflat.integer == 1 && r_drawflat_mode.integer == 0 && model->isworldmodel) {
 		// Guaranteed to be no texturing
 		return;
 	}
 
-	if (gl_program_world.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_WorldTexturedProgramCompile(&allocations, model)) {
+	if (gl_program_world.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_WorldTexturedProgramCompile(&allocations, model, alpha_surfaces)) {
 		R_ProgramUse(r_program_world_textured_glc);
 		R_ProgramUniform1f(r_program_uniform_world_textured_glc_time, cl.time);
 		R_ProgramUniform3f(r_program_uniform_world_textured_glc_r_floorcolor, r_floorcolor.color[0] / 255.0f, r_floorcolor.color[1] / 255.0f, r_floorcolor.color[2] / 255.0f);
 		R_ProgramUniform3f(r_program_uniform_world_textured_glc_r_wallcolor, r_wallcolor.color[0] / 255.0f, r_wallcolor.color[1] / 255.0f, r_wallcolor.color[2] / 255.0f);
 		R_ProgramUniform1f(r_program_uniform_world_textures_glc_texture_multiplier, model->isworldmodel && gl_textureless.integer ? 0.0f : 1.0f);
 
-		GLC_DrawTextureChains_GLSL(ent, model, caustics, polygonOffset, &allocations);
+		GLC_DrawTextureChains_GLSL(ent, model, caustics, polygonOffset, &allocations, alpha_surfaces);
 		R_ProgramUse(r_program_none);
 	}
 	else {
 		if (model->texturechains_have_lumas) {
-			GLC_DrawTextureChains_Immediate(ent, model, caustics, polygonOffset, true);
+			GLC_DrawTextureChains_Immediate(ent, model, caustics, polygonOffset, true, alpha_surfaces);
 		}
-		GLC_DrawTextureChains_Immediate(ent, model, caustics, polygonOffset, false);
+		GLC_DrawTextureChains_Immediate(ent, model, caustics, polygonOffset, false, alpha_surfaces);
 	}
 }
 
@@ -1127,7 +1153,7 @@ qbool GLC_PreCompileWorldPrograms(void)
 	extern cvar_t gl_program_world;
 	texture_unit_allocation_t allocations;
 
-	return (gl_program_world.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_WorldTexturedProgramCompile(&allocations, cl.worldmodel));
+	return (gl_program_world.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_WorldTexturedProgramCompile(&allocations, cl.worldmodel, false) && GLC_WorldTexturedProgramCompile(&allocations, cl.worldmodel, true));
 }
 
 // This is now very similar to GLC_DrawBrushModel, but we don't draw sky surfaces at this stage
@@ -1140,10 +1166,11 @@ void GLC_DrawWorld(void)
 
 	R_TraceEnterFunctionRegion;
 
-	GLC_DrawTextureChains(NULL, cl.worldmodel, false, false);
+	GLC_DrawTextureChains(NULL, cl.worldmodel, false, false, false);
 	GLC_DrawFlat(cl.worldmodel, false);
 	GLC_DrawMapOutline(cl.worldmodel);
-	GLC_DrawAlphaChain(alphachain, polyTypeWorldModel);
+	GLC_DrawTextureChains(NULL, cl.worldmodel, false, false, true);
+	//GLC_DrawAlphaChain(alphachain, polyTypeWorldModel);
 
 	R_TraceLeaveFunctionRegion;
 }
@@ -1152,11 +1179,12 @@ void GLC_DrawBrushModel(entity_t* e, qbool polygonOffset, qbool caustics)
 {
 	extern msurface_t* alphachain;
 
-	GLC_DrawTextureChains(e, e->model, caustics, polygonOffset);
+	GLC_DrawTextureChains(e, e->model, caustics, polygonOffset, false);
 	GLC_DrawFlat(e->model, polygonOffset);
 	GLC_DrawMapOutline(e->model);
 	GLC_SkyDrawChainedSurfaces();
-	GLC_DrawAlphaChain(alphachain, polyTypeBrushModel);
+	GLC_DrawTextureChains(e, e->model, caustics, polygonOffset, true);
+	//GLC_DrawAlphaChain(alphachain, polyTypeBrushModel);
 }
 
 /*

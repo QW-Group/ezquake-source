@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_program.h"
 #include "glc_state.h"
 
+static void GLC_ToggleAlphaTesting(const rendering_state_t* state, rendering_state_t* current);
 static rendering_state_t states[r_state_count];
 
 // Texture functions
@@ -1266,6 +1267,33 @@ void R_GLC_TexturePointer(r_buffer_id buf, int unit, qbool enabled, int size, GL
 	}
 }
 
+void GLC_CustomAlphaTesting(qbool enabled)
+{
+	rendering_state_t state;
+	rendering_state_t* current = &opengl.rendering_state;
+
+	if (enabled) {
+		R_GLC_ConfigureAlphaTesting(&state, true, r_alphatest_func_greater, 0.333f);
+	}
+	else {
+		R_GLC_ConfigureAlphaTesting(&state, false, r_alphatest_func_always, 0);
+	}
+
+	GLC_ToggleAlphaTesting(&state, current);
+}
+
+static void GLC_ToggleAlphaTesting(const rendering_state_t* state, rendering_state_t* current)
+{
+	GL_ApplySimpleToggle(state, current, alphaTesting.enabled, GL_ALPHA_TEST);
+	if (current->alphaTesting.enabled && (state->alphaTesting.func != current->alphaTesting.func || state->alphaTesting.value != current->alphaTesting.value)) {
+		glAlphaFunc(
+			glAlphaTestModeValues[current->alphaTesting.func = state->alphaTesting.func],
+			current->alphaTesting.value = state->alphaTesting.value
+		);
+		R_TraceLogAPICall("glAlphaFunc(%s %f)", txtAlphaTestModeValues[state->alphaTesting.func], state->alphaTesting.value);
+	}
+}
+
 void GLC_ApplyRenderingState(r_state_id id)
 {
 	rendering_state_t* current = &opengl.rendering_state;
@@ -1276,14 +1304,7 @@ void GLC_ApplyRenderingState(r_state_id id)
 	R_TraceEnterRegion(va("GLC_ApplyRenderingState(%s)", state->name), true);
 
 	// Alpha-testing
-	GL_ApplySimpleToggle(state, current, alphaTesting.enabled, GL_ALPHA_TEST);
-	if (current->alphaTesting.enabled && (state->alphaTesting.func != current->alphaTesting.func || state->alphaTesting.value != current->alphaTesting.value)) {
-		glAlphaFunc(
-			glAlphaTestModeValues[current->alphaTesting.func = state->alphaTesting.func],
-			current->alphaTesting.value = state->alphaTesting.value
-		);
-		R_TraceLogAPICall("glAlphaFunc(%s %f)", txtAlphaTestModeValues[state->alphaTesting.func], state->alphaTesting.value);
-	}
+	GLC_ToggleAlphaTesting(state, current);
 
 	// Texture units
 	for (i = 0; i < sizeof(current->textureUnits) / sizeof(current->textureUnits[0]) && i < glConfig.texture_units; ++i) {

@@ -552,6 +552,7 @@ typedef struct model_s {
 
 	msurface_t*         drawflat_chain;
 	qbool               drawflat_todo;
+	qbool               alphapass_todo;
 	int                 first_texture_chained;
 	int                 last_texture_chained;
 	qbool               texturechains_have_lumas;
