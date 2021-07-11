@@ -127,7 +127,7 @@ void GLM_RenderFramebuffers(void)
 
 	if (GLM_CompilePostProcessProgram()) {
 		R_ProgramUse(r_program_post_process);
-		R_BindVertexArray(vao_postprocess);
+		R_ApplyRenderingState(r_state_default_2d);
 
 		if (flip2d && flip3d) {
 			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(framebuffer_std, fbtex_standard));
@@ -182,7 +182,6 @@ void GLM_BrightenScreen(void)
 
 	if (GLM_CompileSimpleProgram()) {
 		R_ProgramUse(r_program_simple);
-		R_BindVertexArray(vao_postprocess);
 		R_ApplyRenderingState(r_state_brighten_screen);
 
 		while (f > 1) {

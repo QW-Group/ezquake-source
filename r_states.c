@@ -135,7 +135,7 @@ static void R_Initialise2DStates(void)
 	rendering_state_t* state;
 	r_vao_id postprocess_vao = R_UseImmediateOpenGL() ? vao_none : vao_postprocess;
 
-	state = R_InitRenderingState(r_state_default_2d, true, "default2DState", vao_none);
+	state = R_InitRenderingState(r_state_default_2d, true, "default2DState", postprocess_vao);
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;
 

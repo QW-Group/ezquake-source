@@ -89,6 +89,7 @@ void GLC_RenderFramebuffers(void)
 		R_ProgramUniform1f(r_program_uniform_post_process_glc_gamma, v_gamma.value);
 		R_ProgramUniform4fv(r_program_uniform_post_process_glc_v_blend, blend_values);
 		R_ProgramUniform1f(r_program_uniform_post_process_glc_contrast, bound(1, v_contrast.value, 3));
+		R_ApplyRenderingState(r_state_default_2d);
 
 		if (flip2d && flip3d) {
 			renderer.TextureUnitBind(0, GL_FramebufferTextureReference(framebuffer_std, fbtex_standard));
