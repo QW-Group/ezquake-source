@@ -908,6 +908,12 @@ void GL_LoadStateFunctions(void)
 	GL_InvalidateFunction(glBindTextures);
 	if (SDL_GL_ExtensionSupported("GL_ARB_multi_bind") && !COM_CheckParm(cmdline_param_client_nomultibind)) {
 		GL_LoadOptionalFunction(glBindTextures);
+
+		// Invalidate if on particular drivers (see github bug #416)
+		if (GL_Available(glBindTextures) && glConfig.amd_issues) {
+			GL_InvalidateFunction(glBindTextures);
+			glConfig.broken_features |= R_BROKEN_GLBINDTEXTURES;
+		}
 	}
 }
 

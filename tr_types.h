@@ -73,6 +73,9 @@ typedef enum {
 	R_SUPPORT_INDIRECT_RENDERING | R_SUPPORT_INSTANCED_RENDERING \
 )
 
+#define R_BROKEN_GLBINDTEXTURES       (1 << 0)
+#define R_BROKEN_PREFERMULTIDRAW      (1 << 1)
+
 typedef struct {
 	const unsigned char                     *renderer_string;
 	const unsigned char                     *vendor_string;
@@ -84,6 +87,7 @@ typedef struct {
 	int		displayFrequency;
 	int     majorVersion;
 	int     minorVersion;
+	qbool   amd_issues;                    // github bug #416: avoid certain paths to workaround
 
 	glHardwareType_t			hardwareType;
 
@@ -107,6 +111,7 @@ typedef struct {
 	int shaderStorageBufferOffsetAlignment;
 
 	unsigned int supported_features;
+	unsigned int broken_features;
 	unsigned int preferred_format;
 	unsigned int preferred_type;
 
@@ -114,6 +119,7 @@ typedef struct {
 } glconfig_t;
 
 #define GL_Supported(x) ((glConfig.supported_features & (x)) == (x))
+#define GL_WorkaroundNeeded(x) ((glConfig.broken_features & (x)) == (x))
 
 extern glconfig_t	glConfig;
 

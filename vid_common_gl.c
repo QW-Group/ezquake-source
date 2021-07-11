@@ -50,6 +50,7 @@ static qbool GL_InitialiseRenderer(void)
 	qbool shaders_supported = false;
 
 	glConfig.supported_features = 0;
+	glConfig.broken_features = 0;
 
 	GL_InitialiseFramebufferHandling();
 	GL_LoadProgramFunctions();
@@ -123,6 +124,16 @@ static qbool GL_InitialiseRenderer(void)
 	}
 	if (glConfig.supported_features & R_SUPPORT_FOG) {
 		R_TraceAPI("... fog");
+	}
+
+	if (glConfig.broken_features) {
+		R_TraceAPI("Broken features:");
+		if (GL_WorkaroundNeeded(R_BROKEN_GLBINDTEXTURES)) {
+			R_TraceAPI("... glBindTextures() - not using");
+		}
+		if (GL_WorkaroundNeeded(R_BROKEN_PREFERMULTIDRAW)) {
+			R_TraceAPI("... glDrawArray() - using glMultiDrawArrays()");
+		}
 	}
 
 	if (R_UseModernOpenGL() && shaders_supported) {
@@ -232,6 +243,8 @@ static void GL_PopulateConfig(void)
 	R_TraceAPI("Max sizes: %d %d %d", glConfig.gl_max_size_default, glConfig.max_3d_texture_size, glConfig.max_texture_depth);
 	R_TraceAPI("Texture units: %d", glConfig.texture_units);
 	R_TraceAPI("Alignments: ubo(%d) ssb(%d)", glConfig.uniformBufferOffsetAlignment, glConfig.shaderStorageBufferOffsetAlignment);
+
+	glConfig.amd_issues = !strncmp(glConfig.version_string, "4.5.13399", sizeof("4.5.13399") - 1) && strstr(glConfig.vendor_string, "ATI");
 }
 
 // meag: EXT => ARB didn't change value of constants, so still using _EXT versions
