@@ -244,7 +244,7 @@ static void GL_PopulateConfig(void)
 	R_TraceAPI("Texture units: %d", glConfig.texture_units);
 	R_TraceAPI("Alignments: ubo(%d) ssb(%d)", glConfig.uniformBufferOffsetAlignment, glConfig.shaderStorageBufferOffsetAlignment);
 
-	glConfig.amd_issues = !strncmp(glConfig.version_string, "4.5.13399", sizeof("4.5.13399") - 1) && strstr(glConfig.vendor_string, "ATI");
+	glConfig.amd_issues = !COM_CheckParm(cmdline_param_client_no_amd_fix) && !strncmp(glConfig.version_string, "4.5.13399", sizeof("4.5.13399") - 1) && strstr(glConfig.vendor_string, "ATI");
 }
 
 // meag: EXT => ARB didn't change value of constants, so still using _EXT versions
