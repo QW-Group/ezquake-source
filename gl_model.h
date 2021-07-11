@@ -116,22 +116,26 @@ typedef struct mtexinfo_s {
 
 // Filled in CopyVertToBuffer in glm_brushmodel
 typedef struct vbo_world_vert_s {
+	// Positions 0/4/8
 	vec3_t position;
 
-	float material_coords[2];
-	short lightmap_coords[2];
+	// Positions 12/16/20
+	vec3_t material_coords;
+
+	// Positions 24/28/32
+	vec3_t lightmap_coords;
+
+	// Positions 36/40
 	float detail_coords[2];
 
-	// Index to lightmap texture array.  -1 for turb surfaces (no lightmap)
-	short lightmap_index;
-	// Index to material texture array
-	short material_index;
+	// Positions 44/48/52
+	float flatcolor[3];
 
-	unsigned int surface_num;
+	// Position 56
+	int surface_num;
 
-	// Flags (VBO_WORLD_X)
-	byte flags;
-	byte flatcolor[3];
+	// Position 60 (VBO_WORLD_X)
+	int flags;
 } vbo_world_vert_t;
 
 // Trying to pad out to keep ATI/AMD happy (doesn't seem to make a difference?)

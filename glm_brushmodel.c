@@ -51,16 +51,14 @@ void GLM_CreateBrushModelVAO(void)
 	buffers.Bind(r_buffer_brushmodel_index_data);
 
 	GLM_ConfigureVertexAttribPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, position), 0);
-	GLM_ConfigureVertexAttribPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, material_coords), 0);
-	GLM_ConfigureVertexAttribPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 2, 2, GL_SHORT, GL_TRUE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, lightmap_coords), 0);
+	GLM_ConfigureVertexAttribPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 1, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, material_coords), 0);
+	GLM_ConfigureVertexAttribPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 2, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, lightmap_coords), 0);
 	GLM_ConfigureVertexAttribPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 3, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, detail_coords), 0);
-	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 4, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, lightmap_index), 0);
-	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 5, 1, GL_SHORT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, material_index), 0);
 	// 
-	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_instance_number, 6, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
-	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 7, 1, GL_UNSIGNED_BYTE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flags), 0);
-	GLM_ConfigureVertexAttribPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 8, 3, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flatcolor), 0);
-	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 9, 1, GL_UNSIGNED_INT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, surface_num), 0);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_instance_number, 4, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 5, 1, GL_UNSIGNED_INT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flags), 0);
+	GLM_ConfigureVertexAttribPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 6, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, flatcolor), 0);
+	GLM_ConfigureVertexAttribIPointer(vao_brushmodel, r_buffer_brushmodel_vertex_data, 7, 1, GL_UNSIGNED_INT, sizeof(vbo_world_vert_t), VBO_FIELDOFFSET(vbo_world_vert_t, surface_num), 0);
 
 	R_BindVertexArray(vao_none);
 
@@ -87,20 +85,14 @@ int GLM_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 	vbo_world_vert_t* target = (vbo_world_vert_t*)vbo_buffer_ + position;
 
 	VectorCopy(source, target->position);
-	target->material_coords[0] = source[3];
-	target->material_coords[1] = source[4];
-	target->lightmap_coords[0] = source[5] * SHRT_MAX;
-	target->lightmap_coords[1] = source[6] * SHRT_MAX;
+	target->material_coords[0] = source[3] * (scaleS ? scaleS : 1);
+	target->material_coords[1] = source[4] * (scaleT ? scaleT : 1);
+	target->material_coords[2] = material;
+	target->lightmap_coords[0] = source[5];
+	target->lightmap_coords[1] = source[6];
+	target->lightmap_coords[2] = lightmap;
 	target->detail_coords[0] = source[7];
 	target->detail_coords[1] = source[8];
-	if (scaleS) {
-		target->material_coords[0] *= scaleS;
-	}
-	if (scaleT) {
-		target->material_coords[1] *= scaleT;
-	}
-	target->lightmap_index = lightmap;
-	target->material_index = material;
 
 	if (surf->flags & SURF_DRAWSKY) {
 		target->flags = TEXTURE_TURB_SKY;
@@ -113,20 +105,20 @@ int GLM_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 	}
 	else if (mod->isworldmodel) {
 		target->flags = EZQ_SURFACE_WORLD;
-		target->flags |= (surf->flags & SURF_DRAWFLAT_FLOOR ? EZQ_SURFACE_IS_FLOOR: 0);
-		target->flags |= (surf->flags & SURF_UNDERWATER ? EZQ_SURFACE_UNDERWATER : 0);
+		target->flags += (surf->flags & SURF_DRAWFLAT_FLOOR ? EZQ_SURFACE_IS_FLOOR: 0);
+		target->flags += (surf->flags & SURF_UNDERWATER ? EZQ_SURFACE_UNDERWATER : 0);
 	}
 	else {
 		target->flags = 0;
 	}
-	target->flags |= (surf->flags & SURF_DRAWALPHA ? EZQ_SURFACE_ALPHATEST : 0);
+	target->flags += (surf->flags & SURF_DRAWALPHA ? EZQ_SURFACE_ALPHATEST : 0);
 
 	{
 		byte rgba[4];
 
 		COLOR_TO_RGBA(surf->texinfo->texture->flatcolor3ub, rgba);
 
-		VectorCopy(rgba, target->flatcolor);
+		VectorScale(rgba, 1 / 255.0f, target->flatcolor);
 	}
 	target->surface_num = mod->isworldmodel ? surf - mod->surfaces : 0;
 
