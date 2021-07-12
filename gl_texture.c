@@ -240,6 +240,7 @@ qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot)
 
 	R_TraceAPI("Allocating %d x %d x %d, %d miplevels\n", slot->texture_width, slot->texture_height, slot->depth, slot->miplevels);
 	GL_ProcessErrors("GLM_TextureAllocateArrayStorage flush");
+	GL_ConsumeErrors();
 	error = GL_TexStorage3D(GL_TEXTURE0, slot->reference, slot->miplevels, GL_StorageFormat(TEX_ALPHA), slot->texture_width, slot->texture_height, slot->depth, false);
 
 	if (error != GL_NO_ERROR) {

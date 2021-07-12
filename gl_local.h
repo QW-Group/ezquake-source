@@ -449,6 +449,7 @@ GLenum GL_ProcessErrors(const char* message);
 #endif // 
 
 void GLC_ClientActiveTexture(GLenum texture_unit);
+void GL_ConsumeErrors();
 
 void VK_PrintGfxInfo(void);
 
