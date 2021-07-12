@@ -691,7 +691,6 @@ static void R_BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 static void R_BuildLightmapData(msurface_t* surf, int surfnum)
 {
 	lightmap_data_t* lm = &lightmaps[surf->lightmaptexturenum];
-	qbool fullbright = (R_FullBrightAllowed() || !cl.worldmodel || !cl.worldmodel->lightdata);
 	byte* lightmap = surf->samples;
 	unsigned int smax = (surf->extents[0] >> 4) + 1;
 	unsigned int tmax = (surf->extents[1] >> 4) + 1;
@@ -715,10 +714,10 @@ static void R_BuildLightmapData(msurface_t* surf, int surfnum)
 			data[2] = (t * 16 + surf->texturemins[1] - surf->texinfo->vecs[1][3]);
 			data[3] = 0;
 
-			source[0] = source[1] = source[2] = (fullbright ? 0xFFFFFFFF : 0);
+			source[0] = source[1] = source[2] = 0;
 			source[3] = lightmap_flags;
 
-			if (lightmap && !fullbright) {
+			if (lightmap) {
 				for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
 					size_t lightmap_index = (maps * smax * tmax + t * smax + s) * 3;
 

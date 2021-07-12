@@ -92,6 +92,7 @@
 - Fixed bug causing aliasmodels to be rendered with the normal map overlaid instead of caustics texture (#457, 3.5 bug, reported by hammer)
 - Fixed bug causing geometry outlines to be rendered incorrectly in sub-views when multiview enabled (3.5 bug)
 - Fixed bug causing invalid lightmap rendering when using drawflat and map load caused number of lightmaps to increase (3.5 bug, found during #540)
+- Fixed bug causing unlit lightmap data to be set to fullbright on first map load after watching demo/qtv stream with r_fullbright enabled (3.5 bug, reported by HangTime)
 
 ### Ruleset-related changes
 
@@ -176,7 +177,7 @@
 - `+qtv_delay` command, to be used with `/qtv_adjustbuffer 2`... pauses QTV stream.  When released, QTV buffer length set to length of buffer
 - On startup, `default.cfg` is executed before config is loaded (nQuake's default.cfg will be ignored)
 - GLSL gamma now supported in classic renderer
-- MVD player lerping is disabled at the point of a player being gibbed (reported by hangtime)
+- MVD player lerping is disabled at the point of a player being gibbed (reported by HangTime)
 - Player LG beams hidden during intermission (no more beams in screenshots)
 - ezQuake will re-calculate normals on shared vertices as model is loaded (bug in models with normals set per-surface)
 - When gameplay-related protocols are enabled but not supported by server, you will be warned during connection
@@ -186,7 +187,7 @@
 - PNG warning messages now printed to console rather than stdout
 - Added macro $timestamp, which is in format YYYYMMDD-hhmmss
 - Qizmo-compressed files can be played back using Qizmo on linux
-- When watching mvd/qtv, `/record` & `/stop` become `/mvdrecord` and `/mvdstop` respectively (suggested by hangtime)
+- When watching mvd/qtv, `/record` & `/stop` become `/mvdrecord` and `/mvdstop` respectively (suggested by HangTime)
 - Internal server has been updated to match latest mvdsv codebase
 - Removed chaticons limitation where source image had to be 256x256 pixels (#477, reported by timbergeron)
 - Demo signoff messages are no longer random
