@@ -99,6 +99,12 @@ void Cbuf_Execute (void)
 	Cbuf_ExecuteEx (&cbuf_server);
 }
 
+void Cbuf_Flush(cbuf_t* cbuf)
+{
+	while (cbuf->text_end > cbuf->text_start)
+		Cbuf_ExecuteEx(cbuf);
+}
+
 //fuh : ideally we should have 'cbuf_t *Cbuf_Register(int maxsize, int flags, qbool (*blockcmd)(void))
 //fuh : so that cbuf_svc and cbuf_safe can be registered outside cmd.c in cl_* .c
 //fuh : flags can be used to deal with newline termination etc for cbuf_svc, and *blockcmd can be used for blocking cmd's for cbuf_svc

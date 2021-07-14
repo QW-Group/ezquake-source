@@ -212,7 +212,7 @@ cvar_t gl_modulate                         = {"gl_modulate", "1"};
 cvar_t gl_outline                          = {"gl_outline", "0"};
 cvar_t r_fx_geometry                       = {"r_fx_geometry", "0"};
 
-cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0", CVAR_LATCH};
+cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0", CVAR_LATCH_GFX };
 
 //Returns true if the box is completely outside the frustom
 qbool R_CullBox(vec3_t mins, vec3_t maxs)

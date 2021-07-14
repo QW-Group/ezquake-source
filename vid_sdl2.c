@@ -159,30 +159,30 @@ static qbool wheeldown_deferred = false;
 extern cvar_t sys_inactivesleep;
 
 // latched variables that can only change over a restart
-cvar_t r_colorbits                = {"vid_colorbits",              "0",       CVAR_LATCH };
-cvar_t r_24bit_depth              = {"vid_24bit_depth",            "1",       CVAR_LATCH };
-cvar_t r_fullscreen               = {"vid_fullscreen",             "1",       CVAR_LATCH };
-cvar_t r_displayRefresh           = {"vid_displayfrequency",       "0",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_displayNumber          = {"vid_displaynumber",          "0",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_usedesktopres          = {"vid_usedesktopres",          "1",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_win_borderless         = {"vid_win_borderless",         "0",       CVAR_LATCH };
-cvar_t vid_width                  = {"vid_width",                  "0",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_height                 = {"vid_height",                 "0",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_win_width              = {"vid_win_width",              "640",     CVAR_LATCH };
-cvar_t vid_win_height             = {"vid_win_height",             "480",     CVAR_LATCH };
-cvar_t vid_hwgammacontrol         = {"vid_hwgammacontrol",         "2",       CVAR_LATCH };
-cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CVAR_LATCH };
+cvar_t r_colorbits                = {"vid_colorbits",              "0",       CVAR_LATCH_GFX };
+cvar_t r_24bit_depth              = {"vid_24bit_depth",            "1",       CVAR_LATCH_GFX };
+cvar_t r_fullscreen               = {"vid_fullscreen",             "1",       CVAR_LATCH_GFX };
+cvar_t r_displayRefresh           = {"vid_displayfrequency",       "0",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_displayNumber          = {"vid_displaynumber",          "0",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_usedesktopres          = {"vid_usedesktopres",          "1",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_win_borderless         = {"vid_win_borderless",         "0",       CVAR_LATCH_GFX };
+cvar_t vid_width                  = {"vid_width",                  "0",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_height                 = {"vid_height",                 "0",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_win_width              = {"vid_win_width",              "640",     CVAR_LATCH_GFX };
+cvar_t vid_win_height             = {"vid_win_height",             "480",     CVAR_LATCH_GFX };
+cvar_t vid_hwgammacontrol         = {"vid_hwgammacontrol",         "2",       CVAR_LATCH_GFX };
+cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CVAR_LATCH_GFX };
 // TODO: Move the in_* cvars
 cvar_t in_raw                     = {"in_raw",                     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
-cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH }; /* Needs vid_restart thus vid_.... */
+cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH_GFX }; /* Needs vid_restart thus vid_.... */
 #ifdef EZ_MULTIPLE_RENDERERS
-cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH };
+cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH_GFX };
 #endif
-cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH };
+cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH_GFX };
 
 #ifdef X11_GAMMA_WORKAROUND
-cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH  };
+cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH_GFX };
 #endif
 
 cvar_t in_release_mouse_modes     = {"in_release_mouse_modes",     "2",       CVAR_SILENT };
@@ -204,17 +204,17 @@ cvar_t r_conscale                 = {"vid_conscale",               "2.0",     CV
 cvar_t vid_flashonactivity        = {"vid_flashonactivity",        "1",       CVAR_SILENT };
 cvar_t r_verbose                  = {"vid_verbose",                "0",       CVAR_SILENT };
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
-cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH | CVAR_AUTO }; // It's here because it needs to be registered before window creation
-cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "0",       CVAR_LATCH };
-cvar_t vid_software_palette       = {"vid_software_palette",       "0",       CVAR_NO_RESET | CVAR_LATCH };
+cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH_GFX | CVAR_AUTO }; // It's here because it needs to be registered before window creation
+cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "0",       CVAR_LATCH_GFX };
+cvar_t vid_software_palette       = {"vid_software_palette",       "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
 
-cvar_t vid_framebuffer             = {"vid_framebuffer",               "0",       CVAR_NO_RESET | CVAR_LATCH, conres_changed_callback };
+cvar_t vid_framebuffer             = {"vid_framebuffer",               "0",       CVAR_NO_RESET | CVAR_LATCH_GFX, conres_changed_callback };
 cvar_t vid_framebuffer_blit        = {"vid_framebuffer_blit",          "0",       CVAR_NO_RESET };
 cvar_t vid_framebuffer_width       = {"vid_framebuffer_width",         "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
 cvar_t vid_framebuffer_height      = {"vid_framebuffer_height",        "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
 cvar_t vid_framebuffer_scale       = {"vid_framebuffer_scale",         "1",       CVAR_NO_RESET, conres_changed_callback };
-cvar_t vid_framebuffer_depthformat = {"vid_framebuffer_depthformat",   "0",       CVAR_NO_RESET | CVAR_LATCH };
-cvar_t vid_framebuffer_hdr         = {"vid_framebuffer_hdr",           "0",       CVAR_NO_RESET | CVAR_LATCH };
+cvar_t vid_framebuffer_depthformat = {"vid_framebuffer_depthformat",   "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
+cvar_t vid_framebuffer_hdr         = {"vid_framebuffer_hdr",           "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
 cvar_t vid_framebuffer_hdr_tonemap = {"vid_framebuffer_hdr_tonemap",   "0" };
 cvar_t vid_framebuffer_smooth      = {"vid_framebuffer_smooth",        "1",       CVAR_NO_RESET, framebuffer_smooth_changed_callback };
 cvar_t vid_framebuffer_sshotmode   = {"vid_framebuffer_sshotmode",     "1" };

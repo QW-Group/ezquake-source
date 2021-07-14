@@ -71,6 +71,9 @@ void Cbuf_Execute (void);
 // Normally called once per frame, but may be explicitly invoked.
 // Do not call inside a command function!
 
+void Cbuf_Flush(cbuf_t* cbuf);
+// Intended for startup... keeps executing until empty
+
 //===========================================================================
 
 /*

@@ -176,6 +176,7 @@
 - `-r-nomultibind` command line option to disable calls to glBindTextures
 - `+qtv_delay` command, to be used with `/qtv_adjustbuffer 2`... pauses QTV stream.  When released, QTV buffer length set to length of buffer
 - On startup, `default.cfg` is executed before config is loaded (nQuake's default.cfg will be ignored)
+- On startup (after `autoexec.cfg` executed), a `vid_restart`/`s_restart` will be issued if any latched variables were changed (#458)
 - GLSL gamma now supported in classic renderer
 - MVD player lerping is disabled at the point of a player being gibbed (reported by HangTime)
 - Player LG beams hidden during intermission (no more beams in screenshots)
