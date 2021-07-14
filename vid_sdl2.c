@@ -972,8 +972,6 @@ static void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_software_palette);
 	Cvar_Register(&vid_framebuffer_depthformat);
 	Cvar_Register(&vid_framebuffer_hdr);
-	Cvar_Register(&vid_framebuffer_smooth);
-	Cvar_Register(&vid_framebuffer_sshotmode);
 
 #ifdef X11_GAMMA_WORKAROUND
 	Cvar_Register(&vid_gamma_workaround);
@@ -1010,6 +1008,8 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&vid_framebuffer_height);
 	Cvar_Register(&vid_framebuffer_scale);
 	Cvar_Register(&vid_framebuffer_hdr_tonemap);
+	Cvar_Register(&vid_framebuffer_smooth);
+	Cvar_Register(&vid_framebuffer_sshotmode);
 
 	Cvar_ResetCurrentGroup();
 }
