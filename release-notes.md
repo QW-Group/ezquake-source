@@ -93,6 +93,7 @@
 - Fixed bug causing geometry outlines to be rendered incorrectly in sub-views when multiview enabled (3.5 bug)
 - Fixed bug causing invalid lightmap rendering when using drawflat and map load caused number of lightmaps to increase (3.5 bug, found during #540)
 - Fixed bug causing unlit lightmap data to be set to fullbright on first map load after watching demo/qtv stream with r_fullbright enabled (3.5 bug, reported by HangTime)
+- Fixed bug causing off-by-one error when drawing rectangle outlines (3.5 bug, reported by Matrix, #536)
 
 ### Ruleset-related changes
 

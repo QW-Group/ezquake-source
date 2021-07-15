@@ -1,6 +1,11 @@
-Changes from alpha7=>alpha8 (Feb 9th => July 13th)
-
 Leaving these here as bugs between dev versions of 3.6 aren't in the release notes.
+
+### Changes from alpha8=>alpha9 (July 13th, ongoing)
+
+- On startup (after `autoexec.cfg` executed), a `vid_restart`/`s_restart` will be issued if any latched variables were changed (#458)
+- Fixed bug causing off-by-one error when drawing rectangle outlines (3.5 bug, reported by Matrix, #536)
+
+### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 
 - Fix increased memory buffer causing slow speed of demo_jump (#453)
 - Fix turbalpha causing rendering artifacts on non-vissed maps (#473)

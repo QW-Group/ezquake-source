@@ -106,7 +106,7 @@ void R_DrawAlphaRectangleRGB(int x, int y, int w, int h, float thickness, qbool 
 		R_DrawRectangle(x, y, w, thickness, bytecolor);
 		R_DrawRectangle(x, y + thickness, thickness, h - thickness, bytecolor);
 		R_DrawRectangle(x + w - thickness, y + thickness, thickness, h - thickness, bytecolor);
-		R_DrawRectangle(x, y + h, w, thickness, bytecolor);
+		R_DrawRectangle(x, y + h - thickness, w, thickness, bytecolor);
 	}
 }
 
