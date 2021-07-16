@@ -4,6 +4,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 
 - On startup (after `autoexec.cfg` executed), a `vid_restart`/`s_restart` will be issued if any latched variables were changed (#458)
 - Fixed bug causing off-by-one error when drawing rectangle outlines (3.5 bug, reported by Matrix, #536)
+- Detection of AMD drivers .13399 wasn't being working in classic renderer (#416)
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 

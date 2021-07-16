@@ -157,6 +157,21 @@ static void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool
 
 /************************************** GL INIT **************************************/
 
+static qbool GL_BrokenAmdVersion(void)
+{
+	if (COM_CheckParm(cmdline_param_client_no_amd_fix)) {
+		// user has asked for driver detection to be turned off
+		return false;
+	}
+
+	if (!strstr(glConfig.vendor_string, "ATI")) {
+		return false;
+	}
+
+	// <anything>.13399 <anything>, might get different version number depending on what we asked for previously
+	return strstr(glConfig.version_string, ".13399 ") != NULL;
+}
+
 static void GL_PopulateConfig(void)
 {
 	int r, g, b, a;
@@ -244,7 +259,7 @@ static void GL_PopulateConfig(void)
 	R_TraceAPI("Texture units: %d", glConfig.texture_units);
 	R_TraceAPI("Alignments: ubo(%d) ssb(%d)", glConfig.uniformBufferOffsetAlignment, glConfig.shaderStorageBufferOffsetAlignment);
 
-	glConfig.amd_issues = !COM_CheckParm(cmdline_param_client_no_amd_fix) && !strncmp(glConfig.version_string, "4.5.13399", sizeof("4.5.13399") - 1) && strstr(glConfig.vendor_string, "ATI");
+	glConfig.amd_issues = GL_BrokenAmdVersion();
 }
 
 // meag: EXT => ARB didn't change value of constants, so still using _EXT versions
