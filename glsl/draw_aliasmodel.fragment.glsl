@@ -11,7 +11,11 @@ layout(binding=SAMPLER_MATERIAL_TEXTURE_START) uniform sampler2D samplers[SAMPLE
 
 in vec2 fsTextureCoord;
 in vec2 fsAltTextureCoord;
+#ifdef EZQ_ALIASMODEL_FLATSHADING
+flat in vec4 fsBaseColor;
+#else
 in vec4 fsBaseColor;
+#endif
 flat in int fsFlags;
 flat in int fsTextureEnabled;
 flat in int fsMaterialSampler;

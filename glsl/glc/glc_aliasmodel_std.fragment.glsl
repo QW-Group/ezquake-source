@@ -17,7 +17,11 @@ uniform float fsCausticEffects;
 varying vec2 fsTextureCoord;
 #endif
 
+#ifdef EZQ_ALIASMODEL_FLATSHADING
+varying flat vec4 fsBaseColor;
+#else
 varying vec4 fsBaseColor;
+#endif
 
 void main()
 {

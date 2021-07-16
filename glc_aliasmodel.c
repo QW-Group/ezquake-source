@@ -56,6 +56,7 @@ extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 extern cvar_t    r_lerpframes;
 extern cvar_t    gl_outline;
 extern cvar_t    gl_program_aliasmodels;
+extern cvar_t    gl_smoothmodels;
 
 extern float     r_framelerp;
 
@@ -245,13 +246,14 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, vbo_model_ve
 #define DRAWFLAGS_TEXTURED     2
 #define DRAWFLAGS_FULLBRIGHT   4
 #define DRAWFLAGS_MUZZLEHACK   8
-#define DRAWFLAGS_MAXIMUM      (DRAWFLAGS_CAUSTICS | DRAWFLAGS_TEXTURED | DRAWFLAGS_FULLBRIGHT | DRAWFLAGS_MUZZLEHACK)
+#define DRAWFLAGS_FLATSHADING  16
+#define DRAWFLAGS_MAXIMUM      (DRAWFLAGS_CAUSTICS | DRAWFLAGS_TEXTURED | DRAWFLAGS_FULLBRIGHT | DRAWFLAGS_MUZZLEHACK | DRAWFLAGS_FLATSHADING)
 
 int GLC_AliasModelSubProgramIndex(qbool textured, qbool fullbright, qbool caustics, qbool muzzlehack)
 {
 	return
 		(textured ? DRAWFLAGS_TEXTURED : 0) | 
-		(fullbright ? DRAWFLAGS_FULLBRIGHT : 0) | 
+		(fullbright ? DRAWFLAGS_FULLBRIGHT : (gl_smoothmodels.integer ? 0 : DRAWFLAGS_FLATSHADING)) |
 		(caustics ? DRAWFLAGS_CAUSTICS : 0) | 
 		(muzzlehack ? DRAWFLAGS_MUZZLEHACK : 0);
 }
@@ -274,6 +276,9 @@ qbool GLC_AliasModelStandardCompileSpecific(int subprogram_index)
 		}
 		if (subprogram_index & DRAWFLAGS_MUZZLEHACK) {
 			strlcat(included_definitions, "#define EZQ_ALIASMODEL_MUZZLEHACK\n", sizeof(included_definitions));
+		}
+		if (subprogram_index & DRAWFLAGS_FLATSHADING) {
+			strlcat(included_definitions, "#define EZQ_ALIASMODEL_FLATSHADING\n", sizeof(included_definitions));
 		}
 
 		R_ProgramCompileWithInclude(r_program_aliasmodel_std_glc, included_definitions);
