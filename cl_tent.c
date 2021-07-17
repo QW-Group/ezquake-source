@@ -150,6 +150,18 @@ void CL_MatchFakeProjectile(centity_t *cent)
 					VectorCopy(prj->partorg, cent->trails[3].stop);
 				}
 
+				if (prj->dl_key)
+				{
+					dlight_t *dl;
+					dl = cl_dlights;
+					for (i = 0; i < MAX_DLIGHTS; i++, dl++) {
+						if (dl->key == prj->dl_key) {
+							memset(dl, 0, sizeof(*dl));
+							cl_dlight_active[i / 32] -= (cl_dlight_active[i / 32] & (1 << (i % 32)));
+						}
+					}
+				}
+
 				memset(prj, 0, sizeof(fproj_t));
 				return;
 			}
@@ -167,6 +179,7 @@ fproj_t *CL_AllocFakeProjectile(void)
 		if (prj->endtime < cl.time)
 		{
 			memset(prj, 0, sizeof(fproj_t));
+			prj->dl_key = MAX_EDICTS + i; // this is hacky and gross
 			return prj;
 		}
 	}
@@ -182,7 +195,7 @@ fproj_t *CL_CreateFakeNail(void)
 		return &cl_fakeprojectiles[0];
 
 	fproj_t *newmis = CL_AllocFakeProjectile();
-	newmis->model = cl.model_precache[cl_modelindices[mi_spike]];
+	newmis->modelindex = cl_modelindices[mi_spike];
 
 	float latency = cls.latency;
 	newmis->starttime = cl.time + max((latency - 0.013) - ((float)pmove.client_ping / 1000), 0);
@@ -198,7 +211,7 @@ fproj_t *CL_CreateFakeSuperNail(void)
 		return &cl_fakeprojectiles[0];
 
 	fproj_t *newmis = CL_AllocFakeProjectile();
-	newmis->model = cl.model_precache[cl_modelindices[mi_s_spike]];
+	newmis->modelindex = cl_modelindices[mi_s_spike];
 
 	float latency = cls.latency;
 	newmis->starttime = cl.time + max((latency - 0.013) - ((float)pmove.client_ping / 1000), 0);
@@ -288,7 +301,7 @@ fproj_t *CL_CreateFakeGrenade(void)
 		return &cl_fakeprojectiles[0];
 
 	fproj_t *newmis = CL_AllocFakeProjectile();
-	newmis->model = cl.model_precache[cl_modelindices[mi_grenade]];
+	newmis->modelindex = cl_modelindices[mi_grenade];
 
 	float latency = cls.latency;
 	newmis->starttime = cl.time + max((latency - 0.013) - ((float)pmove.client_ping / 1000), 0);
@@ -308,9 +321,9 @@ fproj_t *CL_CreateFakeRocket(void)
 		return &cl_fakeprojectiles[0];
 
 	fproj_t *newmis = CL_AllocFakeProjectile();
-	newmis->model = cl.model_precache[cl_modelindices[mi_rocket]];
+	newmis->modelindex = cl_modelindices[mi_rocket];
 	if (cl_rocket2grenade.integer)
-		newmis->model = cl.model_precache[cl_modelindices[mi_grenade]];
+		newmis->modelindex =cl_modelindices[mi_grenade];
 
 	float latency = cls.latency;
 	newmis->starttime = cl.time + max((latency - 0.013) - ((float)pmove.client_ping / 1000), 0);
@@ -1146,6 +1159,7 @@ static void CL_UpdateFakeProjectiles(void)
 	entity_t ent;
 	centity_t cent;
 	entity_state_t centstate;
+	customlight_t cst_lt = { 0 };
 	memset(&centstate, 0, sizeof(entity_state_t));
 	cent.current = centstate;
 
@@ -1155,13 +1169,33 @@ static void CL_UpdateFakeProjectiles(void)
 	for (i = 0; i < MAX_FAKEPROJ; i++) {
 		prj = &cl_fakeprojectiles[i];
 
-		if (cl.time >= prj->endtime || cl.time <= prj->starttime) {
+		if (cl.time <= prj->starttime)
+		{
+			continue;
+		}
+		else if (cl.time >= prj->endtime)
+		{
+			if (prj->dl_key)
+			{
+				dlight_t *dl;
+				dl = cl_dlights;
+				for (i = 0; i < MAX_DLIGHTS; i++, dl++) {
+					if (dl->key == prj->dl_key) {
+						memset(dl, 0, sizeof(*dl));
+						cl_dlight_active[i / 32] -= (cl_dlight_active[i / 32] & (1 << (i % 32)));
+					}
+				}
+			}
+
 			continue;
 		}
 
+		ent.model = cl.model_precache[prj->modelindex];
+		centstate.modelindex = prj->modelindex;
+		centstate.number = prj->dl_key;
+
 		vec3_t sframe_org;
 		VectorCopy(prj->org, sframe_org);
-
 
 		if (prj->type == 1)
 		{
@@ -1202,10 +1236,7 @@ static void CL_UpdateFakeProjectiles(void)
 				VectorCopy(ent.origin, cent.lerp_origin);
 				VectorCopy(ent.origin, prj->partorg);
 
-				if (prj->effects & EF_ROCKET)
-					R_MissileTrail(&cent, r_rockettrail.integer);
-				if (prj->effects & EF_GRENADE)
-					R_MissileTrail(&cent, fix_trail_num_for_grens(r_grenadetrail.integer));
+
 				if (prj->effects & EF_TRACER || prj->effects & EF_TRACER2)
 				{
 					if (amf_nailtrail.integer && !gl_no24bit.integer) {
@@ -1221,10 +1252,12 @@ static void CL_UpdateFakeProjectiles(void)
 						}
 					}
 				}
+				else
+				{
+					CL_AddParticleTrail(&ent, &cent, &cst_lt, &centstate);
+				}
 			}
 		}
-
-		ent.model = prj->model;
 
 		CL_AddEntity(&ent);
 	}

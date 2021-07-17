@@ -22,7 +22,7 @@ typedef struct explosion_s
 #define	MAX_FAKEPROJ 32
 typedef struct
 {
-	model_t *model;
+	int modelindex, dl_key;
 	int type, effects, flags, partcount;
 	float starttime, endtime, parttime;
 	vec3_t start, vel, avel, angs, org, partorg;

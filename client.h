@@ -129,6 +129,8 @@ typedef struct
 	qbool		jump_held;
 	int			jump_msec;		// Fix bunny-hop flickering.
 
+
+
 	vec3_t      current_origin; // current location (no antilag applied)
 	vec3_t      rewind_origin;  // location antilag server has rewound to
 	vec3_t      client_origin;  // location client rendered the player
