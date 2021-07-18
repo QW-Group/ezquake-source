@@ -154,6 +154,55 @@ typedef enum {
 	K_MOUSE7,
 	K_MOUSE8,
 
+//
+// joystick generic buttons
+//
+	K_JOY1,
+	K_JOY2,
+	K_JOY3,			//210
+	K_JOY4,
+
+//
+// joystick POV/hat buttons
+//
+	K_JOYPOVUP,
+	K_JOYPOVRT,
+	K_JOYPOVDN,
+	K_JOYPOVLT,
+
+//
+// aux keys are for multi-buttoned joysticks to generate so they can use
+// the normal binding process
+//
+	K_AUX1,
+	K_AUX2,
+	K_AUX3,
+	K_AUX4,
+	K_AUX5,			//220
+	K_AUX6,
+	K_AUX7,
+	K_AUX8,
+	K_AUX9,
+	K_AUX10,
+	K_AUX11,
+	K_AUX12,
+	K_AUX13,
+	K_AUX14,
+	K_AUX15,		//230
+	K_AUX16,
+	K_AUX17,
+	K_AUX18,
+	K_AUX19,
+	K_AUX20,
+	K_AUX21,
+	K_AUX22,
+	K_AUX23,
+	K_AUX24,
+	K_AUX25,		//240
+	K_AUX26,
+	K_AUX27,
+	K_AUX28,
+
 // JACK: Intellimouse(c) Mouse Wheel Support
 
 	K_MWHEELUP = 244,

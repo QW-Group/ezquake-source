@@ -13389,7 +13389,7 @@
       "type": "string"
     },
     "joystick": {
-      "desc": "Toggles usage of joystick device.",
+      "desc": "Enables usage of joystick device.",
       "group-id": "28",
       "type": "boolean",
       "values": [
@@ -13402,6 +13402,127 @@
           "name": "true"
         }
       ]
+    },
+    "joyindex": {
+      "desc": "Index number of joystick device to use.\nDevices typically start numbering from 0.",
+      "group-id": "28",
+      "type": "integer"
+    },
+    "joyname": {
+      "desc": "User-assigned name of the joystick.",
+      "group-id": "28",
+      "type": "string"
+    },
+    "joyadvanced": {
+      "desc": "Enables advanced joystick features.",
+      "group-id": "28",
+      "type": "boolean"
+    },
+    "joyadvaxisx": {
+      "desc": "Mapping for joystick's X axis.  joyadvanced must be enabled.",
+      "group-id": "28",
+      "type": "integer",
+      "values": [
+        {
+          "description": "Unmapped (axis input ignored).",
+          "name": "0"
+        },
+        {
+          "description": "Map to forward/backward motion.",
+          "name": "1"
+        },
+        {
+          "description": "Map to pitch up/down.",
+          "name": "2"
+        },
+        {
+          "description": "Map to strafing motion.",
+          "name": "3"
+        },
+        {
+          "description": "Map to turning left/right.",
+          "name": "4"
+        },
+        {
+          "description": "Map to vertical motion.",
+          "name": "5"
+        }
+      ]
+    },
+    "joyadvaxisy": {
+      "desc": "Mapping for joystick's Y axis.  joyadvanced must be enabled.  See joyadvaxisx for arguments.",
+      "group-id": "28",
+      "type": "integer"
+    },
+    "joyadvaxisz": {
+      "desc": "Mapping for joystick's Z axis.  joyadvanced must be enabled.  See joyadvaxisx for arguments.",
+      "group-id": "28",
+      "type": "integer"
+    },
+    "joyadvaxisr": {
+      "desc": "Mapping for joystick's R axis.  joyadvanced must be enabled.  See joyadvaxisx for arguments.",
+      "group-id": "28",
+      "type": "integer"
+    },
+    "joyadvaxisu": {
+      "desc": "Mapping for joystick's U axis.  joyadvanced must be enabled.  See joyadvaxisx for arguments.",
+      "group-id": "28",
+      "type": "integer"
+    },
+    "joyadvaxisv": {
+      "desc": "Mapping for joystick's V axis.  joyadvanced must be enabled.  See joyadvaxisx for arguments.",
+      "group-id": "28",
+      "type": "integer"
+    },
+    "joyforwardthreshold": {
+      "desc": "Minimum deflection required for forward movement.\nRange [0.0,1.0]",
+      "group-id": "28",
+      "type": "float"
+    },
+    "joysidethreshold": {
+      "desc": "Minimum deflection required for strafing movement.\nRange [0.0,1.0]",
+      "group-id": "28",
+      "type": "float"
+    },
+    "joyflythreshold": {
+      "desc": "Minimum deflection required for vertical movement.\nRange [0.0,1.0]",
+      "group-id": "28",
+      "type": "float"
+    },
+    "joypitchthreshold": {
+      "desc": "Minimum deflection required for pitching up/down.\nRange [0.0,1.0]",
+      "group-id": "28",
+      "type": "float"
+    },
+    "joyyawthreshold": {
+      "desc": "Minimum deflection required for turning left/right.\nRange [0.0,1.0]",
+      "group-id": "28",
+      "type": "float"
+    },
+    "joyflysensitivity": {
+      "desc": "Scale multiplier for vertical movement.",
+      "group-id": "28",
+      "type": "float"
+    },
+    "joyforwardsensitivity": {
+      "desc": "Scale multiplier for forward movement.",
+      "group-id": "28",
+      "type": "float"
+    },
+    "joysidesensitivity": {
+      "desc": "Scale multiplier for strafing movement.",
+      "group-id": "28",
+      "type": "float"
+    },
+    "joypitchsensitivity": {
+      "desc": "Scale multiplier for pitching up/down.",
+      "group-id": "28",
+      "type": "float"
+    },
+    "joyyawsensitivity": {
+      "desc": "Scale multiplier for turning left/right.",
+      "group-id": "28",
+      "type": "float"
     },
     "keymap_name": {
       "desc": "This holds the name of the current keymappings; it has (currently) only informational purposes.\nIf no keymapping is active, it will contain the name \"Default\".\nIf a keymapping will be active and no name has been set, \"Custom\" will be used as name. It can easily be set with \"keymap_name <layoutname>\"",
