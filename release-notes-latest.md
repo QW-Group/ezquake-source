@@ -26,6 +26,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Added `/v_dlightcolor` to control if being inside flashblend light affects palette by color of light
 - Added `/v_dlightcshiftpercent` to control strength of palette shift effect when inside flashblend light
 - Changed `/v_dlightcshift` to be enum of when being inside flashblend light affects palette (requested by HangTime, #542)
+- Added `/vid_framebuffer_multisample` to control multi-sampling level of the framebuffer (reported by Matrix, #367)
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 

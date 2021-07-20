@@ -93,11 +93,11 @@ static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning);
 
 /*typedef struct {
 	GLenum currentTextureUnit;
-	GLuint bound_textures[MAX_LOGGED_TEXTURE_UNITS];
-	GLuint bound_arrays[MAX_LOGGED_TEXTURE_UNITS];
-	qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS];
-	GLenum unit_texture_mode[MAX_LOGGED_TEXTURE_UNITS];
+	GLenum bound_texture_state[texture_type_count][MAX_LOGGED_TEXTURE_UNITS];
 	image_unit_binding_t bound_images[MAX_LOGGED_IMAGE_UNITS];
+
+	GLenum unit_texture_mode[texture_type_count][MAX_LOGGED_TEXTURE_UNITS]
+	qbool texunitenabled[MAX_LOGGED_TEXTURE_UNITS];
 } texture_state_t;
 */
 typedef struct {
@@ -106,9 +106,7 @@ typedef struct {
 } opengl_state_t;
 
 static GLenum currentTextureUnit;
-static GLuint bound_textures[MAX_LOGGED_TEXTURE_UNITS];
-static GLuint bound_arrays[MAX_LOGGED_TEXTURE_UNITS];
-static GLuint bound_cubemaps[MAX_LOGGED_TEXTURE_UNITS];
+static GLuint bound_texture_state[texture_type_count][MAX_LOGGED_TEXTURE_UNITS];
 static image_unit_binding_t bound_images[MAX_LOGGED_IMAGE_UNITS];
 
 static opengl_state_t opengl;
@@ -451,22 +449,34 @@ void GL_BindTextureToTarget(GLenum textureUnit, GLenum targetType, GLuint name)
 	GL_BindTexture(targetType, name, true);
 }
 
+r_texture_type_id GL_TargetTypeToTextureType(GLuint targetType)
+{
+	if (targetType == GL_TEXTURE_2D_ARRAY) {
+		return texture_type_2d_array;
+	}
+	else if (targetType == GL_TEXTURE_2D) {
+		return texture_type_2d;
+	}
+	else if (targetType == GL_TEXTURE_CUBE_MAP) {
+		return texture_type_cubemap;
+	}
+	else if (targetType == GL_TEXTURE_2D_MULTISAMPLE) {
+		return texture_type_2d_multisampled;
+	}
+	else {
+		Sys_Error("GL_TargetTypeToTextureType(%x) - unsupported", targetType);
+		return 0;
+	}
+}
+
 qbool GL_IsTextureBound(GLuint unit, texture_ref reference)
 {
 	int unit_num = unit - GL_TEXTURE0;
 	GLuint texture = GL_TextureNameFromReference(reference);
 	GLenum targetType = GL_TextureTargetFromReference(reference);
 
-	if (unit_num >= 0 && unit_num < sizeof(bound_arrays) / sizeof(bound_arrays[0])) {
-		if (targetType == GL_TEXTURE_2D_ARRAY) {
-			return (bound_arrays[unit_num] == texture);
-		}
-		else if (targetType == GL_TEXTURE_2D) {
-			return (bound_textures[unit_num] == texture);
-		}
-		else if (targetType == GL_TEXTURE_CUBE_MAP) {
-			return (bound_cubemaps[unit_num] == texture);
-		}
+	if (unit_num >= 0 && unit_num < sizeof(bound_texture_state) / sizeof(bound_texture_state[0])) {
+		return bound_texture_state[GL_TargetTypeToTextureType(targetType)][unit_num] == texture;
 	}
 	return false;
 }
@@ -477,30 +487,13 @@ static qbool GL_BindTextureUnitImpl(GLuint unit, texture_ref reference, qbool al
 	GLuint texture = GL_TextureNameFromReference(reference);
 	GLenum targetType = GL_TextureTargetFromReference(reference);
 
-	if (unit_num >= 0 && unit_num < sizeof(bound_arrays) / sizeof(bound_arrays[0])) {
-		if (targetType == GL_TEXTURE_2D_ARRAY) {
-			if (bound_arrays[unit_num] == texture) {
-				if (always_select_unit) {
-					GL_SelectTexture(unit);
-				}
-				return false;
+	if (unit_num >= 0 && unit_num < sizeof(bound_texture_state) / sizeof(bound_texture_state[0])) {
+		qbool bound = (bound_texture_state[GL_TargetTypeToTextureType(targetType)][unit_num] == texture);
+		if (bound) {
+			if (always_select_unit) {
+				GL_SelectTexture(unit);
 			}
-		}
-		else if (targetType == GL_TEXTURE_2D) {
-			if (bound_textures[unit_num] == texture) {
-				if (always_select_unit) {
-					GL_SelectTexture(unit);
-				}
-				return false;
-			}
-		}
-		else if (targetType == GL_TEXTURE_CUBE_MAP) {
-			if (bound_cubemaps[unit_num] == texture) {
-				if (always_select_unit) {
-					GL_SelectTexture(unit);
-				}
-				return false;
-			}
+			return false;
 		}
 	}
 
@@ -584,10 +577,8 @@ void GL_InitialiseState(void)
 	R_SetIdentityMatrix(R_ProjectionMatrix());
 	R_SetIdentityMatrix(R_ModelviewMatrix());
 
-	memset(bound_textures, 0, sizeof(bound_textures));
-	memset(bound_arrays, 0, sizeof(bound_arrays));
+	memset(bound_texture_state, 0, sizeof(bound_texture_state));
 	memset(bound_images, 0, sizeof(bound_images));
-	memset(bound_cubemaps, 0, sizeof(bound_cubemaps));
 
 	if (buffers.supported) {
 		buffers.InitialiseState();
@@ -595,44 +586,29 @@ void GL_InitialiseState(void)
 	R_ProgramInitialiseState();
 }
 
+static const char* gl_friendlyTextureTargetNames[] = {
+	"GL_TEXTURE_2D",              // texture_type_2d,
+	"GL_TEXTURE_2D_ARRAY",        // texture_type_2d_array,
+	"GL_TEXTURE_CUBE_MAP",        // texture_type_cubemap,
+	"GL_TEXTURE_2D_MULTISAMPLE"   // texture_type_2d_multisampled,
+};
+
 // These functions taken from gl_texture.c
 static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 {
+	r_texture_type_id texture_type = GL_TargetTypeToTextureType(targetType);
+
 	assert(targetType);
 	assert(texnum);
 
-	if (targetType == GL_TEXTURE_2D) {
-		if (bound_textures[currentTextureUnit - GL_TEXTURE0] == texnum) {
-			return;
-		}
+	if (bound_texture_state[texture_type][currentTextureUnit - GL_TEXTURE0] == texnum) {
+		return;
+	}
 
-		R_TraceLogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
-		bound_textures[currentTextureUnit - GL_TEXTURE0] = texnum;
-		GL_BuiltinProcedure(glBindTexture, "target=%u, texnum=%u", targetType, texnum);
-	}
-	else if (targetType == GL_TEXTURE_2D_ARRAY) {
-		if (bound_arrays[currentTextureUnit - GL_TEXTURE0] == texnum) {
-			return;
-		}
+	R_TraceLogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=%s, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, gl_friendlyTextureTargetNames[texture_type], texnum, GL_TextureIdentifierByGLReference(texnum));
 
-		R_TraceLogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_2D_ARRAY, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
-		bound_arrays[currentTextureUnit - GL_TEXTURE0] = texnum;
-		GL_BuiltinProcedure(glBindTexture, "target=%u, texnum=%u", targetType, texnum);
-	}
-	else if (targetType == GL_TEXTURE_CUBE_MAP) {
-		if (bound_cubemaps[currentTextureUnit - GL_TEXTURE0] == texnum) {
-			return;
-		}
-
-		R_TraceLogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=GL_TEXTURE_CUBE_MAP, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
-		bound_cubemaps[currentTextureUnit - GL_TEXTURE0] = texnum;
-		GL_BuiltinProcedure(glBindTexture, "target=%u, texnum=%u", targetType, texnum);
-	}
-	else {
-		// No caching...
-		R_TraceLogAPICall("glBindTexture(unit=GL_TEXTURE%d, target=<other>, texnum=%u[%s])", currentTextureUnit - GL_TEXTURE0, texnum, GL_TextureIdentifierByGLReference(texnum));
-		GL_BuiltinProcedure(glBindTexture, "target=%u, texnum=%u", targetType, texnum);
-	}
+	GL_BuiltinProcedure(glBindTexture, "target=%u, texnum=%u", targetType, texnum);
+	bound_texture_state[texture_type][currentTextureUnit - GL_TEXTURE0] = texnum;
 
 	++frameStats.texture_binds;
 }
@@ -656,10 +632,8 @@ void GL_TextureInitialiseState(void)
 	// Multi texture.
 	currentTextureUnit = GL_TEXTURE0;
 
-	memset(bound_textures, 0, sizeof(bound_textures));
-	memset(bound_arrays, 0, sizeof(bound_arrays));
 	memset(bound_images, 0, sizeof(bound_images));
-	memset(bound_cubemaps, 0, sizeof(bound_cubemaps));
+	memset(bound_texture_state, 0, sizeof(bound_texture_state));
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	{
@@ -674,19 +648,15 @@ void GL_TextureInitialiseState(void)
 
 void GL_InvalidateTextureReferences(GLuint texture)
 {
-	int i;
+	int i, j;
 
 	// glDeleteTextures(texture) has been called - same reference might be re-used in future
 	// If a texture that is currently bound is deleted, the binding reverts to 0 (the default texture)
-	for (i = 0; i < sizeof(bound_textures) / sizeof(bound_textures[0]); ++i) {
-		if (bound_textures[i] == texture) {
-			bound_textures[i] = 0;
-		}
-		if (bound_arrays[i] == texture) {
-			bound_arrays[i] = 0;
-		}
-		if (bound_cubemaps[i] == texture) {
-			bound_cubemaps[i] = 0;
+	for (i = 0; i < sizeof(bound_texture_state) / sizeof(bound_texture_state[0]); ++i) {
+		for (j = 0; j < sizeof(bound_texture_state[0]) / sizeof(bound_texture_state[0][0]); ++j) {
+			if (bound_texture_state[i][j] == texture) {
+				bound_texture_state[i][j] = 0;
+			}
 		}
 	}
 
@@ -700,70 +670,53 @@ void GL_InvalidateTextureReferences(GLuint texture)
 void GL_TextureUnitMultiBind(int first, int count, texture_ref* textures)
 {
 	GLuint glTextures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
+	GLuint postbind_texture_state[texture_type_count][MAX_LOGGED_TEXTURE_UNITS];
 	qbool already_bound[MAX_LOGGED_TEXTURE_UNITS] = { false };
-	qbool is_array[MAX_LOGGED_TEXTURE_UNITS] = { false };
-	qbool is_cubemap[MAX_LOGGED_TEXTURE_UNITS] = { false };
-	qbool is_normal[MAX_LOGGED_TEXTURE_UNITS] = { false };
-	int to_change = 0;
-	int i;
+	r_texture_type_id types[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
+	qbool multi = false;
+	int i, j, first_to_change = -1;
 
 	if (first + count > MAX_LOGGED_TEXTURE_UNITS) {
-		if (GL_Available(glBindTextures)) {
-			GL_Procedure(glBindTextures, first, count, glTextures);
-		}
-		else {
-			for (i = 0; i < count; ++i) {
-				renderer.TextureUnitBind(first + i, textures[i]);
-			}
-		}
-		memset(bound_arrays, 0, sizeof(bound_arrays));
-		memset(bound_textures, 0, sizeof(bound_textures));
-		memset(bound_cubemaps, 0, sizeof(bound_cubemaps));
+		Sys_Error("GL_TextureUnitMultiBind(first=%d, count=%d)... not supported", first, count);
 		return;
 	}
 
+	// assume no change
+	memcpy(postbind_texture_state, bound_texture_state, sizeof(postbind_texture_state));
+
+	// find out which texture units we need to change
 	for (i = 0; i < count; ++i) {
-		GLenum target = GL_TextureTargetFromReference(textures[i]);
+		int unit = first + i;
 
 		glTextures[i] = GL_TextureNameFromReference(textures[i]);
-		is_array[i] = (target == GL_TEXTURE_2D_ARRAY);
-		is_cubemap[i] = (target == GL_TEXTURE_CUBE_MAP);
-		is_normal[i] = !(is_array[i] || is_cubemap[i]);
+		already_bound[i] = true;
 
-		if (is_array[i] || glTextures[i] == 0) {
-			if (!(already_bound[i] = (bound_arrays[i + first] == glTextures[i]))) {
-				++to_change;
+		if (glTextures[i] == 0) {
+			// unbind from all targets...
+			for (j = 0; j < sizeof(postbind_texture_state) / sizeof(postbind_texture_state[0]); ++j) {
+				if (postbind_texture_state[j][unit]) {
+					postbind_texture_state[j][unit] = 0;
+					multi = (first_to_change >= 0);
+					first_to_change = (first_to_change < 0 ? i : first_to_change);
+					already_bound[i] = false;
+				}
 			}
 		}
-		if (is_cubemap[i] || glTextures[i] == 0) {
-			if (!(already_bound[i] = (bound_cubemaps[i + first] == glTextures[i]))) {
-				++to_change;
-			}
-		}
-		if (is_normal[i] || glTextures[i] == 0) {
-			if (!(already_bound[i] = (bound_textures[i + first] == glTextures[i]))) {
-				++to_change;
+		else {
+			GLenum target = GL_TextureTargetFromReference(textures[i]);
+			r_texture_type_id type = GL_TargetTypeToTextureType(target);
+
+			already_bound[i] = (bound_texture_state[type][unit] == glTextures[i]);
+			if (!already_bound[i]) {
+				first_to_change = (first_to_change < 0 ? i : first_to_change);
+				multi = (first_to_change >= 0);
+				postbind_texture_state[type][unit] = glTextures[i];
 			}
 		}
 	}
 
-	if (GL_Available(glBindTextures) && to_change >= 2) {
+	if (multi && GL_Available(glBindTextures)) {
 		GL_Procedure(glBindTextures, first, count, glTextures);
-
-		for (i = 0; i < count; ++i) {
-			if (glTextures[i] == 0) {
-				bound_arrays[i + first] = bound_textures[i + first] = bound_cubemaps[i + first] = 0;
-			}
-			else if (is_array[i]) {
-				bound_arrays[i + first] = glTextures[i];
-			}
-			else if (is_cubemap[i]) {
-				bound_cubemaps[i + first] = glTextures[i];
-			}
-			else {
-				bound_textures[i + first] = glTextures[i];
-			}
-		}
 
 #ifdef WITH_RENDERING_TRACE
 		if (R_TraceLoggingEnabled()) {
@@ -780,13 +733,17 @@ void GL_TextureUnitMultiBind(int first, int count, texture_ref* textures)
 		}
 #endif
 	}
-	else {
+	else if (multi) {
 		for (i = 0; i < count; ++i) {
 			if (!already_bound[i]) {
 				renderer.TextureUnitBind(first + i, textures[i]);
 			}
 		}
 	}
+	else if (first_to_change >= 0) {
+		renderer.TextureUnitBind(first + first_to_change, textures[first_to_change]);
+	}
+	memcpy(bound_texture_state, postbind_texture_state, sizeof(bound_texture_state));
 }
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format)
@@ -1947,9 +1904,9 @@ static void GL_CompareState(FILE* output, const rendering_state_t* found, const 
 		problems = GLC_CompareVertexArrays(output, expected, found) || problems;
 	}
 
-	problems = GL_CompareBoundTextures(output, bound_textures, gl_bound2d, "2DTEXTURE") || problems;
-	problems = GL_CompareBoundTextures(output, bound_arrays, gl_bound3d, "TEXTUREARRAY") || problems;
-	problems = GL_CompareBoundTextures(output, bound_cubemaps, gl_boundCubemap, "CUBEMAP") || problems;
+	problems = GL_CompareBoundTextures(output, bound_texture_state[texture_type_2d], gl_bound2d, "2DTEXTURE") || problems;
+	problems = GL_CompareBoundTextures(output, bound_texture_state[texture_type_2d_array], gl_bound3d, "TEXTUREARRAY") || problems;
+	problems = GL_CompareBoundTextures(output, bound_texture_state[texture_type_cubemap], gl_boundCubemap, "CUBEMAP") || problems;
 
 	if (problems) {
 		Con_Printf("*** PROBLEM ***\n");

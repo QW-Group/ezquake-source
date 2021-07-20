@@ -64,6 +64,7 @@ typedef enum {
 #define R_SUPPORT_IMMEDIATEMODE       (1 << 16)     // immediate-mode rendering (doesn't require programs)
 #define R_SUPPORT_FOG                 (1 << 17)     // fog (OpenGL 1.4+, not currently working)
 #define R_SUPPORT_CUBE_MAPS           (1 << 18)     // cube maps (OpenGL 1.3+)
+#define R_SUPPORT_FRAMEBUFFER_MS      (1 << 19)     // multi-sampled framebuffers
 
 #define R_SUPPORT_FEATURE_HW_LIGHTING (R_SUPPORT_TEXTURE_ARRAYS | R_SUPPORT_COMPUTE_SHADERS | R_SUPPORT_IMAGE_PROCESSING)
 
@@ -105,6 +106,7 @@ typedef struct {
 	int max_3d_texture_size;
 	int max_texture_depth;
 	int texture_units;
+	int max_multisampling_level;
 
 	int tripleBufferIndex;
 	int uniformBufferOffsetAlignment;

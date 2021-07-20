@@ -218,6 +218,7 @@ cvar_t vid_framebuffer_hdr         = {"vid_framebuffer_hdr",           "0",     
 cvar_t vid_framebuffer_hdr_tonemap = {"vid_framebuffer_hdr_tonemap",   "0" };
 cvar_t vid_framebuffer_smooth      = {"vid_framebuffer_smooth",        "1",       CVAR_NO_RESET, framebuffer_smooth_changed_callback };
 cvar_t vid_framebuffer_sshotmode   = {"vid_framebuffer_sshotmode",     "1" };
+cvar_t vid_framebuffer_multisample = {"vid_framebuffer_multisample",   "0" };
 
 //
 // function declaration
@@ -1028,6 +1029,7 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&vid_framebuffer_hdr_tonemap);
 	Cvar_Register(&vid_framebuffer_smooth);
 	Cvar_Register(&vid_framebuffer_sshotmode);
+	Cvar_Register(&vid_framebuffer_multisample);
 
 	Cvar_ResetCurrentGroup();
 }

@@ -179,6 +179,7 @@
 - `/v_dlightcshift` changed - now enum of when being inside flashblend light affects palette (requested by HangTime, #542)
 - `/vid_framebuffer_smooth` controls linear or nearest filtering (thanks to Calinou)
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
+- `/vid_framebuffer_multisample` controls multi-sampling level of the framebuffer (reported by Matrix, #367)
 - `/vid_hwgamma_fps` controls how frequency the gamma of the monitor will be set if hardware gamma is enabled
 - `-oldgamma` command line option to re-instate old `-gamma` behaviour
 - `-r-trace` command line option in debug build - writes out API calls for each frame to qw/trace/ directory (will kill fps, just for debugging)
