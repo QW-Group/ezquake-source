@@ -534,6 +534,7 @@ static int GL_InsertDefinitions(
 	static unsigned char *glsl_constants_glsl = (unsigned char *)"", *glsl_common_glsl = (unsigned char *)"";
 	unsigned int glsl_constants_glsl_len = 0, glsl_common_glsl_len = 0;
 	const char* break_point;
+	int i;
 
 	if (!strings[0] || !strings[0][0]) {
 		return 0;
@@ -569,6 +570,14 @@ static int GL_InsertDefinitions(
 		strings[1] = (const char*)glsl_constants_glsl;
 
 		return 6;
+		// Some drivers interpret length 0 as nul terminated
+		// spec is < 0 (https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glShaderSource.xhtml)
+		for (i = 0; i < MAX_SHADER_COMPONENTS; ++i) {
+			if (lengths[i] == 0) {
+				strings[i] = "";
+			}
+		}
+
 	}
 
 	return 1;
