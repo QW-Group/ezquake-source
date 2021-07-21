@@ -6,6 +6,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Fixed bug causing off-by-one error when drawing rectangle outlines (3.5 bug, reported by Matrix, #536)
 - Detection of AMD drivers .13399 wasn't being working in classic renderer (#416)
 - Added `/gl_smoothmodels` back in, (requested by Repast via [quakeworld.nu](https://www.quakeworld.nu/forum/topic/7508/why-is-the-command-glsmoothmodels-r))
+- `/in_raw 0` behaviour changed to hopefully fix on MacOS and not break Windows
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 
