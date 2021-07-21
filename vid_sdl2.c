@@ -71,7 +71,7 @@ static qbool block_keyboard_input = false;
 #endif
 #ifdef __APPLE__
 static int deadkey_modifiers_held_down = 0;
-static cvar_t in_ignore_deadkeys = { "in_ignore_deadkeys", "1" };
+static cvar_t in_ignore_deadkeys = { "in_ignore_deadkeys", "1", CVAR_SILENT };
 
 #define APPLE_RALT_HELD_DOWN 1
 #define APPLE_LALT_HELD_DOWN 2

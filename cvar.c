@@ -1633,10 +1633,6 @@ void Cvar_ExecuteQueuedChanges(void)
 			Q_free(cvar->latchedString);
 		}
 
-		if (!strcmp(cvar->name, "vid_fullscreen")) {
-			cvar = cvar;
-		}
-
 		vid_restart |= (cvar->flags & CVAR_LATCH_GFX) && cvar->latchedString;
 		sound_restart |= (cvar->flags & CVAR_LATCH_SOUND) && cvar->latchedString;
 	}
