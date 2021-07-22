@@ -46,7 +46,7 @@ vec4 applyColorTinting(vec4 frag_colour)
 vec4 applyColorTinting(vec4 frag_colour)
 {
 #if defined(DRAW_FLATFLOORS) && defined(DRAW_FLATWALLS)
-	frag_colour = vec4(mix(r_wallcolor.rgb, r_floorcolor.rgb, mix_floor), frag_colour.a);
+	frag_colour = vec4(mix(mix(frag_colour.rgb, r_wallcolor.rgb, mix_wall), r_floorcolor.rgb, mix_floor), frag_colour.a);
 #elif defined(DRAW_FLATWALLS)
 	frag_colour = vec4(mix(frag_colour.rgb, r_wallcolor.rgb, mix_wall), frag_colour.a);
 #elif defined(DRAW_FLATFLOORS)
