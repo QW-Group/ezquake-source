@@ -105,6 +105,7 @@
 - `/gl_outline` changed to render by projecting backfaces away by surface normal (rather than lines) - to be tested
 - `/vid_hwgammacontrol` is now forced on when using ruleset `mtfl` (3.0 bug that this was removed)
 - sign of value movement speed cvars is ignored (old - used to create `/cl_idrive`-like movement scripts)
+- Immediate logging of the console (`-condebug`) is disabled during games when using competitive rulesets
 
 ### Debugging protocol changes (weapon scripts)
 

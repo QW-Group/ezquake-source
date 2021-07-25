@@ -8,6 +8,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Added `/gl_smoothmodels` back in, (requested by Repast via [quakeworld.nu](https://www.quakeworld.nu/forum/topic/7508/why-is-the-command-glsmoothmodels-r))
 - `/in_raw 0` behaviour changed to hopefully fix on MacOS and not break Windows
 - Fixed `/r_drawflat 1`, `/r_drawflat_mode 0` affecting ammo boxes etc in classic renderer
+- Fixed match logging not working when using competitive rulesets
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 

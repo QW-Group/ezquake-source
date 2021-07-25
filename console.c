@@ -564,15 +564,15 @@ void Con_PrintW(wchar *txt)
 	wchar *s;
 	static int cr;
 
-	if (Ruleset_CanLogConsole() && !(Print_flags[Print_current] & PR_LOG_SKIP)) {
-		if (qconsole_log) {
+	if (!(Print_flags[Print_current] & PR_LOG_SKIP)) {
+		if (Ruleset_CanLogConsole() && qconsole_log) {
 			char *tempbuf = Q_wcs2str_malloc(txt);
 			fprintf(qconsole_log, "%s", tempbuf);
 			fflush(qconsole_log);
 			Q_free(tempbuf);
 		}
 		if (Log_IsLogging()) {
-			if (log_readable.value) {
+			if (log_readable.integer) {
 				char *s, *tempbuf = Q_wcs2str_malloc(txt);
 				for (s = tempbuf; *s; s++)
 					*s = readableChars[(unsigned char)*s];
