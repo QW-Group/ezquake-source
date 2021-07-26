@@ -100,6 +100,7 @@ extern float r_framelerp;
 #define DRAW_CAUSTIC_TEXTURES  2
 #define DRAW_REVERSED_DEPTH    4
 #define DRAW_LERP_MUZZLEHACK   8
+#define DRAW_FLAT_SHADING      16
 static uniform_block_aliasmodels_t aliasdata;
 
 static int cached_mode;
@@ -118,12 +119,13 @@ static int TEXTURE_UNIT_CAUSTICS;
 
 qbool GLM_CompileAliasModelProgram(void)
 {
-	extern cvar_t r_lerpmuzzlehack;
+	extern cvar_t r_lerpmuzzlehack, gl_smoothmodels;
 
 	unsigned int drawAlias_desiredOptions =
 		(r_refdef2.drawCaustics ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(glConfig.reversed_depth ? DRAW_REVERSED_DEPTH : 0) |
-		(r_lerpmuzzlehack.integer ? DRAW_LERP_MUZZLEHACK : 0);
+		(r_lerpmuzzlehack.integer ? DRAW_LERP_MUZZLEHACK : 0) |
+		(gl_smoothmodels.integer ? 0 : DRAW_FLAT_SHADING);
 
 	if (R_ProgramRecompileNeeded(r_program_aliasmodel, drawAlias_desiredOptions)) {
 		static char included_definitions[1024];
@@ -151,6 +153,9 @@ qbool GLM_CompileAliasModelProgram(void)
 		}
 		if (drawAlias_desiredOptions & DRAW_LERP_MUZZLEHACK) {
 			strlcat(included_definitions, "#define EZQ_ALIASMODEL_MUZZLEHACK\n", sizeof(included_definitions));
+		}
+		if (drawAlias_desiredOptions & DRAW_FLAT_SHADING) {
+			strlcat(included_definitions, "#define EZQ_ALIASMODEL_FLATSHADING\n", sizeof(included_definitions));
 		}
 
 		// Initialise program for drawing image

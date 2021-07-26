@@ -117,6 +117,15 @@ GLenum GL_ProcessErrors(const char* message)
 }
 #endif // WITH_RENDERING_TRACE
 
+void GL_ConsumeErrors(void)
+{
+	GLenum error = glGetError();
+
+	while (error != GL_NO_ERROR) {
+		error = glGetError();
+	}
+}
+
 static void GL_PrintInfoLine(const char* label, int labelsize, const char* fmt, ...)
 {
 	va_list argptr;

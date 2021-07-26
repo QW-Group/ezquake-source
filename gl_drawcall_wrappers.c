@@ -67,6 +67,11 @@ void GL_LoadDrawFunctions(void)
 	GL_LoadOptionalFunction(glMultiDrawArrays);
 	GL_LoadOptionalFunction(glMultiDrawElements);
 
+	// Use this instead of glDrawArrays() if on particular drivers (see github bug #416)
+	if (GL_Available(glMultiDrawArrays) && glConfig.amd_issues) {
+		glConfig.broken_features |= R_BROKEN_PREFERMULTIDRAW;
+	}
+
 	if (GL_VersionAtLeast(3, 2) || SDL_GL_ExtensionSupported("GL_ARB_draw_elements_base_vertex")) {
 		GL_LoadOptionalFunction(glDrawElementsBaseVertex);
 	}
@@ -111,7 +116,12 @@ void GL_DrawArrays(GLenum mode, GLint first, GLsizei count)
 		Con_Printf("GL_DrawArrays() with no VAO bound\n");
 		return;
 	}
-	glDrawArrays(mode, first, count);
+	if (GL_WorkaroundNeeded(R_BROKEN_PREFERMULTIDRAW) && GL_Available(glMultiDrawArrays)) {
+		GL_Procedure(glMultiDrawArrays, mode, &first, &count, 1);
+	}
+	else {
+		GL_BuiltinProcedure(glDrawArrays, "(mode=%u, first=%d, count=%d)", mode, first, count);
+	}
 	++frameStats.draw_calls;
 }
 

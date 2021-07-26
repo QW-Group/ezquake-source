@@ -85,6 +85,11 @@ vec4 applyColorTinting(vec4 frag_colour)
 #define applyColorTinting(x) (x)
 #endif
 
+#if defined(DRAW_TEXTURELESS) && defined(DRAW_ALPHATEST_ENABLED)
+// We pass the original coordinates in TextureCoord & use them for alpha-test, but this is where color should come from
+out vec3 TextureLessCoord;
+#endif
+
 void main()
 {
 	vec4 texColor;
@@ -125,6 +130,9 @@ void main()
 	texColor = texture(materialTex[SamplerNumber], tex);
 
 #ifdef DRAW_ALPHATEST_ENABLED
+	#ifdef DRAW_TEXTURELESS
+		texColor = vec4(texture(materialTex[SamplerNumber], TextureLessCoord).rgb, texColor.a);
+	#endif
 	if ((Flags & EZQ_SURFACE_ALPHATEST) == EZQ_SURFACE_ALPHATEST && texColor.a < 0.333) {
 		discard;
 	}

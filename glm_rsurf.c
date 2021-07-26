@@ -262,9 +262,10 @@ static glm_worldmodel_req_t* GLM_CurrentRequest(void)
 static void GL_StartWorldBatch(qbool alphatest_enabled)
 {
 	texture_ref std_textures[MAX_STANDARD_TEXTURES];
-	int options = R_ProgramCustomOptions(r_program_brushmodel);
+	r_program_id program_id = (alphatest_enabled ? r_program_brushmodel_alphatested : r_program_brushmodel);
+	int options = R_ProgramCustomOptions(program_id);
 
-	R_ProgramUse(r_program_brushmodel);
+	R_ProgramUse(program_id);
 	R_BindVertexArray(vao_brushmodel);
 
 	// Bind standard textures
@@ -292,6 +293,7 @@ static void GL_StartWorldBatch(qbool alphatest_enabled)
 void GLM_EnterBatchedWorldRegion(void)
 {
 	GLM_CompileDrawWorldProgram();
+	GLM_CompileDrawWorldProgramAlphaTested();
 
 	current_drawcall = 0;
 	index_count = 0;

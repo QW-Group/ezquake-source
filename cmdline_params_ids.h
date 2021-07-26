@@ -47,6 +47,7 @@ CMDLINE_DEF(client_verify_glstate, "-r-verify"),
 CMDLINE_DEF(client_novao, "-r-novao"),
 CMDLINE_DEF(client_nocallback, "-r-nocallback"),
 CMDLINE_DEF(client_nomultibind, "-r-nomultibind"),
+CMDLINE_DEF(client_no_amd_fix, "-r-no-amd-fix"),
 
 CMDLINE_DEF(filesystem_basedir, "-basedir"),
 CMDLINE_DEF(filesystem_nohome, "-nohome"),

@@ -603,6 +603,7 @@ void CL_ParsePacketEntities (qbool delta)
 	qbool full;
 	byte from;
 	int maxentities = MAX_MVD_PACKET_ENTITIES; // allow as many as we can handle
+	qbool copy = (cls.netchan.incoming_sequence == 0 && cls.mvdplayback);
 
 	newpacket = cls.netchan.incoming_sequence & UPDATE_MASK;
 	newp = &cl.frames[newpacket].packet_entities;
@@ -614,8 +615,9 @@ void CL_ParsePacketEntities (qbool delta)
 		from = MSG_ReadByte ();
 
 		oldpacket = cl.frames[newpacket].delta_sequence;
-		if (cls.mvdplayback)	
+		if (cls.mvdplayback) {
 			from = oldpacket = cls.netchan.incoming_sequence - 1;
+		}
 
 		if (cls.netchan.outgoing_sequence - cls.netchan.incoming_sequence >= UPDATE_BACKUP - 1) 
 		{
@@ -804,6 +806,10 @@ void CL_ParsePacketEntities (qbool delta)
 	}
 
 	newp->num_entities = newindex;
+	if (copy) {
+		// do this incase it's FTE demo...
+		memcpy(&cl.frames[1], &cl.frames[0], sizeof(cl.frames[1]));
+	}
 
 	if (cls.state == ca_onserver) {
 		// we can now render a frame
@@ -1333,16 +1339,29 @@ void CL_ParsePlayerinfo (void)
 				state->command.angles[i] = MSG_ReadAngle16 ();
 		}
 
-		if (flags & DF_MODEL)
-			state->modelindex = MSG_ReadByte ();
-		else // check for possible bug in mvd/qtv
-		{
-			if (cl_fix_mvd.integer && !state->modelindex && !cl.players[num].spectator && cl_modelindices[mi_player] != -1)
-				state->modelindex = cl_modelindices[mi_player];
+		if (flags & DF_MODEL) {
+			state->modelindex = MSG_ReadByte();
+		}
+		else if (cl_fix_mvd.integer && !state->modelindex && !cl.players[num].spectator && cl_modelindices[mi_player] != -1) {
+			// old bug in mvd/qtv
+			state->modelindex = cl_modelindices[mi_player];
 		}
 
-		if (flags & DF_SKINNUM)
-			state->skinnum = MSG_ReadByte ();
+		if (flags & DF_SKINNUM) {
+			state->skinnum = MSG_ReadByte();
+
+			if (cls.fteprotocolextensions & FTE_PEXT_MODELDBL) {
+				if ((state->skinnum & (1 << 7)) && (flags & DF_MODEL)) {
+					state->skinnum &= ~(1 << 7);
+					state->modelindex += 256;
+				}
+				else if (cl.model_precache[state->modelindex] != NULL && cl.model_precache[state->modelindex]->type == mod_brush && state->modelindex + 256 == cl_modelindices[mi_player]) {
+					// Temporary hack to detect demos where the modelindex needs to be +256, but not encoded in the skin field
+					state->modelindex = cl_modelindices[mi_player];
+				}
+			}
+
+		}
 
 		if (flags & DF_EFFECTS)
 			state->effects = MSG_ReadByte ();
@@ -1350,11 +1369,12 @@ void CL_ParsePlayerinfo (void)
 		if (flags & DF_WEAPONFRAME)
 			state->weaponframe = MSG_ReadByte ();
 
-		if (cl.vwep_enabled && !(state->flags & PF_GIB)
-		&& state->modelindex == cl_modelindices[mi_player] /* no vweps for ring! */)
+		if (cl.vwep_enabled && !(state->flags & PF_GIB) && state->modelindex == cl_modelindices[mi_player] /* no vweps for ring! */) {
 			state->vw_index = MVD_WeaponModelNumber(info->stats[STAT_WEAPON]);
-		else
+		}
+		else {
 			state->vw_index = 0;
+		}
 	} 
 	else 
 	{

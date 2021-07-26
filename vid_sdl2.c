@@ -71,7 +71,7 @@ static qbool block_keyboard_input = false;
 #endif
 #ifdef __APPLE__
 static int deadkey_modifiers_held_down = 0;
-static cvar_t in_ignore_deadkeys = { "in_ignore_deadkeys", "1" };
+static cvar_t in_ignore_deadkeys = { "in_ignore_deadkeys", "1", CVAR_SILENT };
 
 #define APPLE_RALT_HELD_DOWN 1
 #define APPLE_LALT_HELD_DOWN 2
@@ -159,30 +159,30 @@ static qbool wheeldown_deferred = false;
 extern cvar_t sys_inactivesleep;
 
 // latched variables that can only change over a restart
-cvar_t r_colorbits                = {"vid_colorbits",              "0",       CVAR_LATCH };
-cvar_t r_24bit_depth              = {"vid_24bit_depth",            "1",       CVAR_LATCH };
-cvar_t r_fullscreen               = {"vid_fullscreen",             "1",       CVAR_LATCH };
-cvar_t r_displayRefresh           = {"vid_displayfrequency",       "0",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_displayNumber          = {"vid_displaynumber",          "0",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_usedesktopres          = {"vid_usedesktopres",          "1",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_win_borderless         = {"vid_win_borderless",         "0",       CVAR_LATCH };
-cvar_t vid_width                  = {"vid_width",                  "0",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_height                 = {"vid_height",                 "0",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_win_width              = {"vid_win_width",              "640",     CVAR_LATCH };
-cvar_t vid_win_height             = {"vid_win_height",             "480",     CVAR_LATCH };
-cvar_t vid_hwgammacontrol         = {"vid_hwgammacontrol",         "2",       CVAR_LATCH };
-cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CVAR_LATCH };
+cvar_t r_colorbits                = {"vid_colorbits",              "0",       CVAR_LATCH_GFX };
+cvar_t r_24bit_depth              = {"vid_24bit_depth",            "1",       CVAR_LATCH_GFX };
+cvar_t r_fullscreen               = {"vid_fullscreen",             "1",       CVAR_LATCH_GFX };
+cvar_t r_displayRefresh           = {"vid_displayfrequency",       "0",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_displayNumber          = {"vid_displaynumber",          "0",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_usedesktopres          = {"vid_usedesktopres",          "1",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_win_borderless         = {"vid_win_borderless",         "0",       CVAR_LATCH_GFX };
+cvar_t vid_width                  = {"vid_width",                  "0",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_height                 = {"vid_height",                 "0",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_win_width              = {"vid_win_width",              "640",     CVAR_LATCH_GFX };
+cvar_t vid_win_height             = {"vid_win_height",             "480",     CVAR_LATCH_GFX };
+cvar_t vid_hwgammacontrol         = {"vid_hwgammacontrol",         "2",       CVAR_LATCH_GFX };
+cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CVAR_LATCH_GFX };
 // TODO: Move the in_* cvars
 cvar_t in_raw                     = {"in_raw",                     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
-cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH }; /* Needs vid_restart thus vid_.... */
+cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH_GFX }; /* Needs vid_restart thus vid_.... */
 #ifdef EZ_MULTIPLE_RENDERERS
-cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH };
+cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH_GFX };
 #endif
-cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH };
+cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH_GFX };
 
 #ifdef X11_GAMMA_WORKAROUND
-cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH  };
+cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH_GFX };
 #endif
 
 cvar_t in_release_mouse_modes     = {"in_release_mouse_modes",     "2",       CVAR_SILENT };
@@ -204,17 +204,17 @@ cvar_t r_conscale                 = {"vid_conscale",               "2.0",     CV
 cvar_t vid_flashonactivity        = {"vid_flashonactivity",        "1",       CVAR_SILENT };
 cvar_t r_verbose                  = {"vid_verbose",                "0",       CVAR_SILENT };
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
-cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH | CVAR_AUTO }; // It's here because it needs to be registered before window creation
-cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "0",       CVAR_LATCH };
-cvar_t vid_software_palette       = {"vid_software_palette",       "0",       CVAR_NO_RESET | CVAR_LATCH };
+cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH_GFX | CVAR_AUTO }; // It's here because it needs to be registered before window creation
+cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "0",       CVAR_LATCH_GFX };
+cvar_t vid_software_palette       = {"vid_software_palette",       "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
 
-cvar_t vid_framebuffer             = {"vid_framebuffer",               "0",       CVAR_NO_RESET | CVAR_LATCH, conres_changed_callback };
+cvar_t vid_framebuffer             = {"vid_framebuffer",               "0",       CVAR_NO_RESET | CVAR_LATCH_GFX, conres_changed_callback };
 cvar_t vid_framebuffer_blit        = {"vid_framebuffer_blit",          "0",       CVAR_NO_RESET };
 cvar_t vid_framebuffer_width       = {"vid_framebuffer_width",         "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
 cvar_t vid_framebuffer_height      = {"vid_framebuffer_height",        "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
 cvar_t vid_framebuffer_scale       = {"vid_framebuffer_scale",         "1",       CVAR_NO_RESET, conres_changed_callback };
-cvar_t vid_framebuffer_depthformat = {"vid_framebuffer_depthformat",   "0",       CVAR_NO_RESET | CVAR_LATCH };
-cvar_t vid_framebuffer_hdr         = {"vid_framebuffer_hdr",           "0",       CVAR_NO_RESET | CVAR_LATCH };
+cvar_t vid_framebuffer_depthformat = {"vid_framebuffer_depthformat",   "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
+cvar_t vid_framebuffer_hdr         = {"vid_framebuffer_hdr",           "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
 cvar_t vid_framebuffer_hdr_tonemap = {"vid_framebuffer_hdr_tonemap",   "0" };
 cvar_t vid_framebuffer_smooth      = {"vid_framebuffer_smooth",        "1",       CVAR_NO_RESET, framebuffer_smooth_changed_callback };
 cvar_t vid_framebuffer_sshotmode   = {"vid_framebuffer_sshotmode",     "1" };
@@ -245,6 +245,13 @@ qbool IN_QuakeMouseCursorRequired(void)
 	return mouse_active && IN_MouseTrackingRequired() && !IN_OSMouseCursorRequired();
 }
 
+static void IN_SnapMouseBackToCentre(void)
+{
+	SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
+	old_x = glConfig.vidWidth / 2;
+	old_y = glConfig.vidHeight / 2;
+}
+
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel)
 {
 	if (var == &in_raw)
@@ -260,20 +267,22 @@ static void in_grab_windowed_mouse_callback(cvar_t *val, char *value, qbool *can
 
 static void GrabMouse(qbool grab, qbool raw)
 {
-	if ((grab && mouse_active && raw == in_raw.integer) || (!grab && !mouse_active) || !mouseinitialized || !sdl_window)
+	if ((grab && mouse_active && raw == in_raw.integer) || (!grab && !mouse_active) || !mouseinitialized || !sdl_window) {
 		return;
+	}
 
-	if (!r_fullscreen.integer && in_grab_windowed_mouse.integer == 0)
-	{
-		if (!mouse_active)
+	if (!r_fullscreen.integer && in_grab_windowed_mouse.integer == 0) {
+		if (!mouse_active) {
 			return;
+		}
 		grab = 0;
 	}
+
 	// set initial position
 	if (!raw && grab) {
-		SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-		old_x = glConfig.vidWidth / 2;
-		old_y = glConfig.vidHeight / 2;
+		// the first getState() will still return the old values so snapping back doesn't work...
+		// ... open problem, people will get a jump if releasing mouse when re-grabbing with in_raw 0
+		IN_SnapMouseBackToCentre();
 	}
 
 	SDL_SetWindowGrab(sdl_window, grab ? SDL_TRUE : SDL_FALSE);
@@ -287,7 +296,8 @@ static void GrabMouse(qbool grab, qbool raw)
 		SDL_ShowCursor(grab ? SDL_DISABLE : SDL_ENABLE);
 	}
 
-	SDL_SetCursor(NULL); /* Force rewrite of it */
+	// Force rewrite of it
+	SDL_SetCursor(NULL);
 
 	mouse_active = grab;
 }
@@ -309,6 +319,9 @@ void IN_StartupMouse(void)
 	mouseinitialized = true;
 
 	Com_Printf("%s mouse input initialized\n", in_raw.integer > 0 ? "RAW" : "SDL");
+	if (in_raw.integer == 0) {
+		IN_SnapMouseBackToCentre();
+	}
 }
 
 void IN_ActivateMouse(void)
@@ -803,6 +816,7 @@ static void HandleWindowsKeyboardEvents(unsigned int flags, qbool down)
 static void HandleEvents(void)
 {
 	SDL_Event event;
+	qbool track_movement_through_state = (mouse_active && !SDL_GetRelativeMouseMode());
 
 #if defined(_WIN32) && !defined(WITHOUT_WINKEYHOOK)
 	HandleWindowsKeyboardEvents(windows_keys_down, true);
@@ -838,18 +852,7 @@ static void HandleEvents(void)
 					Con_Printf("motion event, which=%d\n", event.motion.which);
 				}
 #endif
-				if (mouse_active && !SDL_GetRelativeMouseMode()) {
-					float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
-
-					mx = event.motion.x - old_x;
-					my = event.motion.y - old_y;
-					cursor_x = min(max(0, cursor_x + (event.motion.x - glConfig.vidWidth / 2) * factor), VID_RenderWidth2D());
-					cursor_y = min(max(0, cursor_y + (event.motion.y - glConfig.vidHeight / 2) * factor), VID_RenderHeight2D());
-					SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-					old_x = glConfig.vidWidth / 2;
-					old_y = glConfig.vidHeight / 2;
-				}
-				else {
+				if (!track_movement_through_state) {
 					float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
 
 					cursor_x += event.motion.xrel * factor;
@@ -884,6 +887,21 @@ static void HandleEvents(void)
 			SDL_free(event.drop.file);
 			break;
 		}
+	}
+
+	if (track_movement_through_state) {
+		float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
+		int pos_x, pos_y;
+
+		SDL_GetMouseState(&pos_x, &pos_y);
+
+		mx = pos_x - old_x;
+		my = pos_y - old_y;
+
+		cursor_x = min(max(0, cursor_x + (pos_x - glConfig.vidWidth / 2) * factor), VID_RenderWidth2D());
+		cursor_y = min(max(0, cursor_y + (pos_y - glConfig.vidHeight / 2) * factor), VID_RenderHeight2D());
+
+		IN_SnapMouseBackToCentre();
 	}
 }
 
@@ -972,8 +990,6 @@ static void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_software_palette);
 	Cvar_Register(&vid_framebuffer_depthformat);
 	Cvar_Register(&vid_framebuffer_hdr);
-	Cvar_Register(&vid_framebuffer_smooth);
-	Cvar_Register(&vid_framebuffer_sshotmode);
 
 #ifdef X11_GAMMA_WORKAROUND
 	Cvar_Register(&vid_gamma_workaround);
@@ -1010,6 +1026,8 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&vid_framebuffer_height);
 	Cvar_Register(&vid_framebuffer_scale);
 	Cvar_Register(&vid_framebuffer_hdr_tonemap);
+	Cvar_Register(&vid_framebuffer_smooth);
+	Cvar_Register(&vid_framebuffer_sshotmode);
 
 	Cvar_ResetCurrentGroup();
 }

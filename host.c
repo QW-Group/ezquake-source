@@ -713,9 +713,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	host_initialized = true;
 
-	// walk through all vars and forse OnChange event if cvar was modified,
-	// also apply that to variables which mirrored in userinfo because of cl_parsefunchars was't applyed as this moment,
-	// same for serverinfo and may be this fix something also.
+	// walk through all vars and force OnChange event if cvar was modified,
+	// also apply that to variables which mirrored in userinfo because of cl_parsefunchars wasn't applyed as this moment,
+	// same for serverinfo and maybe this fix something also.
 	for ( v = NULL; (v = Cvar_Next ( v )); ) {
 		char val[2048];
 
@@ -749,7 +749,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	}
 
 	Cmd_StuffCmds_f ();		// process command line arguments
-	Cbuf_AddText ("cl_warncmd 1\n");
+	Cbuf_AddText("cl_warncmd 1\n");
 
 	Sys_CheckQWProtocolHandler();
 
@@ -758,18 +758,18 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	{
 		char cmd[1024] = {0};
 
-		if (COM_CheckArgsForPlayableFiles(cmd, sizeof(cmd)))
-		{
+		if (COM_CheckArgsForPlayableFiles(cmd, sizeof(cmd))) {
 			Cbuf_AddText(cmd);
 		}
-		else
-		{
+		else {
 			Startup_Place();
 		}
 	}
 
 	// Trigger changes config has made to defaults
+	Cbuf_Flush(&cbuf_main);
 	Cvar_ExecuteQueuedChanges();
+	Cbuf_Execute();
 
 	host_everything_loaded = true;
 #ifdef DEBUG_MEMORY_ALLOCATIONS

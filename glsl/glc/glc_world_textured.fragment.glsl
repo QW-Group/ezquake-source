@@ -9,12 +9,12 @@
 varying float mix_floor;
 varying float mix_wall;
 
-// Drawflat mode TINTED... Amend texture color based on floor/wall
-// FIXME: common with glsl, do some kind of #include support
-#ifdef DRAW_DRAWFLAT_TINTED
 uniform vec3 r_wallcolor;
 uniform vec3 r_floorcolor;
 
+// Drawflat mode TINTED... Amend texture color based on floor/wall
+// FIXME: common with glsl, do some kind of #include support
+#ifdef DRAW_DRAWFLAT_TINTED
 vec4 applyColorTinting(vec4 frag_colour)
 {
 #if defined(DRAW_FLATFLOORS) && defined(DRAW_FLATWALLS)
@@ -28,9 +28,6 @@ vec4 applyColorTinting(vec4 frag_colour)
 	return frag_colour;
 }
 #elif defined(DRAW_DRAWFLAT_BRIGHT)
-uniform vec3 r_wallcolor;
-uniform vec3 r_floorcolor;
-
 vec4 applyColorTinting(vec4 frag_colour)
 {
 	// evaluate brightness as per lightmap scaling ("// kudos to Darel Rex Finley for his HSP color model")
@@ -43,6 +40,18 @@ vec4 applyColorTinting(vec4 frag_colour)
 	frag_colour = vec4(mix(frag_colour.rgb, r_floorcolor.rgb * brightness, mix_floor), frag_colour.a);
 #endif
 
+	return frag_colour;
+}
+#elif defined(DRAW_DRAWFLAT_NORMAL)
+vec4 applyColorTinting(vec4 frag_colour)
+{
+#if defined(DRAW_FLATFLOORS) && defined(DRAW_FLATWALLS)
+	frag_colour = vec4(mix(mix(frag_colour.rgb, r_wallcolor.rgb, mix_wall), r_floorcolor.rgb, mix_floor), frag_colour.a);
+#elif defined(DRAW_FLATWALLS)
+	frag_colour = vec4(mix(frag_colour.rgb, r_wallcolor.rgb, mix_wall), frag_colour.a);
+#elif defined(DRAW_FLATFLOORS)
+	frag_colour = vec4(mix(frag_colour.rgb, r_floorcolor.rgb, mix_floor), frag_colour.a);
+#endif
 	return frag_colour;
 }
 #else
@@ -79,9 +88,21 @@ uniform sampler2D detailSampler;
 varying vec2 DetailCoord;
 #endif
 
+#if defined(DRAW_ALPHATEST_ENABLED)
+// 0 for textureless, 1 for normal
+uniform float texture_multiplier;
+#endif
+
 void main()
 {
 	gl_FragColor = texture2D(texSampler, TextureCoord);
+#ifdef DRAW_ALPHATEST_ENABLED
+	gl_FragColor = vec4(texture2D(texSampler, TextureCoord * texture_multiplier).rgb, gl_FragColor.a);
+
+	if (gl_FragColor.a < 0.333) {
+		discard;
+	}
+#endif
 
 #ifdef DRAW_EXTRA_TEXTURES
 	vec4 lumaColor = texture2D(lumaSampler, TextureCoord);

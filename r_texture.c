@@ -439,12 +439,12 @@ gltexture_t* R_TextureAllocateSlot(r_texture_type_id type, const char* identifie
 		renderer.TextureLabelSet(glt->reference, glt->identifier);
 	}
 	else if (glt && glt->storage_allocated) {
-		if (gl_width != glt->texture_width || gl_height != glt->texture_height || glt->bpp != bpp) {
+		if (gl_width != glt->texture_width || gl_height != glt->texture_height || depth != glt->depth || glt->bpp != bpp) {
 			texture_ref ref = glt->reference;
 
 			R_DeleteTexture(&ref);
 
-			return R_TextureAllocateSlot(type, identifier, width, height, 0, bpp, mode, crc, new_texture);
+			return R_TextureAllocateSlot(type, identifier, width, height, depth, bpp, mode, crc, new_texture);
 		}
 	}
 

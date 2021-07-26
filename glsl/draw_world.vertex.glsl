@@ -3,18 +3,19 @@
 #ezquake-definitions
 
 layout(location = 0) in vec3 position;
-layout(location = 1) in vec2 tex;
-layout(location = 2) in vec2 lightmapCoord;
+layout(location = 1) in vec3 tex;
+layout(location = 2) in vec3 lightmapCoord;
 layout(location = 3) in vec2 detailCoord;
-layout(location = 4) in int lightmapNumber;
-layout(location = 5) in int materialNumber;
-layout(location = 6) in int _instanceId;
-layout(location = 7) in int vboFlags;
-layout(location = 8) in vec3 flatColor;
-layout(location = 9) in int surfaceNumber;
+layout(location = 4) in int _instanceId;
+layout(location = 5) in int vboFlags;
+layout(location = 6) in vec3 flatColor;
+layout(location = 7) in int surfaceNumber;
 
 out vec3 TexCoordLightmap;
 out vec3 TextureCoord;
+#ifdef DRAW_TEXTURELESS
+out vec3 TextureLessCoord;
+#endif
 #if defined(DRAW_LUMA_TEXTURES) || defined(DRAW_LUMA_TEXTURES_FB)
 out vec3 LumaCoord;
 #endif
@@ -46,6 +47,7 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS) buffer SamplerMa
 
 void main()
 {
+	int materialNumber = int(tex.z);
 	float materialArrayIndex = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].layer;
 	int drawCallFlags = drawInfo[_instanceId].drawFlags;
 	int textureFlags = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].flags;
@@ -59,8 +61,8 @@ void main()
 	FlatColor = flatColor;
 	Flags = vboFlags | drawCallFlags | textureFlags;
 
-	if (lightmapNumber < 0) {
-		TextureCoord = vec3(tex, materialArrayIndex);
+	if (lightmapCoord.z < 0) {
+		TextureCoord = vec3(tex.xy, materialArrayIndex);
 		TexCoordLightmap = vec3(0, 0, 0);
 		Direction = (position - cameraPosition);
 #if defined(DRAW_SKYBOX)
@@ -77,16 +79,19 @@ void main()
 		mix_wall = 0;
 	}
 	else {
-#ifdef DRAW_TEXTURELESS
-		TextureCoord = vec3(mix(tex, vec2(0, 0), min(Flags & EZQ_SURFACE_WORLD, 1)), materialArrayIndex);
+#if defined(DRAW_TEXTURELESS) && !defined(DRAW_ALPHATEST_ENABLED)
+		TextureCoord = vec3(mix(tex.xy, vec2(0, 0), min(Flags & EZQ_SURFACE_WORLD, 1)), materialArrayIndex);
+#elif defined(DRAW_TEXTURELESS)
+		TextureLessCoord = vec3(mix(tex.xy, vec2(0, 0), min(Flags & EZQ_SURFACE_WORLD, 1)), materialArrayIndex);
+		TextureCoord = vec3(tex.xy, materialArrayIndex);
 #else
-		TextureCoord = vec3(tex, materialArrayIndex);
+		TextureCoord = vec3(tex.xy, materialArrayIndex);
 #endif
 
 #if defined(DRAW_LUMA_TEXTURES) || defined(DRAW_LUMA_TEXTURES_FB)
 		LumaCoord = (Flags & (EZQ_SURFACE_HAS_LUMA | EZQ_SURFACE_HAS_FB)) != 0 ? vec3(TextureCoord.st, TextureCoord.z + 1) : TextureCoord;
 #endif
-		TexCoordLightmap = vec3(lightmapCoord, lightmapNumber);
+		TexCoordLightmap = lightmapCoord;
 #ifdef DRAW_DETAIL_TEXTURES
 		DetailCoord = detailCoord;
 #endif

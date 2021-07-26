@@ -50,6 +50,7 @@ static qbool GL_InitialiseRenderer(void)
 	qbool shaders_supported = false;
 
 	glConfig.supported_features = 0;
+	glConfig.broken_features = 0;
 
 	GL_InitialiseFramebufferHandling();
 	GL_LoadProgramFunctions();
@@ -125,6 +126,16 @@ static qbool GL_InitialiseRenderer(void)
 		R_TraceAPI("... fog");
 	}
 
+	if (glConfig.broken_features) {
+		R_TraceAPI("Broken features:");
+		if (GL_WorkaroundNeeded(R_BROKEN_GLBINDTEXTURES)) {
+			R_TraceAPI("... glBindTextures() - not using");
+		}
+		if (GL_WorkaroundNeeded(R_BROKEN_PREFERMULTIDRAW)) {
+			R_TraceAPI("... glDrawArray() - using glMultiDrawArrays()");
+		}
+	}
+
 	if (R_UseModernOpenGL() && shaders_supported) {
 		Con_Printf("&c0f0Renderer&r: OpenGL (GLSL)\n");
 		return true;
@@ -145,6 +156,21 @@ static void OnChange_gl_ext_texture_compression(cvar_t *var, char *string, qbool
 }
 
 /************************************** GL INIT **************************************/
+
+static qbool GL_BrokenAmdVersion(void)
+{
+	if (COM_CheckParm(cmdline_param_client_no_amd_fix)) {
+		// user has asked for driver detection to be turned off
+		return false;
+	}
+
+	if (!strstr(glConfig.vendor_string, "ATI")) {
+		return false;
+	}
+
+	// <anything>.13399 <anything>, might get different version number depending on what we asked for previously
+	return strstr(glConfig.version_string, ".13399 ") != NULL;
+}
 
 static void GL_PopulateConfig(void)
 {
@@ -232,6 +258,8 @@ static void GL_PopulateConfig(void)
 	R_TraceAPI("Max sizes: %d %d %d", glConfig.gl_max_size_default, glConfig.max_3d_texture_size, glConfig.max_texture_depth);
 	R_TraceAPI("Texture units: %d", glConfig.texture_units);
 	R_TraceAPI("Alignments: ubo(%d) ssb(%d)", glConfig.uniformBufferOffsetAlignment, glConfig.shaderStorageBufferOffsetAlignment);
+
+	glConfig.amd_issues = GL_BrokenAmdVersion();
 }
 
 // meag: EXT => ARB didn't change value of constants, so still using _EXT versions

@@ -17,7 +17,11 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) buffer AliasMode
 
 out vec2 fsTextureCoord;
 out vec2 fsAltTextureCoord;
+#ifdef EZQ_ALIASMODEL_FLATSHADING
+flat out vec4 fsBaseColor;
+#else
 out vec4 fsBaseColor;
+#endif
 flat out int fsFlags;
 flat out int fsTextureEnabled;
 flat out int fsMaterialSampler;

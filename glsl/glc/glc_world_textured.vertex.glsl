@@ -36,7 +36,11 @@ varying float mix_wall;
 void main()
 {
 	gl_Position = ftransform();
+#ifdef DRAW_ALPHATEST_ENABLED
+	TextureCoord = gl_MultiTexCoord0.st;
+#else
 	TextureCoord = gl_MultiTexCoord0.st * texture_multiplier;
+#endif
 
 #ifdef DRAW_LIGHTMAPS
 #ifdef EZ_USE_TEXTURE_ARRAYS

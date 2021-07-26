@@ -978,13 +978,28 @@ void *Q_calloc(size_t n, size_t size)
 }
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-void *Q_realloc_debug(void *p, size_t newsize, const char* file, int line, const char* label)
-#else
-void *Q_realloc(void *p, size_t newsize)
-#endif
+#define EZQUAKE_SAFE_REALLOC
+void* Q_realloc_debug(void* p, size_t newsize, const char* file, int line, const char* label)
 {
-#ifdef DEBUG_MEMORY_ALLOCATIONS
 	ezquake_memory_block_t* block = NULL;
+	size_t old_size = 0;
+
+#ifdef EZQUAKE_SAFE_REALLOC
+	if (p && old_size)
+	{
+		void* new_buffer;
+
+		// To be sure we're not assuming the memory block is extended, allocate and re-allocate (can catch some bugs)
+		block = MEMORY_BLOCK_FOR_PTR(p);
+		new_buffer = Q_malloc_debug(newsize + sizeof(ezquake_memory_block_t), file, line, label);
+		if (!new_buffer) {
+			return NULL;
+		}
+		memcpy(new_buffer, p, block->size);
+		Q_free_debug(p, file, line);
+		return new_buffer;
+	}
+#endif
 
 	if (p) {
 		block = MEMORY_BLOCK_FOR_PTR(p);
@@ -1004,14 +1019,17 @@ void *Q_realloc(void *p, size_t newsize)
 	Q_malloc_register(file, line);
 
 	return (void*)(((intptr_t)p) + sizeof(ezquake_memory_block_t));
+}
 #else
+void *Q_realloc(void *p, size_t newsize)
+{
 	if (!(p = realloc(p, newsize))) {
 		Sys_Error("Q_realloc: Not enough memory free; check disk space\n");
 	}
 
 	return p;
-#endif
 }
+#endif // !DEBUG_MEMORY_ALLOCATIONS
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 void Q_free_debug(void* ptr, const char* file, int line)

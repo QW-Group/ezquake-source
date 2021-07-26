@@ -76,7 +76,7 @@ static int VFSMMAP_WriteBytes(vfsfile_t *file, const void *buffer, int bytestowr
 	/* Allocate more memory if we would overflow */
 	if (bytestowrite + intfile->position > intfile->len) {
 		size_t newlen  = bytestowrite + intfile->position;
-		void *p = realloc(intfile->handle, newlen);
+		void *p = Q_realloc(intfile->handle, newlen);
 		if (!p) {
 			Com_Printf("VFSMMAP_WriteBytes: Unable to write to file, memory full\n");
 			return 0;

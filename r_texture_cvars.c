@@ -35,7 +35,7 @@ static void OnChange_gl_anisotropy(cvar_t *var, char *string, qbool *cancel);
 cvar_t gl_lerpimages = { "gl_lerpimages", "1" };
 static cvar_t gl_externalTextures_world = { "gl_externalTextures_world", "1" };
 static cvar_t gl_externalTextures_bmodels = { "gl_externalTextures_bmodels", "1" };
-cvar_t gl_wicked_luma_level = { "gl_luma_level", "1", CVAR_LATCH };
+cvar_t gl_wicked_luma_level = { "gl_luma_level", "1", CVAR_LATCH_GFX };
 
 static int anisotropy_tap = 1; //  1 - is off
 
@@ -49,7 +49,7 @@ cvar_t gl_scaleModelTextures = { "gl_scaleModelTextures", "0" };
 cvar_t gl_scaleModelSimpleTextures = { "gl_scaleModelSimpleTextures", "0" };
 cvar_t gl_scaleTurbTextures = { "gl_scaleTurbTextures", "1" };
 cvar_t gl_scaleskytextures = { "gl_scaleskytextures", "0" };
-cvar_t gl_no24bit = { "gl_no24bit", "0", CVAR_LATCH };
+cvar_t gl_no24bit = { "gl_no24bit", "0", CVAR_LATCH_GFX };
 
 static void OnChange_gl_max_size(cvar_t *var, char *string, qbool *cancel)
 {

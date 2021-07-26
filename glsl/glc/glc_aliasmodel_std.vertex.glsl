@@ -7,25 +7,29 @@ attribute float flags;
 #ifdef BACKFACE_PASS
 
 // for outline
-uniform float lerpFraction;
 uniform float outlineScale;
-varying vec4 fsBaseColor;
 
 #else
 
 #if defined(TEXTURING_ENABLED) || defined(DRAW_CAUSTIC_TEXTURES)
 varying vec2 fsTextureCoord;
 #endif
-varying vec4 fsBaseColor;
 
 #ifndef FULLBRIGHT_MODELS
 uniform vec3 angleVector;        // normalized
 uniform float shadelight;        // divided by 256 in C
 uniform float ambientlight;      // divided by 256 in C
 #endif
-uniform float lerpFraction;      // 0 to 1
 
 #endif // BACKFACE_PASS (outlining)
+
+uniform float lerpFraction;      // 0 to 1
+#ifdef EZQ_ALIASMODEL_FLATSHADING
+varying flat vec4 fsBaseColor;
+#else
+varying vec4 fsBaseColor;
+#endif
+
 
 #define AM_VERTEX_NOLERP 1
 

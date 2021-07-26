@@ -1616,6 +1616,9 @@ void Cvar_Shutdown(void)
 void Cvar_ExecuteQueuedChanges(void)
 {
 	cvar_t* cvar;
+	qbool vid_restart = false;
+	qbool sound_restart = false;
+
 	for (cvar = cvar_vars; cvar; cvar = cvar->next) {
 		if ((cvar->flags & CVAR_QUEUED_TRIGGER) && cvar->latchedString) {
 			if (cvar->OnChange) {
@@ -1629,5 +1632,15 @@ void Cvar_ExecuteQueuedChanges(void)
 
 			Q_free(cvar->latchedString);
 		}
+
+		vid_restart |= (cvar->flags & CVAR_LATCH_GFX) && cvar->latchedString;
+		sound_restart |= (cvar->flags & CVAR_LATCH_SOUND) && cvar->latchedString;
+	}
+
+	if (vid_restart) {
+		Cbuf_AddTextEx(&cbuf_main, "\nvid_restart\n");
+	}
+	else if (sound_restart) {
+		Cbuf_AddTextEx(&cbuf_main, "\ns_restart\n");
 	}
 }

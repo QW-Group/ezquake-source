@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t gl_program_sky          = { "gl_program_sky",           "1" };
 cvar_t gl_program_turbsurfaces = { "gl_program_turbsurfaces",  "1" };
-cvar_t gl_program_aliasmodels  = { "gl_program_aliasmodels",   "1", CVAR_LATCH };
+cvar_t gl_program_aliasmodels  = { "gl_program_aliasmodels",   "1", CVAR_LATCH_GFX };
 cvar_t gl_program_world        = { "gl_program_world",         "1" };
 cvar_t gl_program_sprites      = { "gl_program_sprites",       "1" };
 cvar_t gl_program_hud          = { "gl_program_hud",           "1" };
@@ -106,6 +106,7 @@ static void GLC_Begin2DRendering(void)
 #else
 #define GLC_TextureLabelSet                GLC_TextureLabelSetNull
 #endif
+#define GLC_TextureIsUnitBound             GL_IsTextureBound
 #define GLC_TextureUnitBind                GL_EnsureTextureUnitBoundAndSelect
 #define GLC_TextureGet                     GL_TextureGet
 #define GLC_TextureCompressionSet          GL_TextureCompressionSet

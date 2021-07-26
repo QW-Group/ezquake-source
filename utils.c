@@ -552,7 +552,7 @@ int Player_IdStringToSlot(const char* arg)
 	// Make sure all chars in the given arg are digits in that case.
 	for (i = 0; arg[i]; i++)
 	{
-		if (!isdigit(arg[i])) {
+		if (!isdigit((byte)arg[i])) {
 			return PLAYER_NAME_NOMATCH;
 		}
 	}

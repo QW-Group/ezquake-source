@@ -39,8 +39,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_RULESET_MIN     (1<<8)  // limited by ruleset
 #define CVAR_NO_RESET        (1<<9)  // do not perform reset to default in /cfg_load command, but /cvar_reset will still work
 #define CVAR_TEMP            (1<<10) // created during config.cfg execution, before subsystems are initialized
-#define CVAR_LATCH           (1<<11) // will only change when C code next does a Cvar_Register(), so it can't be changed
+#define CVAR_LATCH_GFX       (1<<11) // will only change when C code next does a Cvar_Register(), so it can't be changed
                                      // without proper initialization.  modified will be set, even though the value hasn't changed yet
+                                     // will trigger vid_restart if modified on startup
 #define CVAR_SILENT          (1<<12) // skip warning when trying Cvar_Register() second time
 #define CVAR_COLOR           (1<<13) // on change convert the string to internal RGBA type
 #define CVAR_AUTO            (1<<14) // Cvar can possibly have an automatically calculated value that shouldn't be saved, but still presentable
@@ -50,6 +51,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_QUEUED_TRIGGER  (1<<18) // Found in config and then registered...
 #define CVAR_AUTOSETRECENT   (1<<19) // Ugh... temporary flag so Cvar_SetEx() knows if auto-value set during on-change event
 #define CVAR_USERINFONORESET (1<<20) // won't be reset by cfg_reset/cfg_load when 
+#define CVAR_LATCH_SOUND     (1<<21) // will only change when C code next does a Cvar_Register()... will trigger sound restart if modified on startup
+
+#define CVAR_LATCH (CVAR_LATCH_GFX | CVAR_LATCH_SOUND)
 
 #define CVAR_USERINFO_NO_CFG_RESET (CVAR_USERINFO | CVAR_USERINFONORESET)
 
