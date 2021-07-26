@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "quakedef.h"
 #include "pmove.h"
+#include "cl_tent.h"
 #include "qsound.h"
 #include "client.h"
 
@@ -28,6 +29,7 @@ cvar_t	cl_predict_weaponsound = { "cl_predict_weaponsound", "1" };
 cvar_t	cl_predict_smoothview = { "cl_predict_smoothview", "1" };
 cvar_t	cl_predict_beam = { "cl_predict_beam", "1" };
 cvar_t	cl_predict_jump = { "cl_predict_jump", "0" };
+cvar_t	cl_predict_buffer = { "cl_predict_buffer", "2" };
 
 extern cvar_t cl_independentPhysics;
 
@@ -39,6 +41,7 @@ cvar_t cam_lockpos = {"cam_lockpos", "0"};
 static vec3_t saved_angles;
 qbool clpred_newpos = false;
 #endif
+
 
 static qbool nolerp[2];
 static qbool nolerp_nextpos;
@@ -93,6 +96,7 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u, 
 		pmove.ammo_rockets = from->ammo_rockets;
 		pmove.ammo_cells = from->ammo_cells;
 
+		pmove.weapon_index = from->weapon_index;
 		pmove.weaponframe = from->weaponframe;
 		pmove.weapon = from->weapon;
 		pmove.items = from->items;
@@ -147,6 +151,7 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u, 
 		to->ammo_rockets = pmove.ammo_rockets;
 		to->ammo_cells = pmove.ammo_cells;
 
+		to->weapon_index = pmove.weapon_index;
 		to->weaponframe = pmove.weaponframe;
 		to->weapon = pmove.weapon;
 		to->items = pmove.items;
@@ -374,6 +379,117 @@ static void check_standing_on_entity(void)
         cl_independentPhysics.value);
 }
 
+void CL_PlayEvents() {
+
+	int threshold = bound(min(cl.validsequence + 2, cls.netchan.outgoing_sequence - 1), cls.netchan.outgoing_sequence - (cl_predict_buffer.integer + 1), cls.netchan.outgoing_sequence - 1);
+	if (pmove.effect_frame >= threshold)
+		return;
+
+	player_state_t *new_state = &cl.frames[(cls.netchan.outgoing_sequence - 1)& UPDATE_MASK].playerstate[cl.playernum];
+	player_state_t *state = &cl.frames[(threshold) & UPDATE_MASK].playerstate[cl.playernum];
+
+	prediction_event_sound_t *s_event = p_event_sound;
+	while (s_event != NULL)
+	{
+		if (s_event->frame_num > pmove.effect_frame && s_event->frame_num <= threshold)
+		{
+			S_StartSound(cl.playernum + 1, s_event->chan, s_event->sample, pmove.origin, s_event->vol, 0);
+		}
+		s_event = s_event->next;
+	}
+
+	prediction_event_fakeproj_t *p_event = p_event_fakeproj;
+	while (p_event != NULL)
+	{
+		if (p_event->frame_num > pmove.effect_frame && p_event->frame_num <= threshold)
+		{
+			player_state_t *this_state = &cl.frames[(p_event->frame_num) & UPDATE_MASK].playerstate[cl.playernum];
+			float ms_diff = max((new_state->state_time - this_state->state_time), 0);
+
+			if (p_event->type == IT_LIGHTNING)
+			{
+				if (pmove.client_time >= pmove.t_width)
+				{
+					pmove.t_width = pmove.client_time + (0.6);
+
+					if (!((cl_predict_weaponsound.integer == 0) && (cl_predict_weaponsound.integer & 256)))
+					{
+						S_StartSound(cl.playernum + 1, 1, cl_sfx_lghit, pmove.origin, 1, 0);
+					}
+				}
+
+				vec3_t start, end, forward;
+				VectorCopy(p_event->origin, start);
+				VectorCopy(start, end);
+
+				AngleVectors(p_event->angles, forward, NULL, NULL);
+				VectorScale(forward, 600, forward);
+				VectorAdd(end, forward, end);
+				
+				trace_t hittrace = PM_TraceLine(start, end);
+				CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
+
+
+				p_event = p_event->next;
+				continue;
+			}
+
+			fproj_t *newmis;
+
+
+			///*
+			switch (p_event->type)
+			{
+			case IT_NAILGUN:
+				newmis = CL_CreateFakeNail();
+				break;
+			case IT_SUPER_NAILGUN:
+				newmis = CL_CreateFakeSuperNail();
+				break;
+			case IT_GRENADE_LAUNCHER:
+				newmis = CL_CreateFakeGrenade();
+				break;
+			default:
+				newmis = CL_CreateFakeRocket();
+				break;
+			}
+			//*/
+
+			VectorCopy(p_event->angles, newmis->angs);
+			VectorCopy(p_event->origin, newmis->org);
+			VectorCopy(p_event->origin, newmis->start);
+			VectorCopy(p_event->velocity, newmis->vel);
+			VectorCopy(p_event->avelocity, newmis->avel);
+
+			//if ((cls.latency - 0.013) > ((float)pmove.client_ping / 1000))
+			//	newmis->starttime = (cl.time) + (max((cls.latency - 0.013) - ((float)pmove.client_ping / 1000), ms_diff));
+			//else
+				newmis->starttime -= ms_diff;
+
+			//newmis->starttime = max(newmis->starttime - ms_diff, (cl.time) + (max((cls.latency - 0.013) - ((float)pmove.client_ping / 1000), ms_diff)));
+
+			newmis->endtime -= max(ms_diff - 0.013, 0);
+
+			if (p_event->type == IT_GRENADE_LAUNCHER)
+			{
+				//newmis->starttime -= ms_diff;
+				Fproj_Physics_Bounce(newmis, 0.02);
+				Fproj_Physics_Bounce(newmis, ms_diff);
+			}
+			else
+			{
+				VectorMA(newmis->org, ms_diff, newmis->vel, newmis->org);
+			}
+		}
+
+		p_event = p_event->next;
+	}
+
+	cl.simwepframe = state->weaponframe;
+	cl.simwep = state->weapon_index;
+	pmove.effect_frame = threshold;
+}
+
 void CL_PredictMove (qbool physframe) {
 	int i, oldphysent;
 	frame_t *from = NULL, *to;
@@ -441,14 +557,28 @@ void CL_PredictMove (qbool physframe) {
 		pmove_playeffects = false;
 		pmove_nopred_weapon = (cl_nopred_weapon.integer || pmove.client_predflags == PRDFL_FORCEOFF || cl.spectator);
 
+		///*
+		// cleanup all pred events
+		while (p_event_sound != NULL)
+		{
+			prediction_event_sound_t *s_event = p_event_sound;
+			p_event_sound = NULL;// s_event->next;
+			free(s_event);
+		}
+
+		while (p_event_fakeproj != NULL)
+		{
+			prediction_event_fakeproj_t *p_event = p_event_fakeproj;
+			p_event_fakeproj = NULL;// p_event->next;
+			free(p_event);
+		}
+		//*/
+
+
 		// run frames
 		for (i = 1; i < UPDATE_BACKUP - 1 && cl.validsequence + i < cls.netchan.outgoing_sequence; i++) {
-			if (cl.validsequence + i > pmove.effect_frame)
-			{
-				pmove_playeffects = true;
-				pmove.last_frame = pmove.effect_frame;
-				pmove.effect_frame = cl.validsequence + i;
-			}
+
+			pmove.frame_current = (cl.validsequence + i);
 
 			from = to;
 			to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
@@ -470,6 +600,8 @@ void CL_PredictMove (qbool physframe) {
 				}
 			}
 		}
+
+		CL_PlayEvents();
 
 		pmove.numphysent = oldphysent;
 
@@ -516,8 +648,6 @@ void CL_PredictMove (qbool physframe) {
 		//
 		//
 
-		cl.simwep = pmove.weapon_index;
-		cl.simwepframe = pmove.weaponframe;
 		cl.onground = pmove.onground;
 		cl.waterlevel = pmove.waterlevel;
 		check_standing_on_entity();
@@ -566,6 +696,7 @@ void CL_InitPrediction(void)
 	Cvar_Register(&cl_predict_smoothview);
 	Cvar_Register(&cl_predict_beam);
 	Cvar_Register(&cl_predict_jump);
+	Cvar_Register(&cl_predict_buffer);
 	Cvar_ResetCurrentGroup();
 
 	CL_InitWepSounds();

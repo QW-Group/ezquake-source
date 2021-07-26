@@ -83,9 +83,41 @@ enum {
 	dbg_antilag_position_set   = 4
 };
 
+
+typedef struct prediction_event_sound_s
+{
+	int				frame_num;
+
+	int				chan;
+	struct sfx_s	*sample;
+	float			vol;
+
+	struct prediction_event_sound_s *next;
+} prediction_event_sound_t;
+
+
+typedef struct prediction_event_fakeproj_s
+{
+	int			frame_num;
+
+	int			type;
+	vec3_t		origin;
+	vec3_t		angles;
+	vec3_t		velocity;
+
+	vec3_t		avelocity;
+
+	struct prediction_event_fakeproj_s *next;
+} prediction_event_fakeproj_t;
+
+// events in prediction that we play back slightly delayed depending on cl_predict_buffer
+prediction_event_fakeproj_t	*p_event_fakeproj;
+prediction_event_sound_t	*p_event_sound;
+
+
 // player_state_t is the information needed by a player entity
 // to do move prediction and to generate a drawable entity
-typedef struct 
+typedef struct
 {
 	int			messagenum;		// All players won't be updated each frame.
 
@@ -97,6 +129,7 @@ typedef struct
 	vec3_t		viewangles;		// Only for demos, not from server.
 	vec3_t		velocity;
 	int			weaponframe;
+	int			weapon_index;
 	int			weapon;
 	int			items;
 	int			impulse;
@@ -128,8 +161,6 @@ typedef struct
 	qbool		onground;
 	qbool		jump_held;
 	int			jump_msec;		// Fix bunny-hop flickering.
-
-
 
 	vec3_t      current_origin; // current location (no antilag applied)
 	vec3_t      rewind_origin;  // location antilag server has rewound to

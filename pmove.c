@@ -56,10 +56,18 @@ vec3_t	player_maxs = {16, 16, 32};
 // Play a predicted sound
 void PM_SoundEffect(sfx_t *sample, int chan)
 {
-	if (!pmove_playeffects)
-		return;
+	//if (!pmove_playeffects)
+	//	return;
 
-	S_StartSound(cl.playernum + 1, chan, sample, pmove.origin, 1, 0);
+	//S_StartSound(cl.playernum + 1, chan, sample, pmove.origin, 1, 0);
+	prediction_event_sound_t *s_event = malloc(sizeof(prediction_event_sound_t));
+	s_event->chan = chan;
+	s_event->sample = sample;
+	s_event->vol = 1;
+
+	s_event->frame_num = pmove.frame_current;
+	s_event->next = p_event_sound;
+	p_event_sound = s_event;
 }
 
 void PM_SoundEffect_Weapon(sfx_t *sample, int chan, int weap)
@@ -999,6 +1007,17 @@ int PM_PlayerMove(void)
 //
 #define IT_HOOK			32768
 
+prediction_event_fakeproj_t* PM_AddEvent_FakeProj(int type)
+{
+	prediction_event_fakeproj_t *proj = malloc(sizeof(prediction_event_fakeproj_t));
+	proj->type = type;
+
+	proj->frame_num = pmove.frame_current;
+	proj->next = p_event_fakeproj;
+	p_event_fakeproj = proj;
+	return proj;
+}
+
 int PM_FilterWeaponSound(byte sound_num)
 {
 	if (cl_predict_weaponsound.integer & 2)
@@ -1512,6 +1531,31 @@ void W_FireAxe(void)
 
 void launch_spike(float off)
 {
+	prediction_event_fakeproj_t *newmis;
+	if (pmove.weapon == IT_SUPER_NAILGUN)
+	{
+		newmis = PM_AddEvent_FakeProj(IT_SUPER_NAILGUN);
+		PM_SoundEffect_Weapon(cl_sfx_sng, 1, 32);
+		off = 0;
+	}
+	else
+	{
+		newmis = PM_AddEvent_FakeProj(IT_NAILGUN);
+		PM_SoundEffect_Weapon(cl_sfx_ng, 1, 16);
+	}
+
+	vec3_t forward, right;
+	AngleVectors(pmove.cmd.angles, forward, right, NULL);
+	VectorScale(forward, 1000, newmis->velocity);
+
+	VectorCopy(pmove.origin, newmis->origin);
+	newmis->origin[0] += (forward[0] * 8) + (right[0] * off);
+	newmis->origin[1] += (forward[1] * 8) + (right[1] * off);
+	newmis->origin[2] += 16 + forward[2] * 8;
+	VectorCopy(pmove.cmd.angles, newmis->angles);
+	newmis->angles[0] = -newmis->angles[0];
+
+	/*
 	if (pmove_playeffects)
 	{
 		fproj_t *newmis;
@@ -1538,6 +1582,7 @@ void launch_spike(float off)
 		VectorCopy(pmove.cmd.angles, newmis->angs);
 		newmis->angs[0] = -newmis->angs[0];
 	}
+	*/
 }
 
 void player_run(void)
@@ -1633,28 +1678,15 @@ void player_light1(void)
 
 	pmove.attack_finished = pmove.client_time + 0.2;
 
-	if (!pmove_playeffects)
-		return;
-
-	if (pmove.client_time >= pmove.t_width)
-	{
-		pmove.t_width = pmove.client_time + 0.6;
-		PM_SoundEffect_Weapon(cl_sfx_lghit, 1, 256);
-	}
-
-	vec3_t start, end, forward;
-	VectorCopy(pmove.origin, start);
-	start[2] += 16;
-	VectorCopy(start, end);
-
-	AngleVectors(pmove.cmd.angles, forward, NULL, NULL);
-	VectorScale(forward, 600, forward);
-	VectorAdd(end, forward, end);
-
 	pmove.current_ammo = pmove.ammo_cells -= 1;
-	trace_t hittrace = PM_TraceLine(start, end);
 	if (cl_predict_beam.integer && pmove.waterlevel <= 1)
-		CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
+	{
+		prediction_event_fakeproj_t *beam = PM_AddEvent_FakeProj(IT_LIGHTNING);
+		VectorCopy(pmove.origin, beam->origin);
+		beam->origin[2] += 16;
+
+		VectorCopy(pmove.cmd.angles, beam->angles);
+	}
 }
 
 void player_light2(void)
@@ -1676,28 +1708,15 @@ void player_light2(void)
 
 	pmove.attack_finished = pmove.client_time + 0.2;
 
-	if (!pmove_playeffects)
-		return;
-
-	if (pmove.client_time >= pmove.t_width)
-	{
-		pmove.t_width = pmove.client_time + 0.6;
-		PM_SoundEffect_Weapon(cl_sfx_lghit, 1, 256);
-	}
-
-	vec3_t start, end, forward;
-	VectorCopy(pmove.origin, start);
-	start[2] += 16;
-	VectorCopy(start, end);
-
-	AngleVectors(pmove.cmd.angles, forward, NULL, NULL);
-	VectorScale(forward, 600, forward);
-	VectorAdd(end, forward, end);
-
 	pmove.current_ammo = pmove.ammo_cells -= 1;
-	trace_t hittrace = PM_TraceLine(start, end);
 	if (cl_predict_beam.integer && pmove.waterlevel <= 1)
-		CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
+	{
+		prediction_event_fakeproj_t *beam = PM_AddEvent_FakeProj(IT_LIGHTNING);
+		VectorCopy(pmove.origin, beam->origin);
+		beam->origin[2] += 16;
+
+		VectorCopy(pmove.cmd.angles, beam->angles);
+	}
 }
 
 void anim_lightning(void)
@@ -1839,23 +1858,22 @@ void W_Attack(void)
 		pmove.attack_finished = pmove.client_time + 0.6;
 		pmove.current_ammo = pmove.ammo_rockets -= 1;
 		PM_SoundEffect_Weapon(cl_sfx_gl, 1, 64);
-		if (pmove_playeffects)
-		{
-			fproj_t *newmis = CL_CreateFakeGrenade();
-			vec3_t forward, right, up;
-			AngleVectors(pmove.cmd.angles, forward, right, up);
+		//if (pmove_playeffects)
+		//{
+		prediction_event_fakeproj_t *newmis = PM_AddEvent_FakeProj(IT_GRENADE_LAUNCHER);
+		vec3_t forward, right, up;
+		AngleVectors(pmove.cmd.angles, forward, right, up);
 
-			newmis->vel[0] = forward[0] * 600 + up[0] * 200;
-			newmis->vel[1] = forward[1] * 600 + up[1] * 200;
-			newmis->vel[2] = forward[2] * 600 + up[2] * 200;
+		newmis->velocity[0] = forward[0] * 600 + up[0] * 200;
+		newmis->velocity[1] = forward[1] * 600 + up[1] * 200;
+		newmis->velocity[2] = forward[2] * 600 + up[2] * 200;
 
-			VectorCopy(pmove.origin, newmis->start);
-			VectorCopy(pmove.origin, newmis->org);
-			Fproj_Physics_Bounce(newmis, 0.02);
+		VectorCopy(pmove.origin, newmis->origin);
+		//Fproj_Physics_Bounce(newmis, 0.02);
 
-			vectoangles(newmis->vel, newmis->angs);
-			VectorSet(newmis->avel, 300, 300, 300);
-		}
+		vectoangles(newmis->velocity, newmis->angles);
+		VectorSet(newmis->avelocity, 300, 300, 300);
+		//}
 
 		pmove.client_thinkindex = 1;
 		anim_rocket();
@@ -1865,30 +1883,29 @@ void W_Attack(void)
 		pmove.current_ammo = pmove.ammo_rockets -= 1;
 		PM_SoundEffect_Weapon(cl_sfx_rl, 1, 128);
 
-		if (pmove_playeffects)
-		{
-			fproj_t *newmis = CL_CreateFakeRocket();
+		//if (pmove_playeffects)
+		//{
+			prediction_event_fakeproj_t *newmis = PM_AddEvent_FakeProj(IT_ROCKET_LAUNCHER);
 			vec3_t forward;
 			AngleVectors(pmove.cmd.angles, forward, NULL, NULL);
 
 			if (pmove.client_predflags & PRDFL_MIDAIR)
 			{
-				VectorScale(forward, 2000, newmis->vel);
+				VectorScale(forward, 2000, newmis->velocity);
 			}
 			else
 			{
-				VectorScale(forward, 1000, newmis->vel);
+				VectorScale(forward, 1000, newmis->velocity);
 			}
 
+			VectorCopy(pmove.origin, newmis->origin);
+			newmis->origin[0] += forward[0] * 8;
+			newmis->origin[1] += forward[1] * 8;
+			newmis->origin[2] += 16 + forward[2] * 8;
 
-			VectorCopy(pmove.origin, newmis->start);
-			newmis->start[0] += forward[0] * 8;
-			newmis->start[1] += forward[1] * 8;
-			newmis->start[2] += 16 + forward[2] * 8;
-			VectorCopy(newmis->start, newmis->org);
-			VectorCopy(pmove.cmd.angles, newmis->angs);
-			newmis->angs[0] = -newmis->angs[0];
-		}
+			VectorCopy(pmove.cmd.angles, newmis->angles);
+			newmis->angles[0] = -newmis->angles[0];
+		//}
 		pmove.client_thinkindex = 1;
 		anim_rocket();
 	} break;

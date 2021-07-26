@@ -65,6 +65,7 @@ typedef struct {
 	byte		client_thinkindex;
 	byte		client_ping;
 	byte		client_predflags;
+	int			frame_current;
 
 	int			last_frame;
 	int			effect_frame;
@@ -121,6 +122,7 @@ cvar_t cl_predict_weaponsound;
 cvar_t cl_predict_smoothview;
 cvar_t cl_predict_beam;
 cvar_t cl_predict_jump;
+cvar_t cl_predict_buffer;
 
 extern movevars_t movevars;
 extern playermove_t pmove;

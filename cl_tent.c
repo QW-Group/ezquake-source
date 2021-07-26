@@ -162,6 +162,13 @@ void CL_MatchFakeProjectile(centity_t *cent)
 					}
 				}
 
+				
+				//cent->startlerp = cl.time;
+				//cent->deltalerp = 0.1;
+				//VectorCopy(prj->org, cent->old_origin);
+				//VectorCopy(prj->angs, cent->old_angles);
+				//VectorCopy(prj->org, cent->lerp_origin);
+
 				memset(prj, 0, sizeof(fproj_t));
 				return;
 			}
