@@ -5,7 +5,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - On startup (after `autoexec.cfg` executed), a `vid_restart`/`s_restart` will be issued if any latched variables were changed (#458)
 - Fixed bug causing off-by-one error when drawing rectangle outlines (3.5 bug, reported by Matrix, #536)
 - Detection of AMD drivers .13399 wasn't being working in classic renderer (#416)
-- Added `/gl_smoothmodels` back in, (requested by Repast via [quakeworld.nu](https://www.quakeworld.nu/forum/topic/7508/why-is-the-command-glsmoothmodels-r))
+- Added `/gl_smoothmodels` back in (modern renderer only), (requested by Repast via [quakeworld.nu](https://www.quakeworld.nu/forum/topic/7508/why-is-the-command-glsmoothmodels-r))
 - `/in_raw 0` behaviour changed to hopefully fix on MacOS and not break Windows
 - Fixed `/r_drawflat 1`, `/r_drawflat_mode 0` affecting ammo boxes etc in classic renderer
 - Fixed match logging not working when using competitive rulesets

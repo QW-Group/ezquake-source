@@ -251,9 +251,10 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, vbo_model_ve
 
 int GLC_AliasModelSubProgramIndex(qbool textured, qbool fullbright, qbool caustics, qbool muzzlehack)
 {
+	// gl_smoothmodels disabled for now
 	return
 		(textured ? DRAWFLAGS_TEXTURED : 0) | 
-		(fullbright ? DRAWFLAGS_FULLBRIGHT : (gl_smoothmodels.integer ? 0 : DRAWFLAGS_FLATSHADING)) |
+		(fullbright ? DRAWFLAGS_FULLBRIGHT : 0) | /*(gl_smoothmodels.integer ? 0 : DRAWFLAGS_FLATSHADING)) |*/
 		(caustics ? DRAWFLAGS_CAUSTICS : 0) | 
 		(muzzlehack ? DRAWFLAGS_MUZZLEHACK : 0);
 }
