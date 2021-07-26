@@ -2245,6 +2245,22 @@
         }
       ]
     },
+    "cl_nopred_weapon": {
+      "default": "0",
+      "desc": "Disables weapon prediction for your character",
+      "group-id": "21",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Predict weapons",
+          "name": "false"
+        },
+        {
+          "description": "Don't predict weapons",
+          "name": "true"
+        }
+      ]
+    },
     "cl_novweps": {
       "default": "0",
       "desc": "If set, disables support for zquake vwep extension.",
@@ -2499,6 +2515,82 @@
         {
           "description": "",
           "name": "true"
+        }
+      ]
+    },
+    "cl_predict_buffer": {
+      "default": "3",
+      "desc": "This variable controls how many frames will be buffered before weapon and sound prediction is used.\n\nHigher values will result in larger latency before seeing/hearing your weapon fire,\nbut with less prediction errors.",
+      "group-id": "21",
+      "type": "integer"
+    },
+    "cl_predict_jump": {
+      "default": "0",
+      "desc": "This variable controls if jump sounds will be predicted.",
+      "group-id": "21",
+      "type": "boolean"
+    },
+    "cl_predict_smoothview": {
+      "default": "1",
+      "desc": "This variable determines how smoothly predicted and true positions will be blended when desynchronized from knockback or packet-loss.",
+      "group-id": "21",
+      "type": "float",
+      "values": [
+        {
+          "description": "disables smoothing (behavior prior to EzQuake 3.6)",
+          "name": "0"
+        },
+        {
+          "description": "enables smoothing, higher is smoother, lower is closer to true position on the server.",
+          "name": "0.1 to 2"
+        }
+      ]
+    },
+    "cl_predict_weaponsound": {
+      "default": "1",
+      "desc": "This variable controls if (or which) weapon sounds will be predicted.\nFor choosing specific weapons to disable, add up all desired binary flags.",
+      "group-id": "21",
+      "type": "integer",
+      "values": [
+        {
+          "description": "disable all weapon sound prediction",
+          "name": "0"
+        },
+        {
+          "description": "enable all weapon sound prediction",
+          "name": "1"
+        },
+        {
+          "description": "disable for AXE",
+          "name": "2"
+        },
+        {
+          "description": "disable for SG",
+          "name": "4"
+        },
+        {
+          "description": "disable for SSG",
+          "name": "8"
+        },
+        {
+          "description": "disable for NG",
+          "name": "16"
+        },
+        {
+          "description": "disable for SNG",
+          "name": "32"
+        },
+        {
+          "description": "disable for GL",
+          "name": "64"
+        },
+        {
+          "description": "disable for RL",
+          "name": "128"
+        },
+        {
+          "description": "disable for LG",
+          "name": "256"
         }
       ]
     },
