@@ -1186,10 +1186,11 @@ static void CL_UpdateFakeProjectiles(void)
 			{
 				dlight_t *dl;
 				dl = cl_dlights;
-				for (i = 0; i < MAX_DLIGHTS; i++, dl++) {
+				int ik;
+				for (ik = 0; ik < MAX_DLIGHTS; ik++, dl++) {
 					if (dl->key == prj->dl_key) {
 						memset(dl, 0, sizeof(*dl));
-						cl_dlight_active[i / 32] -= (cl_dlight_active[i / 32] & (1 << (i % 32)));
+						cl_dlight_active[ik / 32] -= (cl_dlight_active[ik / 32] & (1 << (ik % 32)));
 					}
 				}
 			}
