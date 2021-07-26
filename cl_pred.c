@@ -412,7 +412,7 @@ void CL_PlayEvents() {
 				{
 					pmove.t_width = pmove.client_time + (0.6);
 
-					if (!((cl_predict_weaponsound.integer == 0) && (cl_predict_weaponsound.integer & 256)))
+					if (!((cl_predict_weaponsound.integer == 0) || (cl_predict_weaponsound.integer & 256)))
 					{
 						S_StartSound(cl.playernum + 1, 1, cl_sfx_lghit, pmove.origin, 1, 0);
 					}
