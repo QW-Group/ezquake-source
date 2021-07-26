@@ -29,7 +29,7 @@ cvar_t	cl_predict_weaponsound = { "cl_predict_weaponsound", "1" };
 cvar_t	cl_predict_smoothview = { "cl_predict_smoothview", "1" };
 cvar_t	cl_predict_beam = { "cl_predict_beam", "1" };
 cvar_t	cl_predict_jump = { "cl_predict_jump", "0" };
-cvar_t	cl_predict_buffer = { "cl_predict_buffer", "2" };
+cvar_t	cl_predict_buffer = { "cl_predict_buffer", "3" };
 
 extern cvar_t cl_independentPhysics;
 
@@ -437,7 +437,6 @@ void CL_PlayEvents() {
 			fproj_t *newmis;
 
 
-			///*
 			switch (p_event->type)
 			{
 			case IT_NAILGUN:
@@ -453,7 +452,6 @@ void CL_PlayEvents() {
 				newmis = CL_CreateFakeRocket();
 				break;
 			}
-			//*/
 
 			VectorCopy(p_event->angles, newmis->angs);
 			VectorCopy(p_event->origin, newmis->org);
@@ -461,25 +459,21 @@ void CL_PlayEvents() {
 			VectorCopy(p_event->velocity, newmis->vel);
 			VectorCopy(p_event->avelocity, newmis->avel);
 
-			//if ((cls.latency - 0.013) > ((float)pmove.client_ping / 1000))
-			//	newmis->starttime = (cl.time) + (max((cls.latency - 0.013) - ((float)pmove.client_ping / 1000), ms_diff));
-			//else
-				newmis->starttime -= ms_diff;
-
-			//newmis->starttime = max(newmis->starttime - ms_diff, (cl.time) + (max((cls.latency - 0.013) - ((float)pmove.client_ping / 1000), ms_diff)));
-
+			newmis->parttime -= max(ms_diff + 0.013, 0);
+			newmis->starttime -= max(ms_diff + 0.013, 0);
 			newmis->endtime -= max(ms_diff - 0.013, 0);
 
 			if (p_event->type == IT_GRENADE_LAUNCHER)
 			{
 				//newmis->starttime -= ms_diff;
 				Fproj_Physics_Bounce(newmis, 0.02);
-				Fproj_Physics_Bounce(newmis, ms_diff);
+				Fproj_Physics_Bounce(newmis, max(ms_diff - 0.013, 0));
 			}
 			else
 			{
 				VectorMA(newmis->org, ms_diff, newmis->vel, newmis->org);
 			}
+			//*/
 		}
 
 		p_event = p_event->next;
