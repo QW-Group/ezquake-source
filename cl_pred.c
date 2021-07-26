@@ -379,7 +379,8 @@ static void check_standing_on_entity(void)
         cl_independentPhysics.value);
 }
 
-void CL_PlayEvents() {
+void CL_PlayEvents(void)
+{
 
 	int threshold = bound(min(cl.validsequence + 2, cls.netchan.outgoing_sequence - 1), cls.netchan.outgoing_sequence - (cl_predict_buffer.integer + 1), cls.netchan.outgoing_sequence - 1);
 	if (pmove.effect_frame >= threshold)
