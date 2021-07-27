@@ -569,7 +569,6 @@ static int GL_InsertDefinitions(
 		strings[2] = (const char*)glsl_common_glsl;
 		strings[1] = (const char*)glsl_constants_glsl;
 
-		return 6;
 		// Some drivers interpret length 0 as nul terminated
 		// spec is < 0 (https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glShaderSource.xhtml)
 		for (i = 0; i < MAX_SHADER_COMPONENTS; ++i) {
@@ -578,6 +577,7 @@ static int GL_InsertDefinitions(
 			}
 		}
 
+		return 6;
 	}
 
 	return 1;
