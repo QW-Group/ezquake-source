@@ -382,6 +382,7 @@ static void check_standing_on_entity(void)
 void CL_PlayEvents(void)
 {
 
+
 	int threshold = bound(min(cl.validsequence + 2, cls.netchan.outgoing_sequence - 1), cls.netchan.outgoing_sequence - (cl_predict_buffer.integer + 1), cls.netchan.outgoing_sequence - 1);
 	if (pmove.effect_frame >= threshold)
 		return;
@@ -482,6 +483,7 @@ void CL_PlayEvents(void)
 
 	cl.simwepframe = state->weaponframe;
 	cl.simwep = state->weapon_index;
+
 	pmove.effect_frame = threshold;
 }
 
@@ -579,11 +581,9 @@ void CL_PredictMove (qbool physframe) {
 			to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];
 			CL_PredictUsercmd (&from->playerstate[cl.playernum], &to->playerstate[cl.playernum], &to->cmd, true);
 
-			if (i == 1)
-				pmove.weapon_serverstate = to->playerstate[cl.playernum].weapon;
-
 			if ((cl.validsequence + i) == cl.simerr_frame)
 			{
+				// if our origin is significantly wrong, add it to our nudge vector
 				vec3_t diff;
 				VectorSubtract(cl.simerr_org, to->playerstate[cl.playernum].origin, diff);
 				if (VectorLength(diff) > 4 && VectorLength(diff) < 64)
@@ -593,6 +593,10 @@ void CL_PredictMove (qbool physframe) {
 					VectorScale(diff, mult, diff);
 					VectorAdd(diff, cl.simerr_nudge, cl.simerr_nudge);
 				}
+
+				// we missed some weapon state change, replay all the sounds since then
+				if (cl.simerr_wep != pmove.weapon || cl.simerr_wepframe != pmove.weaponframe)
+					pmove.effect_frame = cl.validsequence;
 			}
 		}
 
@@ -608,6 +612,7 @@ void CL_PredictMove (qbool physframe) {
 		// error smoothing
 		if (cl_predict_smoothview.value >= 0.1 && !cl.spectator)
 		{
+			// update and smooth our position
 			cl.simerr_frame = cl.validsequence + i - 1;
 			VectorCopy(to->playerstate[cl.playernum].origin, cl.simerr_org);
 			float nudge = VectorLength(cl.simerr_nudge);
@@ -639,6 +644,10 @@ void CL_PredictMove (qbool physframe) {
 			trace_t checktrace = PM_PlayerTrace(cl.simorg, goal);
 			VectorSubtract(checktrace.endpos, cl.simorg, cl.simerr_nudge);
 			VectorCopy(checktrace.endpos, cl.simorg);
+
+			// update our expected weapon state as well
+			cl.simerr_wep = pmove.weapon;
+			cl.simerr_wepframe = pmove.weaponframe;
 		}
 		//
 		//

@@ -52,7 +52,6 @@ typedef struct {
 	int			pm_type;
 
 	int			weapon;
-	int			weapon_serverstate;
 	int			weapon_index;
 	int			weaponframe;
 

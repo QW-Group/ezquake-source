@@ -680,6 +680,8 @@ typedef struct {
 	int			simwepframe;
 	float		simerr_lastcheck;
 	int			simerr_frame;
+	int			simerr_wepframe;
+	int			simerr_wep;
 	vec3_t		simerr_nudge;
 	vec3_t		simerr_org;
 
