@@ -328,11 +328,13 @@ typedef enum
 
 typedef enum demoseekingtype_e
 {
-	DST_SEEKING_NONE = 0, ///< seeking nothing
-	DST_SEEKING_NORMAL = 1, ///< demo_jump seeking
-	DST_SEEKING_DEMOMARK, ///< demo_jump_mark seeking
-	DST_SEEKING_STATUS, ///< demo_jump_status seeking
-	DST_SEEKING_FOUND ///< mark/status seeking, hint that we are done and should stop seeking
+	DST_SEEKING_NONE = 0,         ///< seeking nothing
+	DST_SEEKING_NORMAL = 1,       ///< demo_jump seeking
+	DST_SEEKING_DEMOMARK,         ///< demo_jump_mark seeking
+	DST_SEEKING_STATUS,           ///< demo_jump_status seeking
+	DST_SEEKING_FOUND,            ///< mark/status seeking, hint that we are done and should stop seeking
+	DST_SEEKING_END,              ///< demo_jump_end seeking (intermission or 1 second before end)
+	DST_SEEKING_FOUND_NOREWIND,   ///< mark/status seeking, no automatic rewind
 } demoseekingtype_t;
 
 typedef enum

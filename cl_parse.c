@@ -3870,6 +3870,10 @@ void CL_ParseServerMessage (void)
 						cl.simangles[i] = MSG_ReadAngle();
 					VectorClear(cl.simvel);
 					TP_ExecTrigger ("f_mapend");
+
+					if (cls.demoseeking == DST_SEEKING_END) {
+						cls.demoseeking = DST_SEEKING_FOUND_NOREWIND; // it will reset to the DST_SEEKING_NONE in the deep of the demo code
+					}
 					break;
 				}
 			case svc_finale:

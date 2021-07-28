@@ -2056,13 +2056,13 @@ qbool CL_GetDemoMessage (void)
 		}
 
 		// If we found demomark, we should stop seeking, so reset time to the proper value.
-		if (cls.demoseeking == DST_SEEKING_FOUND) {
+		if (cls.demoseeking == DST_SEEKING_FOUND || cls.demoseeking == DST_SEEKING_FOUND_NOREWIND) {
 			cls.demotime = demotime; // this will trigger seeking stop
 
-			if (demo_jump_rewind.value < 0) {
-				CL_Demo_Jump (-demo_jump_rewind.value, -1, DST_SEEKING_NORMAL);
+			if (demo_jump_rewind.value < 0 && cls.demoseeking != DST_SEEKING_FOUND_NOREWIND) {
+				CL_Demo_Jump(-demo_jump_rewind.value, -1, DST_SEEKING_NORMAL);
+				return false;
 			}
-			return false;
 		}
 
 		// If we've reached our seek goal, stop seeking.
@@ -4925,7 +4925,7 @@ void CL_Demo_Jump_f (void)
 //
 void CL_Demo_Jump_Mark_f (void)
 {
-	int seconds = 99999; // as far as possibile, we have NO idea about time, we search MARK
+	int seconds = 99999; // as far as possible, we have NO idea about time, we search MARK
 
 	// Cannot jump without playing demo.
 	if (!cls.demoplayback)
@@ -4942,6 +4942,31 @@ void CL_Demo_Jump_Mark_f (void)
 	}
 
 	CL_Demo_Jump(seconds, 0, DST_SEEKING_DEMOMARK);
+}
+
+void CL_Demo_Jump_End_f(void)
+{
+	int target_time;
+
+	// Cannot jump without playing demo.
+	if (!cls.demoplayback) {
+		Com_Printf("Error: not playing a demo\n");
+		return;
+	}
+
+	// Must be active to jump.
+	if (cls.state < ca_active) {
+		Com_Printf("Error: demo must be active first\n");
+		return;
+	}
+
+	target_time = (cls.demoplayback ? (int)ceil(CL_GetDemoLength()) - 2 : 0);
+	if (target_time - (cls.demotime - demostarttime) < (cl.intermission ? 10 : 2)) {
+		Com_Printf("Error: too close to end of demo\n");
+		return;
+	}
+
+	CL_Demo_Jump(target_time, 0, DST_SEEKING_END);
 }
 
 static void CL_Demo_Jump_Status_Free (demoseekingstatus_condition_t *condition)
@@ -5430,6 +5455,7 @@ void CL_Demo_Init(void)
 	Cmd_AddCommand("demo_jump", CL_Demo_Jump_f);
 	Cmd_AddCommand("demo_jump_mark", CL_Demo_Jump_Mark_f);
 	Cmd_AddCommand("demo_jump_status", CL_Demo_Jump_Status_f);
+	Cmd_AddCommand("demo_jump_end", CL_Demo_Jump_End_f);
 	Cmd_AddCommand("demo_controls", DemoControls_f);
 
 	//

@@ -11,6 +11,8 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Fixed match logging not working when using competitive rulesets
 - Fixed incomplete rendering when gibbed or dead in shallow water (reported by Matrix, #568)
 - Fixed tab key not switching tabs on serverinfo popup (reported by Hangtime, #555)
+- Added `/demo_jump_end` to jump to next intermission point or end of demo (requested by Hangtime, #564)
+- Fixed `/demo_jump_mark` not working if `/demo_jump_rewind` not set
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 
