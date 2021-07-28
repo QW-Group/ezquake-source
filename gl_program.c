@@ -399,12 +399,19 @@ static void GL_ConPrintShaderLog(GLuint shader)
 
 	GL_Procedure(glGetShaderiv, shader, GL_INFO_LOG_LENGTH, &log_length);
 	GL_Procedure(glGetShaderiv, shader, GL_SHADER_SOURCE_LENGTH, &src_length);
-	if (log_length) {
+	if (log_length || (src_length > 0 && developer.integer == 3)) {
 		GLsizei written;
 
-		buffer = Q_malloc(max(log_length, src_length));
+		buffer = Q_malloc(max(log_length, src_length) + 1);
 		GL_Procedure(glGetShaderInfoLog, shader, log_length, &written, buffer);
-		Con_Printf(buffer);
+		Con_Printf("-- Version: %s\n", glConfig.version_string);
+		Con_Printf("--    GLSL: %s\n", glConfig.glsl_version);
+		Con_Printf("%s\n", buffer);
+
+		if (developer.integer == 2 || developer.integer == 3) {
+			GL_Procedure(glGetShaderSource, shader, src_length, &written, buffer);
+			Con_Printf("%s\n", buffer);
+		}
 
 		Q_free(buffer);
 	}
@@ -466,6 +473,8 @@ static qbool GL_CompileShader(GLsizei shaderComponents, const char* shaderText[]
 		GL_Procedure(glGetShaderiv, shader, GL_COMPILE_STATUS, &result);
 		if (result) {
 			*shaderId = shader;
+			Con_Printf("Shader->Compile(%X) succeeded\n", shaderType);
+			GL_ConPrintShaderLog(shader);
 			return true;
 		}
 
