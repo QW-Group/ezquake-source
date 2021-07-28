@@ -2059,7 +2059,11 @@ qbool CL_GetDemoMessage (void)
 		if (cls.demoseeking == DST_SEEKING_FOUND || cls.demoseeking == DST_SEEKING_FOUND_NOREWIND) {
 			cls.demotime = demotime; // this will trigger seeking stop
 
-			if (demo_jump_rewind.value < 0 && cls.demoseeking != DST_SEEKING_FOUND_NOREWIND) {
+			if (cls.demoseeking == DST_SEEKING_FOUND_NOREWIND) {
+				// Pause instead of rewinding
+				Cvar_SetValue(&cl_demospeed, 0.0f);
+			}
+			else if (demo_jump_rewind.value < 0) {
 				CL_Demo_Jump(-demo_jump_rewind.value, -1, DST_SEEKING_NORMAL);
 				return false;
 			}
