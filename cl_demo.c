@@ -119,6 +119,7 @@ cvar_t demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
 cvar_t cl_startupdemo = {"cl_startupdemo", ""};
 cvar_t demo_jump_rewind = { "demo_jump_rewind", "-10" };
 cvar_t cl_demo_qwd_delta = { "cl_demo_qwd_delta", "1" };
+cvar_t demo_jump_skip_messages = { "demo_jump_skip_messages", "1" };
 
 // Used to save track status when rewinding.
 static vec3_t rewind_angle;
@@ -5488,6 +5489,7 @@ void CL_Demo_Init(void)
 	Cvar_Register(&cl_startupdemo);
 	Cvar_Register(&demo_jump_rewind);
 	Cvar_Register(&cl_demo_qwd_delta);
+	Cvar_Register(&demo_jump_skip_messages);
 
 	Cvar_ResetCurrentGroup();
 }

@@ -137,6 +137,7 @@
 - `/demo_format` supported in non-Windows builds
 - `/demo_jump` during demo playback should now be faster (#453)
 - `/demo_jump_end` to jump to next intermission point or end of demo (requested by Hangtime, #564)
+- `/demo_jump_skip_messages` to determine if messages should be printed to console during demo jump
 - `/enemyforceskins 1` will search for player names in lower case (#345)
 - `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
 - `/gl_mipmap_viewmodels` removed, replaced with `/gl_texturemode_viewmodels`

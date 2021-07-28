@@ -2,17 +2,18 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 
 ### Changes from alpha8=>alpha9 (July 13th, ongoing)
 
-- On startup (after `autoexec.cfg` executed), a `vid_restart`/`s_restart` will be issued if any latched variables were changed (#458)
+- Fixed/worked around some classic renderer bugs on version x.y.13399 AMD drivers (#416)
 - Fixed bug causing off-by-one error when drawing rectangle outlines (3.5 bug, reported by Matrix, #536)
-- Detection of AMD drivers .13399 wasn't being working in classic renderer (#416)
-- Added `/gl_smoothmodels` back in (modern renderer only), (requested by Repast via [quakeworld.nu](https://www.quakeworld.nu/forum/topic/7508/why-is-the-command-glsmoothmodels-r))
-- `/in_raw 0` behaviour changed to hopefully fix on MacOS and not break Windows
+- Fixed `/in_raw 0` behaviour on MacOS (#489)
 - Fixed `/r_drawflat 1`, `/r_drawflat_mode 0` affecting ammo boxes etc in classic renderer
 - Fixed match logging not working when using competitive rulesets
 - Fixed incomplete rendering when gibbed or dead in shallow water (reported by Matrix, #568)
 - Fixed tab key not switching tabs on serverinfo popup (reported by Hangtime, #555)
-- Added `/demo_jump_end` to jump to next intermission point or end of demo (requested by Hangtime, #564)
 - Fixed `/demo_jump_mark` not working if `/demo_jump_rewind` not set
+- Added `/gl_smoothmodels` back in (modern renderer only), (requested by Repast via [quakeworld.nu](https://www.quakeworld.nu/forum/topic/7508/why-is-the-command-glsmoothmodels-r))
+- Added `/demo_jump_skip_messages` to determine if messages should be printed to console during demo jump
+- Added `/demo_jump_end` to jump to next intermission point or end of demo (requested by Hangtime, #564)
+- On startup (after `autoexec.cfg` executed), a `vid_restart`/`s_restart` will be issued if any latched variables were changed (#458)
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 
