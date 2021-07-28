@@ -1512,9 +1512,6 @@ void ImpulseCommands(void)
 
 void W_FireAxe(void)
 {
-	if (!pmove_playeffects)
-		return;
-
 	vec3_t start, end;
 	VectorCopy(pmove.origin, start);
 	start[2] += 16;
