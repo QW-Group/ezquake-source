@@ -473,8 +473,10 @@ static qbool GL_CompileShader(GLsizei shaderComponents, const char* shaderText[]
 		GL_Procedure(glGetShaderiv, shader, GL_COMPILE_STATUS, &result);
 		if (result) {
 			*shaderId = shader;
-			Con_Printf("Shader->Compile(%X) succeeded\n", shaderType);
-			GL_ConPrintShaderLog(shader);
+			if (developer.integer == 3) {
+				Con_Printf("Shader->Compile(%X) succeeded\n", shaderType);
+				GL_ConPrintShaderLog(shader);
+			}
 			return true;
 		}
 
