@@ -357,7 +357,7 @@ static byte* Skin_Cache(skin_t *skin, qbool no_baseskin)
 			skin->warned = true;
 			return NULL; // well, we not set skin->failedload = true, that how I need it here
 		}
-		else if (!skin->warned) {
+		else if (!skin->warned && strcmp(skin->name, "base")) {
 			Com_Printf("&cf22Couldn't load skin:&r %s\n", name);
 		}
 
