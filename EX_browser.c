@@ -2225,6 +2225,14 @@ void Serverinfo_Key(int key)
 				Serverinfo_Change(servers[Servers_pos]);
 			}
 			break;
+		case K_TAB:
+			if (keydown[K_SHIFT]) {
+				serverinfo_pos--;
+			}
+			else {
+				serverinfo_pos++;
+			}
+			break;
 		case K_LEFTARROW:
 			serverinfo_pos--;
 			break;

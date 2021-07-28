@@ -9,6 +9,8 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - `/in_raw 0` behaviour changed to hopefully fix on MacOS and not break Windows
 - Fixed `/r_drawflat 1`, `/r_drawflat_mode 0` affecting ammo boxes etc in classic renderer
 - Fixed match logging not working when using competitive rulesets
+- Fixed incomplete rendering when gibbed or dead in shallow water (reported by Matrix, #568)
+- Fixed tab key not switching tabs on serverinfo popup (reported by Hangtime, #555)
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 
