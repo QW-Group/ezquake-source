@@ -916,8 +916,6 @@ void SCR_UpdateScreenPlayerView(int flags)
 	qbool draw_2d = !(flags & UPDATESCREEN_3D_ONLY);
 	qbool draw_3d = !(flags & UPDATESCREEN_2D_ONLY);
 
-	R_TraceResetRegion(true);
-
 	if (draw_3d) {
 		R_CheckReloadLightmaps();
 

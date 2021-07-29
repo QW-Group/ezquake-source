@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "version.h"
 #include "demo_controls.h"
 #include "mvd_utils.h"
+#include "r_trace.h"
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
@@ -1904,6 +1905,7 @@ static qbool CL_DemoShouldWeReadNextMessage(double demotime)
 			// and calculate the framerate when it's done.
 			cls.td_starttime = Sys_DoubleTime();
 			cls.td_startframe = cls.framecount;
+			R_TraceAPI("[timedemo] first-frame");
 			key_dest = key_game;
 		}
 
@@ -3385,6 +3387,7 @@ void CL_StopPlayback(void)
 		//
 		// Calculate the time it took to render the frames.
 		//
+		R_TraceAPI("[timedemo] finished");
 		frames = cls.framecount - cls.td_startframe - 1;
 		time = Sys_DoubleTime() - cls.td_starttime;
 		if (time <= 0) {
