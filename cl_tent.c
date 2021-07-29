@@ -329,8 +329,6 @@ fproj_t *CL_CreateFakeRocket(void)
 
 	fproj_t *newmis = CL_AllocFakeProjectile();
 	newmis->modelindex = cl_modelindices[mi_rocket];
-	if (cl_rocket2grenade.integer)
-		newmis->modelindex =cl_modelindices[mi_grenade];
 
 	float latency = cls.latency;
 	newmis->starttime = cl.time + max((latency - 0.013) - ((float)pmove.client_ping / 1000), 0);
@@ -1267,6 +1265,16 @@ static void CL_UpdateFakeProjectiles(void)
 			}
 		}
 
+		// hacky fix for cl_r2g, we have to change the model after the particles have been handled
+		if (prj->effects & EF_ROCKET)
+		{
+			if (cl_rocket2grenade.integer)
+			{
+				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
+			}
+		}
+
+		// finally add fake projectile to the scene
 		CL_AddEntity(&ent);
 	}
 }
