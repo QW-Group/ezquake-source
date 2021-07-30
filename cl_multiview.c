@@ -1329,7 +1329,7 @@ void CL_MultiviewRestoreValues (void)
 	int i = 0;
 
 	for (i = 0; i < sizeof (multiviewCvars) / sizeof (multiviewCvars[0]); ++i) {
-		Cvar_SetValue (multiviewCvars[i].cvar, multiviewCvars[i].value);
+		Cvar_SetValue(multiviewCvars[i].cvar, multiviewCvars[i].value);
 	}
 
 	bExitmultiview = false;
@@ -1343,22 +1343,22 @@ static void CL_MultiviewOverrideValues (void)
 
 	// stop fakeshaft as it lerps with the other views
 	if (cl_fakeshaft.value < 1 && cl_fakeshaft.value > 0) {
-		cl_fakeshaft.value = 0;
+		Cvar_SetValue(&cl_fakeshaft, 0);
 	}
 
 	// allow mvinset 1 to use viewsize value
 	scr_viewsize.value = multiviewCvars[MV_CVAR_VIEWSIZE].value;
 	if ((!cl_mvinset.value && cl_multiview.value == 2) || cl_multiview.value != 2) {
-		scr_viewsize.value = 120;
+		Cvar_SetValue(&scr_viewsize, 120);
 	}
 
 	// stop small screens
 	if (cl_mvinset.value && cl_multiview.value == 2 && scr_viewsize.value < 100) {
-		scr_viewsize.value = 100;
+		Cvar_SetValue(&scr_viewsize, 100);
 	}
 
-	gl_polyblend.value = 0;
-	gl_clear.value = 0;
+	Cvar_SetValue(&gl_polyblend, 0);
+	Cvar_SetValue(&gl_clear, 0);
 }
 
 static qbool CL_MultiviewCvarResetRequired (void)
@@ -1425,8 +1425,9 @@ qbool CL_MultiviewInsetView (void)
 
 int CL_MultiviewActiveViews (void)
 {
-	if (cls.mvdplayback)
-		return bound (1, cl_multiview.integer, 4);
+	if (cls.mvdplayback) {
+		return bound(1, cl_multiview.integer, 4);
+	}
 	return 1;
 }
 
