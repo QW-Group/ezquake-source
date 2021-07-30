@@ -13416,9 +13416,18 @@
       "type": "enum",
       "systems": [ "macos" ],
       "values": [
-        { "name": "0", "description": "Disabled" },
-        { "name": "1", "description": "Enabled when option keys are held down" },
-        { "name": "2", "description": "Enabled when alt keys are held down (for standard keyboard on MacOS)" }
+        {
+          "name": "0",
+          "description": "Disabled"
+        },
+        {
+          "name": "1",
+          "description": "Enabled when option keys are held down"
+        },
+        {
+          "name": "2",
+          "description": "Enabled when alt keys are held down (for standard keyboard on MacOS)"
+        }
       ]
     },
     "in_ignore_touch_events": {
@@ -13433,7 +13442,7 @@
       "group-id": "11",
       "remarks": "X11 systems only.",
       "type": "boolean",
-      "systems": ["linux"]
+      "systems": [ "linux" ]
     },
     "in_m_os_parameters": {
       "desc": "Allows you to use your system mouse settings in the client.",
@@ -21092,21 +21101,37 @@
       "group-id": "39",
       "type": "float"
     },
+    "v_dlightcolor": {
+      "default": "1",
+      "desc": "Controls if the color of a light affects your view\nRequires gl_polyblend & gl_flashblend set",
+      "group-id": "39",
+      "type": "boolean"
+    },
     "v_dlightcshift": {
       "default": "1",
-      "desc": "Turning this variable on will blend light when you're inside a light bubble.\nAlso need to set gl_flashblend 1.",
+      "desc": "Controls when palette will change when inside a light bubble.\nAlso need to set gl_flashblend 1.",
       "group-id": "39",
-      "type": "boolean",
+      "type": "enum",
       "values": [
         {
           "description": "Off.",
-          "name": "false"
+          "name": "0"
         },
         {
           "description": "On.",
-          "name": "true"
+          "name": "1"
+        },
+        {
+          "description": "On, but excludes lights around players.",
+          "name": "2"
         }
       ]
+    },
+    "v_dlightcshiftpercent": {
+      "default": "0.5",
+      "desc": "Strength of effect of v_dlightcshift, as a percentage",
+      "group-id": "39",
+      "type": "float"
     },
     "v_gunkick": {
       "default": "0",

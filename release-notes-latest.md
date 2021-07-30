@@ -23,6 +23,9 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - `/status` command will be ignored if an alias with the same name is found, use `/sv_status` instead (fixes #532)
 - qw:// urls in command line will be opened even if not preceded by `+qwurl` (thanks to ciscon)
 - Linux: register_qwurl_protocol will register protocol with xdg (thanks to ciscon)
+- Added `/v_dlightcolor` to control if being inside flashblend light affects palette by color of light
+- Added `/v_dlightcshiftpercent` to control strength of palette shift effect when inside flashblend light
+- Changed `/v_dlightcshift` to be enum of when being inside flashblend light affects palette (requested by HangTime, #542)
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 

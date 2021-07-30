@@ -83,17 +83,19 @@ cvar_t  cl_crossy = {"cl_crossy", "0"};
 static cvar_t vid_hwgamma_fps = { "vid_hwgamma_fps", "60" };
 
 // QW262: less flash grenade effect in demos
-cvar_t	cl_demoplay_flash = {"cl_demoplay_flash", ".33"};
+cvar_t cl_demoplay_flash       = { "cl_demoplay_flash",      "0.33" };
 
-cvar_t  v_contentblend = {"v_contentblend", "0.2"};
-cvar_t	v_damagecshift = {"v_damagecshift", "0.2"};
-cvar_t	v_quadcshift = {"v_quadcshift", "0.5"};
-cvar_t	v_suitcshift = {"v_suitcshift", "0.5"};
-cvar_t	v_ringcshift = {"v_ringcshift", "0.5"};
-cvar_t	v_pentcshift = {"v_pentcshift", "0.5"};
-cvar_t	v_dlightcshift = {"v_dlightcshift", "1"};
+cvar_t v_contentblend          = { "v_contentblend",         "0.2" };
+cvar_t v_damagecshift          = { "v_damagecshift",         "0.2" };
+cvar_t v_quadcshift            = { "v_quadcshift",           "0.5" };
+cvar_t v_suitcshift            = { "v_suitcshift",           "0.5" };
+cvar_t v_ringcshift            = { "v_ringcshift",           "0.5" };
+cvar_t v_pentcshift            = { "v_pentcshift",           "0.5" };
+cvar_t v_dlightcshift          = { "v_dlightcshift",         "1.0" };
+cvar_t v_dlightcolor           = { "v_dlightcolor",          "1.0" };
+cvar_t v_dlightcshiftpercent   = { "v_dlightcshiftpercent",  "0.5" };
 
-cvar_t	v_bonusflash = {"cl_bonusflash", "0"};
+cvar_t v_bonusflash            = { "cl_bonusflash",          "0.0" };
 
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 
@@ -530,7 +532,7 @@ void V_CalcBlend (void)
 	int j;
 	extern cvar_t gl_polyblend;
 
-	r = g = b = a= 0;
+	r = g = b = a = 0;
 
 	if (cls.state != ca_active) {
 		cl.cshifts[CSHIFT_CONTENTS] = cshift_empty;
@@ -583,16 +585,35 @@ void V_CalcBlend (void)
 	v_blend[3] = bound(0, v_blend[3], 1);
 }
 
-void V_AddLightBlend (float r, float g, float b, float a2)
+void V_AddLightBlend(float r, float g, float b, float a2, qbool suppress_polyblend)
 {
 	float a;
 	extern cvar_t gl_polyblend;
+	qbool shift_on_dlight = gl_polyblend.integer && (v_dlightcshift.integer == 1 || (v_dlightcshift.integer == 2 && !suppress_polyblend));
+	float percentage = bound(0, v_dlightcshiftpercent.value, 1);
 
-	if (!gl_polyblend.value || !gl_cshiftpercent.value || !v_dlightcshift.value) {
+	if (percentage <= 0 || !shift_on_dlight) {
 		return;
 	}
 
-	a2 = a2 * bound(0, v_dlightcshift.value, 1) * gl_cshiftpercent.value / 100.0;
+	if (!v_dlightcolor.integer) {
+		r = 1.0f;
+		g = 0.5f;
+		b = 0.0f;
+	}
+	else {
+		// some kind of scaling, the normal colors aren't full red/blue etc
+		float max = max(r, max(g, b));
+
+		if (max > 0) {
+			r /= max;
+			g /= max;
+			b /= max;
+		}
+	}
+
+	a2 = bound(0, a2, 1);
+	a2 *= percentage;
 
 	v_blend[3] = a = v_blend[3] + a2 * (1 - v_blend[3]);
 
@@ -1162,10 +1183,12 @@ void V_Init (void) {
 	Cvar_Register (&v_pentcshift);
 	Cvar_Register (&cl_demoplay_flash); // from QW262
 
-	Cvar_Register (&v_dlightcshift);
-	Cvar_Register (&gl_cshiftpercent);
-	Cvar_Register (&gl_hwblend);
-	Cvar_Register (&vid_hwgamma_fps);
+	Cvar_Register(&v_dlightcshift);
+	Cvar_Register(&v_dlightcolor);
+	Cvar_Register(&v_dlightcshiftpercent);
+	Cvar_Register(&gl_cshiftpercent);
+	Cvar_Register(&gl_hwblend);
+	Cvar_Register(&vid_hwgamma_fps);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register(&v_gamma);

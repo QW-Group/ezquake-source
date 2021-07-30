@@ -174,6 +174,9 @@
 - `/timedemo2` command renders demo in stop-motion at a particular fps
 - `/tp_poweruptextstyle` controls if `$colored_powerups` or `$colored_short_powerups` is used in internal reporting commands
 - `/tp_point` will show targets in priority order, if `/tp_pointpriorities` is enabled
+- `/v_dlightcolor` added - controls if being inside flashblend light affects palette by color of light
+- `/v_dlightcshiftpercent` added - controls strength of palette shift effect when inside flashblend light
+- `/v_dlightcshift` changed - now enum of when being inside flashblend light affects palette (requested by HangTime, #542)
 - `/vid_framebuffer_smooth` controls linear or nearest filtering (thanks to Calinou)
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
 - `/vid_hwgamma_fps` controls how frequency the gamma of the monitor will be set if hardware gamma is enabled
@@ -194,7 +197,7 @@
 - Added hud element 'frametime', similar to fps but measuring (max) frametime
 - Changed file-handling when viewing demos from within .zip|.gz to reduce temporary files being left on hard drive
 - PNG warning messages now printed to console rather than stdout
-- Added macro $timestamp, which is in format YYYYMMDD-hhmmss
+- Added macro $timestamp, which is in format YYYYMMDD-hhmm
 - Qizmo-compressed files can be played back using Qizmo on linux
 - When watching mvd/qtv, `/record` & `/stop` become `/mvdrecord` and `/mvdstop` respectively (suggested by HangTime)
 - Internal server has been updated to match latest mvdsv codebase
