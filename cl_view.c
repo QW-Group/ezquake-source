@@ -404,7 +404,7 @@ void V_TF_FlashStuff (void)
 	}
 
 	if (cls.demoplayback && cshift_empty.destcolor[0] == cshift_empty.destcolor[1]) {
-		cshift_empty.percent *= cl_demoplay_flash.value / 1.0f;
+		cshift_empty.percent *= bound(0, cl_demoplay_flash.value, 1) / 1.0f;
 	}
 }
 // <-- disconnect
