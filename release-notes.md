@@ -160,6 +160,7 @@
 - `/r_rockettrail` & `/r_grenadetrail` options requiring QMB particles degrade to '1' if QMB not initialised
 - `/r_smoothalphahack 1` - during hud rendering, shader will apply lerped alpha to lerped color (behaves as per ezquake < 3.5)
 - `/register_qwurl_protocol` reports success if run from command line (or rather, run without 'quiet' as 1st argument)
+- `/sb_info_filter` added - allows filtering of servers in server-browser based on serverinfo
 - `/scr_sbar_drawarmor666` - `/hud_armor_pent_666` for oldhud (controls if '666' or armor value is shown when player has pent)
 - `/scr_damage_hitbeep` - will play `dmg-notification.wav` when current player does damage (on supported .mvd files & qtv streams)
 - `/scr_damage_floating` - will display floating damage numbers when current player does damage (on supported .mvd files & qtv streams)
