@@ -362,6 +362,12 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 		realwidth = (newsh - newsl) * texWidth;
 		realheight = (newth - newtl) * texHeight;
 
+		// Cope with 1x1 transparent png files...(#571)
+		realwidth = max(realwidth, 1);
+		realheight = max(realheight, 1);
+		x_src = min(x_src, texWidth - 1);
+		y_src = min(y_src, texHeight - 1);
+
 		snprintf(name, sizeof(name), "hud_ammo_%d", i - WADPIC_SB_IBAR_AMMO1);
 
 		for (y = 0; y < realheight; ++y) {
