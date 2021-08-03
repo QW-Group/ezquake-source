@@ -180,9 +180,10 @@ static void CL_LerpMove (qbool angles_lerp)
 	double  current_lerp_time = cls.demoplayback ? cls.demopackettime : (cmdtime_msec * 0.001);
 	qbool   physframe = cls.netchan.outgoing_sequence != lastsequence;
 
-	if ((cl_nolerp.value || cl_nolerp_on_entity_flag)) 
-	{
-		lastsequence = ((unsigned)-1) >> 1;	//reset
+	if ((cl_nolerp.value || cl_nolerp_on_entity_flag)) {
+		//reset
+		nolerp[0] = nolerp[1] = nolerp_nextpos = false;
+		lastsequence = ((unsigned)-1) >> 1;
 		return;
 	}
 
