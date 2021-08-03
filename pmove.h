@@ -113,15 +113,15 @@ typedef struct {
 	int     rampjump; // if set, all vertical velocity clipped by groundplane during jump frame.  If 0, only when falling (standard jumpfix)
 } movevars_t;
 
-int pmove_playeffects;
-int pmove_nopred_weapon;
-cvar_t cl_nopred;
-cvar_t cl_nopred_weapon;
-cvar_t cl_predict_weaponsound;
-cvar_t cl_predict_smoothview;
-cvar_t cl_predict_beam;
-cvar_t cl_predict_jump;
-cvar_t cl_predict_buffer;
+extern int pmove_playeffects;
+extern int pmove_nopred_weapon;
+extern cvar_t cl_nopred;
+extern cvar_t cl_nopred_weapon;
+extern cvar_t cl_predict_weaponsound;
+extern cvar_t cl_predict_smoothview;
+extern cvar_t cl_predict_beam;
+extern cvar_t cl_predict_jump;
+extern cvar_t cl_predict_buffer;
 
 extern movevars_t movevars;
 extern playermove_t pmove;

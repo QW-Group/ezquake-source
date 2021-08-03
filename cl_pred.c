@@ -43,6 +43,18 @@ qbool clpred_newpos = false;
 #endif
 
 
+prediction_event_fakeproj_t		*p_event_fakeproj;
+prediction_event_sound_t		*p_event_sound;
+sfx_t	*cl_sfx_jump, *cl_sfx_ax1, *cl_sfx_axhit1, *cl_sfx_sg, *cl_sfx_ssg, *cl_sfx_ng, *cl_sfx_sng, *cl_sfx_gl, *cl_sfx_rl, *cl_sfx_lg, *cl_sfx_lghit, *cl_sfx_coil, *cl_sfx_hook;
+cvar_t cl_nopred;
+cvar_t cl_nopred_weapon;
+cvar_t cl_predict_weaponsound;
+cvar_t cl_predict_smoothview;
+cvar_t cl_predict_beam;
+cvar_t cl_predict_jump;
+cvar_t cl_predict_buffer;
+
+
 static qbool nolerp[2];
 static qbool nolerp_nextpos;
 
@@ -576,6 +588,8 @@ void CL_PredictMove (qbool physframe) {
 		for (i = 1; i < UPDATE_BACKUP - 1 && cl.validsequence + i < cls.netchan.outgoing_sequence; i++) {
 
 			pmove.frame_current = (cl.validsequence + i);
+			if (cl.validsequence + i >= cls.netchan.outgoing_sequence - 1)
+				pmove_playeffects = true;
 
 			from = to;
 			to = &cl.frames[(cl.validsequence + i) & UPDATE_MASK];

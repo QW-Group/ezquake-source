@@ -111,8 +111,8 @@ typedef struct prediction_event_fakeproj_s
 } prediction_event_fakeproj_t;
 
 // events in prediction that we play back slightly delayed depending on cl_predict_buffer
-prediction_event_fakeproj_t	*p_event_fakeproj;
-prediction_event_sound_t	*p_event_sound;
+extern prediction_event_fakeproj_t	*p_event_fakeproj;
+extern prediction_event_sound_t		*p_event_sound;
 
 
 // player_state_t is the information needed by a player entity

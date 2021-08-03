@@ -21,12 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_tent.c -- client side temporary entities
 
 #include "quakedef.h"
-#include "gl_model.h"
 #include "vx_stuff.h"
 #include "rulesets.h"
+#include "qsound.h"
 #include "pmove.h"
 #include "utils.h"
-#include "qsound.h"
 #include "qmb_particles.h"
 #include "cl_tent.h"
 

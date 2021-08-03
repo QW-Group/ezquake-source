@@ -38,5 +38,5 @@ fproj_t *CL_CreateFakeGrenade(void);
 fproj_t *CL_CreateFakeRocket(void);
 
 //r_part_trails.c
-void R_MissileTrail(centity_t *cent, int trail_num);
-int fix_trail_num_for_grens(int trail_num);
+extern void R_MissileTrail(centity_t *cent, int trail_num);
+extern int fix_trail_num_for_grens(int trail_num);
