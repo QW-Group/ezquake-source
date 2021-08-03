@@ -48,6 +48,7 @@ void CL_ReadKtxDamageIndicatorString(const char* s);
 
 // Powerup cams
 qbool MVD_PowerupCam_Enabled(void);
+int MVD_PowerupCams_Enabled(void);
 void MVD_PowerupCam_Frame(void);
 
 // JSON stats embedded in mvd

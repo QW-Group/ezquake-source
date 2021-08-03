@@ -1397,7 +1397,20 @@ void CL_MultiviewResetCvars (void)
 
 qbool CL_MultiviewEnabled (void)
 {
-	return cl_multiview.value && cls.mvdplayback && !cl.intermission;
+	if (cl_multiview.integer > 0 && cls.mvdplayback && !cl.intermission) {
+		if (!MVD_PowerupCams_Enabled()) {
+			int first_player = CL_NextPlayer(-1);
+			int next_player = CL_NextPlayer(first_player);
+
+			if (first_player == next_player) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 qbool CL_MultiviewInsetEnabled (void)

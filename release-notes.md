@@ -199,6 +199,7 @@
 - Internal server has been updated to match latest mvdsv codebase
 - Removed chaticons limitation where source image had to be 256x256 pixels (#477, reported by timbergeron)
 - Demo signoff messages are no longer random
+- Multiview will be disabled when watching a solo demo and no powerup cams are active (requested by mmavova, #126)
 
 ### Build/meta
 
