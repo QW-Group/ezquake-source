@@ -246,8 +246,8 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, vbo_model_ve
 #define DRAWFLAGS_TEXTURED     2
 #define DRAWFLAGS_FULLBRIGHT   4
 #define DRAWFLAGS_MUZZLEHACK   8
-#define DRAWFLAGS_FLATSHADING  16
-#define DRAWFLAGS_MAXIMUM      (DRAWFLAGS_CAUSTICS | DRAWFLAGS_TEXTURED | DRAWFLAGS_FULLBRIGHT | DRAWFLAGS_MUZZLEHACK | DRAWFLAGS_FLATSHADING)
+//#define DRAWFLAGS_FLATSHADING  16     // Disabled until we can specify GLSL 1.3 dynamically, MESA drivers very strict
+#define DRAWFLAGS_MAXIMUM      (DRAWFLAGS_CAUSTICS | DRAWFLAGS_TEXTURED | DRAWFLAGS_FULLBRIGHT | DRAWFLAGS_MUZZLEHACK /* | DRAWFLAGS_FLATSHADING*/)
 
 int GLC_AliasModelSubProgramIndex(qbool textured, qbool fullbright, qbool caustics, qbool muzzlehack)
 {
@@ -278,9 +278,11 @@ qbool GLC_AliasModelStandardCompileSpecific(int subprogram_index)
 		if (subprogram_index & DRAWFLAGS_MUZZLEHACK) {
 			strlcat(included_definitions, "#define EZQ_ALIASMODEL_MUZZLEHACK\n", sizeof(included_definitions));
 		}
+#ifdef DRAWFLAGS_FLATSHADING
 		if (subprogram_index & DRAWFLAGS_FLATSHADING) {
 			strlcat(included_definitions, "#define EZQ_ALIASMODEL_FLATSHADING\n", sizeof(included_definitions));
 		}
+#endif
 
 		R_ProgramCompileWithInclude(r_program_aliasmodel_std_glc, included_definitions);
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_texSampler, 0);

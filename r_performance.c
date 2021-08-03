@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_framestats.h"
 #include "r_local.h"
 #include "r_renderer.h"
+#include "r_trace.h"
 
 static cvar_t* framestats_shown;
 
@@ -40,10 +41,13 @@ void R_PerformanceBeginFrame(void)
 		renderer.EnsureFinished();
 	}
 
+	R_TraceResetRegion(true);
+
 	memcpy(&prevFrameStats, &frameStats, sizeof(prevFrameStats));
 	memset(&frameStats, 0, sizeof(frameStats));
 	if (r_speeds.integer || frameStatsVisible || cls.timedemo) {
 		frameStats.start_time = Sys_DoubleTime();
+		R_TraceAPI("[timedemo] start-frame");
 	}
 	frameStats.hotloop = true;
 }
@@ -64,11 +68,13 @@ void R_PerformanceEndFrame(void)
 		if (cls.timedemo && cls.td_starttime) {
 			int ms = (int)ceil((frameStats.end_time - frameStats.start_time) * 10000.0);
 
+			R_TraceAPI("[timedemo] frametime: %dms", ms);
 			ms = bound(0, ms, sizeof(cls.td_frametime_stats) / sizeof(cls.td_frametime_stats[0]) - 1);
 
 			if (ms > cls.td_frametime_max) {
 				cls.td_frametime_max = ms;
 				cls.td_frametime_max_frame = cls.framecount - cls.td_startframe - 1;
+				R_TraceAPI("[timedemo] worst-frametime-set");
 			}
 
 			++cls.td_frametime_stats[ms];

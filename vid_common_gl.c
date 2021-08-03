@@ -164,12 +164,12 @@ static qbool GL_BrokenAmdVersion(void)
 		return false;
 	}
 
-	if (!strstr(glConfig.vendor_string, "ATI")) {
+	if (!strstr((const char*)glConfig.vendor_string, "ATI")) {
 		return false;
 	}
 
 	// <anything>.13399 <anything>, might get different version number depending on what we asked for previously
-	return strstr(glConfig.version_string, ".13399 ") != NULL;
+	return strstr((const char*)glConfig.version_string, ".13399 ") != NULL;
 }
 
 static void GL_PopulateConfig(void)

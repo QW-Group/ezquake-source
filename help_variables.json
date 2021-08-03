@@ -17607,6 +17607,13 @@
       "group-id": "42",
       "type": "float"
     },
+    "sb_info_filter": {
+      "default": "",
+      "desc": "Allows custom filters to be written based on the serverinfo strings\nFormat is [+|-]infokey=value with +/- being include/exclude.\nCan also specify +*/-* to include/exclude all, and +key/-key to include/exclude servers with any value for that key\nValues are regular expressions, if the server doesn't have that key specified then the rule is skipped",
+      "group-id": "42",
+      "type": "string",
+      "remarks": "Default (if no rules match) is opposite of the last valid rule specified.\nRules should be separated by spaces\nExamples\n\n+ktxver               // pass any ktx server, hide others\n+*gamedir=fortress    // pass Team Fortress servers, hide others\n-*version=QTV*        // remove QTV servers\n-map=dm4              // fourier woz ere\n"
+    },
     "sb_listcache": {
       "default": "0",
       "desc": "Cache the list of alive servers and load it on next startup of the client.",

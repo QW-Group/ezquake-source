@@ -2632,6 +2632,8 @@ extern cvar_t scr_coloredfrags;
 // For CL_ParsePrint
 static void FlushString (const wchar *s, int level, qbool team, int offset) 
 {
+	extern cvar_t demo_jump_skip_messages;
+
 	char *s0; // C-char copy of s
 
 	char *mark;
@@ -2680,7 +2682,7 @@ static void FlushString (const wchar *s, int level, qbool team, int offset)
 	// we can change this function a bit, so s0 can be const char*
 	Stats_ParsePrint (s0, level, &cff);
 
-	if (CL_Demo_SkipMessage(true)) {
+	if (CL_Demo_SkipMessage(demo_jump_skip_messages.integer >= 1)) {
 		return;
 	}
 
@@ -3912,6 +3914,10 @@ void CL_ParseServerMessage (void)
 						cl.simangles[i] = MSG_ReadAngle();
 					VectorClear(cl.simvel);
 					TP_ExecTrigger ("f_mapend");
+
+					if (cls.demoseeking == DST_SEEKING_END) {
+						cls.demoseeking = DST_SEEKING_FOUND_NOREWIND; // it will reset to the DST_SEEKING_NONE in the deep of the demo code
+					}
 					break;
 				}
 			case svc_finale:

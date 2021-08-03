@@ -151,10 +151,8 @@ void GL_PrintGfxInfo(void)
 	Com_Printf_State(PRINT_ALL, "\nOpenGL (%s)\n", R_UseImmediateOpenGL() ? "classic" : "glsl");
 	GL_PrintInfoLine("Vendor:", 9, "%s", (const char*)glConfig.vendor_string);
 	GL_PrintInfoLine("Renderer:", 9, "%s", (const char*)glConfig.renderer_string);
+	GL_PrintInfoLine("GLSL:", 9, "%s", (const char*)glConfig.glsl_version);
 	GL_PrintInfoLine("Version:", 9, "%s", (const char*)glConfig.version_string);
-	if (R_UseModernOpenGL()) {
-		GL_PrintInfoLine("GLSL:", 9, "%s", (const char*)glConfig.version_string);
-	}
 
 	if (r_showextensions.integer) {
 		Com_Printf_State(PRINT_ALL, "GL_EXTENSIONS: ");

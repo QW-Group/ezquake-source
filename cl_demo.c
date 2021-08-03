@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "version.h"
 #include "demo_controls.h"
 #include "mvd_utils.h"
+#include "r_trace.h"
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
@@ -119,6 +120,7 @@ cvar_t demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
 cvar_t cl_startupdemo = {"cl_startupdemo", ""};
 cvar_t demo_jump_rewind = { "demo_jump_rewind", "-10" };
 cvar_t cl_demo_qwd_delta = { "cl_demo_qwd_delta", "1" };
+cvar_t demo_jump_skip_messages = { "demo_jump_skip_messages", "1" };
 
 // Used to save track status when rewinding.
 static vec3_t rewind_angle;
@@ -1903,6 +1905,7 @@ static qbool CL_DemoShouldWeReadNextMessage(double demotime)
 			// and calculate the framerate when it's done.
 			cls.td_starttime = Sys_DoubleTime();
 			cls.td_startframe = cls.framecount;
+			R_TraceAPI("[timedemo] first-frame");
 			key_dest = key_game;
 		}
 
@@ -2056,13 +2059,17 @@ qbool CL_GetDemoMessage (void)
 		}
 
 		// If we found demomark, we should stop seeking, so reset time to the proper value.
-		if (cls.demoseeking == DST_SEEKING_FOUND) {
+		if (cls.demoseeking == DST_SEEKING_FOUND || cls.demoseeking == DST_SEEKING_FOUND_NOREWIND) {
 			cls.demotime = demotime; // this will trigger seeking stop
 
-			if (demo_jump_rewind.value < 0) {
-				CL_Demo_Jump (-demo_jump_rewind.value, -1, DST_SEEKING_NORMAL);
+			if (cls.demoseeking == DST_SEEKING_FOUND_NOREWIND) {
+				// Pause instead of rewinding
+				Cvar_SetValue(&cl_demospeed, 0.0f);
 			}
-			return false;
+			else if (demo_jump_rewind.value < 0) {
+				CL_Demo_Jump(-demo_jump_rewind.value, -1, DST_SEEKING_NORMAL);
+				return false;
+			}
 		}
 
 		// If we've reached our seek goal, stop seeking.
@@ -3380,6 +3387,7 @@ void CL_StopPlayback(void)
 		//
 		// Calculate the time it took to render the frames.
 		//
+		R_TraceAPI("[timedemo] finished");
 		frames = cls.framecount - cls.td_startframe - 1;
 		time = Sys_DoubleTime() - cls.td_starttime;
 		if (time <= 0) {
@@ -4925,7 +4933,7 @@ void CL_Demo_Jump_f (void)
 //
 void CL_Demo_Jump_Mark_f (void)
 {
-	int seconds = 99999; // as far as possibile, we have NO idea about time, we search MARK
+	int seconds = 99999; // as far as possible, we have NO idea about time, we search MARK
 
 	// Cannot jump without playing demo.
 	if (!cls.demoplayback)
@@ -4942,6 +4950,31 @@ void CL_Demo_Jump_Mark_f (void)
 	}
 
 	CL_Demo_Jump(seconds, 0, DST_SEEKING_DEMOMARK);
+}
+
+void CL_Demo_Jump_End_f(void)
+{
+	int target_time;
+
+	// Cannot jump without playing demo.
+	if (!cls.demoplayback) {
+		Com_Printf("Error: not playing a demo\n");
+		return;
+	}
+
+	// Must be active to jump.
+	if (cls.state < ca_active) {
+		Com_Printf("Error: demo must be active first\n");
+		return;
+	}
+
+	target_time = (cls.demoplayback ? (int)ceil(CL_GetDemoLength()) - 2 : 0);
+	if (target_time - (cls.demotime - demostarttime) < (cl.intermission ? 10 : 2)) {
+		Com_Printf("Error: too close to end of demo\n");
+		return;
+	}
+
+	CL_Demo_Jump(target_time, 0, DST_SEEKING_END);
 }
 
 static void CL_Demo_Jump_Status_Free (demoseekingstatus_condition_t *condition)
@@ -5430,6 +5463,7 @@ void CL_Demo_Init(void)
 	Cmd_AddCommand("demo_jump", CL_Demo_Jump_f);
 	Cmd_AddCommand("demo_jump_mark", CL_Demo_Jump_Mark_f);
 	Cmd_AddCommand("demo_jump_status", CL_Demo_Jump_Status_f);
+	Cmd_AddCommand("demo_jump_end", CL_Demo_Jump_End_f);
 	Cmd_AddCommand("demo_controls", DemoControls_f);
 
 	//
@@ -5458,6 +5492,7 @@ void CL_Demo_Init(void)
 	Cvar_Register(&cl_startupdemo);
 	Cvar_Register(&demo_jump_rewind);
 	Cvar_Register(&cl_demo_qwd_delta);
+	Cvar_Register(&demo_jump_skip_messages);
 
 	Cvar_ResetCurrentGroup();
 }

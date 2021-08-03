@@ -306,6 +306,8 @@ void R_SetupFrame(void)
 	r_viewleaf = Mod_PointInLeaf (r_origin, cl.worldmodel);
 	r_viewleaf2 = NULL;
 
+	// FIXME: might need to test falling out bottom of water as well?
+
 	// check above and below so crossing solid water doesn't draw wrong
 	if (r_viewleaf->contents <= CONTENTS_WATER && r_viewleaf->contents >= CONTENTS_LAVA) {
 		// look up a bit
@@ -315,12 +317,15 @@ void R_SetupFrame(void)
 		if (leaf->contents == CONTENTS_EMPTY) {
 			r_viewleaf2 = leaf;
 		}
-	} else if (r_viewleaf->contents == CONTENTS_EMPTY) {
+	}
+	else if (r_viewleaf->contents == CONTENTS_EMPTY) {
+		// FIXME: If we test down and find CONTENTS_SOLID then we should reduce viewheight_test and try again?
+
 		// look down a bit
-		VectorCopy (r_origin, testorigin);
-		testorigin[2] -= 10;
-		leaf = Mod_PointInLeaf (testorigin, cl.worldmodel);
-		if (leaf->contents <= CONTENTS_WATER &&	leaf->contents >= CONTENTS_LAVA) {
+		VectorCopy(r_origin, testorigin);
+		testorigin[2] -= r_refdef.viewheight_test;
+		leaf = Mod_PointInLeaf(testorigin, cl.worldmodel);
+		if (leaf->contents <= CONTENTS_WATER && leaf->contents >= CONTENTS_LAVA) {
 			r_viewleaf2 = leaf;
 		}
 	}

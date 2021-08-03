@@ -959,6 +959,7 @@ static void V_CalcRefdef(void)
 	r_refdef.vieworg[2] += 1.0 / 16;
 
 	// add view height
+	r_refdef.viewheight_test = 4;
 	if (view_message.flags & PF_GIB) {
 		r_refdef.vieworg[2] += 8;	// gib view height
 	}
@@ -974,6 +975,9 @@ static void V_CalcRefdef(void)
 
 		// smooth out stair step ups
 		r_refdef.vieworg[2] += cl.crouch;
+
+		// standard offset
+		r_refdef.viewheight_test = 10;
 	}
 
 	// set up refresh view angles

@@ -53,6 +53,7 @@
 - Fixed bug causing `/scr_cursor_iconoffset_x` & `/scr_cursor_iconoffset_y` to have no effect (3.x bug, fix by ciscon)
 - Fixed bug causing `/in_raw 0` to produce no mouse input in-game on MacOS
 - Workaround applied to show players when playing back demos using FTE model extensions where player index >= 256 (3.1+ bug (no support in older clients), #551, reported by lordee)
+- Fixed `/demo_jump_mark` not working if `/demo_jump_rewind` not set
 
 #### Bugs which affected 3.5 (typically related to renderer rewrite)
 
@@ -135,6 +136,8 @@
 - `/cl_username` & `/authenticate` to support optional logins via badplace.eu (see [guide](https://github.com/ezQuake/ezquake-source/wiki/Authentication))
 - `/demo_format` supported in non-Windows builds
 - `/demo_jump` during demo playback should now be faster (#453)
+- `/demo_jump_end` to jump to next intermission point or end of demo (requested by Hangtime, #564)
+- `/demo_jump_skip_messages` to determine if messages should be printed to console during demo jump
 - `/enemyforceskins 1` will search for player names in lower case (#345)
 - `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
 - `/gl_mipmap_viewmodels` removed, replaced with `/gl_texturemode_viewmodels`
@@ -157,6 +160,7 @@
 - `/r_rockettrail` & `/r_grenadetrail` options requiring QMB particles degrade to '1' if QMB not initialised
 - `/r_smoothalphahack 1` - during hud rendering, shader will apply lerped alpha to lerped color (behaves as per ezquake < 3.5)
 - `/register_qwurl_protocol` reports success if run from command line (or rather, run without 'quiet' as 1st argument)
+- `/sb_info_filter` added - allows filtering of servers in server-browser based on serverinfo
 - `/scr_sbar_drawarmor666` - `/hud_armor_pent_666` for oldhud (controls if '666' or armor value is shown when player has pent)
 - `/scr_damage_hitbeep` - will play `dmg-notification.wav` when current player does damage (on supported .mvd files & qtv streams)
 - `/scr_damage_floating` - will display floating damage numbers when current player does damage (on supported .mvd files & qtv streams)

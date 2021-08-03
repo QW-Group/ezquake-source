@@ -124,6 +124,7 @@ typedef struct {
 
 	vec3_t		vieworg;
 	vec3_t		viewangles;
+	int         viewheight_test;
 
 	float		fov_x, fov_y;
 	

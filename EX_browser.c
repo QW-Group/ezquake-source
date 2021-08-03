@@ -40,6 +40,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 int source_unique = 0;
 
+typedef struct info_filter_s {
+	char name[MAX_INFO_KEY];
+	pcre* regex;
+	qbool pass;
+	qbool exec;
+} info_filter_t;
+
+static info_filter_t* SB_InfoFilter_Parse(int* count);
+static qbool SB_InfoFilter_Exec(info_filter_t* info_filters, int info_filter_count, server_data* s);
+static void SB_InfoFilter_Free(info_filter_t* info_filters, int info_filter_count);
 
 // searching
 #define MAX_SEARCH 20
@@ -106,13 +116,19 @@ cvar_t  sb_findroutes    = {"sb_findroutes",       "0"};
 cvar_t  sb_ignore_proxy  = {"sb_ignore_proxy",     ""};
 
 // filters
-cvar_t  sb_hideempty     = {"sb_hideempty",        "1"};
-cvar_t  sb_hidenotempty  = {"sb_hidenotempty",     "0"};
-cvar_t  sb_hidefull      = {"sb_hidefull",         "0"};
-cvar_t  sb_hidedead      = {"sb_hidedead",         "1"};
-cvar_t  sb_hidehighping  = {"sb_hidehighping",     "0"};
-cvar_t  sb_pinglimit     = {"sb_pinglimit",       "80"};
-cvar_t  sb_showproxies   = {"sb_showproxies",      "0"};
+static void sb_trigger_resort(cvar_t* var, char* value, qbool* cancel)
+{
+	resort_servers = 1;
+}
+
+cvar_t  sb_hideempty     = {"sb_hideempty",        "1", 0, sb_trigger_resort };
+cvar_t  sb_hidenotempty  = {"sb_hidenotempty",     "0", 0, sb_trigger_resort };
+cvar_t  sb_hidefull      = {"sb_hidefull",         "0", 0, sb_trigger_resort };
+cvar_t  sb_hidedead      = {"sb_hidedead",         "1", 0, sb_trigger_resort };
+cvar_t  sb_hidehighping  = {"sb_hidehighping",     "0", 0, sb_trigger_resort };
+cvar_t  sb_pinglimit     = {"sb_pinglimit",       "80", 0, sb_trigger_resort };
+cvar_t  sb_showproxies   = {"sb_showproxies",      "0", 0, sb_trigger_resort };
+cvar_t  sb_info_filter   = {"sb_info_filter",       "", 0, sb_trigger_resort };
 
 cvar_t  sb_sourcevalidity  = {"sb_sourcevalidity", "30"}; // not in menu
 cvar_t  sb_mastercache     = {"sb_mastercache",    "1"};  // not in menu
@@ -2225,6 +2241,14 @@ void Serverinfo_Key(int key)
 				Serverinfo_Change(servers[Servers_pos]);
 			}
 			break;
+		case K_TAB:
+			if (keydown[K_SHIFT]) {
+				serverinfo_pos--;
+			}
+			else {
+				serverinfo_pos++;
+			}
+			break;
 		case K_LEFTARROW:
 			serverinfo_pos--;
 			break;
@@ -2874,7 +2898,9 @@ int Servers_Compare_Func(const void * p_s1, const void * p_s2)
 
 void Filter_Servers(void)
 {
-	int i;
+	int i, info_filter_count;
+	info_filter_t* info_filters = SB_InfoFilter_Parse(&info_filter_count);
+
 	serversn_passed = 0;
 	for (i=0; i < serversn; i++)
 	{
@@ -2910,9 +2936,16 @@ void Filter_Servers(void)
 		if (sb_hidefull.value  &&  s->playersn >= (tmp ? atoi(tmp) : 255))
 			continue;
 
+		if (!SB_InfoFilter_Exec(info_filters, info_filter_count, s)) {
+			continue;
+		}
+
 		s->passed_filters = 1;  // passed
 		serversn_passed++;
 	}
+
+	SB_InfoFilter_Free(info_filters, info_filter_count);
+
 	return;
 }
 
@@ -3281,6 +3314,7 @@ void Browser_Init (void)
 	Cvar_Register(&sb_listcache);
 	Cvar_Register(&sb_findroutes);
 	Cvar_Register(&sb_ignore_proxy);
+	Cvar_Register(&sb_info_filter);
 	Cvar_ResetCurrentGroup();
 
 	Cmd_AddCommand("addserver", AddServer_f);
@@ -3338,4 +3372,119 @@ void SB_ExecuteQueuedTriggers(void) {
 		Com_Printf("Ping tree has been created\n");
 		sb_queuedtriggers &= ~SB_TRIGGER_NOTIFY_PINGTREE;
 	}
+}
+
+static qbool SB_InfoFilter_Exec(info_filter_t* info_filters, int info_filter_count, server_data* s)
+{
+	int j;
+	qbool default_pass = true;
+
+	for (j = 0; j < info_filter_count; ++j) {
+		info_filter_t* filter = &info_filters[j];
+		const char* value;
+		qbool matched_rule = false;
+
+		if (!filter->exec) {
+			// Invalid definition
+			continue;
+		}
+
+		// if any filters were valid then block the remaining
+		default_pass = !filter->pass;
+
+		// shorthand for "rest"
+		if (filter->name[0] == '*' && filter->name[1] == '\0') {
+			return filter->pass;
+		}
+
+		value = ValueForKey(s, filter->name);
+		if (!value) {
+			// if server doesn't specify key then we move on to next (hmm)
+			continue;
+		}
+
+		if (!filter->regex) {
+			// Any value will do
+			if (value != NULL && value[0]) {
+				return filter->pass;
+			}
+		}
+		else {
+			// Rule specified, check it matches the regex
+			int offsets[8];
+
+			if (pcre_exec(filter->regex, NULL, value, strlen(value), 0, 0, offsets, sizeof(offsets) / sizeof(offsets[0])) >= 0) {
+				return filter->pass;
+			}
+		}
+	}
+
+	// run out of rules - default 
+	return default_pass;
+}
+
+static info_filter_t* SB_InfoFilter_Parse(int* count)
+{
+	int i;
+	tokenizecontext_t info_filter_ctx;
+	int info_filter_count;
+	info_filter_t* info_filters;
+	char definition[MAX_MACRO_STRING];
+
+	Cmd_TokenizeStringEx(&info_filter_ctx, sb_info_filter.string);
+	*count = info_filter_count = Cmd_ArgcEx(&info_filter_ctx);
+
+	info_filters = Q_malloc(info_filter_count * sizeof(info_filter_t));
+	for (i = 0; i < info_filter_count; ++i) {
+		char* split;
+		const char* error;
+		int error_offset;
+		info_filter_t* filter = &info_filters[i];
+
+		// filters must be +x=y or -x=y
+		strlcpy(definition, Cmd_ArgvEx(&info_filter_ctx, i), sizeof(definition));
+		if (definition[0] != '-' && definition[0] != '+') {
+			Con_Printf("Invalid info-filter: bad syntax (%s)\n", definition);
+			continue;
+		}
+		filter->pass = (definition[0] == '+');
+
+		// Copy the serverinfo key name
+		split = strchr(definition, '=');
+		if (split != NULL) {
+			split[0] = '\0';
+		}
+		strlcpy(filter->name, definition + 1, sizeof(filter->name));
+		if (!filter->name[0]) {
+			// empty key name is invalid...
+			Con_Printf("Invalid info-filter: bad syntax (%s)\n", definition);
+			continue;
+		}
+
+		if (split != NULL && split[1] && split[1] != '*') {
+			// no regex is fine
+			filter->regex = pcre_compile(split + 1, PCRE_CASELESS, &error, &error_offset, NULL);
+			if (filter->regex == NULL) {
+				Con_Printf("Invalid rule definition: %s\n", error);
+				continue;
+			}
+		}
+
+		filter->exec = true;
+	}
+
+	return info_filters;
+}
+
+static void SB_InfoFilter_Free(info_filter_t* info_filters, int info_filter_count)
+{
+	int i;
+
+	for (i = 0; i < info_filter_count; ++i) {
+		if (info_filters[i].regex) {
+			pcre_free(info_filters[i].regex);
+		}
+	}
+
+	Q_free(info_filters);
 }
