@@ -11,11 +11,12 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Fixed tab key not switching tabs on serverinfo popup (reported by Hangtime, #555)
 - Fixed `/demo_jump_mark` not working if `/demo_jump_rewind` not set
 - Fixed coping with 1x1 ibar.png (reported by Matrix, #571)
+- Fixed powerupshells when using `/r_viewmodelsize` (reported by timbergeron, #573)
 - Added `/gl_smoothmodels` back in (modern renderer only), (requested by Repast via [quakeworld.nu](https://www.quakeworld.nu/forum/topic/7508/why-is-the-command-glsmoothmodels-r))
 - Added `/demo_jump_skip_messages` to determine if messages should be printed to console during demo jump
 - Added `/demo_jump_end` to jump to next intermission point or end of demo (requested by Hangtime, #564)
-- Added `/sb_info_filter` to allow filtering of servers in server-browser based on serverinfo
-- On startup (after `autoexec.cfg` executed), a `vid_restart`/`s_restart` will be issued if any latched variables were changed (#458)
+- Added `/sb_info_filter` to allow filtering of servers in server-browser based on serverinfo (requested by Matrix, #537)
+- On startup (after `autoexec.cfg` executed), a `vid_restart`/`s_restart` will be issued if any latched variables were changed (reported by Dusty, #458)
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 
