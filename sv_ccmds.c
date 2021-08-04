@@ -1830,7 +1830,10 @@ void SV_InitOperatorCommands (void)
 	Cmd_AddCommand ("snap", SV_Snap_f);
 	Cmd_AddCommand ("snapall", SV_SnapAll_f);
 	Cmd_AddCommand ("kick", SV_Kick_f);
+
+	// Add sv_status as client allows 'status' alias to over-ride (ezQuake #532)
 	Cmd_AddCommand ("status", SV_Status_f);
+	Cmd_AddCommand ("sv_status", SV_Status_f);
 
 	//bliP: init ->
 	Cmd_AddCommand ("rmdir", SV_RemoveDirectory_f);

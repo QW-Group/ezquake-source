@@ -19,6 +19,8 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Added `/sb_info_filter` to allow filtering of servers in server-browser based on serverinfo (requested by Matrix, #537)
 - On startup (after `autoexec.cfg` executed), a `vid_restart`/`s_restart` will be issued if any latched variables were changed (reported by Dusty, #458)
 - Multiview will be disabled when watching a solo demo and no powerup cams are active (requested by mmavova, #126)
+- MacOS: sets SDL flag to stop touch events being translated into mouse events (might help with #354)
+- `/status` command will be ignored if an alias with the same name is found, use `/sv_status` instead (fixes #532)
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 

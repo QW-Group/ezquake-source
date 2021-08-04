@@ -1735,6 +1735,13 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 			goto done;
 	}
 
+#ifndef CLIENTONLY
+	// 'status' on remote ktx servers..
+	if (!strcmp(Cmd_Argv(0), "status") && Cmd_Argc() == 1 && Cmd_FindAlias("status")) {
+		goto checkaliases;
+	}
+#endif
+
 	// check functions
 	if ((cmd = Cmd_FindCommand(Cmd_Argv(0)))) {
 		if (gtf || cbuf_current == &cbuf_safe) {
