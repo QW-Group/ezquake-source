@@ -1,4 +1,4 @@
-CFLAGS=-m32 -O2 -msse2 -mfpmath=sse -g0 -D_DEBUG -D_WIN32_WINNT=0x0501 -D__USE_MINGW_ANSI_STDIO -DWITH_WINAMP -Imingw32-libs/include -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -Wno-strict-aliasing -Werror=strict-prototypes -Werror=old-style-definition -MMD
+CFLAGS=-m32 -O2 -msse2 -mfpmath=sse -g0 -D_WIN32_WINNT=0x0501 -D__USE_MINGW_ANSI_STDIO -DWITH_WINAMP -Imingw32-libs/include -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -Wno-strict-aliasing -Werror=strict-prototypes -Werror=old-style-definition -MMD
 LDFLAGS=-Lmingw32-libs/lib -static
 ZLIB_LIBS=-lz
 SDL2_CFLAGS=-Imingw32-libs/include/SDL2
