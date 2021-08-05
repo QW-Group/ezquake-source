@@ -1646,7 +1646,7 @@ void player_light1(void)
 	pmove.attack_finished = pmove.client_time + 0.2;
 
 	pmove.current_ammo = pmove.ammo_cells -= 1;
-	if (cl_predict_beam.integer && pmove.waterlevel <= 1)
+	if (pmove.waterlevel <= 1)
 	{
 		prediction_event_fakeproj_t *beam = PM_AddEvent_FakeProj(IT_LIGHTNING);
 		VectorCopy(pmove.origin, beam->origin);
@@ -1676,7 +1676,7 @@ void player_light2(void)
 	pmove.attack_finished = pmove.client_time + 0.2;
 
 	pmove.current_ammo = pmove.ammo_cells -= 1;
-	if (cl_predict_beam.integer && pmove.waterlevel <= 1)
+	if (pmove.waterlevel <= 1)
 	{
 		prediction_event_fakeproj_t *beam = PM_AddEvent_FakeProj(IT_LIGHTNING);
 		VectorCopy(pmove.origin, beam->origin);

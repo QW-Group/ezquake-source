@@ -433,17 +433,19 @@ void CL_PlayEvents(void)
 					}
 				}
 
-				vec3_t start, end, forward;
-				VectorCopy(p_event->origin, start);
-				VectorCopy(start, end);
+				if (cl_predict_beam.integer)
+				{
+					vec3_t start, end, forward;
+					VectorCopy(p_event->origin, start);
+					VectorCopy(start, end);
 
-				AngleVectors(p_event->angles, forward, NULL, NULL);
-				VectorScale(forward, 600, forward);
-				VectorAdd(end, forward, end);
-				
-				trace_t hittrace = PM_TraceLine(start, end);
-				CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
+					AngleVectors(p_event->angles, forward, NULL, NULL);
+					VectorScale(forward, 600, forward);
+					VectorAdd(end, forward, end);
 
+					trace_t hittrace = PM_TraceLine(start, end);
+					CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
+				}
 
 				p_event = p_event->next;
 				continue;
