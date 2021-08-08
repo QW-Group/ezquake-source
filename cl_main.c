@@ -1929,9 +1929,9 @@ static void CL_InitLocal(void)
 
 	Cmd_AddCommand ("hud_fps_min_reset", Cl_Reset_Min_fps_f);
 
-	#ifdef WIN32
+	#if defined WIN32 || defined __linux__
 	Cmd_AddCommand ("register_qwurl_protocol", Sys_RegisterQWURLProtocol_f);
-	#endif // WIN32
+	#endif // WIN32 or linux
 
 	Cmd_AddCommand ("dns", CL_DNS_f);
 	Cmd_AddCommand ("hash", CL_Hash_f);
