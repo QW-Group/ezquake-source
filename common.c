@@ -712,6 +712,14 @@ char *COM_Argv(int arg)
 	if (arg < 0 || arg >= com_argc) {
 		return "";
 	}
+	//follow qw urls if they are our argument without a +qwurl command
+	if(strncmp(com_argv[arg], "qw://", 5) == 0 && arg > 0 && strncmp(com_argv[arg-1], "+qwurl", 5) != 0) {
+		char buf[strlen(com_argv[arg])+8];
+		snprintf(buf, sizeof(buf), "+qwurl %s", com_argv[arg]);
+		COM_AddParm(buf);
+		return "";
+	}
+
 	return com_argv[arg];
 }
 

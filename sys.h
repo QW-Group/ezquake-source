@@ -116,6 +116,7 @@ void Sys_InitIPC(void);
 void Sys_ReadIPC(void);
 void Sys_CloseIPC(void);
 unsigned int Sys_SendIPC(const char *buf);
+void Sys_RegisterQWURLProtocol_f(void);
 
 // Semaphore functions
 #ifdef _WIN32
@@ -155,19 +156,16 @@ void Sys_TimerResolution_Clear(timerresolution_session_t * s);
 void Sys_CancelDeadKey (void);
 
 void Sys_CheckQWProtocolHandler(void);
-void Sys_RegisterQWURLProtocol_f(void);
 
 #else // NOT _WIN32 below
 
 // not implemented on other platforms
 #define Sys_CheckQWProtocolHandler(x)
-#define Sys_RegisterQWURLProtocol_f(x)
 #define Sys_TimerResolution_InitSession(x)
 #define Sys_TimerResolution_RequestMinimum(x)
 #define Sys_TimerResolution_Clear(x)
 
 #endif
-
 
 // MVDSV compatibility
 
