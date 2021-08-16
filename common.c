@@ -712,13 +712,6 @@ char *COM_Argv(int arg)
 	if (arg < 0 || arg >= com_argc) {
 		return "";
 	}
-	//follow qw urls if they are our argument without a +qwurl command
-	if(strncmp(com_argv[arg], "qw://", 5) == 0 && arg > 0 && strncmp(com_argv[arg-1], "+qwurl", 5) != 0) {
-		char buf[strlen(com_argv[arg])+8];
-		snprintf(buf, sizeof(buf), "+qwurl %s", com_argv[arg]);
-		COM_AddParm(buf);
-		return "";
-	}
 
 	return com_argv[arg];
 }
@@ -734,13 +727,21 @@ void COM_ClearArgv(int arg)
 void COM_InitArgv(int argc, char **argv)
 {
 	int id;
+	int i;
 
-	for (com_argc = 0; com_argc < MAX_NUM_ARGVS && com_argc < argc; com_argc++) {
-		if (argv[com_argc]) {
-			largv[com_argc] = argv[com_argc];
+	for (i = 0, com_argc = 0; com_argc < MAX_NUM_ARGVS - 1 && i < argc; ++i) {
+		if (argv[i]) {
+			// follow qw urls if they are our argument without a +qwurl command
+			if (!strncmp(argv[i], "qw://", 5) && (i == 0 || strncmp(argv[i - 1], "+qwurl", 5)) && com_argc < MAX_NUM_ARGVS - 1) {
+				largv[com_argc++] = "+qwurl";
+				largv[com_argc++] = argv[i];
+			}
+			else {
+				largv[com_argc++] = argv[i];
+			}
 		}
 		else {
-			largv[com_argc] = "";
+			largv[com_argc++] = "";
 		}
 	}
 

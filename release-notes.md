@@ -201,6 +201,8 @@
 - Removed chaticons limitation where source image had to be 256x256 pixels (#477, reported by timbergeron)
 - Demo signoff messages are no longer random
 - Multiview will be disabled when watching a solo demo and no powerup cams are active (requested by mmavova, #126)
+- qw:// urls in command line will be opened even if not preceded by `+qwurl` (thanks to ciscon)
+- Linux: `/register_qwurl_protocol` command will register protocol with xdg (thanks to ciscon)
 
 ### Build/meta
 

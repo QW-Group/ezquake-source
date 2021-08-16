@@ -21,6 +21,8 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Multiview will be disabled when watching a solo demo and no powerup cams are active (requested by mmavova, #126)
 - MacOS: sets SDL flag to stop touch events being translated into mouse events (might help with #354)
 - `/status` command will be ignored if an alias with the same name is found, use `/sv_status` instead (fixes #532)
+- qw:// urls in command line will be opened even if not preceded by `+qwurl` (thanks to ciscon)
+- Linux: register_qwurl_protocol will register protocol with xdg (thanks to ciscon)
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 
