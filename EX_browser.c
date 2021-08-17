@@ -3382,7 +3382,6 @@ static qbool SB_InfoFilter_Exec(info_filter_t* info_filters, int info_filter_cou
 	for (j = 0; j < info_filter_count; ++j) {
 		info_filter_t* filter = &info_filters[j];
 		const char* value;
-		qbool matched_rule = false;
 
 		if (!filter->exec) {
 			// Invalid definition
