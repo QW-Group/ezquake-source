@@ -327,8 +327,7 @@ void V_ParseDamage (void)
 // disconnect -->
 qbool flashed = false; // it should be used for f_flashout tirgger
 extern cvar_t v_gamma, v_contrast;
-#define flash_gamma 0.55
-#define flash_contrast 1.0
+
 void V_TF_FlashSettings(qbool flashed)
 {
 	static float old_gamma, old_contrast;
@@ -347,8 +346,8 @@ void V_TF_FlashSettings(qbool flashed)
 		old_contrast = v_contrast.value;
 
 		// set MTFL flash settings	
-		Cvar_SetValue(&v_gamma, flash_gamma);
-		Cvar_SetValue(&v_contrast, flash_contrast);
+		Cvar_SetValue(&v_gamma, MTFL_FLASH_GAMMA);
+		Cvar_SetValue(&v_contrast, MTFL_FLASH_CONTRAST);
 
 		// made gamma&contrast read only
 		Cvar_SetFlags(&v_gamma, Cvar_GetFlags(&v_gamma) | CVAR_ROM);
@@ -370,7 +369,7 @@ void V_TF_FlashStuff (void)
 	// 240 = Normal TF || 255 = Angel TF
 	if (cshift_empty.percent == 240 || cshift_empty.percent == 255 ) {
 		TP_ExecTrigger ("f_flash");
-		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+		if (!flashed && Rulesets_ToggleWhenFlashed()) {
 			V_TF_FlashSettings(true);
 		}
 
@@ -380,7 +379,7 @@ void V_TF_FlashStuff (void)
 
 	if (cshift_empty.percent == 160) {
 		// flashed by your own flash
-		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+		if (!flashed && Rulesets_ToggleWhenFlashed()) {
 			V_TF_FlashSettings(true);
 		}
 
@@ -404,7 +403,7 @@ void V_TF_FlashStuff (void)
 	}
 
 	if (cls.demoplayback && cshift_empty.destcolor[0] == cshift_empty.destcolor[1]) {
-		cshift_empty.percent *= bound(0, cl_demoplay_flash.value, 1) / 1.0f;
+		cshift_empty.percent *= bound(0, cl_demoplay_flash.value, 1.0f);
 	}
 }
 // <-- disconnect

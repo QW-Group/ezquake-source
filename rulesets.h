@@ -20,6 +20,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 
 #define BANNED_BY_MTFL "banned by MTFL ruleset"
+#define MTFL_FLASH_GAMMA (0.55)
+#define MTFL_FLASH_CONTRAST (1.0)
 
 typedef struct locked_cvar_s {
 	cvar_t *var;
