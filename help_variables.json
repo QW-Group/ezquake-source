@@ -6829,6 +6829,11 @@
       "group-id": "19",
       "type": "float"
     },
+    "hud_armor_hidezero": {
+      "desc": "Hide armor number if 0.",
+      "group-id": "19",
+      "type": "float"
+    },
     "hud_armor_style": {
       "desc": "Switches graphical style of armor level.",
       "group-id": "19",
