@@ -281,6 +281,7 @@ typedef enum {
 
 	r_state_aliasmodel_opaque_batch,
 	r_state_aliasmodel_translucent_batch,
+	r_state_aliasmodel_translucent_batch_zpass,
 
 	r_state_aliasmodel_additive_batch,
 

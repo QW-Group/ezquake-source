@@ -381,6 +381,9 @@ static void R_InitialiseEntityStates(void)
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 	state->blendingEnabled = true;
 
+	state = R_CopyRenderingState(r_state_aliasmodel_translucent_batch_zpass, r_state_aliasmodel_opaque_batch, "aliasModelTranslucentBatchZPass");
+	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = false;
+
 	state = R_CopyRenderingState(r_state_aliasmodel_additive_batch, r_state_aliasmodel_opaque_batch, "aliasModelTranslucentBatchState");
 	state->blendFunc = r_blendfunc_additive_blending;
 	state->blendingEnabled = true;
