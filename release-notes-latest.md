@@ -28,6 +28,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Changed `/v_dlightcshift` to be enum of when being inside flashblend light affects palette (requested by HangTime, #542)
 - Added `/vid_framebuffer_multisample` to control multi-sampling level of the framebuffer (reported by Matrix, #367)
 - Translucent models are first drawn with a z-pass, to stop overdraw affecting level of translucency
+- Fixed explosion effects on md3 viewmodels (additive blending was being lost)
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 

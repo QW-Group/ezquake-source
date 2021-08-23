@@ -274,14 +274,14 @@ static void GLM_QueueAliasModelDrawImpl(
 		return;
 	}
 
-	if ((render_effects & RF_WEAPONMODEL) && color[3] < 1) {
-		type = aliasmodel_draw_postscene;
-		shelltype = aliasmodel_draw_postscene_shells;
-		outline = false;
-	}
-	else if (render_effects & RF_ADDITIVEBLEND) {
+	if (render_effects & RF_ADDITIVEBLEND) {
 		type = aliasmodel_draw_postscene_additive;
 		shell = false;
+		outline = false;
+	}
+	else if ((render_effects & RF_WEAPONMODEL) && color[3] < 1) {
+		type = aliasmodel_draw_postscene;
+		shelltype = aliasmodel_draw_postscene_shells;
 		outline = false;
 	}
 	else if (color[3] < 1) {
@@ -461,7 +461,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		renderer.TextureUnitBind(TEXTURE_UNIT_MATERIAL, shelltexture);
 	}
 
-	if (translucent && !shells && !additive) {
+	if (translucent && !shells) {
 		GLM_StateBeginAliasModelZPassBatch();
 		for (i = 0; i < instr->num_calls; ++i) {
 			GL_MultiDrawArraysIndirect(
