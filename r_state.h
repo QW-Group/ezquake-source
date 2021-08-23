@@ -267,11 +267,13 @@ typedef enum {
 	r_state_aliasmodel_singletexture_additive,
 	r_state_aliasmodel_multitexture_opaque,
 	r_state_aliasmodel_multitexture_transparent,
+	r_state_aliasmodel_transparent_zpass,
 	r_state_weaponmodel_singletexture_opaque,
 	r_state_weaponmodel_singletexture_transparent,
 	r_state_weaponmodel_singletexture_additive,
 	r_state_weaponmodel_multitexture_opaque,
 	r_state_weaponmodel_multitexture_transparent,
+	r_state_weaponmodel_transparent_zpass,
 
 	r_state_aliasmodel_shadows,
 	r_state_aliasmodel_outline,

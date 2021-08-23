@@ -310,6 +310,9 @@ static void R_InitialiseEntityStates(void)
 	state->line.smooth = false;
 	state->fog.enabled = true;
 
+	state = R_CopyRenderingState(r_state_aliasmodel_transparent_zpass, r_state_aliasmodel_notexture_opaque, "aliasModelZPass");
+	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = false;
+
 	state = R_CopyRenderingState(r_state_aliasmodel_singletexture_opaque, r_state_aliasmodel_notexture_opaque, "opaqueAliasModelSingleTex");
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 
@@ -346,6 +349,9 @@ static void R_InitialiseEntityStates(void)
 	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
 	state = R_CopyRenderingState(r_state_weaponmodel_multitexture_transparent, r_state_weaponmodel_singletexture_transparent, "weaponModelMultiTransparent");
 	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
+	state = R_CopyRenderingState(r_state_weaponmodel_transparent_zpass, r_state_weaponmodel_singletexture_transparent, "weaponModelZPass");
+	R_GLC_TextureUnitSet(state, 0, false, r_texunit_mode_replace);
+	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = false;
 
 	// additive
 	state = R_CopyRenderingState(r_state_weaponmodel_singletexture_additive, r_state_aliasmodel_singletexture_additive, "weaponModelSingleAdditive");

@@ -232,6 +232,16 @@ static void GLC_DrawAlias3ModelProgram(entity_t* ent, int frame1, qbool invalida
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_lerpFraction, lerpfrac);
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_time, cl.time);
 
+		// z-pass
+		if (ent->r_modelalpha < 1) {
+			GLC_StateBeginDrawAliasZPass(ent->renderfx & RF_WEAPONMODEL);
+			vert_index = first_vert;
+			MD3_ForEachSurface(pheader, surf, surfnum) {
+				GL_DrawArrays(GL_TRIANGLES, vert_index, 3 * surf->numTriangles);
+				vert_index += 3 * surf->numTriangles;
+			}
+		}
+
 		GLC_StateBeginDrawAliasFrameProgram(sinf->texnum, null_texture_reference, ent->renderfx, ent->custom_model, ent->r_modelalpha, additive_pass);
 		vert_index = first_vert;
 		MD3_ForEachSurface(pheader, surf, surfnum) {
@@ -277,6 +287,10 @@ static void GLC_DrawAlias3ModelImmediate(entity_t* ent, int frame1, int frame2, 
 	else {
 		if (ent->skinnum >= 0 && ent->skinnum < pheader->numSkins) {
 			sinf += ent->skinnum * pheader->numSurfaces;
+		}
+		if (ent->r_modelalpha < 1 && !additive_pass) {
+			GLC_StateBeginDrawAliasZPass(ent->renderfx & RF_WEAPONMODEL);
+			GLC_DrawMD3Frame(ent, vertexColor, pheader, frame1, frame2, lerpfrac, sinf, invalidate_texture, false, false);
 		}
 		GLC_StateBeginMD3Draw(ent->r_modelalpha, R_TextureReferenceIsValid(sinf->texnum) && !invalidate_texture, ent->renderfx & RF_WEAPONMODEL, additive_pass);
 		GLC_DrawMD3Frame(ent, vertexColor, pheader, frame1, frame2, lerpfrac, sinf, invalidate_texture, false, additive_pass);
