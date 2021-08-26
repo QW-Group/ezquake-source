@@ -18663,16 +18663,16 @@
     },
     "scr_scoreboard_borderless": {
       "default": "1",
-      "desc": "Controls scoreboard border behavior.",
+      "desc": "Disables the border around the scoreboard.",
       "group-id": "47",
       "type": "boolean",
       "values": [
         {
-          "description": "no scoreboard border will be displayed.",
+          "description": "Scoreboard will have a border.",
           "name": "false"
         },
         {
-          "description": "scoreboard border will be displayed.",
+          "description": "Scoreboard will not have a border.",
           "name": "true"
         }
       ]
