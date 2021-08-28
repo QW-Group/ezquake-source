@@ -17085,11 +17085,10 @@
       "default": "11",
       "desc": "The client includes \"sound interpolation\" which allows it to play sounds at higher frequencies, than the default 11025 Hz with perfect quality.\nIn addition to \"s_khz\" also \"s_bits\" (linux only) will have an influence on interpolation quality. This variable allows you to choose the frequency you want to interpolate the sounds to.\nYou will quickly discover, that the shaft sound is different at increased sampling rate. That's because shaft sounds were recorded at 22050 kHz, so probably that's how they should sound from the beginning. If you don't like it, you can always convert them to 11025.",
       "group-id": "45",
-      "remarks": "Also you can change it 'on fly' - just do s_restart after you change s_khz.",
       "type": "enum",
       "values": [
         {
-          "description": "11khz sound (default)",
+          "description": "11khz sound (default).",
           "name": "11"
         },
         {
@@ -17134,22 +17133,13 @@
     },
     "s_loadas8bit": {
       "default": "0",
+      "desc": "Reduce sound samples down to 8-bit at load time, trading quality for lower memory usage.",
       "group-id": "45",
-      "remarks": "This will give a little performance boost when playing the game at the cost of quality for the sound samples.)",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Off.",
-          "name": "false"
-        },
-        {
-          "description": "On (The sound samples will be loaded in 8-bit mode thus making them a little smaller.",
-          "name": "true"
-        }
-      ]
+      "remarks": "This used to help with performance on systems with low memory.",
+      "type": "boolean"
     },
     "s_mixahead": {
-      "desc": "Only affects OSS and legacy ALSA:\n\nThis variable defines the delay time for sounds. How low you can set your sound mixahead depends on your FPS, when you set it too low, your sound will start  crackling.\nGenerally, with 72 FPS you should be able to use a delay of 0.06 seconds.",
+      "desc": "Only affects OSS and legacy ALSA:\n\nThis variable defines the delay time for sounds. How low you can set your sound mixahead depends on your FPS, when you set it too low, your sound will start crackling.\nGenerally, with 72 FPS you should be able to use a delay of 0.06 seconds.",
       "group-id": "45",
       "type": "float"
     },
@@ -17849,101 +17839,109 @@
     },
     "scr_autoid": {
       "default": "5",
+      "desc": "Controls how names and other info are displayed above players, when spectating.",
       "group-id": "40",
-      "remarks": "Only works when spectating.\nYou can remove the drawing of the playername by using scr_autoid_drawname 0.",
       "type": "enum",
       "values": [
         {
-          "description": "Hide players nick as spectator.",
+          "description": "Do not show any player info.",
           "name": "0"
         },
         {
-          "description": "Show players nick as spectator.",
+          "description": "Show name.",
           "name": "1"
         },
         {
-          "description": "Show health and armor over players' heads.",
+          "description": "Name + health and armor bars.",
           "name": "2"
         },
         {
-          "description": "2 + Show armor name.",
+          "description": "2 + Show armor name/icon.",
           "name": "3"
         },
         {
-          "description": "3 + Show if the user has RL (icon).",
+          "description": "3 + Show if the user's best weapon is RL.",
           "name": "4"
         },
         {
-          "description": "3 + Show the users best weapon (icon).",
+          "description": "3 + Show the user's best weapon name/icon. Minimum best weapon set with scr_autoid_weapons.",
           "name": "5"
         }
       ]
     },
     "scr_autoid_armorbar_green_armor": {
       "default": "25 170 0 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Color of the autoID armor bar when a player has the Green armor.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_armorbar_red_armor": {
       "default": "255 0 0 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Color of the autoID armor bar when a player has the Red armor.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_armorbar_yellow_armor": {
       "default": "255 220 0 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Color of the autoID armor bar when a player has the Yellow armor.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_barlength": {
       "default": "16",
-      "desc": "Sets a fixed length of the bar for autoid functionality.",
+      "desc": "Sets a fixed length for health/armor bars in autoID.",
       "group-id": "40",
       "remarks": "If 0, length will be based on scr_autoid_namelength and/or length of individual player's name.",
       "type": "integer"
     },
     "scr_autoid_drawname": {
-      "desc": "Controls if the player name should be drawn when using scr_autoid >0.",
+      "desc": "Shows player names when using autoID.",
       "group-id": "31",
       "type": "boolean",
       "values": [
         {
-          "description": "Player name is not drawn above player when scr_autoid >0.",
+          "description": "Do not show player names.",
           "name": "false"
         },
         {
-          "description": "Player name is drawn above player when scr_autoid >0.",
+          "description": "Show player names.",
           "name": "true"
         }
       ]
     },
     "scr_autoid_healthbar_bg_color": {
       "default": "180 115 115 100",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Background color of the autoID health bar.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_healthbar_mega_color": {
       "default": "255 0 0 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Color of the autoID health bar when a player has a Megahealth.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_healthbar_normal_color": {
       "default": "80 0 0 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Default color of the autoID health bar.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_healthbar_two_mega_color": {
       "default": "255 100 0 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Color of the autoID health bar when a player has multiple Megahealths.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_healthbar_unnatural_color": {
       "default": "255 255 255 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Color of the autoID health bar for any unusual situation (i.e invincibility during warmup).",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_namelength": {
       "default": "0",
-      "desc": "Maximum number of characters in a player name above player's head with autoid.",
+      "desc": "Maximum number of characters for autoID player names.",
       "group-id": "40",
       "type": "integer"
     },
@@ -17961,11 +17959,12 @@
     },
     "scr_autoid_weaponicon": {
       "default": "1",
+      "desc": "Sets the style of player's weapons in autoID.",
       "group-id": "40",
       "type": "boolean",
       "values": [
         {
-          "description": "Player's weapon is indicated by text (RL, etc)",
+          "description": "Player's weapon is indicated by text (RL, etc).",
           "name": "false"
         },
         {
@@ -17976,7 +17975,7 @@
     },
     "scr_autoid_weapons": {
       "default": "2",
-      "desc": "When scr_autoid is > 4, this determines when the player's best weapon will appear.",
+      "desc": "Determines the minimum best weapon to show for a player when scr_autoid > 4.",
       "group-id": "40",
       "remarks": "The order of 'best' weapon can be controlled via the 'tp_weapon_order' variable.",
       "type": "enum",
@@ -17986,7 +17985,7 @@
           "name": "1"
         },
         {
-          "description": "Super-shotgun or better.",
+          "description": "Super shotgun or better.",
           "name": "2"
         },
         {
