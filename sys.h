@@ -178,20 +178,20 @@ typedef struct
 	int	size;
 	int	time;
 	qbool	isdir; //bliP: list dir
-} file_t;
+} q_file_t;
 
 typedef struct
 {
-	file_t *files;
+	q_file_t *files;
 	int	size;
 	int	numfiles;
 	int	numdirs;
-} dir_t;
+} q_dir_t;
 
 int		Sys_Script (const char *path, const char *args);
 
 int		Sys_rmdir (const char *path);
-dir_t	Sys_listdir (const char *path, const char *ext, int sort_type);
+q_dir_t	Sys_listdir (const char *path, const char *ext, int sort_type);
 
 int		Sys_compare_by_date (const void *a, const void *b);
 int		Sys_compare_by_name (const void *a, const void *b);

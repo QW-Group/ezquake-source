@@ -447,7 +447,7 @@ void Draw_LoadFont_f(void)
 void Draw_ListFonts_f(void)
 {
 	char path[MAX_OSPATH];
-	dir_t dir;
+	q_dir_t dir;
 	int i, printed;
 	pcre* regexp = NULL;
 

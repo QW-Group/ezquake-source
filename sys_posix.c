@@ -41,6 +41,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <errno.h>
 #include <dirent.h>
 
+#if defined(__sun)
+#include <sys/file.h>
+#endif
+
 #include <SDL.h>
 #include <dlfcn.h>
 
@@ -164,10 +168,10 @@ Sys_listdir
 ================
 */
 
-dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
+q_dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 {
-	static file_t list[MAX_DIRFILES];
-	dir_t dir;
+	static q_file_t list[MAX_DIRFILES];
+	q_dir_t dir;
 	char pathname[MAX_OSPATH];
 	DIR *d;
 	DIR *testdir; //bliP: list dir
@@ -246,10 +250,10 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	{
 	case SORT_NO: break;
 	case SORT_BY_DATE:
-		qsort((void *)list, dir.numfiles, sizeof(file_t), Sys_compare_by_date);
+		qsort((void *)list, dir.numfiles, sizeof(q_file_t), Sys_compare_by_date);
 		break;
 	case SORT_BY_NAME:
-		qsort((void *)list, dir.numfiles, sizeof(file_t), Sys_compare_by_name);
+		qsort((void *)list, dir.numfiles, sizeof(q_file_t), Sys_compare_by_name);
 		break;
 	}
 

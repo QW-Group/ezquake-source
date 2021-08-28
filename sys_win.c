@@ -333,10 +333,10 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 Sys_listdir
 ================
 */
-dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
+q_dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 {
-	static file_t	list[MAX_DIRFILES];
-	dir_t	dir;
+	static q_file_t	list[MAX_DIRFILES];
+	q_dir_t	dir;
 	HANDLE	h;
 	WIN32_FIND_DATA fd;
 	char	pathname[MAX_DEMO_NAME];
@@ -418,10 +418,10 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	{
 	case SORT_NO: break;
 	case SORT_BY_DATE:
-		qsort((void *)list, dir.numfiles, sizeof(file_t), Sys_compare_by_date);
+		qsort((void *)list, dir.numfiles, sizeof(q_file_t), Sys_compare_by_date);
 		break;
 	case SORT_BY_NAME:
-		qsort((void *)list, dir.numfiles, sizeof(file_t), Sys_compare_by_name);
+		qsort((void *)list, dir.numfiles, sizeof(q_file_t), Sys_compare_by_name);
 		break;
 	}
 	return dir;

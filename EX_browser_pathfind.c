@@ -65,12 +65,12 @@ typedef int nodeid_t;
 typedef short dist_t;
 
 // trick around language limits - allows to copy 4 bytes with "="
-typedef struct ipaddr_t {
+typedef struct q_ipaddr_t {
 	byte data[4];
-} ipaddr_t;
+} q_ipaddr_t;
 
 typedef struct ping_node_t {
-	ipaddr_t ipaddr;
+	q_ipaddr_t ipaddr;
 	nodeid_t prev;           // previous node on the shortest path
 	nodeid_t nlist_start;    // index of the first neighbour
 	nodeid_t nlist_end;      // index of the last neighbour + 1
@@ -134,7 +134,7 @@ static void SB_PingTree_Assertions(void)
 	}
 }
 
-static int SB_PingTree_FindIp(ipaddr_t ipaddr)
+static int SB_PingTree_FindIp(q_ipaddr_t ipaddr)
 {
 	int i;
 
@@ -148,7 +148,7 @@ static int SB_PingTree_FindIp(ipaddr_t ipaddr)
 	return INVALID_NODE;
 }
 
-static int SB_PingTree_AddNode(ipaddr_t ipaddr, unsigned short proxport)
+static int SB_PingTree_AddNode(q_ipaddr_t ipaddr, unsigned short proxport)
 {
 	int id = SB_PingTree_FindIp(ipaddr);
 
@@ -186,9 +186,9 @@ static int SB_PingTree_AddNeighbour(nodeid_t neighbour_id, dist_t dist)
 	return id;
 }
 
-static ipaddr_t SB_DummyIpAddr(void)
+static q_ipaddr_t SB_DummyIpAddr(void)
 {
-	ipaddr_t dummy = {{0, 0, 0, 0}};
+	q_ipaddr_t dummy = {{0, 0, 0, 0}};
 	return dummy;
 }
 
@@ -204,9 +204,9 @@ static void SB_PingTree_Clear(void)
 	SB_PingTree_AddSelf();
 }
 
-static ipaddr_t SB_Netaddr2Ipaddr(const netadr_t *netadr)
+static q_ipaddr_t SB_Netaddr2Ipaddr(const netadr_t *netadr)
 {
-	ipaddr_t retval;
+	q_ipaddr_t retval;
 	memcpy(retval.data, &netadr->ip, 4);
 	return retval;
 }
@@ -252,7 +252,7 @@ static nodeid_t SB_PingTree_AddServer(const server_data *data)
 static void SB_PingTree_AddProxyPing(netadr_t adr, dist_t dist)
 {
 	nodeid_t id_neighbour;
-	ipaddr_t ip = SB_Netaddr2Ipaddr(&adr);
+	q_ipaddr_t ip = SB_Netaddr2Ipaddr(&adr);
 
 	id_neighbour = SB_PingTree_FindIp(ip); // most of the servers should be found
 	if (id_neighbour == INVALID_NODE) {

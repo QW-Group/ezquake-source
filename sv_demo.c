@@ -1701,7 +1701,7 @@ void SV_MVDEasyRecord_f (void)
 	char	name4[MAX_OSPATH*7]; // scream
 
 	int		i;
-	dir_t	dir;
+	q_dir_t	dir;
 	char	*name3;
 
 	c = Cmd_Argc();

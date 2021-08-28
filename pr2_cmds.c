@@ -2252,7 +2252,7 @@ void PF2_FS_GetFileList(byte* base, uintptr_t mask, pr2val_t* stack, pr2val_t*re
 	char 	*list[MAX_DIRFILES];
 	const 	int	list_cnt = sizeof(list) / sizeof(list[0]);
 
-	dir_t	dir;
+	q_dir_t	dir;
 
 //	searchpath_t *search;
 	char	netpath[MAX_OSPATH], *fullname;

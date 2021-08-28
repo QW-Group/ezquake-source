@@ -523,8 +523,8 @@ Lists files
 ==================*/
 void SV_ListFiles_f (void)
 {
-	dir_t	dir;
-	file_t	*list;
+	q_dir_t	dir;
+	q_file_t *list;
 	char	*key;
 	char	*dirname;
 	int	i;
@@ -661,8 +661,8 @@ void SV_RemoveFile_f (void)
 
 	if (*filename == '*') //token, many files
 	{
-		dir_t dir;
-		file_t *list;
+		q_dir_t dir;
+		q_file_t *list;
 
 		// remove all files with specified token
 		filename++;
@@ -1276,8 +1276,8 @@ SV_Check_maps_f
 */
 void SV_Check_maps_f(void)
 {
-	dir_t d;
-	file_t *list;
+	q_dir_t d;
+	q_file_t *list;
 	int i, j, maps_id1;
 
 	d = Sys_listdir("id1/maps", ".bsp$", SORT_BY_NAME);

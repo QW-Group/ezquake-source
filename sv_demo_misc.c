@@ -144,8 +144,8 @@ Deletes sv_demoClearOld files from demo dir if out of space
 */
 qbool SV_DirSizeCheck (void)
 {
-	dir_t	dir;
-	file_t	*list;
+	q_dir_t	dir;
+	q_file_t *list;
 	int	n;
 
 	if ((int)sv_demoMaxDirSize.value)
@@ -165,7 +165,7 @@ qbool SV_DirSizeCheck (void)
 			if ((int)sv_demotxt.value) // if our server record demos and txts, then to remove
 				n <<= 1;  // 50 demos, we have to remove 50 demos and 50 txts = 50*2 = 100 files
 
-			qsort((void *)list, dir.numfiles, sizeof(file_t), Sys_compare_by_date);
+			qsort((void *)list, dir.numfiles, sizeof(q_file_t), Sys_compare_by_date);
 			for (; list->name[0] && n > 0; list++)
 			{
 				if (list->isdir)
@@ -335,8 +335,8 @@ char *SV_PrintTeams (void)
 void SV_DemoList (qbool use_regex)
 {
 	mvddest_t *d;
-	dir_t	dir;
-	file_t	*list;
+	q_dir_t	dir;
+	q_file_t *list;
 	float	free_space;
 	int		i, j, n;
 	int		files[MAX_DIRFILES + 1];
@@ -434,8 +434,8 @@ void SV_DemoListRegex_f (void)
 
 char *SV_MVDNum (int num)
 {
-	file_t	*list;
-	dir_t	dir;
+	q_file_t *list;
+	q_dir_t	dir;
 
 	if (!num)
 		return NULL;
@@ -574,8 +574,8 @@ void SV_MVDRemove_f (void)
 	ptr = Cmd_Argv(1);
 	if (*ptr == '*')
 	{
-		dir_t dir;
-		file_t *list;
+		q_dir_t dir;
+		q_file_t *list;
 
 		// remove all demos with specified token
 		ptr++;
@@ -972,7 +972,7 @@ void SV_LastScores_f (void)
 	char	buf[512];
 	FILE	*f = NULL;
 	char	path[MAX_OSPATH];
-	dir_t	dir;
+	q_dir_t	dir;
 	extern redirect_t sv_redirected;
 
 	if (Cmd_Argc() > 2)

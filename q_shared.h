@@ -175,6 +175,12 @@ float	FloatSwapPDP2Lit (float f);
 
 #endif
 
+//======================= Solaris DEFINED ============================================
+#if defined(__sun)
+
+#include <endian.h>
+#endif
+
 //======================= BYTE SWAPS =========================================
 #if defined __BIG_ENDIAN__
 #define BigShort(x)		(x)

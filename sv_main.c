@@ -4075,12 +4075,12 @@ Sys_compare_by functions for sort files in list
 */
 int Sys_compare_by_date (const void *a, const void *b)
 {
-	return (int)(((file_t *)a)->time - ((file_t *)b)->time);
+	return (int)(((q_file_t *)a)->time - ((q_file_t *)b)->time);
 }
 
 int Sys_compare_by_name (const void *a, const void *b)
 {
-	return strncmp(((file_t *)a)->name, ((file_t *)b)->name, MAX_DEMO_NAME);
+	return strncmp(((q_file_t *)a)->name, ((q_file_t *)b)->name, MAX_DEMO_NAME);
 }
 
 // real-world time passed
