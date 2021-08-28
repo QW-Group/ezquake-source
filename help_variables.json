@@ -21233,8 +21233,9 @@
     },
     "vid_24bit_depth": {
       "default": "1",
+      "desc": "Requests a 24-bit depth-buffer if possible.",
       "group-id": "52",
-      "remarks": "Visual artifacts may be visible if using a 16-bit depth-buffer (e.g. entities disappearing at distance)",
+      "remarks": "Visual artifacts may be visible if using a 16-bit depth-buffer (e.g. entities disappearing at a distance).",
       "type": "boolean",
       "values": [
         {
@@ -21243,25 +21244,6 @@
         },
         {
           "description": "Request 24-bit depth-buffer.",
-          "name": "true"
-        }
-      ]
-    },
-    "vid_allowExtensions": {
-      "group-id": "31",
-      "type": ""
-    },
-    "vid_borderless": {
-      "desc": "When in windowed mode, window will not have a border.",
-      "group-id": "52",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "",
-          "name": "false"
-        },
-        {
-          "description": "",
           "name": "true"
         }
       ]
@@ -21287,12 +21269,12 @@
     },
     "vid_config_x": {
       "desc": "This variable sets the width of the vid_mode 2 window, the minimum possible value is \"640\".",
-      "group-id": "52",
+      "group-id": "31",
       "type": "float"
     },
     "vid_config_y": {
       "desc": "This variable sets the width of the vid_mode 2 window, the minimum possible value is \"400\"",
-      "group-id": "52",
+      "group-id": "31",
       "type": "float"
     },
     "vid_conheight": {
@@ -21368,78 +21350,165 @@
     },
     "vid_framebuffer": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enables rendering to custom Framebuffer Objects. ezQuake uses these FBOs for improved color, \"render scale\" control, and other post-processing effects.",
+      "group-id": "52",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Only uses the default framebuffer.",
+          "name": "0"
+        },
+        {
+          "description": "Render everything to a FBO.",
+          "name": "1"
+        },
+        {
+          "description": "Use separate FBOs for the 3D scene and HUD (allows scaling the two separately).",
+          "name": "2"
+        }
+      ]
     },
     "vid_framebuffer_blit": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Toggles blitting from the FBO to the front buffer instead of flipping buffers.",
+      "group-id": "52",
+	  "remarks": "Only available with \"vid_framebuffer 1\" + \"vid_software_palette 0\" and a supported GPU.",
+      "type": "boolean"
     },
     "vid_framebuffer_depthformat": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Configures the depth-buffer precision for the framebuffer.",
+      "group-id": "52",
+      "type": "integer",
+	  "values": [
+        {
+          "description": "Use the best precision available (up to 32-bit float).",
+          "name": "0"
+        },
+        {
+          "description": "Use 16-bit float precision.",
+          "name": "1"
+        },
+        {
+          "description": "Use 24-bit float precision.",
+          "name": "2"
+        },
+		{
+          "description": "Use 32-bit precision.",
+          "name": "3"
+        },
+		{
+          "description": "Use 32-bit float precision.",
+          "name": "4"
+        }
+      ]
     },
     "vid_framebuffer_hdr": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enables increased, 16-bit float HDR color precision for the framebuffer. This reduces color banding, and allows e.g. tone mapping in post-processing.",
+      "group-id": "52",
+      "type": "boolean"
     },
     "vid_framebuffer_hdr_tonemap": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Toggles tone mapping in HDR mode.",
+      "group-id": "52",
+      "type": "boolean"
     },
     "vid_framebuffer_height": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Sets a custom height for the FBO (200 pixels minimum).",
+      "group-id": "52",
+	  "remarks": "Setting vid_framebuffer_scale overrides custom FBO width/height.",
+      "type": "integer"
     },
-    "vid_framebuffer_palette": {
+    "vid_framebuffer_multisample": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "The number of samples used around each pixel for anti-aliasing when using custom FBOs. Range 0-16.",
+      "group-id": "52",
+      "type": "integer"
     },
     "vid_framebuffer_scale": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Scales the FBOs down/up to the screen resolution. Similar to \"render scale\" in other games if combined with vid_framebuffer 2.",
+      "group-id": "52",
+	  "remarks": "Takes precedence over vid_framebuffer_width/height.",
+      "type": "float",
+	  "values": [
+		{
+          "description": "Disable scaling.",
+          "name": "0 or 1"
+        },
+		{
+          "description": "Render to a larger FBO, then scale down.",
+          "name": "0.25 - 1"
+        },
+        {
+          "description": "Render to a smaller FBO, then scale up.",
+          "name": "1.x+"
+        }
+      ]
     },
     "vid_framebuffer_smooth": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
-    },
-    "vid_framebuffer_sshotmode": {
-      "default": "1",
-      "group-id": "0",
-      "system-generated": true
-    },
-    "vid_framebuffer_width": {
-      "default": "0",
-      "group-id": "0",
-      "system-generated": true
-    },
-    "vid_fullscreen": {
-      "default": "1",
-      "desc": "Enables fullscreen mode, when disabled, sets windowed mode.",
+      "desc": "Toggles filtering when scaling the framebuffer up/down to the screen resolution (with either the vid_framebuffer_scale or width+height properties).",
       "group-id": "52",
+      "remarks": "Disable smoothing if you want to go for a chunky pixel look with FBO upscaling.",
       "type": "boolean",
       "values": [
         {
-          "description": "",
+          "description": "Nearest filtering - blocky scaling.",
           "name": "false"
         },
         {
-          "description": "",
+          "description": "Linear filtering - smooth scaling.",
+          "name": "true"
+        }
+      ]
+    },
+    "vid_framebuffer_sshotmode": {
+      "default": "1",
+      "desc": "Controls screenshot resolution when using scaled framebuffers.",
+      "group-id": "41",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Fullscreen/windowed resolution.",
+          "name": "false"
+        },
+        {
+          "description": "Framebuffer resolution.",
+          "name": "true"
+        }
+      ]
+    },
+    "vid_framebuffer_width": {
+      "default": "0",
+      "desc": "Sets a custom width for the FBO (320 pixels minimum).",
+      "group-id": "52",
+	  "remarks": "Setting vid_framebuffer_scale overrides custom FBO width/height.",
+      "type": "integer"
+    },
+    "vid_fullscreen": {
+      "default": "1",
+      "desc": "Toggles between fullscreen and windowed mode.",
+      "group-id": "52",
+      "remarks": "alt + enter toggles the setting and applies the change without a vid_restart.",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Windowed mode.",
+          "name": "false"
+        },
+        {
+          "description": "Fullscreen mode.",
           "name": "true"
         }
       ]
     },
     "vid_fullscreen_mode": {
       "desc": "This variable sets the full screen video mode that the game will switch to when the \"vid_fullscreen\" command is executed.",
-      "group-id": "52",
+      "group-id": "31",
       "type": "float"
     },
     "vid_gammacorrection": {
@@ -21463,8 +21532,19 @@
     },
     "vid_gl_core_profile": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Controls the level of backwards compatibility of the Classic Renderer with legacy OpenGL features.",
+      "group-id": "52",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "More backwards compatibility with older OpenGL.",
+          "name": "false"
+        },
+        {
+          "description": "Use the OpenGL Core profile, which drops older features. Disables immediate mode.",
+          "name": "true"
+        }
+      ]
     },
     "vid_grab_keyboard": {
       "default": "1",
@@ -21478,6 +21558,23 @@
       "group-id": "52",
       "remarks": "This value is ignored if vid_usedesktopres is set.",
       "type": "integer"
+    },
+    "vid_hwgamma_fps": {
+      "default": "60",
+      "desc": "Controls the frequency of hardware gamma updates per second. These updates have a performance cost, so it is preferred to not update every frame when playing at thousands of FPS.",
+      "group-id": "52",
+      "remarks": "This can really hurt performance on screen flashing effects, i.e when taking damage - the worst moment to suffer framerate dips!",
+      "type": "integer",
+      "values": [
+        {
+          "description": "Update hardware gamma every frame.",
+          "name": "0"
+        },
+        {
+          "description": "Update hardware gamma at the specified frame rate.",
+          "name": "*"
+        }
+      ]
     },
     "vid_hwgammacontrol": {
       "default": "2",
@@ -21497,20 +21594,14 @@
           "name": "2"
         },
         {
-          "description": "Enables hwgamma even when window focus is lost but not minimized (Xorg only)",
+          "description": "Enables hwgamma even when window focus is lost but not minimized (Xorg only).",
           "name": "3"
         }
       ]
     },
-    "vid_hwgamma_fps": {
-      "default": "60",
-      "desc": "If set, ezQuake will only change hardware gamma at specified frequency.  This reduces fps drops when playing at high fps",
-      "group-id": "52",
-      "type": "integer"
-    },
     "vid_minimize_on_focus_loss": {
       "default": "1",
-      "desc": "If set, ezQuake will minimise when running in fullscreen mode and it loses focus (e.g. alt-tab)",
+      "desc": "If set, ezQuake will minimise when running in fullscreen mode and it loses focus (e.g. alt-tab).",
       "group-id": "52",
       "type": "boolean"
     },
@@ -21564,8 +21655,19 @@
     },
     "vid_software_palette": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Controls whether to adjust gamma at the display level, or as a color correction rendering effect.",
+      "group-id": "52",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Use hardware gamma (classic style).",
+          "name": "false"
+        },
+        {
+          "description": "Adjust gamma in post-processing.",
+          "name": "true"
+        }
+      ]
     },
     "vid_stencilbits": {
       "group-id": "31",
@@ -21652,10 +21754,19 @@
       "type": "integer"
     },
     "vid_win_borderless": {
-      "default": "0",
-      "desc": "If set, windowed mode will be in a borderless window (no title)",
+      "desc": "Enables borderless windowed mode (no window title, frame...). Useful for multi-monitor setups, where it can provide a fullscreen window that does not pause when out of focus.",
       "group-id": "52",
-      "type": "boolean"
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Standard windowed mode.",
+          "name": "false"
+        },
+        {
+          "description": "Borderless windowed mode.",
+          "name": "true"
+        }
+      ]
     },
     "vid_win_displaynumber": {
       "default": "0",
@@ -21690,17 +21801,17 @@
     },
     "vid_window_x": {
       "desc": "This variable sets the x-axis location of the top left corner of the game window on the desktop.",
-      "group-id": "52",
+      "group-id": "31",
       "type": "float"
     },
     "vid_window_y": {
       "desc": "This variable sets the y-axis location of the top left corner of the game window on the desktop.",
-      "group-id": "52",
+      "group-id": "31",
       "type": "float"
     },
     "vid_windowed_mode": {
       "desc": "This variable sets the windowed video mode that the game will switch to when the \"vid_windowed\" command is executed.",
-      "group-id": "52",
+      "group-id": "31",
       "type": "float"
     },
     "vid_xpos": {
@@ -21754,7 +21865,7 @@
       "default": "0.7",
       "desc": "Sets sound volume.",
       "group-id": "45",
-      "remarks": "Even higher values than 1 are possible, but sound usually gets faithless with them.",
+      "remarks": "This can go above 1, but sound will get more and more distorted.",
       "type": "float"
     },
     "w_switch": {
