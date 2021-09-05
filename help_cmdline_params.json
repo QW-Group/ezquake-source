@@ -262,6 +262,9 @@
   "-r-debug": {
     "system-generated": true
   },
+  "-r-no-amd-fix": {
+    "system-generated": true
+  },
   "-r-nocallback": {
     "system-generated": true
   },
