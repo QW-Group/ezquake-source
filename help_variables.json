@@ -16249,23 +16249,67 @@
     },
     "r_smoothalphahack": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Controls the alpha blending style for HUD text.",
+      "group-id": "50",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Corrected HUD text alpha blending (clean edges).",
+          "name": "false"
+        },
+        {
+          "description": "Pre-ezQuake 3.6 HUD text alpha blending (creats faint outlines around the edges).",
+          "name": "true"
+        }
+      ]
     },
     "r_smoothcrosshair": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Controls texture filtering on the crosshair.",
+      "group-id": "6",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Nearest filtering - sharp, pixelated crosshair.",
+          "name": "false"
+        },
+        {
+          "description": "Linear filtering - smooth crosshair.",
+          "name": "true"
+        }
+      ]
     },
     "r_smoothimages": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Controls texture filtering on HUD images (icons, radar...).",
+      "group-id": "50",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Nearest filtering - sharp, pixelated icons.",
+          "name": "false"
+        },
+        {
+          "description": "Linear filtering - smooth icons.",
+          "name": "true"
+        }
+      ]
     },
     "r_smoothtext": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Controls texture filtering on HUD text.",
+      "group-id": "50",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Nearest filtering - sharp, pixelated text.",
+          "name": "false"
+        },
+        {
+          "description": "Linear filtering - smooth text.",
+          "name": "true"
+        }
+      ]
     },
     "r_speeds": {
       "default": "0",
