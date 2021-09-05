@@ -1110,6 +1110,13 @@
       "group-id": "21",
       "type": "integer"
     },
+    "cl_c2sdupe": {
+      "default": "0",
+      "desc": "Controls whether to send duplicate packets to the server.",
+      "group-id": "21",
+      "remarks": "Requires server support.",
+      "type": "integer"
+    },
     "cl_c2spps": {
       "default": "0",
       "desc": "Packet filtering (a la Qizmo's .c2spps command).\nUse this to reduce network traffic if you're playing on a 28800 (or worse) connection and can't set cl_maxfps 72 because it causes lag.\nAlso consider use of FPS independent physics in conjunction with cl_physfps.",
@@ -4032,6 +4039,22 @@
       "remarks": "Time in seconds, must be negative.",
       "type": "float"
     },
+    "demo_jump_skip_messages": {
+      "default": "1",
+      "desc": "Determines if messages should be printed to console during demo jumps.",
+      "group-id": "40",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Display all messages during demo jump.",
+          "name": "false"
+        },
+        {
+          "description": "Skip messages during demo jump.",
+          "name": "true"
+        }
+      ]
+    },
     "demo_playlist_loop": {
       "default": "0",
       "desc": "will toggle playlist looping.",
@@ -6045,6 +6068,13 @@
           "name": "true"
         }
       ]
+    },
+    "gl_smoothmodels": {
+      "default": "1",
+      "desc": "Toggles between flat-shaded and smooth shaded models.",
+      "group-id": "35",
+      "remarks": "Applies to GLSL OpenGL renderer only.",
+      "type": "boolean"
     },
     "gl_squareparticles": {
       "default": "0",
