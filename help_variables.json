@@ -466,9 +466,9 @@
     },
     "allow_scripts": {
       "default": "2",
-      "desc": "Possibility to prove, that you do NOT use scripts. Of course, values 0 and 1 will block 'rotate' command.",
+      "desc": "Controls the complexity of movement scripts allowed in your client (e.g. rocket jump scripts). Other players can check your setting with 'f_scripts'.",
       "group-id": "9",
-      "remarks": "Your current 'allow_scripts' setting will be reported to 'f_scripts' query and anyone will be able to check it.\nIf anyone said 'f_scripts' since last mapchange, the client will also autoreport any change of allow_scripts. So if you don't use scripts, turn them off to prove you don't use them.\nAnd remember - scripts _are allowed_, so don't call ppl who use them 'cheaters'.\n\nThis variable will be set to 0 on startup if a command line switches -norjscripts or -noscripts are used.",
+      "remarks": "If anyone said 'f_scripts' since the last map change, your client will also auto-report any change of allow_scripts.\nCommand line switches -norjscripts or -noscripts set allow_scripts to 0.\nMay not be changed during a match in some rulesets.",
       "type": "enum",
       "values": [
         {
@@ -480,7 +480,7 @@
           "name": "1"
         },
         {
-          "description": "Allow scripts (default)",
+          "description": "Allow scripts (default).",
           "name": "2"
         }
       ]
@@ -1738,16 +1738,17 @@
     },
     "cl_iDrive": {
       "default": "0",
-      "desc": "Emulates \"strafe script\". When turned on you will always move to some direction when holding both keys +moveleft and +moveright (or +forward and +back).\nIf you have this turned on, it will be reported in your f_ruleset reply with as (+i) flag.\nCannot be changed during the gameplay.",
+      "desc": "Emulates \"strafe script\". When turned on, you will always change direction instead of stopping when holding opposing movement keys +moveleft and +moveright, or +forward and +back.",
       "group-id": "9",
+      "remarks": "Reported in your f_ruleset reply with the '+i' flag.\nCan not be changed during a match.",
       "type": "boolean",
       "values": [
         {
-          "description": "Pressing keys for both directions will cause stop in movement",
+          "description": "Pressing keys for both directions will stop movement on that axis.",
           "name": "false"
         },
         {
-          "description": "Auto-releases one of the keys when both directions are pressed",
+          "description": "Auto-releases one of the keys when both directions are pressed.",
           "name": "true"
         }
       ]
@@ -6075,17 +6076,17 @@
     },
     "gl_textureless": {
       "default": "0",
-      "desc": "True textureless map textures, but preserving original colors.\nFor custom colors - look for r_drawflat.",
+      "desc": "Toggles between textures and flat colors based on the textures (looks like gl_max_size 1).\nFor custom colors, look for r_drawflat.",
       "group-id": "50",
-      "remarks": "The beauty of this is that u can toggle in realtime for any map.\nSame as with r_drawflat.",
+      "remarks": "Can not be changed during a match.",
       "type": "boolean",
       "values": [
         {
-          "description": "Normal textures",
+          "description": "Use world textures.",
           "name": "false"
         },
         {
-          "description": "Textureless world",
+          "description": "Use flat colors averaged from the world textures.",
           "name": "true"
         }
       ]
@@ -15383,17 +15384,17 @@
     },
     "r_drawflat": {
       "default": "0",
-      "desc": "Disables textures and walls and floors them with a solid color (/r_wallcolor or /r_floorcolor) depending on the angle.",
+      "desc": "Replaces wall/floor textures with a solid color (/r_wallcolor or /r_floorcolor, depending on the angle of the surface).",
       "group-id": "50",
-      "remarks": "Usually used for performance improvements at the expense of eyecandy. See /r_wallcolor, /r_floorcolor & /r_drawflat_mode.",
+      "remarks": "Usually used for performance improvements at the expense of eyecandy. See /r_wallcolor, /r_floorcolor & /r_drawflat_mode.\nCan not be changed during a match.",
       "type": "enum",
       "values": [
         {
-          "description": "Use basic textures for walls and floors.",
+          "description": "Use textures for walls and floors.",
           "name": "0"
         },
         {
-          "description": "Use color-adjusted walls and floors",
+          "description": "Use custom colored walls and floors.",
           "name": "1"
         },
         {
@@ -15409,19 +15410,19 @@
     "r_drawflat_mode": {
       "default": "0",
       "desc": "Sets the method used to adjust wall & floor textures (/r_drawflat) by the corresponding color (/r_wallcolor & /r_floorcolor)",
-      "remarks": "Works in GLSL modes only (see /gl_program_world).\nMode 0 will give best performance, mode 2 is the recommended setting for different colors.",
+      "remarks": "Works in GLSL modes only (see /gl_program_world).\nMode 0 will give best performance, mode 2 is the recommended setting for different colors.\nCan not be changed during a match.",
       "type": "enum",
       "values": [
         {
-          "description": "Walls/floors will be solid color, as per /r_drawflat setting",
+          "description": "Walls/floors will be solid color, as per /r_drawflat setting.",
           "name": "0"
         },
         {
-          "description": "Walls/floors will be textured but then scaled as per /r_wallcolor & /r_floorcolor settings",
+          "description": "Walls/floors will be textured and blended with custom colors.",
           "name": "1"
         },
         {
-          "description": "Walls/floors will be solid color (see /r_wallcolor & /r_floorcolor), but brightness will be set by the underlying texture",
+          "description": "Walls/floors will be monochrome textures using custom colors.",
           "name": "2"
         }
       ]
@@ -15716,6 +15717,7 @@
       "default": "50 100 150",
       "desc": "Changes color of floors and ceilings when r_drawflat is set to 1.\nEnter RGB value here, e.g. r_floorcolor \"128 128 128\" goes for gray floor.",
       "group-id": "50",
+      "remarks": "Can not be changed during a match.",
       "type": "string"
     },
     "r_fullbright": {
@@ -16819,6 +16821,7 @@
       "default": "255 255 255",
       "desc": "Changes color of walls when r_drawflat is set to 1.\nEnter RGB value here, e.g. r_wallcolor \"128 128 128\" goes for gray walls.",
       "group-id": "50",
+      "remarks": "Can not be changed during a match.",
       "type": "string"
     },
     "r_watercolor": {
