@@ -5827,6 +5827,26 @@
       "group-id": "8",
       "type": "integer"
     },
+    "gl_program_aliasmodels": {
+      "default": "1",
+      "desc": "Determines if GLSL will be used to render aliasmodels.",
+      "group-id": "35",
+      "remarks": "Applies to classic OpenGL renderer only.",
+      "renderers": [
+        "classic"
+      ],
+      "type": "integer"
+    },
+    "gl_program_hud": {
+      "default": "1",
+      "desc": "Determines if GLSL will be used to render the HUD.",
+      "group-id": "35",
+      "remarks": "Applies to classic OpenGL renderer only.",
+      "renderers": [
+        "classic"
+      ],
+      "type": "integer"
+    },
     "gl_program_sky": {
       "default": "1",
       "desc": "Determines if GLSL will be used to render skybox/skydome surfaces.\nr_fastsky does not use this setting.",
@@ -5837,9 +5857,29 @@
       ],
       "type": "integer"
     },
+    "gl_program_sprites": {
+      "default": "1",
+      "desc": "Determines if GLSL will be used to render sprites.",
+      "group-id": "35",
+      "remarks": "Applies to classic OpenGL renderer only.",
+      "renderers": [
+        "classic"
+      ],
+      "type": "integer"
+    },
     "gl_program_turbsurfaces": {
       "default": "1",
-      "desc": "Determines if GLSL will be used to render skybox/skydome surfaces.\nr_fastturb does not use this setting.",
+      "desc": "Determines if GLSL will be used to render 'liquid' surfaces.\nr_fastturb does not use this setting.",
+      "group-id": "35",
+      "remarks": "Applies to classic OpenGL renderer only.",
+      "renderers": [
+        "classic"
+      ],
+      "type": "integer"
+    },
+    "gl_program_world": {
+      "default": "1",
+      "desc": "Determines if GLSL will be used to render world surfaces (walls, floors..).",
       "group-id": "35",
       "remarks": "Applies to classic OpenGL renderer only.",
       "renderers": [
