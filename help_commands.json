@@ -14,6 +14,9 @@
   "+fire": {
     "system-generated": true
   },
+  "+fire_ar": {
+    "system-generated": true
+  },
   "+forward": {
     "description": "When active the player will move forward."
   },
@@ -87,6 +90,9 @@
     "system-generated": true
   },
   "-fire": {
+    "system-generated": true
+  },
+  "-fire_ar": {
     "system-generated": true
   },
   "-forward": {
@@ -313,7 +319,7 @@
   },
   "cfg_save": {
     "description": "This command will dump all aliases, bindings, plus commands, msg_triggers, teamplay settings and variables to filename.cfg .\nUser made variables (created with set/seta) are saved as well.",
-    "remarks":"configs saved with cfg_save are saved in quake/ezquake/configs/*.cfg",
+    "remarks": "Configs saved with cfg_save are saved in quake/ezquake/configs/*.cfg",
     "syntax": "<filename>"
   },
   "check_maps": {
@@ -412,6 +418,9 @@
     "description": "Jumps playback to a point in time.\n\nExamples:\ndemo_jump 120\n - Jump playback to 120 seconds from the start of the demo.\ndemo_jump 4:30\n - Jump playback to 4 minutes and 30 seconds from the start of the demo.",
     "syntax": "[+|-][m:]<s>"
   },
+  "demo_jump_end": {
+    "system-generated": true
+  },
   "demo_jump_mark": {
     "system-generated": true
   },
@@ -480,8 +489,8 @@
   },
   "dev_pointfile": {
     "description": "The pointfile command will load a .pts file and give a dotted line indicating where the leak(s) are on the level.",
-    "syntax": "<filename>",
-    "remarks":"If a leak exists in the level, qbsp generates a non-zero .pts file in the maps directory."
+    "remarks": "If a leak exists in the level, qbsp generates a non-zero .pts file in the maps directory.",
+    "syntax": "<filename>"
   },
   "devmap": {
     "description": "Try it in cheats mode, start a map (devmap dm6) and type fly."
@@ -534,7 +543,7 @@
   },
   "f_modified": {
     "description": "All the usual dm models, sounds, palettes etc are included in the check.\nIn Team Fortress the TF flag, dispensers and sentry guns are also checked. There is also an f_modified command which will print your f_modified response.",
-    "remarks":"You need to install security files."
+    "remarks": "You need to install security files."
   },
   "f_ruleset": {
     "system-generated": true
@@ -1659,7 +1668,7 @@
   },
   "skins": {
     "description": "Refreshes skin settings.",
-    "remarks":"If you have set noskins to 0 and do this it will download all skins that players are using on server."
+    "remarks": "If you have set noskins to 0 and do this it will download all skins that players are using on server."
   },
   "skygroup": {
     "description": "In basics works same as mapgroup.",
@@ -1744,6 +1753,9 @@
     "remarks": "Useful when the physical gamedir directory has a different name than the widely accepted gamedir directory."
   },
   "sv_lastscores": {
+    "system-generated": true
+  },
+  "sv_status": {
     "system-generated": true
   },
   "sv_usercmdtrace": {
