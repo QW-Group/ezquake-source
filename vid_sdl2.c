@@ -897,7 +897,11 @@ static void HandleEvents(void)
 			break;
 		case SDL_DROPFILE:
 			/* TODO: Add handling for different file types */
-			Cbuf_AddText("playdemo ");
+			if (strncmp(event.drop.file, "qw://", 5) == 0) {
+				Cbuf_AddText("qwurl ");
+			} else {
+				Cbuf_AddText("playdemo ");
+			}
 			Cbuf_AddText(event.drop.file);
 			Cbuf_AddText("\n");
 			SDL_free(event.drop.file);
