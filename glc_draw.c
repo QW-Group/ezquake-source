@@ -44,12 +44,7 @@ qbool GLC_ProgramHudImagesCompile(void);
 
 void GLC_DrawDisc(void)
 {
-	if (!GL_FramebufferEnabled2D()) {
-		GL_BuiltinProcedure(glDrawBuffer, "mode=GL_FRONT", GL_FRONT);
-		Draw_Pic(vid.width - 24, 0, draw_disc);
-		R_EmptyImageQueue();
-		GL_BuiltinProcedure(glDrawBuffer, "mode=GL_BACK", GL_BACK);
-	}
+
 }
 
 void GLC_HudDrawComplete(void)
