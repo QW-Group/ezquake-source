@@ -267,9 +267,10 @@ void GL_DrawElementsInstancedBaseVertexBaseInstance(GLenum mode, GLsizei count, 
 qbool GL_DrawElementsBaseVertexAvailable(void);
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
+GLenum GL_ProcessAllErrors(const char* message);
 
 #ifdef WITH_RENDERING_TRACE
-GLenum GL_ProcessErrors(const char* message);
+#define GL_ProcessErrors GL_ProcessAllErrors
 
 #define GL_LoadRequiredFunction(varName, functionName)           (((varName) = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL)
 #define GL_LoadMandatoryFunction(functionName,testFlag)          { testFlag &= ((q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }

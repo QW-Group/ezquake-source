@@ -83,8 +83,9 @@ void GL_EnsureFinished(void)
 	glFinish();
 }
 
-#ifdef WITH_RENDERING_TRACE
-GLenum GL_ProcessErrors(const char* message)
+GLenum GL_ProcessErrors(const char* message);
+
+GLenum GL_ProcessAllErrors(const char* message)
 {
 	GLenum error = glGetError();
 	GLenum firstError = error;
@@ -115,15 +116,10 @@ GLenum GL_ProcessErrors(const char* message)
 	}
 	return firstError;
 }
-#endif // WITH_RENDERING_TRACE
 
 void GL_ConsumeErrors(void)
 {
-	GLenum error = glGetError();
-
-	while (error != GL_NO_ERROR) {
-		error = glGetError();
-	}
+	GL_ProcessAllErrors("Consuming prior errors...");
 }
 
 static void GL_PrintInfoLine(const char* label, int labelsize, const char* fmt, ...)
