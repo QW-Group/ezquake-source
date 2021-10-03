@@ -312,7 +312,6 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	framebuffer_data_t* fb = NULL;
 	char label[128];
 	qbool hdr = (vid_framebuffer_hdr.integer && GL_VersionAtLeast(3, 0) && framebuffer_hdr[id]);
-	qbool alpha = framebuffer_alpha[id];
 	GLenum framebuffer_format;
 
 	if (!GL_Supported(R_SUPPORT_FRAMEBUFFERS)) {

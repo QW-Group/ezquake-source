@@ -238,9 +238,6 @@ void GL_TexStorage2DMultisample(texture_ref texture, GLsizei samples, GLenum int
 			GL_Procedure(glTexStorage2DMultisample, target, samples, internalformat, width, height, fixedsamplelocations);
 		}
 		else if (GL_Available(glTexImage2DMultisample)) {
-			GLenum format = (internalformat == GL_RGBA8 || internalformat == GL_SRGB8_ALPHA8 || internalformat == GL_RGBA16F ? GL_RGBA : GL_RGB);
-			GLenum type = (internalformat == GL_RGBA16F || internalformat == GL_RGB16F ? GL_FLOAT : GL_UNSIGNED_BYTE);
-
 			GL_BindTextureUnit(textureUnit, texture);
 			GL_Procedure(glTexImage2DMultisample, target, samples, internalformat, width, height, fixedsamplelocations);
 		}

@@ -1162,23 +1162,18 @@ qbool GLC_PreCompileWorldPrograms(void)
 //   water surfaces are always drawn during the texture chaining phase, which is something to fix)
 void GLC_DrawWorld(void)
 {
-	extern msurface_t* alphachain;
-
 	R_TraceEnterFunctionRegion;
 
 	GLC_DrawTextureChains(NULL, cl.worldmodel, false, false, false);
 	GLC_DrawFlat(cl.worldmodel, false);
 	GLC_DrawMapOutline(cl.worldmodel);
 	GLC_DrawTextureChains(NULL, cl.worldmodel, false, false, true);
-	//GLC_DrawAlphaChain(alphachain, polyTypeWorldModel);
 
 	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_DrawBrushModel(entity_t* e, qbool polygonOffset, qbool caustics)
 {
-	extern msurface_t* alphachain;
-
 	GLC_DrawTextureChains(e, e->model, caustics, polygonOffset, false);
 	GLC_DrawFlat(e->model, polygonOffset);
 	GLC_DrawMapOutline(e->model);

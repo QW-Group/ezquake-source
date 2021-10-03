@@ -51,6 +51,15 @@ GL_StaticProcedureDeclaration(glMultiTexCoord2f, "target=%u, s=%f, t=%f", GLenum
 GL_StaticProcedureDeclaration(glClientActiveTexture, "target=%u", GLenum target)
 #endif
 
+#ifdef WITH_RENDERING_TRACE
+static const char* gl_friendlyTextureTargetNames[] = {
+	"GL_TEXTURE_2D",              // texture_type_2d,
+	"GL_TEXTURE_2D_ARRAY",        // texture_type_2d_array,
+	"GL_TEXTURE_CUBE_MAP",        // texture_type_cubemap,
+	"GL_TEXTURE_2D_MULTISAMPLE"   // texture_type_2d_multisampled,
+};
+#endif
+
 void R_InitialiseStates(void);
 
 // VAOs
@@ -586,13 +595,6 @@ void GL_InitialiseState(void)
 	R_ProgramInitialiseState();
 }
 
-static const char* gl_friendlyTextureTargetNames[] = {
-	"GL_TEXTURE_2D",              // texture_type_2d,
-	"GL_TEXTURE_2D_ARRAY",        // texture_type_2d_array,
-	"GL_TEXTURE_CUBE_MAP",        // texture_type_cubemap,
-	"GL_TEXTURE_2D_MULTISAMPLE"   // texture_type_2d_multisampled,
-};
-
 // These functions taken from gl_texture.c
 static void GL_BindTexture(GLenum targetType, GLuint texnum, qbool warning)
 {
@@ -672,7 +674,7 @@ void GL_TextureUnitMultiBind(int first, int count, texture_ref* textures)
 	GLuint glTextures[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
 	GLuint postbind_texture_state[texture_type_count][MAX_LOGGED_TEXTURE_UNITS];
 	qbool already_bound[MAX_LOGGED_TEXTURE_UNITS] = { false };
-	r_texture_type_id types[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
+	//r_texture_type_id types[MAX_LOGGED_TEXTURE_UNITS] = { 0 };
 	qbool multi = false;
 	int i, j, first_to_change = -1;
 
