@@ -188,6 +188,7 @@ COMMON_OBJS := \
     host.o             \
     mathlib.o          \
     md4.o              \
+    sha3.o             \
     net.o              \
     net_chan.o         \
     q_shared.o         \
