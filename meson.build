@@ -168,6 +168,7 @@ sources = [
 	'match_tools_challenge.c',
 	'mathlib.c',
 	'md4.c',
+	'sha3.c',
 	'menu.c',
 	'menu_demo.c',
 	'menu_ingame.c',
