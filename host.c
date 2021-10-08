@@ -201,7 +201,9 @@ void SYSINFO_Init(void)
 		buffer[fread (buffer, 1, sizeof(buffer) - 1, f)] = '\0';
 		fclose (f);
 		match = strstr (buffer, "cpu MHz");
-		sscanf (match, "cpu MHz : %i", &SYSINFO_MHz);
+		if (match) {
+			sscanf (match, "cpu MHz : %i", &SYSINFO_MHz);
+		}
 	} else {
 		Com_Printf ("could not open /proc/cpuinfo!\n");
 	}
