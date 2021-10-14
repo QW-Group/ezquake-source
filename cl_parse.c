@@ -48,7 +48,9 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 
 int CL_LoginImageId(const char* name);
 
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
 void IN_ServerSideWeaponSelectionResponse(const char* s);
+#endif
 
 #ifdef MVD_PEXT1_HIDDEN_MESSAGES
 static void CL_ParseAntilagPosition(int size);
@@ -1437,26 +1439,29 @@ void CL_ParseServerData (void)
 
 #ifdef PROTOCOL_VERSION_MVD1
 		if (protover == PROTOCOL_VERSION_MVD1) {
-			extern cvar_t cl_pext_serversideweapon;
 			extern cvar_t cl_pext_lagteleport;
 			extern cvar_t cl_debug_antilag_send;
-			extern cvar_t cl_debug_weapon_send;
 
 			cls.mvdprotocolextensions1 = MSG_ReadLong();
 			Com_DPrintf("Using MVDSV extensions 0x%x\n", cls.mvdprotocolextensions1);
 			if (!cls.demoplayback) {
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+				extern cvar_t cl_pext_serversideweapon;
+
 				if (cl_pext_serversideweapon.integer && !(cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON)) {
 					Con_Printf("&cf00Warning&r: weapon scripts will be executed client-side\n");
 				}
+#endif
+#ifdef MVD_PEXT1_HIGHLAGTELEPORT
 				if (cl_pext_lagteleport.integer && !(cls.mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT)) {
 					Con_Printf("&cf00Warning&r: high-lag teleport fix not available\n");
 				}
+#endif
+#ifdef MVD_PEXT1_DEBUG_ANTILAG
 				if (cl_debug_antilag_send.integer && !(cls.mvdprotocolextensions1 & MVD_PEXT1_DEBUG_ANTILAG)) {
 					Con_Printf("&cf00Warning&r: server doesn't support antilag debugging - will not send\n");
 				}
-				if (cl_debug_weapon_send.integer && !(cls.mvdprotocolextensions1 & MVD_PEXT1_DEBUG_WEAPON)) {
-					Con_Printf("&cf00Warning&r: server doesn't support weapon debugging - will not send\n");
-				}
+#endif
 			}
 			continue;
 		}
@@ -3262,11 +3267,13 @@ void CL_ParseStufftext (void)
 			}
 		}
 	}
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
 	else if (!strncmp(s, "//mvdsv_ssw ", sizeof("//mvdsv_ssw ") - 1)) {
 		if (!cls.demoplayback && !cl.spectator) {
 			IN_ServerSideWeaponSelectionResponse(s + sizeof("//mvdsv_ssw ") - 1);
 		}
 	}
+#endif
 	else
 	{
 		Cbuf_AddTextEx(&cbuf_svc, s);

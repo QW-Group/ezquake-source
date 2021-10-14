@@ -111,9 +111,6 @@
 
 ### Debugging protocol changes (weapon scripts)
 
-- `/cl_debug_weapon_send`: sends information about client-side weapon selection, which is stored in .mvd on supported servers
-- `/cl_debug_weapon_view`: views the client-side weapon debugging messages, if stored in .mvd
-
 - `/cl_debug_antilag_send`: sends location of opponents, which is stored in .mvd on supported servers
 - `/cl_debug_antilag_view`: chooses which location is used when rendering players on supported .mvd/qtv streams (0 = normal, 1 = antilag-rewind, 2 = client position)
 - `/cl_debug_antilag_ghost`: allows rendering a translucent copy of player position on support .mvd/qtv streams (0 = normal, 1 = antilag-rewind, 2 = client position)
@@ -129,9 +126,7 @@
 - `/cl_keypad 2` - keypad will behave as `/cl_keypad 0` in-game, but `/cl_keypad 1` in console etc
 - `/cl_delay_packet_target` - like cl_delay_packet, but half delay is applied to outgoing and the incoming delay is flexible to match the value
 - `/cl_net_clientport` - allows the network client port to be specified in-game (rather than just `-clientport` command line switch)
-- `/cl_pext_serversideweapon` - protocol extension to move weapon selection to server (requires updated mvdsv)
 - `/cl_sv_packetsync` - when using internal server & delay packet, controls if server processes packets as they are received (fixes #292)
-- `/cl_weaponforgetondeath` - resets weapon to shotgun when respawning
 - `/cl_weaponforgetorder` - now sets the best weapon then falls back to sg or axe (as per `/cl_weaponhide_axe`)
 - `/cl_window_caption 2` - window title will be 'ezQuake' and will not change with connection status
 - `/cl_username` & `/authenticate` to support optional logins via badplace.eu (see [guide](https://github.com/ezQuake/ezquake-source/wiki/Authentication))
