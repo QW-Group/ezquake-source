@@ -97,6 +97,14 @@ nexttri:
 			if (used[j])
 				goto done;
 
+			// if strip is too long for our temp buffers, terminate
+			if (stripcount + 2 >= sizeof(stripverts) / sizeof(stripverts[0])) {
+				goto done;
+			}
+			if (stripcount >= sizeof(striptris) / sizeof(striptris[0])) {
+				goto done;
+			}
+
 			// the new edge
 			if (stripcount & 1)
 				m2 = check->vertindex[ (k+2)%3 ];
