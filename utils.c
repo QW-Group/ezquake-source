@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "qtv.h"
 #include "teamplay.h"
+#include "q_shared.h"
 
 int TP_CategorizeMessage (const char *s, int *offset);
 
@@ -832,6 +833,7 @@ void CopyToClipboard(const char *text)
 	}
 #else
 	strlcpy (clipboard, text, CLIPBOARDSIZE);
+	Sys_CopyToClipboard(text);
 #endif
 }
 
