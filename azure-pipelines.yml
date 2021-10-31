@@ -170,6 +170,8 @@ stages:
           artifactName: windows
 # Upload to github once previous stage complete
 - stage: upload
+  pool:
+    vmImage: 'ubuntu-latest'
   jobs:
   - job: upload
     steps:
