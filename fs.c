@@ -87,6 +87,7 @@ int fs_hash_dups;
 int fs_hash_files;
 
 cvar_t fs_cache = {"fs_cache", "1"};
+static cvar_t fs_savegame_home = { "fs_savegame_home", "1" };
 
 static void FS_CreatePathRelative(const char *pname, int relativeto);
 void FS_ForceToPure(char *str, const char *crcs, int seed);
@@ -1935,7 +1936,12 @@ void FS_InitModuleFS (void)
 	Cmd_AddCommand("fs_locate", FS_Locate_f);
 	Cmd_AddLegacyCommand("locate", "fs_locate");
 	Cmd_AddCommand("fs_search", FS_ListFiles_f);
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_FILESYSTEM);
 	Cvar_Register(&fs_cache);
+	Cvar_Register(&fs_savegame_home);
+	Cvar_ResetCurrentGroup();
+
 	Com_Printf("Initialising quake VFS filesystem\n");
 }
 
@@ -3193,5 +3199,17 @@ void FS_Shutdown(void)
 		path->funcs->ClosePath(path->handle);
 		next = path->next;
 		Q_free(path);
+	}
+}
+
+void FS_SaveGameDirectory(char* buffer, int buffer_size)
+{
+	extern cvar_t fs_savegame_home;
+
+	if (fs_savegame_home.integer) {
+		snprintf(buffer, buffer_size, "%s/%s/save/", com_homedir, com_gamedirfile);
+	}
+	else {
+		snprintf(buffer, buffer_size, "%s/save/", com_gamedir);
 	}
 }

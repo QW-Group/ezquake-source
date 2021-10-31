@@ -36,14 +36,18 @@ extern cvar_t maxclients;
 #define	SAVEGAME_COMMENT_LENGTH	39
 #define	SAVEGAME_VERSION	6
 
+#ifdef SERVERONLY
 static void SV_SaveGameFileName(char* buffer, int buffer_size, char* name)
 {
-#ifdef SERVERONLY
-	snprintf (buffer, buffer_size, "%s/save/%s", fs_gamedir, name);
-#else
-	snprintf (buffer, buffer_size, "%s/save/%s", com_gamedir, name);
-#endif
+	snprintf(buffer, buffer_size, "%s/save/%s", fs_gamedir, name);
 }
+#else
+static void SV_SaveGameFileName(char* buffer, int buffer_size, char* name)
+{
+	FS_SaveGameDirectory(buffer, buffer_size);
+	strlcat(buffer, name, buffer_size);
+}
+#endif
 
 //Writes a SAVEGAME_COMMENT_LENGTH character comment
 void SV_SavegameComment (char *buffer) {

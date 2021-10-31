@@ -939,31 +939,43 @@ void M_SinglePlayer_Key (int key) {
 
 #define    MAX_SAVEGAMES        12
 
+const char* save_filenames[] = {
+	"s0.sav", "s1.sav", "s2.sav", "s3.sav", "s4.sav", "s5.sav", "s6.sav", "s7.sav", "s8.sav", "s9.sav", "s10.sav", "s11.sav"
+};
+#ifdef C_ASSERT
+C_ASSERT(sizeof(save_filenames) / sizeof(save_filenames[0]) == MAX_SAVEGAMES);
+#endif
+
 int        load_cursor;        // 0 < load_cursor < MAX_SAVEGAMES
 char    m_filenames[MAX_SAVEGAMES][SAVEGAME_COMMENT_LENGTH + 1];
 int        loadable[MAX_SAVEGAMES];
 menu_window_t load_window, save_window;
 
-void M_ScanSaves (char *sp_gamedir) {
+void M_ScanSaves(char* sp_gamedir)
+{
 	int i, j;
 	char name[MAX_OSPATH];
-	vfsfile_t *f;
+	vfsfile_t* f;
 
 	for (i = 0; i < MAX_SAVEGAMES; i++) {
-		strlcpy (m_filenames[i], "--- UNUSED SLOT ---", SAVEGAME_COMMENT_LENGTH + 1);
 		loadable[i] = false;
+		strlcpy(m_filenames[i], "--- UNUSED SLOT ---", SAVEGAME_COMMENT_LENGTH + 1);
 
-		snprintf (name, sizeof(name), "save/s%i.sav", i);
-		if (!(f = FS_OpenVFS(name, "rb", FS_GAME_OS)))
+		FS_SaveGameDirectory(name, sizeof(name));
+		strlcat(name, save_filenames[i], sizeof(name));
+		if (!(f = FS_OpenVFS(name, "rb", FS_NONE_OS))) {
 			continue;
+		}
 		VFS_GETS(f, name, sizeof(name));
 		VFS_GETS(f, name, sizeof(name));
-		strlcpy (m_filenames[i], name, sizeof(m_filenames[i]));
+		strlcpy(m_filenames[i], name, sizeof(m_filenames[i]));
 
 		// change _ back to space
-		for (j = 0; j < SAVEGAME_COMMENT_LENGTH; j++)
-			if (m_filenames[i][j] == '_')
+		for (j = 0; j < SAVEGAME_COMMENT_LENGTH; j++) {
+			if (m_filenames[i][j] == '_') {
 				m_filenames[i][j] = ' ';
+			}
+		}
 		loadable[i] = true;
 		VFS_CLOSE(f);
 	}

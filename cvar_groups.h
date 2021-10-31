@@ -63,6 +63,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_GROUP_MVD                      "MultiView Demos"
 #define CVAR_GROUP_QTV                      "QTV Settings"
 #define CVAR_GROUP_MENU                     "Menu"
+#define CVAR_GROUP_FILESYSTEM               "File System"
 
 #else   // CVAR_GROUPS_DEFINE_VARIABLES
 
@@ -108,6 +109,7 @@ char *cvar_groups_list[] = {
 	CVAR_GROUP_MVD,
 	CVAR_GROUP_QTV,
 	CVAR_GROUP_MENU,
+	CVAR_GROUP_FILESYSTEM,
 	NULL
 };
 

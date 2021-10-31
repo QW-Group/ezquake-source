@@ -196,5 +196,6 @@ int FS_ZipGetNextFile (unzFile zip_file, sys_dirent *ent);
 #endif // WITH_ZIP
 
 qbool FS_UnsafeFilename(const char* name);
+void FS_SaveGameDirectory(char* buffer, int buffer_size);
 
 #endif // __FS_H__
