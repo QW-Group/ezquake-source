@@ -1327,7 +1327,12 @@ qbool IsRegexp(const char *str)
 	return (strcspn(str, "\\\"()[]{}.*+?^$|")) != strlen(str) ? true : false;
 }
 
-qbool ReSearchInit (const char *wildcard)
+qbool ReSearchInit(const char* wildcard)
+{
+	return ReSearchInitEx(wildcard, true);
+}
+
+qbool ReSearchInitEx(const char *wildcard, qbool case_sensitive)
 {
 	const char *error;
 	int error_offset;
@@ -1336,7 +1341,7 @@ qbool ReSearchInit (const char *wildcard)
 		Com_Printf("Error: Regexp commands nested too deep\n");
 		return false;
 	}
-	wildcard_re[wildcard_level] = pcre_compile(wildcard, 0, &error, &error_offset, NULL);
+	wildcard_re[wildcard_level] = pcre_compile(wildcard, (case_sensitive ? 0 : PCRE_CASELESS), &error, &error_offset, NULL);
 	if (error) {
 		Com_Printf ("Invalid regexp: %s\n", error);
 		return false;
@@ -1366,8 +1371,12 @@ qbool ReSearchMatch (const char *str)
 void ReSearchDone (void)
 {
 	wildcard_level--;
-	if (wildcard_re[wildcard_level]) (pcre_free)(wildcard_re[wildcard_level]);
-	if (wildcard_re_extra[wildcard_level]) (pcre_free)(wildcard_re_extra[wildcard_level]);
+	if (wildcard_re[wildcard_level]) {
+		(pcre_free)(wildcard_re[wildcard_level]);
+	}
+	if (wildcard_re_extra[wildcard_level]) {
+		(pcre_free)(wildcard_re_extra[wildcard_level]);
+	}
 }
 // <-- QW262
 

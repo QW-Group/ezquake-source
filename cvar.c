@@ -542,7 +542,7 @@ static void Cvar_Toggle_f_base (qbool use_regex)
 		name = Cmd_Argv(i);
 
 		if (use_regex && IsRegexp(name)) {
-			if (!ReSearchInit(name)) {
+			if (!ReSearchInitEx(name, false)) {
 				continue;
 			}
 
@@ -607,7 +607,7 @@ void Cvar_CvarList(qbool use_regex)
 	pattern = (Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
 
 	if (((c = Cmd_Argc()) > 1) && use_regex) {
-		if (!ReSearchInit(Cmd_Argv(1))) {
+		if (!ReSearchInitEx(Cmd_Argv(1), false)) {
 			return;
 		}
 	}
@@ -862,7 +862,7 @@ void Cvar_Reset(qbool use_regex)
 		name = Cmd_Argv(i);
 
 		if (use_regex && (re_search = IsRegexp(name))) {
-			if (!ReSearchInit(name)) {
+			if (!ReSearchInitEx(name, false)) {
 				continue;
 			}
 		}
@@ -1263,7 +1263,6 @@ void Cvar_UnSet (qbool use_regex)
 	int		i;
 	qbool	re_search = false;
 
-
 	if (Cmd_Argc() < 2) {
 		Com_Printf ("unset <cvar> [<cvar2>..]: erase user-created variable\n");
 		return;
@@ -1272,9 +1271,11 @@ void Cvar_UnSet (qbool use_regex)
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		if (use_regex && (re_search = IsRegexp(name)))
-			if(!ReSearchInit(name))
+		if (use_regex && (re_search = IsRegexp(name))) {
+			if (!ReSearchInitEx(name, false)) {
 				continue;
+			}
+		}
 
 		if (use_regex && re_search) {
 			for (var = cvar_vars ; var ; var = next) {

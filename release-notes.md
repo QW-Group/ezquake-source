@@ -184,6 +184,7 @@
 - `-noatlas` command line option to stop the system building a 2D atlas at startup
 - `-r-nomultibind` command line option to disable calls to glBindTextures
 - `+qtv_delay` command, to be used with `/qtv_adjustbuffer 2`... pauses QTV stream.  When released, QTV buffer length set to length of buffer
+- `+fire_ar` command added, an anti-rollover `+fire` - experimental, should simplify weapon scripts
 - On startup, `default.cfg` is executed before config is loaded (nQuake's default.cfg will be ignored)
 - On startup (after `autoexec.cfg` executed), a `vid_restart`/`s_restart` will be issued if any latched variables were changed (#458)
 - GLSL gamma now supported in classic renderer
@@ -204,6 +205,7 @@
 - Multiview will be disabled when watching a solo demo and no powerup cams are active (requested by mmavova, #126)
 - qw:// urls in command line will be opened even if not preceded by `+qwurl` (thanks to ciscon)
 - Linux: `/register_qwurl_protocol` command will register protocol with xdg (thanks to ciscon)
+- Commands that search by regular expression (`/cvarlist_re` etc) are now case-insensitive (reported by HangTime, #599)
 
 ### Build/meta
 

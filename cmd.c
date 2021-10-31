@@ -585,28 +585,27 @@ void Cmd_Viewalias_f (void)
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-
-		if ( IsRegexp(name) ) {
-			if (!ReSearchInit(name))
+		if (IsRegexp(name)) {
+			if (!ReSearchInitEx(name, false)) {
 				return;
+			}
 			Com_Printf ("Current alias commands:\n");
 
-			for (alias = cmd_alias, i=m=0; alias ; alias=alias->next, i++)
+			for (alias = cmd_alias, i = m = 0; alias; alias = alias->next, i++) {
 				if (ReSearchMatch(alias->name)) {
-					Com_Printf ("%s : %s\n", alias->name, alias->value);
+					Com_Printf("%s : %s\n", alias->name, alias->value);
 					m++;
 				}
+			}
 
 			Com_Printf ("------------\n%i/%i aliases\n", m, i);
 			ReSearchDone();
 		}
+		else if ((alias = Cmd_FindAlias(name))) {
+			Com_Printf("%s : \"%s\"\n", Cmd_Argv(i), alias->value);
+		}
 		else {
-			if ((alias = Cmd_FindAlias(name))) {
-				Com_Printf("%s : \"%s\"\n", Cmd_Argv(i), alias->value);
-			}
-			else {
-				Com_Printf("No such alias: %s\n", Cmd_Argv(i));
-			}
+			Com_Printf("No such alias: %s\n", Cmd_Argv(i));
 		}
 	}
 }
@@ -655,9 +654,9 @@ void Cmd_AliasList_f (void)
 		assert(!"count == MAX_SORTED_ALIASES");
 
 	c = Cmd_Argc();
-	if (c>1)
-		if (!ReSearchInit(Cmd_Argv(1)))
-			return;
+	if (c > 1 && !ReSearchInitEx(Cmd_Argv(1), false)) {
+		return;
+	}
 
 	Com_Printf ("List of aliases:\n");
 	for (i = 0; i < count; i++) {
@@ -846,9 +845,11 @@ void Cmd_UnAlias (qbool use_regex)
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		if (use_regex && (re_search = IsRegexp(name)))
-			if(!ReSearchInit(name))
+		if (use_regex && (re_search = IsRegexp(name))) {
+			if (!ReSearchInitEx(name, false)) {
 				continue;
+			}
+		}
 
 		if (strlen(name) >= MAX_ALIAS_NAME) {
 			Com_Printf ("Alias name is too long: \"%s\"\n", Cmd_Argv(i));
@@ -1396,9 +1397,11 @@ void Cmd_CmdList (qbool use_regex)
 
 	pattern = (Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
 
-	if (((c = Cmd_Argc()) > 1) && use_regex)
-		if (!ReSearchInit(Cmd_Argv(1)))
+	if (((c = Cmd_Argc()) > 1) && use_regex) {
+		if (!ReSearchInitEx(Cmd_Argv(1), false)) {
 			return;
+		}
+	}
 
 	Com_Printf ("List of commands:\n");
 	for (i = 0; i < count; i++) {
@@ -1516,10 +1519,8 @@ void Cmd_MacroList_f (void)
 	qsort(sorted_macros, num_macros, sizeof (macro_command_t *), Cmd_MacroCompare);
 
 	c = Cmd_Argc();
-	if (c > 1) {
-		if (!ReSearchInit(Cmd_Argv(1))) {
-			return;
-		}
+	if (c > 1 && !ReSearchInitEx(Cmd_Argv(1), false)) {
+		return;
 	}
 
 	Com_Printf ("List of macros:\n");

@@ -178,6 +178,7 @@ void Cvar_CleanUpTempVars (void);	// clean up afterwards
 // ezquake compatibility - integrate into mvdsv?
 #define IsRegexp(...) false
 #define ReSearchInit(...) false
+#define ReSearchInitEx(...) false
 #define ReSearchMatch(...) false
 #define ReSearchDone(...)
 #endif
