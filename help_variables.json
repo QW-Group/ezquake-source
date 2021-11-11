@@ -4536,7 +4536,7 @@
     },
     "gl_alphafont": {
       "default": "1",
-      "desc": "When turned on allows the alpha transparency layer support for the console font.",
+      "desc": "Allows alpha transparency layer support for the console font.",
       "group-id": "5",
       "type": "boolean",
       "values": [
@@ -4552,61 +4552,49 @@
     },
     "gl_anisotropy": {
       "default": "1",
-      "desc": "Anisotropic filtering. Basically improved texture quality.",
+      "desc": "Anisotropic filtering. Improves texture detail on angled surfaces.",
       "group-id": "50",
-      "remarks": "Depends on your Graphics card capabilities and settings. Make sure you have enabled \"Application controlled\" in your Graphics card settings for Anisotropic filtering option.",
+      "remarks": "Depends on your Graphics card capabilities and settings. Make sure you have set your graphic card's Anisotropic Filtering setting to \"Application controlled\".",
       "type": "integer",
       "values": [
         {
-          "description": "0 and 1 means turned off, 16 is usually the highest quality",
+          "description": "0 and 1 means turned off, then usually up to 16 for the highest quality.",
           "name": "*"
         }
       ]
     },
     "gl_bounceparticles": {
       "default": "1",
+      "desc": "Controls whether sparks bounce off walls.",
       "group-id": "36",
       "remarks": "Bouncing particles look nicer, but may eat up CPU.",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable.",
-          "name": "false"
-        },
-        {
-          "description": "Controls whether sparks rebound off walls.",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_brush_polygonoffset": {
       "default": "2.0",
-      "desc": "Value in range 0-25.  Offset drawing of entity models, to stop z-fighting.",
+      "desc": "Offset drawing of entity models to stop z-fighting.",
       "group-id": "35",
-      "remarks": "disabled for qcon (feature makes it possible to fix z-fighting causing flickering areas on Intel cards most often).",
-      "type": "float"
+      "remarks": "Disabled for qcon (can cause flickering areas, most often on Intel cards).",
+      "type": "float",
+      "values": [
+        {
+          "description": "Value in range 0-25.",
+          "name": "*"
+        }
+      ]
     },
     "gl_buildingsparks": {
       "default": "0",
-      "desc": "Buildings that are destroyed in TF will continue to throw sparks until they disapear.",
+      "desc": "Buildings that are destroyed in TF will continue to throw sparks until they disappear.",
       "group-id": "35",
       "type": "float"
     },
     "gl_caustics": {
       "default": "0",
-      "desc": "Turns reflections on walls covered with liquids (water, lava, slime) when set to 1.\nMulti-texturing is required for this variable.",
+      "desc": "Enable reflections in submerged areas (under water, lava, slime).",
       "group-id": "51",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Off.",
-          "name": "false"
-        },
-        {
-          "description": "On.",
-          "name": "true"
-        }
-      ]
+      "remarks": "Multi-texturing is required for this setting.",
+      "type": "boolean"
     },
     "gl_charsets_min": {
       "default": "1",
@@ -4626,19 +4614,10 @@
     },
     "gl_clear": {
       "default": "0",
-      "desc": "This variable will toggle the clearing of the screen between each frame.\nThis can be helpful when specing a game and flying out of the map or during map development when the map maker must fly outside of the map to look has his map from the outside.\nEnabling this command will clear the areas which are not rendered outside of the map thus preventing the flickering effect when images repeat themselves repeatedly. However it causes problems when playing and going through the surfaces of a liquid (for example when diving into liquid), as you will see a red flash where the liquid texture would normally be repeated.",
+      "desc": "Clears the screen between each frame to prevent the hall-of-mirrors glitch when flying outside of the map.",
       "group-id": "35",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Off.",
-          "name": "false"
-        },
-        {
-          "description": "On.",
-          "name": "true"
-        }
-      ]
+      "remarks": "This can cause problems when going through the surface of a liquid, as you may see a colored flash where the liquid texture would normally glitch.",
+      "type": "boolean"
     },
     "gl_clearColor": {
       "default": "0 0 0",
@@ -4648,40 +4627,22 @@
     },
     "gl_clipparticles": {
       "default": "1",
+      "desc": "Limits the number of blended particles close to you. This can give a big FPS increase when blended particles take up a big proportion of your screen and challenge your video card's fillrate.",
       "group-id": "36",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable.",
-          "name": "false"
-        },
-        {
-          "description": "this will limit the number of blended particles close to you. This gives a big FPS increase when blended particles take up a big proportion of your screen and challenge your video card's fillrate.",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_colorlights": {
       "default": "1",
-      "desc": "Switch on/off color of lighting from glowing items (quad, pent, flags in TF, etc).",
+      "desc": "Toggles color on lighting from glowing items (quad, pent, flags in TF, etc).",
       "group-id": "15",
       "remarks": "This implementation does not give a speed increase when gl_colorlights is set to 0, but it does not require a map restart for changes to take effect.",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Colored lighting are off",
-          "name": "false"
-        },
-        {
-          "description": "Colored lighting are on",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_consolefont": {
       "default": "povo5",
-      "desc": "Changes your console font.\nPut all your charset images in qw/textures/charsets/*.png (and *.tga) and use /loadcharset XXX to load XXX.png (or tga). \"/gl_consolefont original\" will restore the 8bit font in your gfx.wad (this is default).\nNote: loadcharset is an alias for gl_consolefont.",
+      "desc": "Changes your console font.\nPut all your charset images in qw/textures/charsets/*.png (and *.tga).\n\"/gl_consolefont original\" will restore the 8bit font in your gfx.wad.",
       "group-id": "5",
+      "remarks": "loadcharset is an alias for gl_consolefont.",
       "type": "string"
     },
     "gl_contrast": {
@@ -4722,7 +4683,7 @@
       "default": "",
       "desc": "Allows color of grenades to be set without requiring a texture change.",
       "group-id": "35",
-      "remarks": "Leave blank to disable.  See gl_custom_grenade_fullbright.",
+      "remarks": "Leave blank to disable.\nSee gl_custom_grenade_fullbright.",
       "type": "string"
     },
     "gl_custom_grenade_fullbright": {
@@ -4742,7 +4703,7 @@
       "default": "",
       "desc": "Allows color of lightning shaft to be set without requiring a texture change.",
       "group-id": "35",
-      "remarks": "Leave blank to disable.  Has no effect if particle shaft is enabled.",
+      "remarks": "Leave blank to disable.\nHas no effect if particle shaft is enabled.",
       "type": "string"
     },
     "gl_custom_lg_fullbright": {
@@ -4770,7 +4731,7 @@
       "default": "",
       "desc": "Allows color of rockets to be set without requiring a texture change.",
       "group-id": "35",
-      "remarks": "Leave blank to disable.  See gl_custom_rocket_fullbright.",
+      "remarks": "Leave blank to disable.\nSee gl_custom_rocket_fullbright.",
       "type": "string"
     },
     "gl_custom_rocket_fullbright": {
@@ -4784,7 +4745,7 @@
       "default": "",
       "desc": "Allows color of spikes/nails to be set without requiring a texture change.",
       "group-id": "35",
-      "remarks": "Leave blank to disable.  See gl_custom_spike_fullbright.",
+      "remarks": "Leave blank to disable.\nSee gl_custom_spike_fullbright.",
       "type": "string"
     },
     "gl_custom_spike_fullbright": {
@@ -4802,66 +4763,49 @@
     },
     "gl_detail": {
       "default": "0",
-      "desc": "Turns on/off fine detailed textures.",
+      "desc": "Toggles an extra layer of fine detail over world textures.",
       "group-id": "8",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Off.",
-          "name": "false"
-        },
-        {
-          "description": "On (Looks awesome, but you will take a giant FPS hit if you don't have a good video card).",
-          "name": "true"
-        }
-      ]
+      "remarks": "Can impact performance on weak GPUs.",
+      "type": "boolean"
     },
     "gl_detpacklights": {
       "default": "0",
-      "desc": "A little green light appears on the detpack, and when the timer reaches 5, the light changes to red. gl_coronas must be turned on for this to work.",
+      "desc": "A little green light appears on the detpack, and when the timer reaches 5, the light changes to red.",
       "group-id": "35",
+      "remarks": "gl_coronas must be turned on for this to work.",
       "type": "float"
     },
     "gl_ext_texture_compression": {
       "default": "0",
-      "desc": "Enable reducing memory held by textures on cards that support it (but textures loaded slower and may have less quality).",
+      "desc": "Compress textures on GPUs that support it to save VRAM, at the cost of longer load times and degraded quality.",
       "group-id": "50",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disabled",
-          "name": "false"
-        },
-        {
-          "description": "Enabled",
-          "name": "true"
-        }
-      ]
+      "remarks": "No longer needed when you have many hundreds of Mb of VRAM.",
+      "type": "boolean"
     },
     "gl_externalTextures_bmodels": {
       "default": "1",
+      "desc": "Toggles loading external 24-bit textures for non-world bsp models, i.e. health and ammo boxes.",
       "group-id": "50",
-      "remarks": "non-world .bsp models (any .bsp that isn't the actual map. Ex. health and ammo boxes).",
       "type": "boolean",
       "values": [
         {
-          "description": "Disable loading of external 24bit textures for",
+          "description": "Disable (classic look).",
           "name": "false"
         },
         {
-          "description": "Enable",
+          "description": "Enable.",
           "name": "true"
         }
       ]
     },
     "gl_externalTextures_world": {
       "default": "1",
+      "desc": "Toggles loading external 24-bit textures for the world, i.e. the actual map.",
       "group-id": "50",
-      "remarks": "world .bsp model (i.e. the actual map).",
       "type": "boolean",
       "values": [
         {
-          "description": "Disable loading of external 24bit textures for the",
+          "description": "Disable (classic look).",
           "name": "false"
         },
         {
@@ -4878,49 +4822,21 @@
     },
     "gl_fb_bmodels": {
       "default": "1",
+      "desc": "Enable \"fullbright\" colors on bsp models (World, health boxes, etc). Might give you a couple more fps.",
       "group-id": "15",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Might give you a couple more fps.",
-          "name": "false"
-        },
-        {
-          "description": "Enable \"fullbright\" colors on bsp models (World, health boxes, etc).",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_fb_models": {
       "default": "1",
+      "desc": "Enable \"fullbright\" colors on alias models (grenades, player models, etc). Might give you a couple more fps.",
       "group-id": "15",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Might also give you more fps.",
-          "name": "false"
-        },
-        {
-          "description": "Enable \"fullbright\" colors on alias models (grenades, player models, etc).",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_finish": {
       "default": "0",
-      "desc": "This variable toggles the calling of the gl_finish() OpenGL function after each rendered frame.",
+      "desc": "Toggles the calling of the gl_finish() OpenGL function after each rendered frame.",
       "group-id": "35",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Do not call the gl_finish() function after each frame.",
-          "name": "false"
-        },
-        {
-          "description": "Call the gl_finish() function after each frame.",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_flashblend": {
       "default": "0",
@@ -4944,38 +4860,40 @@
     },
     "gl_fog": {
       "default": "0",
-      "desc": "Turns fog effect on and off (GL-Only).\nSee /gl_fogstart /gl_fogend /gl_fogsky and /fog too.",
+      "desc": "Enables fog.",
       "group-id": "51",
+      "remarks": "See also other gl_fog cvars for fine-tuning.",
       "type": "float"
     },
     "gl_fogblue": {
       "default": "0.4",
-      "desc": "Blue factor in the color of the fog.",
+      "desc": "Blue component in the color of the fog.",
       "group-id": "51",
       "type": "float"
     },
     "gl_fogend": {
       "default": "800.0",
-      "desc": "Sets ending distance for rendering the fog.\nWhen fog is turned on, you cannot see behind this distance limit.\nSee /gl_fog and /gl_fogstart too.",
+      "desc": "Sets ending distance for rendering the fog.",
       "group-id": "51",
       "type": "float"
     },
     "gl_foggreen": {
       "default": "0.5",
-      "desc": "Green factor in the color of the fog.",
+      "desc": "Green component in the color of the fog.",
       "group-id": "51",
       "type": "float"
     },
     "gl_fogred": {
       "default": "0.6",
-      "desc": "Red factor in the color of the fog.",
+      "desc": "Red component in the color of the fog.",
       "group-id": "51",
       "type": "float"
     },
     "gl_fogsky": {
       "default": "1",
-      "desc": "When turned on, fog effect affects sky too.\nWe suggest turning this on otherwise fog looks ridiculous and unrealistic.",
+      "desc": "Also apply fog effects to the sky.",
       "group-id": "51",
+      "remarks": "Fog tends to look out of place when this is not enabled.",
       "type": "float"
     },
     "gl_fogstart": {
@@ -4986,25 +4904,16 @@
     },
     "gl_gamma": {
       "default": "1.0",
-      "desc": "Change GL gamma.",
+      "desc": "Change gamma.",
       "group-id": "40",
       "type": "float"
     },
     "gl_hwblend": {
       "default": "1",
+      "desc": "Toggles between OpenGL and Hardware palette changing.",
       "group-id": "39",
-      "remarks": "Note: 1 can be slow on wintNT/2K.",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "OpenGL routines.",
-          "name": "false"
-        },
-        {
-          "description": "Hardware palette changing.",
-          "name": "true"
-        }
-      ]
+      "remarks": "1 can be slow on WinNT/2K.",
+      "type": "boolean"
     },
     "gl_inferno_speed": {
       "default": "1000",
@@ -5020,15 +4929,17 @@
     },
     "gl_lerpimages": {
       "default": "1",
+      "desc": "Improves quality of non-power of two textures, at a slight load time cost. No impact on framerates.",
       "group-id": "50",
+      "remarks": "Only applies to GPUs which do not support non-power of two textures.",
       "type": "boolean",
       "values": [
         {
-          "description": "Faster loading maps (not more fps).",
+          "description": "Worse texture quality, faster loading maps.",
           "name": "false"
         },
         {
-          "description": "Better texture quality.",
+          "description": "Better texture quality, slower loading maps.",
           "name": "true"
         }
       ]
@@ -5047,6 +4958,7 @@
     },
     "gl_lightmode": {
       "default": "1",
+      "desc": "Enables overbright lightmaps.\nBrings more contrast, making world lighting look more like software Quake, and less like GLQuake.",
       "group-id": "15",
       "remarks": "Takes effect when the map reloads.",
       "type": "boolean",
@@ -5063,18 +4975,9 @@
     },
     "gl_lightning": {
       "default": "0",
+      "desc": "Toggles particle lightning beams.\nMay be restricted by rulesets.",
       "group-id": "35",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Turns off particle lightning beams",
-          "name": "0"
-        },
-        {
-          "description": "Turns on particle lightning beams.",
-          "name": "1"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_lightning_color": {
       "default": "120 140 255",
@@ -5090,7 +4993,7 @@
     },
     "gl_lightning_size": {
       "default": "3",
-      "desc": "Adjusts size of ligtning particle beam.",
+      "desc": "Adjusts size of lightning particle beam.",
       "group-id": "35",
       "type": "float"
     },
@@ -5132,20 +5035,20 @@
     },
     "gl_luma_level": {
       "default": "1",
-      "desc": "Some luma textures have black (in RGB format its 0,0,0) non-transparent pixels. This can make them transparent.",
+      "desc": "Some luma textures have black non-transparent pixels. This can make them transparent.",
       "group-id": "50",
       "remarks": "Setting this to 0 will disable the functionality. For some commonly used texture packs value 1 is necessary.",
       "type": "integer",
       "values": [
         {
-          "description": "e.g. value 10 makes particular pixels transparent if each color component LESS than 10",
+          "description": "e.g. value 10 makes particular pixels transparent if each color component is LESS than 10.",
           "name": "*"
         }
       ]
     },
     "gl_lumatextures": {
       "default": "1",
-      "desc": "Turns using of luma textures (named *_luma) ON when set to 1 and allowed by server.",
+      "desc": "Turns using luma textures (named *_luma) ON when set to 1 and allowed by server.",
       "group-id": "50",
       "type": "float"
     },
@@ -5157,13 +5060,13 @@
     },
     "gl_miptexLevel": {
       "default": "0",
-      "desc": "It is essentially a GL 'equivalent' to d_mipcap in software. It has no affect when loading external 24bit textures.",
+      "desc": "Downscale textures in a way that looks like the 'd_mipcap' setting from classic software-rendered QW.\nHas no effect on external 24-bit textures.",
       "group-id": "50",
       "type": "float"
     },
     "gl_modulate": {
       "default": "1",
-      "desc": "Affects lightmap. Values from 0.5 to 3 are valid.",
+      "desc": "Controls how bright the lightmap gets. Values from 0.5 to 3 are valid.",
       "group-id": "35",
       "type": "float"
     },
@@ -5205,36 +5108,17 @@
     },
     "gl_nailtrail": {
       "default": "0",
-      "desc": "Adds a white trail onto nails as they fly around.\nThis feature wont work on servers not running with sv_nailhack set to 1.",
+      "desc": "Adds a white trail onto nails as they fly around.",
       "group-id": "35",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable nail trails.",
-          "name": "false"
-        },
-        {
-          "description": "Enable nail trails.",
-          "name": "true"
-        }
-      ]
+      "remarks": "This feature won't work on servers not running with sv_nailhack set to 1.",
+      "type": "boolean"
     },
     "gl_nailtrail_plasma": {
       "default": "0",
-      "desc": "Adds plasma trail to nails.",
+      "desc": "Adds a blue plasma trail to nail trails.",
       "group-id": "35",
-      "remarks": "Need gl_nailtrail 1.",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "No plasma trail.",
-          "name": "false"
-        },
-        {
-          "description": "Blue plasma trail.",
-          "name": "true"
-        }
-      ]
+      "remarks": "Requires gl_nailtrail 1.",
+      "type": "boolean"
     },
     "gl_nailtrail_turb": {
       "default": "0",
@@ -5255,7 +5139,7 @@
     },
     "gl_no24bit": {
       "default": "0",
-      "desc": "Disables support of alternate 24bit textures. Requires a vid_restart to take effect.",
+      "desc": "Disables support of alternate 24-bit textures.",
       "group-id": "50",
       "type": "boolean",
       "values": [
@@ -5271,22 +5155,13 @@
     },
     "gl_nocolors": {
       "default": "0",
+      "desc": "Enable top/bottom colors on 8-bit .pcx skins.",
       "group-id": "35",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Normal.",
-          "name": "false"
-        },
-        {
-          "description": "Don't use top/bottom colors.",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_oldlitscaling": {
       "default": "0",
-      "desc": "Scales lit files the 'old' way ('makes colored areas too dark')",
+      "desc": "Scales lit files the 'old' way ('makes colored areas too dark').",
       "group-id": "15",
       "type": "boolean"
     },
@@ -5317,52 +5192,25 @@
     },
     "gl_part_blobs": {
       "default": "0",
+      "desc": "Determines particles used for blob explosions (EMPs).",
       "group-id": "36",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable.",
-          "name": "false"
-        },
-        {
-          "description": "Determines particles used for blob explosions (EMP's)",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_part_blood": {
       "default": "0",
+      "desc": "Determines particles used for blood effects.",
       "group-id": "36",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable.",
-          "name": "false"
-        },
-        {
-          "description": "Determines particles used for blood effects.",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_part_bubble": {
       "default": "1",
+      "desc": "Advanced particles for bubbles (drowning effect).",
       "group-id": "36",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable.",
-          "name": "false"
-        },
-        {
-          "description": "Advanced particles for bubbles (drowning effect)",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_part_cache": {
       "default": "1",
-      "description": "Reduce CPU overhead when newer particle effects are used",
+      "description": "Reduce CPU overhead when newer particle effects are used.",
       "group-id": "36",
       "type": "boolean",
       "values": [
@@ -5390,86 +5238,42 @@
     },
     "gl_part_explosions": {
       "default": "0",
+      "desc": "Determines particles used for explosions.",
       "group-id": "36",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable.",
-          "name": "false"
-        },
-        {
-          "description": "Determines particles used for explosions.",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_part_gunshots": {
       "default": "0",
+      "desc": "Determines particles used for gunshots.",
       "group-id": "36",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable.",
-          "name": "false"
-        },
-        {
-          "description": "Determines particles used for gunshots.",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_part_inferno": {
       "default": "0",
+      "desc": "Determines particles used for pyro flames in TF.",
       "group-id": "36",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable.",
-          "name": "false"
-        },
-        {
-          "description": "Determines particles used for pyro flames in TF.",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_part_lavasplash": {
       "default": "0",
+      "desc": "Determines particles used for lava splashes (Spy Gren).",
       "group-id": "36",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable.",
-          "name": "false"
-        },
-        {
-          "description": "Determines particles used for lava splashes (Spy Gren).",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_part_spikes": {
       "default": "0",
+      "desc": "Determines particles used for spikes (nailgun etc).",
       "group-id": "36",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable.",
-          "name": "false"
-        },
-        {
-          "description": "Determines particles used for spikes (nailgun etc).",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_part_telesplash": {
       "default": "0",
+      "desc": "Determines particles used for teleport effects.",
       "group-id": "36",
       "type": "enum",
       "values": [
         {
-          "description": "Use classic quake teleport particles",
+          "description": "Use classic quake teleport particles.",
           "name": "0"
         },
         {
@@ -5538,18 +5342,9 @@
     },
     "gl_part_trails": {
       "default": "0",
+      "desc": "Determines particles used for (rocket etc) trails.",
       "group-id": "36",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable.",
-          "name": "false"
-        },
-        {
-          "description": "Determines particles used for (rocket etc) trails.",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_particle_blobs": {
       "default": "0",
@@ -5565,7 +5360,7 @@
     },
     "gl_particle_blood_color": {
       "default": "1",
-      "desc": "Changes color of blood.",
+      "desc": "Changes color of blood particles.",
       "group-id": "36",
       "type": "float"
     },
@@ -5597,7 +5392,7 @@
     },
     "gl_particle_explosions": {
       "default": "0",
-      "desc": "Turns particle alternatives to each r_explosiontype on or off.",
+      "desc": "Determines alternate particles for explosions.",
       "group-id": "36",
       "type": "float"
     },
@@ -5615,7 +5410,7 @@
     },
     "gl_particle_firecolor": {
       "default": "",
-      "desc": "Color of the fire particle.",
+      "desc": "Color of the fire particles.",
       "group-id": "36",
       "type": "string"
     },
@@ -5623,83 +5418,104 @@
       "default": "0",
       "desc": "Allows full detail depth for gl_particle_* effects.",
       "group-id": "36",
+      "remarks": "Requires vid_restart.",
       "type": "boolean"
     },
     "gl_particle_gibtrails": {
       "default": "0",
+      "desc": "Enable alternate gib trails with bright blood.",
       "group-id": "36",
+      "remarks": "Requires gl_part_trails 1.",
       "type": "float"
     },
     "gl_particle_gunshots": {
       "default": "0",
+      "desc": "Enable alternate gunshot impact effects.",
       "group-id": "36",
       "type": "float"
     },
     "gl_particle_gunshots_type": {
       "default": "1",
+      "desc": "Selects alternate gunshot impact effects.",
       "group-id": "36",
-      "type": "float"
+      "remarks": "Light flashes also appear with gl_coronas 1.",
+      "type": "float",
+      "values": [
+        {
+          "description": "Long, thin, curving orange sparks.",
+          "name": "0 and 1"
+        },
+        {
+          "description": "Large, bright yellowish sparks.",
+          "name": "2 and 3"
+        },
+        {
+          "description": "Short, straight orange sparks.",
+          "name": "4"
+        }
+      ]
     },
     "gl_particle_muzzleflash": {
       "default": "0",
-      "desc": "Adds particle effect when firing a weapon.",
+      "desc": "Adds a particle effect when monsters and other players fire a weapon.",
       "group-id": "36",
       "type": "float"
     },
     "gl_particle_shockwaves": {
       "default": "0",
-      "desc": "Controls explosion shockwaves.",
+      "desc": "Controls the volumetric shockwave for the alternate blob explosion effects (r_explosiontype 6).",
       "group-id": "36",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disabled",
-          "name": "false"
-        },
-        {
-          "description": "Enabled",
-          "name": "true"
-        }
-      ]
+      "remarks": "Requires gl_particle_explosions 1.",
+      "type": "boolean"
     },
     "gl_particle_shockwaves_flat": {
       "default": "0",
+      "desc": "Adds a flat, orange shockwave to alternate explosion effects.",
       "group-id": "36",
       "type": "float"
     },
     "gl_particle_sparks": {
       "default": "0",
-      "desc": "Trails appear more beam-like and don't look stupid when they bounce. This applies for wizards and knights only.",
+      "desc": "Controls particle sparks.\nTrails appear more beam-like and don't look stupid when they bounce.\nThis applies for wizards and knights only.",
       "group-id": "36",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Particle sparks off",
-          "name": "false"
-        },
-        {
-          "description": "Particle sparks on",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_particle_spikes": {
       "default": "0",
+      "desc": "Enable alternate spike impact effects.",
       "group-id": "36",
+      "remarks": "Light flashes also appear with gl_coronas 1.",
       "type": "float"
     },
     "gl_particle_spikes_type": {
       "default": "1",
+      "desc": "Selects alternate spike impact effects.",
       "group-id": "36",
-      "type": "float"
+      "remarks": "Light flashes also appear with gl_coronas 1.",
+      "type": "float",
+      "values": [
+        {
+          "description": "Long, thin, curving orange sparks.",
+          "name": "0 and 1"
+        },
+        {
+          "description": "Large, bright yellowish sparks.",
+          "name": "2 and 3"
+        },
+        {
+          "description": "Short, straight orange sparks.",
+          "name": "4"
+        }
+      ]
     },
     "gl_particle_telesplash": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enable alternative teleport effect with extra sparks.",
+      "group-id": "36"
     },
     "gl_particle_trail_detail": {
       "default": "1",
+      "desc": "Controls the level of detail on the particle lightning beams, and some types of sparks.",
       "group-id": "36",
       "type": "float"
     },
@@ -5717,20 +5533,31 @@
     },
     "gl_particle_trail_type": {
       "default": "1",
+      "desc": "Changes the type of particle on alt. gunshots, fuel rod explosions...",
       "group-id": "36",
-      "type": "integer"
+      "type": "integer",
+      "values": [
+        {
+          "description": "Long, thin, curving orange sparks.",
+          "name": "0 and 1"
+        },
+        {
+          "description": "A mist of small white pebbles.",
+          "name": "2"
+        }
+      ]
     },
     "gl_particle_trail_width": {
       "default": "3",
-      "desc": "Changes width of trail particle e.g.: wall hitted by nail, explosion particles trail, etc.",
+      "desc": "Changes width of particle trails, e.g. wall hit by nail, explosion particles trail, etc.",
       "group-id": "36",
       "type": "float"
     },
     "gl_picmip": {
       "default": "0",
-      "desc": "This variable determines the the level of detail for textures used on walls.\nYou can use this variable to lower the texture detail used on walls thus increasing the game's performance.",
+      "desc": "Determines the level of detail for world textures.",
       "group-id": "50",
-      "remarks": "X = etc..",
+      "remarks": "Does not apply to models, liquids, simple icons, but you can also picmip these with the gl_playermip and gl_scale* cvars.",
       "type": "float",
       "values": [
         {
@@ -5744,14 +5571,17 @@
         {
           "description": "One-fourth the dimensions.",
           "name": "2"
+        },
+        {
+          "description": "Etc...",
+          "name": "x"
         }
       ]
     },
     "gl_playermip": {
       "default": "0",
-      "desc": "Determines the level of detail of player models.\nThis variable is useful if you are experiencing slowdowns during multiplayer games when there are lots of players on your screen by shrinking the texture detail, but this will make the player models more blurry.",
+      "desc": "Determines the level of detail of player model textures.",
       "group-id": "50",
-      "remarks": "X = etc.",
       "type": "enum",
       "values": [
         {
@@ -5765,40 +5595,24 @@
         {
           "description": "Low detail.",
           "name": "2"
+        },
+        {
+          "description": "Etc...",
+          "name": "x"
         }
       ]
     },
     "gl_polyblend": {
       "default": "1",
-      "desc": "Controls a short burst of screen tinting on various events. Variables to look at are: gl_cshiftpercent  (controls overall palette shifting) v_damagechisft v_quadcshift  v_pentcshift v_ringcshift v_suitcshift.",
+      "desc": "Controls a short burst of screen tinting when submerged, taking a powerup, or taking damage.\nVariables to look at are: gl_cshiftpercent  (controls overall palette shifting) v_damagechisft v_quadcshift  v_pentcshift v_ringcshift v_suitcshift.",
       "group-id": "39",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable palette shifting when submerged, have powerup, or taking damage. (turns off screen tinting)",
-          "name": "false"
-        },
-        {
-          "description": "Enable palette shifting when submerged, have powerup, or taking damage. (turns on screen tinting)",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_powerupshells": {
       "default": "1",
       "desc": "Enables a flashing layer over players carrying powerups.",
       "group-id": "8",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "",
-          "name": "false"
-        },
-        {
-          "description": "",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_powerupshells_base1level": {
       "default": "0.05",
@@ -5826,6 +5640,26 @@
       "group-id": "8",
       "type": "integer"
     },
+    "gl_program_aliasmodels": {
+      "default": "1",
+      "desc": "Determines if GLSL will be used to render aliasmodels.",
+      "group-id": "35",
+      "remarks": "Applies to classic OpenGL renderer only.",
+      "renderers": [
+        "classic"
+      ],
+      "type": "integer"
+    },
+    "gl_program_hud": {
+      "default": "1",
+      "desc": "Determines if GLSL will be used to render the HUD.",
+      "group-id": "35",
+      "remarks": "Applies to classic OpenGL renderer only.",
+      "renderers": [
+        "classic"
+      ],
+      "type": "integer"
+    },
     "gl_program_sky": {
       "default": "1",
       "desc": "Determines if GLSL will be used to render skybox/skydome surfaces.\nr_fastsky does not use this setting.",
@@ -5836,9 +5670,29 @@
       ],
       "type": "integer"
     },
+    "gl_program_sprites": {
+      "default": "1",
+      "desc": "Determines if GLSL will be used to render sprites.",
+      "group-id": "35",
+      "remarks": "Applies to classic OpenGL renderer only.",
+      "renderers": [
+        "classic"
+      ],
+      "type": "integer"
+    },
     "gl_program_turbsurfaces": {
       "default": "1",
-      "desc": "Determines if GLSL will be used to render skybox/skydome surfaces.\nr_fastturb does not use this setting.",
+      "desc": "Determines if GLSL will be used to render 'liquid' surfaces.\nr_fastturb does not use this setting.",
+      "group-id": "35",
+      "remarks": "Applies to classic OpenGL renderer only.",
+      "renderers": [
+        "classic"
+      ],
+      "type": "integer"
+    },
+    "gl_program_world": {
+      "default": "1",
+      "desc": "Determines if GLSL will be used to render world surfaces (walls, floors..).",
       "group-id": "35",
       "remarks": "Applies to classic OpenGL renderer only.",
       "renderers": [
@@ -5848,7 +5702,7 @@
     },
     "gl_rl_globe": {
       "default": "0",
-      "desc": "Helps customize rocket light independant of gl_flashblend.",
+      "desc": "Helps customize rocket light independent of gl_flashblend.",
       "group-id": "15",
       "type": "integer",
       "values": [
@@ -5866,100 +5720,45 @@
         },
         {
           "description": "Rocket light looks like with gl_flashblend 2, with dynamic lighting",
-          "name": "2"
+          "name": "3"
         }
       ]
     },
     "gl_scaleModelSimpleTextures": {
       "default": "0",
+      "desc": "Applies picmip/max_size/miptexlevel to gl_simpleitem icons.",
       "group-id": "50",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "gl_max_size doesn't affect sprites drawn when gl_simpleitems enabled.",
-          "name": "false"
-        },
-        {
-          "description": "gl_max_size affects simple item sprites",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_scaleModelTextures": {
       "default": "0",
+      "desc": "Applies picmip/max_size/miptexlevel to model textures.",
       "group-id": "50",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable scale model textures.",
-          "name": "false"
-        },
-        {
-          "description": "Enable",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_scaleTurbTextures": {
       "default": "1",
+      "desc": "Applies picmip/max_size/miptexlevel to turb textures (lava, water, slime, teleports).",
       "group-id": "50",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable gl_picmip/gl_max_size/gl_miptexLevel affect turb textures (lava, water, slime, teleports).",
-          "name": "false"
-        },
-        {
-          "description": "Enable.",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_scaleskytextures": {
       "default": "0",
+      "desc": "Applies picmip/max_size/miptexlevel to sky textures (skydome and skybox).",
       "group-id": "50",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable gl_picmip/gl_max_size/gl_miptexlevel affecting sky textures (skydome and skybox).",
-          "name": "false"
-        },
-        {
-          "description": "Enable.",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_shaftlight": {
       "default": "1",
+      "desc": "Toggles between darker/fullbright shaft beams.",
       "group-id": "15",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Dark shaft.",
-          "name": "false"
-        },
-        {
-          "description": "Light shaft.",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_simpleitems": {
       "default": "0",
-      "desc": "Instead of 3D item models in the game display 2D images representing them.",
+      "desc": "Toggles drawing simple icons instead of 3D item models.",
       "group-id": "8",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Draw 3D item models",
-          "name": "false"
-        },
-        {
-          "description": "Draw 2D sprites",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_simpleitems_orientation": {
       "default": "2",
@@ -6005,6 +5804,13 @@
         }
       ]
     },
+    "gl_smoothmodels": {
+      "default": "1",
+      "desc": "Toggles between flat-shaded and smooth shaded models.",
+      "group-id": "35",
+      "remarks": "Applies to GLSL OpenGL renderer only.",
+      "type": "boolean"
+    },
     "gl_squareparticles": {
       "default": "0",
       "desc": "Toggles between circle and square particles.",
@@ -6013,7 +5819,7 @@
     },
     "gl_subdivide_size": {
       "default": "64",
-      "desc": "This variable sets the division value for the sky brushes.\n The higher the value the better the performance, but the smoothness of the sky suffers.",
+      "desc": "This variable sets the division value for the sky brushes.\nThe higher the value the better the performance, but the smoothness of the sky suffers.",
       "group-id": "50",
       "type": "float"
     },
@@ -6024,7 +5830,7 @@
       "type": "enum",
       "values": [
         {
-          "description": "disabled",
+          "description": "Disabled",
           "name": "0"
         },
         {
@@ -6052,7 +5858,7 @@
       "type": "enum",
       "values": [
         {
-          "description": "disabled",
+          "description": "Disabled",
           "name": "0"
         },
         {
@@ -6075,17 +5881,17 @@
     },
     "gl_textureless": {
       "default": "0",
-      "desc": "True textureless map textures, but preserving original colors.\nFor custom colors - look for r_drawflat.",
+      "desc": "Toggles between textures and flat colors based on the textures (looks like gl_max_size 1).\nFor custom colors, look for r_drawflat.",
       "group-id": "50",
-      "remarks": "The beauty of this is that u can toggle in realtime for any map.\nSame as with r_drawflat.",
+      "remarks": "Can not be changed during a match.",
       "type": "boolean",
       "values": [
         {
-          "description": "Normal textures",
+          "description": "Use world textures.",
           "name": "false"
         },
         {
-          "description": "Textureless world",
+          "description": "Use flat colors averaged from the world textures.",
           "name": "true"
         }
       ]
@@ -6156,33 +5962,23 @@
     },
     "gl_triplebuffer": {
       "default": "1",
-      "desc": "Triple buffering of head up display graphics. If you have problems with screen graphics, turn this on.",
+      "desc": "Triple buffering of HUD graphics. If you have problems with screen graphics, turn this on.",
       "group-id": "35",
-      "remarks": "This has nothing to do with 3D rendering, it will not increase graphics \"lag\" or anything like that. It only affects 2D head up display graphics.",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Off.",
-          "name": "false"
-        },
-        {
-          "description": "On.",
-          "name": "true"
-        }
-      ]
+      "remarks": "This has nothing to do with 3D rendering, it will not increase graphics \"lag\" or anything like that. It only affects 2D HUD graphics.",
+      "type": "boolean"
     },
     "gl_turb_effects": {
       "default": "1",
-      "desc": "Controls if shotgun/nailgun impact points will spawn bubbles underwater",
-      "remarks": "Requires QMB particles to be enabled (corresponding gl_particle_xxx option enabled)",
+      "desc": "Controls if shotgun/nailgun impact points will spawn bubbles underwater.",
       "group-id": "51",
+      "remarks": "Requires QMB particles to be enabled (corresponding gl_particle_xxx option enabled).",
       "type": "boolean"
     },
     "gl_turb_fire": {
       "default": "1",
-      "desc": "Controls if explosions/fire will spawn bubbles underwater",
-      "remarks": "Requires QMB particles to be enabled (corresponding gl_particle_xxx option enabled)",
+      "desc": "Controls if explosions/fire will spawn bubbles underwater.",
       "group-id": "51",
+      "remarks": "Requires QMB particles to be enabled (corresponding gl_particle_xxx option enabled).",
       "type": "boolean"
     },
     "gl_turb_trails": {
@@ -6223,7 +6019,7 @@
       "default": "0",
       "desc": "Controls amount of fog when inside liquid (water, lava, slime).\nDensity is controlled by choosing a value from 0 to 1 and from 1 to 2.",
       "group-id": "51",
-      "remarks": "Works only when multitexturing is enabled.",
+      "remarks": "Multi-texturing is required for this setting.",
       "type": "enum",
       "values": [
         {
@@ -6299,8 +6095,8 @@
       "default": "0",
       "desc": "Turns on rain outdoors.\nRain density is equal to whatever gl_weather_rain is set to.",
       "group-id": "51",
-      "type": "float",
-      "remarks": "Works on all custom maps except death32c, dakyne and some others."
+      "remarks": "Works on all custom maps except death32c, dakyne and some others.",
+      "type": "float"
     },
     "gl_weather_rain_fast": {
       "default": "0",
