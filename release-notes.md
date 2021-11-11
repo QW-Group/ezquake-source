@@ -76,6 +76,7 @@
 - `/gl_outline 2` fixed (3.5 bug, reported by fourier)
 - `/gl_shaftlight 0` fixed on glsl path in classic renderer (3.5 bug, reported by maniac)
 - `/r_dynamic 2` was calculating too many lightmaps (3.5 bug, reported by ciscon)
+- `/gl_no24bit` wasn't disabling loading external textures (3.5 bug, kind of reported by hemostx, #601)
 - Fixed bug causing invalid texture references to be used if `/vid_restart` issued while disconnected (3.5 bug)
 - Fixed bug causing oblique particles if sprite array dimensions were unmatched (width != height) (3.5 bug - reported by ciscon)
 - Fixed bug causing flashblend to render as transparent if sprite array dimensions were unmatched (width != height) (3.5 bug - reported by ciscon)

@@ -33,6 +33,8 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Removed debugging messages when using `+fire_ar`
 - Commands that search by regular expression (`/cvarlist_re` etc) are now case-insensitive (reported by HangTime, #599)
 - Added `/fs_savegame_home` to control if games are saved to home directory (default) or game directory (reported by githubtefo, #586)
+- Fixed `/gl_no24bit` not taking effect after `/vid_restart` (reported by hemo, #601)
+- Fixed `/gl_no24bit` not disabling loading external textures (3.5 bug, kind of reported by hemostx, #601)
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
 

@@ -166,7 +166,7 @@ static void OnChange_gl_texturemode(cvar_t *var, char *string, qbool *cancel)
 
 qbool R_ExternalTexturesEnabled(qbool worldmodel)
 {
-	return worldmodel ? gl_externalTextures_world.integer : gl_externalTextures_bmodels.integer;
+	return !gl_no24bit.integer && (worldmodel ? gl_externalTextures_world.integer : gl_externalTextures_bmodels.integer);
 }
 
 void R_TextureRegisterCvars(void)
@@ -182,7 +182,6 @@ void R_TextureRegisterCvars(void)
 		Cvar_Register(&gl_scaleTurbTextures);
 		Cvar_Register(&gl_scaleskytextures);
 		Cvar_Register(&gl_miptexLevel);
-		Cvar_Register(&gl_no24bit);
 		Cvar_Register(&gl_picmip);
 		Cvar_Register(&gl_lerpimages);
 		Cvar_Register(&gl_texturemode);
@@ -193,6 +192,7 @@ void R_TextureRegisterCvars(void)
 	}
 
 	// latch cvars
+	Cvar_Register(&gl_no24bit);
 	Cvar_Register(&gl_wicked_luma_level);
 
 	// This way user can specify gl_max_size in his cfg.
