@@ -817,11 +817,12 @@ static void VID_FramebufferFlip(void)
 static void GL_FramebufferEnsureCreated(framebuffer_id id, int width, int height)
 {
 	framebuffer_data_t* fb = &framebuffer_data[id];
+	int expected_samples = framebuffer_multisampled[id] ? vid_framebuffer_multisample.integer : 0;
 
 	if (!fb->glref) {
 		GL_FramebufferCreate(id, width, height);
 	}
-	else if (fb->width != width || fb->height != height || fb->samples != vid_framebuffer_multisample.integer) {
+	else if (fb->width != width || fb->height != height || fb->samples != expected_samples) {
 		GL_FramebufferDelete(id);
 
 		GL_FramebufferCreate(id, width, height);
@@ -837,14 +838,23 @@ static void GL_FramebufferEnsureDeleted(framebuffer_id id)
 	}
 }
 
+static framebuffer_id VID_MultisampledAlternateId(framebuffer_id id)
+{
+	if (vid_framebuffer_multisample.integer && framebuffer_multisample_alternate[id] && framebuffer_multisample_alternate[id] != id) {
+		return framebuffer_multisample_alternate[id];
+	}
+	return id;
+}
+
 static qbool VID_FramebufferInit(framebuffer_id id, int effective_width, int effective_height)
 {
 	if (effective_width && effective_height) {
 		GL_FramebufferEnsureCreated(id, effective_width, effective_height);
 
 		if (framebuffer_data[id].glref) {
-			if (vid_framebuffer_multisample.integer && framebuffer_multisample_alternate[id] && framebuffer_multisample_alternate[id] != id) {
-				framebuffer_id ms_alt = framebuffer_multisample_alternate[id];
+			framebuffer_id ms_alt = VID_MultisampledAlternateId(id);
+
+			if (ms_alt != id) {
 				GL_FramebufferEnsureCreated(ms_alt, effective_width, effective_height);
 
 				if (framebuffer_data[ms_alt].glref) {
