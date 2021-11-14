@@ -38,6 +38,7 @@
 - Fixed bug causing client to receive playerinfo packet before knowing which protocol extensions are enabled when using `/cl_delay_packet` on local server (#488, reported by pattah)
 - Fixed bug causing fps to affect `/cl_yawspeed`/`+left`/`+right` commands (keyboard turning) (old bug, #550, reported by veganaize)
 - Fixed bug causing missing entities when playing back demos recorded in FTE (old bug, #551, reported by lordee)
+- Fixed bug causing toggling `/gl_no24bit` 1 => 0 causing maximum of a single QMB particle (old bug, #604, reported by hemostx)
 - Translucent models are first drawn with a z-pass, to stop overdraw affecting level of translucency
 
 ### Bugs which affected 3.x

@@ -5,6 +5,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Added `/vid_reload` command to reload textures, rather than full `/vid_restart`.  `/vid_reload_auto` cvar controls automatic/manual.
 - Fixed `/gl_no24bit` not affecting aliasmodel skins (3.5 bug, reported by hemostx, #605)
 - `/gl_consolefont` now falls back to 'original' on load failure, but doesn't change value (for toggling no24bit, #605)
+- Fixed toggling `/gl_no24bit` 1 => 0 causing maximum of a single QMB particle (old bug, reported by hemostx, #604)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 
