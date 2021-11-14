@@ -1,6 +1,6 @@
 Leaving these here as bugs between dev versions of 3.6 aren't in the release notes.
 
-### Changes from alpha8=>alpha9 (July 13th, ongoing)
+### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 
 - Fixed/worked around some classic renderer bugs on version x.y.13399 AMD drivers (#416)
 - Fixed bug causing off-by-one error when drawing rectangle outlines (3.5 bug, reported by Matrix, #536)
@@ -33,10 +33,11 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Removed debugging messages when using `+fire_ar`
 - Commands that search by regular expression (`/cvarlist_re` etc) are now case-insensitive (reported by HangTime, #599)
 - Added `/fs_savegame_home` to control if games are saved to home directory (default) or game directory (reported by githubtefo, #586)
-- Fixed `/gl_no24bit` not taking effect after `/vid_restart` (reported by hemo, #601)
+- Fixed `/gl_no24bit` not taking effect after `/vid_restart` (reported by hemostx, #601)
 - Fixed `/gl_no24bit` not disabling loading external textures (3.5 bug, kind of reported by hemostx, #601)
+- Fixed bug causing `/gl_scaleskytextures` to not affect external textures (reported & fixed by hemostx, #606)
 
-### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
+### Changes from alpha7=>alpha8 (Feb 9th => July 13th, 2021)
 
 - Fix increased memory buffer causing slow speed of demo_jump (#453)
 - Fix turbalpha causing rendering artifacts on non-vissed maps (#473)
