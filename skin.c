@@ -48,12 +48,12 @@ static void Skin_Blend(byte* original, skin_t* skin, int skin_number);
 
 void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel);
 
-cvar_t	noskins = { "noskins", "0" };
+cvar_t	noskins = { "noskins", "0", CVAR_RELOAD_GFX };
 
 cvar_t  enemyforceskins     = {"enemyforceskins", "0", 0, OnChangeSkinForcing};
 cvar_t  teamforceskins      = {"teamforceskins", "0", 0, OnChangeSkinForcing};
 
-static cvar_t  baseskin = { "baseskin", "base" };
+static cvar_t  baseskin = { "baseskin", "base", CVAR_RELOAD_GFX };
 static cvar_t  cl_name_as_skin     = {"cl_name_as_skin", "0", 0, OnChangeSkinForcing};
 cvar_t  r_enemyskincolor    = {"r_enemyskincolor", "", CVAR_COLOR, OnChangeSkinForcing};
 cvar_t  r_teamskincolor     = {"r_teamskincolor",  "", CVAR_COLOR, OnChangeSkinForcing};
@@ -936,7 +936,7 @@ void Skin_UserInfoChange(int slot, player_info_t* player, const char* key)
 
 void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel)
 {
-	extern cvar_t noskins, cl_name_as_skin, enemyforceskins;
+	extern cvar_t cl_name_as_skin, enemyforceskins;
 
 	if (cl.teamfortress || (cl.fpd & FPD_NO_FORCE_SKIN)) {
 		return;
