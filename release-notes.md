@@ -139,6 +139,7 @@
 - `/demo_jump_skip_messages` to determine if messages should be printed to console during demo jump
 - `/enemyforceskins 1` will search for player names in lower case (#345)
 - `/fs_savegame_home` added, controls if games saved to home directory (default) or game directory (reported by githubtefo, #586)
+- `/gl_consolefont` now falls back to 'original' on load failure, but doesn't change value (for toggling no24bit, #605)
 - `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
 - `/gl_mipmap_viewmodels` removed, replaced with `/gl_texturemode_viewmodels`
 - `/gl_turb_fire` added, controls if QMB explosions/fire spawn bubbles underwater
