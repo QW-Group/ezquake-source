@@ -259,7 +259,7 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 	if (var->flags & CVAR_RECOMPILE_PROGS) {
 		renderer.CvarForceRecompile(var);
 	}
-	if ((var->flags & CVAR_RELOAD_GFX) && host_everything_loaded) {
+	if ((var->flags & CVAR_RELOAD_GFX) && host_everything_loaded && !same_value) {
 		VID_ReloadCvarChanged(var);
 	}
 #endif
