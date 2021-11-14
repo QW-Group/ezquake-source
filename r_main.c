@@ -35,8 +35,8 @@ void VID_GfxInfo_f(void)
 
 void R_Shutdown(r_shutdown_mode_t mode)
 {
-	if (renderer.Shutdown && mode != r_shutdown_reload) {
-		renderer.Shutdown(mode != r_shutdown_restart);
+	if (renderer.Shutdown) {
+		renderer.Shutdown(mode);
 	}
 
 	CachePics_Shutdown();

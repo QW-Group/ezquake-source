@@ -188,10 +188,13 @@ void GLM_PostProcessScreen(void)
 	GL_FramebufferPostProcessScreen();
 }
 
-void GLM_Shutdown(qbool restarting)
+void GLM_Shutdown(r_shutdown_mode_t mode)
 {
-	renderer.ProgramsShutdown(restarting);
-	GL_DeleteSamplers();
+	if (mode != r_shutdown_reload) {
+		renderer.ProgramsShutdown(mode == r_shutdown_restart);
+		GL_DeleteSamplers();
+	}
+	GL_FramebufferDeleteAll();
 }
 
 #endif

@@ -62,6 +62,7 @@ qbool GL_FramebufferStartWorldNormals(framebuffer_id id);
 qbool GL_FramebufferEndWorldNormals(framebuffer_id id);
 
 int GL_FramebufferMultisamples(framebuffer_id framebuffer);
+void GL_FramebufferDeleteAll(void);
 
 #define USE_FRAMEBUFFER_SCREEN    1
 #define USE_FRAMEBUFFER_3DONLY    2

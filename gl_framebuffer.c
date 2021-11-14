@@ -991,3 +991,12 @@ int GL_FramebufferMultisamples(framebuffer_id framebuffer)
 
 	return 0;
 }
+
+void GL_FramebufferDeleteAll(void)
+{
+	framebuffer_id i;
+
+	for (i = 0; i < framebuffer_count; ++i) {
+		GL_FramebufferEnsureDeleted(i);
+	}
+}
