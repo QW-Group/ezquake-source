@@ -144,6 +144,7 @@ void GLC_Initialise(void)
 		}
 
 		Cvar_ResetCurrentGroup();
+		glc_program_cvars_initialized = true;
 	}
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);

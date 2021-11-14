@@ -33,10 +33,10 @@ void VID_GfxInfo_f(void)
 	renderer.PrintGfxInfo();
 }
 
-void R_Shutdown(qbool restart)
+void R_Shutdown(r_shutdown_mode_t mode)
 {
-	if (renderer.Shutdown) {
-		renderer.Shutdown(restart);
+	if (renderer.Shutdown && mode != r_shutdown_reload) {
+		renderer.Shutdown(mode != r_shutdown_restart);
 	}
 
 	CachePics_Shutdown();

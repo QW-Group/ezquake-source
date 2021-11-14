@@ -91,8 +91,14 @@ void R_BloomBlend(void);
 #define NUMCROSSHAIRS 6
 
 // r_main.c
+typedef enum {
+	r_shutdown_full = 0,       // shutting down program
+	r_shutdown_restart = 1,    // restarting gfx system (window destroyed & recreated)
+	r_shutdown_reload = 2      // soft restart (reload textures only)
+} r_shutdown_mode_t;
+
 void R_NewMapPrepare(qbool vid_restart);
-void R_Shutdown(qbool restart);
+void R_Shutdown(r_shutdown_mode_t mode);
 void VID_GfxInfo_f(void);
 int VID_DisplayNumber(qbool fullscreen);
 

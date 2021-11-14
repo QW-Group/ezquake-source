@@ -18,6 +18,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // vid.h -- video driver defs
 
+#ifndef EZQUAKE_VID_HEADER
+#define EZQUAKE_VID_HEADER
+
 #include <SDL.h>
 
 #define VID_CBITS 6
@@ -64,11 +67,9 @@ int VID_ScaledHeight3D(void);
 int VID_RenderWidth2D(void);
 int VID_RenderHeight2D(void);
 
-void VID_Shutdown (qbool restart);
+void VID_Shutdown(qbool restart);
+void VID_SoftRestart(void);
 // Called at shutdown
-
-void VID_Update (vrect_t *rects);
-// flushes the given rectangles from the view buffer to the screen
 
 // int VID_SetMode (int modenum, unsigned char *palette);
 // sets the mode; only used by the Quake engine for resetting to mode 0 (the
@@ -98,3 +99,6 @@ const SDL_DisplayMode *VID_GetDisplayMode(int index);
 int VID_GetCurrentModeIndex(void);
 int VID_GetModeIndexCount(void);
 
+void VID_ReloadCheck(void);
+
+#endif // EZQUAKE_VID_HEADER

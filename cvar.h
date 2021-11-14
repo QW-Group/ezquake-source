@@ -52,6 +52,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_AUTOSETRECENT   (1<<19) // Ugh... temporary flag so Cvar_SetEx() knows if auto-value set during on-change event
 #define CVAR_USERINFONORESET (1<<20) // won't be reset by cfg_reset/cfg_load when 
 #define CVAR_LATCH_SOUND     (1<<21) // will only change when C code next does a Cvar_Register()... will trigger sound restart if modified on startup
+#define CVAR_RELOAD_GFX      (1<<22) // changes immediately but takes effect as textures load, prompt for vid_reload
 
 #define CVAR_LATCH (CVAR_LATCH_GFX | CVAR_LATCH_SOUND)
 
@@ -185,7 +186,9 @@ void Cvar_CleanUpTempVars (void);	// clean up afterwards
 
 char* Cvar_ServerInfoValue(char* key, char* value);
 
+void Cvar_ClearAllModifiedFlags(int flags);
 void Cvar_ExecuteQueuedChanges(void);
+qbool Cvar_AnyModified(int flags);
 
 #endif /* !__CVAR_H__ */
 

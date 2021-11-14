@@ -716,7 +716,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	host_initialized = true;
 
 	// walk through all vars and force OnChange event if cvar was modified,
-	// also apply that to variables which mirrored in userinfo because of cl_parsefunchars wasn't applyed as this moment,
+	// also apply that to variables which mirrored in userinfo because of cl_parsefunchars wasn't applied at this moment,
 	// same for serverinfo and maybe this fix something also.
 	for ( v = NULL; (v = Cvar_Next ( v )); ) {
 		char val[2048];

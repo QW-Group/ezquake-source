@@ -2566,6 +2566,8 @@ void CL_Frame(double time)
 		}
 	}
 
+	VID_ReloadCheck();
+
 	R_ParticleFrame();
 
 	buffers.StartFrame();
@@ -2689,7 +2691,7 @@ void CL_Shutdown (void)
 	IN_Shutdown ();
 	Log_Shutdown();
 	if (host_basepal) {
-		VID_Shutdown(false);
+		VID_Shutdown(r_shutdown_full);
 	}
 	History_Shutdown();
 	Sys_CloseIPC();

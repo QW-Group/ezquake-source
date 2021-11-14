@@ -180,6 +180,8 @@
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
 - `/vid_framebuffer_multisample` controls multi-sampling level of the framebuffer (reported by Matrix, #367)
 - `/vid_hwgamma_fps` controls how frequency the gamma of the monitor will be set if hardware gamma is enabled
+- `/vid_reload` command to reload textures, rather than full `/vid_restart` (#602)
+- `/vid_reload_auto` controls if `/vid_reload` is automatically called when a cvar affecting texture load is changed
 - `-oldgamma` command line option to re-instate old `-gamma` behaviour
 - `-r-trace` command line option in debug build - writes out API calls for each frame to qw/trace/ directory (will kill fps, just for debugging)
 - `-r-verify` command line option in debug build - regularly downloads GL state from driver, for use with -r-trace
