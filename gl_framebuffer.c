@@ -39,6 +39,8 @@ extern cvar_t vid_framebuffer_smooth;
 extern cvar_t vid_framebuffer_multisample;
 extern cvar_t r_fx_geometry;
 
+static framebuffer_id VID_MultisampledAlternateId(framebuffer_id id);
+
 #ifndef GL_NEGATIVE_ONE_TO_ONE
 #define GL_NEGATIVE_ONE_TO_ONE            0x935E
 #endif
@@ -478,6 +480,7 @@ qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
 		return false;
 	}
 
+	id = VID_MultisampledAlternateId(id);
 	fb = &framebuffer_data[id];
 	if (!fb->glref) {
 		return false;
@@ -504,9 +507,9 @@ qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
 				return false;
 			}
 			GL_TexStorage2D(fb->texture[fbtex_worldnormals], 1, GL_RGBA16F, fb->width, fb->height, false);
+			renderer.TextureSetFiltering(fb->texture[fbtex_worldnormals], texture_minification_nearest, texture_magnification_nearest);
+			renderer.TextureWrapModeClamp(fb->texture[fbtex_worldnormals]);
 		}
-		renderer.TextureSetFiltering(fb->texture[fbtex_worldnormals], texture_minification_nearest, texture_magnification_nearest);
-		renderer.TextureWrapModeClamp(fb->texture[fbtex_worldnormals]);
 		R_TextureSetFlag(fb->texture[fbtex_worldnormals], R_TextureGetFlag(fb->texture[fbtex_worldnormals]) | TEX_NO_TEXTUREMODE);
 	}
 
@@ -564,6 +567,7 @@ qbool GL_FramebufferEndWorldNormals(framebuffer_id id)
 		return false;
 	}
 
+	id = VID_MultisampledAlternateId(id);
 	fb = &framebuffer_data[id];
 	if (!fb->glref) {
 		return false;

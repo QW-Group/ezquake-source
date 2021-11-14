@@ -6,6 +6,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Fixed `/gl_no24bit` not affecting aliasmodel skins (3.5 bug, reported by hemostx, #605)
 - `/gl_consolefont` now falls back to 'original' on load failure, but doesn't change value (for toggling no24bit, #605)
 - Fixed toggling `/gl_no24bit` 1 => 0 causing maximum of a single QMB particle (old bug, reported by hemostx, #604)
+- Fixed combination of `/vid_framebuffer_multisample` and `/r_fx_geometry` (alpha9 bug, reported by hemostx, #608)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 
