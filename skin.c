@@ -256,7 +256,7 @@ static byte* Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *
 	*max_w = *max_h = *bpp = 0;
 
 	// PCX skins loads different, so using TEX_NO_PCX
-	if ((pic = R_LoadImagePixels(name, 0, 0, TEX_NO_PCX, real_width, real_height))) {
+	if (gl_no24bit.integer == 0 && (pic = R_LoadImagePixels(name, 0, 0, TEX_NO_PCX, real_width, real_height))) {
 		// No limit in gl.
 		*max_w = *real_width;
 		*max_h = *real_height;

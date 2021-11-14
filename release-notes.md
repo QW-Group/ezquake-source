@@ -99,6 +99,7 @@
 - Fixed bug causing invalid lightmap rendering when using drawflat and map load caused number of lightmaps to increase (3.5 bug, found during #540)
 - Fixed bug causing unlit lightmap data to be set to fullbright on first map load after watching demo/qtv stream with r_fullbright enabled (3.5 bug, reported by HangTime)
 - Fixed bug causing off-by-one error when drawing rectangle outlines (3.5 bug, reported by Matrix, #536)
+- Fixed bug causing `/gl_no24bit` to not affect aliasmodel skins (3.5 bug, reported by hemostx, #605)
 
 ### Ruleset-related changes
 

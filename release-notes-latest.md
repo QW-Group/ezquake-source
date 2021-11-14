@@ -3,6 +3,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 ### Changes from alpha9=>alpha10 (November 14th, ongoing)
 
 - Added `/vid_reload` command to reload textures, rather than full `/vid_restart`.  `/vid_reload_auto` cvar controls automatic/manual.
+- Fixed `/gl_no24bit` not affecting aliasmodel skins (3.5 bug, reported by hemostx, #605)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 
