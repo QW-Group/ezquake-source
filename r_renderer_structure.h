@@ -1,6 +1,6 @@
 
 // Meta
-RENDERER_METHOD(void, Shutdown, qbool restart)
+RENDERER_METHOD(void, Shutdown, r_shutdown_mode_t mode)
 RENDERER_METHOD(void, CvarForceRecompile, cvar_t* cvar)
 RENDERER_METHOD(void, PrintGfxInfo, void)
 RENDERER_METHOD(const char*, DescriptiveString, void)
