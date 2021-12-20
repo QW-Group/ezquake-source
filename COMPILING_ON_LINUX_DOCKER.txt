@@ -10,6 +10,7 @@ HOW TO BUILD ON LINUX using Dockerfile:
 
   docker run -it -v $(pwd):/ezquake-source --user "$(id -u):$(id -g)" ezq:dev-focal make -j$(nproc) clean
   docker run -it -v $(pwd):/ezquake-source --user "$(id -u):$(id -g)" ezq:dev-focal make -j$(nproc) all
+  docker run -it -v $(pwd):/ezquake-source --user "$(id -u):$(id -g)" ezq:dev-focal make -j$(nproc) strip
 
 4) As a result you should have a for example: `./ezquake-linux-x86_64` which can be used with ~/nquake
 
