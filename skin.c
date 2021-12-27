@@ -903,7 +903,9 @@ void Skin_RegisterCvars(void)
 void Skin_Refresh(void)
 {
 	int oldskins = noskins.integer;
+	int oldflags = noskins.flags;
 
+	noskins.flags &= ~(CVAR_RELOAD_GFX);
 	Cvar_SetValue(&noskins, 2);
 
 	con_suppress = true;
@@ -911,6 +913,7 @@ void Skin_Refresh(void)
 	con_suppress = false;
 
 	Cvar_SetValue(&noskins, oldskins);
+	noskins.flags = oldflags;
 }
 
 void Skin_UserInfoChange(int slot, player_info_t* player, const char* key)
