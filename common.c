@@ -471,51 +471,67 @@ const char *COM_Parse (const char *data)
 	len = 0;
 	com_token[0] = 0;
 
-	if (!data)
+	if (!data) {
 		return NULL;
+	}
 
 	// skip whitespace
 	while (true) {
-		while ( (c = *data) == ' ' || c == '\t' || c == '\r' || c == '\n')
+		while ((c = *data) == ' ' || c == '\t' || c == '\r' || c == '\n') {
 			data++;
+		}
 
-		if (c == 0)
+		if (c == 0) {
 			return NULL;			// end of file;
+		}
 
 		// skip // comments
-		if (c == '/' && data[1] == '/')
-			while (*data && *data != '\n')
+		if (c == '/' && data[1] == '/') {
+			while (*data && *data != '\n') {
 				data++;
-		else
+			}
+		}
+		else {
 			break;
+		}
 	}
 
 	// handle quoted strings specially
 	if (c == '\"' || (c == '{' && cl_curlybraces.integer) ) {
-		if (c == '{')
+		if (c == '{') {
 			quotes = 1;
-		else
+		}
+		else {
 			quotes = -1;
+		}
 		data++;
 		while (1) {
 			c = *data;
 			data++;
 			if (quotes < 0) {
-				if (c == '\"')
+				if (c == '\"') {
 					quotes++;
-			} else {
-				if (c == '}' && cl_curlybraces.integer)
+				}
+			}
+			else {
+				if (c == '}' && cl_curlybraces.integer) {
 					quotes--;
-				else if (c == '{' && cl_curlybraces.integer)
+				}
+				else if (c == '{' && cl_curlybraces.integer) {
 					quotes++;
+				}
 			}
 
 			if (!quotes || !c) {
 				com_token[len] = 0;
-				return c ? data:data-1;
+				return c ? data : data - 1;
 			}
 			com_token[len] = c;
 			len++;
+
+			if (len >= sizeof(com_token) - 1) {
+				return NULL; // quoted section too long
+			}
 		}
 	}
 
@@ -524,8 +540,9 @@ const char *COM_Parse (const char *data)
 		com_token[len] = c;
 		data++;
 		len++;
-		if (len >= MAX_COM_TOKEN - 1)
+		if (len >= sizeof(com_token) - 1) {
 			break;
+		}
 		c = *data;
 	} while (c && c != ' ' && c != '\t' && c != '\n' && c != '\r');
 
