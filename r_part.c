@@ -433,6 +433,20 @@ void Classic_ParticleTrail(vec3_t start, vec3_t end, vec3_t* trail_stop, trail_t
 	}
 	VectorScale(delta, 1 / len, dir);	//unit vector in direction of trail
 
+	// Convert from AMF/vult particle trail types
+	if (type == AMF_ROCKET_TRAIL) {
+		type = ALT_ROCKET_TRAIL;
+	}
+	else if (type == BLEEDING_TRAIL || type == BLEEDING_TRAIL2) {
+		type = BLOOD_TRAIL;
+	}
+	else if (type == RAIL_TRAIL || type == RAIL_TRAIL2) {
+		type = RAIL_TRAIL;
+	}
+	else if (type == LAVA_TRAIL) {
+		type = ROCKET_TRAIL;
+	}
+
 	switch (type) {
 	case ALT_ROCKET_TRAIL:
 		len /= 1.5; break;
@@ -509,6 +523,7 @@ void Classic_ParticleTrail(vec3_t start, vec3_t end, vec3_t* trail_stop, trail_t
 			for (j = 0; j < 3; j++)
 				p->org[j] = point[j] + ((rand() % 6) - 3);
 			break;
+		case RAIL_TRAIL:
 		case ROCKET_TRAIL:
 		default:
 			p->ramp = (rand() & 3);

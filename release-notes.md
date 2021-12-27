@@ -40,7 +40,8 @@
 - Fixed bug causing missing entities when playing back demos recorded in FTE (old bug, #551, reported by lordee)
 - Fixed bug causing toggling `/gl_no24bit` 1 => 0 causing maximum of a single QMB particle (old bug, #604, reported by hemostx)
 - Fixed bug causing frag-message highlighting of normal messages if name at start of line (very old bug, reported by qqshka #623)
-- Fixed bugs causing access of invalid memory when loading corrupt .bsp files (very olds bugs, repoted by mmmds, #615)
+- Fixed bugs causing access of invalid memory when loading corrupt .bsp files (very old bugs, reported by mmmds, #615)
+- Fixed bug causing `/gl_particle_gibtrails 1` to turn classic blood trails following gibs into rocket smoke (very old bug, reported by hemostx, #614)
 - Translucent models are first drawn with a z-pass, to stop overdraw affecting level of translucency
 
 ### Bugs which affected 3.x
