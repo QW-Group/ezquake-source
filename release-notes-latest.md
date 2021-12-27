@@ -8,6 +8,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Fixed toggling `/gl_no24bit` 1 => 0 causing maximum of a single QMB particle (old bug, reported by hemostx, #604)
 - Fixed combination of `/vid_framebuffer_multisample` and `/r_fx_geometry` (alpha9 bug, reported by hemostx, #608)
 - Fixed bug causing frag-message highlighting of normal messages if name at start of line (very old bug, reported by qqshka #623)
+- Fixed bugs causing access of invalid memory when loading corrupt .bsp files (very olds bugs, repoted by mmmds, #615)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 
