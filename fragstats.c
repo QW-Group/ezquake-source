@@ -485,11 +485,11 @@ typedef struct fragstats_s {
 static fragstats_t fragstats[MAX_CLIENTS];
 static qbool flag_dropped, flag_touched, flag_captured;
 
-static void Stats_ParsePrintLine(char *s, cfrags_format *cff) 
+static void Stats_ParsePrintLine(const char *s, cfrags_format *cff, int offset) 
 {
 	int start_search, end_Search, i, j, k, p1len, msg1len, msg2len, p2len, killer, victim;
 	fragmsg_t *fragmsg;
-	char *start, *name1, *name2, *t;
+	const char *start, *name1, *name2, *t;
 	player_info_t *player1 = NULL, *player2 = NULL;
 
 	for (i = 0; i < MAX_CLIENTS; i++) 
@@ -505,7 +505,7 @@ static void Stats_ParsePrintLine(char *s, cfrags_format *cff)
 		
 		if (!strncmp(start, name1, p1len)) 
 		{
-			cff->p1pos = 0; 
+			cff->p1pos = offset;
 			cff->p1len = p1len; 
 			cff->p1col = player1->topcolor;
 			
@@ -554,7 +554,7 @@ static void Stats_ParsePrintLine(char *s, cfrags_format *cff)
 						
 							if (!strncmp(start, name2, p2len)) 
 							{
-								cff->p2pos = start - s;
+								cff->p2pos = start - s + offset;
 								cff->p2len = p2len;
 								cff->p2col = player2->topcolor;
 								
@@ -714,6 +714,7 @@ foundmatch:
 
 void Stats_ParsePrint(char *s, int level, cfrags_format *cff) {
 	char *start, *end, save;
+	int offset = 0;
 
 	if (!Stats_IsActive())
 		return;
@@ -730,10 +731,11 @@ void Stats_ParsePrint(char *s, int level, cfrags_format *cff) {
 			end++;
 			save = *end;
 			*end = 0;
-			Stats_ParsePrintLine(start, cff);
+			Stats_ParsePrintLine(start, cff, offset);
 			*end = save;
+			offset += (end - s);
 		} else {
-			Stats_ParsePrintLine(start, cff);
+			Stats_ParsePrintLine(start, cff, offset);
 			break;
 		}
 

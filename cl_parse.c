@@ -2643,15 +2643,16 @@ static void FlushString (const wchar *s, int level, qbool team, int offset)
 
 	// s0 is same after Stats_ParsePrint like before, but Stats_ParsePrint modify it during it's work
 	// we can change this function a bit, so s0 can be const char*
-	Stats_ParsePrint (s0, level, &cff);
+	Stats_ParsePrint(s0, level, &cff);
 
 	if (CL_Demo_SkipMessage(demo_jump_skip_messages.integer >= 1)) {
 		return;
 	}
 
 	// Colorize player names here
-	if (scr_coloredfrags.value && cff.p1len)
-		text = CL_ColorizeFragMessage (text, &cff);
+	if (scr_coloredfrags.value && cff.isFragMsg && cff.p1len) {
+		text = CL_ColorizeFragMessage(text, &cff);
+	}
 
 	/* FIXME
 	 * disconnect: There should be something like Com_PrintfW...
