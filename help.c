@@ -810,7 +810,7 @@ static void Help_VerifyConfig_f(void)
 		cvar_t* cvar        = Cvar_Find(name);
 		const char* type    = json_string_value(json_object_get(variable, "type"));
 		json_t* examples    = json_object_get(variable, "values");
-		size_t num_examples = examples && json_is_array(examples) ? json_array_size(examples) : 0;
+		size_t num_examples = json_is_array(examples) ? json_array_size(examples) : 0;
 
 		// obsolete cvars might be in documentation so people can see notes using /describe
 		if (cvar == NULL) {
