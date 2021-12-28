@@ -985,6 +985,8 @@ static int VID_SDL_InitSubSystem(void)
 	return 0;
 }
 
+// This is called during video initialisation & vid_restart, but not vid_reload
+// Do not include any cvars here that should take effect without full restart
 static void VID_RegisterLatchCvars(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
@@ -1770,7 +1772,6 @@ static void VID_Reload_f(void)
 
 	VID_SoftRestart();
 	ReloadPaletteAndColormap();
-	VID_RegisterLatchCvars();
 	VID_Startup();
 	vid_reload_pending = false;
 }
