@@ -2691,7 +2691,7 @@ void CL_Shutdown (void)
 	IN_Shutdown ();
 	Log_Shutdown();
 	if (host_basepal) {
-		VID_Shutdown(r_shutdown_full);
+		VID_Shutdown(false);
 	}
 	History_Shutdown();
 	Sys_CloseIPC();

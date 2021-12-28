@@ -941,7 +941,7 @@ void VID_Shutdown(qbool restart)
 	}
 #endif
 
-	R_Shutdown(restart);
+	R_Shutdown(restart ? r_shutdown_restart : r_shutdown_full);
 
 	if (sdl_context) {
 		SDL_GL_DeleteContext(sdl_context);
@@ -1790,7 +1790,7 @@ static void VID_Restart_f(void)
 		return;
 	}
 
-	VID_Shutdown(r_shutdown_restart);
+	VID_Shutdown(true);
 
 	ReloadPaletteAndColormap();
 
