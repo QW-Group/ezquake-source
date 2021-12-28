@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "pmove.h"		// PM_FLY etc
 #include "rulesets.h"
 
+static void IN_AttackUp_CommonHide(void);
+
 cvar_t cl_anglespeedkey = { "cl_anglespeedkey","1.5" };
 cvar_t cl_backspeed = { "cl_backspeed","400" };
 cvar_t cl_c2spps = { "cl_c2spps","0" };
@@ -281,9 +283,6 @@ static void IN_AntiRolloverFireKeyDown(int key_code)
 		// shouldn't happen, but prevent duplicates
 		for (i = 0; i < cl.ar_count; ++i) {
 			if (cl.ar_keycodes[i] == key_code) {
-				if (developer.integer) {
-					Com_Printf("Duplicate AR found %d @ %d\n", key_code, i);
-				}
 				return;
 			}
 		}
@@ -292,9 +291,6 @@ static void IN_AntiRolloverFireKeyDown(int key_code)
 		if (cl.ar_count < sizeof(cl.ar_keycodes) / sizeof(cl.ar_keycodes[0])) {
 			cl.ar_keycodes[cl.ar_count] = key_code;
 			memcpy(cl.ar_weapon_orders[cl.ar_count], cl.weapon_order, sizeof(cl.ar_weapon_orders[cl.ar_count]));
-			if (developer.integer) {
-				Com_DPrintf("Inserted AR %d @ %d [%d %d %d]\n", key_code, i, cl.ar_weapon_orders[cl.ar_count][0], cl.ar_weapon_orders[cl.ar_count][1], cl.ar_weapon_orders[cl.ar_count][2]);
-			}
 			++cl.ar_count;
 		}
 	}
@@ -311,28 +307,19 @@ static void IN_AntiRolloverFireKeyUp(int key_code)
 		if (cl.ar_count > 0) {
 			int prev = cl.ar_count - 1;
 
-			if (developer.integer) {
-				Com_Printf("Removed AR %d @ last(%d)\n", key_code, cl.ar_count - 1);
-			}
 			memcpy(cl.weapon_order, cl.ar_weapon_orders[prev], sizeof(cl.weapon_order));
 			in_impulse = IN_BestWeapon(false);
-			if (developer.integer) {
-				Com_Printf("New impulse: %d out of [%d %d %d...]\n", in_impulse, cl.weapon_order[0], cl.weapon_order[1], cl.weapon_order[2]);
-			}
 			KeyDown_common(&in_attack, NULL_KEY);
 		}
 		else {
 			KeyUp_common(&in_attack, NULL_KEY);
+			IN_AttackUp_CommonHide();
 		}
 	}
 	else {
 		// Not the most recent, so just remove from the list silently
 		for (i = 0; i < cl.ar_count - 1; ++i) {
 			if (cl.ar_keycodes[i] == key_code) {
-				if (developer.integer) {
-					Com_DPrintf("Removed AR %d @ %d\n", key_code, i);
-				}
-
 				memcpy(&cl.ar_keycodes[i], &cl.ar_keycodes[i + 1], sizeof(cl.ar_keycodes[0]) * (cl.ar_count - 1 - i));
 				memcpy(&cl.ar_weapon_orders[i], &cl.ar_weapon_orders[i + 1], sizeof(cl.ar_weapon_orders[0]) * (cl.ar_count - 1 - i));
 				--i;
@@ -379,7 +366,7 @@ void IN_FireDown(void)
 	}
 }
 
-void IN_AttackUp_CommonHide(void)
+static void IN_AttackUp_CommonHide(void)
 {
 	if (CL_INPUT_WEAPONHIDE()) 	{
 		if (cl_weaponhide_axe.integer) 		{
@@ -1260,13 +1247,11 @@ void CL_InitInput(void)
 	Cvar_Register(&m_accel_offset);
 	Cvar_Register(&m_accel_senscap);
 
-
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register(&cl_nodelta);
 	Cvar_Register(&cl_c2sImpulseBackup);
 	Cvar_Register(&cl_c2spps);
 	Cvar_Register(&cl_c2sdupe);
-
 	Cvar_ResetCurrentGroup();
 
 #ifdef JSS_CAM

@@ -7,9 +7,10 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - `/gl_consolefont` now falls back to 'original' on load failure, but doesn't change value (for toggling no24bit, #605)
 - Fixed toggling `/gl_no24bit` 1 => 0 causing maximum of a single QMB particle (old bug, reported by hemostx, #604)
 - Fixed combination of `/vid_framebuffer_multisample` and `/r_fx_geometry` (alpha9 bug, reported by hemostx, #608)
-- Fixed bug causing frag-message highlighting of normal messages if name at start of line (very old bug, reported by qqshka #623)
+- Fixed bug causing frag-message highlighting of normal messages if name at start of line (very old bug, reported by qqshka, #623)
 - Fixed bugs causing access of invalid memory when loading corrupt .bsp files (very old bugs, reported by mmmds, #615)
 - Fixed bug causing `/gl_particle_gibtrails 1` to turn classic blood trails following gibs into rocket smoke (very old bug, reported by hemostx, #614)
+- Fixed bug causing `+fire_ar` to not obey `/cl_weaponhide` when last button depressed (alpha8 bug, reported by paddern, #613)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 
