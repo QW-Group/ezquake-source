@@ -21,6 +21,7 @@ $Id: gl_model.c,v 1.41 2007-10-07 08:06:33 tonik Exp $
 // gl_brushmodel.c  -- model loading and caching of brush models
 
 #include "quakedef.h"
+#include <limits.h>
 #include "gl_model.h"
 #include "teamplay.h"
 #include "rulesets.h"

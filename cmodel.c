@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "common.h"
 #include "cvar.h"
 #endif
+#include <limits.h>
 
 typedef struct cnode_s {
 	// common with leaf
