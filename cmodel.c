@@ -1237,10 +1237,11 @@ static void CM_BuildPVS29a(lump_t *lump_vis, lump_t *lump_leafs)
 	byte *visdata, *scan;
 	dleaf29a_t *in;
 	int i;
-	int max_visleafs = (INT_MAX / map_vis_rowbytes);
+	int max_visleafs;
 
 	map_vis_rowlongs = (visleafs + 31) >> 5;
 	map_vis_rowbytes = map_vis_rowlongs * 4;
+	max_visleafs = (INT_MAX / map_vis_rowbytes);
 	if (visleafs < 0 || (visleafs > max_visleafs)) {
 		Host_Error("CM_LoadMap: invalid visleafs count [BuildPVS] (%d vs 0-%d)", visleafs, max_visleafs);
 		return;
@@ -1271,10 +1272,11 @@ static void CM_BuildPVSBSP2(lump_t *lump_vis, lump_t *lump_leafs)
 	byte *visdata, *scan;
 	dleaf_bsp2_t *in;
 	int i;
-	int max_visleafs = (INT_MAX / map_vis_rowbytes);
+	int max_visleafs;
 
 	map_vis_rowlongs = (visleafs + 31) >> 5;
 	map_vis_rowbytes = map_vis_rowlongs * 4;
+	max_visleafs = (INT_MAX / map_vis_rowbytes);
 	if (visleafs < 0 || (visleafs > max_visleafs)) {
 		Host_Error("CM_LoadMap: invalid visleafs count [BuildPVS] (%d vs 0-%d)", visleafs, max_visleafs);
 		return;
