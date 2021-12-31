@@ -811,7 +811,7 @@ static void CM_LoadNodesBSP2(lump_t *l)
 
 	for (i = 0; i < count; i++, in++, out++) {
 		p = LittleLong(in->planenum);
-		if (p <= 0) {
+		if (p < 0) {
 			Host_Error("Node %d has negative plane# %d\n", i, in->planenum);
 			return;
 		}
