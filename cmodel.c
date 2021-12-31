@@ -1158,7 +1158,7 @@ static void CM_LoadPlanes(lump_t *l)
 /*
 ** DecompressVis
 */
-static byte *DecompressVis(byte *in)
+static byte *DecompressVis(byte *in, byte* limit)
 {
 	static byte decompressed[MAX_MAP_LEAFS / 8];
 	int c, row;
@@ -1176,6 +1176,10 @@ static byte *DecompressVis(byte *in)
 	}
 
 	do {
+		if (in >= limit) {
+			return NULL;
+		}
+
 		if (*in) {
 			*out++ = *in++;
 			continue;
@@ -1200,7 +1204,7 @@ static byte *DecompressVis(byte *in)
 */
 static void CM_BuildPVS(lump_t *lump_vis, lump_t *lump_leafs)
 {
-	byte *visdata, *scan;
+	byte *visdata, *scan, *visdata_limit;
 	dleaf_t *in;
 	int i;
 	int max_visleafs;
@@ -1214,13 +1218,14 @@ static void CM_BuildPVS(lump_t *lump_vis, lump_t *lump_leafs)
 	}
 	map_pvs = (byte *)Hunk_Alloc(map_vis_rowbytes * visleafs);
 
-	if (!lump_vis->filelen) {
+	if (lump_vis->filelen <= 0) {
 		memset(map_pvs, 0xff, map_vis_rowbytes * visleafs);
 		return;
 	}
 
 	// FIXME, add checks for lump_vis->filelen and leafs' visofs
 	visdata = cmod_base + lump_vis->fileofs;
+	visdata_limit = cmod_base + lump_vis->fileofs + lump_vis->filelen;
 
 	// go through all leafs and decompress visibility data
 	in = (dleaf_t *)(cmod_base + lump_leafs->fileofs);
@@ -1228,13 +1233,27 @@ static void CM_BuildPVS(lump_t *lump_vis, lump_t *lump_leafs)
 	scan = map_pvs;
 	for (i = 0; i < visleafs; i++, in++, scan += map_vis_rowbytes) {
 		int p = LittleLong(in->visofs);
-		memcpy(scan, (p == -1) ? map_novis : DecompressVis(visdata + p), map_vis_rowbytes);
+		byte* source;
+
+		if (p != -1 && p < 0) {
+			Host_Error("CM_BuildPVS: visleaf %d has invalid visofs %d", i, p);
+		}
+		if (p >= lump_vis->filelen) {
+			Host_Error("CM_BuildPVS: visleaf %d has out of range visofs %d (limit %d)", i, p, lump_vis->filelen);
+		}
+
+		source = (p == -1) ? map_novis : DecompressVis(visdata + p, visdata_limit);
+		if (source == NULL) {
+			Host_Error("CM_BuildPVS: visleaf %d visofs %d caused invalid read, lumpsize %d", i, p, lump_vis->filelen);
+			return;
+		}
+		memcpy(scan, source, map_vis_rowbytes);
 	}
 }
 
 static void CM_BuildPVS29a(lump_t *lump_vis, lump_t *lump_leafs)
 {
-	byte *visdata, *scan;
+	byte *visdata, *scan, *visdata_limit;
 	dleaf29a_t *in;
 	int i;
 	int max_visleafs;
@@ -1248,14 +1267,13 @@ static void CM_BuildPVS29a(lump_t *lump_vis, lump_t *lump_leafs)
 	}
 	map_pvs = (byte *)Hunk_Alloc(map_vis_rowbytes * visleafs);
 
-	if (!lump_vis->filelen) {
+	if (lump_vis->filelen <= 0) {
 		memset(map_pvs, 0xff, map_vis_rowbytes * visleafs);
 		return;
 	}
 
-	// FIXME, add checks for lump_vis->filelen and leafs' visofs
-
 	visdata = cmod_base + lump_vis->fileofs;
+	visdata_limit = cmod_base + lump_vis->fileofs + lump_vis->filelen;
 
 	// go through all leafs and decompress visibility data
 	in = (dleaf29a_t *)(cmod_base + lump_leafs->fileofs);
@@ -1263,13 +1281,27 @@ static void CM_BuildPVS29a(lump_t *lump_vis, lump_t *lump_leafs)
 	scan = map_pvs;
 	for (i = 0; i < visleafs; i++, in++, scan += map_vis_rowbytes) {
 		int p = LittleLong(in->visofs);
-		memcpy(scan, (p == -1) ? map_novis : DecompressVis(visdata + p), map_vis_rowbytes);
+		byte* source;
+
+		if (p != -1 && p < 0) {
+			Host_Error("CM_BuildPVS: visleaf %d has invalid visofs %d", i, p);
+		}
+		if (p >= lump_vis->filelen) {
+			Host_Error("CM_BuildPVS: visleaf %d has out of range visofs %d (limit %d)", i, p, lump_vis->filelen);
+		}
+
+		source = (p == -1) ? map_novis : DecompressVis(visdata + p, visdata_limit);
+		if (source == NULL) {
+			Host_Error("CM_BuildPVS: visleaf %d visofs %d caused invalid read, lumpsize %d", i, p, lump_vis->filelen);
+			return;
+		}
+		memcpy(scan, source, map_vis_rowbytes);
 	}
 }
 
 static void CM_BuildPVSBSP2(lump_t *lump_vis, lump_t *lump_leafs)
 {
-	byte *visdata, *scan;
+	byte *visdata, *scan, *visdata_limit;
 	dleaf_bsp2_t *in;
 	int i;
 	int max_visleafs;
@@ -1283,14 +1315,14 @@ static void CM_BuildPVSBSP2(lump_t *lump_vis, lump_t *lump_leafs)
 	}
 	map_pvs = (byte *)Hunk_Alloc(map_vis_rowbytes * visleafs);
 
-	if (!lump_vis->filelen) {
+	if (lump_vis->filelen <= 0) {
 		memset(map_pvs, 0xff, map_vis_rowbytes * visleafs);
 		return;
 	}
 
 	// FIXME, add checks for lump_vis->filelen and leafs' visofs
-
 	visdata = cmod_base + lump_vis->fileofs;
+	visdata_limit = cmod_base + lump_vis->fileofs + lump_vis->filelen;
 
 	// go through all leafs and decompress visibility data
 	in = (dleaf_bsp2_t *)(cmod_base + lump_leafs->fileofs);
@@ -1298,7 +1330,21 @@ static void CM_BuildPVSBSP2(lump_t *lump_vis, lump_t *lump_leafs)
 	scan = map_pvs;
 	for (i = 0; i < visleafs; i++, in++, scan += map_vis_rowbytes) {
 		int p = LittleLong(in->visofs);
-		memcpy(scan, (p == -1) ? map_novis : DecompressVis(visdata + p), map_vis_rowbytes);
+		byte* source;
+
+		if (p != -1 && p < 0) {
+			Host_Error("CM_BuildPVS: visleaf %d has invalid visofs %d", i, p);
+		}
+		if (p >= lump_vis->filelen) {
+			Host_Error("CM_BuildPVS: visleaf %d has out of range visofs %d (limit %d)", i, p, lump_vis->filelen);
+		}
+
+		source = (p == -1) ? map_novis : DecompressVis(visdata + p, visdata_limit);
+		if (source == NULL) {
+			Host_Error("CM_BuildPVS: visleaf %d visofs %d caused invalid read, lumpsize %d", i, p, lump_vis->filelen);
+			return;
+		}
+		memcpy(scan, source, map_vis_rowbytes);
 	}
 }
 
