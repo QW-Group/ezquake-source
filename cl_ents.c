@@ -1038,6 +1038,7 @@ void CL_ParsePacketSimpleProjectiles(void)
 			{
 				memset(mis, 0, sizeof(fproj_t));
 				mis->endtime = -1;
+				mis->index = 0;
 			}
 			memset(&cs_sprojectiles[word], 0, sizeof(cs_sprojectile_t));
 
@@ -1053,6 +1054,8 @@ void CL_ParsePacketSimpleProjectiles(void)
 
 		cs_sprojectiles[word].active = true;
 		cs_sprojectile_t *cs_sproj = &cs_sprojectiles[word];
+		cs_sproj->fproj_number = bound(0, word, MAX_EDICTS);
+
 		mis = &cl_fakeprojectiles[cs_sproj->fproj_number];
 
 		sendflags = (unsigned short)MSG_ReadShort();

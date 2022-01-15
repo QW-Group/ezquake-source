@@ -1132,6 +1132,9 @@ void CL_SetUpPlayerPrediction(qbool dopred);
 void CL_EmitEntities (void);
 void CL_ClearProjectiles (void);
 void CL_ParsePacketEntities (qbool delta);
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+void CL_ParsePacketSimpleProjectiles(void);
+#endif
 void CL_SetSolidEntities (void);
 void CL_ParsePlayerinfo (void);
 void CL_StorePausePredictionLocations(void);

@@ -37,6 +37,7 @@ typedef struct
 void Fproj_Physics_Bounce(fproj_t *proj, float dt);
 void CL_MatchFakeProjectile(centity_t *cent);
 void CL_CreateBeam(int type, int ent, vec3_t start, vec3_t end);
+fproj_t *CL_AllocFakeProjectile(void);
 fproj_t *CL_CreateFakeNail(void);
 fproj_t *CL_CreateFakeSuperNail(void);
 fproj_t *CL_CreateFakeGrenade(void);
