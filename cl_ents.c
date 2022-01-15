@@ -1030,7 +1030,8 @@ void CL_ParsePacketSimpleProjectiles(void)
 
 		if (word & 0x8000)
 		{
-			word -= 0x8000;
+			word -= word & 0x8000;
+			word = bound(0, word, MAX_EDICTS);
 
 			fproj_t *mis = &cl_fakeprojectiles[cs_sprojectiles[word].fproj_number];
 			if (mis->entnum == word)
