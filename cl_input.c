@@ -93,7 +93,6 @@ kbutton_t in_up, in_down;
 
 
 int in_impulse;
-int in_impulse_pred;
 
 #define VOID_KEY (-1)
 #define NULL_KEY (-2)
@@ -263,7 +262,9 @@ void IN_AttackDown(void)
 {
 	int best;
 	if (cl_weaponpreselect.value && (best = IN_BestWeapon(false)))
+	{
 		in_impulse = best;
+	}
 
 	KeyDown(&in_attack);
 }
@@ -951,12 +952,11 @@ void CL_FinishMove(usercmd_t* cmd)
 	}
 	else {
 		cmd->impulse = in_impulse;
-		cmd->impulse_pred = in_impulse_pred;
+		cmd->impulse_pred = in_impulse;
 	}
 
 	// } shaman RFE 1030281
 	in_impulse = 0;
-	in_impulse_pred = 0;
 
 	// chop down so no extra bits are kept that the server wouldn't get
 	cmd->forwardmove = MakeChar(cmd->forwardmove);

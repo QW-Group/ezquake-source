@@ -114,12 +114,6 @@ void CL_PredictUsercmd (player_state_t *from, player_state_t *to, usercmd_t *u, 
 		pmove.weapon = from->weapon;
 		pmove.items = from->items;
 
-		if (cls.mvdprotocolextensions1 & MVD_PEXT1_SERVERSIDEWEAPON)
-		{
-			if (pmove_playeffects)
-				from->impulse = pmove.impulse;
-		}
-
 		pmove.impulse = from->impulse;
 	}
 
