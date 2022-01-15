@@ -113,7 +113,16 @@ cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not ha
 cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1" }; // if set, user will be warned when saving demos that are not backwards compatible
 cvar_t  cl_pext_lagteleport = { "cl_pext_lagteleport", "0" }; // server-side adjustment of yaw angle through teleports
 cvar_t  cl_pext_serversideweapon = { "cl_pext_serversideweapon", "0", 0, onchange_pext_serversideweapon }; // server-side weapon selection
-cvar_t  cl_pext_weaponprediction = { "cl_pext_weaponprediction", "1" }; // server-side weapon selection
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+cvar_t  cl_pext_weaponprediction = { "cl_pext_weaponprediction", "1" }; // send data for client-side weapon prediction
+#endif
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+cvar_t  cl_pext_simpleprojectiles = { "cl_pext_simpleprojectiles", "1" }; // send simple stateless projectiles
+cvar_t  cl_sproj_xerp = { "cl_sproj_xerp", "0" }; // extrapolate projectiles based on ping
+#endif
+#if defined(MVD_PEXT1_SIMPLEPROJECTILE) || defined(MVD_PEXT1_WEAPONPREDICTION)
+cvar_t  cl_predict_knockback = { "cl_predict_knockback", "0" }; // predict knockback
+#endif
 #endif
 #ifdef FTE_PEXT_256PACKETENTITIES
 cvar_t	cl_pext_256packetentities = {"cl_pext_256packetentities", "1"};
@@ -549,6 +558,12 @@ unsigned int CL_SupportedMVDExtensions1(void)
 #ifdef MVD_PEXT1_WEAPONPREDICTION
 	if (cl_pext_weaponprediction.value) {
 		extensions_supported |= MVD_PEXT1_WEAPONPREDICTION;
+	}
+#endif
+
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+	if (cl_pext_simpleprojectiles.value) {
+		extensions_supported |= MVD_PEXT1_SIMPLEPROJECTILE;
 	}
 #endif
 
@@ -1857,6 +1872,11 @@ static void CL_InitLocal(void)
 #endif
 #ifdef MVD_PEXT1_WEAPONPREDICTION
 	Cvar_Register(&cl_pext_weaponprediction);
+#endif
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+	Cvar_Register(&cl_pext_simpleprojectiles);
+	Cvar_Register(&cl_sproj_xerp);
+	Cvar_Register(&cl_predict_knockback);
 #endif
 #endif // PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_256PACKETENTITIES

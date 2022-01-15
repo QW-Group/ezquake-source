@@ -814,6 +814,13 @@ typedef struct {
 	antilag_pos_t antilag_positions[MAX_CLIENTS];
 	antilag_stats_t antilag_stats[MAX_CLIENTS];
 
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+	#define LATESTFRAMENUMS 32
+	int csqc_latestframeposition;
+	int csqc_latestsendnums[LATESTFRAMENUMS];
+	int csqc_latestframenums[LATESTFRAMENUMS];
+#endif
+
 	// demoinfo (stats file embedded in demo)
 	int         demoinfo_blocknumber;
 	int         demoinfo_bytes;

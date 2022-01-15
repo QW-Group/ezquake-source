@@ -30,6 +30,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cl_tent.h"
 
 extern cvar_t gl_no24bit;
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+extern cvar_t cl_sproj_xerp;
+#endif
 
 temp_entity_list_t temp_entities;
 
@@ -43,6 +46,7 @@ explosion_t	cl_explosions[MAX_EXPLOSIONS];
 explosion_t cl_explosions_headnode, *cl_free_explosions;
 
 fproj_t cl_fakeprojectiles[MAX_FAKEPROJ];
+predexplosion_t cl_predictedexplosions[MAX_PREDEXPLOSIONS];
 
 static model_t	*cl_explo_mod, *cl_bolt1_mod, *cl_bolt2_mod, *cl_bolt3_mod, *cl_beam_mod;
 
@@ -178,7 +182,10 @@ void CL_MatchFakeProjectile(centity_t *cent)
 fproj_t *CL_AllocFakeProjectile(void)
 {
 	fproj_t *prj;
-	int i;
+	int		i;
+	float	cull_distance;
+	int		cull_index;
+
 
 	for (i = 0, prj = cl_fakeprojectiles; i < MAX_FAKEPROJ; i++, prj++)
 	{
@@ -186,27 +193,54 @@ fproj_t *CL_AllocFakeProjectile(void)
 		{
 			memset(prj, 0, sizeof(fproj_t));
 			prj->dl_key = MAX_EDICTS + i; // this is hacky and gross
+			prj->index = i;
+			#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+			prj->owner = (cl.viewplayernum + 1);
+			#endif
+			//prj->cent = &cl_entities[CL_MAX_EDICTS - (i + 1)];
 			return prj;
 		}
 	}
 
-	memset(&cl_fakeprojectiles[0], 0, sizeof(fproj_t));
-	return &cl_fakeprojectiles[0];
+	// oh crap, we're out of fakeproj slots! now we need to do some expensive operations to find the furthest projectile and use that
+	cull_distance = 1;
+	cull_index = 0;
+	for (i = 0, prj = cl_fakeprojectiles; i < MAX_FAKEPROJ; i++, prj++)
+	{
+		float	temp_dist;
+		vec3_t	temp_vec;
+
+		VectorSubtract(prj->org, cl.simorg, temp_vec);
+		temp_dist = VectorLength(temp_vec);
+		if (temp_dist > cull_distance)
+		{
+			if (temp_dist > 2048) // it's so far away, just use this and hope for the best
+				break;
+
+			cull_distance = temp_dist;
+			cull_index = i;
+		}
+	}
+
+	
+	memset(&cl_fakeprojectiles[cull_index], 0, sizeof(fproj_t));
+	//cl_fakeprojectiles[cull_index].cent = &cl_entities[CL_MAX_EDICTS - (cull_index + 1)];
+	return &cl_fakeprojectiles[cull_index];
 }
 
 #define WEAPONPRED_MAXLATENCY 0.1
 fproj_t *CL_CreateFakeNail(void)
 {
 	if (pmove.client_ping == 0)
-		return &cl_fakeprojectiles[0];
+		return NULL;//&cl_fakeprojectiles[0];
 
 	fproj_t *newmis = CL_AllocFakeProjectile();
 	newmis->modelindex = cl_modelindices[mi_spike];
 
 	float latency = cls.latency;
 	newmis->starttime = cl.time + max((latency - 0.013) - ((float)pmove.client_ping / 1000), 0);
-	newmis->endtime = cl.time + latency;
-	newmis->effects = EF_TRACER;
+	newmis->endtime = cl.time + latency + 0.013;
+	newmis->effects = 256;
 	
 	return newmis;
 }
@@ -214,15 +248,15 @@ fproj_t *CL_CreateFakeNail(void)
 fproj_t *CL_CreateFakeSuperNail(void)
 {
 	if (pmove.client_ping == 0)
-		return &cl_fakeprojectiles[0];
+		return NULL;//&cl_fakeprojectiles[0];
 
 	fproj_t *newmis = CL_AllocFakeProjectile();
 	newmis->modelindex = cl_modelindices[mi_s_spike];
 
 	float latency = cls.latency;
 	newmis->starttime = cl.time + max((latency - 0.013) - ((float)pmove.client_ping / 1000), 0);
-	newmis->endtime = cl.time + latency;
-	newmis->effects = EF_TRACER2;
+	newmis->endtime = cl.time + latency + 0.013;
+	newmis->effects = 256;
 
 	return newmis;
 }
@@ -304,7 +338,7 @@ void Fproj_Physics_Bounce(fproj_t *proj, float dt)
 fproj_t *CL_CreateFakeGrenade(void)
 {
 	if (pmove.client_ping == 0)
-		return &cl_fakeprojectiles[0];
+		return NULL;//&cl_fakeprojectiles[0];
 
 	fproj_t *newmis = CL_AllocFakeProjectile();
 	newmis->modelindex = cl_modelindices[mi_grenade];
@@ -324,20 +358,74 @@ extern cvar_t cl_rocket2grenade;
 fproj_t *CL_CreateFakeRocket(void)
 {
 	if (pmove.client_ping == 0)
-		return &cl_fakeprojectiles[0];
+		return NULL;//&cl_fakeprojectiles[0];
 
 	fproj_t *newmis = CL_AllocFakeProjectile();
 	newmis->modelindex = cl_modelindices[mi_rocket];
 
 	float latency = cls.latency;
 	newmis->starttime = cl.time + max((latency - 0.013) - ((float)pmove.client_ping / 1000), 0);
-	newmis->endtime = cl.time + latency + 0.015;
+	newmis->endtime = cl.time + latency + 0.013;
 	newmis->parttime = newmis->starttime + 0.013; //delay trail a tiny bit, otherwise it looks funny
 
 	newmis->effects = EF_ROCKET;
 
 	return newmis;
 }
+
+
+
+static predexplosion_t* CL_AllocatePredictedExplosion(void)
+{
+	float reuse_time = cl.time - cls.latency * 3;
+
+	predexplosion_t *expl;
+	int i;
+	for (i = 0, expl = cl_predictedexplosions; i < MAX_PREDEXPLOSIONS; i++, expl++)
+	{
+		if (expl->time > reuse_time)
+			continue;
+
+		memset(expl, 0, sizeof(predexplosion_t));
+		return expl;
+	}
+
+	memset(&cl_predictedexplosions[0], 0, sizeof(predexplosion_t));
+	return &cl_predictedexplosions[0];
+}
+
+
+void CL_CheckPredictedExplosions(player_state_t *from, player_state_t *to)
+{
+	predexplosion_t *expl;
+	int i;
+	for (i = 0, expl = cl_predictedexplosions; i < MAX_PREDEXPLOSIONS; i++, expl++)
+	{
+		if (expl->time == 0)
+			continue;
+
+		if (from->state_time < expl->time && to->state_time >= expl->time)
+		{
+			int dmg;
+			vec3_t diff;
+			VectorSubtract(pmove.origin, expl->origin, diff);
+
+			float distance = VectorLength(diff);
+			dmg = expl->damage * (distance / expl->radius);
+
+			if (distance < expl->radius)
+			{
+				VectorNormalize(diff);
+				int j;
+				for (j = 0; j < 3; j++)
+				{
+					pmove.velocity[j] += diff[j] * dmg * 1;
+				}
+			}
+		}
+	}
+}
+
 
 static void CL_ParseBeam(int type, vec3_t end)
 {
@@ -1161,17 +1249,24 @@ static void CL_UpdateFakeProjectiles(void)
 	int i;
 	fproj_t	*prj;
 	entity_t ent;
-	centity_t cent;
+	centity_t *cent;
 	entity_state_t centstate;
 	customlight_t cst_lt = { 0 };
 	memset(&centstate, 0, sizeof(entity_state_t));
-	cent.current = centstate;
 
 	memset(&ent, 0, sizeof(entity_t));
 	ent.colormap = vid.colormap;
 
 	for (i = 0; i < MAX_FAKEPROJ; i++) {
 		prj = &cl_fakeprojectiles[i];
+		cent = &prj->cent;//&cl_entities[prj->entnum];
+		if (prj->entnum > 0 && prj->entnum < (CL_MAX_EDICTS - 1))
+			cent = &cl_entities[prj->entnum];
+
+		if (cent == NULL)
+			continue;
+
+		//cent->sequence = cl.validsequence;
 
 		if (cl.time <= prj->starttime)
 		{
@@ -1195,6 +1290,9 @@ static void CL_UpdateFakeProjectiles(void)
 			continue;
 		}
 
+		//memset(&cent, 0, sizeof(centity_t));
+		cent->current = centstate;
+
 		ent.model = cl.model_precache[prj->modelindex];
 		centstate.modelindex = prj->modelindex;
 		centstate.number = prj->dl_key;
@@ -1211,16 +1309,45 @@ static void CL_UpdateFakeProjectiles(void)
 		}
 		else
 		{
+			float modified_time = cl.time;
+			#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+			if (cl_sproj_xerp.value)
+			{
+				if (prj->owner != (cl.viewplayernum + 1))
+				{
+					modified_time += min(150, cls.latency);
+				}
+			}
+			#endif
+
 			VectorCopy(prj->start, ent.origin);
 			vec3_t traveled;
-			VectorScale(prj->vel, (cl.time - prj->starttime) + 0.02, traveled);
+			VectorScale(prj->vel, (modified_time - prj->starttime) + 0.02, traveled);
 			VectorAdd(ent.origin, traveled, ent.origin);
 			VectorCopy(prj->angs, ent.angles);
 			VectorCopy(ent.origin, prj->org);
 
 			trace_t trace = PM_TraceLine(prj->start, ent.origin);
 			if (trace.fraction < 1)
-				prj->endtime = cl.time;
+			{
+				#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+				if (prj->modelindex == cl_modelindices[mi_rocket])
+				{
+					predexplosion_t *expl = CL_AllocatePredictedExplosion();
+					expl->time = cls.realtime;
+					expl->damage = 100;
+					expl->radius = expl->damage + 40;
+					VectorCopy(trace.endpos, expl->origin);
+				}
+
+				if (prj->parttime)
+					continue;
+				else
+					VectorCopy(trace.endpos, prj->org);
+				#else
+				continue;//prj->endtime = cl.time;
+				#endif
+			}
 		}
 
 		if (prj->effects)
@@ -1229,37 +1356,46 @@ static void CL_UpdateFakeProjectiles(void)
 			{
 				prj->parttime = cl.time + 0.013;
 				if (!VectorLength(prj->partorg))
+				{
 					VectorCopy(prj->org, prj->partorg);
 
+					VectorCopy(prj->partorg, cent->trails[3].stop);
+					VectorCopy(prj->partorg, cent->trails[2].stop);
+					VectorCopy(prj->partorg, cent->trails[1].stop);
+					VectorCopy(prj->partorg, cent->trails[0].stop);
+				}
+
 				prj->partcount++;
-				VectorCopy(prj->partorg, cent.old_origin);
-				VectorCopy(prj->partorg, cent.trails[3].stop);
-				VectorCopy(prj->partorg, cent.trails[2].stop);
-				VectorCopy(prj->partorg, cent.trails[1].stop);
-				VectorCopy(prj->partorg, cent.trails[0].stop);
-				VectorCopy(ent.origin, cent.current.origin);
-				VectorCopy(ent.origin, cent.lerp_origin);
+				VectorCopy(prj->partorg, cent->old_origin);
+				///*
+				VectorCopy(prj->partorg, cent->trails[3].stop);
+				VectorCopy(prj->partorg, cent->trails[2].stop);
+				VectorCopy(prj->partorg, cent->trails[1].stop);
+				VectorCopy(prj->partorg, cent->trails[0].stop);
+				//*/
+				VectorCopy(ent.origin, cent->current.origin);
+				VectorCopy(ent.origin, cent->lerp_origin);
 				VectorCopy(ent.origin, prj->partorg);
 
 
-				if (prj->effects & EF_TRACER || prj->effects & EF_TRACER2)
+				if (prj->effects & 256)
 				{
 					if (amf_nailtrail.integer && !gl_no24bit.integer) {
 						// VULT NAILTRAIL
 						if (amf_nailtrail_plasma.integer) {
 							byte color[3];
 							color[0] = 0; color[1] = 70; color[2] = 255;
-							FireballTrail(&cent, color, 0.6, 0.3);
+							FireballTrail(cent, color, 0.6, 0.3);
 						}
 						else {
 							//TODO: fix this
-							//ParticleNailTrail(&cent, 2, 0.4f);
+							//ParticleNailTrail(cent, 2, 0.4);
 						}
 					}
 				}
 				else
 				{
-					CL_AddParticleTrail(&ent, &cent, &cst_lt, &centstate);
+					CL_AddParticleTrail(&ent, cent, &cst_lt, &centstate);
 				}
 			}
 		}

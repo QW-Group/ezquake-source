@@ -4082,6 +4082,13 @@ void CL_ParseServerMessage (void)
 					CL_ParseQizmoVoice();
 					break;
 				}
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+			case svc_packetsprojectiles:
+			{
+				CL_ParsePacketSimpleProjectiles();
+				break;
+			}
+#endif
 		}
 
 		// cl_messages, update size

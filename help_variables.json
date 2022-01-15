@@ -2519,7 +2519,7 @@
       ]
     },
     "cl_predict_buffer": {
-      "default": "3",
+      "default": "1",
       "desc": "This variable controls how many frames will be buffered before weapon and sound prediction is used.\n\nHigher values will result in larger latency before seeing/hearing your weapon fire,\nbut with less prediction errors.",
       "group-id": "21",
       "type": "integer"
@@ -2527,6 +2527,18 @@
     "cl_predict_jump": {
       "default": "0",
       "desc": "This variable controls if jump sounds will be predicted.",
+      "group-id": "21",
+      "type": "boolean"
+    },
+    "cl_predict_beam": {
+      "default": "1",
+      "desc": "This variable controls if shaft beam will be predicted, which can misbehave in water.",
+      "group-id": "21",
+      "type": "boolean"
+    },
+    "cl_predict_projectiles": {
+      "default": "0",
+      "desc": "This variable controls if projectiles will be predicted, which can cause confusion if you die at the same time you shoot.",
       "group-id": "21",
       "type": "boolean"
     },

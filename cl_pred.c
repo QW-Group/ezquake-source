@@ -28,8 +28,9 @@ cvar_t	cl_nopred_weapon = { "cl_nopred_weapon", "0" };
 cvar_t	cl_predict_weaponsound = { "cl_predict_weaponsound", "1" };
 cvar_t	cl_predict_smoothview = { "cl_predict_smoothview", "1" };
 cvar_t	cl_predict_beam = { "cl_predict_beam", "1" };
+cvar_t	cl_predict_projectiles = { "cl_predict_projectiles", "0" };
 cvar_t	cl_predict_jump = { "cl_predict_jump", "0" };
-cvar_t	cl_predict_buffer = { "cl_predict_buffer", "3" };
+cvar_t	cl_predict_buffer = { "cl_predict_buffer", "1" };
 
 extern cvar_t cl_independentPhysics;
 
@@ -46,13 +47,13 @@ qbool clpred_newpos = false;
 prediction_event_fakeproj_t		*p_event_fakeproj;
 prediction_event_sound_t		*p_event_sound;
 sfx_t	*cl_sfx_jump, *cl_sfx_ax1, *cl_sfx_axhit1, *cl_sfx_sg, *cl_sfx_ssg, *cl_sfx_ng, *cl_sfx_sng, *cl_sfx_gl, *cl_sfx_rl, *cl_sfx_lg, *cl_sfx_lghit, *cl_sfx_coil, *cl_sfx_hook;
-cvar_t cl_nopred;
-cvar_t cl_nopred_weapon;
-cvar_t cl_predict_weaponsound;
-cvar_t cl_predict_smoothview;
-cvar_t cl_predict_beam;
-cvar_t cl_predict_jump;
-cvar_t cl_predict_buffer;
+extern cvar_t cl_nopred;
+extern cvar_t cl_nopred_weapon;
+extern cvar_t cl_predict_weaponsound;
+extern cvar_t cl_predict_smoothview;
+extern cvar_t cl_predict_beam;
+extern cvar_t cl_predict_jump;
+extern cvar_t cl_predict_buffer;
 
 
 static qbool nolerp[2];
@@ -403,18 +404,17 @@ void CL_PlayEvents(void)
 	player_state_t *new_state = &cl.frames[(cls.netchan.outgoing_sequence - 1)& UPDATE_MASK].playerstate[cl.playernum];
 	player_state_t *state = &cl.frames[(threshold) & UPDATE_MASK].playerstate[cl.playernum];
 
-	prediction_event_sound_t *s_event = p_event_sound;
-	while (s_event != NULL)
+	prediction_event_sound_t *s_event;
+	for(s_event = p_event_sound; s_event != NULL; s_event = s_event->next)
 	{
 		if (s_event->frame_num > pmove.effect_frame && s_event->frame_num <= threshold)
 		{
 			S_StartSound(cl.playernum + 1, s_event->chan, s_event->sample, pmove.origin, s_event->vol, 0);
 		}
-		s_event = s_event->next;
 	}
 
-	prediction_event_fakeproj_t *p_event = p_event_fakeproj;
-	while (p_event != NULL)
+	prediction_event_fakeproj_t *p_event;
+	for(p_event = p_event_fakeproj; p_event != NULL; p_event = p_event->next)
 	{
 		if (p_event->frame_num > pmove.effect_frame && p_event->frame_num <= threshold)
 		{
@@ -433,67 +433,72 @@ void CL_PlayEvents(void)
 					}
 				}
 
-				if (cl_predict_beam.integer)
-				{
-					vec3_t start, end, forward;
-					VectorCopy(p_event->origin, start);
-					VectorCopy(start, end);
 
-					AngleVectors(p_event->angles, forward, NULL, NULL);
-					VectorScale(forward, 600, forward);
-					VectorAdd(end, forward, end);
-
-					trace_t hittrace = PM_TraceLine(start, end);
-					CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
-				}
-
-				p_event = p_event->next;
-				continue;
-			}
-
-			fproj_t *newmis;
+				if (!cl_predict_beam.integer)
+					continue;
 
 
-			switch (p_event->type)
-			{
-			case IT_NAILGUN:
-				newmis = CL_CreateFakeNail();
-				break;
-			case IT_SUPER_NAILGUN:
-				newmis = CL_CreateFakeSuperNail();
-				break;
-			case IT_GRENADE_LAUNCHER:
-				newmis = CL_CreateFakeGrenade();
-				break;
-			default:
-				newmis = CL_CreateFakeRocket();
-				break;
-			}
+				vec3_t start, end, forward;
+				VectorCopy(p_event->origin, start);
+				VectorCopy(start, end);
 
-			VectorCopy(p_event->angles, newmis->angs);
-			VectorCopy(p_event->origin, newmis->org);
-			VectorCopy(p_event->origin, newmis->start);
-			VectorCopy(p_event->velocity, newmis->vel);
-			VectorCopy(p_event->avelocity, newmis->avel);
+				AngleVectors(p_event->angles, forward, NULL, NULL);
+				VectorScale(forward, 600, forward);
+				VectorAdd(end, forward, end);
 
-			newmis->parttime -= max(ms_diff + 0.013, 0);
-			newmis->starttime -= max(ms_diff + 0.013, 0);
-			newmis->endtime -= max(ms_diff - 0.013, 0);
-
-			if (p_event->type == IT_GRENADE_LAUNCHER)
-			{
-				//newmis->starttime -= ms_diff;
-				Fproj_Physics_Bounce(newmis, 0.02);
-				Fproj_Physics_Bounce(newmis, max(ms_diff - 0.013, 0));
+				trace_t hittrace = PM_TraceLine(start, end);
+				CL_CreateBeam(2, cl.playernum + 1, start, hittrace.endpos);
 			}
 			else
 			{
-				VectorMA(newmis->org, ms_diff, newmis->vel, newmis->org);
-			}
-			//*/
-		}
+				if (!cl_predict_projectiles.integer)
+					continue;
 
-		p_event = p_event->next;
+				fproj_t *newmis;
+				switch (p_event->type)
+				{
+				case IT_NAILGUN:
+					newmis = CL_CreateFakeNail();
+					break;
+				case IT_SUPER_NAILGUN:
+					newmis = CL_CreateFakeSuperNail();
+					break;
+				case IT_GRENADE_LAUNCHER:
+					newmis = CL_CreateFakeGrenade();
+					break;
+				default:
+					newmis = CL_CreateFakeRocket();
+					break;
+				}
+
+				if (newmis == NULL)
+					continue;
+
+
+
+				VectorCopy(p_event->angles, newmis->angs);
+				VectorCopy(p_event->origin, newmis->org);
+				VectorCopy(p_event->origin, newmis->start);
+				VectorCopy(p_event->velocity, newmis->vel);
+				VectorCopy(p_event->avelocity, newmis->avel);
+				VectorMA(p_event->origin, 0.05, p_event->velocity, newmis->partorg);
+
+				newmis->parttime -= max(ms_diff + 0.013, 0);
+				newmis->starttime -= max(ms_diff + 0.025, 0);
+				newmis->endtime -= max(ms_diff - 0.013, 0);
+
+				if (p_event->type == IT_GRENADE_LAUNCHER)
+				{
+					//newmis->starttime -= ms_diff;
+					Fproj_Physics_Bounce(newmis, 0.02);
+					Fproj_Physics_Bounce(newmis, max(ms_diff - 0.013, 0));
+				}
+				else
+				{
+					VectorMA(newmis->org, ms_diff, newmis->vel, newmis->org);
+				}
+			}
+		}
 	}
 
 	cl.simwepframe = state->weaponframe;
@@ -716,6 +721,7 @@ void CL_InitPrediction(void)
 	Cvar_Register(&cl_predict_weaponsound);
 	Cvar_Register(&cl_predict_smoothview);
 	Cvar_Register(&cl_predict_beam);
+	Cvar_Register(&cl_predict_projectiles);
 	Cvar_Register(&cl_predict_jump);
 	Cvar_Register(&cl_predict_buffer);
 	Cvar_ResetCurrentGroup();

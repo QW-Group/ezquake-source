@@ -1240,7 +1240,7 @@ void CL_SendCmd(void)
 	sizebuf_t buf;
 	byte data[1024];
 	usercmd_t *cmd, *oldcmd;
-	int i, checksumIndex, lost;
+	int i, j, checksumIndex, lost;
 	qbool dontdrop;
 	static float pps_balance = 0;
 	static int dropcount = 0;
@@ -1405,6 +1405,21 @@ void CL_SendCmd(void)
 
 #ifdef FTE_PEXT2_VOICECHAT
 	S_Voip_Transmit(clc_voicechat, &buf);
+#endif
+
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+	for (i = 0; i < LATESTFRAMENUMS; i++)
+	{
+		if (rand() > RAND_MAX / 3)
+			continue;
+
+		j = (cl.csqc_latestframeposition + i) % LATESTFRAMENUMS;
+		if (cl.csqc_latestsendnums[j] >= cls.netchan.outgoing_sequence)
+		{
+			MSG_WriteByte(&buf, clc_ackframe);
+			MSG_WriteLong(&buf, cl.csqc_latestframenums[j]);
+		}
+	}
 #endif
 
 	cl.frames[cls.netchan.outgoing_sequence&UPDATE_MASK].sentsize = buf.cursize + 8;    // 8 = PACKET_HEADER

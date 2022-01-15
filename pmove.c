@@ -1920,10 +1920,9 @@ void PM_PlayerWeapon(void)
 	}
 
 	if (pmove.client_time >= pmove.attack_finished)
+	{
 		ImpulseCommands();
 
-	if (pmove.client_time >= pmove.attack_finished)
-	{
 		if (pmove.cmd.buttons & 1 && key_dest == key_game)
 		{
 			W_Attack();
