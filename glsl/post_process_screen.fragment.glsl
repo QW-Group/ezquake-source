@@ -2,24 +2,36 @@
 
 #ezquake-definitions
 
-layout(binding = 0) uniform sampler2D base;
-#ifdef EZ_POSTPROCESS_OVERLAY
-layout(binding = 1) uniform sampler2D overlay;
-#endif
-
 in vec2 TextureCoord;
 out vec4 frag_colour;
 
+layout(binding = 0) uniform sampler2D base;
+#ifdef EZ_POSTPROCESS_OVERLAY
+layout(binding = 1) uniform sampler2D overlay;
+#endif // EZ_POSTPROCESS_OVERLAY
+
+vec4 sampleBase(void)
+{
+	return texture(base, TextureCoord);
+}
+
+#ifdef EZ_POSTPROCESS_OVERLAY
+vec4 sampleOverlay(void)
+{
+	return texture(overlay, TextureCoord);
+}
+#endif // EZ_POSTPROCESS_OVERLAY
+
 void main()
 {
-	vec4 result = texture(base, TextureCoord);
+	vec4 result = sampleBase();
 #ifdef EZ_POSTPROCESS_TONEMAP
 	result.r = result.r / (result.r + 1);
 	result.g = result.g / (result.g + 1);
 	result.b = result.b / (result.b + 1);
 #endif
 #ifdef EZ_POSTPROCESS_OVERLAY
-	vec4 add = texture(overlay, TextureCoord);
+	vec4 add = sampleOverlay();
 	result *= 1 - add.a;
 	result += add;
 #endif

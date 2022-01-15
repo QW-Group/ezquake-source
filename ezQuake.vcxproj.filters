@@ -215,6 +215,9 @@
     <ClCompile Include="md4.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="sha3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="movie.c">
       <Filter>Source Files</Filter>
     </ClCompile>

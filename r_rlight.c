@@ -106,16 +106,13 @@ static qbool first_dlight;
 
 void R_RenderDlight(dlight_t *light)
 {
-	// don't draw our own powerup glow and muzzleflashes
 	// muzzleflash keys are negative
-	if (light->key == (cl.viewplayernum + 1) || light->key == -(cl.viewplayernum + 1)) {
+	int abs_key = abs(light->key);
+	qbool suppress_polyblend = light->bubble != 0 || (abs_key >= 0 && abs_key <= MAX_CLIENTS);
+
+	// don't draw our own powerup glow and muzzleflashes
+	if (abs_key == (cl.viewplayernum + 1)) {
 		return;
-	}
-
-	if (first_dlight) {
-		R_Sprite3DInitialiseBatch(SPRITE3D_FLASHBLEND_LIGHTS, r_state_light_bubble, null_texture_reference, 0, r_primitive_triangle_fan);
-
-		first_dlight = false;
 	}
 
 	{
@@ -131,10 +128,26 @@ void R_RenderDlight(dlight_t *light)
 		VectorSubtract(light->origin, r_origin, v);
 		length = VectorNormalize(v);
 
+		if (light->type == lt_custom) {
+			memcpy(center_color, light->color, 3);
+		}
+		else {
+			// FIXME: bubblecolor has 4 elements, but inline spec is only 3... ?
+			center_color[0] = bubblecolor[light->type][0] * 255;
+			center_color[1] = bubblecolor[light->type][1] * 255;
+			center_color[2] = bubblecolor[light->type][2] * 255;
+		}
+
 		if (length < rad) {
 			// view is inside the dlight
-			V_AddLightBlend(1, 0.5, 0, light->radius * 0.0003);
+			V_AddLightBlend(center_color[0] / 255.0f, center_color[1] / 255.0f, center_color[2] / 255.0f, light->radius * 0.0015, suppress_polyblend);
 			return;
+		}
+
+		if (first_dlight) {
+			R_Sprite3DInitialiseBatch(SPRITE3D_FLASHBLEND_LIGHTS, r_state_light_bubble, null_texture_reference, 0, r_primitive_triangle_fan);
+
+			first_dlight = false;
 		}
 
 		vert = R_Sprite3DAddEntry(SPRITE3D_FLASHBLEND_LIGHTS, 18);

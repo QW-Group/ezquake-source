@@ -87,7 +87,7 @@ static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, te
 	R_TextureReferenceInvalidate(texnum);
 	R_TextureReferenceInvalidate(*fb_texnum);
 
-	if (RuleSets_DisallowExternalTexture(loadmodel)) {
+	if (gl_no24bit.integer || RuleSets_DisallowExternalTexture(loadmodel)) {
 		return texnum;
 	}
 

@@ -3,7 +3,7 @@
 #define EZQUAKE_GLC_LOCAL_HEADER
 
 void GLC_FreeAliasPoseBuffer(void);
-void GLC_Shutdown(qbool restarting);
+void GLC_Shutdown(r_shutdown_mode_t mode);
 
 void GLC_PreRenderView(void);
 void GLC_SetupGL(void);
@@ -23,6 +23,7 @@ void GLC_StateBeginEmitDetailPolys(void);
 void GLC_StateBeginDrawMapOutline(void);
 void GLC_StateBeginDrawAliasFrame(texture_ref texture, texture_ref fb_texture, qbool mtex, qbool alpha_blend, struct custom_model_color_s* custom_model, qbool weapon_model);
 void GLC_StateBeginDrawAliasFrameProgram(texture_ref texture, texture_ref fb_texture, int render_effects, struct custom_model_color_s* custom_model, float ent_alpha, qbool additive_pass);
+void GLC_StateBeginDrawAliasZPass(qbool weapon_model);
 void GLC_StateBeginAliasModelShadow(void);
 void GLC_StateBeginFastTurbPoly(byte color[4]);
 void GLC_StateBeginBlendLightmaps(qbool use_buffers);

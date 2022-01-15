@@ -35,9 +35,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static void Cvar_ApplyLatchedUpdate(cvar_t* var);
 
-extern void CL_UserinfoChanged (char *key, char *value);
-extern void SV_ServerinfoChanged (char *key, char *value);
-extern void Help_DescribeCvar (cvar_t *v);
+void CL_UserinfoChanged(char *key, char *value);
+void SV_ServerinfoChanged(char *key, char *value);
+void Help_DescribeCvar(cvar_t *v);
+void VID_ReloadCvarChanged(cvar_t* var);
 
 extern cvar_t r_fullbrightSkins;
 extern cvar_t cl_fakeshaft;
@@ -258,6 +259,9 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 	if (var->flags & CVAR_RECOMPILE_PROGS) {
 		renderer.CvarForceRecompile(var);
 	}
+	if ((var->flags & CVAR_RELOAD_GFX) && host_everything_loaded && !same_value) {
+		VID_ReloadCvarChanged(var);
+	}
 #endif
 }
 
@@ -377,8 +381,9 @@ void Cvar_Register(cvar_t *var)
 		}
 
 		// warn if CVAR_SILENT is not set
-		if (!(old->flags & CVAR_SILENT))
+		if (!(old->flags & CVAR_SILENT)) {
 			Com_Printf("Can't register variable %s, already defined\n", var->name);
+		}
 
 		return;
 	}
@@ -542,7 +547,7 @@ static void Cvar_Toggle_f_base (qbool use_regex)
 		name = Cmd_Argv(i);
 
 		if (use_regex && IsRegexp(name)) {
-			if (!ReSearchInit(name)) {
+			if (!ReSearchInitEx(name, false)) {
 				continue;
 			}
 
@@ -607,7 +612,7 @@ void Cvar_CvarList(qbool use_regex)
 	pattern = (Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
 
 	if (((c = Cmd_Argc()) > 1) && use_regex) {
-		if (!ReSearchInit(Cmd_Argv(1))) {
+		if (!ReSearchInitEx(Cmd_Argv(1), false)) {
 			return;
 		}
 	}
@@ -862,7 +867,7 @@ void Cvar_Reset(qbool use_regex)
 		name = Cmd_Argv(i);
 
 		if (use_regex && (re_search = IsRegexp(name))) {
-			if (!ReSearchInit(name)) {
+			if (!ReSearchInitEx(name, false)) {
 				continue;
 			}
 		}
@@ -1263,7 +1268,6 @@ void Cvar_UnSet (qbool use_regex)
 	int		i;
 	qbool	re_search = false;
 
-
 	if (Cmd_Argc() < 2) {
 		Com_Printf ("unset <cvar> [<cvar2>..]: erase user-created variable\n");
 		return;
@@ -1272,9 +1276,11 @@ void Cvar_UnSet (qbool use_regex)
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		if (use_regex && (re_search = IsRegexp(name)))
-			if(!ReSearchInit(name))
+		if (use_regex && (re_search = IsRegexp(name))) {
+			if (!ReSearchInitEx(name, false)) {
 				continue;
+			}
+		}
 
 		if (use_regex && re_search) {
 			for (var = cvar_vars ; var ; var = next) {
@@ -1617,6 +1623,7 @@ void Cvar_ExecuteQueuedChanges(void)
 {
 	cvar_t* cvar;
 	qbool vid_restart = false;
+	qbool vid_reload = false;
 	qbool sound_restart = false;
 
 	for (cvar = cvar_vars; cvar; cvar = cvar->next) {
@@ -1634,13 +1641,44 @@ void Cvar_ExecuteQueuedChanges(void)
 		}
 
 		vid_restart |= (cvar->flags & CVAR_LATCH_GFX) && cvar->latchedString;
+		vid_reload |= (cvar->flags & CVAR_RELOAD_GFX && cvar->modified);
 		sound_restart |= (cvar->flags & CVAR_LATCH_SOUND) && cvar->latchedString;
 	}
 
 	if (vid_restart) {
 		Cbuf_AddTextEx(&cbuf_main, "\nvid_restart\n");
 	}
-	else if (sound_restart) {
-		Cbuf_AddTextEx(&cbuf_main, "\ns_restart\n");
+	else {
+		if (sound_restart) {
+			Cbuf_AddTextEx(&cbuf_main, "\ns_restart\n");
+		}
+		if (vid_reload) {
+			Cbuf_AddTextEx(&cbuf_main, "\nvid_reload\n");
+		}
 	}
+
+	Cvar_ClearAllModifiedFlags(CVAR_RELOAD_GFX);
+}
+
+void Cvar_ClearAllModifiedFlags(int flags)
+{
+	cvar_t* cvar;
+
+	for (cvar = cvar_vars; cvar; cvar = cvar->next) {
+		if (cvar->flags & flags) {
+			cvar->modified = false;
+		}
+	}
+}
+
+qbool Cvar_AnyModified(int flags)
+{
+	cvar_t* cvar;
+
+	for (cvar = cvar_vars; cvar; cvar = cvar->next) {
+		if ((cvar->flags & flags) && cvar->modified) {
+			return true;
+		}
+	}
+	return false;
 }

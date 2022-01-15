@@ -66,11 +66,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define MVD_PEXT1_FLOATCOORDS       (1 <<  0) // FTE_PEXT_FLOATCOORDS but for entity/player coords only
 #define MVD_PEXT1_HIGHLAGTELEPORT   (1 <<  1) // Adjust movement direction for frames following teleport
-#define MVD_PEXT1_SERVERSIDEWEAPON  (1 <<  2) // Server-side weapon selection
+//#define MVD_PEXT1_SERVERSIDEWEAPON  (1 <<  2) // Server-side weapon selection
 #define MVD_PEXT1_DEBUG_WEAPON      (1 <<  3) // Send weapon-choice explanation to server for logging
 #define MVD_PEXT1_DEBUG_ANTILAG     (1 <<  4) // Send predicted positions to server (compare to antilagged positions)
 #define MVD_PEXT1_HIDDEN_MESSAGES   (1 <<  5) // dem_multiple(0) packets are in format (<length> <type-id>+ <packet-data>)*
-#define MVD_PEXT1_SERVERSIDEWEAPON2 (1 <<  6) // Server-side weapon selection supports clc_mvd_weapon_full_impulse
 #define MVD_PEXT1_WEAPONPREDICTION	(1 <<  7) // Send weapon and attack related data for weapon prediction
 #define MVD_PEXT1_SIMPLEPROJECTILE	(1 <<  8) // Projectiles are sent as simple semi-stateless ents
 
@@ -245,7 +244,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 #define clc_mvd_weapon 200     // server-side weapon selection
+#endif
 
+// these are used in mvd parsing of debug info, even if client doesn't support protocol itself
 // selection options
 #define clc_mvd_weapon_mode_presel      1    // preselect (don't send impulses until -attack/+attack)
 #define clc_mvd_weapon_mode_iffiring    2    // don't wait for -attack before pre-selecting weapon
@@ -260,6 +261,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // others
 #define clc_mvd_weapon_full_impulse     128  // if set, each weapon set as a byte, rather than packing two into one
 
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
 byte MSG_EncodeMVDSVWeaponFlags(int deathmatch, int weaponmode, int weaponhide, qbool weaponhide_axe, qbool forgetorder, qbool forgetondeath, int max_impulse);
 void MSG_DecodeMVDSVWeaponFlags(int flags, int* weaponmode, int* weaponhide, qbool* forgetorder, int* sequence);
 #endif

@@ -93,11 +93,14 @@ void GLC_SetupGL(void)
 {
 }
 
-void GLC_Shutdown(qbool restarting)
+void GLC_Shutdown(r_shutdown_mode_t mode)
 {
-	GLC_FreeAliasPoseBuffer();
-	renderer.ProgramsShutdown(restarting);
-	GL_DeleteSamplers();
+	if (mode != r_shutdown_reload) {
+		GLC_FreeAliasPoseBuffer();
+		renderer.ProgramsShutdown(mode == r_shutdown_restart);
+		GL_DeleteSamplers();
+	}
+	GL_FramebufferDeleteAll();
 }
 
 void GLC_TextureInitialiseState(void)

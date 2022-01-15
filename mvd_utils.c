@@ -2032,6 +2032,19 @@ qbool MVD_PowerupCam_Hidden(void)
 	return powerup_cam_cvars[view_number].string && powerup_cam_cvars[view_number].string[0] && !(powerup_cam_status && powerup_cam_active[view_number]);
 }
 
+int MVD_PowerupCams_Enabled(void)
+{
+	int i, count = 0;
+
+	for (i = 0; i < sizeof(powerup_cam_active) / sizeof(powerup_cam_active[0]) && i < cl_multiview.integer; ++i) {
+		if (powerup_cam_active[i]) {
+			++count;
+		}
+	}
+
+	return count;
+}
+
 qbool MVD_PowerupCam_Enabled(void)
 {
 	int view_number = CL_MultiviewCurrentView();

@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_program.h"
 #include "r_renderer.h"
 
+void GLM_StateBeginAliasModelZPassBatch(void);
 void GLM_StateBeginAliasModelBatch(qbool translucent, qbool additive);
 void GLM_StateBeginAliasOutlineBatch(void);
 
@@ -273,14 +274,14 @@ static void GLM_QueueAliasModelDrawImpl(
 		return;
 	}
 
-	if ((render_effects & RF_WEAPONMODEL) && color[3] < 1) {
-		type = aliasmodel_draw_postscene;
-		shelltype = aliasmodel_draw_postscene_shells;
-		outline = false;
-	}
-	else if (render_effects & RF_ADDITIVEBLEND) {
+	if (render_effects & RF_ADDITIVEBLEND) {
 		type = aliasmodel_draw_postscene_additive;
 		shell = false;
+		outline = false;
+	}
+	else if ((render_effects & RF_WEAPONMODEL) && color[3] < 1) {
+		type = aliasmodel_draw_postscene;
+		shelltype = aliasmodel_draw_postscene_shells;
 		outline = false;
 	}
 	else if (color[3] < 1) {
@@ -436,34 +437,45 @@ void GLM_PrepareAliasModelBatches(void)
 static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 {
 	aliasmodel_draw_instructions_t* instr = &alias_draw_instructions[type];
-	GLint mode = EZQ_ALIAS_MODE_NORMAL;
+	GLint mode = (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells ? EZQ_ALIAS_MODE_SHELLS : EZQ_ALIAS_MODE_NORMAL);
 	unsigned int extra_offset = 0;
 	int i;
+	qbool translucent = (type != aliasmodel_draw_std && type != aliasmodel_draw_postscene_additive);
+	qbool additive = (type == aliasmodel_draw_postscene_additive);
+	qbool shells = (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells);
 
 	if (!instr->num_calls || !GLM_CompileAliasModelProgram()) {
 		return;
 	}
 
-	GLM_StateBeginAliasModelBatch(type != aliasmodel_draw_std && type != aliasmodel_draw_postscene_additive, type == aliasmodel_draw_postscene_additive);
 	buffers.Bind(r_buffer_aliasmodel_drawcall_indirect);
 	extra_offset = buffers.BufferOffset(r_buffer_aliasmodel_drawcall_indirect);
 
-	if (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells) {
-		mode = EZQ_ALIAS_MODE_SHELLS;
-	}
-
 	R_ProgramUse(r_program_aliasmodel);
 	R_SetAliasModelUniform(mode);
-
 	// We have prepared the draw calls earlier in the frame so very trival logic here
 	if (r_refdef2.drawCaustics) {
 		renderer.TextureUnitBind(TEXTURE_UNIT_CAUSTICS, underwatertexture);
 	}
-	for (i = 0; i < instr->num_calls; ++i) {
-		if (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells) {
-			renderer.TextureUnitBind(TEXTURE_UNIT_MATERIAL, shelltexture);
+	if (shells) {
+		renderer.TextureUnitBind(TEXTURE_UNIT_MATERIAL, shelltexture);
+	}
+
+	if (translucent && !shells) {
+		GLM_StateBeginAliasModelZPassBatch();
+		for (i = 0; i < instr->num_calls; ++i) {
+			GL_MultiDrawArraysIndirect(
+				GL_TRIANGLES,
+				(const void*)(uintptr_t)(instr->indirect_buffer_offset + extra_offset),
+				instr->num_cmds[i],
+				0
+			);
 		}
-		else if (instr->num_textures[i]) {
+	}
+
+	GLM_StateBeginAliasModelBatch(translucent, additive);
+	for (i = 0; i < instr->num_calls; ++i) {
+		if (!shells && instr->num_textures[i]) {
 			renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, instr->num_textures[i], instr->bound_textures[i]);
 		}
 

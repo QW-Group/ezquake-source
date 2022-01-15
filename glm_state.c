@@ -70,13 +70,18 @@ void GLM_StateBeginAliasOutlineBatch(void)
 
 void GLM_StateBeginAliasModelBatch(qbool translucent, qbool additive)
 {
-	if (translucent) {
-		R_ApplyRenderingState(r_state_aliasmodel_translucent_batch);
-	}
-	else if (additive) {
+	if (additive) {
 		R_ApplyRenderingState(r_state_aliasmodel_additive_batch);
+	}
+	else if (translucent) {
+		R_ApplyRenderingState(r_state_aliasmodel_translucent_batch);
 	}
 	else {
 		R_ApplyRenderingState(r_state_aliasmodel_opaque_batch);
 	}
+}
+
+void GLM_StateBeginAliasModelZPassBatch(void)
+{
+	R_ApplyRenderingState(r_state_aliasmodel_translucent_batch_zpass);
 }

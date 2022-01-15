@@ -122,6 +122,7 @@ static void GLC_CreateLightmapTextureArray(void)
 	if (R_TextureReferenceIsValid(lightmap_texture_array)) {
 		R_DeleteTextureArray(&lightmap_texture_array);
 	}
+	GL_ConsumeErrors();
 	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_texture_array, "lightmap_texture_array");
 	error = GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, true);
 	if (error != GL_NO_ERROR) {

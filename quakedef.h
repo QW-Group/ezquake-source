@@ -77,6 +77,7 @@ typedef enum {
 	texture_type_2d,
 	texture_type_2d_array,
 	texture_type_cubemap,
+	texture_type_2d_multisampled,
 	texture_type_count
 } r_texture_type_id;
 

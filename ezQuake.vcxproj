@@ -2368,6 +2368,7 @@ msversion.bat</Command>
     <ClCompile Include="match_tools_challenge.c" />
     <ClCompile Include="mathlib.c" />
     <ClCompile Include="md4.c" />
+    <ClCompile Include="sha3.c" />
     <ClCompile Include="menu.c" />
     <ClCompile Include="menu_demo.c" />
     <ClCompile Include="menu_ingame.c" />

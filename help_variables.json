@@ -6933,6 +6933,11 @@
       "group-id": "19",
       "type": "float"
     },
+    "hud_armor_hidezero": {
+      "desc": "Hide armor number if 0.",
+      "group-id": "19",
+      "type": "float"
+    },
     "hud_armor_style": {
       "desc": "Switches graphical style of armor level.",
       "group-id": "19",
@@ -13520,9 +13525,18 @@
       "type": "enum",
       "systems": [ "macos" ],
       "values": [
-        { "name": "0", "description": "Disabled" },
-        { "name": "1", "description": "Enabled when option keys are held down" },
-        { "name": "2", "description": "Enabled when alt keys are held down (for standard keyboard on MacOS)" }
+        {
+          "name": "0",
+          "description": "Disabled"
+        },
+        {
+          "name": "1",
+          "description": "Enabled when option keys are held down"
+        },
+        {
+          "name": "2",
+          "description": "Enabled when alt keys are held down (for standard keyboard on MacOS)"
+        }
       ]
     },
     "in_ignore_touch_events": {
@@ -13537,7 +13551,7 @@
       "group-id": "11",
       "remarks": "X11 systems only.",
       "type": "boolean",
-      "systems": ["linux"]
+      "systems": [ "linux" ]
     },
     "in_m_os_parameters": {
       "desc": "Allows you to use your system mouse settings in the client.",
@@ -17180,11 +17194,10 @@
       "default": "11",
       "desc": "The client includes \"sound interpolation\" which allows it to play sounds at higher frequencies, than the default 11025 Hz with perfect quality.\nIn addition to \"s_khz\" also \"s_bits\" (linux only) will have an influence on interpolation quality. This variable allows you to choose the frequency you want to interpolate the sounds to.\nYou will quickly discover, that the shaft sound is different at increased sampling rate. That's because shaft sounds were recorded at 22050 kHz, so probably that's how they should sound from the beginning. If you don't like it, you can always convert them to 11025.",
       "group-id": "45",
-      "remarks": "Also you can change it 'on fly' - just do s_restart after you change s_khz.",
       "type": "enum",
       "values": [
         {
-          "description": "11khz sound (default)",
+          "description": "11khz sound (default).",
           "name": "11"
         },
         {
@@ -17229,22 +17242,13 @@
     },
     "s_loadas8bit": {
       "default": "0",
+      "desc": "Reduce sound samples down to 8-bit at load time, trading quality for lower memory usage.",
       "group-id": "45",
-      "remarks": "This will give a little performance boost when playing the game at the cost of quality for the sound samples.)",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Off.",
-          "name": "false"
-        },
-        {
-          "description": "On (The sound samples will be loaded in 8-bit mode thus making them a little smaller.",
-          "name": "true"
-        }
-      ]
+      "remarks": "This used to help with performance on systems with low memory.",
+      "type": "boolean"
     },
     "s_mixahead": {
-      "desc": "Only affects OSS and legacy ALSA:\n\nThis variable defines the delay time for sounds. How low you can set your sound mixahead depends on your FPS, when you set it too low, your sound will start  crackling.\nGenerally, with 72 FPS you should be able to use a delay of 0.06 seconds.",
+      "desc": "Only affects OSS and legacy ALSA:\n\nThis variable defines the delay time for sounds. How low you can set your sound mixahead depends on your FPS, when you set it too low, your sound will start crackling.\nGenerally, with 72 FPS you should be able to use a delay of 0.06 seconds.",
       "group-id": "45",
       "type": "float"
     },
@@ -17944,101 +17948,109 @@
     },
     "scr_autoid": {
       "default": "5",
+      "desc": "Controls how names and other info are displayed above players, when spectating.",
       "group-id": "40",
-      "remarks": "Only works when spectating.\nYou can remove the drawing of the playername by using scr_autoid_drawname 0.",
       "type": "enum",
       "values": [
         {
-          "description": "Hide players nick as spectator.",
+          "description": "Do not show any player info.",
           "name": "0"
         },
         {
-          "description": "Show players nick as spectator.",
+          "description": "Show name.",
           "name": "1"
         },
         {
-          "description": "Show health and armor over players' heads.",
+          "description": "Name + health and armor bars.",
           "name": "2"
         },
         {
-          "description": "2 + Show armor name.",
+          "description": "2 + Show armor name/icon.",
           "name": "3"
         },
         {
-          "description": "3 + Show if the user has RL (icon).",
+          "description": "3 + Show if the user's best weapon is RL.",
           "name": "4"
         },
         {
-          "description": "3 + Show the users best weapon (icon).",
+          "description": "3 + Show the user's best weapon name/icon. Minimum best weapon set with scr_autoid_weapons.",
           "name": "5"
         }
       ]
     },
     "scr_autoid_armorbar_green_armor": {
       "default": "25 170 0 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Color of the autoID armor bar when a player has the Green armor.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_armorbar_red_armor": {
       "default": "255 0 0 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Color of the autoID armor bar when a player has the Red armor.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_armorbar_yellow_armor": {
       "default": "255 220 0 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Color of the autoID armor bar when a player has the Yellow armor.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_barlength": {
       "default": "16",
-      "desc": "Sets a fixed length of the bar for autoid functionality.",
+      "desc": "Sets a fixed length for health/armor bars in autoID.",
       "group-id": "40",
       "remarks": "If 0, length will be based on scr_autoid_namelength and/or length of individual player's name.",
       "type": "integer"
     },
     "scr_autoid_drawname": {
-      "desc": "Controls if the player name should be drawn when using scr_autoid >0.",
+      "desc": "Shows player names when using autoID.",
       "group-id": "31",
       "type": "boolean",
       "values": [
         {
-          "description": "Player name is not drawn above player when scr_autoid >0.",
+          "description": "Do not show player names.",
           "name": "false"
         },
         {
-          "description": "Player name is drawn above player when scr_autoid >0.",
+          "description": "Show player names.",
           "name": "true"
         }
       ]
     },
     "scr_autoid_healthbar_bg_color": {
       "default": "180 115 115 100",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Background color of the autoID health bar.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_healthbar_mega_color": {
       "default": "255 0 0 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Color of the autoID health bar when a player has a Megahealth.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_healthbar_normal_color": {
       "default": "80 0 0 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Default color of the autoID health bar.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_healthbar_two_mega_color": {
       "default": "255 100 0 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Color of the autoID health bar when a player has multiple Megahealths.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_healthbar_unnatural_color": {
       "default": "255 255 255 255",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Color of the autoID health bar for any unusual situation (i.e invincibility during warmup).",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_autoid_namelength": {
       "default": "0",
-      "desc": "Maximum number of characters in a player name above player's head with autoid.",
+      "desc": "Maximum number of characters for autoID player names.",
       "group-id": "40",
       "type": "integer"
     },
@@ -18056,11 +18068,12 @@
     },
     "scr_autoid_weaponicon": {
       "default": "1",
+      "desc": "Sets the style of player's weapons in autoID.",
       "group-id": "40",
       "type": "boolean",
       "values": [
         {
-          "description": "Player's weapon is indicated by text (RL, etc)",
+          "description": "Player's weapon is indicated by text (RL, etc).",
           "name": "false"
         },
         {
@@ -18071,7 +18084,7 @@
     },
     "scr_autoid_weapons": {
       "default": "2",
-      "desc": "When scr_autoid is > 4, this determines when the player's best weapon will appear.",
+      "desc": "Determines the minimum best weapon to show for a player when scr_autoid > 4.",
       "group-id": "40",
       "remarks": "The order of 'best' weapon can be controlled via the 'tp_weapon_order' variable.",
       "type": "enum",
@@ -18081,7 +18094,7 @@
           "name": "1"
         },
         {
-          "description": "Super-shotgun or better.",
+          "description": "Super shotgun or better.",
           "name": "2"
         },
         {
@@ -18758,16 +18771,16 @@
     },
     "scr_scoreboard_borderless": {
       "default": "1",
-      "desc": "Controls scoreboard border behavior.",
+      "desc": "Disables the border around the scoreboard.",
       "group-id": "47",
       "type": "boolean",
       "values": [
         {
-          "description": "no scoreboard border will be displayed.",
+          "description": "Scoreboard will have a border.",
           "name": "false"
         },
         {
-          "description": "scoreboard border will be displayed.",
+          "description": "Scoreboard will not have a border.",
           "name": "true"
         }
       ]
@@ -21196,21 +21209,37 @@
       "group-id": "39",
       "type": "float"
     },
+    "v_dlightcolor": {
+      "default": "1",
+      "desc": "Controls if the color of a light affects your view\nRequires gl_polyblend & gl_flashblend set",
+      "group-id": "39",
+      "type": "boolean"
+    },
     "v_dlightcshift": {
       "default": "1",
-      "desc": "Turning this variable on will blend light when you're inside a light bubble.\nAlso need to set gl_flashblend 1.",
+      "desc": "Controls when palette will change when inside a light bubble.\nAlso need to set gl_flashblend 1.",
       "group-id": "39",
-      "type": "boolean",
+      "type": "enum",
       "values": [
         {
           "description": "Off.",
-          "name": "false"
+          "name": "0"
         },
         {
           "description": "On.",
-          "name": "true"
+          "name": "1"
+        },
+        {
+          "description": "On, but excludes lights around players.",
+          "name": "2"
         }
       ]
+    },
+    "v_dlightcshiftpercent": {
+      "default": "0.5",
+      "desc": "Strength of effect of v_dlightcshift, as a percentage",
+      "group-id": "39",
+      "type": "float"
     },
     "v_gunkick": {
       "default": "0",
@@ -21312,8 +21341,9 @@
     },
     "vid_24bit_depth": {
       "default": "1",
+      "desc": "Requests a 24-bit depth-buffer if possible.",
       "group-id": "52",
-      "remarks": "Visual artifacts may be visible if using a 16-bit depth-buffer (e.g. entities disappearing at distance)",
+      "remarks": "Visual artifacts may be visible if using a 16-bit depth-buffer (e.g. entities disappearing at a distance).",
       "type": "boolean",
       "values": [
         {
@@ -21322,25 +21352,6 @@
         },
         {
           "description": "Request 24-bit depth-buffer.",
-          "name": "true"
-        }
-      ]
-    },
-    "vid_allowExtensions": {
-      "group-id": "31",
-      "type": ""
-    },
-    "vid_borderless": {
-      "desc": "When in windowed mode, window will not have a border.",
-      "group-id": "52",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "",
-          "name": "false"
-        },
-        {
-          "description": "",
           "name": "true"
         }
       ]
@@ -21366,12 +21377,12 @@
     },
     "vid_config_x": {
       "desc": "This variable sets the width of the vid_mode 2 window, the minimum possible value is \"640\".",
-      "group-id": "52",
+      "group-id": "31",
       "type": "float"
     },
     "vid_config_y": {
       "desc": "This variable sets the width of the vid_mode 2 window, the minimum possible value is \"400\"",
-      "group-id": "52",
+      "group-id": "31",
       "type": "float"
     },
     "vid_conheight": {
@@ -21447,78 +21458,165 @@
     },
     "vid_framebuffer": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enables rendering to custom Framebuffer Objects. ezQuake uses these FBOs for improved color, \"render scale\" control, and other post-processing effects.",
+      "group-id": "52",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Only uses the default framebuffer.",
+          "name": "0"
+        },
+        {
+          "description": "Render everything to a FBO.",
+          "name": "1"
+        },
+        {
+          "description": "Use separate FBOs for the 3D scene and HUD (allows scaling the two separately).",
+          "name": "2"
+        }
+      ]
     },
     "vid_framebuffer_blit": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Toggles blitting from the FBO to the front buffer instead of flipping buffers.",
+      "group-id": "52",
+	  "remarks": "Only available with \"vid_framebuffer 1\" + \"vid_software_palette 0\" and a supported GPU.",
+      "type": "boolean"
     },
     "vid_framebuffer_depthformat": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Configures the depth-buffer precision for the framebuffer.",
+      "group-id": "52",
+      "type": "integer",
+	  "values": [
+        {
+          "description": "Use the best precision available (up to 32-bit float).",
+          "name": "0"
+        },
+        {
+          "description": "Use 16-bit float precision.",
+          "name": "1"
+        },
+        {
+          "description": "Use 24-bit float precision.",
+          "name": "2"
+        },
+		{
+          "description": "Use 32-bit precision.",
+          "name": "3"
+        },
+		{
+          "description": "Use 32-bit float precision.",
+          "name": "4"
+        }
+      ]
     },
     "vid_framebuffer_hdr": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enables increased, 16-bit float HDR color precision for the framebuffer. This reduces color banding, and allows e.g. tone mapping in post-processing.",
+      "group-id": "52",
+      "type": "boolean"
     },
     "vid_framebuffer_hdr_tonemap": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Toggles tone mapping in HDR mode.",
+      "group-id": "52",
+      "type": "boolean"
     },
     "vid_framebuffer_height": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Sets a custom height for the FBO (200 pixels minimum).",
+      "group-id": "52",
+	  "remarks": "Setting vid_framebuffer_scale overrides custom FBO width/height.",
+      "type": "integer"
     },
-    "vid_framebuffer_palette": {
+    "vid_framebuffer_multisample": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "The number of samples used around each pixel for anti-aliasing when using custom FBOs. Range 0-16.",
+      "group-id": "52",
+      "type": "integer"
     },
     "vid_framebuffer_scale": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Scales the FBOs down/up to the screen resolution. Similar to \"render scale\" in other games if combined with vid_framebuffer 2.",
+      "group-id": "52",
+	  "remarks": "Takes precedence over vid_framebuffer_width/height.",
+      "type": "float",
+	  "values": [
+		{
+          "description": "Disable scaling.",
+          "name": "0 or 1"
+        },
+		{
+          "description": "Render to a larger FBO, then scale down.",
+          "name": "0.25 - 1"
+        },
+        {
+          "description": "Render to a smaller FBO, then scale up.",
+          "name": "1.x+"
+        }
+      ]
     },
     "vid_framebuffer_smooth": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
-    },
-    "vid_framebuffer_sshotmode": {
-      "default": "1",
-      "group-id": "0",
-      "system-generated": true
-    },
-    "vid_framebuffer_width": {
-      "default": "0",
-      "group-id": "0",
-      "system-generated": true
-    },
-    "vid_fullscreen": {
-      "default": "1",
-      "desc": "Enables fullscreen mode, when disabled, sets windowed mode.",
+      "desc": "Toggles filtering when scaling the framebuffer up/down to the screen resolution (with either the vid_framebuffer_scale or width+height properties).",
       "group-id": "52",
+      "remarks": "Disable smoothing if you want to go for a chunky pixel look with FBO upscaling.",
       "type": "boolean",
       "values": [
         {
-          "description": "",
+          "description": "Nearest filtering - blocky scaling.",
           "name": "false"
         },
         {
-          "description": "",
+          "description": "Linear filtering - smooth scaling.",
+          "name": "true"
+        }
+      ]
+    },
+    "vid_framebuffer_sshotmode": {
+      "default": "1",
+      "desc": "Controls screenshot resolution when using scaled framebuffers.",
+      "group-id": "41",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Fullscreen/windowed resolution.",
+          "name": "false"
+        },
+        {
+          "description": "Framebuffer resolution.",
+          "name": "true"
+        }
+      ]
+    },
+    "vid_framebuffer_width": {
+      "default": "0",
+      "desc": "Sets a custom width for the FBO (320 pixels minimum).",
+      "group-id": "52",
+	  "remarks": "Setting vid_framebuffer_scale overrides custom FBO width/height.",
+      "type": "integer"
+    },
+    "vid_fullscreen": {
+      "default": "1",
+      "desc": "Toggles between fullscreen and windowed mode.",
+      "group-id": "52",
+      "remarks": "alt + enter toggles the setting and applies the change without a vid_restart.",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Windowed mode.",
+          "name": "false"
+        },
+        {
+          "description": "Fullscreen mode.",
           "name": "true"
         }
       ]
     },
     "vid_fullscreen_mode": {
       "desc": "This variable sets the full screen video mode that the game will switch to when the \"vid_fullscreen\" command is executed.",
-      "group-id": "52",
+      "group-id": "31",
       "type": "float"
     },
     "vid_gammacorrection": {
@@ -21542,8 +21640,19 @@
     },
     "vid_gl_core_profile": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Controls the level of backwards compatibility of the Classic Renderer with legacy OpenGL features.",
+      "group-id": "52",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "More backwards compatibility with older OpenGL.",
+          "name": "false"
+        },
+        {
+          "description": "Use the OpenGL Core profile, which drops older features. Disables immediate mode.",
+          "name": "true"
+        }
+      ]
     },
     "vid_grab_keyboard": {
       "default": "1",
@@ -21557,6 +21666,23 @@
       "group-id": "52",
       "remarks": "This value is ignored if vid_usedesktopres is set.",
       "type": "integer"
+    },
+    "vid_hwgamma_fps": {
+      "default": "60",
+      "desc": "Controls the frequency of hardware gamma updates per second. These updates have a performance cost, so it is preferred to not update every frame when playing at thousands of FPS.",
+      "group-id": "52",
+      "remarks": "This can really hurt performance on screen flashing effects, i.e when taking damage - the worst moment to suffer framerate dips!",
+      "type": "integer",
+      "values": [
+        {
+          "description": "Update hardware gamma every frame.",
+          "name": "0"
+        },
+        {
+          "description": "Update hardware gamma at the specified frame rate.",
+          "name": "*"
+        }
+      ]
     },
     "vid_hwgammacontrol": {
       "default": "2",
@@ -21576,20 +21702,14 @@
           "name": "2"
         },
         {
-          "description": "Enables hwgamma even when window focus is lost but not minimized (Xorg only)",
+          "description": "Enables hwgamma even when window focus is lost but not minimized (Xorg only).",
           "name": "3"
         }
       ]
     },
-    "vid_hwgamma_fps": {
-      "default": "60",
-      "desc": "If set, ezQuake will only change hardware gamma at specified frequency.  This reduces fps drops when playing at high fps",
-      "group-id": "52",
-      "type": "integer"
-    },
     "vid_minimize_on_focus_loss": {
       "default": "1",
-      "desc": "If set, ezQuake will minimise when running in fullscreen mode and it loses focus (e.g. alt-tab)",
+      "desc": "If set, ezQuake will minimise when running in fullscreen mode and it loses focus (e.g. alt-tab).",
       "group-id": "52",
       "type": "boolean"
     },
@@ -21643,8 +21763,19 @@
     },
     "vid_software_palette": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Controls whether to adjust gamma at the display level, or as a color correction rendering effect.",
+      "group-id": "52",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Use hardware gamma (classic style).",
+          "name": "false"
+        },
+        {
+          "description": "Adjust gamma in post-processing.",
+          "name": "true"
+        }
+      ]
     },
     "vid_stencilbits": {
       "group-id": "31",
@@ -21731,10 +21862,19 @@
       "type": "integer"
     },
     "vid_win_borderless": {
-      "default": "0",
-      "desc": "If set, windowed mode will be in a borderless window (no title)",
+      "desc": "Enables borderless windowed mode (no window title, frame...). Useful for multi-monitor setups, where it can provide a fullscreen window that does not pause when out of focus.",
       "group-id": "52",
-      "type": "boolean"
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Standard windowed mode.",
+          "name": "false"
+        },
+        {
+          "description": "Borderless windowed mode.",
+          "name": "true"
+        }
+      ]
     },
     "vid_win_displaynumber": {
       "default": "0",
@@ -21769,17 +21909,17 @@
     },
     "vid_window_x": {
       "desc": "This variable sets the x-axis location of the top left corner of the game window on the desktop.",
-      "group-id": "52",
+      "group-id": "31",
       "type": "float"
     },
     "vid_window_y": {
       "desc": "This variable sets the y-axis location of the top left corner of the game window on the desktop.",
-      "group-id": "52",
+      "group-id": "31",
       "type": "float"
     },
     "vid_windowed_mode": {
       "desc": "This variable sets the windowed video mode that the game will switch to when the \"vid_windowed\" command is executed.",
-      "group-id": "52",
+      "group-id": "31",
       "type": "float"
     },
     "vid_xpos": {
@@ -21833,7 +21973,7 @@
       "default": "0.7",
       "desc": "Sets sound volume.",
       "group-id": "45",
-      "remarks": "Even higher values than 1 are possible, but sound usually gets faithless with them.",
+      "remarks": "This can go above 1, but sound will get more and more distorted.",
       "type": "float"
     },
     "w_switch": {

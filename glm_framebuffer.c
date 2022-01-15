@@ -37,10 +37,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 #include "r_texture.h"
 
-#define POST_PROCESS_PALETTE    1
-#define POST_PROCESS_3DONLY     2
-#define POST_PROCESS_TONEMAP    4
+#define POST_PROCESS_PALETTE         1
+#define POST_PROCESS_3DONLY          2
+#define POST_PROCESS_TONEMAP         4
 
+extern cvar_t vid_software_palette, vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap, vid_framebuffer_multisample;
 static texture_ref non_framebuffer_screen_texture;
 
 qbool GLM_CompilePostProcessVAO(void)
@@ -82,7 +83,6 @@ qbool GLM_CompilePostProcessVAO(void)
 // If this returns false then the framebuffer will be blitted instead
 qbool GLM_CompilePostProcessProgram(void)
 {
-	extern cvar_t vid_software_palette, vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap;
 	int post_process_flags =
 		(vid_software_palette.integer ? POST_PROCESS_PALETTE : 0) |
 		(vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY ? POST_PROCESS_3DONLY : 0) |

@@ -365,7 +365,6 @@ void R_DrawAliasModel(entity_t *ent, qbool outline)
 	R_RenderAliasModelEntity(ent, paliashdr, color32bit, texture, fb_texture, oldframe, frame, outline, ent->effects);
 	R_PopModelviewMatrix(oldMatrix);
 
-	// VULT MOTION TRAILS - No shadows on motion trails
 	if (R_CanDrawModelShadow(ent)) {
 		renderer.DrawAliasModelShadow(ent);
 	}

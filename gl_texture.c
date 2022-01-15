@@ -49,7 +49,7 @@ static GLint glTextureMagnificationOptions[] = {
 	GL_NEAREST, GL_LINEAR
 };
 static GLenum glTextureTargetForType[] = {
-	GL_TEXTURE_2D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP
+	GL_TEXTURE_2D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_2D_MULTISAMPLE
 };
 
 #ifdef C_ASSERT

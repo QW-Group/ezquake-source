@@ -1,6 +1,18 @@
 Leaving these here as bugs between dev versions of 3.6 aren't in the release notes.
 
-### Changes from alpha8=>alpha9 (July 13th, ongoing)
+### Changes from alpha9=>alpha10 (November 14th, ongoing)
+
+- Added `/vid_reload` command to reload textures, rather than full `/vid_restart`.  `/vid_reload_auto` cvar controls automatic/manual.
+- Fixed `/gl_no24bit` not affecting aliasmodel skins (3.5 bug, reported by hemostx, #605)
+- `/gl_consolefont` now falls back to 'original' on load failure, but doesn't change value (for toggling no24bit, #605)
+- Fixed toggling `/gl_no24bit` 1 => 0 causing maximum of a single QMB particle (old bug, reported by hemostx, #604)
+- Fixed combination of `/vid_framebuffer_multisample` and `/r_fx_geometry` (alpha9 bug, reported by hemostx, #608)
+- Fixed bug causing frag-message highlighting of normal messages if name at start of line (very old bug, reported by qqshka, #623)
+- Fixed bugs causing access of invalid memory when loading corrupt .bsp files (very old bugs, reported by mmmds, #615)
+- Fixed bug causing `/gl_particle_gibtrails 1` to turn classic blood trails following gibs into rocket smoke (very old bug, reported by hemostx, #614)
+- Fixed bug causing `+fire_ar` to not obey `/cl_weaponhide` when last button depressed (alpha8 bug, reported by paddern, #613)
+
+### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 
 - Fixed/worked around some classic renderer bugs on version x.y.13399 AMD drivers (#416)
 - Fixed bug causing off-by-one error when drawing rectangle outlines (3.5 bug, reported by Matrix, #536)
@@ -18,8 +30,26 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Added `/demo_jump_end` to jump to next intermission point or end of demo (requested by Hangtime, #564)
 - Added `/sb_info_filter` to allow filtering of servers in server-browser based on serverinfo (requested by Matrix, #537)
 - On startup (after `autoexec.cfg` executed), a `vid_restart`/`s_restart` will be issued if any latched variables were changed (reported by Dusty, #458)
+- Multiview will be disabled when watching a solo demo and no powerup cams are active (requested by mmavova, #126)
+- MacOS: sets SDL flag to stop touch events being translated into mouse events (might help with #354)
+- `/status` command will be ignored if an alias with the same name is found, use `/sv_status` instead (fixes #532)
+- qw:// urls in command line will be opened even if not preceded by `+qwurl` (thanks to ciscon)
+- Linux: register_qwurl_protocol will register protocol with xdg (thanks to ciscon)
+- Added `/v_dlightcolor` to control if being inside flashblend light affects palette by color of light
+- Added `/v_dlightcshiftpercent` to control strength of palette shift effect when inside flashblend light
+- Changed `/v_dlightcshift` to be enum of when being inside flashblend light affects palette (requested by HangTime, #542)
+- Added `/vid_framebuffer_multisample` to control multi-sampling level of the framebuffer (reported by Matrix, #367)
+- Translucent models are first drawn with a z-pass, to stop overdraw affecting level of translucency
+- Fixed explosion effects on md3 viewmodels (additive blending was being lost)
+- Removed server-side weapon switching 'support' in client
+- Removed debugging messages when using `+fire_ar`
+- Commands that search by regular expression (`/cvarlist_re` etc) are now case-insensitive (reported by HangTime, #599)
+- Added `/fs_savegame_home` to control if games are saved to home directory (default) or game directory (reported by githubtefo, #586)
+- Fixed `/gl_no24bit` not taking effect after `/vid_restart` (reported by hemostx, #601)
+- Fixed `/gl_no24bit` not disabling loading external textures (3.5 bug, kind of reported by hemostx, #601)
+- Fixed bug causing `/gl_scaleskytextures` to not affect external textures (reported & fixed by hemostx, #606)
 
-### Changes from alpha7=>alpha8 (Feb 9th => July 13th)
+### Changes from alpha7=>alpha8 (Feb 9th => July 13th, 2021)
 
 - Fix increased memory buffer causing slow speed of demo_jump (#453)
 - Fix turbalpha causing rendering artifacts on non-vissed maps (#473)

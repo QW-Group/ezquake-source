@@ -171,7 +171,7 @@ static buffer_data_t* GL_BufferAllocateSlot(r_buffer_id id, buffertype_t type, c
 	}
 
 	memset(buffer, 0, sizeof(*buffer));
-	strlcpy(buffer->name, name ? name : "?", sizeof(buffer->name));
+	strlcpy(buffer->name, name && name[0] ? name : "?", sizeof(buffer->name));
 	buffer->size = size;
 	buffer->usage = usage;
 	buffer->type = type;
@@ -373,12 +373,30 @@ static void GL_ResizeBuffer(r_buffer_id id, int size, void* data)
 
 static void GL_UpdateBufferSection(r_buffer_id id, ptrdiff_t offset, int size, const void* data)
 {
-	assert(id != r_buffer_none);
-	assert(glBufferState.buffers[id].glref);
-	assert(data);
-	assert(offset >= 0);
-	assert(offset < glBufferState.buffers[id].size);
-	assert(offset + size <= glBufferState.buffers[id].size);
+	if (id == r_buffer_none) {
+		Sys_Error("GL_UpdateBufferSection: id == r_buffer_none");
+		return;
+	}
+	else if (glBufferState.buffers[id].glref == 0) {
+		Sys_Error("GL_UpdateBufferSection: id(%d:%s) invalid GL ref", id, glBufferState.buffers[id].name);
+		return;
+	}
+	else if (data == 0) {
+		Sys_Error("GL_UpdateBufferSection: id(%d:%s) update with NULL data", id, glBufferState.buffers[id].name);
+		return;
+	}
+	else if (offset < 0) {
+		Sys_Error("GL_UpdateBufferSection: id(%d:%s) offset < 0", id, glBufferState.buffers[id].name);
+		return;
+	}
+	else if (offset >= glBufferState.buffers[id].size) {
+		Sys_Error("GL_UpdateBufferSection: id(%d:%s) offset >= bufsize (%d >= %d)", id, glBufferState.buffers[id].name, (int)offset, glBufferState.buffers[id].size);
+		return;
+	}
+	else if (offset + size > glBufferState.buffers[id].size) {
+		Sys_Error("GL_UpdateBufferSection: id(%d:%s) offset + size >= bufsize (%d + %d > %d)", id, glBufferState.buffers[id].name, (int)offset, size, glBufferState.buffers[id].size);
+		return;
+	}
 
 	R_TraceLogAPICall("GL_UpdateBufferSection(%s)", glBufferState.buffers[id].name);
 	if (glBufferState.buffers[id].persistent_mapped_ptr) {

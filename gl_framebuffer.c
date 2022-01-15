@@ -36,7 +36,10 @@ extern cvar_t vid_software_palette;
 extern cvar_t vid_framebuffer_hdr;
 extern cvar_t vid_framebuffer_blit;
 extern cvar_t vid_framebuffer_smooth;
+extern cvar_t vid_framebuffer_multisample;
 extern cvar_t r_fx_geometry;
+
+static framebuffer_id VID_MultisampledAlternateId(framebuffer_id id);
 
 #ifndef GL_NEGATIVE_ONE_TO_ONE
 #define GL_NEGATIVE_ONE_TO_ONE            0x935E
@@ -55,13 +58,18 @@ GLuint GL_TextureNameFromReference(texture_ref ref);
 
 // OpenGL wrapper functions
 #ifdef GL_USE_RENDER_BUFFERS
+#define EZ_USE_FIXED_SAMPLE_LOCATIONS (GL_TRUE)
+static void GL_RenderBufferStorageMultisample(GLuint renderBuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
 static void GL_RenderBufferStorage(GLuint renderBuffer, GLenum internalformat, GLsizei width, GLsizei height);
 static void GL_FramebufferRenderbuffer(GLuint fbref, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
 static void GL_GenRenderBuffers(GLsizei n, GLuint* buffers);
+#else
+#define EZ_USE_FIXED_SAMPLE_LOCATIONS (GL_FALSE)
 #endif
 static GLenum GL_CheckFramebufferStatus(GLuint fbref);
 static void GL_FramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
 static void GL_GenFramebuffers(GLsizei n, GLuint* buffers);
+static void GL_FramebufferBlitSimple(framebuffer_id source_id, framebuffer_id destination_id);
 
 typedef struct framebuffer_data_s {
 	GLuint glref;
@@ -72,33 +80,95 @@ typedef struct framebuffer_data_s {
 	GLsizei width;
 	GLsizei height;
 	GLenum status;
+	int samples;
 } framebuffer_data_t;
 
 static const char* framebuffer_names[] = {
 	"none", // framebuffer_none
-	"std", // framebuffer_std
+	"std", // framebuffer_std,
+	"std-ms", // framebuffer_std_ms,
 	"hud", // framebuffer_hud
+	"hud-ms", // framebuffer_hud_ms,
+	"std-blit", // framebuffer_std_blit
+	"std-blit-ms", // framebuffer_std_blit_ms
+	"hud-blit", // framebuffer_hud_blit
+	"hud-blit-ms", // framebuffer_hud_blit_ms
 };
 static const char* framebuffer_texture_names[] = {
 	"std", // fbtex_standard,
 	"depth", // fbtex_depth
 	"env", // fbtex_bloom,
-	"norms", // fbtex_worldnormals
+	"norms", // fbtex_worldnormals,
 };
 static qbool framebuffer_depth_buffer[] = {
 	false, // framebuffer_none
 	true, // framebuffer_std
+	true, // framebuffer_std_ms
 	false, // framebuffer_hud
+	false, // framebuffer_hud_ms
+	false, // framebuffer_std_blit
+	false, // framebuffer_std_blit_ms
+	false, // framebuffer_hud_blit
+	false, // framebuffer_hud_blit_ms
+};
+static qbool framebuffer_hdr[] = {
+	false, // framebuffer_none
+	true, // framebuffer_std
+	true, // framebuffer_std_ms
+	false, // framebuffer_hud
+	false, // framebuffer_hud_ms
+	false, // framebuffer_std_blit
+	false, // framebuffer_std_blit_ms
+	false, // framebuffer_hud_blit
+	false, // framebuffer_hud_blit_ms
+};
+static qbool framebuffer_alpha[] = {
+	false, // framebuffer_none
+	false, // framebuffer_std
+	false, // framebuffer_std_ms
+	true, // framebuffer_hud
+	true, // framebuffer_hud_ms
+	false, // framebuffer_std_blit
+	false, // framebuffer_std_blit_ms
+	false, // framebuffer_hud_blit
+	false, // framebuffer_hud_blit_ms
+};
+static qbool framebuffer_multisampled[] = {
+	false, // framebuffer_none
+	false, // framebuffer_std
+	true, // framebuffer_std_ms
+	false, // framebuffer_hud
+	true, // framebuffer_hud_ms
+	false, // framebuffer_std_blit
+	true, // framebuffer_std_blit_ms
+	false, // framebuffer_hud_blit
+	true, // framebuffer_hud_blit_ms
+};
+static framebuffer_id framebuffer_multisample_alternate[] = {
+	framebuffer_none,
+	// rendering
+	framebuffer_std_ms,
+	framebuffer_std_ms,
+	framebuffer_hud_ms,
+	framebuffer_hud_ms,
+	// framebuffers used to resolve multisampling
+	framebuffer_none,
+	framebuffer_none,
+	framebuffer_none,
+	framebuffer_none,
 };
 
 #ifdef C_ASSERT
 C_ASSERT(sizeof(framebuffer_names) / sizeof(framebuffer_names[0]) == framebuffer_count);
 C_ASSERT(sizeof(framebuffer_texture_names) / sizeof(framebuffer_texture_names[0]) == fbtex_count);
 C_ASSERT(sizeof(framebuffer_depth_buffer) / sizeof(framebuffer_depth_buffer[0]) == framebuffer_count);
+C_ASSERT(sizeof(framebuffer_multisampled) / sizeof(framebuffer_multisampled[0]) == framebuffer_count);
+C_ASSERT(sizeof(framebuffer_alpha) / sizeof(framebuffer_alpha[0]) == framebuffer_count);
+C_ASSERT(sizeof(framebuffer_hdr) / sizeof(framebuffer_hdr[0]) == framebuffer_count);
+C_ASSERT(sizeof(framebuffer_multisample_alternate) / sizeof(framebuffer_multisample_alternate[0]) == framebuffer_count);
 #endif
 
 static framebuffer_data_t framebuffer_data[framebuffer_count];
-static int framebuffers;
 
 // 
 GL_StaticProcedureDeclaration(glGenFramebuffers, "n=%d, ids=%p", GLsizei n, GLuint* ids)
@@ -124,6 +194,10 @@ GL_StaticProcedureDeclaration(glBlitNamedFramebuffer, "readFrameBuffer=%u, drawF
 GL_StaticProcedureDeclaration(glDrawBuffers, "n=%d, bufs=%p", GLsizei n, const GLenum* bufs)
 GL_StaticProcedureDeclaration(glClearBufferfv, "buffer=%u, drawbuffer=%d, value=%p", GLenum buffer, GLint drawbuffer, const GLfloat* value)
 GL_StaticProcedureDeclaration(glClipControl, "origin=%u, depth=%u", GLenum origin, GLenum depth)
+
+// Multi-sampled
+GL_StaticProcedureDeclaration(glRenderbufferStorageMultisample, "target=%x, samples=%d, internalformat=%x, width=%d, height=%d", GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height)
+GL_StaticProcedureDeclaration(glNamedRenderbufferStorageMultisample, "renderbuffer=%x, samples=%d, internalformat=%x, width=%d, height=%d", GLuint renderbuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height)
 
 static GLenum glDepthFormats[] = { 0, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT32F };
 typedef enum { r_depthformat_best, r_depthformat_16bit, r_depthformat_24bit, r_depthformat_32bit, r_depthformat_32bit_float, r_depthformat_count } r_depthformat;
@@ -161,7 +235,10 @@ void GL_InitialiseFramebufferHandling(void)
 		GL_LoadMandatoryFunction(glDrawBuffers, framebuffers_supported);
 		GL_LoadMandatoryFunction(glClearBufferfv, framebuffers_supported);
 
+		GL_LoadOptionalFunction(glRenderbufferStorageMultisample);
+
 		glConfig.supported_features |= (framebuffers_supported ? (R_SUPPORT_FRAMEBUFFERS | R_SUPPORT_FRAMEBUFFERS_BLIT) : 0);
+		glConfig.supported_features |= (framebuffers_supported && GL_Available(glRenderbufferStorageMultisample) ? R_SUPPORT_FRAMEBUFFER_MS : 0);
 		if (GL_VersionAtLeast(3, 0) || SDL_GL_ExtensionSupported("GL_ARB_depth_buffer_float")) {
 			glConfig.supported_features |= R_SUPPORT_DEPTH32F;
 		}
@@ -198,6 +275,7 @@ void GL_InitialiseFramebufferHandling(void)
 		GL_LoadOptionalFunction(glBlitNamedFramebuffer);
 		GL_LoadOptionalFunction(glNamedFramebufferTexture);
 		GL_LoadOptionalFunction(glCheckNamedFramebufferStatus);
+		GL_LoadOptionalFunction(glNamedRenderbufferStorageMultisample);
 	}
 
 	// meag: disabled (classic needs glFrustum replaced, modern needs non-rubbish viewweapon
@@ -206,7 +284,6 @@ void GL_InitialiseFramebufferHandling(void)
 		GL_LoadOptionalFunction(glClipControl);
 	}*/
 
-	framebuffers = 1;
 	memset(framebuffer_data, 0, sizeof(framebuffer_data));
 }
 
@@ -222,11 +299,21 @@ void GL_FramebufferSetFiltering(qbool linear)
 	}
 }
 
+static qbool GL_FramebufferCreateRenderingTexture(framebuffer_data_t* fb, fbtex_id tex_id, r_texture_type_id texture_type, GLenum framebuffer_format, const char* label, int width, int height)
+{
+	GL_CreateTexturesWithIdentifier(texture_type, 1, &fb->texture[tex_id], label);
+	GL_TexStorage2D(fb->texture[tex_id], 1, framebuffer_format, width, height, false);
+	renderer.TextureLabelSet(fb->texture[tex_id], label);
+	renderer.TextureWrapModeClamp(fb->texture[tex_id]);
+	R_TextureSetFlag(fb->texture[tex_id], R_TextureGetFlag(fb->texture[tex_id]) | TEX_NO_TEXTUREMODE);
+	return true;
+}
+
 qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 {
 	framebuffer_data_t* fb = NULL;
 	char label[128];
-	qbool hdr = (vid_framebuffer_hdr.integer && GL_VersionAtLeast(3, 0) && id == framebuffer_std);
+	qbool hdr = (vid_framebuffer_hdr.integer && GL_VersionAtLeast(3, 0) && framebuffer_hdr[id]);
 	GLenum framebuffer_format;
 
 	if (!GL_Supported(R_SUPPORT_FRAMEBUFFERS)) {
@@ -238,7 +325,7 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	}
 	else if (vid_gammacorrection.integer) {
 		if (GL_Supported(R_SUPPORT_FRAMEBUFFERS_SRGB)) {
-			framebuffer_format = (id == framebuffer_std ? GL_SRGB8 : GL_SRGB8_ALPHA8);
+			framebuffer_format = framebuffer_alpha[id] ? GL_SRGB8_ALPHA8 : GL_SRGB8;
 		}
 		else {
 			Con_Printf("sRGB framebuffers are not supported on your hardware.\n");
@@ -247,7 +334,7 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 		}
 	}
 	else {
-		framebuffer_format = (id == framebuffer_std ? GL_RGB8 : GL_RGBA8);
+		framebuffer_format = framebuffer_alpha[id] ? GL_RGBA8 : GL_RGB8;
 	}
 
 	fb = &framebuffer_data[id];
@@ -257,17 +344,32 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 
 	memset(fb, 0, sizeof(*fb));
 
+	// Multi-sampling round up to power of 2
+	if (framebuffer_multisampled[id]) {
+		Q_ROUND_POWER2(vid_framebuffer_multisample.integer, fb->samples);
+		fb->samples = bound(0, fb->samples, glConfig.max_multisampling_level);
+		if (vid_framebuffer_multisample.integer != fb->samples) {
+			Cvar_SetValue(&vid_framebuffer_multisample, fb->samples);
+			Con_Printf("&cff0vid_framebuffer_multisample&r has been set to %d\n", fb->samples);
+		}
+	}
+
 	// Render to texture
 	strlcpy(label, framebuffer_names[id], sizeof(label));
 	strlcat(label, "/", sizeof(label));
 	strlcat(label, framebuffer_texture_names[fbtex_standard], sizeof(label));
 
-	GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_standard], label);
-	GL_TexStorage2D(fb->texture[fbtex_standard], 1, framebuffer_format, width, height, false);
-	renderer.TextureLabelSet(fb->texture[fbtex_standard], label);
+	// Create standard rendering texture
+	GL_FramebufferCreateRenderingTexture(fb, fbtex_standard, texture_type_2d, framebuffer_format, label, width, height);
+
+	// Create multi-sampled texture
+	if (fb->samples) {
+		GL_CreateTexturesWithIdentifier(texture_type_2d_multisampled, 1, &fb->texture[fbtex_standard], label);
+		GL_TexStorage2DMultisample(fb->texture[fbtex_standard], fb->samples, framebuffer_format, width, height, EZ_USE_FIXED_SAMPLE_LOCATIONS);
+	}
+
+	// Set linear filtering if requested
 	GL_FramebufferSetFiltering(vid_framebuffer_smooth.integer);
-	renderer.TextureWrapModeClamp(fb->texture[fbtex_standard]);
-	R_TextureSetFlag(fb->texture[fbtex_standard], R_TextureGetFlag(fb->texture[fbtex_standard]) | TEX_NO_TEXTUREMODE);
 
 	// Create frame buffer with texture & depth
 	GL_GenFramebuffers(1, &fb->glref);
@@ -286,8 +388,14 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 #ifdef GL_USE_RENDER_BUFFERS
 		GL_GenRenderBuffers(1, &fb->depthBuffer);
 		GL_TraceObjectLabelSet(GL_RENDERBUFFER, fb->depthBuffer, -1, "depth-buffer");
-		GL_RenderBufferStorage(fb->depthBuffer, fb->depthFormat = depthFormat, width, height);
-		GL_FramebufferRenderbuffer(fb->glref, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fb->depthBuffer);
+		if (fb->samples) {
+			GL_RenderBufferStorageMultisample(fb->depthBuffer, fb->samples, fb->depthFormat = depthFormat, width, height);
+			GL_FramebufferRenderbuffer(fb->glref, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fb->depthBuffer);
+		}
+		else {
+			GL_RenderBufferStorage(fb->depthBuffer, fb->depthFormat = depthFormat, width, height);
+			GL_FramebufferRenderbuffer(fb->glref, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fb->depthBuffer);
+		}
 #else
 		// create depth texture
 		strlcpy(label, framebuffer_names[id], sizeof(label));
@@ -328,7 +436,38 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 
 	GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, 0);
 
-	return fb->status == GL_FRAMEBUFFER_COMPLETE;
+	switch (fb->status) {
+	case GL_FRAMEBUFFER_COMPLETE:
+		return true;
+	case GL_FRAMEBUFFER_UNDEFINED:
+		Con_Printf("&cf00error&r: the specified framebuffer is the default read or draw framebuffer, but the default framebuffer does not exist\n");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+		Con_Printf("&cf00error&r: one of the framebuffer attachment points is framebuffer incomplete\n");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+		Con_Printf("&cf00error&r: framebuffer does not have at least one image attached\n");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+		Con_Printf("&cf00error&r: incomplete draw buffer\n");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+		Con_Printf("&cf00error&r: incomplete read buffer\n");
+		break;
+	case GL_FRAMEBUFFER_UNSUPPORTED:
+		Con_Printf("&cf00error&r: combination of formats is not supported\n");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+		Con_Printf("&cf00error&r: mixture of renderbuffer/texture sampling levels\n");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+		Con_Printf("&cf00error&r: incomplete layer targets\n");
+		break;
+	}
+
+	// Rollback, delete objects
+	GL_FramebufferDelete(id);
+	return false;
 }
 
 qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
@@ -341,6 +480,7 @@ qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
 		return false;
 	}
 
+	id = VID_MultisampledAlternateId(id);
 	fb = &framebuffer_data[id];
 	if (!fb->glref) {
 		return false;
@@ -354,14 +494,22 @@ qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
 		strlcat(label, "/", sizeof(label));
 		strlcat(label, framebuffer_texture_names[fbtex_worldnormals], sizeof(label));
 
-		GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_worldnormals], label);
-		if (!R_TextureReferenceIsValid(fb->texture[fbtex_worldnormals])) {
-			return false;
+		if (fb->samples) {
+			GL_CreateTexturesWithIdentifier(texture_type_2d_multisampled, 1, &fb->texture[fbtex_worldnormals], label);
+			if (!R_TextureReferenceIsValid(fb->texture[fbtex_worldnormals])) {
+				return false;
+			}
+			GL_TexStorage2DMultisample(fb->texture[fbtex_worldnormals], fb->samples, GL_RGBA16F, fb->width, fb->height, EZ_USE_FIXED_SAMPLE_LOCATIONS);
 		}
-
-		GL_TexStorage2D(fb->texture[fbtex_worldnormals], 1, GL_RGBA16F, fb->width, fb->height, false);
-		renderer.TextureSetFiltering(fb->texture[fbtex_worldnormals], texture_minification_nearest, texture_magnification_nearest);
-		renderer.TextureWrapModeClamp(fb->texture[fbtex_worldnormals]);
+		else {
+			GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_worldnormals], label);
+			if (!R_TextureReferenceIsValid(fb->texture[fbtex_worldnormals])) {
+				return false;
+			}
+			GL_TexStorage2D(fb->texture[fbtex_worldnormals], 1, GL_RGBA16F, fb->width, fb->height, false);
+			renderer.TextureSetFiltering(fb->texture[fbtex_worldnormals], texture_minification_nearest, texture_magnification_nearest);
+			renderer.TextureWrapModeClamp(fb->texture[fbtex_worldnormals]);
+		}
 		R_TextureSetFlag(fb->texture[fbtex_worldnormals], R_TextureGetFlag(fb->texture[fbtex_worldnormals]) | TEX_NO_TEXTUREMODE);
 	}
 
@@ -369,6 +517,45 @@ qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
 	GL_Procedure(glDrawBuffers, 2, buffers);
 	GL_Procedure(glClearBufferfv, GL_COLOR, 1, clearValue);
 	return true;
+}
+
+static void GL_MultiSamplingResolve(framebuffer_id src, framebuffer_id target, fbtex_id texture, framebuffer_id temp_src, framebuffer_id temp_dst)
+{
+	// Copy from (multi-sampled) src[texture] => (non-multi-sampled) target[texture]
+	framebuffer_data_t* fb_orig_src = &framebuffer_data[src];
+	framebuffer_data_t* fb_orig_dst = &framebuffer_data[target];
+	framebuffer_data_t* fb_blit_src = &framebuffer_data[temp_src];
+	framebuffer_data_t* fb_blit_dst = &framebuffer_data[temp_dst];
+
+	if (!vid_framebuffer_multisample.integer || !fb_orig_src->glref || !fb_orig_dst->glref) {
+		// nothing to do
+		return;
+	}
+
+	if (temp_src) {
+		if (fb_blit_src->width != fb_orig_src->width || fb_blit_src->height != fb_orig_src->height) {
+			GL_FramebufferDelete(temp_src);
+		}
+		if (!fb_blit_src->glref && !GL_FramebufferCreate(temp_src, fb_orig_src->width, fb_orig_src->height)) {
+			return;
+		}
+	}
+	if (temp_dst) {
+		if (fb_blit_dst->width != fb_orig_dst->width || fb_blit_src->height != fb_orig_dst->height) {
+			GL_FramebufferDelete(temp_dst);
+		}
+		if (!fb_blit_dst->glref && !GL_FramebufferCreate(temp_dst, fb_orig_dst->width, fb_orig_dst->height)) {
+			return;
+		}
+	}
+
+	GL_FramebufferTexture(fb_blit_src->glref, GL_COLOR_ATTACHMENT0, GL_TextureNameFromReference(fb_orig_src->texture[texture]), 0);
+	GL_FramebufferTexture(fb_blit_dst->glref, GL_COLOR_ATTACHMENT0, GL_TextureNameFromReference(fb_orig_dst->texture[texture]), 0);
+
+	GL_FramebufferBlitSimple(temp_src, temp_dst);
+
+	GL_FramebufferTexture(fb_blit_src->glref, GL_COLOR_ATTACHMENT0, 0, 0);
+	GL_FramebufferTexture(fb_blit_dst->glref, GL_COLOR_ATTACHMENT0, 0, 0);
 }
 
 qbool GL_FramebufferEndWorldNormals(framebuffer_id id)
@@ -380,6 +567,7 @@ qbool GL_FramebufferEndWorldNormals(framebuffer_id id)
 		return false;
 	}
 
+	id = VID_MultisampledAlternateId(id);
 	fb = &framebuffer_data[id];
 	if (!fb->glref) {
 		return false;
@@ -387,6 +575,11 @@ qbool GL_FramebufferEndWorldNormals(framebuffer_id id)
 
 	GL_FramebufferTexture(fb->glref, GL_COLOR_ATTACHMENT1, 0, 0);
 	GL_Procedure(glDrawBuffers, 1, &buffer);
+
+	if (fb->samples && id == framebuffer_std_ms) {
+		// Resolve multi-samples
+		GL_MultiSamplingResolve(framebuffer_std_ms, framebuffer_std, fbtex_worldnormals, framebuffer_std_blit_ms, framebuffer_std_blit);
+	}
 	return true;
 }
 
@@ -419,6 +612,10 @@ void GL_FramebufferStartUsing(framebuffer_id id)
 
 void GL_FramebufferStartUsingScreen(void)
 {
+	// resolve any multi-sampling
+	GL_MultiSamplingResolve(framebuffer_std_ms, framebuffer_std, fbtex_standard, framebuffer_std_blit_ms, framebuffer_std_blit);
+	GL_MultiSamplingResolve(framebuffer_hud_ms, framebuffer_hud, fbtex_standard, framebuffer_hud_blit_ms, framebuffer_hud_blit);
+
 	GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, 0);
 }
 
@@ -437,6 +634,20 @@ static void GL_RenderBufferStorage(GLuint renderBuffer, GLenum internalformat, G
 	else if (GL_Available(glBindRenderbuffer) && GL_Available(glRenderbufferStorage)) {
 		GL_Procedure(glBindRenderbuffer, GL_RENDERBUFFER, renderBuffer);
 		GL_Procedure(glRenderbufferStorage, GL_RENDERBUFFER, internalformat, width, height);
+	}
+	else {
+		Sys_Error("ERROR: %s called without driver support", __func__);
+	}
+}
+
+static void GL_RenderBufferStorageMultisample(GLuint renderBuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height)
+{
+	if (GL_Available(glNamedRenderbufferStorageMultisample)) {
+		GL_Procedure(glNamedRenderbufferStorageMultisample, renderBuffer, samples, internalformat, width, height);
+	}
+	else if (GL_Available(glBindRenderbuffer) && GL_Available(glRenderbufferStorageMultisample)) {
+		GL_Procedure(glBindRenderbuffer, GL_RENDERBUFFER, renderBuffer);
+		GL_Procedure(glRenderbufferStorageMultisample, GL_RENDERBUFFER, samples, internalformat, width, height);
 	}
 	else {
 		Sys_Error("ERROR: %s called without driver support", __func__);
@@ -518,7 +729,7 @@ int GL_FrameBufferHeight(framebuffer_id id)
 	return framebuffer_data[id].height;
 }
 
-void GL_FramebufferBlitSimple(framebuffer_id source_id, framebuffer_id destination_id)
+static void GL_FramebufferBlitSimple(framebuffer_id source_id, framebuffer_id destination_id)
 {
 	framebuffer_data_t* src = &framebuffer_data[source_id];
 	framebuffer_data_t* dest = &framebuffer_data[destination_id];
@@ -584,6 +795,7 @@ static void VID_FramebufferFlip(void)
 	if (flip3d || flip2d) {
 		// Screen-wide framebuffer without any processing required, so we can just blit
 		qbool should_blit = (
+			//vid_framebuffer_multisample.integer == 0 &&
 			vid_software_palette.integer == 0 &&
 			vid_framebuffer.integer != USE_FRAMEBUFFER_3DONLY &&
 			vid_framebuffer_blit.integer &&
@@ -606,27 +818,62 @@ static void VID_FramebufferFlip(void)
 	}
 }
 
-static qbool VID_FramebufferInit(framebuffer_id id, int effective_width, int effective_height)
+static void GL_FramebufferEnsureCreated(framebuffer_id id, int width, int height)
+{
+	framebuffer_data_t* fb = &framebuffer_data[id];
+	int expected_samples = framebuffer_multisampled[id] ? vid_framebuffer_multisample.integer : 0;
+
+	if (!fb->glref) {
+		GL_FramebufferCreate(id, width, height);
+	}
+	else if (fb->width != width || fb->height != height || fb->samples != expected_samples) {
+		GL_FramebufferDelete(id);
+
+		GL_FramebufferCreate(id, width, height);
+	}
+}
+
+static void GL_FramebufferEnsureDeleted(framebuffer_id id)
 {
 	framebuffer_data_t* fb = &framebuffer_data[id];
 
+	if (fb->glref) {
+		GL_FramebufferDelete(id);
+	}
+}
+
+static framebuffer_id VID_MultisampledAlternateId(framebuffer_id id)
+{
+	if (vid_framebuffer_multisample.integer && framebuffer_multisample_alternate[id] && framebuffer_multisample_alternate[id] != id) {
+		return framebuffer_multisample_alternate[id];
+	}
+	return id;
+}
+
+static qbool VID_FramebufferInit(framebuffer_id id, int effective_width, int effective_height)
+{
 	if (effective_width && effective_height) {
-		if (!fb->glref) {
-			GL_FramebufferCreate(id, effective_width, effective_height);
-		}
-		else if (fb->width != effective_width || fb->height != effective_height) {
-			GL_FramebufferDelete(id);
+		GL_FramebufferEnsureCreated(id, effective_width, effective_height);
 
-			GL_FramebufferCreate(id, effective_width, effective_height);
-		}
+		if (framebuffer_data[id].glref) {
+			framebuffer_id ms_alt = VID_MultisampledAlternateId(id);
 
-		if (fb->glref) {
-			GL_FramebufferStartUsing(id);
-			return true;
+			if (ms_alt != id) {
+				GL_FramebufferEnsureCreated(ms_alt, effective_width, effective_height);
+
+				if (framebuffer_data[ms_alt].glref) {
+					GL_FramebufferStartUsing(ms_alt);
+					return true;
+				}
+			}
+			else {
+				GL_FramebufferStartUsing(id);
+				return true;
+			}
 		}
 	}
-	else if (fb->glref) {
-		GL_FramebufferDelete(id);
+	else {
+		GL_FramebufferEnsureDeleted(id);
 	}
 
 	return false;
@@ -721,6 +968,7 @@ size_t GL_ScreenshotWidth(void)
 	if (GL_ScreenshotFramebuffer()) {
 		return framebuffer_data[framebuffer_std].width;
 	}
+
 	return glConfig.vidWidth;
 }
 
@@ -729,5 +977,26 @@ size_t GL_ScreenshotHeight(void)
 	if (GL_ScreenshotFramebuffer()) {
 		return framebuffer_data[framebuffer_std].height;
 	}
+
 	return glConfig.vidHeight;
+}
+
+int GL_FramebufferMultisamples(framebuffer_id framebuffer)
+{
+	framebuffer_data_t* fb = &framebuffer_data[framebuffer];
+
+	if (vid_framebuffer.integer && fb->glref && R_TextureReferenceIsValid(fb->texture[fbtex_standard])) {
+		return fb->samples;
+	}
+
+	return 0;
+}
+
+void GL_FramebufferDeleteAll(void)
+{
+	framebuffer_id i;
+
+	for (i = 0; i < framebuffer_count; ++i) {
+		GL_FramebufferEnsureDeleted(i);
+	}
 }

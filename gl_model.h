@@ -527,8 +527,9 @@ typedef struct model_s {
 	int					numtextures;
 	texture_t			**textures;
 
-	byte				*visdata;
-	byte				*lightdata;
+	byte*               visdata;
+	int                 visdata_length;
+	byte*               lightdata;
 
 	int					bspversion;
 	qbool				isworldmodel;

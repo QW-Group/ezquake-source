@@ -163,6 +163,11 @@ void GLC_StateBeginMD3Draw(float alpha, qbool textured, qbool weapon, qbool addi
 	}
 }
 
+void GLC_StateBeginDrawAliasZPass(qbool weapon_model)
+{
+	R_ApplyRenderingState(weapon_model ? r_state_weaponmodel_transparent_zpass : r_state_aliasmodel_transparent_zpass);
+}
+
 void GLC_StateBeginDrawAliasFrameProgram(texture_ref texture, texture_ref fb_texture, int render_effects, struct custom_model_color_s* custom_model, float ent_alpha, qbool additive_pass)
 {
 	qbool weapon_model = render_effects & RF_WEAPONMODEL;

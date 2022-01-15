@@ -348,10 +348,9 @@ void QMB_InitParticles(void)
 		Q_free(particles); // yeah, shit happens, work around
 		QMB_AllocParticles();
 	}
-	else {
-		QMB_ClearParticles (); // also re-allocc particles
-		qmb_initialized = false; // so QMB particle system will be turned off if we fail to load some texture
-	}
+
+	QMB_ClearParticles(); // re-alloc particles, and create linked list of next free particle
+	qmb_initialized = false; // so QMB particle system will be turned off if we fail to load some texture
 
 	ADD_PARTICLE_TEXTURE(ptex_none, null_texture_reference, 0, 1, 0, 0, 0, 0);
 
@@ -477,10 +476,7 @@ void QMB_ClearParticles (void)
 {
 	int	i;
 
-	if (!qmb_initialized) {
-		return;
-	}
-
+	// FIXME: if r_numparticles hasn't changed, then no-need to reallocate again.
 	Q_free(particles);		// free
 	QMB_AllocParticles();	// and alloc again
 

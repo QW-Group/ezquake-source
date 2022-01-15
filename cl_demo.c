@@ -38,6 +38,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "demo_controls.h"
 #include "mvd_utils.h"
 #include "r_trace.h"
+#include "sha3.h"
 #ifndef CLIENTONLY
 #include "server.h"
 #endif
@@ -4297,6 +4298,28 @@ void CL_QTVPoll (void)
 
 			return;
 		}
+		else if (!strcmp(authmethod, "SHA3_512"))
+		{
+			if (strlen(challenge)>=63)
+			{
+				sha3_context c;
+				const uint8_t *byte_hash;
+
+				sha3_Init512(&c);
+				sha3_Update(&c, challenge, strlen(challenge));
+				sha3_Update(&c, qtvpassword, strlen(qtvpassword));
+				byte_hash = sha3_Finalize(&c);
+				sha3_512_ByteToHex(hash, byte_hash);
+				snprintf(connrequest, sizeof(connrequest),
+					"%s" "AUTH: SHA3_512\nPASSWORD: \"%s\"\n\n", QTV_CL_HEADER(QTV_VERSION, QTV_EZQUAKE_EXT_NUM), hash);
+
+				VFS_WRITE(qtvrequest, connrequest, strlen(connrequest));
+
+				return;
+			}
+
+			Com_Printf("Wrong challenge for AUTH: %s\n", authmethod);
+		}
 		else if (!strcmp(authmethod, "CCITT"))
 		{
 			if (strlen(challenge)>=32)
@@ -4397,7 +4420,7 @@ void CL_QTVList_f (void)
 
 	/* if we use pass, then send our supported auth methods */
 	if (qtvpassword[0]) {
-		connrequest = "AUTH: MD4\n" "AUTH: CCITT\n" "AUTH: PLAIN\n" "AUTH: NONE\n";
+		connrequest = "AUTH: SHA3_512\n" "AUTH: MD4\n" "AUTH: CCITT\n" "AUTH: PLAIN\n" "AUTH: NONE\n";
 		VFS_WRITE(newf, connrequest, strlen(connrequest));
 	}
 
@@ -4722,6 +4745,7 @@ void CL_QTVPlay_f (void)
 	if (qtvpassword[0])
 	{
 		connrequest =
+						"AUTH: SHA3_512\n"
 						"AUTH: MD4\n"
 						"AUTH: CCITT\n"
 						"AUTH: PLAIN\n"

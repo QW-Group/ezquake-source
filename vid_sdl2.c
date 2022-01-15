@@ -97,6 +97,7 @@ static void in_raw_callback(cvar_t *var, char *value, qbool *cancel);
 static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *cancel);
 static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel);
 static void framebuffer_smooth_changed_callback(cvar_t* var, char* string, qbool* cancel);
+static void vid_reload_callback(cvar_t* var, char* string, qbool* cancel);
 static void GrabMouse(qbool grab, qbool raw);
 static void HandleEvents(void);
 static void VID_UpdateConRes(void);
@@ -137,6 +138,20 @@ static qbool last_working_values = false;
 // deferred events (Sys_SendDeferredKeyEvents)
 static qbool wheelup_deferred = false;
 static qbool wheeldown_deferred = false;
+
+// vid_reload
+#define CVAR_RELOAD_GFX_COMMAND "vid_reload"
+static qbool vid_reload_pending = false;
+static cvar_t vid_reload_auto = { "vid_reload_auto", "1", 0, vid_reload_callback };
+
+static void vid_reload_callback(cvar_t* var, char* string, qbool* cancel)
+{
+	vid_reload_pending = false;
+
+	if (atoi(string) != 0) {
+		vid_reload_pending = Cvar_AnyModified(CVAR_RELOAD_GFX);
+	}
+}
 
 //
 // OS dependent cvar defaults
@@ -218,6 +233,7 @@ cvar_t vid_framebuffer_hdr         = {"vid_framebuffer_hdr",           "0",     
 cvar_t vid_framebuffer_hdr_tonemap = {"vid_framebuffer_hdr_tonemap",   "0" };
 cvar_t vid_framebuffer_smooth      = {"vid_framebuffer_smooth",        "1",       CVAR_NO_RESET, framebuffer_smooth_changed_callback };
 cvar_t vid_framebuffer_sshotmode   = {"vid_framebuffer_sshotmode",     "1" };
+cvar_t vid_framebuffer_multisample = {"vid_framebuffer_multisample",   "0" };
 
 //
 // function declaration
@@ -907,6 +923,12 @@ static void HandleEvents(void)
 
 /*****************************************************************************/
 
+void VID_SoftRestart(void)
+{
+	R_Shutdown(r_shutdown_reload);
+	QMB_ShutdownParticles();
+}
+
 void VID_Shutdown(qbool restart)
 {
 	IN_DeactivateMouse();
@@ -919,7 +941,7 @@ void VID_Shutdown(qbool restart)
 	}
 #endif
 
-	R_Shutdown(restart);
+	R_Shutdown(restart ? r_shutdown_restart : r_shutdown_full);
 
 	if (sdl_context) {
 		SDL_GL_DeleteContext(sdl_context);
@@ -963,6 +985,8 @@ static int VID_SDL_InitSubSystem(void)
 	return 0;
 }
 
+// This is called during video initialisation & vid_restart, but not vid_reload
+// Do not include any cvars here that should take effect without full restart
 static void VID_RegisterLatchCvars(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
@@ -1028,6 +1052,9 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&vid_framebuffer_hdr_tonemap);
 	Cvar_Register(&vid_framebuffer_smooth);
 	Cvar_Register(&vid_framebuffer_sshotmode);
+	Cvar_Register(&vid_framebuffer_multisample);
+
+	Cvar_Register(&vid_reload_auto);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -1367,6 +1394,11 @@ static void VID_SDL_Init(void)
 #endif
 	SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, vid_grab_keyboard.integer == 0 ? "0" : "1");
 	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
+#ifdef __APPLE__
+#ifdef SDL_HINT_TOUCH_MOUSE_EVENTS
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+#endif
+#endif
 
 	{
 		int i;
@@ -1687,32 +1719,18 @@ static void VID_ParseCmdLine(void)
 #endif
 }
 
-static void VID_Restart_f(void)
+void GFX_Init(void);
+void ReloadPaletteAndColormap(void);
+
+static void VID_Startup(void)
 {
-	extern void GFX_Init(void);
-	extern void ReloadPaletteAndColormap(void);
-	qbool old_con_suppress;
-
-	if (!host_initialized) { // sanity
-		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
-		return;
-	}
-
-	VID_Shutdown(true);
-
-	ReloadPaletteAndColormap();
-
-	// keys can get stuck because SDL2 doesn't send keyup event when the video system is down
-	Key_ClearStates();
-
-	VID_Init(host_basepal);
+	qbool old_con_suppress = con_suppress;
 
 	// force models to reload (just flush, no actual loading code here)
 	Cache_Flush();
 
 	// shut up warnings during GFX_Init();
-	old_con_suppress = con_suppress;
-	con_suppress = (developer.value ? false : true);
+	con_suppress = !developer.integer;
 	// reload 2D textures, particles textures, some other textures and gfx.wad
 	GFX_Init();
 
@@ -1731,6 +1749,57 @@ static void VID_Restart_f(void)
 	CachePics_AtlasFrame();
 	// compile all programs
 	R_ProgramCompileAll();
+
+	Cvar_ClearAllModifiedFlags(CVAR_RELOAD_GFX);
+}
+
+void VID_ReloadCvarChanged(cvar_t* var)
+{
+	if (!vid_reload_auto.integer) {
+		Con_Printf("%s needs %s to immediately take effect.\n", var->name, CVAR_RELOAD_GFX_COMMAND);
+	}
+	else {
+		vid_reload_pending = true;
+	}
+}
+
+static void VID_Reload_f(void)
+{
+	if (!host_initialized) { // sanity
+		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
+		return;
+	}
+
+	VID_SoftRestart();
+	ReloadPaletteAndColormap();
+	VID_Startup();
+	vid_reload_pending = false;
+}
+
+void VID_ReloadCheck(void)
+{
+	if (vid_reload_pending && host_initialized) {
+		VID_Reload_f();
+	}
+}
+
+static void VID_Restart_f(void)
+{
+	if (!host_initialized) { // sanity
+		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
+		return;
+	}
+
+	VID_Shutdown(true);
+
+	ReloadPaletteAndColormap();
+
+	// keys can get stuck because SDL2 doesn't send keyup event when the video system is down
+	Key_ClearStates();
+
+	VID_Init(host_basepal);
+
+	VID_Startup();
 }
 
 static void VID_DisplayList_f(void)
@@ -1766,6 +1835,7 @@ void VID_RegisterCommands(void)
 	if (!host_initialized) {
 		Cmd_AddCommand("vid_gfxinfo", VID_GfxInfo_f);
 		Cmd_AddCommand("vid_restart", VID_Restart_f);
+		Cmd_AddCommand(CVAR_RELOAD_GFX_COMMAND, VID_Reload_f);
 		Cmd_AddCommand("vid_displaylist", VID_DisplayList_f);
 		Cmd_AddCommand("vid_modelist", VID_ModeList_f);
 		Cmd_AddLegacyCommand("vid_framebuffer_palette", vid_software_palette.name);

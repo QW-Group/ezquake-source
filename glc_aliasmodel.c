@@ -399,6 +399,10 @@ static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int po
 			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_lerpFraction, lerpfrac);
 			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_time, cl.time);
 
+			if (ent->r_modelalpha < 1) {
+				GLC_StateBeginDrawAliasZPass(render_effects & RF_WEAPONMODEL);
+				GL_DrawArrays(GL_TRIANGLES, firstVert, paliashdr->vertsPerPose);
+			}
 			GLC_StateBeginDrawAliasFrameProgram(texture, underwatertexture, render_effects, ent->custom_model, ent->r_modelalpha, false);
 			R_CustomColor(color[0], color[1], color[2], color[3]);
 			GL_DrawArrays(GL_TRIANGLES, firstVert, paliashdr->vertsPerPose);
@@ -410,38 +414,11 @@ static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int po
 	}
 }
 
-static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfracDefault)
+static void GLC_DrawAliasFrameImpl_Immediate_Cache(aliashdr_t* paliashdr, entity_t* ent, vbo_model_vert_t* verts1, vbo_model_vert_t* verts2, float lerpfracDefault, qbool limit_lerp, qbool outline, qbool mtex)
 {
-	extern cvar_t r_lerpmuzzlehack;
-
-	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
-	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
-	GLenum primitive = GL_TRIANGLES;
-	qbool mtex = R_TextureReferenceIsValid(fb_texture) && gl_mtexable;
 	int i;
-	vbo_model_vert_t* vbo_buffer = (vbo_model_vert_t*)model->temp_vbo_buffer;
-
 	vec3_t interpolated_verts;
-	vbo_model_vert_t *verts1, *verts2;
-	qbool limit_lerp = r_lerpmuzzlehack.integer && (ent->model->renderfx & RF_LIMITLERP);
 
-	R_ProgramUse(r_program_none);
-	if (outline) {
-		GLC_StateBeginAliasOutlineFrame(render_effects & RF_WEAPONMODEL);
-	}
-	else if (render_effects & RF_CAUSTICS) {
-		GLC_StateBeginUnderwaterAliasModelCaustics(texture, fb_texture);
-	}
-	else {
-		GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, (render_effects & RF_ALPHABLEND) || ent->r_modelalpha < 1, ent->custom_model, ent->renderfx & RF_WEAPONMODEL);
-	}
-
-	verts1 = &vbo_buffer[pose1 * paliashdr->poseverts];
-	verts2 = &vbo_buffer[pose2 * paliashdr->poseverts];
-
-	if (!cache) {
-		GLC_Begin(primitive);
-	}
 	for (i = 0; i < paliashdr->vertsPerPose; ++i, ++verts1, ++verts2) {
 		float color[4];
 		float s = verts1->texture_coords[0];
@@ -462,34 +439,87 @@ static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int 
 		else {
 			VectorInterpolate(verts1->position, lerpfrac, verts2->position, interpolated_verts);
 		}
-		if (cache) {
-			temp_aliasmodel_buffer[i].texture_coords[0] = s;
-			temp_aliasmodel_buffer[i].texture_coords[1] = t;
-			temp_aliasmodel_buffer[i].color[0] = color[0] * 255;
-			temp_aliasmodel_buffer[i].color[1] = color[1] * 255;
-			temp_aliasmodel_buffer[i].color[2] = color[2] * 255;
-			temp_aliasmodel_buffer[i].color[3] = color[3] * 255;
-			VectorCopy(interpolated_verts, temp_aliasmodel_buffer[i].position);
+		temp_aliasmodel_buffer[i].texture_coords[0] = s;
+		temp_aliasmodel_buffer[i].texture_coords[1] = t;
+		temp_aliasmodel_buffer[i].color[0] = color[0] * 255;
+		temp_aliasmodel_buffer[i].color[1] = color[1] * 255;
+		temp_aliasmodel_buffer[i].color[2] = color[2] * 255;
+		temp_aliasmodel_buffer[i].color[3] = color[3] * 255;
+		VectorCopy(interpolated_verts, temp_aliasmodel_buffer[i].position);
+	}
+}
+
+static void GLC_DrawAliasFrameImpl_Immediate_TrueImmediate(aliashdr_t* paliashdr, qbool mtex)
+{
+	int i;
+
+	GLC_Begin(GL_TRIANGLES);
+	for (i = 0; i < paliashdr->vertsPerPose; ++i) {
+		// texture coordinates come from the draw list
+		float s = temp_aliasmodel_buffer[i].texture_coords[0];
+		float t = temp_aliasmodel_buffer[i].texture_coords[1];
+		byte* color = temp_aliasmodel_buffer[i].color;
+
+		if (mtex) {
+			GLC_MultiTexCoord2f(GL_TEXTURE0, s, t);
+			GLC_MultiTexCoord2f(GL_TEXTURE1, s, t);
 		}
 		else {
-			// texture coordinates come from the draw list
-			if (mtex) {
-				GLC_MultiTexCoord2f(GL_TEXTURE0, s, t);
-				GLC_MultiTexCoord2f(GL_TEXTURE1, s, t);
-			}
-			else {
-				glTexCoord2f(s, t);
-			}
-			R_CustomColor(color[0], color[1], color[2], color[3]);
-			GLC_Vertex3fv(interpolated_verts);
+			glTexCoord2f(s, t);
 		}
+		R_CustomColor4ubv(color);
+		GLC_Vertex3fv(temp_aliasmodel_buffer[i].position);
 	}
+	GLC_End();
+}
+
+static void GLC_DrawAliasFrameImpl_Immediate(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfracDefault)
+{
+	extern cvar_t r_lerpmuzzlehack;
+
+	aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(model);
+	qbool cache = buffers.supported && temp_aliasmodel_buffer_size >= paliashdr->poseverts;
+	qbool mtex = R_TextureReferenceIsValid(fb_texture) && gl_mtexable;
+	vbo_model_vert_t* vbo_buffer = (vbo_model_vert_t*)model->temp_vbo_buffer;
+	vbo_model_vert_t* verts1, * verts2;
+	qbool limit_lerp = r_lerpmuzzlehack.integer && (ent->model->renderfx & RF_LIMITLERP);
+	qbool alpha_blend = (render_effects & RF_ALPHABLEND) || ent->r_modelalpha < 1;
+	qbool is_weapon_model = (ent->renderfx & RF_WEAPONMODEL);
+
+	verts1 = &vbo_buffer[pose1 * paliashdr->poseverts];
+	verts2 = &vbo_buffer[pose2 * paliashdr->poseverts];
+
+	GLC_DrawAliasFrameImpl_Immediate_Cache(paliashdr, ent, verts1, verts2, lerpfracDefault, limit_lerp, outline, mtex);
 	if (cache) {
 		buffers.Update(r_buffer_aliasmodel_glc_pose_data, sizeof(temp_aliasmodel_buffer[0]) * paliashdr->vertsPerPose, temp_aliasmodel_buffer);
-		GL_DrawArrays(primitive, 0, paliashdr->vertsPerPose);
+	}
+
+	R_ProgramUse(r_program_none);
+	if (alpha_blend && !outline) {
+		GLC_StateBeginDrawAliasZPass(is_weapon_model);
+		if (cache) {
+			GL_DrawArrays(GL_TRIANGLES, 0, paliashdr->vertsPerPose);
+		}
+		else {
+			GLC_DrawAliasFrameImpl_Immediate_TrueImmediate(paliashdr, mtex);
+		}
+	}
+
+	if (outline) {
+		GLC_StateBeginAliasOutlineFrame(is_weapon_model);
+	}
+	else if (render_effects & RF_CAUSTICS) {
+		GLC_StateBeginUnderwaterAliasModelCaustics(texture, fb_texture);
 	}
 	else {
-		GLC_End();
+		GLC_StateBeginDrawAliasFrame(texture, fb_texture, mtex, alpha_blend, ent->custom_model, is_weapon_model);
+	}
+
+	if (cache) {
+		GL_DrawArrays(GL_TRIANGLES, 0, paliashdr->vertsPerPose);
+	}
+	else {
+		GLC_DrawAliasFrameImpl_Immediate_TrueImmediate(paliashdr, mtex);
 	}
 
 	if (render_effects & RF_CAUSTICS) {

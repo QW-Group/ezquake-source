@@ -38,6 +38,11 @@
 - Fixed bug causing client to receive playerinfo packet before knowing which protocol extensions are enabled when using `/cl_delay_packet` on local server (#488, reported by pattah)
 - Fixed bug causing fps to affect `/cl_yawspeed`/`+left`/`+right` commands (keyboard turning) (old bug, #550, reported by veganaize)
 - Fixed bug causing missing entities when playing back demos recorded in FTE (old bug, #551, reported by lordee)
+- Fixed bug causing toggling `/gl_no24bit` 1 => 0 causing maximum of a single QMB particle (old bug, #604, reported by hemostx)
+- Fixed bug causing frag-message highlighting of normal messages if name at start of line (very old bug, reported by qqshka #623)
+- Fixed bugs causing access of invalid memory when loading corrupt .bsp files (very old bugs, reported by mmmds, #615)
+- Fixed bug causing `/gl_particle_gibtrails 1` to turn classic blood trails following gibs into rocket smoke (very old bug, reported by hemostx, #614)
+- Translucent models are first drawn with a z-pass, to stop overdraw affecting level of translucency
 
 ### Bugs which affected 3.x
 
@@ -54,6 +59,7 @@
 - Fixed bug causing `/in_raw 0` to produce no mouse input in-game on MacOS
 - Workaround applied to show players when playing back demos using FTE model extensions where player index >= 256 (3.1+ bug (no support in older clients), #551, reported by lordee)
 - Fixed `/demo_jump_mark` not working if `/demo_jump_rewind` not set
+- Horizontal field of view limit has increased to 165 (screen ratio adjustment previously limited this to 127 on 16:9) (#389, 3.0 issue)
 
 #### Bugs which affected 3.5 (typically related to renderer rewrite)
 
@@ -74,6 +80,7 @@
 - `/gl_outline 2` fixed (3.5 bug, reported by fourier)
 - `/gl_shaftlight 0` fixed on glsl path in classic renderer (3.5 bug, reported by maniac)
 - `/r_dynamic 2` was calculating too many lightmaps (3.5 bug, reported by ciscon)
+- `/gl_no24bit` wasn't disabling loading external textures (3.5 bug, kind of reported by hemostx, #601)
 - Fixed bug causing invalid texture references to be used if `/vid_restart` issued while disconnected (3.5 bug)
 - Fixed bug causing oblique particles if sprite array dimensions were unmatched (width != height) (3.5 bug - reported by ciscon)
 - Fixed bug causing flashblend to render as transparent if sprite array dimensions were unmatched (width != height) (3.5 bug - reported by ciscon)
@@ -96,6 +103,7 @@
 - Fixed bug causing invalid lightmap rendering when using drawflat and map load caused number of lightmaps to increase (3.5 bug, found during #540)
 - Fixed bug causing unlit lightmap data to be set to fullbright on first map load after watching demo/qtv stream with r_fullbright enabled (3.5 bug, reported by HangTime)
 - Fixed bug causing off-by-one error when drawing rectangle outlines (3.5 bug, reported by Matrix, #536)
+- Fixed bug causing `/gl_no24bit` to not affect aliasmodel skins (3.5 bug, reported by hemostx, #605)
 
 ### Ruleset-related changes
 
@@ -109,9 +117,6 @@
 - Immediate logging of the console (`-condebug`) is disabled during games when using competitive rulesets
 
 ### Debugging protocol changes (weapon scripts)
-
-- `/cl_debug_weapon_send`: sends information about client-side weapon selection, which is stored in .mvd on supported servers
-- `/cl_debug_weapon_view`: views the client-side weapon debugging messages, if stored in .mvd
 
 - `/cl_debug_antilag_send`: sends location of opponents, which is stored in .mvd on supported servers
 - `/cl_debug_antilag_view`: chooses which location is used when rendering players on supported .mvd/qtv streams (0 = normal, 1 = antilag-rewind, 2 = client position)
@@ -128,9 +133,7 @@
 - `/cl_keypad 2` - keypad will behave as `/cl_keypad 0` in-game, but `/cl_keypad 1` in console etc
 - `/cl_delay_packet_target` - like cl_delay_packet, but half delay is applied to outgoing and the incoming delay is flexible to match the value
 - `/cl_net_clientport` - allows the network client port to be specified in-game (rather than just `-clientport` command line switch)
-- `/cl_pext_serversideweapon` - protocol extension to move weapon selection to server (requires updated mvdsv)
 - `/cl_sv_packetsync` - when using internal server & delay packet, controls if server processes packets as they are received (fixes #292)
-- `/cl_weaponforgetondeath` - resets weapon to shotgun when respawning
 - `/cl_weaponforgetorder` - now sets the best weapon then falls back to sg or axe (as per `/cl_weaponhide_axe`)
 - `/cl_window_caption 2` - window title will be 'ezQuake' and will not change with connection status
 - `/cl_username` & `/authenticate` to support optional logins via badplace.eu (see [guide](https://github.com/ezQuake/ezquake-source/wiki/Authentication))
@@ -139,6 +142,8 @@
 - `/demo_jump_end` to jump to next intermission point or end of demo (requested by Hangtime, #564)
 - `/demo_jump_skip_messages` to determine if messages should be printed to console during demo jump
 - `/enemyforceskins 1` will search for player names in lower case (#345)
+- `/fs_savegame_home` added, controls if games saved to home directory (default) or game directory (reported by githubtefo, #586)
+- `/gl_consolefont` now falls back to 'original' on load failure, but doesn't change value (for toggling no24bit, #605)
 - `/gl_custom_grenade_tf` allows `/gl_custom_grenade_*` variables to be ignored when playing Team Fortress
 - `/gl_mipmap_viewmodels` removed, replaced with `/gl_texturemode_viewmodels`
 - `/gl_turb_fire` added, controls if QMB explosions/fire spawn bubbles underwater
@@ -169,19 +174,27 @@
 - `/scr_scoreboard_login_indicator` will be shown next to a player's name when they are logged in (if flag not available)
 - `/scr_scoreboard_login_color` controls the color of a player's name when they are logged in
 - `/set_ex2` command added, same functionality as `/set_ex` but doesn't resolve funchars - useful if script needs to compare value later (#428)
+- `/status` command will be ignored if an alias with the same name is found, use `/sv_status` instead (#532)
 - `/timedemo` commands show extra info at end to try and highlight stutter (measuring worst frametimes)
 - `/timedemo2` command renders demo in stop-motion at a particular fps
 - `/tp_poweruptextstyle` controls if `$colored_powerups` or `$colored_short_powerups` is used in internal reporting commands
 - `/tp_point` will show targets in priority order, if `/tp_pointpriorities` is enabled
+- `/v_dlightcolor` added - controls if being inside flashblend light affects palette by color of light
+- `/v_dlightcshiftpercent` added - controls strength of palette shift effect when inside flashblend light
+- `/v_dlightcshift` changed - now enum of when being inside flashblend light affects palette (requested by HangTime, #542)
 - `/vid_framebuffer_smooth` controls linear or nearest filtering (thanks to Calinou)
 - `/vid_framebuffer_sshotmode` controls if screenshot is of framebuffer or screen size
+- `/vid_framebuffer_multisample` controls multi-sampling level of the framebuffer (reported by Matrix, #367)
 - `/vid_hwgamma_fps` controls how frequency the gamma of the monitor will be set if hardware gamma is enabled
+- `/vid_reload` command to reload textures, rather than full `/vid_restart` (#602)
+- `/vid_reload_auto` controls if `/vid_reload` is automatically called when a cvar affecting texture load is changed
 - `-oldgamma` command line option to re-instate old `-gamma` behaviour
 - `-r-trace` command line option in debug build - writes out API calls for each frame to qw/trace/ directory (will kill fps, just for debugging)
 - `-r-verify` command line option in debug build - regularly downloads GL state from driver, for use with -r-trace
 - `-noatlas` command line option to stop the system building a 2D atlas at startup
 - `-r-nomultibind` command line option to disable calls to glBindTextures
 - `+qtv_delay` command, to be used with `/qtv_adjustbuffer 2`... pauses QTV stream.  When released, QTV buffer length set to length of buffer
+- `+fire_ar` command added, an anti-rollover `+fire` - experimental, should simplify weapon scripts
 - On startup, `default.cfg` is executed before config is loaded (nQuake's default.cfg will be ignored)
 - On startup (after `autoexec.cfg` executed), a `vid_restart`/`s_restart` will be issued if any latched variables were changed (#458)
 - GLSL gamma now supported in classic renderer
@@ -193,12 +206,16 @@
 - Added hud element 'frametime', similar to fps but measuring (max) frametime
 - Changed file-handling when viewing demos from within .zip|.gz to reduce temporary files being left on hard drive
 - PNG warning messages now printed to console rather than stdout
-- Added macro $timestamp, which is in format YYYYMMDD-hhmmss
+- Added macro $timestamp, which is in format YYYYMMDD-hhmm
 - Qizmo-compressed files can be played back using Qizmo on linux
 - When watching mvd/qtv, `/record` & `/stop` become `/mvdrecord` and `/mvdstop` respectively (suggested by HangTime)
 - Internal server has been updated to match latest mvdsv codebase
 - Removed chaticons limitation where source image had to be 256x256 pixels (#477, reported by timbergeron)
 - Demo signoff messages are no longer random
+- Multiview will be disabled when watching a solo demo and no powerup cams are active (requested by mmavova, #126)
+- qw:// urls in command line will be opened even if not preceded by `+qwurl` (thanks to ciscon)
+- Linux: `/register_qwurl_protocol` command will register protocol with xdg (thanks to ciscon)
+- Commands that search by regular expression (`/cvarlist_re` etc) are now case-insensitive (reported by HangTime, #599)
 
 ### Build/meta
 

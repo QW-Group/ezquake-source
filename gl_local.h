@@ -267,9 +267,10 @@ void GL_DrawElementsInstancedBaseVertexBaseInstance(GLenum mode, GLsizei count, 
 qbool GL_DrawElementsBaseVertexAvailable(void);
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
+GLenum GL_ProcessAllErrors(const char* message);
 
 #ifdef WITH_RENDERING_TRACE
-GLenum GL_ProcessErrors(const char* message);
+#define GL_ProcessErrors GL_ProcessAllErrors
 
 #define GL_LoadRequiredFunction(varName, functionName)           (((varName) = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL)
 #define GL_LoadMandatoryFunction(functionName,testFlag)          { testFlag &= ((q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName)) != NULL); }
@@ -300,7 +301,7 @@ GLenum GL_ProcessErrors(const char* message);
 		R_TraceAPI("%s(%s)@%s,%d", #name, args, __FILE__, __LINE__); \
 	} \
 	result = q ## name ## _impl(__VA_ARGS__); \
-	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+	if (COM_CheckParm(cmdline_param_client_video_r_debug) || COM_CheckParm(cmdline_param_client_video_r_trace)) { \
 		GL_ProcessErrors(#name); \
 		R_TraceAPI(q ## name ## _resultString, result); \
 	} \
@@ -315,7 +316,7 @@ GLenum GL_ProcessErrors(const char* message);
 		R_TraceAPI("%s()@%s,%d", #name, __FILE__, __LINE__); \
 	} \
 	result = q ## name ## _impl(); \
-	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+	if (COM_CheckParm(cmdline_param_client_video_r_debug) || COM_CheckParm(cmdline_param_client_video_r_trace)) { \
 		GL_ProcessErrors(#name); \
 		R_TraceAPI(q ## name ## _resultString, result); \
 	} \
@@ -325,13 +326,13 @@ GLenum GL_ProcessErrors(const char* message);
 
 #define GL_Procedure(name, ...) \
 { \
-	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+	if (COM_CheckParm(cmdline_param_client_video_r_debug)) { \
 		const char* ez_gldebug_args = va(q ## name ## _formatString, __VA_ARGS__); \
 \
 		R_TraceAPI("%s(%s)@%s,%d", #name, ez_gldebug_args, __FILE__, __LINE__); \
 	} \
 	q ## name ## _impl(__VA_ARGS__); \
-	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+	if (COM_CheckParm(cmdline_param_client_video_r_debug) || COM_CheckParm(cmdline_param_client_video_r_trace)) { \
 		GL_ProcessErrors(#name); \
 	} \
 }
@@ -342,7 +343,7 @@ GLenum GL_ProcessErrors(const char* message);
 		R_TraceAPI("%s()@%s,%d", #name, __FILE__, __LINE__); \
 	} \
 	q ## name ## _impl(); \
-	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+	if (COM_CheckParm(cmdline_param_client_video_r_debug) || COM_CheckParm(cmdline_param_client_video_r_trace)) { \
 		GL_ProcessErrors(#name); \
 	} \
 }
@@ -356,7 +357,7 @@ GLenum GL_ProcessErrors(const char* message);
 		R_TraceAPI("%s(%s)@%s,%d", #name, ez_gldebug_args, __FILE__, __LINE__); \
 	} \
 	q ## name ## _impl(__VA_ARGS__); \
-	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+	if (COM_CheckParm(cmdline_param_client_video_r_debug) || COM_CheckParm(cmdline_param_client_video_r_trace)) { \
 		ez_gl_error = GL_ProcessErrors(#name); \
 	} \
 	else { \
@@ -374,7 +375,7 @@ GLenum GL_ProcessErrors(const char* message);
 		R_TraceAPI("%s(%s)@%s,%d", #name, ez_gldebug_args, __FILE__, __LINE__); \
 	} \
 	q ## name ## _impl(__VA_ARGS__); \
-	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+	if (COM_CheckParm(cmdline_param_client_video_r_debug) || COM_CheckParm(cmdline_param_client_video_r_trace)) { \
 		ez_gl_error = GL_ProcessErrors(#name); \
 	} \
 	else { \
@@ -393,7 +394,7 @@ GLenum GL_ProcessErrors(const char* message);
 		R_TraceAPI("%s(%s)@%s,%d", #name, ez_gldebug_args, __FILE__, __LINE__); \
 	} \
 	name(__VA_ARGS__); \
-	if (COM_CheckParm(cmdline_param_client_video_r_trace)) { \
+	if (COM_CheckParm(cmdline_param_client_video_r_debug) || COM_CheckParm(cmdline_param_client_video_r_trace)) { \
 		GL_ProcessErrors(#name); \
 	} \
 }

@@ -83,8 +83,9 @@ void GL_EnsureFinished(void)
 	glFinish();
 }
 
-#ifdef WITH_RENDERING_TRACE
-GLenum GL_ProcessErrors(const char* message)
+GLenum GL_ProcessErrors(const char* message);
+
+GLenum GL_ProcessAllErrors(const char* message)
 {
 	GLenum error = glGetError();
 	GLenum firstError = error;
@@ -115,15 +116,10 @@ GLenum GL_ProcessErrors(const char* message)
 	}
 	return firstError;
 }
-#endif // WITH_RENDERING_TRACE
 
 void GL_ConsumeErrors(void)
 {
-	GLenum error = glGetError();
-
-	while (error != GL_NO_ERROR) {
-		error = glGetError();
-	}
+	GL_ProcessAllErrors("Consuming prior errors...");
 }
 
 static void GL_PrintInfoLine(const char* label, int labelsize, const char* fmt, ...)
@@ -260,12 +256,13 @@ int LightmapBenchmarkComparison(const void* lhs_, const void* rhs_)
 	return (uintptr_t)lhs < (uintptr_t)rhs ? -1 : 1;
 }
 
+static byte gl_lightmap_data[LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 16];
+
 void GL_BenchmarkLightmapFormats(void)
 {
 	texture_ref texture;
 	int format;
 	int type;
-	byte data[LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 16];
 	lightmap_benchmark_t results[(sizeof(image_formats) / sizeof(image_formats[0])) * (sizeof(image_types) / sizeof(image_types[0]))];
 	int count = 0, i;
 
@@ -278,13 +275,13 @@ void GL_BenchmarkLightmapFormats(void)
 				continue;
 			}
 
-			memset(data, 255, sizeof(data));
+			memset(gl_lightmap_data, 255, sizeof(gl_lightmap_data));
 
 			GL_ProcessErrors("Pre-init");
 
 			GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &texture, "lightmap-benchmark");
 			renderer.TextureUnitBind(0, texture);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 0, image_formats[format].value, image_types[type].value, data);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 0, image_formats[format].value, image_types[type].value, gl_lightmap_data);
 			if (glGetError() != GL_NO_ERROR) {
 				Con_Printf("%s/%s: error\n", image_formats[format].name, image_types[type].name);
 				continue;
@@ -293,10 +290,10 @@ void GL_BenchmarkLightmapFormats(void)
 			renderer.TextureWrapModeClamp(texture);
 			glFinish();
 
-			memset(data, 0, sizeof(data));
+			memset(gl_lightmap_data, 0, sizeof(gl_lightmap_data));
 			started = Sys_DoubleTime();
 			for (i = 0; i < 1000; ++i) {
-				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, image_formats[format].value, image_types[type].value, data);
+				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, image_formats[format].value, image_types[type].value, gl_lightmap_data);
 			}
 			glFinish();
 			finished = Sys_DoubleTime();

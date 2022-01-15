@@ -35,7 +35,7 @@ static void OnChange_gl_consolefont(cvar_t *, char *, qbool *);
 void Draw_InitFont(void);
 
 cvar_t gl_alphafont    = { "gl_alphafont", "1" };
-cvar_t gl_consolefont  = { "gl_consolefont", "povo5", 0, OnChange_gl_consolefont };
+cvar_t gl_consolefont  = { "gl_consolefont", "povo5", CVAR_AUTO, OnChange_gl_consolefont };
 cvar_t scr_coloredText = { "scr_coloredText", "1" };
 cvar_t gl_charsets_min = { "gl_charsets_min", "1" };
 
@@ -710,10 +710,13 @@ void Draw_InitCharset(void)
 		}
 	}
 
+	Cvar_AutoReset(&gl_consolefont);
 	Draw_LoadCharset(gl_consolefont.string);
 
 	if (!R_TextureReferenceIsValid(char_textures[0].glyphs[0].texnum)) {
-		Cvar_Set(&gl_consolefont, "original");
+		if (Draw_LoadCharset("original") == 0) {
+			Cvar_AutoSet(&gl_consolefont, "original");
+		}
 	}
 
 	if (!R_TextureReferenceIsValid(char_textures[0].glyphs[0].texnum)) {

@@ -27,7 +27,7 @@ stages:
           EZ_CONFIG_FILE=.config_windows make -j5
           EZ_CONFIG_FILE=.config_windows make strip
           mv ezquake.exe ezquake-multi-mingw-x32.exe
-          zip ezquake-latest-win32.zip ezquake-multi-mingw-x32.exe LICENSE release-notes.md
+          zip ezquake-latest-win32.zip ezquake-multi-mingw-x32.exe LICENSE release-notes.md release-notes-latest.md
       # Copy all zip files & release notes to distribution directory
       - task: PublishPipelineArtifact@1
         inputs:
@@ -154,6 +154,7 @@ stages:
           targetFolder: 'tozip'
           contents: |
             release-notes.md
+            release-notes-latest.md
             LICENSE
       - task: ArchiveFiles@2
         inputs:
@@ -169,6 +170,8 @@ stages:
           artifactName: windows
 # Upload to github once previous stage complete
 - stage: upload
+  pool:
+    vmImage: 'ubuntu-latest'
   jobs:
   - job: upload
     steps:
@@ -190,7 +193,9 @@ stages:
         path: $(Build.ArtifactStagingDirectory)/distributableBinaries/
     - task: CopyFiles@2
       inputs:
-        contents: release-notes.md
+        contents: |
+          release-notes.md
+          release-notes-latest.md
         targetFolder: $(Build.ArtifactStagingDirectory)/distributableBinaries/
     - task: PublishBuildArtifacts@1
       inputs:

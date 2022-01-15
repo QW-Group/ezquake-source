@@ -502,7 +502,7 @@ char* Macro_TimeStamp(void)
 	if (!(ptm = localtime(&t)))
 		return "_baddate_";
 
-	strftime(macro_buf, sizeof(macro_buf) - 1, "%Y%m%d-%H%M%S", ptm);
+	strftime(macro_buf, sizeof(macro_buf) - 1, "%Y%m%d-%H%M", ptm);
 	return macro_buf;
 }
 

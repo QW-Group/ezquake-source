@@ -56,7 +56,7 @@ static void SCR_HUD_DrawArmor(hud_t *hud)
 {
 	int level;
 	qbool low;
-	static cvar_t *scale = NULL, *style, *digits, *align, *pent_666, *proportional;
+	static cvar_t *scale = NULL, *style, *digits, *align, *pent_666, *proportional, *hidezero;
 
 	if (scale == NULL) {
 		// first time called
@@ -66,6 +66,7 @@ static void SCR_HUD_DrawArmor(hud_t *hud)
 		align = HUD_FindVar(hud, "align");
 		pent_666 = HUD_FindVar(hud, "pent_666"); // Show 666 or armor value when carrying pentagram
 		proportional = HUD_FindVar(hud, "proportional");
+		hidezero = HUD_FindVar(hud, "hidezero"); //Hide armor number if zero
 	}
 
 	if (HUD_Stats(STAT_HEALTH) > 0) {
@@ -82,6 +83,7 @@ static void SCR_HUD_DrawArmor(hud_t *hud)
 		level = 0;
 		low = true;
 	}
+	if (level == 0 && hidezero->integer == 1) return;
 	if (cl.spectator == cl.autocam) {
 		SCR_HUD_DrawNum(hud, level, low, scale->value, style->value, digits->value, align->string, proportional->integer);
 	}
@@ -228,6 +230,7 @@ void Armor_HudInit(void)
 		"digits", "3",
 		"pent_666", "1",  // Show 666 instead of armor value
 		"proportional", "0",
+		"hidezero", "0", // Hide armor number if 0
 		NULL
 	);
 

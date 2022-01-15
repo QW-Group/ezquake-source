@@ -134,9 +134,10 @@ void Utils_RegExpFreeSubstring(char* substring);
 
 // regexp match support for group operations in scripts
 qbool IsRegexp(const char *str);
-qbool ReSearchInit (const char *wildcard);
-qbool ReSearchMatch (const char *str);
-void ReSearchDone (void);
+qbool ReSearchInit(const char *wildcard);
+qbool ReSearchInitEx(const char* wildcard, qbool case_sensitive);
+qbool ReSearchMatch(const char *str);
+void ReSearchDone(void);
 
 ///
 /// RANDOM GENERATORS

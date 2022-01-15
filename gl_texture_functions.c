@@ -68,6 +68,11 @@ GL_StaticProcedureDeclaration(glBindSampler, "unit=%u, sampler=%u", GLuint unit,
 
 GL_StaticProcedureDeclaration(glGetInternalformativ, "target=%u, internalformat=%u, pname=%u, bufSize=%d, params=%p", GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint* params)
 
+// Multi-sampled textures
+GL_StaticProcedureDeclaration(glTextureStorage2DMultisample, "texture=%d, samples=%d, internalformat=%d, width=%d, height=%d, fixedsamplelocations=%d", GLuint texture, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations)
+GL_StaticProcedureDeclaration(glTexStorage2DMultisample, "target=%x, samples=%d, internalformat=%d, width=%d, height=%d, fixedsamplelocations=%d", GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations)
+GL_StaticProcedureDeclaration(glTexImage2DMultisample, "target=%x, samples=%d, internalformat=%d, width=%d, height=%d, fixedsamplelocations=%d", GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations)
+
 void GL_LoadTextureManagementFunctions(void)
 {
 	glConfig.supported_features &= ~(R_SUPPORT_TEXTURE_ARRAYS | R_SUPPORT_TEXTURE_SAMPLERS);
@@ -126,6 +131,12 @@ void GL_LoadTextureManagementFunctions(void)
 		}
 	}
 
+	if (GL_VersionAtLeast(3, 2)) {
+		GL_LoadOptionalFunction(glTextureStorage2DMultisample);
+		GL_LoadOptionalFunction(glTexStorage2DMultisample);
+		GL_LoadOptionalFunction(glTexImage2DMultisample);
+	}
+
 	if (GL_UseDirectStateAccess()) {
 		GL_LoadOptionalFunction(glGenerateTextureMipmap);
 		GL_LoadOptionalFunction(glGetTextureImage);
@@ -163,6 +174,9 @@ void GL_LoadTextureManagementFunctions(void)
 	if (GL_VersionAtLeast(1, 4)) {
 		glConfig.supported_features |= R_SUPPORT_FOG;
 	}
+
+	glConfig.max_multisampling_level = 0;
+	glGetIntegerv(GL_MAX_SAMPLES, &glConfig.max_multisampling_level);
 }
 
 void GL_TexSubImage3D(
@@ -201,6 +215,34 @@ void GL_TexSubImage2D(
 		GL_BindTextureUnit(textureUnit, texture);
 		GL_BuiltinProcedure(glTexSubImage2D, "target=%u, level=%d, xoffset=%d, yoffset=%d, width=%d, height=%d, format=%u, type=%u, pixels=%p", target, level, xoffset, yoffset, width, height, format, type, pixels);
 	}
+}
+
+void GL_TexStorage2DMultisample(texture_ref texture, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations)
+{
+	int tempWidth = width;
+	int tempHeight = height;
+
+	GL_ProcessErrors(va("pre-%s", __func__));
+
+	R_TextureSizeRoundUp(tempWidth, tempHeight, &width, &height);
+
+	if (GL_Available(glTextureStorage2DMultisample)) {
+		GL_Procedure(glTextureStorage2DMultisample, GL_TextureNameFromReference(texture), samples, internalformat, width, height, fixedsamplelocations);
+	}
+	else {
+		GLenum textureUnit = GL_TEXTURE0;
+		GLenum target = GL_TextureTargetFromReference(texture);
+
+		GL_BindTextureUnit(textureUnit, texture);
+		if (GL_Available(glTexStorage2DMultisample)) {
+			GL_Procedure(glTexStorage2DMultisample, target, samples, internalformat, width, height, fixedsamplelocations);
+		}
+		else if (GL_Available(glTexImage2DMultisample)) {
+			GL_BindTextureUnit(textureUnit, texture);
+			GL_Procedure(glTexImage2DMultisample, target, samples, internalformat, width, height, fixedsamplelocations);
+		}
+	}
+	R_TextureSetDimensions(texture, width, height);
 }
 
 void GL_TexStorage2D(

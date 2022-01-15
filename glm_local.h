@@ -3,7 +3,7 @@
 #define EZQUAKE_GLM_LOCAL_HEADER
 
 void GLM_BuildCommonTextureArrays(qbool vid_restart);
-void GLM_Shutdown(qbool restarting);
+void GLM_Shutdown(r_shutdown_mode_t mode);
 
 // Reference cvars for 3D views...
 typedef struct uniform_block_frame_constants_s {
