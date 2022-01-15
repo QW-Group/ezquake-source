@@ -66,8 +66,6 @@ typedef struct
 	float time_offset;
 
 } cs_sprojectile_t;
-
-cs_sprojectile_t cs_sprojectiles[MAX_EDICTS];
 #endif
 
 //r_part_trails.c

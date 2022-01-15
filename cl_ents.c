@@ -826,6 +826,7 @@ void CL_ParsePacketEntities (qbool delta)
 
 #ifdef MVD_PEXT1_SIMPLEPROJECTILE
 extern fproj_t cl_fakeprojectiles[MAX_FAKEPROJ];
+cs_sprojectile_t cs_sprojectiles[MAX_EDICTS];
 
 int CL_SimpleProjectile_MatchFakeProj(cs_sprojectile_t *sproj, int entnum)
 {
