@@ -224,6 +224,8 @@ fproj_t *CL_AllocFakeProjectile(void)
 
 	
 	memset(&cl_fakeprojectiles[cull_index], 0, sizeof(fproj_t));
+	prj->index = cull_index;
+	prj->owner = (cl.viewplayernum + 1);
 	//cl_fakeprojectiles[cull_index].cent = &cl_entities[CL_MAX_EDICTS - (cull_index + 1)];
 	return &cl_fakeprojectiles[cull_index];
 }
