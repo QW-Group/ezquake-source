@@ -826,7 +826,7 @@ void CL_ParsePacketEntities (qbool delta)
 
 #ifdef MVD_PEXT1_SIMPLEPROJECTILE
 extern fproj_t cl_fakeprojectiles[MAX_FAKEPROJ];
-cs_sprojectile_t cs_sprojectiles[MAX_EDICTS];
+cs_sprojectile_t cs_sprojectiles[CL_MAX_EDICTS];
 
 int CL_SimpleProjectile_MatchFakeProj(cs_sprojectile_t *sproj, int entnum)
 {
@@ -1031,7 +1031,6 @@ void CL_ParsePacketSimpleProjectiles(void)
 		if (word & 0x8000)
 		{
 			word -= word & 0x8000;
-			word = bound(0, word, MAX_EDICTS);
 
 			fproj_t *mis = &cl_fakeprojectiles[cs_sprojectiles[word].fproj_number];
 			if (mis->entnum == word)
@@ -1045,7 +1044,7 @@ void CL_ParsePacketSimpleProjectiles(void)
 			continue;
 		}
 
-
+		word = bound(0, word, CL_MAX_EDICTS - 1);
 
 		fproj_t *mis;
 		int mis_new = 0;
@@ -1054,8 +1053,7 @@ void CL_ParsePacketSimpleProjectiles(void)
 
 		cs_sprojectiles[word].active = true;
 		cs_sprojectile_t *cs_sproj = &cs_sprojectiles[word];
-		cs_sproj->fproj_number = bound(0, word, MAX_EDICTS);
-
+		cs_sproj->fproj_number = bound(0, cs_sproj->fproj_number, MAX_FAKEPROJ - 1);
 		mis = &cl_fakeprojectiles[cs_sproj->fproj_number];
 
 		sendflags = (unsigned short)MSG_ReadShort();
@@ -1129,7 +1127,8 @@ void CL_ParsePacketSimpleProjectiles(void)
 			mis->modelindex = cs_sproj->modelindex;
 			mis->owner = cs_sproj->owner;
 
-			if (mis->modelindex != 0)
+			///*
+			if (mis->modelindex != 0 && cl.model_precache[mis->modelindex])
 			{
 				// apply the model's effect flags
 				mis->effects = cl.model_precache[mis->modelindex]->flags;
@@ -1140,11 +1139,12 @@ void CL_ParsePacketSimpleProjectiles(void)
 					mis->effects |= 256;
 				}
 			}
+			//*/
 		}
 
 		
 
-		mis->endtime = cl.time + 8;
+		mis->endtime = cl.time + 20;
 		if (mis_new)
 		{
 			mis->entnum = word;

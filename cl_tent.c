@@ -197,6 +197,7 @@ fproj_t *CL_AllocFakeProjectile(void)
 			#ifdef MVD_PEXT1_SIMPLEPROJECTILE
 			prj->owner = (cl.viewplayernum + 1);
 			#endif
+			prj->entnum = 0;
 			//prj->cent = &cl_entities[CL_MAX_EDICTS - (i + 1)];
 			return prj;
 		}
@@ -225,6 +226,7 @@ fproj_t *CL_AllocFakeProjectile(void)
 
 	prj = &cl_fakeprojectiles[cull_index];
 	memset(prj, 0, sizeof(fproj_t));
+	prj->entnum = 0;
 	prj->index = cull_index;
 	prj->owner = (cl.viewplayernum + 1);
 	prj->dl_key = MAX_EDICTS + cull_index;
@@ -1252,8 +1254,9 @@ static void CL_UpdateFakeProjectiles(void)
 {
 	int i;
 	fproj_t	*prj;
-	entity_t ent;
+	
 	centity_t *cent;
+	entity_t ent;
 	entity_state_t centstate;
 	customlight_t cst_lt = { 0 };
 	memset(&centstate, 0, sizeof(entity_state_t));
@@ -1264,8 +1267,8 @@ static void CL_UpdateFakeProjectiles(void)
 	for (i = 0; i < MAX_FAKEPROJ; i++) {
 		prj = &cl_fakeprojectiles[i];
 		cent = &prj->cent;//&cl_entities[prj->entnum];
-		if (prj->entnum > 0 && prj->entnum < (CL_MAX_EDICTS - 1))
-			cent = &cl_entities[prj->entnum];
+		//if (prj->entnum > 0 && prj->entnum < (CL_MAX_EDICTS - 1))
+		//	cent = &cl_entities[prj->entnum];
 
 		if (cent == NULL)
 			continue;
@@ -1289,13 +1292,21 @@ static void CL_UpdateFakeProjectiles(void)
 						cl_dlight_active[ik / 32] -= (cl_dlight_active[ik / 32] & (1 << (ik % 32)));
 					}
 				}
+
+				prj->dl_key = 0;
 			}
 
 			continue;
 		}
 
+
 		//memset(&cent, 0, sizeof(centity_t));
 		cent->current = centstate;
+		
+		if (!prj->modelindex || !cl.model_precache[prj->modelindex] || prj->modelindex >= MAX_MODELS)
+			continue;
+
+		//continue;
 
 		ent.model = cl.model_precache[prj->modelindex];
 		centstate.modelindex = prj->modelindex;
