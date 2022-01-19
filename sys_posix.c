@@ -562,7 +562,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 /*************************** INTER PROCESS CALLS *****************************/
 #define PIPE_BUFFERSIZE		1024
 
-FILE *fifo_pipe;
+static int fifo_pipe = -1;
 
 static char *Sys_PipeFile(void) {
 	static char pipe[MAX_PATH] = {0};
@@ -576,24 +576,16 @@ static char *Sys_PipeFile(void) {
 
 void Sys_InitIPC(void)
 {
-	int fd;
 	mode_t old;
 
 	/* Don't use the user's umask, make sure we set the proper access */
 	old = umask(0);
-	if (mkfifo(Sys_PipeFile(), 0600)) {
-		umask(old);
-		// We failed ... 
-		return;
-	}
+	// This could legitimately fail (pipe exists), but it should be fine.
+	mkfifo(Sys_PipeFile(), 0600);
 	umask(old); // Reset old mask
 
 	/* Open in non blocking mode */
-	if ((fd = open(Sys_PipeFile(), O_RDONLY | O_NONBLOCK)) == -1) {
-		// We failed ...
-		return;
-	}
-	if (!(fifo_pipe = fdopen(fd, "r"))) {
+	if ((fifo_pipe = open(Sys_PipeFile(), O_RDONLY | O_NONBLOCK)) == -1) {
 		// We failed ...
 		return;
 	}
@@ -601,8 +593,9 @@ void Sys_InitIPC(void)
 
 void Sys_CloseIPC(void)
 {
-	if (fifo_pipe) {
-		fclose(fifo_pipe);
+	if (fifo_pipe != -1) {
+		close(fifo_pipe);
+		fifo_pipe = -1;
 		unlink(Sys_PipeFile());
 	}
 }
@@ -612,11 +605,13 @@ void Sys_ReadIPC(void)
 	char buf[PIPE_BUFFERSIZE] = {0};
 	int num_bytes_read = 0;
 
-	if (!fifo_pipe)
+	if (fifo_pipe == -1)
 		return;
 
-	num_bytes_read = fread(buf, sizeof(buf), 1, fifo_pipe);
-
+	num_bytes_read = read(fifo_pipe, buf, sizeof(buf) - 1); // nul terminated.
+	if (num_bytes_read <= 0) {
+		return;
+	}
 	COM_ParseIPCData(buf, num_bytes_read);
 }
 
