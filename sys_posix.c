@@ -245,12 +245,14 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	switch (sort_type)
 	{
 	case SORT_NO: break;
+#ifndef CLIENTONLY
 	case SORT_BY_DATE:
 		qsort((void *)list, dir.numfiles, sizeof(file_t), Sys_compare_by_date);
 		break;
 	case SORT_BY_NAME:
 		qsort((void *)list, dir.numfiles, sizeof(file_t), Sys_compare_by_name);
 		break;
+#endif
 	}
 
 	return dir;
