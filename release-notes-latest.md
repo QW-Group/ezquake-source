@@ -11,6 +11,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Fixed bugs causing access of invalid memory when loading corrupt .bsp files (very old bugs, reported by mmmds, #615)
 - Fixed bug causing `/gl_particle_gibtrails 1` to turn classic blood trails following gibs into rocket smoke (very old bug, reported by hemostx, #614)
 - Fixed bug causing `+fire_ar` to not obey `/cl_weaponhide` when last button depressed (alpha8 bug, reported by paddern, #613)
+- Fixed bug causing messagemode input to appear in wrong position when using `notify` hud element (3.5 bug, reported by zigg1zagg1, #626)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 
