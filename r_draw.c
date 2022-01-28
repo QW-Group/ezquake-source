@@ -1008,6 +1008,12 @@ static void Draw_DeleteOldLevelshot(mpic_t* pic)
 	}
 }
 
+void Draw_ClearConback(void)
+{
+	last_lvlshot = NULL;
+	last_mapname[0] = 0;
+}
+
 void Draw_InitConback(void)
 {
 	qpic_t *cb;
@@ -1016,8 +1022,7 @@ void Draw_InitConback(void)
 	// Level shots init. It's cache based so don't free!
 	// Expect the cache to be wiped thus render the old data invalid
 	Draw_DeleteOldLevelshot(last_lvlshot);
-	last_lvlshot = NULL;
-	last_mapname[0] = 0;
+	Draw_ClearConback();
 
 	if (!glConfig.initialized) {
 		return;

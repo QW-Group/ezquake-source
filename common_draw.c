@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "gl_model.h"
 
+void Draw_ClearConback(void);
+
 // FIXME: this is horrible - points to &hud_gameclock_offset->integer
 int* gameclockoffset;
 
@@ -603,6 +605,7 @@ void CachePics_Shutdown(void)
 	}
 
 	memset(cachepics, 0, sizeof(cachepics));
+	Draw_ClearConback();
 }
 
 const int COLOR_WHITE = 0xFFFFFFFF;

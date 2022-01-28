@@ -342,6 +342,7 @@ void R_DeleteTextures(void)
 	for (i = 0; i < numgltextures; ++i) {
 		R_DeleteTexture(&gltextures[i].reference);
 	}
+	Mod_ClearSimpleTextures();
 
 	memset(gltextures, 0, sizeof(gltextures));
 	numgltextures = 0;
