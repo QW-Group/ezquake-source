@@ -3,6 +3,8 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 ### Changes from alpha9=>alpha10 (November 14th, ongoing)
 
 - Added `/vid_reload` command to reload textures, rather than full `/vid_restart`.  `/vid_reload_auto` cvar controls automatic/manual.
+- Added `_draw` cvar on hud elements, to take space on-screen but not render content (also filters SP & MP games) (requests #619, #620)
+- Changed `_show` cvar on hud elements to allow filter for SP & MP games (requests #619, #620)
 - Fixed `/gl_no24bit` not affecting aliasmodel skins (3.5 bug, reported by hemostx, #605)
 - `/gl_consolefont` now falls back to 'original' on load failure, but doesn't change value (for toggling no24bit, #605)
 - Fixed toggling `/gl_no24bit` 1 => 0 causing maximum of a single QMB particle (old bug, reported by hemostx, #604)
@@ -12,6 +14,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Fixed bug causing `/gl_particle_gibtrails 1` to turn classic blood trails following gibs into rocket smoke (very old bug, reported by hemostx, #614)
 - Fixed bug causing `+fire_ar` to not obey `/cl_weaponhide` when last button depressed (alpha8 bug, reported by paddern, #613)
 - Fixed bug causing messagemode input to appear in wrong position when using `notify` hud element (3.5 bug, reported by zigg1zagg1, #626)
+- Fixed bug causing potential access of freed memory during `vid_reload`/`vid_restart`
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 
