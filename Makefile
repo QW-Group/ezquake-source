@@ -534,9 +534,15 @@ else
 
     ifneq ($(SYS),FreeBSD)
         ifneq ($(SYS),OpenBSD)
-            LIBS_c += -ldl
-	endif
+            ifneq ($(SYS),NetBSD)
+                LIBS_c += -ldl
+            endif
+        endif
     endif
+endif
+
+ifeq ($(SYS),NetBSD)
+    USE_SYSTEM_MINIZIP=1
 endif
 
 #ifdef CONFIG_OGG
