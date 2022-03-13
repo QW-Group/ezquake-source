@@ -60,6 +60,7 @@
 - Workaround applied to show players when playing back demos using FTE model extensions where player index >= 256 (3.1+ bug (no support in older clients), #551, reported by lordee)
 - Fixed `/demo_jump_mark` not working if `/demo_jump_rewind` not set
 - Horizontal field of view limit has increased to 165 (screen ratio adjustment previously limited this to 127 on 16:9) (#389, 3.0 issue)
+- Fixed bug causing `/cl_curlybraces` to affect general parsing (3.1 bug after workaround in 2009, #640, reported by raket/fix)
 
 #### Bugs which affected 3.5 (typically related to renderer rewrite)
 

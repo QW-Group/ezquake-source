@@ -15,6 +15,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Fixed bug causing `+fire_ar` to not obey `/cl_weaponhide` when last button depressed (alpha8 bug, reported by paddern, #613)
 - Fixed bug causing messagemode input to appear in wrong position when using `notify` hud element (3.5 bug, reported by zigg1zagg1, #626)
 - Fixed bug causing potential access of freed memory during `vid_reload`/`vid_restart`
+- Fixed bug causing cl_curlybraces to affect general parsing (3.1 bug after workaround in 2009, #640, reported by raket/fix)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 

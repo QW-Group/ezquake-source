@@ -184,7 +184,8 @@ extern	char	com_token[MAX_COM_TOKEN];
 extern	qbool	com_eof;
 typedef enum {TTP_UNKNOWN, TTP_STRING} com_tokentype_t;
 
-const char *COM_Parse (const char *data);
+const char *COM_Parse(const char *data);
+const char* COM_ParseEx(const char* data, qbool curlybraces);
 char *COM_ParseToken (const char *data, const char *punctuation);
 
 char *COM_Argv (int arg); // range and null checked
