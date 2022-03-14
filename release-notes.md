@@ -106,6 +106,7 @@
 - Fixed bug causing off-by-one error when drawing rectangle outlines (3.5 bug, reported by Matrix, #536)
 - Fixed bug causing `/gl_no24bit` to not affect aliasmodel skins (3.5 bug, reported by hemostx, #605)
 - Fixed bug causing messagemode input to appear in wrong position when using `notify` hud element (3.5 bug, reported by zigg1zagg1, #626)
+- Fixed bug causing `/r_tracker_inconsole 3` to show frag messages in the notify area (3.5 bug, #642, reported by HangTime)
 
 ### Ruleset-related changes
 
@@ -218,6 +219,7 @@
 - qw:// urls in command line will be opened even if not preceded by `+qwurl` (thanks to ciscon)
 - Linux: `/register_qwurl_protocol` command will register protocol with xdg (thanks to ciscon)
 - Commands that search by regular expression (`/cvarlist_re` etc) are now case-insensitive (reported by HangTime, #599)
+- Added support for MacOS qw urls opening via drag and drop emulation (thanks to ciscon)
 
 ### Build/meta
 

@@ -357,6 +357,7 @@ extern int	Print_current;
 #define     PR_TR_SKIP  4
 #define     PR_IS_CHAT  8
 #define     PR_NONOTIFY 16
+#define     PR_NORESET  32        // Don't reset at the end of each Print() call
 
 //============================================================================
 

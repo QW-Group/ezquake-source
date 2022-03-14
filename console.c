@@ -687,7 +687,9 @@ void Con_PrintW(wchar *txt)
 		}
 	}
 zomfg:
-	Print_flags[Print_current] = 0;
+	if (!(Print_flags[Print_current] & PR_NORESET)) {
+		Print_flags[Print_current] = 0;
+	}
 }
 
 /*
