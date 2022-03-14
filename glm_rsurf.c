@@ -629,10 +629,11 @@ static glm_brushmodel_drawcall_t* GL_FlushWorldModelBatch(void)
 {
 	const glm_brushmodel_drawcall_t* prev;
 	glm_brushmodel_drawcall_t* current;
+	int last = current_drawcall++;
 
 	GLM_CheckDrawCallSize();
 
-	prev = &drawcalls[current_drawcall++];
+	prev = &drawcalls[last];
 	current = &drawcalls[current_drawcall];
 
 	memset(current, 0, sizeof(*current));
