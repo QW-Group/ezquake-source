@@ -1020,7 +1020,7 @@ prediction_event_fakeproj_t* PM_AddEvent_FakeProj(int type)
 int PM_FilterWeaponSound(byte sound_num)
 {
 	if (cl_predict_weaponsound.integer & 2)
-		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/lstart.wav") == 0)
+		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/ax1.wav") == 0)
 			return false;
 	if (cl_predict_weaponsound.integer & 4)
 		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/guncock.wav") == 0)
@@ -1041,8 +1041,12 @@ int PM_FilterWeaponSound(byte sound_num)
 		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/sgun1.wav") == 0)
 			return false;
 	if (cl_predict_weaponsound.integer & 256)
+	{
+		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/lstart.wav") == 0)
+			return false;
 		if (strcmp(cl.sound_precache[sound_num]->name, "weapons/lhit.wav") == 0)
 			return false;
+	}
 
 	return true;
 }
@@ -1511,6 +1515,7 @@ void ImpulseCommands(void)
 
 void W_FireAxe(void)
 {
+	/*
 	vec3_t start, end;
 	VectorCopy(pmove.origin, start);
 	start[2] += 16;
@@ -1523,6 +1528,7 @@ void W_FireAxe(void)
 
 	if (walltrace.fraction < 1 && walltrace.e.entnum == 0)
 		PM_SoundEffect_Weapon(cl_sfx_axhit1, 1, 2);
+	*/
 }
 
 void launch_spike(float off)
