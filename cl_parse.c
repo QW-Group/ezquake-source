@@ -1965,6 +1965,10 @@ void CL_ParseStartSoundPacket(void)
 				{
 					predict_sound = PM_FilterWeaponSound(sound_num);
 				}
+				else if (strcmp(cl.sound_precache[sound_num]->name, "player/axhit2.wav") == 0)
+				{
+					predict_sound = false;
+				}
 
 				if (predict_sound)
 					return;
