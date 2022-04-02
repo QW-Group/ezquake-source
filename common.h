@@ -184,7 +184,8 @@ extern	char	com_token[MAX_COM_TOKEN];
 extern	qbool	com_eof;
 typedef enum {TTP_UNKNOWN, TTP_STRING} com_tokentype_t;
 
-const char *COM_Parse (const char *data);
+const char *COM_Parse(const char *data);
+const char* COM_ParseEx(const char* data, qbool curlybraces);
 char *COM_ParseToken (const char *data, const char *punctuation);
 
 char *COM_Argv (int arg); // range and null checked
@@ -356,6 +357,7 @@ extern int	Print_current;
 #define     PR_TR_SKIP  4
 #define     PR_IS_CHAT  8
 #define     PR_NONOTIFY 16
+#define     PR_NORESET  32        // Don't reset at the end of each Print() call
 
 //============================================================================
 

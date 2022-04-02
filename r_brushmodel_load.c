@@ -1313,7 +1313,7 @@ static void Mod_LoadLeafs29a(model_t* loadmodel, lump_t* l, byte* mod_base)
 		out->nummarksurfaces = LittleLong(in->nummarksurfaces);
 
 		p = LittleLong(in->visofs);
-		out->compressed_vis = (p == -1) ? NULL : loadmodel->visdata + p;
+		out->compressed_vis = (p == -1 || loadmodel->visdata == NULL || p >= loadmodel->visdata_length) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
 
 		if (out->contents != CONTENTS_EMPTY) {
@@ -1343,6 +1343,7 @@ static void Mod_LoadLeafsBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 
 	loadmodel->leafs = out;
 	loadmodel->numleafs = count;
+
 	for (i = 0; i < count; i++, in++, out++)	{
 		for (j = 0; j < 3; j++) {
 			out->minmaxs[j] = LittleFloat (in->mins[j]);
@@ -1357,7 +1358,7 @@ static void Mod_LoadLeafsBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 		out->nummarksurfaces = LittleLong(in->nummarksurfaces);
 
 		p = LittleLong(in->visofs);
-		out->compressed_vis = (p == -1) ? NULL : loadmodel->visdata + p;
+		out->compressed_vis = (p == -1 || loadmodel->visdata == NULL || p >= loadmodel->visdata_length) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
 
 		if (out->contents != CONTENTS_EMPTY) {

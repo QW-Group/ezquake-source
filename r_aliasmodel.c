@@ -68,13 +68,6 @@ mtriangle_t	triangles[MAXALIASTRIS];
 trivertx_t	*poseverts[MAXALIASFRAMES];
 int			posenum;
 
-#ifndef CLIENTONLY
-extern cvar_t     maxclients;
-#define IsLocalSinglePlayerGame() (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1)
-#else
-#define IsLocalSinglePlayerGame() (0)
-#endif
-
 static void* Mod_LoadAliasFrame(void* pin, maliasframedesc_t *frame, int* posenum);
 static void* Mod_LoadAliasGroup(void* pin, maliasframedesc_t *frame, int* posenum);
 void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t *pskintype);
@@ -604,7 +597,7 @@ void R_AliasSetupLighting(entity_t *ent)
 			calculate_lighting = true;
 		}
 	}
-	else if (Rulesets_FullbrightModel(clmodel, IsLocalSinglePlayerGame())) {
+	else if (Rulesets_FullbrightModel(clmodel)) {
 		ent->ambientlight = ent->shadelight = 4096;
 		calculate_lighting = (r_shadows.integer);
 	}

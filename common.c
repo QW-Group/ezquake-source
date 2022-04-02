@@ -461,8 +461,7 @@ char 		*com_args_original;
 com_tokentype_t com_tokentype;
 
 //Parse a token out of a string
-extern cvar_t cl_curlybraces;
-const char *COM_Parse (const char *data)
+const char* COM_ParseEx(const char *data, qbool curlybraces)
 {
 	unsigned char c;
 	int len;
@@ -497,7 +496,7 @@ const char *COM_Parse (const char *data)
 	}
 
 	// handle quoted strings specially
-	if (c == '\"' || (c == '{' && cl_curlybraces.integer) ) {
+	if (c == '\"' || (c == '{' && curlybraces) ) {
 		if (c == '{') {
 			quotes = 1;
 		}
@@ -514,10 +513,10 @@ const char *COM_Parse (const char *data)
 				}
 			}
 			else {
-				if (c == '}' && cl_curlybraces.integer) {
+				if (c == '}' && curlybraces) {
 					quotes--;
 				}
-				else if (c == '{' && cl_curlybraces.integer) {
+				else if (c == '{' && curlybraces) {
 					quotes++;
 				}
 			}
@@ -548,6 +547,11 @@ const char *COM_Parse (const char *data)
 
 	com_token[len] = 0;
 	return data;
+}
+
+const char* COM_Parse(const char* data)
+{
+	return COM_ParseEx(data, false);
 }
 
 #define DEFAULT_PUNCTUATION "(,{})(\':;=!><&|+"
@@ -749,7 +753,7 @@ void COM_InitArgv(int argc, char **argv)
 	for (i = 0, com_argc = 0; com_argc < MAX_NUM_ARGVS - 1 && i < argc; ++i) {
 		if (argv[i]) {
 			// follow qw urls if they are our argument without a +qwurl command
-			if (!strncmp(argv[i], "qw://", 5) && (i == 0 || strncmp(argv[i - 1], "+qwurl", 5)) && com_argc < MAX_NUM_ARGVS - 1) {
+			if (!strncmp(argv[i], "qw://", 5) && (i == 0 || strncmp(argv[i - 1], "+qwurl", 6)) && com_argc < MAX_NUM_ARGVS - 1) {
 				largv[com_argc++] = "+qwurl";
 				largv[com_argc++] = argv[i];
 			}

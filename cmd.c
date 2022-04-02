@@ -1047,7 +1047,7 @@ char *Cmd_MakeArgsEx (tokenizecontext_t *ctx, int start)
 }
 
 // Parses the given string into command line tokens.
-void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, const char *text)
+void Cmd_TokenizeStringEx2(tokenizecontext_t *ctx, const char *text, qbool curlybraces)
 {
 	int idx = 0, token_len;
 
@@ -1069,7 +1069,7 @@ void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, const char *text)
 		if (ctx->cmd_argc == 1)
 			strlcpy(ctx->cmd_args, text, sizeof(ctx->cmd_args));
 
-		text = COM_Parse (text);
+		text = COM_ParseEx(text, curlybraces);
 		if (!text)
 			return;
 
@@ -1088,6 +1088,11 @@ void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, const char *text)
 
 		idx += token_len + 1;
 	}
+}
+
+void Cmd_TokenizeStringEx(tokenizecontext_t* ctx, const char* text)
+{
+	Cmd_TokenizeStringEx2(ctx, text, false);
 }
 
 // and wrappers for backward compatibility
@@ -1725,8 +1730,8 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	oldcontext = cbuf_current;
 	cbuf_current = context;
 
-	Cmd_ExpandString (text, text_exp);
-	Cmd_TokenizeString (text_exp);
+	Cmd_ExpandString(text, text_exp);
+	Cmd_TokenizeStringEx2(&cmd_tokenizecontext, text_exp, cl_curlybraces.integer);
 
 	if (!Cmd_Argc())
 		goto done; // no tokens

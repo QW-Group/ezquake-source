@@ -352,7 +352,7 @@ static qbool VX_TrackerStringPrintSegmentsWithImage(const char* text1, const byt
 		return VX_TrackerStringPrintSegments(text1, GetWeaponName(weapon), text3, NULL);
 	}
 
-	Print_flags[Print_current] |= (suppress_from_notify == 3 ? PR_NONOTIFY : 0);
+	Print_flags[Print_current] |= (PR_NORESET | (suppress_from_notify ? PR_NONOTIFY : 0));
 
 	if (text1 && text1[0]) {
 		if (text1_color) {

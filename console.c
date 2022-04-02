@@ -687,7 +687,9 @@ void Con_PrintW(wchar *txt)
 		}
 	}
 zomfg:
-	Print_flags[Print_current] = 0;
+	if (!(Print_flags[Print_current] & PR_NORESET)) {
+		Print_flags[Print_current] = 0;
+	}
 }
 
 /*
@@ -871,8 +873,9 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 
 			int printed = 0;
 			int last = idx + con_linewidth - 1;
-			while (last > idx && (con.text + last)[0] == 32)
+			while (last > idx && (con.text + last)[0] == 32) {
 				--last;
+			}
 
 			while (last > idx) {
 				printed = Draw_ConsoleString(posX, v + posY, con.text + idx, con.clr + idx, min(notifyCols, last - idx + 1), 0, scale, proportional);
@@ -885,7 +888,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 		}
 	}
 
-	if (Con_NotifyMessageLine(indent, v, vid.width - indent, vid.height, scale, proportional)) {
+	if (Con_NotifyMessageLine(posX, v + posY, notifyCols * 8 * scale, v * 8 * scale, scale, proportional)) {
 		v += 8 * scale;
 	}
 

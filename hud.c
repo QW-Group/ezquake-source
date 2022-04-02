@@ -28,38 +28,56 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "hud_editor.h"
 #include "utils.h"
 #include "sbar.h"
+#include "rulesets.h"
+
+static qbool HUD_ShouldShow(const hud_t* hud)
+{
+	if (hud->show->integer == 2 || hud->show->integer == 3) {
+		return ((hud->show->integer == 2) == Ruleset_IsLocalSinglePlayerGame());
+	}
+	return (hud->show->integer != 0);
+}
+
+static qbool HUD_ShouldDraw(const hud_t* hud)
+{
+	// 0 = don't draw, 1 = always, 2 = single player only, 3 = multiplayer only
+	if (hud->draw->integer == 2 || hud->draw->integer == 3) {
+		return ((hud->draw->integer == 2) == Ruleset_IsLocalSinglePlayerGame());
+	}
+	return (hud->draw->integer != 0);
+}
 
 #define sbar_last_width 320  // yeah yeah I know, *garbage* -> leave it be :>
 
 char *align_strings_x[] = {
-    "left",
-    "center",
-    "right",
-    "before",
-    "after"
+	"left",
+	"center",
+	"right",
+	"before",
+	"after"
 };
 #define  num_align_strings_x  (sizeof(align_strings_x) / sizeof(align_strings_x[0]))
 
 char *align_strings_y[] = {
-    "top",
-    "center",
-    "bottom",
-    "before",
-    "after",
-    "console"
+	"top",
+	"center",
+	"bottom",
+	"before",
+	"after",
+	"console"
 };
 #define  num_align_strings_y  (sizeof(align_strings_y) / sizeof(align_strings_y[0]))
 
 char *snap_strings[] = {
-    "screen",
-    "top",
-    "view",
-    "sbar",
-    "ibar",
-    "hbar",
-    "sfree",
-    "ifree",
-    "hfree",
+	"screen",
+	"top",
+	"view",
+	"sbar",
+	"ibar",
+	"hbar",
+	"sfree",
+	"ifree",
+	"hfree",
 };
 #define  num_snap_strings  (sizeof(snap_strings) / sizeof(snap_strings[0]))
 
@@ -71,30 +89,30 @@ hud_t *hud_huds = NULL;
 //
 void HUD_Plus_f(void)
 {
-    char *t;
-    hud_t *hud;
+	char *t;
+	hud_t *hud;
 
-    if (Cmd_Argc() < 1)
-        return;
+	if (Cmd_Argc() < 1)
+		return;
 
-    t = Cmd_Argv(0);
-    if (strncmp(t, "+hud_", 5))
-        return;
+	t = Cmd_Argv(0);
+	if (strncmp(t, "+hud_", 5))
+		return;
 
-    hud = HUD_Find(t + 5);
-    if (!hud)
-    {
-        // This should never happen...
-        return;
-    }
+	hud = HUD_Find(t + 5);
+	if (!hud)
+	{
+		// This should never happen...
+		return;
+	}
 
-    if (!hud->show)
-    {
-        // This should never happen...
-        return;
-    }
+	if (!hud->show)
+	{
+		// This should never happen...
+		return;
+	}
 
-    Cvar_Set(hud->show, "1");
+	Cvar_Set(hud->show, "1");
 }
 
 //
@@ -102,30 +120,30 @@ void HUD_Plus_f(void)
 //
 void HUD_Minus_f(void)
 {
-    char *t;
-    hud_t *hud;
+	char *t;
+	hud_t *hud;
 
-    if (Cmd_Argc() < 1)
-        return;
+	if (Cmd_Argc() < 1)
+		return;
 
-    t = Cmd_Argv(0);
-    if (strncmp(t, "-hud_", 5))
-        return;
+	t = Cmd_Argv(0);
+	if (strncmp(t, "-hud_", 5))
+		return;
 
-    hud = HUD_Find(t + 5);
-    if (!hud)
-    {
-        // this should never happen...
-        return;
-    }
+	hud = HUD_Find(t + 5);
+	if (!hud)
+	{
+		// this should never happen...
+		return;
+	}
 
-    if (!hud->show)
-    {
-        // this should never happen...
-        return;
-    }
+	if (!hud->show)
+	{
+		// this should never happen...
+		return;
+	}
 
-    Cvar_Set(hud->show, "0");
+	Cvar_Set(hud->show, "0");
 }
 
 //
@@ -134,83 +152,83 @@ void HUD_Minus_f(void)
 //
 void HUD_Func_f(void)
 {
-    int i;
-    hud_t *hud;
+	int i;
+	hud_t *hud;
 
-    hud = HUD_Find(Cmd_Argv(0));
+	hud = HUD_Find(Cmd_Argv(0));
 
-    if (!hud)
-    {
-        // This should never happen...
-        Com_Printf("Hud element not found\n");
-        return;
-    }
-
-    if (Cmd_Argc() > 1)
-    {
-        char buf[512];
-
-        snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, Cmd_Argv(1));
-        if (Cvar_Find(buf) != NULL)
-        {
-            Cbuf_AddText(buf);
-            if (Cmd_Argc() > 2)
-            {
-                Cbuf_AddText(" ");
-                Cbuf_AddText(Cmd_Argv(2));
-            }
-            Cbuf_AddText("\n");
-        }
-        else
-        {
-            Com_Printf("Trying \"%s\" - no such variable\n", buf);
-        }
-        return;
-    }
-
-    // Description.
-    Com_Printf("%s\n\n", hud->description);
-
-    // Status.
-    if (hud->show != NULL)
+	if (!hud)
 	{
-        Com_Printf("Current status: %s\n", hud->show->value ? "shown" : "hidden");
+		// This should never happen...
+		Com_Printf("Hud element not found\n");
+		return;
+	}
+
+	if (Cmd_Argc() > 1)
+	{
+		char buf[512];
+
+		snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, Cmd_Argv(1));
+		if (Cvar_Find(buf) != NULL)
+		{
+			Cbuf_AddText(buf);
+			if (Cmd_Argc() > 2)
+			{
+				Cbuf_AddText(" ");
+				Cbuf_AddText(Cmd_Argv(2));
+			}
+			Cbuf_AddText("\n");
+		}
+		else
+		{
+			Com_Printf("Trying \"%s\" - no such variable\n", buf);
+		}
+		return;
+	}
+
+	// Description.
+	Com_Printf("%s\n\n", hud->description);
+
+	// Show status.
+	if (hud->show != NULL && hud->draw != NULL)
+	{
+		Com_Printf("Current status: %s, %s\n", HUD_ShouldShow(hud) ? "shown" : "hidden", HUD_ShouldDraw(hud) ? "drawn" : "no content");
 	}
 
 	if (hud->frame != NULL)
 	{
-        Com_Printf("Frame:          %s\n\n", hud->frame->string);
+		Com_Printf("Frame:          %s\n\n", hud->frame->string);
 	}
 
 	if (hud->frame_color != NULL)
 	{
-        Com_Printf("Frame color:          %s\n\n", hud->frame_color->string);
+		Com_Printf("Frame color:          %s\n\n", hud->frame_color->string);
 	}
 
-    // Placement.
-    Com_Printf("Placement:        %s\n", hud->place->string);
+	// Placement.
+	Com_Printf("Placement:        %s\n", hud->place->string);
 
-    // Alignment.
-    Com_Printf("Alignment (x y):  %s %s\n", hud->align_x->string, hud->align_y->string);
+	// Alignment.
+	Com_Printf("Alignment (x y):  %s %s\n", hud->align_x->string, hud->align_y->string);
 
-    // Position.
-    Com_Printf("Offset (x y):     %d %d\n", (int)(hud->pos_x->value), (int)(hud->pos_y->value));
+	// Position.
+	Com_Printf("Offset (x y):     %d %d\n", (int)(hud->pos_x->value), (int)(hud->pos_y->value));
 
 	// Ordering.
 	Com_Printf("Draw Order (z):   %d\n", (int)hud->order->value);
 
-    // Additional parameters.
-    if (hud->num_params > 0)
-    {
-        int prefix_l = strlen(va("hud_%s_", hud->name));
-        Com_Printf("\nParameters:\n");
-        for (i=0; i < hud->num_params; i++)
-        {
-            if (strlen(hud->params[i]->name) > prefix_l)
-                Com_Printf("  %-15s %s\n", hud->params[i]->name + prefix_l,
-                    hud->params[i]->string);
-        }
-    }
+	// Additional parameters.
+	if (hud->num_params > 0)
+	{
+		int prefix_l = strlen(va("hud_%s_", hud->name));
+		Com_Printf("\nParameters:\n");
+		for (i=0; i < hud->num_params; i++)
+		{
+			if (strlen(hud->params[i]->name) > prefix_l)
+				Com_Printf("  %-15s %s\n", hud->params[i]->name + prefix_l,
+					hud->params[i]->string);
+		}
+	}
 }
 
 //
@@ -235,55 +253,55 @@ void HUD_FindMaxMinOrder(int *max, int *min)
 //
 int HUD_FindPlace(hud_t *hud)
 {
-    int i;
-    hud_t *par;
-    qbool out;
-    char *t;
+	int i;
+	hud_t *par;
+	qbool out;
+	char *t;
 
-    // First try standard strings.
-    for (i=0; i < num_snap_strings; i++)
+	// First try standard strings.
+	for (i=0; i < num_snap_strings; i++)
 	{
-        if (!strcasecmp(hud->place->string, snap_strings[i]))
+		if (!strcasecmp(hud->place->string, snap_strings[i]))
 		{
-            break;
+			break;
 		}
 	}
 
-    if (i < num_snap_strings)
-    {
-        // Found.
-        hud->place_num = i+1;
-        hud->place_hud = NULL;
-        return 1;
-    }
+	if (i < num_snap_strings)
+	{
+		// Found.
+		hud->place_num = i+1;
+		hud->place_hud = NULL;
+		return 1;
+	}
 
-    // then try another HUD element
-    out = true;
-    t = hud->place->string;
-    if (hud->place->string[0] == '@')
-    {
-        // place inside
-        out = false;
-        t++;
-    }
+	// then try another HUD element
+	out = true;
+	t = hud->place->string;
+	if (hud->place->string[0] == '@')
+	{
+		// place inside
+		out = false;
+		t++;
+	}
 
-    par = hud_huds;
-    while (par)
-    {
-        if (par != hud && !strcmp(t, par->name))
-        {
-            hud->place_outside = out;
-            hud->place_hud = par;
-            hud->place_num = HUD_PLACE_SCREEN;
-            return 1;
-        }
-        par = par->next;
-    }
+	par = hud_huds;
+	while (par)
+	{
+		if (par != hud && !strcmp(t, par->name))
+		{
+			hud->place_outside = out;
+			hud->place_hud = par;
+			hud->place_num = HUD_PLACE_SCREEN;
+			return 1;
+		}
+		par = par->next;
+	}
 
 	// No way.
-    hud->place_num = HUD_PLACE_SCREEN;
-    hud->place_hud = NULL;
-    return 0;
+	hud->place_num = HUD_PLACE_SCREEN;
+	hud->place_hud = NULL;
+	return 0;
 }
 
 //
@@ -292,29 +310,29 @@ int HUD_FindPlace(hud_t *hud)
 //
 int HUD_FindAlignX(hud_t *hud)
 {
-    int i;
+	int i;
 
-    // First try standard strings.
-    for (i=0; i < num_align_strings_x; i++)
+	// First try standard strings.
+	for (i=0; i < num_align_strings_x; i++)
 	{
-        if (!strcasecmp(hud->align_x->string, align_strings_x[i]))
+		if (!strcasecmp(hud->align_x->string, align_strings_x[i]))
 		{
-            break;
+			break;
 		}
 	}
 
-    if (i < num_align_strings_x)
-    {
-        // Found.
-        hud->align_x_num = i+1;
-        return 1;
-    }
-    else
-    {
-        // Error.
+	if (i < num_align_strings_x)
+	{
+		// Found.
+		hud->align_x_num = i+1;
+		return 1;
+	}
+	else
+	{
+		// Error.
 		hud->align_x_num = HUD_ALIGN_LEFT; // left
-        return 0;
-    }
+		return 0;
+	}
 }
 
 //
@@ -322,29 +340,29 @@ int HUD_FindAlignX(hud_t *hud)
 //
 int HUD_FindAlignY(hud_t *hud)
 {
-    int i;
+	int i;
 
-    // First try standard strings.
-    for (i=0; i < num_align_strings_y; i++)
+	// First try standard strings.
+	for (i=0; i < num_align_strings_y; i++)
 	{
-        if (!strcasecmp(hud->align_y->string, align_strings_y[i]))
+		if (!strcasecmp(hud->align_y->string, align_strings_y[i]))
 		{
-            break;
+			break;
 		}
 	}
 
-    if (i < num_align_strings_y)
-    {
-        // Found.
-        hud->align_y_num = i + 1;
-        return 1;
-    }
-    else
-    {
-        // Error.
-        hud->align_y_num = HUD_ALIGN_TOP; // Left.
-        return 0;
-    }
+	if (i < num_align_strings_y)
+	{
+		// Found.
+		hud->align_y_num = i + 1;
+		return 1;
+	}
+	else
+	{
+		// Error.
+		hud->align_y_num = HUD_ALIGN_TOP; // Left.
+		return 0;
+	}
 }
 
 int Hud_HudCompare (const void *p1, const void *p2)
@@ -359,7 +377,7 @@ void HUD_List (void)
 {
 	static hud_t *sorted_huds[256];
 	int i, count;
-    hud_t *hud;
+	hud_t *hud;
 
 #define MAX_SORTED_HUDS (sizeof (sorted_huds) / sizeof (sorted_huds[0]))
 
@@ -370,12 +388,12 @@ void HUD_List (void)
 	if (count == MAX_SORTED_HUDS)
 		assert(!"count == MAX_SORTED_HUDS");
 
-    Com_Printf("name            status\n");
-    Com_Printf("--------------- ------\n");
+	Com_Printf("name            status\n");
+	Com_Printf("--------------- ------\n");
 	for (i = 0; i < count; i++) {
 		hud = sorted_huds[i];
 
-		Com_Printf("%-15s %s\n", hud->name, hud->show->value ? "shown" : "hidden");
+		Com_Printf("%-15s %s\n", hud->name, HUD_ShouldShow(hud) ? "shown" : "hidden");
 	}
 }
 
@@ -384,39 +402,39 @@ void HUD_List (void)
 //
 void HUD_Show_f (void)
 {
-    hud_t *hud;
+	hud_t *hud;
 
-    if (Cmd_Argc() != 2)
-    {
-        Com_Printf("Usage: show [<name> | all]\n");
-        Com_Printf("Show given HUD element.\n");
-        Com_Printf("use \"show all\" to show all elements.\n");
-        Com_Printf("Current elements status:\n\n");
-        HUD_List();
-        return;
-    }
+	if (Cmd_Argc() != 2)
+	{
+		Com_Printf("Usage: show [<name> | all]\n");
+		Com_Printf("Show given HUD element.\n");
+		Com_Printf("use \"show all\" to show all elements.\n");
+		Com_Printf("Current elements status:\n\n");
+		HUD_List();
+		return;
+	}
 
-    if (!strcasecmp(Cmd_Argv(1), "all"))
-    {
-        hud = hud_huds;
-        while (hud)
-        {
-            Cvar_SetValue(hud->show, 1);
-            hud = hud->next;
-        }
-    }
-    else
-    {
-        hud = HUD_Find(Cmd_Argv(1));
+	if (!strcasecmp(Cmd_Argv(1), "all"))
+	{
+		hud = hud_huds;
+		while (hud)
+		{
+			Cvar_SetValue(hud->show, 1);
+			hud = hud->next;
+		}
+	}
+	else
+	{
+		hud = HUD_Find(Cmd_Argv(1));
 
-        if (!hud)
-        {
-            Com_Printf("No such element: %s\n", Cmd_Argv(1));
-            return;
-        }
+		if (!hud)
+		{
+			Com_Printf("No such element: %s\n", Cmd_Argv(1));
+			return;
+		}
 
-        Cvar_SetValue(hud->show, 1);
-    }
+		Cvar_SetValue(hud->show, 1);
+	}
 }
 
 
@@ -425,39 +443,39 @@ void HUD_Show_f (void)
 //
 void HUD_Hide_f (void)
 {
-    hud_t *hud;
+	hud_t *hud;
 
-    if (Cmd_Argc() != 2)
-    {
-        Com_Printf("Usage: hide [<name> | all]\n");
-        Com_Printf("Hide given HUD element\n");
-        Com_Printf("use \"hide all\" to hide all elements.\n");
-        Com_Printf("Current elements status:\n\n");
-        HUD_List();
-        return;
-    }
+	if (Cmd_Argc() != 2)
+	{
+		Com_Printf("Usage: hide [<name> | all]\n");
+		Com_Printf("Hide given HUD element\n");
+		Com_Printf("use \"hide all\" to hide all elements.\n");
+		Com_Printf("Current elements status:\n\n");
+		HUD_List();
+		return;
+	}
 
-    if (!strcasecmp(Cmd_Argv(1), "all"))
-    {
-        hud = hud_huds;
-        while (hud)
-        {
-            Cvar_SetValue(hud->show, 0);
-            hud = hud->next;
-        }
-    }
-    else
-    {
-        hud = HUD_Find(Cmd_Argv(1));
+	if (!strcasecmp(Cmd_Argv(1), "all"))
+	{
+		hud = hud_huds;
+		while (hud)
+		{
+			Cvar_SetValue(hud->show, 0);
+			hud = hud->next;
+		}
+	}
+	else
+	{
+		hud = HUD_Find(Cmd_Argv(1));
 
-        if (!hud)
-        {
-            Com_Printf("No such element: %s\n", Cmd_Argv(1));
-            return;
-        }
+		if (!hud)
+		{
+			Com_Printf("No such element: %s\n", Cmd_Argv(1));
+			return;
+		}
 
-        Cvar_SetValue(hud->show, 0);
-    }
+		Cvar_SetValue(hud->show, 0);
+	}
 }
 
 //
@@ -465,32 +483,32 @@ void HUD_Hide_f (void)
 //
 void HUD_Toggle_f (void)
 {
-    hud_t *hud;
+	hud_t *hud;
 
-    if (Cmd_Argc() != 2)
-    {
-        Com_Printf("Usage: togglehud <name> | <variable>\n");
-        Com_Printf("Show/hide given HUD element, or toggles variable value.\n");
-        return;
-    }
+	if (Cmd_Argc() != 2)
+	{
+		Com_Printf("Usage: togglehud <name> | <variable>\n");
+		Com_Printf("Show/hide given HUD element, or toggles variable value.\n");
+		return;
+	}
 
-    hud = HUD_Find(Cmd_Argv(1));
+	hud = HUD_Find(Cmd_Argv(1));
 
-    if (!hud)
-    {
-        // look for cvar
-        cvar_t *var = Cvar_Find(Cmd_Argv(1));
-        if (!var)
-        {
-            Com_Printf("No such element or variable: %s\n", Cmd_Argv(1));
-            return;
-        }
+	if (!hud)
+	{
+		// look for cvar
+		cvar_t *var = Cvar_Find(Cmd_Argv(1));
+		if (!var)
+		{
+			Com_Printf("No such element or variable: %s\n", Cmd_Argv(1));
+			return;
+		}
 
 		Cvar_Set (var, var->value ? "0" : "1");
-        return;
-    }
+		return;
+	}
 
-    Cvar_Set (hud->show, hud->show->value ? "0" : "1");
+	Cvar_Set (hud->show, HUD_ShouldShow(hud) ? "0" : "1");
 }
 
 //
@@ -498,33 +516,33 @@ void HUD_Toggle_f (void)
 //
 void HUD_Move_f (void)
 {
-    hud_t *hud;
+	hud_t *hud;
 
-    if (Cmd_Argc() != 4 &&  Cmd_Argc() != 2)
-    {
-        Com_Printf("Usage: move <name> [<x> <y>]\n");
-        Com_Printf("Set offset for given HUD element\n");
-        return;
-    }
+	if (Cmd_Argc() != 4 &&  Cmd_Argc() != 2)
+	{
+		Com_Printf("Usage: move <name> [<x> <y>]\n");
+		Com_Printf("Set offset for given HUD element\n");
+		return;
+	}
 
-    hud = HUD_Find(Cmd_Argv(1));
+	hud = HUD_Find(Cmd_Argv(1));
 
-    if (!hud)
-    {
-        Com_Printf("No such element: %s\n", Cmd_Argv(1));
-        return;
-    }
+	if (!hud)
+	{
+		Com_Printf("No such element: %s\n", Cmd_Argv(1));
+		return;
+	}
 
-    if (Cmd_Argc() == 2)
-    {
-        Com_Printf("Current %s offset is:\n", Cmd_Argv(1));
-        Com_Printf("  x:  %s\n", hud->pos_x->string);
-        Com_Printf("  y:  %s\n", hud->pos_y->string);
-        return;
-    }
+	if (Cmd_Argc() == 2)
+	{
+		Com_Printf("Current %s offset is:\n", Cmd_Argv(1));
+		Com_Printf("  x:  %s\n", hud->pos_x->string);
+		Com_Printf("  y:  %s\n", hud->pos_y->string);
+		return;
+	}
 
-    Cvar_SetValue(hud->pos_x, atof(Cmd_Argv(2)));
-    Cvar_SetValue(hud->pos_y, atof(Cmd_Argv(3)));
+	Cvar_SetValue(hud->pos_x, atof(Cmd_Argv(2)));
+	Cvar_SetValue(hud->pos_y, atof(Cmd_Argv(3)));
 }
 
 //
@@ -535,16 +553,16 @@ void HUD_Reset_f (void)
 	hud_t *hud = NULL;
 	char *hudname = NULL;
 
-    if (Cmd_Argc() != 2)
-    {
-        Com_Printf("Usage: reset <name>\n");
-        Com_Printf("Resets the position of the given HUD element to the center of the screen.\n");
-        return;
-    }
+	if (Cmd_Argc() != 2)
+	{
+		Com_Printf("Usage: reset <name>\n");
+		Com_Printf("Resets the position of the given HUD element to the center of the screen.\n");
+		return;
+	}
 
 	hudname = Cmd_Argv(1);
 
-    hud = HUD_Find(hudname);
+	hud = HUD_Find(hudname);
 
 	if (!hud)
 	{
@@ -581,56 +599,56 @@ void HUD_ReorderChildren(void)
 //
 void HUD_Place_f (void)
 {
-    hud_t *hud;
-    char temp[512];
+	hud_t *hud;
+	char temp[512];
 
-    if (Cmd_Argc() < 2 || Cmd_Argc() > 3)
-    {
-        Com_Printf("Usage: move <name> [<area>]\n");
-        Com_Printf("Place HUD element at given area.\n");
-        Com_Printf("\nPossible areas are:\n");
-        Com_Printf("  screen - screen area\n");
-        Com_Printf("  top    - screen minus status bar\n");
-        Com_Printf("  view   - view\n");
-        Com_Printf("  sbar   - status bar\n");
-        Com_Printf("  ibar   - inventory bar\n");
-        Com_Printf("  hbar   - health bar\n");
-        Com_Printf("  sfree  - status bar free area\n");
-        Com_Printf("  ifree  - inventory bar free area\n");
-        Com_Printf("  hfree  - health bar free area\n");
-        Com_Printf("You can also use any other HUD element as a base alignment. In such case you should specify area as:\n");
-        Com_Printf("  @elem  - if you want to place\n");
-        Com_Printf("           it inside elem\n");
-        Com_Printf("   elem  - if you want to place\n");
-        Com_Printf("           it outside elem\n");
-        Com_Printf("Examples:\n");
-        Com_Printf("  place fps view\n");
-        Com_Printf("  place fps @ping\n");
-        return;
-    }
+	if (Cmd_Argc() < 2 || Cmd_Argc() > 3)
+	{
+		Com_Printf("Usage: move <name> [<area>]\n");
+		Com_Printf("Place HUD element at given area.\n");
+		Com_Printf("\nPossible areas are:\n");
+		Com_Printf("  screen - screen area\n");
+		Com_Printf("  top    - screen minus status bar\n");
+		Com_Printf("  view   - view\n");
+		Com_Printf("  sbar   - status bar\n");
+		Com_Printf("  ibar   - inventory bar\n");
+		Com_Printf("  hbar   - health bar\n");
+		Com_Printf("  sfree  - status bar free area\n");
+		Com_Printf("  ifree  - inventory bar free area\n");
+		Com_Printf("  hfree  - health bar free area\n");
+		Com_Printf("You can also use any other HUD element as a base alignment. In such case you should specify area as:\n");
+		Com_Printf("  @elem  - if you want to place\n");
+		Com_Printf("           it inside elem\n");
+		Com_Printf("   elem  - if you want to place\n");
+		Com_Printf("           it outside elem\n");
+		Com_Printf("Examples:\n");
+		Com_Printf("  place fps view\n");
+		Com_Printf("  place fps @ping\n");
+		return;
+	}
 
-    hud = HUD_Find(Cmd_Argv(1));
+	hud = HUD_Find(Cmd_Argv(1));
 
-    if (!hud)
-    {
-        Com_Printf("No such element: %s\n", Cmd_Argv(1));
-        return;
-    }
+	if (!hud)
+	{
+		Com_Printf("No such element: %s\n", Cmd_Argv(1));
+		return;
+	}
 
-    if (Cmd_Argc() == 2)
-    {
-        Com_Printf("Current %s placement: %s\n", hud->name, hud->place->string);
-        return;
-    }
+	if (Cmd_Argc() == 2)
+	{
+		Com_Printf("Current %s placement: %s\n", hud->name, hud->place->string);
+		return;
+	}
 
-    // Place with helper.
-    strlcpy(temp, hud->place->string, sizeof(temp));
-    Cvar_Set(hud->place, Cmd_Argv(2));
-    if (!HUD_FindPlace(hud))
-    {
-        Com_Printf("place: invalid area argument: %s\n", Cmd_Argv(2));
-        Cvar_Set(hud->place, temp); // Restore old value.
-    }
+	// Place with helper.
+	strlcpy(temp, hud->place->string, sizeof(temp));
+	Cvar_Set(hud->place, Cmd_Argv(2));
+	if (!HUD_FindPlace(hud))
+	{
+		Com_Printf("place: invalid area argument: %s\n", Cmd_Argv(2));
+		Cvar_Set(hud->place, temp); // Restore old value.
+	}
 	else
 	{
 		HUD_ReorderChildren();
@@ -663,17 +681,17 @@ void HUD_Order_f (void)
 	hud = HUD_Find (Cmd_Argv(1));
 
 	if (!hud)
-    {
-        Com_Printf("No such element: %s\n", Cmd_Argv(1));
-        return;
-    }
+	{
+		Com_Printf("No such element: %s\n", Cmd_Argv(1));
+		return;
+	}
 
 	if (Cmd_Argc() == 2)
-    {
-        Com_Printf("Current order for %s is:\n", Cmd_Argv(1));
+	{
+		Com_Printf("Current order for %s is:\n", Cmd_Argv(1));
 		Com_Printf("  order:  %d\n", (int)hud->order->value);
-        return;
-    }
+		return;
+	}
 
 	option = Cmd_Argv(2);
 
@@ -711,52 +729,52 @@ void HUD_Order_f (void)
 //
 void HUD_Align_f (void)
 {
-    hud_t *hud;
+	hud_t *hud;
 
-    if (Cmd_Argc() != 4  &&  Cmd_Argc() != 2)
-    {
-        Com_Printf("Usage: align <name> [<ax> <ay>]\n");
-        Com_Printf("Set HUD element alignment\n");
-        Com_Printf("\nPossible values for ax are:\n");
-        Com_Printf("  left    - left area edge\n");
-        Com_Printf("  center  - area center\n");
-        Com_Printf("  right   - right area edge\n");
-        Com_Printf("  before  - before area (left)\n");
-        Com_Printf("  after   - after area (right)\n");
-        Com_Printf("\nPossible values for ay are:\n");
-        Com_Printf("  top     - screen top\n");
-        Com_Printf("  center  - screen center\n");
-        Com_Printf("  bottom  - screen bottom\n");
-        Com_Printf("  before  - before area (top)\n");
-        Com_Printf("  after   - after area (bottom)\n");
-        Com_Printf("  console - below console\n");
-        return;
-    }
+	if (Cmd_Argc() != 4  &&  Cmd_Argc() != 2)
+	{
+		Com_Printf("Usage: align <name> [<ax> <ay>]\n");
+		Com_Printf("Set HUD element alignment\n");
+		Com_Printf("\nPossible values for ax are:\n");
+		Com_Printf("  left    - left area edge\n");
+		Com_Printf("  center  - area center\n");
+		Com_Printf("  right   - right area edge\n");
+		Com_Printf("  before  - before area (left)\n");
+		Com_Printf("  after   - after area (right)\n");
+		Com_Printf("\nPossible values for ay are:\n");
+		Com_Printf("  top     - screen top\n");
+		Com_Printf("  center  - screen center\n");
+		Com_Printf("  bottom  - screen bottom\n");
+		Com_Printf("  before  - before area (top)\n");
+		Com_Printf("  after   - after area (bottom)\n");
+		Com_Printf("  console - below console\n");
+		return;
+	}
 
-    hud = HUD_Find(Cmd_Argv(1));
+	hud = HUD_Find(Cmd_Argv(1));
 
-    if (!hud)
-    {
-        Com_Printf("No such element: %s\n", Cmd_Argv(1));
-        return;
-    }
+	if (!hud)
+	{
+		Com_Printf("No such element: %s\n", Cmd_Argv(1));
+		return;
+	}
 
-    if (Cmd_Argc() == 2)
-    {
-        Com_Printf("Current alignment for %s is:\n", Cmd_Argv(1));
-        Com_Printf("  horizontal (x):  %s\n", hud->align_x->string);
-        Com_Printf("  vertical (y):    %s\n", hud->align_y->string);
-        return;
-    }
+	if (Cmd_Argc() == 2)
+	{
+		Com_Printf("Current alignment for %s is:\n", Cmd_Argv(1));
+		Com_Printf("  horizontal (x):  %s\n", hud->align_x->string);
+		Com_Printf("  vertical (y):    %s\n", hud->align_y->string);
+		return;
+	}
 
-    // validate and set
-    Cvar_Set(hud->align_x, Cmd_Argv(2));
-    if (!HUD_FindAlignX(hud))
-        Com_Printf("align: invalid X alignment: %s\n", Cmd_Argv(2));
+	// validate and set
+	Cvar_Set(hud->align_x, Cmd_Argv(2));
+	if (!HUD_FindAlignX(hud))
+		Com_Printf("align: invalid X alignment: %s\n", Cmd_Argv(2));
 
-    Cvar_Set(hud->align_y, Cmd_Argv(3));
-    if (!HUD_FindAlignY(hud))
-        Com_Printf("align: invalid Y alignment: %s\n", Cmd_Argv(3));
+	Cvar_Set(hud->align_y, Cmd_Argv(3));
+	if (!HUD_FindAlignY(hud))
+		Com_Printf("align: invalid Y alignment: %s\n", Cmd_Argv(3));
 }
 
 //
@@ -767,20 +785,20 @@ void HUD_Align_f (void)
 //
 void HUD_Recalculate(void)
 {
-    hud_t *hud = hud_huds;
+	hud_t *hud = hud_huds;
 
-    while (hud)
-    {
-        HUD_FindPlace(hud);
-        HUD_FindAlignX(hud);
-        HUD_FindAlignY(hud);
+	while (hud)
+	{
+		HUD_FindPlace(hud);
+		HUD_FindAlignX(hud);
+		HUD_FindAlignY(hud);
 
-        hud = hud->next;
-    }
+		hud = hud->next;
+	}
 }
 void HUD_Recalculate_f(void)
 {
-    HUD_Recalculate();
+	HUD_Recalculate();
 }
 
 //
@@ -792,22 +810,22 @@ void HUD_Init(void)
 	void HUD_Inputlag_hit_f(void);
 
 	// Commands.
-    Cmd_AddCommand ("show", HUD_Show_f);
-    Cmd_AddCommand ("hide", HUD_Hide_f);
-    Cmd_AddCommand ("move", HUD_Move_f);
-    Cmd_AddCommand ("place", HUD_Place_f);
+	Cmd_AddCommand ("show", HUD_Show_f);
+	Cmd_AddCommand ("hide", HUD_Hide_f);
+	Cmd_AddCommand ("move", HUD_Move_f);
+	Cmd_AddCommand ("place", HUD_Place_f);
 	Cmd_AddCommand ("reset", HUD_Reset_f);
 	Cmd_AddCommand ("order", HUD_Order_f);
-    Cmd_AddCommand ("togglehud", HUD_Toggle_f);
-    Cmd_AddCommand ("align", HUD_Align_f);
-    Cmd_AddCommand ("hud_recalculate", HUD_Recalculate_f);
+	Cmd_AddCommand ("togglehud", HUD_Toggle_f);
+	Cmd_AddCommand ("align", HUD_Align_f);
+	Cmd_AddCommand ("hud_recalculate", HUD_Recalculate_f);
 
 	// Variables.
-    Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
-    Cvar_ResetCurrentGroup();
+	Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
+	Cvar_ResetCurrentGroup();
 
 	// Register the hud items.
-    CommonDraw_Init();
+	CommonDraw_Init();
 
 	// Sort the elements.
 	HUD_Sort();
@@ -817,49 +835,49 @@ void HUD_Init(void)
 // Calculate frame extents.
 //
 void HUD_CalcFrameExtents(hud_t *hud, int width, int height,									// In.
-                          int *frame_left, int *frame_right, int *frame_top, int *frame_bottom) // Out.
+						  int *frame_left, int *frame_right, int *frame_top, int *frame_bottom) // Out.
 {
-    if ((hud->flags & HUD_NO_GROW) && hud->frame->value != 2)
-    {
-        *frame_left = *frame_right = *frame_top = *frame_bottom = 0;
-        return;
-    }
+	if ((hud->flags & HUD_NO_GROW) && hud->frame->value != 2)
+	{
+		*frame_left = *frame_right = *frame_top = *frame_bottom = 0;
+		return;
+	}
 
-    if (hud->frame->value == 2) // Treat text box separately.
-    {
-        int ax			= (width % 16);
-        int ay			= (height % 8);
-        *frame_left		= 8 + ax / 2;
-        *frame_top		= 8 + ay / 2;
-        *frame_right	= 8 + ax - ax / 2;
-        *frame_bottom	= 8 + ay - ay / 2;
-    }
-    else if (hud->frame->value > 0  &&  hud->frame->value <= 1)
-    {
-        int frame_x, frame_y;
-        frame_x = 2;
-        frame_y = 2;
+	if (hud->frame->value == 2) // Treat text box separately.
+	{
+		int ax			= (width % 16);
+		int ay			= (height % 8);
+		*frame_left		= 8 + ax / 2;
+		*frame_top		= 8 + ay / 2;
+		*frame_right	= 8 + ax - ax / 2;
+		*frame_bottom	= 8 + ay - ay / 2;
+	}
+	else if (hud->frame->value > 0  &&  hud->frame->value <= 1)
+	{
+		int frame_x, frame_y;
+		frame_x = 2;
+		frame_y = 2;
 
-        if (width > 8)
+		if (width > 8)
 		{
-            frame_x <<= 1;
+			frame_x <<= 1;
 		}
 
-        if (height > 8)
+		if (height > 8)
 		{
-            frame_y <<= 1;
+			frame_y <<= 1;
 		}
 
-        *frame_left		= frame_x;
-        *frame_right	= frame_x;
-        *frame_top		= frame_y;
-        *frame_bottom	= frame_y;
-    }
-    else
-    {
-        // No frame at all.
-        *frame_left = *frame_right = *frame_top = *frame_bottom = 0;
-    }
+		*frame_left		= frame_x;
+		*frame_right	= frame_x;
+		*frame_top		= frame_y;
+		*frame_bottom	= frame_y;
+	}
+	else
+	{
+		// No frame at all.
+		*frame_left = *frame_right = *frame_top = *frame_bottom = 0;
+	}
 }
 
 void HUD_OnChangeFrameColor(cvar_t *var, char *newval, qbool *cancel)
@@ -886,27 +904,27 @@ void HUD_OnChangeFrameColor(cvar_t *var, char *newval, qbool *cancel)
 //
 void HUD_DrawFrame(hud_t *hud, int x, int y, int width, int height)
 {
-    if (!hud->frame->value)
-        return;
+	if (!hud->frame->value)
+		return;
 
-    if (hud->frame->value > 0  &&  hud->frame->value <= 1)
-    {
+	if (hud->frame->value > 0  &&  hud->frame->value <= 1)
+	{
 		hud->frame_color_cache[3] = (byte)(255 * hud->frame->value);
 
 		Draw_AlphaFillRGB(x, y, width, height, RGBAVECT_TO_COLOR(hud->frame_color_cache));
-        return;
-    }
-    else
-    {
-        switch ((int)(hud->frame->value))
-        {
-        case 2:     // Text box.
-            Draw_TextBox(x, y, width/8-2, height/8-2);
-            break;
-        default:    // More will probably come.
-            break;
-        }
-    }
+		return;
+	}
+	else
+	{
+		switch ((int)(hud->frame->value))
+		{
+		case 2:     // Text box.
+			Draw_TextBox(x, y, width/8-2, height/8-2);
+			break;
+		default:    // More will probably come.
+			break;
+		}
+	}
 }
 
 //
@@ -915,13 +933,13 @@ void HUD_DrawFrame(hud_t *hud, int x, int y, int width, int height)
 qbool HUD_PrepareDrawByName(char *name, int width, int height,	// In.
 							int *ret_x, int *ret_y)				// Out (Position).
 {
-    hud_t *hud = HUD_Find(name);
-    if (hud == NULL)
+	hud_t *hud = HUD_Find(name);
+	if (hud == NULL)
 	{
-        return false; // error in C code
+		return false; // error in C code
 	}
 
-    return HUD_PrepareDraw(hud, width, height, ret_x, ret_y);
+	return HUD_PrepareDraw(hud, width, height, ret_x, ret_y);
 }
 
 //
@@ -930,28 +948,31 @@ qbool HUD_PrepareDrawByName(char *name, int width, int height,	// In.
 qbool HUD_PrepareDraw(hud_t *hud, int width, int height, // In.
 					  int *ret_x, int *ret_y)			 // Out (Position).
 {
-    extern vrect_t scr_vrect;
-    int x, y;
-    int frame_left, frame_right, frame_top, frame_bottom;	// Frame left, right, top and bottom.
-    int area_x, area_y, area_width, area_height;			// Area coordinates & sizes to align.
-    int bounds_x, bounds_y, bounds_width, bounds_height;	// Bounds to draw within.
+	extern vrect_t scr_vrect;
+	int x, y;
+	int frame_left, frame_right, frame_top, frame_bottom;	// Frame left, right, top and bottom.
+	int area_x, area_y, area_width, area_height;			// Area coordinates & sizes to align.
+	int bounds_x, bounds_y, bounds_width, bounds_height;	// Bounds to draw within.
+	qbool draw;
+	qbool show = HUD_ShouldShow(hud);
 
 	// Don't show the hud element.
-	if (cls.state < hud->min_state || !hud->show->value)
-	{
-        return false;
+	if (cls.state < hud->min_state || !show) {
+		return false;
 	}
 
-    HUD_CalcFrameExtents(hud, width, height, &frame_left, &frame_right, &frame_top, &frame_bottom);
+	draw = HUD_ShouldDraw(hud);
 
-    width  += frame_left + frame_right;
-    height += frame_top + frame_bottom;
+	HUD_CalcFrameExtents(hud, width, height, &frame_left, &frame_right, &frame_top, &frame_bottom);
 
-    //
-    // Placement.
+	width  += frame_left + frame_right;
+	height += frame_top + frame_bottom;
+
 	//
-    switch (hud->place_num)
-    {
+	// Placement.
+	//
+	switch (hud->place_num)
+	{
 		default:
 		case HUD_PLACE_SCREEN:
 			bounds_x = bounds_y = 0;
@@ -1005,38 +1026,38 @@ qbool HUD_PrepareDraw(hud_t *hud, int width, int height, // In.
 			bounds_x = sbar_last_width;
 			bounds_y = vid.height - bounds_height;
 			break;
-    }
+	}
 
-    if (hud->place_hud == NULL)
-    {
-        // Accepted boundaries are our area.
-        area_x		= bounds_x;
-        area_y		= bounds_y;
-        area_width	= bounds_width;
-        area_height	= bounds_height;
-    }
-    else
-    {
-        // Out area is our parent area.
-        area_x		= hud->place_hud->lx;
-        area_y		= hud->place_hud->ly;
-        area_width	= hud->place_hud->lw;
-        area_height = hud->place_hud->lh;
+	if (hud->place_hud == NULL)
+	{
+		// Accepted boundaries are our area.
+		area_x		= bounds_x;
+		area_y		= bounds_y;
+		area_width	= bounds_width;
+		area_height	= bounds_height;
+	}
+	else
+	{
+		// Out area is our parent area.
+		area_x		= hud->place_hud->lx;
+		area_y		= hud->place_hud->ly;
+		area_width	= hud->place_hud->lw;
+		area_height = hud->place_hud->lh;
 
-        if (hud->place_outside)
-        {
-            area_x		-= hud->place_hud->al;
-            area_y		-= hud->place_hud->at;
-            area_width	+= hud->place_hud->al + hud->place_hud->ar;
-            area_height += hud->place_hud->at + hud->place_hud->ab;
-        }
-    }
+		if (hud->place_outside)
+		{
+			area_x		-= hud->place_hud->al;
+			area_y		-= hud->place_hud->at;
+			area_width	+= hud->place_hud->al + hud->place_hud->ar;
+			area_height += hud->place_hud->at + hud->place_hud->ab;
+		}
+	}
 
-    //
-    // Horizontal pos.
-    //
-    switch (hud->align_x_num)
-    {
+	//
+	// Horizontal pos.
+	//
+	switch (hud->align_x_num)
+	{
 		default:
 		case HUD_ALIGN_LEFT:
 			x = area_x;
@@ -1053,15 +1074,15 @@ qbool HUD_PrepareDraw(hud_t *hud, int width, int height, // In.
 		case HUD_ALIGN_AFTER:
 			x = area_x + area_width;
 			break;
-    }
+	}
 
-    x += hud->pos_x->value;
+	x += hud->pos_x->value;
 
-    //
-    // Vertical pos.
-    //
-    switch (hud->align_y_num)
-    {
+	//
+	// Vertical pos.
+	//
+	switch (hud->align_y_num)
+	{
 		default:
 		case HUD_ALIGN_TOP:
 			y = area_y;
@@ -1081,37 +1102,38 @@ qbool HUD_PrepareDraw(hud_t *hud, int width, int height, // In.
 		case HUD_ALIGN_CONSOLE:
 			y = max(area_y, scr_con_current);
 			break;
-    }
+	}
 
-    y += hud->pos_y->value;
+	y += hud->pos_y->value;
 
-    // Draw frame.
-    HUD_DrawFrame(hud, x, y, width, height);
+	// Draw frame.
+	if (draw) {
+		HUD_DrawFrame(hud, x, y, width, height);
+	}
 
-    // Assign values.
-    *ret_x = x + frame_left;
-    *ret_y = y + frame_top;
+	// Assign values.
+	*ret_x = x + frame_left;
+	*ret_y = y + frame_top;
 
-    // Remember values for children.
-    hud->lx = x + frame_left;
-    hud->ly = y + frame_top;
-    hud->lw = width - frame_left - frame_right;
-    hud->lh = height - frame_top - frame_bottom;
-    hud->al = frame_left;
-    hud->ar = frame_right;
-    hud->at = frame_top;
-    hud->ab = frame_bottom;
+	// Remember values for children.
+	hud->lx = x + frame_left;
+	hud->ly = y + frame_top;
+	hud->lw = width - frame_left - frame_right;
+	hud->lh = height - frame_top - frame_bottom;
+	hud->al = frame_left;
+	hud->ar = frame_right;
+	hud->at = frame_top;
+	hud->ab = frame_bottom;
 
 	// Check if we're supposed to draw the entire item or just the outline/frame.
 	// (If we're in hud editor align/place mode)
-	if(!HUD_Editor_ConfirmDraw(hud))
-	{
+	if (!HUD_Editor_ConfirmDraw(hud)) {
 		return false;
 	}
 
-    // Remember drawing sequence.
-    hud->last_draw_sequence = host_screenupdatecount;
-    return true;
+	// Remember drawing sequence.
+	hud->last_draw_sequence = host_screenupdatecount;
+	return draw;
 }
 
 //
@@ -1119,23 +1141,23 @@ qbool HUD_PrepareDraw(hud_t *hud, int width, int height, // In.
 //
 cvar_t * HUD_CreateVar(char *hud_name, char *subvar, char *value)
 {
-    cvar_t *var;
-    char buf[128];
+	cvar_t *var;
+	char buf[128];
 
-    snprintf (buf, sizeof (buf), "hud_%s_%s", hud_name, subvar);
-    var = (cvar_t *)Q_malloc(sizeof(cvar_t));
-    memset(var, 0, sizeof(cvar_t));
+	snprintf (buf, sizeof (buf), "hud_%s_%s", hud_name, subvar);
+	var = (cvar_t *)Q_malloc(sizeof(cvar_t));
+	memset(var, 0, sizeof(cvar_t));
 
 	// Set name.
 	var->name = Q_strdup(buf);
 
-    // Default. Cvar_Register will dup this string so we don't need to.
+	// Default. Cvar_Register will dup this string so we don't need to.
 	var->string = value;
 
-    Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
-    Cvar_Register(var);
-    Cvar_ResetCurrentGroup();
-    return var;
+	Cvar_SetCurrentGroup(CVAR_GROUP_HUD);
+	Cvar_Register(var);
+	Cvar_ResetCurrentGroup();
+	return var;
 }
 
 //
@@ -1154,17 +1176,17 @@ void HUD_OnChangeOrder(cvar_t *var, char *val, qbool *cancel)
 // Registers a new HUD element to the list of HUD elements.
 //
 hud_t * HUD_Register(char *name, char *var_alias, char *description,
-                     int flags, cactive_t min_state, int draw_order,
-                     hud_func_type draw_func,
-                     char *show, char *place, char *align_x, char *align_y,
-                     char *pos_x, char *pos_y, char *frame, char *frame_color,
+					 int flags, cactive_t min_state, int draw_order,
+					 hud_func_type draw_func,
+					 char *show, char *place, char *align_x, char *align_y,
+					 char *pos_x, char *pos_y, char *frame, char *frame_color,
 					 char *item_opacity,
-                     char *params, ...)
+					 char *params, ...)
 {
-    int i;
-    va_list     argptr;
-    hud_t		*hud;
-    char		*subvar;
+	int i;
+	va_list     argptr;
+	hud_t		*hud;
+	char		*subvar;
 
 	// We want to include Frame, frame_color, item_opacity in the list of
 	// available cvar's for the user also. If any additional cvars that
@@ -1172,24 +1194,24 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 	int			num_params = 3;
 
 	// Allocate room for the HUD.
-    hud = (hud_t *) Q_malloc(sizeof(hud_t));
-    memset(hud, 0, sizeof(hud_t));
-    hud->next = hud_huds;
-    hud_huds = hud;
-    hud->min_state = min_state;
-    hud->draw_func = draw_func;
+	hud = (hud_t *) Q_malloc(sizeof(hud_t));
+	memset(hud, 0, sizeof(hud_t));
+	hud->next = hud_huds;
+	hud_huds = hud;
+	hud->min_state = min_state;
+	hud->draw_func = draw_func;
 
 	// Name.
-    hud->name = (char *) Q_malloc(strlen(name)+1);
-    strcpy(hud->name, name);
+	hud->name = (char *) Q_malloc(strlen(name)+1);
+	strcpy(hud->name, name);
 
 	// Description.
-    hud->description = (char *) Q_malloc(strlen(description)+1);
-    strcpy(hud->description, description);
+	hud->description = (char *) Q_malloc(strlen(description)+1);
+	strcpy(hud->description, description);
 
 	// Count the number of params.
 	subvar = params;
-    va_start (argptr, params);
+	va_start (argptr, params);
 	while(subvar)
 	{
 		num_params++;
@@ -1201,12 +1223,12 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 	hud->params = Q_calloc(num_params, sizeof(cvar_t *));
 
 	// Set flags.
-    hud->flags = flags;
+	hud->flags = flags;
 
-    Cmd_AddCommand(name, HUD_Func_f);
+	Cmd_AddCommand(name, HUD_Func_f);
 
 	//
-    // Create standard variables.
+	// Create standard variables.
 	//
 
 	//
@@ -1220,28 +1242,28 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 	}
 
 	//
-    // Place.
+	// Place.
 	//
-    hud->place = HUD_CreateVar(name, "place", place);
-    i = HUD_FindPlace(hud);
-    if (i == 0)
-    {
-        // Probably parent should be registered earlier.
+	hud->place = HUD_CreateVar(name, "place", place);
+	i = HUD_FindPlace(hud);
+	if (i == 0)
+	{
+		// Probably parent should be registered earlier.
 		// (This doesn't matter, since we'll re-place all elements after
 		// all the elements have been registered)
-        hud->place_num = 0;
-        hud->place_hud = NULL;
-    }
+		hud->place_num = 0;
+		hud->place_hud = NULL;
+	}
 
 	//
-    // Show.
+	// Show.
 	//
-    if (show)
-    {
-        hud->show = HUD_CreateVar(name, "show", show);
+	if (show)
+	{
+		hud->show = HUD_CreateVar(name, "show", show);
 
-        if (flags & HUD_PLUSMINUS)
-        {
+		if (flags & HUD_PLUSMINUS)
+		{
 			char cmdname[128];
 
 			strlcpy(cmdname, "+hud_", sizeof(cmdname));
@@ -1251,57 +1273,57 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 			cmdname[0] = '-';
 			Cmd_AddRemCommand(cmdname, HUD_Minus_f);
 
-            // Add plus and minus commands.
-            //Cmd_AddCommand(Q_strdup(va("+hud_%s", name)), HUD_Plus_f);
-            //Cmd_AddCommand(Q_strdup(va("-hud_%s", name)), HUD_Minus_f);
-        }
-    }
-    else
+			// Add plus and minus commands.
+			//Cmd_AddCommand(Q_strdup(va("+hud_%s", name)), HUD_Plus_f);
+			//Cmd_AddCommand(Q_strdup(va("-hud_%s", name)), HUD_Minus_f);
+		}
+	}
+	else
 	{
-        hud->flags |= HUD_NO_SHOW;
+		hud->flags |= HUD_NO_SHOW;
 	}
 
 	//
-    // X align & pos.
+	// X align & pos.
 	//
-    if (pos_x  &&  align_x)
-    {
-        hud->pos_x = HUD_CreateVar(name, "pos_x", pos_x);
-        hud->align_x = HUD_CreateVar(name, "align_x", align_x);
-    }
-    else
+	if (pos_x  &&  align_x)
 	{
-        hud->flags |= HUD_NO_POS_X;
+		hud->pos_x = HUD_CreateVar(name, "pos_x", pos_x);
+		hud->align_x = HUD_CreateVar(name, "align_x", align_x);
+	}
+	else
+	{
+		hud->flags |= HUD_NO_POS_X;
 	}
 
 	//
-    // Y align & pos.
+	// Y align & pos.
 	//
-    if (pos_y  &&  align_y)
-    {
-        hud->pos_y = HUD_CreateVar(name, "pos_y", pos_y);
-        hud->align_y = HUD_CreateVar(name, "align_y", align_y);
-    }
-    else
+	if (pos_y  &&  align_y)
 	{
-        hud->flags |= HUD_NO_POS_Y;
+		hud->pos_y = HUD_CreateVar(name, "pos_y", pos_y);
+		hud->align_y = HUD_CreateVar(name, "align_y", align_y);
+	}
+	else
+	{
+		hud->flags |= HUD_NO_POS_Y;
 	}
 
 	//
-    // Frame.
+	// Frame.
 	//
-    if (frame)
-    {
-        hud->frame = HUD_CreateVar(name, "frame", frame);
-        hud->params[hud->num_params++] = hud->frame;
+	if (frame)
+	{
+		hud->frame = HUD_CreateVar(name, "frame", frame);
+		hud->params[hud->num_params++] = hud->frame;
 
 		hud->frame_color = HUD_CreateVar(name, "frame_color", frame_color);
 		hud->frame_color->OnChange = HUD_OnChangeFrameColor;
-        hud->params[hud->num_params++] = hud->frame_color;
-    }
-    else
+		hud->params[hud->num_params++] = hud->frame_color;
+	}
+	else
 	{
-        hud->flags |= HUD_NO_FRAME;
+		hud->flags |= HUD_NO_FRAME;
 	}
 
 	//
@@ -1312,6 +1334,9 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 		hud->flags |= HUD_OPACITY;
 		hud->params[hud->num_params++] = hud->opacity;
 	}
+
+	// Draw... if not set, will be measured (unlike ->show) but nothing rendered (assuming it follows standard pattern)
+	hud->draw = HUD_CreateVar(name, "draw", "1");
 
 	//
 	// Create parameters.
@@ -1328,7 +1353,7 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 		hud->params[hud->num_params] = HUD_CreateVar(name, subvar, value);
 		hud->num_params++;
 		subvar = va_arg(argptr, char *);
-    }
+	}
 
 	va_end (argptr);
 
@@ -1340,18 +1365,18 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 //
 hud_t * HUD_Find(char *name)
 {
-    hud_t *hud = hud_huds;
+	hud_t *hud = hud_huds;
 
-    while (hud)
-    {
-        if (!strcasecmp(hud->name, name))
+	while (hud)
+	{
+		if (!strcasecmp(hud->name, name))
 		{
-            return hud;
+			return hud;
 		}
 
-        hud = hud->next;
-    }
-    return NULL;
+		hud = hud->next;
+	}
+	return NULL;
 }
 
 //
@@ -1359,20 +1384,20 @@ hud_t * HUD_Find(char *name)
 //
 cvar_t *HUD_FindVar(hud_t *hud, char *subvar)
 {
-    int i;
-    char buf[128];
+	int i;
+	char buf[128];
 
-    snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, subvar);
+	snprintf(buf, sizeof(buf), "hud_%s_%s", hud->name, subvar);
 
-    for (i=0; i < hud->num_params; i++)
+	for (i=0; i < hud->num_params; i++)
 	{
-        if (!strcmp(buf, hud->params[i]->name))
+		if (!strcmp(buf, hud->params[i]->name))
 		{
-            return hud->params[i];
+			return hud->params[i];
 		}
 	}
 
-    return NULL;
+	return NULL;
 }
 
 //
@@ -1380,53 +1405,52 @@ cvar_t *HUD_FindVar(hud_t *hud, char *subvar)
 //
 void HUD_DrawObject(hud_t *hud)
 {
-    extern qbool sb_showscores, sb_showteamscores;
+	extern qbool sb_showscores, sb_showteamscores;
 
 	// Already tried to draw this frame.
-    if (hud->last_try_sequence == host_screenupdatecount)
-	{
-        return;
-	}
-
-    hud->last_try_sequence = host_screenupdatecount;
-
-    // Check if we should draw this.
-    if (!hud->show->value)
-	{
-        return;
-	}
-
-    if (cls.state < hud->min_state)
-	{
-        return;
-	}
-
-    if (cl.intermission == 1  &&  !(hud->flags & HUD_ON_INTERMISSION))
+	if (hud->last_try_sequence == host_screenupdatecount)
 	{
 		return;
 	}
 
-    if (cl.intermission == 2 && !(hud->flags & HUD_ON_FINALE))
-	{
-        return;
+	hud->last_try_sequence = host_screenupdatecount;
+
+	// Check if we should show this.
+	if (!HUD_ShouldShow(hud)) {
+		return;
 	}
 
-    if ((sb_showscores || sb_showteamscores) && !(hud->flags & HUD_ON_SCORES))
+	if (cls.state < hud->min_state)
 	{
-        return;
+		return;
 	}
 
-    if (hud->place_hud)
-    {
-        // Parent should be drawn it should be first.
-        HUD_DrawObject(hud->place_hud);
+	if (cl.intermission == 1  &&  !(hud->flags & HUD_ON_INTERMISSION))
+	{
+		return;
+	}
 
-        // If parent was not drawn, we refuse to draw too
-        if (hud->place_hud->last_draw_sequence < host_screenupdatecount)
+	if (cl.intermission == 2 && !(hud->flags & HUD_ON_FINALE))
+	{
+		return;
+	}
+
+	if ((sb_showscores || sb_showteamscores) && !(hud->flags & HUD_ON_SCORES))
+	{
+		return;
+	}
+
+	if (hud->place_hud)
+	{
+		// Parent should be drawn it should be first.
+		HUD_DrawObject(hud->place_hud);
+
+		// If parent was not drawn, we refuse to draw too
+		if (hud->place_hud->last_draw_sequence < host_screenupdatecount)
 		{
-            return;
+			return;
 		}
-    }
+	}
 
 	//
 	// Let the HUD element draw itself - updates last_draw_sequence itself.
@@ -1436,7 +1460,7 @@ void HUD_DrawObject(hud_t *hud)
 	Draw_SetOverallAlpha(1.0);
 
 	// last_draw_sequence is update by HUD_PrepareDraw
-    // if object was succesfully drawn (wasn't outside area etc..)
+	// if object was succesfully drawn (wasn't outside area etc..)
 }
 
 //
@@ -1445,7 +1469,7 @@ void HUD_DrawObject(hud_t *hud)
 void HUD_Draw(void)
 {
 	extern cvar_t scr_newHud;
-    hud_t *hud;
+	hud_t *hud;
 
 	// Only draw the hud once in multiview.
 	if (cl_multiview.integer && cls.mvdplayback)
@@ -1463,23 +1487,23 @@ void HUD_Draw(void)
 		autohud_loaded = true;
 	}
 
-    if (scr_newHud.value == 0)
+	if (scr_newHud.value == 0)
 	{
 		return;
 	}
 
-    hud = hud_huds;
+	hud = hud_huds;
 
 	HUD_BeforeDraw();
 
-    while (hud)
-    {
+	while (hud)
+	{
 		// Draw.
 		HUD_DrawObject(hud);
 
 		// Go to next.
 		hud = hud->next;
-    }
+	}
 
 	HUD_AfterDraw();
 }
@@ -1489,8 +1513,8 @@ void HUD_Draw(void)
 //
 int HUD_OrderFunc(const void * p_h1, const void * p_h2)
 {
-    const hud_t *h1 = *((hud_t **)p_h1);
-    const hud_t *h2 = *((hud_t **)p_h2);
+	const hud_t *h1 = *((hud_t **)p_h1);
+	const hud_t *h2 = *((hud_t **)p_h2);
 
 	return (int)h1->order->value - (int)h2->order->value;
 }
@@ -1500,44 +1524,45 @@ int HUD_OrderFunc(const void * p_h1, const void * p_h2)
 //
 void HUD_Sort(void)
 {
-    // Sort elements based on their draw order.
-    int i;
-    hud_t *huds[MAX_HUD_ELEMENTS];
-    int count = 0;
-    hud_t *hud;
+	// Sort elements based on their draw order.
+	int i;
+	hud_t *huds[MAX_HUD_ELEMENTS];
+	int count = 0;
+	hud_t *hud;
 
-    // Copy to table.
-    hud = hud_huds;
-    while (hud)
-    {
-        huds[count++] = hud;
-        hud = hud->next;
-    }
+	// Copy to table.
+	hud = hud_huds;
+	while (hud)
+	{
+		huds[count++] = hud;
+		hud = hud->next;
+	}
 
-    if (count <= 0)
-        return;
+	if (count <= 0)
+		return;
 
-    // Sort table.
-    qsort(huds, count, sizeof(huds[0]), HUD_OrderFunc);
+	// Sort table.
+	qsort(huds, count, sizeof(huds[0]), HUD_OrderFunc);
 
-    // Back to list.
-    hud_huds = huds[0];
-    hud = hud_huds;
-    hud->next = NULL;
-    for (i=1; i < count; i++)
-    {
-        hud->next = huds[i];
-        hud = hud->next;
-        hud->next = NULL;
-    }
+	// Back to list.
+	hud_huds = huds[0];
+	hud = hud_huds;
+	hud->next = NULL;
+	for (i=1; i < count; i++)
+	{
+		hud->next = huds[i];
+		hud = hud->next;
+		hud->next = NULL;
+	}
 
-    // Recalculate elements so vars are parsed.
-    HUD_Recalculate();
+	// Recalculate elements so vars are parsed.
+	HUD_Recalculate();
 }
 
 #define HUD_FreeVar(var) \
 	if ((var)) { \
 		Cvar_Delete(var->name); \
+		(var) = NULL; \
 	}
 
 void HUD_Shutdown(void)
@@ -1552,6 +1577,7 @@ void HUD_Shutdown(void)
 		HUD_FreeVar(hud->order);
 		HUD_FreeVar(hud->place);
 		HUD_FreeVar(hud->show);
+		HUD_FreeVar(hud->draw);
 		HUD_FreeVar(hud->pos_x);
 		HUD_FreeVar(hud->align_x);
 		HUD_FreeVar(hud->pos_y);

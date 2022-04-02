@@ -60,6 +60,7 @@
 - Workaround applied to show players when playing back demos using FTE model extensions where player index >= 256 (3.1+ bug (no support in older clients), #551, reported by lordee)
 - Fixed `/demo_jump_mark` not working if `/demo_jump_rewind` not set
 - Horizontal field of view limit has increased to 165 (screen ratio adjustment previously limited this to 127 on 16:9) (#389, 3.0 issue)
+- Fixed bug causing `/cl_curlybraces` to affect general parsing (3.1 bug after workaround in 2009, #640, reported by raket/fix)
 
 #### Bugs which affected 3.5 (typically related to renderer rewrite)
 
@@ -104,6 +105,8 @@
 - Fixed bug causing unlit lightmap data to be set to fullbright on first map load after watching demo/qtv stream with r_fullbright enabled (3.5 bug, reported by HangTime)
 - Fixed bug causing off-by-one error when drawing rectangle outlines (3.5 bug, reported by Matrix, #536)
 - Fixed bug causing `/gl_no24bit` to not affect aliasmodel skins (3.5 bug, reported by hemostx, #605)
+- Fixed bug causing messagemode input to appear in wrong position when using `notify` hud element (3.5 bug, reported by zigg1zagg1, #626)
+- Fixed bug causing `/r_tracker_inconsole 3` to show frag messages in the notify area (3.5 bug, #642, reported by HangTime)
 
 ### Ruleset-related changes
 
@@ -216,6 +219,7 @@
 - qw:// urls in command line will be opened even if not preceded by `+qwurl` (thanks to ciscon)
 - Linux: `/register_qwurl_protocol` command will register protocol with xdg (thanks to ciscon)
 - Commands that search by regular expression (`/cvarlist_re` etc) are now case-insensitive (reported by HangTime, #599)
+- Added support for MacOS qw urls opening via drag and drop emulation (thanks to ciscon)
 
 ### Build/meta
 

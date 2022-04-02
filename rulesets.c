@@ -757,11 +757,11 @@ qbool Rulesets_ToggleWhenFlashed(void)
 	return rulesetDef.ruleset == rs_mtfl;
 }
 
-qbool Rulesets_FullbrightModel(struct model_s* model, qbool local_singleplayer_game)
+qbool Rulesets_FullbrightModel(struct model_s* model)
 {
 	extern cvar_t gl_fb_models;
 	qbool protected_model = (model->modhint == MOD_EYES || model->modhint == MOD_BACKPACK) && rulesetDef.ruleset != rs_default;
-	qbool fb_requested = gl_fb_models.integer == 1 && model->modhint != MOD_GIB && model->modhint != MOD_VMODEL && !local_singleplayer_game;
+	qbool fb_requested = gl_fb_models.integer == 1 && model->modhint != MOD_GIB && model->modhint != MOD_VMODEL && !Ruleset_IsLocalSinglePlayerGame();
 
 	return !protected_model && fb_requested;
 }
@@ -803,3 +803,11 @@ float Ruleset_RollAngle(void)
 
 	return bound(0.0f, cl_rollangle.value, 5.0f);
 }
+
+#ifndef CLIENTONLY
+extern cvar_t     maxclients;
+qbool Ruleset_IsLocalSinglePlayerGame(void)
+{
+	return com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.integer == 1;
+}
+#endif

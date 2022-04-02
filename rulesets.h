@@ -76,8 +76,15 @@ void Rulesets_OnChange_cl_delay_packet(cvar_t *var, char *value, qbool *cancel);
 void Rulesets_OnChange_cl_iDrive(cvar_t *var, char *value, qbool *cancel);
 
 qbool Rulesets_ToggleWhenFlashed(void);
-qbool Rulesets_FullbrightModel(struct model_s* model, qbool local_singleplayer_game);
+qbool Rulesets_FullbrightModel(struct model_s* model);
 const char* Ruleset_BlockPlayerCountMacros(void);
 
 qbool Ruleset_CanLogConsole(void);
 float Ruleset_RollAngle(void);
+
+#ifndef CLIENTONLY
+extern cvar_t     maxclients;
+qbool Ruleset_IsLocalSinglePlayerGame(void);
+#else
+#define Ruleset_IsLocalSinglePlayerGame() (0)
+#endif
