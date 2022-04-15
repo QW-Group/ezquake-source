@@ -454,7 +454,7 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 
 		mt = (miptex_t *)((byte *)m + m->dataofs[i]);
 		if ((uintptr_t)mt > (uintptr_t)mod_base + l->fileofs + l->filelen - sizeof(miptex_t)) {
-			Host_Error("Texture %s data offset > lump (%d + %d vs %d)", mt->name, l->fileofs, l->filelen);
+			Host_Error("Texture %s data offset > lump (%d + %d vs %d)", mt->name, mod_base, l->fileofs, l->filelen);
 		}
 		mt->width  = LittleLong(mt->width);
 		mt->height = LittleLong(mt->height);
