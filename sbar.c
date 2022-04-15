@@ -1238,8 +1238,8 @@ static qbool Sbar_ShowTeamKills(void)
 		return ((cl.teamplay & 21) != 21); // 21 = (1)Teamplay On + (4)Team-members take No damage from direct fire + (16)Team-members take No damage from area-affect weaponry, so its like teamplay is off??
 	}
 	else {
-		// in teamplay 3 it's not possible to make teamkills
-		return (cl.teamplay != 3);
+		// in teamplay 3 and 4 it's not possible to make teamkills
+		return !(cl.teamplay == 3 || cl.teamplay == 4);
 	}
 }
 
