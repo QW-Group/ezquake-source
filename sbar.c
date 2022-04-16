@@ -132,6 +132,7 @@ cvar_t scr_scoreboard_afk_style       = {"scr_scoreboard_afk_style",      "1"};
 cvar_t	scr_scoreboard_teamsort       = {"scr_scoreboard_teamsort",       "1"};
 cvar_t	scr_scoreboard_forcecolors    = {"scr_scoreboard_forcecolors",    "1"};
 cvar_t	scr_scoreboard_showfrags      = {"scr_scoreboard_showfrags",      "1"};
+cvar_t	scr_scoreboard_showflagstats  = {"scr_scoreboard_showflagstats",  "0"};
 cvar_t	scr_scoreboard_drawtitle      = {"scr_scoreboard_drawtitle",      "1"};
 cvar_t	scr_scoreboard_borderless     = {"scr_scoreboard_borderless",     "1"};
 cvar_t	scr_scoreboard_spectator_name = {"scr_scoreboard_spectator_name", "\xF3\xF0\xE5\xE3\xF4\xE1\xF4\xEF\xF2"}; // brown "spectator". old: &cF20s&cF50p&cF80e&c883c&cA85t&c668a&c55At&c33Bo&c22Dr
@@ -319,6 +320,7 @@ void Sbar_Init(void)
 	Cvar_Register(&scr_scoreboard_teamsort);
 	Cvar_Register(&scr_scoreboard_forcecolors);
 	Cvar_Register(&scr_scoreboard_showfrags);
+	Cvar_Register(&scr_scoreboard_showflagstats);
 	Cvar_Register(&scr_scoreboard_drawtitle);
 	Cvar_Register(&scr_scoreboard_borderless);
 	Cvar_Register(&scr_scoreboard_spectator_name);
@@ -1298,7 +1300,7 @@ static void Sbar_DeathmatchOverlay(int start)
 						stats_team++;
 					}
 				}
-				if (cl.teamfortress && Stats_IsFlagsParsed()) {
+				if ((cl.teamfortress || scr_scoreboard_showflagstats.value) && Stats_IsFlagsParsed()) {
 					if (rank_width + statswidth + RANK_WIDTH_TCHSTATS < vid.width - 16) {
 						statswidth += RANK_WIDTH_TCHSTATS;
 						stats_touches++;
