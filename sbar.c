@@ -470,6 +470,7 @@ static int scoreboardlines;
 typedef struct {
 	char team[SCR_TEAM_T_MAXTEAMSIZE];
 	int frags;
+	int caps;
 	int players;
 	int plow, phigh, ptotal;
 	int topcolor, bottomcolor;
@@ -566,6 +567,8 @@ static void Sbar_SortTeams (void) {
 	mynum = Sbar_PlayerNum();
 
 	for (i = 0; i < MAX_CLIENTS; i++) {
+		int flagstats[] = { 0, 0, 0 };
+
 		s = &cl.players[i];
 		if (!s->name[0] || s->spectator)
 			continue;
@@ -575,6 +578,8 @@ static void Sbar_SortTeams (void) {
 		if (!t[0])
 			continue; // not on team
 
+		Stats_GetFlagStats(s - cl.players, flagstats);
+
 		for (j = 0; j < scoreboardteams; j++) {
 			if (!strcmp(teams[j].team, t)) {
 				playertoteam[i] = j;
@@ -582,13 +587,16 @@ static void Sbar_SortTeams (void) {
 				if (cl.scoring_system == SCORING_SYSTEM_TEAMFRAGS) {
 					if (teams[j].players == 0) {
 						teams[j].frags = s->frags;
+						teams[j].caps = flagstats[2];
 					}
 					else {
 						teams[j].frags = max(s->frags, teams[j].frags);
+						teams[j].caps = max(flagstats[2], teams[j].caps);
 					}
 				}
 				else {
 					teams[j].frags += s->frags;
+					teams[j].caps += flagstats[2];
 				}
 				teams[j].players++;
 				if (!cl.teamfortress && i == mynum) {
@@ -603,6 +611,7 @@ static void Sbar_SortTeams (void) {
 			playertoteam[i] = j;
 
 			teams[j].frags = s->frags;
+			teams[j].caps = flagstats[2];
 			teams[j].players = 1;
 			teams[j].known_team_number = s->known_team_color;
 			if (cl.teamfortress) {
@@ -1802,6 +1811,11 @@ static void Sbar_TeamOverlay(void)
 	Draw_SStringAligned(x, y, (cl.scoring_system == SCORING_SYSTEM_TEAMFRAGS ? "score" : "total"), 1, 1, proportional, text_align_right, x + FONT_WIDTH * 5);
 	x += 5 * FONT_WIDTH;
 	x += FONT_WIDTH;
+	if ((cl.teamfortress || scr_scoreboard_showflagstats.value) && Stats_IsFlagsParsed()) {
+		Draw_SStringAligned(x, y, "caps", 1, 1, proportional, text_align_center, x + FONT_WIDTH * 4);
+		x += 4 * FONT_WIDTH;
+		x += FONT_WIDTH;
+	}
 	Draw_SStringAligned(x, y, "players", 1, 1, proportional, text_align_left, x + FONT_WIDTH * 7);
 	x = lhs;
 
@@ -1870,6 +1884,13 @@ static void Sbar_TeamOverlay(void)
 		Draw_SStringAligned(x, y, num, 1, 1, proportional, text_align_right, x + 5 * FONT_WIDTH);
 		x += 5 * FONT_WIDTH;
 		x += FONT_WIDTH;
+
+		if ((cl.teamfortress || scr_scoreboard_showflagstats.value) && Stats_IsFlagsParsed()) {
+			snprintf(num, sizeof(num), "%4i", tm->caps);
+			Draw_SStringAligned(x, y, num, 1, 1, proportional, text_align_right, x + 4 * FONT_WIDTH);
+			x += 4 * FONT_WIDTH;
+			x += FONT_WIDTH;
+		}
 
 		// draw players
 		snprintf(num, sizeof(num), "%7i", tm->players);
