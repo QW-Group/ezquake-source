@@ -18616,6 +18616,22 @@
         }
       ]
     },
+    "scr_scoreboard_showflagstats": {
+      "desc": "This setting has no effect on TeamFortress which automatically enables flag stats",
+      "default": "0",
+      "group-id": "47",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Disable flag stats on the scoreboard.",
+          "name": "false"
+        },
+        {
+          "description": "Enable flag stats on the scoreboard.",
+          "name": "true"
+        }
+      ]
+    },
     "scr_scoreboard_spectator_name": {
       "desc": "This variable will change what spectators are called in the scoreboard.\nWhen teamplay is not on, this variable is cut to 4 characters.\n&cRGB values are not accepted.",
       "group-id": "47",
