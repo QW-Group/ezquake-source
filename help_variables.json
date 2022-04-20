@@ -6787,6 +6787,10 @@
       "group-id": "19",
       "type": ""
     },
+    "hud_bar_armor_color_ga_over": {
+      "group-id": "19",
+      "type": ""
+    },
     "hud_bar_armor_color_noarmor": {
       "group-id": "19",
       "type": ""

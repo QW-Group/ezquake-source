@@ -55,6 +55,7 @@ static void Frags_DrawHorizontalHealthBar(player_info_t* info, int x, int y, int
 	static cvar_t* health_color_twomega = NULL;
 	static cvar_t* health_color_unnatural = NULL;
 	static cvar_t* armor_color_noarmor = NULL;
+	static cvar_t* armor_color_ga_over = NULL;
 	static cvar_t* armor_color_ga = NULL;
 	static cvar_t* armor_color_ya = NULL;
 	static cvar_t* armor_color_ra = NULL;
@@ -91,6 +92,7 @@ static void Frags_DrawHorizontalHealthBar(player_info_t* info, int x, int y, int
 		health_color_unnatural = Cvar_Find("hud_bar_health_color_unnatural");
 
 		armor_color_noarmor = Cvar_Find("hud_bar_armor_color_noarmor");
+		armor_color_ga_over = Cvar_Find("hud_bar_armor_color_ga_over");
 		armor_color_ga = Cvar_Find("hud_bar_armor_color_ga");
 		armor_color_ya = Cvar_Find("hud_bar_armor_color_ya");
 		armor_color_ra = Cvar_Find("hud_bar_armor_color_ra");
@@ -123,7 +125,11 @@ static void Frags_DrawHorizontalHealthBar(player_info_t* info, int x, int y, int
 		max_armor = 150;
 	}
 	else if (items & IT_ARMOR1 && true_health >= 1) {
-		armor_color = RGBAVECT_TO_COLOR(armor_color_ga->color);
+		if (armor > 100) {
+			armor_color = RGBAVECT_TO_COLOR(armor_color_ga_over->color);
+		} else {
+			armor_color = RGBAVECT_TO_COLOR(armor_color_ga->color);
+		}
 		max_armor = 100;
 	}
 

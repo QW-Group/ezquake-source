@@ -174,7 +174,7 @@ static void SCR_HUD_DrawArmorDamage(hud_t *hud)
 
 void SCR_HUD_DrawBarArmor(hud_t *hud)
 {
-	static	cvar_t *width = NULL, *height, *direction, *color_noarmor, *color_ga, *color_ya, *color_ra, *color_unnatural;
+	static	cvar_t *width = NULL, *height, *direction, *color_noarmor, *color_ga, *color_ga_over, *color_ya, *color_ra, *color_unnatural;
 	int		x, y;
 	int		armor = HUD_Stats(STAT_ARMOR);
 	qbool	alive = cl.stats[STAT_HEALTH] > 0;
@@ -185,6 +185,7 @@ void SCR_HUD_DrawBarArmor(hud_t *hud)
 		height = HUD_FindVar(hud, "height");
 		direction = HUD_FindVar(hud, "direction");
 		color_noarmor = HUD_FindVar(hud, "color_noarmor");
+		color_ga_over = HUD_FindVar(hud, "color_ga_over");
 		color_ga = HUD_FindVar(hud, "color_ga");
 		color_ya = HUD_FindVar(hud, "color_ya");
 		color_ra = HUD_FindVar(hud, "color_ra");
@@ -208,8 +209,13 @@ void SCR_HUD_DrawBarArmor(hud_t *hud)
 			SCR_HUD_DrawBar(direction->integer, armor, 150.0, color_ya->color, x, y, width->integer, height->integer);
 		}
 		else if (HUD_Stats(STAT_ITEMS) & IT_ARMOR1 && alive) {
-			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
-			SCR_HUD_DrawBar(direction->integer, armor, 100.0, color_ga->color, x, y, width->integer, height->integer);
+			if (armor > 100) {
+				SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_ga->color, x, y, width->integer, height->integer);
+				SCR_HUD_DrawBar(direction->integer, armor - 100.0, 100.0, color_ga_over->color, x, y, width->integer, height->integer);
+			} else {
+				SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
+				SCR_HUD_DrawBar(direction->integer, armor, 100.0, color_ga->color, x, y, width->integer, height->integer);
+			}
 		}
 		else {
 			SCR_HUD_DrawBar(direction->integer, 100, 100.0, color_noarmor->color, x, y, width->integer, height->integer);
@@ -267,6 +273,7 @@ void Armor_HudInit(void)
 		"width", "64",
 		"direction", "1",
 		"color_noarmor", "128 128 128 64",
+		"color_ga_over", "48 160 0 128",
 		"color_ga", "32 128 0 128",
 		"color_ya", "192 128 0 128",
 		"color_ra", "128 0 0 128",
