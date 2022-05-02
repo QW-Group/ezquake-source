@@ -168,7 +168,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 
 	// this doesn't draw anything, just calculate width
 	width = SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer, hud_teaminfo_proportional->integer);
-	height = FONTWIDTH * hud_teaminfo_scale->value * (hud_teaminfo_show_enemies->integer && hud_teaminfo_show_headers->integer ? slots_num + n_teams : slots_num);
+	height = FONTWIDTH * hud_teaminfo_scale->value * (hud_teaminfo_show_enemies->integer && hud_teaminfo_show_headers->integer ? slots_num + max(2 * n_teams - 1, 0) : slots_num);
 
 	if (hud_editor) {
 		HUD_PrepareDraw(hud, width, FONTWIDTH, &x, &y);
@@ -198,6 +198,10 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 			// in which case, make sure to differentiate name width vs teaminfo width
 			// i.e int name_width = Draw_SString()
 			if (hud_teaminfo_show_headers->integer) {
+			    if (k > 0) { // separator between teams
+			        _y += FONTWIDTH * hud_teaminfo_scale->value;
+			    }
+
 				Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer);
 				snprintf(tmp, sizeof(tmp), "%s %4i", TP_ParseFunChars("$.", false), sorted_teams[k].frags);
 				Draw_SStringAligned(x, _y, tmp, hud_teaminfo_scale->value, 1.0f, hud_teaminfo_proportional->integer, text_align_right, x + width);
