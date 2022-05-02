@@ -198,9 +198,9 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 			// in which case, make sure to differentiate name width vs teaminfo width
 			// i.e int name_width = Draw_SString()
 			if (hud_teaminfo_show_headers->integer) {
-			    if (k > 0) { // separator between teams
-			        _y += FONTWIDTH * hud_teaminfo_scale->value;
-			    }
+				if (k > 0) { // separator between teams
+					_y += FONTWIDTH * hud_teaminfo_scale->value;
+				}
 
 				Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer);
 				snprintf(tmp, sizeof(tmp), "%s %4i", TP_ParseFunChars("$.", false), sorted_teams[k].frags);
