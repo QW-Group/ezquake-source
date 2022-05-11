@@ -12770,6 +12770,22 @@
         }
       ]
     },
+    "hud_teaminfo_show_ammo": {
+      "desc": "Display ammo count next to best weapon in the teaminfo.",
+      "group-id": "19",
+      "remarks": "If disabled, ammo can still be displayed by adding %c to /hud_teaminfo_layout",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Do not show ammo next to best weapon",
+          "name": "0"
+        },
+        {
+          "description": "Show ammo next to best weapon",
+          "name": "1"
+        }
+      ]
+    },
     "hud_teaminfo_show_enemies": {
       "desc": "Show information about the enemy team(s) in the teaminfo window. Displays a header for each team consisting of the team name and the current team score.",
       "group-id": "19",
@@ -18808,6 +18824,12 @@
       "group-id": "40",
       "type": "float"
     },
+    "scr_shownick_show_ammo": {
+      "default": "0",
+      "desc": "Displays ammo count next to best weapon.",
+      "group-id": "40",
+      "type": "boolean"
+    },
     "scr_shownick_time": {
       "default": "0.8",
       "desc": "Number of seconds to show results of '/shownick 1' command in KTX.",
@@ -19009,6 +19031,23 @@
         {
           "description": "From 0 (very small) to 10 (very big)",
           "name": "*"
+        }
+      ]
+    },
+    "scr_teaminfo_show_ammo": {
+      "default": "0",
+      "desc": "Will show ammo count next to best weapon in teaminfo table.",
+      "group-id": "40",
+      "remarks": "If disabled, ammo can still be displayed by adding %c to /scr_teaminfo_order",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Do not show ammo next to best weapon.",
+          "name": "0"
+        },
+        {
+          "description": "Show ammo next to best weapon.",
+          "name": "1"
         }
       ]
     },
