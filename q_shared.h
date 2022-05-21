@@ -145,7 +145,11 @@ float	FloatSwapPDP2Lit (float f);
 
 #if __FLOAT_WORD_ORDER == __BIG_ENDIAN
 #define __BIG_ENDIAN__
+#elif __BYTE_ORDER == __ORDER_BIG_ENDIAN
+#define __BIG_ENDIAN__
 #elif __FLOAT_WORD_ORDER == __LITTLE_ENDIAN
+#define __LITTLE_ENDIAN__
+#elif __BYTE_ORDER == __ORDER_LITTLE_ENDIAN
 #define __LITTLE_ENDIAN__
 #elif __FLOAT_WORD_ORDER == __PDP_ENDIAN
 #define __PDP_ENDIAN__
