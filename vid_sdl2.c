@@ -1657,7 +1657,8 @@ void VID_Minimize (void)
 
 void VID_Restore (void)
 {
-	if (!sdl_window) {
+	if (!sdl_window || (SDL_GetWindowFlags(sdl_window) & SDL_WINDOW_INPUT_FOCUS)) {
+		Con_Printf("vid restore no restore");
 		return;
 	}
 
