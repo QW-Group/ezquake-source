@@ -1786,7 +1786,7 @@ static void NQP_Skip (int count)
 	nqp_buf.cursize -= count;
 }
 
-static void NQP_Process (void)
+static void NQP_Process(void)
 {
 	int cmd;
 
@@ -1830,13 +1830,16 @@ static void NQP_Process (void)
 		else if (cmd == nq_svc_setview) {
 			if (nqp_buf.cursize < 3)
 				goto waitformore;
-			NQP_Skip (3);		// TODO: make an extension for this
+			// nq_svc_setview <short>
+			NQP_Skip(3);		// TODO: make an extension for this
 		}
-		else if (cmd == svc_updatefrags)
+		else if (cmd == svc_updatefrags) {
 			nqp_expect = 4;
+		}
 		else if (cmd == nq_svc_updatecolors) {
-			if (nqp_buf.cursize < 3)
+			if (nqp_buf.cursize < 3) {
 				goto waitformore;
+			}
 			MSG_WriteByte (&sv.reliable_datagram, svc_setinfo);
 			MSG_WriteByte (&sv.reliable_datagram, nqp_buf_data[1]);
 			MSG_WriteString (&sv.reliable_datagram, "topcolor");
@@ -1850,12 +1853,14 @@ static void NQP_Process (void)
 		else if (cmd == nq_svc_updatename) {
 			int slot;
 			byte *p;
-			if (nqp_buf.cursize < 3)
+			if (nqp_buf.cursize < 3) {
 				goto waitformore;
+			}
 			slot = nqp_buf_data[1];
 			p = (byte *)memchr (nqp_buf_data + 2, 0, nqp_buf.cursize - 2);
-			if (!p)
+			if (!p) {
 				goto waitformore;
+			}
 			MSG_WriteByte (&sv.reliable_datagram, svc_setinfo);
 			MSG_WriteByte (&sv.reliable_datagram, slot);
 			MSG_WriteString (&sv.reliable_datagram, "name");
@@ -1870,84 +1875,97 @@ static void NQP_Process (void)
 			NQP_Skip ((p - nqp_buf_data) + 1);
 		}
 		else if (cmd == svc_cdtrack) {
-			if (nqp_buf.cursize < 3)
+			if (nqp_buf.cursize < 3) {
 				goto waitformore;
+			}
 			NQP_Flush (2);
 			NQP_Skip (1);
 		}
 		else if (cmd == svc_finale) {
 			byte *p = (byte *)memchr (nqp_buf_data + 1, 0, nqp_buf.cursize - 1);
-			if (!p)
+			if (!p) {
 				goto waitformore;
+			}
 			nqp_expect = (p - nqp_buf_data) + 1;
 		}
 		else if (cmd == svc_intermission) {
 			int i;
 			NQP_Flush (1);
-			for (i = 0; i < 3; i++)
-				MSG_WriteCoord (&sv.reliable_datagram, svs.clients[0].edict->v.origin[i]);
-			for (i = 0; i < 3; i++)
-				MSG_WriteAngle (&sv.reliable_datagram, svs.clients[0].edict->v.angles[i]);
+			for (i = 0; i < 3; i++) {
+				MSG_WriteCoord(&sv.reliable_datagram, svs.clients[0].edict->v.origin[i]);
+			}
+			for (i = 0; i < 3; i++) {
+				MSG_WriteAngle(&sv.reliable_datagram, svs.clients[0].edict->v.angles[i]);
+			}
 		}
 		else if (cmd == nq_svc_cutscene) {
 			byte *p = (byte *)memchr (nqp_buf_data + 1, 0, nqp_buf.cursize - 1);
-			if (!p)
+			if (!p) {
 				goto waitformore;
+			}
 			MSG_WriteByte (&sv.reliable_datagram, svc_stufftext);
 			MSG_WriteString (&sv.reliable_datagram, "//cutscene\n"); // ZQ extension
 			NQP_Skip (p - nqp_buf_data + 1);
 		}
-		else if (nqp_buf_data[0] == svc_temp_entity) {
+		else if (cmd == svc_temp_entity) {
 			if (nqp_buf.cursize < 2)
 				break;
 
-switch (nqp_buf_data[1]) {
-  case TE_SPIKE:
-  case TE_SUPERSPIKE:
-  case TE_EXPLOSION:
-  case TE_TAREXPLOSION:
-  case TE_WIZSPIKE:
-  case TE_KNIGHTSPIKE:
-  case TE_LAVASPLASH:
-  case TE_TELEPORT:
-		nqp_expect = 8;
-		break;
-  case TE_GUNSHOT:
-		if (nqp_buf.cursize < 8)
-			goto waitformore;
-		NQP_Flush (2);
-		MSG_WriteByte (&sv.reliable_datagram, 1);
-		NQP_Flush (6);
-		break;
+			switch (nqp_buf_data[1]) {
+			case TE_SPIKE:
+			case TE_SUPERSPIKE:
+			case TE_EXPLOSION:
+			case TE_TAREXPLOSION:
+			case TE_WIZSPIKE:
+			case TE_KNIGHTSPIKE:
+			case TE_LAVASPLASH:
+			case TE_TELEPORT:
+				if (nqp_buf.cursize < 2 + 3 * msg_coordsize) {
+					goto waitformore;
+				}
+				NQP_Flush(2 + 3 * msg_coordsize);
+				break;
+			case TE_GUNSHOT:
+				if (nqp_buf.cursize < 2 + 3 * msg_coordsize) {
+					goto waitformore;
+				}
+				NQP_Flush(2);
+				MSG_WriteByte(&sv.reliable_datagram, 1);
+				NQP_Flush(3 * msg_coordsize);
+				break;
 
-  case TE_LIGHTNING1:
-  case TE_LIGHTNING2:
-  case TE_LIGHTNING3:
-		nqp_expect = 16;
-	  break;
-  case NQ_TE_BEAM:
-  {		int entnum;
-		if (nqp_buf.cursize < 16)
-			goto waitformore;
-		MSG_WriteByte (&sv.reliable_datagram, svc_temp_entity);
-		MSG_WriteByte (&sv.reliable_datagram, TE_LIGHTNING1);
-		entnum = nqp_buf_data[2] + nqp_buf_data[3]*256;
-		if ((unsigned int)entnum > 1023)
-			entnum = 0;
-		MSG_WriteShort (&sv.reliable_datagram, (short)(entnum - 1288));
-		NQP_Skip (4);
-		nqp_expect = 12;
-		break;
-  }
+			case TE_LIGHTNING1:
+			case TE_LIGHTNING2:
+			case TE_LIGHTNING3:
+				if (nqp_buf.cursize < 2 + 2 + 6 * msg_coordsize) {
+					goto waitformore;
+				}
+				NQP_Flush(4 + 6 * msg_coordsize);
+				break;
+			case NQ_TE_BEAM:
+			{
+				int entnum;
+				if (nqp_buf.cursize < 4 + 6 * msg_coordsize) {
+					goto waitformore;
+				}
+				MSG_WriteByte(&sv.reliable_datagram, svc_temp_entity);
+				MSG_WriteByte(&sv.reliable_datagram, TE_LIGHTNING1);
+				entnum = nqp_buf_data[2] + nqp_buf_data[3] * 256;
+				if ((unsigned int)entnum > 1023)
+					entnum = 0;
+				MSG_WriteShort(&sv.reliable_datagram, (short)(entnum - 1288));
+				NQP_Skip(4);
+				NQP_Flush(6 * msg_coordsize);
+				break;
+			}
 
-  case NQ_TE_EXPLOSION2:
-		nqp_expect = 10;
-		break;
-  default:
-		Con_Printf ("WARNING: progs.dat sent an unsupported svc_temp_entity: %i\n", nqp_buf_data[1]);
-	    goto ignore;
-}
-
+			case NQ_TE_EXPLOSION2:
+				// TODO: Convert to TE_BLOOD (2 + 3 * coord + 2 bytes)
+				break;
+			default:
+				Con_Printf("WARNING: progs.dat sent an unsupported svc_temp_entity: %i\n", nqp_buf_data[1]);
+				goto ignore;
+			}
 		}
 		else {
 			Con_Printf ("WARNING: progs.dat sent an unsupported svc: %i\n", cmd);

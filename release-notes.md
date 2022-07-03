@@ -46,6 +46,7 @@
 - Fixed bug causing `/hud_bar_armor` to display outside bounds when armor value > 100 (affects ctf - #651, reported & fixed by dsvensson)
 - Fixed bug causing copy-to-clipboard from server-browser popup on non-Windows systems to not copy to system clipboard (thanks to dev)
 - Fixed reading from pipe on posix systems (thanks to qqskha)
+- Fix invalid protocol adjustments when using NQ progs.dat and `/sv_bigcoords 1`
 
 ### Bugs which affected 3.x
 

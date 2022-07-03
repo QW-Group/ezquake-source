@@ -64,6 +64,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Fixed `/gl_no24bit` not taking effect after `/vid_restart` (reported by hemostx, #601)
 - Fixed `/gl_no24bit` not disabling loading external textures (3.5 bug, kind of reported by hemostx, #601)
 - Fixed bug causing `/gl_scaleskytextures` to not affect external textures (reported & fixed by hemostx, #606)
+- Fix invalid protocol adjustments when using NQ progs.dat and `/sv_bigcoords 1`
 
 ### Changes from alpha7=>alpha8 (Feb 9th => July 13th, 2021)
 
