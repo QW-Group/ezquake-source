@@ -222,6 +222,7 @@
 - Linux: `/register_qwurl_protocol` command will register protocol with xdg (thanks to ciscon)
 - Commands that search by regular expression (`/cvarlist_re` etc) are now case-insensitive (reported by HangTime, #599)
 - Added support for MacOS qw urls opening via drag and drop emulation (thanks to ciscon)
+- Improved alignment of scoreboard scores (thanks to dsvensson)
 
 ### Build/meta
 
