@@ -20,6 +20,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Fixed bug causing `/cl_curlybraces` to affect general parsing (3.1 bug after workaround in 2009, #640, reported by raket/fix)
 - Fixed bug causing `/r_tracker_inconsole 3` to show frag messages in the notify area (3.5 bug, #642, reported by HangTime)
 - Fixed bug causing `/hud_bar_armor` to display outside bounds when armor value > 100 (affects ctf - #651, reported & fixed by dsvensson)
+- Fixed bug causing copy-to-clipboard from server-browser popup on non-Windows systems to not copy to system clipboard (thanks to dev)
 - Improved alignment of scoreboard scores, removed teamkills in teamplay 4 (thanks to dsvensson)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)

@@ -44,6 +44,7 @@
 - Fixed bug causing `/gl_particle_gibtrails 1` to turn classic blood trails following gibs into rocket smoke (very old bug, reported by hemostx, #614)
 - Translucent models are first drawn with a z-pass, to stop overdraw affecting level of translucency
 - Fixed bug causing `/hud_bar_armor` to display outside bounds when armor value > 100 (affects ctf - #651, reported & fixed by dsvensson)
+- Fixed bug causing copy-to-clipboard from server-browser popup on non-Windows systems to not copy to system clipboard (thanks to dev)
 
 ### Bugs which affected 3.x
 
