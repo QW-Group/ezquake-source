@@ -100,5 +100,6 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Server browser shows info at lower resolutions
 - Menu has options for gl_modulate, turn left/right, cvar descriptions match /describe
 - Build support: improve ARM build support, mingw clang, FreeBSD/powerpc 32-bit, ubuntu 20.04 dockerfile, FDK AppStream
+- Support building on NetBSD (thanks to ciscon)
 
 Thanks to all contributors and those who assisted with bug reporting.
