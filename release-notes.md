@@ -235,3 +235,4 @@
 - Fixed build on FreeBSD/powerpc64 (thanks to pkubaj)
 - Remove unsupported 666-deflect message from fragfile.dat (reported by eb, #461)
 - Support building on NetBSD (thanks to ciscon)
+- Lots of help/manual updates (thanks to various, but especially hemostx)
