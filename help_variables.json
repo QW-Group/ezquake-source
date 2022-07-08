@@ -12802,6 +12802,11 @@
       "group-id": "19",
       "type": ""
     },
+    "hud_teaminfo_header_spacing": {
+      "group-id": "19",
+      "type": "float",
+      "desc": "Lines spacing between teams when showing headers"
+    },
     "hud_teaminfo_item_opacity": {
       "group-id": "19",
       "type": "float"

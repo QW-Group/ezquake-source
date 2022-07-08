@@ -6,6 +6,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Added `_draw` cvar on hud elements, to take space on-screen but not render content (also filters SP & MP games) (requests #619, #620)
 - Added `/scr_scoreboard_showflagstats`, to force flag columns to be shown on scoreboard (for CTF - thanks to dsvensson)
 - Added support for MacOS qw urls opening via drag and drop emulation (fix by ciscon)
+- Added `/hud_teaminfo_header_spacing` to control lines between headers (default 1 - thanks to xantom)
 - Changed `_show` cvar on hud elements to allow filter for SP & MP games (requests #619, #620)
 - Changed `/gl_consolefont` to fall back to 'original' on load failure, but doesn't change value (for toggling no24bit, #605)
 - Fixed `/gl_no24bit` not affecting aliasmodel skins (3.5 bug, reported by hemostx, #605)

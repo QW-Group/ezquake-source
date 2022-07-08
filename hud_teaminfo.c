@@ -86,6 +86,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	int x, y, _y, width, height;
 	int i, j, k, slots[MAX_CLIENTS], slots_num, maxname, maxloc;
 	char tmp[1024], *nick;
+	float header_spacing;
 
 	// Used for hud_teaminfo, data is collected in screen.c / scr_teaminfo
 	extern ti_player_t ti_clients[MAX_CLIENTS];
@@ -105,7 +106,8 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		*hud_teaminfo_powerup_style,
 		*hud_teaminfo_low_health,
 		*hud_teaminfo_layout,
-		*hud_teaminfo_proportional;
+		*hud_teaminfo_proportional,
+		*hud_teaminfo_header_spacing;
 
 	if (hud_teaminfo_weapon_style == NULL) {
 		// first time
@@ -122,6 +124,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		hud_teaminfo_low_health = HUD_FindVar(hud, "low_health");
 		hud_teaminfo_layout = HUD_FindVar(hud, "layout");
 		hud_teaminfo_proportional = HUD_FindVar(hud, "proportional");
+		hud_teaminfo_header_spacing = HUD_FindVar(hud, "header_spacing");
 	}
 
 	// Don't update hud item unless first view is beeing displayed
@@ -166,9 +169,11 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	// limit name length
 	maxname = bound(0, maxname, hud_teaminfo_name_width->integer);
 
+	header_spacing = max(0, hud_teaminfo_header_spacing->value);
+
 	// this doesn't draw anything, just calculate width
 	width = SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer, hud_teaminfo_proportional->integer);
-	height = FONTWIDTH * hud_teaminfo_scale->value * (hud_teaminfo_show_enemies->integer && hud_teaminfo_show_headers->integer ? slots_num + max(2 * n_teams - 1, 0) : slots_num);
+	height = FONTWIDTH * hud_teaminfo_scale->value * (hud_teaminfo_show_enemies->integer && hud_teaminfo_show_headers->integer ? slots_num + max(2 * n_teams - 1, 0) * header_spacing : slots_num);
 
 	if (hud_editor) {
 		HUD_PrepareDraw(hud, width, FONTWIDTH, &x, &y);
@@ -199,7 +204,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 			// i.e int name_width = Draw_SString()
 			if (hud_teaminfo_show_headers->integer) {
 				if (k > 0) { // separator between teams
-					_y += FONTWIDTH * hud_teaminfo_scale->value;
+					_y += FONTWIDTH * hud_teaminfo_scale->value * header_spacing;
 				}
 
 				Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer);
@@ -710,6 +715,7 @@ void TeamInfo_HudInit(void)
 		"scale", "1",
 		"powerup_style", "1",
 		"proportional", "0",
+		"header_spacing", "1",
 		NULL
 	);
 }

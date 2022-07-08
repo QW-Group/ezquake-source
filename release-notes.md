@@ -157,7 +157,8 @@
 - `/hud_clock_content 1` changes output to show the uptime of the client
 - `/hud_clock_content 2` changes output to show time connected to the server (should match `/cl_clock 1` in oldhud)
 - `/hud_fps_drop <negative>` will be treated as relative to `/cl_maxfps`, e.g. `/hud_fps_drop -5;/cl_maxfps 1001` will show when fps drops to 996
--` /hud_keys` supports user commands hidden in .mvd files & qtv streams
+- `/hud_keys` supports user commands hidden in .mvd files & qtv streams
+- `/hud_teaminfo_header_spacing` to control lines between headers (default 1 - thanks to xantom)
 - `/in_ignore_touch_events` added - allows mouse clicks from touch input devices
 - `/in_ignore_unfocused_keyb` added - should ignore keyboard events immediately after receiving input focus (linux only)
 - `/in_ignore_deadkeys` added - essentially `/in_builtin_keyboard 1` when option key held down (macos only, #111, reported by bogojoker)
