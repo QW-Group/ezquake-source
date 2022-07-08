@@ -63,6 +63,7 @@
 - Fixed `/demo_jump_mark` not working if `/demo_jump_rewind` not set
 - Horizontal field of view limit has increased to 165 (screen ratio adjustment previously limited this to 127 on 16:9) (#389, 3.0 issue)
 - Fixed bug causing `/cl_curlybraces` to affect general parsing (3.1 bug after workaround in 2009, #640, reported by raket/fix)
+- Fixed bug causing restore of window which already had input focus (affects linux/macos, thanks to ciscon)
 
 #### Bugs which affected 3.5 (typically related to renderer rewrite)
 

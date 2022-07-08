@@ -22,6 +22,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Fixed bug causing `/r_tracker_inconsole 3` to show frag messages in the notify area (3.5 bug, #642, reported by HangTime)
 - Fixed bug causing `/hud_bar_armor` to display outside bounds when armor value > 100 (affects ctf - #651, reported & fixed by dsvensson)
 - Fixed bug causing copy-to-clipboard from server-browser popup on non-Windows systems to not copy to system clipboard (thanks to dev)
+- Fixed bug causing restore of window which already had input focus (affects linux/macos, thanks to ciscon)
 - Improved alignment of scoreboard scores, removed teamkills in teamplay 4 (thanks to dsvensson)
 - Added arch-linux support to `build_linux.sh` script (thanks to ginzberg)
 
