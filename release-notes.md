@@ -239,3 +239,4 @@
 - Support building on NetBSD (thanks to ciscon)
 - Lots of help/manual updates (thanks to various, but especially hemostx)
 - Added arch-linux support to `build_linux.sh` script (thanks to ginzberg)
+- Changed endian detection in GCC/clang (fixes #655, thanks to ciscon)
