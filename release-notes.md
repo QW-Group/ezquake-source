@@ -236,3 +236,4 @@
 - Remove unsupported 666-deflect message from fragfile.dat (reported by eb, #461)
 - Support building on NetBSD (thanks to ciscon)
 - Lots of help/manual updates (thanks to various, but especially hemostx)
+- Added arch-linux support to `build_linux.sh` script (thanks to ginzberg)

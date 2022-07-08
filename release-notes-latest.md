@@ -22,6 +22,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Fixed bug causing `/hud_bar_armor` to display outside bounds when armor value > 100 (affects ctf - #651, reported & fixed by dsvensson)
 - Fixed bug causing copy-to-clipboard from server-browser popup on non-Windows systems to not copy to system clipboard (thanks to dev)
 - Improved alignment of scoreboard scores, removed teamkills in teamplay 4 (thanks to dsvensson)
+- Added arch-linux support to `build_linux.sh` script (thanks to ginzberg)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 
