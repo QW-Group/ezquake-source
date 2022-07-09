@@ -27,6 +27,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Added arch-linux support to `build_linux.sh` script (thanks to ginzberg)
 - Changed endian detection in GCC/clang (fixes #655, thanks to ciscon)
 - Fixed reading from pipe on posix systems (thanks to qqskha)
+- Fixed weapon selection not defaulting back to `2 1` on map change (#659, reported by ParboiL)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 

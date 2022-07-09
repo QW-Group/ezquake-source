@@ -1148,6 +1148,11 @@ void CL_ClearState (void)
 		memset(&cl, 0, sizeof(cl));
 	}
 
+	// default weapon selection if nothing else replaces it
+	cl.weapon_order[0] = 2;
+	cl.weapon_order[1] = 1;
+	cl.weapon_order[2] = 0;
+
 	SZ_Clear (&cls.netchan.message);
 
 	// Clear other arrays.
