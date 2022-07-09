@@ -191,15 +191,26 @@ char *Q_strcpy( char *to, char *from )
 	return to;
 }
 
-char *Q_strlwr( char *s1 ) {
-    char	*s;
+char* Q_strlwr(char* s1) {
+	char* s;
 
-    s = s1;
-	while ( *s ) {
+	s = s1;
+	while (*s) {
 		*s = tolower(*s);
 		s++;
 	}
-    return s1;
+	return s1;
+}
+
+char* Q_strupr(char* s1) {
+	char* s;
+
+	s = s1;
+	while (*s) {
+		*s = toupper(*s);
+		s++;
+	}
+	return s1;
 }
 
 // Added by VVD {

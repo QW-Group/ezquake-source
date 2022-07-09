@@ -1993,7 +1993,7 @@ void ReloadPaletteAndColormap(void)
 
 	host_basepal = (byte *) FS_LoadHeapFile ("gfx/palette.lmp", &filesize);
 	if (!host_basepal)
-		Sys_Error ("Couldn't load gfx/palette.lmp");
+		Sys_Error("Couldn't load gfx/palette.lmp\n\nThis is typically caused by being unable to locate pak0.pak.\nCopy pak0.pak into 'id1' folder, in same directory as executable.");
 	FMod_CheckModel("gfx/palette.lmp", host_basepal, filesize);
 
 	host_colormap = (byte *) FS_LoadHeapFile ("gfx/colormap.lmp", &filesize);

@@ -440,7 +440,7 @@ void FS_SetUserDirectory (char *dir, char *type) {
 // -1 - Error loading file
 
 static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpathfuncs_t *funcs) 
-{	
+{
 	vfsfile_t 		*vfs;
 	flocation_t 	loc;
 	char 			pakfile[MAX_OSPATH];
@@ -468,13 +468,12 @@ static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpa
 		}
 	}
 
-
 	/* Check the pak exists */
 	if (!search->funcs->FindFile(search->handle, &loc, pakname, NULL))
 		return 1;	//not found..
 
 	/* Load the pak file */
-	snprintf (pakfile, sizeof(pakfile), "%s%s", pathto, pakname);
+	snprintf(pakfile, sizeof(pakfile), "%s%s", pathto, pakname);
 	vfs = search->funcs->OpenVFS(search->handle, &loc, "r");
 	if (!vfs)
 		return -1;
@@ -756,13 +755,20 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 
 	// start up with id1 by default
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "id1");
-	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
+	if (!COM_FileExists(tmp_path)) {
+		// (try upper-case ID1 if it's there... Steam...)
+		snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "id1");
+		FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
+	}
+	else {
+		FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
+	}
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "ezquake");
 	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "qw");
 	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
 	if (*com_homedir) {
-	        FS_AddHomeDirectory(com_homedir, FS_LOAD_FILE_ALL);
+	    FS_AddHomeDirectory(com_homedir, FS_LOAD_FILE_ALL);
 	}
 
 	// -data <datadir>
@@ -2731,11 +2737,17 @@ static void FS_AddDataFiles(char *pathto, searchpath_t *parent, char *extension,
 	wildpaks_t wp;
 	FILE *pak_lst;
 
-	for (i=0 ; ; i++)
+	for (i = 0; ; i++)
 	{
+		// try lower-case first
 		snprintf (pakfile, sizeof(pakfile), "pak%i.%s", i, extension);
-		if (FS_AddPak(pathto, pakfile, parent, funcs))
-			break;
+		if (FS_AddPak(pathto, pakfile, parent, funcs)) {
+			// originals might be PAK0.PAK, try again
+			Q_strupr(pakfile);
+			if (FS_AddPak(pathto, pakfile, parent, funcs)) {
+				break;
+			}
+		}
 	}
 
 	/* VFS-FIXME: Sure there is a better way to do this.... */

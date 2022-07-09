@@ -766,7 +766,7 @@ void Cfg_ExecuteDefaultConfig(void)
 		strlcpy(nquakedefault, com_basedir, sizeof(nquakedefault));
 		strlcat(nquakedefault, "/qw/nquake.pk3", sizeof(nquakedefault));
 
-		if (strcmp(pak0default, loc.rawname) && strcmp(nquakedefault, loc.rawname)) {
+		if (strcasecmp(pak0default, loc.rawname) && strcasecmp(nquakedefault, loc.rawname)) {
 			Cbuf_AddText("exec default.cfg\n");
 		}
 	}

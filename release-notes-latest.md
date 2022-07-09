@@ -28,6 +28,8 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Changed endian detection in GCC/clang (fixes #655, thanks to ciscon)
 - Fixed reading from pipe on posix systems (thanks to qqskha)
 - Fixed weapon selection not defaulting back to `2 1` on map change (#659, reported by ParboiL)
+- Will now load from `ID1` folder if `id1` not present
+- Will now check PAKx.PAK if pakx.pak not present (fixes #637, reported by nzmyers)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 

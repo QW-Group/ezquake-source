@@ -228,6 +228,8 @@
 - Commands that search by regular expression (`/cvarlist_re` etc) are now case-insensitive (reported by HangTime, #599)
 - Added support for MacOS qw urls opening via drag and drop emulation (thanks to ciscon)
 - Improved alignment of scoreboard scores, removed teamkills in teamplay 4 (thanks to dsvensson)
+- Will now load from `ID1` folder if `id1` not present
+- Will now check PAKx.PAK if pakx.pak not present (fixes #637, reported by nzmyers)
 
 ### Build/meta
 
