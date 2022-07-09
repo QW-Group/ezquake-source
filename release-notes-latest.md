@@ -26,6 +26,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Improved alignment of scoreboard scores, removed teamkills in teamplay 4 (thanks to dsvensson)
 - Added arch-linux support to `build_linux.sh` script (thanks to ginzberg)
 - Changed endian detection in GCC/clang (fixes #655, thanks to ciscon)
+- Fixed reading from pipe on posix systems (thanks to qqskha)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 
