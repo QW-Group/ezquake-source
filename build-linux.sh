@@ -78,7 +78,9 @@ fi
 [ -n "${VERSION_ID}" ] || VERSION_ID=0
 case $ID in
 	arch)
-    # Note - arch is a rolling release, and does not have the same restriction as versioning as other distros
+		install_check_arch
+		;;
+	manjaro)
 		install_check_arch
 		;;
 	linuxmint)
