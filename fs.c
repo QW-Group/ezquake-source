@@ -757,7 +757,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "id1");
 	if (!COM_FileExists(tmp_path)) {
 		// (try upper-case ID1 if it's there... Steam...)
-		snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "id1");
+		snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "ID1");
 		FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
 	}
 	else {
