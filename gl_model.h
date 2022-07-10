@@ -468,6 +468,17 @@ typedef enum
 #define MAX_SIMPLE_TEXTURES 5
 #define MAX_TEXTURE_ARRAYS_PER_MODEL 64
 
+typedef struct worldspawn_info_s {
+	char skybox_name[MAX_QPATH];
+	float fog_density;
+	vec3_t fog_color;
+
+	float wateralpha;
+	float lavaalpha;
+	float telealpha;
+	float slimealpha;
+} worldspawn_info_t;
+
 typedef struct model_s {
 	char				name[MAX_QPATH];
 	qbool				needload; // bmodels and sprites don't cache normally

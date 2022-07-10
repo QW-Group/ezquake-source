@@ -121,14 +121,112 @@ void R_NewMapPreLoad(void)
 	lightmode = gl_lightmode.integer ? 2 : 0;
 }
 
+static qbool R_ParseWorldspawn(const char* entstring, worldspawn_info_t* worldspawn)
+{
+	char key[256], value[4096];
+	const char* data;
+
+	memset(worldspawn, 0, sizeof(*worldspawn));
+	worldspawn->wateralpha = -1;
+	worldspawn->telealpha = -1;
+	worldspawn->slimealpha = -1;
+	worldspawn->lavaalpha = -1;
+
+	// parse the opening brace
+	data = COM_Parse(entstring);
+	if (!data) {
+		return false;
+	}
+	if (com_token[0] != '{') {
+		Con_Printf("R_ParseWorldSpawn: found %s when expecting {", com_token);
+		return false;
+	}
+
+	while (1) {
+		data = COM_Parse(data);
+		if (!data) {
+			return false; // error
+		}
+		if (com_token[0] == '}') {
+			return true; // end of object: ignore other entities for now
+		}
+		if (com_token[0] == '_') {
+			strlcpy(key, com_token + 1, sizeof(key));
+		}
+		else {
+			strlcpy(key, com_token, sizeof(key));
+		}
+
+		data = COM_Parse(data);
+		if (!data) {
+			return false; // error
+		}
+
+		if (!strcmp("sky", key)) {
+			strlcpy(worldspawn->skybox_name, com_token, sizeof(worldspawn->skybox_name));
+		}
+		else if (!strcmp("wateralpha", key)) {
+			worldspawn->wateralpha = atof(com_token);
+			worldspawn->wateralpha = bound(0, worldspawn->wateralpha, 1);
+		}
+		else if (!strcmp("lavaalpha", key)) {
+			worldspawn->lavaalpha = atof(com_token);
+			worldspawn->lavaalpha = bound(0, worldspawn->lavaalpha, 1);
+		}
+		else if (!strcmp("telealpha", key)) {
+			worldspawn->telealpha = atof(com_token);
+			worldspawn->telealpha = bound(0, worldspawn->telealpha, 1);
+		}
+		else if (!strcmp("slimealpha", key)) {
+			worldspawn->slimealpha = atof(com_token);
+			worldspawn->slimealpha = bound(0, worldspawn->slimealpha, 1);
+		}
+		else if (!strcmp("fog", key)) {
+			// <density> <r> <g> <b>
+			tokenizecontext_t fog;
+			Cmd_TokenizeStringEx(&fog, com_token);
+			if (Cmd_ArgcEx(&fog) == 4) {
+				worldspawn->fog_density = atof(Cmd_ArgvEx(&fog, 0));
+				worldspawn->fog_color[0] = atof(Cmd_ArgvEx(&fog, 0));
+				worldspawn->fog_color[1] = atof(Cmd_ArgvEx(&fog, 1));
+				worldspawn->fog_color[2] = atof(Cmd_ArgvEx(&fog, 2));
+
+				worldspawn->fog_density = bound(0, worldspawn->fog_density, 1);
+				worldspawn->fog_color[0] = bound(0, worldspawn->fog_color[0], 1);
+				worldspawn->fog_color[1] = bound(0, worldspawn->fog_color[1], 1);
+				worldspawn->fog_color[2] = bound(0, worldspawn->fog_color[2], 1);
+			}
+		}
+	}
+
+	return false;
+}
+
 void R_NewMap(qbool vid_restart)
 {
+	worldspawn_info_t worldspawn;
 	int	i;
 
 	extern int R_SetSky(char *skyname);
 	extern void HUD_NewRadarMap(void); // hud_common.c
 
-	R_SetSky(r_skyname.string);
+	if (R_ParseWorldspawn(CM_EntityString(), &worldspawn)) {
+		// load skybox specified
+		if (r_skyname.string[0] == 0 && worldspawn.skybox_name[0]) {
+			R_SetSky(worldspawn.skybox_name);
+		}
+		else {
+			R_SetSky(r_skyname.string);
+		}
+
+		// set fog controls, if specified
+		if (worldspawn.fog_color[0] > 0 && worldspawn.fog_color[1] > 0 && worldspawn.fog_color[2] > 0 && worldspawn.fog_density > 0) {
+			// TODO: add glsl fog first
+		}
+	}
+	else {
+		R_SetSky(r_skyname.string);
+	}
 
 	if (!vid_restart) {
 		for (i = 0; i < 256; i++) {

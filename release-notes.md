@@ -231,6 +231,7 @@
 - Will now load from `ID1` folder if `id1` not present
 - Will now check PAKx.PAK if pakx.pak not present (fixes #637, reported by nzmyers)
 - Skyboxes rotated to match other quake engines (part of #629, requested by inf1niti & lurq)
+- Skyboxes will be loaded on map start if specified in worldspawn (fixes #629, requested by inf1niti & lurq)
 
 ### Build/meta
 
