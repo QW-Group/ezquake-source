@@ -89,13 +89,51 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 	}
 }
 
+#define SPRITE_FLAGS_FOG_LINEAR         (1 << 0)
+#define SPRITE_FLAGS_FOG_EXP            (1 << 1)
+#define SPRITE_FLAGS_FOG_EXP2           (1 << 2)
+#define SPRITE_FLAGS_FOG_ENABLED        (SPRITE_FLAGS_FOG_LINEAR | SPRITE_FLAGS_FOG_EXP | SPRITE_FLAGS_FOG_EXP2)
+
 qbool GLC_CompileSpriteProgram(void)
 {
-	if (R_ProgramRecompileNeeded(r_program_sprites_glc, 0)) {
-		R_ProgramCompile(r_program_sprites_glc);
-		R_ProgramSetCustomOptions(r_program_sprites_glc, 0);
+	int flags =
+		(r_refdef2.fog_calculation == fogcalc_linear ? SPRITE_FLAGS_FOG_LINEAR : 0) |
+		(r_refdef2.fog_calculation == fogcalc_exp ? SPRITE_FLAGS_FOG_EXP : 0) |
+		(r_refdef2.fog_calculation == fogcalc_exp2 ? SPRITE_FLAGS_FOG_EXP2 : 0);
+
+	if (R_ProgramRecompileNeeded(r_program_sprites_glc, flags)) {
+		char included_definitions[1024];
+
+		memset(included_definitions, 0, sizeof(included_definitions));
+		if (flags & SPRITE_FLAGS_FOG_ENABLED) {
+			strlcat(included_definitions, "#define DRAW_FOG\n", sizeof(included_definitions));
+			if (flags & SPRITE_FLAGS_FOG_LINEAR) {
+				strlcat(included_definitions, "#define FOG_LINEAR\n", sizeof(included_definitions));
+			}
+			else if (flags & SPRITE_FLAGS_FOG_EXP) {
+				strlcat(included_definitions, "#define FOG_EXP\n", sizeof(included_definitions));
+			}
+			else if (flags & SPRITE_FLAGS_FOG_EXP2) {
+				strlcat(included_definitions, "#define FOG_EXP2\n", sizeof(included_definitions));
+			}
+		}
+
+		R_ProgramCompileWithInclude(r_program_sprites_glc, included_definitions);
+		R_ProgramSetCustomOptions(r_program_sprites_glc, flags);
 		R_ProgramUniform1i(r_program_uniform_sprites_glc_materialSampler, 0);
 		R_ProgramUniform1f(r_program_uniform_sprites_glc_alphaThreshold, 0);
+
+		if (flags & SPRITE_FLAGS_FOG_ENABLED) {
+			R_ProgramUniform3fv(r_program_uniform_sprites_glc_fog_color, r_refdef2.fog_color);
+
+			if (flags & SPRITE_FLAGS_FOG_LINEAR) {
+				R_ProgramUniform1f(r_program_uniform_sprites_glc_fog_minZ, r_refdef2.fog_linear_start);
+				R_ProgramUniform1f(r_program_uniform_sprites_glc_fog_maxZ, r_refdef2.fog_linear_end);
+			}
+			else {
+				R_ProgramUniform1f(r_program_uniform_sprites_glc_fog_density, r_refdef2.fog_density);
+			}
+		}
 	}
 
 	return R_ProgramReady(r_program_sprites_glc);

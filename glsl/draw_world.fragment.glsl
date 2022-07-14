@@ -157,6 +157,9 @@ void main()
 			else {
 				frag_colour = vec4(FlatColor * waterAlpha, waterAlpha);
 			}
+#ifdef DRAW_FOG
+			frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+#endif
 		}
 		else if (turbType == TEXTURE_TURB_SKY) {
 #if defined(DRAW_SKYBOX)
@@ -173,9 +176,15 @@ void main()
 #else
 			frag_colour = r_skycolor;
 #endif
+#ifdef DRAW_FOG
+			frag_colour = vec4(mix(frag_colour.rgb, fogColor, skyFogMix), frag_colour.a);
+#endif
 		}
 		else {
 			frag_colour = texColor * waterAlpha;
+#ifdef DRAW_FOG
+			frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+#endif
 		}
 	}
 	else {
@@ -218,6 +227,10 @@ void main()
 
 #ifdef DRAW_DETAIL_TEXTURES
 		frag_colour = vec4(mix(frag_colour.rgb, detail.rgb * frag_colour.rgb * 2.0, min(1, Flags & EZQ_SURFACE_WORLD)), frag_colour.a);
+#endif
+
+#ifdef DRAW_FOG
+		frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
 #endif
 	}
 }

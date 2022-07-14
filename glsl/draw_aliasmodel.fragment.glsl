@@ -72,4 +72,8 @@ void main()
 #endif
 		}
 	}
+
+#ifdef DRAW_FOG
+	frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+#endif
 }

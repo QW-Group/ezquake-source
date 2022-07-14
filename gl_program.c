@@ -288,7 +288,67 @@ static r_program_uniform_t program_uniforms[] = {
 	// r_program_uniform_simple3d_color
 	{ r_program_simple3d, "color", 1, false },
 	// r_program_uniform_lighting_firstLightmap,
-	{ r_program_lightmap_compute, "firstLightmap", 1, false }
+	{ r_program_lightmap_compute, "firstLightmap", 1, false },
+	// r_program_uniform_world_textured_glc_fog_minZ
+	{ r_program_world_textured_glc, "fogMinZ", 1, false },
+	// r_program_uniform_world_textured_glc_fog_maxZ
+	{ r_program_world_textured_glc, "fogMaxZ", 1, false },
+	// r_program_uniform_world_textured_glc_fog_density
+	{ r_program_world_textured_glc, "fogDensity", 1, false },
+	// r_program_uniform_world_textured_glc_fog_color
+	{ r_program_world_textured_glc, "fogColor", 1, false },
+	// r_program_uniform_world_drawflat_glc_fog_minZ,
+	{ r_program_world_drawflat_glc, "fogMinZ", 1, false },
+	// r_program_uniform_world_drawflat_glc_fog_maxZ,
+	{ r_program_world_drawflat_glc, "fogMaxZ", 1, false },
+	// r_program_uniform_world_drawflat_glc_fog_density,
+	{ r_program_world_drawflat_glc, "fogDensity", 1, false },
+	// r_program_uniform_world_drawflat_glc_fog_color,
+	{ r_program_world_drawflat_glc, "fogColor", 1, false },
+	// r_program_uniform_sprites_glc_fog_minZ,
+	{ r_program_sprites_glc, "fogMinZ", 1, false },
+	// r_program_uniform_sprites_glc_fog_maxZ,
+	{ r_program_sprites_glc, "fogMaxZ", 1, false },
+	// r_program_uniform_sprites_glc_fog_density,
+	{ r_program_sprites_glc, "fogDensity", 1, false },
+	// r_program_uniform_sprites_glc_fog_color,
+	{ r_program_sprites_glc, "fogColor", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_fog_minZ,
+	{ r_program_aliasmodel_std_glc, "fogMinZ", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_fog_maxZ,
+	{ r_program_aliasmodel_std_glc, "fogMaxZ", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_fog_density,
+	{ r_program_aliasmodel_std_glc, "fogDensity", 1, false },
+	// r_program_uniform_aliasmodel_std_glc_fog_color,
+	{ r_program_aliasmodel_std_glc, "fogColor", 1, false },
+	// r_program_uniform_aliasmodel_shell_glc_fog_minZ,
+	{ r_program_aliasmodel_shell_glc, "fogMinZ", 1, false },
+	// r_program_uniform_aliasmodel_shell_glc_fog_maxZ,
+	{ r_program_aliasmodel_shell_glc, "fogMaxZ", 1, false },
+	// r_program_uniform_aliasmodel_shell_glc_fog_density,
+	{ r_program_aliasmodel_shell_glc, "fogDensity", 1, false },
+	// r_program_uniform_aliasmodel_shell_glc_fog_color,
+	{ r_program_aliasmodel_shell_glc, "fogColor", 1, false },
+	// r_program_uniform_aliasmodel_shadow_glc_fog_minZ,
+	{ r_program_aliasmodel_shadow_glc, "fogMinZ", 1, false },
+	// r_program_uniform_aliasmodel_shadow_glc_fog_maxZ,
+	{ r_program_aliasmodel_shadow_glc, "fogMaxZ", 1, false },
+	// r_program_uniform_aliasmodel_shadow_glc_fog_density,
+	{ r_program_aliasmodel_shadow_glc, "fogDensity", 1, false },
+	// r_program_uniform_aliasmodel_shadow_glc_fog_color,
+	{ r_program_aliasmodel_shadow_glc, "fogColor", 1, false },
+	// r_program_uniform_turb_glc_fog_minZ,
+	{ r_program_turb_glc, "fogMinZ", 1, false },
+	// r_program_uniform_turb_glc_fog_maxZ,
+	{ r_program_turb_glc, "fogMaxZ", 1, false },
+	// r_program_uniform_turb_glc_fog_density,
+	{ r_program_turb_glc, "fogDensity", 1, false },
+	// r_program_uniform_turb_glc_fog_color,
+	{ r_program_turb_glc, "fogColor", 1, false },
+	// r_program_uniform_turb_glc_fog_skyFogMix,
+	{ r_program_sky_glc, "skyFogMix", 1, false },
+	// r_program_uniform_turb_glc_fog_color,
+	{ r_program_sky_glc, "fogColor", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -388,7 +448,7 @@ GL_StaticProcedureDeclaration(glMemoryBarrier, "barriers=%u", GLbitfield barrier
 #define MAX_SHADER_COMPONENTS 6
 #define EZQUAKE_DEFINITIONS_STRING "#ezquake-definitions"
 
-static char core_definitions[512];
+static char core_definitions[2048];
 
 // GLM Utility functions
 static void GL_ConPrintShaderLog(GLuint shader)
@@ -569,14 +629,14 @@ static int GL_InsertDefinitions(
 		int position = break_point - strings[0];
 
 		lengths[5] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
-		lengths[4] = definitions ? strlen(definitions) : 0;
-		lengths[3] = strlen(core_definitions);
+		lengths[4] = strlen(core_definitions);
+		lengths[3] = definitions ? strlen(definitions) : 0;
 		lengths[2] = glsl_common_glsl_len;
 		lengths[1] = glsl_constants_glsl_len;
 		lengths[0] = position;
 		strings[5] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
-		strings[4] = definitions ? definitions : "";
-		strings[3] = core_definitions;
+		strings[4] = core_definitions;
+		strings[3] = definitions ? definitions : "";
 		strings[2] = (const char*)glsl_common_glsl;
 		strings[1] = (const char*)glsl_constants_glsl;
 
@@ -649,21 +709,21 @@ static qbool GL_CompileProgram(
 						return true;
 					}
 					else {
-						Con_Printf("ShaderProgram.Link() failed\n");
+						Con_Printf("ShaderProgram.Link(%s) failed\n", program->friendly_name);
 						GL_ConPrintProgramLog(program_handle);
 					}
 				}
 			}
 			else {
-				Con_Printf("FragmentShader.Compile() failed\n");
+				Con_Printf("FragmentShader.Compile(%s) failed\n", program->friendly_name);
 			}
 		}
 		else {
-			Con_Printf("GeometryShader.Compile() failed\n");
+			Con_Printf("GeometryShader.Compile(%s) failed\n", program->friendly_name);
 		}
 	}
 	else {
-		Con_Printf("VertexShader.Compile() failed\n");
+		Con_Printf("VertexShader.Compile(%s) failed\n", program->friendly_name);
 	}
 
 	if (program_handle) {
@@ -1150,6 +1210,50 @@ static void GL_BuildCoreDefinitions(void)
 {
 	// Set common definitions here (none yet)
 	memset(core_definitions, 0, sizeof(core_definitions));
+	strlcpy(core_definitions, (R_UseModernOpenGL() ? "#define EZ_MODERN_GL\n" : "#define EZ_LEGACY_GL\n"), sizeof(core_definitions));
+	strlcat(core_definitions, 
+		"#ifdef DRAW_FOG\n"
+			"#ifdef FOG_EXP\n"
+			"#ifdef EZ_LEGACY_GL\n"
+				"uniform float fogDensity;\n"
+				"uniform vec3 fogColor;\n"
+			"#endif\n"
+				"vec4 applyFog(vec4 input, float z) {\n"
+				"	float fogmix = exp(-fogDensity * z);\n"
+				"	fogmix = clamp(fogmix, 0.0, 1.0); \n"
+				"	return vec4(mix(fogColor, input.rgb, fogmix), 1) * input.a; \n"
+				"}\n"
+			"#elif defined(FOG_EXP2)\n"
+				"const float LOG2 = 1.442695;\n"
+			"#ifdef EZ_LEGACY_GL\n"
+				"uniform float fogDensity;\n"
+				"uniform vec3 fogColor;\n"
+			"#endif"
+				"\n"
+				"vec4 applyFog(vec4 input, float z) {\n"
+				"	float fogmix = exp2(-fogDensity * z * z * LOG2);\n"
+				"	fogmix = clamp(fogmix, 0.0, 1.0);\n"
+				"	return vec4(mix(fogColor, input.rgb, fogmix), 1) * input.a;\n"
+				"}\n"
+			"#elif defined(FOG_LINEAR)\n"
+			"#ifdef EZ_LEGACY_GL\n"
+				"uniform float fogMinZ; \n"
+				"uniform float fogMaxZ; \n"
+				"uniform vec3 fogColor; \n"
+			"#endif"
+				"\n"
+				"vec4 applyFog(vec4 input, float z) {\n"
+					"float fogmix = (fogMaxZ - z) / (fogMaxZ - fogMinZ); \n"
+					"fogmix = clamp(fogmix, 0.0, 1.0); \n"
+					"return vec4(mix(fogColor, input.rgb / input.a, fogmix), 1) * input.a; \n"
+				"}\n"
+			"#else\n"
+				"vec4 applyFog(vec4 input, float z) {\n"
+				"	return input; \n"
+				"}\n"
+			"#endif\n"
+		"#endif // DRAW_FOG\n", sizeof(core_definitions)
+	);
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	GL_DefineProgram_VF(r_program_aliasmodel, "aliasmodel", true, draw_aliasmodel, renderer_modern, GLM_CompileAliasModelProgram);

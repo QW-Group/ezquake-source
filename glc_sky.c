@@ -281,11 +281,20 @@ static qbool R_DetermineSkyLimits(qbool *ignore_z)
 	return true;
 }
 
-#define PROGRAMFLAGS_SKYBOX 1
+#define PROGRAMFLAGS_SKYBOX       1
+#define PROGRAMFLAGS_FOG_LINEAR   2
+#define PROGRAMFLAGS_FOG_EXP      4
+#define PROGRAMFLAGS_FOG_EXP2     8
+
+#define PROGRAMFLAGS_FOG_ENABLED  (PROGRAMFLAGS_FOG_LINEAR | PROGRAMFLAGS_FOG_EXP | PROGRAMFLAGS_FOG_EXP2)
 
 qbool GLC_SkyProgramCompile(void)
 {
-	int flags = (r_skyboxloaded && R_UseCubeMapForSkyBox() ? PROGRAMFLAGS_SKYBOX : 0);
+	int flags =
+		(r_skyboxloaded && R_UseCubeMapForSkyBox() ? PROGRAMFLAGS_SKYBOX : 0) |
+		(r_refdef2.fog_calculation == fogcalc_linear ? PROGRAMFLAGS_FOG_LINEAR : 0) |
+		(r_refdef2.fog_calculation == fogcalc_exp ? PROGRAMFLAGS_FOG_EXP : 0) |
+		(r_refdef2.fog_calculation == fogcalc_exp2 ? PROGRAMFLAGS_FOG_EXP2 : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_sky_glc, flags)) {
 		static char included_definitions[512];
@@ -293,6 +302,18 @@ qbool GLC_SkyProgramCompile(void)
 		memset(included_definitions, 0, sizeof(included_definitions));
 		if (flags & PROGRAMFLAGS_SKYBOX) {
 			strlcat(included_definitions, "#define DRAW_SKYBOX\n", sizeof(included_definitions));
+		}
+		if (flags & PROGRAMFLAGS_FOG_ENABLED) {
+			strlcat(included_definitions, "#define DRAW_FOG\n", sizeof(included_definitions));
+			if (flags & PROGRAMFLAGS_FOG_LINEAR) {
+				strlcat(included_definitions, "#define FOG_LINEAR\n", sizeof(included_definitions));
+			}
+			else if (flags & PROGRAMFLAGS_FOG_EXP) {
+				strlcat(included_definitions, "#define FOG_EXP\n", sizeof(included_definitions));
+			}
+			else if (flags & PROGRAMFLAGS_FOG_EXP2) {
+				strlcat(included_definitions, "#define FOG_EXP2\n", sizeof(included_definitions));
+			}
 		}
 
 		R_ProgramCompileWithInclude(r_program_sky_glc, included_definitions);
@@ -304,6 +325,11 @@ qbool GLC_SkyProgramCompile(void)
 			R_ProgramUniform1i(r_program_uniform_sky_glc_skyDomeCloudTex, 1);
 		}
 		R_ProgramSetCustomOptions(r_program_sky_glc, flags);
+	}
+
+	if (flags & PROGRAMFLAGS_FOG_ENABLED) {
+		R_ProgramUniform3fv(r_program_uniform_sky_glc_fog_color, r_refdef2.fog_color);
+		R_ProgramUniform1f(r_program_uniform_sky_glc_fog_skyFogMix, r_refdef2.fog_sky);
 	}
 
 	return R_ProgramReady(r_program_sky_glc);

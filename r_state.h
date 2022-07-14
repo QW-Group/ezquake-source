@@ -89,6 +89,13 @@ typedef enum {
 	r_texunit_mode_count
 } r_texunit_mode_t;
 
+typedef enum {
+	r_fogmode_disabled,
+	r_fogmode_enabled,
+
+	r_fogmode_count
+} r_fogmode_t;
+
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 typedef struct glc_vertex_array_element_s {
 	qbool enabled;
@@ -132,7 +139,14 @@ typedef struct rendering_state_s {
 	} line;
 
 	struct {
-		qbool enabled;
+		r_fogmode_t mode;
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+		float color[4];
+		float density;
+		fogcalc_t calculation;
+		float start;
+		float end;
+#endif
 	} fog;
 
 	struct {
@@ -211,7 +225,6 @@ typedef enum {
 	r_state_hud_polygons_glm,
 
 	r_state_sky_fast,
-	r_state_sky_fast_fogged,
 	r_state_skydome_background_pass,
 	r_state_skydome_cloud_pass,
 	r_state_skydome_single_pass,
@@ -221,7 +234,6 @@ typedef enum {
 	r_state_skybox,
 
 	r_state_sky_fast_bmodel,
-	r_state_sky_fast_fogged_bmodel,
 	r_state_skydome_single_pass_bmodel,
 	r_state_skydome_cloud_pass_bmodel,
 	r_state_skydome_background_pass_bmodel,
@@ -306,6 +318,7 @@ typedef enum {
 
 	r_state_drawflat_with_lightmaps_glc,
 	r_state_drawflat_without_lightmaps_glc,
+	r_state_drawflat_without_lightmaps_unfogged_glc,
 
 	r_state_fx_world_geometry,
 

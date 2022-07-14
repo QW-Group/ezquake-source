@@ -764,6 +764,12 @@ typedef struct {
 
 	// damage notifications
 	scr_damage_t damage_notifications[MAX_DAMAGE_NOTIFICATIONS];
+
+	// fog info read from worldspawn
+	vec3_t map_fog_color;
+	float map_fog_density;
+	qbool map_fog_enabled;
+	float map_fog_sky;
 } clientState_t;
 
 #define SCORING_SYSTEM_DEFAULT   0

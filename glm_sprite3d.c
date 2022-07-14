@@ -53,10 +53,38 @@ static void GLM_Create3DSpriteVAO(void)
 	}
 }
 
+#define DRAW_FOG_LINEAR       (1 << 0)
+#define DRAW_FOG_EXP          (1 << 1)
+#define DRAW_FOG_EXP2         (1 << 2)
+
+#define DRAW_FOG              (DRAW_FOG_LINEAR | DRAW_FOG_EXP | DRAW_FOG_EXP2)
+
 qbool GLM_Compile3DSpriteProgram(void)
 {
-	if (R_ProgramRecompileNeeded(r_program_sprite3d, 0)) {
-		R_ProgramCompile(r_program_sprite3d);
+	int flags =
+		(r_refdef2.fog_calculation == fogcalc_linear ? DRAW_FOG_LINEAR : 0) |
+		(r_refdef2.fog_calculation == fogcalc_exp ? DRAW_FOG_EXP : 0) |
+		(r_refdef2.fog_calculation == fogcalc_exp2 ? DRAW_FOG_EXP2 : 0);
+
+	if (R_ProgramRecompileNeeded(r_program_sprite3d, flags)) {
+		char included_definitions[256];
+
+		included_definitions[0] = '\0';
+		if (flags & DRAW_FOG) {
+			strlcat(included_definitions, "#define DRAW_FOG\n", sizeof(included_definitions));
+			if (flags & DRAW_FOG_LINEAR) {
+				strlcat(included_definitions, "#define FOG_LINEAR\n", sizeof(included_definitions));
+			}
+			else if (flags & DRAW_FOG_EXP) {
+				strlcat(included_definitions, "#define FOG_EXP\n", sizeof(included_definitions));
+			}
+			else if (flags & DRAW_FOG_EXP2) {
+				strlcat(included_definitions, "#define FOG_EXP2\n", sizeof(included_definitions));
+			}
+		}
+
+		R_ProgramCompileWithInclude(r_program_sprite3d, included_definitions);
+		R_ProgramSetCustomOptions(r_program_sprite3d, flags);
 	}
 
 	return R_ProgramReady(r_program_sprite3d);

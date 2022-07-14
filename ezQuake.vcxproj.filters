@@ -737,9 +737,6 @@
     <ClCompile Include="r_bloom.c">
       <Filter>Source Files\Renderer\Common</Filter>
     </ClCompile>
-    <ClCompile Include="glc_fog.c">
-      <Filter>Source Files\Renderer\OpenGL %28Classic%29</Filter>
-    </ClCompile>
     <ClCompile Include="glc_draw.c">
       <Filter>Source Files\Renderer\OpenGL %28Classic%29</Filter>
     </ClCompile>
@@ -1659,9 +1656,6 @@
     </ClInclude>
     <ClInclude Include="vx_vertexlights.h">
       <Filter>Source Files\Renderer\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="glc_fog.h">
-      <Filter>Source Files\Renderer\OpenGL %28Classic%29</Filter>
     </ClInclude>
     <ClInclude Include="r_sprite3d_internal.h">
       <Filter>Source Files\Renderer\Common</Filter>

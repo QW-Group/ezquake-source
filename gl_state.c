@@ -58,6 +58,14 @@ static const char* gl_friendlyTextureTargetNames[] = {
 	"GL_TEXTURE_CUBE_MAP",        // texture_type_cubemap,
 	"GL_TEXTURE_2D_MULTISAMPLE"   // texture_type_2d_multisampled,
 };
+
+static const char* fogModeDescriptions[] = {
+	"disabled",
+	"enabled"
+};
+#ifdef C_ASSERT
+C_ASSERT(sizeof(fogModeDescriptions) / sizeof(fogModeDescriptions[0]) == r_fogmode_count);
+#endif
 #endif
 
 void R_InitialiseStates(void);
@@ -260,7 +268,7 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 	state->framebuffer_srgb = false;
 	state->line.smooth = false;
 	state->line.width = 1.0f;
-	state->fog.enabled = false;
+	state->fog.mode = r_fogmode_disabled;
 	state->polygonOffset.option = r_polygonoffset_disabled;
 	state->polygonOffset.factor = 0;
 	state->polygonOffset.units = 0;
@@ -329,7 +337,7 @@ rendering_state_t* R_Init3DSpriteRenderingState(r_state_id id, const char* name)
 {
 	rendering_state_t* state = R_InitRenderingState(id, true, name, vao_3dsprites);
 
-	state->fog.enabled = false;
+	state->fog.mode = r_fogmode_enabled;
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 	state->cullface.enabled = false;
@@ -1310,11 +1318,61 @@ void GLC_ApplyRenderingState(r_state_id id)
 	}
 
 	// Fog
-	if (r_refdef2.fog_enabled) {
-		GL_ApplySimpleToggle(state, current, fog.enabled, GL_FOG);
+	if (r_refdef2.fog_render) {
+		if (state->fog.mode == r_fogmode_disabled && current->fog.mode != r_fogmode_disabled) {
+			current->fog.mode = r_fogmode_disabled;
+			glDisable(GL_FOG);
+			R_TraceLogAPICall("glDisable(GL_FOG)");
+		}
+		else if (state->fog.mode == r_fogmode_enabled) {
+			if (current->fog.mode != r_fogmode_enabled) {
+				current->fog.mode = r_fogmode_enabled;
+				glEnable(GL_FOG);
+				if (r_refdef2.fog_calculation == fogcalc_linear) {
+					if (current->fog.calculation != r_refdef2.fog_calculation) {
+						glFogi(GL_FOG_MODE, GL_LINEAR);
+						current->fog.calculation = r_refdef2.fog_calculation;
+					}
+					if (current->fog.start != r_refdef2.fog_linear_start) {
+						glFogf(GL_FOG_START, r_refdef2.fog_linear_start);
+						current->fog.start = r_refdef2.fog_linear_start;
+					}
+					if (current->fog.end != r_refdef2.fog_linear_end) {
+						glFogf(GL_FOG_END, r_refdef2.fog_linear_end);
+						current->fog.end = r_refdef2.fog_linear_end;
+					}
+				}
+				else if (r_refdef2.fog_calculation == fogcalc_exp) {
+					if (current->fog.calculation != r_refdef2.fog_calculation) {
+						glFogi(GL_FOG_MODE, GL_EXP);
+						current->fog.calculation = r_refdef2.fog_calculation;
+					}
+					if (current->fog.density != r_refdef2.fog_density) {
+						glFogf(GL_FOG_DENSITY, r_refdef2.fog_density);
+						current->fog.density = r_refdef2.fog_density;
+					}
+				}
+				else if (r_refdef2.fog_calculation == fogcalc_exp2) {
+					if (current->fog.calculation != r_refdef2.fog_calculation) {
+						glFogi(GL_FOG_MODE, GL_EXP2);
+						current->fog.calculation = r_refdef2.fog_calculation;
+					}
+					if (current->fog.density != r_refdef2.fog_density) {
+						glFogf(GL_FOG_DENSITY, r_refdef2.fog_density);
+						current->fog.density = r_refdef2.fog_density;
+					}
+				}
+				R_TraceLogAPICall("glEnable(GL_FOG)");
+			}
+			if (memcmp(current->fog.color, r_refdef2.fog_color, sizeof(current->fog.color))) {
+				glFogfv(GL_FOG_COLOR, r_refdef2.fog_color);
+				memcpy(current->fog.color, r_refdef2.fog_color, sizeof(current->fog.color));
+				R_TraceLogAPICall("glFogfv(GL_FOG_COLOR, [%d %d %d %d])", (int)(current->fog.color[0] * 255), (int)(current->fog.color[1] * 255), (int)(current->fog.color[2] * 255), (int)(current->fog.color[3] * 255));
+			}
+		}
 	}
-	else if (current->fog.enabled) {
-		current->fog.enabled = false;
+	else if (current->fog.mode != r_fogmode_disabled) {
+		current->fog.mode = r_fogmode_disabled;
 		glDisable(GL_FOG);
 		R_TraceLogAPICall("glDisable(GL_FOG)");
 	}
@@ -1716,7 +1774,7 @@ static void GL_DownloadState(rendering_state_t* state, GLuint* gl_bound2d, GLuin
 
 	// fog
 	if (GL_Supported(R_SUPPORT_FOG)) {
-		state->fog.enabled = GL_IsEnabled(GL_FOG);
+		state->fog.mode = GL_IsEnabled(GL_FOG) ? r_fogmode_enabled : r_fogmode_disabled;
 	}
 
 	//
@@ -1859,8 +1917,8 @@ static qbool GL_CompareLine(FILE* output, const rendering_state_t* expected, con
 static qbool GL_CompareMisc(FILE* output, const rendering_state_t* expected, const rendering_state_t* found)
 {
 	qbool problem = false;
-	if (expected->fog.enabled != found->fog.enabled) {
-		R_TraceAPI("!FOG: expected %d, found %d", expected->fog.enabled, found->fog.enabled);
+	if (expected->fog.mode != found->fog.mode) {
+		R_TraceAPI("!FOG: expected %s, found %s", fogModeDescriptions[expected->fog.mode], fogModeDescriptions[found->fog.mode]);
 	}
 	if (expected->framebuffer_srgb != found->framebuffer_srgb) {
 		R_TraceAPI("!SRGB: expected %d, found %d", expected->framebuffer_srgb, found->framebuffer_srgb);

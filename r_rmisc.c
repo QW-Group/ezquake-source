@@ -123,7 +123,7 @@ void R_NewMapPreLoad(void)
 
 static qbool R_ParseWorldspawn(const char* entstring, worldspawn_info_t* worldspawn)
 {
-	char key[256], value[4096];
+	char key[256];
 	const char* data;
 
 	memset(worldspawn, 0, sizeof(*worldspawn));
@@ -131,6 +131,7 @@ static qbool R_ParseWorldspawn(const char* entstring, worldspawn_info_t* worldsp
 	worldspawn->telealpha = -1;
 	worldspawn->slimealpha = -1;
 	worldspawn->lavaalpha = -1;
+	worldspawn->fog_sky = -1;
 
 	// parse the opening brace
 	data = COM_Parse(entstring);
@@ -184,7 +185,11 @@ static qbool R_ParseWorldspawn(const char* entstring, worldspawn_info_t* worldsp
 		else if (!strcmp("fog", key)) {
 			// <density> <r> <g> <b>
 			tokenizecontext_t fog;
-			Cmd_TokenizeStringEx(&fog, com_token);
+			char temp[MAX_COM_TOKEN];
+
+			// TokenizeString uses com_token unfortunately...
+			strlcpy(temp, com_token, sizeof(temp));
+			Cmd_TokenizeStringEx(&fog, temp);
 			if (Cmd_ArgcEx(&fog) == 4) {
 				worldspawn->fog_density = atof(Cmd_ArgvEx(&fog, 0));
 				worldspawn->fog_color[0] = atof(Cmd_ArgvEx(&fog, 0));
@@ -196,6 +201,10 @@ static qbool R_ParseWorldspawn(const char* entstring, worldspawn_info_t* worldsp
 				worldspawn->fog_color[1] = bound(0, worldspawn->fog_color[1], 1);
 				worldspawn->fog_color[2] = bound(0, worldspawn->fog_color[2], 1);
 			}
+		}
+		else if (!strcmp("skyfog", key) || !strcmp("r_skyfog", key)) {
+			worldspawn->fog_sky = atof(com_token);
+			worldspawn->fog_sky = bound(0, worldspawn->fog_sky, 1);
 		}
 	}
 
@@ -220,8 +229,14 @@ void R_NewMap(qbool vid_restart)
 		}
 
 		// set fog controls, if specified
-		if (worldspawn.fog_color[0] > 0 && worldspawn.fog_color[1] > 0 && worldspawn.fog_color[2] > 0 && worldspawn.fog_density > 0) {
-			// TODO: add glsl fog first
+		if (worldspawn.fog_density > 0) {
+			VectorCopy(worldspawn.fog_color, cl.map_fog_color);
+			cl.map_fog_density = worldspawn.fog_density / 64.0f;
+			cl.map_fog_enabled = true;
+		}
+
+		if (worldspawn.fog_sky >= 0) {
+			cl.map_fog_sky = worldspawn.fog_sky;
 		}
 	}
 	else {

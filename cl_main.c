@@ -1698,21 +1698,6 @@ void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel)
 
 void CL_InitCommands (void);
 
-void CL_Fog_f (void) 
-{
-	extern cvar_t gl_fogred, gl_foggreen, gl_fogblue, gl_fogenable;
-	
-	if (Cmd_Argc() == 1) 
-	{
-		Com_Printf ("\"fog\" is \"%f %f %f\"\n", gl_fogred.value, gl_foggreen.value, gl_fogblue.value);
-		return;
-	}
-	Cvar_SetValue (&gl_fogenable, 1);
-	Cvar_SetValue (&gl_fogred, atof(Cmd_Argv(1)));
-	Cvar_SetValue (&gl_foggreen, atof(Cmd_Argv(2)));
-	Cvar_SetValue (&gl_fogblue, atof(Cmd_Argv(3)));
-}
-
 static void CL_InitLocal(void)
 {
 	char st[256];

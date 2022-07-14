@@ -59,6 +59,15 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	int r_height;
 	float r_zFar;
 	float r_zNear;
+
+	// fog parameters
+	vec3 fogColor;
+	float fogDensity;
+
+	float skyFogMix;
+	float fogMinZ;
+	float fogMaxZ;
+	float padding;
 };
 
 struct WorldDrawInfo {

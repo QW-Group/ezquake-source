@@ -33,6 +33,8 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Skyboxes rotated to match other quake engines (part of #629, requested by inf1niti & lurq)
 - Skyboxes will be loaded on map start if specified in worldspawn (fixes #629, requested by inf1niti & lurq)
 - Fixed playback of looping sounds when using libsndfile to load sounds (reported by lurq)
+- Fog settings have been moved to `r_fx_fog_...` and work in GLSL
+- Fog settings can be loaded at map start if specified in worldspawn (`r_fx_fog_usemap`)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 

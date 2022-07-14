@@ -351,27 +351,20 @@ void GLC_InitialiseSkyStates(void)
 	state = R_InitRenderingState(r_state_skybox, true, "glcSkyBox", vao_brushmodel);
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
-	state = R_InitRenderingState(r_state_sky_fast_fogged, true, "fastSkyStateFogged", vao_brushmodel);
-	state->depth.test_enabled = false;
-	state->fog.enabled = true;
-
 	state = R_CopyRenderingState(r_state_sky_fast_bmodel, r_state_sky_fast, "fastSkyState_bmodel");
-	state->depth.test_enabled = true;
-
-	state = R_CopyRenderingState(r_state_sky_fast_fogged_bmodel, r_state_sky_fast_fogged, "fastSkyStateFogged_bmodel");
 	state->depth.test_enabled = true;
 
 	state = R_InitRenderingState(r_state_skydome_zbuffer_pass, true, "skyDomeZPassState", vao_brushmodel);
 	state->depth.test_enabled = true;
 	state->blendingEnabled = true;
-	state->fog.enabled = false;
+	state->fog.mode = r_fogmode_disabled;
 	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = false;
 	state->blendFunc = r_blendfunc_src_zero_dest_one;
 
 	state = R_InitRenderingState(r_state_skydome_zbuffer_pass_fogged, true, "skyDomeZPassFoggedState", vao_brushmodel);
 	state->depth.test_enabled = true;
 	state->blendingEnabled = true;
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 	state->blendFunc = r_blendfunc_src_one_dest_zero;
 
 	state = R_InitRenderingState(r_state_skydome_background_pass, true, "skyDomeFirstPassState", vao_none);
@@ -413,30 +406,21 @@ void GLC_InitialiseSkyStates(void)
 
 void GLC_StateBeginFastSky(qbool world)
 {
-	extern cvar_t gl_fogsky, gl_fogenable, r_skycolor;
-
 	R_TraceEnterFunctionRegion;
 
-	if (gl_fogsky.integer && gl_fogenable.integer) {
-		R_ApplyRenderingState(world ? r_state_sky_fast_fogged : r_state_sky_fast_fogged_bmodel);
-	}
-	else {
-		R_ApplyRenderingState(world ? r_state_sky_fast : r_state_sky_fast_bmodel);
-	}
-	R_CustomColor(r_skycolor.color[0] / 255.0f, r_skycolor.color[1] / 255.0f, r_skycolor.color[2] / 255.0f, 1.0f);
+	R_ApplyRenderingState(world ? r_state_sky_fast : r_state_sky_fast_bmodel);
+	R_CustomColor(r_refdef2.fog_skycolor[0], r_refdef2.fog_skycolor[1], r_refdef2.fog_skycolor[2], 1.0f);
 
 	R_TraceLeaveFunctionRegion;
 }
 
 void GLC_StateBeginSkyZBufferPass(void)
 {
-	extern cvar_t gl_fogsky, gl_fogenable, r_skycolor, gl_fogred, gl_foggreen, gl_fogblue;
-
 	R_TraceEnterFunctionRegion;
 
-	if (gl_fogenable.integer && gl_fogsky.integer) {
+	if (r_refdef2.fog_render && r_refdef2.fog_sky > 0) {
 		R_ApplyRenderingState(r_state_skydome_zbuffer_pass_fogged);
-		R_CustomColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1);
+		R_CustomColor(r_refdef2.fog_color[0], r_refdef2.fog_color[1], r_refdef2.fog_color[2], 1);
 	}
 	else {
 		R_ApplyRenderingState(r_state_skydome_zbuffer_pass);

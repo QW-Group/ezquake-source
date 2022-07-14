@@ -97,11 +97,16 @@ typedef struct block_aliasmodels_s {
 
 extern float r_framelerp;
 
-#define DRAW_DETAIL_TEXTURES   1
-#define DRAW_CAUSTIC_TEXTURES  2
-#define DRAW_REVERSED_DEPTH    4
-#define DRAW_LERP_MUZZLEHACK   8
-#define DRAW_FLAT_SHADING      16
+#define DRAW_DETAIL_TEXTURES      (1 << 0)
+#define DRAW_CAUSTIC_TEXTURES     (1 << 1)
+#define DRAW_REVERSED_DEPTH       (1 << 2)
+#define DRAW_LERP_MUZZLEHACK      (1 << 3)
+#define DRAW_FLAT_SHADING         (1 << 4)
+#define DRAW_FOG_LINEAR           (1 << 5)
+#define DRAW_FOG_EXP              (1 << 6)
+#define DRAW_FOG_EXP2             (1 << 7)
+
+#define DRAW_FOG                  (DRAW_FOG_LINEAR | DRAW_FOG_EXP | DRAW_FOG_EXP2)
 static uniform_block_aliasmodels_t aliasdata;
 
 static int cached_mode;
@@ -126,7 +131,11 @@ qbool GLM_CompileAliasModelProgram(void)
 		(r_refdef2.drawCaustics ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(glConfig.reversed_depth ? DRAW_REVERSED_DEPTH : 0) |
 		(r_lerpmuzzlehack.integer ? DRAW_LERP_MUZZLEHACK : 0) |
-		(gl_smoothmodels.integer ? 0 : DRAW_FLAT_SHADING);
+		(gl_smoothmodels.integer ? 0 : DRAW_FLAT_SHADING) |
+		(r_refdef2.fog_calculation == fogcalc_linear ? DRAW_FOG_LINEAR : 0) |
+		(r_refdef2.fog_calculation == fogcalc_exp ? DRAW_FOG_EXP : 0) |
+		(r_refdef2.fog_calculation == fogcalc_exp2 ? DRAW_FOG_EXP2 : 0)
+	;
 
 	if (R_ProgramRecompileNeeded(r_program_aliasmodel, drawAlias_desiredOptions)) {
 		static char included_definitions[1024];
@@ -157,6 +166,19 @@ qbool GLM_CompileAliasModelProgram(void)
 		}
 		if (drawAlias_desiredOptions & DRAW_FLAT_SHADING) {
 			strlcat(included_definitions, "#define EZQ_ALIASMODEL_FLATSHADING\n", sizeof(included_definitions));
+		}
+
+		if (drawAlias_desiredOptions & DRAW_FOG) {
+			strlcat(included_definitions, "#define DRAW_FOG\n", sizeof(included_definitions));
+			if (drawAlias_desiredOptions & DRAW_FOG_LINEAR) {
+				strlcat(included_definitions, "#define FOG_LINEAR\n", sizeof(included_definitions));
+			}
+			else if (drawAlias_desiredOptions & DRAW_FOG_EXP) {
+				strlcat(included_definitions, "#define FOG_EXP\n", sizeof(included_definitions));
+			}
+			else if (drawAlias_desiredOptions & DRAW_FOG_EXP2) {
+				strlcat(included_definitions, "#define FOG_EXP2\n", sizeof(included_definitions));
+			}
 		}
 
 		// Initialise program for drawing image

@@ -310,7 +310,6 @@ sources += [
 	'glc_bloom.c',
 	'glc_brushmodel.c',
 	'glc_draw.c',
-	'glc_fog.c',
 	'glc_framebuffer.c',
 	'glc_lightmaps.c',
 	'glc_main.c',

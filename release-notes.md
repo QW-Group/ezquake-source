@@ -170,6 +170,7 @@
 - `/net_tcp_timeout` added - allows timeout period to be set when connecting to QTV etc
 - `/qtv_adjustbuffer 2` added - targets a specific delay period, rather than % of buffer being full
 - `/r_drawflat_mode` allows textures to be shaded rather than solid color (GLSL only)
+- `/r_fx_fog` cvars replace `gl_fog`
 - `/r_tracker_name_remove_prefixes` is now `/hud_name_remove_prefixes` and affects `teaminfo` as well (also more efficient, #471, req by HangTime)
 - `/r_rockettrail` & `/r_grenadetrail` options requiring QMB particles degrade to '1' if QMB not initialised
 - `/r_smoothalphahack 1` - during hud rendering, shader will apply lerped alpha to lerped color (behaves as per ezquake < 3.5)

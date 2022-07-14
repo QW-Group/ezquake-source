@@ -43,6 +43,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_trace.h"
 #include "r_renderer.h"
 
+#define R_FogAvailable() (!COM_CheckParm(cmdline_param_client_nomultitexturing))
+
 void GLM_ScreenDrawStart(void);
 
 // Move to API
@@ -157,11 +159,6 @@ cvar_t r_skyname                           = {"r_skyname", "", 0, OnChange_r_sky
 cvar_t gl_detail                           = {"gl_detail","0"};
 cvar_t gl_brush_polygonoffset              = {"gl_brush_polygonoffset", "2.0"}; // This is the one to adjust if you notice flicker on lift @ e1m1 for instance, for z-fighting
 cvar_t gl_caustics                         = {"gl_caustics", "0"}; // 1
-cvar_t gl_waterfog                         = {"gl_turbfog", "0"}; // 2
-cvar_t gl_waterfog_density                 = {"gl_turbfogDensity", "1"};
-cvar_t gl_waterfog_color_water             = {"gl_turbfog_color_water", "32 64 128", CVAR_COLOR};
-cvar_t gl_waterfog_color_lava              = {"gl_turbfog_color_lava", "255 64 0", CVAR_COLOR};
-cvar_t gl_waterfog_color_slime             = {"gl_turbfog_color_slime", "128 255 0", CVAR_COLOR};
 cvar_t gl_lumatextures                     = {"gl_lumatextures", "1"};
 cvar_t gl_subdivide_size                   = {"gl_subdivide_size", "64"};
 cvar_t gl_clear                            = {"gl_clear", "0"};
@@ -198,13 +195,21 @@ cvar_t gl_part_bubble                      = {"gl_part_bubble", "1"}; // would p
 cvar_t gl_part_detpackexplosion_fire_color = {"gl_part_detpackexplosion_fire_color", "", CVAR_COLOR};
 cvar_t gl_part_detpackexplosion_ray_color  = {"gl_part_detpackexplosion_ray_color", "", CVAR_COLOR};
 cvar_t gl_powerupshells                    = {"gl_powerupshells", "1"};
-cvar_t gl_fogenable                        = {"gl_fog", "0"};
-cvar_t gl_fogstart                         = {"gl_fogstart", "50.0"};
-cvar_t gl_fogend                           = {"gl_fogend", "800.0"};
-cvar_t gl_fogred                           = {"gl_fogred", "0.6"};
-cvar_t gl_foggreen                         = {"gl_foggreen", "0.5"};
-cvar_t gl_fogblue                          = {"gl_fogblue", "0.4"};
-cvar_t gl_fogsky                           = {"gl_fogsky", "1"};
+
+// 0: off, 1: on, 2: in water only
+cvar_t r_fx_fog                            = {"r_fx_fog", "0"};
+// 0: off, 1: dm & single-player, 2: single-player only
+cvar_t r_fx_fog_usemap                     = {"r_fx_fog_usemap", "2"};
+cvar_t r_fx_fog_model                      = {"r_fx_fog_model", "2"};
+cvar_t r_fx_fog_density                    = {"r_fx_fog_density", "0.125"};
+cvar_t r_fx_fog_start                      = {"r_fx_fog_start", "50.0"};
+cvar_t r_fx_fog_end                        = {"r_fx_fog_end", "800.0"};
+cvar_t r_fx_fog_color_air                  = {"r_fx_fog_color_air", "153 128 103", CVAR_COLOR};
+cvar_t r_fx_fog_color_water                = {"r_fx_fog_color_water", "32 64 128", CVAR_COLOR};
+cvar_t r_fx_fog_color_lava                 = {"r_fx_fog_color_lava", "255 64 0", CVAR_COLOR};
+cvar_t r_fx_fog_color_slime                = {"r_fx_fog_color_slime", "128 255 0", CVAR_COLOR};
+cvar_t r_fx_fog_sky                        = {"r_fx_fog_sky", "0.3"};
+
 cvar_t gl_simpleitems                      = {"gl_simpleitems", "0"};
 cvar_t gl_simpleitems_size                 = {"gl_simpleitems_size", "16"};
 cvar_t gl_simpleitems_orientation          = {"gl_simpleitems_orientation", "2"};
@@ -277,6 +282,74 @@ void R_SetFrustum(void)
 	}
 }
 
+static void R_ConfigureFog(int contents)
+{
+	int i;
+	qbool use_map_fog;
+
+	// enable it even if not showing this frame, to prevent potential program re-compiles when going in/out of water
+	if (!R_FogAvailable()) {
+		r_refdef2.fog_enabled = r_refdef2.fog_render = false;
+		return;
+	}
+
+	use_map_fog = cl.map_fog_enabled && (r_fx_fog_usemap.integer == 1 || (r_fx_fog_usemap.integer == 2 && Ruleset_IsLocalSinglePlayerGame()));
+	r_refdef2.fog_enabled = (use_map_fog || r_fx_fog.integer == 1 || r_fx_fog.integer == 2);
+	r_refdef2.fog_render = (use_map_fog || r_fx_fog.integer == 1 || (r_fx_fog.integer == 2 && ISUNDERWATER(contents)));
+	r_refdef2.fog_density = 0;
+	r_refdef2.fog_calculation = fogcalc_none;
+
+	if (r_refdef2.fog_render) {
+		if (use_map_fog) {
+			r_refdef2.fog_density = bound(0, cl.map_fog_density * cl.map_fog_density, 1);
+			r_refdef2.fog_calculation = fogcalc_exp2;
+		}
+		else {
+			r_refdef2.fog_density = bound(0, r_fx_fog_density.value / 64.0f, 1);
+
+			if (r_fx_fog_model.integer == 0) {
+				r_refdef2.fog_calculation = fogcalc_linear;
+			}
+			else if (r_fx_fog_model.integer == 1) {
+				r_refdef2.fog_calculation = fogcalc_exp;
+			}
+			else if (r_fx_fog_model.integer == 2) {
+				r_refdef2.fog_calculation = fogcalc_exp2;
+				r_refdef2.fog_density = r_refdef2.fog_density * r_refdef2.fog_density;
+			}
+		}
+
+		if (use_map_fog && cl.map_fog_sky >= 0) {
+			r_refdef2.fog_sky = cl.map_fog_sky;
+		}
+		else {
+			r_refdef2.fog_sky = r_refdef2.fog_density != 0 ? bound(0, r_fx_fog_sky.value, 1) : 0;
+		}
+	}
+	r_refdef2.fog_linear_start = r_fx_fog_start.value;
+	r_refdef2.fog_linear_end = r_fx_fog_end.value;
+
+	if (contents == CONTENTS_LAVA) {
+		VectorScale(r_fx_fog_color_lava.color, 1 / 255.0f, r_refdef2.fog_color);
+	}
+	else if (contents == CONTENTS_SLIME) {
+		VectorScale(r_fx_fog_color_slime.color, 1 / 255.0f, r_refdef2.fog_color);
+	}
+	else if (contents == CONTENTS_WATER) {
+		VectorScale(r_fx_fog_color_water.color, 1 / 255.0f, r_refdef2.fog_color);
+	}
+	else if (use_map_fog) {
+		VectorCopy(cl.map_fog_color, r_refdef2.fog_color);
+	}
+	else {
+		VectorScale(r_fx_fog_color_air.color, 1 / 255.0f, r_refdef2.fog_color);
+	}
+	for (i = 0; i < 3; ++i) {
+		r_refdef2.fog_skycolor[i] = r_refdef2.fog_color[i] * r_refdef2.fog_sky + r_skycolor.color[i] * (1.0f - r_refdef2.fog_sky) / 255.0f;
+	}
+	r_refdef2.fog_color[3] = r_refdef2.fog_skycolor[3] = 1.0f;
+}
+
 void R_SetupFrame(void)
 {
 	vec3_t testorigin;
@@ -331,7 +404,7 @@ void R_SetupFrame(void)
 	}
 
 	V_SetContentsColor(r_viewleaf->contents);
-	renderer.ConfigureFog(r_viewleaf->contents);
+	R_ConfigureFog(r_viewleaf->contents);
 	V_CalcBlend();
 
 	R_LightmapFrameInit();
@@ -563,21 +636,22 @@ void R_Init(void)
 	Cvar_Register(&r_novis);
 	Cvar_Register(&r_wateralpha);
 	Cvar_Register(&gl_caustics);
-	if (!COM_CheckParm(cmdline_param_client_nomultitexturing)) {
-		Cvar_Register(&gl_waterfog);
-		Cvar_Register(&gl_waterfog_density);
-		Cvar_Register(&gl_waterfog_color_water);
-		Cvar_Register(&gl_waterfog_color_lava);
-		Cvar_Register(&gl_waterfog_color_slime);
-	}
 
-	Cvar_Register(&gl_fogenable);
-	Cvar_Register(&gl_fogstart);
-	Cvar_Register(&gl_fogend);
-	Cvar_Register(&gl_fogsky);
-	Cvar_Register(&gl_fogred);
-	Cvar_Register(&gl_fogblue);
-	Cvar_Register(&gl_foggreen);
+	// Fog cvars
+	if (R_FogAvailable()) {
+		Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
+		Cvar_Register(&r_fx_fog);
+		Cvar_Register(&r_fx_fog_model);
+		Cvar_Register(&r_fx_fog_usemap);
+		Cvar_Register(&r_fx_fog_density);
+		Cvar_Register(&r_fx_fog_start);
+		Cvar_Register(&r_fx_fog_end);
+		Cvar_Register(&r_fx_fog_sky);
+		Cvar_Register(&r_fx_fog_color_air);
+		Cvar_Register(&r_fx_fog_color_water);
+		Cvar_Register(&r_fx_fog_color_lava);
+		Cvar_Register(&r_fx_fog_color_slime);
+	}
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_BLEND);
 	Cvar_Register(&gl_polyblend);
@@ -707,8 +781,9 @@ static void R_Clear(void)
 	clear_color |= (r_viewleaf->contents == CONTENTS_SOLID && (R_UseModernOpenGL() || r_fastsky.integer));
 
 	if (gl_clear.integer) {
-		if (gl_fogenable.integer) {
-			R_ClearColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1.0);//Tei custom clear color
+		//Tei custom clear color
+		if (r_refdef2.fog_render) {
+			R_ClearColor(r_refdef2.fog_color[0], r_refdef2.fog_color[1], r_refdef2.fog_color[2], 1.0);
 		}
 		else {
 			R_ClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0);

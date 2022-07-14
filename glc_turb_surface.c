@@ -34,20 +34,57 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 extern msurface_t* waterchain;
 void GLC_EmitWaterPoly(msurface_t* fa);
 
+#define TURBFLAGS_FLATCOLOR           (1 << 0)
+#define TURBFLAGS_FOG_LINEAR          (1 << 1)
+#define TURBFLAGS_FOG_EXP             (1 << 2)
+#define TURBFLAGS_FOG_EXP2            (1 << 3)
+#define TURBFLAGS_FOG_ENABLED         (TURBFLAGS_FOG_LINEAR | TURBFLAGS_FOG_EXP | TURBFLAGS_FOG_EXP2)
+
 qbool GLC_TurbSurfaceProgramCompile(void)
 {
 	extern cvar_t r_fastturb;
-	int option = (r_fastturb.integer ? 1 : 0);
+	int option =
+		(r_fastturb.integer ? TURBFLAGS_FLATCOLOR : 0) |
+		(r_refdef2.fog_calculation == fogcalc_linear ? TURBFLAGS_FOG_LINEAR : 0) |
+		(r_refdef2.fog_calculation == fogcalc_exp ? TURBFLAGS_FOG_EXP : 0) |
+		(r_refdef2.fog_calculation == fogcalc_exp2 ? TURBFLAGS_FOG_EXP2 : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_turb_glc, option)) {
-		if (option) {
-			R_ProgramCompileWithInclude(r_program_turb_glc, "#define FLAT_COLOR");
+		char included_definitions[512];
+
+		included_definitions[0] = '\0';
+
+		if (option & TURBFLAGS_FLATCOLOR) {
+			strlcat(included_definitions, "#define FLAT_COLOR\n", sizeof(included_definitions));
+		}
+		if (option & TURBFLAGS_FOG_ENABLED) {
+			strlcat(included_definitions, "#define DRAW_FOG\n", sizeof(included_definitions));
+			if (option & TURBFLAGS_FOG_LINEAR) {
+				strlcat(included_definitions, "#define FOG_LINEAR\n", sizeof(included_definitions));
+			}
+			else if (option & TURBFLAGS_FOG_EXP) {
+				strlcat(included_definitions, "#define FOG_EXP\n", sizeof(included_definitions));
+			}
+			else if (option & TURBFLAGS_FOG_EXP2) {
+				strlcat(included_definitions, "#define FOG_EXP2\n", sizeof(included_definitions));
+			}
+		}
+
+		R_ProgramCompileWithInclude(r_program_turb_glc, included_definitions);
+		R_ProgramUniform1i(r_program_uniform_turb_glc_texSampler, 0);
+		R_ProgramSetCustomOptions(r_program_turb_glc, option);
+	}
+
+	if (option & TURBFLAGS_FOG_ENABLED) {
+		R_ProgramUniform3fv(r_program_uniform_turb_glc_fog_color, r_refdef2.fog_color);
+
+		if (option & TURBFLAGS_FOG_LINEAR) {
+			R_ProgramUniform1f(r_program_uniform_turb_glc_fog_minZ, r_refdef2.fog_linear_start);
+			R_ProgramUniform1f(r_program_uniform_turb_glc_fog_maxZ, r_refdef2.fog_linear_end);
 		}
 		else {
-			R_ProgramCompile(r_program_turb_glc);
-			R_ProgramUniform1i(r_program_uniform_turb_glc_texSampler, 0);
+			R_ProgramUniform1f(r_program_uniform_turb_glc_fog_density, r_refdef2.fog_density);
 		}
-		R_ProgramSetCustomOptions(r_program_turb_glc, option);
 	}
 
 	return R_ProgramReady(r_program_turb_glc);
@@ -60,9 +97,10 @@ static void GLC_DrawWaterSurfaces_Program(void)
 	texture_ref prev_tex = null_texture_reference;
 	int index_count = 0;
 	float water_alpha = r_refdef2.wateralpha;
+	qbool textured = !(R_ProgramCustomOptions(r_program_turb_glc) & TURBFLAGS_FLATCOLOR);
 
 	R_ProgramUse(r_program_turb_glc);
-	if (!R_ProgramCustomOptions(r_program_turb_glc)) {
+	if (textured) {
 		R_ProgramUniform1f(r_program_uniform_turb_glc_time, cl.time);
 		R_ProgramUniform1f(r_program_uniform_turb_glc_alpha, water_alpha);
 	}
@@ -77,7 +115,7 @@ static void GLC_DrawWaterSurfaces_Program(void)
 				GL_DrawElements(GL_TRIANGLE_STRIP, index_count, GL_UNSIGNED_INT, modelIndexes);
 				index_count = 0;
 			}
-			if (!R_ProgramCustomOptions(r_program_turb_glc)) {
+			if (textured) {
 				renderer.TextureUnitBind(0, prev_tex);
 			}
 			else {
