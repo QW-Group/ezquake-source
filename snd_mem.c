@@ -666,6 +666,64 @@ sf_count_t SFVIO_Tell(void *user_data)
 	return sfviodata->position;
 }
 
+static qbool S_ParseCueMark(const byte* chunk, int len, int cue_point_id, int* sample_length)
+{
+	int pos = 0;
+
+	*sample_length = 0;
+	while (pos < len - 8) {
+		unsigned int size = BuffLittleLong(chunk + pos + 4);
+
+		// Looking for ltxt chunk with purpose "mark"
+		if (size >= 20 && !strncmp(chunk + pos, "ltxt", 4) && !strncmp(chunk + pos + 16, "mark", 4)) {
+			// Might be for a different cue point
+			if (cue_point_id == BuffLittleLong(chunk + pos + 8)) {
+				*sample_length = BuffLittleLong(chunk + pos + 12);
+				return true;
+			}
+		}
+
+		pos += size;
+	}
+
+	return false;
+}
+
+static qbool S_FindCuePointSampleLength(SNDFILE* sndfile, int cue_point_id, int* sample_length)
+{
+	SF_CHUNK_INFO chunk_info;
+	chunk_info.datalen = 0;
+	strlcpy(chunk_info.id, "LIST", sizeof(chunk_info.id));
+	chunk_info.id_size = 4;
+	SF_CHUNK_ITERATOR* iterator = sf_get_chunk_iterator(sndfile, &chunk_info);
+	byte chunk_data[1024];
+
+	*sample_length = 0;
+
+	while (iterator != NULL) {
+		if (sf_get_chunk_size(iterator, &chunk_info) != SF_ERR_NO_ERROR) {
+			break;
+		}
+
+		if (chunk_info.datalen >= 24 && chunk_info.datalen <= sizeof(chunk_data)) {
+			chunk_info.data = chunk_data;
+
+			if (sf_get_chunk_data(iterator, &chunk_info) != SF_ERR_NO_ERROR) {
+				break;
+			}
+			else if (chunk_data[0] == 'a' && chunk_data[1] == 'd' && chunk_data[2] == 't' && chunk_data[3] == 'l') {
+				if (S_ParseCueMark(chunk_data + 4, chunk_info.datalen - 4, cue_point_id, sample_length)) {
+					return true;
+				}
+			}
+		}
+
+		iterator = sf_next_chunk_iterator(iterator);
+	}
+
+	return false;
+}
+
 sfxcache_t *S_LoadSound (sfx_t *s)
 {
 	char namebuffer[256];
@@ -711,13 +769,23 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 	buf = (short *)Q_malloc(sfinfo.frames * sfinfo.channels * sizeof(short));
 	sf_readf_short(sndfile, buf, sfinfo.frames);
 	cue_count = 0;
-        sf_command(sndfile, SFC_GET_CUE_COUNT, &cue_count, sizeof(cue_count));
+	sf_command(sndfile, SFC_GET_CUE_COUNT, &cue_count, sizeof(cue_count));
 	loopstart = -1;
-	if (cue_count != 0)
-	{
-        	sf_command(sndfile, SFC_GET_CUE, &sfcues, sizeof(sfcues)) ;
-		loopstart = sfcues.cue_points[0].position;
+
+	if (cue_count != 0) {
+		int loop_sample_count;
+
+		sf_command(sndfile, SFC_GET_CUE, &sfcues, sizeof(sfcues)) ;
+
+		if (S_FindCuePointSampleLength(sndfile, sfcues.cue_points[0].position, &loop_sample_count)) {
+			loopstart = sfcues.cue_points[0].sample_offset;
+			if (loopstart + loop_sample_count > sfinfo.frames) {
+				Sys_Error("Sound %s has a bad loop length", s->name);
+			}
+			sfinfo.frames = loopstart + loop_sample_count;
+		}
 	}
+
 	sf_close(sndfile);
 
 	if (sfinfo.channels < 1 || sfinfo.channels > 2) {
