@@ -35,6 +35,7 @@ Leaving these here as bugs between dev versions of 3.6 aren't in the release not
 - Fixed playback of looping sounds when using libsndfile to load sounds (reported by lurq)
 - Fog settings have been moved to `r_fx_fog_...` and work in GLSL
 - Fog settings can be loaded at map start if specified in worldspawn (`r_fx_fog_usemap`)
+- Removed internal texture size limit of 300k (requested by anni)
 
 ### Changes from alpha8=>alpha9 (July 13th => November 14th, 2021)
 

@@ -233,6 +233,7 @@
 - Will now check PAKx.PAK if pakx.pak not present (fixes #637, reported by nzmyers)
 - Skyboxes rotated to match other quake engines (part of #629, requested by inf1niti & lurq)
 - Skyboxes will be loaded on map start if specified in worldspawn (fixes #629, requested by inf1niti & lurq)
+- Removed internal texture size limit of 300k (requested by anni)
 
 ### Build/meta
 
