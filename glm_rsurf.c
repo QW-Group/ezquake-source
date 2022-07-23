@@ -112,11 +112,6 @@ static void GLM_CheckDrawCallSize(void)
 #define DRAW_DRAWFLAT_TINTED       (1 << 11)
 #define DRAW_DRAWFLAT_BRIGHT       (1 << 12)
 #define DRAW_ALPHATESTED           (1 << 13)
-#define DRAW_FOG_LINEAR            (1 << 14)
-#define DRAW_FOG_EXP               (1 << 15)
-#define DRAW_FOG_EXP2              (1 << 16)
-
-#define DRAW_FOG                   (DRAW_FOG_LINEAR | DRAW_FOG_EXP | DRAW_FOG_EXP2)
 
 static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
@@ -153,10 +148,7 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
 		(gl_textureless.integer ? DRAW_TEXTURELESS : 0) |
 		(r_fx_geometry.integer ? DRAW_GEOMETRY : 0) |
-		(alpha_test ? DRAW_ALPHATESTED : 0) |
-		(r_refdef2.fog_calculation == fogcalc_linear ? DRAW_FOG_LINEAR : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp ? DRAW_FOG_EXP : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp2 ? DRAW_FOG_EXP2 : 0);
+		(alpha_test ? DRAW_ALPHATESTED : 0);
 
 	if (R_ProgramRecompileNeeded(program_id, drawworld_desiredOptions)) {
 		static char included_definitions[2048];
@@ -194,18 +186,6 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 		}
 		if (drawworld_desiredOptions & DRAW_ALPHATESTED) {
 			strlcat(included_definitions, "#define DRAW_ALPHATEST_ENABLED\n", sizeof(included_definitions));
-		}
-		if (drawworld_desiredOptions & DRAW_FOG) {
-			strlcat(included_definitions, "#define DRAW_FOG\n", sizeof(included_definitions));
-			if (drawworld_desiredOptions & DRAW_FOG_LINEAR) {
-				strlcat(included_definitions, "#define FOG_LINEAR\n", sizeof(included_definitions));
-			}
-			else if (drawworld_desiredOptions & DRAW_FOG_EXP) {
-				strlcat(included_definitions, "#define FOG_EXP\n", sizeof(included_definitions));
-			}
-			else if (drawworld_desiredOptions & DRAW_FOG_EXP2) {
-				strlcat(included_definitions, "#define FOG_EXP2\n", sizeof(included_definitions));
-			}
 		}
 
 		if (skybox) {
@@ -591,31 +571,8 @@ qbool GLM_CompilePostProcessVAO(void);
 
 qbool GLM_CompileSimple3dProgram(void)
 {
-	int flags =
-		(r_refdef2.fog_calculation == fogcalc_linear ? DRAW_FOG_LINEAR : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp ? DRAW_FOG_EXP : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp2 ? DRAW_FOG_EXP2 : 0);
-
-	if (R_ProgramRecompileNeeded(r_program_simple3d, flags)) {
-		static char included_definitions[2048];
-		int samplers = 0;
-
-		memset(included_definitions, 0, sizeof(included_definitions));
-		if (flags & DRAW_FOG) {
-			strlcat(included_definitions, "#define DRAW_FOG\n", sizeof(included_definitions));
-			if (flags & DRAW_FOG_LINEAR) {
-				strlcat(included_definitions, "#define FOG_LINEAR\n", sizeof(included_definitions));
-			}
-			else if (flags & DRAW_FOG_EXP) {
-				strlcat(included_definitions, "#define FOG_EXP\n", sizeof(included_definitions));
-			}
-			else if (flags & DRAW_FOG_EXP2) {
-				strlcat(included_definitions, "#define FOG_EXP2\n", sizeof(included_definitions));
-			}
-		}
-
-		R_ProgramCompileWithInclude(r_program_simple3d, included_definitions);
-		R_ProgramSetCustomOptions(r_program_simple3d, flags);
+	if (R_ProgramRecompileNeeded(r_program_simple3d, 0)) {
+		R_ProgramCompile(r_program_simple3d);
 	}
 
 	return R_ProgramReady(r_program_simple3d) && GLM_CompilePostProcessVAO();

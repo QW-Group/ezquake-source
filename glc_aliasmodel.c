@@ -248,10 +248,6 @@ static void GLC_AliasModelLightPoint(float color[4], entity_t* ent, vbo_model_ve
 #define DRAWFLAGS_MUZZLEHACK   8
 //#define DRAWFLAGS_FLATSHADING  16     // Disabled until we can specify GLSL 1.3 dynamically, MESA drivers very strict
 #define DRAWFLAGS_MAXIMUM      (DRAWFLAGS_CAUSTICS | DRAWFLAGS_TEXTURED | DRAWFLAGS_FULLBRIGHT | DRAWFLAGS_MUZZLEHACK /* | DRAWFLAGS_FLATSHADING*/)
-#define EXTRAFLAGS_FOG_LINEAR  32
-#define EXTRAFLAGS_FOG_EXP     64
-#define EXTRAFLAGS_FOG_EXP2    128
-#define EXTRAFLAGS_FOG_ENABLED (EXTRAFLAGS_FOG_LINEAR | EXTRAFLAGS_FOG_EXP | EXTRAFLAGS_FOG_EXP2)
 
 int GLC_AliasModelSubProgramIndex(qbool textured, qbool fullbright, qbool caustics, qbool muzzlehack)
 {
@@ -265,11 +261,7 @@ int GLC_AliasModelSubProgramIndex(qbool textured, qbool fullbright, qbool causti
 
 qbool GLC_AliasModelStandardCompileSpecific(int subprogram_index)
 {
-	int flags =
-		subprogram_index |
-		(r_refdef2.fog_calculation == fogcalc_linear ? EXTRAFLAGS_FOG_LINEAR : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp ? EXTRAFLAGS_FOG_EXP : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp2 ? EXTRAFLAGS_FOG_EXP2 : 0);
+	int flags = subprogram_index;
 
 	R_ProgramSetSubProgram(r_program_aliasmodel_std_glc, subprogram_index);
 	if (R_ProgramRecompileNeeded(r_program_aliasmodel_std_glc, flags)) {
@@ -293,36 +285,13 @@ qbool GLC_AliasModelStandardCompileSpecific(int subprogram_index)
 			strlcat(included_definitions, "#define EZQ_ALIASMODEL_FLATSHADING\n", sizeof(included_definitions));
 		}
 #endif
-		if (flags & EXTRAFLAGS_FOG_ENABLED) {
-			strlcat(included_definitions, "#define DRAW_FOG\n", sizeof(included_definitions));
-			if (flags & EXTRAFLAGS_FOG_LINEAR) {
-				strlcat(included_definitions, "#define FOG_LINEAR\n", sizeof(included_definitions));
-			}
-			else if (flags & EXTRAFLAGS_FOG_EXP) {
-				strlcat(included_definitions, "#define FOG_EXP\n", sizeof(included_definitions));
-			}
-			else if (flags & EXTRAFLAGS_FOG_EXP2) {
-				strlcat(included_definitions, "#define FOG_EXP2\n", sizeof(included_definitions));
-			}
-		}
-
 		R_ProgramCompileWithInclude(r_program_aliasmodel_std_glc, included_definitions);
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_texSampler, 0);
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_causticsSampler, 1);
 		R_ProgramSetCustomOptions(r_program_aliasmodel_std_glc, flags);
 	}
 
-	if (flags & EXTRAFLAGS_FOG_ENABLED) {
-		R_ProgramUniform3fv(r_program_uniform_aliasmodel_std_glc_fog_color, r_refdef2.fog_color);
-
-		if (flags & EXTRAFLAGS_FOG_LINEAR) {
-			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fog_minZ, r_refdef2.fog_linear_start);
-			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fog_maxZ, r_refdef2.fog_linear_end);
-		}
-		else {
-			R_ProgramUniform1f(r_program_uniform_aliasmodel_std_glc_fog_density, r_refdef2.fog_density);
-		}
-	}
+	R_ProgramSetStandardUniforms(r_program_aliasmodel_std_glc);
 
 	return R_ProgramReady(r_program_aliasmodel_std_glc);
 }
@@ -341,43 +310,11 @@ qbool GLC_AliasModelStandardCompile(void)
 
 qbool GLC_AliasModelShadowCompile(void)
 {
-	int flags = 
-		(r_refdef2.fog_calculation == fogcalc_linear ? EXTRAFLAGS_FOG_LINEAR : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp ? EXTRAFLAGS_FOG_EXP : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp2 ? EXTRAFLAGS_FOG_EXP2 : 0);
-
-	if (R_ProgramRecompileNeeded(r_program_aliasmodel_shadow_glc, flags)) {
-		char included_definitions[512];
-
-		included_definitions[0] = '\0';
-		if (flags & EXTRAFLAGS_FOG_ENABLED) {
-			strlcat(included_definitions, "#define DRAW_FOG\n", sizeof(included_definitions));
-			if (flags & EXTRAFLAGS_FOG_LINEAR) {
-				strlcat(included_definitions, "#define FOG_LINEAR\n", sizeof(included_definitions));
-			}
-			else if (flags & EXTRAFLAGS_FOG_EXP) {
-				strlcat(included_definitions, "#define FOG_EXP\n", sizeof(included_definitions));
-			}
-			else if (flags & EXTRAFLAGS_FOG_EXP2) {
-				strlcat(included_definitions, "#define FOG_EXP2\n", sizeof(included_definitions));
-			}
-		}
-
-		R_ProgramCompileWithInclude(r_program_aliasmodel_shadow_glc, included_definitions);
-		R_ProgramSetCustomOptions(r_program_aliasmodel_shadow_glc, flags);
+	if (R_ProgramRecompileNeeded(r_program_aliasmodel_shadow_glc, 0)) {
+		R_ProgramCompile(r_program_aliasmodel_shadow_glc);
 	}
 
-	if (flags & EXTRAFLAGS_FOG_ENABLED) {
-		R_ProgramUniform3fv(r_program_uniform_aliasmodel_shadow_glc_fog_color, r_refdef2.fog_color);
-
-		if (flags & EXTRAFLAGS_FOG_LINEAR) {
-			R_ProgramUniform1f(r_program_uniform_aliasmodel_shadow_glc_fog_minZ, r_refdef2.fog_linear_start);
-			R_ProgramUniform1f(r_program_uniform_aliasmodel_shadow_glc_fog_maxZ, r_refdef2.fog_linear_end);
-		}
-		else {
-			R_ProgramUniform1f(r_program_uniform_aliasmodel_shadow_glc_fog_density, r_refdef2.fog_density);
-		}
-	}
+	R_ProgramSetStandardUniforms(r_program_aliasmodel_shadow_glc);
 
 	return R_ProgramReady(r_program_aliasmodel_shadow_glc);
 }
@@ -385,11 +322,7 @@ qbool GLC_AliasModelShadowCompile(void)
 qbool GLC_AliasModelShellCompile(void)
 {
 	extern cvar_t r_lerpmuzzlehack;
-	int flags = 
-		(r_lerpmuzzlehack.integer ? DRAWFLAGS_MUZZLEHACK : 0) |
-		(r_refdef2.fog_calculation == fogcalc_linear ? EXTRAFLAGS_FOG_LINEAR : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp ? EXTRAFLAGS_FOG_EXP : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp2 ? EXTRAFLAGS_FOG_EXP2 : 0);
+	int flags = (r_lerpmuzzlehack.integer ? DRAWFLAGS_MUZZLEHACK : 0);
 
 	if (R_ProgramRecompileNeeded(r_program_aliasmodel_shell_glc, flags)) {
 		char included_definitions[512];
@@ -398,35 +331,13 @@ qbool GLC_AliasModelShellCompile(void)
 		if (flags & DRAWFLAGS_MUZZLEHACK) {
 			strlcat(included_definitions, "#define EZQ_ALIASMODEL_MUZZLEHACK\n", sizeof(included_definitions));
 		}
-		if (flags & EXTRAFLAGS_FOG_ENABLED) {
-			strlcat(included_definitions, "#define DRAW_FOG\n", sizeof(included_definitions));
-			if (flags & EXTRAFLAGS_FOG_LINEAR) {
-				strlcat(included_definitions, "#define FOG_LINEAR\n", sizeof(included_definitions));
-			}
-			else if (flags & EXTRAFLAGS_FOG_EXP) {
-				strlcat(included_definitions, "#define FOG_EXP\n", sizeof(included_definitions));
-			}
-			else if (flags & EXTRAFLAGS_FOG_EXP2) {
-				strlcat(included_definitions, "#define FOG_EXP2\n", sizeof(included_definitions));
-			}
-		}
 
 		R_ProgramCompileWithInclude(r_program_aliasmodel_shell_glc, included_definitions);
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_shell_glc_texSampler, 0);
 		R_ProgramSetCustomOptions(r_program_aliasmodel_shell_glc, flags);
 	}
 
-	if (flags & EXTRAFLAGS_FOG_ENABLED) {
-		R_ProgramUniform3fv(r_program_uniform_aliasmodel_shell_glc_fog_color, r_refdef2.fog_color);
-
-		if (flags & EXTRAFLAGS_FOG_LINEAR) {
-			R_ProgramUniform1f(r_program_uniform_aliasmodel_shell_glc_fog_minZ, r_refdef2.fog_linear_start);
-			R_ProgramUniform1f(r_program_uniform_aliasmodel_shell_glc_fog_maxZ, r_refdef2.fog_linear_end);
-		}
-		else {
-			R_ProgramUniform1f(r_program_uniform_aliasmodel_shell_glc_fog_density, r_refdef2.fog_density);
-		}
-	}
+	R_ProgramSetStandardUniforms(r_program_aliasmodel_shell_glc);
 
 	return R_ProgramReady(r_program_aliasmodel_shell_glc);
 }

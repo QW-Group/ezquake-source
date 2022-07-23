@@ -99,4 +99,13 @@ typedef enum {
 	texture_magnification_count
 } texture_magnification_id;
 
+#if defined(_WIN32) && defined(_DEBUG)
+#define DebugOutput(text) \
+	if (IsDebuggerPresent()) { \
+		OutputDebugString(text); \
+	}
+#else
+#define DebugOutput(text)
+#endif
+
 #endif /* !__QUAKEDEF_H__ */

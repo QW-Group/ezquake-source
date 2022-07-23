@@ -170,11 +170,7 @@ static void GLC_GLSL_AddFogOptions(char* definitions, int definitions_length, in
 
 qbool GLC_DrawflatProgramCompile(void)
 {
-	int flags =
-		(r_refdef2.fog_calculation == fogcalc_linear ? GLC_WORLD_FOG_LINEAR : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp ? GLC_WORLD_FOG_EXP : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp2 ? GLC_WORLD_FOG_EXP2 : 0);
-	;
+	int flags = 0;
 
 	if (R_ProgramRecompileNeeded(r_program_world_drawflat_glc, flags)) {
 		char included_definitions[512];
@@ -189,17 +185,7 @@ qbool GLC_DrawflatProgramCompile(void)
 		R_ProgramSetCustomOptions(r_program_world_drawflat_glc, flags);
 	}
 
-	if (flags & GLC_USE_FOG) {
-		R_ProgramUniform3fv(r_program_uniform_world_drawflat_glc_fog_color, r_refdef2.fog_color);
-
-		if (flags & GLC_WORLD_FOG_LINEAR) {
-			R_ProgramUniform1f(r_program_uniform_world_drawflat_glc_fog_minZ, r_refdef2.fog_linear_start);
-			R_ProgramUniform1f(r_program_uniform_world_drawflat_glc_fog_maxZ, r_refdef2.fog_linear_end);
-		}
-		else {
-			R_ProgramUniform1f(r_program_uniform_world_drawflat_glc_fog_density, r_refdef2.fog_density);
-		}
-	}
+	R_ProgramSetStandardUniforms(r_program_world_drawflat_glc);
 
 	return R_ProgramReady(r_program_world_drawflat_glc);
 }
@@ -874,10 +860,7 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 		(r_drawflat.integer && r_drawflat_mode.integer == 1 ? GLC_WORLD_DF_TINTED : 0) |
 		(r_drawflat.integer && r_drawflat_mode.integer == 2 ? GLC_WORLD_DF_BRIGHT : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? GLC_WORLD_DF_FLOORS : 0) |
-		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? GLC_WORLD_DF_WALLS : 0) |
-		(r_refdef2.fog_calculation == fogcalc_linear ? GLC_WORLD_FOG_LINEAR : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp ? GLC_WORLD_FOG_EXP : 0) |
-		(r_refdef2.fog_calculation == fogcalc_exp2 ? GLC_WORLD_FOG_EXP2 : 0);
+		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? GLC_WORLD_DF_WALLS : 0);
 
 	R_ProgramSetSubProgram(r_program_world_textured_glc, (alpha_surfaces ? 1 : 0));
 	if (R_ProgramRecompileNeeded(r_program_world_textured_glc, options)) {
@@ -958,17 +941,7 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 			(allocations->fbTextureUnit >= 0 ? 1 : 0);
 	}
 
-	if (options & GLC_USE_FOG) {
-		R_ProgramUniform3fv(r_program_uniform_world_textured_glc_fog_color, r_refdef2.fog_color);
-
-		if (options & GLC_WORLD_FOG_LINEAR) {
-			R_ProgramUniform1f(r_program_uniform_world_textured_glc_fog_minZ, r_refdef2.fog_linear_start);
-			R_ProgramUniform1f(r_program_uniform_world_textured_glc_fog_maxZ, r_refdef2.fog_linear_end);
-		}
-		else {
-			R_ProgramUniform1f(r_program_uniform_world_textured_glc_fog_density, r_refdef2.fog_density);
-		}
-	}
+	R_ProgramSetStandardUniforms(r_program_world_textured_glc);
 
 	R_TraceLogAPICall("--- units      = %d", allocations->texture_unit_count);
 	R_TraceLogAPICall("... caustics   = %d", allocations->causticTextureUnit);
@@ -984,6 +957,8 @@ static qbool GLC_WorldTexturedProgramCompile(texture_unit_allocation_t* allocati
 
 		R_ProgramUniform1i(r_program_uniform_world_textured_glc_causticSampler, 0);
 	}
+
+	R_ProgramSetStandardUniforms(r_program_world_secondpass_glc);
 
 	return R_ProgramReady(r_program_world_textured_glc) && R_ProgramReady(r_program_world_secondpass_glc);
 }
