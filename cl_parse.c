@@ -3157,6 +3157,12 @@ void CL_ParseStufftext (void)
 		if (!cls.mvdplayback)
 			Parse_TeamInfo( s + 2 );
 	}
+	else if (!strncmp(s, "//cainfo ", sizeof("//cainfo ") - 1))
+	{
+		extern void Parse_CAInfo(char *s);
+
+		Parse_CAInfo( s + 2 );
+	}
 	else if (!strncmp(s, "//at ", sizeof("//at ") - 1))
 	{
 		// This is autotrack info from MVD demo/QTV stream, they are almost same.

@@ -246,13 +246,14 @@ qbool Has_Both_RL_and_LG(int flags)
 static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int maxname, int maxloc, qbool width_only, float scale, const char* layout, int weapon_style, int show_ammo, int armor_style, int powerup_style, int flag_style, int low_health, qbool proportional)
 {
 	extern cvar_t tp_name_rlg;
-
-	char *s, *loc, tmp[1024], tmp2[MAX_MACRO_STRING], *aclr;
+	char *s, *loc, tmp[1024], tmp2[MAX_MACRO_STRING], *aclr, *txtclr;
 	float x_in = x; // save x
 	int i, a;
+	qbool isDeadCA;
 	mpic_t *pic;
 	float width;
 	float font_width = scale * FONT_WIDTH;
+	float alpha;
 
 	extern mpic_t *sb_face_invis, *sb_face_quad, *sb_face_invuln;
 	extern mpic_t *sb_armor[3];
@@ -260,6 +261,16 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 
 	if (!ti_cl) {
 		return 0;
+	}
+
+	txtclr = ti_cl->isdead == 2 ? "&c840" : "&cfff";
+	isDeadCA = ti_cl->isdead || (ti_cl->camode == 1 && ti_cl->health <= 0);	// camode == 1 means we're playing ca/wipeout
+	
+	if (isDeadCA) {
+		alpha = 0.25;
+	}
+	else {
+		alpha = 1.0;
 	}
 
 	i = ti_cl->client;
@@ -303,8 +314,8 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 						width = maxname * font_width;
 						if (!width_only) {
 							char *nick = TP_ParseFunChars(ti_cl->nick[0] ? ti_cl->nick : cl.players[i].shortname, false);
-
-							Draw_SStringAligned(x, y, nick, scale, 1, proportional, text_align_right, x + width);
+							snprintf(tmp, sizeof(tmp), "%s%s", txtclr, nick);
+							Draw_SStringAligned(x, y, tmp, scale, alpha, proportional, text_align_right, x + width);
 						}
 						x += width;
 						break;
@@ -322,14 +333,15 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 									}
 									char weap_white_stripped[32];
 									Util_SkipChars(weap_str, "{}", weap_white_stripped, 32);
-									Draw_SStringAligned(x, y, weap_white_stripped, scale, 1.0, proportional, ((s[0] == 'W' || show_ammo) ? text_align_right : text_align_left), x + 3 * font_width);
+									snprintf(tmp, sizeof(tmp), "%s%s", txtclr, isDeadCA ? "--" : weap_white_stripped);
+									Draw_SStringAligned(x, y, tmp, scale, alpha, proportional, ((s[0] == 'W' || show_ammo) ? text_align_right : text_align_left), x + 3 * font_width);
 								}
 								x += 3 * font_width;
 								break;
 							default: // draw image by default
 								if (!width_only) {
-									if ((pic = SCR_GetWeaponIconByFlag(BestWeaponFromStatItems(ti_cl->items)))) {
-										Draw_SPic(x, y, pic, 0.5 * scale);
+									if (!isDeadCA && (pic = SCR_GetWeaponIconByFlag(BestWeaponFromStatItems(ti_cl->items)))) {
+										Draw_SAlphaPic(x, y, pic, alpha, 0.5 * scale);
 									}
 								}
 								x += 2 * font_width;
@@ -337,8 +349,14 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 						}
 						if (show_ammo) {
 							if (!width_only) {
-								snprintf(tmp, sizeof(tmp), ":%d", a);
-								Draw_SStringAligned(x, y, tmp, scale, 1.0, proportional, text_align_left, x + 4 * font_width);
+								if (isDeadCA){
+									snprintf(tmp, sizeof(tmp), "%s", txtclr);
+								} 
+								else {
+									snprintf(tmp, sizeof(tmp), "%s:%d", txtclr, a);
+								}
+								
+								Draw_SStringAligned(x, y, tmp, scale, alpha, proportional, text_align_left, x + 4 * font_width);
 								
 							}
 							x += 4 * font_width;
@@ -347,16 +365,36 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 					case 'c': // draw ammo
 					case 'C': // draw ammo
 						if (!width_only) {
-							snprintf(tmp, sizeof(tmp), "%d", a);
-							Draw_SStringAligned(x, y, tmp, scale, 1.0, proportional, (s[0] == 'C' ? text_align_right : text_align_left), x + 3 * font_width);
+							snprintf(tmp, sizeof(tmp), "%s%d", txtclr, a);
+							Draw_SStringAligned(x, y, tmp, scale, alpha, proportional, (s[0] == 'C' ? text_align_right : text_align_left), x + 3 * font_width);
 						}
 						x += 3 * font_width;
+						break;
+					case 'r': // draw respawn time
+					case 'R': // draw respawn time
+						if (!width_only) {
+							if (ti_cl->isdead == 1 && ti_cl->timetospawn > 0)
+							{
+								snprintf(tmp, sizeof(tmp), "&cfa0%d", ti_cl->timetospawn);
+							}
+							else
+							{
+								snprintf(tmp, sizeof(tmp), "%s", " ");
+							}
+							Draw_SStringAligned(x, y, tmp, scale * 0.75, 1.0, proportional, (s[0] == 'r' ? text_align_right : text_align_left), x + 2 * font_width);
+						}
+						x += 2 * font_width;
 						break;
 					case 'h': // draw health, padding with space on left side
 					case 'H': // draw health, padding with space on right side
 						if (!width_only) {
-							snprintf(tmp, sizeof(tmp), "%s%d", (ti_cl->health < low_health ? "&cf00" : ""), ti_cl->health);
-							Draw_SStringAligned(x, y, tmp, scale, 1.0, proportional, (s[0] == 'h' ? text_align_right : text_align_left), x + 3 * font_width);
+							if (isDeadCA){
+								snprintf(tmp, sizeof(tmp), "%s--", txtclr); // print dashes if dead
+							}
+							else {
+								snprintf(tmp, sizeof(tmp), "%s%d", (ti_cl->health < low_health ? "&cf00" : txtclr), ti_cl->health);
+							}
+							Draw_SStringAligned(x, y, tmp, scale, alpha, proportional, (s[0] == 'h' ? text_align_right : text_align_left), x + 3 * font_width);
 						}
 						x += 3 * font_width;
 						break;
@@ -364,8 +402,8 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 					case 'f': // draw frags, space on left side
 					case 'F': // draw frags, space on right side
 						if (!width_only) {
-							snprintf(tmp, sizeof(tmp), (s[0] == 'f' ? "%3d" : "%-3d"), cl.players[i].frags);
-							Draw_SStringAligned(x, y, tmp, scale, 1.0, proportional, (s[0] == 'f' ? text_align_right : text_align_left), x + 3 * font_width);
+							snprintf(tmp, sizeof(tmp), (s[0] == 'f' ? "%s%3d" : "%s%-3d"), txtclr, cl.players[i].frags);
+							Draw_SStringAligned(x, y, tmp, scale, alpha, proportional, (s[0] == 'f' ? text_align_right : text_align_left), x + 3 * font_width);
 						}
 						x += 3 * FONTWIDTH * scale;
 						break;
@@ -375,16 +413,16 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 						//
 						// different styles of armor
 						//
-						aclr = "";
+						aclr = txtclr;
 						switch (armor_style) {
 							case 1: // image prefixed armor value
 								if (!width_only) {
 									if (ti_cl->items & IT_ARMOR3)
-										Draw_SPic(x, y, sb_armor[2], 1.0 / 3 * scale);
+										Draw_SAlphaPic(x, y, sb_armor[2], alpha, 1.0 / 3 * scale);
 									else if (ti_cl->items & IT_ARMOR2)
-										Draw_SPic(x, y, sb_armor[1], 1.0 / 3 * scale);
+										Draw_SAlphaPic(x, y, sb_armor[1], alpha, 1.0 / 3 * scale);
 									else if (ti_cl->items & IT_ARMOR1)
-										Draw_SPic(x, y, sb_armor[0], 1.0 / 3 * scale);
+										Draw_SAlphaPic(x, y, sb_armor[0], alpha, 1.0 / 3 * scale);
 								}
 								x += font_width;
 								break;
@@ -421,11 +459,11 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 							case 4: // armor value prefixed with letter
 								if (!width_only) {
 									if (ti_cl->items & IT_ARMOR3)
-										Draw_SString(x, y, "r", scale, proportional);
+										Draw_SStringAlpha(x, y, "r", scale, alpha, proportional);
 									else if (ti_cl->items & IT_ARMOR2)
-										Draw_SString(x, y, "y", scale, proportional);
+										Draw_SStringAlpha(x, y, "y", scale, alpha, proportional);
 									else if (ti_cl->items & IT_ARMOR1)
-										Draw_SString(x, y, "g", scale, proportional);
+										Draw_SStringAlpha(x, y, "g", scale, alpha, proportional);
 								}
 								x += font_width;
 								break;
@@ -433,8 +471,13 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 
 						if (!width_only) {
 							// value drawn no matter which style
-							snprintf(tmp, sizeof(tmp), "%s%d", aclr, ti_cl->armor);
-							Draw_SStringAligned(x, y, tmp, scale, 1.0f, proportional, s[0] == 'A' ? text_align_left : text_align_right, x + 3 * font_width);
+							if (isDeadCA){
+								snprintf(tmp, sizeof(tmp), "%s--", txtclr); // print dashes if dead
+							}
+							else {
+								snprintf(tmp, sizeof(tmp), "%s%d", aclr, ti_cl->armor);
+							}
+							Draw_SStringAligned(x, y, tmp, scale, alpha, proportional, s[0] == 'A' ? text_align_left : text_align_right, x + 3 * font_width);
 						}
 						x += 3 * font_width;
 						break;
@@ -447,8 +490,13 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 								loc = "unknown";
 							}
 							loc = TP_ParseFunChars(loc, false);
-
-							Draw_SStringAligned(x, y, loc, scale, 1, proportional, text_align_right, x + width);
+							if (isDeadCA){
+								snprintf(tmp, sizeof(tmp), "%sdead", txtclr);
+							}
+							else {
+								snprintf(tmp, sizeof(tmp), "%s%s", txtclr, loc);
+							}
+							Draw_SStringAligned(x, y, tmp, scale, alpha, proportional, text_align_right, x + width);
 						}
 						x += width;
 						break;
@@ -519,8 +567,8 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 
 					case 't':
 						if (!width_only) {
-							sprintf(tmp, "%i", Player_GetTrackId(cl.players[ti_cl->client].userid));
-							Draw_SString(x, y, tmp, scale, proportional);
+							sprintf(tmp, "%s%i", txtclr, Player_GetTrackId(cl.players[ti_cl->client].userid));
+							Draw_SStringAlpha(x, y, tmp, scale, alpha, proportional);
 						}
 						x += (Player_GetTrackId(cl.players[ti_cl->client].userid) >= 10 ? 2 : 1) * font_width;
 						break;
@@ -551,7 +599,8 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 
 					case '%': // wow, %% result in one %, how smart
 						if (!width_only) {
-							Draw_SString(x, y, "%", scale, proportional);
+							snprintf(tmp, sizeof(tmp), "%s%s", txtclr, "%");
+							Draw_SStringAlpha(x, y, tmp, scale, alpha, proportional);
 						}
 						x += font_width;
 						break;
@@ -559,7 +608,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 					default: // print %x - that mean sequence unknown
 						if (!width_only) {
 							snprintf(tmp, sizeof(tmp), "%%%c", s[0]);
-							Draw_SString(x, y, tmp, scale, proportional);
+							Draw_SStringAlpha(x, y, tmp, scale, alpha, proportional);
 						}
 						x += (s[0] ? 2 : 1) * font_width;
 						break;
@@ -569,10 +618,10 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 
 			default: // print x
 				if (!width_only) {
-					snprintf(tmp, sizeof(tmp), "%c", s[0]);
+					snprintf(tmp, sizeof(tmp), "%s%c", txtclr, s[0]);
 					if (s[0] != ' ') {
 						// inhuman smart optimization, do not print space!
-						Draw_SString(x, y, tmp, scale, proportional);
+						Draw_SStringAlpha(x, y, tmp, scale, alpha, proportional);
 					}
 				}
 				x += font_width;
@@ -708,6 +757,39 @@ void Parse_TeamInfo(char *s)
 	ti_clients[client].nails = atoi(Cmd_Argv(10));
 	ti_clients[client].rockets = atoi(Cmd_Argv(11));
 	ti_clients[client].cells = atoi(Cmd_Argv(12));
+}
+
+void Parse_CAInfo(char *s)
+{
+	int		client;
+
+	Cmd_TokenizeString(s);
+	client = atoi(Cmd_Argv(1));
+
+	if (client < 0 || client >= MAX_CLIENTS) {
+		Com_DPrintf("Parse_CAInfo: wrong client %d\n", client);
+		return;
+	}
+
+	if (!cls.mvdplayback) {
+		ti_clients[client].client = client; // no, its not stupid
+		ti_clients[client].time = r_refdef2.time;
+		ti_clients[client].org[0] = atoi(Cmd_Argv(2));
+		ti_clients[client].org[1] = atoi(Cmd_Argv(3));
+		ti_clients[client].org[2] = atoi(Cmd_Argv(4));
+		ti_clients[client].health = atoi(Cmd_Argv(5));
+		ti_clients[client].armor = atoi(Cmd_Argv(6));
+		ti_clients[client].items = atoi(Cmd_Argv(7));
+		strlcpy(ti_clients[client].nick, Cmd_Argv(8), TEAMINFO_NICKLEN); // nick is optional
+		ti_clients[client].shells = atoi(Cmd_Argv(9));
+		ti_clients[client].nails = atoi(Cmd_Argv(10));
+		ti_clients[client].rockets = atoi(Cmd_Argv(11));
+		ti_clients[client].cells = atoi(Cmd_Argv(12));
+	}
+	
+	ti_clients[client].camode = atoi(Cmd_Argv(13));
+	ti_clients[client].isdead = atoi(Cmd_Argv(14));
+	ti_clients[client].timetospawn = atoi(Cmd_Argv(15));
 }
 
 void Update_FlagStatus(int player_num, char *team, qbool got_flag)

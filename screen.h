@@ -147,6 +147,9 @@ typedef struct ti_player_s {
 	int			nails;
 	int			rockets;
 	int 		cells;
+	int			camode;
+	int			isdead;
+	int			timetospawn;
 	char		nick[TEAMINFO_NICKLEN]; // yeah, nick is nick, must be short
 	double		time; // when we recive last update about this player, so we can guess disconnects and etc
 
