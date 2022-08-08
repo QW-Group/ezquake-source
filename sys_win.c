@@ -61,7 +61,7 @@ __attribute__((dllexport)) DWORD AmdPowerXpressRequestHighPerformance = 0x000000
 #endif
 
 #define MINIMUM_WIN_MEMORY	0x0c00000
-#define MAXIMUM_WIN_MEMORY	0x8000000
+#define MAXIMUM_WIN_MEMORY	0xfffffff
 
 #define PAUSE_SLEEP		50				// sleep time on pause or minimization
 #define NOT_FOCUS_SLEEP	20				// sleep time when not focus
