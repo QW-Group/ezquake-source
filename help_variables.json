@@ -12786,6 +12786,22 @@
         }
       ]
     },
+    "hud_teaminfo_show_countdown": {
+      "desc": "Shows respawn time instead of powerups during wipeout mode.",
+      "group-id": "19",
+      "remarks": "If disabled, countdown can still be displayed by adding %r to /hud_teaminfo_layout",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Do not show respawn time instead of powerups in wipeout mode",
+          "name": "0"
+        },
+        {
+          "description": "Show respawn time instead of powerups in wipeout mode",
+          "name": "1"
+        }
+      ]
+    },
     "hud_teaminfo_show_enemies": {
       "desc": "Show information about the enemy team(s) in the teaminfo window. Displays a header for each team consisting of the team name and the current team score.",
       "group-id": "19",
@@ -19047,6 +19063,23 @@
         },
         {
           "description": "Show ammo next to best weapon.",
+          "name": "1"
+        }
+      ]
+    },
+    "scr_teaminfo_show_countdown": {
+      "default": "0",
+      "desc": "Shows respawn time instead of powerups during wipeout mode.",
+      "group-id": "40",
+      "remarks": "If disabled, countdown can still be displayed by adding %r to /scr_teaminfo_order",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Do not show respawn time instead of powerups in wipeout mode",
+          "name": "0"
+        },
+        {
+          "description": "Show respawn time instead of powerups in wipeout mode",
           "name": "1"
         }
       ]
