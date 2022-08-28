@@ -303,7 +303,6 @@ typedef struct {
 	char	map[MAX_STYLESTRING];
 } lightstyle_t;
 
-#define	MAX_EFRAGS			512
 #define	MAX_STATIC_ENTITIES	512		// torches, etc
 #define	MAX_DEMOS			8
 #define	MAX_DEMONAME		16
@@ -858,7 +857,6 @@ extern cvar_t r_powerupglow;
 
 // FIXME, allocate dynamically
 extern	centity_t        cl_entities[CL_MAX_EDICTS];
-extern	efrag_t          cl_efrags[MAX_EFRAGS];
 extern	entity_t         cl_static_entities[MAX_STATIC_ENTITIES];
 extern	lightstyle_t     cl_lightstyle[MAX_LIGHTSTYLES];
 extern	dlight_t         cl_dlights[MAX_DLIGHTS];
