@@ -109,7 +109,7 @@ void SND_ResampleStream(void *in, int inrate, int inwidth, int inchannels, int i
 // User-setable variables
 // ====================================================================
 
-#define MAX_CHANNELS 128
+#define MAX_CHANNELS 512
 #define MAX_DYNAMIC_CHANNELS 32
 
 
