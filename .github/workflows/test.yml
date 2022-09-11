@@ -6,6 +6,11 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v2
-    - name: Build
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Build app for release
+      run: msbuild ezQuake.vcxproj -t:rebuild -verbosity:diag -property:Configuration=Release
       run: |
         msbuild
