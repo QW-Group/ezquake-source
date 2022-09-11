@@ -13,5 +13,11 @@ jobs:
     - name: Build txt2c
       run: msbuild misc\vstudio\txt2c\txt2c.vcxproj -t:rebuild -property:Configuration=Release
 
+    - name: Make dir
+      run: mkdir .vs
+
+    - name: Copy txt2c
+      run: cp misc\vstudio\txt2c\.vs\txt2c.exe .vs\
+
     - name: Build ezQauke
       run: msbuild ezQuake.vcxproj -t:rebuild -property:Configuration=rls-modern
