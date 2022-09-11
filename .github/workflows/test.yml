@@ -8,4 +8,4 @@ jobs:
       uses: actions/checkout@v2
     - name: Build
       run: |
-        make
+        msbuild
