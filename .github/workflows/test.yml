@@ -19,5 +19,11 @@ jobs:
     - name: Copy txt2c
       run: cp misc\vstudio\txt2c\.vs\txt2c.exe .vs\
 
-    - name: Build ezQauke
+    - name: Build modern client
       run: msbuild ezQuake.vcxproj -t:rebuild -property:Configuration=rls-modern
+
+    - name: Archive modern client
+      uses: actions/upload-artifact@v3
+      with:
+        name: ezQuake-glsl
+        path: .vs\Win32\rls-modern\Output\ezQuake.exe
