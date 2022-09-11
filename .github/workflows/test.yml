@@ -12,5 +12,4 @@ jobs:
 
     - name: Build app for release
       run: msbuild ezQuake.vcxproj -t:rebuild -verbosity:diag -property:Configuration=Release
-      run: |
         msbuild
