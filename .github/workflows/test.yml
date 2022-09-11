@@ -10,5 +10,8 @@ jobs:
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.1
 
-    - name: Build app for release
+    - name: Build txt2c
+      run: msbuild misc\vstudio\txt2c\txt2c.vcxproj -t:rebuild -property:Configuration=Release
+
+    - name: Build ezQauke
       run: msbuild ezQuake.vcxproj -t:rebuild -property:Configuration=rls-modern
