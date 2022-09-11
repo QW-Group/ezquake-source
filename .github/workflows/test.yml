@@ -1,0 +1,12 @@
+name: test
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Build
+      run: |
+        EZ_CONFIG_FILE=.config_windows make
+        
