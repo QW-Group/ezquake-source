@@ -11,4 +11,4 @@ jobs:
       uses: microsoft/setup-msbuild@v1.1
 
     - name: Build app for release
-      run: msbuild ezQuake.vcxproj -t:rebuild -verbosity:diag -property:Configuration=rls-modern
+      run: msbuild ezQuake.vcxproj -t:rebuild -property:Configuration=rls-modern
