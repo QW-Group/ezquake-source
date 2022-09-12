@@ -20,7 +20,7 @@ jobs:
       run: cp misc\vstudio\txt2c\.vs\txt2c.exe .vs\
 
     - name: Build modern client
-      run: msbuild ezQuake.vcxproj -t:rebuild -property:Configuration=rls-modern
+      run: msbuild ezQuake.vcxproj -t:rebuild -property:Configuration=rls-modern;Platform=x64
 
     - name: Archive modern client
       uses: actions/upload-artifact@v3
