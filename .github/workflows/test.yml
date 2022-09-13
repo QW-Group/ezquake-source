@@ -24,14 +24,14 @@ jobs:
            config: rls-classic
            platform: Win32
            output: "Win32\rls-classic"
-         - target: windows-combined-x64
-           config: rls-all
+         - target: windows-combined-dbg-x64
+           config: dbg-all
            platform: x64
-           output: "x64\rls-all"
-         - target: windows-combined-x86
-           config: rls-all
+           output: "x64\dbg-all"
+         - target: windows-combined-dbg-x86
+           config: dbg-all
            platform: Win32
-           output: "Win32\rls-all"
+           output: "Win32\dbg-all"
 
     steps:
     - name: Check out code
@@ -55,5 +55,5 @@ jobs:
     - name: Archive 64bit modern client
       uses: actions/upload-artifact@v3
       with:
-        name: ezQuake-glsl
+        name: ${{ matrix.target }}
         path: .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.exe
