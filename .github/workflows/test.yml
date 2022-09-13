@@ -3,6 +3,36 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+       target: [windows-glsl-x64, windows-glsl-x86, windows-opengl-x64, windows-opengl-x86, windows-combined-x64, windows-combined-x86]
+       include:
+         - target: windows-glsl-x64
+           config: rls-modern
+           platform: x64
+           output: "x64\rls-modern"
+         - target: windows-glsl-x86
+           config: rls-modern
+           platform: Win32
+           output: "Win32\rls-modern"
+         - target: windows-opengl-x64
+           config: rls-classic
+           platform: x64
+           output: "x64\rls-classic"
+         - target: windows-opengl-x86
+           config: rls-classic
+           platform: Win32
+           output: "Win32\rls-classic"
+         - target: windows-combined-x64
+           config: rls-all
+           platform: x64
+           output: "x64\rls-all"
+         - target: windows-combined-x86
+           config: rls-all
+           platform: Win32
+           output: "Win32\rls-all"
+
     steps:
     - name: Check out code
       uses: actions/checkout@v2
@@ -19,11 +49,11 @@ jobs:
     - name: Copy txt2c
       run: cp misc\vstudio\txt2c\.vs\txt2c.exe .vs\
 
-    - name: Build modern client
-      run: msbuild ezQuake.vcxproj -t:rebuild -property:Configuration=rls-modern -property:Platform=x64
+    - name: Build ezquake
+      run: msbuild ezQuake.vcxproj -t:rebuild -property:Configuration=${{ matrix.config }} -property:Platform=${{ matrix.platform }}
 
-    - name: Archive modern client
+    - name: Archive 64bit modern client
       uses: actions/upload-artifact@v3
       with:
         name: ezQuake-glsl
-        path: .vs\Win32\rls-modern\Output\ezQuake.exe
+        path: .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.exe
