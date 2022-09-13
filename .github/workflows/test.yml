@@ -6,7 +6,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-       target: [windows-glsl-x64, windows-glsl-x86, windows-opengl-x64, windows-opengl-x86, windows-combined-x64, windows-combined-x86]
+       target: [windows-glsl-x64, windows-glsl-x86, windows-opengl-x64, windows-opengl-x86, windows-combined-dbg-x64, windows-combined-dbg-x86]
        include:
          - target: windows-glsl-x64
            config: rls-modern
