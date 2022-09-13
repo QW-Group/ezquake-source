@@ -11,27 +11,21 @@ jobs:
          - target: windows-glsl-x64
            config: rls-modern
            platform: x64
-           output: "x64\rls-modern"
          - target: windows-glsl-x86
            config: rls-modern
            platform: Win32
-           output: "Win32\rls-modern"
          - target: windows-opengl-x64
            config: rls-classic
            platform: x64
-           output: "x64\rls-classic"
          - target: windows-opengl-x86
            config: rls-classic
            platform: Win32
-           output: "Win32\rls-classic"
          - target: windows-combined-dbg-x64
            config: dbg-all
            platform: x64
-           output: "x64\dbg-all"
          - target: windows-combined-dbg-x86
            config: dbg-all
            platform: Win32
-           output: "Win32\dbg-all"
 
     steps:
     - name: Check out code
