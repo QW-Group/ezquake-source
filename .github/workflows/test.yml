@@ -6,7 +6,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-       target: [windows-glsl-x64, windows-glsl-x86, windows-opengl-x64, windows-opengl-x86, windows-combined-dbg-x64, windows-combined-dbg-x86]
+       target: [windows-glsl-x64, windows-glsl-x86, windows-opengl-x64, windows-opengl-x86, windows-combined-x64, windows-combined-x86]
        include:
          - target: windows-glsl-x64
            config: rls-modern
@@ -20,10 +20,10 @@ jobs:
          - target: windows-opengl-x86
            config: rls-classic
            platform: Win32
-         - target: windows-combined-dbg-x64
+         - target: windows-combined-x64
            config: dbg-all
            platform: x64
-         - target: windows-combined-dbg-x86
+         - target: windows-combined-x86
            config: dbg-all
            platform: Win32
 
@@ -46,7 +46,7 @@ jobs:
     - name: Build ezquake
       run: msbuild ezQuake.vcxproj -t:rebuild -property:Configuration=${{ matrix.config }} -property:Platform=${{ matrix.platform }}
 
-    - name: Archive 64bit modern client
+    - name: Archive client
       uses: actions/upload-artifact@v3
       with:
         name: ${{ matrix.target }}
