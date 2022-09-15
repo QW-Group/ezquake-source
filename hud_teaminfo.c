@@ -472,7 +472,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 									x += font_width;
 								}
 								else {
-									x += font_width;
+									x += 3 * font_width;
 								}
 								break;
 						}
