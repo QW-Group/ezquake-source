@@ -6,26 +6,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-       target: [windows-glsl-x64, windows-glsl-x86, windows-opengl-x64, windows-opengl-x86, windows-combined-x64, windows-combined-x86]
+       target: [windows-glsl-x64, windows-opengl-x64, windows-combined-x64]
        include:
          - target: windows-glsl-x64
            config: rls-modern
            platform: x64
-         - target: windows-glsl-x86
-           config: rls-modern
-           platform: Win32
          - target: windows-opengl-x64
            config: rls-classic
            platform: x64
-         - target: windows-opengl-x86
-           config: rls-classic
-           platform: Win32
          - target: windows-combined-x64
            config: dbg-all
            platform: x64
-         - target: windows-combined-x86
-           config: dbg-all
-           platform: Win32
 
     steps:
     - name: Check out code
