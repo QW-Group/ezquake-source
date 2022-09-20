@@ -57,7 +57,7 @@ jobs:
       shell: msys2 {0}
       run: |
         #timedatectl set-timezone Europe/Amsterdam
-        #export TZ=CET-1CEST
+        export TZ=CET-1CEST
         echo "DATE=$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_ENV
     - name: Deploy
       shell: msys2 {0}
