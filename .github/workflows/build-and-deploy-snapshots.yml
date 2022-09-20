@@ -40,8 +40,11 @@ jobs:
     - name: Create checksum
       run: |
            md5sum .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.exe > .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.md5
-    - name: Setup SSH
+
+    - name: Invoke msys
       uses: msys2/setup-msys2@v2
+
+    - name: Setup SSH
       shell: msys2 {0}
       env:
         SSH_AUTH_SOCK: C:\ssh_agent.sock
