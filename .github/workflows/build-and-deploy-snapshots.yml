@@ -56,7 +56,7 @@ jobs:
     - name: Set date
       shell: msys2 {0}
       run: |
-        sudo timedatectl set-timezone Europe/Amsterdam
+        timedatectl set-timezone Europe/Amsterdam
         echo "DATE=$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_ENV
     - name: Deploy
       env:
