@@ -1,4 +1,4 @@
-name: test
+name: build and deploy snapshots
 on: [push, pull_request]
 jobs:
   build:
@@ -41,13 +41,16 @@ jobs:
       run: |
            md5sum .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.exe > .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.md5
     - name: Setup SSH
+      uses: msys2/setup-msys2@v2
+      shell: msys2 {0}
       env:
         SSH_AUTH_SOCK: C:\ssh_agent.sock
       run: |
-        Set-Service ssh-agent -StartupType Manual
         ssh-agent -a $SSH_AUTH_SOCK > /dev/null
         ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
     - name: Set date
+      uses: msys2/setup-msys2@v2
+      shell: msys2 {0}
       run: |
         sudo timedatectl set-timezone Europe/Amsterdam
         echo "DATE=$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_ENV
