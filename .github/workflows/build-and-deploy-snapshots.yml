@@ -52,7 +52,6 @@ jobs:
         ssh-agent -a $SSH_AUTH_SOCK > /dev/null
         ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
     - name: Set date
-      uses: msys2/setup-msys2@v2
       shell: msys2 {0}
       run: |
         sudo timedatectl set-timezone Europe/Amsterdam
