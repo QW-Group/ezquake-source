@@ -43,6 +43,8 @@ jobs:
 
     - name: Invoke msys
       uses: msys2/setup-msys2@v2
+      with:
+        install: openssh
 
     - name: Setup SSH
       shell: msys2 {0}
