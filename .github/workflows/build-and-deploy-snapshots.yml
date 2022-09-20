@@ -66,8 +66,8 @@ jobs:
       run: |
            mkdir -p upload/snapshots/${{ matrix.platform }}/${{ matrix.config }}
            mkdir -p upload/snapshots/latest/${{ matrix.platform }}/${{ matrix.config }}
-           cp .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.exe upload/snapshots/${{ matrix.platform }}/${{ matrix.config }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezquake.exe
-           cp .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.md5 upload/snapshots/${{ matrix.platform }}/${{ matrix.config }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezquake.md5
-           cp .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.exe upload/snapshots/latest/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
-           cp .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.md5 upload/snapshots/latest/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/snapshots/${{ matrix.platform }}/${{ matrix.config }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezquake.exe
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/snapshots/${{ matrix.platform }}/${{ matrix.config }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezquake.md5
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/snapshots/latest/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/snapshots/latest/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
            sftp -rp -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -P ${{ secrets.SFTP_PORT }} ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/snapshots <<< $'put -rp upload/snapshots/*'
