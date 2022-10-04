@@ -1,7 +1,8 @@
 name: build targets
-on: [push, pull_request]
+on: [pull_request]
 jobs:
   build:
+    if: github.repository == 'QW-Group/ezquake-source'
     runs-on: windows-latest
     strategy:
       fail-fast: false
