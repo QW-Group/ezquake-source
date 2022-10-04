@@ -10,13 +10,13 @@ jobs:
        target: [windows-glsl-x64, windows-opengl-x64, windows-combined-x64]
        include:
          - target: windows-glsl-x64
-           config: rls-modern
+           config: modern
            platform: x64
-         - target: windows-opengl-x64
-           config: rls-classic
+         - target: windows-std-x64
+           config: classic
            platform: x64
-         - target: windows-combined-x64
-           config: dbg-all
+         - target: windows-multi-x64
+           config: multi
            platform: x64
 
     steps:
