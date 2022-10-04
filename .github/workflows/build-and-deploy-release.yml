@@ -1,4 +1,4 @@
-name: build and deploy snapshots
+name: build and deploy release
 on:
   release:
     types: [published]
