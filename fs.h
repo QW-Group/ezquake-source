@@ -104,7 +104,7 @@ typedef enum {
 		| FS_LOAD_FILE_PK4 | FS_LOAD_FILE_DOOMWAD | FS_LOAD_FROM_PAKLST,
 } FS_Load_File_Types;
 
-void FS_AddGameDirectory (char *dir, unsigned int loadstuff);
+void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff);
 
 char *FS_NextPath (char *prevpath);
 
