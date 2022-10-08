@@ -192,9 +192,9 @@ static qbool R_ParseWorldspawn(const char* entstring, worldspawn_info_t* worldsp
 			Cmd_TokenizeStringEx(&fog, temp);
 			if (Cmd_ArgcEx(&fog) == 4) {
 				worldspawn->fog_density = atof(Cmd_ArgvEx(&fog, 0));
-				worldspawn->fog_color[0] = atof(Cmd_ArgvEx(&fog, 0));
-				worldspawn->fog_color[1] = atof(Cmd_ArgvEx(&fog, 1));
-				worldspawn->fog_color[2] = atof(Cmd_ArgvEx(&fog, 2));
+				worldspawn->fog_color[0] = atof(Cmd_ArgvEx(&fog, 1));
+				worldspawn->fog_color[1] = atof(Cmd_ArgvEx(&fog, 2));
+				worldspawn->fog_color[2] = atof(Cmd_ArgvEx(&fog, 3));
 
 				worldspawn->fog_density = bound(0, worldspawn->fog_density, 1);
 				worldspawn->fog_color[0] = bound(0, worldspawn->fog_color[0], 1);
