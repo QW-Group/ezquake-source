@@ -32,6 +32,8 @@ cvar_t cl_useimagesinfraglog = {"cl_useimagesinfraglog", "0"};
 #define FUH_FRAGFILE_VERSION_1_00	"1.00" /* for compatibility with fuh */
 #define FRAGFILE_VERSION_1_00		"ezquake-1.00" /* fuh suggest such format */
 
+void Update_FlagStatus(int player_num, char *team, qbool got_flag);
+
 typedef enum msgtype_s {
 	mt_fragged,
 	mt_frags,
@@ -686,6 +688,7 @@ foundmatch:
 		case mt_flagtouch:
 		{
 			fragstats[i].touches++;
+			Update_FlagStatus(i, player1->team, true);
 			if (cl.playernum == i || (i == Cam_TrackNum() && cl.spectator))
 				VX_TrackerFlagTouch(fragstats[i].touches);
 			flag_touched = true;
@@ -694,6 +697,7 @@ foundmatch:
 		case mt_flagdrop:
 		{		
 			fragstats[i].fumbles++;
+			Update_FlagStatus(i, player1->team, false);
 			if (cl.playernum == i || (i == Cam_TrackNum() && cl.spectator))
 				VX_TrackerFlagDrop(fragstats[i].fumbles);
 			flag_dropped = true;
@@ -702,6 +706,7 @@ foundmatch:
 		case mt_flagcap:
 		{		
 			fragstats[i].captures++;
+			Update_FlagStatus(i, player1->team, false);
 			if (cl.playernum == i || (i == Cam_TrackNum() && cl.spectator))
 				VX_TrackerFlagCapture(fragstats[i].captures);
 			flag_captured = true;

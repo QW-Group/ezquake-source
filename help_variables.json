@@ -12849,6 +12849,20 @@
       "group-id": "19",
       "type": ""
     },
+    "hud_teaminfo_flag_style": {
+      "group-id": "19",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Flag icons.",
+          "name": "1"
+        },
+        {
+          "description": "Colored text.",
+          "name": "2"
+        }
+      ]
+    },
     "hud_teaminfo_scale": {
       "group-id": "19",
       "type": ""
@@ -18943,6 +18957,20 @@
         {
           "description": "Colored text.",
           "name": "3"
+        }
+      ]
+    },
+    "scr_teaminfo_flag_style": {
+      "group-id": "40",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Flag icons.",
+          "name": "1"
+        },
+        {
+          "description": "Colored text.",
+          "name": "2"
         }
       ]
     },
