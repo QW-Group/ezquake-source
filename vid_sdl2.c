@@ -38,6 +38,7 @@ void Sys_ActiveAppChanged (void);
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
+#include <OpenGL/OpenGL.h>
 #include "in_osx.h"
 #else
 #include <GL/gl.h>
@@ -1542,6 +1543,7 @@ static void VID_SwapBuffersWithVsyncFix(void)
 
 void R_BeginRendering(int *x, int *y, int *width, int *height)
 {
+
 	*x = *y = 0;
 	*width = glConfig.vidWidth;
 	*height = glConfig.vidHeight;
@@ -1568,6 +1570,12 @@ void R_EndRendering(void)
 			if (SDL_GL_SetSwapInterval(0)) {
 				Con_Printf("vsync: Failed to disable vsync...\n");
 			}
+            // MacOS vsync fix
+            #ifdef __APPLE__
+            GLint                       sync = 0;
+            CGLContextObj               ctx = CGLGetCurrentContext();
+            CGLSetParameter(ctx, kCGLCPSwapInterval, &sync);
+            #endif
 		} else if (r_swapInterval.integer == -1) {
 			if (SDL_GL_SetSwapInterval(-1)) {
 				Con_Printf("vsync: Failed to enable late swap tearing (vid_vsync -1), setting vid_vsync 1 instead...\n");
