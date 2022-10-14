@@ -1262,11 +1262,15 @@ static void Sbar_DeathmatchOverlay(int start)
 	char myminutes[11];
 	char fragsstr[10];
 	player_info_t *s;
+	ti_player_t *ti_cl;
 	mpic_t *pic;
 	float scale = 1.0f;
 	float alpha = 1.0f;
+	float ca_alpha = 1.0f;
 	qbool proportional = scr_scoreboard_proportional.integer;
 	qbool any_flags = false;
+
+	extern ti_player_t ti_clients[MAX_CLIENTS];
 
 	if (!start && hud_faderankings.value) {
 		Draw_FadeScreen(hud_faderankings.value);
@@ -1456,6 +1460,8 @@ static void Sbar_DeathmatchOverlay(int start)
 
 		k = fragsort[i];
 		s = &cl.players[k];
+		ti_cl = &ti_clients[k];
+		ca_alpha = ti_cl->isdead ? 0.25f : 1.0f;
 
 		if (!s->name[0]) {
 			continue;
@@ -1539,7 +1545,7 @@ static void Sbar_DeathmatchOverlay(int start)
 			}
 		}
 
-		Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
+		Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale, alpha * ca_alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
 		x += 5 * FONT_WIDTH;
 
 		// draw spectator
@@ -1586,8 +1592,9 @@ static void Sbar_DeathmatchOverlay(int start)
 		}
 
 		// print the shirt/pants colour bars
-		Draw_Fill(cl.teamplay ? tempx - 40 : tempx, y + 4 - colors_thickness, 40, colors_thickness, Sbar_TopColorScoreboard(s));
-		Draw_Fill(cl.teamplay ? tempx - 40 : tempx, y + 4, 40, 4, Sbar_BottomColorScoreboard(s));
+		// use Draw_AlphaFill with additional alpha arg for wipeout deaths
+		Draw_AlphaFill(cl.teamplay ? tempx - 40 : tempx, y + 4 - colors_thickness, 40, colors_thickness, Sbar_TopColorScoreboard(s), ca_alpha);
+		Draw_AlphaFill(cl.teamplay ? tempx - 40 : tempx, y + 4, 40, 4, Sbar_BottomColorScoreboard(s), ca_alpha);
 
 		// frags
 		if (Sbar_ShowScoreboardIndicator() && k == mynum) {
@@ -1605,17 +1612,17 @@ static void Sbar_DeathmatchOverlay(int start)
 
 		// team
 		if (cl.teamplay) {
-			Draw_SColoredStringAligned(x, y, s->team, &color, 1, scale, alpha, proportional, text_align_center, x + 4 * FONT_WIDTH);
+			Draw_SColoredStringAligned(x, y, s->team, &color, 1, scale, alpha * ca_alpha, proportional, text_align_center, x + 4 * FONT_WIDTH);
 			x += 5 * FONT_WIDTH;
 		}
 
 		if (s->loginname[0] && scr_scoreboard_login_indicator.string[0]) {
 			mpic_t* flag = CL_LoginFlag(s->loginflag_id);
 			if (s->loginflag[0] && flag) {
-				Draw_FitPicAlphaCenter(x - FONT_WIDTH * 0.75, y, FONT_WIDTH * 1.6, FONT_WIDTH, flag, 1.0f);
+				Draw_FitPicAlphaCenter(x - FONT_WIDTH * 0.75, y, FONT_WIDTH * 1.6, FONT_WIDTH, flag, 1.0f * ca_alpha);
 			}
 			else {
-				Draw_SStringAligned(x - FONT_WIDTH * 0.75, y, scr_scoreboard_login_indicator.string, scale, alpha, proportional, text_align_center, x + FONT_WIDTH * 1.6);
+				Draw_SStringAligned(x - FONT_WIDTH * 0.75, y, scr_scoreboard_login_indicator.string, scale, alpha * ca_alpha, proportional, text_align_center, x + FONT_WIDTH * 1.6);
 			}
 		}
 		if (any_flags) {
@@ -1624,14 +1631,14 @@ static void Sbar_DeathmatchOverlay(int start)
 		if (s->loginname[0] && scr_scoreboard_login_names.integer) {
 			if (scr_scoreboard_login_color.string[0]) {
 				color.c = RGBAVECT_TO_COLOR(scr_scoreboard_login_color.color);
-				Draw_SColoredStringAligned(x, y, s->loginname, &color, 1, scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+				Draw_SColoredStringAligned(x, y, s->loginname, &color, 1, scale, alpha * ca_alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
 			}
 			else {
-				Draw_SStringAligned(x, y, s->loginname, scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+				Draw_SStringAligned(x, y, s->loginname, scale, alpha * ca_alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
 			}
 		}
 		else {
-			Draw_SStringAligned(x, y, s->name, scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+			Draw_SStringAligned(x, y, s->name, scale, alpha * ca_alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
 		}
 
 		if (statswidth) {
