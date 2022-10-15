@@ -1261,15 +1261,18 @@ static void Sbar_DeathmatchOverlay(int start)
 	char num[12];
 	char myminutes[11];
 	char fragsstr[10];
+	char * ktxmode = Info_ValueForKey(cl.serverinfo, "mode");
 	player_info_t *s;
 	ti_player_t *ti_cl;
 	mpic_t *pic;
 	float scale = 1.0f;
 	float alpha = 1.0f;
-	float ca_alpha = 1.0f;
+	float ca_alpha = 1.0f;	// alpha value for scoreboard elements during clan arena / wipeout
 	qbool proportional = scr_scoreboard_proportional.integer;
 	qbool any_flags = false;
-
+	qbool ktx_ca = (strstr(ktxmode, "-ca") != NULL);
+	qbool ktx_wipeout = (strstr(ktxmode, "-wo") != NULL);
+	qbool ktx_ca_wipeout = (ktx_ca || ktx_wipeout);
 	extern ti_player_t ti_clients[MAX_CLIENTS];
 
 	if (!start && hud_faderankings.value) {
@@ -1461,7 +1464,7 @@ static void Sbar_DeathmatchOverlay(int start)
 		k = fragsort[i];
 		s = &cl.players[k];
 		ti_cl = &ti_clients[k];
-		ca_alpha = ti_cl->isdead ? 0.25f : 1.0f;
+		ca_alpha = (ktx_ca_wipeout && ti_cl->isdead) ? 0.25f : 1.0f; // fade dead players in CA/wipeout
 
 		if (!s->name[0]) {
 			continue;
@@ -1488,7 +1491,7 @@ static void Sbar_DeathmatchOverlay(int start)
 			background = RGBA_TO_COLOR(0, 255, 0, (byte)(bk_alpha * 255));
 		}
 		else {
-			background = RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)(bk_alpha * 255));
+			background = RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)(bk_alpha * ca_alpha * 255));
 		}
 
 		Draw_AlphaFillRGB(xofs, y, rank_width, skip, background);
@@ -1504,9 +1507,9 @@ static void Sbar_DeathmatchOverlay(int start)
 			p = 999;
 		}
 		snprintf(num, sizeof(num), "%i", p);
-		color.c = RGBA_TO_COLOR(0xAA, 0xAA, 0xDD, 0xFF);
+		color.c = RGBA_TO_COLOR(0xAA, 0xAA, 0xDD, (byte)(ca_alpha * 255));
 		color.i = 0;
-		Draw_SColoredStringAligned(x, y, num, &color, 1, scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
+		Draw_SColoredStringAligned(x, y, num, &color, 1, scale, alpha * ca_alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
 		x += 4 * FONT_WIDTH; // move it forward, ready to print next column
 
 		// draw pl
@@ -1514,20 +1517,20 @@ static void Sbar_DeathmatchOverlay(int start)
 		snprintf(num, sizeof(num), "%i", p);
 		if (p == 0) {
 			// 0 - white
-			color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0xFF, 0xFF);
+			color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0xFF, (byte)(ca_alpha * 255));
 		}
 		else if (p < 3) {
 			// 1-2 - yellow
-			color.c = RGBA_TO_COLOR(0xCC, 0xDD, 0xDD, 0xFF);
+			color.c = RGBA_TO_COLOR(0xCC, 0xDD, 0xDD, (byte)(ca_alpha * 255));
 		}
 		else if (p < 6) {
 			// 3-5 orange
-			color.c = RGBA_TO_COLOR(0xFF, 0x55, 0x00, 0xFF);
+			color.c = RGBA_TO_COLOR(0xFF, 0x55, 0x00, (byte)(ca_alpha * 255));
 		}
 		else {	// 6+ - red
-			color.c = RGBA_TO_COLOR(0xFF, 0x00, 0x00, 0xFF);
+			color.c = RGBA_TO_COLOR(0xFF, 0x00, 0x00, (byte)(ca_alpha * 255));
 		}
-		Draw_SColoredStringAligned(x, y, num, &color, 1, scale, alpha, proportional, text_align_right, x + 3 * FONT_WIDTH);
+		Draw_SColoredStringAligned(x, y, num, &color, 1, scale, alpha * ca_alpha, proportional, text_align_right, x + 3 * FONT_WIDTH);
 		x += 4 * FONT_WIDTH;
 
 		// draw time
@@ -1537,15 +1540,26 @@ static void Sbar_DeathmatchOverlay(int start)
 
 		color.c = RGBA_TO_COLOR(255, 255, 255, 255);
 		myminutes[0] = '\0';
-		snprintf(myminutes, sizeof(myminutes), "%i", total);
-		if (scr_scoreboard_afk.integer && (s->chatflag & CIF_AFK)) {
-			color.c = RGBA_TO_COLOR(0xFF, 0x11, 0x11, 0xFF);
-			if (scr_scoreboard_afk_style.integer == 1) {
-				snprintf(myminutes, sizeof(myminutes), "afk");
+
+		// overwrite time column with spawn times in KTX wipeout
+		if ((ktx_wipeout) && (ti_cl->isdead) && (ti_cl->timetospawn > 0) && (ti_cl->timetospawn < 999)){
+			color.c = RGBA_TO_COLOR(255, 255, 0, 255);
+			snprintf(myminutes, sizeof(myminutes), "%d", ti_cl->timetospawn);
+		}
+
+		else if (!ktx_wipeout)
+		{
+			snprintf(myminutes, sizeof(myminutes), "%i", total);
+
+			if (scr_scoreboard_afk.integer && (s->chatflag & CIF_AFK)) {
+				color.c = RGBA_TO_COLOR(0xFF, 0x11, 0x11, 0xFF);
+				if (scr_scoreboard_afk_style.integer == 1) {
+					snprintf(myminutes, sizeof(myminutes), "afk");
+				}
 			}
 		}
 
-		Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale, alpha * ca_alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
+		Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
 		x += 5 * FONT_WIDTH;
 
 		// draw spectator
@@ -1583,7 +1597,7 @@ static void Sbar_DeathmatchOverlay(int start)
 				}
 			}
 			else {
-				Draw_SStringAligned(x, y, s->name, scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+				Draw_SStringAligned(x, y, s->name, scale, ca_alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
 			}
 
 			y += skip;
@@ -1602,8 +1616,10 @@ static void Sbar_DeathmatchOverlay(int start)
 		}
 		fragsint = bound(-999, s->frags, 9999); // limit to 4 symbols int
 		snprintf(fragsstr, sizeof(fragsstr), "%i", fragsint);
-		color.c = RGBA_TO_COLOR(255, 255, 255, 255);
-		Draw_SColoredStringAligned(x, y, fragsstr, &color, 1, scale, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
+		
+		color.c = (ktx_wipeout && ti_cl->isdead) ? RGBA_TO_COLOR(85, 85, 85, 255 * ca_alpha) : RGBA_TO_COLOR(255, 255, 255, 255 * ca_alpha);
+		
+		Draw_SColoredStringAligned(x, y, fragsstr, &color, 1, scale, alpha * ca_alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
 		x += 4 * FONT_WIDTH;
 		if (Sbar_ShowScoreboardIndicator() && k == mynum) {
 			Draw_Character(x, y, 17);
@@ -1638,7 +1654,7 @@ static void Sbar_DeathmatchOverlay(int start)
 			}
 		}
 		else {
-			Draw_SStringAligned(x, y, s->name, scale, alpha * ca_alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+			Draw_SColoredStringAligned(x, y, s->name, &color, 1, scale, alpha * ca_alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
 		}
 
 		if (statswidth) {
@@ -1649,8 +1665,16 @@ static void Sbar_DeathmatchOverlay(int start)
 			}
 
 			// kills
-			snprintf(num, sizeof(num), "%5i", playerstats[0]);
-			color.c = (playerstats[0] == 0 ? RGBA_TO_COLOR(255, 255, 255, 255) : RGBA_TO_COLOR(0, 187, 68, 255));
+			if (ktx_wipeout)
+			{
+				snprintf(num, sizeof(num), "%d", ti_cl->round_kills);
+				color.c = (ti_cl->round_kills == 0 ? RGBA_TO_COLOR(255, 255, 255, 255) : RGBA_TO_COLOR(0, 187, 68, 255));
+			}
+			else
+			{
+				snprintf(num, sizeof(num), "%5i", playerstats[0]);
+				color.c = (playerstats[0] == 0 ? RGBA_TO_COLOR(255, 255, 255, 255) : RGBA_TO_COLOR(0, 187, 68, 255));
+			}
 			Draw_SColoredStringAligned(x, y, num, &color, 1, scale, alpha, proportional, text_align_right, x + 5 * FONT_WIDTH);
 			x += 6 * FONT_WIDTH;
 
@@ -1663,8 +1687,15 @@ static void Sbar_DeathmatchOverlay(int start)
 			}
 
 			// deaths
-			snprintf(num, sizeof(num), "%4i", playerstats[1]);
-			color.c = (playerstats[1] == 0 ? RGBA_TO_COLOR(255, 255, 255, 255) : RGBA_TO_COLOR(255, 0, 0, 255));
+			if (ktx_wipeout)
+			{
+				snprintf(num, sizeof(num), "%d", ti_cl->round_deaths);
+				color.c = (ti_cl->round_deaths ? RGBA_TO_COLOR(255, 255, 255, 255) : RGBA_TO_COLOR(255, 0, 0, 255));
+			}
+			else{
+				snprintf(num, sizeof(num), "%4i", playerstats[1]);
+				color.c = (playerstats[1] == 0 ? RGBA_TO_COLOR(255, 255, 255, 255) : RGBA_TO_COLOR(255, 0, 0, 255));
+			}
 			Draw_SColoredStringAligned(x, y, num, &color, 1, scale, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
 			x += 5 * FONT_WIDTH;
 
