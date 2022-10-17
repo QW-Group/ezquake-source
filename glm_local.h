@@ -62,6 +62,15 @@ typedef struct uniform_block_frame_constants_s {
 	int r_height;
 	float r_zFar;
 	float r_zNear;
+
+	// fog parameters
+	float fogColor[3];
+	float fogDensity;
+
+	float skyFogMix;
+	float fogMinZ;
+	float fogMaxZ;
+	float padding;
 } uniform_block_frame_constants_t;
 
 #define MAX_WORLDMODEL_BATCH     64

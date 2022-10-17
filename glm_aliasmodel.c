@@ -97,11 +97,12 @@ typedef struct block_aliasmodels_s {
 
 extern float r_framelerp;
 
-#define DRAW_DETAIL_TEXTURES   1
-#define DRAW_CAUSTIC_TEXTURES  2
-#define DRAW_REVERSED_DEPTH    4
-#define DRAW_LERP_MUZZLEHACK   8
-#define DRAW_FLAT_SHADING      16
+#define DRAW_DETAIL_TEXTURES      (1 << 0)
+#define DRAW_CAUSTIC_TEXTURES     (1 << 1)
+#define DRAW_REVERSED_DEPTH       (1 << 2)
+#define DRAW_LERP_MUZZLEHACK      (1 << 3)
+#define DRAW_FLAT_SHADING         (1 << 4)
+
 static uniform_block_aliasmodels_t aliasdata;
 
 static int cached_mode;

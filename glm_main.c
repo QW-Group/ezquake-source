@@ -10,10 +10,6 @@ void GL_Init(void);
 void GL_InitialiseBufferHandling(api_buffers_t* api);
 void GL_InitialiseState(void);
 
-static void GLM_ConfigureFog(int contents)
-{
-}
-
 static void R_Stubs_NoOperationEntity(entity_t* ent)
 {
 }

@@ -556,15 +556,21 @@ static void R_Upload32(gltexture_t* glt, unsigned *data, int width, int height, 
 
 static void R_Upload8(gltexture_t* glt, byte *data, int width, int height, int mode)
 {
-	static unsigned trans[640 * 480];
+	static unsigned* trans;
+	static int trans_size;
 	int	i, image_size, p;
 	unsigned *table;
 
 	table = (mode & TEX_BRIGHTEN) ? d_8to24table2 : d_8to24table;
 	image_size = width * height;
 
-	if (image_size * 4 > sizeof(trans)) {
-		Sys_Error("GL_Upload8: image too big (%s: %dx%d)", glt->identifier[0] ? glt->identifier : "?unknown?", width, height);
+	if (image_size * 4 > trans_size) {
+		unsigned* newmem = Q_realloc(trans, image_size * 4);
+		if (newmem == NULL) {
+			Sys_Error("GL_Upload8: image too big (%s: %dx%d)", glt->identifier[0] ? glt->identifier : "?unknown?", width, height);
+		}
+		trans = newmem;
+		trans_size = image_size * 4;
 	}
 
 	if (mode & TEX_FULLBRIGHT) {

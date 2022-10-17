@@ -35,12 +35,12 @@ static void R_InitialiseWorldStates(void)
 	rendering_state_t* state;
 
 	state = R_InitRenderingState(r_state_world_texture_chain, true, "worldTextureChainState", vao_brushmodel);
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(state, 1, true, r_texunit_mode_blend);
 
 	state = R_InitRenderingState(r_state_world_texture_chain_fullbright, true, "worldTextureChainFullbrightState", vao_brushmodel);
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
 	state = R_InitRenderingState(r_state_world_blend_lightmaps, true, "blendLightmapState", vao_brushmodel_lightmap_pass);
@@ -63,7 +63,7 @@ static void R_InitialiseWorldStates(void)
 
 	state = R_InitRenderingState(r_state_world_fast_opaque_water, true, "fastWaterSurfacesState", vao_brushmodel_simpletex);
 	state->depth.test_enabled = true;
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 
 	state = R_CopyRenderingState(r_state_world_opaque_water, r_state_world_fast_opaque_water, "waterSurfacesState");
 	state->cullface.enabled = false;
@@ -100,7 +100,7 @@ static void R_InitialiseWorldStates(void)
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
 	state = R_InitRenderingState(r_state_world_details, true, "detailPolyState", vao_brushmodel_details);
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_decal);
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_src_dst_color_dest_src_color;
@@ -280,7 +280,7 @@ static void R_InitialiseEntityStates(void)
 	rendering_state_t* state;
 
 	state = R_InitRenderingState(r_state_aliasmodel_powerupshell, true, "powerupShellState", vao_aliasmodel);
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 	state->cullface.enabled = true;
 	state->cullface.mode = r_cullface_front;
 	R_GLC_DisableAlphaTesting(state);
@@ -289,7 +289,7 @@ static void R_InitialiseEntityStates(void)
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 
 	state = R_CopyRenderingState(r_state_aliasmodel_outline, r_state_aliasmodel_powerupshell, "aliasmodel-outline");
-	state->fog.enabled = false;
+	state->fog.mode = r_fogmode_enabled;
 	state->blendingEnabled = false;
 	state->cullface.mode = r_cullface_back;
 
@@ -308,7 +308,7 @@ static void R_InitialiseEntityStates(void)
 	state->cullface.mode = r_cullface_front;
 	state->polygonMode = r_polygonmode_fill;
 	state->line.smooth = false;
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 
 	state = R_CopyRenderingState(r_state_aliasmodel_transparent_zpass, r_state_aliasmodel_notexture_opaque, "aliasModelZPass");
 	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = false;
@@ -363,7 +363,7 @@ static void R_InitialiseEntityStates(void)
 	state->cullface.mode = r_cullface_front;
 	state->polygonMode = r_polygonmode_fill;
 	state->line.smooth = false;
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 	R_GLC_DisableAlphaTesting(state);
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
@@ -394,26 +394,29 @@ static void R_InitialiseBrushModelStates(void)
 	rendering_state_t* current;
 
 	current = R_InitRenderingState(r_state_drawflat_without_lightmaps_glc, true, "drawFlatNoLightmapState", vao_brushmodel);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
+
+	current = R_InitRenderingState(r_state_drawflat_without_lightmaps_unfogged_glc, true, "drawFlatNoLightmapStateUnfogged", vao_brushmodel);
+	current->fog.mode = r_fogmode_disabled;
 
 	current = R_InitRenderingState(r_state_drawflat_with_lightmaps_glc, true, "drawFlatLightmapState", vao_brushmodel_lightmap_pass);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_blend);
 
 	// Single-texture: all of these are the same so we don't need to bother about others
 	current = R_InitRenderingState(r_state_world_singletexture_glc, true, "world:singletex", vao_brushmodel);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 
 	// material * lightmap
 	current = R_InitRenderingState(r_state_world_material_lightmap, true, "r_state_world_material_lightmap", vao_brushmodel_lm_unit1);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_blend);
 
 	// material * lightmap + luma
 	current = R_InitRenderingState(r_state_world_material_lightmap_luma, true, "r_state_world_material_lightmap_luma", vao_brushmodel_lm_unit1);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_blend);
 	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_add);
@@ -424,14 +427,14 @@ static void R_InitialiseBrushModelStates(void)
 
 	// no fullbrights, 3 units: blend(material + luma, lightmap) 
 	current = R_InitRenderingState(r_state_world_material_fb_lightmap, true, "r_state_world_material_fb_lightmap", vao_brushmodel);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_add);
 	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_blend);
 
 	// lumas enabled, 3 units
 	current = R_InitRenderingState(r_state_world_material_luma_lightmap, true, "r_state_world_material_luma_lightmap", vao_brushmodel);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_add);
 	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_blend);

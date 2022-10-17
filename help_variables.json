@@ -4882,50 +4882,6 @@
         }
       ]
     },
-    "gl_fog": {
-      "default": "0",
-      "desc": "Enables fog.",
-      "group-id": "51",
-      "remarks": "See also other gl_fog cvars for fine-tuning.",
-      "type": "float"
-    },
-    "gl_fogblue": {
-      "default": "0.4",
-      "desc": "Blue component in the color of the fog.",
-      "group-id": "51",
-      "type": "float"
-    },
-    "gl_fogend": {
-      "default": "800.0",
-      "desc": "Sets ending distance for rendering the fog.",
-      "group-id": "51",
-      "type": "float"
-    },
-    "gl_foggreen": {
-      "default": "0.5",
-      "desc": "Green component in the color of the fog.",
-      "group-id": "51",
-      "type": "float"
-    },
-    "gl_fogred": {
-      "default": "0.6",
-      "desc": "Red component in the color of the fog.",
-      "group-id": "51",
-      "type": "float"
-    },
-    "gl_fogsky": {
-      "default": "1",
-      "desc": "Also apply fog effects to the sky.",
-      "group-id": "51",
-      "remarks": "Fog tends to look out of place when this is not enabled.",
-      "type": "float"
-    },
-    "gl_fogstart": {
-      "default": "50.0",
-      "desc": "Sets starting distance for rendering the fog.\nThe greater the number is, the better visibility in game is and the fog is \"thinner\".",
-      "group-id": "51",
-      "type": "float"
-    },
     "gl_gamma": {
       "default": "1.0",
       "desc": "Change gamma.",
@@ -6036,75 +5992,6 @@
         {
           "description": "Solid.",
           "name": "1.00"
-        }
-      ]
-    },
-    "gl_turbfog": {
-      "default": "0",
-      "desc": "Controls amount of fog when inside liquid (water, lava, slime).\nDensity is controlled by choosing a value from 0 to 1 and from 1 to 2.",
-      "group-id": "51",
-      "remarks": "Multi-texturing is required for this setting.",
-      "type": "enum",
-      "values": [
-        {
-          "description": "Fog in liquids is turned OFF",
-          "name": "0"
-        },
-        {
-          "description": "Linear fog in liquids.",
-          "name": "1"
-        },
-        {
-          "description": "Logarithmic fog in liquids.",
-          "name": "2"
-        }
-      ]
-    },
-    "gl_turbfogDensity": {
-      "default": "1",
-      "desc": "Control of density of liquid (water, lava, slime...) fog.",
-      "group-id": "51",
-      "type": "float",
-      "values": [
-        {
-          "description": "[0...1] = [minimum...maximum] liquid fog density",
-          "name": "*"
-        }
-      ]
-    },
-    "gl_turbfog_color_lava": {
-      "default": "255 64 0",
-      "desc": "Color of fog in lava.",
-      "group-id": "51",
-      "type": "string",
-      "values": [
-        {
-          "description": "R G B, each 0-255",
-          "name": "*"
-        }
-      ]
-    },
-    "gl_turbfog_color_slime": {
-      "default": "128 255 0",
-      "desc": "Color of fog in slime.",
-      "group-id": "51",
-      "type": "string",
-      "values": [
-        {
-          "description": "R G B, each 0-255",
-          "name": "*"
-        }
-      ]
-    },
-    "gl_turbfog_color_water": {
-      "default": "32 64 128",
-      "desc": "Color of fog in water.",
-      "group-id": "51",
-      "type": "string",
-      "values": [
-        {
-          "description": "R G B, each 0-255",
-          "name": "*"
         }
       ]
     },
@@ -15599,6 +15486,139 @@
         }
       ]
     },
+    "r_fx_fog": {
+      "default": "0",
+      "desc": "Enables fog.",
+      "group-id": "51",
+      "remarks": "See also other r_fx_fog cvars for fine-tuning.",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Off",
+          "name": "0"
+        },
+        {
+          "description": "On",
+          "name": "1"
+        },
+        {
+          "description": "In water/slime/lava only",
+          "name": "2"
+        }
+      ]
+    },
+    "r_fx_fog_color_air": {
+      "default": "153 128 103",
+      "desc": "Color of fog when not underwater.",
+      "group-id": "51",
+      "type": "string",
+      "values": [
+        {
+          "description": "R G B, each 0-255",
+          "name": "*"
+        }
+      ]
+    },
+    "r_fx_fog_color_lava": {
+      "default": "255 64 0",
+      "desc": "Color of fog in lava.",
+      "group-id": "51",
+      "type": "string",
+      "values": [
+        {
+          "description": "R G B, each 0-255",
+          "name": "*"
+        }
+      ]
+    },
+    "r_fx_fog_color_slime": {
+      "default": "128 255 0",
+      "desc": "Color of fog in slime.",
+      "group-id": "51",
+      "type": "string",
+      "values": [
+        {
+          "description": "R G B, each 0-255",
+          "name": "*"
+        }
+      ]
+    },
+    "r_fx_fog_color_water": {
+      "default": "32 64 128",
+      "desc": "Color of fog in water.",
+      "group-id": "51",
+      "type": "string",
+      "values": [
+        {
+          "description": "R G B, each 0-255",
+          "name": "*"
+        }
+      ]
+    },
+    "r_fx_fog_density": {
+      "default": "0.002",
+      "desc": "Sets the density of the fog when r_fx_fog_model is an exponential model (1 or 2)",
+      "group-id": "51",
+      "type": "float"
+    },
+    "r_fx_fog_end": {
+      "default": "800.0",
+      "desc": "Sets ending distance for rendering the fog when r_fx_fog_model is 0 (linear).",
+      "group-id": "51",
+      "type": "float"
+    },
+    "r_fx_fog_model": {
+      "default": "2",
+      "desc": "Sets the fog rendering model.",
+      "group-id": "51",
+      "type": "enum",
+      "values": [
+        {
+          "name": "0",
+          "description": "Linear - range is r_fx_fog_start/r_fx_fog_end"
+        },
+        {
+          "name": "1",
+          "description": "Exponential - density r_fx_fog_density"
+        },
+        {
+          "name": "2",
+          "description": "Exponential squared - density r_fx_fog_density.  Used when map fog is enabled"
+        }
+      ]
+    },
+    "r_fx_fog_sky": {
+      "default": "0.3",
+      "desc": "Percentage of shading effect to apply to sky textures",
+      "group-id": "51",
+      "type": "float"
+    },
+    "r_fx_fog_start": {
+      "default": "50.0",
+      "desc": "Sets starting distance for rendering the fog when r_fx_fog_model is 0 (linear).\nThe greater the number is, the better visibility in game is and the fog is \"thinner\".",
+      "group-id": "51",
+      "type": "float"
+    },
+    "r_fx_fog_usemap": {
+      "default": "2",
+      "desc": "When to use fog settings from the map, rather than config.",
+      "group-id": "51",
+      "type": "enum",
+      "values": [
+        {
+          "name": "0",
+          "description": "Never use map-specific settings"
+        },
+        {
+          "name": "1",
+          "description": "Always use map-specific settings, if specified"
+        },
+        {
+          "name": "2",
+          "description": "Only use map-specific settings in local single-player mode"
+        }
+      ]
+    },
     "r_fx_geometry": {
       "default": "0",
       "desc": "Outlines the world based on surface normals.",
@@ -21296,7 +21316,7 @@
       "default": "0",
       "desc": "Toggles blitting from the FBO to the front buffer instead of flipping buffers.",
       "group-id": "52",
-	  "remarks": "Only available with \"vid_framebuffer 1\" + \"vid_software_palette 0\" and a supported GPU.",
+      "remarks": "Only available with \"vid_framebuffer 1\" + \"vid_software_palette 0\" and a supported GPU.",
       "type": "boolean"
     },
     "vid_framebuffer_depthformat": {
@@ -21304,7 +21324,7 @@
       "desc": "Configures the depth-buffer precision for the framebuffer.",
       "group-id": "52",
       "type": "integer",
-	  "values": [
+      "values": [
         {
           "description": "Use the best precision available (up to 32-bit float).",
           "name": "0"
@@ -21317,11 +21337,11 @@
           "description": "Use 24-bit float precision.",
           "name": "2"
         },
-		{
+        {
           "description": "Use 32-bit precision.",
           "name": "3"
         },
-		{
+        {
           "description": "Use 32-bit float precision.",
           "name": "4"
         }
@@ -21343,7 +21363,7 @@
       "default": "0",
       "desc": "Sets a custom height for the FBO (200 pixels minimum).",
       "group-id": "52",
-	  "remarks": "Setting vid_framebuffer_scale overrides custom FBO width/height.",
+      "remarks": "Setting vid_framebuffer_scale overrides custom FBO width/height.",
       "type": "integer"
     },
     "vid_framebuffer_multisample": {
@@ -21356,14 +21376,14 @@
       "default": "1",
       "desc": "Scales the FBOs down/up to the screen resolution. Similar to \"render scale\" in other games if combined with vid_framebuffer 2.",
       "group-id": "52",
-	  "remarks": "Takes precedence over vid_framebuffer_width/height.",
+      "remarks": "Takes precedence over vid_framebuffer_width/height.",
       "type": "float",
-	  "values": [
-		{
+      "values": [
+        {
           "description": "Disable scaling.",
           "name": "0 or 1"
         },
-		{
+        {
           "description": "Render to a larger FBO, then scale down.",
           "name": "0.25 - 1"
         },
@@ -21410,7 +21430,7 @@
       "default": "0",
       "desc": "Sets a custom width for the FBO (320 pixels minimum).",
       "group-id": "52",
-	  "remarks": "Setting vid_framebuffer_scale overrides custom FBO width/height.",
+      "remarks": "Setting vid_framebuffer_scale overrides custom FBO width/height.",
       "type": "integer"
     },
     "vid_fullscreen": {

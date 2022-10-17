@@ -281,7 +281,7 @@ static qbool R_DetermineSkyLimits(qbool *ignore_z)
 	return true;
 }
 
-#define PROGRAMFLAGS_SKYBOX 1
+#define PROGRAMFLAGS_SKYBOX       1
 
 qbool GLC_SkyProgramCompile(void)
 {
@@ -305,6 +305,8 @@ qbool GLC_SkyProgramCompile(void)
 		}
 		R_ProgramSetCustomOptions(r_program_sky_glc, flags);
 	}
+
+	R_ProgramSetStandardUniforms(r_program_sky_glc);
 
 	return R_ProgramReady(r_program_sky_glc);
 }

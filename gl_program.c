@@ -31,7 +31,14 @@ typedef enum {
 	renderer_modern,
 } renderer_id;
 
-#define GL_DefineProgram_VF(program_id, name, expect_params, sourcename, renderer, compile_function) \
+#define STDOPTIONS_FOG_LINEAR     (1 << 0)
+#define STDOPTIONS_FOG_EXP        (1 << 1)
+#define STDOPTIONS_FOG_EXP2       (1 << 2)
+
+#define STDOPTIONS_NONE           (0)
+#define STDOPTIONS_FOG            (STDOPTIONS_FOG_LINEAR | STDOPTIONS_FOG_EXP | STDOPTIONS_FOG_EXP2)
+
+#define GL_DefineProgram_VF(program_id, name, expect_params, sourcename, renderer, compile_function, standard_flags) \
 	{ \
 		extern unsigned char sourcename##_vertex_glsl[]; \
 		extern unsigned int sourcename##_vertex_glsl_len; \
@@ -52,10 +59,11 @@ typedef enum {
 			prog->initialised = true; \
 			prog->renderer_id = renderer; \
 			prog->compile_func = compile_function; \
+			prog->standard_option_flags = standard_flags; \
 		} \
 	}
 
-#define GL_DefineProgram_CS(program_id, name, expect_params, sourcename, renderer, compile_function) \
+#define GL_DefineProgram_CS(program_id, name, expect_params, sourcename, renderer, compile_function, option_flags) \
 	{ \
 		extern unsigned char sourcename##_compute_glsl[]; \
 		extern unsigned int sourcename##_compute_glsl_len; \
@@ -72,6 +80,7 @@ typedef enum {
 			prog->initialised = true; \
 			prog->renderer_id = renderer; \
 			prog->compile_func = compile_function; \
+			prog->standard_option_flags = option_flags; \
 		} \
 	}
 
@@ -119,6 +128,36 @@ typedef struct {
 } gl_program_attribute_t;
 #endif
 
+typedef enum {
+	r_program_std_uniform_fog_linear_start,
+	r_program_std_uniform_fog_linear_end,
+	r_program_std_uniform_fog_density,
+	r_program_std_uniform_fog_color,
+	r_program_std_uniform_count
+} r_program_std_uniform_id;
+
+typedef struct {
+	r_program_id program_id;
+	const char* name;
+	int count;
+	qbool transpose;
+} r_program_uniform_t;
+
+static r_program_uniform_t program_std_uniforms[] = {
+	// r_program_std_uniform_fog_linear_start
+	{ r_program_none, "fogMinZ", 1, false },
+	// r_program_std_uniform_fog_linear_end,
+	{ r_program_none, "fogMaxZ", 1, false },
+	// r_program_std_uniform_fog_density,
+	{ r_program_none, "fogDensity", 1, false },
+	// r_program_std_uniform_fog_color,
+	{ r_program_none, "fogColor", 1, false }
+};
+
+#ifdef C_ASSERT
+C_ASSERT(sizeof(program_std_uniforms) / sizeof(program_std_uniforms[0]) == r_program_std_uniform_count);
+#endif
+
 typedef struct gl_program_s {
 	char friendly_name[128];
 	qbool needs_params;
@@ -139,14 +178,10 @@ typedef struct gl_program_s {
 	unsigned int custom_options;
 	qbool force_recompile;
 	renderer_id renderer_id;
+	unsigned int standard_options;
+	unsigned int standard_option_flags;
+	gl_program_uniform_t std_uniforms[r_program_std_uniform_count];
 } gl_program_t;
-
-typedef struct {
-	r_program_id program_id;
-	const char* name;
-	int count;
-	qbool transpose;
-} r_program_uniform_t;
 
 static r_program_uniform_t program_uniforms[] = {
 	// r_program_uniform_aliasmodel_drawmode
@@ -288,7 +323,9 @@ static r_program_uniform_t program_uniforms[] = {
 	// r_program_uniform_simple3d_color
 	{ r_program_simple3d, "color", 1, false },
 	// r_program_uniform_lighting_firstLightmap,
-	{ r_program_lightmap_compute, "firstLightmap", 1, false }
+	{ r_program_lightmap_compute, "firstLightmap", 1, false },
+	// r_program_uniform_turb_glc_fog_skyFogMix,
+	{ r_program_sky_glc, "skyFogMix", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -385,10 +422,40 @@ GL_StaticFunctionWrapperBody(glGetAttribLocation, GLint, program, name)
 GL_StaticProcedureDeclaration(glDispatchCompute, "num_groups_x=%u, num_groups_y=%u, num_groups_z=%u", GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z)
 GL_StaticProcedureDeclaration(glMemoryBarrier, "barriers=%u", GLbitfield barriers)
 
-#define MAX_SHADER_COMPONENTS 6
+#define MAX_SHADER_COMPONENTS 7
 #define EZQUAKE_DEFINITIONS_STRING "#ezquake-definitions"
 
-static char core_definitions[512];
+static char core_definitions[2048];
+static char standard_definitions[2048];
+
+static unsigned int R_ProgramStandardOptions(unsigned int option_flags)
+{
+	unsigned int flags =
+		(r_refdef2.fog_calculation == fogcalc_linear ? STDOPTIONS_FOG_LINEAR : 0) |
+		(r_refdef2.fog_calculation == fogcalc_exp    ? STDOPTIONS_FOG_EXP    : 0) |
+		(r_refdef2.fog_calculation == fogcalc_exp2   ? STDOPTIONS_FOG_EXP2   : 0);
+
+	return flags & option_flags;
+}
+
+static void R_ProgramBuildStandardDefines(unsigned int option_flags)
+{
+	unsigned int options = R_ProgramStandardOptions(option_flags);
+
+	standard_definitions[0] = '\0';
+	if (options & STDOPTIONS_FOG) {
+		strlcat(standard_definitions, "#define DRAW_FOG\n", sizeof(standard_definitions));
+		if (options & STDOPTIONS_FOG_LINEAR) {
+			strlcat(standard_definitions, "#define FOG_LINEAR\n", sizeof(standard_definitions));
+		}
+		else if (options & STDOPTIONS_FOG_EXP) {
+			strlcat(standard_definitions, "#define FOG_EXP\n", sizeof(standard_definitions));
+		}
+		else if (options & STDOPTIONS_FOG_EXP2) {
+			strlcat(standard_definitions, "#define FOG_EXP2\n", sizeof(standard_definitions));
+		}
+	}
+}
 
 // GLM Utility functions
 static void GL_ConPrintShaderLog(GLuint shader)
@@ -520,21 +587,18 @@ static const char* safe_strstr(const char* source, size_t max_length, const char
 	return NULL;
 }
 
-#if 0
-void Sys_Printf_Direct(const char* text);
 static void GL_DebugPrintShaderText(GLuint shader)
 {
-	int length = 0, n;
+	int length = 0;
 	char* src;
 
 	GL_Procedure(glGetShaderiv, shader, GL_SHADER_SOURCE_LENGTH, &length);
 	src = Q_malloc(length + 1);
 	GL_Procedure(glGetShaderSource, shader, length, NULL, src);
 
-	Sys_Printf_Direct(src);
+	DebugOutput(src);
 	Q_free(src);
 }
-#endif
 
 static int GL_InsertDefinitions(
 	const char* strings[],
@@ -568,15 +632,17 @@ static int GL_InsertDefinitions(
 	if (break_point) {
 		int position = break_point - strings[0];
 
-		lengths[5] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
+		lengths[6] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
+		lengths[5] = strlen(core_definitions);
 		lengths[4] = definitions ? strlen(definitions) : 0;
-		lengths[3] = strlen(core_definitions);
+		lengths[3] = strlen(standard_definitions);
 		lengths[2] = glsl_common_glsl_len;
 		lengths[1] = glsl_constants_glsl_len;
 		lengths[0] = position;
-		strings[5] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
+		strings[6] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
+		strings[5] = core_definitions;
 		strings[4] = definitions ? definitions : "";
-		strings[3] = core_definitions;
+		strings[3] = standard_definitions;
 		strings[2] = (const char*)glsl_common_glsl;
 		strings[1] = (const char*)glsl_constants_glsl;
 
@@ -588,7 +654,7 @@ static int GL_InsertDefinitions(
 			}
 		}
 
-		return 6;
+		return 7;
 	}
 
 	return 1;
@@ -614,7 +680,9 @@ static qbool GL_CompileProgram(
 	const char* fragment_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].text, "", "", "", "", "" };
 	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].length, 0, 0, 0, 0, 0 };
 
-	Con_DPrintf("Compiling: %s\n", friendlyName);
+	DebugOutput(va("Compiling: %s\n", friendlyName));
+
+	R_ProgramBuildStandardDefines(program->standard_option_flags);
 
 	vertex_components = GL_InsertDefinitions(vertex_shader_text, vertex_shader_text_length, program->included_definitions);
 	geometry_components = GL_InsertDefinitions(geometry_shader_text, geometry_shader_text_length, program->included_definitions);
@@ -644,26 +712,27 @@ static qbool GL_CompileProgram(
 						memset(program->attributes, 0, sizeof(program->attributes));
 #endif
 						program->force_recompile = false;
+						program->standard_options = R_ProgramStandardOptions(program->standard_option_flags);
 
 						GL_TraceObjectLabelSet(GL_PROGRAM, program->program, -1, program->friendly_name);
 						return true;
 					}
 					else {
-						Con_Printf("ShaderProgram.Link() failed\n");
+						Con_Printf("ShaderProgram.Link(%s) failed\n", program->friendly_name);
 						GL_ConPrintProgramLog(program_handle);
 					}
 				}
 			}
 			else {
-				Con_Printf("FragmentShader.Compile() failed\n");
+				Con_Printf("FragmentShader.Compile(%s) failed\n", program->friendly_name);
 			}
 		}
 		else {
-			Con_Printf("GeometryShader.Compile() failed\n");
+			Con_Printf("GeometryShader.Compile(%s) failed\n", program->friendly_name);
 		}
 	}
 	else {
-		Con_Printf("VertexShader.Compile() failed\n");
+		Con_Printf("VertexShader.Compile(%s) failed\n", program->friendly_name);
 	}
 
 	if (program_handle) {
@@ -790,8 +859,9 @@ qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options)
 {
 	//
 	const gl_program_t* program = R_CurrentSubProgram(program_id);
+	unsigned int standard_options = R_ProgramStandardOptions(program->standard_option_flags);
 
-	return (!program->program) || program->force_recompile || program->custom_options != options;
+	return (!program->program) || program->force_recompile || program->custom_options != options || program->standard_options != standard_options;
 }
 
 void GL_CvarForceRecompile(void)
@@ -814,6 +884,7 @@ static qbool GL_CompileComputeShaderProgram(gl_program_t* program, const char* s
 	GLint shader_text_length[MAX_SHADER_COMPONENTS] = { length, 0, 0, 0, 0, 0 };
 	int components;
 	GLuint shader;
+	int standard_options = R_ProgramStandardOptions(program->standard_option_flags);
 
 	program->program = 0;
 
@@ -836,6 +907,7 @@ static qbool GL_CompileComputeShaderProgram(gl_program_t* program, const char* s
 				memset(program->attributes, 0, sizeof(program->attributes));
 #endif
 				program->force_recompile = false;
+				program->standard_options = standard_options;
 
 				GL_TraceObjectLabelSet(GL_PROGRAM, program->program, -1, program->friendly_name);
 				return true;
@@ -1047,6 +1119,52 @@ void R_ProgramUniform3f(r_program_uniform_id uniform_id, float x, float y, float
 	R_ProgramUniform3fv(uniform_id, vec);
 }
 
+static void R_ProgramStandardUniform3fv(r_program_id program_id, r_program_std_uniform_id id, const float* values)
+{
+	gl_program_t* program = R_CurrentSubProgram(program_id);
+	r_program_uniform_t* std_uniform = &program_std_uniforms[id];
+	gl_program_uniform_t* program_uniform = &program->std_uniforms[id];
+
+	if (program->program && !program_uniform->found) {
+		program_uniform->location = GL_Function(glGetUniformLocation, program->program, std_uniform->name);
+		program_uniform->found = true;
+	}
+
+	if (program_uniform->location >= 0) {
+		R_TraceLogAPICall("%s(%s/%s)", __func__, program->friendly_name, std_uniform->name);
+		if (GL_Available(glProgramUniform3fv)) {
+			GL_Procedure(glProgramUniform3fv, program->program, program_uniform->location, std_uniform->count, values);
+		}
+		else {
+			R_ProgramUse(program_id);
+			GL_Procedure(glUniform3fv, program_uniform->location, std_uniform->count, values);
+		}
+	}
+}
+
+static void R_ProgramStandardUniform1f(r_program_id program_id, r_program_std_uniform_id id, float value)
+{
+	gl_program_t* program = R_CurrentSubProgram(program_id);
+	r_program_uniform_t* std_uniform = &program_std_uniforms[id];
+	gl_program_uniform_t* program_uniform = &program->std_uniforms[id];
+
+	if (program->program && !program_uniform->found) {
+		program_uniform->location = GL_Function(glGetUniformLocation, program->program, std_uniform->name);
+		program_uniform->found = true;
+	}
+
+	if (program_uniform->location >= 0) {
+		R_TraceLogAPICall("%s(%s/%s)", __func__, program->friendly_name, std_uniform->name);
+		if (GL_Available(glProgramUniform1f)) {
+			GL_Procedure(glProgramUniform1f, program->program, program_uniform->location, value);
+		}
+		else {
+			R_ProgramUse(program_id);
+			GL_Procedure(glUniform1f, program_uniform->location, value);
+		}
+	}
+}
+
 void R_ProgramUniform3fv(r_program_uniform_id uniform_id, const float* values)
 {
 	r_program_uniform_t* base_uniform = &program_uniforms[uniform_id];
@@ -1150,35 +1268,79 @@ static void GL_BuildCoreDefinitions(void)
 {
 	// Set common definitions here (none yet)
 	memset(core_definitions, 0, sizeof(core_definitions));
+	strlcpy(core_definitions, (R_UseModernOpenGL() ? "#define EZ_MODERN_GL\n" : "#define EZ_LEGACY_GL\n"), sizeof(core_definitions));
+	strlcat(core_definitions, 
+		"#ifdef DRAW_FOG\n"
+			"#ifdef FOG_EXP\n"
+			"#ifdef EZ_LEGACY_GL\n"
+				"uniform float fogDensity;\n"
+				"uniform vec3 fogColor;\n"
+			"#endif\n"
+				"vec4 applyFog(vec4 vecinput, float z) {\n"
+				"	float fogmix = exp(-fogDensity * z);\n"
+				"	fogmix = clamp(fogmix, 0.0, 1.0); \n"
+				"	return vec4(mix(fogColor, vecinput.rgb, fogmix), 1) * vecinput.a; \n"
+				"}\n"
+			"#elif defined(FOG_EXP2)\n"
+				"const float LOG2 = 1.442695;\n"
+			"#ifdef EZ_LEGACY_GL\n"
+				"uniform float fogDensity;\n"
+				"uniform vec3 fogColor;\n"
+			"#endif"
+				"\n"
+				"vec4 applyFog(vec4 vecinput, float z) {\n"
+				"	float fogmix = exp2(-fogDensity * z * z * LOG2);\n"
+				"	fogmix = clamp(fogmix, 0.0, 1.0);\n"
+				"	return vec4(mix(fogColor, vecinput.rgb, fogmix), 1) * vecinput.a;\n"
+				"}\n"
+			"#elif defined(FOG_LINEAR)\n"
+			"#ifdef EZ_LEGACY_GL\n"
+				"uniform float fogMinZ; \n"
+				"uniform float fogMaxZ; \n"
+				"uniform vec3 fogColor; \n"
+			"#endif"
+				"\n"
+				"vec4 applyFog(vec4 vecinput, float z) {\n"
+					"float fogmix = (fogMaxZ - z) / (fogMaxZ - fogMinZ); \n"
+					"fogmix = clamp(fogmix, 0.0, 1.0); \n"
+					"return vec4(mix(fogColor, vecinput.rgb / vecinput.a, fogmix), 1) * vecinput.a; \n"
+				"}\n"
+			"#else\n"
+				"vec4 applyFog(vec4 vecinput, float z) {\n"
+				"	return vecinput; \n"
+				"}\n"
+			"#endif\n"
+		"#endif // DRAW_FOG\n", sizeof(core_definitions)
+	);
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
-	GL_DefineProgram_VF(r_program_aliasmodel, "aliasmodel", true, draw_aliasmodel, renderer_modern, GLM_CompileAliasModelProgram);
-	GL_DefineProgram_VF(r_program_brushmodel, "brushmodel", true, draw_world, renderer_modern, GLM_CompileDrawWorldProgram);
-	GL_DefineProgram_VF(r_program_brushmodel_alphatested, "brushmodel-alphatested", true, draw_world, renderer_modern, GLM_CompileDrawWorldProgramAlphaTested);
-	GL_DefineProgram_VF(r_program_sprite3d, "3d-sprites", false, draw_sprites, renderer_modern, GLM_Compile3DSpriteProgram);
-	GL_DefineProgram_VF(r_program_hud_images, "image-draw", true, hud_draw_image, renderer_modern, GLM_CreateMultiImageProgram);
-	GL_DefineProgram_VF(r_program_hud_circles, "circle-draw", false, hud_draw_circle, renderer_modern, GLM_CompileHudCircleProgram);
-	GL_DefineProgram_VF(r_program_post_process, "post-process-screen", true, post_process_screen, renderer_modern, GLM_CompilePostProcessProgram);
-	GL_DefineProgram_CS(r_program_lightmap_compute, "lightmaps", false, lighting, renderer_modern, GLM_CompileLightmapComputeProgram);
-	GL_DefineProgram_VF(r_program_fx_world_geometry, "world-geometry", true, fx_world_geometry, renderer_modern, GLM_CompileWorldGeometryProgram);
-	GL_DefineProgram_VF(r_program_simple, "simple", false, simple, renderer_modern, GLM_CompileSimpleProgram);
-	GL_DefineProgram_VF(r_program_simple3d, "simple3d", false, simple3d, renderer_modern, GLM_CompileSimple3dProgram);
+	GL_DefineProgram_VF(r_program_aliasmodel, "aliasmodel", true, draw_aliasmodel, renderer_modern, GLM_CompileAliasModelProgram, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_brushmodel, "brushmodel", true, draw_world, renderer_modern, GLM_CompileDrawWorldProgram, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_brushmodel_alphatested, "brushmodel-alphatested", true, draw_world, renderer_modern, GLM_CompileDrawWorldProgramAlphaTested, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_sprite3d, "3d-sprites", false, draw_sprites, renderer_modern, GLM_Compile3DSpriteProgram, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_hud_images, "image-draw", true, hud_draw_image, renderer_modern, GLM_CreateMultiImageProgram, STDOPTIONS_NONE);
+	GL_DefineProgram_VF(r_program_hud_circles, "circle-draw", false, hud_draw_circle, renderer_modern, GLM_CompileHudCircleProgram, STDOPTIONS_NONE);
+	GL_DefineProgram_VF(r_program_post_process, "post-process-screen", true, post_process_screen, renderer_modern, GLM_CompilePostProcessProgram, STDOPTIONS_NONE);
+	GL_DefineProgram_CS(r_program_lightmap_compute, "lightmaps", false, lighting, renderer_modern, GLM_CompileLightmapComputeProgram, STDOPTIONS_NONE);
+	GL_DefineProgram_VF(r_program_fx_world_geometry, "world-geometry", true, fx_world_geometry, renderer_modern, GLM_CompileWorldGeometryProgram, STDOPTIONS_NONE);
+	GL_DefineProgram_VF(r_program_simple, "simple", false, simple, renderer_modern, GLM_CompileSimpleProgram, STDOPTIONS_NONE);
+	GL_DefineProgram_VF(r_program_simple3d, "simple3d", false, simple3d, renderer_modern, GLM_CompileSimple3dProgram, STDOPTIONS_NONE);
 #endif
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
-	GL_DefineProgram_VF(r_program_post_process_glc, "post-process-screen", true, glc_post_process_screen, renderer_classic, GLC_CompilePostProcessProgram);
-	GL_DefineProgram_VF(r_program_sky_glc, "sky-rendering", true, glc_sky, renderer_classic, GLC_SkyProgramCompile);
-	GL_DefineProgram_VF(r_program_turb_glc, "turb-rendering", true, glc_turbsurface, renderer_classic, GLC_TurbSurfaceProgramCompile);
-	GL_DefineProgram_VF(r_program_caustics_glc, "caustics-rendering", true, glc_caustics, renderer_classic, GLC_CausticsProgramCompile);
-	GL_DefineProgram_VF(r_program_aliasmodel_std_glc, "aliasmodel-std", true, glc_aliasmodel_std, renderer_classic, GLC_AliasModelStandardCompile);
-	GL_DefineProgram_VF(r_program_aliasmodel_shell_glc, "aliasmodel-shell", true, glc_aliasmodel_shell, renderer_classic, GLC_AliasModelShellCompile);
-	GL_DefineProgram_VF(r_program_aliasmodel_shadow_glc, "aliasmodel-shadow", true, glc_aliasmodel_shadow, renderer_classic, GLC_AliasModelShadowCompile);
-	GL_DefineProgram_VF(r_program_aliasmodel_outline_glc, "aliasmodel-outline", true, glc_aliasmodel_std, renderer_classic, GLC_AliasModelOutlineCompile);
-	GL_DefineProgram_VF(r_program_world_drawflat_glc, "drawflat-world", true, glc_world_drawflat, renderer_classic, GLC_DrawflatProgramCompile);
-	GL_DefineProgram_VF(r_program_world_textured_glc, "textured-world", true, glc_world_textured, renderer_classic, GLC_PreCompileWorldPrograms);
-	GL_DefineProgram_VF(r_program_world_secondpass_glc, "secondpass-world", true, glc_world_secondpass, renderer_classic, GLC_PreCompileWorldPrograms);
-	GL_DefineProgram_VF(r_program_sprites_glc, "3d-sprites", true, glc_draw_sprites, renderer_classic, GLC_CompileSpriteProgram);
-	GL_DefineProgram_VF(r_program_hud_images_glc, "hud-images", true, glc_hud_images, renderer_classic, GLC_ProgramHudImagesCompile);
+	GL_DefineProgram_VF(r_program_post_process_glc, "post-process-screen", true, glc_post_process_screen, renderer_classic, GLC_CompilePostProcessProgram, STDOPTIONS_NONE);
+	GL_DefineProgram_VF(r_program_sky_glc, "sky-rendering", true, glc_sky, renderer_classic, GLC_SkyProgramCompile, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_turb_glc, "turb-rendering", true, glc_turbsurface, renderer_classic, GLC_TurbSurfaceProgramCompile, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_caustics_glc, "caustics-rendering", true, glc_caustics, renderer_classic, GLC_CausticsProgramCompile, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_aliasmodel_std_glc, "aliasmodel-std", true, glc_aliasmodel_std, renderer_classic, GLC_AliasModelStandardCompile, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_aliasmodel_shell_glc, "aliasmodel-shell", true, glc_aliasmodel_shell, renderer_classic, GLC_AliasModelShellCompile, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_aliasmodel_shadow_glc, "aliasmodel-shadow", true, glc_aliasmodel_shadow, renderer_classic, GLC_AliasModelShadowCompile, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_aliasmodel_outline_glc, "aliasmodel-outline", true, glc_aliasmodel_std, renderer_classic, GLC_AliasModelOutlineCompile, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_world_drawflat_glc, "drawflat-world", true, glc_world_drawflat, renderer_classic, GLC_DrawflatProgramCompile, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_world_textured_glc, "textured-world", true, glc_world_textured, renderer_classic, GLC_PreCompileWorldPrograms, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_world_secondpass_glc, "secondpass-world", true, glc_world_secondpass, renderer_classic, GLC_PreCompileWorldPrograms, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_sprites_glc, "3d-sprites", true, glc_draw_sprites, renderer_classic, GLC_CompileSpriteProgram, STDOPTIONS_FOG);
+	GL_DefineProgram_VF(r_program_hud_images_glc, "hud-images", true, glc_hud_images, renderer_classic, GLC_ProgramHudImagesCompile, STDOPTIONS_NONE);
 #endif
 }
 
@@ -1264,4 +1426,23 @@ void R_ProgramCompileAll(void)
 void R_ProgramSetSubProgram(r_program_id program_id, int sub_index)
 {
 	program_currentSubProgram[program_id] = sub_index;
+}
+
+void R_ProgramSetStandardUniforms(r_program_id program_id)
+{
+	gl_program_t* program = R_CurrentSubProgram(program_id);
+
+	if (program->standard_options & STDOPTIONS_FOG) {
+		if (r_refdef2.fog_enabled) {
+			R_ProgramStandardUniform3fv(program_id, r_program_std_uniform_fog_color, r_refdef2.fog_color);
+
+			if (r_refdef2.fog_calculation == fogcalc_linear) {
+				R_ProgramStandardUniform1f(program_id, r_program_std_uniform_fog_linear_start, r_refdef2.fog_linear_start);
+				R_ProgramStandardUniform1f(program_id, r_program_std_uniform_fog_linear_end, r_refdef2.fog_linear_end);
+			}
+			else {
+				R_ProgramStandardUniform1f(program_id, r_program_std_uniform_fog_density, r_refdef2.fog_density);
+			}
+		}
+	}
 }

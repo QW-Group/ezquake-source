@@ -161,4 +161,8 @@ void main()
 
 	gl_FragColor = vec4(detail.rgb * gl_FragColor.rgb * 2.0, gl_FragColor.a);
 #endif
+
+#ifdef DRAW_FOG
+	gl_FragColor = applyFog(gl_FragColor, gl_FragCoord.z / gl_FragCoord.w);
+#endif
 }

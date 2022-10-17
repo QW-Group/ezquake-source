@@ -10,6 +10,7 @@ varying vec3 TextureCoord;
 varying vec2 TextureCoord;
 #endif
 varying float lightmapScale;
+varying float fogScale;
 
 uniform vec4 wallcolor;
 uniform vec4 floorcolor;
@@ -28,9 +29,7 @@ void main()
 	TextureCoord = gl_MultiTexCoord0.st;
 #endif
 
-	float bitmask = style;
-
-	lightmapScale = step(64, style);
+	lightmapScale = step(64, mod(style, 256));
 
 	color = vec4(0, 0, 0, 1);
 	color += mod(style, 2) * skycolor;
@@ -41,4 +40,8 @@ void main()
 	color += mod(floor(style / 32), 2) * skycolor;
 	color += mod(floor(style / 64), 2) * floorcolor;
 	color += mod(floor(style / 128), 2) * wallcolor;
+	color.a = 1;
+
+	// don't apply z-fog to the sky
+	fogScale = 1 - mod(style, 2);
 }

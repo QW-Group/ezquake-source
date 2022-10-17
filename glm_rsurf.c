@@ -98,20 +98,20 @@ static void GLM_CheckDrawCallSize(void)
 	}
 }
 
-#define DRAW_DETAIL_TEXTURES       1
-#define DRAW_CAUSTIC_TEXTURES      2
-#define DRAW_LUMA_TEXTURES         4
-#define DRAW_SKYBOX                8
-#define DRAW_SKYDOME              16
-#define DRAW_FLATFLOORS           32
-#define DRAW_FLATWALLS            64
-#define DRAW_LUMA_TEXTURES_FB    128
-#define DRAW_TEXTURELESS         256
-#define DRAW_GEOMETRY            512
-#define DRAW_DRAWFLAT_NORMAL    1024
-#define DRAW_DRAWFLAT_TINTED    2048
-#define DRAW_DRAWFLAT_BRIGHT    4096
-#define DRAW_ALPHATESTED        8192
+#define DRAW_DETAIL_TEXTURES       (1 <<  0)
+#define DRAW_CAUSTIC_TEXTURES      (1 <<  1)
+#define DRAW_LUMA_TEXTURES         (1 <<  2)
+#define DRAW_SKYBOX                (1 <<  3)
+#define DRAW_SKYDOME               (1 <<  4)
+#define DRAW_FLATFLOORS            (1 <<  5)
+#define DRAW_FLATWALLS             (1 <<  6)
+#define DRAW_LUMA_TEXTURES_FB      (1 <<  7)
+#define DRAW_TEXTURELESS           (1 <<  8)
+#define DRAW_GEOMETRY              (1 <<  9)
+#define DRAW_DRAWFLAT_NORMAL       (1 << 10)
+#define DRAW_DRAWFLAT_TINTED       (1 << 11)
+#define DRAW_DRAWFLAT_BRIGHT       (1 << 12)
+#define DRAW_ALPHATESTED           (1 << 13)
 
 static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit

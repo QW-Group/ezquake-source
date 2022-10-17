@@ -24,4 +24,8 @@ void main()
 	gl_FragColor = texture2D(texSampler, tex);
 	gl_FragColor *= alpha;
 #endif
+
+#ifdef DRAW_FOG
+	gl_FragColor = applyFog(gl_FragColor, gl_FragCoord.z / gl_FragCoord.w);
+#endif
 }

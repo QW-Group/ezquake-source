@@ -261,8 +261,10 @@ int GLC_AliasModelSubProgramIndex(qbool textured, qbool fullbright, qbool causti
 
 qbool GLC_AliasModelStandardCompileSpecific(int subprogram_index)
 {
+	int flags = subprogram_index;
+
 	R_ProgramSetSubProgram(r_program_aliasmodel_std_glc, subprogram_index);
-	if (R_ProgramRecompileNeeded(r_program_aliasmodel_std_glc, subprogram_index)) {
+	if (R_ProgramRecompileNeeded(r_program_aliasmodel_std_glc, flags)) {
 		char included_definitions[512];
 
 		included_definitions[0] = '\0';
@@ -283,12 +285,13 @@ qbool GLC_AliasModelStandardCompileSpecific(int subprogram_index)
 			strlcat(included_definitions, "#define EZQ_ALIASMODEL_FLATSHADING\n", sizeof(included_definitions));
 		}
 #endif
-
 		R_ProgramCompileWithInclude(r_program_aliasmodel_std_glc, included_definitions);
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_texSampler, 0);
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_std_glc_causticsSampler, 1);
-		R_ProgramSetCustomOptions(r_program_aliasmodel_std_glc, subprogram_index);
+		R_ProgramSetCustomOptions(r_program_aliasmodel_std_glc, flags);
 	}
+
+	R_ProgramSetStandardUniforms(r_program_aliasmodel_std_glc);
 
 	return R_ProgramReady(r_program_aliasmodel_std_glc);
 }
@@ -307,12 +310,11 @@ qbool GLC_AliasModelStandardCompile(void)
 
 qbool GLC_AliasModelShadowCompile(void)
 {
-	int flags = 0;
-
-	if (R_ProgramRecompileNeeded(r_program_aliasmodel_shadow_glc, flags)) {
+	if (R_ProgramRecompileNeeded(r_program_aliasmodel_shadow_glc, 0)) {
 		R_ProgramCompile(r_program_aliasmodel_shadow_glc);
-		R_ProgramSetCustomOptions(r_program_aliasmodel_shadow_glc, flags);
 	}
+
+	R_ProgramSetStandardUniforms(r_program_aliasmodel_shadow_glc);
 
 	return R_ProgramReady(r_program_aliasmodel_shadow_glc);
 }
@@ -334,6 +336,8 @@ qbool GLC_AliasModelShellCompile(void)
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_shell_glc_texSampler, 0);
 		R_ProgramSetCustomOptions(r_program_aliasmodel_shell_glc, flags);
 	}
+
+	R_ProgramSetStandardUniforms(r_program_aliasmodel_shell_glc);
 
 	return R_ProgramReady(r_program_aliasmodel_shell_glc);
 }

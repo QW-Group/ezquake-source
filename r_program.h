@@ -107,6 +107,7 @@ typedef enum {
 	r_program_uniform_world_textures_glc_texture_multiplier,
 	r_program_uniform_simple3d_color,
 	r_program_uniform_lighting_firstLightmap,
+	r_program_uniform_sky_glc_fog_skyFogMix,
 	r_program_uniform_count
 } r_program_uniform_id;
 
@@ -167,5 +168,8 @@ void R_ProgramCompileAll(void);
 
 // Switches between sub-programs (allows multiple copies of the same program with different flags)
 void R_ProgramSetSubProgram(r_program_id program_id, int sub_index);
+
+// Sets uniforms based on program flags (used for fog at the moment)
+void R_ProgramSetStandardUniforms(r_program_id program_id);
 
 #endif // EZQUAKE_R_PROGRAM_HEADER

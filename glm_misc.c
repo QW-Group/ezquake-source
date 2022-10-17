@@ -153,6 +153,13 @@ void GLM_PreRenderView(void)
 	frameConstants.r_zFar = R_FarPlaneZ();
 	frameConstants.r_zNear = R_NearPlaneZ();
 
+	// fog colors
+	VectorCopy(r_refdef2.fog_color, frameConstants.fogColor);
+	frameConstants.fogMinZ = r_refdef2.fog_linear_start;
+	frameConstants.fogMaxZ = r_refdef2.fog_linear_end;
+	frameConstants.skyFogMix = r_refdef2.fog_sky;
+	frameConstants.fogDensity = r_refdef2.fog_density; // (r_refdef2.fog_calculation == fogcalc_exp2 ? r_refdef2.fog_density * r_refdef2.fog_density : r_refdef2.fog_density);
+
 	frameConstantsUploaded = false;
 }
 

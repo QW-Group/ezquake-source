@@ -212,6 +212,7 @@ static qbool GL_CreateFixedBuffer(r_buffer_id id, buffertype_t type, const char*
 		return false;
 	}
 
+	DebugOutput(va("Generating buffer %s\n", name));
 	buffer = GL_BufferAllocateSlot(id, type, name, size, usage);
 
 	if (usage == bufferusage_once_per_frame) {
@@ -516,7 +517,9 @@ static void GL_BindBuffer(r_buffer_id id)
 
 static void GL_InitialiseBufferState(void)
 {
+	qbool tripleBufferSupported = glBufferState.tripleBuffer_supported;
 	memset(&glBufferState, 0, sizeof(glBufferState));
+	glBufferState.tripleBuffer_supported = tripleBufferSupported;
 	R_BindVertexArrayElementBuffer(r_buffer_none);
 	R_InitialiseVAOState();
 }

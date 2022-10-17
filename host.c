@@ -523,7 +523,6 @@ static void Commands_For_Configs_Init (void)
 	extern void MT_MapGroup_f (void);
 	extern void MT_AddSkyGroups (void);
 	extern void MT_SkyGroup_f (void);
-	extern void CL_Fog_f (void);
 	extern void SB_SourceUnmarkAll(void);
 	extern void SB_SourceMark(void);
 	extern void LoadConfig_f(void);
@@ -544,7 +543,6 @@ static void Commands_For_Configs_Init (void)
 
 	MT_AddSkyGroups ();
 	Cmd_AddCommand ("skygroup", MT_SkyGroup_f);
-	Cmd_AddCommand ("fog", CL_Fog_f);
 	Cmd_AddCommand ("allskins", Skin_AllSkins_f);
 
 	Cmd_AddCommand ("sb_sourceunmarkall", SB_SourceUnmarkAll);

@@ -472,6 +472,7 @@ typedef struct worldspawn_info_s {
 	char skybox_name[MAX_QPATH];
 	float fog_density;
 	vec3_t fog_color;
+	float fog_sky;
 
 	float wateralpha;
 	float lavaalpha;

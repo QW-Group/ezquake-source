@@ -52,4 +52,8 @@ void main()
 		gl_FragColor = vec4(caustic.rgb * gl_FragColor.rgb * 1.8, gl_FragColor.a);
 	#endif
 #endif // BACKFACE_PASS
+
+#ifdef DRAW_FOG
+	gl_FragColor = applyFog(gl_FragColor, gl_FragCoord.z / gl_FragCoord.w);
+#endif
 }

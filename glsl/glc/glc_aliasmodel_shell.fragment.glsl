@@ -15,4 +15,8 @@ void main()
 	vec4 alt = texture2D(texSampler, fsAltTextureCoord);
 
 	gl_FragColor = tex * fsBaseColor1 + alt * fsBaseColor2;
+
+#ifdef DRAW_FOG
+	gl_FragColor = applyFog(gl_FragColor, gl_FragCoord.z / gl_FragCoord.w);
+#endif
 }

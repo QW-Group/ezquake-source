@@ -260,7 +260,6 @@ CLASSIC_OPENGL_OBJS := \
     glc_bloom.o \
     glc_brushmodel.o \
     glc_draw.o \
-    glc_fog.o \
     glc_framebuffer.o \
     glc_lightmaps.o \
     glc_main.o \

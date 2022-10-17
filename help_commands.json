@@ -588,10 +588,6 @@
     "description": "You can fly around the map with flymode on.",
     "remarks": "Needs cheat support by server."
   },
-  "fog": {
-    "description": "Changes color of fog.",
-    "syntax": "R G B"
-  },
   "fontlist": {
     "description": "Lists TrueType fonts available on the system."
   },

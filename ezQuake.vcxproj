@@ -1590,13 +1590,6 @@ msversion.bat</Command>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='rls-modern|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="glc_fog.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-modern|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-modern|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='rls-modern|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="glc_framebuffer.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-modern|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-modern|x64'">true</ExcludedFromBuild>
@@ -3179,13 +3172,6 @@ msversion.bat</Command>
     <ClInclude Include="cmdline_params_ids.h" />
     <ClInclude Include="EX_browser_ping.h" />
     <ClInclude Include="fonts.h" />
-    <ClInclude Include="glc_fog.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-modern|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-modern|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='rls-modern|Win32'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="glc_local.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-modern|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|x64'">true</ExcludedFromBuild>

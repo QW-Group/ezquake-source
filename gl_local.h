@@ -112,6 +112,8 @@ extern	cvar_t	r_bloom_fast_sample;
 extern	cvar_t	r_skyname;
 extern  cvar_t  gl_caustics;
 extern  cvar_t  gl_detail;
+extern  cvar_t  gl_fog;
+extern  cvar_t  gl_fog_density;
 extern  cvar_t  gl_waterfog;
 extern  cvar_t  gl_waterfog_density;
 
