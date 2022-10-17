@@ -43,6 +43,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_trace.h"
 #include "r_renderer.h"
 
+#define R_FogAvailable() (!COM_CheckParm(cmdline_param_client_nomultitexturing))
+
 void GLM_ScreenDrawStart(void);
 
 // Move to API
@@ -72,6 +74,8 @@ void R_CreateWorldTextureChains(void);
 static void R_SetupGL(void);
 
 void GLM_RenderView(void);
+
+void SCR_SetupDamageIndicators(void);
 
 extern msurface_t *alphachain;
 
@@ -126,6 +130,7 @@ cvar_t cl_mvinset_top                      = {"cl_mvinset_top", "1"};
 cvar_t cl_mvinset_right                    = {"cl_mvinset_right", "1"};
 
 cvar_t r_drawentities                      = {"r_drawentities", "1"};
+cvar_t r_drawworld                         = {"r_drawworld", "1"};
 cvar_t r_lerpframes                        = {"r_lerpframes", "1"};
 cvar_t r_drawflame                         = {"r_drawflame", "1"};
 cvar_t r_drawdisc                          = {"r_drawdisc", "1"};
@@ -145,6 +150,7 @@ cvar_t r_lavacolor                         = {"r_lavacolor", "80 0 0", CVAR_COLO
 cvar_t r_slimecolor                        = {"r_slimecolor", "10 60 10", CVAR_COLOR};
 cvar_t r_watercolor                        = {"r_watercolor", "10 50 80", CVAR_COLOR};
 cvar_t r_drawflat                          = {"r_drawflat", "0", 0, OnChange_r_drawflat};
+cvar_t r_drawflat_mode                     = {"r_drawflat_mode", "0", 0, OnChange_r_drawflat};
 cvar_t r_wallcolor                         = {"r_wallcolor", "255 255 255", CVAR_COLOR, OnChange_r_drawflat};
 cvar_t r_floorcolor                        = {"r_floorcolor", "50 100 150", CVAR_COLOR, OnChange_r_drawflat};
 cvar_t gl_textureless                      = {"gl_textureless", "0", 0, OnChange_r_drawflat}; //Qrack
@@ -153,11 +159,6 @@ cvar_t r_skyname                           = {"r_skyname", "", 0, OnChange_r_sky
 cvar_t gl_detail                           = {"gl_detail","0"};
 cvar_t gl_brush_polygonoffset              = {"gl_brush_polygonoffset", "2.0"}; // This is the one to adjust if you notice flicker on lift @ e1m1 for instance, for z-fighting
 cvar_t gl_caustics                         = {"gl_caustics", "0"}; // 1
-cvar_t gl_waterfog                         = {"gl_turbfog", "0"}; // 2
-cvar_t gl_waterfog_density                 = {"gl_turbfogDensity", "1"};
-cvar_t gl_waterfog_color_water             = {"gl_turbfog_color_water", "32 64 128", CVAR_COLOR};
-cvar_t gl_waterfog_color_lava              = {"gl_turbfog_color_lava", "255 64 0", CVAR_COLOR};
-cvar_t gl_waterfog_color_slime             = {"gl_turbfog_color_slime", "128 255 0", CVAR_COLOR};
 cvar_t gl_lumatextures                     = {"gl_lumatextures", "1"};
 cvar_t gl_subdivide_size                   = {"gl_subdivide_size", "64"};
 cvar_t gl_clear                            = {"gl_clear", "0"};
@@ -194,27 +195,30 @@ cvar_t gl_part_bubble                      = {"gl_part_bubble", "1"}; // would p
 cvar_t gl_part_detpackexplosion_fire_color = {"gl_part_detpackexplosion_fire_color", "", CVAR_COLOR};
 cvar_t gl_part_detpackexplosion_ray_color  = {"gl_part_detpackexplosion_ray_color", "", CVAR_COLOR};
 cvar_t gl_powerupshells                    = {"gl_powerupshells", "1"};
-cvar_t gl_fogenable                        = {"gl_fog", "0"};
-cvar_t gl_fogstart                         = {"gl_fogstart", "50.0"};
-cvar_t gl_fogend                           = {"gl_fogend", "800.0"};
-cvar_t gl_fogred                           = {"gl_fogred", "0.6"};
-cvar_t gl_foggreen                         = {"gl_foggreen", "0.5"};
-cvar_t gl_fogblue                          = {"gl_fogblue", "0.4"};
-cvar_t gl_fogsky                           = {"gl_fogsky", "1"};
+
+// 0: off, 1: on, 2: in water only
+cvar_t r_fx_fog                            = {"r_fx_fog", "0"};
+// 0: off, 1: dm & single-player, 2: single-player only
+cvar_t r_fx_fog_usemap                     = {"r_fx_fog_usemap", "2"};
+cvar_t r_fx_fog_model                      = {"r_fx_fog_model", "2"};
+cvar_t r_fx_fog_density                    = {"r_fx_fog_density", "0.125"};
+cvar_t r_fx_fog_start                      = {"r_fx_fog_start", "50.0"};
+cvar_t r_fx_fog_end                        = {"r_fx_fog_end", "800.0"};
+cvar_t r_fx_fog_color_air                  = {"r_fx_fog_color_air", "153 128 103", CVAR_COLOR};
+cvar_t r_fx_fog_color_water                = {"r_fx_fog_color_water", "32 64 128", CVAR_COLOR};
+cvar_t r_fx_fog_color_lava                 = {"r_fx_fog_color_lava", "255 64 0", CVAR_COLOR};
+cvar_t r_fx_fog_color_slime                = {"r_fx_fog_color_slime", "128 255 0", CVAR_COLOR};
+cvar_t r_fx_fog_sky                        = {"r_fx_fog_sky", "0.3"};
+
 cvar_t gl_simpleitems                      = {"gl_simpleitems", "0"};
 cvar_t gl_simpleitems_size                 = {"gl_simpleitems_size", "16"};
 cvar_t gl_simpleitems_orientation          = {"gl_simpleitems_orientation", "2"};
-cvar_t gl_motion_blur                      = {"gl_motion_blur", "0"};
-cvar_t gl_motion_blur_fps                  = {"gl_motion_blur_fps", "77"};
-cvar_t gl_motion_blur_norm                 = {"gl_motion_blur_norm", "0.5"};
-cvar_t gl_motion_blur_hurt                 = {"gl_motion_blur_hurt", "0.5"};
-cvar_t gl_motion_blur_dead                 = {"gl_motion_blur_dead", "0.5"};
 cvar_t gl_modulate                         = {"gl_modulate", "1"};
 cvar_t gl_outline                          = {"gl_outline", "0"};
-cvar_t gl_outline_width                    = {"gl_outline_width", "2"};
+cvar_t gl_smoothmodels                     = {"gl_smoothmodels", "1"};
 cvar_t r_fx_geometry                       = {"r_fx_geometry", "0"};
 
-cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0", CVAR_LATCH};
+cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0", CVAR_LATCH_GFX };
 
 //Returns true if the box is completely outside the frustom
 qbool R_CullBox(vec3_t mins, vec3_t maxs)
@@ -278,6 +282,74 @@ void R_SetFrustum(void)
 	}
 }
 
+static void R_ConfigureFog(int contents)
+{
+	int i;
+	qbool use_map_fog;
+
+	// enable it even if not showing this frame, to prevent potential program re-compiles when going in/out of water
+	if (!R_FogAvailable()) {
+		r_refdef2.fog_enabled = r_refdef2.fog_render = false;
+		return;
+	}
+
+	use_map_fog = cl.map_fog_enabled && (r_fx_fog_usemap.integer == 1 || (r_fx_fog_usemap.integer == 2 && Ruleset_IsLocalSinglePlayerGame()));
+	r_refdef2.fog_enabled = (use_map_fog || r_fx_fog.integer == 1 || r_fx_fog.integer == 2);
+	r_refdef2.fog_render = (use_map_fog || r_fx_fog.integer == 1 || (r_fx_fog.integer == 2 && ISUNDERWATER(contents)));
+	r_refdef2.fog_density = 0;
+	r_refdef2.fog_calculation = fogcalc_none;
+
+	if (r_refdef2.fog_render) {
+		if (use_map_fog) {
+			r_refdef2.fog_density = bound(0, cl.map_fog_density * cl.map_fog_density, 1);
+			r_refdef2.fog_calculation = fogcalc_exp2;
+		}
+		else {
+			r_refdef2.fog_density = bound(0, r_fx_fog_density.value / 64.0f, 1);
+
+			if (r_fx_fog_model.integer == 0) {
+				r_refdef2.fog_calculation = fogcalc_linear;
+			}
+			else if (r_fx_fog_model.integer == 1) {
+				r_refdef2.fog_calculation = fogcalc_exp;
+			}
+			else if (r_fx_fog_model.integer == 2) {
+				r_refdef2.fog_calculation = fogcalc_exp2;
+				r_refdef2.fog_density = r_refdef2.fog_density * r_refdef2.fog_density;
+			}
+		}
+
+		if (use_map_fog && cl.map_fog_sky >= 0) {
+			r_refdef2.fog_sky = cl.map_fog_sky;
+		}
+		else {
+			r_refdef2.fog_sky = r_refdef2.fog_density != 0 ? bound(0, r_fx_fog_sky.value, 1) : 0;
+		}
+	}
+	r_refdef2.fog_linear_start = r_fx_fog_start.value;
+	r_refdef2.fog_linear_end = r_fx_fog_end.value;
+
+	if (contents == CONTENTS_LAVA) {
+		VectorScale(r_fx_fog_color_lava.color, 1 / 255.0f, r_refdef2.fog_color);
+	}
+	else if (contents == CONTENTS_SLIME) {
+		VectorScale(r_fx_fog_color_slime.color, 1 / 255.0f, r_refdef2.fog_color);
+	}
+	else if (contents == CONTENTS_WATER) {
+		VectorScale(r_fx_fog_color_water.color, 1 / 255.0f, r_refdef2.fog_color);
+	}
+	else if (use_map_fog) {
+		VectorCopy(cl.map_fog_color, r_refdef2.fog_color);
+	}
+	else {
+		VectorScale(r_fx_fog_color_air.color, 1 / 255.0f, r_refdef2.fog_color);
+	}
+	for (i = 0; i < 3; ++i) {
+		r_refdef2.fog_skycolor[i] = r_refdef2.fog_color[i] * r_refdef2.fog_sky + r_skycolor.color[i] * (1.0f - r_refdef2.fog_sky) / 255.0f;
+	}
+	r_refdef2.fog_color[3] = r_refdef2.fog_skycolor[3] = 1.0f;
+}
+
 void R_SetupFrame(void)
 {
 	vec3_t testorigin;
@@ -307,6 +379,8 @@ void R_SetupFrame(void)
 	r_viewleaf = Mod_PointInLeaf (r_origin, cl.worldmodel);
 	r_viewleaf2 = NULL;
 
+	// FIXME: might need to test falling out bottom of water as well?
+
 	// check above and below so crossing solid water doesn't draw wrong
 	if (r_viewleaf->contents <= CONTENTS_WATER && r_viewleaf->contents >= CONTENTS_LAVA) {
 		// look up a bit
@@ -316,22 +390,23 @@ void R_SetupFrame(void)
 		if (leaf->contents == CONTENTS_EMPTY) {
 			r_viewleaf2 = leaf;
 		}
-	} else if (r_viewleaf->contents == CONTENTS_EMPTY) {
+	}
+	else if (r_viewleaf->contents == CONTENTS_EMPTY) {
+		// FIXME: If we test down and find CONTENTS_SOLID then we should reduce viewheight_test and try again?
+
 		// look down a bit
-		VectorCopy (r_origin, testorigin);
-		testorigin[2] -= 10;
-		leaf = Mod_PointInLeaf (testorigin, cl.worldmodel);
-		if (leaf->contents <= CONTENTS_WATER &&	leaf->contents >= CONTENTS_LAVA) {
+		VectorCopy(r_origin, testorigin);
+		testorigin[2] -= r_refdef.viewheight_test;
+		leaf = Mod_PointInLeaf(testorigin, cl.worldmodel);
+		if (leaf->contents <= CONTENTS_WATER && leaf->contents >= CONTENTS_LAVA) {
 			r_viewleaf2 = leaf;
 		}
 	}
 
 	V_SetContentsColor(r_viewleaf->contents);
-	renderer.ConfigureFog(r_viewleaf->contents);
+	R_ConfigureFog(r_viewleaf->contents);
 	V_CalcBlend();
 
-	memcpy(&prevFrameStats, &frameStats, sizeof(prevFrameStats));
-	memset(&frameStats, 0, sizeof(frameStats));
 	R_LightmapFrameInit();
 }
 
@@ -473,6 +548,7 @@ static void R_SetupViewport(void)
 	h = y - y2;
 
 	// Multiview
+	R_SetFullScreenViewport(glx + x, gly + y2, w, h);
 	if (CL_MultiviewEnabled() && CL_MultiviewCurrentView() != 0) {
 		R_SetViewports(glx, x, gly, y2, w, h, cl_multiview.value);
 	}
@@ -513,6 +589,7 @@ void R_Init(void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register(&r_drawentities);
+	Cvar_Register(&r_drawworld);
 	Cvar_Register(&r_lerpframes);
 	Cvar_Register(&r_drawflame);
 	Cvar_Register(&r_drawdisc);
@@ -522,12 +599,6 @@ void R_Init(void)
 	Cvar_Register(&gl_simpleitems);
 	Cvar_Register(&gl_simpleitems_size);
 	Cvar_Register(&gl_simpleitems_orientation);
-
-	Cvar_Register(&gl_motion_blur);
-	Cvar_Register(&gl_motion_blur_fps);
-	Cvar_Register(&gl_motion_blur_norm);
-	Cvar_Register(&gl_motion_blur_hurt);
-	Cvar_Register(&gl_motion_blur_dead);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 	Cvar_Register(&gl_part_explosions);
@@ -565,21 +636,22 @@ void R_Init(void)
 	Cvar_Register(&r_novis);
 	Cvar_Register(&r_wateralpha);
 	Cvar_Register(&gl_caustics);
-	if (!COM_CheckParm(cmdline_param_client_nomultitexturing)) {
-		Cvar_Register(&gl_waterfog);
-		Cvar_Register(&gl_waterfog_density);
-		Cvar_Register(&gl_waterfog_color_water);
-		Cvar_Register(&gl_waterfog_color_lava);
-		Cvar_Register(&gl_waterfog_color_slime);
-	}
 
-	Cvar_Register(&gl_fogenable);
-	Cvar_Register(&gl_fogstart);
-	Cvar_Register(&gl_fogend);
-	Cvar_Register(&gl_fogsky);
-	Cvar_Register(&gl_fogred);
-	Cvar_Register(&gl_fogblue);
-	Cvar_Register(&gl_foggreen);
+	// Fog cvars
+	if (R_FogAvailable()) {
+		Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
+		Cvar_Register(&r_fx_fog);
+		Cvar_Register(&r_fx_fog_model);
+		Cvar_Register(&r_fx_fog_usemap);
+		Cvar_Register(&r_fx_fog_density);
+		Cvar_Register(&r_fx_fog_start);
+		Cvar_Register(&r_fx_fog_end);
+		Cvar_Register(&r_fx_fog_sky);
+		Cvar_Register(&r_fx_fog_color_air);
+		Cvar_Register(&r_fx_fog_color_water);
+		Cvar_Register(&r_fx_fog_color_lava);
+		Cvar_Register(&r_fx_fog_color_slime);
+	}
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_BLEND);
 	Cvar_Register(&gl_polyblend);
@@ -604,6 +676,7 @@ void R_Init(void)
 	Cvar_Register(&gl_subdivide_size);
 	Cvar_Register(&gl_lumatextures);
 	Cvar_Register(&r_drawflat);
+	Cvar_Register(&r_drawflat_mode);
 	Cvar_Register(&r_wallcolor);
 	Cvar_Register(&r_floorcolor);
 	Cvar_Register(&gl_textureless); //Qrack
@@ -619,7 +692,7 @@ void R_Init(void)
 	Cvar_Register(&gl_modulate);
 
 	Cvar_Register(&gl_outline);
-	Cvar_Register(&gl_outline_width);
+	Cvar_Register(&gl_smoothmodels);
 
 	Cvar_Register(&r_fx_geometry);
 
@@ -681,19 +754,6 @@ void R_Init(void)
 	R_InitBloomTextures();
 }
 
-static void R_RenderScene(void)
-{
-	R_TraceEnterNamedRegion("R_DrawWorld");
-	R_DrawWorld();		// adds static entities to the list
-	R_TraceLeaveNamedRegion();
-
-	if (R_WaterAlpha() == 1) {
-		renderer.DrawWaterSurfaces();
-	}
-
-	R_DrawEntities();
-}
-
 void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 	byte *color;
 	char buf[MAX_COM_TOKEN];
@@ -721,8 +781,9 @@ static void R_Clear(void)
 	clear_color |= (r_viewleaf->contents == CONTENTS_SOLID && (R_UseModernOpenGL() || r_fastsky.integer));
 
 	if (gl_clear.integer) {
-		if (gl_fogenable.integer) {
-			R_ClearColor(gl_fogred.value, gl_foggreen.value, gl_fogblue.value, 1.0);//Tei custom clear color
+		//Tei custom clear color
+		if (r_refdef2.fog_render) {
+			R_ClearColor(r_refdef2.fog_color[0], r_refdef2.fog_color[1], r_refdef2.fog_color[2], 1.0);
 		}
 		else {
 			R_ClearColor(clearColor[0], clearColor[1], clearColor[2], 1.0);
@@ -760,6 +821,7 @@ static void R_Render3DHud(void)
 
 	// While still in 3D mode, calculate the location of labels to be printed in 2D
 	SCR_SetupAutoID();
+	SCR_SetupDamageIndicators();
 }
 
 void R_RenderView(void)
@@ -774,14 +836,19 @@ void R_RenderView(void)
 	}
 
 	R_SetFrustum();
-
 	R_SetupGL();
 	R_Clear();
 	R_MarkLeaves();	// done here so we know if we're in water
 	R_CreateWorldTextureChains();
 
-	// render normal view (world & entities)
-	R_RenderScene();
+	// render normal view
+	R_DrawWorld();		// adds static entities to the list
+
+	if (r_refdef2.wateralpha == 1) {
+		renderer.DrawWaterSurfaces();
+	}
+
+	R_DrawEntities();
 
 	// Adds 3d effects (particles, lights, chat icons etc)
 	R_Render3DEffects();
@@ -796,8 +863,6 @@ void R_RenderView(void)
 	R_Render3DHud();
 
 	renderer.RenderView();
-
-	R_PerformanceEndFrame();
 }
 
 qbool R_PointIsUnderwater(vec3_t point)
@@ -976,11 +1041,13 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 					}
 					break;
 				case mod_alias:
-					if (type == visent_shells) {
-						renderer.DrawAliasModelPowerupShell(&todraw->ent);
-					}
-					else {
-						R_DrawAliasModel(&todraw->ent);
+					if (type != visent_additive) {
+						if (type == visent_shells) {
+							renderer.DrawAliasModelPowerupShell(&todraw->ent);
+						}
+						else {
+							R_DrawAliasModel(&todraw->ent, type == visent_outlines);
+						}
 					}
 					break;
 				case mod_alias3:
@@ -988,7 +1055,7 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 						renderer.DrawAlias3ModelPowerupShell(&todraw->ent);
 					}
 					else {
-						renderer.DrawAlias3Model(&todraw->ent);
+						renderer.DrawAlias3Model(&todraw->ent, type == visent_outlines, type == visent_additive);
 					}
 					break;
 				case mod_unknown:
@@ -1031,7 +1098,7 @@ static void R_DrawEntities(void)
 
 	R_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, r_state_sprites_textured, null_texture_reference, 0, r_primitive_triangle_strip);
 	qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
-	for (ent_type = visent_firstpass; ent_type < visent_max; ++ent_type) {
+	for (ent_type = 0; ent_type < visent_max; ++ent_type) {
 		R_DrawEntitiesOnList(&cl_visents, ent_type);
 	}
 	if (R_UseModernOpenGL() || R_UseVulkan()) {

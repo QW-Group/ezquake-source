@@ -32,10 +32,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 extern cvar_t vid_framebuffer;
 extern cvar_t vid_framebuffer_depthformat;
-extern cvar_t vid_framebuffer_palette;
+extern cvar_t vid_software_palette;
 extern cvar_t vid_framebuffer_hdr;
 extern cvar_t vid_framebuffer_blit;
+extern cvar_t vid_framebuffer_smooth;
+extern cvar_t vid_framebuffer_multisample;
 extern cvar_t r_fx_geometry;
+
+static framebuffer_id VID_MultisampledAlternateId(framebuffer_id id);
 
 #ifndef GL_NEGATIVE_ONE_TO_ONE
 #define GL_NEGATIVE_ONE_TO_ONE            0x935E
@@ -54,13 +58,18 @@ GLuint GL_TextureNameFromReference(texture_ref ref);
 
 // OpenGL wrapper functions
 #ifdef GL_USE_RENDER_BUFFERS
+#define EZ_USE_FIXED_SAMPLE_LOCATIONS (GL_TRUE)
+static void GL_RenderBufferStorageMultisample(GLuint renderBuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
 static void GL_RenderBufferStorage(GLuint renderBuffer, GLenum internalformat, GLsizei width, GLsizei height);
 static void GL_FramebufferRenderbuffer(GLuint fbref, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
 static void GL_GenRenderBuffers(GLsizei n, GLuint* buffers);
+#else
+#define EZ_USE_FIXED_SAMPLE_LOCATIONS (GL_FALSE)
 #endif
 static GLenum GL_CheckFramebufferStatus(GLuint fbref);
 static void GL_FramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
 static void GL_GenFramebuffers(GLsizei n, GLuint* buffers);
+static void GL_FramebufferBlitSimple(framebuffer_id source_id, framebuffer_id destination_id);
 
 typedef struct framebuffer_data_s {
 	GLuint glref;
@@ -71,81 +80,124 @@ typedef struct framebuffer_data_s {
 	GLsizei width;
 	GLsizei height;
 	GLenum status;
+	int samples;
 } framebuffer_data_t;
 
 static const char* framebuffer_names[] = {
 	"none", // framebuffer_none
-	"std", // framebuffer_std
+	"std", // framebuffer_std,
+	"std-ms", // framebuffer_std_ms,
 	"hud", // framebuffer_hud
+	"hud-ms", // framebuffer_hud_ms,
+	"std-blit", // framebuffer_std_blit
+	"std-blit-ms", // framebuffer_std_blit_ms
+	"hud-blit", // framebuffer_hud_blit
+	"hud-blit-ms", // framebuffer_hud_blit_ms
 };
 static const char* framebuffer_texture_names[] = {
 	"std", // fbtex_standard,
 	"depth", // fbtex_depth
 	"env", // fbtex_bloom,
-	"norms", // fbtex_worldnormals
+	"norms", // fbtex_worldnormals,
 };
 static qbool framebuffer_depth_buffer[] = {
 	false, // framebuffer_none
 	true, // framebuffer_std
+	true, // framebuffer_std_ms
 	false, // framebuffer_hud
+	false, // framebuffer_hud_ms
+	false, // framebuffer_std_blit
+	false, // framebuffer_std_blit_ms
+	false, // framebuffer_hud_blit
+	false, // framebuffer_hud_blit_ms
+};
+static qbool framebuffer_hdr[] = {
+	false, // framebuffer_none
+	true, // framebuffer_std
+	true, // framebuffer_std_ms
+	false, // framebuffer_hud
+	false, // framebuffer_hud_ms
+	false, // framebuffer_std_blit
+	false, // framebuffer_std_blit_ms
+	false, // framebuffer_hud_blit
+	false, // framebuffer_hud_blit_ms
+};
+static qbool framebuffer_alpha[] = {
+	false, // framebuffer_none
+	false, // framebuffer_std
+	false, // framebuffer_std_ms
+	true, // framebuffer_hud
+	true, // framebuffer_hud_ms
+	false, // framebuffer_std_blit
+	false, // framebuffer_std_blit_ms
+	false, // framebuffer_hud_blit
+	false, // framebuffer_hud_blit_ms
+};
+static qbool framebuffer_multisampled[] = {
+	false, // framebuffer_none
+	false, // framebuffer_std
+	true, // framebuffer_std_ms
+	false, // framebuffer_hud
+	true, // framebuffer_hud_ms
+	false, // framebuffer_std_blit
+	true, // framebuffer_std_blit_ms
+	false, // framebuffer_hud_blit
+	true, // framebuffer_hud_blit_ms
+};
+static framebuffer_id framebuffer_multisample_alternate[] = {
+	framebuffer_none,
+	// rendering
+	framebuffer_std_ms,
+	framebuffer_std_ms,
+	framebuffer_hud_ms,
+	framebuffer_hud_ms,
+	// framebuffers used to resolve multisampling
+	framebuffer_none,
+	framebuffer_none,
+	framebuffer_none,
+	framebuffer_none,
 };
 
 #ifdef C_ASSERT
 C_ASSERT(sizeof(framebuffer_names) / sizeof(framebuffer_names[0]) == framebuffer_count);
 C_ASSERT(sizeof(framebuffer_texture_names) / sizeof(framebuffer_texture_names[0]) == fbtex_count);
 C_ASSERT(sizeof(framebuffer_depth_buffer) / sizeof(framebuffer_depth_buffer[0]) == framebuffer_count);
+C_ASSERT(sizeof(framebuffer_multisampled) / sizeof(framebuffer_multisampled[0]) == framebuffer_count);
+C_ASSERT(sizeof(framebuffer_alpha) / sizeof(framebuffer_alpha[0]) == framebuffer_count);
+C_ASSERT(sizeof(framebuffer_hdr) / sizeof(framebuffer_hdr[0]) == framebuffer_count);
+C_ASSERT(sizeof(framebuffer_multisample_alternate) / sizeof(framebuffer_multisample_alternate[0]) == framebuffer_count);
 #endif
 
 static framebuffer_data_t framebuffer_data[framebuffer_count];
-static int framebuffers;
 
 // 
-typedef void (APIENTRY *glGenFramebuffers_t)(GLsizei n, GLuint* ids);
-typedef void (APIENTRY *glDeleteFramebuffers_t)(GLsizei n, GLuint* ids);
-typedef void (APIENTRY *glBindFramebuffer_t)(GLenum target, GLuint framebuffer);
+GL_StaticProcedureDeclaration(glGenFramebuffers, "n=%d, ids=%p", GLsizei n, GLuint* ids)
+GL_StaticProcedureDeclaration(glDeleteFramebuffers, "n=%d, ids=%p", GLsizei n, GLuint* ids)
+GL_StaticProcedureDeclaration(glBindFramebuffer, "target=%u, framebuffer=%u", GLenum target, GLuint framebuffer)
 
-typedef void (APIENTRY *glGenRenderbuffers_t)(GLsizei n, GLuint* ids);
-typedef void (APIENTRY *glDeleteRenderbuffers_t)(GLsizei n, GLuint* ids);
-typedef void (APIENTRY *glBindRenderbuffer_t)(GLenum target, GLuint renderbuffer);
-typedef void (APIENTRY *glRenderbufferStorage_t)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRY *glNamedRenderbufferStorage_t)(GLuint renderbuffer, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRY *glFramebufferRenderbuffer_t)(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-typedef void (APIENTRY *glNamedFramebufferRenderbuffer_t)(GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+GL_StaticProcedureDeclaration(glGenRenderbuffers, "n=%d, ids=%p", GLsizei n, GLuint* ids)
+GL_StaticProcedureDeclaration(glDeleteRenderbuffers, "n=%d, ids=%p", GLsizei n, GLuint* ids)
+GL_StaticProcedureDeclaration(glBindRenderbuffer, "target=%u, renderbuffer=%u", GLenum target, GLuint renderbuffer)
+GL_StaticProcedureDeclaration(glRenderbufferStorage, "target=%u, internalformat=%u, width=%d, height=%d", GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
+GL_StaticProcedureDeclaration(glNamedRenderbufferStorage, "renderbuffer=%u, internalformat=%u, width=%d, height=%d", GLuint renderbuffer, GLenum internalformat, GLsizei width, GLsizei height)
+GL_StaticProcedureDeclaration(glFramebufferRenderbuffer, "target=%u, attachment=%u, renderbuffertarget=%u, renderbuffer=%u", GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
+GL_StaticProcedureDeclaration(glNamedFramebufferRenderbuffer, "framebuffer=%u, attachment=%u, renderbuffertarget=%u, renderbuffer=%u", GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
 
-typedef void (APIENTRY *glFramebufferTexture_t)(GLenum target, GLenum attachment, GLuint texture, GLint level);
-typedef void (APIENTRY *glNamedFramebufferTexture_t)(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level);
-typedef GLenum (APIENTRY *glCheckFramebufferStatus_t)(GLenum target);
-typedef GLenum (APIENTRY *glCheckNamedFramebufferStatus_t)(GLuint framebuffer, GLenum target);
-typedef void (APIENTRY *glBlitFramebuffer_t)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-typedef void (APIENTRY *glBlitNamedFramebuffer_t)(GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-typedef void (APIENTRY *glDrawBuffers_t)(GLsizei n, const GLenum* bufs);
-typedef void (APIENTRY *glClearBufferfv_t)(GLenum buffer, GLint drawbuffer, const GLfloat* value);
+GL_StaticProcedureDeclaration(glFramebufferTexture, "target=%u, attachment=%u, texture=%u, level=%d", GLenum target, GLenum attachment, GLuint texture, GLint level);
+GL_StaticProcedureDeclaration(glNamedFramebufferTexture, "framebuffer=%u, attachment=%u, texture=%u, level=%d", GLuint framebuffer, GLenum attachment, GLuint texture, GLint level)
+GL_StaticFunctionDeclaration(glCheckFramebufferStatus, "target=%u", "result=%u", GLenum, GLenum target)
+GL_StaticFunctionWrapperBody(glCheckFramebufferStatus, GLenum, target)
+GL_StaticFunctionDeclaration(glCheckNamedFramebufferStatus, "framebuffer=%u, target=%u", "result=%u", GLenum, GLuint framebuffer, GLenum target)
+GL_StaticFunctionWrapperBody(glCheckNamedFramebufferStatus, GLenum, framebuffer, target)
+GL_StaticProcedureDeclaration(glBlitFramebuffer, "srcX0=%d, srcY0=%d, srcX1=%d, srcY1=%d, dstX0=%d, dstY0=%d, dstX1=%d, dstY1=%d, mask=%u, filter=%u", GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter)
+GL_StaticProcedureDeclaration(glBlitNamedFramebuffer, "readFrameBuffer=%u, drawFramebuffer=%u, srcX0=%d, srcY0=%d, srcX1=%d, srcY1=%d, dstX0=%d, dstY0=%d, dstX1=%d, dstY1=%d, mask=%u, filter=%u", GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter)
+GL_StaticProcedureDeclaration(glDrawBuffers, "n=%d, bufs=%p", GLsizei n, const GLenum* bufs)
+GL_StaticProcedureDeclaration(glClearBufferfv, "buffer=%u, drawbuffer=%d, value=%p", GLenum buffer, GLint drawbuffer, const GLfloat* value)
+GL_StaticProcedureDeclaration(glClipControl, "origin=%u, depth=%u", GLenum origin, GLenum depth)
 
-typedef void (APIENTRY *glClipControl_t)(GLenum origin, GLenum depth);
-
-static glGenFramebuffers_t qglGenFramebuffers;
-static glDeleteFramebuffers_t qglDeleteFramebuffers;
-static glBindFramebuffer_t qglBindFramebuffer;
-
-static glGenRenderbuffers_t qglGenRenderbuffers;
-static glDeleteRenderbuffers_t qglDeleteRenderbuffers;
-static glBindRenderbuffer_t qglBindRenderbuffer;
-static glRenderbufferStorage_t qglRenderbufferStorage;
-static glNamedRenderbufferStorage_t qglNamedRenderbufferStorage;
-static glFramebufferRenderbuffer_t qglFramebufferRenderbuffer;
-static glNamedFramebufferRenderbuffer_t qglNamedFramebufferRenderbuffer;
-
-static glFramebufferTexture_t qglFramebufferTexture;
-static glNamedFramebufferTexture_t qglNamedFramebufferTexture;
-static glCheckFramebufferStatus_t qglCheckFramebufferStatus;
-static glCheckNamedFramebufferStatus_t qglCheckNamedFramebufferStatus;
-static glDrawBuffers_t qglDrawBuffers;
-static glClearBufferfv_t qglClearBufferfv;
-
-static glBlitFramebuffer_t qglBlitFramebuffer;
-static glBlitNamedFramebuffer_t qglBlitNamedFramebuffer;
-
-static glClipControl_t qglClipControl;
+// Multi-sampled
+GL_StaticProcedureDeclaration(glRenderbufferStorageMultisample, "target=%x, samples=%d, internalformat=%x, width=%d, height=%d", GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height)
+GL_StaticProcedureDeclaration(glNamedRenderbufferStorageMultisample, "renderbuffer=%x, samples=%d, internalformat=%x, width=%d, height=%d", GLuint renderbuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height)
 
 static GLenum glDepthFormats[] = { 0, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT32F };
 typedef enum { r_depthformat_best, r_depthformat_16bit, r_depthformat_24bit, r_depthformat_32bit, r_depthformat_32bit_float, r_depthformat_count } r_depthformat;
@@ -158,7 +210,7 @@ C_ASSERT(sizeof(glDepthFormats) / sizeof(glDepthFormats[0]) == r_depthformat_cou
 #endif
 
 //
-// Initialize framebuffer stuff, Loads procadresses and such.
+// Initialize framebuffer stuff, Loads procaddresses and such.
 //
 void GL_InitialiseFramebufferHandling(void)
 {
@@ -183,7 +235,10 @@ void GL_InitialiseFramebufferHandling(void)
 		GL_LoadMandatoryFunction(glDrawBuffers, framebuffers_supported);
 		GL_LoadMandatoryFunction(glClearBufferfv, framebuffers_supported);
 
+		GL_LoadOptionalFunction(glRenderbufferStorageMultisample);
+
 		glConfig.supported_features |= (framebuffers_supported ? (R_SUPPORT_FRAMEBUFFERS | R_SUPPORT_FRAMEBUFFERS_BLIT) : 0);
+		glConfig.supported_features |= (framebuffers_supported && GL_Available(glRenderbufferStorageMultisample) ? R_SUPPORT_FRAMEBUFFER_MS : 0);
 		if (GL_VersionAtLeast(3, 0) || SDL_GL_ExtensionSupported("GL_ARB_depth_buffer_float")) {
 			glConfig.supported_features |= R_SUPPORT_DEPTH32F;
 		}
@@ -208,7 +263,7 @@ void GL_InitialiseFramebufferHandling(void)
 		GL_LoadMandatoryFunctionEXT(glClearBufferfv, framebuffers_supported);
 
 		glConfig.supported_features |= (framebuffers_supported ? (R_SUPPORT_FRAMEBUFFERS) : 0);
-		glConfig.supported_features |= (framebuffers_supported && (qglBlitFramebuffer != NULL) ? (R_SUPPORT_FRAMEBUFFERS_BLIT) : 0);
+		glConfig.supported_features |= (framebuffers_supported && GL_Available(glBlitFramebuffer) ? (R_SUPPORT_FRAMEBUFFERS_BLIT) : 0);
 		glConfig.supported_features |= SDL_GL_ExtensionSupported("GL_ARB_depth_buffer_float") ? R_SUPPORT_DEPTH32F : 0;
 	}
 
@@ -220,24 +275,45 @@ void GL_InitialiseFramebufferHandling(void)
 		GL_LoadOptionalFunction(glBlitNamedFramebuffer);
 		GL_LoadOptionalFunction(glNamedFramebufferTexture);
 		GL_LoadOptionalFunction(glCheckNamedFramebufferStatus);
+		GL_LoadOptionalFunction(glNamedRenderbufferStorageMultisample);
 	}
 
-	qglClipControl = NULL;
 	// meag: disabled (classic needs glFrustum replaced, modern needs non-rubbish viewweapon
 	//                 depth hack, and near-plane clipping issues when the player is gibbed)
 	/*if (GL_VersionAtLeast(4, 5) || SDL_GL_ExtensionSupported("GL_ARB_clip_control")) {
 		GL_LoadOptionalFunction(glClipControl);
 	}*/
 
-	framebuffers = 1;
 	memset(framebuffer_data, 0, sizeof(framebuffer_data));
+}
+
+void GL_FramebufferSetFiltering(qbool linear)
+{
+	texture_ref tex = framebuffer_data[framebuffer_std].texture[fbtex_standard];
+
+	if (R_TextureReferenceIsValid(tex)) {
+		texture_minification_id min_filter = linear ? texture_minification_linear : texture_minification_nearest;
+		texture_magnification_id mag_filter = linear ? texture_magnification_linear : texture_magnification_nearest;
+
+		renderer.TextureSetFiltering(tex, min_filter, mag_filter);
+	}
+}
+
+static qbool GL_FramebufferCreateRenderingTexture(framebuffer_data_t* fb, fbtex_id tex_id, r_texture_type_id texture_type, GLenum framebuffer_format, const char* label, int width, int height)
+{
+	GL_CreateTexturesWithIdentifier(texture_type, 1, &fb->texture[tex_id], label);
+	GL_TexStorage2D(fb->texture[tex_id], 1, framebuffer_format, width, height, false);
+	renderer.TextureLabelSet(fb->texture[tex_id], label);
+	renderer.TextureWrapModeClamp(fb->texture[tex_id]);
+	R_TextureSetFlag(fb->texture[tex_id], R_TextureGetFlag(fb->texture[tex_id]) | TEX_NO_TEXTUREMODE);
+	return true;
 }
 
 qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 {
 	framebuffer_data_t* fb = NULL;
 	char label[128];
-	qbool hdr = (vid_framebuffer_hdr.integer && GL_VersionAtLeast(3, 0) && id == framebuffer_std);
+	qbool hdr = (vid_framebuffer_hdr.integer && GL_VersionAtLeast(3, 0) && framebuffer_hdr[id]);
 	GLenum framebuffer_format;
 
 	if (!GL_Supported(R_SUPPORT_FRAMEBUFFERS)) {
@@ -249,7 +325,7 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	}
 	else if (vid_gammacorrection.integer) {
 		if (GL_Supported(R_SUPPORT_FRAMEBUFFERS_SRGB)) {
-			framebuffer_format = (id == framebuffer_std ? GL_SRGB8 : GL_SRGB8_ALPHA8);
+			framebuffer_format = framebuffer_alpha[id] ? GL_SRGB8_ALPHA8 : GL_SRGB8;
 		}
 		else {
 			Con_Printf("sRGB framebuffers are not supported on your hardware.\n");
@@ -258,7 +334,7 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 		}
 	}
 	else {
-		framebuffer_format = (id == framebuffer_std ? GL_RGB8 : GL_RGBA8);
+		framebuffer_format = framebuffer_alpha[id] ? GL_RGBA8 : GL_RGB8;
 	}
 
 	fb = &framebuffer_data[id];
@@ -268,29 +344,32 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 
 	memset(fb, 0, sizeof(*fb));
 
+	// Multi-sampling round up to power of 2
+	if (framebuffer_multisampled[id]) {
+		Q_ROUND_POWER2(vid_framebuffer_multisample.integer, fb->samples);
+		fb->samples = bound(0, fb->samples, glConfig.max_multisampling_level);
+		if (vid_framebuffer_multisample.integer != fb->samples) {
+			Cvar_SetValue(&vid_framebuffer_multisample, fb->samples);
+			Con_Printf("&cff0vid_framebuffer_multisample&r has been set to %d\n", fb->samples);
+		}
+	}
+
 	// Render to texture
 	strlcpy(label, framebuffer_names[id], sizeof(label));
 	strlcat(label, "/", sizeof(label));
 	strlcat(label, framebuffer_texture_names[fbtex_standard], sizeof(label));
 
-	//
-	//R_AllocateTextureReferences(texture_type_2d, width, height, hdr ? TEX_NOSCALE | (id == framebuffer_std ? 0 : TEX_ALPHA), 1, &fb->texture[fbtex_standard]);
-	GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_standard], label);
-	GL_TexStorage2D(fb->texture[fbtex_standard], 1, framebuffer_format, width, height, false);
-	renderer.TextureLabelSet(fb->texture[fbtex_standard], label);
-	renderer.TextureSetFiltering(fb->texture[fbtex_standard], texture_minification_linear, texture_minification_linear);
-	renderer.TextureWrapModeClamp(fb->texture[fbtex_standard]);
+	// Create standard rendering texture
+	GL_FramebufferCreateRenderingTexture(fb, fbtex_standard, texture_type_2d, framebuffer_format, label, width, height);
 
-	/*if (id == framebuffer_std) {
-		strlcpy(label, framebuffer_names[id], sizeof(label));
-		strlcat(label, "/", sizeof(label));
-		strlcat(label, framebuffer_texture_names[fbtex_bloom], sizeof(label));
+	// Create multi-sampled texture
+	if (fb->samples) {
+		GL_CreateTexturesWithIdentifier(texture_type_2d_multisampled, 1, &fb->texture[fbtex_standard], label);
+		GL_TexStorage2DMultisample(fb->texture[fbtex_standard], fb->samples, framebuffer_format, width, height, EZ_USE_FIXED_SAMPLE_LOCATIONS);
+	}
 
-		R_AllocateTextureReferences(texture_type_2d, width, height, TEX_NOSCALE | TEX_MIPMAP, 1, &fb->texture[fbtex_bloom]);
-		renderer.TextureLabelSet(fb->texture[fbtex_bloom], label);
-		renderer.TextureSetFiltering(fb->texture[fbtex_bloom], texture_minification_linear, texture_minification_linear);
-		renderer.TextureWrapModeClamp(fb->texture[fbtex_bloom]);
-	}*/
+	// Set linear filtering if requested
+	GL_FramebufferSetFiltering(vid_framebuffer_smooth.integer);
 
 	// Create frame buffer with texture & depth
 	GL_GenFramebuffers(1, &fb->glref);
@@ -300,7 +379,7 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	if (framebuffer_depth_buffer[id]) {
 		GLenum depthFormat = glDepthFormats[bound(0, vid_framebuffer_depthformat.integer, r_depthformat_count - 1)];
 		if (depthFormat == 0) {
-			depthFormat = qglClipControl ? GL_DEPTH_COMPONENT32F : GL_DEPTH_COMPONENT32;
+			depthFormat = GL_Available(glClipControl) ? GL_DEPTH_COMPONENT32F : GL_DEPTH_COMPONENT32;
 		}
 		if (depthFormat == GL_DEPTH_COMPONENT32F && !GL_Supported(R_SUPPORT_DEPTH32F)) {
 			depthFormat = GL_DEPTH_COMPONENT32;
@@ -309,8 +388,14 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 #ifdef GL_USE_RENDER_BUFFERS
 		GL_GenRenderBuffers(1, &fb->depthBuffer);
 		GL_TraceObjectLabelSet(GL_RENDERBUFFER, fb->depthBuffer, -1, "depth-buffer");
-		GL_RenderBufferStorage(fb->depthBuffer, fb->depthFormat = depthFormat, width, height);
-		GL_FramebufferRenderbuffer(fb->glref, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fb->depthBuffer);
+		if (fb->samples) {
+			GL_RenderBufferStorageMultisample(fb->depthBuffer, fb->samples, fb->depthFormat = depthFormat, width, height);
+			GL_FramebufferRenderbuffer(fb->glref, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fb->depthBuffer);
+		}
+		else {
+			GL_RenderBufferStorage(fb->depthBuffer, fb->depthFormat = depthFormat, width, height);
+			GL_FramebufferRenderbuffer(fb->glref, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fb->depthBuffer);
+		}
 #else
 		// create depth texture
 		strlcpy(label, framebuffer_names[id], sizeof(label));
@@ -319,20 +404,20 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 
 		GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_depth], label);
 		GL_TexStorage2D(fb->texture[fbtex_depth], 1, depthFormat, width, height, false);
-		renderer.TextureSetFiltering(fb->texture[fbtex_depth], texture_minification_linear, texture_minification_linear);
+		renderer.TextureSetFiltering(fb->texture[fbtex_depth], min_filter, mag_filter);
 		renderer.TextureWrapModeClamp(fb->texture[fbtex_depth]);
 
 		GL_FramebufferTexture(fb->glref, GL_DEPTH_ATTACHMENT, GL_TextureNameFromReference(fb->texture[fbtex_depth]), 0);
 #endif
 
-		if (qglClipControl) {
+		if (GL_Available(glClipControl)) {
 			if (depthFormat == GL_DEPTH_COMPONENT32F) {
-				qglClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+				GL_Procedure(glClipControl, GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 				glClearDepth(0.0f);
 				glConfig.reversed_depth = true;
 			}
 			else {
-				qglClipControl(GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
+				GL_Procedure(glClipControl, GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
 				glClearDepth(1.0f);
 				glConfig.reversed_depth = false;
 			}
@@ -349,9 +434,40 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	fb->width = width;
 	fb->height = height;
 
-	qglBindFramebuffer(GL_FRAMEBUFFER, 0);
+	GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, 0);
 
-	return fb->status == GL_FRAMEBUFFER_COMPLETE;
+	switch (fb->status) {
+	case GL_FRAMEBUFFER_COMPLETE:
+		return true;
+	case GL_FRAMEBUFFER_UNDEFINED:
+		Con_Printf("&cf00error&r: the specified framebuffer is the default read or draw framebuffer, but the default framebuffer does not exist\n");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+		Con_Printf("&cf00error&r: one of the framebuffer attachment points is framebuffer incomplete\n");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+		Con_Printf("&cf00error&r: framebuffer does not have at least one image attached\n");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
+		Con_Printf("&cf00error&r: incomplete draw buffer\n");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER:
+		Con_Printf("&cf00error&r: incomplete read buffer\n");
+		break;
+	case GL_FRAMEBUFFER_UNSUPPORTED:
+		Con_Printf("&cf00error&r: combination of formats is not supported\n");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE:
+		Con_Printf("&cf00error&r: mixture of renderbuffer/texture sampling levels\n");
+		break;
+	case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
+		Con_Printf("&cf00error&r: incomplete layer targets\n");
+		break;
+	}
+
+	// Rollback, delete objects
+	GL_FramebufferDelete(id);
+	return false;
 }
 
 qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
@@ -364,6 +480,7 @@ qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
 		return false;
 	}
 
+	id = VID_MultisampledAlternateId(id);
 	fb = &framebuffer_data[id];
 	if (!fb->glref) {
 		return false;
@@ -377,20 +494,68 @@ qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
 		strlcat(label, "/", sizeof(label));
 		strlcat(label, framebuffer_texture_names[fbtex_worldnormals], sizeof(label));
 
-		GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_worldnormals], label);
-		if (!R_TextureReferenceIsValid(fb->texture[fbtex_worldnormals])) {
-			return false;
+		if (fb->samples) {
+			GL_CreateTexturesWithIdentifier(texture_type_2d_multisampled, 1, &fb->texture[fbtex_worldnormals], label);
+			if (!R_TextureReferenceIsValid(fb->texture[fbtex_worldnormals])) {
+				return false;
+			}
+			GL_TexStorage2DMultisample(fb->texture[fbtex_worldnormals], fb->samples, GL_RGBA16F, fb->width, fb->height, EZ_USE_FIXED_SAMPLE_LOCATIONS);
 		}
-
-		GL_TexStorage2D(fb->texture[fbtex_worldnormals], 1, GL_RGBA16F, fb->width, fb->height, false);
-		renderer.TextureSetFiltering(fb->texture[fbtex_worldnormals], texture_minification_nearest, texture_minification_nearest);
-		renderer.TextureWrapModeClamp(fb->texture[fbtex_worldnormals]);
+		else {
+			GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &fb->texture[fbtex_worldnormals], label);
+			if (!R_TextureReferenceIsValid(fb->texture[fbtex_worldnormals])) {
+				return false;
+			}
+			GL_TexStorage2D(fb->texture[fbtex_worldnormals], 1, GL_RGBA16F, fb->width, fb->height, false);
+			renderer.TextureSetFiltering(fb->texture[fbtex_worldnormals], texture_minification_nearest, texture_magnification_nearest);
+			renderer.TextureWrapModeClamp(fb->texture[fbtex_worldnormals]);
+		}
+		R_TextureSetFlag(fb->texture[fbtex_worldnormals], R_TextureGetFlag(fb->texture[fbtex_worldnormals]) | TEX_NO_TEXTUREMODE);
 	}
 
 	GL_FramebufferTexture(fb->glref, GL_COLOR_ATTACHMENT1, GL_TextureNameFromReference(fb->texture[fbtex_worldnormals]), 0);
-	qglDrawBuffers(2, buffers);
-	qglClearBufferfv(GL_COLOR, 1, clearValue);
+	GL_Procedure(glDrawBuffers, 2, buffers);
+	GL_Procedure(glClearBufferfv, GL_COLOR, 1, clearValue);
 	return true;
+}
+
+static void GL_MultiSamplingResolve(framebuffer_id src, framebuffer_id target, fbtex_id texture, framebuffer_id temp_src, framebuffer_id temp_dst)
+{
+	// Copy from (multi-sampled) src[texture] => (non-multi-sampled) target[texture]
+	framebuffer_data_t* fb_orig_src = &framebuffer_data[src];
+	framebuffer_data_t* fb_orig_dst = &framebuffer_data[target];
+	framebuffer_data_t* fb_blit_src = &framebuffer_data[temp_src];
+	framebuffer_data_t* fb_blit_dst = &framebuffer_data[temp_dst];
+
+	if (!vid_framebuffer_multisample.integer || !fb_orig_src->glref || !fb_orig_dst->glref) {
+		// nothing to do
+		return;
+	}
+
+	if (temp_src) {
+		if (fb_blit_src->width != fb_orig_src->width || fb_blit_src->height != fb_orig_src->height) {
+			GL_FramebufferDelete(temp_src);
+		}
+		if (!fb_blit_src->glref && !GL_FramebufferCreate(temp_src, fb_orig_src->width, fb_orig_src->height)) {
+			return;
+		}
+	}
+	if (temp_dst) {
+		if (fb_blit_dst->width != fb_orig_dst->width || fb_blit_src->height != fb_orig_dst->height) {
+			GL_FramebufferDelete(temp_dst);
+		}
+		if (!fb_blit_dst->glref && !GL_FramebufferCreate(temp_dst, fb_orig_dst->width, fb_orig_dst->height)) {
+			return;
+		}
+	}
+
+	GL_FramebufferTexture(fb_blit_src->glref, GL_COLOR_ATTACHMENT0, GL_TextureNameFromReference(fb_orig_src->texture[texture]), 0);
+	GL_FramebufferTexture(fb_blit_dst->glref, GL_COLOR_ATTACHMENT0, GL_TextureNameFromReference(fb_orig_dst->texture[texture]), 0);
+
+	GL_FramebufferBlitSimple(temp_src, temp_dst);
+
+	GL_FramebufferTexture(fb_blit_src->glref, GL_COLOR_ATTACHMENT0, 0, 0);
+	GL_FramebufferTexture(fb_blit_dst->glref, GL_COLOR_ATTACHMENT0, 0, 0);
 }
 
 qbool GL_FramebufferEndWorldNormals(framebuffer_id id)
@@ -402,13 +567,19 @@ qbool GL_FramebufferEndWorldNormals(framebuffer_id id)
 		return false;
 	}
 
+	id = VID_MultisampledAlternateId(id);
 	fb = &framebuffer_data[id];
 	if (!fb->glref) {
 		return false;
 	}
 
 	GL_FramebufferTexture(fb->glref, GL_COLOR_ATTACHMENT1, 0, 0);
-	qglDrawBuffers(1, &buffer);
+	GL_Procedure(glDrawBuffers, 1, &buffer);
+
+	if (fb->samples && id == framebuffer_std_ms) {
+		// Resolve multi-samples
+		GL_MultiSamplingResolve(framebuffer_std_ms, framebuffer_std, fbtex_worldnormals, framebuffer_std_blit_ms, framebuffer_std_blit);
+	}
 	return true;
 }
 
@@ -419,7 +590,7 @@ void GL_FramebufferDelete(framebuffer_id id)
 
 	if (id != framebuffer_none && fb->glref) {
 		if (fb->depthBuffer) {
-			qglDeleteRenderbuffers(1, &fb->depthBuffer);
+			GL_Procedure(glDeleteRenderbuffers, 1, &fb->depthBuffer);
 		}
 		for (i = 0; i < sizeof(fb->texture) / sizeof(fb->texture[0]); ++i) {
 			if (R_TextureReferenceIsValid(fb->texture[i])) {
@@ -427,7 +598,7 @@ void GL_FramebufferDelete(framebuffer_id id)
 			}
 		}
 		if (fb->glref) {
-			qglDeleteFramebuffers(1, &fb->glref);
+			GL_Procedure(glDeleteFramebuffers, 1, &fb->glref);
 		}
 
 		memset(fb, 0, sizeof(*fb));
@@ -436,12 +607,16 @@ void GL_FramebufferDelete(framebuffer_id id)
 
 void GL_FramebufferStartUsing(framebuffer_id id)
 {
-	qglBindFramebuffer(GL_FRAMEBUFFER, framebuffer_data[id].glref);
+	GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, framebuffer_data[id].glref);
 }
 
 void GL_FramebufferStartUsingScreen(void)
 {
-	qglBindFramebuffer(GL_FRAMEBUFFER, 0);
+	// resolve any multi-sampling
+	GL_MultiSamplingResolve(framebuffer_std_ms, framebuffer_std, fbtex_standard, framebuffer_std_blit_ms, framebuffer_std_blit);
+	GL_MultiSamplingResolve(framebuffer_hud_ms, framebuffer_hud, fbtex_standard, framebuffer_hud_blit_ms, framebuffer_hud_blit);
+
+	GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, 0);
 }
 
 texture_ref GL_FramebufferTextureReference(framebuffer_id id, fbtex_id tex_id)
@@ -453,29 +628,43 @@ texture_ref GL_FramebufferTextureReference(framebuffer_id id, fbtex_id tex_id)
 #ifdef GL_USE_RENDER_BUFFERS
 static void GL_RenderBufferStorage(GLuint renderBuffer, GLenum internalformat, GLsizei width, GLsizei height)
 {
-	if (qglNamedRenderbufferStorage) {
-		qglNamedRenderbufferStorage(renderBuffer, internalformat, width, height);
+	if (GL_Available(glNamedRenderbufferStorage)) {
+		GL_Procedure(glNamedRenderbufferStorage, renderBuffer, internalformat, width, height);
 	}
-	else if (qglBindRenderbuffer && qglRenderbufferStorage) {
-		qglBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
-		qglRenderbufferStorage(GL_RENDERBUFFER, internalformat, width, height);
+	else if (GL_Available(glBindRenderbuffer) && GL_Available(glRenderbufferStorage)) {
+		GL_Procedure(glBindRenderbuffer, GL_RENDERBUFFER, renderBuffer);
+		GL_Procedure(glRenderbufferStorage, GL_RENDERBUFFER, internalformat, width, height);
 	}
 	else {
-		Sys_Error("ERROR: %s called without driver support", __FUNCTION__);
+		Sys_Error("ERROR: %s called without driver support", __func__);
+	}
+}
+
+static void GL_RenderBufferStorageMultisample(GLuint renderBuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height)
+{
+	if (GL_Available(glNamedRenderbufferStorageMultisample)) {
+		GL_Procedure(glNamedRenderbufferStorageMultisample, renderBuffer, samples, internalformat, width, height);
+	}
+	else if (GL_Available(glBindRenderbuffer) && GL_Available(glRenderbufferStorageMultisample)) {
+		GL_Procedure(glBindRenderbuffer, GL_RENDERBUFFER, renderBuffer);
+		GL_Procedure(glRenderbufferStorageMultisample, GL_RENDERBUFFER, samples, internalformat, width, height);
+	}
+	else {
+		Sys_Error("ERROR: %s called without driver support", __func__);
 	}
 }
 
 static void GL_FramebufferRenderbuffer(GLuint fbref, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
 {
-	if (qglNamedFramebufferRenderbuffer) {
-		qglNamedFramebufferRenderbuffer(fbref, attachment, renderbuffertarget, renderbuffer);
+	if (GL_Available(glNamedFramebufferRenderbuffer)) {
+		GL_Procedure(glNamedFramebufferRenderbuffer, fbref, attachment, renderbuffertarget, renderbuffer);
 	}
-	else if (qglBindFramebuffer && qglFramebufferRenderbuffer) {
-		qglBindFramebuffer(GL_FRAMEBUFFER, fbref);
-		qglFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment, renderbuffertarget, renderbuffer);
+	else if (GL_Available(glBindFramebuffer) && GL_Available(glFramebufferRenderbuffer)) {
+		GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, fbref);
+		GL_Procedure(glFramebufferRenderbuffer, GL_FRAMEBUFFER, attachment, renderbuffertarget, renderbuffer);
 	}
 	else {
-		Sys_Error("ERROR: %s called without driver support", __FUNCTION__);
+		Sys_Error("ERROR: %s called without driver support", __func__);
 	}
 }
 
@@ -483,40 +672,40 @@ static void GL_GenRenderBuffers(GLsizei n, GLuint* buffers)
 {
 	int i;
 
-	qglGenRenderbuffers(n, buffers);
+	GL_Procedure(glGenRenderbuffers, n, buffers);
 
 	for (i = 0; i < n; ++i) {
-		qglBindRenderbuffer(GL_RENDERBUFFER, buffers[i]);
+		GL_Procedure(glBindRenderbuffer, GL_RENDERBUFFER, buffers[i]);
 	}
 }
 #endif
 
 static GLenum GL_CheckFramebufferStatus(GLuint fbref)
 {
-	if (qglCheckNamedFramebufferStatus) {
-		return qglCheckNamedFramebufferStatus(fbref, GL_FRAMEBUFFER);
+	if (GL_Available(glCheckNamedFramebufferStatus)) {
+		return GL_Function(glCheckNamedFramebufferStatus, fbref, GL_FRAMEBUFFER);
 	}
-	else if (qglBindFramebuffer && qglCheckFramebufferStatus) {
-		qglBindFramebuffer(GL_FRAMEBUFFER, fbref);
-		return qglCheckFramebufferStatus(GL_FRAMEBUFFER);
+	else if (GL_Available(glBindFramebuffer) && GL_Available(glCheckFramebufferStatus)) {
+		GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, fbref);
+		return GL_Function(glCheckFramebufferStatus, GL_FRAMEBUFFER);
 	}
 	else {
-		Sys_Error("ERROR: %s called without driver support", __FUNCTION__);
+		Sys_Error("ERROR: %s called without driver support", __func__);
 		return 0;
 	}
 }
 
 static void GL_FramebufferTexture(GLuint framebuffer, GLenum attachment, GLuint texture, GLint level)
 {
-	if (qglNamedFramebufferTexture) {
-		qglNamedFramebufferTexture(framebuffer, attachment, texture, level);
+	if (GL_Available(glNamedFramebufferTexture)) {
+		GL_Procedure(glNamedFramebufferTexture, framebuffer, attachment, texture, level);
 	}
-	else if (qglBindFramebuffer && qglFramebufferTexture) {
-		qglBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-		qglFramebufferTexture(GL_FRAMEBUFFER, attachment, texture, level);
+	else if (GL_Available(glBindFramebuffer) && GL_Available(glFramebufferTexture)) {
+		GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, framebuffer);
+		GL_Procedure(glFramebufferTexture, GL_FRAMEBUFFER, attachment, texture, level);
 	}
 	else {
-		Sys_Error("ERROR: %s called without driver support", __FUNCTION__);
+		Sys_Error("ERROR: %s called without driver support", __func__);
 	}
 }
 
@@ -524,10 +713,9 @@ static void GL_GenFramebuffers(GLsizei n, GLuint* buffers)
 {
 	int i;
 
-	qglGenFramebuffers(n, buffers);
-
+	GL_Procedure(glGenFramebuffers, n, buffers);
 	for (i = 0; i < n; ++i) {
-		qglBindFramebuffer(GL_FRAMEBUFFER, buffers[i]);
+		GL_Procedure(glBindFramebuffer, GL_FRAMEBUFFER, buffers[i]);
 	}
 }
 
@@ -541,7 +729,7 @@ int GL_FrameBufferHeight(framebuffer_id id)
 	return framebuffer_data[id].height;
 }
 
-void GL_FramebufferBlitSimple(framebuffer_id source_id, framebuffer_id destination_id)
+static void GL_FramebufferBlitSimple(framebuffer_id source_id, framebuffer_id destination_id)
 {
 	framebuffer_data_t* src = &framebuffer_data[source_id];
 	framebuffer_data_t* dest = &framebuffer_data[destination_id];
@@ -559,20 +747,21 @@ void GL_FramebufferBlitSimple(framebuffer_id source_id, framebuffer_id destinati
 		filter = GL_LINEAR;
 	}
 
-	if (qglBlitNamedFramebuffer) {
-		qglBlitNamedFramebuffer(
-			src->glref, dest->glref,
+	if (GL_Available(glBlitNamedFramebuffer)) {
+		GL_Procedure(
+			glBlitNamedFramebuffer, src->glref, dest->glref,
 			srcTL[0], srcTL[1], srcTL[0] + srcSize[0], srcTL[1] + srcSize[1],
 			destTL[0], destTL[1], destTL[0] + destSize[0], destTL[1] + destSize[1],
 			GL_COLOR_BUFFER_BIT, filter
 		);
 	}
-	else if (qglBlitFramebuffer) {
+	else if (GL_Available(glBlitFramebuffer)) {
 		// ARB_framebuffer
-		qglBindFramebuffer(GL_READ_FRAMEBUFFER, src->glref);
-		qglBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest->glref);
+		GL_Procedure(glBindFramebuffer, GL_READ_FRAMEBUFFER, src->glref);
+		GL_Procedure(glBindFramebuffer, GL_DRAW_FRAMEBUFFER, dest->glref);
 
-		qglBlitFramebuffer(
+		GL_Procedure(
+			glBlitFramebuffer,
 			srcTL[0], srcTL[1], srcTL[0] + srcSize[0], srcTL[1] + srcSize[1],
 			destTL[0], destTL[1], destTL[0] + destSize[0], destTL[1] + destSize[1],
 			GL_COLOR_BUFFER_BIT, filter
@@ -606,7 +795,8 @@ static void VID_FramebufferFlip(void)
 	if (flip3d || flip2d) {
 		// Screen-wide framebuffer without any processing required, so we can just blit
 		qbool should_blit = (
-			vid_framebuffer_palette.integer == 0 &&
+			//vid_framebuffer_multisample.integer == 0 &&
+			vid_software_palette.integer == 0 &&
 			vid_framebuffer.integer != USE_FRAMEBUFFER_3DONLY &&
 			vid_framebuffer_blit.integer &&
 			(glConfig.supported_features & R_SUPPORT_FRAMEBUFFERS_BLIT)
@@ -623,29 +813,67 @@ static void VID_FramebufferFlip(void)
 			renderer.RenderFramebuffers();
 		}
 	}
+	else if (vid_software_palette.integer) {
+		renderer.RenderFramebuffers();
+	}
+}
+
+static void GL_FramebufferEnsureCreated(framebuffer_id id, int width, int height)
+{
+	framebuffer_data_t* fb = &framebuffer_data[id];
+	int expected_samples = framebuffer_multisampled[id] ? vid_framebuffer_multisample.integer : 0;
+
+	if (!fb->glref) {
+		GL_FramebufferCreate(id, width, height);
+	}
+	else if (fb->width != width || fb->height != height || fb->samples != expected_samples) {
+		GL_FramebufferDelete(id);
+
+		GL_FramebufferCreate(id, width, height);
+	}
+}
+
+static void GL_FramebufferEnsureDeleted(framebuffer_id id)
+{
+	framebuffer_data_t* fb = &framebuffer_data[id];
+
+	if (fb->glref) {
+		GL_FramebufferDelete(id);
+	}
+}
+
+static framebuffer_id VID_MultisampledAlternateId(framebuffer_id id)
+{
+	if (vid_framebuffer_multisample.integer && framebuffer_multisample_alternate[id] && framebuffer_multisample_alternate[id] != id) {
+		return framebuffer_multisample_alternate[id];
+	}
+	return id;
 }
 
 static qbool VID_FramebufferInit(framebuffer_id id, int effective_width, int effective_height)
 {
-	framebuffer_data_t* fb = &framebuffer_data[id];
-
 	if (effective_width && effective_height) {
-		if (!fb->glref) {
-			GL_FramebufferCreate(id, effective_width, effective_height);
-		}
-		else if (fb->width != effective_width || fb->height != effective_height) {
-			GL_FramebufferDelete(id);
+		GL_FramebufferEnsureCreated(id, effective_width, effective_height);
 
-			GL_FramebufferCreate(id, effective_width, effective_height);
-		}
+		if (framebuffer_data[id].glref) {
+			framebuffer_id ms_alt = VID_MultisampledAlternateId(id);
 
-		if (fb->glref) {
-			GL_FramebufferStartUsing(id);
-			return true;
+			if (ms_alt != id) {
+				GL_FramebufferEnsureCreated(ms_alt, effective_width, effective_height);
+
+				if (framebuffer_data[ms_alt].glref) {
+					GL_FramebufferStartUsing(ms_alt);
+					return true;
+				}
+			}
+			else {
+				GL_FramebufferStartUsing(id);
+				return true;
+			}
 		}
 	}
-	else if (fb->glref) {
-		GL_FramebufferDelete(id);
+	else {
+		GL_FramebufferEnsureDeleted(id);
 	}
 
 	return false;
@@ -664,6 +892,7 @@ qbool GL_Framebuffer2DSwitch(void)
 
 		if (VID_FramebufferInit(framebuffer_hud, glConfig.vidWidth, glConfig.vidHeight)) {
 			R_Viewport(0, 0, glConfig.vidWidth, glConfig.vidHeight);
+			R_ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 			glClear(GL_COLOR_BUFFER_BIT);
 			return true;
 		}
@@ -677,17 +906,15 @@ void GL_FramebufferPostProcessScreen(void)
 {
 	qbool framebuffer_active = GL_FramebufferEnabled3D() || GL_FramebufferEnabled2D();
 
-	if (framebuffer_active) {
+	if (framebuffer_active || vid_software_palette.integer) {
 		R_Viewport(glx, gly, glConfig.vidWidth, glConfig.vidHeight);
 
 		VID_FramebufferFlip();
-
-		if (!vid_framebuffer_palette.integer) {
-			// Hardware palette changes
-			V_UpdatePalette();
-		}
 	}
-	else {
+
+	if (!vid_software_palette.integer) {
+		renderer.BrightenScreen();
+
 		// Hardware palette changes
 		V_UpdatePalette();
 	}
@@ -709,5 +936,67 @@ const char* GL_FramebufferZBufferString(framebuffer_id ref)
 	}
 	else {
 		return "unknown z-buffer";
+	}
+}
+
+static qbool GL_ScreenshotFramebuffer(void)
+{
+	extern cvar_t vid_framebuffer_sshotmode;
+
+	return vid_framebuffer_sshotmode.integer && vid_framebuffer.integer == USE_FRAMEBUFFER_SCREEN && GL_FramebufferEnabled3D();
+}
+
+void GL_Screenshot(byte* buffer, size_t size)
+{
+	size_t width = renderer.ScreenshotWidth();
+	size_t height = renderer.ScreenshotHeight();
+
+	GL_PackAlignment(1);
+	if (GL_Available(glBindFramebuffer)) {
+		if (GL_ScreenshotFramebuffer()) {
+			GL_Procedure(glBindFramebuffer, GL_READ_FRAMEBUFFER, framebuffer_data[framebuffer_std].glref);
+		}
+		else {
+			GL_Procedure(glBindFramebuffer, GL_READ_FRAMEBUFFER, 0);
+		}
+	}
+	glReadPixels(0, 0, (GLsizei)width, (GLsizei)height, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+}
+
+size_t GL_ScreenshotWidth(void)
+{
+	if (GL_ScreenshotFramebuffer()) {
+		return framebuffer_data[framebuffer_std].width;
+	}
+
+	return glConfig.vidWidth;
+}
+
+size_t GL_ScreenshotHeight(void)
+{
+	if (GL_ScreenshotFramebuffer()) {
+		return framebuffer_data[framebuffer_std].height;
+	}
+
+	return glConfig.vidHeight;
+}
+
+int GL_FramebufferMultisamples(framebuffer_id framebuffer)
+{
+	framebuffer_data_t* fb = &framebuffer_data[framebuffer];
+
+	if (vid_framebuffer.integer && fb->glref && R_TextureReferenceIsValid(fb->texture[fbtex_standard])) {
+		return fb->samples;
+	}
+
+	return 0;
+}
+
+void GL_FramebufferDeleteAll(void)
+{
+	framebuffer_id i;
+
+	for (i = 0; i < framebuffer_count; ++i) {
+		GL_FramebufferEnsureDeleted(i);
 	}
 }

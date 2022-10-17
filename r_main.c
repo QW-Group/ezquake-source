@@ -33,20 +33,24 @@ void VID_GfxInfo_f(void)
 	renderer.PrintGfxInfo();
 }
 
-void R_Shutdown(qbool restart)
+void R_Shutdown(r_shutdown_mode_t mode)
 {
 	if (renderer.Shutdown) {
-		renderer.Shutdown(restart);
+		renderer.Shutdown(mode);
 	}
 
 	CachePics_Shutdown();
 	R_LightmapShutdown();
-	R_BrushModelFreeMemory();
-	if (renderer.DeleteVAOs) {
-		renderer.DeleteVAOs();
-	}
-	if (buffers.Shutdown) {
-		buffers.Shutdown();
+
+	// Not texture related so leave alone (FIXME: move to renderer.Shutdown)
+	if (mode != r_shutdown_reload) {
+		R_BrushModelFreeMemory();
+		if (renderer.DeleteVAOs) {
+			renderer.DeleteVAOs();
+		}
+		if (buffers.Shutdown) {
+			buffers.Shutdown();
+		}
 	}
 	R_DeleteTextures();
 	R_TexturesInvalidateAllReferences();

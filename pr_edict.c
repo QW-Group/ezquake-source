@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sv_edict.c -- entity dictionary
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 dprograms_t		*progs;
@@ -43,15 +44,16 @@ static int pr_globaloffsetpatch_nq[62] = {0,0,0,0,0,666,-4,-4,8,8,
 8,8,8,8,8,8,8,8,8,8, 8,8,8,8,8,8,8,8,8,8, 8,8};
 #endif
 
-int	type_size[8] = {
-	1,					// void
-	1,	                // string_t
-	1,					// float
-	3,					// vector
-	1,					// entity
-	1,					// field
-	1,              	// func_t
-	1 	                // pointer (its an int index)
+static int type_size[8] =
+{
+	1,                  // void
+	1,                  // string_t
+	1,                  // float
+	3,                  // vector
+	1,                  // entity
+	1,                  // field
+	1,                  // func_t
+	1                   // pointer (its an int index)
 };
 
 ddef_t *ED_FieldAtOfs (int ofs);
@@ -516,16 +518,20 @@ void ED_Print (edict_t *ed)
 		// if the value is still all 0, skip the field
 		type = d->type & ~DEF_SAVEGLOBAL;
 
-		for (j=0 ; j<type_size[type] ; j++)
-			if (v[j])
+		for (j = 0; j < type_size[type]; j++) {
+			if (v[j]) {
 				break;
-		if (j == type_size[type])
+			}
+		}
+		if (j == type_size[type]) {
 			continue;
+		}
 
 		Con_Printf ("%s",name);
 		l = strlen (name);
-		while (l++ < 15)
-			Con_Printf (" ");
+		while (l++ < 15) {
+			Con_Printf(" ");
+		}
 
 		Con_Printf ("%s\n", PR_ValueString((etype_t)d->type, (eval_t *)v));
 	}
@@ -713,7 +719,7 @@ void ED_WriteGlobals (FILE *f)
 ED_ParseGlobals
 =============
 */
-void ED_ParseGlobals (char *data)
+void ED_ParseGlobals (const char *data)
 {
 	char	keyname[64];
 	ddef_t	*key;
@@ -866,7 +872,7 @@ ed should be a properly initialized empty edict.
 Used for initial level load and for savegames.
 ====================
 */
-char *ED_ParseEdict (char *data, edict_t *ent)
+const char *ED_ParseEdict (const char *data, edict_t *ent)
 {
 	ddef_t		*key;
 	qbool		anglehack;
@@ -956,7 +962,7 @@ Used for both fresh maps and savegame loads.  A fresh map would also need
 to call ED_CallSpawnFunctions () to let the objects initialize themselves.
 ================
 */
-void ED_LoadFromFile (char *data)
+void ED_LoadFromFile (const char *data)
 {
 	edict_t		*ent;
 	int			inhibit;
@@ -1269,3 +1275,5 @@ int NUM_FOR_EDICT(edict_t *e)
 
 	return b;
 }
+
+#endif // !CLIENTONLY

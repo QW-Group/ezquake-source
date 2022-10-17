@@ -191,6 +191,7 @@ episode_t    episodes[] = {
 	static void M_CG_BotMatch_Start(void) {
 		const char *cfg;
 		const char *map = bm_map_desc[bm_map_var];
+		extern cvar_t menu_botmatch_gamedir, menu_botmatch_mod_old;
 
 		switch (bm_type_var) {
 			case bmt_arena:		cfg = "arena"; break;
@@ -201,7 +202,16 @@ episode_t    episodes[] = {
 			default:			cfg = "ffa"; break;
 		}
 
-		Cbuf_AddText(va("disconnect;sv_progsname qwprogs;gamedir fbca;exec configs/%s.cfg;map %s\n",cfg,map));
+		Cbuf_AddText("disconnect;sv_progsname qwprogs;");
+		if (menu_botmatch_gamedir.string[0]) {
+			Cbuf_AddText(va("gamedir \"%s\";", menu_botmatch_gamedir.string));
+		}
+		if (menu_botmatch_mod_old.integer) {
+			Cbuf_AddText("cl_sv_packetsync 0\n");
+			Cbuf_AddText("cl_pext_floatcoords 0\n");
+			Cbuf_AddText("sv_bigcoords 0\n");
+		}
+		Cbuf_AddText(va("exec configs/%s.cfg;map %s\n",cfg,map));
 		M_LeaveMenus();
 	}
 

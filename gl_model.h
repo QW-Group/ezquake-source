@@ -65,7 +65,8 @@ typedef struct texture_s {
 	unsigned int        offsets[MIPLEVELS];         //four mip maps stored
 	unsigned int        flatcolor3ub;               //just for r_fastturb's sake
 	qbool               loaded;                     //help speed up vid_restart, actual only for brush models
-	int	                isLumaTexture;
+	int                 isLumaTexture;              //fb is luma texture, rather than normal fb
+	qbool               isAlphaTested;              //texture is flagged for alpha-testing
 	int                 turbType;
 
 	int                 gl_width;
@@ -115,22 +116,26 @@ typedef struct mtexinfo_s {
 
 // Filled in CopyVertToBuffer in glm_brushmodel
 typedef struct vbo_world_vert_s {
+	// Positions 0/4/8
 	vec3_t position;
 
-	float material_coords[2];
-	short lightmap_coords[2];
+	// Positions 12/16/20
+	vec3_t material_coords;
+
+	// Positions 24/28/32
+	vec3_t lightmap_coords;
+
+	// Positions 36/40
 	float detail_coords[2];
 
-	// Index to lightmap texture array.  -1 for turb surfaces (no lightmap)
-	short lightmap_index;
-	// Index to material texture array
-	short material_index;
+	// Positions 44/48/52
+	float flatcolor[3];
 
-	unsigned int surface_num;
+	// Position 56
+	int surface_num;
 
-	// Flags (VBO_WORLD_X)
-	byte flags;
-	byte flatcolor[3];
+	// Position 60 (VBO_WORLD_X)
+	int flags;
 } vbo_world_vert_t;
 
 // Trying to pad out to keep ATI/AMD happy (doesn't seem to make a difference?)
@@ -152,10 +157,14 @@ typedef struct glc_vbo_world_vert_s {
 
 typedef struct vbo_model_vert_s {
 	vec3_t position;
+	int lightnormalindex;
 	vec3_t normal;
+	int padding2;
 	vec3_t direction;
+	int padding3;
 	float texture_coords[2];
 	unsigned int flags;
+	int padding4;
 } vbo_model_vert_t;
 
 typedef struct glpoly_s {
@@ -459,6 +468,18 @@ typedef enum
 #define MAX_SIMPLE_TEXTURES 5
 #define MAX_TEXTURE_ARRAYS_PER_MODEL 64
 
+typedef struct worldspawn_info_s {
+	char skybox_name[MAX_QPATH];
+	float fog_density;
+	vec3_t fog_color;
+	float fog_sky;
+
+	float wateralpha;
+	float lavaalpha;
+	float telealpha;
+	float slimealpha;
+} worldspawn_info_t;
+
 typedef struct model_s {
 	char				name[MAX_QPATH];
 	qbool				needload; // bmodels and sprites don't cache normally
@@ -518,8 +539,9 @@ typedef struct model_s {
 	int					numtextures;
 	texture_t			**textures;
 
-	byte				*visdata;
-	byte				*lightdata;
+	byte*               visdata;
+	int                 visdata_length;
+	byte*               lightdata;
 
 	int					bspversion;
 	qbool				isworldmodel;
@@ -547,6 +569,7 @@ typedef struct model_s {
 
 	msurface_t*         drawflat_chain;
 	qbool               drawflat_todo;
+	qbool               alphapass_todo;
 	int                 first_texture_chained;
 	int                 last_texture_chained;
 	qbool               texturechains_have_lumas;

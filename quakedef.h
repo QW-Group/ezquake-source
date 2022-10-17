@@ -77,6 +77,7 @@ typedef enum {
 	texture_type_2d,
 	texture_type_2d_array,
 	texture_type_cubemap,
+	texture_type_2d_multisampled,
 	texture_type_count
 } r_texture_type_id;
 
@@ -97,5 +98,14 @@ typedef enum {
 
 	texture_magnification_count
 } texture_magnification_id;
+
+#if defined(_WIN32) && defined(_DEBUG)
+#define DebugOutput(text) \
+	if (IsDebuggerPresent()) { \
+		OutputDebugString(text); \
+	}
+#else
+#define DebugOutput(text)
+#endif
 
 #endif /* !__QUAKEDEF_H__ */

@@ -32,12 +32,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 void SCR_Init (void);
 
-#define UPDATESCREEN_MULTIVIEW 1
+#define UPDATESCREEN_MULTIVIEW   1
 #define UPDATESCREEN_POSTPROCESS 2
+#define UPDATESCREEN_3D_ONLY     4
+#define UPDATESCREEN_2D_ONLY     8
 
 qbool SCR_UpdateScreen (void);
 qbool SCR_UpdateScreenPrePlayerView (void);
 void SCR_UpdateScreenPlayerView(int flags);
+void SCR_UpdateScreenHudOnly(void);
 void SCR_UpdateScreenPostPlayerView (void);
 
 void SCR_UpdateWholeScreen (void);
@@ -107,9 +110,12 @@ extern qbool flashed;
 
 void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
 void SCR_TileClear(void);
+void SCR_RestoreAutoID(void);
+void SCR_SaveAutoID(void);
 void SCR_SetupAutoID(void);
 void SCR_RegisterAutoIDCvars(void);
 void SCR_DrawAutoID(void);
+void SCR_DrawAntilagIndicators(void);
 void SShot_RegisterCvars(void);
 qbool SCR_TakingAutoScreenshot(void);
 void SCR_CheckAutoScreenshot(void);

@@ -31,5 +31,13 @@ void main()
 		discard;
 	}
 
+#ifdef PREMULT_ALPHA_HACK
+	// Some people prefer the smoothing effect from ezQuake < 3.5,
+	//   caused by the alpha being blended incorrectly & effectively applied twice
+	texColor.r *= texColor.a;
+	texColor.g *= texColor.a;
+	texColor.b *= texColor.a;
+#endif
+
 	frag_colour = texColor * Colour;
 }

@@ -32,6 +32,8 @@ cvar_t cl_useimagesinfraglog = {"cl_useimagesinfraglog", "0"};
 #define FUH_FRAGFILE_VERSION_1_00	"1.00" /* for compatibility with fuh */
 #define FRAGFILE_VERSION_1_00		"ezquake-1.00" /* fuh suggest such format */
 
+void Update_FlagStatus(int player_num, char *team, qbool got_flag);
+
 typedef enum msgtype_s {
 	mt_fragged,
 	mt_frags,
@@ -485,11 +487,11 @@ typedef struct fragstats_s {
 static fragstats_t fragstats[MAX_CLIENTS];
 static qbool flag_dropped, flag_touched, flag_captured;
 
-static void Stats_ParsePrintLine(char *s, cfrags_format *cff) 
+static void Stats_ParsePrintLine(const char *s, cfrags_format *cff, int offset) 
 {
 	int start_search, end_Search, i, j, k, p1len, msg1len, msg2len, p2len, killer, victim;
 	fragmsg_t *fragmsg;
-	char *start, *name1, *name2, *t;
+	const char *start, *name1, *name2, *t;
 	player_info_t *player1 = NULL, *player2 = NULL;
 
 	for (i = 0; i < MAX_CLIENTS; i++) 
@@ -505,7 +507,7 @@ static void Stats_ParsePrintLine(char *s, cfrags_format *cff)
 		
 		if (!strncmp(start, name1, p1len)) 
 		{
-			cff->p1pos = 0; 
+			cff->p1pos = offset;
 			cff->p1len = p1len; 
 			cff->p1col = player1->topcolor;
 			
@@ -554,7 +556,7 @@ static void Stats_ParsePrintLine(char *s, cfrags_format *cff)
 						
 							if (!strncmp(start, name2, p2len)) 
 							{
-								cff->p2pos = start - s;
+								cff->p2pos = start - s + offset;
 								cff->p2len = p2len;
 								cff->p2col = player2->topcolor;
 								
@@ -686,6 +688,7 @@ foundmatch:
 		case mt_flagtouch:
 		{
 			fragstats[i].touches++;
+			Update_FlagStatus(i, player1->team, true);
 			if (cl.playernum == i || (i == Cam_TrackNum() && cl.spectator))
 				VX_TrackerFlagTouch(fragstats[i].touches);
 			flag_touched = true;
@@ -694,6 +697,7 @@ foundmatch:
 		case mt_flagdrop:
 		{		
 			fragstats[i].fumbles++;
+			Update_FlagStatus(i, player1->team, false);
 			if (cl.playernum == i || (i == Cam_TrackNum() && cl.spectator))
 				VX_TrackerFlagDrop(fragstats[i].fumbles);
 			flag_dropped = true;
@@ -702,6 +706,7 @@ foundmatch:
 		case mt_flagcap:
 		{		
 			fragstats[i].captures++;
+			Update_FlagStatus(i, player1->team, false);
 			if (cl.playernum == i || (i == Cam_TrackNum() && cl.spectator))
 				VX_TrackerFlagCapture(fragstats[i].captures);
 			flag_captured = true;
@@ -714,6 +719,7 @@ foundmatch:
 
 void Stats_ParsePrint(char *s, int level, cfrags_format *cff) {
 	char *start, *end, save;
+	int offset = 0;
 
 	if (!Stats_IsActive())
 		return;
@@ -730,10 +736,11 @@ void Stats_ParsePrint(char *s, int level, cfrags_format *cff) {
 			end++;
 			save = *end;
 			*end = 0;
-			Stats_ParsePrintLine(start, cff);
+			Stats_ParsePrintLine(start, cff, offset);
 			*end = save;
+			offset += (end - s);
 		} else {
-			Stats_ParsePrintLine(start, cff);
+			Stats_ParsePrintLine(start, cff, offset);
 			break;
 		}
 

@@ -31,12 +31,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifdef _WIN32
 WSADATA winsockdata;
+#define EZ_TCP_WOULDBLOCK (WSAEWOULDBLOCK)
+#else
+#define EZ_TCP_WOULDBLOCK (EINPROGRESS)
 #endif
+
 
 #ifndef SERVERONLY
 netadr_t	net_local_cl_ipadr;
 
 void NET_CloseClient (void);
+
+static void cl_net_clientport_changed(cvar_t* var, char* value, qbool* cancel);
+static cvar_t cl_net_clientport = { "cl_net_clientport", "27001", CVAR_AUTO, cl_net_clientport_changed };  // Was PORT_CLIENT in protocol.h
+
+#define MIN_TCP_TIMEOUT  500
+#define MAX_TCP_TIMEOUT 5000
+
+static cvar_t net_tcp_timeout = { "net_tcp_timeout", "2000" };
 #endif
 
 #ifndef CLIENTONLY
@@ -95,6 +107,7 @@ typedef struct packet_queue_s {
 	cl_delayed_packet_t packets[CL_MAX_DELAYED_PACKETS];
 	int head;
 	int tail;
+	qbool outgoing;
 } packet_queue_t;
 
 static packet_queue_t delay_queue_get;
@@ -133,18 +146,54 @@ static qbool NET_PacketQueueRemove(packet_queue_t* queue, sizebuf_t* buffer, net
 static qbool NET_PacketQueueAdd(packet_queue_t* queue, byte* data, int size, netadr_t addr)
 {
 	cl_delayed_packet_t* next = &queue->packets[queue->tail];
-	double time = Sys_DoubleTime();
-	float deviation = f_rnd(-bound(0, cl_delay_packet_dev.integer, CL_MAX_PACKET_DELAY_DEVIATION), bound(0, cl_delay_packet_dev.integer, CL_MAX_PACKET_DELAY_DEVIATION));
+	float deviation = 0;
+	float ms_delay;
+
+	if (cl_delay_packet_dev.integer) {
+		deviation = f_rnd(-bound(0, cl_delay_packet_dev.integer, CL_MAX_PACKET_DELAY_DEVIATION), bound(0, cl_delay_packet_dev.integer, CL_MAX_PACKET_DELAY_DEVIATION));
+	}
 
 	// If buffer is full, can't prevent packet loss - drop this packet
 	if (next->time && queue->head == queue->tail) {
 		return false;
 	}
 
+	// calculate delay based on settings
+	if (cls.state != ca_active) {
+		// not yet connected, go as fast as possible
+		ms_delay = 0;
+	}
+	else if (cl_delay_packet_target.integer && *(int*)data != -1) {
+		if (!queue->outgoing) {
+			// dynamically change delay to target a particular latency
+			int sequence_ack;
+			int sequencemod;
+			double expected_latency;
+
+			MSG_BeginReading();
+			MSG_ReadLong(); // sequence =
+			sequence_ack = MSG_ReadLong();
+			sequence_ack &= ~(1 << 31);
+
+			sequencemod = sequence_ack & UPDATE_MASK;
+			expected_latency = (cls.realtime - cl.frames[sequencemod].senttime) * 1000.0;
+
+			ms_delay = max(0, cl_delay_packet_target.value - expected_latency + deviation);
+		}
+		else {
+			// push some of the delay onto outgoing
+			ms_delay = cls.latency / 2;
+		}
+	}
+	else {
+		// delay by constant amount
+		ms_delay = bound(0, 0.5 * cl_delay_packet.integer + deviation, CL_MAX_PACKET_DELAY);
+	}
+
 	memmove(next->data, data, size);
 	next->length = size;
 	next->addr = addr;
-	next->time = time + 0.001 * bound(0, 0.5 * cl_delay_packet.integer + deviation, CL_MAX_PACKET_DELAY);
+	next->time = Sys_DoubleTime() + 0.001 * ms_delay;
 
 	NET_PacketQueueSetNextIndex(&queue->tail);
 	return true;
@@ -784,7 +833,7 @@ qbool NET_GetPacket (netsrc_t netsrc)
 #ifdef SERVERONLY
 	qbool delay = false;
 #else
-	qbool delay = (netsrc == NS_CLIENT && cl_delay_packet.integer);
+	qbool delay = (netsrc == NS_CLIENT && (cl_delay_packet.integer || cl_delay_packet_target.integer));
 #endif
 
 	return NET_GetPacketEx (netsrc, delay);
@@ -1022,7 +1071,7 @@ qbool TCP_Set_KEEPALIVE(int sock)
 	return true;
 }
 
-int TCP_OpenStream (netadr_t remoteaddr)
+int TCP_OpenStream(netadr_t remoteaddr)
 {
 	unsigned long _true = true;
 	int newsocket;
@@ -1032,29 +1081,64 @@ int TCP_OpenStream (netadr_t remoteaddr)
 	NetadrToSockadr(&remoteaddr, &qs);
 	temp = sizeof(struct sockaddr_in);
 
-	if ((newsocket = socket (((struct sockaddr_in*)&qs)->sin_family, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
-		Con_Printf ("TCP_OpenStream: socket: (%i): %s\n", qerrno, strerror(qerrno));
+	if ((newsocket = socket(((struct sockaddr_in*)&qs)->sin_family, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
+		Con_Printf("TCP_OpenStream: socket: (%i): %s\n", qerrno, strerror(qerrno));
 		return INVALID_SOCKET;
 	}
 
-	if (connect (newsocket, (struct sockaddr *)&qs, temp) == INVALID_SOCKET) {
-		Con_Printf ("TCP_OpenStream: connect: (%i): %s\n", qerrno, strerror(qerrno));
-		closesocket(newsocket);
-		return INVALID_SOCKET;
-	}
-
-#ifndef _WIN32
-	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
-		Con_Printf ("TCP_OpenStream: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
+	// Set socket to non-blocking
+#if !defined(_WIN32)
+	if ((fcntl(newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
+		Con_Printf("TCP_OpenStream: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
 	}
 #endif
 
-	if (ioctlsocket (newsocket, FIONBIO, &_true) == -1) { // make asynchronous
-		Con_Printf ("TCP_OpenStream: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
+	if (ioctlsocket(newsocket, FIONBIO, &_true) == -1) { // make asynchronous
+		Con_Printf("TCP_OpenStream: ioctl: (%i): %s\n", qerrno, strerror(qerrno));
 		closesocket(newsocket);
 		return INVALID_SOCKET;
+	}
+
+	if (connect (newsocket, (struct sockaddr *)&qs, temp) == INVALID_SOCKET) {
+		// Socket is non-blocking, so check if the error is just because it would block
+		if (qerrno == EZ_TCP_WOULDBLOCK) {
+			struct timeval t;
+			fd_set socket_set;
+
+			t.tv_sec = bound(MIN_TCP_TIMEOUT, net_tcp_timeout.integer, MAX_TCP_TIMEOUT) / 1000;
+			t.tv_usec = (bound(MIN_TCP_TIMEOUT, net_tcp_timeout.integer, MAX_TCP_TIMEOUT) % 1000) * 1000;
+
+			FD_ZERO(&socket_set);
+			FD_SET(newsocket, &socket_set);
+
+			if (select(newsocket + 1, NULL, &socket_set, NULL, &t) <= 0) {
+				Con_Printf("TCP_OpenStream: connection timeout\n");
+				closesocket(newsocket);
+				return INVALID_SOCKET;
+			}
+			else {
+				int error = SOCKET_ERROR;
+#ifdef _WIN32
+				int len = sizeof(error);
+#else
+				socklen_t len = sizeof(error);
+#endif
+
+				getsockopt(newsocket, SOL_SOCKET, SO_ERROR, (char*)&error, &len);
+				if (error != 0) {
+					Con_Printf("TCP_OpenStream: connect: (%i): %s\n", error, strerror(error));
+					closesocket(newsocket);
+					return INVALID_SOCKET;
+				}
+			}
+		}
+		else {
+			Con_Printf("TCP_OpenStream: connect: (%i): %s\n", qerrno, strerror(qerrno));
+			closesocket(newsocket);
+			return INVALID_SOCKET;
+		}
 	}
 
 	return newsocket;
@@ -1275,6 +1359,11 @@ void NET_Init (void)
 // TCPCONNECT -->
 	cls.sockettcp = INVALID_SOCKET;
 // <--TCPCONNECT
+
+	Cvar_Register(&cl_net_clientport);
+	Cvar_Register(&net_tcp_timeout);
+
+	delay_queue_send.outgoing = true;
 #endif
 
 #ifndef CLIENTONLY
@@ -1309,32 +1398,113 @@ void NET_Shutdown (void)
 }
 
 #ifndef SERVERONLY
-void NET_InitClient(void)
+static void cl_net_clientport_changed(cvar_t* var, char* value, qbool* cancel)
 {
-	int port = PORT_CLIENT;
-	int p;
+	int new_socket = INVALID_SOCKET;
+	int new_port = atoi(value);
+	qbool set_auto = false;
 
-	p = COM_CheckParm (cmdline_param_net_clientport);
-	if (p && p < COM_Argc()) {
-		port = atoi(COM_Argv(p+1));
+	// No change
+	if (new_port == var->integer) {
+		*cancel = true;
+		return;
 	}
 
-	if (cls.socketip == INVALID_SOCKET)
-		cls.socketip = UDP_OpenSocket (port);
+#ifndef CLIENTONLY
+	// FIXME: Technically this could be changed on the command line or dynamically allocated
+	//        no damage done if they do this when disconnected 
+	if (new_port == PORT_SERVER) {
+		*cancel = true;
+		Con_Printf("Port %i is reserved for the internal server.\n", new_port);
+		return;
+	}
+#endif
 
-	if (cls.socketip == INVALID_SOCKET)
-		cls.socketip = UDP_OpenSocket (PORT_ANY); // any dynamic port
+	// In theory you could be connected to mvd...
+	if (cls.state != ca_disconnected) {
+		Con_Printf("You must be disconnected to change %s.\n", var->name);
+		*cancel = true;
+		return;
+	}
 
-	if (cls.socketip == INVALID_SOCKET)
-		Sys_Error ("Couldn't allocate client socket");
+	if (new_port > 0) {
+		new_socket = UDP_OpenSocket(new_port);
+
+		if (new_socket == INVALID_SOCKET) {
+			Con_Printf("Unable to open new socket on port %d\n", new_port);
+			*cancel = true;
+			return;
+		}
+	}
+	if (new_socket == INVALID_SOCKET) {
+		new_socket = UDP_OpenSocket(PORT_ANY);
+		set_auto = true;
+	}
+	
+	if (new_socket == INVALID_SOCKET) {
+		Con_Printf("Unable to open new socket\n");
+		*cancel = true;
+		return;
+	}
+
+	if (cls.socketip != INVALID_SOCKET) {
+		closesocket(cls.socketip);
+	}
+
+	cls.socketip = new_socket;
+	NET_GetLocalAddress(cls.socketip, &net_local_cl_ipadr);
+	if (set_auto) {
+		Com_Printf("Client port allocated: %i\n", ntohs(net_local_cl_ipadr.port));
+		Cvar_AutoSetInt(var, ntohs(net_local_cl_ipadr.port));
+	}
+	else {
+		Cvar_AutoReset(var);
+	}
+}
+
+// This is called after config loaded
+void NET_InitClient(void)
+{
+	int port = cl_net_clientport.integer;
+	qbool set_auto = false;
+	qbool set = (cls.socketip == INVALID_SOCKET);
+	int p;
+
+	// Allow user to override the config file
+	p = COM_CheckParm(cmdline_param_net_clientport);
+	if (p && p < COM_Argc()) {
+		port = atoi(COM_Argv(p + 1));
+		set_auto = true;
+	}
+
+	if (cls.socketip == INVALID_SOCKET && port > 0)
+		cls.socketip = UDP_OpenSocket(port);
+
+	if (cls.socketip == INVALID_SOCKET) {
+		cls.socketip = UDP_OpenSocket(PORT_ANY); // any dynamic port
+		set_auto = true;
+	}
+
+	if (cls.socketip == INVALID_SOCKET) {
+		Sys_Error("Couldn't allocate client socket");
+		return;
+	}
 
 	// init the message buffer
-	SZ_Init (&net_message, net_message_buffer, sizeof(net_message_buffer));
+	SZ_Init(&net_message, net_message_buffer, sizeof(net_message_buffer));
 
 	// determine my name & address
-	NET_GetLocalAddress (cls.socketip, &net_local_cl_ipadr);
+	NET_GetLocalAddress(cls.socketip, &net_local_cl_ipadr);
+	if (set) {
+		if (set_auto) {
+			Cvar_AutoSetInt(&cl_net_clientport, ntohs(net_local_cl_ipadr.port));
+		}
+		else {
+			Cvar_AutoReset(&cl_net_clientport);
+		}
+	}
 
-	Com_Printf_State (PRINT_OK, "Client port Initialized\n");
+	Com_Printf_State(PRINT_OK, "Client port initialized: %i\n", ntohs(net_local_cl_ipadr.port));
 }
 
 void NET_CloseClient (void)
@@ -1359,6 +1529,13 @@ qbool CL_QueInputPacket(void)
 		return false;
 
 	return NET_PacketQueueAdd(&delay_queue_get, net_message.data, net_message.cursize, net_from);
+}
+
+void CL_ClearQueuedPackets(void)
+{
+	memset(&delay_queue_get, 0, sizeof(delay_queue_get));
+	memset(&delay_queue_send, 0, sizeof(delay_queue_send));
+	delay_queue_send.outgoing = true;
 }
 #endif
 

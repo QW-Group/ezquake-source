@@ -9,9 +9,9 @@ NC='\e[0m'
 
 BUILD_LOG=/tmp/ezquake-build.log
 
-PKGS_DEB="git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev libfreetype6-dev"
-PKGS_RPM="pcre-devel mesa-libGL-devel SDL2-devel make gcc jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel"
-PKGS_ARCH=""
+PKGS_DEB="git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev libfreetype6-dev libsndfile1-dev libpcre3-dev"
+PKGS_RPM="pcre-devel mesa-libGL-devel SDL2-devel make gcc jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libsndfile-devel libXxf86vm-devel"
+PKGS_ARCH="base-devel libpng libjpeg-turbo sdl2 expat libcurl-compat freetype2 speex speexdsp jansson libsndfile"
 
 CPU=$(uname -m | sed -e s/i.86/i386/ -e s/amd64/x86_64/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/alpha/axp/)
 
@@ -53,11 +53,10 @@ install_check_rpm() {
 }
 
 install_check_arch() {
-	error "NOT IMPLEMENTED YET. Feel free to put a pull request on https://github.com/ezQuake/ezquake-source with arch packages"
 	step "Install/check dependecies (packages)..."
 	info "You might be prompted to input your password as superuser privileges are required."
 	sudo pacman -Sy >>$BUILD_LOG 2>&1 || error "Failed to update repository cache. Exiting."
-	sudo pacman -S $PKGS_ARCH >>$BUILD_LOG 2>&1 || error "Failed to install required packages. Exiting."
+	sudo pacman -S --needed --noconfirm $PKGS_ARCH >>$BUILD_LOG 2>&1 || error "Failed to install required packages. Exiting."
 }
 
 
@@ -79,7 +78,9 @@ fi
 [ -n "${VERSION_ID}" ] || VERSION_ID=0
 case $ID in
 	arch)
-		# FIXME: Not implemented yet (package list missing)
+		install_check_arch
+		;;
+	manjaro)
 		install_check_arch
 		;;
 	linuxmint)

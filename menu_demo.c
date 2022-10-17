@@ -463,16 +463,15 @@ void Menu_Demo_Draw (void)
 // </draw pages>
 // =============
 
-void Demo_AddDemoToPlaylist (char *display_name, char *path)
+static void Demo_AddDemoToPlaylist(const char* display_name, const char* path)
 {
-	if (demo_playlist_num >= DEMO_PLAYLIST_MAX)
-	{
-		Com_Printf ("Playlist is full, cannot add \"%s\" to it. Max allowed demos in playlist is %d\n", display_name, DEMO_PLAYLIST_MAX);
+	if (demo_playlist_num >= DEMO_PLAYLIST_MAX) {
+		Com_Printf("Playlist is full, cannot add \"%s\" to it. Max allowed demos in playlist is %d\n", display_name, DEMO_PLAYLIST_MAX);
 		return;
 	}
 
-	snprintf (demo_playlist[demo_playlist_num].name, sizeof((*demo_playlist).name), "%s", display_name);
-	snprintf (demo_playlist[demo_playlist_num].path, sizeof((*demo_playlist).path), "%s", path);
+	snprintf(demo_playlist[demo_playlist_num].name, sizeof((*demo_playlist).name), "%s", display_name);
+	snprintf(demo_playlist[demo_playlist_num].path, sizeof((*demo_playlist).path), "%s", path);
 	demo_playlist_num++;
 }
 
@@ -482,8 +481,7 @@ void Demo_AddDirToPlaylist (char *dir_path)
 	int i;
 	filelist_t dir_filelist;
 
-	if (!dir_path)
-	{
+	if (!dir_path) {
 		return;
 	}
 
@@ -515,47 +513,41 @@ void Demo_AddDirToPlaylist (char *dir_path)
 }
 
 #ifdef WITH_ZIP
-void Demo_AddZipToPlaylist (const char *zip_path)
+void Demo_AddZipToPlaylist(const char *zip_path)
 {
-	char temp_path[MAX_PATH] = {0};
+	unz_global_info global_info;
+	unzFile         zip_file;
+	char            filename[MAX_PATH_LENGTH];
+	unz_file_info   file_info;
+	char            full_queued_path[MAX_PATH_LENGTH];
 
 	// Unpack the files to a temp path.
-	unzFile zip_file = FS_ZipUnpackOpenFile (zip_path);
-	FS_ZipUnpackToTemp (zip_file, false, false, NULL, temp_path, sizeof(temp_path));
-	FS_ZipUnpackCloseFile (zip_file);
+	zip_file = FS_ZipUnpackOpenFile(zip_path);
 
-	if (temp_path[0])
-	{
-		Demo_AddDirToPlaylist (temp_path);
+	// Get the number of files in the zip archive.
+	if (unzGetGlobalInfo(zip_file, &global_info) == UNZ_OK) {
+		int i;
+
+		for (i = 0; i < global_info.number_entry; ++i) {
+			if (i && unzGoToNextFile(zip_file) != UNZ_OK) {
+				break;
+			}
+
+			if (unzGetCurrentFileInfo(zip_file, &file_info, filename, sizeof(filename), NULL, 0, NULL, 0) != UNZ_OK) {
+				break;
+			}
+
+			if (!CL_DemoExtensionMatch(filename)) {
+				continue;
+			}
+
+			strlcpy(full_queued_path, zip_path, sizeof(full_queued_path));
+			strlcat(full_queued_path, "/", sizeof(full_queued_path));
+			strlcat(full_queued_path, filename, sizeof(full_queued_path));
+			Demo_AddDemoToPlaylist(COM_SkipPath(filename), filename);
+		}
 	}
 }
-
-#ifdef WITH_VFS_ARCHIVE_LOADING
-// VFS-FIXME: This is probably the wrong thing to do
-// AddDir to playlist adds the whole directory, not just the current
-// file
-void Demo_AddArchiveToPlayList(const char *archive_path) {
-	searchpathfuncs_t *funcs;
-	vfsfile_t *vfs = NULL;
-	void  *archive_handle = NULL;
-
-	vfs = FS_OpenVFS(archive_path, "rb", FS_NONE_OS);
-	funcs = FS_FileNameToSearchFunctions(archive_path);
-	if (!funcs) goto fail;
-
-	archive_handle = funcs->OpenNew(vfs, archive_path);
-	if (!archive_handle) goto fail;
-
-	return;
-
-fail:
-	if (archive_handle)
-		funcs->ClosePath(archive_handle); // This closes vfs aswell
-	else if (vfs)
-		VFS_CLOSE(vfs);
-	return;
-}
-#endif // WITH_VFS_ARCHIVE_LOADING
 #endif // WITH_ZIP
 
 // ==============================
@@ -893,10 +885,6 @@ void Menu_Demo_Init(void)
 	FL_AddFileType(&demo_filelist, 1, ".qwz");
 	FL_AddFileType(&demo_filelist, 2, ".mvd");
 	FL_AddFileType(&demo_filelist, 3, ".dem");
-	#ifdef WITH_VFS_ARCHIVE_LOADING
-	FL_AddFileType(&demo_filelist, 4, ".tar");
-	FL_AddFileType(&demo_filelist, 4, ".pak");
-	#endif // WITH_VFS_ARCHIVE_LOADING
 	#ifdef WITH_ZLIB
 	FL_AddFileType(&demo_filelist, 4, ".gz");
 	#endif // WITH_ZLIB

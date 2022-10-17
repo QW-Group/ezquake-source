@@ -29,11 +29,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 cvar_t gl_program_sky          = { "gl_program_sky",           "1" };
 cvar_t gl_program_turbsurfaces = { "gl_program_turbsurfaces",  "1" };
-cvar_t gl_program_aliasmodels  = { "gl_program_aliasmodels",   "1", CVAR_LATCH };
+cvar_t gl_program_aliasmodels  = { "gl_program_aliasmodels",   "1", CVAR_LATCH_GFX };
 cvar_t gl_program_world        = { "gl_program_world",         "1" };
 cvar_t gl_program_sprites      = { "gl_program_sprites",       "1" };
 cvar_t gl_program_hud          = { "gl_program_hud",           "1" };
 
+static qbool glc_program_cvars_initialized = false;
 static cvar_t* gl_program_cvars[] = {
 	&gl_program_sky,
 	&gl_program_turbsurfaces,
@@ -90,6 +91,8 @@ static void GLC_Begin2DRendering(void)
 #define GLC_EnsureFinished                 GL_EnsureFinished
 #define GLC_RenderView                     GLC_NoOperation
 #define GLC_Screenshot                     GL_Screenshot
+#define GLC_ScreenshotWidth                GL_ScreenshotWidth
+#define GLC_ScreenshotHeight               GL_ScreenshotHeight
 #define GLC_InitialiseVAOState             GL_InitialiseVAOState
 #define GLC_DescriptiveString              GL_DescriptiveString
 #define GLC_Draw3DSprites                  GLC_NoOperation
@@ -103,7 +106,8 @@ static void GLC_Begin2DRendering(void)
 #else
 #define GLC_TextureLabelSet                GLC_TextureLabelSetNull
 #endif
-#define GLC_TextureUnitBind                GL_EnsureTextureUnitBound
+#define GLC_TextureIsUnitBound             GL_IsTextureBound
+#define GLC_TextureUnitBind                GL_EnsureTextureUnitBoundAndSelect
 #define GLC_TextureGet                     GL_TextureGet
 #define GLC_TextureCompressionSet          GL_TextureCompressionSet
 #define GLC_TextureCreate2D                GL_TextureCreate2D
@@ -117,6 +121,7 @@ static void GLC_Begin2DRendering(void)
 #define GLC_ProgramsInitialise             GL_ProgramsInitialise
 #define GLC_ProgramsShutdown               GL_ProgramsShutdown
 #define GLC_FramebufferCreate              GL_FramebufferCreate
+#define GLC_PrepareAliasModel              GL_PrepareAliasModel
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \
@@ -130,7 +135,7 @@ void GLC_Initialise(void)
 	extern cvar_t vid_gl_core_profile;
 #include "r_renderer_structure.h"
 
-	if (!host_initialized) {
+	if (!glc_program_cvars_initialized) {
 		Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
 		for (i = 0; i < sizeof(gl_program_cvars) / sizeof(gl_program_cvars[0]); ++i) {
 			if (!(gl_program_cvars[i]->flags & CVAR_LATCH)) {
@@ -139,6 +144,7 @@ void GLC_Initialise(void)
 		}
 
 		Cvar_ResetCurrentGroup();
+		glc_program_cvars_initialized = true;
 	}
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_OPENGL);
@@ -187,8 +193,14 @@ void GLC_Initialise(void)
 		Con_Printf("&c0f0INFO&r: immediate-mode rendering disabled.\n");
 	}
 	else {
+		// make optional
 		for (i = 0; i < sizeof(gl_program_cvars) / sizeof(gl_program_cvars[0]); ++i) {
 			Cvar_SetFlags(gl_program_cvars[i], Cvar_GetFlags(gl_program_cvars[i]) & ~CVAR_ROM);
+		}
+		if (!renderer.vaos_supported) {
+			// disable aliasmodel program rendering, it requires attributes
+			Cvar_LatchedSetValue(&gl_program_aliasmodels, 0);
+			Cvar_SetFlags(&gl_program_aliasmodels, Cvar_GetFlags(&gl_program_aliasmodels) | CVAR_ROM);
 		}
 		glConfig.supported_features |= R_SUPPORT_IMMEDIATEMODE;
 	}

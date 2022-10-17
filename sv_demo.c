@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // sv_demo.c - mvd demo related code
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 // minimal cache which can be used for demos, must be few times greater than DEMO_FLUSH_CACHE_IF_LESS_THAN_THIS
@@ -162,9 +163,9 @@ void DestClose (mvddest_t *d, qbool destroyfiles)
 }
 
 //
-// compleate - just force flush for chached dests (dest->desttype == DEST_BUFFEREDFILE)
+// complete - just force flush for cached dests (dest->desttype == DEST_BUFFEREDFILE)
 //
-void DestFlush (qbool compleate)
+void DestFlush (qbool complete)
 {
 	int len;
 	mvddest_t *d, *t;
@@ -195,7 +196,7 @@ void DestFlush (qbool compleate)
 			break;
 
 		case DEST_BUFFEREDFILE:
-			if (d->cacheused + DEMO_FLUSH_CACHE_IF_LESS_THAN_THIS > d->maxcachesize || compleate)
+			if (d->cacheused + DEMO_FLUSH_CACHE_IF_LESS_THAN_THIS > d->maxcachesize || complete)
 			{
 				len = (int)fwrite(d->cache, 1, d->cacheused, d->file);
 				if (len != d->cacheused)
@@ -476,6 +477,20 @@ qbool MVDWrite_Begin (byte type, int to, int size)
 	return (sv.mvdrecording ? true : false);
 }
 
+qbool MVDWrite_HiddenBlockBegin(int length)
+{
+	return MVDWrite_Begin(dem_multiple, 0, length);
+}
+
+qbool MVDWrite_HiddenBlock(const void* data, int length)
+{
+	if (MVDWrite_HiddenBlockBegin(length)) {
+		MVD_SZ_Write(data, length);
+		return true;
+	}
+	return false;
+}
+
 /*
 ====================
 MVD_FrameDeltaTime
@@ -541,6 +556,31 @@ static qbool MVD_WriteMessage (sizebuf_t *msg, byte msec)
 	return (sv.mvdrecording ? true : false);
 }
 
+static void SV_MVDWritePausedTimeToStreams(demo_frame_t* frame)
+{
+	// When writing out a paused frame, send a packet to let QTV keep delay in sync
+	if (frame->paused) {
+		mvddest_t* d;
+		sizebuf_t msg;
+		byte msg_buffer[128];
+		byte duration = frame->pause_duration;
+
+		SZ_Init(&msg, msg_buffer, sizeof(msg_buffer));
+		MSG_WriteByte(&msg, 0);                                           //     0: duration == 0, for demos
+		MSG_WriteByte(&msg, dem_multiple);                                //     1: target of the packet
+		MSG_WriteLong(&msg, 0);                                           //  2- 5: 0 ... demo_multiple(0) => hidden packet
+		MSG_WriteLong(&msg, LittleLong(sizeof(short) + sizeof(byte)));    //  6-10: length = <short> + <byte>
+		MSG_WriteShort(&msg, LittleShort(mvdhidden_paused_duration));     // 11-12: tell QTV how much time has really passed
+		MSG_WriteByte(&msg, duration);                                    //    13: true ms value, as demo packets will have 0
+
+		for (d = demo.dest; d; d = d->nextdest) {
+			if (d->desttype == DEST_STREAM) {
+				DemoWriteDest(msg.data, msg.cursize, d);
+			}
+		}
+	}
+}
+
 /*
 ====================
 SV_MVDWritePackets
@@ -549,7 +589,6 @@ Interpolates to get exact players position for current frame
 and writes packets to the disk/memory
 ====================
 */
-
 static qbool SV_MVDWritePacketsEx (int num)
 {
 	demo_frame_t	*frame, *nextframe;
@@ -579,6 +618,8 @@ static qbool SV_MVDWritePacketsEx (int num)
 		frame = &demo.frames[demo.lastwritten&UPDATE_MASK];
 		time1 = frame->time;
 		nextframe = frame;
+
+		SV_MVDWritePausedTimeToStreams(frame);
 
 		// find two frames
 		// one before the exact time (time - msec) and one after,
@@ -950,7 +991,7 @@ void SV_MVDStop (int reason, qbool mvdonly)
 				SV_BroadcastPrintf (PRINT_CHAT, "Server recording completed\n");
 		}
 		else
-			SV_BroadcastPrintf (PRINT_CHAT, "Server recording stoped\nMax demo size exceeded\n");
+			SV_BroadcastPrintf (PRINT_CHAT, "Server recording stopped\nMax demo size exceeded\n");
 	}
 
 	Cvar_SetROM(&serverdemo, "");
@@ -1136,44 +1177,38 @@ qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange)
 	return true;
 }
 
-void SV_MVD_SendInitialGamestate(mvddest_t *dest)
+void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 {
 	sizebuf_t	buf;
 	unsigned char buf_data[MAX_MSGLEN];
 	unsigned int n;
-	char *s, info[MAX_EXT_INFO_STRING];
+	char* s, info[MAX_EXT_INFO_STRING];
 
-	client_t *player;
-	edict_t *ent;
-	char *gamedir;
+	client_t* player;
+	edict_t* ent;
+	char* gamedir;
 	int i;
 
 	if (!demo.dest)
 		return;
 
 	sv.mvdrecording = true; // NOTE:  afaik set to false on map change, so restore it here
-	
-	
 	demo.pingtime = demo.time = sv.time;
-
-
 	singledest = dest;
 
 	/*-------------------------------------------------*/
 
 	// serverdata
 	// send the info about the new client to all connected clients
-	memset(&buf, 0, sizeof(buf));
-	buf.data = buf_data;
-	buf.maxsize = sizeof(buf_data);
+	SZ_Init(&buf, buf_data, sizeof(buf_data));
 
 	// send the serverdata
 
-	gamedir = Info_ValueForKey (svs.info, "*gamedir");
+	gamedir = Info_ValueForKey(svs.info, "*gamedir");
 	if (!gamedir[0])
 		gamedir = "qw";
 
-	MSG_WriteByte (&buf, svc_serverdata);
+	MSG_WriteByte(&buf, svc_serverdata);
 
 #ifdef FTE_PEXT_FLOATCOORDS
 	//fix up extensions to match sv_bigcoords correctly. sorry for old clients not working.
@@ -1196,6 +1231,15 @@ void SV_MVD_SendInitialGamestate(mvddest_t *dest)
 	{
 		MSG_WriteLong(&buf, PROTOCOL_VERSION_FTE2);
 		MSG_WriteLong(&buf, demo.recorder.fteprotocolextensions2);
+	}
+#endif
+
+#ifdef PROTOCOL_VERSION_MVD1
+	demo.recorder.mvdprotocolextensions1 |= MVD_PEXT1_HIDDEN_MESSAGES;
+	if (demo.recorder.mvdprotocolextensions1)
+	{
+		MSG_WriteLong(&buf, PROTOCOL_VERSION_MVD1);
+		MSG_WriteLong(&buf, demo.recorder.mvdprotocolextensions1);
 	}
 #endif
 
@@ -1411,7 +1455,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t *dest)
 
 		MSG_WriteByte (&buf, svc_updateentertime);
 		MSG_WriteByte (&buf, i);
-		MSG_WriteFloat (&buf, realtime - player->connection_started);
+		MSG_WriteFloat (&buf, SV_ClientGameTime(player));
 
 		Info_ReverseConvert(&player->_userinfoshort_ctx_, info, sizeof(info));
 		Info_RemovePrefixedKeys (info, '_');	// server passwords, etc
@@ -1768,7 +1812,7 @@ static void MVD_Init (void)
 
 	Cvar_Register (&extralogname);
 
-	p = COM_CheckParm (cmdline_param_server_democache_kb);
+	p = SV_CommandLineDemoCacheArgument();
 	if (p)
 	{
 		if (p < COM_Argc()-1)
@@ -1787,7 +1831,47 @@ static void MVD_Init (void)
 	CleanName_Init();
 }
 
-void SV_MVDInit (void)
+void SV_UserCmdTrace_f(void)
+{
+	const char* user = Cmd_Argv(1);
+	const char* option_ = Cmd_Argv(2);
+	qbool option = false;
+	int uid, i;
+
+	if (Cmd_Argc() != 3) {
+		Con_Printf("Usage: %s userid (on | off)\n", Cmd_Argv(0));
+		return;
+	}
+
+	if (!strcmp(option_, "on")) {
+		option = true;
+	}
+	else if (strcmp(option_, "off")) {
+		Con_Printf("Usage: %s userid (on | off)\n", Cmd_Argv(0));
+		return;
+	}
+
+	uid = atoi(user);
+	if (!uid) {
+		Con_Printf("Usage: %s userid (on | off)\n", Cmd_Argv(0));
+		return;
+	}
+
+	for (i = 0; i < MAX_CLIENTS; i++) {
+		if (!svs.clients[i].state) {
+			continue;
+		}
+		if (svs.clients[i].userid == uid) {
+			svs.clients[i].mvd_write_usercmds = option;
+			return;
+		}
+	}
+
+	Con_Printf("Couldn't find userid %d\n", uid);
+	return;
+}
+
+void SV_MVDInit(void)
 {
 	MVD_Init();
 
@@ -1818,8 +1902,11 @@ void SV_MVDInit (void)
 	Cmd_AddCommand ("sv_demoinfoadd",	SV_MVDInfoAdd_f);
 	Cmd_AddCommand ("sv_demoinforemove",SV_MVDInfoRemove_f);
 	Cmd_AddCommand ("sv_demoinfo",		SV_MVDInfo_f);
+	Cmd_AddCommand ("sv_demoembedinfo", SV_MVDEmbedInfo_f);
 	// not prefixed.
 	Cmd_AddCommand ("script",			SV_Script_f);
+
+	Cmd_AddCommand ("sv_usercmdtrace",  SV_UserCmdTrace_f);
 
 	SV_QTV_Init();
 }
@@ -1832,10 +1919,12 @@ const char* SV_MVDDemoName(void)
 		if (d->desttype == DEST_STREAM) {
 			continue; // streams are not saved on to HDD, so ignore it...
 		}
-		if (d->name && d->name[0]) {
+		if (d->name[0]) {
 			return d->name;
 		}
 	}
 
 	return NULL;
 }
+
+#endif // !CLIENTONLY

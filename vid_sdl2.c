@@ -38,6 +38,7 @@ void Sys_ActiveAppChanged (void);
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
+#include <OpenGL/OpenGL.h>
 #include "in_osx.h"
 #else
 #include <GL/gl.h>
@@ -63,6 +64,20 @@ void Sys_ActiveAppChanged (void);
 SDL_GLContext GLM_SDL_CreateContext(SDL_Window* window);
 SDL_GLContext GLC_SDL_CreateContext(SDL_Window* window);
 
+#ifdef __linux__
+// This is hack to ignore keyboard events we receive between FOCUS_GAINED & TAKE_FOCUS
+// Without it the keys you press to switch back to ezQuake will fire, which is probably not desired
+// Affects X11 only - might also be needed on FreeBSD/OSX?
+static qbool block_keyboard_input = false;
+#endif
+#ifdef __APPLE__
+static int deadkey_modifiers_held_down = 0;
+static cvar_t in_ignore_deadkeys = { "in_ignore_deadkeys", "1", CVAR_SILENT };
+
+#define APPLE_RALT_HELD_DOWN 1
+#define APPLE_LALT_HELD_DOWN 2
+#endif
+
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
 #define VID_RENDERER_MIN 0
@@ -82,6 +97,8 @@ extern void TP_ExecTrigger(const char *);
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel);
 static void in_grab_windowed_mouse_callback(cvar_t *var, char *value, qbool *cancel);
 static void conres_changed_callback (cvar_t *var, char *string, qbool *cancel);
+static void framebuffer_smooth_changed_callback(cvar_t* var, char* string, qbool* cancel);
+static void vid_reload_callback(cvar_t* var, char* string, qbool* cancel);
 static void GrabMouse(qbool grab, qbool raw);
 static void HandleEvents(void);
 static void VID_UpdateConRes(void);
@@ -119,6 +136,24 @@ static int last_working_hz;
 static int last_working_display;
 static qbool last_working_values = false;
 
+// deferred events (Sys_SendDeferredKeyEvents)
+static qbool wheelup_deferred = false;
+static qbool wheeldown_deferred = false;
+
+// vid_reload
+#define CVAR_RELOAD_GFX_COMMAND "vid_reload"
+static qbool vid_reload_pending = false;
+static cvar_t vid_reload_auto = { "vid_reload_auto", "1", 0, vid_reload_callback };
+
+static void vid_reload_callback(cvar_t* var, char* string, qbool* cancel)
+{
+	vid_reload_pending = false;
+
+	if (atoi(string) != 0) {
+		vid_reload_pending = Cvar_AnyModified(CVAR_RELOAD_GFX);
+	}
+}
+
 //
 // OS dependent cvar defaults
 //
@@ -140,33 +175,37 @@ static qbool last_working_values = false;
 extern cvar_t sys_inactivesleep;
 
 // latched variables that can only change over a restart
-cvar_t r_colorbits                = {"vid_colorbits",              "0",       CVAR_LATCH };
-cvar_t r_24bit_depth              = {"vid_24bit_depth",            "1",       CVAR_LATCH };
-cvar_t r_fullscreen               = {"vid_fullscreen",             "1",       CVAR_LATCH };
-cvar_t r_displayRefresh           = {"vid_displayfrequency",       "0",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_displayNumber          = {"vid_displaynumber",          "0",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_usedesktopres          = {"vid_usedesktopres",          "1",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_win_borderless         = {"vid_win_borderless",         "0",       CVAR_LATCH };
-cvar_t vid_width                  = {"vid_width",                  "0",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_height                 = {"vid_height",                 "0",       CVAR_LATCH | CVAR_AUTO };
-cvar_t vid_win_width              = {"vid_win_width",              "640",     CVAR_LATCH };
-cvar_t vid_win_height             = {"vid_win_height",             "480",     CVAR_LATCH };
-cvar_t vid_hwgammacontrol         = {"vid_hwgammacontrol",         "2",       CVAR_LATCH };
-cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CVAR_LATCH };
+cvar_t r_colorbits                = {"vid_colorbits",              "0",       CVAR_LATCH_GFX };
+cvar_t r_24bit_depth              = {"vid_24bit_depth",            "1",       CVAR_LATCH_GFX };
+cvar_t r_fullscreen               = {"vid_fullscreen",             "1",       CVAR_LATCH_GFX };
+cvar_t r_displayRefresh           = {"vid_displayfrequency",       "0",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_displayNumber          = {"vid_displaynumber",          "0",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_usedesktopres          = {"vid_usedesktopres",          "1",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_win_borderless         = {"vid_win_borderless",         "0",       CVAR_LATCH_GFX };
+cvar_t vid_width                  = {"vid_width",                  "0",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_height                 = {"vid_height",                 "0",       CVAR_LATCH_GFX | CVAR_AUTO };
+cvar_t vid_win_width              = {"vid_win_width",              "640",     CVAR_LATCH_GFX };
+cvar_t vid_win_height             = {"vid_win_height",             "480",     CVAR_LATCH_GFX };
+cvar_t vid_hwgammacontrol         = {"vid_hwgammacontrol",         "2",       CVAR_LATCH_GFX };
+cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CVAR_LATCH_GFX };
 // TODO: Move the in_* cvars
 cvar_t in_raw                     = {"in_raw",                     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
-cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH }; /* Needs vid_restart thus vid_.... */
+cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          CVAR_DEF2, CVAR_LATCH_GFX }; /* Needs vid_restart thus vid_.... */
 #ifdef EZ_MULTIPLE_RENDERERS
-cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH };
+cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH_GFX };
 #endif
-cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH };
+cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH_GFX };
 
 #ifdef X11_GAMMA_WORKAROUND
-cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH  };
+cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH_GFX };
 #endif
 
 cvar_t in_release_mouse_modes     = {"in_release_mouse_modes",     "2",       CVAR_SILENT };
+cvar_t in_ignore_touch_events     = {"in_ignore_touch_events",     "1",       CVAR_SILENT };
+#ifdef __linux__
+cvar_t in_ignore_unfocused_keyb   = {"in_ignore_unfocused_keyb",   "0",       CVAR_SILENT };
+#endif
 cvar_t vid_vsync_lag_fix          = {"vid_vsync_lag_fix",          "0"                    };
 cvar_t vid_vsync_lag_tweak        = {"vid_vsync_lag_tweak",        "1.0"                  };
 cvar_t r_swapInterval             = {"vid_vsync",                  "0",       CVAR_SILENT };
@@ -181,18 +220,21 @@ cvar_t r_conscale                 = {"vid_conscale",               "2.0",     CV
 cvar_t vid_flashonactivity        = {"vid_flashonactivity",        "1",       CVAR_SILENT };
 cvar_t r_verbose                  = {"vid_verbose",                "0",       CVAR_SILENT };
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
-cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH | CVAR_AUTO }; // It's here because it needs to be registered before window creation
-cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "0",       CVAR_LATCH };
+cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH_GFX | CVAR_AUTO }; // It's here because it needs to be registered before window creation
+cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "0",       CVAR_LATCH_GFX };
+cvar_t vid_software_palette       = {"vid_software_palette",       "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
 
-cvar_t vid_framebuffer             = {"vid_framebuffer",               "0",       CVAR_NO_RESET | CVAR_LATCH, conres_changed_callback };
+cvar_t vid_framebuffer             = {"vid_framebuffer",               "0",       CVAR_NO_RESET | CVAR_LATCH_GFX, conres_changed_callback };
 cvar_t vid_framebuffer_blit        = {"vid_framebuffer_blit",          "0",       CVAR_NO_RESET };
 cvar_t vid_framebuffer_width       = {"vid_framebuffer_width",         "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
 cvar_t vid_framebuffer_height      = {"vid_framebuffer_height",        "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
 cvar_t vid_framebuffer_scale       = {"vid_framebuffer_scale",         "1",       CVAR_NO_RESET, conres_changed_callback };
-cvar_t vid_framebuffer_palette     = {"vid_framebuffer_palette",       "0",       CVAR_NO_RESET | CVAR_LATCH };
-cvar_t vid_framebuffer_depthformat = {"vid_framebuffer_depthformat",   "0",       CVAR_NO_RESET | CVAR_LATCH };
-cvar_t vid_framebuffer_hdr         = {"vid_framebuffer_hdr",           "0",       CVAR_NO_RESET | CVAR_LATCH };
+cvar_t vid_framebuffer_depthformat = {"vid_framebuffer_depthformat",   "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
+cvar_t vid_framebuffer_hdr         = {"vid_framebuffer_hdr",           "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
 cvar_t vid_framebuffer_hdr_tonemap = {"vid_framebuffer_hdr_tonemap",   "0" };
+cvar_t vid_framebuffer_smooth      = {"vid_framebuffer_smooth",        "1",       CVAR_NO_RESET, framebuffer_smooth_changed_callback };
+cvar_t vid_framebuffer_sshotmode   = {"vid_framebuffer_sshotmode",     "1" };
+cvar_t vid_framebuffer_multisample = {"vid_framebuffer_multisample",   "0" };
 
 //
 // function declaration
@@ -220,6 +262,13 @@ qbool IN_QuakeMouseCursorRequired(void)
 	return mouse_active && IN_MouseTrackingRequired() && !IN_OSMouseCursorRequired();
 }
 
+static void IN_SnapMouseBackToCentre(void)
+{
+	SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
+	old_x = glConfig.vidWidth / 2;
+	old_y = glConfig.vidHeight / 2;
+}
+
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel)
 {
 	if (var == &in_raw)
@@ -235,20 +284,22 @@ static void in_grab_windowed_mouse_callback(cvar_t *val, char *value, qbool *can
 
 static void GrabMouse(qbool grab, qbool raw)
 {
-	if ((grab && mouse_active && raw == in_raw.integer) || (!grab && !mouse_active) || !mouseinitialized || !sdl_window)
+	if ((grab && mouse_active && raw == in_raw.integer) || (!grab && !mouse_active) || !mouseinitialized || !sdl_window) {
 		return;
+	}
 
-	if (!r_fullscreen.integer && in_grab_windowed_mouse.integer == 0)
-	{
-		if (!mouse_active)
+	if (!r_fullscreen.integer && in_grab_windowed_mouse.integer == 0) {
+		if (!mouse_active) {
 			return;
+		}
 		grab = 0;
 	}
+
 	// set initial position
 	if (!raw && grab) {
-		SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-		old_x = glConfig.vidWidth / 2;
-		old_y = glConfig.vidHeight / 2;
+		// the first getState() will still return the old values so snapping back doesn't work...
+		// ... open problem, people will get a jump if releasing mouse when re-grabbing with in_raw 0
+		IN_SnapMouseBackToCentre();
 	}
 
 	SDL_SetWindowGrab(sdl_window, grab ? SDL_TRUE : SDL_FALSE);
@@ -262,7 +313,8 @@ static void GrabMouse(qbool grab, qbool raw)
 		SDL_ShowCursor(grab ? SDL_DISABLE : SDL_ENABLE);
 	}
 
-	SDL_SetCursor(NULL); /* Force rewrite of it */
+	// Force rewrite of it
+	SDL_SetCursor(NULL);
 
 	mouse_active = grab;
 }
@@ -276,10 +328,17 @@ void IN_StartupMouse(void)
 	Cvar_Register(&in_raw);
 	Cvar_Register(&in_grab_windowed_mouse);
 	Cvar_Register(&in_release_mouse_modes);
+	Cvar_Register(&in_ignore_touch_events);
+#ifdef __APPLE__
+	Cvar_Register(&in_ignore_deadkeys);
+#endif
 
 	mouseinitialized = true;
 
 	Com_Printf("%s mouse input initialized\n", in_raw.integer > 0 ? "RAW" : "SDL");
+	if (in_raw.integer == 0) {
+		IN_SnapMouseBackToCentre();
+	}
 }
 
 void IN_ActivateMouse(void)
@@ -292,17 +351,19 @@ void IN_DeactivateMouse(void)
 	GrabMouse(false, in_raw.integer);
 }
 
-void IN_Frame(void)
+static void IN_Frame(void)
 {
-	if (!sdl_window)
+	if (!sdl_window) {
 		return;
+	}
 
 	HandleEvents();
 
 	if (!ActiveApp || Minimized || IN_OSMouseCursorRequired()) {
 		IN_DeactivateMouse();
 		return;
-	} else {
+	}
+	else {
 		IN_ActivateMouse();
 	}
 
@@ -314,6 +375,18 @@ void IN_Frame(void)
 #endif
 	}
 	
+}
+
+void Sys_SendDeferredKeyEvents(void)
+{
+	if (wheelup_deferred) {
+		Key_Event(K_MWHEELUP, false);
+		wheelup_deferred = false;
+	}
+	if (wheeldown_deferred) {
+		Key_Event(K_MWHEELDOWN, false);
+		wheeldown_deferred = false;
+	}
 }
 
 void Sys_SendKeyEvents(void)
@@ -465,6 +538,9 @@ static void window_event(SDL_WindowEvent *event)
 
 		case SDL_WINDOWEVENT_FOCUS_LOST:
 			ActiveApp = false;
+#ifdef __linux__
+			block_keyboard_input = in_ignore_unfocused_keyb.integer;
+#endif
 #ifdef X11_GAMMA_WORKAROUND
 			if (vid_gamma_workaround.integer) {
 				if (Minimized || vid_hwgammacontrol.integer != 3) {
@@ -522,6 +598,14 @@ static void window_event(SDL_WindowEvent *event)
 			if (renderer.InvalidateViewport)
 				renderer.InvalidateViewport();
 			break;
+
+#ifdef __linux__
+		case SDL_WINDOWEVENT_TAKE_FOCUS:
+			// On X, sequence is FOCUS_GAINED, [Keyboard 'down' events], TAKE_FOCUS
+			// On Windows, it's just FOCUS_GAINED then TAKE_FOCUS, so nothing to block really
+			block_keyboard_input = false;
+			break;
+#endif
 	}
 }
 
@@ -560,7 +644,7 @@ byte Key_ScancodeToQuakeCode(int scancode)
 	else if (scancode >= 224 && scancode < 224 + 8)
 		quakeCode = scantokey[scancode - 104];
 
-	if (!cl_keypad.integer) {
+	if (cl_keypad.integer == 0 || key_dest == key_menu || (cl_keypad.integer == 2 && !(key_dest == key_console || key_dest == key_message))) {
 		// compatibility mode without knowledge about keypad-keys:
 		switch (quakeCode)
 		{
@@ -582,6 +666,12 @@ byte Key_ScancodeToQuakeCode(int scancode)
 		case KP_DEL:         quakeCode = K_DEL;            break;
 		case KP_ENTER:       quakeCode = K_ENTER;          break;
 		default:                                           break;
+		}
+	}
+	else if (cl_keypad.integer == 1 && key_dest != key_game) {
+		// Treat as normal return key
+		if (quakeCode == KP_ENTER) {
+			quakeCode = K_ENTER;
 		}
 	}
 
@@ -613,6 +703,19 @@ static void keyb_textinputevent(char* text)
 	if (!*text)
 		return;
 
+#ifdef __APPLE__
+	// operating system is sending deadkey-modified input... ignore
+	if (deadkey_modifiers_held_down) {
+		return;
+	}
+#endif
+
+#ifdef __linux__
+	if (block_keyboard_input) {
+		return;
+	}
+#endif
+
 	len = strlen(text);
 	for (i = 0; i < len; ++i)
 	{
@@ -626,12 +729,35 @@ static void keyb_textinputevent(char* text)
 static void keyb_event(SDL_KeyboardEvent *event)
 {
 	byte result = Key_ScancodeToQuakeCode(event->keysym.scancode);
-	
+
+#ifdef __APPLE__
+	if (in_ignore_deadkeys.integer) {
+		// Apologies for the guesswork, no Apple keyboard...
+		int left_alt = (in_ignore_deadkeys.integer == 2 ? SDLK_LALT : SDLK_LGUI);
+		int right_alt = (in_ignore_deadkeys.integer == 2 ? SDLK_RALT : SDLK_RGUI);
+
+		if (event->keysym.sym == left_alt) {
+			deadkey_modifiers_held_down ^= APPLE_LALT_HELD_DOWN;
+			deadkey_modifiers_held_down |= (event->state ? APPLE_LALT_HELD_DOWN : 0);
+		}
+		else if (event->keysym.sym == right_alt) {
+			deadkey_modifiers_held_down ^= APPLE_RALT_HELD_DOWN;
+			deadkey_modifiers_held_down |= (event->state ? APPLE_RALT_HELD_DOWN : 0);
+		}
+	}
+#endif
+
 	if (result == 0) {
 		Com_DPrintf("%s: unknown scancode %d\n", __func__, event->keysym.scancode);
 		return;
 	}
 
+#ifdef __linux__
+	if (block_keyboard_input) {
+		Com_DPrintf("%s: scan-code %d, qchar %d: suppressed\n", __func__, event->keysym.scancode, result);
+		return;
+	}
+#endif
 	Key_Event(result, event->state);
 }
 
@@ -668,11 +794,18 @@ static void mouse_button_event(SDL_MouseButtonEvent *event)
 static void mouse_wheel_event(SDL_MouseWheelEvent *event)
 {
 	if (event->y > 0) {
+		if (wheelup_deferred) {
+			Key_Event(K_MWHEELUP, false);
+		}
 		Key_Event(K_MWHEELUP, true);
-		Key_Event(K_MWHEELUP, false);
-	} else if (event->y < 0) {
+		wheelup_deferred = true;
+	}
+	else if (event->y < 0) {
+		if (wheeldown_deferred) {
+			Key_Event(K_MWHEELDOWN, false);
+		}
 		Key_Event(K_MWHEELDOWN, true);
-		Key_Event(K_MWHEELDOWN, false);
+		wheeldown_deferred = true;
 	}
 }
 
@@ -700,6 +833,7 @@ static void HandleWindowsKeyboardEvents(unsigned int flags, qbool down)
 static void HandleEvents(void)
 {
 	SDL_Event event;
+	qbool track_movement_through_state = (mouse_active && !SDL_GetRelativeMouseMode());
 
 #if defined(_WIN32) && !defined(WITHOUT_WINKEYHOOK)
 	HandleWindowsKeyboardEvents(windows_keys_down, true);
@@ -718,52 +852,87 @@ static void HandleEvents(void)
 			break;
 		case SDL_KEYDOWN:
 		case SDL_KEYUP:
+#ifdef __APPLE__
+			if (developer.integer == 2) {
+				Con_Printf("key%s event, scan=%d, sym=%d, mod=%d\n", event.type == SDL_KEYDOWN ? "down" : "up", event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod);
+			}
+#endif
 			keyb_event(&event.key);
 			break;
 		case SDL_TEXTINPUT:
 			keyb_textinputevent(event.text.text);
 			break;
 		case SDL_MOUSEMOTION:
-			if (mouse_active && !SDL_GetRelativeMouseMode()) {
-				float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
+			if (event.motion.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
+#ifdef __APPLE__
+				if (developer.integer == 2) {
+					Con_Printf("motion event, which=%d\n", event.motion.which);
+				}
+#endif
+				if (!track_movement_through_state) {
+					float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
 
-				mx = event.motion.x - old_x;
-				my = event.motion.y - old_y;
-				cursor_x = min(max(0, cursor_x + (event.motion.x - glConfig.vidWidth / 2) * factor), glConfig.vidWidth);
-				cursor_y = min(max(0, cursor_y + (event.motion.y - glConfig.vidHeight / 2) * factor), glConfig.vidHeight);
-				SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-				old_x = glConfig.vidWidth / 2;
-				old_y = glConfig.vidHeight / 2;
-			}
-			else {
-				float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
+					cursor_x += event.motion.xrel * factor;
+					cursor_y += event.motion.yrel * factor;
 
-				cursor_x += event.motion.xrel * factor;
-				cursor_y += event.motion.yrel * factor;
-
-				cursor_x = bound(0, cursor_x, glConfig.vidWidth);
-				cursor_y = bound(0, cursor_y, glConfig.vidHeight);
+					cursor_x = bound(0, cursor_x, VID_RenderWidth2D());
+					cursor_y = bound(0, cursor_y, VID_RenderHeight2D());
+				}
 			}
 			break;
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:
-			mouse_button_event(&event.button);
+#ifdef __APPLE__
+			if (developer.integer == 2) {
+				Con_Printf("mouse%s event, which=%d, button=%d\n", event.type == SDL_MOUSEBUTTONDOWN ? "down" : "up", event.button.which, event.button.button);
+			}
+#endif
+			if (event.button.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
+				mouse_button_event(&event.button);
+			}
 			break;
 		case SDL_MOUSEWHEEL:
-			mouse_wheel_event(&event.wheel);
+			if (event.wheel.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
+				mouse_wheel_event(&event.wheel);
+			}
 			break;
 		case SDL_DROPFILE:
 			/* TODO: Add handling for different file types */
-			Cbuf_AddText("playdemo ");
+			if (strncmp(event.drop.file, "qw://", 5) == 0) {
+				Cbuf_AddText("qwurl ");
+			} else {
+				Cbuf_AddText("playdemo ");
+			}
 			Cbuf_AddText(event.drop.file);
 			Cbuf_AddText("\n");
 			SDL_free(event.drop.file);
 			break;
 		}
 	}
+
+	if (track_movement_through_state) {
+		float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
+		int pos_x, pos_y;
+
+		SDL_GetMouseState(&pos_x, &pos_y);
+
+		mx = pos_x - old_x;
+		my = pos_y - old_y;
+
+		cursor_x = min(max(0, cursor_x + (pos_x - glConfig.vidWidth / 2) * factor), VID_RenderWidth2D());
+		cursor_y = min(max(0, cursor_y + (pos_y - glConfig.vidHeight / 2) * factor), VID_RenderHeight2D());
+
+		IN_SnapMouseBackToCentre();
+	}
 }
 
 /*****************************************************************************/
+
+void VID_SoftRestart(void)
+{
+	R_Shutdown(r_shutdown_reload);
+	QMB_ShutdownParticles();
+}
 
 void VID_Shutdown(qbool restart)
 {
@@ -777,7 +946,7 @@ void VID_Shutdown(qbool restart)
 	}
 #endif
 
-	R_Shutdown(restart);
+	R_Shutdown(restart ? r_shutdown_restart : r_shutdown_full);
 
 	if (sdl_context) {
 		SDL_GL_DeleteContext(sdl_context);
@@ -821,6 +990,8 @@ static int VID_SDL_InitSubSystem(void)
 	return 0;
 }
 
+// This is called during video initialisation & vid_restart, but not vid_reload
+// Do not include any cvars here that should take effect without full restart
 static void VID_RegisterLatchCvars(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIDEO);
@@ -845,7 +1016,7 @@ static void VID_RegisterLatchCvars(void)
 #endif
 	Cvar_Register(&vid_gl_core_profile);
 	Cvar_Register(&vid_framebuffer);
-	Cvar_Register(&vid_framebuffer_palette);
+	Cvar_Register(&vid_software_palette);
 	Cvar_Register(&vid_framebuffer_depthformat);
 	Cvar_Register(&vid_framebuffer_hdr);
 
@@ -875,12 +1046,20 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&vid_flashonactivity);
 	Cvar_Register(&r_showextensions);
 	Cvar_Register(&vid_win_displayNumber);
+#ifdef __linux__
+	Cvar_Register(&in_ignore_unfocused_keyb);
+#endif
 
 	Cvar_Register(&vid_framebuffer_blit);
 	Cvar_Register(&vid_framebuffer_width);
 	Cvar_Register(&vid_framebuffer_height);
 	Cvar_Register(&vid_framebuffer_scale);
 	Cvar_Register(&vid_framebuffer_hdr_tonemap);
+	Cvar_Register(&vid_framebuffer_smooth);
+	Cvar_Register(&vid_framebuffer_sshotmode);
+	Cvar_Register(&vid_framebuffer_multisample);
+
+	Cvar_Register(&vid_reload_auto);
 
 	Cvar_ResetCurrentGroup();
 }
@@ -1220,6 +1399,11 @@ static void VID_SDL_Init(void)
 #endif
 	SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, vid_grab_keyboard.integer == 0 ? "0" : "1");
 	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
+#ifdef __APPLE__
+#ifdef SDL_HINT_TOUCH_MOUSE_EVENTS
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+#endif
+#endif
 
 	{
 		int i;
@@ -1359,6 +1543,7 @@ static void VID_SwapBuffersWithVsyncFix(void)
 
 void R_BeginRendering(int *x, int *y, int *width, int *height)
 {
+
 	*x = *y = 0;
 	*width = glConfig.vidWidth;
 	*height = glConfig.vidHeight;
@@ -1385,6 +1570,12 @@ void R_EndRendering(void)
 			if (SDL_GL_SetSwapInterval(0)) {
 				Con_Printf("vsync: Failed to disable vsync...\n");
 			}
+            // MacOS vsync fix
+            #ifdef __APPLE__
+            GLint                       sync = 0;
+            CGLContextObj               ctx = CGLGetCurrentContext();
+            CGLSetParameter(ctx, kCGLCPSwapInterval, &sync);
+            #endif
 		} else if (r_swapInterval.integer == -1) {
 			if (SDL_GL_SetSwapInterval(-1)) {
 				Con_Printf("vsync: Failed to enable late swap tearing (vid_vsync -1), setting vid_vsync 1 instead...\n");
@@ -1445,7 +1636,7 @@ void VID_NotifyActivity(void)
 
 int VID_SetDeviceGammaRamp(unsigned short *ramps)
 {
-	if (!sdl_window || COM_CheckParm(cmdline_param_client_nohardwaregamma)) {
+	if (!sdl_window || (COM_CheckParm(cmdline_param_client_nohardwaregamma) && Ruleset_AllowNoHardwareGamma())) {
 		return 0;
 	}
 
@@ -1474,7 +1665,7 @@ void VID_Minimize (void)
 
 void VID_Restore (void)
 {
-	if (!sdl_window) {
+	if (!sdl_window || (SDL_GetWindowFlags(sdl_window) & SDL_WINDOW_INPUT_FOCUS)) {
 		return;
 	}
 
@@ -1540,32 +1731,18 @@ static void VID_ParseCmdLine(void)
 #endif
 }
 
-static void VID_Restart_f(void)
+void GFX_Init(void);
+void ReloadPaletteAndColormap(void);
+
+static void VID_Startup(void)
 {
-	extern void GFX_Init(void);
-	extern void ReloadPaletteAndColormap(void);
-	qbool old_con_suppress;
-
-	if (!host_initialized) { // sanity
-		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
-		return;
-	}
-
-	VID_Shutdown(true);
-
-	ReloadPaletteAndColormap();
-
-	// keys can get stuck because SDL2 doesn't send keyup event when the video system is down
-	Key_ClearStates();
-
-	VID_Init(host_basepal);
+	qbool old_con_suppress = con_suppress;
 
 	// force models to reload (just flush, no actual loading code here)
 	Cache_Flush();
 
 	// shut up warnings during GFX_Init();
-	old_con_suppress = con_suppress;
-	con_suppress = (developer.value ? false : true);
+	con_suppress = !developer.integer;
 	// reload 2D textures, particles textures, some other textures and gfx.wad
 	GFX_Init();
 
@@ -1584,6 +1761,57 @@ static void VID_Restart_f(void)
 	CachePics_AtlasFrame();
 	// compile all programs
 	R_ProgramCompileAll();
+
+	Cvar_ClearAllModifiedFlags(CVAR_RELOAD_GFX);
+}
+
+void VID_ReloadCvarChanged(cvar_t* var)
+{
+	if (!vid_reload_auto.integer) {
+		Con_Printf("%s needs %s to immediately take effect.\n", var->name, CVAR_RELOAD_GFX_COMMAND);
+	}
+	else {
+		vid_reload_pending = true;
+	}
+}
+
+static void VID_Reload_f(void)
+{
+	if (!host_initialized) { // sanity
+		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
+		return;
+	}
+
+	VID_SoftRestart();
+	ReloadPaletteAndColormap();
+	VID_Startup();
+	vid_reload_pending = false;
+}
+
+void VID_ReloadCheck(void)
+{
+	if (vid_reload_pending && host_initialized) {
+		VID_Reload_f();
+	}
+}
+
+static void VID_Restart_f(void)
+{
+	if (!host_initialized) { // sanity
+		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
+		return;
+	}
+
+	VID_Shutdown(true);
+
+	ReloadPaletteAndColormap();
+
+	// keys can get stuck because SDL2 doesn't send keyup event when the video system is down
+	Key_ClearStates();
+
+	VID_Init(host_basepal);
+
+	VID_Startup();
 }
 
 static void VID_DisplayList_f(void)
@@ -1619,8 +1847,10 @@ void VID_RegisterCommands(void)
 	if (!host_initialized) {
 		Cmd_AddCommand("vid_gfxinfo", VID_GfxInfo_f);
 		Cmd_AddCommand("vid_restart", VID_Restart_f);
+		Cmd_AddCommand(CVAR_RELOAD_GFX_COMMAND, VID_Reload_f);
 		Cmd_AddCommand("vid_displaylist", VID_DisplayList_f);
 		Cmd_AddCommand("vid_modelist", VID_ModeList_f);
+		Cmd_AddLegacyCommand("vid_framebuffer_palette", vid_software_palette.name);
 	}
 }
 
@@ -1691,6 +1921,19 @@ static void VID_UpdateConRes(void)
 	vid.numpages = 2; // ??
 	Draw_AdjustConback();
 	vid.recalc_refdef = 1;
+}
+
+void GL_FramebufferSetFiltering(qbool linear);
+
+static void framebuffer_smooth_changed_callback(cvar_t* var, char* string, qbool* cancel)
+{
+	if (string[0] == '\0' || string[1] != '\0' || !(string[0] == '0' || string[0] == '1')) {
+		Com_Printf("Value of %s must be 0 or 1\n", var->name);
+		*cancel = true;
+		return;
+	}
+
+	GL_FramebufferSetFiltering(string[0] == '1');
 }
 
 static void conres_changed_callback(cvar_t *var, char *string, qbool *cancel)

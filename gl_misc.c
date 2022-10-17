@@ -83,22 +83,44 @@ void GL_EnsureFinished(void)
 	glFinish();
 }
 
-void GL_Screenshot(byte* buffer, size_t size)
-{
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(glx, gly, glwidth, glheight, GL_RGB, GL_UNSIGNED_BYTE, buffer);
-}
+GLenum GL_ProcessErrors(const char* message);
 
-#ifdef GL_PARANOIA
-void GL_ProcessErrors(const char* message)
+GLenum GL_ProcessAllErrors(const char* message)
 {
 	GLenum error = glGetError();
+	GLenum firstError = error;
+
 	while (error != GL_NO_ERROR) {
-		Con_Printf("%s> = %X\n", message, error);
+		if (error == GL_INVALID_ENUM) {
+			R_TraceLogAPICall("  ERROR: %s (GL_INVALID_ENUM)\n", message);
+		}
+		else if (error == GL_INVALID_VALUE) {
+			R_TraceLogAPICall("  ERROR: %s (GL_INVALID_VALUE)\n", message);
+		}
+		else if (error == GL_INVALID_OPERATION) {
+			R_TraceLogAPICall("  ERROR: %s (GL_INVALID_OPERATION)\n", message);
+		}
+		else if (error == GL_STACK_OVERFLOW) {
+			R_TraceLogAPICall("  ERROR: %s (GL_STACK_OVERFLOW)\n", message);
+		}
+		else if (error == GL_STACK_UNDERFLOW) {
+			R_TraceLogAPICall("  ERROR: %s (GL_STACK_UNDERFLOW)\n", message);
+		}
+		else if (error == GL_OUT_OF_MEMORY) {
+			R_TraceLogAPICall("  ERROR: %s (GL_OUT_OF_MEMORY)\n", message);
+		}
+		else {
+			R_TraceLogAPICall("  ERROR: %s (UNKNOWN_ERROR 0x%X)\n", message, error);
+		}
 		error = glGetError();
 	}
+	return firstError;
 }
-#endif
+
+void GL_ConsumeErrors(void)
+{
+	GL_ProcessAllErrors("Consuming prior errors...");
+}
 
 static void GL_PrintInfoLine(const char* label, int labelsize, const char* fmt, ...)
 {
@@ -125,10 +147,8 @@ void GL_PrintGfxInfo(void)
 	Com_Printf_State(PRINT_ALL, "\nOpenGL (%s)\n", R_UseImmediateOpenGL() ? "classic" : "glsl");
 	GL_PrintInfoLine("Vendor:", 9, "%s", (const char*)glConfig.vendor_string);
 	GL_PrintInfoLine("Renderer:", 9, "%s", (const char*)glConfig.renderer_string);
+	GL_PrintInfoLine("GLSL:", 9, "%s", (const char*)glConfig.glsl_version);
 	GL_PrintInfoLine("Version:", 9, "%s", (const char*)glConfig.version_string);
-	if (R_UseModernOpenGL()) {
-		GL_PrintInfoLine("GLSL:", 9, "%s", (const char*)glConfig.version_string);
-	}
 
 	if (r_showextensions.integer) {
 		Com_Printf_State(PRINT_ALL, "GL_EXTENSIONS: ");
@@ -236,17 +256,15 @@ int LightmapBenchmarkComparison(const void* lhs_, const void* rhs_)
 	return (uintptr_t)lhs < (uintptr_t)rhs ? -1 : 1;
 }
 
+static byte gl_lightmap_data[LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 16];
+
 void GL_BenchmarkLightmapFormats(void)
 {
 	texture_ref texture;
 	int format;
 	int type;
-	byte data[LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * 16];
 	lightmap_benchmark_t results[(sizeof(image_formats) / sizeof(image_formats[0])) * (sizeof(image_types) / sizeof(image_types[0]))];
 	int count = 0, i;
-
-	while (glGetError() != GL_NO_ERROR) {
-	}
 
 	for (format = 0; format < sizeof(image_formats) / sizeof(image_formats[0]); ++format) {
 		for (type = 0; type < sizeof(image_types) / sizeof(image_types[0]); ++type) {
@@ -257,13 +275,13 @@ void GL_BenchmarkLightmapFormats(void)
 				continue;
 			}
 
-			memset(data, 255, sizeof(data));
+			memset(gl_lightmap_data, 255, sizeof(gl_lightmap_data));
 
 			GL_ProcessErrors("Pre-init");
 
 			GL_CreateTexturesWithIdentifier(texture_type_2d, 1, &texture, "lightmap-benchmark");
 			renderer.TextureUnitBind(0, texture);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 0, image_formats[format].value, image_types[type].value, data);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 0, image_formats[format].value, image_types[type].value, gl_lightmap_data);
 			if (glGetError() != GL_NO_ERROR) {
 				Con_Printf("%s/%s: error\n", image_formats[format].name, image_types[type].name);
 				continue;
@@ -272,10 +290,10 @@ void GL_BenchmarkLightmapFormats(void)
 			renderer.TextureWrapModeClamp(texture);
 			glFinish();
 
-			memset(data, 0, sizeof(data));
+			memset(gl_lightmap_data, 0, sizeof(gl_lightmap_data));
 			started = Sys_DoubleTime();
 			for (i = 0; i < 1000; ++i) {
-				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, image_formats[format].value, image_types[type].value, data);
+				glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, image_formats[format].value, image_types[type].value, gl_lightmap_data);
 			}
 			glFinish();
 			finished = Sys_DoubleTime();

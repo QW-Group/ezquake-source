@@ -78,7 +78,7 @@ void R_SelectRenderer(void);
 #endif
 
 // Debug profile may or may not do anything, but if it does anything it's slower, so only enable in dev mode
-#define R_DebugProfileContext()  (IsDeveloperMode() && COM_CheckParm(cmdline_param_client_video_r_debug))
+#define R_DebugProfileContext()  ((IsDeveloperMode() && COM_CheckParm(cmdline_param_client_video_r_debug)) || COM_CheckParm(cmdline_param_client_video_r_trace))
 #define R_CompressFullbrightTextures() (!R_UseImmediateOpenGL())
 #define R_LumaTexturesMustMatchDimensions() (!R_UseImmediateOpenGL())
 #define R_UseCubeMapForSkyBox() (!R_UseImmediateOpenGL() || GL_Supported(R_SUPPORT_SEAMLESS_CUBEMAPS))
@@ -91,8 +91,14 @@ void R_BloomBlend(void);
 #define NUMCROSSHAIRS 6
 
 // r_main.c
+typedef enum {
+	r_shutdown_full = 0,       // shutting down program
+	r_shutdown_restart = 1,    // restarting gfx system (window destroyed & recreated)
+	r_shutdown_reload = 2      // soft restart (reload textures only)
+} r_shutdown_mode_t;
+
 void R_NewMapPrepare(qbool vid_restart);
-void R_Shutdown(qbool restart);
+void R_Shutdown(r_shutdown_mode_t mode);
 void VID_GfxInfo_f(void);
 int VID_DisplayNumber(qbool fullscreen);
 
@@ -106,6 +112,7 @@ extern int r_framecount;
 // palette
 void Check_Gamma(unsigned char *pal);
 void VID_SetPalette(unsigned char *palette);
+qbool R_OldGammaBehaviour(void);
 
 void R_Initialise(void);
 float R_WaterAlpha(void);

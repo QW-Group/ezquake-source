@@ -530,31 +530,31 @@ void DumpHUD262(FILE *f)
 
 /************************************ RESET FUNCTIONS ************************************/
 
-static void ResetVariables(int cvar_flags, qbool userinfo)
+static void ResetVariables(int cvar_flags, qbool resetting_before_load)
 {
 	cvar_t *var;
-	qbool check_userinfos = false;
 
-	if (userinfo) {
-		if (!cfg_save_userinfo.value)
+	if (resetting_before_load) {
+		if (!cfg_save_userinfo.integer) {
 			cvar_flags |= CVAR_USERINFO;
-		else if (userinfo && cfg_save_userinfo.value == 1)
-			check_userinfos = true;
+		}
+		else if (cfg_save_userinfo.integer == 1) {
+			cvar_flags |= CVAR_USERINFONORESET;
+		}
 	}
 
 	for (var = cvar_vars; var; var = var->next) {
-		if (!(
-		            (var->flags & (cvar_flags | CVAR_ROM | CVAR_INIT | CVAR_USER_CREATED | CVAR_NO_RESET)) ||
-		            (var->group && !strcmp(var->group->name, CVAR_GROUP_NO_GROUP))
-		        )) {
-			if (check_userinfos && (
-			            !strcmp(var->name, "team") || !strcmp(var->name, "skin") ||
-			            !strcmp(var->name, "spectator") || !strcmp(var->name, "topcolor") ||
-				    !strcmp(var->name, "bottomcolor")
-			        ))
-				continue;
-			Cvar_ResetVar(var);
+		// don't reset based on flags (see cfg_save_userinfo)
+		if (var->flags & (cvar_flags | CVAR_ROM | CVAR_INIT | CVAR_USER_CREATED | CVAR_NO_RESET)) {
+			continue;
 		}
+
+		// don't reset ungrouped cvars (... why?)
+		if (var->group && !strcmp(var->group->name, CVAR_GROUP_NO_GROUP)) {
+			continue;
+		}
+
+		Cvar_ResetVar(var);
 	}
 }
 
@@ -746,33 +746,37 @@ static void Config_PrintPreamble(FILE *f)
 	if (cfg_save_cmdline.value) {
 		DumpCmdLine(f);
 		fprintf(f, "%s", newlines);
-		}
+	}
 }
 
 /************************************ MAIN FUCTIONS	************************************/
 
-// Executes default.cfg as long as it isn't the one from pak0.pak
+// Executes default.cfg as long as it isn't the one from pak0.pak or nQuake's default (which is executed from autoexec.cfg ...)
 void Cfg_ExecuteDefaultConfig(void)
 {
 	flocation_t loc;
 
 	if (FS_FLocateFile("default.cfg", FSLFRT_IFFOUND, &loc)) {
 		char pak0default[MAX_OSPATH];
+		char nquakedefault[MAX_OSPATH];
 
 		strlcpy(pak0default, com_basedir, sizeof(pak0default));
 		strlcat(pak0default, "/id1/pak0.pak/default.cfg", sizeof(pak0default));
 
-		if (strcmp(pak0default, loc.rawname)) {
+		strlcpy(nquakedefault, com_basedir, sizeof(nquakedefault));
+		strlcat(nquakedefault, "/qw/nquake.pk3", sizeof(nquakedefault));
+
+		if (strcasecmp(pak0default, loc.rawname) && strcasecmp(nquakedefault, loc.rawname)) {
 			Cbuf_AddText("exec default.cfg\n");
 		}
 	}
 }
 
-static void ResetConfigs(qbool resetall, qbool read_legacy_configs)
+static void ResetConfigs(qbool explicit_reset, qbool read_legacy_configs)
 {
 	vfsfile_t *v;
 
-	ResetVariables(CVAR_SERVERINFO, !resetall);
+	ResetVariables(CVAR_SERVERINFO, !explicit_reset);
 	DeleteUserAliases();
 	DeleteUserVariables();
 	ResetBinds();
@@ -780,15 +784,15 @@ static void ResetConfigs(qbool resetall, qbool read_legacy_configs)
 	ResetTeamplayCommands();
 	ResetMiscCommands();
 
-	if (read_legacy_configs)
-	{
-		Cbuf_AddText ("cl_warncmd 0\n");
+	if (read_legacy_configs) {
+		Cbuf_AddText("cl_warncmd 0\n");
 		Cfg_ExecuteDefaultConfig();
+		Cbuf_Execute();
 		if ((v = FS_OpenVFS("autoexec.cfg", "rb", FS_ANY))) {
-			Cbuf_AddText ("exec autoexec.cfg\n");
+			Cbuf_AddText("exec autoexec.cfg\n");
 			VFS_CLOSE(v);
 		}
-		Cbuf_AddText ("cl_warncmd 1\n");
+		Cbuf_AddText("cl_warncmd 1\n");
 	}
 }
 
@@ -924,10 +928,15 @@ void DumpHUD(const char *name)
 
 extern qbool filesystemchanged; // fix bug 2359900
 
-void SaveConfig(const char *cfgname)
+static void SaveConfig(const char *cfgname)
 {
 	char filename[MAX_PATH] = {0};
 	FILE *f;
+
+	if (cfgname[0] && FS_UnsafeFilename(cfgname)) {
+		Con_Printf("Invalid/unsafe filename, config not saved.\n");
+		return;
+	}
 
 	snprintf(filename, sizeof(filename) - 4, "%s", cfgname[0] ? cfgname : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
@@ -966,7 +975,7 @@ void SaveConfig(const char *cfgname)
 
 void SaveConfig_f(void)
 {
-	SaveConfig(COM_SkipPath(Cmd_Argv(1)));
+	SaveConfig(Cmd_Argv(1));
 }
 
 void Config_QuitSave(void)
@@ -1049,18 +1058,33 @@ void LoadConfig_f(void)
 	snprintf(fullname, sizeof(fullname), "%s/%s%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "" : va("%s/", com_gamedirfile), filename);
 	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/%s", com_homedir, filename);
 
-	if(use_home && !((f = fopen(fullname, "rb")) && cfg_use_gamedir.integer) && !(f = fopen(fullname_moddefault, "rb")))
-	{
-		use_home = false;
+	if (use_home) {
+		if (cfg_use_gamedir.integer) {
+			f = fopen(fullname, "rb");
+		}
+		if (f == NULL) {
+			f = fopen(fullname_moddefault, "rb");
+		}
+		if (f == NULL) {
+			use_home = false;
+		}
 	}
 
 	// basedir
 	snprintf(fullname, sizeof(fullname), "%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
 	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/ezquake/configs/%s", com_basedir, filename);
 
-	if(!use_home && !((f = fopen(fullname, "rb")) && cfg_use_gamedir.integer) && !(f = fopen(fullname_moddefault, "rb")))
-	{
-		Com_Printf("Couldn't load %s %s\n", filename, (cfg_use_gamedir.integer) ? "(using gamedir search)": "(not using gamedir search)");
+	if(!use_home) {
+		if (cfg_use_gamedir.integer) {
+			f = fopen(fullname, "rb");
+		}
+		if (f == NULL) {
+			f = fopen(fullname_moddefault, "rb");
+		}
+	}
+
+	if (f == NULL) {
+		Com_Printf("Couldn't load %s %s\n", filename, (cfg_use_gamedir.integer) ? "(using gamedir search)" : "(not using gamedir search)");
 		return;
 	}
 

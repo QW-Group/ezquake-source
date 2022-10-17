@@ -19,7 +19,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	
 */
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
+
+#ifndef SERVERONLY
+void CL_ClearState(void);
+void CL_ClearQueuedPackets(void);
+#endif
 
 server_static_t	svs;				// persistent server info
 server_t		sv;					// local server
@@ -213,9 +219,6 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	char oldmap[MAP_NAME_LEN];
 	extern qbool	sv_allow_cheats;
 	extern cvar_t	sv_cheats, sv_paused, sv_bigcoords;
-#ifndef SERVERONLY
-	extern void CL_ClearState (void);
-#endif
 
 	// store old map name
 	snprintf (oldmap, MAP_NAME_LEN, "%s", sv.mapname);
@@ -371,6 +374,50 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	}
 	else {
 		svs.mvdprotocolextension1 &= ~MVD_PEXT1_HIGHLAGTELEPORT;
+	}
+#endif
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+	{
+		extern cvar_t sv_pext_mvdsv_serversideweapon;
+
+		// Cheap 'ktx' detection
+		if (sv_pext_mvdsv_serversideweapon.value && strstr(Cvar_String("qwm_name"), "KTX")) {
+			svs.mvdprotocolextension1 |= MVD_PEXT1_SERVERSIDEWEAPON;
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON2
+			svs.mvdprotocolextension1 |= MVD_PEXT1_SERVERSIDEWEAPON2;
+#endif
+		}
+		else {
+			svs.mvdprotocolextension1 &= ~MVD_PEXT1_SERVERSIDEWEAPON;
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON2
+			svs.mvdprotocolextension1 &= ~MVD_PEXT1_SERVERSIDEWEAPON2;
+#endif
+		}
+
+	}
+#endif
+#ifdef MVD_PEXT1_DEBUG_ANTILAG
+	{
+		extern cvar_t sv_debug_antilag;
+
+		if (sv_debug_antilag.value) {
+			svs.mvdprotocolextension1 |= MVD_PEXT1_DEBUG_ANTILAG;
+		}
+		else {
+			svs.mvdprotocolextension1 &= ~MVD_PEXT1_DEBUG_ANTILAG;
+		}
+	}
+#endif
+#ifdef MVD_PEXT1_DEBUG_WEAPON
+	{
+		extern cvar_t sv_debug_weapons;
+
+		if (sv_debug_weapons.value) {
+			svs.mvdprotocolextension1 |= MVD_PEXT1_DEBUG_WEAPON;
+		}
+		else {
+			svs.mvdprotocolextension1 &= ~MVD_PEXT1_DEBUG_WEAPON;
+		}
 	}
 #endif
 
@@ -586,7 +633,9 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	SV_MVD_Record(NULL, true);
 
 #ifndef SERVERONLY
-	CL_ClearState ();
+	CL_ClearState();
+	CL_ClearQueuedPackets();
 #endif
 }
 
+#endif // !CLIENTONLY

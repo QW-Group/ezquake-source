@@ -150,6 +150,7 @@ void Draw_SCharacter(float x, float y, int num, float scale);
 void Draw_SPic(float x, float y, mpic_t *, float scale);
 void Draw_FitPic(float x, float y, int fit_width, int fit_height, mpic_t *gl); // Will fit image into given area; will keep it's proportions.
 void Draw_FitPicAlpha(float x, float y, int fit_width, int fit_height, mpic_t *gl, float alpha);
+void Draw_FitPicAlphaCenter(float x, float y, int fit_width, int fit_height, mpic_t* gl, float alpha);
 void Draw_SAlphaPic(float x, float y, mpic_t *, float alpha, float scale);
 void Draw_SSubPic(float x, float y, mpic_t *, int srcx, int srcy, int width, int height, float scale);
 void Draw_STransPic(float x, float y, mpic_t *, float scale);

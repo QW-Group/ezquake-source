@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TEX_LUMA            (1<<3)  // do not apply gamma adjustment to texture when loading
 #define TEX_FULLBRIGHT      (1<<4)  // make all non-fullbright colours transparent (8-bit only).
 #define TEX_NOSCALE         (1<<5)  // do no use gl_max_size or gl_picmap variables while loading texture
-#define TEX_BRIGHTEN        (1<<6)  // ??
+#define TEX_BRIGHTEN        (1<<6)  // use brighter 8bit => 24bit conversion during load
 #define TEX_NOCOMPRESS      (1<<7)  // do not use texture compression extension
 #define TEX_NO_PCX          (1<<8)  // do not load pcx images
 #define TEX_NO_TEXTUREMODE  (1<<9)  // ignore gl_texturemode* changes for texture
@@ -36,6 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define TEX_ZERO_ALPHA      (1<<11) // after pre-multiplying alpha, set alpha to 0 (additive blending)
 #define TEX_MERGED_LUMA     (1<<12) // alpha channel signifies luma %
 #define TEX_FLOAT           (1<<13) // floating point texture format
+#define TEX_VIEWMODEL       (1<<14) // use viewmodel texture mode, not normal
 
 #define MAX_GLTEXTURES 8192	//dimman: old value 1024 isn't enough when using high framecount sprites (according to Spike)
 #define MAX_CHARSETS 256
@@ -91,7 +92,7 @@ extern texture_api_t textures;
 
 void R_Texture_Init(void);
 
-void R_TextureAnisotropyChanged(texture_ref tex, qbool mipmap);
+void R_TextureAnisotropyChanged(texture_ref tex, qbool mipmap, qbool viewmodel);
 
 mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
 byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
@@ -102,7 +103,7 @@ texture_ref R_LoadTexture(const char *identifier, int width, int height, byte *d
 texture_ref R_LoadPicTexture(const char *name, mpic_t *pic, byte *data);
 texture_ref R_LoadTexturePixels(byte *data, const char *identifier, int width, int height, int mode);
 texture_ref R_LoadTextureImage(const char *filename, const char *identifier, int matchwidth, int matchheight, int mode);
-texture_ref R_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth);
+texture_ref R_CreateTextureArray(const char* identifier, int width, int height, int depth, int mode);
 texture_ref R_CreateCubeMap(const char* identifier, int width, int height, int mode);
 void R_DeleteTextureArray(texture_ref* texture);
 void R_DeleteCubeMap(texture_ref* texture);
@@ -128,7 +129,7 @@ void R_TextureSizeRoundUp(int orig_width, int orig_height, int* width, int* heig
 const char* R_TextureIdentifier(texture_ref ref);
 #endif
 
-extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_scaleModelSimpleTextures, gl_miptexLevel, gl_mipmap_viewmodels, gl_scaleskytextures;
+extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_scaleModelSimpleTextures, gl_miptexLevel, gl_scaleskytextures;
 extern cvar_t gl_no24bit;
 extern texture_ref underwatertexture, detailtexture, solidwhite_texture, solidblack_texture, transparent_texture;
 
@@ -138,9 +139,9 @@ void R_AllocateTextureReferences(r_texture_type_id type_id, int width, int heigh
 void R_TextureRescaleOverlay(byte** overlay_pixels, int* overlay_width, int* overlay_height, int underlying_width, int underlying_height);
 int R_TextureCount(void);
 void R_TextureFindIdentifierByReference(unsigned int ref, char* label, int labelsize);
+int R_TextureGetFlag(texture_ref ref);
+void R_TextureSetFlag(texture_ref ref, int mode);
 
-#ifdef DEBUG_MEMORY_ALLOCATIONS
 void R_SetTextureArraySize(texture_ref tex, int width, int height, int depth, int bpp);
-#endif
 
 #endif	// EZQUAKE_R_TEXTURE_H

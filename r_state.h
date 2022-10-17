@@ -89,6 +89,13 @@ typedef enum {
 	r_texunit_mode_count
 } r_texunit_mode_t;
 
+typedef enum {
+	r_fogmode_disabled,
+	r_fogmode_enabled,
+
+	r_fogmode_count
+} r_fogmode_t;
+
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 typedef struct glc_vertex_array_element_s {
 	qbool enabled;
@@ -120,6 +127,9 @@ typedef struct rendering_state_s {
 	int currentViewportX, currentViewportY;
 	int currentViewportWidth, currentViewportHeight;
 
+	int fullScreenViewportX, fullScreenViewportY;
+	int fullScreenViewportWidth, fullScreenViewportHeight;
+
 	qbool framebuffer_srgb;
 
 	struct {
@@ -129,7 +139,14 @@ typedef struct rendering_state_s {
 	} line;
 
 	struct {
-		qbool enabled;
+		r_fogmode_t mode;
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+		float color[4];
+		float density;
+		fogcalc_t calculation;
+		float start;
+		float end;
+#endif
 	} fog;
 
 	struct {
@@ -175,12 +192,13 @@ typedef struct rendering_state_s {
 	glc_vertex_array_element_t vertex_array;
 	glc_vertex_array_element_t color_array;
 	glc_vertex_array_element_t normal_array;
-
-	glc_attribute_t glc_attributes[MAX_GLC_ATTRIBUTES];
 #endif
 
 	// always false if not classic
 	qbool glc_vao_force_rebind;
+
+	// misc (texture downloads, screenshots & atlas building)
+	int pack_alignment;
 
 	// meta
 	qbool initialized;
@@ -199,13 +217,14 @@ typedef enum {
 	r_state_brighten_screen,
 	r_state_line,
 	r_state_hud_images_glc,
+	r_state_hud_images_glc_non_glsl,
 	r_state_hud_images_alphatested_glc,
+	r_state_hud_images_alphatested_glc_non_glsl,
 	r_state_poly_blend,
 	r_state_hud_images_glm,
 	r_state_hud_polygons_glm,
 
 	r_state_sky_fast,
-	r_state_sky_fast_fogged,
 	r_state_skydome_background_pass,
 	r_state_skydome_cloud_pass,
 	r_state_skydome_single_pass,
@@ -213,6 +232,11 @@ typedef enum {
 	r_state_skydome_zbuffer_pass,
 	r_state_skydome_zbuffer_pass_fogged,
 	r_state_skybox,
+
+	r_state_sky_fast_bmodel,
+	r_state_skydome_single_pass_bmodel,
+	r_state_skydome_cloud_pass_bmodel,
+	r_state_skydome_background_pass_bmodel,
 
 	r_state_world_texture_chain,
 	r_state_world_texture_chain_fullbright,
@@ -232,6 +256,7 @@ typedef enum {
 	r_state_world_singletexture_glc,
 	r_state_world_material_lightmap,
 	r_state_world_material_lightmap_luma,
+	r_state_world_material_lightmap_fb,
 	r_state_world_material_fb_lightmap,
 	r_state_world_material_luma_lightmap,
 
@@ -245,22 +270,30 @@ typedef enum {
 	r_state_aliasmodel_powerupshell,
 	r_state_weaponmodel_powerupshell,
 
+	// meag: no multitexture_additive: multitex currently only for .mdl files, additive only for .md3
 	r_state_aliasmodel_notexture_opaque,
 	r_state_aliasmodel_notexture_transparent,
+	r_state_aliasmodel_notexture_additive,
 	r_state_aliasmodel_singletexture_opaque,
 	r_state_aliasmodel_singletexture_transparent,
+	r_state_aliasmodel_singletexture_additive,
 	r_state_aliasmodel_multitexture_opaque,
 	r_state_aliasmodel_multitexture_transparent,
+	r_state_aliasmodel_transparent_zpass,
 	r_state_weaponmodel_singletexture_opaque,
 	r_state_weaponmodel_singletexture_transparent,
+	r_state_weaponmodel_singletexture_additive,
 	r_state_weaponmodel_multitexture_opaque,
 	r_state_weaponmodel_multitexture_transparent,
+	r_state_weaponmodel_transparent_zpass,
 
 	r_state_aliasmodel_shadows,
 	r_state_aliasmodel_outline,
+	r_state_weaponmodel_outline,
 
 	r_state_aliasmodel_opaque_batch,
 	r_state_aliasmodel_translucent_batch,
+	r_state_aliasmodel_translucent_batch_zpass,
 
 	r_state_aliasmodel_additive_batch,
 
@@ -285,6 +318,7 @@ typedef enum {
 
 	r_state_drawflat_with_lightmaps_glc,
 	r_state_drawflat_without_lightmaps_glc,
+	r_state_drawflat_without_lightmaps_unfogged_glc,
 
 	r_state_fx_world_geometry,
 
@@ -308,5 +342,7 @@ void R_CustomPolygonOffset(r_polygonoffset_t mode);
 void R_Hud_Initialise(void);
 
 void R_Viewport(int x, int y, int width, int height);
+void R_SetFullScreenViewport(int x, int y, int width, int height);
+void R_GetFullScreenViewport(int* viewport);
 
 #endif // EZQUAKE_R_STATE_HEADER

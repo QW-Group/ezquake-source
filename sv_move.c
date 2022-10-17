@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sv_move.c -- monster movement
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 #define	STEPSIZE	18
@@ -313,24 +314,22 @@ void SV_NewChaseDir (edict_t *actor, edict_t *enemy, float dist)
 	}
 
 	// try other directions
-	if ( ((rand()&3) & 1) ||  abs(deltay)>abs(deltax))
+	if ( ((rand()&3) & 1) || fabs(deltay) > fabs(deltax))
 	{
 		tdir=d[1];
 		d[1]=d[2];
 		d[2]=tdir;
 	}
 
-	if (d[1]!=DI_NODIR && d[1]!=turnaround
-	        && SV_StepDirection(actor, d[1], dist))
+	if (d[1] != DI_NODIR && d[1] != turnaround && SV_StepDirection(actor, d[1], dist))
 		return;
 
-	if (d[2]!=DI_NODIR && d[2]!=turnaround
-	        && SV_StepDirection(actor, d[2], dist))
+	if (d[2] != DI_NODIR && d[2] != turnaround && SV_StepDirection(actor, d[2], dist))
 		return;
 
 	/* there is no direct path to the player, so pick another direction */
 
-	if (olddir!=DI_NODIR && SV_StepDirection(actor, olddir, dist))
+	if (olddir != DI_NODIR && SV_StepDirection(actor, olddir, dist))
 		return;
 
 	if (rand()&1) 	/*randomly determine direction of search*/
@@ -413,3 +412,5 @@ void SV_MoveToGoal (void)
 		SV_NewChaseDir (ent, goal, dist);
 	}
 }
+
+#endif // !CLIENTONLY

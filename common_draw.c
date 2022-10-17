@@ -28,6 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "gl_model.h"
 
+void Draw_ClearConback(void);
+
 // FIXME: this is horrible - points to &hud_gameclock_offset->integer
 int* gameclockoffset;
 
@@ -56,7 +58,7 @@ int SCR_DrawDemoStatus(void)
     int w, i;
     int mins, secs;
 
-    if (cls.timedemo  ||  !cls.demoplayback)
+    if (cls.timedemo || !cls.demoplayback)
         return 0;
 
     if (!cls.demopaused  &&  (realtime - cls.demobartime > demo_statustime.value  ||  cls.demobartime < 0))
@@ -603,6 +605,7 @@ void CachePics_Shutdown(void)
 	}
 
 	memset(cachepics, 0, sizeof(cachepics));
+	Draw_ClearConback();
 }
 
 const int COLOR_WHITE = 0xFFFFFFFF;
@@ -741,8 +744,12 @@ const char* SCR_GetTime (const char *format)
 
 	time (&t);
 	ptm = localtime (&t);
-	if (!ptm) return "-:-";
-	if (!strftime(buf, sizeof(buf)-1, format, ptm)) return "-:-";
+	if (!ptm) {
+		return "-:-";
+	}
+	if (!strftime(buf, sizeof(buf) - 1, format, ptm)) {
+		return "-:-";
+	}
 	//snprintf(buf, sizeof (buf), "%2d:%02d:%02d", tm->wHour, tm->wMinute, tm->wSecond);
 	return buf;
 }
@@ -757,7 +764,7 @@ char* SCR_GetGameTime(int t)
 	if (cl.countdown || cl.standby)
 		strlcpy (str, SecondsToMinutesString(timelimit), sizeof(str));
 	else
-		strlcpy (str, SecondsToMinutesString((int) abs(timelimit - cl.gametime + *gameclockoffset)), sizeof(str));
+		strlcpy (str, SecondsToMinutesString((int)fabs(timelimit - cl.gametime + *gameclockoffset)), sizeof(str));
 
 	return str;
 }
@@ -766,6 +773,21 @@ char* SCR_GetDemoTime(void)
 {
 	static char str[9]; // '01:02:03\0'
 	strlcpy (str, SecondsToMinutesString((int) (cls.demotime - demostarttime)), sizeof(str));
+	return str;
+}
+
+char* SCR_GetHostTime(void)
+{
+	static char str[9]; // '01:02:03\0'
+	strlcpy(str, SecondsToMinutesString((int)curtime), sizeof(str));
+	return str;
+}
+
+char* SCR_GetConnectedTime(void)
+{
+	static char str[9]; // '01:02:03\0'
+	float time = (cl.servertime_works) ? cl.servertime : cls.realtime;
+	strlcpy(str, SecondsToHourString((int)time), sizeof(str));
 	return str;
 }
 
@@ -804,7 +826,14 @@ const char* SCR_GetTimeString(int timetype, const char *format)
 		case TIMETYPE_DEMOCLOCK:
 			return SCR_GetDemoTime();
 
-		case TIMETYPE_CLOCK: default:
+		case TIMETYPE_HOSTCLOCK:
+			return SCR_GetHostTime();
+
+		case TIMETYPE_CONNECTEDCLOCK:
+			return SCR_GetConnectedTime();
+
+		case TIMETYPE_CLOCK:
+		default:
 			return SCR_GetTime(format);
 	}
 }
@@ -908,9 +937,9 @@ void SCR_HUD_DrawBar(int direction, int value, float max_value, byte *color, int
 
 	if(direction >= 2)
 		// top-down
-		amount = Q_rint(abs((height * value) / max_value));
+		amount = Q_rint(fabs((height * value) / max_value));
 	else// left-right
-		amount = Q_rint(abs((width * value) / max_value));
+		amount = Q_rint(fabs((width * value) / max_value));
 
 	if(direction == 0)
 		// left->right

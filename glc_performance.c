@@ -33,12 +33,14 @@ void GLC_TimeRefresh(void)
 	int i;
 	float start, stop, time;
 
+	if (!GL_FramebufferEnabled2D()) {
 #ifndef __APPLE__
-	if (glConfig.hardwareType != GLHW_INTEL) {
-		// Causes the console to flicker on Intel cards.
-		glDrawBuffer(GL_FRONT);
-	}
+		if (glConfig.hardwareType != GLHW_INTEL) {
+			// Causes the console to flicker on Intel cards.
+			GL_BuiltinProcedure(glDrawBuffer, "mode=GL_FRONT", GL_FRONT)
+		}
 #endif
+	}
 
 	renderer.EnsureFinished();
 
@@ -54,11 +56,13 @@ void GLC_TimeRefresh(void)
 	time = stop - start;
 	Com_Printf("%f seconds (%f fps)\n", time, 128 / time);
 
+	if (!GL_FramebufferEnabled2D()) {
 #ifndef __APPLE__
-	if (glConfig.hardwareType != GLHW_INTEL) {
-		glDrawBuffer(GL_BACK);
-	}
+		if (glConfig.hardwareType != GLHW_INTEL) {
+			GL_BuiltinProcedure(glDrawBuffer, "mode=GL_BACK", GL_BACK)
+		}
 #endif
+	}
 
 	R_EndRendering();
 }

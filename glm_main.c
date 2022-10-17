@@ -10,10 +10,6 @@ void GL_Init(void);
 void GL_InitialiseBufferHandling(api_buffers_t* api);
 void GL_InitialiseState(void);
 
-static void GLM_ConfigureFog(int contents)
-{
-}
-
 static void R_Stubs_NoOperationEntity(entity_t* ent)
 {
 }
@@ -37,6 +33,8 @@ static void GLM_Begin2DRendering(void)
 #define GLM_ClearRenderingSurface          GL_Clear
 #define GLM_EnsureFinished                 GL_EnsureFinished
 #define GLM_Screenshot                     GL_Screenshot
+#define GLM_ScreenshotWidth                GL_ScreenshotWidth
+#define GLM_ScreenshotHeight               GL_ScreenshotHeight
 #define GLM_InitialiseVAOState             GL_InitialiseVAOState
 #define GLM_DescriptiveString              GL_DescriptiveString
 #define GLM_Draw3DSpritesInline            R_Stubs_NoOperation
@@ -69,7 +67,7 @@ static void GLM_Begin2DRendering(void)
 #define GLM_ProgramsShutdown               GL_ProgramsShutdown
 #define GLM_DrawSky                        R_Stubs_NoOperation
 #define GLM_PrepareAliasModel              GL_PrepareAliasModel
-
+#define GLM_TextureIsUnitBound             GL_IsTextureBound
 #define GLM_FramebufferCreate              GL_FramebufferCreate
 
 #define RENDERER_METHOD(returntype, name, ...) \

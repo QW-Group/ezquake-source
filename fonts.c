@@ -373,18 +373,18 @@ static qbool FontCreate(int grouping, const char* userpath)
 			memset(temp_buffer, 0, yoffset * base_font_width * 4);
 		}
 
-glyphs[ch].offsets[0] /= (base_font_width / 2);
-glyphs[ch].offsets[1] /= (base_font_height / 2);
+		glyphs[ch].offsets[0] /= (base_font_width / 2);
+		glyphs[ch].offsets[1] /= (base_font_height / 2);
 
-charset->glyphs[ch].width = width;
-charset->glyphs[ch].height = height;
-charset->glyphs[ch].sl = (original_left + xbase) * 1.0f / texture_width;
-charset->glyphs[ch].tl = (original_top + ybase) * 1.0f / texture_height;
-charset->glyphs[ch].sh = charset->glyphs[ch].sl + width * 1.0f / texture_width;
-charset->glyphs[ch].th = charset->glyphs[ch].tl + height * 1.0f / texture_height;
-charset->glyphs[ch].texnum = charset->master;
+		charset->glyphs[ch].width = width;
+		charset->glyphs[ch].height = height;
+		charset->glyphs[ch].sl = (original_left + xbase) * 1.0f / texture_width;
+		charset->glyphs[ch].tl = (original_top + ybase) * 1.0f / texture_height;
+		charset->glyphs[ch].sh = charset->glyphs[ch].sl + width * 1.0f / texture_width;
+		charset->glyphs[ch].th = charset->glyphs[ch].tl + height * 1.0f / texture_height;
+		charset->glyphs[ch].texnum = charset->master;
 
-renderer.TextureReplaceSubImageRGBA(charset->master, original_left + xbase, original_top + ybase, base_font_width, base_font_height, temp_buffer);
+		renderer.TextureReplaceSubImageRGBA(charset->master, original_left + xbase, original_top + ybase, base_font_width, base_font_height, temp_buffer);
 	}
 	Q_free(full_buffer);
 	charset->custom_scale_x = charset->custom_scale_y = 1;
@@ -442,6 +442,8 @@ void Draw_LoadFont_f(void)
 	}
 }
 
+// FIXME, should be in client but relies on Sys_listdir
+#ifndef CLIENTONLY
 void Draw_ListFonts_f(void)
 {
 	char path[MAX_OSPATH];
@@ -487,11 +489,14 @@ void Draw_ListFonts_f(void)
 	}
 	Con_Printf("Found %d/%d files in %s\n", printed, dir.numfiles, path);
 }
+#endif
 
 void FontInitialise(void)
 {
 	Cmd_AddCommand("fontload", Draw_LoadFont_f);
+#ifndef CLIENTONLY // FIXME
 	Cmd_AddCommand("fontlist", Draw_ListFonts_f);
+#endif
 
 	Cvar_Register(&font_facepath);
 	Cvar_Register(&font_capitalize);
@@ -518,14 +523,14 @@ qbool FontAlterCharCoordsWide(float* x, float* y, wchar ch, qbool bigchar, float
 		return false;
 	}
 
-	// Space.
-	if (ch == 32) {
+	// Space (& 'red' version).
+	if (ch == 32 || ch == (32 | 128)) {
 		*x += FontCharacterWidthWide(ch, scale, proportional);
 		return false;
 	}
 
 #ifdef EZ_FREETYPE_SUPPORT
-	if (proportional && ch <= sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
+	if (proportional && ch < sizeof(glyphs) / sizeof(glyphs[0]) && glyphs[ch].loaded) {
 		*x += glyphs[ch].offsets[0] * char_size * scale;
 	}
 #endif
@@ -535,7 +540,7 @@ qbool FontAlterCharCoordsWide(float* x, float* y, wchar ch, qbool bigchar, float
 
 float FontCharacterWidthWide(wchar ch, float scale, qbool proportional)
 {
-	unsigned char charset = (unsigned char)((ch >> 8) & 0xFF);
+	int charset = ((ch >> 8) & 0xFF);
 	float width = 8 * scale;
 
 #ifdef EZ_FREETYPE_SUPPORT
@@ -544,7 +549,7 @@ float FontCharacterWidthWide(wchar ch, float scale, qbool proportional)
 	}
 #endif
 
-	if (charset >= 0 && charset < MAX_CHARSETS && char_textures[charset].custom_scale_x != 0) {
+	if (charset >= 0 && charset < sizeof(char_textures) / sizeof(char_textures[0]) && char_textures[charset].custom_scale_x != 0) {
 		width *= char_textures[charset].custom_scale_x;
 	}
 

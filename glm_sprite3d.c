@@ -53,6 +53,12 @@ static void GLM_Create3DSpriteVAO(void)
 	}
 }
 
+#define DRAW_FOG_LINEAR       (1 << 0)
+#define DRAW_FOG_EXP          (1 << 1)
+#define DRAW_FOG_EXP2         (1 << 2)
+
+#define DRAW_FOG              (DRAW_FOG_LINEAR | DRAW_FOG_EXP | DRAW_FOG_EXP2)
+
 qbool GLM_Compile3DSpriteProgram(void)
 {
 	if (R_ProgramRecompileNeeded(r_program_sprite3d, 0)) {
@@ -103,7 +109,7 @@ void GLM_Prepare3DSprites(void)
 		return;
 	}
 
-	R_TraceEnterNamedRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__func__);
 
 	GLM_Create3DSpriteVAO();
 
@@ -124,7 +130,7 @@ void GLM_Draw3DSprites(void)
 		return;
 	}
 
-	R_TraceEnterNamedRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__func__);
 
 	if (!GLM_3DSpritesInit()) {
 		R_TraceLeaveNamedRegion();

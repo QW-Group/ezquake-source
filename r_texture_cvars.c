@@ -27,33 +27,31 @@ $Id: gl_texture.c,v 1.44 2007-10-05 19:06:24 johnnycz Exp $
 #include "gl_texture.h"
 #include "r_renderer.h"
 
-void R_TextureModeForEach(void(*func)(texture_ref ref, qbool mipmap));
-
 static void OnChange_gl_max_size(cvar_t *var, char *string, qbool *cancel);
 static void OnChange_gl_texturemode(cvar_t *var, char *string, qbool *cancel);
 static void OnChange_gl_miptexLevel(cvar_t *var, char *string, qbool *cancel);
 static void OnChange_gl_anisotropy(cvar_t *var, char *string, qbool *cancel);
 
-cvar_t gl_lerpimages = { "gl_lerpimages", "1" };
-static cvar_t gl_externalTextures_world = { "gl_externalTextures_world", "1" };
-static cvar_t gl_externalTextures_bmodels = { "gl_externalTextures_bmodels", "1" };
-cvar_t gl_wicked_luma_level = { "gl_luma_level", "1", CVAR_LATCH };
+cvar_t gl_lerpimages = { "gl_lerpimages", "1", CVAR_RELOAD_GFX };
+static cvar_t gl_externalTextures_world = { "gl_externalTextures_world", "1", CVAR_RELOAD_GFX };
+static cvar_t gl_externalTextures_bmodels = { "gl_externalTextures_bmodels", "1", CVAR_RELOAD_GFX };
+cvar_t gl_wicked_luma_level = { "gl_luma_level", "1", CVAR_RELOAD_GFX };
 
 static int anisotropy_tap = 1; //  1 - is off
 
-cvar_t gl_max_size = { "gl_max_size", "2048", 0, OnChange_gl_max_size };
-cvar_t gl_picmip = { "gl_picmip", "0" };
-cvar_t gl_miptexLevel = { "gl_miptexLevel", "0", 0, OnChange_gl_miptexLevel };
+cvar_t gl_max_size = { "gl_max_size", "2048", CVAR_RELOAD_GFX, OnChange_gl_max_size };
+cvar_t gl_picmip = { "gl_picmip", "0", CVAR_RELOAD_GFX };
+cvar_t gl_miptexLevel = { "gl_miptexLevel", "0", CVAR_RELOAD_GFX, OnChange_gl_miptexLevel };
 cvar_t gl_texturemode = { "gl_texturemode", "GL_LINEAR_MIPMAP_LINEAR", 0, OnChange_gl_texturemode };
+cvar_t gl_texturemode_viewmodels = { "gl_texturemode_viewmodels", "GL_LINEAR", 0, OnChange_gl_texturemode };
 cvar_t gl_anisotropy = { "gl_anisotropy","1", 0, OnChange_gl_anisotropy };
-cvar_t gl_scaleModelTextures = { "gl_scaleModelTextures", "0" };
-cvar_t gl_scaleModelSimpleTextures = { "gl_scaleModelSimpleTextures", "0" };
-cvar_t gl_scaleTurbTextures = { "gl_scaleTurbTextures", "1" };
-cvar_t gl_scaleskytextures = { "gl_scaleskytextures", "0" };
-cvar_t gl_mipmap_viewmodels = { "gl_mipmap_viewmodels", "0" };
-cvar_t gl_no24bit = { "gl_no24bit", "0", CVAR_LATCH };
+cvar_t gl_scaleModelTextures = { "gl_scaleModelTextures", "0", CVAR_RELOAD_GFX };
+cvar_t gl_scaleModelSimpleTextures = { "gl_scaleModelSimpleTextures", "0", CVAR_RELOAD_GFX };
+cvar_t gl_scaleTurbTextures = { "gl_scaleTurbTextures", "1", CVAR_RELOAD_GFX };
+cvar_t gl_scaleskytextures = { "gl_scaleskytextures", "0", CVAR_RELOAD_GFX };
+cvar_t gl_no24bit = { "gl_no24bit", "0", CVAR_RELOAD_GFX };
 
-void OnChange_gl_max_size(cvar_t *var, char *string, qbool *cancel)
+static void OnChange_gl_max_size(cvar_t *var, char *string, qbool *cancel)
 {
 	int i;
 	float newvalue = Q_atof(string);
@@ -73,14 +71,14 @@ void OnChange_gl_max_size(cvar_t *var, char *string, qbool *cancel)
 	}
 }
 
-void R_TextureAnisotropyChanged(texture_ref tex, qbool mipmap)
+void R_TextureAnisotropyChanged(texture_ref tex, qbool mipmap, qbool viewmodel)
 {
-	if (mipmap) {
+	if (mipmap || viewmodel) {
 		renderer.TextureSetAnisotropy(tex, anisotropy_tap);
 	}
 }
 
-void OnChange_gl_anisotropy(cvar_t *var, char *string, qbool *cancel)
+static void OnChange_gl_anisotropy(cvar_t *var, char *string, qbool *cancel)
 {
 	int newvalue = Q_atoi(string);
 
@@ -89,7 +87,7 @@ void OnChange_gl_anisotropy(cvar_t *var, char *string, qbool *cancel)
 	R_TextureModeForEach(R_TextureAnisotropyChanged);
 }
 
-void OnChange_gl_miptexLevel(cvar_t *var, char *string, qbool *cancel)
+static void OnChange_gl_miptexLevel(cvar_t *var, char *string, qbool *cancel)
 {
 	float newval = Q_atof(string);
 
@@ -116,12 +114,17 @@ static glmode_t modes[] = {
 
 static texture_minification_id gl_filter_min = texture_minification_linear_mipmap_nearest;
 static texture_magnification_id gl_filter_max = texture_magnification_linear;
+static texture_minification_id gl_filter_viewmodel_min = texture_minification_linear;
+static texture_magnification_id gl_filter_viewmodel_max = texture_magnification_linear;
 static const texture_minification_id gl_filter_min_2d = texture_minification_linear;
 static const texture_magnification_id gl_filter_max_2d = texture_magnification_linear;   // no longer controlled by cvar
 
-void R_TextureModeChanged(texture_ref tex, qbool mipmap)
+void R_TextureModeChanged(texture_ref tex, qbool mipmap, qbool viewmodel)
 {
-	if (mipmap) {
+	if (viewmodel) {
+		renderer.TextureSetFiltering(tex, gl_filter_viewmodel_min, gl_filter_viewmodel_max);
+	}
+	else if (mipmap) {
 		renderer.TextureSetFiltering(tex, gl_filter_min, gl_filter_max);
 	}
 	else {
@@ -149,6 +152,10 @@ static void OnChange_gl_texturemode(cvar_t *var, char *string, qbool *cancel)
 		gl_filter_min = modes[i].minimize;
 		gl_filter_max = modes[i].maximize;
 	}
+	else if (var == &gl_texturemode_viewmodels) {
+		gl_filter_viewmodel_min = modes[i].minimize;
+		gl_filter_viewmodel_max = modes[i].maximize;
+	}
 	else {
 		Sys_Error("OnChange_gl_texturemode: unexpected cvar!");
 		return;
@@ -159,7 +166,7 @@ static void OnChange_gl_texturemode(cvar_t *var, char *string, qbool *cancel)
 
 qbool R_ExternalTexturesEnabled(qbool worldmodel)
 {
-	return worldmodel ? gl_externalTextures_world.integer : gl_externalTextures_bmodels.integer;
+	return !gl_no24bit.integer && (worldmodel ? gl_externalTextures_world.integer : gl_externalTextures_bmodels.integer);
 }
 
 void R_TextureRegisterCvars(void)
@@ -172,21 +179,21 @@ void R_TextureRegisterCvars(void)
 		Cvar_Register(&gl_max_size);
 		Cvar_Register(&gl_scaleModelTextures);
 		Cvar_Register(&gl_scaleModelSimpleTextures);
-		Cvar_Register(&gl_mipmap_viewmodels);
 		Cvar_Register(&gl_scaleTurbTextures);
 		Cvar_Register(&gl_scaleskytextures);
 		Cvar_Register(&gl_miptexLevel);
-		Cvar_Register(&gl_no24bit);
 		Cvar_Register(&gl_picmip);
 		Cvar_Register(&gl_lerpimages);
 		Cvar_Register(&gl_texturemode);
+		Cvar_Register(&gl_texturemode_viewmodels);
 		Cvar_Register(&gl_anisotropy);
 		Cvar_Register(&gl_externalTextures_world);
 		Cvar_Register(&gl_externalTextures_bmodels);
-	}
 
-	// latch cvars
-	Cvar_Register(&gl_wicked_luma_level);
+		Cvar_Register(&gl_no24bit);
+		Cvar_Register(&gl_wicked_luma_level);
+		Cvar_ResetCurrentGroup();
+	}
 
 	// This way user can specify gl_max_size in his cfg.
 	i = (cv = Cvar_Find(gl_max_size.name)) ? cv->integer : 0;

@@ -19,11 +19,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // sv_demo_misc.c - misc demo related stuff, helpers
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 #ifndef SERVERONLY
 #include "pcre.h"
 #endif
 
+#define MAX_DEMOINFO_SIZE (1024 * 200)
 static char chartbl[256];
 
 /*
@@ -246,7 +248,7 @@ char *SV_PrintTeams (void)
 	static char		lastscores[2048];
 	extern cvar_t	teamplay;
 	date_t			date;
-	SV_TimeOfDay(&date);
+	SV_TimeOfDay(&date, "%a %b %d, %H:%M:%S %Y");
 
 	// count teams and players
 	for (i=0; i < MAX_CLIENTS; i++)
@@ -676,7 +678,7 @@ void SV_MVDRemoveNum_f (void)
 		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, name);
 		if (!Sys_remove(path))
 		{
-			Con_Printf("demo %s succesfully removed\n", name);
+			Con_Printf("demo %s successfully removed\n", name);
 			if (*sv_ondemoremove.string)
 			{
 				extern redirect_t sv_redirected;
@@ -740,7 +742,8 @@ void SV_MVDInfoAdd_f (void)
 	}
 
 	if (!strcmp(Cmd_Argv(1), "**"))
-	{ // put content of one file to another
+	{
+		// put content of one file to another
 		FILE *src;
 
 		snprintf(path, MAX_OSPATH, "%s/%s", fs_gamedir, Cmd_Argv(2));
@@ -751,13 +754,18 @@ void SV_MVDInfoAdd_f (void)
 		}
 		else
 		{
-			char buf[1024*200] = {0}; // 200 kb
-			size_t sz = fread((void*) buf, 1, sizeof(buf), src); // read from src
+			byte buf[1024 * 200] = { 0 }; // 200 kb
+			size_t sz = fread((void*)buf, 1, sizeof(buf), src); // read from src
 
-			if (sz <= 0)
+			if (sz <= 0) {
 				Con_Printf("failed to read or empty input file\n");
-			else if (sz != fwrite((void*) buf, 1, sz, f)) // write to f
-				Con_Printf("failed write to file\n");
+			}
+			else {
+				// write to f
+				if (sz != fwrite((void*)buf, 1, sz, f)) {
+					Con_Printf("failed write to file\n");
+				}
+			}
 
 			fclose(src); // close src
 		}
@@ -779,6 +787,85 @@ void SV_MVDInfoAdd_f (void)
 
 	// force cache rebuild.
 	FS_FlushFSHash();
+}
+
+// Put content of one file into .mvd
+void SV_MVDEmbedInfo_f(void)
+{
+	// put content of one file to another
+	FILE* src;
+	byte* buf;
+	size_t sz;
+	char name[MAX_OSPATH];
+	char path[MAX_OSPATH];
+
+	if (Cmd_Argc() == 1) {
+		Con_Printf("Embeds contents of a file into mvd/qtv stream\n");
+		Con_Printf("Usage: %s <filename>\n", Cmd_Argv(0));
+		return;
+	}
+
+	// No config files, no sub-directories
+	strlcpy(name, Cmd_Argv(1), sizeof(name));
+	snprintf(path, MAX_OSPATH, "%s/%s", fs_gamedir, Cmd_Argv(1));
+	if (FS_UnsafeFilename(path) || !strcasecmp(COM_FileExtension(name), "cfg")) {
+		Con_Printf("Unsafe filename detected - cancelled\n");
+		return;
+	}
+
+	if ((src = fopen(path, "rb")) == NULL) {
+		Con_Printf("failed to open input file\n");
+		return;
+	}
+
+	buf = Q_malloc(MAX_DEMOINFO_SIZE);
+	sz = fread((void*)buf, 1, MAX_DEMOINFO_SIZE, src);
+	fclose(src);
+	if (sz <= 0) {
+		Con_Printf("failed to read or empty input file\n");
+		Q_free(buf);
+		return;
+	}
+
+	Con_Printf("Embedding (%s):\n", path);
+
+	// embed in .mvd/qtv (sanity check limits)
+	if (sz < 2 * 1024 * 1024) {
+		mvdhidden_block_header_t header;
+		byte* data = buf;
+		short block_number = 1;
+
+		while (sz > 0) {
+			int prefix_length = sizeof_mvdhidden_block_header_t_range0 + sizeof(block_number);
+			int length = (int)min(sz + prefix_length, MAX_MVD_SIZE);
+
+			if (MVDWrite_HiddenBlockBegin(length)) {
+				length -= prefix_length;
+
+				sz -= length;
+				if (sz == 0) {
+					block_number = 0;
+				}
+
+				header.length = LittleLong(length + sizeof(short));
+				header.type_id = LittleShort(mvdhidden_demoinfo);
+				MVD_SZ_Write(&header.length, sizeof(header.length));
+				MVD_SZ_Write(&header.type_id, sizeof(header.type_id));
+				MVD_SZ_Write(&block_number, sizeof(block_number));
+				MVD_SZ_Write(data, length);
+
+				data += length;
+				++block_number;
+			}
+			else {
+				Con_Printf("failed write to mvd/qtv\n");
+				Q_free(buf);
+				break;
+			}
+		}
+	}
+
+	Q_free(buf);
 }
 
 void SV_MVDInfoRemove_f (void)
@@ -1070,3 +1157,5 @@ char *quote (char *str)
 	*s = '\0';
 	return out;
 }
+
+#endif // !CLIENTONLY

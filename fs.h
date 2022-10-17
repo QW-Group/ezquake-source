@@ -104,7 +104,7 @@ typedef enum {
 		| FS_LOAD_FILE_PK4 | FS_LOAD_FILE_DOOMWAD | FS_LOAD_FROM_PAKLST,
 } FS_Load_File_Types;
 
-void FS_AddGameDirectory (char *dir, unsigned int loadstuff);
+void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff);
 
 char *FS_NextPath (char *prevpath);
 
@@ -123,10 +123,7 @@ int FS_GZipUnpack (char *source_path,		// The path to the compressed source file
 					char *destination_path, // The destination file path.
 					qbool overwrite);		// Overwrite the destination file if it exists?
 
-int FS_GZipUnpackToTemp (char *source_path,		// The compressed source file.
-						  char *unpack_path,		// A buffer that will contain the path to the unpacked file.
-						  int unpack_path_size,		// The size of the buffer.	
-						  char *append_extension);	// The extension if any that should be appended to the filename.
+void* FS_GZipUnpackToMemory(char* source_path, size_t* unpacked_length);
 
 int FS_ZlibInflate(FILE *source, FILE *dest);
 
@@ -176,13 +173,14 @@ int FS_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with FS_Zip
 						  qbool overwrite,				// Overwrite any existing file with the same name when unpacking?
 						  const char *password);		// The password to use when extracting the file.
 
-int FS_ZipUnpackOneFileToTemp (unzFile zip_file, 
-						  const char *filename_inzip,
-						  qbool case_sensitive, 
-						  qbool keep_path,
-						  const char *password,
-						  char *unpack_path,			// The path where the file was unpacked.
-						  int unpack_path_size);			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.
+void* FS_ZipUnpackOneFileToMemory(
+	unzFile zip_file,
+	const char* filename_inzip,
+	qbool case_sensitive,
+	qbool keep_path,
+	const char* password,
+	size_t* unpacked_length
+);
 
 int FS_ZipUnpackCurrentFile (unzFile zip_file, 
 							  const char *destination_path, 
@@ -198,5 +196,6 @@ int FS_ZipGetNextFile (unzFile zip_file, sys_dirent *ent);
 #endif // WITH_ZIP
 
 qbool FS_UnsafeFilename(const char* name);
+void FS_SaveGameDirectory(char* buffer, int buffer_size);
 
 #endif // __FS_H__

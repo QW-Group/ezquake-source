@@ -347,12 +347,18 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 	//zoid, no input in demo playback mode
 	if (!cls.demoplayback)
 #endif
-		NET_SendPacket (chan->sock, send.cursize, send.data, chan->remote_address);
+	{
+		for (i = 0; i <= chan->dupe; ++i) {
+			NET_SendPacket(chan->sock, send.cursize, send.data, chan->remote_address);
+		}
+	}
 
-	if (chan->cleartime < curtime)
-		chan->cleartime = curtime + send.cursize * chan->rate;
-	else
-		chan->cleartime += send.cursize * chan->rate;
+	if (chan->cleartime < curtime) {
+		chan->cleartime = curtime + send.cursize * i * chan->rate;
+	}
+	else {
+		chan->cleartime += send.cursize * i * chan->rate;
+	}
 
 #ifndef CLIENTONLY
 	if (chan->sock == NS_SERVER && sv.paused)
@@ -363,8 +369,8 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 #ifndef SERVERONLY
 		Print_flags[Print_current] |= PR_TR_SKIP;
 #endif
-		Con_Printf ("--> s=%i(%i) a=%i(%i) %i%s\n"
-		            , chan->outgoing_sequence
+		Con_Printf ("%.1f --> s=%i(%i) a=%i(%i) %i%s\n"
+		            , cls.demopackettime * 1000, chan->outgoing_sequence
 		            , send_reliable
 		            , chan->incoming_sequence
 		            , chan->incoming_reliable_sequence
@@ -411,8 +417,8 @@ qbool Netchan_Process (netchan_t *chan)
 #ifndef SERVERONLY
 		Print_flags[Print_current] |= PR_TR_SKIP;
 #endif
-		Con_Printf ("<-- s=%i(%i) a=%i(%i) %i%s\n"
-		            , sequence
+		Con_Printf ("%.1f <-- s=%i(%i) a=%i(%i) %i%s\n"
+		            , cls.demopackettime * 1000, sequence
 		            , reliable_message
 		            , sequence_ack
 		            , reliable_ack

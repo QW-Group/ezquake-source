@@ -144,9 +144,9 @@ float particle_time;
 qbool qmb_initialized = false;
 
 static cvar_t gl_clipparticles = {"gl_clipparticles", "1"};
-static cvar_t gl_part_cache = { "gl_part_cache", "1", CVAR_LATCH };
+static cvar_t gl_part_cache = { "gl_part_cache", "1", CVAR_LATCH_GFX };
 static cvar_t gl_bounceparticles = {"gl_bounceparticles", "1"};
-cvar_t amf_part_fulldetail = { "gl_particle_fulldetail", "0", CVAR_LATCH };
+cvar_t amf_part_fulldetail = { "gl_particle_fulldetail", "0", CVAR_LATCH_GFX };
 
 static int ParticleContents(particle_t* p, vec3_t movement)
 {
@@ -348,10 +348,9 @@ void QMB_InitParticles(void)
 		Q_free(particles); // yeah, shit happens, work around
 		QMB_AllocParticles();
 	}
-	else {
-		QMB_ClearParticles (); // also re-allocc particles
-		qmb_initialized = false; // so QMB particle system will be turned off if we fail to load some texture
-	}
+
+	QMB_ClearParticles(); // re-alloc particles, and create linked list of next free particle
+	qmb_initialized = false; // so QMB particle system will be turned off if we fail to load some texture
 
 	ADD_PARTICLE_TEXTURE(ptex_none, null_texture_reference, 0, 1, 0, 0, 0, 0);
 
@@ -477,10 +476,7 @@ void QMB_ClearParticles (void)
 {
 	int	i;
 
-	if (!qmb_initialized) {
-		return;
-	}
-
+	// FIXME: if r_numparticles hasn't changed, then no-need to reallocate again.
 	Q_free(particles);		// free
 	QMB_AllocParticles();	// and alloc again
 

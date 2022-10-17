@@ -19,4 +19,8 @@ void main()
 	if (alpha_test && frag_color.a < 0.3) {
 		discard;
 	}
+
+#ifdef DRAW_FOG
+	frag_color = applyFog(frag_color, gl_FragCoord.z / gl_FragCoord.w);
+#endif
 }

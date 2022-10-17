@@ -27,16 +27,9 @@ static cvar_t scr_qtvbuffer   = { "scr_qtvbuffer",        "0" };
 static cvar_t scr_qtvbuffer_x = { "scr_qtvbuffer_x",      "0" };
 static cvar_t scr_qtvbuffer_y = { "scr_qtvbuffer_y",    "-10" };
 
-static qbool SCR_QTVBufferToBeDrawn(int options)
-{
-	return (options == 1 && cls.mvdplayback == QTV_PLAYBACK) || (options > 1 && cls.mvdplayback);
-}
-
 void SCR_DrawQTVBuffer(void)
 {
 	extern double Demo_GetSpeed(void);
-	extern unsigned char pb_buf[];
-	extern int	pb_cnt;
 
 	int x, y;
 	int ms, len;
@@ -46,7 +39,7 @@ void SCR_DrawQTVBuffer(void)
 		return;
 	}
 
-	len = ConsistantMVDDataEx(pb_buf, pb_cnt, &ms);
+	len = Demo_BufferSize(&ms);
 	snprintf(str, sizeof(str), "%6dms %5db %2.3f", ms, len, Demo_GetSpeed());
 
 	x = ELEMENT_X_COORD(scr_qtvbuffer);
@@ -57,8 +50,6 @@ void SCR_DrawQTVBuffer(void)
 static void SCR_HUD_DrawQTVBuffer(hud_t* hud)
 {
 	extern double Demo_GetSpeed(void);
-	extern unsigned char pb_buf[];
-	extern int pb_cnt;
 
 	int x, y;
 	int ms, len;
@@ -76,7 +67,7 @@ static void SCR_HUD_DrawQTVBuffer(hud_t* hud)
 		return;
 	}
 
-	len = ConsistantMVDDataEx(pb_buf, pb_cnt, &ms);
+	len = Demo_BufferSize(&ms);
 	snprintf(str, sizeof(str), "%6dms %5db %2.3f", ms, len, Demo_GetSpeed());
 	
 	draw_len = Draw_StringLength(str, -1, hud_scale->value, hud_proportional->integer);

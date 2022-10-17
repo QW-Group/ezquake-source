@@ -27,6 +27,7 @@
   reenterable vmMain
 */
 
+#ifndef CLIENTONLY
 #ifdef USE_PR2
 
 #include "qwsvdef.h"
@@ -35,7 +36,7 @@
 cvar_t	sv_enableprofile = {"sv_enableprofile","0"};
 typedef struct
 {
-	int adress;
+	int address;
 #ifdef _WIN32
 	__int64 instruction_count;
 #else
@@ -89,22 +90,22 @@ void* VM_POINTER(byte* base, uintptr_t mask, intptr_t offset)
 	return OLD_VM_POINTER(base, mask, offset);
 }
 
-profile_t* ProfileEnterFunction(int adress)
+profile_t* ProfileEnterFunction(int address)
 {
 	int i;
 	for (  i = 0 ; i < num_profile_func ; i++ )
 	{
-		if(profile_funcs[i].adress == adress)
+		if(profile_funcs[i].address == address)
 			return &profile_funcs[i];
 	}
 	if( num_profile_func >= MAX_PROFILE_FUNCS )
 	{
-		profile_funcs[0].adress = adress;
+		profile_funcs[0].address = address;
 		profile_funcs[0].instruction_count = 0;
 
 		return &profile_funcs[0];
 	}
-	profile_funcs[num_profile_func].adress = adress;
+	profile_funcs[num_profile_func].address = address;
 	profile_funcs[num_profile_func].instruction_count = 0;
 
 	return &profile_funcs[num_profile_func++];
@@ -157,7 +158,7 @@ void PR2_Profile_f(void)
 		{
 			if (num < 15)
 			{
-				sym = QVM_FindName( (qvm_t*)(sv_vm->hInst), best->adress );
+				sym = QVM_FindName( (qvm_t*)(sv_vm->hInst), best->address );
 #ifdef _WIN32
 				Con_Printf ("%18I64d %s\n", best->instruction_count, sym->name);
 #else
@@ -209,6 +210,7 @@ qbool VM_LoadNative( vm_t * vm )
 	char   *gpath = NULL;
 	void    ( *dllEntry ) ( void * );
 
+	memset(name, 0, sizeof(name));
 	while ( ( gpath = FS_NextPath( gpath ) ) )
 	{
 		snprintf(name, sizeof(name), "%s/%s." DLEXT, gpath, vm->name);
@@ -592,7 +594,7 @@ void  QVM_StackTrace( qvm_t * qvm )
 		LP += num;
 		if ( off < 0 || off >= qvm->len_cs )
 		{
-			Con_Printf( "Error ret adress %8x in stack %8x/%8x\n", off, LP, qvm->len_ds );
+			Con_Printf( "Error ret address %8x in stack %8x/%8x\n", off, LP, qvm->len_ds );
 			return;
 		}
 		if ( num <= 0 )
@@ -1275,3 +1277,5 @@ void PrintInstruction( qvm_t * qvm )
 }
 
 #endif /* USE_PR2 */
+
+#endif // !CLIENTONLY

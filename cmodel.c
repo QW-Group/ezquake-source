@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "common.h"
 #include "cvar.h"
 #endif
+#include <limits.h>
 
 typedef struct cnode_s {
 	// common with leaf
@@ -79,6 +80,15 @@ static mphysicsnormal_t* map_physicsnormals;     // must be same number as clipn
 
 static byte			*cmod_base;					// for CM_Load* functions
 
+// lumps immediately follow:
+typedef struct {
+	char lumpname[24];
+	int fileofs;
+	int filelen;
+} bspx_lump_t;
+
+void* Mod_BSPX_FindLump(bspx_header_t* bspx_header, char* lumpname, int* plumpsize, byte* mod_base);
+bspx_header_t* Mod_LoadBSPX(int filesize, byte* mod_base);
 
 /*
 ===============================================================================
@@ -135,10 +145,10 @@ hull_t *CM_HullForBox (vec3_t mins, vec3_t maxs)
 	return &box_hull;
 }
 
-int CM_CachedHullPointContents(hull_t *hull, int num, vec3_t p, float* min_dist)
+int CM_CachedHullPointContents(hull_t* hull, int num, vec3_t p, float* min_dist)
 {
-	mclipnode_t *node;
-	mplane_t *plane;
+	mclipnode_t* node;
+	mplane_t* plane;
 	float d;
 
 	*min_dist = 999;
@@ -592,12 +602,12 @@ int CM_FindTouchedLeafs (const vec3_t mins, const vec3_t maxs, int leafs[], int 
 
 static void CM_LoadEntities (lump_t *l)
 {
-	if (!l->filelen) {
+	if (l->filelen <= 0 || l->filelen >= INT_MAX) {
 		map_entitystring = NULL;
 		return;
 	}
-	map_entitystring = (char *) Hunk_AllocName (l->filelen, loadname);
-	memcpy (map_entitystring, cmod_base + l->fileofs, l->filelen);
+	map_entitystring = (char *) Hunk_AllocName(l->filelen + 1, loadname);
+	memcpy(map_entitystring, cmod_base + l->fileofs, l->filelen);
 }
 
 
@@ -675,11 +685,19 @@ static void CM_LoadSubmodels (lump_t *l)
 CM_SetParent
 =================
 */
-static void CM_SetParent (cnode_t *node, cnode_t *parent)
+static void CM_SetParent(cnode_t *node, cnode_t *parent)
 {
-	node->parent = parent;
-	if (node->contents < 0)
+	if (node->parent && node->parent == parent) {
+		Host_Error("Infinite loop detected in node list (node %p, base %p)\n", node, map_nodes);
 		return;
+	}
+
+	node->parent = parent;
+
+	if (node->contents < 0) {
+		return;
+	}
+
 	CM_SetParent (node->children[0], node);
 	CM_SetParent (node->children[1], node);
 }
@@ -694,30 +712,40 @@ static void CM_LoadNodes (lump_t *l)
 	int i, j, count, p;
 	dnode_t *in;
 	cnode_t *out;
+	const int max_nodes = (INT_MAX / sizeof(*out));
 
 	in = (dnode_t *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
 		Host_Error ("CM_LoadMap: funny lump size");
 
 	count = l->filelen / sizeof(*in);
+	if (count < 0 || count > max_nodes) {
+		Host_Error("CM_LoadMap: invalid node count (%d vs 0-%d)", count, max_nodes);
+	}
 	out = (cnode_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	map_nodes = out;
 	numnodes = count;
 
-	for (i = 0; i < count; i++, in++, out++)
-	{
+	for (i = 0; i < count; i++, in++, out++) {
 		p = LittleLong(in->planenum);
+		if (p < 0 || p >= numplanes) {
+			Host_Error("Node %d has invalid plane# %d (0 to %d)\n", i, p, numplanes);
+			return;
+		}
 		out->plane = map_planes + p;
 
-		for (j=0 ; j<2 ; j++)
-		{
-			p = LittleShort (in->children[j]);
-			out->children[j] = (p >= 0) ? (map_nodes + p) : ((cnode_t *)(map_leafs + (-1 - p)));
+		for (j = 0; j < 2; j++) {
+			p = LittleShort(in->children[j]);
+			if (p < -numleafs || p >= numnodes) {
+				Host_Error("Node %d child[%d] #%d (%d to %d)", i, j, p, -numleafs, numnodes);
+				return;
+			}
+			out->children[j] = (p >= 0) ? (map_nodes + p) : ((cnode_t*)(map_leafs + (-1 - p)));
 		}
 	}
 
-	CM_SetParent (map_nodes, NULL); // sets nodes and leafs
+	CM_SetParent(map_nodes, NULL); // sets nodes and leafs
 }
 
 static void CM_LoadNodes29a(lump_t *l)
@@ -725,12 +753,16 @@ static void CM_LoadNodes29a(lump_t *l)
 	int i, j, count, p;
 	dnode29a_t *in;
 	cnode_t *out;
+	const int max_nodes = (INT_MAX / sizeof(*out));
 
 	in = (dnode29a_t *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
 		Host_Error("CM_LoadMap: funny lump size");
 
 	count = l->filelen / sizeof(*in);
+	if (count < 0 || count > max_nodes) {
+		Host_Error("CM_LoadMap: invalid node count (%d vs 0-%d)", count, max_nodes);
+	}
 	out = (cnode_t *)Hunk_AllocName(count * sizeof(*out), loadname);
 
 	map_nodes = out;
@@ -738,10 +770,18 @@ static void CM_LoadNodes29a(lump_t *l)
 
 	for (i = 0; i < count; i++, in++, out++) {
 		p = LittleLong(in->planenum);
+		if (p < 0 || p >= numplanes) {
+			Host_Error("Node %d has invalid plane# %d (0 to %d)\n", i, p, numplanes);
+			return;
+		}
 		out->plane = map_planes + p;
 
 		for (j = 0; j < 2; j++) {
 			p = LittleLong(in->children[j]);
+			if (p < -numleafs || p >= numnodes) {
+				Host_Error("Node %d child[%d] #%d (%d to %d)", i, j, p, -numleafs, numnodes);
+				return;
+			}
 			out->children[j] = (p >= 0) ? (map_nodes + p) : ((cnode_t *)(map_leafs + (-1 - p)));
 		}
 	}
@@ -754,12 +794,16 @@ static void CM_LoadNodesBSP2(lump_t *l)
 	int i, j, count, p;
 	dnode_bsp2_t *in;
 	cnode_t *out;
+	const int max_nodes = (INT_MAX / sizeof(*out));
 
 	in = (dnode_bsp2_t *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
 		Host_Error("CM_LoadMap: funny lump size");
 
 	count = l->filelen / sizeof(*in);
+	if (count < 0 || count > max_nodes) {
+		Host_Error("CM_LoadMap: invalid node count (%d vs 0-%d)", count, max_nodes);
+	}
 	out = (cnode_t *)Hunk_AllocName(count * sizeof(*out), loadname);
 
 	map_nodes = out;
@@ -767,10 +811,18 @@ static void CM_LoadNodesBSP2(lump_t *l)
 
 	for (i = 0; i < count; i++, in++, out++) {
 		p = LittleLong(in->planenum);
+		if (p < 0) {
+			Host_Error("Node %d has negative plane# %d\n", i, in->planenum);
+			return;
+		}
 		out->plane = map_planes + p;
 
 		for (j = 0; j < 2; j++) {
 			p = LittleLong(in->children[j]);
+			if (p < -numleafs || p >= numnodes) {
+				Host_Error("Node %d child[%d] #%d (%d to %d)", i, j, p, -numleafs, numnodes);
+				return;
+			}
 			out->children[j] = (p >= 0) ? (map_nodes + p) : ((cnode_t *)(map_leafs + (-1 - p)));
 		}
 	}
@@ -786,12 +838,16 @@ static void CM_LoadLeafs (lump_t *l)
 	dleaf_t *in;
 	cleaf_t *out;
 	int i, j, count, p;
+	int max_leafs = (INT_MAX / sizeof(*out));
 
 	in = (dleaf_t *)(cmod_base + l->fileofs);
 
 	if (l->filelen % sizeof(*in))
 		Host_Error ("CM_LoadMap: funny lump size");
 	count = l->filelen / sizeof(*in);
+	if (count < 0 || count > max_leafs) {
+		Host_Error("CM_LoadMap: invalid leaf count (%d vs 0-%d)", count, max_leafs);
+	}
 	out = (cleaf_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	map_leafs = out;
@@ -808,9 +864,9 @@ static void CM_LoadLeafs (lump_t *l)
 static void CM_LoadLeafs29a (lump_t *l)
 {
 	dleaf29a_t *in;
-
 	cleaf_t *out;
 	int i, j, count, p;
+	int max_leafs = (INT_MAX / sizeof(*out));
 
 	in = (dleaf29a_t *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in)) {
@@ -818,6 +874,9 @@ static void CM_LoadLeafs29a (lump_t *l)
 	}
 
 	count = l->filelen / sizeof(*in);
+	if (count < 0 || count > max_leafs) {
+		Host_Error("CM_LoadMap: invalid leaf count (%d vs 0-%d)", count, max_leafs);
+	}
 	out = Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	map_leafs = out;
@@ -826,18 +885,18 @@ static void CM_LoadLeafs29a (lump_t *l)
 	for (i = 0; i < count; i++, in++, out++) {
 		p = LittleLong(in->contents);
 		out->contents = p;
-		for (j = 0; j < 4; j++)
+		for (j = 0; j < 4; j++) {
 			out->ambient_sound_level[j] = in->ambient_level[j];
+		}
 	}
-
 }
 
 static void CM_LoadLeafsBSP2 (lump_t *l)
 {
 	dleaf_bsp2_t *in;
-
 	cleaf_t *out;
 	int i, j, count, p;
+	int max_leafs = (INT_MAX / sizeof(*out));
 
 	in = (dleaf_bsp2_t *)(cmod_base + l->fileofs);
 
@@ -846,6 +905,9 @@ static void CM_LoadLeafsBSP2 (lump_t *l)
 	}
 
 	count = l->filelen / sizeof(*in);
+	if (count < 0 || count > max_leafs) {
+		Host_Error("CM_LoadMap: invalid leaf count (%d vs 0-%d)", count, max_leafs);
+	}
 	out = Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	map_leafs = out;
@@ -869,11 +931,15 @@ static void CM_LoadClipnodes(lump_t *l)
 	dclipnode_t *in;
 	mclipnode_t *out;
 	int i, count;
+	const int max_clipnodes = (INT_MAX / sizeof(*out));
 
 	in = (dclipnode_t *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
 		Host_Error("CM_LoadMap: funny lump size");
 	count = l->filelen / sizeof(*in);
+	if (count < 0 || count > max_clipnodes) {
+		Host_Error("CM_LoadMap: invalid clipnode count (%d vs 0-%d)", count, max_clipnodes);
+	}
 	out = (mclipnode_t *)Hunk_AllocName(count * sizeof(*out), loadname);
 
 	map_clipnodes = out;
@@ -881,6 +947,10 @@ static void CM_LoadClipnodes(lump_t *l)
 
 	for (i = 0; i < count; i++, out++, in++) {
 		out->planenum = LittleLong(in->planenum);
+		if (out->planenum < 0 || out->planenum >= numplanes) {
+			Host_Error("CM_LoadClipNodes: node %d references plane %d (numplanes %d)", i, out->planenum, numplanes);
+			return;
+		}
 		out->children[0] = LittleShort(in->children[0]);
 		out->children[1] = LittleShort(in->children[1]);
 	}
@@ -891,11 +961,16 @@ static void CM_LoadClipnodesBSP2(lump_t *l)
 	dclipnode29a_t *in;
 	mclipnode_t *out;
 	int i, count;
+	const int max_clipnodes = (INT_MAX / sizeof(*out));
 
 	in = (void *)(cmod_base + l->fileofs);
-	if (l->filelen % sizeof(*in))
+	if (l->filelen % sizeof(*in)) {
 		Host_Error("CM_LoadMap: funny lump size");
+	}
 	count = l->filelen / sizeof(*in);
+	if (count < 0 || count > max_clipnodes) {
+		Host_Error("CM_LoadMap: invalid clipnode count (%d vs 0-%d)", count, max_clipnodes);
+	}
 	out = Hunk_AllocName(count * sizeof(*out), loadname);
 
 	map_clipnodes = out;
@@ -903,6 +978,10 @@ static void CM_LoadClipnodesBSP2(lump_t *l)
 
 	for (i = 0; i < count; i++, out++, in++) {
 		out->planenum = LittleLong(in->planenum);
+		if (out->planenum < 0 || out->planenum >= numplanes) {
+			Host_Error("CM_LoadClipNodes: node %d references plane %d (numplanes %d)", i, out->planenum, numplanes);
+			return;
+		}
 		out->children[0] = LittleLong(in->children[0]);
 		out->children[1] = LittleLong(in->children[1]);
 	}
@@ -910,16 +989,21 @@ static void CM_LoadClipnodesBSP2(lump_t *l)
 
 static qbool CM_LoadPhysicsNormalsData(byte* data, int datalength)
 {
-	extern cvar_t pm_rampjump;
 	mphysicsnormal_t* in = (mphysicsnormal_t*)(data + 8);
-	float* cvars = (float*)data;
 	int i;
 
 	if (datalength != 8 + sizeof(map_physicsnormals[0]) * numclipnodes) {
 		return false;
 	}
 
-	Cvar_SetValue(&pm_rampjump, LittleFloat(cvars[0]));
+#ifndef CLIENTONLY
+	{
+		float* cvars = (float*)data;
+		extern cvar_t pm_rampjump;
+
+		Cvar_SetValue(&pm_rampjump, LittleFloat(cvars[0]));
+	}
+#endif
 	// Meag: previously the maximum speed was set here but I don't think it should be map-specific (?)
 
 	for (i = 0; i < numclipnodes; ++i) {
@@ -937,12 +1021,16 @@ static void CM_LoadPhysicsNormals(int filelen)
 	//   As client-side movement prediction will be incorrect if physics normals don't
 	//     match, I strongly recommend the .bspx solution
 	bspx_header_t* bspx;
-	extern cvar_t pm_rampjump;
 	int i;
 	qbool bspx_loaded = false;
 
 	// Allocate memory, all maps default to rampjump off
-	Cvar_SetValue(&pm_rampjump, 0);
+#ifndef CLIENTONLY
+	{
+		extern cvar_t pm_rampjump;
+		Cvar_SetValue(&pm_rampjump, 0);
+	}
+#endif
 	map_physicsnormals = Hunk_AllocName(numclipnodes * sizeof(map_physicsnormals[0]), loadname);
 
 	// Try and load from BSPX lump
@@ -953,7 +1041,7 @@ static void CM_LoadPhysicsNormals(int filelen)
 
 		bspx_loaded = CM_LoadPhysicsNormalsData(data, lumpsize);
 		if (bspx_loaded) {
-			Com_Printf("Loading BSPX physics normals\n");
+			Con_Printf("Loading BSPX physics normals\n");
 		}
 	}
 
@@ -977,16 +1065,15 @@ static void CM_LoadPhysicsNormals(int filelen)
 		data = FS_LoadHunkFile(extfile, &extfilesize);
 		if (data) {
 			if (CM_LoadPhysicsNormalsData(data, extfilesize)) {
-				Com_Printf("Loading external physics normals\n");
+				Con_Printf("Loading external physics normals\n");
 			}
 			else {
-				Com_Printf("%s is corrupt or wrong size\n", extfile);
+				Con_Printf("%s is corrupt or wrong size\n", extfile);
 			}
 			Hunk_FreeToLowMark(mark);
 		}
 	}
 }
-
 
 /*
 =================
@@ -1000,9 +1087,14 @@ static void CM_MakeHull0(void)
 	cnode_t *in, *child;
 	mclipnode_t *out;
 	int i, j, count;
+	int max_clipnodes = (INT_MAX / sizeof(*out));
 
 	in = map_nodes;
 	count = numnodes;
+	if (count < 0 || count > max_clipnodes) {
+		Host_Error("CM_LoadMap: invalid clipnode count [MakeHull] (%d vs 0-%d)", count, max_clipnodes);
+		return;
+	}
 	out = (mclipnode_t *)Hunk_AllocName(count * sizeof(*out), loadname);
 
 	// fix up hull 0 in all cmodels
@@ -1031,6 +1123,7 @@ static void CM_LoadPlanes(lump_t *l)
 	int i, j, count, bits;
 	mplane_t *out;
 	dplane_t *in;
+	const int max_planes = (INT_MAX / sizeof(*out));
 
 	in = (dplane_t *)(cmod_base + l->fileofs);
 
@@ -1038,6 +1131,10 @@ static void CM_LoadPlanes(lump_t *l)
 		Host_Error("CM_LoadMap: funny lump size");
 
 	count = l->filelen / sizeof(*in);
+	if (count < 0 || count > max_planes) {
+		Host_Error("CM_LoadMap: invalid plane count (%d vs 0-%d)", count, max_planes);
+		return;
+	}
 	out = (mplane_t *)Hunk_AllocName(count * sizeof(*out), loadname);
 
 	map_planes = out;
@@ -1061,7 +1158,7 @@ static void CM_LoadPlanes(lump_t *l)
 /*
 ** DecompressVis
 */
-static byte *DecompressVis(byte *in)
+static byte *DecompressVis(byte *in, byte* limit)
 {
 	static byte decompressed[MAX_MAP_LEAFS / 8];
 	int c, row;
@@ -1079,6 +1176,10 @@ static byte *DecompressVis(byte *in)
 	}
 
 	do {
+		if (in >= limit) {
+			return NULL;
+		}
+
 		if (*in) {
 			*out++ = *in++;
 			continue;
@@ -1103,22 +1204,28 @@ static byte *DecompressVis(byte *in)
 */
 static void CM_BuildPVS(lump_t *lump_vis, lump_t *lump_leafs)
 {
-	byte *visdata, *scan;
+	byte *visdata, *scan, *visdata_limit;
 	dleaf_t *in;
 	int i;
+	int max_visleafs;
 
 	map_vis_rowlongs = (visleafs + 31) >> 5;
 	map_vis_rowbytes = map_vis_rowlongs * 4;
+	max_visleafs = (INT_MAX / map_vis_rowbytes);
+	if (visleafs < 0 || (visleafs > max_visleafs)) {
+		Host_Error("CM_LoadMap: invalid visleafs count [BuildPVS] (%d vs 0-%d)", visleafs, max_visleafs);
+		return;
+	}
 	map_pvs = (byte *)Hunk_Alloc(map_vis_rowbytes * visleafs);
 
-	if (!lump_vis->filelen) {
+	if (lump_vis->filelen <= 0) {
 		memset(map_pvs, 0xff, map_vis_rowbytes * visleafs);
 		return;
 	}
 
 	// FIXME, add checks for lump_vis->filelen and leafs' visofs
-
 	visdata = cmod_base + lump_vis->fileofs;
+	visdata_limit = cmod_base + lump_vis->fileofs + lump_vis->filelen;
 
 	// go through all leafs and decompress visibility data
 	in = (dleaf_t *)(cmod_base + lump_leafs->fileofs);
@@ -1126,28 +1233,47 @@ static void CM_BuildPVS(lump_t *lump_vis, lump_t *lump_leafs)
 	scan = map_pvs;
 	for (i = 0; i < visleafs; i++, in++, scan += map_vis_rowbytes) {
 		int p = LittleLong(in->visofs);
-		memcpy(scan, (p == -1) ? map_novis : DecompressVis(visdata + p), map_vis_rowbytes);
+		byte* source;
+
+		if (p != -1 && p < 0) {
+			Host_Error("CM_BuildPVS: visleaf %d has invalid visofs %d", i, p);
+		}
+		if (p >= lump_vis->filelen) {
+			Host_Error("CM_BuildPVS: visleaf %d has out of range visofs %d (limit %d)", i, p, lump_vis->filelen);
+		}
+
+		source = (p == -1) ? map_novis : DecompressVis(visdata + p, visdata_limit);
+		if (source == NULL) {
+			Host_Error("CM_BuildPVS: visleaf %d visofs %d caused invalid read, lumpsize %d", i, p, lump_vis->filelen);
+			return;
+		}
+		memcpy(scan, source, map_vis_rowbytes);
 	}
 }
 
 static void CM_BuildPVS29a(lump_t *lump_vis, lump_t *lump_leafs)
 {
-	byte *visdata, *scan;
+	byte *visdata, *scan, *visdata_limit;
 	dleaf29a_t *in;
 	int i;
+	int max_visleafs;
 
 	map_vis_rowlongs = (visleafs + 31) >> 5;
 	map_vis_rowbytes = map_vis_rowlongs * 4;
+	max_visleafs = (INT_MAX / map_vis_rowbytes);
+	if (visleafs < 0 || (visleafs > max_visleafs)) {
+		Host_Error("CM_LoadMap: invalid visleafs count [BuildPVS] (%d vs 0-%d)", visleafs, max_visleafs);
+		return;
+	}
 	map_pvs = (byte *)Hunk_Alloc(map_vis_rowbytes * visleafs);
 
-	if (!lump_vis->filelen) {
+	if (lump_vis->filelen <= 0) {
 		memset(map_pvs, 0xff, map_vis_rowbytes * visleafs);
 		return;
 	}
 
-	// FIXME, add checks for lump_vis->filelen and leafs' visofs
-
 	visdata = cmod_base + lump_vis->fileofs;
+	visdata_limit = cmod_base + lump_vis->fileofs + lump_vis->filelen;
 
 	// go through all leafs and decompress visibility data
 	in = (dleaf29a_t *)(cmod_base + lump_leafs->fileofs);
@@ -1155,28 +1281,48 @@ static void CM_BuildPVS29a(lump_t *lump_vis, lump_t *lump_leafs)
 	scan = map_pvs;
 	for (i = 0; i < visleafs; i++, in++, scan += map_vis_rowbytes) {
 		int p = LittleLong(in->visofs);
-		memcpy(scan, (p == -1) ? map_novis : DecompressVis(visdata + p), map_vis_rowbytes);
+		byte* source;
+
+		if (p != -1 && p < 0) {
+			Host_Error("CM_BuildPVS: visleaf %d has invalid visofs %d", i, p);
+		}
+		if (p >= lump_vis->filelen) {
+			Host_Error("CM_BuildPVS: visleaf %d has out of range visofs %d (limit %d)", i, p, lump_vis->filelen);
+		}
+
+		source = (p == -1) ? map_novis : DecompressVis(visdata + p, visdata_limit);
+		if (source == NULL) {
+			Host_Error("CM_BuildPVS: visleaf %d visofs %d caused invalid read, lumpsize %d", i, p, lump_vis->filelen);
+			return;
+		}
+		memcpy(scan, source, map_vis_rowbytes);
 	}
 }
 
 static void CM_BuildPVSBSP2(lump_t *lump_vis, lump_t *lump_leafs)
 {
-	byte *visdata, *scan;
+	byte *visdata, *scan, *visdata_limit;
 	dleaf_bsp2_t *in;
 	int i;
+	int max_visleafs;
 
 	map_vis_rowlongs = (visleafs + 31) >> 5;
 	map_vis_rowbytes = map_vis_rowlongs * 4;
+	max_visleafs = (INT_MAX / map_vis_rowbytes);
+	if (visleafs < 0 || (visleafs > max_visleafs)) {
+		Host_Error("CM_LoadMap: invalid visleafs count [BuildPVS] (%d vs 0-%d)", visleafs, max_visleafs);
+		return;
+	}
 	map_pvs = (byte *)Hunk_Alloc(map_vis_rowbytes * visleafs);
 
-	if (!lump_vis->filelen) {
+	if (lump_vis->filelen <= 0) {
 		memset(map_pvs, 0xff, map_vis_rowbytes * visleafs);
 		return;
 	}
 
 	// FIXME, add checks for lump_vis->filelen and leafs' visofs
-
 	visdata = cmod_base + lump_vis->fileofs;
+	visdata_limit = cmod_base + lump_vis->fileofs + lump_vis->filelen;
 
 	// go through all leafs and decompress visibility data
 	in = (dleaf_bsp2_t *)(cmod_base + lump_leafs->fileofs);
@@ -1184,7 +1330,21 @@ static void CM_BuildPVSBSP2(lump_t *lump_vis, lump_t *lump_leafs)
 	scan = map_pvs;
 	for (i = 0; i < visleafs; i++, in++, scan += map_vis_rowbytes) {
 		int p = LittleLong(in->visofs);
-		memcpy(scan, (p == -1) ? map_novis : DecompressVis(visdata + p), map_vis_rowbytes);
+		byte* source;
+
+		if (p != -1 && p < 0) {
+			Host_Error("CM_BuildPVS: visleaf %d has invalid visofs %d", i, p);
+		}
+		if (p >= lump_vis->filelen) {
+			Host_Error("CM_BuildPVS: visleaf %d has out of range visofs %d (limit %d)", i, p, lump_vis->filelen);
+		}
+
+		source = (p == -1) ? map_novis : DecompressVis(visdata + p, visdata_limit);
+		if (source == NULL) {
+			Host_Error("CM_BuildPVS: visleaf %d visofs %d caused invalid read, lumpsize %d", i, p, lump_vis->filelen);
+			return;
+		}
+		memcpy(scan, source, map_vis_rowbytes);
 	}
 }
 
@@ -1199,6 +1359,12 @@ static void CM_BuildPHS (void)
 	int i, j, k, l, index1, bitbyte;
 	unsigned *dest, *src;
 	byte *scan;
+	int max_visleafs = (INT_MAX / map_vis_rowbytes);
+
+	if (visleafs > max_visleafs) {
+		Host_Error("CM_LoadMap: invalid visleafs count [BuildPHS] (%d vs 0-%d)", visleafs, max_visleafs);
+		return;
+	}
 
 	map_phs = NULL;
 	if (map_vis_rowbytes * visleafs > 0x100000) {
@@ -1463,4 +1629,67 @@ mphysicsnormal_t CM_PhysicsNormal(int num)
 	}
 
 	return ret;
+}
+
+void* Mod_BSPX_FindLump(bspx_header_t* bspx_header, char* lumpname, int* plumpsize, byte* mod_base)
+{
+	int i;
+	bspx_lump_t* lump;
+
+	if (!bspx_header) {
+		return NULL;
+	}
+
+	lump = (bspx_lump_t*)(bspx_header + 1);
+	for (i = 0; i < bspx_header->numlumps; i++, lump++) {
+		if (!strcmp(lump->lumpname, lumpname)) {
+			if (plumpsize) {
+				*plumpsize = lump->filelen;
+			}
+			return mod_base + lump->fileofs;
+		}
+	}
+
+	return NULL;
+}
+
+bspx_header_t* Mod_LoadBSPX(int filesize, byte* mod_base)
+{
+	dheader_t* header;
+	bspx_header_t* xheader;
+	bspx_lump_t* lump;
+	int i;
+	int xofs;
+
+	// find end of last lump
+	header = (dheader_t*)mod_base;
+	xofs = 0;
+	for (i = 0; i < HEADER_LUMPS; i++) {
+		xofs = max(xofs, header->lumps[i].fileofs + header->lumps[i].filelen);
+	}
+
+	if (xofs + sizeof(bspx_header_t) > filesize) {
+		return NULL;
+	}
+
+	xheader = (bspx_header_t*)(mod_base + xofs);
+	xheader->numlumps = LittleLong(xheader->numlumps);
+
+	if (xheader->numlumps < 0 || xofs + sizeof(bspx_header_t) + xheader->numlumps * sizeof(bspx_lump_t) > filesize) {
+		return NULL;
+	}
+
+	// byte-swap and check sanity
+	lump = (bspx_lump_t*)(xheader + 1); // lumps immediately follow the header
+	for (i = 0; i < xheader->numlumps; i++, lump++) {
+		lump->lumpname[sizeof(lump->lumpname) - 1] = '\0'; // make sure it ends with zero
+		lump->fileofs = LittleLong(lump->fileofs);
+		lump->filelen = LittleLong(lump->filelen);
+		if (lump->fileofs < 0 || lump->filelen < 0 || (unsigned)(lump->fileofs + lump->filelen) >(unsigned)filesize) {
+			return NULL;
+		}
+	}
+
+	// success
+	return xheader;
 }

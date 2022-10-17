@@ -552,7 +552,9 @@ void TP_LocFiles_NewMap(void)
 
 	if (strcmp(mapname, last_map)) {	// map name has changed
 		TP_ClearLocs();					// clear loc file
-		if (tp_loadlocs.integer && cl.deathmatch && !cls.demoplayback) {
+
+		// always load when playing back demos (teaminfo might be enabled etc)
+		if ((tp_loadlocs.integer && cl.deathmatch) || cls.demoplayback) {
 			if (!TP_LoadLocFile(va("%s.loc", mapname), true)) {
 				if ((groupname = TP_GetMapGroupName(mapname, &system)) && !system) {
 					TP_LoadLocFile(va("%s.loc", groupname), true);

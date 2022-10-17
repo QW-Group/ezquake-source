@@ -66,7 +66,7 @@ If you want to make a clean installation of ezQuake you can do this by following
 
 ### Compiling a Windows binary
 
-#### Using Ubuntu Bash
+#### Using Ubuntu Bash (WSL)
 
 You can use the new Ubuntu Bash feature in Windows 10 to compile ezQuake for Windows.
 
@@ -79,13 +79,19 @@ Now press the `Start` button again and enter `bash`. Click it and install Bash.
 Enter the following command to install all required prerequisites to build ezQuake:
 
 ```
-sudo apt-get install -y git mingw-w64 build-essential
+sudo apt-get install -y git mingw-w64 build-essential libspeexdsp-dev dos2unix pkg-config
 ```
 
 Now clone the ezQuake source code:
 
 ```
 git clone https://github.com/ezQuake/ezquake-source.git ezquake
+```
+
+Make sure line endings are not CRLF:
+
+```
+dos2unix *.sh
 ```
 
 Now build the ezQuake executable:
@@ -122,6 +128,11 @@ sudo apt-get install git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-de
 ```
 sudo apt install git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev
 ```
+- For *openSUSE Tumbleweed*
+```
+sudo zypper install -t pattern devel_C_C++
+sudo zypper install git pcre-devel Mesa-libGL-devel libSDL2-devel libjansson-devel libexpat-devel libcurl-devel libpng16-devel libjpeg8-devel libjpeg-turbo libsndfile-devel speex-devel speexdsp-devel libXxf86vm-devel
+```
 
 Clone the git repository:
 ```
@@ -149,7 +160,7 @@ Get [Homebrew](http://brew.sh)
 Run exactly as it says on the front page:
 
 ```
-ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 Make sure you run the `brew doctor` as instructed before doing anything else.
@@ -157,7 +168,7 @@ Make sure you run the `brew doctor` as instructed before doing anything else.
 Then run:
 
 ```
-brew install sdl2 sdl2_net sdl2_image sdl2_gfx sdl2_mixer pcre jansson pkg-config speex speexdsp
+brew install sdl2 sdl2_net sdl2_image sdl2_gfx sdl2_mixer pcre jansson pkg-config speex speexdsp libsndfile
 ```
 
 When it's done, just run `make` and it should compile without errors.

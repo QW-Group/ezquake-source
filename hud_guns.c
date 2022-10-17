@@ -188,7 +188,9 @@ static void SCR_HUD_DrawGun2(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawGunByNum(hud, 2, scale->value, style->value, 0, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawGunByNum(hud, 2, scale->value, style->value, 0, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawGun3(hud_t *hud)
@@ -200,7 +202,9 @@ static void SCR_HUD_DrawGun3(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawGunByNum(hud, 3, scale->value, style->value, 0, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawGunByNum(hud, 3, scale->value, style->value, 0, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawGun4(hud_t *hud)
@@ -212,7 +216,9 @@ static void SCR_HUD_DrawGun4(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawGunByNum(hud, 4, scale->value, style->value, 0, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawGunByNum(hud, 4, scale->value, style->value, 0, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawGun5(hud_t *hud)
@@ -224,7 +230,9 @@ static void SCR_HUD_DrawGun5(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawGunByNum(hud, 5, scale->value, style->value, 0, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawGunByNum(hud, 5, scale->value, style->value, 0, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawGun6(hud_t *hud)
@@ -236,7 +244,9 @@ static void SCR_HUD_DrawGun6(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawGunByNum(hud, 6, scale->value, style->value, 0, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawGunByNum(hud, 6, scale->value, style->value, 0, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawGun7(hud_t *hud)
@@ -248,7 +258,9 @@ static void SCR_HUD_DrawGun7(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawGunByNum(hud, 7, scale->value, style->value, 0, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawGunByNum(hud, 7, scale->value, style->value, 0, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawGun8(hud_t *hud)
@@ -261,7 +273,9 @@ static void SCR_HUD_DrawGun8(hud_t *hud)
 		wide = HUD_FindVar(hud, "wide");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawGunByNum(hud, 8, scale->value, style->value, wide->value, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawGunByNum(hud, 8, scale->value, style->value, wide->value, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawGunCurrent(hud_t *hud)
@@ -279,7 +293,7 @@ static void SCR_HUD_DrawGunCurrent(hud_t *hud)
 
 	if (ShowPreselectedWeap()) {
 		// using weapon pre-selection so show info for current best pre-selected weapon
-		gun = IN_BestWeapon();
+		gun = IN_BestWeapon(true);
 		if (gun < 2) {
 			return;
 		}
@@ -298,7 +312,9 @@ static void SCR_HUD_DrawGunCurrent(hud_t *hud)
 		}
 	}
 
-	SCR_HUD_DrawGunByNum(hud, gun, scale->value, style->value, wide->value, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawGunByNum(hud, gun, scale->value, style->value, wide->value, proportional->integer);
+	}
 }
 
 void Guns_HudInit(void)

@@ -34,9 +34,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 void SCR_RSShot_f (void);
-void CL_ProcessServerInfo (void);
-void SV_Serverinfo_f (void);
-void S_StopAllSounds (qbool clear);
+void CL_ProcessServerInfo(void);
+void SV_Serverinfo_f(void);
+void S_StopAllSounds(void);
 
 
 cvar_t cl_sayfilter_coloredtext = {"cl_sayfilter_coloredtext", "0"};
@@ -81,7 +81,8 @@ void Cmd_ForwardToServer (void) {
 // don't forward the first argument
 void CL_ForwardToServer_f (void) {
 // Added by VVD {
-	char		*server_string, client_time_str[9];
+	char* server_string;
+	char client_time_str[sizeof(time_t) * 2 + 1] = { 0 };
 	int		i, server_string_len;
 	extern cvar_t	cl_crypt_rcon;
 	time_t		client_time;
@@ -401,7 +402,7 @@ void CL_Packet_f(void) {
 	}
 
 	if (cbuf_current && cbuf_current != &cbuf_svc && Rulesets_RestrictPacket()) {
-		Com_Printf("Packet commands is disabled during match\n");
+		Com_Printf("Packet command is disabled during match\n");
 		return;
 	}
 
@@ -417,7 +418,6 @@ void CL_Packet_f(void) {
 
 	in = Cmd_Argv(2);
 	out = send + 4;
-
 
 	while (*in && out - send < sizeof(send) - 2) {
 		if (in[0] == '\\' && in[1]) {
@@ -545,16 +545,17 @@ void CL_QStat_f (void)
 //Send the rest of the command line over as an unconnected command.
 void CL_Rcon_f (void) {
 
-	char	message[1024], client_time_str[9];
-	int		i, i_from;
-	netadr_t	to;
-	extern cvar_t	rcon_password, rcon_address, cl_crypt_rcon;
-	time_t		client_time;
+	char message[1024];
+	char client_time_str[sizeof(time_t) * 2 + 1];
+	int	i, i_from;
+	netadr_t to;
+	extern cvar_t rcon_password, rcon_address, cl_crypt_rcon;
+	time_t client_time;
 
-	message[0] = 255;
-	message[1] = 255;
-	message[2] = 255;
-	message[3] = 255;
+	message[0] = (char)255;
+	message[1] = (char)255;
+	message[2] = (char)255;
+	message[3] = (char)255;
 	message[4] = 0;
 	strlcat (message, "rcon ", sizeof(message));
 
@@ -988,7 +989,7 @@ void CL_Changing_f (void) {
 		return;
 	}
 
-	S_StopAllSounds (true);
+	S_StopAllSounds();
 
 	// MVDs starting during map change can have /changing from the previous map
 	if (!(cls.mvdplayback && cls.state == ca_onserver)) {

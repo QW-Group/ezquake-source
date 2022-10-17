@@ -125,6 +125,8 @@ static void Setting_DrawNum(int x, int y, int w, setting* setting, qbool active)
 	x = UI_DrawSlider (x, y, SliderPos(setting->min, setting->max, VARFVAL(setting->cvar)));
 	if (setting->step > 0.99)
 		snprintf(buf, sizeof(buf), "%3d", (int) VARFVAL(setting->cvar));
+	else if (((setting->step)*10) < 1)
+		snprintf(buf, sizeof(buf), "%3.2f", VARFVAL(setting->cvar));
 	else
 		snprintf(buf, sizeof(buf), "%3.1f", VARFVAL(setting->cvar));
 

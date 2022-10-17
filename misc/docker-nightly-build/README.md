@@ -7,7 +7,7 @@ First, you need to create the docker image. You can do this by running
 docker build -t localghost/ezquake_nightly .
 ```
 or using the [`build_image.sh`](build_image.sh)-script.
-This will create a docker image based on Arch Linux that contains the libraries and tools required to compile linux and windows versions of ezQuake.
+This will create a docker image based on Debian Buster that contains the libraries and tools required to compile linux and windows versions of ezQuake.
 
 Now that we have the image ready we can use it to start containers to build ezQuake.
 
@@ -53,4 +53,4 @@ docker run \
 
 This can be done using the [`linux.sh`](linux.sh)-script. *FORCEBUILD* works here too and you need to set *OUTPUTDIR* and *SOURCEDIR* as well.
 
-Please note that the build environment this uses is *Arch Linux*, if you are compiling on another distribution of linux for use on that distribution you are probably better off installing the dependencies yourself and compiling ezQuake without using this method.
+Please note that the build environment this uses is *Debian Buster*, if you are compiling on another distribution of linux for use on that distribution you are probably better off installing the dependencies yourself and compiling ezQuake without using this method.

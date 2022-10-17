@@ -18,10 +18,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef __COMMON_DRAW__H__
 #define __COMMON_DRAW__H__
 
-#define TIMETYPE_CLOCK 0
-#define TIMETYPE_GAMECLOCK 1
-#define TIMETYPE_GAMECLOCKINV 2
-#define TIMETYPE_DEMOCLOCK 3
+#define TIMETYPE_CLOCK             0
+#define TIMETYPE_GAMECLOCK         1
+#define TIMETYPE_GAMECLOCKINV      2
+#define TIMETYPE_DEMOCLOCK         3
+#define TIMETYPE_HOSTCLOCK         4
+#define TIMETYPE_CONNECTEDCLOCK    5
 
 void CommonDraw_Init(void);
 

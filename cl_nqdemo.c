@@ -993,7 +993,7 @@ void NQD_LinkEntities (void)
 
 		// calculate origin
 		for (i = 0; i < 3; i++) {
-			if (abs(cent->current.origin[i] - cent->old_origin[i]) > 128) {
+			if (fabs(cent->current.origin[i] - cent->old_origin[i]) > 128.0f) {
 				// teleport or something, don't lerp
 				VectorCopy(cur_origin, ent.origin);
 				if (num == nq_viewentity) {

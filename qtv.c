@@ -28,29 +28,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "fs.h"
 #include "utils.h"
 
-cvar_t	qtv_buffertime		 = {"qtv_buffertime",		"0.5"};
-cvar_t	qtv_chatprefix		 = {"qtv_chatprefix",		"$[{QTV}$] "};
-cvar_t	qtv_gamechatprefix	 = {"qtv_gamechatprefix",	"$[{QTV>game}$] "};
-cvar_t	qtv_skipchained		 = {"qtv_skipchained",		"1"};
-cvar_t  qtv_adjustbuffer	 = {"qtv_adjustbuffer",		"1"};
-cvar_t  qtv_adjustminspeed	 = {"qtv_adjustminspeed",	"0"};
-cvar_t  qtv_adjustmaxspeed	 = {"qtv_adjustmaxspeed",	"999"};
-cvar_t  qtv_adjustlowstart   = {"qtv_adjustlowstart",	"0.3"};
-cvar_t  qtv_adjusthighstart  = {"qtv_adjusthighstart",	"1"};
-cvar_t  qtv_say_team         = {"qtv_say_team",         "0"};
-cvar_t  qtv_allow_pause		 = {"qtv_allow_pause",      "0"};	// ignore cl_demospeed during QTV playback by default
+cvar_t  qtv_buffertime       = { "qtv_buffertime",       "0.5" };
+cvar_t  qtv_prebuffertime    = { "qtv_prebuffertime",    "0" };
+cvar_t  qtv_chatprefix       = { "qtv_chatprefix",       "$[{QTV}$] " };
+cvar_t  qtv_gamechatprefix   = { "qtv_gamechatprefix",   "$[{QTV>game}$] " };
+cvar_t  qtv_skipchained      = { "qtv_skipchained",      "1" };
+cvar_t  qtv_adjustbuffer     = { "qtv_adjustbuffer",     "1" };
+cvar_t  qtv_adjustminspeed   = { "qtv_adjustminspeed",   "0" };
+cvar_t  qtv_adjustmaxspeed   = { "qtv_adjustmaxspeed",   "999" };
+cvar_t  qtv_adjustlowstart   = { "qtv_adjustlowstart",   "0.3" };
+cvar_t  qtv_adjusthighstart  = { "qtv_adjusthighstart",  "1" };
+cvar_t  qtv_say_team         = { "qtv_say_team",         "0" };
+cvar_t  qtv_allow_pause      = { "qtv_allow_pause",      "0" }; // ignore cl_demospeed during QTV playback by default
 
-cvar_t  qtv_event_join       = {"qtv_event_join", 		" &c2F2joined&r"};
-cvar_t  qtv_event_leave      = {"qtv_event_leave", 		" &cF22left&r"};
-cvar_t  qtv_event_changename = {"qtv_event_changename", " &cFF0changed name to&r "};
+cvar_t  qtv_event_join       = { "qtv_event_join",        " &c2F2joined&r"};
+cvar_t  qtv_event_leave      = { "qtv_event_leave",       " &cF22left&r"};
+cvar_t  qtv_event_changename = { "qtv_event_changename",  " &cFF0changed name to&r "};
+
+extern qbool qtv_playback_paused;
 
 void Qtvusers_f (void);
+void QtvStartDelay_f(void);
+void QtvEndDelay_f(void);
 
 void QTV_Init(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_QTV);
 
 	Cvar_Register(&qtv_buffertime);
+	Cvar_Register(&qtv_prebuffertime);
 	Cvar_Register(&qtv_chatprefix);
 	Cvar_Register(&qtv_gamechatprefix);
 	Cvar_Register(&qtv_skipchained);
@@ -68,7 +74,9 @@ void QTV_Init(void)
 
 	Cvar_ResetCurrentGroup();
 
-	Cmd_AddCommand ("qtvusers", Qtvusers_f);
+	Cmd_AddCommand("qtvusers", Qtvusers_f);
+	Cmd_AddCommand("+qtv_delay", QtvStartDelay_f);
+	Cmd_AddCommand("-qtv_delay", QtvEndDelay_f);
 }
 
 //=================================================
@@ -87,20 +95,19 @@ char *QTV_CL_HEADER(float qtv_ver, int qtv_ezquake_ext)
 // ripped from FTEQTV, original name is SV_ConsistantMVDData
 // return non zero if we have at least one message
 // ms - will contain ms
-int ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms)
+int ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms, int max_messages)
 {
 	qbool warn = true;
 	int lengthofs;
 	int length;
 	int available = 0;
 
-	if (ms)
+	if (ms) {
 		ms[0] = 0;
+	}
 
-	while( 1 )
-	{
-		if (remaining < 2)
-		{
+	while ( 1 ) {
+		if (remaining < 2) {
 			return available;
 		}
 
@@ -119,15 +126,13 @@ int ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms)
 			break;
 		}
 
-		if (lengthofs+4 > remaining)
-		{
+		if (lengthofs+4 > remaining) {
 			return available;
 		}
 
 		length = (buffer[lengthofs]<<0) + (buffer[lengthofs+1]<<8) + (buffer[lengthofs+2]<<16) + (buffer[lengthofs+3]<<24);
 
-		if (length > MAX_MVD_SIZE && warn)
-		{
+		if (length > MAX_MVD_SIZE && warn) {
 			Com_Printf("Corrupt mvd, length: %d\n", length);
 			warn = false;
 		}
@@ -135,23 +140,27 @@ int ConsistantMVDDataEx(unsigned char *buffer, int remaining, int *ms)
 		length += lengthofs+4;
 
 gottotallength:
-		if (remaining < length)
-		{
+		if (remaining < length) {
 			return available;
 		}
 
-		if (ms)
+		if (ms) {
 			ms[0] += buffer[0];
+		}
 			
 		remaining -= length;
 		available += length;
 		buffer    += length;
+
+		if (max_messages && available >= max_messages) {
+			return available;
+		}
 	}
 }
 
-int ConsistantMVDData(unsigned char *buffer, int remaining)
+int ConsistantMVDData(unsigned char *buffer, int remaining, int max_packets)
 {
-	return ConsistantMVDDataEx(buffer, remaining, NULL);
+	return ConsistantMVDDataEx(buffer, remaining, NULL, max_packets);
 }
 
 //=================================================
@@ -545,3 +554,29 @@ qbool QTV_FindBestNick (const char *nick, char *result, size_t result_len)
 
 	return false;
 }
+
+void QtvStartDelay_f(void)
+{
+	if (cls.mvdplayback != QTV_PLAYBACK) {
+		Con_Printf("Can only be used during QTV playback.\n");
+		return;
+	}
+
+	qtv_playback_paused = true;
+}
+
+void QtvEndDelay_f(void)
+{
+	int ms;
+
+	if (Demo_BufferSize(&ms)) {
+		Cvar_SetValue(&qtv_buffertime, ms / 1000.0f);
+		Con_Printf("QTV delay set to %3.1fs.\n", qtv_buffertime.value);
+	}
+	else {
+		Con_Printf("No QTV data in buffer: no delay set.\n");
+	}
+
+	qtv_playback_paused = false;
+}
+

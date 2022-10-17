@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sv_master.c - send heartbeats to master server
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 #define HEARTBEAT_SECONDS 300
@@ -140,3 +141,4 @@ void Master_Shutdown (void)
 		}
 }
 
+#endif // !CLIENTONLY

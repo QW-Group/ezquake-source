@@ -24,8 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"       // FPD_NO_FORCE_COLOR
 
 // meag: for switching back to 3d resolution to draw the multiview outlines
-#include "gl_model.h"
-#include "gl_local.h"
+#include "r_matrix.h"
+#include "mvd_utils.h"
 
 extern int glx, gly, glwidth, glheight;
 
@@ -371,7 +371,7 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 	int health_amount_width = 0;
 
 	health = min (100, health);
-	health_amount_width = Q_rint (abs ((MV_HUD_HEALTH_WIDTH * health) / 100.0));
+	health_amount_width = Q_rint (fabs((MV_HUD_HEALTH_WIDTH * health) / 100.0f));
 
 	if (health > 0) {
 		Draw_AlphaFillRGB (x, y, health_amount_width, 8, ALPHA_COLOR (scr_autoid_healthbar_normal_color.color, 2 * MV_HEALTH_OPACITY));
@@ -381,13 +381,13 @@ void SCR_MV_DrawHealth (int x, int y, int *width, int *height, int style)
 
 	if (health > 100 && health <= 200) {
 		// Mega health.
-		health_amount_width = Q_rint ((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 100));
+		health_amount_width = Q_rint ((MV_HUD_HEALTH_WIDTH / 100.0f) * (health - 100));
 
 		Draw_AlphaFillRGB (x, y, health_amount_width, 8, ALPHA_COLOR (scr_autoid_healthbar_mega_color.color, MV_HEALTH_OPACITY));
 	}
 	else if (health > 200 && health <= 250) {
 		// Super health.
-		health_amount_width = Q_rint ((MV_HUD_HEALTH_WIDTH / 100.0) * (health - 200));
+		health_amount_width = Q_rint ((MV_HUD_HEALTH_WIDTH / 100.0f) * (health - 200));
 
 		Draw_AlphaFillRGB (x, y, MV_HUD_HEALTH_WIDTH, 8, ALPHA_COLOR (scr_autoid_healthbar_mega_color.color, MV_HEALTH_OPACITY));
 		Draw_AlphaFillRGB (x, y, health_amount_width, 8, ALPHA_COLOR (scr_autoid_healthbar_two_mega_color.color, MV_HEALTH_OPACITY));
@@ -806,9 +806,6 @@ void SCR_DrawMVStatusStrings (void)
 
 	int i;
 
-	extern int powerup_cam_active, cam_1, cam_2, cam_3, cam_4;
-	extern cvar_t mvd_pc_view_1, mvd_pc_view_2, mvd_pc_view_3, mvd_pc_view_4;
-
 	// Only in MVD.
 	if (!cl_multiview.value || !cls.mvdplayback) {
 		return;
@@ -980,27 +977,10 @@ void SCR_DrawMVStatusStrings (void)
 	}
 
 	//
-	// Powerup cam stuff.
+	// Powerup cam stuff: (don't display links if we're using fixed camera position)
 	//
-	if (CURRVIEW == 1 && mvd_pc_view_1.string && strlen (mvd_pc_view_1.string) && powerup_cam_active && cam_1) {
-		sAmmo[0] = '\0';
-		strng[0] = '\0';
-		weapons[0] = '\0';
-	}
-	else if (CURRVIEW == 2 && mvd_pc_view_2.string && strlen (mvd_pc_view_2.string) && powerup_cam_active && cam_2) {
-		sAmmo[0] = '\0';
-		strng[0] = '\0';
-		weapons[0] = '\0';
-	}
-	else if (CURRVIEW == 3 && mvd_pc_view_3.string && strlen (mvd_pc_view_3.string) && powerup_cam_active && cam_3) {
-		sAmmo[0] = '\0';
-		strng[0] = '\0';
-		weapons[0] = '\0';
-	}
-	else if (CURRVIEW == 4 && mvd_pc_view_4.string && strlen (mvd_pc_view_4.string) && powerup_cam_active && cam_4) {
-		sAmmo[0] = '\0';
-		strng[0] = '\0';
-		weapons[0] = '\0';
+	if (MVD_PowerupCam_Enabled()) {
+		sAmmo[0] = strng[0] = weapons[0] = '\0';
 	}
 
 	//
@@ -1101,10 +1081,6 @@ void SCR_DrawMVStatusStrings (void)
 			xd = vid.width - strlen (weapons) * 8 - 84;
 			yd = vid.height - sb_lines - 8;
 		}
-	}
-
-	if (cl_multiview.value == 2 && cl_mvinset.value) {
-		memcpy (cl.stats, cl.players[nTrack1duel].stats, sizeof (cl.stats));
 	}
 
 	// Hud info
@@ -1261,7 +1237,7 @@ static void CL_Multiview (void)
 					&& cl.players[j].name[0]
 					&& !strcmp (currteam, cl.players[j].team)) {
 					// Find the player slot to track.
-					mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[j].name, false);
+					mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[j].name, false, false);
 					team_slot_count++;
 				}
 
@@ -1353,7 +1329,7 @@ void CL_MultiviewRestoreValues (void)
 	int i = 0;
 
 	for (i = 0; i < sizeof (multiviewCvars) / sizeof (multiviewCvars[0]); ++i) {
-		Cvar_SetValue (multiviewCvars[i].cvar, multiviewCvars[i].value);
+		Cvar_SetValue(multiviewCvars[i].cvar, multiviewCvars[i].value);
 	}
 
 	bExitmultiview = false;
@@ -1367,22 +1343,22 @@ static void CL_MultiviewOverrideValues (void)
 
 	// stop fakeshaft as it lerps with the other views
 	if (cl_fakeshaft.value < 1 && cl_fakeshaft.value > 0) {
-		cl_fakeshaft.value = 0;
+		Cvar_SetValue(&cl_fakeshaft, 0);
 	}
 
 	// allow mvinset 1 to use viewsize value
 	scr_viewsize.value = multiviewCvars[MV_CVAR_VIEWSIZE].value;
 	if ((!cl_mvinset.value && cl_multiview.value == 2) || cl_multiview.value != 2) {
-		scr_viewsize.value = 120;
+		Cvar_SetValue(&scr_viewsize, 120);
 	}
 
 	// stop small screens
 	if (cl_mvinset.value && cl_multiview.value == 2 && scr_viewsize.value < 100) {
-		scr_viewsize.value = 100;
+		Cvar_SetValue(&scr_viewsize, 100);
 	}
 
-	gl_polyblend.value = 0;
-	gl_clear.value = 0;
+	Cvar_SetValue(&gl_polyblend, 0);
+	Cvar_SetValue(&gl_clear, 0);
 }
 
 static qbool CL_MultiviewCvarResetRequired (void)
@@ -1397,7 +1373,7 @@ int CL_MultiviewNextPlayer (void)
 	if (next_spec_track >= 0) {
 		return next_spec_track;
 	}
-	return spec_track;
+	return cl.spec_track;
 }
 
 int CL_MultiviewCurrentView (void)
@@ -1421,7 +1397,20 @@ void CL_MultiviewResetCvars (void)
 
 qbool CL_MultiviewEnabled (void)
 {
-	return cl_multiview.value && cls.mvdplayback && !cl.intermission;
+	if (cl_multiview.integer > 0 && cls.mvdplayback && !cl.intermission) {
+		if (!MVD_PowerupCams_Enabled()) {
+			int first_player = CL_NextPlayer(-1);
+			int next_player = CL_NextPlayer(first_player);
+
+			if (first_player == next_player) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 qbool CL_MultiviewInsetEnabled (void)
@@ -1436,8 +1425,9 @@ qbool CL_MultiviewInsetView (void)
 
 int CL_MultiviewActiveViews (void)
 {
-	if (cls.mvdplayback)
-		return bound (1, cl_multiview.integer, 4);
+	if (cls.mvdplayback) {
+		return bound(1, cl_multiview.integer, 4);
+	}
 	return 1;
 }
 
@@ -1455,7 +1445,7 @@ void CL_MultiviewFrameStart (void)
 void CL_MultiviewFrameFinish (void)
 {
 	if (next_spec_track >= 0) {
-		spec_track = next_spec_track;
+		cl.spec_track = next_spec_track;
 	}
 }
 
@@ -1549,12 +1539,12 @@ void CL_TrackTeam_f (void)
 		// Find the player slot to track.
 		if (!cl.players[i].spectator && strcmp (cl.players[i].name, "")
 			&& teamchoice == 1 && !strcmp (currteam, cl.players[i].team)) {
-			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name, false);
+			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name, false, false);
 			team_slot_count++;
 		}
 		else if (!cl.players[i].spectator && strcmp (cl.players[i].name, "")
 			&& teamchoice == 2 && strcmp (currteam, cl.players[i].team)) {
-			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name, false);
+			mv_trackslots[team_slot_count] = Player_StringtoSlot (cl.players[i].name, false, false);
 			team_slot_count++;
 		}
 
@@ -1639,13 +1629,11 @@ qbool CL_MultiviewGetCrosshairCoordinates(qbool use_screen_coords, float* cross_
 						return false;
 					}
 
-					x = min_x + 5.0f * width / 6.0f;
-					if (cl_sbar.value) {
-						y = min_y + (height / 3 - sb_lines / 3) / 2;
-					}
-					else {
-						y = min_y + height / 6; // no sbar
-					}
+					x = inset_x + inset_width / 2.0f;
+					y = inset_y + inset_height / 2.0f;
+
+					// y is flipped in 2d world...
+					y = VID_RenderHeight2D() - y;
 
 					*half_size = true;
 				}
@@ -1718,31 +1706,21 @@ void SCR_DrawMultiviewBorders(void)
 	//
 	// Draw black borders around the views.
 	//
-	if (cl_multiview.value == 2 && !cl_mvinset.value)
-	{
+	if (cl_multiview.integer == 2 && !cl_mvinset.integer) {
 		Draw_Fill(0, vid.height / 2, vid.width - 1, 1, 0);
 	}
-	else if (cl_multiview.value == 2 && cl_mvinset.value)
-	{
+	else if (cl_multiview.integer == 2 && cl_mvinset.integer) {
 		extern byte color_black[4];
 
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0, glwidth, 0, glheight, -99999, 99999);
-
+		R_OrthographicProjection(0, glwidth, 0, glheight, -99999, 99999);
 		Draw_AlphaRectangleRGB(inset_x, inset_y, inset_width, inset_height, 1.0f, false, RGBAVECT_TO_COLOR(color_black));
-
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(0, vid.width, vid.height, 0, -99999, 99999);
+		R_OrthographicProjection(0, vid.width, vid.height, 0, -99999, 99999);
 	}
-	else if (cl_multiview.value == 3)
-	{
+	else if (cl_multiview.integer == 3) {
 		Draw_Fill(vid.width / 2, vid.height / 2, 1, vid.height / 2, 0);
 		Draw_Fill(0, vid.height / 2, vid.width, 1, 0);
 	}
-	else if (cl_multiview.value == 4)
-	{
+	else if (cl_multiview.integer == 4) {
 		Draw_Fill(vid.width / 2, 0, 1, vid.height, 0);
 		Draw_Fill(0, vid.height / 2, vid.width, 1, 0);
 	}
@@ -1761,4 +1739,11 @@ centity_t* CL_WeaponModelForView(void)
 	int view = bound(0, CURRVIEW - 1, MV_VIEWS - 1);
 
 	return &cl.viewent[view];
+}
+
+void CL_MultiviewInsetRestoreStats(void)
+{
+	if (cl_multiview.value == 2 && cl_mvinset.integer) {
+		memcpy(cl.stats, cl.players[nTrack1duel].stats, sizeof(cl.stats));
+	}
 }

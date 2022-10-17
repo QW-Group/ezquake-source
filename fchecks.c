@@ -80,7 +80,7 @@ static void FChecks_FServerResponse (void)
 
 static void FChecks_SkinsResponse (float fbskins)
 {
-	char *sf = enemyforceskins.integer ? ", enemy skins forcing" : ""; 
+	char *sf = enemyforceskins.integer ? ", individual enemy skin forcing" : "";
 
 	if (fbskins > 0)
 		Cbuf_AddText (va("say all skins %d%% fullbright%s\n", (int) (fbskins * 100), sf));
@@ -296,7 +296,7 @@ void FChecks_FRuleset_cmd(void)
 			"Flags:\n  End of the reply is ruleset name + flags denoting enabled and disabled features:\n"
 			"  m - modified models or sounds\n"
 			"  s - movement scripts\n"
-			"  f - enemy skin forcing\n"
+			"  f - individual enemy skin forcing\n"
 			"  i - side step aid (strafescript)\n"
 			"  flags that start with + mean feature is enabled, - means disabled\n");
 	}

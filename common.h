@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "protocol.h"
 #include "cmodel.h"
 #include "cmdline_params.h"
+#include "fs.h"
 
 #ifdef _WIN64
 int Q_strlen(const char* s);
@@ -183,7 +184,8 @@ extern	char	com_token[MAX_COM_TOKEN];
 extern	qbool	com_eof;
 typedef enum {TTP_UNKNOWN, TTP_STRING} com_tokentype_t;
 
-char *COM_Parse (char *data);
+const char *COM_Parse(const char *data);
+const char* COM_ParseEx(const char* data, qbool curlybraces);
 char *COM_ParseToken (const char *data, const char *punctuation);
 
 char *COM_Argv (int arg); // range and null checked
@@ -218,13 +220,14 @@ void COM_ForceExtension (char *path, char *extension);
 // a bit extended version of COM_ForceExtension(), we suply size of path, so append safe, sure if u provide right path size
 void COM_ForceExtensionEx (char *path, char *extension, size_t path_size);
 int COM_GetTempDir(char *buf, int bufsize);
-int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qbool verify_exists);
-qbool COM_FileExists (char *path);
+qbool COM_WriteToUniqueTempFile(char* path, int path_buffer_size, const char* ext, const byte* buffer, size_t bytes);
+qbool COM_WriteToUniqueTempFileVFS(char* path, int path_buffer_size, const char* ext, vfsfile_t* input);
+qbool COM_FileExists(char *path);
 void COM_StoreOriginalCmdline(int argc, char **argv);
 
 extern char *SYSINFO_GetString(void);
 
-char *va(char *format, ...); // does a varargs printf into a temp buffer
+char *va(const char *format, ...); // does a varargs printf into a temp buffer
 
 //============================================================================
 // Quake File System
@@ -250,8 +253,8 @@ int FS_FOpenPathFile (const char *filename, FILE **file);
 byte *FS_LoadTempFile (char *path, int *len);
 byte *FS_LoadHunkFile (char *path, int *len);
 byte *FS_LoadHeapFile (const char *path, int *len);
-qbool FS_WriteFile (char *filename, void *data, int len); //The filename will be prefixed by com_basedir
-qbool FS_WriteFile_2 (char *filename, void *data, int len); //The filename used as is
+qbool FS_WriteFile(const char *filename, const void *data, int len); //The filename will be prefixed by com_basedir
+qbool FS_WriteFile_2(const char *filename, const void *data, int len); //The filename used as is
 void FS_CreatePath (char *path);
 int FS_FCreateFile (char *filename, FILE **file, char *path, char *mode);
 char *FS_LegacyDir (char *media_dir);
@@ -354,6 +357,7 @@ extern int	Print_current;
 #define     PR_TR_SKIP  4
 #define     PR_IS_CHAT  8
 #define     PR_NONOTIFY 16
+#define     PR_NORESET  32        // Don't reset at the end of each Print() call
 
 //============================================================================
 
@@ -390,7 +394,7 @@ void MSG_WriteCoord (sizebuf_t *sb, float f);
 void MSG_WriteLongCoord (sizebuf_t *sb, float f);
 void MSG_WriteAngle (sizebuf_t *sb, float f);
 void MSG_WriteAngle16 (sizebuf_t *sb, float f);
-void MSG_WriteDeltaUsercmd (sizebuf_t *sb, struct usercmd_s *from, struct usercmd_s *cmd);
+int MSG_WriteDeltaUsercmd (sizebuf_t *sb, struct usercmd_s *from, struct usercmd_s *cmd, unsigned int mvdsv_extensions);
 void MSG_WriteDeltaEntity  (entity_state_t *from, entity_state_t *to, sizebuf_t *msg, qbool force, unsigned int fte_extensions, unsigned int mvdsv_extensions);
 
 extern	int	msg_readcount;
@@ -463,6 +467,9 @@ float AdjustAngle(float current, float ideal, float fraction);
 char *Q_normalizetext(char *str);
 unsigned char *Q_redtext(unsigned char *str);
 unsigned char *Q_yelltext(unsigned char *str);
+
+// Name comparison: case insensitive, red/white text insensitive
+int Q_namecmp(const char* s1, const char* s2);
 
 #endif /* !__COMMON_H__ */
 

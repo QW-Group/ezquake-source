@@ -208,7 +208,7 @@ void MSG_WriteAngle (sizebuf_t *sb, float f)
 		MSG_WriteByte (sb, Q_rint(f * 256.0 / 360.0) & 255);
 }
 
-void MSG_WriteDeltaUsercmd (sizebuf_t *buf, struct usercmd_s *from, struct usercmd_s *cmd)
+int MSG_WriteDeltaUsercmd(sizebuf_t *buf, struct usercmd_s *from, struct usercmd_s *cmd, unsigned int mvdsv_extensions)
 {
 	int bits;
 
@@ -249,9 +249,12 @@ void MSG_WriteDeltaUsercmd (sizebuf_t *buf, struct usercmd_s *from, struct userc
 
 	if (bits & CM_BUTTONS)
 		MSG_WriteByte (buf, cmd->buttons);
-	if (bits & CM_IMPULSE)
-		MSG_WriteByte (buf, cmd->impulse);
+	if (bits & CM_IMPULSE) {
+		MSG_WriteByte(buf, cmd->impulse);
+	}
 	MSG_WriteByte (buf, cmd->msec);
+
+	return bits;
 }
 
 //Writes part of a packetentities message.
@@ -309,9 +312,14 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 		bits |= U_SOLID;
 
 	// Taken from FTE
-	if (msg->cursize + 40 > msg->maxsize)
-	{	//not enough space in the buffer, don't send the entity this frame. (not sending means nothing changes, and it takes no bytes!!)
+	if (msg->cursize + 40 > msg->maxsize && !msg->overflow_handler)
+	{
+		//not enough space in the buffer, don't send the entity this frame. (not sending means nothing changes, and it takes no bytes!!)
+		int oldnum = to->number;
 		*to = *from;
+		if (oldnum && !from->number) {
+			to->number = oldnum;
+		}
 		return;
 	}
 
@@ -705,3 +713,50 @@ void MSG_ReadSkip(int bytes)
 		MSG_ReadByte ();
 	}
 }
+
+#ifndef SERVERONLY
+byte MSG_EncodeMVDSVWeaponFlags(int deathmatch, int weaponmode, int weaponhide, qbool weaponhide_axe, qbool forgetorder, qbool forgetondeath, int max_impulse)
+{
+	byte flags = clc_mvd_weapon_switching;
+	qbool hide = ((weaponhide == 1) || ((weaponhide == 2) && (deathmatch == 1)));
+
+	if (weaponmode == 3) {
+		weaponmode = (deathmatch == 1 ? 1 : 0);
+	}
+	else if (weaponmode == 4) {
+		weaponmode = (deathmatch == 1 ? 2 : 0);
+	}
+
+	if (weaponmode == 1) {
+		flags |= clc_mvd_weapon_mode_presel;
+	}
+	else if (weaponmode == 2) {
+		flags |= clc_mvd_weapon_mode_iffiring;
+	}
+
+	if (forgetorder) {
+		flags |= clc_mvd_weapon_forget_ranking;
+	}
+
+	if (hide) {
+		if (weaponhide_axe) {
+			flags |= clc_mvd_weapon_hide_axe;
+		}
+		else {
+			flags |= clc_mvd_weapon_hide_sg;
+		}
+	}
+
+	flags |= (forgetondeath ? clc_mvd_weapon_reset_on_death : 0);
+
+	flags |= (max_impulse >= 16 ? clc_mvd_weapon_full_impulse : 0);
+
+	return flags;
+}
+#endif
+
+void MSG_DecodeMVDSVWeaponFlags(int flags, int* weaponmode, int* weaponhide, qbool* forgetorder, int* sequence)
+{
+
+}
+

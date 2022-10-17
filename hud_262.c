@@ -661,25 +661,6 @@ void SCR_DrawHud(void)
 	}
 }
 
-qbool Hud_CheckBounds(hud_element_t *elem, int x, int y)
-{
-	unsigned int con_x, con_y;
-	int hud_x, hud_y;
-
-	con_x = VID_ConsoleX(x);
-	con_y = VID_ConsoleY(y);
-
-	if (!Hud_TranslateCoords(elem, &hud_x, &hud_y))
-		return false;
-
-	if (con_x < hud_x || con_x >= (hud_x + elem->scr_width))
-		return false;
-	if (con_y < hud_y || con_y >= (hud_y + elem->scr_height))
-		return false;
-
-	return true;
-}
-
 // QW262 -->
 void Hud_262Init(void)
 {

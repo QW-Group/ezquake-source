@@ -132,7 +132,7 @@ static void Ignore_f(void) {
 		return;
 	}
 
-	if ((slot = Player_StringtoSlot(Cmd_Argv(1), true)) == PLAYER_ID_NOMATCH) {
+	if ((slot = Player_StringtoSlot(Cmd_Argv(1), true, true)) == PLAYER_ID_NOMATCH) {
 		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), Q_atoi(Cmd_Argv(1)));
 	}
 	else if (slot == PLAYER_NAME_NOMATCH) {
@@ -193,7 +193,7 @@ static void Unignore_f(void) {
 		return;
 	}
 
-	if ((slot = Player_StringtoSlot(Cmd_Argv(1), true)) == PLAYER_ID_NOMATCH) {
+	if ((slot = Player_StringtoSlot(Cmd_Argv(1), true, true)) == PLAYER_ID_NOMATCH) {
 		Com_Printf("%s : no player with userid %d\n", Cmd_Argv(0), Q_atoi(Cmd_Argv(1)));
 	} else if (slot == PLAYER_NAME_NOMATCH) {
 		Com_Printf("%s : no player with name %s\n", Cmd_Argv(0), Cmd_Argv(1));
@@ -467,7 +467,7 @@ static void VIgnoreToggleCommand (qbool ignore)
 		return;
 	}
 
-	if ((slot = Player_StringtoSlot(Cmd_Argv(1), true)) == PLAYER_ID_NOMATCH) {
+	if ((slot = Player_StringtoSlot(Cmd_Argv(1), true, true)) == PLAYER_ID_NOMATCH) {
 		Con_Printf("%s : no player with userid %d\n", Cmd_Argv(0), Q_atoi(Cmd_Argv(1)));
 	}
 	else if (slot == PLAYER_NAME_NOMATCH) {

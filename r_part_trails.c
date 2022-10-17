@@ -36,6 +36,10 @@ static int fix_trail_num_for_grens(int trail_num)
 
 static void R_MissileTrail(centity_t *cent, int trail_num)
 {
+	if ((trail_num == 8 || trail_num == 10 || trail_num == 11) && !qmb_initialized) {
+		trail_num = 1;
+	}
+
 	if (trail_num == 0) {
 		VectorCopy(cent->current.origin, cent->trails[0].stop);
 	}
@@ -223,7 +227,7 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, 
 		}
 		else if (model->modhint == MOD_DETPACK) {
 			// VULT CORONAS
-			if (qmb_initialized) {
+			if (qmb_initialized && amf_detpacklights.integer) {
 				vec3_t liteorg, forward, right, up;
 				VectorCopy(ent->origin, liteorg);
 				AngleVectors(ent->angles, forward, right, up);

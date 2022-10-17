@@ -48,6 +48,42 @@ void GL_AliasModelSetVertexDirection(int num_triangles, vbo_model_vert_t* vbo_bu
 	}
 }
 
+// Also used by .md3
+void GL_AliasModelFixNormals(vbo_model_vert_t* vbo_buffer, int v, int vertsPerPose)
+{
+	int j, k;
+	vec3_t new_normal;  // 2020...
+	int matches;
+
+	for (j = 0; j < vertsPerPose; ++j) {
+		if (vbo_buffer[v + j].flags & AM_VERTEX_NORMALFIXED) {
+			continue;
+		}
+
+		VectorCopy(vbo_buffer[v + j].normal, new_normal);
+		matches = 1;
+
+		for (k = j + 1; k < vertsPerPose; ++k) {
+			if (VectorCompare(vbo_buffer[v + j].position, vbo_buffer[v + k].position)) {
+				VectorAdd(new_normal, vbo_buffer[v + k].normal, new_normal);
+				++matches;
+			}
+		}
+
+		if (matches > 1) {
+			VectorScale(new_normal, 1.0f / matches, new_normal);
+
+			VectorCopy(new_normal, vbo_buffer[v + j].normal);
+			for (k = j + 1; k < vertsPerPose; ++k) {
+				if (VectorCompare(vbo_buffer[v + j].position, vbo_buffer[v + k].position)) {
+					VectorCopy(new_normal, vbo_buffer[v + k].normal);
+					vbo_buffer[v + k].flags |= AM_VERTEX_NORMALFIXED;
+				}
+			}
+		}
+	}
+}
+
 void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 {
 	// 
@@ -98,8 +134,11 @@ void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 				vbo_buffer[v].texture_coords[1] = t;
 				VectorCopy(r_avertexnormals[l], vbo_buffer[v].normal);
 				vbo_buffer[v].flags = 0;
+				vbo_buffer[v].lightnormalindex = l;
 			}
 		}
+
+		GL_AliasModelFixNormals(vbo_buffer, pose * hdr->vertsPerPose, hdr->vertsPerPose);
 	}
 
 	// Go back through and set directions
@@ -127,9 +166,17 @@ void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 	}
 }
 
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+extern cvar_t gl_program_aliasmodels;
+#define R_GLSLAliasModelRendering() ((!R_UseImmediateOpenGL()) || gl_program_aliasmodels.integer)
+#else
+#define R_GLSLAliasModelRendering() (1)
+#endif
+
 void R_AliasModelPopulateVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position)
 {
-	if (mod->temp_vbo_buffer) {
+	// Don't delete if using immediate mode as we loop over them ourselves
+	if (mod->temp_vbo_buffer && R_GLSLAliasModelRendering()) {
 		memcpy(aliasModelBuffer + position, mod->temp_vbo_buffer, mod->vertsInVBO * sizeof(vbo_model_vert_t));
 
 		mod->vbo_start = position;

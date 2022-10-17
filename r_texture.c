@@ -194,7 +194,7 @@ int R_TextureDepth(texture_ref ref)
 	return gltextures[ref.index].depth;
 }
 
-void R_TextureModeForEach(void(*func)(texture_ref tex, qbool mipmap))
+void R_TextureModeForEach(void(*func)(texture_ref tex, qbool mipmap, qbool viewmodel))
 {
 	int i;
 	gltexture_t* glt;
@@ -210,7 +210,7 @@ void R_TextureModeForEach(void(*func)(texture_ref tex, qbool mipmap))
 						// for example charset which rather controlled by gl_smoothfont.
 		}
 
-		func(glt->reference, glt->texmode & TEX_MIPMAP);
+		func(glt->reference, glt->texmode & TEX_MIPMAP, glt->texmode & TEX_VIEWMODEL);
 	}
 }
 
@@ -218,11 +218,27 @@ const char* R_TextureIdentifier(texture_ref ref)
 {
 	assert(ref.index < sizeof(gltextures) / sizeof(gltextures[0]));
 
-	if (ref.index == 0) {
+	if (ref.index <= 0 || ref.index >= sizeof(gltextures) / sizeof(gltextures[0])) {
 		return "null-texture";
 	}
 
 	return gltextures[ref.index].identifier[0] ? gltextures[ref.index].identifier : "unnamed-texture";
+}
+
+void R_TextureSetFlag(texture_ref ref, int mode)
+{
+	if (ref.index <= 0 || ref.index >= sizeof(gltextures) / sizeof(gltextures[0]))
+		return;
+
+	gltextures[ref.index].texmode = mode;
+}
+
+int R_TextureGetFlag(texture_ref ref)
+{
+	if (ref.index <= 0 || ref.index >= sizeof(gltextures) / sizeof(gltextures[0]))
+		return 0;
+
+	return gltextures[ref.index].texmode;
 }
 
 void R_TextureSetDimensions(texture_ref ref, int width, int height)
@@ -326,6 +342,7 @@ void R_DeleteTextures(void)
 	for (i = 0; i < numgltextures; ++i) {
 		R_DeleteTexture(&gltextures[i].reference);
 	}
+	Mod_ClearSimpleTextures();
 
 	memset(gltextures, 0, sizeof(gltextures));
 	numgltextures = 0;
@@ -423,12 +440,12 @@ gltexture_t* R_TextureAllocateSlot(r_texture_type_id type, const char* identifie
 		renderer.TextureLabelSet(glt->reference, glt->identifier);
 	}
 	else if (glt && glt->storage_allocated) {
-		if (gl_width != glt->texture_width || gl_height != glt->texture_height || glt->bpp != bpp) {
+		if (gl_width != glt->texture_width || gl_height != glt->texture_height || depth != glt->depth || glt->bpp != bpp) {
 			texture_ref ref = glt->reference;
 
 			R_DeleteTexture(&ref);
 
-			return R_TextureAllocateSlot(type, identifier, width, height, 0, bpp, mode, crc, new_texture);
+			return R_TextureAllocateSlot(type, identifier, width, height, depth, bpp, mode, crc, new_texture);
 		}
 	}
 
@@ -471,16 +488,18 @@ void R_SetTextureArraySize(texture_ref tex, int width, int height, int depth, in
 	gltextures[tex.index].texture_width = width;
 	gltextures[tex.index].texture_height = height;
 	gltextures[tex.index].depth = depth;
+	gltextures[tex.index].is_array = true;
 }
 
 // We could flag the textures as they're created and then move all 2d>3d to this module?
 // FIXME: Ensure not called in immediate-mode OpenGL
-texture_ref R_CreateTextureArray(const char* identifier, int width, int height, int* depth, int mode, int minimum_depth)
+texture_ref R_CreateTextureArray(const char* identifier, int width, int height, int depth, int mode)
 {
 	qbool new_texture = false;
-	gltexture_t* slot = R_TextureAllocateSlot(texture_type_2d_array, identifier, width, height, *depth, 4, mode | TEX_NOSCALE, 0, &new_texture);
+	gltexture_t* slot;
 	texture_ref gl_texturenum;
 
+	slot = R_TextureAllocateSlot(texture_type_2d_array, identifier, width, height, depth, 4, mode | TEX_NOSCALE, 0, &new_texture);
 	if (!slot) {
 		return invalid_texture_reference;
 	}
@@ -493,15 +512,16 @@ texture_ref R_CreateTextureArray(const char* identifier, int width, int height, 
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
-		renderer.TextureUnitBind(0, gl_texturenum);
-		if (GLM_TextureAllocateArrayStorage(slot, minimum_depth, depth)) {
+		texture_ref tex = slot->reference;
+
+		renderer.TextureUnitBind(0, tex);
+		if (GLM_TextureAllocateArrayStorage(slot)) {
 			R_TextureUtil_SetFiltering(slot->reference);
+			return tex;
 		}
-		else {
-			texture_ref tex = slot->reference;
-			R_DeleteTexture(&tex);
-			return null_texture_reference;
-		}
+
+		R_DeleteTexture(&tex);
+		return null_texture_reference;
 	}
 #endif
 #ifdef RENDERER_OPTION_VULKAN

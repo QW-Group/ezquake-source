@@ -1,0 +1,76 @@
+name: build and deploy release
+on:
+  release:
+    types: [published]
+jobs:
+  build:
+    if: github.repository == 'QW-Group/ezquake-source'
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+       target: [windows-glsl-x64, windows-std-x64, windows-multi-x64]
+       include:
+         - target: windows-glsl-x64
+           config: rls-modern
+           platform: x64
+         - target: windows-std-x64
+           config: rls-classic
+           platform: x64
+         - target: windows-multi-x64
+           config: rls-all
+           platform: x64
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.1
+
+    - name: Build txt2c
+      run: msbuild misc\vstudio\txt2c\txt2c.vcxproj -t:rebuild -property:Configuration=Release
+
+    - name: Make dir
+      run: mkdir .vs
+
+    - name: Copy txt2c
+      run: cp misc\vstudio\txt2c\.vs\txt2c.exe .vs\
+
+    - name: Build ezquake
+      run: msbuild ezQuake.vcxproj -t:rebuild -property:Configuration=${{ matrix.config }} -property:Platform=${{ matrix.platform }}
+
+    - name: Create checksum
+      run: |
+           md5sum .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.exe > .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.md5
+
+    - name: Invoke msys
+      uses: msys2/setup-msys2@v2
+      with:
+        install: openssh
+
+    - name: Setup SSH
+      shell: msys2 {0}
+      env:
+        SSH_AUTH_SOCK: C:\ssh_agent.sock
+      run: |
+        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+        ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+    - name: Set date
+      shell: msys2 {0}
+      run: |
+        #timedatectl set-timezone Europe/Amsterdam
+        export TZ=CET-1CEST
+        echo "DATE=$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_ENV
+    - name: Deploy
+      shell: msys2 {0}
+      env:
+        SSH_AUTH_SOCK: C:\ssh_agent.sock
+      run: |
+           mkdir -p upload/releases/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}
+           mkdir -p upload/releases/latest/${{ matrix.platform }}/${{ matrix.config }}
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/releases/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/releases/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/releases/latest/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/releases/latest/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
+           sftp -rp -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -P ${{ secrets.SFTP_PORT }} ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/releases <<< $'put -rp upload/releases/*'

@@ -34,8 +34,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 
 // Move to API
-void GLM_DrawWorld(void);
-void GLC_DrawWorld(void);
 void GLC_ClearTextureChains(void);
 
 // gl_refrag.c
@@ -150,6 +148,7 @@ void R_BrushModelClearTextureChains(model_t *clmodel)
 	}
 	clmodel->drawflat_chain = NULL;
 	clmodel->drawflat_todo = false;
+	clmodel->alphapass_todo = false;
 	clmodel->first_texture_chained = clmodel->numtextures;
 	clmodel->last_texture_chained = -1;
 
@@ -180,8 +179,7 @@ void OnChange_r_drawflat (cvar_t *var, char *value, qbool *cancel) {
 
 void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 {
-	float wateralpha = R_WaterAlpha();
-	extern cvar_t r_fastturb, r_drawflat, r_fastsky;
+	extern cvar_t r_fastturb, r_fastsky;
 	model_t* clmodel = cl.worldmodel;
 
 	int c, side, clipped;
@@ -189,9 +187,6 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 	msurface_t *surf, **mark;
 	mleaf_t *pleaf;
 	float dot;
-	qbool drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1);
-	qbool drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1);
-	qbool solidTexTurb = (!r_fastturb.integer && wateralpha == 1);
 
 	if (node->contents == CONTENTS_SOLID || node->visframe != r_visframecount) {
 		return;
@@ -284,11 +279,11 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 				}
 			}
 			else if (turbSurface) {
-				if (r_fastturb.integer && wateralpha == 1) {
+				if (r_fastturb.integer && r_refdef2.wateralpha == 1) {
 					chain_surfaces_simple_drawflat(&cl.worldmodel->drawflat_chain, surf);
 					cl.worldmodel->drawflat_todo = true;
 				}
-				else if (solidTexTurb && R_UseModernOpenGL()) {
+				else if (r_refdef2.solidTexTurb && R_UseModernOpenGL()) {
 					chain_surfaces_simple(&surf->texinfo->texture->texturechain, surf);
 				}
 				else {
@@ -296,11 +291,8 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 				}
 				R_TurbSurfacesEmitParticleEffects(surf);
 			}
-			else if (R_UseImmediateOpenGL() && alphaSurface) {
-				CHAIN_SURF_B2F(surf, alphachain);
-			}
 			else {
-				if (!alphaSurface && drawFlatFloors && (surf->flags & SURF_DRAWFLAT_FLOOR)) {
+				if (!alphaSurface && r_refdef2.drawFlatFloors && (surf->flags & SURF_DRAWFLAT_FLOOR)) {
 					if (R_UseImmediateOpenGL()) {
 						R_AddDrawflatChainSurface(surf, true);
 					}
@@ -309,7 +301,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 					}
 					cl.worldmodel->drawflat_todo = true;
 				}
-				else if (!alphaSurface && drawFlatWalls && !(surf->flags & SURF_DRAWFLAT_FLOOR)) {
+				else if (!alphaSurface && r_refdef2.drawFlatWalls && !(surf->flags & SURF_DRAWFLAT_FLOOR)) {
 					if (R_UseImmediateOpenGL()) {
 						R_AddDrawflatChainSurface(surf, false);
 					}
@@ -320,8 +312,15 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 				}
 				else {
 					clmodel->texturechains_have_lumas |= R_TextureAnimation(NULL, surf->texinfo->texture)->isLumaTexture;
+					clmodel->alphapass_todo |= alphaSurface;
+
 					if (R_UseImmediateOpenGL()) {
-						chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain, surf);
+						if (alphaSurface) {
+							CHAIN_SURF_B2F(surf, surf->texinfo->texture->texturechain);
+						}
+						else {
+							chain_surfaces_by_lightmap(&surf->texinfo->texture->texturechain, surf);
+						}
 					}
 					else {
 						chain_surfaces_simple(&surf->texinfo->texture->texturechain, surf);
@@ -336,9 +335,9 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 
 void R_CreateWorldTextureChains(void)
 {
-	R_PerformanceBeginFrame();
+	extern cvar_t r_drawworld;
 
-	if (cl.worldmodel) {
+	if (cl.worldmodel && (!cls.timedemo || r_drawworld.integer)) {
 		R_BrushModelClearTextureChains(cl.worldmodel);
 
 		VectorCopy(r_refdef.vieworg, modelorg);
@@ -355,15 +354,15 @@ void R_CreateWorldTextureChains(void)
 
 void R_DrawWorld(void)
 {
+	R_TraceEnterNamedRegion("R_DrawWorld");
 	VectorCopy(r_refdef.vieworg, modelorg);
 
-	R_TraceEnterNamedRegion("DrawWorld");
 	//draw the world sky
 	R_DrawSky();
 
 	renderer.DrawWorld();
 
-	if (R_WaterAlpha() == 1) {
+	if (r_refdef2.wateralpha == 1) {
 		renderer.DrawWaterSurfaces();
 	}
 	R_TraceLeaveNamedRegion();

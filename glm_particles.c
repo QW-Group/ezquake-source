@@ -32,6 +32,8 @@ texture_ref particletexture_array;
 int particletexture_array_index;
 float particletexture_array_xpos_tr;
 float particletexture_array_ypos_tr;
+float particletexture_array_max_s = 1.0f;
+float particletexture_array_max_t = 1.0f;
 static float particletexture_scale_s;
 static float particletexture_scale_t;
 
@@ -59,12 +61,19 @@ void Part_ImportTexturesForArrayReferences(texture_flag_t* texture_flags)
 			Q_free(data);
 		}
 
-		particletexture_array = array_ref->ref;
-		particletexture_array_xpos_tr = (R_TextureWidth(particletexture_array) - 1.0f) / R_TextureWidth(particletexture_array);
-		particletexture_array_ypos_tr = (R_TextureHeight(particletexture_array) - 1.0f) / R_TextureWidth(particletexture_array);
-		particletexture_array_index = array_ref->index;
-		particletexture_scale_s = array_ref->scale_s;
-		particletexture_scale_t = array_ref->scale_t;
+		{
+			float width = R_TextureWidth(array_ref->ref);
+			float height = R_TextureHeight(array_ref->ref);
+
+			particletexture_array = array_ref->ref;
+			particletexture_array_xpos_tr = (width - 1.0f) / width;
+			particletexture_array_ypos_tr = (height - 1.0f) / height;
+			particletexture_array_max_s = min(width, height) / width;
+			particletexture_array_max_t = min(width, height) / height;
+			particletexture_array_index = array_ref->index;
+			particletexture_scale_s = array_ref->scale_s;
+			particletexture_scale_t = array_ref->scale_t;
+		}
 	}
 }
 

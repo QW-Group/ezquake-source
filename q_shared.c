@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "q_shared.h"
+#include "r_framestats.h"
 
 /*
 ============================================================================
@@ -190,15 +191,26 @@ char *Q_strcpy( char *to, char *from )
 	return to;
 }
 
-char *Q_strlwr( char *s1 ) {
-    char	*s;
+char* Q_strlwr(char* s1) {
+	char* s;
 
-    s = s1;
-	while ( *s ) {
+	s = s1;
+	while (*s) {
 		*s = tolower(*s);
 		s++;
 	}
-    return s1;
+	return s1;
+}
+
+char* Q_strupr(char* s1) {
+	char* s;
+
+	s = s1;
+	while (*s) {
+		*s = toupper(*s);
+		s++;
+	}
+	return s1;
 }
 
 // Added by VVD {
@@ -807,12 +819,18 @@ unsigned short BuffLittleShort (const unsigned char *buffer)
 
 //===========================================================================
 
-void SZ_InitEx (sizebuf_t *buf, byte *data, int length, qbool allowoverflow)
+void SZ_InitEx2(sizebuf_t* buf, byte* data, int length, qbool allowoverflow, sizebuf_overflow_handler_func_t overflow_handler)
 {
-	memset (buf, 0, sizeof (*buf));
+	memset(buf, 0, sizeof(*buf));
 	buf->data = data;
 	buf->maxsize = length;
 	buf->allowoverflow = allowoverflow;
+	buf->overflow_handler = overflow_handler;
+}
+
+void SZ_InitEx (sizebuf_t *buf, byte *data, int length, qbool allowoverflow)
+{
+	SZ_InitEx2(buf, data, length, allowoverflow, NULL);
 }
 
 void SZ_Init (sizebuf_t *buf, byte *data, int length)
@@ -825,8 +843,13 @@ void SZ_Clear (sizebuf_t *buf) {
 	buf->overflowed = false;
 }
 
-void *SZ_GetSpace (sizebuf_t *buf, int length) {
+void *SZ_GetSpace(sizebuf_t *buf, int length)
+{
 	void *data;
+
+	if (buf->cursize + length > buf->maxsize && buf->overflow_handler) {
+		buf->overflow_handler(buf, length);
+	}
 
 	if (buf->cursize + length > buf->maxsize) {
 		if (!buf->allowoverflow)
@@ -846,19 +869,23 @@ void *SZ_GetSpace (sizebuf_t *buf, int length) {
 	return data;
 }
 
-void SZ_Write (sizebuf_t *buf, const void *data, int length) {
-	memcpy (SZ_GetSpace(buf,length),data,length);
+void SZ_Write(sizebuf_t *buf, const void *data, int length)
+{
+	byte* dest = SZ_GetSpace(buf, length);
+
+	memcpy(dest, data, length);
 }
 
-void SZ_Print (sizebuf_t *buf, char *data) {
-	int len;
+void SZ_Print(sizebuf_t *buf, char *data)
+{
+	int len = strlen(data) + 1;
 
-	len = strlen(data) + 1;
+	// Remove trailing '\0'
+	if (buf->cursize && !buf->data[buf->cursize - 1]) {
+		--buf->cursize;
+	}
 
-	if (!buf->cursize || buf->data[buf->cursize-1])
-		memcpy ((byte *)SZ_GetSpace(buf, len),data,len); // no trailing 0
-	else
-		memcpy ((byte *)SZ_GetSpace(buf, len-1)-1,data,len); // write over trailing 0
+	SZ_Write(buf, data, len);
 }
 
 //============================================================================
@@ -876,6 +903,19 @@ typedef struct ezquake_memory_block_s {
 
 #define MEMORY_BLOCK_FOR_PTR(ptr) ((ezquake_memory_block_t*) (((intptr_t)ptr) - sizeof(ezquake_memory_block_t)));
 #define PTR_FOR_MEMORY_BLOCK(block) (void*)(((intptr_t)block) + sizeof(ezquake_memory_block_t))
+
+static void Q_malloc_register(const char* file, int line)
+{
+	if (frameStats.hotloop) {
+		++frameStats.hotloop_mallocs;
+		if (developer.integer) {
+			frameStats.hotloop = false;
+			Com_Printf("HotMalloc: %s[%d]\n", file, line);
+			frameStats.hotloop = true;
+		}
+	}
+	++frameStats.mallocs;
+}
 
 #endif
 
@@ -900,6 +940,7 @@ void* Q_malloc(size_t size)
 
 	if (!block) {
 		Sys_Error("Q_malloc: Not enough memory free; check disk space\n");
+		return NULL;
 	}
 
 	strlcpy(block->filename, file, sizeof(block->filename));
@@ -909,6 +950,8 @@ void* Q_malloc(size_t size)
 	block->line_number = line;
 	block->size = size;
 	block->allocation_number = allocation_number++;
+
+	Q_malloc_register(file, line);
 
 	p = PTR_FOR_MEMORY_BLOCK(block);
 #else
@@ -946,13 +989,28 @@ void *Q_calloc(size_t n, size_t size)
 }
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-void *Q_realloc_debug(void *p, size_t newsize, const char* file, int line, const char* label)
-#else
-void *Q_realloc(void *p, size_t newsize)
-#endif
+#define EZQUAKE_SAFE_REALLOC
+void* Q_realloc_debug(void* p, size_t newsize, const char* file, int line, const char* label)
 {
-#ifdef DEBUG_MEMORY_ALLOCATIONS
 	ezquake_memory_block_t* block = NULL;
+	size_t old_size = 0;
+
+#ifdef EZQUAKE_SAFE_REALLOC
+	if (p && old_size)
+	{
+		void* new_buffer;
+
+		// To be sure we're not assuming the memory block is extended, allocate and re-allocate (can catch some bugs)
+		block = MEMORY_BLOCK_FOR_PTR(p);
+		new_buffer = Q_malloc_debug(newsize + sizeof(ezquake_memory_block_t), file, line, label);
+		if (!new_buffer) {
+			return NULL;
+		}
+		memcpy(new_buffer, p, block->size);
+		Q_free_debug(p, file, line);
+		return new_buffer;
+	}
+#endif
 
 	if (p) {
 		block = MEMORY_BLOCK_FOR_PTR(p);
@@ -969,16 +1027,20 @@ void *Q_realloc(void *p, size_t newsize)
 	if (label) {
 		strlcpy(block->label, label, sizeof(block->label));
 	}
+	Q_malloc_register(file, line);
 
 	return (void*)(((intptr_t)p) + sizeof(ezquake_memory_block_t));
+}
 #else
+void *Q_realloc(void *p, size_t newsize)
+{
 	if (!(p = realloc(p, newsize))) {
 		Sys_Error("Q_realloc: Not enough memory free; check disk space\n");
 	}
 
 	return p;
-#endif
 }
+#endif // !DEBUG_MEMORY_ALLOCATIONS
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 void Q_free_debug(void* ptr, const char* file, int line)
@@ -1035,6 +1097,7 @@ char *Q_wcs2str_malloc(const wchar *ws)
 	size_t len = qwcslen(ws);
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	char *buf = (char *)Q_malloc_debug(len + 1, file, line, NULL);
+	Q_malloc_register(file, line);
 #else
 	char *buf = (char *)Q_malloc(len + 1);
 #endif

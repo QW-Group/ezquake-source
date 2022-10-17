@@ -19,6 +19,7 @@ typedef enum {
 	r_program_aliasmodel_std_glc,
 	r_program_aliasmodel_shell_glc,
 	r_program_aliasmodel_shadow_glc,
+	r_program_aliasmodel_outline_glc,
 	r_program_world_drawflat_glc,
 	r_program_world_textured_glc,
 	r_program_world_secondpass_glc,
@@ -28,6 +29,9 @@ typedef enum {
 	r_program_lightmap_compute,
 
 	r_program_fx_world_geometry,
+	r_program_brushmodel_alphatested,
+	r_program_simple,
+	r_program_simple3d,
 
 	r_program_count
 } r_program_id;
@@ -85,10 +89,25 @@ typedef enum {
 	r_program_uniform_world_textured_glc_causticSampler,
 	r_program_uniform_world_textured_glc_detailSampler,
 	r_program_uniform_world_textured_glc_time,
+	r_program_uniform_world_textured_glc_lumaScale,
+	r_program_uniform_world_textured_glc_fbScale,
+	r_program_uniform_world_textured_glc_r_floorcolor,
+	r_program_uniform_world_textured_glc_r_wallcolor,
 	r_program_uniform_sprites_glc_materialSampler,
 	r_program_uniform_sprites_glc_alphaThreshold,
 	r_program_uniform_hud_images_glc_primarySampler,
 	r_program_uniform_hud_images_glc_secondarySampler,
+	r_program_uniform_aliasmodel_outline_glc_lerpFraction,
+	r_program_uniform_aliasmodel_outline_glc_outlineScale,
+	r_program_uniform_brushmodel_alphatested_outlines,
+	r_program_uniform_brushmodel_alphatested_sampler,
+	r_program_uniform_turb_glc_alpha,
+	r_program_uniform_turb_glc_color,
+	r_program_uniform_simple_color,
+	r_program_uniform_world_textures_glc_texture_multiplier,
+	r_program_uniform_simple3d_color,
+	r_program_uniform_lighting_firstLightmap,
+	r_program_uniform_sky_glc_fog_skyFogMix,
 	r_program_uniform_count
 } r_program_uniform_id;
 
@@ -96,6 +115,7 @@ typedef enum {
 	r_program_attribute_aliasmodel_std_glc_flags,
 	r_program_attribute_aliasmodel_shell_glc_flags,
 	r_program_attribute_aliasmodel_shadow_glc_flags,
+	r_program_attribute_aliasmodel_outline_glc_flags,
 	r_program_attribute_world_drawflat_style,
 	r_program_attribute_world_textured_style,
 	r_program_attribute_world_textured_detailCoord,
@@ -119,11 +139,13 @@ int R_ProgramCustomOptions(r_program_id program_id);
 void R_ProgramSetCustomOptions(r_program_id program_id, int options);
 
 void R_ProgramComputeDispatch(r_program_id program_id, unsigned int num_groups_x, unsigned int num_groups_y, unsigned int num_groups_z);
+void R_ProgramMemoryBarrier(r_program_id program_id);
 void R_ProgramComputeSetMemoryBarrierFlag(r_program_id program_id, r_program_memory_barrier_id barrier_id);
 
 void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value);
 void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value);
 void R_ProgramUniform4fv(r_program_uniform_id uniform_id, const float* values);
+void R_ProgramUniform3f(r_program_uniform_id uniform_id, float x, float y, float z);
 void R_ProgramUniform3fv(r_program_uniform_id uniform_id, const float* values);
 void R_ProgramUniform2fv(r_program_uniform_id uniform_id, const float* values);
 void R_ProgramUniform3fNormalize(r_program_uniform_id uniform_id, const byte* values);
@@ -131,7 +153,6 @@ void R_ProgramUniformMatrix4fv(r_program_uniform_id uniform_id, const float* val
 int R_ProgramUniformGet1i(r_program_uniform_id uniform_id, int default_value);
 
 int R_ProgramAttributeLocation(r_program_attribute_id attr_id);
-#define R_ProgramUniformValid(attr_id) (R_ProgramAttributeLocation(attr_id) >= 0)
 
 // Check if a program needs to be recompiled
 qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options);
@@ -144,5 +165,11 @@ qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_
 
 // Asks all programs to compile themselves
 void R_ProgramCompileAll(void);
+
+// Switches between sub-programs (allows multiple copies of the same program with different flags)
+void R_ProgramSetSubProgram(r_program_id program_id, int sub_index);
+
+// Sets uniforms based on program flags (used for fog at the moment)
+void R_ProgramSetStandardUniforms(r_program_id program_id);
 
 #endif // EZQUAKE_R_PROGRAM_HEADER

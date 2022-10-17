@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	
 */
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 #ifndef SERVERONLY
 #include "pcre.h"
@@ -176,3 +177,5 @@ char *parse_mod_string(char *str)
 	}
 	return ret;
 }
+
+#endif // !CLIENTONLY

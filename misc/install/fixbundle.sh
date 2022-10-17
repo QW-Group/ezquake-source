@@ -54,7 +54,7 @@ if [ ! -d "$FRAMEWORK_DIR" ]; then
 fi
 
 function get_deps {
-	echo $(otool -L "$1" | grep local | awk '{print $1}')
+	echo $(otool -L "$1" | grep 'local\|homebrew' | awk '{print $1}')
 }
 
 # readlink -f
@@ -90,6 +90,8 @@ done
 function fix_symbols {
 	for DEP in $(get_deps "$1"); do
 		install_name_tool -change "$DEP" "@executable_path/../Frameworks/$(basename $(realpath $DEP))" "$1"
+		codesign --remove-signature "$1"
+		codesign -s - "$1"
 	done
 }
 

@@ -72,13 +72,6 @@ typedef struct searchpath_s
 } searchpath_t;
 
 
-#ifdef WITH_VFS_ARCHIVE_LOADING
-int FS_BreakUpArchivePath(const char *filename, 
-		char *archive, size_t archive_len,
-		char *inside, size_t inside_len);
-searchpathfuncs_t *FS_FileNameToSearchFunctions(const char *filename);
-#endif
-
 //=================================
 // STDIO Files (OS)
 //=================================
@@ -143,6 +136,7 @@ extern searchpathfuncs_t tarfilefuncs;
 // Memory Mapped files
 //=====================
 vfsfile_t *FSMMAP_OpenVFS(void *buf, size_t buf_len);
+qbool FSMMAP_IsMemoryMapped(vfsfile_t* file);
 
 //=====================
 // Doomwad Support

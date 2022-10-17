@@ -22,9 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "hud.h"
 #include "gl_model.h"
 #include "image.h"
+#if defined(WITH_PNG)
 #include <png.h>
+#endif
 #include "sbar.h"
 #include "r_texture.h"
+#include "r_renderer.h"
 
 // What stats to draw.
 #define HUD_RADAR_STATS_NONE				0
@@ -140,8 +143,10 @@ void HUD_NewRadarMap(void)
 		radar_pic = *radar_pic_p;
 		radar_pic_found = true;
 
+		renderer.TextureWrapModeClamp(radar_pic.texnum);
+
 		// Calculate the height of the map.
-		map_height_diff = abs(cl.worldmodel->maxs[2] - cl.worldmodel->mins[2]);
+		map_height_diff = fabs((float)(cl.worldmodel->maxs[2] - cl.worldmodel->mins[2]));
 
 		// Get the comments from the PNG.
 		txt = Image_LoadPNG_Comments(radar_filename, &n_textcount);
@@ -196,7 +201,6 @@ void HUD_NewRadarMap(void)
 		memset (&radar_pic, 0, sizeof(radar_pic));
 		radar_pic_found = false;
 		conversion_formula_found = false;
-		Con_Printf("No radar pic found\n");
 	}
 
 	// Free the path string to the radar png.

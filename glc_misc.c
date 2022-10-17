@@ -33,20 +33,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // motion blur.
 void GLC_PolyBlend(float v_blend[4])
 {
-	R_ProgramUse(r_program_none);
-	GLC_StateBeginPolyBlend(v_blend);
+	color_t v_blend_color = RGBA_TO_COLOR(
+		bound(0, v_blend[0], 1) * 255,
+		bound(0, v_blend[1], 1) * 255,
+		bound(0, v_blend[2], 1) * 255,
+		bound(0, v_blend[3], 1) * 255
+	);
 
-	GLC_Begin(GL_QUADS);
-	GLC_Vertex2f(r_refdef.vrect.x, r_refdef.vrect.y);
-	GLC_Vertex2f(r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y);
-	GLC_Vertex2f(r_refdef.vrect.x + r_refdef.vrect.width, r_refdef.vrect.y + r_refdef.vrect.height);
-	GLC_Vertex2f(r_refdef.vrect.x, r_refdef.vrect.y + r_refdef.vrect.height);
-	GLC_End();
+	R_ApplyRenderingState(r_state_poly_blend);
+	Draw_AlphaRectangleRGB(r_refdef.vrect.x, r_refdef.vrect.y, r_refdef.vrect.width, r_refdef.vrect.height, 0.0f, true, v_blend_color);
 }
 
 void GLC_BrightenScreen(void)
 {
-	extern float vid_gamma;
 	float f;
 
 	if (vid_hwgamma_enabled) {
@@ -57,7 +56,11 @@ void GLC_BrightenScreen(void)
 	}
 
 	f = min(v_contrast.value, 3);
-	f = pow(f, vid_gamma);
+	if (R_OldGammaBehaviour()) {
+		extern float vid_gamma;
+
+		f = pow(f, vid_gamma);
+	}
 
 	R_ProgramUse(r_program_none);
 	GLC_StateBeginBrightenScreen();
@@ -71,10 +74,10 @@ void GLC_BrightenScreen(void)
 			R_CustomColor(f - 1, f - 1, f - 1, 1);
 		}
 
-		GLC_Vertex2f(0, 0);
-		GLC_Vertex2f(vid.width, 0);
-		GLC_Vertex2f(vid.width, vid.height);
-		GLC_Vertex2f(0, vid.height);
+		GLC_Vertex2f(-1, -1);
+		GLC_Vertex2f(-1, 1);
+		GLC_Vertex2f(1, 1);
+		GLC_Vertex2f(1, -1);
 
 		f *= 0.5;
 	}
@@ -90,11 +93,14 @@ void GLC_SetupGL(void)
 {
 }
 
-void GLC_Shutdown(qbool restarting)
+void GLC_Shutdown(r_shutdown_mode_t mode)
 {
-	GLC_FreeAliasPoseBuffer();
-	renderer.ProgramsShutdown(restarting);
-	GL_DeleteSamplers();
+	if (mode != r_shutdown_reload) {
+		GLC_FreeAliasPoseBuffer();
+		renderer.ProgramsShutdown(mode == r_shutdown_restart);
+		GL_DeleteSamplers();
+	}
+	GL_FramebufferDeleteAll();
 }
 
 void GLC_TextureInitialiseState(void)

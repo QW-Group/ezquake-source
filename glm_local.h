@@ -3,7 +3,7 @@
 #define EZQUAKE_GLM_LOCAL_HEADER
 
 void GLM_BuildCommonTextureArrays(qbool vid_restart);
-void GLM_Shutdown(qbool restarting);
+void GLM_Shutdown(r_shutdown_mode_t mode);
 
 // Reference cvars for 3D views...
 typedef struct uniform_block_frame_constants_s {
@@ -47,7 +47,7 @@ typedef struct uniform_block_frame_constants_s {
 	float unused_r_texture_luma_fb_bmodels;
 
 	// powerup shells round alias models
-	float shellSize;                         // IS NOW CONSTANT 0.5, replace
+	float shellSize_unused;                  // IS NOW CONSTANT 0.5, replace
 	float shell_base_level1;
 	float shell_base_level2;
 	float shell_effect_level1;
@@ -62,6 +62,15 @@ typedef struct uniform_block_frame_constants_s {
 	int r_height;
 	float r_zFar;
 	float r_zNear;
+
+	// fog parameters
+	float fogColor[3];
+	float fogDensity;
+
+	float skyFogMix;
+	float fogMinZ;
+	float fogMaxZ;
+	float padding;
 } uniform_block_frame_constants_t;
 
 #define MAX_WORLDMODEL_BATCH     64
@@ -112,7 +121,7 @@ void GLM_UploadFrameConstants(void);
 void GLM_StateBeginImageDraw(void);
 
 typedef enum {
-	opaque_world,
+	opaque_world,      // also contains alpha-tested
 	alpha_surfaces
 } glm_brushmodel_drawcall_type;
 

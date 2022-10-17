@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-void VK_DrawAlias3Model(entity_t* ent)
+void VK_DrawAlias3Model(entity_t* ent, qbool outline, qbool additive_pass)
 {
 }
 

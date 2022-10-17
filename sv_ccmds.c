@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	
 */
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 cvar_t	sv_cheats = {"sv_cheats", "0"};
@@ -437,7 +438,7 @@ void SV_Map (qbool now)
 		{
 			//bliP: date check ->
 			date_t date;
-			SV_TimeOfDay(&date);
+			SV_TimeOfDay(&date, "%a %b %d, %H:%M:%S %Y");
 			s = va("\\newmap\\%s\\\\\\\\%d-%d-%d %d:%d:%d\\\n",
 			       level,
 			       date.year,
@@ -492,6 +493,9 @@ void SV_Map (qbool now)
 
 	changed = true;
 #ifndef SERVERONLY
+	if (!com_serveractive) {
+		Host_EndGame();
+	}
 	com_serveractive = true;
 #endif
 }
@@ -615,7 +619,7 @@ void SV_RemoveDirectory_f (void)
 	}
 
 	if (!Sys_rmdir(dirname))
-		Con_Printf("Directory %s succesfully removed\n", dirname);
+		Con_Printf("Directory %s successfully removed\n", dirname);
 	else
 		Con_Printf("Unable to remove directory %s\n", dirname);
 }
@@ -684,7 +688,7 @@ void SV_RemoveFile_f (void)
 	else // 1 file
 	{
 		if (!Sys_remove(va("%s/%s", dirname, filename)))
-			Con_Printf("File %s succesfully removed\n", filename);
+			Con_Printf("File %s successfully removed\n", filename);
 		else
 			Con_Printf("Unable to remove file %s\n", filename);
 	}
@@ -733,7 +737,7 @@ void SV_ChmodFile_f (void)
 	if (chmod(filename, mode))
 		Con_Printf("Unable to chmod %s\n", filename);
 	else
-		Con_Printf("Chmod %s succesful\n", filename);
+		Con_Printf("Chmod %s successful\n", filename);
 }
 #endif //_WIN32
 
@@ -798,7 +802,6 @@ void SV_Kick_f (void)
 	client_t	*cl;
 	int			uid;
 	int			c;
-	int			saved_state;
 	char		reason[80] = "";
 
 	c = Cmd_Argc ();
@@ -839,18 +842,23 @@ void SV_Kick_f (void)
 					strlcat (reason, ")", sizeof(reason));
 			}
 
-			saved_state = cl->state;
-			cl->state = cs_free; // HACK: don't broadcast to this client
-			SV_BroadcastPrintf (PRINT_HIGH, "%s was kicked%s\n", cl->name, reason);
-			cl->state = (sv_client_state_t) saved_state;
-			SV_ClientPrintf (cl, PRINT_HIGH, "You were kicked from the game%s\n", reason);
-			SV_LogPlayer(cl, va("kick%s\n", reason), 1); //bliP: logging
-			SV_DropClient (cl);
+			SV_KickClient(cl, reason);
 			return;
 		}
 	}
 
 	Con_Printf ("Couldn't find user number %i\n", uid);
+}
+
+void SV_KickClient(client_t* cl, const char* reason)
+{
+	sv_client_state_t saved_state = cl->state;
+	cl->state = cs_free; // HACK: don't broadcast to this client
+	SV_BroadcastPrintf(PRINT_HIGH, "%s was kicked%s\n", cl->name, reason);
+	cl->state = (sv_client_state_t)saved_state;
+	SV_ClientPrintf(cl, PRINT_HIGH, "You were kicked from the game%s\n", reason);
+	SV_LogPlayer(cl, va("kick%s\n", reason), 1); //bliP: logging
+	SV_DropClient(cl);
 }
 
 //bliP: mute, cuff ->
@@ -914,7 +922,7 @@ void SV_Cuff_f (void)
 			continue;
 		if (cl->userid == uid)
 		{
-			cl->cuff_time = realtime + (mins * 60.0);
+			cl->cuff_time = curtime + (mins * 60.0);
 			done = true;
 			break;
 		}
@@ -1001,7 +1009,7 @@ void SV_Mute_f (void)
 			continue;
 		if (cl->userid == uid)
 		{
-			cl->lockedtill = realtime + (mins * 60.0);
+			cl->lockedtill = curtime + (mins * 60.0);
 			done = true;
 			break;
 		}
@@ -1081,13 +1089,13 @@ void SV_ListPenalty_f (void)
 		if (!cl->state)
 			continue;
 
-		if (cl->lockedtill >= realtime)
+		if (cl->lockedtill >= curtime)
 		{
-			Con_Printf ("%i %s mute (remaining: %d)\n", cl->userid, cl->name, (cl->lockedtill) ? (int)(cl->lockedtill - realtime) : 0);
+			Con_Printf ("%i %s mute (remaining: %d)\n", cl->userid, cl->name, (cl->lockedtill) ? (int)(cl->lockedtill - curtime) : 0);
 		}
-		if (cl->cuff_time >= realtime)
+		if (cl->cuff_time >= curtime)
 		{
-			Con_Printf ("%i %s cuff (remaining: %d)\n", cl->userid, cl->name, (cl->cuff_time) ? (int)(cl->cuff_time - realtime) : 0);
+			Con_Printf ("%i %s cuff (remaining: %d)\n", cl->userid, cl->name, (cl->cuff_time) ? (int)(cl->cuff_time - curtime) : 0);
 		}
 	}
 
@@ -1664,8 +1672,7 @@ void SV_Gamedir_f (void)
 
 	dir = Cmd_Argv(1);
 
-	if (strstr(dir, "..") || strchr(dir, '/')
-	        || strchr(dir, '\\') || strchr(dir, ':') )
+	if (strstr(dir, "..") || strchr(dir, '/') || strchr(dir, '\\') || strchr(dir, ':') )
 	{
 		Con_Printf ("Gamedir should be a single filename, not a path\n");
 		return;
@@ -1808,7 +1815,7 @@ void SV_InitOperatorCommands (void)
 
 	Cvar_Register (&sv_cheats);
 
-	if (COM_CheckParm (cmdline_param_server_enablecheats))
+	if (SV_CommandLineEnableCheats())
 	{
 		sv_allow_cheats = true;
 		Cvar_SetValue (&sv_cheats, 1);
@@ -1823,7 +1830,10 @@ void SV_InitOperatorCommands (void)
 	Cmd_AddCommand ("snap", SV_Snap_f);
 	Cmd_AddCommand ("snapall", SV_SnapAll_f);
 	Cmd_AddCommand ("kick", SV_Kick_f);
+
+	// Add sv_status as client allows 'status' alias to over-ride (ezQuake #532)
 	Cmd_AddCommand ("status", SV_Status_f);
+	Cmd_AddCommand ("sv_status", SV_Status_f);
 
 	//bliP: init ->
 	Cmd_AddCommand ("rmdir", SV_RemoveDirectory_f);
@@ -1840,7 +1850,7 @@ void SV_InitOperatorCommands (void)
 	Cmd_AddCommand ("chmod", SV_ChmodFile_f);
 #endif //_WIN32
 	//<-
-	if (COM_CheckParm (cmdline_param_server_enablelocalcommand))
+	if (SV_CommandLineEnableLocalCommand())
 		Cmd_AddCommand ("localcommand", SV_LocalCommand_f);
 
 	Cmd_AddCommand ("map", SV_Map_f);
@@ -1887,3 +1897,5 @@ void SV_InitOperatorCommands (void)
 
 	Cmd_AddCommand ("master_rcon_password", SV_MasterPassword_f);
 }
+
+#endif // !CLIENTONLY

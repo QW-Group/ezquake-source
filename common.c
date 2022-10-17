@@ -322,82 +322,116 @@ void COM_ForceExtensionEx (char *path, char *extension, size_t path_size)
 int COM_GetTempDir(char *buf, int bufsize)
 {
 	int returnval = 0;
-	#ifdef WIN32
-
+#ifdef WIN32
 	returnval = GetTempPath (bufsize, buf);
 
-	if (returnval > bufsize || returnval == 0)
-	{
+	if (returnval > bufsize || returnval == 0) {
 		return -1;
 	}
-	#else // UNIX
+#else // UNIX
 	char *tmp;
 	if (!(tmp = getenv ("TMPDIR")))
 		tmp = P_tmpdir; // defined at <stdio.h>
 
 	returnval = strlen (tmp);
 
-	if (returnval > bufsize || returnval == 0)
-	{
+	if (returnval > bufsize || returnval == 0) {
 		return -1;
 	}
 
 	strlcpy (buf, tmp, bufsize);
-	#endif // WIN32
+#endif // WIN32
 
 	return returnval;
+}
+
+qbool COM_WriteToUniqueTempFileVFS(char* path, int path_buffer_size, const char* ext, vfsfile_t* input)
+{
+	size_t bytes = VFS_GETLEN(input);
+	byte* buffer = Q_malloc(bytes);
+	vfserrno_t err;
+	qbool result;
+
+	if (!buffer) {
+		return false;
+	}
+	VFS_READ(input, buffer, (int)bytes, &err);
+	VFS_SEEK(input, 0, SEEK_SET);
+
+	result = COM_WriteToUniqueTempFile(path, path_buffer_size, ext, buffer, bytes);
+	Q_free(buffer);
+	return result;
 }
 
 //
 // Get a unique temp filename.
 // Returns negative value on failure.
 //
-int COM_GetUniqueTempFilename (char *path, char *filename, int filename_size, qbool verify_exists)
+qbool COM_WriteToUniqueTempFile(char *path, int path_buffer_size, const char* ext, const byte* buffer, size_t bytes)
 {
-	int retval = 0;
-	#ifdef WIN32
-	char tmp[MAX_PATH];
-	char *p = NULL;
-	char real_path[MAX_PATH];
+	char temp_path[MAX_OSPATH];
 
-	// If no path is specified we need to find it ourself.
-	// (This is done automatically in unix)
-	if (path == NULL)
+	if (ext == NULL) {
+		ext = "";
+	}
+
+	// Get the path to temporary directory
+	if (COM_GetTempDir(temp_path, sizeof(temp_path)) < 0) {
+		return false;
+	}
+
+#ifdef _WIN32
 	{
-		if (COM_GetTempDir(real_path, MAX_PATH) < 0)
-		{
-			return -1;
+		GUID guid;
+		char* dot = "";
+
+		dot = (ext[0] && ext[0] != '.' ? "." : "");
+
+		if (path_buffer_size < MAX_PATH) {
+			return false;
 		}
 
-		p = real_path;
+		if (CoCreateGuid(&guid) == S_OK) {
+			if (path_buffer_size > snprintf(path, path_buffer_size, "%s\\%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X%s%s", temp_path, guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7], dot, ext)) {
+				FS_WriteFile_2(path, buffer, (int)bytes);
+				return true;
+			}
+		}
+
+		return false;
 	}
-	else
+#else
 	{
-		p = path;
+		int fd = 0;
+		strlcat(path, "/ezquakeXXXXXX", path_buffer_size);
+		if (ext[0]) {
+			int ext_len = 0;
+
+			if (ext[0] != '.') {
+				strlcat(path, ".", path_buffer_size);
+				strlcat(path, ext, path_buffer_size);
+				ext_len = strlen(ext) + 1;
+			}
+			else {
+				strlcat(path, ext, path_buffer_size);
+				ext_len = strlen(ext);
+			}
+			fd = mkstemps(path, ext_len);
+		}
+		else {
+			fd = mkstemp(path);
+		}
+
+		if (fd < 0) {
+			return false;
+		}
+
+		write(fd, buffer, bytes);
+
+		close(fd);
+		return true;
 	}
-
-	retval = GetTempFileName (p, "ezq", !verify_exists, tmp);
-
-	if (!retval)
-	{
-		return -1;
-	}
-
-	strlcpy (filename, tmp, filename_size);
-	#else
-	char *tmp;
-
-	// TODO: I'm no unix person, is this proper? -Nope. Fixme
-	tmp = tempnam(path, "ezq");
-	if (!tmp)
-		return -1;
-
-	strlcpy (filename, tmp, filename_size);
-	Q_free (tmp);
-	retval = strlen(filename);
-	#endif
-
-	return retval;
+#endif
 }
 
 qbool COM_FileExists (char *path)
@@ -427,8 +461,7 @@ char 		*com_args_original;
 com_tokentype_t com_tokentype;
 
 //Parse a token out of a string
-extern cvar_t cl_curlybraces;
-char *COM_Parse (char *data)
+const char* COM_ParseEx(const char *data, qbool curlybraces)
 {
 	unsigned char c;
 	int len;
@@ -437,51 +470,67 @@ char *COM_Parse (char *data)
 	len = 0;
 	com_token[0] = 0;
 
-	if (!data)
+	if (!data) {
 		return NULL;
+	}
 
 	// skip whitespace
 	while (true) {
-		while ( (c = *data) == ' ' || c == '\t' || c == '\r' || c == '\n')
+		while ((c = *data) == ' ' || c == '\t' || c == '\r' || c == '\n') {
 			data++;
+		}
 
-		if (c == 0)
+		if (c == 0) {
 			return NULL;			// end of file;
+		}
 
 		// skip // comments
-		if (c == '/' && data[1] == '/')
-			while (*data && *data != '\n')
+		if (c == '/' && data[1] == '/') {
+			while (*data && *data != '\n') {
 				data++;
-		else
+			}
+		}
+		else {
 			break;
+		}
 	}
 
 	// handle quoted strings specially
-	if (c == '\"' || (c == '{' && cl_curlybraces.integer) ) {
-		if (c == '{')
+	if (c == '\"' || (c == '{' && curlybraces) ) {
+		if (c == '{') {
 			quotes = 1;
-		else
+		}
+		else {
 			quotes = -1;
+		}
 		data++;
 		while (1) {
 			c = *data;
 			data++;
 			if (quotes < 0) {
-				if (c == '\"')
+				if (c == '\"') {
 					quotes++;
-			} else {
-				if (c == '}' && cl_curlybraces.integer)
+				}
+			}
+			else {
+				if (c == '}' && curlybraces) {
 					quotes--;
-				else if (c == '{' && cl_curlybraces.integer)
+				}
+				else if (c == '{' && curlybraces) {
 					quotes++;
+				}
 			}
 
 			if (!quotes || !c) {
 				com_token[len] = 0;
-				return c ? data:data-1;
+				return c ? data : data - 1;
 			}
 			com_token[len] = c;
 			len++;
+
+			if (len >= sizeof(com_token) - 1) {
+				return NULL; // quoted section too long
+			}
 		}
 	}
 
@@ -490,13 +539,19 @@ char *COM_Parse (char *data)
 		com_token[len] = c;
 		data++;
 		len++;
-		if (len >= MAX_COM_TOKEN - 1)
+		if (len >= sizeof(com_token) - 1) {
 			break;
+		}
 		c = *data;
 	} while (c && c != ' ' && c != '\t' && c != '\n' && c != '\r');
 
 	com_token[len] = 0;
 	return data;
+}
+
+const char* COM_Parse(const char* data)
+{
+	return COM_ParseEx(data, false);
 }
 
 #define DEFAULT_PUNCTUATION "(,{})(\':;=!><&|+"
@@ -678,6 +733,7 @@ char *COM_Argv(int arg)
 	if (arg < 0 || arg >= com_argc) {
 		return "";
 	}
+
 	return com_argv[arg];
 }
 
@@ -692,13 +748,21 @@ void COM_ClearArgv(int arg)
 void COM_InitArgv(int argc, char **argv)
 {
 	int id;
+	int i;
 
-	for (com_argc = 0; com_argc < MAX_NUM_ARGVS && com_argc < argc; com_argc++) {
-		if (argv[com_argc]) {
-			largv[com_argc] = argv[com_argc];
+	for (i = 0, com_argc = 0; com_argc < MAX_NUM_ARGVS - 1 && i < argc; ++i) {
+		if (argv[i]) {
+			// follow qw urls if they are our argument without a +qwurl command
+			if (!strncmp(argv[i], "qw://", 5) && (i == 0 || strncmp(argv[i - 1], "+qwurl", 6)) && com_argc < MAX_NUM_ARGVS - 1) {
+				largv[com_argc++] = "+qwurl";
+				largv[com_argc++] = argv[i];
+			}
+			else {
+				largv[com_argc++] = argv[i];
+			}
 		}
 		else {
-			largv[com_argc] = "";
+			largv[com_argc++] = "";
 		}
 	}
 
@@ -720,7 +784,7 @@ void COM_Init(void)
 }
 
 //does a varargs printf into a temp buffer, so I don't need to have varargs versions of all text functions.
-char *va (char *format, ...)
+char *va(const char *format, ...)
 {
 	va_list argptr;
 	static char string[32][2048];
@@ -1769,4 +1833,26 @@ float AdjustAngle(float current, float ideal, float fraction)
 		move += 360;
 
 	return current + fraction * move;
+}
+
+int Q_namecmp(const char* s1, const char* s2)
+{
+	if (s1 == NULL && s2 == NULL)
+		return 0;
+
+	if (s1 == NULL)
+		return -1;
+
+	if (s2 == NULL)
+		return 1;
+
+	while (*s1 || *s2) {
+		if (tolower(*s1 & 0x7f) != tolower(*s2 & 0x7f)) {
+			return tolower(*s1 & 0x7f) - tolower(*s2 & 0x7f);
+		}
+		s1++;
+		s2++;
+	}
+
+	return 0;
 }

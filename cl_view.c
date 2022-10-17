@@ -26,12 +26,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "hud.h"
 #include "hud_common.h"
+#include "mvd_utils.h"
+#include "r_matrix.h"
 
 #ifdef X11_GAMMA_WORKAROUND
 #include "tr_types.h"
 #endif
 #include "r_local.h"
 #include "r_renderer.h"
+#include "r_brushmodel.h"
 
 /*
 The view is allowed to move slightly from its true position for bobbing,
@@ -76,18 +79,23 @@ cvar_t	crosshairsize	= {"crosshairsize", "1"};
 cvar_t  cl_crossx = {"cl_crossx", "0"};
 cvar_t  cl_crossy = {"cl_crossy", "0"};
 
+// gamma updates are expensive in hw: update at lower fps, otherwise drops are severe
+static cvar_t vid_hwgamma_fps = { "vid_hwgamma_fps", "60" };
+
 // QW262: less flash grenade effect in demos
-cvar_t	cl_demoplay_flash = {"cl_demoplay_flash", ".33"};
+cvar_t cl_demoplay_flash       = { "cl_demoplay_flash",      "0.33" };
 
-cvar_t  v_contentblend = {"v_contentblend", "0.2"};
-cvar_t	v_damagecshift = {"v_damagecshift", "0.2"};
-cvar_t	v_quadcshift = {"v_quadcshift", "0.5"};
-cvar_t	v_suitcshift = {"v_suitcshift", "0.5"};
-cvar_t	v_ringcshift = {"v_ringcshift", "0.5"};
-cvar_t	v_pentcshift = {"v_pentcshift", "0.5"};
-cvar_t	v_dlightcshift = {"v_dlightcshift", "1"};
+cvar_t v_contentblend          = { "v_contentblend",         "0.2" };
+cvar_t v_damagecshift          = { "v_damagecshift",         "0.2" };
+cvar_t v_quadcshift            = { "v_quadcshift",           "0.5" };
+cvar_t v_suitcshift            = { "v_suitcshift",           "0.5" };
+cvar_t v_ringcshift            = { "v_ringcshift",           "0.5" };
+cvar_t v_pentcshift            = { "v_pentcshift",           "0.5" };
+cvar_t v_dlightcshift          = { "v_dlightcshift",         "1.0" };
+cvar_t v_dlightcolor           = { "v_dlightcolor",          "1.0" };
+cvar_t v_dlightcshiftpercent   = { "v_dlightcshiftpercent",  "0.5" };
 
-cvar_t	v_bonusflash = {"cl_bonusflash", "0"};
+cvar_t v_bonusflash            = { "cl_bonusflash",          "0.0" };
 
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 
@@ -108,7 +116,7 @@ float V_CalcRoll (vec3_t angles, vec3_t velocity) {
 	sign = side < 0 ? -1 : 1;
 	side = fabs(side);
 
-	side = (side < cl_rollspeed.value) ? side * cl_rollangle.value / cl_rollspeed.value : cl_rollangle.value;
+	side = (side < cl_rollspeed.value) ? side * Ruleset_RollAngle() / cl_rollspeed.value : Ruleset_RollAngle();
 
 	if (side > 45)
 		side = 45;
@@ -246,13 +254,8 @@ cshift_t	cshift_lava = { {255,80,0}, 150 };
 cvar_t		gl_cshiftpercent = {"gl_cshiftpercent", "100"};
 cvar_t		gl_hwblend = {"gl_hwblend", "1"};
 float		v_blend[4];		// rgba 0.0 - 1.0
-#ifdef NDEBUG
-cvar_t		v_gamma = {"gl_gamma", "0.8"};
-cvar_t		v_contrast = {"gl_contrast", "1.3"};
-#else
 cvar_t		v_gamma = {"gl_gamma", "1.0"};
 cvar_t		v_contrast = {"gl_contrast", "1.0"};
-#endif
 
 #ifdef X11_GAMMA_WORKAROUND
 unsigned short ramps[3][4096];
@@ -292,9 +295,7 @@ void V_ParseDamage (void)
 	if (cl.cshifts[CSHIFT_DAMAGE].percent > 150)
 		cl.cshifts[CSHIFT_DAMAGE].percent = 150;
 
-	fraction = v_damagecshift.value;
-	if (fraction < 0) fraction = 0;
-	if (fraction > 1) fraction = 1;
+	fraction = bound(0, v_damagecshift.value, 1);
 	cl.cshifts[CSHIFT_DAMAGE].percent *= fraction;
 
 	if (armor > blood) {
@@ -326,8 +327,7 @@ void V_ParseDamage (void)
 // disconnect -->
 qbool flashed = false; // it should be used for f_flashout tirgger
 extern cvar_t v_gamma, v_contrast;
-#define flash_gamma 0.55
-#define flash_contrast 1.0
+
 void V_TF_FlashSettings(qbool flashed)
 {
 	static float old_gamma, old_contrast;
@@ -346,8 +346,8 @@ void V_TF_FlashSettings(qbool flashed)
 		old_contrast = v_contrast.value;
 
 		// set MTFL flash settings	
-		Cvar_SetValue(&v_gamma, flash_gamma);
-		Cvar_SetValue(&v_contrast, flash_contrast);
+		Cvar_SetValue(&v_gamma, MTFL_FLASH_GAMMA);
+		Cvar_SetValue(&v_contrast, MTFL_FLASH_CONTRAST);
 
 		// made gamma&contrast read only
 		Cvar_SetFlags(&v_gamma, Cvar_GetFlags(&v_gamma) | CVAR_ROM);
@@ -369,7 +369,7 @@ void V_TF_FlashStuff (void)
 	// 240 = Normal TF || 255 = Angel TF
 	if (cshift_empty.percent == 240 || cshift_empty.percent == 255 ) {
 		TP_ExecTrigger ("f_flash");
-		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+		if (!flashed && Rulesets_ToggleWhenFlashed()) {
 			V_TF_FlashSettings(true);
 		}
 
@@ -379,7 +379,7 @@ void V_TF_FlashStuff (void)
 
 	if (cshift_empty.percent == 160) {
 		// flashed by your own flash
-		if (!flashed && (!strncasecmp(Rulesets_Ruleset(), "MTFL", 4))) {
+		if (!flashed && Rulesets_ToggleWhenFlashed()) {
 			V_TF_FlashSettings(true);
 		}
 
@@ -403,7 +403,7 @@ void V_TF_FlashStuff (void)
 	}
 
 	if (cls.demoplayback && cshift_empty.destcolor[0] == cshift_empty.destcolor[1]) {
-		cshift_empty.percent *= cl_demoplay_flash.value / 1.0f;
+		cshift_empty.percent *= bound(0, cl_demoplay_flash.value, 1.0f);
 	}
 }
 // <-- disconnect
@@ -527,11 +527,11 @@ void V_CalcPowerupCshift(void)
 
 void V_CalcBlend (void)
 {
-	float r, g, b, a, a2;
+	float r, g, b, a, a2, t;
 	int j;
 	extern cvar_t gl_polyblend;
 
-	r = g = b = a= 0;
+	r = g = b = a = 0;
 
 	if (cls.state != ca_active) {
 		cl.cshifts[CSHIFT_CONTENTS] = cshift_empty;
@@ -542,7 +542,8 @@ void V_CalcBlend (void)
 	}
 
 	// drop the damage value
-	cl.cshifts[CSHIFT_DAMAGE].percent -= cls.frametime * 150;
+	t = cls.frametime * 150;
+	cl.cshifts[CSHIFT_DAMAGE].percent -= t;
 	if (cl.cshifts[CSHIFT_DAMAGE].percent <= 0) {
 		cl.cshifts[CSHIFT_DAMAGE].percent = 0;
 	}
@@ -583,16 +584,35 @@ void V_CalcBlend (void)
 	v_blend[3] = bound(0, v_blend[3], 1);
 }
 
-void V_AddLightBlend (float r, float g, float b, float a2)
+void V_AddLightBlend(float r, float g, float b, float a2, qbool suppress_polyblend)
 {
 	float a;
 	extern cvar_t gl_polyblend;
+	qbool shift_on_dlight = gl_polyblend.integer && (v_dlightcshift.integer == 1 || (v_dlightcshift.integer == 2 && !suppress_polyblend));
+	float percentage = bound(0, v_dlightcshiftpercent.value, 1);
 
-	if (!gl_polyblend.value || !gl_cshiftpercent.value || !v_dlightcshift.value) {
+	if (percentage <= 0 || !shift_on_dlight) {
 		return;
 	}
 
-	a2 = a2 * bound(0, v_dlightcshift.value, 1) * gl_cshiftpercent.value / 100.0;
+	if (!v_dlightcolor.integer) {
+		r = 1.0f;
+		g = 0.5f;
+		b = 0.0f;
+	}
+	else {
+		// some kind of scaling, the normal colors aren't full red/blue etc
+		float max = max(r, max(g, b));
+
+		if (max > 0) {
+			r /= max;
+			g /= max;
+			b /= max;
+		}
+	}
+
+	a2 = bound(0, a2, 1);
+	a2 *= percentage;
 
 	v_blend[3] = a = v_blend[3] + a2 * (1 - v_blend[3]);
 
@@ -610,59 +630,67 @@ void V_AddLightBlend (float r, float g, float b, float a2)
 void V_UpdatePalette (void)
 {
 	int i, j, c;
-	qbool new;
 	float current_gamma, current_contrast, a, rgb[3];
-	static float prev_blend[4];
-	static float old_gamma, old_contrast, old_hwblend;
+	static float prev_blend[4] = { 0, 0, 0, 0 };
+	static float old_gamma = 1, old_contrast = 1;
+	static qbool old_change_palette = false;
+	static double last_set = 0;
 	extern float vid_gamma;
+	float hw_vblend[4];
+	// whether or not to include content/damage palette shifts as part of the hw gamma
+	qbool change_palette = (vid_hwgamma_enabled && gl_hwblend.value && !cl.teamfortress);
+	int change_flags = 0;
 
-	new = false;
-
-	for (i = 0; i < 4; i++) {
-		if (v_blend[i] != prev_blend[i]) {
-			new = true;
-			prev_blend[i] = v_blend[i];
-		}
+	if (change_palette) {
+		memcpy(hw_vblend, v_blend, sizeof(hw_vblend));
 	}
-
-	current_gamma = bound (0.3, v_gamma.value, 3);
-	if (current_gamma != old_gamma || v_gamma.modified) {
-		v_gamma.modified = false;
-		old_gamma = current_gamma;
-		new = true;
+	else {
+		memset(hw_vblend, 0, sizeof(hw_vblend));
 	}
+	current_gamma = (vid_hwgamma_enabled ? bound(0.3, v_gamma.value, 3) : 1);
+	current_contrast = (vid_hwgamma_enabled ? bound(1, v_contrast.value, 3) : 1);
 
-	current_contrast = bound (1, v_contrast.value, 3);
-	if (current_contrast != old_contrast) {
-		old_contrast = current_contrast;
-		new = true;
-	}
+	change_flags |= (memcmp(hw_vblend, prev_blend, sizeof(hw_vblend)) ? 1 : 0);
+	change_flags |= (current_gamma != old_gamma || v_gamma.modified ? 2 : 0);
+	change_flags |= (current_contrast != old_contrast ? 4 : 0);
+	change_flags |= (change_palette != old_change_palette ? 8 : 0);
 
-	if (gl_hwblend.value != old_hwblend) {
-		new = true;
-		old_hwblend = gl_hwblend.value;
-	}
-
-	if (!new)
+	if (!change_flags) {
 		return;
-
-	a = v_blend[3];
-
-	if (!vid_hwgamma_enabled || !gl_hwblend.value || cl.teamfortress) {
-		a = 0;
 	}
 
-	if (vid_gamma != 1.0) {
+	// don't update if not enough time has passed & only palette updating
+	if (change_flags == 1 && vid_hwgamma_fps.integer && curtime < last_set + (1.0f / max(10, vid_hwgamma_fps.integer))) {
+		return;
+	}
+
+	// store flags
+	old_change_palette = change_palette;
+	prev_blend[0] = hw_vblend[0];
+	prev_blend[1] = hw_vblend[1];
+	prev_blend[2] = hw_vblend[2];
+	prev_blend[3] = hw_vblend[3];
+	old_gamma = current_gamma;
+	old_contrast = current_contrast;
+	last_set = curtime;
+	v_gamma.modified = false;
+	if (developer.integer == 3) {
+		Con_DPrintf("palette: change_flags %d [%d %d %d %d] %.2f %.2f\n", change_flags, (int)(hw_vblend[0] * 255), (int)(hw_vblend[1] * 255), (int)(hw_vblend[2] * 255), (int)(hw_vblend[3] * 255), current_gamma, current_contrast);
+	}
+
+	a = hw_vblend[3];
+	if (R_OldGammaBehaviour() && vid_gamma != 1.0) {
 		current_contrast = pow(current_contrast, vid_gamma);
 		current_gamma = current_gamma / vid_gamma;
 	}
 
+	// Have to do this in a loop these days as certain color ranges will be blocked by OS
 	do {
 		float std_alpha;
 
-		rgb[0] = 255 * v_blend[0] * a;
-		rgb[1] = 255 * v_blend[1] * a;
-		rgb[2] = 255 * v_blend[2] * a;
+		rgb[0] = 255 * hw_vblend[0] * a;
+		rgb[1] = 255 * hw_vblend[1] * a;
+		rgb[2] = 255 * hw_vblend[2] * a;
 
 		std_alpha = 1 - a;
 
@@ -760,7 +788,7 @@ void V_CalcViewRoll (void) {
 	float side, adjspeed;
 
 	side = V_CalcRoll (cl.simangles, cl.simvel);
-	adjspeed = cl_rollalpha.value * bound (2, fabs(cl_rollangle.value), 45);
+	adjspeed = cl_rollalpha.value * bound (2, Ruleset_RollAngle(), 45);
 	if (side > cl.rollangle) {
 		cl.rollangle += cls.frametime * adjspeed;
 		if (cl.rollangle > side)
@@ -783,8 +811,8 @@ void V_CalcViewRoll (void) {
 // if user wish so, weapon pre-selection is also taken in account
 // todo: if user selects different weapon while the current one is still
 // firing, wait until the animation is finished
-static int V_CurrentWeaponModel(void) { 
-	extern int IN_BestWeaponReal(void);
+static int V_CurrentWeaponModel(void)
+{
 	extern cvar_t cl_weaponpreselect;
 	int bestgun;
 	int realw = cl.stats[STAT_WEAPON];
@@ -816,7 +844,7 @@ static int V_CurrentWeaponModel(void) {
 	}
 	else {
 		if (ShowPreselectedWeap() && r_viewpreselgun.integer && !view_message.weaponframe) {
-			bestgun = IN_BestWeaponReal();
+			bestgun = IN_BestWeaponReal(true);
 			if (bestgun == 1) {
 				return cl_modelindices[mi_vaxe];
 			}
@@ -894,7 +922,8 @@ static void V_AddViewWeapon(float bob)
 	cent->current.frame = view_message.weaponframe;
 }
 
-void V_CalcIntermissionRefdef (void) {
+static void V_CalcIntermissionRefdef(void)
+{
 	float old;
 
 	VectorCopy (cl.simorg, r_refdef.vieworg);
@@ -910,7 +939,7 @@ void V_CalcIntermissionRefdef (void) {
 	v_idlescale.value = old;
 }
 
-void V_CalcRefdef(void)
+static void V_CalcRefdef(void)
 {
 	vec3_t forward;
 	float bob;
@@ -937,6 +966,7 @@ void V_CalcRefdef(void)
 	r_refdef.vieworg[2] += 1.0 / 16;
 
 	// add view height
+	r_refdef.viewheight_test = 4;
 	if (view_message.flags & PF_GIB) {
 		r_refdef.vieworg[2] += 8;	// gib view height
 	}
@@ -952,6 +982,9 @@ void V_CalcRefdef(void)
 
 		// smooth out stair step ups
 		r_refdef.vieworg[2] += cl.crouch;
+
+		// standard offset
+		r_refdef.viewheight_test = 10;
 	}
 
 	// set up refresh view angles
@@ -968,8 +1001,9 @@ void V_CalcRefdef(void)
 		r_refdef.viewangles[PITCH] += cl.punchangle * 0.5;
 	}
 
-	if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0))
+	if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0)) {
 		r_refdef.viewangles[ROLL] = 80;	// dead view angle
+	}
 
 	//VULT CAMERAS
 	CameraUpdate(view_message.flags & PF_DEAD);
@@ -1025,23 +1059,57 @@ qbool V_PreRenderView(void)
 			V_CalcRefdef();
 		}
 
+		MVD_PowerupCam_Frame();
+
 		R_PushDlights();
 
 		r_refdef2.time = cl.time;
 		r_refdef2.sin_time = sin(r_refdef2.time);
 		r_refdef2.cos_time = cos(r_refdef2.time);
 
+		// scroll parameters for powerup shells
+		r_refdef2.powerup_scroll_params[0] = cos(cl.time * 1.5);
+		r_refdef2.powerup_scroll_params[1] = sin(cl.time * 1.1);
+		r_refdef2.powerup_scroll_params[2] = cos(cl.time * -0.5);
+		r_refdef2.powerup_scroll_params[3] = sin(cl.time * -0.5);
+
 		// restrictions
 		r_refdef2.allow_cheats = cls.demoplayback || (Info_ValueForKey(cl.serverinfo, "*cheats")[0] && com_serveractive);
 		if (cls.demoplayback || cl.spectator) {
 			r_refdef2.allow_lumas = true;
 			r_refdef2.max_fbskins = 1;
-			r_refdef2.max_watervis = 1;
 		}
 		else {
 			r_refdef2.allow_lumas = !strcmp(Info_ValueForKey(cl.serverinfo, "24bit_fbs"), "0") ? false : true;
 			r_refdef2.max_fbskins = *(p = Info_ValueForKey(cl.serverinfo, "fbskins")) ? bound(0, Q_atof(p), 1) : (cl.teamfortress ? 0 : 1);
+		}
+
+		// Only allow alpha water if the server allows it, or they are spectator and have novis enabled
+		{
+			extern cvar_t r_novis;
+
 			r_refdef2.max_watervis = *(p = Info_ValueForKey(cl.serverinfo, "watervis")) ? bound(0, Q_atof(p), 1) : 0;
+			if ((cls.demoplayback || cl.spectator) && (r_novis.integer || r_refdef2.max_watervis > 0)) {
+				// ignore server limit
+				r_refdef2.max_watervis = 1;
+			}
+			r_refdef2.wateralpha = R_WaterAlpha();  // relies on r_refdef2.max_watervis
+		}
+
+		// time-savers
+		{
+			extern cvar_t r_drawflat_mode, r_drawflat, r_fastturb, gl_caustics;
+			extern texture_ref underwatertexture;
+
+			r_refdef2.drawFlatFloors = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 2 || r_drawflat.integer == 1);
+			r_refdef2.drawFlatWalls = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 3 || r_drawflat.integer == 1);
+			r_refdef2.solidTexTurb = (!r_fastturb.integer && r_refdef2.wateralpha == 1);
+
+			r_refdef2.drawCaustics = (R_TextureReferenceIsValid(underwatertexture) && gl_caustics.integer);
+			r_refdef2.drawWorldOutlines = R_DrawWorldOutlines();
+			r_refdef2.distanceScale = tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
+			VectorScale(vpn, 0.002 * r_refdef2.distanceScale, r_refdef2.outline_vpn);
+			r_refdef2.outlineBase = 1 - DotProduct(r_origin, r_refdef2.outline_vpn);
 		}
 	}
 
@@ -1114,13 +1182,34 @@ void V_Init (void) {
 	Cvar_Register (&v_pentcshift);
 	Cvar_Register (&cl_demoplay_flash); // from QW262
 
-	Cvar_Register (&v_dlightcshift);
-	Cvar_Register (&gl_cshiftpercent);
-	Cvar_Register (&gl_hwblend);
+	Cvar_Register(&v_dlightcshift);
+	Cvar_Register(&v_dlightcolor);
+	Cvar_Register(&v_dlightcshiftpercent);
+	Cvar_Register(&gl_cshiftpercent);
+	Cvar_Register(&gl_hwblend);
+	Cvar_Register(&vid_hwgamma_fps);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
-	Cvar_Register (&v_gamma);
-	Cvar_Register (&v_contrast);
+	Cvar_Register(&v_gamma);
+	Cvar_Register(&v_contrast);
 
+	// we do not need this after host initialized
+	if (!host_initialized) {
+		int i;
+		float def_gamma = 1.0f;
+		extern float vid_gamma;
+
+		if ((i = COM_CheckParm(cmdline_param_client_gamma)) != 0 && i + 1 < COM_Argc()) {
+			def_gamma = Q_atof(COM_Argv(i + 1));
+			def_gamma = bound(0.3, def_gamma, 3);
+			Cvar_SetDefaultAndValue(&v_gamma, def_gamma, def_gamma);
+			vid_gamma = def_gamma;
+		}
+		else {
+			vid_gamma = 1.0;
+		}
+
+		v_gamma.modified = true;
+	}
 	Cvar_ResetCurrentGroup();
 }

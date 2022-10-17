@@ -455,7 +455,7 @@ void R_UploadChangedLightmaps(void)
 		return;
 	}
 
-	R_TraceEnterNamedRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__func__);
 	if (R_HardwareLighting()) {
 		if (R_FullBrightAllowed() || !cl.worldmodel || !cl.worldmodel->lightdata) {
 			int i;
@@ -577,9 +577,15 @@ static int LightmapAllocBlock(int w, int h, int *x, int *y)
 		lightmaps = Q_realloc(lightmaps, sizeof(lightmaps[0]) * new_size);
 		if (!lightmaps) {
 			Sys_Error("AllocBlock: full");
+			return 0;
 		}
 		memset(lightmaps + lightmap_array_size, 0, sizeof(lightmaps[0]) * LIGHTMAP_ARRAY_GROWTH);
 		lightmap_array_size = new_size;
+
+		// Memory pointers might now be invalid afer realloc()
+		for (i = 0; i < new_size; ++i) {
+			lightmaps[i].drawflat_chain_tail = &lightmaps[i].drawflat_chain;
+		}
 	}
 	return LightmapAllocBlock(w, h, x, y);
 }
@@ -685,7 +691,6 @@ static void R_BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 static void R_BuildLightmapData(msurface_t* surf, int surfnum)
 {
 	lightmap_data_t* lm = &lightmaps[surf->lightmaptexturenum];
-	qbool fullbright = (R_FullBrightAllowed() || !cl.worldmodel || !cl.worldmodel->lightdata);
 	byte* lightmap = surf->samples;
 	unsigned int smax = (surf->extents[0] >> 4) + 1;
 	unsigned int tmax = (surf->extents[1] >> 4) + 1;
@@ -709,10 +714,10 @@ static void R_BuildLightmapData(msurface_t* surf, int surfnum)
 			data[2] = (t * 16 + surf->texturemins[1] - surf->texinfo->vecs[1][3]);
 			data[3] = 0;
 
-			source[0] = source[1] = source[2] = (fullbright ? 0xFFFFFFFF : 0);
+			source[0] = source[1] = source[2] = 0;
 			source[3] = lightmap_flags;
 
-			if (lightmap && !fullbright) {
+			if (lightmap) {
 				for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
 					size_t lightmap_index = (maps * smax * tmax + t * smax + s) * 3;
 
@@ -734,13 +739,13 @@ static void R_LightmapCreateForSurface(msurface_t *surf, int surfnum)
 	tmax = (surf->extents[1] >> 4) + 1;
 
 	if (smax > LIGHTMAP_WIDTH) {
-		Host_Error("%s: smax = %d > BLOCK_WIDTH", __FUNCTION__, smax);
+		Host_Error("%s: smax = %d > BLOCK_WIDTH", __func__, smax);
 	}
 	if (tmax > LIGHTMAP_HEIGHT) {
-		Host_Error("%s: tmax = %d > BLOCK_HEIGHT", __FUNCTION__, tmax);
+		Host_Error("%s: tmax = %d > BLOCK_HEIGHT", __func__, tmax);
 	}
 	if (smax * tmax > MAX_LIGHTMAP_SIZE) {
-		Host_Error("%s: smax * tmax = %d > MAX_LIGHTMAP_SIZE", __FUNCTION__, smax * tmax);
+		Host_Error("%s: smax * tmax = %d > MAX_LIGHTMAP_SIZE", __func__, smax * tmax);
 	}
 
 	surf->lightmaptexturenum = LightmapAllocBlock(smax, tmax, &surf->light_s, &surf->light_t);
@@ -790,12 +795,17 @@ void R_BuildLightmaps(void)
 
 	if (lightmaps) {
 		for (i = 0; i < lightmap_array_size; ++i) {
+			lightmaps[i].drawflat_chain = NULL;
+			lightmaps[i].drawflat_chain_tail = &lightmaps[i].drawflat_chain;
 			memset(lightmaps[i].allocated, 0, sizeof(lightmaps[i].allocated));
 		}
 	}
 	else {
 		lightmaps = Q_malloc(sizeof(*lightmaps) * LIGHTMAP_ARRAY_GROWTH);
 		lightmap_array_size = LIGHTMAP_ARRAY_GROWTH;
+		for (i = 0; i < lightmap_array_size; ++i) {
+			lightmaps[i].drawflat_chain_tail = &lightmaps[i].drawflat_chain;
+		}
 	}
 	last_lightmap_updated = 0;
 

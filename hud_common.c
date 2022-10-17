@@ -99,11 +99,14 @@ struct
 } autohud;
 
 void OnAutoHudChange(cvar_t *var, char *value, qbool *cancel);
+static void OnRemovePrefixesChange(cvar_t* var, char* value, qbool* cancel);
 qbool autohud_loaded = false;
 cvar_t hud_planmode = {"hud_planmode",   "0"};
 cvar_t mvd_autohud = {"mvd_autohud", "0", 0, OnAutoHudChange};
 cvar_t hud_digits_trim = {"hud_digits_trim", "1"};
+static cvar_t hud_name_remove_prefixes = { "hud_name_remove_prefixes", "", 0, OnRemovePrefixesChange };
 
+sort_players_info_t		sorted_players_by_frags[MAX_CLIENTS];
 sort_players_info_t		sorted_players[MAX_CLIENTS];
 sort_teams_info_t		sorted_teams[MAX_CLIENTS];
 int       n_teams;
@@ -223,9 +226,9 @@ void SCR_HUD_DrawNotify(hud_t* hud)
 //
 
 // status numbers
-void SCR_HUD_DrawNum(
+void SCR_HUD_DrawNum2(
 	hud_t *hud, int num, qbool low,
-	float scale, int style, int digits, char *s_align, qbool proportional
+	float scale, int style, int digits, char *s_align, qbool proportional, qbool draw_content
 )
 {
 	extern mpic_t *sb_nums[2][11];
@@ -334,7 +337,7 @@ void SCR_HUD_DrawNum(
 	{
 		case 1:
 		case 3:
-			if (!HUD_PrepareDraw(hud, width, height, &x, &y)) {
+			if (!HUD_PrepareDraw(hud, width, height, &x, &y) || !draw_content) {
 				return;
 			}
 			switch (align)
@@ -355,7 +358,7 @@ void SCR_HUD_DrawNum(
 		case 0:
 		case 2:
 		default:
-			if (!HUD_PrepareDraw(hud, width, height, &x, &y)) {
+			if (!HUD_PrepareDraw(hud, width, height, &x, &y) || !draw_content) {
 				return;
 			}
 
@@ -377,6 +380,14 @@ void SCR_HUD_DrawNum(
 			}
 			break;
 	}
+}
+
+void SCR_HUD_DrawNum(
+	hud_t* hud, int num, qbool low,
+	float scale, int style, int digits, char* s_align, qbool proportional
+)
+{
+	SCR_HUD_DrawNum2(hud, num, low, scale, style, digits, s_align, proportional, true);
 }
 
 #define TEMPHUD_NAME "_temphud"
@@ -659,7 +670,16 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 	}
 
 	if (cls.demoplayback && !cls.nqdemoplayback && !cls.mvdplayback && player->string[0]) {
-		player_slot = Player_GetSlot(player->string);
+		player_slot = Player_GetSlot(player->string, false);
+	}
+	else if (cls.mvdplayback) {
+		if (player->string[0]) {
+			player_slot = Player_GetSlot(player->string, false);
+		}
+		else {
+			// returns -1 if not tracking
+			player_slot = Cam_TrackNum();
+		}
 	}
 
 	b = CL_GetLastCmd(player_slot);
@@ -668,14 +688,14 @@ void SCR_HUD_DrawKeys(hud_t *hud)
 	scale = max(0, scale);
 
 	i = 0;
-	line1[i++] = b.attack  ? 'x' + 128 : 'x';
-	line1[i++] = b.forward ? '^' + 128 : '^';
-	line1[i++] = b.jump    ? 'J' + 128 : 'J';
+	line1[i++] = b.attack  ? (char)('x' + 128) : 'x';
+	line1[i++] = b.forward ? (char)('^' + 128) : '^';
+	line1[i++] = b.jump    ? (char)('J' + 128) : 'J';
 	line1[i++] = '\0';
 	i = 0;
-	line2[i++] = b.left    ? '<' + 128 : '<';
-	line2[i++] = b.back    ? '_' + 128 : '_';
-	line2[i++] = b.right   ? '>' + 128 : '>';
+	line2[i++] = b.left    ? (char)('<' + 128) : '<';
+	line2[i++] = b.back    ? (char)('_' + 128) : '_';
+	line2[i++] = b.right   ? (char)('>' + 128) : '>';
 	line2[i++] = '\0';
 
 	width = LETTERWIDTH * strlen(line1) * scale;
@@ -863,6 +883,7 @@ void CommonDraw_Init(void)
 	Cvar_Register(&hud_planmode);
 	Cvar_Register(&hud_tp_need);
 	Cvar_Register(&hud_digits_trim);
+	Cvar_Register(&hud_name_remove_prefixes);
 	Cvar_ResetCurrentGroup();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_MVD);
@@ -986,8 +1007,76 @@ void CommonDraw_Init(void)
 
 const char* HUD_FirstTeam(void)
 {
-	if (n_teams) {
-		return sorted_teams[0].name;
+	if (!cl.teamlock1_teamname[0] && n_teams) {
+		// setting for the first time when we have teams
+		strlcpy(cl.teamlock1_teamname, sorted_teams[0].name, sizeof(cl.teamlock1_teamname));
 	}
-	return "";
+	else if (n_teams) {
+		// check that the team still exists
+		int i;
+		for (i = 0; i < n_teams; ++i) {
+			if (!strcmp(sorted_teams[i].name, cl.teamlock1_teamname)) {
+				return cl.teamlock1_teamname; // found
+			}
+		}
+		// not found, reset to first time
+		strlcpy(cl.teamlock1_teamname, sorted_teams[0].name, sizeof(cl.teamlock1_teamname));
+	}
+	else {
+		// no teams, clear and set again in the future
+		memset(cl.teamlock1_teamname, 0, sizeof(cl.teamlock1_teamname));
+	}
+	return cl.teamlock1_teamname;
+}
+
+void CL_RemovePrefixFromName(int player)
+{
+	size_t skip;
+	char* prefixes, * prefix, * name;
+	char normalized_list[256];
+	char normalized_name[MAX_SCOREBOARDNAME];
+	const char* prefixes_list = hud_name_remove_prefixes.string;
+
+	strlcpy(cl.players[player].shortname, cl.players[player].name, sizeof(cl.players[player].shortname));
+
+	if (!prefixes_list || !prefixes_list[0]) {
+		return;
+	}
+
+	skip = 0;
+
+	strlcpy(normalized_list, prefixes_list, sizeof(normalized_list));
+	prefixes = Q_normalizetext(normalized_list);
+	prefix = strtok(prefixes, " ");
+	strlcpy(normalized_name, cl.players[player].name, sizeof(normalized_name));
+	name = Q_normalizetext(normalized_name);
+
+	while (prefix != NULL) {
+		if (strlen(prefix) > skip && strlen(name) > strlen(prefix) && strncasecmp(prefix, name, strlen(prefix)) == 0) {
+			skip = strlen(prefix);
+			// remove spaces from the new start of the name
+			while (name[skip] == ' ') {
+				skip++;
+			}
+			// if it would skip the whole name, just use the whole name
+			if (name[skip] == 0) {
+				skip = 0;
+				break;
+			}
+		}
+		prefix = strtok(NULL, " ");
+	}
+
+	strlcpy(cl.players[player].shortname, cl.players[player].name + skip, sizeof(cl.players[player].shortname));
+}
+
+static void OnRemovePrefixesChange(cvar_t* var, char* value, qbool* cancel)
+{
+	int i;
+
+	Cvar_SetIgnoreCallback(var, value);
+
+	for (i = 0; i < sizeof(cl.players) / sizeof(cl.players[0]); ++i) {
+		CL_RemovePrefixFromName(i);
+	}
 }

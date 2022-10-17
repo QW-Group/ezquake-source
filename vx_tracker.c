@@ -28,7 +28,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "quakedef.h"
 #include "utils.h"
 #include "vx_tracker.h"
-#include "server.h"
 #include "gl_model.h"
 #include "fonts.h"
 #include "hud.h"
@@ -38,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // This can't be increased without changing private use image reservations (PRIVATE_USE_IMAGES_TRACKERIMAGES_BASE etc)
 #define MAX_IMAGES_PER_WEAPON 4
+#define TEXTFLAG_WEAPON 1
 
 typedef struct weapon_label_s {
 	char label[64];
@@ -96,7 +96,7 @@ cvar_t amf_tracker_frags                         = {"r_tracker_frags", "1"};
 cvar_t amf_tracker_streaks                       = {"r_tracker_streaks", "0"};
 cvar_t amf_tracker_time                          = {"r_tracker_time", "4"};
 cvar_t amf_tracker_messages                      = {"r_tracker_messages", "20"};
-cvar_t amf_tracker_pickups                       = {"r_tracker_pickups", "0"};
+static cvar_t amf_tracker_pickups                = {"r_tracker_pickups", "0"};
 cvar_t amf_tracker_align_right                   = {"r_tracker_align_right", "1"};
 cvar_t amf_tracker_scale                         = {"r_tracker_scale", "1"};
 static cvar_t amf_tracker_inconsole              = {"r_tracker_inconsole", "0"};
@@ -116,7 +116,6 @@ static cvar_t amf_tracker_string_died            = {"r_tracker_string_died",    
 static cvar_t amf_tracker_string_teammate        = {"r_tracker_string_teammate", "teammate"};
 static cvar_t amf_tracker_string_enemy           = {"r_tracker_string_enemy",    "enemy"};
 static cvar_t amf_tracker_name_width             = {"r_tracker_name_width",      "0", 0, OnChange_TrackerNameWidth};
-static cvar_t amf_tracker_name_remove_prefixes   = {"r_tracker_name_remove_prefixes", ""};
 static cvar_t amf_tracker_own_frag_prefix        = {"r_tracker_own_frag_prefix", "You fragged "};
 static cvar_t amf_tracker_positive_enemy_suicide = {"r_tracker_positive_enemy_suicide", "0"};	// Medar wanted it to be customizable
 static cvar_t amf_tracker_proportional           = {"r_tracker_proportional", "0"};
@@ -135,6 +134,7 @@ typedef struct
 
 	// Pre-parse now, don't do this every frame
 	char text[MAX_SEGMENTS_PER_LINE][64];
+	int text_flags[MAX_SEGMENTS_PER_LINE];
 	byte colors[MAX_SEGMENTS_PER_LINE][4];
 	mpic_t* images[MAX_SEGMENTS_PER_LINE];
 	text_alignment_t alignment[MAX_SEGMENTS_PER_LINE];
@@ -210,7 +210,6 @@ void InitTracker(void)
 	Cvar_Register(&amf_tracker_string_enemy);
 
 	Cvar_Register(&amf_tracker_name_width);
-	Cvar_Register(&amf_tracker_name_remove_prefixes);
 	Cvar_Register(&amf_tracker_own_frag_prefix);
 	Cvar_Register(&amf_tracker_positive_enemy_suicide);
 	Cvar_Register(&amf_tracker_proportional);
@@ -353,7 +352,7 @@ static qbool VX_TrackerStringPrintSegmentsWithImage(const char* text1, const byt
 		return VX_TrackerStringPrintSegments(text1, GetWeaponName(weapon), text3, NULL);
 	}
 
-	Print_flags[Print_current] |= (suppress_from_notify == 3 ? PR_NONOTIFY : 0);
+	Print_flags[Print_current] |= (PR_NORESET | (suppress_from_notify ? PR_NONOTIFY : 0));
 
 	if (text1 && text1[0]) {
 		if (text1_color) {
@@ -392,6 +391,10 @@ static qbool VX_TrackerStringPrintSegmentsWithImage(const char* text1, const byt
 
 static trackmsg_t* VX_NewTrackerMsg(void)
 {
+	if (!max_active_tracks) {
+		return NULL;
+	}
+
 	// free space by removing the oldest one
 	if (active_track >= max_active_tracks) {
 		int i;
@@ -417,13 +420,19 @@ static trackmsg_t* VX_NewTrackerMsg(void)
 	return &trackermsg[active_track++];
 }
 
-static void VX_TrackerAddTextSegment(trackmsg_t* msg, const char* text, const byte* color)
+static void VX_TrackerAddFlaggedTextSegment(trackmsg_t* msg, const char* text, const byte* color, int flags)
 {
-	if (text && text[0] && color) {
+	if (text && text[0] && color && msg->segments < sizeof(msg->colors) / sizeof(msg->colors[0])) {
 		memcpy(msg->colors[msg->segments], color, sizeof(msg->colors[msg->segments]));
 		strlcpy(msg->text[msg->segments], text, sizeof(msg->text[msg->segments]));
+		msg->text_flags[msg->segments] = flags;
 		++msg->segments;
 	}
+}
+
+static void VX_TrackerAddTextSegment(trackmsg_t* msg, const char* text, const byte* color)
+{
+	VX_TrackerAddFlaggedTextSegment(msg, text, color, 0);
 }
 
 static void VX_TrackerAddImageSegment(trackmsg_t* msg, mpic_t* pic)
@@ -448,8 +457,10 @@ static void VX_TrackerAddSimpleText(const char* text, const byte* color)
 	}
 
 	msg = VX_NewTrackerMsg();
-	VX_TrackerAddTextSegment(msg, text, color);
-	VX_PreProcessMessage(msg);
+	if (msg) {
+		VX_TrackerAddTextSegment(msg, text, color);
+		VX_PreProcessMessage(msg);
+	}
 }
 
 static void VX_TrackerAddSegmented4(const char* lhs_text, const byte* lhs_color, const char* center_text, const byte* center_color, const char* rhs_text, const byte* rhs_color, const char* extra_text, const byte* extra_color)
@@ -465,11 +476,13 @@ static void VX_TrackerAddSegmented4(const char* lhs_text, const byte* lhs_color,
 	}
 
 	msg = VX_NewTrackerMsg();
-	VX_TrackerAddTextSegment(msg, lhs_text, lhs_color);
-	VX_TrackerAddTextSegment(msg, center_text, center_color);
-	VX_TrackerAddTextSegment(msg, rhs_text, rhs_color);
-	VX_TrackerAddTextSegment(msg, extra_text, extra_color);
-	VX_PreProcessMessage(msg);
+	if (msg) {
+		VX_TrackerAddTextSegment(msg, lhs_text, lhs_color);
+		VX_TrackerAddTextSegment(msg, center_text, center_color);
+		VX_TrackerAddTextSegment(msg, rhs_text, rhs_color);
+		VX_TrackerAddTextSegment(msg, extra_text, extra_color);
+		VX_PreProcessMessage(msg);
+	}
 }
 
 static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_color, int weapon, const char* rhs_text, const byte* rhs_color)
@@ -494,17 +507,19 @@ static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_
 	}
 
 	msg = VX_NewTrackerMsg();
-	msg->pad = lhs_text && rhs_text && lhs_text[0] && rhs_text[0];
-	VX_TrackerAddTextSegment(msg, lhs_text, lhs_color);
-	for (i = 0; i < weapon_images[weapon]; ++i) {
-		mpic_t* pic = &char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].glyphs[weapon * MAX_IMAGES_PER_WEAPON + i];
+	if (msg) {
+		msg->pad = lhs_text && rhs_text && lhs_text[0] && rhs_text[0];
+		VX_TrackerAddTextSegment(msg, lhs_text, lhs_color);
+		for (i = 0; i < weapon_images[weapon]; ++i) {
+			mpic_t* pic = &char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].glyphs[weapon * MAX_IMAGES_PER_WEAPON + i];
 
-		if (R_TextureReferenceIsValid(pic->texnum)) {
-			VX_TrackerAddImageSegment(msg, pic);
+			if (R_TextureReferenceIsValid(pic->texnum)) {
+				VX_TrackerAddImageSegment(msg, pic);
+			}
 		}
+		VX_TrackerAddTextSegment(msg, rhs_text, rhs_color);
+		VX_PreProcessMessage(msg);
 	}
-	VX_TrackerAddTextSegment(msg, rhs_text, rhs_color);
-	VX_PreProcessMessage(msg);
 }
 
 static void VX_TrackerAddWeaponTextSplit(const char* lhs_text, int weapon, const byte* weapon_color, const char* rhs_text)
@@ -512,7 +527,7 @@ static void VX_TrackerAddWeaponTextSplit(const char* lhs_text, int weapon, const
 	trackmsg_t* msg;
 	int i;
 
-	if ((!lhs_text && !rhs_text) || (!lhs_text[0] && !rhs_text[0]) || CL_Demo_SkipMessage(true)) {
+	if (((!lhs_text || !lhs_text[0]) && (!rhs_text || !rhs_text[0])) || CL_Demo_SkipMessage(true)) {
 		return;
 	}
 
@@ -521,18 +536,20 @@ static void VX_TrackerAddWeaponTextSplit(const char* lhs_text, int weapon, const
 	}
 
 	msg = VX_NewTrackerMsg();
-	msg->pad = lhs_text && rhs_text && lhs_text[0] && rhs_text[0];
-	VX_TrackerAddTextSegment(msg, lhs_text, color_white);
-	for (i = 0; i < weapon_labels[weapon].count; ++i) {
-		if (weapon_labels[weapon].colors[i][3]) {
-			VX_TrackerAddTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_labels[weapon].colors[i]);
+	if (msg) {
+		msg->pad = lhs_text && rhs_text && lhs_text[0] && rhs_text[0];
+		VX_TrackerAddTextSegment(msg, lhs_text, color_white);
+		for (i = 0; i < weapon_labels[weapon].count; ++i) {
+			if (weapon_labels[weapon].colors[i][3]) {
+				VX_TrackerAddFlaggedTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_labels[weapon].colors[i], TEXTFLAG_WEAPON);
+			}
+			else {
+				VX_TrackerAddFlaggedTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_color, TEXTFLAG_WEAPON);
+			}
 		}
-		else {
-			VX_TrackerAddTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_color);
-		}
+		VX_TrackerAddTextSegment(msg, rhs_text, color_white);
+		VX_PreProcessMessage(msg);
 	}
-	VX_TrackerAddTextSegment(msg, rhs_text, color_white);
-	VX_PreProcessMessage(msg);
 }
 
 static void VX_TrackerLinkStrings(void)
@@ -542,44 +559,9 @@ static void VX_TrackerLinkStrings(void)
 	}
 }
 
-static char *VX_RemovePrefix(int player)
-{
-	size_t skip;
-	char *prefixes, *prefix, *name;
-
-	if (amf_tracker_name_remove_prefixes.string[0] == 0)
-		return cl.players[player].name;
-
-	skip = 0;
-	prefixes = Q_normalizetext(Q_strdup(amf_tracker_name_remove_prefixes.string));
-	prefix = strtok(prefixes, " ");
-	name = Q_normalizetext(Q_strdup(cl.players[player].name));
-
-	while (prefix != NULL) {
-		if (strlen(prefix) > skip && strlen(name) > strlen(prefix) && strncasecmp(prefix, name, strlen(prefix)) == 0) {
-			skip = strlen(prefix);
-			// remove spaces from the new start of the name
-			while (name[skip] == ' ') {
-				skip++;
-			}
-			// if it would skip the whole name, just use the whole name
-			if (name[skip] == 0) {
-				skip = 0;
-				break;
-			}
-		}
-		prefix = strtok(NULL, " ");
-	}
-
-	Q_free(prefixes);
-	Q_free(name);
-
-	return cl.players[player].name + skip;
-}
-
 static char* VX_Name(int player, char* buffer, int max_length)
 {
-	strlcpy(buffer, VX_RemovePrefix(player), max_length);
+	strlcpy(buffer, cl.players[player].shortname, max_length);
 
 	return buffer;
 }
@@ -693,7 +675,7 @@ void VX_TrackerDeath(int player, int weapon, int count)
 		return;
 	}
 
-	if (amf_tracker_frags.value == 2) {
+	if (amf_tracker_frags.integer == 2) {
 		char player_name[MAX_SCOREBOARDNAME];
 
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
@@ -731,7 +713,7 @@ void VX_TrackerSuicide(int player, int weapon, int count)
 		return;
 	}
 
-	if (amf_tracker_frags.value == 2) {
+	if (amf_tracker_frags.integer == 2) {
 		char player_name[MAX_SCOREBOARDNAME];
 
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
@@ -775,7 +757,7 @@ void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, i
 		return;
 	}
 
-	if (amf_tracker_frags.value == 2) {
+	if (amf_tracker_frags.integer == 2) {
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
 		VX_Name(killer, killer_name, MAX_SCOREBOARDNAME);
 
@@ -836,7 +818,7 @@ void VX_TrackerOddFrag(int player, int weapon, int wcount)
 		return;
 	}
 
-	if (amf_tracker_frags.value == 2) {
+	if (amf_tracker_frags.integer == 2) {
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
 
 		if (cl_useimagesinfraglog.integer) {
@@ -877,7 +859,7 @@ void VX_TrackerTK_XvsY(int player, int killer, int weapon, int p_count, int p_ic
 		return;
 	}
 
-	if (amf_tracker_frags.value == 2) {
+	if (amf_tracker_frags.integer == 2) {
 		byte* color = TeamKillColor(player);
 
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
@@ -931,7 +913,7 @@ void VX_TrackerOddTeamkill(int player, int weapon, int count)
 		return;
 	}
 
-	if (amf_tracker_frags.value == 2) {
+	if (amf_tracker_frags.integer == 2) {
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
 
 		if (cl_useimagesinfraglog.integer) {
@@ -1073,36 +1055,21 @@ void VX_TrackerStreakEnd(int player, int killer, int count)
 
 	if (player == killer) {
 		// streak ends due to suicide
-		char gender;
-		char* userinfo_gender = Info_ValueForKey(cl.players[player].userinfo, "gender");
-		if (!*userinfo_gender) {
-			userinfo_gender = Info_ValueForKey(cl.players[player].userinfo, "g");
-		}
-
-		gender = userinfo_gender[0];
-		if (gender == '0' || gender == 'M') {
-			gender = 'm';
-		}
-		else if (gender == '1' || gender == 'F') {
-			gender = 'f';
-		}
-		else if (gender == '2' || gender == 'N') {
-			gender = 'n';
-		}
+		gender_id gender = cl.players[player].gender;
 
 		if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
 			snprintf(outstring, sizeof(outstring), "You were looking good until you killed yourself (%i kills)", count);
 			VX_TrackerAddSimpleText(outstring, color940);
 		}
-		else if (gender == 'm') {
+		else if (gender == gender_male) {
 			snprintf(outstring, sizeof(outstring), " was looking good until he killed himself (%i kills)", count);
 			VX_TrackerAddSegmented(cl.players[player].name, color_white, outstring, color940, "", NULL);
 		}
-		else if (gender == 'f') {
+		else if (gender == gender_female) {
 			snprintf(outstring, sizeof(outstring), " was looking good until she killed herself (%i kills)", count);
 			VX_TrackerAddSegmented(cl.players[player].name, color_white, outstring, color940, "", NULL);
 		}
-		else if (gender == 'n') {
+		else if (gender == gender_neutral) {
 			snprintf(outstring, sizeof(outstring), " was looking good until it killed itself (%i kills)", count);
 			VX_TrackerAddSegmented(cl.players[player].name, color_white, outstring, color940, "", NULL);
 		}
@@ -1192,7 +1159,7 @@ void VXSCR_MeasureTracker(float* width, float* height, float scale, qbool propor
 				x += 8 * 2 * scale;
 			}
 			else {
-				if (trackermsg[i].pad && padded_width) {
+				if (trackermsg[i].pad && padded_width && !trackermsg[i].text_flags[s]) {
 					x += padded_width;
 				}
 				else {
@@ -1213,7 +1180,7 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 {
 	int		x, y;
 	int		i, printable_chars, s;
-	float	alpha = 1;
+	float	alpha = 1, width_one_char;
 	int     padded_width = 8 * bound(name_width, 0, MAX_SCOREBOARDNAME - 1) * scale;
 
 	scale = bound(0.1, scale, 10);
@@ -1222,10 +1189,14 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 		return;
 	}
 
+	width_one_char = FontFixedWidth(1, scale, false, proportional);
+
 	// Draw the max allowed trackers allowed at the same time
 	// the latest ones are always shown.
 	y = y_pos;
 	for (i = 0; i < max_active_tracks; i++) {
+		int initial_position;
+
 		// Time expired for this tracker, don't draw it.
 		if (trackermsg[i].die < r_refdef2.time) {
 			continue;
@@ -1240,9 +1211,15 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 		}
 
 		// Place the tracker.
-		x = x_pos + (align_right ? width - FontFixedWidth(printable_chars, scale, false, proportional) - FontFixedWidth(1, scale, false, proportional) : FontFixedWidth(1, scale, false, proportional));
+		if (!proportional) {
+			x = x_pos + (align_right ? width - (printable_chars + 1) * width_one_char : width_one_char);
+		}
+		else {
+			x = x_pos + width_one_char;
+		}
 
 		// Draw the segments.
+		initial_position = Draw_ImagePosition();
 		for (s = 0; s < trackermsg[i].segments; ++s) {
 			mpic_t* pic = trackermsg[i].images[s];
 
@@ -1264,7 +1241,7 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 				clr.c = RGBAVECT_TO_COLOR_PREMULT_SPECIFIC(trackermsg[i].colors[s], alpha);
 				clr.i = 0;
 
-				if (trackermsg[i].pad && padded_width) {
+				if (trackermsg[i].pad && padded_width && !trackermsg[i].text_flags[s]) {
 					Draw_SColoredStringAligned(x, y, trackermsg[i].text[s], &clr, 1, scale, alpha, proportional, trackermsg[i].alignment[s], x + padded_width);
 					x += padded_width;
 				}
@@ -1274,6 +1251,12 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 			}
 
 			x += 8 * scale;
+		}
+		if (proportional && align_right) {
+			// shift into correct location, now we know where it ended
+			int new_draw_position = Draw_ImagePosition();
+
+			Draw_AdjustImages(initial_position, new_draw_position, width - (x - x_pos));
 		}
 
 		y += 8 * scale;	// Next line.
@@ -1293,7 +1276,7 @@ static void VX_PreProcessMessage(trackmsg_t* msg)
 		else  {
 			int length = 0;
 
-			if (msg->pad && padded_chars) {
+			if (msg->pad && !msg->text_flags[s] && padded_chars) {
 				length = padded_chars;
 			}
 			else {

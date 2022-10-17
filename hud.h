@@ -73,10 +73,11 @@ typedef struct hud_s
 	cvar_t *order;						// Higher it is, later this element will be drawn
 										// and more probable that will be on top.
 
-    cvar_t *show;						// Show cvar.
-    cvar_t *frame;						// Frame cvar.
-	cvar_t *frame_color;				// Frame color cvar.
-	byte frame_color_cache[4];			// Cache for parsed frame color.
+    cvar_t* show;                       // Show cvar.
+    cvar_t* draw;                       // Draw cvar
+    cvar_t* frame;                      // Frame cvar.
+    cvar_t* frame_color;                // Frame color cvar.
+    byte    frame_color_cache[4];       // Cache for parsed frame color.
 
 	cvar_t *opacity;					// The overall opacity of the entire HUD element.
 

@@ -882,7 +882,7 @@ static void InitInternalTriggers(void)
 	// lastip
 	AddInternalTrigger("([0-9]|[01]?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|[01]?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|[01]?\\d\\d|2[0-4]\\d|25[0-5])\\.([0-9]|[01]?\\d\\d|2[0-4]\\d|25[0-5])\\:(\\d{4,5})", 8, INTRIG_Lastip_port);
 	// lastip address, restricted to 64 bytes
-	AddInternalTrigger("\\b([A-Za-z0-9-.]{1,53}?\\.[A-Za-z]{2,4}\\:\\d{4,5})", 8, INTRIG_Lastip_port);
+	AddInternalTrigger("\\b([A-Za-z0-9-.]{1,53}?\\.[A-Za-z]{2,5}\\:\\d{4,5})", 8, INTRIG_Lastip_port);
 }
  
 void TP_InitTriggers (void)

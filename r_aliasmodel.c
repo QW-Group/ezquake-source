@@ -68,13 +68,6 @@ mtriangle_t	triangles[MAXALIASTRIS];
 trivertx_t	*poseverts[MAXALIASFRAMES];
 int			posenum;
 
-#ifndef CLIENTONLY
-extern cvar_t     maxclients;
-#define IsLocalSinglePlayerGame() (com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.value == 1)
-#else
-#define IsLocalSinglePlayerGame() (0)
-#endif
-
 static void* Mod_LoadAliasFrame(void* pin, maliasframedesc_t *frame, int* posenum);
 static void* Mod_LoadAliasGroup(void* pin, maliasframedesc_t *frame, int* posenum);
 void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t *pskintype);
@@ -85,6 +78,7 @@ cvar_t    gl_powerupshells_effect1level = { "gl_powerupshells_effect1level", "0.
 cvar_t    gl_powerupshells_base1level = { "gl_powerupshells_base1level", "0.05" };
 cvar_t    gl_powerupshells_effect2level = { "gl_powerupshells_effect2level", "0.4" };
 cvar_t    gl_powerupshells_base2level = { "gl_powerupshells_base2level", "0.1" };
+cvar_t    gl_custom_grenade_tf = { "gl_custom_grenade_tf", "1" };
 
 float     r_framelerp;
 
@@ -92,7 +86,6 @@ extern float     bubblecolor[NUM_DLIGHTTYPES][4];
 
 extern cvar_t    r_lerpframes;
 extern cvar_t    gl_outline;
-extern cvar_t    gl_outline_width;
 
 static custom_model_color_t custom_model_colors[] = {
 	// LG beam
@@ -290,14 +283,13 @@ static qbool R_CanDrawModelShadow(entity_t* ent)
 	return (r_shadows.integer && !ent->full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha;
 }
 
-void R_DrawAliasModel(entity_t *ent)
+void R_DrawAliasModel(entity_t *ent, qbool outline)
 {
 	int anim, skinnum;
 	texture_ref texture, fb_texture;
 	aliashdr_t* paliashdr;
 	maliasframedesc_t *oldframe, *frame;
 	byte *color32bit = NULL;
-	qbool outline = false;
 	float oldMatrix[16];
 
 	if (R_FilterEntity(ent)) {
@@ -311,7 +303,7 @@ void R_DrawAliasModel(entity_t *ent)
 	if (amf_coronas.integer) {
 		if (IsFlameModel(ent->model)) {
 			//FIXME: This is slow and pathetic as hell, really we should just check the entity
-			//alternativley add some kind of permanent client side TE for the torch
+			//alternatively add some kind of permanent client side TE for the torch
 			NewStaticLightCorona(C_FIRE, ent->origin, ent->entity_id);
 		}
 		else if (ent->model->modhint == MOD_TELEPORTDESTINATION) {
@@ -336,7 +328,7 @@ void R_DrawAliasModel(entity_t *ent)
 
 	frameStats.classic.polycount[polyTypeAliasModel] += paliashdr->numtris;
 
-	R_TraceEnterRegion(va("%s(%s)", __FUNCTION__, ent->model->name), true);
+	R_TraceEnterRegion(va("%s(%s)", __func__, ent->model->name), true);
 	R_PushModelviewMatrix(oldMatrix);
 	R_StateBeginDrawAliasModel(ent, paliashdr);
 
@@ -344,6 +336,13 @@ void R_DrawAliasModel(entity_t *ent)
 	R_AliasSetupLighting(ent);
 	shadedots = r_avertexnormal_dots[((int)(ent->angles[1] * (SHADEDOT_QUANT / 360.0))) & (SHADEDOT_QUANT - 1)];
 	ent->r_modelalpha = (ent->alpha ? ent->alpha : 1);
+
+	if (ent->r_modelalpha != 1 && outline) {
+		// todo
+		R_PopModelviewMatrix(oldMatrix);
+		R_TraceLeaveRegion(true);
+		return;
+	}
 
 	anim = (int)(r_refdef2.time * 10) & 3;
 	skinnum = ent->skinnum;
@@ -356,17 +355,9 @@ void R_DrawAliasModel(entity_t *ent)
 	fb_texture = paliashdr->glc_fb_texturenum[skinnum][anim];
 
 	R_OverrideModelTextures(ent, &texture, &fb_texture, &color32bit);
-
-	// Check for outline on models.
-	// We don't support outline for transparent models,
-	// and we also check for ruleset, since we don't want outline on eyes.
-	outline = ((gl_outline.integer & 1) && ent->r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
-
 	R_RenderAliasModelEntity(ent, paliashdr, color32bit, texture, fb_texture, oldframe, frame, outline, ent->effects);
-
 	R_PopModelviewMatrix(oldMatrix);
 
-	// VULT MOTION TRAILS - No shadows on motion trails
 	if (R_CanDrawModelShadow(ent)) {
 		renderer.DrawAliasModelShadow(ent);
 	}
@@ -567,6 +558,10 @@ void R_AliasSetupLighting(entity_t *ent)
 		}
 	}
 
+	if (clmodel->modhint == MOD_GRENADE && !gl_custom_grenade_tf.integer && cl.teamfortress) {
+		ent->custom_model = NULL;
+	}
+
 	if (ent->custom_model && ent->custom_model->fullbright_cvar.integer) {
 		ent->ambientlight = 4096;
 		ent->shadelight = 0;
@@ -602,7 +597,7 @@ void R_AliasSetupLighting(entity_t *ent)
 			calculate_lighting = true;
 		}
 	}
-	else if (Rulesets_FullbrightModel(clmodel, IsLocalSinglePlayerGame())) {
+	else if (Rulesets_FullbrightModel(clmodel)) {
 		ent->ambientlight = ent->shadelight = 4096;
 		calculate_lighting = (r_shadows.integer);
 	}
@@ -694,16 +689,18 @@ void R_DrawViewModel(void)
 
 	switch (gun.model->type) {
 		case mod_alias:
-			R_DrawAliasModel(&gun);
+			// don't support outlining weaponmodel just yet
+			R_DrawAliasModel(&gun, false);
 			if (gun.effects) {
 				renderer.DrawAliasModelPowerupShell(&gun);
 			}
 			break;
 		case mod_alias3:
-			renderer.DrawAlias3Model(&gun);
+			renderer.DrawAlias3Model(&gun, false, false);
 			if (gun.effects) {
 				renderer.DrawAlias3ModelPowerupShell(&gun);
 			}
+			renderer.DrawAlias3Model(&gun, false, true);
 			break;
 		default:
 			Com_Printf("Not drawing view model of type %i\n", gun.model->type);
@@ -727,6 +724,7 @@ void R_InitAliasModelCvars(void)
 	Cvar_Register(&gl_powerupshells_effect1level);
 	Cvar_Register(&gl_powerupshells_base2level);
 	Cvar_Register(&gl_powerupshells_effect2level);
+	Cvar_Register(&gl_custom_grenade_tf);
 }
 
 void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* loadname)
@@ -771,26 +769,31 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 	pheader->skinwidth = LittleLong(pinmodel->skinwidth);
 	pheader->skinheight = LittleLong(pinmodel->skinheight);
 
-	if (pheader->skinheight > MAX_LBM_HEIGHT)
+	if (pheader->skinheight > MAX_LBM_HEIGHT) {
 		Host_Error("Mod_LoadAliasModel: model %s has a skin taller than %d", mod->name, MAX_LBM_HEIGHT);
+	}
 
 	pheader->numverts = LittleLong(pinmodel->numverts);
 
-	if (pheader->numverts <= 0)
+	if (pheader->numverts <= 0) {
 		Host_Error("Mod_LoadAliasModel: model %s has no vertices", mod->name);
+	}
 
-	if (pheader->numverts > MAXALIASVERTS)
+	if (pheader->numverts > MAXALIASVERTS) {
 		Host_Error("Mod_LoadAliasModel: model %s has too many vertices", mod->name);
+	}
 
 	pheader->numtris = LittleLong(pinmodel->numtris);
 
-	if (pheader->numtris <= 0)
+	if (pheader->numtris <= 0) {
 		Host_Error("Mod_LoadAliasModel: model %s has no triangles", mod->name);
+	}
 
 	pheader->numframes = LittleLong(pinmodel->numframes);
 	numframes = pheader->numframes;
-	if (numframes < 1)
-		Host_Error("Mod_LoadAliasModel: Invalid # of frames: %d\n", numframes);
+	if (numframes < 1) {
+		Host_Error("Mod_LoadAliasModel: model %s has invalid # of frames: %d\n", mod->name, numframes);
+	}
 
 	pheader->size = LittleFloat(pinmodel->size) * ALIAS_BASE_SIZE_RATIO;
 	mod->synctype = LittleLong(pinmodel->synctype);
@@ -822,7 +825,10 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 		triangles[i].facesfront = LittleLong(pintriangles[i].facesfront);
 
 		for (j = 0; j < 3; j++) {
-			triangles[i].vertindex[j] = LittleLong(pintriangles[i].vertindex[j]);
+			int index = triangles[i].vertindex[j] = LittleLong(pintriangles[i].vertindex[j]);
+			if (index < 0 || index >= pheader->numverts) {
+				Host_Error("Mod_LoadAliasModel: model %s has invalid vertex ref (%d/%d)\n", mod->name, index, pheader->numverts);
+			}
 		}
 	}
 
@@ -1028,8 +1034,6 @@ void R_AliasModelPrepare(entity_t* ent, int framecount, int* frame1_, int* frame
 	*frame1_ = frame1;
 	*frame2_ = frame2;
 
-	// Check for outline on models.
 	// We don't support outline for transparent models,
-	// and we also check for ruleset, since we don't want outline on eyes.
-	*outline = ((gl_outline.integer & 1) && ent->r_modelalpha == 1 && !RuleSets_DisallowModelOutline(ent->model));
+	*outline &= ent->r_modelalpha == 1;
 }

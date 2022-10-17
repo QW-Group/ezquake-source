@@ -171,7 +171,7 @@
 // FIXME: afaik one (and only one?) msg still unsupported: Satan's power deflects qqshka's telefrag
 
 
-#DEFINE OBITUARY	PLAYER_DEATH	TRAP		"Satan's power deflects " "'s telefrag"
+// #DEFINE OBITUARY	PLAYER_DEATH	TRAP		"Satan's power deflects " "'s telefrag"
 
 #DEFINE OBITUARY	PLAYER_DEATH	DROWN			" sleeps with the fishes"
 #DEFINE OBITUARY	PLAYER_DEATH	DROWN			" sucks it down"

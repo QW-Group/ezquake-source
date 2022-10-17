@@ -19,7 +19,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	
 */
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
+
+static void SV_BotWriteDamage(client_t* c, int i);
 
 #define CHAN_AUTO   0
 #define CHAN_WEAPON 1
@@ -400,12 +403,13 @@ MULTICAST_PHS	send to clients potentially hearable from org
 */
 void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key)
 {
-	client_t	*client;
-	byte		*mask;
-	int		leafnum;
-	int		j;
-	qbool		reliable;
-	vec3_t		vieworg;
+	client_t*   client;
+	byte*       mask;
+	int         leafnum;
+	int         j;
+	qbool       reliable;
+	vec3_t      vieworg;
+	qbool       mvd_only = false;
 
 	reliable = false;
 
@@ -428,6 +432,10 @@ void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key)
 	case MULTICAST_PVS:
 		mask = CM_LeafPVS (CM_PointInLeaf (origin));
 		break;
+	case MULTICAST_MVD_HIDDEN:
+		mask = NULL;
+		mvd_only = true;
+		break;
 
 	default:
 		mask = NULL;
@@ -435,7 +443,7 @@ void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key)
 	}
 
 	// send the data to all relevent clients
-	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++)
+	for (j = 0, client = svs.clients; j < MAX_CLIENTS && !mvd_only; j++, client++)
 	{
 		int trackent = 0;
 
@@ -494,19 +502,27 @@ inrange:
 			SZ_Write (&client->datagram, sv.multicast.data, sv.multicast.cursize);
 	}
 
-	if (sv.mvdrecording)
-	{
-		if (reliable)
-		{
-			if (MVDWrite_Begin(dem_all, 0, sv.multicast.cursize))
-			{
+	if (sv.mvdrecording) {
+		if (mvd_only) {
+			mvdhidden_block_header_t header;
+			header.length = sv.multicast.cursize - 2;
+			// header.type_id = ...; < up to the mod to fill this part in
+
+			// write to dem_multiple(0), which will be skipped by all major clients (ezQuake, FTE, fod)
+			if (MVDWrite_HiddenBlockBegin(sv.multicast.cursize + sizeof(header.length))) {
+				MVD_SZ_Write(&header.length, sizeof(header.length));
 				MVD_SZ_Write(sv.multicast.data, sv.multicast.cursize);
 			}
 		}
-		else
+		else if (reliable) {
+			if (MVDWrite_Begin(dem_all, 0, sv.multicast.cursize)) {
+				MVD_SZ_Write(sv.multicast.data, sv.multicast.cursize);
+			}
+		}
+		else {
 			SZ_Write(&demo.datagram, sv.multicast.data, sv.multicast.cursize);
+		}
 	}
-
 
 	SZ_Clear (&sv.multicast);
 }
@@ -604,7 +620,7 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 
 	if ( sound_num == MAX_SOUNDS || !sv.sound_precache[sound_num] )
 	{
-		Con_Printf ("SV_StartSound: %s not precacheed\n", sample);
+		Con_Printf ("SV_StartSound: %s not precached\n", sample);
 		return;
 	}
 
@@ -745,6 +761,7 @@ void SV_WriteClientdataToMessage (client_t *client, sizebuf_t *msg)
 
 		MSG_WriteByte (msg, svc_setangle);
 
+#ifdef MVD_PEXT1_HIGHLAGTELEPORT
 		if (client->mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT) {
 			if (fofs_teleported) {
 				client->lastteleport_teleport = ((eval_t *)((byte *)&(client->edict)->v + fofs_teleported))->_int;
@@ -765,6 +782,7 @@ void SV_WriteClientdataToMessage (client_t *client, sizebuf_t *msg)
 				MSG_WriteByte(msg, 0); // we don't know, so no changes made...
 			}
 		}
+#endif
 
 		for (i=0 ; i < 3 ; i++)
 			MSG_WriteAngle (msg, ent->v.angles[i] );
@@ -889,11 +907,7 @@ void SV_SendClientDatagram (client_t *client, int client_num)
 	sizebuf_t	msg;
 	//	packet_t	*pack;
 
-	msg.data = buf;
-	msg.maxsize = sizeof(buf);
-	msg.cursize = 0;
-	msg.allowoverflow = true;
-	msg.overflowed = false;
+	SZ_InitEx(&msg, buf, sizeof(buf), true);
 
 	// for faster downloading skip half the frames
 	/*if (client->download && client->netchan.outgoing_sequence & 1)
@@ -1134,14 +1148,16 @@ void SV_SendClientMessages (void)
 		}
 
 #ifdef USE_PR2
-		if(c->isBot)
-		{
-			SZ_Clear (&c->netchan.message);
-			SZ_Clear (&c->datagram);
+		if (c->isBot) {
+			// Write damage to bot clients too (for mvd playback)
+			SV_BotWriteDamage(c, i);
+
+			SZ_Clear(&c->netchan.message);
+			SZ_Clear(&c->datagram);
 			c->num_backbuf = 0;
 
 			// Need to tell mod what the bot would have seen
-			SV_SetVisibleEntitiesForBot (c);
+			SV_SetVisibleEntitiesForBot(c);
 			continue;
 		}
 #endif
@@ -1174,6 +1190,30 @@ void SV_SendClientMessages (void)
 		else {
 			Netchan_Transmit (&c->netchan, c->datagram.cursize, c->datagram.data);	// just update reliable
 			c->datagram.cursize = 0;
+		}
+	}
+}
+
+static void SV_BotWriteDamage(client_t* c, int i)
+{
+	edict_t* ent = c->edict;
+
+	if (c->edict->v.dmg_take || c->edict->v.dmg_save) {
+		if (ent->v.dmg_take || ent->v.dmg_save) {
+			int length = 3 + 3 * msg_coordsize;
+
+			if (MVDWrite_Begin(dem_single, i, length)) {
+				edict_t* other = PROG_TO_EDICT(ent->v.dmg_inflictor);
+
+				MVD_MSG_WriteByte(svc_damage);
+				MVD_MSG_WriteByte(ent->v.dmg_save);
+				MVD_MSG_WriteByte(ent->v.dmg_take);
+				for (i = 0; i < 3; i++)
+					MVD_MSG_WriteCoord(other->v.origin[i] + 0.5 * (other->v.mins[i] + other->v.maxs[i]));
+			}
+
+			ent->v.dmg_take = 0;
+			ent->v.dmg_save = 0;
 		}
 	}
 }
@@ -1296,21 +1336,24 @@ void SV_SendDemoMessage(void)
 		cls |= 1 << i;
 	}
 
-	// if no players, use idle fps
-	if (cls)
+	// if no players or paused, use idle fps
+	if (cls && !sv.paused)
 		min_fps = max(4.0, (int)sv_demofps.value ? (int)sv_demofps.value : 20.0);
 	else
 		min_fps = bound(4.0, (int)sv_demoIdlefps.value, 30);
 
-	if (sv.time - demo.time < 1.0/min_fps)
+	if (curtime - demo.curtime < 1.0 / min_fps) {
 		return;
+	}
+
+	SZ_InitEx(&msg, msg_buf, sizeof(msg_buf), true);
 
 	if ((int)sv_demoPings.value)
 	{
-		if (sv.time - demo.pingtime > sv_demoPings.value)
+		if (curtime - demo.pingtime > sv_demoPings.value)
 		{
 			SV_MVDPings();
-			demo.pingtime = sv.time;
+			demo.pingtime = curtime;
 		}
 	}
 
@@ -1319,7 +1362,6 @@ void SV_SendDemoMessage(void)
 	// send over all the objects that are in the PVS
 	// this will include clients, a packetentities, and
 	// possibly a nails update
-	SZ_InitEx(&msg, msg_buf, sizeof(msg_buf), true);
 
 	if (!demo.recorder.delta_sequence)
 		demo.recorder.delta_sequence = -1;
@@ -1364,11 +1406,14 @@ void SV_SendDemoMessage(void)
 
 	demo.recorder.delta_sequence = demo.recorder.netchan.incoming_sequence&255;
 	demo.recorder.netchan.incoming_sequence++;
-	demo.frames[demo.parsecount&UPDATE_MASK].time = demo.time = sv.time;
+	demo.frames[demo.parsecount & UPDATE_MASK].time = sv.time;
+	demo.frames[demo.parsecount & UPDATE_MASK].paused = sv.paused;
+	demo.frames[demo.parsecount & UPDATE_MASK].pause_duration = (int)bound(0, (curtime - demo.curtime) * 1000.0f, 255);
+	demo.curtime = curtime;
+	demo.time = sv.time;
 
-//	if (demo.parsecount - demo.lastwritten > 60) // that's a backup of 3sec in 20fps, should be enough
-	if (demo.parsecount - demo.lastwritten > 5)  // lets not wait so much time
-	{
+	// let's not wait so much time (was 60)
+	if (demo.parsecount - demo.lastwritten > 5) {
 		SV_MVDWritePackets(1);
 	}
 
@@ -1410,3 +1455,4 @@ void SV_SendMessagesToAll (void)
 	SV_SendClientMessages ();
 }
 
+#endif // !CLIENTONLY

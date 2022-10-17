@@ -37,13 +37,14 @@ void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel);
 void OnChangeColorForcing(cvar_t *var, char *string, qbool *cancel);
 void OnChangeSkinAndColorForcing(cvar_t *var, char *string, qbool *cancel);
 
-cvar_t	cl_parseSay = {"cl_parseSay", "1"};
-cvar_t	cl_parseFunChars = {"cl_parseFunChars", "1"};
-cvar_t	cl_nofake = {"cl_nofake", "2"};
-cvar_t	tp_loadlocs = {"tp_loadlocs", "1"};
-cvar_t  tp_pointpriorities = {"tp_pointpriorities", "0"}; // FIXME: buggy
-cvar_t  tp_tooktimeout = {"tp_tooktimeout", "15"};
-cvar_t  tp_pointtimeout = {"tp_pointtimeout", "15"};
+cvar_t cl_parseSay = {"cl_parseSay", "1"};
+cvar_t cl_parseFunChars = {"cl_parseFunChars", "1"};
+cvar_t cl_nofake = {"cl_nofake", "2"};
+cvar_t tp_loadlocs = {"tp_loadlocs", "1"};
+cvar_t tp_pointpriorities = {"tp_pointpriorities", "0"}; // FIXME: buggy
+cvar_t tp_tooktimeout = {"tp_tooktimeout", "15"};
+cvar_t tp_pointtimeout = {"tp_pointtimeout", "15"};
+static cvar_t tp_poweruptextstyle = { "tp_poweruptextstyle", "0" };
 
 cvar_t  cl_teamtopcolor = {"teamtopcolor", "-1", 0, OnChangeColorForcing};
 cvar_t  cl_teambottomcolor = {"teambottomcolor", "-1", 0, OnChangeColorForcing};
@@ -229,10 +230,9 @@ char *Macro_WeaponAndAmmo (void)
 char *Macro_WeaponNum (void)
 {
 	extern cvar_t cl_weaponpreselect;
-	int IN_BestWeapon (void);
 	int best;
 
-	if (cl_weaponpreselect.integer && (best = IN_BestWeapon())) {
+	if (cl_weaponpreselect.integer && (best = IN_BestWeapon(true))) {
 		char buf[4];
 		snprintf(buf, sizeof(buf), "%d", best);
 		strlcpy(macro_buf, buf, sizeof(macro_buf));
@@ -372,6 +372,14 @@ char *Macro_Colored_Short_Powerups_f (void) // same as above, but displays "qrp"
 	return macro_buf;
 }
 
+char* Macro_Teamplay_Powerups_f(void)
+{
+	if (tp_poweruptextstyle.integer) {
+		return Macro_Colored_Short_Powerups_f();
+	}
+	return Macro_Colored_Powerups_f();
+}
+
 char *Macro_ArmorType (void)
 {
 	if (cl.stats[STAT_ITEMS] & IT_ARMOR1)
@@ -485,7 +493,18 @@ char *Macro_Date (void)
 	return macro_buf;
 }
 
+char* Macro_TimeStamp(void)
+{
+	time_t t;
+	struct tm* ptm;
 
+	time(&t);
+	if (!(ptm = localtime(&t)))
+		return "_baddate_";
+
+	strftime(macro_buf, sizeof(macro_buf) - 1, "%Y%m%d-%H%M", ptm);
+	return macro_buf;
+}
 
 // returns the last item picked up
 char *Macro_Took (void)
@@ -978,7 +997,7 @@ void TP_PrintHiddenMessage(char *buf, int nodisplay)
 	while ((c = *s++) && (c != '\x7f')) {
 		if (c == '\xff') {
 			if ((hide = !hide)) {
-				*d++ = (*s == 'z') ? 'x' : 139;
+				*d++ = (*s == 'z') ? 'x' : (char)139;
 				s++;
 				memmove(s - 2, s, strlen(s) + 1);
 				s -= 2;
@@ -1158,6 +1177,7 @@ void TP_AddMacros(void)
 	Cmd_AddMacro(macro_qt, Macro_Quote_f);
 	Cmd_AddMacro(macro_latency, Macro_Latency);
 	Cmd_AddMacro(macro_ping, Macro_Latency);
+	Cmd_AddMacro(macro_timestamp, Macro_TimeStamp);
 	Cmd_AddMacro(macro_time, Macro_Time);
 	Cmd_AddMacro(macro_date, Macro_Date);
 
@@ -1167,6 +1187,7 @@ void TP_AddMacros(void)
 	Cmd_AddMacroEx(macro_colored_armor, Macro_Colored_Armor_f, teamplay);
 	Cmd_AddMacroEx(macro_colored_powerups, Macro_Colored_Powerups_f, teamplay);
 	Cmd_AddMacroEx(macro_colored_short_powerups, Macro_Colored_Short_Powerups_f, teamplay);
+	Cmd_AddMacroEx(macro_tp_powerups, Macro_Teamplay_Powerups_f, teamplay);
 
 	Cmd_AddMacroEx(macro_shells, Macro_Shells, teamplay);
 	Cmd_AddMacroEx(macro_nails, Macro_Nails, teamplay);
@@ -1717,17 +1738,18 @@ char *TP_SkinForcingTeam(void)
 {
 	int tracknum;
 
+	// FIXME: teams with names 0 & 1 will clash with this - teamlock & the team name should be diff cvars
 	if (!cl.spectator)
 	{
 		// Normal player.
 		return cl.players[cl.playernum].team;
 	}
-	else if (cl_teamlock.integer == 1) {
+	else if (cl_teamlock.string[0] == '1' && cl_teamlock.string[1] == '\0') {
 		extern const char* HUD_FirstTeam(void);
 		int i;
 
 		if (cls.mvdplayback && HUD_FirstTeam()[0]) {
-			return (char*) HUD_FirstTeam();
+			return (char*)HUD_FirstTeam();
 		}
 
 		for (i = 0; i < MAX_CLIENTS; i++) {
@@ -1736,7 +1758,8 @@ char *TP_SkinForcingTeam(void)
 			}
 		}
 	}
-	else if (cl_teamlock.string[0] && strcmp(cl_teamlock.string, "0")) {
+	else if (!(cl_teamlock.string[0] == '0' && cl_teamlock.string[1] == '\0')) {
+		// anything that isn't "0" to disable
 		return cl_teamlock.string;
 	}
 	else if ((tracknum = Cam_TrackNum()) != -1)
@@ -2137,88 +2160,126 @@ void DumpFlagCommands(FILE *f)
 	DumpFlagCommand(f, "tp_point    ", pointflags, default_pointflags);
 }
 
-static void FlagCommand (unsigned int *flags, unsigned int defaultflags)
+static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 {
-	int i, j, c;
+	int i, j, c, offset = 0;
 	unsigned int flag;
-	char *p, str[255] = {0};
+	char* p, str[255] = { 0 };
 	qbool removeflag = false;
 
-	c = Cmd_Argc ();
-	if (c == 1)	{
+	c = Cmd_Argc();
+	if (c == 1) {
 		qbool notfirst = false;
 		if (!*flags)
-			strlcpy (str, "none", sizeof (str));
-		for (i = 0 ; i < NUM_ITEMFLAGS ; i++)
-			if (*flags & (1 << i)) {
-				if (notfirst)
-					Com_Printf(" ");
-					//strlcat (str, " ", sizeof (str) - strlen (str));
+			strlcpy(str, "none", sizeof(str));
 
-				notfirst = true;
-				Com_Printf("%s", pknames[i]);
-				//strlcat (str, pknames[i], sizeof (str) - strlen (str));
+		if (tp_pointpriorities.integer) {
+			int p;
+			for (p = 0; p < NUM_ITEMFLAGS; ++p) {
+				for (i = 0; i < NUM_ITEMFLAGS; i++) {
+					if (pointpriorities[i] == p && (*flags & (1 << i))) {
+						if (notfirst) {
+							Com_Printf(" ");
+						}
+
+						notfirst = true;
+						Com_Printf("%s", pknames[i]);
+					}
+				}
 			}
-		Com_Printf ("\n");
+		}
+		else {
+			for (i = 0; i < NUM_ITEMFLAGS; i++) {
+				if (*flags & (1 << i)) {
+					if (notfirst) {
+						Com_Printf(" ");
+					}
+
+					notfirst = true;
+					Com_Printf("%s", pknames[i]);
+				}
+			}
+		}
+		Com_Printf("\n");
 		return;
 	}
 
 	if (c == 2 && !strcasecmp(Cmd_Argv(1), "none")) {
 		*flags = 0;
+		memset(pointpriorities, 0, sizeof(pointpriorities));
 		return;
 	}
 
-	if (*Cmd_Argv(1) != '+' && *Cmd_Argv(1) != '-')
+	if (*Cmd_Argv(1) != '+' && *Cmd_Argv(1) != '-') {
 		*flags = 0;
+		memset(pointpriorities, 0, sizeof(pointpriorities));
+	}
+	else if (*Cmd_Argv(1) == '+') {
+		for (i = 0; i < NUM_ITEMFLAGS; ++i) {
+			if (*flags & (1 << i)) {
+				++offset;
+			}
+		}
+	}
 
 	for (i = 1; i < c; i++) {
-		p = Cmd_Argv (i);
+		p = Cmd_Argv(i);
 		if (*p == '+') {
 			removeflag = false;
 			p++;
-		} else if (*p == '-') {
+		}
+		else if (*p == '-') {
 			removeflag = true;
 			p++;
 		}
 
 		flag = 0;
-		for (j=0 ; j<NUM_ITEMFLAGS ; j++) {
-			if (!strcasecmp (p, pknames[j])) {
-				flag = 1<<j;
+		for (j = 0; j < NUM_ITEMFLAGS; j++) {
+			if (!strcasecmp(p, pknames[j])) {
+				flag = 1 << j;
 				break;
 			}
 		}
 
 		if (!flag) {
-			if (!strcasecmp (p, "armor"))
+			if (!strcasecmp(p, "armor"))
 				flag = it_armor;
-			else if (!strcasecmp (p, "weapons"))
+			else if (!strcasecmp(p, "weapons"))
 				flag = it_weapons;
-			else if (!strcasecmp (p, "powerups"))
+			else if (!strcasecmp(p, "powerups"))
 				flag = it_powerups;
-			else if (!strcasecmp (p, "ammo"))
+			else if (!strcasecmp(p, "ammo"))
 				flag = it_ammo;
-			else if (!strcasecmp (p, "players"))
+			else if (!strcasecmp(p, "players"))
 				flag = it_players;
-			else if (!strcasecmp (p, "default"))
+			else if (!strcasecmp(p, "default"))
 				flag = defaultflags;
-			else if (!strcasecmp (p, "runes"))
+			else if (!strcasecmp(p, "runes"))
 				flag = it_runes;
-			else if (!strcasecmp (p, "all"))
+			else if (!strcasecmp(p, "all"))
 				flag = UINT_MAX; //(1 << NUM_ITEMFLAGS); //-1;
 		}
 
+		if (flags != &pointflags) {
+			flag &= ~(it_sentry | it_disp | it_players);
+		}
 
-		if (flags != &pointflags)
-			flag &= ~(it_sentry|it_disp|it_players);
-
-		if (removeflag)
+		if (removeflag) {
 			*flags &= ~flag;
-		else {
+
+			for (j = 1; j <= NUM_ITEMFLAGS; j++) {
+				if (flag & (1 << (j - 1))) {
+					pointpriorities[j - 1] = 0;
+				}
+			}
+		}
+		else if (flag) {
 			*flags |= flag;
-			for (j = 1; j < NUM_ITEMFLAGS; j++) {
-				if (flag & (1 << (j-1)))
-					pointpriorities[j] = i;
+
+			for (j = 1; j <= NUM_ITEMFLAGS; j++) {
+				if (flag & (1 << (j - 1))) {
+					pointpriorities[j - 1] = i + offset;
+				}
 			}
 		}
 	}
@@ -3145,11 +3206,12 @@ void TP_Init (void)
 	Cvar_Register (&cl_teamlock);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_COMMUNICATION);
-	Cvar_Register (&tp_loadlocs);
-	Cvar_Register (&tp_pointpriorities);
-	Cvar_Register (&tp_weapon_order);
-	Cvar_Register (&tp_tooktimeout);
-	Cvar_Register (&tp_pointtimeout);
+	Cvar_Register(&tp_loadlocs);
+	Cvar_Register(&tp_pointpriorities);
+	Cvar_Register(&tp_weapon_order);
+	Cvar_Register(&tp_tooktimeout);
+	Cvar_Register(&tp_pointtimeout);
+	Cvar_Register(&tp_poweruptextstyle);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_ITEM_NAMES);
 	Cvar_Register (&tp_name_separator);

@@ -98,8 +98,11 @@ void Sys_Quit (void);
 double Sys_DoubleTime (void);
 
 
-// Perform Key_Event () callbacks until the input que is empty
+// Perform Key_Event() callbacks until the input que is empty
 void Sys_SendKeyEvents (void);
+// Some events (mouse wheel in particular) we won't get a secondary 'up/stop' event, so
+//   we flag & execute them here, after any commands have been sent to the server
+void Sys_SendDeferredKeyEvents(void);
 
 void Sys_Init (void);
 
@@ -113,6 +116,7 @@ void Sys_InitIPC(void);
 void Sys_ReadIPC(void);
 void Sys_CloseIPC(void);
 unsigned int Sys_SendIPC(const char *buf);
+void Sys_RegisterQWURLProtocol_f(void);
 
 // Semaphore functions
 #ifdef _WIN32
@@ -152,19 +156,16 @@ void Sys_TimerResolution_Clear(timerresolution_session_t * s);
 void Sys_CancelDeadKey (void);
 
 void Sys_CheckQWProtocolHandler(void);
-void Sys_RegisterQWURLProtocol_f(void);
 
 #else // NOT _WIN32 below
 
 // not implemented on other platforms
 #define Sys_CheckQWProtocolHandler(x)
-#define Sys_RegisterQWURLProtocol_f(x)
 #define Sys_TimerResolution_InitSession(x)
 #define Sys_TimerResolution_RequestMinimum(x)
 #define Sys_TimerResolution_Clear(x)
 
 #endif
-
 
 // MVDSV compatibility
 

@@ -95,6 +95,9 @@ typedef struct entity_s {
 	int       entity_id;
 	int       corona_id;
 	double    particle_time;
+
+	// outlining
+	float     outlineScale;
 } entity_t;
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
@@ -121,12 +124,19 @@ typedef struct {
 
 	vec3_t		vieworg;
 	vec3_t		viewangles;
+	int         viewheight_test;
 
 	float		fov_x, fov_y;
 	
 	int			ambientlight;
 } refdef_t;
 
+typedef enum {
+	fogcalc_none,
+	fogcalc_linear,
+	fogcalc_exp,
+	fogcalc_exp2
+} fogcalc_t;
 
 // eye position, enitity list, etc - filled in before calling R_RenderView (TODO: port from ZQuake)
 typedef struct {
@@ -138,10 +148,31 @@ typedef struct {
 //	int				viewplayernum;  // don't draw own glow when gl_flashblend 1
 
 //	lightstyle_t    *lightstyles;
-	qbool           fog_enabled;    // fog is enabled
+	qbool           fog_enabled;    // fog is enabled (glsl programs etc should have fog enabled)
+	qbool           fog_render;     // fog should be rendered
+	fogcalc_t       fog_calculation;
+	float           fog_linear_start;
+	float           fog_linear_end;
+	float           fog_density;    // 0+
+	float           fog_color[4];
+	float           fog_skycolor[4];// 
+	float           fog_sky;        // 0..1 - how much sky is affected by fog
 
 	float           cos_time;
 	float           sin_time;
+
+	float           wateralpha;
+	qbool           drawFlatFloors;
+	qbool           drawFlatWalls;
+	qbool           solidTexTurb;
+	qbool           drawCaustics;
+	qbool           drawWorldOutlines;
+	float           distanceScale;
+
+	vec3_t          outline_vpn;
+	float           outlineBase;
+
+	float           powerup_scroll_params[4];
 } refdef2_t;
 
 
@@ -161,8 +192,8 @@ void R_InitTextures(void);
 void R_PostProcessScene(void);
 void R_RenderView(void);		// must set r_refdef first
 
+void R_Init_EFrags (void);
 void R_AddEfrags(entity_t *ent);
-void R_RemoveEfrags(entity_t *ent);
 void R_NewMap(qbool vid_restart);
 void R_NewMapPreLoad(void);
 

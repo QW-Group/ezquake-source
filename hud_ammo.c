@@ -104,8 +104,8 @@ int HUD_AmmoLowByWeapon(int weapon)
 	}
 }
 
-void SCR_HUD_DrawAmmo(
-	hud_t *hud, int num, float scale, int style, int digits, char *s_align, qbool proportional
+static void SCR_HUD_DrawAmmo(
+	hud_t *hud, int num, float scale, int style, int digits, char *s_align, qbool proportional, qbool always
 )
 {
 	extern mpic_t sb_ib_ammo[4];
@@ -114,12 +114,9 @@ void SCR_HUD_DrawAmmo(
 
 	num_old = num;
 	if (num < 1 || num > 4) {	// draw 'current' ammo, which one is it?
-
 		if (ShowPreselectedWeap()) {
 			// using weapon pre-selection so show info for current best pre-selected weapon ammo
-			if (!(num = State_AmmoNumForWeapon(IN_BestWeapon()))) {
-				return;
-			}
+			num = State_AmmoNumForWeapon(IN_BestWeapon(true));
 		}
 		else {
 			// not using weapon pre-selection or player is dead so show current selected ammo
@@ -139,13 +136,29 @@ void SCR_HUD_DrawAmmo(
 				num = 4;
 			}
 			else {
-				return;
+				num = 0;
 			}
 		}
 	}
 
+	// 'New HUD' used to just return - instead draw blank space so other objects can be placed
+	// If user has specified 'show_always', carry on and show current value of STAT_AMMO
+	if (!num && !always) {
+		if (style < 2) {
+			// use this to calculate sizes, but draw_content is false
+			SCR_HUD_DrawNum2(hud, 0, false, scale, style, digits, s_align, proportional, false);
+		}
+		else {
+			int x_, y;
+
+			// calculate sizes but draw nothing
+			HUD_PrepareDraw(hud, 42 * scale, 11 * scale, &x_, &y);
+		}
+		return;
+	}
+
 	low = HUD_AmmoLowByWeapon(num * 2);
-	if (num_old == 0 && (!ShowPreselectedWeap() || cl.standby)) {
+	if (num < 1 || num > 4 || (num_old == 0 && (!ShowPreselectedWeap() || cl.standby))) {
 		// this check is here to display a feature from KTPRO/KTX where you can see received damage in prewar
 		// also we make sure this applies only to 'ammo' element
 		// weapon preselection must always use HUD_Stats()
@@ -200,7 +213,7 @@ void SCR_HUD_DrawAmmo(
 
 void SCR_HUD_DrawAmmoCurrent(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *digits, *align, *proportional;
+	static cvar_t *scale = NULL, *style, *digits, *align, *proportional, *always;
 	if (scale == NULL)  // first time called
 	{
 		scale = HUD_FindVar(hud, "scale");
@@ -208,8 +221,11 @@ void SCR_HUD_DrawAmmoCurrent(hud_t *hud)
 		digits = HUD_FindVar(hud, "digits");
 		align = HUD_FindVar(hud, "align");
 		proportional = HUD_FindVar(hud, "proportional");
+		always = HUD_FindVar(hud, "show_always");
 	}
-	SCR_HUD_DrawAmmo(hud, 0, scale->value, style->value, digits->value, align->string, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawAmmo(hud, 0, scale->value, style->value, digits->value, align->string, proportional->integer, always->integer);
+	}
 }
 
 void SCR_HUD_DrawAmmo1(hud_t *hud)
@@ -223,7 +239,9 @@ void SCR_HUD_DrawAmmo1(hud_t *hud)
 		align = HUD_FindVar(hud, "align");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawAmmo(hud, 1, scale->value, style->value, digits->value, align->string, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawAmmo(hud, 1, scale->value, style->value, digits->value, align->string, proportional->integer, true);
+	}
 }
 
 void SCR_HUD_DrawAmmo2(hud_t *hud)
@@ -237,7 +255,9 @@ void SCR_HUD_DrawAmmo2(hud_t *hud)
 		align = HUD_FindVar(hud, "align");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawAmmo(hud, 2, scale->value, style->value, digits->value, align->string, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawAmmo(hud, 2, scale->value, style->value, digits->value, align->string, proportional->integer, true);
+	}
 }
 
 void SCR_HUD_DrawAmmo3(hud_t *hud)
@@ -251,7 +271,9 @@ void SCR_HUD_DrawAmmo3(hud_t *hud)
 		align = HUD_FindVar(hud, "align");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawAmmo(hud, 3, scale->value, style->value, digits->value, align->string, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawAmmo(hud, 3, scale->value, style->value, digits->value, align->string, proportional->integer, true);
+	}
 }
 
 void SCR_HUD_DrawAmmo4(hud_t *hud)
@@ -265,7 +287,9 @@ void SCR_HUD_DrawAmmo4(hud_t *hud)
 		align = HUD_FindVar(hud, "align");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawAmmo(hud, 4, scale->value, style->value, digits->value, align->string, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawAmmo(hud, 4, scale->value, style->value, digits->value, align->string, proportional->integer, true);
+	}
 }
 
 // icons - active ammo, armor, face etc..
@@ -278,19 +302,21 @@ void SCR_HUD_DrawAmmoIcon(hud_t *hud, int num, float scale, int style)
 
 	width = height = (style ? 8 : 24) * scale;
 
-	if (!HUD_PrepareDraw(hud, width, height, &x, &y))
-		return;
+	if (cl.spectator == cl.autocam) {
+		if (!HUD_PrepareDraw(hud, width, height, &x, &y) || num == 0)
+			return;
 
-	if (style) {
-		switch (num) {
-			case 1: Draw_SAlt_String(x, y, "s", scale, false); break;
-			case 2: Draw_SAlt_String(x, y, "n", scale, false); break;
-			case 3: Draw_SAlt_String(x, y, "r", scale, false); break;
-			case 4: Draw_SAlt_String(x, y, "c", scale, false); break;
+		if (style) {
+			switch (num) {
+				case 1: Draw_SAlt_String(x, y, "s", scale, false); break;
+				case 2: Draw_SAlt_String(x, y, "n", scale, false); break;
+				case 3: Draw_SAlt_String(x, y, "r", scale, false); break;
+				case 4: Draw_SAlt_String(x, y, "c", scale, false); break;
+			}
 		}
-	}
-	else {
-		Draw_SPic(x, y, sb_ammo[num - 1], scale);
+		else {
+			Draw_SPic(x, y, sb_ammo[num - 1], scale);
+		}
 	}
 }
 
@@ -307,8 +333,7 @@ void SCR_HUD_DrawAmmoIconCurrent(hud_t *hud)
 
 	if (ShowPreselectedWeap()) {
 		// using weapon pre-selection so show info for current best pre-selected weapon ammo
-		if (!(num = State_AmmoNumForWeapon(IN_BestWeapon())))
-			return;
+		num = State_AmmoNumForWeapon(IN_BestWeapon(true));
 	}
 	else {
 		// not using weapon pre-selection or player is dead so show current selected ammo
@@ -323,7 +348,7 @@ void SCR_HUD_DrawAmmoIconCurrent(hud_t *hud)
 		else if (TP_TeamFortressEngineerSpanner())
 			num = 4;
 		else
-			return;
+			num = 0;
 	}
 
 	SCR_HUD_DrawAmmoIcon(hud, num, scale->value, style->value);
@@ -337,7 +362,9 @@ void SCR_HUD_DrawAmmoIcon1(hud_t *hud)
 		scale = HUD_FindVar(hud, "scale");
 		style = HUD_FindVar(hud, "style");
 	}
-	SCR_HUD_DrawAmmoIcon(hud, 1, scale->value, style->value);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawAmmoIcon(hud, 1, scale->value, style->value);
+	}
 }
 
 void SCR_HUD_DrawAmmoIcon2(hud_t *hud)
@@ -348,7 +375,9 @@ void SCR_HUD_DrawAmmoIcon2(hud_t *hud)
 		scale = HUD_FindVar(hud, "scale");
 		style = HUD_FindVar(hud, "style");
 	}
-	SCR_HUD_DrawAmmoIcon(hud, 2, scale->value, style->value);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawAmmoIcon(hud, 2, scale->value, style->value);
+	}
 }
 
 void SCR_HUD_DrawAmmoIcon3(hud_t *hud)
@@ -359,7 +388,9 @@ void SCR_HUD_DrawAmmoIcon3(hud_t *hud)
 		scale = HUD_FindVar(hud, "scale");
 		style = HUD_FindVar(hud, "style");
 	}
-	SCR_HUD_DrawAmmoIcon(hud, 3, scale->value, style->value);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawAmmoIcon(hud, 3, scale->value, style->value);
+	}
 }
 
 void SCR_HUD_DrawAmmoIcon4(hud_t *hud)
@@ -370,21 +401,27 @@ void SCR_HUD_DrawAmmoIcon4(hud_t *hud)
 		scale = HUD_FindVar(hud, "scale");
 		style = HUD_FindVar(hud, "style");
 	}
-	SCR_HUD_DrawAmmoIcon(hud, 4, scale->value, style->value);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawAmmoIcon(hud, 4, scale->value, style->value);
+	}
 }
 
 void Ammo_HudInit(void)
 {
 	// ammo/s
-	HUD_Register("ammo", NULL, "Part of your inventory - ammo for active weapon.",
-				 HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoCurrent,
-				 "1", "health", "after", "center", "32", "0", "0", "0 0 0", NULL,
-				 "style", "0",
-				 "scale", "1",
-				 "align", "right",
-				 "digits", "3",
-				 "proportional", "0",
-				 NULL);
+	HUD_Register(
+		"ammo", NULL, "Part of your inventory - ammo for active weapon.",
+		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoCurrent,
+		"1", "health", "after", "center", "32", "0", "0", "0 0 0", NULL,
+		"style", "0",
+		"scale", "1",
+		"align", "right",
+		"digits", "3",
+		"proportional", "0",
+		"show_always", "0",
+		 NULL
+	);
+
 	HUD_Register("ammo1", NULL, "Part of your inventory - ammo - shells.",
 				 HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo1,
 				 "0", "ibar", "left", "top", "0", "0", "0", "0 0 0", NULL,
@@ -423,12 +460,16 @@ void Ammo_HudInit(void)
 				 NULL);
 
 	// ammo icon/s
-	HUD_Register("iammo", NULL, "Part of your inventory - ammo icon.",
-				 HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoIconCurrent,
-				 "1", "ammo", "before", "center", "0", "0", "0", "0 0 0", NULL,
-				 "style", "0",
-				 "scale", "1",
-				 NULL);
+	HUD_Register(
+		"iammo", NULL, "Part of your inventory - ammo icon.",
+		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoIconCurrent,
+		"1", "ammo", "before", "center", "0", "0", "0", "0 0 0", NULL,
+		"style", "0",
+		"scale", "1",
+		"show_always", "0",
+		NULL
+	);
+
 	HUD_Register("iammo1", NULL, "Part of your inventory - ammo icon.",
 				 HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmoIcon1,
 				 "0", "ibar", "left", "top", "0", "0", "0", "0 0 0", NULL,

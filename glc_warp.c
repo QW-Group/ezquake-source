@@ -172,7 +172,7 @@ void GLC_EmitCausticsPolys(void)
 		return;
 	}
 
-	R_TraceEnterRegion(__FUNCTION__, true);
+	R_TraceEnterRegion(__func__, true);
 	GLC_StateBeginCausticsPolys();
 
 	renderer.TextureUnitBind(0, underwatertexture);

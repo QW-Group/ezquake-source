@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_brushmodel.h"
 #include "r_renderer.h"
 #include "r_program.h"
+#include "r_lightmaps.h"
 
 // This is a chain of polys, only used in classic when multi-texturing not available
 glpoly_t *fullbright_polys[MAX_GLTEXTURES];
@@ -49,32 +50,62 @@ void GLC_ClearTextureChains(void)
 	memset(luma_polys, 0, sizeof(luma_polys));
 }
 
+void GLC_DrawChainOutline(msurface_t* surf, qbool texture_chains)
+{
+	msurface_t* prev;
+	msurface_t* s = surf;
+
+	while (s) {
+		int front = 0, back = s->polys->numverts - 1;
+
+		GLC_Begin(GL_LINE_LOOP);
+		while (front < back) {
+			GLC_Vertex3fv(s->polys->verts[front]);
+			front += 2;
+		}
+		while (back > 0) {
+			GLC_Vertex3fv(s->polys->verts[back]);
+			back -= 2;
+		}
+		GLC_End();
+
+		prev = s;
+		if (texture_chains) {
+			s = s->texturechain;
+			prev->texturechain = NULL;
+		}
+		else {
+			s = s->drawflatchain;
+			prev->drawflatchain = NULL;
+		}
+	}
+}
+
 void GLC_DrawMapOutline(model_t *model)
 {
-	msurface_t *s;
 	int i;
+	unsigned int lightmap_count;
 
+	if (!(model->isworldmodel && r_refdef2.drawWorldOutlines)) {
+		return;
+	}
+
+	lightmap_count = R_LightmapCount();
 	GLC_StateBeginDrawMapOutline();
-
 	for (i = 0; i < model->numtextures; i++) {
+		texture_t* t;
+
 		if (!model->textures[i] || !model->textures[i]->texturechain) {
 			continue;
 		}
 
-		for (s = model->textures[i]->texturechain; s; s = s->texturechain) {
-			int front = 0, back = s->polys->numverts - 1;
-
-			GLC_Begin(GL_LINE_LOOP);
-			while (front < back) {
-				GLC_Vertex3fv(s->polys->verts[front]);
-				front += 2;
-			}
-			while (back > 0) {
-				GLC_Vertex3fv(s->polys->verts[back]);
-				back -= 2;
-			}
-			GLC_End();
-		}
+		t = R_TextureAnimation(NULL, model->textures[i]);
+		GLC_DrawChainOutline(t->texturechain, true);
+	}
+	GLC_DrawChainOutline(model->drawflat_chain, false);
+	for (i = 0; i < lightmap_count; ++i) {
+		GLC_DrawChainOutline(R_DrawflatLightmapChain(i), false);
+		R_ClearDrawflatLightmapChain(i);
 	}
 }
 

@@ -92,7 +92,7 @@ void IN_MouseMove (usercmd_t *cmd)
 		// add mouse X/Y movement to cmd
 		if ((in_strafe.state & 1) || (lookstrafe.value && mlook_active))
 			cmd->sidemove += m_side.value * mouse_x;
-		else
+		else if (!cl.paused || cls.demoplayback || cl.spectator)
 			cl.viewangles[YAW] -= m_yaw.value * mouse_x;
 
 		if (mlook_active)
@@ -100,7 +100,9 @@ void IN_MouseMove (usercmd_t *cmd)
 
 		if (mlook_active && !(in_strafe.state & 1))
 		{
-			cl.viewangles[PITCH] += m_pitch.value * mouse_y;
+			if (!cl.paused || cls.demoplayback || cl.spectator) {
+				cl.viewangles[PITCH] += m_pitch.value * mouse_y;
+			}
 			if (cl.viewangles[PITCH] > cl.maxpitch)
 				cl.viewangles[PITCH] = cl.maxpitch;
 			if (cl.viewangles[PITCH] < cl.minpitch)

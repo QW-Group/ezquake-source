@@ -49,7 +49,7 @@ static GLint glTextureMagnificationOptions[] = {
 	GL_NEAREST, GL_LINEAR
 };
 static GLenum glTextureTargetForType[] = {
-	GL_TEXTURE_2D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP
+	GL_TEXTURE_2D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, GL_TEXTURE_2D_MULTISAMPLE
 };
 
 #ifdef C_ASSERT
@@ -212,15 +212,17 @@ void GL_TextureSetAnisotropy(texture_ref texture, int anisotropy)
 void GL_TextureDelete(texture_ref texture)
 {
 	gltexture_t* slot = &gltextures[texture.index];
+	GLuint texture_num = slot->texnum;
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	Sys_Printf("\nopengl-texture,free,%u,%d,%d,%d,%s\n", texture.index, slot->texture_width, slot->texture_height, slot->texture_width * slot->texture_height * max(slot->depth,1) * slot->bpp, slot->identifier);
 #endif
 
-	glDeleteTextures(1, &slot->texnum);
+	GL_BuiltinProcedure(glDeleteTextures, "n=%d, textures=%p", 1, &texture_num);
 
 	// Might have been bound when deleted, update state
-	GL_InvalidateTextureReferences(gltextures[texture.index].texnum);
+	GL_InvalidateTextureReferences(texture_num);
+	slot->texnum = 0;
 }
 
 void GL_AllocateStorage(gltexture_t* texture)
@@ -232,41 +234,33 @@ void GL_AllocateStorage(gltexture_t* texture)
 }
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
-qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot, int minimum_depth, int* depth)
+qbool GLM_TextureAllocateArrayStorage(gltexture_t* slot)
 {
 	GLenum error;
 
-	while ((error = glGetError()) != GL_NO_ERROR) {
-		Com_Printf("Prior-texture-array-creation: OpenGL error %u\n", error);
-	}
-	while (*depth >= minimum_depth) {
-		GL_Paranoid_Printf("Allocating %d x %d x %d, %d miplevels\n", slot->texture_width, slot->texture_height, *depth, slot->miplevels);
-		GL_TexStorage3D(GL_TEXTURE0, slot->reference, slot->miplevels, GL_StorageFormat(TEX_ALPHA), slot->texture_width, slot->texture_height, *depth, false);
+	R_TraceAPI("Allocating %d x %d x %d, %d miplevels\n", slot->texture_width, slot->texture_height, slot->depth, slot->miplevels);
+	GL_ProcessErrors("GLM_TextureAllocateArrayStorage flush");
+	GL_ConsumeErrors();
+	error = GL_TexStorage3D(GL_TEXTURE0, slot->reference, slot->miplevels, GL_StorageFormat(TEX_ALPHA), slot->texture_width, slot->texture_height, slot->depth, false);
 
-		error = glGetError();
-		if (error == GL_OUT_OF_MEMORY && *depth > 2) {
-			*depth /= 2;
-			GL_Paranoid_Printf("Array allocation failed (memory), reducing size...\n");
-			continue;
-		}
-		else if (error != GL_NO_ERROR) {
-#ifdef GL_PARANOIA
-			int array_width, array_height, array_depth;
-			array_width = R_TextureWidth(slot->reference);
-			array_height = R_TextureHeight(slot->reference);
-			array_depth = R_TextureDepth(slot->reference);
+	if (error != GL_NO_ERROR) {
+#ifdef WITH_RENDERING_TRACE
+		int array_width, array_height, array_depth;
 
-			GL_Paranoid_Printf("Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, slot->miplevels, slot->texture_width, slot->texture_height, *depth);
-			GL_Paranoid_Printf(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
+		array_width = R_TextureWidth(slot->reference);
+		array_height = R_TextureHeight(slot->reference);
+		array_depth = R_TextureDepth(slot->reference);
+
+		R_TraceAPI("!!ERROR Array allocation failed, error %X: [mip %d, %d x %d x %d]\n", error, slot->miplevels, slot->texture_width, slot->texture_height, slot->depth);
+		R_TraceAPI(" > Sizes reported: %d x %d x %d\n", array_width, array_height, array_depth);
 #endif
-			return false;
-		}
-		break;
+		return false;
 	}
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", slot->reference.index, slot->texture_width, slot->texture_height, slot->texture_width * slot->texture_height * slot->depth * (slot->texmode & TEX_ALPHA ? 4 : 3), slot->identifier);
 #endif
+
 	return true;
 }
 #endif // RENDERER_OPTION_MODERN_OPENGL

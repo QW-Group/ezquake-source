@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // sv_save.c
 
+#ifndef CLIENTONLY
 #ifdef SERVERONLY
 #include "qwsvdef.h"
 #else
@@ -35,14 +36,18 @@ extern cvar_t maxclients;
 #define	SAVEGAME_COMMENT_LENGTH	39
 #define	SAVEGAME_VERSION	6
 
+#ifdef SERVERONLY
 static void SV_SaveGameFileName(char* buffer, int buffer_size, char* name)
 {
-#ifdef SERVERONLY
-	snprintf (buffer, buffer_size, "%s/save/%s", fs_gamedir, name);
-#else
-	snprintf (buffer, buffer_size, "%s/save/%s", com_gamedir, name);
-#endif
+	snprintf(buffer, buffer_size, "%s/save/%s", fs_gamedir, name);
 }
+#else
+static void SV_SaveGameFileName(char* buffer, int buffer_size, char* name)
+{
+	FS_SaveGameDirectory(buffer, buffer_size);
+	strlcat(buffer, name, buffer_size);
+}
+#endif
 
 //Writes a SAVEGAME_COMMENT_LENGTH character comment
 void SV_SavegameComment (char *buffer) {
@@ -158,7 +163,8 @@ void SV_SaveGame_f(void)
 
 void SV_LoadGame_f(void)
 {
-	char name[MAX_OSPATH], mapname[MAX_QPATH], str[32 * 1024], *start;
+	char name[MAX_OSPATH], mapname[MAX_QPATH], str[32 * 1024];
+	const char* start;
 	FILE *f;
 	float time, tfloat, spawn_parms[NUM_SPAWN_PARMS];
 	edict_t *ent;
@@ -244,6 +250,7 @@ void SV_LoadGame_f(void)
 			fclose (f);
 			return;
 		}
+		str[sizeof(str) - 1] = '\0';
 		length = strlen(str) + 1;
 		sv.lightstyles[i] = (char *) Hunk_Alloc (length);
 		strlcpy (sv.lightstyles[i], str, length);
@@ -305,3 +312,4 @@ void SV_LoadGame_f(void)
 		svs.clients->spawn_parms[i] = spawn_parms[i];
 }
 
+#endif // !CLIENTONLY

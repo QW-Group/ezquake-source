@@ -454,10 +454,10 @@ int CDAudio_Init(void)
 {
 	int i;
 
-	if (!COM_CheckParm("-cdaudio"))
+	if (!COM_CheckParm(cmdline_param_client_cd_audio))
 		return -1;
 
-	if ((i = COM_CheckParm("-cddev")) != 0 && i < COM_Argc() - 1)
+	if ((i = COM_CheckParm(cmdline_param_client_cd_device)) != 0 && i < COM_Argc() - 1)
 		strlcpy (cd_dev, COM_Argv(i + 1), sizeof(cd_dev));
 
 	if ((cdfile = open(cd_dev, O_RDONLY)) == -1) {

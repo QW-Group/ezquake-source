@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+#if 0
 
 #include "quakedef.h"
 #include "gl_model.h"
@@ -308,107 +308,9 @@ static void BuildTris(void)
 	alltris += pheader->numtris;
 }
 
-void GLC_PrepareAliasModel_Immediate(model_t* m, aliashdr_t* hdr)
-{
-	int i, j;
-	int* cmds;
-	ez_trivertx_t* verts;
-	int total_vertices = 0;
-	int f1;
-
-	// Tonik: don't cache anything, because it seems just as fast
-	// (if not faster) to rebuild the tris instead of loading them from disk
-	BuildTris();		// trifans or lists
-
-	// save the data out
-	hdr->poseverts = numorder;
-
-	cmds = (int *)Hunk_Alloc(numcommands * 4);
-	hdr->commands = (byte *)cmds - (byte *)hdr;
-	memcpy(cmds, commands, numcommands * 4);
-
-	verts = (ez_trivertx_t *)Hunk_Alloc(hdr->numposes * hdr->poseverts * sizeof(ez_trivertx_t));
-	hdr->posedata = (byte *)verts - (byte *)hdr;
-	for (i = 0; i < hdr->numposes; i++) {
-		for (j = 0; j < numorder; j++) {
-			//TODO: corrupted files may cause a crash here, sanity checks?
-			trivertx_t* src = &poseverts[i][vertexorder[j]];
-
-			verts->v[0] = src->v[0] * hdr->scale[0] + hdr->scale_origin[0];
-			verts->v[1] = src->v[1] * hdr->scale[1] + hdr->scale_origin[1];
-			verts->v[2] = src->v[2] * hdr->scale[2] + hdr->scale_origin[2];
-			if (m->modhint == MOD_EYES) {
-				VectorScale(verts->v, 2, verts->v);
-				verts->v[2] -= 30;
-			}
-			verts->lightnormalindex = src->lightnormalindex;
-
-			++verts;
-		}
-	}
-
-	// Go back through and set directions
-	for (f1 = 0; f1 < hdr->numframes; ++f1) {
-		maliasframedesc_t* frame = &hdr->frames[f1];
-
-		if (frame->numposes > 1) {
-			// This frame has animated poses, so link them all together
-		}
-		else {
-			// Find next frame's pose
-			maliasframedesc_t* frame2 = R_AliasModelFindFrame(hdr, frame->groupname, frame->groupnumber + 1);
-			if (!frame2) {
-				frame2 = R_AliasModelFindFrame(hdr, frame->groupname, 1);
-			}
-
-			if (frame2) {
-				frame->nextpose = frame2->firstpose;
-			}
-		}
-	}
-
-	// Measure vertices required
-	{
-		int* order = (int *)((byte *)hdr + hdr->commands);
-		int count = 0;
-
-		m->min_tex[0] = m->min_tex[1] = 9999;
-		m->max_tex[0] = m->max_tex[1] = -9999;
-
-		while ((count = *order++)) {
-			float s, t;
-
-			if (count < 0) {
-				count = -count;
-			}
-
-			while (count--) {
-				s = ((float *)order)[0];
-				t = ((float *)order)[1];
-				m->min_tex[0] = min(m->min_tex[0], s);
-				m->min_tex[1] = min(m->min_tex[1], t);
-				m->max_tex[0] = max(m->max_tex[0], s);
-				m->max_tex[1] = max(m->max_tex[1], t);
-				order += 2;
-				++total_vertices;
-			}
-		}
-
-		m->vertsInVBO = total_vertices * hdr->numposes;
-		hdr->vertsPerPose = total_vertices;
-	}
-}
-
 void GLC_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 {
-	extern cvar_t gl_program_aliasmodels;
-
-	if (gl_program_aliasmodels.integer) {
-		GL_PrepareAliasModel(m, hdr);
-	}
-	else {
-		GLC_PrepareAliasModel_Immediate(m, hdr);
-	}
+	GL_PrepareAliasModel(m, hdr);
 }
 
-#endif // #ifdef RENDERER_OPTION_CLASSIC_OPENGL
+#endif // #if 0

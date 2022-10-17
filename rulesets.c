@@ -35,16 +35,18 @@ typedef struct rulesetDef_s {
 	qbool restrictParticles;
 	qbool restrictSound;
 	qbool restrictLogging;
+	qbool restrictRollAngle;
 } rulesetDef_t;
 
 static rulesetDef_t rulesetDef = {
-	rs_default,
-	72.0,
-	false,
-	false,
-	false,
-	false,
-	false
+	rs_default,    // ruleset
+	72.0,          // maxfps
+	false,         // restrict triggers
+	false,         // restrict /packet command
+	false,         // restrict particles
+	false,         // restrict sound
+	false,         // restrict logging
+	false          // restrict rollangle
 };
 
 cvar_t ruleset = {"ruleset", "default", 0, Rulesets_OnChange_ruleset};
@@ -91,8 +93,11 @@ qbool RuleSets_DisallowModelOutline(struct model_s *mod)
 			return true;
 		case MOD_THUNDERBOLT:
 			return true;
+		case MOD_BACKPACK:
+			return !cls.demoplayback && (rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown);
 		default:
-			return rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown || rulesetDef.ruleset == rs_thunderdome;
+			// return to just rs_qcon once backface outlining tested
+			return !cls.demoplayback && (rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown);
 	}
 }
 
@@ -162,7 +167,7 @@ qbool Rulesets_RestrictSound(const char* name)
 
 qbool Rulesets_RestrictPacket(void)
 {
-	return !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictPacket;
+	return cls.state == ca_active && !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictPacket;
 }
 
 qbool Rulesets_RestrictParticles(void)
@@ -234,6 +239,7 @@ static void Rulesets_Smackdown(qbool enable)
 		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
 		rulesetDef.restrictParticles = true;
 		rulesetDef.restrictLogging = true;
+		rulesetDef.restrictRollAngle = true;
 		rulesetDef.ruleset = rs_smackdown;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
@@ -247,6 +253,7 @@ static void Rulesets_Smackdown(qbool enable)
 		rulesetDef.restrictPacket = false;
 		rulesetDef.restrictParticles = false;
 		rulesetDef.restrictLogging = false;
+		rulesetDef.restrictRollAngle = false;
 		rulesetDef.ruleset = rs_default;
 	}
 }
@@ -287,6 +294,7 @@ static void Rulesets_Qcon(qbool enable)
 		rulesetDef.restrictParticles = true;
 		rulesetDef.restrictSound = true;
 		rulesetDef.restrictLogging = true;
+		rulesetDef.restrictRollAngle = true;
 		rulesetDef.ruleset = rs_qcon;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
@@ -301,6 +309,7 @@ static void Rulesets_Qcon(qbool enable)
 		rulesetDef.restrictParticles = false;
 		rulesetDef.restrictSound = false;
 		rulesetDef.restrictLogging = false;
+		rulesetDef.restrictRollAngle = false;
 		rulesetDef.ruleset = rs_default;
 	}
 }
@@ -337,6 +346,7 @@ static void Rulesets_Thunderdome(qbool enable)
 		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
 		rulesetDef.restrictParticles = false;
 		rulesetDef.restrictLogging = true;
+		rulesetDef.restrictRollAngle = true;
 		rulesetDef.ruleset = rs_thunderdome;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
@@ -350,6 +360,7 @@ static void Rulesets_Thunderdome(qbool enable)
 		rulesetDef.restrictPacket = false;
 		rulesetDef.restrictParticles = false;
 		rulesetDef.restrictLogging = false;
+		rulesetDef.restrictRollAngle = false;
 		rulesetDef.ruleset = rs_default;
 	}
 }
@@ -363,6 +374,7 @@ static void Rulesets_MTFL(qbool enable)
 	extern cvar_t cl_c2spps, r_fullbrightSkins;
 	extern cvar_t amf_detpacklights;
 	extern cvar_t gl_picmip, gl_max_size, r_drawflat;
+	extern cvar_t vid_hwgammacontrol;
 	extern cvar_t gl_textureless;
 
 	int i = 0;
@@ -372,6 +384,7 @@ static void Rulesets_MTFL(qbool enable)
 		{&amf_detpacklights, "0"},
 		{&gl_textureless, "0"},
 		{&r_fullbrightSkins, "0"},
+		{&vid_hwgammacontrol, "2"},
 		{&cl_c2spps, "0"},
 	};
 
@@ -400,7 +413,9 @@ static void Rulesets_MTFL(qbool enable)
 			Cvar_SetFlags(limited_min_cvars[i].var, Cvar_GetFlags(limited_min_cvars[i].var) | CVAR_RULESET_MIN);
 		}
 
+		rulesetDef.restrictRollAngle = false;
 		rulesetDef.ruleset = rs_mtfl;
+		v_gamma.modified = true;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
@@ -412,6 +427,8 @@ static void Rulesets_MTFL(qbool enable)
 			Cvar_SetFlags(limited_min_cvars[i].var, Cvar_GetFlags(limited_min_cvars[i].var) & ~CVAR_RULESET_MIN);
 
 		rulesetDef.ruleset = rs_default;
+		rulesetDef.restrictRollAngle = false;
+		v_gamma.modified = true;
 	}
 }
 
@@ -526,15 +543,27 @@ void Rulesets_OnChange_cl_delay_packet(cvar_t *var, char *value, qbool *cancel)
 		return;
 	}
 
+	if (var == &cl_delay_packet_target && (ival < 0 || ival > CL_MAX_PACKET_DELAY_TARGET)) {
+		Com_Printf("%s must be between 0 and %d\n", var->name, CL_MAX_PACKET_DELAY_TARGET);
+		*cancel = true;
+		return;
+	}
+
 	if (cls.state == ca_active) {
 		if ((cl.standby) || (cl.teamfortress)) {
 			char announce[128];
+			int delay_target_ms = (var == &cl_delay_packet_target ? ival : cl_delay_packet_target.integer);
+			int delay_deviation = (var == &cl_delay_packet_dev ? ival : cl_delay_packet_dev.integer);
+			int delay_constant = (var == &cl_delay_packet ? ival : cl_delay_packet.integer);
 
-			if (var == &cl_delay_packet) {
-				snprintf(announce, sizeof(announce), "say delay packet: %d ms (%d dev)\n", ival, cl_delay_packet_dev.integer);
+			if (delay_target_ms) {
+				snprintf(announce, sizeof(announce), "say delay packet: target ping %d ms (%dms dev)\n", delay_target_ms, delay_deviation);
+			}
+			else if (delay_constant) {
+				snprintf(announce, sizeof(announce), "say delay packet: adding %d ms (%dms dev)\n", delay_constant, delay_deviation);
 			}
 			else {
-				snprintf(announce, sizeof(announce), "say delay packet: %d ms (%d dev)\n", cl_delay_packet.integer, ival);
+				snprintf(announce, sizeof(announce), "say delay packet: off\n");
 			}
 
 			// allow in standby or teamfortress. For teamfortress, more often than not
@@ -728,11 +757,11 @@ qbool Rulesets_ToggleWhenFlashed(void)
 	return rulesetDef.ruleset == rs_mtfl;
 }
 
-qbool Rulesets_FullbrightModel(struct model_s* model, qbool local_singleplayer_game)
+qbool Rulesets_FullbrightModel(struct model_s* model)
 {
 	extern cvar_t gl_fb_models;
 	qbool protected_model = (model->modhint == MOD_EYES || model->modhint == MOD_BACKPACK) && rulesetDef.ruleset != rs_default;
-	qbool fb_requested = gl_fb_models.integer == 1 && model->modhint != MOD_GIB && model->modhint != MOD_VMODEL && !local_singleplayer_game;
+	qbool fb_requested = gl_fb_models.integer == 1 && model->modhint != MOD_GIB && model->modhint != MOD_VMODEL && !Ruleset_IsLocalSinglePlayerGame();
 
 	return !protected_model && fb_requested;
 }
@@ -758,3 +787,27 @@ qbool Ruleset_CanLogConsole(void)
 {
 	return cls.demoplayback || cls.state != ca_active || cl.standby || cl.countdown || !rulesetDef.restrictLogging;
 }
+
+qbool Ruleset_AllowNoHardwareGamma(void)
+{
+	return rulesetDef.ruleset != rs_mtfl;
+}
+
+float Ruleset_RollAngle(void)
+{
+	extern cvar_t cl_rollangle;
+
+	if (cls.demoplayback || cl.spectator || !rulesetDef.restrictRollAngle) {
+		return fabs(cl_rollangle.value);
+	}
+
+	return bound(0.0f, cl_rollangle.value, 5.0f);
+}
+
+#ifndef CLIENTONLY
+extern cvar_t     maxclients;
+qbool Ruleset_IsLocalSinglePlayerGame(void)
+{
+	return com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.integer == 1;
+}
+#endif

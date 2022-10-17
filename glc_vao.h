@@ -41,6 +41,7 @@ void GLC_DeleteVAOs(void);
 void GLC_GenVertexArray(r_vao_id vao, const char* name);
 qbool GLC_VertexArrayCreated(r_vao_id vao);
 void GLC_BindVertexArray(r_vao_id vao);
+void GLC_BindVertexArrayAttributes(r_vao_id vao);
 qbool GLC_InitialiseVAOHandling(void);
 void GLC_EnsureVAOCreated(r_vao_id vao);
 

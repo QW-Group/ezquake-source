@@ -50,8 +50,19 @@ static cvar_t scr_autoid_armorbar_red_armor        = { "scr_autoid_armorbar_red_
 
 typedef struct player_autoid_s {
 	float x, y;
-	player_info_t *player;
+	player_info_t* player;
+
+	// antilag indicators (debugging antilag queries)
+	float rewind_x1, rewind_y1; // as rewound by server
+	float rewind_x2, rewind_y2; // current position, for rewound line
+	float client_x1, client_y1; // as claimed by the client
+	float client_x2, client_y2; // current position, for client line
+	qbool rewind_valid, client_valid;
 } autoid_player_t;
+
+// For 2-pass multiview... [<view-num>][<other-player>]
+static autoid_player_t saved_autoids[4][MAX_CLIENTS];
+static int saved_autoid_count[4];
 
 static autoid_player_t autoids[MAX_CLIENTS];
 static int autoid_count;
@@ -64,6 +75,26 @@ static int autoid_count;
 
 #define AUTOID_WEAPON_OFFSET_Y				AUTOID_HEALTHBAR_OFFSET_Y
 #define AUTOID_WEAPON_OFFSET_X				2
+
+void SCR_SaveAutoID(void)
+{
+	int view_num = CL_MultiviewCurrentView() - 1;
+
+	if (view_num >= 0 && view_num < 4) {
+		memcpy(saved_autoids[view_num], autoids, sizeof(saved_autoids[view_num]));
+		saved_autoid_count[view_num] = autoid_count;
+	}
+}
+
+void SCR_RestoreAutoID(void)
+{
+	int view_num = CL_MultiviewCurrentView() - 1;
+
+	if (view_num >= 0 && view_num < 4) {
+		memcpy(autoids, saved_autoids[view_num], sizeof(autoids));
+		autoid_count = saved_autoid_count[view_num];
+	}
+}
 
 void SCR_SetupAutoID(void)
 {
@@ -134,6 +165,16 @@ void SCR_SetupAutoID(void)
 		id->player = info;
 		if (R_Project3DCoordinates(origin[0], origin[1], origin[2] + 28, &id->x, &id->y, &winz)) {
 			autoid_count++;
+
+			id->rewind_valid = id->client_valid = false;
+			if (state->antilag_flags & dbg_antilag_rewind_present) {
+				id->rewind_valid = R_Project3DCoordinates(state->rewind_origin[0], state->rewind_origin[1], state->rewind_origin[2] + 16, &id->rewind_x1, &id->rewind_y1, &winz);
+				id->rewind_valid &= R_Project3DCoordinates(origin[0], origin[1], origin[2] + 16, &id->rewind_x2, &id->rewind_y2, &winz);
+			}
+			if (state->antilag_flags & dbg_antilag_client_present) {
+				id->client_valid = R_Project3DCoordinates(state->client_origin[0], state->client_origin[1], state->client_origin[2] + 18, &id->client_x1, &id->client_y1, &winz);
+				id->client_valid &= R_Project3DCoordinates(origin[0], origin[1], origin[2] + 18, &id->client_x2, &id->client_y2, &winz);
+			}
 		}
 	}
 }
@@ -304,6 +345,59 @@ static void SCR_DrawAutoIDStatus(autoid_player_t *autoid_p, int x, int y, float 
 	}
 }
 
+void SCR_DrawAntilagIndicators(void)
+{
+	int i;
+	extern cvar_t cl_debug_antilag_lines;
+	extern cvar_t cl_debug_antilag_view;
+
+	if (!cl_debug_antilag_lines.integer || (!cls.demoplayback && !cl.spectator) || cl.intermission) {
+		return;
+	}
+
+	for (i = 0; i < autoid_count; ++i) {
+		color_t r_color = RGBA_TO_COLOR(255, 0, 0, 255);
+		color_t c_color = RGBA_TO_COLOR(0, 255, 0, 255);
+		color_t rc_color = RGBA_TO_COLOR(0, 0, 255, 255);
+		float r_x1 = autoids[i].rewind_x1 * vid.width / glwidth;
+		float r_y1 = (glheight - autoids[i].rewind_y1) * vid.height / glheight;
+		float r_x2 = autoids[i].rewind_x2 * vid.width / glwidth;
+		float r_y2 = (glheight - autoids[i].rewind_y2) * vid.height / glheight;
+		float c_x1 = autoids[i].client_x1 * vid.width / glwidth;
+		float c_y1 = (glheight - autoids[i].client_y1) * vid.height / glheight;
+		float c_x2 = autoids[i].client_x2 * vid.width / glwidth;
+		float c_y2 = (glheight - autoids[i].client_y2) * vid.height / glheight;
+
+		if (cl_debug_antilag_view.integer == 0) {
+			// player shown in current server position, draw from rewound & client
+			if (autoids[i].rewind_valid) {
+				Draw_AlphaLineRGB(r_x1, r_y1, r_x2, r_y2, 2, r_color);
+			}
+			if (autoids[i].client_valid) {
+				Draw_AlphaLineRGB(c_x1, c_y1, c_x2, c_y2, 2, c_color);
+			}
+		}
+		else if (cl_debug_antilag_view.integer == 1) {
+			// player shown in rewound position, draw from current & client
+			if (autoids[i].rewind_valid) {
+				Draw_AlphaLineRGB(r_x1, r_y1, r_x2, r_y2, 2, r_color);
+			}
+			if (autoids[i].rewind_valid && autoids[i].client_valid) {
+				Draw_AlphaLineRGB(c_x1, c_y1, r_x1, r_y1, 2, rc_color);
+			}
+		}
+		else if (cl_debug_antilag_view.integer == 2) {
+			// player shown in client position, draw to current & rewound
+			if (autoids[i].rewind_valid && autoids[i].client_valid) {
+				Draw_AlphaLineRGB(r_x1, r_y1, c_x1, c_y1, 2, rc_color);
+			}
+			if (autoids[i].client_valid) {
+				Draw_AlphaLineRGB(c_x1, c_y1, c_x2, c_y2, 2, c_color);
+			}
+		}
+	}
+}
+
 void SCR_DrawAutoID(void)
 {
 	int i, x, y;
@@ -333,7 +427,7 @@ void SCR_DrawAutoID(void)
 		}
 
 		// We only have health/armor info for all players when in demo playback.
-		if (cls.demoplayback && scr_autoid.value >= 2) {
+		if (cls.mvdplayback && scr_autoid.value >= 2) {
 			SCR_DrawAutoIDStatus(&autoids[i], x, y, scale, proportional);
 		}
 	}

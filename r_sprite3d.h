@@ -76,9 +76,14 @@ typedef enum {
 #define SPRITE3D_PARTICLES_NEW_LIMIT (SPRITE3D_FLASHBLEND_LIGHTS)
 
 typedef struct r_sprite3d_vert_s {
+	// 0->12
 	float position[3];
+	// 12->24
 	float tex[3];
+	// 24->28
 	byte color[4];
+	// 28->32
+	byte padding[4];
 } r_sprite3d_vert_t;
 
 typedef enum {

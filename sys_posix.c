@@ -245,12 +245,14 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	switch (sort_type)
 	{
 	case SORT_NO: break;
+#ifndef CLIENTONLY
 	case SORT_BY_DATE:
 		qsort((void *)list, dir.numfiles, sizeof(file_t), Sys_compare_by_date);
 		break;
 	case SORT_BY_NAME:
 		qsort((void *)list, dir.numfiles, sizeof(file_t), Sys_compare_by_name);
 		break;
+#endif
 	}
 
 	return dir;
@@ -333,7 +335,7 @@ int main(int argc, char **argv)
 	if (COM_CheckParm(cmdline_param_client_nostdoutput))
 		sys_nostdout.value = 1;
 
-	Host_Init (argc, argv, 128 * 1024 * 1024);
+	Host_Init (argc, argv, 256 * 1024 * 1024);
 
 	oldtime = Sys_DoubleTime ();
 	while (1) {
@@ -562,7 +564,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 /*************************** INTER PROCESS CALLS *****************************/
 #define PIPE_BUFFERSIZE		1024
 
-FILE *fifo_pipe;
+static int fifo_pipe = -1;
 
 static char *Sys_PipeFile(void) {
 	static char pipe[MAX_PATH] = {0};
@@ -576,24 +578,16 @@ static char *Sys_PipeFile(void) {
 
 void Sys_InitIPC(void)
 {
-	int fd;
 	mode_t old;
 
 	/* Don't use the user's umask, make sure we set the proper access */
 	old = umask(0);
-	if (mkfifo(Sys_PipeFile(), 0600)) {
-		umask(old);
-		// We failed ... 
-		return;
-	}
+	// This could legitimately fail (pipe exists), but it should be fine.
+	mkfifo(Sys_PipeFile(), 0600);
 	umask(old); // Reset old mask
 
 	/* Open in non blocking mode */
-	if ((fd = open(Sys_PipeFile(), O_RDONLY | O_NONBLOCK)) == -1) {
-		// We failed ...
-		return;
-	}
-	if (!(fifo_pipe = fdopen(fd, "r"))) {
+	if ((fifo_pipe = open(Sys_PipeFile(), O_RDONLY | O_NONBLOCK)) == -1) {
 		// We failed ...
 		return;
 	}
@@ -601,8 +595,9 @@ void Sys_InitIPC(void)
 
 void Sys_CloseIPC(void)
 {
-	if (fifo_pipe) {
-		fclose(fifo_pipe);
+	if (fifo_pipe != -1) {
+		close(fifo_pipe);
+		fifo_pipe = -1;
 		unlink(Sys_PipeFile());
 	}
 }
@@ -612,11 +607,13 @@ void Sys_ReadIPC(void)
 	char buf[PIPE_BUFFERSIZE] = {0};
 	int num_bytes_read = 0;
 
-	if (!fifo_pipe)
+	if (fifo_pipe == -1)
 		return;
 
-	num_bytes_read = fread(buf, sizeof(buf), 1, fifo_pipe);
-
+	num_bytes_read = read(fifo_pipe, buf, sizeof(buf) - 1); // nul terminated.
+	if (num_bytes_read <= 0) {
+		return;
+	}
 	COM_ParseIPCData(buf, num_bytes_read);
 }
 
@@ -746,3 +743,78 @@ const char* Sys_HomeDirectory(void)
 	}
 	return "";
 }
+
+#ifdef __MACOSX__
+
+void Sys_RegisterQWURLProtocol_f(void)
+{
+	Con_Printf("Not yet implemented for this platform.");
+	return;
+}
+
+#else
+
+void Sys_RegisterQWURLProtocol_f(void)
+{
+    char open_cmd[MAX_PATH*2+1024] = { 0 };
+    char exe_path[MAX_PATH] = { 0 };
+    char buf[MAX_PATH] = { 0 };
+    const char *homedir=Sys_HomeDirectory();
+    int nchar = -1;
+    FILE *fptr;
+
+    qbool quiet = Cmd_Argc() == 2 && !strcmp(Cmd_Argv(1), "quiet");
+
+    nchar = readlink("/proc/self/exe", exe_path, sizeof(exe_path)-1);
+    if (nchar < 0 || nchar >= sizeof exe_path) {
+        Con_Printf("Failed to get executable path.");
+        return;
+    }
+
+    snprintf(open_cmd, sizeof(open_cmd), "[Desktop Entry]\n"
+            "Type=Application\n"
+            "Name=ezQuake\n"
+            "GenericName=Handles qw:// protocol links from browsers\n"
+            "Comment=Browser uses ezQuake to open qw:// urls.\n"
+            "Keywords=qtv,qw://;\n"
+            "Categories=quakeworld;qtv;Game;\n"
+            "Exec=%s +qwurl %s\n"
+            "Path=%s\n"
+            "MimeType=x-scheme-handler/qw\n"
+            "Terminal=false\n"
+            "StartupNotify=false\n"
+            , exe_path, "%u", com_basedir);
+    snprintf(buf, sizeof(buf), "%s/.local/share/applications/qw-url-handler.desktop", homedir);
+
+    fptr = fopen(buf, "wb+");
+    if(!fptr){
+        //create directory path to url handler file
+        snprintf(buf, sizeof(buf), "%s/.local", homedir);
+        Sys_mkdir(buf);
+        snprintf(buf, sizeof(buf), "%s/.local/share", homedir);
+        Sys_mkdir(buf);
+        snprintf(buf, sizeof(buf), "%s/.local/share/applications", homedir);
+        Sys_mkdir(buf);
+        //attempt opening the file again
+        snprintf(buf, sizeof(buf), "%s/.local/share/applications/qw-url-handler.desktop", homedir);
+        fptr = fopen(buf, "wb+");
+    }
+    if (fptr == NULL) {
+        Con_Printf("Failed to open qw-url-handler file.");
+        return;
+    }
+    fprintf(fptr, "%s", open_cmd);
+    fclose(fptr);
+
+	if(system("xdg-mime default qw-url-handler.desktop x-scheme-handler/qw") != 0){
+        Con_Printf("Failed to register qw-url-handler file with xdg-mime, please make sure this program is installed.");
+    }
+
+    if (!quiet) {
+        Com_Printf_State(PRINT_WARNING, "qw:// protocol registered\n");
+    }
+
+    return;
+}
+
+#endif //platforms other than osx

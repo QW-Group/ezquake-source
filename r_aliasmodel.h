@@ -37,7 +37,7 @@ extern qbool gl_mtexable;
 
 extern texture_ref shelltexture;
 
-void GLC_StateBeginMD3Draw(float alpha, qbool textured, qbool weapon);
+void GLC_StateBeginMD3Draw(float alpha, qbool textured, qbool weapon, qbool additive_pass);
 void R_StateBeginDrawAliasModel(const entity_t* e, aliashdr_t* paliashdr);
 
 // gl_mesh.c
@@ -50,12 +50,11 @@ void GLC_AllocateAliasPoseBuffer(void);
 void GLC_BeginCausticsTextureMatrix(void);
 void GLC_EndCausticsTextureMatrix(void);
 
-void R_DrawAliasModel(entity_t *ent);
+void R_DrawAliasModel(entity_t *ent, qbool outline);
 
 qbool R_FilterEntity(entity_t* ent);
 qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame);
 
-void R_DrawAliasModel(entity_t *ent);
 void R_AliasModelPrepare(entity_t* ent, int framecount, int* frame1, int* frame2, float* lerpfrac, qbool* outline);
 int R_AliasFramePose(const maliasframedesc_t* frame);
 maliasframedesc_t* R_AliasModelFindFrame(aliashdr_t* hdr, const char* framename, int framenumber);

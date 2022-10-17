@@ -37,6 +37,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
 #include <unistd.h>
 #include <strings.h>
+#if defined(__APPLE__)
+#include <libproc.h>
+#elif defined(__FreeBSD__)
+#include <sys/sysctl.h>
+#endif
 #endif
 
 static void FS_RebuildFSHash(void);
@@ -87,9 +92,10 @@ int fs_hash_dups;
 int fs_hash_files;
 
 cvar_t fs_cache = {"fs_cache", "1"};
+static cvar_t fs_savegame_home = { "fs_savegame_home", "1" };
 
-void FS_CreatePathRelative(char *pname, int relativeto);
-void FS_ForceToPure(char *str, char *crcs, int seed);
+static void FS_CreatePathRelative(const char *pname, int relativeto);
+void FS_ForceToPure(char *str, const char *crcs, int seed);
 int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
 void FS_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
 int FS_FileOpenRead (char *path, FILE **hndl);
@@ -206,7 +212,7 @@ int FS_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 }
 
 //The filename will be prefixed by com_basedir
-qbool FS_WriteFileRelative(char *filename, void *data, int len, int relativeto)
+static qbool FS_WriteFileRelative(const char *filename, const void *data, int len, int relativeto)
 {
 	vfsfile_t *f;
 
@@ -233,14 +239,14 @@ FS_WriteFile
 The filename will be prefixed by the current game directory
 ============
 */
-qbool FS_WriteFile (char *filename, void *data, int len)
+qbool FS_WriteFile(const char *filename, const void *data, int len)
 {
 	Sys_Printf ("FS_WriteFile: %s\n", filename);
 	return FS_WriteFileRelative(filename, data, len, FS_GAME_OS);
 }
 
 //The filename used as is
-qbool FS_WriteFile_2 (char *filename, void *data, int len)
+qbool FS_WriteFile_2(const char *filename, const void *data, int len)
 {
 	Sys_Printf ("FS_WriteFile_2: %s\n", filename);
 	return FS_WriteFileRelative(filename, data, len, FS_NONE_OS);
@@ -439,7 +445,7 @@ void FS_SetUserDirectory (char *dir, char *type) {
 // -1 - Error loading file
 
 static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpathfuncs_t *funcs) 
-{	
+{
 	vfsfile_t 		*vfs;
 	flocation_t 	loc;
 	char 			pakfile[MAX_OSPATH];
@@ -467,13 +473,12 @@ static int FS_AddPak(char *pathto, char *pakname, searchpath_t *search, searchpa
 		}
 	}
 
-
 	/* Check the pak exists */
 	if (!search->funcs->FindFile(search->handle, &loc, pakname, NULL))
 		return 1;	//not found..
 
 	/* Load the pak file */
-	snprintf (pakfile, sizeof(pakfile), "%s%s", pathto, pakname);
+	snprintf(pakfile, sizeof(pakfile), "%s%s", pathto, pakname);
 	vfs = search->funcs->OpenVFS(search->handle, &loc, "r");
 	if (!vfs)
 		return -1;
@@ -586,20 +591,25 @@ void FS_AddUserDirectory(char *dir)
 void Draw_InitConback(void);
 
 // Sets the gamedir and path to a different directory.
-void FS_SetGamedir (char *dir, qbool force)
+void FS_SetGamedir(char* dir, qbool force)
 {
-	searchpath_t  *next;
-	if (strstr(dir, "..") || strchr(dir, '/')
-	 || strchr(dir, '\\') || strchr(dir, ':') ) 
-	{
-		Com_Printf ("Gamedir should be a single filename, not a path\n");
+	searchpath_t* next;
+
+	if (dir == NULL || !dir[0]) {
+		dir = "qw";
+	}
+
+	if (strstr(dir, "..") || strchr(dir, '/') || strchr(dir, '\\') || strchr(dir, ':')) {
+		Com_Printf("Gamedir should be a single filename, not a path\n");
 		return;
 	}
 
-	if (!force && !strcmp(com_gamedirfile, dir))
-		return;		// Still the same.
-	
-	strlcpy (com_gamedirfile, dir, sizeof(com_gamedirfile));
+	if (!force && !strcmp(com_gamedirfile, dir)) {
+		// Still the same
+		return;
+	}
+
+	strlcpy(com_gamedirfile, dir, sizeof(com_gamedirfile));
 
 	// Free up any current game dir info.
 	FS_FlushFSHash();
@@ -609,14 +619,14 @@ void FS_SetGamedir (char *dir, qbool force)
 	{
 		fs_searchpaths->funcs->ClosePath(fs_searchpaths->handle);
 		next = fs_searchpaths->next;
-		Q_free (fs_searchpaths);
+		Q_free(fs_searchpaths);
 		fs_searchpaths = next;
 	}
 
-	filesystemchanged=true;
+	filesystemchanged = true;
 
 	// Flush all data, so it will be forced to reload.
-	Cache_Flush ();
+	Cache_Flush();
 
 	snprintf(com_gamedir, sizeof(com_gamedir), "%s/%s", com_basedir, dir);
 
@@ -698,8 +708,16 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 #elif defined(__linux__)
 		if (!Sys_fullpath(com_basedir, "/proc/self/exe", sizeof(com_basedir)))
 			Sys_Error("FS_InitFilesystemEx: Sys_fullpath failed");
+#elif defined(__APPLE__)
+		if (proc_pidpath(getpid(), com_basedir, (uint32_t)sizeof(com_basedir)) != 0)
+			Sys_Error("FS_InitFilesystemEx: proc_pidpath failed");
+#elif defined(__FreeBSD__)
+		int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
+		size_t com_basedirlen = sizeof(com_basedir);
+		if (sysctl(mib, 4, com_basedir, &com_basedirlen, NULL, 0) < 0)
+			Sys_Error("FS_InitFilesystemEx: sysctl failed");
 #else
-		com_basedir[0] = 0; // FIXME: MAC / FreeBSD
+		com_basedir[0] = 0; // FIXME: others
 #endif
 
 		// strip ezquake*.exe, we need only path
@@ -750,13 +768,20 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 
 	// start up with id1 by default
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "id1");
-	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
+	if (!COM_FileExists(tmp_path)) {
+		// (try upper-case ID1 if it's there... Steam...)
+		snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "ID1");
+		FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
+	}
+	else {
+		FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
+	}
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "ezquake");
 	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "qw");
 	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
 	if (*com_homedir) {
-	        FS_AddHomeDirectory(com_homedir, FS_LOAD_FILE_ALL);
+	    FS_AddHomeDirectory(com_homedir, FS_LOAD_FILE_ALL);
 	}
 
 	// -data <datadir>
@@ -883,6 +908,7 @@ int VFS_READ (struct vfsfile_s *vf, void *buffer, int bytestoread, vfserrno_t *e
 	return vf->ReadBytes(vf, buffer, bytestoread, err);
 }
 
+// FIXME: bytestowrite should be size_t
 int VFS_WRITE (struct vfsfile_s *vf, const void *buffer, int bytestowrite) {
 	assert(vf);
 	VFS_CHECKCALL(vf, vf->WriteBytes, "VFS_WRITE");
@@ -940,70 +966,6 @@ qbool VFS_COPYPROTECTED(struct vfsfile_s *vf) {
 // some general function to open VFS file, except VFSTCP
 //
 
-
-#ifdef WITH_VFS_ARCHIVE_LOADING
-/* 
- * ====================
- * FS_ExtensionToSearchFunctions
- * ====================
- * Given a file extension the search 
- * functions for operating on that file type
- * is returned.
- * If the file type is unknown, NULL is returned.
- */
-searchpathfuncs_t *FS_FileNameToSearchFunctions(const char *filename) {
-	char *ext = COM_FileExtension(filename);
-	if (strcmp(ext, "pak") == 0) {
-		return &packfilefuncs;
-	} else if (strcmp(ext, "tar") == 0) {
-		return &tarfilefuncs;
-#ifdef WITH_ZLIB
-	} else if (strcmp(ext, "zip") == 0 || strcmp(ext, "pk3") == 0) {
-		return &zipfilefuncs;
-	} else if (strcmp(ext, "gz") == 0) {
-		return &gzipfilefuncs;
-#endif // WITH_ZLIB
-	} else {
-		return NULL;
-	}
-}
-
-/* ===================
- * FS_BreakUpArchivePath
- * ===================
- * Given the following path /opt/zip1.zip/zip2.zip/file
- * ext     = "zip"
- * archive = "/opt/zip1.zip/zip2.zip"
- * inside  = "file"
- *
- * Return = true if the files contain a 
- * file inside an archive otherwise false
- */
-int FS_BreakUpArchivePath(const char *filename, 
-		char *archive, size_t archive_len,
-		char *inside, size_t inside_len) {
-	int i;
-	int first_slash = 0;
-	int first_dot   = 0;
-
-	for (i = strlen(filename); i >= 0; i--) {
-		if (filename[i] == '/') {
-			first_slash = i;
-		} else if (first_slash && filename[i] == '.') {
-			first_dot = i;
-			break;
-		}
-	}
-	if (i == -1)
-		return 0;
-
-	strlcpy(inside, filename+first_slash+1, inside_len);
-	strlcpy(archive, filename, min(first_slash+1, archive_len)); // +1 room for \0
-	return 1;
-}
-
-#endif // WITH_VFS_ARCHIVE_LOADING
-
 /* ================
  * FS_OpenVFS
  * ================
@@ -1023,49 +985,9 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 	if (Sys_PathProtection(filename)) 
 		return NULL;
 
-	if (strcmp(mode, "rb"))
-		if (strcmp(mode, "wb"))
-			if (strcmp(mode, "ab"))
-				return NULL; //urm, unable to write/append
-
-#if WITH_VFS_ARCHIVE_LOADING
-	/* This allows opening of files with paths like
-     * file.zip/file_inside_zip.qwd */
-	{
-		int r;
-		char archive[MAX_OSPATH], inside[MAX_OSPATH];
-		r = FS_BreakUpArchivePath(filename, archive, sizeof(archive),
-				inside,  sizeof(inside));
-		if (r) {
-			searchpathfuncs_t *funcs;
-			void *file_handle = NULL;
-			vfsfile_t *vfs_archive = NULL;
-			memset(&loc, 0, sizeof(loc));
-
-			vfs = FS_OpenVFS(archive, mode, relativeto);
-			if (!vfs) goto archive_fail;
-
-			funcs = FS_FileNameToSearchFunctions(archive);
-			if (!funcs) goto archive_fail;
-
-			file_handle = funcs->OpenNew(vfs, archive);
-			if (!file_handle) goto archive_fail;
-			if (!funcs->FindFile(file_handle, &loc, inside, NULL))  goto archive_fail;
-				
-			vfs_archive = funcs->OpenVFS(file_handle, &loc, mode);
-			if (!vfs_archive) goto archive_fail;
-
-			return vfs_archive;
-
-archive_fail:
-			if (file_handle)
-				funcs->ClosePath(file_handle); // Also closes the vfs for us
-			else if (vfs)
-				VFS_CLOSE(vfs);
-			return NULL;
-		}
+	if (strcmp(mode, "rb") && strcmp(mode, "wb") && strcmp(mode, "ab")) {
+		return NULL; //urm, unable to write/append
 	}
-#endif // WITH_VFS_ARCHIVE_LOADING
 
 	/* General opening of files */
 	switch (relativeto)
@@ -1316,20 +1238,18 @@ int FS_GZipUnpack (char *source_path,		// The path to the compressed source file
 
 	// Check if the destination file exists and
 	// if we're allowed to overwrite it.
-	if (COM_FileExists (destination_path) && !overwrite)
-	{
+	if (COM_FileExists(destination_path) && !overwrite) {
 		return 0;
 	}
 
 	// Create the path for the destination.
-	FS_CreatePath (COM_SkipPathWritable (destination_path));
+	FS_CreatePath(COM_SkipPathWritable(destination_path));
 
 	// Open destination.
-	dest = fopen (destination_path, "wb");
+	dest = fopen(destination_path, "wb");
 
 	// Failed to open the file for writing.
-	if (!dest)
-	{
+	if (!dest) {
 		return 0;
 	}
 
@@ -1337,11 +1257,13 @@ int FS_GZipUnpack (char *source_path,		// The path to the compressed source file
 	{
 		unsigned char out[CHUNK];
 		gzFile gzip_file = gzopen (source_path, "rb");
-		if (gzip_file == NULL)
+		if (gzip_file == NULL) {
+			fclose(dest);
+			Sys_remove(destination_path);
 			return 0;
+		}
 
-		while ((retval = gzread (gzip_file, out, CHUNK)) > 0)
-		{
+		while ((retval = gzread (gzip_file, out, CHUNK)) > 0) {
 			fwrite (out, 1, retval, dest);
 		}
 
@@ -1352,44 +1274,55 @@ int FS_GZipUnpack (char *source_path,		// The path to the compressed source file
 	return 1;
 }
 
-//
-// Unpack a .gz file to a temp file.
-//
-int FS_GZipUnpackToTemp (char *source_path,		// The compressed source file.
-						  char *unpack_path,		// A buffer that will contain the path to the unpacked file.
-						  int unpack_path_size,		// The size of the buffer.
-						  char *append_extension)	// The extension if any that should be appended to the filename.
+#define GZIP_MEMORY_DEFAULT   (4 * 1024 * 1024)
+#define GZIP_MEMORY_INCREMENT (2 * 1024 * 1024)
+
+void* FS_GZipUnpackToMemory(char* source_path, size_t* unpacked_length)
 {
-	int retval;
-	// Get a unique temp filename.
-	if (COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true) < 0)
+	byte* memory = NULL;
+	size_t actual_length = 0;
+	size_t allocated_length = 0;
+	gzFile gzip_file;
+
+	gzip_file = gzopen(source_path, "rb");
+	if (gzip_file == NULL) {
+		return NULL;
+	}
+
+	// Unpack.
+	memory = Q_malloc_named(GZIP_MEMORY_DEFAULT, source_path);
+	allocated_length = GZIP_MEMORY_DEFAULT;
 	{
-		return 0;
-	}
+		unsigned char out[CHUNK];
+		int retval; // bytes output
 
-	// Delete the existing temp file (it is created when the filename is received above).
-	retval = unlink (unpack_path);
-	if (retval == -1 && qerrno != ENOENT)
-	{
-		unpack_path[0] = 0;
-		return 0;
-	}
+		while ((retval = gzread(gzip_file, out, CHUNK)) > 0) {
+			if (actual_length + retval > allocated_length) {
+				// Need to increase memory buffer
+				byte* new_memory = Q_realloc_named(memory, allocated_length + GZIP_MEMORY_INCREMENT, source_path);
 
-	// Append the extension if any.
-	if (append_extension != NULL) {
-		char tmp_path[MAX_OSPATH];
-		snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", unpack_path, append_extension);
-		strlcpy (unpack_path, tmp_path, unpack_path_size);
-	}
+				// Failed to reallocate, clean-up and error
+				if (new_memory == NULL) {
+					gzclose(gzip_file);
+					Q_free(memory);
+					return NULL;
+				}
 
-	// Unpack the file.
-	if (!FS_GZipUnpack (source_path, unpack_path, true))
-	{
-		unpack_path[0] = 0;
-		return 0;
-	}
+				// Carry on
+				memory = new_memory;
+				allocated_length = allocated_length + GZIP_MEMORY_INCREMENT;
+			}
+			memcpy(memory + actual_length, out, retval);
+			actual_length += retval;
+		}
 
-	return 1;
+		gzclose(gzip_file);
+
+		if (unpacked_length) {
+			*unpacked_length = actual_length;
+		}
+		return memory;
+	}
 }
 
 //
@@ -1518,6 +1451,7 @@ int FS_ZlibUnpack (char *source_path,		// The path to the compressed source file
 	return (retval != Z_OK) ? 0 : 1;
 }
 
+/*
 //
 // Unpack a zlib file to a temp file... NOT the same as gzip!
 //
@@ -1558,6 +1492,7 @@ int FS_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 
 	return 1;
 }
+*/
 
 #endif // WITH_ZLIB
 
@@ -1565,58 +1500,78 @@ int FS_ZlibUnpackToTemp (char *source_path,		// The compressed source file.
 
 #define ZIP_WRITEBUFFERSIZE (8192)
 
-/*
-[19:23:40] <@disconnect|bla> Cokeman: how do you delete temporary files on windows? =:-)
-[19:23:51] <@Cokeman> I don't :D
-[19:23:52] Cokeman hides
-[19:23:55] <@disconnect|bla> zomfg :E
-[19:24:04] <@disconnect|bla> OK. Linux have same behavior now.
-*/
-int FS_ZipUnpackOneFileToTemp (unzFile zip_file,
-						  const char *filename_inzip,
-						  qbool case_sensitive,
-						  qbool keep_path,
-						  const char *password,
-						  char *unpack_path,			// The path where the file was unpacked.
-						  int unpack_path_size)			// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.
+void* FS_ZipUnpackOneFileToMemory(
+	unzFile zip_file,
+	const char *filename_inzip,
+	qbool case_sensitive,
+	qbool keep_path,
+	const char *password,
+	size_t* unpacked_length
+)
 {
-	int retval;
+	char			filename[MAX_PATH_LENGTH];
+	unz_file_info	file_info;
+	byte*           extracted_file = NULL;
+	unsigned int    position = 0;
 
-
-	// Get a unique temp filename.
-	if (COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true) < 0) {
-		return UNZ_ERRNO;
+	if (filename_inzip == NULL || zip_file == NULL) {
+		return NULL;
 	}
 
-	// Delete the temp file if it exists (it is created when the filename is received above).
-	retval = unlink (unpack_path);
-	if (retval == -1 && qerrno != ENOENT) {
-		return UNZ_ERRNO;
+	// Locate the file.
+	if (unzLocateFile(zip_file, filename_inzip, case_sensitive) != UNZ_OK) {
+		return NULL;
 	}
 
-	// Make sure we create a directory for the destination path.
-	#ifdef WIN32
-	strlcat (unpack_path, "\\", unpack_path_size);
-	#else
-	strlcat (unpack_path, "/", unpack_path_size);
-	#endif
+	// unzLocateFile has set the current file
+	if (unzGetCurrentFileInfo(zip_file, &file_info, filename, sizeof(filename), NULL, 0, NULL, 0) != UNZ_OK) {
+		return NULL;
+	}
 
-	// Unpack the file
-	retval = FS_ZipUnpackOneFile (zip_file, filename_inzip, unpack_path, case_sensitive, keep_path, true, password);
+	extracted_file = Q_malloc(file_info.uncompressed_size);
+	if (extracted_file == NULL) {
+		return NULL;
+	}
+	*unpacked_length = file_info.uncompressed_size;
 
-	if (retval == UNZ_OK) {
-		char tmp_path[MAX_OSPATH];
-		if (keep_path) {
-			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", unpack_path, filename_inzip);
-		} else {
-			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", unpack_path, COM_SkipPath(filename_inzip));
+	//
+	// Extract the file.
+	//
+	{
+#define	EXPECTED_BYTES_READ	1
+		int	bytes_read = 0;
+
+		//
+		// Open the zip file.
+		//
+		if (unzOpenCurrentFilePassword(zip_file, password) != UNZ_OK) {
+			return NULL;
 		}
-		strlcpy (unpack_path, tmp_path, unpack_path_size);
-	} else {
-		unpack_path[0] = 0;
+
+		//
+		// Write the decompressed file to the destination.
+		//
+		do
+		{
+			if (position >= file_info.uncompressed_size) {
+				break;
+			}
+
+			// Read the decompressed data from the zip file.
+			bytes_read = unzReadCurrentFile(zip_file, extracted_file + position, file_info.uncompressed_size - position);
+
+			if (bytes_read > 0) {
+				position += bytes_read;
+			}
+		} while (bytes_read > 0);
+
+		//
+		// Close the zip file
+		//
+		unzCloseCurrentFile(zip_file);
 	}
 
-	return retval;
+	return extracted_file;
 }
 
 int FS_ZipBreakupArchivePath (char *archive_extension,			// The extension of the archive type we're looking fore "zip" for example.
@@ -1654,7 +1609,6 @@ int FS_ZipBreakupArchivePath (char *archive_extension,			// The extension of the
 	return -1;
 }
 
-#ifndef WITH_VFS_ARCHIVE_LOADING
 //
 // Does the given path point to a zip file?
 //
@@ -1662,24 +1616,6 @@ qbool FS_IsArchive (char *zip_path)
 {
 	return (!strcasecmp(COM_FileExtension (zip_path), "zip"));
 }
-#else
-// VFS-FIXME: exts should be placed somewhere obvious so it can be updated
-// if any other extensions are added
-// VFS-FIXME: this doesn't allow for the different ifdefs to be used
-qbool FS_IsArchive(char *arch_path)
-{
-	char *ext = COM_FileExtension(arch_path);
-	char *exts[] = {"zip", "pk3", "pak", "tar", "gz", NULL};
-	char **e;
-
-	for (e = exts; *e; e++) {
-		if (strcasecmp(ext, *e) == 0) {
-			return true;
-		}
-	}
-	return false;
-}
-#endif
 
 unzFile FS_ZipUnpackOpenFile (const char *zip_path)
 {
@@ -1722,12 +1658,14 @@ static void FS_ZipMakeDirent (sys_dirent *ent, char *filename_inzip, unz_file_in
 	ent->hidden = 0;
 }
 
-int FS_ZipUnpack (unzFile zip_file,
-				   char *destination_path,
-				   qbool case_sensitive,
-				   qbool keep_path,
-				   qbool overwrite,
-				   const char *password)
+int FS_ZipUnpack(
+	unzFile zip_file,
+	char *destination_path,
+	qbool case_sensitive,
+	qbool keep_path,
+	qbool overwrite,
+	const char *password
+)
 {
 	int error = UNZ_OK;
 	unsigned long file_num = 0;
@@ -1762,45 +1700,6 @@ int FS_ZipUnpack (unzFile zip_file,
 	}
 
 	return error;
-}
-
-int FS_ZipUnpackToTemp (unzFile zip_file,
-				   qbool case_sensitive,
-				   qbool keep_path,
-				   const char *password,
-				   char *unpack_path,			// The path where the file was unpacked.
-				   int unpack_path_size)		// The size of the buffer for "unpack_path", MAX_PATH is a goode idea.)
-{
-	int	retval = UNZ_OK;
-
-	// Get a unique temp filename.
-	if (COM_GetUniqueTempFilename (NULL, unpack_path, unpack_path_size, true) < 0)
-	{
-		return UNZ_ERRNO;
-	}
-
-	// Delete the existing temp file (it is created when the filename is received above).
-	if (unlink (unpack_path))
-	{
-		return UNZ_ERRNO;
-	}
-
-	// Make sure we create a directory for the destination path since we're unpacking an entire zip.
-	#ifdef WIN32
-	strlcat (unpack_path, "\\", unpack_path_size);
-	#else
-	strlcat (unpack_path, "/", unpack_path_size);
-	#endif
-
-	// Unpack the file.
-	retval = FS_ZipUnpack (zip_file, unpack_path, case_sensitive, keep_path, true, password);
-
-	if (retval != UNZ_OK)
-	{
-		unpack_path[0] = 0;
-	}
-
-	return retval;
 }
 
 int FS_ZipUnpackOneFile (unzFile zip_file,				// The zip file opened with FS_ZipUnpackOpenFile(..)
@@ -2056,7 +1955,12 @@ void FS_InitModuleFS (void)
 	Cmd_AddCommand("fs_locate", FS_Locate_f);
 	Cmd_AddLegacyCommand("locate", "fs_locate");
 	Cmd_AddCommand("fs_search", FS_ListFiles_f);
+
+	Cvar_SetCurrentGroup(CVAR_GROUP_FILESYSTEM);
 	Cvar_Register(&fs_cache);
+	Cvar_Register(&fs_savegame_home);
+	Cvar_ResetCurrentGroup();
+
 	Com_Printf("Initialising quake VFS filesystem\n");
 }
 
@@ -2747,12 +2651,13 @@ int FS_Remove(char *fname, int relativeto)
 		break;
 	default:
 		Sys_Error("FS_Rename case not handled\n");
+		return 0;
 	}
 
 	return unlink (fullname);
 }
 
-void FS_CreatePathRelative(char *pname, int relativeto)
+static void FS_CreatePathRelative(const char *pname, int relativeto)
 {
 	char fullname[MAX_OSPATH];
 	switch (relativeto)
@@ -2845,11 +2750,17 @@ static void FS_AddDataFiles(char *pathto, searchpath_t *parent, char *extension,
 	wildpaks_t wp;
 	FILE *pak_lst;
 
-	for (i=0 ; ; i++)
+	for (i = 0; ; i++)
 	{
+		// try lower-case first
 		snprintf (pakfile, sizeof(pakfile), "pak%i.%s", i, extension);
-		if (FS_AddPak(pathto, pakfile, parent, funcs))
-			break;
+		if (FS_AddPak(pathto, pakfile, parent, funcs)) {
+			// originals might be PAK0.PAK, try again
+			Q_strupr(pakfile);
+			if (FS_AddPak(pathto, pakfile, parent, funcs)) {
+				break;
+			}
+		}
 	}
 
 	/* VFS-FIXME: Sure there is a better way to do this.... */
@@ -2952,7 +2863,7 @@ void FS_AddHomeDirectory (char *dir, FS_Load_File_Types loadstuff)
 
 //space-seperate pk3 names followed by space-seperated crcs
 //note that we'll need to reorder and filter out files that don't match the crc.
-void FS_ForceToPure(char *str, char *crcs, int seed)
+void FS_ForceToPure(char *str, const char *crcs, int seed)
 {
 	//pure files are more important than non-pure.
 
@@ -3313,5 +3224,17 @@ void FS_Shutdown(void)
 		path->funcs->ClosePath(path->handle);
 		next = path->next;
 		Q_free(path);
+	}
+}
+
+void FS_SaveGameDirectory(char* buffer, int buffer_size)
+{
+	extern cvar_t fs_savegame_home;
+
+	if (fs_savegame_home.integer) {
+		snprintf(buffer, buffer_size, "%s/%s/save/", com_homedir, com_gamedirfile);
+	}
+	else {
+		snprintf(buffer, buffer_size, "%s/save/", com_gamedir);
 	}
 }

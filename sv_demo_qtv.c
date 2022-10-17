@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //	sv_demo_qtv.c - misc QTV's code
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 static cvar_t qtv_streamport     = {"qtv_streamport",      "0"};
@@ -595,7 +596,7 @@ void SV_MVD_RunPendingConnections (void)
 					else if (!versiontouse)
 					{
 						e = ("QTVSV 1\n"
-							 "PERROR: Incompatable version (valid version is v1)\n\n");
+							 "PERROR: Incompatible version (valid version is v1)\n\n");
 					}
 					else if (raw)
 					{
@@ -1439,3 +1440,5 @@ void SV_QTV_Init(void)
 	Cmd_AddCommand ("qtv_close", Qtv_Close_f);
 	Cmd_AddCommand ("qtv_status", Qtv_Status_f);
 }
+
+#endif // !CLIENTONLY

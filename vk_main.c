@@ -64,19 +64,23 @@ qbool VK_Initialise(SDL_Window* window)
 	return true;
 }
 
-void VK_Shutdown(void)
+void VK_Shutdown(r_shutdown_mode_t mode)
 {
-	VK_DestroySwapChain();
+	if (mode != r_shutdown_reload) {
+		VK_DestroySwapChain();
 
-	VK_RenderPassDelete();
-	
-	if (vk_options.instance) {
-		VK_DestroyWindowSurface(vk_options.instance, vk_options.surface);
-		VK_ShutdownDebugCallback(vk_options.instance);
-		vkDestroyInstance(vk_options.instance, NULL);
+		VK_RenderPassDelete();
+
+		if (vk_options.instance) {
+			VK_DestroyWindowSurface(vk_options.instance, vk_options.surface);
+			VK_ShutdownDebugCallback(vk_options.instance);
+			vkDestroyInstance(vk_options.instance, NULL);
+		}
+
+		memset(&vk_options, 0, sizeof(vk_options));
 	}
 
-	memset(&vk_options, 0, sizeof(vk_options));
+	// FIXME
 }
 
 void VK_PopulateConfig(void)

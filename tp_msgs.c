@@ -163,7 +163,7 @@ GLOBAL void TP_Msg_Report_f (void)
 	}
 	
 	if (HAVE_POWERUP())
-		powerup = "$colored_powerups ";
+		powerup = "$tp_powerups ";
  
 	if	(HAVE_RL() && HAVE_LG()) {
 		rl = tp_name_rl.string;
@@ -265,7 +265,7 @@ GLOBAL void TP_Msg_EnemyPowerup_f (void) // might as well add flag to this monst
 			return;
 		}
 		else
-			team = "{&c0b0team&cfff} $colored_powerups";
+			team = "{&c0b0team&cfff} $tp_powerups";
 	}
 	else if (INPOINT(teammate)) {
 		team = "{&c0b0team&cfff} ";
@@ -370,11 +370,11 @@ GLOBAL void TP_Msg_Took_f (void)
 		}
 		
 		// Note that we check if you are holding powerup. This is because TOOK remembers for 15 seconds.
-		// So a case could arise where you took quad then died less than 15 seconds later, and you'd be reporting "team need %u" (because $colored_powerups would be empty)
+		// So a case could arise where you took quad then died less than 15 seconds later, and you'd be reporting "team need %u" (because $tp_powerups would be empty)
 		else if ((NEED(health) || NEED(armor) || NEED_WEAPON() || NEED(rockets) || NEED(cells)) && HAVE_POWERUP())
-			took = "{&c0b0team&cfff} $colored_powerups need %u";
+			took = "{&c0b0team&cfff} $tp_powerups need %u";
 		else if (HAVE_QUAD() || HAVE_RING()) // notice we can't send this check to tp_msgenemypwr, because if enemy with powerup is in your view, tp_enemypwr reports enemypwr first, but in this function you want to report TEAM powerup.
-			took = "{&c0b0team&cfff} $colored_powerups";
+			took = "{&c0b0team&cfff} $tp_powerups";
 		else { // In this case, you took quad or ring and died before 15 secs later. So just report what you need, nothing about powerups.
 			took = "need %u"; //notice we don't say quad over, because it could be that you held ring. No way to distinguish
 		}
@@ -401,7 +401,7 @@ GLOBAL void TP_Msg_Took_f (void)
 		took_msg = "took ";
 		
 		if (HAVE_POWERUP())
-			powerup = "$colored_powerups ";
+			powerup = "$tp_powerups ";
 		else
 			powerup = "";	
 	}
@@ -496,7 +496,7 @@ GLOBAL void TP_Msg_Need_f (void)
 		need = "need %u $[{%l}$]";
 		
 		if (HAVE_POWERUP())
-			team_powerup = "{&c0b0team&cfff} $colored_powerups ";
+			team_powerup = "{&c0b0team&cfff} $tp_powerups ";
 		
 		if (need[0] == 0 && team_powerup[0] == 0)
 			return;
@@ -586,11 +586,11 @@ GLOBAL void TP_Msg_YouTake_f (void)
 
 GLOBAL void TP_Msg_Help_f (void)
 {
-	TP_Send_TeamSay("%s%s", (HAVE_POWERUP() ? "$colored_powerups " : ""), "{&cff0help&cfff} {&cff0[&cfff}{%l}{&cff0]&cfff} {%e}"); // yellow help
+	TP_Send_TeamSay("%s%s", (HAVE_POWERUP() ? "$tp_powerups " : ""), "{&cff0help&cfff} {&cff0[&cfff}{%l}{&cff0]&cfff} {%e}"); // yellow help
 }
 
 // The following define allows us to make as many functions as we want and get the message "powerup message location"
-#define TP_MSG_GENERIC(type) TP_Send_TeamSay("%s" type " $[{%%l}$]", (HAVE_POWERUP() ? "$colored_powerups " : ""))
+#define TP_MSG_GENERIC(type) TP_Send_TeamSay("%s" type " $[{%%l}$]", (HAVE_POWERUP() ? "$tp_powerups " : ""))
 
 GLOBAL void TP_Msg_YesOk_f (void)		{ TP_MSG_GENERIC("{yes/ok}"); }
 GLOBAL void TP_Msg_NoCancel_f (void)	{ TP_MSG_GENERIC("{&cf00no/cancel&cfff}"); } //red no/cancel
@@ -687,7 +687,7 @@ GLOBAL const char * TP_MSG_Colored_Short_Powerups(void) // this displays "qrp" i
 	else if (HAVE_QUAD() && HAVE_RING())
 		msg = tp_ib_name_q tp_ib_name_r;
 	else if (HAVE_PENT() && HAVE_RING())
-		msg = tp_ib_name_r tp_ib_name_p;
+		msg = tp_ib_name_p tp_ib_name_r;
 	else if (HAVE_QUAD())
 		msg = tp_ib_name_q;
 	else if (HAVE_PENT())

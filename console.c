@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "irc.h"
 #include "fonts.h"
 #include "rulesets.h"
+#include "menu.h"
 
 #define     MINIMUM_CONBUFSIZE     (1 << 15)
 #define     DEFAULT_CONBUFSIZE     (1 << 16)
@@ -131,6 +132,14 @@ void Date_f (void)
     con_ormask = 128;
     Com_Printf ("%s %s %02d, %2d:%02d %d\n", day, month, tm.wDay, tm.wHour, tm.wMinute, tm.wYear);
     con_ormask = 0;
+}
+
+static qbool Con_MenuWillDrawConsole(void)
+{
+	if (m_state == m_none || key_dest != key_menu || m_state == m_proxy) {
+		return false;
+	}
+	return (SCR_NEED_CONSOLE_BACKGROUND);
 }
 
 void MakeStringRed(char *s)
@@ -555,15 +564,15 @@ void Con_PrintW(wchar *txt)
 	wchar *s;
 	static int cr;
 
-	if (Ruleset_CanLogConsole() && !(Print_flags[Print_current] & PR_LOG_SKIP)) {
-		if (qconsole_log) {
+	if (!(Print_flags[Print_current] & PR_LOG_SKIP)) {
+		if (Ruleset_CanLogConsole() && qconsole_log) {
 			char *tempbuf = Q_wcs2str_malloc(txt);
 			fprintf(qconsole_log, "%s", tempbuf);
 			fflush(qconsole_log);
 			Q_free(tempbuf);
 		}
 		if (Log_IsLogging()) {
-			if (log_readable.value) {
+			if (log_readable.integer) {
 				char *s, *tempbuf = Q_wcs2str_malloc(txt);
 				for (s = tempbuf; *s; s++)
 					*s = readableChars[(unsigned char)*s];
@@ -678,7 +687,9 @@ void Con_PrintW(wchar *txt)
 		}
 	}
 zomfg:
-	Print_flags[Print_current] = 0;
+	if (!(Print_flags[Print_current] & PR_NORESET)) {
+		Print_flags[Print_current] = 0;
+	}
 }
 
 /*
@@ -862,8 +873,9 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 
 			int printed = 0;
 			int last = idx + con_linewidth - 1;
-			while (last > idx && (con.text + last)[0] == 32)
+			while (last > idx && (con.text + last)[0] == 32) {
 				--last;
+			}
 
 			while (last > idx) {
 				printed = Draw_ConsoleString(posX, v + posY, con.text + idx, con.clr + idx, min(notifyCols, last - idx + 1), 0, scale, proportional);
@@ -876,7 +888,7 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 		}
 	}
 
-	if (Con_NotifyMessageLine(indent, v, vid.width - indent, vid.height, scale, proportional)) {
+	if (Con_NotifyMessageLine(posX, v + posY, notifyCols * 8 * scale, v * 8 * scale, scale, proportional)) {
 		v += 8 * scale;
 	}
 
@@ -890,7 +902,7 @@ void Con_DrawConsole (int lines) {
 	int i, j, x, y, n=0, rows, row, idx;
 	char *text, dlbar[1024];
 
-	if (lines <= 0)
+	if (lines <= 0 || Con_MenuWillDrawConsole())
 		return;
 
 	// draw the background

@@ -33,9 +33,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "parser.h"
 #include "r_renderer.h"
 
-extern void CL_UserinfoChanged (char *key, char *value);
-extern void SV_ServerinfoChanged (char *key, char *value);
-extern void Help_DescribeCvar (cvar_t *v);
+static void Cvar_ApplyLatchedUpdate(cvar_t* var);
+
+void CL_UserinfoChanged(char *key, char *value);
+void SV_ServerinfoChanged(char *key, char *value);
+void Help_DescribeCvar(cvar_t *v);
+void VID_ReloadCvarChanged(cvar_t* var);
 
 extern cvar_t r_fullbrightSkins;
 extern cvar_t cl_fakeshaft;
@@ -209,6 +212,7 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 		qbool cancel = false;
 
 		changing = true;
+		var->flags &= ~(CVAR_AUTOSETRECENT);
 		var->OnChange(var, value, &cancel);
 		changing = false;
 
@@ -235,9 +239,10 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 	else {
 		StringToRGB_W(var->string, var->color);
 	}
-	if (!same_value) {
+	if (!same_value && !(var->flags & CVAR_AUTOSETRECENT)) {
 		Cvar_AutoReset (var);
 	}
+	var->flags &= ~(CVAR_AUTOSETRECENT);
 	var->modified = true;
 #endif
 
@@ -253,6 +258,9 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 	}
 	if (var->flags & CVAR_RECOMPILE_PROGS) {
 		renderer.CvarForceRecompile(var);
+	}
+	if ((var->flags & CVAR_RELOAD_GFX) && host_everything_loaded && !same_value) {
+		VID_ReloadCvarChanged(var);
 	}
 #endif
 }
@@ -366,24 +374,16 @@ void Cvar_Register(cvar_t *var)
 		// allow re-register latched cvar
 		if (old->flags & CVAR_LATCH) {
 			// if we have a latched string, take that value now
-			if (old->latchedString) {
-				// I did't want bother with all this CVAR_ROM and OnChange handler, just set value
-				Q_free(old->string);
-				old->string = old->latchedString;
-				old->latchedString = NULL;
-				old->value = Q_atof(old->string);
-				old->integer = Q_atoi(old->string);
-				StringToRGB_W(old->string, old->color);
-				old->modified = true;
-			}
+			Cvar_ApplyLatchedUpdate(old);
 			Cvar_AutoReset(old);
 
 			return;
 		}
 
 		// warn if CVAR_SILENT is not set
-		if (!(old->flags & CVAR_SILENT))
+		if (!(old->flags & CVAR_SILENT)) {
 			Com_Printf("Can't register variable %s, already defined\n", var->name);
+		}
 
 		return;
 	}
@@ -393,15 +393,23 @@ void Cvar_Register(cvar_t *var)
 	}
 
 	if (var->defaultvalue) {
-		Sys_Error("Cvar_Register: defaultvalue alredy set for %s", var->name);
+		Sys_Error("Cvar_Register: defaultvalue already set for %s", var->name);
 	}
 
 	var->defaultvalue = Q_strdup_named(var->string, var->name);
 	if (old) {
 		char string[512];
+		qbool queued_replace;
+
+		// Trigger change later if this is a proper cvar replacing a user one
+		queued_replace = (old->flags & CVAR_USER_CREATED) && (var->flags & CVAR_QUEUED_TRIGGER) && !(var->flags & CVAR_USER_CREATED);
+		if (queued_replace) {
+			// Created by executing config, now we have the 'proper' cvar - store old value to trigger later
+			var->latchedString = Q_strdup_named(old->string, var->name);
+		}
 
 		var->flags |= old->flags & ~(CVAR_USER_CREATED | CVAR_TEMP);
-		strlcpy(string, (var->flags & CVAR_ROM) ? var->string : old->string, sizeof(string));
+		strlcpy(string, (var->flags & CVAR_ROM) || queued_replace ? var->string : old->string, sizeof(string));
 		Cvar_Delete(old->name);
 		var->string = Q_strdup_named(string, var->name);
 	}
@@ -444,6 +452,20 @@ void Cvar_Register(cvar_t *var)
 		CL_UserinfoChanged(var->name, var->string);
 	}
 #endif // !SERVERONLY
+}
+
+static void Cvar_ApplyLatchedUpdate(cvar_t* var)
+{
+	if (var->latchedString) {
+		// I did't want bother with all this CVAR_ROM and OnChange handler, just set value
+		Q_free(var->string);
+		var->string = var->latchedString;
+		var->latchedString = NULL;
+		var->value = Q_atof(var->string);
+		var->integer = Q_atoi(var->string);
+		StringToRGB_W(var->string, var->color);
+		var->modified = true;
+	}
 }
 
 qbool Cvar_Command (void)
@@ -525,7 +547,7 @@ static void Cvar_Toggle_f_base (qbool use_regex)
 		name = Cmd_Argv(i);
 
 		if (use_regex && IsRegexp(name)) {
-			if (!ReSearchInit(name)) {
+			if (!ReSearchInitEx(name, false)) {
 				continue;
 			}
 
@@ -590,7 +612,7 @@ void Cvar_CvarList(qbool use_regex)
 	pattern = (Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
 
 	if (((c = Cmd_Argc()) > 1) && use_regex) {
-		if (!ReSearchInit(Cmd_Argv(1))) {
+		if (!ReSearchInitEx(Cmd_Argv(1), false)) {
 			return;
 		}
 	}
@@ -845,7 +867,7 @@ void Cvar_Reset(qbool use_regex)
 		name = Cmd_Argv(i);
 
 		if (use_regex && (re_search = IsRegexp(name))) {
-			if (!ReSearchInit(name)) {
+			if (!ReSearchInitEx(name, false)) {
 				continue;
 			}
 		}
@@ -962,6 +984,7 @@ void Cvar_AutoSet(cvar_t *var, char *value)
 	Q_free(var->autoString);
 
 	var->autoString = Q_strdup(value);
+	var->flags |= CVAR_AUTOSETRECENT;
 }
 
 void Cvar_AutoSetInt(cvar_t *var, int value)
@@ -977,6 +1000,7 @@ void Cvar_AutoSetInt(cvar_t *var, int value)
 	snprintf(&val[0], sizeof(val), "%d", value);
 
 	var->autoString = Q_strdup_named(val, var->name);
+	var->flags |= CVAR_AUTOSETRECENT;
 }
 
 void Cvar_AutoReset(cvar_t *var)
@@ -1120,35 +1144,37 @@ void Cvar_Set_tp_f(void)
 	}
 }
 
-void Cvar_Set_ex_f (void)
+static void Cvar_Set_ex_f(void)
 {
-	cvar_t	*var;
-	char	*var_name;
-	char	*st = NULL;
+	cvar_t* var;
+	char* var_name;
+	char* st = NULL;
 	char	text_exp[1024];
+	qbool   parse_funchars = !strcasecmp(Cmd_Argv(0), "set_ex");
 
 	if (Cmd_Argc() != 3) {
-		Com_Printf ("usage: set_ex <cvar> <value>\n");
+		Com_Printf("usage: %s <cvar> <value>\n", Cmd_Argv(0));
 		return;
 	}
 
-	var_name = Cmd_Argv (1);
-	var = Cvar_Find (var_name);
+	var_name = Cmd_Argv(1);
+	var = Cvar_Find(var_name);
 
-
-	if ( !var ) {
+	if (!var) {
 		if (Cmd_Exists(var_name)) {
-			Com_Printf ("\"%s\" is a command\n", var_name);
+			Com_Printf("\"%s\" is a command\n", var_name);
 			return;
 		}
 		var = Cvar_Create(var_name, "", 0);
 	}
 
-	Cmd_ExpandString( Cmd_Argv(2), text_exp);
-	st = TP_ParseMacroString( text_exp );
-	st = TP_ParseFunChars(st, false);
+	Cmd_ExpandString(Cmd_Argv(2), text_exp);
+	st = TP_ParseMacroString(text_exp);
+	if (parse_funchars) {
+		st = TP_ParseFunChars(st, false);
+	}
 
-	Cvar_Set (var, st );
+	Cvar_Set(var, st);
 }
 
 void Cvar_Set_Alias_Str_f (void)
@@ -1242,7 +1268,6 @@ void Cvar_UnSet (qbool use_regex)
 	int		i;
 	qbool	re_search = false;
 
-
 	if (Cmd_Argc() < 2) {
 		Com_Printf ("unset <cvar> [<cvar2>..]: erase user-created variable\n");
 		return;
@@ -1251,9 +1276,11 @@ void Cvar_UnSet (qbool use_regex)
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		if (use_regex && (re_search = IsRegexp(name)))
-			if(!ReSearchInit(name))
+		if (use_regex && (re_search = IsRegexp(name))) {
+			if (!ReSearchInitEx(name, false)) {
 				continue;
+			}
+		}
 
 		if (use_regex && re_search) {
 			for (var = cvar_vars ; var ; var = next) {
@@ -1539,6 +1566,7 @@ void Cvar_Init(void)
 #ifndef SERVERONLY
 	Cmd_AddCommand("set_tp", Cvar_Set_tp_f);
 	Cmd_AddCommand("set_ex", Cvar_Set_ex_f);
+	Cmd_AddCommand("set_ex2", Cvar_Set_ex_f);
 	Cmd_AddCommand("set_alias_str", Cvar_Set_Alias_Str_f);
 	Cmd_AddCommand("set_bind_str", Cvar_Set_Bind_Str_f);
 	Cmd_AddCommand("unset", Cvar_UnSet_f);
@@ -1589,4 +1617,68 @@ void Cvar_Shutdown(void)
 		Q_free(group);
 	}
 #endif
+}
+
+void Cvar_ExecuteQueuedChanges(void)
+{
+	cvar_t* cvar;
+	qbool vid_restart = false;
+	qbool vid_reload = false;
+	qbool sound_restart = false;
+
+	for (cvar = cvar_vars; cvar; cvar = cvar->next) {
+		if ((cvar->flags & CVAR_QUEUED_TRIGGER) && cvar->latchedString) {
+			if (cvar->OnChange) {
+				qbool cancel = false;
+
+				cvar->OnChange(cvar, cvar->latchedString, &cancel);
+				if (!cancel) {
+					Cvar_ApplyLatchedUpdate(cvar);
+				}
+			}
+
+			Q_free(cvar->latchedString);
+		}
+
+		vid_restart |= (cvar->flags & CVAR_LATCH_GFX) && cvar->latchedString;
+		vid_reload |= (cvar->flags & CVAR_RELOAD_GFX && cvar->modified);
+		sound_restart |= (cvar->flags & CVAR_LATCH_SOUND) && cvar->latchedString;
+	}
+
+	if (vid_restart) {
+		Cbuf_AddTextEx(&cbuf_main, "\nvid_restart\n");
+	}
+	else {
+		if (sound_restart) {
+			Cbuf_AddTextEx(&cbuf_main, "\ns_restart\n");
+		}
+		if (vid_reload) {
+			Cbuf_AddTextEx(&cbuf_main, "\nvid_reload\n");
+		}
+	}
+
+	Cvar_ClearAllModifiedFlags(CVAR_RELOAD_GFX);
+}
+
+void Cvar_ClearAllModifiedFlags(int flags)
+{
+	cvar_t* cvar;
+
+	for (cvar = cvar_vars; cvar; cvar = cvar->next) {
+		if (cvar->flags & flags) {
+			cvar->modified = false;
+		}
+	}
+}
+
+qbool Cvar_AnyModified(int flags)
+{
+	cvar_t* cvar;
+
+	for (cvar = cvar_vars; cvar; cvar = cvar->next) {
+		if ((cvar->flags & flags) && cvar->modified) {
+			return true;
+		}
+	}
+	return false;
 }

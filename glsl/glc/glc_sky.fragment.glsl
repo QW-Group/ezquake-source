@@ -9,6 +9,10 @@ uniform sampler2D skyDomeTex;
 uniform sampler2D skyDomeCloudTex;
 #endif
 
+#ifdef DRAW_FOG
+uniform float skyFogMix;
+#endif
+
 uniform float skySpeedscale;
 uniform float skySpeedscale2;
 
@@ -27,5 +31,9 @@ void main()
 	vec4 cloudColor = texture2D(skyDomeCloudTex, vec2(skySpeedscale2 + dir.x * len, skySpeedscale2 + dir.y * len));
 
 	gl_FragColor = mix(skyColor, cloudColor, cloudColor.a);
+#endif
+
+#ifdef DRAW_FOG
+	gl_FragColor = vec4(mix(gl_FragColor.rgb, fogColor, skyFogMix), gl_FragColor.a);
 #endif
 }

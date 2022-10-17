@@ -21,8 +21,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 typedef enum {
 	framebuffer_none,
+	// rendering
 	framebuffer_std,
+	framebuffer_std_ms,
 	framebuffer_hud,
+	framebuffer_hud_ms,
+	// framebuffers used to resolve multisampling
+	framebuffer_std_blit,
+	framebuffer_std_blit_ms,
+	framebuffer_hud_blit,
+	framebuffer_hud_blit_ms,
 	framebuffer_count
 } framebuffer_id;
 
@@ -42,7 +50,6 @@ void GL_FramebufferStartUsingScreen(void);
 texture_ref GL_FramebufferTextureReference(framebuffer_id id, fbtex_id tex_id);
 int GL_FrameBufferWidth(framebuffer_id ref);
 int GL_FrameBufferHeight(framebuffer_id ref);
-void GL_FramebufferBlitSimple(framebuffer_id source, framebuffer_id destination);
 const char* GL_FramebufferZBufferString(framebuffer_id ref);
 
 void GL_FramebufferScreenDrawStart(void);
@@ -53,6 +60,9 @@ qbool GL_FramebufferEnabled3D(void);
 
 qbool GL_FramebufferStartWorldNormals(framebuffer_id id);
 qbool GL_FramebufferEndWorldNormals(framebuffer_id id);
+
+int GL_FramebufferMultisamples(framebuffer_id framebuffer);
+void GL_FramebufferDeleteAll(void);
 
 #define USE_FRAMEBUFFER_SCREEN    1
 #define USE_FRAMEBUFFER_3DONLY    2

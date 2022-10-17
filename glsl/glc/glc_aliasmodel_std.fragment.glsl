@@ -2,9 +2,10 @@
 
 #ezquake-definitions
 
+#ifdef TEXTURING_ENABLED
 uniform sampler2D texSampler;
-uniform int fsTextureEnabled;
 uniform float fsMinLumaMix;
+#endif
 
 #ifdef DRAW_CAUSTIC_TEXTURES
 uniform sampler2D causticsSampler;
@@ -12,21 +13,31 @@ uniform float time;
 uniform float fsCausticEffects;
 #endif
 
+#if defined(TEXTURING_ENABLED) || defined(DRAW_CAUSTIC_TEXTURES)
 varying vec2 fsTextureCoord;
+#endif
+
+#ifdef EZQ_ALIASMODEL_FLATSHADING
+varying flat vec4 fsBaseColor;
+#else
 varying vec4 fsBaseColor;
+#endif
 
 void main()
 {
+#ifdef BACKFACE_PASS
 	gl_FragColor = fsBaseColor;
-	if (fsTextureEnabled == 1) {
+#else
+	#ifdef TEXTURING_ENABLED
 		vec4 tex = texture2D(texSampler, fsTextureCoord);
 		vec3 texMix = mix(tex.rgb, tex.rgb * fsBaseColor.rgb, max(fsMinLumaMix, tex.a));
 
 		gl_FragColor = vec4(texMix, fsBaseColor.a);
-	}
+	#else
+		gl_FragColor = fsBaseColor;
+	#endif
 
-#ifdef DRAW_CAUSTIC_TEXTURES
-	if (fsCausticEffects != 0) {
+	#ifdef DRAW_CAUSTIC_TEXTURES
 		vec4 causticCoord = vec4(
 			// Using multipler of 3 here - not in other caustics logic but range
 			//   isn't enough otherwise, effect too subtle
@@ -39,6 +50,10 @@ void main()
 
 		// FIXME: Do proper GL_DECAL etc
 		gl_FragColor = vec4(caustic.rgb * gl_FragColor.rgb * 1.8, gl_FragColor.a);
-	}
+	#endif
+#endif // BACKFACE_PASS
+
+#ifdef DRAW_FOG
+	gl_FragColor = applyFog(gl_FragColor, gl_FragCoord.z / gl_FragCoord.w);
 #endif
 }

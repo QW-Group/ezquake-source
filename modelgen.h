@@ -99,6 +99,7 @@ typedef struct {
 
 typedef struct {
 	vec3_t  v;
+	vec3_t  normal;
 	byte	lightnormalindex;
 } ez_trivertx_t;
 

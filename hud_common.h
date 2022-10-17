@@ -34,6 +34,7 @@ void SCR_HUD_DrawRadar(hud_t *hud);
 
 void HudCommon_Init(void);
 void SCR_HUD_DrawNum(hud_t *hud, int num, qbool low, float scale, int style, int digits, char *s_align, qbool proportional);
+void SCR_HUD_DrawNum2(hud_t* hud, int num, qbool low, float scale, int style, int digits, char* s_align, qbool proportional, qbool draw_content);
 
 extern qbool autohud_loaded;
 extern cvar_t mvd_autohud;
@@ -76,6 +77,7 @@ typedef struct sort_players_info_s {
 }
 sort_players_info_t;
 
+extern sort_players_info_t sorted_players_by_frags[MAX_CLIENTS];
 extern sort_players_info_t sorted_players[MAX_CLIENTS];
 extern sort_teams_info_t   sorted_teams[MAX_CLIENTS];
 extern int n_teams;
@@ -84,7 +86,6 @@ extern int n_spectators;
 
 int HUD_Stats(int stat_num);
 extern cvar_t cl_weaponpreselect;
-int IN_BestWeapon(void);
 
 #define HUD_SCOREBOARD_ALL			0xffffffff
 #define HUD_SCOREBOARD_SORT_TEAMS	(1 << 0)

@@ -38,6 +38,8 @@ static void SCR_HUD_DrawFPS(hud_t *hud)
 {
 	int x, y;
 	char st[128];
+	qbool drop_triggered = false;
+	extern cvar_t cl_maxfps;
 
 	static cvar_t
 		*hud_fps_show_min = NULL,
@@ -57,6 +59,9 @@ static void SCR_HUD_DrawFPS(hud_t *hud)
 		hud_fps_proportional = HUD_FindVar(hud, "proportional");
 	}
 
+	drop_triggered = (hud_fps_drop->integer > 0 && (hud_fps_drop->value) >= cls.fps);
+	drop_triggered |= (hud_fps_drop->integer < 0 && cl_maxfps.integer && (cl_maxfps.integer + hud_fps_drop->value) >= cls.fps);
+
 	if (hud_fps_show_min->value) {
 		snprintf(st, sizeof(st), "%3d\xf%3d", (int)(cls.min_fps + 0.25), (int)(cls.fps + 0.25));
 	}
@@ -75,19 +80,78 @@ static void SCR_HUD_DrawFPS(hud_t *hud)
 				break;
 			case 2:
 				// if fps is less than a user-set value, then show it
-				if ((hud_fps_drop->value) >= cls.fps) {
+				if (drop_triggered) {
 					Draw_SString(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
 				}
 				break;
 			case 3:
 				// if fps is less than a user-set value, then show it
-				if ((hud_fps_drop->value) >= cls.fps) {
+				if (drop_triggered) {
 					Draw_SAlt_String(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
 				}
 				break;
 			default:
 				Draw_SString(x, y, st, hud_fps_scale->value, hud_fps_proportional->integer);
 				break;
+		}
+	}
+}
+
+// DrawFrameTime
+static void SCR_HUD_DrawFrameTime(hud_t* hud)
+{
+	int x, y;
+	char st[128];
+
+	static cvar_t
+		* hud_frametime_show_max = NULL,
+		* hud_frametime_style,
+		* hud_frametime_title,
+		* hud_frametime_spike,
+		* hud_frametime_scale,
+		* hud_frametime_proportional;
+
+	if (hud_frametime_show_max == NULL) {
+		// first time called
+		hud_frametime_show_max = HUD_FindVar(hud, "show_max");
+		hud_frametime_style = HUD_FindVar(hud, "style");
+		hud_frametime_title = HUD_FindVar(hud, "title");
+		hud_frametime_spike = HUD_FindVar(hud, "spike");
+		hud_frametime_scale = HUD_FindVar(hud, "scale");
+		hud_frametime_proportional = HUD_FindVar(hud, "proportional");
+	}
+
+	if (hud_frametime_show_max->value) {
+		snprintf(st, sizeof(st), "%3.1f\xf%3.1f", cls.max_frametime * 1000, cls.avg_frametime * 1000);
+	}
+	else {
+		snprintf(st, sizeof(st), "%3.1f", cls.avg_frametime * 1000);
+	}
+
+	if (hud_frametime_title->value) {
+		strlcat(st, " ms", sizeof(st));
+	}
+
+	if (HUD_PrepareDraw(hud, Draw_StringLength(st, -1, hud_frametime_scale->value, hud_frametime_proportional->integer), 8 * hud_frametime_scale->value, &x, &y)) {
+		switch (hud_frametime_style->integer) {
+		case 1:
+			Draw_SAlt_String(x, y, st, hud_frametime_scale->value, hud_frametime_proportional->integer);;
+			break;
+		case 2:
+			// if frametime is greater than a user-set value, then show it
+			if ((hud_frametime_spike->value) <= cls.max_frametime * 1000) {
+				Draw_SString(x, y, st, hud_frametime_scale->value, hud_frametime_proportional->integer);
+			}
+			break;
+		case 3:
+			// if frametime is greater than a user-set value, then show it
+			if ((hud_frametime_spike->value) <= cls.max_frametime * 1000) {
+				Draw_SAlt_String(x, y, st, hud_frametime_scale->value, hud_frametime_proportional->integer);
+			}
+			break;
+		default:
+			Draw_SString(x, y, st, hud_frametime_scale->value, hud_frametime_proportional->integer);
+			break;
 		}
 	}
 }
@@ -198,6 +262,11 @@ static void FrameStats_DrawElement(hud_t *hud)
 			FrameStats_AddLine(&lines, "Brush-model polys:", frameStats.classic.polycount[polyTypeBrushModel]);
 		}
 	}
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	FrameStats_AddLine(&lines, "Mallocs:", prevFrameStats.mallocs);
+	FrameStats_AddLine(&lines, "HotMallocs:", prevFrameStats.hotloop_mallocs);
+#endif
+
 	FrameStats_AddLine(&lines, "Particles:", prevFrameStats.particle_count);
 	if (hud_frameStats_amfstats->integer) {
 		FrameStats_AddLine(&lines, "", 0);
@@ -242,6 +311,22 @@ void Performance_HudInit(void)
 		"title", "1",
 		"scale", "1",
 		"drop", "70",
+		"proportional", "0",
+		NULL
+	);
+
+	// frametime
+	HUD_Register(
+		"frametime", NULL,
+		"Shows your current frametime in ms."
+		"This can also show the maximum frametime that occured in the last measured period.",
+		HUD_PLUSMINUS, ca_active, 9, SCR_HUD_DrawFrameTime,
+		"0", "fps", "center", "after", "0", "0", "0", "0 0 0", NULL,
+		"show_max", "1",
+		"style", "0",
+		"title", "1",
+		"scale", "1",
+		"spike", "10",
 		"proportional", "0",
 		NULL
 	);

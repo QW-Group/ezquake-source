@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
+#include "r_local.h"
 
 float vid_gamma = 1.0;
 byte vid_gamma_table[256];
@@ -33,21 +34,7 @@ void Check_Gamma(unsigned char *pal)
 	unsigned char palette[768];
 	int i;
 
-	// we do not need this after host initialized
-	if (!host_initialized) {
-		float old = v_gamma.value;
-		char string = v_gamma.string[0];
-		if ((i = COM_CheckParm(cmdline_param_client_gamma)) != 0 && i + 1 < COM_Argc()) {
-			vid_gamma = bound(0.3, Q_atof(COM_Argv(i + 1)), 1);
-		}
-		else {
-			vid_gamma = 1;
-		}
-
-		Cvar_SetDefaultAndValue(&v_gamma, vid_gamma, old || string == '0' ? old : vid_gamma);
-	}
-
-	if (vid_gamma != 1) {
+	if (R_OldGammaBehaviour() && vid_gamma != 1) {
 		for (i = 0; i < 256; i++) {
 			inf = 255 * pow((i + 0.5) / 255.5, vid_gamma) + 0.5;
 			if (inf > 255) {
@@ -102,4 +89,9 @@ void VID_SetPalette(unsigned char *palette)
 		*table++ = LittleLong((255 << 24) + (r << 0) + (g << 8) + (b << 16));
 	}
 	d_8to24table2[255] = 0;	// 255 is transparent
+}
+
+qbool R_OldGammaBehaviour(void)
+{
+	return COM_CheckParm(cmdline_param_client_oldgammabehaviour) > 0;
 }

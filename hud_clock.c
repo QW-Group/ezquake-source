@@ -56,7 +56,8 @@ static void SCR_HUD_DrawClock(hud_t *hud)
 		*hud_clock_blink,
 		*hud_clock_scale,
 		*hud_clock_format,
-		*hud_clock_proportional;
+		*hud_clock_proportional,
+		*hud_clock_content;
 
 	if (hud_clock_big == NULL) {
 		// first time
@@ -66,9 +67,18 @@ static void SCR_HUD_DrawClock(hud_t *hud)
 		hud_clock_scale = HUD_FindVar(hud, "scale");
 		hud_clock_format = HUD_FindVar(hud, "format");
 		hud_clock_proportional = HUD_FindVar(hud, "proportional");
+		hud_clock_content = HUD_FindVar(hud, "content");
 	}
 
-	t = SCR_GetTimeString(TIMETYPE_CLOCK, SCR_HUD_ClockFormat(hud_clock_format->integer));
+	if (hud_clock_content->integer == 1) {
+		t = SCR_GetTimeString(TIMETYPE_HOSTCLOCK, SCR_HUD_ClockFormat(hud_clock_format->integer));
+	}
+	else if (hud_clock_content->integer == 2) {
+		t = SCR_GetTimeString(TIMETYPE_CONNECTEDCLOCK, SCR_HUD_ClockFormat(hud_clock_format->integer));
+	}
+	else {
+		t = SCR_GetTimeString(TIMETYPE_CLOCK, SCR_HUD_ClockFormat(hud_clock_format->integer));
+	}
 	width = SCR_GetClockStringWidth(t, hud_clock_big->integer, hud_clock_scale->value, hud_clock_proportional->integer);
 	height = SCR_GetClockStringHeight(hud_clock_big->integer, hud_clock_scale->value);
 
@@ -207,9 +217,11 @@ static void SCR_DrawClock(void)
 	if (scr_clock.integer == 2) {
 		strlcpy(str, SCR_GetTimeString(TIMETYPE_CLOCK, SCR_HUD_ClockFormat(scr_clock_format.integer)), sizeof(str));
 	}
+	else if (scr_clock.integer == 3) {
+		strlcpy(str, SCR_GetTimeString(TIMETYPE_HOSTCLOCK, SCR_HUD_ClockFormat(scr_clock_format.integer)), sizeof(str));
+	}
 	else {
-		float time = (cl.servertime_works) ? cl.servertime : cls.realtime;
-		strlcpy(str, SecondsToHourString((int)time), sizeof(str));
+		strlcpy(str, SCR_GetTimeString(TIMETYPE_CONNECTEDCLOCK, SCR_HUD_ClockFormat(scr_clock_format.integer)), sizeof(str));
 	}
 
 	x = ELEMENT_X_COORD(scr_clock);
@@ -239,7 +251,7 @@ static void SCR_DrawGameClock(void)
 		strlcpy(str, SecondsToHourString(timelimit), sizeof(str));
 	}
 	else {
-		strlcpy(str, SecondsToHourString((int)abs(timelimit - cl.gametime + scr_gameclock_offset.value)), sizeof(str));
+		strlcpy(str, SecondsToHourString((int)fabs(timelimit - cl.gametime + scr_gameclock_offset.value)), sizeof(str));
 	}
 
 	if ((scr_gameclock.value == 3 || scr_gameclock.value == 4) && (s = strchr(str, ':'))) {
@@ -312,6 +324,7 @@ void Clock_HudInit(void)
 		"blink", "1",
 		"format", "0",
 		"proportional", "0",
+		"content", "0",
 		NULL
 	);
 

@@ -36,7 +36,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static int Cam_MainTrackNum(void);
 
 static vec3_t desired_position; // where the camera wants to be.
-static qbool locked = false;	// Is the spectator locked to a players view or free flying.
 static int oldbuttons;
 static qbool cmddown, olddown;
 extern cvar_t cam_thirdperson, cl_camera_tpp;
@@ -46,9 +45,6 @@ cvar_t cl_chasecam = {"cl_chasecam", "1"};		// "through the eyes" view
 
 vec3_t cam_viewangles;
 double cam_lastviewtime;
-
-int spec_track = 0;				// player# of who we are tracking
-int autocam = CAM_NONE;
 
 void CL_TrackMV1_f(void);
 void CL_TrackMV2_f(void);
@@ -60,8 +56,7 @@ void CL_Track_f(void);
 void CL_Trackkiller_f(void);
 void CL_Autotrack_f(void);
 
-int		ideal_track = 0;		// The currently tracked player.
-float	last_lock = 0;			// Last tracked player.
+double last_lock = 0;			// Last time Cam_Lock() successful
 
 static int	killer = -1;		// id of the player who killed the player we are now tracking
 
@@ -94,11 +89,21 @@ void vectoangles(vec3_t vec, vec3_t ang) {
 	ang[2] = 0;
 }
 
-void Cam_SetViewPlayer (void) {
-	if (cl.spectator && autocam && locked && cl_chasecam.value)
-		cl.viewplayernum = spec_track;
-	else
-		cl.viewplayernum = cl.playernum;
+void Cam_SetViewPlayer (void)
+{
+	int new_track;
+
+	if (cl.spectator && cl.autocam && cl.spec_locked && cl_chasecam.value) {
+		new_track = cl.spec_track;
+	}
+	else {
+		new_track = cl.playernum;
+	}
+
+	if (new_track != cl.viewplayernum) {
+		memset(cl.antilag_positions, 0, sizeof(cl.antilag_positions));
+	}
+	cl.viewplayernum = new_track;
 }
 
 // returns true if weapon model should be drawn in camera mode
@@ -106,7 +111,7 @@ qbool Cam_DrawViewModel(void) {
 	if (!cl.spectator)
 		return true;
 
-	if (autocam && locked && cl_chasecam.value)
+	if (cl.autocam && cl.spec_locked && cl_chasecam.value)
 		return true;
 	return false;
 }
@@ -117,8 +122,9 @@ static qbool Cam_FirstPersonMode(void)
 }
 
 // returns true if we should draw this player, we don't if we are chase camming
-qbool Cam_DrawPlayer(int playernum) {
-	if (cl.spectator && autocam && locked && spec_track == playernum && Cam_FirstPersonMode())
+qbool Cam_DrawPlayer(int playernum)
+{
+	if (cl.spectator && cl.autocam && cl.spec_locked && cl.spec_track == playernum && Cam_FirstPersonMode())
 		return false;
 	return true;
 }
@@ -130,8 +136,7 @@ void Cam_Unlock(void)
 		Cbuf_AddTextEx (&cbuf_main, "f_freeflyspectate\n");
 	}
 
-	if (!autocam)
-	{
+	if (!cl.autocam) {
 		return;
 	}
 
@@ -146,8 +151,8 @@ void Cam_Unlock(void)
 		MSG_WriteString (&cls.netchan.message, "ptrack");
 	}
 
-	autocam = CAM_NONE;
-	locked = false;
+	cl.autocam = CAM_NONE;
+	cl.spec_locked = false;
 	Sbar_Changed();
 
 	if (cls.mvdplayback && cl.teamfortress) 
@@ -188,13 +193,13 @@ void Cam_Lock(int playernum)
 
 	if (cls.mvdplayback) {
 		memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
-		ideal_track = playernum;
+		cl.ideal_track = playernum;
 		cl.mvd_time_offset = 0;
 	}
 	last_lock = cls.realtime;
 
-	spec_track = playernum;
-	locked = false;
+	cl.spec_track = playernum;
+	cl.spec_locked = false;
 	Sbar_Changed();
 
 	if (TP_NeedRefreshSkins())
@@ -331,7 +336,7 @@ static qbool InitFlyby(player_state_t *self, player_state_t *player, int checkvi
 	// ack, can't find him
     if (max >= 1000)
 		return false;
-	locked = true;
+	cl.spec_locked = true;
 	VectorCopy(vec, desired_position); 
 	return true;
 }
@@ -351,9 +356,9 @@ static void Cam_CheckHighTarget(void)
 		}
 	}
 	if (j >= 0) {
-		if (!locked || cl.players[j].frags > cl.players[spec_track].frags) {
+		if (!cl.spec_locked || cl.players[j].frags > cl.players[cl.spec_track].frags) {
 			Cam_Lock(j);
-			ideal_track = spec_track;	
+			cl.ideal_track = cl.spec_track;
 		}
 	} else
 		Cam_Unlock();
@@ -367,8 +372,7 @@ void Cam_Track(usercmd_t *cmd)
 	frame_t *frame;
 	vec3_t vec;
 
-	if (!cl.spectator)
-	{
+	if (!cl.spectator) {
 		return;
 	}
 
@@ -376,19 +380,19 @@ void Cam_Track(usercmd_t *cmd)
 	cmddown = cmd->upmove < 0;
 
 	// cl_hightrack 
-	if (cl_hightrack.value && !locked)
+	if (cl_hightrack.value && !cl.spec_locked)
 	{
 		Cam_CheckHighTarget(); 
 	}
 	
-	if (!autocam || cls.state != ca_active)
+	if (!cl.autocam || cls.state != ca_active)
 	{
 		return;
 	}
 
-	if (locked && (!cl.players[spec_track].name[0] || cl.players[spec_track].spectator)) 
+	if (cl.spec_locked && (!cl.players[cl.spec_track].name[0] || cl.players[cl.spec_track].spectator))
 	{
-		locked = false;
+		cl.spec_locked = false;
 
 		// cl_hightrack 
 		if (cl_hightrack.value)
@@ -404,16 +408,16 @@ void Cam_Track(usercmd_t *cmd)
 
 	frame = &cl.frames[cl.validsequence & UPDATE_MASK];
 
-	if (autocam && cls.mvdplayback) {
-		if (ideal_track != spec_track && cls.realtime - last_lock > 0.1 && frame->playerstate[ideal_track].messagenum == cl.parsecount) {
-			Cam_Lock(ideal_track);
+	if (cl.autocam && cls.mvdplayback) {
+		if (cl.ideal_track != cl.spec_track && cls.realtime - last_lock > 0.1 && frame->playerstate[cl.ideal_track].messagenum == cl.parsecount) {
+			Cam_Lock(cl.ideal_track);
 		}
 
-		if (frame->playerstate[spec_track].messagenum != cl.parsecount || Cam_MainTrackNum() != ideal_track) {
+		if ((frame->playerstate[cl.spec_track].messagenum != cl.parsecount && frame->playerstate[cl.spec_track].messagenum != cl.oldparsecount) || Cam_MainTrackNum() != cl.ideal_track) {
 			int i;
 
 			for (i = 0; i < MAX_CLIENTS - 1; i++) {
-				if (frame->playerstate[i].messagenum == cl.parsecount) {
+				if ((frame->playerstate[i].messagenum == cl.parsecount || frame->playerstate[i].messagenum == cl.oldparsecount)) {
 					break;
 				}
 			}
@@ -423,12 +427,12 @@ void Cam_Track(usercmd_t *cmd)
 		}
 	}
 
-	player = frame->playerstate + spec_track;
+	player = frame->playerstate + cl.spec_track;
 	self = frame->playerstate + cl.playernum;
 
-	if (!locked || !Cam_IsVisible(player, desired_position))
+	if (!cl.spec_locked || !Cam_IsVisible(player, desired_position))
 	{
-		if (!locked || cls.realtime - cam_lastviewtime > 0.1) 
+		if (!cl.spec_locked || cls.realtime - cam_lastviewtime > 0.1)
 		{
 			if (!InitFlyby(self, player, true))
 				InitFlyby(self, player, false);
@@ -441,7 +445,7 @@ void Cam_Track(usercmd_t *cmd)
 	}
 	
 	// couldn't track for some reason
-	if (!locked || !autocam)
+	if (!cl.spec_locked || !cl.autocam)
 		return;
 
 	if (cl_chasecam.value) 
@@ -535,9 +539,9 @@ void Cam_FinishMove(usercmd_t *cmd)
 		if (!(oldbuttons & BUTTON_ATTACK)) {
 
 			oldbuttons |= BUTTON_ATTACK;
-			autocam++;
+			cl.autocam++;
 
-			if (autocam > CAM_TRACK) {
+			if (cl.autocam > CAM_TRACK) {
 				Cam_Unlock();
 				VectorCopy(cl.viewangles, cmd->angles);
 				return;
@@ -546,12 +550,12 @@ void Cam_FinishMove(usercmd_t *cmd)
 			return;
 	} else {
 		oldbuttons &= ~BUTTON_ATTACK;
-		if (!autocam)
+		if (!cl.autocam)
 			return;
 	}
 
 	// cl_hightrack 
-	if (autocam && cl_hightrack.value) 
+	if (cl.autocam && cl_hightrack.value)
 	{
 		Cam_CheckHighTarget();
 		if (Cam_JumpCheck(cmd))
@@ -567,7 +571,7 @@ void Cam_FinishMove(usercmd_t *cmd)
 		inc = 1;
 	}
 
-	if (locked) {
+	if (cl.spec_locked) {
 		if (!Cam_JumpCheck(cmd) && inc == 1) {
 			return;
 		}
@@ -576,10 +580,12 @@ void Cam_FinishMove(usercmd_t *cmd)
 	}
 
 	
-	if (locked && autocam)
-		end = (ideal_track + MAX_CLIENTS + inc) % MAX_CLIENTS;
-	else
-		end = ideal_track;
+	if (cl.spec_locked && cl.autocam) {
+		end = (cl.ideal_track + MAX_CLIENTS + inc) % MAX_CLIENTS;
+	}
+	else {
+		end = cl.ideal_track;
+	}
 
 	i = end;
 	do {
@@ -589,27 +595,29 @@ void Cam_FinishMove(usercmd_t *cmd)
 				V_TF_ClearGrenadeEffects(); // BorisU
 			}
 			Cam_Lock(i);
-			ideal_track = i;    
+			cl.ideal_track = i;
 			return;
 		}
 		i = (i + MAX_CLIENTS + inc) % MAX_CLIENTS;
 	} while (i != end);
-	// stay on same guy?
 
-	i = ideal_track;	
+	// stay on same guy?
+	i = cl.ideal_track;
 	s = &cl.players[i];
 	if (s->name[0] && !s->spectator) {
 		Cam_Lock(i);
 		return;
 	}
 	Com_Printf ("No target found ...\n");
-	autocam = locked = false;
+	cl.autocam = cl.spec_locked = false;
 }
 
-void Cam_Reset(void) {
-	autocam = CAM_NONE;
-	spec_track = 0;
-	ideal_track = 0;    
+void Cam_Reset(void)
+{
+	cl.autocam = CAM_NONE;
+	cl.spec_track = 0;
+	cl.ideal_track = 0;
+	cl.spec_locked = false;
 }
 
 //Fixes spectator chasecam demos
@@ -621,11 +629,11 @@ void Cam_TryLock (void) {
 	if (!cl.validsequence)
 		return;
 
-	if (!autocam)
+	if (!cl.autocam)
 		cam_lastlocktime = 0;
 
-	old_autocam = autocam;
-	old_spec_track = spec_track;
+	old_autocam = cl.autocam;
+	old_spec_track = cl.spec_track;
 
 	state = cl.frames[cl.validsequence & UPDATE_MASK].playerstate;
 	for (i = 0; i < MAX_CLIENTS; i++) {
@@ -638,9 +646,9 @@ void Cam_TryLock (void) {
 					break;	// too far
 			if (j < 3)
 				continue;
-			autocam = CAM_TRACK;
-			spec_track = i;
-			locked = true;
+			cl.autocam = CAM_TRACK;
+			cl.spec_track = i;
+			cl.spec_locked = true;
 			cam_lastlocktime = cls.realtime;
 			break;
 		}
@@ -649,12 +657,12 @@ void Cam_TryLock (void) {
 	if (cls.realtime - cam_lastlocktime > 0.3) {
 		// Couldn't lock to any player for 0.3 seconds, so assume
 		// the spectator switched to free spectator mode
-		autocam = CAM_NONE;
-		spec_track = 0;
-		locked = false;
+		cl.autocam = CAM_NONE;
+		cl.spec_track = 0;
+		cl.spec_locked = false;
 	}
 
-	if (autocam != old_autocam || spec_track != old_spec_track) {
+	if (cl.autocam != old_autocam || cl.spec_track != old_spec_track) {
 		Sbar_Changed ();
 
 		if (TP_NeedRefreshSkins())
@@ -866,17 +874,17 @@ void CL_Track (int trackview)
 		if (trackview < 0)
 		{
 			// Normal track.
-			Com_Printf("Usage: %s <name | userid>\n", Cmd_Argv(0));
+			Com_Printf("Usage: %s <userid> | <name>\n", Cmd_Argv(0));
 		}
 		else
 		{
 			// Multiview track.
-			Com_Printf("Usage: %s <name | userid | off>\n", Cmd_Argv(0));
+			Com_Printf("Usage: %s <userid> | <name> | <off>\n", Cmd_Argv(0));
 		}
 		return;
 	}
 
-	slot = Player_GetSlot(arg = Cmd_Argv(1));
+	slot = Player_GetSlot(arg = Cmd_Argv(1), true);
 
 	//
 	// The specified player wasn't found.
@@ -908,15 +916,15 @@ void CL_Track (int trackview)
 		// If we're not already tracking the found slot
 		// set the camera to track mode and lock it to the selected slot.
 		// (Locked as in "not free flying", not "cannot change tracked player")
-		autocam = CAM_TRACK;
+		cl.autocam = CAM_TRACK;
 		Cam_Lock(slot);
-		ideal_track = slot;
+		cl.ideal_track = slot;
 		
 		// Multiview tracking:
 		// Set the specified track view to track the specified player.
 		CL_MultiviewSetTrackSlot(trackview, slot);
 
-		locked = true;
+		cl.spec_locked = true;
 
 		if (cls.mvdplayback && cl.teamfortress)
 		{
@@ -1018,29 +1026,29 @@ int Cam_TrackNum(void)
 	static int mvlatch;
 
 	// If we're free-flying, temporarily turn cl_multiview off
-	if (cl_multiview.value && !locked) 
+	if (cl_multiview.value && !cl.spec_locked)
 	{
 		mvlatch = cl_multiview.value;
 		cl_multiview.value = 0;
 	}
-	else if (!cl_multiview.value && mvlatch && locked) 
+	else if (!cl_multiview.value && mvlatch && cl.spec_locked)
 	{
 		cl_multiview.value = mvlatch;
 		mvlatch = 0;
 	}
 
-	if (!autocam)
-	{
+	if (!cl.autocam) {
 		return -1;
 	}
 	
-	return spec_track;
+	return cl.spec_track;
 }
 
 int WhoIsSpectated (void)
 {
-    if (cl.spectator  &&  autocam == CAM_TRACK  &&  cl.players[spec_track].name[0])
-        return spec_track;
+	if (cl.spectator && cl.autocam == CAM_TRACK && cl.players[cl.spec_track].name[0]) {
+		return cl.spec_track;
+	}
 
     return -1;
 }

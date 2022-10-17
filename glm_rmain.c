@@ -35,6 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 #include "r_sprite3d.h"
 #include "r_state.h"
+#include "r_matrix.h"
 
 texture_ref GL_FramebufferTextureReference(framebuffer_id id, fbtex_id tex_id);
 qbool GLM_CompilePostProcessVAO(void);
@@ -58,13 +59,30 @@ static void GLM_DrawWorldOutlines(void)
 {
 	texture_ref normals = GL_FramebufferTextureReference(framebuffer_std, fbtex_worldnormals);
 
-	if (R_TextureReferenceIsValid(normals) && developer.integer == 0 && GLM_CompileWorldGeometryProgram()) {
+	if (R_TextureReferenceIsValid(normals) && GLM_CompileWorldGeometryProgram()) {
+		int viewport[4];
+		int fullscreen_viewport[4];
+
+		// If we are only rendering to a section of the screen then that is the only part of the texture that will be filled in
+		if (CL_MultiviewEnabled()) {
+			R_GetViewport(viewport);
+			R_GetFullScreenViewport(fullscreen_viewport);
+			R_Viewport(fullscreen_viewport[0], fullscreen_viewport[1], fullscreen_viewport[2], fullscreen_viewport[3]);
+			R_EnableScissorTest(viewport[0], viewport[1], viewport[2], viewport[3]);
+		}
+
 		renderer.TextureUnitBind(0, normals);
 
 		R_ProgramUse(r_program_fx_world_geometry);
 		R_ApplyRenderingState(r_state_fx_world_geometry);
 
 		GL_DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+		// Restore viewport
+		if (CL_MultiviewEnabled()) {
+			R_Viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+			R_DisableScissorTest();
+		}
 	}
 }
 
@@ -98,9 +116,9 @@ void GLM_RenderView(void)
 
 void GLM_PrepareModelRendering(qbool vid_restart)
 {
-	if (cls.state != ca_disconnected) {
-		GLM_BuildCommonTextureArrays(vid_restart);
+	GLM_BuildCommonTextureArrays(vid_restart);
 
+	if (cls.state != ca_disconnected) {
 		R_CreateInstanceVBO();
 		R_CreateAliasModelVBO();
 		R_BrushModelCreateVBO();

@@ -35,12 +35,12 @@ static void R_InitialiseWorldStates(void)
 	rendering_state_t* state;
 
 	state = R_InitRenderingState(r_state_world_texture_chain, true, "worldTextureChainState", vao_brushmodel);
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(state, 1, true, r_texunit_mode_blend);
 
 	state = R_InitRenderingState(r_state_world_texture_chain_fullbright, true, "worldTextureChainFullbrightState", vao_brushmodel);
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
 	state = R_InitRenderingState(r_state_world_blend_lightmaps, true, "blendLightmapState", vao_brushmodel_lightmap_pass);
@@ -63,15 +63,22 @@ static void R_InitialiseWorldStates(void)
 
 	state = R_InitRenderingState(r_state_world_fast_opaque_water, true, "fastWaterSurfacesState", vao_brushmodel_simpletex);
 	state->depth.test_enabled = true;
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 
 	state = R_CopyRenderingState(r_state_world_opaque_water, r_state_world_fast_opaque_water, "waterSurfacesState");
 	state->cullface.enabled = false;
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
 	state = R_CopyRenderingState(r_state_world_translucent_water, r_state_world_fast_opaque_water, "translucentWaterSurfacesState");
+	state->blendFunc = r_blendfunc_premultiplied_alpha;
+	state->blendingEnabled = true;
 	state->depth.mask_enabled = false; // FIXME: water-alpha < 0.9 only?
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
+
+	state = R_CopyRenderingState(r_state_world_fast_translucent_water, r_state_world_translucent_water, "translucentFastWater");
+	state->blendFunc = r_blendfunc_premultiplied_alpha;
+	state->blendingEnabled = true;
+	R_GLC_TextureUnitSet(state, 0, false, r_texunit_mode_replace);
 
 	state = R_InitRenderingState(r_state_world_alpha_surfaces, true, "alphaChainState", vao_brushmodel);
 	R_GLC_ConfigureAlphaTesting(state, true, r_alphatest_func_greater, 0.333f);
@@ -93,16 +100,19 @@ static void R_InitialiseWorldStates(void)
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_replace);
 
 	state = R_InitRenderingState(r_state_world_details, true, "detailPolyState", vao_brushmodel_details);
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_decal);
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_src_dst_color_dest_src_color;
 
 	state = R_InitRenderingState(r_state_world_outline, true, "mapOutlineState", vao_brushmodel);
 	state->polygonOffset.option = r_polygonoffset_outlines;
+	state->polygonMode = r_polygonmode_line;
 	state->depth.mask_enabled = false;
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_premultiplied_alpha;
 
 	state = R_InitRenderingState(r_state_alpha_surfaces_offset_glm, true, "glmAlphaOffsetWorldState", vao_brushmodel);
 	state->polygonOffset.option = r_polygonoffset_standard;
@@ -125,7 +135,7 @@ static void R_Initialise2DStates(void)
 	rendering_state_t* state;
 	r_vao_id postprocess_vao = R_UseImmediateOpenGL() ? vao_none : vao_postprocess;
 
-	state = R_InitRenderingState(r_state_default_2d, true, "default2DState", vao_none);
+	state = R_InitRenderingState(r_state_default_2d, true, "default2DState", postprocess_vao);
 	state->depth.test_enabled = false;
 	state->cullface.enabled = false;
 
@@ -156,6 +166,12 @@ static void R_Initialise2DStates(void)
 
 	state = R_CopyRenderingState(r_state_hud_images_alphatested_glc, r_state_hud_images_glc, "glcAlphaTestedImageDrawState");
 	R_GLC_EnableAlphaTesting(state);
+
+	state = R_CopyRenderingState(r_state_hud_images_glc_non_glsl, r_state_hud_images_glc, "glcImageDrawStateNonGLSL");
+	state->vao_id = vao_hud_images_non_glsl;
+
+	state = R_CopyRenderingState(r_state_hud_images_alphatested_glc_non_glsl, r_state_hud_images_alphatested_glc, "glcAlphaTestedImageDrawStateNonGLSL");
+	state->vao_id = vao_hud_images_non_glsl;
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	state = R_InitRenderingState(r_state_postprocess_bloom1, true, "glcBloomState", postprocess_vao);
@@ -264,13 +280,21 @@ static void R_InitialiseEntityStates(void)
 	rendering_state_t* state;
 
 	state = R_InitRenderingState(r_state_aliasmodel_powerupshell, true, "powerupShellState", vao_aliasmodel);
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 	state->cullface.enabled = true;
 	state->cullface.mode = r_cullface_front;
 	R_GLC_DisableAlphaTesting(state);
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_additive_blending;
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
+
+	state = R_CopyRenderingState(r_state_aliasmodel_outline, r_state_aliasmodel_powerupshell, "aliasmodel-outline");
+	state->fog.mode = r_fogmode_enabled;
+	state->blendingEnabled = false;
+	state->cullface.mode = r_cullface_back;
+
+	state = R_CopyRenderingState(r_state_weaponmodel_outline, r_state_aliasmodel_outline, "weaponmodel-outline");
+	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
 
 	state = R_CopyRenderingState(r_state_weaponmodel_powerupshell, r_state_aliasmodel_powerupshell, "weaponmodel-shell");
 	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
@@ -284,7 +308,10 @@ static void R_InitialiseEntityStates(void)
 	state->cullface.mode = r_cullface_front;
 	state->polygonMode = r_polygonmode_fill;
 	state->line.smooth = false;
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
+
+	state = R_CopyRenderingState(r_state_aliasmodel_transparent_zpass, r_state_aliasmodel_notexture_opaque, "aliasModelZPass");
+	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = false;
 
 	state = R_CopyRenderingState(r_state_aliasmodel_singletexture_opaque, r_state_aliasmodel_notexture_opaque, "opaqueAliasModelSingleTex");
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
@@ -293,6 +320,7 @@ static void R_InitialiseEntityStates(void)
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 	R_GLC_TextureUnitSet(state, 1, true, r_texunit_mode_decal);
 
+	// transparent
 	state = R_CopyRenderingState(r_state_aliasmodel_notexture_transparent, r_state_aliasmodel_notexture_opaque, "transparentAliasModelNoTex");
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
@@ -303,16 +331,30 @@ static void R_InitialiseEntityStates(void)
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 
+	// additive
+	state = R_CopyRenderingState(r_state_aliasmodel_notexture_additive, r_state_aliasmodel_notexture_opaque, "additiveAliasModelNoTex");
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_additive_blending;
+	state = R_CopyRenderingState(r_state_aliasmodel_singletexture_additive, r_state_aliasmodel_singletexture_opaque, "additiveAliasModelSingleTex");
+	state->blendingEnabled = true;
+	state->blendFunc = r_blendfunc_additive_blending;
+
 	state = R_CopyRenderingState(r_state_weaponmodel_singletexture_opaque, r_state_aliasmodel_singletexture_opaque, "weaponModelSingleOpaque");
 	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
-
-	state = R_CopyRenderingState(r_state_weaponmodel_singletexture_transparent, r_state_aliasmodel_singletexture_transparent, "weaponModelSingleTransparent");
-	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
-
 	state = R_CopyRenderingState(r_state_weaponmodel_multitexture_opaque, r_state_weaponmodel_singletexture_opaque, "weaponModelMultiOpaque");
 	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
 
-	state = R_CopyRenderingState(r_state_weaponmodel_multitexture_transparent, r_state_weaponmodel_singletexture_transparent, "weaponModelMultiOpaque");
+	// transparent
+	state = R_CopyRenderingState(r_state_weaponmodel_singletexture_transparent, r_state_aliasmodel_singletexture_transparent, "weaponModelSingleTransparent");
+	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
+	state = R_CopyRenderingState(r_state_weaponmodel_multitexture_transparent, r_state_weaponmodel_singletexture_transparent, "weaponModelMultiTransparent");
+	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
+	state = R_CopyRenderingState(r_state_weaponmodel_transparent_zpass, r_state_weaponmodel_singletexture_transparent, "weaponModelZPass");
+	R_GLC_TextureUnitSet(state, 0, false, r_texunit_mode_replace);
+	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = false;
+
+	// additive
+	state = R_CopyRenderingState(r_state_weaponmodel_singletexture_additive, r_state_aliasmodel_singletexture_additive, "weaponModelSingleAdditive");
 	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
 
 	state = R_InitRenderingState(r_state_aliasmodel_shadows, true, "aliasModelShadowState", vao_aliasmodel);
@@ -321,25 +363,12 @@ static void R_InitialiseEntityStates(void)
 	state->cullface.mode = r_cullface_front;
 	state->polygonMode = r_polygonmode_fill;
 	state->line.smooth = false;
-	state->fog.enabled = true;
+	state->fog.mode = r_fogmode_enabled;
 	R_GLC_DisableAlphaTesting(state);
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 	state->color[0] = state->color[1] = state->color[2] = 0;
 	state->color[3] = 0.5f;
-
-	state = R_InitRenderingState(r_state_aliasmodel_outline, true, "aliasModelOutlineState", vao_aliasmodel);
-	R_GLC_DisableAlphaTesting(state);
-	state->blendingEnabled = false;
-	state->fog.enabled = true;
-	state->polygonOffset.option = r_polygonoffset_outlines;
-	state->cullface.enabled = true;
-	state->cullface.mode = r_cullface_back;
-	state->polygonMode = r_polygonmode_line;
-	state->line.width = 0.1;
-	state->line.flexible_width = true;
-	state->line.smooth = true;
-	state->color[0] = state->color[1] = state->color[2] = 0;
 
 	state = R_InitRenderingState(r_state_aliasmodel_opaque_batch, true, "aliasModelBatchState", vao_aliasmodel);
 	state->cullface.mode = r_cullface_front;
@@ -352,6 +381,9 @@ static void R_InitialiseEntityStates(void)
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 	state->blendingEnabled = true;
 
+	state = R_CopyRenderingState(r_state_aliasmodel_translucent_batch_zpass, r_state_aliasmodel_opaque_batch, "aliasModelTranslucentBatchZPass");
+	state->colorMask[0] = state->colorMask[1] = state->colorMask[2] = state->colorMask[3] = false;
+
 	state = R_CopyRenderingState(r_state_aliasmodel_additive_batch, r_state_aliasmodel_opaque_batch, "aliasModelTranslucentBatchState");
 	state->blendFunc = r_blendfunc_additive_blending;
 	state->blendingEnabled = true;
@@ -362,40 +394,47 @@ static void R_InitialiseBrushModelStates(void)
 	rendering_state_t* current;
 
 	current = R_InitRenderingState(r_state_drawflat_without_lightmaps_glc, true, "drawFlatNoLightmapState", vao_brushmodel);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
+
+	current = R_InitRenderingState(r_state_drawflat_without_lightmaps_unfogged_glc, true, "drawFlatNoLightmapStateUnfogged", vao_brushmodel);
+	current->fog.mode = r_fogmode_disabled;
 
 	current = R_InitRenderingState(r_state_drawflat_with_lightmaps_glc, true, "drawFlatLightmapState", vao_brushmodel_lightmap_pass);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_blend);
 
 	// Single-texture: all of these are the same so we don't need to bother about others
 	current = R_InitRenderingState(r_state_world_singletexture_glc, true, "world:singletex", vao_brushmodel);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 
 	// material * lightmap
 	current = R_InitRenderingState(r_state_world_material_lightmap, true, "r_state_world_material_lightmap", vao_brushmodel_lm_unit1);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_blend);
 
 	// material * lightmap + luma
 	current = R_InitRenderingState(r_state_world_material_lightmap_luma, true, "r_state_world_material_lightmap_luma", vao_brushmodel_lm_unit1);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_blend);
 	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_add);
 
+	// r_state_world_material_lightmap_fb
+	current = R_CopyRenderingState(r_state_world_material_lightmap_fb, r_state_world_material_lightmap_luma, "r_state_world_material_lightmap_fb");
+	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_decal);
+
 	// no fullbrights, 3 units: blend(material + luma, lightmap) 
 	current = R_InitRenderingState(r_state_world_material_fb_lightmap, true, "r_state_world_material_fb_lightmap", vao_brushmodel);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_add);
 	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_blend);
 
 	// lumas enabled, 3 units
 	current = R_InitRenderingState(r_state_world_material_luma_lightmap, true, "r_state_world_material_luma_lightmap", vao_brushmodel);
-	current->fog.enabled = true;
+	current->fog.mode = r_fogmode_enabled;
 	R_GLC_TextureUnitSet(current, 0, true, r_texunit_mode_replace);
 	R_GLC_TextureUnitSet(current, 1, glConfig.texture_units >= 2, r_texunit_mode_add);
 	R_GLC_TextureUnitSet(current, 2, glConfig.texture_units >= 3, r_texunit_mode_blend);
@@ -460,7 +499,7 @@ void R_StateBeginDrawAliasModel(const entity_t* ent, aliashdr_t* paliashdr)
 {
 	extern cvar_t r_viewmodelsize;
 
-	R_TraceEnterRegion(__FUNCTION__, true);
+	R_TraceEnterRegion(__func__, true);
 
 	R_RotateForEntity(ent);
 	if (ent->renderfx & RF_WEAPONMODEL) {

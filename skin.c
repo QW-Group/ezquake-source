@@ -48,12 +48,12 @@ static void Skin_Blend(byte* original, skin_t* skin, int skin_number);
 
 void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel);
 
-cvar_t	noskins = { "noskins", "0" };
+cvar_t	noskins = { "noskins", "0", CVAR_RELOAD_GFX };
 
 cvar_t  enemyforceskins     = {"enemyforceskins", "0", 0, OnChangeSkinForcing};
 cvar_t  teamforceskins      = {"teamforceskins", "0", 0, OnChangeSkinForcing};
 
-static cvar_t  baseskin = { "baseskin", "base" };
+static cvar_t  baseskin = { "baseskin", "base", CVAR_RELOAD_GFX };
 static cvar_t  cl_name_as_skin     = {"cl_name_as_skin", "0", 0, OnChangeSkinForcing};
 cvar_t  r_enemyskincolor    = {"r_enemyskincolor", "", CVAR_COLOR, OnChangeSkinForcing};
 cvar_t  r_teamskincolor     = {"r_teamskincolor",  "", CVAR_COLOR, OnChangeSkinForcing};
@@ -107,6 +107,7 @@ static char* Skin_AsNameOrId(player_info_t *sc)
 	switch (Skin_ForcingType(sc->team)) {
 	case 1: // get skin as player name
 		Util_ToValidFileName(sc->name, name, sizeof(name));
+		Q_strlwr(name);
 		return name;
 		break;
 
@@ -255,7 +256,7 @@ static byte* Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *
 	*max_w = *max_h = *bpp = 0;
 
 	// PCX skins loads different, so using TEX_NO_PCX
-	if ((pic = R_LoadImagePixels(name, 0, 0, TEX_NO_PCX, real_width, real_height))) {
+	if (gl_no24bit.integer == 0 && (pic = R_LoadImagePixels(name, 0, 0, TEX_NO_PCX, real_width, real_height))) {
 		// No limit in gl.
 		*max_w = *real_width;
 		*max_h = *real_height;
@@ -356,7 +357,7 @@ static byte* Skin_Cache(skin_t *skin, qbool no_baseskin)
 			skin->warned = true;
 			return NULL; // well, we not set skin->failedload = true, that how I need it here
 		}
-		else if (!skin->warned) {
+		else if (!skin->warned && strcmp(skin->name, "base")) {
 			Com_Printf("&cf22Couldn't load skin:&r %s\n", name);
 		}
 
@@ -902,7 +903,9 @@ void Skin_RegisterCvars(void)
 void Skin_Refresh(void)
 {
 	int oldskins = noskins.integer;
+	int oldflags = noskins.flags;
 
+	noskins.flags &= ~(CVAR_RELOAD_GFX);
 	Cvar_SetValue(&noskins, 2);
 
 	con_suppress = true;
@@ -910,6 +913,7 @@ void Skin_Refresh(void)
 	con_suppress = false;
 
 	Cvar_SetValue(&noskins, oldskins);
+	noskins.flags = oldflags;
 }
 
 void Skin_UserInfoChange(int slot, player_info_t* player, const char* key)
@@ -935,7 +939,7 @@ void Skin_UserInfoChange(int slot, player_info_t* player, const char* key)
 
 void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel)
 {
-	extern cvar_t noskins, cl_name_as_skin, enemyforceskins;
+	extern cvar_t cl_name_as_skin, enemyforceskins;
 
 	if (cl.teamfortress || (cl.fpd & FPD_NO_FORCE_SKIN)) {
 		return;
@@ -946,11 +950,16 @@ void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel)
 	}
 
 	if (var == &enemyforceskins && (!cl.spectator && cls.state != ca_disconnected)) {
-		if (Q_atoi(string)) {
-			Cbuf_AddText("say Forcing enemy skins\n");
+		if (!cl.standby && !cl.countdown) {
+			Con_Printf("%s cannot be changed during match\n", var->name);
+			return;
 		}
-		else {
-			Cbuf_AddText("say Not forcing enemy skins\n");
+
+		if (Q_atoi(string)) {
+			Cbuf_AddText("say Individual enemy skins: enabled\n");
+		}
+		else if (strcmp(var->string, string)) {
+			Cbuf_AddText("say Individual enemy skins: disabled\n");
 		}
 	}
 

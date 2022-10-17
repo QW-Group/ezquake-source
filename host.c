@@ -47,6 +47,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "config_manager.h"
 #include "EX_qtvlist.h"
 #include "r_renderer.h"
+#include "central.h"
 
 double		curtime;
 
@@ -200,7 +201,9 @@ void SYSINFO_Init(void)
 		buffer[fread (buffer, 1, sizeof(buffer) - 1, f)] = '\0';
 		fclose (f);
 		match = strstr (buffer, "cpu MHz");
-		sscanf (match, "cpu MHz : %i", &SYSINFO_MHz);
+		if (match) {
+			sscanf (match, "cpu MHz : %i", &SYSINFO_MHz);
+		}
 	} else {
 		Com_Printf ("could not open /proc/cpuinfo!\n");
 	}
@@ -336,11 +339,19 @@ void SYSINFO_Init(void)
 	SYSINFO_processor_description = cpu_model;
 
 	gettimeofday(&old_tp, NULL);
+#ifdef __powerpc__
+	__asm__ __volatile__("mfspr %%r3, 268": "=r" (old_tsc));
+#else
 	old_tsc = rdtsc();
+#endif
 	do {
 		gettimeofday(&tp, NULL);
 	} while ((tp.tv_sec - old_tp.tv_sec) * 1000000. + tp.tv_usec - old_tp.tv_usec < 1000000.);
+#ifdef __powerpc__
+	__asm__ __volatile__("mfspr %%r3, 268": "=r" (tsc_freq));
+#else
 	tsc_freq = rdtsc();
+#endif
 	SYSINFO_MHz = (int)((tsc_freq - old_tsc) /
 						(tp.tv_sec - old_tp.tv_sec + (tp.tv_usec - old_tp.tv_usec) / 1000000.) /
 						1000000. + .5);
@@ -385,9 +396,10 @@ void Host_EndGame (void)
 #ifndef CLIENTONLY
 	SV_Shutdown ("Server was killed");
 #endif
-	CL_Disconnect ();
+	CL_Disconnect();
 	// clear disconnect messages from loopback
-	NET_ClearLoopback ();
+	CL_ClearQueuedPackets();
+	NET_ClearLoopback();
 }
 
 //This shuts down both the client and server
@@ -465,6 +477,8 @@ void Host_Frame (double time)
 	curtime += time;
 
 	CL_Frame (time);	// will also call SV_Frame
+
+	Central_ProcessResponses();
 }
 
 char *Host_PrintBars(char *s, int len)
@@ -509,7 +523,6 @@ static void Commands_For_Configs_Init (void)
 	extern void MT_MapGroup_f (void);
 	extern void MT_AddSkyGroups (void);
 	extern void MT_SkyGroup_f (void);
-	extern void CL_Fog_f (void);
 	extern void SB_SourceUnmarkAll(void);
 	extern void SB_SourceMark(void);
 	extern void LoadConfig_f(void);
@@ -530,7 +543,6 @@ static void Commands_For_Configs_Init (void)
 
 	MT_AddSkyGroups ();
 	Cmd_AddCommand ("skygroup", MT_SkyGroup_f);
-	Cmd_AddCommand ("fog", CL_Fog_f);
 	Cmd_AddCommand ("allskins", Skin_AllSkins_f);
 
 	Cmd_AddCommand ("sb_sourceunmarkall", SB_SourceUnmarkAll);
@@ -646,12 +658,20 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	FS_InitFilesystem ();
 	NET_Init ();
 
+#ifdef WITH_RENDERING_TRACE
+	// Start immediately: (have to wait until filesystem is started up so we know where to save files)
+	if (COM_CheckParm(cmdline_param_client_video_r_trace)) {
+		Dev_VidFrameStart();
+	}
+#endif
+
 	Commands_For_Configs_Init ();
 	Host_RegisterLegacyCvars();
 	Browser_Init2();
 	ConfigManager_Init();
 	ResetBinds();
 	Cfg_ExecuteDefaultConfig();
+	Cbuf_Execute();
 
 	i = COM_FindParm("+cfg_load");
 
@@ -682,6 +702,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	SV_Init ();
 #endif
 	CL_Init ();
+	Central_Init();
 
 	Cvar_CleanUpTempVars ();
 
@@ -692,9 +713,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	host_initialized = true;
 
-	// walk through all vars and forse OnChange event if cvar was modified,
-	// also apply that to variables which mirrored in userinfo because of cl_parsefunchars was't applyed as this moment,
-	// same for serverinfo and may be this fix something also.
+	// walk through all vars and force OnChange event if cvar was modified,
+	// also apply that to variables which mirrored in userinfo because of cl_parsefunchars wasn't applied at this moment,
+	// same for serverinfo and maybe this fix something also.
 	for ( v = NULL; (v = Cvar_Next ( v )); ) {
 		char val[2048];
 
@@ -713,7 +734,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Com_Printf_State (PRINT_INFO, "Exe: "__DATE__" "__TIME__"\n");
 	Com_Printf_State (PRINT_INFO, "Hunk allocation: %4.1f MB\n", (float) host_memsize / (1024 * 1024));
 	Com_Printf("\n");
-	Com_Printf("http://ezquake.github.io/\n");
+	Com_Printf(EZ_VERSION_WEBSITE "\n");
 	Com_Printf("\n");
 //	Com_Printf(Host_PrintBars("ezQuake\x9c" "SourceForge\x9c" "net", 38));
 	Com_Printf("ezQuake %s\n", VersionStringColour());
@@ -728,7 +749,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	}
 
 	Cmd_StuffCmds_f ();		// process command line arguments
-	Cbuf_AddText ("cl_warncmd 1\n");
+	Cbuf_AddText("cl_warncmd 1\n");
 
 	Sys_CheckQWProtocolHandler();
 
@@ -737,15 +758,18 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	{
 		char cmd[1024] = {0};
 
-		if (COM_CheckArgsForPlayableFiles(cmd, sizeof(cmd)))
-		{
+		if (COM_CheckArgsForPlayableFiles(cmd, sizeof(cmd))) {
 			Cbuf_AddText(cmd);
 		}
-		else
-		{
+		else {
 			Startup_Place();
 		}
 	}
+
+	// Trigger changes config has made to defaults
+	Cbuf_Flush(&cbuf_main);
+	Cvar_ExecuteQueuedChanges();
+	Cbuf_Execute();
 
 	host_everything_loaded = true;
 #ifdef DEBUG_MEMORY_ALLOCATIONS
@@ -774,6 +798,7 @@ void Host_Shutdown (void)
 	SV_Shutdown ("Server quit\n");
 #endif
 
+	Central_Shutdown();
 	CL_Shutdown ();
 	NET_Shutdown ();
 	Con_Shutdown();

@@ -1,12 +1,12 @@
 {
   "ammo": {
     "description": "returns amount of ammo held for currently selected weapon",
-    "teamplay-restricted": true,
+    "teamplay-restricted": false,
     "type": "integer"
   },
   "armor": {
     "description": "returns current armor value",
-    "teamplay-restricted": true,
+    "teamplay-restricted": false,
     "type": "integer"
   },
   "armortype": {
@@ -17,7 +17,7 @@
       "tp_name_armortype_ra",
       "tp_name_armortype_none"
     ],
-    "teamplay-restricted": true,
+    "teamplay-restricted": false,
     "type": "string"
   },
   "bestammo": {
@@ -25,7 +25,7 @@
     "related-cvars": [
       "tp_weapon_order"
     ],
-    "teamplay-restricted": true,
+    "teamplay-restricted": false,
     "type": "integer"
   },
   "bestweapon": {
@@ -40,7 +40,7 @@
       "tp_name_rl",
       "tp_name_lg"
     ],
-    "teamplay-restricted": true,
+    "teamplay-restricted": false,
     "type": "string"
   },
   "cam_angles": {
@@ -109,25 +109,25 @@
   },
   "cells": {
     "description": "returns number of cells held, regardless of weapon selected",
-    "teamplay-restricted": true,
+    "teamplay-restricted": false,
     "type": "integer"
   },
   "colored_armor": {
     "description": "returns $armor, surrounded by color codes so it is displayed in &c0b0red&r, &cff0yellow&r, &e00green&r or &cfffwhite&r",
-    "teamplay-restricted": true,
+    "teamplay-restricted": false,
     "type": "string"
   },
   "colored_powerups": {
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "colored_short_powerups": {
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "conheight": {
     "flags": [
@@ -169,7 +169,7 @@
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "demolength": {
     "description": "returns the expected length of the current demo, in seconds",
@@ -194,12 +194,12 @@
   },
   "droploc": {
     "description": "returns the name of the location where the last backpack was dropped by the current player.",
-    "teamplay-restricted": true,
+    "teamplay-restricted": false,
     "type": "string"
   },
   "droptime": {
     "description": "returns the number of seconds since the last backpack was dropped by the current player.",
-    "teamplay-restricted": true,
+    "teamplay-restricted": false,
     "type": "integer"
   },
   "gamedir": {
@@ -209,7 +209,7 @@
   },
   "health": {
     "description": "the current player's health (0 - 250)",
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "lastip": {
     "flags": [
@@ -221,13 +221,13 @@
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "lastpowerup": {
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "latency": {
     "flags": [
@@ -239,19 +239,19 @@
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "ledstatus": {
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "location": {
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "matchname": {
     "flags": [
@@ -275,24 +275,24 @@
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "mp3info": {
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "nails": {
     "description": "returns number of nails held, regardless of weapon selected",
-    "teamplay-restricted": true,
+    "teamplay-restricted": false,
     "type": "integer"
   },
   "need": {
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "ping": {
     "flags": [
@@ -304,25 +304,25 @@
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "pointatloc": {
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "pointloc": {
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "powerups": {
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "qt": {
     "description": "returns \" - useful to clear cvars in scripts",
@@ -336,7 +336,7 @@
   },
   "rockets": {
     "description": "returns number of rockets held, regardless of weapon selected",
-    "teamplay-restricted": true,
+    "teamplay-restricted": false,
     "type": "integer"
   },
   "serverip": {
@@ -347,8 +347,16 @@
   },
   "shells": {
     "description": "returns number of shells held, regardless of weapon selected",
-    "teamplay-restricted": true,
+    "teamplay-restricted": false,
     "type": "integer"
+  },
+  "team1": {
+    "system-generated": true,
+    "teamplay-restricted": true
+  },
+  "team2": {
+    "system-generated": true,
+    "teamplay-restricted": true
   },
   "tf_skin": {
     "flags": [
@@ -361,23 +369,35 @@
     "teamplay-restricted": true,
     "type": "string"
   },
+  "timestamp": {
+    "system-generated": true,
+    "teamplay-restricted": true
+  },
   "took": {
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "tookatloc": {
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   },
   "tookloc": {
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
+  },
+  "tp_powerups": {
+    "description": "$colored_powerups or $colored_short_powerups, depending on value of tp_poweruptextstyle",
+    "related-cvars": [
+      "tp_poweruptextstyle"
+    ],
+    "teamplay-restricted": false,
+    "type": "boolean"
   },
   "triggermatch": {
     "flags": [
@@ -401,6 +421,6 @@
     "flags": [
       "incomplete"
     ],
-    "teamplay-restricted": true
+    "teamplay-restricted": false
   }
 }

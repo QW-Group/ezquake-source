@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "image.h"
 #include "crc.h"
 #include "gl_texture.h"
+#include "r_trace.h"
 
 static void R_LoadTextureData(gltexture_t* glt, int width, int height, byte *data, int mode, int bpp);
 
@@ -64,6 +65,7 @@ texture_ref R_LoadTextureImage(const char *filename, const char *identifier, int
 	int image_width = -1, image_height = -1;
 	gltexture_t *gltexture;
 
+	R_TraceAPI("R_LoadTextureImage(filename=%s, identifier=%s, matchwidth=%d, matchheight=%d, mode=%d)", filename, identifier, matchwidth, matchheight, mode);
 	if (Block24BitTextures) {
 		return invalid_texture_reference;
 	}
@@ -118,6 +120,7 @@ mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int match
 	// this is 2D texture loading so it must not have MIP MAPS
 	mode &= ~TEX_MIPMAP;
 
+	R_TraceAPI("R_LoadPicImage(filename=%s, identifier=%s, matchwidth=%d, matchheight=%d, mode=%d)", filename, id, matchwidth, matchheight, mode);
 	if (Block24BitTextures) {
 		return NULL;
 	}
@@ -193,11 +196,16 @@ qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t*
 	byte *data, *buf = NULL, *dest, *src;
 	texture_ref tex;
 
+	R_TraceEnterRegion(va("R_LoadCharsetImage(filename=%s, identifier=%s, flags=%d)", filename, identifier, flags), true);
 	if (Block24BitTextures) {
+		R_TraceAPI("24-bit textures blocked");
+		R_TraceLeaveRegion(true);
 		return false;
 	}
 
 	if (!(data = R_LoadImagePixels(filename, 0, 0, flags, &real_width, &real_height))) {
+		R_TraceAPI("Failed to load image pixels");
+		R_TraceLeaveRegion(true);
 		return false;
 	}
 
@@ -238,12 +246,15 @@ qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t*
 			pic->glyphs[i].width = real_width >> 4;
 			pic->glyphs[i].height = real_height >> 4;
 		}
+
+		pic->master = tex;
 	}
 
 	pic->custom_scale_x = 1;
 	pic->custom_scale_y = 1;
 
 	Q_free(data);	// data was Q_malloc'ed by R_LoadImagePixels
+	R_TraceLeaveRegion(true);
 	return R_TextureReferenceIsValid(tex);
 }
 
@@ -393,7 +404,7 @@ texture_ref R_LoadTexturePixels(byte *data, const char *identifier, int width, i
 		R_ImagePreMultiplyAlpha(data, width, height, mode & TEX_ZERO_ALPHA);
 	}
 
-	if (gamma) {
+	if (R_OldGammaBehaviour() && gamma) {
 		for (i = 0; i < image_size; i++) {
 			data[4 * i] = vid_gamma_table[data[4 * i]];
 			data[4 * i + 1] = vid_gamma_table[data[4 * i + 1]];
@@ -447,14 +458,22 @@ texture_ref R_LoadTexture(const char *identifier, int width, int height, byte *d
 	qbool new_texture = false;
 	gltexture_t *glt = R_TextureAllocateSlot(texture_type_2d, identifier, width, height, 0, bpp, mode, crc, &new_texture);
 
+	R_TraceEnterFunctionRegion;
+	R_TraceAPI("R_LoadTexture(id=%s, width=%d, height=%d, mode=%d, bpp=%d)", identifier, width, height, mode, bpp);
 	if (glt && !new_texture) {
+		R_TraceLeaveFunctionRegion;
 		return glt->reference;
+	}
+	else if (!glt) {
+		R_TraceLeaveFunctionRegion;
+		return null_texture_reference;
 	}
 
 	if (data) {
 		R_LoadTextureData(glt, width, height, data, mode, bpp);
 	}
 
+	R_TraceLeaveFunctionRegion;
 	return glt->reference;
 }
 
@@ -537,15 +556,21 @@ static void R_Upload32(gltexture_t* glt, unsigned *data, int width, int height, 
 
 static void R_Upload8(gltexture_t* glt, byte *data, int width, int height, int mode)
 {
-	static unsigned trans[640 * 480];
+	static unsigned* trans;
+	static int trans_size;
 	int	i, image_size, p;
 	unsigned *table;
 
 	table = (mode & TEX_BRIGHTEN) ? d_8to24table2 : d_8to24table;
 	image_size = width * height;
 
-	if (image_size * 4 > sizeof(trans)) {
-		Sys_Error("GL_Upload8: image too big (%s: %dx%d)", glt->identifier[0] ? glt->identifier : "?unknown?", width, height);
+	if (image_size * 4 > trans_size) {
+		unsigned* newmem = Q_realloc(trans, image_size * 4);
+		if (newmem == NULL) {
+			Sys_Error("GL_Upload8: image too big (%s: %dx%d)", glt->identifier[0] ? glt->identifier : "?unknown?", width, height);
+		}
+		trans = newmem;
+		trans_size = image_size * 4;
 	}
 
 	if (mode & TEX_FULLBRIGHT) {

@@ -572,8 +572,8 @@ static background_thread_t threads[MAX_SCREENSHOT_THREADS] = { { 0 } };
 static byte* tempBuffer = 0;
 static int background_threads = 0;
 static int next_thread = 0;
-static int movie_width = 0;
-static int movie_height = 0;
+static size_t movie_width = 0;
+static size_t movie_height = 0;
 
 static int Movie_BackgroundThread(void* thread_data)
 {
@@ -645,7 +645,7 @@ void Movie_BackgroundShutdown(void)
 
 }
 
-byte* Movie_TempBuffer(int width, int height)
+byte* Movie_TempBuffer(size_t width, size_t height)
 {
 	if (width != movie_width || height != movie_height) {
 		return NULL;

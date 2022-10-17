@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	
 */
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 #ifdef SERVERONLY
@@ -54,6 +55,7 @@ void OnChange_sysselecttimeout_var (cvar_t *var, char *value, qbool *cancel);
 cvar_t	sys_select_timeout = {"sys_select_timeout", "10000", 0, OnChange_sysselecttimeout_var}; // microseconds.
 
 cvar_t	sys_restart_on_error = {"sys_restart_on_error", "0"};
+cvar_t  sv_mod_extensions = { "sv_mod_extensions", "2", CVAR_ROM };
 
 #ifdef SERVERONLY
 cvar_t  sys_simulation = { "sys_simulation", "0" };
@@ -184,6 +186,10 @@ cvar_t sv_serveme_fix = { "sv_serveme_fix", "1", CVAR_ROM };
 
 #ifdef FTE_PEXT_FLOATCOORDS
 cvar_t sv_bigcoords = {"sv_bigcoords", "", CVAR_SERVERINFO};
+#endif
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+// Only enabled on KTX mod (see sv_init)
+cvar_t sv_pext_mvdsv_serversideweapon = { "sv_pext_mvdsv_serversideweapon", "1" };
 #endif
 
 cvar_t sv_extlimits = { "sv_extlimits", "2" };
@@ -353,7 +359,7 @@ or unwillingly.  This is NOT called if the entire server is quiting
 or crashing.
 =====================
 */
-void SV_DropClient (client_t *drop)
+void SV_DropClient(client_t* drop)
 {
 	//bliP: cuff, mute ->
 	SV_SavePenaltyFilter (drop, ft_mute, drop->lockedtill);
@@ -403,8 +409,8 @@ void SV_DropClient (client_t *drop)
 
 	SV_Logout(drop);
 
-	drop->state = cs_zombie;		// become free in a few seconds
-	drop->connection_started = realtime;	// for zombie timeout
+	drop->state = cs_zombie;		    // become free in a few seconds
+	SV_SetClientConnectionTime(drop);   // for zombie timeout
 
 // MD -->
 	if (drop == WatcherId)
@@ -419,7 +425,7 @@ void SV_DropClient (client_t *drop)
 	Info_RemoveAll(&drop->_userinfoshort_ctx_);
 
 	// send notification to all remaining clients
-	SV_FullClientUpdate (drop, &sv.reliable_datagram);
+	SV_FullClientUpdate(drop, &sv.reliable_datagram);
 }
 
 
@@ -495,7 +501,7 @@ void SV_FullClientUpdate (client_t *client, sizebuf_t *buf)
 
 	MSG_WriteByte (buf, svc_updateentertime);
 	MSG_WriteByte (buf, i);
-	MSG_WriteFloat (buf, realtime - client->connection_started);
+	MSG_WriteFloat (buf, SV_ClientGameTime(client));
 
 	Info_ReverseConvert(&client->_userinfoshort_ctx_, info, sizeof(info));
 	Info_RemovePrefixedKeys (info, '_');	// server passwords, etc
@@ -584,6 +590,7 @@ This message can be up to around 5k with worst case string lengths.
 #define STATUS_SPECTATORS_AS_PLAYERS    8 //for ASE - change only frags: show as "S"
 #define STATUS_SHOWTEAMS                16
 #define STATUS_SHOWQTV                  32
+#define STATUS_SHOWFLAGS                64
 
 static void SVC_Status (void)
 {
@@ -627,13 +634,26 @@ static void SVC_Status (void)
 					frags = va("%i", cl->old_frags);
 
 				Con_Printf ("%i %s %i %i \"%s\" \"%s\" %i %i", cl->userid, frags,
-				            (int)(realtime - cl->connection_started)/60, ping, name,
+				            (int)(SV_ClientConnectedTime(cl) / 60.0f), ping, name,
 				            Info_Get (&cl->_userinfo_ctx_, "skin"), top, bottom);
 
-				if (opt & STATUS_SHOWTEAMS)
-					Con_Printf (" \"%s\"\n", cl->team);
-				else
-					Con_Printf ("\n");
+				if (opt & STATUS_SHOWTEAMS) {
+					Con_Printf(" \"%s\"", cl->team);
+				}
+
+				if (opt & STATUS_SHOWFLAGS) {
+					if (cl->login_flag[0]) {
+						Con_Printf(" \"%s\"", cl->login_flag);
+					}
+					else if (cl->logged_in_via_web || cl->logged > 0) {
+						Con_Printf(" \"none\"");
+					}
+					else {
+						Con_Printf(" \"\"");
+					}
+				}
+
+				Con_Printf("\n");
 			}
 		}
 
@@ -1058,7 +1078,7 @@ qbool CheckReConnect( netadr_t adr, int qport )
 		if (NET_CompareBaseAdr (adr, cl->netchan.remote_address) &&
 			(cl->netchan.qport == qport || adr.port == cl->netchan.remote_address.port))
 		{
-			if ((realtime - cl->connection_started) < sv_reconnectlimit.value)
+			if (SV_ClientConnectedTime(cl) < sv_reconnectlimit.value)
 			{
 				Con_Printf ("%s:reconnect rejected: too soon\n", NET_AdrToString (adr));
 				return false;
@@ -1392,8 +1412,7 @@ static void SVC_DirectConnect (void)
 	// }
 
 	// JACK: Init the floodprot stuff.
-	for (i=0; i<10; i++)
-		newcl->whensaid[i] = 0.0;
+	memset(newcl->whensaid, 0, sizeof(newcl->whensaid));
 	newcl->whensaidhead = 0;
 	newcl->lockedtill = 0;
 	newcl->disable_updates_stop = -1.0; // Vladis
@@ -1494,8 +1513,6 @@ static qbool rcon_bandlim (void)
 //bliP: master rcon/logging ->
 int Rcon_Validate (char *client_string, char *password1)
 {
-	time_t server_time, client_time = 0;
-	double difftime_server_client;
 	unsigned int i;
 
 	if (rcon_bandlim()) {
@@ -1507,14 +1524,24 @@ int Rcon_Validate (char *client_string, char *password1)
 	}
 
 	if ((int)sv_crypt_rcon.value) {
-		time(&server_time);
-		for (i = 0; i < sizeof(client_time) * 2; i += 2) {
-			client_time += (char2int((unsigned char)(Cmd_Argv(1) + DIGEST_SIZE * 2)[i]) << (4 + i * 4)) +
-			               (char2int((unsigned char)(Cmd_Argv(1) + DIGEST_SIZE * 2)[i + 1]) << (i * 4));
-		}
-		difftime_server_client = difftime(server_time, client_time);
+		const char* digest = Cmd_Argv(1);
+		const char* time_start = Cmd_Argv(1) + DIGEST_SIZE * 2;
 
-		if (!(int)sv_timestamplen.value) {
+		if (strlen(digest) < DIGEST_SIZE * 2 + sizeof(time_t) * 2) {
+			return 0;
+		}
+
+		if ((int)sv_timestamplen.value) {
+			time_t server_time, client_time = 0;
+			double difftime_server_client;
+
+			time(&server_time);
+			for (i = 0; i < sizeof(client_time) * 2; i += 2) {
+				client_time += (char2int((unsigned char)time_start[i]) << (4 + i * 4)) +
+				               (char2int((unsigned char)time_start[i + 1]) << (i * 4));
+			}
+			difftime_server_client = difftime(server_time, client_time);
+
 			if (difftime_server_client > (double)sv_timestamplen.value || difftime_server_client < -(double)sv_timestamplen.value) {
 				return 0;
 			}
@@ -1523,13 +1550,13 @@ int Rcon_Validate (char *client_string, char *password1)
 		SHA1_Update((unsigned char*)Cmd_Argv(0));
 		SHA1_Update((unsigned char*)" ");
 		SHA1_Update((unsigned char*)password1);
-		SHA1_Update((unsigned char*)Cmd_Argv(1) + DIGEST_SIZE * 2);
+		SHA1_Update((unsigned char*)time_start);
 		SHA1_Update((unsigned char*)" ");
 		for (i = 2; (int) i < Cmd_Argc(); i++) {
 			SHA1_Update((unsigned char*)Cmd_Argv(i));
 			SHA1_Update((unsigned char*)" ");
 		}
-		if (strncmp(Cmd_Argv(1), SHA1_Final(), DIGEST_SIZE * 2)) {
+		if (strncmp(digest, SHA1_Final(), DIGEST_SIZE * 2)) {
 			return 0;
 		}
 	}
@@ -2838,7 +2865,7 @@ void SV_SavePenaltyFilter (client_t *cl, filtertype_t type, double pentime)
 {
 	int i;
 
-	if (pentime < realtime)   // no point
+	if (pentime < curtime)   // no point
 		return;
 
 	for (i = 0; i < numpenfilters; i++)
@@ -3023,10 +3050,11 @@ static void SV_CheckTimeouts (void)
 				SV_DropClient (cl);
 				cl->state = cs_free;	// don't bother with zombie state
 			}
-			if (!cl->logged)
+			if (!cl->logged && !cl->logged_in_via_web) {
 				SV_LoginCheckTimeOut(cl);
+			}
 		}
-		if (cl->state == cs_zombie && realtime - cl->connection_started > zombietime.value)
+		if (cl->state == cs_zombie && SV_ClientConnectedTime(cl) > zombietime.value)
 		{
 			cl->state = cs_free;	// can now be reused
 		}
@@ -3092,8 +3120,8 @@ int SV_BoundRate (qbool dl, int rate)
 
 	if (rate < 500)
 		rate = 500;
-	if (rate > 100000)
-		rate = 100000;
+	if (rate > 100000 * MAX_DUPLICATE_PACKETS)
+		rate = 100000 * MAX_DUPLICATE_PACKETS;
 
 	return rate;
 }
@@ -3299,6 +3327,24 @@ void SV_InitLocal (void)
 	//extern	cvar_t	pm_slidefix;
 	extern	cvar_t	pm_ktjump;
 	//extern	cvar_t	pm_bunnyspeedcap;
+
+	// qws = QuakeWorld Server information
+	static cvar_t qws_name = { "qws_name", SERVER_NAME, CVAR_ROM };
+	static cvar_t qws_fullname = { "qws_fullname", SERVER_FULLNAME, CVAR_ROM };
+	static cvar_t qws_version = { "qws_version", SERVER_VERSION, CVAR_ROM };
+	static cvar_t qws_buildnum = { "qws_buildnum", "unknown", CVAR_ROM };
+	static cvar_t qws_platform = { "qws_platform", QW_PLATFORM_SHORT, CVAR_ROM };
+	static cvar_t qws_builddate = { "qws_builddate", BUILD_DATE, CVAR_ROM };
+	static cvar_t qws_homepage = { "qws_homepage", SERVER_HOME_URL, CVAR_ROM };
+	// qwm = QuakeWorld Mod information placeholders
+	static cvar_t qwm_name = { "qwm_name", "" };
+	static cvar_t qwm_fullname = { "qwm_fullname", "" };
+	static cvar_t qwm_version = { "qwm_version", "" };
+	static cvar_t qwm_buildnum = { "qwm_buildnum", "" };
+	static cvar_t qwm_platform = { "qwm_platform", "" };
+	static cvar_t qwm_builddate = { "qwm_builddate", "" };
+	static cvar_t qwm_homepage = { "qwm_homepage", "" };
+
 	packet_t *packet_freeblock; // initialise delayed packet free block
 
 	SV_InitOperatorCommands	();
@@ -3438,8 +3484,31 @@ void SV_InitLocal (void)
 #endif
 
 	Cvar_Register (&sv_extlimits);
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+	Cvar_Register (&sv_pext_mvdsv_serversideweapon);
+#endif
 
 	Cvar_Register (&sv_reliable_sound);
+
+	Cvar_Register(&qws_name);
+	Cvar_Register(&qws_fullname);
+	Cvar_Register(&qws_version);
+	if (GIT_COMMIT[0]) {
+		qws_buildnum.string = GIT_COMMIT;
+	}
+	Cvar_Register(&qws_buildnum);
+	Cvar_Register(&qws_platform);
+	Cvar_Register(&qws_builddate);
+	Cvar_Register(&qws_homepage);
+	Cvar_Register(&qwm_name);
+	Cvar_Register(&qwm_fullname);
+	Cvar_Register(&qwm_version);
+	Cvar_Register(&qwm_buildnum);
+	Cvar_Register(&qwm_platform);
+	Cvar_Register(&qwm_builddate);
+	Cvar_Register(&qwm_homepage);
+
+	Cvar_Register(&sv_mod_extensions);
 
 // QW262 -->
 	Cmd_AddCommand ("svadmin", SV_Admin_f);
@@ -3493,8 +3562,17 @@ void SV_InitLocal (void)
 #ifdef MVD_PEXT1_HIGHLAGTELEPORT
 	svs.mvdprotocolextension1 |= MVD_PEXT1_HIGHLAGTELEPORT;
 #endif
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+	svs.mvdprotocolextension1 |= MVD_PEXT1_SERVERSIDEWEAPON;
+#endif
+#ifdef MVD_PEXT1_HIDDEN_MESSAGES
+	svs.mvdprotocolextension1 |= MVD_PEXT1_HIDDEN_MESSAGES;
+#endif
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON2
+	svs.mvdprotocolextension1 |= MVD_PEXT1_SERVERSIDEWEAPON2;
+#endif
 
-	Info_SetValueForStarKey (svs.info, "*version", SERVER_NAME " " VERSION_NUMBER, MAX_SERVERINFO_STRING);
+	Info_SetValueForStarKey (svs.info, "*version", SERVER_NAME " " SERVER_VERSION, MAX_SERVERINFO_STRING);
 	Info_SetValueForStarKey (svs.info, "*z_ext", va("%i", SERVER_EXTENSIONS), MAX_SERVERINFO_STRING);
 
 	// init fraglog stuff
@@ -3576,7 +3654,7 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 			val = Info_Get (&cl->_userinfo_ctx_, "name");
 		}
 
-		if (!val[0] || !strcasecmp(val, "console") || strstr(val, "&c") || strstr(val, "&r"))
+		if (!val[0] || !Q_namecmp(val, "console") || strstr(val, "&c") || strstr(val, "&r"))
 		{
 			Info_Set (&cl->_userinfo_ctx_, "name", sv_default_name.string);
 			val = Info_Get (&cl->_userinfo_ctx_, "name");
@@ -3590,7 +3668,7 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 				if (client->state != cs_spawned || client == cl)
 					continue;
 
-				if (!strcasecmp(client->name, val))
+				if (!Q_namecmp(client->name, val))
 					break;
 			}
 			if (i != MAX_CLIENTS)
@@ -3617,28 +3695,24 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 
 		if (strncmp(val, cl->name, strlen(cl->name) + 1))
 		{
-			if (!sv.paused)
-			{
-				if (!cl->lastnametime || realtime - cl->lastnametime > 5)
-				{
-					cl->lastnamecount = 0;
-					cl->lastnametime = realtime;
-				}
-				else if (cl->lastnamecount++ > 4)
-				{
-					SV_BroadcastPrintf (PRINT_HIGH, "%s was kicked for name spamming\n", cl->name);
-					SV_ClientPrintf (cl, PRINT_HIGH, "You were kicked from the game for name spamming\n");
-					SV_LogPlayer(cl, "name spam", 1); //bliP: player logging
-					SV_DropClient (cl);
-					return;
-				}
+			if (!cl->lastnametime || curtime - cl->lastnametime > 5) {
+				cl->lastnamecount = 0;
+				cl->lastnametime = curtime;
+			}
+			else if (cl->lastnamecount++ > 4) {
+				SV_BroadcastPrintf(PRINT_HIGH, "%s was kicked for name spamming\n", cl->name);
+				SV_ClientPrintf(cl, PRINT_HIGH, "You were kicked from the game for name spamming\n");
+				SV_LogPlayer(cl, "name spam", 1); //bliP: player logging
+				SV_DropClient(cl);
+				return;
 			}
 
-			if (cl->state >= cs_spawned && !cl->spectator)
-				SV_BroadcastPrintf (PRINT_HIGH, "%s changed name to %s\n", cl->name, val);
+			if (cl->state >= cs_spawned && !cl->spectator) {
+				SV_BroadcastPrintf(PRINT_HIGH, "%s changed name to %s\n", cl->name, val);
+			}
 		}
 
-		strlcpy (cl->name, val, CLIENT_NAME_LEN);
+		strlcpy(cl->name, val, CLIENT_NAME_LEN);
 
 		if (cl->state >= cs_spawned) //bliP: player logging
 			SV_LogPlayer(cl, "name change", 1);
@@ -3653,6 +3727,12 @@ void SV_ExtractFromUserinfo (client_t *cl, qbool namechanged)
 	// rate
 	val = Info_Get (&cl->_userinfo_ctx_, cl->download ? "drate" : "rate");
 	cl->netchan.rate = 1.0 / SV_BoundRate (cl->download != NULL, Q_atoi(*val ? val : "99999"));
+
+	// s2c packet dupes
+	val = Info_Get(&cl->_userinfo_ctx_, "dupe");
+	cl->dupe = atoi(val);
+	cl->dupe = (int)bound(0, cl->dupe, MAX_DUPLICATE_PACKETS); // 0=1 packet (aka: no dupes)
+	cl->netchan.dupe = (cl->download ? 0 : cl->dupe);
 
 	// message level
 	val = Info_Get (&cl->_userinfo_ctx_, "msg");
@@ -3723,7 +3803,7 @@ void COM_Init (void)
 	Cvar_Register (&version);
 	Cvar_Register (&sys_simulation);
 
-	Cvar_SetROM(&version, VersionStringFull());
+	Cvar_SetROM(&version, SERVER_NAME " " SERVER_VERSION);
 }
 
 //Free hunk memory up to host_hunklevel
@@ -3744,13 +3824,13 @@ void Host_InitMemory (int memsize)
 {
 	int t;
 
-	if (COM_CheckParm(cmdline_param_host_memory_minimum))
+	if (SV_CommandLineUseMinimumMemory())
 		memsize = MINIMUM_MEMORY;
 
-	if ((t = COM_CheckParm(cmdline_param_host_memory_kb)) != 0 && t + 1 < COM_Argc())
+	if ((t = SV_CommandLineHeapSizeMemoryKB()) != 0 && t + 1 < COM_Argc())
 		memsize = Q_atoi (COM_Argv(t + 1)) * 1024;
 
-	if ((t = COM_CheckParm(cmdline_param_host_memory_mb)) != 0 && t + 1 < COM_Argc())
+	if ((t = SV_CommandLineHeapSizeMemoryMB()) != 0 && t + 1 < COM_Argc())
 		memsize = Q_atoi (COM_Argv(t + 1)) * 1024 * 1024;
 
 	if (memsize < MINIMUM_MEMORY)
@@ -3770,7 +3850,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	Host_InitMemory (default_memsize);
 
-	Con_Printf ("============= Starting " SERVER_NAME " =============\n");
+	Con_Printf ("============= Starting %s =============\n", VersionStringFull());
 
 	Cbuf_Init ();
 	Cmd_Init ();
@@ -3805,7 +3885,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	Con_Printf ("%4.1f megabyte heap\n", (float)hunk_size / (1024 * 1024));
 	Con_Printf ("QuakeWorld Initialized\n");
-	Version_f();
 
 	Cbuf_InsertText ("exec server.cfg\n");
 
@@ -3878,7 +3957,7 @@ void SV_Init (void)
 SV_TimeOfDay
 ============
 */
-void SV_TimeOfDay(date_t *date)
+void SV_TimeOfDay(date_t *date, char *timeformat)
 {
 	struct tm *newtime;
 	time_t long_time;
@@ -3906,7 +3985,7 @@ void SV_TimeOfDay(date_t *date)
 	date->hour = newtime->tm_hour;
 	date->min = newtime->tm_min;
 	date->sec = newtime->tm_sec;
-	strftime(date->str, sizeof(date->str)-1, "%a %b %d, %H:%M:%S %Y", newtime);
+	strftime(date->str, sizeof(date->str)-1, timeformat, newtime);
 }
 
 //bliP: player logging ->
@@ -3954,7 +4033,7 @@ void SV_Write_Log(int sv_log, int level, char *msg)
 	if (logs[sv_log].log_level < level)
 		return;
 
-	SV_TimeOfDay(&date);
+	SV_TimeOfDay(&date, "%a %b %d, %H:%M:%S %Y");
 
 	switch (sv_log)
 	{
@@ -4005,3 +4084,30 @@ int Sys_compare_by_name (const void *a, const void *b)
 {
 	return strncmp(((file_t *)a)->name, ((file_t *)b)->name, MAX_DEMO_NAME);
 }
+
+// real-world time passed
+double SV_ClientConnectedTime(client_t* client)
+{
+	if (!client->connection_started_curtime) {
+		return 0;
+	}
+	return curtime - client->connection_started_curtime;
+}
+
+// affected by pause
+double SV_ClientGameTime(client_t* client)
+{
+	if (!client->connection_started_realtime) {
+		return 0;
+	}
+
+	return realtime - client->connection_started_realtime;
+}
+
+void SV_SetClientConnectionTime(client_t* client)
+{
+	client->connection_started_realtime = realtime;
+	client->connection_started_curtime = curtime;
+}
+
+#endif // !CLIENTONLY

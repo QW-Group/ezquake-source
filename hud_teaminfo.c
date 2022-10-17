@@ -53,13 +53,14 @@ static cvar_t scr_teaminfo_name_width      = { "scr_teaminfo_name_width",  "6" }
 static cvar_t scr_teaminfo_low_health      = { "scr_teaminfo_low_health",  "25" };
 static cvar_t scr_teaminfo_armor_style     = { "scr_teaminfo_armor_style", "3" };
 static cvar_t scr_teaminfo_powerup_style   = { "scr_teaminfo_powerup_style", "1" };
+static cvar_t scr_teaminfo_flag_style      = { "scr_teaminfo_flag_style",  "1" };
 static cvar_t scr_teaminfo_weapon_style    = { "scr_teaminfo_weapon_style","1" };
 static cvar_t scr_teaminfo_show_enemies    = { "scr_teaminfo_show_enemies","0" };
 static cvar_t scr_teaminfo_show_self       = { "scr_teaminfo_show_self",   "2" };
 static cvar_t scr_teaminfo_proportional    = { "scr_teaminfo_proportional", "0"};
 cvar_t scr_teaminfo                        = { "scr_teaminfo",             "1" };   // non-static for menu
 
-static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int maxname, int maxloc, qbool width_only, float scale, const char* layout, int weapon_style, int armor_style, int powerup_style, int low_health, qbool proportional);
+static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int maxname, int maxloc, qbool width_only, float scale, const char* layout, int weapon_style, int armor_style, int powerup_style, int flag_style, int low_health, qbool proportional);
 
 static int HUD_CompareTeamInfoSlots(const void* lhs_, const void* rhs_)
 {
@@ -86,6 +87,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	int x, y, _y, width, height;
 	int i, j, k, slots[MAX_CLIENTS], slots_num, maxname, maxloc;
 	char tmp[1024], *nick;
+	float header_spacing;
 
 	// Used for hud_teaminfo, data is collected in screen.c / scr_teaminfo
 	extern ti_player_t ti_clients[MAX_CLIENTS];
@@ -99,12 +101,15 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		*hud_teaminfo_name_width,
 		*hud_teaminfo_show_enemies,
 		*hud_teaminfo_show_self,
+		*hud_teaminfo_show_headers,
 		*hud_teaminfo_scale,
 		*hud_teaminfo_armor_style,
 		*hud_teaminfo_powerup_style,
+		*hud_teaminfo_flag_style,
 		*hud_teaminfo_low_health,
 		*hud_teaminfo_layout,
-		*hud_teaminfo_proportional;
+		*hud_teaminfo_proportional,
+		*hud_teaminfo_header_spacing;
 
 	if (hud_teaminfo_weapon_style == NULL) {
 		// first time
@@ -114,12 +119,15 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		hud_teaminfo_name_width = HUD_FindVar(hud, "name_width");
 		hud_teaminfo_show_enemies = HUD_FindVar(hud, "show_enemies");
 		hud_teaminfo_show_self = HUD_FindVar(hud, "show_self");
+		hud_teaminfo_show_headers = HUD_FindVar(hud, "show_headers");
 		hud_teaminfo_scale = HUD_FindVar(hud, "scale");
 		hud_teaminfo_armor_style = HUD_FindVar(hud, "armor_style");
 		hud_teaminfo_powerup_style = HUD_FindVar(hud, "powerup_style");
+		hud_teaminfo_flag_style = HUD_FindVar(hud, "flag_style");
 		hud_teaminfo_low_health = HUD_FindVar(hud, "low_health");
 		hud_teaminfo_layout = HUD_FindVar(hud, "layout");
 		hud_teaminfo_proportional = HUD_FindVar(hud, "proportional");
+		hud_teaminfo_header_spacing = HUD_FindVar(hud, "header_spacing");
 	}
 
 	// Don't update hud item unless first view is beeing displayed
@@ -164,9 +172,11 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	// limit name length
 	maxname = bound(0, maxname, hud_teaminfo_name_width->integer);
 
+	header_spacing = max(0, hud_teaminfo_header_spacing->value);
+
 	// this doesn't draw anything, just calculate width
-	width = SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer, hud_teaminfo_proportional->integer);
-	height = FONTWIDTH * hud_teaminfo_scale->value * (hud_teaminfo_show_enemies->integer ? slots_num + n_teams : slots_num);
+	width = SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_flag_style->integer, hud_teaminfo_low_health->integer, hud_teaminfo_proportional->integer);
+	height = FONTWIDTH * hud_teaminfo_scale->value * (hud_teaminfo_show_enemies->integer && hud_teaminfo_show_headers->integer ? slots_num + max(2 * n_teams - 1, 0) * header_spacing : slots_num);
 
 	if (hud_editor) {
 		HUD_PrepareDraw(hud, width, FONTWIDTH, &x, &y);
@@ -195,14 +205,20 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 			// hmx : different name/scores alignment options are possible in the header
 			// in which case, make sure to differentiate name width vs teaminfo width
 			// i.e int name_width = Draw_SString()
-			Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer);
-			snprintf(tmp, sizeof(tmp), "%s %4i", TP_ParseFunChars("$.", false), sorted_teams[k].frags);
-			Draw_SStringAligned(x, _y, tmp, hud_teaminfo_scale->value, 1.0f, hud_teaminfo_proportional->integer, text_align_right, x + width);
-			_y += FONTWIDTH * hud_teaminfo_scale->value;
+			if (hud_teaminfo_show_headers->integer) {
+				if (k > 0) { // separator between teams
+					_y += FONTWIDTH * hud_teaminfo_scale->value * header_spacing;
+				}
+
+				Draw_SString(x, _y, sorted_teams[k].name, hud_teaminfo_scale->value, hud_teaminfo_proportional->integer);
+				snprintf(tmp, sizeof(tmp), "%s %4i", TP_ParseFunChars("$.", false), sorted_teams[k].frags);
+				Draw_SStringAligned(x, _y, tmp, hud_teaminfo_scale->value, 1.0f, hud_teaminfo_proportional->integer, text_align_right, x + width);
+				_y += FONTWIDTH * hud_teaminfo_scale->value;
+			}
 			for (j = 0; j < slots_num; j++) {
 				i = slots[j];
 				if (!strcmp(cl.players[i].team, sorted_teams[k].name)) {
-					SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer, hud_teaminfo_proportional->integer);
+					SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_flag_style->integer, hud_teaminfo_low_health->integer, hud_teaminfo_proportional->integer);
 					_y += FONTWIDTH * hud_teaminfo_scale->value;
 				}
 			}
@@ -212,7 +228,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 	else {
 		for (j = 0; j < slots_num; j++) {
 			i = slots[j];
-			SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_low_health->integer, hud_teaminfo_proportional->integer);
+			SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, _y, maxname, maxloc, false, hud_teaminfo_scale->value, hud_teaminfo_layout->string, hud_teaminfo_weapon_style->integer, hud_teaminfo_armor_style->integer, hud_teaminfo_powerup_style->integer, hud_teaminfo_flag_style->integer, hud_teaminfo_low_health->integer, hud_teaminfo_proportional->integer);
 			_y += FONTWIDTH * hud_teaminfo_scale->value;
 		}
 	}
@@ -223,7 +239,7 @@ qbool Has_Both_RL_and_LG(int flags)
 	return (flags & IT_ROCKET_LAUNCHER) && (flags & IT_LIGHTNING);
 }
 
-static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int maxname, int maxloc, qbool width_only, float scale, const char* layout, int weapon_style, int armor_style, int powerup_style, int low_health, qbool proportional)
+static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int maxname, int maxloc, qbool width_only, float scale, const char* layout, int weapon_style, int armor_style, int powerup_style, int flag_style, int low_health, qbool proportional)
 {
 	extern cvar_t tp_name_rlg;
 
@@ -265,7 +281,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 					case 'n': // draw name
 						width = maxname * font_width;
 						if (!width_only) {
-							char *nick = TP_ParseFunChars(ti_cl->nick[0] ? ti_cl->nick : cl.players[i].name, false);
+							char *nick = TP_ParseFunChars(ti_cl->nick[0] ? ti_cl->nick : cl.players[i].shortname, false);
 
 							Draw_SStringAligned(x, y, nick, scale, 1, proportional, text_align_right, x + width);
 						}
@@ -459,7 +475,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 									x += font_width;
 								}
 								else {
-									x += font_width;
+									x += 3 * font_width;
 								}
 								break;
 						}
@@ -471,6 +487,30 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 							Draw_SString(x, y, tmp, scale, proportional);
 						}
 						x += (Player_GetTrackId(cl.players[ti_cl->client].userid) >= 10 ? 2 : 1) * font_width;
+						break;
+
+					case 'c':
+						switch (flag_style) {
+							case 1:
+								if (!width_only) {
+									if (ti_cl->items & IT_KEY1) {
+										Draw_SPic(x, y, sb_items[0], scale / 2);
+									} else if (ti_cl->items & IT_KEY2) {
+										Draw_SPic(x, y, sb_items[1], scale / 2);
+									}
+								}
+								break;
+							case 2:
+								if (!width_only) {
+									if (ti_cl->items & IT_KEY1) {
+										Draw_SString(x, y, "&cf00B", scale, proportional);
+									} else if (ti_cl->items & IT_KEY2) {
+										Draw_SString(x, y, "&c00fR", scale, proportional);
+									}
+								}
+								break;
+						}
+						x += font_width;
 						break;
 
 					case '%': // wow, %% result in one %, how smart
@@ -573,7 +613,7 @@ void SCR_Draw_TeamInfo(void)
 	y = vid.height * 0.6 + scr_teaminfo_y.value;
 
 	// this does't draw anything, just calculate width
-	w = SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, scr_teaminfo_scale.value, scr_teaminfo_order.string, scr_teaminfo_weapon_style.integer, scr_teaminfo_armor_style.integer, scr_teaminfo_powerup_style.integer, scr_teaminfo_low_health.integer, scr_teaminfo_proportional.integer);
+	w = SCR_HudDrawTeamInfoPlayer(&ti_clients[0], 0, 0, maxname, maxloc, true, scr_teaminfo_scale.value, scr_teaminfo_order.string, scr_teaminfo_weapon_style.integer, scr_teaminfo_armor_style.integer, scr_teaminfo_powerup_style.integer, scr_teaminfo_flag_style.integer, scr_teaminfo_low_health.integer, scr_teaminfo_proportional.integer);
 	h = slots_num * scale;
 
 	for (j = 0; j < slots_num; j++) {
@@ -588,10 +628,20 @@ void SCR_Draw_TeamInfo(void)
 			Draw_AlphaRectangleRGB(x, y, w, h * FONTWIDTH, 0, true, RGBAVECT_TO_COLOR(col));
 		}
 
-		SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, y, maxname, maxloc, false, scr_teaminfo_scale.value, scr_teaminfo_order.string, scr_teaminfo_weapon_style.integer, scr_teaminfo_armor_style.integer, scr_teaminfo_powerup_style.integer, scr_teaminfo_low_health.integer, scr_teaminfo_proportional.integer);
+		SCR_HudDrawTeamInfoPlayer(&ti_clients[i], x, y, maxname, maxloc, false, scr_teaminfo_scale.value, scr_teaminfo_order.string, scr_teaminfo_weapon_style.integer, scr_teaminfo_armor_style.integer, scr_teaminfo_powerup_style.integer, scr_teaminfo_flag_style.integer, scr_teaminfo_low_health.integer, scr_teaminfo_proportional.integer);
 
 		y += FONTWIDTH * scale;
 	}
+}
+
+#define FLAGS_RUNES_MASK (IT_SIGIL1 | IT_SIGIL2 | IT_SIGIL3 | IT_SIGIL4 | IT_KEY1 | IT_KEY2)
+
+static int Filter_FlagsAndRunes(int client, int stats)
+{
+	if (!Stats_IsFlagsParsed()) {
+		return stats;
+	}
+	return (ti_clients[client].items & FLAGS_RUNES_MASK) | (stats & ~FLAGS_RUNES_MASK);
 }
 
 void Parse_TeamInfo(char *s)
@@ -616,8 +666,24 @@ void Parse_TeamInfo(char *s)
 	ti_clients[client].org[2] = atoi(Cmd_Argv(4));
 	ti_clients[client].health = atoi(Cmd_Argv(5));
 	ti_clients[client].armor = atoi(Cmd_Argv(6));
-	ti_clients[client].items = atoi(Cmd_Argv(7));
+	ti_clients[client].items = Filter_FlagsAndRunes(client, atoi(Cmd_Argv(7)));
 	strlcpy(ti_clients[client].nick, Cmd_Argv(8), TEAMINFO_NICKLEN); // nick is optional
+}
+
+void Update_FlagStatus(int player_num, char *team, qbool got_flag)
+{
+	int flag = IT_KEY1 | IT_KEY2;
+	if (!strcmp(team, "blue")) {
+		flag = IT_KEY2;
+	} else if (!strcmp(team, "red")) {
+		flag = IT_KEY1;
+	}
+
+	if (got_flag) {
+		ti_clients[player_num].items |= flag;
+	} else {
+		ti_clients[player_num].items &= ~flag;
+	}
 }
 
 static void Update_TeamInfo(void)
@@ -651,7 +717,7 @@ static void Update_TeamInfo(void)
 
 		ti_clients[i].health = bound(0, st[STAT_HEALTH], 999);
 		ti_clients[i].armor = bound(0, st[STAT_ARMOR], 999);
-		ti_clients[i].items = st[STAT_ITEMS];
+		ti_clients[i].items = Filter_FlagsAndRunes(i, st[STAT_ITEMS]);
 		ti_clients[i].nick[0] = 0; // sad, we don't have nick, will use name
 	}
 }
@@ -679,6 +745,7 @@ void TeamInfo_HudInit(void)
 	Cvar_Register(&scr_teaminfo_low_health);
 	Cvar_Register(&scr_teaminfo_armor_style);
 	Cvar_Register(&scr_teaminfo_powerup_style);
+	Cvar_Register(&scr_teaminfo_flag_style);
 	Cvar_Register(&scr_teaminfo_weapon_style);
 	Cvar_Register(&scr_teaminfo_show_enemies);
 	Cvar_Register(&scr_teaminfo_show_self);
@@ -698,9 +765,12 @@ void TeamInfo_HudInit(void)
 		"weapon_style", "0",
 		"show_enemies", "0",
 		"show_self", "1",
+		"show_headers", "1",
 		"scale", "1",
 		"powerup_style", "1",
+		"flag_style", "1",
 		"proportional", "0",
+		"header_spacing", "1",
 		NULL
 	);
 }
@@ -783,7 +853,7 @@ void SCR_Draw_ShowNick(void)
 	y = vid.height * 0.6 + scr_shownick_y.value;
 
 	// this does't draw anything, just calculate width
-	w = SCR_HudDrawTeamInfoPlayer(&shownick, 0, 0, maxname, maxloc, true, scale, scr_shownick_order.string, scr_teaminfo_weapon_style.integer, scr_teaminfo_armor_style.integer, scr_teaminfo_powerup_style.integer, scr_teaminfo_low_health.integer, scr_shownick_proportional.integer);
+	w = SCR_HudDrawTeamInfoPlayer(&shownick, 0, 0, maxname, maxloc, true, scale, scr_shownick_order.string, scr_teaminfo_weapon_style.integer, scr_teaminfo_armor_style.integer, scr_teaminfo_powerup_style.integer, scr_teaminfo_flag_style.integer, scr_teaminfo_low_health.integer, scr_shownick_proportional.integer);
 	h = FONTWIDTH * scale;
 
 	x = (scr_shownick_align_right ? (vid.width - w) - FONTWIDTH : FONTWIDTH);
@@ -795,5 +865,5 @@ void SCR_Draw_ShowNick(void)
 	Draw_AlphaRectangleRGB(x, y, w, h, 0, true, RGBAVECT_TO_COLOR(col));
 
 	// draw shownick
-	SCR_HudDrawTeamInfoPlayer(&shownick, x, y, maxname, maxloc, false, scale, scr_shownick_order.string, scr_teaminfo_weapon_style.integer, scr_teaminfo_armor_style.integer, scr_teaminfo_powerup_style.integer, scr_teaminfo_low_health.integer, scr_shownick_proportional.integer);
+	SCR_HudDrawTeamInfoPlayer(&shownick, x, y, maxname, maxloc, false, scale, scr_shownick_order.string, scr_teaminfo_weapon_style.integer, scr_teaminfo_armor_style.integer, scr_teaminfo_powerup_style.integer, scr_teaminfo_flag_style.integer, scr_teaminfo_low_health.integer, scr_shownick_proportional.integer);
 }

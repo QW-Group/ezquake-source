@@ -92,11 +92,16 @@ static void GLC_DrawSequentialBatch(gl_sprite3d_batch_t* batch, int index_offset
 qbool GLC_CompileSpriteProgram(void)
 {
 	if (R_ProgramRecompileNeeded(r_program_sprites_glc, 0)) {
-		R_ProgramCompile(r_program_sprites_glc);
-		R_ProgramSetCustomOptions(r_program_sprites_glc, 0);
+		char included_definitions[1024];
+
+		memset(included_definitions, 0, sizeof(included_definitions));
+
+		R_ProgramCompileWithInclude(r_program_sprites_glc, included_definitions);
 		R_ProgramUniform1i(r_program_uniform_sprites_glc_materialSampler, 0);
 		R_ProgramUniform1f(r_program_uniform_sprites_glc_alphaThreshold, 0);
 	}
+
+	R_ProgramSetStandardUniforms(r_program_sprites_glc);
 
 	return R_ProgramReady(r_program_sprites_glc);
 }
@@ -258,7 +263,7 @@ void GLC_DrawSpriteModel(entity_t* e)
 	psprite = (msprite2_t*)Mod_Extradata(e->model);	//locate the proper data
 	frame = R_GetSpriteFrame(e, psprite);
 
-	if (!frame)
+	if (!frame || !R_TextureReferenceIsValid(frame->gl_texturenum))
 		return;
 
 	if (psprite->type == SPR_ORIENTED) {

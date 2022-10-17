@@ -20,6 +20,7 @@
  *  
  */
 
+#ifndef CLIENTONLY
 #ifdef USE_PR2
 
 #include "qwsvdef.h"
@@ -31,8 +32,8 @@
 #define Cbuf_ExecuteEx(x) Cbuf_Execute()
 #endif
 
-char	*pr2_ent_data_ptr;
-vm_t	*sv_vm = NULL;
+const char*    pr2_ent_data_ptr;
+vm_t*          sv_vm = NULL;
 
 /*
 ============
@@ -513,8 +514,9 @@ void PF2_traceline(byte* base, uintptr_t mask, pr2val_t* stack, pr2val_t*retval)
 
 	if (sv_antilag.value == 2)
 	{
-		//if (! (entnum >= 1 && entnum <= MAX_CLIENTS && svs.clients[entnum - 1].isBot))
+		if (!(entnum >= 1 && entnum <= MAX_CLIENTS && svs.clients[entnum - 1].isBot)) {
 			nomonsters |= MOVE_LAGGED;
+		}
 	}
 
 	trace = SV_Trace(v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
@@ -1779,7 +1781,7 @@ void PF2_infokey(byte* base, uintptr_t mask, pr2val_t* stack, pr2val_t*retval)
 		else if (!strcmp(key, "date_str")) { // qqshka - qvm does't have any time builtin support, so add this
 			date_t date;
 
-			SV_TimeOfDay(&date);
+			SV_TimeOfDay(&date, "%a %b %d, %H:%M:%S %Y");
 			snprintf(ov, sizeof(ov), "%s", date.str);
 		}
 		else if ((value = Info_ValueForKey(svs.info, key)) == NULL || !*value)
@@ -2506,7 +2508,7 @@ void PF2_Add_Bot( byte * base, uintptr_t mask, pr2val_t * stack, pr2val_t * retv
 	newcl->datagram.maxsize = sizeof( newcl->datagram_buf );
 	newcl->spectator = 0;
 	newcl->isBot = 1;
-	newcl->connection_started = realtime;
+	SV_SetClientConnectionTime(newcl);
 	strlcpy(newcl->name, name, sizeof(newcl->name));
 
 	newcl->entgravity = 1.0;
@@ -3039,3 +3041,5 @@ void PR2_InitProg(void)
 	}
 }
 #endif /* USE_PR2 */
+
+#endif // !CLIENTONLY

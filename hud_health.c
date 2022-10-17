@@ -55,7 +55,9 @@ static void SCR_HUD_DrawHealth(hud_t *hud)
 	}
 
 	value = HUD_Stats(STAT_HEALTH);
-	SCR_HUD_DrawNum(hud, (value < 0 ? 0 : value), HUD_HealthLow(), scale->value, style->value, digits->value, align->string, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawNum(hud, (value < 0 ? 0 : value), HUD_HealthLow(), scale->value, style->value, digits->value, align->string, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawHealthDamage(hud_t *hud)
@@ -85,7 +87,7 @@ static void SCR_HUD_DrawBarHealth(hud_t *hud)
 		color_unnatural = HUD_FindVar(hud, "color_unnatural");
 	}
 
-	if (HUD_PrepareDraw(hud, width->integer, height->integer, &x, &y)) {
+	if (HUD_PrepareDraw(hud, width->integer, height->integer, &x, &y) && (cl.spectator == cl.autocam)) {
 		if (!width->integer || !height->integer) {
 			return;
 		}

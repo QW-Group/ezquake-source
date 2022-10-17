@@ -112,7 +112,7 @@ extern unsigned short ramps[3][256];
 #endif
 
 //applies hwgamma to RGB data
-static void applyHWGamma(byte *buffer, int size)
+static void applyHWGamma(byte *buffer, size_t size)
 {
 	int i;
 
@@ -139,23 +139,26 @@ static void applyHWGamma(byte *buffer, int size)
 int SCR_Screenshot(char *name, qbool movie_capture)
 {
 	scr_sshot_target_t* target_params = Q_malloc(sizeof(scr_sshot_target_t));
+	size_t width = renderer.ScreenshotWidth();
+	size_t height = renderer.ScreenshotHeight();
+	size_t buffer_size = width * height * 3;
 
 	// name is fullpath now
 	//	name = (*name == '/') ? name + 1 : name;
 	target_params->format = SShot_FormatForName(name);
 	strlcpy(target_params->fileName, name, sizeof(target_params->fileName));
 	COM_ForceExtension(target_params->fileName, SShot_ExtForFormat(target_params->format));
-	target_params->width = glwidth;
-	target_params->height = glheight;
+	target_params->width = width;
+	target_params->height = height;
 
-	target_params->buffer = Movie_TempBuffer(glwidth, glheight);
+	target_params->buffer = Movie_TempBuffer(width, height);
 	target_params->movie_capture = movie_capture;
 	if (!target_params->buffer) {
-		target_params->buffer = Q_malloc(glwidth * glheight * 3);
+		target_params->buffer = Q_malloc(buffer_size);
 		target_params->freeMemory = true;
 	}
 
-	renderer.Screenshot(target_params->buffer, glwidth * glheight * 3);
+	renderer.Screenshot(target_params->buffer, buffer_size);
 
 	if (movie_capture && Movie_BackgroundCapture(target_params)) {
 		return SSHOT_SUCCESS;
@@ -171,7 +174,7 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 	int format = target_params->format;
 	byte* buffer = target_params->buffer;
 	char* name = target_params->fileName;
-	int buffersize = target_params->width * target_params->height * 3;
+	size_t buffersize = target_params->width * target_params->height * 3;
 
 #ifdef WITH_PNG
 	if (format == IMAGE_PNG) {
@@ -180,13 +183,10 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 		if (target_params->movie_capture && Movie_AnimatedPNG()) {
 			extern cvar_t movie_fps;
 
-			Image_WriteAPNGFrame(buffer + buffersize - 3 * glwidth, -glwidth, glheight, movie_fps.integer);
+			Image_WriteAPNGFrame(buffer, target_params->width, target_params->height, movie_fps.integer);
 		}
 		else {
-			success = Image_WritePNG(
-				name, image_png_compression_level.value,
-				buffer + buffersize - 3 * target_params->width, -target_params->width, target_params->height
-			) ? SSHOT_SUCCESS : SSHOT_FAILED;
+			success = Image_WritePNG(name, image_png_compression_level.value, buffer, target_params->width, target_params->height) ? SSHOT_SUCCESS : SSHOT_FAILED;
 		}
 	}
 #endif
@@ -196,7 +196,7 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 		applyHWGamma(buffer, buffersize);
 		success = Image_WriteJPEG(
 			name, image_jpeg_quality_level.value,
-			buffer + buffersize - 3 * target_params->width, -target_params->width, target_params->height
+			buffer + buffersize - 3 * target_params->width, -(int)target_params->width, (int)target_params->height
 		) ? SSHOT_SUCCESS : SSHOT_FAILED;
 	}
 #endif

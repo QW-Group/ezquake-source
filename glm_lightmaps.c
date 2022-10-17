@@ -61,6 +61,8 @@ qbool GLM_CompileLightmapComputeProgram(void)
 
 void GLM_ComputeLightmaps(void)
 {
+	int i, start;
+
 	if (!GLM_CompileLightmapComputeProgram()) {
 		return;
 	}
@@ -79,7 +81,27 @@ void GLM_ComputeLightmaps(void)
 	GL_BindImageTexture(1, lightmap_texture_array, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	GL_BindImageTexture(2, lightmap_data_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32I);
 
-	R_ProgramComputeDispatch(r_program_lightmap_compute, LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, lightmap_array_size);
+	start = -1;
+	for (i = 0; i < lightmap_array_size; ++i) {
+		if (lightmaps[i].modified) {
+			if (start < 0) {
+				start = i;
+			}
+			lightmaps[i].modified = false;
+		}
+		else if (start >= 0) {
+			R_ProgramUniform1i(r_program_uniform_lighting_firstLightmap, start);
+			R_ProgramComputeDispatch(r_program_lightmap_compute, LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, i - start);
+
+			start = -1;
+		}
+	}
+
+	if (start >= 0) {
+		R_ProgramUniform1i(r_program_uniform_lighting_firstLightmap, start);
+		R_ProgramComputeDispatch(r_program_lightmap_compute, LIGHTMAP_WIDTH / HW_LIGHTING_BLOCK_SIZE, LIGHTMAP_HEIGHT / HW_LIGHTING_BLOCK_SIZE, lightmap_array_size - start);
+	}
+	R_ProgramMemoryBarrier(r_program_lightmap_compute);
 }
 
 void GLM_CreateLightmapTextures(void)
@@ -129,8 +151,8 @@ void GLM_CreateLightmapTextures(void)
 
 	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_texture_array, "lightmap_texture_array");
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_texture_array, 1, GL_RGBA8, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, true);
-#ifdef DEBUG_MEMORY_ALLOCATIONS
 	R_SetTextureArraySize(lightmap_texture_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 4);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
 	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_texture_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 4, "lightmap_texture_array");
 #endif
 	renderer.TextureSetFiltering(lightmap_texture_array, texture_minification_linear, texture_magnification_linear);
@@ -142,15 +164,15 @@ void GLM_CreateLightmapTextures(void)
 
 	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_source_array, "lightmap_source_array");
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA32UI, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, false);
-#ifdef DEBUG_MEMORY_ALLOCATIONS
 	R_SetTextureArraySize(lightmap_source_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 16);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
 	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_source_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 16, "lightmap_source_array");
 #endif
 
 	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_data_array, "lightmap_data_array");
 	GL_TexStorage3D(GL_TEXTURE0, lightmap_data_array, 1, GL_RGBA32I, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, false);
-#ifdef DEBUG_MEMORY_ALLOCATIONS
 	R_SetTextureArraySize(lightmap_data_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 16);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
 	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_data_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 16, "lightmap_data_array");
 #endif
 }
@@ -180,6 +202,9 @@ void GLM_RenderDynamicLightmaps(msurface_t* s, qbool world)
 
 	if (world && surfaceTodoData && s->surfacenum < maximumSurfaceNumber) {
 		surfaceTodoData[s->surfacenum / 32] |= (1 << (s->surfacenum % 32));
+		if (s->lightmaptexturenum >= 0 && s->lightmaptexturenum < lightmap_array_size) {
+			lightmaps[s->lightmaptexturenum].modified = true;
+		}
 	}
 }
 

@@ -58,6 +58,7 @@ typedef struct glm_worldmodel_req_s {
 	int samplerMappingBase;
 	int samplerMappingCount;
 	int firstTexture;
+	qbool isAlphaTested;
 	float alpha;
 	qbool polygonOffset;
 	qbool worldmodel;
@@ -97,16 +98,20 @@ static void GLM_CheckDrawCallSize(void)
 	}
 }
 
-#define DRAW_DETAIL_TEXTURES       1
-#define DRAW_CAUSTIC_TEXTURES      2
-#define DRAW_LUMA_TEXTURES         4
-#define DRAW_SKYBOX                8
-#define DRAW_SKYDOME              16
-#define DRAW_FLATFLOORS           32
-#define DRAW_FLATWALLS            64
-#define DRAW_LUMA_TEXTURES_FB    128
-#define DRAW_TEXTURELESS         256
-#define DRAW_GEOMETRY            512
+#define DRAW_DETAIL_TEXTURES       (1 <<  0)
+#define DRAW_CAUSTIC_TEXTURES      (1 <<  1)
+#define DRAW_LUMA_TEXTURES         (1 <<  2)
+#define DRAW_SKYBOX                (1 <<  3)
+#define DRAW_SKYDOME               (1 <<  4)
+#define DRAW_FLATFLOORS            (1 <<  5)
+#define DRAW_FLATWALLS             (1 <<  6)
+#define DRAW_LUMA_TEXTURES_FB      (1 <<  7)
+#define DRAW_TEXTURELESS           (1 <<  8)
+#define DRAW_GEOMETRY              (1 <<  9)
+#define DRAW_DRAWFLAT_NORMAL       (1 << 10)
+#define DRAW_DRAWFLAT_TINTED       (1 << 11)
+#define DRAW_DRAWFLAT_BRIGHT       (1 << 12)
+#define DRAW_ALPHATESTED           (1 << 13)
 
 static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
@@ -118,14 +123,14 @@ static int TEXTURE_UNIT_SKYDOME_TEXTURE;
 static int TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE;
 
 // We re-compile whenever certain options change, to save texture bindings/lookups
-qbool GLM_CompileDrawWorldProgram(void)
+static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alpha_test)
 {
 	extern cvar_t gl_lumatextures;
 	extern cvar_t gl_textureless;
 	extern cvar_t r_fx_geometry;
 
 	qbool detail_textures = gl_detail.integer && R_TextureReferenceIsValid(detailtexture);
-	qbool caustic_textures = gl_caustics.integer && R_TextureReferenceIsValid(underwatertexture);
+	qbool caustic_textures = r_refdef2.drawCaustics;
 	qbool luma_textures = gl_lumatextures.integer && r_refdef2.allow_lumas;
 	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
 	qbool skydome = !skybox && !r_fastsky.integer && R_TextureReferenceIsValid(solidskytexture);
@@ -134,15 +139,19 @@ qbool GLM_CompileDrawWorldProgram(void)
 		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
 		(caustic_textures ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(luma_textures ? DRAW_LUMA_TEXTURES : 0) |
-		(luma_textures && gl_fb_bmodels.integer ? DRAW_LUMA_TEXTURES_FB : 0) |
+		(gl_fb_bmodels.integer ? DRAW_LUMA_TEXTURES_FB : 0) |
 		(skybox ? DRAW_SKYBOX : (skydome ? DRAW_SKYDOME : 0)) |
+		(r_drawflat_mode.integer == 0 && r_drawflat.integer != 0 ? DRAW_DRAWFLAT_NORMAL : 0) |
+		(r_drawflat_mode.integer == 1 && r_drawflat.integer != 0 ? DRAW_DRAWFLAT_TINTED : 0) |
+		(r_drawflat_mode.integer == 2 && r_drawflat.integer != 0 ? DRAW_DRAWFLAT_BRIGHT : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
 		(gl_textureless.integer ? DRAW_TEXTURELESS : 0) |
-		(r_fx_geometry.integer ? DRAW_GEOMETRY : 0);
+		(r_fx_geometry.integer ? DRAW_GEOMETRY : 0) |
+		(alpha_test ? DRAW_ALPHATESTED : 0);
 
-	if (R_ProgramRecompileNeeded(r_program_brushmodel, drawworld_desiredOptions)) {
-		static char included_definitions[1024];
+	if (R_ProgramRecompileNeeded(program_id, drawworld_desiredOptions)) {
+		static char included_definitions[2048];
 		int samplers = 0;
 
 		memset(included_definitions, 0, sizeof(included_definitions));
@@ -158,7 +167,7 @@ qbool GLM_CompileDrawWorldProgram(void)
 			strlcat(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_CAUSTIC_TEXTURE %d\n", TEXTURE_UNIT_CAUSTICS), sizeof(included_definitions));
 		}
-		if (r_drawflat.integer != 1) {
+		if (r_drawflat.integer != 1 || r_drawflat_mode.integer != 0) {
 			if (luma_textures) {
 				strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES\n", sizeof(included_definitions));
 			}
@@ -166,6 +175,19 @@ qbool GLM_CompileDrawWorldProgram(void)
 				strlcat(included_definitions, "#define DRAW_LUMA_TEXTURES_FB\n", sizeof(included_definitions));
 			}
 		}
+		if (drawworld_desiredOptions & DRAW_DRAWFLAT_NORMAL) {
+			strlcat(included_definitions, "#define DRAW_DRAWFLAT_NORMAL\n", sizeof(included_definitions));
+		}
+		else if (drawworld_desiredOptions & DRAW_DRAWFLAT_TINTED) {
+			strlcat(included_definitions, "#define DRAW_DRAWFLAT_TINTED\n", sizeof(included_definitions));
+		}
+		else if (drawworld_desiredOptions & DRAW_DRAWFLAT_BRIGHT) {
+			strlcat(included_definitions, "#define DRAW_DRAWFLAT_BRIGHT\n", sizeof(included_definitions));
+		}
+		if (drawworld_desiredOptions & DRAW_ALPHATESTED) {
+			strlcat(included_definitions, "#define DRAW_ALPHATEST_ENABLED\n", sizeof(included_definitions));
+		}
+
 		if (skybox) {
 			TEXTURE_UNIT_SKYBOX = samplers++;
 
@@ -201,9 +223,9 @@ qbool GLM_CompileDrawWorldProgram(void)
 		}
 
 		// Initialise program for drawing image
-		R_ProgramCompileWithInclude(r_program_brushmodel, included_definitions);
+		R_ProgramCompileWithInclude(program_id, included_definitions);
 
-		R_ProgramSetCustomOptions(r_program_brushmodel, drawworld_desiredOptions);
+		R_ProgramSetCustomOptions(program_id, drawworld_desiredOptions);
 	}
 
 	if (!R_BufferReferenceIsValid(r_buffer_brushmodel_drawcall_data)) {
@@ -217,7 +239,17 @@ qbool GLM_CompileDrawWorldProgram(void)
 		buffers.Create(r_buffer_brushmodel_drawcall_indirect, buffertype_indirect, "world-indirect", sizeof(drawcalls[0].worldmodel_requests) * GLM_DRAWCALL_INCREMENT, NULL, bufferusage_once_per_frame);
 	}
 
-	return R_ProgramReady(r_program_brushmodel);
+	return R_ProgramReady(program_id);
+}
+
+qbool GLM_CompileDrawWorldProgram(void)
+{
+	return GLM_CompileDrawWorldProgramImpl(r_program_brushmodel, false);
+}
+
+qbool GLM_CompileDrawWorldProgramAlphaTested(void)
+{
+	return GLM_CompileDrawWorldProgramImpl(r_program_brushmodel_alphatested, true);
 }
 
 static glm_worldmodel_req_t* GLM_CurrentRequest(void)
@@ -227,12 +259,13 @@ static glm_worldmodel_req_t* GLM_CurrentRequest(void)
 	return &call->worldmodel_requests[call->batch_count - 1];
 }
 
-static void GL_StartWorldBatch(void)
+static void GL_StartWorldBatch(qbool alphatest_enabled)
 {
 	texture_ref std_textures[MAX_STANDARD_TEXTURES];
-	int options = R_ProgramCustomOptions(r_program_brushmodel);
+	r_program_id program_id = (alphatest_enabled ? r_program_brushmodel_alphatested : r_program_brushmodel);
+	int options = R_ProgramCustomOptions(program_id);
 
-	R_ProgramUse(r_program_brushmodel);
+	R_ProgramUse(program_id);
 	R_BindVertexArray(vao_brushmodel);
 
 	// Bind standard textures
@@ -260,6 +293,7 @@ static void GL_StartWorldBatch(void)
 void GLM_EnterBatchedWorldRegion(void)
 {
 	GLM_CompileDrawWorldProgram();
+	GLM_CompileDrawWorldProgramAlphaTested();
 
 	current_drawcall = 0;
 	index_count = 0;
@@ -297,7 +331,9 @@ static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
 
 	drawcall->mappings[index].samplerIndex = sampler;
 	drawcall->mappings[index].arrayIndex = texture->gl_texture_index;
-	drawcall->mappings[index].flags = R_TextureReferenceIsValid(texture->fb_texturenum) ? EZQ_SURFACE_HAS_LUMA : 0;
+	drawcall->mappings[index].flags = R_TextureReferenceIsValid(texture->fb_texturenum) && texture->isLumaTexture ? EZQ_SURFACE_HAS_LUMA : 0;
+	drawcall->mappings[index].flags |= R_TextureReferenceIsValid(texture->fb_texturenum) && !texture->isLumaTexture ? EZQ_SURFACE_HAS_FB : 0;
+	drawcall->mappings[index].flags |= R_TextureReferenceIsValid(texture->fb_texturenum) && texture->isAlphaTested ? EZQ_SURFACE_ALPHATEST : 0;
 	return true;
 }
 
@@ -337,7 +373,7 @@ static qbool GLM_DuplicatePreviousRequest(model_t* model, float alpha, int num_t
 	return false;
 }
 
-static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, int num_textures, int first_texture, qbool polygonOffset, qbool caustics, qbool allow_duplicate)
+static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, int num_textures, int first_texture, qbool polygonOffset, qbool caustics, qbool allow_duplicate, qbool isAlphaTested)
 {
 	glm_worldmodel_req_t* req;
 	qbool worldmodel = model ? model->isworldmodel : false;
@@ -356,7 +392,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 	if (drawcall->batch_count) {
 		req = &drawcall->worldmodel_requests[drawcall->batch_count - 1];
 
-		if (allow_duplicate && model == req->model && req->samplerMappingCount == num_textures && req->firstTexture == first_texture && drawcall->batch_count < MAX_WORLDMODEL_BATCH) {
+		if (allow_duplicate && model == req->model && req->samplerMappingCount == num_textures && req->firstTexture == first_texture && drawcall->batch_count < MAX_WORLDMODEL_BATCH && isAlphaTested == req->isAlphaTested) {
 			// Duplicate details from previous request, but with different matrix
 			glm_worldmodel_req_t* newreq = &drawcall->worldmodel_requests[drawcall->batch_count];
 
@@ -373,7 +409,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 		}
 
 		// Try and continue the previous batch
-		if (worldmodel == req->worldmodel && !memcmp(req->mvMatrix, mvMatrix, sizeof(req->mvMatrix)) && polygonOffset == req->polygonOffset && req->flags == flags) {
+		if (worldmodel == req->worldmodel && !memcmp(req->mvMatrix, mvMatrix, sizeof(req->mvMatrix)) && polygonOffset == req->polygonOffset && req->flags == flags && req->isAlphaTested == isAlphaTested) {
 			if (num_textures == 0) {
 				// We don't care about materials, so can draw with previous batch
 				return req;
@@ -407,6 +443,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 	req->worldmodel = worldmodel;
 	req->model = model;
 	req->firstTexture = first_texture;
+	req->isAlphaTested = isAlphaTested;
 
 	req->count = 0;
 	req->instanceCount = 1;
@@ -431,17 +468,17 @@ void GLM_DrawWaterSurfaces(void)
 		return;
 	}
 
-	alpha = R_WaterAlpha();
+	alpha = r_refdef2.wateralpha;
 
 	// Waterchain has list of alpha-blended surfaces
-	R_TraceEnterNamedRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__func__);
 
 	GL_StartWaterSurfaceBatch();
 	for (surf = waterchain; surf; surf = surf->texturechain) {
 		glpoly_t* poly;
 		texture_t* tex = R_TextureAnimation(NULL, surf->texinfo->texture);
 
-		req = GLM_NextBatchRequest(NULL, alpha, 1, surf->texinfo->miptex, false, false, false);
+		req = GLM_NextBatchRequest(NULL, alpha, 1, surf->texinfo->miptex, false, false, false, tex->isAlphaTested);
 		GLM_AssignTexture(surf->texinfo->miptex, tex);
 		for (poly = surf->polys; poly; poly = poly->next) {
 			int newVerts = poly->numverts;
@@ -530,18 +567,34 @@ static glm_worldmodel_req_t* GLM_DrawTexturedChain(glm_worldmodel_req_t* req, ms
 	return req;
 }
 
+qbool GLM_CompilePostProcessVAO(void);
+
+qbool GLM_CompileSimple3dProgram(void)
+{
+	if (R_ProgramRecompileNeeded(r_program_simple3d, 0)) {
+		R_ProgramCompile(r_program_simple3d);
+	}
+
+	return R_ProgramReady(r_program_simple3d) && GLM_CompilePostProcessVAO();
+}
+
 static void GLM_DrawWorldModelOutlines(const glm_brushmodel_drawcall_t* drawcall)
 {
 	int begin = -1;
 	int i;
 	uintptr_t extra_offset = buffers.BufferOffset(r_buffer_brushmodel_drawcall_indirect);
+	float color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+	if (!GLM_CompileSimple3dProgram()) {
+		return;
+	}
 
 	//
-	R_ProgramUniform1i(r_program_uniform_brushmodel_outlines, 1);
-
 	GLM_StateBeginDrawWorldOutlines();
+	R_ProgramUse(r_program_simple3d);
+	R_ProgramUniform4fv(r_program_uniform_simple3d_color, color);
 
-	for (i = 0; i <= drawcall->batch_count; ++i) {
+	for (i = 0; i < drawcall->batch_count; ++i) {
 		if (!drawcall->worldmodel_requests[i].worldmodel) {
 			if (begin >= 0) {
 				// Draw outline models so far
@@ -570,19 +623,17 @@ static void GLM_DrawWorldModelOutlines(const glm_brushmodel_drawcall_t* drawcall
 			sizeof(drawcall->worldmodel_requests[0])
 		);
 	}
-
-	// Valid to reset the uniforms here as this is the only code that expects it
-	R_ProgramUniform1i(r_program_uniform_brushmodel_outlines, 0);
 }
 
 static glm_brushmodel_drawcall_t* GL_FlushWorldModelBatch(void)
 {
 	const glm_brushmodel_drawcall_t* prev;
 	glm_brushmodel_drawcall_t* current;
+	int last = current_drawcall++;
 
 	GLM_CheckDrawCallSize();
 
-	prev = &drawcalls[current_drawcall++];
+	prev = &drawcalls[last];
 	current = &drawcalls[current_drawcall];
 
 	memset(current, 0, sizeof(*current));
@@ -605,7 +656,7 @@ void GLM_PrepareWorldModelBatch(void)
 	int batchOffset = 0;
 	int draw, i;
 
-	R_TraceEnterNamedRegion(__FUNCTION__);
+	R_TraceEnterNamedRegion(__func__);
 	buffers.Update(r_buffer_brushmodel_index_data, sizeof(modelIndexes[0]) * index_count, modelIndexes);
 	buffers.EnsureSize(r_buffer_brushmodel_drawcall_indirect, sizeof(drawcalls[0].worldmodel_requests) * maximum_drawcalls);
 	buffers.EnsureSize(r_buffer_brushmodel_drawcall_data, sizeof(drawcalls[0].calls) * maximum_drawcalls);
@@ -648,18 +699,27 @@ static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintp
 	int i;
 	int prevSampler = -1;
 	const qbool batch = false;
+	qbool prev_alphaTested = false;
 
 	for (i = begin; i < begin + count; ++i) {
 		glm_worldmodel_req_t* req = &drawcall->worldmodel_requests[i];
 		int sampler = req->nonDynamicSampler;
 		int batchCount = 1;
 
-		if (prevSampler != sampler) {
-			R_ProgramUniform1i(r_program_uniform_brushmodel_sampler, prevSampler = sampler);
+		if (prevSampler != sampler || req->isAlphaTested != prev_alphaTested) {
+			if (req->isAlphaTested) {
+				R_ProgramUse(r_program_brushmodel_alphatested);
+				R_ProgramUniform1i(r_program_uniform_brushmodel_alphatested_sampler, prevSampler = sampler);
+			}
+			else {
+				R_ProgramUse(r_program_brushmodel);
+				R_ProgramUniform1i(r_program_uniform_brushmodel_sampler, prevSampler = sampler);
+			}
+			prev_alphaTested = req->isAlphaTested;
 		}
 
 		if (batch) {
-			while (i + batchCount < begin + count && drawcall->worldmodel_requests[i + batchCount].nonDynamicSampler == sampler) {
+			while (i + batchCount < begin + count && drawcall->worldmodel_requests[i + batchCount].nonDynamicSampler == sampler && drawcall->worldmodel_requests[i + batchCount].isAlphaTested == req->isAlphaTested) {
 				++batchCount;
 			}
 		}
@@ -688,6 +748,7 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 	int draw;
 	qbool first = true;
 	unsigned int extra_offset = 0;
+	qbool alphablended = (type == alpha_surfaces);
 
 	for (draw = 0; draw <= current_drawcall; ++draw) {
 		glm_brushmodel_drawcall_t* drawcall = &drawcalls[draw];
@@ -697,8 +758,8 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 		}
 
 		if (first) {
-			R_TraceEnterNamedRegion(__FUNCTION__);
-			GL_StartWorldBatch();
+			R_TraceEnterNamedRegion(__func__);
+			GL_StartWorldBatch(alphablended);
 			buffers.Bind(r_buffer_brushmodel_index_data);
 			buffers.Bind(r_buffer_brushmodel_drawcall_indirect);
 			extra_offset = buffers.BufferOffset(r_buffer_brushmodel_drawcall_indirect);
@@ -716,15 +777,15 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 			uintptr_t polygonOffset_offset = (extra_offset + drawcall->indirectDrawOffset + sizeof(drawcall->worldmodel_requests[0]) * drawcall->polygonOffsetSplit);
 
 			if (drawcall->polygonOffsetSplit) {
-				GLM_BeginDrawWorld(type == alpha_surfaces, false);
+				GLM_BeginDrawWorld(alphablended, false);
 				GLM_DrawWorldExecuteCalls(drawcall, normal_offset, 0, drawcall->polygonOffsetSplit);
 			}
 
-			GLM_BeginDrawWorld(type == alpha_surfaces, true);
+			GLM_BeginDrawWorld(alphablended, true);
 			GLM_DrawWorldExecuteCalls(drawcall, polygonOffset_offset, drawcall->polygonOffsetSplit, drawcall->batch_count - drawcall->polygonOffsetSplit);
 		}
 		else {
-			GLM_BeginDrawWorld(type == alpha_surfaces, false);
+			GLM_BeginDrawWorld(alphablended, false);
 			GLM_DrawWorldExecuteCalls(drawcall, extra_offset + drawcall->indirectDrawOffset, 0, drawcall->batch_count);
 		}
 
@@ -756,7 +817,7 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 	}
 
 	if (model->drawflat_chain) {
-		req = GLM_NextBatchRequest(model, 1.0f, 0, 0, false, false, false);
+		req = GLM_NextBatchRequest(model, 1.0f, 0, 0, false, false, false, false);
 
 		req = GLM_DrawFlatChain(req, model->drawflat_chain);
 
@@ -774,10 +835,10 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 			continue;
 		}
 
-		req = GLM_NextBatchRequest(model, 1.0f, 1, i, polygonOffset, caustics, false);
+		req = GLM_NextBatchRequest(model, 1.0f, 1, i, polygonOffset, caustics, false, tex->isAlphaTested);
 		tex = R_TextureAnimation(ent, tex);
 		if (!GLM_AssignTexture(i, tex)) {
-			req = GLM_NextBatchRequest(model, 1.0f, 1, i, polygonOffset, caustics, false);
+			req = GLM_NextBatchRequest(model, 1.0f, 1, i, polygonOffset, caustics, false, tex->isAlphaTested);
 			GLM_AssignTexture(i, tex);
 		}
 
@@ -794,6 +855,13 @@ static int GL_DrawCallComparison(const void* lhs_, const void* rhs_)
 		return 1;
 	}
 	if (!lhs->polygonOffset && rhs->polygonOffset) {
+		return -1;
+	}
+
+	if (lhs->isAlphaTested && !rhs->isAlphaTested) {
+		return 1;
+	}
+	else if (!lhs->isAlphaTested && rhs->isAlphaTested) {
 		return -1;
 	}
 
@@ -815,6 +883,10 @@ static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall)
 		int sampler = drawcall->mappings[mappingIndex].samplerIndex;
 
 		thisReq->nonDynamicSampler = sampler;
+
+		if (thisReq->polygonOffset && drawcall->polygonOffsetSplit > i) {
+			drawcall->polygonOffsetSplit = i;
+		}
 	}
 
 	qsort(drawcall->worldmodel_requests, drawcall->batch_count, sizeof(drawcall->worldmodel_requests[0]), GL_DrawCallComparison);

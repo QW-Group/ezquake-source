@@ -53,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 extern cvar_t r_farclip, gl_max_size, gl_miptexLevel;
 extern cvar_t r_bloom;
-extern cvar_t gl_flashblend, r_dynamic, gl_lightmode;
+extern cvar_t gl_flashblend, r_dynamic, gl_lightmode, gl_modulate;
 
 typedef enum {
 	OPTPG_MISC,
@@ -853,7 +853,7 @@ setting settplayer_arr[] = {
 	ADDSET_COLOR	("Shirt Color", topcolor),
 	ADDSET_COLOR	("Pants Color", bottomcolor),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Fullbright Skins", r_fullbrightSkins),
+	ADDSET_NUMBER	("Fullbright Skins", r_fullbrightSkins, 0, 1, 0.05),
 	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
 	ADDSET_BASIC_SECTION(),
 	
@@ -906,7 +906,7 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("View Size (fov)", scr_fov, 40, 140, 2),
 	ADDSET_NUMBER	("Screen Size", scr_viewsize, 30, 120, 5),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 30, 2),
+	ADDSET_NUMBER	("Rollangle", cl_rollangle, 0, 10, 1),
 	ADDSET_NUMBER	("Rollspeed", cl_rollspeed, 0, 30, 2),
 	ADDSET_BOOL		("Gun Kick", v_gunkick),
 	ADDSET_NUMBER	("Kick Pitch", v_kickpitch, 0, 10, 0.5),
@@ -957,7 +957,7 @@ setting settfps_arr[] = {
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NAMED	("Rocket Trail", r_rockettrail, rockettrail_enum),
 	ADDSET_ADVANCED_SECTION(),
-	ADDSET_BOOL		("Rocket Light", r_rocketlight),
+	ADDSET_NUMBER	("Rocket Light", r_rocketlight, 0, 1, 0.05),
 	ADDSET_NAMED	("Grenade Trail", r_grenadetrail, grenadetrail_enum),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Fakeshaft", cl_fakeshaft, 0, 1, 0.05),
@@ -1117,6 +1117,8 @@ setting settbinds_arr[] = {
 	ADDSET_BIND("Move Backward", "+back"),
 	ADDSET_BIND("Strafe Left", "+moveleft"),
 	ADDSET_BIND("Strafe Right", "+moveright"),
+	ADDSET_BIND("Turn Left", "+left"),
+	ADDSET_BIND("Turn Right", "+right"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BIND("Swim Up", "+moveup"),
 	ADDSET_BIND("Swim Down", "+movedown"),
@@ -1224,9 +1226,10 @@ setting settsystem_arr[] = {
 
 	//Video
 	ADDSET_SEPARATOR("Video"),
-	ADDSET_NUMBER	("Gamma", v_gamma, 0.1, 2.0, 0.1),
+	ADDSET_NUMBER	("Gamma", v_gamma, 0.3, 3.0, 0.1),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
 	ADDSET_ADVANCED_SECTION(),
+	ADDSET_NUMBER	("Lightmap Intensity", gl_modulate, 0.5, 3.0, 0.1),
 	ADDSET_BOOL		("Clear Video Buffer", gl_clear),
 	ADDSET_NUMBER	("Anisotropy Filter", gl_anisotropy, 0, 16, 1),
 	ADDSET_ENUM		("Quality Mode", gl_texturemode, gl_texturemode_enum),

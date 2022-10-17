@@ -59,13 +59,11 @@ cvar_t match_name_on = {"match_name_on", "on"};
 cvar_t match_name_nick = {"match_name_nick", ""};			
 cvar_t match_name_spec = {"match_name_spec", "(SPEC)"};		
 
-int loc_loaded = 0;
-
 char *CL_DemoDirectory(void);
 
 static char *MT_CleanString(char *string, qbool allow_spaces_and_slashes) {
 	byte *in, *out, c, d, *disallowed;
-	static byte buf[MAX_STATIC_STRING], badchars[] = {' ', '\\', '/', '?', '*', ':', '<', '>', '"', '|'};
+	static byte buf[MAX_STATIC_STRING], badchars[] = {' ', '\\', '/', '?', '*', ':', '<', '>', '"', '|', '\0'};
 	extern char readableChars[];
 
 	disallowed = allow_spaces_and_slashes ? badchars + 3 : badchars;
@@ -754,7 +752,6 @@ void MT_NewMap(void)
 {
 	MT_CancelMatch();
 	MT_ClearClientState();
-	loc_loaded=0;
 }
 
 void MT_Disconnect(void)

@@ -341,7 +341,6 @@ void Hash_RemoveData(hashtable_t *table, char *name, void *data)
 	return;
 }
 
-
 void Hash_RemoveKey(hashtable_t *table, char *key)
 {
 	int bucknum = ((uintptr_t) key) % table->numbuckets;

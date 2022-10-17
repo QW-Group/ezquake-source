@@ -56,6 +56,7 @@ cvar_t	scr_menudrawhud		= {"scr_menudrawhud", "0"};
 cvar_t  r_smoothtext        = { "r_smoothtext",      "1" };
 cvar_t  r_smoothcrosshair   = { "r_smoothcrosshair", "1" };
 cvar_t  r_smoothimages      = { "r_smoothimages",    "1" };
+cvar_t  r_smoothalphahack   = { "r_smoothalphahack", "0" };
 
 void OnChange_crosshairimage(cvar_t *, char *, qbool *);
 static cvar_t crosshairimage          = {"crosshairimage", "", 0, OnChange_crosshairimage};
@@ -497,29 +498,25 @@ static const char* cache_pic_paths[] = {
 qbool Draw_KeepOffAtlas(const char* path)
 {
 	int i;
+	qbool result = false;
 
 	// Tiled backgrounds: atlas not suitable for tiling, so keep off atlas
-	for (i = CACHEPIC_BOX_TL; i <= CACHEPIC_BOX_BR; ++i) {
-		if (!strcmp(path, cache_pic_paths[i])) {
-			return true;
-		}
+	for (i = CACHEPIC_BOX_TL; i <= CACHEPIC_BOX_BR && !result; ++i) {
+		result |= !strcmp(path, cache_pic_paths[i]);
 	}
 
 	// Single-player & main menu items - take up too much space for no high-performance path
-	for (i = CACHEPIC_TTL_MAIN; i <= CACHEPIC_P_MULTI; ++i) {
-		if (!strcmp(path, cache_pic_paths[i])) {
-			return true;
-		}
+	for (i = CACHEPIC_TTL_MAIN; i <= CACHEPIC_P_MULTI && !result; ++i) {
+		result |= !strcmp(path, cache_pic_paths[i]);
 	}
 
 	// Single-player intermission titles
-	for (i = CACHEPIC_COMPLETE; i <= CACHEPIC_FINALE; ++i) {
-		if (!strcmp(path, cache_pic_paths[i])) {
-			return true;
-		}
+	for (i = CACHEPIC_COMPLETE; i <= CACHEPIC_FINALE && !result; ++i) {
+		result |= !strcmp(path, cache_pic_paths[i]);
 	}
 
-	return false;
+	R_TraceAPI("Draw_KeepOffAtlas(%s) = %s\n", path, result ? "true" : "false");
+	return result;
 }
 
 mpic_t *Draw_CachePic(cache_pic_id_t id)
@@ -564,6 +561,7 @@ void Draw_Init (void)
 		Cvar_Register(&scr_menualpha);
 		Cvar_Register(&scr_menudrawhud);
 		Cvar_Register(&r_smoothimages);
+		Cvar_Register(&r_smoothalphahack);
 
 		Cvar_SetCurrentGroup(CVAR_GROUP_CROSSHAIR);
 		Cvar_Register(&crosshairimage);
@@ -610,6 +608,7 @@ void Draw_Crosshair (void)
 	extern vrect_t scr_vrect;
 	float crosshair_scale = (crosshairscalemethod.integer ? 1 : ((float)glwidth / 320));
 	int crosshair_pixel_size = CrosshairPixelSize();
+	qbool half_size = false;
 
 	if (current_crosshair_pixel_size != crosshair_pixel_size) {
 		BuildBuiltinCrosshairs();
@@ -618,7 +617,6 @@ void Draw_Crosshair (void)
 	if ((crosshair.value >= 2 && crosshair.value <= NUMCROSSHAIRS + 1) ||
 		((customcrosshair_loaded & CROSSHAIR_TXT) && crosshair.value == 1) ||
 		(customcrosshair_loaded & CROSSHAIR_IMAGE)) {
-		qbool half_size = false;
 		texture_ref texnum;
 		int width2d = VID_RenderWidth2D();
 		int height2d = VID_RenderHeight2D();
@@ -678,12 +676,20 @@ void Draw_Crosshair (void)
 		Draw_SetCrosshairTextMode(true);
 		if (CL_MultiviewInsetEnabled()) {
 			if (CL_MultiviewInsetView()) {
-				if (cl_sbar.value) {
-					Draw_Character(vid.width - (vid.width / 3) / 2 - 4, ((vid.height / 3) - sb_lines / 3) / 2 - 2, '+');
+				int width2d = VID_RenderWidth2D();
+				int height2d = VID_RenderHeight2D();
+
+				if (!CL_MultiviewGetCrosshairCoordinates(true, &x, &y, &half_size)) {
+					return;
 				}
-				else {
-					Draw_Character(vid.width - (vid.width / 3) / 2 - 4, (vid.height / 3) / 2 - 2, '+');
-				}
+
+				// convert from 3d to 2d
+				x = (x * vid.width) / width2d;
+				y = (y * vid.height) / height2d;
+
+				// x = vid.width - (vid.width / 3) / 2 - 4
+				// y = (vid.height / 3) / 2 - 2,
+				Draw_Character(x - 4, y - 4, '+');
 			}
 			else {
 				Draw_Character(scr_vrect.x + scr_vrect.width / 2 - 4 + cl_crossx.value, scr_vrect.y + scr_vrect.height / 2 - 4 + cl_crossy.value, '+');
@@ -952,6 +958,15 @@ void Draw_FitPicAlpha(float x, float y, int fit_width, int fit_height, mpic_t *g
 	Draw_SAlphaPic(x, y, gl, alpha, min(sw, sh));
 }
 
+void Draw_FitPicAlphaCenter(float x, float y, int fit_width, int fit_height, mpic_t* gl, float alpha)
+{
+	float sw, sh, scale;
+	sw = (float)fit_width / (float)gl->width;
+	sh = (float)fit_height / (float)gl->height;
+	scale = min(sw, sh);
+	Draw_SAlphaPic(x + (fit_width - scale * gl->width) / 2.0f, y + (fit_height - scale * gl->height) / 2.0f, gl, alpha, scale);
+}
+
 void Draw_STransPic(float x, float y, mpic_t *pic, float scale)
 {
     Draw_SPic(x, y, pic, scale);
@@ -993,6 +1008,12 @@ static void Draw_DeleteOldLevelshot(mpic_t* pic)
 	}
 }
 
+void Draw_ClearConback(void)
+{
+	last_lvlshot = NULL;
+	last_mapname[0] = 0;
+}
+
 void Draw_InitConback(void)
 {
 	qpic_t *cb;
@@ -1001,8 +1022,7 @@ void Draw_InitConback(void)
 	// Level shots init. It's cache based so don't free!
 	// Expect the cache to be wiped thus render the old data invalid
 	Draw_DeleteOldLevelshot(last_lvlshot);
-	last_lvlshot = NULL;
-	last_mapname[0] = 0;
+	Draw_ClearConback();
 
 	if (!glConfig.initialized) {
 		return;
@@ -1010,6 +1030,7 @@ void Draw_InitConback(void)
 
 	if (!(cb = (qpic_t *)FS_LoadHeapFile("gfx/conback.lmp", NULL))) {
 		Sys_Error("Couldn't load gfx/conback.lmp");
+		return;
 	}
 	SwapPic (cb);
 
@@ -1054,7 +1075,9 @@ void Draw_ConsoleBackground(int lines)
 				last_lvlshot->width  = conback.width;
 				last_lvlshot->height = conback.height;
 			}
-			Draw_DeleteOldLevelshot(old_levelshot);
+			if (last_lvlshot != old_levelshot) {
+				Draw_DeleteOldLevelshot(old_levelshot);
+			}
 
 			strlcpy(last_mapname, host_mapname.string, sizeof(last_mapname)); // Save.
 		}

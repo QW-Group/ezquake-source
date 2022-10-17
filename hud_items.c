@@ -33,7 +33,8 @@ static void SCR_HUD_DrawPowerup(hud_t *hud, int num, float scale, int style, qbo
 
 	scale = max(scale, 0.01);
 
-	switch (style) {
+	if (cl.spectator == cl.autocam) {
+		switch (style) {
 		case 1:     // letter
 			width = FontFixedWidth(1, scale, false, proportional);
 			height = 8 * scale;
@@ -62,6 +63,7 @@ static void SCR_HUD_DrawPowerup(hud_t *hud, int num, float scale, int style, qbo
 				Draw_SPic(x, y, sb_items[num], scale);
 			}
 			break;
+		}
 	}
 }
 
@@ -74,7 +76,9 @@ static void SCR_HUD_DrawKey1(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawPowerup(hud, 0, scale->value, style->value, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawPowerup(hud, 0, scale->value, style->value, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawKey2(hud_t *hud)
@@ -86,7 +90,9 @@ static void SCR_HUD_DrawKey2(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawPowerup(hud, 1, scale->value, style->value, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawPowerup(hud, 1, scale->value, style->value, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawRing(hud_t *hud)
@@ -98,7 +104,9 @@ static void SCR_HUD_DrawRing(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawPowerup(hud, 2, scale->value, style->value, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawPowerup(hud, 2, scale->value, style->value, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawPent(hud_t *hud)
@@ -110,7 +118,9 @@ static void SCR_HUD_DrawPent(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawPowerup(hud, 3, scale->value, style->value, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawPowerup(hud, 3, scale->value, style->value, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawSuit(hud_t *hud)
@@ -122,7 +132,9 @@ static void SCR_HUD_DrawSuit(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawPowerup(hud, 4, scale->value, style->value, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawPowerup(hud, 4, scale->value, style->value, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawQuad(hud_t *hud)
@@ -134,7 +146,9 @@ static void SCR_HUD_DrawQuad(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawPowerup(hud, 5, scale->value, style->value, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawPowerup(hud, 5, scale->value, style->value, proportional->integer);
+	}
 }
 
 // -----------
@@ -146,8 +160,8 @@ static void SCR_HUD_DrawSigil(hud_t *hud, int num, float scale, int style, qbool
 	int     x, y;
 
 	scale = max(scale, 0.01);
-
-	switch (style) {
+	if (cl.spectator == cl.autocam) {
+		switch (style) {
 		case 1:     // sigil number
 			if (!HUD_PrepareDraw(hud, 8 * scale, 8 * scale, &x, &y)) {
 				return;
@@ -164,6 +178,7 @@ static void SCR_HUD_DrawSigil(hud_t *hud, int num, float scale, int style, qbool
 				Draw_SPic(x, y, sb_sigil[num], scale);
 			}
 			break;
+		}
 	}
 }
 
@@ -176,7 +191,9 @@ static void SCR_HUD_DrawSigil1(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawSigil(hud, 0, scale->value, style->value, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawSigil(hud, 0, scale->value, style->value, proportional->integer);
+	}
 }
 
 void SCR_HUD_DrawSigil2(hud_t *hud)
@@ -188,7 +205,9 @@ void SCR_HUD_DrawSigil2(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawSigil(hud, 1, scale->value, style->value, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawSigil(hud, 1, scale->value, style->value, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawSigil3(hud_t *hud)
@@ -200,7 +219,9 @@ static void SCR_HUD_DrawSigil3(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawSigil(hud, 2, scale->value, style->value, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawSigil(hud, 2, scale->value, style->value, proportional->integer);
+	}
 }
 
 static void SCR_HUD_DrawSigil4(hud_t *hud)
@@ -212,7 +233,9 @@ static void SCR_HUD_DrawSigil4(hud_t *hud)
 		style = HUD_FindVar(hud, "style");
 		proportional = HUD_FindVar(hud, "proportional");
 	}
-	SCR_HUD_DrawSigil(hud, 3, scale->value, style->value, proportional->integer);
+	if (cl.spectator == cl.autocam) {
+		SCR_HUD_DrawSigil(hud, 3, scale->value, style->value, proportional->integer);
+	}
 }
 
 void Items_HudInit(void)

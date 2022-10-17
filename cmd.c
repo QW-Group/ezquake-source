@@ -99,6 +99,12 @@ void Cbuf_Execute (void)
 	Cbuf_ExecuteEx (&cbuf_server);
 }
 
+void Cbuf_Flush(cbuf_t* cbuf)
+{
+	while (cbuf->text_end > cbuf->text_start)
+		Cbuf_ExecuteEx(cbuf);
+}
+
 //fuh : ideally we should have 'cbuf_t *Cbuf_Register(int maxsize, int flags, qbool (*blockcmd)(void))
 //fuh : so that cbuf_svc and cbuf_safe can be registered outside cmd.c in cl_* .c
 //fuh : flags can be used to deal with newline termination etc for cbuf_svc, and *blockcmd can be used for blocking cmd's for cbuf_svc
@@ -579,28 +585,27 @@ void Cmd_Viewalias_f (void)
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-
-		if ( IsRegexp(name) ) {
-			if (!ReSearchInit(name))
+		if (IsRegexp(name)) {
+			if (!ReSearchInitEx(name, false)) {
 				return;
+			}
 			Com_Printf ("Current alias commands:\n");
 
-			for (alias = cmd_alias, i=m=0; alias ; alias=alias->next, i++)
+			for (alias = cmd_alias, i = m = 0; alias; alias = alias->next, i++) {
 				if (ReSearchMatch(alias->name)) {
-					Com_Printf ("%s : %s\n", alias->name, alias->value);
+					Com_Printf("%s : %s\n", alias->name, alias->value);
 					m++;
 				}
+			}
 
 			Com_Printf ("------------\n%i/%i aliases\n", m, i);
 			ReSearchDone();
 		}
+		else if ((alias = Cmd_FindAlias(name))) {
+			Com_Printf("%s : \"%s\"\n", Cmd_Argv(i), alias->value);
+		}
 		else {
-			if ((alias = Cmd_FindAlias(name))) {
-				Com_Printf("%s : \"%s\"\n", Cmd_Argv(i), alias->value);
-			}
-			else {
-				Com_Printf("No such alias: %s\n", Cmd_Argv(i));
-			}
+			Com_Printf("No such alias: %s\n", Cmd_Argv(i));
 		}
 	}
 }
@@ -649,9 +654,9 @@ void Cmd_AliasList_f (void)
 		assert(!"count == MAX_SORTED_ALIASES");
 
 	c = Cmd_Argc();
-	if (c>1)
-		if (!ReSearchInit(Cmd_Argv(1)))
-			return;
+	if (c > 1 && !ReSearchInitEx(Cmd_Argv(1), false)) {
+		return;
+	}
 
 	Com_Printf ("List of aliases:\n");
 	for (i = 0; i < count; i++) {
@@ -840,9 +845,11 @@ void Cmd_UnAlias (qbool use_regex)
 	for (i=1; i<Cmd_Argc(); i++) {
 		name = Cmd_Argv(i);
 
-		if (use_regex && (re_search = IsRegexp(name)))
-			if(!ReSearchInit(name))
+		if (use_regex && (re_search = IsRegexp(name))) {
+			if (!ReSearchInitEx(name, false)) {
 				continue;
+			}
+		}
 
 		if (strlen(name) >= MAX_ALIAS_NAME) {
 			Com_Printf ("Alias name is too long: \"%s\"\n", Cmd_Argv(i));
@@ -927,15 +934,9 @@ void DeleteServerAliases(void)
 =============================================================================
 */
 
-typedef struct legacycmd_s
-{
-	char *oldname, *newname;
-	struct legacycmd_s *next;
-} legacycmd_t;
+legacycmd_t *legacycmds = NULL;
 
-static legacycmd_t *legacycmds = NULL;
-
-void Cmd_AddLegacyCommand (char *oldname, char *newname)
+void Cmd_AddLegacyCommand(char *oldname, char *newname)
 {
 	legacycmd_t *cmd;
 	cmd = (legacycmd_t *) Q_malloc(sizeof(legacycmd_t));
@@ -944,6 +945,7 @@ void Cmd_AddLegacyCommand (char *oldname, char *newname)
 
 	cmd->oldname = oldname;
 	cmd->newname = newname;
+	cmd->dummy_cmd.name = oldname;
 }
 
 qbool Cmd_IsLegacyCommand (char *oldname)
@@ -1045,7 +1047,7 @@ char *Cmd_MakeArgsEx (tokenizecontext_t *ctx, int start)
 }
 
 // Parses the given string into command line tokens.
-void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, char *text)
+void Cmd_TokenizeStringEx2(tokenizecontext_t *ctx, const char *text, qbool curlybraces)
 {
 	int idx = 0, token_len;
 
@@ -1067,7 +1069,7 @@ void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, char *text)
 		if (ctx->cmd_argc == 1)
 			strlcpy(ctx->cmd_args, text, sizeof(ctx->cmd_args));
 
-		text = COM_Parse (text);
+		text = COM_ParseEx(text, curlybraces);
 		if (!text)
 			return;
 
@@ -1086,6 +1088,11 @@ void Cmd_TokenizeStringEx (tokenizecontext_t *ctx, char *text)
 
 		idx += token_len + 1;
 	}
+}
+
+void Cmd_TokenizeStringEx(tokenizecontext_t* ctx, const char* text)
+{
+	Cmd_TokenizeStringEx2(ctx, text, false);
 }
 
 // and wrappers for backward compatibility
@@ -1114,7 +1121,7 @@ char *Cmd_MakeArgs (int start)
 }
 
 //Parses the given string into command line tokens.
-void Cmd_TokenizeString (char *text)
+void Cmd_TokenizeString (const char *text)
 {
 	Cmd_TokenizeStringEx(&cmd_tokenizecontext, text);
 }
@@ -1294,6 +1301,7 @@ char *Cmd_CompleteCommand (char *partial)
 	cmd_function_t *cmd;
 	int len;
 	cmd_alias_t *alias;
+	legacycmd_t* legacy_cmd;
 
 	len = strlen(partial);
 
@@ -1307,6 +1315,11 @@ char *Cmd_CompleteCommand (char *partial)
 	for (alias = cmd_alias; alias; alias = alias->next)
 		if (!strcasecmp (partial, alias->name))
 			return alias->name;
+	for (legacy_cmd = legacycmds; legacy_cmd; legacy_cmd = legacy_cmd->next) {
+		if (!strcasecmp(partial, legacy_cmd->oldname)) {
+			return legacy_cmd->oldname;
+		}
+	}
 
 	// check for partial match
 	for (cmd = cmd_functions; cmd; cmd = cmd->next)
@@ -1315,6 +1328,11 @@ char *Cmd_CompleteCommand (char *partial)
 	for (alias = cmd_alias; alias; alias = alias->next)
 		if (!strncasecmp (partial, alias->name, len))
 			return alias->name;
+	for (legacy_cmd = legacycmds; legacy_cmd; legacy_cmd = legacy_cmd->next) {
+		if (!strncasecmp(partial, legacy_cmd->oldname, len)) {
+			return legacy_cmd->oldname;
+		}
+	}
 
 	return NULL;
 }
@@ -1322,15 +1340,25 @@ char *Cmd_CompleteCommand (char *partial)
 int Cmd_CompleteCountPossible (char *partial)
 {
 	cmd_function_t *cmd;
+	legacycmd_t* legacy_cmd;
 	int len, c = 0;
 
 	len = strlen(partial);
 	if (!len)
 		return 0;
 
-	for (cmd = cmd_functions; cmd; cmd = cmd->next)
-		if (!strncasecmp (partial, cmd->name, len))
+	for (cmd = cmd_functions; cmd; cmd = cmd->next) {
+		if (!strncasecmp(partial, cmd->name, len)) {
 			c++;
+		}
+	}
+
+	// Also check legacy commands
+	for (legacy_cmd = legacycmds; legacy_cmd; legacy_cmd = legacy_cmd->next) {
+		if (!strncasecmp(partial, legacy_cmd->oldname, len)) {
+			++c;
+		}
+	}
 
 	return c;
 }
@@ -1374,9 +1402,11 @@ void Cmd_CmdList (qbool use_regex)
 
 	pattern = (Cmd_Argc() > 1) ? Cmd_Argv(1) : NULL;
 
-	if (((c = Cmd_Argc()) > 1) && use_regex)
-		if (!ReSearchInit(Cmd_Argv(1)))
+	if (((c = Cmd_Argc()) > 1) && use_regex) {
+		if (!ReSearchInitEx(Cmd_Argv(1), false)) {
 			return;
+		}
+	}
 
 	Com_Printf ("List of commands:\n");
 	for (i = 0; i < count; i++) {
@@ -1440,19 +1470,29 @@ char *Cmd_MacroString (const char* s, int *macro_length)
 {
 	int i;
 	macro_command_t	*macro;
+	int best = -1;
+	int best_length = -1;
 
 	*macro_length = 0;
 	for (i = 0; i < num_macros; i++) {
 		macro = &macro_commands[i];
 		if (macro->func) {
-			if (!strncasecmp(s, macro->name, strlen(macro->name))) {
-				if (cbuf_current == &cbuf_main && (macro->teamplay == MACRO_DISALLOWED)) {
-					cbuf_current = &cbuf_formatted_comms;
+			int name_length = strlen(macro->name);
+			if (!strncasecmp(s, macro->name, name_length)) {
+				if (best_length == -1 || best_length < name_length) {
+					best = i;
+					best_length = name_length;
 				}
-				*macro_length = strlen(macro->name);
-				return macro->func();
 			}
 		}
+	}
+
+	if (best >= 0) {
+		if (cbuf_current == &cbuf_main && (macro_commands[best].teamplay == MACRO_DISALLOWED)) {
+			cbuf_current = &cbuf_formatted_comms;
+		}
+		*macro_length = best_length;
+		return macro_commands[best].func();
 	}
 
 	return NULL;
@@ -1484,10 +1524,8 @@ void Cmd_MacroList_f (void)
 	qsort(sorted_macros, num_macros, sizeof (macro_command_t *), Cmd_MacroCompare);
 
 	c = Cmd_Argc();
-	if (c > 1) {
-		if (!ReSearchInit(Cmd_Argv(1))) {
-			return;
-		}
+	if (c > 1 && !ReSearchInitEx(Cmd_Argv(1), false)) {
+		return;
 	}
 
 	Com_Printf ("List of macros:\n");
@@ -1692,8 +1730,8 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	oldcontext = cbuf_current;
 	cbuf_current = context;
 
-	Cmd_ExpandString (text, text_exp);
-	Cmd_TokenizeString (text_exp);
+	Cmd_ExpandString(text, text_exp);
+	Cmd_TokenizeStringEx2(&cmd_tokenizecontext, text_exp, cl_curlybraces.integer);
 
 	if (!Cmd_Argc())
 		goto done; // no tokens
@@ -1702,6 +1740,13 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 		if (CL_CheckServerCommand())
 			goto done;
 	}
+
+#ifndef CLIENTONLY
+	// 'status' on remote ktx servers..
+	if (!strcmp(Cmd_Argv(0), "status") && Cmd_Argc() == 1 && Cmd_FindAlias("status")) {
+		goto checkaliases;
+	}
+#endif
 
 	// check functions
 	if ((cmd = Cmd_FindCommand(Cmd_Argv(0)))) {

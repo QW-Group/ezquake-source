@@ -43,6 +43,9 @@ void SCR_HUD_DrawFace(hud_t *hud)
 
 	scale = max(v_scale->value, 0.01);
 
+	if (cl.spectator != cl.autocam)
+		return;
+	
 	if (!HUD_PrepareDraw(hud, 24 * scale, 24 * scale, &x, &y))
 		return;
 

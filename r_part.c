@@ -37,6 +37,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 int particletexture_array_index = 0;
 float particletexture_array_xpos_tr = 0.9999f;
 float particletexture_array_ypos_tr = 0.9999f;
+float particletexture_array_max_s = 1.0f;
+float particletexture_array_max_t = 1.0f;
+#else
+extern float particletexture_array_max_s;
+extern float particletexture_array_max_t;
 #endif
 
 texture_ref particletexture;
@@ -82,7 +87,7 @@ byte* Classic_CreateParticleTexture(int width, int height)
 	byte* data = Q_malloc(sizeof(byte) * width * height * 4);
 	int x, y;
 	int size = min(width, height);
-	float quarter = size / 4 - 0.5f;
+	float quarter = size / 4.0f - 0.5f;
 	extern cvar_t gl_squareparticles;
 
 	// draw a circle in the top left corner or square, depends of cvar
@@ -127,8 +132,8 @@ byte* Classic_CreateParticleTexture(int width, int height)
 	}
 
 	// draw a square in top-right
-	for (x = size - 4; x < size; ++x) {
-		for (y = size - 4; y < size; ++y) {
+	for (x = width - 4; x < width; ++x) {
+		for (y = height - 4; y < height; ++y) {
 			data[(x + y * width) * 4 + 0] = 255;
 			data[(x + y * width) * 4 + 1] = 255;
 			data[(x + y * width) * 4 + 2] = 255;
@@ -192,7 +197,7 @@ void R_ReadPointFile_f(void)
 {
 	vfsfile_t *v;
 	char line[1024];
-	char *s;
+	const char *s;
 	vec3_t org;
 	int c;
 	qparticle_t *p;
@@ -428,6 +433,20 @@ void Classic_ParticleTrail(vec3_t start, vec3_t end, vec3_t* trail_stop, trail_t
 	}
 	VectorScale(delta, 1 / len, dir);	//unit vector in direction of trail
 
+	// Convert from AMF/vult particle trail types
+	if (type == AMF_ROCKET_TRAIL) {
+		type = ALT_ROCKET_TRAIL;
+	}
+	else if (type == BLEEDING_TRAIL || type == BLEEDING_TRAIL2) {
+		type = BLOOD_TRAIL;
+	}
+	else if (type == RAIL_TRAIL || type == RAIL_TRAIL2) {
+		type = RAIL_TRAIL;
+	}
+	else if (type == LAVA_TRAIL) {
+		type = ROCKET_TRAIL;
+	}
+
 	switch (type) {
 	case ALT_ROCKET_TRAIL:
 		len /= 1.5; break;
@@ -504,6 +523,7 @@ void Classic_ParticleTrail(vec3_t start, vec3_t end, vec3_t* trail_stop, trail_t
 			for (j = 0; j < 3; j++)
 				p->org[j] = point[j] + ((rand() % 6) - 3);
 			break;
+		case RAIL_TRAIL:
 		case ROCKET_TRAIL:
 		default:
 			p->ramp = (rand() & 3);
@@ -622,8 +642,8 @@ void Classic_ReScaleParticles(void)
 		float scale = glpart->gl_scale = dist_precalc + DotProduct(glpart->gl_org, scaled_vpn);
 
 		R_Sprite3DSetVert(vert, glpart->gl_org[0], glpart->gl_org[1], glpart->gl_org[2], 0, 0, vert->color, particletexture_array_index);
-		R_Sprite3DSetVert(vert + 1, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, 1, 0, vert->color, particletexture_array_index);
-		R_Sprite3DSetVert(vert + 2, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, 1, vert->color, particletexture_array_index);
+		R_Sprite3DSetVert(vert + 1, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale, particletexture_array_max_s, 0, vert->color, particletexture_array_index);
+		R_Sprite3DSetVert(vert + 2, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale, 0, particletexture_array_max_t, vert->color, particletexture_array_index);
 	}
 }
 
@@ -633,7 +653,7 @@ static void Classic_PrepareParticles(void)
 	qparticle_t* p;
 	unsigned char *at;
 	float theAlpha;
-	float scale, r_partscale;
+	float scale;
 	vec3_t up, right;
 	int i;
 	float dist_precalc;
@@ -646,10 +666,9 @@ static void Classic_PrepareParticles(void)
 
 	frameStats.particle_count = r_numactiveparticles;
 
-	r_partscale = 0.004 * tan(r_refdef.fov_x * (M_PI / 180) * 0.5f);
 	VectorScale(vup, 1.5, up);
 	VectorScale(vright, 1.5, right);
-	VectorScale(vpn, r_partscale, scaled_vpn);
+	VectorScale(vpn, 0.004 * r_refdef2.distanceScale, scaled_vpn);
 
 	// load texture if not done yet
 	if (!R_TextureReferenceIsValid(particletexture)) {
@@ -693,12 +712,12 @@ static void Classic_PrepareParticles(void)
 			++vert;
 
 			*((unsigned int*)vert->color) = *(unsigned int*)glpart->gl_color;
-			VectorSet(vert->tex, 1, 0, particletexture_array_index);
+			VectorSet(vert->tex, particletexture_array_max_s, 0, particletexture_array_index);
 			VectorSet(vert->position, glpart->gl_org[0] + up[0] * scale, glpart->gl_org[1] + up[1] * scale, glpart->gl_org[2] + up[2] * scale);
 			++vert;
 
 			*((unsigned int*)vert->color) = *(unsigned int*)glpart->gl_color;
-			VectorSet(vert->tex, 0, 1, particletexture_array_index);
+			VectorSet(vert->tex, 0, particletexture_array_max_t, particletexture_array_index);
 			VectorSet(vert->position, glpart->gl_org[0] + right[0] * scale, glpart->gl_org[1] + right[1] * scale, glpart->gl_org[2] + right[2] * scale);
 			++vert;
 

@@ -68,16 +68,30 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "menu_demo.h"
 #include "r_local.h"
 #include "r_renderer.h"
+#include "r_performance.h"
 #include "r_program.h"
 
 extern qbool ActiveApp, Minimized;
 
+#ifndef CLIENTONLY
 static void Dev_PhysicsNormalSet(void);
 static void Dev_PhysicsNormalSave(void);
 static void Dev_PhysicsNormalShow(void);
+#endif
 
 static void Cl_Reset_Min_fps_f(void);
 void CL_QWURL_ProcessChallenge(const char *parameters);
+
+// cl_input.c
+void onchange_pext_serversideweapon(cvar_t* var, char* value, qbool* cancel);
+void onchange_hud_performance_average(cvar_t* var, char* value, qbool* cancel);
+
+#ifdef MVD_PEXT1_HIDDEN_MESSAGES
+// cl_parse.c
+void CL_ParseHiddenDataMessage(void);
+#endif
+
+static void AuthUsernameChanged(cvar_t* var, char* value, qbool* cancel);
 
 cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
 cvar_t	rcon_password = {"rcon_password", ""};
@@ -87,6 +101,7 @@ cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1"};
 cvar_t	cl_timeout = {"cl_timeout", "60"};
 
 cvar_t	cl_delay_packet = {"cl_delay_packet", "0", 0, Rulesets_OnChange_cl_delay_packet};
+cvar_t  cl_delay_packet_target = { "cl_delay_packet_target", "0", 0, Rulesets_OnChange_cl_delay_packet };
 cvar_t  cl_delay_packet_dev = { "cl_delay_packet_deviation", "0", 0, Rulesets_OnChange_cl_delay_packet };
 
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
@@ -97,6 +112,9 @@ cvar_t  cl_pext_limits = { "cl_pext_limits", "1" }; // enhanced protocol limits
 cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
 cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1" }; // if set, user will be warned when saving demos that are not backwards compatible
 cvar_t  cl_pext_lagteleport = { "cl_pext_lagteleport", "0" }; // server-side adjustment of yaw angle through teleports
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+cvar_t  cl_pext_serversideweapon = { "cl_pext_serversideweapon", "0", 0, onchange_pext_serversideweapon }; // server-side weapon selection
+#endif
 #endif
 #ifdef FTE_PEXT_256PACKETENTITIES
 cvar_t	cl_pext_256packetentities = {"cl_pext_256packetentities", "1"};
@@ -114,6 +132,14 @@ cvar_t  cl_pext_floatcoords  = {"cl_pext_floatcoords", "1"};
 cvar_t cl_pext_alpha = {"cl_pext_alpha", "1"};
 #endif
 
+#ifdef CLIENTONLY
+#define PROCESS_SERVERPACKETS_IMMEDIATELY (0)
+#else
+static cvar_t cl_sv_packetsync = { "cl_sv_packetsync", "1" };
+#define PROCESS_SERVERPACKETS_IMMEDIATELY (cl_sv_packetsync.integer)
+#endif
+
+
 cvar_t	cl_sbar		= {"cl_sbar", "0"};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0"};
 cvar_t	cl_maxfps	= {"cl_maxfps", "0"};
@@ -126,6 +152,8 @@ cvar_t	cl_solid_players = {"cl_solid_players", "1"};
 cvar_t	cl_predict_half = {"cl_predict_half", "0"};
 
 cvar_t	hud_fps_min_reset_interval = {"hud_fps_min_reset_interval", "30"};
+cvar_t  hud_frametime_max_reset_interval = { "hud_frametime_max_reset_interval", "30" };
+cvar_t  hud_performance_average = { "hud_performance_average", "1", 0, onchange_hud_performance_average };
 
 cvar_t  localid = {"localid", ""};
 
@@ -199,14 +227,14 @@ cvar_t r_lightmap_packbytexture = {"r_lightmap_packbytexture", "2"};
 
 // info mirrors
 cvar_t  password                = {"password", "", CVAR_USERINFO};
-cvar_t  spectator               = {"spectator", "", CVAR_USERINFO};
+cvar_t  spectator               = {"spectator", "", CVAR_USERINFO_NO_CFG_RESET };
 void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel);
 cvar_t  name                    = {"name", "player", CVAR_USERINFO, CL_OnChange_name_validate};
-cvar_t  team                    = {"team", "", CVAR_USERINFO};
-cvar_t  topcolor                = {"topcolor","", CVAR_USERINFO};
-cvar_t  bottomcolor             = {"bottomcolor","", CVAR_USERINFO};
-cvar_t  skin                    = {"skin", "", CVAR_USERINFO};
-cvar_t  rate                    = {"rate", "5760", CVAR_USERINFO};
+cvar_t  team                    = {"team", "", CVAR_USERINFO_NO_CFG_RESET };
+cvar_t  topcolor                = {"topcolor","", CVAR_USERINFO_NO_CFG_RESET };
+cvar_t  bottomcolor             = {"bottomcolor","", CVAR_USERINFO_NO_CFG_RESET };
+cvar_t  skin                    = {"skin", "", CVAR_USERINFO_NO_CFG_RESET };
+cvar_t  rate                    = {"rate", "25000", CVAR_USERINFO};
 void OnChange_AppliedAfterReconnect (cvar_t *var, char *value, qbool *cancel);
 cvar_t  mtu                     = {"mtu", "", CVAR_USERINFO, OnChange_AppliedAfterReconnect};
 cvar_t  msg                     = {"msg", "1", CVAR_USERINFO};
@@ -228,6 +256,20 @@ cvar_t cl_verify_qwprotocol     = {"cl_verify_qwprotocol", "1"};
 
 cvar_t demo_autotrack           = {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
 
+// Authentication
+cvar_t cl_username              = {"cl_username", "", CVAR_QUEUED_TRIGGER, AuthUsernameChanged};
+static void CL_Authenticate_f(void);
+
+// antilag debugging
+cvar_t cl_debug_antilag_view    = { "cl_debug_antilag_view", "0" };
+cvar_t cl_debug_antilag_ghost   = { "cl_debug_antilag_ghost", "0" };
+cvar_t cl_debug_antilag_self    = { "cl_debug_antilag_self", "0" };
+cvar_t cl_debug_antilag_lines   = { "cl_debug_antilag_lines", "0" };
+cvar_t cl_debug_antilag_send    = { "cl_debug_antilag_send", "0" };
+
+// weapon-switching debugging
+cvar_t cl_debug_weapon_view     = { "cl_debug_weapon_view", "0" };
+
 /// persistent client state
 clientPersistent_t	cls;
 
@@ -235,7 +277,6 @@ clientPersistent_t	cls;
 clientState_t		cl;
 
 centity_t       cl_entities[CL_MAX_EDICTS];
-efrag_t			cl_efrags[MAX_EFRAGS];
 entity_t		cl_static_entities[MAX_STATIC_ENTITIES];
 lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
 dlight_t		cl_dlights[MAX_DLIGHTS];
@@ -252,7 +293,6 @@ qbool	host_skipframe;			// used in demo playback
 byte		*host_basepal = NULL;
 byte		*host_colormap = NULL;
 
-int		fps_count;
 qbool physframe;
 double physframetime;
 
@@ -358,7 +398,9 @@ void CL_MakeActive(void)
 	// last chance
 	CachePics_AtlasFrame();
 	// compile all programs
-	R_ProgramCompileAll();
+	if (GL_Supported(R_SUPPORT_RENDERING_SHADERS)) {
+		R_ProgramCompileAll();
+	}
 
 	cls.state = ca_active;
 	if (cls.demoplayback) 
@@ -481,8 +523,9 @@ unsigned int CL_SupportedMVDExtensions1(void)
 {
 	unsigned int extensions_supported = 0;
 
-	if (!cl_pext.value)
+	if (!cl_pext.value) {
 		return 0;
+	}
 
 #ifdef MVD_PEXT1_FLOATCOORDS
 	if (cl_pext_floatcoords.value) {
@@ -493,6 +536,18 @@ unsigned int CL_SupportedMVDExtensions1(void)
 #ifdef MVD_PEXT1_HIGHLAGTELEPORT
 	if (cl_pext_lagteleport.integer & 1) {
 		extensions_supported |= MVD_PEXT1_HIGHLAGTELEPORT;
+	}
+#endif
+
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+	if (cl_pext_serversideweapon.integer) {
+		extensions_supported |= MVD_PEXT1_SERVERSIDEWEAPON;
+	}
+#endif
+
+#ifdef MVD_PEXT1_DEBUG_ANTILAG
+	if (cl_debug_antilag_send.integer) {
+		extensions_supported |= MVD_PEXT1_DEBUG_ANTILAG;
 	}
 #endif
 
@@ -1077,17 +1132,38 @@ void CL_ClearState (void)
 
 	CL_ClearPredict();
 
-	// Wipe the entire cl structure.
-	memset(&cl, 0, sizeof(cl));
+	if (cls.state == ca_active) {
+		int ideal_track = cl.ideal_track;
+		int autocam = cl.autocam;
+
+		// Wipe the entire cl structure.
+		memset(&cl, 0, sizeof(cl));
+
+		cl.ideal_track = ideal_track;
+		cl.autocam = autocam;
+	}
+	else {
+		// Wipe the entire cl structure.
+		memset(&cl, 0, sizeof(cl));
+	}
+
+	// default weapon selection if nothing else replaces it
+	cl.weapon_order[0] = 2;
+	cl.weapon_order[1] = 1;
+	cl.weapon_order[2] = 0;
 
 	SZ_Clear (&cls.netchan.message);
 
 	// Clear other arrays.
-	memset(cl_efrags, 0, sizeof(cl_efrags));
 	memset(cl_dlight_active, 0, sizeof(cl_dlight_active));
 	memset(cl_lightstyle, 0, sizeof(cl_lightstyle));
 	memset(cl_entities, 0, sizeof(cl_entities));
 	memset(cl_static_entities, 0, sizeof(cl_static_entities));
+
+	// Set entnum for all entity baselines
+	for (i = 0; i < sizeof(cl_entities) / sizeof(cl_entities[0]); ++i) {
+		cl_entities[i].baseline.number = i;
+	}
 
 	// Set default viewheight for mvd, we copy cl.players[].stats[] to cl_stats[] in Cam_Lock() when pov changes.
 	for (i = 0; i < MAX_CLIENTS; i++)
@@ -1095,11 +1171,7 @@ void CL_ClearState (void)
 	// Set default viewheight for normal game/current pov.
 	cl.stats[STAT_VIEWHEIGHT] = DEFAULT_VIEWHEIGHT;
 
-	// Allocate the efrags and chain together into a free list.
-	cl.free_efrags = cl_efrags;
-	for (i = 0; i < MAX_EFRAGS - 1; i++)
-		cl.free_efrags[i].entnext = &cl.free_efrags[i + 1];
-	cl.free_efrags[i].entnext = NULL;
+	R_Init_EFrags();
 
 	memset(&cshift_empty, 0, sizeof(cshift_empty));
 
@@ -1493,9 +1565,7 @@ void CL_ConnectionlessPacket (void)
 // Handles playback of demos, on top of NET_ code
 qbool CL_GetMessage (void) 
 {
-	#ifdef _WIN32
 	CL_CheckQizmoCompletion ();
-	#endif
 
 	if (cls.demoplayback)
 		return CL_GetDemoMessage();
@@ -1545,6 +1615,15 @@ static void CL_ReadPackets(void)
 		{
 			if (!Netchan_Process(&cls.netchan))
 				continue; // Wasn't accepted for some reason.
+		}
+
+		if (cls.lastto == 0 && cls.lasttype == dem_multiple) {
+#ifdef MVD_PEXT1_HIDDEN_MESSAGES
+			if (cls.mvdprotocolextensions1 & MVD_PEXT1_HIDDEN_MESSAGES) {
+				CL_ParseHiddenDataMessage();
+			}
+#endif
+			continue;
 		}
 
 		CL_ParseServerMessage();
@@ -1613,22 +1692,7 @@ void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel)
 
 void CL_InitCommands (void);
 
-void CL_Fog_f (void) 
-{
-	extern cvar_t gl_fogred, gl_foggreen, gl_fogblue, gl_fogenable;
-	
-	if (Cmd_Argc() == 1) 
-	{
-		Com_Printf ("\"fog\" is \"%f %f %f\"\n", gl_fogred.value, gl_foggreen.value, gl_fogblue.value);
-		return;
-	}
-	Cvar_SetValue (&gl_fogenable, 1);
-	Cvar_SetValue (&gl_fogred, atof(Cmd_Argv(1)));
-	Cvar_SetValue (&gl_foggreen, atof(Cmd_Argv(2)));
-	Cvar_SetValue (&gl_fogblue, atof(Cmd_Argv(3)));
-}
-
-static void CL_InitLocal (void) 
+static void CL_InitLocal(void)
 {
 	char st[256];
 
@@ -1637,135 +1701,143 @@ static void CL_InitLocal (void)
 	Cl_Messages_Init();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CHAT);
-	Cvar_Register (&cl_parseWhiteText);
-	Cvar_Register (&cl_chatsound);
-	Cvar_Register (&cl_fakename);
-	Cvar_Register (&cl_fakename_suffix);
+	Cvar_Register(&cl_parseWhiteText);
+	Cvar_Register(&cl_chatsound);
+	Cvar_Register(&cl_fakename);
+	Cvar_Register(&cl_fakename_suffix);
 
-	Cvar_Register (&cl_restrictions);
+	Cvar_Register(&cl_restrictions);
 
-	Cvar_Register (&cl_floodprot);
-	Cvar_Register (&cl_fp_messages);
-	Cvar_Register (&cl_fp_persecond);
+	Cvar_Register(&cl_floodprot);
+	Cvar_Register(&cl_fp_messages);
+	Cvar_Register(&cl_fp_persecond);
 
-	Cvar_Register (&msg_filter);
+	Cvar_Register(&msg_filter);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
-	Cvar_Register (&cl_shownet);
-	Cvar_Register (&cl_confirmquit);
-	Cvar_Register (&cl_window_caption);
-	Cvar_Register (&cl_onload);
+	Cvar_Register(&cl_shownet);
+	Cvar_Register(&cl_confirmquit);
+	Cvar_Register(&cl_window_caption);
+	Cvar_Register(&cl_onload);
 
-	#ifdef WIN32
-	Cvar_Register (&cl_verify_qwprotocol);
-	#endif // WIN32
+#ifdef WIN32
+	Cvar_Register(&cl_verify_qwprotocol);
+#endif // WIN32
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
-	Cvar_Register (&cl_sbar);
-	Cvar_Register (&cl_hudswap);
+	Cvar_Register(&cl_sbar);
+	Cvar_Register(&cl_hudswap);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_VIEWMODEL);
-	Cvar_Register (&cl_filterdrawviewmodel);
+	Cvar_Register(&cl_filterdrawviewmodel);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
-	Cvar_Register (&cl_model_bobbing);
-	Cvar_Register (&cl_nolerp);
-	Cvar_Register (&cl_nolerp_on_entity);
-	Cvar_Register (&cl_newlerp);
-	Cvar_Register (&cl_lerp_monsters);
-	Cvar_Register (&cl_maxfps);
-	Cvar_Register (&cl_physfps);
-	Cvar_Register (&hud_fps_min_reset_interval);
-	Cvar_Register (&cl_physfps_spectator);
-	Cvar_Register (&cl_independentPhysics);
-	Cvar_Register (&cl_deadbodyfilter);
-	Cvar_Register (&cl_gibfilter);
-	Cvar_Register (&cl_backpackfilter);
-	Cvar_Register (&cl_muzzleflash);
-	Cvar_Register (&cl_rocket2grenade);
-	Cvar_Register (&r_explosiontype);
-	Cvar_Register (&r_lightflicker);
-	Cvar_Register (&r_lightmap_lateupload);
-	Cvar_Register (&r_lightmap_packbytexture);
-	Cvar_Register (&r_rockettrail);
-	Cvar_Register (&r_grenadetrail);
-	Cvar_Register (&r_railtrail);
-	Cvar_Register (&r_instagibtrail);
-	Cvar_Register (&r_powerupglow);
-	Cvar_Register (&cl_novweps);
-	Cvar_Register (&r_drawvweps);
-	Cvar_Register (&r_rocketlight);
-	Cvar_Register (&r_explosionlight);
-	Cvar_Register (&r_rocketlightcolor);
-	Cvar_Register (&r_explosionlightcolor);
-	Cvar_Register (&r_flagcolor);
-	Cvar_Register (&cl_fakeshaft);
-	Cvar_Register (&cl_fakeshaft_extra_updates);
-	Cvar_Register (&r_telesplash);
-	Cvar_Register (&r_shaftalpha);
-	Cvar_Register (&r_lightdecayrate);
+	Cvar_Register(&cl_model_bobbing);
+	Cvar_Register(&cl_nolerp);
+	Cvar_Register(&cl_nolerp_on_entity);
+	Cvar_Register(&cl_newlerp);
+	Cvar_Register(&cl_lerp_monsters);
+	Cvar_Register(&cl_maxfps);
+	Cvar_Register(&cl_physfps);
+	Cvar_Register(&hud_fps_min_reset_interval);
+	Cvar_Register(&hud_frametime_max_reset_interval);
+	Cvar_Register(&hud_performance_average);
+	Cvar_Register(&cl_physfps_spectator);
+	Cvar_Register(&cl_independentPhysics);
+	Cvar_Register(&cl_deadbodyfilter);
+	Cvar_Register(&cl_gibfilter);
+	Cvar_Register(&cl_backpackfilter);
+	Cvar_Register(&cl_muzzleflash);
+	Cvar_Register(&cl_rocket2grenade);
+	Cvar_Register(&r_explosiontype);
+	Cvar_Register(&r_lightflicker);
+	Cvar_Register(&r_lightmap_lateupload);
+	Cvar_Register(&r_lightmap_packbytexture);
+	Cvar_Register(&r_rockettrail);
+	Cvar_Register(&r_grenadetrail);
+	Cvar_Register(&r_railtrail);
+	Cvar_Register(&r_instagibtrail);
+	Cvar_Register(&r_powerupglow);
+	Cvar_Register(&cl_novweps);
+	Cvar_Register(&r_drawvweps);
+	Cvar_Register(&r_rocketlight);
+	Cvar_Register(&r_explosionlight);
+	Cvar_Register(&r_rocketlightcolor);
+	Cvar_Register(&r_explosionlightcolor);
+	Cvar_Register(&r_flagcolor);
+	Cvar_Register(&cl_fakeshaft);
+	Cvar_Register(&cl_fakeshaft_extra_updates);
+	Cvar_Register(&r_telesplash);
+	Cvar_Register(&r_shaftalpha);
+	Cvar_Register(&r_lightdecayrate);
 
 	Skin_RegisterCvars();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_DEMO);
-	Cvar_Register (&cl_demospeed);
-	Cvar_Register (&cl_demoPingInterval);
-	Cvar_Register (&qizmo_dir);
-	Cvar_Register (&qwdtools_dir);
-	Cvar_Register (&demo_getpings);
-	Cvar_Register (&demo_autotrack);
-	Cvar_Register (&cl_demoteamplay);
+	Cvar_Register(&cl_demospeed);
+	Cvar_Register(&cl_demoPingInterval);
+	Cvar_Register(&qizmo_dir);
+	Cvar_Register(&qwdtools_dir);
+	Cvar_Register(&demo_getpings);
+	Cvar_Register(&demo_autotrack);
+	Cvar_Register(&cl_demoteamplay);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SOUND);
-	Cvar_Register (&cl_staticsounds);
+	Cvar_Register(&cl_staticsounds);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_USERINFO);
-	Cvar_Register (&team);
-	Cvar_Register (&spectator);
-	Cvar_Register (&skin);
-	Cvar_Register (&rate);
-	Cvar_Register (&mtu);
-	Cvar_Register (&name);
-	Cvar_Register (&msg);
-	Cvar_Register (&noaim);
-	Cvar_Register (&topcolor);
-	Cvar_Register (&bottomcolor);
-	Cvar_Register (&w_switch);
-	Cvar_Register (&b_switch);
-	Cvar_Register (&railcolor);
-	Cvar_Register (&gender);
+	Cvar_Register(&team);
+	Cvar_Register(&spectator);
+	Cvar_Register(&skin);
+	Cvar_Register(&rate);
+	Cvar_Register(&mtu);
+	Cvar_Register(&name);
+	Cvar_Register(&msg);
+	Cvar_Register(&noaim);
+	Cvar_Register(&topcolor);
+	Cvar_Register(&bottomcolor);
+	Cvar_Register(&w_switch);
+	Cvar_Register(&b_switch);
+	Cvar_Register(&railcolor);
+	Cvar_Register(&gender);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
-	Cvar_Register (&cl_predict_players);
-	Cvar_Register (&cl_solid_players);
-	Cvar_Register (&cl_predict_half);
-	Cvar_Register (&cl_timeout);
-	Cvar_Register (&cl_useproxy);
-	Cvar_Register (&cl_proxyaddr);
-	Cvar_Register (&cl_crypt_rcon);
-	Cvar_Register (&cl_fix_mvd);
+	Cvar_Register(&cl_predict_players);
+	Cvar_Register(&cl_solid_players);
+	Cvar_Register(&cl_predict_half);
+	Cvar_Register(&cl_timeout);
+	Cvar_Register(&cl_useproxy);
+	Cvar_Register(&cl_proxyaddr);
+	Cvar_Register(&cl_crypt_rcon);
+	Cvar_Register(&cl_fix_mvd);
 
-	Cvar_Register (&cl_delay_packet);
-	Cvar_Register (&cl_delay_packet_dev);
-	Cvar_Register (&cl_earlypackets);
+	Cvar_Register(&cl_delay_packet);
+	Cvar_Register(&cl_delay_packet_target);
+	Cvar_Register(&cl_delay_packet_dev);
+	Cvar_Register(&cl_earlypackets);
 
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
-	Cvar_Register (&cl_pext);
-	Cvar_Register (&cl_pext_limits);
-	Cvar_Register (&cl_pext_other);
-	Cvar_Register (&cl_pext_warndemos);
-	Cvar_Register (&cl_pext_lagteleport);
+	Cvar_Register(&cl_pext);
+	Cvar_Register(&cl_pext_limits);
+	Cvar_Register(&cl_pext_other);
+	Cvar_Register(&cl_pext_warndemos);
+#ifdef MVD_PEXT1_HIGHLAGTELEPORT
+	Cvar_Register(&cl_pext_lagteleport);
+#endif
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+	Cvar_Register(&cl_pext_serversideweapon);
+#endif
 #endif // PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_256PACKETENTITIES
-	Cvar_Register (&cl_pext_256packetentities);
+	Cvar_Register(&cl_pext_256packetentities);
 #endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
-	Cvar_Register (&cl_pext_chunkeddownloads);
-	Cvar_Register (&cl_chunksperframe);
+	Cvar_Register(&cl_pext_chunkeddownloads);
+	Cvar_Register(&cl_chunksperframe);
 #endif
 
 #ifdef FTE_PEXT_FLOATCOORDS
-	Cvar_Register (&cl_pext_floatcoords);
+	Cvar_Register(&cl_pext_floatcoords);
 #endif
 
 #ifdef FTE_PEXT_TRANS
@@ -1773,10 +1845,15 @@ static void CL_InitLocal (void)
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
-	Cvar_Register (&allow_scripts);
+	Cvar_Register(&allow_scripts);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SYSTEM_SETTINGS);
-	Cvar_Register (&cl_mediaroot);
+	Cvar_Register(&cl_mediaroot);
+
+#ifndef CLIENTONLY
+	Cvar_SetCurrentGroup(CVAR_GROUP_COMMUNICATION);
+	Cvar_Register(&cl_sv_packetsync);
+#endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NO_GROUP);
 	Cvar_Register (&password);
@@ -1787,6 +1864,19 @@ static void CL_InitLocal (void)
 	Cvar_Register (&cl_cmdline);
 	Cvar_ForceSet (&cl_cmdline, com_args_original);
 	Cvar_ResetCurrentGroup();
+
+	Cvar_Register (&cl_username);
+	Cmd_AddCommand("authenticate", CL_Authenticate_f);
+
+	// debugging antilag
+	Cvar_Register(&cl_debug_antilag_view);
+	Cvar_Register(&cl_debug_antilag_ghost);
+	Cvar_Register(&cl_debug_antilag_self);
+	Cvar_Register(&cl_debug_antilag_lines);
+	Cvar_Register(&cl_debug_antilag_send);
+
+	// debugging weapons
+	Cvar_Register(&cl_debug_weapon_view);
 
 	snprintf(st, sizeof(st), "ezQuake %i", REVISION);
 
@@ -1817,9 +1907,9 @@ static void CL_InitLocal (void)
 
 	Cmd_AddCommand ("hud_fps_min_reset", Cl_Reset_Min_fps_f);
 
-	#ifdef WIN32
+	#if defined WIN32 || defined __linux__
 	Cmd_AddCommand ("register_qwurl_protocol", Sys_RegisterQWURLProtocol_f);
-	#endif // WIN32
+	#endif // WIN32 or linux
 
 	Cmd_AddCommand ("dns", CL_DNS_f);
 	Cmd_AddCommand ("hash", CL_Hash_f);
@@ -1836,21 +1926,19 @@ static void CL_InitLocal (void)
 
 #ifdef WITH_RENDERING_TRACE
 	if (R_DebugProfileContext()) {
-		extern void Dev_VidFrameTrace(void);
-		extern void Dev_VidTextureDump(void);
-		extern void Dev_TextureList(void);
-
 		Cmd_AddCommand("dev_gfxtrace", Dev_VidFrameTrace);
 		Cmd_AddCommand("dev_gfxtexturedump", Dev_VidTextureDump);
 		Cmd_AddCommand("dev_gfxtexturelist", Dev_TextureList);
 	}
 #endif
 
+#ifndef CLIENTONLY
 	if (IsDeveloperMode()) {
 		Cmd_AddCommand("dev_physicsnormalset", Dev_PhysicsNormalSet);
 		Cmd_AddCommand("dev_physicsnormalshow", Dev_PhysicsNormalShow);
 		Cmd_AddCommand("dev_physicsnormalsave", Dev_PhysicsNormalSave);
 	}
+#endif
 
 	{
 		extern void GL_BenchmarkLightmapFormats(void);
@@ -1884,7 +1972,7 @@ void ReloadPaletteAndColormap(void)
 
 	host_basepal = (byte *) FS_LoadHeapFile ("gfx/palette.lmp", &filesize);
 	if (!host_basepal)
-		Sys_Error ("Couldn't load gfx/palette.lmp");
+		Sys_Error("Couldn't load gfx/palette.lmp\n\nThis is typically caused by being unable to locate pak0.pak.\nCopy pak0.pak into 'id1' folder, in same directory as executable.");
 	FMod_CheckModel("gfx/palette.lmp", host_basepal, filesize);
 
 	host_colormap = (byte *) FS_LoadHeapFile ("gfx/colormap.lmp", &filesize);
@@ -1904,6 +1992,7 @@ void CL_Init (void)
 
 	cls.state = ca_disconnected;
 	cls.min_fps = 999999;
+	cls.max_frametime = 1;
 
 	SZ_Init(&cls.cmdmsg, cls.cmdmsg_data, sizeof(cls.cmdmsg_data));
 	cls.cmdmsg.allowoverflow = true;
@@ -2070,32 +2159,63 @@ static double MinPhysFrameTime (void)
 	return 1 / fpscap;
 }
 
+void onchange_hud_performance_average(cvar_t* var, char* value, qbool* cancel)
+{
+	// Reset on change
+	if (strcmp(var->string, value)) {
+		Cl_Reset_Min_fps_f();
+	}
+}
+
 void CL_CalcFPS(void)
 {
-	static double lastfps;
-	static double last_frame_time;
-	static double time_of_last_minfps_update;
-
 	double t = Sys_DoubleTime();
+	perfinfo_t* stats = &cls.fps_stats;
+	double frametime = stats->last_run_time == 0 ? 0 : t - stats->last_run_time;
+	double time_since_snapshot = (t - stats->last_snapshot_time);
+	stats->last_run_time = t;
 
-	if ((t - last_frame_time) >= 1.0)
+	// Average over previous second
+	if (time_since_snapshot >= 1.0)
 	{
-		lastfps = (double)fps_count / (t - last_frame_time);
-		fps_count = 0;
-		last_frame_time = t;
+		stats->lastfps_value = (double)stats->fps_count / time_since_snapshot;
+		stats->lastframetime_value = time_since_snapshot / max(stats->fps_count, 1);
+		stats->fps_count = 0;
+		stats->last_snapshot_time = t;
 	}
 
-	cls.fps = lastfps;
-	// update min_fps if last fps is less than our lowest accepted minfps (10.0) or greater than min_reset_interval
-	if ((lastfps > 10.0 && lastfps < cls.min_fps) || ((t - time_of_last_minfps_update) > hud_fps_min_reset_interval.value)) { 
-		cls.min_fps = lastfps;
-		time_of_last_minfps_update = t;
+	cls.fps = stats->lastfps_value;
+	cls.avg_frametime = stats->lastframetime_value;
+
+	if (hud_performance_average.integer) {
+		// update min_fps if last fps is less than our lowest accepted minfps (10.0) or greater than min_reset_interval
+		if ((stats->lastfps_value > 10.0 && stats->lastfps_value < cls.min_fps) || ((t - stats->time_of_last_minfps_update) > hud_fps_min_reset_interval.value)) {
+			cls.min_fps = stats->lastfps_value;
+			stats->time_of_last_minfps_update = t;
+		}
+		if ((stats->lastframetime_value < 2.0f && stats->lastframetime_value > cls.max_frametime) || ((t - stats->time_of_last_maxframetime_update) > hud_frametime_max_reset_interval.value)) {
+			cls.max_frametime = stats->lastframetime_value;
+			stats->time_of_last_maxframetime_update = t;
+		}
+	}
+	else if (frametime > 0) {
+		// update min_fps if last fps is less than our lowest accepted minfps (10.0) or greater than min_reset_interval
+		if (stats->lastfps_value < cls.min_fps || ((t - stats->time_of_last_minfps_update) > hud_fps_min_reset_interval.value)) {
+			cls.min_fps = stats->lastfps_value;
+			stats->time_of_last_minfps_update = t;
+		}
+		if (frametime > cls.max_frametime || ((t - stats->time_of_last_maxframetime_update) > hud_frametime_max_reset_interval.value)) {
+			cls.max_frametime = frametime;
+			stats->time_of_last_maxframetime_update = t;
+		}
 	}
 }
 
 void Cl_Reset_Min_fps_f(void)
 {
-	cls.min_fps = 9999;
+	cls.min_fps = 9999.0f;
+	cls.max_frametime = 0.0f;
+
 	CL_CalcFPS();
 }
 
@@ -2190,25 +2310,25 @@ void CL_Frame(double time)
 			#endif
 		}
 
-		if (cl_delay_packet.integer) {
+		if (cl_delay_packet.integer || cl_delay_packet_target.integer) {
 			CL_QueInputPacket();
 			need_server_frame = CL_UnqueOutputPacket(false);
 		}
 
-		if (need_server_frame && com_serveractive) {
+		if (need_server_frame && PROCESS_SERVERPACKETS_IMMEDIATELY) {
 			CL_ServerFrame(0);
 		}
 
 		return;
 	}
 
-	if (cl_delay_packet.integer) {
+	if (cl_delay_packet.integer || cl_delay_packet_target.integer) {
 		CL_QueInputPacket();
 		need_server_frame = CL_UnqueOutputPacket(false);
 	}
 
 	if (VID_VSyncLagFix()) {
-		if (need_server_frame && com_serveractive) {
+		if (need_server_frame && PROCESS_SERVERPACKETS_IMMEDIATELY) {
 			CL_ServerFrame(0);
 		}
 		return;
@@ -2262,6 +2382,9 @@ void CL_Frame(double time)
 		}
 		else if (!cls.timedemo) {
 			cls.frametime *= Demo_GetSpeed();
+		}
+		else if (cls.timedemo == TIMEDEMO_FIXEDFPS) {
+			cls.frametime = cls.td_frametime;
 		}
 
 		if (!host_skipframe) {
@@ -2329,16 +2452,16 @@ void CL_Frame(double time)
 
 		// We need to move the mouse also when disconnected
 		// to get the cursor working properly.
-		if(cls.state == ca_disconnected)
-		{
+		if (cls.state == ca_disconnected) {
 			usercmd_t dummy;
 			IN_Move(&dummy);
 		}
+
+		Sys_SendDeferredKeyEvents();
 	}
 	else 
 	{
-		if (physframe)
-		{
+		if (physframe) {
 			Sys_SendKeyEvents();
 
 			// allow mice or other external controllers to add commands
@@ -2373,15 +2496,16 @@ void CL_Frame(double time)
 
 			CL_SendToServer();
 
-			if (cls.state == ca_disconnected) // We need to move the mouse also when disconnected
-			{
+			// We need to move the mouse also when disconnected
+			if (cls.state == ca_disconnected) {
 				usercmd_t dummy;
 				IN_Move(&dummy);
 			}
+
+			Sys_SendDeferredKeyEvents();
 		}
-		else
-		{
-			if (need_server_frame && com_serveractive) {
+		else {
+			if (need_server_frame && PROCESS_SERVERPACKETS_IMMEDIATELY) {
 				CL_ServerFrame(0);
 			}
 
@@ -2426,6 +2550,8 @@ void CL_Frame(double time)
 		}
 	}
 
+	VID_ReloadCheck();
+
 	R_ParticleFrame();
 
 	buffers.StartFrame();
@@ -2439,7 +2565,9 @@ void CL_Frame(double time)
 		qbool draw_next_view = true;
 		qbool first_view = true;
 
+		R_PerformanceBeginFrame();
 		if (SCR_UpdateScreenPrePlayerView()) {
+			qbool two_pass_rendering = GL_FramebufferEnabled2D();
 			renderer.ScreenDrawStart();
 
 			while (draw_next_view) {
@@ -2454,9 +2582,14 @@ void CL_Frame(double time)
 
 				SCR_CalcRefdef();
 
-				SCR_UpdateScreenPlayerView(draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS);
+				SCR_UpdateScreenPlayerView((draw_next_view ? 0 : UPDATESCREEN_POSTPROCESS) | (two_pass_rendering ? UPDATESCREEN_3D_ONLY : 0));
 
-				SCR_DrawMultiviewIndividualElements();
+				if (!two_pass_rendering) {
+					SCR_DrawMultiviewIndividualElements();
+				}
+				else {
+					SCR_SaveAutoID();
+				}
 
 				if (CL_MultiviewCurrentView() == 2 || (CL_MultiviewCurrentView() == 1 && CL_MultiviewActiveViews() == 1)) {
 					CL_SoundFrame();
@@ -2466,16 +2599,37 @@ void CL_Frame(double time)
 				CL_MultiviewFrameFinish();
 			}
 
+			if (two_pass_rendering) {
+				buffers.EndFrame();
+
+				draw_next_view = true;
+				while (draw_next_view) {
+					draw_next_view = CL_MultiviewAdvanceView();
+
+					// Need to call this again to keep autoid correct
+					SCR_RestoreAutoID();
+
+					SCR_UpdateScreenPlayerView(UPDATESCREEN_2D_ONLY);
+					SCR_DrawMultiviewIndividualElements();
+
+					// Multiview: advance to next player
+					CL_MultiviewFrameFinish();
+				}
+			}
+
 			SCR_UpdateScreenPostPlayerView();
 		}
 		else {
 			VID_RenderFrameEnd();
 		}
+		R_PerformanceEndFrame();
 	}
 	else {
 		CL_LinkEntities();
 
+		R_PerformanceBeginFrame();
 		SCR_UpdateScreen();
+		R_PerformanceEndFrame();
 
 		CL_SoundFrame();
 	}
@@ -2491,7 +2645,7 @@ void CL_Frame(double time)
 	}
 
 	cls.framecount++;
-	fps_count++;
+	cls.fps_stats.fps_count++;
 	CL_CalcFPS();
 
 	VFS_TICK(); // VFS hook for updating some systems
@@ -2542,23 +2696,25 @@ void CL_Shutdown (void)
 
 void CL_UpdateCaption(qbool force)
 {
-	static char caption[512] = {0};
-	char str[512] = {0};
+	static char caption[512] = { 0 };
+	char str[512] = { 0 };
 
-	if (!cl_window_caption.value)
-	{
-		if (!cls.demoplayback && (cls.state == ca_active))
+	if (!cl_window_caption.value) {
+		if (!cls.demoplayback && (cls.state == ca_active)) {
 			snprintf(str, sizeof(str), "ezQuake: %s", cls.servername);
-		else
+		}
+		else {
 			snprintf(str, sizeof(str), "ezQuake");
+		}
 	}
-	else
-	{
+	else if (cl_window_caption.integer == 1) {
 		snprintf(str, sizeof(str), "%s - %s", CL_Macro_Serverstatus(), MT_ShortStatus());
 	}
+	else if (cl_window_caption.integer == 2) {
+		snprintf(str, sizeof(str), "ezQuake");
+	}
 
-	if (force || strcmp(str, caption))
-	{
+	if (force || strcmp(str, caption)) {
 		VID_SetCaption(str);
 		strlcpy(caption, str, sizeof(caption));
 	}
@@ -2578,6 +2734,7 @@ void OnChangeDemoTeamplay (cvar_t *var, char *value, qbool *cancel)
 
 
 
+#ifndef CLIENTONLY
 
 void Dev_PhysicsNormalShow(void)
 {
@@ -2702,8 +2859,98 @@ void Dev_PhysicsNormalSave(void)
 	Con_Printf("Wrote %s\n", filename);
 }
 
+#endif // !CLIENTONLY
+
 void Cache_Flush(void)
 {
 	Skin_Clear(false);
 	Mod_FreeAllCachedData();
+}
+
+static void AuthUsernameChanged(cvar_t* var, char* value, qbool* cancel)
+{
+	char path[MAX_PATH];
+	char filename[MAX_PATH];
+	byte* auth_token;
+	int auth_token_length;
+	int len = strlen(value);
+	int i;
+
+	// Don't validate if no changes
+	if (!strcmp(var->string, value)) {
+		return;
+	}
+
+	// Validate new name
+	for (i = 0; i < len; ++i) {
+		if (isalpha(value[i]) || isdigit(value[i]))
+			continue;
+		if (value[i] == '_' || value[i] == '[' || value[i] == ']' || value[i] == '(' || value[i] == ')' || value[i] == '.' || value[i] == '-')
+			continue;
+		// TODO: others
+
+		// Illegal
+		Com_Printf("Illegal character %c in username\n", value[i]);
+		*cancel = true;
+		return;
+	}
+
+	if (!value[0]) {
+		// Logging out...
+		if (cls.state == ca_active && cl.players[cl.playernum].loginname[0]) {
+			Cbuf_AddTextEx(&cbuf_main, "cmd logout\n");
+		}
+		memset(cls.auth_logintoken, 0, sizeof(cls.auth_logintoken));
+		return;
+	}
+	
+	// FIXME: server-side, treat new login request as logout?
+	if (cls.state == ca_active && cl.players[cl.playernum].loginname[0]) {
+		Com_Printf("You are logged in to the server & must logout first\n");
+		*cancel = true;
+		return;
+	}
+
+	// Try and load login token
+	strlcpy(filename, value, sizeof(filename));
+	COM_ForceExtensionEx(filename, ".apikey", sizeof(filename));
+
+	Cfg_GetConfigPath(path, sizeof(path), filename);
+
+	auth_token = FS_LoadTempFile(path, &auth_token_length);
+	if (auth_token == 0) {
+		Com_Printf("Unable to load authentication token for '%s'\n", value);
+		*cancel = true;
+		return;
+	}
+	else {
+		strlcpy(cls.auth_logintoken, (const char*)auth_token, sizeof(cls.auth_logintoken));
+		memset(cl.auth_challenge, 0, sizeof(cl.auth_challenge));
+		if (cls.state == ca_active) {
+			Cbuf_AddTextEx(&cbuf_main, va("cmd login %s\n", value));
+		}
+	}
+}
+
+static void CL_Authenticate_f(void)
+{
+	if (!cls.auth_logintoken[0] || !cl_username.string[0]) {
+		Com_Printf("You must load a login token by setting cl_username first.\n");
+		Com_Printf("Login tokens must be located in your configuration directory\n");
+		return;
+	}
+
+	if (cls.state != ca_active) {
+		Com_Printf("Cannot authenticate, not connected\n");
+		return;
+	}
+
+	if (cl.players[cl.playernum].loginname[0]) {
+		Com_Printf("Logging out...\n");
+		Cbuf_AddTextEx(&cbuf_main, "cmd logout\n");
+		return;
+	}
+
+	Com_Printf("Starting authentication process...\n");
+	Cbuf_AddTextEx(&cbuf_main, va("cmd login \"%s\"\n", cl_username.string));
 }

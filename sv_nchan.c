@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sv_nchan.c, user reliable data stream writes
 
+#ifndef CLIENTONLY
 #include "qwsvdef.h"
 
 // check to see if client block will fit, if not, rotate buffers
@@ -190,3 +191,5 @@ void SV_ClearReliable (client_t *cl)
 	SZ_Clear (&cl->netchan.message);
 	SV_ClearBackbuf (cl);
 }
+
+#endif // !CLIENTONLY

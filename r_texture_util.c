@@ -57,6 +57,6 @@ void R_TextureUtil_SetFiltering(texture_ref texture)
 {
 	int mode = gltextures[texture.index].texmode;
 
-	R_TextureModeChanged(texture, mode & TEX_MIPMAP);
-	R_TextureAnisotropyChanged(texture, mode & TEX_MIPMAP);
+	R_TextureModeChanged(texture, mode & TEX_MIPMAP, mode & TEX_VIEWMODEL);
+	R_TextureAnisotropyChanged(texture, mode & TEX_MIPMAP, mode & TEX_VIEWMODEL);
 }

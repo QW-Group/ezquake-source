@@ -62,6 +62,9 @@ typedef enum {
 #define R_SUPPORT_DEPTH32F            (1 << 14)     // floating point 32-bit depth buffers
 #define R_SUPPORT_FRAMEBUFFERS_SRGB   (1 << 15)     // framebuffers support sRGB
 #define R_SUPPORT_IMMEDIATEMODE       (1 << 16)     // immediate-mode rendering (doesn't require programs)
+#define R_SUPPORT_FOG                 (1 << 17)     // fog (OpenGL 1.4+, not currently working)
+#define R_SUPPORT_CUBE_MAPS           (1 << 18)     // cube maps (OpenGL 1.3+)
+#define R_SUPPORT_FRAMEBUFFER_MS      (1 << 19)     // multi-sampled framebuffers
 
 #define R_SUPPORT_FEATURE_HW_LIGHTING (R_SUPPORT_TEXTURE_ARRAYS | R_SUPPORT_COMPUTE_SHADERS | R_SUPPORT_IMAGE_PROCESSING)
 
@@ -70,6 +73,9 @@ typedef enum {
 	R_SUPPORT_MULTITEXTURING | R_SUPPORT_IMAGE_PROCESSING | R_SUPPORT_TEXTURE_SAMPLERS | R_SUPPORT_TEXTURE_ARRAYS | \
 	R_SUPPORT_INDIRECT_RENDERING | R_SUPPORT_INSTANCED_RENDERING \
 )
+
+#define R_BROKEN_GLBINDTEXTURES       (1 << 0)
+#define R_BROKEN_PREFERMULTIDRAW      (1 << 1)
 
 typedef struct {
 	const unsigned char                     *renderer_string;
@@ -82,6 +88,7 @@ typedef struct {
 	int		displayFrequency;
 	int     majorVersion;
 	int     minorVersion;
+	qbool   amd_issues;                    // github bug #416: avoid certain paths to workaround
 
 	glHardwareType_t			hardwareType;
 
@@ -99,12 +106,14 @@ typedef struct {
 	int max_3d_texture_size;
 	int max_texture_depth;
 	int texture_units;
+	int max_multisampling_level;
 
 	int tripleBufferIndex;
 	int uniformBufferOffsetAlignment;
 	int shaderStorageBufferOffsetAlignment;
 
 	unsigned int supported_features;
+	unsigned int broken_features;
 	unsigned int preferred_format;
 	unsigned int preferred_type;
 
@@ -112,6 +121,7 @@ typedef struct {
 } glconfig_t;
 
 #define GL_Supported(x) ((glConfig.supported_features & (x)) == (x))
+#define GL_WorkaroundNeeded(x) ((glConfig.broken_features & (x)) == (x))
 
 extern glconfig_t	glConfig;
 

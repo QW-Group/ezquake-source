@@ -13,7 +13,10 @@ varying vec2 LightmapCoord;
 #endif
 #endif
 #ifdef DRAW_EXTRA_TEXTURES
+uniform float lumaMultiplier;
+uniform float fbMultiplier;
 varying float lumaScale;
+varying float fbScale;
 #endif
 #ifdef DRAW_DETAIL
 attribute vec2 detailCoordInput;
@@ -24,14 +27,21 @@ attribute vec2 causticsCoord;
 varying float causticsScale;
 #endif
 
+// 0 for textureless, 1 for normal
+uniform float texture_multiplier;
+
+varying float mix_floor;
+varying float mix_wall;
+
 void main()
 {
 	gl_Position = ftransform();
-#ifdef DRAW_TEXTURELESS
-	TextureCoord = vec2(0, 0);
-#else
+#ifdef DRAW_ALPHATEST_ENABLED
 	TextureCoord = gl_MultiTexCoord0.st;
+#else
+	TextureCoord = gl_MultiTexCoord0.st * texture_multiplier;
 #endif
+
 #ifdef DRAW_LIGHTMAPS
 #ifdef EZ_USE_TEXTURE_ARRAYS
 	LightmapCoord = gl_MultiTexCoord1.xyz;
@@ -41,7 +51,8 @@ void main()
 #endif
 
 #ifdef DRAW_EXTRA_TEXTURES
-	lumaScale = mod(floor(style / 256), 2);
+	lumaScale = lumaMultiplier * mod(floor(style / 256), 2);
+	fbScale = fbMultiplier * mod(floor(style / 1024), 2);
 #endif
 #ifdef DRAW_CAUSTICS
 	causticsScale = mod(floor(style / 512), 2);
@@ -49,4 +60,7 @@ void main()
 #ifdef DRAW_DETAIL
 	DetailCoord = detailCoordInput;
 #endif
+
+	mix_floor = mod(floor(style / 64), 2);
+	mix_wall = mod(floor(style / 128), 2);
 }

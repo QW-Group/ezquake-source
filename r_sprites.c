@@ -90,8 +90,8 @@ void *Mod_LoadSpriteFrame (void * pin, mspriteframe_t **ppframe, int framenum)
 
 	snprintf (identifier, sizeof(identifier), "sprites/%s_%i", basename, framenum);
 	texnum = Mod_LoadExternalSpriteSkin(identifier, framenum);
-	if (!R_TextureReferenceIsValid(texnum)) {
-		texnum = R_LoadTexture(identifier, width, height, (byte *)(pinframe + 1), texmode, 1);
+	if (!R_TextureReferenceIsValid(texnum) && width > 0 && height > 0) {
+		texnum = R_LoadTexture(identifier, width, height, (byte*)(pinframe + 1), texmode, 1);
 	}
 
 	pspriteframe->gl_texturenum = texnum;
