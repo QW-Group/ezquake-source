@@ -1543,8 +1543,9 @@ static void Sbar_DeathmatchOverlay(int start)
 
 		// overwrite time column with spawn times in KTX wipeout
 		if ((ktx_wipeout) && (ti_cl->isdead) && (ti_cl->timetospawn > 0) && (ti_cl->timetospawn < 999)){
-			color.c = RGBA_TO_COLOR(255, 255, 0, 255);
+			color.c = RGBA_TO_COLOR(0xFF, 0xAA, 0x00, 255);
 			snprintf(myminutes, sizeof(myminutes), "%d", ti_cl->timetospawn);
+			Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale * 0.85, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
 		}
 
 		else if (!ktx_wipeout)
@@ -1557,9 +1558,10 @@ static void Sbar_DeathmatchOverlay(int start)
 					snprintf(myminutes, sizeof(myminutes), "afk");
 				}
 			}
+
+			Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
 		}
 
-		Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
 		x += 5 * FONT_WIDTH;
 
 		// draw spectator

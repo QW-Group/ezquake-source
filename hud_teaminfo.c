@@ -250,9 +250,13 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 {
 	extern cvar_t tp_name_rlg;
 	char *s, *loc, tmp[1024], tmp2[MAX_MACRO_STRING], *aclr, *txtclr;
+	char * ktxmode = Info_ValueForKey(cl.serverinfo, "mode"); // check KTX game mode
 	float x_in = x; // save x
 	int i, a;
 	qbool isDeadCA, isRespawning;
+	qbool ktx_ca = (strstr(ktxmode, "-ca") != NULL);
+	qbool ktx_wipeout = (strstr(ktxmode, "-wo") != NULL);
+	qbool ktx_ca_wipeout = (ktx_ca || ktx_wipeout);
 	mpic_t *pic;
 	float width;
 	float font_width = scale * FONT_WIDTH;
@@ -267,7 +271,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 	}
 
 	txtclr = ti_cl->isdead == 2 ? "&c840" : "&cfff";
-	isDeadCA = ti_cl->isdead || (ti_cl->camode == 1 && ti_cl->health <= 0); // camode == 1 means ca/wipeout
+	isDeadCA = ti_cl->isdead || (ktx_ca_wipeout && ti_cl->health <= 0);
 	isRespawning = ti_cl->isdead == 1 && ti_cl->timetospawn > 0 && ti_cl->timetospawn < 999;
 	
 	if (isDeadCA) {
@@ -366,8 +370,8 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 							x += 4 * font_width;
 						}
 						break;
-					case 'c': // draw ammo
-					case 'C': // draw ammo
+					case 'k': // draw ammo
+					case 'K': // draw ammo
 						if (!width_only) {
 							snprintf(tmp, sizeof(tmp), "%s%d", txtclr, a);
 							Draw_SStringAligned(x, y, tmp, scale, alpha, proportional, (s[0] == 'C' ? text_align_right : text_align_left), x + 3 * font_width);
@@ -506,7 +510,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 						break;
 
 					case 'p': // draw powerups
-						if (show_countdown && ti_cl->camode)
+						if (show_countdown && ktx_ca_wipeout)
 						{
 							if (!width_only) {
 								if (isRespawning)
