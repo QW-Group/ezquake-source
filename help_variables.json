@@ -18794,6 +18794,21 @@
         }
       ]
     },
+    "scr_scoreboard_wipeout": {
+      "default": "1",
+      "group-id": "47",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Display normal scoreboard during clan arena or wipeout modes.",
+          "name": "false"
+        },
+        {
+          "description": "Display game-specific scoreboard during clan arena or wipeout modes.",
+          "name": "true"
+        }
+      ]
+    },
     "scr_showcrosshair": {
       "default": "1",
       "desc": "Allows you to force the display of the crosshair when in menus or in scoreboard.",
