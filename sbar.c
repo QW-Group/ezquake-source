@@ -1493,7 +1493,7 @@ static void Sbar_DeathmatchOverlay(int start)
 			background = RGBA_TO_COLOR(0, 255, 0, (byte)(bk_alpha * 255));
 		}
 		else {
-			background = RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)(bk_alpha * ca_alpha * 255));
+			background = RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)(bk_alpha * 255));
 		}
 
 		Draw_AlphaFillRGB(xofs, y, rank_width, skip, background);
@@ -1544,7 +1544,7 @@ static void Sbar_DeathmatchOverlay(int start)
 		myminutes[0] = '\0';
 
 		// overwrite time column with spawn times in KTX wipeout
-		if (ktx_wipeout && scr_scoreboard_wipeout.value && ti_cl->isdead && (ti_cl->timetospawn > 0) && (ti_cl->timetospawn < 999)){
+		if (ktx_wipeout && scr_scoreboard_wipeout.value && (ti_cl->isdead == 1) && (ti_cl->timetospawn > 0) && (ti_cl->timetospawn < 999)){
 			color.c = RGBA_TO_COLOR(0xFF, 0xAA, 0x00, 255);
 			snprintf(myminutes, sizeof(myminutes), "%d", ti_cl->timetospawn);
 			Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale * 0.85, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);

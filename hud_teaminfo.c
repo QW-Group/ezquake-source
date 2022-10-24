@@ -271,8 +271,8 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 	}
 
 	txtclr = ti_cl->isdead == 2 ? "&c840" : "&cfff";
-	isDeadCA = ti_cl->isdead || (ktx_ca_wipeout && ti_cl->health <= 0);
-	isRespawning = ti_cl->isdead == 1 && ti_cl->timetospawn > 0 && ti_cl->timetospawn < 999;
+	isDeadCA = ti_cl->isdead;
+	isRespawning = isDeadCA && ti_cl->timetospawn > 0 && ti_cl->timetospawn < 999;
 	
 	if (isDeadCA) {
 		alpha = 0.25;
