@@ -737,11 +737,19 @@ const char* Sys_FontsDirectory(void)
 
 const char* Sys_HomeDirectory(void)
 {
-	char *ev = getenv("HOME");
-	if (ev) {
-		return ev;
-	}
-	return "";
+    char *ev, *buf;
+    if (!(ev = getenv("XDG_DATA_HOME"))) {
+        if((ev = getenv("HOME"))) {
+            buf = malloc(strlen(ev) + 14);
+            sprintf(buf, "%s/.local/share", ev);
+        } else {
+            buf = malloc(1);
+            buf[0] = 0;
+        }
+    } else {
+        buf = strdup(ev);
+    }
+    return(buf)
 }
 
 #ifdef __MACOSX__
@@ -759,11 +767,20 @@ void Sys_RegisterQWURLProtocol_f(void)
     char open_cmd[MAX_PATH*2+1024] = { 0 };
     char exe_path[MAX_PATH] = { 0 };
     char buf[MAX_PATH] = { 0 };
-    const char *homedir=Sys_HomeDirectory();
+    const char *homedir = Sys_HomeDirectory();
     int nchar = -1;
     FILE *fptr;
 
     qbool quiet = Cmd_Argc() == 2 && !strcmp(Cmd_Argv(1), "quiet");
+
+    if (!homedir) {
+        Con_Printf("Failed to get home directory.");
+        return;
+    }
+    snprintf(buf, sizeof(buf), "%s/applications", homedir);
+	free(homedir)
+    snprintf(open_cmd, sizeof(open_cmd), "mkdir -pm 0755 \"%s\"", buf);
+    system(open_cmd);
 
     nchar = readlink("/proc/self/exe", exe_path, sizeof(exe_path)-1);
     if (nchar < 0 || nchar >= sizeof exe_path) {
@@ -784,29 +801,16 @@ void Sys_RegisterQWURLProtocol_f(void)
             "Terminal=false\n"
             "StartupNotify=false\n"
             , exe_path, "%u", com_basedir);
-    snprintf(buf, sizeof(buf), "%s/.local/share/applications/qw-url-handler.desktop", homedir);
+    strlcat(buf, "/qw-url-handler.desktop", sizeof(buf));
 
-    fptr = fopen(buf, "wb+");
-    if(!fptr){
-        //create directory path to url handler file
-        snprintf(buf, sizeof(buf), "%s/.local", homedir);
-        Sys_mkdir(buf);
-        snprintf(buf, sizeof(buf), "%s/.local/share", homedir);
-        Sys_mkdir(buf);
-        snprintf(buf, sizeof(buf), "%s/.local/share/applications", homedir);
-        Sys_mkdir(buf);
-        //attempt opening the file again
-        snprintf(buf, sizeof(buf), "%s/.local/share/applications/qw-url-handler.desktop", homedir);
-        fptr = fopen(buf, "wb+");
-    }
-    if (fptr == NULL) {
+    if (!(fptr = fopen(buf, "w"))) {
         Con_Printf("Failed to open qw-url-handler file.");
         return;
     }
     fprintf(fptr, "%s", open_cmd);
     fclose(fptr);
 
-	if(system("xdg-mime default qw-url-handler.desktop x-scheme-handler/qw") != 0){
+    if(system("xdg-mime default qw-url-handler.desktop x-scheme-handler/qw") != 0){
         Con_Printf("Failed to register qw-url-handler file with xdg-mime, please make sure this program is installed.");
     }
 
