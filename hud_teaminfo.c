@@ -250,13 +250,9 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 {
 	extern cvar_t tp_name_rlg;
 	char *s, *loc, tmp[1024], tmp2[MAX_MACRO_STRING], *aclr, *txtclr;
-	char * ktxmode = Info_ValueForKey(cl.serverinfo, "mode"); // check KTX game mode
 	float x_in = x; // save x
 	int i, a;
 	qbool isDeadCA, isRespawning;
-	qbool ktx_ca = (strstr(ktxmode, "-ca") != NULL);
-	qbool ktx_wipeout = (strstr(ktxmode, "-wo") != NULL);
-	qbool ktx_ca_wipeout = (ktx_ca || ktx_wipeout);
 	mpic_t *pic;
 	float width;
 	float font_width = scale * FONT_WIDTH;
@@ -510,7 +506,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 						break;
 
 					case 'p': // draw powerups
-						if (show_countdown && ktx_ca_wipeout)
+						if (show_countdown && check_ktx_ca_wo())
 						{
 							if (!width_only) {
 								if (isRespawning)

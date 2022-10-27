@@ -1263,18 +1263,14 @@ static void Sbar_DeathmatchOverlay(int start)
 	char num[12];
 	char myminutes[11];
 	char fragsstr[10];
-	char * ktxmode = Info_ValueForKey(cl.serverinfo, "mode");
 	player_info_t *s;
 	ti_player_t *ti_cl;
 	mpic_t *pic;
 	float scale = 1.0f;
 	float alpha = 1.0f;
-	float ca_alpha = 1.0f;	// alpha value for scoreboard elements during clan arena / wipeout
+	float ca_alpha;	// alpha value for scoreboard elements during clan arena / wipeout
 	qbool proportional = scr_scoreboard_proportional.integer;
 	qbool any_flags = false;
-	qbool ktx_ca = (strstr(ktxmode, "-ca") != NULL);
-	qbool ktx_wipeout = (strstr(ktxmode, "-wo") != NULL);
-	qbool ktx_ca_wipeout = (ktx_ca || ktx_wipeout);
 	extern ti_player_t ti_clients[MAX_CLIENTS];
 
 	if (!start && hud_faderankings.value) {
@@ -1466,7 +1462,7 @@ static void Sbar_DeathmatchOverlay(int start)
 		k = fragsort[i];
 		s = &cl.players[k];
 		ti_cl = &ti_clients[k];
-		ca_alpha = (ktx_ca_wipeout && scr_scoreboard_wipeout.value && ti_cl->isdead) ? 0.25f : 1.0f; // fade dead players in CA/wipeout
+		ca_alpha = (check_ktx_ca_wo() && scr_scoreboard_wipeout.value && ti_cl->isdead) ? 0.25f : 1.0f; // fade dead players in CA/wipeout
 
 		if (!s->name[0]) {
 			continue;
@@ -1544,13 +1540,13 @@ static void Sbar_DeathmatchOverlay(int start)
 		myminutes[0] = '\0';
 
 		// overwrite time column with spawn times in KTX wipeout
-		if (ktx_wipeout && scr_scoreboard_wipeout.value && (ti_cl->isdead == 1) && (ti_cl->timetospawn > 0) && (ti_cl->timetospawn < 999)){
+		if (check_ktx_wo() && scr_scoreboard_wipeout.value && (ti_cl->isdead == 1) && (ti_cl->timetospawn > 0) && (ti_cl->timetospawn < 999)){
 			color.c = RGBA_TO_COLOR(0xFF, 0xAA, 0x00, 255);
 			snprintf(myminutes, sizeof(myminutes), "%d", ti_cl->timetospawn);
 			Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale * 0.85, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
 		}
 
-		else if (!ktx_wipeout || !scr_scoreboard_wipeout.value)
+		else if (!check_ktx_wo() || !scr_scoreboard_wipeout.value)
 		{
 			snprintf(myminutes, sizeof(myminutes), "%i", total);
 
@@ -1621,7 +1617,7 @@ static void Sbar_DeathmatchOverlay(int start)
 		fragsint = bound(-999, s->frags, 9999); // limit to 4 symbols int
 		snprintf(fragsstr, sizeof(fragsstr), "%i", fragsint);
 		
-		if (ktx_ca_wipeout && scr_scoreboard_wipeout.value && ti_cl->isdead)
+		if (check_ktx_ca_wo() && scr_scoreboard_wipeout.value && ti_cl->isdead)
 		{
 			color.c = RGBA_TO_COLOR(85, 85, 85, 255 * ca_alpha);	// change team/name to gray transparent text if dead in ca/wipeout
 		}
@@ -1676,7 +1672,7 @@ static void Sbar_DeathmatchOverlay(int start)
 			}
 
 			// kills
-			if (ktx_wipeout && scr_scoreboard_wipeout.value)
+			if (check_ktx_wo() && scr_scoreboard_wipeout.value)
 			{
 				snprintf(num, sizeof(num), "%d", ti_cl->round_kills);
 				color.c = (ti_cl->round_kills == 0 ? RGBA_TO_COLOR(255, 255, 255, 255) : RGBA_TO_COLOR(0, 187, 68, 255));
@@ -1698,7 +1694,7 @@ static void Sbar_DeathmatchOverlay(int start)
 			}
 
 			// deaths
-			if (ktx_wipeout && scr_scoreboard_wipeout.value)
+			if (check_ktx_wo() && scr_scoreboard_wipeout.value)
 			{
 				snprintf(num, sizeof(num), "%d", ti_cl->round_deaths);
 				color.c = (ti_cl->round_deaths == 0 ? RGBA_TO_COLOR(255, 255, 255, 255) : RGBA_TO_COLOR(255, 0, 0, 255));

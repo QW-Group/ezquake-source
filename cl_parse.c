@@ -3076,10 +3076,6 @@ void CL_ParsePrint (void)
 void CL_ParseStufftext (void) 
 {
 	char *s = MSG_ReadString();
-	char *ktxmode = Info_ValueForKey(cl.serverinfo, "mode");
-	qbool ktx_ca = (strstr(ktxmode, "-ca") != NULL);
-	qbool ktx_wipeout = (strstr(ktxmode, "-wo") != NULL);
-	qbool ktx_ca_wipeout = (ktx_ca || ktx_wipeout);
 
 	// Always process demomarks, regardless of who inserted them
 	if (!strcmp(s, "//demomark\n"))
@@ -3158,7 +3154,7 @@ void CL_ParseStufftext (void)
 	{
 		extern void Parse_TeamInfo(char *s);
 
-		if (!cls.mvdplayback && !ktx_ca_wipeout)
+		if (!cls.mvdplayback && !check_ktx_ca_wo())
 		{
 			Parse_TeamInfo( s + 2 );
 		}
