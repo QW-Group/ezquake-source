@@ -705,7 +705,16 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 		if(!(i = GetModuleFileName(NULL, com_basedir, sizeof(com_basedir)-1)))
 			Sys_Error("FS_InitFilesystemEx: GetModuleFileName failed");
 		com_basedir[i] = 0; // ensure null terminator
-#elif defined(__linux__)
+
+		// strip ezquake*.exe, we need only path
+		for (e = com_basedir+strlen(com_basedir)-1; e >= com_basedir; e--)
+			if (*e == '/' || *e == '\\')
+			{
+				*e = 0;
+				break;
+			}
+#else
+#if defined(__linux__)
 		if (!Sys_fullpath(com_basedir, "/proc/self/exe", sizeof(com_basedir)))
 			Sys_Error("FS_InitFilesystemEx: Sys_fullpath failed");
 #elif defined(__APPLE__)
@@ -716,17 +725,16 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 		size_t com_basedirlen = sizeof(com_basedir);
 		if (sysctl(mib, 4, com_basedir, &com_basedirlen, NULL, 0) < 0)
 			Sys_Error("FS_InitFilesystemEx: sysctl failed");
-#else
-		com_basedir[0] = 0; // FIXME: others
 #endif
-
-		// strip ezquake*.exe, we need only path
+		// strip executable name, we need only path
 		for (e = com_basedir+strlen(com_basedir)-1; e >= com_basedir; e--)
-			if (*e == '/' || *e == '\\')
+			if (*e == '/')
 			{
 				*e = 0;
 				break;
 			}
+#endif //FIXME: others
+
 	}
 	else if ((i = COM_CheckParm (cmdline_param_filesystem_basedir)) && i < COM_Argc() - 1) {
 		// -basedir <path>
