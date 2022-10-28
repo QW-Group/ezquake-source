@@ -572,10 +572,16 @@ void FS_AddUserDirectory(char *dir)
 	case 3: snprintf(com_userdir, sizeof(com_userdir), "%s/qw/%s", com_basedir, userdirfile); break;
 	case 4: snprintf(com_userdir, sizeof(com_userdir), "%s/%s", com_basedir, userdirfile); break;
 	case 5: {
-		const char* homedir = Sys_HomeDirectory();
+		const char* homedir;
+#ifdef _WIN32
+		homedir = Sys_HomeDirectory();
+#else
+		homedir = strdup(getenv("HOME"));
+#endif
 		if (homedir && homedir[0]) {
 			snprintf(com_userdir, sizeof(com_userdir), "%s/qw/%s", homedir, userdirfile);
 		}
+		free(homedir);
 		break;
 	}
 	default:
@@ -695,6 +701,7 @@ void FS_ShutDown( void ) {
 void FS_InitFilesystemEx( qbool guess_cwd ) {
 	int i;
 	char tmp_path[MAX_OSPATH];
+	char *s;
 
 	FS_ShutDown();
 
@@ -758,7 +765,9 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	if (i >= 0 && com_basedir[i] == '/')
 		com_basedir[i] = 0;
 
-	strlcpy(com_homedir, Sys_HomeDirectory(), sizeof(com_homedir));
+	s = Sys_HomeDirectory();
+	strlcpy(com_homedir, s, sizeof(com_homedir));
+	free(s);
 
 	if (COM_CheckParm(cmdline_param_filesystem_nohome)) {
 		com_homedir[0] = 0;
@@ -769,7 +778,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 #ifdef _WIN32
 		strlcat(com_homedir, "/ezQuake", sizeof(com_homedir));
 #else
-		strlcat(com_homedir, "/.ezquake", sizeof(com_homedir));
+		strlcat(com_homedir, "/ezquake", sizeof(com_homedir));
 #endif
 		Com_Printf("Using home directory \"%s\"\n", com_homedir);
 	}

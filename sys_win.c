@@ -1656,12 +1656,14 @@ const char* Sys_FontsDirectory(void)
 
 const char* Sys_HomeDirectory(void)
 {
-	static char path[MAX_OSPATH];
+	char path[MAX_OSPATH], *res;
 
 	// gets "C:\documents and settings\johnny\my documents" path
 	if (!SHGetSpecialFolderPath(0, path, CSIDL_PERSONAL, 0)) {
 		path[0] = 0;
 	}
+	res = malloc(strlen(path) + 1);
+	strcpy(res, path);
 
 	// <Cokeman> yea, but it shouldn't be in My Documents
 	// <Cokeman> it should be in the application data dir
@@ -1670,5 +1672,5 @@ const char* Sys_HomeDirectory(void)
 	//	path[0] = 0;
 	//}
 
-	return path;
+	return res;
 }
