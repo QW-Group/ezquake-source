@@ -1654,7 +1654,7 @@ const char* Sys_FontsDirectory(void)
 	return path;
 }
 
-const char* Sys_HomeDirectory(void)
+char* Sys_HomeDirectory(void)
 {
 	char path[MAX_OSPATH], *res;
 

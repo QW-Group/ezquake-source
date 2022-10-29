@@ -572,7 +572,7 @@ void FS_AddUserDirectory(char *dir)
 	case 3: snprintf(com_userdir, sizeof(com_userdir), "%s/qw/%s", com_basedir, userdirfile); break;
 	case 4: snprintf(com_userdir, sizeof(com_userdir), "%s/%s", com_basedir, userdirfile); break;
 	case 5: {
-		const char* homedir;
+		char* homedir;
 #ifdef _WIN32
 		homedir = Sys_HomeDirectory();
 #else

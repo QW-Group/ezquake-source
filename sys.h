@@ -217,4 +217,5 @@ void *Sys_GetAddressForName(dllhandle_t *module, const char *exportname);
 void Sys_CvarInit(void);
 
 const char* Sys_FontsDirectory(void);
-const char* Sys_HomeDirectory(void);
+// Directoy for User's data files. returns string allocated with malloc. Must be freed.
+char* Sys_HomeDirectory(void);

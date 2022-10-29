@@ -735,7 +735,7 @@ const char* Sys_FontsDirectory(void)
 	return sys_fontsdir.string;
 }
 
-const char* Sys_HomeDirectory(void)
+char* Sys_HomeDirectory(void)
 {
     char *ev, *buf;
     if (!(ev = getenv("XDG_DATA_HOME"))) {
@@ -749,7 +749,7 @@ const char* Sys_HomeDirectory(void)
     } else {
         buf = strdup(ev);
     }
-    return(buf)
+    return(buf);
 }
 
 #ifdef __MACOSX__
@@ -767,7 +767,7 @@ void Sys_RegisterQWURLProtocol_f(void)
     char open_cmd[MAX_PATH*2+1024] = { 0 };
     char exe_path[MAX_PATH] = { 0 };
     char buf[MAX_PATH] = { 0 };
-    const char *homedir = Sys_HomeDirectory();
+    char *homedir = Sys_HomeDirectory();
     int nchar = -1;
     FILE *fptr;
 
@@ -778,7 +778,7 @@ void Sys_RegisterQWURLProtocol_f(void)
         return;
     }
     snprintf(buf, sizeof(buf), "%s/applications", homedir);
-	free(homedir)
+	free(homedir);
     snprintf(open_cmd, sizeof(open_cmd), "mkdir -pm 0755 \"%s\"", buf);
     system(open_cmd);
 
