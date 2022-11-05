@@ -55,6 +55,15 @@ char *str_trim(char *str);
 int HexToInt(char c);
 
 ///
+/// Game Mode utils
+///
+
+char *get_ktx_mode(void);
+qbool check_ktx_ca(void);
+qbool check_ktx_wo(void);
+qbool check_ktx_ca_wo(void);
+
+///
 /// Filename utils
 ///
 

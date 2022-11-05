@@ -1,7 +1,7 @@
 name: build targets
 on: [pull_request]
 jobs:
-  build:
+  windows-build:
     if: github.repository == 'QW-Group/ezquake-source'
     runs-on: windows-latest
     strategy:
@@ -21,7 +21,7 @@ jobs:
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.1
@@ -43,3 +43,45 @@ jobs:
       with:
         name: ${{ matrix.target }}
         path: .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.exe
+
+  macos-arm-build:
+    if: github.repository == 'QW-Group/ezquake-source'
+    runs-on: macos-12
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: .github/workflows/scripts/homebrew.sh install-arm64
+
+    - name: Build
+      run: .github/workflows/scripts/homebrew.sh build-arm64
+
+    - name: Create Bundle
+      run: .github/workflows/scripts/homebrew.sh create-bundle
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: macos-arm64
+        path: artifact
+
+  macos-intel-build:
+    if: github.repository == 'QW-Group/ezquake-source'
+    runs-on: macos-12
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: .github/workflows/scripts/homebrew.sh install-intel
+
+    - name: Build
+      run: .github/workflows/scripts/homebrew.sh build-intel
+
+    - name: Create Bundle
+      run: .github/workflows/scripts/homebrew.sh create-bundle
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: macos-intel
+        path: artifact

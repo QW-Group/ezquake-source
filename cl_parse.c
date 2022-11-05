@@ -3154,8 +3154,16 @@ void CL_ParseStufftext (void)
 	{
 		extern void Parse_TeamInfo(char *s);
 
-		if (!cls.mvdplayback)
+		if (!cls.mvdplayback && !check_ktx_ca_wo())
+		{
 			Parse_TeamInfo( s + 2 );
+		}
+	}
+	else if (!strncmp(s, "//cainfo ", sizeof("//cainfo ") - 1))
+	{
+		extern void Parse_CAInfo(char *s);
+
+		Parse_CAInfo( s + 2 );
 	}
 	else if (!strncmp(s, "//at ", sizeof("//at ") - 1))
 	{

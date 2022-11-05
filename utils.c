@@ -362,6 +362,32 @@ int HexToInt(char c)
 		return -1;
 }
 
+/************************************** Game Mode Utils *********************************/
+
+char *get_ktx_mode (void)
+{
+	return Info_ValueForKey(cl.serverinfo, "mode");
+}
+
+qbool check_ktx_ca (void)	// playing clan arena
+{
+	char *ktxmode = get_ktx_mode();
+
+	return (strstr(ktxmode, "-ca") != NULL);
+}
+
+qbool check_ktx_wo (void)	// playing wipeout
+{
+	char *ktxmode = get_ktx_mode();
+
+	return (strstr(ktxmode, "-wo") != NULL);
+}
+
+qbool check_ktx_ca_wo (void) // playing clan arena or wipeout
+{
+	return (check_ktx_ca() || check_ktx_wo());
+}
+
 /************************************** File Utils **************************************/
 
 int Util_Extend_Filename(char *filename, char **ext) {
