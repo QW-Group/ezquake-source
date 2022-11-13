@@ -35,7 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // "Starting with the Release 302 drivers, application developers can direct the
 // Optimus driver at runtime to use the High Performance Graphics to render any
-// application —- even those applications for which there is no existing application
+// application -- even those applications for which there is no existing application
 // profile. They can do this by exporting a global variable named NvOptimusEnablement.
 // The Optimus driver looks for the existence and value of the export. Only the LSB of
 // the DWORD matters at this time. A value of 0x00000001 indicates that rendering should
@@ -52,7 +52,7 @@ __attribute__((dllexport)) DWORD NvOptimusEnablement = 0x00000001;
 // (2) discrete high performance graphics devices.Unfortunately, 3D intensive application performance
 // may suffer greatly if the best graphics device is not selected.For example, a game may run at 30
 // Frames Per Second(FPS) on the integrated GPU rather than the 60 FPS the discrete GPU would enable.
-// As a developer you can easily fix this problem by adding only one line to your executable’s source code :
+// As a developer you can easily fix this problem by adding only one line to your executable's source code :
 // https://gpuopen.com/amdpowerxpressrequesthighperformance/
 #ifdef _MSC_VER
 _declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x00000001;
@@ -681,12 +681,7 @@ void WinCheckOSInfo(void)
 
 void Sys_Init_ (void) 
 {
-	// Allocate a named semaphore on the client so the front end can tell if it is alive.
-	// Enabled for development purposes, but disabled for official builds.
-
-#ifdef _DEBUG
 	if (!COM_CheckParm(cmdline_param_client_allowmultipleclients))
-#endif
 	{
 		// Mutex will fail if semaphore already exists.
 		qwclsemaphore = CreateMutex(
