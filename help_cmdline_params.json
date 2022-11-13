@@ -1,8 +1,5 @@
 {
   "-allowmultiple": {
-    "builds": [
-      "debug"
-    ],
     "description": "On Windows, launch multiple copies of ezQuake rather than re-using the existing instance",
     "systems": [
       "windows"
