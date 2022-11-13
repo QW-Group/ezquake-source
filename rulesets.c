@@ -96,8 +96,7 @@ qbool RuleSets_DisallowModelOutline(struct model_s *mod)
 		case MOD_BACKPACK:
 			return !cls.demoplayback && (rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown);
 		default:
-			// return to just rs_qcon once backface outlining tested
-			return !cls.demoplayback && (rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown);
+			return !cls.demoplayback && (rulesetDef.ruleset == rs_qcon);
 	}
 }
 
@@ -237,7 +236,7 @@ static void Rulesets_Smackdown(qbool enable)
 		rulesetDef.maxfps = 77;
 		rulesetDef.restrictTriggers = true;
 		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
-		rulesetDef.restrictParticles = true;
+		rulesetDef.restrictParticles = false;
 		rulesetDef.restrictLogging = true;
 		rulesetDef.restrictRollAngle = true;
 		rulesetDef.ruleset = rs_smackdown;
