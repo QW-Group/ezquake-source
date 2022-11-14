@@ -273,7 +273,7 @@ static void qtvlist_find_player(const char *name, qbool list_all)
 	}
 }
 
-static void qtvlist_follow_player(const char *name)
+static void qtvlist_find_and_follow_player(const char *name)
 {
 	json_t *server_array, *server_entry, *gs_array, *gs_entry;
 	json_t *players_array, *player_entry;
@@ -545,7 +545,7 @@ static void qtvlist_find_player_cmd(void)
 	SDL_UnlockMutex(qtvlist_mutex);
 }
 
-static void qtvlist_follow_player_cmd(void)
+static void qtvlist_find_and_follow_player_cmd(void)
 {
 	if (qtvlist_mutex == NULL) {
 		Com_Printf("error: cannot read QTV list, mutex not initialized\n");
@@ -553,7 +553,7 @@ static void qtvlist_follow_player_cmd(void)
 	}
 
 	if (Cmd_Argc() == 1) {
-		Com_Printf("usage: follow [nickname]\n");
+		Com_Printf("usage: find_and_follow [nickname]\n");
 		return;
 	}
 
@@ -562,7 +562,7 @@ static void qtvlist_follow_player_cmd(void)
 		return;
 	}
 
-	qtvlist_follow_player(Cmd_Argv(1));
+	qtvlist_find_and_follow_player(Cmd_Argv(1));
 
 	SDL_UnlockMutex(qtvlist_mutex);
 
@@ -630,7 +630,7 @@ void qtvlist_init(void)
 {
 	Cmd_AddCommand("qtv", qtvlist_qtv_cmd);
 	Cmd_AddCommand("find", qtvlist_find_player_cmd);
-	Cmd_AddCommand("follow", qtvlist_follow_player_cmd);
+	Cmd_AddCommand("find_and_follow", qtvlist_find_and_follow_player_cmd);
 	Cmd_AddCommand("find_update", qtvlist_spawn_updater);
 	Cmd_AddCommand("observeqtv", qtvlist_qtv_cmd); /* For backwards compat */
 	Cmd_AddCommand("qtv_update", qtvlist_spawn_updater);

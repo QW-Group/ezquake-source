@@ -555,10 +555,13 @@
     "description": "Message filtering system. Only team messages are filtered.\nUse filter with no parameters to list current filters and filter clear to remove all filters.\n\nExample:\nfilter #a  say_team i can see this message #a.\nsay_team i can't see this message #d."
   },
   "find": {
-    "system-generated": true
+    "description": "Lists all the players on all servers. Based on QTV."
+  },
+  "find_and_follow": {
+    "description": "Find a player by name and connect to the same server. Based on QTV."
   },
   "find_update": {
-    "system-generated": true
+    "description": "Update the database of the current players on all servers. Based on QTV."
   },
   "floodprot": {
     "arguments": [
