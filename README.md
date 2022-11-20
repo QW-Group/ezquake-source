@@ -120,18 +120,19 @@ _These instructions were tested on Ubuntu_
 
 Make sure you have the dependencies installed:
 
-- For *Ubuntu 15.10-16.04*
-```
-sudo apt-get install git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng12-dev libjpeg-dev libspeex-dev libspeexdsp-dev
-```
 - For *Ubuntu 16.10+*
 ```
-sudo apt install git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev
+sudo apt install git build-essential libsdl2-dev libjansson-dev libexpat-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libsndfile-dev libspeex-dev libspeexdsp-dev libxxf86vm-dev
 ```
 - For *openSUSE Tumbleweed*
 ```
 sudo zypper install -t pattern devel_C_C++
-sudo zypper install git pcre-devel Mesa-libGL-devel libSDL2-devel libjansson-devel libexpat-devel libcurl-devel libpng16-devel libjpeg8-devel libjpeg-turbo libsndfile-devel speex-devel speexdsp-devel libXxf86vm-devel
+sudo zypper install git pcre-devel Mesa-libGL-devel SDL2-devel libjansson-devel libexpat-devel libcurl-devel libpng16-devel libpng16-compat-devel libjpeg8-devel libjpeg-turbo libsndfile-devel speex-devel speexdsp-devel libXxf86vm-devel
+```
+- For *Fedora*
+```
+sudo dnf group install 'C Development Tools and Libraries'
+sudo dnf install git pcre-devel mesa-libEGL-devel SDL2-devel jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel libsndfile-devel speex-devel speexdsp-devel libXxf86vm-devel
 ```
 
 Clone the git repository:
