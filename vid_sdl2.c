@@ -25,6 +25,7 @@
 
 #include <SDL.h>
 #include <SDL_syswm.h>
+#include <SDL_video.h>
 
 #ifdef X11_GAMMA_WORKAROUND
 #include <X11/extensions/xf86vmode.h>
@@ -1607,23 +1608,18 @@ void VID_SetCaption (char *text)
 
 void VID_NotifyActivity(void)
 {
-#ifdef _WIN32
 	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
 
 	if (ActiveApp || !vid_flashonactivity.value) {
 		return;
 	}
 
 	if (SDL_GetWindowWMInfo(sdl_window, &info) == SDL_TRUE) {
-		if (info.subsystem == SDL_SYSWM_WINDOWS) {
-			FlashWindow(info.info.win.window, TRUE);
-		}
+		SDL_FlashWindow(sdl_window,SDL_FLASH_UNTIL_FOCUSED);
 	}
 	else {
 		Com_DPrintf("Sys_NotifyActivity: SDL_GetWindowWMInfo failed: %s\n", SDL_GetError());
 	}
-#endif
 }
 
 int VID_SetDeviceGammaRamp(unsigned short *ramps)
