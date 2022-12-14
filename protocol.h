@@ -285,8 +285,8 @@ void MSG_DecodeMVDSVWeaponFlags(int flags, int* weaponmode, int* weaponhide, qbo
 // bits 11..13 are player move type bits (ZQuake extension)
 #define PF_PMC_SHIFT	11
 #define	PF_PMC_MASK		7
-#define	PF_ONGROUND		(1<<14)			// ZQuake extension
-#define	PF_SOLID		(1<<15)			// ZQuake extension
+#define	PF_ONGROUND		(1<<22)			// ZQuake extension, 14 but offset due to TRANS
+#define	PF_SOLID		(1<<23)			// ZQuake extension, 15 but offset due to TRANS
 
 // encoded player move types
 #define PMC_NORMAL				0		// normal ground movement
@@ -352,6 +352,8 @@ void MSG_DecodeMVDSVWeaponFlags(int flags, int* weaponmode, int* weaponhide, qbo
 
 #ifdef PROTOCOL_VERSION_FTE
 #define U_FTE_EVENMORE	(1<<7)		//extension info follows
+
+#define PF_EXTRA_PFS    (1<<15)
 
 //fte extensions
 //EVENMORE flags

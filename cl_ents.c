@@ -1366,7 +1366,19 @@ void CL_ParsePlayerinfo (void)
 	} 
 	else 
 	{
-		flags = state->flags = MSG_ReadShort ();
+		flags = (unsigned short) MSG_ReadShort ();
+
+		if (cls.fteprotocolextensions & FTE_PEXT_TRANS)
+		{
+			if (flags & PF_EXTRA_PFS)
+				flags |= MSG_ReadByte() << 16;
+		}
+		else
+		{
+			flags = (flags & 0x3fff) | ((flags & 0xc000) << 8);
+		}
+
+		state->flags = flags;
 
 		state->messagenum = cl.parsecount;
 		if (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
