@@ -334,6 +334,7 @@ static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
 	drawcall->mappings[index].flags = R_TextureReferenceIsValid(texture->fb_texturenum) && texture->isLumaTexture ? EZQ_SURFACE_HAS_LUMA : 0;
 	drawcall->mappings[index].flags |= R_TextureReferenceIsValid(texture->fb_texturenum) && !texture->isLumaTexture ? EZQ_SURFACE_HAS_FB : 0;
 	drawcall->mappings[index].flags |= R_TextureReferenceIsValid(texture->fb_texturenum) && texture->isAlphaTested ? EZQ_SURFACE_ALPHATEST : 0;
+	drawcall->mappings[index].flags |= texture->isLitTurb ? EZQ_SURFACE_LIT_TURB : 0;
 	return true;
 }
 
