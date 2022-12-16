@@ -182,6 +182,9 @@ void main()
 		}
 		else {
 			frag_colour = texColor * waterAlpha;
+			if ((Flags & EZQ_SURFACE_LIT_TURB) > 0) {
+				frag_colour = vec4(lmColor.rgb, 1) * frag_colour;
+			}
 #ifdef DRAW_FOG
 			frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
 #endif

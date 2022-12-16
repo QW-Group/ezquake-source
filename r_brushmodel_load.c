@@ -54,8 +54,6 @@ model_t* Mod_FindName(const char *name);
 
 static void SetTextureFlags(model_t* mod, msurface_t* out, int surfnum)
 {
-	int i;
-
 	out->texinfo->surfaces++;
 
 	// set the drawing flags flag
@@ -68,12 +66,14 @@ static void SetTextureFlags(model_t* mod, msurface_t* out, int surfnum)
 	}
 
 	if (Mod_IsTurbTextureName(mod, out->texinfo->texture->name)) {	// turbulent
-		out->flags |= (SURF_DRAWTURB | SURF_DRAWTILED);
+		out->flags |= SURF_DRAWTURB;
 		out->texinfo->skippable = false;
 
-		for (i = 0; i < 2; i++) {
-			out->extents[i] = 16384;
-			out->texturemins[i] = -8192;
+		// check if texture should receive no lighting.
+		if (out->texinfo->flags & TEX_SPECIAL) {
+			out->flags |= SURF_DRAWTILED;
+		} else {
+			out->texinfo->texture->isLitTurb = true;
 		}
 		R_TurbSurfacesSubdivide(out);	// cut up polygon for warps
 		return;

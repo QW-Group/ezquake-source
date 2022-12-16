@@ -651,7 +651,7 @@ static void R_BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 		poly->verts[i][4] = t;
 
 		// lightmap texture coordinates
-		if (isTurb) {
+		if (isTurb && !fa->texinfo->texture->isLitTurb) {
 			poly->verts[i][5] = poly->verts[i][6] = 0;
 			poly->verts[i][7] = poly->verts[i][8] = 0;
 		}
@@ -880,9 +880,7 @@ void R_BuildLightmaps(void)
 				continue;
 			}
 
-			if (!isTurb) {
-				R_LightmapCreateForSurface(m->surfaces + i, m->isworldmodel ? m->surfaces[i].surfacenum : -1);
-			}
+			R_LightmapCreateForSurface(m->surfaces + i, m->isworldmodel ? m->surfaces[i].surfacenum : -1);
 			R_BuildSurfaceDisplayList(m, m->surfaces + i);
 		}
 	}
