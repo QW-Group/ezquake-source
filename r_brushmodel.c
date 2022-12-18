@@ -189,7 +189,9 @@ static int R_BrushModelPopulateVBO(model_t* m, void* vbo_buffer, int vbo_pos)
 		has_luma = has_fb & m->textures[i]->isLumaTexture;
 		for (j = 0; j < m->nummodelsurfaces; ++j) {
 			msurface_t* surf = m->surfaces + m->firstmodelsurface + j;
-			int lightmap = surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY) ? -1 : surf->lightmaptexturenum;
+			qbool isTurbOrSky = surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY);
+			qbool isLitTurb = surf->texinfo->texture->isLitTurb;
+			int lightmap = isTurbOrSky && !isLitTurb ? -1 : surf->lightmaptexturenum;
 			glpoly_t* poly;
 
 			if (surf->texinfo->miptex != i) {
