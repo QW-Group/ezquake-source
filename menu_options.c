@@ -180,7 +180,7 @@ const char* scr_sshot_format_enum[] = {
 extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_weaponhide, con_funchars_mode, con_notifytime, scr_consize, ignore_opponents, _con_notifylines,
 	ignore_qizmo_spec, ignore_spec, msg_filter, crosshair, crosshairsize, cl_smartjump, scr_coloredText,
 	cl_rollangle, cl_rollspeed, v_gunkick, v_kickpitch, v_kickroll, v_kicktime, v_viewheight, match_auto_sshot, match_auto_record, match_auto_logconsole,
-	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, scr_clock, scr_gameclock, show_fps, rate, cl_c2sImpulseBackup,
+	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, gl_outline, scr_clock, scr_gameclock, show_fps, rate, cl_c2sImpulseBackup,
 	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
 	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename, cl_fakename_suffix,
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz, s_desiredsamples,
@@ -188,6 +188,10 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	enemyforceskins, teamforceskins, vid_vsync_lag_fix, cl_sayfilter_coloredtext, cl_sayfilter_sendboth,
 	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format, menu_ingame, sys_inactivesound
 ;
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+extern cvar_t r_fx_geometry;
+#endif
+
 #ifdef _WIN32
 extern cvar_t demo_format, sys_highpriority, cl_window_caption, vid_flashonactivity;
 void Sys_RegisterQWURLProtocol_f(void);
@@ -350,6 +354,9 @@ const char* explosiontype_enum[] =
 
 const char* muzzleflashes_enum[] =
 { "off", "on", "own off" };
+
+const char* outline_enum[] =
+{ "off", "models", "world", "models+world" };
 
 const char* simpleitemsorientation_enum[] =
 {"Parallel upright", "Facing upright", "Parallel", "Oriented"};
@@ -932,6 +939,7 @@ setting settfps_arr[] = {
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Weapon Shift", r_viewmodeloffset, -10, 10, 1),
 	ADDSET_NAMED	("Weapon Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
+	ADDSET_NAMED	("Outline", gl_outline, outline_enum),
 	ADDSET_BASIC_SECTION(),
 	
 	ADDSET_SEPARATOR("Environment"),
@@ -948,6 +956,9 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+	ADDSET_BOOL		("Outline", r_fx_geometry),
+#endif
 	ADDSET_BASIC_SECTION(),
 	
 	ADDSET_SEPARATOR("Projectiles"),

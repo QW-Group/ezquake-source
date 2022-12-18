@@ -476,7 +476,7 @@ qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
 	GLenum buffers[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
 	float clearValue[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
-	if (!r_fx_geometry.integer || !GL_Supported(R_SUPPORT_FRAMEBUFFERS)) {
+	if (!r_fx_geometry.integer || !GL_Supported(R_SUPPORT_FRAMEBUFFERS) || !RuleSets_AllowEdgeOutline()) {
 		return false;
 	}
 
