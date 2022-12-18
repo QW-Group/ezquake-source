@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "r_texture.h"
 #include "gl_texture_internal.h"
 #include "r_renderer.h"
+#include "rulesets.h"
 
 extern cvar_t vid_framebuffer;
 extern cvar_t vid_framebuffer_depthformat;
