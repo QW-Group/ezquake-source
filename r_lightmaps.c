@@ -880,7 +880,9 @@ void R_BuildLightmaps(void)
 				continue;
 			}
 
-			R_LightmapCreateForSurface(m->surfaces + i, m->isworldmodel ? m->surfaces[i].surfacenum : -1);
+			if (!isTurb || !(m->surfaces[i].texinfo->flags & TEX_SPECIAL)) {
+				R_LightmapCreateForSurface(m->surfaces + i, m->isworldmodel ? m->surfaces[i].surfacenum : -1);
+			}
 			R_BuildSurfaceDisplayList(m, m->surfaces + i);
 		}
 	}
