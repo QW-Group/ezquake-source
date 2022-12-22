@@ -29,6 +29,7 @@ dependencies=(
     sdl2_gfx
     sdl2_image
     sdl2_mixer
+    python-tk
 )
 
 
