@@ -669,10 +669,11 @@ sf_count_t SFVIO_Tell(void *user_data)
 static qbool S_ParseCueMark(const byte* chunk, int len, int cue_point_id, int* sample_length)
 {
 	int pos = 0;
+	unsigned int size = 1;
 
 	*sample_length = 0;
-	while (pos < len - 8) {
-		unsigned int size = BuffLittleLong(chunk + pos + 4);
+	while ((pos < (len - 8)) && (size != 0)) {
+		size = BuffLittleLong(chunk + pos + 4);
 
 		// Looking for ltxt chunk with purpose "mark"
 		if (size >= 20 && !strncmp(chunk + pos, "ltxt", 4) && !strncmp(chunk + pos + 16, "mark", 4)) {
