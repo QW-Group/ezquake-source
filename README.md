@@ -1,7 +1,7 @@
 # ezQuake — Modern QuakeWorld Client
 [![Build Status](https://travis-ci.org/ezQuake/ezquake-source.svg?branch=master)](https://travis-ci.org/ezQuake/ezquake-source)
 
-Homepage: [https://ezquake.github.io/][homepage]
+Homepage: [https://ezquake.com][homepage]
 
 Community discord: [http://discord.quake.world][discord]
 
@@ -200,5 +200,5 @@ Nightly builds for Windows can be found [here][nightly]
  [nightly]: http://uttergrottan.localghost.net/ezquake/dev/nightlybuilds/win32/
  [releases]: https://github.com/ezQuake/ezquake-source/releases
  [issues]: https://github.com/ezQuake/ezquake-source/issues
- [homepage]: https://ezquake.github.io/
+ [homepage]: https://ezquake.com
  [discord]: http://discord.quake.world/
