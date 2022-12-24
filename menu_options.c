@@ -615,12 +615,9 @@ extern cvar_t cfg_backup, cfg_save_aliases, cfg_save_binds, cfg_save_cmdline,
 
 void MOpt_ImportConfig(void) {
 	MOpt_configpage_mode = MOCPM_CHOOSECONFIG;
+	char path[MAX_OSPATH];
 	
-	// hope few doubled trinary operator won't hurt your brains
-	if (cfg_use_home.integer)
-		FL_SetCurrentDir(&configs_filelist, (cfg_use_gamedir.integer) ? va("%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "" : com_gamedirfile) : com_homedir);
-    else
-		FL_SetCurrentDir(&configs_filelist, (cfg_use_gamedir.integer) ? va("%s/%s/configs", com_basedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile) : va("%s/ezquake/configs", com_basedir));
+	FL_SetCurrentDir(&configs_filelist, Cfg_GetConfigPath(path, sizeof (path), ""));
 }
 void MOpt_ExportConfig(void) {
 	MOpt_configpage_mode = MOCPM_ENTERFILENAME;

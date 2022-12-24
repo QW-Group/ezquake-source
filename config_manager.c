@@ -798,8 +798,17 @@ static void ResetConfigs(qbool explicit_reset, qbool read_legacy_configs)
 
 void Cfg_GetConfigPath(char* path, size_t max_length, const char* name)
 {
+	char *configdir;
+#ifdef _WIN32
+	configdir = com_homedir;
+#else
+	configdir = getenv("XDG_CONFIG_HOME");
+	if (!configdir)
+		configdir = com_homedir;
+#endif
+
 	const char* default_gamedir = (cfg_use_home.integer ? "" : "ezquake");
-	const char* base_directory = (cfg_use_home.integer ? com_homedir : com_basedir);
+	const char* base_directory = (cfg_use_home.integer ? configdir : com_basedir);
 
 	strlcpy(path, base_directory, max_length);
 	if (path[0]) {
@@ -1032,8 +1041,8 @@ qbool LoadCfg(FILE *f)
 	example how it works
 	
 	=== ./ezquake -game testmod -config testcfg
-	homedir/testmod/testcfg.cfg (fullname)
-	homedir/testcfg.cfg (fullname_moddefault)
+	homedir/testmod/testcfg.cfg
+	homedir/testcfg.cfg
 	quakedir/testmod/configs/testcfg.cfg
 	quakedir/ezquake/configs/testcfg.cfg
 	built-in ezquake config
@@ -1043,49 +1052,33 @@ void LoadConfig_f(void)
 	FILE	*f = NULL;
 	char	filename[MAX_PATH] = {0},
 			fullname[MAX_PATH] = {0},
-			fullname_moddefault[MAX_PATH] = {0},
 			*arg1;
-	int		use_home;
+	int		use_home, use_gamedir;
 
 	arg1 = COM_SkipPathWritable(Cmd_Argv(1));
 
 	snprintf(filename, sizeof(filename) - 4, "%s", arg1[0] ? arg1 : MAIN_CONFIG_FILENAME); // use config.cfg if no params was specified
+	
 
 	COM_ForceExtensionEx (filename, ".cfg", sizeof (filename));
+
+	//save state of config vars
 	use_home = cfg_use_home.integer || !host_everything_loaded;
+	use_gamedir = cfg_use_gamedir.integer;
 
-	// home
-	snprintf(fullname, sizeof(fullname), "%s/%s%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "" : va("%s/", com_gamedirfile), filename);
-	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/%s", com_homedir, filename);
+	cfg_use_home.integer = use_home || !host_everything_loaded;
 
-	if (use_home) {
-		if (cfg_use_gamedir.integer) {
-			f = fopen(fullname, "rb");
-		}
-		if (f == NULL) {
-			f = fopen(fullname_moddefault, "rb");
-		}
-		if (f == NULL) {
-			use_home = false;
-		}
-	}
-
-	// basedir
-	snprintf(fullname, sizeof(fullname), "%s/%s/configs/%s", com_basedir, (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
-	snprintf(fullname_moddefault, sizeof(fullname_moddefault), "%s/ezquake/configs/%s", com_basedir, filename);
-
-	if(!use_home) {
-		if (cfg_use_gamedir.integer) {
-			f = fopen(fullname, "rb");
-		}
-		if (f == NULL) {
-			f = fopen(fullname_moddefault, "rb");
-		}
-	}
-
-	if (f == NULL) {
-		Com_Printf("Couldn't load %s %s\n", filename, (cfg_use_gamedir.integer) ? "(using gamedir search)" : "(not using gamedir search)");
-		return;
+	while (Cfg_GetConfigPath(fullname, sizeof (fullname), filename), !(f = fopen(fullname, "rb"))) {
+		if (!(use_home || use_gamedir))
+			Com_Printf("Couldn't load %s %s\n", filename, (cfg_use_gamedir.integer) ? "(using gamedir search)" : "(not using gamedir search)");
+			cfg_use_gamedir.integer = use_gamedir;
+			cfg_use_home.integer = use_home;
+			return;
+		if (cfg_use_gamedir.integer)
+			cfg_use_gamedir.integer = 0;
+		continue;
+		cfg_use_home.integer = false;
+		cfg_use_gamedir.integer = use_gamedir;
 	}
 
 	con_suppress = true;
@@ -1093,9 +1086,11 @@ void LoadConfig_f(void)
 	con_suppress = false;
 
 	if(use_home)
-		Com_Printf("Loading %s%s (Using Home Directory) ...\n", (strcmp(com_gamedirfile, "qw") == 0) ? "" : va("%s/",com_gamedirfile), filename);
+		Com_Printf("Loading %s (Using Home Directory) ...\n", fullname);
 	else
-		Com_Printf("Loading %s/configs/%s ...\n", (strcmp(com_gamedirfile, "qw") == 0) ? "ezquake" : com_gamedirfile, filename);
+		Com_Printf("Loading %s ...\n", fullname);
+
+	cfg_use_home.integer = use_home;
 	
 	Cbuf_AddText ("cl_warncmd 0\n");
 
