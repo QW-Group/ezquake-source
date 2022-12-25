@@ -32,6 +32,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qtv.h"
 #include "fs.h"
 
+/*time type to be used for rcon encryption*/
+#define __qtime_t uint64_t
 
 void SCR_RSShot_f (void);
 void CL_ProcessServerInfo(void);
@@ -82,10 +84,10 @@ void Cmd_ForwardToServer (void) {
 void CL_ForwardToServer_f (void) {
 // Added by VVD {
 	char* server_string;
-	char client_time_str[sizeof(time_t) * 2 + 1] = { 0 };
-	int		i, server_string_len;
-	extern cvar_t	cl_crypt_rcon;
-	time_t		client_time;
+	char client_time_str[sizeof(__qtime_t) * 2 + 1] = { 0 };
+	int i, server_string_len;
+	extern cvar_t cl_crypt_rcon;
+	__qtime_t client_time;
 // Added by VVD }
 
 	if (cls.mvdplayback == QTV_PLAYBACK) {
@@ -546,11 +548,11 @@ void CL_QStat_f (void)
 void CL_Rcon_f (void) {
 
 	char message[1024];
-	char client_time_str[sizeof(time_t) * 2 + 1];
-	int	i, i_from;
+	char client_time_str[sizeof(__qtime_t) * 2 + 1];
+	int i, i_from;
 	netadr_t to;
 	extern cvar_t rcon_password, rcon_address, cl_crypt_rcon;
-	time_t client_time;
+	__qtime_t client_time;
 
 	message[0] = (char)255;
 	message[1] = (char)255;
