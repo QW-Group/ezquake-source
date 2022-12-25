@@ -38,7 +38,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 static void OnChange_scr_allowsnap(cvar_t *, char *, qbool *);
 
 static cvar_t scr_sshot_autoname = { "sshot_autoname", "0" };
-static cvar_t scr_allowsnap      = { "scr_allowsnap", "1", 0, OnChange_scr_allowsnap };
+cvar_t scr_allowsnap      = { "scr_allowsnap", "1", 0, OnChange_scr_allowsnap };
 cvar_t scr_sshot_format = { "sshot_format", DEFAULT_SSHOT_FORMAT };
 cvar_t scr_sshot_dir = { "sshot_dir", "" };
 
@@ -325,15 +325,12 @@ void SCR_RSShot_f(void)
 	if (!scr_allowsnap.value) {
 		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
 		SZ_Print(&cls.netchan.message, "snap\n");
-		Com_Printf("Refusing remote screen shot request.\n");
 		return;
 	}
-
-	Com_Printf("Remote screenshot requested.\n");
-
+	
 	snprintf(filename, sizeof(filename), "%s/temp/__rsshot__", Sshot_SshotDirectory());
 
-	width = 400; height = 300;
+	width = 800; height = 600;
 	base = (byte *)Q_malloc((width * height + glwidth * glheight) * 3);
 	pixels = base + glwidth * glheight * 3;
 
@@ -352,17 +349,12 @@ void SCR_RSShot_f(void)
 		FILE	*f;
 		byte	*screen_shot;
 		int	size;
-		if ((size = FS_FileOpenRead(filename, &f)) == -1) {
-			Com_Printf("Can't send screenshot to server: can't open file %s\n", filename);
-		}
-		else {
+		if ((size = FS_FileOpenRead(filename, &f)) != -1) {
 			screen_shot = (byte *)Q_malloc(size);
 			if (fread(screen_shot, 1, (size_t)size, f) == (size_t)size) {
-				Com_Printf("Sending screenshot to server...\n");
 				CL_StartUpload(screen_shot, size);
 			}
-			else
-				Com_Printf("Can't send screenshot to server: can't read file %s\n", filename);
+
 			fclose(f);
 			Q_free(screen_shot);
 		}
