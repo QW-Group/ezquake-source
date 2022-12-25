@@ -919,7 +919,7 @@
     "syntax": "<address>"
   },
   "joyadvancedupdate": {
-    "description": "This command initializes the joystick's advanced features.\nIt is necessary to issue this command after making any changes to the other joystick commands.\nThis command will initialize all of the settings."
+    "description": "This command must be run to apply changes made to the joyadvaxis[xyzruv] or joyindex cvars."
   },
   "keycode": {
     "description": "This command enables the setting of a new keymapping.",
