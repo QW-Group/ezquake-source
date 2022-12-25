@@ -133,9 +133,11 @@ void main()
 	#ifdef DRAW_TEXTURELESS
 		texColor = vec4(texture(materialTex[SamplerNumber], TextureLessCoord).rgb, texColor.a);
 	#endif
-	if ((Flags & EZQ_SURFACE_ALPHATEST) == EZQ_SURFACE_ALPHATEST && texColor.a < 0.333) {
+	if ((Flags & EZQ_SURFACE_ALPHATEST) == EZQ_SURFACE_ALPHATEST && texColor.a < 0.5) {
 		discard;
 	}
+	// Avoid black artifacts at border between texture and transparency visible in fog
+	texColor = vec4(texColor.rgb, 1.0);
 #endif
 
 	turbType = Flags & EZQ_SURFACE_TYPE;
