@@ -5147,9 +5147,9 @@
     },
     "gl_outline": {
       "default": "0",
-      "desc": "Controls outlining of models and map.",
+      "desc": "Controls outlining of models and map. Disallowed in qcon ruleset.",
       "group-id": "35",
-      "remarks": "Outlining of the world is only valid when cheats are enabled.",
+      "remarks": "See /r_fx_geometry for edge outlining of the map.",
       "type": "enum",
       "values": [
         {
@@ -5161,7 +5161,7 @@
           "name": "1"
         },
         {
-          "description": "Outline world",
+          "description": "Outline world (used only for map development)",
           "name": "2"
         },
         {
@@ -15653,9 +15653,9 @@
     },
     "r_fx_geometry": {
       "default": "0",
-      "desc": "Outlines the world based on surface normals.",
+      "desc": "Outlines the world based on surface normals. Disallowed in qcon ruleset.",
       "group-id": "35",
-      "remarks": "Requires vid_framebuffer 1|2 and Modern OpenGL (vid_renderer 1).",
+      "remarks": "Requires vid_framebuffer 1|2 and Modern OpenGL (vid_renderer 1). See /gl_outline for model outline",
       "type": "boolean"
     },
     "r_glstats": {

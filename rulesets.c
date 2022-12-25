@@ -81,6 +81,7 @@ qbool RuleSets_DisallowSimpleTexture(model_t* mod)
 	}
 }
 
+// for models (gl_outline)
 qbool RuleSets_DisallowModelOutline(struct model_s *mod)
 {
 	if (mod == NULL) {
@@ -90,14 +91,25 @@ qbool RuleSets_DisallowModelOutline(struct model_s *mod)
 
 	switch (mod->modhint) {
 		case MOD_EYES:
-			return true;
 		case MOD_THUNDERBOLT:
 			return true;
 		case MOD_BACKPACK:
 			return !cls.demoplayback && (rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown);
 		default:
 			// return to just rs_qcon once backface outlining tested
-			return !cls.demoplayback && (rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown);
+//			return !cls.demoplayback && (rulesetDef.ruleset == rs_qcon || rulesetDef.ruleset == rs_smackdown);
+			return !cls.demoplayback && (rulesetDef.ruleset == rs_qcon);
+	}
+}
+
+// for edges (r_fx_geometry)
+qbool RuleSets_AllowEdgeOutline(void)
+{
+	switch(rulesetDef.ruleset) {
+		case rs_qcon:
+			return false;
+		default:
+			return true;
 	}
 }
 
