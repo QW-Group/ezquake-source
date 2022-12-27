@@ -38,7 +38,6 @@ function install_arm64() {
     export HOMEBREW_NO_INSTALL_CLEANUP="true"
     export HOMEBREW_DIR="/Users/runner/Library/Caches/Homebrew/downloads"
 
-    brew update
     brew fetch --force --bottle-tag=arm64_big_sur "${dependencies[@]}"
 
     for dependency in "${dependencies[@]}"; do
@@ -49,7 +48,6 @@ function install_arm64() {
 
 function install_intel() {
     export HOMEBREW_NO_INSTALL_CLEANUP="true"
-    brew update
     brew install --quiet "${dependencies[@]}"
 }
 
