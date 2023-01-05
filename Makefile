@@ -43,6 +43,9 @@ CFLAGS_c :=
 RCFLAGS_c :=
 LDFLAGS_c :=
 
+SRC_DIR = src
+INCLUDES = -I$(SRC_DIR)/minizip
+
 ifdef CONFIG_WINDOWS
     LDFLAGS_c += -mwindows
 
@@ -175,307 +178,307 @@ RCFLAGS_c += -DREVISION=$(REV) -DVERSION='\"$(VER)\"'
 ### Object Files ###
 
 COMMON_OBJS := \
-    cmodel.o           \
-    cmd.o              \
-    com_msg.o          \
-    common.o           \
-    crc.o              \
-    cvar.o             \
-    fs.o               \
-    vfs_os.o           \
-    vfs_pak.o          \
-    vfs_zip.o          \
-    vfs_tcp.o          \
-    vfs_gzip.o         \
-    vfs_doomwad.o      \
-    vfs_mmap.o         \
-    vfs_tar.o          \
-    hash.o             \
-    host.o             \
-    mathlib.o          \
-    md4.o              \
-    sha3.o             \
-    net.o              \
-    net_chan.o         \
-    q_shared.o         \
-    version.o          \
-    zone.o             \
-    pmove.o            \
-    pmovetst.o
+    $(SRC_DIR)/cmodel.o           \
+    $(SRC_DIR)/cmd.o              \
+    $(SRC_DIR)/com_msg.o          \
+    $(SRC_DIR)/common.o           \
+    $(SRC_DIR)/crc.o              \
+    $(SRC_DIR)/cvar.o             \
+    $(SRC_DIR)/fs.o               \
+    $(SRC_DIR)/vfs_os.o           \
+    $(SRC_DIR)/vfs_pak.o          \
+    $(SRC_DIR)/vfs_zip.o          \
+    $(SRC_DIR)/vfs_tcp.o          \
+    $(SRC_DIR)/vfs_gzip.o         \
+    $(SRC_DIR)/vfs_doomwad.o      \
+    $(SRC_DIR)/vfs_mmap.o         \
+    $(SRC_DIR)/vfs_tar.o          \
+    $(SRC_DIR)/hash.o             \
+    $(SRC_DIR)/host.o             \
+    $(SRC_DIR)/mathlib.o          \
+    $(SRC_DIR)/md4.o              \
+    $(SRC_DIR)/sha3.o             \
+    $(SRC_DIR)/net.o              \
+    $(SRC_DIR)/net_chan.o         \
+    $(SRC_DIR)/q_shared.o         \
+    $(SRC_DIR)/version.o          \
+    $(SRC_DIR)/zone.o             \
+    $(SRC_DIR)/pmove.o            \
+    $(SRC_DIR)/pmovetst.o
 
 SERVER_OBJS := \
-    pr_cmds.o \
-    pr_edict.o \
-    pr_exec.o \
-    pr2_cmds.o \
-    pr2_edict.o \
-    pr2_exec.o \
-    pr2_vm.o \
-    sv_ccmds.o \
-    sv_ents.o \
-    sv_init.o \
-    sv_main.o \
-    sv_master.o \
-    sv_move.o \
-    sv_nchan.o \
-    sv_phys.o \
-    sv_save.o \
-    sv_send.o \
-    sv_user.o \
-    sv_world.o \
-    sv_demo.o \
-    sv_demo_misc.o \
-    sv_demo_qtv.o \
-    sv_login.o \
-    sv_mod_frags.o
+    $(SRC_DIR)/pr_cmds.o \
+    $(SRC_DIR)/pr_edict.o \
+    $(SRC_DIR)/pr_exec.o \
+    $(SRC_DIR)/pr2_cmds.o \
+    $(SRC_DIR)/pr2_edict.o \
+    $(SRC_DIR)/pr2_exec.o \
+    $(SRC_DIR)/pr2_vm.o \
+    $(SRC_DIR)/sv_ccmds.o \
+    $(SRC_DIR)/sv_ents.o \
+    $(SRC_DIR)/sv_init.o \
+    $(SRC_DIR)/sv_main.o \
+    $(SRC_DIR)/sv_master.o \
+    $(SRC_DIR)/sv_move.o \
+    $(SRC_DIR)/sv_nchan.o \
+    $(SRC_DIR)/sv_phys.o \
+    $(SRC_DIR)/sv_save.o \
+    $(SRC_DIR)/sv_send.o \
+    $(SRC_DIR)/sv_user.o \
+    $(SRC_DIR)/sv_world.o \
+    $(SRC_DIR)/sv_demo.o \
+    $(SRC_DIR)/sv_demo_misc.o \
+    $(SRC_DIR)/sv_demo_qtv.o \
+    $(SRC_DIR)/sv_login.o \
+    $(SRC_DIR)/sv_mod_frags.o
 
 HELP_OBJS := \
     $(patsubst help_%.json,help_%.o,$(wildcard help_*.json))
 
 MODERN_GLSL_OBJS := \
-    $(patsubst glsl/%.glsl,glsl_%.glsl.o,$(wildcard glsl/*.glsl))
+    $(patsubst $(SRC_DIR)/glsl/%.glsl,$(SRC_DIR)/glsl_%.glsl.o,$(wildcard $(SRC_DIR)/glsl/*.glsl))
 
 CLASSIC_GLSL_OBJS := \
-    $(patsubst glsl/glc/%.glsl,glsl_%.glsl.o,$(wildcard glsl/glc/*.glsl))
+    $(patsubst $(SRC_DIR)/glsl/glc/%.glsl,$(SRC_DIR)/glsl_%.glsl.o,$(wildcard $(SRC_DIR)/glsl/glc/*.glsl))
 
 MODERN_OPENGL_OBJS := \
     $(MODERN_GLSL_OBJS) \
-    glm_aliasmodel.o \
-    glm_brushmodel.o \
-    glm_draw.o \
-    glm_framebuffer.o \
-    glm_lightmaps.o \
-    glm_md3.o \
-    glm_misc.o \
-    glm_particles.o \
-    glm_performance.o \
-    glm_main.o \
-    glm_rmain.o \
-    glm_rsurf.o \
-    glm_sdl.o \
-    glm_sprite.o \
-    glm_sprite3d.o \
-    glm_state.o \
-    glm_texture_arrays.o \
-    glm_vao.o
+    $(SRC_DIR)/glm_aliasmodel.o \
+    $(SRC_DIR)/glm_brushmodel.o \
+    $(SRC_DIR)/glm_draw.o \
+    $(SRC_DIR)/glm_framebuffer.o \
+    $(SRC_DIR)/glm_lightmaps.o \
+    $(SRC_DIR)/glm_md3.o \
+    $(SRC_DIR)/glm_misc.o \
+    $(SRC_DIR)/glm_particles.o \
+    $(SRC_DIR)/glm_performance.o \
+    $(SRC_DIR)/glm_main.o \
+    $(SRC_DIR)/glm_rmain.o \
+    $(SRC_DIR)/glm_rsurf.o \
+    $(SRC_DIR)/glm_sdl.o \
+    $(SRC_DIR)/glm_sprite.o \
+    $(SRC_DIR)/glm_sprite3d.o \
+    $(SRC_DIR)/glm_state.o \
+    $(SRC_DIR)/glm_texture_arrays.o \
+    $(SRC_DIR)/glm_vao.o
 
 CLASSIC_OPENGL_OBJS := \
     $(CLASSIC_GLSL_OBJS) \
-    glc_aliasmodel.o \
-    glc_aliasmodel_mesh.o \
-    glc_bloom.o \
-    glc_brushmodel.o \
-    glc_draw.o \
-    glc_framebuffer.o \
-    glc_lightmaps.o \
-    glc_main.o \
-    glc_matrix.o \
-    glc_md3.o \
-    glc_misc.o \
-    glc_particles.o \
-    glc_performance.o \
-    glc_sdl.o \
-    glc_sky.o \
-    glc_sprite3d.o \
-    glc_state.o \
-    glc_surf.o \
-    glc_turb_surface.o \
-    glc_vao.o \
-    glc_warp.o
+    $(SRC_DIR)/glc_aliasmodel.o \
+    $(SRC_DIR)/glc_aliasmodel_mesh.o \
+    $(SRC_DIR)/glc_bloom.o \
+    $(SRC_DIR)/glc_brushmodel.o \
+    $(SRC_DIR)/glc_draw.o \
+    $(SRC_DIR)/glc_framebuffer.o \
+    $(SRC_DIR)/glc_lightmaps.o \
+    $(SRC_DIR)/glc_main.o \
+    $(SRC_DIR)/glc_matrix.o \
+    $(SRC_DIR)/glc_md3.o \
+    $(SRC_DIR)/glc_misc.o \
+    $(SRC_DIR)/glc_particles.o \
+    $(SRC_DIR)/glc_performance.o \
+    $(SRC_DIR)/glc_sdl.o \
+    $(SRC_DIR)/glc_sky.o \
+    $(SRC_DIR)/glc_sprite3d.o \
+    $(SRC_DIR)/glc_state.o \
+    $(SRC_DIR)/glc_surf.o \
+    $(SRC_DIR)/glc_turb_surface.o \
+    $(SRC_DIR)/glc_vao.o \
+    $(SRC_DIR)/glc_warp.o
 
 COMMON_OPENGL_OBJS := \
-    gl_aliasmodel.o \
-    gl_aliasmodel_md3.o \
-    gl_buffers.o \
-    gl_debug.o \
-    gl_drawcall_wrappers.o \
-    gl_framebuffer.o \
-    gl_misc.o \
-    gl_program.o \
-    gl_sdl.o \
-    gl_sprite3d.o \
-    gl_state.o \
-    gl_texture.o \
-    gl_texture_functions.o \
-    vid_common_gl.o
+    $(SRC_DIR)/gl_aliasmodel.o \
+    $(SRC_DIR)/gl_aliasmodel_md3.o \
+    $(SRC_DIR)/gl_buffers.o \
+    $(SRC_DIR)/gl_debug.o \
+    $(SRC_DIR)/gl_drawcall_wrappers.o \
+    $(SRC_DIR)/gl_framebuffer.o \
+    $(SRC_DIR)/gl_misc.o \
+    $(SRC_DIR)/gl_program.o \
+    $(SRC_DIR)/gl_sdl.o \
+    $(SRC_DIR)/gl_sprite3d.o \
+    $(SRC_DIR)/gl_state.o \
+    $(SRC_DIR)/gl_texture.o \
+    $(SRC_DIR)/gl_texture_functions.o \
+    $(SRC_DIR)/vid_common_gl.o
 
 COMMON_RENDERER_OBJS := \
-    r_aliasmodel.o \
-    r_aliasmodel_md3.o \
-    r_aliasmodel_mesh.o \
-    r_aliasmodel_skins.o \
-    r_atlas.o \
-    r_bloom.o \
-    r_brushmodel.o \
-    r_brushmodel_bspx.o \
-    r_brushmodel_load.o \
-    r_brushmodel_sky.o \
-    r_brushmodel_surfaces.o \
-    r_brushmodel_textures.o \
-    r_brushmodel_warpsurfaces.o \
-    r_buffers.o \
-    r_chaticons.o \
-    r_draw.o \
-    r_draw_charset.o \
-    r_draw_circle.o \
-    r_draw_image.o \
-    r_draw_line.o \
-    r_draw_polygon.o \
-    r_hud.o \
-    r_lightmaps.o \
-    r_main.o \
-    r_matrix.o \
-    r_misc.o \
-    r_model.o \
-    r_netgraph.o \
-    r_palette.o \
-    r_part.o \
-    r_part_trails.o \
-    r_particles_qmb.o \
-    r_particles_qmb_trails.o \
-    r_particles_qmb_spawn.o \
-    r_performance.o \
-    r_refrag.o \
-    r_rlight.o \
-    r_rmain.o \
-    r_rmisc.o \
-    r_sprite3d.o \
-    r_sprites.o \
-    r_states.o \
-    r_texture.o \
-    r_texture_cvars.o \
-    r_texture_load.o \
-    r_texture_util.o \
-    vx_camera.o \
-    vx_coronas.o \
-    vx_stuff.o \
-    vx_vertexlights.o
+    $(SRC_DIR)/r_aliasmodel.o \
+    $(SRC_DIR)/r_aliasmodel_md3.o \
+    $(SRC_DIR)/r_aliasmodel_mesh.o \
+    $(SRC_DIR)/r_aliasmodel_skins.o \
+    $(SRC_DIR)/r_atlas.o \
+    $(SRC_DIR)/r_bloom.o \
+    $(SRC_DIR)/r_brushmodel.o \
+    $(SRC_DIR)/r_brushmodel_bspx.o \
+    $(SRC_DIR)/r_brushmodel_load.o \
+    $(SRC_DIR)/r_brushmodel_sky.o \
+    $(SRC_DIR)/r_brushmodel_surfaces.o \
+    $(SRC_DIR)/r_brushmodel_textures.o \
+    $(SRC_DIR)/r_brushmodel_warpsurfaces.o \
+    $(SRC_DIR)/r_buffers.o \
+    $(SRC_DIR)/r_chaticons.o \
+    $(SRC_DIR)/r_draw.o \
+    $(SRC_DIR)/r_draw_charset.o \
+    $(SRC_DIR)/r_draw_circle.o \
+    $(SRC_DIR)/r_draw_image.o \
+    $(SRC_DIR)/r_draw_line.o \
+    $(SRC_DIR)/r_draw_polygon.o \
+    $(SRC_DIR)/r_hud.o \
+    $(SRC_DIR)/r_lightmaps.o \
+    $(SRC_DIR)/r_main.o \
+    $(SRC_DIR)/r_matrix.o \
+    $(SRC_DIR)/r_misc.o \
+    $(SRC_DIR)/r_model.o \
+    $(SRC_DIR)/r_netgraph.o \
+    $(SRC_DIR)/r_palette.o \
+    $(SRC_DIR)/r_part.o \
+    $(SRC_DIR)/r_part_trails.o \
+    $(SRC_DIR)/r_particles_qmb.o \
+    $(SRC_DIR)/r_particles_qmb_trails.o \
+    $(SRC_DIR)/r_particles_qmb_spawn.o \
+    $(SRC_DIR)/r_performance.o \
+    $(SRC_DIR)/r_refrag.o \
+    $(SRC_DIR)/r_rlight.o \
+    $(SRC_DIR)/r_rmain.o \
+    $(SRC_DIR)/r_rmisc.o \
+    $(SRC_DIR)/r_sprite3d.o \
+    $(SRC_DIR)/r_sprites.o \
+    $(SRC_DIR)/r_states.o \
+    $(SRC_DIR)/r_texture.o \
+    $(SRC_DIR)/r_texture_cvars.o \
+    $(SRC_DIR)/r_texture_load.o \
+    $(SRC_DIR)/r_texture_util.o \
+    $(SRC_DIR)/vx_camera.o \
+    $(SRC_DIR)/vx_coronas.o \
+    $(SRC_DIR)/vx_stuff.o \
+    $(SRC_DIR)/vx_vertexlights.o
 
 HUD_OBJS := \
-    hud.o \
-    hud_262.o \
-    hud_common.o \
-    hud_editor.o \
-    hud_radar.o \
-    hud_speed.o \
-    hud_teaminfo.o \
-    hud_weapon_stats.o \
-    hud_autoid.o \
-    hud_clock.o \
-    hud_ammo.o \
-    hud_items.o \
-    hud_net.o \
-    hud_guns.o \
-    hud_groups.o \
-    hud_armor.o \
-    hud_health.o \
-    hud_gamesummary.o \
-    hud_face.o \
-    hud_frags.o \
-    hud_tracking.o \
-    hud_scores.o \
-    hud_performance.o \
-    hud_centerprint.o \
-    hud_qtv.o
+    $(SRC_DIR)/hud.o \
+    $(SRC_DIR)/hud_262.o \
+    $(SRC_DIR)/hud_common.o \
+    $(SRC_DIR)/hud_editor.o \
+    $(SRC_DIR)/hud_radar.o \
+    $(SRC_DIR)/hud_speed.o \
+    $(SRC_DIR)/hud_teaminfo.o \
+    $(SRC_DIR)/hud_weapon_stats.o \
+    $(SRC_DIR)/hud_autoid.o \
+    $(SRC_DIR)/hud_clock.o \
+    $(SRC_DIR)/hud_ammo.o \
+    $(SRC_DIR)/hud_items.o \
+    $(SRC_DIR)/hud_net.o \
+    $(SRC_DIR)/hud_guns.o \
+    $(SRC_DIR)/hud_groups.o \
+    $(SRC_DIR)/hud_armor.o \
+    $(SRC_DIR)/hud_health.o \
+    $(SRC_DIR)/hud_gamesummary.o \
+    $(SRC_DIR)/hud_face.o \
+    $(SRC_DIR)/hud_frags.o \
+    $(SRC_DIR)/hud_tracking.o \
+    $(SRC_DIR)/hud_scores.o \
+    $(SRC_DIR)/hud_performance.o \
+    $(SRC_DIR)/hud_centerprint.o \
+    $(SRC_DIR)/hud_qtv.o
 
 OBJS_c := \
     $(COMMON_OBJS) \
     $(HELP_OBJS) \
     $(HUD_OBJS) \
     $(COMMON_RENDERER_OBJS) \
-    Ctrl.o \
-    Ctrl_EditBox.o \
-    Ctrl_PageViewer.o \
-    Ctrl_ScrollBar.o \
-    Ctrl_Tab.o \
-    EX_FileList.o \
-    EX_browser.o \
-    EX_browser_net.o \
-    EX_browser_pathfind.o \
-    EX_browser_ping.o \
-    EX_browser_qtvlist.o \
-    EX_browser_sources.o \
-    EX_qtvlist.o \
-    ez_controls.o \
-    ez_scrollbar.o \
-    ez_scrollpane.o \
-    ez_label.o \
-    ez_slider.o \
-    ez_button.o \
-    ez_window.o \
-    cl_cam.o \
-    cl_cmd.o \
-    cl_demo.o \
-    cl_nqdemo.o \
-    cl_ents.o \
-    cl_input.o \
-    cl_main.o \
-    cl_parse.o \
-    cl_pred.o \
-    cl_screen.o \
-    cl_slist.o \
-    cl_tent.o \
-    cl_view.o \
-    common_draw.o \
-    console.o \
-    config_manager.o \
-    demo_controls.o \
-    document_rendering.o \
-    fchecks.o \
-    fmod.o \
-    fragstats.o \
-    help.o \
-    help_files.o \
-    ignore.o \
-    image.o \
-    irc_filter.o \
-    irc.o \
-    keys.o \
-    logging.o \
-    match_tools.o \
-    match_tools_challenge.o \
-    menu.o \
-    menu_demo.o \
-    menu_ingame.o \
-    menu_multiplayer.o \
-    menu_options.o \
-    menu_proxy.o \
-    movie.o \
-    mvd_autotrack.o \
-    mvd_utils.o \
-    mvd_xmlstats.o \
-    parser.o \
-    qtv.o \
-    rulesets.o \
-    sbar.o \
-    settings_page.o \
-    sha1.o \
-    skin.o \
-    snd_main.o \
-    snd_mem.o \
-    snd_mix.o \
-    stats_grid.o \
-    teamplay.o \
-    teamplay_locfiles.o \
-    tp_msgs.o \
-    tp_triggers.o \
-    textencoding.o \
-    utils.o \
-    vx_tracker.o \
-    wad.o \
-    xsd.o \
-    xsd_document.o \
-    collision.o \
-    vid_vsync.o \
-    cd_null.o \
-    vid_sdl2.o \
-    sys_sdl2.o \
-    in_sdl2.o \
-    cl_multiview.o \
-    snd_voip.o \
-    cl_screenshot.o \
-    fonts.o \
-    cl_skygroups.o
+    $(SRC_DIR)/Ctrl.o \
+    $(SRC_DIR)/Ctrl_EditBox.o \
+    $(SRC_DIR)/Ctrl_PageViewer.o \
+    $(SRC_DIR)/Ctrl_ScrollBar.o \
+    $(SRC_DIR)/Ctrl_Tab.o \
+    $(SRC_DIR)/EX_FileList.o \
+    $(SRC_DIR)/EX_browser.o \
+    $(SRC_DIR)/EX_browser_net.o \
+    $(SRC_DIR)/EX_browser_pathfind.o \
+    $(SRC_DIR)/EX_browser_ping.o \
+    $(SRC_DIR)/EX_browser_qtvlist.o \
+    $(SRC_DIR)/EX_browser_sources.o \
+    $(SRC_DIR)/EX_qtvlist.o \
+    $(SRC_DIR)/ez_controls.o \
+    $(SRC_DIR)/ez_scrollbar.o \
+    $(SRC_DIR)/ez_scrollpane.o \
+    $(SRC_DIR)/ez_label.o \
+    $(SRC_DIR)/ez_slider.o \
+    $(SRC_DIR)/ez_button.o \
+    $(SRC_DIR)/ez_window.o \
+    $(SRC_DIR)/cl_cam.o \
+    $(SRC_DIR)/cl_cmd.o \
+    $(SRC_DIR)/cl_demo.o \
+    $(SRC_DIR)/cl_nqdemo.o \
+    $(SRC_DIR)/cl_ents.o \
+    $(SRC_DIR)/cl_input.o \
+    $(SRC_DIR)/cl_main.o \
+    $(SRC_DIR)/cl_parse.o \
+    $(SRC_DIR)/cl_pred.o \
+    $(SRC_DIR)/cl_screen.o \
+    $(SRC_DIR)/cl_slist.o \
+    $(SRC_DIR)/cl_tent.o \
+    $(SRC_DIR)/cl_view.o \
+    $(SRC_DIR)/common_draw.o \
+    $(SRC_DIR)/console.o \
+    $(SRC_DIR)/config_manager.o \
+    $(SRC_DIR)/demo_controls.o \
+    $(SRC_DIR)/document_rendering.o \
+    $(SRC_DIR)/fchecks.o \
+    $(SRC_DIR)/fmod.o \
+    $(SRC_DIR)/fragstats.o \
+    $(SRC_DIR)/help.o \
+    $(SRC_DIR)/help_files.o \
+    $(SRC_DIR)/ignore.o \
+    $(SRC_DIR)/image.o \
+    $(SRC_DIR)/irc_filter.o \
+    $(SRC_DIR)/irc.o \
+    $(SRC_DIR)/keys.o \
+    $(SRC_DIR)/logging.o \
+    $(SRC_DIR)/match_tools.o \
+    $(SRC_DIR)/match_tools_challenge.o \
+    $(SRC_DIR)/menu.o \
+    $(SRC_DIR)/menu_demo.o \
+    $(SRC_DIR)/menu_ingame.o \
+    $(SRC_DIR)/menu_multiplayer.o \
+    $(SRC_DIR)/menu_options.o \
+    $(SRC_DIR)/menu_proxy.o \
+    $(SRC_DIR)/movie.o \
+    $(SRC_DIR)/mvd_autotrack.o \
+    $(SRC_DIR)/mvd_utils.o \
+    $(SRC_DIR)/mvd_xmlstats.o \
+    $(SRC_DIR)/parser.o \
+    $(SRC_DIR)/qtv.o \
+    $(SRC_DIR)/rulesets.o \
+    $(SRC_DIR)/sbar.o \
+    $(SRC_DIR)/settings_page.o \
+    $(SRC_DIR)/sha1.o \
+    $(SRC_DIR)/skin.o \
+    $(SRC_DIR)/snd_main.o \
+    $(SRC_DIR)/snd_mem.o \
+    $(SRC_DIR)/snd_mix.o \
+    $(SRC_DIR)/stats_grid.o \
+    $(SRC_DIR)/teamplay.o \
+    $(SRC_DIR)/teamplay_locfiles.o \
+    $(SRC_DIR)/tp_msgs.o \
+    $(SRC_DIR)/tp_triggers.o \
+    $(SRC_DIR)/textencoding.o \
+    $(SRC_DIR)/utils.o \
+    $(SRC_DIR)/vx_tracker.o \
+    $(SRC_DIR)/wad.o \
+    $(SRC_DIR)/xsd.o \
+    $(SRC_DIR)/xsd_document.o \
+    $(SRC_DIR)/collision.o \
+    $(SRC_DIR)/vid_vsync.o \
+    $(SRC_DIR)/cd_null.o \
+    $(SRC_DIR)/vid_sdl2.o \
+    $(SRC_DIR)/sys_sdl2.o \
+    $(SRC_DIR)/in_sdl2.o \
+    $(SRC_DIR)/cl_multiview.o \
+    $(SRC_DIR)/snd_voip.o \
+    $(SRC_DIR)/cl_screenshot.o \
+    $(SRC_DIR)/fonts.o \
+    $(SRC_DIR)/cl_skygroups.o
 
 ### Configuration Options ###
 
@@ -508,27 +511,27 @@ endif
 
 ifdef CURL_LIBS
     OBJS_c += \
-        central.o
+        $(SRC_DIR)/central.o
 endif
 
 ifdef CONFIG_WINDOWS
     OBJS_c += \
-        movie_avi.o \
-        localtime_win.o \
-        sys_win.o \
-        winquake.o
+        $(SRC_DIR)/movie_avi.o \
+        $(SRC_DIR)/localtime_win.o \
+        $(SRC_DIR)/sys_win.o \
+        $(SRC_DIR)/winquake.o
     LIBS_c += -lopengl32 -lws2_32 -lwinmm -lpthread
 else
     OBJS_c += \
-    	localtime_posix.o \
-	sys_posix.o \
-    	linux_signals.o
+        $(SRC_DIR)/localtime_posix.o \
+        $(SRC_DIR)/sys_posix.o \
+        $(SRC_DIR)/linux_signals.o
 
-    LIBS_c += -lm
+LIBS_c += -lm
 
     ifeq ($(SYS),Darwin)
         LIBS_c += -framework Foundation -framework OpenGL -framework IOKit -framework CoreServices
-        OBJS_c += in_osx.o sys_osx.o
+        OBJS_c += $(SRC_DIR)/in_osx.o $(SRC_DIR)/sys_osx.o
     else
         LIBS_c += -lGL -lpthread
     endif
@@ -563,7 +566,7 @@ ifeq ($(USE_SYSTEM_MINIZIP),1)
 	CFLAGS_c += $(MINIZIP_CFLAGS)
 	LIBS_c += $(MINIZIP_LIBS)
 else
-	OBJS_c += minizip/ioapi.o minizip/unzip.o
+	OBJS_c += $(SRC_DIR)/minizip/ioapi.o $(SRC_DIR)/minizip/unzip.o
 	CFLAGS_c += -Iminizip
 endif
 
@@ -609,32 +612,31 @@ strip: $(TARG_c)
 	$(E) [STRIP]
 	$(Q)$(STRIP) $(TARG_c)
 
-# ------
 
 $(BUILD_c)/glsl_%.glsl.o: glsl/%.glsl
 	$(E) [GLSL] $@
 	$(Q)$(JSON2C) $< > $(BUILD_c)/$*.c
-	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $(BUILD_c)/$*.c
+	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) $(INCLUDES) -o $@ $(BUILD_c)/$*.c
 
 $(BUILD_c)/glsl_%.glsl.o: glsl/glc/%.glsl
 	$(E) [GLSL] $@
 	$(Q)$(JSON2C) $< > $(BUILD_c)/$*.c
-	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $(BUILD_c)/$*.c
+	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) $(INCLUDES) -o $@ $(BUILD_c)/$*.c
 
 $(BUILD_c)/%.o: %.json
 	$(E) [JS] $@
 	$(Q)$(JSON2C) $< > $(BUILD_c)/$*.c
-	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $(BUILD_c)/$*.c
+	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) $(INCLUDES) -o $@ $(BUILD_c)/$*.c
 
 $(BUILD_c)/%.o: %.c
 	$(E) [CC] $@
 	$(Q)$(MKDIR) $(@D)
-	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $<
+	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) $(INCLUDES) -o $@ $<
 
 $(BUILD_c)/%.o: %.m
 	$(E) [CC] $@
 	$(Q)$(MKDIR) $(@D)
-	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) -o $@ $<
+	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) $(INCLUDES) -o $@ $<
 
 $(BUILD_c)/%.o: %.rc
 	$(E) [RC] $@
