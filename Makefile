@@ -613,12 +613,12 @@ strip: $(TARG_c)
 	$(Q)$(STRIP) $(TARG_c)
 
 
-$(BUILD_c)/glsl_%.glsl.o: glsl/%.glsl
+$(BUILD_c)/$(SRC_DIR)/glsl_%.glsl.o: $(SRC_DIR)/glsl/%.glsl
 	$(E) [GLSL] $@
 	$(Q)$(JSON2C) $< > $(BUILD_c)/$*.c
 	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) $(INCLUDES) -o $@ $(BUILD_c)/$*.c
 
-$(BUILD_c)/glsl_%.glsl.o: glsl/glc/%.glsl
+$(BUILD_c)/$(SRC_DIR)/glsl_%.glsl.o: $(SRC_DIR)/glsl/glc/%.glsl
 	$(E) [GLSL] $@
 	$(Q)$(JSON2C) $< > $(BUILD_c)/$*.c
 	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) $(INCLUDES) -o $@ $(BUILD_c)/$*.c
