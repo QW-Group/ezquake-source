@@ -52,13 +52,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #  ifdef USE_SDL_VOICE
 #    undef USE_SDL_VOICE
 #  endif // USE_SDL_VOICE
-//#  if SDL_VERSION_ATLEAST(2,0,5)
-//#   define FTE_PEXT2_VOICECHAT			0x00000002
-//#  endif // SDL_VERSION_ATLEAST(2,0,5)
-# endif // WITH_SPEEX
-# if SDL_VERSION_ATLEAST(2,0,5)
+#  if SDL_VERSION_ATLEAST(2,0,5)
+#   define FTE_PEXT2_VOICECHAT			0x00000002
+#  endif // SDL_VERSION_ATLEAST(2,0,5)
+# else
 #  define FTE_PEXT2_VOICECHAT			0x00000002
-# endif // SDL_VERSION_ATLEAST(2,0,5)
+# endif // WITH_SPEEX
 #endif // PROTOCOL_VERSION_FTE2
 
 #ifdef PROTOCOL_VERSION_MVD1
@@ -125,7 +124,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 //=========================================
 
-// #define PORT_CLIENT  27001   // now a cvar in net.c (/cl_net_clientport)
 #define PORT_MASTER		27000
 #define	PORT_CLIENT		27001
 #define PORT_SERVER		27500
@@ -169,7 +167,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	svc_stufftext			9		// [string] stuffed into client's console buffer
 										// the string should be \n terminated
 #define	svc_setangle			10		// [angle3] set the view angle to this absolute value
-	
+
 #define	svc_serverdata			11		// [long] protocol ...
 #define	svc_lightstyle			12		// [byte] [string]
 #define	nq_svc_updatename		13		// [byte] [string]
@@ -179,11 +177,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	nq_svc_updatecolors		17		// [byte] [byte] [byte]
 #define	nq_svc_particle			18		// [vec3] <variable>
 #define	svc_damage				19
-	
+
 #define	svc_spawnstatic			20
 #define	svc_fte_spawnstatic2	21		// @!@!@!
 #define	svc_spawnbaseline		22
-	
+
 #define	svc_temp_entity			23		// variable
 #define	svc_setpause			24		// [byte] on / off
 #define nq_svc_signonnum		25		// [byte]  used for the signon sequence
@@ -232,15 +230,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define svc_nails2				54		// [byte] num [52 bits] nxyzpy 8 12 12 12 4 8
 										// mvdsv extended svcs (for mvd playback)
 #ifdef FTE_PEXT_MODELDBL
-#define	svc_fte_modellistshort	60		// [strings]
-#endif
+# define	svc_fte_modellistshort	60	// [strings]
+#endif // FTE_PEXT_MODELDBL
 
 #define svc_fte_spawnbaseline2	66
 #define svc_qizmovoice			83
 
 #ifdef FTE_PEXT2_VOICECHAT
-#define svc_fte_voicechat		84
-#endif
+# define svc_fte_voicechat		84
+#endif // FTE_PEXT2_VOICECHAT
 
 //==============================================
 
@@ -401,8 +399,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	SND_VOLUME		(1 << 15)		// a byte
 #define	SND_ATTENUATION	(1 << 14)		// a byte
 
-#define DEFAULT_SOUND_PACKET_VOLUME 255
-#define DEFAULT_SOUND_PACKET_ATTENUATION 1.0
+#define DEFAULT_SOUND_PACKET_VOLUME			255
+#define DEFAULT_SOUND_PACKET_ATTENUATION	1.0
 
 //==============================================
 
@@ -467,9 +465,9 @@ typedef struct entity_state_s {
 	byte	trans;
 } entity_state_t;
 
-#define	MAX_PACKET_ENTITIES	64			// doesn't include nails
+#define	MAX_PACKET_ENTITIES			64	// doesn't include nails
 #define MAX_PEXT256_PACKET_ENTITIES 256	// up to 256 ents, look FTE_PEXT_256PACKETENTITIES
-#define	MAX_MVD_PACKET_ENTITIES	300		// !!! MUST not be less than any of above values!!!
+#define	MAX_MVD_PACKET_ENTITIES		300	// !!! MUST not be less than any of above values!!!
 
 typedef struct packet_entities_s {
 	int				num_entities;
@@ -533,26 +531,26 @@ typedef struct temp_entity_list_s {
 // embedded in dem_multiple(0) - should be safely skipped in clients
 // format is <int:length> <short:type>*   where <type> is duplicated if 0xFFFF.  <length> is length of the data packet, not the header
 enum {
-	mvdhidden_antilag_position           = 0x0000,  // mvdhidden_antilag_position_header_t mvdhidden_antilag_position_t*
-	mvdhidden_usercmd                    = 0x0001,  // <byte: playernum> <byte:dropnum> <byte: msec, vec3_t: angles, short[3]: forward side up> <byte: buttons> <byte: impulse>
-	mvdhidden_usercmd_weapons            = 0x0002,  // <byte: source playernum> <int: items> <byte[4]: ammo> <byte: result> <byte*: weapon priority (nul terminated)>
-	mvdhidden_demoinfo                   = 0x0003,  // <short: block#> <byte[] content>
-	mvdhidden_commentary_track           = 0x0004,  // <byte: track#> [todo... <byte: audioformat> <string: short-name> <string: author(s)> <float: start-offset>?]
-	mvdhidden_commentary_data            = 0x0005,  // <byte: track#> [todo... format-specific]
-	mvdhidden_commentary_text_segment    = 0x0006,  // <byte: track#> [todo... <float: duration> <string: text (utf8)>]
-	mvdhidden_dmgdone                    = 0x0007,  // <byte: type-flags> <short: damaged ent#> <short: damaged ent#> <short: damage>
-	mvdhidden_usercmd_weapons_ss         = 0x0008,  // (same format as mvdhidden_usercmd_weapons)
-	mvdhidden_usercmd_weapon_instruction = 0x0009,  // <byte: playernum> <byte: flags> <int: sequence#> <int: mode> <byte[10]: weaponlist>
-	mvdhidden_paused_duration            = 0x000A,  // <byte: msec> ... actual time elapsed, not gametime (can be used to keep stream running) ... expected to be QTV only
-	mvdhidden_extended                   = 0xFFFF   // doubt we'll ever get here: read next short...
+	mvdhidden_antilag_position				= 0x0000,	// mvdhidden_antilag_position_header_t mvdhidden_antilag_position_t*
+	mvdhidden_usercmd						= 0x0001,	// <byte: playernum> <byte:dropnum> <byte: msec, vec3_t: angles, short[3]: forward side up> <byte: buttons> <byte: impulse>
+	mvdhidden_usercmd_weapons				= 0x0002,	// <byte: source playernum> <int: items> <byte[4]: ammo> <byte: result> <byte*: weapon priority (nul terminated)>
+	mvdhidden_demoinfo						= 0x0003,	// <short: block#> <byte[] content>
+	mvdhidden_commentary_track				= 0x0004,	// <byte: track#> [todo... <byte: audioformat> <string: short-name> <string: author(s)> <float: start-offset>?]
+	mvdhidden_commentary_data				= 0x0005,	// <byte: track#> [todo... format-specific]
+	mvdhidden_commentary_text_segment		= 0x0006,	// <byte: track#> [todo... <float: duration> <string: text (utf8)>]
+	mvdhidden_dmgdone						= 0x0007,	// <byte: type-flags> <short: damaged ent#> <short: damaged ent#> <short: damage>
+	mvdhidden_usercmd_weapons_ss			= 0x0008,	// (same format as mvdhidden_usercmd_weapons)
+	mvdhidden_usercmd_weapon_instruction	= 0x0009,	// <byte: playernum> <byte: flags> <int: sequence#> <int: mode> <byte[10]: weaponlist>
+	mvdhidden_paused_duration				= 0x000A,	// <byte: msec> ... actual time elapsed, not gametime (can be used to keep stream running) ... expected to be QTV only
+	mvdhidden_extended						= 0xFFFF	// doubt we'll ever get here: read next short...
 };
 
 #define sizeof_mvdhidden_block_header_t_usercmd (1 + 1 + 1 + 3 * 4 + 3 * 2 + 1 + 1)
 #define sizeof_mvdhidden_usercmd_weapon_instruction (1 + 1 + 4 + 4 + 10)
 
 typedef struct {
-	int                 length;    // this is the number of bytes in the packet, not including this header
-	unsigned short      type_id;   // If 0xFFFF, read again to extend range
+	int				length;		// this is the number of bytes in the packet, not including this header
+	unsigned short	type_id;	// If 0xFFFF, read again to extend range
 } mvdhidden_block_header_t;
 
 #define sizeof_mvdhidden_block_header_t_range0 (4 + 2)
@@ -590,6 +588,11 @@ typedef struct {
 
 #endif // MVD_PEXT1_HIDDEN_MESSAGES
 
-extern temp_entity_list_t temp_entities;
+//==============================================
+
+#define MAX_SCOREBOARDNAME	16
+#define	MAX_INFO_STRING		1024
+
+//==============================================
 
 #endif // __PROTOCOL_H__

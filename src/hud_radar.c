@@ -94,6 +94,8 @@ static qbool radar_show_shotgun = false;
 
 byte hud_radar_highlight_color[4] = { 255, 255, 0, HUD_COLOR_DEFAULT_TRANSPARENCY };
 
+extern temp_entity_list_t temp_entities;
+
 #ifdef WITH_PNG
 
 // Map picture to draw for the mapoverview hud control.
