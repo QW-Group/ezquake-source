@@ -44,7 +44,7 @@ RCFLAGS_c :=
 LDFLAGS_c :=
 
 SRC_DIR = src
-INCLUDES = -I$(SRC_DIR)/minizip
+INCLUDES = -I$(SRC_DIR)/minizip -I$(SRC_DIR)/qwprot/src
 
 ifdef CONFIG_WINDOWS
     LDFLAGS_c += -mwindows
