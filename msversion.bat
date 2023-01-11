@@ -53,3 +53,7 @@ echo #define VERSION ^"%gitrev%~%githash%^" >> .msversion.temp
 
 fc .msversion.temp .msversion.h > nul
 if %ERRORLEVEL% GTR 0 copy /y ".msversion.temp" "src\.msversion.h"
+
+del .msversion.temp
+del .git-hash
+del .git-revision
