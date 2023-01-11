@@ -8,3 +8,5 @@ ezQuake.aps
 SysPrintf.log
 .ezquake/
 .vs
+.*
+!.gitignore
