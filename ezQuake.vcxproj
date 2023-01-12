@@ -874,7 +874,7 @@ msversion.bat</Command>
       <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
