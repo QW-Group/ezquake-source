@@ -120,7 +120,6 @@ typedef struct
 	int         antilag_flags;  // bitmask: dbg_antilag_rewind_present | dbg_antilag_client_present
 } player_state_t;
 
-#define	MAX_SCOREBOARDNAME	16
 typedef enum {
 	gender_unknown = 0,
 	gender_male,

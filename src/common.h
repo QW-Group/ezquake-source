@@ -148,19 +148,13 @@ typedef enum
 #define EF_BLUE              64
 #define EF_RED              128
 
-// print flags
-#define	PRINT_LOW			0		// pickup messages
-#define	PRINT_MEDIUM		1		// death messages
-#define	PRINT_HIGH			2		// critical messages
-#define	PRINT_CHAT			3		// chat messages
-
 // game types sent by serverinfo
 // these determine which intermission screen plays
 #define	GAME_COOP			0
 #define	GAME_DEATHMATCH		1
 
 #define	MAX_INFO_KEY 64
-#define	MAX_INFO_STRING	1024
+//#define	MAX_INFO_STRING	1024
 #define	MAX_SERVERINFO_STRING 512
 #define	MAX_LOCALINFO_STRING 32768
 
