@@ -628,17 +628,17 @@ $(BUILD_c)/%.o: %.json
 	$(Q)$(JSON2C) $< > $(BUILD_c)/$*.c
 	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) $(INCLUDES) -o $@ $(BUILD_c)/$*.c
 
-$(BUILD_c)/%.o: %.c
+$(BUILD_c)/$(SRC_DIR)/%.o: $(SRC_DIR)/%.c
 	$(E) [CC] $@
 	$(Q)$(MKDIR) $(@D)
 	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) $(INCLUDES) -o $@ $<
 
-$(BUILD_c)/%.o: %.m
+$(BUILD_c)/$(SRC_DIR)/%.o: $(SRC_DIR)/%.m
 	$(E) [CC] $@
 	$(Q)$(MKDIR) $(@D)
 	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) $(INCLUDES) -o $@ $<
 
-$(BUILD_c)/%.o: %.rc
+$(BUILD_c)/$(SRC_DIR)/%.o: $(SRC_DIR)/%.rc
 	$(E) [RC] $@
 	$(Q)$(MKDIR) $(@D)
 	$(Q)$(WINDRES) $(RCFLAGS) $(RCFLAGS_c) -o $@ $<
