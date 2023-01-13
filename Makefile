@@ -638,7 +638,7 @@ $(BUILD_c)/$(SRC_DIR)/%.o: $(SRC_DIR)/%.m
 	$(Q)$(MKDIR) $(@D)
 	$(Q)$(CC) -c $(CFLAGS) $(CFLAGS_c) $(INCLUDES) -o $@ $<
 
-$(BUILD_c)/$(SRC_DIR)/%.o: $(SRC_DIR)/%.rc
+$(BUILD_c)/%.o: %.rc
 	$(E) [RC] $@
 	$(Q)$(MKDIR) $(@D)
 	$(Q)$(WINDRES) $(RCFLAGS) $(RCFLAGS_c) -o $@ $<
