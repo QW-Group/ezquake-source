@@ -5863,7 +5863,7 @@
       "default": "0",
       "desc": "Toggles between textures and flat colors based on the textures (looks like gl_max_size 1).\nFor custom colors, look for r_drawflat.",
       "group-id": "50",
-      "remarks": "Can not be changed during a match.",
+      "remarks": "The effect varies with picmip/max_size.\nCan not be changed during a match.",
       "type": "boolean",
       "values": [
         {
@@ -5871,7 +5871,7 @@
           "name": "false"
         },
         {
-          "description": "Use flat colors averaged from the world textures.",
+          "description": "Use flat colors based on the world textures.",
           "name": "true"
         }
       ]
