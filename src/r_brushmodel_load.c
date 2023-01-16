@@ -491,6 +491,10 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 		if (tx->width < 0 || tx->height < 0) {
 			Host_Error("Texture %s negative dimensions: %dx%d", tx->name, tx->width, tx->height);
 		}
+		if (tx->width == 0 || tx->height == 0) {
+			Con_Printf("Warning: Skipping zero size texture %s in %s\n", tx->name, mod->name);
+			continue;
+		}
 		if (tx->width > INT_MAX / tx->height / 3) {
 			Host_Error("Texture %s excessive size: %dx%d", tx->name, tx->width, tx->height);
 		}
