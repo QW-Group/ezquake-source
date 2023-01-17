@@ -271,10 +271,10 @@ static void IN_SnapMouseBackToCentre(void)
 
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel)
 {
-	if (var == &in_raw)
+	if ((var == &in_raw) && (atoi(value) != in_raw.value)) {
 		Cvar_SetValue(&in_raw, atoi(value));
-
-	IN_Restart_f();
+		IN_Restart_f();
+	}
 }
 
 static void in_grab_windowed_mouse_callback(cvar_t *val, char *value, qbool *cancel)

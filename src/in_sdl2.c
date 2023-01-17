@@ -34,12 +34,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "in_osx.h"
 #endif
 
+static void in_joystick_callback(cvar_t *var, char *value, qbool *cancel);
 
 cvar_t	m_filter        = {"m_filter",       "0", CVAR_SILENT};
 cvar_t	cl_keypad       = {"cl_keypad",      "1", CVAR_SILENT};
 
 /*  Joystick cvars.  */
-cvar_t	in_joystick		= {"joystick",			"0",	CVAR_SILENT };
+cvar_t	in_joystick		= {"joystick",			"0",	CVAR_SILENT, in_joystick_callback };
 cvar_t	joy_index		= {"joyindex",			"0",	CVAR_SILENT };
 cvar_t	joy_name		= {"joyname",			"joystick", CVAR_SILENT };
 cvar_t	joy_advanced		= {"joyadvanced",		"0",	CVAR_SILENT };
@@ -191,6 +192,13 @@ static int16_t		joy_devidx = -1;
 static uint8_t		joy_prevpov;
 static qbool		joy_avail, joy_haspov, joy_advancedinit;
 
+static void in_joystick_callback(cvar_t *var, char *value, qbool *cancel)
+{
+  if ((var == &in_joystick) && (atoi(value) != in_joystick.value)) {
+    Cvar_SetValue(&in_joystick, atoi(value));
+    IN_Restart_f();
+  }
+}
 
 /*
  * The user needs to invoke this command after changing the 'joyadv*' cvars.
@@ -333,6 +341,8 @@ IN_JoyMove (usercmd_t *cmd)
 	float	axisval;
 	int	i;
 
+	if (!in_joystick.integer) return;
+
 	if (Movie_IsCapturing()  &&  movie_steadycam.value) {
 		frametime = movie_fps.value > 0 ?  1.0 / movie_fps.value
 		                                :  1.0 / 30.0;
@@ -349,7 +359,7 @@ IN_JoyMove (usercmd_t *cmd)
 	}
 
 	// Verify joystick is available and that the user wants to use it.
-	if (!joy_avail  ||  !joy_dev  ||  !in_joystick.integer)
+	if (!joy_avail  ||  !joy_dev)
 		return;
 
 	speed = (in_speed.state & 1) ? cl_movespeedkey.value : 1.0;
@@ -464,6 +474,35 @@ IN_StartupJoystick (void)
 	int		numdevs;
 
 	//COM_CheckParm ("-joystick");
+	
+	if (!host_initialized) {
+		Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_JOYSTICK);
+		Cvar_Register (&in_joystick);
+		Cvar_Register (&joy_index);
+		Cvar_Register (&joy_name);
+		Cvar_Register (&joy_advanced);
+		Cvar_Register (&joy_advaxisx);
+		Cvar_Register (&joy_advaxisy);
+		Cvar_Register (&joy_advaxisz);
+		Cvar_Register (&joy_advaxisr);
+		Cvar_Register (&joy_advaxisu);
+		Cvar_Register (&joy_advaxisv);
+		Cvar_Register (&joy_forwardthreshold);
+		Cvar_Register (&joy_sidethreshold);
+		Cvar_Register (&joy_flythreshold);
+		Cvar_Register (&joy_pitchthreshold);
+		Cvar_Register (&joy_yawthreshold);
+		Cvar_Register (&joy_flysensitivity);
+		Cvar_Register (&joy_forwardsensitivity);
+		Cvar_Register (&joy_sidesensitivity);
+		Cvar_Register (&joy_pitchsensitivity);
+		Cvar_Register (&joy_yawsensitivity);
+		Cvar_ResetCurrentGroup();
+
+		Cmd_AddCommand ("joyadvancedupdate", Joy_AdvancedUpdate_f);
+	}
+
+	if (!in_joystick.value) return;
 
 	if (SDL_WasInit (SDL_INIT_JOYSTICK) == 0) {
 		int ret = SDL_InitSubSystem (SDL_INIT_JOYSTICK);
@@ -472,31 +511,6 @@ IN_StartupJoystick (void)
 			return;
 		}
 	}
-
-	Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_JOYSTICK);
-	Cvar_Register (&in_joystick);
-	Cvar_Register (&joy_index);
-	Cvar_Register (&joy_name);
-	Cvar_Register (&joy_advanced);
-	Cvar_Register (&joy_advaxisx);
-	Cvar_Register (&joy_advaxisy);
-	Cvar_Register (&joy_advaxisz);
-	Cvar_Register (&joy_advaxisr);
-	Cvar_Register (&joy_advaxisu);
-	Cvar_Register (&joy_advaxisv);
-	Cvar_Register (&joy_forwardthreshold);
-	Cvar_Register (&joy_sidethreshold);
-	Cvar_Register (&joy_flythreshold);
-	Cvar_Register (&joy_pitchthreshold);
-	Cvar_Register (&joy_yawthreshold);
-	Cvar_Register (&joy_flysensitivity);
-	Cvar_Register (&joy_forwardsensitivity);
-	Cvar_Register (&joy_sidesensitivity);
-	Cvar_Register (&joy_pitchsensitivity);
-	Cvar_Register (&joy_yawsensitivity);
-	Cvar_ResetCurrentGroup();
-
-	Cmd_AddCommand ("joyadvancedupdate", Joy_AdvancedUpdate_f);
 
 	/*  See if there are any joysticks at all.  */
 	numdevs = SDL_NumJoysticks();
