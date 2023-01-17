@@ -1917,6 +1917,7 @@ static void VID_UpdateConRes(void)
 	vid.numpages = 2; // ??
 	Draw_AdjustConback();
 	vid.recalc_refdef = 1;
+	Con_CheckResize();
 }
 
 void GL_FramebufferSetFiltering(qbool linear);
