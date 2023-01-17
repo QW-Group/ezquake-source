@@ -93,6 +93,9 @@ case $ID in
 	manjaro)
 		install_check_arch
 		;;
+    void)
+        install_check_void
+        ;;
 	linuxmint)
 		[ $VERSION_ID -ge 18 ] || error "Your Linux Mint version '$VERSION_ID' is too old. Exiting."
 		install_check_deb
