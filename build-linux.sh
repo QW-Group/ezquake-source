@@ -12,6 +12,7 @@ BUILD_LOG=/tmp/ezquake-build.log
 PKGS_DEB="git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev libfreetype6-dev libsndfile1-dev libpcre3-dev"
 PKGS_RPM="pcre-devel mesa-libGL-devel SDL2-devel make gcc jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libsndfile-devel libXxf86vm-devel"
 PKGS_ARCH="base-devel libpng libjpeg-turbo sdl2 expat libcurl-compat freetype2 speex speexdsp jansson libsndfile"
+PKGS_VOID="base-devel SDL2-devel pcre-devel jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libsndfile-devel libXxf86vm-devel"
 
 CPU=$(uname -m | sed -e s/i.86/i386/ -e s/amd64/x86_64/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/alpha/axp/)
 
@@ -59,6 +60,15 @@ install_check_arch() {
 	sudo pacman -S --needed --noconfirm $PKGS_ARCH >>$BUILD_LOG 2>&1 || error "Failed to install required packages. Exiting."
 }
 
+install_check_void() {
+    step "Install/check dependencies (packages)..."
+    info "You might be prompted to input your password as superuser privileges are required."
+
+    info "Updating xbps repo list... (running with sudo)"
+    sudo xbps-install -Sy >>$BUILD_LOG 2>&1 || error "Failed to update package sources. Exiting."
+    info "Checking/installing required packages... (running with sudo)"
+    sudo xbps-install -y $PKGS_VOID >>$BUILD_LOG 2>&1 || error "Failed to install required packages. Exiting."
+}
 
 if [ -f $BUILD_LOG ];then
 	rm -f $BUILD_LOG ||:
