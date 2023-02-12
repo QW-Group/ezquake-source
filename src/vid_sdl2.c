@@ -1120,6 +1120,7 @@ static void VID_SetupResolution(void)
 			Cvar_LatchedSetValue(&vid_width, 1024);
 			Cvar_LatchedSetValue(&vid_height, 768);
 			Cvar_LatchedSetValue(&r_displayRefresh, 0);
+
 			return;
 		}
 
@@ -1516,6 +1517,15 @@ static void VID_SDL_Init(void)
 #endif
 
 	R_Initialise();
+
+	//always get/set refresh rate
+	SDL_DisplayMode display_mode;
+	int display_nbr;
+
+	display_nbr = VID_DisplayNumber(true);
+	if (SDL_GetDesktopDisplayMode(display_nbr, &display_mode) == 0) {
+		Cvar_AutoSetInt(&r_displayRefresh, display_mode.refresh_rate);
+	}
 
 	glConfig.initialized = true;
 }

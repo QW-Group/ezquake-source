@@ -143,6 +143,7 @@ static cvar_t cl_sv_packetsync = { "cl_sv_packetsync", "1" };
 cvar_t	cl_sbar		= {"cl_sbar", "0"};
 cvar_t	cl_hudswap	= {"cl_hudswap", "0"};
 cvar_t	cl_maxfps	= {"cl_maxfps", "0"};
+cvar_t	cl_maxfps_menu	= {"cl_maxfps_menu", "0"};
 cvar_t	cl_physfps	= {"cl_physfps", "0"};	//#fps
 cvar_t	cl_physfps_spectator = {"cl_physfps_spectator", "77"};
 cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, Rulesets_OnChange_indphys};
@@ -1738,6 +1739,7 @@ static void CL_InitLocal(void)
 	Cvar_Register(&cl_newlerp);
 	Cvar_Register(&cl_lerp_monsters);
 	Cvar_Register(&cl_maxfps);
+	Cvar_Register(&cl_maxfps_menu);
 	Cvar_Register(&cl_physfps);
 	Cvar_Register(&hud_fps_min_reset_interval);
 	Cvar_Register(&hud_frametime_max_reset_interval);
@@ -2113,8 +2115,11 @@ static double CL_MinFrameTime (void)
 	if (cls.timedemo || Movie_IsCapturing())
 		return 0;
 
-	if (cls.state == ca_disconnected || (Minimized && !cls.download))
-		return 1 / 30.0;
+	if ((cls.state == ca_disconnected) || (Minimized && !cls.download))
+		if (cl_maxfps_menu.value >= 30)
+			return 1 / cl_maxfps_menu.value;
+		else
+			return 1 / (r_displayRefresh.autoString ? atoi(r_displayRefresh.autoString) : 30.0);
 
 	if (cls.demoplayback)
 	{
