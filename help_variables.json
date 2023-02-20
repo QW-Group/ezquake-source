@@ -1830,7 +1830,13 @@
     },
     "cl_maxfps": {
       "default": "0",
-      "desc": "This variable sets the maximum limit for frames-per-second. Please see vid_vsync, cl_independentphysics, and cl_physfps.",
+      "desc": "This variable sets the maximum limit for frames-per-second while in-game. Please see cl_maxfps_menu, vid_vsync, cl_independentphysics, and cl_physfps.",
+      "group-id": "8",
+      "type": "float"
+    },
+    "cl_maxfps_menu": {
+      "default": "0",
+      "desc": "This variable sets the maximum limit for frames-per-second while disconnected, has a minimum of 30, set lower to use display frequency.",
       "group-id": "8",
       "type": "float"
     },
