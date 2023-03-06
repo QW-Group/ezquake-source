@@ -252,7 +252,7 @@ cshift_t	cshift_slime = { {0,25,5}, 150 };
 cshift_t	cshift_lava = { {255,80,0}, 150 };
 
 cvar_t		gl_cshiftpercent = {"gl_cshiftpercent", "100"};
-cvar_t		gl_hwblend = {"gl_hwblend", "1"};
+cvar_t		gl_hwblend = {"gl_hwblend", "0"};
 float		v_blend[4];		// rgba 0.0 - 1.0
 cvar_t		v_gamma = {"gl_gamma", "1.0"};
 cvar_t		v_contrast = {"gl_contrast", "1.0"};

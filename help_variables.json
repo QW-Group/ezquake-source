@@ -4895,7 +4895,7 @@
       "type": "float"
     },
     "gl_hwblend": {
-      "default": "1",
+      "default": "0",
       "desc": "Toggles between OpenGL and Hardware palette changing.",
       "group-id": "39",
       "remarks": "1 can be slow on WinNT/2K.",
