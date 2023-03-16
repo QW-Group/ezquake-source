@@ -56,6 +56,10 @@ extern cvar_t r_farclip, gl_max_size, gl_miptexLevel;
 extern cvar_t r_bloom;
 extern cvar_t gl_flashblend, r_dynamic, gl_lightmode, gl_modulate;
 
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+extern cvar_t vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap, vid_framebuffer_scale, vid_framebuffer_multisample;
+#endif
+
 extern cvar_t vid_software_palette;
 
 #ifdef EZ_MULTIPLE_RENDERERS
@@ -430,6 +434,14 @@ const char* vid_software_palette_enum[] = {
 const char* vid_renderer_enum[] = {
 	"classic", "0",
 	"modern", "1"
+};
+#endif
+
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+const char* vid_framebuffer_enum[] = {
+	"disabled", "0",
+	"enabled", "1",
+	"enabled (separate scene & hud)", "2"
 };
 #endif
 
@@ -1291,6 +1303,18 @@ setting settsystem_arr[] = {
 	ADDSET_SEPARATOR("Renderer"),
 	ADDSET_ENUM("Mode", vid_renderer, vid_renderer_enum),
 	ADDSET_ACTION("Apply Changes", RendererRestart, "Restarts the renderer."),
+#endif
+
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_SEPARATOR("Framebuffer"),
+	ADDSET_ENUM("Mode", vid_framebuffer, vid_framebuffer_enum),
+	ADDSET_BOOL("HDR", vid_framebuffer_hdr),
+	ADDSET_BOOL("HDR Tonemap", vid_framebuffer_hdr_tonemap),
+	ADDSET_NUMBER("Scale", vid_framebuffer_scale, 0.25, 2.0, 0.25),
+	ADDSET_NUMBER("Multisample", vid_framebuffer_multisample, 0, 16, 1),
+	ADDSET_ACTION("Apply Changes", RendererRestart, "Restarts the renderer."),
+	ADDSET_BASIC_SECTION(),
 #endif
 
 	//Font
