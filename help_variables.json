@@ -21812,7 +21812,7 @@
       "type": "boolean"
     },
     "vid_software_palette": {
-      "default": "0",
+      "default": "1",
       "desc": "Controls whether to adjust gamma at the display level, or as a color correction rendering effect.",
       "group-id": "52",
       "type": "boolean",

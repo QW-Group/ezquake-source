@@ -56,6 +56,8 @@ extern cvar_t r_farclip, gl_max_size, gl_miptexLevel;
 extern cvar_t r_bloom;
 extern cvar_t gl_flashblend, r_dynamic, gl_lightmode, gl_modulate;
 
+extern cvar_t vid_software_palette;
+
 #ifdef EZ_MULTIPLE_RENDERERS
 extern cvar_t vid_renderer;
 #endif
@@ -417,6 +419,11 @@ const char* gl_texturemode_enum[] = {
 	"medium", "GL_LINEAR_MIPMAP_NEAREST",
 	"high", "GL_LINEAR_MIPMAP_LINEAR",
 	"very high", "GL_NEAREST"
+};
+
+const char* vid_software_palette_enum[] = {
+	"hardware", "0",
+	"shader", "1"
 };
 
 #ifdef EZ_MULTIPLE_RENDERERS
@@ -1258,6 +1265,9 @@ setting settsystem_arr[] = {
 	//Video
 	ADDSET_SEPARATOR("Video"),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.3, 3.0, 0.1),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_ENUM		("Gamma control", vid_software_palette, vid_software_palette_enum),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Lightmap Intensity", gl_modulate, 0.5, 3.0, 0.1),
