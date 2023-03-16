@@ -15391,7 +15391,7 @@
       ]
     },
     "r_dynamic": {
-      "default": "1",
+      "default": "2",
       "desc": "Controls dynamic lighting (muzzle-flash, quad & rocket glow, etc) on world surfaces.",
       "group-id": "15",
       "type": "enum",
