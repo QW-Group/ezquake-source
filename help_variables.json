@@ -4581,7 +4581,7 @@
       ]
     },
     "gl_anisotropy": {
-      "default": "1",
+      "default": "16",
       "desc": "Anisotropic filtering. Improves texture detail on angled surfaces.",
       "group-id": "50",
       "remarks": "Depends on your Graphics card capabilities and settings. Make sure you have set your graphic card's Anisotropic Filtering setting to \"Application controlled\".",
