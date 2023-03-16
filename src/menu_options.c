@@ -50,10 +50,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keys.h"
 #include "hud.h"
 #include "hud_common.h"
+#include "r_local.h"
 
 extern cvar_t r_farclip, gl_max_size, gl_miptexLevel;
 extern cvar_t r_bloom;
 extern cvar_t gl_flashblend, r_dynamic, gl_lightmode, gl_modulate;
+
+#ifdef EZ_MULTIPLE_RENDERERS
+extern cvar_t vid_renderer;
+#endif
 
 typedef enum {
 	OPTPG_MISC,
@@ -414,6 +419,13 @@ const char* gl_texturemode_enum[] = {
 	"very high", "GL_NEAREST"
 };
 
+#ifdef EZ_MULTIPLE_RENDERERS
+const char* vid_renderer_enum[] = {
+	"classic", "0",
+	"modern", "1"
+};
+#endif
+
 settings_page settfps;
 
 void CT_Opt_FPS_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
@@ -493,6 +505,14 @@ void VideoApplySettings (void)
 
 	mss_askmode = true;
 }
+
+#if defined(EZ_MULTIPLE_RENDERERS) || defined(RENDERER_OPTION_MODERN_OPENGL)
+// performed when user hits the "apply" button
+void RendererRestart (void)
+{
+	Cbuf_AddText("vid_restart\n");
+}
+#endif
 
 // two possible results of the "keep these video settings?" dialogue
 static void KeepNewVideoSettings (void) { mss_askmode = false; }
@@ -1256,6 +1276,12 @@ setting settsystem_arr[] = {
 	ADDSET_CUSTOM("Bit Depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
 	ADDSET_ACTION("Apply Changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
+
+#ifdef EZ_MULTIPLE_RENDERERS
+	ADDSET_SEPARATOR("Renderer"),
+	ADDSET_ENUM("Mode", vid_renderer, vid_renderer_enum),
+	ADDSET_ACTION("Apply Changes", RendererRestart, "Restarts the renderer."),
+#endif
 
 	//Font
 	ADDSET_ADVANCED_SECTION(),
