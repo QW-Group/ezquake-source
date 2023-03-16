@@ -79,7 +79,12 @@ float VARFVAL(const cvar_t *v)
 	else return v->value;
 }
 
-#define VARSVAL(x) (((x).flags & CVAR_LATCH) ? ((x).latchedString) : ((x).string))
+char* VARSVAL(const cvar_t *v)
+{
+	if (v->flags & CVAR_LATCH && v->latchedString)
+		return v->latchedString;
+	else return v->string;
+}
 
 static int STHeight(setting* s) {
 	if (s->advanced && !menu_advanced.value)
@@ -172,9 +177,10 @@ static void Setting_DrawNamed(int x, int y, int w, setting* set, qbool active)
 static int Enum_Find_ValueCode(setting* set)
 {
 	int i;
+
 	for (i = 0; i <= set->max; i++)
 	{
-		if (!strcmp(set->cvar->string, ENUM_VALUE(set, i)))
+		if (!strcmp(VARSVAL(set->cvar), ENUM_VALUE(set, i)))
 			return i;
 	}
 	return ENUM_ITEM_NOT_FOUND;
@@ -200,7 +206,7 @@ static void Setting_DrawString(int x, int y, int w, setting* setting, qbool acti
 		editbox.width = (w - x + x0) / 8;
 		CEditBox_Draw(&editbox, x, y, true);
 	} else {
-		UI_Print(x, y, VARSVAL(*(setting->cvar)), false);
+		UI_Print(x, y, VARSVAL(setting->cvar), false);
 	}
 }
 
