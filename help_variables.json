@@ -4581,7 +4581,7 @@
       ]
     },
     "gl_anisotropy": {
-      "default": "1",
+      "default": "16",
       "desc": "Anisotropic filtering. Improves texture detail on angled surfaces.",
       "group-id": "50",
       "remarks": "Depends on your Graphics card capabilities and settings. Make sure you have set your graphic card's Anisotropic Filtering setting to \"Application controlled\".",
@@ -15391,7 +15391,7 @@
       ]
     },
     "r_dynamic": {
-      "default": "1",
+      "default": "2",
       "desc": "Controls dynamic lighting (muzzle-flash, quad & rocket glow, etc) on world surfaces.",
       "group-id": "15",
       "type": "enum",
@@ -21774,7 +21774,7 @@
       "type": "float"
     },
     "vid_renderer": {
-      "default": "0",
+      "default": "1",
       "desc": "Selects which rendering mode to use.",
       "group-id": "52",
       "remarks": "(variable only available if multiple renderers available)",
@@ -21812,7 +21812,7 @@
       "type": "boolean"
     },
     "vid_software_palette": {
-      "default": "0",
+      "default": "1",
       "desc": "Controls whether to adjust gamma at the display level, or as a color correction rendering effect.",
       "group-id": "52",
       "type": "boolean",

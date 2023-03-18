@@ -138,7 +138,11 @@ cvar_t r_speeds                            = {"r_speeds", "0"};
 cvar_t r_fullbright                        = {"r_fullbright", "0"};
 cvar_t r_shadows                           = {"r_shadows", "0"};
 cvar_t r_wateralpha                        = {"gl_turbalpha", "1"};
+#if defined(EZ_MULTIPLE_RENDERERS) || defined(RENDERER_OPTION_MODERN_OPENGL)
+cvar_t r_dynamic                           = {"r_dynamic", "2", 0, OnDynamicLightingChange };
+#else
 cvar_t r_dynamic                           = {"r_dynamic", "1", 0, OnDynamicLightingChange };
+#endif
 cvar_t r_novis                             = {"r_novis", "0"};
 cvar_t r_netgraph                          = {"r_netgraph", "0"};
 cvar_t r_netstats                          = {"r_netstats", "0"};

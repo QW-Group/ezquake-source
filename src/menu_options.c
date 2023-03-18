@@ -50,10 +50,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "keys.h"
 #include "hud.h"
 #include "hud_common.h"
+#include "r_local.h"
 
 extern cvar_t r_farclip, gl_max_size, gl_miptexLevel;
 extern cvar_t r_bloom;
 extern cvar_t gl_flashblend, r_dynamic, gl_lightmode, gl_modulate;
+
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+extern cvar_t vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap, vid_framebuffer_scale, vid_framebuffer_multisample;
+#endif
+
+extern cvar_t vid_software_palette;
+
+#ifdef EZ_MULTIPLE_RENDERERS
+extern cvar_t vid_renderer;
+#endif
 
 typedef enum {
 	OPTPG_MISC,
@@ -414,6 +425,26 @@ const char* gl_texturemode_enum[] = {
 	"very high", "GL_NEAREST"
 };
 
+const char* vid_software_palette_enum[] = {
+	"hardware", "0",
+	"shader", "1"
+};
+
+#ifdef EZ_MULTIPLE_RENDERERS
+const char* vid_renderer_enum[] = {
+	"classic", "0",
+	"modern", "1"
+};
+#endif
+
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+const char* vid_framebuffer_enum[] = {
+	"disabled", "0",
+	"enabled", "1",
+	"enabled (separate scene & hud)", "2"
+};
+#endif
+
 settings_page settfps;
 
 void CT_Opt_FPS_Draw (int x, int y, int w, int h, CTab_t *tab, CTabPage_t *page)
@@ -493,6 +524,14 @@ void VideoApplySettings (void)
 
 	mss_askmode = true;
 }
+
+#if defined(EZ_MULTIPLE_RENDERERS) || defined(RENDERER_OPTION_MODERN_OPENGL)
+// performed when user hits the "apply" button
+void RendererRestart (void)
+{
+	Cbuf_AddText("vid_restart\n");
+}
+#endif
 
 // two possible results of the "keep these video settings?" dialogue
 static void KeepNewVideoSettings (void) { mss_askmode = false; }
@@ -1238,6 +1277,9 @@ setting settsystem_arr[] = {
 	//Video
 	ADDSET_SEPARATOR("Video"),
 	ADDSET_NUMBER	("Gamma", v_gamma, 0.3, 3.0, 0.1),
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_ENUM		("Gamma control", vid_software_palette, vid_software_palette_enum),
+	ADDSET_BASIC_SECTION(),
 	ADDSET_NUMBER	("Contrast", v_contrast, 1, 5, 0.1),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Lightmap Intensity", gl_modulate, 0.5, 3.0, 0.1),
@@ -1256,6 +1298,24 @@ setting settsystem_arr[] = {
 	ADDSET_CUSTOM("Bit Depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),
 	ADDSET_ACTION("Apply Changes", VideoApplySettings, "Restarts the renderer and applies the selected resolution."),
+
+#ifdef EZ_MULTIPLE_RENDERERS
+	ADDSET_SEPARATOR("Renderer"),
+	ADDSET_ENUM("Mode", vid_renderer, vid_renderer_enum),
+	ADDSET_ACTION("Apply Changes", RendererRestart, "Restarts the renderer."),
+#endif
+
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+	ADDSET_ADVANCED_SECTION(),
+	ADDSET_SEPARATOR("Framebuffer"),
+	ADDSET_ENUM("Mode", vid_framebuffer, vid_framebuffer_enum),
+	ADDSET_BOOL("HDR", vid_framebuffer_hdr),
+	ADDSET_BOOL("HDR Tonemap", vid_framebuffer_hdr_tonemap),
+	ADDSET_NUMBER("Scale", vid_framebuffer_scale, 0.25, 2.0, 0.25),
+	ADDSET_NUMBER("Multisample", vid_framebuffer_multisample, 0, 16, 1),
+	ADDSET_ACTION("Apply Changes", RendererRestart, "Restarts the renderer."),
+	ADDSET_BASIC_SECTION(),
+#endif
 
 	//Font
 	ADDSET_ADVANCED_SECTION(),
