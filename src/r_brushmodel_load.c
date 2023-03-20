@@ -1229,6 +1229,18 @@ static void Mod_LoadNodesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 	Mod_SetParent (loadmodel->nodes, NULL);	// sets nodes and leafs
 }
 
+static qbool ContentsIsLiquid(int contents)
+{
+	switch (contents) {
+	case CONTENTS_WATER:
+	case CONTENTS_SLIME:
+	case CONTENTS_LAVA:
+		return true;
+	default:
+		return false;
+	}
+}
+
 static void Mod_LoadLeafs(model_t* loadmodel, lump_t* l, byte* mod_base)
 {
 	dleaf_t *in;
@@ -1276,7 +1288,7 @@ static void Mod_LoadLeafs(model_t* loadmodel, lump_t* l, byte* mod_base)
 		out->compressed_vis = (p == -1 || loadmodel->visdata == NULL || p >= loadmodel->visdata_length) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
 
-		if (out->contents != CONTENTS_EMPTY) {
+		if (ContentsIsLiquid(out->contents)) {
 			for (j = 0; j < out->nummarksurfaces; j++)
 				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;
 		}
@@ -1320,7 +1332,7 @@ static void Mod_LoadLeafs29a(model_t* loadmodel, lump_t* l, byte* mod_base)
 		out->compressed_vis = (p == -1 || loadmodel->visdata == NULL || p >= loadmodel->visdata_length) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
 
-		if (out->contents != CONTENTS_EMPTY) {
+		if (ContentsIsLiquid(out->contents)) {
 			for (j = 0; j < out->nummarksurfaces; j++)
 				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;
 		}
@@ -1365,7 +1377,7 @@ static void Mod_LoadLeafsBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 		out->compressed_vis = (p == -1 || loadmodel->visdata == NULL || p >= loadmodel->visdata_length) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
 
-		if (out->contents != CONTENTS_EMPTY) {
+		if (ContentsIsLiquid(out->contents)) {
 			for (j = 0; j < out->nummarksurfaces; j++) {
 				out->firstmarksurface[j]->flags |= SURF_UNDERWATER;
 			}
