@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sched.h>
 #include <errno.h>
 #include <dirent.h>
+#include <sys/resource.h>
 
 #include <SDL.h>
 #include <dlfcn.h>
@@ -54,11 +55,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #  define O_NDELAY	FNDELAY
 #endif
 
+
 int noconinput = 0;
 
 qbool stdin_ready;
 int do_stdin = 1;
 
+void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
+cvar_t  sys_highpriority = {"sys_highpriority", "0", 0, OnChange_sys_highpriority};
 cvar_t sys_nostdout = {"sys_nostdout", "0"};
 cvar_t sys_fontsdir = { "sys_fontsdir", "/usr/local/share/fonts/" };
 
@@ -100,7 +104,9 @@ void Sys_Init(void)
     extern void init_url_handler( void );
     init_url_handler();
 #endif
-
+#ifdef __LINUX__
+	Cvar_Register(&sys_highpriority);
+#endif /* __LINUX__ */
 	Cvar_Register(&sys_fontsdir);
 }
 
@@ -818,3 +824,55 @@ void Sys_RegisterQWURLProtocol_f(void)
 }
 
 #endif //platforms other than osx
+
+int Sys_SetPriority(int priority)
+{
+	int ret, i=0;
+	int which = PRIO_PROCESS;
+	id_t pid;
+
+	switch (priority) {
+		case 1:
+			for (i=-19;i<0;i++) {
+				pid = getpid();
+				ret = setpriority(which, pid, i);
+				if (ret == 0) break;
+			}
+			break;
+		case -1:
+			for (i=19;i>0;i--) {
+				pid = getpid();
+				ret = setpriority(which, pid, i);
+				if (ret == 0) break;
+			}
+			break;
+		default:
+			ret = setpriority(which, pid, 0);
+	}
+
+	if (ret == 0) {
+		Com_Printf("Set process nice level to %d\n",i);
+		return 0;
+	}
+
+	return -1;
+}
+
+void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel)
+{
+	int ok;
+	char *desc;
+	int priority;
+
+	priority = Q_atoi(s);
+	if (priority > 0){
+		desc = "high";
+	} else if (priority < 0) {
+		desc = "low";
+	} else {
+		desc = "normal";
+	}
+
+	if (Sys_SetPriority(priority))
+		Com_Printf("Process priority set to %s\n", desc, priority);
+}

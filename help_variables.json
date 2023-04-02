@@ -20310,6 +20310,7 @@
     "sys_highpriority": {
       "default": "0",
       "group-id": "48",
+      "remarks": "Note: On linux setting a number higher than 1 also sets the priority number (1-95).",
       "type": "enum",
       "values": [
         {
