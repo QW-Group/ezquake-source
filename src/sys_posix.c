@@ -54,6 +54,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #  define O_NDELAY	FNDELAY
 #endif
 
+#ifdef __LINUX__
+#include <linux/sched.h>
+void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
+int Sys_SetPriority(int priority);
+cvar_t  sys_highpriority = {"sys_highpriority", "0", 0, OnChange_sys_highpriority};
+struct sched_param sp;
+#endif /* __LINUX__ */
+
 int noconinput = 0;
 
 qbool stdin_ready;
@@ -100,7 +108,9 @@ void Sys_Init(void)
     extern void init_url_handler( void );
     init_url_handler();
 #endif
-
+#ifdef __LINUX__
+	Cvar_Register(&sys_highpriority);
+#endif /* __LINUX__ */
 	Cvar_Register(&sys_fontsdir);
 }
 
@@ -816,5 +826,51 @@ void Sys_RegisterQWURLProtocol_f(void)
 
     return;
 }
+
+#ifdef __LINUX__
+int Sys_SetPriority(int priority)
+{
+	int type;
+
+	if (priority > 0){ //high priority, fifo
+		sp.sched_priority = bound(1,priority,(sched_get_priority_max(SCHED_FIFO)-4));
+		priority = SCHED_FIFO;
+	} else if(priority < 0) { //low priority, default
+		sp.sched_priority = 0;
+		priority = SCHED_OTHER;
+	} else { //default priority, round robin
+		sp.sched_priority = 1;
+		priority = SCHED_RR;
+	}
+
+	return sched_setscheduler(0, priority|SCHED_RESET_ON_FORK, &sp);
+}
+
+void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel)
+{
+	int ok;
+	char *desc;
+	int priority;
+
+	priority = Q_atoi(s);
+	if (priority > 0){
+		desc = "high";
+	} else if (priority < 0) {
+		desc = "low";
+	} else {
+		desc = "normal";
+	}
+
+	if (-1 == Sys_SetPriority(priority))
+	{
+		perror("sched_setscheduler");
+		Com_Printf("Changing process priority failed\n");
+		*cancel = true;
+		return;
+	}
+
+	Com_Printf("Process priority set to %s\n", desc, priority);
+}
+#endif /* __LINUX__ */
 
 #endif //platforms other than osx
