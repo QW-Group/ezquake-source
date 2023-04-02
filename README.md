@@ -1,6 +1,4 @@
 # ezQuake — Modern QuakeWorld Client
-[![Build Status](https://travis-ci.org/ezQuake/ezquake-source.svg?branch=master)](https://travis-ci.org/ezQuake/ezquake-source)
-
 Homepage: [https://ezquake.com][homepage]
 
 Community discord: [http://discord.quake.world][discord]
@@ -65,6 +63,17 @@ If you want to make a clean installation of ezQuake you can do this by following
 ## Compiling
 
 ### Compiling a Windows binary
+
+#### Using Visual Studio
+The project contain a VS solution.
+
+Clone the ezQuake source code:
+
+```
+git clone --recurse-submodules https://github.com/ezQuake/ezquake-source.git ezquake
+```
+Load the solution into VS, and compile your preferred target.
+
 
 #### Using Ubuntu Bash (WSL)
 
