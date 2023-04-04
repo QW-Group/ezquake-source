@@ -94,7 +94,7 @@ void SHA1Init(SHA1_CTX* context)
 
 void SHA1Update(SHA1_CTX* context, unsigned char* data, size_t len)
 {
-	unsigned int i, j;
+	volatile unsigned int i, j;
 
     j = (context->count[0] >> 3) & 63;
 	if ((context->count[0] += len << 3) < (len << 3)) {
