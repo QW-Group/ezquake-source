@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sched.h>
 #include <errno.h>
 #include <dirent.h>
+#include <sys/resource.h>
 
 #include <SDL.h>
 #include <dlfcn.h>
@@ -54,13 +55,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #  define O_NDELAY	FNDELAY
 #endif
 
+
 int noconinput = 0;
 
 qbool stdin_ready;
 int do_stdin = 1;
 
-cvar_t sys_nostdout = {"sys_nostdout", "0"};
-cvar_t sys_fontsdir = { "sys_fontsdir", "/usr/local/share/fonts/" };
+void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
+
+cvar_t sys_highpriority = {"sys_highpriority", "", 0, OnChange_sys_highpriority};
+cvar_t sys_nostdout     = {"sys_nostdout", "0" };
+cvar_t sys_fontsdir     = {"sys_fontsdir", "/usr/local/share/fonts/"};
 
 void Sys_Printf (char *fmt, ...)
 {
@@ -97,10 +102,10 @@ void Sys_Quit(void)
 void Sys_Init(void)
 {
 #ifdef __APPLE__
-    extern void init_url_handler( void );
-    init_url_handler();
+	extern void init_url_handler( void );
+	init_url_handler();
 #endif
-
+	Cvar_Register(&sys_highpriority);
 	Cvar_Register(&sys_fontsdir);
 }
 
@@ -818,3 +823,54 @@ void Sys_RegisterQWURLProtocol_f(void)
 }
 
 #endif //platforms other than osx
+
+int Sys_SetPriority(int priority)
+{
+	int ret, i=0;
+	int which = PRIO_PROCESS;
+
+	switch (priority) {
+		case 1:
+			for (i=-19;i<0;i++) {
+				ret = setpriority(PRIO_PGRP, 0, i);
+				if (ret == 0) break;
+			}
+			break;
+		case -1:
+			for (i=19;i>0;i--) {
+				ret = setpriority(PRIO_PGRP, 0, i);
+				if (ret == 0) break;
+			}
+			break;
+		default:
+			ret = setpriority(PRIO_PGRP, 0, 0);
+	}
+
+	if (ret == 0) return i;
+	return 255;
+}
+
+void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel)
+{
+	//do not attempt to change priority if cvar is unset
+	if (s[0] == '\0') return;
+
+	int ok, priority, ret;
+	char *desc;
+
+	priority = Q_atoi(s);
+	if (priority > 0){
+		desc = "high";
+	} else if (priority < 0) {
+		desc = "low";
+	} else {
+		desc = "normal";
+	}
+
+	ret = Sys_SetPriority(priority);
+	if (ret != 255) {
+		Com_Printf("Process priority set to %s (nice level %d)\n", desc, ret);
+	} else {
+		Com_Printf("Failed to set process priority set to %s\n", desc);
+	}
+}
