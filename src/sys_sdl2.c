@@ -79,7 +79,7 @@ wchar *Sys_GetClipboardTextW(void)
 	return wtmp;
 }
 
-void Sys_CopyToClipboard(char *text)
+void Sys_CopyToClipboard(const char *text)
 {
 	SDL_SetClipboardText(text);
 }

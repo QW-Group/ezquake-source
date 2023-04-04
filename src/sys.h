@@ -107,7 +107,7 @@ void Sys_SendDeferredKeyEvents(void);
 void Sys_Init (void);
 
 wchar *Sys_GetClipboardTextW(void);
-void Sys_CopyToClipboard(char *);
+void Sys_CopyToClipboard(const char *);
 
 void Sys_GetFullExePath(char *path, unsigned int path_length, int long_name);
 

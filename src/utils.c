@@ -751,7 +751,7 @@ int Player_GetSlot(char *arg, qbool prioritise_user_id)
 
 /********************************** Nick completion related ****************************************/
 
-const char disallowed_in_nick[] = {'\n', '\f', '\\', '/', '\"', ' ' , ';'};
+const char disallowed_in_nick[] = {'\n', '\f', '\\', '/', '\"', ' ' , ';', '\0'};
 
 // yet another utility, there also exist at least one similar function Player_StripNameColor(), but not the same
 void RemoveColors (char *name, size_t len)

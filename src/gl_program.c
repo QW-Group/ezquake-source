@@ -864,7 +864,7 @@ qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options)
 	return (!program->program) || program->force_recompile || program->custom_options != options || program->standard_options != standard_options;
 }
 
-void GL_CvarForceRecompile(void)
+void GL_CvarForceRecompile(cvar_t* cvar)
 {
 	r_program_id p;
 	int i;
