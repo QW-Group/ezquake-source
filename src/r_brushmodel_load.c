@@ -1288,7 +1288,7 @@ static void Mod_LoadLeafs(model_t* loadmodel, lump_t* l, byte* mod_base)
 		first_marksurface = LittleShort(in->firstmarksurface);
 		num_marksurfaces = LittleShort(in->nummarksurfaces);
 
-		if (first_marksurface < 0 || first_marksurface >= loadmodel->nummarksurfaces) {
+		if (first_marksurface < 0 || first_marksurface > loadmodel->nummarksurfaces) {
 			Host_Error("Mod_LoadLeafs: first mark surface invalid (%d vs 0-%d)", first_marksurface, loadmodel->nummarksurfaces);
 		}
 		if (num_marksurfaces < 0 || num_marksurfaces > loadmodel->nummarksurfaces - first_marksurface) {
