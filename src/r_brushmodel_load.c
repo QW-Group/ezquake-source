@@ -814,7 +814,8 @@ static void Mod_LoadPlanes(model_t* model, lump_t* l, byte* mod_base)
 
 static void Mod_LoadMarksurfacesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 {
-	int i, j, count;
+	int i, count;
+	unsigned int j;
 	int *in;
 	msurface_t **out;
 	int max_surfaces = (INT_MAX / sizeof(*out));
@@ -834,7 +835,8 @@ static void Mod_LoadMarksurfacesBSP2(model_t* loadmodel, lump_t* l, byte* mod_ba
 	loadmodel->nummarksurfaces = count;
 
 	for (i = 0; i < count; i++) {
-		j = LittleLong(in[i]);
+		// Surface indices are unsigned
+		j = (unsigned int) LittleLong(in[i]);
 		if (j >= loadmodel->numsurfaces) {
 			Host_Error("Mod_LoadMarksurfaces: bad surface number");
 		}
@@ -844,7 +846,8 @@ static void Mod_LoadMarksurfacesBSP2(model_t* loadmodel, lump_t* l, byte* mod_ba
 
 static void Mod_LoadMarksurfaces(model_t* loadmodel, lump_t* l, byte* mod_base)
 {
-	int i, j, count;
+	int i, count;
+	unsigned short j;
 	short *in;
 	msurface_t **out;
 	int max_surfaces = (INT_MAX / sizeof(*out));
@@ -864,7 +867,8 @@ static void Mod_LoadMarksurfaces(model_t* loadmodel, lump_t* l, byte* mod_base)
 	loadmodel->nummarksurfaces = count;
 
 	for (i = 0; i < count; i++) {
-		j = LittleShort(in[i]);
+		// Surface indices are unsigned
+		j = (unsigned short) LittleShort(in[i]);
 		if (j >= loadmodel->numsurfaces) {
 			Host_Error("Mod_LoadMarksurfaces: bad surface number");
 		}
@@ -1288,7 +1292,7 @@ static void Mod_LoadLeafs(model_t* loadmodel, lump_t* l, byte* mod_base)
 		first_marksurface = LittleShort(in->firstmarksurface);
 		num_marksurfaces = LittleShort(in->nummarksurfaces);
 
-		if (first_marksurface < 0 || first_marksurface >= loadmodel->nummarksurfaces) {
+		if (first_marksurface < 0 || first_marksurface > loadmodel->nummarksurfaces) {
 			Host_Error("Mod_LoadLeafs: first mark surface invalid (%d vs 0-%d)", first_marksurface, loadmodel->nummarksurfaces);
 		}
 		if (num_marksurfaces < 0 || num_marksurfaces > loadmodel->nummarksurfaces - first_marksurface) {
