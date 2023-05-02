@@ -759,8 +759,8 @@ void R_TranslatePlayerSkin(int playernum)
 		translate[BOTTOM_RANGE + i] = (bottom < 128) ? (bottom + i) : (bottom + 15 - i);
 	}
 
-	scaled_width = gl_scaleModelTextures.value ? min(gl_max_size.value, 512) : min(glConfig.gl_max_size_default, 512);
-	scaled_height = gl_scaleModelTextures.value ? min(gl_max_size.value, 256) : min(glConfig.gl_max_size_default, 256);
+	scaled_width = gl_scaleModelTextures.value ? min(gl_max_size.value, tinwidth) : min(glConfig.gl_max_size_default, tinwidth);
+	scaled_height = gl_scaleModelTextures.value ? min(gl_max_size.value, tinheight) : min(glConfig.gl_max_size_default, tinheight);
 
 	// allow users to crunch sizes down even more if they want
 	scaled_width >>= (int)gl_playermip.value;
