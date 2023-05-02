@@ -327,6 +327,13 @@ void IN_StartupMouse(void)
 	Cvar_Register(&in_ignore_touch_events);
 #ifdef __APPLE__
 	Cvar_Register(&in_ignore_deadkeys);
+
+	if (in_raw.integer > 0) {
+		if (OSX_Mouse_Init() != 0) {
+			Com_Printf("warning: failed to initialize raw input mouse thread...\n");
+			Cvar_SetValue(&in_raw, 0);
+		}
+	}
 #endif
 
 	mouseinitialized = true;
