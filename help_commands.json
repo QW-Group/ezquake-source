@@ -256,6 +256,10 @@
   "bindlist": {
     "description": "Prints all binds."
   },
+  "bindedit": {
+    "description": "Allows you to edit your bind in console manually.",
+    "syntax": "<key>"
+  },
   "calc_fov": {
     "arguments": [
       {
