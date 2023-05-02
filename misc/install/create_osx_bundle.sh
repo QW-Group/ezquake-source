@@ -14,7 +14,7 @@ ARCH=$(uname -m | sed -e s/i.86/i386/ -e s/amd64/x86_64/ -e s/sun4u/sparc64/ -e 
 BUNDLE_NAME=ezQuake.app
 BINARY=ezquake-darwin-${ARCH}
 ICON_FILE=ezquake.icns
-VERSION=$(cat version.h | grep VERSION_NUMBER | cut -d " " -f 3 | sed -e 's/^"//' -e 's/"$//')
+VERSION=$(cat src/version.h | grep VERSION_NUMBER | cut -d " " -f 3 | sed -e 's/^"//' -e 's/"$//')
 
 if [ -d $BUNDLE_NAME ]; then
 	echo "$BUNDLE_NAME already exists"

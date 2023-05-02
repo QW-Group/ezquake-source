@@ -560,16 +560,6 @@ void IN_Init (void)
 		Cmd_AddCommand("in_restart", IN_Restart_f);
 	}
 
-#ifdef __APPLE__
-	extern cvar_t in_raw;
-	if (in_raw.integer > 0) {
-		if (OSX_Mouse_Init() != 0) {
-			Com_Printf("warning: failed to initialize raw input mouse thread...\n");
-			Cvar_SetValue(&in_raw, 0);
-		}
-	}
-#endif
-
 	IN_StartupMouse ();
 	IN_StartupJoystick();
 }
