@@ -7099,7 +7099,7 @@
       "type": "string"
     },
     "hud_scoreclock_format": {
-      "desc": "Controls in what format the scoreclock is displayed.",
+      "desc": "Controls in what format the scoreclock is displayed. Check the link below for available options. You can also add text, e.g. \"time: %H:%M:%S\"",
       "remarks": "https://www.man7.org/linux/man-pages/man3/strftime.3.html",
       "group-id": "19",
       "type": "string"
