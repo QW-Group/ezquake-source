@@ -1415,6 +1415,10 @@ void HUD_DrawObject(hud_t *hud)
 
 	hud->last_try_sequence = host_screenupdatecount;
 
+	if(hud->flags & HUD_NO_DRAW) {
+		return;
+	}
+
 	// Check if we should show this.
 	if (!HUD_ShouldShow(hud)) {
 		return;

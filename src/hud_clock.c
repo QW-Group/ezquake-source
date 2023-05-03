@@ -185,6 +185,42 @@ static void SCR_HUD_DrawDemoClock(hud_t *hud)
 	}
 }
 
+static void SCR_HUD_DrawScoreClock(hud_t *hud) {
+	int width, height;
+	int x, y;
+	static cvar_t
+			*hud_scoreclock_format = NULL,
+			*hud_scoreclock_scale = NULL,
+			*hud_scoreclock_proportional = NULL;
+
+	if (hud_scoreclock_format == NULL) {
+		hud_scoreclock_format = HUD_FindVar(hud, "format");
+		hud_scoreclock_scale = HUD_FindVar(hud, "scale");
+		hud_scoreclock_proportional = HUD_FindVar(hud, "proportional");
+	}
+
+	if(!hud_scoreclock_format->string)
+		return;
+
+	time_t t;
+	struct tm *ptm;
+	char datestr[256] = "bad date";
+	time(&t);
+	if ((ptm = localtime(&t)))
+		strftime(datestr, sizeof(datestr) - 1, hud_scoreclock_format->string, ptm);
+
+	width = Draw_StringLengthColors(datestr, -1, hud_scoreclock_scale->value, hud_scoreclock_proportional->integer);
+	height = SCR_GetClockStringHeight(false, hud_scoreclock_scale->value);
+
+	if(!width)
+		return;
+
+	if (!HUD_PrepareDraw(hud, width, height, &x, &y))
+		return;
+
+	Draw_SString(x, y, datestr, hud_scoreclock_scale->value, hud_scoreclock_proportional->integer);
+}
+
 ///
 /// cl_screen.c clock module: to be merged
 ///
@@ -352,6 +388,16 @@ void Clock_HudInit(void)
 		"blink", "1",
 		"countdown", "0",
 		"offset", "0",
+		"proportional", "0",
+		NULL
+	);
+
+	HUD_Register(
+		"scoreclock", NULL, "Shows current date and time on the scoreboard",
+		HUD_NO_DRAW, ca_disconnected, 8, SCR_HUD_DrawScoreClock,
+		"0", "screen", "center", "bottom", "0", "-10", "0", "0 0 0", NULL,
+		"scale", "1",
+		"format", "%d-%m-%Y %H:%M:%S",
 		"proportional", "0",
 		NULL
 	);

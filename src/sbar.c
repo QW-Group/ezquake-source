@@ -1768,6 +1768,12 @@ static void Sbar_DeathmatchOverlay(int start)
 	if (!scr_scoreboard_borderless.value) {
 		Draw_Fill(xofs - 1, y - 1, rank_width + 2, 1, 0); //Border - Bottom
 	}
+
+	static hud_t *scoreclock = NULL;
+	if(scoreclock == NULL) // first time
+		scoreclock = HUD_Find("scoreclock");
+	if(scoreclock->show)
+		scoreclock->draw_func(scoreclock);
 }
 
 static void Sbar_TeamOverlay(void)
