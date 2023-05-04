@@ -1923,7 +1923,6 @@ void CL_ParseStaticSound (void)
 ACTION MESSAGES
 =====================================================================
 */
-
 void CL_ParseStartSoundPacket(void)
 {
     vec3_t pos;
@@ -1947,6 +1946,54 @@ void CL_ParseStartSoundPacket(void)
 
 	if (ent > CL_MAX_EDICTS)
 		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
+
+	// Skip weapon sounds if we're predicting them
+	if (ent == cl.playernum + 1)
+	{
+		if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION && cl_predict_weaponsound.integer != 0)
+		{
+			if (channel == 1)
+			{
+				int predict_sound;
+				predict_sound = true;
+
+				if (cl_predict_weaponsound.integer == 0)
+				{
+					predict_sound = false;
+				}
+				else if (cl_predict_weaponsound.integer > 1)
+				{
+					predict_sound = PM_FilterWeaponSound(sound_num);
+				}
+				else if (strcmp(cl.sound_precache[sound_num]->name, "player/axhit2.wav") == 0)
+				{
+					predict_sound = false;
+				}
+
+				if (predict_sound)
+					return;
+			}
+
+			//  yuck! nasty hacks to ignore certain channel sounds we don't want
+			if (channel == 0)
+			{
+				if (!(cl_predict_weaponsound.integer & 256))
+				{
+					if (strcmp(cl.sound_precache[sound_num]->name, "weapons/lstart.wav") == 0)
+						return;
+				}
+			}
+		}
+
+		if (cl_predict_jump.integer && !cl_nopred.integer)
+		{
+			if (channel == 4)
+			{
+				if (strcmp(cl.sound_precache[sound_num]->name, "player/plyrjmp8.wav") == 0)
+					return;
+			}
+		}
+	}
 
 	// MVD Playback
     if (cls.mvdplayback)
@@ -2091,7 +2138,6 @@ void CL_ProcessUserInfo(int slot, player_info_t *player, char *key)
 
 	player->real_topcolor = atoi(Info_ValueForKey(player->userinfo, "topcolor"));
 	player->real_bottomcolor = atoi(Info_ValueForKey(player->userinfo, "bottomcolor"));
-
 	strlcpy(player->team, Info_ValueForKey(player->userinfo, "team"), sizeof(player->team));
 
 	if (atoi(Info_ValueForKey(player->userinfo, "*spectator"))) {
@@ -4061,6 +4107,13 @@ void CL_ParseServerMessage (void)
 					CL_ParseQizmoVoice();
 					break;
 				}
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+			case svc_packetsprojectiles:
+			{
+				CL_ParsePacketSimpleProjectiles();
+				break;
+			}
+#endif
 		}
 
 		// cl_messages, update size

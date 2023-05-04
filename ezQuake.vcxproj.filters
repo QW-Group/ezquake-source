@@ -1680,6 +1680,8 @@
     </ClInclude>
     <ClInclude Include="src\.msversion.h">
       <Filter>Header Files\Generated</Filter>
+    <ClInclude Include="cl_tent.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

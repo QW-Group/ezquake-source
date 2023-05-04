@@ -91,6 +91,7 @@ kbutton_t in_lookup, in_lookdown, in_moveleft, in_moveright;
 kbutton_t in_strafe, in_speed, in_use, in_jump, in_attack, in_attack2;
 kbutton_t in_up, in_down;
 
+
 int in_impulse;
 
 #define VOID_KEY (-1)
@@ -261,7 +262,9 @@ void IN_AttackDown(void)
 {
 	int best;
 	if (cl_weaponpreselect.value && (best = IN_BestWeapon(false)))
+	{
 		in_impulse = best;
+	}
 
 	KeyDown(&in_attack);
 }
@@ -945,10 +948,13 @@ void CL_FinishMove(usercmd_t* cmd)
 		)
 		) {
 		cmd->impulse = 0;
+		cmd->impulse_pred = 0;
 	}
 	else {
 		cmd->impulse = in_impulse;
+		cmd->impulse_pred = in_impulse;
 	}
+
 	// } shaman RFE 1030281
 	in_impulse = 0;
 
@@ -991,8 +997,10 @@ void CL_SendCmd(void)
 {
 	sizebuf_t buf;
 	byte data[1024];
+
 	usercmd_t* cmd, * oldcmd;
 	int i, checksumIndex, lost;
+
 	qbool dontdrop;
 	static float pps_balance = 0;
 	static int dropcount = 0;
@@ -1153,6 +1161,23 @@ void CL_SendCmd(void)
 #ifdef FTE_PEXT2_VOICECHAT
 	S_Voip_Transmit(clc_voicechat, &buf);
 #endif
+
+	/*
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+	for (i = 0; i < LATESTFRAMENUMS; i++)
+	{
+		if (rand() > RAND_MAX / 3)
+			continue;
+
+		j = (cl.csqc_latestframeposition + i) % LATESTFRAMENUMS;
+		if (cl.csqc_latestsendnums[j] >= cls.netchan.outgoing_sequence)
+		{
+			MSG_WriteByte(&buf, clc_ackframe);
+			MSG_WriteLong(&buf, cl.csqc_latestframenums[j]);
+		}
+	}
+#endif
+	*/
 
 	cl.frames[cls.netchan.outgoing_sequence & UPDATE_MASK].sentsize = buf.cursize + 8;    // 8 = PACKET_HEADER
 	// network stats table

@@ -83,9 +83,41 @@ enum {
 	dbg_antilag_position_set   = 4
 };
 
+
+typedef struct prediction_event_sound_s
+{
+	int				frame_num;
+
+	int				chan;
+	struct sfx_s	*sample;
+	float			vol;
+
+	struct prediction_event_sound_s *next;
+} prediction_event_sound_t;
+
+
+typedef struct prediction_event_fakeproj_s
+{
+	int			frame_num;
+
+	int			type;
+	vec3_t		origin;
+	vec3_t		angles;
+	vec3_t		velocity;
+
+	vec3_t		avelocity;
+
+	struct prediction_event_fakeproj_s *next;
+} prediction_event_fakeproj_t;
+
+// events in prediction that we play back slightly delayed depending on cl_predict_buffer
+extern prediction_event_fakeproj_t	*p_event_fakeproj;
+extern prediction_event_sound_t		*p_event_sound;
+
+
 // player_state_t is the information needed by a player entity
 // to do move prediction and to generate a drawable entity
-typedef struct 
+typedef struct
 {
 	int			messagenum;		// All players won't be updated each frame.
 
@@ -97,6 +129,22 @@ typedef struct
 	vec3_t		viewangles;		// Only for demos, not from server.
 	vec3_t		velocity;
 	int			weaponframe;
+	int			weapon_index;
+	int			weapon;
+	int			items;
+	int			impulse;
+
+	byte		ammo_shells;
+	byte		ammo_nails;
+	byte		ammo_rockets;
+	byte		ammo_cells;
+
+	float		attack_finished;
+	float		client_time;
+	float		client_nextthink;
+	int			client_thinkindex;
+	int			client_ping;
+	int			client_predflags;
 
 	int			modelindex;
 	int			frame;
@@ -628,6 +676,14 @@ typedef struct {
 	vec3_t		simorg;
 	vec3_t		simvel;
 	vec3_t		simangles;
+	int			simwep;
+	int			simwepframe;
+	float		simerr_lastcheck;
+	int			simerr_frame;
+	int			simerr_wepframe;
+	int			simerr_wep;
+	vec3_t		simerr_nudge;
+	vec3_t		simerr_org;
 
 	// pitch drifting vars
 	float		pitchvel;
@@ -755,6 +811,13 @@ typedef struct {
 	// antilag debug playback
 	antilag_pos_t antilag_positions[MAX_CLIENTS];
 	antilag_stats_t antilag_stats[MAX_CLIENTS];
+
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+	#define LATESTFRAMENUMS 32
+	int csqc_latestframeposition;
+	int csqc_latestsendnums[LATESTFRAMENUMS];
+	int csqc_latestframenums[LATESTFRAMENUMS];
+#endif
 
 	// demoinfo (stats file embedded in demo)
 	int         demoinfo_blocknumber;
@@ -1027,6 +1090,9 @@ void	CL_SendChunkDownloadReq(void);
 
 #endif // FTE_PEXT_CHUNKEDDOWNLOADS
 
+// cl_pred.c
+void CL_InitWepSounds(void);
+
 // cl_tent.c
 void CL_InitTEnts (void);
 void CL_InitTEntsCvar(void);
@@ -1038,13 +1104,13 @@ void CL_UpdateTEnts(void);
 
 // cl_ents.c
 typedef enum cl_modelindex_s {
-	mi_spike, mi_player, mi_eyes, mi_flag, mi_tf_flag, mi_tf_stan, mi_explod1, mi_explod2, mi_h_player,
+	mi_spike, mi_s_spike, mi_player, mi_eyes, mi_flag, mi_tf_flag, mi_tf_stan, mi_explod1, mi_explod2, mi_h_player,
 	mi_gib1, mi_gib2, mi_gib3, mi_rocket, mi_grenade, mi_bubble,
 	mi_vaxe, mi_vbio, mi_vgrap, mi_vknife, mi_vknife2, mi_vmedi, mi_vspan,
 	mi_flame,	//joe: for changing flame/flame0 models
 	mi_monster1,mi_m2,mi_m3,mi_m4,mi_m5,mi_m6,mi_m7,mi_m8,mi_m9,mi_m10,mi_m11,mi_m12,
 	mi_m13, mi_m14, mi_m15, mi_m16, mi_m17,
-	mi_weapon1, mi_weapon2, mi_weapon3, mi_weapon4, mi_weapon5, mi_weapon6, mi_weapon7, mi_weapon8,
+	mi_weapon1, mi_weapon2, mi_weapon3, mi_weapon4, mi_weapon5, mi_weapon6, mi_weapon7, mi_weapon8, mi_coilgun, mi_hook,
 	cl_num_modelindices,
 } cl_modelindex_t;
 
@@ -1069,6 +1135,9 @@ void CL_SetUpPlayerPrediction(qbool dopred);
 void CL_EmitEntities (void);
 void CL_ClearProjectiles (void);
 void CL_ParsePacketEntities (qbool delta);
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+void CL_ParsePacketSimpleProjectiles(void);
+#endif
 void CL_SetSolidEntities (void);
 void CL_ParsePlayerinfo (void);
 void CL_StorePausePredictionLocations(void);
@@ -1082,7 +1151,7 @@ void CL_ParseProjectiles(qbool indexed);
 // cl_pred.c
 void CL_InitPrediction(void);
 void CL_PredictMove(qbool physframe);
-void CL_PredictUsercmd(player_state_t *from, player_state_t *to, usercmd_t *u);
+void CL_PredictUsercmd(player_state_t *from, player_state_t *to, usercmd_t *u, int local);
 void CL_DisableLerpMove(void);
 
 // cl_cam.c

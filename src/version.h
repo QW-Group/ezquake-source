@@ -93,7 +93,7 @@ char *VersionStringFull(void);
 
 // MVDSV compatibility
 #define	QW_VERSION			"2.40"
-#define SERVER_VERSION      "0.34-beta"
+#define SERVER_VERSION      "0.34-beta-RekiFork"
 #define SERVER_VERSION_NUM  0.33
 #define SERVER_FULLNAME     "MVDSV: MultiView Demo SerVer"
 #define SERVER_HOME_URL     "https://mvdsv.deurk.net"

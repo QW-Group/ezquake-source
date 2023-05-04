@@ -401,6 +401,7 @@ static void S_Restart_f (void)
 	S_Startup();
 
 	CL_InitTEnts();
+	CL_InitWepSounds();
 	for (i=1; i < MAX_SOUNDS; i++) {
 
 		if (!cl.sound_name[i][0])

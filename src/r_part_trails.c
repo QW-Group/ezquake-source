@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "vx_stuff.h"
 #include "qmb_particles.h"
 
-static int fix_trail_num_for_grens(int trail_num)
+int fix_trail_num_for_grens(int trail_num)
 {
 	//trails for rockets and grens are the same
 	//only nums 1 and 2 must be swapped
@@ -34,7 +34,7 @@ static int fix_trail_num_for_grens(int trail_num)
 	return trail_num;
 }
 
-static void R_MissileTrail(centity_t *cent, int trail_num)
+void R_MissileTrail(centity_t *cent, int trail_num)
 {
 	if ((trail_num == 8 || trail_num == 10 || trail_num == 11) && !qmb_initialized) {
 		trail_num = 1;

@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "vx_stuff.h"
 #include "pmove.h"
+#include "cl_tent.h"
 #include "utils.h"
 #include "qmb_particles.h"
 #include "rulesets.h"
@@ -33,6 +34,9 @@ extern cvar_t cl_predict_half;
 extern cvar_t cl_model_bobbing;		
 extern cvar_t cl_nolerp, cl_lerp_monsters, cl_newlerp;
 extern cvar_t r_drawvweps;		
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+extern cvar_t cl_sproj_xerp;
+#endif
 extern  unsigned int     cl_dlight_active[MAX_DLIGHTS/32];       
 
 static struct predicted_player {
@@ -61,6 +65,7 @@ void CL_InitEnts(void) {
 	memset(cl_modelnames, 0, sizeof(cl_modelnames));
 
 	cl_modelnames[mi_spike] = "progs/spike.mdl";
+	cl_modelnames[mi_s_spike] = "progs/s_spike.mdl";
 	cl_modelnames[mi_player] = "progs/player.mdl";
 	cl_modelnames[mi_eyes] = "progs/eyes.mdl";
 	cl_modelnames[mi_flag] = "progs/flag.mdl";
@@ -86,6 +91,8 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_weapon6] = "progs/v_rock.mdl";
 	cl_modelnames[mi_weapon7] = "progs/v_rock2.mdl";
 	cl_modelnames[mi_weapon8] = "progs/v_light.mdl";
+	cl_modelnames[mi_coilgun] = "progs/v_coil.mdl";
+	cl_modelnames[mi_hook] = "progs/v_star.mdl";
 
 	cl_modelnames[mi_vaxe] = "progs/v_axe.mdl";
 	cl_modelnames[mi_vbio] = "progs/v_bio.mdl";
@@ -813,6 +820,560 @@ void CL_ParsePacketEntities (qbool delta)
 	}
 }
 
+
+
+
+
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+extern fproj_t cl_fakeprojectiles[MAX_FAKEPROJ];
+cs_sprojectile_t cs_sprojectiles[CL_MAX_EDICTS];
+
+int CL_SimpleProjectile_MatchFakeProj(cs_sprojectile_t *sproj, int entnum)
+{
+	fproj_t *prj;
+	int i;
+	for (i = 0, prj = cl_fakeprojectiles; i < MAX_FAKEPROJ; i++, prj++)
+	{
+		if (prj->endtime == 0)
+			continue;
+
+		if (prj->owner != sproj->owner)
+			continue;
+
+		//if (prj->modelindex != sproj->modelindex)
+		//	continue;
+
+		if (cl.time > prj->endtime + 0.1)
+			continue;
+
+		//vec3_t diff;
+		//VectorSubtract(sproj->origin, prj->start, diff);
+		//if (VectorLength(diff) < 24)
+		if (prj->entnum == sproj->fproj_number)
+		{
+			return i;
+		}
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+		else if (cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION && prj->entnum == 0)
+		{
+			//if (cl.time > prj->endtime - 0.05)
+			//	continue;
+
+			vec3_t diff;
+			VectorSubtract(sproj->origin, prj->org, diff);
+
+			if (VectorLength(diff) > 24)
+				continue;
+
+			//VectorCopy(prj->org, prj->partorg);
+			prj->entnum = entnum;
+			prj->endtime = prj->starttime + 5;
+			return i;
+		}
+#endif
+	}
+
+	return -1;
+}
+
+
+/*
+void CL_ParseDeltaSimpleProjectile(sprojectile_state_t *from, sprojectile_state_t *to, int bits, int entnum) {
+	int i;
+
+	*to = *from;
+	to->number = entnum;
+	to->flags = bits;
+	
+	if (bits & U_ORIGIN2)
+		to->owner = (unsigned short)MSG_ReadShort();
+
+	if (bits & U_FRAME)
+		to->modelindex = MSG_ReadByte();
+
+	if (bits & U_ORIGIN3)
+		to->time_offset = -(float)MSG_ReadByte() / 255;
+
+	if (bits & U_ORIGIN1)
+	{
+		to->time = MSG_ReadFloat();
+
+		to->origin[0] = MSG_ReadCoord();
+		to->origin[1] = MSG_ReadCoord();
+		to->origin[2] = MSG_ReadCoord();
+
+		to->velocity[0] = MSG_ReadCoord();
+		to->velocity[1] = MSG_ReadCoord();
+		to->velocity[2] = MSG_ReadCoord();
+	}
+
+	if (bits & U_ANGLE2)
+	{
+		to->angles[0] = MSG_ReadAngle();
+		to->angles[1] = MSG_ReadAngle();
+		to->angles[2] = MSG_ReadAngle();
+	}
+}
+
+
+void FlushSimpleProjectilePacket(void) {
+	int word, entnum;
+	sprojectile_state_t olde, newe;
+
+	Com_DPrintf("FlushEntityPacket\n");
+
+	memset(&olde, 0, sizeof(olde));
+
+	//cl.delta_sequence = 0;
+	//cl.frames[cls.netchan.incoming_sequence & UPDATE_MASK].invalid = true;
+
+	// read it all, but ignore it
+	while (1) {
+		entnum = (unsigned short)MSG_ReadShort();
+		word = (unsigned short)MSG_ReadShort();
+		if (msg_badread) {	// something didn't parse right...
+			Host_Error("msg_badread in packetentities");
+			return;
+		}
+
+		if (word == 0 && entnum == 0)
+			break;	// done
+
+		CL_ParseDeltaSimpleProjectile(&olde, &newe, word, entnum);
+	}
+}
+
+
+void CL_SetupPacketSimpleProjectile(int bits, sprojectile_state_t *from, sprojectile_state_t *to)
+{
+	if ((from->time != to->time) && !(bits & U_REMOVE))
+	{
+		fproj_t *mis;
+		to->fproj_num = CL_SimpleProjectile_MatchFakeProj(to);
+		if (to->fproj_num < 0)
+		{
+			//Con_Printf("NO MATCH!\n");
+			mis = CL_CreateFakeSuperNail();
+			to->fproj_num = mis->index;
+
+			mis->entnum = to->number;
+			mis->starttime = cl.time + (to->time - cl.servertime);
+			mis->endtime = mis->starttime + 5;
+			VectorCopy(to->origin, mis->partorg);
+			VectorMA(mis->partorg, to->time_offset, to->velocity, mis->partorg);
+		}
+		else
+		{
+			//Con_Printf("MATCHED! %i\n", to->number);
+			mis = &cl_fakeprojectiles[to->fproj_num];
+			mis->entnum = to->number;
+			mis->starttime = cl.time + (to->time - cl.servertime);
+		}
+
+		mis->owner = to->owner;
+		VectorCopy(to->origin, mis->start);
+		VectorCopy(to->origin, mis->org);
+		VectorCopy(to->velocity, mis->vel);
+		VectorCopy(to->angles, mis->angs);
+
+		if (to->owner == (cl.viewplayernum + 1))
+		{
+			//mis->starttime -= 0.5;
+		}
+
+		if (to->modelindex != 0)
+		{
+			mis->modelindex = to->modelindex;
+			// apply the model's effect flags
+			mis->effects = cl.model_precache[to->modelindex]->flags;
+
+			// a yucky hack to add nail trails
+			if (to->modelindex == cl_modelindices[mi_spike] || to->modelindex == cl_modelindices[mi_s_spike])
+			{
+				mis->effects |= EF_TRACER2;
+			}
+		}
+
+		//CL_MatchFakeProjectile(cent);
+
+		//Con_Printf("fp created\n   stime: %f, fptime %f\n", cl.time, mis->starttime);
+	}
+}
+*/
+
+
+// An svc_packetsprojectiles has just been parsed, deal with the rest of the data stream.
+void CL_ParsePacketSimpleProjectiles(void)
+{
+	int word, sendflags;
+	int framenum;
+
+	framenum = MSG_ReadLong();
+	/*
+	cl.csqc_latestframenums[cl.csqc_latestframeposition] = framenum;
+	cl.csqc_latestframeposition++;
+	if (cl.csqc_latestframeposition >= LATESTFRAMENUMS)
+		cl.csqc_latestframeposition = LATESTFRAMENUMS - 1;
+	*/
+
+	cl.csqc_latestframenums[cl.csqc_latestframeposition] = framenum;
+	cl.csqc_latestsendnums[cl.csqc_latestframeposition] = cls.netchan.outgoing_sequence;
+	cl.csqc_latestframeposition = (cl.csqc_latestframeposition + 1) % LATESTFRAMENUMS;
+
+
+	while (true)
+	{
+		word = (unsigned short)MSG_ReadShort();
+
+		if (word == 0)
+			break;
+
+		if (word & 0x8000)
+		{
+			word -= word & 0x8000;
+
+			fproj_t *mis = &cl_fakeprojectiles[cs_sprojectiles[word].fproj_number];
+			if (mis->entnum == word)
+			{
+				memset(mis, 0, sizeof(fproj_t));
+				mis->endtime = -1;
+				mis->index = 0;
+			}
+			memset(&cs_sprojectiles[word], 0, sizeof(cs_sprojectile_t));
+
+			continue;
+		}
+
+		word = bound(0, word, CL_MAX_EDICTS - 1);
+
+		fproj_t *mis;
+		int mis_new = 0;
+		if (cs_sprojectiles[word].active == false)
+			mis_new = 1;
+
+		cs_sprojectiles[word].active = true;
+		cs_sprojectile_t *cs_sproj = &cs_sprojectiles[word];
+		cs_sproj->fproj_number = bound(0, cs_sproj->fproj_number, MAX_FAKEPROJ - 1);
+		mis = &cl_fakeprojectiles[cs_sproj->fproj_number];
+
+		sendflags = (unsigned short)MSG_ReadShort();
+
+
+		if (sendflags & U_ORIGIN1)
+		{
+			cs_sproj->origin[0] = MSG_ReadFloat();
+			cs_sproj->origin[1] = MSG_ReadFloat();
+			cs_sproj->origin[2] = MSG_ReadFloat();
+
+			cs_sproj->velocity[0] = MSG_ReadFloat();
+			cs_sproj->velocity[1] = MSG_ReadFloat();
+			cs_sproj->velocity[2] = MSG_ReadFloat();
+		}
+
+		if (sendflags & U_ANGLE1)
+		{
+			cs_sproj->angles[0] = MSG_ReadAngle();
+			cs_sproj->angles[1] = MSG_ReadAngle();
+			cs_sproj->angles[2] = MSG_ReadAngle();
+		}
+
+		if (sendflags & U_MODEL)
+		{
+			cs_sproj->modelindex = MSG_ReadShort();
+			cs_sproj->owner = MSG_ReadShort();
+		}
+
+		if (sendflags & U_ORIGIN3)
+		{
+			cs_sproj->time_offset = -(float)MSG_ReadByte() / 255;
+		}
+
+
+		if (mis_new)
+		{
+			cs_sproj->fproj_number = -1;
+			cs_sproj->fproj_number = CL_SimpleProjectile_MatchFakeProj(cs_sproj, word);
+			if (cs_sproj->fproj_number < 0)
+			{
+				mis_new = 2;
+				mis = CL_AllocFakeProjectile();
+				cs_sproj->fproj_number = mis->index;
+			}
+
+
+			mis = &cl_fakeprojectiles[cs_sproj->fproj_number];
+
+			mis->starttime = cl.time;
+			VectorCopy(cs_sproj->origin, mis->start);
+		}
+
+
+		if (sendflags & U_ORIGIN1)
+		{
+			VectorCopy(cs_sproj->origin, mis->org);
+			VectorCopy(cs_sproj->velocity, mis->vel);
+
+			mis->starttime = cl.time;
+			VectorCopy(mis->org, mis->start);
+		}
+
+		if (sendflags & U_ANGLE1)
+		{
+			VectorCopy(cs_sproj->angles, mis->angs);
+		}
+
+		if (sendflags & U_MODEL)
+		{
+			mis->modelindex = cs_sproj->modelindex;
+			mis->owner = cs_sproj->owner;
+
+			///*
+			if (mis->modelindex != 0 && cl.model_precache[mis->modelindex])
+			{
+				// apply the model's effect flags
+				mis->effects = cl.model_precache[mis->modelindex]->flags;
+
+				// a yucky hack to add nail trails
+				if (mis->modelindex == cl_modelindices[mi_spike] || mis->modelindex == cl_modelindices[mi_s_spike])
+				{
+					mis->effects |= 256;
+				}
+			}
+			//*/
+		}
+
+		
+
+		mis->endtime = cl.time + 20;
+		if (mis_new)
+		{
+			mis->entnum = word;
+			if (mis_new == 2)
+			{
+				memset(&cl_entities[mis->entnum], 0, sizeof(centity_t));
+
+				VectorCopy(mis->org, mis->partorg);
+				if (cs_sproj->time_offset)
+				{
+					VectorMA(mis->partorg, cs_sproj->time_offset, cs_sproj->velocity, mis->partorg);
+				}
+			}
+			else
+			{
+				cl_entities[mis->entnum] = mis->cent;
+			}
+		}
+
+	}
+
+
+
+
+
+	/*
+	return;
+
+	int oldpacket, newpacket, oldindex, newindex, word, entnum, newnum, oldnum;
+	packet_entities_t *oldp, *newp, dummy;
+	qbool full;
+	qbool delta;
+	byte from;
+	newpacket = cls.netchan.incoming_sequence & UPDATE_MASK;
+	newp = &cl.frames[newpacket].packet_entities;
+
+
+	if (delta)
+	{
+		from = MSG_ReadByte();
+		oldpacket = cl.frames[newpacket].delta_sequence;
+		
+		if (cls.netchan.outgoing_sequence - cls.netchan.incoming_sequence >= UPDATE_BACKUP - 1)
+		{
+			Con_Printf("No valid frames\n");
+			// There are no valid frames left, so drop it.
+			FlushSimpleProjectilePacket();
+			//cl.validsequence = 0;
+			return;
+		}
+
+		if ((from & UPDATE_MASK) != (oldpacket & UPDATE_MASK))
+		{
+			Con_Printf("Mismatch\n");
+			Com_DPrintf("WARNING: from mismatch (%d vs %d, %d vs %d)\n", (from & UPDATE_MASK), (oldpacket & UPDATE_MASK), from, oldpacket);
+			FlushSimpleProjectilePacket();
+			//cl.validsequence = 0;
+			return;
+		}
+
+		if (cls.netchan.outgoing_sequence - oldpacket >= UPDATE_BACKUP - 1)
+		{
+			Con_Printf("Too old\n");
+			// We can't use this, it is too old.
+			FlushSimpleProjectilePacket();
+			// Don't clear cl.validsequence, so that frames can still be rendered;
+			// it is possible that a fresh packet will be received before
+			// (outgoing_sequence - incoming_sequence) exceeds UPDATE_BACKUP - 1
+			return;
+		}
+
+		oldp = &cl.frames[oldpacket & UPDATE_MASK].packet_entities;
+		full = false;
+	}
+	else
+	{
+		// This is a full update that we can start delta compressing from now.
+		oldp = &dummy;
+		dummy.num_sprojectiles = 0;
+		full = true;
+	}
+
+	oldindex = 0;
+	newindex = 0;
+	newp->num_sprojectiles = 0;
+
+	int f_enm, t_enm;
+	f_enm = MAX_EDICTS;
+	t_enm = (unsigned short)MSG_ReadShort();
+	word = (unsigned short)MSG_ReadShort();
+
+
+
+	//Con_Printf("ent num %i\n word %i\n", t_enm, word);
+	if (t_enm != 0 || word != 0)
+	{
+		//Con_Printf("\n\n\nFRAME:%i\n", oldp->num_sprojectiles);
+
+		if (oldindex < oldp->num_sprojectiles)
+			f_enm = oldp->sprojectiles[oldindex].number;
+
+		while (true)
+		{
+			if (t_enm == 0 && word == 0)// || msg_badread)
+			{
+				//Con_Printf("msg end\n");
+				break;
+			}
+
+			if (oldindex >= MAX_SIMPLEPROJECTILES || newindex >= MAX_SIMPLEPROJECTILES)
+				break;
+
+
+			if (oldindex < oldp->num_sprojectiles)
+				f_enm = oldp->sprojectiles[oldindex].number;
+			else
+				f_enm = MAX_EDICTS;
+
+			//if (oldindex >= oldp->num_sprojectiles && newindex >= newp->num_sprojectiles)
+			//	break;
+
+
+			//if (newindex < newp->num_sprojectiles)
+			//{
+			//	t_enm = newp->sprojectiles[to_ind].number;
+			//}
+
+			//Con_Printf("SORT %i vs %i\n", f_enm, t_enm);
+			if (t_enm == f_enm)
+			{
+				if (word & U_REMOVE)
+				{
+					//Con_Printf("Remove: %i\n", t_enm);
+					fproj_t *mis = &cl_fakeprojectiles[oldp->sprojectiles[oldindex].fproj_num];
+					if (mis->entnum == oldp->sprojectiles[oldindex].number)
+					{
+						memset(mis, 0, sizeof(fproj_t));
+						//Con_Printf("fprj delete: %i\n", oldp->sprojectiles[oldindex].fproj_num);
+					}
+
+					t_enm = (unsigned short)MSG_ReadShort();
+					word = (unsigned short)MSG_ReadShort();
+
+					oldindex++;
+
+					if (oldindex < oldp->num_sprojectiles)
+						f_enm = oldp->sprojectiles[oldindex].number;
+					continue;
+				}
+
+				//update
+				//Con_Printf("Update: %i\n", t_enm);
+
+				newp->sprojectiles[newindex] = oldp->sprojectiles[newindex];
+				//newp->sprojectiles[newindex] = (newp->sprojectiles[newindex]);
+				//newp->sprojectiles[newindex].sflag = oldindex;
+				//newp->sprojectiles[newindex].number = t_enm;
+				CL_ParseDeltaSimpleProjectile(&oldp->sprojectiles[oldindex], &newp->sprojectiles[newindex], word, t_enm);
+				CL_SetupPacketSimpleProjectile(word, &oldp->sprojectiles[oldindex], &newp->sprojectiles[newindex]);
+
+				t_enm = (unsigned short)MSG_ReadShort();
+				word = (unsigned short)MSG_ReadShort();
+
+				oldindex++;
+				newindex++;
+			}
+			else if (f_enm < t_enm)
+			{
+				//Con_Printf("Insert: %i\n", f_enm);
+
+				//newp->sprojectiles[newindex] = (oldp->sprojectiles[oldindex]);
+				//newp->sprojectiles[newindex].sflag = -1;
+				newp->sprojectiles[newindex] = oldp->sprojectiles[oldindex];
+				CL_SetupPacketSimpleProjectile(word, &oldp->sprojectiles[oldindex], &newp->sprojectiles[newindex]);
+
+				newindex++;
+				oldindex++;
+			}
+			else if (t_enm < f_enm)
+			{
+				//newp->sprojectiles[newindex] = (newp->sprojectiles[newindex]);
+				//newp->sprojectiles[newindex].sflag = 0;
+
+				//new
+				//Con_Printf("New: %i\n", t_enm);
+
+				//newp->sprojectiles[newindex].number = t_enm;
+				CL_ParseDeltaSimpleProjectile(&cl_entities[newnum].baseline, &newp->sprojectiles[newindex], word, t_enm);
+				CL_SetupPacketSimpleProjectile(word, &cl_entities[newnum].baseline, &newp->sprojectiles[newindex]);
+
+				t_enm = (unsigned short)MSG_ReadShort();
+				word = (unsigned short)MSG_ReadShort();
+
+				newindex++;
+			}
+		}
+	}
+
+
+	for (; oldindex < oldp->num_sprojectiles && newindex < MAX_SIMPLEPROJECTILES; oldindex++)
+	{
+		if (oldp->sprojectiles[oldindex].number == 0)
+			continue;
+
+		newp->sprojectiles[newindex] = oldp->sprojectiles[oldindex];
+		newindex++;
+	}
+
+
+	// cleanup any lost info due to overflow
+	while (word != 0 || t_enm != 0)
+	{
+		//Con_Printf("Still need to flush.\n");
+		sprojectile_state_t olde, newe;
+		
+		CL_ParseDeltaSimpleProjectile(&olde, &newe, word, t_enm);
+
+		t_enm = (unsigned short)MSG_ReadShort();
+		word = (unsigned short)MSG_ReadShort();
+	}
+
+	newp->num_sprojectiles = newindex;
+	*/
+}
+
+#endif
+
+
+
 static qbool CL_SetAlphaByDistance(entity_t* ent)
 {
 	vec3_t diff;
@@ -963,7 +1524,13 @@ void CL_LinkPacketEntities(void)
 		{
 			if (cl_rocket2grenade.value && cl_modelindices[mi_grenade] != -1)
 				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
+			CL_MatchFakeProjectile(cent);
+		} 
+		else if (state->modelindex == cl_modelindices[mi_grenade])
+		{
+			CL_MatchFakeProjectile(cent);
 		}
+
 
 		ent.skinnum = state->skinnum;
 
@@ -1270,6 +1837,7 @@ void CL_ParsePlayerinfo (void)
 
 	player_state_t *prevstate, dummy;
 	int num, i;
+	int wep_predict = 0;
 
 	extern void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);
 
@@ -1305,6 +1873,7 @@ void CL_ParsePlayerinfo (void)
 		}
 
 		flags = MSG_ReadShort ();
+
 		state->flags = MVD_TranslateFlags(flags);
 
 		state->messagenum = cl.parsecount;
@@ -1366,7 +1935,15 @@ void CL_ParsePlayerinfo (void)
 	} 
 	else 
 	{
-		flags = state->flags = MSG_ReadShort ();
+		flags = state->flags = (unsigned short)MSG_ReadShort ();
+
+#if defined(FTE_PEXT_TRANS) // and any other fte extension that uses this... (we don't support those yet)
+		if (cls.fteprotocolextensions & (FTE_PEXT_TRANS))
+		{
+			if (flags & PF_FTE_EXTRA)
+				flags |= MSG_ReadByte() << 16;
+		}
+#endif
 
 		state->messagenum = cl.parsecount;
 		if (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
@@ -1440,10 +2017,41 @@ void CL_ParsePlayerinfo (void)
 			state->effects = 0;
 
 		if (flags & PF_WEAPONFRAME)
-			state->weaponframe = MSG_ReadByte ();
+		{
+			state->weaponframe = MSG_ReadByte();
+
+			if (cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+			{
+				wep_predict = MSG_ReadByte();
+				if (wep_predict)
+				{
+					int data_impulse = MSG_ReadByte();
+					state->impulse = data_impulse;
+
+					state->weapon = MSG_ReadShort();
+					state->items = cl.stats[STAT_ITEMS];
+
+					state->client_time = MSG_ReadFloat();
+					state->attack_finished = MSG_ReadFloat();
+					state->client_nextthink = MSG_ReadFloat();
+					state->client_thinkindex = MSG_ReadByte();
+					state->client_ping = MSG_ReadByte();
+					state->client_predflags = MSG_ReadByte();
+
+					state->ammo_shells = MSG_ReadByte();
+					state->ammo_nails = MSG_ReadByte();
+					state->ammo_rockets = MSG_ReadByte();
+					state->ammo_cells = MSG_ReadByte();
+				}
+			}
+			else
+			{
+				state->weapon = cl.stats[STAT_ACTIVEWEAPON];
+				state->items = cl.stats[STAT_ITEMS];
+			}
+		}
 		else
 			state->weaponframe = 0;
-
 
 		state->alpha = 255;
 #ifdef FTE_PEXT_TRANS
@@ -1541,7 +2149,31 @@ guess_pm_type:
 			if (flags & PF_EFFECTS)
 				MSG_WriteByte(&cls.demomessage, state->effects);
 			if (flags & PF_WEAPONFRAME)
+			{
 				MSG_WriteByte(&cls.demomessage, state->weaponframe);
+
+				if (cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+				{
+					MSG_WriteByte(&cls.demomessage, wep_predict);
+					if (wep_predict)
+					{
+						MSG_WriteByte(&cls.demomessage, state->impulse);
+						MSG_WriteShort(&cls.demomessage, state->weapon);
+
+						MSG_WriteFloat(&cls.demomessage, state->client_time);
+						MSG_WriteFloat(&cls.demomessage, state->attack_finished);
+						MSG_WriteFloat(&cls.demomessage, state->client_nextthink);
+						MSG_WriteByte(&cls.demomessage, state->client_thinkindex);
+						MSG_WriteByte(&cls.demomessage, state->client_ping);
+						MSG_WriteByte(&cls.demomessage, state->client_predflags);
+
+						MSG_WriteByte(&cls.demomessage, state->ammo_shells);
+						MSG_WriteByte(&cls.demomessage, state->ammo_nails);
+						MSG_WriteByte(&cls.demomessage, state->ammo_rockets);
+						MSG_WriteByte(&cls.demomessage, state->ammo_cells);
+					}
+				}
+			}
 #ifdef FTE_PEXT_TRANS
 			if (flags & PF_TRANS_Z && cls.fteprotocolextensions & FTE_PEXT_TRANS)
 				MSG_WriteByte(&cls.demomessage, state->alpha);		
@@ -1709,6 +2341,7 @@ static void CL_LinkPlayers(void)
 		if (state->messagenum != cl.parsecount)
 			continue;	// not present this frame
 
+
 		// spawn light flashes, even ones coming from invisible objects
 		if (r_powerupglow.value && !(r_powerupglow.value == 2 && j == cl.viewplayernum)) 
 		{
@@ -1829,6 +2462,7 @@ static void CL_LinkPlayers(void)
 		ent.scoreboard = (state->modelindex == cl_modelindices[mi_player]) ? info : NULL;
 		ent.frame = state->frame;
 		ent.effects = state->effects; // Electro - added for shells
+		ent.alpha = (float)state->alpha / 255;
 
 		if (cent->frametime >= 0 && cent->frametime <= cl.time) 
 		{
@@ -1862,7 +2496,7 @@ static void CL_LinkPlayers(void)
 
 			oldphysent = pmove.numphysent;
 			CL_SetSolidPlayers(j);
-			CL_PredictUsercmd(state, &exact, &state->command);
+			CL_PredictUsercmd(state, &exact, &state->command, false);
 			pmove.numphysent = oldphysent;
 			VectorCopy(exact.origin, ent.origin);
 			VectorCopy(exact.origin, predicted_players[j].drawn_origin);
@@ -2078,7 +2712,7 @@ void CL_SetUpPlayerPrediction(qbool dopred)
 					msec = 255;
 				state->command.msec = msec;
 
-				CL_PredictUsercmd (state, &exact, &state->command);
+				CL_PredictUsercmd (state, &exact, &state->command, false);
 				VectorCopy (exact.origin, pplayer->origin);
 			}
 		}
@@ -2378,6 +3012,9 @@ void MVD_Interpolate(void)
 void CL_ClearPredict(void) {
 	memset(predicted_players, 0, sizeof(predicted_players));
 	mvd_fixangle = 0;
+	pmove.effect_frame = 0;
+	pmove.t_width = 0;
+	pmove.impulse = 0;
 }
 
 void CL_CalcPlayerFPS(player_info_t *info, int msec)

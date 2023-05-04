@@ -21,45 +21,32 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // cl_tent.c -- client side temporary entities
 
 #include "quakedef.h"
-#include "gl_model.h"
 #include "vx_stuff.h"
 #include "rulesets.h"
+#include "qsound.h"
 #include "pmove.h"
 #include "utils.h"
-#include "qsound.h"
 #include "qmb_particles.h"
+#include "cl_tent.h"
 
 extern cvar_t gl_no24bit;
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+extern cvar_t cl_sproj_xerp;
+#endif
 
 temp_entity_list_t temp_entities;
-
-#define	MAX_BEAMS 32
-typedef struct 
-{
-	int entity;
-	model_t *model;
-	float endtime;
-	vec3_t start, end;
-} beam_t;
 
 beam_t cl_beams[MAX_BEAMS];
 
 static vec3_t playerbeam_end;
 static qbool playerbeam_update;
 
-#define MAX_EXPLOSIONS 32
-typedef struct explosion_s 
-{
-	struct explosion_s *prev, *next;
-	vec3_t origin;
-	float start;
-	model_t *model;
-} explosion_t;
-
-
 // cl_free_explosions = linear linked list of free explosions
 explosion_t	cl_explosions[MAX_EXPLOSIONS];
 explosion_t cl_explosions_headnode, *cl_free_explosions;
+
+fproj_t cl_fakeprojectiles[MAX_FAKEPROJ];
+predexplosion_t cl_predictedexplosions[MAX_PREDEXPLOSIONS];
 
 static model_t	*cl_explo_mod, *cl_bolt1_mod, *cl_bolt2_mod, *cl_bolt3_mod, *cl_beam_mod;
 
@@ -95,6 +82,7 @@ void CL_ClearTEnts(void)
 
 	memset (&cl_beams, 0, sizeof(cl_beams));
 	memset (&cl_explosions, 0, sizeof(cl_explosions));
+	memset (&cl_fakeprojectiles, 0, sizeof(cl_fakeprojectiles));
 
 	// link explosions 
 	cl_free_explosions = cl_explosions; 
@@ -142,12 +130,313 @@ void CL_FreeExplosion(explosion_t *ex)
 	cl_free_explosions = ex;
 }
 
+void CL_MatchFakeProjectile(centity_t *cent)
+{
+	fproj_t *prj;
+	int i;
+
+	for (i = 0, prj = cl_fakeprojectiles; i < MAX_FAKEPROJ; i++, prj++)
+	{
+		// only do this for fake projectiles that ended recently (or will end soon)
+		if (prj->endtime >= cl.time && prj->endtime <= cl.time + 0.08)
+		{
+			vec3_t diff;
+			VectorSubtract(cent->lerp_origin, prj->org, diff);
+
+			if (VectorLength(diff) < 24)
+			{
+				if (prj->partcount)
+				{
+					VectorCopy(prj->partorg, cent->trails[0].stop);
+					VectorCopy(prj->partorg, cent->trails[1].stop);
+					VectorCopy(prj->partorg, cent->trails[2].stop);
+					VectorCopy(prj->partorg, cent->trails[3].stop);
+				}
+
+				if (prj->dl_key)
+				{
+					dlight_t *dl;
+					dl = cl_dlights;
+					for (i = 0; i < MAX_DLIGHTS; i++, dl++) {
+						if (dl->key == prj->dl_key) {
+							memset(dl, 0, sizeof(*dl));
+							cl_dlight_active[i / 32] -= (cl_dlight_active[i / 32] & (1 << (i % 32)));
+						}
+					}
+				}
+
+				
+				//cent->startlerp = cl.time;
+				//cent->deltalerp = 0.1;
+				//VectorCopy(prj->org, cent->old_origin);
+				//VectorCopy(prj->angs, cent->old_angles);
+				//VectorCopy(prj->org, cent->lerp_origin);
+
+				memset(prj, 0, sizeof(fproj_t));
+				return;
+			}
+		}
+	}
+}
+
+fproj_t *CL_AllocFakeProjectile(void)
+{
+	fproj_t *prj;
+	int		i;
+	float	cull_distance;
+	int		cull_index;
+
+
+	for (i = 0, prj = cl_fakeprojectiles; i < MAX_FAKEPROJ; i++, prj++)
+	{
+		if (prj->endtime < cl.time)
+		{
+			memset(prj, 0, sizeof(fproj_t));
+			prj->dl_key = MAX_EDICTS + i; // this is hacky and gross
+			prj->index = i;
+			#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+			prj->owner = (cl.viewplayernum + 1);
+			#endif
+			prj->entnum = 0;
+			//prj->cent = &cl_entities[CL_MAX_EDICTS - (i + 1)];
+			return prj;
+		}
+	}
+
+	// oh crap, we're out of fakeproj slots! now we need to do some expensive operations to find the furthest projectile and use that
+	cull_distance = 1;
+	cull_index = 0;
+	for (i = 0, prj = cl_fakeprojectiles; i < MAX_FAKEPROJ; i++, prj++)
+	{
+		float	temp_dist;
+		vec3_t	temp_vec;
+
+		VectorSubtract(prj->org, cl.simorg, temp_vec);
+		temp_dist = VectorLength(temp_vec);
+		if (temp_dist > cull_distance)
+		{
+			if (temp_dist > 2048) // it's so far away, just use this and hope for the best
+				break;
+
+			cull_distance = temp_dist;
+			cull_index = i;
+		}
+	}
+
+
+	prj = &cl_fakeprojectiles[cull_index];
+	memset(prj, 0, sizeof(fproj_t));
+	prj->entnum = 0;
+	prj->index = cull_index;
+	prj->owner = (cl.viewplayernum + 1);
+	prj->dl_key = MAX_EDICTS + cull_index;
+	//cl_fakeprojectiles[cull_index].cent = &cl_entities[CL_MAX_EDICTS - (cull_index + 1)];
+	return prj;
+}
+
+#define WEAPONPRED_MAXLATENCY 0.1
+fproj_t *CL_CreateFakeNail(void)
+{
+	if (pmove.client_ping == 0)
+		return NULL;//&cl_fakeprojectiles[0];
+
+	fproj_t *newmis = CL_AllocFakeProjectile();
+	newmis->modelindex = cl_modelindices[mi_spike];
+
+	float latency = cls.latency;
+	newmis->starttime = cl.time + max((latency - 0.013) - ((float)pmove.client_ping / 1000), 0);
+	newmis->endtime = cl.time + latency + 0.013;
+	newmis->effects = 256;
+	
+	return newmis;
+}
+
+fproj_t *CL_CreateFakeSuperNail(void)
+{
+	if (pmove.client_ping == 0)
+		return NULL;//&cl_fakeprojectiles[0];
+
+	fproj_t *newmis = CL_AllocFakeProjectile();
+	newmis->modelindex = cl_modelindices[mi_s_spike];
+
+	float latency = cls.latency;
+	newmis->starttime = cl.time + max((latency - 0.013) - ((float)pmove.client_ping / 1000), 0);
+	newmis->endtime = cl.time + latency + 0.013;
+	newmis->effects = 256;
+
+	return newmis;
+}
+
+#define MAX_CLIP_PLANES 5
+vec3_t bounce_retvec;
+void Fproj_Physics_ClipVelocity(vec3_t vel, vec3_t norm, float f)
+{
+	vec3_t vel2;
+	VectorScale(norm, DotProduct(vel, norm), vel2);
+	VectorScale(vel2, f, vel2);
+	VectorSubtract(vel, vel2, vel);
+
+	if (vel[0] > -0.1 && vel[0] < 0.1) vel[0] = 0;
+	if (vel[1] > -0.1 && vel[1] < 0.1) vel[1] = 0;
+	if (vel[2] > -0.1 && vel[2] < 0.1) vel[2] = 0;
+
+	VectorCopy(vel, bounce_retvec);
+}
+
+void Fproj_Physics_Bounce(fproj_t *proj, float dt)
+{
+	float gravity_value = movevars.gravity;
+
+	if (proj->flags & 512)
+	{
+		if (proj->vel[2] >= 1 / 32)
+			proj->flags = proj->flags &~512;
+	}
+
+	proj->vel[2] -= 0.5 * dt * gravity_value;
+	
+	VectorMA(proj->angs, dt, proj->avel, proj->angs);
+
+	float movetime, bump;
+	movetime = dt;
+	for (bump = 0; bump < MAX_CLIP_PLANES && movetime > 0; ++bump)
+	{
+		vec3_t move;
+		VectorScale(proj->vel, movetime, move);
+
+		vec3_t to;
+		VectorAdd(proj->org, move, to);
+		//VectorMA(proj->vel, dt, to, to);
+		trace_t phytrace = PM_TraceLine(proj->org, to);
+		VectorCopy(phytrace.endpos, proj->org);
+
+		if (phytrace.fraction == 1)
+			break;
+
+		movetime *= 1 - min(1, phytrace.fraction);
+
+		float d, bouncefac, bouncestp;
+
+		bouncefac = 0.5;
+		bouncestp = 60 / 800;
+		bouncestp *= gravity_value;
+
+		Fproj_Physics_ClipVelocity(proj->vel, phytrace.plane.normal, 1 + bouncefac);
+		VectorCopy(bounce_retvec, proj->vel);
+
+		d = DotProduct(phytrace.plane.normal, proj->vel);
+		if (phytrace.plane.normal[2] > 0.7 && d < bouncestp && d > -bouncestp)
+		{
+			proj->flags |= 512;
+			VectorClear(proj->vel);
+			VectorClear(proj->avel);
+		}
+		else
+			proj->flags -= proj->flags & 512;
+	}
+
+	if (!(proj->flags & 512))
+	{
+		proj->vel[2] -= 0.5 * dt * gravity_value;
+	}
+}
+
+fproj_t *CL_CreateFakeGrenade(void)
+{
+	if (pmove.client_ping == 0)
+		return NULL;//&cl_fakeprojectiles[0];
+
+	fproj_t *newmis = CL_AllocFakeProjectile();
+	newmis->modelindex = cl_modelindices[mi_grenade];
+
+	float latency = cls.latency;
+	newmis->starttime = cl.time + max((latency - 0.013) - ((float)pmove.client_ping / 1000), 0);
+	newmis->endtime = cl.time + latency;
+	newmis->parttime = newmis->starttime + 0.013;
+
+	newmis->type = 1;
+	newmis->effects = EF_GRENADE;
+
+	return newmis;
+}
+
+extern cvar_t cl_rocket2grenade;
+fproj_t *CL_CreateFakeRocket(void)
+{
+	if (pmove.client_ping == 0)
+		return NULL;//&cl_fakeprojectiles[0];
+
+	fproj_t *newmis = CL_AllocFakeProjectile();
+	newmis->modelindex = cl_modelindices[mi_rocket];
+
+	float latency = cls.latency;
+	newmis->starttime = cl.time + max((latency - 0.013) - ((float)pmove.client_ping / 1000), 0);
+	newmis->endtime = cl.time + latency + 0.013;
+	newmis->parttime = newmis->starttime + 0.013; //delay trail a tiny bit, otherwise it looks funny
+
+	newmis->effects = EF_ROCKET;
+
+	return newmis;
+}
+
+
+
+static predexplosion_t* CL_AllocatePredictedExplosion(void)
+{
+	float reuse_time = cl.time - cls.latency * 3;
+
+	predexplosion_t *expl;
+	int i;
+	for (i = 0, expl = cl_predictedexplosions; i < MAX_PREDEXPLOSIONS; i++, expl++)
+	{
+		if (expl->time > reuse_time)
+			continue;
+
+		memset(expl, 0, sizeof(predexplosion_t));
+		return expl;
+	}
+
+	memset(&cl_predictedexplosions[0], 0, sizeof(predexplosion_t));
+	return &cl_predictedexplosions[0];
+}
+
+
+void CL_CheckPredictedExplosions(player_state_t *from, player_state_t *to)
+{
+	predexplosion_t *expl;
+	int i;
+	for (i = 0, expl = cl_predictedexplosions; i < MAX_PREDEXPLOSIONS; i++, expl++)
+	{
+		if (expl->time == 0)
+			continue;
+
+		if (from->state_time < expl->time && to->state_time >= expl->time)
+		{
+			int dmg;
+			vec3_t diff;
+			VectorSubtract(pmove.origin, expl->origin, diff);
+
+			float distance = VectorLength(diff);
+			dmg = expl->damage * (distance / expl->radius);
+
+			if (distance < expl->radius)
+			{
+				VectorNormalize(diff);
+				int j;
+				for (j = 0; j < 3; j++)
+				{
+					pmove.velocity[j] += diff[j] * dmg * 1;
+				}
+			}
+		}
+	}
+}
+
+
 static void CL_ParseBeam(int type, vec3_t end)
 {
-	int ent, i;
+	int ent;
 	vec3_t start;
-	beam_t *b;
-	struct model_s *m;
 
 	ent = MSG_ReadShort();
 
@@ -158,6 +447,21 @@ static void CL_ParseBeam(int type, vec3_t end)
 	end[0] = MSG_ReadCoord();
 	end[1] = MSG_ReadCoord();
 	end[2] = MSG_ReadCoord();
+
+	if (ent == cl.playernum + 1)
+	{
+		if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION && cl_predict_beam.integer)
+			return;
+	}
+
+	CL_CreateBeam(type, ent, start, end);
+}
+
+void CL_CreateBeam(int type, int ent, vec3_t start, vec3_t end)
+{
+	int i;
+	beam_t *b;
+	struct model_s *m;
 
 	if (CL_Demo_SkipMessage(true))
 		return;
@@ -946,9 +1250,189 @@ static void CL_UpdateExplosions(void)
 	}
 }
 
+static void CL_UpdateFakeProjectiles(void)
+{
+	int i;
+	fproj_t	*prj;
+	
+	centity_t *cent;
+	entity_t ent;
+	entity_state_t centstate;
+	customlight_t cst_lt = { 0 };
+	memset(&centstate, 0, sizeof(entity_state_t));
+
+	memset(&ent, 0, sizeof(entity_t));
+	ent.colormap = vid.colormap;
+
+	for (i = 0; i < MAX_FAKEPROJ; i++) {
+		prj = &cl_fakeprojectiles[i];
+		cent = &prj->cent;//&cl_entities[prj->entnum];
+		//if (prj->entnum > 0 && prj->entnum < (CL_MAX_EDICTS - 1))
+		//	cent = &cl_entities[prj->entnum];
+
+		if (cent == NULL)
+			continue;
+
+		//cent->sequence = cl.validsequence;
+
+		if (cl.time <= prj->starttime)
+		{
+			continue;
+		}
+		else if (cl.time >= prj->endtime)
+		{
+			if (prj->dl_key)
+			{
+				dlight_t *dl;
+				dl = cl_dlights;
+				int ik;
+				for (ik = 0; ik < MAX_DLIGHTS; ik++, dl++) {
+					if (dl->key == prj->dl_key) {
+						memset(dl, 0, sizeof(*dl));
+						cl_dlight_active[ik / 32] -= (cl_dlight_active[ik / 32] & (1 << (ik % 32)));
+					}
+				}
+
+				prj->dl_key = 0;
+			}
+
+			continue;
+		}
+
+
+		//memset(&cent, 0, sizeof(centity_t));
+		cent->current = centstate;
+		
+		if (!prj->modelindex || !cl.model_precache[prj->modelindex] || prj->modelindex >= MAX_MODELS)
+			continue;
+
+		//continue;
+
+		ent.model = cl.model_precache[prj->modelindex];
+		centstate.modelindex = prj->modelindex;
+		centstate.number = prj->dl_key;
+
+		vec3_t sframe_org;
+		VectorCopy(prj->org, sframe_org);
+
+		if (prj->type == 1)
+		{
+			Fproj_Physics_Bounce(prj, cls.frametime);
+
+			VectorCopy(prj->org, ent.origin);
+			VectorCopy(prj->angs, ent.angles);
+		}
+		else
+		{
+			float modified_time = cl.time;
+			#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+			if (cl_sproj_xerp.value)
+			{
+				if (prj->owner != (cl.viewplayernum + 1))
+				{
+					modified_time += min(150, cls.latency);
+				}
+			}
+			#endif
+
+			VectorCopy(prj->start, ent.origin);
+			vec3_t traveled;
+			VectorScale(prj->vel, (modified_time - prj->starttime) + 0.02, traveled);
+			VectorAdd(ent.origin, traveled, ent.origin);
+			VectorCopy(prj->angs, ent.angles);
+			VectorCopy(ent.origin, prj->org);
+
+			trace_t trace = PM_TraceLine(prj->start, ent.origin);
+			if (trace.fraction < 1)
+			{
+				#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+				if (prj->modelindex == cl_modelindices[mi_rocket])
+				{
+					predexplosion_t *expl = CL_AllocatePredictedExplosion();
+					expl->time = cls.realtime;
+					expl->damage = 100;
+					expl->radius = expl->damage + 40;
+					VectorCopy(trace.endpos, expl->origin);
+				}
+
+				if (prj->parttime)
+					continue;
+				else
+					VectorCopy(trace.endpos, prj->org);
+				#else
+				continue;//prj->endtime = cl.time;
+				#endif
+			}
+		}
+
+		if (prj->effects)
+		{
+			if (cl.time >= prj->parttime)
+			{
+				prj->parttime = cl.time + 0.013;
+				if (!VectorLength(prj->partorg))
+				{
+					VectorCopy(prj->org, prj->partorg);
+
+					VectorCopy(prj->partorg, cent->trails[3].stop);
+					VectorCopy(prj->partorg, cent->trails[2].stop);
+					VectorCopy(prj->partorg, cent->trails[1].stop);
+					VectorCopy(prj->partorg, cent->trails[0].stop);
+				}
+
+				prj->partcount++;
+				VectorCopy(prj->partorg, cent->old_origin);
+				///*
+				VectorCopy(prj->partorg, cent->trails[3].stop);
+				VectorCopy(prj->partorg, cent->trails[2].stop);
+				VectorCopy(prj->partorg, cent->trails[1].stop);
+				VectorCopy(prj->partorg, cent->trails[0].stop);
+				//*/
+				VectorCopy(ent.origin, cent->current.origin);
+				VectorCopy(ent.origin, cent->lerp_origin);
+				VectorCopy(ent.origin, prj->partorg);
+
+
+				if (prj->effects & 256)
+				{
+					if (amf_nailtrail.integer && !gl_no24bit.integer) {
+						// VULT NAILTRAIL
+						if (amf_nailtrail_plasma.integer) {
+							byte color[3];
+							color[0] = 0; color[1] = 70; color[2] = 255;
+							FireballTrail(cent, color, 0.6, 0.3);
+						}
+						else {
+							//TODO: fix this
+							//ParticleNailTrail(cent, 2, 0.4);
+						}
+					}
+				}
+				else
+				{
+					CL_AddParticleTrail(&ent, cent, &cst_lt, &centstate);
+				}
+			}
+		}
+
+		// hacky fix for cl_r2g, we have to change the model after the particles have been handled
+		if (prj->effects & EF_ROCKET)
+		{
+			if (cl_rocket2grenade.integer)
+			{
+				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
+			}
+		}
+
+		// finally add fake projectile to the scene
+		CL_AddEntity(&ent);
+	}
+}
+
 void CL_UpdateTEnts (void)
 {
 	CL_UpdateBeams();
 	CL_UpdateExplosions();
+	CL_UpdateFakeProjectiles();
 }
 

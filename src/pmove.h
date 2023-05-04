@@ -51,6 +51,31 @@ typedef struct {
 	float		waterjumptime;
 	int			pm_type;
 
+	int			weapon;
+	int			weapon_index;
+	int			weaponframe;
+
+	int			current_ammo;
+	int			items;
+	int			impulse;
+	float		client_time;
+	float		attack_finished;
+	float		client_nextthink;
+	byte		client_thinkindex;
+	byte		client_ping;
+	byte		client_predflags;
+	int			frame_current;
+
+	int			last_frame;
+	int			effect_frame;
+
+	short		ammo_shells;
+	short		ammo_nails;
+	short		ammo_rockets;
+	short		ammo_cells;
+
+	float		t_width;
+
 	// world state
 	int			numphysent;
 	physent_t	physents[MAX_PHYSENTS]; // 0 should be the world
@@ -88,10 +113,27 @@ typedef struct {
 	int     rampjump; // if set, all vertical velocity clipped by groundplane during jump frame.  If 0, only when falling (standard jumpfix)
 } movevars_t;
 
+extern int pmove_playeffects;
+extern int pmove_nopred_weapon;
+extern cvar_t cl_nopred;
+extern cvar_t cl_nopred_weapon;
+extern cvar_t cl_predict_weaponsound;
+extern cvar_t cl_predict_smoothview;
+extern cvar_t cl_predict_beam;
+extern cvar_t cl_predict_jump;
+extern cvar_t cl_predict_buffer;
+
 extern movevars_t movevars;
 extern playermove_t pmove;
 
+#define PRDFL_MIDAIR	1
+#define PRDFL_COILGUN	2
+#define PRDFL_FORCEOFF	255
+
+int PM_FilterWeaponSound(byte sound_num);
+
 int PM_PlayerMove (void);
+void PM_PlayerWeapon (void);
 
 int PM_PointContents (vec3_t point);
 int PM_PointContents_AllBSPs (vec3_t p);
