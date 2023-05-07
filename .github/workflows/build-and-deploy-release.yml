@@ -3,7 +3,7 @@ on:
   release:
     types: [published]
 jobs:
-  build:
+  windows-build:
     if: github.repository == 'QW-Group/ezquake-source'
     runs-on: windows-latest
     strategy:
@@ -55,7 +55,6 @@ jobs:
     - name: Set date
       shell: msys2 {0}
       run: |
-        #timedatectl set-timezone Europe/Amsterdam
         export TZ=CET-1CEST
         echo "DATE=$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_ENV
     - name: Deploy
@@ -63,10 +62,59 @@ jobs:
       env:
         SSH_AUTH_SOCK: C:\ssh_agent.sock
       run: |
-           mkdir -p upload/releases/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}
-           mkdir -p upload/releases/latest/${{ matrix.platform }}/${{ matrix.config }}
-           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/releases/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
-           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/releases/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
-           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/releases/latest/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
-           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/releases/latest/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
+           mkdir -p upload/releases/windows/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}
+           mkdir -p upload/releases/latest/windows/${{ matrix.platform }}/${{ matrix.config }}
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/releases/windows/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/releases/windows/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/releases/latest/windows/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/releases/latest/windows/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
+           sftp -rp -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -P ${{ secrets.SFTP_PORT }} ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/releases <<< $'put -rp upload/releases/*'
+
+  linux-build:
+    if: github.repository == 'QW-Group/ezquake-source'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+       target: [linux-x86_64]
+       include:
+         - target: linux-x86_644
+           platform: x86_64
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+
+    - name: Install dependencies
+      run: sudo apt-get install libfuse2 openssh-client
+
+    - name: Build
+      run: ./misc/appimage/appimage-manual_creation.sh
+
+    - name: Create checksum
+      run: |
+           md5sum ezQuake-${{ matrix.platform }}.AppImage > ezQuake-${{ matrix.platform }}.AppImage.md5
+
+    - name: Setup SSH
+      env:
+        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      run: |
+        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+        ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+    - name: Set date
+      run: |
+        export TZ=CET-1CEST
+        echo "DATE=$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_ENV
+    - name: Deploy
+      env:
+        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      run: |
+           mkdir -p upload/releases/linux/${{ matrix.platform }}
+           mkdir -p upload/releases/latest/linux/${{ matrix.platform }}
+           cp ezQuake-${{ matrix.platform }}.AppImage upload/releases/linux/${{ matrix.platform }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage
+           cp ezQuake-${{ matrix.platform }}.AppImage.md5 upload/releases/linux/${{ matrix.platform }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage.md5
+           cp ezQuake-${{ matrix.platform }}.AppImage upload/releases/latest/linux/${{ matrix.platform }}/ezQuake-${{ matrix.platform }}.AppImage
+           cp ezQuake-${{ matrix.platform }}.AppImage.md5 upload/releases/latest/linux/${{ matrix.platform }}/ezQuake-${{ matrix.platform }}.AppImage.md5
            sftp -rp -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -P ${{ secrets.SFTP_PORT }} ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/releases <<< $'put -rp upload/releases/*'

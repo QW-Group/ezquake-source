@@ -2,7 +2,7 @@ name: build and deploy snapshots
 on: [push]
 jobs:
   windows-build:
-#    if: github.repository == 'QW-Group/ezquake-source'
+    if: github.repository == 'QW-Group/ezquake-source'
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -69,7 +69,7 @@ jobs:
            sftp -rp -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -P ${{ secrets.SFTP_PORT }} ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/snapshots <<< $'put -rp upload/snapshots/*'
 
   linux-build:
-#    if: github.repository == 'QW-Group/ezquake-source'
+    if: github.repository == 'QW-Group/ezquake-source'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
