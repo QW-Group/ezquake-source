@@ -104,10 +104,10 @@ jobs:
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       run: |
-           mkdir -p upload/snapshots/linux/${{ matrix.platform }}/${{ matrix.config }}
-           mkdir -p upload/snapshots/latest/linux/${{ matrix.platform }}/${{ matrix.config }}
-           cp ${{ matrix.target }}-AppImage upload/snapshots/linux/${{ matrix.platform }}/${{ matrix.config }}/${{ env.DATE }}_${GITHUB_SHA::7}_${{ matrix.target }}-AppImage
-           cp ezQuake-${{ matrix.platform }}.AppImage upload/snapshots/linux/${{ matrix.platform }}/${{ matrix.config }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage
-           cp ${{ matrix.target }}-AppImage upload/snapshots/latest/linux/${{ matrix.platform }}/${{ matrix.config }}/${{ matrix.target }}-AppImage
-           cp ezQuake-${{ matrix.platform }}.AppImage upload/snapshots/latest/linux/${{ matrix.platform }}/${{ matrix.config }}/ezQuake-${{ matrix.platform }}.AppImage
+           mkdir -p upload/snapshots/linux/${{ matrix.platform }}
+           mkdir -p upload/snapshots/latest/linux/${{ matrix.platform }}
+           cp ${{ matrix.target }}-AppImage upload/snapshots/linux/${{ matrix.platform }}/${{ env.DATE }}_${GITHUB_SHA::7}_${{ matrix.target }}-AppImage
+           cp ezQuake-${{ matrix.platform }}.AppImage upload/snapshots/linux/${{ matrix.platform }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage
+           cp ${{ matrix.target }}-AppImage upload/snapshots/latest/linux/${{ matrix.platform }}/${{ matrix.target }}-AppImage
+           cp ezQuake-${{ matrix.platform }}.AppImage upload/snapshots/latest/linux/${{ matrix.platform }}/ezQuake-${{ matrix.platform }}.AppImage
            sftp -rp -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -P ${{ secrets.SFTP_PORT }} ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/snapshots <<< $'put -rp upload/snapshots/*'
