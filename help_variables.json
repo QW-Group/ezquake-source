@@ -7100,6 +7100,71 @@
       "group-id": "19",
       "type": "integer"
     },
+    "hud_scoreclock_align_x": {
+      "desc": "Sets horizontal align of scoreclock.",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_scoreclock_align_y": {
+      "desc": "Sets vertical align of scoreclock.",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_scoreclock_format": {
+      "desc": "Controls in what format the scoreclock is displayed. Check the link below for available options. You can also add text, e.g. \"time: %H:%M:%S\"",
+      "remarks": "https://www.man7.org/linux/man-pages/man3/strftime.3.html",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_scoreclock_frame": {
+      "desc": "Sets frame visibility and style for scoreclock.",
+      "group-id": "19",
+      "type": "float"
+    },
+    "hud_scoreclock_frame_color": {
+      "desc": "Defines the color of the background of the scoreclock HUD element. See HUD manual for more info.",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_scoreclock_item_opacity": {
+      "group-id": "19",
+      "type": "float"
+    },
+    "hud_scoreclock_order": {
+      "desc": "This defines the order of drawing the HUD elements. That means you can change will be drawn on top of other elements. See HUD manual for more info.",
+      "group-id": "19",
+      "type": "integer"
+    },
+    "hud_scoreclock_place": {
+      "desc": "Sets relative positioning for scoreclock.",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_scoreclock_pos_x": {
+      "desc": "Sets horizontal position of scoreclock.",
+      "group-id": "19",
+      "type": "float"
+    },
+    "hud_scoreclock_pos_y": {
+      "desc": "Sets vertical position of scoreclock.",
+      "group-id": "19",
+      "type": "float"
+    },
+    "hud_scoreclock_scale": {
+      "desc": "Scale of the scoreclock HUD element.",
+      "group-id": "19",
+      "type": "float"
+    },
+    "hud_scoreclock_show": {
+      "desc": "Toggles whether the scoreclock is displayed. It is only displayed when the scoreboard is open.",
+      "group-id": "19",
+      "type": "boolean"
+    },
+    "hud_scoreclock_proportional": {
+      "desc": "Toggles whether the scoreclock uses charset chars or TTF chars",
+      "group-id": "19",
+      "type": "boolean"
+    },
     "hud_digits_trim": {
       "desc": "Changes how large numbers are treated in Head Up Display.",
       "group-id": "19",
