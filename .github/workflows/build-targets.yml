@@ -1,5 +1,6 @@
 name: build targets
-on: [pull_request]
+#on: [pull_request]
+on: [push]
 jobs:
   windows-build:
     if: github.repository == 'QW-Group/ezquake-source'
