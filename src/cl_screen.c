@@ -752,6 +752,7 @@ static void SCR_DrawElements(void)
 				if (!scr_notifyalways.integer) {
 					Con_ClearNotify();
 				}
+				HUD_Draw();
 			}
 			else if (cl.intermission == 2) {
 				Sbar_FinaleOverlay();
@@ -759,10 +760,9 @@ static void SCR_DrawElements(void)
 				if (!scr_notifyalways.integer) {
 					Con_ClearNotify();
 				}
+				HUD_Draw();
 			}
-
-			if (cls.state == ca_active)
-			{
+			else if (cls.state == ca_active) {
 				SCR_DrawNet ();
 				SCR_DrawTurtle ();
 #ifdef EXPERIMENTAL_SHOW_ACCELERATION
@@ -783,46 +783,43 @@ static void SCR_DrawElements(void)
 					SCR_VoiceMeter();
 				}
 
-				if (!cl.intermission) 
+				if ((key_dest != key_menu) && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores)))
 				{
-					if ((key_dest != key_menu) && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores)))
-					{
-						Draw_Crosshair ();
-					}
-
-					// Do not show if +showscores
-					if (!sb_showscores && !sb_showteamscores)
-					{ 
-						SCR_Draw_TeamInfo();
-
-						SCR_Draw_ShowNick();
-
-						SCR_CenterString_Draw();
-						SCR_DrawSpeed();
-						SCR_DrawClocks();
-						SCR_DrawQTVBuffer();
-						SCR_DrawFPS();
-					}
-
-					// QW262
-					SCR_DrawHud();
-
-					if (cls.mvdplayback) {
-						MVD_Screen();
-					}
-
-					// VULT DISPLAY KILLS
-					VX_TrackerThink();
-
-					if (CL_MultiviewEnabled())
-						SCR_DrawMultiviewOverviewElements ();
-
-					Sbar_Draw();
-					HUD_Draw();
-					HUD_Editor_Draw();
-
-					DemoControls_Draw();
+					Draw_Crosshair ();
 				}
+
+				// Do not show if +showscores
+				if (!sb_showscores && !sb_showteamscores)
+				{
+					SCR_Draw_TeamInfo();
+
+					SCR_Draw_ShowNick();
+
+					SCR_CenterString_Draw();
+					SCR_DrawSpeed();
+					SCR_DrawClocks();
+					SCR_DrawQTVBuffer();
+					SCR_DrawFPS();
+				}
+
+				// QW262
+				SCR_DrawHud();
+
+				if (cls.mvdplayback) {
+					MVD_Screen();
+				}
+
+				// VULT DISPLAY KILLS
+				VX_TrackerThink();
+
+				if (CL_MultiviewEnabled())
+					SCR_DrawMultiviewOverviewElements ();
+
+				Sbar_Draw();
+				HUD_Draw();
+				HUD_Editor_Draw();
+
+				DemoControls_Draw();
 			}
 		}
 
