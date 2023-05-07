@@ -1,6 +1,5 @@
 name: build targets
-#on: [pull_request]
-on: [push]
+on: [pull_request]
 jobs:
   windows-build:
     if: github.repository == 'QW-Group/ezquake-source'
@@ -92,10 +91,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-       target: [linux-x86_64]
+       target: [linux-x64]
        include:
-         - target: linux-x86_64
-           platform: x86_64
+         - target: linux-x64
+           platform: x64
 
     steps:
     - name: Check out code

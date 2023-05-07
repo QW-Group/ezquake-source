@@ -73,10 +73,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-       target: [linux-x86_64]
+       target: [linux-x64]
        include:
-         - target: linux-x86_64
-           platform: x86_64
+         - target: linux-x64
+           platform: x64
 
     steps:
     - name: Check out code
@@ -89,6 +89,10 @@ jobs:
 
     - name: Build
       run: ./misc/appimage/appimage-manual_creation.sh
+
+    - name: Create checksum
+      run: |
+           md5sum ezQuake-${{ matrix.platform }}.AppImage > ezQuake-${{ matrix.platform }}.AppImage.md5
 
     - name: Setup SSH
       env:
@@ -106,8 +110,8 @@ jobs:
       run: |
            mkdir -p upload/snapshots/linux/${{ matrix.platform }}
            mkdir -p upload/snapshots/latest/linux/${{ matrix.platform }}
-           cp ${{ matrix.target }}-AppImage upload/snapshots/linux/${{ matrix.platform }}/${{ env.DATE }}_${GITHUB_SHA::7}_${{ matrix.target }}-AppImage
            cp ezQuake-${{ matrix.platform }}.AppImage upload/snapshots/linux/${{ matrix.platform }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage
-           cp ${{ matrix.target }}-AppImage upload/snapshots/latest/linux/${{ matrix.platform }}/${{ matrix.target }}-AppImage
+           cp ezQuake-${{ matrix.platform }}.AppImage.md5 upload/snapshots/linux/${{ matrix.platform }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage.md5
            cp ezQuake-${{ matrix.platform }}.AppImage upload/snapshots/latest/linux/${{ matrix.platform }}/ezQuake-${{ matrix.platform }}.AppImage
+           cp ezQuake-${{ matrix.platform }}.AppImage.md5 upload/snapshots/latest/linux/${{ matrix.platform }}/ezQuake-${{ matrix.platform }}.AppImage.md5
            sftp -rp -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -P ${{ secrets.SFTP_PORT }} ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/snapshots <<< $'put -rp upload/snapshots/*'
