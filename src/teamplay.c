@@ -493,6 +493,17 @@ char *Macro_Date (void)
 	return macro_buf;
 }
 
+char *Macro_DateIso(void) {
+	time_t t;
+	struct tm *ptm;
+
+	time (&t);
+	if (!(ptm = localtime (&t)))
+		return "#bad date#";
+	strftime (macro_buf, sizeof(macro_buf) - 1, "%Y-%m-%d_%H-%M-%S", ptm);
+	return macro_buf;
+}
+
 char* Macro_TimeStamp(void)
 {
 	time_t t;
@@ -1180,6 +1191,7 @@ void TP_AddMacros(void)
 	Cmd_AddMacro(macro_timestamp, Macro_TimeStamp);
 	Cmd_AddMacro(macro_time, Macro_Time);
 	Cmd_AddMacro(macro_date, Macro_Date);
+	Cmd_AddMacro(macro_dateiso, Macro_DateIso);
 
 	Cmd_AddMacroEx(macro_health, Macro_Health, teamplay);
 	Cmd_AddMacroEx(macro_armortype, Macro_ArmorType, teamplay);
