@@ -947,10 +947,10 @@ void R_CustomPolygonOffset(r_polygonoffset_t mode)
 	rendering_state_t* current = &opengl.rendering_state;
 
 	if (mode != current->polygonOffset.option) {
-		extern cvar_t gl_brush_polygonoffset;
+		extern cvar_t gl_brush_polygonoffset, gl_brush_polygonoffset_factor;
 
-		float factor = (mode == r_polygonoffset_standard ? 0.05 : 1);
-		float units = (mode == r_polygonoffset_standard ? -bound(0, gl_brush_polygonoffset.value, 2.0) : 1);
+		float factor = (mode == r_polygonoffset_standard ? bound(-1, gl_brush_polygonoffset_factor.value, 1) : 1);
+		float units = (mode == r_polygonoffset_standard ? bound(0, gl_brush_polygonoffset.value, 2) : 1);
 		qbool enabled = (mode == r_polygonoffset_standard || mode == r_polygonoffset_outlines) && units != 0;
 
 		if (enabled) {
