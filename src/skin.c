@@ -570,7 +570,7 @@ static texture_ref Skin_ApplyRGBColor(byte* original, int width, int height, byt
 		}
 	}
 
-	return R_LoadTexture(texture_name, width, height, specific, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
+	return R_LoadTexture(texture_name, width, height, specific, TEX_MIPMAP | TEX_NOSCALE, 4);
 }
 
 static void Skin_Blend(byte* original, skin_t* skin, int skin_number)
@@ -589,7 +589,7 @@ static void Skin_Blend(byte* original, skin_t* skin, int skin_number)
 	block_adjustments |= (!r_teamskincolor.string[0] && !r_enemyskincolor.string[0]) || (r_skincolormodedead.integer <= 0 && r_skincolormode.integer == 0);
 	if (block_adjustments) {
 		snprintf(texture_name, sizeof(texture_name), "%s-%02d", types[skin_base], skin_number);
-		skin->texnum[skin_base] = R_LoadTexture(texture_name, skin->width, skin->height, original, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
+		skin->texnum[skin_base] = R_LoadTexture(texture_name, skin->width, skin->height, original, TEX_MIPMAP | TEX_NOSCALE, 4);
 		return;
 	}
 
@@ -603,7 +603,7 @@ static void Skin_Blend(byte* original, skin_t* skin, int skin_number)
 			// If no color adjustment required then we only need one version
 			if (i == skin_base) {
 				// Load normal texture
-				skin->texnum[skin_base] = R_LoadTexture(texture_name, skin->width, skin->height, original, (gl_playermip.integer ? TEX_MIPMAP : 0) | TEX_NOSCALE, 4);
+				skin->texnum[skin_base] = R_LoadTexture(texture_name, skin->width, skin->height, original, TEX_MIPMAP | TEX_NOSCALE, 4);
 			}
 			continue;
 		}
@@ -759,8 +759,8 @@ void R_TranslatePlayerSkin(int playernum)
 		translate[BOTTOM_RANGE + i] = (bottom < 128) ? (bottom + i) : (bottom + 15 - i);
 	}
 
-	scaled_width = gl_scaleModelTextures.value ? min(gl_max_size.value, 512) : min(glConfig.gl_max_size_default, 512);
-	scaled_height = gl_scaleModelTextures.value ? min(gl_max_size.value, 256) : min(glConfig.gl_max_size_default, 256);
+	scaled_width = gl_scaleModelTextures.value ? min(gl_max_size.value, tinwidth) : min(glConfig.gl_max_size_default, tinwidth);
+	scaled_height = gl_scaleModelTextures.value ? min(gl_max_size.value, tinheight) : min(glConfig.gl_max_size_default, tinheight);
 
 	// allow users to crunch sizes down even more if they want
 	scaled_width >>= (int)gl_playermip.value;
