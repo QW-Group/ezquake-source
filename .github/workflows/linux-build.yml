@@ -1,4 +1,4 @@
-    if: github.repository == 'QW-Group/ezquake-source'
+#    if: github.repository == 'QW-Group/ezquake-source'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

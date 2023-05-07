@@ -1,8 +1,8 @@
 name: build and deploy snapshots
 on: [push]
 jobs:
-  build:
-    if: github.repository == 'QW-Group/ezquake-source'
+  windows-build:
+#    if: github.repository == 'QW-Group/ezquake-source'
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -53,7 +53,6 @@ jobs:
     - name: Set date
       shell: msys2 {0}
       run: |
-        #timedatectl set-timezone Europe/Amsterdam
         export TZ=CET-1CEST
         echo "DATE=$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_ENV
     - name: Deploy
@@ -68,3 +67,6 @@ jobs:
            cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/snapshots/latest/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
            cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/snapshots/latest/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
            sftp -rp -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -P ${{ secrets.SFTP_PORT }} ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/snapshots <<< $'put -rp upload/snapshots/*'
+
+  linux-build:
+    uses: ./.github/workflows/linux-build.yml
