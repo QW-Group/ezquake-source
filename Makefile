@@ -44,7 +44,7 @@ RCFLAGS_c :=
 LDFLAGS_c :=
 
 SRC_DIR = src
-INCLUDES = -I$(SRC_DIR)/minizip -I$(SRC_DIR)/qwprot/src
+INCLUDES = -I$(SRC_DIR)/qwprot/src
 
 ifdef CONFIG_WINDOWS
     LDFLAGS_c += -mwindows
@@ -567,7 +567,7 @@ ifeq ($(USE_SYSTEM_MINIZIP),1)
 	LIBS_c += $(MINIZIP_LIBS)
 else
 	OBJS_c += $(SRC_DIR)/minizip/ioapi.o $(SRC_DIR)/minizip/unzip.o
-	CFLAGS_c += -Iminizip
+	CFLAGS_c += -I$(SRC_DIR)/minizip
 endif
 
 ### Targets ###
