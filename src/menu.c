@@ -53,6 +53,7 @@ void M_Menu_Main_f (void);
 	void M_Menu_SinglePlayer_f (void);
 		void M_Menu_Load_f (void);
 		void M_Menu_Save_f (void);
+	void M_Menu_Browser_f (void);
 	void M_Menu_MultiPlayer_f (void);
 			void M_Menu_SEdit_f (void);
 		void M_Menu_Demos_f (void);
@@ -1250,6 +1251,10 @@ qbool M_MultiPlayerSub_Mouse_Event(const mouse_state_t *ms)
     return true;
 }
 
+void M_Menu_Browser_f (void) {
+	M_EnterMenu(m_multiplayer);
+}
+
 void M_Menu_MultiPlayer_f (void)
 {
 	if (Draw_BigFontAvailable()) {
@@ -1301,7 +1306,7 @@ void M_Init (void) {
 	Cmd_AddCommand ("menu_save", M_Menu_Save_f);
 #endif
 	Cmd_AddCommand ("menu_multiplayer", M_Menu_MultiPlayer_f);
-	Cmd_AddCommand ("menu_slist", M_Menu_MultiPlayer_f);
+	Cmd_AddCommand ("menu_slist", M_Menu_Browser_f);
 	Cmd_AddCommand ("menu_demos", M_Menu_Demos_f);
 	Cmd_AddCommand ("menu_options", M_Menu_Options_f);
 	Cmd_AddCommand ("help", M_Menu_Help_f);
