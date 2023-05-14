@@ -44,7 +44,12 @@ RCFLAGS_c :=
 LDFLAGS_c :=
 
 SRC_DIR = src
-INCLUDES = -I$(SRC_DIR)/qwprot/src
+
+ifneq (,$(wildcard $(SRC_DIR)/qwprot/src/*.h))
+    INCLUDES = -I$(SRC_DIR)/qwprot/src
+else
+    $(error qwprot submodule missing, try initializing submodules with "git submodule update --init --recursive --remote")
+endif
 
 ifdef CONFIG_WINDOWS
     LDFLAGS_c += -mwindows
