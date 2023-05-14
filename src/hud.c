@@ -1425,19 +1425,35 @@ void HUD_DrawObject(hud_t *hud)
 		return;
 	}
 
-	if (cl.intermission == 1  &&  !(hud->flags & HUD_ON_INTERMISSION))
-	{
-		return;
-	}
 
-	if (cl.intermission == 2 && !(hud->flags & HUD_ON_FINALE))
-	{
-		return;
-	}
+	if(hud->flags & HUD_NO_DRAW) {
+		// draw only during specified events (e.g. HUD_ON_INTERMISSION)
+		qbool draw = false;
 
-	if ((sb_showscores || sb_showteamscores) && !(hud->flags & HUD_ON_SCORES))
-	{
-		return;
+		if (cl.intermission == 1 && (hud->flags & HUD_ON_INTERMISSION))
+			draw = true;
+
+		else if (cl.intermission == 2 && !(hud->flags & HUD_ON_FINALE))
+			draw = true;
+
+		else if ((sb_showscores || sb_showteamscores) && (hud->flags & HUD_ON_SCORES))
+			draw = true;
+
+		//else if (???????? && (hud->flags & HUD_ON_DIALOG))
+		//	draw = true;
+
+		if(!draw)
+			return;
+
+	} else {
+		if (cl.intermission == 1 && !(hud->flags & HUD_ON_INTERMISSION))
+			return;
+
+		if (cl.intermission == 2 && !(hud->flags & HUD_ON_FINALE))
+			return;
+
+		if ((sb_showscores || sb_showteamscores) && !(hud->flags & HUD_ON_SCORES))
+			return;
 	}
 
 	if (hud->place_hud)

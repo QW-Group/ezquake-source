@@ -23,7 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define __hud_h__
 
 // flags
-#define HUD_NO_DRAW            (1 <<  0)  // don't draw this automatically
+#define HUD_NO_DRAW            (1 <<  0)  // draw only during specified events (e.g. elements with flags = HUD_NO_DRAW | HUD_ON_INTERMISSION
+                                          // will only draw during the intermission)
 #define HUD_NO_SHOW            (1 <<  1)  // doesn't support show/hide
 #define HUD_NO_POS_X           (1 <<  2)  // doesn't support x positioning
 #define HUD_NO_POS_Y           (1 <<  3)  // doesn't support y positioning
