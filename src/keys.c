@@ -1783,7 +1783,8 @@ void Key_BindList_f (void) {
 }
 
 void Key_EditBind_f(void) {
-	int argc = Cmd_Argc();
+	char *keybinding, final_string[MAXCMDLINE - 1];
+	int keynum, argc = Cmd_Argc();
 
 	if(argc < 2) {
 		Com_Printf("%s <key> : modify a bind\n", Cmd_Argv(0));
@@ -1791,14 +1792,13 @@ void Key_EditBind_f(void) {
 		return;
 	}
 
-	int keynum = Key_StringToKeynum(Cmd_Argv(1));
+	keynum = Key_StringToKeynum(Cmd_Argv(1));
 	if(keynum == -1) {
 		Com_Printf("\"%s\" isn't a valid key\n", Cmd_Argv(1));
 		return;
 	}
 
-	char final_string[MAXCMDLINE - 1];
-	char *keybinding = (keybindings[keynum] ? keybindings[keynum] : "");
+	keybinding = keybindings[keynum];
 	strlcpy(final_string, "/bind \"", sizeof(final_string));
 	strlcat(final_string, Cmd_Argv(1), sizeof(final_string));
 	strlcat(final_string, "\" \"", sizeof(final_string));
