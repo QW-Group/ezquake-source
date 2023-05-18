@@ -1782,6 +1782,31 @@ void Key_BindList_f (void) {
 	}
 }
 
+void Key_EditBind_f(void) {
+	char *keybinding, final_string[MAXCMDLINE - 1];
+	int keynum, argc = Cmd_Argc();
+
+	if(argc < 2) {
+		Com_Printf("%s <key> : modify a bind\n", Cmd_Argv(0));
+		Com_Printf("bindlist : list all binds\n");
+		return;
+	}
+
+	keynum = Key_StringToKeynum(Cmd_Argv(1));
+	if(keynum == -1) {
+		Com_Printf("\"%s\" isn't a valid key\n", Cmd_Argv(1));
+		return;
+	}
+
+	keybinding = keybindings[keynum];
+	strlcpy(final_string, "/bind \"", sizeof(final_string));
+	strlcat(final_string, Cmd_Argv(1), sizeof(final_string));
+	strlcat(final_string, "\" \"", sizeof(final_string));
+	strlcat(final_string, keybinding, sizeof(final_string));
+	strlcat(final_string, "\"", sizeof(final_string));
+	Key_ClearTyping();
+	memcpy(key_lines[edit_line] + 1, str2wcs(final_string), (strlen(final_string) + 1) * sizeof(wchar));
+}
 
 void History_Init (void)
 {
@@ -1944,6 +1969,7 @@ void Key_Init (void) {
 	// register our functions
 	Cmd_AddCommand("bindlist",Key_BindList_f);
 	Cmd_AddCommand("bind",Key_Bind_f);
+	Cmd_AddCommand("bindedit",Key_EditBind_f);
 	Cmd_AddCommand("unbind",Key_Unbind_f);
 	Cmd_AddCommand("unbindall",Key_Unbindall_f);
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
