@@ -16811,6 +16811,12 @@
       "group-id": "40",
       "type": "integer"
     },
+    "r_tracker_positive_enemy_vs_enemy": {
+      "default": "0",
+      "desc": "If enabled frag tracker draws enemy vs enemy kills using color value of r_tracker_color_good variable.",
+      "group-id": "40",
+      "type": "integer"
+    },
     "r_tracker_proportional": {
       "default": "0",
       "desc": "Enable TrueType fonts on tracker text.",
