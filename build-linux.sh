@@ -121,11 +121,11 @@ case $ID in
 		;;
 esac
 
-step "Cleaning up any previous build files..."
-make clean >>$BUILD_LOG 2>&1 || error "Failed to cleanup old build files"
-
 step "Checking out git submodules..."
 git submodule update --init --recursive --remote >> $BUILD_LOG 2>&1 || error "Failed to checkout git submodules. Exiting."
+
+step "Cleaning up any previous build files..."
+make clean >>$BUILD_LOG 2>&1 || error "Failed to cleanup old build files"
 
 step "Compiling sources (this might take a while, please wait)..."
 njobs=2
