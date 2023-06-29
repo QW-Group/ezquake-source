@@ -244,6 +244,7 @@ static check_models_hashes_entry_t mdlhash_player_mdl_CapNBubs_FMOD_DM = { {0xC0
 static check_models_hashes_entry_t sound_gpl_maps_silence_wav = { {0xc99871d4, 0xc60e0fef, 0x14e64bf9, 0xbaf43934, 0x5376df18}, NULL };
 
 // rerelease
+static check_models_hashes_entry_t sound_doors_rerelease_airbut1 = { {0x47d5141e, 0xc925e8eb, 0x26e5583c, 0xc8dfd021, 0x226792ef}, NULL };
 static check_models_hashes_entry_t sound_items_rerelease_armor1 = { {0x1bde8fc5, 0xc979543f, 0x8fc7f57b, 0xe2c1367b, 0x62cac72f}, NULL };
 static check_models_hashes_entry_t sound_items_rerelease_damage = { {0x4dde0192, 0x1791d662, 0xa33168eb, 0xb98d083f, 0x15ba0ded}, NULL };
 static check_models_hashes_entry_t sound_items_rerelease_damage2 = { {0x6c9b6f7c, 0x85e48943, 0x803ddafd, 0x8249af31, 0x9967d89c}, NULL };
@@ -519,6 +520,7 @@ void FMod_Init (void)
 	//Wav files
 	FMod_AddModel ("sound/buttons/airbut1.wav",	FMOD_DM | FMOD_TF,	sound_buttons_airbut1_wav_FMOD_DM_FMOD_TF);
 		FMod_AddModelAlt(lastid, &sound_items_mindgrid_airbut1);
+		FMod_AddModelAlt(lastid, &sound_items_rerelease_airbut1);
 	lastid = FMod_AddModel ("sound/items/armor1.wav",	FMOD_DM | FMOD_TF,	sound_items_armor1_wav_FMOD_DM_FMOD_TF);
 		FMod_AddModelAlt(lastid, &sound_items_mindgrid_armor1);
 		FMod_AddModelAlt(lastid, &sound_items_rerelease_armor1);
