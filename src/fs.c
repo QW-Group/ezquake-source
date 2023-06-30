@@ -694,7 +694,7 @@ void FS_ShutDown( void ) {
 
 void FS_InitFilesystemEx( qbool guess_cwd ) {
 	int i;
-	char tmp_path[MAX_OSPATH];
+	char tmp_path[MAX_OSPATH], *xdg;
 
 	FS_ShutDown();
 
@@ -761,7 +761,13 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 #ifdef _WIN32
 		strlcat(com_homedir, "/ezQuake", sizeof(com_homedir));
 #else
-		strlcat(com_homedir, "/.ezquake", sizeof(com_homedir));
+		xdg = getenv("XDG_DATA_HOME");
+		if(xdg) {
+			strlcpy(com_homedir, xdg, sizeof(com_homedir));
+			strlcat(com_homedir, "/ezquake", sizeof(com_homedir));
+		} else {
+			strlcat(com_homedir, "/.local/share/ezquake", sizeof(com_homedir));
+		}
 #endif
 		Com_Printf("Using home directory \"%s\"\n", com_homedir);
 	}
@@ -818,7 +824,7 @@ void FS_InitFilesystem( void ) {
 
 	FS_InitModuleFS();
 	FS_InitFilesystemEx( false ); // first attempt, simplified
-	vfs = FS_OpenVFS("gfx.wad", "rb", FS_ANY); 
+	vfs = FS_OpenVFS("gfx.wad", "rb", FS_ANY);
 	if (vfs) { // // we found gfx.wad, seems we have proper com_basedir
 		VFS_CLOSE(vfs);
 		return;
