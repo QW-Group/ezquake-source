@@ -137,7 +137,7 @@ static void SetSurfaceLighting(model_t* loadmodel, msurface_t* out, byte* styles
 		out->styles[i] = styles[i];
 	}
 	i = LittleLong(lightofs);
-	if (i == -1) {
+	if (i == -1 || loadmodel->lightdata == NULL) {
 		out->samples = NULL;
 	}
 	else {
@@ -223,30 +223,36 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 	char *litfilename;
 	int filesize;
 	extern cvar_t gl_loadlitfiles;
+	qbool load_inline;
+
 
 	loadmodel->lightdata = NULL;
-	if (l->filelen <= 0 || l->filelen >= INT_MAX / 3) {
-		return;
-	}
 
-	if (loadmodel->bspversion == HL_BSPVERSION) {
+	if (loadmodel->bspversion == HL_BSPVERSION && l->filelen > 0) {
 		loadmodel->lightdata = (byte *) Hunk_AllocName(l->filelen, loadmodel->name);
 		memcpy (loadmodel->lightdata, mod_base + l->fileofs, l->filelen);
 		return;
 	}
 
-	if (gl_loadlitfiles.integer == 1 || gl_loadlitfiles.integer == 3) {
+	load_inline = gl_loadlitfiles.integer == 1 || gl_loadlitfiles.integer == 3;
+	if (!load_inline && (l->filelen <= 0 && !R_FullBrightAllowed())) {
+		Con_Printf("No vanilla lighting, using inline to satisfy ruleset.\n");
+		load_inline = true;
+	}
+
+	if (load_inline) {
 		int threshold = (lightmode == 1 ? 255 : lightmode == 2 ? 170 : 128);
 		int lumpsize;
 		byte *rgb = Mod_BSPX_FindLump(bspx_header, "RGBLIGHTING", &lumpsize, mod_base);
-		if (rgb && lumpsize == l->filelen * 3) {
+		// Sanity-check size if vanilla lit exists
+		if (rgb && lumpsize % 3 == 0 && (lumpsize == l->filelen * 3 || l->filelen <= 0)) {
 			loadmodel->lightdata = (byte *) Hunk_AllocName(lumpsize, loadmodel->name);
 			memcpy(loadmodel->lightdata, rgb, lumpsize);
 			// we trust the inline RGB data to be bug free so we don't check it against the mono lightmap
 			// what we do though is prevent color wash-out in brightly lit areas
 			// (one day we may do it in R_BuildLightMap instead)
 			out = loadmodel->lightdata;
-			for (i = 0; i < l->filelen; i++, out += 3) {
+			for (i = 0; i < lumpsize / 3; i++, out += 3) {
 				int m = max(out[0], max(out[1], out[2]));
 				if (m > threshold) {
 					out[0] = out[0] * threshold / m;
@@ -256,6 +262,11 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 			}
 			// all done, but we let them override it with a .lit
 		}
+	}
+
+	// Missing or corrupt vanilla lighting needed for .lit files, bail.
+	if (l->filelen <= 0 || l->filelen >= INT_MAX / 3) {
+		return;
 	}
 
 	//check for a .lit file
