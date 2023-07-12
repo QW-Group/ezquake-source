@@ -1063,6 +1063,7 @@ static void Mod_LoadFaces(model_t* loadmodel, lump_t* l, byte* mod_base)
 		}
 		out->plane = loadmodel->planes + planenum;
 		out->texinfo = loadmodel->texinfo + texinfo;
+		out->lmshift = DEFAULT_LMSHIFT;
 
 		CalcSurfaceExtents(loadmodel, out);
 
@@ -1107,6 +1108,7 @@ static void Mod_LoadFacesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 
 		out->plane = loadmodel->planes + planenum;
 		out->texinfo = loadmodel->texinfo + LittleLong(in->texinfo);
+		out->lmshift = DEFAULT_LMSHIFT;
 
 		CalcSurfaceExtents(loadmodel, out);
 
