@@ -846,7 +846,7 @@ void CL_SendChunkDownloadReq(void)
 	extern cvar_t cl_chunksperframe;
 	int i, j, chunks;
 	
-	chunks = bound(1, cl_chunksperframe.integer, 5);
+	chunks = bound(1, cl_chunksperframe.integer, 30);
 
 	for (j = 0; j < chunks; j++)
 	{

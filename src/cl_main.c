@@ -121,7 +121,7 @@ cvar_t	cl_pext_256packetentities = {"cl_pext_256packetentities", "1"};
 #endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 cvar_t  cl_pext_chunkeddownloads  = {"cl_pext_chunkeddownloads", "1"};
-cvar_t  cl_chunksperframe  = {"cl_chunksperframe", "5"};
+cvar_t  cl_chunksperframe  = {"cl_chunksperframe", "30"};
 #endif
 
 #ifdef FTE_PEXT_FLOATCOORDS
