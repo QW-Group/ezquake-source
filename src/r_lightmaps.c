@@ -105,8 +105,8 @@ static void R_BuildDlightList (msurface_t *surf)
 			impact[i] = cl_dlights[lnum].origin[i] - surf->plane->normal[i] * dist;
 		}
 
-		local[0] = DotProduct (impact, tex->vecs[0]) + tex->vecs[0][3] - surf->texturemins[0];
-		local[1] = DotProduct (impact, tex->vecs[1]) + tex->vecs[1][3] - surf->texturemins[1];
+		local[0] = DotProduct (impact, surf->lmvecs[0]) + surf->lmvecs[0][3] - surf->texturemins[0];
+		local[1] = DotProduct (impact, surf->lmvecs[1]) + surf->lmvecs[1][3] - surf->texturemins[1];
 
 		// check if this dlight will touch the surface
 		if (local[1] > 0) {
@@ -175,11 +175,13 @@ static void R_AddDynamicLights(msurface_t *surf)
 
 		for (t = 0, _td = light->local[1]; t < tmax; t++, _td -= (1 << surf->lmshift)) {
 			td = _td < 0 ? -_td : _td;
+			td *= surf->lmvlen[1];
 
 			if (td < irad) {
 				dest = blocklights + t * smax * 3;
 				for (s = 0, _sd = light->local[0]; s < smax; s++, _sd -= (1 << surf->lmshift), dest += 3) {
 					sd = _sd < 0 ? -_sd : _sd;
+					sd *= surf->lmvlen[0];
 
 					if (sd + td < iminlight) {
 						idist = sd + td;
@@ -535,7 +537,7 @@ static int LightmapAllocBlock(int w, int h, int *x, int *y)
 	int texnum;
 
 	if (w < 1 || w > LIGHTMAP_WIDTH || h < 1 || h > LIGHTMAP_HEIGHT) {
-		Sys_Error("AllocBlock: Bad dimensions");
+		Sys_Error("AllocBlock: Bad dimensions (w: %d, h: %d)", w, h);
 	}
 
 	for (texnum = last_lightmap_updated; texnum < lightmap_array_size; texnum++, last_lightmap_updated++) {
@@ -656,13 +658,13 @@ static void R_BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 			poly->verts[i][7] = poly->verts[i][8] = 0;
 		}
 		else {
-			s = DotProduct(vec, fa->texinfo->vecs[0]) + fa->texinfo->vecs[0][3];
+			s = DotProduct(vec, fa->lmvecs[0]) + fa->lmvecs[0][3];
 			s -= fa->texturemins[0];
 			s += fa->light_s * (1 << fa->lmshift);
-            s += (1 << fa->lmshift) * 0.5;
+			s += (1 << fa->lmshift) * 0.5;
 			s /= LIGHTMAP_WIDTH * (1 << fa->lmshift);
 
-			t = DotProduct(vec, fa->texinfo->vecs[1]) + fa->texinfo->vecs[1][3];
+			t = DotProduct(vec, fa->lmvecs[1]) + fa->lmvecs[1][3];
 			t -= fa->texturemins[1];
 			t += fa->light_t * (1 << fa->lmshift);
 			t += (1 << fa->lmshift) * 0.5;
@@ -710,8 +712,8 @@ static void R_BuildLightmapData(msurface_t* surf, int surfnum)
 
 		for (s = 0; s < smax; ++s, data += 4, source += 4) {
 			data[0] = surfnum;
-			data[1] = (s * (1 << surf->lmshift) + surf->texturemins[0] - surf->texinfo->vecs[0][3]);
-			data[2] = (t * (1 << surf->lmshift) + surf->texturemins[1] - surf->texinfo->vecs[1][3]);
+			data[1] = (s * (1 << surf->lmshift) + surf->texturemins[0] - surf->lmvecs[0][3]);
+			data[2] = (t * (1 << surf->lmshift) + surf->texturemins[1] - surf->lmvecs[1][3]);
 			data[3] = 0;
 
 			source[0] = source[1] = source[2] = 0;

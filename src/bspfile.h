@@ -289,4 +289,11 @@ typedef struct {
 	byte           ambient_level[NUM_AMBIENTS];
 } dleaf_bsp2_t;
 
+typedef struct {
+	unsigned short lmwidth;
+	unsigned short lmheight;
+	int            lightofs;
+	float          vecs[2][4];
+} dlminfo_t;
+
 #endif /* !__BSPFILE_H__ */
