@@ -6,7 +6,7 @@
 #define	LIGHTMAP_WIDTH  128
 #define	LIGHTMAP_HEIGHT 128
 
-#define MAX_LIGHTMAP_SIZE (32 * 32) // it was 4096 for quite long time
+#define MAX_LIGHTMAP_SIZE (64 * 64)
 #define LIGHTMAP_ARRAY_GROWTH 4
 
 typedef struct glRect_s {
