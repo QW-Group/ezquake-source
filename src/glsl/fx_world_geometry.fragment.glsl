@@ -5,6 +5,7 @@
 layout(binding = 0) uniform sampler2D normal_texture;
 
 uniform vec3 outline_color;
+uniform float outline_accuracy;
 
 in vec2 TextureCoord;
 out vec4 frag_colour;
@@ -24,10 +25,10 @@ void main()
 	if (center.a != 0 && (
 		(left.a != 0 && right.a != 0 && z_diff) ||
 		(down.a != 0 && up.a != 0 && z_diff2) ||
-		(left.a != 0 && dot(center.rgb, left.rgb) < 0.9) ||
-		(right.a != 0 && dot(center.rgb, right.rgb) < 0.9) ||
-		(up.a != 0 && dot(center.rgb, up.rgb) < 0.9) ||
-		(down.a != 0 && dot(center.rgb, down.rgb) < 0.9)
+		(left.a != 0 && dot(center.rgb, left.rgb) < outline_accuracy) ||
+		(right.a != 0 && dot(center.rgb, right.rgb) < outline_accuracy) ||
+		(up.a != 0 && dot(center.rgb, up.rgb) < outline_accuracy) ||
+		(down.a != 0 && dot(center.rgb, down.rgb) < outline_accuracy)
 		)) {
 		frag_colour = vec4(outline_color, 1.0);
 	}
