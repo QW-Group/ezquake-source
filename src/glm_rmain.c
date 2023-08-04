@@ -74,7 +74,8 @@ static void GLM_DrawWorldOutlines(void)
 		} else {
             // ignore viewsize and allat crap and set the viewport size to the whole window.
             // previously the viewport was already resized, and then resized again later, making the outlines not align.
-            R_Viewport(0, 0, glConfig.vidWidth, glConfig.vidHeight);
+            R_Viewport(0, 0, VID_ScaledWidth3D(), VID_ScaledHeight3D());
+
         }
 
 		renderer.TextureUnitBind(0, normals);
