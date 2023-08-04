@@ -65,7 +65,8 @@ static model_t	*cl_explo_mod, *cl_bolt1_mod, *cl_bolt2_mod, *cl_bolt3_mod, *cl_b
 
 sfx_t	*cl_sfx_wizhit, *cl_sfx_knighthit, *cl_sfx_tink1, *cl_sfx_ric1, *cl_sfx_ric2, *cl_sfx_ric3, *cl_sfx_r_exp3;
 
-cvar_t r_lgblood = {"r_lgbloodColor", "225"};
+cvar_t r_sgbloodColor = {"r_sgbloodColor", "73"};
+cvar_t r_lgbloodColor = {"r_lgbloodColor", "225"};
 cvar_t r_shiftbeam = {"r_shiftbeam", "0"};
 
 void CL_InitTEnts(void)
@@ -82,7 +83,8 @@ void CL_InitTEnts(void)
 void CL_InitTEntsCvar(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
-	Cvar_Register(&r_lgblood);
+	Cvar_Register(&r_sgbloodColor);
+	Cvar_Register(&r_lgbloodColor);
 	Cvar_Register(&r_shiftbeam);
 	Cvar_ResetCurrentGroup();
 }
@@ -589,7 +591,9 @@ static void CL_Parse_TE_BLOOD(vec3_t pos)
 		VXBlood(pos, 5 * count * amf_part_blood.value);
 	}
 	else {
-		R_RunParticleEffect(pos, vec3_origin, 73, 20 * count);
+        extern cvar_t gl_part_blood;
+
+		R_RunParticleEffect(pos, vec3_origin, gl_part_blood.value ? 73 : r_sgbloodColor.integer, 20 * count);
 	}
 }
 
@@ -610,7 +614,7 @@ static void CL_Parse_TE_LIGHTNINGBLOOD(vec3_t pos)
 			return;
 		}
 
-		R_RunParticleEffect(pos, vec3_origin, gl_part_blood.value?225:r_lgblood.value, 50); // 225 default
+		R_RunParticleEffect(pos, vec3_origin, gl_part_blood.value ? 225 : r_lgbloodColor.integer, 50); // 225 default
 	}
 }
 
