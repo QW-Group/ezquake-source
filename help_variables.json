@@ -16033,11 +16033,17 @@
         }
       ]
     },
+    "r_sgbloodColor": {
+      "default": "73",
+      "desc": "Determines the (palletized) color of the blood particles emitted when hitting entities with weapons other than the lightning gun.",
+      "group-id": "8",
+      "type": "integer"
+    },
     "r_lgbloodColor": {
       "default": "225",
-      "desc": "Determines the color of the blood (for standard particles).\nThe QW-default value is 225.",
+      "desc": "Determines the (palletized) color of the blood particles emitted when hitting entities with the lightning gun.",
       "group-id": "8",
-      "type": "float"
+      "type": "integer"
     },
     "r_lightdecayrate": {
       "default": "2",
