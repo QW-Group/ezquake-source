@@ -5167,7 +5167,6 @@
       "default": "0",
       "desc": "Controls outlining of models and map. Disallowed in qcon ruleset.",
       "group-id": "35",
-      "remarks": "See /r_fx_geometry for edge outlining of the map.",
       "type": "enum",
       "values": [
         {
@@ -5175,11 +5174,11 @@
           "name": "0"
         },
         {
-          "description": "Outline models to create rotoscope effect",
+          "description": "Outline models",
           "name": "1"
         },
         {
-          "description": "Outline world (used only for map development)",
+          "description": "Outline world",
           "name": "2"
         },
         {
@@ -15854,13 +15853,6 @@
           "description": "Only use map-specific settings in local single-player mode"
         }
       ]
-    },
-    "r_fx_geometry": {
-      "default": "0",
-      "desc": "Outlines the world based on surface normals. Disallowed in qcon ruleset.",
-      "group-id": "35",
-      "remarks": "Requires vid_framebuffer 1|2 and Modern OpenGL (vid_renderer 1). See /gl_outline for model outline",
-      "type": "boolean"
     },
     "r_glstats": {
       "default": "0",

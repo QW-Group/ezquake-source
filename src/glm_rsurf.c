@@ -127,7 +127,7 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 {
 	extern cvar_t gl_lumatextures;
 	extern cvar_t gl_textureless;
-	extern cvar_t r_fx_geometry;
+	extern cvar_t gl_outline;
 
 	qbool detail_textures = gl_detail.integer && R_TextureReferenceIsValid(detailtexture);
 	qbool caustic_textures = r_refdef2.drawCaustics;
@@ -147,7 +147,7 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 		(r_drawflat.integer == 1 || r_drawflat.integer == 2 ? DRAW_FLATFLOORS : 0) |
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
 		(gl_textureless.integer ? DRAW_TEXTURELESS : 0) |
-		(r_fx_geometry.integer ? DRAW_GEOMETRY : 0) |
+		((gl_outline.integer & 2) ? DRAW_GEOMETRY : 0) |
 		(alpha_test ? DRAW_ALPHATESTED : 0);
 
 	if (R_ProgramRecompileNeeded(program_id, drawworld_desiredOptions)) {
@@ -202,7 +202,7 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 			strlcat(included_definitions, va("#define SAMPLER_SKYDOME_TEXTURE %d\n", TEXTURE_UNIT_SKYDOME_TEXTURE), sizeof(included_definitions));
 			strlcat(included_definitions, va("#define SAMPLER_SKYDOME_CLOUDTEXTURE %d\n", TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE), sizeof(included_definitions));
 		}
-		if (r_fx_geometry.integer) {
+		if (gl_outline.integer & 2) {
 			strlcat(included_definitions, "#define DRAW_GEOMETRY\n", sizeof(included_definitions));
 		}
 		TEXTURE_UNIT_LIGHTMAPS = samplers++;

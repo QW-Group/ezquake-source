@@ -81,7 +81,7 @@ qbool RuleSets_DisallowSimpleTexture(model_t* mod)
 	}
 }
 
-// for models (gl_outline)
+// for models (gl_outline 1 and 3)
 qbool RuleSets_DisallowModelOutline(struct model_s *mod)
 {
 	if (mod == NULL) {
@@ -102,7 +102,7 @@ qbool RuleSets_DisallowModelOutline(struct model_s *mod)
 	}
 }
 
-// for edges (r_fx_geometry)
+// for edges (gl_outline 2 and 3)
 qbool RuleSets_AllowEdgeOutline(void)
 {
 	switch(rulesetDef.ruleset) {

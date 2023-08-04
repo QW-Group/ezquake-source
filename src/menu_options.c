@@ -199,9 +199,6 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	enemyforceskins, teamforceskins, vid_vsync_lag_fix, cl_sayfilter_coloredtext, cl_sayfilter_sendboth,
 	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format, menu_ingame, sys_inactivesound
 ;
-#ifdef RENDERER_OPTION_MODERN_OPENGL
-extern cvar_t r_fx_geometry;
-#endif
 
 #ifdef _WIN32
 extern cvar_t demo_format, sys_highpriority, cl_window_caption, vid_flashonactivity;
@@ -213,15 +210,15 @@ extern cvar_t scr_autoid, crosshairalpha, amf_hidenails, amf_hiderockets, gl_ani
 
 void CL_Autotrack_f(void);
 
-const char* bandwidth_enum[] = { 
-	"Modem (33k)", "3800", "Modem (56k)", "5670", 
+const char* bandwidth_enum[] = {
+	"Modem (33k)", "3800", "Modem (56k)", "5670",
 	"ISDN (112k)", "9856", "Cable (128k)", "14336",
 	"ADSL (> 256k)", "30000" };
 
 const char* cl_c2sImpulseBackup_enum[] = {
 	"Perfect", "0", "Low", "2", "Medium", "4",
 	"High", "6" };
-	
+
 
 const char* ignore_flood_enum[] = {
 	"Off", "0", "say/spec", "1", "say/say_team/spec", "2" };
@@ -236,7 +233,7 @@ const char* cl_chatmode_enum[] = {
 const char* con_completion_format_enum[] = {
 	"Old", "New:Current+Default", "New:Current", "New:Default", "New:Current+Default,if changed", "New:Without values"
 };
-	
+
 const char* scr_conback_enum[] = {
 	"Off", "On Load", "Always", };
 
@@ -557,7 +554,7 @@ const char* ResolutionRead(void)
 	}
 
 	snprintf(buf, sizeof(buf), "%dx%d@%dHz", mode->w, mode->h, mode->refresh_rate);
-		
+
 	return buf;
 }
 
@@ -661,7 +658,7 @@ extern cvar_t cfg_backup, cfg_save_aliases, cfg_save_binds, cfg_save_cmdline,
 
 void MOpt_ImportConfig(void) {
 	MOpt_configpage_mode = MOCPM_CHOOSECONFIG;
-	
+
 	// hope few doubled trinary operator won't hurt your brains
 	if (cfg_use_home.integer)
 		FL_SetCurrentDir(&configs_filelist, (cfg_use_gamedir.integer) ? va("%s/%s", com_homedir, (strcmp(com_gamedirfile, "qw") == 0) ? "" : com_gamedirfile) : com_homedir);
@@ -699,7 +696,7 @@ void MOpt_LoadCfg(void) {
 	S_LocalSound("misc/basekey.wav");
 	Cbuf_AddText("cfg_load\n");
 }
-void MOpt_SaveCfg(void) { 
+void MOpt_SaveCfg(void) {
 	S_LocalSound("doors/runeuse.wav");
 	Cbuf_AddText("cfg_save\n");
 }
@@ -902,19 +899,19 @@ setting settplayer_arr[] = {
 	ADDSET_NUMBER	("Fullbright Skins", r_fullbrightSkins, 0, 1, 0.05),
 	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
 	ADDSET_BASIC_SECTION(),
-	
+
 	ADDSET_SEPARATOR("Weapon Handling"),
 	ADDSET_CUSTOM	("Gun Autoswitch", AutoSWRead, AutoSWToggle, "Switches to the weapon picked up if it is more powerful than what you're currently holding."),
 	ADDSET_BOOL		("Gun Preselect", cl_weaponpreselect),
 	ADDSET_BOOL		("Gun Auto Hide", cl_weaponhide),
-	
+
     ADDSET_SEPARATOR("Movement"),
 	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum forward speed at all times."),
 	ADDSET_ADVANCED_SECTION(),
     ADDSET_BOOL		("Smart Jump", cl_smartjump),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
 	ADDSET_BASIC_SECTION(),
-	
+
 	ADDSET_SEPARATOR("Team Skin & Colors"),
 	ADDSET_COLOR	("Shirt Color", cl_teamtopcolor),
 	ADDSET_COLOR	("Pants Color", cl_teambottomcolor),
@@ -925,7 +922,7 @@ setting settplayer_arr[] = {
 	ADDSET_SKIN		("Pent Skin", cl_teampentskin),
 	ADDSET_SKIN		("Quad+Pent Skin", cl_teambothskin),
 	ADDSET_BASIC_SECTION(),
-	
+
 	ADDSET_SEPARATOR("Enemy Skin & Colors"),
 	ADDSET_COLOR	("Shirt Color", cl_enemytopcolor),
 	ADDSET_COLOR	("Pants Color", cl_enemybottomcolor),
@@ -941,7 +938,7 @@ setting settplayer_arr[] = {
 // GRAPHICS TAB
 setting settfps_arr[] = {
 	ADDSET_BOOL		("Advanced Options", menu_advanced),
-	
+
 	ADDSET_SEPARATOR("Presets"),
 	ADDSET_CUSTOM	("GFX Preset", GFXPresetRead, GFXPresetToggle, "Select different graphic presets."),
 
@@ -961,14 +958,14 @@ setting settfps_arr[] = {
 	ADDSET_NUMBER	("View Height", v_viewheight, -7, 4, 0.5),
 	ADDSET_BASIC_SECTION(),
 
-	ADDSET_ADVANCED_SECTION(),	
+	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SEPARATOR("Textures"),
 	ADDSET_BOOL		("Luma", gl_lumatextures),
 	ADDSET_ENUM 	("Detail", gl_max_size, gl_max_size_enum),
 	ADDSET_NUMBER	("Miptex", gl_miptexLevel, 0, 3, 1),
 	ADDSET_BOOL		("No Textures", gl_textureless),
 	ADDSET_BASIC_SECTION(),
-	
+
 	ADDSET_SEPARATOR("Player & Weapon Model"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Powerup Luma", gl_powerupshells),
@@ -978,9 +975,8 @@ setting settfps_arr[] = {
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Weapon Shift", r_viewmodeloffset, -10, 10, 1),
 	ADDSET_NAMED	("Weapon Muzzleflashes", cl_muzzleflash, muzzleflashes_enum),
-	ADDSET_NAMED	("Outline", gl_outline, outline_enum),
 	ADDSET_BASIC_SECTION(),
-	
+
 	ADDSET_SEPARATOR("Environment"),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL		("Fullbright World", r_fullbright),
@@ -996,7 +992,7 @@ setting settfps_arr[] = {
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
 #ifdef RENDERER_OPTION_MODERN_OPENGL
-	ADDSET_BOOL		("Outline", r_fx_geometry),
+	ADDSET_NAMED    ("Outline", gl_outline, outline_enum),
 #endif
 	ADDSET_BASIC_SECTION(),
 	

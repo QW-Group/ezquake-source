@@ -38,7 +38,7 @@ extern cvar_t vid_framebuffer_hdr;
 extern cvar_t vid_framebuffer_blit;
 extern cvar_t vid_framebuffer_smooth;
 extern cvar_t vid_framebuffer_multisample;
-extern cvar_t r_fx_geometry;
+extern cvar_t gl_outline;
 
 static framebuffer_id VID_MultisampledAlternateId(framebuffer_id id);
 
@@ -171,7 +171,7 @@ C_ASSERT(sizeof(framebuffer_multisample_alternate) / sizeof(framebuffer_multisam
 
 static framebuffer_data_t framebuffer_data[framebuffer_count];
 
-// 
+//
 GL_StaticProcedureDeclaration(glGenFramebuffers, "n=%d, ids=%p", GLsizei n, GLuint* ids)
 GL_StaticProcedureDeclaration(glDeleteFramebuffers, "n=%d, ids=%p", GLsizei n, GLuint* ids)
 GL_StaticProcedureDeclaration(glBindFramebuffer, "target=%u, framebuffer=%u", GLenum target, GLuint framebuffer)
@@ -477,7 +477,7 @@ qbool GL_FramebufferStartWorldNormals(framebuffer_id id)
 	GLenum buffers[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
 	float clearValue[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
-	if (!r_fx_geometry.integer || !GL_Supported(R_SUPPORT_FRAMEBUFFERS) || !RuleSets_AllowEdgeOutline()) {
+	if (!(gl_outline.integer & 2) || !GL_Supported(R_SUPPORT_FRAMEBUFFERS) || !RuleSets_AllowEdgeOutline()) {
 		return false;
 	}
 
