@@ -4,6 +4,8 @@
 
 layout(binding = 0) uniform sampler2D normal_texture;
 
+uniform vec3 outline_color;
+
 in vec2 TextureCoord;
 out vec4 frag_colour;
 
@@ -27,7 +29,7 @@ void main()
 		(up.a != 0 && dot(center.rgb, up.rgb) < 0.9) ||
 		(down.a != 0 && dot(center.rgb, down.rgb) < 0.9)
 		)) {
-		frag_colour = vec4(0, 0, 0, 1.0);
+		frag_colour = vec4(outline_color, 1.0);
 	}
 	else {
 		frag_colour = vec4(0, 0, 0, 0);

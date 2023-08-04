@@ -220,6 +220,7 @@ cvar_t gl_simpleitems_size                 = {"gl_simpleitems_size", "16"};
 cvar_t gl_simpleitems_orientation          = {"gl_simpleitems_orientation", "2"};
 cvar_t gl_modulate                         = {"gl_modulate", "1"};
 cvar_t gl_outline                          = {"gl_outline", "0"};
+cvar_t gl_outline_color_world              = {"gl_outline_color_world", "0 0 0"};
 cvar_t gl_smoothmodels                     = {"gl_smoothmodels", "1"};
 
 cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0", CVAR_LATCH_GFX };
@@ -697,6 +698,7 @@ void R_Init(void)
 	Cvar_Register(&gl_modulate);
 
 	Cvar_Register(&gl_outline);
+	Cvar_Register(&gl_outline_color_world);
 	Cvar_Register(&gl_smoothmodels);
 
 	Cvar_Register(&gl_vbo_clientmemory);

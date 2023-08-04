@@ -62,6 +62,7 @@ static void GLM_DrawWorldOutlines(void)
 	if (R_TextureReferenceIsValid(normals) && GLM_CompileWorldGeometryProgram()) {
 		int viewport[4];
 		int fullscreen_viewport[4];
+        extern cvar_t gl_outline_color_world;
 
         R_GetViewport(viewport);
 
@@ -77,6 +78,11 @@ static void GLM_DrawWorldOutlines(void)
         }
 
 		renderer.TextureUnitBind(0, normals);
+
+        R_ProgramUniform3f(r_program_uniform_outline_color,
+                           (float)gl_outline_color_world.color[0] / 255.0f,
+                           (float)gl_outline_color_world.color[1] / 255.0f,
+                           (float)gl_outline_color_world.color[2] / 255.0f);
 
 		R_ProgramUse(r_program_fx_world_geometry);
 		R_ApplyRenderingState(r_state_fx_world_geometry);

@@ -326,6 +326,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_lightmap_compute, "firstLightmap", 1, false },
 	// r_program_uniform_turb_glc_fog_skyFogMix,
 	{ r_program_sky_glc, "skyFogMix", 1, false },
+    // r_program_uniform_outline_color
+	{ r_program_fx_world_geometry, "outline_color", 1, false },
 };
 
 #ifdef C_ASSERT
