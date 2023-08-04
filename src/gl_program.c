@@ -332,6 +332,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_fx_world_geometry, "outline_accuracy", 1, false },
     // r_program_uniform_aliasmodel_outline_color
 	{ r_program_aliasmodel, "outline_color", 1, false },
+    // r_program_uniform_aliasmodel_outline_scale
+	{ r_program_aliasmodel, "outline_scale", 1, false },
 };
 
 #ifdef C_ASSERT

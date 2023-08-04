@@ -80,7 +80,7 @@ static void GLM_DrawWorldOutlines(void)
 		renderer.TextureUnitBind(0, normals);
 
         R_ProgramUniform1f(r_program_uniform_outline_accuracy,
-                           bound(gl_outline_world_accuracy.value, 0.0, 1.0));
+                           bound(0.0, gl_outline_world_accuracy.value, 1.0));
 
         R_ProgramUniform3f(r_program_uniform_outline_color,
                            (float)gl_outline_color_world.color[0] / 255.0f,

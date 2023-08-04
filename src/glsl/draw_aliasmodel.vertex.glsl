@@ -3,6 +3,7 @@
 #ezquake-definitions
 
 uniform int mode;
+uniform float outline_scale;
 
 layout(location = 0) in vec3 vboPosition;
 layout(location = 1) in vec2 vboTex;
@@ -66,7 +67,7 @@ void main()
 		}
 	}
 	else if (mode == EZQ_ALIAS_MODE_OUTLINES) {
-		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position + models[_instanceId].outlineNormalScale * normalCoords, 1);
+		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position + models[_instanceId].outlineNormalScale * normalCoords * outline_scale, 1);
 	}
 	else {
 		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position + normalCoords * 0.5, 1);
