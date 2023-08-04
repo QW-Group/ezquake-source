@@ -19,8 +19,8 @@ void main()
 	vec4 up = texelFetchOffset(normal_texture, coords, 0, ivec2(0, -1));
 	vec4 down = texelFetchOffset(normal_texture, coords, 0, ivec2(0, +1));
 
-	bool z_diff = r_zFar * abs((right.a - center.a) - (center.a - left.a)) > 8;
-	bool z_diff2 = r_zFar * abs((down.a - center.a) - (center.a - up.a)) > 8;
+	bool z_diff = r_zFar * abs((right.a - center.a) - (center.a - left.a)) > r_zNear;
+	bool z_diff2 = r_zFar * abs((down.a - center.a) - (center.a - up.a)) > r_zNear;
 
 	if (center.a != 0 && (
 		(left.a != 0 && right.a != 0 && z_diff) ||
