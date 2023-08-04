@@ -489,10 +489,18 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	}
 
 	if (type == aliasmodel_draw_std && alias_draw_instructions[aliasmodel_draw_outlines].num_calls) {
+        extern cvar_t gl_outline_color_model;
+
 		instr = &alias_draw_instructions[aliasmodel_draw_outlines];
 
 		R_TraceEnterNamedRegion("GLM_DrawOutlineBatch");
 		R_SetAliasModelUniform(EZQ_ALIAS_MODE_OUTLINES);
+        R_ProgramUniform3f(r_program_uniform_aliasmodel_outline_color,
+                (float)gl_outline_color_model.color[0] / 255.0f,
+                (float)gl_outline_color_model.color[1] / 255.0f,
+                (float)gl_outline_color_model.color[2] / 255.0f
+        );
+
 		GLM_StateBeginAliasOutlineBatch();
 
 		for (i = 0; i < instr->num_calls; ++i) {

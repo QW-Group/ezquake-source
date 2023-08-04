@@ -110,6 +110,7 @@ typedef enum {
 	r_program_uniform_sky_glc_fog_skyFogMix,
     r_program_uniform_outline_color,
     r_program_uniform_outline_accuracy,
+    r_program_uniform_aliasmodel_outline_color,
 	r_program_uniform_count
 } r_program_uniform_id;
 

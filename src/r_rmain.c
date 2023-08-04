@@ -221,6 +221,7 @@ cvar_t gl_simpleitems_orientation          = {"gl_simpleitems_orientation", "2"}
 cvar_t gl_modulate                         = {"gl_modulate", "1"};
 cvar_t gl_outline                          = {"gl_outline", "0"};
 cvar_t gl_outline_color_world              = {"gl_outline_color_world", "0 0 0"};
+cvar_t gl_outline_color_model              = {"gl_outline_color_model", "0 0 0"};
 cvar_t gl_outline_world_accuracy           = {"gl_outline_world_accuracy", "0.9"};
 cvar_t gl_smoothmodels                     = {"gl_smoothmodels", "1"};
 
@@ -700,6 +701,7 @@ void R_Init(void)
 
 	Cvar_Register(&gl_outline);
 	Cvar_Register(&gl_outline_color_world);
+	Cvar_Register(&gl_outline_color_model);
 	Cvar_Register(&gl_outline_world_accuracy);
 	Cvar_Register(&gl_smoothmodels);
 

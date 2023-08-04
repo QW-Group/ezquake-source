@@ -3,6 +3,7 @@
 #ezquake-definitions
 
 uniform int mode;
+uniform vec3 outline_color;
 
 #ifdef DRAW_CAUSTIC_TEXTURES
 layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
@@ -25,7 +26,7 @@ out vec4 frag_colour;
 
 void main()
 {
-	frag_colour = vec4(0, 0, 0, 1);
+	frag_colour = vec4(outline_color, 1.0);
 
 	if (mode != EZQ_ALIAS_MODE_OUTLINES) {
 		vec4 tex = texture(samplers[fsMaterialSampler], fsTextureCoord.st);

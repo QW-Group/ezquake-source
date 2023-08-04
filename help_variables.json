@@ -5193,6 +5193,12 @@
       "group-id": "35",
       "type": "string"
     },
+    "gl_outline_color_model": {
+      "default": "0 0 0",
+      "desc": "Determines the color of model outlines.",
+      "group-id": "35",
+      "type": "string"
+    },
     "gl_outline_world_accuracy": {
       "default": "0.9",
       "desc": "Determines the accuracy for drawing world outlines. Mainly visible on slopes and other angled surfaces.",
