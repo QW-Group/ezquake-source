@@ -136,9 +136,9 @@ Make sure you have the dependencies installed:
 
 (You may skip installing dependencies if you are going to use the build-linux.sh script included in the repository, this will take care of installing packages for you.)
 
-- For *Ubuntu 16.10+*
+- For *Debian/Ubuntu 16.10+*
 ```
-sudo apt install git build-essential libsdl2-dev libjansson-dev libexpat-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libsndfile-dev libspeex-dev libspeexdsp-dev libxxf86vm-dev
+sudo apt install git build-essential libsdl2-dev libjansson-dev libexpat-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libsndfile-dev libspeex-dev libspeexdsp-dev libxxf86vm-dev libpcre3-dev
 ```
 - For *openSUSE Tumbleweed*
 ```
