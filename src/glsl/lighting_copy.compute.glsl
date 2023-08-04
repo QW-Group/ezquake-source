@@ -33,6 +33,12 @@ void main()
 	vec3 PlaneMins0 = surfaces[surfaceNumber].vecs0;
 	vec3 PlaneMins1 = surfaces[surfaceNumber].vecs1;
 
+	float vlen0 = length(PlaneMins0);
+	vlen0 = vlen0 > 0.0f ? 1.0f / vlen0 : 0;
+
+	float vlen1 = length(PlaneMins1);
+	vlen1 = vlen1 > 0.0f ? 1.0f / vlen1 : 0;
+
 	// lightsActive
 	for (i = 0; i < lightsActive; ++i) {
 		float dist = dot(lightPositions[i].xyz, Plane.xyz) - Plane.a;
@@ -48,8 +54,8 @@ void main()
 		vec3 impact = lightPositions[i].xyz - Plane.xyz * dist;
 		vec2 local = vec2(dot(impact, PlaneMins0), dot(impact, PlaneMins1));
 
-		int sd = int(abs(local[0] - sdelta)); // sdelta = s * 16 - tex->vecs[0][3] + surf->texturemins[0];
-		int td = int(abs(local[1] - tdelta)); // tdelta = t * 16 - tex->vecs[1][3] + surf->texturemins[1];
+		int sd = int(abs(local[0] - sdelta) * vlen0); // sdelta = s * (1 << surf->lmshift) + surf->texturemins[0] - surf->lmvecs[0][3];
+		int td = int(abs(local[1] - tdelta) * vlen1); // tdelta = t * (1 << surf->lmshift) + surf->texturemins[1] - surf->lmvecs[1][3];
 
 		if (sd > td) {
 			dist = sd + (td >> 1);

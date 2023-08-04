@@ -194,6 +194,8 @@ typedef struct msurface_s {
 	short               texturemins[2];
 	short               extents[2];
 
+	short               lmshift;
+
 	// gl lightmap coordinates
 	int                 light_s;
 	int                 light_t;
@@ -204,7 +206,11 @@ typedef struct msurface_s {
 	struct	msurface_s  *drawflatchain;
 
 	mtexinfo_t          *texinfo;
-	
+
+	// decoupled lm
+	float               lmvecs[2][4];
+	float               lmvlen[2];
+
 	// lighting info
 	int                 dlightframe;
 	int                 dlightbits;
@@ -641,5 +647,8 @@ extern mplane_t frustum[4];
 
 // sky
 #define BACKFACE_EPSILON	0.01
+
+
+#define DEFAULT_LMSHIFT     4
 
 #endif	// __MODEL__
