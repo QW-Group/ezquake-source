@@ -71,6 +71,8 @@ typedef struct uniform_block_frame_constants_s {
 	float fogMinZ;
 	float fogMaxZ;
 	float padding;
+
+	float camangles[3];
 } uniform_block_frame_constants_t;
 
 #define MAX_WORLDMODEL_BATCH     64

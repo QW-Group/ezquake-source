@@ -68,6 +68,8 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	float fogMinZ;
 	float fogMaxZ;
 	float padding;
+
+	vec3 camAngles;
 };
 
 struct WorldDrawInfo {

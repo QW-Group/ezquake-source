@@ -97,7 +97,7 @@ void main()
 	int turbType;
 
 #ifdef DRAW_GEOMETRY
-	normal_texture = vec4(Normal, UnClipped.z / r_zFar); // xyz = normal, a = depth
+	normal_texture = vec4(Normal, abs(UnClipped.z / r_zFar)); // rgb = normal, a = depth
 #endif
 
 	if (draw_outlines == 1) {
