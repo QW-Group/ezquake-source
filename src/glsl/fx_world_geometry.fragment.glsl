@@ -72,7 +72,7 @@ void main()
 	float sp = sin(camAngles.x);
 	float cy = cos(camAngles.y);
 	float sy = sin(camAngles.y);
-	vec3 dir_fwd = { cp * cy, sy * cp, sp };
+	vec3 dir_fwd = { cp * cy, -sp, sy * cp };
 
 	// make the depth threshold bigger the closer the surface to camera angle is to 90 degrees
 	float ndv = 1.0f - dot(center.rgb, abs(dir_fwd));
