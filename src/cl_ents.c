@@ -1652,6 +1652,9 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int old_vw_frame)
 	newent.skinnum = 0;
 	newent.colormap = vid.colormap;
 	newent.renderfx |= RF_PLAYERMODEL;	// not really, but use same lighting rules
+	newent.renderfx |= RF_VWEPMODEL;
+	if(ent->renderfx & RF_BEHINDWALL)
+		newent.renderfx |= RF_BEHINDWALL;
 	newent.effects = ent->effects; // Electro - added for shells
 	newent.scoreboard = ent->scoreboard; // for team color in gl_outline
 

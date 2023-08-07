@@ -29,14 +29,27 @@ flat in vec4 plrbotcolor;
 
 out vec4 frag_colour;
 
+bool texture_coord_is_on_legs() {
+	// both front and back legs at the same y level on the texture
+	if(fsTextureCoord.y >= 0.42 && fsTextureCoord.y <= 1)
+	           /*                   front legs                  */    /*                   back legs                   */
+		return fsTextureCoord.x >= 0.19 && fsTextureCoord.x <= 0.4 || fsTextureCoord.x >= 0.69 && fsTextureCoord.x <= 0.9;
+
+	return false;
+}
+
 void main()
 {
 	if((fsFlags & AMF_PLAYERMODEL) != 0 && (fsFlags & AMF_WEAPONMODEL) == 0) {
 		if(outline_use_player_color != 0) {
-			if (fsTextureCoord.y > 0.5)
-				frag_colour = vec4(plrbotcolor.rgb, 1.0f);
-			else
+			if((fsFlags & AMF_VWEPMODEL) != 0) { // vwep model is top color
 				frag_colour = vec4(plrtopcolor.rgb, 1.0f);
+			} else {
+				if (texture_coord_is_on_legs())
+					frag_colour = vec4(plrbotcolor.rgb, 1.0f);
+				else
+					frag_colour = vec4(plrtopcolor.rgb, 1.0f);
+			}
 		} else {
 			if((fsFlags & AMF_TEAMMATE) != 0)
 				frag_colour = vec4(outline_color_team, 1.0f);

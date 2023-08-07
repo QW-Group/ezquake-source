@@ -368,7 +368,8 @@ static void GLM_QueueAliasModelDrawImpl(
 		(render_effects & RF_WEAPONMODEL ? AMF_WEAPONMODEL : 0) |
 		(ent->scoreboard != NULL ? ent->scoreboard->teammate ? AMF_TEAMMATE : 0 : 0) |
 		(ent->renderfx & RF_BEHINDWALL ? AMF_BEHINDWALL : 0) |
-		(ent->renderfx & RF_PLAYERMODEL ? AMF_PLAYERMODEL : 0);
+		(ent->renderfx & RF_PLAYERMODEL ? AMF_PLAYERMODEL : 0) |
+		(ent->renderfx & RF_VWEPMODEL ? AMF_VWEPMODEL : 0);
 	uniform->yaw_angle_rad = ent->angles[YAW] * M_PI / 180.0;
 	uniform->shadelight = ent->shadelight;
 	uniform->ambientlight = ent->ambientlight;
