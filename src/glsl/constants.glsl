@@ -14,6 +14,9 @@
 #define AMF_TEXTURE_MATERIAL   16
 #define AMF_TEXTURE_LUMA       32
 #define AMF_WEAPONMODEL        64
+#define AMF_PLAYERMODEL       128
+#define AMF_TEAMMATE          256
+#define AMF_BEHINDWALL        512
 #define AMF_SHELLFLAGS        (AMF_SHELLMODEL_RED | AMF_SHELLMODEL_BLUE | AMF_SHELLMODEL_GREEN)
 
 #define AM_VERTEX_NOLERP        1 // the alias model vertex should not be lerped, and always use lerpfraction 1 (meag: update shader if value no longer 1)
@@ -50,9 +53,10 @@
 #define EZQ_GL_BINDINGPOINT_FRAMECONSTANTS      0
 
 // Alias models
-#define EZQ_ALIAS_MODE_NORMAL   0
-#define EZQ_ALIAS_MODE_SHELLS   1
-#define EZQ_ALIAS_MODE_OUTLINES 2
+#define EZQ_ALIAS_MODE_NORMAL        0
+#define EZQ_ALIAS_MODE_SHELLS        1
+#define EZQ_ALIAS_MODE_OUTLINES      2
+#define EZQ_ALIAS_MODE_OUTLINES_SPEC 4
 
 // 8x8 block
 #define HW_LIGHTING_BLOCK_SIZE 4

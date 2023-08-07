@@ -4,6 +4,8 @@
 
 uniform int mode;
 uniform vec3 outline_color;
+uniform vec3 outline_color_team;
+uniform vec3 outline_color_enemy;
 
 #ifdef DRAW_CAUSTIC_TEXTURES
 layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
@@ -26,9 +28,16 @@ out vec4 frag_colour;
 
 void main()
 {
-	frag_colour = vec4(outline_color, 1.0);
+	if((fsFlags & AMF_PLAYERMODEL) != 0) {
+		if ((fsFlags & AMF_TEAMMATE) != 0)
+			frag_colour = vec4(outline_color_team, 1.0f);
+		else
+			frag_colour = vec4(outline_color_enemy, 1.0f);
+	} else {
+		frag_colour = vec4(outline_color, 1.0f);
+	}
 
-	if (mode != EZQ_ALIAS_MODE_OUTLINES) {
+	if (mode != EZQ_ALIAS_MODE_OUTLINES && mode != EZQ_ALIAS_MODE_OUTLINES_SPEC) {
 		vec4 tex = texture(samplers[fsMaterialSampler], fsTextureCoord.st);
 		vec4 altTex = texture(samplers[fsMaterialSampler], fsAltTextureCoord.st);
 #ifdef DRAW_CAUSTIC_TEXTURES

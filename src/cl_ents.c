@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "qmb_particles.h"
 #include "rulesets.h"
+#include "teamplay.h"
 
 static int MVD_TranslateFlags(int src);
 void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);	
@@ -1652,6 +1653,7 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int old_vw_frame)
 	newent.colormap = vid.colormap;
 	newent.renderfx |= RF_PLAYERMODEL;	// not really, but use same lighting rules
 	newent.effects = ent->effects; // Electro - added for shells
+	// newent.scoreboard = ent->scoreboard; // for team color in gl_outline
 
 	if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing && !CL_SetAlphaByDistance(&newent)) {
 		return false;
@@ -1692,6 +1694,7 @@ static void CL_LinkPlayers(void)
 	entity_t ent;
 	centity_t *cent;
 	frame_t *frame;
+	trace_t trace;
 	customlight_t cst_lt = {0};
 	extern cvar_t cl_debug_antilag_ghost, cl_debug_antilag_view;
 
@@ -1955,11 +1958,21 @@ static void CL_LinkPlayers(void)
 			}
 		}
 
-		if ((cl.vwep_enabled && r_drawvweps.value && state->vw_index) && (state->modelindex != cl_modelindices[mi_eyes])) 
+		vec3_t end;
+		VectorCopy(cent->lerp_origin, end);
+		end[2] += 12;
+		trace = PM_TraceLine(r_refdef.vieworg, end);
+		if (trace.fraction != 1) {
+			ent.renderfx |= RF_BEHINDWALL;
+		} else {
+			ent.renderfx &= ~RF_BEHINDWALL;
+		}
+
+		if ((cl.vwep_enabled && r_drawvweps.value && state->vw_index) && (state->modelindex != cl_modelindices[mi_eyes]))
 		{
 			qbool vwep;
 			vwep = CL_AddVWepModel (&ent, state->vw_index, cent->old_vw_frame);
-			if (vwep) 
+			if (vwep)
 			{
 				if (cl.vw_model_name[0][0] != '-') 
 				{

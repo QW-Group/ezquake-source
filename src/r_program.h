@@ -112,7 +112,9 @@ typedef enum {
 	r_program_uniform_outline_depth_threshold,
 	r_program_uniform_outline_depth_scale,
 	r_program_uniform_outline_scale,
-	r_program_uniform_aliasmodel_outline_color,
+	r_program_uniform_aliasmodel_outline_color_model,
+	r_program_uniform_aliasmodel_outline_color_team,
+	r_program_uniform_aliasmodel_outline_color_enemy,
 	r_program_uniform_aliasmodel_outline_scale,
 	r_program_uniform_count
 } r_program_uniform_id;
