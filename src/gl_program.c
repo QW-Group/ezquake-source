@@ -340,6 +340,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_aliasmodel, "outline_color_team", 1, false },
 	// r_program_uniform_aliasmodel_outline_color_enemy
 	{ r_program_aliasmodel, "outline_color_enemy", 1, false },
+	// r_program_uniform_aliasmodel_outline_use_player_color
+	{ r_program_aliasmodel, "outline_use_player_color", 1, false },
 	// r_program_uniform_aliasmodel_outline_scale
 	{ r_program_aliasmodel, "outline_scale", 1, false },
 };

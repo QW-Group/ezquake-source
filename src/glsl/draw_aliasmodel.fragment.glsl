@@ -6,6 +6,7 @@ uniform int mode;
 uniform vec3 outline_color;
 uniform vec3 outline_color_team;
 uniform vec3 outline_color_enemy;
+uniform int outline_use_player_color;
 
 #ifdef DRAW_CAUSTIC_TEXTURES
 layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
@@ -23,16 +24,25 @@ flat in int fsFlags;
 flat in int fsTextureEnabled;
 flat in int fsMaterialSampler;
 flat in float fsMinLumaMix;
+flat in vec4 plrtopcolor;
+flat in vec4 plrbotcolor;
 
 out vec4 frag_colour;
 
 void main()
 {
-	if((fsFlags & AMF_PLAYERMODEL) != 0) {
-		if ((fsFlags & AMF_TEAMMATE) != 0)
-			frag_colour = vec4(outline_color_team, 1.0f);
-		else
-			frag_colour = vec4(outline_color_enemy, 1.0f);
+	if((fsFlags & AMF_PLAYERMODEL) != 0 && (fsFlags & AMF_WEAPONMODEL) == 0) {
+		if(outline_use_player_color != 0) {
+			if (fsTextureCoord.y > 0.5)
+				frag_colour = vec4(plrbotcolor.rgb, 1.0f);
+			else
+				frag_colour = vec4(plrtopcolor.rgb, 1.0f);
+		} else {
+			if((fsFlags & AMF_TEAMMATE) != 0)
+				frag_colour = vec4(outline_color_team, 1.0f);
+			else
+				frag_colour = vec4(outline_color_enemy, 1.0f);
+		}
 	} else {
 		frag_colour = vec4(outline_color, 1.0f);
 	}

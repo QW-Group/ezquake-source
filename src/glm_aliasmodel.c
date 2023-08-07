@@ -82,6 +82,8 @@ typedef struct uniform_block_aliasmodel_s {
 	float modelViewMatrix[16];
 	// offset: 16 * float
 	float color[4];
+	float plrtopcolor[4];
+	float plrbotcolor[4];
 	int amFlags;
 	float yaw_angle_rad;
 	float shadelight;
@@ -107,12 +109,47 @@ extern float r_framelerp;
 static uniform_block_aliasmodels_t aliasdata;
 
 static int cached_mode;
+static float cached_scale;
+static int cached_use_plr_color;
+static float cached_color_model[3];
+static float cached_color_enemy[3];
+static float cached_color_team[3];
 
-static void R_SetAliasModelUniform(int mode)
+static void R_SetAliasModelUniforms(int mode)
 {
+	extern cvar_t gl_outline_scale_model, gl_outline_use_player_color,
+	gl_outline_color_model, gl_outline_color_team, gl_outline_color_enemy;
+	float scale = bound(0.0, gl_outline_scale_model.value, 5.0);
+	int use_player_color = gl_outline_use_player_color.integer;
+	float color_model[3] = {(float)gl_outline_color_model.color[0] / 255.0f,(float)gl_outline_color_model.color[1] / 255.0f,(float)gl_outline_color_model.color[2] / 255.0f};
+	float color_team[3] = {(float)gl_outline_color_team.color[0] / 255.0f,(float)gl_outline_color_team.color[1] / 255.0f,(float)gl_outline_color_team.color[2] / 255.0f};
+	float color_enemy[3] = {(float)gl_outline_color_enemy.color[0] / 255.0f,(float)gl_outline_color_enemy.color[1] / 255.0f,(float)gl_outline_color_enemy.color[2] / 255.0f};
+
 	if (cached_mode != mode) {
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_drawmode, mode);
 		cached_mode = mode;
+	}
+
+	if(cached_scale != scale) {
+		R_ProgramUniform1f(r_program_uniform_aliasmodel_outline_scale, scale);
+		cached_scale = scale;
+	}
+
+	if(cached_use_plr_color != use_player_color) {
+		R_ProgramUniform1i(r_program_uniform_aliasmodel_outline_use_player_color, use_player_color);
+		cached_use_plr_color = use_player_color;
+	}
+	if(!VectorCompare(cached_color_model, color_model)) {
+		R_ProgramUniform3fv(r_program_uniform_aliasmodel_outline_color_model, color_model);
+		VectorCopy(color_model, cached_color_model);
+	}
+	if(!VectorCompare(cached_color_enemy, color_enemy)) {
+		R_ProgramUniform3fv(r_program_uniform_aliasmodel_outline_color_enemy, color_enemy);
+		VectorCopy(color_enemy, cached_color_enemy);
+	}
+	if(!VectorCompare(cached_color_team, color_team)) {
+		R_ProgramUniform3fv(r_program_uniform_aliasmodel_outline_color_team, color_team);
+		VectorCopy(color_team, cached_color_team);
 	}
 }
 
@@ -338,6 +375,14 @@ static void GLM_QueueAliasModelDrawImpl(
 	uniform->materialSamplerMapping = textureSampler;
 	uniform->minLumaMix = 1.0f - (ent->full_light ? bound(0, gl_fb_models.integer, 1) : 0);
 	uniform->outline_normal_scale = ent->outlineScale;
+	if(ent->scoreboard != NULL) {
+		int tc = 16 * (bound(0, ent->scoreboard->topcolor, 13)) + 8;
+		int bc = 16 * (bound(0, ent->scoreboard->bottomcolor, 13)) + 8;
+		byte top[] = { host_basepal[tc * 3], host_basepal[tc * 3 + 1], host_basepal[tc * 3 + 2] };
+		byte bot[] = { host_basepal[bc * 3], host_basepal[bc * 3 + 1], host_basepal[bc * 3 + 2] };
+		for(int i = 0; i < 3; i++) uniform->plrtopcolor[i] = (float)top[i] / 256.0f;
+		for(int i = 0; i < 3; i++) uniform->plrbotcolor[i] = (float)bot[i] / 256.0f;
+	}
 
 	// Add to queues
 	GLM_QueueDrawCall(type, vbo_start, vbo_count, alias_draw_count);
@@ -454,7 +499,6 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	qbool translucent = (type != aliasmodel_draw_std && type != aliasmodel_draw_postscene_additive);
 	qbool additive = (type == aliasmodel_draw_postscene_additive);
 	qbool shells = (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells);
-	extern cvar_t gl_outline_color_model, gl_outline_scale_model, gl_outline_color_team, gl_outline_color_enemy;
 
 	if (!instr->num_calls || !GLM_CompileAliasModelProgram()) {
 		return;
@@ -464,7 +508,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	extra_offset = buffers.BufferOffset(r_buffer_aliasmodel_drawcall_indirect);
 
 	R_ProgramUse(r_program_aliasmodel);
-	R_SetAliasModelUniform(mode);
+	R_SetAliasModelUniforms(mode);
 	// We have prepared the draw calls earlier in the frame so very trival logic here
 	if (r_refdef2.drawCaustics) {
 		renderer.TextureUnitBind(TEXTURE_UNIT_CAUSTICS, underwatertexture);
@@ -499,20 +543,11 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		);
 	}
 
-#define SETCOLORUNIFORM(colort) R_ProgramUniform3f(r_program_uniform_aliasmodel_outline_##colort,\
-									(float)gl_outline_##colort.color[0] / 255.0f,\
-									(float)gl_outline_##colort.color[1] / 255.0f,\
-									(float)gl_outline_##colort.color[2] / 255.0f)
-
 	if (type == aliasmodel_draw_std && alias_draw_instructions[aliasmodel_draw_outlines_spec].num_calls) {
 		instr = &alias_draw_instructions[aliasmodel_draw_outlines_spec];
 
 		R_TraceEnterNamedRegion("GLM_DrawOutlineBatch");
-		R_SetAliasModelUniform(EZQ_ALIAS_MODE_OUTLINES_SPEC);
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_outline_scale, bound(0.0, gl_outline_scale_model.value, 5.0));
-		SETCOLORUNIFORM(color_model);
-		SETCOLORUNIFORM(color_team);
-		SETCOLORUNIFORM(color_enemy);
+		R_SetAliasModelUniforms(EZQ_ALIAS_MODE_OUTLINES_SPEC);
 
 		R_ApplyRenderingState(r_state_aliasmodel_outline_spec);
 
@@ -524,7 +559,6 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 					0
 			);
 		}
-
 		R_TraceLeaveNamedRegion();
 	}
 
@@ -532,11 +566,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		instr = &alias_draw_instructions[aliasmodel_draw_outlines];
 
 		R_TraceEnterNamedRegion("GLM_DrawOutlineBatch");
-		R_SetAliasModelUniform(EZQ_ALIAS_MODE_OUTLINES);
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_outline_scale, bound(0.0, gl_outline_scale_model.value, 5.0));
-		SETCOLORUNIFORM(color_model);
-		SETCOLORUNIFORM(color_team);
-		SETCOLORUNIFORM(color_enemy);
+		R_SetAliasModelUniforms(EZQ_ALIAS_MODE_OUTLINES);
 
 		GLM_StateBeginAliasOutlineBatch();
 
@@ -548,12 +578,8 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 				0
 			);
 		}
-
 		R_TraceLeaveNamedRegion();
 	}
-
-
-#undef SETCOLORUNIFORM
 }
 
 void GLM_DrawAliasModelBatches(void)

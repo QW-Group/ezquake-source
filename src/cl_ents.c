@@ -1653,7 +1653,7 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int old_vw_frame)
 	newent.colormap = vid.colormap;
 	newent.renderfx |= RF_PLAYERMODEL;	// not really, but use same lighting rules
 	newent.effects = ent->effects; // Electro - added for shells
-	// newent.scoreboard = ent->scoreboard; // for team color in gl_outline
+	newent.scoreboard = ent->scoreboard; // for team color in gl_outline
 
 	if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing && !CL_SetAlphaByDistance(&newent)) {
 		return false;

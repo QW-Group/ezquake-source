@@ -97,6 +97,8 @@ struct AliasModelVert {
 struct AliasModel {
 	mat4 modelView;
 	vec4 color;
+	vec4 topcolor;
+	vec4 bottomcolor;
 	int flags;
 	float yaw_angle_rad;
 	float shadelight;
