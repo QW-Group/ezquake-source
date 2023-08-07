@@ -219,6 +219,7 @@ cvar_t gl_simpleitems                      = {"gl_simpleitems", "0"};
 cvar_t gl_simpleitems_size                 = {"gl_simpleitems_size", "16"};
 cvar_t gl_simpleitems_orientation          = {"gl_simpleitems_orientation", "2"};
 cvar_t gl_modulate                         = {"gl_modulate", "1"};
+
 cvar_t gl_outline                          = {"gl_outline", "0"};
 cvar_t gl_outline_color_world              = {"gl_outline_color_world", "0 0 0"};
 cvar_t gl_outline_color_model              = {"gl_outline_color_model", "0 0 0"};
@@ -229,8 +230,9 @@ cvar_t gl_outline_world_depth_scale        = {"gl_outline_world_depth_scale", "7
 cvar_t gl_outline_use_player_color         = {"gl_outline_use_player_color", "0"};
 cvar_t gl_outline_xray                     = {"gl_outline_xray", "0"};
 cvar_t gl_outline_xray_distance            = {"gl_outline_xray_distance", "512"};
-cvar_t gl_outline_color_team               = {"gl_outline_color_team", "0 255 0"};
-cvar_t gl_outline_color_enemy              = {"gl_outline_color_enemy", "255 0 0"};
+cvar_t gl_outline_color_team               = {"gl_outline_color_team", ""};
+cvar_t gl_outline_color_enemy              = {"gl_outline_color_enemy", ""};
+
 cvar_t gl_smoothmodels                     = {"gl_smoothmodels", "1"};
 
 cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0", CVAR_LATCH_GFX };

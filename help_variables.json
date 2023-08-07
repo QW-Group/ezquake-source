@@ -5206,9 +5206,46 @@
       "group-id": "35",
       "type": "float"
     },
-    "gl_outline_world_accuracy": {
+    "gl_outline_world_depth_threshold": {
       "default": "0.9",
-      "desc": "Determines the accuracy for drawing world outlines. Effects are mainly visible on slopes and other angled surfaces.",
+      "desc": "Threshold for finding edges with depth values.",
+      "group-id": "35",
+      "type": "float"
+    },
+    "gl_outline_world_depth_scale": {
+      "default": "7.0",
+      "desc": "Scaling factor for the depth threshold.",
+      "group-id": "35",
+      "type": "float"
+    },
+    "gl_outline_use_player_color": {
+      "default": "0",
+      "desc": "Use the colors in the 'color' cvar for drawing player outlines",
+      "group-id": "35",
+      "type": "boolean"
+    },
+    "gl_outline_color_team": {
+      "default": "",
+      "desc": "Determines the outline color of friendly players. Set to \"\" to disable.",
+      "group-id": "35",
+      "type": "string"
+    },
+    "gl_outline_color_enemy": {
+      "default": "",
+      "desc": "Determines the outline color of enemy players. Set to \"\" to disable.",
+      "group-id": "35",
+      "type": "string"
+    },
+
+    "gl_outline_xray": {
+      "default": "0",
+      "desc": "See players through walls (spectator only, and not really an outline)",
+      "group-id": "35",
+      "type": "boolean"
+    },
+    "gl_outline_xray_distance": {
+      "default": "512",
+      "desc": "Distance from which you can see the players through walls, see gl_outline_xray",
       "group-id": "35",
       "type": "float"
     },

@@ -115,15 +115,18 @@ static float cached_color_model[3];
 static float cached_color_enemy[3];
 static float cached_color_team[3];
 
+#define GET_COLOR_VALUES(colr) (float[]){(float)gl_outline_color_##colr.color[0] / 255.0f,(float)gl_outline_color_##colr.color[1] / 255.0f,(float)gl_outline_color_##colr.color[2] / 255.0f}
+
 static void R_SetAliasModelUniforms(int mode)
 {
 	extern cvar_t gl_outline_scale_model, gl_outline_use_player_color,
 	gl_outline_color_model, gl_outline_color_team, gl_outline_color_enemy;
 	float scale = bound(0.0, gl_outline_scale_model.value, 5.0);
+	float *color_model, *color_enemy, *color_team;
 	int use_player_color = gl_outline_use_player_color.integer;
-	float color_model[3] = {(float)gl_outline_color_model.color[0] / 255.0f,(float)gl_outline_color_model.color[1] / 255.0f,(float)gl_outline_color_model.color[2] / 255.0f};
-	float color_team[3] = {(float)gl_outline_color_team.color[0] / 255.0f,(float)gl_outline_color_team.color[1] / 255.0f,(float)gl_outline_color_team.color[2] / 255.0f};
-	float color_enemy[3] = {(float)gl_outline_color_enemy.color[0] / 255.0f,(float)gl_outline_color_enemy.color[1] / 255.0f,(float)gl_outline_color_enemy.color[2] / 255.0f};
+	color_model = GET_COLOR_VALUES(model);
+	color_enemy = gl_outline_color_enemy.string[0] ? GET_COLOR_VALUES(enemy) : color_model;
+	color_team  = gl_outline_color_team .string[0] ? GET_COLOR_VALUES(team)  : color_model;
 
 	if (cached_mode != mode) {
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_drawmode, mode);
@@ -152,6 +155,8 @@ static void R_SetAliasModelUniforms(int mode)
 		VectorCopy(color_team, cached_color_team);
 	}
 }
+
+#undef GET_COLOR_VALUES
 
 static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL;
