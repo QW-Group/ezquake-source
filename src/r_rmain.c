@@ -228,8 +228,8 @@ cvar_t gl_outline_scale_model              = {"gl_outline_scale_model", "1.0"};
 cvar_t gl_outline_world_depth_threshold    = {"gl_outline_world_depth_threshold", "0.9"};
 cvar_t gl_outline_world_depth_scale        = {"gl_outline_world_depth_scale", "7.0"};
 cvar_t gl_outline_use_player_color         = {"gl_outline_use_player_color", "0"};
-cvar_t gl_outline_xray                     = {"gl_outline_xray", "0"};
-cvar_t gl_outline_xray_distance            = {"gl_outline_xray_distance", "512"};
+cvar_t gl_spec_xray                        = {"gl_spec_xray", "0"};
+cvar_t gl_spec_xray_distance               = {"gl_spec_xray_distance", "1500"};
 cvar_t gl_outline_color_team               = {"gl_outline_color_team", ""};
 cvar_t gl_outline_color_enemy              = {"gl_outline_color_enemy", ""};
 
@@ -717,8 +717,8 @@ void R_Init(void)
 	Cvar_Register(&gl_outline_world_depth_threshold);
 	Cvar_Register(&gl_outline_world_depth_scale);
 	Cvar_Register(&gl_outline_use_player_color);
-	Cvar_Register(&gl_outline_xray);
-	Cvar_Register(&gl_outline_xray_distance);
+	Cvar_Register(&gl_spec_xray);
+	Cvar_Register(&gl_spec_xray_distance);
 	Cvar_Register(&gl_outline_color_team);
 	Cvar_Register(&gl_outline_color_enemy);
 	Cvar_Register(&gl_smoothmodels);

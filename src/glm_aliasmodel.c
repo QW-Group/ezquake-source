@@ -312,7 +312,7 @@ static void GLM_QueueAliasModelDrawImpl(
 	aliasmodel_draw_type_t shelltype = aliasmodel_draw_shells;
 	aliasmodel_draw_instructions_t* instr;
 	int textureSampler = -1;
-	extern cvar_t gl_outline_xray;
+	extern cvar_t gl_spec_xray;
 
 	// Compile here so we can work out how many samplers we have free to allocate per draw-call
 	if (!GLM_CompileAliasModelProgram()) {
@@ -398,8 +398,8 @@ static void GLM_QueueAliasModelDrawImpl(
 	if (shell) {
 		GLM_QueueDrawCall(shelltype, vbo_start, vbo_count, alias_draw_count);
 	}
-	if((render_effects & RF_PLAYERMODEL)  && (render_effects & RF_BEHINDWALL) &&
-	   (cls.demoplayback || cl.spectator) && gl_outline_xray.value)
+	if((render_effects & RF_PLAYERMODEL) && (render_effects & RF_BEHINDWALL) &&
+	   (cls.demoplayback || cl.spectator) && gl_spec_xray.value)
 	{
 		GLM_QueueDrawCall(aliasmodel_draw_outlines_spec, vbo_start, vbo_count, alias_draw_count);
 	}

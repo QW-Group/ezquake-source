@@ -1689,8 +1689,8 @@ void CL_StorePausePredictionLocations(void)
 static void CL_LinkPlayers(void)
 {
 	int j, msec, i, flicker, oldphysent;
-	float *org;
-	vec3_t	tmp;
+	float *org, distance;
+	vec3_t tmp, end, diff;
 	double playertime = CL_PlayerTime();
 	player_info_t *info;
 	player_state_t *state, exact;
@@ -1699,7 +1699,7 @@ static void CL_LinkPlayers(void)
 	frame_t *frame;
 	trace_t trace;
 	customlight_t cst_lt = {0};
-	extern cvar_t cl_debug_antilag_ghost, cl_debug_antilag_view;
+	extern cvar_t cl_debug_antilag_ghost, cl_debug_antilag_view, gl_spec_xray_distance;
 
 	frame = &cl.frames[cl.parsecount & UPDATE_MASK];
 	memset (&ent, 0, sizeof(entity_t));
@@ -1961,15 +1961,20 @@ static void CL_LinkPlayers(void)
 			}
 		}
 
-		vec3_t end;
 		VectorCopy(cent->lerp_origin, end);
 		end[2] += 12;
 		trace = PM_TraceLine(r_refdef.vieworg, end);
+
 		if (trace.fraction != 1) {
-			ent.renderfx |= RF_BEHINDWALL;
-		} else {
+			VectorSubtract(cent->lerp_origin, r_refdef.vieworg, diff);
+			distance = VectorLength(diff);
+
+			if(distance > gl_spec_xray_distance.value)
+				continue;
+			else
+				ent.renderfx |= RF_BEHINDWALL;
+		} else
 			ent.renderfx &= ~RF_BEHINDWALL;
-		}
 
 		if ((cl.vwep_enabled && r_drawvweps.value && state->vw_index) && (state->modelindex != cl_modelindices[mi_eyes]))
 		{
