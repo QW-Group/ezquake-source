@@ -399,7 +399,7 @@ static void GLM_QueueAliasModelDrawImpl(
 		GLM_QueueDrawCall(shelltype, vbo_start, vbo_count, alias_draw_count);
 	}
 	if((render_effects & RF_PLAYERMODEL) && (render_effects & RF_BEHINDWALL) &&
-	   (cls.demoplayback || cl.spectator) && gl_spec_xray.value)
+	   (cls.demoplayback || cls.mvdplayback) && gl_spec_xray.value)
 	{
 		GLM_QueueDrawCall(aliasmodel_draw_outlines_spec, vbo_start, vbo_count, alias_draw_count);
 	}
