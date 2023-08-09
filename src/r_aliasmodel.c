@@ -264,7 +264,7 @@ void R_OverrideModelTextures(entity_t* ent, texture_ref* texture, texture_ref* f
 {
 	int playernum = -1;
 
-	if (ent->scoreboard) {
+	if (ent->scoreboard && (ent->renderfx & RF_VWEPMODEL) == 0) {
 		playernum = ent->scoreboard - cl.players;
 	}
 

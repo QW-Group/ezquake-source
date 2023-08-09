@@ -1656,7 +1656,7 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int old_vw_frame)
 	if(ent->renderfx & RF_BEHINDWALL)
 		newent.renderfx |= RF_BEHINDWALL;
 	newent.effects = ent->effects; // Electro - added for shells
-	newent.scoreboard = ent->scoreboard; // for team color in gl_outline FIXME: this changes the vwep model texture to the player
+	newent.scoreboard = ent->scoreboard; // for team color in gl_outline
 
 	if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing && !CL_SetAlphaByDistance(&newent)) {
 		return false;
@@ -1976,7 +1976,7 @@ static void CL_LinkPlayers(void)
 		} else
 			ent.renderfx &= ~RF_BEHINDWALL;
 
-		ent.renderfx |= RF_PLAYERMODEL; // FIXME: cheeck if this is used anywhere for something that r_drawvwep users only should/shoudlnt see
+		ent.renderfx |= RF_PLAYERMODEL;
 
 		if ((cl.vwep_enabled && r_drawvweps.value && state->vw_index) && (state->modelindex != cl_modelindices[mi_eyes]))
 		{
