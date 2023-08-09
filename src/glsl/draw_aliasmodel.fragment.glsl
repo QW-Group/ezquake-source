@@ -40,7 +40,7 @@ bool texture_coord_is_on_legs() {
 
 void main()
 {
-	if((fsFlags & AMF_PLAYERMODEL) != 0 && (fsFlags & AMF_WEAPONMODEL) == 0) {
+	if((fsFlags & AMF_PLAYERMODEL) != 0) {
 		if(outline_use_player_color != 0) {
 			if((fsFlags & AMF_VWEPMODEL) != 0) { // vwep model is top color
 				frag_colour = vec4(plrtopcolor.rgb, 1.0f);

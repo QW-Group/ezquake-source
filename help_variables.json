@@ -5167,7 +5167,7 @@
       "default": "0",
       "desc": "Controls outlining of models and map. Disallowed in qcon ruleset.",
       "group-id": "35",
-      "remarks": "World outlines require vid_framebuffer 1|2 and Modern OpenGL (vid_renderer 1).",
+      "remarks": "World outlines require vid_framebuffer 1|2 and Modern OpenGL (vid_renderer 1). With vid_renderer 0, ruleset default and sv_cheats 1, gl_outline 2 draws outlines of every surface that is rendered.",
       "type": "enum",
       "values": [
         {
@@ -5203,7 +5203,7 @@
     },
     "gl_outline_scale_model": {
       "default": "1",
-      "desc": "Determines the scale of model outlines. Allows values 0 to 5.",
+      "desc": "Determines the scale of model outlines. Allows values 0 to 1 for rulesets smackdown and qcon, and 0 to 5 for other rulesets.",
       "remarks": "Requires vid_renderer 1",
       "group-id": "35",
       "type": "float"
@@ -5229,14 +5229,14 @@
     },
     "gl_outline_color_team": {
       "default": "",
-      "desc": "Determines the outline color of friendly players. Set to \"\" to disable.",
+      "desc": "Determines the outline color of friendly players. Set to \"\" to use the value of gl_outline_color_model.",
       "remarks": "Requires vid_renderer 1",
       "group-id": "35",
       "type": "string"
     },
     "gl_outline_color_enemy": {
       "default": "",
-      "desc": "Determines the outline color of enemy players. Set to \"\" to disable.",
+      "desc": "Determines the outline color of enemy players. Set to \"\" to use the value of gl_outline_color_model.",
       "remarks": "Requires vid_renderer 1",
       "group-id": "35",
       "type": "string"

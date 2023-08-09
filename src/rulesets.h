@@ -61,6 +61,7 @@ qbool Ruleset_BlockHudPicChange(void);
 qbool Ruleset_AllowPolygonOffset(entity_t* ent);
 qbool Rulesets_AllowAlternateModel(const char* modelName);
 qbool RuleSets_DisallowModelOutline(struct model_s *mod);
+float RuleSets_ModelOutlineScale(void);
 qbool RuleSets_AllowEdgeOutline(void);
 qbool RuleSets_DisallowExternalTexture(struct model_s *mod);
 qbool Ruleset_IsLumaAllowed(struct model_s *mod);

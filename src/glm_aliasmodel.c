@@ -119,9 +119,9 @@ static float cached_color_team[3];
 
 static void R_SetAliasModelUniforms(int mode)
 {
-	extern cvar_t gl_outline_scale_model, gl_outline_use_player_color,
+	extern cvar_t gl_outline_use_player_color,
 	gl_outline_color_model, gl_outline_color_team, gl_outline_color_enemy;
-	float scale = bound(0.0, gl_outline_scale_model.value, 5.0);
+	float scale = RuleSets_ModelOutlineScale();
 	float *color_model, *color_enemy, *color_team;
 	int use_player_color = gl_outline_use_player_color.integer;
 	color_model = GET_COLOR_VALUES(model);
