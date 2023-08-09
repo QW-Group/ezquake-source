@@ -97,7 +97,9 @@ void main()
 	int turbType;
 
 #ifdef DRAW_GEOMETRY
-	normal_texture = vec4(Normal, abs(UnClipped.z / r_zFar)); // rgb = normal, a = depth
+	// depth of 0 means dont draw outlines
+	float depth = (Flags & TEXTURE_TURB_SKY) != 0 ? 0.0f : abs(UnClipped.z / r_zFar);
+	normal_texture = vec4(Normal, depth);
 #endif
 
 	if (draw_outlines == 1) {
