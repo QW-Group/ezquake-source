@@ -111,10 +111,10 @@ jobs:
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       run: |
-           mkdir -p upload/releases/${{ matrix.platform }}/linux
+           mkdir -p upload/releases/${{ github.ref_name }}/linux
            mkdir -p upload/releases/latest/linux/${{ matrix.platform }}
-           cp ezQuake-${{ matrix.platform }}.AppImage upload/releases/${{ matrix.platform }}/linux/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage
-           cp ezQuake-${{ matrix.platform }}.AppImage.md5 upload/releases/${{ matrix.platform }}/linux/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage.md5
+           cp ezQuake-${{ matrix.platform }}.AppImage upload/releases/${{ github.ref_name }}/linux/ezQuake-${{ matrix.platform }}.AppImage
+           cp ezQuake-${{ matrix.platform }}.AppImage.md5 upload/releases/${{ github.ref_name }}/linux/ezQuake-${{ matrix.platform }}.AppImage.md5
            cp ezQuake-${{ matrix.platform }}.AppImage upload/releases/latest/linux/${{ matrix.platform }}/ezQuake-${{ matrix.platform }}.AppImage
            cp ezQuake-${{ matrix.platform }}.AppImage.md5 upload/releases/latest/linux/${{ matrix.platform }}/ezQuake-${{ matrix.platform }}.AppImage.md5
            sftp -rp -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -P ${{ secrets.SFTP_PORT }} ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/releases <<< $'put -rp upload/releases/*'
