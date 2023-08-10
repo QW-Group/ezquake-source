@@ -78,7 +78,7 @@ jobs:
       matrix:
        target: [linux-x86_64]
        include:
-         - target: linux-x86_644
+         - target: linux-x86_64
            platform: x86_64
 
     steps:
