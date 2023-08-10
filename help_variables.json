@@ -5209,14 +5209,8 @@
       "type": "float"
     },
     "gl_outline_world_depth_threshold": {
-      "default": "0.9",
-      "desc": "Threshold for finding edges with depth values.",
-      "group-id": "35",
-      "type": "float"
-    },
-    "gl_outline_world_depth_scale": {
-      "default": "7.0",
-      "desc": "Scaling factor for the depth threshold.",
+      "default": "4",
+      "desc": "Threshold for finding edges with depth values. Higher value means vanishing lines at close range. Lower value means false positives at longer range.",
       "group-id": "35",
       "type": "float"
     },

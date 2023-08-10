@@ -62,8 +62,7 @@ static void GLM_DrawWorldOutlines(void)
 	if (R_TextureReferenceIsValid(normals) && GLM_CompileWorldGeometryProgram()) {
 		int viewport[4];
 		int fullscreen_viewport[4];
-		extern cvar_t gl_outline_color_world, gl_outline_scale_world,
-		              gl_outline_world_depth_threshold, gl_outline_world_depth_scale;
+		extern cvar_t gl_outline_color_world, gl_outline_world_depth_threshold; //, gl_outline_scale_world;
 
 		R_GetViewport(viewport);
 
@@ -81,8 +80,7 @@ static void GLM_DrawWorldOutlines(void)
 		renderer.TextureUnitBind(0, normals);
 
 		R_ProgramUniform1f(r_program_uniform_outline_depth_threshold, gl_outline_world_depth_threshold.value);
-		R_ProgramUniform1f(r_program_uniform_outline_depth_scale, gl_outline_world_depth_scale.value);
-		R_ProgramUniform1f(r_program_uniform_outline_scale, gl_outline_scale_world.value);
+		// R_ProgramUniform1f(r_program_uniform_outline_scale, gl_outline_scale_world.value);
 		R_ProgramUniform3f(r_program_uniform_outline_color,
                            (float)gl_outline_color_world.color[0] / 255.0f,
                            (float)gl_outline_color_world.color[1] / 255.0f,

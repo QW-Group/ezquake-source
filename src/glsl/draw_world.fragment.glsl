@@ -97,8 +97,9 @@ void main()
 	int turbType;
 
 #ifdef DRAW_GEOMETRY
-	// depth of 0 means dont draw outlines
-	float depth = (Flags & TEXTURE_TURB_SKY) != 0 ? 0.0f : abs(UnClipped.z / r_zFar);
+	int surface = Flags & EZQ_SURFACE_TYPE;
+	// if the texture is a turb, force outline between it and regular textures, but not between other turbs of the same type
+	float depth = (surface != 0) ? -float(surface) : abs(UnClipped.z / r_zFar);
 	normal_texture = vec4(Normal, depth);
 #endif
 
