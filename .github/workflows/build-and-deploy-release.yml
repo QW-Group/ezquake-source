@@ -62,7 +62,7 @@ jobs:
       env:
         SSH_AUTH_SOCK: C:\ssh_agent.sock
       run: |
-           mkdir -p upload/releases/windows/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}
+           mkdir -p upload/releases/${{ github.ref_name }}/windows/${{ matrix.platform }}/${{ matrix.config }}
            mkdir -p upload/releases/latest/windows/${{ matrix.platform }}/${{ matrix.config }}
            cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/releases/windows/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
            cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/releases/windows/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
@@ -111,7 +111,7 @@ jobs:
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       run: |
-           mkdir -p upload/releases/linux/${{ matrix.platform }}
+           mkdir -p upload/releases/${{ matrix.platform }}/linux
            mkdir -p upload/releases/latest/linux/${{ matrix.platform }}
            cp ezQuake-${{ matrix.platform }}.AppImage upload/releases/linux/${{ matrix.platform }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage
            cp ezQuake-${{ matrix.platform }}.AppImage.md5 upload/releases/linux/${{ matrix.platform }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage.md5
