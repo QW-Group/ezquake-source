@@ -64,8 +64,8 @@ jobs:
       run: |
            mkdir -p upload/releases/${{ github.ref_name }}/windows/${{ matrix.platform }}/${{ matrix.config }}
            mkdir -p upload/releases/latest/windows/${{ matrix.platform }}/${{ matrix.config }}
-           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/releases/windows/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
-           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/releases/windows/${{ github.ref_name }}/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/releases/${{ github.ref_name }}/windows/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
+           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/releases/${{ github.ref_name }}/windows/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
            cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/releases/latest/windows/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
            cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/releases/latest/windows/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
            sftp -rp -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -P ${{ secrets.SFTP_PORT }} ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/releases <<< $'put -rp upload/releases/*'
@@ -113,8 +113,8 @@ jobs:
       run: |
            mkdir -p upload/releases/${{ matrix.platform }}/linux
            mkdir -p upload/releases/latest/linux/${{ matrix.platform }}
-           cp ezQuake-${{ matrix.platform }}.AppImage upload/releases/linux/${{ matrix.platform }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage
-           cp ezQuake-${{ matrix.platform }}.AppImage.md5 upload/releases/linux/${{ matrix.platform }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage.md5
+           cp ezQuake-${{ matrix.platform }}.AppImage upload/releases/${{ matrix.platform }}/linux/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage
+           cp ezQuake-${{ matrix.platform }}.AppImage.md5 upload/releases/${{ matrix.platform }}/linux/${{ env.DATE }}_${GITHUB_SHA::7}_ezQuake-${{ matrix.platform }}.AppImage.md5
            cp ezQuake-${{ matrix.platform }}.AppImage upload/releases/latest/linux/${{ matrix.platform }}/ezQuake-${{ matrix.platform }}.AppImage
            cp ezQuake-${{ matrix.platform }}.AppImage.md5 upload/releases/latest/linux/${{ matrix.platform }}/ezQuake-${{ matrix.platform }}.AppImage.md5
            sftp -rp -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -P ${{ secrets.SFTP_PORT }} ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/releases <<< $'put -rp upload/releases/*'
