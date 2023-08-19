@@ -114,8 +114,8 @@ case $ID in
 		;;
 	pop)
 		VERSION_ID=${VERSION_ID%.*}
-                  [ $VERSION_ID -ge 17 ] || error "Your Pop!_OS version '$VERSION_ID' is too old. Exiting."
-                  install_check_deb
+		[ $VERSION_ID -ge 17 ] || error "Your Pop!_OS version '$VERSION_ID' is too old. Exiting."
+		install_check_deb
 		;;
 	centos|rhel|fedora)
 		# FIXME: Versions checks?
