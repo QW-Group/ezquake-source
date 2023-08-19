@@ -1051,6 +1051,32 @@ void CL_Observe_f (void)
 	Cbuf_AddText(va("%s\n", proxy ? "say ,reconnect" : "reconnect"));
 }
 
+
+void CL_Observe_BestRoute_f(void)
+{
+	if (Cmd_Argc() != 2) {
+		Com_Printf("Usage: %s <address>\nConnects to given server via fastest available path (ping-wise).\n", Cmd_Argv(0));
+		Com_Printf("Requires Server Browser refreshed with sb_findroutes 1\n");
+		return;
+	}
+	else {
+		netadr_t adr;
+		if (!NET_StringToAdr(Cmd_Argv(1), &adr)) {
+			Com_Printf("Invalid address\n");
+			return;
+		}
+
+		if (adr.port == 0)
+			adr.port = htons(27500);
+
+		Cvar_SetValue(&spectator, 1);
+
+
+		SB_PingTree_DumpPath(&adr);
+		SB_PingTree_ConnectBestPath(&adr);
+	}
+}
+
 // Just toggle mode between spec and player.
 void Cl_ToggleSpec_f (void)
 {
@@ -1905,6 +1931,7 @@ static void CL_InitLocal(void)
 
 	Cmd_AddCommand ("join", CL_Join_f);
 	Cmd_AddCommand ("observe", CL_Observe_f);
+	Cmd_AddCommand ("observebr", CL_Observe_BestRoute_f);
 	Cmd_AddCommand ("togglespec", Cl_ToggleSpec_f);
 
 	Cmd_AddCommand ("hud_fps_min_reset", Cl_Reset_Min_fps_f);
