@@ -34,7 +34,7 @@ int main(){
 '
 
 QUAKE_SCRIPT='#!/usr/bin/env bash
-export LD_LIBRARY_PATH="${APPIMAGE_LIBRARY_PATH}:${APPDIR}/usr/lib"
+export LD_LIBRARY_PATH="${APPIMAGE_LIBRARY_PATH}:${APPDIR}/usr/lib:${LD_LIBRARY_PATH}"
 cd "$OWD"
 "${APPDIR}/usr/bin/test"  >/dev/null 2>&1 |:
 FAIL=${PIPESTATUS[0]}
@@ -92,6 +92,7 @@ ldd "$DIR/AppDir/usr/bin/ezquake-linux-$ARCH" | \
 strip -s "$DIR/AppDir/usr/lib/"* || exit 5
 strip -s "$DIR/AppDir/usr/bin/"* || exit 5
 mv -f "$DIR/AppDir/usr/lib/libc.so.6" "$DIR/AppDir/usr/lib-override/."
+mv -f "$DIR/AppDir/usr/lib/libm.so.6" "$DIR/AppDir/usr/lib-override/."
 cp -Lf "/lib64/ld-linux-${ARCHDASH}.so.2" "$DIR/AppDir/usr/lib-override/." || exit 6
 
 cd "$DIR" || exit 5
