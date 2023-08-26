@@ -396,7 +396,7 @@ void Clock_HudInit(void)
 	HUD_Register(
 			"scoreclock", NULL, "Shows current date and time on the scoreboard",
 			HUD_NO_DRAW | HUD_ON_INTERMISSION | HUD_ON_SCORES | HUD_ON_FINALE, ca_disconnected, 8, SCR_HUD_DrawScoreClock,
-			"0", "screen", "center", "bottom", "0", "-10", "0", "0 0 0", NULL,
+			"1", "screen", "center", "bottom", "0", "-10", "0", "0 0 0", NULL,
 			"scale", "1",
 			"format", "%d-%m-%Y %H:%M:%S",
 			"proportional", "0",
