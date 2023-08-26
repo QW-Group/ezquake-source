@@ -190,7 +190,7 @@ static void SCR_Hud_GameSummary(hud_t* hud)
 				}
 
 				if (value) {
-					Draw_SString(x + hud_gamesummary_scale->value * (icon_size / 2 - text_size / 2), y + text_offset, buffer, hud_gamesummary_scale->value, hud_gamesummary_proportional->integer);
+					Draw_SStringAligned(x, y + text_offset, buffer, hud_gamesummary_scale->value, 1.0f, hud_gamesummary_proportional->integer, text_align_center, x + icon_size * hud_gamesummary_scale->value);
 				}
 			}
 
