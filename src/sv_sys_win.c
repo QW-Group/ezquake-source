@@ -170,9 +170,10 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	char	pathname[MAX_DEMO_NAME];
 	qbool all;
 
-	int	r;
-	pcre	*preg;
-	const char	*errbuf;
+	PCRE2_SIZE	error_offset;
+	pcre2_code	*preg;
+	pcre2_match_data *match_data = NULL;
+	int error;
 
 	memset(list, 0, sizeof(list));
 	memset(&dir, 0, sizeof(dir));
@@ -180,11 +181,13 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	dir.files = list;
 	all = !strncmp(ext, ".*", 3);
 	if (!all)
-		if (!(preg = pcre_compile(ext, PCRE_CASELESS, &errbuf, &r, NULL)))
+		if (!(preg = pcre2_compile((PCRE2_SPTR)ext, PCRE2_ZERO_TERMINATED, PCRE2_CASELESS, &error, &error_offset, NULL)))
 		{
-			Con_Printf("Sys_listdir: pcre_compile(%s) error: %s at offset %d\n",
-			           ext, errbuf, r);
-			Q_free(preg);
+			PCRE2_UCHAR error_str[256];
+			pcre2_get_error_message(error, error_str, sizeof(error_str));
+			Con_Printf("Sys_listdir: pcre2_compile(%s) error: %s at offset %d\n",
+			           ext, error_str, error_offset);
+			pcre2_code_free(preg);
 			return dir;
 		}
 
@@ -192,7 +195,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	if ((h = FindFirstFile (pathname , &fd)) == INVALID_HANDLE_VALUE)
 	{
 		if (!all)
-			Q_free(preg);
+			pcre2_code_free(preg);
 		return dir;
 	}
 
@@ -202,16 +205,23 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 			continue;
 		if (!all)
 		{
-			switch (r = pcre_exec(preg, NULL, fd.cFileName,
-			                      strlen(fd.cFileName), 0, 0, NULL, 0))
+			match_data = pcre2_match_data_create_from_pattern(preg, NULL);
+			switch (error = pcre2_match(preg, (PCRE2_SPTR)fd.cFileName,
+			                      strlen(fd.cFileName), 0, 0, match_data, NULL))
 			{
-			case 0: break;
-			case PCRE_ERROR_NOMATCH: continue;
+			case 0:
+				pcre2_match_data_free(match_data);
+				break;
+			case PCRE2_ERROR_NOMATCH:
+				pcre2_match_data_free(match_data);
+				continue;
 			default:
-				Con_Printf("Sys_listdir: pcre_exec(%s, %s) error code: %d\n",
-				           ext, fd.cFileName, r);
-				if (!all)
-					Q_free(preg);
+				Con_Printf("Sys_listdir: pcre2_match(%s, %s) error code: %d\n",
+				           ext, fd.cFileName, error);
+				if (!all) {
+					pcre2_match_data_free(match_data);
+					pcre2_code_free(preg);
+				}
 				return dir;
 			}
 		}
@@ -239,7 +249,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 
 	FindClose (h);
 	if (!all)
-		Q_free(preg);
+		pcre2_code_free(preg);
 
 	switch (sort_type)
 	{

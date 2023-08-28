@@ -35,8 +35,7 @@ typedef struct pcre_trigger_s {
 	char					*name;
 	char					*regexpstr;
 	struct pcre_trigger_s*	next;
-	pcre*					regexp;
-	pcre_extra*				regexp_extra;
+	pcre2_code*				regexp;
 	unsigned				flags;
 	float					min_interval;
 	double					lasttime;
@@ -47,8 +46,7 @@ typedef void internal_trigger_func (const char *s);
 
 typedef struct pcre_internal_trigger_s {
 	struct pcre_internal_trigger_s	*next;
-	pcre							*regexp;
-	pcre_extra						*regexp_extra;
+	pcre2_code						*regexp;
 	internal_trigger_func			*func;
 	unsigned						flags;
 } pcre_internal_trigger_t;

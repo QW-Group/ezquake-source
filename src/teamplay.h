@@ -24,7 +24,7 @@
 		Boston, MA  02111-1307, USA
 */
 
-#include <pcre.h>
+#include <pcre2.h>
 
 extern cvar_t cl_parsesay;
 extern cvar_t cl_nofake;

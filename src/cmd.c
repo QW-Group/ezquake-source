@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "parser.h"
 #include "utils.h"
 #include "keys.h"
+#include <pcre2.h>
 
 typedef struct {
 	char name[MAX_MACRO_NAME];
@@ -1900,10 +1901,10 @@ static qbool is_numeric (char *c)
 	         (*c == '.' && isdigit((int)(unsigned char)c[1])) );
 }
 
-void Re_Trigger_Copy_Subpatterns (const char *s, int* offsets, int num, cvar_t *re_sub); // QW262
+void Re_Trigger_Copy_Subpatterns (const char *s, size_t* offsets, int num, cvar_t *re_sub); // QW262
 extern cvar_t re_sub[10]; // QW262
 
-void Cmd_CatchTriggerSubpatterns(const char *s, int* offsets, int num)
+void Cmd_CatchTriggerSubpatterns(const char *s, size_t* offsets, int num)
 {
 	Re_Trigger_Copy_Subpatterns(s, offsets, min(num, 10), re_sub);
 }
@@ -2043,20 +2044,24 @@ void Cmd_If_Old (void)
 		result = (strstr(Cmd_Argv(3), Cmd_Argv(1)) ? 0 : 1);
 
 	} else if (!strcmp(op, "=~") || !strcmp(op, "!~")) {
-		pcre*		regexp;
-		const char	*error;
-		int		error_offset;
-		int		rc;
-		int		offsets[99];
+		pcre2_code       *regexp;
+		int              error;
+		PCRE2_SIZE       error_offset;
+		pcre2_match_data *match_data = NULL;
+		int              rc;
 
-		regexp = pcre_compile (Cmd_Argv(3), 0, &error, &error_offset, NULL);
+		regexp = pcre2_compile ((PCRE2_SPTR)Cmd_Argv(3), PCRE2_ZERO_TERMINATED, 0, &error, &error_offset, NULL);
 		if (!regexp) {
-			Com_Printf ("Error in regexp: %s\n", error);
+			PCRE2_UCHAR error_str[256];
+			pcre2_get_error_message(error, error_str, sizeof(error_str));
+			Com_Printf ("Error in regexp: %s\n", error_str);
 			return;
 		}
-		rc = pcre_exec (regexp, NULL, Cmd_Argv(1), strlen(Cmd_Argv(1)),
-		                0, 0, offsets, 99);
+		match_data = pcre2_match_data_create_from_pattern(regexp, NULL);
+		rc = pcre2_match (regexp, (PCRE2_SPTR)Cmd_Argv(1), strlen(Cmd_Argv(1)),
+		                0, 0, match_data, NULL);
 		if (rc >= 0) {
+			PCRE2_SIZE *offsets = pcre2_get_ovector_pointer(match_data);
 			Re_Trigger_Copy_Subpatterns (Cmd_Argv(1), offsets, min(rc, 10), re_sub);
 			result = true;
 		} else
@@ -2065,7 +2070,8 @@ void Cmd_If_Old (void)
 		if (op[0] != '=')
 			result = !result;
 
-		pcre_free (regexp);
+		pcre2_match_data_free (match_data);
+		pcre2_code_free (regexp);
 	} else {
 		Com_Printf ("unknown operator: %s\n", op);
 		Com_Printf ("valid operators are ==, =, !=, <>, >, <, >=, <=, isin, !isin, =~, !~\n");
