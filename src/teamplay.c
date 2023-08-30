@@ -1957,7 +1957,7 @@ qbool TP_ThisPOV_IsHisTeam(const char* team)
 {
 	int pn = TP_CurrentTrackNum();
 	
-	if (pn < 0 || pn > MAX_CLIENTS)
+	if (pn < 0 || pn >= MAX_CLIENTS)
 		return false;
 	else
 		return !strcmp(team, cl.players[pn].team);
