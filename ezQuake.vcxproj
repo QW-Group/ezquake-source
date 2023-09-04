@@ -551,7 +551,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
@@ -596,7 +596,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
@@ -641,7 +641,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
@@ -686,7 +686,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
@@ -892,7 +892,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -943,7 +943,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -993,7 +993,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
