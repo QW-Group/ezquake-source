@@ -695,6 +695,7 @@ void Cmd_EditAlias_f (void)
 	strlcat(final_string, s, sizeof(final_string));
 	strlcat(final_string, "\"", sizeof(final_string));
 	Key_ClearTyping();
+	key_linepos = 9 + (int)strlen(Cmd_Argv(1)) + 3; // move to where the commands are in the bind
 	memcpy(key_lines[edit_line]+1, str2wcs(final_string), (strlen(final_string) + 1) * sizeof(wchar));
 }
 
