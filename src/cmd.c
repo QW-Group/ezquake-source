@@ -676,7 +676,7 @@ void Cmd_AliasList_f (void)
 void Cmd_EditAlias_f (void)
 {
 	cmd_alias_t	*a;
-	char *s, final_string[MAXCMDLINE - 1];
+	char *s, *v, final_string[MAXCMDLINE - 1];
 	int c;
 
 	c = Cmd_Argc();
@@ -686,13 +686,22 @@ void Cmd_EditAlias_f (void)
 		return;
 	}
 
+	s = Cmd_Argv(1);
+	if (s[0] == '\0') {
+		Com_Printf("Alias name must be specified\n");
+		return;
+	} else if(strlen(s) >= MAX_ALIAS_NAME) {
+		Com_Printf("Alias name is too long\n");
+		return;
+	}
+
 	a = Cmd_FindAlias(Cmd_Argv(1));
-	s = (a ? a->value : "");
+	v = (a ? a->value : "");
 
 	strlcpy(final_string, "/alias \"", sizeof(final_string));
-	strlcat(final_string, Cmd_Argv(1), sizeof(final_string));
-	strlcat(final_string, "\" \"", sizeof(final_string));
 	strlcat(final_string, s, sizeof(final_string));
+	strlcat(final_string, "\" \"", sizeof(final_string));
+	strlcat(final_string, v, sizeof(final_string));
 	strlcat(final_string, "\"", sizeof(final_string));
 	Key_ClearTyping();
 	key_linepos = 9 + (int)strlen(Cmd_Argv(1)) + 3; // move to where the commands are in the alias
