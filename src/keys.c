@@ -1798,7 +1798,7 @@ void Key_EditBind_f(void) {
 		return;
 	}
 
-	keybinding = keybindings[keynum];
+	keybinding = keybindings[keynum] ? keybindings[keynum] : "";
 	strlcpy(final_string, "/bind \"", sizeof(final_string));
 	strlcat(final_string, Cmd_Argv(1), sizeof(final_string));
 	strlcat(final_string, "\" \"", sizeof(final_string));
