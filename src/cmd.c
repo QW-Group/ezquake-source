@@ -673,7 +673,7 @@ void Cmd_AliasList_f (void)
 	Com_Printf ("------------\n%i/%i aliases\n", m, count);
 }
 
-void Cmd_EditAlias_f (void)
+void Cmd_AliasEdit_f (void)
 {
 	cmd_alias_t	*a;
 	char *s, *v, final_string[MAXCMDLINE - 1];
@@ -2370,7 +2370,7 @@ void Cmd_Init (void)
 #endif
 	Cmd_AddCommand ("echo", Cmd_Echo_f);
 	Cmd_AddCommand ("aliaslist", Cmd_AliasList_f);
-	Cmd_AddCommand ("aliasedit", Cmd_EditAlias_f);
+	Cmd_AddCommand ("aliasedit", Cmd_AliasEdit_f);
 	Cmd_AddCommand ("alias", Cmd_Alias_f);
 	Cmd_AddCommand ("tempalias", Cmd_Alias_f);
 	Cmd_AddCommand ("viewalias", Cmd_Viewalias_f);

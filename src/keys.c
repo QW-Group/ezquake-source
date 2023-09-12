@@ -1782,7 +1782,7 @@ void Key_BindList_f (void) {
 	}
 }
 
-void Key_EditBind_f(void) {
+void Key_BindEdit_f(void) {
 	char *keybinding, final_string[MAXCMDLINE - 1];
 	int keynum, argc = Cmd_Argc();
 
@@ -1970,7 +1970,7 @@ void Key_Init (void) {
 	// register our functions
 	Cmd_AddCommand("bindlist",Key_BindList_f);
 	Cmd_AddCommand("bind",Key_Bind_f);
-	Cmd_AddCommand("bindedit",Key_EditBind_f);
+	Cmd_AddCommand("bindedit", Key_BindEdit_f);
 	Cmd_AddCommand("unbind",Key_Unbind_f);
 	Cmd_AddCommand("unbindall",Key_Unbindall_f);
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
