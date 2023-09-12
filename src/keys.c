@@ -1782,7 +1782,7 @@ void Key_BindList_f (void) {
 	}
 }
 
-void Key_EditBind_f(void) {
+void Key_BindEdit_f(void) {
 	char *keybinding, final_string[MAXCMDLINE - 1];
 	int keynum, argc = Cmd_Argc();
 
@@ -1798,13 +1798,14 @@ void Key_EditBind_f(void) {
 		return;
 	}
 
-	keybinding = keybindings[keynum];
+	keybinding = keybindings[keynum] ? keybindings[keynum] : "";
 	strlcpy(final_string, "/bind \"", sizeof(final_string));
 	strlcat(final_string, Cmd_Argv(1), sizeof(final_string));
 	strlcat(final_string, "\" \"", sizeof(final_string));
 	strlcat(final_string, keybinding, sizeof(final_string));
 	strlcat(final_string, "\"", sizeof(final_string));
 	Key_ClearTyping();
+	key_linepos = 8 + (int)strlen(Cmd_Argv(1)) + 3; // move to where the commands are in the bind
 	memcpy(key_lines[edit_line] + 1, str2wcs(final_string), (strlen(final_string) + 1) * sizeof(wchar));
 }
 
@@ -1969,7 +1970,7 @@ void Key_Init (void) {
 	// register our functions
 	Cmd_AddCommand("bindlist",Key_BindList_f);
 	Cmd_AddCommand("bind",Key_Bind_f);
-	Cmd_AddCommand("bindedit",Key_EditBind_f);
+	Cmd_AddCommand("bindedit", Key_BindEdit_f);
 	Cmd_AddCommand("unbind",Key_Unbind_f);
 	Cmd_AddCommand("unbindall",Key_Unbindall_f);
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
