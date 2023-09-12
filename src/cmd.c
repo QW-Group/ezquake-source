@@ -695,7 +695,7 @@ void Cmd_AliasEdit_f (void)
 		return;
 	}
 
-	a = Cmd_FindAlias(Cmd_Argv(1));
+	a = Cmd_FindAlias(s);
 	v = (a ? a->value : "");
 
 	strlcpy(final_string, "/alias \"", sizeof(final_string));
@@ -704,7 +704,7 @@ void Cmd_AliasEdit_f (void)
 	strlcat(final_string, v, sizeof(final_string));
 	strlcat(final_string, "\"", sizeof(final_string));
 	Key_ClearTyping();
-	key_linepos = 9 + (int)strlen(Cmd_Argv(1)) + 3; // move to where the commands are in the alias
+	key_linepos = 9 + (int)strlen(s) + 3; // move to where the commands are in the alias
 	memcpy(key_lines[edit_line]+1, str2wcs(final_string), (strlen(final_string) + 1) * sizeof(wchar));
 }
 
