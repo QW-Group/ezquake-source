@@ -75,6 +75,11 @@ void Cmd_Wait_f (void)
 	return;
 }
 
+// copies the first argument to clipboard
+void Cmd_Clipboard_f(void) {
+	CopyToClipboard(Cmd_Args());
+}
+
 /*
 =============================================================================
 						COMMAND BUFFER
@@ -2383,6 +2388,7 @@ void Cmd_Init (void)
 	Cmd_AddCommand ("if", Cmd_If_f);
 	Cmd_AddCommand ("if_exists", Cmd_If_Exists_f);
 	Cmd_AddCommand ("eval", Cmd_Eval_f);
+	Cmd_AddCommand ("clipboard", Cmd_Clipboard_f);
 // QW262 -->
 	Cmd_AddCommand ("alias_in", Cmd_Alias_In_f);
 	Cmd_AddCommand ("alias_out", Cmd_Alias_Out_f);
