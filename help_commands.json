@@ -2086,6 +2086,9 @@
   "writeip": {
     "description": "Records all IP addresses on the server IP list. The file name is listip.cfg."
   },
+  "clipboard": {
+    "description": "Copies all the following arguments to the system clipboard"
+  },
   "z_ext_list": {
     "system-generated": true
   }
