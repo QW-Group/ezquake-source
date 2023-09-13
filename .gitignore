@@ -8,5 +8,9 @@ ezQuake.aps
 SysPrintf.log
 .ezquake/
 .vs
+*.json.c
+*.glsl.c
+vcpkg_installed/
+src/.msversion.h
 
 !.gitignore
