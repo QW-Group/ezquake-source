@@ -23,16 +23,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_trace.h"
 #include "r_state.h"
 
-void GLM_StateBeginDrawWorldOutlines(void)
-{
-	R_TraceEnterFunctionRegion;
-
-	// FIXME: This was different for GLC & GLM, why?  // disable depth-test
-	R_ApplyRenderingState(r_state_world_outline);
-
-	R_TraceLeaveFunctionRegion;
-}
-
 void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset)
 {
 	if (alpha_surfaces && polygon_offset) {

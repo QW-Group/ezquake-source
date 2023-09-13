@@ -70,7 +70,11 @@ typedef struct uniform_block_frame_constants_s {
 	float skyFogMix;
 	float fogMinZ;
 	float fogMaxZ;
-	float padding;
+	// camangles [0]
+
+	float camangles[3]; // [1] [2]
+	float padding[2];
+
 } uniform_block_frame_constants_t;
 
 #define MAX_WORLDMODEL_BATCH     64
@@ -113,7 +117,6 @@ void GLM_DrawAliasModelPostSceneBatches(void);
 
 void GLM_StateBeginPolyBlend(void);
 void GLM_StateBeginDraw3DSprites(void);
-void GLM_StateBeginDrawWorldOutlines(void);
 void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset);
 
 void GLM_UploadFrameConstants(void);

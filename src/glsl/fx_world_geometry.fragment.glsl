@@ -4,6 +4,10 @@
 
 layout(binding = 0) uniform sampler2D normal_texture;
 
+uniform vec3 outline_color;
+uniform float outline_scale;
+uniform float outline_depth_threshold;
+
 in vec2 TextureCoord;
 out vec4 frag_colour;
 
@@ -11,25 +15,37 @@ void main()
 {
 	ivec2 coords = ivec2(TextureCoord.x * r_width, TextureCoord.y * r_height);
 	vec4 center = texelFetch(normal_texture, coords, 0);
-	vec4 left = texelFetchOffset(normal_texture, coords, 0, ivec2(-1, 0));
-	vec4 right = texelFetchOffset(normal_texture, coords, 0, ivec2(+1, 0));
-	vec4 up = texelFetchOffset(normal_texture, coords, 0, ivec2(0, -1));
-	vec4 down = texelFetchOffset(normal_texture, coords, 0, ivec2(0, +1));
+	vec4 left   = texelFetch(normal_texture, coords - ivec2(1, 0), 0);
+	vec4 right  = texelFetch(normal_texture, coords + ivec2(1, 0), 0);
+	vec4 up     = texelFetch(normal_texture, coords - ivec2(0, 1), 0);
+	vec4 down   = texelFetch(normal_texture, coords + ivec2(0, 1), 0);
 
-	bool z_diff = r_zFar * abs((right.a - center.a) - (center.a - left.a)) > 8;
-	bool z_diff2 = r_zFar * abs((down.a - center.a) - (center.a - up.a)) > 8;
+	bool ignore = center.a == left.a && center.a == right.a && center.a == up.a && center.a == down.a;
+	if(ignore)
+		discard;
+
+	if(center.a == 0)
+		discard;
+
+	if ((left.a  != 0 && center.rgb != left.rgb ) ||
+		(right.a != 0 && center.rgb != right.rgb) ||
+		(up.a    != 0 && center.rgb != up.rgb   ) ||
+		(down.a  != 0 && center.rgb != down.rgb )
+	) {
+		frag_colour.rgb = outline_color;
+		frag_colour.a = 1;
+		return;
+	}
+
+	bool z_diff = r_zFar * abs((right.a - center.a) - (center.a - left.a)) > outline_depth_threshold;
+	bool z_diff2 = r_zFar * abs((down.a - center.a) - (center.a - up.a)) > outline_depth_threshold;
 
 	if (center.a != 0 && (
-		(left.a != 0 && right.a != 0 && z_diff) ||
-		(down.a != 0 && up.a != 0 && z_diff2) ||
-		(left.a != 0 && dot(center.rgb, left.rgb) < 0.9) ||
-		(right.a != 0 && dot(center.rgb, right.rgb) < 0.9) ||
-		(up.a != 0 && dot(center.rgb, up.rgb) < 0.9) ||
-		(down.a != 0 && dot(center.rgb, down.rgb) < 0.9)
-		)) {
-		frag_colour = vec4(0, 0, 0, 1.0);
+	(left.a  != 0 && right.a != 0 && z_diff) ||
+	(down.a  != 0 && up.a    != 0 && z_diff2)
+	)) {
+		frag_colour = vec4(outline_color, 1.0f);
+		return;
 	}
-	else {
-		frag_colour = vec4(0, 0, 0, 0);
-	}
+	frag_colour = vec4(0.0f);
 }

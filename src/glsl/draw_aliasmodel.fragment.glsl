@@ -3,6 +3,10 @@
 #ezquake-definitions
 
 uniform int mode;
+uniform vec3 outline_color;
+uniform vec3 outline_color_team;
+uniform vec3 outline_color_enemy;
+uniform int outline_use_player_color;
 
 #ifdef DRAW_CAUSTIC_TEXTURES
 layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
@@ -20,14 +24,43 @@ flat in int fsFlags;
 flat in int fsTextureEnabled;
 flat in int fsMaterialSampler;
 flat in float fsMinLumaMix;
+flat in vec4 plrtopcolor;
+flat in vec4 plrbotcolor;
 
 out vec4 frag_colour;
 
+bool texture_coord_is_on_legs() {
+	// both front and back legs at the same y level on the texture
+	if(fsTextureCoord.y >= 0.42 && fsTextureCoord.y <= 1)
+	           /*                   front legs                  */    /*                   back legs                   */
+		return fsTextureCoord.x >= 0.19 && fsTextureCoord.x <= 0.4 || fsTextureCoord.x >= 0.69 && fsTextureCoord.x <= 0.9;
+
+	return false;
+}
+
 void main()
 {
-	frag_colour = vec4(0, 0, 0, 1);
+	if((fsFlags & AMF_PLAYERMODEL) != 0) {
+		if(outline_use_player_color != 0) {
+			if((fsFlags & AMF_VWEPMODEL) != 0) { // vwep model is top color
+				frag_colour = vec4(plrtopcolor.rgb, 1.0f);
+			} else {
+				if (texture_coord_is_on_legs())
+					frag_colour = vec4(plrbotcolor.rgb, 1.0f);
+				else
+					frag_colour = vec4(plrtopcolor.rgb, 1.0f);
+			}
+		} else {
+			if((fsFlags & AMF_TEAMMATE) != 0)
+				frag_colour = vec4(outline_color_team, 1.0f);
+			else
+				frag_colour = vec4(outline_color_enemy, 1.0f);
+		}
+	} else {
+		frag_colour = vec4(outline_color, 1.0f);
+	}
 
-	if (mode != EZQ_ALIAS_MODE_OUTLINES) {
+	if (mode != EZQ_ALIAS_MODE_OUTLINES && mode != EZQ_ALIAS_MODE_OUTLINES_SPEC) {
 		vec4 tex = texture(samplers[fsMaterialSampler], fsTextureCoord.st);
 		vec4 altTex = texture(samplers[fsMaterialSampler], fsAltTextureCoord.st);
 #ifdef DRAW_CAUSTIC_TEXTURES

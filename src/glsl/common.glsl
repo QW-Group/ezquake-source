@@ -67,7 +67,11 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	float skyFogMix;
 	float fogMinZ;
 	float fogMaxZ;
-	float padding;
+	// camAngles.x
+
+	vec3 camAngles; // camAngles.yz
+	float padding1;
+	float padding2;
 };
 
 struct WorldDrawInfo {
@@ -95,6 +99,8 @@ struct AliasModelVert {
 struct AliasModel {
 	mat4 modelView;
 	vec4 color;
+	vec4 topcolor;
+	vec4 bottomcolor;
 	int flags;
 	float yaw_angle_rad;
 	float shadelight;

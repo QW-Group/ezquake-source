@@ -81,7 +81,7 @@ qbool RuleSets_DisallowSimpleTexture(model_t* mod)
 	}
 }
 
-// for models (gl_outline)
+// for models (gl_outline 1 and 3)
 qbool RuleSets_DisallowModelOutline(struct model_s *mod)
 {
 	if (mod == NULL) {
@@ -102,7 +102,20 @@ qbool RuleSets_DisallowModelOutline(struct model_s *mod)
 	}
 }
 
-// for edges (r_fx_geometry)
+// gl_outline_scale_model
+// 0-1 for smackdown and qcon, 0-5 for others
+float RuleSets_ModelOutlineScale(void) {
+	extern cvar_t gl_outline_scale_model;
+	switch(rulesetDef.ruleset) {
+		case rs_smackdown:
+		case rs_qcon:
+			return bound(0.0f, gl_outline_scale_model.value, 1.0f);
+		default:
+			return bound(0.0f, gl_outline_scale_model.value, 5.0f);
+	}
+}
+
+// for edges (gl_outline 2 and 3)
 qbool RuleSets_AllowEdgeOutline(void)
 {
 	switch(rulesetDef.ruleset) {

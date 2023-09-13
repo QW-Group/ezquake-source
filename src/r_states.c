@@ -293,6 +293,10 @@ static void R_InitialiseEntityStates(void)
 	state->blendingEnabled = false;
 	state->cullface.mode = r_cullface_back;
 
+	state = R_CopyRenderingState(r_state_aliasmodel_outline_spec, r_state_aliasmodel_outline, "aliasmodel-outline-spec");
+	state->cullface.mode = r_cullface_front;
+	state->depth.test_enabled = false;
+
 	state = R_CopyRenderingState(r_state_weaponmodel_outline, r_state_aliasmodel_outline, "weaponmodel-outline");
 	state->depth.farRange = R_UseImmediateOpenGL() ? 0.3f : state->depth.farRange;
 

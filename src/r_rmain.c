@@ -219,9 +219,20 @@ cvar_t gl_simpleitems                      = {"gl_simpleitems", "0"};
 cvar_t gl_simpleitems_size                 = {"gl_simpleitems_size", "16"};
 cvar_t gl_simpleitems_orientation          = {"gl_simpleitems_orientation", "2"};
 cvar_t gl_modulate                         = {"gl_modulate", "1"};
+
 cvar_t gl_outline                          = {"gl_outline", "0"};
+cvar_t gl_outline_color_world              = {"gl_outline_color_world", "0 0 0"};
+cvar_t gl_outline_color_model              = {"gl_outline_color_model", "0 0 0"};
+cvar_t gl_outline_scale_world              = {"gl_outline_scale_world", "1"};
+cvar_t gl_outline_scale_model              = {"gl_outline_scale_model", "1"};
+cvar_t gl_outline_world_depth_threshold    = {"gl_outline_world_depth_threshold", "4"};
+cvar_t gl_outline_use_player_color         = {"gl_outline_use_player_color", "0"};
+cvar_t gl_spec_xray                        = {"gl_spec_xray", "0"};
+cvar_t gl_spec_xray_distance               = {"gl_spec_xray_distance", "1500"};
+cvar_t gl_outline_color_team               = {"gl_outline_color_team", ""};
+cvar_t gl_outline_color_enemy              = {"gl_outline_color_enemy", ""};
+
 cvar_t gl_smoothmodels                     = {"gl_smoothmodels", "1"};
-cvar_t r_fx_geometry                       = {"r_fx_geometry", "0"};
 
 cvar_t gl_vbo_clientmemory                 = {"gl_vbo_clientmemory", "0", CVAR_LATCH_GFX };
 
@@ -698,9 +709,17 @@ void R_Init(void)
 	Cvar_Register(&gl_modulate);
 
 	Cvar_Register(&gl_outline);
+	Cvar_Register(&gl_outline_color_world);
+	Cvar_Register(&gl_outline_color_model);
+	// Cvar_Register(&gl_outline_scale_world);
+	Cvar_Register(&gl_outline_scale_model);
+	Cvar_Register(&gl_outline_world_depth_threshold);
+	Cvar_Register(&gl_outline_use_player_color);
+	Cvar_Register(&gl_spec_xray);
+	Cvar_Register(&gl_spec_xray_distance);
+	Cvar_Register(&gl_outline_color_team);
+	Cvar_Register(&gl_outline_color_enemy);
 	Cvar_Register(&gl_smoothmodels);
-
-	Cvar_Register(&r_fx_geometry);
 
 	Cvar_Register(&gl_vbo_clientmemory);
 

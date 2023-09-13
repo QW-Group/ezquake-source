@@ -326,6 +326,22 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_lightmap_compute, "firstLightmap", 1, false },
 	// r_program_uniform_turb_glc_fog_skyFogMix,
 	{ r_program_sky_glc, "skyFogMix", 1, false },
+	// r_program_uniform_outline_color
+	{ r_program_fx_world_geometry, "outline_color", 1, false },
+	// r_program_uniform_outline_depth_threshold
+	{ r_program_fx_world_geometry, "outline_depth_threshold", 1, false },
+	// r_program_uniform_outline_scale
+	{ r_program_fx_world_geometry, "outline_scale", 1, false },
+	// r_program_uniform_aliasmodel_outline_color_model
+	{ r_program_aliasmodel, "outline_color", 1, false },
+	// r_program_uniform_aliasmodel_outline_color_team
+	{ r_program_aliasmodel, "outline_color_team", 1, false },
+	// r_program_uniform_aliasmodel_outline_color_enemy
+	{ r_program_aliasmodel, "outline_color_enemy", 1, false },
+	// r_program_uniform_aliasmodel_outline_use_player_color
+	{ r_program_aliasmodel, "outline_use_player_color", 1, false },
+	// r_program_uniform_aliasmodel_outline_scale
+	{ r_program_aliasmodel, "outline_scale", 1, false },
 };
 
 #ifdef C_ASSERT

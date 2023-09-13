@@ -62,16 +62,29 @@ static void GLM_DrawWorldOutlines(void)
 	if (R_TextureReferenceIsValid(normals) && GLM_CompileWorldGeometryProgram()) {
 		int viewport[4];
 		int fullscreen_viewport[4];
+		extern cvar_t gl_outline_color_world, gl_outline_world_depth_threshold; //, gl_outline_scale_world;
+
+		R_GetViewport(viewport);
 
 		// If we are only rendering to a section of the screen then that is the only part of the texture that will be filled in
 		if (CL_MultiviewEnabled()) {
-			R_GetViewport(viewport);
 			R_GetFullScreenViewport(fullscreen_viewport);
 			R_Viewport(fullscreen_viewport[0], fullscreen_viewport[1], fullscreen_viewport[2], fullscreen_viewport[3]);
 			R_EnableScissorTest(viewport[0], viewport[1], viewport[2], viewport[3]);
+		} else {
+			// ignore viewsize and allat crap and set the viewport size to the whole window.
+			// previously the viewport was already resized, and then resized again later, making the outlines not align.
+			R_Viewport(0, 0, VID_ScaledWidth3D(), VID_ScaledHeight3D());
 		}
 
 		renderer.TextureUnitBind(0, normals);
+
+		R_ProgramUniform1f(r_program_uniform_outline_depth_threshold, gl_outline_world_depth_threshold.value);
+		// R_ProgramUniform1f(r_program_uniform_outline_scale, gl_outline_scale_world.value);
+		R_ProgramUniform3f(r_program_uniform_outline_color,
+                           (float)gl_outline_color_world.color[0] / 255.0f,
+                           (float)gl_outline_color_world.color[1] / 255.0f,
+                           (float)gl_outline_color_world.color[2] / 255.0f);
 
 		R_ProgramUse(r_program_fx_world_geometry);
 		R_ApplyRenderingState(r_state_fx_world_geometry);
@@ -79,8 +92,8 @@ static void GLM_DrawWorldOutlines(void)
 		GL_DrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 		// Restore viewport
+		R_Viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 		if (CL_MultiviewEnabled()) {
-			R_Viewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 			R_DisableScissorTest();
 		}
 	}

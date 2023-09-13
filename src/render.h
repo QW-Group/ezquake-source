@@ -42,6 +42,8 @@ typedef struct efrag_s {
 #define RF_ADDITIVEBLEND  128
 #define RF_ROCKETPACK     256
 #define RF_LGPACK         512
+#define RF_BEHINDWALL    1024
+#define RF_VWEPMODEL     2048
 
 #define RF_BACKPACK_FLAGS (RF_ROCKETPACK | RF_LGPACK)
 

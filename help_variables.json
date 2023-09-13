@@ -5167,7 +5167,7 @@
       "default": "0",
       "desc": "Controls outlining of models and map. Disallowed in qcon ruleset.",
       "group-id": "35",
-      "remarks": "See /r_fx_geometry for edge outlining of the map.",
+      "remarks": "World outlines require vid_framebuffer 1|2 and Modern OpenGL (vid_renderer 1). With vid_renderer 0, ruleset default and sv_cheats 1, gl_outline 2 draws outlines of every surface that is rendered.",
       "type": "enum",
       "values": [
         {
@@ -5175,11 +5175,11 @@
           "name": "0"
         },
         {
-          "description": "Outline models to create rotoscope effect",
+          "description": "Outline models",
           "name": "1"
         },
         {
-          "description": "Outline world (used only for map development)",
+          "description": "Outline world",
           "name": "2"
         },
         {
@@ -5187,6 +5187,66 @@
           "name": "3"
         }
       ]
+    },
+    "gl_outline_color_world": {
+      "default": "0 0 0",
+      "desc": "Determines the color of world outlines.",
+      "group-id": "35",
+      "type": "string"
+    },
+    "gl_outline_color_model": {
+      "default": "0 0 0",
+      "desc": "Determines the color of model outlines.",
+      "remarks": "Requires vid_renderer 1",
+      "group-id": "35",
+      "type": "string"
+    },
+    "gl_outline_scale_model": {
+      "default": "1",
+      "desc": "Determines the scale of model outlines. Allows values 0 to 1 for rulesets smackdown and qcon, and 0 to 5 for other rulesets.",
+      "remarks": "Requires vid_renderer 1",
+      "group-id": "35",
+      "type": "float"
+    },
+    "gl_outline_world_depth_threshold": {
+      "default": "4",
+      "desc": "Threshold for finding edges with depth values. Higher value means vanishing lines at close range. Lower value means false positives at longer range.",
+      "group-id": "35",
+      "type": "float"
+    },
+    "gl_outline_use_player_color": {
+      "default": "0",
+      "desc": "Use the top and bottom color for drawing player outlines",
+      "remarks": "Requires vid_renderer 1",
+      "group-id": "35",
+      "type": "boolean"
+    },
+    "gl_outline_color_team": {
+      "default": "",
+      "desc": "Determines the outline color of friendly players. Set to \"\" to use the value of gl_outline_color_model.",
+      "remarks": "Requires vid_renderer 1",
+      "group-id": "35",
+      "type": "string"
+    },
+    "gl_outline_color_enemy": {
+      "default": "",
+      "desc": "Determines the outline color of enemy players. Set to \"\" to use the value of gl_outline_color_model.",
+      "remarks": "Requires vid_renderer 1",
+      "group-id": "35",
+      "type": "string"
+    },
+    "gl_spec_xray": {
+      "default": "0",
+      "desc": "See players through walls (demo/qtv only). Is affected by gl_outline_* values like color, scale, etc.",
+      "remarks": "Requires vid_renderer 1",
+      "group-id": "35",
+      "type": "boolean"
+    },
+    "gl_spec_xray_distance": {
+      "default": "512",
+      "desc": "Distance from which you can see the players through walls, see gl_spec_xray",
+      "group-id": "35",
+      "type": "float"
     },
     "gl_part_blobs": {
       "default": "0",
@@ -15854,13 +15914,6 @@
           "description": "Only use map-specific settings in local single-player mode"
         }
       ]
-    },
-    "r_fx_geometry": {
-      "default": "0",
-      "desc": "Outlines the world based on surface normals. Disallowed in qcon ruleset.",
-      "group-id": "35",
-      "remarks": "Requires vid_framebuffer 1|2 and Modern OpenGL (vid_renderer 1). See /gl_outline for model outline",
-      "type": "boolean"
     },
     "r_glstats": {
       "default": "0",

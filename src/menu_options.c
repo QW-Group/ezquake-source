@@ -199,9 +199,6 @@ extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_we
 	enemyforceskins, teamforceskins, vid_vsync_lag_fix, cl_sayfilter_coloredtext, cl_sayfilter_sendboth,
 	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format, menu_ingame, sys_inactivesound
 ;
-#ifdef RENDERER_OPTION_MODERN_OPENGL
-extern cvar_t r_fx_geometry;
-#endif
 
 #ifdef _WIN32
 extern cvar_t demo_format, sys_highpriority, cl_window_caption, vid_flashonactivity;
@@ -995,9 +992,6 @@ setting settfps_arr[] = {
 	ADDSET_BOOL		("Gib Filter", cl_gibfilter),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NAMED	("Dead Body Filter", cl_deadbodyfilter, deadbodyfilter_enum),
-#ifdef RENDERER_OPTION_MODERN_OPENGL
-	ADDSET_BOOL		("Outline", r_fx_geometry),
-#endif
 	ADDSET_BASIC_SECTION(),
 	
 	ADDSET_SEPARATOR("Projectiles"),

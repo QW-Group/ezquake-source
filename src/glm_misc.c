@@ -169,6 +169,10 @@ void GLM_SetupGL(void)
 	memcpy(frameConstants.projectionMatrix, R_ProjectionMatrix(), sizeof(frameConstants.projectionMatrix));
 	VectorCopy(r_refdef.vieworg, frameConstants.position);
 
+	frameConstants.camangles[PITCH] = DEG2RAD(r_refdef.viewangles[PITCH]);
+	frameConstants.camangles[YAW] = DEG2RAD(r_refdef.viewangles[YAW]);
+	frameConstants.camangles[ROLL] = DEG2RAD(r_refdef.viewangles[ROLL]);
+
 	frameConstantsUploaded = false;
 }
 

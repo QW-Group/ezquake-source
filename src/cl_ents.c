@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "qmb_particles.h"
 #include "rulesets.h"
+#include "teamplay.h"
 
 static int MVD_TranslateFlags(int src);
 void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);	
@@ -1651,7 +1652,11 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int old_vw_frame)
 	newent.skinnum = 0;
 	newent.colormap = vid.colormap;
 	newent.renderfx |= RF_PLAYERMODEL;	// not really, but use same lighting rules
+	newent.renderfx |= RF_VWEPMODEL;
+	if(ent->renderfx & RF_BEHINDWALL)
+		newent.renderfx |= RF_BEHINDWALL;
 	newent.effects = ent->effects; // Electro - added for shells
+	newent.scoreboard = ent->scoreboard; // for team color in gl_outline
 
 	if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing && !CL_SetAlphaByDistance(&newent)) {
 		return false;
@@ -1684,16 +1689,17 @@ void CL_StorePausePredictionLocations(void)
 static void CL_LinkPlayers(void)
 {
 	int j, msec, i, flicker, oldphysent;
-	float *org;
-	vec3_t	tmp;
+	float *org, distance;
+	vec3_t tmp, end, diff;
 	double playertime = CL_PlayerTime();
 	player_info_t *info;
 	player_state_t *state, exact;
 	entity_t ent;
 	centity_t *cent;
 	frame_t *frame;
+	trace_t trace;
 	customlight_t cst_lt = {0};
-	extern cvar_t cl_debug_antilag_ghost, cl_debug_antilag_view;
+	extern cvar_t cl_debug_antilag_ghost, cl_debug_antilag_view, gl_spec_xray_distance;
 
 	frame = &cl.frames[cl.parsecount & UPDATE_MASK];
 	memset (&ent, 0, sizeof(entity_t));
@@ -1955,16 +1961,32 @@ static void CL_LinkPlayers(void)
 			}
 		}
 
-		if ((cl.vwep_enabled && r_drawvweps.value && state->vw_index) && (state->modelindex != cl_modelindices[mi_eyes])) 
+		VectorCopy(cent->lerp_origin, end);
+		end[2] += 12;
+		trace = PM_TraceLine(r_refdef.vieworg, end);
+
+		if (trace.fraction != 1) {
+			VectorSubtract(cent->lerp_origin, r_refdef.vieworg, diff);
+			distance = VectorLength(diff);
+
+			if(distance > gl_spec_xray_distance.value)
+				continue;
+			else
+				ent.renderfx |= RF_BEHINDWALL;
+		} else
+			ent.renderfx &= ~RF_BEHINDWALL;
+
+		ent.renderfx |= RF_PLAYERMODEL;
+
+		if ((cl.vwep_enabled && r_drawvweps.value && state->vw_index) && (state->modelindex != cl_modelindices[mi_eyes]))
 		{
 			qbool vwep;
 			vwep = CL_AddVWepModel (&ent, state->vw_index, cent->old_vw_frame);
-			if (vwep) 
+			if (vwep)
 			{
 				if (cl.vw_model_name[0][0] != '-') 
 				{
 					ent.model = cl.vw_model_precache[0];
-					ent.renderfx |= RF_PLAYERMODEL;
 					if (Cam_TrackNum() >= 0 && cl.racing) {
 						CL_SetAlphaByDistance(&ent);
 					}

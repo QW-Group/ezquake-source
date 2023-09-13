@@ -3,6 +3,7 @@
 #ezquake-definitions
 
 uniform int mode;
+uniform float outline_scale;
 
 layout(location = 0) in vec3 vboPosition;
 layout(location = 1) in vec2 vboTex;
@@ -26,6 +27,8 @@ flat out int fsFlags;
 flat out int fsTextureEnabled;
 flat out int fsMaterialSampler;
 flat out float fsMinLumaMix;
+flat out vec4 plrtopcolor;
+flat out vec4 plrbotcolor;
 
 void main()
 {
@@ -37,6 +40,9 @@ void main()
 
 	fsFlags = models[_instanceId].flags;
 	fsMinLumaMix = models[_instanceId].minLumaMix;
+
+	plrtopcolor = models[_instanceId].topcolor;
+	plrbotcolor = models[_instanceId].bottomcolor;
 
 #ifdef EZQ_ALIASMODEL_MUZZLEHACK
 	lerpFrac = sign(lerpFrac) * max(lerpFrac, (vboFlags & AM_VERTEX_NOLERP));
@@ -65,8 +71,9 @@ void main()
 			fsBaseColor = models[_instanceId].color;
 		}
 	}
-	else if (mode == EZQ_ALIAS_MODE_OUTLINES) {
-		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position + models[_instanceId].outlineNormalScale * normalCoords, 1);
+	else if (mode == EZQ_ALIAS_MODE_OUTLINES || mode == EZQ_ALIAS_MODE_OUTLINES_SPEC) {
+		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position + /*models[_instanceId].outlineNormalScale **/ normalCoords * outline_scale, 1);
+		fsTextureCoord = vec2(tex.x, tex.y);
 	}
 	else {
 		gl_Position = projectionMatrix * models[_instanceId].modelView * vec4(position + normalCoords * 0.5, 1);
