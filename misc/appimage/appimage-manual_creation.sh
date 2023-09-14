@@ -93,6 +93,7 @@ strip -s "$DIR/AppDir/usr/lib/"* || exit 5
 strip -s "$DIR/AppDir/usr/bin/"* || exit 5
 mv -f "$DIR/AppDir/usr/lib/libc.so.6" "$DIR/AppDir/usr/lib-override/."
 mv -f "$DIR/AppDir/usr/lib/libm.so.6" "$DIR/AppDir/usr/lib-override/."
+cp -f "$(ldconfig -Np|grep --color=never libpthread.so.0$|grep --color=never $(uname -m)|awk '{print $NF}')" "$DIR/AppDir/usr/lib-override/."
 cp -Lf "/lib64/ld-linux-${ARCHDASH}.so.2" "$DIR/AppDir/usr/lib-override/." || exit 6
 
 cd "$DIR" || exit 5
