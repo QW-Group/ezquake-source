@@ -11,6 +11,10 @@ uniform float outline_depth_threshold;
 in vec2 TextureCoord;
 out vec4 frag_colour;
 
+bool vec_nequ(vec3 a, vec3 b) {
+	return dot(a, b) < 0.997; // todo: make this customizable?
+}
+
 void main()
 {
 	ivec2 coords = ivec2(TextureCoord.x * r_width, TextureCoord.y * r_height);
@@ -21,16 +25,20 @@ void main()
 	vec4 down   = texelFetch(normal_texture, coords + ivec2(0, 1), 0);
 
 	bool ignore = center.a == left.a && center.a == right.a && center.a == up.a && center.a == down.a;
-	if(ignore)
-		discard;
+	if(ignore) {
+		frag_colour = vec4(0);
+		return;
+	}
 
-	if(center.a == 0)
-		discard;
+	if(center.a == 0) {
+		frag_colour = vec4(0);
+		return;
+	}
 
-	if ((left.a  != 0 && center.rgb != left.rgb ) ||
-		(right.a != 0 && center.rgb != right.rgb) ||
-		(up.a    != 0 && center.rgb != up.rgb   ) ||
-		(down.a  != 0 && center.rgb != down.rgb )
+	if ((left.a  != 0 && vec_nequ(center.rgb, left.rgb )) ||
+		(right.a != 0 && vec_nequ(center.rgb, right.rgb)) ||
+		(up.a    != 0 && vec_nequ(center.rgb, up.rgb   )) ||
+		(down.a  != 0 && vec_nequ(center.rgb, down.rgb ))
 	) {
 		frag_colour.rgb = outline_color;
 		frag_colour.a = 1;
