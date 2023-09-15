@@ -28,8 +28,10 @@ Categories=Game;
 Keywords=quake;first;person;shooter;multiplayer;'
 
 TESTPROGRAM='
+#include "curl/curl.h"
 int main(){
- return 0;
+	curl_easy_init();
+	return 0;
 }
 '
 
@@ -63,19 +65,21 @@ mkdir -p "$DIR/AppDir/usr/bin" || exit 1
 mkdir -p "$DIR/AppDir/usr/lib" || exit 1
 mkdir -p "$DIR/AppDir/usr/lib-override" || exit 1
 
-echo "$TESTPROGRAM" > "$DIR/test.c" || exit 2
-gcc "$DIR/test.c" -o "$DIR/AppDir/usr/bin/test" ||exit 2
-rm -f "$DIR/AppDir/test.c" || exit 2
-
 VERSION=$(sed -n 's/.*VERSION_NUMBER.*"\(.*\)".*/\1/p' src/version.h)
 REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
 
+#build ezquake
 if [ $SKIP_DEPS -eq 0 ];then
   chmod +x ./build-linux.sh && \
   nice ./build-linux.sh || exit 3
 else
   make -j$(nproc)
 fi
+
+#build test program
+echo "$TESTPROGRAM" > "$DIR/test.c" || exit 2
+gcc "$DIR/test.c" -o "$DIR/AppDir/usr/bin/test" -lcurl || exit 2
+rm -f "$DIR/AppDir/test.c" || exit 2
 
 cp -f ezquake-linux-$ARCH "$DIR/AppDir/usr/bin/." || exit 4
 rm -f "$DIR/AppDir/AppRun"
