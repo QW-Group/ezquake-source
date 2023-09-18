@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="dbg-classic|Win32">
@@ -63,6 +63,7 @@
     <RootNamespace>ezQuake</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectName>ezQuake</ProjectName>
+    <AdditionalIncludeDirectories>$(VcpkgManifestRoot)/vcpkg_installed/$(VcpkgHostTriplet)/include/SDL2;$(VcpkgManifestRoot)/vcpkg_installed/$(VcpkgHostTriplet)/include/minizip;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-all|Win32'" Label="Configuration">
@@ -70,24 +71,28 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <VcpkgTriplet>x86-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-classic|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <VcpkgTriplet>x86-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-modern|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <VcpkgTriplet>x86-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <VcpkgTriplet>x86-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='rls-all|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -95,6 +100,7 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <VcpkgTriplet>x86-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='rls-modern|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -102,6 +108,7 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <VcpkgTriplet>x86-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='rls-classic|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -109,6 +116,7 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <VcpkgTriplet>x86-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-all|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -121,18 +129,21 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-modern|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
+    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='rls-all|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -140,6 +151,7 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='rls-modern|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -147,6 +159,7 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='rls-classic|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -154,6 +167,7 @@
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -204,32 +218,32 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-all|Win32'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir).vs\$(Platform)\$(Configuration)\Output\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-classic|Win32'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
     <OutDir>$(SolutionDir).vs\$(Platform)\$(Configuration)\Output\</OutDir>
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-modern|Win32'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
     <OutDir>$(SolutionDir).vs\$(Platform)\$(Configuration)\Output\</OutDir>
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|Win32'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
     <ExecutablePath>$(VC_ExecutablePath_x86);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);C:\VulkanSDK\1.1.101.0\Bin32</ExecutablePath>
@@ -237,71 +251,78 @@
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-all|x64'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib64;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir).vs\$(Platform)\$(Configuration)\Output\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-classic|x64'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib64;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir).vs\$(Platform)\$(Configuration)\Output\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-modern|x64'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib64;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir).vs\$(Platform)\$(Configuration)\Output\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='dbg-vulkan|x64'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib64;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <PreBuildEventUseInBuild>true</PreBuildEventUseInBuild>
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir).vs\$(Platform)\$(Configuration)\Output\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='rls-all|x64'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib64;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir).vs\$(Platform)\$(Configuration)\Output\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='rls-modern|x64'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib64;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir).vs\$(Platform)\$(Configuration)\Output\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='rls-classic|x64'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib64;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
     <OutDir>$(SolutionDir).vs\$(Platform)\$(Configuration)\Output\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='rls-all|Win32'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir).vs\$(Platform)\$(Configuration)\Output\</OutDir>
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='rls-modern|Win32'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir).vs\$(Platform)\$(Configuration)\Output\</OutDir>
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='rls-classic|Win32'">
-    <IncludePath>$(SolutionDir)\src\minizip;$(SolutionDir)\src\qwprot\src;$(SolutionDir)\src\vstudio-libs\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)\src\vstudio-libs\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <IncludePath>$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\SDL2;$(SolutionDir)\vcpkg_installed\$(VcpkgTriplet)\$(VcpkgTriplet)\include\minizip;$(SolutionDir)\src\qwprot\src;$(IncludePath)</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir).vs\$(Platform)\$(Configuration)\Output\</OutDir>
     <IntDir>.vs\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+    <VcpkgManifestInstall>true</VcpkgManifestInstall>
+    <VcpkgUseStatic>true</VcpkgUseStatic>
+    <VcpkgConfiguration>Release</VcpkgConfiguration>
+    <VcpkgAdditionalInstallOptions>--clean-after-build</VcpkgAdditionalInstallOptions>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='dbg-all|Win32'">
     <ClCompile>
@@ -318,7 +339,7 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Setupapi.lib;libspeexdsp.lib;libspeex.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -373,7 +394,7 @@ msversion.bat</Command>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Setupapi.lib;libspeexdsp.lib;libspeex.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -428,7 +449,7 @@ msversion.bat</Command>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Setupapi.lib;libspeexdsp.lib;libspeex.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -483,7 +504,7 @@ msversion.bat</Command>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Setupapi.lib;libspeexdsp.lib;libspeex.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -530,7 +551,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
@@ -539,7 +560,7 @@ msversion.bat</Command>
 msversion.bat</Command>
     </PreBuildEvent>
     <Link>
-      <AdditionalDependencies>Setupapi.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -575,7 +596,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
@@ -584,7 +605,7 @@ msversion.bat</Command>
 msversion.bat</Command>
     </PreBuildEvent>
     <Link>
-      <AdditionalDependencies>Setupapi.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -620,7 +641,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
@@ -629,7 +650,7 @@ msversion.bat</Command>
 msversion.bat</Command>
     </PreBuildEvent>
     <Link>
-      <AdditionalDependencies>Setupapi.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -665,7 +686,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
@@ -674,7 +695,7 @@ msversion.bat</Command>
 msversion.bat</Command>
     </PreBuildEvent>
     <Link>
-      <AdditionalDependencies>Setupapi.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -719,7 +740,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Setupapi.lib;libspeexdsp.lib;libspeex.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <ShowProgress>NotSet</ShowProgress>
       <Profile>true</Profile>
@@ -772,7 +793,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Setupapi.lib;libspeexdsp.lib;libspeex.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <ShowProgress>NotSet</ShowProgress>
       <Profile>true</Profile>
@@ -826,7 +847,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Setupapi.lib;libspeexdsp.lib;libspeex.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <ShowProgress>NotSet</ShowProgress>
       <Profile>true</Profile>
@@ -871,7 +892,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -880,7 +901,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Setupapi.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -922,7 +943,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -930,7 +951,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Setupapi.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -972,7 +993,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -980,7 +1001,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Setupapi.lib;libsndfile.lib;freetyped.lib;version.lib;imm32.lib;winmm.lib;turbojpeg-static.lib;SDL2.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;sdl2.lib;jansson_d.lib;libpng16.lib;zlib.lib;libcurld.lib;libexpat.lib;pcred.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -2093,8 +2114,6 @@ msversion.bat</Command>
     <ClCompile Include="src\menu_multiplayer.c" />
     <ClCompile Include="src\menu_options.c" />
     <ClCompile Include="src\menu_proxy.c" />
-    <ClCompile Include="src\minizip\ioapi.c" />
-    <ClCompile Include="src\minizip\unzip.c" />
     <ClCompile Include="src\movie.c" />
     <ClCompile Include="src\movie_avi.c" />
     <ClCompile Include="src\mvd_autotrack.c" />

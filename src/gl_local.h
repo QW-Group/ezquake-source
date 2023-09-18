@@ -20,43 +20,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __GL_LOCAL_H__
 #define __GL_LOCAL_H__
 
-#ifdef __APPLE__
-
-#include <OpenGL/gl.h>
-#ifdef GL_GLEXT_VERSION
-#undef GL_GLEXT_VERSION
-#endif
-#ifdef GL_DRAW_FRAMEBUFFER_BINDING
-#undef GL_DRAW_FRAMEBUFFER_BINDING
-#endif
-#include "opengl/glext.h"  // Should be <OpenGL/glext.h> but appears broken on newer macOS
-
-#else // __APPLE__
-
-#include <GL/gl.h>
-
-#ifdef __GNUC__
-#include <GL/glext.h>
-#endif // __GNUC__
-
-#ifdef _MSC_VER
-#include <glext.h>
-#endif
-
-#ifndef _WIN32
-#include <GL/glx.h>
-#endif // _WIN32
-#endif // __APPLE__
+#include <SDL_opengl.h>
+#include <SDL_opengl_glext.h>
 
 #include "gl_model.h"
 #include "r_framestats.h"
 #include "r_trace.h"
 #include "r_local.h"
-//#include "gl_texture.h"
-
-#ifndef APIENTRY
-#define APIENTRY
-#endif
 
 void R_TimeRefresh_f (void);
 texture_t *R_TextureAnimation(entity_t* ent, texture_t *base);

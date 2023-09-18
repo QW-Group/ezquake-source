@@ -145,6 +145,11 @@ JANSSON_LIBS ?= $(shell pkg-config jansson --libs)
 CFLAGS += $(JANSSON_CFLAGS)
 LIBS_c += $(JANSSON_LIBS)
 
+MINIZIP_CFLAGS ?= $(shell pkg-config --cflags minizip)
+MINIZIP_LIBS ?= $(shell pkg-config --libs minizip)
+CFLAGS_c += $(MINIZIP_CFLAGS)
+LIBS_c += $(MINIZIP_LIBS)
+
 SPEEX_LIBS ?= $(shell pkg-config speex --libs) $(shell pkg-config speexdsp --libs)
 ifdef SPEEX_LIBS
     CFLAGS_c += $(shell pkg-config speex --cflags) $(shell pkg-config speexdsp --cflags) -DWITH_SPEEX
@@ -554,26 +559,12 @@ LIBS_c += -lm
     endif
 endif
 
-ifeq ($(SYS),NetBSD)
-    USE_SYSTEM_MINIZIP=1
-endif
-
 #ifdef CONFIG_OGG
 #    OGG_CFLAGS ?= $(shell pkg-config vorbisfile --cflags) -DWITH_OGG_VORBIS
 #    OGG_LIBS ?= $(shell pkg-config vorbisfile --libs)
 #    CFLAGS_c += $(OGG_CFLAGS)
 #    LIBS_c += $(OGG_LIBS)
 #endif
-
-ifeq ($(USE_SYSTEM_MINIZIP),1)
-	MINIZIP_CFLAGS ?= $(shell pkg-config --cflags minizip)
-	MINIZIP_LIBS ?= $(shell pkg-config --libs minizip)
-	CFLAGS_c += $(MINIZIP_CFLAGS)
-	LIBS_c += $(MINIZIP_LIBS)
-else
-	OBJS_c += $(SRC_DIR)/minizip/ioapi.o $(SRC_DIR)/minizip/unzip.o
-	CFLAGS_c += -I$(SRC_DIR)/minizip
-endif
 
 ### Targets ###
 
