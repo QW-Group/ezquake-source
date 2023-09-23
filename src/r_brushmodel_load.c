@@ -1665,6 +1665,7 @@ void R_LoadBrushModelTextures(model_t *m)
 		noscale_flag = 0;
 		noscale_flag = (!gl_scaleModelTextures.value && !m->isworldmodel) ? TEX_NOSCALE : noscale_flag;
 		noscale_flag = (!gl_scaleTurbTextures.value  && Mod_IsTurbTextureName(m, tx->name)) ? TEX_NOSCALE : noscale_flag;
+		noscale_flag = (!gl_scaleAlphaTextures.value  && Mod_IsAlphaTextureName(m, tx->name)) ? TEX_NOSCALE : noscale_flag;
 
 		mipTexLevel  = noscale_flag ? 0 : gl_miptexLevel.value;
 

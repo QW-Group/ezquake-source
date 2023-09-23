@@ -48,6 +48,7 @@ cvar_t gl_anisotropy = { "gl_anisotropy","16", 0, OnChange_gl_anisotropy };
 cvar_t gl_scaleModelTextures = { "gl_scaleModelTextures", "0", CVAR_RELOAD_GFX };
 cvar_t gl_scaleModelSimpleTextures = { "gl_scaleModelSimpleTextures", "0", CVAR_RELOAD_GFX };
 cvar_t gl_scaleTurbTextures = { "gl_scaleTurbTextures", "1", CVAR_RELOAD_GFX };
+cvar_t gl_scaleAlphaTextures = { "gl_scaleAlphaTextures", "0", CVAR_RELOAD_GFX };
 cvar_t gl_scaleskytextures = { "gl_scaleskytextures", "0", CVAR_RELOAD_GFX };
 cvar_t gl_no24bit = { "gl_no24bit", "0", CVAR_RELOAD_GFX };
 
@@ -181,6 +182,7 @@ void R_TextureRegisterCvars(void)
 		Cvar_Register(&gl_scaleModelSimpleTextures);
 		Cvar_Register(&gl_scaleTurbTextures);
 		Cvar_Register(&gl_scaleskytextures);
+		Cvar_Register(&gl_scaleAlphaTextures);
 		Cvar_Register(&gl_miptexLevel);
 		Cvar_Register(&gl_picmip);
 		Cvar_Register(&gl_lerpimages);
