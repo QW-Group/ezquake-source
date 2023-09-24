@@ -129,7 +129,7 @@ void R_TextureSizeRoundUp(int orig_width, int orig_height, int* width, int* heig
 const char* R_TextureIdentifier(texture_ref ref);
 #endif
 
-extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_scaleModelSimpleTextures, gl_miptexLevel, gl_scaleskytextures;
+extern cvar_t gl_max_size, gl_scaleModelTextures, gl_scaleTurbTextures, gl_scaleAlphaTextures, gl_scaleModelSimpleTextures, gl_miptexLevel, gl_scaleskytextures;
 extern cvar_t gl_no24bit;
 extern texture_ref underwatertexture, detailtexture, solidwhite_texture, solidblack_texture, transparent_texture;
 
