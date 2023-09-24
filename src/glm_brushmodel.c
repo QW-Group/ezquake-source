@@ -129,7 +129,6 @@ void GLM_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 {
 	int i;
 	msurface_t* psurf;
-	extern msurface_t* alphachain;
 	qbool drawFlatFloors = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 2 || r_drawflat.integer == 1) && clmodel->isworldmodel;
 	qbool drawFlatWalls = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 3 || r_drawflat.integer == 1) && clmodel->isworldmodel;
 
@@ -158,10 +157,6 @@ void GLM_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 
 			clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
 			clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
-		}
-		else if (psurf->flags & SURF_DRAWALPHA) {
-			// FIXME: Find an example...
-			CHAIN_SURF_B2F(psurf, alphachain); // FIXME: ?
 		}
 		else {
 			if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
