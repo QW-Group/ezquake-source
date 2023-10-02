@@ -646,8 +646,8 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 	if (attenuation != DEFAULT_SOUND_PACKET_ATTENUATION)
 		channel |= SND_ATTENUATION;
 
-	// use the entity origin unless it is a bmodel
-	if (entity->v.solid == SOLID_BSP)
+	// use the entity origin unless it is a bmodel or a trigger
+	if (entity->v.solid == SOLID_BSP || (entity->v.solid == SOLID_TRIGGER && entity->v.modelindex == 0))
 	{
 		for (i=0 ; i<3 ; i++)
 			origin[i] = entity->v.origin[i]+0.5*(entity->v.mins[i]+entity->v.maxs[i]);
