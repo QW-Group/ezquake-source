@@ -21877,7 +21877,7 @@
       ]
     },
     "vid_hwgammacontrol": {
-      "default": "2",
+      "default": "0",
       "group-id": "52",
       "type": "enum",
       "values": [
