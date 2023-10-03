@@ -109,18 +109,12 @@ extern float r_framelerp;
 static uniform_block_aliasmodels_t aliasdata;
 
 static int cached_mode;
-static float cached_scale;
-static int cached_use_plr_color;
-static float cached_color_model[3];
-static float cached_color_enemy[3];
-static float cached_color_team[3];
 
 #define GET_COLOR_VALUES(colr) (float[]){(float)gl_outline_color_##colr.color[0] / 255.0f,(float)gl_outline_color_##colr.color[1] / 255.0f,(float)gl_outline_color_##colr.color[2] / 255.0f}
 
 static void R_SetAliasModelUniforms(int mode)
 {
-	extern cvar_t gl_outline_use_player_color,
-	gl_outline_color_model, gl_outline_color_team, gl_outline_color_enemy;
+	extern cvar_t gl_outline_use_player_color, gl_outline_color_model, gl_outline_color_team, gl_outline_color_enemy;
 	float scale = RuleSets_ModelOutlineScale();
 	float *color_model, *color_enemy, *color_team;
 	int use_player_color = gl_outline_use_player_color.integer;
@@ -133,27 +127,11 @@ static void R_SetAliasModelUniforms(int mode)
 		cached_mode = mode;
 	}
 
-	if(cached_scale != scale) {
-		R_ProgramUniform1f(r_program_uniform_aliasmodel_outline_scale, scale);
-		cached_scale = scale;
-	}
-
-	if(cached_use_plr_color != use_player_color) {
-		R_ProgramUniform1i(r_program_uniform_aliasmodel_outline_use_player_color, use_player_color);
-		cached_use_plr_color = use_player_color;
-	}
-	if(!VectorCompare(cached_color_model, color_model)) {
-		R_ProgramUniform3fv(r_program_uniform_aliasmodel_outline_color_model, color_model);
-		VectorCopy(color_model, cached_color_model);
-	}
-	if(!VectorCompare(cached_color_enemy, color_enemy)) {
-		R_ProgramUniform3fv(r_program_uniform_aliasmodel_outline_color_enemy, color_enemy);
-		VectorCopy(color_enemy, cached_color_enemy);
-	}
-	if(!VectorCompare(cached_color_team, color_team)) {
-		R_ProgramUniform3fv(r_program_uniform_aliasmodel_outline_color_team, color_team);
-		VectorCopy(color_team, cached_color_team);
-	}
+	R_ProgramUniform1f(r_program_uniform_aliasmodel_outline_scale, scale);
+	R_ProgramUniform1i(r_program_uniform_aliasmodel_outline_use_player_color, use_player_color);
+	R_ProgramUniform3fv(r_program_uniform_aliasmodel_outline_color_model, color_model);
+	R_ProgramUniform3fv(r_program_uniform_aliasmodel_outline_color_enemy, color_enemy);
+	R_ProgramUniform3fv(r_program_uniform_aliasmodel_outline_color_team, color_team);
 }
 
 #undef GET_COLOR_VALUES
