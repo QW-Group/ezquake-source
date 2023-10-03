@@ -61,8 +61,7 @@ function create_bundle() {
     echo "Bundled content types:"
     find ezQuake.app/Contents -type f -exec file {} \;
 
-    mkdir artifact
-    mv ezQuake.app artifact/
+    zip -9 ezQuake.zip ezQuake.app
 }
 
 function build_intel() {

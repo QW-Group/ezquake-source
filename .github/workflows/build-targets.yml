@@ -68,7 +68,7 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: macos-arm64
-        path: artifact
+        path: ezQuake.zip
 
   macos-intel-build:
     if: github.repository == 'QW-Group/ezquake-source'
@@ -91,7 +91,7 @@ jobs:
     - uses: actions/upload-artifact@v3
       with:
         name: macos-intel
-        path: artifact
+        path: ezQuake.zip
 
   linux-build:
     if: github.repository == 'QW-Group/ezquake-source'
