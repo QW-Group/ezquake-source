@@ -339,7 +339,7 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -394,7 +394,7 @@ msversion.bat</Command>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -449,7 +449,7 @@ msversion.bat</Command>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -504,7 +504,7 @@ msversion.bat</Command>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -560,7 +560,7 @@ msversion.bat</Command>
 msversion.bat</Command>
     </PreBuildEvent>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -605,7 +605,7 @@ msversion.bat</Command>
 msversion.bat</Command>
     </PreBuildEvent>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -650,7 +650,7 @@ msversion.bat</Command>
 msversion.bat</Command>
     </PreBuildEvent>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -695,7 +695,7 @@ msversion.bat</Command>
 msversion.bat</Command>
     </PreBuildEvent>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -740,7 +740,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <ShowProgress>NotSet</ShowProgress>
       <Profile>true</Profile>
@@ -793,7 +793,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <ShowProgress>NotSet</ShowProgress>
       <Profile>true</Profile>
@@ -847,7 +847,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <ShowProgress>NotSet</ShowProgress>
       <Profile>true</Profile>
@@ -901,7 +901,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -951,7 +951,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -1001,7 +1001,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
