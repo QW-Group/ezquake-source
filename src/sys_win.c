@@ -375,7 +375,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 			continue;
 		if (!all)
 		{
-			match_data = pcre2_match_data_create_from_pattern(re, NULL);
+			match_data = pcre2_match_data_create_from_pattern(preg, NULL);
 			switch (error = pcre2_match(preg, (PCRE2_SPTR)fd.cFileName,
 			                      strlen(fd.cFileName), 0, 0, match_data, NULL))
 			{
