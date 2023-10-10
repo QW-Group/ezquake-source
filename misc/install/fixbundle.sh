@@ -54,7 +54,8 @@ if [ ! -d "$FRAMEWORK_DIR" ]; then
 fi
 
 function get_deps {
-	echo $(otool -L "$1" | grep 'local\|homebrew' | awk '{print $1}')
+	# Lines ending with : refers to the library itself
+	echo $(otool -L "$1" | grep 'local\|homebrew\|@loader_path' | awk '{print $1}' | grep -Ev ':$')
 }
 
 # readlink -f
@@ -73,13 +74,30 @@ function realpath {
 
 function copy_deps {
 	for DEP in $(get_deps "$1"); do
-		REAL_DEP=$(realpath $DEP)
+		if [[ "$(realpath $DEP)" == "$(realpath $1)" ]]; then
+			continue
+		fi;
+
+		# Handle libraries with relative load paths
+		if [[ "$DEP" == "@loader_path/"* ]]; then
+			LIBDIR=$(dirname "$1")
+			REAL_DEP=$(realpath "${DEP/@loader_path/$LIBDIR}")
+		else
+			REAL_DEP=$(realpath $DEP)
+		fi
+
+		FRAMEWORK_TARGET="$FRAMEWORK_DIR/$(basename $1)"
+		FRAMEWORK_DEP="$FRAMEWORK_DIR/$(basename $REAL_DEP)"
 
 		if [ ! -f "$FRAMEWORK_DIR/$(basename $REAL_DEP)" ]; then
-			cp "$DEP" "$FRAMEWORK_DIR/$(basename $REAL_DEP)"
-			chmod 644 "$FRAMEWORK_DIR/$(basename $REAL_DEP)"
-			copy_deps "$FRAMEWORK_DIR/$(basename $REAL_DEP)"
+			cp "$REAL_DEP" "$FRAMEWORK_DEP"
+			chmod 644 "$FRAMEWORK_DEP"
 		fi
+
+		# Fix transitive deps where we still know the origin of parent dependency
+		install_name_tool -change "$DEP" "@executable_path/../Frameworks/$(basename $REAL_DEP)" "$FRAMEWORK_TARGET"
+
+		copy_deps $REAL_DEP
 	done
 }
 
@@ -95,7 +113,7 @@ function fix_symbols {
 
 shopt -s nullglob
 
-for BINARY in "${@:2}" "$FRAMEWORK_DIR/"*.dylib "$FRAMEWORK_DIR/"*.so; do
+for BINARY in "${@:2}"; do
 	fix_symbols "$BINARY"
 done
 
