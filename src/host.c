@@ -48,6 +48,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "EX_qtvlist.h"
 #include "r_renderer.h"
 #include "central.h"
+#include <curl/curl.h>
 
 double		curtime;
 
@@ -637,6 +638,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	int i;
 	char *cfg_name;
 
+	// central, version check etc
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
 
@@ -697,6 +701,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Sys_CvarInit();
 	CM_Init ();
 	Mod_Init ();
+	VersionCheck_Init();
 
 #ifndef CLIENTONLY
 	SV_Init ();
@@ -807,6 +812,10 @@ void Host_Shutdown (void)
 	FS_Shutdown();
 	SYSINFO_Shutdown();
 	Q_free(com_args_original);
+
+	VersionCheck_Shutdown();
+
+	curl_global_cleanup();
 }
 
 void Host_Quit (void)

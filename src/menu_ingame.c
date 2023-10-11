@@ -32,6 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "settings.h"
 #include "settings_page.h"
 #include "server.h"
+#include "version.h"
 
 #define TOPMARGIN (6*LETTERWIDTH)
 
@@ -169,8 +170,19 @@ static settings_page *M_Ingame_Current(void) {
 }
 
 void M_Ingame_Draw(void) {
+	char version[VERSION_MAX_LEN] = { 0 };
+	qbool outdated;
+
 	M_Unscale_Menu();
 	Settings_Draw(0, TOPMARGIN, vid.width, vid.height - TOPMARGIN, M_Ingame_Current());
+
+	outdated = VersionCheck_GetLatest(version);
+	if (outdated)
+	{
+		char message[4096] = { 0 };
+		snprintf(message, sizeof(message), "Outdated client %s, latest version is %s", VERSION_NUMBER, version);
+		UI_Print_Center(0, 32, vid.width, message, 0);
+	}
 }
 
 void M_Ingame_Key(int key) {

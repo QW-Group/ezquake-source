@@ -694,14 +694,10 @@ void Central_Shutdown(void)
 		curl_multi_cleanup(curl_handle);
 		curl_handle = NULL;
 	}
-
-	curl_global_cleanup();
 }
 
 void Central_Init(void)
 {
-	curl_global_init(CURL_GLOBAL_DEFAULT);
-
 // TODO: client-only version
 #ifdef SERVER_ONLY
 	Cvar_Register(&sv_www_address);

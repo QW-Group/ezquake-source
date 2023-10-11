@@ -79,11 +79,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // Note: for server mods to detect version, change VERSION_NUM below
 #define VERSION_NUMBER "3.6.4-dev"
+#define VERSION_MAX_LEN 32
 
 void CL_Version_f(void);
 char *VersionString(void);
 char *VersionStringColour(void);
 char *VersionStringFull(void);
+
+void VersionCheck_Init(void);
+void VersionCheck_Shutdown(void);
+qbool VersionCheck_GetLatest(char dest[VERSION_MAX_LEN]);
 
 #ifndef SERVERONLY
 #define SERVER_NAME         "EZQUAKE"
