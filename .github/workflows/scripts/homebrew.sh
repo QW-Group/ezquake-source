@@ -17,6 +17,7 @@ dependencies=(
     jpeg-turbo
     libmodplug
     minizip
+    lame
     mpg123
     speex
     speexdsp
