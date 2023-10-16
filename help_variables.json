@@ -485,10 +485,10 @@
         }
       ]
     },
-    "allow_update_check": {
+    "sys_update_check": {
       "default": "1",
       "desc": "Checks if the the client is outdated. If a new version is found, this will be presented above the in-game menu. The version check performs a HTTP request to GitHub once per launch without introducing any application start delay. Any error querying the latest version assumes the current client is the latest.",
-      "group-id": "2",
+      "group-id": "48",
       "type": "boolean",
       "values": [
         {

@@ -44,7 +44,7 @@ static qbool version_refreshing = false;
 static SDL_mutex *version_mutex = NULL;
 
 static void VersionCheck_OnConfigChange(cvar_t *var, char *string, qbool *cancel);
-static cvar_t allow_update_check  = {"allow_update_check",  "1", CVAR_NONE, VersionCheck_OnConfigChange};
+static cvar_t allow_update_check  = {"sys_update_check",  "1", CVAR_NONE, VersionCheck_OnConfigChange};
 
 /*
 =======================
