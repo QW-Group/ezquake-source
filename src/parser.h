@@ -73,7 +73,7 @@ typedef expr_val (* variable_val_fnc) (const char* varname);
 /// \param[in] str		source string
 /// \param[in] offsets	array of offset pairs (start1,end1,start2,end2,...)
 /// \param[in] matches	number of captured groups
-typedef void (* subpatterns_report_fnc) (const char* str, int* offsets, int matches);
+typedef void (* subpatterns_report_fnc) (const char* str, size_t* offsets, int matches);
 
 /// expression parser's extra options
 typedef struct {

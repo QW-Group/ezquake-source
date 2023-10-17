@@ -9,10 +9,10 @@ NC='\e[0m'
 
 BUILD_LOG=/tmp/ezquake-build.log
 
-PKGS_DEB="git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev libfreetype6-dev libsndfile1-dev libpcre3-dev libminizip-dev"
-PKGS_RPM="pcre-devel mesa-libGL-devel SDL2-devel make gcc jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libsndfile-devel libXxf86vm-devel minizip-devel"
+PKGS_DEB="git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev libfreetype6-dev libsndfile1-dev libpcre2-dev libminizip-dev"
+PKGS_RPM="pcre2-devel mesa-libGL-devel SDL2-devel make gcc jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libsndfile-devel libXxf86vm-devel minizip-devel"
 PKGS_ARCH="base-devel libpng libjpeg-turbo sdl2 expat libcurl-compat freetype2 speex speexdsp jansson libsndfile minizip"
-PKGS_VOID="base-devel SDL2-devel pcre-devel jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libsndfile-devel libXxf86vm-devel minizip"
+PKGS_VOID="base-devel SDL2-devel pcre2-devel jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libsndfile-devel libXxf86vm-devel minizip"
 
 CPU=$(uname -m | sed -e s/i.86/i386/ -e s/amd64/x86_64/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/alpha/axp/)
 

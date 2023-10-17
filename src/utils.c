@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include "pcre.h"
+#include <pcre2.h>
 #include "hud.h"
 #include "utils.h"
 #include "qtv.h"
@@ -1257,82 +1257,80 @@ int Utils_TF_TeamToColor(char *team) {
 
 qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 {
-	int offsets[HUD_REGEXP_OFFSET_COUNT];
-	pcre *re = NULL;
-	const char *error;
-	int erroffset = 0;
+	pcre2_code *re = NULL;
+	int error;
+	PCRE2_SIZE error_offset = 0;
 	int match = 0;
+	pcre2_match_data *match_data = NULL;
 
-	re = pcre_compile(
-			regexp,				// The pattern.
-			PCRE_CASELESS,		// Case insensitive.
+	re = pcre2_compile(
+			(PCRE2_SPTR)regexp,	// The pattern.
+			PCRE2_ZERO_TERMINATED,
+			PCRE2_CASELESS,		// Case insensitive.
 			&error,				// Error message.
-			&erroffset,			// Error offset.
+			&error_offset,		// Error offset.
 			NULL);				// use default character tables.
 
 	// Check for an error compiling the regexp.
-	if (error) {
-		if (re) {
-			pcre_free(re);
-		}
-
+	if (!re)
 		return false;
-	}
 
 	// Check if we have a match.
-	if (re && (match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0) {
-		pcre_free(re);
+	match_data = pcre2_match_data_create_from_pattern(re, NULL);
+	if (re && (match = pcre2_match(re, (PCRE2_SPTR)matchstring, strlen(matchstring), 0, 0, match_data, NULL)) >= 0) {
+		pcre2_match_data_free(match_data);
+		pcre2_code_free(re);
 
 		return true;
 	}
 
 	// Make sure we clean up.
 	if (re) {
-		pcre_free(re);
+		pcre2_match_data_free(match_data);
+		pcre2_code_free(re);
 	}
 	return false;
 }
 
 qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **resultstring, int *resultlength, int group)
 {
-	int offsets[HUD_REGEXP_OFFSET_COUNT];
-	pcre *re = NULL;
-	const char *error;
-	int erroffset = 0;
+	pcre2_code *re = NULL;
+	int error;
+	PCRE2_SIZE error_offset = 0;
 	int match = 0;
+	pcre2_match_data *match_data;
 
-	re = pcre_compile(
-			regexp,				// The pattern.
-			PCRE_CASELESS,		// Case insensitive.
+	re = pcre2_compile(
+			(PCRE2_SPTR)regexp,	// The pattern.
+			PCRE2_ZERO_TERMINATED,
+			PCRE2_CASELESS,		// Case insensitive.
 			&error,				// Error message.
-			&erroffset,			// Error offset.
+			&error_offset,		// Error offset.
 			NULL);				// use default character tables.
 
-	if (error) {
-		if (re) {
-			pcre_free(re);
-		}
-
+	if (!re)
 		return false;
-	}
 
-	if (re && (match = pcre_exec(re, NULL, matchstring, strlen(matchstring), 0, 0, offsets, HUD_REGEXP_OFFSET_COUNT)) >= 0) {
+	match_data = pcre2_match_data_create_from_pattern(re, NULL);
+	if (re && (match = pcre2_match(re, (PCRE2_SPTR)matchstring, strlen(matchstring), 0, 0, match_data, NULL)) >= 0) {
 		int substring_length = 0;
-		substring_length = pcre_get_substring (matchstring, offsets, match, group, resultstring);
+		error = pcre2_substring_get_bynumber (match_data, group, (PCRE2_UCHAR8**)resultstring, (size_t*)&substring_length);
 
 		if (resultlength != NULL) {
 			(*resultlength) = substring_length;
 		}
 
+		pcre2_match_data_free (match_data);
 		if (re) {
-			pcre_free(re);
+			pcre2_code_free(re);
 		}
 
-		return (substring_length != PCRE_ERROR_NOSUBSTRING && substring_length != PCRE_ERROR_NOMEMORY);
+		return (error != PCRE2_ERROR_NOSUBSTRING && error != PCRE2_ERROR_NOMEMORY);
 	}
 
+	pcre2_match_data_free (match_data);
 	if (re) {
-		pcre_free(re);
+		pcre2_code_free(re);
 	}
 
 	return false;
@@ -1342,8 +1340,7 @@ qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **results
 // QW262 -->
 // regexp match support for group operations in scripts
 int			wildcard_level = 0;
-pcre		*wildcard_re[4];
-pcre_extra	*wildcard_re_extra[4];
+pcre2_code	*wildcard_re[4];
 
 qbool IsRegexp(const char *str)
 {
@@ -1362,25 +1359,21 @@ qbool ReSearchInit(const char* wildcard)
 
 qbool ReSearchInitEx(const char *wildcard, qbool case_sensitive)
 {
-	const char *error;
-	int error_offset;
+	int error;
+	PCRE2_SIZE error_offset;
 
 	if (wildcard_level == 4) {
 		Com_Printf("Error: Regexp commands nested too deep\n");
 		return false;
 	}
-	wildcard_re[wildcard_level] = pcre_compile(wildcard, (case_sensitive ? 0 : PCRE_CASELESS), &error, &error_offset, NULL);
-	if (error) {
-		Com_Printf ("Invalid regexp: %s\n", error);
+	wildcard_re[wildcard_level] = pcre2_compile((PCRE2_SPTR)wildcard, PCRE2_ZERO_TERMINATED, (case_sensitive ? 0 : PCRE2_CASELESS), &error, &error_offset, NULL);
+	if (!wildcard_re[wildcard_level]) {
+		PCRE2_UCHAR error_str[256];
+		pcre2_get_error_message(error, error_str, sizeof(error_str));
+		Com_Printf ("Invalid regexp: %s %d\n", error_str, error_offset);
 		return false;
 	}
 
-	error = NULL;
-	wildcard_re_extra[wildcard_level] = pcre_study(wildcard_re[wildcard_level], 0, &error);
-	if (error) {
-		Com_Printf ("Regexp study error: %s\n", &error);
-		return false;
-	}
 
 	wildcard_level++;
 	return true;
@@ -1389,10 +1382,11 @@ qbool ReSearchInitEx(const char *wildcard, qbool case_sensitive)
 qbool ReSearchMatch (const char *str)
 {
 	int result;
-	int offsets[99];
-
-	result = pcre_exec(wildcard_re[wildcard_level-1],
-			wildcard_re_extra[wildcard_level-1], str, strlen(str), 0, 0, offsets, 99);
+	pcre2_match_data *match_data = NULL;
+	match_data = pcre2_match_data_create_from_pattern(wildcard_re[wildcard_level-1], NULL);
+	result = pcre2_match(wildcard_re[wildcard_level-1],
+			(PCRE2_SPTR)str, strlen(str), 0, 0, match_data, NULL);
+	pcre2_match_data_free(match_data);
 	return (result>0) ? true : false;
 }
 
@@ -1400,10 +1394,7 @@ void ReSearchDone (void)
 {
 	wildcard_level--;
 	if (wildcard_re[wildcard_level]) {
-		(pcre_free)(wildcard_re[wildcard_level]);
-	}
-	if (wildcard_re_extra[wildcard_level]) {
-		(pcre_free)(wildcard_re_extra[wildcard_level]);
+		(pcre2_code_free)(wildcard_re[wildcard_level]);
 	}
 }
 // <-- QW262
@@ -1527,7 +1518,7 @@ qbool Util_GetNextWordwrapString(const char *input, char *target, int start_inde
 void Utils_RegExpFreeSubstring(char* substring)
 {
 	if (substring) {
-		pcre_free_substring(substring);
+		pcre2_substring_free((PCRE2_UCHAR8*)substring);
 	}
 }
 

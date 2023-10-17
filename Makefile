@@ -115,10 +115,10 @@ ZLIB_LIBS ?= -lz
 CFLAGS_c += $(ZLIB_CFLAGS)
 LIBS_c += $(ZLIB_LIBS)
 
-PCRE_CFLAGS ?= $(shell pkg-config libpcre --cflags)
-PCRE_LIBS ?= $(shell pkg-config libpcre --libs)
-CFLAGS_c += $(PCRE_CFLAGS)
-LIBS_c += $(PCRE_LIBS)
+PCRE2_CFLAGS ?= $(shell pkg-config libpcre2-8 --cflags)
+PCRE2_LIBS ?= $(shell pkg-config libpcre2-8 --libs)
+CFLAGS_c += $(PCRE2_CFLAGS) -DPCRE2_CODE_UNIT_WIDTH=8
+LIBS_c += $(PCRE2_LIBS)
 
 EXPAT_CFLAGS ?= $(shell pkg-config expat --cflags)
 EXPAT_LIBS ?= $(shell pkg-config expat --libs)

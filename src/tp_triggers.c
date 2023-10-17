@@ -412,10 +412,7 @@ pcre_trigger_t *CL_FindReTrigger (char *name)
 static void DeleteReTrigger (pcre_trigger_t *t)
 {
 	if (t->regexp)
-		(pcre_free)(t->regexp);
-
-	if (t->regexp_extra)
-		(pcre_free)(t->regexp_extra);
+		(pcre2_code_free)(t->regexp);
 
 	if (t->regexpstr)
 		Q_free(t->regexpstr);
@@ -441,10 +438,9 @@ static void CL_RE_Trigger_f (void)
 	char *name;
 	char *regexpstr;
 	pcre_trigger_t *trig;
-	pcre *re;
-	pcre_extra *re_extra;
-	const char *error;
-	int error_offset;
+	pcre2_code *re;
+	int error;
+	PCRE2_SIZE error_offset;
 	qbool newtrigger=false;
 	qbool re_search = false;
  
@@ -514,24 +510,16 @@ static void CL_RE_Trigger_f (void)
 			trig->flags = RE_PRINT_ALL | RE_ENABLED; // catch all printed messages by default
 		}
  
-		error = NULL;
-		if ((re = pcre_compile(regexpstr, 0, &error, &error_offset, NULL))) {
-			error = NULL;
-			re_extra = pcre_study(re, 0, &error);
-			if (error) {
-				Com_Printf ("Regexp study error: %s\n", &error);
-			} else {
-				if (!newtrigger) {
-					(pcre_free)(trig->regexp);
-					if (trig->regexp_extra)
-						(pcre_free)(trig->regexp_extra);
-					Q_free(trig->regexpstr);
-				}
-				trig->regexpstr = Q_strdup(regexpstr);
-				trig->regexp = re;
-				trig->regexp_extra = re_extra;
-				return;
+		error = 0;
+		if ((re = pcre2_compile((PCRE2_SPTR)regexpstr, PCRE2_ZERO_TERMINATED, 0, &error, &error_offset, NULL))) {
+			error = 0;
+			if (!newtrigger) {
+				(pcre2_code_free)(trig->regexp);
+				Q_free(trig->regexpstr);
 			}
+			trig->regexpstr = Q_strdup(regexpstr);
+			trig->regexp = re;
+			return;
 		} else {
 			Com_Printf ("Invalid regexp: %s\n", error);
 		}
@@ -685,7 +673,7 @@ void CL_RE_Trigger_ResetLasttime (void)
 		trig->lasttime = 0.0;
 }
 
-void Re_Trigger_Copy_Subpatterns (const char *s, int* offsets, int num, cvar_t *re_sub)
+void Re_Trigger_Copy_Subpatterns (const char *s, size_t* offsets, int num, cvar_t *re_sub)
 {
 	int i;
 	char *tmp;
@@ -708,8 +696,7 @@ static void CL_RE_Trigger_Match_f (void)
 	pcre_trigger_t *rt;
 	char *string;
 	int result;
-	int offsets[99];
- 
+
 	c = Cmd_Argc();
  
 	if (c != 3) {
@@ -722,13 +709,16 @@ static void CL_RE_Trigger_Match_f (void)
  
 	for (rt = re_triggers; rt; rt = rt->next)
 		if (!strcmp(rt->name, tr_name)) {
-			result = pcre_exec (rt->regexp, rt->regexp_extra, s, strlen(s), 0, 0, offsets, 99);
+			pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(rt->regexp, NULL);
+			result = pcre2_match (rt->regexp, (PCRE2_SPTR)s, strlen(s), 0, 0, match_data, NULL);
  
 			if (result >= 0) {
 				rt->lasttime = cls.realtime;
 				rt->counter++;
+
+				PCRE2_SIZE *offsets = pcre2_get_ovector_pointer(match_data);
 				Re_Trigger_Copy_Subpatterns (s, offsets, min (result,10), re_sub);
- 
+
 				if (!(rt->flags & RE_NOACTION)) {
 					string = Cmd_AliasString (rt->name);
 					if (string) {
@@ -740,6 +730,7 @@ static void CL_RE_Trigger_Match_f (void)
 					}
 				}
 			}
+			pcre2_match_data_free (match_data);
 			return;
 		}
 	Com_Printf ("re_trigger \"%s\" not found\n", tr_name);
@@ -753,19 +744,23 @@ qbool CL_SearchForReTriggers (const char *s, unsigned trigger_type)
 	cmd_alias_t *trig_alias;
 	qbool removestr = false;
 	int result;
-	int offsets[99];
 	int len = strlen(s);
+	pcre2_match_data *match_data;
+	PCRE2_SIZE *offsets;
  
 	// internal triggers - always enabled
 	if (trigger_type < RE_PRINT_ECHO) {
 		allow_re_triggers = true;
 		for (irt = internal_triggers; irt; irt = irt->next) {
 			if (irt->flags & trigger_type) {
-				result = pcre_exec (irt->regexp, irt->regexp_extra, s, len, 0, 0, offsets, 99);
+				match_data = pcre2_match_data_create_from_pattern(irt->regexp, NULL);
+				result = pcre2_match (irt->regexp, (PCRE2_SPTR)s, len, 0, 0, match_data, NULL);
 				if (result >= 0) {
+					offsets = pcre2_get_ovector_pointer(match_data);
 					Re_Trigger_Copy_Subpatterns (s, offsets, min(result,10), re_subi);
 					irt->func (s);
 				}
+				pcre2_match_data_free (match_data);
 			}
 		}
 		if (!allow_re_triggers)
@@ -796,10 +791,12 @@ qbool CL_SearchForReTriggers (const char *s, unsigned trigger_type)
 			// probably it dont solve re_trigger timers problem
 			// you always trigger on statusbar(TF) or wp_stats (KTPro/KTX) messages and get 0.5~1.5 accuracy for your timer
 		{
-			result = pcre_exec (rt->regexp, rt->regexp_extra, s, len, 0, 0, offsets, 99);
+			pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(rt->regexp, NULL);
+			result = pcre2_match (rt->regexp, (PCRE2_SPTR)s, len, 0, 0, match_data, NULL);
 			if (result >= 0) {
 				rt->lasttime = cls.realtime;
 				rt->counter++;
+				offsets = pcre2_get_ovector_pointer(match_data);
 				Re_Trigger_Copy_Subpatterns (s, offsets, min(result,10), re_sub);
  
 				if (!(rt->flags & RE_NOACTION)) {
@@ -821,6 +818,7 @@ qbool CL_SearchForReTriggers (const char *s, unsigned trigger_type)
 				if (rt->flags & RE_FINAL)
 					break;
 			}
+			pcre2_match_data_free (match_data);
 		}
  
 	if (removestr)
@@ -833,15 +831,14 @@ qbool CL_SearchForReTriggers (const char *s, unsigned trigger_type)
 static void AddInternalTrigger (char* regexpstr, unsigned mask, internal_trigger_func func)
 {
 	pcre_internal_trigger_t *trig;
-	const char *error;
-	int error_offset;
+	int error;
+	PCRE2_SIZE error_offset;
  
 	trig = (pcre_internal_trigger_t *) Q_malloc(sizeof(pcre_internal_trigger_t));
 	trig->next = internal_triggers;
 	internal_triggers = trig;
  
-	trig->regexp = pcre_compile (regexpstr, 0, &error, &error_offset, NULL);
-	trig->regexp_extra = pcre_study (trig->regexp, 0, &error);
+	trig->regexp = pcre2_compile ((PCRE2_SPTR)regexpstr, PCRE2_ZERO_TERMINATED, 0, &error, &error_offset, NULL);
 	trig->func = func;
 	trig->flags = mask;
 }
@@ -916,11 +913,7 @@ void TP_ShutdownTriggers(void)
 	for (trigger = internal_triggers; trigger; trigger = next_trigger) {
 		next_trigger = trigger->next;
 		if (trigger->regexp) {
-			(pcre_free)(trigger->regexp);
-		}
-
-		if (trigger->regexp_extra) {
-			(pcre_free)(trigger->regexp_extra);
+			(pcre2_code_free)(trigger->regexp);
 		}
 
 		Q_free(trigger);

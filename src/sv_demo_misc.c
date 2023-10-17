@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
 #ifndef SERVERONLY
-#include "pcre.h"
+#include "pcre2.h"
 #endif
 
 #define MAX_DEMOINFO_SIZE (1024 * 200)
@@ -341,9 +341,10 @@ void SV_DemoList (qbool use_regex)
 	int		i, j, n;
 	int		files[MAX_DIRFILES + 1];
 
-	int	r;
-	pcre	*preg;
-	const char	*errbuf;
+	PCRE2_SIZE	error_offset;
+	pcre2_code	*preg;
+	pcre2_match_data *match_data = NULL;
+	int error;
 
 	memset(files, 0, sizeof(files));
 
@@ -361,26 +362,31 @@ void SV_DemoList (qbool use_regex)
 		{
 			if (use_regex)
 			{
-				if (!(preg = pcre_compile(Q_normalizetext(Cmd_Argv(j)),	PCRE_CASELESS, &errbuf, &r, NULL)))
+				if (!(preg = pcre2_compile((PCRE2_SPTR)Q_normalizetext(Cmd_Argv(j)), PCRE2_ZERO_TERMINATED, PCRE2_CASELESS, &error, &error_offset, NULL)))
 				{
-					Con_Printf("Sys_listdir: pcre_compile(%s) error: %s at offset %d\n",
-					           Cmd_Argv(j), errbuf, r);
-					pcre_free(preg);
+					PCRE2_UCHAR error_str[256];
+					pcre2_get_error_message(error, error_str, sizeof(error_str));
+					Con_Printf("Sys_listdir: pcre2_compile(%s) error: %s at offset %d\n",
+					           Cmd_Argv(j), error_str, error_offset);
+					pcre2_code_free(preg);
 					break;
 				}
-				switch (r = pcre_exec(preg, NULL, list->name,
-				                      strlen(list->name), 0, 0, NULL, 0))
+				match_data = pcre2_match_data_create_from_pattern(preg, NULL);
+				switch (error = pcre2_match(preg, (PCRE2_SPTR)list->name,
+				                      strlen(list->name), 0, 0, match_data, NULL))
 				{
 				case 0:
-					pcre_free(preg);
+					pcre2_match_data_free(match_data);
+					pcre2_code_free(preg);
 					continue;
-				case PCRE_ERROR_NOMATCH:
+				case PCRE2_ERROR_NOMATCH:
 					break;
 				default:
-					Con_Printf("Sys_listdir: pcre_exec(%s, %s) error code: %d\n",
-					           Cmd_Argv(j), list->name, r);
+					Con_Printf("Sys_listdir: pcre2_match(%s, %s) error code: %d\n",
+					           Cmd_Argv(j), list->name, error);
 				}
-				pcre_free(preg);
+				pcre2_match_data_free(match_data);
+				pcre2_code_free(preg);
 				break;
 			}
 			else
@@ -502,9 +508,10 @@ char *SV_MVDName2Txt (const char *name)
 	char	s[MAX_OSPATH];
 	int		len;
 
-	int		r, ovector[OVECCOUNT];
-	pcre	*preg;
-	const char	*errbuf;
+	PCRE2_SIZE	error_offset;
+	pcre2_code	*preg;
+	int error;
+	pcre2_match_data *match_data = NULL;
 
 	if (!name)
 		return NULL;
@@ -515,29 +522,37 @@ char *SV_MVDName2Txt (const char *name)
 	strlcpy(s, name, MAX_OSPATH);
 	len = strlen(s);
 
-	if (!(preg = pcre_compile(sv_demoRegexp.string, PCRE_CASELESS, &errbuf, &r, NULL)))
+	if (!(preg = pcre2_compile((PCRE2_SPTR)sv_demoRegexp.string, PCRE2_ZERO_TERMINATED, PCRE2_CASELESS, &error, &error_offset, NULL)))
 	{
-		Con_Printf("SV_MVDName2Txt: pcre_compile(%s) error: %s at offset %d\n",
-					sv_demoRegexp.string, errbuf, r);
-		pcre_free(preg);
+		PCRE2_UCHAR error_str[256];
+		pcre2_get_error_message(error, error_str, sizeof(error_str));
+		Con_Printf("SV_MVDName2Txt: pcre2_compile(%s) error: %s at offset %d\n",
+					sv_demoRegexp.string, error_str, error_offset);
+		pcre2_code_free(preg);
 		return NULL;
 	}
-	r = pcre_exec(preg, NULL, s, len, 0, 0, ovector, OVECCOUNT);
-	pcre_free(preg);
-	if (r < 0)
+	match_data = pcre2_match_data_create_from_pattern(preg, NULL);
+	error = pcre2_match(preg, (PCRE2_SPTR)s, len, 0, 0, match_data, NULL);
+
+	if (error < 0)
 	{
-		switch (r)
+		pcre2_match_data_free(match_data);
+		pcre2_code_free(preg);
+
+		switch (error)
 		{
-		case PCRE_ERROR_NOMATCH:
+		case PCRE2_ERROR_NOMATCH:
 			return NULL;
 		default:
-			Con_Printf("SV_MVDName2Txt: pcre_exec(%s, %s) error code: %d\n",
-						sv_demoRegexp.string, s, r);
+			Con_Printf("SV_MVDName2Txt: pcre2_match(%s, %s) error code: %d\n",
+						sv_demoRegexp.string, s, error);
 			return NULL;
 		}
 	}
 	else
 	{
+		PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(match_data);
+
 		if (ovector[0] + 5 > MAX_OSPATH)
 			len = MAX_OSPATH - 5;
 		else
@@ -548,6 +563,9 @@ char *SV_MVDName2Txt (const char *name)
 	s[len++] = 'x';
 	s[len++] = 't';
 	s[len]   = '\0';
+
+	pcre2_match_data_free(match_data);
+	pcre2_code_free(preg);
 
 	//Con_Printf("%d) %s, %s\n", r, name, s);
 	return va("%s", s);

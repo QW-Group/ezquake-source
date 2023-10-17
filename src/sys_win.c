@@ -30,7 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <tchar.h>
 #include "keys.h"
 #include "server.h"
-#include "pcre.h"
+#include "pcre2.h"
 #include <shlobj.h>
 
 // "Starting with the Release 302 drivers, application developers can direct the
@@ -342,9 +342,10 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	char	pathname[MAX_DEMO_NAME];
 	qbool all;
 
-	int	r;
-	pcre	*preg = NULL;
-	const char	*errbuf;
+	PCRE2_SIZE	error_offset;
+	pcre2_code	*preg = NULL;
+	pcre2_match_data *match_data = NULL;
+	int error;
 
 	memset(list, 0, sizeof(list));
 	memset(&dir, 0, sizeof(dir));
@@ -352,10 +353,9 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	dir.files = list;
 	all = !strncmp(ext, ".*", 3);
 	if (!all) {
-		if (!(preg = pcre_compile(ext, PCRE_CASELESS, &errbuf, &r, NULL))) {
-			Con_Printf("Sys_listdir: pcre_compile(%s) error: %s at offset %d\n",
-				ext, errbuf, r);
-			pcre_free(preg);
+		if (!(preg = pcre2_compile((PCRE2_SPTR)ext, PCRE2_ZERO_TERMINATED, PCRE2_CASELESS, &error, &error_offset, NULL))) {
+			Con_Printf("Sys_listdir: pcre2_compile(%s) error: %d at offset %d\n",
+				ext, error, error_offset);
 			return dir;
 		}
 	}
@@ -364,7 +364,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 	if ((h = FindFirstFile (pathname , &fd)) == INVALID_HANDLE_VALUE)
 	{
 		if (!all) {
-			pcre_free(preg);
+			pcre2_code_free(preg);
 		}
 		return dir;
 	}
@@ -375,16 +375,22 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 			continue;
 		if (!all)
 		{
-			switch (r = pcre_exec(preg, NULL, fd.cFileName,
-			                      strlen(fd.cFileName), 0, 0, NULL, 0))
+			match_data = pcre2_match_data_create_from_pattern(preg, NULL);
+			switch (error = pcre2_match(preg, (PCRE2_SPTR)fd.cFileName,
+			                      strlen(fd.cFileName), 0, 0, match_data, NULL))
 			{
-			case 0: break;
-			case PCRE_ERROR_NOMATCH: continue;
+			case 0:
+				pcre2_match_data_free(match_data);
+				break;
+			case PCRE2_ERROR_NOMATCH:
+				pcre2_match_data_free(match_data);
+				continue;
 			default:
-				Con_Printf("Sys_listdir: pcre_exec(%s, %s) error code: %d\n",
-				           ext, fd.cFileName, r);
+				Con_Printf("Sys_listdir: pcre2_match(%s, %s) error code: %d\n",
+				           ext, fd.cFileName, error);
+				pcre2_match_data_free(match_data);
 				if (!all) {
-					pcre_free(preg);
+					pcre2_code_free(preg);
 				}
 				return dir;
 			}
@@ -411,7 +417,7 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 
 	FindClose (h);
 	if (!all) {
-		pcre_free(preg);
+		pcre2_code_free(preg);
 	}
 
 	switch (sort_type)

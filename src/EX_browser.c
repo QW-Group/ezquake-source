@@ -42,7 +42,7 @@ int source_unique = 0;
 
 typedef struct info_filter_s {
 	char name[MAX_INFO_KEY];
-	pcre* regex;
+	pcre2_code* regex;
 	qbool pass;
 	qbool exec;
 } info_filter_t;
@@ -3410,11 +3410,12 @@ static qbool SB_InfoFilter_Exec(info_filter_t* info_filters, int info_filter_cou
 		}
 		else {
 			// Rule specified, check it matches the regex
-			int offsets[8];
-
-			if (pcre_exec(filter->regex, NULL, value, strlen(value), 0, 0, offsets, sizeof(offsets) / sizeof(offsets[0])) >= 0) {
+			pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(filter->regex, NULL);
+			if (pcre2_match(filter->regex, (PCRE2_SPTR)value, strlen(value), 0, 0, match_data, NULL) >= 0) {
+				pcre2_match_data_free (match_data);
 				return filter->pass;
 			}
+			pcre2_match_data_free (match_data);
 		}
 	}
 
@@ -3436,8 +3437,8 @@ static info_filter_t* SB_InfoFilter_Parse(int* count)
 	info_filters = Q_malloc(info_filter_count * sizeof(info_filter_t));
 	for (i = 0; i < info_filter_count; ++i) {
 		char* split;
-		const char* error;
-		int error_offset;
+		int error;
+		PCRE2_SIZE error_offset;
 		info_filter_t* filter = &info_filters[i];
 
 		// filters must be +x=y or -x=y
@@ -3462,9 +3463,11 @@ static info_filter_t* SB_InfoFilter_Parse(int* count)
 
 		if (split != NULL && split[1] && split[1] != '*') {
 			// no regex is fine
-			filter->regex = pcre_compile(split + 1, PCRE_CASELESS, &error, &error_offset, NULL);
+			filter->regex = pcre2_compile((PCRE2_SPTR)(split + 1), PCRE2_ZERO_TERMINATED, PCRE2_CASELESS, &error, &error_offset, NULL);
 			if (filter->regex == NULL) {
-				Con_Printf("Invalid rule definition: %s\n", error);
+				PCRE2_UCHAR error_str[256];
+				pcre2_get_error_message(error, error_str, sizeof(error_str));
+				Con_Printf("Invalid rule definition: %s\n", error_str);
 				continue;
 			}
 		}
@@ -3481,7 +3484,7 @@ static void SB_InfoFilter_Free(info_filter_t* info_filters, int info_filter_coun
 
 	for (i = 0; i < info_filter_count; ++i) {
 		if (info_filters[i].regex) {
-			pcre_free(info_filters[i].regex);
+			pcre2_code_free(info_filters[i].regex);
 		}
 	}
 

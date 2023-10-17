@@ -329,7 +329,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -339,7 +339,7 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -384,7 +384,7 @@ msversion.bat</Command>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_CLASSIC_OPENGL;DEBUG_MEMORY_ALLOCATIONS;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_CLASSIC_OPENGL;DEBUG_MEMORY_ALLOCATIONS;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -394,7 +394,7 @@ msversion.bat</Command>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -439,7 +439,7 @@ msversion.bat</Command>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;WITH_PNG;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;WITH_PNG;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -449,7 +449,7 @@ msversion.bat</Command>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -494,7 +494,7 @@ msversion.bat</Command>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_VULKAN;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_VULKAN;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_WINAMP;USE_MEDIA_FOUNDATION;USE_PR2;WITH_SPEEX;WITH_NQPROGS;XML_STATIC;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
@@ -504,7 +504,7 @@ msversion.bat</Command>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -551,7 +551,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
@@ -560,7 +560,7 @@ msversion.bat</Command>
 msversion.bat</Command>
     </PreBuildEvent>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -596,7 +596,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_OPENGL_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
@@ -605,7 +605,7 @@ msversion.bat</Command>
 msversion.bat</Command>
     </PreBuildEvent>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -641,7 +641,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;DEBUG_MEMORY_ALLOCATIONS;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
@@ -650,7 +650,7 @@ msversion.bat</Command>
 msversion.bat</Command>
     </PreBuildEvent>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -686,7 +686,7 @@ msversion.bat</Command>
       <SDLCheck>true</SDLCheck>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;WITH_RENDERING_TRACE;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PreBuildEvent>
@@ -695,7 +695,7 @@ msversion.bat</Command>
 msversion.bat</Command>
     </PreBuildEvent>
     <Link>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
@@ -731,7 +731,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;SUPPORT_FRAMEBUFFERS;USE_MEDIA_FOUNDATION;WITH_NQPROGS;WITH_SPEEX;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;SUPPORT_FRAMEBUFFERS;USE_MEDIA_FOUNDATION;WITH_NQPROGS;WITH_SPEEX;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <AdditionalOptions>/Qvec-report:2 %(AdditionalOptions)</AdditionalOptions>
@@ -740,7 +740,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <ShowProgress>NotSet</ShowProgress>
       <Profile>true</Profile>
@@ -784,7 +784,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;SUPPORT_FRAMEBUFFERS;USE_MEDIA_FOUNDATION;WITH_NQPROGS;WITH_SPEEX;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;SUPPORT_FRAMEBUFFERS;USE_MEDIA_FOUNDATION;WITH_NQPROGS;WITH_SPEEX;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
@@ -793,7 +793,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <ShowProgress>NotSet</ShowProgress>
       <Profile>true</Profile>
@@ -837,7 +837,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;WITH_SPEEX;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;WITH_SPEEX;XML_STATIC;USE_PR2;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -847,7 +847,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;speexdsp.lib;speex.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 /LTCG %(AdditionalOptions)</AdditionalOptions>
       <ShowProgress>NotSet</ShowProgress>
       <Profile>true</Profile>
@@ -892,7 +892,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;RENDERER_OPTION_MODERN_OPENGL;RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -901,7 +901,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -943,7 +943,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RENDERER_OPTION_MODERN_OPENGL;EZ_FREETYPE_SUPPORT;PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -951,7 +951,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -993,7 +993,7 @@ msversion.bat</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>RENDERER_OPTION_CLASSIC_OPENGL;EZ_FREETYPE_SUPPORT;PCRE2_CODE_UNIT_WIDTH=8;EZ_FREETYPE_SUPPORT_STATIC;WITH_NQPROGS;XML_STATIC;USE_PR2;WITH_SPEEX;__Q_PNG14__;WITH_ZIP;WITH_ZLIB;WITH_JPEG;WITH_PNG;PCRE_STATIC;CURL_STATICLIB;JSS_CAM;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>
       </ForcedIncludeFiles>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -1001,7 +1001,7 @@ msversion.bat</Command>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Shlwapi.lib;Setupapi.lib;sndfile.lib;freetype.lib;version.lib;imm32.lib;winmm.lib;turbojpeg.lib;SDL2-static.lib;comctl32.lib;wldap32.lib;Winmm.lib;OpenGL32.lib;ws2_32.lib;SDL2-static.lib;jansson.lib;libpng16.lib;zlib.lib;crypt32.lib;libcurl.lib;libexpatMT.lib;pcre2-8.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>

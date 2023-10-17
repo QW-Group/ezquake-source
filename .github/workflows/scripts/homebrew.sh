@@ -10,7 +10,7 @@ set -e
 # dependencies to avoid installing Intel versions in the cross-compilation
 # case.
 dependencies=(
-    pcre
+    pcre2
     freetype
     jansson
     libpng

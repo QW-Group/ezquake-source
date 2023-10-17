@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef EZ_FREETYPE_SUPPORT
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include "pcre.h"
+#include "pcre2.h"
 #endif
 #include "quakedef.h"
 #include "gl_model.h"
@@ -449,20 +449,20 @@ void Draw_ListFonts_f(void)
 	char path[MAX_OSPATH];
 	dir_t dir;
 	int i, printed;
-	pcre* regexp = NULL;
+	pcre2_code* regexp = NULL;
+	pcre2_match_data *match_data = NULL;
 
 	strlcpy(path, Sys_FontsDirectory(), sizeof(path));
 
 	if (Cmd_Argc() > 1) {
-		const char* error = NULL;
-		int erroffset = 0;
+		int error = 0;
+		PCRE2_SIZE error_offset = 0;
 
-		regexp = pcre_compile(Cmd_Argv(1), PCRE_CASELESS, &error, &erroffset, NULL);
-		if (error) {
-			if (regexp) {
-				pcre_free(regexp);
-			}
-			Con_Printf("Error in regular expression: %s\n", error);
+		regexp = pcre2_compile((PCRE2_SPTR)Cmd_Argv(1), PCRE2_ZERO_TERMINATED, PCRE2_CASELESS, &error, &error_offset, NULL);
+		if (!regexp) {
+			PCRE2_UCHAR error_str[256];
+			pcre2_get_error_message(error, error_str, sizeof(error_str));
+			Con_Printf("Error in regular expression: %s\n", error_str);
 			return;
 		}
 	}
@@ -473,19 +473,20 @@ void Draw_ListFonts_f(void)
 			continue;
 		}
 		if (regexp) {
-			int offsets[3];  // pcre manual: must be multiple of 3
-
-			if (pcre_exec(regexp, NULL, dir.files[i].name, strlen(dir.files[i].name), 0, 0, offsets, sizeof(offsets) / sizeof(offsets[0])) <= 0) {
+			match_data = pcre2_match_data_create_from_pattern(regexp, NULL);
+			if (pcre2_match(regexp, (PCRE2_SPTR)dir.files[i].name, strlen(dir.files[i].name), 0, 0, match_data, NULL) <= 0) {
+				pcre2_match_data_free(match_data);
 				continue;
 			}
+			pcre2_match_data_free(match_data);
 		}
-		
+
 		Con_Printf("  %s\n", dir.files[i].name);
 		printed++;
 	}
 
 	if (regexp) {
-		pcre_free(regexp);
+		pcre2_code_free(regexp);
 	}
 	Con_Printf("Found %d/%d files in %s\n", printed, dir.numfiles, path);
 }

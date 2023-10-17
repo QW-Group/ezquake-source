@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "quakedef.h"
 #include "q_shared.h"
 #include "utils.h"
-#include "pcre.h"
+#include "pcre2.h"
 #include "parser.h"
 
 #undef Q_malloc
@@ -765,22 +765,25 @@ LOCAL expr_val operator_reeq(EParser p, const expr_val e1, const expr_val e2)
 	expr_val mask = ToString(p, e2);
 	// this makes sense for "111 =~ 1.1", however we are doing str->double->str conversion
 	// and it can happen that the result string won't be the same as the source
-	pcre*		regexp;
-	const char	*error;
-	int		error_offset;
-	int		rc;
-	int		offsets[99];
+	pcre2_code       *regexp;
+	int              error;
+	PCRE2_SIZE       error_offset;
+	pcre2_match_data *match_data = NULL;
+	PCRE2_SIZE       *offsets;
+	int              rc;
 
 	r.type = ET_BOOL;
 
-	regexp = pcre_compile (mask.s_val, 0, &error, &error_offset, NULL);
+	regexp = pcre2_compile ((PCRE2_SPTR)mask.s_val, PCRE2_ZERO_TERMINATED, 0, &error, &error_offset, NULL);
 	if (!regexp) {
 		SetError(p, ERR_REGEXP);
 		return Get_Expr_Dummy();
 	}
-	rc = pcre_exec (regexp, NULL, strr.s_val, strlen(strr.s_val),
-	                0, 0, offsets, 99);
+	match_data = pcre2_match_data_create_from_pattern(regexp, NULL);
+	rc = pcre2_match (regexp, (PCRE2_SPTR)strr.s_val, strlen(strr.s_val),
+	                0, 0, match_data, NULL);
 	if (rc >= 0) {
+		offsets = pcre2_get_ovector_pointer(match_data);
 		if (p->re_patfnc)
 			p->re_patfnc(strr.s_val, offsets, rc > 99 ? 99 : rc);
 		r.b_val = BOOL_TRUE;
@@ -790,7 +793,8 @@ LOCAL expr_val operator_reeq(EParser p, const expr_val e1, const expr_val e2)
 	Q_free(e1.s_val);
 	Q_free(e2.s_val);
 
-	pcre_free (regexp);
+	pcre2_match_data_free (match_data);
+	pcre2_code_free (regexp);
 	return r;
 }
 
