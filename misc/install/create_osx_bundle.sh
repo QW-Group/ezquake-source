@@ -43,9 +43,9 @@ echo '    osascript -e "tell app \"Finder\" to activate"' >> $BUNDLE_NAME/Conten
 echo '    exit' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo 'fi' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo '' >> $BUNDLE_NAME/Contents/MacOS/ezquake
-echo 'PNAME="$(cd "$(dirname "$0")"; pwd -P)"' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo 'PNAME="$(dirname "$BASH_SOURCE")"' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo '' >> $BUNDLE_NAME/Contents/MacOS/ezquake
-echo "exec \"\$PNAME\"/$BINARY -basedir \"\$DIRNAME\"" >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo "exec \"\$PNAME\"/$BINARY -basedir \"\$DIRNAME\" \$*" >> $BUNDLE_NAME/Contents/MacOS/ezquake
 
 chmod u+x $BUNDLE_NAME/Contents/MacOS/ezquake
 
