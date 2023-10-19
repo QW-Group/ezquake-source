@@ -33,19 +33,20 @@ cp $(dirname $0)/$ICON_FILE $BUNDLE_NAME/Contents/Resources/.
 
 echo '#!/bin/sh' > $BUNDLE_NAME/Contents/MacOS/ezquake
 echo '' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo 'PNAME="$(dirname "$BASH_SOURCE")"' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo 'DIRNAME="$HOME"/Library/Application\ Support/ezQuake' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo 'DIRNAME2="$PNAME"/../../..' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo '' >> $BUNDLE_NAME/Contents/MacOS/ezquake
-echo 'if [ ! -f "$DIRNAME"/id1/pak0.pak ]; then' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo 'if [ -f "$DIRNAME"/id1/pak0.pak ]; then' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo "    exec \"\$PNAME\"/$BINARY -basedir \"\$DIRNAME\" \$*" >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo 'elif [ -f "$DIRNAME2"/id1/pak0.pak ]; then' >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo "    exec \"\$PNAME\"/$BINARY -basedir \"\$DIRNAME2\" \$*" >> $BUNDLE_NAME/Contents/MacOS/ezquake
+echo 'else' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo '    mkdir -p "$DIRNAME"/id1' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo '    touch "$DIRNAME"/id1/Copy\ your\ pak0.pak\ and\ pak1.pak\ files\ here.txt' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo '    osascript -e "tell app \"Finder\" to open (\"${DIRNAME}/id1/\" as POSIX file)"' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo '    osascript -e "tell app \"Finder\" to activate"' >> $BUNDLE_NAME/Contents/MacOS/ezquake
-echo '    exit' >> $BUNDLE_NAME/Contents/MacOS/ezquake
 echo 'fi' >> $BUNDLE_NAME/Contents/MacOS/ezquake
-echo '' >> $BUNDLE_NAME/Contents/MacOS/ezquake
-echo 'PNAME="$(dirname "$BASH_SOURCE")"' >> $BUNDLE_NAME/Contents/MacOS/ezquake
-echo '' >> $BUNDLE_NAME/Contents/MacOS/ezquake
-echo "exec \"\$PNAME\"/$BINARY -basedir \"\$DIRNAME\" \$*" >> $BUNDLE_NAME/Contents/MacOS/ezquake
 
 chmod u+x $BUNDLE_NAME/Contents/MacOS/ezquake
 
