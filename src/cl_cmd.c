@@ -624,6 +624,28 @@ void CL_Rcon_f (void) {
 	NET_SendPacket (NS_CLIENT, strlen(message)+1, message, to);
 }
 
+qbool CL_Download_Accept(const char *filename)
+{
+	if (strstr(filename, "..") || !strcmp(filename, "") || filename[0] == '/' || strchr(filename, '\\') || strchr(filename, ':') || strstr(filename, "//")) {
+		Com_Printf("Warning: Invalid characters in filename \"%s\"\n", filename);
+		return false;
+	}
+
+	const char *tmp = strrchr(filename, '.');
+	if (tmp != NULL && (!strcasecmp(tmp, ".dll") || !strcasecmp(tmp, ".so"))) {
+		Com_Printf("Warning: Non-allowed file \"%s\" skipped\n", filename);
+		return false;
+	}
+
+	vfsfile_t *f = FS_OpenVFS(filename, "rb", FS_ANY);
+	if (f) {
+		VFS_CLOSE(f);
+		return false;
+	}
+
+	return true;
+}
+
 void CL_Download_f (void){
 	char *dir; // we save to demo_dir or gamedir
 	char *filename; // which file to dl, will be sent to server
@@ -638,7 +660,7 @@ void CL_Download_f (void){
 	filename = Cmd_Argv(1);
 	strlcpy(ondiskname, filename, sizeof(ondiskname)); // in most cases this is same as filename
 
-	if (Cmd_Argc() != 2 || !filename[0]) {
+	if (Cmd_Argc() != 2 || !filename[0] || !CL_Download_Accept(filename)) {
 		Com_Printf ("Usage: %s <datafile>\n", Cmd_Argv(0));
 		return;
 	}

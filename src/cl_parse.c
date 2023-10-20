@@ -472,25 +472,13 @@ int CL_CalcNetStatistics(
 
 //=============================================================================
 
+qbool CL_Download_Accept(const char *filename);
+
 // Returns true if the file exists, otherwise it attempts to start a download from the server.
 qbool CL_CheckOrDownloadFile(char *filename)
 {
-	vfsfile_t *f;
-	char *tmp;
-
-	if (strstr(filename, "..") || !strcmp(filename, "") || filename[0] == '/' || strchr(filename, '\\') || strchr(filename, ':') || strstr(filename, "//")) {
-		Com_Printf("Warning: Invalid characters in filename \"%s\"\n", filename);
-		return true;
-	}
-
-	if ((tmp = strrchr(filename, '.')) && (!strcasecmp(tmp, ".dll") || !strcasecmp(tmp, ".so"))) {
-		Com_Printf("Warning: Non-allowed file \"%s\" skipped\n", filename);
-		return true;
-	}
-
-	f = FS_OpenVFS(filename, "rb", FS_ANY);
-	if (f) {
-		VFS_CLOSE(f);
+	if (!CL_Download_Accept(filename))
+	{
 		return true;
 	}
 
