@@ -366,32 +366,29 @@ void SV_DemoList (qbool use_regex)
 				{
 					PCRE2_UCHAR error_str[256];
 					pcre2_get_error_message(error, error_str, sizeof(error_str));
-					Con_Printf("Sys_listdir: pcre2_compile(%s) error: %s at offset %d\n",
+					Con_Printf("SV_DemoList: pcre2_compile(%s) error: %s at offset %d\n",
 					           Cmd_Argv(j), error_str, error_offset);
 					pcre2_code_free(preg);
 					break;
 				}
 				match_data = pcre2_match_data_create_from_pattern(preg, NULL);
-				switch (error = pcre2_match(preg, (PCRE2_SPTR)list->name,
-				                      strlen(list->name), 0, 0, match_data, NULL))
-				{
-				case 0:
-					pcre2_match_data_free(match_data);
-					pcre2_code_free(preg);
-					continue;
-				case PCRE2_ERROR_NOMATCH:
-					break;
-				default:
-					Con_Printf("Sys_listdir: pcre2_match(%s, %s) error code: %d\n",
-					           Cmd_Argv(j), list->name, error);
-				}
+				error = pcre2_match(preg, (PCRE2_SPTR)list->name, strlen(list->name), 0, 0, match_data, NULL);
 				pcre2_match_data_free(match_data);
 				pcre2_code_free(preg);
-				break;
+				if (error < 0)
+				{
+					if (error != PCRE2_ERROR_NOMATCH) {
+						Con_Printf("SV_DemoList: pcre2_match(%s, %s) error code: %d\n",
+							Cmd_Argv(j), list->name, error);
+					}
+					break;
+				}
 			}
 			else
+			{
 				if (strstr(list->name, Cmd_Argv(j)) == NULL)
 					break;
+			}
 		}
 
 		if (Cmd_Argc() == j)
