@@ -280,8 +280,8 @@ void SV_God_f (void)
 	if (!SV_SetPlayer ())
 		return;
 
-	sv_player->v.flags = (int)sv_player->v.flags ^ FL_GODMODE;
-	if (!((int)sv_player->v.flags & FL_GODMODE) )
+	sv_player->v->flags = (int)sv_player->v->flags ^ FL_GODMODE;
+	if (!((int)sv_player->v->flags & FL_GODMODE) )
 		SV_ClientPrintf (sv_client, PRINT_HIGH, "godmode OFF\n");
 	else
 		SV_ClientPrintf (sv_client, PRINT_HIGH, "godmode ON\n");
@@ -299,14 +299,14 @@ void SV_Noclip_f (void)
 	if (!SV_SetPlayer ())
 		return;
 
-	if (sv_player->v.movetype != MOVETYPE_NOCLIP)
+	if (sv_player->v->movetype != MOVETYPE_NOCLIP)
 	{
-		sv_player->v.movetype = MOVETYPE_NOCLIP;
+		sv_player->v->movetype = MOVETYPE_NOCLIP;
 		SV_ClientPrintf (sv_client, PRINT_HIGH, "noclip ON\n");
 	}
 	else
 	{
-		sv_player->v.movetype = MOVETYPE_WALK;
+		sv_player->v->movetype = MOVETYPE_WALK;
 		SV_ClientPrintf (sv_client, PRINT_HIGH, "noclip OFF\n");
 	}
 }
@@ -347,23 +347,23 @@ void SV_Give_f (void)
 	case '7':
 	case '8':
 	case '9':
-		sv_player->v.items = (int)sv_player->v.items | IT_SHOTGUN<< (t[0] - '2');
+		sv_player->v->items = (int)sv_player->v->items | IT_SHOTGUN<< (t[0] - '2');
 		break;
 
 	case 's':
-		sv_player->v.ammo_shells = v;
+		sv_player->v->ammo_shells = v;
 		break;
 	case 'n':
-		sv_player->v.ammo_nails = v;
+		sv_player->v->ammo_nails = v;
 		break;
 	case 'r':
-		sv_player->v.ammo_rockets = v;
+		sv_player->v->ammo_rockets = v;
 		break;
 	case 'h':
-		sv_player->v.health = v;
+		sv_player->v->health = v;
 		break;
 	case 'c':
-		sv_player->v.ammo_cells = v;
+		sv_player->v->ammo_cells = v;
 		break;
 	}
 }
@@ -379,17 +379,17 @@ void SV_Fly_f (void)
 	if (!SV_SetPlayer ())
 		return;
 
-	if (sv_player->v.solid != SOLID_SLIDEBOX)
+	if (sv_player->v->solid != SOLID_SLIDEBOX)
 		return;		// dead don't fly
 
-	if (sv_player->v.movetype != MOVETYPE_FLY)
+	if (sv_player->v->movetype != MOVETYPE_FLY)
 	{
-		sv_player->v.movetype = MOVETYPE_FLY;
+		sv_player->v->movetype = MOVETYPE_FLY;
 		SV_ClientPrintf (sv_client, PRINT_HIGH, "flymode ON\n");
 	}
 	else
 	{
-		sv_player->v.movetype = MOVETYPE_WALK;
+		sv_player->v->movetype = MOVETYPE_WALK;
 		SV_ClientPrintf (sv_client, PRINT_HIGH, "flymode OFF\n");
 	}
 }
@@ -484,6 +484,9 @@ void SV_Map (qbool now)
 
 	// check to make sure the level exists
 	snprintf (expanded, MAX_QPATH, "maps/%s.bsp", level);
+
+	// Flush FS cache on each map change.
+	FS_FlushFSHash();
 
 	if (!FS_FLocateFile(expanded, FSLFRT_IFFOUND, NULL))
 	{
@@ -1211,7 +1214,7 @@ void SV_Status_f (void)
 					continue;
 				s = NET_BaseAdrToString(cl->netchan.remote_address);
 				Con_Printf ("%-16s %4i %5i %6i %-22s ", cl->name, (int)SV_CalcPing(cl),
-						(int)cl->edict->v.frags, cl->userid, (int)sv_use_dns.value ? SV_Resolve(s) : s);
+						(int)cl->edict->v->frags, cl->userid, (int)sv_use_dns.value ? SV_Resolve(s) : s);
 				if (cl->realip.ip[0])
 					Con_Printf ("%-15s", NET_BaseAdrToString (cl->realip));
 				Con_Printf (cl->spectator ? (char *) "(s)" : (char *) "");
@@ -1247,7 +1250,7 @@ void SV_Status_f (void)
 
 				s = NET_BaseAdrToString(cl->netchan.remote_address);
 				Con_Printf ("%-18s %4i %5i %6s %s\n%-36s\n", cl->name, (int)SV_CalcPing(cl),
-							(int)cl->edict->v.frags, Q_yelltext((unsigned char*)va("%d", cl->userid)),
+							(int)cl->edict->v->frags, Q_yelltext((unsigned char*)va("%d", cl->userid)),
 							cl->spectator ? " (s)" : "", (int)sv_use_dns.value ? SV_Resolve(s) : s);
 
 				if (cl->realip.ip[0])

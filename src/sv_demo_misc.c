@@ -1050,6 +1050,84 @@ void SV_LastScores_f (void)
 	}
 }
 
+#define STATS_LIMIT_DEFAULT 10
+#define STATS_LIMIT_MAX     50
+void SV_LastStats_f (void)
+{
+	int limit = STATS_LIMIT_DEFAULT;
+	int i;
+	char buf[512];
+	FILE *f = NULL;
+	char path[MAX_OSPATH];
+	dir_t dir;
+	extern redirect_t sv_redirected;
+
+	if (sv_redirected != RD_PACKET)
+	{
+		return;
+	}
+
+	if (Cmd_Argc() > 2)
+	{
+		Con_Printf("usage: laststats [<limit>]\n<limit> = '0' for last %i stats\n<limit> = 'n' for last n stats (max %i)\n<limit> = '' (empty) for last %i stats\n", STATS_LIMIT_MAX, STATS_LIMIT_MAX, STATS_LIMIT_DEFAULT);
+		return;
+	}
+	else if (Cmd_Argc() == 2)
+	{
+		limit = Q_atoi(Cmd_Argv(1));
+
+		if (limit <= 0 || limit > STATS_LIMIT_MAX)
+		{
+			limit = STATS_LIMIT_MAX;
+		}
+	}
+
+	dir = Sys_listdir(va("%s/%s", fs_gamedir, sv_demoDir.string), sv_demoRegexp.string,
+			SORT_BY_DATE);
+
+	if (!dir.numfiles)
+	{
+		Con_Printf("laststats 0:\n");
+		Con_Printf("[]\n");
+		return;
+	}
+
+	if (limit > dir.numfiles)
+	{
+		limit = dir.numfiles;
+	}
+
+	Con_Printf("laststats %i\n", limit);
+	Con_Printf("[\n");
+
+	for (i = dir.numfiles - limit; i < dir.numfiles; i++)
+	{
+		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string,
+					SV_MVDName2Txt(dir.files[i].name));
+
+		if ((f = fopen(path, "rt")) != NULL)
+		{
+			if (FS_FileLength(f) == 0) {
+			    continue;
+			}
+
+			if (i != dir.numfiles - limit)
+			{
+				Con_Printf(",\n");
+			}
+
+			while (fread(buf, 1, sizeof(buf)-1, f))
+			{
+				Con_Printf("%s", (unsigned char*)buf);
+				memset(buf, 0, sizeof(buf));
+			}
+			fclose(f);
+		}
+	}
+
+	Con_Printf("\n]\n");
+}
+
 // easyrecord helpers
 
 int Dem_CountPlayers (void)

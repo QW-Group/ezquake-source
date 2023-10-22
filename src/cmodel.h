@@ -115,7 +115,9 @@ typedef struct bspx_header_s {
 	int numlumps;
 } bspx_header_t;
 
+#ifndef SERVERONLY
 void* Mod_BSPX_FindLump(bspx_header_t* bspx_header, char* lumpname, int* plumpsize, byte* mod_base);
 bspx_header_t* Mod_LoadBSPX(int filesize, byte* mod_base);
+#endif
 
 #endif /* !__CMODEL_H__ */

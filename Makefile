@@ -223,7 +223,6 @@ SERVER_OBJS := \
     $(SRC_DIR)/pr2_cmds.o \
     $(SRC_DIR)/pr2_edict.o \
     $(SRC_DIR)/pr2_exec.o \
-    $(SRC_DIR)/pr2_vm.o \
     $(SRC_DIR)/sv_ccmds.o \
     $(SRC_DIR)/sv_ents.o \
     $(SRC_DIR)/sv_init.o \
@@ -240,7 +239,10 @@ SERVER_OBJS := \
     $(SRC_DIR)/sv_demo_misc.o \
     $(SRC_DIR)/sv_demo_qtv.o \
     $(SRC_DIR)/sv_login.o \
-    $(SRC_DIR)/sv_mod_frags.o
+    $(SRC_DIR)/sv_mod_frags.o \
+    $(SRC_DIR)/vm.o \
+    $(SRC_DIR)/vm_interpreted.o \
+    $(SRC_DIR)/vm_x86.o
 
 HELP_OBJS := \
     $(patsubst help_%.json,help_%.o,$(wildcard help_*.json))

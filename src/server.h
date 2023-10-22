@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "progs.h"
 #ifdef USE_PR2
-#include "pr2_vm.h"
+#include "vm.h"
 #include "pr2.h"
 #include "g_public.h"
 #endif
@@ -95,10 +95,10 @@ typedef struct
 
 	int         num_edicts;         // increases towards MAX_EDICTS
 	int         num_baseline_edicts;// number of entities that have baselines
-	edict_t     *edicts;            // can NOT be array indexed, because
-	                                // edict_t is variable sized, but can
-	                                // be used to reference the world ent
-	sv_edict_t  sv_edicts[MAX_EDICTS]; // part of the edict_t
+
+	edict_t		edicts[MAX_EDICTS];
+	entvars_t	*game_edicts;		// can NOT be array indexed, because entvars_t is variable sized
+
 	int         max_edicts;         // might not MAX_EDICTS if mod allocates memory
 
 	byte		*pvs, *phs;			// fully expanded and decompressed
@@ -356,6 +356,7 @@ typedef struct client_s
 	int             rip_vip;
 	double          delay;
 	double          disable_updates_stop;     // Vladis
+	qbool           maxping_met;              // set if user meets maxping requirements
 	packet_t        *packets, *last_packet;
 
 #ifdef MVD_PEXT1_HIGHLAGTELEPORT
@@ -1007,6 +1008,7 @@ int		Dem_CountTeamPlayers (char *t);
 char	*quote (char *str);
 void	CleanName_Init (void);
 void	SV_LastScores_f (void);
+void	SV_LastStats_f (void);
 void	SV_DemoList_f (void);
 void	SV_DemoListRegex_f (void);
 void	SV_MVDRemove_f (void);

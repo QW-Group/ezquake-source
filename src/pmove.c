@@ -29,9 +29,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 movevars_t      movevars;
 playermove_t    pmove;
 
-static float    pm_frametime;
+static float	pm_frametime;
 
-static vec3_t   pm_forward, pm_right;
+static vec3_t	pm_forward, pm_right;
 
 static vec3_t   groundnormal;
 
@@ -40,11 +40,11 @@ vec3_t	player_maxs = {16, 16, 32};
 
 #define STEPSIZE        18
 
-#define pm_flyfriction  4
+#define pm_flyfriction	4
 
-#define BLOCKED_FLOOR   1
-#define BLOCKED_STEP    2
-#define BLOCKED_OTHER   4
+#define BLOCKED_FLOOR	1
+#define BLOCKED_STEP	2
+#define BLOCKED_OTHER	4
 #define BLOCKED_ANY		7
 
 #define MAX_JUMPFIX_DOTPRODUCT -0.1

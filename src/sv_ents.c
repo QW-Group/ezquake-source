@@ -44,7 +44,7 @@ static qbool SV_AddNailUpdate (edict_t *ent)
 	if ((int)sv_nailhack.value)
 		return false;
 
-	if (ent->v.modelindex != sv_nailmodel && ent->v.modelindex != sv_supernailmodel)
+	if (ent->v->modelindex != sv_nailmodel && ent->v->modelindex != sv_supernailmodel)
 		return false;
 
 	if (msg_coordsize != 2)
@@ -80,20 +80,20 @@ static void SV_EmitNailUpdate (sizebuf_t *msg, qbool recorder)
 		ent = nails[n];
 		if (recorder)
 		{
-			if (!ent->v.colormap)
+			if (!ent->v->colormap)
 			{
 				if (!((++nailcount)&255)) nailcount++;
-				ent->v.colormap = nailcount&255;
+				ent->v->colormap = nailcount&255;
 			}
 
-			MSG_WriteByte (msg, (byte)ent->v.colormap);
+			MSG_WriteByte (msg, (byte)ent->v->colormap);
 		}
 
-		x = ((int)(ent->v.origin[0] + 4096 + 1) >> 1) & 4095;
-		y = ((int)(ent->v.origin[1] + 4096 + 1) >> 1) & 4095;
-		z = ((int)(ent->v.origin[2] + 4096 + 1) >> 1) & 4095;
-		p = Q_rint(ent->v.angles[0]*(16.0/360.0)) & 15;
-		yaw = Q_rint(ent->v.angles[1]*(256.0/360.0)) & 255;
+		x = ((int)(ent->v->origin[0] + 4096 + 1) >> 1) & 4095;
+		y = ((int)(ent->v->origin[1] + 4096 + 1) >> 1) & 4095;
+		z = ((int)(ent->v->origin[2] + 4096 + 1) >> 1) & 4095;
+		p = Q_rint(ent->v->angles[0]*(16.0/360.0)) & 15;
+		yaw = Q_rint(ent->v->angles[1]*(256.0/360.0)) & 255;
 
 		bits[0] = x;
 		bits[1] = (x>>8) | (y<<4);
@@ -355,7 +355,7 @@ static void SV_EmitPacketEntities (client_t *client, packet_entities_t *to, size
 			}
 			ent = EDICT_NUM(newnum);
 			//Con_Printf ("baseline %i\n", newnum);
-			SV_WriteDelta (client, &ent->e->baseline, &to->entities[newindex], msg, true);
+			SV_WriteDelta (client, &ent->e.baseline, &to->entities[newindex], msg, true);
 			newindex++;
 			continue;
 		}
@@ -393,13 +393,13 @@ static void SV_EmitPacketEntities (client_t *client, packet_entities_t *to, size
 
 static int TranslateEffects (edict_t *ent)
 {
-	int fx = (int)ent->v.effects;
+	int fx = (int)ent->v->effects;
 	if (pr_nqprogs)
 		fx &= ~EF_MUZZLEFLASH;
 	if (pr_nqprogs && (fx & EF_DIMLIGHT)) {
-		if ((int)ent->v.items & IT_QUAD)
+		if ((int)ent->v->items & IT_QUAD)
 			fx |= EF_BLUE;
-		if ((int)ent->v.items & IT_INVULNERABILITY)
+		if ((int)ent->v->items & IT_INVULNERABILITY)
 			fx |= EF_RED;
 	}
 	return fx;
@@ -432,26 +432,26 @@ static void SV_MVD_WritePlayersToClient ( void )
 
 		dcl->parsecount = demo.parsecount;
 
-		VectorCopy(ent->v.origin, dcl->origin);
-		VectorCopy(ent->v.angles, dcl->angles);
+		VectorCopy(ent->v->origin, dcl->origin);
+		VectorCopy(ent->v->angles, dcl->angles);
 		dcl->angles[0] *= -3;
 #ifdef USE_PR2
 		if( cl->isBot )
-			VectorCopy(ent->v.v_angle, dcl->angles);
+			VectorCopy(ent->v->v_angle, dcl->angles);
 #endif
 		dcl->angles[2] = 0; // no roll angle
 
-		if (ent->v.health <= 0)
+		if (ent->v->health <= 0)
 		{	// don't show the corpse looking around...
 			dcl->angles[0] = 0;
-			dcl->angles[1] = ent->v.angles[1];
+			dcl->angles[1] = ent->v->angles[1];
 			dcl->angles[2] = 0;
 		}
 
-		dcl->weaponframe = ent->v.weaponframe;
-		dcl->frame       = ent->v.frame;
-		dcl->skinnum     = ent->v.skin;
-		dcl->model       = ent->v.modelindex;
+		dcl->weaponframe = ent->v->weaponframe;
+		dcl->frame       = ent->v->frame;
+		dcl->skinnum     = ent->v->skin;
+		dcl->model       = ent->v->modelindex;
 		dcl->effects     = TranslateEffects(ent);
 		dcl->flags       = 0;
 
@@ -460,9 +460,9 @@ static void SV_MVD_WritePlayersToClient ( void )
 
 		dcl->sec         = sv.time - cl->localtime;
 
-		if (ent->v.health <= 0)
+		if (ent->v->health <= 0)
 			dcl->flags |= DF_DEAD;
-		if (ent->v.mins[2] != -24)
+		if (ent->v->mins[2] != -24)
 			dcl->flags |= DF_GIB;
 
 		continue;
@@ -486,14 +486,14 @@ qbool SV_PlayerVisibleToClient (client_t* client, int j, byte* pvs, edict_t* sel
 		if (cl->spectator)
 			return false;
 
-		if (pvs && ent->e->num_leafs >= 0) {
+		if (pvs && ent->e.num_leafs >= 0) {
 			// ignore if not touching a PV leaf
-			for (i = 0; i < ent->e->num_leafs; i++) {
-				if (pvs[ent->e->leafnums[i] >> 3] & (1 << (ent->e->leafnums[i] & 7))) {
+			for (i = 0; i < ent->e.num_leafs; i++) {
+				if (pvs[ent->e.leafnums[i] >> 3] & (1 << (ent->e.leafnums[i] & 7))) {
 					break;
 				}
 			}
-			if (i == ent->e->num_leafs) {
+			if (i == ent->e.num_leafs) {
 				return false; // not visible
 			}
 		}
@@ -515,14 +515,14 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 	usercmd_t cmd;
 	int hideent = 0;
 	int trackent = 0;
-	qbool hide_players = fofs_hide_players && ((eval_t *)((byte *)&(client->edict)->v + fofs_hide_players))->_int;
+	qbool hide_players = fofs_hide_players && ((eval_t *)((byte *)(client->edict)->v + fofs_hide_players))->_int;
 
 	if (fofs_hideentity)
-		hideent = ((eval_t *)((byte *)&(client->edict)->v + fofs_hideentity))->_int / pr_edict_size;
+		hideent = ((eval_t *)((byte *)(client->edict)->v + fofs_hideentity))->_int / pr_edict_size;
 
 	if (fofs_trackent)
 	{
-		trackent = ((eval_t *)((byte *)&(client->edict)->v + fofs_trackent))->_int;
+		trackent = ((eval_t *)((byte *)(client->edict)->v + fofs_trackent))->_int;
 		if (trackent < 1 || trackent > MAX_CLIENTS || svs.clients[trackent - 1].state != cs_spawned)
 			trackent = 0;
 	}
@@ -538,7 +538,7 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 
 		if (fofs_visibility) {
 			// Presume not visible
-			((eval_t *)((byte *)&(cl->edict)->v + fofs_visibility))->_int &= ~(1 << (client - svs.clients));
+			((eval_t *)((byte *)(cl->edict)->v + fofs_visibility))->_int &= ~(1 << (client - svs.clients));
 		}
 
 		if (cl->state != cs_spawned)
@@ -568,7 +568,7 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 
 		if (fofs_visibility) {
 			// Update flags so mods can tell what was visible
-			((eval_t *)((byte *)&(ent)->v + fofs_visibility))->_int |= (1 << (client - svs.clients));
+			((eval_t *)((byte *)(ent)->v + fofs_visibility))->_int |= (1 << (client - svs.clients));
 		}
 
 		if (j == hideent - 1)
@@ -587,18 +587,18 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 
 		pflags = PF_MSEC | PF_COMMAND;
 
-		if (ent->v.modelindex != sv_playermodel)
+		if (ent->v->modelindex != sv_playermodel)
 			pflags |= PF_MODEL;
 		for (i=0 ; i<3 ; i++)
-			if (ent->v.velocity[i])
+			if (ent->v->velocity[i])
 				pflags |= PF_VELOCITY1<<i;
-		if (ent->v.effects)
+		if (ent->v->effects)
 			pflags |= PF_EFFECTS;
-		if (ent->v.skin || ent->v.modelindex >= 256)
+		if (ent->v->skin || ent->v->modelindex >= 256)
 			pflags |= PF_SKINNUM;
-		if (ent->v.health <= 0)
+		if (ent->v->health <= 0)
 			pflags |= PF_DEAD;
-		if (ent->v.mins[2] != -24)
+		if (ent->v->mins[2] != -24)
 			pflags |= PF_GIB;
 
 		if (cl->spectator)
@@ -608,7 +608,7 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 		else if (ent == self_ent)
 		{	// don't send a lot of data on personal entity
 			pflags &= ~(PF_MSEC|PF_COMMAND);
-			if (ent->v.weaponframe)
+			if (ent->v->weaponframe)
 				pflags |= PF_WEAPONFRAME;
 		}
 
@@ -647,17 +647,17 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 		pflags |= pm_code << PF_PMC_SHIFT;
 
 		// Z_EXT_PF_ONGROUND protocol extension
-		if ((int)ent->v.flags & FL_ONGROUND)
+		if ((int)ent->v->flags & FL_ONGROUND)
 			pflags |= PF_ONGROUND;
 
 		// Z_EXT_PF_SOLID protocol extension
-		if (ent->v.solid == SOLID_BBOX || ent->v.solid == SOLID_SLIDEBOX)
+		if (ent->v->solid == SOLID_BBOX || ent->v->solid == SOLID_SLIDEBOX)
 			pflags |= PF_SOLID;
 
 		if (pm_type == PM_LOCK && ent == self_ent)
 			pflags |= PF_COMMAND;	// send forced view angles
 
-		if (client->spec_track && client->spec_track - 1 == j && ent->v.weaponframe)
+		if (client->spec_track && client->spec_track - 1 == j && ent->v->weaponframe)
 			pflags |= PF_WEAPONFRAME;
 
 		MSG_WriteByte (msg, svc_playerinfo);
@@ -665,17 +665,17 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 		MSG_WriteShort (msg, pflags);
 
 		if (client->mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) {
-			MSG_WriteLongCoord(msg, ent->v.origin[0]);
-			MSG_WriteLongCoord(msg, ent->v.origin[1]);
-			MSG_WriteLongCoord(msg, ent->v.origin[2]);
+			MSG_WriteLongCoord(msg, ent->v->origin[0]);
+			MSG_WriteLongCoord(msg, ent->v->origin[1]);
+			MSG_WriteLongCoord(msg, ent->v->origin[2]);
 		}
 		else {
-			MSG_WriteCoord(msg, ent->v.origin[0]);
-			MSG_WriteCoord(msg, ent->v.origin[1]);
-			MSG_WriteCoord(msg, ent->v.origin[2]);
+			MSG_WriteCoord(msg, ent->v->origin[0]);
+			MSG_WriteCoord(msg, ent->v->origin[1]);
+			MSG_WriteCoord(msg, ent->v->origin[2]);
 		}
 
-		MSG_WriteByte (msg, ent->v.frame);
+		MSG_WriteByte (msg, ent->v->frame);
 
 		if (pflags & PF_MSEC)
 		{
@@ -689,10 +689,10 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 		{
 			cmd = cl->lastcmd;
 
-			if (ent->v.health <= 0)
+			if (ent->v->health <= 0)
 			{	// don't show the corpse looking around...
 				cmd.angles[0] = 0;
-				cmd.angles[1] = ent->v.angles[1];
+				cmd.angles[1] = ent->v->angles[1];
 				cmd.angles[0] = 0;
 			}
 
@@ -702,7 +702,7 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 			if (ent == self_ent)
 			{
 				// this is PM_LOCK, we only want to send view angles
-				VectorCopy(ent->v.v_angle, cmd.angles);
+				VectorCopy(ent->v->v_angle, cmd.angles);
 				cmd.forwardmove = 0;
 				cmd.sidemove = 0;
 				cmd.upmove = 0;
@@ -717,19 +717,19 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 
 		for (i=0 ; i<3 ; i++)
 			if (pflags & (PF_VELOCITY1<<i) )
-				MSG_WriteShort (msg, ent->v.velocity[i]);
+				MSG_WriteShort (msg, ent->v->velocity[i]);
 
 		if (pflags & PF_MODEL)
-			MSG_WriteByte (msg, ent->v.modelindex);
+			MSG_WriteByte (msg, ent->v->modelindex);
 
 		if (pflags & PF_SKINNUM)
-			MSG_WriteByte (msg, (int)ent->v.skin | (((pflags & PF_MODEL)&&(ent->v.modelindex >= 256))<<7));
+			MSG_WriteByte (msg, (int)ent->v->skin | (((pflags & PF_MODEL)&&(ent->v->modelindex >= 256))<<7));
 
 		if (pflags & PF_EFFECTS)
 			MSG_WriteByte (msg, TranslateEffects(ent));
 
 		if (pflags & PF_WEAPONFRAME)
-			MSG_WriteByte (msg, ent->v.weaponframe);
+			MSG_WriteByte (msg, ent->v->weaponframe);
 	}
 }
 
@@ -750,19 +750,19 @@ qbool SV_EntityVisibleToClient (client_t* client, int e, byte* pvs)
 	}
 
 	// ignore ents without visible models
-	if (!ent->v.modelindex || !*PR_GetEntityString(ent->v.model))
+	if (!ent->v->modelindex || !*PR_GetEntityString(ent->v->model))
 		return false;
 
-	if ( pvs && ent->e->num_leafs >= 0 )
+	if ( pvs && ent->e.num_leafs >= 0 )
 	{
 		int i;
 
 		// ignore if not touching a PV leaf
-		for (i=0 ; i < ent->e->num_leafs ; i++)
-			if (pvs[ent->e->leafnums[i] >> 3] & (1 << (ent->e->leafnums[i]&7) ))
+		for (i=0 ; i < ent->e.num_leafs ; i++)
+			if (pvs[ent->e.leafnums[i] >> 3] & (1 << (ent->e.leafnums[i]&7) ))
 				break;
 
-		if (i == ent->e->num_leafs)
+		if (i == ent->e.num_leafs)
 			return false;		// not visible
 	}
 
@@ -821,13 +821,13 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 		int trackent = 0;
 
 		if (fofs_hideentity)
-			hideent = ((eval_t *)((byte *)&(client->edict)->v + fofs_hideentity))->_int / pr_edict_size;
+			hideent = ((eval_t *)((byte *)(client->edict)->v + fofs_hideentity))->_int / pr_edict_size;
 		else
 			hideent = 0;
 
 		if (fofs_trackent)
 		{
-			trackent = ((eval_t *)((byte *)&(client->edict)->v + fofs_trackent))->_int;
+			trackent = ((eval_t *)((byte *)(client->edict)->v + fofs_trackent))->_int;
 			if (trackent < 1 || trackent > MAX_CLIENTS || svs.clients[trackent - 1].state != cs_spawned)
 				trackent = 0;
 		}
@@ -835,11 +835,11 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 		// we should use org of tracked player in case or trackent.
 		if (trackent)
 		{
-			VectorAdd (svs.clients[trackent - 1].edict->v.origin, svs.clients[trackent - 1].edict->v.view_ofs, org);		
+			VectorAdd (svs.clients[trackent - 1].edict->v->origin, svs.clients[trackent - 1].edict->v->view_ofs, org);		
 		}
 		else
 		{
-			VectorAdd (client->edict->v.origin, client->edict->v.view_ofs, org);
+			VectorAdd (client->edict->v->origin, client->edict->v->view_ofs, org);
 		}
 
 		pvs = CM_FatPVS (org); // search some PVS
@@ -850,7 +850,7 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 			#define ISUNDERWATER(x) ((x) == CONTENTS_WATER || (x) == CONTENTS_SLIME || (x) == CONTENTS_LAVA)
 
 			// server flash should not work underwater
-			int content = CM_HullPointContents(&sv.worldmodel->hulls[0], 0, client->edict->v.origin);
+			int content = CM_HullPointContents(&sv.worldmodel->hulls[0], 0, client->edict->v->origin);
 			disable_updates = !ISUNDERWATER(content);
 
 			#undef ISUNDERWATER
@@ -884,14 +884,14 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 		{
 			if (!SV_EntityVisibleToClient(client, e, pvs)) {
 				if (fofs_visibility) {
-					((eval_t *)((byte *)&(ent)->v + fofs_visibility))->_int &= ~client_flag;
+					((eval_t *)((byte *)(ent)->v + fofs_visibility))->_int &= ~client_flag;
 				}
 				continue;
 			}
 
 			if (fofs_visibility) {
 				// Don't include other filters in logic for setting this field
-				((eval_t *)((byte *)&(ent)->v + fofs_visibility))->_int |= (1 << (client - svs.clients));
+				((eval_t *)((byte *)(ent)->v + fofs_visibility))->_int |= (1 << (client - svs.clients));
 			}
 
 			if (e == hideent) {
@@ -902,8 +902,8 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 				continue; // added to the special update list
 
 			if (clent) {
-				VectorAdd(ent->v.absmin, ent->v.absmax, org);
-				VectorMA(clent->v.origin, -0.5, org, org);
+				VectorAdd(ent->v->absmin, ent->v->absmax, org);
+				VectorMA(clent->v->origin, -0.5, org, org);
 				distance = DotProduct(org, org);	//Length
 
 				// add to the packetentities
@@ -948,12 +948,12 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 
 			state->number = e;
 			state->flags = 0;
-			VectorCopy (ent->v.origin, state->origin);
-			VectorCopy (ent->v.angles, state->angles);
-			state->modelindex = ent->v.modelindex;
-			state->frame = ent->v.frame;
-			state->colormap = ent->v.colormap;
-			state->skinnum = ent->v.skin;
+			VectorCopy (ent->v->origin, state->origin);
+			VectorCopy (ent->v->angles, state->angles);
+			state->modelindex = ent->v->modelindex;
+			state->frame = ent->v->frame;
+			state->colormap = ent->v->colormap;
+			state->skinnum = ent->v->skin;
 			state->effects = TranslateEffects(ent);
 		}
 	} // server flash
@@ -972,18 +972,18 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 		for (e=1, ent=EDICT_NUM(e) ; e < sv.num_edicts ; e++, ent = NEXT_EDICT(ent))
 		{
 			// ignore ents without visible models
-			if (!ent->v.modelindex || !*PR_GetEntityString(ent->v.model))
+			if (!ent->v->modelindex || !*PR_GetEntityString(ent->v->model))
 				continue;
 
 			// ignore if not touching a PV leaf (meag: this does nothing... complete or remove?)
-			if (pvs && ent->e->num_leafs >= 0) {
-				for (i = 0; i < ent->e->num_leafs; i++)
-					if (pvs[ent->e->leafnums[i] >> 3] & (1 << (ent->e->leafnums[i] & 7)))
+			if (pvs && ent->e.num_leafs >= 0) {
+				for (i = 0; i < ent->e.num_leafs; i++)
+					if (pvs[ent->e.leafnums[i] >> 3] & (1 << (ent->e.leafnums[i] & 7)))
 						break;
 			}
 
-			if ((int)ent->v.effects & EF_MUZZLEFLASH) {
-				ent->v.effects = (int)ent->v.effects & ~EF_MUZZLEFLASH;
+			if ((int)ent->v->effects & EF_MUZZLEFLASH) {
+				ent->v->effects = (int)ent->v->effects & ~EF_MUZZLEFLASH;
 				MSG_WriteByte (msg, svc_muzzleflash);
 				MSG_WriteShort (msg, e);
 			}
@@ -1007,17 +1007,17 @@ void SV_SetVisibleEntitiesForBot (client_t* client)
 	if (!fofs_visibility)
 		return;
 
-	VectorAdd (client->edict->v.origin, client->edict->v.view_ofs, org);
+	VectorAdd (client->edict->v->origin, client->edict->v->view_ofs, org);
 	pvs = CM_FatPVS (org); // search some PVS
 
 	// players first
 	for (j = 0; j < MAX_CLIENTS; j++)
 	{
 		if (SV_PlayerVisibleToClient(client, j, pvs, client->edict, svs.clients[j].edict)) {
-			((eval_t *)((byte *)&(svs.clients[j].edict)->v + fofs_visibility))->_int |= client_flag;
+			((eval_t *)((byte *)(svs.clients[j].edict)->v + fofs_visibility))->_int |= client_flag;
 		}
 		else {
-			((eval_t *)((byte *)&(svs.clients[j].edict)->v + fofs_visibility))->_int &= ~client_flag;
+			((eval_t *)((byte *)(svs.clients[j].edict)->v + fofs_visibility))->_int &= ~client_flag;
 		}
 	}
 
@@ -1027,10 +1027,10 @@ void SV_SetVisibleEntitiesForBot (client_t* client)
 		edict_t* ent = EDICT_NUM (e);
 
 		if (SV_EntityVisibleToClient(client, e, pvs)) {
-			((eval_t *)((byte *)&(ent)->v + fofs_visibility))->_int |= client_flag;
+			((eval_t *)((byte *)(ent)->v + fofs_visibility))->_int |= client_flag;
 		}
 		else {
-			((eval_t *)((byte *)&(ent)->v + fofs_visibility))->_int &= ~client_flag;
+			((eval_t *)((byte *)(ent)->v + fofs_visibility))->_int &= ~client_flag;
 		}
 	}
 }

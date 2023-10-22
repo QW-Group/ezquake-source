@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static tokenizecontext_t pr1_tokencontext;
 
 #define	RETURN_EDICT(e) (((int *)pr_globals)[OFS_RETURN] = EDICT_TO_PROG(e))
-#define RETURN_STRING(s) (PR1_SetString(&((int *)pr_globals)[OFS_RETURN], s))
+#define	RETURN_STRING(s) (PR1_SetString(&((int *)pr_globals)[OFS_RETURN], s))
 
 /*
 ===============================================================================
@@ -127,7 +127,7 @@ void PF_setorigin (void)
 
 	e = G_EDICT(OFS_PARM0);
 	org = G_VECTOR(OFS_PARM1);
-	VectorCopy (org, e->v.origin);
+	VectorCopy (org, e->v->origin);
 	SV_AntilagReset (e);
 	SV_LinkEdict (e, false);
 }
@@ -150,9 +150,9 @@ void PF_setsize (void)
 	e = G_EDICT(OFS_PARM0);
 	min = G_VECTOR(OFS_PARM1);
 	max = G_VECTOR(OFS_PARM2);
-	VectorCopy (min, e->v.mins);
-	VectorCopy (max, e->v.maxs);
-	VectorSubtract (max, min, e->v.size);
+	VectorCopy (min, e->v->mins);
+	VectorCopy (max, e->v->maxs);
+	VectorSubtract (max, min, e->v->size);
 	SV_LinkEdict (e, false);
 }
 
@@ -182,33 +182,33 @@ static void PF_setmodel (void)
 	PR_RunError ("PF_setmodel: no precache: %s\n", m);
 ok:
 
-	e->v.model = G_INT(OFS_PARM1);
-	e->v.modelindex = i;
+	e->v->model = G_INT(OFS_PARM1);
+	e->v->modelindex = i;
 
 // if it is an inline model, get the size information for it
 	if (m[0] == '*')
 	{
 		mod = CM_InlineModel (m);
-		VectorCopy (mod->mins, e->v.mins);
-		VectorCopy (mod->maxs, e->v.maxs);
-		VectorSubtract (mod->maxs, mod->mins, e->v.size);
+		VectorCopy (mod->mins, e->v->mins);
+		VectorCopy (mod->maxs, e->v->maxs);
+		VectorSubtract (mod->maxs, mod->mins, e->v->size);
 		SV_LinkEdict (e, false);
 	}
 	else if (pr_nqprogs)
 	{
 		// hacks to make NQ progs happy
-		if (!strcmp(PR1_GetString(e->v.model), "maps/b_explob.bsp"))
+		if (!strcmp(PR1_GetString(e->v->model), "maps/b_explob.bsp"))
 		{
-			VectorClear (e->v.mins);
-			VectorSet (e->v.maxs, 32, 32, 64);
+			VectorClear (e->v->mins);
+			VectorSet (e->v->maxs, 32, 32, 64);
 		}
 		else
 		{
 			// FTE does this, so we do, too; I'm not sure if it makes a difference
-			VectorSet (e->v.mins, -16, -16, -16);
-			VectorSet (e->v.maxs, 16, 16, 16);
+			VectorSet (e->v->mins, -16, -16, -16);
+			VectorSet (e->v->maxs, 16, 16, 16);
 		}
-		VectorSubtract (e->v.maxs, e->v.mins, e->v.size);
+		VectorSubtract (e->v->maxs, e->v->mins, e->v->size);
 		SV_LinkEdict (e, false);
 	}
 }
@@ -726,11 +726,11 @@ int PF_newcheckclient (int check)
 		if (i == check)
 			break;	// didn't find anything else
 
-		if (ent->e->free)
+		if (ent->e.free)
 			continue;
-		if (ent->v.health <= 0)
+		if (ent->v->health <= 0)
 			continue;
-		if ((int)ent->v.flags & FL_NOTARGET)
+		if ((int)ent->v->flags & FL_NOTARGET)
 			continue;
 
 	// anything that is a client, or has a client as an enemy
@@ -738,7 +738,7 @@ int PF_newcheckclient (int check)
 	}
 
 // get the PVS for the entity
-	VectorAdd (ent->v.origin, ent->v.view_ofs, org);
+	VectorAdd (ent->v->origin, ent->v->view_ofs, org);
 	checkpvs = CM_LeafPVS (CM_PointInLeaf(org));
 
 	return i;
@@ -776,7 +776,7 @@ static void PF_checkclient (void)
 
 // return check if it might be visible	
 	ent = EDICT_NUM(sv.lastcheck);
-	if (ent->e->free || ent->v.health <= 0)
+	if (ent->e.free || ent->v->health <= 0)
 	{
 		RETURN_EDICT(sv.edicts);
 		return;
@@ -784,7 +784,7 @@ static void PF_checkclient (void)
 
 // if current entity can't possibly see the check entity, return 0
 	self = PROG_TO_EDICT(pr_global_struct->self);
-	VectorAdd (self->v.origin, self->v.view_ofs, vieworg);
+	VectorAdd (self->v->origin, self->v->view_ofs, vieworg);
 	l = CM_Leafnum(CM_PointInLeaf(vieworg)) - 1;
 	if ( (l<0) || !(checkpvs[l>>3] & (1<<(l&7)) ) )
 	{
@@ -1228,15 +1228,15 @@ static void PF_findradius (void)
 	for (i = 0; i < numtouch; i++)
 	{
 		ent = touchlist[i];
-		if (ent->v.solid == SOLID_NOT)
+		if (ent->v->solid == SOLID_NOT)
 			continue;	// FIXME?
 
 		for (j = 0; j < 3; j++)
-			eorg[j] = org[j] - (ent->v.origin[j] + (ent->v.mins[j] + ent->v.maxs[j]) * 0.5);
+			eorg[j] = org[j] - (ent->v->origin[j] + (ent->v->mins[j] + ent->v->maxs[j]) * 0.5);
 		if (DotProduct(eorg, eorg) > rad_2)
 			continue;
 
-		ent->v.chain = EDICT_TO_PROG(chain);
+		ent->v->chain = EDICT_TO_PROG(chain);
 		chain = ent;
 	}
 
@@ -1315,7 +1315,7 @@ void PF_Find (void)
 	for (e++ ; e < sv.num_edicts ; e++)
 	{
 		ed = EDICT_NUM(e);
-		if (ed->e->free)
+		if (ed->e.free)
 			continue;
 		t = E_STRING(ed,f);
 		if (!t)
@@ -1457,7 +1457,7 @@ void PF_walkmove (void)
 	yaw = G_FLOAT(OFS_PARM0);
 	dist = G_FLOAT(OFS_PARM1);
 
-	if ( !( (int)ent->v.flags & (FL_ONGROUND|FL_FLY|FL_SWIM) ) )
+	if ( !( (int)ent->v->flags & (FL_ONGROUND|FL_FLY|FL_SWIM) ) )
 	{
 		G_FLOAT(OFS_RETURN) = 0;
 		return;
@@ -1496,19 +1496,19 @@ void PF_droptofloor (void)
 
 	ent = PROG_TO_EDICT(pr_global_struct->self);
 
-	VectorCopy (ent->v.origin, end);
+	VectorCopy (ent->v->origin, end);
 	end[2] -= 256;
 
-	trace = SV_Trace (ent->v.origin, ent->v.mins, ent->v.maxs, end, false, ent);
+	trace = SV_Trace (ent->v->origin, ent->v->mins, ent->v->maxs, end, false, ent);
 
 	if (trace.fraction == 1 || trace.allsolid)
 		G_FLOAT(OFS_RETURN) = 0;
 	else
 	{
-		VectorCopy (trace.endpos, ent->v.origin);
+		VectorCopy (trace.endpos, ent->v->origin);
 		SV_LinkEdict (ent, false);
-		ent->v.flags = (int)ent->v.flags | FL_ONGROUND;
-		ent->v.groundentity = EDICT_TO_PROG(trace.e.ent);
+		ent->v->flags = (int)ent->v->flags | FL_ONGROUND;
+		ent->v->groundentity = EDICT_TO_PROG(trace.e.ent);
 		G_FLOAT(OFS_RETURN) = 1;
 	}
 }
@@ -1624,7 +1624,7 @@ void PF_nextent (void)
 			return;
 		}
 		ent = EDICT_NUM(i);
-		if (!ent->e->free)
+		if (!ent->e.free)
 		{
 			RETURN_EDICT(ent);
 			return;
@@ -1658,9 +1658,9 @@ void PF_changeyaw (void)
 	float		ideal, current, move, speed;
 
 	ent = PROG_TO_EDICT(pr_global_struct->self);
-	current = anglemod( ent->v.angles[1] );
-	ideal = ent->v.ideal_yaw;
-	speed = ent->v.yaw_speed;
+	current = anglemod( ent->v->angles[1] );
+	ideal = ent->v->ideal_yaw;
+	speed = ent->v->yaw_speed;
 
 	if (current == ideal)
 		return;
@@ -1686,7 +1686,7 @@ void PF_changeyaw (void)
 			move = -speed;
 	}
 
-	ent->v.angles[1] = anglemod (current + move);
+	ent->v->angles[1] = anglemod (current + move);
 }
 
 /*
@@ -1786,7 +1786,7 @@ static void NQP_Skip (int count)
 	nqp_buf.cursize -= count;
 }
 
-static void NQP_Process(void)
+static void NQP_Process (void)
 {
 	int cmd;
 
@@ -1830,16 +1830,13 @@ static void NQP_Process(void)
 		else if (cmd == nq_svc_setview) {
 			if (nqp_buf.cursize < 3)
 				goto waitformore;
-			// nq_svc_setview <short>
-			NQP_Skip(3);		// TODO: make an extension for this
+			NQP_Skip (3);		// TODO: make an extension for this
 		}
-		else if (cmd == svc_updatefrags) {
+		else if (cmd == svc_updatefrags)
 			nqp_expect = 4;
-		}
 		else if (cmd == nq_svc_updatecolors) {
-			if (nqp_buf.cursize < 3) {
+			if (nqp_buf.cursize < 3)
 				goto waitformore;
-			}
 			MSG_WriteByte (&sv.reliable_datagram, svc_setinfo);
 			MSG_WriteByte (&sv.reliable_datagram, nqp_buf_data[1]);
 			MSG_WriteString (&sv.reliable_datagram, "topcolor");
@@ -1853,14 +1850,12 @@ static void NQP_Process(void)
 		else if (cmd == nq_svc_updatename) {
 			int slot;
 			byte *p;
-			if (nqp_buf.cursize < 3) {
+			if (nqp_buf.cursize < 3)
 				goto waitformore;
-			}
 			slot = nqp_buf_data[1];
 			p = (byte *)memchr (nqp_buf_data + 2, 0, nqp_buf.cursize - 2);
-			if (!p) {
+			if (!p)
 				goto waitformore;
-			}
 			MSG_WriteByte (&sv.reliable_datagram, svc_setinfo);
 			MSG_WriteByte (&sv.reliable_datagram, slot);
 			MSG_WriteString (&sv.reliable_datagram, "name");
@@ -1875,97 +1870,84 @@ static void NQP_Process(void)
 			NQP_Skip ((p - nqp_buf_data) + 1);
 		}
 		else if (cmd == svc_cdtrack) {
-			if (nqp_buf.cursize < 3) {
+			if (nqp_buf.cursize < 3)
 				goto waitformore;
-			}
 			NQP_Flush (2);
 			NQP_Skip (1);
 		}
 		else if (cmd == svc_finale) {
 			byte *p = (byte *)memchr (nqp_buf_data + 1, 0, nqp_buf.cursize - 1);
-			if (!p) {
+			if (!p)
 				goto waitformore;
-			}
 			nqp_expect = (p - nqp_buf_data) + 1;
 		}
 		else if (cmd == svc_intermission) {
 			int i;
 			NQP_Flush (1);
-			for (i = 0; i < 3; i++) {
-				MSG_WriteCoord(&sv.reliable_datagram, svs.clients[0].edict->v.origin[i]);
-			}
-			for (i = 0; i < 3; i++) {
-				MSG_WriteAngle(&sv.reliable_datagram, svs.clients[0].edict->v.angles[i]);
-			}
+			for (i = 0; i < 3; i++)
+				MSG_WriteCoord (&sv.reliable_datagram, svs.clients[0].edict->v->origin[i]);
+			for (i = 0; i < 3; i++)
+				MSG_WriteAngle (&sv.reliable_datagram, svs.clients[0].edict->v->angles[i]);
 		}
 		else if (cmd == nq_svc_cutscene) {
 			byte *p = (byte *)memchr (nqp_buf_data + 1, 0, nqp_buf.cursize - 1);
-			if (!p) {
+			if (!p)
 				goto waitformore;
-			}
 			MSG_WriteByte (&sv.reliable_datagram, svc_stufftext);
 			MSG_WriteString (&sv.reliable_datagram, "//cutscene\n"); // ZQ extension
 			NQP_Skip (p - nqp_buf_data + 1);
 		}
-		else if (cmd == svc_temp_entity) {
+		else if (nqp_buf_data[0] == svc_temp_entity) {
 			if (nqp_buf.cursize < 2)
 				break;
 
-			switch (nqp_buf_data[1]) {
-			case TE_SPIKE:
-			case TE_SUPERSPIKE:
-			case TE_EXPLOSION:
-			case TE_TAREXPLOSION:
-			case TE_WIZSPIKE:
-			case TE_KNIGHTSPIKE:
-			case TE_LAVASPLASH:
-			case TE_TELEPORT:
-				if (nqp_buf.cursize < 2 + 3 * msg_coordsize) {
-					goto waitformore;
-				}
-				NQP_Flush(2 + 3 * msg_coordsize);
-				break;
-			case TE_GUNSHOT:
-				if (nqp_buf.cursize < 2 + 3 * msg_coordsize) {
-					goto waitformore;
-				}
-				NQP_Flush(2);
-				MSG_WriteByte(&sv.reliable_datagram, 1);
-				NQP_Flush(3 * msg_coordsize);
-				break;
+switch (nqp_buf_data[1]) {
+  case TE_SPIKE:
+  case TE_SUPERSPIKE:
+  case TE_EXPLOSION:
+  case TE_TAREXPLOSION:
+  case TE_WIZSPIKE:
+  case TE_KNIGHTSPIKE:
+  case TE_LAVASPLASH:
+  case TE_TELEPORT:
+		nqp_expect = 8;
+		break;
+  case TE_GUNSHOT:
+		if (nqp_buf.cursize < 8)
+			goto waitformore;
+		NQP_Flush (2);
+		MSG_WriteByte (&sv.reliable_datagram, 1);
+		NQP_Flush (6);
+		break;
 
-			case TE_LIGHTNING1:
-			case TE_LIGHTNING2:
-			case TE_LIGHTNING3:
-				if (nqp_buf.cursize < 2 + 2 + 6 * msg_coordsize) {
-					goto waitformore;
-				}
-				NQP_Flush(4 + 6 * msg_coordsize);
-				break;
-			case NQ_TE_BEAM:
-			{
-				int entnum;
-				if (nqp_buf.cursize < 4 + 6 * msg_coordsize) {
-					goto waitformore;
-				}
-				MSG_WriteByte(&sv.reliable_datagram, svc_temp_entity);
-				MSG_WriteByte(&sv.reliable_datagram, TE_LIGHTNING1);
-				entnum = nqp_buf_data[2] + nqp_buf_data[3] * 256;
-				if ((unsigned int)entnum > 1023)
-					entnum = 0;
-				MSG_WriteShort(&sv.reliable_datagram, (short)(entnum - 1288));
-				NQP_Skip(4);
-				NQP_Flush(6 * msg_coordsize);
-				break;
-			}
+  case TE_LIGHTNING1:
+  case TE_LIGHTNING2:
+  case TE_LIGHTNING3:
+		nqp_expect = 16;
+	  break;
+  case NQ_TE_BEAM:
+  {		int entnum;
+		if (nqp_buf.cursize < 16)
+			goto waitformore;
+		MSG_WriteByte (&sv.reliable_datagram, svc_temp_entity);
+		MSG_WriteByte (&sv.reliable_datagram, TE_LIGHTNING1);
+		entnum = nqp_buf_data[2] + nqp_buf_data[3]*256;
+		if ((unsigned int)entnum > 1023)
+			entnum = 0;
+		MSG_WriteShort (&sv.reliable_datagram, (short)(entnum - 1288));
+		NQP_Skip (4);
+		nqp_expect = 12;
+		break;
+  }
 
-			case NQ_TE_EXPLOSION2:
-				// TODO: Convert to TE_BLOOD (2 + 3 * coord + 2 bytes)
-				break;
-			default:
-				Con_Printf("WARNING: progs.dat sent an unsupported svc_temp_entity: %i\n", nqp_buf_data[1]);
-				goto ignore;
-			}
+  case NQ_TE_EXPLOSION2:
+		nqp_expect = 10;
+		break;
+  default:
+		Con_Printf ("WARNING: progs.dat sent an unsupported svc_temp_entity: %i\n", nqp_buf_data[1]);
+	    goto ignore;
+}
+
 		}
 		else {
 			Con_Printf ("WARNING: progs.dat sent an unsupported svc: %i\n", cmd);
@@ -2236,16 +2218,16 @@ void PF_makestatic (void)
 	s = &sv.static_entities[sv.static_entity_count];
 	memset(s, 0, sizeof(sv.static_entities[0]));
 	s->number = sv.static_entity_count + 1;
-	s->modelindex = SV_ModelIndex(PR_GetEntityString(ent->v.model));
+	s->modelindex = SV_ModelIndex(PR_GetEntityString(ent->v->model));
 	if (!s->modelindex) {
 		ED_Free (ent);
 		return;
 	}
-	s->frame = ent->v.frame;
-	s->colormap = ent->v.colormap;
-	s->skinnum = ent->v.skin;
-	VectorCopy(ent->v.origin, s->origin);
-	VectorCopy(ent->v.angles, s->angles);
+	s->frame = ent->v->frame;
+	s->colormap = ent->v->colormap;
+	s->skinnum = ent->v->skin;
+	VectorCopy(ent->v->origin, s->origin);
+	VectorCopy(ent->v->angles, s->angles);
 	++sv.static_entity_count;
 
 	// throw the entity away now

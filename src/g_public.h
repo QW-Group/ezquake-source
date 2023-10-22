@@ -30,8 +30,35 @@
 //
 // g_public.h -- game module information visible to server
 
-#define	GAME_API_VERSION	15
+#define	GAME_API_VERSION	16
 
+/*
+ * Changes in GAME_API_VERSION 16:
+ * - server edict data removed from game edict: typedef struct shared_edict_s { entvars_t v;} edict_t;
+ * - SetSting works for PR1 only
+ * - ported VM from Q3
+ * - QVM mods should get mapname and client netnames with infokey trap
+ *
+ * mod should get client netname in GAME_CLIENT_CONNECT call:
+ *  self = PROG_TO_EDICT(g_globalvars.self);
+ *  self->s.v.netname = netnames[NUM_FOR_EDICT(self)-1];
+ *  infokey( self, "netname", self->s.v.netname,  32);
+ *
+ * mod should get mapname in GAME_START_FRAME call:
+ *  if (framecount == 0)
+ *  {
+ *     infokey(world, "mapname", mapname, sizeof(mapname));
+ *     infokey(world, "modelname", worldmodel, sizeof(worldmodel));
+ *     world->model = worldmodel;
+ *  }
+ *
+ *  infokey( world, "mapname", mapname, sizeof(mapname) );
+ *
+ * - QVM GAME_CLIENT_USERINFO_CHANGED call now have integer paramater
+ *
+ * called with 0 before changing, with 1 after changing
+ * mod must update client netname in call with param 1 and key = "name"
+ */
 
 //===============================================================
 
@@ -142,6 +169,8 @@ typedef enum
 	G_SETPAUSE,
 	G_SETUSERINFO,
 	G_MOVETOGOAL,
+	G_VISIBLETO,
+	_G__LASTAPI
 } gameImport_t;
 
 // !!! new things comes to end of list !!!
@@ -215,14 +244,30 @@ typedef struct
 
 typedef struct
 {
-	edict_t         *ents;
+	int   name;
+	int   ofs;
+	int   type;
+} field_vm_t;
+
+typedef struct
+{
+	intptr_t        ents;
 	int             sizeofent;
-	globalvars_t    *global;
-	field_t         *fields;
+	intptr_t        global;
+	intptr_t        fields;
 	int             APIversion;
 	int             maxentities;
 } gameData_t;
 
+typedef struct
+{
+	int         ents_p;
+	int         sizeofent;
+	int         global_p;
+	int         fields_p;
+	int         APIversion;
+	int         maxentities;
+} gameData_vm_t;
 typedef int		fileHandle_t;
 
 typedef enum {

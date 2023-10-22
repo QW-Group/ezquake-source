@@ -51,12 +51,12 @@ void SV_ClearWorld (void);
 void SV_UnlinkEdict (edict_t *ent);
 // call before removing an entity, and before trying to move one,
 // so it doesn't clip against itself
-// flags ent->v.modified
+// flags ent->v->modified
 
 void SV_LinkEdict (edict_t *ent, qbool touch_triggers);
 // Needs to be called any time an entity changes origin, mins, maxs, or solid
-// flags ent->v.modified
-// sets ent->v.absmin and ent->v.absmax
+// flags ent->v->modified
+// sets ent->v->absmin and ent->v->absmax
 // if touchtriggers, calls prog functions for the intersected triggers
 
 int SV_PointContents (vec3_t p);

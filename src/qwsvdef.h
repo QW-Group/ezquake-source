@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "net.h"
 #include "crc.h"
 #include "sha1.h"
+#include "sha3.h"
 #include "pmove.h"
 #include "version.h"
 #include "sv_log.h"

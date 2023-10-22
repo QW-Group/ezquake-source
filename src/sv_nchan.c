@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 void ClientReliableCheckBlock(client_t *cl, int maxsize)
 {
 	if (cl->num_backbuf
-	        || cl->netchan.message.cursize > cl->netchan.message.maxsize - maxsize - 1)
+		|| cl->netchan.message.cursize > cl->netchan.message.maxsize - maxsize - 1)
 	{
 		// we would probably overflow the buffer, save it for next
 		if (!cl->num_backbuf || cl->backbuf.cursize > cl->backbuf.maxsize - maxsize - 1)

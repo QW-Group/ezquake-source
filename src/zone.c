@@ -221,22 +221,13 @@ void Hunk_FreeToLowMark(int mark)
 	hunk_low_used = mark;
 }
 
-int	Hunk_HighMark(void)
+static int Hunk_HighMark(void)
 {
-	if (hunk_tempactive) {
-		hunk_tempactive = false;
-		Hunk_FreeToHighMark(hunk_tempmark);
-	}
-
 	return hunk_high_used;
 }
 
-void Hunk_FreeToHighMark(int mark)
+static void Hunk_FreeToHighMark(int mark)
 {
-	if (hunk_tempactive) {
-		hunk_tempactive = false;
-		Hunk_FreeToHighMark(hunk_tempmark);
-	}
 	if (mark < 0 || mark > hunk_high_used) {
 		Sys_Error("Hunk_FreeToHighMark: bad mark %i", mark);
 	}
@@ -249,17 +240,12 @@ void Hunk_FreeToHighMark(int mark)
 Hunk_HighAllocName
 ===================
 */
-void *Hunk_HighAllocName(int size, char *name)
+static void *Hunk_HighAllocName(int size, char *name)
 {
 	hunk_t *h;
 
 	if (size < 0) {
 		Sys_Error("Hunk_HighAllocName: bad size: %i", size);
-	}
-
-	if (hunk_tempactive) {
-		Hunk_FreeToHighMark(hunk_tempmark);
-		hunk_tempactive = false;
 	}
 
 #ifdef PARANOID
@@ -291,6 +277,23 @@ void *Hunk_HighAllocName(int size, char *name)
 
 /*
 =================
+Hunk_TempFlush
+
+Free the temporary memory zone to baseline.
+=================
+*/
+void Hunk_TempFlush(void)
+{
+	if (hunk_tempactive) {
+		Hunk_FreeToHighMark(hunk_tempmark);
+		hunk_tempactive = false;
+	}
+
+	hunk_tempmark = Hunk_HighMark();
+}
+
+/*
+=================
 Hunk_TempAlloc
 
 Return space from the top of the hunk
@@ -300,20 +303,28 @@ void *Hunk_TempAlloc(int size)
 {
 	void *buf;
 
-	size = (size + 15) & ~15;
-
-	if (hunk_tempactive) {
-		Hunk_FreeToHighMark(hunk_tempmark);
-		hunk_tempactive = false;
-	}
-
-	hunk_tempmark = Hunk_HighMark();
+	Hunk_TempFlush();
 
 	buf = Hunk_HighAllocName(size, "temp");
 
 	hunk_tempactive = true;
 
 	return buf;
+}
+
+/*
+=================
+Hunk_TempAllocMore
+
+Return space after any previous temporary allocation without clearing first.
+=================
+*/
+void *Hunk_TempAllocMore(int size)
+{
+	if (!hunk_tempactive)
+		return Hunk_TempAlloc(size);
+
+	return Hunk_HighAllocName(size, "temp+");
 }
 
 #ifdef SERVERONLY

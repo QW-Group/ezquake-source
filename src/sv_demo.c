@@ -1251,7 +1251,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	MSG_WriteFloat (&buf, sv.time);
 
 	// send full levelname
-	MSG_WriteString (&buf, PR_GetEntityString(sv.edicts->v.message));
+	MSG_WriteString (&buf, PR_GetEntityString(sv.edicts->v->message));
 
 	// send the movevars
 	MSG_WriteFloat(&buf, movevars.gravity);
@@ -1375,7 +1375,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 
 		for (i = 0; i < sv.num_baseline_edicts; ++i) {
 			edict_t* svent = EDICT_NUM(i);
-			entity_state_t* s = &svent->e->baseline;
+			entity_state_t* s = &svent->e.baseline;
 
 			if (buf.cursize >= MAX_MSGLEN/2) {
 				SV_WriteRecordMVDMessage (&buf);
@@ -1496,23 +1496,23 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 		flags =   (DF_ORIGIN << 0) | (DF_ORIGIN << 1) | (DF_ORIGIN << 2)
 				| (DF_ANGLES << 0) | (DF_ANGLES << 1) | (DF_ANGLES << 2)
 				| DF_EFFECTS | DF_SKINNUM 
-				| (ent->v.health <= 0 ? DF_DEAD : 0)
-				| (ent->v.mins[2] != -24 ? DF_GIB : 0)
+				| (ent->v->health <= 0 ? DF_DEAD : 0)
+				| (ent->v->mins[2] != -24 ? DF_GIB : 0)
 				| DF_WEAPONFRAME | DF_MODEL;
 
-		VectorCopy(ent->v.origin, origin);
-		VectorCopy(ent->v.angles, angles);
+		VectorCopy(ent->v->origin, origin);
+		VectorCopy(ent->v->angles, angles);
 		angles[0] *= -3;
 #ifdef USE_PR2
 		if( player->isBot )
-			VectorCopy(ent->v.v_angle, angles);
+			VectorCopy(ent->v->v_angle, angles);
 #endif
 		angles[2] = 0; // no roll angle
 
-		if (ent->v.health <= 0)
+		if (ent->v->health <= 0)
 		{	// don't show the corpse looking around...
 			angles[0] = 0;
-			angles[1] = ent->v.angles[1];
+			angles[1] = ent->v->angles[1];
 			angles[2] = 0;
 		}
 
@@ -1520,7 +1520,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 		MSG_WriteByte (&buf, i);
 		MSG_WriteShort (&buf, flags);
 
-		MSG_WriteByte (&buf, ent->v.frame);
+		MSG_WriteByte (&buf, ent->v->frame);
 
 		for (j = 0 ; j < 3 ; j++)
 			if (flags & (DF_ORIGIN << j))
@@ -1531,16 +1531,16 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 				MSG_WriteAngle16 (&buf, angles[j]);
 
 		if (flags & DF_MODEL)
-			MSG_WriteByte (&buf, ent->v.modelindex);
+			MSG_WriteByte (&buf, ent->v->modelindex);
 
 		if (flags & DF_SKINNUM)
-			MSG_WriteByte (&buf, ent->v.skin);
+			MSG_WriteByte (&buf, ent->v->skin);
 
 		if (flags & DF_EFFECTS)
-			MSG_WriteByte (&buf, ent->v.effects);
+			MSG_WriteByte (&buf, ent->v->effects);
 
 		if (flags & DF_WEAPONFRAME)
-			MSG_WriteByte (&buf, ent->v.weaponframe);
+			MSG_WriteByte (&buf, ent->v->weaponframe);
 
 		if (buf.cursize > MAX_MSGLEN/2)
 		{
@@ -1573,21 +1573,21 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 
 		memset(stats, 0, sizeof(stats));
 
-		stats[STAT_HEALTH]       = ent->v.health;
-		stats[STAT_WEAPON]       = SV_ModelIndex(PR_GetEntityString(ent->v.weaponmodel));
-		stats[STAT_AMMO]         = ent->v.currentammo;
-		stats[STAT_ARMOR]        = ent->v.armorvalue;
-		stats[STAT_SHELLS]       = ent->v.ammo_shells;
-		stats[STAT_NAILS]        = ent->v.ammo_nails;
-		stats[STAT_ROCKETS]      = ent->v.ammo_rockets;
-		stats[STAT_CELLS]        = ent->v.ammo_cells;
-		stats[STAT_ACTIVEWEAPON] = ent->v.weapon;
+		stats[STAT_HEALTH]       = ent->v->health;
+		stats[STAT_WEAPON]       = SV_ModelIndex(PR_GetEntityString(ent->v->weaponmodel));
+		stats[STAT_AMMO]         = ent->v->currentammo;
+		stats[STAT_ARMOR]        = ent->v->armorvalue;
+		stats[STAT_SHELLS]       = ent->v->ammo_shells;
+		stats[STAT_NAILS]        = ent->v->ammo_nails;
+		stats[STAT_ROCKETS]      = ent->v->ammo_rockets;
+		stats[STAT_CELLS]        = ent->v->ammo_cells;
+		stats[STAT_ACTIVEWEAPON] = ent->v->weapon;
 
-		if (ent->v.health > 0) // viewheight for PF_DEAD & PF_GIB is hardwired
-			stats[STAT_VIEWHEIGHT] = ent->v.view_ofs[2];
+		if (ent->v->health > 0) // viewheight for PF_DEAD & PF_GIB is hardwired
+			stats[STAT_VIEWHEIGHT] = ent->v->view_ofs[2];
 
 		// stuff the sigil bits into the high bits of items for sbar
-		stats[STAT_ITEMS] = (int) ent->v.items | ((int) PR_GLOBAL(serverflags) << 28);
+		stats[STAT_ITEMS] = (int) ent->v->items | ((int) PR_GLOBAL(serverflags) << 28);
 
 		for (j = 0; j < MAX_CL_STATS; j++)
 		{

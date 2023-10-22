@@ -407,9 +407,6 @@
     <ClCompile Include="src\help.c">
       <Filter>Source Files\Documentation</Filter>
     </ClCompile>
-    <ClCompile Include="src\pr2_vm.c">
-      <Filter>Source Files\Server</Filter>
-    </ClCompile>
     <ClCompile Include="src\pr_cmds.c">
       <Filter>Source Files\Server</Filter>
     </ClCompile>
@@ -426,6 +423,15 @@
       <Filter>Source Files\Server</Filter>
     </ClCompile>
     <ClCompile Include="src\pr2_exec.c">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="src\vm.c">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="src\vm_interpreted.c">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="src\vm_x86.c">
       <Filter>Source Files\Server</Filter>
     </ClCompile>
     <ClCompile Include="src\Ctrl.c">
@@ -1231,6 +1237,9 @@
     <ClInclude Include="src\common.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\q_platform.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\common_draw.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -1381,10 +1390,13 @@
     <ClInclude Include="src\pr_comp.h">
       <Filter>Source Files\Server</Filter>
     </ClInclude>
-    <ClInclude Include="src\pr2.h">
+    <ClInclude Include="src\vm.h">
       <Filter>Source Files\Server</Filter>
     </ClInclude>
-    <ClInclude Include="src\pr2_vm.h">
+    <ClInclude Include="src\vm_local.h">
+      <Filter>Source Files\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pr2.h">
       <Filter>Source Files\Server</Filter>
     </ClInclude>
     <ClInclude Include="src\progdefs.h">
