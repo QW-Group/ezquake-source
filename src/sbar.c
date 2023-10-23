@@ -1256,7 +1256,7 @@ static qbool Sbar_ShowTeamKills(void)
 
 static void Sbar_DeathmatchOverlay(int start)
 {
-	int stats_basic, stats_team, stats_touches, stats_caps, playerstats[7];
+	int stats_team, stats_touches, stats_caps, playerstats[7];
 	int scoreboardsize, colors_thickness, statswidth, stats_xoffset = 0;
 	int i, k, x, y, xofs, total, p, skip = 10, fragsint;
 	int rank_width, leftover, startx, tempx, mynum;
@@ -1302,11 +1302,10 @@ static void Sbar_DeathmatchOverlay(int start)
 	rank_width = (cl.teamplay ? RANK_WIDTH_TEAM : RANK_WIDTH_DM);
 
 	statswidth = 0;
-	stats_basic = stats_team = stats_touches = stats_caps = 0;
+	stats_team = stats_touches = stats_caps = 0;
 	if (scr_scoreboard_showfrags.value && Stats_IsActive()) {
 		if (rank_width + statswidth + RANK_WIDTH_BASICSTATS < vid.width - 16) {
 			statswidth += RANK_WIDTH_BASICSTATS;
-			stats_basic++;
 			if (cl.teamplay) {
 				if (rank_width + statswidth + RANK_WIDTH_TEAMSTATS < vid.width - 16) {
 					if (Sbar_ShowTeamKills()) {

@@ -220,7 +220,6 @@ static void GL_FlagTexturesForModel(model_t* mod)
 	case mod_sprite:
 		{
 			msprite2_t* psprite = (msprite2_t*)Mod_Extradata(mod);
-			int count = 0;
 
 			for (j = 0; j < psprite->numframes; ++j) {
 				int offset    = psprite->frames[j].offset;
@@ -235,7 +234,6 @@ static void GL_FlagTexturesForModel(model_t* mod)
 				if (R_TextureReferenceIsValid(frame->gl_texturenum)) {
 					texture_flags[frame->gl_texturenum.index].flags |= (1 << TEXTURETYPES_SPRITES);
 				}
-				++count;
 			}
 			break;
 		}

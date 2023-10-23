@@ -85,12 +85,11 @@ Otherwise, allocations with the same name will be totaled up before printing.
 void Hunk_Print(qbool all)
 {
 	hunk_t  *h, *next, *endlow, *starthigh, *endhigh;
-	int     count, sum;
+	int     sum;
 	int     totalblocks;
 	char    name[9];
 
 	name[8] = 0;
-	count = 0;
 	sum = 0;
 	totalblocks = 0;
 
@@ -125,7 +124,6 @@ void Hunk_Print(qbool all)
 		}
 
 		next = (hunk_t *)((byte *)h + h->size);
-		count++;
 		totalblocks++;
 		sum += h->size;
 
@@ -140,7 +138,6 @@ void Hunk_Print(qbool all)
 			if (!all) {
 				Con_Printf("          :%8ikb %8s (TOTAL)\n", sum / 1024, name);
 			}
-			count = 0;
 			sum = 0;
 		}
 

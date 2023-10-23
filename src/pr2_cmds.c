@@ -2437,7 +2437,7 @@ void PF2_Add_Bot( byte * base, uintptr_t mask, pr2val_t * stack, pr2val_t * retv
 	int     topcolor = stack[2]._int;
 	char   *skin = (char *) VM_POINTER( base, mask, stack[3].string );
 	int     edictnum;
-	int     clients, spectators, i;
+	int     clients, i;
 	extern char *shortinfotbl[];
 	char   *s;
 	edict_t *ent;
@@ -2447,14 +2447,11 @@ void PF2_Add_Bot( byte * base, uintptr_t mask, pr2val_t * stack, pr2val_t * retv
 
 	// count up the clients and spectators
 	clients = 0;
-	spectators = 0;
 	for ( i = 0, cl = svs.clients; i < MAX_CLIENTS; i++, cl++ )
 	{
 		if ( cl->state == cs_free )
 			continue;
-		if ( cl->spectator )
-			spectators++;
-		else
+		if ( !cl->spectator )
 			clients++;
 	}
 

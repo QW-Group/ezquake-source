@@ -117,7 +117,6 @@ void GLC_AllocateAliasPoseBuffer(void)
 	if (!gl_program_aliasmodels.integer) {
 		int max_verts = 0;
 		int i;
-		int total_verts = 0;
 
 		for (i = 1; i < MAX_MODELS; ++i) {
 			model_t* mod = cl.model_precache[i];
@@ -127,7 +126,6 @@ void GLC_AllocateAliasPoseBuffer(void)
 
 				if (hdr) {
 					max_verts = max(max_verts, hdr->vertsPerPose);
-					total_verts += hdr->vertsPerPose * hdr->numposes;
 				}
 			}
 		}
@@ -140,7 +138,6 @@ void GLC_AllocateAliasPoseBuffer(void)
 
 				if (hdr) {
 					max_verts = max(max_verts, hdr->vertsPerPose);
-					total_verts += hdr->vertsPerPose * hdr->numposes;
 				}
 			}
 		}
@@ -153,7 +150,6 @@ void GLC_AllocateAliasPoseBuffer(void)
 
 				if (hdr) {
 					max_verts = max(max_verts, hdr->vertsPerPose);
-					total_verts += hdr->vertsPerPose * hdr->numposes;
 				}
 			}
 		}

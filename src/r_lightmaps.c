@@ -73,7 +73,6 @@ static void R_BuildDlightList (msurface_t *surf)
 {
 	float dist;
 	vec3_t impact;
-	mtexinfo_t *tex;
 	int lnum, i, smax, tmax, irad, iminlight, local[2], tdmin, sdmin, distmin;
 	unsigned int dlightbits;
 	dlightinfo_t *light;
@@ -82,7 +81,6 @@ static void R_BuildDlightList (msurface_t *surf)
 
 	smax = (surf->extents[0] >> surf->lmshift) + 1;
 	tmax = (surf->extents[1] >> surf->lmshift) + 1;
-	tex = surf->texinfo;
 	dlightbits = surf->dlightbits;
 
 	for (lnum = 0; lnum < MAX_DLIGHTS && dlightbits; lnum++) {

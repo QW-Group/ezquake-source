@@ -177,8 +177,6 @@ static int R_BrushModelPopulateVBO(model_t* m, void* vbo_buffer, int vbo_pos)
 
 	// Order vertices in the VBO by texture & lightmap
 	for (i = 0; i < m->numtextures; ++i) {
-		int length = 0;
-		int surface_count = 0;
 		qbool has_fb = false, has_luma = false;
 
 		if (!m->textures[i]) {
@@ -215,8 +213,6 @@ static int R_BrushModelPopulateVBO(model_t* m, void* vbo_buffer, int vbo_pos)
 					vbo_pos = renderer.BrushModelCopyVertToBuffer(m, vbo_buffer, vbo_pos, poly->verts[k], lightmap, material, scaleS, scaleT, surf, has_fb, has_luma);
 				}
 
-				length += poly->numverts;
-				++surface_count;
 			}
 		}
 	}
