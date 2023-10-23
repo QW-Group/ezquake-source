@@ -46,8 +46,11 @@ jobs:
         name: ${{ matrix.target }}
         path: .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.exe
 
-  macos-arm-build:
+  macos-build:
     runs-on: macos-12
+    strategy:
+      matrix:
+        ARCH: ["arm64","intel"]
     steps:
     - name: Check out code
       uses: actions/checkout@v3
@@ -55,39 +58,17 @@ jobs:
         submodules: true
 
     - name: Install dependencies
-      run: .github/workflows/scripts/homebrew.sh install-arm64
+      run: .github/workflows/scripts/homebrew.sh install-${{matrix.ARCH}}
 
     - name: Build
-      run: .github/workflows/scripts/homebrew.sh build-arm64
+      run: .github/workflows/scripts/homebrew.sh build-${{matrix.ARCH}}
 
     - name: Create Bundle
-      run: .github/workflows/scripts/homebrew.sh create-bundle
+      run: .github/workflows/scripts/homebrew.sh create-bundle ${{matrix.ARCH}}
 
     - uses: actions/upload-artifact@v3
       with:
-        name: macos-arm64
-        path: ezQuake.zip
-
-  macos-intel-build:
-    runs-on: macos-12
-    steps:
-    - name: Check out code
-      uses: actions/checkout@v3
-      with:
-        submodules: true
-
-    - name: Install dependencies
-      run: .github/workflows/scripts/homebrew.sh install-intel
-
-    - name: Build
-      run: .github/workflows/scripts/homebrew.sh build-intel
-
-    - name: Create Bundle
-      run: .github/workflows/scripts/homebrew.sh create-bundle
-
-    - uses: actions/upload-artifact@v3
-      with:
-        name: macos-intel
+        name: macos-${{matrix.ARCH}}
         path: ezQuake.zip
 
   linux-build:

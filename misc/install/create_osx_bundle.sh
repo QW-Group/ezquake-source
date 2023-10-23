@@ -9,7 +9,7 @@
 # there will also be an ezquake.zip which basically just zips up the .app.
 #
 
-ARCH=$(uname -m | sed -e s/i.86/i386/ -e s/amd64/x86_64/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/alpha/axp/)
+ARCH=${1:-x86_64}
 
 BUNDLE_NAME=ezQuake.app
 BINARY=ezquake-darwin-${ARCH}
