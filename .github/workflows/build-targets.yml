@@ -1,8 +1,7 @@
 name: build targets
-on: [pull_request]
+on: [push, pull_request, workflow_dispatch]
 jobs:
   windows-build:
-    if: github.repository == 'QW-Group/ezquake-source'
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -48,7 +47,6 @@ jobs:
         path: .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.exe
 
   macos-arm-build:
-    if: github.repository == 'QW-Group/ezquake-source'
     runs-on: macos-12
     steps:
     - name: Check out code
@@ -71,7 +69,6 @@ jobs:
         path: ezQuake.zip
 
   macos-intel-build:
-    if: github.repository == 'QW-Group/ezquake-source'
     runs-on: macos-12
     steps:
     - name: Check out code
@@ -94,7 +91,6 @@ jobs:
         path: ezQuake.zip
 
   linux-build:
-    if: github.repository == 'QW-Group/ezquake-source'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
