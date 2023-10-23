@@ -2809,7 +2809,7 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 	else
 		strlcpy (com_gamedirfile, dir, sizeof (com_gamedirfile));
 
-	strlcpy (com_gamedir, dir, sizeof (com_gamedir));
+	if (com_gamedir != dir) strlcpy (com_gamedir, dir, sizeof (com_gamedir));
 
 	for (search = fs_searchpaths; search; search = search->next)
 	{
