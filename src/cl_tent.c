@@ -65,8 +65,10 @@ static model_t	*cl_explo_mod, *cl_bolt1_mod, *cl_bolt2_mod, *cl_bolt3_mod, *cl_b
 
 sfx_t	*cl_sfx_wizhit, *cl_sfx_knighthit, *cl_sfx_tink1, *cl_sfx_ric1, *cl_sfx_ric2, *cl_sfx_ric3, *cl_sfx_r_exp3;
 
-cvar_t r_sgbloodColor = {"r_sgbloodColor", "73"};
 cvar_t r_lgbloodColor = {"r_lgbloodColor", "225"};
+cvar_t r_rlbloodColor_small = {"r_rlbloodColor_small", "225"};
+cvar_t r_rlbloodColor_big = {"r_rlbloodColor_big", "73"};
+cvar_t r_sgbloodColor = {"r_sgbloodColor", "73"};
 cvar_t r_shiftbeam = {"r_shiftbeam", "0"};
 
 void CL_InitTEnts(void)
@@ -83,8 +85,10 @@ void CL_InitTEnts(void)
 void CL_InitTEntsCvar(void)
 {
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
-	Cvar_Register(&r_sgbloodColor);
 	Cvar_Register(&r_lgbloodColor);
+	Cvar_Register(&r_rlbloodColor_small);
+	Cvar_Register(&r_rlbloodColor_big);
+	Cvar_Register(&r_sgbloodColor);
 	Cvar_Register(&r_shiftbeam);
 	Cvar_ResetCurrentGroup();
 }
@@ -428,11 +432,11 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 	}
 	else if (r_explosiontype.value == 3) {
 		// lightning blood
-		R_RunParticleEffect(pos, vec3_origin, 225, 50);
+		R_RunParticleEffect(pos, vec3_origin, r_rlbloodColor_small.value ? r_rlbloodColor_small.integer : 225, 50);
 	}
 	else if (r_explosiontype.value == 4) {
 		// Big blood
-		R_RunParticleEffect(pos, vec3_origin, 73, 20 * 32);
+		R_RunParticleEffect(pos, vec3_origin, r_rlbloodColor_big.value ? r_rlbloodColor_big.integer : 73, 20 * 32);
 	}
 	else if (r_explosiontype.value == 5) {
 		// Double gunshot

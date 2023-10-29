@@ -16108,15 +16108,27 @@
         }
       ]
     },
-    "r_sgbloodColor": {
-      "default": "73",
-      "desc": "Determines the (palletized) color of the blood particles emitted when hitting entities with weapons other than the lightning gun.",
-      "group-id": "8",
-      "type": "integer"
-    },
     "r_lgbloodColor": {
       "default": "225",
       "desc": "Determines the (palletized) color of the blood particles emitted when hitting entities with the lightning gun.",
+      "group-id": "8",
+      "type": "integer"
+    },
+    "r_rlbloodColor_small": {
+      "default": "225",
+      "desc": "Determines the (palletized) color of the blood particles emitted when hitting entities with the rocket launcher. Requires the rocket explosion to be small blood (cl_explosiontype 3. Default value is 225.",
+      "group-id": "8",
+      "type": "integer"
+    },
+    "r_rlbloodColor_big": {
+      "default": "73",
+      "desc": "Determines the (palletized) color of the blood particles emitted when hitting entities with the rocket launcher. Requires the rocket explosion to be big blood (cl_explosiontype 4. Default value is 73.",
+      "group-id": "8",
+      "type": "integer"
+    },
+    "r_sgbloodColor": {
+      "default": "73",
+      "desc": "Determines the (palletized) color of the blood particles emitted when hitting entities with weapons other than the lightning gun.",
       "group-id": "8",
       "type": "integer"
     },
