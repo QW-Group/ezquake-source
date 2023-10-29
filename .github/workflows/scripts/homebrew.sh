@@ -35,6 +35,7 @@ dependencies=(
 
 
 function install_arm64() {
+    export CPU="arm64"
     # Ignore pre-installed Intel packages, always install what we say.
     export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK="true"
     export HOMEBREW_NO_INSTALL_CLEANUP="true"
@@ -50,13 +51,18 @@ function install_arm64() {
 }
 
 function install_intel() {
+    export CPU="x86_64"
     export HOMEBREW_NO_INSTALL_CLEANUP="true"
     brew reinstall --quiet pkg-config
     brew install --quiet "${dependencies[@]}"
 }
 
 function create_bundle() {
-    sh misc/install/create_osx_bundle.sh
+    ARCH=$1
+    if [ "$ARCH" == "intel" ];then
+        ARCH="x86_64"
+    fi
+    sh misc/install/create_osx_bundle.sh $ARCH
 
     echo
     echo "Bundled content types:"
@@ -66,10 +72,12 @@ function create_bundle() {
 }
 
 function build_intel() {
+    export CPU="x86_64"
     make strip
 }
 
 function build_arm64() {
+    export CPU="arm64"
     make strip DARWIN_TARGET=arm64-apple-macos12
 }
 
@@ -87,7 +95,7 @@ case $1 in
         build_arm64
         ;;
     "create-bundle")
-        create_bundle
+        create_bundle $2
         ;;
     *)
         echo "Unknown arg $1"
