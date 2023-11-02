@@ -1,9 +1,9 @@
-wget -m -nd http://www.quakeservers.net/lists/australia/au-sv.txt
-wget -m -nd http://www.quakeservers.net/lists/ctf/ctf.txt
-wget -m -nd http://www.quakeservers.net/lists/europe/eu-sv.txt
-wget -m -nd http://www.quakeservers.net/lists/servers/global.txt
-wget -m -nd http://www.quakeservers.net/lists/north_america/na-sv.txt
-wget -m -nd http://www.quakeservers.net/lists/qizmo/qizmo.txt
-wget -m -nd http://www.quakeservers.net/lists/south_america/sa-sv.txt
-wget -m -nd http://www.quakeservers.net/lists/tf/tf.txt
-wget -m -nd http://www.quakeservers.net/lists/4on4_eu/eu-4on4.txt
+wget -m -nd --no-if-modified-since https://www.quakeservers.net/lists/australia/au-sv.txt
+wget -m -nd --no-if-modified-since https://www.quakeservers.net/lists/ctf/ctf.txt
+wget -m -nd --no-if-modified-since https://www.quakeservers.net/lists/europe/eu-sv.txt
+wget -m -nd --no-if-modified-since https://www.quakeservers.net/lists/servers/global.txt
+wget -m -nd --no-if-modified-since https://www.quakeservers.net/lists/north_america/na-sv.txt
+wget -m -nd --no-if-modified-since https://www.quakeservers.net/lists/qizmo/qizmo.txt
+wget -m -nd --no-if-modified-since https://www.quakeservers.net/lists/south_america/sa-sv.txt
+wget -m -nd --no-if-modified-since https://www.quakeservers.net/lists/tf/tf.txt
+wget -m -nd --no-if-modified-since https://www.quakeservers.net/lists/4on4_eu/eu-4on4.txt
