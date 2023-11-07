@@ -90,8 +90,10 @@ static hud_element_t* Hud_NewElement(void)
 
 static void Hud_DeleteElement(hud_element_t *elem)
 {
-	if (elem->flags & (HUD_STRING | HUD_IMAGE))
+	if (elem->flags & (HUD_STRING))
 		Q_free(elem->contents);
+	if (elem->flags & (HUD_IMAGE))
+		CachePic_RemoveByPic(elem->contents);
 	if (elem->f_hover)
 		Q_free(elem->f_hover);
 	if (elem->f_button)
@@ -163,6 +165,20 @@ void Hud_Add_f(void)
 			elem = Hud_NewElement();
 			elem->contents = Q_strdup(a3);
 			elem->flags = HUD_STRING | HUD_ENABLED;
+		}
+		else if (!strcasecmp(a2, "img")) {
+			char* pic_path = Q_strdup(a3);
+			mpic_t* tmp_pic;
+			if (pic_path && strlen(pic_path) > 0) {
+				// Try loading the pic.
+				if (!(tmp_pic = Draw_CachePicSafe(pic_path, false, true))) {
+					Com_Printf("Couldn't load picture %s for '%s'\n", pic_path, a2);
+					return;
+				}
+			}
+			elem = Hud_NewElement();
+			elem->contents = tmp_pic;
+			elem->flags = HUD_IMAGE | HUD_ENABLED;
 		}
 		else {
 			Com_Printf("\"%s\" is not a valid hud type\n", a2);
@@ -592,10 +608,10 @@ void SCR_DrawHud(void)
 				func = (Hud_Func)elem->contents;
 				st = (*func)();
 				l = strlen(st);
-				/*} else if (elem->flags & HUD_IMAGE) {
+			} else if (elem->flags & HUD_IMAGE) {
 				img = (mpic_t*)elem->contents;
 				l = img->width/8;
-				elem->scr_height = img->height;*/
+				elem->scr_height = img->height;
 			}
 			else {
 				continue;

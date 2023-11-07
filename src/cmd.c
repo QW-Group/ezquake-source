@@ -1653,7 +1653,7 @@ int Commands_Compare_Func (const void * arg1, const void * arg2)
 }
 
 char *msgtrigger_commands[] = {
-	"play", "playvol", "stopsound", "set", "echo", "say", "say_team",
+	"play", "playvol", "stopsound", "stopsound_script", "set", "echo", "say", "say_team",
 	"alias", "unalias", "msg_trigger", "inc", "bind", "unbind", "record",
 	"easyrecord", "stop", "if", "if_exists", "wait", "log", "match_forcestart",
 	"dns", "addserver", "connect", "join", "observe",

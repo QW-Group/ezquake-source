@@ -40,6 +40,7 @@ static void S_Play_f (void);
 static void S_MuteSound_f (void);
 static void S_SoundList_f (void);
 static void S_Update_ (void);
+static void S_StopSoundScript_f(void);
 static void S_StopAllSounds_f (void);
 static void S_Register_LatchCvars(void);
 void S_Voip_RegisterCvars (void);
@@ -450,6 +451,7 @@ static void S_Register_RegularCvarsAndCommands(void)
 	Cmd_AddCommand("play", S_Play_f);
 	Cmd_AddCommand("playvol", S_Play_f);
 	Cmd_AddCommand("stopsound", S_StopAllSounds_f);
+	Cmd_AddCommand("stopsound_script", S_StopSoundScript_f);
 	Cmd_AddCommand("soundlist", S_SoundList_f);
 	Cmd_AddCommand("soundinfo", S_SoundInfo_f);
 	Cmd_AddCommand("s_listdrivers", S_ListDrivers);
@@ -715,6 +717,10 @@ void S_StopSound (int entnum, int entchannel)
 		}
 	}
 	S_UnlockMixer();
+}
+
+static void S_StopSoundScript_f(void) {
+	S_StopSound(SELF_SOUND_ENTITY, 0);
 }
 
 void S_StopAllSounds(void)
