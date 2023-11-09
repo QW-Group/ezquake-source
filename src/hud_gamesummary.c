@@ -173,10 +173,8 @@ static void SCR_Hud_GameSummary(hud_t* hud)
 
 			{
 				char buffer[10];
-				int text_size;
 
 				snprintf(buffer, sizeof(buffer), "%d", value);
-				text_size = Draw_StringLength(buffer, -1, hud_gamesummary_scale->value, hud_gamesummary_proportional->integer);
 
 				if (hud_gamesummary_circles->integer && background_color) {
 					float half_width = icon_size * 0.5f * hud_gamesummary_scale->value;

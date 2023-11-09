@@ -484,7 +484,7 @@ static void R_Upload32(gltexture_t* glt, unsigned *data, int width, int height, 
 {
 	// Tell OpenGL the texnum of the texture before uploading it.
 	extern cvar_t gl_lerpimages, gl_wicked_luma_level;
-	int	tempwidth, tempheight, levels;
+	int	tempwidth, tempheight;
 	byte *newdata;
 
 	R_TextureSizeRoundUp(width, height, &tempwidth, &tempheight);
@@ -528,14 +528,9 @@ static void R_Upload32(gltexture_t* glt, unsigned *data, int width, int height, 
 
 	if (mode & TEX_MIPMAP) {
 		int largest = max(width, height);
-		levels = 0;
 		while (largest) {
-			++levels;
 			largest /= 2;
 		}
-	}
-	else {
-		levels = 1;
 	}
 
 	if (mode & TEX_BRIGHTEN) {

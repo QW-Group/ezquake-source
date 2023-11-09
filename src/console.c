@@ -778,7 +778,6 @@ static qbool Con_NotifyMessageLine(float posX, float posY, float width, float he
 			strlcpy(dest, IRC_GetCurrentChan(), sizeof(dest));
 			strlcat(dest, ":", sizeof(dest));
 
-			indent += Draw_SString(posX, v + bound(0, con_shift.value, 8), dest, scale, proportional);
 		}
 #endif
 		else if (chat_team == chat_qtvtogame) {
@@ -846,7 +845,6 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 	int v, i, idx;
 	float time;
 	float timeout = bound (0, notifyTime, MAX_NOTIFICATION_TIME);
-	float indent = 0;
 
 	notifyCols = bound(10, notifyCols, con_linewidth);
 
