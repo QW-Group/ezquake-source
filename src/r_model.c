@@ -465,6 +465,12 @@ void Mod_AddModelFlags(model_t *mod)
 		!strcmp(mod->name, "progs/w_s_key.mdl") ||
 		!strcmp(mod->name, "progs/b_g_key.mdl") ||
 		!strcmp(mod->name, "progs/b_s_key.mdl") ||
+		!strcmp(mod->name, "progs/stag.mdl") ||
+		!strcmp(mod->name, "progs/basrkey.bsp") ||
+		!strcmp(mod->name, "progs/basbkey.bsp") ||
+		!strcmp(mod->name, "progs/ff_flag.mdl") ||
+		!strcmp(mod->name, "progs/harbflag.mdl") ||
+		!strcmp(mod->name, "progs/princess.mdl") ||
 		!strcmp(mod->name, "progs/tf_stan.mdl")) {
 		mod->modhint = MOD_FLAG;
 	}

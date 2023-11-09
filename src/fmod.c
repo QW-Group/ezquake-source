@@ -60,6 +60,16 @@ static const int progs_suit_mdl_FMOD_DM_FMOD_TF[5]				= {0xb7dcb9dd, 0xed8da03b,
 static const int progs_player_mdl_FMOD_DM[5]					= {0x95ca0ab4, 0x021be62e, 0x6655e9a5, 0xd4a7ef1c, 0xb484582f};
 static const int progs_player_mdl_FMOD_TF[5]					= {0x8fcab658, 0x027a97ef, 0xa96eee3d, 0xc1e44f46, 0x18a533c9};
 static const int progs_tf_flag_mdl_FMOD_TF[5]					= {0x6e969df0, 0xc91b9eef, 0x84cb1a40, 0xcaee122e, 0x1b1d3d28};
+static const int progs_stag_mdl_FMOD_TF[5]						= {0x6e970df0, 0xc91b9eef, 0x84cb1a40, 0xcaee122e, 0x1b1d3d28};
+static const int progs_basrkey_bsp_FMOD_TF[5]					= {0x6e971df0, 0xc11b9eef, 0x84cb1a40, 0xcaee122e, 0x1b1d3d28};
+static const int progs_basbkey_bsp_FMOD_TF[5]					= {0x6e972df0, 0xc21b9eef, 0x84cb1a40, 0xcaee122e, 0x1b1d3d28};
+static const int progs_w_s_key_mdl_FMOD_TF[5]					= {0x6e973df0, 0xc31b9eef, 0x84cb1a40, 0xcaee122e, 0x1b1d3d28};
+static const int progs_w_g_key_mdl_FMOD_TF[5]					= {0x6e974df0, 0xc41b9eef, 0x84cb1a40, 0xcaee122e, 0x1b1d3d28};
+static const int progs_b_g_key_mdl_FMOD_TF[5]					= {0x6e975df0, 0xc51b9eef, 0x84cb1a40, 0xcaee122e, 0x1b1d3d28};
+static const int progs_b_s_key_mdl_FMOD_TF[5]					= {0x6e976df0, 0xc61b9eef, 0x84cb1a40, 0xcaee122e, 0x1b1d3d28};
+static const int progs_ff_flag_mdl_FMOD_TF[5]					= {0x6e977df0, 0xc71b9eef, 0x84cb1a40, 0xcaee122e, 0x1b1d3d28};
+static const int progs_harbflag_mdl_FMOD_TF[5]					= {0x6e978df0, 0xc81b9eef, 0x84cb1a40, 0xcaee122e, 0x1b1d3d28};
+static const int progs_princess_mdl_FMOD_TF[5]					= {0x6e979df0, 0xc92b9eef, 0x84cb1a40, 0xcaee122e, 0x1b1d3d28};
 static const int progs_turrbase_mdl_FMOD_TF[5]					= {0x0cda73d5, 0x822703cb, 0x9e6cbe6b, 0x94fb95f7, 0xc7c04bed};
 static const int progs_turrgun_mdl_FMOD_TF[5]					= {0x314b126f, 0x7d8d7cb5, 0x8df185c8, 0x1f3662f7, 0xa272957b};
 static const int progs_disp_mdl_FMOD_TF[5]						= {0x5596fa4a, 0xd94e2457, 0x140f84df, 0x5859dda8, 0xe96752fc};
@@ -501,6 +511,16 @@ void FMod_Init (void)
 	FMod_AddModel ("progs/player.mdl",			FMOD_TF,			progs_player_mdl_FMOD_TF);
 
 	FMod_AddModel ("progs/tf_flag.mdl",			FMOD_TF,			progs_tf_flag_mdl_FMOD_TF);
+	FMod_AddModel("progs/stag.mdl",				FMOD_TF,			progs_stag_mdl_FMOD_TF);
+	FMod_AddModel("progs/basrkey.bsp",			FMOD_TF,			progs_basrkey_bsp_FMOD_TF);
+	FMod_AddModel("progs/basbkey.bsp",			FMOD_TF,			progs_basbkey_bsp_FMOD_TF);
+	FMod_AddModel("progs/w_s_key.mdl",			FMOD_TF,			progs_w_s_key_mdl_FMOD_TF);
+	FMod_AddModel("progs/w_g_key.mdl",			FMOD_TF,			progs_w_g_key_mdl_FMOD_TF);
+	FMod_AddModel("progs/b_g_key.mdl",			FMOD_TF,			progs_b_g_key_mdl_FMOD_TF);
+	FMod_AddModel("progs/b_s_key.mdl",			FMOD_TF,			progs_b_s_key_mdl_FMOD_TF);
+	FMod_AddModel("progs/ff_flag.mdl",			FMOD_TF,			progs_ff_flag_mdl_FMOD_TF);
+	FMod_AddModel("progs/harbflag.mdl",			FMOD_TF,			progs_harbflag_mdl_FMOD_TF);
+	FMod_AddModel("progs/princess.mdl",			FMOD_TF,			progs_princess_mdl_FMOD_TF);
 	FMod_AddModel ("progs/turrbase.mdl",		FMOD_TF,			progs_turrbase_mdl_FMOD_TF);
 	FMod_AddModel ("progs/turrgun.mdl",			FMOD_TF,			progs_turrgun_mdl_FMOD_TF);
 	FMod_AddModel ("progs/disp.mdl",			FMOD_TF,			progs_disp_mdl_FMOD_TF);

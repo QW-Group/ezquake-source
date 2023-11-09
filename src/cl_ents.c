@@ -67,6 +67,16 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_flag] = "progs/flag.mdl";
 	cl_modelnames[mi_tf_flag] = "progs/tf_flag.mdl";
 	cl_modelnames[mi_tf_stan] = "progs/tf_stan.mdl";
+	cl_modelnames[mi_stag] = "progs/stag.mdl";
+	cl_modelnames[mi_basrkey] = "progs/basrkey.bsp";
+	cl_modelnames[mi_basbkey] = "progs/basbkey.bsp";
+	cl_modelnames[mi_w_s_key] = "progs/w_s_key.mdl";
+	cl_modelnames[mi_w_g_key] = "progs/w_g_key.mdl";
+	cl_modelnames[mi_b_g_key] = "progs/b_g_key.mdl";
+	cl_modelnames[mi_b_s_key] = "progs/b_s_key.mdl";
+	cl_modelnames[mi_ff_flag] = "progs/ff_flag.mdl";
+	cl_modelnames[mi_harbflag] = "progs/harbflag.mdl";
+	cl_modelnames[mi_princess] = "progs/princess.mdl";
 	cl_modelnames[mi_explod1] = "progs/s_explod.spr";
 	cl_modelnames[mi_explod2] = "progs/s_expl.spr";
 	cl_modelnames[mi_h_player] = "progs/h_player.mdl";
@@ -901,7 +911,18 @@ void CL_LinkPacketEntities(void)
 			{
 				qbool flagcolor = false;
 
-				if (cl.teamfortress && (state->modelindex == cl_modelindices[mi_tf_flag] || state->modelindex == cl_modelindices[mi_tf_stan]))
+				if (cl.teamfortress && (state->modelindex == cl_modelindices[mi_tf_flag] || 
+										state->modelindex == cl_modelindices[mi_tf_stan] || 
+										state->modelindex == cl_modelindices[mi_stag] || 
+										state->modelindex == cl_modelindices[mi_basrkey] || 
+										state->modelindex == cl_modelindices[mi_basbkey] || 
+										state->modelindex == cl_modelindices[mi_w_s_key] ||
+										state->modelindex == cl_modelindices[mi_w_g_key] ||
+										state->modelindex == cl_modelindices[mi_b_g_key] ||
+										state->modelindex == cl_modelindices[mi_b_s_key] ||
+										state->modelindex == cl_modelindices[mi_ff_flag] ||
+										state->modelindex == cl_modelindices[mi_harbflag] ||
+										state->modelindex == cl_modelindices[mi_princess]))
 					flagcolor = true;
 				else if (state->modelindex == cl_modelindices[mi_flag])
 					flagcolor = true;
