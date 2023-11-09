@@ -165,6 +165,10 @@
     "teamplay-restricted": true,
     "type": "string"
   },
+  "dateiso": {
+    "system-generated": true,
+    "teamplay-restricted": true
+  },
   "deathloc": {
     "flags": [
       "incomplete"

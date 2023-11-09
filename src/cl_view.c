@@ -91,11 +91,11 @@ cvar_t v_quadcshift            = { "v_quadcshift",           "0.5" };
 cvar_t v_suitcshift            = { "v_suitcshift",           "0.5" };
 cvar_t v_ringcshift            = { "v_ringcshift",           "0.5" };
 cvar_t v_pentcshift            = { "v_pentcshift",           "0.5" };
-cvar_t v_dlightcshift          = { "v_dlightcshift",         "1.0" };
-cvar_t v_dlightcolor           = { "v_dlightcolor",          "1.0" };
+cvar_t v_dlightcshift          = { "v_dlightcshift",         "1" };
+cvar_t v_dlightcolor           = { "v_dlightcolor",          "1" };
 cvar_t v_dlightcshiftpercent   = { "v_dlightcshiftpercent",  "0.5" };
 
-cvar_t v_bonusflash            = { "cl_bonusflash",          "0.0" };
+cvar_t v_bonusflash            = { "cl_bonusflash",          "0" };
 
 float	v_dmg_time, v_dmg_roll, v_dmg_pitch;
 
