@@ -35,6 +35,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "menu.h"
 #include "image.h"
 
+qbool CachePic_RemoveByPic(mpic_t* pic);
+
 static char *hud262_load_buff = NULL;
 
 extern cvar_t cl_hud;
@@ -175,10 +177,10 @@ void Hud_Add_f(void)
 					Com_Printf("Couldn't load picture %s for '%s'\n", pic_path, a2);
 					return;
 				}
+				elem = Hud_NewElement();
+				elem->contents = tmp_pic;
+				elem->flags = HUD_IMAGE | HUD_ENABLED;
 			}
-			elem = Hud_NewElement();
-			elem->contents = tmp_pic;
-			elem->flags = HUD_IMAGE | HUD_ENABLED;
 		}
 		else {
 			Com_Printf("\"%s\" is not a valid hud type\n", a2);
