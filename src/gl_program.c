@@ -330,6 +330,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_fx_world_geometry, "outline_color", 1, false },
 	// r_program_uniform_outline_depth_threshold
 	{ r_program_fx_world_geometry, "outline_depth_threshold", 1, false },
+	// r_program_uniform_outline_normal_threshold
+	{ r_program_fx_world_geometry, "outline_normal_threshold", 1, false },
 	// r_program_uniform_outline_scale
 	{ r_program_fx_world_geometry, "outline_scale", 1, false },
 	// r_program_uniform_aliasmodel_outline_color_model
