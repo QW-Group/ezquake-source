@@ -5177,6 +5177,12 @@
       "remarks": "Requires vid_renderer 1",
       "type": "boolean"
     },
+    "gl_outline_world_normal_threshold": {
+      "default": "0.997",
+      "desc": "Threshold for finding edges face orientation. Higher value is more edges. The allowed range is 0 to 0.999.",
+      "group-id": "35",
+      "type": "float"
+    },
     "gl_outline_world_depth_threshold": {
       "default": "4",
       "desc": "Threshold for finding edges with depth values. Higher value means vanishing lines at close range. Lower value means false positives at longer range.",
