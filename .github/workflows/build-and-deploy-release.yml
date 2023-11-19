@@ -110,16 +110,19 @@ jobs:
     - name: Setup SSH
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      shell: bash
       run: |
         ssh-agent -a $SSH_AUTH_SOCK > /dev/null
         ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
     - name: Set date
+      shell: bash
       run: |
         export TZ=CET-1CEST
         echo "DATE=$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_ENV
     - name: Deploy
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      shell: bash
       run: |
            mkdir -p upload/releases/${{ github.ref_name }}/linux
            mkdir -p upload/releases/latest/linux/${{ matrix.platform }}
