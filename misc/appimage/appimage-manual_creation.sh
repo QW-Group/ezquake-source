@@ -42,12 +42,21 @@ cd "$OWD"
 FAIL=${PIPESTATUS[0]}
 if [ $FAIL -eq 0 ];then
 	echo "executing with native libc"
-	exec "${APPDIR}/usr/bin/ezquake-linux-'$ARCH'" $*
+	"${APPDIR}/usr/bin/ezquake-linux-'$ARCH'" $*
 else
 	echo "executing with appimage libc"
 	export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${APPDIR}/usr/lib-override"
-	exec "${APPDIR}/usr/lib-override/ld-linux-'$ARCHDASH'.so.2" "${APPDIR}/usr/bin/ezquake-linux-'$ARCH'" $*
-fi'
+	"${APPDIR}/usr/lib-override/ld-linux-'$ARCHDASH'.so.2" "${APPDIR}/usr/bin/ezquake-linux-'$ARCH'" $*
+fi
+exitstatus=$?
+
+if [ $exitstatus -eq 0 ];then
+	#fix qwurl association if set for appimage
+	grep -q "^Exec=/tmp/.mount_" "${HOME}/.local/share/applications/qw-url-handler.desktop" && \
+		sed -i "s|^Exec=.*|Exec=${APPIMAGE}|g" "${HOME}/.local/share/applications/qw-url-handler.desktop"
+fi
+exit $exitstatus
+'
 
 unset CC
 if [ "$ARCH" == "x86_64" ];then
