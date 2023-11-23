@@ -794,7 +794,7 @@ void Sys_RegisterQWURLProtocol_f(void)
             "Categories=quakeworld;qtv;Game;\n"
             "Exec=%s +qwurl %s\n"
             "Path=%s\n"
-            "MimeType=x-scheme-handler/qw\n"
+            "MimeType=x-scheme-handler/qw;\n"
             "Terminal=false\n"
             "StartupNotify=false\n"
             , exe_path, "%u", com_basedir);

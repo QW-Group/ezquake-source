@@ -144,7 +144,7 @@ Make sure you have the dependencies installed:
 
 - For *Debian/Ubuntu 16.10+*
 ```
-sudo apt install git build-essential libsdl2-dev libjansson-dev libexpat-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libsndfile-dev libspeex-dev libspeexdsp-dev libxxf86vm-dev libpcre2-dev
+sudo apt install git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev libfreetype6-dev libsndfile1-dev libpcre2-dev libminizip-dev
 ```
 - For *openSUSE Tumbleweed*
 ```
