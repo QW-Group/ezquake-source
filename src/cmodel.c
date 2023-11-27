@@ -1441,7 +1441,8 @@ cmodel_t *CM_LoadMap (char *name, qbool clientload, unsigned *checksum, unsigned
 	int filelen = 0;
 
 	if (map_name[0]) {
-		assert(!strcmp(name, map_name));
+		if (strcmp(name, map_name))
+			Con_Printf("CM_LoadMap: '%s' != '%s'\n", name, map_name);
 
 		if (checksum)
 			*checksum = map_checksum;
