@@ -144,7 +144,7 @@ static void SCR_HUD_DrawAmmo(
 	// 'New HUD' used to just return - instead draw blank space so other objects can be placed
 	// If user has specified 'show_always', carry on and show current value of STAT_AMMO
 	if (!num && !always) {
-		if (style < 2) {
+		if (style < 2 || style == 3) {
 			// use this to calculate sizes, but draw_content is false
 			SCR_HUD_DrawNum2(hud, 0, false, scale, style, digits, s_align, proportional, false);
 		}
@@ -168,7 +168,7 @@ static void SCR_HUD_DrawAmmo(
 		value = HUD_Stats(STAT_SHELLS + num - 1);
 	}
 
-	if (style < 2) {
+	if (style < 2 || style == 3) {
 		// simply draw number
 		SCR_HUD_DrawNum(hud, value, low, scale, style, digits, s_align, proportional);
 	}
