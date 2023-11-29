@@ -170,7 +170,7 @@ static void SCR_HUD_DrawAmmo(
 
 	if (style < 2 || style == 3) {
 		// simply draw number
-		SCR_HUD_DrawNum(hud, value, low, scale, style, digits, s_align, proportional);
+		SCR_HUD_DrawNum(hud, value, style == 3 ? false : low, scale, style, digits, s_align, proportional);
 	}
 	else {
 		// else - draw classic ammo-count box with background
