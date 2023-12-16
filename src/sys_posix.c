@@ -125,6 +125,7 @@ void Sys_Error(char *error, ...)
 		fprintf(qconsole_log, "Error: %s\n", string);
 
 	Host_Shutdown ();
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", string, NULL);
 	exit(1);
 }
 
