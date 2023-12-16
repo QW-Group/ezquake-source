@@ -276,21 +276,15 @@ void SV_Shutdown (char *finalmsg)
 SV_Error
 
 Sends a datagram to all the clients informing them of the server crash,
-then exits
+then stops the server
 ================
 */
 void SV_Error (char *error, ...)
 {
-	static qbool inerror = false;
 	static char string[1024];
 	va_list argptr;
 
 	sv_error = true;
-
-	if (inerror)
-		Sys_Error ("SV_Error: recursively entered (%s)", string);
-
-	inerror = true;
 
 	va_start (argptr, error);
 	vsnprintf (string, sizeof (string), error, argptr);
@@ -298,7 +292,8 @@ void SV_Error (char *error, ...)
 
 	SV_Shutdown (va ("SV_Error: %s\n", string));
 
-	Sys_Error ("SV_Error: %s", string);
+	Host_EndGame();
+	Host_Error("SV_Error: %s", string);
 }
 
 static void SV_FreeHeadDelayedPacket(client_t *cl) {

@@ -199,7 +199,7 @@ void PR_StackTrace (void)
 	}
 
 	pr_stack[pr_depth].f = pr_xfunction;
-	for (i=pr_depth ; i>=0 ; i--)
+	for (i=pr_depth ; i>0 ; i--)
 	{
 		f = pr_stack[i].f;
 
@@ -278,7 +278,7 @@ void PR_RunError (char *error, ...)
 
 	pr_depth = 0; // dump the stack so SV_Error can shutdown functions
 
-	SV_Error ("Program error");
+	SV_Error ("Program error (PR_RunError)");
 }
 
 /*
