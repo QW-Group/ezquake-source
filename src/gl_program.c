@@ -582,8 +582,12 @@ static const char* safe_strstr(const char* source, size_t max_length, const char
 	size_t search_length = strlen(search_string);
 	const char* position;
 
-	position = (const char*)memchr(source, search_string[0], max_length);
-	while (position) {
+	while (true) {
+		position = (const char*)memchr(source, search_string[0], max_length);
+		if (!position) {
+			break;
+		}
+
 		// Move along
 		if (max_length < (position - source)) {
 			break;
@@ -598,8 +602,8 @@ static const char* safe_strstr(const char* source, size_t max_length, const char
 		}
 
 		// Try again
-		source = position;
-		position = (const char*)memchr(source + 1, search_string[0], max_length);
+		source = position + 1;
+		max_length -= 1;
 	}
 
 	return NULL;
