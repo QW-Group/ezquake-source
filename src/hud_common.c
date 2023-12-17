@@ -351,6 +351,14 @@ void SCR_HUD_DrawNum2(
 				Draw_SAlt_String(x, y, buf, scale, proportional);
 			}
 			else {
+				if(style == 3) {
+					// golden numbers
+					for(i = 0; i < len; i++) {
+						if(isdigit(buf[i])) {
+							buf[i] = 18 + buf[i] - '0';
+						}
+					}
+				}
 				Draw_SString(x, y, buf, scale, proportional);
 			}
 			break;
