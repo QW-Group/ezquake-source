@@ -220,6 +220,8 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	extern qbool	sv_allow_cheats;
 	extern cvar_t	sv_cheats, sv_paused, sv_bigcoords;
 
+	sv_error = false;
+
 	// store old map name
 	snprintf (oldmap, MAP_NAME_LEN, "%s", sv.mapname);
 
