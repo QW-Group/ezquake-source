@@ -105,30 +105,30 @@ static void SV_CreateBaseline (void)
 	for (entnum = 0; entnum < sv.num_edicts ; entnum++)
 	{
 		svent = EDICT_NUM(entnum);
-		if (svent->e->free)
+		if (svent->e.free)
 			continue;
 		// create baselines for all player slots,
 		// and any other edict that has a visible model
-		if (entnum > MAX_CLIENTS && !svent->v.modelindex)
+		if (entnum > MAX_CLIENTS && !svent->v->modelindex)
 			continue;
 
 		//
 		// create entity baseline
 		//
-		svent->e->baseline.number = entnum;
-		VectorCopy (svent->v.origin, svent->e->baseline.origin);
-		VectorCopy (svent->v.angles, svent->e->baseline.angles);
-		svent->e->baseline.frame = svent->v.frame;
-		svent->e->baseline.skinnum = svent->v.skin;
+		svent->e.baseline.number = entnum;
+		VectorCopy (svent->v->origin, svent->e.baseline.origin);
+		VectorCopy (svent->v->angles, svent->e.baseline.angles);
+		svent->e.baseline.frame = svent->v->frame;
+		svent->e.baseline.skinnum = svent->v->skin;
 		if (entnum > 0 && entnum <= MAX_CLIENTS)
 		{
-			svent->e->baseline.colormap = entnum;
-			svent->e->baseline.modelindex = SV_ModelIndex("progs/player.mdl");
+			svent->e.baseline.colormap = entnum;
+			svent->e.baseline.modelindex = SV_ModelIndex("progs/player.mdl");
 		}
 		else
 		{
-			svent->e->baseline.colormap = 0;
-			svent->e->baseline.modelindex = svent->v.modelindex;
+			svent->e.baseline.colormap = 0;
+			svent->e.baseline.modelindex = svent->v->modelindex;
 		}
 	}
 	sv.num_baseline_edicts = sv.num_edicts;
@@ -243,7 +243,7 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 		if( sv_vm && svs.clients[i].isBot )
 		{
 			svs.clients[i].old_frags = 0;
-			svs.clients[i].edict->v.frags = 0.0;
+			svs.clients[i].edict->v->frags = 0.0;
 			svs.clients[i].name[0] = 0;
 			svs.clients[i].state = cs_free;
 			Info_RemoveAll(&svs.clients[i]._userinfo_ctx_);
@@ -352,11 +352,10 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 
 	for (i = 0; i < sv.max_edicts; i++)
 	{
-		ent = EDICT_NUM(i);
-		ent->e = &sv.sv_edicts[i]; // assigning ->e field in each edict_t
-		ent->e->entnum = i;
-		ent->e->area.ed = ent; // yeah, pretty funny, but this help to find which edict_t own this area (link_t)
-		PR_ClearEdict(ent);
+		sv.edicts[i].v = (entvars_t *)((byte *)sv.game_edicts + i * pr_edict_size);
+		sv.edicts[i].e.entnum = i;
+		sv.edicts[i].e.area.ed = &sv.edicts[i]; // yeah, pretty funny, but this help to find which edict_t own this area (link_t)
+		PR_ClearEdict(&sv.edicts[i]);
 	}
 
 	fofs_items2 = ED_FindFieldOffset ("items2"); // ZQ_ITEMS2 extension
@@ -443,7 +442,7 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	{
 		ent = EDICT_NUM(i+1);
 		// restore client name.
-		PR_SetEntityString(ent, ent->v.netname, svs.clients[i].name);
+		PR_SetEntityString(ent, ent->v->netname, svs.clients[i].name);
 		// reserve edict.
 		svs.clients[i].edict = ent;
 		//ZOID - make sure we update frags right
@@ -525,17 +524,17 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 #endif
 
 	ent = EDICT_NUM(0);
-	ent->e->free = false;
-	PR_SetEntityString(ent, ent->v.model, sv.modelname);
-	ent->v.modelindex = 1;		// world model
-	ent->v.solid = SOLID_BSP;
-	ent->v.movetype = MOVETYPE_PUSH;
+	ent->e.free = false;
+	PR_SetEntityString(ent, ent->v->model, sv.modelname);
+	ent->v->modelindex = 1;		// world model
+	ent->v->solid = SOLID_BSP;
+	ent->v->movetype = MOVETYPE_PUSH;
 
 	// information about the server
-	PR_SetEntityString(ent, ent->v.netname, VersionStringFull());
-	PR_SetEntityString(ent, ent->v.targetname, SERVER_NAME);
-	ent->v.impulse = VERSION_NUM;
-	ent->v.items = pr_numbuiltins - 1;
+	PR_SetEntityString(ent, ent->v->netname, VersionStringFull());
+	PR_SetEntityString(ent, ent->v->targetname, SERVER_NAME);
+	ent->v->impulse = VERSION_NUM;
+	ent->v->items = pr_numbuiltins - 1;
 
 	PR_SetGlobalString(PR_GLOBAL(mapname), sv.mapname);
 	// serverflags are for cross level information (sigils)

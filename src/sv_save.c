@@ -114,7 +114,7 @@ void SV_SaveGame_f(void)
 	if (svs.clients[0].state != cs_spawned) {
 		Con_Printf ("Can't save, client #0 not spawned.\n");
 		return;
-	} else if (svs.clients[0].edict->v.health <= 0) {
+	} else if (svs.clients[0].edict->v->health <= 0) {
 		Con_Printf ("Can't save game with a dead player\n");
 		// in fact, we can, but does it make sense?
 		return;
@@ -297,7 +297,7 @@ void SV_LoadGame_f(void)
 			ED_ParseEdict (start, ent);
 
 			// link it into the bsp tree
-			if (!ent->e->free)
+			if (!ent->e.free)
 				SV_LinkEdict (ent, false);
 		}
 		entnum++;

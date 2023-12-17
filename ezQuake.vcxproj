@@ -2133,9 +2133,6 @@ msversion.bat</Command>
     <ClCompile Include="src\pr2_exec.c">
       <FileType>CppCode</FileType>
     </ClCompile>
-    <ClCompile Include="src\pr2_vm.c">
-      <FileType>CppCode</FileType>
-    </ClCompile>
     <ClCompile Include="src\pr_cmds.c">
       <FileType>CppCode</FileType>
     </ClCompile>
@@ -2145,6 +2142,9 @@ msversion.bat</Command>
     <ClCompile Include="src\pr_exec.c">
       <FileType>CppCode</FileType>
     </ClCompile>
+    <ClCompile Include="src\vm.c" />
+    <ClCompile Include="src\vm_interpreted.c" />
+    <ClCompile Include="src\vm_x86.c" />
     <ClCompile Include="src\qtv.c" />
     <ClCompile Include="src\q_shared.c" />
     <ClCompile Include="src\rulesets.c" />
@@ -2950,6 +2950,7 @@ msversion.bat</Command>
     <ClInclude Include="src\cmd.h" />
     <ClInclude Include="src\cmodel.h" />
     <ClInclude Include="src\common.h" />
+    <ClInclude Include="src\q_platform.h" />
     <ClInclude Include="src\common_draw.h" />
     <ClInclude Include="src\config_manager.h" />
     <ClInclude Include="src\console.h" />
@@ -3015,8 +3016,9 @@ msversion.bat</Command>
     <ClInclude Include="src\parser.h" />
     <ClInclude Include="src\particles_classic.h" />
     <ClInclude Include="src\pmove.h" />
+    <ClInclude Include="src\vm.h" />
+    <ClInclude Include="src\vm_local.h" />
     <ClInclude Include="src\pr2.h" />
-    <ClInclude Include="src\pr2_vm.h" />
     <ClInclude Include="src\progdefs.h" />
     <ClInclude Include="src\progs.h" />
     <ClInclude Include="src\pr_comp.h" />

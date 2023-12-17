@@ -413,7 +413,7 @@ void SV_DropClient(client_t* drop)
 // <-- MD
 
 	drop->old_frags = 0;
-	drop->edict->v.frags = 0.0;
+	drop->edict->v->frags = 0.0;
 	drop->name[0] = 0;
 
 	Info_RemoveAll(&drop->_userinfo_ctx_);
@@ -671,6 +671,22 @@ static void SVC_LastScores (void)
 
 	SV_BeginRedirect (RD_PACKET);
 	SV_LastScores_f ();
+	SV_EndRedirect ();
+}
+
+/*
+===================
+SVC_LastStats
+===================
+*/
+void SV_LastStats_f (void);
+static void SVC_LastStats (void)
+{
+	if(!(int)sv_allowlastscores.value)
+		return;
+
+	SV_BeginRedirect (RD_PACKET);
+	SV_LastStats_f ();
 	SV_EndRedirect ();
 }
 
@@ -1380,10 +1396,10 @@ static void SVC_DirectConnect (void)
 
 	edictnum = (newcl-svs.clients)+1;
 	ent = EDICT_NUM(edictnum);
-	ent->e->free = false;
+	ent->e.free = false;
 	newcl->edict = ent;
 	// restore client name.
-	PR_SetEntityString(ent, ent->v.netname, newcl->name);
+	PR_SetEntityString(ent, ent->v->netname, newcl->name);
 
 	s = ( vip ? va("%d", vip) : "" );
 
@@ -1888,6 +1904,8 @@ static void SV_ConnectionlessPacket (void)
 		SVC_GetChallenge ();
 	else if (!strcmp(c,"lastscores"))
 		SVC_LastScores ();
+	else if (!strcmp(c,"laststats"))
+		SVC_LastStats ();
 	else if (!strcmp(c,"dlist"))
 		SVC_DemoList ();
 	else if (!strcmp(c,"dlistr"))
@@ -3115,6 +3133,7 @@ int SV_BoundRate (qbool dl, int rate)
 
 	if (rate < 500)
 		rate = 500;
+
 	if (rate > 100000 * MAX_DUPLICATE_PACKETS)
 		rate = 100000 * MAX_DUPLICATE_PACKETS;
 
@@ -3319,9 +3338,9 @@ void SV_InitLocal (void)
 	extern	cvar_t	pm_airstep;
 	extern	cvar_t	pm_pground;
 	extern  cvar_t  pm_rampjump;
-	//extern	cvar_t	pm_slidefix;
+	extern	cvar_t	pm_slidefix;
 	extern	cvar_t	pm_ktjump;
-	//extern	cvar_t	pm_bunnyspeedcap;
+	extern	cvar_t	pm_bunnyspeedcap;
 
 	// qws = QuakeWorld Server information
 	static cvar_t qws_name = { "qws_name", SERVER_NAME, CVAR_ROM };
@@ -3426,9 +3445,9 @@ void SV_InitLocal (void)
 	Cvar_Register (&sv_antilag_no_pred);
 	Cvar_Register (&sv_antilag_projectiles);
 
-	//Cvar_Register (&pm_bunnyspeedcap);
+	Cvar_Register (&pm_bunnyspeedcap);
 	Cvar_Register (&pm_ktjump);
-	//Cvar_Register (&pm_slidefix);
+	Cvar_Register (&pm_slidefix);
 	Cvar_Register (&pm_pground);
 	Cvar_Register (&pm_airstep);
 	Cvar_Register (&pm_rampjump);
@@ -3880,6 +3899,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	Con_Printf ("%4.1f megabyte heap\n", (float)hunk_size / (1024 * 1024));
 	Con_Printf ("QuakeWorld Initialized\n");
+#ifndef	WWW_INTEGRATION
+	Con_Printf ("www authentication disabled (no curl support)\n");
+#endif
 
 	Cbuf_InsertText ("exec server.cfg\n");
 

@@ -131,7 +131,7 @@ const char **qwmsg_pcre_check(const char *str, const char *qwm_str, int str_len)
 	match_data = pcre2_match_data_create_from_pattern(reg, NULL);
 	stringcount = pcre2_match(reg, (PCRE2_SPTR)str, str_len, 0, 0, match_data, NULL);
 
-	if (stringcount <= 0) {
+	if (stringcount < 0) {
 		pcre2_match_data_free (match_data);
 		pcre2_code_free(reg);
 		return NULL;

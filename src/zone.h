@@ -85,15 +85,12 @@ void Memory_Init (void *buf, int size);
 void *Hunk_Alloc (int size); // returns 0 filled memory
 void *Hunk_AllocName (int size, const char *name);
 
-void *Hunk_HighAllocName (int size, char *name);
-
 int	Hunk_LowMark (void);
 void Hunk_FreeToLowMark (int mark);
 
-int	Hunk_HighMark (void);
-void Hunk_FreeToHighMark (int mark);
-
+void Hunk_TempFlush(void);
 void *Hunk_TempAlloc (int size);
+void *Hunk_TempAllocMore(int size);
 
 void Hunk_Check (void);
 
