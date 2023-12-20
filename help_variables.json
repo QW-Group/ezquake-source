@@ -2908,7 +2908,7 @@
           "name": "false"
         },
         {
-          "description": "Enable the uknown command messages.",
+          "description": "Enable the unknown command messages.",
           "name": "true"
         }
       ]
@@ -14326,7 +14326,7 @@
           "name": "2"
         },
         {
-          "description": "Enables the use of mvd_multitrack_1 - 4 allowing to set seperate algorthms for every window with cl_muiltiview 2-4",
+          "description": "Enables the use of mvd_multitrack_1 - 4 allowing to set separate algorithms for every window with cl_muiltiview 2-4",
           "name": "3"
         },
         {
@@ -14337,53 +14337,53 @@
     },
     "mvd_autotrack_1on1": {
       "default": "%a * %A + 50 * %W + %p + %f",
-      "desc": "Will be used if mvd_autotrack = 1 and a 1on1 game is played. Its an algorythm for selecting the best player.",
+      "desc": "Will be used if mvd_autotrack = 1 and a 1on1 game is played. Its an algorithm for selecting the best player.",
       "group-id": "20",
       "remarks": "For a full description read the manual.",
       "type": "string"
     },
     "mvd_autotrack_1on1_values": {
       "default": "1 2 3 2 3 5 8 8 1 2 3 0 0 0",
-      "desc": "Allows you to customize autotrack algoritm. See autotrack manual page for more info.",
+      "desc": "Allows you to customize autotrack algorithm. See autotrack manual page for more info.",
       "group-id": "20",
       "type": "string"
     },
     "mvd_autotrack_2on2": {
       "default": "%a * %A + 50 * %W + %p + %f",
-      "desc": "Will be used if mvd_autotrack = 1 and a 2on2 game is played. Its an algorythm for selecting the best player.",
+      "desc": "Will be used if mvd_autotrack = 1 and a 2on2 game is played. Its an algorithm for selecting the best player.",
       "group-id": "20",
       "remarks": "For a full description read the manual.",
       "type": "string"
     },
     "mvd_autotrack_2on2_values": {
       "default": "1 2 3 2 3 5 8 8 1 2 3 500 900 1000",
-      "desc": "Allows you to customize autotrack algoritm. See autotrack manual page for more info.",
+      "desc": "Allows you to customize autotrack algorithm. See autotrack manual page for more info.",
       "group-id": "20",
       "type": "string"
     },
     "mvd_autotrack_4on4": {
       "default": "%a * %A + 50 * %W + %p + %f",
-      "desc": "Will be used if mvd_autotrack = 1 and a 4on4 game is played. Its an algorythm for selecting the best player.",
+      "desc": "Will be used if mvd_autotrack = 1 and a 4on4 game is played. Its an algorithm for selecting the best player.",
       "group-id": "20",
       "remarks": "For a full description read the manual.",
       "type": "string"
     },
     "mvd_autotrack_4on4_values": {
       "default": "1 2 4 2 4 6 10 10 1 2 3 500 900 1000",
-      "desc": "Allows you to customize autotrack algoritm. See autotrack manual page for more info.",
+      "desc": "Allows you to customize autotrack algorithm. See autotrack manual page for more info.",
       "group-id": "20",
       "type": "string"
     },
     "mvd_autotrack_custom": {
       "default": "%a * %A + 50 * %W + %p + %f",
-      "desc": "Will be used if mvd_autotrack = 2.\n Its an algorythm for selecting the best player.",
+      "desc": "Will be used if mvd_autotrack = 2.\n Its an algorithm for selecting the best player.",
       "group-id": "20",
       "remarks": "For a full description read the manual.",
       "type": "string"
     },
     "mvd_autotrack_custom_values": {
       "default": "1 2 3 2 3 4 6 6 1 2 3 500 900 1000",
-      "desc": "Allows you to customize autotrack algoritm. See autotrack manual page for more info.",
+      "desc": "Allows you to customize autotrack algorithm. See autotrack manual page for more info.",
       "group-id": "20",
       "type": "string"
     },
@@ -14480,53 +14480,53 @@
     },
     "mvd_multitrack_1": {
       "default": "%f",
-      "desc": "Will be used if mvd_autotrack = 3 and cl_multiview is enabled.\nIts an algorythm for selecting the best player on viewport 1.",
+      "desc": "Will be used if mvd_autotrack = 3 and cl_multiview is enabled.\nIts an algorithm for selecting the best player on viewport 1.",
       "group-id": "20",
       "remarks": "For a full description read the manual.",
       "type": "string"
     },
     "mvd_multitrack_1_values": {
       "default": "1 2 3 2 3 5 8 8 1 2 3 0 0 0",
-      "desc": "Allows you to customize autotrack algoritm. See autotrack manual page for more info.",
+      "desc": "Allows you to customize autotrack algorithm. See autotrack manual page for more info.",
       "group-id": "20",
       "type": "string"
     },
     "mvd_multitrack_2": {
       "default": "%W",
-      "desc": "Will be used if mvd_autotrack = 3 and cl_multiview is enabled.\nIts an algorythm for selecting the best player on viewport 2.",
+      "desc": "Will be used if mvd_autotrack = 3 and cl_multiview is enabled.\nIts an algorithm for selecting the best player on viewport 2.",
       "group-id": "20",
       "remarks": "For a full description read the manual.",
       "type": "string"
     },
     "mvd_multitrack_2_values": {
       "default": "1 2 3 2 3 5 8 8 1 2 3 0 0 0",
-      "desc": "Allows you to customize autotrack algoritm. See autotrack manual page for more info.",
+      "desc": "Allows you to customize autotrack algorithm. See autotrack manual page for more info.",
       "group-id": "20",
       "type": "string"
     },
     "mvd_multitrack_3": {
       "default": "%h",
-      "desc": "Will be used if mvd_autotrack = 3 and cl_multiview is enabled.\nIts an algorythm for selecting the best player on viewport 3.",
+      "desc": "Will be used if mvd_autotrack = 3 and cl_multiview is enabled.\nIts an algorithm for selecting the best player on viewport 3.",
       "group-id": "20",
       "remarks": "For a full description read the manual.",
       "type": "string"
     },
     "mvd_multitrack_3_values": {
       "default": "1 2 3 2 3 5 8 8 1 2 3 0 0 0",
-      "desc": "Allows you to customize autotrack algoritm. See autotrack manual page for more info.",
+      "desc": "Allows you to customize autotrack algorithm. See autotrack manual page for more info.",
       "group-id": "20",
       "type": "string"
     },
     "mvd_multitrack_4": {
       "default": "%A",
-      "desc": "Will be used if mvd_autotrack = 3 and cl_multiview is enabled.\nIts an algorythm for selecting the best player on viewport 4.",
+      "desc": "Will be used if mvd_autotrack = 3 and cl_multiview is enabled.\nIts an algorithm for selecting the best player on viewport 4.",
       "group-id": "20",
       "remarks": "For a full description read the manual.",
       "type": "string"
     },
     "mvd_multitrack_4_values": {
       "default": "1 2 3 2 3 5 8 8 1 2 3 0 0 0",
-      "desc": "Allows you to customize autotrack algoritm. See autotrack manual page for more info.",
+      "desc": "Allows you to customize autotrack algorithm. See autotrack manual page for more info.",
       "group-id": "20",
       "type": "string"
     },
