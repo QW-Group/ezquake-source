@@ -4121,7 +4121,7 @@ void CL_QTVPoll (void)
 
 	if (strncmp(qtvrequestbuffer, QTVSV, QTVSVLEN))
 	{
-		Com_Printf("Server is not a QTV server (or is incompatable)\n");
+		Com_Printf("Server is not a QTV server (or is incompatible)\n");
 		QTV_CloseRequest(true);
 		return;
 	}
