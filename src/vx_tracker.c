@@ -96,6 +96,7 @@ cvar_t amf_tracker_frags                          = {"r_tracker_frags", "1"};
 cvar_t amf_tracker_streaks                        = {"r_tracker_streaks", "0"};
 cvar_t amf_tracker_time                           = {"r_tracker_time", "4"};
 cvar_t amf_tracker_messages                       = {"r_tracker_messages", "20"};
+static cvar_t amf_tracker_colorfix				  = {"r_tracker_colorfix", "0"};
 static cvar_t amf_tracker_pickups                 = {"r_tracker_pickups", "0"};
 cvar_t amf_tracker_align_right                    = {"r_tracker_align_right", "1"};
 cvar_t amf_tracker_scale                          = {"r_tracker_scale", "1"};
@@ -188,6 +189,7 @@ void InitTracker(void)
 	Cvar_Register(&amf_tracker_flags);
 	Cvar_Register(&amf_tracker_streaks);
 	Cvar_Register(&amf_tracker_messages);
+	Cvar_Register(&amf_tracker_colorfix);
 	Cvar_Register(&amf_tracker_inconsole);
 	Cvar_Register(&amf_tracker_time);
 	Cvar_Register(&amf_tracker_align_right);
@@ -759,6 +761,7 @@ void VX_TrackerSuicide(int player, int weapon, int count)
 
 void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, int killer_wcount)
 {
+	int colorfix = amf_tracker_colorfix.integer;
 	char outstring[20];
 	char player_name[MAX_SCOREBOARDNAME];
 	char killer_name[MAX_SCOREBOARDNAME];
@@ -776,7 +779,7 @@ void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, i
 			Q_normalizetext(player_name);
 			Q_normalizetext(killer_name);
 
-			VX_TrackerAddWeaponImageSplit(killer_name, XvsYFullColor(player, killer), weapon, player_name, XvsYFullColor(killer, player));
+			VX_TrackerAddWeaponImageSplit(killer_name, XvsYFullColor(player, killer), weapon, player_name, colorfix ? XvsYFullColor(player, killer) : XvsYFullColor(killer, player));
 		}
 		else {
 			VX_TrackerAddWeaponTextSplit(killer_name, weapon, XvsYFullColor(player, killer), player_name);
