@@ -115,6 +115,7 @@ static cvar_t amf_tracker_string_suicides         = {"r_tracker_string_suicides"
 static cvar_t amf_tracker_string_died             = {"r_tracker_string_died",     " (died)"};
 static cvar_t amf_tracker_string_teammate         = {"r_tracker_string_teammate", "teammate"};
 static cvar_t amf_tracker_string_enemy            = {"r_tracker_string_enemy",    "enemy"};
+static cvar_t amf_tracker_string_inconsole_prefix = {"r_tracker_string_inconsole_prefix", ""};
 static cvar_t amf_tracker_name_width              = {"r_tracker_name_width",      "0", 0, OnChange_TrackerNameWidth};
 static cvar_t amf_tracker_own_frag_prefix         = {"r_tracker_own_frag_prefix", "You fragged "};
 static cvar_t amf_tracker_positive_enemy_suicide  = {"r_tracker_positive_enemy_suicide", "0"};	// Medar wanted it to be customizable
@@ -209,6 +210,7 @@ void InitTracker(void)
 	Cvar_Register(&amf_tracker_string_died);
 	Cvar_Register(&amf_tracker_string_teammate);
 	Cvar_Register(&amf_tracker_string_enemy);
+	Cvar_Register(&amf_tracker_string_inconsole_prefix);
 
 	Cvar_Register(&amf_tracker_name_width);
 	Cvar_Register(&amf_tracker_own_frag_prefix);
@@ -313,16 +315,16 @@ static qbool VX_TrackerStringPrintSegments(const char* text1, const char* text2,
 
 	switch (amf_tracker_inconsole.integer) {
 		case 1:
-			Com_Printf("%s%s%s%s%s%s%s\n", text1 ? text1 : "", text1 && text2 ? " " : "", text2 ? text2 : "", text2 && text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
+			Com_Printf("%s%s%s%s%s%s%s%s\n", amf_tracker_string_inconsole_prefix.string, text1 ? text1 : "", text1 && text2 ? " " : "", text2 ? text2 : "", text2 && text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
 			return false;
 		case 2:
-			Com_Printf("%s%s%s%s%s%s%s\n", text1 ? text1 : "", text1 && text2 ? " " : "", text2 ? text2 : "", text2 && text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
+			Com_Printf("%s%s%s%s%s%s%s%s\n", amf_tracker_string_inconsole_prefix.string, text1 ? text1 : "", text1 && text2 ? " " : "", text2 ? text2 : "", text2 && text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
 			return true;
 		case 3:
 		{
 			int flags = Print_flags[Print_current];
 			Print_flags[Print_current] |= PR_NONOTIFY;
-			Com_Printf("%s%s%s%s%s%s%s\n", text1 ? text1 : "", text1 && text2 ? " " : "", text2 ? text2 : "", text2 && text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
+			Com_Printf("%s%s%s%s%s%s%s%s\n", amf_tracker_string_inconsole_prefix, text1 ? text1 : "", text1 && text2 ? " " : "", text2 ? text2 : "", text2 && text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
 			Print_flags[Print_current] = flags;
 			return true;
 		}
@@ -355,6 +357,8 @@ static qbool VX_TrackerStringPrintSegmentsWithImage(const char* text1, const byt
 	}
 
 	Print_flags[Print_current] |= (PR_NORESET | (suppress_from_notify ? PR_NONOTIFY : 0));
+
+	Com_Printf("%s", amf_tracker_string_inconsole_prefix.string);
 
 	if (text1 && text1[0]) {
 		if (text1_color) {
