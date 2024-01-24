@@ -2201,46 +2201,6 @@ void Serverinfo_Key(int key)
 		case K_BACKSPACE:
 			Serverinfo_Stop();
 			break;
-		case K_PGUP:
-			if (CTab_GetCurrentId(&sb_tab) == SBPG_PLAYERS)
-			{
-				if (keydown[K_CTRL])
-					Players_pos = 0;
-				else
-					Players_pos--;
-				Players_pos = max(0, Players_pos);
-				Serverinfo_Change(all_players[Players_pos]->serv);
-			}
-			else
-			{
-				if (keydown[K_CTRL])
-					Servers_pos = 0;
-				else
-					Servers_pos--;
-				Servers_pos = max(0, Servers_pos);
-				Serverinfo_Change(servers[Servers_pos]);
-			}
-			break;
-		case K_PGDN:
-			if (CTab_GetCurrentId(&sb_tab) == SBPG_PLAYERS)
-			{
-				if (keydown[K_CTRL])
-					Players_pos = all_players_n - 1;
-				else
-					Players_pos++;
-				Players_pos = min(all_players_n-1, Players_pos);
-				Serverinfo_Change(all_players[Players_pos]->serv);
-			}
-			else
-			{
-				if (keydown[K_CTRL])
-					Servers_pos = serversn_passed-1;
-				else
-					Servers_pos++;
-				Servers_pos = min(serversn_passed-1, Servers_pos);
-				Serverinfo_Change(servers[Servers_pos]);
-			}
-			break;
 		case K_TAB:
 			if (keydown[K_SHIFT]) {
 				serverinfo_pos--;
@@ -2297,6 +2257,23 @@ void Serverinfo_Key(int key)
 		case 'i':
 			SB_PingTree_DumpPath(&show_serverinfo->address);
 			break;
+		case K_MWHEELUP:
+	        case K_UPARROW:
+	        case K_PGUP:
+	          if (!keydown[K_CTRL]) {
+		    Servers_pos--;
+		    Servers_pos = max(0, Servers_pos);
+		    Serverinfo_Change(servers[Servers_pos]);
+		    break;
+	          }
+	        case K_MWHEELDOWN:
+	        case K_DOWNARROW:
+	        case K_PGDN:
+	          if (!keydown[K_CTRL]) {
+		    Servers_pos++;
+		    Servers_pos = min(serversn_passed - 1, Servers_pos);
+		    Serverinfo_Change(servers[Servers_pos]);
+	          }
 		default:
 			switch (serverinfo_pos)
 			{
