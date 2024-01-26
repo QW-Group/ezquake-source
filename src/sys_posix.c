@@ -125,6 +125,7 @@ void Sys_Error(char *error, ...)
 		fprintf(qconsole_log, "Error: %s\n", string);
 
 	Host_Shutdown ();
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", string, NULL);
 	exit(1);
 }
 
@@ -171,7 +172,7 @@ Sys_listdir
 
 dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 {
-	static file_t list[MAX_DIRFILES];
+	static file_t list[MAX_DIRFILES]; // FIXME: thread un-safe.
 	dir_t dir;
 	char pathname[MAX_OSPATH];
 	DIR *d;
@@ -214,21 +215,15 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 		if (!all)
 		{
 			match_data = pcre2_match_data_create_from_pattern(preg, NULL);
-			switch (error = pcre2_match(preg, (PCRE2_SPTR)oneentry->d_name,
-			                      strlen(oneentry->d_name), 0, 0, match_data, NULL))
-			{
-			case 0:
-				pcre2_match_data_free(match_data);
-				break;
-			case PCRE2_ERROR_NOMATCH:
-				pcre2_match_data_free(match_data);
+			error = pcre2_match(preg, (PCRE2_SPTR)oneentry->d_name,
+				strlen(oneentry->d_name), 0, 0, match_data, NULL);
+			pcre2_match_data_free(match_data);
+			if (error < 0) {
+				if (error != PCRE2_ERROR_NOMATCH) {
+					Con_Printf("Sys_listdir: pcre2_match(%s, %s) error code: %d\n",
+						ext, oneentry->d_name, error);
+				}
 				continue;
-			default:
-				Con_Printf("Sys_listdir: pcre2_match(%s, %s) error code: %d\n",
-				           ext, oneentry->d_name, error);
-				pcre2_match_data_free(match_data);
-				pcre2_code_free(preg);
-				return dir;
 			}
 		}
 		snprintf(pathname, sizeof(pathname), "%s/%s", path, oneentry->d_name);
@@ -794,7 +789,7 @@ void Sys_RegisterQWURLProtocol_f(void)
             "Categories=quakeworld;qtv;Game;\n"
             "Exec=%s +qwurl %s\n"
             "Path=%s\n"
-            "MimeType=x-scheme-handler/qw\n"
+            "MimeType=x-scheme-handler/qw;\n"
             "Terminal=false\n"
             "StartupNotify=false\n"
             , exe_path, "%u", com_basedir);

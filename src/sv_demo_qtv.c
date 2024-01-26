@@ -383,6 +383,7 @@ void SV_MVD_RunPendingConnections (void)
 						QTVAM_PLAIN,
 						QTVAM_CCITT,
 						QTVAM_MD4,
+						QTVAM_SHA3_512,
 					} authmethod_t;
 					authmethod_t authmethod = QTVAM_NONE;
 					start = p->inbuffer;
@@ -456,6 +457,8 @@ void SV_MVD_RunPendingConnections (void)
 									thisauth = QTVAM_CCITT;
 								else if (!strcmp(com_token, "MD4"))
 									thisauth = QTVAM_MD4;
+								else if (!strcmp(com_token, "SHA3_512"))
+									thisauth = QTVAM_SHA3_512;
 								else
 								{
 									thisauth = QTVAM_NONE;
@@ -530,6 +533,21 @@ void SV_MVD_RunPendingConnections (void)
 							}
 							break;
 
+						case QTVAM_SHA3_512:
+							{
+								sha3_context c;
+								const uint8_t *byte_hash;
+								char hash[SHA3_512_DIGEST_HEX_STR_SIZE] = {0};
+
+								sha3_Init512(&c);
+								sha3_Update(&c, p->challenge, strlen(p->challenge));
+								sha3_Update(&c, qtv_password.string, strlen(qtv_password.string));
+								byte_hash = sha3_Finalize(&c);
+								sha3_512_ByteToHex(hash, byte_hash);
+								p->hasauthed = !strcmp(password, hash);
+							}
+							break;
+
 						default:
 							e = ("QTVSV 1\n"
 								 "PERROR: FTEQWSV bug detected.\n\n");
@@ -575,6 +593,17 @@ void SV_MVD_RunPendingConnections (void)
 						case QTVAM_MD4:
 							e = ("QTVSV 1\n"
 								"AUTH: MD4\n"
+								"CHALLENGE: ");
+
+							send(p->socket, e, strlen(e), 0);
+							send(p->socket, p->challenge, strlen(p->challenge), 0);
+							e = "\n\n";
+							send(p->socket, e, strlen(e), 0);
+							continue;
+
+						case QTVAM_SHA3_512:
+							e = ("QTVSV 1\n"
+								"AUTH: SHA3_512\n"
 								"CHALLENGE: ");
 
 							send(p->socket, e, strlen(e), 0);
@@ -695,7 +724,6 @@ void QTVcmd_Say_f(mvddest_t *d)
 	int		j;
 	char	*p;
 	char	text[1024], text2[1024], *cmd;
-	int     sent_to = 0;
 
 	if (Cmd_Argc () < 2)
 		return;
@@ -744,9 +772,6 @@ void QTVcmd_Say_f(mvddest_t *d)
 			continue; // game started, don't send QTV chat to players, specs still get QTV chat
 
 		SV_ClientPrintf2(client, PRINT_CHAT, "%s", text);
-		if (!client->spectator) {
-			sent_to |= (1 << j);
-		}
 	}
 
 	if (sv.mvdrecording) {

@@ -7,12 +7,13 @@ layout(binding = 0) uniform sampler2D normal_texture;
 uniform vec3 outline_color;
 uniform float outline_scale;
 uniform float outline_depth_threshold;
+uniform float outline_normal_threshold;
 
 in vec2 TextureCoord;
 out vec4 frag_colour;
 
 bool vec_nequ(vec3 a, vec3 b) {
-	return dot(a, b) < 0.997; // todo: make this customizable?
+	return dot(a, b) < outline_normal_threshold;
 }
 
 void main()

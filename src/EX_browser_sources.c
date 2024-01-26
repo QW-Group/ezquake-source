@@ -987,7 +987,6 @@ int rebuild_servers_list = 0;
 void Rebuild_Servers_List(void)
 {
     int i;
-    int suppressed_servers = 0;
     int server_limit = sizeof(servers) / sizeof(servers[0]);
     serversn = 0;
 	
@@ -1019,9 +1018,6 @@ void Rebuild_Servers_List(void)
                     // if not on list yet
                     if (serversn < server_limit) {
                         servers[serversn++] = sources[i]->servers[j];
-                    }
-                    else {
-                        ++suppressed_servers;
                     }
                 }
             }

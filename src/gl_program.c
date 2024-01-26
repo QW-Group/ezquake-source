@@ -330,6 +330,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_fx_world_geometry, "outline_color", 1, false },
 	// r_program_uniform_outline_depth_threshold
 	{ r_program_fx_world_geometry, "outline_depth_threshold", 1, false },
+	// r_program_uniform_outline_normal_threshold
+	{ r_program_fx_world_geometry, "outline_normal_threshold", 1, false },
 	// r_program_uniform_outline_scale
 	{ r_program_fx_world_geometry, "outline_scale", 1, false },
 	// r_program_uniform_aliasmodel_outline_color_model
@@ -580,8 +582,12 @@ static const char* safe_strstr(const char* source, size_t max_length, const char
 	size_t search_length = strlen(search_string);
 	const char* position;
 
-	position = (const char*)memchr(source, search_string[0], max_length);
-	while (position) {
+	while (true) {
+		position = (const char*)memchr(source, search_string[0], max_length);
+		if (!position) {
+			break;
+		}
+
 		// Move along
 		if (max_length < (position - source)) {
 			break;
@@ -596,8 +602,8 @@ static const char* safe_strstr(const char* source, size_t max_length, const char
 		}
 
 		// Try again
-		source = position;
-		position = (const char*)memchr(source + 1, search_string[0], max_length);
+		source = position + 1;
+		max_length -= 1;
 	}
 
 	return NULL;

@@ -226,6 +226,7 @@ cvar_t gl_outline_color_model              = {"gl_outline_color_model", "0 0 0"}
 cvar_t gl_outline_scale_world              = {"gl_outline_scale_world", "1"};
 cvar_t gl_outline_scale_model              = {"gl_outline_scale_model", "1"};
 cvar_t gl_outline_world_depth_threshold    = {"gl_outline_world_depth_threshold", "4"};
+cvar_t gl_outline_world_normal_threshold   = {"gl_outline_world_normal_threshold", "0.997"};
 cvar_t gl_outline_use_player_color         = {"gl_outline_use_player_color", "0"};
 cvar_t gl_spec_xray                        = {"gl_spec_xray", "0"};
 cvar_t gl_spec_xray_distance               = {"gl_spec_xray_distance", "1500"};
@@ -714,6 +715,7 @@ void R_Init(void)
 	// Cvar_Register(&gl_outline_scale_world);
 	Cvar_Register(&gl_outline_scale_model);
 	Cvar_Register(&gl_outline_world_depth_threshold);
+	Cvar_Register(&gl_outline_world_normal_threshold);
 	Cvar_Register(&gl_outline_use_player_color);
 	Cvar_Register(&gl_spec_xray);
 	Cvar_Register(&gl_spec_xray_distance);

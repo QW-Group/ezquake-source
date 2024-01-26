@@ -85,15 +85,21 @@ jobs:
        include:
          - target: linux-x86_64
            platform: x86_64
+    container:
+      image: debian:testing
+      options: --privileged
 
     steps:
+    - name: Install dependencies
+      run: apt-get -qy update && apt-get -qy install curl file libfuse2 git make sudo git ssh-client
+
     - name: Check out code
       uses: actions/checkout@v3
       with:
         submodules: true
 
-    - name: Install dependencies
-      run: sudo apt-get install libfuse2 openssh-client
+    - name: Build
+      run:  git config --global --add safe.directory $PWD && ./misc/appimage/appimage-manual_creation.sh
 
     - name: Build
       run: ./misc/appimage/appimage-manual_creation.sh
@@ -105,16 +111,19 @@ jobs:
     - name: Setup SSH
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      shell: bash
       run: |
         ssh-agent -a $SSH_AUTH_SOCK > /dev/null
         ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
     - name: Set date
+      shell: bash
       run: |
         export TZ=CET-1CEST
         echo "DATE=$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_ENV
     - name: Deploy
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      shell: bash
       run: |
            mkdir -p upload/snapshots/linux/${{ matrix.platform }}
            mkdir -p upload/snapshots/latest/linux/${{ matrix.platform }}

@@ -474,7 +474,7 @@ void Draw_ListFonts_f(void)
 		}
 		if (regexp) {
 			match_data = pcre2_match_data_create_from_pattern(regexp, NULL);
-			if (pcre2_match(regexp, (PCRE2_SPTR)dir.files[i].name, strlen(dir.files[i].name), 0, 0, match_data, NULL) <= 0) {
+			if (pcre2_match(regexp, (PCRE2_SPTR)dir.files[i].name, strlen(dir.files[i].name), 0, 0, match_data, NULL) < 0) {
 				pcre2_match_data_free(match_data);
 				continue;
 			}

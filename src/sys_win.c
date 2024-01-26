@@ -376,23 +376,15 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 		if (!all)
 		{
 			match_data = pcre2_match_data_create_from_pattern(preg, NULL);
-			switch (error = pcre2_match(preg, (PCRE2_SPTR)fd.cFileName,
-			                      strlen(fd.cFileName), 0, 0, match_data, NULL))
-			{
-			case 0:
-				pcre2_match_data_free(match_data);
-				break;
-			case PCRE2_ERROR_NOMATCH:
-				pcre2_match_data_free(match_data);
-				continue;
-			default:
-				Con_Printf("Sys_listdir: pcre2_match(%s, %s) error code: %d\n",
-				           ext, fd.cFileName, error);
-				pcre2_match_data_free(match_data);
-				if (!all) {
-					pcre2_code_free(preg);
+			error = pcre2_match(preg, (PCRE2_SPTR)fd.cFileName,
+				strlen(fd.cFileName), 0, 0, match_data, NULL);
+			pcre2_match_data_free(match_data);
+			if (error < 0) {
+				if (error != PCRE2_ERROR_NOMATCH) {
+					Con_Printf("Sys_listdir: pcre2_match(%s, %s) error code: %d\n",
+						ext, fd.cFileName, error);
 				}
-				return dir;
+				continue;
 			}
 		}
 

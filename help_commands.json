@@ -253,12 +253,12 @@
   "bind": {
     "description": "This command binds one or several commands to a key.\nTo bind multiple commands to a key, enclose the commands in double-quotes (\") and separate them with semicolons (;)."
   },
-  "bindlist": {
-    "description": "Prints all binds."
-  },
   "bindedit": {
     "description": "Allows you to edit your bind in the console.",
     "syntax": "<key>"
+  },
+  "bindlist": {
+    "description": "Prints all binds."
   },
   "calc_fov": {
     "arguments": [
@@ -337,6 +337,9 @@
   },
   "clearlocs": {
     "description": "Clear all currently loaded locs."
+  },
+  "clipboard": {
+    "description": "Copies all the following arguments to the system clipboard"
   },
   "cmd": {
     "description": "Sends a command directly to the server."
@@ -673,7 +676,7 @@
   "hide": {
     "system-generated": true
   },
-  "HUD262_add": {
+  "hud262_add": {
     "arguments": [
       {
         "description": "Can be cvar or str",
@@ -687,7 +690,7 @@
     "description": "Creates or changes a HUD element with hud_name.\nThe following types of HUD elements are available:\ncvar - a value of a variable is displayed; in this case param must be a name of this variable.\nstr - a string defined by param is displayed\nCvar and %macros expansion is performed every time element is shown.",
     "syntax": "<hud_name> <type> <param>"
   },
-  "HUD262_alpha": {
+  "hud262_alpha": {
     "arguments": [
       {
         "description": "HUD element's name",
@@ -701,7 +704,7 @@
     "description": "Sets a transparency for strings-HUD element.",
     "syntax": "<name> <value>"
   },
-  "HUD262_bg": {
+  "hud262_bg": {
     "arguments": [
       {
         "description": "HUD element's name",
@@ -715,7 +718,7 @@
     "description": "Defines a color of the HUD element background.\n0 - transparent (default).",
     "syntax": "<hud_name> <bg_color>"
   },
-  "HUD262_blink": {
+  "hud262_blink": {
     "arguments": [
       {
         "description": "HUD element's name",
@@ -733,7 +736,7 @@
     "description": "Allows to make blinking strings-HUD elements.",
     "syntax": "<name> <period> <mask>"
   },
-  "HUD262_bringtofront": {
+  "hud262_bringtofront": {
     "arguments": [
       {
         "description": "HUD element's name",
@@ -743,7 +746,7 @@
     "description": "Transfers all HUD elements created after hud_name element (including) to the end of drawing list, that in short means that they will be displayed above all other elements which could be present on that place already.",
     "syntax": "<name>"
   },
-  "HUD262_disable": {
+  "hud262_disable": {
     "arguments": [
       {
         "description": "HUD element's name",
@@ -753,7 +756,7 @@
     "description": "Prohibits to display one or more HUD elements.",
     "syntax": "<hud_name> [hud_name2...]"
   },
-  "HUD262_enable": {
+  "hud262_enable": {
     "arguments": [
       {
         "description": "HUD element's name",
@@ -763,7 +766,7 @@
     "description": "Allows to display one or more HUD elements.",
     "syntax": "<hud_name> [hud_name2...]"
   },
-  "HUD262_list": {
+  "hud262_list": {
     "arguments": [
       {
         "description": "Print only [regexp] matching HUDs",
@@ -773,7 +776,7 @@
     "description": "Prints a list of strings-HUD elements.",
     "syntax": "[regexp]"
   },
-  "HUD262_move": {
+  "hud262_move": {
     "arguments": [
       {
         "description": "HUD element's name",
@@ -791,7 +794,7 @@
     "description": "Moves a HUD element.\ndx and dy deviations are measured in symbols.",
     "syntax": "<hud_name> <dx> <dy>"
   },
-  "HUD262_position": {
+  "hud262_position": {
     "arguments": [
       {
         "description": "Name of your HUD element",
@@ -813,7 +816,7 @@
     "description": "Indicates position of a HUD element on the screen.",
     "syntax": "<hud_name> <pos> <x> <y>"
   },
-  "HUD262_remove": {
+  "hud262_remove": {
     "arguments": [
       {
         "description": "HUD element's name",
@@ -823,7 +826,7 @@
     "description": "Kills a HUD element.",
     "syntax": "<hud_name>"
   },
-  "HUD262_width": {
+  "hud262_width": {
     "arguments": [
       {
         "description": "HUD element's name",
@@ -1829,7 +1832,7 @@
   "toggleconsole": {
     "description": "Brings the console up and down."
   },
-  "toggleHUD": {
+  "togglehud": {
     "system-generated": true
   },
   "togglemenu": {
@@ -2049,6 +2052,9 @@
   "vid_modelist": {
     "description": "Prints all supported video modes."
   },
+  "vid_reload": {
+    "system-generated": true
+  },
   "vid_restart": {
     "description": "Will restart your video renderer. Needed for some changes to take affect."
   },
@@ -2085,9 +2091,6 @@
   },
   "writeip": {
     "description": "Records all IP addresses on the server IP list. The file name is listip.cfg."
-  },
-  "clipboard": {
-    "description": "Copies all the following arguments to the system clipboard"
   },
   "z_ext_list": {
     "system-generated": true
