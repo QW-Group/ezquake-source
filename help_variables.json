@@ -16881,6 +16881,13 @@
       "group-id": "40",
       "type": "string"
     },
+    "r_tracker_string_inconsole_prefix": {
+      "default": "",
+      "desc": "Prefix to prepend before tracker messages in the console",
+      "group-id": "40",
+      "remarks": "The prefix is only visible when r_tracker_inconsole has a value greater than 0",
+      "type": "string"
+    },
     "r_tracker_time": {
       "default": "4",
       "desc": "Number of seconds the tracker information is drawn on the screen.",
