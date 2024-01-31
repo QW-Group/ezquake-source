@@ -138,7 +138,6 @@ typedef struct {
 
 	//in case we're forced away.
 	zipfile_t *parent;
-	qbool iscompressed;
 	int pos;
 	int length;	//try and optimise some things
 	int index;
@@ -181,23 +180,9 @@ static int VFSZIP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestore
 	if (vfsz->defer)
 		return VFS_READ(vfsz->defer, buffer, bytestoread, err);
 
-//	if (vfsz->iscompressed)
-//	{
-		VFSZIP_MakeActive(vfsz);
-		read = unzReadCurrentFile(vfsz->parent->handle, buffer, bytestoread);
-//	}
-//	else
-//	{
-		// VFS-FIXME This stuff seems to be only for optimisation, 
-		// hence we can probably just go with unzReadCurrentFile
-//		if (vfsz->parent->currentfile != file)
-//		{
-//			unzCloseCurrentFile(vfsz->parent->handle);
-//			VFS_SEEK(vfsz->parent->raw, vfsz->pos+vfsz->startpos, SEEK_SET);
-//			vfsz->parent->currentfile = file;
-//		}
-//		read = VFS_READ(vfsz->parent->raw, buffer, bytestoread, err);
-//	}
+	VFSZIP_MakeActive(vfsz);
+	read = unzReadCurrentFile(vfsz->parent->handle, buffer, bytestoread);
+
 	if (err)
 		*err = ((read || bytestoread <= 0) ? VFSERR_NONE : VFSERR_EOF);
 
@@ -222,35 +207,32 @@ static int VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 	//This is *really* inefficient
 	if (vfsz->parent->currentfile == file)
 	{
-		if (vfsz->iscompressed)
-		{	//if they're going to seek on a file in a zip, let's just copy it out
-			char buffer[8192];
-			unsigned int chunk;
-			unsigned int i;
-			unsigned int length;
+		char buffer[8192];
+		unsigned int chunk;
+		unsigned int i;
+		unsigned int length;
 
-			vfsz->defer = FS_OpenTemp();
-			if (vfsz->defer)
+		vfsz->defer = FS_OpenTemp();
+		if (vfsz->defer)
+		{
+			unzCloseCurrentFile(vfsz->parent->handle);
+			vfsz->parent->currentfile = NULL;	//make it not us
+
+			length = vfsz->length;
+			i = 0;
+			vfsz->pos = 0;
+			VFSZIP_MakeActive(vfsz);
+			while (1)
 			{
-				unzCloseCurrentFile(vfsz->parent->handle);
-				vfsz->parent->currentfile = NULL;	//make it not us
+				chunk = length - i;
+				if (chunk > sizeof(buffer))
+					chunk = sizeof(buffer);
+				if (chunk == 0)
+					break;
+				unzReadCurrentFile(vfsz->parent->handle, buffer, chunk);
+				VFS_WRITE(vfsz->defer, buffer, chunk);
 
-				length = vfsz->length;
-				i = 0;
-				vfsz->pos = 0;
-				VFSZIP_MakeActive(vfsz);
-				while (1)
-				{
-					chunk = length - i;
-					if (chunk > sizeof(buffer))
-						chunk = sizeof(buffer);
-					if (chunk == 0)
-						break;
-					unzReadCurrentFile(vfsz->parent->handle, buffer, chunk);
-					VFS_WRITE(vfsz->defer, buffer, chunk);
-
-					i += chunk;
-				}
+				i += chunk;
 			}
 		}
 
@@ -326,19 +308,6 @@ static vfsfile_t *FSZIP_OpenVFS(void *handle, flocation_t *loc, char *mode)
 	vfsz->funcs.Close      = VFSZIP_Close;
 	if (loc->search)
 		vfsz->funcs.copyprotected = loc->search->copyprotected;
-
-	// VFS-FIXME: 
-	// What is the point of is compressed etc
-	
-	//unzLocateFileMy(vfsz->parent->handle, vfsz->index, vfsz->startpos);
-	//rawofs = unzGetCurrentFileUncompressedPos(zip->handle);
-	/*vfsz->iscompressed = 1; // rawofs<0;
-	if (!vfsz->iscompressed)
-	{
-		vfsz->startpos = rawofs;
-		VFS_SEEK(zip->raw, vfsz->startpos, SEEK_SET);
-		vfsz->parent->currentfile = (vfsfile_t*)vfsz;
-	}*/
 
 	zip->references++;
 
