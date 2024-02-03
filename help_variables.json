@@ -7436,15 +7436,23 @@
       "desc": "Toggles alignment of players nick and team name in frags HUD element.",
       "group-id": "19",
       "remarks": "Use 'frags shownames 1' and/or 'frags showteams 1' to show names and team names of players.",
-      "type": "boolean",
+      "type": "integer",
       "values": [
         {
           "description": "Rows aligned to the left side, names and team tags are on the right side of frag counts.",
-          "name": "false"
+          "name": "0"
         },
         {
           "description": "Rows aligned to the right side, names and team tags are on the left side of frag counts.",
-          "name": "true"
+          "name": "1"
+        },
+        {
+          "description": "Rows aligned toward the inside of each column.",
+          "name": "2"
+        },
+        {
+          "description": "Rows aligned toward the outside of each column.",
+          "name": "3"
         }
       ]
     },
@@ -7595,7 +7603,7 @@
           "name": "2"
         },
         {
-          "description": "Similar to 0.",
+          "description": "No pointer or indicator.",
           "name": "3"
         },
         {

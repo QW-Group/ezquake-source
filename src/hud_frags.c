@@ -338,6 +338,9 @@ static void Frags_DrawColors(
 				Draw_Fill(x + width - 1, y - 1, 1, height + 2, 0x4f);
 				Draw_Fill(x, y + height, width, 1, 0x4f);
 				break;
+			case 3:
+				// Draw nothing
+				break;
 			case 0:
 			default:
 				Draw_SCharacterP(x - 2 - 2 * d, brack_posy, 16, scale, proportional); // [
