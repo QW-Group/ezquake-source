@@ -16802,6 +16802,23 @@
         }
       ]
     },
+    "r_tracker_inconsole_colored_weapon": {
+      "default": "0",
+      "desc": "Use colored weapon string in death messages",
+      "group-id": "40",
+      "remarks": "The colors will be selected from r_tracker_color_good, r_tracker_color_bad, r_tracker_color_myfrag and r_tracker_color_fragonme",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Weapon text will not be colored",
+          "name": "0"
+        },
+        {
+          "description": "Weapon text will be colored",
+          "name": "1"
+        }
+      ]
+    },
     "r_tracker_messages": {
       "default": "20",
       "desc": "Maximum number of custom frag messages to be displayed in extra frag messages window.",

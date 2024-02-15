@@ -180,6 +180,12 @@ byte* StringToRGB(char *s)
 	return rgb;
 }
 
+void RGBToString(const byte *rgb, char *s) {
+	s[0] = '0' + (rgb[0] / 255) * 9.0f;
+	s[1] = '0' + (rgb[1] / 255) * 9.0f;
+	s[2] = '0' + (rgb[2] / 255) * 9.0f;
+}
+
 /*
    float f[10];
    int size = sizeof(f)/sizeof(f[0]);
