@@ -880,9 +880,13 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 	if (hud_frags_strip->integer) {
 		// Auto set the number of rows / cols based on the number of players.
 		// (This is kinda fucked up, but I won't mess with it for the sake of backwards compability).
-		if (hud_frags_vertical->value) {
+		if (hud_frags_vertical->value == 1) {
 			a_cols = min((n_players + rows - 1) / rows, cols);
 			a_rows = min(rows, n_players);
+		}
+		else if (hud_frags_vertical->value == 2) {
+			a_cols = min(n_teams, cols);
+			a_rows = min(rows, ((n_players % a_cols) ? n_players/a_cols + 1 : n_players/a_cols));
 		}
 		else {
 			a_rows = min((n_players + cols - 1) / cols, rows);

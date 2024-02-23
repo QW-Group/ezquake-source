@@ -7636,6 +7636,20 @@
     "hud_frags_vertical": {
       "desc": "Switches vertical rendering of frags bar.",
       "group-id": "19",
+      "values": [
+        {
+          "description": "No vertical rendering.",
+          "name": "0"
+        },
+        {
+          "description": "Legacy vertical rendering.",
+          "name": "1"
+        },
+        {
+          "description": "New vertical rendering: split columns evenly based on number of players.",
+          "name": "2"
+        }
+      ],
       "type": "float"
     },
     "hud_gameclock_align_x": {
