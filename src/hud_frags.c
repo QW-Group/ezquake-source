@@ -322,23 +322,30 @@ static void Frags_DrawColors(
 		}
 	}
 	else {
-		if (use_wipeout && (isdead == 1) && (timetospawn > 0) && (timetospawn < 999)){
-			color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0x00, (byte)(1 * 255));
-			snprintf(buf, sizeof(buf), "%d", timetospawn);
-		}
-		else if (use_wipeout && (isdead == 2)){
-			if(!hidefrags) {
+		if (use_wipeout) {
+			if (isdead == 1 && timetospawn > 0 && timetospawn < 999) {
+				color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0x00, (byte)(1 * 255));
+			} 
+			else if (isdead == 2) {
 				color.c = RGBA_TO_COLOR(0x33, 0x33, 0x33, (byte)(1 * 255));
-				snprintf(buf, sizeof(buf), "%d", frags);
+			} 
+			else {
+				color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0xFF, (byte)(1 * 255));
 			}
 		}
 		else {
 			color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0xFF, (byte)(1 * 255));
+		}
 
-			if (!use_wipeout || !hidefrags)
-				snprintf(buf, sizeof(buf), "%d", frags);
-			else
-				snprintf(buf, sizeof(buf), "%s", " ");
+		// Determine snprintf content
+		if (use_wipeout && isdead == 1 && timetospawn > 0 && timetospawn < 999) {
+			snprintf(buf, sizeof(buf), "%d", timetospawn);
+		} 
+		else if (use_wipeout && hidefrags) {
+			snprintf(buf, sizeof(buf), "%s", " ");
+		} 
+		else {
+			snprintf(buf, sizeof(buf), "%d", frags);
 		}
 
 		// Normal text size. (meag: why -3?)
