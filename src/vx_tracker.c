@@ -90,37 +90,38 @@ static int max_active_tracks = 0;
 static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int name_width, qbool proportional, float scale, float image_scale, qbool align_right);
 static void OnChange_TrackerNameWidth(cvar_t* var, char* value, qbool* cancel);
 
-cvar_t r_tracker                                  = {"r_tracker", "1"};
-cvar_t amf_tracker_flags                          = {"r_tracker_flags", "0"};
-cvar_t amf_tracker_frags                          = {"r_tracker_frags", "1"};
-cvar_t amf_tracker_streaks                        = {"r_tracker_streaks", "0"};
-cvar_t amf_tracker_time                           = {"r_tracker_time", "4"};
-cvar_t amf_tracker_messages                       = {"r_tracker_messages", "20"};
-static cvar_t amf_tracker_pickups                 = {"r_tracker_pickups", "0"};
-cvar_t amf_tracker_align_right                    = {"r_tracker_align_right", "1"};
-cvar_t amf_tracker_scale                          = {"r_tracker_scale", "1"};
-static cvar_t amf_tracker_inconsole               = {"r_tracker_inconsole", "0"};
-static cvar_t amf_tracker_x                       = {"r_tracker_x", "0"};
-static cvar_t amf_tracker_y                       = {"r_tracker_y", "0"};
-static cvar_t amf_tracker_frame_color             = {"r_tracker_frame_color", "0 0 0 0", CVAR_COLOR};
-static cvar_t amf_tracker_images_scale            = {"r_tracker_images_scale", "1"};
-static cvar_t amf_tracker_color_good              = {"r_tracker_color_good",     "090", CVAR_TRACKERCOLOR }; // good news
-static cvar_t amf_tracker_color_bad               = {"r_tracker_color_bad",      "900", CVAR_TRACKERCOLOR }; // bad news
-static cvar_t amf_tracker_color_tkgood            = {"r_tracker_color_tkgood",   "990", CVAR_TRACKERCOLOR }; // team kill, not on ur team
-static cvar_t amf_tracker_color_tkbad             = {"r_tracker_color_tkbad",    "009", CVAR_TRACKERCOLOR }; // team kill, on ur team
-static cvar_t amf_tracker_color_myfrag            = {"r_tracker_color_myfrag",   "090", CVAR_TRACKERCOLOR }; // use this color for frag which u done
-static cvar_t amf_tracker_color_fragonme          = {"r_tracker_color_fragonme", "900", CVAR_TRACKERCOLOR }; // use this color when u frag someone
-static cvar_t amf_tracker_color_suicide           = {"r_tracker_color_suicide",  "900", CVAR_TRACKERCOLOR }; // use this color when u suicides
-static cvar_t amf_tracker_string_suicides         = {"r_tracker_string_suicides", " (suicides)"};
-static cvar_t amf_tracker_string_died             = {"r_tracker_string_died",     " (died)"};
-static cvar_t amf_tracker_string_teammate         = {"r_tracker_string_teammate", "teammate"};
-static cvar_t amf_tracker_string_enemy            = {"r_tracker_string_enemy",    "enemy"};
-static cvar_t amf_tracker_string_inconsole_prefix = {"r_tracker_string_inconsole_prefix", ""};
-static cvar_t amf_tracker_name_width              = {"r_tracker_name_width",      "0", 0, OnChange_TrackerNameWidth};
-static cvar_t amf_tracker_own_frag_prefix         = {"r_tracker_own_frag_prefix", "You fragged "};
-static cvar_t amf_tracker_positive_enemy_suicide  = {"r_tracker_positive_enemy_suicide", "0"};	// Medar wanted it to be customizable
-static cvar_t amf_tracker_positive_enemy_vs_enemy = {"r_tracker_positive_enemy_vs_enemy", "0"};
-static cvar_t amf_tracker_proportional            = {"r_tracker_proportional", "0"};
+cvar_t r_tracker                                   = {"r_tracker", "1"};
+cvar_t amf_tracker_flags                           = {"r_tracker_flags", "0"};
+cvar_t amf_tracker_frags                           = {"r_tracker_frags", "1"};
+cvar_t amf_tracker_streaks                         = {"r_tracker_streaks", "0"};
+cvar_t amf_tracker_time                            = {"r_tracker_time", "4"};
+cvar_t amf_tracker_messages                        = {"r_tracker_messages", "20"};
+static cvar_t amf_tracker_pickups                  = {"r_tracker_pickups", "0"};
+cvar_t amf_tracker_align_right                     = {"r_tracker_align_right", "1"};
+cvar_t amf_tracker_scale                           = {"r_tracker_scale", "1"};
+static cvar_t amf_tracker_inconsole                = {"r_tracker_inconsole", "0"};
+static cvar_t amf_tracker_inconsole_colored_weapon = {"r_tracker_inconsole_colored_weapon", "0"};
+static cvar_t amf_tracker_x                        = {"r_tracker_x", "0"};
+static cvar_t amf_tracker_y                        = {"r_tracker_y", "0"};
+static cvar_t amf_tracker_frame_color              = {"r_tracker_frame_color", "0 0 0 0", CVAR_COLOR};
+static cvar_t amf_tracker_images_scale             = {"r_tracker_images_scale", "1"};
+static cvar_t amf_tracker_color_good               = {"r_tracker_color_good",     "090", CVAR_TRACKERCOLOR }; // good news
+static cvar_t amf_tracker_color_bad                = {"r_tracker_color_bad",      "900", CVAR_TRACKERCOLOR }; // bad news
+static cvar_t amf_tracker_color_tkgood             = {"r_tracker_color_tkgood",   "990", CVAR_TRACKERCOLOR }; // team kill, not on ur team
+static cvar_t amf_tracker_color_tkbad              = {"r_tracker_color_tkbad",    "009", CVAR_TRACKERCOLOR }; // team kill, on ur team
+static cvar_t amf_tracker_color_myfrag             = {"r_tracker_color_myfrag",   "090", CVAR_TRACKERCOLOR }; // use this color for frag which u done
+static cvar_t amf_tracker_color_fragonme           = {"r_tracker_color_fragonme", "900", CVAR_TRACKERCOLOR }; // use this color when u frag someone
+static cvar_t amf_tracker_color_suicide            = {"r_tracker_color_suicide",  "900", CVAR_TRACKERCOLOR }; // use this color when u suicides
+static cvar_t amf_tracker_string_suicides          = {"r_tracker_string_suicides", " (suicides)"};
+static cvar_t amf_tracker_string_died              = {"r_tracker_string_died",     " (died)"};
+static cvar_t amf_tracker_string_teammate          = {"r_tracker_string_teammate", "teammate"};
+static cvar_t amf_tracker_string_enemy             = {"r_tracker_string_enemy",    "enemy"};
+static cvar_t amf_tracker_string_inconsole_prefix  = {"r_tracker_string_inconsole_prefix", ""};
+static cvar_t amf_tracker_name_width               = {"r_tracker_name_width",      "0", 0, OnChange_TrackerNameWidth};
+static cvar_t amf_tracker_own_frag_prefix          = {"r_tracker_own_frag_prefix", "You fragged "};
+static cvar_t amf_tracker_positive_enemy_suicide   = {"r_tracker_positive_enemy_suicide", "0"};	// Medar wanted it to be customizable
+static cvar_t amf_tracker_positive_enemy_vs_enemy  = {"r_tracker_positive_enemy_vs_enemy", "0"};
+static cvar_t amf_tracker_proportional             = {"r_tracker_proportional", "0"};
 
 #define MAX_TRACKERMESSAGES 30
 #define MAX_TRACKER_MSG_LEN 500
@@ -189,6 +190,7 @@ void InitTracker(void)
 	Cvar_Register(&amf_tracker_streaks);
 	Cvar_Register(&amf_tracker_messages);
 	Cvar_Register(&amf_tracker_inconsole);
+	Cvar_Register(&amf_tracker_inconsole_colored_weapon);
 	Cvar_Register(&amf_tracker_time);
 	Cvar_Register(&amf_tracker_align_right);
 	Cvar_Register(&amf_tracker_x);
@@ -532,12 +534,17 @@ static void VX_TrackerAddWeaponTextSplit(const char* lhs_text, int weapon, const
 {
 	trackmsg_t* msg;
 	int i;
+	char *weapon_text;
 
 	if (((!lhs_text || !lhs_text[0]) && (!rhs_text || !rhs_text[0])) || CL_Demo_SkipMessage(true)) {
 		return;
 	}
 
-	if (!VX_TrackerStringPrintSegments(lhs_text, GetWeaponName(weapon), rhs_text, NULL)) {
+	weapon_text = amf_tracker_inconsole_colored_weapon.integer == 0
+		? GetWeaponName(weapon)
+		: GetColoredWeaponName(weapon, weapon_color);
+
+	if (!VX_TrackerStringPrintSegments(lhs_text, weapon_text, rhs_text, NULL)) {
 		return;
 	}
 
