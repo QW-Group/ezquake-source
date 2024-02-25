@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "vx_stuff.h"
 #include "vx_tracker.h"
+#include "utils.h"
 
 cvar_t cl_parsefrags = {"cl_parseFrags", "1"};
 cvar_t cl_showFragsMessages = {"con_fragmessages", "1"};
