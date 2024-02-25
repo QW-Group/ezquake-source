@@ -16720,6 +16720,12 @@
       "group-id": "40",
       "type": "string"
     },
+    "r_tracker_colorfix": {
+      "default": "0",
+      "desc": "Both players in fragline will be colored according to good/bad/myfrag/etc values.",
+      "group-id": "40",
+      "type": "integer"
+    },
     "r_tracker_flags": {
       "default": "0",
       "desc": "Everytime you take, capture or drop a flag, the number of times is displayed on the screen.",
