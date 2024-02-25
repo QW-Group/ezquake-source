@@ -96,6 +96,7 @@ static int VFSPAK_WriteBytes (struct vfsfile_s *vfs, const void *buffer, int byt
 static int VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whence)
 {
 	vfspack_t *vfsp = (vfspack_t*)vfs;
+	int rel_offset;
 
 	// VFS-FIXME Support other whence types
 	switch(whence) {
@@ -113,7 +114,8 @@ static int VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whence)
 		return -1;
 	}
 
-	if (vfsp->currentpos > vfsp->length) {
+	rel_offset = vfsp->currentpos - vfsp->startpos;
+	if (rel_offset < 0 || rel_offset >= vfsp->length) {
 		Com_Printf("VFSPAK_Seek: Warning seeking past the file's size\n");
 	}
 

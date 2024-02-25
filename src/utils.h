@@ -38,6 +38,7 @@ char *SecondsToHourString(int time);
 char *ColorNameToRGBString(char *color_name);
 byte *StringToRGB(char *s);
 int StringToRGB_W(char *s, byte *rgb);
+void RGBToString(const byte *rgb, char *s);
 void TrackerStringToRGB_W(const char *s, byte *rgb);
 int ParseFloats(char *s, float *f, int *f_size);
 

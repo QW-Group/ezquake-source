@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "vx_stuff.h"
 #include "vx_tracker.h"
+#include "utils.h"
 
 cvar_t cl_parsefrags = {"cl_parseFrags", "1"};
 cvar_t cl_showFragsMessages = {"con_fragmessages", "1"};
@@ -31,6 +32,26 @@ cvar_t cl_useimagesinfraglog = {"cl_useimagesinfraglog", "0"};
 
 #define FUH_FRAGFILE_VERSION_1_00	"1.00" /* for compatibility with fuh */
 #define FRAGFILE_VERSION_1_00		"ezquake-1.00" /* fuh suggest such format */
+
+// The following values are fetched from nquake.pk3 and
+// misc/fragfile/fragfile.dat respectively.
+#define EZQUAKE_SG_QUAD   "&c06fQ&r-sg"
+#define EZQUAKE_SSG_QUAD  "&c06fQ&r-ssg"
+#define EZQUAKE_SNG_QUAD  "&c06fQ&r-sng"
+#define EZQUAKE_RL_QUAD   "&c06fQ&r-rl"
+#define EZQUAKE_LG_QUAD   "&c06fQ&r-lg"
+#define EZQUAKE_QUAD      "&c06fQ&r-"
+#define NQUAKE_SG_QUAD    "sg &c06fQ&r"
+#define NQUAKE_SSG_QUAD   "ssg &c06fQ&r"
+#define NQUAKE_SNG_QUAD   "sng &c06fQ&r"
+#define NQUAKE_RL_QUAD    "rl &c06fQ&r"
+#define NQUAKE_LG_QUAD    "lg &c06fQ&r"
+#define NQUAKE_QUAD       " &c06fQ&r"
+#define WEAPON_CLASS_SG   "sg"
+#define WEAPON_CLASS_SSG  "ssg"
+#define WEAPON_CLASS_SNG  "sng"
+#define WEAPON_CLASS_RL   "rl"
+#define WEAPON_CLASS_LG   "lg"
 
 void Update_FlagStatus(int player_num, char *team, qbool got_flag);
 
@@ -55,6 +76,9 @@ typedef struct wclass_s {
 	char	*name;
 	char	*shortname;
 	char	*imagename;
+	char    *colorname;
+	int     colorname_rgb_offset;
+	qbool   colorname_skip;
 } wclass_t;
 
 typedef struct fragmsg_s {
@@ -158,6 +182,9 @@ static void InitFragDefs(qbool restart)
 		Q_free(wclasses[i].name);
 		Q_free(wclasses[i].shortname);
 		Q_free(wclasses[i].imagename);
+
+		if (wclasses[i].colorname != NULL)
+			Q_free(wclasses[i].colorname);
 	}
 
 	memset(&fragdefs, 0, sizeof(fragdefs));
@@ -302,6 +329,10 @@ static void LoadFragFile(char *filename, qbool quiet)
 				wclasses[num_wclasses].name      = Q_strdup(Cmd_Argv(3));
 				wclasses[num_wclasses].shortname = Q_strdup(Cmd_Argv(4));
 				wclasses[num_wclasses].imagename = Q_strdup(Cmd_Argv(5));
+				wclasses[num_wclasses].colorname = NULL;
+				wclasses[num_wclasses].colorname_rgb_offset = -1;
+				wclasses[num_wclasses].colorname_skip = false;
+
 				num_wclasses++;
 			} else if (	!strcasecmp(Cmd_Argv(1), "OBITUARY") || !strcasecmp(Cmd_Argv(1), "OBIT")) {
 
@@ -843,6 +874,111 @@ char *GetWeaponName (int num)
 		return wclasses[num].name;
 
 	return "Unknown";
+}
+
+static void InitColoredWeapon (int num, const byte *color)
+{
+	char *original_weapon, *weapon, *prefix = NULL, *suffix = NULL;
+	int original_weapon_len = 0, weapon_len = 0, prefix_len = 0;
+
+	original_weapon = GetWeaponName(num);
+	original_weapon_len = strlen(original_weapon);
+
+	// Check whether or not the original_weapon is a known string that we
+	// need to handle in a specific way.
+	//
+	// The code supports the ezquake and nquake fragfile.dat values for quad
+	// related weapons.
+	//
+	// We store the offset to 'R' in the "c&RGB" string so that we easily
+	// can overwrite the RGB value later on.
+	if (strcmp(original_weapon, EZQUAKE_SG_QUAD) == 0) {
+		weapon = WEAPON_CLASS_SG;
+		prefix = EZQUAKE_QUAD;
+		wclasses[num].colorname_rgb_offset = 11;
+	} else if (strcmp(original_weapon, EZQUAKE_SSG_QUAD) == 0) {
+		weapon = WEAPON_CLASS_SSG;
+		prefix = EZQUAKE_QUAD;
+		wclasses[num].colorname_rgb_offset = 11;
+	} else if (strcmp(original_weapon, EZQUAKE_SNG_QUAD) == 0) {
+		weapon = WEAPON_CLASS_SNG;
+		prefix = EZQUAKE_QUAD;
+		wclasses[num].colorname_rgb_offset = 11;
+	} else if (strcmp(original_weapon, EZQUAKE_RL_QUAD) == 0) {
+		weapon = WEAPON_CLASS_RL;
+		prefix = EZQUAKE_QUAD;
+		wclasses[num].colorname_rgb_offset = 11;
+	} else if (strcmp(original_weapon, EZQUAKE_LG_QUAD) == 0) {
+		weapon = WEAPON_CLASS_LG;
+		prefix = EZQUAKE_QUAD;
+		wclasses[num].colorname_rgb_offset = 11;
+	} else if (strcmp(original_weapon, NQUAKE_SG_QUAD) == 0) {
+		weapon = WEAPON_CLASS_SG;
+		suffix = NQUAKE_QUAD;
+		wclasses[num].colorname_rgb_offset = 2;
+	} else if (strcmp(original_weapon, NQUAKE_SSG_QUAD) == 0) {
+		weapon = WEAPON_CLASS_SSG;
+		suffix = NQUAKE_QUAD;
+		wclasses[num].colorname_rgb_offset = 2;
+	} else if (strcmp(original_weapon, NQUAKE_SNG_QUAD) == 0) {
+		weapon = WEAPON_CLASS_SNG;
+		suffix = NQUAKE_QUAD;
+		wclasses[num].colorname_rgb_offset = 2;
+	} else if (strcmp(original_weapon, NQUAKE_RL_QUAD) == 0) {
+		weapon = WEAPON_CLASS_RL;
+		suffix = NQUAKE_QUAD;
+		wclasses[num].colorname_rgb_offset = 2;
+	} else if (strcmp(original_weapon, NQUAKE_LG_QUAD) == 0) {
+		weapon = WEAPON_CLASS_LG;
+		suffix = NQUAKE_QUAD;
+		wclasses[num].colorname_rgb_offset = 2;
+	} else if ((strstr(original_weapon, "&c")) == NULL) {
+		// No fancy formatting is applied to the weapon.
+		weapon = original_weapon;
+		wclasses[num].colorname_rgb_offset = 2;
+	} else  {
+		// This case covers an unknown name that contains a "&c"
+		// sequence. These weapon strings will be ignored.
+		wclasses[num].colorname_skip = true;
+		return;
+	}
+
+	// Allocate and initialize the memory for the colored weapon string.
+	// We'll use the original weapon length + 8 additional bytes. The 8
+	// bytes are for "&cRGB", "&r" and a trailing '\0' character.
+	wclasses[num].colorname = Q_malloc(original_weapon_len + 8);
+	memset(wclasses[num].colorname, 0, original_weapon_len + 8);
+
+	if (prefix != NULL) {
+		prefix_len = strlen(prefix);
+		memcpy(wclasses[num].colorname, prefix, prefix_len);
+	}
+
+	weapon_len = strlen(weapon);
+	memcpy(wclasses[num].colorname + prefix_len, "&cRGB", 5);
+	memcpy(wclasses[num].colorname + prefix_len + 5, weapon, weapon_len);
+	memcpy(wclasses[num].colorname + prefix_len + 5 + weapon_len, "&r", 2);
+
+	if (suffix != NULL) {
+		memcpy(wclasses[num].colorname + prefix_len + 5 + weapon_len + 2, suffix, strlen(suffix));
+	}
+}
+
+char *GetColoredWeaponName (int num, const byte *color)
+{
+	char rgb[3];
+
+	if (!wclasses[num].colorname_skip && wclasses[num].colorname == NULL)
+		InitColoredWeapon(num, color);
+
+	if (wclasses[num].colorname_skip)
+		return GetWeaponName(num);
+
+	// Convert color to string and overwrite the RGB values.
+	RGBToString(color, rgb);
+	memcpy(wclasses[num].colorname + wclasses[num].colorname_rgb_offset, rgb, 3);
+
+	return wclasses[num].colorname;
 }
 
 const char* GetWeaponImageName(int num)
