@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "keys.h"
 #include <pcre2.h>
+#include <curl/curl.h>
 
 typedef struct {
 	char name[MAX_MACRO_NAME];
@@ -452,11 +453,35 @@ void Cmd_StuffCmds_f (void)
 	Q_free (token);
 }
 
+static size_t cfg_download_callback(void *contents, size_t size, size_t nmemb, void *userp)
+{
+	size_t realsize = size *nmemb, offset = 0;
+	char **mem = (char **)userp;
+
+	if (*mem == NULL) {
+		*mem = Q_malloc(realsize + 1);
+	} else {
+		offset = strlen(*mem);
+		*mem = Q_realloc(*mem, offset + realsize);
+	}
+
+	memcpy(*mem+offset, (char *)contents, realsize);
+
+	return realsize;
+}
+
+static qbool is_string_url(const char *str)
+{
+	return ((strlen(Cmd_Argv(1)) >= 7 && strncmp(Cmd_Argv(1), "http://", 7) == 0) ||
+		(strlen(Cmd_Argv(1)) >= 8 && strncmp(Cmd_Argv(1), "https://", 8) == 0));
+}
+
 void Cmd_Exec_f (void)
 {
-	char *f, name[MAX_OSPATH];
+	char *f = NULL, name[MAX_OSPATH];
 	char reset_bindphysical[128];
-	qbool server_command = false;
+	qbool server_command = false, is_url = false;
+	CURL *curl = NULL;
 
 	if (Cmd_Argc () != 2) {
 		Com_Printf ("%s <filename> : execute a script file\n", Cmd_Argv(0));
@@ -467,22 +492,47 @@ void Cmd_Exec_f (void)
 	server_command = cbuf_current == &cbuf_server || !strcmp(Cmd_Argv(0), "serverexec");
 #endif
 
-	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
-	if (!(f = (char *) FS_LoadHeapFile(name, NULL)))	{
-		const char *p;
-		p = COM_SkipPath (name);
-		if (!strchr (p, '.')) {
-			// no extension, so try the default (.cfg)
-			strlcat (name, ".cfg", sizeof (name));
-			f = (char *)FS_LoadHeapFile(name, NULL);
+	is_url = is_string_url(Cmd_Argv(1));
+
+	if (is_url) {
+		strlcpy(name, Cmd_Argv(1), sizeof(name));
+
+		curl = curl_easy_init();
+		curl_easy_setopt(curl, CURLOPT_URL, name);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &f);
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, cfg_download_callback);
+
+		CURLcode res = curl_easy_perform(curl);
+		if (res != CURLE_OK) {
+			Com_Printf("Could not fetch %s, error: %s\n", name, curl_easy_strerror(res));
+			goto cleanup;
 		}
-		if (!f) {
-			Com_Printf ("couldn't exec %s\n", Cmd_Argv(1));
-			return;
+
+		f[strlen(f)] = '\0';
+	} else {
+		strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
+		if (!(f = (char *) FS_LoadHeapFile(name, NULL))) {
+			const char *p;
+			p = COM_SkipPath (name);
+			if (!strchr (p, '.')) {
+				// no extension, so try the default (.cfg)
+				strlcat (name, ".cfg", sizeof (name));
+				f = (char *)FS_LoadHeapFile(name, NULL);
+			}
 		}
 	}
+
+	if (!f) {
+		Com_Printf ("couldn't exec %s\n", Cmd_Argv(1));
+		return;
+	}
+
 	if (cl_warnexec.integer || developer.integer) {
-		Com_Printf("execing %s/%s\n", FS_Locate_GetPath(name), name);
+		if (is_url) {
+			Com_Printf("execing %s\n", name);
+		} else {
+			Com_Printf("execing %s/%s\n", FS_Locate_GetPath(name), name);
+		}
 	}
 
 	// All config files default to con_bindphysical 1, and would have to over-ride if they
@@ -502,7 +552,14 @@ void Cmd_Exec_f (void)
 		Cbuf_InsertTextEx(&cbuf_main, "con_bindphysical 1\n");
 	}
 	
-	Q_free(f);
+cleanup:
+	if (f != NULL) {
+		Q_free(f);
+	}
+
+	if (curl != NULL) {
+		curl_easy_cleanup(curl);
+	}
 }
 
 //Just prints the rest of the line to the console
