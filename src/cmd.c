@@ -498,6 +498,7 @@ void Cmd_Exec_f (void)
 		strlcpy(name, Cmd_Argv(1), sizeof(name));
 
 		curl = curl_easy_init();
+		curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 		curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
 		curl_easy_setopt(curl, CURLOPT_URL, name);
 		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &f);
