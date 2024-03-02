@@ -3073,10 +3073,17 @@ void CL_ParseStufftext (void)
 	{
 		// We need to duplicate the string before it is tokenized and
 		// trimmed since strtok mutates the original input.
-		c = str_trim(strtok(Q_strdup(s), " "));
+		c = Q_strdup(s);
+		c = str_trim(strtok(c, " "));
+
+		// The server can send multiple commands at the same time,
+		// separated by a new line.
+		// When a map is changed it sends "changing\nreconnect", to make
+		// this a hashable value we'll replace '\n' with '_'.
+		str_replace_char(c, '\n', '_');
 		if (!Hash_Get(stufftext_allowed_commands_hash, c))
 		{
-			Com_Printf("Prevented server from running %s", s);
+			Com_DPrintf("Prevented server from running %s", s);
 			return;
 		}
 	}
