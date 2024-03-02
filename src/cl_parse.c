@@ -3065,6 +3065,7 @@ void CL_ParsePrint (void)
 void CL_ParseStufftext (void) 
 {
 	extern cvar_t cl_stufftext_allowed_commands;
+	extern cvar_t cl_stufftext_prevent_nested_commands;
 	extern hashtable_t *stufftext_allowed_commands_hash;
 	char *s = MSG_ReadString(), *c;
 
@@ -3078,6 +3079,12 @@ void CL_ParseStufftext (void)
 			Com_Printf("Prevented server from running %s", s);
 			return;
 		}
+	}
+
+	if (cl_stufftext_prevent_nested_commands.integer && strchr(s, ';') != NULL)
+	{
+		Com_Printf("Prevented server from running %s", s);
+		return;
 	}
 
 	// Always process demomarks, regardless of who inserted them

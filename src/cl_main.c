@@ -276,6 +276,7 @@ cvar_t cl_debug_weapon_view     = { "cl_debug_weapon_view", "0" };
 static void OnChange_stufftext_allowed_commands(cvar_t *var, char *string, qbool *cancel);
 hashtable_t *stufftext_allowed_commands_hash;
 cvar_t cl_stufftext_allowed_commands = { "cl_stufftext_allowed_commands", "", 0, OnChange_stufftext_allowed_commands };
+cvar_t cl_stufftext_prevent_nested_commands = { "cl_stufftext_prevent_nested_commands", "0" };
 
 /// persistent client state
 clientPersistent_t	cls;
@@ -1939,6 +1940,7 @@ static void CL_InitLocal(void)
 
 	// stufftext restrictions
 	Cvar_Register(&cl_stufftext_allowed_commands);
+	Cvar_Register(&cl_stufftext_prevent_nested_commands);
 
 	snprintf(st, sizeof(st), "ezQuake %i", REVISION);
 
