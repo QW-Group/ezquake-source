@@ -45,6 +45,7 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 #include "qtv.h"
 #include "r_brushmodel_sky.h"
 #include "central.h"
+#include "hash.h"
 
 int CL_LoginImageId(const char* name);
 
@@ -3063,7 +3064,21 @@ void CL_ParsePrint (void)
 
 void CL_ParseStufftext (void) 
 {
-	char *s = MSG_ReadString();
+	extern cvar_t cl_stufftext_allowed_commands;
+	extern hashtable_t *stufftext_allowed_commands_hash;
+	char *s = MSG_ReadString(), *c;
+
+	if (strlen(cl_stufftext_allowed_commands.string) > 0)
+	{
+		// We need to duplicate the string before it is tokenized and
+		// trimmed since strtok mutates the original input.
+		c = str_trim(strtok(Q_strdup(s), " "));
+		if (!Hash_Get(stufftext_allowed_commands_hash, c))
+		{
+			Com_Printf("Prevented server from running %s", s);
+			return;
+		}
+	}
 
 	// Always process demomarks, regardless of who inserted them
 	if (!strcmp(s, "//demomark\n"))

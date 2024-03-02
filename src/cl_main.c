@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "EX_qtvlist.h"
 #include "qtv.h"
 #include "keys.h"
+#include "hash.h"
 #include "hud.h"
 #include "hud_common.h"
 #include "hud_editor.h"
@@ -270,6 +271,11 @@ cvar_t cl_debug_antilag_send    = { "cl_debug_antilag_send", "0" };
 
 // weapon-switching debugging
 cvar_t cl_debug_weapon_view     = { "cl_debug_weapon_view", "0" };
+
+// stufftext restrictions
+static void OnChange_stufftext_allowed_commands(cvar_t *var, char *string, qbool *cancel);
+hashtable_t *stufftext_allowed_commands_hash;
+cvar_t cl_stufftext_allowed_commands = { "cl_stufftext_allowed_commands", "", 0, OnChange_stufftext_allowed_commands };
 
 /// persistent client state
 clientPersistent_t	cls;
@@ -1719,6 +1725,31 @@ void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel)
 
 void CL_InitCommands (void);
 
+static void OnChange_stufftext_allowed_commands(cvar_t *var, char *string, qbool *cancel)
+{
+	// The string is duplicated since strtok mutates the input.
+	char *command = Q_strdup(string);
+
+	if (!stufftext_allowed_commands_hash)
+	{
+		stufftext_allowed_commands_hash = Hash_InitTable(255);
+	}
+
+	// This value isn't changed very often, so when it is, we'll flush the
+	// existing hash and recreate it below.
+	Hash_Flush(stufftext_allowed_commands_hash);
+
+	// Split the command string on spaces and iterate over each item and
+	// add it to the hash.
+	command = strtok(command, " ");
+	while (command != NULL)
+	{
+		Com_DPrintf("Adding %s to stufftext_allowed_commands_hash\n", command);
+		Hash_Add(stufftext_allowed_commands_hash, command, (void *)1);
+		command = strtok(NULL, " ");
+	}
+}
+
 static void CL_InitLocal(void)
 {
 	char st[256];
@@ -1905,6 +1936,9 @@ static void CL_InitLocal(void)
 
 	// debugging weapons
 	Cvar_Register(&cl_debug_weapon_view);
+
+	// stufftext restrictions
+	Cvar_Register(&cl_stufftext_allowed_commands);
 
 	snprintf(st, sizeof(st), "ezQuake %i", REVISION);
 
