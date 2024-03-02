@@ -53,6 +53,8 @@ void str_align_right (char *target, size_t size, const char *source, size_t leng
 // skip whitespace from both beginning and end
 char *str_trim(char *str);
 
+void str_replace_char(char *str, const char old, const char new);
+
 int HexToInt(char c);
 
 ///

@@ -363,6 +363,16 @@ char *str_trim(char *str)
 	return orig_str;
 }
 
+void str_replace_char(char *str, const char old, const char new)
+{
+	char *c = NULL;
+
+	while ((c = strchr(str, old)) != NULL)
+	{
+		*c = new;
+	}
+}
+
 int HexToInt(char c)
 {
 	if (isdigit(c))
