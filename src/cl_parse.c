@@ -3090,7 +3090,7 @@ void CL_ParseStufftext (void)
 
 	if (cl_stufftext_prevent_nested_commands.integer && strchr(s, ';') != NULL)
 	{
-		Com_Printf("Prevented server from running %s", s);
+		Com_DPrintf("Prevented server from running %s", s);
 		return;
 	}
 
