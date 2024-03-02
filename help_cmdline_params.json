@@ -67,11 +67,6 @@
       "incomplete"
     ]
   },
-  "-enablelocalcommand": {
-    "flags": [
-      "incomplete"
-    ]
-  },
   "-forceTextureReload": {
     "flags": [
       "incomplete"

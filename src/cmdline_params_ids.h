@@ -69,7 +69,6 @@ CMDLINE_DEF(developer_mode, "-dev"),
 
 CMDLINE_DEF(server_progtype, "-progtype"),
 CMDLINE_DEF(server_enablecheats, "-cheats"),
-CMDLINE_DEF(server_enablelocalcommand, "-enablelocalcommand"),
 CMDLINE_DEF(server_democache_kb, "-democache"),
 // leave trailing ,
 

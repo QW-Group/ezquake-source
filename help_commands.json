@@ -1044,9 +1044,6 @@
   "logtelnet": {
     "system-generated": true
   },
-  "ls": {
-    "system-generated": true
-  },
   "macrolist": {
     "description": "Prints a list of all available macros."
   },
@@ -1236,9 +1233,6 @@
   "noclip": {
     "description": "You can fly and go thru objects free mode as spectator",
     "remarks": "Needs cheats support by server."
-  },
-  "nslookup": {
-    "system-generated": true
   },
   "observe": {
     "description": "Connects you to a server as a spectator. If no address is specified, observe will reconnect to the last visited server as a spectator.\n\nExample:\nobserve 123.124.125.126",
@@ -1478,12 +1472,6 @@
     "system-generated": true
   },
   "reset": {
-    "system-generated": true
-  },
-  "rm": {
-    "system-generated": true
-  },
-  "rmdir": {
     "system-generated": true
   },
   "rotate": {
