@@ -1828,7 +1828,9 @@ void SV_InitOperatorCommands (void)
 	for (i = MIN_LOG; i < MAX_LOG; ++i)
 		Cmd_AddCommand (logs[i].command, logs[i].function);
 
+#ifdef SERVERONLY
 	Cmd_AddCommand ("nslookup", SV_Nslookup_f);
+#endif
 	Cmd_AddCommand ("check_maps", SV_Check_maps_f);
 	Cmd_AddCommand ("snap", SV_Snap_f);
 	Cmd_AddCommand ("snapall", SV_SnapAll_f);
@@ -1838,10 +1840,12 @@ void SV_InitOperatorCommands (void)
 	Cmd_AddCommand ("status", SV_Status_f);
 	Cmd_AddCommand ("sv_status", SV_Status_f);
 
+#ifdef SERVERONLY
 	//bliP: init ->
 	Cmd_AddCommand ("rmdir", SV_RemoveDirectory_f);
 	Cmd_AddCommand ("rm", SV_RemoveFile_f);
 	Cmd_AddCommand ("ls", SV_ListFiles_f);
+#endif
 
 	Cmd_AddCommand ("mute", SV_Mute_f);
 	Cmd_AddCommand ("cuff", SV_Cuff_f);
@@ -1849,12 +1853,14 @@ void SV_InitOperatorCommands (void)
 	Cmd_AddCommand ("penaltylist", SV_ListPenalty_f);
 	Cmd_AddCommand ("penaltyremove", SV_RemovePenalty_f);
 
+#ifdef SERVERONLY
 #ifndef _WIN32
 	Cmd_AddCommand ("chmod", SV_ChmodFile_f);
 #endif //_WIN32
 	//<-
 	if (SV_CommandLineEnableLocalCommand())
 		Cmd_AddCommand ("localcommand", SV_LocalCommand_f);
+#endif
 
 	Cmd_AddCommand ("map", SV_Map_f);
 #ifdef SERVERONLY

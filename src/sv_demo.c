@@ -1904,7 +1904,9 @@ void SV_MVDInit(void)
 	Cmd_AddCommand ("sv_demoinfo",		SV_MVDInfo_f);
 	Cmd_AddCommand ("sv_demoembedinfo", SV_MVDEmbedInfo_f);
 	// not prefixed.
+#ifdef SERVERONLY
 	Cmd_AddCommand ("script",			SV_Script_f);
+#endif
 
 	Cmd_AddCommand ("sv_usercmdtrace",  SV_UserCmdTrace_f);
 
