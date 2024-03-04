@@ -70,8 +70,6 @@ typedef struct texture_s {
 	qbool               isLitTurb;                  //turb texture has lightmap
 	int                 turbType;
 
-	int                 gl_width;
-	int                 gl_height;
 	int                 next_same_size;
 	qbool               size_start;
 
@@ -79,12 +77,6 @@ typedef struct texture_s {
 	unsigned int        gl_texture_index;
 	float               gl_texture_scaleS;
 	float               gl_texture_scaleT;
-
-	// FIXME: Get rid
-	float               min_s;
-	float               min_t;
-	float               max_s;
-	float               max_t;
 
 	int                 index;
 } texture_t;
