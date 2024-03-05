@@ -276,19 +276,26 @@ static void Frags_DrawColors(
 	int x, int y, int width, int height,
 	int top_color, int bottom_color, float color_alpha,
 	int frags, int drawBrackets, int style,
-	float bignum, float scale, qbool proportional
+	float bignum, float scale, qbool proportional, 
+	int wipeout, int hidefrags, int isdead, int timetospawn
 )
 {
 	char buf[32];
+	clrinfo_t color;
 	int posy = 0;
 	int char_size = (bignum > 0) ? Q_rint(24 * bignum) : 8 * scale;
+	qbool use_wipeout = (check_ktx_ca_wo() && wipeout);
+	qbool norespawn = (use_wipeout && (isdead == 2));
+	float wo_alpha = (use_wipeout && (isdead == 1)) ? 0.5 : 1.0;
+	float bignum_alpha = (use_wipeout && isdead) ? 0.25 : 1.0;
 
-	Draw_AlphaFill(x, y, width, height / 2, top_color, color_alpha);
-	Draw_AlphaFill(x, y + height / 2, width, height - height / 2, bottom_color, color_alpha);
+	Draw_AlphaFill(x, y, width, height / 2, norespawn ? 3 : top_color, color_alpha * wo_alpha);
+	Draw_AlphaFill(x, y + height / 2, width, height - height / 2, norespawn ? 3 : bottom_color, color_alpha * wo_alpha);
 
 	posy = y + (height - char_size) / 2;
+	color.i = 0;
 
-	if (bignum > 0) {
+	if ((bignum > 0) && !hidefrags) {
 		//
 		// Scaled big numbers for frags.
 		//
@@ -297,17 +304,17 @@ static void Frags_DrawColors(
 		int char_x;
 		int char_y;
 		snprintf(buf, sizeof(buf), "%d", frags);
-
+		
 		char_x = max(x, x + (width - (int)strlen(buf) * char_size) / 2);
 		char_y = max(y, posy);
 
 		while (*t) {
 			if (*t >= '0' && *t <= '9') {
-				Draw_STransPic(char_x, char_y, sb_nums[0][*t - '0'], bignum);
+				Draw_SAlphaPic(char_x, char_y, sb_nums[0][*t - '0'], bignum_alpha, bignum);
 				char_x += char_size;
 			}
 			else if (*t == '-') {
-				Draw_STransPic(char_x, char_y, sb_nums[0][STAT_MINUS], bignum);
+				Draw_SAlphaPic(char_x, char_y, sb_nums[0][STAT_MINUS], bignum_alpha, bignum);
 				char_x += char_size;
 			}
 
@@ -315,10 +322,34 @@ static void Frags_DrawColors(
 		}
 	}
 	else {
-		snprintf(buf, sizeof(buf), "%d", frags);
+		if (use_wipeout) {
+			if (isdead == 1 && timetospawn > 0 && timetospawn < 999) {
+				color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0x00, (byte)(1 * 255));
+			} 
+			else if (isdead == 2) {
+				color.c = RGBA_TO_COLOR(0x33, 0x33, 0x33, (byte)(1 * 255));
+			} 
+			else {
+				color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0xFF, (byte)(1 * 255));
+			}
+		}
+		else {
+			color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0xFF, (byte)(1 * 255));
+		}
+
+		// Determine snprintf content
+		if (use_wipeout && isdead == 1 && timetospawn > 0 && timetospawn < 999) {
+			snprintf(buf, sizeof(buf), "%d", timetospawn);
+		} 
+		else if (use_wipeout && hidefrags) {
+			snprintf(buf, sizeof(buf), "%s", " ");
+		} 
+		else {
+			snprintf(buf, sizeof(buf), "%d", frags);
+		}
 
 		// Normal text size. (meag: why -3?)
-		Draw_SString(x + (width - Draw_StringLength(buf, -1, scale, proportional)) / 2, posy, buf, scale, proportional);
+		Draw_SColoredAlphaString(x + (width - Draw_StringLength(buf, -1, scale, proportional)) / 2, posy, buf, &color, 1, 0, scale, 1, proportional);
 	}
 
 	if (drawBrackets && width) {
@@ -337,6 +368,9 @@ static void Frags_DrawColors(
 				Draw_Fill(x, y - 1, 1, height + 2, 0x4f);
 				Draw_Fill(x + width - 1, y - 1, 1, height + 2, 0x4f);
 				Draw_Fill(x, y + height, width, 1, 0x4f);
+				break;
+			case 3:
+				// Draw nothing
 				break;
 			case 0:
 			default:
@@ -668,7 +702,8 @@ static int Frags_DrawText(
 	int max_name_length, int max_team_length,
 	int flip, int pad,
 	int shownames, int showteams,
-	char* name, char* team, float scale, qbool proportional
+	char* name, char* team, float scale, qbool proportional,
+	int wipeout, int isdead, int timetospawn
 )
 {
 	char _name[MAX_FRAGS_NAME + 1];
@@ -677,8 +712,21 @@ static int Frags_DrawText(
 	int name_length = 0;
 	float char_size = 8 * scale;
 	int y_pos;
+	clrinfo_t color;
+	qbool use_wipeout = (check_ktx_ca_wo() && wipeout);
 
+	color.i = 0;
 	y_pos = Q_rint(py + (cell_height / 2.0) - 4 * scale);
+
+	if (use_wipeout && (isdead == 1) && (timetospawn > 0) && (timetospawn < 999)){
+		color.c = RGBA_TO_COLOR(0x55, 0x55, 0x55, (byte)(1 * 255));
+	}
+	else if (use_wipeout && (isdead == 2)){
+		color.c = RGBA_TO_COLOR(0x33, 0x33, 0x33, (byte)(1 * 255));
+	}
+	else {
+		color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0xFF, (byte)(1 * 255));
+	}
 
 	// Draw team
 	if (showteams && cl.teamplay) {
@@ -690,15 +738,15 @@ static int Frags_DrawText(
 		}
 
 		if (pad && flip) {
-			Draw_SString(px + max_team_length * char_size - team_length, y_pos, _team, scale, proportional);
+			Draw_SColoredAlphaString(px + max_team_length * char_size - team_length, y_pos, _team, &color, 1, 0, scale, 1, proportional);
 			px += max_team_length * char_size;
 		}
 		else if (pad) {
-			Draw_SString(px, y_pos, _team, scale, proportional);
+			Draw_SColoredAlphaString(px, y_pos, _team, &color, 1, 0, scale, 1, proportional);
 			px += max_team_length * char_size;
 		}
 		else {
-			px += Draw_SString(px, y_pos, _team, scale, proportional);
+			px += Draw_SColoredAlphaString(px, y_pos, _team, &color, 1, 0, scale, 1, proportional);
 		}
 
 		if (flip) {
@@ -712,15 +760,15 @@ static int Frags_DrawText(
 		name_length = Draw_StringLength(_name, -1, scale, proportional);
 
 		if (flip && pad) {
-			Draw_SString(px + max_name_length * char_size - name_length, y_pos, _name, scale, proportional);
+			Draw_SColoredAlphaString(px + max_name_length * char_size - name_length, y_pos, _name, &color, 1, 0, scale, 1, proportional);
 			px += max_name_length * char_size;
 		}
 		else if (pad) {
-			Draw_SString(px, y_pos, _name, scale, proportional);
+			Draw_SColoredAlphaString(px, y_pos, _name, &color, 1, 0, scale, 1, proportional);
 			px += max_name_length * char_size;
 		}
 		else {
-			px += Draw_SString(px, y_pos, _name, scale, proportional);
+			px += Draw_SColoredAlphaString(px, y_pos, _name, &color, 1, 0, scale, 1, proportional);
 		}
 
 		px += space_x;
@@ -741,6 +789,8 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 	qbool any_labels_or_info;
 	qbool two_lines;
 
+	extern ti_player_t ti_clients[MAX_CLIENTS];
+
 	static cvar_t
 		*hud_frags_cell_width = NULL,
 		*hud_frags_cell_height,
@@ -751,6 +801,8 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 		*hud_frags_vertical,
 		*hud_frags_strip,
 		*hud_frags_shownames,
+		*hud_frags_hidefrags,
+		*hud_frags_wipeout,
 		*hud_frags_teams,
 		*hud_frags_padtext,
 		*hud_frags_extra_spec,
@@ -780,6 +832,8 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 		hud_frags_strip = HUD_FindVar(hud, "strip");
 		hud_frags_vertical = HUD_FindVar(hud, "vertical");
 		hud_frags_shownames = HUD_FindVar(hud, "shownames");
+		hud_frags_hidefrags = HUD_FindVar(hud, "hidefrags");
+		hud_frags_wipeout = HUD_FindVar(hud, "wipeout");
 		hud_frags_teams = HUD_FindVar(hud, "showteams");
 		hud_frags_padtext = HUD_FindVar(hud, "padtext");
 		hud_frags_extra_spec = HUD_FindVar(hud, "extra_spec_info");
@@ -833,9 +887,13 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 	if (hud_frags_strip->integer) {
 		// Auto set the number of rows / cols based on the number of players.
 		// (This is kinda fucked up, but I won't mess with it for the sake of backwards compability).
-		if (hud_frags_vertical->value) {
+		if (hud_frags_vertical->value == 1) {
 			a_cols = min((n_players + rows - 1) / rows, cols);
 			a_rows = min(rows, n_players);
+		}
+		else if (hud_frags_vertical->value == 2) {
+			a_cols = min(n_teams, cols);
+			a_rows = min(rows, ((n_players % a_cols) ? n_players/a_cols + 1 : n_players/a_cols));
 		}
 		else {
 			a_rows = min((n_players + cols - 1) / cols, rows);
@@ -932,6 +990,7 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 		//
 		for (i = 0; i < limit; i++) {
 			player_info_t *info;
+			ti_player_t *ti_cl;
 
 			// Always include the current player's position
 			if (active_player_position >= 0 && i == limit - 1 && num < active_player_position) {
@@ -939,6 +998,7 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 			}
 
 			info = &cl.players[sorted_players[num].playernum]; // FIXME! johnnycz; causes crashed on some demos
+			ti_cl = &ti_clients[sorted_players[num].playernum];
 
 			//
 			// Set the coordinates where to draw the next element.
@@ -1027,7 +1087,10 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 						space_x, space_y, max_name_length, max_team_length,
 						fliptext, hud_frags_padtext->value,
 						hud_frags_shownames->value, 0,
-						info->name, info->team, hud_frags_scale->value, hud_frags_proportional->integer
+						info->name, info->team, hud_frags_scale->value, hud_frags_proportional->integer,
+						hud_frags_wipeout->value,
+						ti_cl->isdead,
+						ti_cl->timetospawn
 					);
 
 					// Draw team.
@@ -1036,7 +1099,10 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 						space_x, space_y, max_name_length, max_team_length,
 						fliptext, hud_frags_padtext->value,
 						0, hud_frags_teams->value,
-						info->name, info->team, hud_frags_scale->value, hud_frags_proportional->integer
+						info->name, info->team, hud_frags_scale->value, hud_frags_proportional->integer,
+						hud_frags_wipeout->value,
+						ti_cl->isdead,
+						ti_cl->timetospawn
 					);
 
 					Frags_DrawColors(
@@ -1047,7 +1113,11 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 						hud_frags_style->value,
 						hud_frags_bignum->value,
 						hud_frags_scale->value,
-						hud_frags_proportional->integer
+						hud_frags_proportional->integer,
+						hud_frags_wipeout->value,
+						hud_frags_hidefrags->value,
+						ti_cl->isdead,
+						ti_cl->timetospawn
 					);
 
 					rel_player_x += cell_width + space_x;
@@ -1078,7 +1148,11 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 						hud_frags_style->value,
 						hud_frags_bignum->value,
 						hud_frags_scale->value,
-						hud_frags_proportional->integer
+						hud_frags_proportional->integer,
+						hud_frags_wipeout->value,
+						hud_frags_hidefrags->value,
+						ti_cl->isdead,
+						ti_cl->timetospawn
 					);
 
 					rel_player_x += cell_width + space_x;
@@ -1092,7 +1166,10 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 						space_x, space_y, max_name_length, max_team_length,
 						fliptext, hud_frags_padtext->value,
 						0, hud_frags_teams->value,
-						info->name, info->team, hud_frags_scale->value, hud_frags_proportional->integer
+						info->name, info->team, hud_frags_scale->value, hud_frags_proportional->integer,
+						hud_frags_wipeout->value,
+						ti_cl->isdead,
+						ti_cl->timetospawn
 					);
 
 					// Draw name.
@@ -1101,7 +1178,10 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 						space_x, space_y, max_name_length, max_team_length,
 						fliptext, hud_frags_padtext->value,
 						hud_frags_shownames->value, 0,
-						info->name, info->team, hud_frags_scale->value, hud_frags_proportional->integer
+						info->name, info->team, hud_frags_scale->value, hud_frags_proportional->integer,
+						hud_frags_wipeout->value,
+						ti_cl->isdead,
+						ti_cl->timetospawn
 					);
 				}
 
@@ -1125,7 +1205,11 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 					hud_frags_style->value,
 					hud_frags_bignum->value,
 					hud_frags_scale->value,
-					hud_frags_proportional->integer
+					hud_frags_proportional->integer,
+					hud_frags_wipeout->value,
+					hud_frags_hidefrags->value,
+					ti_cl->isdead,
+					ti_cl->timetospawn
 				);
 
 				if (hud_frags_vertical->value) {
@@ -1343,7 +1427,10 @@ static void SCR_HUD_DrawTeamFrags(hud_t *hud)
 						space_x, space_y, 0, max_team_length,
 						true, hud_teamfrags_padtext->value,
 						0, hud_teamfrags_shownames->value,
-						"", sorted_teams[num].name, hud_teamfrags_scale->value, hud_teamfrags_proportional->integer
+						"", sorted_teams[num].name, hud_teamfrags_scale->value, hud_teamfrags_proportional->integer,
+						0,
+						0,
+						0
 					);
 
 					Frags_DrawColors(
@@ -1356,7 +1443,11 @@ static void SCR_HUD_DrawTeamFrags(hud_t *hud)
 						hud_teamfrags_style->value,
 						hud_teamfrags_bignum->value,
 						hud_teamfrags_scale->value,
-						hud_teamfrags_proportional->integer
+						hud_teamfrags_proportional->integer,
+						0,
+						0,
+						0,
+						0
 					);
 
 					_px += cell_width + space_x;
@@ -1378,7 +1469,11 @@ static void SCR_HUD_DrawTeamFrags(hud_t *hud)
 						hud_teamfrags_style->value,
 						hud_teamfrags_bignum->value,
 						hud_teamfrags_scale->value,
-						hud_teamfrags_proportional->integer
+						hud_teamfrags_proportional->integer,
+						0,
+						0,
+						0,
+						0
 					);
 
 					_px += cell_width + space_x;
@@ -1391,7 +1486,10 @@ static void SCR_HUD_DrawTeamFrags(hud_t *hud)
 						0, hud_teamfrags_shownames->value,
 						"", sorted_teams[num].name,
 						hud_teamfrags_scale->value,
-						hud_teamfrags_proportional->integer
+						hud_teamfrags_proportional->integer,
+						0,
+						0,
+						0
 					);
 				}
 
@@ -1413,7 +1511,11 @@ static void SCR_HUD_DrawTeamFrags(hud_t *hud)
 					hud_teamfrags_style->value,
 					hud_teamfrags_bignum->value,
 					hud_teamfrags_scale->value,
-					hud_teamfrags_proportional->integer
+					hud_teamfrags_proportional->integer,
+					0,
+					0,
+					0,
+					0
 				);
 
 				if (hud_teamfrags_vertical->value) {
@@ -1443,8 +1545,10 @@ void Frags_HudInit(void)
 		"teamsort", "0",
 		"strip", "1",
 		"vertical", "0",
+		"hidefrags", "0",
 		"shownames", "0",
 		"showteams", "0",
+		"wipeout", "1",
 		"padtext", "1",
 		"showself_always", "1",
 		"extra_spec_info", "ALL",
