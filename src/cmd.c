@@ -48,6 +48,7 @@ static macro_command_t macro_commands[num_macros] = {
 #undef MACRO_DEF
 
 qbool CL_CheckServerCommand (void);
+qbool CL_CheckServerCommandWhitelisted (void);
 
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
 static int gtf = 0; // global trigger flag
@@ -1753,6 +1754,9 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 		goto done; // no tokens
 
 	if (cbuf_current == &cbuf_svc) {
+		if (!CL_CheckServerCommandWhitelisted())
+			goto done;
+
 		if (CL_CheckServerCommand())
 			goto done;
 	}

@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "menu.h"
 #include "qtv.h"
 #include "fs.h"
+#include "hash.h"
 
 /*time type to be used for rcon encryption*/
 #define __qtime_t uint64_t
@@ -1080,6 +1081,30 @@ qbool CL_CheckServerCommand (void) {
 			return true;
 		}
 	}
+
+	return false;
+}
+
+// Called by Cmd_ExecuteString if cbuf_current == &cbuf_svc
+qbool CL_CheckServerCommandWhitelisted (void) {
+	char *command;
+	extern cvar_t cl_stufftext_allowed_commands;
+	extern hashtable_t *stufftext_allowed_commands_hash;
+
+	if (strlen(cl_stufftext_allowed_commands.string) <= 0)
+		return true;
+
+	command = Cmd_Argv(0);
+
+	if (Hash_Get(stufftext_allowed_commands_hash, command))
+		return true;
+
+	// We are extra friendly when we block the download command, to let the
+	// user know what's going on.
+	if (strncmp(command, "download", 8) == 0)
+		Com_Printf("Prevented server from running '%s'\n", command);
+	else
+		Com_DPrintf("Prevented server from running '%s'\n", command);
 
 	return false;
 }
