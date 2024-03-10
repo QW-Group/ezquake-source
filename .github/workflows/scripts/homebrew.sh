@@ -33,6 +33,15 @@ dependencies=(
     sdl2_mixer
 )
 
+function cleanup_python() {
+    # Workaround for sdl2_mixer, installs a new Python version
+    # that fails to clean up state of the old one.
+    rm -rf \
+        /usr/local/bin/{2to3*,idle3*,pydoc3*,python3*} \
+        /usr/local/share/man/man1/python3* \
+        /usr/local/lib/pkgconfig/python3* \
+        /usr/local/Frameworks/Python.framework
+}
 
 function install_arm64() {
     export CPU="arm64"
@@ -40,6 +49,8 @@ function install_arm64() {
     export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK="true"
     export HOMEBREW_NO_INSTALL_CLEANUP="true"
     export HOMEBREW_DIR="/Users/runner/Library/Caches/Homebrew/downloads"
+
+    cleanup_python
 
     brew reinstall --quiet pkg-config
     brew fetch --force --bottle-tag=arm64_sonoma "${dependencies[@]}"
@@ -52,7 +63,11 @@ function install_arm64() {
 
 function install_intel() {
     export CPU="x86_64"
+    export HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK="true"
     export HOMEBREW_NO_INSTALL_CLEANUP="true"
+
+    cleanup_python
+
     brew reinstall --quiet pkg-config
     brew install --quiet "${dependencies[@]}"
 }
