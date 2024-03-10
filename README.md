@@ -218,14 +218,14 @@ There will also be an `ezquake.zip` which basically just zips up the .app.
 
 ## Nightly builds
 
-Nightly builds for Windows can be found [here][nightly]
+Nightly builds can be found [here][nightly]
 
  [nQuake]: http://nquake.com/
  [webchat]: http://webchat.quakenet.org/?channels=#ezquake
  [IRC]: irc://irc.quakenet.org/#ezquake
  [forum]: http://www.quakeworld.nu/forum/8
  [qtv]: http://qtv.quakeworld.nu/
- [nightly]: http://uttergrottan.localghost.net/ezquake/dev/nightlybuilds/win32/
+ [nightly]: http://uttergrottan.localghost.net/ezquake/dev/nightlybuilds/win32/](https://builds.quakeworld.nu/ezquake/snapshots/
  [releases]: https://github.com/ezQuake/ezquake-source/releases
  [issues]: https://github.com/ezQuake/ezquake-source/issues
  [homepage]: https://ezquake.com
