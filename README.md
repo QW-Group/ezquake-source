@@ -225,7 +225,7 @@ Nightly builds can be found [here][nightly]
  [IRC]: irc://irc.quakenet.org/#ezquake
  [forum]: http://www.quakeworld.nu/forum/8
  [qtv]: http://qtv.quakeworld.nu/
- [nightly]: http://uttergrottan.localghost.net/ezquake/dev/nightlybuilds/win32/](https://builds.quakeworld.nu/ezquake/snapshots/
+ [nightly]: https://builds.quakeworld.nu/ezquake/snapshots/
  [releases]: https://github.com/ezQuake/ezquake-source/releases
  [issues]: https://github.com/ezQuake/ezquake-source/issues
  [homepage]: https://ezquake.com
