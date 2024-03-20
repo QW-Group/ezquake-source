@@ -55,7 +55,7 @@ fi
 exitstatus=$?
 if [ $exitstatus -eq 0 ];then
 	#fix qwurl association if set for appimage
-	grep -q "^Exec=/tmp/.mount_" "${HOME}/.local/share/applications/qw-url-handler.desktop" && \
+	grep -q "^Exec=/tmp/.mount_" "${HOME}/.local/share/applications/qw-url-handler.desktop" >/dev/null 2>&1 && \
 		sed -i "s|^Exec=.*|Exec=${APPIMAGE} +qwurl %u|g" "${HOME}/.local/share/applications/qw-url-handler.desktop"
 fi
 exit $exitstatus
@@ -103,6 +103,8 @@ mkdir -p "$DIR/AppDir/usr/share/metainfo"
 sed 's,EZQUAKE_VERSION,'$VERSION-$REVISION',g;s,EZQUAKE_DATE,'$(date +%F)',g' "$DIR/misc/appimage/ezquake.appdata.xml.template" > "$DIR/AppDir/usr/share/metainfo/ezquake.appdata.xml"
 ldd "$DIR/AppDir/usr/bin/ezquake-linux-$ARCH" | \
 	grep --color=never -v libGL| \
+	grep --color=never -v libdrm.so | \
+	grep --color=never -v libgbm.so | \
 	awk '{print $3}'| \
 	xargs -I% cp -Lf "%" "$DIR/AppDir/usr/lib/." || exit 5
 strip -s "$DIR/AppDir/usr/lib/"* || exit 5
