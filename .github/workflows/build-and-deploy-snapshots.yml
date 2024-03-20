@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - name: Check out code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
 
@@ -94,7 +94,7 @@ jobs:
       run: apt-get -qy update && apt-get -qy install curl file libfuse2 git make sudo git ssh-client
 
     - name: Check out code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
 
