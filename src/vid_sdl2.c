@@ -1381,6 +1381,8 @@ static void VID_SDL_Init(void)
 		return;
 	}
 
+	SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "1");
+
 	VID_SDL_InitSubSystem();
 
 	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
