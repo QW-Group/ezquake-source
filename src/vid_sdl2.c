@@ -186,7 +186,11 @@ cvar_t vid_width                  = {"vid_width",                  "0",       CV
 cvar_t vid_height                 = {"vid_height",                 "0",       CVAR_LATCH_GFX | CVAR_AUTO };
 cvar_t vid_win_width              = {"vid_win_width",              "640",     CVAR_LATCH_GFX };
 cvar_t vid_win_height             = {"vid_win_height",             "480",     CVAR_LATCH_GFX };
+#ifdef __APPLE__
+cvar_t vid_hwgammacontrol         = {"vid_hwgammacontrol",         "2",       CVAR_LATCH_GFX };
+#else
 cvar_t vid_hwgammacontrol         = {"vid_hwgammacontrol",         "0",       CVAR_LATCH_GFX };
+#endif
 cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CVAR_LATCH_GFX };
 // TODO: Move the in_* cvars
 cvar_t in_raw                     = {"in_raw",                     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
@@ -221,8 +225,12 @@ cvar_t vid_flashonactivity        = {"vid_flashonactivity",        "1",       CV
 cvar_t r_verbose                  = {"vid_verbose",                "0",       CVAR_SILENT };
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
 cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH_GFX | CVAR_AUTO }; // It's here because it needs to be registered before window creation
-cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "0",       CVAR_LATCH_GFX };
+cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "2",       CVAR_LATCH_GFX };
+#ifdef __APPLE__
+cvar_t vid_software_palette       = {"vid_software_palette",       "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
+#else
 cvar_t vid_software_palette       = {"vid_software_palette",       "1",       CVAR_NO_RESET | CVAR_LATCH_GFX };
+#endif
 
 cvar_t vid_framebuffer             = {"vid_framebuffer",               "0",       CVAR_NO_RESET | CVAR_LATCH_GFX, conres_changed_callback };
 cvar_t vid_framebuffer_blit        = {"vid_framebuffer_blit",          "0",       CVAR_NO_RESET };
