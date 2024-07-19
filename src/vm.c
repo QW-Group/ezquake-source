@@ -1418,6 +1418,11 @@ locals from sp
 ==============
 */
 
+// Disable optimization for clang compiler under MacOs, otherwise generated code segfaults,
+// feel free to find a real cause of the bug.
+#if defined(__clang__) && defined(__APPLE__)
+__attribute__((optnone))
+#endif
 intptr_t QDECL VM_Call( vm_t *vm, int nargs, int callnum, ... )
 {
 	vm_t	*oldVM;
