@@ -682,13 +682,16 @@ int Sys_Script (const char *path, const char *args)
 
 DL_t Sys_DLOpen(const char *path)
 {
-	return dlopen(path,
+	DL_t ret = dlopen(path,
 #ifdef __OpenBSD__
 	              DL_LAZY
 #else
 	              RTLD_NOW
 #endif
 	             );
+	if (!ret)
+		Con_DPrintf("Sys_DLOpen: %s\n", dlerror());
+	return ret;
 }
 
 qbool Sys_DLClose(DL_t dl)
