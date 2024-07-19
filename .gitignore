@@ -8,6 +8,7 @@ ezQuake.aps
 SysPrintf.log
 .ezquake/
 .vs
+/.vscode
 *.json.c
 *.glsl.c
 vcpkg_installed/
