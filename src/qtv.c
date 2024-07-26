@@ -218,6 +218,9 @@ void QTV_ForwardToServerEx (qbool skip_if_no_params, qbool use_first_argument)
 	VFS_WRITE(playbackfile, buf.data, buf.cursize);
 }
 
+#if defined(_MSC_VER) && !defined(__clang__)
+#pragma optimize( "", off )
+#endif
 void QTV_Say_f (void)
 {
 	tokenizecontext_t tmpcontext;
@@ -247,6 +250,9 @@ void QTV_Say_f (void)
 	// restore
 	Cmd_RestoreContext(&tmpcontext);
 }
+#if defined(_MSC_VER) && !defined(__clang__)
+#pragma optimize( "", on )
+#endif
 
 void QTV_Cmd_ForwardToServer (void)
 {
