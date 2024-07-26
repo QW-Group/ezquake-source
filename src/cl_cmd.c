@@ -130,7 +130,7 @@ void CL_ForwardToServer_f (void) {
 // Added by VVD {
 		if (cl_crypt_rcon.value && strcasecmp(Cmd_Argv(1), "techlogin") == 0 && Cmd_Argc() > 2)
 		{
-			time(&client_time);
+			time((time_t *)&client_time);
 			for (client_time_str[0] = i = 0; i < sizeof(client_time); i++) {
 				char tmp[3];
 				snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
@@ -564,7 +564,7 @@ void CL_Rcon_f (void) {
 // Added by VVD {
 	if (cl_crypt_rcon.value)
 	{
-		time(&client_time);
+		time((time_t *)&client_time);
 		for (client_time_str[0] = i = 0; i < sizeof(client_time); i++) {
 			char tmp[3];
 			snprintf(tmp, sizeof(tmp), "%02X", (unsigned int)((client_time >> (i * 8)) & 0xFF));
