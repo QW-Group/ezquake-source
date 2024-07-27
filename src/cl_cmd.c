@@ -87,7 +87,7 @@ void CL_ForwardToServer_f (void) {
 	char client_time_str[sizeof(__qtime_t) * 2 + 1] = { 0 };
 	int i, server_string_len;
 	extern cvar_t cl_crypt_rcon;
-	__qtime_t client_time;
+	__qtime_t client_time = 0;
 // Added by VVD }
 
 	if (cls.mvdplayback == QTV_PLAYBACK) {
@@ -552,7 +552,7 @@ void CL_Rcon_f (void) {
 	int i, i_from;
 	netadr_t to;
 	extern cvar_t rcon_password, rcon_address, cl_crypt_rcon;
-	__qtime_t client_time;
+	__qtime_t client_time = 0;
 
 	message[0] = (char)255;
 	message[1] = (char)255;
