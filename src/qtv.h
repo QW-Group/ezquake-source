@@ -108,6 +108,7 @@ int			ConsistantMVDData(unsigned char *buffer, int remaining, int max_packets);
 
 //======================================
 
+void		QTV_ForwardToServerEx (qbool skip_if_no_params, qbool use_first_argument);
 void		QTV_Say_f (void);
 void		QTV_Cmd_ForwardToServer (void);
 void		QTV_Cl_ForwardToServer_f (void);
