@@ -47,7 +47,7 @@ extern cvar_t allow_scripts;
 extern cvar_t cl_delay_packet;
 extern cvar_t r_fullbrightSkins;
 extern cvar_t cl_fakeshaft;
-extern cvar_t cl_iDrive;
+extern cvar_t cl_socd;
 
 
 static void FChecks_VersionResponse (void)
@@ -233,8 +233,8 @@ const char* FChecks_RulesetAdditionString(void)
 	// enemy skin forcing enabled
 	APPENDFEATURE((enemyforceskins.integer),"f");
 
-	// cl_iDrive - strafing aid
-	APPENDFEATURE((cl_iDrive.integer),"i");
+	// cl_socd (formerly cl_iDrive)
+	APPENDFEATURE((cl_socd.integer),"i");
 	#undef APPENDFEATURE
 
 	if (strlen(feat_on_buf) > 1) {

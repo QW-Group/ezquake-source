@@ -1714,20 +1714,28 @@
         }
       ]
     },
-    "cl_iDrive": {
-      "default": "0",
-      "desc": "Emulates \"strafe script\". When turned on, you will always change direction instead of stopping when holding opposing movement keys +moveleft and +moveright, or +forward and +back.",
+    "cl_socd": {
+      "default": "1",
+      "desc": "Determines movement behavior when holding opposing directional keys.",
       "group-id": "9",
-      "remarks": "Reported in your f_ruleset reply with the '+i' flag.\nCan not be changed during a match.",
-      "type": "boolean",
+      "remarks": "",
+      "type": "integer",
       "values": [
         {
-          "description": "Pressing keys for both directions will stop movement on that axis.",
-          "name": "false"
+          "description": "Legacy behavior (no priority)",
+          "name": "0"
         },
         {
-          "description": "Auto-releases one of the keys when both directions are pressed.",
-          "name": "true"
+          "description": "Last Input Priority",
+          "name": "1"
+        },
+        {
+          "description": "Absolute Priority: moveleft",
+          "name": "2"
+        },
+        {
+          "description": "Absolute Priority: moveright",
+          "name": "3"
         }
       ]
     },

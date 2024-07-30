@@ -618,8 +618,8 @@ void Rulesets_OnChange_cl_iDrive(cvar_t *var, char *value, qbool *cancel)
 		return;
 	}
 
-	if (fval != 0 && fval != 1) {
-		Com_Printf("Invalid value for %s, use 0 or 1.\n", var->name);
+	if (fval != 0 && fval != 1 && fval != 2 && fval != 3) {
+		Com_Printf("Invalid value for %s, use 0 or 1 or 2 or 3.\n", var->name);
 		*cancel = true;
 		return;
 	}

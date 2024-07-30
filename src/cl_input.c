@@ -31,7 +31,7 @@ cvar_t cl_c2sImpulseBackup = { "cl_c2sImpulseBackup","3" };
 cvar_t cl_c2sdupe = { "cl_c2sdupe", "0" };
 cvar_t cl_forwardspeed = { "cl_forwardspeed","400" };
 cvar_t cl_smartjump = { "cl_smartjump", "1" };
-cvar_t cl_iDrive = { "cl_iDrive", "0", 0, Rulesets_OnChange_cl_iDrive };
+cvar_t cl_socd = { "cl_socd", "1", 0, Rulesets_OnChange_cl_iDrive };
 cvar_t cl_movespeedkey = { "cl_movespeedkey","2.0" };
 cvar_t cl_nodelta = { "cl_nodelta","0" };
 cvar_t cl_pitchspeed = { "cl_pitchspeed","150" };
@@ -762,7 +762,7 @@ void CL_BaseMove(usercmd_t* cmd)
 
 	VectorCopy(cl.viewangles, cmd->angles);
 
-	if (cl_iDrive.integer) {
+	if (cl_socd.integer) {
 		float s1, s2;
 
 		if (in_strafe.state & 1) {
@@ -770,10 +770,22 @@ void CL_BaseMove(usercmd_t* cmd)
 			s2 = CL_KeyState(&in_left, false);
 
 			if (s1 && s2) {
-				if (in_right.downtime > in_left.downtime)
-					s2 = 0;
-				if (in_right.downtime < in_left.downtime)
-					s1 = 0;
+				if (in_right.downtime > in_left.downtime) {
+					if (cl_socd.integer == 1)
+						s2 = 0;
+					else if (cl_socd.integer == 2)
+						s1 = 0;	// Prioritize moveleft
+					else
+						s2 = 0;	// Prioritize moveright	
+				}
+				if (in_right.downtime < in_left.downtime) {
+					if (cl_socd.integer == 1)
+						s1 = 0;
+					else if (cl_socd.integer == 2)
+						s1 = 0; // Prioritize moveleft
+					else
+						s2 = 0;	// Prioritize moveright
+				}
 			}
 
 			cmd->sidemove += sidespeed * s1;
@@ -784,10 +796,22 @@ void CL_BaseMove(usercmd_t* cmd)
 		s2 = CL_KeyState(&in_moveleft, false);
 
 		if (s1 && s2) {
-			if (in_moveright.downtime > in_moveleft.downtime)
-				s2 = 0;
-			if (in_moveright.downtime < in_moveleft.downtime)
-				s1 = 0;
+			if (in_moveright.downtime > in_moveleft.downtime) {
+				if (cl_socd.integer == 1)
+					s2 = 0;
+				else if (cl_socd.integer == 2)
+					s1 = 0;	// Prioritize moveleft
+				else
+					s2 = 0;	// Prioritize moveright	
+			}
+			if (in_moveright.downtime < in_moveleft.downtime){
+				if (cl_socd.integer == 1)
+					s1 = 0;
+				else if (cl_socd.integer == 2)
+					s1 = 0;	// Prioritize moveleft
+				else
+					s2 = 0;	// Prioritize moveright	
+			}
 		}
 
 		cmd->sidemove += sidespeed * s1;
@@ -1226,7 +1250,7 @@ void CL_InitInput(void)
 	Cvar_Register(&cl_yawspeed);
 	Cvar_Register(&cl_pitchspeed);
 	Cvar_Register(&cl_anglespeedkey);
-	Cvar_Register(&cl_iDrive);
+	Cvar_Register(&cl_socd);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MISC);
 	Cvar_Register(&lookspring);
