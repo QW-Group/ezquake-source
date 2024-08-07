@@ -834,7 +834,6 @@ void Sys_RegisterQWURLProtocol_f(void)
 int Sys_SetPriority(int priority)
 {
 	int ret, i=0;
-	int which = PRIO_PROCESS;
 
 	switch (priority) {
 		case 1:
@@ -862,7 +861,7 @@ void OnChange_sys_highpriority (cvar_t *var, char *s, qbool *cancel)
 	//do not attempt to change priority if cvar is unset
 	if (s[0] == '\0') return;
 
-	int ok, priority, ret;
+	int priority, ret;
 	char *desc;
 
 	priority = Q_atoi(s);
