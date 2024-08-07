@@ -18,9 +18,11 @@ static void R_Stubs_NoOperation(void)
 {
 }
 
+#ifndef WITH_RENDERING_TRACE
 static void GLM_TextureLabelSetNull(texture_ref texture, const char* name)
 {
 }
+#endif
 
 static void GLM_Begin2DRendering(void)
 {

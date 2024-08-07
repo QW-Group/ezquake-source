@@ -1259,9 +1259,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	global_hInstance = hInstance;
 
-	// Make sure we link with comctl32.lib to get XP themed buttons if they're available.
-	InitCommonControls();
-
 	WinCheckOSInfo();
 
 	ParseCommandLine(lpCmdLine);

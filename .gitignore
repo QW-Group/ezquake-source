@@ -13,5 +13,6 @@ SysPrintf.log
 *.glsl.c
 vcpkg_installed/
 src/.msversion.h
+cmake-build-presets
 
 !.gitignore

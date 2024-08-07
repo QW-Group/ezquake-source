@@ -98,7 +98,7 @@ qbool TP_LoadLocFile(char *path, qbool quiet)
 	}
 
 	strlcat(locname, path, sizeof(locname) - strlen(locname));
-	COM_DefaultExtension(locname, ".loc");
+	COM_DefaultExtension(locname, ".loc", sizeof(locname));
 
 	if (!(buf = (char *)FS_LoadHeapFile(locname, NULL))) {
 		if (!quiet) {
@@ -251,7 +251,7 @@ qbool TP_SaveLocFile(char *path, qbool quiet)
 
 	// Add an extension if it doesn't exist already.
 	strlcat(locname, path, sizeof(locname) - strlen(locname));
-	COM_DefaultExtension(locname, ".loc");
+	COM_DefaultExtension(locname, ".loc", sizeof(locname));
 
 	// Allocate a buffer to hold the file contents.
 	buf = (char *)Q_calloc(loc_count * (MAX_LOC_NAME + 24), sizeof(char));

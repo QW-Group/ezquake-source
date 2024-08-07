@@ -246,7 +246,7 @@ static qbool FontCreate(int grouping, const char* userpath)
 	strlcpy(path, Sys_FontsDirectory(), sizeof(path));
 	strlcat(path, "/", sizeof(path));
 	strlcat(path, userpath, sizeof(path));
-	COM_DefaultExtension(path, ".ttf");
+	COM_DefaultExtension(path, ".ttf", sizeof(path));
 
 	error = ezFT_New_Face(library, path, 0, &face);
 	if (error == FT_Err_Unknown_File_Format) {

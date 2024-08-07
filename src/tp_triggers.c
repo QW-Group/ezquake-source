@@ -193,7 +193,7 @@ qbool TP_CheckSoundTrigger (wchar *wstr)
 				if (!snd_initialized || !snd_started)
 					return false;
  
-				COM_DefaultExtension (soundname, ".wav");
+				COM_DefaultExtension (soundname, ".wav", sizeof(soundname));
  
 				// make sure we have it on disk (FIXME)
 				if (!(v = FS_OpenVFS(va("sound/%s", soundname), "rb", FS_ANY))) 

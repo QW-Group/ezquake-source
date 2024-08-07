@@ -632,7 +632,7 @@ void SV_MVDRemove_f (void)
 	}
 
 	strlcpy(name, Cmd_Argv(1), MAX_DEMO_NAME);
-	COM_DefaultExtension(name, ".mvd");
+	COM_DefaultExtension(name, ".mvd", sizeof(name));
 
 	snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, name);
 

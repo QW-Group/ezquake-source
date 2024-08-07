@@ -1,0 +1,15 @@
+# Can be removed once vcpkg speexdsp package has gained a proper cmake-wrapper.
+set(_VCPKG_ARCH_DIR "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
+find_path(SPEEX_INCLUDE_DIR NAMES speex/speex.h PATHS "${_VCPKG_ARCH_DIR}/include" NO_DEFAULT_PATH REQUIRED)
+find_library(SPEEX_LIB_RELEASE NAMES speex PATHS "${_VCPKG_ARCH_DIR}/lib" NO_DEFAULT_PATH)
+find_library(SPEEX_LIB_DEBUG NAMES speex PATHS "${_VCPKG_ARCH_DIR}/debug/lib" NO_DEFAULT_PATH)
+if(NOT SPEEX_LIB_RELEASE AND NOT SPEEX_LIB_DEBUG)
+    message(FATAL_ERROR "Speex library not found")
+endif()
+add_library(SPEEX::SPEEX STATIC IMPORTED)
+set_target_properties(SPEEX::SPEEX PROPERTIES
+        IMPORTED_CONFIGURATIONS "Debug;Release"
+        IMPORTED_LOCATION_RELEASE "${SPEEX_LIB_RELEASE}"
+        IMPORTED_LOCATION_DEBUG "${SPEEX_LIB_DEBUG}"
+        INTERFACE_INCLUDE_DIRECTORIES "${SPEEX_INCLUDE_DIR}"
+)

@@ -261,7 +261,7 @@ model_t *Mod_LoadModel(model_t *mod, qbool crash)
 		(namelen >= 9 && mod->name[5] == 'b' && mod->name[6] == '_' && !strcmp(mod->name + namelen - 4, ".bsp")))) {
 		char newname[MAX_QPATH];
 		COM_StripExtension(mod->name, newname, sizeof(newname));
-		COM_DefaultExtension(newname, ".md3");
+		COM_DefaultExtension(newname, ".md3", sizeof(newname));
 		buf = (unsigned *)FS_LoadTempFile(newname, &filesize);
 	}
 

@@ -692,6 +692,8 @@ void FS_ShutDown( void ) {
 	userdir_type		= -1;
 }
 
+void SysLibrarySupportDir(char *basedir, int length);
+
 void FS_InitFilesystemEx( qbool guess_cwd ) {
 	int i;
 	char tmp_path[MAX_OSPATH];
@@ -699,7 +701,9 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	FS_ShutDown();
 
 	if (guess_cwd) { // so, com_basedir directory will be where ezquake*.exe located
+#ifndef __APPLE__
 		char *e;
+#endif
 
 #if defined(_WIN32)
 		if(!(i = GetModuleFileName(NULL, com_basedir, sizeof(com_basedir)-1)))
@@ -709,8 +713,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 		if (!Sys_fullpath(com_basedir, "/proc/self/exe", sizeof(com_basedir)))
 			Sys_Error("FS_InitFilesystemEx: Sys_fullpath failed");
 #elif defined(__APPLE__)
-		if (proc_pidpath(getpid(), com_basedir, (uint32_t)sizeof(com_basedir)) != 0)
-			Sys_Error("FS_InitFilesystemEx: proc_pidpath failed");
+		SysLibrarySupportDir(com_basedir, MAX_OSPATH);
 #elif defined(__FreeBSD__)
 		int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
 		size_t com_basedirlen = sizeof(com_basedir);
@@ -720,6 +723,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 		com_basedir[0] = 0; // FIXME: others
 #endif
 
+#ifndef __APPLE__
 		// strip ezquake*.exe, we need only path
 		for (e = com_basedir+strlen(com_basedir)-1; e >= com_basedir; e--)
 			if (*e == '/' || *e == '\\')
@@ -727,6 +731,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 				*e = 0;
 				break;
 			}
+#endif
 	}
 	else if ((i = COM_CheckParm (cmdline_param_filesystem_basedir)) && i < COM_Argc() - 1) {
 		// -basedir <path>

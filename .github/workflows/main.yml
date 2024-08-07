@@ -1,0 +1,157 @@
+name: build
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - configurePreset: ninja-msvc-x64
+            buildPreset: ninja-msvc-x64-release
+            ext: ".exe"
+            os: windows-latest
+            should_upload: true
+            double_zip: false
+
+          - configurePreset: msbuild-x64
+            buildPreset: msbuild-x64-release
+            ext: ".exe"
+            os: windows-latest
+            should_upload: false
+            double_zip: false
+
+          - configurePreset: ninja-mingw64-i686-cross
+            buildPreset: ninja-mingw64-i686-cross-release
+            packages: "binutils-mingw-w64-i686 gcc-mingw-w64-i686 g++-mingw-w64-i686"
+            ext: ".exe"
+            os: ubuntu-latest
+            should_upload: true
+            double_zip: false
+
+          - configurePreset: ninja-mingw64-x64-cross
+            buildPreset: ninja-mingw64-x64-cross-release
+            packages: "binutils-mingw-w64-x86-64 gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64"
+            ext: ".exe"
+            os: ubuntu-latest
+            should_upload: true
+            double_zip: false
+
+          - configurePreset: ninja-generic-dynamic
+            buildPreset: ninja-generic-dynamic-release
+            packages: "libcurl4-openssl-dev libexpat1-dev libfreetype-dev libjpeg-dev libjansson-dev libminizip-dev libpcre2-dev libpng-dev libsdl2-dev libsndfile1-dev libspeex-dev libspeexdsp-dev zlib1g-dev"
+            ext: ""
+            os: ubuntu-latest
+            should_upload: false
+            double_zip: true
+
+          - configurePreset: xcode-arm64-release-ci
+            buildPreset: xcode-arm64-release-ci
+            packages: "autoconf automake libtool"
+            ext: ".app"
+            os: macos-latest
+            should_upload: true
+            double_zip: true
+
+          - configurePreset: xcode-x64-release-ci
+            buildPreset: xcode-x64-release-ci
+            packages: "autoconf automake libtool"
+            ext: ".app"
+            os: macos-latest
+            should_upload: true
+            double_zip: true
+
+    name: ${{ matrix.configurePreset }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Fetch upstream tags for version metadata
+        run: |
+          git remote add upstream https://github.com/QW-Group/ezquake-source.git
+          git fetch --tags --no-recurse-submodules upstream
+        if: github.repository != 'QW-Group/ezquake-source'
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update -qq
+          sudo apt-get install -qq ${{ matrix.packages }}
+        if: matrix.os == 'ubuntu-latest'
+
+      - name: Install macOS build dependencies
+        run: brew install ${{ matrix.packages }}
+        if: matrix.os == 'macos-latest'
+
+      - uses: lukka/get-cmake@latest
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+
+      - name: Run CMake
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: ${{ matrix.configurePreset }}
+          buildPreset: ${{ matrix.buildPreset }}
+
+      - name: Pre-zip to preserve executable bit
+        run: zip -r -9 ../../../ezQuake.zip ezquake${{ matrix.ext }}
+        working-directory: "cmake-build-presets/${{ matrix.configurePreset }}/Release/"
+        if: ${{ matrix.should_upload && matrix.double_zip }}
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.buildPreset }}
+          path: ezQuake.zip
+          compression-level: 9
+        if: ${{ matrix.should_upload && matrix.double_zip }}
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.configurePreset }}
+          path: "cmake-build-presets/${{ matrix.configurePreset }}/Release/ezquake${{ matrix.ext }}"
+          compression-level: 9
+        if: ${{ matrix.should_upload && !matrix.double_zip }}
+
+  macos-universal:
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Download Intel Build
+        uses: actions/download-artifact@v4
+        with:
+          name: "xcode-arm64-release-ci"
+          path: artifacts/x64
+
+      - name: Download ARM64 Build
+        uses: actions/download-artifact@v4
+        with:
+          name: "xcode-x64-release-ci"
+          path: artifacts/arm64
+
+      - name: Create Universal Binary
+        run: |
+          (cd artifacts/x64 && unzip -qq ezQuake.zip) && (cd artifacts/arm64 && unzip -qq ezQuake.zip)
+          cp -r artifacts/arm64/ezQuake.app .
+          lipo -create -output ezQuake.app/Contents/MacOS/ezQuake \
+              artifacts/x64/ezQuake.app/Contents/MacOS/ezQuake \
+              artifacts/arm64/ezQuake.app/Contents/MacOS/ezQuake
+          codesign --force --sign - --entitlements misc/install/ezquake.entitlements.plist --options runtime --timestamp ezQuake.app
+          zip -r ezQuake.zip ezQuake.app
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "ezQuake-macOS-universal-sandboxed"
+          path: ezQuake.zip
+          compression-level: 9

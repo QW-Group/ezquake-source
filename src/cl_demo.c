@@ -3166,7 +3166,7 @@ static void PlayQWZDemo(const char* name)
 		}
 
 		// Convert to system path
-		Sys_fullpath(qwz_name, initialName, MAX_PATH);
+		Sys_fullpath(qwz_name, initialName, sizeof(qwz_name));
 	}
 
 	VFS_CLOSE(playbackfile);

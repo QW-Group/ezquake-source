@@ -24,3 +24,16 @@ void init_url_handler(void)
 	
 	[[NSAppleEventManager sharedAppleEventManager] setEventHandler:url andSelector:@selector(getURL:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
 }
+
+void SysLibrarySupportDir(char *basedir, int length)
+{
+	@autoreleasepool {
+		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
+		NSString *app_support_path = [paths firstObject];
+		NSString *ezquake_path = [app_support_path stringByAppendingPathComponent:@"ezQuake"];
+
+		const char *raw = [ezquake_path UTF8String];
+		strncpy(basedir, raw, length - 1);
+		basedir[length - 1] = '\0';
+    }
+}

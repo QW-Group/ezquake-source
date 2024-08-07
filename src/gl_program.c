@@ -609,6 +609,7 @@ static const char* safe_strstr(const char* source, size_t max_length, const char
 	return NULL;
 }
 
+#if 0
 static void GL_DebugPrintShaderText(GLuint shader)
 {
 	int length = 0;
@@ -621,6 +622,7 @@ static void GL_DebugPrintShaderText(GLuint shader)
 	DebugOutput(src);
 	Q_free(src);
 }
+#endif
 
 static int GL_InsertDefinitions(
 	const char* strings[],
@@ -691,7 +693,6 @@ static qbool GL_CompileProgram(
 	GLint result = 0;
 	int i;
 
-	const char* friendlyName = program->friendly_name;
 	GLsizei vertex_components = 1;
 	const char* vertex_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_vertex].text, "", "", "", "", "" };
 	GLint vertex_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_vertex].length, 0, 0, 0, 0, 0 };
@@ -702,7 +703,7 @@ static qbool GL_CompileProgram(
 	const char* fragment_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].text, "", "", "", "", "" };
 	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].length, 0, 0, 0, 0, 0 };
 
-	DebugOutput(va("Compiling: %s\n", friendlyName));
+	DebugOutput(va("Compiling: %s\n", program->friendly_name));
 
 	R_ProgramBuildStandardDefines(program->standard_option_flags);
 

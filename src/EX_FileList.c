@@ -131,7 +131,7 @@ void FL_SetCurrentDir(filelist_t *fl, const char *dir)
 {
 	char buf[MAX_PATH+1];
 
-	if (Sys_fullpath(buf, dir, MAX_PATH + 1) == NULL) {
+	if (Sys_fullpath(buf, dir, sizeof(buf)) == NULL) {
 		return;
 	}
 
@@ -787,7 +787,7 @@ void FL_ReadDir(filelist_t *fl)
 			else
 			{
 				// Get full path for normal files/dirs.
-				Sys_fullpath(f->name, ent.fname, MAX_PATH+1);
+				Sys_fullpath(f->name, ent.fname, sizeof(f->name));
 			}
 
 			f->size = ent.size;
