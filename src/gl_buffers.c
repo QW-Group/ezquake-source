@@ -260,18 +260,18 @@ static qbool GL_CreateFixedBuffer(r_buffer_id id, buffertype_t type, const char*
 	}
 
 	if (alignment > 1) {
-		buffer->size = size = ((size + (alignment - 1)) / alignment) * alignment;
+		buffer->size = ((size + (alignment - 1)) / alignment) * alignment;
 	}
 
 	GL_TraceObjectLabelSet(GL_BUFFER, buffer->glref, -1, name);
 
 	if (tripleBuffer) {
-		GL_Procedure(glBufferStorage, target, size * 3, NULL, storageFlags);
-		buffer->persistent_mapped_ptr = GL_Function(glMapBufferRange, target, 0, size * 3, storageFlags);
+		GL_Procedure(glBufferStorage, target, buffer->size * 3, NULL, storageFlags);
+		buffer->persistent_mapped_ptr = GL_Function(glMapBufferRange, target, 0, buffer->size * 3, storageFlags);
 
 		if (buffer->persistent_mapped_ptr) {
 			if (data) {
-				void* base = (void*)((uintptr_t)buffer->persistent_mapped_ptr + size * glConfig.tripleBufferIndex);
+				void* base = (void*)((uintptr_t)buffer->persistent_mapped_ptr + buffer->size * glConfig.tripleBufferIndex);
 
 				memcpy(base, data, size);
 			}
