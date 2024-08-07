@@ -480,14 +480,14 @@ char *Sys_fullpath(char *absPath, const char *relPath, int maxLength)
 {
     // too small buffer, copy in tmp[] and then look is enough space in output buffer aka absPath
     if (maxLength-1 < PATH_MAX)	{
-			 char tmp[PATH_MAX+1];
-			 if (realpath(relPath, tmp) && absPath && strlen(tmp) < maxLength+1) {
-					strlcpy(absPath, tmp, maxLength+1);
-          return absPath;
-			 }
-
-       return NULL;
+		char tmp[PATH_MAX+1];
+		if (realpath(relPath, tmp) && absPath && strlen(tmp) < maxLength) {
+			strlcpy(absPath, tmp, maxLength);
+			return absPath;
 		}
+
+		return NULL;
+	}
 
     return realpath(relPath, absPath);
 }
