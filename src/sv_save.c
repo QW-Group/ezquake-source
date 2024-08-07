@@ -121,7 +121,7 @@ void SV_SaveGame_f(void)
 	}
 
 	SV_SaveGameFileName (fname, sizeof(fname), Cmd_Argv(1));
-	COM_DefaultExtension (fname, ".sav");
+	COM_DefaultExtension (fname, ".sav", sizeof(fname));
 	
 	Con_Printf ("Saving game to %s...\n", fname);
 	if (!(f = fopen (fname, "w"))) {		
@@ -177,7 +177,7 @@ void SV_LoadGame_f(void)
 	}
 
 	SV_SaveGameFileName (name, sizeof(name), Cmd_Argv(1));
-	COM_DefaultExtension (name, ".sav");
+	COM_DefaultExtension (name, ".sav", sizeof(name));
 
 	Con_Printf ("Loading game from %s...\n", name);
 	if (!(f = fopen (name, "rb"))) {

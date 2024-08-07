@@ -1001,7 +1001,7 @@ static void S_Play_f (void)
 		}
 
 		VectorCopy(listener_origin, sound_origin);
-		COM_DefaultExtension (name, ".wav");
+		COM_DefaultExtension (name, ".wav", sizeof(name));
 		sfx = S_PrecacheSound(name);
 		if (playvol)
 			vol = Q_atof(Cmd_Argv(++i));
