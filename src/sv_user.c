@@ -70,8 +70,10 @@ static struct {
 	antilag_client_info_t antilag_clients[MAX_CLIENTS];
 } debug_info;
 
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
 static void SV_DebugServerSideWeaponScript(client_t* cl, int best_impulse);
 static void SV_DebugServerSideWeaponInstruction(client_t* cl);
+#endif
 cvar_t sv_debug_weapons = { "sv_debug_weapons", "0" };
 #endif
 
@@ -79,7 +81,10 @@ cvar_t sv_debug_weapons = { "sv_debug_weapons", "0" };
 cvar_t sv_debug_usercmd = { "sv_debug_usercmd", "0" };
 cvar_t sv_debug_antilag = { "sv_debug_antilag", "0" };
 
+
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
 static void SV_UserSetWeaponRank(client_t* cl, const char* new_wrank);
+#endif
 static void SV_DebugClientCommand(byte playernum, const usercmd_t* cmd, int dropnum_);
 
 extern	vec3_t	player_mins;
@@ -4052,6 +4057,7 @@ void SV_PostRunCmd(void)
 SV_UserSetWeaponRank
 Sets wrank userinfo for mods to pick best weapon based on user's preferences
 */
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
 static void SV_UserSetWeaponRank(client_t* cl, const char* new_wrank)
 {
 	char old_wrank[128] = { 0 };
@@ -4065,6 +4071,7 @@ static void SV_UserSetWeaponRank(client_t* cl, const char* new_wrank)
 		}
 	}
 }
+#endif
 
 // SV_RotateCmd
 // Rotates client command so a high-ping player can better control direction as they exit teleporters on high-ping
@@ -4277,7 +4284,6 @@ static void SV_DebugServerSideWeaponInstruction(client_t* cl)
 		}
 	}
 }
-#endif
 
 static void SV_DebugServerSideWeaponScript(client_t* cl, int best_impulse)
 {
@@ -4301,6 +4307,8 @@ static void SV_DebugServerSideWeaponScript(client_t* cl, int best_impulse)
 		SV_DebugWriteWeaponScript(cl - svs.clients, true, ent->items, ent->ammo_shells, ent->ammo_nails, ent->ammo_rockets, ent->ammo_cells, best_impulse, encoded);
 	}
 }
+#endif
+
 #endif
 
 /*
