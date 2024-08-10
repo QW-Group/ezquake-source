@@ -315,7 +315,9 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 				// Try and load
 				for (j = 0; j < sizeof(potential_textures) / sizeof(potential_textures[0]); ++j) {
 					if (potential_textures[j][0] && R_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(potential_textures[j], potential_textures[j], 0, 0, 0))) {
-						strlcpy(sinf->name, potential_textures[j], sizeof(sinf->name));
+						if (potential_textures[j] != sinf->name) {
+							strlcpy(sinf->name, potential_textures[j], sizeof(sinf->name));
+						}
 						break;
 					}
 				}
