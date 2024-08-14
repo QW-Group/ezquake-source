@@ -2605,29 +2605,6 @@
         }
       ]
     },
-    "cl_showkeycodes": {
-      "desc": "This variable enables/disables the output of informations to the currently pressed and/or released keys.",
-      "group-id": "28",
-      "type": "enum",
-      "values": [
-        {
-          "description": "Switch off output of scancode/keymapping information (Default)",
-          "name": "0"
-        },
-        {
-          "description": "information about keys will be printed when the keys are pressed.",
-          "name": "1"
-        },
-        {
-          "description": "information about keys will be printed when releasing the keys.",
-          "name": "2"
-        },
-        {
-          "description": "information about keys will be printed when the keys are pressed and also when they are released.",
-          "name": "3"
-        }
-      ]
-    },
     "cl_shownet": {
       "default": "0",
       "desc": "This variable toggles the display of current net info.",
@@ -13655,11 +13632,6 @@
     "joyyawthreshold": {
       "default": "0.15",
       "desc": "Minimum deflection required for turning left/right.\nRange [0.0,1.0]",
-      "group-id": "28",
-      "type": "float"
-    },
-    "keymap_name": {
-      "desc": "This holds the name of the current keymappings; it has (currently) only informational purposes.\nIf no keymapping is active, it will contain the name \"Default\".\nIf a keymapping will be active and no name has been set, \"Custom\" will be used as name. It can easily be set with \"keymap_name <layoutname>\"",
       "group-id": "28",
       "type": "float"
     },

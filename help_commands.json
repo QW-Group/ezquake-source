@@ -928,30 +928,6 @@
   "joyadvancedupdate": {
     "description": "This command must be run to apply changes made to the joyadvaxis[xyzruv] or joyindex cvars."
   },
-  "keycode": {
-    "description": "This command enables the setting of a new keymapping.",
-    "syntax": "[ext] <scancode> <key> [<shiftmap>] [<altgrmap>]"
-  },
-  "keymap_init": {
-    "description": "This resets the current keymapping and then generates a copy of the internal defaults (US keyboard) to be the new keymappings.\nThis can be used as a base to generate a new keymapping file.\nIt has the same (unchangeable) mapping as the example keymap file \"default.kmap\""
-  },
-  "keymap_list": {
-    "description": "This command prints all the current keymappings to the quake console."
-  },
-  "keymap_load": {
-    "description": "This command first resets the current keymappings and then loads a new mapping from the given file.",
-    "syntax": "keymap_load [layoutname] <filename>"
-  },
-  "keymap_reset": {
-    "description": "This command switches off the current keymappings and sets it back to the internal defaults; it also restores \"keymap_name\" to its default name \"Default\".\nThe defaults are an internally defined (and not changeable) keymapping for US keyboards."
-  },
-  "keymap_save": {
-    "description": "With this command the active keymappings will be written to a .kmap file (including a descriptive header which explains the usage).",
-    "syntax": "[layoutname] <filename>"
-  },
-  "keymaplist": {
-    "description": "This command prints all the current keymappings to the quake console."
-  },
   "kick": {
     "description": "Removes a user from the server. Use the status command to receive the user's id.\n\nExample:\nkick 1234",
     "syntax": "<userid>"
