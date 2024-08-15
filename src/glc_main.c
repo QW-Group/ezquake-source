@@ -57,9 +57,11 @@ static void GLC_BindVertexArrayElementBuffer(r_vao_id vao, r_buffer_id ref)
 {
 }
 
+#ifndef WITH_RENDERING_TRACE
 static void GLC_TextureLabelSetNull(texture_ref texture, const char* name)
 {
 }
+#endif
 
 qbool GLC_False(void)
 {

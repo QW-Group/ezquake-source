@@ -1660,21 +1660,6 @@ static qbool GLC_CompareVertexArrays(FILE* output, const rendering_state_t* expe
 	return problem;
 }
 
-static qbool GLC_CompareTextureUnitState(FILE* output, const rendering_state_t* expected, const rendering_state_t* found)
-{
-	int i;
-	qbool problem = false;
-
-	for (i = 0; i < 4; ++i) {
-		if (expected->textureUnits[i].mode != found->textureUnits[i].mode || expected->textureUnits[i].enabled != found->textureUnits[i].enabled) {
-			R_TraceAPI("!TEXSTATE%d: expected %d,%d found %d,%d", i, expected->textureUnits[i].mode, found->polygonMode);
-			problem = true;
-		}
-	}
-
-	return problem;
-}
-
 // Adjust for what OpenGL doesn't know about
 #define GLC_AssumeState(state) { from_gl.state = opengl.rendering_state.state; }
 #else

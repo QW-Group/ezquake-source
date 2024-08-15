@@ -35,16 +35,16 @@ static int Mod_ReadFlagsFromMD1(char *name, int md3version)
 	mdl_t* pinmodel;
 	char fname[MAX_QPATH];
 	COM_StripExtension(name, fname, sizeof(fname));
-	COM_DefaultExtension(fname, ".md3");
+	COM_DefaultExtension(fname, ".md3", sizeof(fname));
 
 	if (!strcmp(name, fname)) {
 		//md3 renamed as mdl
 		COM_StripExtension(name, fname, sizeof(fname));	//seeing as the md3 is named over the mdl,
-		COM_DefaultExtension(fname, ".md1");//read from a file with md1 (one, not an ell)
+		COM_DefaultExtension(fname, ".md1", sizeof(fname));//read from a file with md1 (one, not an ell)
 	}
 	else {
 		COM_StripExtension(name, fname, sizeof(fname));
-		COM_DefaultExtension(fname, ".mdl");
+		COM_DefaultExtension(fname, ".mdl", sizeof(fname));
 	}
 
 	pinmodel = (mdl_t *)FS_LoadTempFile(fname, NULL);
@@ -315,7 +315,9 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 				// Try and load
 				for (j = 0; j < sizeof(potential_textures) / sizeof(potential_textures[0]); ++j) {
 					if (potential_textures[j][0] && R_TextureReferenceIsValid(sinf->texnum = R_LoadTextureImage(potential_textures[j], potential_textures[j], 0, 0, 0))) {
-						strlcpy(sinf->name, potential_textures[j], sizeof(sinf->name));
+						if (potential_textures[j] != sinf->name) {
+							strlcpy(sinf->name, potential_textures[j], sizeof(sinf->name));
+						}
 						break;
 					}
 				}

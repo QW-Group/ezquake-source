@@ -206,7 +206,7 @@ char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit);
 char *COM_FileExtension (const char *in);
 void COM_StripExtension (const char *in, char *out, int out_size);
 void COM_FileBase (const char *in, char *out);
-void COM_DefaultExtension (char *path, char *extension);
+void COM_DefaultExtension (char *path, char *extension, size_t path_len);
 // If path doesn't have an extension or has a different extension, append(!) specified extension.
 // path buffer supposed to be MAX_OSPATH size
 void COM_ForceExtension (char *path, char *extension);

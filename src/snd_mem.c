@@ -791,10 +791,12 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 
 	if (sfinfo.channels < 1 || sfinfo.channels > 2) {
 		Com_Printf("%s has an unsupported number of channels (%i)\n", s->name, sfinfo.channels);
+		Q_free(buf);
 		return NULL;
 	}
 
 	ResampleSfx (s, sfinfo.samplerate, sfinfo.channels, sizeof(short), sfinfo.frames, loopstart, (byte *)buf);
+	Q_free(buf);
 
 	return s->buf;
 }
