@@ -28,7 +28,6 @@
 ;      xsd/ (cvs/documentation/xsd)
 ;      xsl/ (cvs/documentation/xsl)
 ;      index.xml (cvs/documentation/index.xml)
-;    keymaps/ (dir, see CVS/ezquake/misc/keymaps/)
 ;    manual/ (dir, link to online version at http://ezquake.sourceforge.net/docs/)
 ;    sb/ (dir, see CVS/ezquake/misc/sb)
 ;  inst_gfx/ (dir)
@@ -139,10 +138,6 @@ Section "!ezQuake client" Main
   SetOutPath $INSTDIR\ezquake\help\xsl
   File "ezquake\help\xsl\*.*"
 
-  CreateDirectory $INSTDIR\ezquake\keymaps
-  SetOutPath $INSTDIR\ezquake\keymaps
-  File "ezquake\keymaps\*.*"
-
   CreateDirectory $INSTDIR\ezquake\sb
   SetOutPath $INSTDIR\ezquake\sb
   File "ezquake\sb\au-sv.txt"
@@ -227,7 +222,6 @@ Section "Uninstall"
   Delete "$INSTDIR\ezquake-security.dll"
   Delete "$INSTDIR\ezuninstall.exe"
   RMDir /r "$INSTDIR\ezquake\help"
-  RMDir /r "$INSTDIR\ezquake\keymaps"
   RMDir /r "$INSTDIR\ezquake\manual"
   RMDir /r "$INSTDIR\ezquake\sb"
   Delete "$INSTDIR\ezquake\base.pk3"
