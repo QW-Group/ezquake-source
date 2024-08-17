@@ -9,10 +9,10 @@ NC='\e[0m'
 
 BUILD_LOG=/tmp/ezquake-build.log
 
-PKGS_DEB="git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev libfreetype6-dev libsndfile1-dev libpcre2-dev libminizip-dev"
-PKGS_RPM="pcre2-devel mesa-libGL-devel SDL2-devel make gcc jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libsndfile-devel libXxf86vm-devel minizip-devel"
-PKGS_ARCH="base-devel libpng libjpeg-turbo sdl2 expat libcurl-compat freetype2 speex speexdsp jansson libsndfile minizip"
-PKGS_VOID="base-devel SDL2-devel pcre2-devel jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libsndfile-devel libXxf86vm-devel minizip"
+PKGS_DEB="git cmake ninja-build build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev libfreetype6-dev libsndfile1-dev libpcre2-dev libminizip-dev"
+PKGS_RPM="pcre2-devel cmake ninja-build mesa-libGL-devel SDL2-devel make gcc jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libsndfile-devel libXxf86vm-devel minizip-devel"
+PKGS_ARCH="base-devel cmake ninja libpng libjpeg-turbo sdl2 expat libcurl-compat freetype2 speex speexdsp jansson libsndfile minizip"
+PKGS_VOID="base-devel cmake ninja SDL2-devel pcre2-devel jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libsndfile-devel libXxf86vm-devel minizip"
 
 CPU=$(uname -m | sed -e s/i.86/i386/ -e s/amd64/x86_64/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e s/alpha/axp/)
 
@@ -129,13 +129,11 @@ esac
 step "Checking out git submodules..."
 git submodule update --init --recursive --remote >> $BUILD_LOG 2>&1 || error "Failed to checkout git submodules. Exiting."
 
-step "Cleaning up any previous build files..."
-make clean >>$BUILD_LOG 2>&1 || error "Failed to cleanup old build files"
+step "Configure build..."
+cmake --preset dynamic
 
 step "Compiling sources (this might take a while, please wait)..."
-njobs=2
-! command -v nproc >/dev/null 2>&1 || njobs=$(($(nproc) + 1))
-make -j$njobs >>$BUILD_LOG 2>&1 || error "Compilation failed. Exiting."
+cmake --build build-dynamic --config Release
 
 printf "\n${GREEN}Build completed successfully.${NC}\n"
-printf "Copy ${YELLOW}ezquake-linux-${CPU}${NC} into your quake directory.\n\n"
+printf "Copy ${YELLOW}ezquake-${CPU}${NC} into your quake directory.\n\n"
