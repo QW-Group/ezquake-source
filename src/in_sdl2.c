@@ -471,7 +471,7 @@ static void
 IN_StartupJoystick (void)
 {
 	SDL_Joystick	*jdev;
-	int		numdevs;
+	int		numdevs, i;
 
 	//COM_CheckParm ("-joystick");
 	
@@ -520,7 +520,7 @@ IN_StartupJoystick (void)
 	}
 
 	/*  Check if we can open any of them.  */
-	for (int i = 0;  i < numdevs;  ++i) {
+	for (i = 0;  i < numdevs;  ++i) {
 		jdev = SDL_JoystickOpen (i);
 		if (jdev) {
 			Com_Printf ("Detected joystick %d: %d axes, %d buttons: \"%s\"\n",
