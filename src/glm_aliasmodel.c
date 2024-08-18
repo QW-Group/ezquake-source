@@ -291,6 +291,7 @@ static void GLM_QueueAliasModelDrawImpl(
 	aliasmodel_draw_instructions_t* instr;
 	int textureSampler = -1;
 	extern cvar_t gl_spec_xray;
+	int i;
 
 	// Compile here so we can work out how many samplers we have free to allocate per draw-call
 	if (!GLM_CompileAliasModelProgram()) {
@@ -364,8 +365,8 @@ static void GLM_QueueAliasModelDrawImpl(
 		int bc = 16 * (bound(0, ent->scoreboard->bottomcolor, 13)) + 8;
 		byte top[] = { host_basepal[tc * 3], host_basepal[tc * 3 + 1], host_basepal[tc * 3 + 2] };
 		byte bot[] = { host_basepal[bc * 3], host_basepal[bc * 3 + 1], host_basepal[bc * 3 + 2] };
-		for(int i = 0; i < 3; i++) uniform->plrtopcolor[i] = (float)top[i] / 256.0f;
-		for(int i = 0; i < 3; i++) uniform->plrbotcolor[i] = (float)bot[i] / 256.0f;
+		for(i = 0; i < 3; i++) uniform->plrtopcolor[i] = (float)top[i] / 256.0f;
+		for(i = 0; i < 3; i++) uniform->plrbotcolor[i] = (float)bot[i] / 256.0f;
 	}
 
 	// Add to queues

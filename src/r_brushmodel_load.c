@@ -1021,6 +1021,7 @@ static int Mod_LoadDecoupledLM(dlminfo_t* lminfos, int surfnum, msurface_t *out)
 {
 	dlminfo_t *lminfo;
 	unsigned short lmwidth, lmheight;
+	int i, j;
 
 	if (lminfos == NULL) {
 		return -1;
@@ -1035,8 +1036,8 @@ static int Mod_LoadDecoupledLM(dlminfo_t* lminfos, int surfnum, msurface_t *out)
 		return -1;
 	}
 
-	for (int i = 0; i < 2; i++) {
-		for (int j = 0; j < 4; j++) {
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j < 4; j++) {
 			out->lmvecs[i][j] = LittleFloat(lminfo->vecs[i][j]);
 		}
 	}

@@ -34,7 +34,7 @@ RMDIR ?= rm -rf
 MKDIR ?= mkdir -p
 JSON2C ?= ./json2c.sh
 
-CFLAGS ?= -O2 -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -Wno-strict-aliasing -Werror=strict-prototypes -Werror=old-style-definition -g -MMD $(INCLUDES)
+CFLAGS ?= -std=gnu89 -O2 -Wall -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast -Wno-strict-aliasing -Werror=strict-prototypes -Werror=old-style-definition -g -MMD $(INCLUDES)
 RCFLAGS ?=
 LDFLAGS ?=
 LIBS ?=
