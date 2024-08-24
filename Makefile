@@ -27,6 +27,7 @@ endif
 
 LSYS := $(shell echo $(SYS) | tr A-Z a-z)
 CC ?= gcc
+PKG_CONFIG ?= pkg-config
 WINDRES ?= windres
 STRIP ?= strip
 RM ?= rm -f
@@ -115,51 +116,51 @@ ZLIB_LIBS ?= -lz
 CFLAGS_c += $(ZLIB_CFLAGS)
 LIBS_c += $(ZLIB_LIBS)
 
-PCRE2_CFLAGS ?= $(shell pkg-config libpcre2-8 --cflags)
-PCRE2_LIBS ?= $(shell pkg-config libpcre2-8 --libs)
+PCRE2_CFLAGS ?= $(shell $(PKG_CONFIG) libpcre2-8 --cflags)
+PCRE2_LIBS ?= $(shell $(PKG_CONFIG) libpcre2-8 --libs)
 CFLAGS_c += $(PCRE2_CFLAGS) -DPCRE2_CODE_UNIT_WIDTH=8
 LIBS_c += $(PCRE2_LIBS)
 
-EXPAT_CFLAGS ?= $(shell pkg-config expat --cflags)
-EXPAT_LIBS ?= $(shell pkg-config expat --libs)
+EXPAT_CFLAGS ?= $(shell $(PKG_CONFIG) expat --cflags)
+EXPAT_LIBS ?= $(shell $(PKG_CONFIG) expat --libs)
 CFLAGS_c += $(EXPAT_CFLAGS)
 LIBS_c += $(EXPAT_LIBS)
 
-PNG_CFLAGS ?= $(shell pkg-config libpng --cflags) -DWITH_PNG
-PNG_LIBS ?= $(shell pkg-config libpng --libs)
+PNG_CFLAGS ?= $(shell $(PKG_CONFIG) libpng --cflags) -DWITH_PNG
+PNG_LIBS ?= $(shell $(PKG_CONFIG) libpng --libs)
 CFLAGS_c += $(PNG_CFLAGS)
 LIBS_c += $(PNG_LIBS)
 
-JPEG_CFLAGS ?= $(shell pkg-config libjpeg --cflags) -DWITH_JPEG
-JPEG_LIBS ?= $(shell pkg-config libjpeg --libs)
+JPEG_CFLAGS ?= $(shell $(PKG_CONFIG) libjpeg --cflags) -DWITH_JPEG
+JPEG_LIBS ?= $(shell $(PKG_CONFIG) libjpeg --libs)
 CFLAGS_c += $(JPEG_CFLAGS)
 LIBS_c += $(JPEG_LIBS)
 
-CURL_CFLAGS ?= $(shell pkg-config libcurl --cflags)
-CURL_LIBS ?= $(shell pkg-config libcurl --libs)
+CURL_CFLAGS ?= $(shell $(PKG_CONFIG) libcurl --cflags)
+CURL_LIBS ?= $(shell $(PKG_CONFIG) libcurl --libs)
 CFLAGS_c += $(CURL_CFLAGS)
 LIBS_c += $(CURL_LIBS)
 
-JANSSON_CFLAGS ?= $(shell pkg-config jansson --cflags)
-JANSSON_LIBS ?= $(shell pkg-config jansson --libs)
+JANSSON_CFLAGS ?= $(shell $(PKG_CONFIG) jansson --cflags)
+JANSSON_LIBS ?= $(shell $(PKG_CONFIG) jansson --libs)
 CFLAGS += $(JANSSON_CFLAGS)
 LIBS_c += $(JANSSON_LIBS)
 
-MINIZIP_CFLAGS ?= $(shell pkg-config --cflags minizip)
-MINIZIP_LIBS ?= $(shell pkg-config --libs minizip)
+MINIZIP_CFLAGS ?= $(shell $(PKG_CONFIG) --cflags minizip)
+MINIZIP_LIBS ?= $(shell $(PKG_CONFIG) --libs minizip)
 CFLAGS_c += $(MINIZIP_CFLAGS)
 LIBS_c += $(MINIZIP_LIBS)
 
-SPEEX_LIBS ?= $(shell pkg-config speex --libs) $(shell pkg-config speexdsp --libs)
+SPEEX_LIBS ?= $(shell $(PKG_CONFIG) speex --libs) $(shell pkg-config speexdsp --libs)
 ifdef SPEEX_LIBS
-    CFLAGS_c += $(shell pkg-config speex --cflags) $(shell pkg-config speexdsp --cflags) -DWITH_SPEEX
+    CFLAGS_c += $(shell $(PKG_CONFIG) speex --cflags) $(shell pkg-config speexdsp --cflags) -DWITH_SPEEX
 endif
 LIBS_c += $(SPEEX_LIBS)
 
 ifndef CONFIG_WINDOWS
-    ifeq ($(shell pkg-config --exists freetype2 && echo 1),1)
-        FREETYPE_CFLAGS ?= $(shell pkg-config freetype2 --cflags)
-        FREETYPE_LIBS ?= $(shell pkg-config freetype2 --libs)
+    ifeq ($(shell $(PKG_CONFIG) --exists freetype2 && echo 1),1)
+        FREETYPE_CFLAGS ?= $(shell $(PKG_CONFIG) freetype2 --cflags)
+        FREETYPE_LIBS ?= $(shell $(PKG_CONFIG) freetype2 --libs)
     endif
 
     ifdef FREETYPE_LIBS
@@ -176,8 +177,8 @@ endif
 ifdef OLD_WAV_LOADING
     CFLAGS_c += -DOLD_WAV_LOADING
 else
-    SNDFILE_CFLAGS ?= $(shell pkg-config sndfile --cflags)
-    SNDFILE_LIBS ?= $(shell pkg-config sndfile --libs)
+    SNDFILE_CFLAGS ?= $(shell $(PKG_CONFIG) sndfile --cflags)
+    SNDFILE_LIBS ?= $(shell $(PKG_CONFIG) sndfile --libs)
     CFLAGS += $(SNDFILE_CFLAGS)
     LIBS_c += $(SNDFILE_LIBS)
 endif
@@ -562,8 +563,8 @@ LIBS_c += -lm
 endif
 
 #ifdef CONFIG_OGG
-#    OGG_CFLAGS ?= $(shell pkg-config vorbisfile --cflags) -DWITH_OGG_VORBIS
-#    OGG_LIBS ?= $(shell pkg-config vorbisfile --libs)
+#    OGG_CFLAGS ?= $(shell $(PKG_CONFIG) vorbisfile --cflags) -DWITH_OGG_VORBIS
+#    OGG_LIBS ?= $(shell $(PKG_CONFIG) vorbisfile --libs)
 #    CFLAGS_c += $(OGG_CFLAGS)
 #    LIBS_c += $(OGG_LIBS)
 #endif
