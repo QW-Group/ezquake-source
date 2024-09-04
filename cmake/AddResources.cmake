@@ -7,6 +7,8 @@
 # };
 # const unsigned int blabla_len = 581;
 
+find_program(JQ_EXECUTABLE jq)
+
 macro(add_resources target_var)
     add_library(${target_var} OBJECT)
     set(RESOURCE_COMPILER "${PROJECT_SOURCE_DIR}/cmake/ResourceCompiler.cmake")
@@ -24,8 +26,14 @@ macro(add_resources target_var)
         get_filename_component(source_file_name "${source_file}" NAME)
         set(generated_file_name "${generated_directory}/${source_file_name}.c")
 
+        get_filename_component(source_ext "${source_file}" EXT)
+        if (source_ext STREQUAL ".json" AND JQ_EXECUTABLE)
+            set(validation_command ${JQ_EXECUTABLE} empty "${source_file}")
+        endif()
+
         add_custom_command(
                 OUTPUT ${generated_file_name}
+                COMMAND ${validation_command}
                 COMMAND ${CMAKE_COMMAND} -P ${RESOURCE_COMPILER} "${source_file}" "${generated_file_name}"
                 WORKING_DIRECTORY "${source_file_dir}"
                 DEPENDS ${source_file} ${RESOURCE_COMPILER}
