@@ -73,10 +73,7 @@ Clone the ezQuake source code:
 git clone --recurse-submodules https://github.com/ezQuake/ezquake-source.git ezquake
 ```
 
-Initialize Vcpkg, and refresh submodules if needed:
-```
-bootstrap.bat
-```
+Initialize Vcpkg, and refresh submodules if needed by invoking the `bootstrap.ps1` script.
 
 Load the solution into VS, and compile your preferred target.
 

@@ -3,18 +3,22 @@
   "name": "ezquake",
   "version": "1.0.0",
   "dependencies": [
+    { "name": "pkgconf", "default-features": false, "platform": "osx", "host": true },
     { "name": "zlib", "default-features": false },
     { "name": "pcre2", "default-features": false },
     { "name": "minizip", "default-features": false },
     { "name": "expat", "default-features": false },
     { "name": "jansson", "default-features": false },
-    { "name": "curl", "default-features": false, "features": ["schannel"] },
+    { "name": "curl", "default-features": false, "features": ["schannel"], "platform": "windows" },
+    { "name": "curl", "default-features": false, "features": ["mbedtls"], "platform": "linux, osx" },
     { "name": "libpng", "default-features": false },
     { "name": "libjpeg-turbo", "default-features": false },
     { "name": "freetype", "default-features": false, "features": ["zlib"] },
     { "name": "speex", "default-features": false },
     { "name": "speexdsp", "default-features": false },
     { "name": "libsndfile", "default-features": false, "features": ["external-libs"] },
-    { "name": "sdl2", "default-features": false }
+    { "name": "alsa", "default-features": false, "platform": "linux" },
+    { "name": "sdl2", "default-features": false, "platform": "windows, osx" },
+    { "name": "sdl2", "default-features": false, "features": ["wayland", "x11", "alsa"], "platform": "linux" }
   ]
 }

@@ -1,0 +1,458 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 22,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "template-common",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build-${presetName}",
+            "cacheVariables": {
+                "CMAKE_VERBOSE_MAKEFILE": "OFF",
+                "CMAKE_COLOR_DIAGNOSTICS": "ON",
+                "CMAKE_CONFIGURATION_TYPES": "Debug;RelWithDebInfo;Release"
+            }
+        },
+        {
+            "name": "template-vcpkg",
+            "hidden": true,
+            "inherits": "template-common",
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": {
+                    "type": "FILEPATH",
+                    "value": "vcpkg/scripts/buildsystems/vcpkg.cmake"
+                },
+                "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets",
+                "VCPKG_LIBRARY_LINKAGE": "static",
+                "VCPKG_CRT_LINKAGE": "dynamic",
+                "VCPKG_INSTALL_OPTIONS": "--clean-after-build",
+                "VCPKG_ENABLE_METRICS": "0",
+                "VCPKG_APPLOCAL_DEPS": "OFF",
+                "USE_SYSTEM_LIBS": "OFF"
+            }
+        },
+        {
+            "name": "template-gcc-mingw-cross",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_SYSTEM_NAME": "Windows"
+            }
+        },
+        {
+            "name": "template-gcc-mingw-i686",
+            "hidden": true,
+            "inherits": "template-vcpkg",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "i686-w64-mingw32-gcc",
+                "CMAKE_CXX_COMPILER": "i686-w64-mingw32-g++",
+                "CMAKE_RC_COMPILER": "i686-w64-mingw32-windres",
+                "CMAKE_C_FLAGS": "-msse2"
+            }
+        },
+        {
+            "name": "template-gcc-mingw-x64",
+            "hidden": true,
+            "inherits": "template-vcpkg",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "x86_64-w64-mingw32-gcc",
+                "CMAKE_CXX_COMPILER": "x86_64-w64-mingw32-g++",
+                "CMAKE_RC_COMPILER": "x86_64-w64-mingw32-windres",
+                "CMAKE_C_FLAGS": "-march=nehalem"
+            }
+        },
+        {
+            "name": "msbuild-x64",
+            "description": "Configure as Visual Studio project",
+            "generator": "Visual Studio 17 2022",
+            "inherits": "template-vcpkg",
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "x64-windows-static"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "msvc-x64",
+            "description": "Configure using Ninja to build with msvc",
+            "generator": "Ninja Multi-Config",
+            "inherits": "template-vcpkg",
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "x64-windows-static"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "mingw64-x64-shared",
+            "hidden": true,
+            "description": "Configure using Ninja to build with mingw64 for x64",
+            "generator": "Ninja Multi-Config",
+            "inherits": "template-gcc-mingw-x64",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "x64-mingw-static",
+                "CMAKE_SYSTEM_PROCESSOR": "x86_64"
+            }
+        },
+        {
+            "name": "mingw64-x64",
+            "inherits": ["mingw64-x64-shared"],
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "mingw64-x64-cross",
+            "inherits": ["mingw64-x64-shared", "template-gcc-mingw-cross"],
+            "condition": {
+                "type": "notEquals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "mingw64-i686-shared",
+            "hidden": true,
+            "description": "Configure with Ninja to build with mingw64 for i686",
+            "generator": "Ninja Multi-Config",
+            "inherits": ["template-gcc-mingw-i686"],
+            "architecture": {
+                "value": "x86",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "x86-mingw-static",
+                "CMAKE_SYSTEM_PROCESSOR": "x86"
+            }
+        },
+        {
+            "name": "mingw64-i686",
+            "inherits": ["mingw64-i686-shared"],
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "mingw64-i686-cross",
+            "inherits": ["mingw64-i686-shared", "template-gcc-mingw-cross"],
+            "cacheVariables": {
+                "CMAKE_SYSTEM_PROCESSOR": "i686"
+            },
+            "condition": {
+                "type": "notEquals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "macos",
+            "hidden": true,
+            "description": "Configure XCode project file",
+            "generator": "Xcode",
+            "inherits": "template-vcpkg",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Darwin"
+            },
+            "cacheVariables": {
+                "RENDERER_MODERN_OPENGL": "OFF"
+            }
+        },
+        {
+            "name": "macos-arm64",
+            "displayName": "XCode (arm64)",
+            "inherits": "macos",
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "arm64-osx",
+                "CMAKE_OSX_ARCHITECTURES": "arm64",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0"
+            }
+        },
+        {
+            "name": "macos-arm64-release-ci",
+            "inherits": "macos-arm64",
+            "cacheVariables": {
+                "CMAKE_CONFIGURATION_TYPES": "Release",
+                "VCPKG_TARGET_TRIPLET": "arm64-osx-release",
+                "ENABLE_SANDBOX": "OFF"
+            }
+        },
+        {
+            "name": "macos-x64",
+            "displayName": "XCode (x64)",
+            "inherits": "macos",
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "x64-osx",
+                "CMAKE_OSX_ARCHITECTURES": "x86_64",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0"
+            }
+        },
+        {
+            "name": "macos-x64-release-ci",
+            "inherits": "macos-x64",
+            "cacheVariables": {
+                "CMAKE_CONFIGURATION_TYPES": "Release",
+                "VCPKG_TARGET_TRIPLET": "x64-osx-release",
+                "ENABLE_SANDBOX": "OFF"
+            }
+        },
+        {
+            "name": "dynamic",
+            "description": "Configure XCode project file",
+            "generator": "Ninja Multi-Config",
+            "inherits": "template-common",
+            "cacheVariables": {
+                "USE_SYSTEM_LIBS": "ON"
+            }
+        },
+        {
+            "name": "static",
+            "description": "Configure XCode project file",
+            "generator": "Ninja Multi-Config",
+            "inherits": "template-vcpkg"
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "msbuild-x64-debug",
+            "configurePreset": "msbuild-x64",
+            "displayName": "Build msbuild-x64 debug",
+            "description": "Build Visual Studio Debug configuration",
+            "configuration": "Debug"
+        },
+        {
+            "name": "msbuild-x64-release",
+            "configurePreset": "msbuild-x64",
+            "displayName": "Build msbuild-x64 release",
+            "description": "Build Visual Studio Release configuration",
+            "configuration": "Release"
+        },
+        {
+            "name": "msbuild-x64-relwithdebinfo",
+            "configurePreset": "msbuild-x64",
+            "displayName": "Build msbuild-x64 release with debug info",
+            "description": "Build Visual Studio Release configuration",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "msvc-x64-debug",
+            "configurePreset": "msvc-x64",
+            "displayName": "Build msvc-x64 debug",
+            "description": "Build MSVC debug configuration",
+            "configuration": "Debug"
+        },
+        {
+            "name": "msvc-x64-release",
+            "configurePreset": "msvc-x64",
+            "displayName": "Build ninja-msvc-x64 release",
+            "description": "Build MSVC release configuration",
+            "configuration": "Release"
+        },
+        {
+            "name": "msvc-x64-relwithdebinfo",
+            "configurePreset": "msvc-x64",
+            "displayName": "Build MSVC release with debug symbols",
+            "description": "Build MSVC release with debug info configuration",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "mingw64-x64-debug",
+            "configurePreset": "mingw64-x64",
+            "displayName": "Build mingw64-x64 debug",
+            "description": "Build Windows Subsystem for Linux Debug configuration",
+            "configuration": "Debug"
+        },
+        {
+            "name": "mingw64-x64-cross-debug",
+            "configurePreset": "mingw64-x64-cross",
+            "displayName": "Build mingw64-x64 debug",
+            "description": "Cross-compile with mingw64-x64 Debug configuration",
+            "configuration": "Debug"
+        },
+        {
+            "name": "mingw64-x64-release",
+            "configurePreset": "mingw64-x64",
+            "displayName": "Build mingw64-x64 release",
+            "description": "Build Windows Subsystem for Linux Release configuration",
+            "configuration": "Release"
+        },
+        {
+            "name": "mingw64-x64-cross-release",
+            "configurePreset": "mingw64-x64-cross",
+            "displayName": "Build mingw64-x64 release",
+            "description": "Cross-compile with mingw64-x64 Release configuration",
+            "configuration": "Release"
+        },
+        {
+            "name": "mingw64-x64-relwithdebinfo",
+            "configurePreset": "mingw64-x64",
+            "displayName": "Build mingw64-x64 release with debug info",
+            "description": "Build Windows Subsystem for Linux Release with debug info configuration",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "mingw64-x64-cross-relwithdebinfo",
+            "configurePreset": "mingw64-x64-cross",
+            "displayName": "Build mingw64-x64 release with debug info",
+            "description": "Cross-compile with mingw64-x64 Release with debug info configuration",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "mingw64-i686-debug",
+            "configurePreset": "mingw64-i686",
+            "displayName": "Build mingw64-i686 debug",
+            "description": "Build Windows Subsystem for Linux Debug configuration",
+            "configuration": "Debug"
+        },
+        {
+            "name": "mingw64-i686-cross-debug",
+            "configurePreset": "mingw64-i686-cross",
+            "displayName": "Build mingw64-i686 debug",
+            "description": "Build Windows Subsystem for Linux Debug configuration",
+            "configuration": "Debug"
+        },
+        {
+            "name": "mingw64-i686-release",
+            "configurePreset": "mingw64-i686",
+            "displayName": "Build mingw64-i686 release",
+            "description": "Build Windows Subsystem for Linux Debug configuration",
+            "configuration": "Release"
+        },
+        {
+            "name": "mingw64-i686-cross-release",
+            "configurePreset": "mingw64-i686-cross",
+            "displayName": "Build mingw64-i686 release",
+            "description": "Build Windows Subsystem for Linux Debug configuration",
+            "configuration": "Release"
+        },
+        {
+            "name": "mingw64-i686-relwithdebinfo",
+            "configurePreset": "mingw64-i686",
+            "displayName": "Build mingw64-i686 release with debug info",
+            "description": "Build Windows Subsystem for Linux Debug configuration",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "mingw64-i686-cross-relwithdebinfo",
+            "configurePreset": "mingw64-i686-cross",
+            "displayName": "Build mingw64-i686 release with debug info",
+            "description": "Cross-compile with mingw64-i686 Release with debug info configuration",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "macos-arm64-debug",
+            "configurePreset": "macos-arm64",
+            "displayName": "Build Xcode debug",
+            "description": "Build Xcode Debug configuration",
+            "configuration": "Debug"
+        },
+        {
+            "name": "macos-arm64-release",
+            "configurePreset": "macos-arm64",
+            "displayName": "Build Xcode release",
+            "description": "Build Xcode Release configuration",
+            "configuration": "Release"
+        },
+        {
+            "name": "macos-arm64-relwithdebinfo",
+            "configurePreset": "macos-arm64",
+            "displayName": "Build Xcode release with debug info",
+            "description": "Build Xcode Release with debug info configuration",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "macos-arm64-release-ci",
+            "configurePreset": "macos-arm64-release-ci",
+            "displayName": "Build Xcode release",
+            "description": "Build with community release triplet",
+            "configuration": "Release"
+        },
+        {
+            "name": "macos-x64-debug",
+            "configurePreset": "macos-x64",
+            "displayName": "Build Xcode debug",
+            "description": "Build Xcode Debug configuration",
+            "configuration": "Debug"
+        },
+        {
+            "name": "macos-x64-release",
+            "configurePreset": "macos-x64",
+            "displayName": "Build Xcode release",
+            "description": "Build Xcode Release configuration",
+            "configuration": "Release"
+        },
+        {
+            "name": "macos-x64-relwithdebinfo",
+            "configurePreset": "macos-x64",
+            "displayName": "Build Xcode release with debug info",
+            "description": "Build Xcode Release with debug info configuration",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "macos-x64-release-ci",
+            "configurePreset": "macos-x64-release-ci",
+            "displayName": "Build Xcode release",
+            "description": "Build with community release triplet",
+            "configuration": "Release"
+        },
+        {
+            "name": "dynamic-debug",
+            "configurePreset": "dynamic",
+            "displayName": "Build native dynamically linked release",
+            "description": "Build with community release triplet",
+            "configuration": "Debug"
+        },
+        {
+            "name": "dynamic-release",
+            "configurePreset": "dynamic",
+            "displayName": "Build native dynamically linked release",
+            "description": "Build with community release triplet",
+            "configuration": "Release"
+        },
+        {
+            "name": "dynamic-relwithdebinfo",
+            "configurePreset": "dynamic",
+            "displayName": "Build native dynamically linked release",
+            "description": "Build with community release triplet",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "static-debug",
+            "configurePreset": "static",
+            "displayName": "Build native statically linked debug",
+            "description": "Build with statically linked debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "static-release",
+            "configurePreset": "static",
+            "displayName": "Build native statically linked release",
+            "description": "Build with statically linked release",
+            "configuration": "Release"
+        },
+        {
+            "name": "static-relwithdebinfo",
+            "configurePreset": "static",
+            "displayName": "Build native statically linked release with debug info",
+            "description": "Build with statically linked release with debug info",
+            "configuration": "RelWithDebInfo"
+        }
+    ]
+}

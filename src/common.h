@@ -42,7 +42,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cmdline_params.h"
 #include "fs.h"
 
-#ifdef _WIN64
+#if defined(_WIN64) && !defined(__MINGW64__)
 int Q_strlen(const char* s);
 #define strlen Q_strlen
 #endif

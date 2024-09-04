@@ -80,8 +80,8 @@ else
             CFLAGS_c += -target $(DARWIN_TARGET)
             LDFLAGS_c += -target $(DARWIN_TARGET)
         else
-            CFLAGS_c += -mmacosx-version-min=10.8
-            LDFLAGS_c += -mmacosx-version-min=10.8
+            CFLAGS_c += -mmacosx-version-min=11.0
+            LDFLAGS_c += -mmacosx-version-min=11.0
         endif
 
         # From  10.10 at least, expat is a system library
@@ -542,7 +542,7 @@ else
 LIBS_c += -lm
 
     ifeq ($(SYS),Darwin)
-        LIBS_c += -framework Foundation -framework OpenGL -framework IOKit -framework CoreServices
+        LIBS_c += -framework Foundation -framework OpenGL -framework AppKit -framework CoreServices -framework GameController
         OBJS_c += $(SRC_DIR)/in_osx.o $(SRC_DIR)/sys_osx.o
     else
         LIBS_c += -lGL -lpthread

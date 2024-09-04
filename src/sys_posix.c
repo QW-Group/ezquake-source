@@ -102,8 +102,8 @@ void Sys_Quit(void)
 void Sys_Init(void)
 {
 #ifdef __APPLE__
-	extern void init_url_handler( void );
-	init_url_handler();
+	extern void init_macos_extras(void);
+	init_macos_extras();
 #endif
 	Cvar_Register(&sys_highpriority);
 	Cvar_Register(&sys_fontsdir);
