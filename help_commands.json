@@ -1749,8 +1749,8 @@
   "svadmin": {
     "system-generated": true
   },
-  "sys_forget_sandbox" {
-    "description": "Clears the currently selected sandbox directory. On the next restart, ezQuake will prompt you to select a directory again."
+  "sys_forget_sandbox": {
+    "description": "Clears the currently selected sandbox directory. On the next restart, ezQuake will prompt you to select a directory again.",
     "remarks": "macOS only"
   },
   "tcl_eval": {
