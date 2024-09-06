@@ -100,6 +100,16 @@ else()
     if(HAS_MISLEADING_INDENTATION)
         add_compile_options("-Wno-misleading-indentation")
     endif()
+    # While not gnu89, it's in practice allowed by all supported compilers
+    check_c_compiler_flag("-Wtypedef-redefinition" HAS_TYPE_REDEFINITION)
+    if(HAS_TYPE_REDEFINITION)
+        add_compile_options("-Wno-typedef-redefinition")
+    endif()
+    # Should mostly be fixed in mvdsv, and next sync can remove this
+    check_c_compiler_flag("-Wshorten-64-to-32" HAS_SHORTEN_64_TO_32)
+    if(HAS_TYPE_REDEFINITION)
+        add_compile_options("-Wno-shorten-64-to-32")
+    endif()
 endif()
 
 find_library(MATH m)
