@@ -47,29 +47,82 @@ jobs:
         path: .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.exe
 
   macos-build:
-    runs-on: macos-13
+    runs-on: macos-latest
     strategy:
       matrix:
-        ARCH: ["arm64","intel"]
+        ARCH: ["arm64","x64"]
     steps:
     - name: Check out code
       uses: actions/checkout@v4
       with:
         submodules: true
 
-    - name: Install dependencies
-      run: .github/workflows/scripts/homebrew.sh install-${{matrix.ARCH}}
+    - name: Install macOS build dependencies
+      run: brew install -q autoconf automake libtool
 
-    - name: Build
-      run: .github/workflows/scripts/homebrew.sh build-${{matrix.ARCH}}
+    - uses: lukka/get-cmake@latest
 
-    - name: Create Bundle
-      run: .github/workflows/scripts/homebrew.sh create-bundle ${{matrix.ARCH}}
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+
+    - name: Run CMake
+      uses: lukka/run-cmake@v10
+      with:
+          configurePreset: macos-${{matrix.ARCH}}-release-ci
+          buildPreset: macos-${{matrix.ARCH}}-release-ci
+
+    - name: Pre-zip to preserve executable bit
+      run: |
+          zip -r -9 ${GITHUB_WORKSPACE}/ezQuake.zip ezQuake.app
+      working-directory: build-macos-${{matrix.ARCH}}-release-ci/Release
 
     - uses: actions/upload-artifact@v4
       with:
-        name: macos-${{matrix.ARCH}}
+        name: ezQuake-macos-${{matrix.ARCH}}
         path: ezQuake.zip
+
+  macos-universal:
+      needs: macos-build
+      runs-on: macos-latest
+      steps:
+          - name: Check out code
+            uses: actions/checkout@v4
+
+          - name: Download Intel Build
+            uses: actions/download-artifact@v4
+            with:
+                name: ezQuake-macos-arm64
+                path: artifacts/arm64
+
+          - name: Download ARM64 Build
+            uses: actions/download-artifact@v4
+            with:
+                name: ezQuake-macos-x64
+                path: artifacts/x64
+
+          - name: Create Universal Binary
+            run: |
+                (cd artifacts/x64 && unzip -qq ezQuake.zip) && (cd artifacts/arm64 && unzip -qq ezQuake.zip)
+                cp -r artifacts/arm64/ezQuake.app .
+                lipo -create -output ezQuake.app/Contents/MacOS/ezQuake \
+                    artifacts/x64/ezQuake.app/Contents/MacOS/ezQuake \
+                    artifacts/arm64/ezQuake.app/Contents/MacOS/ezQuake
+                codesign --force --sign - --entitlements misc/install/ezquake.entitlements.plist --options runtime --timestamp ezQuake.app
+                zip -r ezQuake.zip ezQuake.app
+
+          - name: Delete macOS arch specific builds
+            uses: geekyeggo/delete-artifact@v5
+            with:
+                name: |
+                    ezQuake-macos-arm64
+                    ezQuake-macos-x64
+
+          - name: Upload Build Artifact
+            uses: actions/upload-artifact@v4
+            with:
+                name: ezQuake-macOS
+                path: ezQuake.zip
+                compression-level: 9
 
   linux-build:
     runs-on: ubuntu-latest
