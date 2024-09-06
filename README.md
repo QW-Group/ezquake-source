@@ -179,39 +179,7 @@ Copy the compiled binary to your Quake folder, on 64bit linux the binary will be
 
 ### Compiling an OS X binary
 
-_These instructions were tested on Mac OS X 10.10._
-
-Get [Homebrew](http://brew.sh)
-
-Run exactly as it says on the front page:
-
-```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
-Make sure you run the `brew doctor` as instructed before doing anything else.
-
-Then run:
-
-```
-brew install sdl2 sdl2_net sdl2_image sdl2_gfx sdl2_mixer pcre2 jansson pkg-config speex speexdsp libsndfile
-```
-
-When it's done, just run `make` and it should compile without errors.
-
-
-#### Creating an app bundle
-
-Call from main ezquake-source directory, e.g. you probably do something like this:
-
-```
-make
-sh misc/install/create_osx_bundle.sh
-```
-
-Current directory should have an `ezQuake.app` folder which is the app.
-
-There will also be an `ezquake.zip` which basically just zips up the .app.
+See [misc/docs/COMPILING_ON_OSX.md](misc/docs/COMPILING_ON_OSX.md)
 
 ## Nightly builds
 
