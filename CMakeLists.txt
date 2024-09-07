@@ -756,7 +756,11 @@ set(central
 source_group(TREE ${SOURCE_DIR} PREFIX "Source Files/central" FILES ${central})
 source_group(TREE ${SOURCE_DIR} PREFIX "Header Files/central" FILES ${central_headers})
 
-set(main ${SOURCE_DIR}/sys_$<IF:$<PLATFORM_ID:Windows>,win,posix>.c)
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(main ${SOURCE_DIR}/sys_win.c)
+else()
+    set(main ${SOURCE_DIR}/sys_posix.c)
+endif()
 source_group(TREE ${SOURCE_DIR} PREFIX "Source Files/main" FILES ${main})
 
 get_target_property(version_major git_version VERSION_MAJOR)
