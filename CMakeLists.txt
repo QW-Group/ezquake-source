@@ -767,6 +767,7 @@ get_target_property(version_major git_version VERSION_MAJOR)
 get_target_property(version_minor git_version VERSION_MINOR)
 get_target_property(version_patch git_version VERSION_PATCH)
 get_target_property(version_build git_version REVISION)
+get_target_property(version_commit git_version COMMIT)
 
 # macOS icon
 set(macos_icon "${PROJECT_SOURCE_DIR}/misc/install/ezquake.icns")
@@ -779,6 +780,7 @@ set(EZQUAKE_RESOURCE_NAME "ezQuake")
 set(EZQUAKE_RESOURCE_DESCRIPTION "ezQuake - a QuakeWorld client")
 set(EZQUAKE_RESOURCE_ICON "${PROJECT_SOURCE_DIR}/ezquake.ico")
 set(EZQUAKE_RESOURCE_VERSION "${version_major},${version_minor},${version_patch},${version_build}")
+set(EZQUAKE_RESOURCE_COMMIT "${version_commit}")
 configure_file("${PROJECT_SOURCE_DIR}/ezQuake.rc.in" ${windows_icon} @ONLY)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
