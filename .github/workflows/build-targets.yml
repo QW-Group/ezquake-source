@@ -2,49 +2,45 @@ name: build targets
 on: [push, pull_request, workflow_dispatch]
 jobs:
   windows-build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-       target: [windows-multi-x64]
        include:
-         - target: windows-multi-x64
-           config: rls-all
-           platform: x64
-           triplet: x64-windows-static
+         - target: x64
 
     steps:
     - name: Check out code
       uses: actions/checkout@v4
       with:
         submodules: true
+        fetch-depth: 0
 
-    - name: Setup vcpkg (it does not install any package yet)
+    - name: Fetch upstream tags for version metadata
+      run: |
+          git remote add upstream https://github.com/QW-Group/ezquake-source.git
+          git fetch --tags --no-recurse-submodules upstream
+      if: github.repository != 'QW-Group/ezquake-source'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -qq --no-install-recommends cmake ninja-build binutils-mingw-w64-x86-64 gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
+
+    - name: Setup vcpkg
       uses: lukka/run-vcpkg@v11
 
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.1
-
-    - name: Build txt2c
-      run: msbuild misc\vstudio\txt2c\txt2c.vcxproj -t:rebuild -property:Configuration=Release
-
-    - name: Make dir
-      run: mkdir .vs
-
-    - name: Copy txt2c
-      run: cp misc\vstudio\txt2c\.vs\txt2c.exe .vs\
-
-    - name: Build ezquake
-      run: msbuild ezQuake.vcxproj -t:rebuild -property:Configuration=${{ matrix.config }} -property:Platform=${{ matrix.platform }} -property:VcpkgEnableManifest=true
-      env:
-        VcpkgConfiguration: Release
-        VcpkgTriplet: ${{ matrix.triplet }}
+    - name: Run CMake
+      uses: lukka/run-cmake@v10
+      with:
+        configurePreset: mingw64-${{ matrix.target }}-cross
+        buildPreset: mingw64-${{ matrix.target }}-cross-release
 
     - name: Archive client
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.target }}
-        path: .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.exe
+        name: windows-multi-${{ matrix.target }}
+        path: ezquake.exe
 
   macos-build:
     runs-on: macos-latest
@@ -131,7 +127,7 @@ jobs:
                 path: ezQuake.zip
                 compression-level: 9
 
-  linux-build:
+  appimage-build:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

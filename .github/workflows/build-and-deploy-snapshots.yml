@@ -3,14 +3,12 @@ on: [push]
 jobs:
   windows-build:
     if: github.repository == 'QW-Group/ezquake-source'
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-       target: [windows-multi-x64]
        include:
-         - target: windows-multi-x64
-           config: rls-all
+         - config: rls-all
            platform: x64
            triplet: x64-windows-static
 
@@ -18,61 +16,50 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v4
       with:
-        submodules: true
+          submodules: true
+          fetch-depth: 0
 
-    - name: Setup vcpkg (it does not install any package yet)
+    - name: Install dependencies
+      run: |
+           sudo apt-get update -qq
+           sudo apt-get install -qq --no-install-recommends cmake ninja-build binutils-mingw-w64-x86-64 gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
+
+    - name: Setup vcpkg
       uses: lukka/run-vcpkg@v11
 
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.1
-
-    - name: Build txt2c
-      run: msbuild misc\vstudio\txt2c\txt2c.vcxproj -t:rebuild -property:Configuration=Release
-
-    - name: Make dir
-      run: mkdir .vs
-
-    - name: Copy txt2c
-      run: cp misc\vstudio\txt2c\.vs\txt2c.exe .vs\
-
-    - name: Build ezquake
-      run: msbuild ezQuake.vcxproj -t:rebuild -property:Configuration=${{ matrix.config }} -property:Platform=${{ matrix.platform }} -property:VcpkgEnableManifest=true
-      env:
-        VcpkgConfiguration: Release
-        VcpkgTriplet: ${{ matrix.triplet }}
+    - name: Run CMake
+      uses: lukka/run-cmake@v10
+      with:
+          configurePreset: mingw64-${{ matrix.platform }}-cross
+          buildPreset: mingw64-${{ matrix.platform }}-cross-release
 
     - name: Create checksum
       run: |
-           md5sum .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.exe > .vs\${{ matrix.platform }}\${{ matrix.config }}\Output\ezQuake.md5
-
-    - name: Invoke msys
-      uses: msys2/setup-msys2@v2
-      with:
-        install: openssh
+           md5sum ezquake.exe > ezquake.md5
 
     - name: Setup SSH
-      shell: msys2 {0}
       env:
-        SSH_AUTH_SOCK: C:\ssh_agent.sock
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      shell: bash
       run: |
-        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-        ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
     - name: Set date
-      shell: msys2 {0}
+      shell: bash
       run: |
-        export TZ=CET-1CEST
-        echo "DATE=$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_ENV
+          export TZ=CET-1CEST
+          echo "DATE=$(date "+%Y%m%d-%H%M%S")" >> $GITHUB_ENV
     - name: Deploy
-      shell: msys2 {0}
       env:
-        SSH_AUTH_SOCK: C:\ssh_agent.sock
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      shell: bash
       run: |
            mkdir -p upload/snapshots/windows/${{ matrix.platform }}/${{ matrix.config }}
            mkdir -p upload/snapshots/latest/windows/${{ matrix.platform }}/${{ matrix.config }}
-           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/snapshots/windows/${{ matrix.platform }}/${{ matrix.config }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezquake.exe
-           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/snapshots/windows/${{ matrix.platform }}/${{ matrix.config }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezquake.md5
-           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.exe upload/snapshots/latest/windows/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
-           cp .vs/${{ matrix.platform }}/${{ matrix.config }}/Output/ezQuake.md5 upload/snapshots/latest/windows/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
+           cp ezquake.exe upload/snapshots/windows/${{ matrix.platform }}/${{ matrix.config }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezquake.exe
+           cp ezquake.md5 upload/snapshots/windows/${{ matrix.platform }}/${{ matrix.config }}/${{ env.DATE }}_${GITHUB_SHA::7}_ezquake.md5
+           cp ezquake.exe upload/snapshots/latest/windows/${{ matrix.platform }}/${{ matrix.config }}/ezquake.exe
+           cp ezquake.md5 upload/snapshots/latest/windows/${{ matrix.platform }}/${{ matrix.config }}/ezquake.md5
            sftp -rp -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -P ${{ secrets.SFTP_PORT }} ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/snapshots <<< $'put -rp upload/snapshots/*'
 
   linux-build:
