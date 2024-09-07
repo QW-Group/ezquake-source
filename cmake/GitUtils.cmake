@@ -31,11 +31,23 @@ endfunction()
 function(git_extract_version target_var)
     if (GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
         execute_process(
-                COMMAND ${GIT_EXECUTABLE} rev-list HEAD --count
-                OUTPUT_VARIABLE GIT_REVISION
+                COMMAND ${GIT_EXECUTABLE} rev-parse --is-shallow-repository
+                OUTPUT_VARIABLE GIT_IS_SHALLOW
                 OUTPUT_STRIP_TRAILING_WHITESPACE
                 WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         )
+
+        if (GIT_IS_SHALLOW MATCHES "true")
+            message(WARNING "Shallow repository detected, revision not available.")
+            set(GIT_REVISION "0")
+        else()
+            execute_process(
+                    COMMAND ${GIT_EXECUTABLE} rev-list HEAD --count
+                    OUTPUT_VARIABLE GIT_REVISION
+                    OUTPUT_STRIP_TRAILING_WHITESPACE
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            )
+        endif()
 
         execute_process(
                 COMMAND ${GIT_EXECUTABLE} rev-parse HEAD
