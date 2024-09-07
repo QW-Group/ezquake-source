@@ -225,7 +225,7 @@ cvar_t vid_flashonactivity        = {"vid_flashonactivity",        "1",       CV
 cvar_t r_verbose                  = {"vid_verbose",                "0",       CVAR_SILENT };
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
 cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH_GFX | CVAR_AUTO }; // It's here because it needs to be registered before window creation
-cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "2",       CVAR_LATCH_GFX };
+cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "0",       CVAR_LATCH_GFX };
 #ifdef __APPLE__
 cvar_t vid_software_palette       = {"vid_software_palette",       "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
 #else
