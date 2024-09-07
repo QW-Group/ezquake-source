@@ -91,33 +91,38 @@ function(git_extract_version target_var)
             VERSION="${GIT_REVISION}~${GIT_COMMIT_SHORT_HASH}"
     )
 
-    string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+).*" "\\1;\\2;\\3" PARTS "${GIT_DESCRIBE}")
-    list(LENGTH PARTS PARTS_SIZE)
-
     set(VERSION_MAJOR 0)
     set(VERSION_MINOR 0)
     set(VERSION_PATCH 0)
 
-    if (PARTS_SIZE GREATER 0)
-        list(GET PARTS 0 VERSION_MAJOR)
-    endif()
+    string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+).*" "\\1;\\2;\\3" SEMVER_MATCH "${GIT_DESCRIBE}")
+    list(LENGTH SEMVER_MATCH PARTS_SIZE)
 
-    if (PARTS_SIZE GREATER 1)
-        list(GET PARTS 1 VERSION_MINOR)
-    endif()
+    if(SEMVER_MATCH)
+        if(PARTS_SIZE GREATER 0)
+            list(GET SEMVER_MATCH 0 VERSION_MAJOR)
+        endif()
 
-    if (PARTS_SIZE GREATER 2)
-        list(GET PARTS 2 VERSION_PATCH)
+        if(PARTS_SIZE GREATER 1)
+            list(GET SEMVER_MATCH 1 VERSION_MINOR)
+        endif()
+
+        if(PARTS_SIZE GREATER 2)
+            list(GET SEMVER_MATCH 2 VERSION_PATCH)
+        endif()
+    else()
+        message(WARNING "Upstream tags missing. Using default version 0.0.0")
     endif()
 
     set_target_properties(${target_var} PROPERTIES
             REVISION      "${GIT_REVISION}"
             VERSION       "${GIT_REVISION}~${GIT_COMMIT_SHORT_HASH}"
+            COMMIT        "${GIT_COMMIT_HASH}"
             GIT_DESCRIBE  "${GIT_DESCRIBE}"
             VERSION_MAJOR "${VERSION_MAJOR}"
             VERSION_MINOR "${VERSION_MINOR}"
             VERSION_PATCH "${VERSION_PATCH}"
     )
 
-    message("-- Version: ${GIT_DESCRIBE} (${GIT_REVISION}~${GIT_COMMIT_SHORT_HASH})")
+    message(STATUS "Version: ${GIT_DESCRIBE} (${GIT_REVISION}~${GIT_COMMIT_SHORT_HASH})")
 endfunction()
