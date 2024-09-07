@@ -5179,19 +5179,10 @@
       "type": "boolean"
     },
     "gl_part_bloodtrails": {
-      "default": "0",
+      "default": "1",
+      "desc": "Determines particles used for blood trails (gibs).",
       "group-id": "36",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable.",
-          "name": "false"
-        },
-        {
-          "description": "Determines particles used for blood trails (gibs).",
-          "name": "true"
-        }
-      ]
+      "type": "boolean"
     },
     "gl_part_bubble": {
       "default": "1",
