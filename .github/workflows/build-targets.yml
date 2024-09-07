@@ -56,6 +56,13 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
+        fetch-depth: 0
+
+    - name: Fetch upstream tags for version metadata
+      run: |
+          git remote add upstream https://github.com/QW-Group/ezquake-source.git
+          git fetch --tags --no-recurse-submodules upstream
+      if: github.repository != 'QW-Group/ezquake-source'
 
     - name: Install macOS build dependencies
       run: brew install -q autoconf automake libtool
@@ -145,6 +152,14 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
+        fetch-depth: 0
+
+    - name: Fetch upstream tags for version metadata
+      run: |
+          git config --global --add safe.directory '*' # container build workaround
+          git remote add upstream https://github.com/QW-Group/ezquake-source.git
+          git fetch --tags --no-recurse-submodules upstream
+      if: github.repository != 'QW-Group/ezquake-source'
 
     - name: Build
       run:  git config --global --add safe.directory $PWD && ./misc/appimage/appimage-manual_creation.sh
