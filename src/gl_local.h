@@ -97,6 +97,7 @@ extern	cvar_t	gl_fb_models;
 extern	cvar_t	gl_playermip;
 
 extern  cvar_t gl_part_explosions;
+extern  cvar_t gl_part_bloodtrails;
 extern  cvar_t gl_part_trails;
 extern  cvar_t gl_part_spikes;
 extern  cvar_t gl_part_gunshots;
