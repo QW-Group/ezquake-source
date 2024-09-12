@@ -328,7 +328,7 @@ static qbool VX_TrackerStringPrintSegments(const char* text1, const char* text2,
 		{
 			int flags = Print_flags[Print_current];
 			Print_flags[Print_current] |= PR_NONOTIFY;
-			Com_Printf("%s%s%s%s%s%s%s%s\n", amf_tracker_string_inconsole_prefix, text1 ? text1 : "", text1 && text2 ? " " : "", text2 ? text2 : "", text2 && text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
+			Com_Printf("%s%s%s%s%s%s%s%s\n", amf_tracker_string_inconsole_prefix.string, text1 ? text1 : "", text1 && text2 ? " " : "", text2 ? text2 : "", text2 && text3 ? " " : "", text3 ? text3 : "", text3 && text4 ? " " : "", text4 ? text4 : "");
 			Print_flags[Print_current] = flags;
 			return true;
 		}
