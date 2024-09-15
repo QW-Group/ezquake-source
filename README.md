@@ -64,72 +64,7 @@ If you want to make a clean installation of ezQuake you can do this by following
 
 ### Compiling a Windows binary
 
-#### Using Visual Studio
-The project contain a VS solution.
-
-Clone the ezQuake source code:
-
-```
-git clone --recurse-submodules https://github.com/ezQuake/ezquake-source.git ezquake
-```
-
-Initialize Vcpkg, and refresh submodules if needed by invoking the `bootstrap.ps1` script.
-
-Load the solution into VS, and compile your preferred target.
-
-
-#### Using Ubuntu Bash (WSL)
-
-You can use the new Ubuntu Bash feature in Windows 10 to compile ezQuake for Windows.
-
-To enable Bash for Windows, press the `Start` button and type `Turn Windows f` and select `Turn Windows features on or off`. Scroll down to `Windows Subsystem for Linux (Beta)` and enable it.
-
-Now press WINDOWS+I, go to `Update & security` and then to the `For developers` tab. Enable `Developer mode`.
-
-Now press the `Start` button again and enter `bash`. Click it and install Bash.
-
-Enter the following command to install all required prerequisites to build ezQuake:
-
-```
-sudo apt-get install -y git mingw-w64 build-essential libspeexdsp-dev dos2unix pkg-config
-```
-
-Now clone the ezQuake source code:
-
-```
-git clone --recurse-submodules https://github.com/ezQuake/ezquake-source.git ezquake
-```
-
-Make sure line endings are not CRLF:
-
-```
-dos2unix *.sh
-```
-
-Now build the ezQuake executable:
-
-```
-EZ_CONFIG_FILE=.config_windows make
-```
-
-Copy the compiled binary to your Quake folder, the binary is called `ezquake.exe`.
-
-#### Using a Linux system
-
-Initialize/update git submodules:
-```
-git submodule update --init --recursive --remote
-```
-
-Make sure you have mingw32 toolchain installed. On Arch Linux it's `mingw-w64` (select complete group).
-
-Build an executable using the following command:
-
-```
-EZ_CONFIG_FILE=.config_windows make
-```
-
-You can add `-jN` as a parameter to `make` to build in parallell. Use number of cpu cores plus 1 (e.g. `-j5` if you have a quad core processor).
+See [misc/docs/COMPILING_FOR_WINDOWS.md](misc/docs/COMPILING_FOR_WINDOWS.md)
 
 ### Compiling a Linux binary
 
