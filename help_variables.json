@@ -15627,6 +15627,23 @@
       "remarks": "See also: r_nearclip.",
       "type": "float"
     },
+    "r_remove_collinear_vertices": {
+        "default": "0",
+        "desc": "Filter out vertices causing triangles to have zero area. These types of triangles are a sore spot in some GPUs that risk introducing glitches. An expected side effect is a risk of seeing a sparkling pixel.",
+        "group-id": "35",
+        "remarks": "For macOS arm64 this is force-enabled to prevent cheating. This filtering is a temporary workaround before adding code to avoid generating such triangles in the first place.",
+        "type": "boolean",
+        "values": [
+            {
+                "description": "Disable filtering of collinear vertices.",
+                "name": "false"
+            },
+            {
+                "description": "Enable filtering of collinear vertices.",
+                "name": "true"
+            }
+        ]
+    },
     "r_fastsky": {
       "default": "0",
       "group-id": "51",
