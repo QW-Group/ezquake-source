@@ -1,12 +1,26 @@
-#!/bin/sh
+#!/bin/sh -e
 
 show_error() {
-    echo "Error: $1"
+    printf "\e[31mError\e[0m: $1\n"
     exit 1
 }
 
-if ! command -v git >/dev/null 2>&1; then
-    show_error "Git is needed to checkout vcpkg, but it's not installed or not available in PATH."
+required_commands="cmake ninja git automake autoconf pkg-config curl zip unzip tar"
+
+missing_deps=""
+for cmd in $required_commands; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        missing_deps="$missing_deps $cmd"
+    fi
+done
+
+# naming differs on macOS/Linux
+if ! command -v "libtoolize" >/dev/null 2>&1 && ! command -v "glibtoolize" >/dev/null 2>&1; then
+    missing_deps="$missing_deps libtool";
+fi
+
+if [ -n "$missing_deps" ]; then
+    show_error "Install packages that provide support for:$missing_deps"
 fi
 
 if [ -e ".git" ]; then
