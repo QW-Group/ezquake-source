@@ -43,7 +43,8 @@ typedef enum {
 	rs_smackdown,
 	rs_thunderdome,
 	rs_qcon,
-	rs_mtfl
+	rs_mtfl,
+	rs_smackdrive
 } ruleset_t;
 
 void  Rulesets_Init(void);
