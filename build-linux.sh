@@ -74,7 +74,7 @@ if [ -f $BUILD_LOG ];then
 	rm -f $BUILD_LOG ||:
 fi
 
-[ -e Makefile ] || error "Cannot find 'Makefile', please run this script from the source code directory."
+[ -e CMakeLists.txt ] || error "Cannot find 'Makefile', please run this script from the source code directory."
 command -v sudo >/dev/null 2>&1 || error "Could not find sudo, please install it. Exiting."
 
 

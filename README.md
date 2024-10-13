@@ -62,59 +62,10 @@ If you want to make a clean installation of ezQuake you can do this by following
 
 ## Compiling
 
-### Compiling a Windows binary
+On Linux, `./build-linux.sh` produces an ezQuake binary in the top directory. 
 
-See [misc/docs/COMPILING_FOR_WINDOWS.md](misc/docs/COMPILING_FOR_WINDOWS.md)
-
-### Compiling a Linux binary
-
-_These instructions were tested on Ubuntu_
-
-Make sure you have the dependencies installed:
-
-(You may skip installing dependencies if you are going to use the build-linux.sh script included in the repository, this will take care of installing packages for you.)
-
-- For *Debian/Ubuntu 16.10+*
-```
-sudo apt install git build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev libfreetype6-dev libsndfile1-dev libpcre2-dev libminizip-dev
-```
-- For *openSUSE Tumbleweed*
-```
-sudo zypper install -t pattern devel_C_C++
-sudo zypper install git pcre2-devel Mesa-libGL-devel SDL2-devel libjansson-devel libexpat-devel libcurl-devel libpng16-devel libpng16-compat-devel libjpeg8-devel libjpeg-turbo libsndfile-devel speex-devel speexdsp-devel libXxf86vm-devel
-```
-- For *Fedora*
-```
-sudo dnf group install 'C Development Tools and Libraries'
-sudo dnf install git pcre2-devel mesa-libEGL-devel SDL2-devel jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel libsndfile-devel speex-devel speexdsp-devel libXxf86vm-devel
-```
-
-Clone the git repository:
-```
-git clone --recurse-submodules https://github.com/ezQuake/ezquake-source.git
-```
-
-Switch to `ezquake-source` path:
-```
-cd ~/ezquake-source/
-```
-
-Initialize/update git submodules:
-```
-git submodule update --init --recursive --remote
-```
-
-Run the compilation (replace 5 with the number of cpu cores you have +1):
-```
-make -j5
-```
-You can add `-jN` as a parameter to `make` to build in parallell. Use number of cpu cores plus 1 (e.g. `-j5` if you have a quad core processor).
-
-Copy the compiled binary to your Quake folder, on 64bit linux the binary will be called `ezquake-linux-x86_64`.
-
-### Compiling an OS X binary
-
-See [misc/docs/COMPILING_ON_OSX.md](misc/docs/COMPILING_ON_OSX.md)
+For a more in-depth description of how to build on all platforms, have a look at 
+[BUILD.md](BUILD.md).
 
 ## Nightly builds
 
