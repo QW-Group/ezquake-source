@@ -2,12 +2,7 @@ name: build targets
 on: [push, pull_request, workflow_dispatch]
 jobs:
   windows-build:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-       include:
-         - target: x64
+    runs-on: windows-latest
 
     steps:
     - name: Check out code
@@ -22,24 +17,19 @@ jobs:
           git fetch --tags --no-recurse-submodules upstream
       if: github.repository != 'QW-Group/ezquake-source'
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update -qq
-        sudo apt-get install -qq --no-install-recommends cmake ninja-build binutils-mingw-w64-x86-64 gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64
-
     - name: Setup vcpkg
       uses: lukka/run-vcpkg@v11
 
     - name: Run CMake
       uses: lukka/run-cmake@v10
       with:
-        configurePreset: mingw64-${{ matrix.target }}-cross
-        buildPreset: mingw64-${{ matrix.target }}-cross-release
+        configurePreset: msbuild-x64
+        buildPreset: msbuild-x64-release
 
     - name: Archive client
       uses: actions/upload-artifact@v4
       with:
-        name: windows-multi-${{ matrix.target }}
+        name: windows-multi-x64
         path: ezquake.exe
 
   macos-build:
