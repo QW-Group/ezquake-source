@@ -13,6 +13,6 @@ SysPrintf.log
 *.glsl.c
 vcpkg_installed/
 src/.msversion.h
-/build-*/
+/build*/
 
 !.gitignore
