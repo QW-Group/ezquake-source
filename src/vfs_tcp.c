@@ -115,7 +115,7 @@ int VFSTCP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfs
 	}
 	else
 	{ // lack of data, but probably have at least something in buffer
-		if (tf->readbuffered > 0) {
+		if (tf->readbuffered > 0 && buffer != NULL) {
 			bytestoread = tf->readbuffered;
 			memcpy(buffer, tf->readbuffer, tf->readbuffered);
 			tf->readbuffered = 0;

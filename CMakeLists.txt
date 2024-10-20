@@ -897,11 +897,6 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(INSTALL_DESTINATION "${PROJECT_SOURCE_DIR}" CACHE PATH "Installation Directory" FORCE)
 
     install(TARGETS ezquake DESTINATION ${INSTALL_DESTINATION})
-
-    add_custom_command(
-        TARGET ezquake POST_BUILD
-        COMMAND ${CMAKE_COMMAND} --install ${CMAKE_BINARY_DIR} $<$<CONFIG:Release>:--strip> --config $<CONFIG>
-    )
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
