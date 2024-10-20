@@ -8545,6 +8545,11 @@
       "group-id": "19",
       "type": "string"
     },
+    "hud_gun2_frame_hide": {
+      "desc": "Hide the frame unless you have the weapon.",
+      "group-id": "19",
+      "type": "integer"
+    },
     "hud_gun2_item_opacity": {
       "group-id": "19",
       "type": "float"
@@ -8641,6 +8646,11 @@
       "desc": "Defines the color of the background of the gun3 HUD element. See HUD manual for more info.",
       "group-id": "19",
       "type": "string"
+    },
+    "hud_gun3_frame_hide": {
+      "desc": "Hide the frame unless you have the weapon.",
+      "group-id": "19",
+      "type": "integer"
     },
     "hud_gun3_item_opacity": {
       "group-id": "19",
@@ -8739,6 +8749,11 @@
       "group-id": "19",
       "type": "string"
     },
+    "hud_gun4_frame_hide": {
+      "desc": "Hide the frame unless you have the weapon.",
+      "group-id": "19",
+      "type": "integer"
+    },
     "hud_gun4_item_opacity": {
       "group-id": "19",
       "type": "float"
@@ -8835,6 +8850,11 @@
       "desc": "Defines the color of the background of the gun5 HUD element. See HUD manual for more info.",
       "group-id": "19",
       "type": "string"
+    },
+    "hud_gun5_frame_hide": {
+      "desc": "Hide the frame unless you have the weapon.",
+      "group-id": "19",
+      "type": "integer"
     },
     "hud_gun5_item_opacity": {
       "group-id": "19",
@@ -8933,6 +8953,11 @@
       "group-id": "19",
       "type": "string"
     },
+    "hud_gun6_frame_hide": {
+      "desc": "Hide the frame unless you have the weapon.",
+      "group-id": "19",
+      "type": "integer"
+    },
     "hud_gun6_item_opacity": {
       "group-id": "19",
       "type": "float"
@@ -9030,6 +9055,11 @@
       "group-id": "19",
       "type": "string"
     },
+    "hud_gun7_frame_hide": {
+      "desc": "Hide the frame unless you have the weapon.",
+      "group-id": "19",
+      "type": "integer"
+    },
     "hud_gun7_item_opacity": {
       "group-id": "19",
       "type": "float"
@@ -9126,6 +9156,11 @@
       "desc": "Defines the color of the background of the gun8 HUD element. See HUD manual for more info.",
       "group-id": "19",
       "type": "string"
+    },
+    "hud_gun8_frame_hide": {
+      "desc": "Hide the frame unless you have the weapon.",
+      "group-id": "19",
+      "type": "integer"
     },
     "hud_gun8_item_opacity": {
       "group-id": "19",
