@@ -23,6 +23,7 @@ jobs:
 
     - name: Create checksum
       run: |
+          cp build-msbuild-*/Release/ezquake.exe .
           md5sum ezquake.exe > ezquake.md5
 
     - name: Setup SSH

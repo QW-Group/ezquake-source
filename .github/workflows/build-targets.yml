@@ -30,7 +30,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: windows-multi-x64
-        path: ezquake.exe
+        path: build-msbuild-x64/Release/ezquake.exe
 
   macos-build:
     runs-on: macos-latest
