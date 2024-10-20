@@ -891,14 +891,6 @@ endif()
 
 set_target_properties(ezquake PROPERTIES OUTPUT_NAME ${EXECUTABLE_NAME})
 
-# Make executable easy to find in project root, strip if release (macOS does this on its own).
-# If CMake was invoked with an installation prefix, don't override with project root.
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(INSTALL_DESTINATION "${PROJECT_SOURCE_DIR}" CACHE PATH "Installation Directory" FORCE)
-
-    install(TARGETS ezquake DESTINATION ${INSTALL_DESTINATION})
-endif()
-
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     get_target_property(version git_version GIT_DESCRIBE)
 
