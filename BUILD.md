@@ -19,8 +19,7 @@ dependency is not installed. Check the output to see if it matches your expectat
 in regard to optional dependencies.
 
 When configure phase passes, the build phase will produce a dynamically linked binary.
-For convenience this binary is copied to the top project directory, but can otherwise
-be found in the build directory at `build/ezquake-linux-x86_64`.
+The resulting binary can be found in the build directory at `build/ezquake-linux-x86_64`.
 
 The default mode of compilation is to not show the full command line, only errors and
 warnings. To enable verbose mode, set `CMAKE_VERBOSE_MAKEFILE` to `ON`.

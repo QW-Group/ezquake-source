@@ -93,7 +93,7 @@ echo "$TESTPROGRAM" > "$DIR/test.c" || exit 2
 gcc "$DIR/test.c" -o "$DIR/AppDir/usr/bin/test" -lcurl || exit 2
 rm -f "$DIR/AppDir/test.c" || exit 2
 
-cp -f ezquake-linux-$ARCH "$DIR/AppDir/usr/bin/." || exit 4
+cp -f build-dynamic/Release/ezquake-linux-$ARCH "$DIR/AppDir/usr/bin/." || exit 4
 rm -f "$DIR/AppDir/AppRun"
 echo "$QUAKE_SCRIPT" > "$DIR/AppDir/AppRun" || exit 4
 chmod +x "$DIR/AppDir/AppRun" || exit 4
