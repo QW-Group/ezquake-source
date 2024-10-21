@@ -26,6 +26,11 @@ jobs:
           cp build-msbuild-*/Release/ezquake.exe .
           md5sum ezquake.exe > ezquake.md5
 
+    - name: Invoke msys
+      uses: msys2/setup-msys2@v2
+      with:
+          install: openssh
+
     - name: Setup SSH
       env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
