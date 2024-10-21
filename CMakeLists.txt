@@ -778,10 +778,10 @@ set(windows_icon "${CMAKE_CURRENT_BINARY_DIR}/ezQuake.rc")
 set(EZQUAKE_RESOURCE_AUTHOR "QW-Group")
 set(EZQUAKE_RESOURCE_NAME "ezQuake")
 set(EZQUAKE_RESOURCE_DESCRIPTION "ezQuake - a QuakeWorld client")
-set(EZQUAKE_RESOURCE_ICON "${PROJECT_SOURCE_DIR}/ezquake.ico")
+set(EZQUAKE_RESOURCE_ICON "${PROJECT_SOURCE_DIR}/dist/windows/ezquake.ico")
 set(EZQUAKE_RESOURCE_VERSION "${version_major},${version_minor},${version_patch},${version_build}")
 set(EZQUAKE_RESOURCE_COMMIT "${version_commit}")
-configure_file("${PROJECT_SOURCE_DIR}/ezQuake.rc.in" ${windows_icon} @ONLY)
+configure_file("${PROJECT_SOURCE_DIR}/dist/windows/ezQuake.rc.in" ${windows_icon} @ONLY)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     # Mark the executable as a non-console application
