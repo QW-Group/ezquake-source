@@ -100,7 +100,7 @@ jobs:
                 lipo -create -output ezQuake.app/Contents/MacOS/ezQuake \
                     artifacts/x64/ezQuake.app/Contents/MacOS/ezQuake \
                     artifacts/arm64/ezQuake.app/Contents/MacOS/ezQuake
-                codesign --force --sign - --entitlements misc/install/ezquake.entitlements.plist --options runtime --timestamp ezQuake.app
+                codesign --force --sign - --entitlements dist/macOS/ezquake.entitlements.plist --options runtime --timestamp ezQuake.app
                 zip -r ezQuake.zip ezQuake.app
 
           - name: Delete macOS arch specific builds
