@@ -911,10 +911,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     if(ENABLE_SANDBOX)
         set_target_properties(ezquake PROPERTIES
-                XCODE_ATTRIBUTE_ENABLE_APP_SANDBOX                 YES
-                XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME            YES
-                XCODE_ATTRIBUTE_CODE_SIGN_INJECT_BASE_ENTITLEMENTS YES
-                XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS             "dist/macOS/ezquake.entitlements.plist"
+                XCODE_ATTRIBUTE_ENABLE_APP_SANDBOX                                         YES
+                XCODE_ATTRIBUTE_ENABLE_HARDENED_RUNTIME                                    YES
+                XCODE_ATTRIBUTE_CODE_SIGN_INJECT_BASE_ENTITLEMENTS[variant=Debug]          YES
+                XCODE_ATTRIBUTE_CODE_SIGN_INJECT_BASE_ENTITLEMENTS[variant=RelWithDebInfo] YES
+                XCODE_ATTRIBUTE_CODE_SIGN_INJECT_BASE_ENTITLEMENTS[variant=Release]        NO
+                XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "dist/macOS/ezquake.entitlements.plist"
         )
     endif()
 endif()
