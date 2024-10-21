@@ -181,7 +181,7 @@ static void SCR_HUD_DrawGunByNum(hud_t *hud, int num, float scale, int style, in
 
 static void SCR_HUD_DrawGun2(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *proportional;
+	static cvar_t *scale = NULL, *style, *proportional, *frame_hide;
 	if (scale == NULL) {
 		// first time called
 		scale = HUD_FindVar(hud, "scale");
@@ -191,11 +191,16 @@ static void SCR_HUD_DrawGun2(hud_t *hud)
 	if (cl.spectator == cl.autocam) {
 		SCR_HUD_DrawGunByNum(hud, 2, scale->value, style->value, 0, proportional->integer);
 	}
+
+	frame_hide = HUD_FindVar(hud, "frame_hide");
+	hud->frame_hide = frame_hide->value && !(HUD_Stats(STAT_ITEMS) & IT_SHOTGUN)
+		? true
+		: false;
 }
 
 static void SCR_HUD_DrawGun3(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *proportional;
+	static cvar_t *scale = NULL, *style, *proportional, *frame_hide;
 	if (scale == NULL) {
 		// first time called
 		scale = HUD_FindVar(hud, "scale");
@@ -205,11 +210,16 @@ static void SCR_HUD_DrawGun3(hud_t *hud)
 	if (cl.spectator == cl.autocam) {
 		SCR_HUD_DrawGunByNum(hud, 3, scale->value, style->value, 0, proportional->integer);
 	}
+
+	frame_hide = HUD_FindVar(hud, "frame_hide");
+	hud->frame_hide = frame_hide->value && !(HUD_Stats(STAT_ITEMS) & IT_SUPER_SHOTGUN)
+		? true
+		: false;
 }
 
 static void SCR_HUD_DrawGun4(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *proportional;
+	static cvar_t *scale = NULL, *style, *proportional, *frame_hide;
 	if (scale == NULL) {
 		// first time called
 		scale = HUD_FindVar(hud, "scale");
@@ -219,11 +229,16 @@ static void SCR_HUD_DrawGun4(hud_t *hud)
 	if (cl.spectator == cl.autocam) {
 		SCR_HUD_DrawGunByNum(hud, 4, scale->value, style->value, 0, proportional->integer);
 	}
+
+	frame_hide = HUD_FindVar(hud, "frame_hide");
+	hud->frame_hide = frame_hide->value && !(HUD_Stats(STAT_ITEMS) & IT_NAILGUN)
+		? true
+		: false;
 }
 
 static void SCR_HUD_DrawGun5(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *proportional;
+	static cvar_t *scale = NULL, *style, *proportional, *frame_hide;
 	if (scale == NULL) {
 		// first time called
 		scale = HUD_FindVar(hud, "scale");
@@ -233,11 +248,16 @@ static void SCR_HUD_DrawGun5(hud_t *hud)
 	if (cl.spectator == cl.autocam) {
 		SCR_HUD_DrawGunByNum(hud, 5, scale->value, style->value, 0, proportional->integer);
 	}
+
+	frame_hide = HUD_FindVar(hud, "frame_hide");
+	hud->frame_hide = frame_hide->value && !(HUD_Stats(STAT_ITEMS) & IT_SUPER_NAILGUN)
+		? true
+		: false;
 }
 
 static void SCR_HUD_DrawGun6(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *proportional;
+	static cvar_t *scale = NULL, *style, *proportional, *frame_hide;
 	if (scale == NULL) {
 		// first time called
 		scale = HUD_FindVar(hud, "scale");
@@ -247,11 +267,16 @@ static void SCR_HUD_DrawGun6(hud_t *hud)
 	if (cl.spectator == cl.autocam) {
 		SCR_HUD_DrawGunByNum(hud, 6, scale->value, style->value, 0, proportional->integer);
 	}
+
+	frame_hide = HUD_FindVar(hud, "frame_hide");
+	hud->frame_hide = frame_hide->value && !(HUD_Stats(STAT_ITEMS) & IT_GRENADE_LAUNCHER)
+		? true
+		: false;
 }
 
 static void SCR_HUD_DrawGun7(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *proportional;
+	static cvar_t *scale = NULL, *style, *proportional, *frame_hide;
 	if (scale == NULL) {
 		// first time called
 		scale = HUD_FindVar(hud, "scale");
@@ -261,11 +286,16 @@ static void SCR_HUD_DrawGun7(hud_t *hud)
 	if (cl.spectator == cl.autocam) {
 		SCR_HUD_DrawGunByNum(hud, 7, scale->value, style->value, 0, proportional->integer);
 	}
+
+	frame_hide = HUD_FindVar(hud, "frame_hide");
+	hud->frame_hide = frame_hide->value && !(HUD_Stats(STAT_ITEMS) & IT_ROCKET_LAUNCHER)
+		? true
+		: false;
 }
 
 static void SCR_HUD_DrawGun8(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *wide, *proportional;
+	static cvar_t *scale = NULL, *style, *wide, *proportional, *frame_hide;
 	if (scale == NULL) {
 		// first time called
 		scale = HUD_FindVar(hud, "scale");
@@ -276,6 +306,11 @@ static void SCR_HUD_DrawGun8(hud_t *hud)
 	if (cl.spectator == cl.autocam) {
 		SCR_HUD_DrawGunByNum(hud, 8, scale->value, style->value, wide->value, proportional->integer);
 	}
+
+	frame_hide = HUD_FindVar(hud, "frame_hide");
+	hud->frame_hide = frame_hide->value && !(HUD_Stats(STAT_ITEMS) & IT_LIGHTNING)
+		? true
+		: false;
 }
 
 static void SCR_HUD_DrawGunCurrent(hud_t *hud)
@@ -327,6 +362,7 @@ void Guns_HudInit(void)
 		"style", "0",
 		"scale", "1",
 		"proportional", "0",
+		"frame_hide", "0",
 		NULL);
 	HUD_Register("gun2", NULL, "Part of your inventory - shotgun.",
 		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun2,
@@ -334,6 +370,7 @@ void Guns_HudInit(void)
 		"style", "0",
 		"scale", "1",
 		"proportional", "0",
+		"frame_hide", "0",
 		NULL);
 	HUD_Register("gun3", NULL, "Part of your inventory - super shotgun.",
 		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun3,
@@ -341,6 +378,7 @@ void Guns_HudInit(void)
 		"style", "0",
 		"scale", "1",
 		"proportional", "0",
+		"frame_hide", "0",
 		NULL);
 	HUD_Register("gun4", NULL, "Part of your inventory - nailgun.",
 		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun4,
@@ -348,6 +386,7 @@ void Guns_HudInit(void)
 		"style", "0",
 		"scale", "1",
 		"proportional", "0",
+		"frame_hide", "0",
 		NULL);
 	HUD_Register("gun5", NULL, "Part of your inventory - super nailgun.",
 		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun5,
@@ -355,6 +394,7 @@ void Guns_HudInit(void)
 		"style", "0",
 		"scale", "1",
 		"proportional", "0",
+		"frame_hide", "0",
 		NULL);
 	HUD_Register("gun6", NULL, "Part of your inventory - grenade launcher.",
 		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun6,
@@ -362,6 +402,7 @@ void Guns_HudInit(void)
 		"style", "0",
 		"scale", "1",
 		"proportional", "0",
+		"frame_hide", "0",
 		NULL);
 	HUD_Register("gun7", NULL, "Part of your inventory - rocket launcher.",
 		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun7,
@@ -369,6 +410,7 @@ void Guns_HudInit(void)
 		"style", "0",
 		"scale", "1",
 		"proportional", "0",
+		"frame_hide", "0",
 		NULL);
 	HUD_Register("gun8", NULL, "Part of your inventory - thunderbolt.",
 		HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawGun8,
@@ -377,5 +419,6 @@ void Guns_HudInit(void)
 		"style", "0",
 		"scale", "1",
 		"proportional", "0",
+		"frame_hide", "0",
 		NULL);
 }

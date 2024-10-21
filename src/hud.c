@@ -904,6 +904,10 @@ void HUD_OnChangeFrameColor(cvar_t *var, char *newval, qbool *cancel)
 //
 void HUD_DrawFrame(hud_t *hud, int x, int y, int width, int height)
 {
+	if (hud->frame_hide) {
+		return;
+	}
+
 	if (!hud->frame->value)
 		return;
 
