@@ -254,8 +254,7 @@ nextInstruction2:
 				//vm->programStack = programStack - 4;
 				vm->programStack = programStack - 8;
 				*(int *)&image[ programStack + 4 ] = ~r0.i;
-				{
-#if idx64 //__WORDSIZE == 64
+				if (sizeof(int) != sizeof(intptr_t)) {
 					// the vm has ints on the stack, we expect
 					// longs so we have to convert it
 					intptr_t argarr[16];
@@ -264,12 +263,10 @@ nextInstruction2:
 						argarr[ argn ] = *(int*)&image[ programStack + 4 + 4*argn ];
 					}
 					v0 = vm->systemCall( &argarr[0] );
-#else
-                    //VM_LogSyscalls( (int *)&image[ programStack + 4 ] );
+				} else {
+					//VM_LogSyscalls( (int *)&image[ programStack + 4 ] );
 					v0 = vm->systemCall( (intptr_t *)&image[ programStack + 4 ] );
-#endif
 				}
-
 				// save return value
 				//opStack++;
 				ci = inst + *(int *)&image[ programStack ];
