@@ -54,6 +54,22 @@ static float GETFLOAT(int i)
 }
 #endif
 
+typedef intptr_t (*ext_syscall_t)(intptr_t *arg);
+static intptr_t EXT_MapExtFieldPtr(intptr_t *args);
+static intptr_t EXT_SetExtFieldPtr(intptr_t *args);
+static intptr_t EXT_GetExtFieldPtr(intptr_t *args);
+struct
+{
+	char *extname;
+	ext_syscall_t fun;
+} ext_syscalls[] =
+{
+	{"MapExtFieldPtr",	EXT_MapExtFieldPtr},
+	{"SetExtFieldPtr",	EXT_SetExtFieldPtr},
+	{"GetExtFieldPtr",	EXT_GetExtFieldPtr},
+};
+ext_syscall_t ext_syscall_tbl[256];
+
 int NUM_FOR_GAME_EDICT(byte *e)
 {
 	int b;
@@ -1951,6 +1967,86 @@ intptr_t PF2_FS_GetFileList(char *path, char *ext,
 	return numfiles;
 }
 
+// To prevent mods from hardcoding field offsets which would cause engine incompatibilities.
+static uint32_t GetExtFieldCookie(void)
+{
+	static uint32_t cookie = 0;
+	while (cookie == 0)
+	{
+		cookie = ((uint32_t)(rand() & 0xFFFF)) << 16;
+	}
+	return cookie;
+}
+
+static qbool ValidateExtFieldToken(uint32_t token, uint32_t *offset)
+{
+	uint32_t cookie = GetExtFieldCookie();
+	*offset = token & ~cookie;
+	return (token & cookie) == cookie;
+}
+
+static intptr_t EXT_SetExtFieldPtr(intptr_t *args)
+{
+	uint32_t field_ref;
+	edict_t *e;
+	size_t size;
+
+	if (!ValidateExtFieldToken(args[2], &field_ref))
+	{
+		Con_Printf("SetExtFieldPtr: Corrupt field reference!\n");
+		return 0;
+	}
+
+	size = args[4];
+
+	if ((field_ref + size) > sizeof(ext_entvars_t))
+	{
+		Con_Printf("SetExtFieldPtr: Field reference out of bounds!\n");
+		return 0;
+	}
+
+	e = &sv.edicts[NUM_FOR_GAME_EDICT(VM_ArgPtr(args[1]))];
+	memcpy((byte*)&e->xv + field_ref, VM_ArgPtr(args[3]), size);
+
+	return 1;
+}
+
+static intptr_t EXT_GetExtFieldPtr(intptr_t *args)
+{
+	uint32_t field_ref;
+	edict_t *e;
+	size_t size;
+
+	if (!ValidateExtFieldToken(args[2], &field_ref))
+	{
+		Con_Printf("GetExtFieldPtr: Corrupt field reference!\n");
+		return 0;
+	}
+
+	size = args[4];
+
+	if ((field_ref + size) > sizeof(ext_entvars_t))
+	{
+		Con_Printf("GetExtFieldPtr: Field reference out of bounds!\n");
+		return 0;
+	}
+
+	e = &sv.edicts[NUM_FOR_GAME_EDICT(VM_ArgPtr(args[1]))];
+	memcpy(VM_ArgPtr(args[3]), (byte*)&e->xv + field_ref, size);
+
+	return 1;
+}
+
+static intptr_t EXT_MapExtFieldPtr(intptr_t *args)
+{
+	char *key = VM_ArgPtr(args[1]);
+	if (key)
+	{
+	}
+
+	return 0;
+}
+
 /*
   int trap_Map_Extension( const char* ext_name, int mapto)
   return:
@@ -1960,10 +2056,28 @@ intptr_t PF2_FS_GetFileList(char *path, char *ext,
 */
 intptr_t PF2_Map_Extension(char *name, int mapto)
 {
-	if (mapto < _G__LASTAPI)
-	{
+	int i;
 
+	if ((mapto - G_EXTENSIONS_FIRST) >= ARRAY_LEN(ext_syscall_tbl))
+	{
 		return -2;
+	}
+
+	if (!name)
+	{
+		if (mapto < _G__LASTAPI)
+		{
+			return -2;
+		}
+		return -1;
+	}
+	for (i = 0; i < ARRAY_LEN(ext_syscalls); i++)
+	{
+		if (!strcmp(ext_syscalls[i].extname, name))
+		{
+			ext_syscall_tbl[mapto - G_EXTENSIONS_FIRST] = ext_syscalls[i].fun;
+			return mapto;
+		}
 	}
 
 	return -1;
@@ -2674,7 +2788,14 @@ intptr_t PR2_GameSystemCalls(intptr_t *args) {
 		PF2_VisibleTo(args[1], args[2], args[3], VMA(4));
 		return 0;
 	default:
-		SV_Error("Bad game system trap: %ld", (long int)args[0]);
+		if (args[0] >= _G__LASTAPI && ext_syscall_tbl[args[0] - G_EXTENSIONS_FIRST])
+		{
+			return ext_syscall_tbl[args[0] - G_EXTENSIONS_FIRST](args);
+		}
+		else
+		{
+			SV_Error("Bad game system trap: %ld", (long int)args[0]);
+		}
 	}
 	return 0;
 }
