@@ -357,6 +357,33 @@ static void Cmd_New_f (void)
 	}
 #endif
 
+#if defined(FTE_PEXT_TRANS)
+	if (sv_client->fteprotocolextensions & FTE_PEXT_TRANS)
+	{
+		const char *client_string = Info_Get(&sv_client->_userinfo_ctx_, "*client");
+		char *ptr = strchr(client_string, ' ');
+		if (ptr != NULL) {
+			ptr++;
+			if (strncmp(client_string, "ezQuake", 7) == 0 && *ptr != '\0')
+			{
+				extern cvar_t sv_pext_ezquake_verfortrans;
+				char *endptr;
+				long revision = strtol(ptr, &endptr, 10);
+				if (*endptr != '\0' || (revision > 0 && revision < sv_pext_ezquake_verfortrans.value))
+				{
+					SV_ClientPrintf(sv_client, PRINT_HIGH, "\n\nWARNING:\n"
+						"Alpha support disabled due to buggy client, "
+						"if the map contains transparency you may be at a disadvantage.\n"
+						"Please upgrade to one of the following:\n"
+						"> ezQuake (https://www.ezquake.com)\n"
+						"> FTEQW (http://fte.triptohell.info/)\n");
+					sv_client->fteprotocolextensions &= ~FTE_PEXT_TRANS;
+				}
+			}
+		}
+	}
+#endif
+
 	//NOTE:  This doesn't go through ClientReliableWrite since it's before the user
 	//spawns.  These functions are written to not overflow
 	if (sv_client->num_backbuf)

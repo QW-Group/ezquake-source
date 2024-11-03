@@ -194,6 +194,10 @@ cvar_t sv_pext_mvdsv_serversideweapon = { "sv_pext_mvdsv_serversideweapon", "1" 
 
 cvar_t sv_extlimits = { "sv_extlimits", "2" };
 
+#if defined(FTE_PEXT_TRANS)
+cvar_t sv_pext_ezquake_verfortrans = {"pext_ezquake_verfortrans", "7814", CVAR_NONE};
+#endif
+
 qbool sv_error = false;
 
 client_t *WatcherId = NULL; // QW262
@@ -3500,6 +3504,10 @@ void SV_InitLocal (void)
 	Cvar_Register (&sv_extlimits);
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 	Cvar_Register (&sv_pext_mvdsv_serversideweapon);
+#endif
+
+#ifdef FTE_PEXT_TRANS
+	Cvar_Register(&sv_pext_ezquake_verfortrans);
 #endif
 
 	Cvar_Register (&sv_reliable_sound);
