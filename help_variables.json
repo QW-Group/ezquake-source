@@ -1686,7 +1686,7 @@
       "default": "1",
       "desc": "Enables/Disables strings-hud.\nStrings hud is not mqwcl hud. It gives you ability put any string (or value of some variable) on your hud.",
       "group-id": "40",
-      "remarks": "Strings hud banned for ruleset smackdown.",
+      "remarks": "Strings hud banned for ruleset smackdown and smackdrive.",
       "type": "boolean",
       "values": [
         {
@@ -2521,7 +2521,7 @@
       "default": "20",
       "desc": "You can turn off the 'dodging' or 'rolling' effect for your own point of view while still see other player models affected by cl_rollangle.",
       "group-id": "53",
-      "remarks": "0 disables, 1 is standard. Disabled by ruleset smackdown.",
+      "remarks": "0 disables, 1 is standard. Disabled by ruleset smackdown and smackdrive.",
       "type": "integer"
     },
     "cl_rollangle": {
@@ -5142,7 +5142,7 @@
     },
     "gl_outline_scale_model": {
       "default": "1",
-      "desc": "Determines the scale of model outlines. Allows values 0 to 1 for rulesets smackdown and qcon, and 0 to 5 for other rulesets.",
+      "desc": "Determines the scale of model outlines. Allows values 0 to 1 for rulesets smackdown, smackdrive and qcon, and 0 to 5 for other rulesets.",
       "group-id": "35",
       "remarks": "Requires vid_renderer 1",
       "type": "float"
@@ -16516,7 +16516,7 @@
       "default": "1",
       "desc": "Adds transparency to the lightning gun beam (shaft).",
       "group-id": "8",
-      "remarks": "Disabled in ruleset smackdown.",
+      "remarks": "Disabled in ruleset smackdown and smackdrive.",
       "type": "float",
       "values": [
         {
@@ -16529,7 +16529,7 @@
       "default": "0",
       "desc": "Shift start of the shaft lights.",
       "group-id": "8",
-      "remarks": "Doesn't work with smackdown ruleset. Intended for movies.",
+      "remarks": "Doesn't work with ruleset smackdown and smackdrive. Intended for movies.",
       "type": "float"
     },
     "r_skincolormode": {
