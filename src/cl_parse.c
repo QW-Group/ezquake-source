@@ -1875,6 +1875,10 @@ void CL_ParseStatic (qbool extended)
 	ent->frame = es.frame;
 	ent->colormap = vid.colormap;
 	ent->skinnum = es.skinnum;
+#ifdef FTE_PEXT_TRANS
+	// set trans, 0 and 255 are both opaque, represented by alpha 0.
+	ent->alpha = es.trans == 255 ? 0.0f : (float)es.trans / 254.0f;
+#endif
 
 	VectorCopy(es.origin, ent->origin);
 	VectorCopy(es.angles, ent->angles);

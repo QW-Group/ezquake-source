@@ -105,7 +105,9 @@ typedef struct
 
 	int			flags;			// Dead, gib, etc.
 
+#ifdef FTE_PEXT_TRANS
 	byte		alpha;
+#endif
 
 	byte		vw_index;
 	byte		pm_type;
