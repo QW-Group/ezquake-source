@@ -108,6 +108,9 @@ typedef struct
 #ifdef FTE_PEXT_TRANS
 	byte		alpha;
 #endif
+#ifdef FTE_PEXT_COLOURMOD
+	byte		colourmod[3];
+#endif
 
 	byte		vw_index;
 	byte		pm_type;

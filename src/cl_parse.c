@@ -1879,6 +1879,17 @@ void CL_ParseStatic (qbool extended)
 	// set trans, 0 and 255 are both opaque, represented by alpha 0.
 	ent->alpha = es.trans == 255 ? 0.0f : (float)es.trans / 254.0f;
 #endif
+#ifdef FTE_PEXT_COLOURMOD
+	// Skip colourmod if unset, or identity
+	if ((es.colourmod[0] > 0 || es.colourmod[1] > 0 || es.colourmod[2] > 0) &&
+	    !(es.colourmod[0] == 32 && es.colourmod[1] == 32 && es.colourmod[2] == 32))
+	{
+		ent->r_modelcolor[0] = (float)es.colourmod[0] * 8.0f / 256.0f;
+		ent->r_modelcolor[1] = (float)es.colourmod[1] * 8.0f / 256.0f;
+		ent->r_modelcolor[2] = (float)es.colourmod[2] * 8.0f / 256.0f;
+		ent->renderfx |= RF_FORCECOLOURMOD;
+	}
+#endif
 
 	VectorCopy(es.origin, ent->origin);
 	VectorCopy(es.angles, ent->angles);

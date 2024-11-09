@@ -558,6 +558,15 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 	}
 #endif
 
+#ifdef FTE_PEXT_COLOURMOD
+	if ((morebits & U_FTE_COLOURMOD) && (cls.fteprotocolextensions & FTE_PEXT_COLOURMOD))
+	{
+		to->colourmod[0] = MSG_ReadByte();
+		to->colourmod[1] = MSG_ReadByte();
+		to->colourmod[2] = MSG_ReadByte();
+	}
+#endif
+
 #ifdef FTE_PEXT_ENTITYDBL
 	if (morebits & U_FTE_ENTITYDBL) {
 		to->number += 512;
@@ -1048,6 +1057,16 @@ void CL_LinkPacketEntities(void)
 		// set trans, 0 and 255 are both opaque, represented by alpha 0.
 		ent.alpha = state->trans == 255 ? 0.0f : (float)state->trans / 254.0f;
 #endif
+#if defined(FTE_PEXT_COLOURMOD)
+		// colourmod 0 is unset, 32 (1.0) incurs no color change
+		if ((state->colourmod[0] > 0 || state->colourmod[1] > 0 || state->colourmod[2] > 0) &&
+			!(state->colourmod[0] == 32 && state->colourmod[1] == 32 && state->colourmod[2] == 32))
+		{
+			ent.r_modelcolor[0] = ((float) state->colourmod[0] * 8.0f) / 256.0f;
+			ent.r_modelcolor[1] = ((float) state->colourmod[1] * 8.0f) / 256.0f;
+			ent.r_modelcolor[2] = ((float) state->colourmod[2] * 8.0f) / 256.0f;
+			ent.renderfx |= RF_FORCECOLOURMOD;
+		}
 #endif
 
 		if (ent.model->flags & EF_ROTATE)
@@ -1487,6 +1506,14 @@ void CL_ParsePlayerinfo (void)
 #ifdef FTE_PEXT_TRANS
 		if (flags & PF_TRANS_Z && cls.fteprotocolextensions & FTE_PEXT_TRANS)
 			state->alpha = MSG_ReadByte();
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+		if (flags & PF_COLOURMOD && cls.fteprotocolextensions & FTE_PEXT_COLOURMOD)
+		{
+			state->colourmod[0] = MSG_ReadByte();
+			state->colourmod[1] = MSG_ReadByte();
+			state->colourmod[2] = MSG_ReadByte();
+		}
 #endif
 
 		if (cl.z_ext & Z_EXT_PM_TYPE)
