@@ -215,6 +215,13 @@ void SV_WriteDelta(client_t* client, entity_state_t *from, entity_state_t *to, s
         evenmorebits |= U_FTE_TRANS;
 #endif
 
+#ifdef U_FTE_COLOURMOD
+	if ((to->colourmod[0] != from->colourmod[0] ||
+	     to->colourmod[1] != from->colourmod[1] ||
+	     to->colourmod[2] != from->colourmod[2]) && (fte_extensions & FTE_PEXT_COLOURMOD))
+		evenmorebits |= U_FTE_COLOURMOD;
+#endif
+
 	if (evenmorebits&0xff00)
 		evenmorebits |= U_FTE_YETMORE;
 	if (evenmorebits&0x00ff)
@@ -298,6 +305,15 @@ void SV_WriteDelta(client_t* client, entity_state_t *from, entity_state_t *to, s
 #ifdef U_FTE_TRANS
 	if (evenmorebits & U_FTE_TRANS)
 		MSG_WriteByte (msg, to->trans);
+#endif
+
+#ifdef U_FTE_COLOURMOD
+	if (evenmorebits & U_FTE_COLOURMOD)
+	{
+		MSG_WriteByte (msg, to->colourmod[0]);
+		MSG_WriteByte (msg, to->colourmod[1]);
+		MSG_WriteByte (msg, to->colourmod[2]);
+	}
 #endif
 }
 
@@ -628,6 +644,14 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 			pflags |= PF_TRANS_Z;
 		}
 #endif
+#ifdef FTE_PEXT_COLOURMOD
+		if (client->fteprotocolextensions & FTE_PEXT_COLOURMOD &&
+		    (ent->xv.colourmod[0] > 0.0f && ent->xv.colourmod[1] > 0.0f && ent->xv.colourmod[2] > 0.0f) &&
+		    !(ent->xv.colourmod[0] == 1.0f && ent->xv.colourmod[1] == 1.0f && ent->xv.colourmod[2] == 1.0f))
+		{
+			pflags |= PF_COLOURMOD;
+		}
+#endif
 
 		// Z_EXT_PM_TYPE protocol extension
 		// encode pm_type and jump_held into pm_code
@@ -680,8 +704,8 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 		MSG_WriteByte (msg, svc_playerinfo);
 		MSG_WriteByte (msg, j);
 
-#ifdef FTE_PEXT_TRANS
-		if (client->fteprotocolextensions & FTE_PEXT_TRANS)
+#if defined(FTE_PEXT_TRANS) && defined(FTE_PEXT_COLOURMOD)
+		if (client->fteprotocolextensions & (FTE_PEXT_TRANS | FTE_PEXT_COLOURMOD))
 		{
 			if (pflags & 0xff0000)
 			{
@@ -774,6 +798,14 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 		if (pflags & PF_TRANS_Z)
 		{
 			MSG_WriteByte (msg, bound(1, (byte)(ent->xv.alpha * 254.0f), 254));
+		}
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+		if (pflags & PF_COLOURMOD)
+		{
+			MSG_WriteByte(msg, bound(0, ent->xv.colourmod[0] * (256.0f / 8.0f), 255));
+			MSG_WriteByte(msg, bound(0, ent->xv.colourmod[1] * (256.0f / 8.0f), 255));
+			MSG_WriteByte(msg, bound(0, ent->xv.colourmod[2] * (256.0f / 8.0f), 255));
 		}
 #endif
 	}
@@ -1003,6 +1035,14 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 			state->effects = TranslateEffects(ent);
 #ifdef FTE_PEXT_TRANS
 			state->trans = ent->xv.alpha >= 1.0f ? 0 : bound(0, (byte)(ent->xv.alpha * 254.0f), 254);
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+			if (ent->xv.colourmod[0] != 1.0f && ent->xv.colourmod[1] != 1.0f && ent->xv.colourmod[2] != 1.0f)
+			{
+				state->colourmod[0] = bound(0, ent->xv.colourmod[0] * (256.0f / 8.0f), 255);
+				state->colourmod[1] = bound(0, ent->xv.colourmod[1] * (256.0f / 8.0f), 255);
+				state->colourmod[2] = bound(0, ent->xv.colourmod[2] * (256.0f / 8.0f), 255);
+			}
 #endif
 		}
 	} // server flash

@@ -2231,6 +2231,14 @@ void PF_makestatic (void)
 #ifdef FTE_PEXT_TRANS
 	s->trans = ent->xv.alpha >= 1.0f ? 0 : bound(0, (byte)(ent->xv.alpha * 254.0), 254);
 #endif
+#ifdef FTE_PEXT_COLOURMOD
+	if (ent->xv.colourmod[0] != 1.0f && ent->xv.colourmod[1] != 1.0f && ent->xv.colourmod[2] != 1.0f)
+	{
+		s->colourmod[0] = bound(0, ent->xv.colourmod[0] * (256.0f / 8.0f), 255);
+		s->colourmod[1] = bound(0, ent->xv.colourmod[1] * (256.0f / 8.0f), 255);
+		s->colourmod[2] = bound(0, ent->xv.colourmod[2] * (256.0f / 8.0f), 255);
+	}
+#endif
 	++sv.static_entity_count;
 
 	// throw the entity away now

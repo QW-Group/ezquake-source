@@ -928,6 +928,19 @@ const char *ED_ParseEdict (const char *data, edict_t *ent)
 			ent->xv.alpha = bound(0.0f, atof (com_token), 1.0f);
 			continue;
 		}
+		if (!strcmp(keyname, "colormod"))
+		{
+			float v[3];
+			int ret = sscanf(com_token, "%f %f %f", &v[0], &v[1], &v[2]);
+			if (ret == 3 && v[0] > 0.0f && v[1] > 0.0f && v[2] > 0.0f)
+			{
+				ent->xv.colourmod[0] = max(0.0f, v[0]);
+				ent->xv.colourmod[1] = max(0.0f, v[1]);
+				ent->xv.colourmod[2] = max(0.0f, v[2]);
+			}
+			continue;
+		}
+
 		key = ED_FindField (keyname);
 		if (!key)
 		{
