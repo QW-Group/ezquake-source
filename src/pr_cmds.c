@@ -2228,6 +2228,9 @@ void PF_makestatic (void)
 	s->skinnum = ent->v->skin;
 	VectorCopy(ent->v->origin, s->origin);
 	VectorCopy(ent->v->angles, s->angles);
+#ifdef FTE_PEXT_TRANS
+	s->trans = ent->xv.alpha >= 1.0f ? 0 : bound(0, (byte)(ent->xv.alpha * 254.0), 254);
+#endif
 	++sv.static_entity_count;
 
 	// throw the entity away now

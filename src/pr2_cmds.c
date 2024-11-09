@@ -1421,6 +1421,9 @@ void PF2_makestatic(edict_t *ent)
 	s->skinnum = ent->v->skin;
 	VectorCopy(ent->v->origin, s->origin);
 	VectorCopy(ent->v->angles, s->angles);
+#ifdef FTE_PEXT_TRANS
+	s->trans = ent->xv.alpha >= 1.0f ? 0 : bound(0, (byte)(ent->xv.alpha * 254.0), 254);
+#endif
 	++sv.static_entity_count;
 
 	// throw the entity away now
@@ -2042,6 +2045,10 @@ static intptr_t EXT_MapExtFieldPtr(intptr_t *args)
 	char *key = VM_ArgPtr(args[1]);
 	if (key)
 	{
+		if (!strcmp(key, "alpha"))
+		{
+			return offsetof(ext_entvars_t, alpha) | GetExtFieldCookie();
+		}
 	}
 
 	return 0;

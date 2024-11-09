@@ -93,6 +93,7 @@ Sets everything to NULL
 void ED_ClearEdict (edict_t *e)
 {
 	memset(e->v, 0, pr_edict_size);
+	memset(&e->xv, 0, sizeof(ext_entvars_t));
 	e->e.lastruntime = 0;
 	e->e.free = false;
 	PR_ClearEdict(e);
@@ -155,7 +156,7 @@ FIXME: walk all entities and NULL out references to this entity
 void ED_Free (edict_t *ed)
 {
 	SV_UnlinkEdict (ed);		// unlink from world bsp
-
+	memset(&ed->xv, 0, sizeof(ext_entvars_t));
 	ed->e.free = true;
 	ed->v->model = 0;
 	ed->v->takedamage = 0;
@@ -922,6 +923,11 @@ const char *ED_ParseEdict (const char *data, edict_t *ent)
 		if (keyname[0] == '_')
 			continue;
 
+		if (!strcmp (keyname, "alpha"))
+		{
+			ent->xv.alpha = bound(0.0f, atof (com_token), 1.0f);
+			continue;
+		}
 		key = ED_FindField (keyname);
 		if (!key)
 		{

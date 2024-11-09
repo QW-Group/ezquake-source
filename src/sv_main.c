@@ -3565,7 +3565,9 @@ void SV_InitLocal (void)
 #ifdef FTE_PEXT_SPAWNSTATIC2
 	svs.fteprotocolextensions |= FTE_PEXT_SPAWNSTATIC2;
 #endif
-
+#ifdef FTE_PEXT_TRANS
+    svs.fteprotocolextensions |= FTE_PEXT_TRANS;
+#endif
 #ifdef FTE_PEXT2_VOICECHAT
 	svs.fteprotocolextensions2 |= FTE_PEXT2_VOICECHAT;
 #endif
