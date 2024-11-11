@@ -132,6 +132,10 @@ cvar_t  cl_pext_floatcoords  = {"cl_pext_floatcoords", "1"};
 cvar_t cl_pext_alpha = {"cl_pext_alpha", "1"};
 #endif
 
+#ifdef FTE_PEXT_COLOURMOD
+cvar_t cl_pext_colourmod = {"cl_pext_colourmod", "1"};
+#endif
+
 #ifdef CLIENTONLY
 #define PROCESS_SERVERPACKETS_IMMEDIATELY (0)
 #else
@@ -472,6 +476,10 @@ unsigned int CL_SupportedFTEExtensions (void)
 #ifdef FTE_PEXT_TRANS
 	if (cl_pext_alpha.value)
 		fteprotextsupported |= FTE_PEXT_TRANS;
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+	if (cl_pext_colourmod.value)
+		fteprotextsupported |= FTE_PEXT_COLOURMOD;
 #endif
 
 	if (cl_pext_limits.value) {
@@ -1870,6 +1878,9 @@ static void CL_InitLocal(void)
 
 #ifdef FTE_PEXT_TRANS
 	Cvar_Register(&cl_pext_alpha);
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+	Cvar_Register(&cl_pext_colourmod);
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);

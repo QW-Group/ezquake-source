@@ -63,9 +63,16 @@ typedef struct sv_edict_s
 	double		lastruntime;	// sv.time when SV_RunEntity was last called for this edict (Tonik)
 } sv_edict_t;
 
+typedef struct
+{
+	float	alpha;			// 0 = opaque, 1 = opaque, 0 < x < 1 translucent
+	float	colourmod[3];	// r,g,b [0.0 .. 1.0], > 1 overbright
+} ext_entvars_t;
+
 typedef struct edict_s
 {
 	sv_edict_t	e;			// server side part of the edict_t
+	ext_entvars_t	xv;
 	entvars_t	*v;			// C exported fields from progs
 } edict_t;
 
