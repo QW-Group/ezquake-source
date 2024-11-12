@@ -219,7 +219,7 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 	return success;
 }
 
-#define MAX_SCREENSHOT_COUNT	1000
+#define MAX_SCREENSHOT_COUNT	65535
 
 int SCR_GetScreenShotName(char *name, int name_size, char *sshot_dir)
 {
