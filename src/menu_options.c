@@ -57,7 +57,7 @@ extern cvar_t r_bloom;
 extern cvar_t gl_flashblend, r_dynamic, gl_lightmode, gl_modulate;
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
-extern cvar_t vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap, vid_framebuffer_scale, vid_framebuffer_multisample;
+extern cvar_t vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap, vid_framebuffer_scale, vid_framebuffer_multisample, vid_framebuffer_fxaa;
 #endif
 
 extern cvar_t vid_software_palette;
@@ -1307,6 +1307,7 @@ setting settsystem_arr[] = {
 	ADDSET_BOOL("HDR Tonemap", vid_framebuffer_hdr_tonemap),
 	ADDSET_NUMBER("Scale", vid_framebuffer_scale, 0.25, 2.0, 0.25),
 	ADDSET_NUMBER("Multisample", vid_framebuffer_multisample, 0, 16, 1),
+	ADDSET_NUMBER("FXAA", vid_framebuffer_fxaa, 0, 17, 1),
 	ADDSET_ACTION("Apply Changes", RendererRestart, "Restarts the renderer."),
 	ADDSET_BASIC_SECTION(),
 #endif

@@ -21781,6 +21781,86 @@
       "remarks": "Setting vid_framebuffer_scale overrides custom FBO width/height.",
       "type": "integer"
     },
+    "vid_framebuffer_fxaa": {
+      "default": "0",
+      "desc": "Fast Approximate Anti-Aliasing. Enable vid_framebuffer 2 to avoid filtering HUD. Typically between 1-6.",
+      "group-id": "52",
+      "type": "integer",
+      "values": [
+        {
+          "description": "Disabled.",
+          "name": "0"
+        },
+        {
+          "description": "Medium dither, quality 1 (fastest).",
+          "name": "1"
+        },
+        {
+          "description": "Medium dither, quality 2.",
+          "name": "2"
+        },
+        {
+          "description": "Medium dither, quality 3.",
+          "name": "3"
+        },
+        {
+          "description": "Medium dither, quality 4.",
+          "name": "4"
+        },
+        {
+          "description": "Medium dither, quality 5.",
+          "name": "5"
+        },
+        {
+          "description": "Medium dither, quality 6 (highest quality).",
+          "name": "6"
+        },
+        {
+          "description": "Less dither, quality 1 (fastest).",
+          "name": "7"
+        },
+        {
+          "description": "Less dither, quality 2.",
+          "name": "8"
+        },
+        {
+          "description": "Less dither, quality 3.",
+          "name": "9"
+        },
+        {
+          "description": "Less dither, quality 4.",
+          "name": "10"
+        },
+        {
+          "description": "Less dither, quality 5.",
+          "name": "11"
+        },
+        {
+          "description": "Less dither, quality 6.",
+          "name": "12"
+        },
+        {
+          "description": "Less dither, quality 7.",
+          "name": "13"
+        },
+        {
+          "description": "Less dither, quality 8.",
+          "name": "14"
+        },
+        {
+          "description": "Less dither, quality 9.",
+          "name": "15"
+        },
+        {
+          "description": "Less dither, quality 10 (highest quality).",
+          "name": "16"
+        },
+        {
+          "description": "No dither (expensive).",
+          "name": "17"
+        }
+      ]
+    },
     "vid_fullscreen": {
       "default": "1",
       "desc": "Toggles between fullscreen and windowed mode.",

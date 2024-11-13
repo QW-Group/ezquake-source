@@ -150,6 +150,8 @@ void GLM_PreRenderView(void)
 	// Window constants
 	frameConstants.r_width = VID_ScaledWidth3D();
 	frameConstants.r_height = VID_ScaledHeight3D();
+	frameConstants.r_inv_width = 1.0f / (float) frameConstants.r_width;
+	frameConstants.r_inv_height = 1.0f / (float) frameConstants.r_height;
 	frameConstants.r_zFar = R_FarPlaneZ();
 	frameConstants.r_zNear = R_NearPlaneZ();
 
