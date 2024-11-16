@@ -9,7 +9,7 @@ NC='\e[0m'
 
 BUILD_LOG=/tmp/ezquake-build.log
 
-PKGS_DEB="git cmake ninja-build build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev libfreetype6-dev libsndfile1-dev libpcre2-dev libminizip-dev"
+PKGS_DEB="git cmake ninja-build build-essential libsdl2-2.0-0 libsdl2-dev libjansson-dev libexpat1-dev libcurl4-openssl-dev libpng-dev libjpeg-dev libspeex-dev libspeexdsp-dev libfreetype-dev libsndfile1-dev libpcre2-dev libminizip-dev"
 PKGS_RPM="pcre2-devel cmake ninja-build mesa-libGL-devel SDL2-devel make gcc jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libsndfile-devel libXxf86vm-devel minizip-devel"
 PKGS_ARCH="base-devel cmake ninja libpng libjpeg-turbo sdl2 expat libcurl-compat freetype2 speex speexdsp jansson libsndfile minizip"
 PKGS_VOID="base-devel cmake ninja SDL2-devel pcre2-devel jansson-devel expat-devel libcurl-devel libpng-devel libjpeg-turbo-devel speex-devel speexdsp-devel freetype-devel libsndfile-devel libXxf86vm-devel minizip"
@@ -103,6 +103,13 @@ case $ID in
 	ubuntu)
 		VERSION_ID=${VERSION_ID%.*}
 		[ $VERSION_ID -ge 16 ] || error "Your Ubuntu version '$VERSION_ID' is too old. Exiting."
+		install_check_deb
+		;;
+	devuan)
+		if [ $VERSION_ID -gt 0 ] && [ $VERSION_ID -lt 4 ] ; then
+			error "Your Devuan version '$VERSION_ID' is too old. Exiting."
+		fi
+		# Includes Devuan testing/unstable as they don't provide a VERSION_ID
 		install_check_deb
 		;;
 	debian)
