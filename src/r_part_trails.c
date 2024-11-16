@@ -68,19 +68,19 @@ static void R_MissileTrail(centity_t *cent, int trail_num)
 		// VULT PARTICLES
 		byte color[3];
 		color[0] = 0; color[1] = 70; color[2] = 255;
-		FireballTrail(cent, color, 2, 0.5);
+		FireballTrailEntity(cent, color, 2.0f, 0.5f);
 	}
 	else if (trail_num == 9) {
 		R_EntityParticleTrail(cent, LAVA_TRAIL);
 	}
 	else if (trail_num == 10) {
 		// VULT PARTICLES
-		FuelRodGunTrail(cent);
+		FuelRodGunTrailEntity(cent);
 	}
 	else if (trail_num == 11) {
 		byte color[3];
 		color[0] = 255; color[1] = 70; color[2] = 5;
-		FireballTrailWave(cent, color, 2, 0.5, cent->current.angles);
+		FireballTrailWaveEntity(cent, color, 2.0f, 0.5f, cent->current.angles);
 	}
 	else if (trail_num == 12) {
 		R_EntityParticleTrail(cent, AMF_ROCKET_TRAIL);
@@ -202,7 +202,7 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, 
 			if (amf_nailtrail_plasma.integer) {
 				byte color[3];
 				color[0] = 0; color[1] = 70; color[2] = 255;
-				FireballTrail(cent, color, 0.6, 0.3);
+				FireballTrailEntity(cent, color, 0.6f, 0.3f);
 			}
 			else {
 				ParticleNailTrail(cent, 2, 0.4f);
