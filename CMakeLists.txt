@@ -113,6 +113,11 @@ else()
 endif()
 
 find_library(MATH m)
+
+# Override by configuring with -DOpenGL_GL_PREFERENCE=GLVND
+if(NOT OpenGL_GL_PREFERENCE)
+    set(OpenGL_GL_PREFERENCE LEGACY)
+endif()
 find_package(OpenGL REQUIRED)
 find_package(Threads REQUIRED)
 
