@@ -138,6 +138,11 @@ if [ -d ".git" ]; then
 	git submodule update --init --recursive >> $BUILD_LOG 2>&1 || error "Failed to checkout git submodules. Exiting."
 fi
 
+if [ ! -f src/qwprot/src/protocol.h ]; then
+  error "Bad source code directory, not a git repository, and lacks src/qwprot/src/protocol.h." \
+        "Download an official source release or checkout the official git repository."
+fi
+
 step "Configure build..."
 if command -v ninja >/dev/null 2>&1; then
   GENERATOR="-G Ninja"
