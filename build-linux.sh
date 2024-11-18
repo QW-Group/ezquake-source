@@ -133,8 +133,10 @@ case $ID in
 		;;
 esac
 
-step "Checking out git submodules..."
-git submodule update --init --recursive >> $BUILD_LOG 2>&1 || error "Failed to checkout git submodules. Exiting."
+if [ -d ".git" ]; then
+	step "Checking out git submodules..."
+	git submodule update --init --recursive >> $BUILD_LOG 2>&1 || error "Failed to checkout git submodules. Exiting."
+fi
 
 step "Configure build..."
 cmake --preset dynamic
