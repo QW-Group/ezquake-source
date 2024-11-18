@@ -90,7 +90,7 @@ SDL_GLContext GL_SDL_CreateBestContext(SDL_Window* window, const opengl_version_
 		}
 #endif
 		if (context) {
-			if (atoi((const char*)glGetString(GL_VERSION)) >= version->majorVersion) {
+			if (glGetString(GL_VERSION) && atoi((const char*)glGetString(GL_VERSION)) >= version->majorVersion) {
 				return context;
 			}
 			
