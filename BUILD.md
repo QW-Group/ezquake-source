@@ -133,6 +133,9 @@ cmake --preset mingw64-x64-cross
 cmake --build build-mingw64-x64-cross --config Release
 ```
 
+In addition to mingw64 being installed, a native compiler is also needed as parts of the vcpkg
+build need to execute on the host.
+
 ## Visual Studio
 
 ### CMake Mode
