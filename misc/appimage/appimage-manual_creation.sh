@@ -81,12 +81,8 @@ VERSION=$(sed -n 's/.*VERSION_NUMBER.*"\(.*\)".*/\1/p' src/version.h)
 REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
 
 #build ezquake
-if [ $SKIP_DEPS -eq 0 ];then
-  chmod +x ./build-linux.sh && \
-  nice ./build-linux.sh || exit 3
-else
-  make -j$(nproc)
-fi
+export SKIP_DEPS
+chmod +x ./build-linux.sh && nice ./build-linux.sh || exit 3
 
 #build test program
 echo "$TESTPROGRAM" > "$DIR/test.c" || exit 2
