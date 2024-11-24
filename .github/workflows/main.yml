@@ -1,0 +1,329 @@
+name: main
+
+on:
+  push:
+    # Only build branches on push, tags will be handled by 'release' job.
+    branches:
+      - '**'
+  pull_request:
+  workflow_dispatch:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            configurePreset: msbuild-x64
+            buildPreset: msbuild-x64-release
+            name: ezQuake-windows-x64
+            artifact: "ezquake.exe"
+            container: null
+          - os: macos-latest
+            configurePreset: macos-arm64
+            buildPreset: macos-arm64-release
+            name: ezQuake-macOS-arm64
+            artifact: "ezQuake.zip"
+            packages: ["autoconf", "automake", "libtool"]
+            container: null
+          - os: macos-latest
+            configurePreset: macos-x64
+            buildPreset: macos-x64-release
+            name: ezQuake-macOS-x64
+            artifact: "ezQuake.zip"
+            packages: ["autoconf", "automake", "libtool"]
+            container: null
+          - os: ubuntu-latest
+            configurePreset: dynamic
+            buildPreset: dynamic-release
+            name: ezQuake-linux-x86_64
+            artifact: "ezQuake-x86_64.AppImage"
+            cflags: "-march=nehalem"
+            packages: ["build-essential", "ca-certificates", "cmake", "curl", "file", "git", "libcurl4-openssl-dev", "libexpat1-dev", "libfreetype-dev", "libfuse2", "libjansson-dev", "libjpeg-dev", "libminizip-dev", "libpcre2-dev", "libpng-dev", "libsdl2-2.0-0", "libsdl2-dev", "libsndfile1-dev", "libspeex-dev", "libspeexdsp-dev", "ninja-build", "unzip"]
+            container:
+              image: debian:testing
+              options: --privileged
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container }}
+
+    steps:
+    - name: Prepare Linux environment
+      run: |
+        apt-get -qq update && apt-get -qq install --no-install-recommends ${{ join(matrix.packages, ' ') }}
+        git config --global --add safe.directory $PWD
+      if: matrix.os == 'ubuntu-latest'
+
+    - name: Prepare macOS environment
+      run: brew install -q ${{ join(matrix.packages, ' ') }}
+      if: matrix.os == 'macos-latest'
+
+    - name: Check out code
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+        # To get correct revision which is needed by server to detect certain client bugs
+        fetch-depth: 0
+
+    - name: Fetch upstream tags for version metadata
+      run: |
+          git remote add upstream https://github.com/QW-Group/ezquake-source.git
+          git fetch --tags --no-recurse-submodules upstream
+      if: github.repository != 'QW-Group/ezquake-source'
+
+    - name: Set library build type to release
+      shell: bash
+      run: |
+        # Hopefully overrideable via environment in the future. Done here as
+        # vcpkg is chainloaded before cmake, and doesn't seem to apply args.
+        # Avoids building both -dbg and -rel versions of static libraries.
+        for x in {cmake/triplets/*,vcpkg/triplets/{*,community/*}}; do
+          if [[ -f $x ]]; then
+            echo >> $x
+            echo 'set(VCPKG_BUILD_TYPE release)' >> $x
+          fi
+        done
+      if: matrix.os != 'ubuntu-latest'
+
+    - uses: lukka/get-cmake@latest
+      with:
+        cmakeVersion: "~3.28.0"
+      if: matrix.os != 'ubuntu-latest'
+
+    - name: Setup vcpkg
+      uses: lukka/run-vcpkg@v11
+      if: matrix.os != 'ubuntu-latest'
+
+    - name: Run CMake
+      uses: lukka/run-cmake@v10
+      with:
+        configurePreset: ${{ matrix.configurePreset }}
+        buildPreset: ${{ matrix.buildPreset }}
+      env:
+        CFLAGS: ${{ matrix.cflags }}
+
+    - name: Generate Linux AppImage
+      run: |
+        export EXECUTABLE=$(echo build-${{ matrix.configurePreset }}/Release/ezquake*)
+        ./misc/appimage/appimage-manual_creation.sh
+        mv ezQuake-x86_64.AppImage build-${{ matrix.configurePreset }}/Release/
+      if: matrix.os == 'ubuntu-latest'
+
+    - name: Preserve macOS executable bit
+      run: |
+        zip -r -9 ezQuake.zip ezQuake.app
+      working-directory: build-${{ matrix.configurePreset }}/Release
+      if: matrix.os == 'macos-latest'
+
+    - name: Archive client
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.name }}
+        path: |
+          build-${{ matrix.configurePreset }}/Release/${{ matrix.artifact }}
+        compression-level: 9
+
+  macos-universal:
+    needs: build
+
+    name: "ezQuake-macOS-universal"
+    runs-on: macos-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Download ARM64 Build
+      uses: actions/download-artifact@v4
+      with:
+        name: ezQuake-macOS-arm64
+        path: artifacts/arm64
+
+    - name: Download Intel Build
+      uses: actions/download-artifact@v4
+      with:
+        name: ezQuake-macOS-x64
+        path: artifacts/x64
+
+    - name: Create Universal Binary
+      run: |
+        (cd artifacts/x64 && unzip -qq ezQuake.zip) && (cd artifacts/arm64 && unzip -qq ezQuake.zip)
+        cp -r artifacts/arm64/ezQuake.app .
+        lipo -create -output ezQuake.app/Contents/MacOS/ezQuake \
+            artifacts/x64/ezQuake.app/Contents/MacOS/ezQuake \
+            artifacts/arm64/ezQuake.app/Contents/MacOS/ezQuake
+        codesign --force --sign - --entitlements dist/macOS/ezquake.entitlements.plist --options runtime --timestamp ezQuake.app
+        zip -r ezQuake-macOS-universal.zip ezQuake.app
+
+    - name: Delete macOS arch specific builds
+      uses: geekyeggo/delete-artifact@v5
+      with:
+        name: |
+          ezQuake-macOS-arm64
+          ezQuake-macOS-x64
+
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ezQuake-macOS-universal
+        path: ezQuake-macOS-universal.zip
+        compression-level: 9
+
+  upload:
+    if: github.repository == 'QW-group/ezquake-source' && ((github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'release')
+    needs: [macos-universal]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: ezquake
+          submodules: true
+          # To get correct revision when generating version.json for source release tarball
+          fetch-depth: 0
+        if: github.event_name == 'release'
+
+      - name: Get release date
+        run: |
+          RELEASE_DATE=$(git log -1 --format=%cI "${{ github.ref_name }}")
+          echo "RELEASE_DATE=$RELEASE_DATE" >> $GITHUB_ENV
+        working-directory: ezquake
+        if: github.event_name == 'release'
+
+      - name: Collect GitHub release artifacts
+        run: |
+          set -e
+
+          dist_dir="${GITHUB_WORKSPACE}/dist"
+          mkdir "${dist_dir}"
+
+          # Reset timestamp to time of commit before compression
+          find "artifacts" -type f -exec touch --date="${RELEASE_DATE}" {} +
+
+          # Set executable bit for all files
+          find "artifacts" -type f -exec chmod 755 {} +
+
+          # Recompress before attaching to release, avoiding double-zip of macOS
+          (
+            cd artifacts
+            for target in *; do
+              if ls "${target}"/*.zip &> /dev/null; then
+                cp "${target}"/*.zip "${dist_dir}/${target}.zip"
+              else
+                (cd "${target}"; zip -o -9 "${dist_dir}/${target}.zip" *)
+              fi
+            done;
+          )
+
+          # Generate source release with submodule, version.json etc
+          (
+            cd "${GITHUB_WORKSPACE}/ezquake"
+            dist/gen-release.sh
+            mv *.tar.gz "${dist_dir}/"
+          )
+
+          find "${dist_dir}" -type f -execdir sha256sum {} \; > "checksums.txt"
+          mv "checksums.txt" "${dist_dir}/"
+
+          # Reset timestamp to time of commit for all release artifacts
+          find "${dist_dir}" -type f -exec touch --date="${RELEASE_DATE}" {} +
+
+          echo "Release artifacts:"
+          ls -lR "${dist_dir}"
+
+          echo "Checksums:"
+          cat "${dist_dir}/checksums.txt"
+
+          echo "GITHUB_ARTIFACTS=$dist_dir" >> $GITHUB_ENV
+        if: github.event_name == 'release'
+
+      - name: Attach artifacts to GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.GITHUB_ARTIFACTS }}/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: github.event_name == 'release'
+
+      - name: Prepare Upload Environemnt
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq --no-install-recommends install openssh-client
+
+      - name: Setup SSH
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+
+      - name: Prepare upload to builds.quakeworld.nu
+        run: |
+          # Build file structure for uploading
+          # snapshots:
+          #  upload/snapshots/latest/$os/$arch/$filename
+          #  upload/snapshots/$os/$arch/$prefix_$filename
+          # releases:
+          #  upload/releases/latest/$os/$arch/$filename
+          #  upload/releases/$tag/$os/$arch/$filename
+
+          set -e
+
+          upload_dir="${GITHUB_WORKSPACE}/upload"
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            main_dir="${upload_dir}/releases/${{ github.ref_name }}"
+            latest_dir="${upload_dir}/releases/latest"
+            prefix=""
+            upload_prefix="releases"
+          else
+            main_dir="${upload_dir}/snapshots"
+            latest_dir="${upload_dir}/snapshots/latest"
+            date=$(TZ="Europe/Amsterdam" date "+%Y%m%d-%H%M%S")
+            prefix="${date}_${GITHUB_SHA::7}_"
+            upload_prefix="snapshots"
+          fi
+
+          # Collect upload structure
+          for artifact in artifacts/*/*; do
+            artifact_file=$(basename "${artifact}")
+            artifact_dir=$(dirname "${artifact}")
+
+            IFS='-' read -r ezq os arch <<< "${artifact_dir}"
+
+            mkdir -p "${main_dir}/${os}/${arch}" "${latest_dir}/${os}/${arch}"
+
+            cp "${artifact}" "${main_dir}/${os}/${arch}/${prefix}${artifact_file}"
+            cp "${artifact}" "${latest_dir}/${os}/${arch}/${artifact_file}"
+          done
+
+          # Set executable bit for all files
+          find "${upload_dir}" -type f -exec chmod 755 {} +
+
+          # Generate checksums
+          for artifact in $(find "${upload_dir}" -type f); do
+            artifact_file=$(basename "${artifact}")
+            artifact_dir=$(dirname "${artifact}")
+            (cd "${artifact_dir}" && md5sum "${artifact_file}" > "${artifact_file}.md5")
+          done
+
+          # Reset timestamp to time of commit
+          find "${upload_dir}" -type f -exec touch --date="${RELEASE_DATE}" {} +
+
+          echo "Upload artifacts:"
+          ls -lR "${upload_dir}"
+
+          echo "UPLOAD_PREFIX=${upload_prefix}" >> $GITHUB_ENV
+
+      - name: Upload to builds.quakeworld.nu
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          sftp -rp -o 'StrictHostKeyChecking no' -o 'UserKnownHostsFile /dev/null' -P ${{ secrets.SFTP_PORT }} ${{ secrets.SFTP_USERNAME }}@${{ secrets.SFTP_HOST }}:/${{ env.UPLOAD_PREFIX }} <<< $'put -rp upload/${{ env.UPLOAD_PREFIX }}/*'
