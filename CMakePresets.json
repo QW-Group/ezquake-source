@@ -186,15 +186,6 @@
             }
         },
         {
-            "name": "macos-arm64-release-ci",
-            "inherits": "macos-arm64",
-            "cacheVariables": {
-                "CMAKE_CONFIGURATION_TYPES": "Release",
-                "VCPKG_TARGET_TRIPLET": "arm64-osx-release",
-                "ENABLE_SANDBOX": "OFF"
-            }
-        },
-        {
             "name": "macos-x64",
             "displayName": "XCode (x64)",
             "inherits": "macos",
@@ -202,15 +193,6 @@
                 "VCPKG_TARGET_TRIPLET": "x64-osx",
                 "CMAKE_OSX_ARCHITECTURES": "x86_64",
                 "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0"
-            }
-        },
-        {
-            "name": "macos-x64-release-ci",
-            "inherits": "macos-x64",
-            "cacheVariables": {
-                "CMAKE_CONFIGURATION_TYPES": "Release",
-                "VCPKG_TARGET_TRIPLET": "x64-osx-release",
-                "ENABLE_SANDBOX": "OFF"
             }
         },
         {
@@ -378,13 +360,6 @@
             "configuration": "RelWithDebInfo"
         },
         {
-            "name": "macos-arm64-release-ci",
-            "configurePreset": "macos-arm64-release-ci",
-            "displayName": "Build Xcode release",
-            "description": "Build with community release triplet",
-            "configuration": "Release"
-        },
-        {
             "name": "macos-x64-debug",
             "configurePreset": "macos-x64",
             "displayName": "Build Xcode debug",
@@ -404,13 +379,6 @@
             "displayName": "Build Xcode release with debug info",
             "description": "Build Xcode Release with debug info configuration",
             "configuration": "RelWithDebInfo"
-        },
-        {
-            "name": "macos-x64-release-ci",
-            "configurePreset": "macos-x64-release-ci",
-            "displayName": "Build Xcode release",
-            "description": "Build with community release triplet",
-            "configuration": "Release"
         },
         {
             "name": "dynamic-debug",

@@ -22,7 +22,7 @@ GIT_COMMIT_TIMESTAMP=$(git --git-dir="${EZQ_DIR}" log -1 --format=%cd --date=for
 
 VCPKG_TAG=$(git --git-dir="${VCPKG_DIR}" describe --tags)
 
-EZQ_NAME="ezquake-${GIT_DESCRIBE}"
+EZQ_NAME="ezquake-source-${GIT_DESCRIBE}"
 EZQ_TAR="${EZQ_NAME}.tar"
 EZQ_VERSION="${EZQ_NAME}/version.json"
 EZQ_CHECKSUM="${EZQ_NAME}/checksum"

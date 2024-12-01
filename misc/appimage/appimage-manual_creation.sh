@@ -80,12 +80,11 @@ mkdir -p "$DIR/AppDir/usr/lib-override" || exit 1
 VERSION=$(sed -n 's/.*VERSION_NUMBER.*"\(.*\)".*/\1/p' src/version.h)
 REVISION=$(git log -n 1|head -1|awk '{print $2}'|cut -c1-6)
 
-#build ezquake
-if [ $SKIP_DEPS -eq 0 ];then
-  chmod +x ./build-linux.sh && \
-  nice ./build-linux.sh || exit 3
-else
-  make -j$(nproc)
+#build ezquake unless executable set
+if ! [[ -x "$EXECUTABLE" ]]; then
+	export SKIP_DEPS
+	chmod +x ./build-linux.sh && nice ./build-linux.sh || exit 3
+	EXECUTABLE="build/ezquake-linux-$ARCH"
 fi
 
 #build test program
@@ -93,7 +92,7 @@ echo "$TESTPROGRAM" > "$DIR/test.c" || exit 2
 gcc "$DIR/test.c" -o "$DIR/AppDir/usr/bin/test" -lcurl || exit 2
 rm -f "$DIR/AppDir/test.c" || exit 2
 
-cp -f build/ezquake-linux-$ARCH "$DIR/AppDir/usr/bin/." || exit 4
+cp -f $EXECUTABLE "$DIR/AppDir/usr/bin/." || exit 4
 rm -f "$DIR/AppDir/AppRun"
 echo "$QUAKE_SCRIPT" > "$DIR/AppDir/AppRun" || exit 4
 chmod +x "$DIR/AppDir/AppRun" || exit 4
