@@ -306,6 +306,7 @@ static qbool GL_FramebufferCreateRenderingTexture(framebuffer_data_t* fb, fbtex_
 	GL_TexStorage2D(fb->texture[tex_id], 1, framebuffer_format, width, height, false);
 	renderer.TextureLabelSet(fb->texture[tex_id], label);
 	renderer.TextureWrapModeClamp(fb->texture[tex_id]);
+	renderer.TextureSetFiltering(fb->texture[tex_id], texture_minification_nearest, texture_magnification_nearest);
 	R_TextureSetFlag(fb->texture[tex_id], R_TextureGetFlag(fb->texture[tex_id]) | TEX_NO_TEXTUREMODE);
 	return true;
 }
