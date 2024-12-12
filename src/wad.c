@@ -305,7 +305,7 @@ void WAD3_LoadWadFile(const char *filename)
 	}
 
 	lowmark = Hunk_LowMark();
-	if (!(lumps = Hunk_Alloc(sizeof(lumpinfo_t) * numlumps))) {
+	if (!(lumps = Hunk_AllocName(sizeof(lumpinfo_t) * numlumps, filename))) {
 		Com_Printf("WAD3_LoadWadFile: unable to allocate temporary memory for lump table\n");
 		return;
 	}

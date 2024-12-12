@@ -176,6 +176,10 @@ void *Hunk_AllocName(int size, const char *name)
 	size = sizeof(hunk_t) + ((size + 15) & ~15);
 
 	if (hunk_size - hunk_low_used - hunk_high_used < size) {
+		if ((int)developer.value)
+		{
+			Hunk_Print(true);
+		}
 #ifdef SERVERONLY
 		Sys_Error("Hunk_AllocName: Not enough RAM allocated. Try starting using \"-mem 64\" (or more) on the command line.");
 #else
@@ -195,16 +199,6 @@ void *Hunk_AllocName(int size, const char *name)
 	strlcpy(h->name, name, sizeof(h->name));
 
 	return (void *)(h + 1);
-}
-
-/*
-===================
-Hunk_Alloc
-===================
-*/
-void *Hunk_Alloc(int size)
-{
-	return Hunk_AllocName(size, "unknown");
 }
 
 int	Hunk_LowMark(void)
@@ -589,8 +583,6 @@ void Cache_Init_Commands(void)
 	Cmd_AddCommand("flush", Cache_Flush);
 	Cmd_AddCommand("cache_print", Cache_Print);
 	Cmd_AddCommand("cache_report", Cache_Report);
-
-	Cmd_AddCommand("hunk_print", Hunk_Print_f);
 }
 
 #ifndef WITH_DP_MEM
@@ -700,4 +692,6 @@ void Memory_Init(void *buf, int size)
 	hunk_high_used = 0;
 
 	Cache_Init();
+
+	Cmd_AddCommand("hunk_print", Hunk_Print_f);
 }

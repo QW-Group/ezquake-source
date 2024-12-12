@@ -110,7 +110,7 @@ qbool VM_PrepareInterpreter2( vm_t *vm, vmHeader_t *header )
 {
 	const char *errMsg;
 	instruction_t *buf;
-	buf = ( instruction_t *) Hunk_Alloc( (vm->instructionCount + 8) * sizeof( instruction_t ));
+	buf = ( instruction_t *) Hunk_AllocName( (vm->instructionCount + 8) * sizeof( instruction_t ), "vm");
 
 	errMsg = VM_LoadInstructions( (byte *) header + header->codeOffset, header->codeLength, header->instructionCount, buf );
 	if ( !errMsg ) {

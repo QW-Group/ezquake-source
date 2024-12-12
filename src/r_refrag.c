@@ -39,7 +39,7 @@ entity_t	*r_addent;
 
 void R_Init_EFrags (void)
 {
-	cl.free_efrags = (efrag_t *) Hunk_Alloc (sizeof (efrag_t));
+	cl.free_efrags = (efrag_t *) Hunk_AllocName (sizeof (efrag_t), "efrag");
 	memset (cl.free_efrags, 0, sizeof (efrag_t));
 }
 
@@ -48,7 +48,7 @@ void R_Next_Free_EFrag (void)
 	// advance the linked list, growing it as needed
 	if (cl.free_efrags->entnext == NULL)
 	{
-		cl.free_efrags->entnext = (efrag_t *) Hunk_Alloc (sizeof (efrag_t));
+		cl.free_efrags->entnext = (efrag_t *) Hunk_AllocName (sizeof (efrag_t), "efrag");
 		memset (cl.free_efrags->entnext, 0, sizeof (efrag_t));
 	}
 	cl.free_efrags = cl.free_efrags->entnext;

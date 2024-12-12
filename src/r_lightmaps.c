@@ -652,7 +652,7 @@ static void R_BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 
 	// draw texture
 	if (!fa->polys) { // seems map loaded first time, so light maps loaded first time too
-		poly = (glpoly_t *)Hunk_Alloc(sizeof(glpoly_t) + (lnumverts - 4) * VERTEXSIZE * sizeof(float));
+		poly = (glpoly_t *)Hunk_AllocName(sizeof(glpoly_t) + (lnumverts - 4) * VERTEXSIZE * sizeof(float), "lmpoly");
 		poly->next = fa->polys;
 		fa->polys = poly;
 		poly->numverts = lnumverts;
