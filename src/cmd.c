@@ -120,7 +120,7 @@ static void Cbuf_Register (cbuf_t *cbuf, int maxsize)
 {
 	assert (!host_initialized);
 	cbuf->maxsize = maxsize;
-	cbuf->text_buf = (char *) Hunk_Alloc(maxsize);
+	cbuf->text_buf = (char *) Hunk_AllocName(maxsize, "cbuf");
 	cbuf->text_start = cbuf->text_end = (cbuf->maxsize >> 1);
 	cbuf->wait = false;
 	cbuf->waitCount = 0;
@@ -1180,7 +1180,7 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 		}
 	}
 
-	cmd = (cmd_function_t *) Hunk_Alloc (sizeof(cmd_function_t));
+	cmd = (cmd_function_t *) Hunk_AllocName (sizeof(cmd_function_t), "cmd");
 	cmd->name = cmd_name;
 	cmd->function = function;
 	cmd->zmalloced = false;

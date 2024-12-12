@@ -530,7 +530,7 @@ void LoadFields(void)
 		while (fieldvm_p[num].name) {
 			num++;
 		}
-		f = fields = (field_t *)Hunk_Alloc(sizeof(field_t) * (num + 1));
+		f = fields = (field_t *)Hunk_AllocName(sizeof(field_t) * (num + 1), "edfields");
 		while (fieldvm_p->name){
 			f->name = (stringptr_t)fieldvm_p->name;
 			f->ofs =  fieldvm_p->ofs;

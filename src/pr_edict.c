@@ -770,7 +770,7 @@ char *ED_NewString (char *string)
 	int		i,l;
 
 	l = strlen(string) + 1;
-	nuw = (char *) Hunk_Alloc (l);
+	nuw = (char *) Hunk_AllocName (l, "edstring");
 	new_p = nuw;
 
 	for (i=0 ; i< l ; i++)

@@ -82,7 +82,6 @@ startup hunk allocations
 
 void Memory_Init (void *buf, int size);
 
-void *Hunk_Alloc (int size); // returns 0 filled memory
 void *Hunk_AllocName (int size, const char *name);
 
 int	Hunk_LowMark (void);

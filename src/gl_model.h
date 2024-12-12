@@ -162,12 +162,13 @@ typedef struct vbo_model_vert_s {
 
 typedef struct glpoly_s {
 	struct	glpoly_s	*next;
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	struct	glpoly_s	*chain;						//next lightmap poly in chain
 	struct	glpoly_s	*fb_chain;					//next fb poly in chain
 	struct	glpoly_s	*luma_chain;				//next luma poly in chain
 	struct	glpoly_s	*caustics_chain;			//next caustic poly in chain
 	struct	glpoly_s	*detail_chain;				//next detail poly in chain
-	struct  glpoly_s    *drawflat_chain;            //next drawflat poly in chain
+#endif
 
 	unsigned int        vbo_start;
 	int					numverts;

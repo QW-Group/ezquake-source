@@ -252,7 +252,7 @@ void SV_LoadGame_f(void)
 		}
 		str[sizeof(str) - 1] = '\0';
 		length = strlen(str) + 1;
-		sv.lightstyles[i] = (char *) Hunk_Alloc (length);
+		sv.lightstyles[i] = (char *) Hunk_AllocName (length, "lightstyle");
 		strlcpy (sv.lightstyles[i], str, length);
 	}
 

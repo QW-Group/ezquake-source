@@ -158,7 +158,7 @@ static void Mod_MD3LoadSkins(model_t* mod, md3Header_t* header, md3model_t* mode
 	header->numSkins = found_skins;
 
 	// Convert linked list to array so it's moveable & easier to access
-	surfinf_t* surface_info = Hunk_Alloc(sizeof(surfinf_t) * header->numSkins * header->numSurfaces);
+	surfinf_t* surface_info = Hunk_AllocName(sizeof(surfinf_t) * header->numSkins * header->numSurfaces, "md3surfinfo");
 	model->surfinf = (int)((intptr_t)surface_info - (intptr_t)model);
 	while (skin_list) {
 		md3_skin_list_entry_t* next = skin_list->next;
@@ -194,8 +194,8 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 
 	numsurfs = LittleLong(((md3Header_t *)buffer)->numSurfaces);
 
-	pheader = (md3model_t *)Hunk_Alloc(sizeof(md3model_t));
-	mem = (md3Header_t *)Hunk_Alloc(filesize);
+	pheader = (md3model_t *)Hunk_AllocName(sizeof(md3model_t), "md3model");
+	mem = (md3Header_t *)Hunk_AllocName(filesize, "md3header");
 	pheader->md3model = (char *)mem - (char *)pheader;
 	memcpy(mem, buffer, filesize);	//casually load the entire thing. As you do.
 
@@ -269,7 +269,7 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 
 			// swap all the vertices, convert to our format
 			vert = (md3XyzNormal_t *)((char *)surf + surf->ofsXyzNormals);
-			output_vert = (ezMd3XyzNormal_t*)Hunk_Alloc(surf->numVerts * surf->numFrames * sizeof(ezMd3XyzNormal_t));
+			output_vert = (ezMd3XyzNormal_t*)Hunk_AllocName(surf->numVerts * surf->numFrames * sizeof(ezMd3XyzNormal_t), "md3normal");
 			for (j = 0; j < surf->numVerts * surf->numFrames; j++) {
 				vert[j].xyz[0] = LittleShort(vert[j].xyz[0]);
 				vert[j].xyz[1] = LittleShort(vert[j].xyz[1]);

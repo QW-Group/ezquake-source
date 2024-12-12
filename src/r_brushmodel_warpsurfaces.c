@@ -116,7 +116,7 @@ static void R_WarpSurfaceSubdividePolygon(int numverts, float *verts)
 		return;
 	}
 
-	poly = (glpoly_t *)Hunk_Alloc(sizeof(glpoly_t) + (numverts - 4) * VERTEXSIZE * sizeof(float));
+	poly = (glpoly_t *)Hunk_AllocName(sizeof(glpoly_t) + (numverts - 4) * VERTEXSIZE * sizeof(float), "subdivpoly");
 	poly->next = warpface->subdivided;
 	warpface->subdivided = poly;
 	poly->numverts = numverts;
@@ -189,7 +189,7 @@ void R_SkySurfacesBuildPolys(msurface_t *fa)
 		numverts++;
 	}
 
-	poly = Hunk_Alloc(sizeof(glpoly_t) + (numverts - 4) * VERTEXSIZE * sizeof(float));
+	poly = Hunk_AllocName(sizeof(glpoly_t) + (numverts - 4) * VERTEXSIZE * sizeof(float), "subdivpoly");
 	poly->next = NULL;
 	fa->polys = poly;
 	poly->numverts = numverts;
