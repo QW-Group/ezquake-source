@@ -1002,3 +1002,13 @@ void GL_FramebufferDeleteAll(void)
 		GL_FramebufferEnsureDeleted(i);
 	}
 }
+
+int GL_FramebufferFxaaPreset(void)
+{
+	static const int fxaa_cvar_to_preset[18] = {
+			0, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 39
+	};
+	extern cvar_t vid_framebuffer_fxaa;
+
+	return fxaa_cvar_to_preset[bound(0, vid_framebuffer_fxaa.integer, 17)];
+}
