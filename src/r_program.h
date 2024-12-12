@@ -48,6 +48,8 @@ typedef enum {
 	r_program_uniform_post_process_glc_overlay,
 	r_program_uniform_post_process_glc_v_blend,
 	r_program_uniform_post_process_glc_contrast,
+	r_program_uniform_post_process_glc_r_inv_width,
+	r_program_uniform_post_process_glc_r_inv_height,
 	r_program_uniform_sky_glc_cameraPosition,
 	r_program_uniform_sky_glc_speedscale,
 	r_program_uniform_sky_glc_speedscale2,

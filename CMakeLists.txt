@@ -262,6 +262,15 @@ set(server
 source_group(TREE ${SOURCE_DIR} PREFIX "Source Files/server" FILES ${server})
 source_group(TREE ${SOURCE_DIR} PREFIX "Header Files/server" FILES ${server_headers})
 
+if(RENDERER_MODERN_OPENGL OR RENDERER_CLASSIC_OPENGL)
+    set(SHARED_GLSL_DIR ${SOURCE_DIR}/glsl/shared)
+    add_resources(shaders_shared
+            ${SHARED_GLSL_DIR}/fxaa.h.glsl
+    )
+    source_group(TREE ${SOURCE_DIR} PREFIX "Source Files/shared_opengl" FILES ${shared_opengl})
+    source_group(TREE ${SOURCE_DIR} PREFIX "Header Files/shared_opengl" FILES ${shared_opengl_headers})
+endif()
+
 if(RENDERER_MODERN_OPENGL)
     set(MODERN_GLSL_DIR ${SOURCE_DIR}/glsl)
     add_resources(shaders_modern
@@ -852,6 +861,7 @@ target_compile_definitions(ezquake PRIVATE
 target_link_libraries(ezquake PRIVATE
         $<$<BOOL:${RENDERER_MODERN_OPENGL}>:shaders_modern>
         $<$<BOOL:${RENDERER_CLASSIC_OPENGL}>:shaders_classic>
+        shaders_shared
         documentation
         git_version
 

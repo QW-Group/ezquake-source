@@ -56,9 +56,7 @@ extern cvar_t r_farclip, gl_max_size, gl_miptexLevel;
 extern cvar_t r_bloom;
 extern cvar_t gl_flashblend, r_dynamic, gl_lightmode, gl_modulate;
 
-#ifdef RENDERER_OPTION_MODERN_OPENGL
 extern cvar_t vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap, vid_framebuffer_scale, vid_framebuffer_multisample, vid_framebuffer_fxaa;
-#endif
 
 extern cvar_t vid_software_palette;
 
@@ -434,13 +432,11 @@ const char* vid_renderer_enum[] = {
 };
 #endif
 
-#ifdef RENDERER_OPTION_MODERN_OPENGL
 const char* vid_framebuffer_enum[] = {
 	"disabled", "0",
 	"enabled", "1",
 	"enabled (separate scene & hud)", "2"
 };
-#endif
 
 settings_page settfps;
 
@@ -522,13 +518,11 @@ void VideoApplySettings (void)
 	mss_askmode = true;
 }
 
-#if defined(EZ_MULTIPLE_RENDERERS) || defined(RENDERER_OPTION_MODERN_OPENGL)
 // performed when user hits the "apply" button
 void RendererRestart (void)
 {
 	Cbuf_AddText("vid_restart\n");
 }
-#endif
 
 // two possible results of the "keep these video settings?" dialogue
 static void KeepNewVideoSettings (void) { mss_askmode = false; }
@@ -1299,7 +1293,6 @@ setting settsystem_arr[] = {
 	ADDSET_ACTION("Apply Changes", RendererRestart, "Restarts the renderer."),
 #endif
 
-#ifdef RENDERER_OPTION_MODERN_OPENGL
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_SEPARATOR("Framebuffer"),
 	ADDSET_ENUM("Mode", vid_framebuffer, vid_framebuffer_enum),
@@ -1310,7 +1303,6 @@ setting settsystem_arr[] = {
 	ADDSET_NUMBER("FXAA", vid_framebuffer_fxaa, 0, 17, 1),
 	ADDSET_ACTION("Apply Changes", RendererRestart, "Restarts the renderer."),
 	ADDSET_BASIC_SECTION(),
-#endif
 
 	//Font
 	ADDSET_ADVANCED_SECTION(),

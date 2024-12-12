@@ -39,18 +39,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define POST_PROCESS_PALETTE    1
 #define POST_PROCESS_3DONLY     2
+#define POST_PROCESS_FXAA       4
 
 static texture_ref non_framebuffer_screen_texture;
 
 qbool GLC_CompilePostProcessProgram(void)
 {
 	extern cvar_t vid_software_palette, vid_framebuffer;
+	int fxaa_preset = GL_FramebufferFxaaPreset();
 	int post_process_flags =
 		(vid_software_palette.integer ? POST_PROCESS_PALETTE : 0) |
-		(vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY ? POST_PROCESS_3DONLY : 0);
+		(vid_framebuffer.integer == USE_FRAMEBUFFER_3DONLY ? POST_PROCESS_3DONLY : 0) |
+		(fxaa_preset > 0 ? POST_PROCESS_FXAA : 0) | (fxaa_preset << 4); // mix in preset to detect change
 
 	if (R_ProgramRecompileNeeded(r_program_post_process_glc, post_process_flags)) {
-		static char included_definitions[512];
+		static char included_definitions[131072];
 
 		memset(included_definitions, 0, sizeof(included_definitions));
 		if (post_process_flags & POST_PROCESS_PALETTE) {
@@ -58,6 +61,39 @@ qbool GLC_CompilePostProcessProgram(void)
 		}
 		if (post_process_flags & POST_PROCESS_3DONLY) {
 			strlcat(included_definitions, "#define EZ_POSTPROCESS_OVERLAY\n", sizeof(included_definitions));
+		}
+		if (post_process_flags & POST_PROCESS_FXAA) {
+			qbool supported = true;
+			if (!SDL_GL_ExtensionSupported("GL_EXT_gpu_shader4"))
+			{
+				Com_Printf("WARNING: Missing GL_EXT_gpu_shader4, FXAA not available.");
+				supported = false;
+			}
+#ifndef __APPLE__
+			if (!SDL_GL_ExtensionSupported("GL_ARB_gpu_shader5"))
+			{
+				Com_Printf("WARNING: Missing GL_ARB_gpu_shader5, FXAA not available.");
+				supported = false;
+			}
+#endif
+			if (supported)
+			{
+				extern const unsigned char fxaa_h_glsl[];
+				char buffer[33];
+				const char *settings =
+						"#extension GL_EXT_gpu_shader4 : enable\n"
+#ifndef __APPLE__
+						"#extension GL_ARB_gpu_shader5 : enable\n"
+#endif
+						"#define EZ_POSTPROCESS_FXAA\n"
+						"#define FXAA_PC 1\n"
+						"#define FXAA_GLSL_120 1\n"
+						"#define FXAA_GREEN_AS_LUMA 1\n";
+				snprintf(buffer, sizeof(buffer), "#define FXAA_QUALITY__PRESET %d\n", fxaa_preset);
+				strlcat(included_definitions, settings, sizeof(included_definitions));
+				strlcat(included_definitions, buffer, sizeof(included_definitions));
+				strlcat(included_definitions, (const char *)fxaa_h_glsl, sizeof(included_definitions));
+			}
 		}
 
 		// Initialise program for drawing image
@@ -89,6 +125,8 @@ void GLC_RenderFramebuffers(void)
 		R_ProgramUniform1f(r_program_uniform_post_process_glc_gamma, v_gamma.value);
 		R_ProgramUniform4fv(r_program_uniform_post_process_glc_v_blend, blend_values);
 		R_ProgramUniform1f(r_program_uniform_post_process_glc_contrast, bound(1, v_contrast.value, 3));
+		R_ProgramUniform1f(r_program_uniform_post_process_glc_r_inv_width, 1.0f / (float)VID_ScaledWidth3D());
+		R_ProgramUniform1f(r_program_uniform_post_process_glc_r_inv_height, 1.0f / (float)VID_ScaledHeight3D());
 		R_ApplyRenderingState(r_state_default_2d);
 
 		if (flip2d && flip3d) {
