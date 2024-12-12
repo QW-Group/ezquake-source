@@ -97,7 +97,7 @@ qbool GLM_CompilePostProcessProgram(void)
 		(vid_framebuffer_fxaa.integer ? POST_PROCESS_FXAA : 0) | (fxaa_preset << 4); // mix in preset to detect change
 
 	if (R_ProgramRecompileNeeded(r_program_post_process, post_process_flags)) {
-		static char included_definitions[512];
+		static char included_definitions[131072];
 
 		memset(included_definitions, 0, sizeof(included_definitions));
 		if (post_process_flags & POST_PROCESS_PALETTE) {
@@ -110,10 +110,17 @@ qbool GLM_CompilePostProcessProgram(void)
 			strlcat(included_definitions, "#define EZ_POSTPROCESS_TONEMAP\n", sizeof(included_definitions));
 		}
 		if (post_process_flags & POST_PROCESS_FXAA) {
+			extern const unsigned char fxaa_h_glsl[];
 			char buffer[33];
+			const char *settings =
+					"#define EZ_POSTPROCESS_FXAA\n" \
+					"#define FXAA_PC 1\n" \
+					"#define FXAA_GLSL_130 1\n" \
+					"#define FXAA_GREEN_AS_LUMA 1\n";
 			snprintf(buffer, sizeof(buffer), "#define FXAA_QUALITY__PRESET %d\n", fxaa_preset);
-			strlcat(included_definitions, "#define EZ_POSTPROCESS_FXAA\n", sizeof(included_definitions));
+			strlcat(included_definitions, settings, sizeof(included_definitions));
 			strlcat(included_definitions, buffer, sizeof(included_definitions));
+			strlcat(included_definitions, (const char *)fxaa_h_glsl, sizeof(included_definitions));
 		}
 
 		// Initialise program for drawing image
