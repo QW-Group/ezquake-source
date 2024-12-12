@@ -13,4 +13,7 @@ string(LENGTH "${content}" content_length)
 math(EXPR data_length "${content_length} / 2")
 
 string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," data "${content}")
+
+string(APPEND data "0x00,")
+
 file(WRITE "${output_file}" "const unsigned char ${variable_name}[] = {\n${data}\n};\nconst unsigned int ${variable_name}_len = ${data_length};\n")

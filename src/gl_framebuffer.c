@@ -306,6 +306,7 @@ static qbool GL_FramebufferCreateRenderingTexture(framebuffer_data_t* fb, fbtex_
 	GL_TexStorage2D(fb->texture[tex_id], 1, framebuffer_format, width, height, false);
 	renderer.TextureLabelSet(fb->texture[tex_id], label);
 	renderer.TextureWrapModeClamp(fb->texture[tex_id]);
+	renderer.TextureSetFiltering(fb->texture[tex_id], texture_minification_nearest, texture_magnification_nearest);
 	R_TextureSetFlag(fb->texture[tex_id], R_TextureGetFlag(fb->texture[tex_id]) | TEX_NO_TEXTUREMODE);
 	return true;
 }
@@ -1000,4 +1001,14 @@ void GL_FramebufferDeleteAll(void)
 	for (i = 0; i < framebuffer_count; ++i) {
 		GL_FramebufferEnsureDeleted(i);
 	}
+}
+
+int GL_FramebufferFxaaPreset(void)
+{
+	static const int fxaa_cvar_to_preset[18] = {
+			0, 10, 11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 39
+	};
+	extern cvar_t vid_framebuffer_fxaa;
+
+	return fxaa_cvar_to_preset[bound(0, vid_framebuffer_fxaa.integer, 17)];
 }
