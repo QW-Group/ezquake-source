@@ -724,11 +724,23 @@ void CL_QWURL_f (void)
 {
 	char *connection_str = NULL;
 	char *command = NULL;
+	char *c;
 
 	if (Cmd_Argc() != 2) 
 	{
 		Com_Printf ("Usage: %s <qw-url>\n", Cmd_Argv(0));
 		return;
+	}
+
+	// Ensure someone isn't trying to concatenate commands.
+	for (c = Cmd_Argv(1); *c != '\0'; c++)
+	{
+		if (*c == ';')
+		{
+			Com_Printf("%s: The QW-URL \"%s\" contains illegal characters\n",
+				Cmd_Argv(0), Cmd_Argv(1));
+			return;
+		}
 	}
 
 	// Strip the leading qw:// first.
