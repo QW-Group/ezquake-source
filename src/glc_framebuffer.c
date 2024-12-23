@@ -61,6 +61,11 @@ qbool GLC_CompilePostProcessProgram(void)
 		}
 		if (post_process_flags & POST_PROCESS_3DONLY) {
 			strlcat(included_definitions, "#define EZ_POSTPROCESS_OVERLAY\n", sizeof(included_definitions));
+			if (SDL_GL_ExtensionSupported("GL_ARB_draw_buffers")) {
+				strlcat(included_definitions, "#extension GL_ARB_draw_buffers : enable\n", sizeof(included_definitions));
+			} else if (SDL_GL_ExtensionSupported("GL_EXT_draw_buffers")) {
+				strlcat(included_definitions, "#extension GL_EXT_draw_buffers : enable\n", sizeof(included_definitions));
+			}
 		}
 		if (post_process_flags & POST_PROCESS_FXAA) {
 			qbool supported = true;
