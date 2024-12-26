@@ -13,7 +13,10 @@ extern cvar_t r_skyname;
 extern texture_ref skyboxtextures[MAX_SKYBOXTEXTURES];
 
 void R_ClearSkyTextures(void);
-void R_LoadSky_f(void);
+void R_SkyRegisterCvars(void);
 extern qbool r_skyboxloaded;
+
+qbool Skywind_Active(void);
+qbool Skywind_GetDirectionAndPhase(float wind_dir[3], float *wind_phase);
 
 #endif // EZQUAKE_R_BRUSHMODEL_SKY_HEADER

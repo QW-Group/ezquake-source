@@ -282,10 +282,14 @@ static qbool R_DetermineSkyLimits(qbool *ignore_z)
 }
 
 #define PROGRAMFLAGS_SKYBOX       1
+#define PROGRAMFLAGS_SKYWIND      2
 
 qbool GLC_SkyProgramCompile(void)
 {
 	int flags = (r_skyboxloaded && R_UseCubeMapForSkyBox() ? PROGRAMFLAGS_SKYBOX : 0);
+	if (flags && Skywind_Active()) {
+		flags |= PROGRAMFLAGS_SKYWIND;
+	}
 
 	if (R_ProgramRecompileNeeded(r_program_sky_glc, flags)) {
 		static char included_definitions[512];
@@ -293,6 +297,9 @@ qbool GLC_SkyProgramCompile(void)
 		memset(included_definitions, 0, sizeof(included_definitions));
 		if (flags & PROGRAMFLAGS_SKYBOX) {
 			strlcat(included_definitions, "#define DRAW_SKYBOX\n", sizeof(included_definitions));
+			if (flags & PROGRAMFLAGS_SKYWIND) {
+				strlcat(included_definitions, "#define DRAW_SKYWIND\n", sizeof(included_definitions));
+			}
 		}
 
 		R_ProgramCompileWithInclude(r_program_sky_glc, included_definitions);
@@ -316,6 +323,7 @@ static void GLC_DrawSky_Program(void)
 	extern msurface_t *skychain;
 	float skySpeedscale = r_refdef2.time * 8;
 	float skySpeedscale2 = r_refdef2.time * 16;
+	float skyWind[4];
 
 	skySpeedscale -= (int)skySpeedscale & ~127;
 	skySpeedscale2 -= (int)skySpeedscale2 & ~127;
@@ -328,6 +336,9 @@ static void GLC_DrawSky_Program(void)
 	R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale, skySpeedscale);
 	R_ProgramUniform1f(r_program_uniform_sky_glc_speedscale2, skySpeedscale2);
 	R_ProgramUniform3fv(r_program_uniform_sky_glc_cameraPosition, r_refdef.vieworg);
+	if (Skywind_GetDirectionAndPhase(skyWind, &skyWind[3])) {
+		R_ProgramUniform4fv(r_program_uniform_sky_glc_skyWind, skyWind);
+	}
 
 	if (r_skyboxloaded && R_UseCubeMapForSkyBox()) {
 		extern texture_ref skybox_cubeMap;

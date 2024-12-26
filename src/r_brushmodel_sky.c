@@ -37,6 +37,20 @@ texture_ref skybox_cubeMap;
 
 qbool r_skyboxloaded;
 
+extern cvar_t r_skywind;
+
+static float skywind_dist;
+static float skywind_yaw;
+static float skywind_pitch;
+static float skywind_period;
+
+static char active_skyname[MAX_QPATH];
+
+#define SKYWIND_CFG			"_wind.cfg"
+
+static void Skywind_Load_f(void);
+static void Skywind_Clear(void);
+
 //A sky texture is 256 * 128, with the right side being a masked overlay
 void R_InitSky (texture_t *mt) {
 	int i, j, p, r, g, b;
@@ -80,7 +94,9 @@ int R_SetSky(char *skyname)
 {
 	char *groupname;
 
+	memset(active_skyname, 0, sizeof(active_skyname));
 	r_skyboxloaded = false;
+	Skywind_Clear();
 
 	// set skyname to groupname if any
 	skyname	= (groupname = TP_GetSkyGroupName(TP_MapName(), NULL)) ? groupname : skyname;
@@ -98,12 +114,20 @@ int R_SetSky(char *skyname)
 
 	// everything was OK
 	r_skyboxloaded = true;
+
+	strlcpy(active_skyname, skyname, sizeof(active_skyname));
+
+	if (r_skywind.integer) {
+		Skywind_Load_f();
+	}
+
 	return 0;
 }
 
 void OnChange_r_skyname (cvar_t *v, char *skyname, qbool* cancel)
 {
-	if (!skyname[0]) {		
+	if (!skyname[0]) {
+		memset(active_skyname, 0, sizeof(active_skyname));
 		r_skyboxloaded = false;
 		return;
 	}
@@ -111,7 +135,7 @@ void OnChange_r_skyname (cvar_t *v, char *skyname, qbool* cancel)
 	*cancel = R_SetSky(skyname);
 }
 
-void R_LoadSky_f(void)
+static void R_LoadSky_f(void)
 {
 	switch (Cmd_Argc()) {
 	case 1:
@@ -208,7 +232,7 @@ static qbool Sky_LoadSkyboxTextures(const char* skyname)
 				fixed_size = size;
 
 				if (i == 0) {
-					skybox_cubeMap = R_CreateCubeMap("***skybox***", size, size, TEX_NOCOMPRESS | TEX_MIPMAP | TEX_NOSCALE);
+					skybox_cubeMap = R_CreateCubeMap("***skybox***", size, size, TEX_NOCOMPRESS | TEX_MIPMAP | TEX_NOSCALE | TEX_ALPHA);
 					if (!R_TextureReferenceIsValid(skybox_cubeMap)) {
 						Q_free(data);
 						Com_Printf("Couldn't load skybox \"%s\"\n", skyname);
@@ -257,4 +281,263 @@ void R_ClearSkyTextures(void)
 {
 	R_TextureReferenceInvalidate(solidskytexture);
 	R_TextureReferenceInvalidate(alphaskytexture);
+}
+
+static void Skywind_Clear(void)
+{
+	if (!r_skyboxloaded)
+		return;
+	skywind_dist = 0.f;
+	skywind_yaw = 45.f;
+	skywind_pitch = 0.f;
+	skywind_period = 30.f;
+}
+
+static void Skywind_Load_f(void)
+{
+	char relname[MAX_QPATH];
+	char *buf;
+	const char *data;
+
+	if (!r_skyboxloaded)
+	{
+		Con_Printf ("No skybox loaded\n");
+		return;
+	}
+
+	snprintf(relname, sizeof(relname), "gfx/env/%s" SKYWIND_CFG, active_skyname);
+	buf = (char *)FS_LoadTempFile(relname, NULL);
+	if (!buf)
+	{
+		Con_DPrintf ("Sky wind config not found '%s'.\n", relname);
+		return;
+	}
+
+	data = COM_Parse(buf);
+	if (!data)
+	{
+		return;
+	}
+
+	if (strcmp(com_token, "skywind") != 0)
+	{
+		Con_Printf("Skywind_Load_f: first token must be 'skywind'.\n");
+		return;
+	}
+
+	Skywind_Clear();
+
+	if ((data = COM_Parse(data)) != NULL)
+	{
+		skywind_dist = bound(-2.0f, atof(com_token), 2.0f);
+	}
+
+	if ((data = COM_Parse(data)) != NULL)
+	{
+		skywind_yaw = fmodf(atof(com_token), 360.0f);
+	}
+
+	if ((data = COM_Parse(data)) != NULL)
+	{
+		skywind_period = atof(com_token);
+	}
+
+	if ((data = COM_Parse(data)) != NULL)
+	{
+		skywind_pitch = fmodf(atof(com_token) + 90.0f, 180.0f) - 90.0f;
+	}
+}
+
+static void Skywind_Save_f (void)
+{
+	char relname[MAX_QPATH];
+	char path[MAX_OSPATH];
+	FILE *f;
+
+	if (!r_skyboxloaded)
+	{
+		Con_Printf("No skybox loaded\n");
+		return;
+	}
+
+	snprintf(relname, sizeof(relname), "gfx/env/%s" SKYWIND_CFG, active_skyname);
+	snprintf(path, sizeof(path), "%s/%s", com_gamedir, relname);
+	f = fopen(path, "wt");
+	if (!f)
+	{
+		Con_Printf("Couldn't write '%s'.\n", relname);
+		return;
+	}
+
+	fprintf(f,
+			"// distance yaw period pitch\n"
+			"skywind %g %g %g %g\n",
+			skywind_dist,
+			skywind_yaw,
+			skywind_period,
+			skywind_pitch
+	);
+
+	fclose(f);
+
+	Con_Printf("Wrote %s\n", relname);
+}
+
+static void Skywind_LookDir_f (void)
+{
+	if (cls.state != ca_active)
+	{
+		return;
+	}
+
+	if (!r_skyboxloaded)
+	{
+		Con_Printf("No skybox loaded\n");
+		return;
+	}
+
+	// invert view direction so that clouds move towards the player, not away from them
+	skywind_yaw = fmodf(cl.viewangles[YAW] + 180.0f, 360.0f);
+	skywind_pitch = -cl.viewangles[PITCH];
+
+	// first argument, if present, overrides the loop duration (default: 30 seconds)
+	if (Cmd_Argc() >= 2)
+	{
+		skywind_period = atof(Cmd_Argv(1));
+	}
+	else if (!skywind_period)
+	{
+		skywind_period = 30.f;
+	}
+
+	// second argument, if present, overrides the amplitude of the movement (default: 1.0)
+	if (Cmd_Argc() >= 3)
+	{
+		skywind_dist = bound(-2.0f, atof(Cmd_Argv(2)), 2.0f);
+	}
+	else if (!skywind_dist)
+	{
+		skywind_dist = 1.0f;
+	}
+}
+
+static void Skywind_Rotate_f(void)
+{
+	if (cls.state != ca_active)
+	{
+		return;
+	}
+
+	if (!r_skyboxloaded)
+	{
+		Con_Printf("No skybox loaded\n");
+		return;
+	}
+
+	if (Cmd_Argc() < 2)
+	{
+		Con_Printf(
+				"usage:\n"
+				"   %s <yawdelta> [pitchdelta]\n",
+				Cmd_Argv (0)
+		);
+		return;
+	}
+
+	skywind_yaw = fmodf(skywind_yaw + atof(Cmd_Argv(1)), 360.0f);
+	if (Cmd_Argc() >= 3)
+	{
+		skywind_pitch = fmodf(skywind_pitch + atof(Cmd_Argv(2)) + 90.0f, 180.0f) - 90.0f;
+	}
+}
+
+static void Skywind_f (void)
+{
+	if (cls.state != ca_active)
+	{
+		return;
+	}
+
+	if (!r_skyboxloaded)
+	{
+		Con_Printf("No skybox loaded\n");
+		return;
+	}
+
+	if (Cmd_Argc() < 2)
+	{
+		Con_Printf (
+				"usage:\n"
+				"   %s [distance] [yaw] [period] [pitch]\n"
+				"current values:\n"
+				"   \"distance\" is \"%g\"\n"
+				"   \"yaw\"      is \"%g\"\n"
+				"   \"period\"   is \"%g\"\n"
+				"   \"pitch\"    is \"%g\"\n",
+				Cmd_Argv(0),
+				skywind_dist,
+				skywind_yaw,
+				skywind_period,
+				skywind_pitch
+		);
+		return;
+	}
+
+	skywind_dist = bound(-2.0f, atof(Cmd_Argv (1)), 2.0f);
+	if (Cmd_Argc () >= 3)
+	{
+		skywind_yaw = fmodf(atof(Cmd_Argv(2)), 360.0f);
+	}
+	if (Cmd_Argc () >= 4)
+	{
+		skywind_period = atof(Cmd_Argv(3));
+	}
+	if (Cmd_Argc () >= 5)
+	{
+		skywind_pitch = fmodf(atof(Cmd_Argv(4)) + 90.0f, 180.0f) - 90.0f;
+	}
+}
+
+qbool Skywind_Active(void)
+{
+	return r_skyboxloaded && skywind_dist > 0.0f;
+}
+
+qbool Skywind_GetDirectionAndPhase(float wind_dir[3], float *wind_phase)
+{
+	float yaw, pitch, sy, sp, cy, cp, dist, period;
+	double phase;
+
+	if (!Skywind_Active())
+	{
+		return false;
+	}
+
+	yaw = DEG2RAD(skywind_yaw);
+	pitch = DEG2RAD(skywind_pitch);
+	sy = sinf(yaw);
+	sp = sinf(pitch);
+	cy = cosf(yaw);
+	cp = cosf(pitch);
+	dist = bound(-2.f, skywind_dist, 2.f);
+	period = skywind_period / r_skywind.value;
+	phase = period ? cl.time * 0.5 / period : 0.5;
+
+	phase -= floor(phase) + 0.5; // [-0.5, 0.5)
+	wind_dir[0] = dist * cp * sy;
+	wind_dir[1] = dist * sp;
+	wind_dir[2] = -dist * cp * cy;
+	*wind_phase = (float) phase;
+
+	return true;
+}
+
+void R_SkyRegisterCvars(void)
+{
+	Cmd_AddCommand("loadsky", R_LoadSky_f);
+	Cmd_AddCommand("skywind",Skywind_f);
+	Cmd_AddCommand("skywind_save",Skywind_Save_f);
+	Cmd_AddCommand("skywind_load",Skywind_Load_f);
+	Cmd_AddCommand("skywind_lookdir",Skywind_LookDir_f);
+	Cmd_AddCommand("skywind_rotate",Skywind_Rotate_f);
 }

@@ -10,7 +10,7 @@ layout(binding=SAMPLER_DETAIL_TEXTURE) uniform sampler2D detailTex;
 #ifdef DRAW_CAUSTIC_TEXTURES
 layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
 #endif
-#ifdef DRAW_SKYBOX
+#if defined(DRAW_SKYBOX)
 layout(binding=SAMPLER_SKYBOX_TEXTURE) uniform samplerCube skyTex;
 #elif defined(DRAW_SKYDOME)
 layout(binding=SAMPLER_SKYDOME_TEXTURE) uniform sampler2D skyDomeTex;
@@ -169,6 +169,20 @@ void main()
 		else if (turbType == TEXTURE_TURB_SKY) {
 #if defined(DRAW_SKYBOX)
 			frag_colour = texture(skyTex, Direction);
+#if defined(DRAW_SKYWIND)
+			float t1 = skyWind.w;
+			float t2 = fract(t1) - 0.5;
+			float blend = abs(t1 * 2.0);
+			vec3 dir = normalize(Direction);
+			vec4 layer1 = texture(skyTex, dir + t1 * skyWind.xyz);
+			vec4 layer2 = texture(skyTex, dir + t2 * skyWind.xyz);
+			layer1.a *= 1.0 - blend;
+			layer2.a *= blend;
+			layer1.rgb *= layer1.a;
+			layer2.rgb *= layer2.a;
+			vec4 combined = layer1 + layer2;
+			frag_colour = vec4(frag_colour.rgb * (1.0 - combined.a) + combined.rgb, 1);
+#endif
 #elif defined(DRAW_SKYDOME)
 			const float len = 3.09375;
 			// Flatten it out

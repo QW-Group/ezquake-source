@@ -38,6 +38,10 @@ typedef struct uniform_block_frame_constants_s {
 	float r_farclip_unused;                  // NO LONGER USED, replace
 	float waterAlpha;
 
+	// animated skybox
+	vec3_t windDir;
+	float  windPhase;
+
 	// drawflat toggles (combine into bitfield?)
 	int r_drawflat;
 	int r_fastturb;

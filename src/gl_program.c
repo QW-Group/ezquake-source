@@ -218,6 +218,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_sky_glc, "skySpeedscale2", 1, false },
 	// r_program_uniform_sky_glc_skyTex,
 	{ r_program_sky_glc, "skyTex", 1, false },
+	// r_program_uniform_sky_glc_skyWind,
+	{ r_program_sky_glc, "skyWind", 1, false },
 	// r_program_uniform_sky_glc_skyDomeTex,
 	{ r_program_sky_glc, "skyDomeTex", 1, false },
 	// r_program_uniform_sky_glc_skyDomeCloudTex,
