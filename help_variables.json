@@ -16590,6 +16590,13 @@
       "remarks": "Specifying a value will disable loading of skyboxes specified by the map.\nSkyboxes should be placed in 'env' or 'gfx/env' folders",
       "type": "string"
     },
+    "r_skywind": {
+      "default": "1",
+      "desc": "Sets the scale factor of skybox animation if above 0, and skybox has an animation configuration.",
+      "group-id": "51",
+      "remarks": "Specifying a value above 1.0 will increase the pace of the configured animation.",
+      "type": "float"
+    },
     "r_slimecolor": {
       "default": "10 60 10",
       "desc": "Changes color of slime when r_fastturb set to 1.",

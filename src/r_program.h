@@ -54,6 +54,7 @@ typedef enum {
 	r_program_uniform_sky_glc_speedscale,
 	r_program_uniform_sky_glc_speedscale2,
 	r_program_uniform_sky_glc_skyTex,
+	r_program_uniform_sky_glc_skyWind,
 	r_program_uniform_sky_glc_skyDomeTex,
 	r_program_uniform_sky_glc_skyDomeCloudTex,
 	r_program_uniform_turb_glc_texSampler,

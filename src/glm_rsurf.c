@@ -112,6 +112,7 @@ static void GLM_CheckDrawCallSize(void)
 #define DRAW_DRAWFLAT_TINTED       (1 << 11)
 #define DRAW_DRAWFLAT_BRIGHT       (1 << 12)
 #define DRAW_ALPHATESTED           (1 << 13)
+#define DRAW_SKYWIND               (1 << 14)
 
 static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
@@ -134,6 +135,7 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 	qbool luma_textures = gl_lumatextures.integer && r_refdef2.allow_lumas;
 	qbool skybox = r_skyboxloaded && !r_fastsky.integer;
 	qbool skydome = !skybox && !r_fastsky.integer && R_TextureReferenceIsValid(solidskytexture);
+	qbool skywind = skybox && Skywind_Active();
 
 	int drawworld_desiredOptions =
 		(detail_textures ? DRAW_DETAIL_TEXTURES : 0) |
@@ -148,7 +150,8 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 		(r_drawflat.integer == 1 || r_drawflat.integer == 3 ? DRAW_FLATWALLS : 0) |
 		(gl_textureless.integer ? DRAW_TEXTURELESS : 0) |
 		((gl_outline.integer & 2) ? DRAW_GEOMETRY : 0) |
-		(alpha_test ? DRAW_ALPHATESTED : 0);
+		(alpha_test ? DRAW_ALPHATESTED : 0) |
+		(skywind ? DRAW_SKYWIND : 0);
 
 	if (R_ProgramRecompileNeeded(program_id, drawworld_desiredOptions)) {
 		static char included_definitions[2048];
@@ -192,7 +195,11 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 			TEXTURE_UNIT_SKYBOX = samplers++;
 
 			strlcat(included_definitions, "#define DRAW_SKYBOX\n", sizeof(included_definitions));
+			if (skywind) {
+				strlcat(included_definitions, "#define DRAW_SKYWIND\n", sizeof(included_definitions));
+			}
 			strlcat(included_definitions, va("#define SAMPLER_SKYBOX_TEXTURE %d\n", TEXTURE_UNIT_SKYBOX), sizeof(included_definitions));
+
 		}
 		else if (skydome) {
 			TEXTURE_UNIT_SKYDOME_TEXTURE = samplers++;

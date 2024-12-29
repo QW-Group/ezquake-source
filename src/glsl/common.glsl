@@ -34,6 +34,9 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	float r_farclip_unused;              // Replace
 	float waterAlpha;
 
+	// animated skybox
+	vec4  skyWind;
+
 	// drawflat toggles
 	int r_drawflat;
 	int r_fastturb;
