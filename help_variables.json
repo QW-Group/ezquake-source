@@ -1043,6 +1043,21 @@
       "group-id": "9",
       "type": "string"
     },
+    "cl_allow_uploads": {
+      "default": "0",
+      "group-id": "9",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Don't allow uploads.",
+          "name": "0"
+        },
+        {
+          "description": "Allow uploads.",
+          "name": "1"
+        }
+      ]
+    },
     "cl_anglespeedkey": {
       "default": "1.5",
       "desc": "This variable sets multiplier by which your \"cl_yawspeed\" (how fast you turn) is multiplied when running (+speed).",

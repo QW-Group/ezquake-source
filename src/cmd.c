@@ -69,6 +69,7 @@ cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, 
 hashtable_t *rc_hash;
 
 cvar_t cl_allow_downloads = {"cl_allow_downloads", "bsp,lmp,loc,mdl,mvd,pcx,spr,wad,wav"};
+cvar_t cl_allow_uploads = {"cl_allow_uploads", "0"};
 
 cbuf_t cbuf_main;
 cbuf_t cbuf_svc;
@@ -2496,6 +2497,7 @@ void Cmd_Init (void)
 	Cvar_Register(&cl_warnexec);
 	Cvar_Register(&cl_remote_capabilities);
 	Cvar_Register(&cl_allow_downloads);
+	Cvar_Register(&cl_allow_uploads);
 
 	Cmd_AddCommand ("macrolist", Cmd_MacroList_f);
 	qsort(msgtrigger_commands,
