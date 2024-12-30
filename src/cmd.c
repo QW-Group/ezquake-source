@@ -31,6 +31,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "parser.h"
 #include "utils.h"
 #include "keys.h"
+#include "hash.h"
 #include <pcre2.h>
 
 typedef struct {
@@ -57,12 +58,81 @@ cvar_t cl_warncmd = {"cl_warncmd", "1"};
 cvar_t cl_warnexec = {"cl_warnexec", "1"};
 cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 
+#define REMOTE_CAPABILITIES "alias,bf,changing,cmd,color,download,exec,fullserverinfo,impulse," \
+				"infoset,ktx_infoset,ktx_sinfoset,nextul,on_enter," \
+				"on_enter_ctf,on_enter_ffa,on_spec_enter,on_spec_enter_ctf," \
+				"on_spec_enter_ffa,packet,play,reconnect,say,sinfoset,skin," \
+				"skins,team,tempalias,track,wait"
+static void OnChange_remote_capabilities(cvar_t *var, char *string, qbool *cancel);
+cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, 0,
+				   OnChange_remote_capabilities};
+hashtable_t *rc_hash;
+
 cbuf_t cbuf_main;
 cbuf_t cbuf_svc;
 cbuf_t cbuf_safe, cbuf_formatted_comms;
 cbuf_t cbuf_server;
 
 cbuf_t *cbuf_current = NULL;
+
+static void OnChange_remote_capabilities(cvar_t *var, char *string, qbool *cancel)
+{
+	char *cmd, *ent, *tmp;
+
+	if (cls.state != ca_disconnected)
+	{
+		Com_Printf("You cannot change remote capabilities unless you are disconnected\n");
+		return;
+	}
+
+	if (!rc_hash || strlen(var->string) == 0)
+	{
+		goto add;
+	}
+
+	tmp = Q_strdup(var->string);
+	cmd = strtok(tmp, ",");
+	while (cmd != NULL)
+	{
+		Com_DPrintf("Removing %s from remote capabilities\n", cmd);
+
+		if ((ent = Hash_Get(rc_hash, cmd)))
+		{
+			Q_free(ent);
+			Hash_Remove(rc_hash, cmd);
+		}
+
+		cmd = strtok(NULL, ",");
+	}
+	Q_free(tmp);
+
+add:
+	if (!rc_hash)
+	{
+		rc_hash = Hash_InitTable(512);
+	}
+	else
+	{
+		Hash_Flush(rc_hash);
+	}
+
+	tmp = Q_strdup(string);
+	cmd = strtok(tmp, ",");
+	while (cmd != NULL)
+	{
+		Com_DPrintf("Adding %s to capabilities\n", cmd);
+
+		if (!Hash_Get(rc_hash, cmd))
+		{
+			ent = Q_malloc(sizeof(char));
+			*ent = 1;
+			Hash_Add(rc_hash, cmd, (void *)ent);
+		}
+
+		cmd = strtok(NULL, ",");
+	}
+	Q_free(tmp);
+}
 
 //=============================================================================
 
@@ -1742,6 +1812,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	cbuf_t *inserttarget, *oldcontext;
 	char *p, *n, *s;
 	char text_exp[1024];
+	qbool is_server_alias = false;
 
 	oldcontext = cbuf_current;
 	cbuf_current = context;
@@ -1778,10 +1849,17 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 			}
 		}
 
-		if (cmd->function)
+		if (cmd->function) {
+			if (cbuf_current == &cbuf_svc && !Hash_Get(rc_hash, cmd->name)) {
+				Com_Printf("Blocked %s: not in cl_remote_capabilities\n", cmd->name);
+				goto done;
+			}
+
 			cmd->function();
-		else
+		}
+		else {
 			Cmd_ForwardToServer ();
+		}
 		goto done;
 	}
 
@@ -1791,6 +1869,11 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 
 	// check cvars
 	if ((v = Cvar_Find(Cmd_Argv(0)))) {
+		if (cbuf_current == &cbuf_svc && !Hash_Get(rc_hash, v->name)) {
+			Com_Printf("Blocked %s: not in cl_remote_capabilities\n", v->name);
+			goto done;
+		}
+
 		if (cbuf_current == &cbuf_formatted_comms) {
 			Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", Cmd_Argv(0));
 			goto done;
@@ -1802,6 +1885,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 	// check aliases
 checkaliases:
 	if ((a = Cmd_FindAlias(Cmd_Argv(0)))) {
+		is_server_alias = a->flags & ALIAS_SERVER;
 
 		// QW262 -->
 		if (a->value[0] == '\0') {
@@ -1851,11 +1935,15 @@ checkaliases:
 
 		if (cbuf_current == &cbuf_svc)
 		{
-			Cbuf_AddText (p);
-			Cbuf_AddText ("\n");
+			Cbuf_AddTextEx (&cbuf_svc, p);
+			Cbuf_AddTextEx (&cbuf_svc, "\n");
 		} else
 		{
-			inserttarget = cbuf_current ? cbuf_current : &cbuf_main;
+			if (is_server_alias)
+				inserttarget = &cbuf_svc;
+			else
+				inserttarget = cbuf_current ? cbuf_current : &cbuf_main;
+
 			Cbuf_InsertTextEx (inserttarget, "\n");
 
 			// if the alias value is a command or cvar and
@@ -2403,7 +2491,8 @@ void Cmd_Init (void)
 // <-- QW262
 
 	Cvar_Register(&cl_curlybraces);
-    Cvar_Register(&cl_warnexec);
+	Cvar_Register(&cl_warnexec);
+	Cvar_Register(&cl_remote_capabilities);
 
 	Cmd_AddCommand ("macrolist", Cmd_MacroList_f);
 	qsort(msgtrigger_commands,
