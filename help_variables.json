@@ -1037,6 +1037,12 @@
         }
       ]
     },
+    "cl_allow_downloads": {
+      "default": "bsp,lmp,loc,mdl,mvd,pcx,spr,wad,wav",
+      "desc": "This variable controls which file extensions a client/server can download/upload from/to the server/client.",
+      "group-id": "9",
+      "type": "string"
+    },
     "cl_anglespeedkey": {
       "default": "1.5",
       "desc": "This variable sets multiplier by which your \"cl_yawspeed\" (how fast you turn) is multiplied when running (+speed).",
