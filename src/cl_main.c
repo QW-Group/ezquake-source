@@ -731,6 +731,14 @@ void CL_QWURL_f (void)
 		return;
 	}
 
+	// Ensure someone isn't trying to concatenate commands.
+	if (strchr(Cmd_Argv(1), ';') != NULL)
+	{
+		Com_Printf("%s: The QW-URL \"%s\" contains illegal characters\n",
+			Cmd_Argv(0), Cmd_Argv(1));
+		return;
+	}
+
 	// Strip the leading qw:// first.
 	{
 		char qws_str[] = "qw://";
