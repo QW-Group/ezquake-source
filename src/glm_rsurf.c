@@ -659,7 +659,6 @@ static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintp
 {
 	int i;
 	int prevSampler = -1;
-	const qbool batch = false;
 	qbool prev_alphaTested = false;
 
 	for (i = begin; i < begin + count; ++i) {
@@ -679,10 +678,8 @@ static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintp
 			prev_alphaTested = req->isAlphaTested;
 		}
 
-		if (batch) {
-			while (i + batchCount < begin + count && drawcall->worldmodel_requests[i + batchCount].nonDynamicSampler == sampler && drawcall->worldmodel_requests[i + batchCount].isAlphaTested == req->isAlphaTested) {
-				++batchCount;
-			}
+		while (i + batchCount < begin + count && drawcall->worldmodel_requests[i + batchCount].nonDynamicSampler == sampler && drawcall->worldmodel_requests[i + batchCount].isAlphaTested == req->isAlphaTested) {
+			++batchCount;
 		}
 
 		if (batchCount == 1) {
@@ -697,8 +694,7 @@ static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintp
 			);
 		}
 		else {
-			GL_MultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(offset + sizeof(drawcall->worldmodel_requests[0]) * i), batchCount, sizeof(drawcall->worldmodel_requests[0]));
-
+			GL_MultiDrawElementsIndirect(GL_TRIANGLE_STRIP, GL_UNSIGNED_INT, (void*)(offset + (i - begin) * sizeof(drawcall->worldmodel_requests[0])), batchCount, sizeof(drawcall->worldmodel_requests[0]));
 			i += batchCount - 1;
 		}
 	}
