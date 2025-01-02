@@ -626,30 +626,13 @@ void CL_Rcon_f (void) {
 
 qbool CL_Download_Accept(const char *filename)
 {
-	char *str, *tmp, *ext;
-	qbool is_valid = false;
-	extern cvar_t cl_allow_downloads;
-
 	if (strstr(filename, "..") || !strcmp(filename, "") || filename[0] == '/' || strchr(filename, '\\') || strchr(filename, ':') || strstr(filename, "//")) {
 		Com_Printf("Warning: Invalid characters in filename \"%s\"\n", filename);
 		return false;
 	}
 
-	ext = COM_FileExtension(filename);
-	str = Q_strdup(cl_allow_downloads.string);
-	tmp = strtok(str, ",");
-	while (tmp != NULL) {
-		if (strcmp(ext, tmp) == 0) {
-			is_valid = true;
-			break;
-		}
-
-		tmp = strtok(NULL, ",");
-	}
-	Q_free(str);
-
-	if (!is_valid) {
-		Com_Printf("Warning: Non-allowed file \"%s\" skipped. Add \"%s\" to cl_allow_download_file_extensions to allow the file to be downloaded\n", filename, ext);
+	if (!CL_IsDownloadableFileExtension(filename)) {
+		Com_Printf("Warning: Non-allowed file \"%s\" skipped. Add \"%s\" to cl_allow_downloads to allow the file to be downloaded\n", filename, COM_FileExtension(filename));
 		return false;
 	}
 

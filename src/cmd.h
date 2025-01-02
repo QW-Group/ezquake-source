@@ -182,6 +182,7 @@ void Cbuf_AddEarlyCommands (void);
 void Cmd_StuffCmds_f (void);
 qbool Cmd_IsLegacyCommand (char *oldname);
 void Cmd_AddLegacyCommand (char *oldname, char *newname);
+qbool CL_IsDownloadableFileExtension(const char *filename);
 
 //===========================================================================
 
