@@ -1287,7 +1287,13 @@ void CL_StartFileUpload (void)
 {
 	char *name;
 	int i;
+	extern cvar_t cl_allow_uploads;
 
+	if (!cl_allow_uploads.integer)
+	{
+		Com_Printf ("This command has been disabled for security reasons. Set cl_allow_uploads to 1 if you want to enable uploads.\n");
+		return;
+	}
 
 	if (cls.state < ca_onserver) 
 	{

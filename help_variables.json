@@ -1037,6 +1037,27 @@
         }
       ]
     },
+    "cl_allow_downloads": {
+      "default": "bsp,lmp,loc,mdl,mvd,pcx,spr,wad,wav",
+      "desc": "This variable controls which file extensions a client/server can download/upload from/to the server/client.",
+      "group-id": "9",
+      "type": "string"
+    },
+    "cl_allow_uploads": {
+      "default": "0",
+      "group-id": "9",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Don't allow uploads.",
+          "name": "0"
+        },
+        {
+          "description": "Allow uploads.",
+          "name": "1"
+        }
+      ]
+    },
     "cl_anglespeedkey": {
       "default": "1.5",
       "desc": "This variable sets multiplier by which your \"cl_yawspeed\" (how fast you turn) is multiplied when running (+speed).",
@@ -2499,6 +2520,12 @@
           "name": "true"
         }
       ]
+    },
+    "cl_remote_capabilities": {
+      "default": "alias,bf,changing,cmd,color,download,exec,fullserverinfo,impulse,infoset,ktx_infoset,ktx_sinfoset,nextul,on_enter,on_enter_ctf,on_enter_ffa,on_spec_enter,on_spec_enter_ctf,on_spec_enter_ffa,packet,play,reconnect,say,sinfoset,skin,skins,team,tempalias,track,wait",
+      "desc": "This variable controls which commands and variables a server is allowed to execute or set on the client. Input a comma-separated list of commands and variables to toggle access. The default values are adapted for KTX use.",
+      "group-id": "9",
+      "type": "string"
     },
     "cl_restrictions": {
       "default": "0",
