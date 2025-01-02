@@ -137,6 +137,27 @@ add:
 	Q_free(tmp);
 }
 
+qbool CL_IsDownloadableFileExtension(const char *filename)
+{
+	qbool is_allowed = false;
+	char *ext, *str, *tmp;
+
+	ext = COM_FileExtension(filename);
+	str = Q_strdup(cl_allow_downloads.string);
+	tmp = strtok(str, ",");
+	while (tmp != NULL) {
+		if (strcmp(ext, tmp) == 0) {
+			is_allowed = true;
+			break;
+		}
+
+		tmp = strtok(NULL, ",");
+	}
+	Q_free(str);
+
+	return is_allowed;
+}
+
 //=============================================================================
 
 //Causes execution of the remainder of the command buffer to be delayed until next frame.
@@ -539,6 +560,11 @@ void Cmd_Exec_f (void)
 #if !defined(SERVERONLY) && !defined(CLIENTONLY)
 	server_command = cbuf_current == &cbuf_server || !strcmp(Cmd_Argv(0), "serverexec");
 #endif
+
+	if (CL_IsDownloadableFileExtension(Cmd_Argv(1))) {
+		Com_Printf("Warning: \"%s\" is not allowed to be executed. Remove \"%s\" from cl_allow_downloads to allow execution\n", Cmd_Argv(1), COM_FileExtension(Cmd_Argv(1)));
+		return;
+	}
 
 	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
 	if (!(f = (char *) FS_LoadHeapFile(name, NULL)))	{
