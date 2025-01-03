@@ -62,7 +62,7 @@ cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 				"infoset,ktx_infoset,ktx_sinfoset,nextul,on_enter," \
 				"on_enter_ctf,on_enter_ffa,on_spec_enter,on_spec_enter_ctf," \
 				"on_spec_enter_ffa,packet,play,reconnect,say,sinfoset,skin," \
-				"skins,team,tempalias,track,wait"
+				"skins,team,tempalias,track,wait,+attack,-attack"
 static void OnChange_remote_capabilities(cvar_t *var, char *string, qbool *cancel);
 cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, 0,
 				   OnChange_remote_capabilities};
