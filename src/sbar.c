@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "sbar.h"
 #include "keys.h"
+#include "common_draw.h"
 
 #include "qsound.h"
 
@@ -1211,23 +1212,31 @@ static void Sbar_DrawCompact_Bare (void) {
 void Sbar_SoloScoreboard (void)
 {
 	char	str[256];
-	int		len;
+	int	len;
 
-	sprintf (str,"Kills: %i/%i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
-	Sbar_DrawString (8, 12, str);
+	if (cl.gametype == GAME_COOP)
+	{
+		sprintf (str,"Kills: %i/%i", cl.stats[STAT_MONSTERS], cl.stats[STAT_TOTALMONSTERS]);
+		Sbar_DrawString (8, 12, str);
 
-	sprintf (str,"Secrets: %i/%i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
-	Sbar_DrawString (312 - strlen(str)*8, 12, str);
+		sprintf (str,"Secrets: %i/%i", cl.stats[STAT_SECRETS], cl.stats[STAT_TOTALSECRETS]);
+		Sbar_DrawString (312 - strlen(str)*8, 12, str);
 #ifndef CLIENTONLY
-	sprintf (str,"skill %i", (int)(skill.value + 0.5));
-	Sbar_DrawString (160 - strlen(str)*4, 12, str);
+		sprintf (str,"skill %i", (int)(skill.value + 0.5));
+		Sbar_DrawString (160 - strlen(str)*4, 12, str);
 #endif
-	strlcpy(str, cl.levelname, sizeof(str));
-	strlcat(str, " (", sizeof(str));
-	strlcat(str, host_mapname.string, sizeof(str));
-	strlcat(str, ")", sizeof(str));
-	len = strlen (str);
-	Sbar_DrawString (160 - len*4, 4, str);
+		strlcpy(str, cl.levelname, sizeof(str));
+		strlcat(str, " (", sizeof(str));
+		strlcat(str, host_mapname.string, sizeof(str));
+		strlcat(str, ")", sizeof(str));
+		len = strlen (str);
+		Sbar_DrawString (160 - len*4, 4, str);
+	}
+	else
+	{
+		strlcpy(str, SCR_GetTimeString(TIMETYPE_CLOCK, "%H:%M:%S"), sizeof(str));
+		Sbar_DrawString(160 - (strlen(str)*4), -10, str);
+	}
 }
 
 #define SCOREBOARD_LASTROW		(vid.height - 34)
