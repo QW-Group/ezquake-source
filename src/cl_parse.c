@@ -3310,6 +3310,7 @@ void CL_ParseStufftext (void)
 void CL_SetStat (int stat, int value)
 {
 	int	j;
+	extern cvar_t scr_gameclock;
 
 	if (stat < 0 || stat >= MAX_CL_STATS) {
 		Host_Error("CL_SetStat: %i is invalid", stat);
@@ -3361,7 +3362,12 @@ void CL_SetStat (int stat, int value)
 			cl.servertime = cl.stats[STAT_TIME] * 0.001;
 		}
 
-	if (cl.stats[STAT_MATCHSTARTTIME])
+	// Since the server doesn't include overtime data, we can't rely on
+	// the STAT_MATCHSTARTTIME data when using a game clock that counts
+	// down. Instead, we'll have to wait for a "[X] minutes remaining"
+	// message to sync the game clock. Without this, during overtime, the
+	// clock will start counting up instead of down.
+	if (cl.stats[STAT_MATCHSTARTTIME] && scr_gameclock.value != 2 && scr_gameclock.value != 4)
 	{
 		cl.gamestarttime = Sys_DoubleTime() - cl.servertime + ((double)cl.stats[STAT_MATCHSTARTTIME])/1000 - cl.gamepausetime;
 		if (cls.mvdplayback && cl.servertime_works && !cl.gametime) {
