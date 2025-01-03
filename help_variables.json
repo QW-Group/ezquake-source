@@ -4647,25 +4647,16 @@
     },
     "gl_coronas": {
       "default": "0",
-      "desc": "Adds coronas to some effects:\n\n - Explosions: Basically just a bright flash since the default explosions didn't feel powerful enough.\n - Muzzleflashes.\n - Lightning.\n - Fire: Torches have glows.\n - Rocket Lights.",
+      "desc": "Adds coronas to some effects:\n\n - Explosions: Basically just a bright flash since the default explosions didn't feel powerful enough.\n - Weapon impacts (optional, see gl_particle_*).\n - Muzzleflashes.\n - Lightning bolts.\n - Fire: Torches have glows.\n - Rocket Lights.",
       "group-id": "15",
       "type": "float"
     },
     "gl_coronas_tele": {
       "default": "0",
-      "desc": "Allows you to turn on/off blue light when spawning.",
+      "desc": "Adds a blue glow to spawn/teleport effects.",
       "group-id": "15",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Spawn coronas off.",
-          "name": "false"
-        },
-        {
-          "description": "Spawn coronas on.",
-          "name": "true"
-        }
-      ]
+      "remarks": "Requires gl_coronas 1.",
+      "type": "boolean"
     },
     "gl_cshiftpercent": {
       "default": "100",
@@ -4925,8 +4916,9 @@
     },
     "gl_lightning": {
       "default": "0",
-      "desc": "Toggles particle lightning beams.\nMay be restricted by rulesets.",
+      "desc": "Toggles particle lightning beams. Glow is controlled by gl_coronas.",
       "group-id": "35",
+      "remarks": "Restricted in rulesets qcon and smackdown/drive (glow effect remains).",
       "type": "boolean"
     },
     "gl_lightning_color": {
