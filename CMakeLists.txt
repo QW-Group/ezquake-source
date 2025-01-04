@@ -10,7 +10,6 @@ option(USE_SYSTEM_LIBS          "Use system libraries instead of VCPKG"       ON
 option(RENDERER_MODERN_OPENGL   "Enable modern OpenGL renderer"               ON)
 option(RENDERER_CLASSIC_OPENGL  "Enable classic OpenGL renderer"              ON)
 option(DEBUG_MEMORY_ALLOCATIONS "Enable debug prints for memory allocations" OFF)
-option(RENDERING_TRACE          "Enable tracing of the rendering pipeline"   OFF)
 option(ENABLE_SANDBOX           "Enables application sandboxing (macOS)"      ON)
 option(ENABLE_LTO               "Enable Link Time Optimization"               ON)
 
@@ -838,7 +837,7 @@ target_compile_definitions(ezquake PRIVATE
         WITH_NQPROGS
 
         $<$<BOOL:${DEBUG_MEMORY_ALLOCATIONS}>:DEBUG_MEMORY_ALLOCATIONS>
-        $<$<BOOL:${RENDERING_TRACE}>:WITH_RENDERING_TRACE>
+        $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:WITH_RENDERING_TRACE>
 
         $<$<PLATFORM_ID:Darwin>:GL_SILENCE_DEPRECATION>
 
