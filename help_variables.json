@@ -19716,17 +19716,8 @@
     "showturtle": {
       "default": "0",
       "group-id": "40",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Never display the turtle icon.",
-          "name": "false"
-        },
-        {
-          "description": "Display the turtle icon when your frame rate drops below 10.",
-          "name": "true"
-        }
-      ]
+      "type": "float",
+      "desc": "Sets the value at which the turtle icon will be displayed. For example, if showturtle is set to 70, the turtle will appear when the FPS drops to 70 or below."
     },
     "skill": {
       "default": "1",

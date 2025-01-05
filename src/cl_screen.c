@@ -441,19 +441,7 @@ void SCR_DrawAccel (void) {
 
 void SCR_DrawTurtle(void)
 {
-	static int  count;
-
-	if (!scr_showturtle.value) {
-		return;
-	}
-
-	if (cls.frametime < 0.1) {
-		count = 0;
-		return;
-	}
-
-	count++;
-	if (count < 3) {
+	if (!scr_showturtle.value || cls.fps >= scr_showturtle.value) {
 		return;
 	}
 
