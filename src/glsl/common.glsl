@@ -60,8 +60,6 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	// [4-byte break]
 	int r_width;
 	int r_height;
-	float r_inv_width;
-	float r_inv_height;
 	float r_zFar;
 	float r_zNear;
 
@@ -75,6 +73,8 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	// camAngles.x
 
 	vec3 camAngles; // camAngles.yz
+	float r_inv_width;
+	float r_inv_height;
 };
 
 struct WorldDrawInfo {

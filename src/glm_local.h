@@ -64,8 +64,6 @@ typedef struct uniform_block_frame_constants_s {
 	// [4-byte break]
 	int r_width;
 	int r_height;
-	float r_inv_width;
-	float r_inv_height;
 	float r_zFar;
 	float r_zNear;
 
@@ -79,6 +77,8 @@ typedef struct uniform_block_frame_constants_s {
 	// camangles [0]
 
 	float camangles[3]; // [1] [2]
+	float r_inv_width;
+	float r_inv_height;
 } uniform_block_frame_constants_t;
 
 #define MAX_WORLDMODEL_BATCH     64
