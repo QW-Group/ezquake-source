@@ -139,9 +139,9 @@ void main()
 	if ((Flags & EZQ_SURFACE_ALPHATEST) == EZQ_SURFACE_ALPHATEST && texColor.a < 0.5) {
 		discard;
 	}
+#endif
 	// Avoid black artifacts at border between texture and transparency visible in fog
 	texColor = vec4(texColor.rgb, 1.0);
-#endif
 
 	turbType = Flags & EZQ_SURFACE_TYPE;
 	if (turbType != 0) {
