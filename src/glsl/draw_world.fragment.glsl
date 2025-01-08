@@ -45,6 +45,7 @@ in vec4 UnClipped;
 
 in float mix_floor;
 in float mix_wall;
+in float alpha;
 
 layout(location=0) out vec4 frag_colour;
 #ifdef DRAW_GEOMETRY
@@ -139,9 +140,9 @@ void main()
 	if ((Flags & EZQ_SURFACE_ALPHATEST) == EZQ_SURFACE_ALPHATEST && texColor.a < 0.5) {
 		discard;
 	}
+#endif
 	// Avoid black artifacts at border between texture and transparency visible in fog
 	texColor = vec4(texColor.rgb, 1.0);
-#endif
 
 	turbType = Flags & EZQ_SURFACE_TYPE;
 	if (turbType != 0) {
@@ -232,11 +233,11 @@ void main()
 		texColor = vec4(mix(texColor.rgb, texColor.rgb + lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_LUMA)), texColor.a);
 #endif
 		texColor = applyColorTinting(texColor);
-		frag_colour = vec4(lmColor.rgb, 1) * texColor;
+		frag_colour = vec4(lmColor.rgb * alpha, alpha) * texColor;
 #if defined(DRAW_LUMA_TEXTURES) && defined(DRAW_LUMA_TEXTURES_FB)
 		lumaColor = applyColorTinting(lumaColor);
 		frag_colour = vec4(mix(frag_colour.rgb, frag_colour.rgb + lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_LUMA)), frag_colour.a);
-		frag_colour = vec4(mix(frag_colour.rgb, lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_FB) * lumaColor.a), frag_colour.a);
+		frag_colour = vec4(mix(frag_colour.rgb, lumaColor.rgb * alpha, min(1, Flags & EZQ_SURFACE_HAS_FB) * lumaColor.a), frag_colour.a);
 #elif !defined(DRAW_LUMA_TEXTURES) && defined(DRAW_LUMA_TEXTURES_FB)
 		// GL_DECAL
 		lumaColor = applyColorTinting(lumaColor);

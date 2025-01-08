@@ -382,6 +382,7 @@ static void R_InitialiseEntityStates(void)
 	state->blendingEnabled = false;
 
 	state = R_CopyRenderingState(r_state_aliasmodel_translucent_batch, r_state_aliasmodel_opaque_batch, "aliasModelTranslucentBatchState");
+	state->depth.mask_enabled = false;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
 	state->blendingEnabled = true;
 

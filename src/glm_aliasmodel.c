@@ -502,7 +502,8 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		renderer.TextureUnitBind(TEXTURE_UNIT_MATERIAL, shelltexture);
 	}
 
-	if (translucent && !shells) {
+	// Depth pre-pass to make viewmodel look good.
+	if (type == aliasmodel_draw_postscene) {
 		GLM_StateBeginAliasModelZPassBatch();
 		for (i = 0; i < instr->num_calls; ++i) {
 			GL_MultiDrawArraysIndirect(
