@@ -280,7 +280,7 @@ void *Hash_AddKey(hashtable_t *table, char *key, void *data, bucket_t *buck)
 void Hash_Remove(hashtable_t *table, char *name)
 {
 	int bucknum = Hash_Key(name, table->numbuckets);
-	bucket_t *buck;	
+	bucket_t *buck, *to_remove;
 
 	buck = table->bucket[bucknum];
 
@@ -297,9 +297,10 @@ void Hash_Remove(hashtable_t *table, char *name)
 	{
 		if (!STRCMP(name, buck->next->keystring))
 		{
-			buck->next = buck->next->next;
-			Q_free(buck->next->keystring);
-			Q_free(buck->next);
+			to_remove = buck->next;
+			buck->next = to_remove->next;
+			Q_free(to_remove->keystring);
+			Q_free(to_remove);
 			return;
 		}
 
@@ -344,7 +345,7 @@ void Hash_RemoveData(hashtable_t *table, char *name, void *data)
 void Hash_RemoveKey(hashtable_t *table, char *key)
 {
 	int bucknum = ((uintptr_t) key) % table->numbuckets;
-	bucket_t *buck;	
+	bucket_t *buck, *to_remove;
 
 	buck = table->bucket[bucknum];
 
@@ -361,9 +362,10 @@ void Hash_RemoveKey(hashtable_t *table, char *key)
 	{
 		if (buck->next->keystring == key)
 		{
-			buck->next = buck->next->next;
-			Q_free(buck->next->keystring);
-			Q_free(buck->next);
+			to_remove = buck->next;
+			buck->next = to_remove->next;
+			Q_free(to_remove->keystring);
+			Q_free(to_remove);
 			return;
 		}
 
