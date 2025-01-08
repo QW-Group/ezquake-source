@@ -1061,7 +1061,7 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 {
 	int i;
 
-	if (r_drawentities.integer && vislist->typecount[type] >= 0) {
+	if (r_drawentities.integer && vislist->typecount[type] > 0) {
 		for (i = 0; i < vislist->count; i++) {
 			visentity_t* todraw = &vislist->list[i];
 
