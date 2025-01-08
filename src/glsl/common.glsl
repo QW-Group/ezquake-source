@@ -82,7 +82,7 @@ struct WorldDrawInfo {
 	float alpha;
 	int samplerBase;
 	int drawFlags;
-	int padding;
+	int sampler;
 };
 
 struct SamplerMapping {

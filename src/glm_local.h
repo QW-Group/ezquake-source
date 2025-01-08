@@ -97,7 +97,7 @@ typedef struct uniform_block_world_calldata_s {
 	float alpha;
 	int samplerBase;
 	int flags;
-	int padding;
+	int sampler;
 } uniform_block_world_calldata_t;
 
 typedef struct uniform_block_sprite_s {
