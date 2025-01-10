@@ -149,19 +149,19 @@ void main()
 		// Turb surface
 		if (turbType != TEXTURE_TURB_SKY && r_fastturb != 0) {
 			if (turbType == TEXTURE_TURB_WATER) {
-				frag_colour = r_watercolor * waterAlpha;
+				frag_colour = r_watercolor * alpha;
 			}
 			else if (turbType == TEXTURE_TURB_SLIME) {
-				frag_colour = r_slimecolor * waterAlpha;
+				frag_colour = r_slimecolor * alpha;
 			}
 			else if (turbType == TEXTURE_TURB_LAVA) {
-				frag_colour = r_lavacolor * waterAlpha;
+				frag_colour = r_lavacolor * alpha;
 			}
 			else if (turbType == TEXTURE_TURB_TELE) {
-				frag_colour = r_telecolor * waterAlpha;
+				frag_colour = r_telecolor * alpha;
 			}
 			else {
-				frag_colour = vec4(FlatColor * waterAlpha, waterAlpha);
+				frag_colour = vec4(FlatColor * alpha, alpha);
 			}
 #ifdef DRAW_FOG
 			frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
@@ -201,7 +201,7 @@ void main()
 #endif
 		}
 		else {
-			frag_colour = texColor * waterAlpha;
+			frag_colour = texColor * alpha;
 			if ((Flags & EZQ_SURFACE_LIT_TURB) > 0) {
 				frag_colour = vec4(lmColor.rgb, 1) * frag_colour;
 			}

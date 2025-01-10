@@ -36,7 +36,7 @@ typedef struct uniform_block_frame_constants_s {
 	float skySpeedscale;
 	float skySpeedscale2;
 	float r_farclip_unused;                  // NO LONGER USED, replace
-	float waterAlpha;
+	float padding;
 
 	// animated skybox
 	vec3_t windDir;

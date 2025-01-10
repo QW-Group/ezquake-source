@@ -121,8 +121,6 @@ void GLM_PreRenderView(void)
 	frameConstants.skySpeedscale2 -= (int)frameConstants.skySpeedscale2 & ~127;
 	frameConstants.skySpeedscale2 /= 128.0f;
 
-	frameConstants.waterAlpha = R_WaterAlpha();
-
 	frameConstants.r_drawflat = r_drawflat.integer;
 	PASS_COLOR_AS_4F(frameConstants.r_wallcolor, r_wallcolor);
 	PASS_COLOR_AS_4F(frameConstants.r_floorcolor, r_floorcolor);
