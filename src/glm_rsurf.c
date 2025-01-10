@@ -41,8 +41,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define GLM_DRAWCALL_INCREMENT 8
 
-void GL_StartWaterSurfaceBatch(void);
-
 static GLuint index_count;
 
 typedef struct glm_worldmodel_req_s {
@@ -83,7 +81,7 @@ typedef struct glm_brushmodel_drawcall_s {
 	struct glm_brushmodel_drawcall_s* next;
 } glm_brushmodel_drawcall_t;
 
-static glm_brushmodel_drawcall_t* GL_FlushWorldModelBatch(void);
+static glm_brushmodel_drawcall_t* GL_PrepareWorldModelBatch(glm_brushmodel_drawcall_type type);
 static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall);
 
 static glm_brushmodel_drawcall_t* drawcalls;
@@ -329,7 +327,7 @@ static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
 
 	if (sampler < 0) {
 		if (drawcall->material_samplers >= material_samplers_max) {
-			drawcall = GL_FlushWorldModelBatch();
+			drawcall = GL_PrepareWorldModelBatch(drawcall->type);
 		}
 
 		sampler = drawcall->material_samplers++;
@@ -399,8 +397,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 	}
 
 	if (drawcall->type != desired_type) {
-		drawcall = GL_FlushWorldModelBatch();
-		drawcall->type = desired_type;
+		drawcall = GL_PrepareWorldModelBatch(desired_type);
 	}
 	else if (drawcall->batch_count && drawcall->type == opaque_world) {
 		// See if previous request has same texture & matrix, if so just continue
@@ -444,7 +441,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 	}
 
 	if (drawcall->sampler_mappings >= MAX_SAMPLER_MAPPINGS || drawcall->batch_count >= MAX_WORLDMODEL_BATCH) {
-		drawcall = GL_FlushWorldModelBatch();
+		drawcall = GL_PrepareWorldModelBatch(drawcall->type);
 	}
 
 	req = &drawcall->worldmodel_requests[drawcall->batch_count];
@@ -489,7 +486,6 @@ void GLM_DrawWaterSurfaces(void)
 	// Waterchain has list of alpha-blended surfaces
 	R_TraceEnterNamedRegion(__func__);
 
-	GL_StartWaterSurfaceBatch();
 	for (surf = waterchain; surf; surf = surf->texturechain) {
 		glpoly_t* poly;
 		texture_t* tex = R_TextureAnimation(NULL, surf->texinfo->texture);
@@ -594,27 +590,25 @@ qbool GLM_CompileSimple3dProgram(void)
 	return R_ProgramReady(r_program_simple3d) && GLM_CompilePostProcessVAO();
 }
 
-static glm_brushmodel_drawcall_t* GL_FlushWorldModelBatch(void)
+static glm_brushmodel_drawcall_t* GL_PrepareWorldModelBatch(glm_brushmodel_drawcall_type type)
 {
-	const glm_brushmodel_drawcall_t* prev;
+	glm_brushmodel_drawcall_t* prev = &drawcalls[current_drawcall];
 	glm_brushmodel_drawcall_t* current;
-	int last = current_drawcall++;
+
+	if (prev->batch_count == 0)	{
+		prev->type = type;
+		return prev;
+	}
+
+	current_drawcall++;
 
 	GLM_CheckDrawCallSize();
 
-	prev = &drawcalls[last];
 	current = &drawcalls[current_drawcall];
 
 	memset(current, 0, sizeof(*current));
-	current->type = prev->type;
+	current->type = type;
 	return current;
-}
-
-void GL_StartWaterSurfaceBatch(void)
-{
-	GL_FlushWorldModelBatch();
-
-	drawcalls[current_drawcall].type = alpha_surfaces;
 }
 
 void GLM_PrepareWorldModelBatch(void)
