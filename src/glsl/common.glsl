@@ -32,7 +32,7 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	float skySpeedscale;
 	float skySpeedscale2;
 	float r_farclip_unused;              // Replace
-	float waterAlpha;
+	float padding;
 
 	// animated skybox
 	vec4  skyWind;
@@ -82,7 +82,7 @@ struct WorldDrawInfo {
 	float alpha;
 	int samplerBase;
 	int drawFlags;
-	int padding;
+	int sampler;
 };
 
 struct SamplerMapping {

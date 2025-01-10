@@ -102,6 +102,8 @@ void main()
 	if (gl_FragColor.a < 0.333) {
 		discard;
 	}
+
+	gl_FragColor = vec4(gl_FragColor.rgb, 1.0);
 #endif
 
 #ifdef DRAW_EXTRA_TEXTURES

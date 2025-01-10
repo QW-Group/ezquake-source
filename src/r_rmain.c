@@ -897,9 +897,6 @@ void R_RenderView(void)
 	// Adds 3d effects (particles, lights, chat icons etc)
 	R_Render3DEffects();
 
-	// Draws transparent world surfaces
-	renderer.DrawWaterSurfaces();
-
 	// Render billboards
 	renderer.Draw3DSpritesInline();
 
@@ -1064,7 +1061,7 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 {
 	int i;
 
-	if (r_drawentities.integer && vislist->typecount[type] >= 0) {
+	if (r_drawentities.integer && vislist->typecount[type] > 0) {
 		for (i = 0; i < vislist->count; i++) {
 			visentity_t* todraw = &vislist->list[i];
 
@@ -1143,6 +1140,10 @@ static void R_DrawEntities(void)
 	R_Sprite3DInitialiseBatch(SPRITE3D_ENTITIES, r_state_sprites_textured, null_texture_reference, 0, r_primitive_triangle_strip);
 	qsort(cl_visents.list, cl_visents.count, sizeof(cl_visents.list[0]), R_DrawEntitiesSorter);
 	for (ent_type = 0; ent_type < visent_max; ++ent_type) {
+		if (ent_type == visent_alpha) {
+			// Transluscent before translucent entities, but after opaque ones.
+			renderer.DrawWaterSurfaces();
+		}
 		R_DrawEntitiesOnList(&cl_visents, ent_type);
 	}
 	if (R_UseModernOpenGL() || R_UseVulkan()) {
