@@ -229,9 +229,14 @@ static int VersionCheck_Thread(void *args)
 
 cleanup:
 	if (root != NULL)
+	{
 		json_decref(root);
+	}
 	if (curl != NULL)
+	{
+		curl_slist_free_all(headers);
 		curl_easy_cleanup(curl);
+	}
 
 	SDL_LockMutex(version_mutex);
 	version_refreshing = false;
