@@ -1964,8 +1964,9 @@ checkaliases:
 
 		if (cbuf_current == &cbuf_svc)
 		{
-			Cbuf_AddTextEx (&cbuf_svc, p);
-			Cbuf_AddTextEx (&cbuf_svc, "\n");
+			inserttarget = is_server_alias ? &cbuf_svc : &cbuf_main;
+			Cbuf_AddTextEx (inserttarget, p);
+			Cbuf_AddTextEx (inserttarget, "\n");
 		} else
 		{
 			if (is_server_alias)
