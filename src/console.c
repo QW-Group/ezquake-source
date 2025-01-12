@@ -997,9 +997,9 @@ void Con_DrawConsole (int lines) {
 
 		i = strlen (dlbar);
 		if (cls.download)
-			snprintf (dlbar + i, sizeof (dlbar), " %02d%%(%dkb/s)", cls.downloadpercent, cls.downloadrate);
+			snprintf (dlbar + i, sizeof (dlbar) - i, " %02d%%(%dkb/s)", cls.downloadpercent, cls.downloadrate);
 		else if (cls.upload)
-			snprintf (dlbar + i, sizeof (dlbar), " %02d%%(%dkb/s)", cls.uploadpercent, cls.uploadrate);
+			snprintf (dlbar + i, sizeof (dlbar) - i, " %02d%%(%dkb/s)", cls.uploadpercent, cls.uploadrate);
 		else
 			return;
 
