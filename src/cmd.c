@@ -58,11 +58,14 @@ cvar_t cl_warncmd = {"cl_warncmd", "1"};
 cvar_t cl_warnexec = {"cl_warnexec", "1"};
 cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 
-#define REMOTE_CAPABILITIES "alias,bf,changing,cmd,color,download,exec,fullserverinfo,impulse," \
-				"infoset,ktx_infoset,ktx_sinfoset,nextul,on_enter," \
-				"on_enter_ctf,on_enter_ffa,on_spec_enter,on_spec_enter_ctf," \
-				"on_spec_enter_ffa,packet,play,rate,reconnect,say,sinfoset,skin," \
-				"skins,team,tempalias,track,wait,+attack,-attack"
+#define REMOTE_CAPABILITIES "+attack,-attack,alias,bf,changing,cmd,color,download,exec,fullserverinfo," \
+				"impulse,infoset,ktx_infoset,ktx_sinfoset,nextul,on_admin,on_connect," \
+				"on_connect_ctf,on_connect_ffa,on_enter,on_enter_ctf,on_enter_ffa,on_matchend," \
+				"on_matchstart,on_observe,on_observe_ctf,on_observe_ffa,on_spec_enter," \
+				"on_spec_enter_ctf,on_spec_enter_ffa,on_spec_matchend,on_spec_matchstart," \
+				"on_unadmin,packet,play,rate,reconnect,say,sinfoset,skin,skins,team,tempalias," \
+				"track,wait"
+
 static void OnChange_remote_capabilities(cvar_t *var, char *string, qbool *cancel);
 cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, 0,
 				   OnChange_remote_capabilities};
