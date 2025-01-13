@@ -136,7 +136,9 @@ void R_BrushModelClearTextureChains(model_t *clmodel)
 	texture_t *texture;
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
-	GLC_ClearTextureChains();
+	if (R_UseImmediateOpenGL()) {
+		GLC_ClearTextureChains();
+	}
 #endif
 
 	clmodel->texturechains_have_lumas = false;
