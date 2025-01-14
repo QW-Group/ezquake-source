@@ -1828,6 +1828,15 @@ void CL_ParseBaseline (entity_state_t *es)
 		es->origin[i] = MSG_ReadCoord ();
 		es->angles[i] = MSG_ReadAngle ();
 	}
+
+#ifdef FTE_PEXT_TRANS
+	es->trans = 0;
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+	es->colourmod[0] = 0;
+	es->colourmod[1] = 0;
+	es->colourmod[2] = 0;
+#endif
 }
 
 // An easy way to keep compatability with other entity extensions

@@ -130,6 +130,16 @@ static void SV_CreateBaseline (void)
 			svent->e.baseline.colormap = 0;
 			svent->e.baseline.modelindex = svent->v->modelindex;
 		}
+
+#ifdef FTE_PEXT_TRANS
+		svent->e.baseline.trans = svent->xv.alpha >= 1.0f ? 0 : bound(0, (byte)(svent->xv.alpha * 254.0), 254);
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+		svent->e.baseline.colourmod[0] = bound(0, svent->xv.colourmod[0] * (256.0f / 8.0f), 255);
+		svent->e.baseline.colourmod[1] = bound(0, svent->xv.colourmod[1] * (256.0f / 8.0f), 255);
+		svent->e.baseline.colourmod[2] = bound(0, svent->xv.colourmod[2] * (256.0f / 8.0f), 255);
+#endif
+
 	}
 	sv.num_baseline_edicts = sv.num_edicts;
 }
