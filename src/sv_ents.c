@@ -211,15 +211,19 @@ void SV_WriteDelta(client_t* client, entity_state_t *from, entity_state_t *to, s
 	}
 
 #ifdef U_FTE_TRANS
-    if (to->trans != from->trans && (fte_extensions & FTE_PEXT_TRANS))
-        evenmorebits |= U_FTE_TRANS;
+	if (to->trans != from->trans && (fte_extensions & FTE_PEXT_TRANS)) {
+		evenmorebits |= U_FTE_TRANS;
+		required_extensions |= FTE_PEXT_TRANS;
+	}
 #endif
 
 #ifdef U_FTE_COLOURMOD
 	if ((to->colourmod[0] != from->colourmod[0] ||
 	     to->colourmod[1] != from->colourmod[1] ||
-	     to->colourmod[2] != from->colourmod[2]) && (fte_extensions & FTE_PEXT_COLOURMOD))
+	     to->colourmod[2] != from->colourmod[2]) && (fte_extensions & FTE_PEXT_COLOURMOD)) {
 		evenmorebits |= U_FTE_COLOURMOD;
+		required_extensions |= FTE_PEXT_COLOURMOD;
+	}
 #endif
 
 	if (evenmorebits&0xff00)
