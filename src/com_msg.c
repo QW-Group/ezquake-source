@@ -352,6 +352,22 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 		}
 	}
 
+#ifdef U_FTE_TRANS
+	if (to->trans != from->trans && (fte_extensions & FTE_PEXT_TRANS)) {
+		evenmorebits |= U_FTE_TRANS;
+		required_extensions |= FTE_PEXT_TRANS;
+    }
+#endif
+
+#ifdef U_FTE_COLOURMOD
+	if ((to->colourmod[0] != from->colourmod[0] ||
+		 to->colourmod[1] != from->colourmod[1] ||
+		 to->colourmod[2] != from->colourmod[2]) && (fte_extensions & FTE_PEXT_COLOURMOD)) {
+		evenmorebits |= U_FTE_COLOURMOD;
+		required_extensions |= FTE_PEXT_COLOURMOD;
+    }
+#endif
+
 	if (evenmorebits&0xff00)
 		evenmorebits |= U_FTE_YETMORE;
 	if (evenmorebits&0x00ff)
@@ -430,6 +446,20 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 	}
 	if (bits & U_ANGLE3)
 		MSG_WriteAngle(msg, to->angles[2]);
+
+#ifdef U_FTE_TRANS
+	if (evenmorebits & U_FTE_TRANS)
+		MSG_WriteByte (msg, to->trans);
+#endif
+
+#ifdef U_FTE_COLOURMOD
+	if (evenmorebits & U_FTE_COLOURMOD)
+	{
+		MSG_WriteByte (msg, to->colourmod[0]);
+		MSG_WriteByte (msg, to->colourmod[1]);
+		MSG_WriteByte (msg, to->colourmod[2]);
+	}
+#endif
 }
 
 /********************************** READING **********************************/
