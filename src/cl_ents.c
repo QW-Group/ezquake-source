@@ -1525,14 +1525,6 @@ void CL_ParsePlayerinfo (void)
 		if (flags & PF_TRANS_Z && cls.fteprotocolextensions & FTE_PEXT_TRANS)
 			state->alpha = MSG_ReadByte();
 #endif
-#ifdef FTE_PEXT_COLOURMOD
-		if (flags & PF_COLOURMOD && cls.fteprotocolextensions & FTE_PEXT_COLOURMOD)
-		{
-			state->colourmod[0] = MSG_ReadByte();
-			state->colourmod[1] = MSG_ReadByte();
-			state->colourmod[2] = MSG_ReadByte();
-		}
-#endif
 
 		if (cl.z_ext & Z_EXT_PM_TYPE)
 		{
