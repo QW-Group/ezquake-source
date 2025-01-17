@@ -18950,6 +18950,22 @@
         }
       ]
     },
+    "scr_scoreboard_classic": {
+      "default": "0",
+      "desc": "Toggle between the classic and modern look in the scoreboard.",
+      "group-id": "47",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Disable the classic look.",
+          "name": "false"
+        },
+        {
+          "description": "Enable the classic look.",
+          "name": "true"
+        }
+      ]
+    },
     "scr_scoreboard_drawtitle": {
       "default": "1",
       "group-id": "47",
