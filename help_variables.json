@@ -19020,6 +19020,22 @@
         }
       ]
     },
+    "scr_scoreboard_highlightself": {
+      "default": "1",
+      "desc": "Toggle the highlighting of your own scores in the scoreboard.",
+      "group-id": "47",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Disable highlight of your own scores in the scoreboard.",
+          "name": "false"
+        },
+        {
+          "description": "Enable highlight of your own scores in the scoreboard.",
+          "name": "true"
+        }
+      ]
+    },
     "scr_scoreboard_login_color": {
       "default": "255 255 192",
       "group-id": "0",

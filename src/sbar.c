@@ -142,6 +142,7 @@ cvar_t	scr_scoreboard_fillcolored    = {"scr_scoreboard_fillcolored",    "2"};
 cvar_t  scr_scoreboard_proportional   = {"scr_scoreboard_proportional",   "0"};
 cvar_t  scr_scoreboard_wipeout	 	  = {"scr_scoreboard_wipeout",   	  "1"};
 cvar_t	scr_scoreboard_classic        = {"scr_scoreboard_classic", "0"};
+cvar_t	scr_scoreboard_highlightself  = {"scr_scoreboard_highlightself", "1"};
 
 // VFrags: only draw the frags for the first player when using mvinset
 #define MULTIVIEWTHISPOV() ((!cl_multiview.value) || (cl_mvinset.value && CL_MultiviewCurrentView() == 1))
@@ -332,6 +333,7 @@ void Sbar_Init(void)
 	Cvar_Register(&scr_scoreboard_proportional);
 	Cvar_Register(&scr_scoreboard_wipeout);
 	Cvar_Register(&scr_scoreboard_classic);
+	Cvar_Register(&scr_scoreboard_highlightself);
 
 	Cvar_ResetCurrentGroup();
 
@@ -1507,7 +1509,7 @@ static void Sbar_DeathmatchOverlay(int start)
 		if (is_classic) {
 			bk_alpha = 0;
 		}
-		else if (k == mynum) {
+		else if (k == mynum && scr_scoreboard_highlightself.value) {
 			bk_alpha = 1.7 * SCOREBOARD_ALPHA;
 			bk_alpha = min(alpha, 0.75);
 		}
