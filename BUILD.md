@@ -133,7 +133,7 @@ cmake --preset mingw64-x64-cross
 cmake --build build-mingw64-x64-cross --config Release
 ```
 
-In addition to mingw64 being installed, a native compiler is also needed as parts of the vcpkg
+Be sure to install mingw-w64 before running the above commands. A native compiler is also needed as parts of the vcpkg
 build need to execute on the host.
 
 ## Visual Studio
@@ -171,7 +171,7 @@ the `./bootstrap.ps1` PowerShell script must be invoked the first time to initia
 
 ```shell
 powershell -File bootstrap.ps1
-camke --preset msbuild-x64
+cmake --preset msbuild-x64
 ```
 
 Once done you will have a Visual Studio Solution in `build-msbuild-x64/ezquake.sln`.
