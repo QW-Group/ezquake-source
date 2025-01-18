@@ -78,6 +78,20 @@
             }
         },
         {
+            "name": "msbuild-arm64",
+            "description": "Configure as Visual Studio project",
+            "generator": "Visual Studio 17 2022",
+            "inherits": "template-vcpkg",
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "arm64-windows-static"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
             "name": "msvc-x64",
             "description": "Configure using Ninja to build with msvc",
             "generator": "Ninja Multi-Config",
@@ -230,6 +244,27 @@
             "name": "msbuild-x64-relwithdebinfo",
             "configurePreset": "msbuild-x64",
             "displayName": "Build msbuild-x64 release with debug info",
+            "description": "Build Visual Studio Release configuration",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "msbuild-arm64-debug",
+            "configurePreset": "msbuild-arm64",
+            "displayName": "Build msbuild-arm64 debug",
+            "description": "Build Visual Studio Debug configuration",
+            "configuration": "Debug"
+        },
+        {
+            "name": "msbuild-arm64-release",
+            "configurePreset": "msbuild-arm64",
+            "displayName": "Build msbuild-arm64 release",
+            "description": "Build Visual Studio Release configuration",
+            "configuration": "Release"
+        },
+        {
+            "name": "msbuild-arm64-relwithdebinfo",
+            "configurePreset": "msbuild-arm64",
+            "displayName": "Build msbuild-arm64 release with debug info",
             "description": "Build Visual Studio Release configuration",
             "configuration": "RelWithDebInfo"
         },
