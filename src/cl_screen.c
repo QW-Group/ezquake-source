@@ -232,8 +232,18 @@ static void CalcFov(float fov, float *fov_x, float *fov_y, float width, float he
 
 	if (width / 4 < height / 3) {
 		fovx = fov;
-		t = width / tan(fovx / 360 * M_PI);
-		fovy = atan (height / t) * 360 / M_PI;
+
+		if (reduce_vertfov) {
+			// Crop vertically when viewsize decreased
+			// hmx: Fixes "legacy" fov style causing some visual glitches since 3.0.1 in rare aspect ratios/viewsizes combos
+			// *almost* matches 3.0 results *and* not visually broken
+			t = view_width / tan(fovx / 360 * M_PI);
+			fovy = atan(view_height / t) * 360 / M_PI;
+		}
+		else {
+			t = width / tan(fovx / 360 * M_PI);
+			fovy = atan(height / t) * 360 / M_PI;
+		}
 	}
 	else {
 		fovx = fov;
