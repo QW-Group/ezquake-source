@@ -42,14 +42,11 @@ void main()
 			blocklight.a = 0;
 
 			vec4 Plane = surfaces[surfaceNumber].normal;
-			vec3 PlaneMins0 = surfaces[surfaceNumber].vecs0;
-			vec3 PlaneMins1 = surfaces[surfaceNumber].vecs1;
+			vec4 PlaneMins0 = surfaces[surfaceNumber].vecs0;
+			vec4 PlaneMins1 = surfaces[surfaceNumber].vecs1;
 
-			float vlen0 = length(PlaneMins0);
-			vlen0 = vlen0 > 0.0f ? 1.0f / vlen0 : 0;
-
-			float vlen1 = length(PlaneMins1);
-			vlen1 = vlen1 > 0.0f ? 1.0f / vlen1 : 0;
+			float vlen0 = PlaneMins0.w;
+			float vlen1 = PlaneMins1.w;
 
 			// Build static lights: default to black
 			vec4 baseLightmap = vec4(0, 0, 0, 0);
@@ -80,7 +77,7 @@ void main()
 					minlight = rad - minlight;
 
 					vec3 impact = lightPositions[i].xyz - Plane.xyz * dist;
-					vec2 local = vec2(dot(impact, PlaneMins0), dot(impact, PlaneMins1));
+					vec2 local = vec2(dot(impact, PlaneMins0.xyz), dot(impact, PlaneMins1.xyz));
 
 					int sd = int(abs(local[0] - sdelta) * vlen0); // sdelta = s * (1 << surf->lmshift) + surf->texturemins[0] - surf->lmvecs[0][3];
 					int td = int(abs(local[1] - tdelta) * vlen1); // tdelta = t * (1 << surf->lmshift) + surf->texturemins[1] - surf->lmvecs[1][3];

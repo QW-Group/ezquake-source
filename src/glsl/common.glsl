@@ -116,6 +116,6 @@ struct AliasModel {
 
 struct model_surface {
 	vec4 normal;
-	vec3 vecs0;
-	vec3 vecs1;
+	vec4 vecs0;
+	vec4 vecs1;
 };
