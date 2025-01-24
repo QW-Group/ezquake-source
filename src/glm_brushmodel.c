@@ -72,6 +72,8 @@ void GLM_CreateBrushModelVAO(void)
 			surfaces[i].normal[3] = surf->plane->dist;
 			memcpy(surfaces[i].lm_vecs0, surf->lmvecs[0], sizeof(surf->lmvecs[0]));
 			memcpy(surfaces[i].lm_vecs1, surf->lmvecs[1], sizeof(surf->lmvecs[1]));
+			surfaces[i].lm_vecs0[3] = surf->lmvlen[0];
+			surfaces[i].lm_vecs1[3] = surf->lmvlen[1];
 		}
 		buffers.Create(r_buffer_brushmodel_surface_data, buffertype_storage, "brushmodel-surfs", cl.worldmodel->numsurfaces * sizeof(vbo_world_surface_t), surfaces, bufferusage_constant_data);
 		Q_free(surfaces);
