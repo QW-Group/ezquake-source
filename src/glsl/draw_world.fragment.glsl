@@ -140,31 +140,34 @@ void main()
 	if ((Flags & EZQ_SURFACE_ALPHATEST) == EZQ_SURFACE_ALPHATEST && texColor.a < 0.5) {
 		discard;
 	}
-#endif
 	// Avoid black artifacts at border between texture and transparency visible in fog
 	texColor = vec4(texColor.rgb, 1.0);
+#endif
 
 	turbType = Flags & EZQ_SURFACE_TYPE;
 	if (turbType != 0) {
 		// Turb surface
 		if (turbType != TEXTURE_TURB_SKY && r_fastturb != 0) {
 			if (turbType == TEXTURE_TURB_WATER) {
-				frag_colour = r_watercolor * alpha;
+				frag_colour = r_watercolor;
 			}
 			else if (turbType == TEXTURE_TURB_SLIME) {
-				frag_colour = r_slimecolor * alpha;
+				frag_colour = r_slimecolor;
 			}
 			else if (turbType == TEXTURE_TURB_LAVA) {
-				frag_colour = r_lavacolor * alpha;
+				frag_colour = r_lavacolor;
 			}
 			else if (turbType == TEXTURE_TURB_TELE) {
-				frag_colour = r_telecolor * alpha;
+				frag_colour = r_telecolor;
 			}
 			else {
-				frag_colour = vec4(FlatColor * alpha, alpha);
+				frag_colour = vec4(FlatColor, 1);
 			}
 #ifdef DRAW_FOG
 			frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+#endif
+#ifdef DRAW_ALPHATEST_ENABLED
+			frag_colour *= alpha;
 #endif
 		}
 		else if (turbType == TEXTURE_TURB_SKY) {
@@ -201,12 +204,15 @@ void main()
 #endif
 		}
 		else {
-			frag_colour = texColor * alpha;
+			frag_colour = texColor;
 			if ((Flags & EZQ_SURFACE_LIT_TURB) > 0) {
 				frag_colour = vec4(lmColor.rgb, 1) * frag_colour;
 			}
 #ifdef DRAW_FOG
 			frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+#endif
+#ifdef DRAW_ALPHATEST_ENABLED
+			frag_colour *= alpha;
 #endif
 		}
 	}
@@ -233,11 +239,11 @@ void main()
 		texColor = vec4(mix(texColor.rgb, texColor.rgb + lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_LUMA)), texColor.a);
 #endif
 		texColor = applyColorTinting(texColor);
-		frag_colour = vec4(lmColor.rgb * alpha, alpha) * texColor;
+		frag_colour = vec4(lmColor.rgb, 1) * texColor;
 #if defined(DRAW_LUMA_TEXTURES) && defined(DRAW_LUMA_TEXTURES_FB)
 		lumaColor = applyColorTinting(lumaColor);
 		frag_colour = vec4(mix(frag_colour.rgb, frag_colour.rgb + lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_LUMA)), frag_colour.a);
-		frag_colour = vec4(mix(frag_colour.rgb, lumaColor.rgb * alpha, min(1, Flags & EZQ_SURFACE_HAS_FB) * lumaColor.a), frag_colour.a);
+		frag_colour = vec4(mix(frag_colour.rgb, lumaColor.rgb, min(1, Flags & EZQ_SURFACE_HAS_FB) * lumaColor.a), frag_colour.a);
 #elif !defined(DRAW_LUMA_TEXTURES) && defined(DRAW_LUMA_TEXTURES_FB)
 		// GL_DECAL
 		lumaColor = applyColorTinting(lumaColor);
@@ -254,6 +260,10 @@ void main()
 
 #ifdef DRAW_FOG
 		frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+#endif
+
+#ifdef DRAW_ALPHATEST_ENABLED
+		frag_colour *= alpha;
 #endif
 	}
 }
