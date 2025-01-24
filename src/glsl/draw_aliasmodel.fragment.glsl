@@ -89,24 +89,31 @@ void main()
 				0
 			);
 
-			frag_colour = shell_alpha * color1 * tex + shell_alpha * color2 * altTex;
+			frag_colour = color1 * tex + color2 * altTex;
+#ifdef DRAW_FOG
+			frag_colour = applyFogBlend(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+#endif
+			frag_colour *= shell_alpha;
 		}
 		else {
-			frag_colour = fsBaseColor;
+			frag_colour = vec4(fsBaseColor.rgb, 1);
 			if (fsTextureEnabled != 0) {
-				frag_colour = vec4(mix(tex.rgb, tex.rgb * fsBaseColor.rgb, max(fsMinLumaMix, tex.a)), fsBaseColor.a);
+				frag_colour = vec4(mix(tex.rgb, tex.rgb * fsBaseColor.rgb, max(fsMinLumaMix, tex.a)), 1);
 			}
-
 #ifdef DRAW_CAUSTIC_TEXTURES
 			if ((fsFlags & AMF_CAUSTICS) == AMF_CAUSTICS) {
 				// FIXME: Do proper GL_DECAL etc
-				frag_colour = vec4(caustic.rgb * frag_colour.rgb * 1.8, frag_colour.a);
+				frag_colour = vec4(caustic.rgb * frag_colour.rgb * 1.8, 1);
 			}
 #endif
-		}
-	}
-
 #ifdef DRAW_FOG
-	frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+			frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
 #endif
+			frag_colour *= fsBaseColor.a;
+		}
+	} else {
+#ifdef DRAW_FOG
+		frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+#endif
+	}
 }
