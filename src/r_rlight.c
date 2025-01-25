@@ -401,8 +401,8 @@ loc0:
 				continue;	// no lightmaps
 			}
 
-			ds = (int)((float)DotProduct(mid, surf->texinfo->vecs[0]) + surf->texinfo->vecs[0][3]);
-			dt = (int)((float)DotProduct(mid, surf->texinfo->vecs[1]) + surf->texinfo->vecs[1][3]);
+			ds = (int)((float)DotProduct(mid, surf->lmvecs[0]) + surf->lmvecs[0][3]);
+			dt = (int)((float)DotProduct(mid, surf->lmvecs[1]) + surf->lmvecs[1][3]);
 			if (ds < surf->texturemins[0] || dt < surf->texturemins[1]) {
 				continue;
 			}
