@@ -141,7 +141,7 @@ static void SetSurfaceLighting(model_t* loadmodel, msurface_t* out, byte* styles
 		out->samples = NULL;
 	}
 	else {
-		out->samples = loadmodel->lightdata + (loadmodel->bspversion == HL_BSPVERSION ? i : i * 3);
+		out->samples = loadmodel->lightdata + (loadmodel->bspversion == HL_BSPVERSION ? i : i * loadmodel->lightdatasamplesize);
 	}
 }
 
@@ -243,24 +243,38 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 	if (load_inline) {
 		int threshold = (lightmode == 1 ? 255 : lightmode == 2 ? 170 : 128);
 		int lumpsize;
-		byte *rgb = Mod_BSPX_FindLump(bspx_header, "RGBLIGHTING", &lumpsize, mod_base);
-		// Sanity-check size if vanilla lit exists
-		if (rgb && lumpsize % 3 == 0 && (lumpsize == l->filelen * 3 || l->filelen <= 0)) {
-			loadmodel->lightdata = (byte *) Hunk_AllocName(lumpsize, loadmodel->name);
+		byte *rgb;
+
+		rgb = Mod_BSPX_FindLump(bspx_header, "LIGHTING_E5BGR9", &lumpsize, mod_base);
+		if (rgb && lumpsize % 4 == 0 && (lumpsize == l->filelen * 4 || l->filelen <= 0)) {
+			loadmodel->lightdata = (byte *) Hunk_AllocName (lumpsize, loadmodel->name);
+			loadmodel->lightdatasamplesize = 4;
 			memcpy(loadmodel->lightdata, rgb, lumpsize);
-			// we trust the inline RGB data to be bug free so we don't check it against the mono lightmap
-			// what we do though is prevent color wash-out in brightly lit areas
-			// (one day we may do it in R_BuildLightMap instead)
-			out = loadmodel->lightdata;
-			for (i = 0; i < lumpsize / 3; i++, out += 3) {
-				int m = max(out[0], max(out[1], out[2]));
-				if (m > threshold) {
-					out[0] = out[0] * threshold / m;
-					out[1] = out[1] * threshold / m;
-					out[2] = out[2] * threshold / m;
-				}
+			loadmodel->flags |= MOD_HDRLIGHTING;
+			for (i = 0; i < lumpsize / 4; i++) { //native endian...
+				((int*)loadmodel->lightdata)[i] = LittleLong(((int*)loadmodel->lightdata)[i]);
 			}
-			// all done, but we let them override it with a .lit
+		} else {
+			rgb = Mod_BSPX_FindLump(bspx_header, "RGBLIGHTING", &lumpsize, mod_base);
+			// Sanity-check size if vanilla lit exists
+			if (rgb && lumpsize % 3 == 0 && (lumpsize == l->filelen * 3 || l->filelen <= 0)) {
+				loadmodel->lightdata = (byte *) Hunk_AllocName(lumpsize, loadmodel->name);
+				loadmodel->lightdatasamplesize = 3;
+				memcpy(loadmodel->lightdata, rgb, lumpsize);
+				// we trust the inline RGB data to be bug free so we don't check it against the mono lightmap
+				// what we do though is prevent color wash-out in brightly lit areas
+				// (one day we may do it in R_BuildLightMap instead)
+				out = loadmodel->lightdata;
+				for (i = 0; i < lumpsize / 3; i++, out += 3) {
+					int m = max(out[0], max(out[1], out[2]));
+					if (m > threshold) {
+						out[0] = out[0] * threshold / m;
+						out[1] = out[1] * threshold / m;
+						out[2] = out[2] * threshold / m;
+					}
+				}
+				// all done, but we let them override it with a .lit
+			}
 		}
 	}
 
@@ -285,6 +299,7 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 				Com_Printf("Static coloured lighting loaded\n");
 			}
 			loadmodel->lightdata = data + 8;
+			loadmodel->lightdatasamplesize = 3;
 
 			in = mod_base + l->fileofs;
 			out = loadmodel->lightdata;
@@ -345,6 +360,7 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 
 	//no .lit found, expand the white lighting data to color
 	loadmodel->lightdata = (byte *) Hunk_AllocName (l->filelen * 3, va("%s_@lightdata", loadmodel->name));
+	loadmodel->lightdatasamplesize = 3;
 	in = mod_base + l->fileofs;
 	out = loadmodel->lightdata;
 	for (i = 0; i < l->filelen; i++, out += 3) {
