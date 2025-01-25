@@ -210,10 +210,9 @@ static void R_AddDynamicLights(msurface_t *surf)
 }
 
 //Combine and scale multiple lightmaps into the 8.8 format in blocklights
-static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
+static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride, uint32_t flags)
 {
 	int smax, tmax, i, j, size, blocksize, maps;
-	byte *lightmap;
 	unsigned scale, *bl;
 	qbool fullbright = false;
 
@@ -225,7 +224,6 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 	tmax = (surf->extents[1] >> surf->lmshift) + 1;
 	size = smax * tmax;
 	blocksize = size * 3;
-	lightmap = surf->samples;
 
 	// check for full bright or no light data
 	fullbright = (R_FullBrightAllowed() || !cl.worldmodel || !cl.worldmodel->lightdata);
@@ -241,16 +239,37 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride)
 	}
 
 	// add all the lightmaps
-	for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
-		scale = d_lightstylevalue[surf->styles[maps]];
-		surf->cached_light[maps] = scale;	// 8.8 fraction
-
-		if (!fullbright && lightmap) {
+	if (flags & MOD_HDRLIGHTING) {
+		uint32_t *lightmap = (uint32_t *)surf->samples;
+		for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
+			scale = d_lightstylevalue[surf->styles[maps]];
+			surf->cached_light[maps] = scale;	// 8.8 fraction
+			// it sucks that blocklights is an int array. we can still massively
+			// overbright though, just not underbright quite as accurately
+			// (still quite a bit more than rgb8 precision there).
 			bl = blocklights;
-			for (i = 0; i < blocksize; i++) {
-				*bl++ += lightmap[i] * scale;
+			for (i=0 ; i<size ; i++) {
+				uint32_t e5bgr9 = *lightmap++;
+				//we're converting to a scale that holds overbrights, so 1->128, its 2->255ish
+				float e = rgb9e5tab[e5bgr9>>27] * (1<<7) * scale;
+				*bl++ += e*((e5bgr9>> 0)&0x1ff); //red
+				*bl++ += e*((e5bgr9>> 9)&0x1ff); //green
+				*bl++ += e*((e5bgr9>>18)&0x1ff); //blue
 			}
-			lightmap += blocksize;		// skip to next lightmap
+		}
+	} else {
+		byte *lightmap = surf->samples;
+		for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
+			scale = d_lightstylevalue[surf->styles[maps]];
+			surf->cached_light[maps] = scale;	// 8.8 fraction
+
+			if (!fullbright && lightmap) {
+				bl = blocklights;
+				for (i = 0; i < blocksize; i++) {
+					*bl++ += lightmap[i] * scale;
+				}
+				lightmap += blocksize;		// skip to next lightmap
+			}
 		}
 	}
 
@@ -392,7 +411,7 @@ void R_RenderDynamicLightmaps(msurface_t *fa, qbool world)
 		theRect->h = fa->light_t - theRect->t + tmax;
 	}
 	base = lm->rawdata + (fa->light_t * LIGHTMAP_WIDTH + fa->light_s) * 4;
-	R_BuildLightMap (fa, base, LIGHTMAP_WIDTH * 4);
+	R_BuildLightMap (fa, base, LIGHTMAP_WIDTH * 4, world ? cl.worldmodel->flags : 0);
 }
 
 void R_LightmapFrameInit(void)
@@ -749,7 +768,6 @@ static void R_BuildSurfaceDisplayList(model_t* currentmodel, msurface_t *fa)
 static void R_BuildLightmapData(msurface_t* surf, int surfnum)
 {
 	lightmap_data_t* lm = &lightmaps[surf->lightmaptexturenum];
-	byte* lightmap = surf->samples;
 	unsigned int smax = (surf->extents[0] >> surf->lmshift) + 1;
 	unsigned int tmax = (surf->extents[1] >> surf->lmshift) + 1;
 	unsigned int lightmap_flags;
@@ -775,20 +793,35 @@ static void R_BuildLightmapData(msurface_t* surf, int surfnum)
 			source[0] = source[1] = source[2] = 0;
 			source[3] = lightmap_flags;
 
-			if (lightmap) {
-				for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
-					size_t lightmap_index = (maps * smax * tmax + t * smax + s) * 3;
+			if (surf->samples) {
+				if (surfnum != -1 && cl.worldmodel->flags & MOD_HDRLIGHTING) {
+					uint32_t* lightmap = (uint32_t *)surf->samples;
+					for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
+						size_t lightmap_index = (maps * smax * tmax + t * smax + s);
+						uint32_t e5bgr9 = lightmap[lightmap_index];
+						//we're converting to a scale that holds overbrights, so 1->128, its 2->255ish
+						float e = rgb9e5tab[e5bgr9>>27] * (1<<7);
+						// should not clamp here, but changing the light compute shader can be done later
+						source[0] += (unsigned int)bound(0, e*((e5bgr9>> 0)&0x1ff), 0xff) << (8 * maps);
+						source[1] += (unsigned int)bound(0, e*((e5bgr9>> 9)&0x1ff), 0xff) << (8 * maps);
+						source[2] += (unsigned int)bound(0, e*((e5bgr9>>18)&0x1ff), 0xff) << (8 * maps);
+					}
+				} else {
+					byte* lightmap = surf->samples;
+					for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
+						size_t lightmap_index = (maps * smax * tmax + t * smax + s) * 3;
 
-					source[0] |= ((unsigned int)lightmap[lightmap_index + 0]) << (8 * maps);
-					source[1] |= ((unsigned int)lightmap[lightmap_index + 1]) << (8 * maps);
-					source[2] |= ((unsigned int)lightmap[lightmap_index + 2]) << (8 * maps);
+						source[0] |= ((unsigned int)lightmap[lightmap_index + 0]) << (8 * maps);
+						source[1] |= ((unsigned int)lightmap[lightmap_index + 1]) << (8 * maps);
+						source[2] |= ((unsigned int)lightmap[lightmap_index + 2]) << (8 * maps);
+					}
 				}
 			}
 		}
 	}
 }
 
-static void R_LightmapCreateForSurface(msurface_t *surf, int surfnum)
+static void R_LightmapCreateForSurface(msurface_t *surf, int surfnum, uint32_t flags)
 {
 	int smax, tmax;
 	byte *base;
@@ -811,7 +844,7 @@ static void R_LightmapCreateForSurface(msurface_t *surf, int surfnum)
 	base = lightmaps[surf->lightmaptexturenum].rawdata + (surf->light_t * LIGHTMAP_WIDTH + surf->light_s) * 4;
 	numdlights = 0;
 	R_BuildLightmapData(surf, surfnum);
-	R_BuildLightMap(surf, base, LIGHTMAP_WIDTH * 4);
+	R_BuildLightMap(surf, base, LIGHTMAP_WIDTH * 4, flags);
 }
 
 static int R_LightmapSurfaceSortFunction(const void* lhs_, const void* rhs_)
@@ -917,7 +950,7 @@ void R_BuildLightmaps(void)
 					qbool isTurb = (surfaces[i]->flags & SURF_DRAWTURB);
 
 					if (!isTurb) {
-						R_LightmapCreateForSurface(surfaces[i], m->isworldmodel ? surfaces[i]->surfacenum : -1);
+						R_LightmapCreateForSurface(surfaces[i], m->isworldmodel ? surfaces[i]->surfacenum : -1, m->flags);
 					}
 					R_BuildSurfaceDisplayList(m, surfaces[i]);
 				}
@@ -939,7 +972,7 @@ void R_BuildLightmaps(void)
 			}
 
 			if (!isTurb || !(m->surfaces[i].texinfo->flags & TEX_SPECIAL)) {
-				R_LightmapCreateForSurface(m->surfaces + i, m->isworldmodel ? m->surfaces[i].surfacenum : -1);
+				R_LightmapCreateForSurface(m->surfaces + i, m->isworldmodel ? m->surfaces[i].surfacenum : -1, m->flags);
 			}
 			R_BuildSurfaceDisplayList(m, m->surfaces + i);
 		}
