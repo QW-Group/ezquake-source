@@ -465,6 +465,8 @@ typedef enum
 #define	EF_TRACER2	64			// orange split trail + rotate
 #define	EF_TRACER3	128			// purple trail
 
+#define MOD_HDRLIGHTING (1u<<13)	//spike -- light samples are in e5bgr9 format. int aligned.
+
 #define MAX_SIMPLE_TEXTURES 5
 #define MAX_TEXTURE_ARRAYS_PER_MODEL 64
 
@@ -542,6 +544,7 @@ typedef struct model_s {
 	byte*               visdata;
 	int                 visdata_length;
 	byte*               lightdata;
+	size_t              lightdatasamplesize;
 
 	int					bspversion;
 	qbool				isworldmodel;
