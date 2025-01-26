@@ -38,7 +38,12 @@ void GLM_StateBeginAliasModelZPassBatch(void);
 void GLM_StateBeginAliasModelBatch(qbool translucent, qbool additive);
 void GLM_StateBeginAliasOutlineBatch(void);
 
-#define MAXIMUM_ALIASMODEL_DRAWCALLS MAX_STANDARD_ENTITIES   // ridiculous
+// MAX_STANDARD_ENTITIES used to be 512, so lets pretend like
+// there can't be more aliasmodel entities, as that will cause
+// the arrays sized according to this limit to become too big
+// for caches etc. Should there be more aliasmodels than this,
+// there will be an error printed.
+#define MAXIMUM_ALIASMODEL_DRAWCALLS 512   // ridiculous
 #define MAXIMUM_MATERIAL_SAMPLERS 32
 
 typedef enum aliasmodel_draw_type_s {
