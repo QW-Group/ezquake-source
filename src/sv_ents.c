@@ -159,6 +159,9 @@ void SV_WriteDelta(client_t* client, entity_state_t *from, entity_state_t *to, s
 		bits |= U_MODEL;
 #ifdef FTE_PEXT_ENTITYDBL
 		if (to->modelindex > 255) {
+			if (to->modelindex >= 512) {
+				bits &= ~U_MODEL;
+			}
 			evenmorebits |= U_FTE_MODELDBL;
 			required_extensions |= FTE_PEXT_MODELDBL;
 		}
@@ -264,6 +267,8 @@ void SV_WriteDelta(client_t* client, entity_state_t *from, entity_state_t *to, s
 
 	if (bits & U_MODEL)
 		MSG_WriteByte(msg, to->modelindex & 255);
+	else if (evenmorebits & U_FTE_MODELDBL)
+		MSG_WriteShort(msg, to->modelindex);
 	if (bits & U_FRAME)
 		MSG_WriteByte(msg, to->frame);
 	if (bits & U_COLORMAP)

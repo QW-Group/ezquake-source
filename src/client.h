@@ -307,7 +307,7 @@ typedef struct {
 	char	map[MAX_STYLESTRING];
 } lightstyle_t;
 
-#define	MAX_STATIC_ENTITIES	512		// torches, etc
+#define	MAX_STATIC_ENTITIES	2048		// torches, etc
 #define	MAX_DEMOS			8
 #define	MAX_DEMONAME		16
 
@@ -800,7 +800,7 @@ typedef struct visentity_s {
 	qbool       draw[visent_max];
 } visentity_t;
 
-#define MAX_STANDARD_ENTITIES 512
+#define MAX_STANDARD_ENTITIES 2048
 
 typedef struct visentlist_s {
 	visentity_t list[MAX_STANDARD_ENTITIES];

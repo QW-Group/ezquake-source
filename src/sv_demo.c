@@ -1210,6 +1210,31 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 
 	MSG_WriteByte(&buf, svc_serverdata);
 
+#ifdef FTE_PEXT_256PACKETENTITIES
+	demo.recorder.fteprotocolextensions |= FTE_PEXT_256PACKETENTITIES;
+#endif
+#ifdef FTE_PEXT_MODELDBL
+	demo.recorder.fteprotocolextensions |= FTE_PEXT_MODELDBL;
+#endif
+#ifdef FTE_PEXT_ENTITYDBL
+	demo.recorder.fteprotocolextensions |= FTE_PEXT_ENTITYDBL;
+#endif
+#ifdef FTE_PEXT_ENTITYDBL2
+	demo.recorder.fteprotocolextensions |= FTE_PEXT_ENTITYDBL2;
+#endif
+#ifdef FTE_PEXT_SPAWNSTATIC2
+	demo.recorder.fteprotocolextensions |= FTE_PEXT_SPAWNSTATIC2;
+#endif
+#ifdef FTE_PEXT_TRANS
+	demo.recorder.fteprotocolextensions |= FTE_PEXT_TRANS;
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+	demo.recorder.fteprotocolextensions |= FTE_PEXT_COLOURMOD;
+#endif
+#ifdef FTE_PEXT2_VOICECHAT
+	demo.recorder.fteprotocolextensions2 |= FTE_PEXT2_VOICECHAT;
+#endif
+
 #ifdef FTE_PEXT_FLOATCOORDS
 	//fix up extensions to match sv_bigcoords correctly. sorry for old clients not working.
 	if (msg_coordsize == 4)
@@ -1316,14 +1341,22 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	while (s)
 	{
 		MSG_WriteString (&buf, s);
-		if (buf.cursize > MAX_MSGLEN/2)
+		if (buf.cursize > MAX_MSGLEN/2 && n & 0xff)
 		{
+			// partial flush as long as not at a zero boundary
 			MSG_WriteByte (&buf, 0);
 			MSG_WriteByte (&buf, n);
 			SV_WriteRecordMVDMessage (&buf);
 			SZ_Clear (&buf);
-			MSG_WriteByte (&buf, svc_modellist);
-			MSG_WriteByte (&buf, n + 1);
+			if (n + 1 > 0xff)
+			{
+				MSG_WriteByte (&buf, svc_fte_modellistshort);
+				MSG_WriteShort (&buf, n + 1);
+			} else
+			{
+				MSG_WriteByte (&buf, svc_modellist);
+				MSG_WriteByte (&buf, n + 1);
+			}
 		}
 		n++;
 		s = sv.model_precache[n+1];

@@ -167,7 +167,6 @@ static qbool is_monster (int modelindex)
 
 void CL_ClearScene(void)
 {
-	memset(cl_visents.list, 0, sizeof(cl_visents.list));
 	memset(cl_visents.typecount, 0, sizeof(cl_visents.typecount));
 	cl_visents.count = 0;
 }
@@ -510,8 +509,16 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 #endif
 
 	to->flags = bits;
-	if (bits & U_MODEL)
+	if (bits & U_MODEL) {
 		to->modelindex = MSG_ReadByte();
+#ifdef FTE_PEXT_MODELDBL
+		if (morebits & U_FTE_MODELDBL) {
+			to->modelindex += 256;
+		}
+	} else if (morebits & U_FTE_MODELDBL) {
+		to->modelindex = MSG_ReadShort();
+#endif
+	}
 
 	if (bits & U_FRAME)
 		to->frame = MSG_ReadByte ();
@@ -589,11 +596,6 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 #ifdef FTE_PEXT_ENTITYDBL2
 	if (morebits & U_FTE_ENTITYDBL2) {
 		to->number += 1024;
-	}
-#endif
-#ifdef FTE_PEXT_MODELDBL
-	if (morebits & U_FTE_MODELDBL) {
-		to->modelindex += 256;
 	}
 #endif
 #endif

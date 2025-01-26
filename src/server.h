@@ -126,7 +126,7 @@ typedef struct
 
 	qbool		   mvdrecording;
 
-	entity_state_t static_entities[512];
+	entity_state_t static_entities[MAX_STATIC_ENTITIES];
 	int            static_entity_count;
 } server_t;
 
@@ -733,7 +733,7 @@ extern	demo_t		demo;	// server demo struct
 extern	client_t	*sv_client;
 extern	edict_t		*sv_player;
 
-#define	MODEL_NAME_LEN	5
+#define	MODEL_NAME_LEN	6
 extern	char		localmodels[MAX_MODELS][MODEL_NAME_LEN]; // inline model names for precache
 //extern	char		localinfo[MAX_LOCALINFO_STRING+1];
 extern  ctxinfo_t _localinfo_;

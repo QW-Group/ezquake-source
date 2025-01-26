@@ -340,7 +340,7 @@ void PF2_sprint(int entnum, int level, char *s, int flags)
 		flags = 0;
 	if (entnum < 1 || entnum > MAX_CLIENTS)
 	{
-		Con_Printf("tried to sprint to a non-client %d \n", entnum);
+		Con_Printf("tried to sprint to a non-client %d (%s)\n", entnum, s);
 		return;
 	}
 

@@ -46,8 +46,7 @@ void Mod_AddModelFlags(model_t *mod);
 
 byte	mod_novis[MAX_MAP_LEAFS/8];
 
-#define	MAX_MOD_KNOWN	512
-model_t	mod_known[MAX_MOD_KNOWN];
+model_t	mod_known[MAX_MODELS];
 int		mod_numknown;
 
 void Mod_Init(void)
@@ -175,7 +174,7 @@ model_t *Mod_FindName(const char *name)
 	}
 
 	if (i == mod_numknown) {
-		if (mod_numknown == MAX_MOD_KNOWN) {
+		if (mod_numknown == MAX_MODELS) {
 			Sys_Error("mod_numknown == MAX_MOD_KNOWN");
 		}
 		strlcpy(mod->name, name, sizeof(mod->name));
