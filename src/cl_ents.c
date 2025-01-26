@@ -167,7 +167,6 @@ static qbool is_monster (int modelindex)
 
 void CL_ClearScene(void)
 {
-	memset(cl_visents.list, 0, sizeof(cl_visents.list));
 	memset(cl_visents.typecount, 0, sizeof(cl_visents.typecount));
 	cl_visents.count = 0;
 }
