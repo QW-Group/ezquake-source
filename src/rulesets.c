@@ -789,6 +789,7 @@ static void Rulesets_OnChange_ruleset(cvar_t *var, char *value, qbool *cancel)
 
 	Cmd_ReInitAllMacro();
 	IN_ClearProtectedKeys();
+	Info_SetValueForStarKey(cls.userinfo, "*rsn", value, MAX_INFO_STRING);
 }
 
 int Rulesets_MaxSequentialWaitCommands(void)
