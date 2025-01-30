@@ -141,6 +141,8 @@ cvar_t	scr_scoreboard_fillalpha      = {"scr_scoreboard_fillalpha",      "0.7"};
 cvar_t	scr_scoreboard_fillcolored    = {"scr_scoreboard_fillcolored",    "2"};
 cvar_t  scr_scoreboard_proportional   = {"scr_scoreboard_proportional",   "0"};
 cvar_t  scr_scoreboard_wipeout	 	  = {"scr_scoreboard_wipeout",   	  "1"};
+cvar_t	scr_scoreboard_classic        = {"scr_scoreboard_classic", "0"};
+cvar_t	scr_scoreboard_highlightself  = {"scr_scoreboard_highlightself", "1"};
 
 // VFrags: only draw the frags for the first player when using mvinset
 #define MULTIVIEWTHISPOV() ((!cl_multiview.value) || (cl_mvinset.value && CL_MultiviewCurrentView() == 1))
@@ -330,6 +332,8 @@ void Sbar_Init(void)
 	Cvar_Register(&scr_scoreboard_fillcolored);
 	Cvar_Register(&scr_scoreboard_proportional);
 	Cvar_Register(&scr_scoreboard_wipeout);
+	Cvar_Register(&scr_scoreboard_classic);
+	Cvar_Register(&scr_scoreboard_highlightself);
 
 	Cvar_ResetCurrentGroup();
 
@@ -1281,6 +1285,8 @@ static void Sbar_DeathmatchOverlay(int start)
 	qbool proportional = scr_scoreboard_proportional.integer;
 	qbool any_flags = false;
 	extern ti_player_t ti_clients[MAX_CLIENTS];
+	qbool is_classic = scr_scoreboard_classic.value;
+	qbool is_classic_spec;
 
 	if (!start && hud_faderankings.value) {
 		Draw_FadeScreen(hud_faderankings.value);
@@ -1384,30 +1390,48 @@ static void Sbar_DeathmatchOverlay(int start)
 	if (!scr_scoreboard_borderless.value) {
 		Draw_Fill(xofs - 1, y - 9, rank_width + 2, 1, 0);						//Border - Top
 	}
-	Draw_AlphaFill(xofs, y - 8, rank_width, 9, 1, SCOREBOARD_HEADINGALPHA);	//Draw heading row
+
+	if (!is_classic)
+		Draw_AlphaFill(xofs, y - 8, rank_width, 9, 1, SCOREBOARD_HEADINGALPHA);	//Draw heading row
 
 	x = xofs + 1;
 	// teamplay: " ping pl  fps frags team name" | " ping pl time frags team name"
 	// non-tp  : " ping pl  fps frags name" | " ping pl time frags name"
+
 	x += FONT_WIDTH;
 	Draw_SStringAligned(x, y - 8, "ping", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
+	if (is_classic)
+		Draw_SStringAligned(x, y, "\x1d\x1e\x1e\x1f", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
 	x += 5 * FONT_WIDTH;
 	Draw_SStringAligned(x, y - 8, "pl", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 2);
+	if (is_classic)
+		Draw_SStringAligned(x, y, "\x1d\x1f", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 2);
 	x += 3 * FONT_WIDTH;
 	Draw_SStringAligned(x, y - 8, "time", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
+	if (is_classic)
+		Draw_SStringAligned(x, y, "\x1d\x1e\x1e\x1f", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
 	x += 5 * FONT_WIDTH;
 	Draw_SStringAligned(x, y - 8, "frags", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 5);
+	if (is_classic)
+		Draw_SStringAligned(x, y, "\x1d\x1e\x1e\x1e\x1f", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 5);
 	x += 6 * FONT_WIDTH;
 	if (cl.teamplay) {
 		Draw_SStringAligned(x, y - 8, "team", scale, alpha, proportional, text_align_center, x + FONT_WIDTH * 4);
+		if (is_classic)
+			Draw_SStringAligned(x, y, "\x1d\x1e\x1e\x1f", scale, alpha, proportional, text_align_center, x + FONT_WIDTH * 4);
 		x += 5 * FONT_WIDTH;
 	}
+
 	if (any_flags) {
 		x += FONT_WIDTH;
 	}
+
 	Draw_SStringAligned(x, y - 8, "name", scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+
+	if (is_classic)
+		Draw_SStringAligned(x, y, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f", scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
 	x += (any_flags ? 15 : 16) * FONT_WIDTH;
-	if (statswidth) {
+	if (!is_classic && statswidth) {
 		stats_xoffset = x;
 
 		Draw_SStringAligned(x, y - 8, "kills", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 5);
@@ -1432,8 +1456,12 @@ static void Sbar_DeathmatchOverlay(int start)
 
 	x = xofs + 1;
 
-	Draw_Fill(xofs, y + 1, rank_width, 1, 0);	//Border - Top (under header)
-	y += 2;												//dont go over the black border, move the rest down
+	if (!is_classic)
+		Draw_Fill(xofs, y + 1, rank_width, 1, 0);	//Border - Top (under header)
+
+	// If scr_scoreboard_classic is true, we've added an extra line for the
+	// separator, which must be accounted for.
+	y += is_classic ? 10 : 2;				//dont go over the black border, move the rest down
 	if (!scr_scoreboard_borderless.value) {
 		Draw_Fill(xofs - 1, y - 10, 1, 10, 0);						//Border - Left
 		Draw_Fill(xofs - 1 + rank_width + 1, y - 10, 1, 10, 0);	//Border - Right
@@ -1469,6 +1497,7 @@ static void Sbar_DeathmatchOverlay(int start)
 
 		k = fragsort[i];
 		s = &cl.players[k];
+		is_classic_spec = is_classic && s->spectator;
 		ti_cl = &ti_clients[k];
 		ca_alpha = (check_ktx_ca_wo() && scr_scoreboard_wipeout.value && ti_cl->isdead) ? 0.25f : 1.0f; // fade dead players in CA/wipeout
 
@@ -1477,7 +1506,10 @@ static void Sbar_DeathmatchOverlay(int start)
 		}
 
 		//render the main background transparencies behind players row
-		if (k == mynum) {
+		if (is_classic) {
+			bk_alpha = 0;
+		}
+		else if (k == mynum && scr_scoreboard_highlightself.value) {
 			bk_alpha = 1.7 * SCOREBOARD_ALPHA;
 			bk_alpha = min(alpha, 0.75);
 		}
@@ -1513,7 +1545,9 @@ static void Sbar_DeathmatchOverlay(int start)
 			p = 999;
 		}
 		snprintf(num, sizeof(num), "%i", p);
-		color.c = RGBA_TO_COLOR(0xAA, 0xAA, 0xDD, (byte)(ca_alpha * 255));
+		color.c = is_classic
+			? RGBA_TO_COLOR(0xFF, 0xFF, 0xFF, (byte)(ca_alpha * 255))
+			: RGBA_TO_COLOR(0xAA, 0xAA, 0xDD, (byte)(ca_alpha * 255));
 		color.i = 0;
 		Draw_SColoredStringAligned(x, y, num, &color, 1, scale, alpha * ca_alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
 		x += 4 * FONT_WIDTH; // move it forward, ready to print next column
@@ -1521,22 +1555,30 @@ static void Sbar_DeathmatchOverlay(int start)
 		// draw pl
 		p = s->pl;
 		snprintf(num, sizeof(num), "%i", p);
-		if (p == 0) {
-			// 0 - white
+
+		if (is_classic)
 			color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0xFF, (byte)(ca_alpha * 255));
+		else {
+			if (p == 0) {
+				// 0 - white
+				color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0xFF, (byte)(ca_alpha * 255));
+			}
+			else if (p < 3) {
+				// 1-2 - yellow
+				color.c = RGBA_TO_COLOR(0xCC, 0xDD, 0xDD, (byte)(ca_alpha * 255));
+			}
+			else if (p < 6) {
+				// 3-5 orange
+				color.c = RGBA_TO_COLOR(0xFF, 0x55, 0x00, (byte)(ca_alpha * 255));
+			}
+			else {	// 6+ - red
+				color.c = RGBA_TO_COLOR(0xFF, 0x00, 0x00, (byte)(ca_alpha * 255));
+			}
 		}
-		else if (p < 3) {
-			// 1-2 - yellow
-			color.c = RGBA_TO_COLOR(0xCC, 0xDD, 0xDD, (byte)(ca_alpha * 255));
-		}
-		else if (p < 6) {
-			// 3-5 orange
-			color.c = RGBA_TO_COLOR(0xFF, 0x55, 0x00, (byte)(ca_alpha * 255));
-		}
-		else {	// 6+ - red
-			color.c = RGBA_TO_COLOR(0xFF, 0x00, 0x00, (byte)(ca_alpha * 255));
-		}
-		Draw_SColoredStringAligned(x, y, num, &color, 1, scale, alpha * ca_alpha, proportional, text_align_right, x + 3 * FONT_WIDTH);
+
+		if (!is_classic_spec)
+			Draw_SColoredStringAligned(x, y, num, &color, 1, scale, alpha * ca_alpha, proportional, text_align_right, x + 3 * FONT_WIDTH);
+
 		x += 4 * FONT_WIDTH;
 
 		// draw time
@@ -1551,7 +1593,9 @@ static void Sbar_DeathmatchOverlay(int start)
 		if (check_ktx_wo() && scr_scoreboard_wipeout.value && (ti_cl->isdead == 1) && (ti_cl->timetospawn > 0) && (ti_cl->timetospawn < 999)){
 			color.c = RGBA_TO_COLOR(0xFF, 0xAA, 0x00, 255);
 			snprintf(myminutes, sizeof(myminutes), "%d", ti_cl->timetospawn);
-			Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale * 0.85, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
+
+			if (!is_classic_spec)
+				Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale * 0.85, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
 		}
 
 		else if (!check_ktx_wo() || !scr_scoreboard_wipeout.value)
@@ -1565,7 +1609,8 @@ static void Sbar_DeathmatchOverlay(int start)
 				}
 			}
 
-			Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
+			if (!is_classic_spec)
+				Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
 		}
 
 		x += 5 * FONT_WIDTH;
@@ -1574,11 +1619,11 @@ static void Sbar_DeathmatchOverlay(int start)
 		if (s->spectator) {
 			if (cl.teamplay) {
 				// use columns frags and team
-				Draw_SStringAligned(x, y, scr_scoreboard_spectator_name.string, scale, alpha, proportional, text_align_left, x + 10 * FONT_WIDTH);
+				Draw_SStringAligned(is_classic_spec ? x - (8 * FONT_WIDTH) : x, y, is_classic_spec ? "(spectator)" : scr_scoreboard_spectator_name.string, scale, alpha, proportional, text_align_left, x + 10 * FONT_WIDTH);
 			}
 			else {
 				// use only frags column
-				Draw_SStringAligned(x, y, scr_scoreboard_spectator_name.string, scale, alpha, proportional, text_align_left, x + SHORT_SPECTATOR_NAME_LEN * FONT_WIDTH);
+				Draw_SStringAligned(is_classic_spec ? x - (8 * FONT_WIDTH): x, y, is_classic_spec ? "(spectator)" : scr_scoreboard_spectator_name.string, scale, alpha, proportional, text_align_left, x + SHORT_SPECTATOR_NAME_LEN * FONT_WIDTH);
 			}
 
 			x += (cl.teamplay ? 11 : 6) * FONT_WIDTH; // move across to print the name
@@ -1786,6 +1831,7 @@ static void Sbar_TeamOverlay(void)
 	mpic_t *pic;
 	qbool proportional = scr_scoreboard_proportional.integer;
 	float lhs;
+	qbool is_classic = scr_scoreboard_classic.value;
 
 	if (key_dest == key_console && !SCR_TakingAutoScreenshot())
 		return;
@@ -1835,8 +1881,11 @@ static void Sbar_TeamOverlay(void)
 	if (!scr_scoreboard_borderless.value) {
 		Draw_Fill(xofs - 1, y + 1, rank_width + 2, 1, 0);							//Border - Top
 	}
-	Draw_AlphaFill(xofs, y + 2, rank_width, skip, 1, SCOREBOARD_HEADINGALPHA);	//draw heading row
-	Draw_Fill(xofs, y + 11, rank_width, 1, 0);							//Border - Top (under header)
+
+	if (!is_classic) {
+		Draw_AlphaFill(xofs, y + 2, rank_width, skip, 1, SCOREBOARD_HEADINGALPHA); //draw heading row
+		Draw_Fill(xofs, y + 11, rank_width, 1, 0); //Border - Top (under header)
+	}
 	y += 2;																		//dont go over the black border, move the rest down
 	if (!scr_scoreboard_borderless.value) {
 		Draw_Fill(xofs - 1, y, 1, skip, 0);										//Border - Left
@@ -1848,31 +1897,50 @@ static void Sbar_TeamOverlay(void)
 	lhs = x;
 
 	Draw_SStringAligned(x, y, "low", 1, 1, proportional, text_align_right, x + 3 * FONT_WIDTH);
+	if (is_classic)
+		Draw_SStringAligned(x, y + 8, "\x1d\x1e\x1e", 1, 1, proportional, text_align_right, x + 3 * FONT_WIDTH);
 	x += 3 * FONT_WIDTH;
 	Draw_SStringAligned(x, y, "/", 1, 1, proportional, text_align_right, x + FONT_WIDTH);
+	if (is_classic)
+		Draw_SStringAligned(x, y + 8, "\x1e", 1, 1, proportional, text_align_right, x + FONT_WIDTH);
 	x += FONT_WIDTH;
 	Draw_SStringAligned(x, y, "avg", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 3);
+	if (is_classic)
+		Draw_SStringAligned(x, y + 8, "\x1e\x1e\x1e", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 3);
 	x += 3 * FONT_WIDTH;
 	Draw_SStringAligned(x, y, "/", 1, 1, proportional, text_align_right, x + FONT_WIDTH);
+	if (is_classic)
+		Draw_SStringAligned(x, y + 8, "\x1e", 1, 1, proportional, text_align_right, x + FONT_WIDTH);
 	x += FONT_WIDTH;
 	Draw_SStringAligned(x, y, "high", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 4);
+	if (is_classic)
+		Draw_SStringAligned(x, y + 8, "\x1e\x1e\x1e\x1f", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 4);
 	x += 4 * FONT_WIDTH;
 	x += FONT_WIDTH;
 	Draw_SStringAligned(x, y, "team", 1, 1, proportional, text_align_center, x + FONT_WIDTH * 4);
+	if (is_classic)
+		Draw_SStringAligned(x, y + 8, "\x1d\x1e\x1e\x1f", 1, 1, proportional, text_align_center, x + FONT_WIDTH * 4);
 	x += 4 * FONT_WIDTH;
 	x += FONT_WIDTH;
 	Draw_SStringAligned(x, y, (cl.scoring_system == SCORING_SYSTEM_TEAMFRAGS ? "score" : "total"), 1, 1, proportional, text_align_right, x + FONT_WIDTH * 5);
+	if (is_classic)
+		Draw_SStringAligned(x, y + 8, "\x1d\x1e\x1e\x1e\x1f", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 5);
 	x += 5 * FONT_WIDTH;
 	x += FONT_WIDTH;
-	if ((cl.teamfortress || scr_scoreboard_showflagstats.value) && Stats_IsFlagsParsed()) {
+	if ((cl.teamfortress || scr_scoreboard_showflagstats.value) && Stats_IsFlagsParsed() && !is_classic) {
 		Draw_SStringAligned(x, y, "caps", 1, 1, proportional, text_align_center, x + FONT_WIDTH * 4);
 		x += 4 * FONT_WIDTH;
 		x += FONT_WIDTH;
 	}
+
 	Draw_SStringAligned(x, y, "players", 1, 1, proportional, text_align_left, x + FONT_WIDTH * 7);
+	if (is_classic)
+		Draw_SStringAligned(x, y + 8, "\x1d\x1e\x1e\x1e\x1e\x1e\x1f", 1, 1, proportional, text_align_left, x + FONT_WIDTH * 7);
 	x = lhs;
 
-	y += 10;
+	// If scr_scoreboard_classic is true, we've added an extra line for the
+	// separator, which must be accounted for.
+	y += is_classic ? 18 : 10;
 
 	Sbar_SortTeams();		// sort the teams
 
@@ -1881,7 +1949,8 @@ static void Sbar_TeamOverlay(void)
 		tm = teams + k;
 		x = lhs;
 
-		Draw_AlphaFill(xofs, y, rank_width, skip, 2, SCOREBOARD_ALPHA);
+		if (!is_classic)
+			Draw_AlphaFill(xofs, y, rank_width, skip, 2, SCOREBOARD_ALPHA);
 
 		if (!scr_scoreboard_borderless.value) {
 			Draw_Fill(xofs - 1, y, 1, skip, 0);						//Border - Left
