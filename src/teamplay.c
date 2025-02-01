@@ -1896,9 +1896,9 @@ void TP_ColorForcing (cvar_t *topcolor, cvar_t *bottomcolor)
 	}
 
 	top &= 15;
-	top = min(13, top);
+	top = min(15, top);
 	bottom &= 15;
-	bottom = min(13, bottom);
+	bottom = min(15, bottom);
 
 	Cvar_SetValue(topcolor, top);
 	Cvar_SetValue(bottomcolor, bottom);
