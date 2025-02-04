@@ -555,6 +555,11 @@ void Cmd_Exec_f (void)
 	char reset_bindphysical[128];
 	qbool server_command = false;
 
+	if (Rulesets_RestrictExec()) {
+		Com_Printf("The use of exec is not allowed during matches\n");
+		return;
+	}
+
 	if (Cmd_Argc () != 2) {
 		Com_Printf ("%s <filename> : execute a script file\n", Cmd_Argv(0));
 		return;

@@ -1152,6 +1152,11 @@ static void Cvar_Set_ex_f(void)
 	char	text_exp[1024];
 	qbool   parse_funchars = !strcasecmp(Cmd_Argv(0), "set_ex");
 
+	if (Rulesets_RestrictSetEx()) {
+		Com_Printf("The use of set_ex/set_ex2 is not allowed during matches\n");
+		return;
+	}
+
 	if (Cmd_Argc() != 3) {
 		Com_Printf("usage: %s <cvar> <value>\n", Cmd_Argv(0));
 		return;
@@ -1336,6 +1341,11 @@ void Cvar_Set_Calc_f(void)
 	float num1, num2, result;
 	char buf[1024];
 
+	if (Rulesets_RestrictSetCalc()) {
+		Com_Printf("The use of set_calc is not allowed during matches\n");
+		return;
+	}
+
 	var_name = Cmd_Argv (1);
 	var = Cvar_Find (var_name);
 
@@ -1483,6 +1493,11 @@ void Cvar_Set_Calc_f(void)
 
 void Cvar_Set_Eval_f(void)
 {
+	if (Rulesets_RestrictSetEval()) {
+		Com_Printf("The use of set_eval is not allowed during matches\n");
+		return;
+	}
+
 	if (Cmd_Argc() < 3) {
 		Com_Printf("Usage:\n"
 			"set_eval <variable> <expression>\n"

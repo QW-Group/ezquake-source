@@ -36,6 +36,11 @@ typedef struct rulesetDef_s {
 	qbool restrictSound;
 	qbool restrictLogging;
 	qbool restrictRollAngle;
+	qbool restrictIPC;
+	qbool restrictExec;
+	qbool restrictSetCalc;
+	qbool restrictSetEval;
+	qbool restrictSetEx;
 } rulesetDef_t;
 
 static rulesetDef_t rulesetDef = {
@@ -46,7 +51,12 @@ static rulesetDef_t rulesetDef = {
 	false,         // restrict particles
 	false,         // restrict sound
 	false,         // restrict logging
-	false          // restrict rollangle
+	false,         // restrict rollangle
+	false,         // restrict IPC
+	false,         // restrict /exec command
+	false,         // restrict /set_calc command
+	false,         // restrict /set_eval command
+	false          // restrict /set_ex command
 };
 
 cvar_t ruleset = {"ruleset", "default", 0, Rulesets_OnChange_ruleset};
@@ -203,6 +213,31 @@ qbool Rulesets_RestrictParticles(void)
 	return !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictParticles && !r_refdef2.allow_cheats;
 }
 
+qbool Rulesets_RestrictIPC(void)
+{
+	return cls.state == ca_active && !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictIPC;
+}
+
+qbool Rulesets_RestrictExec(void)
+{
+	return cls.state == ca_active && !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictExec;
+}
+
+qbool Rulesets_RestrictSetCalc(void)
+{
+	return cls.state == ca_active && !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictSetCalc;
+}
+
+qbool Rulesets_RestrictSetEval(void)
+{
+	return cls.state == ca_active && !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictSetEval;
+}
+
+qbool Rulesets_RestrictSetEx(void)
+{
+	return cls.state == ca_active && !cl.spectator && !cls.demoplayback && !cl.standby && rulesetDef.restrictSetEx;
+}
+
 qbool Rulesets_RestrictTCL(void)
 {
 	switch(rulesetDef.ruleset) {
@@ -274,6 +309,11 @@ static void Rulesets_Smackdown(qbool enable)
 		rulesetDef.restrictLogging = true;
 		rulesetDef.restrictRollAngle = true;
 		rulesetDef.ruleset = rs_smackdown;
+		rulesetDef.restrictIPC = true;
+		rulesetDef.restrictExec = true;
+		rulesetDef.restrictSetCalc = true;
+		rulesetDef.restrictSetEval = true;
+		rulesetDef.restrictSetEx = true;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
@@ -288,6 +328,11 @@ static void Rulesets_Smackdown(qbool enable)
 		rulesetDef.restrictLogging = false;
 		rulesetDef.restrictRollAngle = false;
 		rulesetDef.ruleset = rs_default;
+		rulesetDef.restrictIPC = false;
+		rulesetDef.restrictExec = false;
+		rulesetDef.restrictSetCalc = false;
+		rulesetDef.restrictSetEval = false;
+		rulesetDef.restrictSetEx = false;
 	}
 }
 
@@ -329,6 +374,11 @@ static void Rulesets_Qcon(qbool enable)
 		rulesetDef.restrictLogging = true;
 		rulesetDef.restrictRollAngle = true;
 		rulesetDef.ruleset = rs_qcon;
+		rulesetDef.restrictIPC = true;
+		rulesetDef.restrictExec = true;
+		rulesetDef.restrictSetCalc = true;
+		rulesetDef.restrictSetEval = true;
+		rulesetDef.restrictSetEx = true;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
@@ -344,6 +394,11 @@ static void Rulesets_Qcon(qbool enable)
 		rulesetDef.restrictLogging = false;
 		rulesetDef.restrictRollAngle = false;
 		rulesetDef.ruleset = rs_default;
+		rulesetDef.restrictIPC = false;
+		rulesetDef.restrictExec = false;
+		rulesetDef.restrictSetCalc = false;
+		rulesetDef.restrictSetEval = false;
+		rulesetDef.restrictSetEx = false;
 	}
 }
 static void Rulesets_Thunderdome(qbool enable)
@@ -381,6 +436,11 @@ static void Rulesets_Thunderdome(qbool enable)
 		rulesetDef.restrictLogging = true;
 		rulesetDef.restrictRollAngle = true;
 		rulesetDef.ruleset = rs_thunderdome;
+		rulesetDef.restrictIPC = true;
+		rulesetDef.restrictExec = true;
+		rulesetDef.restrictSetCalc = true;
+		rulesetDef.restrictSetEval = true;
+		rulesetDef.restrictSetEx = true;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
@@ -395,6 +455,11 @@ static void Rulesets_Thunderdome(qbool enable)
 		rulesetDef.restrictLogging = false;
 		rulesetDef.restrictRollAngle = false;
 		rulesetDef.ruleset = rs_default;
+		rulesetDef.restrictIPC = false;
+		rulesetDef.restrictExec = false;
+		rulesetDef.restrictSetCalc = false;
+		rulesetDef.restrictSetEval = false;
+		rulesetDef.restrictSetEx = false;
 	}
 }
 static void Rulesets_MTFL(qbool enable)
@@ -502,6 +567,11 @@ static void Rulesets_Smackdrive(qbool enable)
 		rulesetDef.restrictLogging = true;
 		rulesetDef.restrictRollAngle = true;
 		rulesetDef.ruleset = rs_smackdrive;
+		rulesetDef.restrictIPC = true;
+		rulesetDef.restrictExec = true;
+		rulesetDef.restrictSetCalc = true;
+		rulesetDef.restrictSetEval = true;
+		rulesetDef.restrictSetEx = true;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
@@ -516,6 +586,11 @@ static void Rulesets_Smackdrive(qbool enable)
 		rulesetDef.restrictLogging = false;
 		rulesetDef.restrictRollAngle = false;
 		rulesetDef.ruleset = rs_default;
+		rulesetDef.restrictIPC = false;
+		rulesetDef.restrictExec = false;
+		rulesetDef.restrictSetCalc = false;
+		rulesetDef.restrictSetEval = false;
+		rulesetDef.restrictSetEx = false;
 	}
 }
 
