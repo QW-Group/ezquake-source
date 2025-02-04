@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "stats_grid.h"
 #include "tp_triggers.h"
 #include "fs.h"
+#include "rulesets.h"
 
 typedef struct commandline_option_s {
 	const char* name;
@@ -1630,6 +1631,11 @@ void Com_PrintVerticalBar(int width)
 
 void COM_ParseIPCData(const char *buf, unsigned int bufsize)
 {
+	if (Rulesets_RestrictIPC()) {
+		Com_Printf("The use of IPC is not allowed during matches\n");
+		return;
+	}
+
 	if (bufsize > 0)
 	{
 		// TODO : Expect some more fancy commands and stuff here instead.. if we want to use it for more than qw:// urls...
