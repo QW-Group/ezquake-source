@@ -500,7 +500,7 @@ char *Macro_DateIso(void) {
 	time (&t);
 	if (!(ptm = localtime (&t)))
 		return "#bad date#";
-	strftime (macro_buf, sizeof(macro_buf) - 1, "%Y-%m-%d_%H-%M-%S", ptm);
+	strftime (macro_buf, sizeof(macro_buf) - 1, "%Y-%m-%d_%H-%M", ptm);
 	return macro_buf;
 }
 
