@@ -18555,6 +18555,10 @@
         {
           "description": "Teamfrags in teamplay mode.",
           "name": "2"
+        },
+        {
+          "description": "Teamfrags in teamplay mode, individual frags hidden.",
+          "name": "3"
         }
       ]
     },
