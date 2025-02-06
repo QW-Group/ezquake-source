@@ -1442,6 +1442,10 @@ void Sys_ReadIPC(void)
 				sizeof(buf),				// Size of buffer 
 				&num_bytes_read,			// Number of bytes read 
 				NULL);						// Not overlapped I/O 
+	if (num_bytes_read <= 0)
+	{
+		return;
+	}
 
 	COM_ParseIPCData(buf, num_bytes_read);
 }
