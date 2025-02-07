@@ -746,7 +746,7 @@ void CL_Color_f (void) {
 			Com_Printf ("\"color\" is \"%s %s\"\n",
 				Info_ValueForKey (cls.userinfo, "topcolor"),
 				Info_ValueForKey (cls.userinfo, "bottomcolor") );
-			Com_Printf ("color <0-13> [0-13]\n");
+			Com_Printf ("color <0-15> [0-15]\n");
 			return;
 		case 2:
 			top = bottom = Q_atoi(Cmd_Argv(1));
@@ -757,9 +757,9 @@ void CL_Color_f (void) {
 	}
 
 	top &= 15;
-	top = min(top, 13);
+	top = min(top, 15);
 	bottom &= 15;
-	bottom = min(bottom, 13);
+	bottom = min(bottom, 15);
 
 	Cvar_SetValue (&topcolor, top);
 	Cvar_SetValue (&bottomcolor, bottom);
