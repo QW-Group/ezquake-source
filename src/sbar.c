@@ -143,6 +143,7 @@ cvar_t  scr_scoreboard_proportional   = {"scr_scoreboard_proportional",   "0"};
 cvar_t  scr_scoreboard_wipeout	 	  = {"scr_scoreboard_wipeout",   	  "1"};
 cvar_t	scr_scoreboard_classic        = {"scr_scoreboard_classic", "0"};
 cvar_t	scr_scoreboard_highlightself  = {"scr_scoreboard_highlightself", "1"};
+cvar_t	scr_scoreboard_showclock      = {"scr_scoreboard_showclock", "0"};
 
 // VFrags: only draw the frags for the first player when using mvinset
 #define MULTIVIEWTHISPOV() ((!cl_multiview.value) || (cl_mvinset.value && CL_MultiviewCurrentView() == 1))
@@ -334,6 +335,7 @@ void Sbar_Init(void)
 	Cvar_Register(&scr_scoreboard_wipeout);
 	Cvar_Register(&scr_scoreboard_classic);
 	Cvar_Register(&scr_scoreboard_highlightself);
+	Cvar_Register(&scr_scoreboard_showclock);
 
 	Cvar_ResetCurrentGroup();
 
@@ -1236,7 +1238,7 @@ void Sbar_SoloScoreboard (void)
 		len = strlen (str);
 		Sbar_DrawString (160 - len*4, 4, str);
 	}
-	else
+	else if (scr_scoreboard_showclock.value)
 	{
 		strlcpy(str, SCR_GetTimeString(TIMETYPE_CLOCK, "%H:%M:%S"), sizeof(str));
 		Sbar_DrawString(160 - (strlen(str)*4), -10, str);

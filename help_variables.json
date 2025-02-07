@@ -19106,6 +19106,21 @@
         }
       ]
     },
+    "scr_scoreboard_showclock": {
+      "default": "0",
+      "group-id": "47",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Hide the clock on the scoreboard.",
+          "name": "false"
+        },
+        {
+          "description": "Show the clock on the scoreboard.",
+          "name": "true"
+        }
+      ]
+    },
     "scr_scoreboard_showfrags": {
       "default": "1",
       "group-id": "47",
