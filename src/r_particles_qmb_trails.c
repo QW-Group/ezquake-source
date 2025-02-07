@@ -32,11 +32,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 extern cvar_t gl_part_tracer1_color, gl_part_tracer1_size, gl_part_tracer1_time;
 extern cvar_t gl_part_tracer2_color, gl_part_tracer2_size, gl_part_tracer2_time;
+extern cvar_t r_particles_count;
 
 __inline static void AddParticleTrailImpl(part_type_t type, vec3_t start, vec3_t end, float size, float time, col_t col, centity_t* cent, int trail_index)
 {
 	byte *color;
-	int i, j, num_particles;
+	int i, j, num_particles, cull_threshold;
 	float count = 0.0, theta = 0.0;
 	vec3_t point, delta;
 	particle_t *p;
@@ -133,8 +134,20 @@ __inline static void AddParticleTrailImpl(part_type_t type, vec3_t start, vec3_t
 		goto done;
 	}
 
+	cull_threshold = r_particles_count.value * 0.75f;
+
 	VectorScale(delta, 1.0 / num_particles, delta);
 	for (i = 0; i < num_particles && free_particles; i++) {
+		// reki: if particles are choking, cull some randomly.
+		// this isn't elegant (earlier ents still take priority) but it does help a bit
+		if (ParticleCount > cull_threshold)
+		{
+			if (rand() > RAND_MAX * 0.15f)
+			{
+				continue;
+			}
+		}
+
 		color = col ? col : ColorForParticle(type);
 		INIT_NEW_PARTICLE(pt, p, color, size, time);
 		p->entity_ref = entity_ref;
@@ -290,8 +303,13 @@ void ParticleNailTrail(centity_t* client_ent, float size, float life)
 	}
 }
 
+void ParticleNailTrail_NoEntity(vec3_t start, vec3_t end, float size, float life)
+{
+	AddParticleTrail(p_nailtrail, start, end, size, life, NULL);
+}
+
 //VULT PARTICLES
-void FireballTrail(centity_t* cent, byte col[3], float size, float life)
+void FireballTrailEntity(centity_t* cent, byte col[3], float size, float life)
 {
 	col_t color;
 
@@ -314,8 +332,39 @@ void FireballTrail(centity_t* cent, byte col[3], float size, float life)
 	AddEntityParticleTrail(p_trailpart, cent, 2, size * 3, life, color);
 }
 
+void FireballTrail(vec3_t start, vec3_t end, byte col[3], float size, float life)
+{
+	col_t color;
+
+	color[0] = col[0];
+	color[1] = col[1];
+	color[2] = col[2];
+	color[3] = 255;
+
+	//head
+	AddParticleTrail(p_trailpart, start, end, size * 7.0f, 0.15f, color);
+
+	//head-white part
+	color[0] = 255; color[1] = 255; color[2] = 255;
+	AddParticleTrail(p_trailpart, start, end, size * 5.0f, 0.15f, color);
+
+	//medium trail
+	color[0] = col[0];
+	color[1] = col[1];
+	color[2] = col[2];
+	AddParticleTrail(p_trailpart, start, end, size * 3.0f, life, color);
+}
+
 //VULT PARTICLES
-void FireballTrailWave(centity_t* cent, byte col[3], float size, float life, vec3_t angle)
+void FireballTrailWaveEntity(centity_t* cent, byte col[3], float size, float life, vec3_t angle)
+{
+	vec3_t vec;
+	AngleVectors(angle, vec, NULL, NULL);
+	vec[2] *= -1;
+	FireballTrailEntity(cent, col, size, life);
+}
+
+void FireballTrailWave(vec3_t start, vec3_t end, byte col[3], float size, float life, vec3_t angle)
 {
 	int i, j;
 	vec3_t dir, vec;
@@ -327,19 +376,19 @@ void FireballTrailWave(centity_t* cent, byte col[3], float size, float life, vec
 
 	AngleVectors(angle, vec, NULL, NULL);
 	vec[2] *= -1;
-	FireballTrail(cent, col, size, life);
-	if (cent->trails[2].lasttime == particle_time) {
-		for (i = 0; i < 3; i++) {
-			for (j = 0; j < 3; j++) {
-				dir[j] = vec[j] * -600 + ((rand() % 100) - 50);
-			}
-			AddParticle(p_streakwave, qmb_end(cent), 1, 1, 1, color, dir);
+	FireballTrail(start, end, col, size, life);
+
+	for (i = 0; i < 3; i++) {
+		for (j = 0; j < 3; j++) {
+			dir[j] = vec[j] * -600 + ((rand() % 100) - 50);
 		}
+		AddParticle(p_streakwave, end, 1, 1, 1, color, dir);
 	}
 }
 
+
 //VULT PARTICLES
-void FuelRodGunTrail(centity_t* cent)
+void FuelRodGunTrailEntity(centity_t* cent)
 {
 	col_t color;
 	int i, j;
@@ -370,6 +419,21 @@ void FuelRodGunTrail(centity_t* cent)
 			}
 		}
 	}
+}
+
+void FuelRodGunTrail(vec3_t start, vec3_t end, vec3_t angles)
+{
+	col_t color;
+	color[3] = 255;
+
+	color[0] = 0; color[1] = 255; color[2] = 0;
+	AddParticleTrail(p_trailpart, start, end, 15.0f, 0.2f, color);
+	color[0] = 255; color[1] = 255; color[2] = 255;
+	AddParticleTrail(p_trailpart, start, end, 10.0f, 0.2f, color);
+	color[0] = 0; color[1] = 128; color[2] = 0;
+	AddParticleTrail(p_trailpart, start, end, 10.0f, 0.5f, color);
+	color[0] = 0; color[1] = 22; color[2] = 0;
+	AddParticleTrail(p_trailpart, start, end, 2.0f, 3.0f, color);
 }
 
 //VULT PARTICLES
