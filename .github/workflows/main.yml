@@ -8,7 +8,7 @@ on:
   pull_request:
   workflow_dispatch:
   release:
-    types: [created]
+    types: [published]
 
 jobs:
   build:
