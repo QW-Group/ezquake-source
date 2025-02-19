@@ -11,7 +11,7 @@ layout(location = 5) in int vboFlags;
 layout(location = 6) in vec3 flatColor;
 layout(location = 7) in int surfaceNumber;
 
-out vec3 TexCoordLightmap;
+centroid out vec3 TexCoordLightmap;
 out vec3 TextureCoord;
 #ifdef DRAW_TEXTURELESS
 out vec3 TextureLessCoord;

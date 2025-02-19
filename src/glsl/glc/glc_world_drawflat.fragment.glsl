@@ -5,10 +5,10 @@
 #ifdef EZ_USE_TEXTURE_ARRAYS
 #extension GL_EXT_texture_array : enable
 uniform sampler2DArray texSampler;
-varying vec3 TextureCoord;
+centroid varying vec3 TextureCoord;
 #else
 uniform sampler2D texSampler;
-varying vec2 TextureCoord;
+centroid varying vec2 TextureCoord;
 #endif
 
 varying float lightmapScale;

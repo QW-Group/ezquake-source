@@ -27,7 +27,7 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS) buffer SamplerMa
 };
 
 in vec3 TextureCoord;
-in vec3 TexCoordLightmap;
+centroid in vec3 TexCoordLightmap;
 #ifdef DRAW_DETAIL_TEXTURES
 in vec2 DetailCoord;
 #endif

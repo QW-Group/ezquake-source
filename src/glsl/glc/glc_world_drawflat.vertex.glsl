@@ -5,9 +5,9 @@
 attribute float style;
 varying vec4 color;
 #ifdef EZ_USE_TEXTURE_ARRAYS
-varying vec3 TextureCoord;
+centroid varying vec3 TextureCoord;
 #else
-varying vec2 TextureCoord;
+centroid varying vec2 TextureCoord;
 #endif
 varying float lightmapScale;
 varying float fogScale;

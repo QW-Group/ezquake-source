@@ -7,9 +7,9 @@ attribute float style;
 
 #ifdef DRAW_LIGHTMAPS
 #ifdef EZ_USE_TEXTURE_ARRAYS
-varying vec3 LightmapCoord;
+centroid varying vec3 LightmapCoord;
 #else
-varying vec2 LightmapCoord;
+centroid varying vec2 LightmapCoord;
 #endif
 #endif
 #ifdef DRAW_EXTRA_TEXTURES
