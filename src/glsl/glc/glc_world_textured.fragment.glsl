@@ -64,10 +64,10 @@ varying vec2 TextureCoord;
 #ifdef DRAW_LIGHTMAPS
 #ifdef EZ_USE_TEXTURE_ARRAYS
 uniform sampler2DArray lightmapSampler;
-varying vec3 LightmapCoord;
+centroid varying vec3 LightmapCoord;
 #else
 uniform sampler2D lightmapSampler;
-varying vec2 LightmapCoord;
+centroid varying vec2 LightmapCoord;
 #endif
 #endif
 
