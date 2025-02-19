@@ -441,9 +441,7 @@ void Sbar_DrawNum (int x, int y, int num, int digits, int color) {
 
 // this used to be static function
 int	Sbar_ColorForMap (int m) {
-	m = bound(0, m, 13);
-
-	return 16 * m + 8;
+	return m == 16 ? 0 : 16 * bound(0, m, 15) + 8;
 }
 
 // HUD -> hexum

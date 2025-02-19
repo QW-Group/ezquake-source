@@ -651,6 +651,18 @@
         {
           "description": "Blue",
           "name": "13"
+        },
+        {
+          "description": "Orange.",
+          "name": "14"
+        },
+        {
+          "description": "Bright red.",
+          "name": "15"
+        },
+        {
+          "description": "Black.",
+          "name": "16"
         }
       ]
     },
@@ -4124,6 +4136,18 @@
         {
           "description": "Blue",
           "name": "13"
+        },
+        {
+          "description": "Orange.",
+          "name": "14"
+        },
+        {
+          "description": "Bright red.",
+          "name": "15"
+        },
+        {
+          "description": "Black.",
+          "name": "16"
         }
       ]
     },
@@ -4236,6 +4260,18 @@
         {
           "description": "Blue",
           "name": "13"
+        },
+        {
+          "description": "Orange.",
+          "name": "14"
+        },
+        {
+          "description": "Bright red.",
+          "name": "15"
+        },
+        {
+          "description": "Black.",
+          "name": "16"
         }
       ]
     },
@@ -20694,6 +20730,18 @@
         {
           "description": "Blue",
           "name": "13"
+        },
+        {
+          "description": "Orange.",
+          "name": "14"
+        },
+        {
+          "description": "Bright red.",
+          "name": "15"
+        },
+        {
+          "description": "Black.",
+          "name": "16"
         }
       ]
     },
@@ -20847,6 +20895,18 @@
         {
           "description": "Blue",
           "name": "13"
+        },
+        {
+          "description": "Orange.",
+          "name": "14"
+        },
+        {
+          "description": "Bright red.",
+          "name": "15"
+        },
+        {
+          "description": "Black.",
+          "name": "16"
         }
       ]
     },
@@ -20932,6 +20992,18 @@
         {
           "description": "Blue.",
           "name": "13"
+        },
+        {
+          "description": "Orange.",
+          "name": "14"
+        },
+        {
+          "description": "Bright red.",
+          "name": "15"
+        },
+        {
+          "description": "Black.",
+          "name": "16"
         }
       ]
     },
