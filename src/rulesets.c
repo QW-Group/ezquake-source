@@ -192,6 +192,10 @@ qbool Rulesets_RestrictPlay(const char* name)
 		return false;
 	}
 
+	if (cls.state == ca_active && (cl.spectator || cls.demoplayback || cl.standby)) {
+		return false;
+	}
+
 	if (name == NULL || cbuf_current != &cbuf_svc) {
 		return true;
 	}
