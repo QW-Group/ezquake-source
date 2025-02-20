@@ -314,6 +314,7 @@ static void Rulesets_Smackdown(qbool enable)
 		rulesetDef.restrictSetCalc = true;
 		rulesetDef.restrictSetEval = true;
 		rulesetDef.restrictSetEx = true;
+		rulesetDef.restrictSound = true;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
@@ -333,6 +334,7 @@ static void Rulesets_Smackdown(qbool enable)
 		rulesetDef.restrictSetCalc = false;
 		rulesetDef.restrictSetEval = false;
 		rulesetDef.restrictSetEx = false;
+		rulesetDef.restrictSound = false;
 	}
 }
 
@@ -572,6 +574,7 @@ static void Rulesets_Smackdrive(qbool enable)
 		rulesetDef.restrictSetCalc = true;
 		rulesetDef.restrictSetEval = true;
 		rulesetDef.restrictSetEx = true;
+		rulesetDef.restrictSound = true;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
@@ -591,6 +594,7 @@ static void Rulesets_Smackdrive(qbool enable)
 		rulesetDef.restrictSetCalc = false;
 		rulesetDef.restrictSetEval = false;
 		rulesetDef.restrictSetEx = false;
+		rulesetDef.restrictSound = false;
 	}
 }
 
