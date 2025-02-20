@@ -33,7 +33,7 @@ typedef struct rulesetDef_s {
 	qbool restrictTriggers;
 	qbool restrictPacket;
 	qbool restrictParticles;
-	qbool restrictSound;
+	qbool restrictPlay;
 	qbool restrictLogging;
 	qbool restrictRollAngle;
 	qbool restrictIPC;
@@ -186,9 +186,9 @@ qbool Rulesets_RestrictTriggers(void)
 	return rulesetDef.restrictTriggers;
 }
 
-qbool Rulesets_RestrictSound(const char* name)
+qbool Rulesets_RestrictPlay(const char* name)
 {
-	if (!rulesetDef.restrictSound) {
+	if (!rulesetDef.restrictPlay) {
 		return false;
 	}
 
@@ -314,7 +314,7 @@ static void Rulesets_Smackdown(qbool enable)
 		rulesetDef.restrictSetCalc = true;
 		rulesetDef.restrictSetEval = true;
 		rulesetDef.restrictSetEx = true;
-		rulesetDef.restrictSound = true;
+		rulesetDef.restrictPlay = true;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
@@ -334,7 +334,7 @@ static void Rulesets_Smackdown(qbool enable)
 		rulesetDef.restrictSetCalc = false;
 		rulesetDef.restrictSetEval = false;
 		rulesetDef.restrictSetEx = false;
-		rulesetDef.restrictSound = false;
+		rulesetDef.restrictPlay = false;
 	}
 }
 
@@ -372,7 +372,7 @@ static void Rulesets_Qcon(qbool enable)
 		rulesetDef.restrictTriggers = true;
 		rulesetDef.restrictPacket = true; // packet command could have been exploited for external timers
 		rulesetDef.restrictParticles = true;
-		rulesetDef.restrictSound = true;
+		rulesetDef.restrictPlay = true;
 		rulesetDef.restrictLogging = true;
 		rulesetDef.restrictRollAngle = true;
 		rulesetDef.ruleset = rs_qcon;
@@ -392,7 +392,7 @@ static void Rulesets_Qcon(qbool enable)
 		rulesetDef.restrictTriggers = false;
 		rulesetDef.restrictPacket = false;
 		rulesetDef.restrictParticles = false;
-		rulesetDef.restrictSound = false;
+		rulesetDef.restrictPlay = false;
 		rulesetDef.restrictLogging = false;
 		rulesetDef.restrictRollAngle = false;
 		rulesetDef.ruleset = rs_default;
@@ -574,7 +574,7 @@ static void Rulesets_Smackdrive(qbool enable)
 		rulesetDef.restrictSetCalc = true;
 		rulesetDef.restrictSetEval = true;
 		rulesetDef.restrictSetEx = true;
-		rulesetDef.restrictSound = true;
+		rulesetDef.restrictPlay = true;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
@@ -594,7 +594,7 @@ static void Rulesets_Smackdrive(qbool enable)
 		rulesetDef.restrictSetCalc = false;
 		rulesetDef.restrictSetEval = false;
 		rulesetDef.restrictSetEx = false;
-		rulesetDef.restrictSound = false;
+		rulesetDef.restrictPlay = false;
 	}
 }
 
