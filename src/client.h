@@ -773,6 +773,10 @@ typedef struct {
 	float map_fog_density;
 	qbool map_fog_enabled;
 	float map_fog_sky;
+
+	// exec_count keeps track of how many /exec calls have been made during a
+	// game, the counter will be reset upon match start.
+	int exec_count;
 } clientState_t;
 
 #define SCORING_SYSTEM_DEFAULT   0

@@ -692,6 +692,7 @@ static void MT_StartMatch(void)
 	cl.countdown = false;
 	cl.gametime = 0;
 	cl.gamestarttime = Sys_DoubleTime();
+	cl.exec_count = 0;
 
 	if (cls.state < ca_active) {
 		matchstate.matchtype = mt_empty;
