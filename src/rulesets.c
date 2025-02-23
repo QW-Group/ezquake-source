@@ -447,6 +447,7 @@ static void Rulesets_Thunderdome(qbool enable)
 		rulesetDef.restrictSetCalc = true;
 		rulesetDef.restrictSetEval = true;
 		rulesetDef.restrictSetEx = true;
+		rulesetDef.restrictPlay = true;
 	} else {
 		for (i = 0; i < (sizeof(disabled_cvars) / sizeof(disabled_cvars[0])); i++)
 			Cvar_SetFlags(disabled_cvars[i].var, Cvar_GetFlags(disabled_cvars[i].var) & ~CVAR_ROM);
@@ -466,6 +467,7 @@ static void Rulesets_Thunderdome(qbool enable)
 		rulesetDef.restrictSetCalc = false;
 		rulesetDef.restrictSetEval = false;
 		rulesetDef.restrictSetEx = false;
+		rulesetDef.restrictPlay = false;
 	}
 }
 static void Rulesets_MTFL(qbool enable)
