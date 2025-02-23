@@ -1925,6 +1925,10 @@ static void CL_InitLocal(void)
 	// debugging weapons
 	Cvar_Register(&cl_debug_weapon_view);
 
+#if REVISION == 0
+#define REVISION 1
+#endif
+
 	snprintf(st, sizeof(st), "ezQuake %i", REVISION);
 
 	if (COM_CheckParm (cmdline_param_client_norjscripts) || COM_CheckParm (cmdline_param_client_noscripts))
