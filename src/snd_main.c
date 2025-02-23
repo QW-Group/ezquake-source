@@ -996,7 +996,8 @@ static void S_Play_f (void)
 		int entity = SELF_SOUND_ENTITY;   // ezhfan: pnum+1 changed to SELF_SOUND to make sound not to disappear
 
 		strlcpy (name, Cmd_Argv(i), sizeof(name));
-		if (Rulesets_RestrictSound(name)) {
+		if (Rulesets_RestrictPlay(name)) {
+			Com_Printf("The use of play is not allowed during matches\n");
 			continue;
 		}
 
