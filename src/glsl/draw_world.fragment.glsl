@@ -140,7 +140,11 @@ void main()
 	if ((Flags & EZQ_SURFACE_ALPHATEST) == EZQ_SURFACE_ALPHATEST && texColor.a < 0.5) {
 		discard;
 	}
-	// Avoid black artifacts at border between texture and transparency visible in fog
+#endif
+
+#if defined(DRAW_ALPHATEST_ENABLED) || defined(DRAW_FOG)
+	// Avoid black artifacts at border at edge of fence textures and guarantee that
+	// fog function doesn't multiply with zero.
 	texColor = vec4(texColor.rgb, 1.0);
 #endif
 
