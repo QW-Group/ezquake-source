@@ -11524,6 +11524,84 @@
       "group-id": "19",
       "type": "boolean"
     },
+    "hud_scoremapname_align_x": {
+      "desc": "Sets horizontal align of scoremapname.",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_scoremapname_align_y": {
+      "desc": "Sets vertical align of scoremapname.",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_scoremapname_frame": {
+      "desc": "Sets frame visibility and style for scoremapname.",
+      "group-id": "19",
+      "type": "float"
+    },
+    "hud_scoremapname_frame_color": {
+      "desc": "Defines the color of the background of the scoremapname HUD element. See HUD manual for more info.",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_scoremapname_item_opacity": {
+      "group-id": "19",
+      "type": "float"
+    },
+    "hud_scoremapname_order": {
+      "desc": "This defines the order of drawing the HUD elements. That means you can change will be drawn on top of other elements. See HUD manual for more info.",
+      "group-id": "19",
+      "type": "integer"
+    },
+    "hud_scoremapname_place": {
+      "desc": "Sets relative positioning for scoremapname.",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_scoremapname_pos_x": {
+      "desc": "Sets horizontal position of scoremapname.",
+      "group-id": "19",
+      "type": "float"
+    },
+    "hud_scoremapname_pos_y": {
+      "desc": "Sets vertical position of scoremapname.",
+      "group-id": "19",
+      "type": "float"
+    },
+    "hud_scoremapname_proportional": {
+      "desc": "Toggles whether the scoremapname uses charset chars or TTF chars",
+      "group-id": "19",
+      "type": "boolean"
+    },
+    "hud_scoremapname_scale": {
+      "desc": "Scale of the scoremapname HUD element.",
+      "group-id": "19",
+      "type": "float"
+    },
+    "hud_scoremapname_style": {
+      "desc": "Style of the scoremapname HUD element.",
+      "group-id": "19",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Full name, example: The Abandoned Base (dm3)",
+          "name": "0"
+        },
+        {
+          "description": "Level name, example: The Abandoned Base",
+          "name": "1"
+        },
+        {
+          "description": "Map name, example: dm3",
+          "name": "2"
+        }
+      ]
+    },
+    "hud_scoremapname_show": {
+      "desc": "Toggles whether the scoremapname is displayed. It is only displayed when the scoreboard is open.",
+      "group-id": "19",
+      "type": "boolean"
+    },
     "hud_sigil1_align_x": {
       "desc": "Sets horizontal align of sigil 1 icon (rune)",
       "group-id": "19",
@@ -19154,6 +19232,29 @@
         {
           "description": "Show the clock on the scoreboard.",
           "name": "true"
+        }
+      ]
+    },
+    "scr_scoreboard_showmapname": {
+      "default": "0",
+      "group-id": "47",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Don't display the level name",
+          "name": "0"
+        },
+        {
+          "description": "Full name, example: The Abandoned Base (dm3)",
+          "name": "1"
+        },
+        {
+          "description": "Level name, example: The Abandoned Base",
+          "name": "2"
+        },
+        {
+          "description": "Map name, example: dm3",
+          "name": "3"
         }
       ]
     },
