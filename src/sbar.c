@@ -1285,7 +1285,7 @@ static void Sbar_DeathmatchOverlay(int start)
 	qbool proportional = scr_scoreboard_proportional.integer;
 	qbool any_flags = false;
 	extern ti_player_t ti_clients[MAX_CLIENTS];
-	qbool is_classic = scr_scoreboard_classic.value;
+	int is_classic = scr_scoreboard_classic.integer;
 	qbool is_classic_spec;
 
 	if (!start && hud_faderankings.value) {
@@ -1401,24 +1401,24 @@ static void Sbar_DeathmatchOverlay(int start)
 	x += FONT_WIDTH;
 	Draw_SStringAligned(x, y - 8, "ping", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
 	if (is_classic)
-		Draw_SStringAligned(x, y, "\x1d\x1e\x1e\x1f", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
+		Draw_SStringAligned(x, y, is_classic == 2 ? "----" : "\x1d\x1e\x1e\x1f", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
 	x += 5 * FONT_WIDTH;
 	Draw_SStringAligned(x, y - 8, "pl", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 2);
 	if (is_classic)
-		Draw_SStringAligned(x, y, "\x1d\x1f", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 2);
+		Draw_SStringAligned(x, y, is_classic == 2 ? "--" : "\x1d\x1f", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 2);
 	x += 3 * FONT_WIDTH;
 	Draw_SStringAligned(x, y - 8, "time", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
 	if (is_classic)
-		Draw_SStringAligned(x, y, "\x1d\x1e\x1e\x1f", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
+		Draw_SStringAligned(x, y, is_classic == 2 ? "----" : "\x1d\x1e\x1e\x1f", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
 	x += 5 * FONT_WIDTH;
 	Draw_SStringAligned(x, y - 8, "frags", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 5);
 	if (is_classic)
-		Draw_SStringAligned(x, y, "\x1d\x1e\x1e\x1e\x1f", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 5);
+		Draw_SStringAligned(x, y, is_classic == 2 ? "-----" : "\x1d\x1e\x1e\x1e\x1f", scale, alpha, proportional, text_align_right, x + FONT_WIDTH * 5);
 	x += 6 * FONT_WIDTH;
 	if (cl.teamplay) {
 		Draw_SStringAligned(x, y - 8, "team", scale, alpha, proportional, text_align_center, x + FONT_WIDTH * 4);
 		if (is_classic)
-			Draw_SStringAligned(x, y, "\x1d\x1e\x1e\x1f", scale, alpha, proportional, text_align_center, x + FONT_WIDTH * 4);
+			Draw_SStringAligned(x, y, is_classic == 2 ? "----" : "\x1d\x1e\x1e\x1f", scale, alpha, proportional, text_align_center, x + FONT_WIDTH * 4);
 		x += 5 * FONT_WIDTH;
 	}
 
@@ -1429,7 +1429,7 @@ static void Sbar_DeathmatchOverlay(int start)
 	Draw_SStringAligned(x, y - 8, "name", scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
 
 	if (is_classic)
-		Draw_SStringAligned(x, y, "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f", scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+		Draw_SStringAligned(x, y, is_classic == 2 ? "---------------" : "\x1d\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1e\x1f", scale, alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
 	x += (any_flags ? 15 : 16) * FONT_WIDTH;
 	if (!is_classic && statswidth) {
 		stats_xoffset = x;
@@ -1831,7 +1831,7 @@ static void Sbar_TeamOverlay(void)
 	mpic_t *pic;
 	qbool proportional = scr_scoreboard_proportional.integer;
 	float lhs;
-	qbool is_classic = scr_scoreboard_classic.value;
+	int is_classic = scr_scoreboard_classic.integer;
 
 	if (key_dest == key_console && !SCR_TakingAutoScreenshot())
 		return;
@@ -1898,33 +1898,33 @@ static void Sbar_TeamOverlay(void)
 
 	Draw_SStringAligned(x, y, "low", 1, 1, proportional, text_align_right, x + 3 * FONT_WIDTH);
 	if (is_classic)
-		Draw_SStringAligned(x, y + 8, "\x1d\x1e\x1e", 1, 1, proportional, text_align_right, x + 3 * FONT_WIDTH);
+		Draw_SStringAligned(x, y + 8, is_classic == 2 ? "---" : "\x1d\x1e\x1e", 1, 1, proportional, text_align_right, x + 3 * FONT_WIDTH);
 	x += 3 * FONT_WIDTH;
 	Draw_SStringAligned(x, y, "/", 1, 1, proportional, text_align_right, x + FONT_WIDTH);
 	if (is_classic)
-		Draw_SStringAligned(x, y + 8, "\x1e", 1, 1, proportional, text_align_right, x + FONT_WIDTH);
+		Draw_SStringAligned(x, y + 8, is_classic == 2 ? "-" : "\x1e", 1, 1, proportional, text_align_right, x + FONT_WIDTH);
 	x += FONT_WIDTH;
 	Draw_SStringAligned(x, y, "avg", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 3);
 	if (is_classic)
-		Draw_SStringAligned(x, y + 8, "\x1e\x1e\x1e", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 3);
+		Draw_SStringAligned(x, y + 8, is_classic == 2 ? "---" : "\x1e\x1e\x1e", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 3);
 	x += 3 * FONT_WIDTH;
 	Draw_SStringAligned(x, y, "/", 1, 1, proportional, text_align_right, x + FONT_WIDTH);
 	if (is_classic)
-		Draw_SStringAligned(x, y + 8, "\x1e", 1, 1, proportional, text_align_right, x + FONT_WIDTH);
+		Draw_SStringAligned(x, y + 8, is_classic == 2 ? "-" : "\x1e", 1, 1, proportional, text_align_right, x + FONT_WIDTH);
 	x += FONT_WIDTH;
 	Draw_SStringAligned(x, y, "high", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 4);
 	if (is_classic)
-		Draw_SStringAligned(x, y + 8, "\x1e\x1e\x1e\x1f", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 4);
+		Draw_SStringAligned(x, y + 8, is_classic == 2 ? "----" : "\x1e\x1e\x1e\x1f", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 4);
 	x += 4 * FONT_WIDTH;
 	x += FONT_WIDTH;
 	Draw_SStringAligned(x, y, "team", 1, 1, proportional, text_align_center, x + FONT_WIDTH * 4);
 	if (is_classic)
-		Draw_SStringAligned(x, y + 8, "\x1d\x1e\x1e\x1f", 1, 1, proportional, text_align_center, x + FONT_WIDTH * 4);
+		Draw_SStringAligned(x, y + 8, is_classic == 2 ? "----" : "\x1d\x1e\x1e\x1f", 1, 1, proportional, text_align_center, x + FONT_WIDTH * 4);
 	x += 4 * FONT_WIDTH;
 	x += FONT_WIDTH;
 	Draw_SStringAligned(x, y, (cl.scoring_system == SCORING_SYSTEM_TEAMFRAGS ? "score" : "total"), 1, 1, proportional, text_align_right, x + FONT_WIDTH * 5);
 	if (is_classic)
-		Draw_SStringAligned(x, y + 8, "\x1d\x1e\x1e\x1e\x1f", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 5);
+		Draw_SStringAligned(x, y + 8, is_classic == 2 ? "-----" : "\x1d\x1e\x1e\x1e\x1f", 1, 1, proportional, text_align_right, x + FONT_WIDTH * 5);
 	x += 5 * FONT_WIDTH;
 	x += FONT_WIDTH;
 	if ((cl.teamfortress || scr_scoreboard_showflagstats.value) && Stats_IsFlagsParsed() && !is_classic) {
@@ -1935,7 +1935,7 @@ static void Sbar_TeamOverlay(void)
 
 	Draw_SStringAligned(x, y, "players", 1, 1, proportional, text_align_left, x + FONT_WIDTH * 7);
 	if (is_classic)
-		Draw_SStringAligned(x, y + 8, "\x1d\x1e\x1e\x1e\x1e\x1e\x1f", 1, 1, proportional, text_align_left, x + FONT_WIDTH * 7);
+		Draw_SStringAligned(x, y + 8, is_classic == 2 ? "-------" : "\x1d\x1e\x1e\x1e\x1e\x1e\x1f", 1, 1, proportional, text_align_left, x + FONT_WIDTH * 7);
 	x = lhs;
 
 	// If scr_scoreboard_classic is true, we've added an extra line for the

@@ -18994,15 +18994,19 @@
       "default": "0",
       "desc": "Toggle between the classic and modern look in the scoreboard.",
       "group-id": "47",
-      "type": "boolean",
+      "type": "enum",
       "values": [
         {
           "description": "Disable the classic look.",
-          "name": "false"
+          "name": "0"
         },
         {
           "description": "Enable the classic look.",
-          "name": "true"
+          "name": "1"
+        },
+        {
+          "description": "Enable the true classic look, which was available in qwcl 1.50 and 1.55",
+          "name": "2"
         }
       ]
     },
