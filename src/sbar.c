@@ -144,6 +144,7 @@ cvar_t  scr_scoreboard_wipeout	 	  = {"scr_scoreboard_wipeout",   	  "1"};
 cvar_t	scr_scoreboard_classic        = {"scr_scoreboard_classic", "0"};
 cvar_t	scr_scoreboard_highlightself  = {"scr_scoreboard_highlightself", "1"};
 cvar_t	scr_scoreboard_showclock      = {"scr_scoreboard_showclock", "0"};
+cvar_t	scr_scoreboard_showmapname    = {"scr_scoreboard_showmapname", "0"};
 
 // VFrags: only draw the frags for the first player when using mvinset
 #define MULTIVIEWTHISPOV() ((!cl_multiview.value) || (cl_mvinset.value && CL_MultiviewCurrentView() == 1))
@@ -336,6 +337,7 @@ void Sbar_Init(void)
 	Cvar_Register(&scr_scoreboard_classic);
 	Cvar_Register(&scr_scoreboard_highlightself);
 	Cvar_Register(&scr_scoreboard_showclock);
+	Cvar_Register(&scr_scoreboard_showmapname);
 
 	Cvar_ResetCurrentGroup();
 
@@ -1217,6 +1219,8 @@ void Sbar_SoloScoreboard (void)
 {
 	char	str[256];
 	int	len;
+	int	clock_y;
+	int	mapname_y;
 
 	if (cl.gametype == GAME_COOP)
 	{
@@ -1236,10 +1240,50 @@ void Sbar_SoloScoreboard (void)
 		len = strlen (str);
 		Sbar_DrawString (160 - len*4, 4, str);
 	}
-	else if (scr_scoreboard_showclock.value)
+	else
 	{
-		strlcpy(str, SCR_GetTimeString(TIMETYPE_CLOCK, "%H:%M:%S"), sizeof(str));
-		Sbar_DrawString(160 - (strlen(str)*4), -10, str);
+		if ((scr_scoreboard_showclock.integer && !scr_scoreboard_showmapname.integer))
+		{
+			clock_y = -10;
+		}
+		else if (!scr_scoreboard_showclock.integer && scr_scoreboard_showmapname.integer)
+		{
+			mapname_y = -10;
+		}
+		else if (scr_scoreboard_showclock.integer && scr_scoreboard_showmapname.integer == 3)
+		{
+			clock_y = 2;
+			mapname_y = -10;
+		}
+		else
+		{
+			clock_y = -10;
+			mapname_y = 2;
+		}
+
+		if (scr_scoreboard_showclock.integer)
+		{
+			snprintf(str, sizeof(str), "%s", SCR_GetTimeString(TIMETYPE_CLOCK, "%H:%M:%S"));
+			Sbar_DrawString(160 - strlen(str) * 4, clock_y, str);
+		}
+
+		if (scr_scoreboard_showmapname.integer)
+		{
+			switch (scr_scoreboard_showmapname.integer)
+			{
+				case 2:
+					snprintf(str, sizeof(str), "%s", cl.levelname);
+					break;
+				case 3:
+					snprintf(str, sizeof(str), "%s", host_mapname.string);
+					break;
+				default:
+					snprintf(str, sizeof(str), "%s (%s)", cl.levelname, host_mapname.string);
+					break;
+			}
+
+			Sbar_DrawString (160 - strlen(str) * 4, mapname_y, str);
+		}
 	}
 }
 

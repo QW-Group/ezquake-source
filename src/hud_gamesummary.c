@@ -197,6 +197,40 @@ static void SCR_Hud_GameSummary(hud_t* hud)
 	}
 }
 
+static void SCR_HUD_DrawScoreMapName(hud_t *hud) {
+	static cvar_t *proportional = NULL, *scale, *style;
+	int w, h, x, y;
+	char str[256];
+
+	if (proportional == NULL)
+	{
+		proportional = HUD_FindVar(hud, "proportional");
+		scale = HUD_FindVar(hud, "scale");
+		style = HUD_FindVar(hud, "style");
+	}
+
+	switch (style->integer)
+	{
+		case 1:
+			snprintf(str, sizeof(str), "%s", cl.levelname);
+			break;
+		case 2:
+			snprintf(str, sizeof(str), "%s", host_mapname.string);
+			break;
+		default:
+			snprintf(str, sizeof(str), "%s (%s)", cl.levelname, host_mapname.string);
+			break;
+	}
+
+	w = Draw_StringLengthColors(str, -1, scale->value, proportional->integer);
+	h = scale->value * 8;
+
+	if (!HUD_PrepareDraw(hud, w, h, &x, &y))
+		return;
+
+	Draw_SString(x, y, str, scale->value, proportional->integer);
+}
+
 void GameSummary_HudInit(void)
 {
 	HUD_Register(
@@ -211,6 +245,16 @@ void GameSummary_HudInit(void)
 		"ratio", "4",
 		"flash", "1",
 		"proportional", "0",
+		NULL
+	);
+
+	HUD_Register(
+		"scoremapname", NULL, "Shows map name on the scoreboard",
+		HUD_NO_DRAW | HUD_ON_INTERMISSION | HUD_ON_SCORES | HUD_ON_FINALE, ca_disconnected, 8, SCR_HUD_DrawScoreMapName,
+		"0", "screen", "right", "bottom", "0", "-10", "0", "0 0 0", NULL,
+		"style", "0",
+		"proportional", "0",
+		"scale", "1",
 		NULL
 	);
 }
