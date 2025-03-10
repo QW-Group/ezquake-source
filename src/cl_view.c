@@ -58,6 +58,7 @@ cvar_t	v_gunkick = {"v_gunkick", "0"};
 cvar_t	v_viewheight = {"v_viewheight", "0"};
 
 cvar_t	cl_drawgun = {"r_drawviewmodel", "1"};
+cvar_t	cl_drawgun_invisible = {"r_drawviewmodel_invisible", "0"};
 cvar_t  r_nearclip = {"r_nearclip", "2", CVAR_RULESET_MAX | CVAR_RULESET_MIN, NULL, R_MINIMUM_NEARCLIP, R_MAXIMUM_FARCLIP, R_MINIMUM_NEARCLIP };
 cvar_t	r_viewmodelsize = {"r_viewmodelSize", "1"};
 cvar_t	r_viewmodeloffset = {"r_viewmodeloffset", ""};
@@ -868,9 +869,12 @@ static void V_AddViewWeapon(float bob)
 	cent = CL_WeaponModelForView();
 	TP_ParseWeaponModel(cl.model_precache[gunmodel]);
 
-	if (!cl_drawgun.value || (cl_drawgun.value == 2 && scr_fov.value > 90)
+	if (!cl_drawgun.value
+		|| (cl_drawgun.value == 2 && scr_fov.value > 90)
 		|| ((view_message.flags & (PF_GIB | PF_DEAD)))
-		|| cl.stats[STAT_ITEMS] & IT_INVISIBILITY || cl.stats[STAT_HEALTH] <= 0 || !Cam_DrawViewModel()) {
+		|| (!cl_drawgun_invisible.value && cl.stats[STAT_ITEMS] & IT_INVISIBILITY)
+		|| cl.stats[STAT_HEALTH] <= 0
+		|| !Cam_DrawViewModel()) {
 		cent->current.modelindex = 0;	//no model
 		return;
 	}
@@ -1156,6 +1160,7 @@ void V_Init (void) {
 	Cvar_Register(&cl_bobhead);
 
 	Cvar_Register(&cl_drawgun);
+	Cvar_Register(&cl_drawgun_invisible);
 	Cvar_Register(&r_viewmodelsize);
 	Cvar_Register(&r_viewmodeloffset);
 	Cvar_Register(&r_viewpreselgun);
