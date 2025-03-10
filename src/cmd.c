@@ -554,10 +554,25 @@ void Cmd_Exec_f (void)
 	char *f, name[MAX_OSPATH];
 	char reset_bindphysical[128];
 	qbool server_command = false;
+	const int max_exec_calls = 2;
 
-	if (Rulesets_RestrictExec()) {
-		Com_Printf("The use of exec is not allowed during matches\n");
-		return;
+	if (Rulesets_RestrictExec())
+	{
+		if (cl.exec_count >= max_exec_calls)
+		{
+			Com_Printf("You have no remaining exec calls for this game\n");
+			return;
+		}
+
+		cl.exec_count++;
+		if (cl.exec_count < max_exec_calls)
+		{
+			Com_Printf("You have %d exec calls remaining\n", max_exec_calls - cl.exec_count);
+		}
+		else
+		{
+			Com_Printf("This was your last exec call for this game\n");
+		}
 	}
 
 	if (Cmd_Argc () != 2) {
