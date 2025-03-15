@@ -45,6 +45,20 @@ void NET_CloseClient (void);
 static void cl_net_clientport_changed(cvar_t* var, char* value, qbool* cancel);
 static cvar_t cl_net_clientport = { "cl_net_clientport", "27001", CVAR_AUTO, cl_net_clientport_changed };  // Was PORT_CLIENT in protocol.h
 
+typedef struct {
+	char *target_addr;
+	char *original_addr;
+} portpingprobe_worker_args_t;
+
+static SDL_atomic_t portpingprobe_status;
+
+static void cl_portpingprobe_probes_changed(cvar_t *var, char *val, qbool *cancel);
+static cvar_t cl_portpingprobe_probes = {"cl_portpingprobe_probes", "100", 0, cl_portpingprobe_probes_changed};
+static cvar_t cl_useportpingprobe = {"cl_useportpingprobe", "0"};
+
+static double NET_PortPing(const struct sockaddr_in *srv_adr, const int probe_port);
+static int NET_PortPingProbeWorker(void *data);
+
 #define MIN_TCP_TIMEOUT  500
 #define MAX_TCP_TIMEOUT 5000
 
@@ -1363,6 +1377,10 @@ void NET_Init (void)
 	Cvar_Register(&cl_net_clientport);
 	Cvar_Register(&net_tcp_timeout);
 
+	Cvar_Register(&cl_useportpingprobe);
+	Cvar_Register(&cl_portpingprobe_probes);
+	NET_SetPortPingProbeStatus(PORTPINGPROBE_READY);
+
 	delay_queue_send.outgoing = true;
 #endif
 
@@ -1625,3 +1643,166 @@ void NET_CloseServer (void)
 }
 #endif
 
+static void cl_portpingprobe_probes_changed(cvar_t *var, char *val, qbool *cancel)
+{
+	int probes = Q_atoi(val);
+
+	if (probes < 1 || probes > 500)
+	{
+		Com_Printf("The number of probes needs to be between 1 and 500.\n");
+		*cancel = true;
+	}
+}
+
+static double NET_PortPing(const struct sockaddr_in *srv_adr, const int probe_port) {
+	static char payload[] = {0xff, 0xff, 0xff, 0xff, 'p', 'i', 'n', 'g'};
+	static struct timeval timeout = {1, 0};
+	struct sockaddr_in cli_addr;
+	double start;
+	char buf;
+	int sock, ret = -1;
+
+	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	{
+		Com_Printf("NET_PortPing: Unable to initialize socket\n");
+		return -1;
+	}
+
+	if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
+	{
+		Com_Printf("NET_PortPing: Unable to set timeout on socket\n");
+		goto cleanup;
+	}
+
+	memset(&cli_addr, 0, sizeof(cli_addr));
+	cli_addr.sin_family = AF_INET;
+	cli_addr.sin_addr.s_addr = INADDR_ANY;
+	cli_addr.sin_port = htons(probe_port);
+
+	if (bind(sock, (struct sockaddr *)&cli_addr, sizeof(cli_addr)) < 0)
+	{
+		Com_DPrintf("NET_PortPing: Port is already in use: %d\n", probe_port);
+		goto cleanup;
+	}
+
+	start = Sys_DoubleTime();
+
+	if ((ret = sendto(sock, payload, sizeof(payload), 0, (struct sockaddr *)srv_adr, sizeof(*srv_adr))) < 0)
+	{
+		Com_Printf("NET_PortPing: Unable to send to the server from port %d\n", probe_port);
+		goto cleanup;
+	}
+
+	if ((ret = recvfrom(sock, &buf, sizeof(buf), 0, NULL, NULL)) <= 0)
+	{
+		Com_Printf("NET_PortPing: Unable to receive from the server\n");
+		ret = -1;
+	}
+
+cleanup:
+	close(sock);
+
+	return ret == -1 ? ret : Sys_DoubleTime() - start;
+}
+
+static int NET_PortPingProbeWorker(void *data)
+{
+	portpingprobe_worker_args_t *args = (portpingprobe_worker_args_t *)data;
+	portpingprobe_status_t final_status = PORTPINGPROBE_READY;
+	struct sockaddr_in srv_addr;
+	netadr_t net_addr;
+	double current_rtt, best_rtt = 100000;
+	int i, probe_port, best_port = cl_net_clientport.integer;
+
+	if (!NET_StringToAdr(args->target_addr, &net_addr))
+	{
+		Com_Printf("NET_PortPingProbeWorker: Invalid address %s\n", args->target_addr);
+		goto cleanup;
+	}
+
+	memset(&srv_addr, 0, sizeof(srv_addr));
+	srv_addr.sin_family = AF_INET;
+	srv_addr.sin_port = net_addr.port == 0 ? htons(27500) : net_addr.port;
+	memcpy(&srv_addr.sin_addr.s_addr, net_addr.ip, 4);
+
+	Com_Printf("Probing %s to find the best source port (%d probes)\n",
+		args->target_addr, cl_portpingprobe_probes.integer);
+
+	NET_SetPortPingProbeStatus(PORTPINGPROBE_PROBING);
+
+	for (i = 0; i < cl_portpingprobe_probes.integer; i++)
+	{
+		probe_port = rand() % (65536 - 1024) + 1024;
+
+		if (i % 10 == 0)
+		{
+			Com_Printf("Probing in progress: %.0f%% done\n",
+				((float)i / (cl_portpingprobe_probes.integer)) * 100);
+		}
+
+		current_rtt = NET_PortPing(&srv_addr, probe_port);
+		Com_DPrintf("Probing port %d: RTT = %f ms\n", probe_port, current_rtt*1000.0);
+
+		if (current_rtt != -1 && current_rtt < best_rtt)
+		{
+			best_rtt = current_rtt;
+			best_port = probe_port;
+		}
+
+		// If the client issues a new connection while a probe is in
+		// progress or disconnects, we'll abort and exit gracefully.
+		if (NET_GetPortPingProbeStatus() == PORTPINGPROBE_ABORT)
+		{
+			Com_Printf("Port ping probe aborted\n");
+			goto cleanup;
+		}
+	}
+
+	Com_Printf("Connecting to %s using source port %d (%.2f ms)\n",
+		args->target_addr, best_port, best_rtt*1000.0);
+
+	Cvar_SetValue(&cl_net_clientport, best_port);
+
+	Cbuf_AddText(va("connect %s\n", args->original_addr));
+
+	final_status = PORTPINGPROBE_COMPLETED;
+
+cleanup:
+	Q_free(args->target_addr);
+	Q_free(args->original_addr);
+	Q_free(args);
+
+	NET_SetPortPingProbeStatus(final_status);
+
+	return 0;
+}
+
+qbool UsePortPingProbe(void)
+{
+	return cl_useportpingprobe.integer;
+}
+
+void NET_PortPingProbe(const char *target_addr, const char *original_addr)
+{
+	// We need to allocate and copy the target and original addresses since
+	// they will go out of scope as soon as the connect function ends. We'll
+	// free the allocations once the worker function completes.
+	portpingprobe_worker_args_t *args = Q_malloc(sizeof(portpingprobe_worker_args_t));
+	args->target_addr = Q_strdup(target_addr);
+	args->original_addr = Q_strdup(original_addr);
+
+	if (Sys_CreateDetachedThread(NET_PortPingProbeWorker, (void *)args) < 0)
+	{
+		Com_Printf("PortPingProbe: Unable to launch worker thread\n");
+	}
+}
+
+void NET_SetPortPingProbeStatus(const portpingprobe_status_t status)
+{
+	SDL_AtomicSet(&portpingprobe_status, (int)status);
+}
+
+portpingprobe_status_t NET_GetPortPingProbeStatus(void)
+{
+	return (portpingprobe_status_t)SDL_AtomicGet(&portpingprobe_status);
+}
