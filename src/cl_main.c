@@ -808,11 +808,31 @@ void CL_Connect_f (void)
 	qbool proxy;
 	char *connect_addr = NULL;
 	char *server_buf = NULL;
+	portpingprobe_status_t status;
 
 	if (Cmd_Argc() != 2) 
 	{
 		Com_Printf ("Usage: %s <server>\n", Cmd_Argv(0));
 		return;
+	}
+
+	// It's not possible to change the source address when connected to a
+	// server, so we'll inform the user and return early
+	if (UsePortPingProbe() && cls.state != ca_disconnected)
+	{
+		Com_Printf("With cl_useportpingprobe enabled, you must disconnect before switching servers\n");
+		return;
+	}
+
+	// The user has already initiated a port ping probe, so we'll abort that
+	// and wait for the worker thread to stop before we proceed.
+	if (UsePortPingProbe() && (status = NET_GetPortPingProbeStatus()) == PORTPINGPROBE_PROBING)
+	{
+		NET_SetPortPingProbeStatus(PORTPINGPROBE_ABORT);
+		while ((status = NET_GetPortPingProbeStatus()) != PORTPINGPROBE_READY)
+		{
+			Sys_MSleep(10);
+		}
 	}
 
 	// in this part proxy means QWFWD proxy
@@ -847,6 +867,19 @@ void CL_Connect_f (void)
 	{
 		connect_addr = Cmd_Argv(1);
 		connected_via_proxy = false;
+	}
+
+	if (UsePortPingProbe())
+	{
+		if (status == PORTPINGPROBE_READY)
+		{
+			NET_PortPingProbe(connect_addr, Cmd_Argv(1));
+			return;
+		}
+		else if (status == PORTPINGPROBE_COMPLETED)
+		{
+			NET_SetPortPingProbeStatus(PORTPINGPROBE_READY);
+		}
 	}
 
 	// in this part proxy means Qizmo proxy
@@ -1340,8 +1373,19 @@ void CL_Disconnect (void)
 
 void CL_Disconnect_f (void) 
 {
+	portpingprobe_status_t status;
+
 	cl.intermission = 0;
 	CL_Demo_Disconnected();
+
+	if (UsePortPingProbe() && (status = NET_GetPortPingProbeStatus()) == PORTPINGPROBE_PROBING)
+	{
+		NET_SetPortPingProbeStatus(PORTPINGPROBE_ABORT);
+		while ((status = NET_GetPortPingProbeStatus()) != PORTPINGPROBE_READY)
+		{
+			Sys_MSleep(10);
+		}
+	}
 
 	Host_EndGame();
 }
