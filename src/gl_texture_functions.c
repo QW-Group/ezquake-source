@@ -93,7 +93,7 @@ void GL_LoadTextureManagementFunctions(void)
 		}
 	}
 
-	if (SDL_GL_ExtensionSupported("GL_ARB_texture_storage")) {
+	if (GL_VersionAtLeast(4, 2) || SDL_GL_ExtensionSupported("GL_ARB_texture_storage")) {
 		GL_LoadOptionalFunction(glTexStorage2D);
 		GL_LoadOptionalFunction(glTexStorage3D);
 	}
@@ -108,7 +108,7 @@ void GL_LoadTextureManagementFunctions(void)
 		glConfig.supported_features |= (all_available ? R_SUPPORT_TEXTURE_ARRAYS : 0);
 	}
 
-	if (SDL_GL_ExtensionSupported("GL_ARB_sampler_objects")) {
+	if (GL_VersionAtLeast(3, 3) || SDL_GL_ExtensionSupported("GL_ARB_sampler_objects")) {
 		qbool all_available = true;
 
 		// Texture samplers in 3.3

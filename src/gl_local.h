@@ -27,6 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_framestats.h"
 #include "r_trace.h"
 #include "r_local.h"
+#include "tr_types.h"
 
 void R_TimeRefresh_f (void);
 texture_t *R_TextureAnimation(entity_t* ent, texture_t *base);
@@ -253,7 +254,7 @@ GLenum GL_ProcessAllErrors(const char* message);
 #define GL_LoadOptionalFunction(functionName)    { q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName); }
 #define GL_LoadOptionalFunctionEXT(functionName) { q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName "EXT"); }
 #define GL_LoadOptionalFunctionARB(functionName) { q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName "ARB"); }
-#define GL_UseDirectStateAccess() (SDL_GL_ExtensionSupported("GL_ARB_direct_state_access"))
+#define GL_UseDirectStateAccess() (GL_VersionAtLeast(4, 5) || SDL_GL_ExtensionSupported("GL_ARB_direct_state_access"))
 #define GL_StaticProcedureDeclaration(name, formatString, ...) \
 	typedef void (APIENTRY *name ## _t)(__VA_ARGS__); \
 	static name ## _t    q ## name ## _impl; \
@@ -385,7 +386,7 @@ GLenum GL_ProcessAllErrors(const char* message);
 #define GL_LoadOptionalFunction(functionName) { q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName); }
 #define GL_LoadOptionalFunctionEXT(functionName) { q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName "EXT"); }
 #define GL_LoadOptionalFunctionARB(functionName) { q##functionName##_impl = (functionName##_t)SDL_GL_GetProcAddress(#functionName "ARB"); }
-#define GL_UseDirectStateAccess() (SDL_GL_ExtensionSupported("GL_ARB_direct_state_access"))
+#define GL_UseDirectStateAccess() (GL_VersionAtLeast(4, 5) || SDL_GL_ExtensionSupported("GL_ARB_direct_state_access"))
 #else
 #define GL_LoadMandatoryFunction(functionName,testFlag) { q##functionName##_impl = NULL; testFlag = false; }
 #define GL_LoadMandatoryFunctionEXT(functionName,testFlag) { q##functionName##_impl = NULL; testFlag = false; }

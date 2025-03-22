@@ -64,13 +64,13 @@ qbool GLC_CompilePostProcessProgram(void)
 		}
 		if (post_process_flags & POST_PROCESS_FXAA) {
 			qbool supported = true;
-			if (!SDL_GL_ExtensionSupported("GL_EXT_gpu_shader4"))
+			if (!(GL_VersionAtLeast(3, 0) || SDL_GL_ExtensionSupported("GL_EXT_gpu_shader4")))
 			{
 				Com_Printf("WARNING: Missing GL_EXT_gpu_shader4, FXAA not available.");
 				supported = false;
 			}
 #ifndef __APPLE__
-			if (!SDL_GL_ExtensionSupported("GL_ARB_gpu_shader5"))
+			if (!(GL_VersionAtLeast(4, 2) || SDL_GL_ExtensionSupported("GL_ARB_gpu_shader5")))
 			{
 				Com_Printf("WARNING: Missing GL_ARB_gpu_shader5, FXAA not available.");
 				supported = false;

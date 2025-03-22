@@ -915,6 +915,10 @@ static qbool GL_CompileComputeShaderProgram(gl_program_t* program, const char* s
 	GLuint shader;
 	int standard_options = R_ProgramStandardOptions(program->standard_option_flags);
 
+	if (!GL_Supported(R_SUPPORT_COMPUTE_SHADERS)) {
+		return false;
+	}
+
 	program->program = 0;
 
 	components = GL_InsertDefinitions(shader_text, shader_text_length, "");
@@ -999,7 +1003,7 @@ void GL_LoadProgramFunctions(void)
 		GL_LoadOptionalFunction(glProgramUniformMatrix4fv);
 	}
 
-	if (SDL_GL_ExtensionSupported("GL_ARB_compute_shader") && SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store")) {
+	if (GL_VersionAtLeast(4, 3) || (GL_VersionAtLeast(4, 2) && SDL_GL_ExtensionSupported("GL_ARB_compute_shader") && SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store"))) {
 		qbool compute_shaders_support = true;
 
 		GL_LoadMandatoryFunctionExtension(glDispatchCompute, compute_shaders_support);

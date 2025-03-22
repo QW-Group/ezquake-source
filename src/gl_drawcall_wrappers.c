@@ -44,7 +44,7 @@ void GL_LoadDrawFunctions(void)
 {
 	glConfig.supported_features &= ~(R_SUPPORT_INDIRECT_RENDERING | R_SUPPORT_INSTANCED_RENDERING | R_SUPPORT_PRIMITIVERESTART);
 
-	if (SDL_GL_ExtensionSupported("GL_ARB_multi_draw_indirect")) {
+	if (GL_VersionAtLeast(4, 3) || SDL_GL_ExtensionSupported("GL_ARB_multi_draw_indirect")) {
 		qbool all_available = true;
 
 		GL_LoadMandatoryFunctionExtension(glMultiDrawArraysIndirect, all_available);
@@ -53,7 +53,7 @@ void GL_LoadDrawFunctions(void)
 		glConfig.supported_features |= (all_available ? R_SUPPORT_INDIRECT_RENDERING : 0);
 	}
 
-	if (SDL_GL_ExtensionSupported("GL_ARB_base_instance")) {
+	if (GL_VersionAtLeast(4, 2) || SDL_GL_ExtensionSupported("GL_ARB_base_instance")) {
 		qbool all_available = true;
 
 		GL_LoadMandatoryFunctionExtension(glDrawArraysInstancedBaseInstance, all_available);

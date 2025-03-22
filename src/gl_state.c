@@ -866,14 +866,14 @@ void GL_LoadStateFunctions(void)
 	GL_LoadOptionalFunction(glActiveTexture);
 	glConfig.supported_features |= (GL_Available(glActiveTexture) ? R_SUPPORT_MULTITEXTURING : 0);
 
-	if (SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store")) {
+	if (GL_VersionAtLeast(4, 2) || SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store")) {
 		GL_LoadOptionalFunction(glBindImageTexture);
 		glConfig.supported_features |= (GL_Available(glBindImageTexture) ? R_SUPPORT_IMAGE_PROCESSING : 0);
 	}
 
 	// 4.4 - binds textures to consecutive texture units
 	GL_InvalidateFunction(glBindTextures);
-	if (SDL_GL_ExtensionSupported("GL_ARB_multi_bind") && !COM_CheckParm(cmdline_param_client_nomultibind)) {
+	if ((GL_VersionAtLeast(4, 4) || SDL_GL_ExtensionSupported("GL_ARB_multi_bind")) && !COM_CheckParm(cmdline_param_client_nomultibind)) {
 		GL_LoadOptionalFunction(glBindTextures);
 
 		// Invalidate if on particular drivers (see github bug #416)
@@ -1452,7 +1452,7 @@ void GLC_MultiTexCoord2f(GLenum target, float s, float t)
 
 void GL_CheckMultiTextureExtensions(void)
 {
-	if (!COM_CheckParm(cmdline_param_client_nomultitexturing) && SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
+	if (!COM_CheckParm(cmdline_param_client_nomultitexturing) && (GL_VersionAtLeast(2, 0) || SDL_GL_ExtensionSupported("GL_ARB_multitexture"))) {
 		GL_LoadOptionalFunction(glMultiTexCoord2f);
 		if (!GL_Available(glMultiTexCoord2f)) {
 			GL_LoadOptionalFunctionARB(glMultiTexCoord2f);
@@ -1489,19 +1489,20 @@ void GL_CheckMultiTextureExtensions(void)
 #else
 void GL_CheckMultiTextureExtensions(void)
 {
-	if (!SDL_GL_ExtensionSupported("GL_ARB_multitexture")) {
+	if (GL_VersionAtLeast(2, 0) || SDL_GL_ExtensionSupported("GL_ARB_multitexture"))
+	{
+		GL_LoadOptionalFunction(glActiveTexture);
+		if (!GL_Available(glActiveTexture)) {
+			Sys_Error("Required OpenGL function not supported: glActiveTexture");
+			return;
+		}
+
+		gl_textureunits = min(glConfig.texture_units, 4);
+		gl_mtexable = true;
+	} else {
 		Sys_Error("Required extension not supported: GL_ARB_multitexture");
-		return;
 	}
 
-	GL_LoadOptionalFunction(glActiveTexture);
-	if (!GL_Available(glActiveTexture)) {
-		Sys_Error("Required OpenGL function not supported: glActiveTexture");
-		return;
-	}
-
-	gl_textureunits = min(glConfig.texture_units, 4);
-	gl_mtexable = true;
 }
 #endif
 
