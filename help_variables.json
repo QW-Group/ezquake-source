@@ -15221,6 +15221,26 @@
       "group-id": "38",
       "type": "string"
     },
+    "qtv_event_msglevel": {
+      "default": "1",
+      "desc": "Controls the visibility of QTV event messages, allowing them to be enabled, disabled, or hidden during an active match.",
+      "group-id": "38",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Disables QTV event messages.",
+          "name": "0"
+        },
+        {
+          "description": "Enables QTV event messages.",
+          "name": "1"
+        },
+        {
+          "description": "Hides QTV event messages when a match has started.",
+          "name": "2"
+        }
+      ]
+    },
     "qtv_gamechatprefix": {
       "default": "$[{QTV>game}$] ",
       "desc": "String that will be added at the beginning of all messages send from QTV to the server where the broadcasted game is being played.",
@@ -19276,6 +19296,26 @@
           "name": "true"
         }
       ]
+    },
+    "scr_scoreboard_showqtvusers": {
+      "default": "0",
+      "group-id": "47",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Disable QTV users in the scoreboard.",
+          "name": "false"
+        },
+        {
+          "description": "Enable QTV users in the scoreboard.",
+          "name": "true"
+        }
+      ]
+    },
+    "scr_scoreboard_qtv_name": {
+      "desc": "This variable will change what qtv users are called in the scoreboard.\nWhen teamplay is not on, this variable is cut to 4 characters.\n&cRGB values are not accepted.",
+      "group-id": "47",
+      "type": "string"
     },
     "scr_scoreboard_spectator_name": {
       "desc": "This variable will change what spectators are called in the scoreboard.\nWhen teamplay is not on, this variable is cut to 4 characters.\n&cRGB values are not accepted.",

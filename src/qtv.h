@@ -58,7 +58,8 @@ typedef enum {
 	QUL_NONE = 0,	//
 	QUL_ADD,		// user joined
 	QUL_CHANGE,		// user changed something like name or something
-	QUL_DEL			// user dropped
+	QUL_DEL,		// user dropped
+	QUL_INIT		// user init
 } qtvuserlist_t;
 
 typedef struct qtvuser_s {
