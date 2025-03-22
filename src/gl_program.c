@@ -690,6 +690,46 @@ static int GL_InsertDefinitions(
 	return 1;
 }
 
+static void GL_DumpShader(const char *name, const char *suffix, int components, const char* strings[], GLint lengths[])
+{
+	char filename[MAX_OSPATH];
+	char buf[256];
+	int i;
+	FILE *fd;
+
+	if (strings[0] == NULL) {
+		return;
+	}
+
+	snprintf(filename, sizeof(filename), "%s/qw/shaders", com_basedir);
+	Sys_mkdir(filename);
+	snprintf(filename, sizeof(filename), "%s/qw/shaders/%s.%s", com_basedir, name, suffix);
+
+	fd = fopen(filename, "wt");
+	if (!fd) {
+		Sys_Error("Could not open %s for writing\n", filename);
+	}
+
+	for (i = 0; i < components; i++) {
+		if (!lengths[i]) {
+			continue;
+		}
+		// Original source up to #ezquake-definitions, likely just "#version ..."
+		if (i == 0) {
+			if (sizeof(buf) <= lengths[0]) {
+				Sys_Error("Unexpected shader preamble size (%d, max %d)\n", lengths[0], sizeof(buf));
+			}
+			strlcpy(buf, strings[0], lengths[0]);
+			fprintf(fd, "%s\n", buf);
+		}
+		else {
+			fprintf(fd, "%s\n", strings[i]);
+		}
+	}
+
+	fclose(fd);
+}
+
 static qbool GL_CompileProgram(
 	gl_program_t* program
 )
@@ -708,6 +748,9 @@ static qbool GL_CompileProgram(
 	GLsizei fragment_components = 1;
 	const char* fragment_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].text, "", "", "", "", "" };
 	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].length, 0, 0, 0, 0, 0 };
+	GLsizei compute_components = 1;
+	const char* compute_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_compute].text, "", "", "", "", "" };
+	GLint compute_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_compute].length, 0, 0, 0, 0, 0 };
 
 	DebugOutput(va("Compiling: %s\n", program->friendly_name));
 
@@ -716,6 +759,18 @@ static qbool GL_CompileProgram(
 	vertex_components = GL_InsertDefinitions(vertex_shader_text, vertex_shader_text_length, program->included_definitions);
 	geometry_components = GL_InsertDefinitions(geometry_shader_text, geometry_shader_text_length, program->included_definitions);
 	fragment_components = GL_InsertDefinitions(fragment_shader_text, fragment_shader_text_length, program->included_definitions);
+	compute_components = GL_InsertDefinitions(compute_shader_text, compute_shader_text_length, program->included_definitions);
+
+	if (COM_CheckParm(cmdline_param_client_video_r_dump_shaders)) {
+		GL_DumpShader(program->friendly_name, "vert", vertex_components, vertex_shader_text, vertex_shader_text_length);
+		GL_DumpShader(program->friendly_name, "frag", fragment_components, fragment_shader_text, fragment_shader_text_length);
+		GL_DumpShader(program->friendly_name, "geom", geometry_components, geometry_shader_text, geometry_shader_text_length);
+		GL_DumpShader(program->friendly_name, "comp", compute_components, compute_shader_text, compute_shader_text_length);
+	}
+
+	if (program->shaders[shadertype_compute].text) {
+		return GL_CompileComputeShaderProgram(program, compute_shader_text[0], compute_shader_text_length[0]);
+	}
 
 	if (GL_CompileShader(vertex_components, vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &shaders[shadertype_vertex])) {
 		if (geometry_shader_text[0] == NULL || GL_CompileShader(geometry_components, geometry_shader_text, geometry_shader_text_length, GL_GEOMETRY_SHADER, &shaders[shadertype_geometry])) {
@@ -868,7 +923,7 @@ void GL_ProgramsInitialise(void)
 			}
 
 			if (!prog->program && !prog->needs_params && prog->initialised) {
-				gl_shader_def_t* compute = &prog->shaders[shadertype_compute];
+				gl_shader_def_t * compute = &prog->shaders[shadertype_compute];
 				if (compute->length) {
 					GL_CompileComputeShaderProgram(prog, compute->text, compute->length);
 				}
