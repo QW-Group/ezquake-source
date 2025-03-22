@@ -35,7 +35,7 @@ in vec2 DetailCoord;
 in vec3 LumaCoord;
 #endif
 in vec3 FlatColor;
-in flat int Flags;
+flat in int Flags;
 in vec3 Direction;
 #ifdef DRAW_GEOMETRY
 in vec3 Normal;
@@ -45,7 +45,7 @@ in vec4 UnClipped;
 in float mix_floor;
 in float mix_wall;
 in float alpha;
-in flat int SamplerNumber;
+flat in int SamplerNumber;
 
 layout(location=0) out vec4 frag_colour;
 #ifdef DRAW_GEOMETRY

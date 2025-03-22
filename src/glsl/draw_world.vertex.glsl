@@ -23,7 +23,7 @@ out vec3 LumaCoord;
 out vec2 DetailCoord;
 #endif
 out vec3 FlatColor;
-out flat int Flags;
+flat out int Flags;
 out vec3 Direction;
 #ifdef DRAW_GEOMETRY
 out vec3 Normal;
@@ -37,7 +37,7 @@ layout(std140, binding = EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface
 out float mix_floor;
 out float mix_wall;
 out float alpha;
-out flat int SamplerNumber;
+flat out int SamplerNumber;
 
 layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA) buffer WorldCvars {
 	WorldDrawInfo drawInfo[];
