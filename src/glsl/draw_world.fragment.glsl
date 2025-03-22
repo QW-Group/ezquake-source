@@ -19,13 +19,6 @@ layout(binding=SAMPLER_SKYDOME_CLOUDTEXTURE) uniform sampler2D skyDomeCloudTex;
 layout(binding=SAMPLER_LIGHTMAP_TEXTURE) uniform sampler2DArray lightmapTex;
 layout(binding=SAMPLER_MATERIAL_TEXTURE_START) uniform sampler2DArray materialTex[SAMPLER_MATERIAL_TEXTURE_COUNT];
 
-layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA) buffer WorldCvars {
-	WorldDrawInfo drawInfo[];
-};
-layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS) buffer SamplerMappingsBuffer {
-	SamplerMapping samplerMapping[];
-};
-
 in vec3 TextureCoord;
 centroid in vec3 TexCoordLightmap;
 #ifdef DRAW_DETAIL_TEXTURES
@@ -36,15 +29,23 @@ in vec3 LumaCoord;
 #endif
 in vec3 FlatColor;
 flat in int Flags;
+#if defined(DRAW_SKYBOX) || defined(DRAW_SKYDOME)
 in vec3 Direction;
+#endif
 #ifdef DRAW_GEOMETRY
 in vec3 Normal;
 in vec4 UnClipped;
 #endif
 
+#ifdef DRAW_FLATFLOORS
 in float mix_floor;
+#endif
+#ifdef DRAW_FLATWALLS
 in float mix_wall;
+#endif
+#ifdef DRAW_ALPHATEST_ENABLED
 in float alpha;
+#endif
 flat in int SamplerNumber;
 
 layout(location=0) out vec4 frag_colour;
