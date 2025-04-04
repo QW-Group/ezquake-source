@@ -19472,16 +19472,20 @@
           "name": "0"
         },
         {
-          "description": "Displays teammates' armor always in white.",
+          "description": "Displays teammates' armor in white, prefixed by the icon of the armor they have.",
           "name": "1"
         },
         {
-          "description": "Displays teammates' armor in white with the icon of the armor they have next to it.",
+          "description": "Displays teammates' armor in white.",
           "name": "2"
         },
         {
           "description": "Displays teammates' armor in the color of the armor they have.",
           "name": "3"
+        },
+        {
+          "description": "Displays teammates' armor in white, prefixed by g|y|r depending on type.",
+          "name": "4"
         }
       ]
     },
