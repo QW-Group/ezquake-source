@@ -15629,6 +15629,22 @@
         }
       ]
     },
+    "r_drawviewmodel_invisible": {
+      "default": "0",
+      "desc": "This command controls whether or not to draw the weapon when invisible. It needs to be used in conjunction with r_drawviewmodel > 0.",
+      "group-id": "54",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Don't display the weapon when invisible.",
+          "name": "0"
+        },
+        {
+          "description": "Display the weapon when invisible.",
+          "name": "1"
+        }
+      ]
+    },
     "r_drawvweps": {
       "default": "1",
       "desc": "Whether to draw vweps (other players' weapon models).",
