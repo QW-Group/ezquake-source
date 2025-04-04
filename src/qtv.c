@@ -44,6 +44,7 @@ cvar_t  qtv_allow_pause      = { "qtv_allow_pause",      "0" }; // ignore cl_dem
 cvar_t  qtv_event_join       = { "qtv_event_join",        " &c2F2joined&r"};
 cvar_t  qtv_event_leave      = { "qtv_event_leave",       " &cF22left&r"};
 cvar_t  qtv_event_changename = { "qtv_event_changename",  " &cFF0changed name to&r "};
+cvar_t  qtv_event_msglevel   = { "qtv_event_msglevel",    "1" };
 
 extern qbool qtv_playback_paused;
 
@@ -71,6 +72,7 @@ void QTV_Init(void)
 	Cvar_Register(&qtv_event_join);
 	Cvar_Register(&qtv_event_leave);
 	Cvar_Register(&qtv_event_changename);
+	Cvar_Register(&qtv_event_msglevel);
 
 	Cvar_ResetCurrentGroup();
 
@@ -290,7 +292,7 @@ void QTV_Cmd_Printf(int qtv_ext, char *fmt, ...)
 
 //=================================================
 
-static qtvuser_t *qtvuserlist = NULL;
+qtvuser_t *qtvuserlist = NULL;
 
 static qtvuser_t *QTV_UserById(int id)
 {
@@ -393,10 +395,11 @@ void QTV_FreeUserList(void)
 #define QTV_EVENT_PREFIX "QTV: "
 
 // user join qtv
-void QTV_JoinEvent(qtvuser_t *user)
+void QTV_JoinEvent(qtvuser_t *user, qtvuserlist_t event)
 {
-	// make it optional message
-	if (!qtv_event_join.string[0])
+	// make it optional message, or if QUL_INIT, just return since we don't
+	// need to spam which users are already on the QTV.
+	if (!qtv_event_join.string[0] || qtv_event_msglevel.integer == 0 || event == QUL_INIT)
 		return;
 
 	// do not show "user joined" at moment of connection to QTV, it mostly QTV just spammed userlist to us.
@@ -409,7 +412,12 @@ void QTV_JoinEvent(qtvuser_t *user)
 		return;
 	}
 
-	Com_Printf("%s%s%s\n", QTV_EVENT_PREFIX, user->name, qtv_event_join.string);
+	if (qtv_event_msglevel.integer == 1 ||
+		(qtv_event_msglevel.integer == 2 && cls.state == ca_active && (cls.demoplayback || cl.standby)))
+
+	{
+		Com_Printf("%s%s%s\n", QTV_EVENT_PREFIX, user->name, qtv_event_join.string);
+	}
 }
 
 // user leaved/left qtv
@@ -418,7 +426,7 @@ void QTV_LeaveEvent(qtvuser_t *user)
 	qtvuser_t *olduser;
 
 	// make it optional message
-	if (!qtv_event_leave.string[0])
+	if (!qtv_event_leave.string[0] || qtv_event_msglevel.integer == 0)
 		return;
 
 	if (!(olduser = QTV_UserById(user->id)))
@@ -427,7 +435,11 @@ void QTV_LeaveEvent(qtvuser_t *user)
 		return;
 	}
 
-	Com_Printf("%s%s%s\n", QTV_EVENT_PREFIX, olduser->name, qtv_event_leave.string);
+	if (qtv_event_msglevel.integer == 1 ||
+		(qtv_event_msglevel.integer == 2 && cls.state == ca_active && (cls.demoplayback || cl.standby)))
+	{
+		Com_Printf("%s%s%s\n", QTV_EVENT_PREFIX, olduser->name, qtv_event_leave.string);
+	}
 }
 
 // user changed name on qtv
@@ -436,7 +448,7 @@ void QTV_ChangeEvent(qtvuser_t *user)
 	qtvuser_t *olduser;
 
 	// well, too spammy, make it as option
-	if (!qtv_event_changename.string[0])
+	if (!qtv_event_changename.string[0] || qtv_event_msglevel.integer == 0)
 		return;
 
 	if (!(olduser = QTV_UserById(user->id)))
@@ -446,7 +458,11 @@ void QTV_ChangeEvent(qtvuser_t *user)
 		return;
 	}
 
-	Com_Printf("%s%s%s%s\n", QTV_EVENT_PREFIX, olduser->name, qtv_event_changename.string, user->name);
+	if (qtv_event_msglevel.integer == 1 ||
+		(qtv_event_msglevel.integer == 2 && cls.state == ca_active && (cls.demoplayback || cl.standby)))
+	{
+		Com_Printf("%s%s%s%s\n", QTV_EVENT_PREFIX, olduser->name, qtv_event_changename.string, user->name);
+	}
 }
 
 void Parse_QtvUserList(char *s)
@@ -468,7 +484,8 @@ void Parse_QtvUserList(char *s)
 	switch ( action )
 	{
 		case QUL_ADD:
-			QTV_JoinEvent(&tmpuser);
+		case QUL_INIT:
+			QTV_JoinEvent(&tmpuser, action);
 			QTV_NewUser(&tmpuser);
 
 		break;

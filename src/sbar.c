@@ -146,6 +146,10 @@ cvar_t	scr_scoreboard_highlightself  = {"scr_scoreboard_highlightself", "1"};
 cvar_t	scr_scoreboard_showclock      = {"scr_scoreboard_showclock", "0"};
 cvar_t	scr_scoreboard_showmapname    = {"scr_scoreboard_showmapname", "0"};
 
+static void OnChange_scr_scoreboard_showqtvusers(cvar_t *old_value, char *new_value, qbool*);
+cvar_t scr_scoreboard_showqtvusers = {"scr_scoreboard_showqtvusers", "1", 0, OnChange_scr_scoreboard_showqtvusers};
+cvar_t scr_scoreboard_qtv_name = {"scr_scoreboard_qtv_name", "\xF1\xF4\xF6"};
+
 // VFrags: only draw the frags for the first player when using mvinset
 #define MULTIVIEWTHISPOV() ((!cl_multiview.value) || (cl_mvinset.value && CL_MultiviewCurrentView() == 1))
 
@@ -338,6 +342,8 @@ void Sbar_Init(void)
 	Cvar_Register(&scr_scoreboard_highlightself);
 	Cvar_Register(&scr_scoreboard_showclock);
 	Cvar_Register(&scr_scoreboard_showmapname);
+	Cvar_Register(&scr_scoreboard_showqtvusers);
+	Cvar_Register(&scr_scoreboard_qtv_name);
 
 	Cvar_ResetCurrentGroup();
 
@@ -1311,6 +1317,8 @@ static qbool Sbar_ShowTeamKills(void)
 	}
 }
 
+extern qtvuser_t *qtvuserlist;
+
 static void Sbar_DeathmatchOverlay(int start)
 {
 	int stats_team, stats_touches, stats_caps, playerstats[7];
@@ -1331,6 +1339,7 @@ static void Sbar_DeathmatchOverlay(int start)
 	extern ti_player_t ti_clients[MAX_CLIENTS];
 	int is_classic = scr_scoreboard_classic.integer;
 	qbool is_classic_spec;
+	qtvuser_t *qu;
 
 	if (!start && hud_faderankings.value) {
 		Draw_FadeScreen(hud_faderankings.value);
@@ -1862,6 +1871,93 @@ static void Sbar_DeathmatchOverlay(int start)
 		x = startx;
 	}
 
+	if (!scr_scoreboard_showqtvusers.value) {
+		goto finalize;
+	}
+
+	for (qu = qtvuserlist; qu && y <= SCOREBOARD_LASTROW; qu = qu->next) {
+		color_t background;
+		float bk_alpha;
+		byte c = 2;
+		clrinfo_t color;
+		ca_alpha = 1.0f;
+
+		if (!qu->name[0]) {
+			continue;
+		}
+
+		if (is_classic) {
+			bk_alpha = 0;
+		} else if (k == mynum && scr_scoreboard_highlightself.value) {
+			bk_alpha = 1.7 * SCOREBOARD_ALPHA;
+			bk_alpha = min(alpha, 0.75);
+		} else {
+			bk_alpha = SCOREBOARD_ALPHA;
+		}
+
+		background = RGBA_TO_COLOR(host_basepal[c * 3], host_basepal[c * 3 + 1], host_basepal[c * 3 + 2], (byte)(bk_alpha * 255));
+		Draw_AlphaFillRGB(xofs, y, rank_width, skip, background);
+
+		if (!scr_scoreboard_borderless.value) {
+			Draw_Fill(xofs - 1, y, 1, skip, 0);
+			Draw_Fill(xofs - 1 + rank_width + 1, y, 1, skip, 0);
+		}
+
+		snprintf(num, sizeof(num), "%i", 0);
+
+		color.c = is_classic
+			? RGBA_TO_COLOR(0xFF, 0xFF, 0xFF, (byte)(ca_alpha * 255))
+			: RGBA_TO_COLOR(0xAA, 0xAA, 0xDD, (byte)(ca_alpha * 255));
+		color.i = 0;
+		Draw_SColoredStringAligned(x, y, num, &color, 1, scale, alpha * ca_alpha, proportional, text_align_right, x + FONT_WIDTH * 4);
+		x += 4 * FONT_WIDTH;
+
+		if (is_classic) {
+			color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0xFF, (byte)(ca_alpha * 255));
+		} else {
+			if (p == 0) {
+				// 0 - white
+				color.c = RGBA_TO_COLOR(0xFF, 0xFF, 0xFF, (byte)(ca_alpha * 255));
+			} else if (p < 3) {
+				// 1-2 - yellow
+				color.c = RGBA_TO_COLOR(0xCC, 0xDD, 0xDD, (byte)(ca_alpha * 255));
+			} else if (p < 6) {
+				// 3-5 orange
+				color.c = RGBA_TO_COLOR(0xFF, 0x55, 0x00, (byte)(ca_alpha * 255));
+			} else {
+				// 6+ - red
+				color.c = RGBA_TO_COLOR(0xFF, 0x00, 0x00, (byte)(ca_alpha * 255));
+			}
+		}
+
+		if (!is_classic) {
+			Draw_SColoredStringAligned(x, y, num, &color, 1, scale, alpha * ca_alpha, proportional, text_align_right, x + 3 * FONT_WIDTH);
+		}
+
+		x += 4 * FONT_WIDTH;
+
+		color.c = RGBA_TO_COLOR(255, 255, 255, 255);
+
+		if (!is_classic) {
+			snprintf(myminutes, sizeof(myminutes), "%i", 0);
+			Draw_SColoredStringAligned(x, y, myminutes, &color, 1, scale, alpha, proportional, text_align_right, x + 4 * FONT_WIDTH);
+		}
+
+		x += 5 * FONT_WIDTH;
+
+		if (cl.teamplay) {
+			Draw_SStringAligned(is_classic ? x - (8 * FONT_WIDTH) : x, y, is_classic ? "(qtv)" : scr_scoreboard_qtv_name.string, scale, alpha, proportional, text_align_left, x + 10 * FONT_WIDTH);
+		} else {
+			Draw_SStringAligned(is_classic ? x - (8 * FONT_WIDTH): x, y, is_classic ? "(qtv)" : scr_scoreboard_qtv_name.string, scale, alpha, proportional, text_align_left, x + SHORT_SPECTATOR_NAME_LEN * FONT_WIDTH);
+		}
+
+		x += (cl.teamplay ? 11 : 6) * FONT_WIDTH;
+		Draw_SStringAligned(x, y, qu->name, scale, ca_alpha, proportional, text_align_left, x + FONT_WIDTH * 15);
+		y += skip;
+		x = startx;
+	}
+
+finalize:
 	if (!scr_scoreboard_borderless.value) {
 		Draw_Fill(xofs - 1, y - 1, rank_width + 2, 1, 0); //Border - Bottom
 	}
@@ -2533,6 +2629,23 @@ qbool CL_LoginImageLoad(const char* path)
 static void OnChange_scr_scoreboard_login_flagfile(cvar_t* cv, char* newvalue, qbool* cancel)
 {
 	*cancel = CL_LoginImageLoad(newvalue);
+}
+
+static void OnChange_scr_scoreboard_showqtvusers(cvar_t *old_value, char *new_value, qbool *cancel)
+{
+	qbool is_set = (new_value && *new_value == '1');
+	Info_SetValueForKey (cls.userinfo, "qul", is_set ? "1" : "0", MAX_INFO_STRING);
+
+	if (cls.state >= ca_connected)
+	{
+		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+		SZ_Print(&cls.netchan.message, va("setinfo \"qul\" \"%s\"", is_set ? "1" : "0"));
+	}
+
+	if (!is_set)
+	{
+		QTV_FreeUserList();
+	}
 }
 
 static mpic_t* CL_LoginFlag(int id)
