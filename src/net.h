@@ -277,4 +277,17 @@ void Netchan_Setup (netsrc_t sock, netchan_t *chan, netadr_t adr, int qport, int
 qbool Netchan_CanPacket (netchan_t *chan);
 qbool Netchan_CanReliable (netchan_t *chan);
 
+typedef enum {
+	PORTPINGPROBE_READY,
+	PORTPINGPROBE_PROBING,
+	PORTPINGPROBE_COMPLETED,
+	PORTPINGPROBE_ABORT
+} portpingprobe_status_t;
+
+qbool IsPortPingProbeEnabled(void);
+void NET_PortPingProbe(const char *target_addr, const char *original_addr);
+void NET_SetPortPingProbeStatus(const portpingprobe_status_t status);
+portpingprobe_status_t NET_GetPortPingProbeStatus(void);
+int NET_GetPortPingProbeProgress(void);
+
 #endif /* !__NET_H__ */

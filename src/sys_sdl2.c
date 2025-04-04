@@ -98,3 +98,7 @@ int Sys_CreateDetachedThread(int (*func)(void *), void *data)
 	return 0;
 }
 
+SDL_Thread *Sys_CreateThread(int (*func)(void *), void *data)
+{
+	return SDL_CreateThread((SDL_ThreadFunction)func, NULL, data);
+}

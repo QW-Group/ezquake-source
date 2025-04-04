@@ -897,8 +897,9 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 
 //Draws the console with the solid background
 void Con_DrawConsole (int lines) {
-	int i, j, x, y, n=0, rows, row, idx;
+	int i, j, x, y, n=0, rows, row, idx, probing_progress;
 	char *text, dlbar[1024];
+	qbool is_probing;
 
 	if (lines <= 0 || Con_MenuWillDrawConsole())
 		return;
@@ -939,9 +940,12 @@ void Con_DrawConsole (int lines) {
 		Draw_ConsoleString( 1 << 3, y + bound(0, con_shift.value, 8), con.text + idx, con.clr + idx, con_linewidth, 0, 1, con_proportional.integer);
 	}
 
+	is_probing = IsPortPingProbeEnabled() && NET_GetPortPingProbeStatus() == PORTPINGPROBE_PROBING;
+	probing_progress = IsPortPingProbeEnabled() && is_probing ? NET_GetPortPingProbeProgress() : 0;
+
 	// draw the download bar
 	// figure out width
-	if (cls.download || cls.upload) {
+	if (cls.download || cls.upload || is_probing) {
 		int	slider_box_position = -1;
 
 		if (cls.download) {
@@ -954,6 +958,8 @@ void Con_DrawConsole (int lines) {
 				text++;
 			else
 				text = cls.uploadname;
+		} else if (is_probing) {
+			text = "probing";
 		} else
 			return;
 
@@ -979,8 +985,10 @@ void Con_DrawConsole (int lines) {
 		} else if (cls.upload) {
 			if (cls.uploadpercent == 0)
 				n = 0;
-		else
-			n = y * cls.uploadpercent / 100;
+			else
+				n = y * cls.uploadpercent / 100;
+		} else if (is_probing) {
+			n = y * probing_progress / 100;
 		}
 
 		for (j = 0; j < y; j++)
@@ -1000,6 +1008,8 @@ void Con_DrawConsole (int lines) {
 			snprintf (dlbar + i, sizeof (dlbar) - i, " %02d%%(%dkb/s)", cls.downloadpercent, cls.downloadrate);
 		else if (cls.upload)
 			snprintf (dlbar + i, sizeof (dlbar) - i, " %02d%%(%dkb/s)", cls.uploadpercent, cls.uploadrate);
+		else if (is_probing)
+			snprintf (dlbar + i, sizeof (dlbar) - i, " %02d%%", probing_progress);
 		else
 			return;
 

@@ -48,8 +48,13 @@ void *Sys_DLProc(DL_t dl, const char *name);
 
 #include "localtime.h"
 
+#include <SDL.h>
+
 // create detached thread
 int  Sys_CreateDetachedThread(int (*func)(void *), void *data);
+
+// create thread
+SDL_Thread *Sys_CreateThread(int (*func)(void *), void *data);
 
 #define MAX_PATH_LENGTH 1024
 
