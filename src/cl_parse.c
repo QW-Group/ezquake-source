@@ -2385,6 +2385,7 @@ void CL_ProcessServerInfo (void)
 		&& (cl.z_ext & Z_EXT_PF_ONGROUND) /* pground doesn't make sense without this */;
 	movevars.ktjump = *(p = Info_ValueForKey(cl.serverinfo, "pm_ktjump")) ? Q_atof(p) : cl.teamfortress ? 0 : 1;
 	movevars.rampjump = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_rampjump")) != 0);
+	movevars.surffix = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_surffix")) != 0);
 
 	// Deathmatch and teamplay.
 	cl.deathmatch = atoi(Info_ValueForKey(cl.serverinfo, "deathmatch"));
