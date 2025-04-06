@@ -36,6 +36,8 @@ cvar_t		ignore_mode				= {"ignore_mode", "0"};
 cvar_t		ignore_flood_duration	= {"ignore_flood_duration", "4"};
 cvar_t		ignore_flood			= {"ignore_flood", "0"};		
 cvar_t		ignore_opponents		= {"ignore_opponents", "0"};
+cvar_t		ignore_no_weapon		= {"ignore_no_weapon", "0"};
+cvar_t		ignore_not_enough_ammo		= {"ignore_not_enough_ammo", "0"};
 
 char ignoreteamlist[MAX_TEAMIGNORELIST][16 + 1];
 
@@ -507,6 +509,8 @@ void Ignore_Init(void) {
 	Cvar_Register (&ignore_qtv);
 	Cvar_Register (&ignore_mode);
 	Cvar_Register (&ignore_opponents);
+	Cvar_Register (&ignore_no_weapon);
+	Cvar_Register (&ignore_not_enough_ammo);
 
 	Cvar_ResetCurrentGroup();
 
