@@ -1433,6 +1433,9 @@ void CL_Reconnect_f (void)
 		// switch the stuff
 		Cbuf_AddText(va("connect %s\n", cls.servername));
 	}
+	else if (IsPortPingProbeEnabled()) {
+		Cbuf_AddText(va("connect %s\n", cls.servername));
+	}
 	else {
 		// good old reconnect, no need to do anything special
 		Host_EndGame();
