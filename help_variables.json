@@ -2795,6 +2795,12 @@
       "group-id": "21",
       "type": "integer"
     },
+    "cl_portpingprobe_port_probes": {
+      "default": "1",
+      "desc": "Lets you set how many times each port should be probed when connecting to a server. It can be set to a value between 1 and 5.",
+      "group-id": "21",
+      "type": "integer"
+    },
     "cl_useproxy": {
       "default": "0",
       "desc": "This toggles whether Qizmo should be used (if detected) to a server. When enabled the server browser will use an existing connection to a Qizmo when connecting another server by using the ezQuake Server Browser.",
