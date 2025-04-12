@@ -105,7 +105,8 @@ int HUD_AmmoLowByWeapon(int weapon)
 }
 
 static void SCR_HUD_DrawAmmo(
-	hud_t *hud, int num, float scale, int style, int digits, char *s_align, qbool proportional, qbool always
+	hud_t *hud, int num, float scale, int style, int digits, char *s_align, qbool proportional, qbool always,
+	byte *text_color_low, byte *text_color_normal
 )
 {
 	extern mpic_t sb_ib_ammo[4];
@@ -146,7 +147,7 @@ static void SCR_HUD_DrawAmmo(
 	if (!num && !always) {
 		if (style < 2 || style == 3) {
 			// use this to calculate sizes, but draw_content is false
-			SCR_HUD_DrawNum2(hud, 0, false, scale, style, digits, s_align, proportional, false);
+			SCR_HUD_DrawNum2(hud, 0, false, scale, style, digits, s_align, proportional, false, text_color_low, text_color_normal);
 		}
 		else {
 			int x_, y;
@@ -170,7 +171,7 @@ static void SCR_HUD_DrawAmmo(
 
 	if (style < 2 || style == 3) {
 		// simply draw number
-		SCR_HUD_DrawNum(hud, value, style == 3 ? false : low, scale, style, digits, s_align, proportional);
+		SCR_HUD_DrawNum2(hud, value, style == 3 ? false : low, scale, style, digits, s_align, proportional, true, text_color_low, text_color_normal);
 	}
 	else {
 		// else - draw classic ammo-count box with background
@@ -213,7 +214,7 @@ static void SCR_HUD_DrawAmmo(
 
 void SCR_HUD_DrawAmmoCurrent(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *digits, *align, *proportional, *always;
+	static cvar_t *scale = NULL, *style, *digits, *align, *proportional, *always, *text_color_low, *text_color_normal;
 	if (scale == NULL)  // first time called
 	{
 		scale = HUD_FindVar(hud, "scale");
@@ -222,15 +223,20 @@ void SCR_HUD_DrawAmmoCurrent(hud_t *hud)
 		align = HUD_FindVar(hud, "align");
 		proportional = HUD_FindVar(hud, "proportional");
 		always = HUD_FindVar(hud, "show_always");
+		text_color_low = HUD_FindInitTextColorVar(hud, "text_color_low");
+		text_color_normal = HUD_FindInitTextColorVar(hud, "text_color_normal");
 	}
 	if (cl.spectator == cl.autocam) {
-		SCR_HUD_DrawAmmo(hud, 0, scale->value, style->value, digits->value, align->string, proportional->integer, always->integer);
+		SCR_HUD_DrawAmmo(hud, 0, scale->value, style->value, digits->value, align->string,
+			proportional->integer, always->integer,
+			strlen(text_color_low->string) == 0 ? NULL : text_color_low->color,
+			strlen(text_color_normal->string) == 0 ? NULL : text_color_normal->color);
 	}
 }
 
 void SCR_HUD_DrawAmmo1(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *digits, *align, *proportional;
+	static cvar_t *scale = NULL, *style, *digits, *align, *proportional, *text_color_low, *text_color_normal;
 	if (scale == NULL)  // first time called
 	{
 		scale = HUD_FindVar(hud, "scale");
@@ -238,15 +244,21 @@ void SCR_HUD_DrawAmmo1(hud_t *hud)
 		digits = HUD_FindVar(hud, "digits");
 		align = HUD_FindVar(hud, "align");
 		proportional = HUD_FindVar(hud, "proportional");
+		text_color_low = HUD_FindInitTextColorVar(hud, "text_color_low");
+		text_color_normal = HUD_FindInitTextColorVar(hud, "text_color_normal");
 	}
+
 	if (cl.spectator == cl.autocam) {
-		SCR_HUD_DrawAmmo(hud, 1, scale->value, style->value, digits->value, align->string, proportional->integer, true);
+		SCR_HUD_DrawAmmo(hud, 1, scale->value, style->value, digits->value, align->string,
+			proportional->integer, true,
+			strlen(text_color_low->string) == 0 ? NULL : text_color_low->color,
+			strlen(text_color_normal->string) == 0 ? NULL : text_color_normal->color);
 	}
 }
 
 void SCR_HUD_DrawAmmo2(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *digits, *align, *proportional;
+	static cvar_t *scale = NULL, *style, *digits, *align, *proportional, *text_color_low, *text_color_normal;
 	if (scale == NULL)  // first time called
 	{
 		scale = HUD_FindVar(hud, "scale");
@@ -254,15 +266,20 @@ void SCR_HUD_DrawAmmo2(hud_t *hud)
 		digits = HUD_FindVar(hud, "digits");
 		align = HUD_FindVar(hud, "align");
 		proportional = HUD_FindVar(hud, "proportional");
+		text_color_low = HUD_FindInitTextColorVar(hud, "text_color_low");
+		text_color_normal = HUD_FindInitTextColorVar(hud, "text_color_normal");
 	}
 	if (cl.spectator == cl.autocam) {
-		SCR_HUD_DrawAmmo(hud, 2, scale->value, style->value, digits->value, align->string, proportional->integer, true);
+		SCR_HUD_DrawAmmo(hud, 2, scale->value, style->value, digits->value, align->string,
+			proportional->integer, true,
+			strlen(text_color_low->string) == 0 ? NULL : text_color_low->color,
+			strlen(text_color_normal->string) == 0 ? NULL : text_color_normal->color);
 	}
 }
 
 void SCR_HUD_DrawAmmo3(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *digits, *align, *proportional;
+	static cvar_t *scale = NULL, *style, *digits, *align, *proportional, *text_color_low, *text_color_normal;
 	if (scale == NULL)  // first time called
 	{
 		scale = HUD_FindVar(hud, "scale");
@@ -270,15 +287,20 @@ void SCR_HUD_DrawAmmo3(hud_t *hud)
 		digits = HUD_FindVar(hud, "digits");
 		align = HUD_FindVar(hud, "align");
 		proportional = HUD_FindVar(hud, "proportional");
+		text_color_low = HUD_FindInitTextColorVar(hud, "text_color_low");
+		text_color_normal = HUD_FindInitTextColorVar(hud, "text_color_normal");
 	}
 	if (cl.spectator == cl.autocam) {
-		SCR_HUD_DrawAmmo(hud, 3, scale->value, style->value, digits->value, align->string, proportional->integer, true);
+		SCR_HUD_DrawAmmo(hud, 3, scale->value, style->value, digits->value, align->string,
+			proportional->integer, true,
+			strlen(text_color_low->string) == 0 ? NULL : text_color_low->color,
+			strlen(text_color_normal->string) == 0 ? NULL : text_color_normal->color);
 	}
 }
 
 void SCR_HUD_DrawAmmo4(hud_t *hud)
 {
-	static cvar_t *scale = NULL, *style, *digits, *align, *proportional;
+	static cvar_t *scale = NULL, *style, *digits, *align, *proportional, *text_color_low, *text_color_normal;
 	if (scale == NULL)  // first time called
 	{
 		scale = HUD_FindVar(hud, "scale");
@@ -286,9 +308,14 @@ void SCR_HUD_DrawAmmo4(hud_t *hud)
 		digits = HUD_FindVar(hud, "digits");
 		align = HUD_FindVar(hud, "align");
 		proportional = HUD_FindVar(hud, "proportional");
+		text_color_low = HUD_FindInitTextColorVar(hud, "text_color_low");
+		text_color_normal = HUD_FindInitTextColorVar(hud, "text_color_normal");
 	}
 	if (cl.spectator == cl.autocam) {
-		SCR_HUD_DrawAmmo(hud, 4, scale->value, style->value, digits->value, align->string, proportional->integer, true);
+		SCR_HUD_DrawAmmo(hud, 4, scale->value, style->value, digits->value, align->string,
+			proportional->integer, true,
+			strlen(text_color_low->string) == 0 ? NULL : text_color_low->color,
+			strlen(text_color_normal->string) == 0 ? NULL : text_color_normal->color);
 	}
 }
 
@@ -419,6 +446,8 @@ void Ammo_HudInit(void)
 		"digits", "3",
 		"proportional", "0",
 		"show_always", "0",
+		"text_color_low", "",
+		"text_color_normal", "",
 		 NULL
 	);
 
@@ -430,6 +459,8 @@ void Ammo_HudInit(void)
 				 "align", "right",
 				 "digits", "3",
 				 "proportional", "0",
+				 "text_color_low", "",
+				 "text_color_normal", "",
 				 NULL);
 	HUD_Register("ammo2", NULL, "Part of your inventory - ammo - nails.",
 				 HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo2,
@@ -439,6 +470,8 @@ void Ammo_HudInit(void)
 				 "align", "right",
 				 "digits", "3",
 				 "proportional", "0",
+				 "text_color_low", "",
+				 "text_color_normal", "",
 				 NULL);
 	HUD_Register("ammo3", NULL, "Part of your inventory - ammo - rockets.",
 				 HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo3,
@@ -448,6 +481,8 @@ void Ammo_HudInit(void)
 				 "align", "right",
 				 "digits", "3",
 				 "proportional", "0",
+				 "text_color_low", "",
+				 "text_color_normal", "",
 				 NULL);
 	HUD_Register("ammo4", NULL, "Part of your inventory - ammo - cells.",
 				 HUD_INVENTORY, ca_active, 0, SCR_HUD_DrawAmmo4,
@@ -457,6 +492,8 @@ void Ammo_HudInit(void)
 				 "align", "right",
 				 "digits", "3",
 				 "proportional", "0",
+				 "text_color_low", "",
+				 "text_color_normal", "",
 				 NULL);
 
 	// ammo icon/s

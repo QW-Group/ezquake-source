@@ -1405,6 +1405,35 @@ cvar_t *HUD_FindVar(hud_t *hud, char *subvar)
 }
 
 //
+// HUD_FindInitTextColorVar searches for a HUD element by name.
+//
+// If not found, returns NULL (same as HUD_FindVar).
+//
+// If found, apply the CVAR_COLOR flag to indicate the value should be parsed as
+// a color.
+//
+// If the variable has a value, it is re-assigned to trigger correct color
+// parsing.
+cvar_t *HUD_FindInitTextColorVar(hud_t *hud, char *name)
+{
+	cvar_t *cvar;
+
+	if ((cvar = HUD_FindVar(hud, name)) == NULL)
+	{
+		return NULL;
+	}
+
+	Cvar_SetFlags(cvar, Cvar_GetFlags(cvar) | CVAR_COLOR);
+
+	if (strlen(cvar->string) > 0)
+	{
+		Cvar_Set(cvar, cvar->string);
+	}
+
+	return cvar;
+}
+
+//
 // Draws single HUD element.
 //
 void HUD_DrawObject(hud_t *hud)

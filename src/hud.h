@@ -149,6 +149,11 @@ void HUD_Draw(void);
 cvar_t *HUD_FindVar(hud_t *hud, char *subvar);
 
 //
+// Retrieve hud cvar by name and apply text color flags and parsing.
+//
+cvar_t *HUD_FindInitTextColorVar(hud_t *hud, char *name);
+
+//
 // Find element in list.
 //
 hud_t * HUD_Find(char *name);

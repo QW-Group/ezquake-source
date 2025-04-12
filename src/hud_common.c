@@ -228,7 +228,8 @@ void SCR_HUD_DrawNotify(hud_t* hud)
 // status numbers
 void SCR_HUD_DrawNum2(
 	hud_t *hud, int num, qbool low,
-	float scale, int style, int digits, char *s_align, qbool proportional, qbool draw_content
+	float scale, int style, int digits, char *s_align, qbool proportional, qbool draw_content,
+	byte *text_color_low, byte *text_color_normal
 )
 {
 	extern mpic_t *sb_nums[2][11];
@@ -240,6 +241,8 @@ void SCR_HUD_DrawNum2(
 	int width, height, x, y;
 	int size;
 	int align;
+
+	clrinfo_t clr = { .i = 0 };
 
 	clamp(num, -99999, 999999);
 	scale = max(scale, 0.01);
@@ -348,7 +351,15 @@ void SCR_HUD_DrawNum2(
 			}
 
 			if (low) {
-				Draw_SAlt_String(x, y, buf, scale, proportional);
+				if (text_color_low != NULL)
+				{
+					clr.c = RGBAVECT_TO_COLOR(text_color_low);
+					Draw_SColoredAlphaString(x, y, buf, &clr, 1, 0, scale, 1.0, proportional);
+				}
+				else
+				{
+					Draw_SAlt_String(x, y, buf, scale, proportional);
+				}
 			}
 			else {
 				if(style == 3) {
@@ -359,7 +370,16 @@ void SCR_HUD_DrawNum2(
 						}
 					}
 				}
-				Draw_SString(x, y, buf, scale, proportional);
+
+				if (text_color_normal != NULL)
+				{
+					clr.c = RGBAVECT_TO_COLOR(text_color_normal);
+					Draw_SColoredAlphaString(x, y, buf, &clr, 1, 0, scale, 1.0, proportional);
+				}
+				else
+				{
+					Draw_SString(x, y, buf, scale, proportional);
+				}
 			}
 			break;
 
@@ -395,7 +415,7 @@ void SCR_HUD_DrawNum(
 	float scale, int style, int digits, char* s_align, qbool proportional
 )
 {
-	SCR_HUD_DrawNum2(hud, num, low, scale, style, digits, s_align, proportional, true);
+	SCR_HUD_DrawNum2(hud, num, low, scale, style, digits, s_align, proportional, true, NULL, NULL);
 }
 
 #define TEMPHUD_NAME "_temphud"
