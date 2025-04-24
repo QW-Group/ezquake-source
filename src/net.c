@@ -52,7 +52,7 @@ typedef struct {
 
 typedef struct {
 	int thread_id;
-	int num_probes;
+	int num_ports;
 	struct sockaddr_in *addr;
 	portpingprobe_t *results;
 } portpingprobe_worker_args_t;
@@ -66,9 +66,11 @@ static SDL_atomic_t portpingprobe_status;
 static SDL_atomic_t portpingprobe_progress;
 
 static void cl_portpingprobe_probes_changed(cvar_t *var, char *val, qbool *cancel);
-static cvar_t cl_portpingprobe_probes = {"cl_portpingprobe_probes", "500", 0, cl_portpingprobe_probes_changed};
-static cvar_t cl_portpingprobe_enable = {"cl_portpingprobe_enable", "0"};
-static cvar_t cl_portpingprobe_delay  = {"cl_portpingprobe_delay",  "0"};
+static void cl_portpingprobe_port_probes_changed(cvar_t *var, char *val, qbool *cancel);
+static cvar_t cl_portpingprobe_probes      = {"cl_portpingprobe_probes", "500", 0, cl_portpingprobe_probes_changed};
+static cvar_t cl_portpingprobe_port_probes = {"cl_portpingprobe_port_probes", "1", 0, cl_portpingprobe_port_probes_changed};
+static cvar_t cl_portpingprobe_enable      = {"cl_portpingprobe_enable", "0"};
+static cvar_t cl_portpingprobe_delay       = {"cl_portpingprobe_delay",  "0"};
 
 static double NET_PortPing(const struct sockaddr_in *srv_adr, const int probe_port);
 static int NET_PortPingProbeWorker(void *data);
@@ -1396,6 +1398,7 @@ void NET_Init (void)
 	Cvar_Register(&cl_portpingprobe_delay);
 	Cvar_Register(&cl_portpingprobe_enable);
 	Cvar_Register(&cl_portpingprobe_probes);
+	Cvar_Register(&cl_portpingprobe_port_probes);
 	NET_SetPortPingProbeStatus(PORTPINGPROBE_READY);
 
 	delay_queue_send.outgoing = true;
@@ -1671,6 +1674,17 @@ static void cl_portpingprobe_probes_changed(cvar_t *var, char *val, qbool *cance
 	}
 }
 
+static void cl_portpingprobe_port_probes_changed(cvar_t *var, char *val, qbool *cancel)
+{
+	int probes = Q_atoi(val);
+
+	if (probes < 1 || probes > 5)
+	{
+		Com_Printf("The number of port probes needs to be between 1 and 5.\n");
+		*cancel = true;
+	}
+}
+
 static double NET_PortPing(const struct sockaddr_in *srv_adr, const int probe_port) {
 	static char payload[] = {0xff, 0xff, 0xff, 0xff, 'p', 'i', 'n', 'g'};
 	static struct timeval timeout = {1, 0};
@@ -1742,13 +1756,20 @@ static int NET_PortPingProbeWorker(void *data)
 	portpingprobe_worker_args_t *args = (portpingprobe_worker_args_t *)data;
 	double rtt;
 	int i, port;
+	int *ports = Q_malloc(args->num_ports * sizeof(int));
+	int num_probes = args->num_ports * cl_portpingprobe_port_probes.integer;
 
-	Com_DPrintf("[%d]: Launching %d probes\n", args->thread_id, args->num_probes);
-	for (i = 0; i < args->num_probes; i++)
+	Com_DPrintf("[%d]: Generating %d random ports\n", args->thread_id, args->num_ports);
+	for (i = 0; i < args->num_ports; i++)
 	{
-		port = rand() % (65536 - 1024) + 1024;
-		rtt = NET_PortPing(args->addr, port);
+		ports[i] = rand() % (65536 - 1024) + 1024;
+	}
 
+	Com_DPrintf("[%d]: Launching %d probes\n", args->thread_id, num_probes);
+	for (i = 0; i < num_probes; i++)
+	{
+		port = ports[i % args->num_ports];
+		rtt = NET_PortPing(args->addr, port);
 		args->results[i].port = port;
 		args->results[i].rtt = rtt;
 
@@ -1774,6 +1795,7 @@ static int NET_PortPingProbeWorker(void *data)
 
 cleanup:
 	free(args);
+	free(ports);
 
 	return 0;
 }
@@ -1799,8 +1821,8 @@ static SDL_Thread **NET_PortPingProbeInitWorkers(struct sockaddr_in *addr, int n
 		args = Q_malloc(sizeof(portpingprobe_worker_args_t));
 		args->addr = addr;
 		args->thread_id = i;
-		args->results = &results[i*num_probes];
-		args->num_probes = num_probes + (i == num_threads - 1 ? remaining_probes : 0);
+		args->results = &results[i * num_probes * cl_portpingprobe_port_probes.integer];
+		args->num_ports = num_probes + (i == num_threads - 1 ? remaining_probes : 0);
 
 		workers[i] = Sys_CreateThread(NET_PortPingProbeWorker, args);
 		if (!workers[i])
@@ -1862,7 +1884,7 @@ static int NET_PortPingProbeOrchestrator(void *data)
 	memcpy(&addr.sin_addr.s_addr, net_addr.ip, 4);
 
 	// Allocate memory for the probe results.
-	results = Q_malloc(sizeof(portpingprobe_t) * cl_portpingprobe_probes.integer);
+	results = Q_malloc(sizeof(portpingprobe_t) * cl_portpingprobe_probes.integer * cl_portpingprobe_port_probes.integer);
 
 	// Initialize the worker threads.
 	workers = NET_PortPingProbeInitWorkers(&addr, num_threads, results);
@@ -1876,8 +1898,10 @@ static int NET_PortPingProbeOrchestrator(void *data)
 	// the progress bar from console.c
 	SDL_AtomicSet(&portpingprobe_progress, 0);
 
-	Com_Printf("Probing %s to find the best source port (%d probes, %d threads)\n",
-		args->target_addr, cl_portpingprobe_probes.integer, num_threads);
+	Com_Printf("Probing %s to find the best source port (%d probes, %d threads, %d %s per port)\n",
+		args->target_addr, cl_portpingprobe_probes.integer, num_threads,
+		cl_portpingprobe_port_probes.integer,
+		cl_portpingprobe_port_probes.integer == 1 ? "probe" : "probes");
 
 	// Wait for the worker threads to finish; they will either finish when
 	// all probes have been completed or if they are aborted by the user.
@@ -1895,9 +1919,10 @@ static int NET_PortPingProbeOrchestrator(void *data)
 	}
 
 	// Iterate over the results and select the port with the lowest latency.
-	for (i = 0; i < cl_portpingprobe_probes.integer; i++)
+	for (i = 0; i < cl_portpingprobe_probes.integer * cl_portpingprobe_port_probes.integer; i++)
 	{
-		Com_DPrintf("Results: port: %d RTT: %f\n", results[i].port, results[i].rtt);
+		Com_DPrintf("Results: index: %d, port: %d RTT: %f\n",
+			i, results[i].port, results[i].rtt);
 
 		if (results[i].rtt != -1 && results[i].rtt < best_rtt)
 		{
@@ -1969,5 +1994,5 @@ portpingprobe_status_t NET_GetPortPingProbeStatus(void)
 
 int NET_GetPortPingProbeProgress(void)
 {
-	return ((float)SDL_AtomicGet(&portpingprobe_progress) / (cl_portpingprobe_probes.integer)) * 100;
+	return ((float)SDL_AtomicGet(&portpingprobe_progress) / (cl_portpingprobe_probes.integer * cl_portpingprobe_port_probes.integer)) * 100;
 }
