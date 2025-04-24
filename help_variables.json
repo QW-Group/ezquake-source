@@ -6297,6 +6297,16 @@
       "group-id": "19",
       "type": "float"
     },
+    "hud_ammo1_text_color_low": {
+      "desc": "Text color when low on shells (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_ammo1_text_color_normal": {
+      "desc": "Text color when shell count is normal (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
     "hud_ammo2_align": {
       "desc": "Sets align of number of nails.",
       "group-id": "19",
@@ -6365,6 +6375,16 @@
       "desc": "Switches graphical style of number of nails.",
       "group-id": "19",
       "type": "float"
+    },
+    "hud_ammo2_text_color_low": {
+      "desc": "Text color when low on nails (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_ammo2_text_color_normal": {
+      "desc": "Text color when nail count is normal (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
     },
     "hud_ammo3_align": {
       "desc": "Sets align of number of rockets.",
@@ -6435,6 +6455,16 @@
       "group-id": "19",
       "type": "float"
     },
+    "hud_ammo3_text_color_low": {
+      "desc": "Text color when low on rockets (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_ammo3_text_color_normal": {
+      "desc": "Text color when rocket count is normal (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
     "hud_ammo4_align": {
       "desc": "Sets align of number of cells.",
       "group-id": "19",
@@ -6503,6 +6533,16 @@
       "desc": "Switches graphical style of number of cells.",
       "group-id": "19",
       "type": "float"
+    },
+    "hud_ammo4_text_color_low": {
+      "desc": "Text color when low on cells (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_ammo4_text_color_normal": {
+      "desc": "Text color when cell count is normal (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
     },
     "hud_ammo_align": {
       "desc": "Sets align of current ammo value.",
