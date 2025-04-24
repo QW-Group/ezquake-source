@@ -198,6 +198,7 @@ cvar_t cl_cmdline			= {"cl_cmdline", "", CVAR_ROM};
 cvar_t cl_useproxy			= {"cl_useproxy", "0"};
 cvar_t cl_proxyaddr         = {"cl_proxyaddr", ""};
 cvar_t cl_window_caption	= {"cl_window_caption", "1"};
+cvar_t cl_window_caption_delimiter = {"cl_window_caption_delimiter", " | "};
 
 cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};
 cvar_t cl_nolerp			= {"cl_nolerp", "0"}; // 0 is good for indep-phys, 1 is good for old-phys
@@ -1804,6 +1805,7 @@ static void CL_InitLocal(void)
 	Cvar_Register(&cl_shownet);
 	Cvar_Register(&cl_confirmquit);
 	Cvar_Register(&cl_window_caption);
+	Cvar_Register(&cl_window_caption_delimiter);
 	Cvar_Register(&cl_onload);
 
 #ifdef WIN32
@@ -2809,6 +2811,18 @@ void CL_UpdateCaption(qbool force)
 	}
 	else if (cl_window_caption.integer == 2) {
 		snprintf(str, sizeof(str), "ezQuake");
+	}
+	else if (cl_window_caption.integer == 3) {
+		if (cls.state < ca_connected) {
+			snprintf(str, sizeof(str), "ezQuake v%s", VERSION_NUMBER);
+		}
+		else {
+			snprintf(str, sizeof(str), "%d/%d%s%s",
+				TP_CountPlayers(),
+				Q_atoi(Info_ValueForKey(cl.serverinfo, "maxclients")),
+				cl_window_caption_delimiter.string,
+				TP_MapName());
+		}
 	}
 
 	if (force || strcmp(str, caption)) {

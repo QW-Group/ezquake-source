@@ -3068,8 +3068,18 @@
         {
           "description": "Fixed: ezQuake",
           "name": "2"
+        },
+        {
+          "description": "Format: ezQuake <version> or <number of players>/<max players> <delim> <map>",
+          "name": "3"
         }
       ]
+    },
+    "cl_window_caption_delimiter": {
+      "default": " | ",
+      "desc": "Delimiter between <number of players>/<max players> and <map> when using cl_window_caption 3.",
+      "group-id": "40",
+      "type": "string"
     },
     "cl_www_address": {
       "default": "https://badplace.eu/",
