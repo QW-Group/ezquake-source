@@ -45,6 +45,9 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 #include "qtv.h"
 #include "r_brushmodel_sky.h"
 #include "central.h"
+#ifdef MVD_PEXT1_EZCSQC
+#include "ezcsqc.h"
+#endif
 
 int CL_LoginImageId(const char* name);
 
@@ -628,6 +631,15 @@ void CL_Prespawn (void)
 		MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 		MSG_WriteString (&cls.netchan.message, va("prespawn %i 0 %i", cl.servercount, cl.map_checksum2));
 	}
+
+#ifdef MVD_PEXT1_EZCSQC
+	if (cls.mvdprotocolextensions1 & MVD_PEXT1_EZCSQC)
+	{
+		MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
+		MSG_WriteString(&cls.netchan.message, "enablecsqc");
+		Con_Printf("enabling CSQC...\n");
+	}
+#endif
 }
 
 /*
@@ -1980,7 +1992,18 @@ void CL_ParseStartSoundPacket(void)
 	if (CL_Demo_SkipMessage(true))
 		return;
 
-    S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
+#ifdef MVD_PEXT1_EZCSQC
+	if (ezcsqc.active)
+	{
+		if (CL_EZCSQC_Event_Sound(ent, channel, sound_num, volume/255.0, attenuation, pos, 1, 0))
+		{
+			// if ezcsqc intercepted the sound, don't continue with engine default behavior
+			return;
+		}
+	}
+#endif
+
+	S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 
 	if (ent == cl.playernum+1)
 		TP_CheckPickupSound (cl.sound_name[sound_num], pos);
@@ -3608,9 +3631,19 @@ void CL_ParseServerMessage (void)
 		}
 
 		if (cmd == svc_qizmovoice)
+		{
 			SHOWNET("svc_qizmovoice")
+		}
 		else if (cmd < num_svc_strings)
+		{
 			SHOWNET(svc_strings[cmd]);
+		}
+#ifdef MVD_PEXT1_EZCSQC
+		else if (cmd == svc_fte_csqcentities)
+		{
+			SHOWNET("svc_fte_csqcentities");
+		}
+#endif
 
 		// Update msg no:
 		if (cmd < NUMMSG)
@@ -4029,6 +4062,13 @@ void CL_ParseServerMessage (void)
 					break;
 				}
 #endif  // PROTOCOL_VERSION_FTE
+#ifdef MVD_PEXT1_EZCSQC
+			case svc_fte_csqcentities:
+				{
+					CL_EZCSQC_ParseEntities();
+					break;
+				}
+#endif
 			case svc_soundlist:
 				{
 					CL_ParseSoundlist();
