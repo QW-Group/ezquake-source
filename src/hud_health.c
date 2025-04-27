@@ -44,6 +44,7 @@ static qbool HUD_HealthLow(void)
 static void SCR_HUD_DrawHealth(hud_t *hud)
 {
 	static cvar_t *scale = NULL, *style, *digits, *align, *proportional;
+	static cvar_t *text_color_low, *text_color_normal, *text_color_mega;
 	static int value;
 	if (scale == NULL) {
 		// first time called
@@ -52,11 +53,20 @@ static void SCR_HUD_DrawHealth(hud_t *hud)
 		digits = HUD_FindVar(hud, "digits");
 		align = HUD_FindVar(hud, "align");
 		proportional = HUD_FindVar(hud, "proportional");
+		text_color_low = HUD_FindInitTextColorVar(hud, "text_color_low");
+		text_color_normal = HUD_FindInitTextColorVar(hud, "text_color_normal");
+		text_color_mega = HUD_FindInitTextColorVar(hud, "text_color_mega");
 	}
 
 	value = HUD_Stats(STAT_HEALTH);
 	if (cl.spectator == cl.autocam) {
-		SCR_HUD_DrawNum(hud, (value < 0 ? 0 : value), HUD_HealthLow(), scale->value, style->value, digits->value, align->string, proportional->integer);
+		SCR_HUD_DrawNum2(hud, (value < 0 ? 0 : value), HUD_HealthLow(),
+			scale->value, style->value, digits->value, align->string,
+			proportional->integer, true,
+			strlen(text_color_low->string) == 0 ? NULL : text_color_low->color,
+			value > 100
+				? strlen(text_color_mega->string) == 0 ? NULL : text_color_mega->color
+				: strlen(text_color_normal->string) == 0 ? NULL : text_color_normal->color);
 	}
 }
 
@@ -141,6 +151,9 @@ void Health_HudInit(void)
 		"align", "right",
 		"digits", "3",
 		"proportional", "0",
+		"text_color_low", "",
+		"text_color_normal", "",
+		"text_color_mega", "",
 		NULL
 	);
 
