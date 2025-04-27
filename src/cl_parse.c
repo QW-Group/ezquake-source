@@ -2866,6 +2866,9 @@ void CL_ProcessPrint (int level, char* s0)
 	char *chat_sound_file;
 	float chat_sound_vol = 0.0;
 
+	extern cvar_t ignore_no_weapon;
+	extern cvar_t ignore_not_enough_ammo;
+
 	// { QTV: check do this string is QTV chat
 	qtvtmp = SkipQTVLeadingProxies(s0);
 
@@ -3050,6 +3053,17 @@ void CL_ProcessPrint (int level, char* s0)
 				if (*p == 0x0D || (*p == 0x0A && p[1]))
 					*p = ' ';
 			}
+		}
+	}
+	else if (level == PRINT_HIGH)
+	{
+		if (ignore_no_weapon.integer > 0 && strncmp(s0, "no weapon", 9) == 0)
+		{
+			return;
+		}
+		else if (ignore_not_enough_ammo.integer > 0 && strncmp(s0, "not enough ammo", 15) == 0)
+		{
+			return;
 		}
 	}
 

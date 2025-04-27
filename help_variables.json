@@ -13453,6 +13453,38 @@
         }
       ]
     },
+    "ignore_no_weapon": {
+      "default": "0",
+      "desc": "Toggle showing the \"no weapon.\" message emitted by KTX when attempting to fire a weapon you don't have.",
+      "group-id": "3",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "",
+          "name": "false"
+        },
+        {
+          "description": "",
+          "name": "true"
+        }
+      ]
+    },
+    "ignore_not_enough_ammo": {
+      "default": "0",
+      "desc": "Toggle showing the \"not enough ammo.\" message emitted by KTX when attempting to fire a weapon without enough ammo.",
+      "group-id": "3",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "",
+          "name": "false"
+        },
+        {
+          "description": "",
+          "name": "true"
+        }
+      ]
+    },
     "image_jpeg_quality_level": {
       "default": "75",
       "desc": "You can set quality of jpeg screenshots with 'image_jpeg_quality_level x' where x is an integer from 0 to 100 inclusive.\nThe larger x is, the better the quality of a jpeg screenshot, but also the bigger the size.",
