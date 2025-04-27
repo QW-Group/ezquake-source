@@ -6691,6 +6691,41 @@
       "group-id": "19",
       "type": "float"
     },
+    "hud_armor_text_color_none": {
+      "desc": "Text color when no armor is equipped (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_armor_text_color_ga_low": {
+      "desc": "Text color when low on ga (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_armor_text_color_ga_normal": {
+      "desc": "Text color for ga (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_armor_text_color_ya_low": {
+      "desc": "Text color when low on ya (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_armor_text_color_ya_normal": {
+      "desc": "Text color for ya (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_armor_text_color_ra_low": {
+      "desc": "Text color when low on ra (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_armor_text_color_ra_normal": {
+      "desc": "Text color for ra (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
     "hud_armordamage_align": {
       "desc": "Sets armordamage HUD element alignment.",
       "group-id": "19",
