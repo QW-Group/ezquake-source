@@ -98,6 +98,7 @@ extern cvar_t   pm_slidefix;
 extern cvar_t   pm_airstep;
 extern cvar_t   pm_pground;
 extern cvar_t   pm_rampjump;
+extern cvar_t   pm_surffix;
 extern double	sv_frametime;
 
 //bliP: init ->
@@ -3675,6 +3676,7 @@ FIXME
 	movevars.airstep = ((int)pm_airstep.value != 0);
 	movevars.pground = ((int)pm_pground.value != 0);
 	movevars.rampjump = ((int)pm_rampjump.value != 0);
+	movevars.surffix = ((int)pm_surffix.value != 0);
 
 	// do the move
 	blocked = PM_PlayerMove ();
