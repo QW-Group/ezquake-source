@@ -1038,7 +1038,7 @@ void Draw_InitConback(void)
 		Sys_Error("Draw_InitConback: conback.lmp size is not 320x200");
 	}
 
-	if ((pic_24bit = R_LoadPicImage(va("gfx/%s", scr_conpicture.string), "conback", 0, 0, 0))) {
+	if ((pic_24bit = R_LoadPicImage(va("gfx/%s", scr_conpicture.string), "conback", 0, 0, TEX_ALPHA))) {
 		Draw_CopyMPICKeepSize(&conback, pic_24bit);
 	}
 	else {
