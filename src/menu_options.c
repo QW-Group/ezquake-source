@@ -237,7 +237,8 @@ const char* scr_conback_enum[] = {
 
 const char* s_khz_enum[] = {
 	"11 kHz", "11", "22 kHz", "22", "44 kHz", "44"
-#if defined(__linux__) || defined(__FreeBSD__)
+//FIXME probably works on all supported platforms by now?
+#if defined(__linux__) || defined(__FreeBSD__) || defined(_WIN32)
 	,"48 kHz", "48"
 #endif
 };
