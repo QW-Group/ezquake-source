@@ -180,7 +180,7 @@ static int Enum_Find_ValueCode(setting* set)
 
 	for (i = 0; i <= set->max; i++)
 	{
-		if (!strcmp(VARSVAL(set->cvar), ENUM_VALUE(set, i)))
+		if (!strcasecmp(VARSVAL(set->cvar), ENUM_VALUE(set, i)))
 			return i;
 	}
 	return ENUM_ITEM_NOT_FOUND;
