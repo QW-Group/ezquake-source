@@ -65,7 +65,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define ADDSET_NAMED(label, var, strs) { stt_named, label, false, &var, 0, sizeof(strs)/sizeof(char*)-1, 1, NULL, NULL, NULL, strs }
 
 // color
-#define ADDSET_COLOR(label, var) { stt_playercolor, label, false, &var, -1, 13, 1, NULL, NULL, NULL, NULL }
+#define ADDSET_COLOR(label, var) { stt_playercolor, label, false, &var, -1, 16, 1, NULL, NULL, NULL, NULL }
 
 // key bind
 #define ADDSET_BIND(label, cmd) { stt_bind, label, false, NULL, 0, 0, 0, NULL, NULL, NULL, NULL, cmd }
@@ -101,7 +101,7 @@ typedef enum  {
 	stt_enum,                  // named enum, pairs of "name", "value"
 	stt_action,                // function is assigned to this, pointer must be stored in togglefnc
 	stt_string,                // string - fully editable by the user, needs only cvar
-	stt_playercolor,           // named enum 0..13
+	stt_playercolor,           // named enum 0..16
 	stt_skin,                  // player skin
 	stt_bind,                  // keybinding
 	stt_advmark,               // denotes advanced settings area
