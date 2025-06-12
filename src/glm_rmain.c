@@ -86,6 +86,19 @@ static void GLM_DrawWorldOutlines(void)
                            (float)gl_outline_color_world.color[1] / 255.0f,
                            (float)gl_outline_color_world.color[2] / 255.0f);
 
+		// Scaling the outline with framebuffer resolution for consistency
+		// Outline scaling factor bounds:
+		// - 1:1 for upscaling a smaller FB (only one pixel needed, as they get bigger and bigger and bloat the view),
+		// - 4:1 for downscaling a larger FB (max effective framebuffer scale)
+		// MAX is better at high scales and mismatched x/y ratios
+		// (maintains more outline at high FB scale, consistent with base res).
+		// MIN/MAX makes no difference at tiny scales
+
+		float fb_scale_x = VID_ScaledWidth3D() / glConfig.vidWidth;
+		float fb_scale_y = VID_ScaledHeight3D() / glConfig.vidHeight;
+		float fb_scaling = bound(1,(max(fb_scale_x, fb_scale_y)),4);
+		R_ProgramUniform1f(r_program_uniform_outline_scale, fb_scaling);
+
 		R_ProgramUse(r_program_fx_world_geometry);
 		R_ApplyRenderingState(r_state_fx_world_geometry);
 

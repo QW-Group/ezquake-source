@@ -19,11 +19,16 @@ bool vec_nequ(vec3 a, vec3 b) {
 void main()
 {
 	ivec2 coords = ivec2(TextureCoord.x * r_width, TextureCoord.y * r_height);
+
+	// Scale the sampling offsets by outline_scale
+	ivec2 offset_x = ivec2(int(outline_scale), 0);
+	ivec2 offset_y = ivec2(0, int(outline_scale));
+
 	vec4 center = texelFetch(normal_texture, coords, 0);
-	vec4 left   = texelFetch(normal_texture, coords - ivec2(1, 0), 0);
-	vec4 right  = texelFetch(normal_texture, coords + ivec2(1, 0), 0);
-	vec4 up     = texelFetch(normal_texture, coords - ivec2(0, 1), 0);
-	vec4 down   = texelFetch(normal_texture, coords + ivec2(0, 1), 0);
+	vec4 left   = texelFetch(normal_texture, coords - offset_x, 0);
+	vec4 right  = texelFetch(normal_texture, coords + offset_x, 0);
+	vec4 up     = texelFetch(normal_texture, coords - offset_y, 0);
+	vec4 down   = texelFetch(normal_texture, coords + offset_y, 0);
 
 	bool ignore = center.a == left.a && center.a == right.a && center.a == up.a && center.a == down.a;
 	if(ignore) {
