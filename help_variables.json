@@ -2394,6 +2394,11 @@
         }
       ]
     },
+    "cl_pext_colourmod": {
+      "default": "1",
+      "group-id": "0",
+      "system-generated": true
+    },
     "cl_pext_floatcoords": {
       "default": "1",
       "desc": "If set, enable support for FTE's floating point coordinate protocol extension.",
@@ -2478,6 +2483,40 @@
       "desc": "This variable determines how fast you you turn up/down when using \"+lookup\" and \"+lookdown\".",
       "group-id": "9",
       "type": "float"
+    },
+    "cl_portpingprobe_delay": {
+      "default": "0",
+      "desc": "Specifies the number of milliseconds to sleep between each probe. Defaults to no delay",
+      "group-id": "21",
+      "type": "integer"
+    },
+    "cl_portpingprobe_enable": {
+      "default": "0",
+      "desc": "Toggle whether a port ping probe should be performed when connecting to a server.",
+      "group-id": "21",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Do not perform a port ping probe before connecting to a server.",
+          "name": "false"
+        },
+        {
+          "description": "Perform a port ping probe before connecting to a server.",
+          "name": "true"
+        }
+      ]
+    },
+    "cl_portpingprobe_port_probes": {
+      "default": "1",
+      "desc": "Lets you set how many times each port should be probed when connecting to a server. It can be set to a value between 1 and 5.",
+      "group-id": "21",
+      "type": "integer"
+    },
+    "cl_portpingprobe_probes": {
+      "default": "500",
+      "desc": "Lets you set how many port ping probes that should be performed when connecting to a server. It can be set to a value between 1 and 1000.",
+      "group-id": "21",
+      "type": "integer"
     },
     "cl_predict_half": {
       "default": "0",
@@ -2766,40 +2805,6 @@
           "name": "true"
         }
       ]
-    },
-    "cl_portpingprobe_delay": {
-      "default": "0",
-      "desc": "Specifies the number of milliseconds to sleep between each probe. Defaults to no delay",
-      "group-id": "21",
-      "type": "integer"
-    },
-    "cl_portpingprobe_enable": {
-      "default": "0",
-      "desc": "Toggle whether a port ping probe should be performed when connecting to a server.",
-      "group-id": "21",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Do not perform a port ping probe before connecting to a server.",
-          "name": "false"
-        },
-        {
-          "description": "Perform a port ping probe before connecting to a server.",
-          "name": "true"
-        }
-      ]
-    },
-    "cl_portpingprobe_probes": {
-      "default": "500",
-      "desc": "Lets you set how many port ping probes that should be performed when connecting to a server. It can be set to a value between 1 and 1000.",
-      "group-id": "21",
-      "type": "integer"
-    },
-    "cl_portpingprobe_port_probes": {
-      "default": "1",
-      "desc": "Lets you set how many times each port should be probed when connecting to a server. It can be set to a value between 1 and 5.",
-      "group-id": "21",
-      "type": "integer"
     },
     "cl_useproxy": {
       "default": "0",
@@ -5253,15 +5258,15 @@
       "remarks": "Requires vid_renderer 1",
       "type": "boolean"
     },
-    "gl_outline_world_normal_threshold": {
-      "default": "0.997",
-      "desc": "Threshold for finding edges face orientation. Higher value is more edges. The allowed range is 0 to 0.999.",
-      "group-id": "35",
-      "type": "float"
-    },
     "gl_outline_world_depth_threshold": {
       "default": "4",
       "desc": "Threshold for finding edges with depth values. Higher value means vanishing lines at close range. Lower value means false positives at longer range.",
+      "group-id": "35",
+      "type": "float"
+    },
+    "gl_outline_world_normal_threshold": {
+      "default": "0.997",
+      "desc": "Threshold for finding edges face orientation. Higher value is more edges. The allowed range is 0 to 0.999.",
       "group-id": "35",
       "type": "float"
     },
@@ -7758,6 +7763,7 @@
     "hud_frags_vertical": {
       "desc": "Switches vertical rendering of frags bar.",
       "group-id": "19",
+      "type": "float",
       "values": [
         {
           "description": "No vertical rendering.",
@@ -7771,8 +7777,7 @@
           "description": "New vertical rendering: split columns evenly based on number of players.",
           "name": "2"
         }
-      ],
-      "type": "float"
+      ]
     },
     "hud_gameclock_align_x": {
       "desc": "Vertical alignment of the gameclock HUD element. See the HUD manual for more info.",
@@ -11662,6 +11667,11 @@
       "group-id": "19",
       "type": "float"
     },
+    "hud_scoremapname_show": {
+      "desc": "Toggles whether the scoremapname is displayed. It is only displayed when the scoreboard is open.",
+      "group-id": "19",
+      "type": "boolean"
+    },
     "hud_scoremapname_style": {
       "desc": "Style of the scoremapname HUD element.",
       "group-id": "19",
@@ -11680,11 +11690,6 @@
           "name": "2"
         }
       ]
-    },
-    "hud_scoremapname_show": {
-      "desc": "Toggles whether the scoremapname is displayed. It is only displayed when the scoreboard is open.",
-      "group-id": "19",
-      "type": "boolean"
     },
     "hud_sigil1_align_x": {
       "desc": "Sets horizontal align of sigil 1 icon (rune)",
@@ -13383,6 +13388,38 @@
         }
       ]
     },
+    "ignore_no_weapon": {
+      "default": "0",
+      "desc": "Toggle showing the \"no weapon.\" message emitted by KTX when attempting to fire a weapon you don't have.",
+      "group-id": "3",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "",
+          "name": "false"
+        },
+        {
+          "description": "",
+          "name": "true"
+        }
+      ]
+    },
+    "ignore_not_enough_ammo": {
+      "default": "0",
+      "desc": "Toggle showing the \"not enough ammo.\" message emitted by KTX when attempting to fire a weapon without enough ammo.",
+      "group-id": "3",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "",
+          "name": "false"
+        },
+        {
+          "description": "",
+          "name": "true"
+        }
+      ]
+    },
     "ignore_opponents": {
       "default": "0",
       "group-id": "3",
@@ -13450,38 +13487,6 @@
         {
           "description": "Ignore spec chat even if you are a spectator.",
           "name": "2"
-        }
-      ]
-    },
-    "ignore_no_weapon": {
-      "default": "0",
-      "desc": "Toggle showing the \"no weapon.\" message emitted by KTX when attempting to fire a weapon you don't have.",
-      "group-id": "3",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "",
-          "name": "false"
-        },
-        {
-          "description": "",
-          "name": "true"
-        }
-      ]
-    },
-    "ignore_not_enough_ammo": {
-      "default": "0",
-      "desc": "Toggle showing the \"not enough ammo.\" message emitted by KTX when attempting to fire a weapon without enough ammo.",
-      "group-id": "3",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "",
-          "name": "false"
-        },
-        {
-          "description": "",
-          "name": "true"
         }
       ]
     },
@@ -15134,6 +15139,11 @@
         }
       ]
     },
+    "pext_ezquake_verfortrans": {
+      "default": "7814",
+      "group-id": "0",
+      "system-generated": true
+    },
     "pm_airstep": {
       "default": "",
       "desc": "Airstep player-move-extension.\nChanges the physics of the game and allows to do jumps on stairs.",
@@ -15152,6 +15162,7 @@
       ]
     },
     "pm_bunnyspeedcap": {
+      "default": "",
       "desc": "This is experimental code intended to restore class balance in TF.\nIf you set this cvar to something like 1.5 or 2, a solider will not be able to bunnyhop as fast as a scout does :)\nNote that this cvar is optional and disabled by default, so it will in NO WAY affect gameplay unless you set it explicitly to anything but 0.",
       "group-id": "34",
       "type": "float"
@@ -15175,6 +15186,7 @@
       "system-generated": true
     },
     "pm_slidefix": {
+      "default": "",
       "desc": "When set to 1, Upon decsension from a sloped surface, the player doesn't \"drop\" (which is a bug in QW), but smoothly slides, as it was in NQ.",
       "group-id": "34",
       "type": "boolean",
@@ -15489,7 +15501,7 @@
       "system-generated": true
     },
     "qws_builddate": {
-      "default": "Jan 24 2021, 15:34:11",
+      "default": "Jun 10 2025, 22:10:07",
       "group-id": "0",
       "system-generated": true
     },
@@ -15946,23 +15958,6 @@
       "group-id": "35",
       "remarks": "See also: r_nearclip.",
       "type": "float"
-    },
-    "r_remove_collinear_vertices": {
-        "default": "0",
-        "desc": "Filter out vertices causing triangles to have zero area. These types of triangles are a sore spot in some GPUs that risk introducing glitches. An expected side effect is a risk of seeing a sparkling pixel.",
-        "group-id": "35",
-        "remarks": "For macOS arm64 this is force-enabled to prevent cheating. This filtering is a temporary workaround before adding code to avoid generating such triangles in the first place.",
-        "type": "boolean",
-        "values": [
-            {
-                "description": "Disable filtering of collinear vertices.",
-                "name": "false"
-            },
-            {
-                "description": "Enable filtering of collinear vertices.",
-                "name": "true"
-            }
-        ]
     },
     "r_fastsky": {
       "default": "0",
@@ -16629,6 +16624,23 @@
         }
       ]
     },
+    "r_remove_collinear_vertices": {
+      "default": "0",
+      "desc": "Filter out vertices causing triangles to have zero area. These types of triangles are a sore spot in some GPUs that risk introducing glitches. An expected side effect is a risk of seeing a sparkling pixel.",
+      "group-id": "35",
+      "remarks": "For macOS arm64 this is force-enabled to prevent cheating. This filtering is a temporary workaround before adding code to avoid generating such triangles in the first place.",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Disable filtering of collinear vertices.",
+          "name": "false"
+        },
+        {
+          "description": "Enable filtering of collinear vertices.",
+          "name": "true"
+        }
+      ]
+    },
     "r_reportedgeout": {
       "group-id": "31",
       "type": "boolean",
@@ -17238,6 +17250,13 @@
       "remarks": "Relates to X_FRAGS_UNKNOWN rules in fragfile.dat.",
       "type": "string"
     },
+    "r_tracker_string_inconsole_prefix": {
+      "default": "",
+      "desc": "Prefix to prepend before tracker messages in the console",
+      "group-id": "40",
+      "remarks": "The prefix is only visible when r_tracker_inconsole has a value greater than 0",
+      "type": "string"
+    },
     "r_tracker_string_suicides": {
       "default": " (suicides)",
       "group-id": "40",
@@ -17246,13 +17265,6 @@
     "r_tracker_string_teammate": {
       "default": "teammate",
       "group-id": "40",
-      "type": "string"
-    },
-    "r_tracker_string_inconsole_prefix": {
-      "default": "",
-      "desc": "Prefix to prepend before tracker messages in the console",
-      "group-id": "40",
-      "remarks": "The prefix is only visible when r_tracker_inconsole has a value greater than 0",
       "type": "string"
     },
     "r_tracker_time": {
@@ -19360,6 +19372,26 @@
       "group-id": "5",
       "type": "boolean"
     },
+    "scr_scoreboard_qtv_name": {
+      "desc": "This variable will change what qtv users are called in the scoreboard.\nWhen teamplay is not on, this variable is cut to 4 characters.\n&cRGB values are not accepted.",
+      "group-id": "47",
+      "type": "string"
+    },
+    "scr_scoreboard_showclock": {
+      "default": "0",
+      "group-id": "47",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Hide the clock on the scoreboard.",
+          "name": "false"
+        },
+        {
+          "description": "Show the clock on the scoreboard.",
+          "name": "true"
+        }
+      ]
+    },
     "scr_scoreboard_showflagstats": {
       "default": "0",
       "desc": "This setting has no effect on TeamFortress which automatically enables flag stats",
@@ -19376,17 +19408,17 @@
         }
       ]
     },
-    "scr_scoreboard_showclock": {
-      "default": "0",
+    "scr_scoreboard_showfrags": {
+      "default": "1",
       "group-id": "47",
       "type": "boolean",
       "values": [
         {
-          "description": "Hide the clock on the scoreboard.",
+          "description": "Disable frags on the scoreboard.",
           "name": "false"
         },
         {
-          "description": "Show the clock on the scoreboard.",
+          "description": "Enable frags on the scoreboard.",
           "name": "true"
         }
       ]
@@ -19414,23 +19446,8 @@
         }
       ]
     },
-    "scr_scoreboard_showfrags": {
-      "default": "1",
-      "group-id": "47",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Disable frags on the scoreboard.",
-          "name": "false"
-        },
-        {
-          "description": "Enable frags on the scoreboard.",
-          "name": "true"
-        }
-      ]
-    },
     "scr_scoreboard_showqtvusers": {
-      "default": "0",
+      "default": "1",
       "group-id": "47",
       "type": "boolean",
       "values": [
@@ -19443,11 +19460,6 @@
           "name": "true"
         }
       ]
-    },
-    "scr_scoreboard_qtv_name": {
-      "desc": "This variable will change what qtv users are called in the scoreboard.\nWhen teamplay is not on, this variable is cut to 4 characters.\n&cRGB values are not accepted.",
-      "group-id": "47",
-      "type": "string"
     },
     "scr_scoreboard_spectator_name": {
       "desc": "This variable will change what spectators are called in the scoreboard.\nWhen teamplay is not on, this variable is cut to 4 characters.\n&cRGB values are not accepted.",
@@ -20083,9 +20095,9 @@
     },
     "showturtle": {
       "default": "0",
+      "desc": "Sets the value at which the turtle icon will be displayed. For example, if showturtle is set to 70, the turtle will appear when the FPS drops to 70 or below.",
       "group-id": "40",
-      "type": "float",
-      "desc": "Sets the value at which the turtle icon will be displayed. For example, if showturtle is set to 70, the turtle will appear when the FPS drops to 70 or below."
+      "type": "float"
     },
     "skill": {
       "default": "1",
@@ -22116,92 +22128,6 @@
         }
       ]
     },
-    "vid_framebuffer_hdr": {
-      "default": "0",
-      "desc": "Enables increased, 16-bit float HDR color precision for the framebuffer. This reduces color banding, and allows e.g. tone mapping in post-processing.",
-      "group-id": "52",
-      "type": "boolean"
-    },
-    "vid_framebuffer_hdr_tonemap": {
-      "default": "0",
-      "desc": "Toggles tone mapping in HDR mode.",
-      "group-id": "52",
-      "type": "boolean"
-    },
-    "vid_framebuffer_height": {
-      "default": "0",
-      "desc": "Sets a custom height for the FBO (200 pixels minimum).",
-      "group-id": "52",
-      "remarks": "Setting vid_framebuffer_scale overrides custom FBO width/height.",
-      "type": "integer"
-    },
-    "vid_framebuffer_multisample": {
-      "default": "0",
-      "desc": "The number of samples used around each pixel for anti-aliasing when using custom FBOs. Range 0-16.",
-      "group-id": "52",
-      "type": "integer"
-    },
-    "vid_framebuffer_scale": {
-      "default": "1",
-      "desc": "Scales the FBOs down/up to the screen resolution. Similar to \"render scale\" in other games if combined with vid_framebuffer 2.",
-      "group-id": "52",
-      "remarks": "Takes precedence over vid_framebuffer_width/height.",
-      "type": "float",
-      "values": [
-        {
-          "description": "Disable scaling.",
-          "name": "0 or 1"
-        },
-        {
-          "description": "Render to a larger FBO, then scale down.",
-          "name": "0.25 - 1"
-        },
-        {
-          "description": "Render to a smaller FBO, then scale up.",
-          "name": "1.x+"
-        }
-      ]
-    },
-    "vid_framebuffer_smooth": {
-      "default": "1",
-      "desc": "Toggles filtering when scaling the framebuffer up/down to the screen resolution (with either the vid_framebuffer_scale or width+height properties).",
-      "group-id": "52",
-      "remarks": "Disable smoothing if you want to go for a chunky pixel look with FBO upscaling.",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Nearest filtering - blocky scaling.",
-          "name": "false"
-        },
-        {
-          "description": "Linear filtering - smooth scaling.",
-          "name": "true"
-        }
-      ]
-    },
-    "vid_framebuffer_sshotmode": {
-      "default": "1",
-      "desc": "Controls screenshot resolution when using scaled framebuffers.",
-      "group-id": "41",
-      "type": "boolean",
-      "values": [
-        {
-          "description": "Fullscreen/windowed resolution.",
-          "name": "false"
-        },
-        {
-          "description": "Framebuffer resolution.",
-          "name": "true"
-        }
-      ]
-    },
-    "vid_framebuffer_width": {
-      "default": "0",
-      "desc": "Sets a custom width for the FBO (320 pixels minimum).",
-      "group-id": "52",
-      "remarks": "Setting vid_framebuffer_scale overrides custom FBO width/height.",
-      "type": "integer"
-    },
     "vid_framebuffer_fxaa": {
       "default": "0",
       "desc": "Fast Approximate Anti-Aliasing. Enable vid_framebuffer 2 to avoid filtering HUD. Typically between 1-6.",
@@ -22281,6 +22207,92 @@
           "name": "17"
         }
       ]
+    },
+    "vid_framebuffer_hdr": {
+      "default": "0",
+      "desc": "Enables increased, 16-bit float HDR color precision for the framebuffer. This reduces color banding, and allows e.g. tone mapping in post-processing.",
+      "group-id": "52",
+      "type": "boolean"
+    },
+    "vid_framebuffer_hdr_tonemap": {
+      "default": "0",
+      "desc": "Toggles tone mapping in HDR mode.",
+      "group-id": "52",
+      "type": "boolean"
+    },
+    "vid_framebuffer_height": {
+      "default": "0",
+      "desc": "Sets a custom height for the FBO (200 pixels minimum).",
+      "group-id": "52",
+      "remarks": "Setting vid_framebuffer_scale overrides custom FBO width/height.",
+      "type": "integer"
+    },
+    "vid_framebuffer_multisample": {
+      "default": "0",
+      "desc": "The number of samples used around each pixel for anti-aliasing when using custom FBOs. Range 0-16.",
+      "group-id": "52",
+      "type": "integer"
+    },
+    "vid_framebuffer_scale": {
+      "default": "1",
+      "desc": "Scales the FBOs down/up to the screen resolution. Similar to \"render scale\" in other games if combined with vid_framebuffer 2.",
+      "group-id": "52",
+      "remarks": "Takes precedence over vid_framebuffer_width/height.",
+      "type": "float",
+      "values": [
+        {
+          "description": "Disable scaling.",
+          "name": "0 or 1"
+        },
+        {
+          "description": "Render to a larger FBO, then scale down.",
+          "name": "0.25 - 1"
+        },
+        {
+          "description": "Render to a smaller FBO, then scale up.",
+          "name": "1.x+"
+        }
+      ]
+    },
+    "vid_framebuffer_smooth": {
+      "default": "1",
+      "desc": "Toggles filtering when scaling the framebuffer up/down to the screen resolution (with either the vid_framebuffer_scale or width+height properties).",
+      "group-id": "52",
+      "remarks": "Disable smoothing if you want to go for a chunky pixel look with FBO upscaling.",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Nearest filtering - blocky scaling.",
+          "name": "false"
+        },
+        {
+          "description": "Linear filtering - smooth scaling.",
+          "name": "true"
+        }
+      ]
+    },
+    "vid_framebuffer_sshotmode": {
+      "default": "0",
+      "desc": "Controls screenshot resolution when using scaled framebuffers.",
+      "group-id": "41",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Fullscreen/windowed resolution.",
+          "name": "false"
+        },
+        {
+          "description": "Framebuffer resolution.",
+          "name": "true"
+        }
+      ]
+    },
+    "vid_framebuffer_width": {
+      "default": "0",
+      "desc": "Sets a custom width for the FBO (320 pixels minimum).",
+      "group-id": "52",
+      "remarks": "Setting vid_framebuffer_scale overrides custom FBO width/height.",
+      "type": "integer"
     },
     "vid_fullscreen": {
       "default": "1",
@@ -22659,6 +22671,11 @@
       "default": "",
       "group-id": "43",
       "type": "string"
+    },
+    "vm_rtChecks": {
+      "default": "1",
+      "group-id": "0",
+      "system-generated": true
     },
     "volume": {
       "default": "0.7",

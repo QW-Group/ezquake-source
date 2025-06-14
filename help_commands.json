@@ -859,6 +859,9 @@
   "hud_recalculate": {
     "description": "Refresh the positions of your HUD elements."
   },
+  "hunk_print": {
+    "system-generated": true
+  },
   "if": {
     "arguments": [
       {
@@ -1663,9 +1666,6 @@
     "description": "Sets the animation parameters of the skybox. Requires a skybox with some level of transparency.",
     "syntax": "skywind [distance] [yaw] [period] [pitch]"
   },
-  "skywind_save": {
-    "description": "Saves the current skywind configuration as gfx/env/$skybox_wind.cfg."
-  },
   "skywind_load": {
     "description": "Loads the skywind config for the loaded skymap. The file is expected to contain: skywind [distance] [yaw] [period] [pitch]."
   },
@@ -1676,6 +1676,9 @@
   "skywind_rotate": {
     "description": "Updates the skywind direction with yaw (horizontal) and pitch (vertical) adjustment.",
     "syntax": "skywind_rotate [yaw] [pitch]"
+  },
+  "skywind_save": {
+    "description": "Saves the current skywind configuration as gfx/env/$skybox_wind.cfg."
   },
   "snap": {
     "description": "Remote screenshot from a player.\n\nExample:\nsnap 1234\n - server requests remote screenshot from user 1234",
@@ -1711,6 +1714,9 @@
   },
   "stopsound": {
     "description": "Stops all sounds currently being played."
+  },
+  "stopsound_script": {
+    "system-generated": true
   },
   "sv_democancel": {
     "system-generated": true
@@ -2075,6 +2081,9 @@
     "system-generated": true
   },
   "vip_writeip": {
+    "system-generated": true
+  },
+  "vminfo": {
     "system-generated": true
   },
   "wait": {
