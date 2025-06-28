@@ -78,14 +78,17 @@ static void PM_ClipVelocity (vec3_t in, vec3_t normal, vec3_t out, float overbou
 	for (i = 0; i < 3; i++) {
 		change = normal[i] * backoff;
 		out[i] = in[i] - change;
-		if (out[i] > -STOP_EPSILON && out[i] < STOP_EPSILON)
-			out[i] = 0;
+		// Apply STOP_EPSILON check only if not in surf mode.
+		if (!movevars.surffix) {
+			if (out[i] > -STOP_EPSILON && out[i] < STOP_EPSILON)
+				out[i] = 0;
+		}
 	}
 }
 
 //The basic solid body movement clip that slides along multiple planes
 #define	MAX_CLIP_PLANES 5
-static int PM_SlideMove (void)
+static int PM_OriginalSlideMove (void)
 {
 	vec3_t dir, planes[MAX_CLIP_PLANES], primal_velocity, original_velocity, end;
 	int bumpcount, numbumps, i, j, blocked, numplanes;
@@ -184,6 +187,57 @@ static int PM_SlideMove (void)
 	}
 
 	return blocked;
+}
+
+#define MAX_TRIES 6
+static int PM_SurfSlideMove (void) {
+	trace_t trace;
+	vec3_t try_location, original_velocity;
+	int try_count = 0, blocked = 0;
+
+	VectorCopy(pmove.velocity, original_velocity);
+
+	while (try_count < MAX_TRIES) {
+		// Move at the current velocity, see if we hit something.
+		VectorMA(pmove.origin, pm_frametime, pmove.velocity, try_location)
+		trace = PM_PlayerTrace(pmove.origin, try_location);
+		if (trace.startsolid || trace.allsolid) {
+			VectorClear(pmove.velocity);
+			return BLOCKED_FLOOR | BLOCKED_STEP;
+		}
+		// We didn't collide with anything.
+		if (trace.fraction == 1)
+			break;
+		// Save entity for contact.
+		PM_AddTouchedEnt(trace.e.entnum);
+		// Quake Bullshit (tm)
+		if (trace.plane.normal[2] >= MIN_STEP_NORMAL)
+			blocked |= BLOCKED_FLOOR;
+		else if (!trace.plane.normal[2])
+			blocked |= BLOCKED_STEP;
+		else
+			blocked |= BLOCKED_OTHER;
+		// Reduce the velocity in the plane component to 90% of the fraction needed to get it there within the frame.
+		PM_ClipVelocity(pmove.velocity, trace.plane.normal, pmove.velocity, 1 - trace.fraction * 0.9);
+		// Add a bit against the planes direction to make sure!
+		VectorAdd(pmove.velocity, trace.plane.normal, pmove.velocity);
+		try_count++;
+	}
+	if (DotProduct(pmove.velocity, original_velocity) <= 0 || try_count >= MAX_TRIES)
+		VectorClear(pmove.velocity);
+	VectorMA(pmove.origin, pm_frametime, pmove.velocity, pmove.origin);
+	if (pmove.waterjumptime)
+		VectorCopy(original_velocity, pmove.velocity);
+	return blocked;
+}
+#undef MAX_TRIES
+
+static int PM_SlideMove (void)
+{
+	if (movevars.surffix)
+		return PM_SurfSlideMove();
+	else
+		return PM_OriginalSlideMove();
 }
 
 //Each intersection will try to step over the obstruction instead of sliding along it.
