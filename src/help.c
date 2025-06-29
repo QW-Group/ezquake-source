@@ -53,6 +53,7 @@ static json_t* document_root[helpdoc_count];
 typedef struct json_variable_s
 {
 	const char *name;
+	const char *default_value;
 	const char *description;
 	int value_type;
 	const json_t* values;
@@ -479,6 +480,7 @@ static const json_variable_t* JSON_Variable_Load(const char* name)
 	variableType = json_string_value(json_object_get(variable, "type"));
 
 	memset(&result, 0, sizeof(result));
+	result.default_value = json_string_value(json_object_get(variable, "default"));
 	result.description = json_string_value(json_object_get(variable, "desc"));
 	result.name = name;
 	result.remarks = json_string_value(json_object_get(variable, "remarks"));
@@ -557,6 +559,12 @@ void Help_VarDescription (const char *varname, char* buf, size_t bufsize)
 		strlcat(buf, CharsToBrownStatic("Variable Name: "), bufsize);
 		strlcat(buf, varname, bufsize);
 		strlcat(buf, "\n", bufsize);
+
+		if (var->default_value) {
+			strlcat(buf, CharsToBrownStatic("Default: "), bufsize);
+			strlcat(buf, var->default_value, bufsize);
+			strlcat(buf, "\n", bufsize);
+		}
 	}
 	
 	if (!var)
