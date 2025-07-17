@@ -35,6 +35,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_renderer.h"
 #include "r_brushmodel.h"
+#ifdef MVD_PEXT1_EZCSQC
+#include "ezcsqc.h"
+#endif
 
 /*
 The view is allowed to move slightly from its true position for bobbing,
@@ -1011,6 +1014,14 @@ static void V_CalcRefdef(void)
 
 	//VULT CAMERAS
 	CameraUpdate(view_message.flags & PF_DEAD);
+
+#ifdef MVD_PEXT1_EZCSQC
+	// EZCSQC viewmodel manipulation
+	if (ezcsqc.active)
+	{
+		CL_EZCSQC_ViewmodelUpdate(&view_message);
+	}
+#endif
 
 	// meag: really viewheight shouldn't be here, but it was incorrectly passed for years instead of bob,
 	//       and so without it the gun is rendered too far forward if e.g. viewheight -6
