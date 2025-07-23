@@ -2385,6 +2385,7 @@ void CL_ProcessServerInfo (void)
 		&& (cl.z_ext & Z_EXT_PF_ONGROUND) /* pground doesn't make sense without this */;
 	movevars.ktjump = *(p = Info_ValueForKey(cl.serverinfo, "pm_ktjump")) ? Q_atof(p) : cl.teamfortress ? 0 : 1;
 	movevars.rampjump = (Q_atof(Info_ValueForKey(cl.serverinfo, "pm_rampjump")) != 0);
+	movevars.safestrafe = Q_atoi(Info_ValueForKey(cl.serverinfo, "sv_safestrafe"));
 
 	// Deathmatch and teamplay.
 	cl.deathmatch = atoi(Info_ValueForKey(cl.serverinfo, "deathmatch"));
@@ -3367,6 +3368,11 @@ void CL_SetStat (int stat, int value)
 		for (j = 0; j < 32; j++)
 			if ( (value & (1 << j)) && !(cl.stats[stat] & (1 << j)) )
 				cl.item_gettime[j] = cl.time;
+	}
+
+	// Reset safestrafe state when respawning (health goes from 0 or less to positive)
+	if (stat == STAT_HEALTH && value > 0 && cl.stats[stat] <= 0 && !cl.spectator) {
+		memset(&cl.safestrafe, 0, sizeof(cl.safestrafe));
 	}
 
 	cl.stats[stat] = value;
