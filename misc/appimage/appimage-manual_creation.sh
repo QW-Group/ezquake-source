@@ -6,7 +6,7 @@ SKIP_DEPS="${SKIP_DEPS:-0}"
 
 ARCH=$(uname -m)
 ARCHDASH=$(echo "$ARCH"|tr '_' '-')
-APPIMAGETOOL="https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${ARCH}.AppImage"
+APPIMAGETOOL="https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${ARCH}.AppImage"
 
 curl -Ls "$APPIMAGETOOL" > appimagetool
 if [ $? -ne 0 ];then
