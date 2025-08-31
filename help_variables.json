@@ -2630,6 +2630,27 @@
       "group-id": "53",
       "type": "float"
     },
+    "cl_safestrafe": {
+      "default": "0",
+      "desc": "Enables safestrafe mode in client regardless of server enforcement.",
+      "group-id": "9",
+      "remarks": "Safestrafe is a serverside SOCD fairness feature that requires one or more stop frames between direction changes.",
+      "type": "integer",
+      "values": [
+        {
+          "description": "Disabled",
+          "name": "0 "
+        },
+        {
+          "description": "Enabled (requires one stop frame between direction changes)",
+          "name": "1 "
+        },
+        {
+          "description": "Sets the number of required stop frames between direction changes.",
+          "name": "2+"
+        }
+      ]
+    },
     "cl_savehistory": {
       "default": "1",
       "desc": "Save console commands history to .ezquake_history. Loads history from this file while starting ezquake.",
