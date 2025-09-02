@@ -79,6 +79,7 @@ cvar_t      con_shift               = {"con_shift", "-10"};
 cvar_t      cl_textEncoding         = {"cl_textencoding", "0"};
 cvar_t      con_mm2_only            = {"con_mm2_only", "0"};
 cvar_t      con_proportional        = {"con_proportional", "0"};
+cvar_t      con_margin_left         = {"con_margin_left", "0"};
 
 #ifdef _WIN32
 cvar_t      con_toggle_deadkey      = {"con_deadkey", "1"};
@@ -477,6 +478,7 @@ void Con_Init (void) {
 	Cvar_Register (&con_shift); 
 	Cvar_Register (&con_mm2_only);
 	Cvar_Register (&con_proportional);
+	Cvar_Register (&con_margin_left);
 
 	Cvar_ResetCurrentGroup();
 
@@ -677,7 +679,7 @@ void Con_PrintW(wchar *txt)
 					Con_Linefeed();
 				}
 				y = con.current % con_totallines;
-				idx = y * con_linewidth + con.x;
+				idx = y * con_linewidth + con.x + con_margin_left.integer;
 				con.text[idx] = c | (c > 0 && c <= 0x7F ? (mask | con_ormask) : 0);	// only apply mask if in 'standard' charset
 				memset(&con.clr[idx], 0, sizeof(clrinfo_t)); // zeroing whole struct
 				con.clr[idx].c = color;
