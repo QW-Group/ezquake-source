@@ -70,6 +70,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 #include "r_performance.h"
 #include "r_program.h"
+#ifdef MVD_PEXT1_EZCSQC
+#include "ezcsqc.h"
+#endif
 
 extern qbool ActiveApp, Minimized;
 
@@ -114,6 +117,9 @@ cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1" }; // if set, user will b
 cvar_t  cl_pext_lagteleport = { "cl_pext_lagteleport", "0" }; // server-side adjustment of yaw angle through teleports
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 cvar_t  cl_pext_serversideweapon = { "cl_pext_serversideweapon", "0", 0, onchange_pext_serversideweapon }; // server-side weapon selection
+#endif
+#ifdef MVD_PEXT1_EZCSQC
+cvar_t  cl_pext_ezcsqc = { "cl_pext_ezcsqc", "1" }; // basic client-side game logic support
 #endif
 #endif
 #ifdef FTE_PEXT_256PACKETENTITIES
@@ -558,6 +564,12 @@ unsigned int CL_SupportedMVDExtensions1(void)
 #ifdef MVD_PEXT1_DEBUG_ANTILAG
 	if (cl_debug_antilag_send.integer) {
 		extensions_supported |= MVD_PEXT1_DEBUG_ANTILAG;
+	}
+#endif
+
+#ifdef MVD_PEXT1_EZCSQC
+	if (cl_pext_ezcsqc.value) {
+		extensions_supported |= MVD_PEXT1_EZCSQC;
 	}
 #endif
 
@@ -1235,6 +1247,11 @@ void CL_ClearState (void)
 	memset(cl_lightstyle, 0, sizeof(cl_lightstyle));
 	memset(cl_entities, 0, sizeof(cl_entities));
 	memset(cl_static_entities, 0, sizeof(cl_static_entities));
+
+#ifdef MVD_PEXT1_EZCSQC
+	// clear csqc state
+	CL_EZCSQC_InitializeEntities();
+#endif
 
 	// Set entnum for all entity baselines
 	for (i = 0; i < sizeof(cl_entities) / sizeof(cl_entities[0]); ++i) {
@@ -1918,6 +1935,10 @@ static void CL_InitLocal(void)
 #endif
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 	Cvar_Register(&cl_pext_serversideweapon);
+#endif
+#ifdef MVD_PEXT1_EZCSQC
+       Cvar_Register(&cl_pext_ezcsqc);
+       Cvar_Register(&cl_predict_weaponsounds);
 #endif
 #endif // PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_256PACKETENTITIES
