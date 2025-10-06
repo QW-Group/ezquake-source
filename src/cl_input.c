@@ -755,6 +755,7 @@ void CL_BaseMove(usercmd_t* cmd)
 	float forwardspeed = (float)fabs(cl_forwardspeed.value);
 	float backspeed = (float)fabs(cl_backspeed.value);
 	float speedmodifier = (float)fabs(cl_movespeedkey.value);
+	int idrive = cl_iDrive.integer;
 
 	CL_AdjustAngles();
 
@@ -762,7 +763,7 @@ void CL_BaseMove(usercmd_t* cmd)
 
 	VectorCopy(cl.viewangles, cmd->angles);
 
-	if (cl_iDrive.integer) {
+	if (idrive) {
 		float s1, s2;
 
 		if (in_strafe.state & 1) {
@@ -793,6 +794,13 @@ void CL_BaseMove(usercmd_t* cmd)
 		cmd->sidemove += sidespeed * s1;
 		cmd->sidemove -= sidespeed * s2;
 
+		if ((idrive == 2) && !(s1 && s2) && (s1 || s2) && cls.sidemove_prev) {
+			if (cls.sidemove_prev != (cmd->sidemove > 0) - (cmd->sidemove < 0)) {
+				cmd->sidemove -= sidespeed * s1;
+				cmd->sidemove += sidespeed * s2;
+			}
+		}
+
 		s1 = CL_KeyState(&in_up, false);
 		s2 = CL_KeyState(&in_down, false);
 
@@ -819,6 +827,13 @@ void CL_BaseMove(usercmd_t* cmd)
 
 			cmd->forwardmove += forwardspeed * s1;
 			cmd->forwardmove -= backspeed * s2;
+
+			if ((idrive == 2) && !(s1 && s2) && (s1 || s2) && cls.forwardmove_prev) {
+				if (cls.forwardmove_prev != (cmd->forwardmove > 0) - (cmd->forwardmove < 0)) {
+					cmd->forwardmove -= forwardspeed * s1;
+					cmd->forwardmove += backspeed * s2;
+				}
+			}
 		}
 	}
 	else {
@@ -844,6 +859,15 @@ void CL_BaseMove(usercmd_t* cmd)
 		cmd->forwardmove *= speedmodifier;
 		cmd->sidemove *= speedmodifier;
 		cmd->upmove *= speedmodifier;
+	}
+
+	if (idrive == 2) {
+		cls.sidemove_prev = (cmd->sidemove > 0) - (cmd->sidemove < 0);
+		cls.forwardmove_prev = (cmd->forwardmove > 0) - (cmd->forwardmove < 0);
+	}
+	else {
+		cls.sidemove_prev = 0;
+		cls.forwardmove_prev = 0;
 	}
 
 #ifdef JSS_CAM

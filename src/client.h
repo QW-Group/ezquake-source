@@ -416,6 +416,9 @@ typedef struct
 	byte		cmdmsg_data[1024];		///< have no idea which size here must be
 	sizebuf_t	cmdmsg;
 
+	int		sidemove_prev;		///< previous frame sidemove direction for cl_iDrive 2
+	int		forwardmove_prev;	///< previous frame forwardmove direction for cl_iDrive 2
+
 	// TCPCONNECT
 	int			sockettcp;
 	netadr_t	sockettcpdest;
