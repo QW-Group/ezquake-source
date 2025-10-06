@@ -764,9 +764,9 @@ void Rulesets_OnChange_cl_iDrive(cvar_t *var, char *value, qbool *cancel)
 	}
 
 	if (fval != 0 && fval != 1 && fval != 2) {
-			Com_Printf("Invalid value for %s, use 0, 1 or 2.\n", var->name);
-			*cancel = true;
-			return;
+		Com_Printf("Invalid value for %s, use 0, 1 or 2.\n", var->name);
+		*cancel = true;
+		return;
 	}
 
 	if (cls.state == ca_active) {
@@ -787,12 +787,12 @@ void Rulesets_OnChange_cl_iDrive(cvar_t *var, char *value, qbool *cancel)
 			Cbuf_AddText(va("say side step aid (strafescript): %s\n", state));
 		}
 		else {
-				// disallow during the match
-		Com_Printf("%s changes are not allowed during the match\n", var->name);
-		*cancel = true;
+			// disallow during the match
+			Com_Printf("%s changes are not allowed during the match\n", var->name);
+			*cancel = true;
 		}
 	} else {
-	// allow in not fully connected state
+		// allow in not fully connected state
 	}
 }
 
