@@ -422,6 +422,10 @@ void CL_MakeActive(void)
 	if (!cls.demoseeking) {
 		Con_ClearNotify ();
 	}
+	
+	// Reset safestrafe state on spawn
+	memset(&cl.safestrafe, 0, sizeof(cl.safestrafe));
+	
 	TP_ExecTrigger("f_spawn");
 }
 

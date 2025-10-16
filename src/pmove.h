@@ -86,6 +86,7 @@ typedef struct {
 	qbool	airstep;
 	qbool	pground; // NQ-style "onground" flag handling.
 	int     rampjump; // if set, all vertical velocity clipped by groundplane during jump frame.  If 0, only when falling (standard jumpfix)
+	int     safestrafe; // sv_safestrafe value from server
 } movevars_t;
 
 extern movevars_t movevars;
