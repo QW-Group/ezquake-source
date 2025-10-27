@@ -3431,6 +3431,12 @@
         }
       ]
     },
+    "con_margin_left": {
+      "default": "0",
+      "desc": "If set, messages are padded on the left by the number of spaces defined in the variable",
+      "group-id": "47",
+      "type": "integer"
+    },
     "con_mm2_only": {
       "default": "0",
       "desc": "If set, notification area is limited to mm2 (/say_team) messages.",
