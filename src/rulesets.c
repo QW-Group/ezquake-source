@@ -763,8 +763,8 @@ void Rulesets_OnChange_cl_iDrive(cvar_t *var, char *value, qbool *cancel)
 		return;
 	}
 
-	if (fval != 0 && fval != 1) {
-		Com_Printf("Invalid value for %s, use 0 or 1.\n", var->name);
+	if (fval != 0 && fval != 1 && fval != 2) {
+		Com_Printf("Invalid value for %s, use 0, 1 or 2.\n", var->name);
 		*cancel = true;
 		return;
 	}
@@ -772,7 +772,19 @@ void Rulesets_OnChange_cl_iDrive(cvar_t *var, char *value, qbool *cancel)
 	if (cls.state == ca_active) {
 		if (cl.standby) {
 			// allow in standby
-			Cbuf_AddText(va("say side step aid (strafescript): %s\n", ival ? "on" : "off"));
+			const char *state;
+
+			if (!ival) {
+					state = "off";
+			}
+			else if (ival == 1) {
+					state = "on";
+			}
+			else {
+					state = "smooth";
+			}
+
+			Cbuf_AddText(va("say side step aid (strafescript): %s\n", state));
 		}
 		else {
 			// disallow during the match

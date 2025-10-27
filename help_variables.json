@@ -1752,18 +1752,22 @@
     },
     "cl_iDrive": {
       "default": "0",
-      "desc": "Emulates \"strafe script\". When turned on, you will always change direction instead of stopping when holding opposing movement keys +moveleft and +moveright, or +forward and +back.",
+      "desc": "Emulates \"strafe script\". Mode 1 instantly changes direction when holding opposing movement keys +moveleft and +moveright, or +forward and +back. Mode 2 adds a neutral frame before switching directions to smooth model movement.",
       "group-id": "9",
       "remarks": "Reported in your f_ruleset reply with the '+i' flag.\nCan not be changed during a match.",
-      "type": "boolean",
+      "type": "integer",
       "values": [
         {
           "description": "Pressing keys for both directions will stop movement on that axis.",
-          "name": "false"
+          "name": "0"
         },
         {
           "description": "Auto-releases one of the keys when both directions are pressed.",
-          "name": "true"
+          "name": "1"
+        },
+        {
+          "description": "Adds a neutral frame between opposite directions to improve smoothness.",
+          "name": "2"
         }
       ]
     },
