@@ -131,7 +131,8 @@ void TP_ExecTrigger (const char *trigger)
  
 	if ((alias = Cmd_FindAlias (trigger))) {
 		if (!(f_triggers[i].restricted && Rulesets_RestrictTriggers ())) {
-			Cbuf_AddTextEx (&cbuf_main, va("%s\n", alias->value));
+			Cbuf_AddTextEx(alias->flags & ALIAS_SERVER ? &cbuf_svc : &cbuf_main,
+				va("%s\n", alias->value));
 		}
 	}
 }
