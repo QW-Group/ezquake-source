@@ -1800,7 +1800,8 @@ static void CL_LinkPlayers(void)
 	frame_t *frame;
 	trace_t trace;
 	customlight_t cst_lt = {0};
-	extern cvar_t cl_debug_antilag_ghost, cl_debug_antilag_view, gl_spec_xray_distance;
+	extern cvar_t cl_debug_antilag_ghost, cl_debug_antilag_view;
+	extern cvar_t gl_spec_xray, gl_spec_xray_distance;
 
 	frame = &cl.frames[cl.parsecount & UPDATE_MASK];
 	memset (&ent, 0, sizeof(entity_t));
@@ -2062,20 +2063,23 @@ static void CL_LinkPlayers(void)
 			}
 		}
 
-		VectorCopy(cent->lerp_origin, end);
-		end[2] += 12;
-		trace = PM_TraceLine(r_refdef.vieworg, end);
+		if (gl_spec_xray.value && (cls.demoplayback || cls.mvdplayback))
+		{
+			VectorCopy(cent->lerp_origin, end);
+			end[2] += 12;
+			trace = PM_TraceLine(r_refdef.vieworg, end);
 
-		if (trace.fraction != 1) {
-			VectorSubtract(cent->lerp_origin, r_refdef.vieworg, diff);
-			distance = VectorLength(diff);
+			if (trace.fraction != 1) {
+				VectorSubtract(cent->lerp_origin, r_refdef.vieworg, diff);
+				distance = VectorLength(diff);
 
-			if(distance > gl_spec_xray_distance.value)
-				continue;
-			else
-				ent.renderfx |= RF_BEHINDWALL;
-		} else
-			ent.renderfx &= ~RF_BEHINDWALL;
+				if(distance > gl_spec_xray_distance.value)
+					continue;
+				else
+					ent.renderfx |= RF_BEHINDWALL;
+			} else
+				ent.renderfx &= ~RF_BEHINDWALL;
+		}
 
 		ent.renderfx |= RF_PLAYERMODEL;
 
