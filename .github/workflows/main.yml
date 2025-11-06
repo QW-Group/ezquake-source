@@ -193,7 +193,8 @@ jobs:
 
       - name: Get release date
         run: |
-          RELEASE_DATE=$(git log -1 --format=%cI "${{ github.ref_name }}")
+          REF_NAME="${{ github.ref_name || github.event.release.tag_name }}"
+          RELEASE_DATE=$(git log -1 --format=%cI "$REF_NAME")
           echo "RELEASE_DATE=$RELEASE_DATE" >> $GITHUB_ENV
         working-directory: ezquake
         if: github.event_name == 'release'
