@@ -29,6 +29,9 @@ typedef struct {
 	cmodel_t	*model;		// only for bsp models
 	vec3_t		mins, maxs;	// only for non-bsp models
 	int			info;		// for client or server to identify
+#if defined(FTE_PEXT_TRANS)
+	qbool		is_transparent;
+#endif
 } physent_t;
 
 typedef enum {
