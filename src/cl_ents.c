@@ -2141,6 +2141,10 @@ void CL_SetSolidEntities (void)
 				break;
 
 			pmove.physents[pmove.numphysent].model = cl.clipmodels[state->modelindex];
+#if defined(FTE_PEXT_TRANS)
+			pmove.physents[pmove.numphysent].is_transparent =
+				state->trans > 0 && state->trans < 255 ? true : false;
+#endif
 			VectorCopy (state->origin, pmove.physents[pmove.numphysent].origin);
 			pmove.numphysent++;
 		}

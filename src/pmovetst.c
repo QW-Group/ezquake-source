@@ -233,6 +233,13 @@ trace_t PM_TraceLine (vec3_t start, vec3_t end)
 
 	for (i = 0; i < pmove.numphysent; i++) {
 		pe = &pmove.physents[i];
+
+#if defined(FTE_PEXT_TRANS)
+		if (cls.fteprotocolextensions & FTE_PEXT_TRANS && pe->is_transparent) {
+			continue;
+		}
+#endif
+
 		// get the clipping hull
 		hull = (pe->model) ? (&pmove.physents[i].model->hulls[0]) : (CM_HullForBox(pe->mins, pe->maxs));
 
