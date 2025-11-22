@@ -372,18 +372,46 @@ int SB_PingTree_SendQueryThread(void *thread_arg)
 {
 	proxy_request_queue *queue = (proxy_request_queue *) thread_arg;
 	int i, ret;
-	double interval_ms = (1.0 / sb_proxinfopersec.value) * 1000.0;
+	double interval_ms;
 #ifdef _WIN32
 	timerresolution_session_t timersession = {0, 0};
 #endif
+
+	// Null check for queue
+	if (!queue) {
+		Com_DPrintf("SB_PingTree_SendQueryThread: queue is NULL\n");
+		return -1;
+	}
+
+	// Null check for queue data
+	if (!queue->data) {
+		Com_DPrintf("SB_PingTree_SendQueryThread: queue->data is NULL\n");
+		return -1;
+	}
+
+	interval_ms = (1.0 / sb_proxinfopersec.value) * 1000.0;
 
 	Sys_TimerResolution_InitSession(&timersession);
 	Sys_TimerResolution_RequestMinimum(&timersession);
 
 	for (i = 0; i < queue->items; i++) {
+		// Bounds check
+		if (i >= queue->items) {
+			Com_DPrintf("SB_PingTree_SendQueryThread: index out of bounds\n");
+			break;
+		}
+
 		if (!queue->data[i].done) {
 			struct sockaddr_storage addr_to;
-			netadr_t netadr = SB_NodeNetadr_Get(queue->data[i].nodeid);
+			netadr_t netadr;
+
+			// Validate nodeid
+			if (queue->data[i].nodeid < 0 || queue->data[i].nodeid >= ping_nodes_count) {
+				Com_DPrintf("SB_PingTree_SendQueryThread: invalid nodeid %d\n", queue->data[i].nodeid);
+				continue;
+			}
+
+			netadr = SB_NodeNetadr_Get(queue->data[i].nodeid);
 
 			NetadrToSockadr(&netadr, &addr_to);
 			ret = sendto(queue->data[i].sock,
@@ -513,25 +541,46 @@ static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue, FILE *f)
 static void SB_PingTree_ScanProxies(void)
 {
 	int i;
-	proxy_request_queue queue = { NULL, 0, false };
+	proxy_request_queue *queue = NULL;
 	size_t request = 0;
 	FILE *f = NULL;
 
+	// Allocate queue on heap
+	queue = (proxy_request_queue *) Q_malloc(sizeof(proxy_request_queue));
+	if (!queue) {
+		Com_Printf("Failed to allocate memory for proxy request queue\n");
+		return;
+	}
+
+	// Initialize queue fields
+	queue->data = NULL;
+	queue->items = 0;
+	queue->sending_done = false;
+	queue->allrecved = false;
+
 	for (i = 0; i < ping_nodes_count; i++) {
 		if (ping_nodes[i].proxport) {
-			queue.items++;
+			queue->items++;
 		}
 	}
 
-	if (!queue.items) return;
+	if (!queue->items) {
+		Q_free(queue);
+		return;
+	}
 
-	queue.data = (proxy_query_request_t *) Q_malloc(sizeof(proxy_query_request_t) * queue.items);
+	queue->data = (proxy_query_request_t *) Q_malloc(sizeof(proxy_query_request_t) * queue->items);
+	if (!queue->data) {
+		Com_Printf("Failed to allocate memory for proxy request data\n");
+		Q_free(queue);
+		return;
+	}
 
 	for (i = 0; i < ping_nodes_count; i++) {
 		if (ping_nodes[i].proxport) {
-			queue.data[request].done = false;
-			queue.data[request].nodeid = i;
-			queue.data[request].sock = UDP_OpenSocket(PORT_ANY);
+			queue->data[request].done = false;
+			queue->data[request].nodeid = i;
+			queue->data[request].sock = UDP_OpenSocket(PORT_ANY);
 			request++;
 		}
 	}
@@ -546,12 +595,20 @@ static void SB_PingTree_ScanProxies(void)
 	}
 
 	for (i = 0; i < sb_proxretries.integer; i++) {
-		queue.sending_done = false;
-		if (Sys_CreateDetachedThread(SB_PingTree_SendQueryThread, (void *) &queue) < 0) {
+		queue->sending_done = false;
+		if (Sys_CreateDetachedThread(SB_PingTree_SendQueryThread, (void *) queue) < 0) {
 			Com_Printf("Failed to create SB_PingTree_SendQueryThread thread\n");
+			// If thread creation fails, don't continue with this retry
+			continue;
 		}
-		SB_PingTree_RecvQuery(&queue, f);
-		if (queue.allrecved) {
+		SB_PingTree_RecvQuery(queue, f);
+		
+		// Wait for the sending thread to complete before next retry
+		while (!queue->sending_done) {
+			Sys_MSleep(10);
+		}
+		
+		if (queue->allrecved) {
 			break;
 		}
 	}
@@ -561,16 +618,12 @@ static void SB_PingTree_ScanProxies(void)
 		fclose(f);
 	}
 
-	while (!queue.sending_done) {
-		// XXX: use semaphore instead
-		Sys_MSleep(100);
+	for (i = 0; i < queue->items; i++) {
+		closesocket(queue->data[i].sock);
 	}
 
-	for (i = 0; i < queue.items; i++) {
-		closesocket(queue.data[i].sock);
-	}
-
-	Q_free(queue.data);
+	Q_free(queue->data);
+	Q_free(queue);
 }
 
 static nodeid_t SB_PingTree_NearestNodeGet(void)
