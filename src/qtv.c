@@ -44,7 +44,7 @@ cvar_t  qtv_allow_pause      = { "qtv_allow_pause",      "0" }; // ignore cl_dem
 cvar_t  qtv_event_join       = { "qtv_event_join",        " &c2F2joined&r"};
 cvar_t  qtv_event_leave      = { "qtv_event_leave",       " &cF22left&r"};
 cvar_t  qtv_event_changename = { "qtv_event_changename",  " &cFF0changed name to&r "};
-cvar_t  qtv_event_msglevel   = { "qtv_event_msglevel",    "1" };
+cvar_t  qtv_event_msglevel   = { "qtv_event_msglevel",    "2" };
 
 extern qbool qtv_playback_paused;
 
