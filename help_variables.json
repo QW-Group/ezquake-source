@@ -15471,7 +15471,7 @@
       "type": "string"
     },
     "qtv_event_msglevel": {
-      "default": "1",
+      "default": "2",
       "desc": "Controls the visibility of QTV event messages, allowing them to be enabled, disabled, or hidden during an active match.",
       "group-id": "38",
       "type": "enum",
