@@ -584,6 +584,8 @@ static void Host_RegisterLegacyCvars(void)
 	Cmd_AddLegacyCommand("contrast", v_contrast.name);
 	Cmd_AddLegacyCommand("gl_gammacorrection", "vid_gammacorrection");
 
+	Cmd_AddLegacyCommand("cl_idrive", "cl_socd");
+
 	// if you don't like renaming things in this way, let's have some talk with tea - johnnycz
 	Cmd_AddLegacyCommand("con_sound_mm1_file", "s_mm1_file");
 	Cmd_AddLegacyCommand("con_sound_mm2_file", "s_mm2_file");
