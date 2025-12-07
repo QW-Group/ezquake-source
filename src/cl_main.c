@@ -2110,6 +2110,8 @@ void CL_Init (void)
 	Sys_mkdir(va("%s/qw", com_basedir));
 	Sys_mkdir(va("%s/ezquake", com_basedir));
 
+	SDL_SetHint(SDL_HINT_APP_NAME, "ezQuake");
+
 	History_Init();
 	V_Init ();
 	MVD_Utils_Init ();
