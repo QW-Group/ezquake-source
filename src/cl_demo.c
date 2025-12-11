@@ -228,14 +228,6 @@ static void CL_Demo_Write(const void *data, int size)
 }
 
 //
-// Flushes any pending write operations to the recording file.
-//
-static void CL_Demo_Flush(void)
-{
-	fflush(recordfile);
-}
-
-//
 // Writes a user cmd to the open demo file.
 //
 void CL_WriteDemoCmd (usercmd_t *pcmd)
@@ -271,9 +263,6 @@ void CL_WriteDemoCmd (usercmd_t *pcmd)
 	t[1] = LittleFloat (cl.viewangles[1]);
 	t[2] = LittleFloat (cl.viewangles[2]);
 	CL_Demo_Write(t, sizeof(t));
-
-	// Flush the changes to file.
-	CL_Demo_Flush();
 }
 
 //
@@ -299,9 +288,6 @@ void CL_WriteDemoMessage (sizebuf_t *msg)
 
 	// Write the data.
 	CL_Demo_Write(msg->data, msg->cursize);
-
-	// Flush the changes to the recording file.
-	CL_Demo_Flush();
 
 	// Request pings from the net chan if the user has set it.
     {
@@ -370,9 +356,6 @@ static void CL_WriteStartupDemoMessage (sizebuf_t *msg, int seq)
 
 	// Write the actual message data to the demo.
 	CL_Demo_Write(msg->data, msg->cursize);
-
-	// Flush the message to file.
-	CL_Demo_Flush();
 }
 
 //
@@ -402,9 +385,6 @@ static void CL_WriteSetDemoMessage (void)
 	CL_Demo_Write(&len, 4);
 	len = LittleLong(cls.netchan.incoming_sequence);
 	CL_Demo_Write(&len, 4);
-
-	// Flush the demo file to disk.
-	CL_Demo_Flush();
 }
 
 // FIXME: same as in sv_user.c. Move to common.c?
