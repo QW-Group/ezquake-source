@@ -395,12 +395,6 @@ int SB_PingTree_SendQueryThread(void *thread_arg)
 	Sys_TimerResolution_RequestMinimum(&timersession);
 
 	for (i = 0; i < queue->items; i++) {
-		// Bounds check
-		if (i >= queue->items) {
-			Com_DPrintf("SB_PingTree_SendQueryThread: index out of bounds\n");
-			break;
-		}
-
 		if (!queue->data[i].done) {
 			struct sockaddr_storage addr_to;
 			netadr_t netadr;
