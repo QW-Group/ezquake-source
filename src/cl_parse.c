@@ -2363,6 +2363,15 @@ void CL_ProcessServerInfo (void)
 		}
 	}
 
+	if (countdown && cl.countdown)
+	{
+		TP_ExecTrigger("f_countdownstart");
+	}
+	else if (standby && !cl.standby && !countdown && cl.countdown)
+	{
+		TP_ExecTrigger("f_countdownbreak");
+	}
+
 	cl.standby = standby;
 	cl.countdown = countdown;
 
