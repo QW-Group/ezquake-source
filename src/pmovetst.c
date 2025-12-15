@@ -60,7 +60,13 @@ PM_PointContents
 */
 int PM_PointContents (vec3_t p)
 {
-	hull_t *hull = &pmove.physents[0].model->hulls[0];
+	hull_t *hull;
+	
+	// Safety check for NULL model in case entity updates arrive out of order
+	if (!pmove.physents[0].model)
+		return CONTENTS_EMPTY;
+	
+	hull = &pmove.physents[0].model->hulls[0];
 	return CM_HullPointContents (hull, hull->firstclipnode, p);
 }
 
