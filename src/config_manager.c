@@ -299,7 +299,7 @@ static void DumpAliases(FILE *f)
 {
 	int maxlen, i, j, count, lonely_count, minus_index, minus_count;
 	char *spaces;
-	cmd_alias_t	*b, *a, *sorted_aliases[1024], *lonely_pluses[512];
+	cmd_alias_t	*b, *a, *sorted_aliases[2048], *lonely_pluses[512];
 	qbool partner, printed;
 
 	fprintf(f, "unaliasall\n");
