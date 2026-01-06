@@ -93,7 +93,9 @@ f_trigger_t f_triggers[] = {
 	{"f_flash", true, true},
 	{"f_bonusflash", true, true},
 
-	{"f_demomatchstart", false, false}
+	{"f_demomatchstart", false, false},
+	{"f_countdownstart", false, false},
+	{"f_countdownbreak", false, false}
 };
  
 #define num_f_triggers	(sizeof(f_triggers) / sizeof(f_triggers[0]))
