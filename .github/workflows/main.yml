@@ -41,7 +41,7 @@ jobs:
             name: ezQuake-linux-x86_64
             artifact: "ezQuake-x86_64.AppImage"
             cflags: "-march=nehalem"
-            packages: ["build-essential", "ca-certificates", "cmake", "curl", "file", "git", "libcurl4-openssl-dev", "libexpat1-dev", "libfreetype-dev", "libfuse2", "libjansson-dev", "libjpeg-dev", "libminizip-dev", "libpcre2-dev", "libpng-dev", "libsdl2-2.0-0", "libsdl2-dev", "libsndfile1-dev", "libspeex-dev", "libspeexdsp-dev", "ninja-build", "unzip"]
+            packages: ["build-essential", "ca-certificates", "cmake", "curl", "file", "git", "libcurl4-openssl-dev", "libexpat1-dev", "libfreetype-dev", "libfuse3-dev", "libjansson-dev", "libjpeg-dev", "libminizip-dev", "libpcre2-dev", "libpng-dev", "libsdl2-2.0-0", "libsdl2-dev", "libsndfile1-dev", "libspeex-dev", "libspeexdsp-dev", "ninja-build", "unzip"]
             container:
               image: debian:testing
               options: --privileged
