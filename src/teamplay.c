@@ -33,6 +33,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 #include "tp_msgs.h"
 
+#define CASE_PLAYER_COUNT_ALLOWED(c, fn) \
+	case c: \
+		if ((cl.fpd & FPD_ENABLE_PLAYER_COUNT)) { \
+			macro_string = fn(); \
+			break; \
+		} else { \
+			goto do_default; \
+		}
+
 void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel);
 void OnChangeColorForcing(cvar_t *var, char *string, qbool *cancel);
 void OnChangeSkinAndColorForcing(cvar_t *var, char *string, qbool *cancel);
@@ -1548,18 +1557,11 @@ char *TP_ParseMacroString (char *s)
 				case 'l':	macro_string = Macro_Location(); cvar_lookup_char = 'l'; break;
 				case 'L':	macro_string = Macro_Last_Location(); cvar_lookup_char = 'l'; break;
 				case 'm':	macro_string = Macro_LastTookOrPointed(); break;
-
-				case 'o':	macro_string = Macro_CountNearbyFriendlyPlayers(); break;
-				case 'e':	macro_string = Macro_CountNearbyEnemyPlayers(); break;
-				case 'O':	macro_string = Macro_Count_Last_NearbyFriendlyPlayers(); break;
-				case 'E':	macro_string = Macro_Count_Last_NearbyEnemyPlayers(); break;
-
 				case 'P':
 				case 'p':	macro_string = Macro_Powerups(); cvar_lookup_char = 'p'; break;
 				case 'q':	macro_string = Macro_LastSeenPowerup(); break;
 				case 'r':	macro_string = Macro_LastReportedLoc(); cvar_lookup_char = 'l'; break;
 				case 'R':	macro_string = Macro_Rune(); break;
-				case 's':	macro_string = Macro_EnemyStatus_LED(); break;
 				case 'S':	macro_string = Macro_TF_Skin(); break;
 				case 't':	macro_string = Macro_PointNameAtLocation(); break;
 				case 'u':	macro_string = Macro_Need(); break;
@@ -1568,9 +1570,15 @@ char *TP_ParseMacroString (char *s)
 				case 'X':	macro_string = Macro_Took(); cvar_lookup_char = 'x'; break;
 				case 'y':	macro_string = Macro_PointLocation(); cvar_lookup_char = 'l'; break;
 				case 'Y':	macro_string = Macro_TookLoc(); cvar_lookup_char = 'l'; break;
-				case '%': 
+				CASE_PLAYER_COUNT_ALLOWED('E', Macro_Count_Last_NearbyEnemyPlayers)
+				CASE_PLAYER_COUNT_ALLOWED('e', Macro_CountNearbyEnemyPlayers)
+				CASE_PLAYER_COUNT_ALLOWED('O', Macro_Count_Last_NearbyFriendlyPlayers)
+				CASE_PLAYER_COUNT_ALLOWED('o', Macro_CountNearbyFriendlyPlayers)
+				CASE_PLAYER_COUNT_ALLOWED('s', Macro_EnemyStatus_LED)
+				case '%':
 					++s;	// deliberate fall-through, skip this % and print the next
 				default:
+				do_default:
 					buf[i++] = '%';
 					++s;
 					continue;
