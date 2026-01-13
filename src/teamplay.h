@@ -110,6 +110,7 @@ void TP_Shutdown(void);
 #define FPD_NO_FORCE_COLOR	512
 #define FPD_LIMIT_PITCH		(1 << 14)
 #define FPD_LIMIT_YAW		(1 << 15)
+#define FPD_ENABLE_PLAYER_COUNT	(1 << 16)
 
 /*fpd values from qizmo.txt
   1 = Disable %-reporting
