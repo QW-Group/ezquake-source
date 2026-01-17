@@ -235,6 +235,7 @@ cvar_t scr_gameclock = { "cl_gameclock", "0" };
 static cvar_t scr_gameclock_x = { "cl_gameclock_x", "0" };
 static cvar_t scr_gameclock_y = { "cl_gameclock_y", "-3" };
 static cvar_t scr_gameclock_offset = { "cl_gameclock_offset", "0" };
+static cvar_t scr_gameclock_style = { "cl_gameclock_style", "0" };
 
 static cvar_t scr_democlock = { "cl_democlock", "0" };
 static cvar_t scr_democlock_x = { "cl_democlock_x", "0" };
@@ -267,7 +268,7 @@ static void SCR_DrawClock(void)
 
 static void SCR_DrawGameClock(void)
 {
-	int x, y;
+	int x, y, i, style = scr_gameclock_style.integer;
 	char str[80], *s;
 	float timelimit;
 
@@ -296,6 +297,29 @@ static void SCR_DrawGameClock(void)
 	}
 	else {
 		s = str;
+	}
+
+	if (style) {
+		for (i = 0; i < strlen(s); i++) {
+			// only recolor ':' for red numbers
+			if (style != 1 && s[i] == ':')
+				continue;
+
+			switch (style) {
+			case 1:
+				// red numbers
+				s[i] += 128;
+				break;
+			case 2:
+				// high bit green numbers
+				s[i] += 98;
+				break;
+			case 3:
+				// low bit green numbers
+				s[i] -= 30;
+				break;
+			}
+		}
 	}
 
 	x = ELEMENT_X_COORD(scr_gameclock);
@@ -340,6 +364,7 @@ void Clock_HudInit(void)
 	Cvar_Register(&scr_clock_format);
 	Cvar_Register(&scr_clock);
 
+	Cvar_Register(&scr_gameclock_style);
 	Cvar_Register(&scr_gameclock_offset);
 	Cvar_Register(&scr_gameclock_x);
 	Cvar_Register(&scr_gameclock_y);
