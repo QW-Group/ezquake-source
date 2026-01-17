@@ -123,6 +123,7 @@ static cvar_t amf_tracker_own_frag_prefix          = {"r_tracker_own_frag_prefix
 static cvar_t amf_tracker_positive_enemy_suicide   = {"r_tracker_positive_enemy_suicide", "0"};	// Medar wanted it to be customizable
 static cvar_t amf_tracker_positive_enemy_vs_enemy  = {"r_tracker_positive_enemy_vs_enemy", "0"};
 static cvar_t amf_tracker_proportional             = {"r_tracker_proportional", "0"};
+static cvar_t amf_tracker_weapon_first             = {"r_tracker_weapon_first", "0"};
 
 #define MAX_TRACKERMESSAGES 30
 #define MAX_TRACKER_MSG_LEN 500
@@ -221,6 +222,7 @@ void InitTracker(void)
 	Cvar_Register(&amf_tracker_positive_enemy_suicide);
 	Cvar_Register(&amf_tracker_positive_enemy_vs_enemy);
 	Cvar_Register(&amf_tracker_proportional);
+	Cvar_Register(&amf_tracker_weapon_first);
 }
 
 void VX_TrackerClear(void)
@@ -519,7 +521,10 @@ static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_
 	msg = VX_NewTrackerMsg();
 	if (msg) {
 		msg->pad = lhs_text && rhs_text && lhs_text[0] && rhs_text[0];
-		VX_TrackerAddTextSegment(msg, lhs_text, lhs_color);
+
+		if (!amf_tracker_weapon_first.integer)
+			VX_TrackerAddTextSegment(msg, lhs_text, lhs_color);
+
 		for (i = 0; i < weapon_images[weapon]; ++i) {
 			mpic_t* pic = &char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].glyphs[weapon * MAX_IMAGES_PER_WEAPON + i];
 
@@ -527,6 +532,10 @@ static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_
 				VX_TrackerAddImageSegment(msg, pic);
 			}
 		}
+
+		if (amf_tracker_weapon_first.integer)
+			VX_TrackerAddTextSegment(msg, lhs_text, lhs_color);
+
 		VX_TrackerAddTextSegment(msg, rhs_text, rhs_color);
 		VX_PreProcessMessage(msg);
 	}
@@ -546,17 +555,23 @@ static void VX_TrackerAddWeaponTextSplit(char* lhs_text, int weapon, const byte*
 		? GetWeaponName(weapon)
 		: GetColoredWeaponName(weapon, color);
 
-	if (!VX_TrackerStringPrintSegments(lhs_text, weapon_text, rhs_text, NULL)) {
+	if (!VX_TrackerStringPrintSegments(
+		amf_tracker_weapon_first.integer ? weapon_text : lhs_text,
+		amf_tracker_weapon_first.integer ? lhs_text : weapon_text,
+		rhs_text, NULL)) {
 		return;
 	}
 
 	msg = VX_NewTrackerMsg();
 	if (msg) {
 		msg->pad = lhs_text && rhs_text && lhs_text[0] && rhs_text[0];
-		VX_TrackerAddTextSegment(
-			msg,
-			amf_tracker_colorfix.integer ? Q_normalizetext(lhs_text) : lhs_text,
-			amf_tracker_colorfix.integer ? color : color_white);
+
+		if (!amf_tracker_weapon_first.integer)
+			VX_TrackerAddTextSegment(
+				msg,
+				amf_tracker_colorfix.integer ? Q_normalizetext(lhs_text) : lhs_text,
+				amf_tracker_colorfix.integer ? color : color_white);
+
 		for (i = 0; i < weapon_labels[weapon].count; ++i) {
 			if (weapon_labels[weapon].colors[i][3]) {
 				VX_TrackerAddFlaggedTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_labels[weapon].colors[i], TEXTFLAG_WEAPON);
@@ -565,6 +580,13 @@ static void VX_TrackerAddWeaponTextSplit(char* lhs_text, int weapon, const byte*
 				VX_TrackerAddFlaggedTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], color, TEXTFLAG_WEAPON);
 			}
 		}
+
+		if (amf_tracker_weapon_first.integer)
+			VX_TrackerAddTextSegment(
+				msg,
+				amf_tracker_colorfix.integer ? Q_normalizetext(lhs_text) : lhs_text,
+				amf_tracker_colorfix.integer ? color : color_white);
+
 		VX_TrackerAddTextSegment(
 			msg,
 			amf_tracker_colorfix.integer ? Q_normalizetext(rhs_text) : rhs_text,
