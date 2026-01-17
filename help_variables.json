@@ -1685,6 +1685,29 @@
       "remarks": "See cl_gameclock for detailed info about the clock.",
       "type": "float"
     },
+    "cl_gameclock_style": {
+      "default": "0",
+      "group-id": "40",
+      "type": "enum",
+      "values": [
+        {
+          "description": "White numbers",
+          "name": "0"
+        },
+        {
+          "description": "Red numbers",
+          "name": "1"
+        },
+        {
+          "description": "Green numbers (high bit)",
+          "name": "2"
+        },
+        {
+          "description": "Green numbers (low bit)",
+          "name": "3"
+        }
+      ]
+    },
     "cl_gibFilter": {
       "default": "0",
       "group-id": "8",
