@@ -17436,6 +17436,12 @@
         }
       ]
     },
+    "r_tracker_weapon_first": {
+      "default": "0",
+      "desc": "Print the weapon icon or name before the player name.",
+      "group-id": "40",
+      "type": "boolean"
+    },
     "r_tracker_x": {
       "default": "0",
       "desc": "Adjusts the position of extra frag messages window.",
