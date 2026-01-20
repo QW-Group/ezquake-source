@@ -253,6 +253,8 @@ void Cvar_SetEx(cvar_t *var, char *value, qbool ignore_callback)
 #endif
 
 #ifndef SERVERONLY
+	Cvar_UserOnChange(var);
+
 	if (var->flags & CVAR_USERINFO) {
 		CL_UserinfoChanged(var->name, var->string);
 	}
@@ -713,6 +715,7 @@ cvar_t *Cvar_Create(const char *name, const char *string, int cvarflags)
 
 	v->name = Q_strdup_named(name, name);
 	v->string = Q_strdup_named(string, name);
+	v->onChangeAlias = Q_strdup("");
 	v->value = Q_atof(v->string);
 	v->flags = cvarflags;
 #ifndef SERVERONLY
@@ -769,6 +772,7 @@ qbool Cvar_Delete(const char *name)
 			// free
 			Q_free(var->string);
 			Q_free(var->name);
+			Q_free(var->onChangeAlias);
 			Q_free(var);
 			return true;
 		}
@@ -833,11 +837,54 @@ int Cvar_GetFlags (cvar_t *var)
 }
 
 #ifndef SERVERONLY
+void Cvar_SetOnChangeAlias_f(void) {
+	char* alias;
+	cvar_t* var;
+
+	if (Cmd_Argc() != 3) {
+		Con_Printf("Usage: cvar_set_onchangealias <cvar> [alias]\n");
+		return;
+	}
+
+	var = Cvar_Find(Cmd_Argv(1));
+	if (!var) {
+		Con_Printf("Unknown variable \"%s\"\n", Cmd_Argv(1));
+		return;
+	}
+	
+	alias = Cmd_Argv(2);
+
+	Q_free(var->onChangeAlias);
+	var->onChangeAlias = Q_strdup(alias);
+}
+
+
+void Cvar_UserOnChange(struct cvar_s* var) {
+	if (!var->onChangeAlias) {
+		// FIXME: Possibly not freed for not user created cvars
+		var->onChangeAlias = Q_strdup("");
+		return;
+	}
+
+	cmd_alias_t* alias = Cmd_FindAlias(var->onChangeAlias);
+
+	if (alias) {
+		Cbuf_InsertTextEx(&cbuf_safe, "\nwait\n");
+		Cbuf_InsertTextEx(&cbuf_safe, alias->name);
+		Cbuf_ExecuteEx(&cbuf_safe);
+	}
+}
+
 qbool Cvar_ForceCallback(cvar_t *var)
 {
 	qbool cancel = false;
 
-	if (!var || !var->OnChange)
+	if (!var)
+		return cancel;
+
+	Cvar_UserOnChange(var);
+
+	if (!var->OnChange)
 		return cancel;
 
 	var->OnChange(var, var->string, &cancel);
@@ -1591,6 +1638,7 @@ void Cvar_Init(void)
 	Cmd_AddCommand("cvar_reset_re", Cvar_Reset_re_f);
 	Cmd_AddCommand("set_calc", Cvar_Set_Calc_f);
 	Cmd_AddCommand("set_eval", Cvar_Set_Eval_f);
+	Cmd_AddCommand("cvar_set_onchangealias", Cvar_SetOnChangeAlias_f);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_CONSOLE);
 	Cvar_Register(&cvar_viewdefault);
@@ -1643,6 +1691,8 @@ void Cvar_ExecuteQueuedChanges(void)
 
 	for (cvar = cvar_vars; cvar; cvar = cvar->next) {
 		if ((cvar->flags & CVAR_QUEUED_TRIGGER) && cvar->latchedString) {
+			Cvar_UserOnChange(cvar);
+
 			if (cvar->OnChange) {
 				qbool cancel = false;
 

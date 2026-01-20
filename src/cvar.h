@@ -75,6 +75,7 @@ typedef struct cvar_s {
 	byte    color[4];           // gets set in Cvar_Set, Cvar_Register, Cvar_Create
 	qbool   modified;           // set to true in Cvar_Set(), Cvar_Register(), Cvar_Create(), reset to false manually in C code
 	qbool   teamplay;           // is this variable protected so that it can be only used within messaging?
+	char* onChangeAlias;
 
 	struct cvar_group_s *group;
 	struct cvar_s       *next_in_group;
@@ -165,6 +166,10 @@ void Cvar_SetDefaultAndValue(cvar_t *var, float default_value, float actual_valu
 // attempts to match a partial variable name for command line completion
 // returns NULL if nothing fits
 char  *Cvar_CompleteVariable (char *partial);
+
+void Cvar_UserOnChange(struct cvar_s* var);
+
+void Cvar_SetOnChangeAlias_f(void);
 
 // call OnChange callback.
 qbool Cvar_ForceCallback(cvar_t *var);
