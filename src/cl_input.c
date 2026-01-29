@@ -1059,7 +1059,9 @@ void CL_ApplySafestrafe(usercmd_t *cmd)
 	if (current_dir != 0 && previous_dir != 0 && 
 	    current_dir != previous_dir) {
 		// Direct direction change - enforce stop frames
-		cl.safestrafe.pending_frames = required_frames;
+		cl.safestrafe.pending_frames = required_frames - 1;
+		if (cl.safestrafe.pending_frames < 0)
+			cl.safestrafe.pending_frames = 0;
 		cl.safestrafe.pending_direction = current_move;
 		cl.safestrafe.stop_frames = 1;
 		cmd->sidemove = 0;
@@ -1068,10 +1070,12 @@ void CL_ApplySafestrafe(usercmd_t *cmd)
 		// Starting movement after stop
 		if (cl.safestrafe.stop_frames < required_frames) {
 			// Not enough stop frames
-			cl.safestrafe.pending_frames = 
-				required_frames - cl.safestrafe.stop_frames;
 			cl.safestrafe.pending_direction = current_move;
 			cl.safestrafe.stop_frames++;
+			cl.safestrafe.pending_frames = 
+				required_frames - cl.safestrafe.stop_frames;
+			if (cl.safestrafe.pending_frames < 0)
+				cl.safestrafe.pending_frames = 0;
 			cmd->sidemove = 0;
 		}
 		else {
