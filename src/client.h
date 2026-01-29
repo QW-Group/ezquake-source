@@ -780,6 +780,8 @@ typedef struct {
 		float    pending_direction; // Desired sidemove after stop
 		int      stop_frames;       // Accumulated frames with sidemove=0
 		float    last_sidemove;     // Previous frame's sidemove value
+		int      print_frames_since;// Physics frames since last non-zero sidemove
+		int      print_last_dir;    // Last non-zero sidemove direction (-1/1)
 	} safestrafe;
 } clientState_t;
 

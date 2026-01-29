@@ -37,6 +37,7 @@ cvar_t cl_nodelta = { "cl_nodelta","0" };
 cvar_t cl_pitchspeed = { "cl_pitchspeed","150" };
 cvar_t cl_upspeed = { "cl_upspeed","400" };
 cvar_t cl_safestrafe = {"cl_safestrafe", "0"};
+cvar_t cl_safestrafe_print = {"cl_safestrafe_print", "0"};
 cvar_t cl_sidespeed = { "cl_sidespeed","400" };
 cvar_t cl_yawspeed = { "cl_yawspeed","140" };
 cvar_t cl_weaponhide = { "cl_weaponhide", "0" };
@@ -988,6 +989,49 @@ void CL_SendClientCommand(qbool reliable, char* format, ...)
 
 int cmdtime_msec = 0;
 
+static void CL_PrintSafestrafeFrames(const usercmd_t *cmd)
+{
+	static int last_enabled = 0;
+
+	if (!cl_safestrafe_print.integer) {
+		last_enabled = 0;
+		return;
+	}
+
+	if (!last_enabled) {
+		cl.safestrafe.print_frames_since = 0;
+		cl.safestrafe.print_last_dir = 0;
+		last_enabled = 1;
+	}
+
+	int current_dir = (cmd->sidemove > 0) - (cmd->sidemove < 0);
+
+	if (cl.safestrafe.print_last_dir != 0) {
+		cl.safestrafe.print_frames_since++;
+	}
+
+	// Hard cap to avoid treating long idle gaps as direction changes.
+	if (current_dir == 0 && cl.safestrafe.print_last_dir != 0 &&
+		cl.safestrafe.print_frames_since > 10) {
+		cl.safestrafe.print_last_dir = 0;
+		cl.safestrafe.print_frames_since = 0;
+		return;
+	}
+
+	if (current_dir != 0) {
+		if (cl.safestrafe.print_last_dir != 0 &&
+			current_dir != cl.safestrafe.print_last_dir) {
+			int frames_between = cl.safestrafe.print_frames_since - 1;
+			if (frames_between < 0)
+				frames_between = 0;
+			Com_Printf("frames between strafes: %d\n", frames_between);
+		}
+
+		cl.safestrafe.print_last_dir = current_dir;
+		cl.safestrafe.print_frames_since = 0;
+	}
+}
+
 void CL_ApplySafestrafe(usercmd_t *cmd)
 {
 	int required_frames = max(movevars.safestrafe, cl_safestrafe.value);
@@ -1081,7 +1125,10 @@ void CL_SendCmd(void)
 
 	// allow mice or other external controllers to add to the move
 
-	if (cl_independentPhysics.value == 0 || (physframe && cl_independentPhysics.value != 0)) {
+	qbool physics_frame = (cl_independentPhysics.value == 0 ||
+		(physframe && cl_independentPhysics.value != 0));
+
+	if (physics_frame) {
 		IN_Move(cmd);
 	}
 
@@ -1094,6 +1141,8 @@ void CL_SendCmd(void)
 	if ((movevars.safestrafe > 0 || cl_safestrafe.value > 0) && !cl.spectator) {
 		CL_ApplySafestrafe(cmd);
 	}
+
+	CL_PrintSafestrafeFrames(cmd);
 
 	CL_FinishMove(cmd);
 	cmdtime_msec += cmd->msec;
@@ -1284,6 +1333,7 @@ void CL_InitInput(void)
 	Cvar_Register(&cl_forwardspeed);
 	Cvar_Register(&cl_backspeed);
 	Cvar_Register(&cl_safestrafe);
+	Cvar_Register(&cl_safestrafe_print);
 	Cvar_Register(&cl_sidespeed);
 	Cvar_Register(&cl_movespeedkey);
 	Cvar_Register(&cl_yawspeed);
