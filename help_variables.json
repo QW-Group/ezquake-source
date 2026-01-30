@@ -15849,6 +15849,7 @@
     "r_drawflat_mode": {
       "default": "0",
       "desc": "Sets the method used to adjust wall & floor textures (/r_drawflat) by the corresponding color (/r_wallcolor & /r_floorcolor)",
+      "group-id": "50",
       "remarks": "Works in GLSL modes only (see /gl_program_world).\nMode 0 will give best performance, mode 2 is the recommended setting for different colors.\nCan not be changed during a match.",
       "type": "enum",
       "values": [
