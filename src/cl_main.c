@@ -111,7 +111,7 @@ cvar_t  cl_pext = {"cl_pext", "1"};					// allow/disallow protocol extensions at
 cvar_t  cl_pext_limits = { "cl_pext_limits", "1" }; // enhanced protocol limits
 cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
 cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1" }; // if set, user will be warned when saving demos that are not backwards compatible
-cvar_t  cl_pext_lagteleport = { "cl_pext_lagteleport", "0" }; // server-side adjustment of yaw angle through teleports
+cvar_t  cl_pext_lagteleport = { "cl_pext_lagteleport", "1" }; // server-side adjustment of yaw angle through teleports
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 cvar_t  cl_pext_serversideweapon = { "cl_pext_serversideweapon", "0", 0, onchange_pext_serversideweapon }; // server-side weapon selection
 #endif
