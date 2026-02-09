@@ -16,3 +16,8 @@ src/.msversion.h
 /build*/
 
 !.gitignore
+
+# Local documentation files (not for repository)
+CR*.md
+EZQUAKE_HUD_*.md
+TRACKER_*.md
