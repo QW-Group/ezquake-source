@@ -422,7 +422,8 @@ void R_AliasModelDeterminePoses(const maliasframedesc_t* oldframe, const maliasf
 		lerp = (1 - r_framelerp);
 	}
 	else {
-		lerp = 1;
+		// Allow interpolation even for non-sequential frames (e.g. cycle boundary 7->0)
+		lerp = r_framelerp;
 	}
 
 	if (lerp == 1) {
@@ -1014,7 +1015,7 @@ void R_AliasModelPrepare(entity_t* ent, int framecount, int* frame1_, int* frame
 
 	R_AliasSetupLighting(ent);
 
-	if (!r_lerpframes.value || ent->framelerp < 0 || frame1 == frame2 || (frame2 != expected1 && frame1 != expected2)) {
+	if (!r_lerpframes.value || ent->framelerp < 0 || frame1 == frame2) {
 		*lerpfrac = 1.0f;
 	}
 	else {

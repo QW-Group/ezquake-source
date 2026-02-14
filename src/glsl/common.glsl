@@ -110,6 +110,8 @@ struct AliasModel {
 	float ambientlight;
 	int materialTextureMapping;
 	float lerpFraction;
+	int pose1Base;
+	int pose2Base;
 	float minLumaMix;
 	float outlineNormalScale;
 };

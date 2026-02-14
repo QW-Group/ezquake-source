@@ -17,7 +17,7 @@ void main()
 	lerpFrac = sign(lerpFrac) * max(lerpFrac, mod(flags, 2));
 #endif
 
-	vec4 pos = gl_Vertex + lerpFrac * vec4(gl_MultiTexCoord1.xyz, 0);
+	vec4 pos = vec4(mix(gl_Vertex.xyz, gl_MultiTexCoord1.xyz, lerpFrac), 1.0);
 
 	pos.x -= shadevector[0] * (pos[2] + lheight);
 	pos.y -= shadevector[1] * (pos[2] + lheight);
