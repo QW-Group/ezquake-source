@@ -95,6 +95,8 @@ typedef struct uniform_block_aliasmodel_s {
 	float ambientlight;
 	int materialSamplerMapping;
 	float lerpFraction;
+	int pose1Base;
+	int pose2Base;
 	float minLumaMix;
 	float outline_normal_scale;
 } uniform_block_aliasmodel_t;
@@ -358,6 +360,8 @@ static void GLM_QueueAliasModelDrawImpl(
 	uniform->shadelight = ent->shadelight;
 	uniform->ambientlight = ent->ambientlight;
 	uniform->lerpFraction = lerpFraction;
+	uniform->pose1Base = vbo_start;
+	uniform->pose2Base = lerpFrameVertOffset;
 	uniform->color[0] = color[0];
 	uniform->color[1] = color[1];
 	uniform->color[2] = color[2];
@@ -451,6 +455,11 @@ void GLM_PrepareAliasModelBatches(void)
 	// Update VBO with data about each entity
 	buffers.Update(r_buffer_aliasmodel_model_data, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
 	buffers.BindRange(r_buffer_aliasmodel_model_data, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA, buffers.BufferOffset(r_buffer_aliasmodel_model_data), sizeof(aliasdata.models[0]) * alias_draw_count);
+#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
+	if (buffers.IsValid(r_buffer_aliasmodel_vertex_ssbo)) {
+		buffers.BindBase(r_buffer_aliasmodel_vertex_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
+	}
+#endif
 
 	// Build & update list of indirect calls
 	{

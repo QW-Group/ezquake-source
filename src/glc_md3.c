@@ -41,6 +41,14 @@ void GLC_PowerupShellColor(int layer_no, int effects, float* color);
 qbool GLC_AliasModelStandardCompileSpecific(int subprogram_index);
 int GLC_AliasModelSubProgramIndex(qbool textured, qbool fullbright, qbool caustics, qbool muzzlehack);
 qbool GLC_AliasModelShellCompile(void);
+void R_GLC_TexturePointer(r_buffer_id buffer_id, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
+
+static void GLC_BindPose2TextureCoord_MD3(int firstVert, int pose2Vert)
+{
+	void* offset = (void*)((uintptr_t)((pose2Vert - firstVert) * sizeof(vbo_model_vert_t)));
+	R_GLC_TexturePointer(r_buffer_aliasmodel_vertex_data, 1, true, 3, GL_FLOAT,
+		sizeof(vbo_model_vert_t), offset);
+}
 
 #if 0
 // FIXME: get rid of cos/sin lookups etc
@@ -181,7 +189,7 @@ static void GLC_DrawMD3Frame(const entity_t* ent, const float* modelColor, md3He
 	}
 }
 
-static void GLC_DrawAlias3ModelProgram(entity_t* ent, int frame1, qbool invalidate_texture, float* vertexColor, float lerpfrac, qbool outline, qbool additive_pass)
+static void GLC_DrawAlias3ModelProgram(entity_t* ent, int frame1, int frame2, qbool invalidate_texture, float* vertexColor, float lerpfrac, qbool outline, qbool additive_pass)
 {
 	model_t *mod = ent->model;
 	md3model_t *mhead = (md3model_t *)Mod_Extradata(mod);
@@ -190,10 +198,20 @@ static void GLC_DrawAlias3ModelProgram(entity_t* ent, int frame1, qbool invalida
 	vec3_t angle_vector = { cos(angle_radians), sin(angle_radians), 1 };
 	int vertsPerFrame = mod->vertsInVBO / pheader->numFrames;
 	int first_vert = mod->vbo_start + vertsPerFrame * frame1;
+	int frame2_vert = mod->vbo_start + vertsPerFrame * frame2;
 	int vert_index;
 	surfinf_t* sinf = MD3_ExtraSurfaceInfoForModel(mhead);
 	md3Surface_t* surf;
 	int surfnum;
+
+	// When frame2 is earlier in VBO than frame1 (e.g. cycle boundary 7->0),
+	// swap first/second and invert lerpfrac so the offset is always non-negative.
+	if (frame2_vert < first_vert) {
+		int tmp = first_vert;
+		first_vert = frame2_vert;
+		frame2_vert = tmp;
+		lerpfrac = 1.0f - lerpfrac;
+	}
 
 	if (ent->skinnum >= 0 && ent->skinnum < pheader->numSkins) {
 		sinf += ent->skinnum * pheader->numSurfaces;
@@ -206,6 +224,7 @@ static void GLC_DrawAlias3ModelProgram(entity_t* ent, int frame1, qbool invalida
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_outline_glc_lerpFraction, lerpfrac);
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_outline_glc_outlineScale, ent->outlineScale);
 		GLC_StateBeginAliasOutlineFrame(weaponmodel);
+		GLC_BindPose2TextureCoord_MD3(first_vert, frame2_vert);
 		vert_index = first_vert;
 		MD3_ForEachSurface(pheader, surf, surfnum) {
 			// FIXME: hack for not reading shader types
@@ -235,6 +254,7 @@ static void GLC_DrawAlias3ModelProgram(entity_t* ent, int frame1, qbool invalida
 		// z-pass
 		if (ent->r_modelalpha < 1) {
 			GLC_StateBeginDrawAliasZPass(ent->renderfx & RF_WEAPONMODEL);
+			GLC_BindPose2TextureCoord_MD3(first_vert, frame2_vert);
 			vert_index = first_vert;
 			MD3_ForEachSurface(pheader, surf, surfnum) {
 				GL_DrawArrays(GL_TRIANGLES, vert_index, 3 * surf->numTriangles);
@@ -243,6 +263,7 @@ static void GLC_DrawAlias3ModelProgram(entity_t* ent, int frame1, qbool invalida
 		}
 
 		GLC_StateBeginDrawAliasFrameProgram(sinf->texnum, null_texture_reference, ent->renderfx, ent->custom_model, ent->r_modelalpha, additive_pass);
+		GLC_BindPose2TextureCoord_MD3(first_vert, frame2_vert);
 		vert_index = first_vert;
 		MD3_ForEachSurface(pheader, surf, surfnum) {
 			// FIXME: hack for not reading shader types
@@ -325,7 +346,7 @@ void GLC_DrawAlias3Model(entity_t *ent, qbool outline, qbool additive_pass)
 	subprogram = GLC_AliasModelSubProgramIndex(!invalidate_texture, ent->full_light, gl_caustics.integer && (ent->renderfx & RF_CAUSTICS), r_lerpmuzzlehack.integer && (render_effects & RF_WEAPONMODEL));
 
 	if (gl_program_aliasmodels.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompileSpecific(subprogram)) {
-		GLC_DrawAlias3ModelProgram(ent, frame1, invalidate_texture, vertexColor, lerpfrac, outline, additive_pass);
+		GLC_DrawAlias3ModelProgram(ent, frame1, frame2, invalidate_texture, vertexColor, lerpfrac, outline, additive_pass);
 	}
 	else if (GL_Supported(R_SUPPORT_IMMEDIATEMODE)) {
 		GLC_DrawAlias3ModelImmediate(ent, frame1, frame2, invalidate_texture, vertexColor, lerpfrac, outline, additive_pass);
@@ -333,11 +354,19 @@ void GLC_DrawAlias3Model(entity_t *ent, qbool outline, qbool additive_pass)
 	R_PopModelviewMatrix(oldMatrix);
 }
 
-static void GLC_DrawAlias3ModelPowerupShellProgram(model_t * mod, md3Header_t * pheader, int frame1, entity_t * ent, float lerpfrac)
+static void GLC_DrawAlias3ModelPowerupShellProgram(model_t * mod, md3Header_t * pheader, int frame1, int frame2, entity_t * ent, float lerpfrac)
 {
 	int vertsPerFrame = mod->vertsInVBO / pheader->numFrames;
 	int first_vert = mod->vbo_start + vertsPerFrame * frame1;
+	int frame2_vert = mod->vbo_start + vertsPerFrame * frame2;
 	float color1[4], color2[4];
+
+	if (frame2_vert < first_vert) {
+		int tmp = first_vert;
+		first_vert = frame2_vert;
+		frame2_vert = tmp;
+		lerpfrac = 1.0f - lerpfrac;
+	}
 
 	GLC_PowerupShellColor(0, ent->effects, color1);
 	GLC_PowerupShellColor(1, ent->effects, color2);
@@ -347,6 +376,7 @@ static void GLC_DrawAlias3ModelPowerupShellProgram(model_t * mod, md3Header_t * 
 	R_ProgramUniform4fv(r_program_uniform_aliasmodel_shell_glc_fsBaseColor2, color2);
 	R_ProgramUniform4fv(r_program_uniform_aliasmodel_shell_glc_scroll, GLC_PowerupShell_ScrollParams());
 	R_ProgramUniform1f(r_program_uniform_aliasmodel_shell_glc_lerpFraction, lerpfrac);
+	GLC_BindPose2TextureCoord_MD3(first_vert, frame2_vert);
 	GL_DrawArrays(GL_TRIANGLES, first_vert, vertsPerFrame);
 	R_ProgramUse(r_program_none);
 }
@@ -425,7 +455,7 @@ void GLC_DrawAlias3ModelPowerupShell(entity_t *ent)
 
 	GLC_StateBeginAliasPowerupShell(ent->renderfx & RF_WEAPONMODEL);
 	if (gl_program_aliasmodels.integer && buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelShellCompile()) {
-		GLC_DrawAlias3ModelPowerupShellProgram(mod, pheader, frame1, ent, lerpfrac);
+		GLC_DrawAlias3ModelPowerupShellProgram(mod, pheader, frame1, frame2, ent, lerpfrac);
 	}
 	else if (GL_Supported(R_SUPPORT_IMMEDIATEMODE)) {
 		GLC_DrawAlias3ModelPowerupShellImmediate(mod, pheader, frame1, frame2, ent, lerpfrac);

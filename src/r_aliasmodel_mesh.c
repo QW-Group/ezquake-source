@@ -294,8 +294,9 @@ void R_CreateAliasModelVBO(void)
 	if (R_UseModernOpenGL()) {
 		GLM_CreateAliasModelVAO();
 #ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
-		aliasModel_ssbo = buffers.Create(buffertype_storage, "aliasmodel-vertex-ssbo", required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
-		buffers.BindBase(aliasModel_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
+		buffers.Create(r_buffer_aliasmodel_vertex_ssbo, buffertype_storage, "aliasmodel-vertex-ssbo",
+			required_vbo_length * sizeof(vbo_model_vert_t), aliasModelData, bufferusage_constant_data);
+		buffers.BindBase(r_buffer_aliasmodel_vertex_ssbo, EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO);
 #endif
 	}
 #endif

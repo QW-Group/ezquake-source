@@ -41,11 +41,10 @@ void main()
 #endif
 
 #ifdef BACKFACE_PASS
-	gl_Position = gl_ModelViewProjectionMatrix * (gl_Vertex + lerpFrac * vec4(gl_MultiTexCoord1.xyz, 0) + vec4(outlineScale * gl_Normal, 0));
-	// gl_Position += gl_ModelViewProjectionMatrix * 
+	gl_Position = gl_ModelViewProjectionMatrix * vec4(mix(gl_Vertex.xyz, gl_MultiTexCoord1.xyz, lerpFrac) + outlineScale * gl_Normal, 1.0);
 	fsBaseColor = gl_Color;
 #else
-		gl_Position = gl_ModelViewProjectionMatrix * (gl_Vertex + lerpFrac * vec4(gl_MultiTexCoord1.xyz, 0));
+		gl_Position = gl_ModelViewProjectionMatrix * vec4(mix(gl_Vertex.xyz, gl_MultiTexCoord1.xyz, lerpFrac), 1.0);
 	#if defined(TEXTURING_ENABLED) || defined(DRAW_CAUSTIC_TEXTURES)
 		fsTextureCoord = gl_MultiTexCoord0.st;
 	#endif // TEXTURING

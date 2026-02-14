@@ -16,6 +16,12 @@ layout(std140, binding=EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) buffer AliasMode
 	AliasModel models[];
 };
 
+#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
+layout(std430, binding=EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO) buffer AliasModelVerts {
+	float verts[];  // raw float data: 16 floats per vertex (64 bytes), position at offset 0
+};
+#endif
+
 out vec2 fsTextureCoord;
 out vec2 fsAltTextureCoord;
 #ifdef EZQ_ALIASMODEL_FLATSHADING
@@ -45,9 +51,18 @@ void main()
 	plrbotcolor = models[_instanceId].bottomcolor;
 
 #ifdef EZQ_ALIASMODEL_MUZZLEHACK
-	lerpFrac = sign(lerpFrac) * max(lerpFrac, (vboFlags & AM_VERTEX_NOLERP));
+	lerpFrac = sign(lerpFrac) * max(lerpFrac, float(vboFlags & AM_VERTEX_NOLERP));
 #endif
+#ifdef EZQ_GL_BINDINGPOINT_ALIASMODEL_SSBO
+	{
+		int vertexOffset = gl_VertexID - models[_instanceId].pose1Base;
+		int pose2Index = (models[_instanceId].pose2Base + vertexOffset) * 16;
+		vec3 pose2Position = vec3(verts[pose2Index], verts[pose2Index + 1], verts[pose2Index + 2]);
+		position = mix(vboPosition, pose2Position, lerpFrac);
+	}
+#else
 	position = position + vboDirection * lerpFrac;
+#endif
 	fsMaterialSampler = models[_instanceId].materialTextureMapping;
 
 	if (mode == EZQ_ALIAS_MODE_NORMAL) {

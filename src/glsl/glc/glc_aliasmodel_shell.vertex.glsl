@@ -18,7 +18,7 @@ void main()
 	lerpFrac = sign(lerpFrac) * max(lerpFrac, mod(flags, 2));
 #endif
 
-	gl_Position = gl_ModelViewProjectionMatrix * ((gl_Vertex + lerpFrac * vec4(gl_MultiTexCoord1.xyz, 0)) + vec4(gl_Normal * 0.5, 0));
+	gl_Position = gl_ModelViewProjectionMatrix * vec4(mix(gl_Vertex.xyz, gl_MultiTexCoord1.xyz, lerpFrac) + gl_Normal * 0.5, 1.0);
 	fsTextureCoord = vec2(gl_MultiTexCoord0.s * 2 + scroll.x, gl_MultiTexCoord0.t * 2 + scroll.y);
 	fsAltTextureCoord = vec2(gl_MultiTexCoord0.s * 2 + scroll.z, gl_MultiTexCoord0.t * 2 + scroll.a);
 }
