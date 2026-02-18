@@ -29,8 +29,8 @@ out vec3 Direction;
 out vec3 Normal;
 out vec4 UnClipped;
 
-layout(std140, binding = EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface_data {
-	model_surface surfaces[];
+EZ_SSBO_LAYOUT(std140, EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES) EZ_SSBO(surface_data) {
+	model_surface surfaces[EZ_SSBO_ARRAY_SIZE(8192)];
 };
 #endif
 
@@ -45,11 +45,11 @@ out float alpha;
 #endif
 flat out int SamplerNumber;
 
-layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA) buffer WorldCvars {
-	WorldDrawInfo drawInfo[];
+EZ_SSBO_LAYOUT(std140, EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA) EZ_SSBO(WorldCvars) {
+	WorldDrawInfo drawInfo[EZ_SSBO_ARRAY_SIZE(64)];
 };
-layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS) buffer SamplerMappingsBuffer {
-	SamplerMapping samplerMapping[];
+EZ_SSBO_LAYOUT(std140, EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS) EZ_SSBO(SamplerMappingsBuffer) {
+	SamplerMapping samplerMapping[EZ_SSBO_ARRAY_SIZE(256)];
 };
 
 

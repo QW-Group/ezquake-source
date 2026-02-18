@@ -63,6 +63,11 @@ qbool GLM_Compile3DSpriteProgram(void)
 {
 	if (R_ProgramRecompileNeeded(r_program_sprite3d, 0)) {
 		R_ProgramCompile(r_program_sprite3d);
+
+		if (!GL_VersionAtLeast(4, 2) && R_ProgramReady(r_program_sprite3d)) {
+			R_ProgramUse(r_program_sprite3d);
+			R_ProgramUniform1i(r_program_uniform_sprites_materialtex, 0);
+		}
 	}
 
 	return R_ProgramReady(r_program_sprite3d);

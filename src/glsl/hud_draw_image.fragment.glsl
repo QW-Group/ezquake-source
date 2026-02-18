@@ -1,9 +1,9 @@
 #ezquake-definitions
 
 #ifdef MIXED_SAMPLING
-layout(binding=0) uniform sampler2D tex[2];
+EZ_LAYOUT_BINDING(0) uniform sampler2D tex[2];
 #else
-layout(binding=0) uniform sampler2D tex;
+EZ_LAYOUT_BINDING(0) uniform sampler2D tex;
 #endif
 
 in vec2 TextureCoord;

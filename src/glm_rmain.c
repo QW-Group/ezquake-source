@@ -49,6 +49,11 @@ qbool GLM_CompileWorldGeometryProgram(void)
 		// Initialise program for drawing image
 		R_ProgramCompile(r_program_fx_world_geometry);
 
+		if (!GL_VersionAtLeast(4, 2) && R_ProgramReady(r_program_fx_world_geometry)) {
+			R_ProgramUse(r_program_fx_world_geometry);
+			R_ProgramUniform1i(r_program_uniform_fxworldgeometry_normaltex, 0);
+		}
+
 		R_ProgramSetCustomOptions(r_program_fx_world_geometry, post_process_flags);
 	}
 

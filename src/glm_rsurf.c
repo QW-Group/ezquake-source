@@ -230,6 +230,27 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 		// Initialise program for drawing image
 		R_ProgramCompileWithInclude(program_id, included_definitions);
 
+		// Set sampler uniforms for GL < 4.2 (no layout(binding=N) support)
+		if (!GL_VersionAtLeast(4, 2) && R_ProgramReady(program_id)) {
+			int base = alpha_test ? r_program_uniform_brushmodel_at_detailtex : r_program_uniform_brushmodel_detailtex;
+			R_ProgramUse(program_id);
+			if (detail_textures) {
+				R_ProgramUniform1i(base + 0, TEXTURE_UNIT_DETAIL);
+			}
+			if (caustic_textures) {
+				R_ProgramUniform1i(base + 1, TEXTURE_UNIT_CAUSTICS);
+			}
+			if (skybox) {
+				R_ProgramUniform1i(base + 2, TEXTURE_UNIT_SKYBOX);
+			}
+			else if (skydome) {
+				R_ProgramUniform1i(base + 3, TEXTURE_UNIT_SKYDOME_TEXTURE);
+				R_ProgramUniform1i(base + 4, TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE);
+			}
+			R_ProgramUniform1i(base + 5, TEXTURE_UNIT_LIGHTMAPS);
+			R_ProgramUniform1iArrayBase(base + 6, material_samplers_max, TEXTURE_UNIT_MATERIAL);
+		}
+
 		R_ProgramSetCustomOptions(program_id, drawworld_desiredOptions);
 	}
 
@@ -625,8 +646,8 @@ void GLM_PrepareWorldModelBatch(void)
 	buffers.EnsureSize(r_buffer_brushmodel_drawcall_data, sizeof(drawcalls[0].calls) * maximum_drawcalls);
 	buffers.EnsureSize(r_buffer_brushmodel_worldsamplers_ssbo, sizeof(drawcalls[0].mappings) * maximum_drawcalls);
 
-	buffers.BindRange(r_buffer_brushmodel_drawcall_data, EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA, buffers.BufferOffset(r_buffer_brushmodel_drawcall_data), sizeof(drawcalls[0].calls) * maximum_drawcalls);
-	buffers.BindRange(r_buffer_brushmodel_worldsamplers_ssbo, EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS, buffers.BufferOffset(r_buffer_brushmodel_worldsamplers_ssbo), sizeof(drawcalls[0].mappings) * maximum_drawcalls);
+	buffers.BindRange(r_buffer_brushmodel_drawcall_data, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA), buffers.BufferOffset(r_buffer_brushmodel_drawcall_data), sizeof(drawcalls[0].calls) * maximum_drawcalls);
+	buffers.BindRange(r_buffer_brushmodel_worldsamplers_ssbo, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS), buffers.BufferOffset(r_buffer_brushmodel_worldsamplers_ssbo), sizeof(drawcalls[0].mappings) * maximum_drawcalls);
 
 	for (draw = 0; draw <= current_drawcall; ++draw) {
 		glm_brushmodel_drawcall_t* drawcall = &drawcalls[draw];

@@ -10,8 +10,8 @@ layout(location = 3) in int _instanceId;
 layout(location = 4) in vec3 vboDirection;
 layout(location = 5) in int vboFlags;
 
-layout(std140, binding=EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) buffer AliasModelData {
-	AliasModel models[];
+EZ_SSBO_LAYOUT(std140, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) EZ_SSBO(AliasModelData) {
+	AliasModel models[EZ_SSBO_ARRAY_SIZE(64)];
 };
 
 out vec2 fsTextureCoord;

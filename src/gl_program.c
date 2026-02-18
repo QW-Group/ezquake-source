@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "r_program.h"
 #include "tr_types.h"
+#include "glsl/constants.glsl"
 
 typedef enum {
 	renderer_classic = 1,
@@ -350,6 +351,54 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_aliasmodel, "outline_use_player_color", 1, false },
 	// r_program_uniform_aliasmodel_outline_scale
 	{ r_program_aliasmodel, "outline_scale", 1, false },
+	// r_program_uniform_brushmodel_detailtex
+	{ r_program_brushmodel, "detailTex", 1, false },
+	// r_program_uniform_brushmodel_causticstex
+	{ r_program_brushmodel, "causticsTex", 1, false },
+	// r_program_uniform_brushmodel_skytex
+	{ r_program_brushmodel, "skyTex", 1, false },
+	// r_program_uniform_brushmodel_skydometex
+	{ r_program_brushmodel, "skyDomeTex", 1, false },
+	// r_program_uniform_brushmodel_skydomecloudtex
+	{ r_program_brushmodel, "skyDomeCloudTex", 1, false },
+	// r_program_uniform_brushmodel_lightmaptex
+	{ r_program_brushmodel, "lightmapTex", 1, false },
+	// r_program_uniform_brushmodel_materialtex
+	{ r_program_brushmodel, "materialTex", 1, false },
+	// r_program_uniform_brushmodel_at_detailtex
+	{ r_program_brushmodel_alphatested, "detailTex", 1, false },
+	// r_program_uniform_brushmodel_at_causticstex
+	{ r_program_brushmodel_alphatested, "causticsTex", 1, false },
+	// r_program_uniform_brushmodel_at_skytex
+	{ r_program_brushmodel_alphatested, "skyTex", 1, false },
+	// r_program_uniform_brushmodel_at_skydometex
+	{ r_program_brushmodel_alphatested, "skyDomeTex", 1, false },
+	// r_program_uniform_brushmodel_at_skydomecloudtex
+	{ r_program_brushmodel_alphatested, "skyDomeCloudTex", 1, false },
+	// r_program_uniform_brushmodel_at_lightmaptex
+	{ r_program_brushmodel_alphatested, "lightmapTex", 1, false },
+	// r_program_uniform_brushmodel_at_materialtex
+	{ r_program_brushmodel_alphatested, "materialTex", 1, false },
+	// r_program_uniform_aliasmodel_causticstex
+	{ r_program_aliasmodel, "causticsTex", 1, false },
+	// r_program_uniform_aliasmodel_samplers
+	{ r_program_aliasmodel, "samplers", 1, false },
+	// r_program_uniform_sprites_materialtex
+	{ r_program_sprite3d, "materialTex", 1, false },
+	// r_program_uniform_postprocess_base
+	{ r_program_post_process, "base", 1, false },
+	// r_program_uniform_postprocess_overlay
+	{ r_program_post_process, "overlay", 1, false },
+	// r_program_uniform_fxworldgeometry_normaltex
+	{ r_program_fx_world_geometry, "normal_texture", 1, false },
+	// r_program_uniform_hudimage_tex
+	{ r_program_hud_images, "tex", 1, false },
+	// r_program_uniform_aliasmodel_instanceOffset
+	{ r_program_aliasmodel, "instanceOffset", 1, false },
+	// r_program_uniform_brushmodel_instanceOffset
+	{ r_program_brushmodel, "instanceOffset", 1, false },
+	// r_program_uniform_brushmodel_alphatested_instanceOffset
+	{ r_program_brushmodel_alphatested, "instanceOffset", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -975,6 +1024,11 @@ qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options)
 	return (!program->program) || program->force_recompile || program->custom_options != options || program->standard_options != standard_options;
 }
 
+GLuint R_ProgramId(r_program_id program_id)
+{
+	return R_CurrentSubProgram(program_id)->program;
+}
+
 void GL_CvarForceRecompile(cvar_t* cvar)
 {
 	r_program_id p;
@@ -1190,6 +1244,21 @@ void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value)
 	}
 }
 
+void R_ProgramUniform1iArrayBase(r_program_uniform_id uniform_id, int count, int base_value)
+{
+	r_program_uniform_t* base_uniform = &program_uniforms[uniform_id];
+	gl_program_uniform_t* program_uniform = GL_ProgramUniformFind(uniform_id);
+	int j;
+
+	if (program_uniform->location >= 0) {
+		R_ProgramUse(base_uniform->program_id);
+		for (j = 0; j < count; ++j) {
+			GL_Procedure(glUniform1i, program_uniform->location + j, base_value + j);
+		}
+		program_uniform->int_value = base_value;
+	}
+}
+
 void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value)
 {
 	r_program_uniform_t* base_uniform = &program_uniforms[uniform_id];
@@ -1355,6 +1424,39 @@ int R_ProgramUniformGet1i(r_program_uniform_id uniform_id, int default_value)
 	return default_value;
 }
 
+// Set UBO block bindings manually when layout(binding=N) is unavailable (GL < 4.2)
+static void R_PatchProgramBindings(r_program_id program_id)
+{
+	static const struct { const char* name; int binding; } storage_bindings[] = {
+		{ "WorldCvars",            EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA },
+		{ "SamplerMappingsBuffer", EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS },
+		{ "AliasModelData",        EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA },
+		{ "surface_data",          EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES },
+	};
+	GLuint prog, idx;
+	int i;
+
+	if (GL_VersionAtLeast(4, 2)) {
+		return; // layout(binding=N) works in-shader
+	}
+
+	prog = R_ProgramId(program_id);
+
+	// Set UBO binding for GlobalState
+	idx = GL_GetUniformBlockIndex(prog, "GlobalState");
+	if (idx != GL_INVALID_INDEX) {
+		GL_UniformBlockBinding(prog, idx, EZQ_GL_BINDINGPOINT_FRAMECONSTANTS);
+	}
+
+	// Set UBO bindings for storage blocks (SSBOs that became UBOs)
+	for (i = 0; i < (int)(sizeof(storage_bindings) / sizeof(storage_bindings[0])); i++) {
+		idx = GL_GetUniformBlockIndex(prog, storage_bindings[i].name);
+		if (idx != GL_INVALID_INDEX) {
+			GL_UniformBlockBinding(prog, idx, EZQ_STORAGE_BLOCK_BINDING(storage_bindings[i].binding));
+		}
+	}
+}
+
 qbool R_ProgramCompile(r_program_id program_id)
 {
 	return R_ProgramCompileWithInclude(program_id, NULL);
@@ -1374,6 +1476,7 @@ qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_
 		}
 		R_ProgramFindUniformsForProgram(program_id);
 		R_ProgramFindAttributesForProgram(program_id);
+		R_PatchProgramBindings(program_id);
 		return true;
 	}
 	return false;

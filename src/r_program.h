@@ -120,6 +120,31 @@ typedef enum {
 	r_program_uniform_aliasmodel_outline_color_enemy,
 	r_program_uniform_aliasmodel_outline_use_player_color,
 	r_program_uniform_aliasmodel_outline_scale,
+	// Sampler uniforms for GL < 4.2 (no layout(binding=N))
+	r_program_uniform_brushmodel_detailtex,
+	r_program_uniform_brushmodel_causticstex,
+	r_program_uniform_brushmodel_skytex,
+	r_program_uniform_brushmodel_skydometex,
+	r_program_uniform_brushmodel_skydomecloudtex,
+	r_program_uniform_brushmodel_lightmaptex,
+	r_program_uniform_brushmodel_materialtex,
+	r_program_uniform_brushmodel_at_detailtex,
+	r_program_uniform_brushmodel_at_causticstex,
+	r_program_uniform_brushmodel_at_skytex,
+	r_program_uniform_brushmodel_at_skydometex,
+	r_program_uniform_brushmodel_at_skydomecloudtex,
+	r_program_uniform_brushmodel_at_lightmaptex,
+	r_program_uniform_brushmodel_at_materialtex,
+	r_program_uniform_aliasmodel_causticstex,
+	r_program_uniform_aliasmodel_samplers,
+	r_program_uniform_sprites_materialtex,
+	r_program_uniform_postprocess_base,
+	r_program_uniform_postprocess_overlay,
+	r_program_uniform_fxworldgeometry_normaltex,
+	r_program_uniform_hudimage_tex,
+	r_program_uniform_aliasmodel_instanceOffset,
+	r_program_uniform_brushmodel_instanceOffset,
+	r_program_uniform_brushmodel_alphatested_instanceOffset,
 	r_program_uniform_count
 } r_program_uniform_id;
 
@@ -155,6 +180,7 @@ void R_ProgramMemoryBarrier(r_program_id program_id);
 void R_ProgramComputeSetMemoryBarrierFlag(r_program_id program_id, r_program_memory_barrier_id barrier_id);
 
 void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value);
+void R_ProgramUniform1iArrayBase(r_program_uniform_id uniform_id, int count, int base_value);
 void R_ProgramUniform1f(r_program_uniform_id uniform_id, float value);
 void R_ProgramUniform4fv(r_program_uniform_id uniform_id, const float* values);
 void R_ProgramUniform3f(r_program_uniform_id uniform_id, float x, float y, float z);
@@ -168,6 +194,9 @@ int R_ProgramAttributeLocation(r_program_attribute_id attr_id);
 
 // Check if a program needs to be recompiled
 qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options);
+
+// Get program handle (GLuint)
+unsigned int R_ProgramId(r_program_id program_id);
 
 // Compiles a simple program
 qbool R_ProgramCompile(r_program_id program_id);

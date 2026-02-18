@@ -80,7 +80,7 @@ static GLenum GL_BufferTypeToTarget(buffertype_t type)
 		case buffertype_indirect:
 			return GL_DRAW_INDIRECT_BUFFER;
 		case buffertype_storage:
-			return GL_SHADER_STORAGE_BUFFER;
+			return GL_VersionAtLeast(4, 3) ? GL_SHADER_STORAGE_BUFFER : GL_UNIFORM_BUFFER;
 		case buffertype_vertex:
 			return GL_ARRAY_BUFFER;
 		case buffertype_uniform:

@@ -42,16 +42,18 @@
 
 #define MAX_SAMPLER_MAPPINGS 256
 
-// SSBO bindings
+// SSBO/UBO bindings
+#define EZQ_GL_BINDINGPOINT_FRAMECONSTANTS      0
+
+// Storage buffer binding points (SSBO on 4.3+, UBO on 4.1)
+// In GLSL: offset by 1 when used as UBOs to avoid conflict with GlobalState at 0
+// In C code: EZQ_STORAGE_BLOCK_BINDING() macro applies the offset at runtime
 #define EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES 0
 #define EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA 1
 #define EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA 2
 #define EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS 3
 #define EZQ_GL_BINDINGPOINT_LIGHTSTYLES         4
 #define EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT   5
-
-// UBO bindings
-#define EZQ_GL_BINDINGPOINT_FRAMECONSTANTS      0
 
 // Alias models
 #define EZQ_ALIAS_MODE_NORMAL        0

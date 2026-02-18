@@ -3,19 +3,19 @@
 uniform int draw_outlines;
 
 #ifdef DRAW_DETAIL_TEXTURES
-layout(binding=SAMPLER_DETAIL_TEXTURE) uniform sampler2D detailTex;
+EZ_LAYOUT_BINDING(SAMPLER_DETAIL_TEXTURE) uniform sampler2D detailTex;
 #endif
 #ifdef DRAW_CAUSTIC_TEXTURES
-layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
+EZ_LAYOUT_BINDING(SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
 #endif
 #if defined(DRAW_SKYBOX)
-layout(binding=SAMPLER_SKYBOX_TEXTURE) uniform samplerCube skyTex;
+EZ_LAYOUT_BINDING(SAMPLER_SKYBOX_TEXTURE) uniform samplerCube skyTex;
 #elif defined(DRAW_SKYDOME)
-layout(binding=SAMPLER_SKYDOME_TEXTURE) uniform sampler2D skyDomeTex;
-layout(binding=SAMPLER_SKYDOME_CLOUDTEXTURE) uniform sampler2D skyDomeCloudTex;
+EZ_LAYOUT_BINDING(SAMPLER_SKYDOME_TEXTURE) uniform sampler2D skyDomeTex;
+EZ_LAYOUT_BINDING(SAMPLER_SKYDOME_CLOUDTEXTURE) uniform sampler2D skyDomeCloudTex;
 #endif
-layout(binding=SAMPLER_LIGHTMAP_TEXTURE) uniform sampler2DArray lightmapTex;
-layout(binding=SAMPLER_MATERIAL_TEXTURE_START) uniform sampler2DArray materialTex[SAMPLER_MATERIAL_TEXTURE_COUNT];
+EZ_LAYOUT_BINDING(SAMPLER_LIGHTMAP_TEXTURE) uniform sampler2DArray lightmapTex;
+EZ_LAYOUT_BINDING(SAMPLER_MATERIAL_TEXTURE_START) uniform sampler2DArray materialTex[SAMPLER_MATERIAL_TEXTURE_COUNT];
 
 in vec3 TextureCoord;
 centroid in vec3 TexCoordLightmap;

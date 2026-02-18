@@ -7,9 +7,9 @@ uniform vec3 outline_color_enemy;
 uniform int outline_use_player_color;
 
 #ifdef DRAW_CAUSTIC_TEXTURES
-layout(binding=SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
+EZ_LAYOUT_BINDING(SAMPLER_CAUSTIC_TEXTURE) uniform sampler2D causticsTex;
 #endif
-layout(binding=SAMPLER_MATERIAL_TEXTURE_START) uniform sampler2D samplers[SAMPLER_COUNT];
+EZ_LAYOUT_BINDING(SAMPLER_MATERIAL_TEXTURE_START) uniform sampler2D samplers[SAMPLER_COUNT];
 
 in vec2 fsTextureCoord;
 in vec2 fsAltTextureCoord;

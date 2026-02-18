@@ -3,7 +3,7 @@
 
 #define MAX_DLIGHTS 32
 
-layout(std140, binding=EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
+EZ_SSBO_LAYOUT(std140, EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	mat4 modelViewMatrix;
 	mat4 projectionMatrix;
 

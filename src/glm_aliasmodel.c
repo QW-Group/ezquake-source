@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
+#include "gl_local.h"
 #include "r_aliasmodel.h"
 #include "tr_types.h"
 #include "glsl/constants.glsl"
@@ -188,6 +189,16 @@ qbool GLM_CompileAliasModelProgram(void)
 
 		// Initialise program for drawing image
 		R_ProgramCompileWithInclude(r_program_aliasmodel, included_definitions);
+
+		// Set sampler uniforms for GL < 4.2 (no layout(binding=N) support)
+		if (!GL_VersionAtLeast(4, 2) && R_ProgramReady(r_program_aliasmodel)) {
+			R_ProgramUse(r_program_aliasmodel);
+			if (drawAlias_desiredOptions & DRAW_CAUSTIC_TEXTURES) {
+				R_ProgramUniform1i(r_program_uniform_aliasmodel_causticstex, TEXTURE_UNIT_CAUSTICS);
+			}
+			R_ProgramUniform1iArrayBase(r_program_uniform_aliasmodel_samplers, material_samplers_max, TEXTURE_UNIT_MATERIAL);
+		}
+
 		R_ProgramSetCustomOptions(r_program_aliasmodel, drawAlias_desiredOptions);
 	}
 	cached_mode = R_ProgramUniformGet1i(r_program_uniform_aliasmodel_drawmode, 0);
@@ -450,7 +461,7 @@ void GLM_PrepareAliasModelBatches(void)
 
 	// Update VBO with data about each entity
 	buffers.Update(r_buffer_aliasmodel_model_data, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
-	buffers.BindRange(r_buffer_aliasmodel_model_data, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA, buffers.BufferOffset(r_buffer_aliasmodel_model_data), sizeof(aliasdata.models[0]) * alias_draw_count);
+	buffers.BindRange(r_buffer_aliasmodel_model_data, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA), buffers.BufferOffset(r_buffer_aliasmodel_model_data), sizeof(aliasdata.models[0]) * alias_draw_count);
 
 	// Build & update list of indirect calls
 	{

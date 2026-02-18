@@ -178,6 +178,10 @@ void GL_InitialiseDebugging(void);
 // Which renderer to use
 #define GL_VersionAtLeast(major, minor) (glConfig.majorVersion > (major) || (glConfig.majorVersion == (major) && glConfig.minorVersion >= (minor)))
 
+// When SSBOs are unavailable (GL < 4.3), storage buffers become UBOs.
+// UBOs share the binding namespace with GlobalState (binding 0), so offset by 1.
+#define EZQ_STORAGE_BLOCK_BINDING(n) (GL_VersionAtLeast(4, 3) ? (n) : ((n) + 1))
+
 void GL_TextureInitialiseState(void);
 void GL_InvalidateTextureReferences(GLuint texture);
 

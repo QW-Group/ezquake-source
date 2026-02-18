@@ -77,7 +77,7 @@ void GLM_CreateBrushModelVAO(void)
 		}
 		buffers.Create(r_buffer_brushmodel_surface_data, buffertype_storage, "brushmodel-surfs", cl.worldmodel->numsurfaces * sizeof(vbo_world_surface_t), surfaces, bufferusage_constant_data);
 		Q_free(surfaces);
-		buffers.BindBase(r_buffer_brushmodel_surface_data, EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES);
+		buffers.BindBase(r_buffer_brushmodel_surface_data, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES));
 	}
 }
 

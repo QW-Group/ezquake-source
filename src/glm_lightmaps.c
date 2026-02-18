@@ -73,9 +73,9 @@ void GLM_ComputeLightmaps(void)
 	else {
 		buffers.Update(r_buffer_brushmodel_lightstyles_ssbo, sizeof(d_lightstylevalue), d_lightstylevalue);
 	}
-	buffers.BindRange(r_buffer_brushmodel_lightstyles_ssbo, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, buffers.BufferOffset(r_buffer_brushmodel_lightstyles_ssbo), sizeof(d_lightstylevalue));
+	buffers.BindRange(r_buffer_brushmodel_lightstyles_ssbo, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_LIGHTSTYLES), buffers.BufferOffset(r_buffer_brushmodel_lightstyles_ssbo), sizeof(d_lightstylevalue));
 	buffers.Update(r_buffer_brushmodel_surfacestolight_ssbo, surfaceTodoLength, surfaceTodoData);
-	buffers.BindRange(r_buffer_brushmodel_surfacestolight_ssbo, EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT, buffers.BufferOffset(r_buffer_brushmodel_surfacestolight_ssbo), surfaceTodoLength);
+	buffers.BindRange(r_buffer_brushmodel_surfacestolight_ssbo, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT), buffers.BufferOffset(r_buffer_brushmodel_surfacestolight_ssbo), surfaceTodoLength);
 
 	GL_BindImageTexture(0, lightmap_source_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
 	GL_BindImageTexture(1, lightmap_texture_array, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
