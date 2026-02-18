@@ -51,6 +51,10 @@ texture_ref GLM_LightmapArray(void)
 
 qbool GLM_CompileLightmapComputeProgram(void)
 {
+	if (!GL_Supported(R_SUPPORT_COMPUTE_SHADERS)) {
+		return false;
+	}
+
 	if (R_ProgramRecompileNeeded(r_program_lightmap_compute, 0) && R_ProgramCompile(r_program_lightmap_compute)) {
 		R_ProgramComputeSetMemoryBarrierFlag(r_program_lightmap_compute, r_program_memory_barrier_image_access);
 		R_ProgramComputeSetMemoryBarrierFlag(r_program_lightmap_compute, r_program_memory_barrier_texture_access);
