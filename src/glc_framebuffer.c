@@ -64,23 +64,36 @@ qbool GLC_CompilePostProcessProgram(void)
 		}
 		if (post_process_flags & POST_PROCESS_FXAA) {
 			qbool supported = true;
-			if (!(GL_VersionAtLeast(3, 0) || SDL_GL_ExtensionSupported("GL_EXT_gpu_shader4")))
-			{
-				Com_Printf("WARNING: Missing GL_EXT_gpu_shader4, FXAA not available.");
-				supported = false;
+			if (glConfig.coreProfile) {
+				// gpu_shader4 and gpu_shader5 functionality is core in GL 3.3+
 			}
-#ifndef __APPLE__
-			if (!(GL_VersionAtLeast(4, 2) || SDL_GL_ExtensionSupported("GL_ARB_gpu_shader5")))
-			{
-				Com_Printf("WARNING: Missing GL_ARB_gpu_shader5, FXAA not available.");
-				supported = false;
+			else {
+				if (!GL_VersionAtLeast(3, 0) || !SDL_GL_ExtensionSupported("GL_EXT_gpu_shader4"))
+				{
+					Com_Printf("WARNING: Missing GL_EXT_gpu_shader4, FXAA not available.");
+					supported = false;
+				}
+
+				if (!GL_VersionAtLeast(4, 2) || !SDL_GL_ExtensionSupported("GL_ARB_gpu_shader5"))
+				{
+					Com_Printf("WARNING: Missing GL_ARB_gpu_shader5, FXAA not available.");
+					supported = false;
+				}
 			}
-#endif
 			if (supported)
 			{
 				extern const unsigned char fxaa_h_glsl[];
-				char buffer[33];
-				const char *settings =
+				char buffer[64] = {0};
+				const char *settings;
+				if (glConfig.coreProfile) {
+					settings =
+						"#define EZ_POSTPROCESS_FXAA\n"
+						"#define FXAA_PC 1\n"
+						"#define FXAA_GLSL_130 1\n"
+						"#define FXAA_GREEN_AS_LUMA 1\n";
+				}
+				else {
+					settings =
 						"#extension GL_EXT_gpu_shader4 : enable\n"
 #ifndef __APPLE__
 						"#extension GL_ARB_gpu_shader5 : enable\n"
@@ -89,6 +102,7 @@ qbool GLC_CompilePostProcessProgram(void)
 						"#define FXAA_PC 1\n"
 						"#define FXAA_GLSL_120 1\n"
 						"#define FXAA_GREEN_AS_LUMA 1\n";
+				}
 				snprintf(buffer, sizeof(buffer), "#define FXAA_QUALITY__PRESET %d\n", fxaa_preset);
 				strlcat(included_definitions, settings, sizeof(included_definitions));
 				strlcat(included_definitions, buffer, sizeof(included_definitions));
