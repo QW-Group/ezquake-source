@@ -446,9 +446,10 @@ GL_StaticFunctionWrapperBody(glGetAttribLocation, GLint, program, name)
 GL_StaticProcedureDeclaration(glDispatchCompute, "num_groups_x=%u, num_groups_y=%u, num_groups_z=%u", GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z)
 GL_StaticProcedureDeclaration(glMemoryBarrier, "barriers=%u", GLbitfield barriers)
 
-#define MAX_SHADER_COMPONENTS 7
+#define MAX_SHADER_COMPONENTS 8
 #define EZQUAKE_DEFINITIONS_STRING "#ezquake-definitions"
 
+static char macro_definitions[4096];
 static char core_definitions[2048];
 static char standard_definitions[2048];
 
@@ -663,18 +664,21 @@ static int GL_InsertDefinitions(
 	if (break_point) {
 		int position = break_point - strings[0];
 
-		lengths[6] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
-		lengths[5] = strlen(core_definitions);
-		lengths[4] = definitions ? strlen(definitions) : 0;
-		lengths[3] = strlen(standard_definitions);
-		lengths[2] = glsl_common_glsl_len;
+		// Order: version, constants, macros, common, standard_defs, included_defs, core_defs, shader
+		lengths[7] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
+		lengths[6] = strlen(core_definitions);
+		lengths[5] = definitions ? strlen(definitions) : 0;
+		lengths[4] = strlen(standard_definitions);
+		lengths[3] = glsl_common_glsl_len;
+		lengths[2] = strlen(macro_definitions);
 		lengths[1] = glsl_constants_glsl_len;
 		lengths[0] = position;
-		strings[6] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
-		strings[5] = core_definitions;
-		strings[4] = definitions ? definitions : "";
-		strings[3] = standard_definitions;
-		strings[2] = (const char*)glsl_common_glsl;
+		strings[7] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
+		strings[6] = core_definitions;
+		strings[5] = definitions ? definitions : "";
+		strings[4] = standard_definitions;
+		strings[3] = (const char*)glsl_common_glsl;
+		strings[2] = macro_definitions;
 		strings[1] = (const char*)glsl_constants_glsl;
 
 		// Inject the appropriate GLSL version string (with shader type for GLC core profile)
@@ -707,7 +711,7 @@ static int GL_InsertDefinitions(
 			}
 		}
 
-		return 7;
+		return 8;
 	}
 
 	return 1;
@@ -763,17 +767,17 @@ static qbool GL_CompileProgram(
 	int i;
 
 	GLsizei vertex_components = 1;
-	const char* vertex_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_vertex].text, "", "", "", "", "" };
-	GLint vertex_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_vertex].length, 0, 0, 0, 0, 0 };
+	const char* vertex_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_vertex].text, "", "", "", "", "", "" };
+	GLint vertex_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_vertex].length, 0, 0, 0, 0, 0, 0 };
 	GLsizei geometry_components = 1;
-	const char* geometry_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_geometry].text, "", "", "", "", "" };
-	GLint geometry_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_geometry].length, 0, 0, 0, 0, 0 };
+	const char* geometry_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_geometry].text, "", "", "", "", "", "" };
+	GLint geometry_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_geometry].length, 0, 0, 0, 0, 0, 0 };
 	GLsizei fragment_components = 1;
-	const char* fragment_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].text, "", "", "", "", "" };
-	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].length, 0, 0, 0, 0, 0 };
+	const char* fragment_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].text, "", "", "", "", "", "" };
+	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].length, 0, 0, 0, 0, 0, 0 };
 	GLsizei compute_components = 1;
-	const char* compute_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_compute].text, "", "", "", "", "" };
-	GLint compute_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_compute].length, 0, 0, 0, 0, 0 };
+	const char* compute_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_compute].text, "", "", "", "", "", "" };
+	GLint compute_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_compute].length, 0, 0, 0, 0, 0, 0 };
 
 	DebugOutput(va("Compiling: %s\n", program->friendly_name));
 
@@ -987,8 +991,8 @@ void GL_CvarForceRecompile(cvar_t* cvar)
 
 static qbool GL_CompileComputeShaderProgram(gl_program_t* program, const char* shadertext, unsigned int length)
 {
-	const char* shader_text[MAX_SHADER_COMPONENTS] = { shadertext, "", "", "", "", "" };
-	GLint shader_text_length[MAX_SHADER_COMPONENTS] = { length, 0, 0, 0, 0, 0 };
+	const char* shader_text[MAX_SHADER_COMPONENTS] = { shadertext, "", "", "", "", "", "" };
+	GLint shader_text_length[MAX_SHADER_COMPONENTS] = { length, 0, 0, 0, 0, 0, 0 };
 	int components;
 	GLuint shader;
 	int standard_options = R_ProgramStandardOptions(program->standard_option_flags);
@@ -1377,10 +1381,73 @@ qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_
 
 static void GL_BuildCoreDefinitions(void)
 {
-	// Set common definitions here (none yet)
+	// macro_definitions: injected BEFORE common.glsl (macros used by common.glsl)
+	memset(macro_definitions, 0, sizeof(macro_definitions));
+	strlcpy(macro_definitions, (R_UseModernOpenGL() ? "#define EZ_MODERN_GL\n" : "#define EZ_LEGACY_GL\n"), sizeof(macro_definitions));
+
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+	if (R_UseModernOpenGL()) {
+		if (GL_VersionAtLeast(4, 3)) {
+			strlcat(macro_definitions,
+				"#define EZ_HAS_SSBO 1\n"
+				"#define EZ_LAYOUT_BINDING(n) layout(binding=n)\n"
+				"#define EZ_SSBO_LAYOUT(qualifier, binding_name) layout(qualifier, binding=binding_name)\n"
+				"#define EZ_SSBO(name) buffer name\n"
+				"#define EZ_SSBO_ARRAY_SIZE(max_size)\n",
+				sizeof(macro_definitions));
+		}
+		else {
+			strlcat(macro_definitions,
+				"#define EZ_LAYOUT_BINDING(n)\n"
+				"#define EZ_SSBO_LAYOUT(qualifier, binding_name) layout(qualifier)\n"
+				"#define EZ_SSBO(name) uniform name\n"
+				"#define EZ_SSBO_ARRAY_SIZE(max_size) max_size\n",
+				sizeof(macro_definitions));
+		}
+	}
+#endif
+
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+	// GLC core profile compatibility macros (only in actual core profile context)
+	if (!R_UseModernOpenGL() && glConfig.coreProfile) {
+		strlcat(macro_definitions,
+			// Shared uniforms (available in both vertex and fragment shaders)
+			"uniform mat4 ezModelViewProjectionMatrix;\n"
+			"uniform mat4 ezTextureMatrix[4];\n"
+			"#define gl_ModelViewProjectionMatrix ezModelViewProjectionMatrix\n"
+			"#define gl_TextureMatrix ezTextureMatrix\n"
+			// Vertex shader compatibility
+			"#ifdef EZ_VERTEX_SHADER\n"
+			"#define attribute in\n"
+			"#define varying out\n"
+			"in vec4 ezVertex;\n"
+			"in vec3 ezNormal;\n"
+			"in vec4 ezColor;\n"
+			"in vec4 ezMultiTexCoord0;\n"
+			"in vec4 ezMultiTexCoord1;\n"
+			"#define gl_Vertex ezVertex\n"
+			"#define gl_Normal ezNormal\n"
+			"#define gl_Color ezColor\n"
+			"#define gl_MultiTexCoord0 ezMultiTexCoord0\n"
+			"#define gl_MultiTexCoord1 ezMultiTexCoord1\n"
+			"#define ftransform() (ezModelViewProjectionMatrix * ezVertex)\n"
+			"#endif\n"
+			// Fragment shader compatibility
+			"#ifdef EZ_FRAGMENT_SHADER\n"
+			"#define varying in\n"
+			"out vec4 ezFragColor;\n"
+			"#define gl_FragColor ezFragColor\n"
+			"#define texture2D texture\n"
+			"#define texture2DArray texture\n"
+			"#define textureCube texture\n"
+			"#endif\n",
+			sizeof(macro_definitions));
+	}
+#endif
+
+	// core_definitions: injected AFTER common.glsl (fog functions that use GlobalState members)
 	memset(core_definitions, 0, sizeof(core_definitions));
-	strlcpy(core_definitions, (R_UseModernOpenGL() ? "#define EZ_MODERN_GL\n" : "#define EZ_LEGACY_GL\n"), sizeof(core_definitions));
-	strlcat(core_definitions, 
+	strlcat(core_definitions,
 		"#ifdef DRAW_FOG\n"
 			"#ifdef FOG_EXP\n"
 			"#ifdef EZ_LEGACY_GL\n"
