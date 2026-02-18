@@ -111,6 +111,7 @@ static void GLM_CheckDrawCallSize(void)
 #define DRAW_DRAWFLAT_BRIGHT       (1 << 12)
 #define DRAW_ALPHATESTED           (1 << 13)
 #define DRAW_SKYWIND               (1 << 14)
+#define DRAW_INSTANCED             (1 << 15)
 
 static int material_samplers_max;
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
@@ -149,7 +150,8 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 		(gl_textureless.integer ? DRAW_TEXTURELESS : 0) |
 		((gl_outline.integer & 2) && GL_VersionAtLeast(4, 3) ? DRAW_GEOMETRY : 0) |
 		(alpha_test ? DRAW_ALPHATESTED : 0) |
-		(skywind ? DRAW_SKYWIND : 0);
+		(skywind ? DRAW_SKYWIND : 0) |
+		(GL_Supported(R_SUPPORT_INSTANCED_RENDERING) ? DRAW_INSTANCED : 0);
 
 	if (R_ProgramRecompileNeeded(program_id, drawworld_desiredOptions)) {
 		static char included_definitions[2048];
@@ -682,6 +684,7 @@ static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintp
 {
 	int i;
 	qbool prev_alphaTested = false;
+	qbool no_base_instance = !GL_Supported(R_SUPPORT_INSTANCED_RENDERING);
 
 	for (i = begin; i < begin + count; ++i) {
 		glm_worldmodel_req_t* req = &drawcall->worldmodel_requests[i];
@@ -695,6 +698,23 @@ static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintp
 				R_ProgramUse(r_program_brushmodel);
 			}
 			prev_alphaTested = req->isAlphaTested;
+		}
+
+		if (no_base_instance) {
+			// GL 4.1: no baseInstance support, _instanceId is always 0
+			// Use instanceOffset uniform so shader reads drawInfo[0 + baseInstance]
+			// Set on both programs since either may be active (alpha surfaces start
+			// with alphatested program but prev_alphaTested tracks request state)
+			R_ProgramUniform1i(r_program_uniform_brushmodel_instanceOffset, req->baseInstance);
+			R_ProgramUniform1i(r_program_uniform_brushmodel_alphatested_instanceOffset, req->baseInstance);
+			GL_DrawElementsBaseVertex(
+				GL_TRIANGLE_STRIP,
+				req->count,
+				GL_UNSIGNED_INT,
+				(void*)(req->firstIndex * sizeof(GLuint)),
+				req->baseVertex
+			);
+			continue;
 		}
 
 		while (i + batchCount < begin + count && drawcall->worldmodel_requests[i + batchCount].isAlphaTested == req->isAlphaTested) {

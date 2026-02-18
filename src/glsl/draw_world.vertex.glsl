@@ -9,6 +9,10 @@ layout(location = 5) in int vboFlags;
 layout(location = 6) in vec3 flatColor;
 layout(location = 7) in int surfaceNumber;
 
+#ifndef DRAW_INSTANCED
+uniform int instanceOffset;
+#endif
+
 centroid out vec3 TexCoordLightmap;
 out vec3 TextureCoord;
 #ifdef DRAW_TEXTURELESS
@@ -55,19 +59,24 @@ EZ_SSBO_LAYOUT(std140, EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS) EZ_SSBO(SamplerM
 
 void main()
 {
-	int materialNumber = int(tex.z);
-	float materialArrayIndex = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].layer;
-	int drawCallFlags = drawInfo[_instanceId].drawFlags;
-	int textureFlags = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].flags;
-#ifdef DRAW_ALPHATEST_ENABLED
-	alpha = drawInfo[_instanceId].alpha;
+#ifndef DRAW_INSTANCED
+	int modelId = _instanceId + instanceOffset;
+#else
+	int modelId = _instanceId;
 #endif
-	SamplerNumber = drawInfo[_instanceId].sampler;
+	int materialNumber = int(tex.z);
+	float materialArrayIndex = samplerMapping[drawInfo[modelId].samplerBase + materialNumber].layer;
+	int drawCallFlags = drawInfo[modelId].drawFlags;
+	int textureFlags = samplerMapping[drawInfo[modelId].samplerBase + materialNumber].flags;
+#ifdef DRAW_ALPHATEST_ENABLED
+	alpha = drawInfo[modelId].alpha;
+#endif
+	SamplerNumber = drawInfo[modelId].sampler;
 
-	gl_Position = projectionMatrix * drawInfo[_instanceId].mvMatrix * vec4(position, 1.0);
+	gl_Position = projectionMatrix * drawInfo[modelId].mvMatrix * vec4(position, 1.0);
 #ifdef DRAW_GEOMETRY
 	Normal = surfaces[surfaceNumber].normal.xyz;
-	UnClipped = drawInfo[_instanceId].mvMatrix * vec4(position, 1.0);
+	UnClipped = drawInfo[modelId].mvMatrix * vec4(position, 1.0);
 #endif
 
 	FlatColor = flatColor;
