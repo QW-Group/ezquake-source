@@ -1,5 +1,3 @@
-#version 430
-
 #ezquake-definitions
 
 in vec2 TextureCoord;

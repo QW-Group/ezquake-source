@@ -1,5 +1,3 @@
-#version 430
-
 #ezquake-definitions
 
 uniform int mode;

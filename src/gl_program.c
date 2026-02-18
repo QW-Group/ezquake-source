@@ -633,7 +633,8 @@ static void GL_DebugPrintShaderText(GLuint shader)
 static int GL_InsertDefinitions(
 	const char* strings[],
 	GLint lengths[],
-	const char* definitions
+	const char* definitions,
+	GLenum shader_type
 )
 {
 	static unsigned char *glsl_constants_glsl = (unsigned char *)"", *glsl_common_glsl = (unsigned char *)"";
@@ -675,6 +676,28 @@ static int GL_InsertDefinitions(
 		strings[3] = standard_definitions;
 		strings[2] = (const char*)glsl_common_glsl;
 		strings[1] = (const char*)glsl_constants_glsl;
+
+		// Inject the appropriate GLSL version string (with shader type for GLC core profile)
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+		if (R_UseModernOpenGL()) {
+			strings[0] = GL_VersionAtLeast(4, 3) ? "#version 430\n\n" : "#version 410\n\n";
+		}
+		else
+#endif
+		{
+			if (glConfig.coreProfile) {
+				if (shader_type == GL_VERTEX_SHADER) {
+					strings[0] = "#version 330\n#define EZ_VERTEX_SHADER\n\n";
+				}
+				else {
+					strings[0] = "#version 330\n#define EZ_FRAGMENT_SHADER\n\n";
+				}
+			}
+			else {
+				strings[0] = "#version 120\n\n";
+			}
+		}
+		lengths[0] = strlen(strings[0]);
 
 		// Some drivers interpret length 0 as nul terminated
 		// spec is < 0 (https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glShaderSource.xhtml)
@@ -756,10 +779,10 @@ static qbool GL_CompileProgram(
 
 	R_ProgramBuildStandardDefines(program->standard_option_flags);
 
-	vertex_components = GL_InsertDefinitions(vertex_shader_text, vertex_shader_text_length, program->included_definitions);
-	geometry_components = GL_InsertDefinitions(geometry_shader_text, geometry_shader_text_length, program->included_definitions);
-	fragment_components = GL_InsertDefinitions(fragment_shader_text, fragment_shader_text_length, program->included_definitions);
-	compute_components = GL_InsertDefinitions(compute_shader_text, compute_shader_text_length, program->included_definitions);
+	vertex_components = GL_InsertDefinitions(vertex_shader_text, vertex_shader_text_length, program->included_definitions, GL_VERTEX_SHADER);
+	geometry_components = GL_InsertDefinitions(geometry_shader_text, geometry_shader_text_length, program->included_definitions, GL_GEOMETRY_SHADER);
+	fragment_components = GL_InsertDefinitions(fragment_shader_text, fragment_shader_text_length, program->included_definitions, GL_FRAGMENT_SHADER);
+	compute_components = GL_InsertDefinitions(compute_shader_text, compute_shader_text_length, program->included_definitions, GL_COMPUTE_SHADER);
 
 	if (COM_CheckParm(cmdline_param_client_video_r_dump_shaders)) {
 		GL_DumpShader(program->friendly_name, "vert", vertex_components, vertex_shader_text, vertex_shader_text_length);
@@ -976,7 +999,7 @@ static qbool GL_CompileComputeShaderProgram(gl_program_t* program, const char* s
 
 	program->program = 0;
 
-	components = GL_InsertDefinitions(shader_text, shader_text_length, "");
+	components = GL_InsertDefinitions(shader_text, shader_text_length, "", GL_COMPUTE_SHADER);
 	if (GL_CompileShader(components, shader_text, shader_text_length, GL_COMPUTE_SHADER, &shader)) {
 		GLuint shader_program = GL_FunctionNoArgs(glCreateProgram);
 		if (shader_program) {

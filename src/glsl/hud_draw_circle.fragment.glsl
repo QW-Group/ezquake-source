@@ -1,4 +1,4 @@
-#version 430
+#ezquake-definitions
 
 uniform vec4 color;
 

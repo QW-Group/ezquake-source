@@ -1,4 +1,4 @@
-#version 120
+#ezquake-definitions
 
 varying vec2 TextureCoord;
 

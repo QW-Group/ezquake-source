@@ -1,5 +1,3 @@
-#version 430
-
 #ezquake-definitions
 
 #ifdef MIXED_SAMPLING

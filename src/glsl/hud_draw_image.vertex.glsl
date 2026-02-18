@@ -1,5 +1,3 @@
-#version 430
-
 #ezquake-definitions
 
 layout(location = 0) in vec2 inPosition;

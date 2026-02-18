@@ -1,5 +1,3 @@
-#version 430
-
 #ezquake-definitions
 
 layout(binding=0) uniform sampler2DArray materialTex;

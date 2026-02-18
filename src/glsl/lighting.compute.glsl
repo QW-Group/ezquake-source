@@ -1,5 +1,3 @@
-#version 430
-
 #ezquake-definitions
 
 layout(local_size_x = HW_LIGHTING_BLOCK_SIZE, local_size_y = HW_LIGHTING_BLOCK_SIZE) in;
