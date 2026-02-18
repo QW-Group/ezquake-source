@@ -38,6 +38,11 @@ GL_StaticProcedureDeclaration(glMultiDrawElementsIndirect, "mode=%u, type=%u, in
 GL_StaticProcedureDeclaration(glDrawArraysInstancedBaseInstance, "mode=%u, first=%d, count=%d, primcount=%d, baseinstance=%u", GLenum mode, GLint first, GLsizei count, GLsizei primcount, GLuint baseinstance)
 GL_StaticProcedureDeclaration(glDrawElementsInstancedBaseInstance, "mode=%u, count=%d, type=%u, indices=%p, primcount=%d, baseinstance=%d", GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount, GLuint baseinstance)
 GL_StaticProcedureDeclaration(glDrawElementsInstancedBaseVertexBaseInstance, "mode=%u, count=%d, type=%u, indices=%p, primcount=%d, basevertex=%d, baseinstance=%u", GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance)
+GL_StaticProcedureDeclaration(glDrawElementsIndirect, "mode=%u, type=%u, indirect=%p", GLenum mode, GLenum type, GLvoid* indirect)
+GL_StaticProcedureDeclaration(glDrawArraysIndirect, "mode=%u, indirect=%p", GLenum mode, const void* indirect)
+GL_StaticProcedureDeclaration(glUniformBlockBinding, "program=%u, index=%u, binding=%u", GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding)
+GL_StaticFunctionDeclaration(glGetUniformBlockIndex, "program=%u, name=%s", "returns %u", GLuint, GLuint program, const GLchar *uniformBlockName)
+GL_StaticFunctionWrapperBody(glGetUniformBlockIndex, GLuint, program, uniformBlockName)
 // </draw-functions>
 
 void GL_LoadDrawFunctions(void)
@@ -61,6 +66,16 @@ void GL_LoadDrawFunctions(void)
 		GL_LoadMandatoryFunctionExtension(glDrawElementsInstancedBaseVertexBaseInstance, all_available);
 
 		glConfig.supported_features |= (all_available ? R_SUPPORT_INSTANCED_RENDERING : 0);
+	}
+
+	// GL 4.0 core: indirect draw and UBO binding functions
+	if (GL_VersionAtLeast(4, 0)) {
+		GL_LoadOptionalFunction(glDrawElementsIndirect);
+		GL_LoadOptionalFunction(glDrawArraysIndirect);
+	}
+	if (GL_VersionAtLeast(3, 1)) {
+		GL_LoadOptionalFunction(glUniformBlockBinding);
+		GL_LoadOptionalFunction(glGetUniformBlockIndex);
 	}
 
 	// Draw functions used for modern & classic
@@ -153,20 +168,62 @@ void GL_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indi
 
 void GL_MultiDrawArraysIndirect(GLenum mode, const void* indirect, GLsizei drawcount, GLsizei stride)
 {
-	GL_Procedure(glMultiDrawArraysIndirect, mode, indirect, drawcount, stride);
+	if (GL_Available(glMultiDrawArraysIndirect)) {
+		GL_Procedure(glMultiDrawArraysIndirect, mode, indirect, drawcount, stride);
+	}
+	else if (GL_Available(glDrawArraysIndirect)) {
+		int actual_stride = stride ? stride : (4 * sizeof(GLuint));
+		int i;
+		for (i = 0; i < drawcount; i++) {
+			GL_Procedure(glDrawArraysIndirect, mode, (const char*)indirect + i * actual_stride);
+		}
+	}
 	++frameStats.draw_calls;
 	frameStats.subdraw_calls += drawcount;
 }
 
 void GL_MultiDrawElementsIndirect(GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride)
 {
-	GL_Procedure(glMultiDrawElementsIndirect, mode, type, indirect, drawcount, stride);
+	if (GL_Available(glMultiDrawElementsIndirect)) {
+		GL_Procedure(glMultiDrawElementsIndirect, mode, type, indirect, drawcount, stride);
+	}
+	else if (GL_Available(glDrawElementsIndirect)) {
+		int actual_stride = stride ? stride : (5 * sizeof(GLuint));
+		int i;
+		for (i = 0; i < drawcount; i++) {
+			GL_Procedure(glDrawElementsIndirect, mode, type, (const char*)indirect + i * actual_stride);
+		}
+	}
 	++frameStats.draw_calls;
 	frameStats.subdraw_calls += drawcount;
 }
 
+void GL_DrawElementsIndirect(GLenum mode, GLenum type, GLvoid* indirect)
+{
+	GL_Procedure(glDrawElementsIndirect, mode, type, indirect);
+	++frameStats.draw_calls;
+}
+
 void GL_DrawElementsInstancedBaseVertexBaseInstance(GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLsizei primcount, GLint basevertex, GLuint baseinstance)
 {
-	GL_Procedure(glDrawElementsInstancedBaseVertexBaseInstance, mode, count, type, indices, primcount, basevertex, baseinstance);
+	if (GL_Available(glDrawElementsInstancedBaseVertexBaseInstance)) {
+		GL_Procedure(glDrawElementsInstancedBaseVertexBaseInstance, mode, count, type, indices, primcount, basevertex, baseinstance);
+	}
+	else {
+		GL_DrawElementsBaseVertex(mode, count, type, indices, basevertex);
+	}
 	++frameStats.draw_calls;
+}
+
+void GL_UniformBlockBinding(GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding)
+{
+	GL_Procedure(glUniformBlockBinding, program, uniformBlockIndex, uniformBlockBinding);
+}
+
+GLuint GL_GetUniformBlockIndex(GLuint program, const GLchar *uniformBlockName)
+{
+	if (!GL_Available(glGetUniformBlockIndex)) {
+		return GL_INVALID_INDEX;
+	}
+	return GL_Function(glGetUniformBlockIndex, program, uniformBlockName);
 }
