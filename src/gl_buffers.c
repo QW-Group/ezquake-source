@@ -648,6 +648,9 @@ void GL_InitialiseBufferHandling(api_buffers_t* api)
 	if (GL_VersionAtLeast(3, 0)) {
 		GL_LoadOptionalFunction(glBindBufferBase);
 		GL_LoadOptionalFunction(glBindBufferRange);
+	} else {
+		GL_InvalidateFunction(glBindBufferBase);
+		GL_InvalidateFunction(glBindBufferRange);
 	}
 
 	// OpenGL 4.4, persistent mapping of buffers
@@ -659,18 +662,23 @@ void GL_InitialiseBufferHandling(api_buffers_t* api)
 	}
 	else {
 		glBufferState.tripleBuffer_supported = false;
+		GL_InvalidateFunction(glFenceSync);
+		GL_InvalidateFunction(glClientWaitSync);
+		GL_InvalidateFunction(glDeleteSync);
 	}
 	if (GL_VersionAtLeast(4, 4) || SDL_GL_ExtensionSupported("GL_ARB_buffer_storage")) {
 		GL_LoadMandatoryFunctionExtension(glBufferStorage, glBufferState.tripleBuffer_supported);
 	}
 	else {
 		glBufferState.tripleBuffer_supported = false;
+		GL_InvalidateFunction(glBufferStorage);
 	}
 	if (GL_VersionAtLeast(3, 0)) {
 		GL_LoadMandatoryFunctionExtension(glMapBufferRange, glBufferState.tripleBuffer_supported);
 	}
 	else {
 		glBufferState.tripleBuffer_supported = false;
+		GL_InvalidateFunction(glMapBufferRange);
 	}
 
 	// OpenGL 4.5 onwards, update directly
@@ -678,6 +686,10 @@ void GL_InitialiseBufferHandling(api_buffers_t* api)
 		GL_LoadOptionalFunction(glNamedBufferSubData);
 		GL_LoadOptionalFunction(glNamedBufferData);
 		GL_LoadOptionalFunction(glUnmapNamedBuffer);
+	} else {
+		GL_InvalidateFunction(glNamedBufferSubData);
+		GL_InvalidateFunction(glNamedBufferData);
+		GL_InvalidateFunction(glUnmapNamedBuffer);
 	}
 
 	glBufferState.tripleBuffer_supported &= buffers_supported;

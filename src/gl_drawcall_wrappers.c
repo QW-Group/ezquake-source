@@ -56,6 +56,9 @@ void GL_LoadDrawFunctions(void)
 		GL_LoadMandatoryFunctionExtension(glMultiDrawElementsIndirect, all_available);
 
 		glConfig.supported_features |= (all_available ? R_SUPPORT_INDIRECT_RENDERING : 0);
+	} else {
+		GL_InvalidateFunction(glMultiDrawArraysIndirect);
+		GL_InvalidateFunction(glMultiDrawElementsIndirect);
 	}
 
 	if (GL_VersionAtLeast(4, 2) || SDL_GL_ExtensionSupported("GL_ARB_base_instance")) {
@@ -66,16 +69,26 @@ void GL_LoadDrawFunctions(void)
 		GL_LoadMandatoryFunctionExtension(glDrawElementsInstancedBaseVertexBaseInstance, all_available);
 
 		glConfig.supported_features |= (all_available ? R_SUPPORT_INSTANCED_RENDERING : 0);
+	} else {
+		GL_InvalidateFunction(glDrawArraysInstancedBaseInstance);
+		GL_InvalidateFunction(glDrawElementsInstancedBaseInstance);
+		GL_InvalidateFunction(glDrawElementsInstancedBaseVertexBaseInstance);
 	}
 
 	// GL 4.0 core: indirect draw and UBO binding functions
 	if (GL_VersionAtLeast(4, 0)) {
 		GL_LoadOptionalFunction(glDrawElementsIndirect);
 		GL_LoadOptionalFunction(glDrawArraysIndirect);
+	} else {
+		GL_InvalidateFunction(glDrawElementsIndirect);
+		GL_InvalidateFunction(glDrawArraysIndirect);
 	}
 	if (GL_VersionAtLeast(3, 1)) {
 		GL_LoadOptionalFunction(glUniformBlockBinding);
 		GL_LoadOptionalFunction(glGetUniformBlockIndex);
+	} else {
+		GL_InvalidateFunction(glUniformBlockBinding);
+		GL_InvalidateFunction(glGetUniformBlockIndex);
 	}
 
 	// Draw functions used for modern & classic
@@ -89,7 +102,11 @@ void GL_LoadDrawFunctions(void)
 
 	if (GL_VersionAtLeast(3, 2) || SDL_GL_ExtensionSupported("GL_ARB_draw_elements_base_vertex")) {
 		GL_LoadOptionalFunction(glDrawElementsBaseVertex);
+	} else {
+		GL_InvalidateFunction(glDrawElementsBaseVertex);
 	}
+
+	GL_InvalidateFunction(glPrimitiveRestartIndex);
 
 	glConfig.supported_features &= ~R_SUPPORT_PRIMITIVERESTART;
 	if (R_UseModernOpenGL() || GL_VersionAtLeast(3, 1)) {

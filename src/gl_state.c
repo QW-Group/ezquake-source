@@ -869,6 +869,8 @@ void GL_LoadStateFunctions(void)
 	if (GL_VersionAtLeast(4, 2) || SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store")) {
 		GL_LoadOptionalFunction(glBindImageTexture);
 		glConfig.supported_features |= (GL_Available(glBindImageTexture) ? R_SUPPORT_IMAGE_PROCESSING : 0);
+	} else {
+		GL_InvalidateFunction(glBindImageTexture);
 	}
 
 	// 4.4 - binds textures to consecutive texture units
@@ -1467,6 +1469,10 @@ void GL_CheckMultiTextureExtensions(void)
 		}
 		Com_Printf_State(PRINT_OK, "Multitexture extensions found\n");
 		gl_mtexable = true;
+	} else {
+		GL_InvalidateFunction(glMultiTexCoord2f);
+		GL_InvalidateFunction(glActiveTexture);
+		GL_InvalidateFunction(glClientActiveTexture);
 	}
 
 	gl_textureunits = min(glConfig.texture_units, 4);

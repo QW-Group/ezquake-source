@@ -1137,6 +1137,13 @@ void GL_LoadProgramFunctions(void)
 		GL_LoadOptionalFunction(glProgramUniform3fv);
 		GL_LoadOptionalFunction(glProgramUniform4fv);
 		GL_LoadOptionalFunction(glProgramUniformMatrix4fv);
+	} else {
+		GL_InvalidateFunction(glProgramUniform1i);
+		GL_InvalidateFunction(glProgramUniform1f);
+		GL_InvalidateFunction(glProgramUniform2fv);
+		GL_InvalidateFunction(glProgramUniform3fv);
+		GL_InvalidateFunction(glProgramUniform4fv);
+		GL_InvalidateFunction(glProgramUniformMatrix4fv);
 	}
 
 	if (GL_VersionAtLeast(4, 3) || (GL_VersionAtLeast(4, 2) && SDL_GL_ExtensionSupported("GL_ARB_compute_shader") && SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store"))) {
@@ -1146,6 +1153,9 @@ void GL_LoadProgramFunctions(void)
 		GL_LoadMandatoryFunctionExtension(glMemoryBarrier, compute_shaders_support);
 
 		glConfig.supported_features |= (compute_shaders_support ? R_SUPPORT_COMPUTE_SHADERS : 0);
+	} else {
+		GL_InvalidateFunction(glDispatchCompute);
+		GL_InvalidateFunction(glMemoryBarrier);
 	}
 }
 

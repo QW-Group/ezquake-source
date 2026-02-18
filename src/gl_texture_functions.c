@@ -91,11 +91,16 @@ void GL_LoadTextureManagementFunctions(void)
 			glConfig.preferred_format = tempFormat;
 			glConfig.preferred_type = tempType;
 		}
+	} else {
+		GL_InvalidateFunction(glGetInternalformativ);
 	}
 
 	if (GL_VersionAtLeast(4, 2) || SDL_GL_ExtensionSupported("GL_ARB_texture_storage")) {
 		GL_LoadOptionalFunction(glTexStorage2D);
 		GL_LoadOptionalFunction(glTexStorage3D);
+	} else {
+		GL_InvalidateFunction(glTexStorage2D);
+		GL_InvalidateFunction(glTexStorage3D);
 	}
 
 	if (GL_VersionAtLeast(3,0) || SDL_GL_ExtensionSupported("GL_EXT_texture_array")) {
@@ -106,6 +111,9 @@ void GL_LoadTextureManagementFunctions(void)
 		GL_LoadMandatoryFunctionExtension(glTexImage3D, all_available);
 
 		glConfig.supported_features |= (all_available ? R_SUPPORT_TEXTURE_ARRAYS : 0);
+	} else {
+		GL_InvalidateFunction(glTexSubImage3D);
+		GL_InvalidateFunction(glTexImage3D);
 	}
 
 	if (GL_VersionAtLeast(3, 3) || SDL_GL_ExtensionSupported("GL_ARB_sampler_objects")) {
@@ -118,6 +126,11 @@ void GL_LoadTextureManagementFunctions(void)
 		GL_LoadMandatoryFunctionExtension(glSamplerParameterf, all_available);
 		GL_LoadMandatoryFunctionExtension(glBindSampler, all_available);
 		glConfig.supported_features |= (all_available ? R_SUPPORT_TEXTURE_SAMPLERS : 0);
+	} else {
+		GL_InvalidateFunction(glGenSamplers);
+		GL_InvalidateFunction(glDeleteSamplers);
+		GL_InvalidateFunction(glSamplerParameterf);
+		GL_InvalidateFunction(glBindSampler);
 	}
 
 	if (GL_VersionAtLeast(3, 0)) {
@@ -129,12 +142,18 @@ void GL_LoadTextureManagementFunctions(void)
 		if (!GL_Available(glGenerateMipmap)) {
 			GL_LoadOptionalFunctionEXT(glGenerateMipmap);
 		}
+	} else {
+		GL_InvalidateFunction(glGenerateMipmap);
 	}
 
 	if (GL_VersionAtLeast(3, 2)) {
 		GL_LoadOptionalFunction(glTextureStorage2DMultisample);
 		GL_LoadOptionalFunction(glTexStorage2DMultisample);
 		GL_LoadOptionalFunction(glTexImage2DMultisample);
+	} else {
+		GL_InvalidateFunction(glTextureStorage2DMultisample);
+		GL_InvalidateFunction(glTexStorage2DMultisample);
+		GL_InvalidateFunction(glTexImage2DMultisample);
 	}
 
 	if (GL_UseDirectStateAccess()) {
@@ -152,6 +171,21 @@ void GL_LoadTextureManagementFunctions(void)
 		GL_LoadOptionalFunction(glGetTextureLevelParameterfv);
 		GL_LoadOptionalFunction(glGetTextureLevelParameterfv);
 		GL_LoadOptionalFunction(glGetTextureLevelParameteriv);
+	} else {
+		GL_InvalidateFunction(glGenerateTextureMipmap);
+		GL_InvalidateFunction(glGetTextureImage);
+		GL_InvalidateFunction(glCreateTextures);
+		GL_InvalidateFunction(glTextureParameteri);
+		GL_InvalidateFunction(glTextureParameterf);
+		GL_InvalidateFunction(glTextureParameterfv);
+		GL_InvalidateFunction(glTextureParameteriv);
+		GL_InvalidateFunction(glTextureStorage3D);
+		GL_InvalidateFunction(glTextureStorage2D);
+		GL_InvalidateFunction(glTextureSubImage2D);
+		GL_InvalidateFunction(glTextureSubImage3D);
+		GL_InvalidateFunction(glGetTextureLevelParameterfv);
+		GL_InvalidateFunction(glGetTextureLevelParameterfv);
+		GL_InvalidateFunction(glGetTextureLevelParameteriv);
 	}
 
 	if (GL_VersionAtLeast(3, 3)) {
@@ -160,6 +194,8 @@ void GL_LoadTextureManagementFunctions(void)
 
 	if (GL_VersionAtLeast(4, 5)) {
 		GL_LoadOptionalFunction(glGetnTexImage);
+	} else {
+		GL_InvalidateFunction(glGetnTexImage);
 	}
 
 	if (GL_VersionAtLeast(3, 2) || SDL_GL_ExtensionSupported("GL_ARB_seamless_cube_map")) {
