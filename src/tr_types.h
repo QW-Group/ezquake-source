@@ -87,6 +87,7 @@ typedef struct {
 	int		displayFrequency;
 	int     majorVersion;
 	int     minorVersion;
+	qbool   coreProfile;
 	qbool   amd_issues;                    // github bug #416: avoid certain paths to workaround
 
 	glHardwareType_t			hardwareType;
