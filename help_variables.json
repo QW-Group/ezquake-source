@@ -2674,6 +2674,22 @@
         }
       ]
     },
+    "cl_safestrafe_print": {
+      "default": "0",
+      "desc": "Prints the number of frames between left/right direction changes.",
+      "group-id": "9",
+      "type": "integer",
+      "values": [
+        {
+          "description": "Disabled",
+          "name": "0 "
+        },
+        {
+          "description": "Enabled",
+          "name": "1 "
+        }
+      ]
+    },
     "cl_savehistory": {
       "default": "1",
       "desc": "Save console commands history to .ezquake_history. Loads history from this file while starting ezquake.",
