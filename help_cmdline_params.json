@@ -277,6 +277,9 @@
   "-r-verify": {
     "system-generated": true
   },
+  "-r-dump-shaders": {
+    "description": "Write expanded shader source to qw/shaders/<name>.<type>"
+  },
   "-ruleset": {
     "flags": [
       "incomplete"

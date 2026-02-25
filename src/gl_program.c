@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_local.h"
 #include "r_program.h"
 #include "tr_types.h"
+#include "glsl/constants.glsl"
 
 typedef enum {
 	renderer_classic = 1,
@@ -350,6 +351,54 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_aliasmodel, "outline_use_player_color", 1, false },
 	// r_program_uniform_aliasmodel_outline_scale
 	{ r_program_aliasmodel, "outline_scale", 1, false },
+	// r_program_uniform_brushmodel_detailtex
+	{ r_program_brushmodel, "detailTex", 1, false },
+	// r_program_uniform_brushmodel_causticstex
+	{ r_program_brushmodel, "causticsTex", 1, false },
+	// r_program_uniform_brushmodel_skytex
+	{ r_program_brushmodel, "skyTex", 1, false },
+	// r_program_uniform_brushmodel_skydometex
+	{ r_program_brushmodel, "skyDomeTex", 1, false },
+	// r_program_uniform_brushmodel_skydomecloudtex
+	{ r_program_brushmodel, "skyDomeCloudTex", 1, false },
+	// r_program_uniform_brushmodel_lightmaptex
+	{ r_program_brushmodel, "lightmapTex", 1, false },
+	// r_program_uniform_brushmodel_materialtex
+	{ r_program_brushmodel, "materialTex", 1, false },
+	// r_program_uniform_brushmodel_at_detailtex
+	{ r_program_brushmodel_alphatested, "detailTex", 1, false },
+	// r_program_uniform_brushmodel_at_causticstex
+	{ r_program_brushmodel_alphatested, "causticsTex", 1, false },
+	// r_program_uniform_brushmodel_at_skytex
+	{ r_program_brushmodel_alphatested, "skyTex", 1, false },
+	// r_program_uniform_brushmodel_at_skydometex
+	{ r_program_brushmodel_alphatested, "skyDomeTex", 1, false },
+	// r_program_uniform_brushmodel_at_skydomecloudtex
+	{ r_program_brushmodel_alphatested, "skyDomeCloudTex", 1, false },
+	// r_program_uniform_brushmodel_at_lightmaptex
+	{ r_program_brushmodel_alphatested, "lightmapTex", 1, false },
+	// r_program_uniform_brushmodel_at_materialtex
+	{ r_program_brushmodel_alphatested, "materialTex", 1, false },
+	// r_program_uniform_aliasmodel_causticstex
+	{ r_program_aliasmodel, "causticsTex", 1, false },
+	// r_program_uniform_aliasmodel_samplers
+	{ r_program_aliasmodel, "samplers", 1, false },
+	// r_program_uniform_sprites_materialtex
+	{ r_program_sprite3d, "materialTex", 1, false },
+	// r_program_uniform_postprocess_base
+	{ r_program_post_process, "base", 1, false },
+	// r_program_uniform_postprocess_overlay
+	{ r_program_post_process, "overlay", 1, false },
+	// r_program_uniform_fxworldgeometry_normaltex
+	{ r_program_fx_world_geometry, "normal_texture", 1, false },
+	// r_program_uniform_hudimage_tex
+	{ r_program_hud_images, "tex", 1, false },
+	// r_program_uniform_aliasmodel_instanceOffset
+	{ r_program_aliasmodel, "instanceOffset", 1, false },
+	// r_program_uniform_brushmodel_instanceOffset
+	{ r_program_brushmodel, "instanceOffset", 1, false },
+	// r_program_uniform_brushmodel_alphatested_instanceOffset
+	{ r_program_brushmodel_alphatested, "instanceOffset", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -446,9 +495,10 @@ GL_StaticFunctionWrapperBody(glGetAttribLocation, GLint, program, name)
 GL_StaticProcedureDeclaration(glDispatchCompute, "num_groups_x=%u, num_groups_y=%u, num_groups_z=%u", GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z)
 GL_StaticProcedureDeclaration(glMemoryBarrier, "barriers=%u", GLbitfield barriers)
 
-#define MAX_SHADER_COMPONENTS 7
+#define MAX_SHADER_COMPONENTS 8
 #define EZQUAKE_DEFINITIONS_STRING "#ezquake-definitions"
 
+static char macro_definitions[4096];
 static char core_definitions[2048];
 static char standard_definitions[2048];
 
@@ -633,7 +683,8 @@ static void GL_DebugPrintShaderText(GLuint shader)
 static int GL_InsertDefinitions(
 	const char* strings[],
 	GLint lengths[],
-	const char* definitions
+	const char* definitions,
+	GLenum shader_type
 )
 {
 	static unsigned char *glsl_constants_glsl = (unsigned char *)"", *glsl_common_glsl = (unsigned char *)"";
@@ -662,19 +713,44 @@ static int GL_InsertDefinitions(
 	if (break_point) {
 		int position = break_point - strings[0];
 
-		lengths[6] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
-		lengths[5] = strlen(core_definitions);
-		lengths[4] = definitions ? strlen(definitions) : 0;
-		lengths[3] = strlen(standard_definitions);
-		lengths[2] = glsl_common_glsl_len;
+		// Order: version, constants, macros, common, standard_defs, included_defs, core_defs, shader
+		lengths[7] = lengths[0] - position - strlen(EZQUAKE_DEFINITIONS_STRING);
+		lengths[6] = strlen(core_definitions);
+		lengths[5] = definitions ? strlen(definitions) : 0;
+		lengths[4] = strlen(standard_definitions);
+		lengths[3] = glsl_common_glsl_len;
+		lengths[2] = strlen(macro_definitions);
 		lengths[1] = glsl_constants_glsl_len;
 		lengths[0] = position;
-		strings[6] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
-		strings[5] = core_definitions;
-		strings[4] = definitions ? definitions : "";
-		strings[3] = standard_definitions;
-		strings[2] = (const char*)glsl_common_glsl;
+		strings[7] = break_point + strlen(EZQUAKE_DEFINITIONS_STRING);
+		strings[6] = core_definitions;
+		strings[5] = definitions ? definitions : "";
+		strings[4] = standard_definitions;
+		strings[3] = (const char*)glsl_common_glsl;
+		strings[2] = macro_definitions;
 		strings[1] = (const char*)glsl_constants_glsl;
+
+		// Inject the appropriate GLSL version string (with shader type for GLC core profile)
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+		if (R_UseModernOpenGL()) {
+			strings[0] = GL_VersionAtLeast(4, 3) ? "#version 430\n\n" : "#version 410\n\n";
+		}
+		else
+#endif
+		{
+			if (glConfig.coreProfile) {
+				if (shader_type == GL_VERTEX_SHADER) {
+					strings[0] = "#version 330\n#define EZ_VERTEX_SHADER\n\n";
+				}
+				else {
+					strings[0] = "#version 330\n#define EZ_FRAGMENT_SHADER\n\n";
+				}
+			}
+			else {
+				strings[0] = "#version 120\n\n";
+			}
+		}
+		lengths[0] = strlen(strings[0]);
 
 		// Some drivers interpret length 0 as nul terminated
 		// spec is < 0 (https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glShaderSource.xhtml)
@@ -684,10 +760,50 @@ static int GL_InsertDefinitions(
 			}
 		}
 
-		return 7;
+		return 8;
 	}
 
 	return 1;
+}
+
+static void GL_DumpShader(const char *name, const char *suffix, int components, const char* strings[], GLint lengths[])
+{
+	char filename[MAX_OSPATH];
+	char buf[256];
+	int i;
+	FILE *fd;
+
+	if (strings[0] == NULL) {
+		return;
+	}
+
+	snprintf(filename, sizeof(filename), "%s/qw/shaders", com_basedir);
+	Sys_mkdir(filename);
+	snprintf(filename, sizeof(filename), "%s/qw/shaders/%s.%s", com_basedir, name, suffix);
+
+	fd = fopen(filename, "wt");
+	if (!fd) {
+		Sys_Error("Could not open %s for writing\n", filename);
+	}
+
+	for (i = 0; i < components; i++) {
+		if (!lengths[i]) {
+			continue;
+		}
+		// Original source up to #ezquake-definitions, likely just "#version ..."
+		if (i == 0) {
+			if (sizeof(buf) <= lengths[0]) {
+				Sys_Error("Unexpected shader preamble size (%d, max %d)\n", lengths[0], sizeof(buf));
+			}
+			strlcpy(buf, strings[0], lengths[0]);
+			fprintf(fd, "%s\n", buf);
+		}
+		else {
+			fprintf(fd, "%s\n", strings[i]);
+		}
+	}
+
+	fclose(fd);
 }
 
 static qbool GL_CompileProgram(
@@ -700,22 +816,37 @@ static qbool GL_CompileProgram(
 	int i;
 
 	GLsizei vertex_components = 1;
-	const char* vertex_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_vertex].text, "", "", "", "", "" };
-	GLint vertex_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_vertex].length, 0, 0, 0, 0, 0 };
+	const char* vertex_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_vertex].text, "", "", "", "", "", "" };
+	GLint vertex_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_vertex].length, 0, 0, 0, 0, 0, 0 };
 	GLsizei geometry_components = 1;
-	const char* geometry_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_geometry].text, "", "", "", "", "" };
-	GLint geometry_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_geometry].length, 0, 0, 0, 0, 0 };
+	const char* geometry_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_geometry].text, "", "", "", "", "", "" };
+	GLint geometry_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_geometry].length, 0, 0, 0, 0, 0, 0 };
 	GLsizei fragment_components = 1;
-	const char* fragment_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].text, "", "", "", "", "" };
-	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].length, 0, 0, 0, 0, 0 };
+	const char* fragment_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].text, "", "", "", "", "", "" };
+	GLint fragment_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_fragment].length, 0, 0, 0, 0, 0, 0 };
+	GLsizei compute_components = 1;
+	const char* compute_shader_text[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_compute].text, "", "", "", "", "", "" };
+	GLint compute_shader_text_length[MAX_SHADER_COMPONENTS] = { program->shaders[shadertype_compute].length, 0, 0, 0, 0, 0, 0 };
 
 	DebugOutput(va("Compiling: %s\n", program->friendly_name));
 
 	R_ProgramBuildStandardDefines(program->standard_option_flags);
 
-	vertex_components = GL_InsertDefinitions(vertex_shader_text, vertex_shader_text_length, program->included_definitions);
-	geometry_components = GL_InsertDefinitions(geometry_shader_text, geometry_shader_text_length, program->included_definitions);
-	fragment_components = GL_InsertDefinitions(fragment_shader_text, fragment_shader_text_length, program->included_definitions);
+	vertex_components = GL_InsertDefinitions(vertex_shader_text, vertex_shader_text_length, program->included_definitions, GL_VERTEX_SHADER);
+	geometry_components = GL_InsertDefinitions(geometry_shader_text, geometry_shader_text_length, program->included_definitions, GL_GEOMETRY_SHADER);
+	fragment_components = GL_InsertDefinitions(fragment_shader_text, fragment_shader_text_length, program->included_definitions, GL_FRAGMENT_SHADER);
+	compute_components = GL_InsertDefinitions(compute_shader_text, compute_shader_text_length, program->included_definitions, GL_COMPUTE_SHADER);
+
+	if (COM_CheckParm(cmdline_param_client_video_r_dump_shaders)) {
+		GL_DumpShader(program->friendly_name, "vert", vertex_components, vertex_shader_text, vertex_shader_text_length);
+		GL_DumpShader(program->friendly_name, "frag", fragment_components, fragment_shader_text, fragment_shader_text_length);
+		GL_DumpShader(program->friendly_name, "geom", geometry_components, geometry_shader_text, geometry_shader_text_length);
+		GL_DumpShader(program->friendly_name, "comp", compute_components, compute_shader_text, compute_shader_text_length);
+	}
+
+	if (program->shaders[shadertype_compute].text) {
+		return GL_CompileComputeShaderProgram(program, compute_shader_text[0], compute_shader_text_length[0]);
+	}
 
 	if (GL_CompileShader(vertex_components, vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &shaders[shadertype_vertex])) {
 		if (geometry_shader_text[0] == NULL || GL_CompileShader(geometry_components, geometry_shader_text, geometry_shader_text_length, GL_GEOMETRY_SHADER, &shaders[shadertype_geometry])) {
@@ -868,7 +999,7 @@ void GL_ProgramsInitialise(void)
 			}
 
 			if (!prog->program && !prog->needs_params && prog->initialised) {
-				gl_shader_def_t* compute = &prog->shaders[shadertype_compute];
+				gl_shader_def_t * compute = &prog->shaders[shadertype_compute];
 				if (compute->length) {
 					GL_CompileComputeShaderProgram(prog, compute->text, compute->length);
 				}
@@ -893,6 +1024,11 @@ qbool R_ProgramRecompileNeeded(r_program_id program_id, unsigned int options)
 	return (!program->program) || program->force_recompile || program->custom_options != options || program->standard_options != standard_options;
 }
 
+GLuint R_ProgramId(r_program_id program_id)
+{
+	return R_CurrentSubProgram(program_id)->program;
+}
+
 void GL_CvarForceRecompile(cvar_t* cvar)
 {
 	r_program_id p;
@@ -909,15 +1045,19 @@ void GL_CvarForceRecompile(cvar_t* cvar)
 
 static qbool GL_CompileComputeShaderProgram(gl_program_t* program, const char* shadertext, unsigned int length)
 {
-	const char* shader_text[MAX_SHADER_COMPONENTS] = { shadertext, "", "", "", "", "" };
-	GLint shader_text_length[MAX_SHADER_COMPONENTS] = { length, 0, 0, 0, 0, 0 };
+	const char* shader_text[MAX_SHADER_COMPONENTS] = { shadertext, "", "", "", "", "", "" };
+	GLint shader_text_length[MAX_SHADER_COMPONENTS] = { length, 0, 0, 0, 0, 0, 0 };
 	int components;
 	GLuint shader;
 	int standard_options = R_ProgramStandardOptions(program->standard_option_flags);
 
+	if (!GL_Supported(R_SUPPORT_COMPUTE_SHADERS)) {
+		return false;
+	}
+
 	program->program = 0;
 
-	components = GL_InsertDefinitions(shader_text, shader_text_length, "");
+	components = GL_InsertDefinitions(shader_text, shader_text_length, "", GL_COMPUTE_SHADER);
 	if (GL_CompileShader(components, shader_text, shader_text_length, GL_COMPUTE_SHADER, &shader)) {
 		GLuint shader_program = GL_FunctionNoArgs(glCreateProgram);
 		if (shader_program) {
@@ -997,15 +1137,25 @@ void GL_LoadProgramFunctions(void)
 		GL_LoadOptionalFunction(glProgramUniform3fv);
 		GL_LoadOptionalFunction(glProgramUniform4fv);
 		GL_LoadOptionalFunction(glProgramUniformMatrix4fv);
+	} else {
+		GL_InvalidateFunction(glProgramUniform1i);
+		GL_InvalidateFunction(glProgramUniform1f);
+		GL_InvalidateFunction(glProgramUniform2fv);
+		GL_InvalidateFunction(glProgramUniform3fv);
+		GL_InvalidateFunction(glProgramUniform4fv);
+		GL_InvalidateFunction(glProgramUniformMatrix4fv);
 	}
 
-	if (SDL_GL_ExtensionSupported("GL_ARB_compute_shader") && SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store")) {
+	if (GL_VersionAtLeast(4, 3) || (GL_VersionAtLeast(4, 2) && SDL_GL_ExtensionSupported("GL_ARB_compute_shader") && SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store"))) {
 		qbool compute_shaders_support = true;
 
 		GL_LoadMandatoryFunctionExtension(glDispatchCompute, compute_shaders_support);
 		GL_LoadMandatoryFunctionExtension(glMemoryBarrier, compute_shaders_support);
 
 		glConfig.supported_features |= (compute_shaders_support ? R_SUPPORT_COMPUTE_SHADERS : 0);
+	} else {
+		GL_InvalidateFunction(glDispatchCompute);
+		GL_InvalidateFunction(glMemoryBarrier);
 	}
 }
 
@@ -1101,6 +1251,21 @@ void R_ProgramUniform1i(r_program_uniform_id uniform_id, int value)
 			GL_Procedure(glUniform1i, program_uniform->location, value);
 		}
 		program_uniform->int_value = value;
+	}
+}
+
+void R_ProgramUniform1iArrayBase(r_program_uniform_id uniform_id, int count, int base_value)
+{
+	r_program_uniform_t* base_uniform = &program_uniforms[uniform_id];
+	gl_program_uniform_t* program_uniform = GL_ProgramUniformFind(uniform_id);
+	int j;
+
+	if (program_uniform->location >= 0) {
+		R_ProgramUse(base_uniform->program_id);
+		for (j = 0; j < count; ++j) {
+			GL_Procedure(glUniform1i, program_uniform->location + j, base_value + j);
+		}
+		program_uniform->int_value = base_value;
 	}
 }
 
@@ -1269,6 +1434,39 @@ int R_ProgramUniformGet1i(r_program_uniform_id uniform_id, int default_value)
 	return default_value;
 }
 
+// Set UBO block bindings manually when layout(binding=N) is unavailable (GL < 4.2)
+static void R_PatchProgramBindings(r_program_id program_id)
+{
+	static const struct { const char* name; int binding; } storage_bindings[] = {
+		{ "WorldCvars",            EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA },
+		{ "SamplerMappingsBuffer", EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS },
+		{ "AliasModelData",        EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA },
+		{ "surface_data",          EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES },
+	};
+	GLuint prog, idx;
+	int i;
+
+	if (GL_VersionAtLeast(4, 2)) {
+		return; // layout(binding=N) works in-shader
+	}
+
+	prog = R_ProgramId(program_id);
+
+	// Set UBO binding for GlobalState
+	idx = GL_GetUniformBlockIndex(prog, "GlobalState");
+	if (idx != GL_INVALID_INDEX) {
+		GL_UniformBlockBinding(prog, idx, EZQ_GL_BINDINGPOINT_FRAMECONSTANTS);
+	}
+
+	// Set UBO bindings for storage blocks (SSBOs that became UBOs)
+	for (i = 0; i < (int)(sizeof(storage_bindings) / sizeof(storage_bindings[0])); i++) {
+		idx = GL_GetUniformBlockIndex(prog, storage_bindings[i].name);
+		if (idx != GL_INVALID_INDEX) {
+			GL_UniformBlockBinding(prog, idx, EZQ_STORAGE_BLOCK_BINDING(storage_bindings[i].binding));
+		}
+	}
+}
+
 qbool R_ProgramCompile(r_program_id program_id)
 {
 	return R_ProgramCompileWithInclude(program_id, NULL);
@@ -1288,6 +1486,7 @@ qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_
 		}
 		R_ProgramFindUniformsForProgram(program_id);
 		R_ProgramFindAttributesForProgram(program_id);
+		R_PatchProgramBindings(program_id);
 		return true;
 	}
 	return false;
@@ -1295,10 +1494,73 @@ qbool R_ProgramCompileWithInclude(r_program_id program_id, const char* included_
 
 static void GL_BuildCoreDefinitions(void)
 {
-	// Set common definitions here (none yet)
+	// macro_definitions: injected BEFORE common.glsl (macros used by common.glsl)
+	memset(macro_definitions, 0, sizeof(macro_definitions));
+	strlcpy(macro_definitions, (R_UseModernOpenGL() ? "#define EZ_MODERN_GL\n" : "#define EZ_LEGACY_GL\n"), sizeof(macro_definitions));
+
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+	if (R_UseModernOpenGL()) {
+		if (GL_VersionAtLeast(4, 3)) {
+			strlcat(macro_definitions,
+				"#define EZ_HAS_SSBO 1\n"
+				"#define EZ_LAYOUT_BINDING(n) layout(binding=n)\n"
+				"#define EZ_SSBO_LAYOUT(qualifier, binding_name) layout(qualifier, binding=binding_name)\n"
+				"#define EZ_SSBO(name) buffer name\n"
+				"#define EZ_SSBO_ARRAY_SIZE(max_size)\n",
+				sizeof(macro_definitions));
+		}
+		else {
+			strlcat(macro_definitions,
+				"#define EZ_LAYOUT_BINDING(n)\n"
+				"#define EZ_SSBO_LAYOUT(qualifier, binding_name) layout(qualifier)\n"
+				"#define EZ_SSBO(name) uniform name\n"
+				"#define EZ_SSBO_ARRAY_SIZE(max_size) max_size\n",
+				sizeof(macro_definitions));
+		}
+	}
+#endif
+
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+	// GLC core profile compatibility macros (only in actual core profile context)
+	if (!R_UseModernOpenGL() && glConfig.coreProfile) {
+		strlcat(macro_definitions,
+			// Shared uniforms (available in both vertex and fragment shaders)
+			"uniform mat4 ezModelViewProjectionMatrix;\n"
+			"uniform mat4 ezTextureMatrix[4];\n"
+			"#define gl_ModelViewProjectionMatrix ezModelViewProjectionMatrix\n"
+			"#define gl_TextureMatrix ezTextureMatrix\n"
+			// Vertex shader compatibility
+			"#ifdef EZ_VERTEX_SHADER\n"
+			"#define attribute in\n"
+			"#define varying out\n"
+			"in vec4 ezVertex;\n"
+			"in vec3 ezNormal;\n"
+			"in vec4 ezColor;\n"
+			"in vec4 ezMultiTexCoord0;\n"
+			"in vec4 ezMultiTexCoord1;\n"
+			"#define gl_Vertex ezVertex\n"
+			"#define gl_Normal ezNormal\n"
+			"#define gl_Color ezColor\n"
+			"#define gl_MultiTexCoord0 ezMultiTexCoord0\n"
+			"#define gl_MultiTexCoord1 ezMultiTexCoord1\n"
+			"#define ftransform() (ezModelViewProjectionMatrix * ezVertex)\n"
+			"#endif\n"
+			// Fragment shader compatibility
+			"#ifdef EZ_FRAGMENT_SHADER\n"
+			"#define varying in\n"
+			"out vec4 ezFragColor;\n"
+			"#define gl_FragColor ezFragColor\n"
+			"#define texture2D texture\n"
+			"#define texture2DArray texture\n"
+			"#define textureCube texture\n"
+			"#endif\n",
+			sizeof(macro_definitions));
+	}
+#endif
+
+	// core_definitions: injected AFTER common.glsl (fog functions that use GlobalState members)
 	memset(core_definitions, 0, sizeof(core_definitions));
-	strlcpy(core_definitions, (R_UseModernOpenGL() ? "#define EZ_MODERN_GL\n" : "#define EZ_LEGACY_GL\n"), sizeof(core_definitions));
-	strlcat(core_definitions, 
+	strlcat(core_definitions,
 		"#ifdef DRAW_FOG\n"
 			"#ifdef FOG_EXP\n"
 			"#ifdef EZ_LEGACY_GL\n"

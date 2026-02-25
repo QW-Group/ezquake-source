@@ -1,4 +1,4 @@
-#version 430
+#ezquake-definitions
 
 in vec4 inColor;
 out vec4 color;

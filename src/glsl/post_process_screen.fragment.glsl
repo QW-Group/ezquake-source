@@ -1,13 +1,11 @@
-#version 430
-
 #ezquake-definitions
 
 in vec2 TextureCoord;
 out vec4 frag_colour;
 
-layout(binding = 0) uniform sampler2D base;
+EZ_LAYOUT_BINDING(0) uniform sampler2D base;
 #ifdef EZ_POSTPROCESS_OVERLAY
-layout(binding = 1) uniform sampler2D overlay;
+EZ_LAYOUT_BINDING(1) uniform sampler2D overlay;
 #endif // EZ_POSTPROCESS_OVERLAY
 
 vec4 sampleBase(void)

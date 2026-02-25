@@ -1,4 +1,4 @@
-#version 430
+#ezquake-definitions
 
 // Converts a single point to a quad with correct texture co-ords for character
 

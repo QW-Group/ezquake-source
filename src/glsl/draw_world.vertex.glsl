@@ -1,5 +1,3 @@
-#version 430
-
 #ezquake-definitions
 
 layout(location = 0) in vec3 position;
@@ -10,6 +8,10 @@ layout(location = 4) in int _instanceId;
 layout(location = 5) in int vboFlags;
 layout(location = 6) in vec3 flatColor;
 layout(location = 7) in int surfaceNumber;
+
+#ifndef DRAW_INSTANCED
+uniform int instanceOffset;
+#endif
 
 centroid out vec3 TexCoordLightmap;
 out vec3 TextureCoord;
@@ -23,43 +25,58 @@ out vec3 LumaCoord;
 out vec2 DetailCoord;
 #endif
 out vec3 FlatColor;
-out flat int Flags;
+flat out int Flags;
+#if defined(DRAW_SKYBOX) || defined(DRAW_SKYDOME)
 out vec3 Direction;
+#endif
 #ifdef DRAW_GEOMETRY
 out vec3 Normal;
 out vec4 UnClipped;
 
-layout(std140, binding = EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface_data {
-	model_surface surfaces[];
+EZ_SSBO_LAYOUT(std140, EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES) EZ_SSBO(surface_data) {
+	model_surface surfaces[EZ_SSBO_ARRAY_SIZE(8192)];
 };
 #endif
 
+#ifdef DRAW_FLATFLOORS
 out float mix_floor;
+#endif
+#ifdef DRAW_FLATWALLS
 out float mix_wall;
+#endif
+#ifdef DRAW_ALPHATEST_ENABLED
 out float alpha;
-out flat int SamplerNumber;
+#endif
+flat out int SamplerNumber;
 
-layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA) buffer WorldCvars {
-	WorldDrawInfo drawInfo[];
+EZ_SSBO_LAYOUT(std140, EZQ_GL_BINDINGPOINT_BRUSHMODEL_DRAWDATA) EZ_SSBO(WorldCvars) {
+	WorldDrawInfo drawInfo[EZ_SSBO_ARRAY_SIZE(64)];
 };
-layout(std140, binding=EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS) buffer SamplerMappingsBuffer {
-	SamplerMapping samplerMapping[];
+EZ_SSBO_LAYOUT(std140, EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS) EZ_SSBO(SamplerMappingsBuffer) {
+	SamplerMapping samplerMapping[EZ_SSBO_ARRAY_SIZE(256)];
 };
 
 
 void main()
 {
+#ifndef DRAW_INSTANCED
+	int modelId = _instanceId + instanceOffset;
+#else
+	int modelId = _instanceId;
+#endif
 	int materialNumber = int(tex.z);
-	float materialArrayIndex = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].layer;
-	int drawCallFlags = drawInfo[_instanceId].drawFlags;
-	int textureFlags = samplerMapping[drawInfo[_instanceId].samplerBase + materialNumber].flags;
-	alpha = drawInfo[_instanceId].alpha;
-	SamplerNumber = drawInfo[_instanceId].sampler;
+	float materialArrayIndex = samplerMapping[drawInfo[modelId].samplerBase + materialNumber].layer;
+	int drawCallFlags = drawInfo[modelId].drawFlags;
+	int textureFlags = samplerMapping[drawInfo[modelId].samplerBase + materialNumber].flags;
+#ifdef DRAW_ALPHATEST_ENABLED
+	alpha = drawInfo[modelId].alpha;
+#endif
+	SamplerNumber = drawInfo[modelId].sampler;
 
-	gl_Position = projectionMatrix * drawInfo[_instanceId].mvMatrix * vec4(position, 1.0);
+	gl_Position = projectionMatrix * drawInfo[modelId].mvMatrix * vec4(position, 1.0);
 #ifdef DRAW_GEOMETRY
 	Normal = surfaces[surfaceNumber].normal.xyz;
-	UnClipped = drawInfo[_instanceId].mvMatrix * vec4(position, 1.0);
+	UnClipped = drawInfo[modelId].mvMatrix * vec4(position, 1.0);
 #endif
 
 	FlatColor = flatColor;
@@ -68,9 +85,11 @@ void main()
 	if (lightmapCoord.z < 0) {
 		TextureCoord = vec3(tex.xy, materialArrayIndex);
 		TexCoordLightmap = vec3(0, 0, 0);
+#if defined(DRAW_SKYBOX) || defined(DRAW_SKYDOME)
 		Direction = (position - cameraPosition);
 #if defined(DRAW_SKYBOX)
 		Direction = vec3(-Direction.y, Direction.z, Direction.x);
+#endif
 #endif
 #ifdef DRAW_DETAIL_TEXTURES
 		DetailCoord = vec2(0, 0);
@@ -79,8 +98,12 @@ void main()
 		LumaCoord = TextureCoord;
 #endif
 
+#ifdef DRAW_FLATFLOORS
 		mix_floor = 0;
+#endif
+#ifdef DRAW_FLATWALLS
 		mix_wall = 0;
+#endif
 	}
 	else {
 #if defined(DRAW_TEXTURELESS) && !defined(DRAW_ALPHATEST_ENABLED)
@@ -100,7 +123,11 @@ void main()
 		DetailCoord = detailCoord;
 #endif
 
+#ifdef DRAW_FLATFLOORS
 		mix_floor = min(1, (Flags & EZQ_SURFACE_WORLD) * (Flags & EZQ_SURFACE_IS_FLOOR));
+#endif
+#ifdef DRAW_FLATWALLS
 		mix_wall = min(1, (Flags & EZQ_SURFACE_WORLD) * (1 - mix_floor));
+#endif
 	}
 }

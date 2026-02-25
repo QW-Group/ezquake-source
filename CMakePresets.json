@@ -184,9 +184,6 @@
                 "type": "equals",
                 "lhs": "${hostSystemName}",
                 "rhs": "Darwin"
-            },
-            "cacheVariables": {
-                "RENDERER_MODERN_OPENGL": "OFF"
             }
         },
         {

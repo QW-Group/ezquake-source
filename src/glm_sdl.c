@@ -36,6 +36,7 @@ static opengl_version_t versions[] = {
 	{ 4, 5, true },
 	{ 4, 4, true },
 	{ 4, 3, true },
+	{ 4, 1, true },
 };
 
 SDL_GLContext GLM_SDL_CreateContext(SDL_Window* window)

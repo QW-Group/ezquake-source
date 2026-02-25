@@ -51,6 +51,10 @@ texture_ref GLM_LightmapArray(void)
 
 qbool GLM_CompileLightmapComputeProgram(void)
 {
+	if (!GL_Supported(R_SUPPORT_COMPUTE_SHADERS)) {
+		return false;
+	}
+
 	if (R_ProgramRecompileNeeded(r_program_lightmap_compute, 0) && R_ProgramCompile(r_program_lightmap_compute)) {
 		R_ProgramComputeSetMemoryBarrierFlag(r_program_lightmap_compute, r_program_memory_barrier_image_access);
 		R_ProgramComputeSetMemoryBarrierFlag(r_program_lightmap_compute, r_program_memory_barrier_texture_access);
@@ -73,9 +77,9 @@ void GLM_ComputeLightmaps(void)
 	else {
 		buffers.Update(r_buffer_brushmodel_lightstyles_ssbo, sizeof(d_lightstylevalue), d_lightstylevalue);
 	}
-	buffers.BindRange(r_buffer_brushmodel_lightstyles_ssbo, EZQ_GL_BINDINGPOINT_LIGHTSTYLES, buffers.BufferOffset(r_buffer_brushmodel_lightstyles_ssbo), sizeof(d_lightstylevalue));
+	buffers.BindRange(r_buffer_brushmodel_lightstyles_ssbo, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_LIGHTSTYLES), buffers.BufferOffset(r_buffer_brushmodel_lightstyles_ssbo), sizeof(d_lightstylevalue));
 	buffers.Update(r_buffer_brushmodel_surfacestolight_ssbo, surfaceTodoLength, surfaceTodoData);
-	buffers.BindRange(r_buffer_brushmodel_surfacestolight_ssbo, EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT, buffers.BufferOffset(r_buffer_brushmodel_surfacestolight_ssbo), surfaceTodoLength);
+	buffers.BindRange(r_buffer_brushmodel_surfacestolight_ssbo, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT), buffers.BufferOffset(r_buffer_brushmodel_surfacestolight_ssbo), surfaceTodoLength);
 
 	GL_BindImageTexture(0, lightmap_source_array, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
 	GL_BindImageTexture(1, lightmap_texture_array, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);

@@ -80,7 +80,7 @@ static GLenum GL_BufferTypeToTarget(buffertype_t type)
 		case buffertype_indirect:
 			return GL_DRAW_INDIRECT_BUFFER;
 		case buffertype_storage:
-			return GL_SHADER_STORAGE_BUFFER;
+			return GL_VersionAtLeast(4, 3) ? GL_SHADER_STORAGE_BUFFER : GL_UNIFORM_BUFFER;
 		case buffertype_vertex:
 			return GL_ARRAY_BUFFER;
 		case buffertype_uniform:
@@ -648,29 +648,37 @@ void GL_InitialiseBufferHandling(api_buffers_t* api)
 	if (GL_VersionAtLeast(3, 0)) {
 		GL_LoadOptionalFunction(glBindBufferBase);
 		GL_LoadOptionalFunction(glBindBufferRange);
+	} else {
+		GL_InvalidateFunction(glBindBufferBase);
+		GL_InvalidateFunction(glBindBufferRange);
 	}
 
 	// OpenGL 4.4, persistent mapping of buffers
 	glBufferState.tripleBuffer_supported = !COM_CheckParm(cmdline_param_client_notriplebuffering);
-	if (SDL_GL_ExtensionSupported("GL_ARB_sync")) {
+	if (GL_VersionAtLeast(3, 2) || SDL_GL_ExtensionSupported("GL_ARB_sync")) {
 		GL_LoadMandatoryFunctionExtension(glFenceSync, glBufferState.tripleBuffer_supported);
 		GL_LoadMandatoryFunctionExtension(glClientWaitSync, glBufferState.tripleBuffer_supported);
 		GL_LoadMandatoryFunctionExtension(glDeleteSync, glBufferState.tripleBuffer_supported);
 	}
 	else {
 		glBufferState.tripleBuffer_supported = false;
+		GL_InvalidateFunction(glFenceSync);
+		GL_InvalidateFunction(glClientWaitSync);
+		GL_InvalidateFunction(glDeleteSync);
 	}
-	if (SDL_GL_ExtensionSupported("GL_ARB_buffer_storage")) {
+	if (GL_VersionAtLeast(4, 4) || SDL_GL_ExtensionSupported("GL_ARB_buffer_storage")) {
 		GL_LoadMandatoryFunctionExtension(glBufferStorage, glBufferState.tripleBuffer_supported);
 	}
 	else {
 		glBufferState.tripleBuffer_supported = false;
+		GL_InvalidateFunction(glBufferStorage);
 	}
 	if (GL_VersionAtLeast(3, 0)) {
 		GL_LoadMandatoryFunctionExtension(glMapBufferRange, glBufferState.tripleBuffer_supported);
 	}
 	else {
 		glBufferState.tripleBuffer_supported = false;
+		GL_InvalidateFunction(glMapBufferRange);
 	}
 
 	// OpenGL 4.5 onwards, update directly
@@ -678,6 +686,10 @@ void GL_InitialiseBufferHandling(api_buffers_t* api)
 		GL_LoadOptionalFunction(glNamedBufferSubData);
 		GL_LoadOptionalFunction(glNamedBufferData);
 		GL_LoadOptionalFunction(glUnmapNamedBuffer);
+	} else {
+		GL_InvalidateFunction(glNamedBufferSubData);
+		GL_InvalidateFunction(glNamedBufferData);
+		GL_InvalidateFunction(glUnmapNamedBuffer);
 	}
 
 	glBufferState.tripleBuffer_supported &= buffers_supported;

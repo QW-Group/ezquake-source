@@ -1,4 +1,4 @@
-#version 430
+#ezquake-definitions
 
 layout(location = 0) in vec2 inPosition;
 layout(location = 1) in vec2 inTextureCoord;

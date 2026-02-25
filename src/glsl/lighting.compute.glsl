@@ -1,20 +1,18 @@
-#version 430
-
 #ezquake-definitions
 
 layout(local_size_x = HW_LIGHTING_BLOCK_SIZE, local_size_y = HW_LIGHTING_BLOCK_SIZE) in;
-layout(binding=0, rgba32ui) uniform uimage2DArray sourceBlocklights;
-layout(binding=1, rgba8)    uniform image2DArray  destinationLightmap;
-layout(binding=2, rgba32i)  uniform iimage2DArray sourceLightmapData;
+EZ_LAYOUT_BINDING(0) layout(rgba32ui) uniform uimage2DArray sourceBlocklights;
+EZ_LAYOUT_BINDING(1) layout(rgba8)    uniform image2DArray  destinationLightmap;
+EZ_LAYOUT_BINDING(2) layout(rgba32i)  uniform iimage2DArray sourceLightmapData;
 
-layout(std140, binding=EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES) buffer surface_data {
-	model_surface surfaces[];
+EZ_SSBO_LAYOUT(std140, EZQ_GL_BINDINGPOINT_WORLDMODEL_SURFACES) EZ_SSBO(surface_data) {
+	model_surface surfaces[EZ_SSBO_ARRAY_SIZE(8192)];
 };
-layout(std430, binding=EZQ_GL_BINDINGPOINT_LIGHTSTYLES) buffer lightstyle_data {
+EZ_SSBO_LAYOUT(std430, EZQ_GL_BINDINGPOINT_LIGHTSTYLES) EZ_SSBO(lightstyle_data) {
 	uint dlightstyles[MAX_LIGHTSTYLES];
 };
-layout(std430, binding=EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT) buffer todolist_data {
-	uint surfaces_to_light[];
+EZ_SSBO_LAYOUT(std430, EZQ_GL_BINDINGPOINT_SURFACES_TO_LIGHT) EZ_SSBO(todolist_data) {
+	uint surfaces_to_light[EZ_SSBO_ARRAY_SIZE(8192)];
 };
 
 uniform int firstLightmap;
