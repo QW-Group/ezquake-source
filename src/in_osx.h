@@ -20,4 +20,4 @@
 
 int OSX_Mouse_Init(void);
 void OSX_Mouse_Shutdown(void);
-void OSX_Mouse_GetMouseMovement(int *mouse_x, int *mouse_y);
+void OSX_Mouse_GetMouseMovement(float *mouse_x, float *mouse_y);

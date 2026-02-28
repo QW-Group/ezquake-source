@@ -1,6 +1,6 @@
 #import <AppKit/Appkit.h>
 #import <Foundation/Foundation.h>
-#import <SDL.h>
+#import <SDL3/SDL.h>
 #import "common.h"
 
 @interface URL : NSObject
@@ -95,7 +95,7 @@ void SysLibrarySupportDir(char *basedir, int length)
 		// Need to temporarily start SDL here to not break initialization of application which
 		// prevents both the dummy menu, and more importantly mouseMovedHandler from working.
 		SDL_Window *window = SDL_CreateWindow(
-				"ezQuake", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_HIDDEN
+				"ezQuake", 0, 0, SDL_WINDOW_HIDDEN
 		);
 
 		if (EzCheckExistingSettings(basedir, length)) {

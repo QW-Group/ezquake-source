@@ -18,13 +18,13 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#import <SDL.h>
+#import <SDL3/SDL.h>
 #import <GameController/GameController.h>
 #import "common.h"
 
 static id mouseAddedObserver = nil;
 static id mouseRemovedObserver = nil;
-static SDL_mutex *mouse_mutex = NULL;
+static SDL_Mutex *mouse_mutex = NULL;
 static float mouse_x = 0;
 static float mouse_y = 0;
 
@@ -89,12 +89,12 @@ void OSX_Mouse_Shutdown(void)
 	mouse_mutex = NULL;
 }
 
-void OSX_Mouse_GetMouseMovement(int *m_x, int *m_y)
+void OSX_Mouse_GetMouseMovement(float *m_x, float *m_y)
 {
 	SDL_LockMutex(mouse_mutex);
 
-	*m_x = (int)mouse_x;
-	*m_y = (int)mouse_y;
+	*m_x = mouse_x;
+	*m_y = mouse_y;
 
 	mouse_x = 0;
 	mouse_y = 0;

@@ -23,8 +23,7 @@
 
 #include "quakedef.h"
 
-#include <SDL.h>
-#include <SDL_syswm.h>
+#include <SDL3/SDL.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -61,10 +60,12 @@ SDL_GLContext GLM_SDL_CreateContext(SDL_Window* window);
 SDL_GLContext GLC_SDL_CreateContext(SDL_Window* window);
 
 #ifdef __linux__
-// This is hack to ignore keyboard events we receive between FOCUS_GAINED & TAKE_FOCUS
+// This is hack to ignore keyboard events we receive along with FOCUS_GAINED
 // Without it the keys you press to switch back to ezQuake will fire, which is probably not desired
+// SDL2 unblocked on TAKE_FOCUS, which SDL3 lacks, so unblock once the event queue that gained focus is drained
 // Affects X11 only - might also be needed on FreeBSD/OSX?
 static qbool block_keyboard_input = false;
+static qbool unblock_keyboard_input = false;
 #endif
 #ifdef __APPLE__
 static int deadkey_modifiers_held_down = 0;
@@ -106,8 +107,10 @@ static SDL_GLContext    sdl_context;
 glconfig_t glConfig;
 static qbool mouse_active = false;
 qbool mouseinitialized = false; // unfortunately non static, lame...
-int mx, my;
+float mx, my;
 static int old_x = 0, old_y = 0;
+// Relative motion summed from events, SDL3's own sum is written by its raw input thread on Windows
+static float relative_x = 0, relative_y = 0;
 extern double cursor_x, cursor_y;
 
 qbool ActiveApp = true;
@@ -290,15 +293,23 @@ static void GrabMouse(qbool grab, qbool raw)
 		IN_SnapMouseBackToCentre();
 	}
 
-	SDL_SetWindowGrab(sdl_window, grab ? SDL_TRUE : SDL_FALSE);
-	SDL_SetRelativeMouseMode((raw && grab) ? SDL_TRUE : SDL_FALSE);
-	SDL_GetRelativeMouseState(NULL, NULL);
+	SDL_SetWindowMouseGrab(sdl_window, grab);
+	// SDL2's SDL_HINT_GRAB_KEYBOARD grabbed the keyboard along with the mouse
+	if (vid_grab_keyboard.integer) {
+		SDL_SetWindowKeyboardGrab(sdl_window, grab);
+	}
+	SDL_SetWindowRelativeMouseMode(sdl_window, (raw && grab));
+	relative_x = relative_y = 0;
 
 	// never show real cursor in fullscreen
 	if (r_fullscreen.integer) {
-		SDL_ShowCursor(SDL_DISABLE);
+		SDL_HideCursor();
 	} else {
-		SDL_ShowCursor(grab ? SDL_DISABLE : SDL_ENABLE);
+		if (grab) {
+			SDL_HideCursor();
+		} else {
+			SDL_ShowCursor();
+		}
 	}
 
 	// Force rewrite of it
@@ -358,14 +369,16 @@ static void IN_Frame(void)
 		IN_ActivateMouse();
 	}
 
-	if (mouse_active && SDL_GetRelativeMouseMode()) {
+	if (mouse_active && SDL_GetWindowRelativeMouseMode(sdl_window)) {
 #ifdef __APPLE__
 		OSX_Mouse_GetMouseMovement(&mx, &my);
 #else
-		SDL_GetRelativeMouseState(&mx, &my);
+		mx = relative_x;
+		my = relative_y;
 #endif
 	}
-	
+	relative_x = relative_y = 0;
+
 }
 
 void Sys_SendDeferredKeyEvents(void)
@@ -412,28 +425,45 @@ void IN_Restart_f(void)
 	}
 }
 
+// Returns the SDL_DisplayID for a given display index (0-based), or first display on error
+SDL_DisplayID VID_GetDisplayID(int index)
+{
+	int count = 0;
+	SDL_DisplayID *displays = SDL_GetDisplays(&count);
+	SDL_DisplayID id = 0;
+
+	if (displays && count > 0) {
+		id = displays[bound(0, index, count - 1)];
+	}
+	SDL_free(displays);
+	return id;
+}
+
 // Converts co-ordinates for the whole desktop to co-ordinates for a specific display
 static void VID_RelativePositionFromAbsolute(int* x, int* y, int* display)
 {
-	int displays = SDL_GetNumVideoDisplays();
+	int count = 0;
 	int i = 0;
+	SDL_DisplayID *displays = SDL_GetDisplays(&count);
 
-	for (i = 0; i < displays; ++i)
+	for (i = 0; i < count; ++i)
 	{
 		SDL_Rect bounds;
 
-		if (SDL_GetDisplayBounds(i, &bounds) == 0)
+		if (SDL_GetDisplayBounds(displays[i], &bounds))
 		{
 			if (*x >= bounds.x && *x < bounds.x + bounds.w && *y >= bounds.y && *y < bounds.y + bounds.h)
 			{
 				*x = *x - bounds.x;
 				*y = *y - bounds.y;
 				*display = i;
+				SDL_free(displays);
 				return;
 			}
 		}
 	}
 
+	SDL_free(displays);
 	*display = 0;
 }
 
@@ -441,12 +471,14 @@ static void VID_RelativePositionFromAbsolute(int* x, int* y, int* display)
 static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
 {
 	SDL_Rect bounds;
-	
+	SDL_DisplayID display_id = VID_GetDisplayID(*display);
+
 	// Try and get bounds for the specified display - default back to main display if there's an issue
-	if (SDL_GetDisplayBounds(*display, &bounds))
+	if (!SDL_GetDisplayBounds(display_id, &bounds))
 	{
 		*display = 0;
-		if (SDL_GetDisplayBounds(*display, &bounds))
+		display_id = VID_GetDisplayID(0);
+		if (!SDL_GetDisplayBounds(display_id, &bounds))
 		{
 			// Still an issue - reset back to top-left of screen
 			Com_Printf("Error detecting resolution...\n");
@@ -460,16 +492,16 @@ static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
 	*y = bounds.y + min(*y, bounds.h - 30);
 }
 
-static void window_event(SDL_WindowEvent *event)
+static void window_event(SDL_Event *event)
 {
 	extern qbool scr_skipupdate;
 	int flags = SDL_GetWindowFlags(sdl_window);
 
-	switch (event->event) {
-		case SDL_WINDOWEVENT_MINIMIZED:
+	switch (event->type) {
+		case SDL_EVENT_WINDOW_MINIMIZED:
 			Minimized = true;
-
-		case SDL_WINDOWEVENT_FOCUS_LOST:
+			/* Fall through */
+		case SDL_EVENT_WINDOW_FOCUS_LOST:
 			ActiveApp = false;
 #ifdef __linux__
 			block_keyboard_input = in_ignore_unfocused_keyb.integer;
@@ -479,10 +511,14 @@ static void window_event(SDL_WindowEvent *event)
 #endif
 			break;
 
-		case SDL_WINDOWEVENT_FOCUS_GAINED:
+		case SDL_EVENT_WINDOW_FOCUS_GAINED:
 			TP_ExecTrigger("f_focusgained");
+#ifdef __linux__
+			// Keys held while switching back arrive after this event, so keep blocking until the queue is drained
+			unblock_keyboard_input = block_keyboard_input;
+#endif
 			/* Fall through */
-		case SDL_WINDOWEVENT_RESTORED:
+		case SDL_EVENT_WINDOW_RESTORED:
 			Minimized = false;
 			ActiveApp = true;
 			scr_skipupdate = 0;
@@ -491,11 +527,12 @@ static void window_event(SDL_WindowEvent *event)
 #endif
 			break;
 
-		case SDL_WINDOWEVENT_MOVED:
-			if (!(flags & SDL_WINDOW_FULLSCREEN) && r_win_save_pos.integer) {
+		case SDL_EVENT_WINDOW_MOVED:
+			// SDL3 sets the fullscreen flag once the window manager confirms it, so also check the cvar
+			if (!(flags & SDL_WINDOW_FULLSCREEN) && !r_fullscreen.integer && r_win_save_pos.integer) {
 				int displayNumber = 0;
-				int x = event->data1;
-				int y = event->data2;
+				int x = event->window.data1;
+				int y = event->window.data2;
 
 				VID_RelativePositionFromAbsolute(&x, &y, &displayNumber);
 
@@ -505,13 +542,13 @@ static void window_event(SDL_WindowEvent *event)
 			}
 			break;
 
-		case SDL_WINDOWEVENT_RESIZED:
-			if (!(flags & SDL_WINDOW_FULLSCREEN)) {
-				glConfig.vidWidth = event->data1;
-				glConfig.vidHeight = event->data2;
+		case SDL_EVENT_WINDOW_RESIZED:
+			if (!(flags & SDL_WINDOW_FULLSCREEN) && !r_fullscreen.integer) {
+				glConfig.vidWidth = event->window.data1;
+				glConfig.vidHeight = event->window.data2;
 				if (r_win_save_size.integer) {
-					Cvar_LatchedSetValue(&vid_win_width, event->data1);
-					Cvar_LatchedSetValue(&vid_win_height, event->data2);
+					Cvar_LatchedSetValue(&vid_win_width, event->window.data1);
+					Cvar_LatchedSetValue(&vid_win_height, event->window.data2);
 				}
 				if (!r_conwidth.integer || !r_conheight.integer)
 					VID_UpdateConRes();
@@ -520,13 +557,6 @@ static void window_event(SDL_WindowEvent *event)
 				renderer.InvalidateViewport();
 			break;
 
-#ifdef __linux__
-		case SDL_WINDOWEVENT_TAKE_FOCUS:
-			// On X, sequence is FOCUS_GAINED, [Keyboard 'down' events], TAKE_FOCUS
-			// On Windows, it's just FOCUS_GAINED then TAKE_FOCUS, so nothing to block really
-			block_keyboard_input = false;
-			break;
-#endif
 	}
 }
 
@@ -604,14 +634,20 @@ byte Key_CharacterToQuakeCode(char ch)
 	// Uses fact that SDLK_a == 'a'... is this okay?
 	
 	// Convert from key-code to scan-code to see what physical button they pressed
-	int scancode = SDL_GetScancodeFromKey(ch);
+	SDL_Keymod modstate = SDL_KMOD_NONE;
+	int scancode = SDL_GetScancodeFromKey(ch, &modstate);
+
+	// SDL3 also finds characters typed with Shift or AltGr, which are not the key itself
+	if (modstate != SDL_KMOD_NONE) {
+		scancode = SDL_SCANCODE_UNKNOWN;
+	}
 
 	return Key_ScancodeToQuakeCode(scancode);
 }
 
 wchar Key_Event_TextInput(wchar unichar);
 
-static void keyb_textinputevent(char* text)
+static void keyb_textinputevent(const char* text)
 {
 	int i = 0;
 	int len = 0;
@@ -640,7 +676,7 @@ static void keyb_textinputevent(char* text)
 	len = strlen(text);
 	for (i = 0; i < len; ++i)
 	{
-		unichar = TextEncodingDecodeUTF8(text, &i);
+		unichar = TextEncodingDecodeUTF8((char*)text, &i);
 
 		if (unichar)
 			Key_Event_TextInput(unichar);
@@ -649,7 +685,7 @@ static void keyb_textinputevent(char* text)
 
 static void keyb_event(SDL_KeyboardEvent *event)
 {
-	byte result = Key_ScancodeToQuakeCode(event->keysym.scancode);
+	byte result = Key_ScancodeToQuakeCode(event->scancode);
 
 #ifdef __APPLE__
 	if (in_ignore_deadkeys.integer) {
@@ -657,29 +693,30 @@ static void keyb_event(SDL_KeyboardEvent *event)
 		int left_alt = (in_ignore_deadkeys.integer == 2 ? SDLK_LALT : SDLK_LGUI);
 		int right_alt = (in_ignore_deadkeys.integer == 2 ? SDLK_RALT : SDLK_RGUI);
 
-		if (event->keysym.sym == left_alt) {
+		if (event->key == left_alt) {
 			deadkey_modifiers_held_down ^= APPLE_LALT_HELD_DOWN;
-			deadkey_modifiers_held_down |= (event->state ? APPLE_LALT_HELD_DOWN : 0);
+			deadkey_modifiers_held_down |= (event->down ? APPLE_LALT_HELD_DOWN : 0);
 		}
-		else if (event->keysym.sym == right_alt) {
+		else if (event->key == right_alt) {
 			deadkey_modifiers_held_down ^= APPLE_RALT_HELD_DOWN;
-			deadkey_modifiers_held_down |= (event->state ? APPLE_RALT_HELD_DOWN : 0);
+			deadkey_modifiers_held_down |= (event->down ? APPLE_RALT_HELD_DOWN : 0);
 		}
 	}
 #endif
 
 	if (result == 0) {
-		Com_DPrintf("%s: unknown scancode %d\n", __func__, event->keysym.scancode);
+		Com_DPrintf("%s: unknown scancode %d\n", __func__, event->scancode);
 		return;
 	}
 
 #ifdef __linux__
-	if (block_keyboard_input) {
-		Com_DPrintf("%s: scan-code %d, qchar %d: suppressed\n", __func__, event->keysym.scancode, result);
+	// Let key-ups through, SDL3 releases held keys after FOCUS_LOST and blocking those leaves keys stuck
+	if (block_keyboard_input && event->down) {
+		Com_DPrintf("%s: scan-code %d, qchar %d: suppressed\n", __func__, event->scancode, result);
 		return;
 	}
 #endif
-	Key_Event(result, event->state);
+	Key_Event(result, event->down);
 }
 
 static void mouse_button_event(SDL_MouseButtonEvent *event)
@@ -709,19 +746,20 @@ static void mouse_button_event(SDL_MouseButtonEvent *event)
 		return;
 	}
 
-	Key_Event(key, event->state);
+	Key_Event(key, event->down);
 }
 
 static void mouse_wheel_event(SDL_MouseWheelEvent *event)
 {
-	if (event->y > 0) {
+	// High-resolution wheels report fractions of a notch, only whole notches are key presses
+	if (event->integer_y > 0) {
 		if (wheelup_deferred) {
 			Key_Event(K_MWHEELUP, false);
 		}
 		Key_Event(K_MWHEELUP, true);
 		wheelup_deferred = true;
 	}
-	else if (event->y < 0) {
+	else if (event->integer_y < 0) {
 		if (wheeldown_deferred) {
 			Key_Event(K_MWHEELDOWN, false);
 		}
@@ -754,7 +792,8 @@ static void HandleWindowsKeyboardEvents(unsigned int flags, qbool down)
 static void HandleEvents(void)
 {
 	SDL_Event event;
-	qbool track_movement_through_state = (mouse_active && !SDL_GetRelativeMouseMode());
+	qbool relative_mode = (mouse_active && SDL_GetWindowRelativeMouseMode(sdl_window));
+	qbool track_movement_through_state = (mouse_active && !relative_mode);
 
 #if defined(_WIN32) && !defined(WITHOUT_WINKEYHOOK)
 	HandleWindowsKeyboardEvents(windows_keys_down, true);
@@ -765,25 +804,34 @@ static void HandleEvents(void)
 
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
-		case SDL_QUIT:
+		case SDL_EVENT_QUIT:
 			Sys_Quit();
 			break;
-		case SDL_WINDOWEVENT:
-			window_event(&event.window);
+		case SDL_EVENT_WINDOW_MINIMIZED:
+		case SDL_EVENT_WINDOW_FOCUS_LOST:
+		case SDL_EVENT_WINDOW_FOCUS_GAINED:
+		case SDL_EVENT_WINDOW_RESTORED:
+		case SDL_EVENT_WINDOW_MOVED:
+		case SDL_EVENT_WINDOW_RESIZED:
+			window_event(&event);
 			break;
-		case SDL_KEYDOWN:
-		case SDL_KEYUP:
+		case SDL_EVENT_KEY_DOWN:
+		case SDL_EVENT_KEY_UP:
 #ifdef __APPLE__
 			if (developer.integer == 2) {
-				Con_Printf("key%s event, scan=%d, sym=%d, mod=%d\n", event.type == SDL_KEYDOWN ? "down" : "up", event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod);
+				Con_Printf("key%s event, scan=%d, sym=%d, mod=%d\n", event.type == SDL_EVENT_KEY_DOWN ? "down" : "up", event.key.scancode, event.key.key, event.key.mod);
 			}
 #endif
 			keyb_event(&event.key);
 			break;
-		case SDL_TEXTINPUT:
+		case SDL_EVENT_TEXT_INPUT:
 			keyb_textinputevent(event.text.text);
 			break;
-		case SDL_MOUSEMOTION:
+		case SDL_EVENT_MOUSE_MOTION:
+			if (relative_mode) {
+				relative_x += event.motion.xrel;
+				relative_y += event.motion.yrel;
+			}
 			if (event.motion.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
 #ifdef __APPLE__
 				if (developer.integer == 2) {
@@ -801,39 +849,46 @@ static void HandleEvents(void)
 				}
 			}
 			break;
-		case SDL_MOUSEBUTTONDOWN:
-		case SDL_MOUSEBUTTONUP:
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+		case SDL_EVENT_MOUSE_BUTTON_UP:
 #ifdef __APPLE__
 			if (developer.integer == 2) {
-				Con_Printf("mouse%s event, which=%d, button=%d\n", event.type == SDL_MOUSEBUTTONDOWN ? "down" : "up", event.button.which, event.button.button);
+				Con_Printf("mouse%s event, which=%d, button=%d\n", event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ? "down" : "up", event.button.which, event.button.button);
 			}
 #endif
 			if (event.button.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
 				mouse_button_event(&event.button);
 			}
 			break;
-		case SDL_MOUSEWHEEL:
+		case SDL_EVENT_MOUSE_WHEEL:
 			if (event.wheel.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
 				mouse_wheel_event(&event.wheel);
 			}
 			break;
-		case SDL_DROPFILE:
+		case SDL_EVENT_DROP_FILE:
 			/* TODO: Add handling for different file types */
-			if (strncmp(event.drop.file, "qw://", 5) == 0) {
+			if (event.drop.data && strncmp(event.drop.data, "qw://", 5) == 0) {
 				Cbuf_AddText("qwurl ");
 			} else {
 				Cbuf_AddText("playdemo ");
 			}
-			Cbuf_AddText(event.drop.file);
+			if (event.drop.data) {
+				Cbuf_AddText(event.drop.data);
+			}
 			Cbuf_AddText("\n");
-			SDL_free(event.drop.file);
 			break;
 		}
 	}
 
+#ifdef __linux__
+	if (unblock_keyboard_input) {
+		block_keyboard_input = unblock_keyboard_input = false;
+	}
+#endif
+
 	if (track_movement_through_state) {
 		float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
-		int pos_x, pos_y;
+		float pos_x, pos_y;
 
 		SDL_GetMouseState(&pos_x, &pos_y);
 
@@ -859,12 +914,14 @@ void VID_Shutdown(qbool restart)
 {
 	IN_DeactivateMouse();
 
-	SDL_StopTextInput();
+	if (sdl_window) {
+		SDL_StopTextInput(sdl_window);
+	}
 
 	R_Shutdown(restart ? r_shutdown_restart : r_shutdown_full);
 
 	if (sdl_context) {
-		SDL_GL_DeleteContext(sdl_context);
+		SDL_GL_DestroyContext(sdl_context);
 		sdl_context = NULL;
 	}
 
@@ -872,8 +929,6 @@ void VID_Shutdown(qbool restart)
 		SDL_DestroyWindow(sdl_window);
 		sdl_window = NULL;
 	}
-
-	SDL_GL_ResetAttributes();
 
 	if (SDL_WasInit(SDL_INIT_VIDEO) != 0) {
 		SDL_QuitSubSystem(SDL_INIT_VIDEO);
@@ -890,16 +945,26 @@ void VID_Shutdown(qbool restart)
 	}
 }
 
+static void VID_SDL_SetHints(void)
+{
+	// Render 1:1 to physical pixels under fractional Wayland scaling instead of being scaled by the compositor
+	SDL_SetHint(SDL_HINT_VIDEO_WAYLAND_SCALE_TO_DISPLAY, "1");
+#ifdef _WIN32
+	// Keep the native IME windows hidden as with SDL2
+	SDL_SetHint(SDL_HINT_IME_IMPLEMENTED_UI, "composition,candidates");
+#endif
+}
+
 static int VID_SDL_InitSubSystem(void)
 {
+	VID_SDL_SetHints();
+
 	if (SDL_WasInit(SDL_INIT_VIDEO) == 0) {
-		if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0) {
+		if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
 			Sys_Error("Couldn't initialize SDL video: %s\n", SDL_GetError());
 			return -1;
 		}
 	}
-
-	SDL_StartTextInput();
 
 	return 0;
 }
@@ -980,46 +1045,55 @@ void VID_RegisterCvars(void)
 int VID_DisplayNumber(qbool fullscreen)
 {
 	int displayNumber = (fullscreen ? vid_displayNumber.value : vid_win_displayNumber.value);
-	int displays = SDL_GetNumVideoDisplays();
+	int count = 0;
+	SDL_DisplayID *displays = SDL_GetDisplays(&count);
+	SDL_free(displays);
 
-	return max(0, min(displays - 1, displayNumber));
+	return max(0, min(count - 1, displayNumber));
 }
 
 static void VID_SetupModeList(void)
 {
 	int i;
+	int count = 0;
+	SDL_DisplayID display_id = VID_GetDisplayID(VID_DisplayNumber(r_fullscreen.integer == 1));
+	SDL_DisplayMode **modes = SDL_GetFullscreenDisplayModes(display_id, &count);
 
-	modelist_count = SDL_GetNumDisplayModes(VID_DisplayNumber(r_fullscreen.integer == 1));
+	Q_free(modelist);
+	modelist_count = 0;
 
-	if (modelist_count <= 0) {
+	if (!modes || count <= 0) {
 		Com_Printf("error getting display modes: %s\n", SDL_GetError());
-		modelist_count = 0;
+		SDL_free(modes);
+		return;
 	}
 
-	modelist = Q_calloc(modelist_count, sizeof(*modelist));
+	modelist_count = count;
+	modelist = Q_calloc(count, sizeof(*modelist));
 
-	for (i = 0; i < modelist_count; i++) {
-		SDL_GetDisplayMode(0, i, &modelist[i]);
+	for (i = 0; i < count; i++) {
+		modelist[i] = *modes[i];
 	}
+	SDL_free(modes);
 }
 
 static void VID_SetupResolution(void)
 {
-	SDL_DisplayMode display_mode;
 	int display_nbr;
 
 	if (r_fullscreen.integer) {
 		display_nbr = VID_DisplayNumber(true);
 		if (vid_usedesktopres.integer == 1) {
-			if (SDL_GetDesktopDisplayMode(display_nbr, &display_mode) == 0) {
-				glConfig.vidWidth = last_working_width = display_mode.w;
-				glConfig.vidHeight = last_working_height = display_mode.h;
-				glConfig.displayFrequency = last_working_hz = display_mode.refresh_rate;
+			const SDL_DisplayMode *display_mode = SDL_GetDesktopDisplayMode(VID_GetDisplayID(display_nbr));
+			if (display_mode) {
+				glConfig.vidWidth = last_working_width = display_mode->w;
+				glConfig.vidHeight = last_working_height = display_mode->h;
+				glConfig.displayFrequency = last_working_hz = VID_DisplayModeRefreshRate(display_mode);
 				last_working_display = display_nbr;
 				last_working_values = true;
-				Cvar_AutoSetInt(&vid_width, display_mode.w);
-				Cvar_AutoSetInt(&vid_height, display_mode.h);
-				Cvar_AutoSetInt(&r_displayRefresh, display_mode.refresh_rate);
+				Cvar_AutoSetInt(&vid_width, display_mode->w);
+				Cvar_AutoSetInt(&vid_height, display_mode->h);
+				Cvar_AutoSetInt(&r_displayRefresh, VID_DisplayModeRefreshRate(display_mode));
 				return;
 			} else {
 				Com_Printf("warning: failed to get desktop resolution\n");
@@ -1067,13 +1141,13 @@ int VID_GetCurrentModeIndex(void)
 
 	for (i = 0; i < modelist_count; i++) {
 		if (modelist[i].w == vid_width.integer && modelist[i].h == vid_height.integer) {
-			if (modelist[i].refresh_rate == r_displayRefresh.integer) {
-				Com_DPrintf("MATCHED: %dx%d hz:%d\n", modelist[i].w, modelist[i].h, modelist[i].refresh_rate);
+			if (VID_DisplayModeRefreshRate(&modelist[i]) == r_displayRefresh.integer) {
+				Com_DPrintf("MATCHED: %dx%d hz:%d\n", modelist[i].w, modelist[i].h, VID_DisplayModeRefreshRate(&modelist[i]));
 				return i;
 			}
 
-			if (modelist[i].refresh_rate > best_freq) {
-				best_freq = modelist[i].refresh_rate;
+			if (VID_DisplayModeRefreshRate(&modelist[i]) > best_freq) {
+				best_freq = VID_DisplayModeRefreshRate(&modelist[i]);
 				best_idx = i;
 			}
 		}
@@ -1081,7 +1155,7 @@ int VID_GetCurrentModeIndex(void)
 
 	/* width/height matched but not hz, using the best available */
 	if (best_idx >= 0) {
-		Cvar_AutoSetInt(&r_displayRefresh, modelist[best_idx].refresh_rate);
+		Cvar_AutoSetInt(&r_displayRefresh, VID_DisplayModeRefreshRate(&modelist[best_idx]));
 	}
 
 	return best_idx;
@@ -1100,9 +1174,14 @@ const SDL_DisplayMode *VID_GetDisplayMode(int index)
 	return &modelist[index];
 }
 
+// SDL3 reports the refresh rate as a float, SDL2 rounded it
+int VID_DisplayModeRefreshRate(const SDL_DisplayMode *mode)
+{
+	return (int)SDL_lroundf(mode->refresh_rate);
+}
+
 static void VID_SDL_GL_SetupWindowAttributes(int options)
 {
-	SDL_GL_ResetAttributes();
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, options & VID_MULTISAMPLED ? 1 : 0);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, options & VID_MULTISAMPLED ? bound(2, gl_multisamples.integer, 16) : 0);
 	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, options & VID_ACCELERATED ? 1 : 0);
@@ -1155,18 +1234,39 @@ static int VID_SetWindowIcon(SDL_Window *sdl_window)
 	return 0;
 #else
 	SDL_Surface *icon_surface;
-        icon_surface = SDL_CreateRGBSurfaceFrom((void *)ezquake_icon.pixel_data, ezquake_icon.width, ezquake_icon.height, ezquake_icon.bytes_per_pixel * 8,
-                ezquake_icon.width * ezquake_icon.bytes_per_pixel,
-                0x000000FF,0x0000FF00,0x00FF0000,0xFF000000);
+	SDL_PixelFormat fmt = SDL_GetPixelFormatForMasks(
+		ezquake_icon.bytes_per_pixel * 8,
+		0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+	icon_surface = SDL_CreateSurfaceFrom(
+		ezquake_icon.width, ezquake_icon.height, fmt,
+		(void *)ezquake_icon.pixel_data,
+		ezquake_icon.width * ezquake_icon.bytes_per_pixel);
 
 	if (icon_surface) {
 		SDL_SetWindowIcon(sdl_window, icon_surface);
-		SDL_FreeSurface(icon_surface);
+		SDL_DestroySurface(icon_surface);
 		return 0;
 	}
 
 	return -1;
 #endif
+}
+
+static SDL_Window *VID_SDL_CreateWindowAt(int x, int y, int width, int height, int flags)
+{
+	SDL_PropertiesID props = SDL_CreateProperties();
+	SDL_Window *window;
+
+	SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, WINDOW_CLASS_NAME);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, x);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, y);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, width);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, height);
+	SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER, flags);
+	window = SDL_CreateWindowWithProperties(props);
+	SDL_DestroyProperties(props);
+
+	return window;
 }
 
 static SDL_Window *VID_SDL_CreateWindow(int flags)
@@ -1178,7 +1278,7 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 
 		VID_AbsolutePositionFromRelative(&xpos, &ypos, &displayNumber);
 
-		return SDL_CreateWindow(WINDOW_CLASS_NAME, xpos, ypos, glConfig.vidWidth, glConfig.vidHeight, flags);
+		return VID_SDL_CreateWindowAt(xpos, ypos, glConfig.vidWidth, glConfig.vidHeight, flags);
 	}
 	else {
 		int windowWidth = glConfig.vidWidth;
@@ -1188,7 +1288,7 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 		int displayNumber = VID_DisplayNumber(true);
 		SDL_Rect bounds;
 
-		if (SDL_GetDisplayBounds(displayNumber, &bounds) == 0) {
+		if (SDL_GetDisplayBounds(VID_GetDisplayID(displayNumber), &bounds)) {
 			windowX = bounds.x;
 			windowY = bounds.y;
 			windowWidth = bounds.w;
@@ -1198,7 +1298,7 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 			Com_Printf("Couldn't determine bounds of display #%d, defaulting to main display\n", displayNumber);
 		}
 
-		return SDL_CreateWindow(WINDOW_CLASS_NAME, windowX, windowY, windowWidth, windowHeight, flags);
+		return VID_SDL_CreateWindowAt(windowX, windowY, windowWidth, windowHeight, flags);
 	}
 }
 
@@ -1228,19 +1328,19 @@ static void VID_SetWindowResolution(void)
 			VID_SetupResolution();
 		}
 		else {
-			if (SDL_SetWindowDisplayMode(sdl_window, &modelist[index]) != 0) {
+			if (!SDL_SetWindowFullscreenMode(sdl_window, &modelist[index])) {
 				Com_Printf("sdl error: %s\n", SDL_GetError());
 			}
 			else {
 				last_working_width = (&modelist[index])->w;
 				last_working_height = (&modelist[index])->h;
-				last_working_hz = (&modelist[index])->refresh_rate;
+				last_working_hz = VID_DisplayModeRefreshRate(&modelist[index]);
 				last_working_display = vid_displayNumber.integer;
 				last_working_values = true;
 			}
 		}
 
-		if (SDL_SetWindowFullscreen(sdl_window, SDL_WINDOW_FULLSCREEN) < 0) {
+		if (!SDL_SetWindowFullscreen(sdl_window, true)) {
 			Com_Printf("Failed to change to fullscreen mode\n");
 		}
 	}
@@ -1258,23 +1358,24 @@ static void VID_SDL_Init(void)
 
 	VID_SDL_InitSubSystem();
 
-	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
-	// MEAG: deliberately not specifying SDL_WINDOW_ALLOW_HIGHDPI as in our current workflow, it
+	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
+	// MEAG: deliberately not specifying SDL_WINDOW_HIGH_PIXEL_DENSITY as in our current workflow, it
 	//          breaks retina devices (we ask for display resolution and get told lower value)
 	//       Understand this is meant to be helped by NSHighResolutionCapable in Info.plist, but
 	//          BLooD_DoG tried that and it didn't help.  No OSX device to test on, so removed
 	//          for the moment.
 	//       Flag has no effect on Windows (see SetProcessDpiAwarenessFunc in sys_win.c)
 	if (r_fullscreen.integer > 0) {
-		flags |= (vid_usedesktopres.integer == 1 ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+		// Desktop fullscreen right away, exclusive modes are applied by VID_SetWindowResolution
+		flags |= (vid_usedesktopres.integer == 1 ? SDL_WINDOW_FULLSCREEN : 0);
 	}
 	else {
 		flags |= (vid_win_borderless.integer > 0 ? SDL_WINDOW_BORDERLESS : 0);
 	}
 
 	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, vid_minimize_on_focus_loss.integer == 0 ? "0" : "1");
-	SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, vid_grab_keyboard.integer == 0 ? "0" : "1");
-	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
+	// SDL_HINT_GRAB_KEYBOARD removed in SDL3; GrabMouse grabs the keyboard along with the mouse instead
+	// SDL_HINT_MOUSE_RELATIVE_MODE_WARP removed in SDL3
 #ifdef __APPLE__
 #ifdef SDL_HINT_TOUCH_MOUSE_EVENTS
 	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
@@ -1383,17 +1484,28 @@ static void VID_SDL_Init(void)
 		Com_Printf("Failed to set window icon");
 	}
 
+	{
+		// Console input: plain text, no capitalization or autocorrection by the input method
+		SDL_PropertiesID props = SDL_CreateProperties();
+
+		SDL_SetNumberProperty(props, SDL_PROP_TEXTINPUT_TYPE_NUMBER, SDL_TEXTINPUT_TYPE_TEXT);
+		SDL_SetNumberProperty(props, SDL_PROP_TEXTINPUT_CAPITALIZATION_NUMBER, SDL_CAPITALIZE_NONE);
+		SDL_SetBooleanProperty(props, SDL_PROP_TEXTINPUT_AUTOCORRECT_BOOLEAN, false);
+		SDL_StartTextInputWithProperties(sdl_window, props);
+		SDL_DestroyProperties(props);
+	}
+
 	r_swapInterval.modified = true;
 
 	R_Initialise();
 
 	//always get/set refresh rate
-	SDL_DisplayMode display_mode;
-	int display_nbr;
-
-	display_nbr = VID_DisplayNumber(true);
-	if (SDL_GetDesktopDisplayMode(display_nbr, &display_mode) == 0) {
-		Cvar_AutoSetInt(&r_displayRefresh, display_mode.refresh_rate);
+	{
+		int display_nbr = VID_DisplayNumber(true);
+		const SDL_DisplayMode *display_mode = SDL_GetDesktopDisplayMode(VID_GetDisplayID(display_nbr));
+		if (display_mode) {
+			Cvar_AutoSetInt(&r_displayRefresh, VID_DisplayModeRefreshRate(display_mode));
+		}
 	}
 
 	glConfig.initialized = true;
@@ -1442,7 +1554,7 @@ void R_EndRendering(void)
 {
 	if (r_swapInterval.modified) {
 		if (r_swapInterval.integer == 0) {
-			if (SDL_GL_SetSwapInterval(0)) {
+			if (!SDL_GL_SetSwapInterval(0)) {
 				Con_Printf("vsync: Failed to disable vsync...\n");
 			}
             // MacOS vsync fix
@@ -1452,14 +1564,14 @@ void R_EndRendering(void)
             CGLSetParameter(ctx, kCGLCPSwapInterval, &sync);
             #endif
 		} else if (r_swapInterval.integer == -1) {
-			if (SDL_GL_SetSwapInterval(-1)) {
+			if (!SDL_GL_SetSwapInterval(-1)) {
 				Con_Printf("vsync: Failed to enable late swap tearing (vid_vsync -1), setting vid_vsync 1 instead...\n");
 				Cvar_SetValueByName("vid_vsync", 1);
 			}
 		}
 
 		if (r_swapInterval.integer == 1) {
-			if (SDL_GL_SetSwapInterval(1)) {
+			if (!SDL_GL_SetSwapInterval(1)) {
 				Con_Printf("vsync: Failed to enable vsync...\n");
 			}
 		}
@@ -1491,20 +1603,18 @@ void VID_SetCaption (char *text)
 void VID_NotifyActivity(void)
 {
 #ifdef _WIN32
-	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-
 	if (ActiveApp || !vid_flashonactivity.value) {
 		return;
 	}
 
-	if (SDL_GetWindowWMInfo(sdl_window, &info) == SDL_TRUE) {
-		if (info.subsystem == SDL_SYSWM_WINDOWS) {
-			FlashWindow(info.info.win.window, TRUE);
+	{
+		SDL_PropertiesID props = SDL_GetWindowProperties(sdl_window);
+		HWND hwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+		if (hwnd) {
+			FlashWindow(hwnd, TRUE);
+		} else {
+			Com_DPrintf("Sys_NotifyActivity: could not get Win32 HWND\n");
 		}
-	}
-	else {
-		Com_DPrintf("Sys_NotifyActivity: SDL_GetWindowWMInfo failed: %s\n", SDL_GetError());
 	}
 #endif
 }
@@ -1520,7 +1630,7 @@ void VID_Minimize (void)
 
 void VID_Restore (void)
 {
-	if (!sdl_window || (SDL_GetWindowFlags(sdl_window) & SDL_WINDOW_INPUT_FOCUS)) {
+	if (!sdl_window || SDL_GetKeyboardFocus() == sdl_window) {
 		return;
 	}
 
@@ -1671,16 +1781,18 @@ static void VID_Restart_f(void)
 
 static void VID_DisplayList_f(void)
 {
-	int displays = SDL_GetNumVideoDisplays();
+	int count = 0;
 	int i;
+	SDL_DisplayID *displays = SDL_GetDisplays(&count);
 
-	for (i = 0; i < displays; i++) {
-		const char *displayname = SDL_GetDisplayName(i);
+	for (i = 0; i < count; i++) {
+		const char *displayname = SDL_GetDisplayName(displays[i]);
 		if (displayname == NULL) {
 			displayname = "Unknown";
 		}
 		Com_Printf("%d: %s\n", i, displayname);
 	}
+	SDL_free(displays);
 }
 
 static void VID_ModeList_f(void)
@@ -1693,7 +1805,7 @@ static void VID_ModeList_f(void)
 	}
 	
 	for (; i < modelist_count; i++) {
-		Com_Printf("%dx%d@%dHz\n", (&modelist[i])->w, (&modelist[i])->h, (&modelist[i])->refresh_rate);
+		Com_Printf("%dx%d@%dHz\n", (&modelist[i])->w, (&modelist[i])->h, VID_DisplayModeRefreshRate(&modelist[i]));
 	}
 }
 
