@@ -559,9 +559,9 @@ static void OnChange_movie_dir(cvar_t *var, char *string, qbool *cancel) {
 
 typedef struct background_thread_s {
 	SDL_Thread* thread;            // thread handle
-	SDL_mutex* mutex;              // mutex
-	SDL_sem* finished;             // signals that the background thread should terminate (set by main)
-	SDL_sem* signal;               // queue length
+	SDL_Mutex* mutex;              // mutex
+	SDL_Semaphore* finished;       // signals that the background thread should terminate (set by main)
+	SDL_Semaphore* signal;         // queue length
 	scr_sshot_target_t* data;      // queue data
 	byte* buffer;                  // screenshot data
 } background_thread_t;
@@ -580,10 +580,10 @@ static int Movie_BackgroundThread(void* thread_data)
 	background_thread_t* thread = (background_thread_t*) thread_data;
 	while (true) {
 		// Wait to be woken up
-		SDL_SemWait(thread->signal);
+		SDL_WaitSemaphore(thread->signal);
 
 		SDL_LockMutex(thread->mutex);
-		if (SDL_SemTryWait(thread->finished) == SDL_MUTEX_TIMEDOUT) {
+		if (!SDL_TryWaitSemaphore(thread->finished)) {
 			SCR_ScreenshotWrite(thread->data);
 			SDL_UnlockMutex(thread->mutex);
 		}
@@ -628,8 +628,8 @@ void Movie_BackgroundShutdown(void)
 	int i;
 
 	for (i = 0; i < background_threads; ++i) {
-		SDL_SemPost(threads[i].finished);
-		SDL_SemPost(threads[i].signal);
+		SDL_SignalSemaphore(threads[i].finished);
+		SDL_SignalSemaphore(threads[i].signal);
 	}
 
 	for (i = 0; i < background_threads; ++i) {
@@ -668,7 +668,7 @@ qbool Movie_BackgroundCapture(scr_sshot_target_t* params)
 		params->buffer = thread->buffer;
 		thread->data = params;
 		SDL_UnlockMutex(thread->mutex);
-		SDL_SemPost(thread->signal);
+		SDL_SignalSemaphore(thread->signal);
 
 		next_thread = (next_thread + 1) % background_threads;
 		return true;

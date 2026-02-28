@@ -128,7 +128,7 @@ check_dependency(Jansson  "jansson"    "jansson"            "jansson::jansson"  
 check_dependency(MiniZip  "minizip"    "unofficial-minizip" "unofficial::minizip::minizip" REQUIRED)
 check_dependency(PCRE2    "libpcre2-8" "PCRE2"              "pcre2::pcre2-8-static"        REQUIRED)
 check_dependency(PNG      "libpng"     "PNG"                "PNG::PNG"                     REQUIRED)
-check_dependency(SDL2     "sdl2"       "SDL2"               "SDL2::SDL2-static"            REQUIRED)
+check_dependency(SDL3     "sdl3"       "SDL3"               "SDL3::SDL3-static"            REQUIRED)
 check_dependency(SndFile  "sndfile"    "SndFile"            "SndFile::sndfile"             REQUIRED)
 check_dependency(Speex    "speex"      "Speex"              "SPEEX::SPEEX"                 OPTIONAL)
 check_dependency(SpeexDSP "speexdsp"   "SpeexDSP"           "SPEEX::SPEEXDSP"              OPTIONAL)
@@ -746,11 +746,7 @@ else()
     )
 endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    list(APPEND sys_headers
-            ${SOURCE_DIR}/in_osx.h
-    )
     list(APPEND sys
-            ${SOURCE_DIR}/in_osx.m
             ${SOURCE_DIR}/sys_osx.m
     )
 endif()
@@ -870,7 +866,7 @@ target_link_libraries(ezquake PRIVATE
         Dep::Expat
         Dep::JPEG
         Dep::PCRE2
-        Dep::SDL2
+        Dep::SDL3
         Dep::Jansson
         Dep::SndFile
         Dep::PNG

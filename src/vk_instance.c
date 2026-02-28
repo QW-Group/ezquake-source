@@ -25,8 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <vulkan/vulkan.h>
 #include "quakedef.h"
 
-#include <SDL.h>
-#include <SDL_vulkan.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
 
 #include "vk_local.h"
 
@@ -95,13 +95,13 @@ qbool VK_CreateInstance(SDL_Window* window, VkInstance* instance)
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
 
-	if (!SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, NULL)) {
+	if (!SDL_Vulkan_GetInstanceExtensions(&extensionCount, NULL)) {
 		Con_Printf("vulkan:GetInstanceExtensions() failed\n");
 		return false;
 	}
 
 	extensionStrings = Q_malloc(sizeof(extensionStrings[0]) * (extensionCount + EZ_MAX_ADDITIONAL_EXTENSIONS));
-	if (!SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, extensionStrings)) {
+	if (!SDL_Vulkan_GetInstanceExtensions(&extensionCount, extensionStrings)) {
 		Con_Printf("vulkan:GetInstanceExtensions() failed\n");
 		return false;
 	}
