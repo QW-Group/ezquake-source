@@ -66,7 +66,7 @@
         {
             "name": "msbuild-x64",
             "description": "Configure as Visual Studio project",
-            "generator": "Visual Studio 17 2022",
+            "generator": "Visual Studio 18 2026",
             "inherits": "template-vcpkg",
             "cacheVariables": {
                 "VCPKG_TARGET_TRIPLET": "x64-windows-static"
@@ -80,7 +80,7 @@
         {
             "name": "msbuild-arm64",
             "description": "Configure as Visual Studio project",
-            "generator": "Visual Studio 17 2022",
+            "generator": "Visual Studio 18 2026",
             "inherits": "template-vcpkg",
             "cacheVariables": {
                 "VCPKG_TARGET_TRIPLET": "arm64-windows-static"
