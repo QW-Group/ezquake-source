@@ -125,6 +125,7 @@ static cvar_t amf_tracker_positive_enemy_vs_enemy  = {"r_tracker_positive_enemy_
 static cvar_t amf_tracker_proportional             = {"r_tracker_proportional", "0"};
 static cvar_t amf_tracker_weapon_first             = {"r_tracker_weapon_first", "0"};
 static cvar_t amf_tracker_row_spacing              = {"r_tracker_row_spacing", "0"};
+static cvar_t amf_tracker_reverse                  = {"r_tracker_reverse", "0"};
 
 #define MAX_TRACKERMESSAGES 30
 #define MAX_TRACKER_MSG_LEN 500
@@ -225,6 +226,7 @@ void InitTracker(void)
 	Cvar_Register(&amf_tracker_proportional);
 	Cvar_Register(&amf_tracker_weapon_first);
 	Cvar_Register(&amf_tracker_row_spacing);
+	Cvar_Register(&amf_tracker_reverse);
 }
 
 void VX_TrackerClear(void)
@@ -1245,19 +1247,21 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 	// the latest ones are always shown.
 	y = y_pos;
 	for (i = 0; i < max_active_tracks; i++) {
+		int idx = amf_tracker_reverse.integer ? (max_active_tracks - 1 - i) : i;
+		trackmsg_t *msg = &trackermsg[idx];
 		int initial_position;
 
 		// Time expired for this tracker, don't draw it.
-		if (trackermsg[i].die < r_refdef2.time) {
+		if (msg->die < r_refdef2.time) {
 			continue;
 		}
 
 		// Fade the text as it gets older.
-		alpha = min(1, (trackermsg[i].die - r_refdef2.time) / 2);
+		alpha = min(1, (msg->die - r_refdef2.time) / 2);
 
-		printable_chars = trackermsg[i].printable_characters + trackermsg[i].image_characters;
+		printable_chars = msg->printable_characters + msg->image_characters;
 		if (printable_chars <= 0) {
-			break;
+			continue;
 		}
 
 		// Place the tracker.
@@ -1270,8 +1274,8 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 
 		// Draw the segments.
 		initial_position = Draw_ImagePosition();
-		for (s = 0; s < trackermsg[i].segments; ++s) {
-			mpic_t* pic = trackermsg[i].images[s];
+		for (s = 0; s < msg->segments; ++s) {
+			mpic_t* pic = msg->images[s];
 
 			if (pic) {
 				// Draw pic
@@ -1288,15 +1292,15 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 				// Draw text
 				clrinfo_t clr;
 
-				clr.c = RGBAVECT_TO_COLOR_PREMULT_SPECIFIC(trackermsg[i].colors[s], alpha);
+				clr.c = RGBAVECT_TO_COLOR_PREMULT_SPECIFIC(msg->colors[s], alpha);
 				clr.i = 0;
 
-				if (trackermsg[i].pad && padded_width && !trackermsg[i].text_flags[s]) {
-					Draw_SColoredStringAligned(x, y, trackermsg[i].text[s], &clr, 1, scale, alpha, proportional, trackermsg[i].alignment[s], x + padded_width);
+				if (msg->pad && padded_width && !msg->text_flags[s]) {
+					Draw_SColoredStringAligned(x, y, msg->text[s], &clr, 1, scale, alpha, proportional, msg->alignment[s], x + padded_width);
 					x += padded_width;
 				}
 				else {
-					x += Draw_SColoredAlphaString(x, y, trackermsg[i].text[s], &clr, 1, 0, scale, alpha, proportional);
+					x += Draw_SColoredAlphaString(x, y, msg->text[s], &clr, 1, 0, scale, alpha, proportional);
 				}
 			}
 
