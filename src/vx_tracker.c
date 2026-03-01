@@ -124,6 +124,7 @@ static cvar_t amf_tracker_positive_enemy_suicide   = {"r_tracker_positive_enemy_
 static cvar_t amf_tracker_positive_enemy_vs_enemy  = {"r_tracker_positive_enemy_vs_enemy", "0"};
 static cvar_t amf_tracker_proportional             = {"r_tracker_proportional", "0"};
 static cvar_t amf_tracker_weapon_first             = {"r_tracker_weapon_first", "0"};
+static cvar_t amf_tracker_row_spacing              = {"r_tracker_row_spacing", "0"};
 
 #define MAX_TRACKERMESSAGES 30
 #define MAX_TRACKER_MSG_LEN 500
@@ -223,6 +224,7 @@ void InitTracker(void)
 	Cvar_Register(&amf_tracker_positive_enemy_vs_enemy);
 	Cvar_Register(&amf_tracker_proportional);
 	Cvar_Register(&amf_tracker_weapon_first);
+	Cvar_Register(&amf_tracker_row_spacing);
 }
 
 void VX_TrackerClear(void)
@@ -1307,7 +1309,7 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 			Draw_AdjustImages(initial_position, new_draw_position, width - (x - x_pos));
 		}
 
-		y += 8 * scale;	// Next line.
+		y += (8 + amf_tracker_row_spacing.value) * scale;	// Next line with configurable spacing.
 	}
 }
 

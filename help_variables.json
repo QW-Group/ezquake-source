@@ -17374,6 +17374,12 @@
       "group-id": "40",
       "type": "integer"
     },
+    "r_tracker_row_spacing": {
+      "default": "0",
+      "desc": "Additional pixels to add between tracker message rows. Positive values increase spacing, negative values decrease it.",
+      "group-id": "40",
+      "type": "integer"
+    },
     "r_tracker_proportional": {
       "default": "0",
       "desc": "Enable TrueType fonts on tracker text.",
