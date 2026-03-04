@@ -140,7 +140,8 @@ static void GL_PrintInfoLine(const char* label, int labelsize, const char* fmt, 
 
 void GL_PrintGfxInfo(void)
 {
-	SDL_DisplayMode current;
+	const SDL_DisplayMode *current_mode;
+	SDL_DisplayMode current = { 0 };
 	GLint num_extensions;
 	int i;
 
@@ -208,12 +209,15 @@ void GL_PrintGfxInfo(void)
 	GL_PrintInfoLine("Tex samplers:", 15, "%s", GL_Supported(R_SUPPORT_TEXTURE_SAMPLERS) ? "&c0f0available&r" : "&cf00unsupported&r");
 	GL_PrintInfoLine("HW lighting:", 15, "%s", GL_Supported(R_SUPPORT_FEATURE_HW_LIGHTING) ? "&c0f0available&r" : "&cf00unsupported&r");
 
-	if (SDL_GetCurrentDisplayMode(VID_DisplayNumber(r_fullscreen.value), &current) != 0) {
+	current_mode = SDL_GetCurrentDisplayMode(VID_GetDisplayID(VID_DisplayNumber(r_fullscreen.value)));
+	if (current_mode) {
+		current = *current_mode;
+	} else {
 		current.refresh_rate = 0; // print 0Hz if we run into problem fetching data
 	}
 
 	Com_Printf_State(PRINT_ALL, "Video\n");
-	GL_PrintInfoLine("Resolution:", 12, "%dx%d@%dhz [%s]", current.w, current.h, current.refresh_rate, r_fullscreen.integer ? "fullscreen" : "windowed");
+	GL_PrintInfoLine("Resolution:", 12, "%dx%d@%dhz [%s]", current.w, current.h, (int)current.refresh_rate, r_fullscreen.integer ? "fullscreen" : "windowed");
 	GL_PrintInfoLine("Format:", 12, "%2d-bit color\n%2d-bit z-buffer\n%2d-bit stencil", glConfig.colorBits, glConfig.depthBits, glConfig.stencilBits);
 	if (GL_FramebufferEnabled3D()) {
 		GL_PrintInfoLine("Framebuffer:", 12, "%dx%d,%s\n", GL_FrameBufferWidth(framebuffer_std), GL_FrameBufferHeight(framebuffer_std), GL_FramebufferZBufferString(framebuffer_std));

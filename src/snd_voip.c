@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Original code taken from ezquake 2.2, which used speex
 // Now using SDL audio capture (requires SDL 2.0.5 or above)
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "quakedef.h"
 #include "qsound.h"
 
@@ -129,94 +129,88 @@ static qbool S_Speex_Init (void)
 	return s_speex.loaded;
 }
 
-static int S_CaptureDriverInit (int sampleRate)
+static void *S_CaptureDriverInit (int sampleRate)
 {
-	SDL_AudioDeviceID inputdevid = 0;
-	SDL_AudioSpec desired, obtained;
-	int ret = 0;
-	const char *requested_device = NULL;
+	SDL_AudioStream *capture_stream = NULL;
+	SDL_AudioSpec desired;
+	SDL_AudioDeviceID target_device = SDL_AUDIO_DEVICE_DEFAULT_RECORDING;
 
-	if (SDL_WasInit (SDL_INIT_AUDIO) == 0)
-		ret = SDL_InitSubSystem (SDL_INIT_AUDIO);
-
-	if (ret == -1) {
-		Con_Printf ("Couldn't initialize SDL audio: %s\n", SDL_GetError ());
-		return false;
+	if (SDL_WasInit (SDL_INIT_AUDIO) == 0) {
+		if (!SDL_InitSubSystem (SDL_INIT_AUDIO)) {
+			Con_Printf ("Couldn't initialize SDL audio: %s\n", SDL_GetError ());
+			return NULL;
+		}
 	}
 
 	memset (&desired, 0, sizeof (desired));
 	desired.freq = sampleRate;
-	desired.samples = 64;
-	desired.format = AUDIO_S16LSB;
+	desired.format = SDL_AUDIO_S16LE;
 	desired.channels = 1;
 
 	/* Make audiodevice list start from index 1 so that 0 can be system default */
 	if (s_inputdevice.integer > 0) {
-		requested_device = SDL_GetAudioDeviceName (s_inputdevice.integer - 1, 0);
+		int count;
+		SDL_AudioDeviceID *devices = SDL_GetAudioRecordingDevices (&count);
+		int idx = s_inputdevice.integer - 1;
+		if (devices && idx < count) {
+			target_device = devices[idx];
+		}
+		SDL_free (devices);
 	}
 
-	if ((inputdevid = SDL_OpenAudioDevice (requested_device, 1, &desired, &obtained, 0)) <= 0) {
-		Com_Printf ("sound: couldn't open SDL audio: %s\n", SDL_GetError ());
-		if (requested_device != NULL) {
+	capture_stream = SDL_OpenAudioDeviceStream (target_device, &desired, NULL, NULL);
+	if (!capture_stream) {
+		Com_Printf ("sound: couldn't open SDL audio capture: %s\n", SDL_GetError ());
+		if (target_device != SDL_AUDIO_DEVICE_DEFAULT_RECORDING) {
 			Com_Printf ("sound: retrying with default audio device\n");
-			if ((inputdevid = SDL_OpenAudioDevice (NULL, 1, &desired, &obtained, 0)) <= 0) {
+			capture_stream = SDL_OpenAudioDeviceStream (SDL_AUDIO_DEVICE_DEFAULT_RECORDING, &desired, NULL, NULL);
+			if (!capture_stream) {
 				Com_Printf ("sound: failure again, aborting...\n");
-				return 0;
+				return NULL;
 			}
 			Cvar_LatchedSet (&s_inputdevice, "0");
+		} else {
+			return NULL;
 		}
 	}
 
-	if (obtained.format != AUDIO_S16LSB) {
-		Com_Printf ("SDL audio format %d unsupported.\n", obtained.format);
-		SDL_CloseAudioDevice (inputdevid);
-		inputdevid = 0;
-		return 0;
-	}
+	Com_Printf ("Using SDL audio capture driver: %s @ %d Hz\n", SDL_GetCurrentAudioDriver (), desired.freq);
+	SDL_ResumeAudioStreamDevice (capture_stream);
 
-	if (obtained.channels != 1 && obtained.channels != 2) {
-		Com_Printf ("SDL audio channels %d unsupported.\n", obtained.channels);
-		SDL_CloseAudioDevice (inputdevid);
-		inputdevid = 0;
-		return 0;
-	}
-
-	Com_Printf ("Using SDL audio capture driver: %s @ %d Hz (samplerate %d)\n", SDL_GetCurrentAudioDriver (), obtained.freq, obtained.samples);
-	SDL_PauseAudioDevice (inputdevid, 0);
-
-	return inputdevid;
+	return (void *)capture_stream;
 }
 
 static void S_CaptureDriverStart (void *ctx)
 {
-	SDL_AudioDeviceID inputdevid = (SDL_AudioDeviceID)ctx;
+	SDL_AudioStream *capture_stream = (SDL_AudioStream *)ctx;
 
-	SDL_PauseAudioDevice (inputdevid, 0);
+	SDL_ResumeAudioStreamDevice (capture_stream);
 }
 
 static void S_CaptureDriverStop (void *ctx)
 {
-	SDL_AudioDeviceID inputdevid = (SDL_AudioDeviceID)ctx;
+	SDL_AudioStream *capture_stream = (SDL_AudioStream *)ctx;
 
-	SDL_PauseAudioDevice (inputdevid, 1);
+	SDL_PauseAudioStreamDevice (capture_stream);
 }
 
 static void S_CaptureDriverShutdown (void *ctx)
 {
-	SDL_AudioDeviceID inputdevid = (SDL_AudioDeviceID)ctx;
+	SDL_AudioStream *capture_stream = (SDL_AudioStream *)ctx;
 
-	if (inputdevid) {
-		SDL_CloseAudioDevice (inputdevid);
+	if (capture_stream) {
+		SDL_DestroyAudioStream (capture_stream);
 	}
 }
 
 static unsigned int S_CaptureDriverUpdate (void* driverContext, unsigned char* buffer, int minBytes, int maxBytes)
 {
-	SDL_AudioDeviceID inputdevid = (SDL_AudioDeviceID)driverContext;
-	unsigned int available = SDL_GetQueuedAudioSize (inputdevid);
+	SDL_AudioStream *capture_stream = (SDL_AudioStream *)driverContext;
+	int available = SDL_GetAudioStreamAvailable (capture_stream);
 
 	if (available > minBytes) {
-		return SDL_DequeueAudio (inputdevid, buffer, maxBytes);
+		int got = SDL_GetAudioStreamData (capture_stream, buffer, maxBytes);
+		return got > 0 ? (unsigned int)got : 0;
 	}
 
 	return 0;
