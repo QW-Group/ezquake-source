@@ -169,9 +169,26 @@ typedef struct
 {
 	double			localtime;
 	vec3_t			origin;
+	vec3_t			mins;
+	vec3_t			maxs;
+	byte			flags;
 } antilag_position_t;
 
+#define ANTILAG_POSITION_DISCONTINUITY  (1 << 0)
+#define ANTILAG_POSITION_ALIVE          (1 << 1)
+
+typedef enum {
+	antilag_resolve_none = 0,
+	antilag_resolve_single,
+	antilag_resolve_oldest,
+	antilag_resolve_newest,
+	antilag_resolve_discontinuity,
+	antilag_resolve_interpolate,
+	antilag_resolve_bad_interval
+} antilag_resolve_mode_t;
+
 #define MAX_ANTILAG_POSITIONS      128
+#define MAX_ANTILAG_DECISIONS      32
 #define MAX_BACK_BUFFERS           128
 #define MAX_STUFFTEXT              256
 #define	CLIENT_LOGIN_LEN            16
@@ -183,6 +200,30 @@ typedef struct
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 #define MAX_WEAPONSWITCH_OPTIONS    10
 #endif
+
+typedef struct
+{
+	double			server_time;
+	double			target_time;
+	double			command_target_time;
+	double			latency_target_time;
+	double			one_way_latency;
+	double			interp_delay;
+	double			command_window;
+	double			build_seconds;
+	unsigned int	reason_flags;
+	unsigned short	ping_ms;
+	unsigned short	scanned;
+	unsigned short	kept;
+	unsigned short	prefiltered;
+	unsigned short	pvs_rejects;
+	unsigned short	team_rejects;
+	unsigned short	oldest_fallbacks;
+	unsigned short	newest_fallbacks;
+	unsigned short	bad_interval_fallbacks;
+	unsigned short	history_misses;
+	byte			net_drop;
+} antilag_decision_t;
 
 typedef struct client_s
 {
@@ -205,7 +246,9 @@ typedef struct client_s
 	ctxinfo_t		_userinfoshort_ctx_;	// infostring
 
 	antilag_position_t	antilag_positions[MAX_ANTILAG_POSITIONS];
-	int				antilag_position_next;
+	int				antilag_position_next;   // ring insert index
+	int				antilag_position_count;  // number of valid positions in ring
+	qbool			antilag_pending_discontinuity;
 
 	usercmd_t		lastcmd;			// for filling in big drops and partial predictions
 	double			localtime;			// of last message
@@ -248,6 +291,26 @@ typedef struct client_s
 	unsigned int	laggedents_count;
 	float			laggedents_frac;
 	float           laggedents_time;
+	unsigned int	antilag_requests;
+	unsigned int	antilag_ping_rejects;
+	unsigned int	antilag_cmd_fallbacks;
+	unsigned int	antilag_maxunlag_clamps;
+	unsigned int	antilag_history_misses;
+	unsigned int	antilag_history_oldest_fallbacks;
+	unsigned int	antilag_history_newest_fallbacks;
+	unsigned int	antilag_interp_bad_denom;
+	unsigned int	antilag_candidates_scanned;
+	unsigned int	antilag_candidates_prefiltered;
+	unsigned int	antilag_candidates_pvs_rejects;
+	unsigned int	antilag_candidates_team_rejects;
+	unsigned int	antilag_clip_candidates;
+	unsigned int	antilag_clip_broadphase_rejects;
+	unsigned int	antilag_clip_ray_rejects;
+	unsigned int	antilag_clip_traces;
+	antilag_decision_t antilag_last_decision;
+	antilag_decision_t antilag_recent[MAX_ANTILAG_DECISIONS];
+	unsigned int	antilag_recent_head;
+	unsigned int	antilag_recent_count;
 // }
 
 	// spawn parms are carried from level to level
@@ -711,6 +774,13 @@ extern	cvar_t	sv_paused; // 1 - normal, 2 - auto (single player), 3 - both
 extern	cvar_t	sv_maxspeed;
 extern	cvar_t	sv_mintic, sv_maxtic, sv_maxfps;
 extern	cvar_t	sv_antilag, sv_antilag_no_pred, sv_antilag_projectiles;
+extern	cvar_t	sv_antilag_rollout_stage, sv_antilag_projectile_playtest_signoff, sv_antilag_projectile_full_admin;
+extern	cvar_t	sv_antilag_projectile_mode, sv_antilag_projectile_nudge, sv_antilag_projectile_owner_stale;
+extern	cvar_t	sv_antilag_projectile_optin, sv_antilag_projectile_allow, sv_antilag_projectile_deny;
+extern	cvar_t	sv_antilag_maxunlag, sv_antilag_max_cmd_delta, sv_antilag_ping_limit, sv_antilag_teleport_dist;
+extern	cvar_t	sv_antilag_prefilter_pvs, sv_antilag_prefilter_team;
+extern	cvar_t	sv_antilag_ray_narrow, sv_antilag_ray_narrow_pad;
+extern	cvar_t	sv_antilag_frame_budget_ms;
 
 extern	int current_skill;
 
@@ -896,6 +966,17 @@ void SV_UserInit (void);
 void SV_TogglePause (const char *msg, int bit);
 void ProcessUserInfoChange (client_t* sv_client, const char* key, const char* old_value);
 void SV_RotateCmd(client_t* cl, usercmd_t* cmd);
+void SV_AntilagRecord(client_t *cl, qbool discontinuity);
+qbool SV_AntilagFindHistory(client_t *cl, double target_time, const antilag_position_t **base, const antilag_position_t **interpolate);
+qbool SV_AntilagResolvePosition(client_t *cl, double target_time, vec3_t out_origin, antilag_resolve_mode_t *mode);
+void SV_AntilagApplyStartupDefaults(void);
+int SV_AntilagRolloutStageResolved(void);
+int SV_AntilagGameplayModeResolved(void);
+int SV_AntilagProjectileModeResolved(void);
+void SV_AntilagPerfFrameBegin(void);
+void SV_AntilagPerfFrameEnd(void);
+void SV_AntilagPerfAddBuild(double elapsed_seconds, unsigned int scanned, unsigned int kept, unsigned int prefiltered, unsigned int pvs_rejects, unsigned int team_rejects);
+void SV_AntilagPerfAddClip(double elapsed_seconds, unsigned int candidates, unsigned int broadphase_rejects, unsigned int ray_rejects, unsigned int trace_tests);
 
 #ifdef FTE_PEXT2_VOICECHAT
 void SV_VoiceInitClient(client_t *client);

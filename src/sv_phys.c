@@ -50,9 +50,36 @@ cvar_t	sv_spectatormaxspeed 	= { "sv_spectatormaxspeed", "500"};
 cvar_t	sv_accelerate		= { "sv_accelerate", "10"};
 cvar_t	sv_airaccelerate	= { "sv_airaccelerate", "10"};
 
+static void OnChange_sv_antilag_projectiles(cvar_t *var, char *value, qbool *cancel);
+static void OnChange_sv_antilag_projectile_mode(cvar_t *var, char *value, qbool *cancel);
+static void OnChange_sv_antilag_projectile_nudge(cvar_t *var, char *value, qbool *cancel);
+static void OnChange_sv_antilag_projectile_owner_stale(cvar_t *var, char *value, qbool *cancel);
+static void OnChange_sv_antilag_projectile_optin(cvar_t *var, char *value, qbool *cancel);
+static void OnChange_sv_antilag_rollout_stage(cvar_t *var, char *value, qbool *cancel);
+static void OnChange_sv_antilag_projectile_playtest_signoff(cvar_t *var, char *value, qbool *cancel);
+static void OnChange_sv_antilag_projectile_full_admin(cvar_t *var, char *value, qbool *cancel);
+
 cvar_t	sv_antilag		= { "sv_antilag", "", CVAR_SERVERINFO};
 cvar_t	sv_antilag_no_pred	= { "sv_antilag_no_pred", "", CVAR_SERVERINFO}; // "negative" cvar so it doesn't show on serverinfo for no reason
-cvar_t	sv_antilag_projectiles	= { "sv_antilag_projectiles", "", CVAR_SERVERINFO};
+cvar_t	sv_antilag_rollout_stage	= { "sv_antilag_rollout_stage", "", CVAR_SERVERINFO, OnChange_sv_antilag_rollout_stage };
+cvar_t	sv_antilag_projectile_playtest_signoff	= { "sv_antilag_projectile_playtest_signoff", "", CVAR_SERVERINFO, OnChange_sv_antilag_projectile_playtest_signoff };
+cvar_t	sv_antilag_projectile_full_admin	= { "sv_antilag_projectile_full_admin", "", CVAR_SERVERINFO, OnChange_sv_antilag_projectile_full_admin };
+cvar_t	sv_antilag_projectiles	= { "sv_antilag_projectiles", "", CVAR_SERVERINFO, OnChange_sv_antilag_projectiles };
+cvar_t	sv_antilag_projectile_mode	= { "sv_antilag_projectile_mode", "", CVAR_SERVERINFO, OnChange_sv_antilag_projectile_mode };
+cvar_t	sv_antilag_projectile_nudge	= { "sv_antilag_projectile_nudge", "", CVAR_SERVERINFO, OnChange_sv_antilag_projectile_nudge };
+cvar_t	sv_antilag_projectile_owner_stale	= { "sv_antilag_projectile_owner_stale", "", CVAR_SERVERINFO, OnChange_sv_antilag_projectile_owner_stale };
+cvar_t	sv_antilag_projectile_optin	= { "sv_antilag_projectile_optin", "", CVAR_SERVERINFO, OnChange_sv_antilag_projectile_optin };
+cvar_t	sv_antilag_projectile_allow	= { "sv_antilag_projectile_allow", "" };
+cvar_t	sv_antilag_projectile_deny	= { "sv_antilag_projectile_deny", "" };
+cvar_t	sv_antilag_maxunlag	= { "sv_antilag_maxunlag", "", CVAR_SERVERINFO };
+cvar_t	sv_antilag_max_cmd_delta	= { "sv_antilag_max_cmd_delta", "", CVAR_SERVERINFO };
+cvar_t	sv_antilag_ping_limit	= { "sv_antilag_ping_limit", "", CVAR_SERVERINFO };
+cvar_t	sv_antilag_teleport_dist	= { "sv_antilag_teleport_dist", "", CVAR_SERVERINFO };
+cvar_t	sv_antilag_prefilter_pvs	= { "sv_antilag_prefilter_pvs", "", CVAR_SERVERINFO };
+cvar_t	sv_antilag_prefilter_team	= { "sv_antilag_prefilter_team", "", CVAR_SERVERINFO };
+cvar_t	sv_antilag_ray_narrow	= { "sv_antilag_ray_narrow", "", CVAR_SERVERINFO };
+cvar_t	sv_antilag_ray_narrow_pad	= { "sv_antilag_ray_narrow_pad", "", CVAR_SERVERINFO };
+cvar_t	sv_antilag_frame_budget_ms	= { "sv_antilag_frame_budget_ms", "" };
 
 cvar_t	sv_wateraccelerate	= { "sv_wateraccelerate", "10"};
 cvar_t	sv_friction		= { "sv_friction", "4"};
@@ -66,6 +93,212 @@ cvar_t	pm_pground		= { "pm_pground", "", CVAR_SERVERINFO|CVAR_ROM};
 cvar_t  pm_rampjump     = { "pm_rampjump", "", CVAR_SERVERINFO };
 
 double	sv_frametime;
+static qbool sv_antilag_projectile_syncing = false;
+
+static void SV_AntilagSyncLegacyProjectileToggle(int mode)
+{
+	Cvar_SetIgnoreCallback(&sv_antilag_projectiles, mode > 0 ? "1" : "");
+}
+
+static void SV_AntilagSyncProjectileModeFromLegacyString(const char *legacy_value)
+{
+	int mode = bound(0, sv_antilag_projectile_mode.integer, 2);
+	int desired_mode = mode;
+	qbool legacy_enabled = (Q_atof(legacy_value ? legacy_value : "") != 0.0f);
+
+	if (!legacy_enabled) {
+		desired_mode = 0;
+	}
+	else if (desired_mode == 0) {
+		desired_mode = 1;
+	}
+
+	if (desired_mode == mode) {
+		return;
+	}
+
+	if (desired_mode <= 0) {
+		Cvar_SetIgnoreCallback(&sv_antilag_projectile_mode, "0");
+	}
+	else if (desired_mode == 1) {
+		Cvar_SetIgnoreCallback(&sv_antilag_projectile_mode, "1");
+	}
+	else {
+		Cvar_SetIgnoreCallback(&sv_antilag_projectile_mode, "2");
+	}
+}
+
+static void OnChange_sv_antilag_projectiles(cvar_t *var, char *value, qbool *cancel)
+{
+	(void)var;
+	(void)cancel;
+
+	if (sv_antilag_projectile_syncing) {
+		return;
+	}
+
+	sv_antilag_projectile_syncing = true;
+	SV_AntilagSyncProjectileModeFromLegacyString(value);
+	sv_antilag_projectile_syncing = false;
+}
+
+static void OnChange_sv_antilag_projectile_mode(cvar_t *var, char *value, qbool *cancel)
+{
+	int requested = Q_atoi(value);
+	int mode = bound(0, requested, 2);
+
+	if (requested != mode) {
+		*cancel = true;
+		if (mode <= 0) {
+			Cvar_SetIgnoreCallback(var, "0");
+		}
+		else if (mode == 1) {
+			Cvar_SetIgnoreCallback(var, "1");
+		}
+		else {
+			Cvar_SetIgnoreCallback(var, "2");
+		}
+		SV_AntilagSyncLegacyProjectileToggle(mode);
+		return;
+	}
+
+	if (sv_antilag_projectile_syncing) {
+		return;
+	}
+
+	sv_antilag_projectile_syncing = true;
+	SV_AntilagSyncLegacyProjectileToggle(mode);
+	sv_antilag_projectile_syncing = false;
+}
+
+static void OnChange_sv_antilag_projectile_nudge(cvar_t *var, char *value, qbool *cancel)
+{
+	float requested = Q_atof(value);
+
+	if (requested >= 0.0f) {
+		return;
+	}
+
+	*cancel = true;
+	Cvar_SetIgnoreCallback(var, "0");
+}
+
+static void OnChange_sv_antilag_projectile_owner_stale(cvar_t *var, char *value, qbool *cancel)
+{
+	float requested = Q_atof(value);
+
+	if (requested >= 0.0f) {
+		return;
+	}
+
+	*cancel = true;
+	Cvar_SetIgnoreCallback(var, "0");
+}
+
+static void OnChange_sv_antilag_projectile_optin(cvar_t *var, char *value, qbool *cancel)
+{
+	int requested = Q_atoi(value);
+	int clamped = bound(0, requested, 2);
+
+	if (requested == clamped) {
+		return;
+	}
+
+	*cancel = true;
+	if (clamped <= 0) {
+		Cvar_SetIgnoreCallback(var, "0");
+	}
+	else if (clamped == 1) {
+		Cvar_SetIgnoreCallback(var, "1");
+	}
+	else {
+		Cvar_SetIgnoreCallback(var, "2");
+	}
+}
+
+static void SV_AntilagClampBoolean(cvar_t *var, char *value, qbool *cancel)
+{
+	int requested = Q_atoi(value);
+	int clamped = !!requested;
+
+	if (requested == 0 || requested == 1) {
+		return;
+	}
+
+	*cancel = true;
+	Cvar_SetIgnoreCallback(var, clamped ? "1" : "0");
+}
+
+static void OnChange_sv_antilag_rollout_stage(cvar_t *var, char *value, qbool *cancel)
+{
+	int requested = Q_atoi(value);
+	int clamped = bound(0, requested, 3);
+
+	if (requested == clamped) {
+		return;
+	}
+
+	*cancel = true;
+	if (clamped <= 0) {
+		Cvar_SetIgnoreCallback(var, "0");
+	}
+	else if (clamped == 1) {
+		Cvar_SetIgnoreCallback(var, "1");
+	}
+	else if (clamped == 2) {
+		Cvar_SetIgnoreCallback(var, "2");
+	}
+	else {
+		Cvar_SetIgnoreCallback(var, "3");
+	}
+}
+
+static void OnChange_sv_antilag_projectile_playtest_signoff(cvar_t *var, char *value, qbool *cancel)
+{
+	SV_AntilagClampBoolean(var, value, cancel);
+}
+
+static void OnChange_sv_antilag_projectile_full_admin(cvar_t *var, char *value, qbool *cancel)
+{
+	SV_AntilagClampBoolean(var, value, cancel);
+}
+
+int SV_AntilagRolloutStageResolved(void)
+{
+	return bound(0, sv_antilag_rollout_stage.integer, 3);
+}
+
+int SV_AntilagGameplayModeResolved(void)
+{
+	int mode = bound(0, sv_antilag.integer, 2);
+
+	if (SV_AntilagRolloutStageResolved() <= 0) {
+		return 0;
+	}
+
+	return mode;
+}
+
+int SV_AntilagProjectileModeResolved(void)
+{
+	int mode = bound(0, sv_antilag_projectile_mode.integer, 2);
+	int stage = SV_AntilagRolloutStageResolved();
+
+	if (mode <= 0) {
+		return 0;
+	}
+	if (stage < 2) {
+		return 0;
+	}
+	if (!sv_antilag_projectile_playtest_signoff.integer) {
+		return 0;
+	}
+	if (mode >= 2 && (stage < 3 || !sv_antilag_projectile_full_admin.integer)) {
+		return 1;
+	}
+
+	return mode;
+}
 
 
 // when pm_airstep is 1, set pm_pground to 1, and vice versa
@@ -78,6 +311,87 @@ void OnChange_pm_airstep (cvar_t *var, char *value, qbool *cancel)
 
 
 void SV_Physics_Toss (edict_t *ent);
+
+static qbool SV_AntilagUseCompetitiveDefaults(void)
+{
+	cvar_t *ruleset_var = Cvar_Find("ruleset");
+	const char *ruleset_name = ruleset_var ? ruleset_var->string : "";
+
+	return !strcasecmp(ruleset_name, "smackdown")
+		|| !strcasecmp(ruleset_name, "smackdrive")
+		|| !strcasecmp(ruleset_name, "qcon")
+		|| !strcasecmp(ruleset_name, "thunderdome")
+		|| !strcasecmp(ruleset_name, "mtfl");
+}
+
+void SV_AntilagApplyStartupDefaults(void)
+{
+	qbool competitive = SV_AntilagUseCompetitiveDefaults();
+	int rollout_stage;
+
+	if (!sv_antilag_rollout_stage.string[0]) {
+		Cvar_Set(&sv_antilag_rollout_stage, "0");
+	}
+	if (!sv_antilag_projectile_playtest_signoff.string[0]) {
+		Cvar_Set(&sv_antilag_projectile_playtest_signoff, "0");
+	}
+	if (!sv_antilag_projectile_full_admin.string[0]) {
+		Cvar_Set(&sv_antilag_projectile_full_admin, "0");
+	}
+	rollout_stage = SV_AntilagRolloutStageResolved();
+
+	// Keep explicit user/server config overrides; only fill empty defaults.
+	if (!sv_antilag.string[0]) {
+		Cvar_Set(&sv_antilag, rollout_stage >= 2 ? "2" : "1");
+	}
+	if (!sv_antilag_projectile_mode.string[0]) {
+		if (sv_antilag_projectiles.string[0]) {
+			Cvar_Set(&sv_antilag_projectile_mode, sv_antilag_projectiles.value ? "1" : "0");
+		}
+		else {
+			Cvar_Set(&sv_antilag_projectile_mode, (rollout_stage >= 2 && sv_antilag_projectile_playtest_signoff.integer) ? "1" : "0");
+		}
+	}
+	if (!sv_antilag_projectiles.string[0]) {
+		Cvar_Set(&sv_antilag_projectiles, bound(0, sv_antilag_projectile_mode.integer, 2) ? "1" : "");
+	}
+	if (!sv_antilag_projectile_nudge.string[0]) {
+		Cvar_Set(&sv_antilag_projectile_nudge, "0.05");
+	}
+	if (!sv_antilag_projectile_owner_stale.string[0]) {
+		Cvar_Set(&sv_antilag_projectile_owner_stale, competitive ? "0.25" : "0.40");
+	}
+	if (!sv_antilag_projectile_optin.string[0]) {
+		Cvar_Set(&sv_antilag_projectile_optin, "0");
+	}
+	if (!sv_antilag_maxunlag.string[0]) {
+		Cvar_Set(&sv_antilag_maxunlag, competitive ? "0.25" : "0.50");
+	}
+	if (!sv_antilag_max_cmd_delta.string[0]) {
+		Cvar_Set(&sv_antilag_max_cmd_delta, competitive ? "0.20" : "0.35");
+	}
+	if (!sv_antilag_ping_limit.string[0]) {
+		Cvar_Set(&sv_antilag_ping_limit, competitive ? "400" : "0");
+	}
+	if (!sv_antilag_teleport_dist.string[0]) {
+		Cvar_Set(&sv_antilag_teleport_dist, competitive ? "64" : "96");
+	}
+	if (!sv_antilag_prefilter_pvs.string[0]) {
+		Cvar_Set(&sv_antilag_prefilter_pvs, "1");
+	}
+	if (!sv_antilag_prefilter_team.string[0]) {
+		Cvar_Set(&sv_antilag_prefilter_team, "1");
+	}
+	if (!sv_antilag_ray_narrow.string[0]) {
+		Cvar_Set(&sv_antilag_ray_narrow, "1");
+	}
+	if (!sv_antilag_ray_narrow_pad.string[0]) {
+		Cvar_Set(&sv_antilag_ray_narrow_pad, competitive ? "16" : "24");
+	}
+	if (!sv_antilag_frame_budget_ms.string[0]) {
+		Cvar_Set(&sv_antilag_frame_budget_ms, competitive ? "0.75" : "1.50");
+	}
+}
 
 
 /*
@@ -399,9 +713,7 @@ trace_t SV_PushEntity (edict_t *ent, vec3_t push, unsigned int traceflags)
 	vec3_t	end;
 
 	VectorAdd (ent->v->origin, push, end);
-
-	if ((int)ent->v->flags&FL_LAGGEDMOVE)
-		traceflags |= MOVE_LAGGED;
+	traceflags = SV_AntilagApplyTracePolicy(traceflags, ent, antilag_trace_projectile);
 
 	if (ent->v->movetype == MOVETYPE_FLYMISSILE)
 		trace = SV_Trace (ent->v->origin, ent->v->mins, ent->v->maxs, end, MOVE_MISSILE|traceflags, ent);
@@ -747,7 +1059,7 @@ void SV_Physics_Toss (edict_t *ent)
 
 	// move origin
 	VectorScale (ent->v->velocity, sv_frametime, move);
-	trace = SV_PushEntity (ent, move, (sv_antilag.value == 2 && sv_antilag_projectiles.value) ? MOVE_LAGGED:0);
+	trace = SV_PushEntity(ent, move, 0);
 	if (trace.fraction == 1)
 		return;
 	if (ent->e.free)
@@ -1102,14 +1414,10 @@ void SV_RunBots(void)
 		cl->delta_sequence = -1;	// no delta unless requested
 
 		if (sv_antilag.value) {
-			if (cl->antilag_position_next == 0 || cl->antilag_positions[(cl->antilag_position_next - 1) % MAX_ANTILAG_POSITIONS].localtime < cl->localtime) {
-				cl->antilag_positions[cl->antilag_position_next % MAX_ANTILAG_POSITIONS].localtime = cl->localtime;
-				VectorCopy(cl->edict->v->origin, cl->antilag_positions[cl->antilag_position_next % MAX_ANTILAG_POSITIONS].origin);
-				cl->antilag_position_next++;
-			}
+			SV_AntilagRecord(cl, false);
 		}
 		else {
-			cl->antilag_position_next = 0;
+			SV_AntilagReset(cl->edict);
 		}
 	}
 

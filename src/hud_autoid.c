@@ -350,51 +350,142 @@ void SCR_DrawAntilagIndicators(void)
 	int i;
 	extern cvar_t cl_debug_antilag_lines;
 	extern cvar_t cl_debug_antilag_view;
+	extern cvar_t cl_debug_antilag_hud;
+	antilag_stats_t *stats;
+	char reasons[256];
+	char line[256];
+	unsigned int known_flags;
+	unsigned int unknown_flags;
+	int x = 8;
+	int y = 40;
+	double rewind_ms;
+	double command_delta_ms;
+	double latency_delta_ms;
+	double avg_rewind_delta;
 
-	if (!cl_debug_antilag_lines.integer || (!cls.demoplayback && !cl.spectator) || cl.intermission) {
+	if (cl.intermission) {
 		return;
 	}
 
-	for (i = 0; i < autoid_count; ++i) {
-		color_t r_color = RGBA_TO_COLOR(255, 0, 0, 255);
-		color_t c_color = RGBA_TO_COLOR(0, 255, 0, 255);
-		color_t rc_color = RGBA_TO_COLOR(0, 0, 255, 255);
-		float r_x1 = autoids[i].rewind_x1 * vid.width / glwidth;
-		float r_y1 = (glheight - autoids[i].rewind_y1) * vid.height / glheight;
-		float r_x2 = autoids[i].rewind_x2 * vid.width / glwidth;
-		float r_y2 = (glheight - autoids[i].rewind_y2) * vid.height / glheight;
-		float c_x1 = autoids[i].client_x1 * vid.width / glwidth;
-		float c_y1 = (glheight - autoids[i].client_y1) * vid.height / glheight;
-		float c_x2 = autoids[i].client_x2 * vid.width / glwidth;
-		float c_y2 = (glheight - autoids[i].client_y2) * vid.height / glheight;
+	if (cl_debug_antilag_lines.integer && (cls.demoplayback || cl.spectator)) {
+		for (i = 0; i < autoid_count; ++i) {
+			color_t r_color = RGBA_TO_COLOR(255, 0, 0, 255);
+			color_t c_color = RGBA_TO_COLOR(0, 255, 0, 255);
+			color_t rc_color = RGBA_TO_COLOR(0, 0, 255, 255);
+			float r_x1 = autoids[i].rewind_x1 * vid.width / glwidth;
+			float r_y1 = (glheight - autoids[i].rewind_y1) * vid.height / glheight;
+			float r_x2 = autoids[i].rewind_x2 * vid.width / glwidth;
+			float r_y2 = (glheight - autoids[i].rewind_y2) * vid.height / glheight;
+			float c_x1 = autoids[i].client_x1 * vid.width / glwidth;
+			float c_y1 = (glheight - autoids[i].client_y1) * vid.height / glheight;
+			float c_x2 = autoids[i].client_x2 * vid.width / glwidth;
+			float c_y2 = (glheight - autoids[i].client_y2) * vid.height / glheight;
 
-		if (cl_debug_antilag_view.integer == 0) {
-			// player shown in current server position, draw from rewound & client
-			if (autoids[i].rewind_valid) {
-				Draw_AlphaLineRGB(r_x1, r_y1, r_x2, r_y2, 2, r_color);
+			if (cl_debug_antilag_view.integer == 0) {
+				// player shown in current server position, draw from rewound & client
+				if (autoids[i].rewind_valid) {
+					Draw_AlphaLineRGB(r_x1, r_y1, r_x2, r_y2, 2, r_color);
+				}
+				if (autoids[i].client_valid) {
+					Draw_AlphaLineRGB(c_x1, c_y1, c_x2, c_y2, 2, c_color);
+				}
 			}
-			if (autoids[i].client_valid) {
-				Draw_AlphaLineRGB(c_x1, c_y1, c_x2, c_y2, 2, c_color);
+			else if (cl_debug_antilag_view.integer == 1) {
+				// player shown in rewound position, draw from current & client
+				if (autoids[i].rewind_valid) {
+					Draw_AlphaLineRGB(r_x1, r_y1, r_x2, r_y2, 2, r_color);
+				}
+				if (autoids[i].rewind_valid && autoids[i].client_valid) {
+					Draw_AlphaLineRGB(c_x1, c_y1, r_x1, r_y1, 2, rc_color);
+				}
+			}
+			else if (cl_debug_antilag_view.integer == 2) {
+				// player shown in client position, draw to current & rewound
+				if (autoids[i].rewind_valid && autoids[i].client_valid) {
+					Draw_AlphaLineRGB(r_x1, r_y1, c_x1, c_y1, 2, rc_color);
+				}
+				if (autoids[i].client_valid) {
+					Draw_AlphaLineRGB(c_x1, c_y1, c_x2, c_y2, 2, c_color);
+				}
 			}
 		}
-		else if (cl_debug_antilag_view.integer == 1) {
-			// player shown in rewound position, draw from current & client
-			if (autoids[i].rewind_valid) {
-				Draw_AlphaLineRGB(r_x1, r_y1, r_x2, r_y2, 2, r_color);
-			}
-			if (autoids[i].rewind_valid && autoids[i].client_valid) {
-				Draw_AlphaLineRGB(c_x1, c_y1, r_x1, r_y1, 2, rc_color);
-			}
-		}
-		else if (cl_debug_antilag_view.integer == 2) {
-			// player shown in client position, draw to current & rewound
-			if (autoids[i].rewind_valid && autoids[i].client_valid) {
-				Draw_AlphaLineRGB(r_x1, r_y1, c_x1, c_y1, 2, rc_color);
-			}
-			if (autoids[i].client_valid) {
-				Draw_AlphaLineRGB(c_x1, c_y1, c_x2, c_y2, 2, c_color);
-			}
-		}
+	}
+
+	if (!cl_debug_antilag_hud.integer || cl.viewplayernum < 0 || cl.viewplayernum >= MAX_CLIENTS) {
+		return;
+	}
+
+	stats = &cl.antilag_stats[cl.viewplayernum];
+	if (stats->server_time <= 0 && stats->target_time <= 0 && !stats->reason_flags && stats->client_rewind_samples <= 0) {
+		return;
+	}
+
+	reasons[0] = '\0';
+	if (stats->reason_flags & MVD_PEXT1_ANTILAG_REASON_DISABLED) strlcat(reasons, "disabled|", sizeof(reasons));
+	if (stats->reason_flags & MVD_PEXT1_ANTILAG_REASON_ENABLED) strlcat(reasons, "enabled|", sizeof(reasons));
+	if (stats->reason_flags & MVD_PEXT1_ANTILAG_REASON_PING_REJECT) strlcat(reasons, "ping_reject|", sizeof(reasons));
+	if (stats->reason_flags & MVD_PEXT1_ANTILAG_REASON_CMD_FALLBACK) strlcat(reasons, "cmd_fallback|", sizeof(reasons));
+	if (stats->reason_flags & MVD_PEXT1_ANTILAG_REASON_CLAMP_MAXUNLAG) strlcat(reasons, "clamp_unlag|", sizeof(reasons));
+	if (stats->reason_flags & MVD_PEXT1_ANTILAG_REASON_CLAMP_FUTURE) strlcat(reasons, "clamp_future|", sizeof(reasons));
+	if (stats->reason_flags & MVD_PEXT1_ANTILAG_REASON_PREFILTER_PVS) strlcat(reasons, "prefilter_pvs|", sizeof(reasons));
+	if (stats->reason_flags & MVD_PEXT1_ANTILAG_REASON_PREFILTER_TEAM) strlcat(reasons, "prefilter_team|", sizeof(reasons));
+	if (stats->reason_flags & MVD_PEXT1_ANTILAG_REASON_HIST_OLDEST) strlcat(reasons, "oldest|", sizeof(reasons));
+	if (stats->reason_flags & MVD_PEXT1_ANTILAG_REASON_HIST_NEWEST) strlcat(reasons, "newest|", sizeof(reasons));
+	if (stats->reason_flags & MVD_PEXT1_ANTILAG_REASON_HIST_BAD_INTERVAL) strlcat(reasons, "bad_interval|", sizeof(reasons));
+	if (stats->reason_flags & MVD_PEXT1_ANTILAG_REASON_HIST_MISS) strlcat(reasons, "history_miss|", sizeof(reasons));
+	if (stats->reason_flags & MVD_PEXT1_ANTILAG_REASON_ROLLOUT_GATE) strlcat(reasons, "rollout_gate|", sizeof(reasons));
+	known_flags =
+		MVD_PEXT1_ANTILAG_REASON_DISABLED
+		| MVD_PEXT1_ANTILAG_REASON_ENABLED
+		| MVD_PEXT1_ANTILAG_REASON_PING_REJECT
+		| MVD_PEXT1_ANTILAG_REASON_CMD_FALLBACK
+		| MVD_PEXT1_ANTILAG_REASON_CLAMP_MAXUNLAG
+		| MVD_PEXT1_ANTILAG_REASON_CLAMP_FUTURE
+		| MVD_PEXT1_ANTILAG_REASON_PREFILTER_PVS
+		| MVD_PEXT1_ANTILAG_REASON_PREFILTER_TEAM
+		| MVD_PEXT1_ANTILAG_REASON_HIST_OLDEST
+		| MVD_PEXT1_ANTILAG_REASON_HIST_NEWEST
+		| MVD_PEXT1_ANTILAG_REASON_HIST_BAD_INTERVAL
+		| MVD_PEXT1_ANTILAG_REASON_HIST_MISS
+		| MVD_PEXT1_ANTILAG_REASON_ROLLOUT_GATE;
+	unknown_flags = stats->reason_flags & ~known_flags;
+	if (unknown_flags) {
+		char token[32];
+
+		snprintf(token, sizeof(token), "unknown:0x%08x|", unknown_flags);
+		strlcat(reasons, token, sizeof(reasons));
+	}
+	if (!reasons[0]) {
+		strlcpy(reasons, "none", sizeof(reasons));
+	}
+	else if (reasons[strlen(reasons) - 1] == '|') {
+		reasons[strlen(reasons) - 1] = '\0';
+	}
+
+	rewind_ms = max(0.0, (stats->server_time - stats->target_time) * 1000.0);
+	command_delta_ms = (stats->command_target_time - stats->target_time) * 1000.0;
+	latency_delta_ms = (stats->latency_target_time - stats->target_time) * 1000.0;
+	avg_rewind_delta = (stats->client_rewind_samples > 0 ? (stats->client_rewind_distance / stats->client_rewind_samples) : 0.0);
+	snprintf(line, sizeof(line), "AL rewind=%0.1fms avg=%0.1fu ping=%ums drop=%u", rewind_ms, avg_rewind_delta, stats->ping_ms, stats->net_drop);
+	Draw_String(x, y, line);
+	y += 8;
+	snprintf(line, sizeof(line), "AL cmd=%+0.1fms lat=%+0.1fms interp=%0.1fms one-way=%0.1fms win=%0.1fms",
+		command_delta_ms, latency_delta_ms, stats->interp_delay * 1000.0, stats->one_way_latency * 1000.0, stats->command_window * 1000.0);
+	Draw_String(x, y, line);
+	y += 8;
+	snprintf(line, sizeof(line), "AL reason=%s", reasons);
+	Draw_String(x, y, line);
+	y += 8;
+
+	if (cl_debug_antilag_hud.integer >= 2) {
+		snprintf(line, sizeof(line), "AL scanned=%u kept=%u pre=%u pvs=%u team=%u", stats->scanned, stats->kept, stats->prefiltered, stats->pvs_rejects, stats->team_rejects);
+		Draw_String(x, y, line);
+		y += 8;
+		snprintf(line, sizeof(line), "AL fallback o/n/b=%u/%u/%u miss=%u build=%0.3fms", stats->oldest_fallbacks, stats->newest_fallbacks, stats->bad_interval_fallbacks, stats->history_misses, stats->build_seconds * 1000.0);
+		Draw_String(x, y, line);
+		y += 8;
+		snprintf(line, sizeof(line), "AL server=%0.3f target=%0.3f", stats->server_time, stats->target_time);
+		Draw_String(x, y, line);
 	}
 }
 

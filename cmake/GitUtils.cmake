@@ -95,23 +95,12 @@ function(git_extract_version target_var)
     set(VERSION_MINOR 0)
     set(VERSION_PATCH 0)
 
-    string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+).*" "\\1;\\2;\\3" SEMVER_MATCH "${GIT_DESCRIBE}")
-    list(LENGTH SEMVER_MATCH PARTS_SIZE)
-
-    if(SEMVER_MATCH)
-        if(PARTS_SIZE GREATER 0)
-            list(GET SEMVER_MATCH 0 VERSION_MAJOR)
-        endif()
-
-        if(PARTS_SIZE GREATER 1)
-            list(GET SEMVER_MATCH 1 VERSION_MINOR)
-        endif()
-
-        if(PARTS_SIZE GREATER 2)
-            list(GET SEMVER_MATCH 2 VERSION_PATCH)
-        endif()
+    if(GIT_DESCRIBE MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+).*")
+        set(VERSION_MAJOR "${CMAKE_MATCH_1}")
+        set(VERSION_MINOR "${CMAKE_MATCH_2}")
+        set(VERSION_PATCH "${CMAKE_MATCH_3}")
     else()
-        message(WARNING "Upstream tags missing. Using default version 0.0.0")
+        message(WARNING "Upstream semver tags missing. Using default version 0.0.0")
     endif()
 
     set_target_properties(${target_var} PROPERTIES

@@ -1,0 +1,11 @@
+# name,sv_time,frame_sv_time,ping_ms,net_drop,last_msec,oldest_msec,old_msec,new_msec,sv_maxfps,max_cmd_delta,max_unlag,no_pred
+steady_latency,10.000,9.900,100,0,13,13,13,13,77,0.20,0.25,0
+jitter_spike,20.000,19.910,80,0,15,15,15,40,77,0.20,0.25,0
+loss_burst,30.000,29.800,120,5,15,14,16,17,77,0.20,0.25,0
+reorder_fallback,40.000,39.200,60,0,13,13,13,13,77,0.20,0.25,0
+clamp_maxunlag,50.000,49.400,200,0,13,13,13,13,77,0.20,0.05,0
+no_pred_baseline,60.000,59.920,100,0,13,13,13,13,77,0.20,0.25,1
+msec_clamp_fallback,70.000,69.700,90,0,120,120,120,120,77,0.20,0.25,0
+cmd_delta_guard_disabled,80.000,79.200,60,0,13,13,13,13,77,0.00,0.25,0
+heavy_loss_window,90.000,89.600,140,10,16,14,17,18,77,0.20,0.25,0
+high_jitter_no_fallback,100.000,99.900,50,0,13,13,13,45,77,0.25,0.25,0

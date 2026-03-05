@@ -541,6 +541,26 @@ typedef struct antilag_pos_s {
 typedef struct antilag_stats_s {
 	double      client_rewind_distance;
 	double      client_rewind_samples;
+	double      server_time;
+	double      target_time;
+	double      command_target_time;
+	double      latency_target_time;
+	double      one_way_latency;
+	double      interp_delay;
+	double      command_window;
+	double      build_seconds;
+	unsigned int reason_flags;
+	unsigned int ping_ms;
+	unsigned int scanned;
+	unsigned int kept;
+	unsigned int prefiltered;
+	unsigned int pvs_rejects;
+	unsigned int team_rejects;
+	unsigned int oldest_fallbacks;
+	unsigned int newest_fallbacks;
+	unsigned int bad_interval_fallbacks;
+	unsigned int history_misses;
+	unsigned int net_drop;
 } antilag_stats_t;
 
 // cl.paused flags

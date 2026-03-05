@@ -102,6 +102,7 @@ void Cam_SetViewPlayer (void)
 
 	if (new_track != cl.viewplayernum) {
 		memset(cl.antilag_positions, 0, sizeof(cl.antilag_positions));
+		memset(cl.antilag_stats, 0, sizeof(cl.antilag_stats));
 	}
 	cl.viewplayernum = new_track;
 }

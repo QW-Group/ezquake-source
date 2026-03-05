@@ -1807,6 +1807,263 @@ void SV_MasterPassword_f (void)
 }
 // <-- QW262
 
+static void SV_AntilagReplayTests_f(void)
+{
+	int failures = SV_AntilagRunReplayTests();
+
+	if (failures > 0) {
+		Con_Printf("sv_antilag_replaytests: %d scenario(s) failed\n", failures);
+	}
+}
+
+static void SV_AntilagAppendReason(char *buffer, size_t size, const char *token)
+{
+	if (!buffer || !size || !token || !token[0]) {
+		return;
+	}
+
+	if (buffer[0]) {
+		strlcat(buffer, "|", size);
+	}
+	strlcat(buffer, token, size);
+}
+
+static void SV_AntilagReasonFlagsToString(unsigned int flags, char *buffer, size_t size)
+{
+	unsigned int known_flags;
+	unsigned int unknown_flags;
+
+	if (!buffer || !size) {
+		return;
+	}
+
+	buffer[0] = '\0';
+	if (flags & MVD_PEXT1_ANTILAG_REASON_DISABLED) SV_AntilagAppendReason(buffer, size, "disabled");
+	if (flags & MVD_PEXT1_ANTILAG_REASON_ENABLED) SV_AntilagAppendReason(buffer, size, "enabled");
+	if (flags & MVD_PEXT1_ANTILAG_REASON_PING_REJECT) SV_AntilagAppendReason(buffer, size, "ping_reject");
+	if (flags & MVD_PEXT1_ANTILAG_REASON_CMD_FALLBACK) SV_AntilagAppendReason(buffer, size, "cmd_fallback");
+	if (flags & MVD_PEXT1_ANTILAG_REASON_CLAMP_MAXUNLAG) SV_AntilagAppendReason(buffer, size, "clamp_unlag");
+	if (flags & MVD_PEXT1_ANTILAG_REASON_CLAMP_FUTURE) SV_AntilagAppendReason(buffer, size, "clamp_future");
+	if (flags & MVD_PEXT1_ANTILAG_REASON_PREFILTER_PVS) SV_AntilagAppendReason(buffer, size, "prefilter_pvs");
+	if (flags & MVD_PEXT1_ANTILAG_REASON_PREFILTER_TEAM) SV_AntilagAppendReason(buffer, size, "prefilter_team");
+	if (flags & MVD_PEXT1_ANTILAG_REASON_HIST_OLDEST) SV_AntilagAppendReason(buffer, size, "oldest");
+	if (flags & MVD_PEXT1_ANTILAG_REASON_HIST_NEWEST) SV_AntilagAppendReason(buffer, size, "newest");
+	if (flags & MVD_PEXT1_ANTILAG_REASON_HIST_BAD_INTERVAL) SV_AntilagAppendReason(buffer, size, "bad_interval");
+	if (flags & MVD_PEXT1_ANTILAG_REASON_HIST_MISS) SV_AntilagAppendReason(buffer, size, "history_miss");
+	if (flags & MVD_PEXT1_ANTILAG_REASON_ROLLOUT_GATE) SV_AntilagAppendReason(buffer, size, "rollout_gate");
+	known_flags =
+		MVD_PEXT1_ANTILAG_REASON_DISABLED
+		| MVD_PEXT1_ANTILAG_REASON_ENABLED
+		| MVD_PEXT1_ANTILAG_REASON_PING_REJECT
+		| MVD_PEXT1_ANTILAG_REASON_CMD_FALLBACK
+		| MVD_PEXT1_ANTILAG_REASON_CLAMP_MAXUNLAG
+		| MVD_PEXT1_ANTILAG_REASON_CLAMP_FUTURE
+		| MVD_PEXT1_ANTILAG_REASON_PREFILTER_PVS
+		| MVD_PEXT1_ANTILAG_REASON_PREFILTER_TEAM
+		| MVD_PEXT1_ANTILAG_REASON_HIST_OLDEST
+		| MVD_PEXT1_ANTILAG_REASON_HIST_NEWEST
+		| MVD_PEXT1_ANTILAG_REASON_HIST_BAD_INTERVAL
+		| MVD_PEXT1_ANTILAG_REASON_HIST_MISS
+		| MVD_PEXT1_ANTILAG_REASON_ROLLOUT_GATE;
+	unknown_flags = flags & ~known_flags;
+	if (unknown_flags) {
+		char token[32];
+
+		snprintf(token, sizeof(token), "unknown:0x%08x", unknown_flags);
+		SV_AntilagAppendReason(buffer, size, token);
+	}
+
+	if (!buffer[0]) {
+		strlcpy(buffer, "none", size);
+	}
+}
+
+static void SV_AntilagDumpClientDecision(client_t *cl, int ordinal, const antilag_decision_t *decision)
+{
+	char reasons[256];
+	double rewind_ms;
+	double cmd_ms;
+	double lat_ms;
+	double build_ms;
+
+	if (!cl || !decision) {
+		return;
+	}
+
+	SV_AntilagReasonFlagsToString(decision->reason_flags, reasons, sizeof(reasons));
+	rewind_ms = max(0.0, (decision->server_time - decision->target_time) * 1000.0);
+	cmd_ms = (decision->command_target_time - decision->target_time) * 1000.0;
+	lat_ms = (decision->latency_target_time - decision->target_time) * 1000.0;
+	build_ms = decision->build_seconds * 1000.0;
+
+	Con_Printf(
+		"  #%d t=%0.3f target=%0.3f rewind=%0.1fms ping=%ums drop=%u reason=%s\n"
+		"     cmd_delta=%+0.1fms lat_delta=%+0.1fms interp=%0.1fms oneway=%0.1fms window=%0.1fms build=%0.3fms\n"
+		"     scanned=%u kept=%u pre=%u pvs=%u team=%u fallback(o/n/b)=%u/%u/%u miss=%u\n",
+		ordinal,
+		decision->server_time,
+		decision->target_time,
+		rewind_ms,
+		(unsigned int)decision->ping_ms,
+		(unsigned int)decision->net_drop,
+		reasons,
+		cmd_ms,
+		lat_ms,
+		decision->interp_delay * 1000.0,
+		decision->one_way_latency * 1000.0,
+		decision->command_window * 1000.0,
+		build_ms,
+		(unsigned int)decision->scanned,
+		(unsigned int)decision->kept,
+		(unsigned int)decision->prefiltered,
+		(unsigned int)decision->pvs_rejects,
+		(unsigned int)decision->team_rejects,
+		(unsigned int)decision->oldest_fallbacks,
+		(unsigned int)decision->newest_fallbacks,
+		(unsigned int)decision->bad_interval_fallbacks,
+		(unsigned int)decision->history_misses);
+}
+
+static void SV_AntilagDumpClientTotals(client_t *cl)
+{
+	unsigned int build_kept;
+
+	if (!cl) {
+		return;
+	}
+
+	build_kept = (cl->antilag_candidates_scanned > cl->antilag_candidates_prefiltered
+		? (cl->antilag_candidates_scanned - cl->antilag_candidates_prefiltered)
+		: 0);
+
+	Con_Printf(
+		"  totals: req=%u ping_reject=%u cmd_fallback=%u clamp=%u hist_miss=%u hist(o/n/b)=%u/%u/%u\n"
+		"          build scanned=%u kept=%u pre=%u pvs=%u team=%u\n"
+		"          clip candidates=%u broadphase=%u ray=%u traces=%u\n",
+		cl->antilag_requests,
+		cl->antilag_ping_rejects,
+		cl->antilag_cmd_fallbacks,
+		cl->antilag_maxunlag_clamps,
+		cl->antilag_history_misses,
+		cl->antilag_history_oldest_fallbacks,
+		cl->antilag_history_newest_fallbacks,
+		cl->antilag_interp_bad_denom,
+		cl->antilag_candidates_scanned,
+		build_kept,
+		cl->antilag_candidates_prefiltered,
+		cl->antilag_candidates_pvs_rejects,
+		cl->antilag_candidates_team_rejects,
+		cl->antilag_clip_candidates,
+		cl->antilag_clip_broadphase_rejects,
+		cl->antilag_clip_ray_rejects,
+		cl->antilag_clip_traces);
+}
+
+static void SV_AntilagDumpClientHistory(client_t *cl, int wanted)
+{
+	int count;
+	int i;
+
+	if (!cl) {
+		return;
+	}
+
+	if (cl->antilag_recent_count == 0) {
+		Con_Printf("%s(%d): no anti-lag decisions recorded\n", cl->name, cl->userid);
+		return;
+	}
+
+	count = bound(1, wanted, MAX_ANTILAG_DECISIONS);
+	count = min(count, (int)cl->antilag_recent_count);
+
+	Con_Printf("%s(%d): showing %d of %u anti-lag decisions\n", cl->name, cl->userid, count, cl->antilag_recent_count);
+	SV_AntilagDumpClientTotals(cl);
+	for (i = 0; i < count; ++i) {
+		int index = (cl->antilag_recent_head + MAX_ANTILAG_DECISIONS - 1 - i) % MAX_ANTILAG_DECISIONS;
+		SV_AntilagDumpClientDecision(cl, i + 1, &cl->antilag_recent[index]);
+	}
+}
+
+static void SV_AntilagDump_f(void)
+{
+	client_t *cl;
+	int uid;
+	int wanted = 8;
+	int i;
+
+	if (Cmd_Argc() < 2 || Cmd_Argc() > 3) {
+		Con_Printf("usage: sv_antilag_dump <userid/name> [count]\n");
+		return;
+	}
+
+	uid = SV_MatchUser(Cmd_Argv(1));
+	if (!uid) {
+		Con_Printf("Couldn't find user %s\n", Cmd_Argv(1));
+		return;
+	}
+	if (Cmd_Argc() == 3) {
+		wanted = Q_atoi(Cmd_Argv(2));
+	}
+
+	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; ++i, ++cl) {
+		if (cl->state < cs_preconnected) {
+			continue;
+		}
+		if (cl->userid == uid) {
+			SV_AntilagDumpClientHistory(cl, wanted);
+			return;
+		}
+	}
+
+	Con_Printf("Couldn't find user %s\n", Cmd_Argv(1));
+}
+
+static void SV_AntilagDumpAll_f(void)
+{
+	client_t *cl;
+	int wanted = 1;
+	int i;
+	int printed = 0;
+
+	if (Cmd_Argc() > 2) {
+		Con_Printf("usage: sv_antilag_dumpall [count]\n");
+		return;
+	}
+	if (Cmd_Argc() == 2) {
+		wanted = Q_atoi(Cmd_Argv(1));
+	}
+
+	for (i = 0, cl = svs.clients; i < MAX_CLIENTS; ++i, ++cl) {
+		if (cl->state < cs_preconnected || cl->antilag_recent_count == 0) {
+			continue;
+		}
+		SV_AntilagDumpClientHistory(cl, wanted);
+		printed++;
+	}
+
+	if (!printed) {
+		Con_Printf("sv_antilag_dumpall: no anti-lag decisions recorded\n");
+	}
+}
+
+static void SV_AntilagRolloutStatus_f(void)
+{
+	int stage = SV_AntilagRolloutStageResolved();
+	int requested_mode = bound(0, sv_antilag.integer, 2);
+	int effective_mode = SV_AntilagGameplayModeResolved();
+	int requested_projectile = bound(0, sv_antilag_projectile_mode.integer, 2);
+	int effective_projectile = SV_AntilagProjectileModeResolved();
+
+	Con_Printf("anti-lag rollout status:\n");
+	Con_Printf("  stage=%d (0 instrumentation, 1 hitscan/melee, 2 projectile-limited, 3 full-projectile-eligible)\n", stage);
+	Con_Printf("  sv_antilag requested=%d effective=%d\n", requested_mode, effective_mode);
+	Con_Printf("  projectile_mode requested=%d effective=%d\n", requested_projectile, effective_projectile);
+	Con_Printf("  playtest_signoff=%d full_admin=%d legacy_projectiles=%d\n",
+		!!sv_antilag_projectile_playtest_signoff.integer,
+		!!sv_antilag_projectile_full_admin.integer,
+		!!sv_antilag_projectiles.integer);
+}
+
 /*
 ==================
 SV_InitOperatorCommands
@@ -1834,6 +2091,10 @@ void SV_InitOperatorCommands (void)
 	Cmd_AddCommand ("check_maps", SV_Check_maps_f);
 	Cmd_AddCommand ("snap", SV_Snap_f);
 	Cmd_AddCommand ("snapall", SV_SnapAll_f);
+	Cmd_AddCommand ("sv_antilag_replaytests", SV_AntilagReplayTests_f);
+	Cmd_AddCommand ("sv_antilag_dump", SV_AntilagDump_f);
+	Cmd_AddCommand ("sv_antilag_dumpall", SV_AntilagDumpAll_f);
+	Cmd_AddCommand ("sv_antilag_rollout_status", SV_AntilagRolloutStatus_f);
 	Cmd_AddCommand ("kick", SV_Kick_f);
 
 	// Add sv_status as client allows 'status' alias to over-ride (ezQuake #532)

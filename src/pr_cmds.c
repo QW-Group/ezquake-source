@@ -660,10 +660,7 @@ void PF_traceline (void)
 	nomonsters = G_FLOAT(OFS_PARM2);
 	ent = G_EDICT(OFS_PARM3);
 
-	if (sv_antilag.value == 2)
-		nomonsters |= MOVE_LAGGED;
-
-	trace = SV_Trace (v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
+	trace = SV_AntilagTrace(v1, vec3_origin, vec3_origin, v2, nomonsters, ent, antilag_trace_hitscan);
 
 	PR_GLOBAL(trace_allsolid) = trace.allsolid;
 	PR_GLOBAL(trace_startsolid) = trace.startsolid;
@@ -2532,7 +2529,7 @@ static void PF_tracebox (void)
         nomonsters = G_FLOAT(OFS_PARM4);
         ent = G_EDICT(OFS_PARM5);
 
-        trace = SV_Trace (v1, mins, maxs, v2, nomonsters, ent);
+        trace = SV_AntilagTrace(v1, mins, maxs, v2, nomonsters, ent, antilag_trace_melee);
 
         PR_GLOBAL(trace_allsolid) = trace.allsolid;
         PR_GLOBAL(trace_startsolid) = trace.startsolid;

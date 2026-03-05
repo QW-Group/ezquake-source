@@ -1,0 +1,21 @@
+# Phase 9 anti-lag regression golden outcomes
+# Network format: network,name,target_time,reason_flags
+# Hitreg format: hitreg,name,mode,x,y,z
+network,steady_latency,9.900000,0
+network,jitter_spike,19.930000,0
+network,loss_burst,29.875000,0
+network,reorder_fallback,39.957000,8
+network,clamp_maxunlag,49.950000,24
+network,no_pred_baseline,59.933000,0
+network,msec_clamp_fallback,69.935000,8
+network,cmd_delta_guard_disabled,79.750000,16
+network,heavy_loss_window,89.759000,0
+network,high_jitter_no_fallback,99.925000,0
+hitreg,peek_shot,interpolate,48.0,0.0,0.0
+hitreg,crossing_strafe,interpolate,0.0,0.0,0.0
+hitreg,jitter_target,interpolate,24.0,0.0,0.0
+hitreg,discontinuity_snap,newest,50.0,0.0,0.0
+hitreg,discontinuity_snap_oldest,oldest,0.0,0.0,0.0
+hitreg,out_of_window_oldest,oldest,-10.0,0.0,0.0
+hitreg,out_of_window_newest,newest,55.0,0.0,0.0
+hitreg,single_sample,single,123.0,4.0,-7.0

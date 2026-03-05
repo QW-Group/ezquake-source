@@ -67,6 +67,13 @@ On Linux, `./build-linux.sh` produces an ezQuake binary in the top directory.
 For a more in-depth description of how to build on all platforms, have a look at 
 [BUILD.md](BUILD.md).
 
+## Anti-Lag Docs
+
+- [Anti-Lag Invariants and Threat Model](docs/ANTI_LAG_INVARIANTS.md)
+- [Anti-Lag Admin Tuning Guide](docs/ANTI_LAG_ADMIN_TUNING.md)
+- [Anti-Lag Fairness Guide for Players](docs/ANTI_LAG_PLAYER_FAIRNESS.md)
+- [Anti-Lag Troubleshooting Matrix](docs/ANTI_LAG_TROUBLESHOOTING.md)
+
 ## Nightly builds
 
 Nightly builds can be found [here][nightly]

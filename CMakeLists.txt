@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.22)
 
 project(ezquake C)
 
+option(ENABLE_ANTILAG_REGRESSION_TESTS "Build and register anti-lag regression tests" ON)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     enable_language(OBJC)
 endif()
@@ -903,6 +905,32 @@ else()
 endif()
 
 set_target_properties(ezquake PROPERTIES OUTPUT_NAME ${EXECUTABLE_NAME})
+
+if(ENABLE_ANTILAG_REGRESSION_TESTS)
+    add_executable(antilag_phase9_regression
+            ${PROJECT_SOURCE_DIR}/tests/antilag/phase9_regression.c
+    )
+    target_include_directories(antilag_phase9_regression PRIVATE
+            ${SOURCE_DIR}/qwprot/src
+    )
+    if(MATH)
+        target_link_libraries(antilag_phase9_regression PRIVATE ${MATH})
+    endif()
+
+    enable_testing()
+    add_test(
+            NAME antilag_phase9_regression
+            COMMAND antilag_phase9_regression
+                    --network ${PROJECT_SOURCE_DIR}/tests/antilag/phase9_network_scenarios.csv
+                    --golden ${PROJECT_SOURCE_DIR}/tests/antilag/phase9_golden.csv
+    )
+    set_tests_properties(antilag_phase9_regression PROPERTIES
+            TIMEOUT 30
+            PASS_REGULAR_EXPRESSION "PHASE9_REGRESSION_PASS"
+            FAIL_REGULAR_EXPRESSION "PHASE9_REGRESSION_FAIL"
+            LABELS "antilag;regression"
+    )
+endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     get_target_property(version git_version GIT_DESCRIBE)

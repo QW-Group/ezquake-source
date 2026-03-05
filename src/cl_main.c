@@ -271,6 +271,7 @@ cvar_t cl_debug_antilag_view    = { "cl_debug_antilag_view", "0" };
 cvar_t cl_debug_antilag_ghost   = { "cl_debug_antilag_ghost", "0" };
 cvar_t cl_debug_antilag_self    = { "cl_debug_antilag_self", "0" };
 cvar_t cl_debug_antilag_lines   = { "cl_debug_antilag_lines", "0" };
+cvar_t cl_debug_antilag_hud     = { "cl_debug_antilag_hud", "0" };
 cvar_t cl_debug_antilag_send    = { "cl_debug_antilag_send", "0" };
 
 // weapon-switching debugging
@@ -1972,6 +1973,7 @@ static void CL_InitLocal(void)
 	Cvar_Register(&cl_debug_antilag_ghost);
 	Cvar_Register(&cl_debug_antilag_self);
 	Cvar_Register(&cl_debug_antilag_lines);
+	Cvar_Register(&cl_debug_antilag_hud);
 	Cvar_Register(&cl_debug_antilag_send);
 
 	// debugging weapons

@@ -1718,6 +1718,20 @@
   "stopsound_script": {
     "system-generated": true
   },
+  "sv_antilag_dump": {
+    "description": "Print cumulative anti-lag counters plus recent anti-lag decisions for one client.",
+    "syntax": "<userid/name> [count]"
+  },
+  "sv_antilag_dumpall": {
+    "description": "Print cumulative anti-lag counters plus recent anti-lag decisions for all active clients with recorded samples.",
+    "syntax": "[count]"
+  },
+  "sv_antilag_replaytests": {
+    "description": "Run deterministic anti-lag replay scenarios on the server and print pass/fail results."
+  },
+  "sv_antilag_rollout_status": {
+    "description": "Print anti-lag rollout stage plus requested/effective gameplay and projectile modes."
+  },
   "sv_democancel": {
     "system-generated": true
   },

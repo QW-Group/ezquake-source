@@ -3234,6 +3234,8 @@ void SV_Frame (double time1)
 	// keep the random time dependent
 	rand ();
 
+	SV_AntilagPerfFrameBegin();
+
 	// decide the simulation time
 	if (!sv.paused)
 	{
@@ -3297,6 +3299,8 @@ void SV_Frame (double time1)
 
 	// send a heartbeat to the master if needed
 	Master_Heartbeat ();
+
+	SV_AntilagPerfFrameEnd();
 
 	// collect timing statistics
 	end = Sys_DoubleTime ();
@@ -3447,7 +3451,26 @@ void SV_InitLocal (void)
 
 	Cvar_Register (&sv_antilag);
 	Cvar_Register (&sv_antilag_no_pred);
+	Cvar_Register (&sv_antilag_rollout_stage);
+	Cvar_Register (&sv_antilag_projectile_playtest_signoff);
+	Cvar_Register (&sv_antilag_projectile_full_admin);
 	Cvar_Register (&sv_antilag_projectiles);
+	Cvar_Register (&sv_antilag_projectile_mode);
+	Cvar_Register (&sv_antilag_projectile_nudge);
+	Cvar_Register (&sv_antilag_projectile_owner_stale);
+	Cvar_Register (&sv_antilag_projectile_optin);
+	Cvar_Register (&sv_antilag_projectile_allow);
+	Cvar_Register (&sv_antilag_projectile_deny);
+	Cvar_Register (&sv_antilag_maxunlag);
+	Cvar_Register (&sv_antilag_max_cmd_delta);
+	Cvar_Register (&sv_antilag_ping_limit);
+	Cvar_Register (&sv_antilag_teleport_dist);
+	Cvar_Register (&sv_antilag_prefilter_pvs);
+	Cvar_Register (&sv_antilag_prefilter_team);
+	Cvar_Register (&sv_antilag_ray_narrow);
+	Cvar_Register (&sv_antilag_ray_narrow_pad);
+	Cvar_Register (&sv_antilag_frame_budget_ms);
+	SV_AntilagApplyStartupDefaults();
 
 	Cvar_Register (&pm_bunnyspeedcap);
 	Cvar_Register (&pm_ktjump);

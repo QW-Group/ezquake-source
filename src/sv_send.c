@@ -767,6 +767,7 @@ void SV_WriteClientdataToMessage (client_t *client, sizebuf_t *msg)
 				client->lastteleport_teleport = ((eval_t *)((byte *)(client->edict)->v + fofs_teleported))->_int;
 				if (client->lastteleport_teleport) {
 					MSG_WriteByte(msg, 1); // signal a teleport
+					SV_AntilagReset(client->edict);
 				}
 				else {
 					MSG_WriteByte(msg, 2); // respawn

@@ -4196,15 +4196,38 @@ void CL_ParseHiddenDataMessage(void)
 	while (true) {
 		int size = LittleLong(MSG_ReadLong());
 		int protocol_version = 0, type;
+		int remaining;
 
 		if (size == -1) {
 			break;
 		}
+		if (size < 0) {
+			Con_DPrintf("CL_ParseHiddenDataMessage: invalid hidden block size %d\n", size);
+			break;
+		}
+
+		remaining = net_message.cursize - msg_readcount;
+		if (remaining < (int)sizeof(short)) {
+			Con_DPrintf("CL_ParseHiddenDataMessage: truncated hidden block header remaining=%d\n", remaining);
+			break;
+		}
 
 		type = LittleLong(MSG_ReadShort());
-		while (type == 0xFFFF && size > 0) {
+		while (type == 0xFFFF) {
+			remaining = net_message.cursize - msg_readcount;
+			if (remaining < (int)sizeof(short)) {
+				Con_DPrintf("CL_ParseHiddenDataMessage: truncated extended hidden header\n");
+				return;
+			}
 			type = LittleLong(MSG_ReadShort());
 			++protocol_version;
+		}
+
+		remaining = net_message.cursize - msg_readcount;
+		if (size > remaining) {
+			Con_DPrintf("CL_ParseHiddenDataMessage: truncated hidden block size=%d remaining=%d\n", size, remaining);
+			MSG_ReadSkip(max(0, remaining));
+			break;
 		}
 
 		if (protocol_version != 0) {
@@ -4286,7 +4309,19 @@ static void CL_ParseDemoInfo(int size)
 static void CL_ParseAntilagPosition(int size)
 {
 	mvdhidden_antilag_position_header_t header;
+	antilag_stats_t *stats = NULL;
 	int old_readcount = msg_readcount;
+	int payload_bytes;
+	int player_bytes;
+	int extra_bytes;
+	qbool has_extra = false;
+	int source_player;
+
+	if (size < sizeof_mvdhidden_antilag_position_header_t) {
+		Con_DPrintf("CL_ParseAntilagPosition: short block size=%d\n", size);
+		MSG_ReadSkip(max(0, size));
+		return;
+	}
 
 	header.playernum = MSG_ReadByte();
 	header.players = MSG_ReadByte();
@@ -4294,21 +4329,95 @@ static void CL_ParseAntilagPosition(int size)
 	header.server_time = LittleFloat(MSG_ReadFloat());
 	header.target_time = LittleFloat(MSG_ReadFloat());
 
-	size -= (msg_readcount - old_readcount);
-	if (size != header.players * sizeof_mvdhidden_antilag_position_t) {
-		Con_DPrintf("unexpected size: %d vs %d (%d players)\n", size, header.players * sizeof_mvdhidden_antilag_position_t, header.players);
-		MSG_ReadSkip(size);
+	payload_bytes = size - (msg_readcount - old_readcount);
+	player_bytes = header.players * sizeof_mvdhidden_antilag_position_t;
+	if (payload_bytes < player_bytes) {
+		Con_DPrintf("unexpected size: %d < %d (%d players)\n", payload_bytes, player_bytes, header.players);
+		MSG_ReadSkip(max(0, payload_bytes));
 	}
 	else if (header.playernum != cl.viewplayernum) {
-		MSG_ReadSkip(size);
+		MSG_ReadSkip(payload_bytes);
 	}
 	else {
 		mvdhidden_antilag_position_t position;
+		float command_target_time = 0;
+		float latency_target_time = 0;
+		float one_way_latency = 0;
+		float interp_delay = 0;
+		float command_window = 0;
+		float build_seconds = 0;
+		unsigned int reason_flags = 0;
+		unsigned short ping_ms = 0;
+		unsigned short scanned = 0;
+		unsigned short kept = 0;
+		unsigned short prefiltered = 0;
+		unsigned short pvs_rejects = 0;
+		unsigned short team_rejects = 0;
+		unsigned short oldest_fallbacks = 0;
+		unsigned short newest_fallbacks = 0;
+		unsigned short bad_interval_fallbacks = 0;
+		unsigned short history_misses = 0;
+		byte net_drop = 0;
 		int i;
 
+		extra_bytes = payload_bytes - player_bytes;
+		if (extra_bytes >= sizeof_mvdhidden_antilag_position_extra_t) {
+			has_extra = true;
+			reason_flags = LittleLong(MSG_ReadLong());
+			command_target_time = LittleFloat(MSG_ReadFloat());
+			latency_target_time = LittleFloat(MSG_ReadFloat());
+			one_way_latency = LittleFloat(MSG_ReadFloat());
+			interp_delay = LittleFloat(MSG_ReadFloat());
+			command_window = LittleFloat(MSG_ReadFloat());
+			build_seconds = LittleFloat(MSG_ReadFloat());
+			ping_ms = LittleShort(MSG_ReadShort());
+			scanned = LittleShort(MSG_ReadShort());
+			kept = LittleShort(MSG_ReadShort());
+			prefiltered = LittleShort(MSG_ReadShort());
+			pvs_rejects = LittleShort(MSG_ReadShort());
+			team_rejects = LittleShort(MSG_ReadShort());
+			oldest_fallbacks = LittleShort(MSG_ReadShort());
+			newest_fallbacks = LittleShort(MSG_ReadShort());
+			bad_interval_fallbacks = LittleShort(MSG_ReadShort());
+			history_misses = LittleShort(MSG_ReadShort());
+			net_drop = MSG_ReadByte();
+			MSG_ReadSkip(3);
+			extra_bytes -= sizeof_mvdhidden_antilag_position_extra_t;
+		}
+		if (extra_bytes > 0) {
+			MSG_ReadSkip(extra_bytes);
+		}
+
 		memset(&cl.antilag_positions, 0, sizeof(cl.antilag_positions));
+		source_player = bound(0, header.playernum, MAX_CLIENTS - 1);
+		stats = &cl.antilag_stats[source_player];
+		memset(stats, 0, sizeof(*stats));
+		stats->server_time = header.server_time;
+		stats->target_time = header.target_time;
+		if (has_extra) {
+			stats->reason_flags = reason_flags;
+			stats->command_target_time = command_target_time;
+			stats->latency_target_time = latency_target_time;
+			stats->one_way_latency = one_way_latency;
+			stats->interp_delay = interp_delay;
+			stats->command_window = command_window;
+			stats->build_seconds = build_seconds;
+			stats->ping_ms = ping_ms;
+			stats->scanned = scanned;
+			stats->kept = kept;
+			stats->prefiltered = prefiltered;
+			stats->pvs_rejects = pvs_rejects;
+			stats->team_rejects = team_rejects;
+			stats->oldest_fallbacks = oldest_fallbacks;
+			stats->newest_fallbacks = newest_fallbacks;
+			stats->bad_interval_fallbacks = bad_interval_fallbacks;
+			stats->history_misses = history_misses;
+			stats->net_drop = net_drop;
+		}
+
 		for (i = 0; i < header.players; ++i) {
 			qbool clientpos_valid = false;
+			vec3_t delta;
 
 			position.playernum = MSG_ReadByte();
 			clientpos_valid = position.playernum & MVD_PEXT1_ANTILAG_CLIENTPOS;
@@ -4328,6 +4437,11 @@ static void CL_ParseAntilagPosition(int size)
 				cl.antilag_positions[position.playernum].present = true;
 				VectorCopy(position.clientpos, cl.antilag_positions[position.playernum].clientpos);
 				cl.antilag_positions[position.playernum].clientpresent = clientpos_valid;
+				if (clientpos_valid && stats) {
+					VectorSubtract(position.pos, position.clientpos, delta);
+					stats->client_rewind_distance += VectorLength(delta);
+					stats->client_rewind_samples += 1.0;
+				}
 			}
 		}
 	}

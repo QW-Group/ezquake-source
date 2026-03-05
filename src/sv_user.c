@@ -81,6 +81,113 @@ cvar_t sv_debug_weapons = { "sv_debug_weapons", "0" };
 cvar_t sv_debug_usercmd = { "sv_debug_usercmd", "0" };
 cvar_t sv_debug_antilag = { "sv_debug_antilag", "0" };
 
+typedef struct
+{
+	double build_seconds;
+	double clip_seconds;
+	unsigned int build_scanned;
+	unsigned int build_kept;
+	unsigned int build_prefiltered;
+	unsigned int build_pvs_rejects;
+	unsigned int build_team_rejects;
+	unsigned int clip_candidates;
+	unsigned int clip_broadphase_rejects;
+	unsigned int clip_ray_rejects;
+	unsigned int clip_trace_tests;
+} antilag_perf_frame_t;
+
+static antilag_perf_frame_t sv_antilag_perf_frame;
+static double sv_antilag_perf_next_alarm;
+
+typedef struct
+{
+	double target_time;
+	double command_target_time;
+	double latency_target_time;
+	double one_way_latency;
+	double interp_delay;
+	double command_window;
+	unsigned int reason_flags;
+} antilag_target_time_info_t;
+
+static unsigned short SV_AntilagClampU16(unsigned int value)
+{
+	return (unsigned short)min(value, 0xFFFFu);
+}
+
+static void SV_AntilagStoreDecision(client_t *cl, const antilag_decision_t *decision)
+{
+	unsigned int index;
+
+	if (!cl || !decision) {
+		return;
+	}
+
+	index = cl->antilag_recent_head % MAX_ANTILAG_DECISIONS;
+	cl->antilag_recent[index] = *decision;
+	cl->antilag_recent_head = (cl->antilag_recent_head + 1) % MAX_ANTILAG_DECISIONS;
+	if (cl->antilag_recent_count < MAX_ANTILAG_DECISIONS) {
+		cl->antilag_recent_count++;
+	}
+	cl->antilag_last_decision = *decision;
+}
+
+void SV_AntilagPerfFrameBegin(void)
+{
+	memset(&sv_antilag_perf_frame, 0, sizeof(sv_antilag_perf_frame));
+}
+
+void SV_AntilagPerfAddBuild(double elapsed_seconds, unsigned int scanned, unsigned int kept, unsigned int prefiltered, unsigned int pvs_rejects, unsigned int team_rejects)
+{
+	sv_antilag_perf_frame.build_seconds += max(0.0, elapsed_seconds);
+	sv_antilag_perf_frame.build_scanned += scanned;
+	sv_antilag_perf_frame.build_kept += kept;
+	sv_antilag_perf_frame.build_prefiltered += prefiltered;
+	sv_antilag_perf_frame.build_pvs_rejects += pvs_rejects;
+	sv_antilag_perf_frame.build_team_rejects += team_rejects;
+}
+
+void SV_AntilagPerfAddClip(double elapsed_seconds, unsigned int candidates, unsigned int broadphase_rejects, unsigned int ray_rejects, unsigned int trace_tests)
+{
+	sv_antilag_perf_frame.clip_seconds += max(0.0, elapsed_seconds);
+	sv_antilag_perf_frame.clip_candidates += candidates;
+	sv_antilag_perf_frame.clip_broadphase_rejects += broadphase_rejects;
+	sv_antilag_perf_frame.clip_ray_rejects += ray_rejects;
+	sv_antilag_perf_frame.clip_trace_tests += trace_tests;
+}
+
+void SV_AntilagPerfFrameEnd(void)
+{
+	double budget_ms = max(0.0, sv_antilag_frame_budget_ms.value);
+	double total_ms;
+
+	if (budget_ms <= 0) {
+		return;
+	}
+
+	total_ms = (sv_antilag_perf_frame.build_seconds + sv_antilag_perf_frame.clip_seconds) * 1000.0;
+	if (total_ms <= budget_ms) {
+		return;
+	}
+
+	if (sv_antilag_perf_next_alarm > sv.time) {
+		return;
+	}
+	sv_antilag_perf_next_alarm = sv.time + 1.0;
+
+	Con_Printf("antilag budget alarm: total=%0.3fms budget=%0.3fms build=%0.3fms clip=%0.3fms scanned=%u kept=%u prefiltered=%u clip_tests=%u broadphase_rejects=%u ray_rejects=%u\n",
+		total_ms,
+		budget_ms,
+		sv_antilag_perf_frame.build_seconds * 1000.0,
+		sv_antilag_perf_frame.clip_seconds * 1000.0,
+		sv_antilag_perf_frame.build_scanned,
+		sv_antilag_perf_frame.build_kept,
+		sv_antilag_perf_frame.build_prefiltered,
+		sv_antilag_perf_frame.clip_trace_tests,
+		sv_antilag_perf_frame.clip_broadphase_rejects,
+		sv_antilag_perf_frame.clip_ray_rejects);
+}
+
 
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 static void SV_UserSetWeaponRank(client_t* cl, const char* new_wrank);
@@ -1035,6 +1142,7 @@ static void Cmd_Begin_f (void)
 		MSG_WriteAngle (&sv_client->netchan.message, 0);
 	}
 
+	SV_AntilagReset(sv_client->edict);
 	sv_client->lastservertimeupdate = -99; // update immediately
 }
 
@@ -2702,6 +2810,7 @@ static void Cmd_Join_f (void)
 	pr_global_struct->self = EDICT_TO_PROG(sv_player);
 	G_FLOAT(OFS_PARM0) = (float) sv_client->vip;
 	PR_GamePutClientInServer(0);
+	SV_AntilagReset(sv_client->edict);
 
 	// look in SVC_DirectConnect() for for extended comment whats this for
 	MVD_PlayerReset(NUM_FOR_EDICT(sv_player) - 1);
@@ -2787,6 +2896,7 @@ static void Cmd_Observe_f (void)
 	pr_global_struct->time = sv.time;
 	pr_global_struct->self = EDICT_TO_PROG(sv_player);
 	PR_GamePutClientInServer(1); // let mod know we put spec not player
+	SV_AntilagReset(sv_client->edict);
 
 	// look in SVC_DirectConnect() for for extended comment whats this for
 	MVD_PlayerReset(NUM_FOR_EDICT(sv_player) - 1);
@@ -4119,6 +4229,372 @@ void SV_RotateCmd(client_t* cl, usercmd_t* cmd_)
 	}
 }
 
+static double SV_AntilagSafeCmdMsec(int msec)
+{
+	return bound(0, msec, 50);
+}
+
+static double SV_AntilagCommandWindowMsec(client_t *cl, const usercmd_t *oldest, const usercmd_t *oldcmd, const usercmd_t *newcmd)
+{
+	double command_window = 0;
+	int net_drop = cl->netchan.dropped;
+
+	if (net_drop < 20 && net_drop > 2) {
+		command_window += (net_drop - 2) * SV_AntilagSafeCmdMsec(cl->lastcmd.msec);
+	}
+	if (net_drop > 1) {
+		command_window += SV_AntilagSafeCmdMsec(oldest->msec);
+	}
+	if (net_drop > 0) {
+		command_window += SV_AntilagSafeCmdMsec(oldcmd->msec);
+	}
+	command_window += SV_AntilagSafeCmdMsec(newcmd->msec);
+
+	return command_window;
+}
+
+static double SV_AntilagInterpolationDelay(const usercmd_t *newcmd, double max_physfps)
+{
+	const double max_prediction = 0.02;
+	double cmd_interval = SV_AntilagSafeCmdMsec(newcmd->msec) * 0.001;
+
+	if (sv_antilag_no_pred.value) {
+		return 0;
+	}
+
+	if (max_physfps < 20 || max_physfps > 1000) {
+		max_physfps = 77.0;
+	}
+
+	if (cmd_interval <= 0) {
+		cmd_interval = 1.0 / max_physfps;
+	}
+
+	return min(max_prediction, max(1.0 / max_physfps, cmd_interval));
+}
+
+static double SV_AntilagComputeTargetTime(client_t *cl, client_frame_t *frame, const usercmd_t *oldest, const usercmd_t *oldcmd, const usercmd_t *newcmd, antilag_target_time_info_t *info)
+{
+	double rtt = max(0.0, frame->ping_time);
+	double one_way = rtt * 0.5;
+	double interp = SV_AntilagInterpolationDelay(newcmd, sv_maxfps.value);
+	double command_window = SV_AntilagCommandWindowMsec(cl, oldest, oldcmd, newcmd) * 0.001;
+	double command_time = frame->sv_time + command_window;
+	double command_target = command_time - interp;
+	double latency_target = sv.time - one_way - interp;
+	double max_cmd_delta = max(0.0, sv_antilag_max_cmd_delta.value);
+	double max_unlag = max(0.0, sv_antilag_maxunlag.value);
+	double target_time = command_target;
+	qbool fallback = false;
+	qbool clamped_maxunlag = false;
+	qbool clamped_future = false;
+
+	if (info) {
+		memset(info, 0, sizeof(*info));
+		info->command_target_time = command_target;
+		info->latency_target_time = latency_target;
+		info->one_way_latency = one_way;
+		info->interp_delay = interp;
+		info->command_window = command_window;
+	}
+
+	if (command_time > sv.time) {
+		command_time = sv.time;
+		command_target = command_time - interp;
+	}
+
+	if (max_cmd_delta > 0 && fabs(command_target - latency_target) > max_cmd_delta) {
+		target_time = latency_target;
+		fallback = true;
+		cl->antilag_cmd_fallbacks++;
+		if (info) {
+			info->reason_flags |= MVD_PEXT1_ANTILAG_REASON_CMD_FALLBACK;
+		}
+	}
+
+	if (max_unlag > 0 && target_time < sv.time - max_unlag) {
+		target_time = sv.time - max_unlag;
+		clamped_maxunlag = true;
+	}
+
+	if (target_time > sv.time) {
+		target_time = sv.time;
+		clamped_future = true;
+	}
+
+	if (clamped_maxunlag || clamped_future) {
+		cl->antilag_maxunlag_clamps++;
+	}
+	if (clamped_maxunlag && info) {
+		info->reason_flags |= MVD_PEXT1_ANTILAG_REASON_CLAMP_MAXUNLAG;
+	}
+	if (clamped_future && info) {
+		info->reason_flags |= MVD_PEXT1_ANTILAG_REASON_CLAMP_FUTURE;
+	}
+
+	if (sv_debug_antilag.integer >= 2 && (fallback || clamped_maxunlag || clamped_future)) {
+		Com_DPrintf("antilag %s: ping=%dms target=%0.3f cmd=%0.3f latency=%0.3f interp=%0.3f drop=%d\n",
+			cl->name,
+			(int)Q_rint(frame->ping_time * 1000.0),
+			target_time,
+			command_target,
+			latency_target,
+			interp,
+			cl->netchan.dropped);
+	}
+
+	if (info) {
+		info->target_time = target_time;
+		info->command_target_time = command_target;
+		info->latency_target_time = latency_target;
+	}
+
+	return target_time;
+}
+
+static qbool SV_AntilagPointInPVS(byte *pvs, vec3_t point)
+{
+	int leafnum;
+
+	if (!pvs) {
+		return true;
+	}
+
+	leafnum = CM_Leafnum(CM_PointInLeaf(point)) - 1;
+	if (leafnum < 0) {
+		return true;
+	}
+
+	return (pvs[leafnum >> 3] & (1 << (leafnum & 7))) != 0;
+}
+
+static qbool SV_AntilagNoFriendlyFire(void)
+{
+	int tp = (int)teamplay.value;
+
+	// Teamplay 3/4 and 21 are known no-teamdamage modes in common QW rulesets.
+	return (tp == 3 || tp == 4 || tp == 21);
+}
+
+static qbool SV_AntilagRelevantTeam(client_t *attacker, client_t *target)
+{
+	if (!sv_antilag_prefilter_team.integer) {
+		return true;
+	}
+	if (!teamplay.value || !SV_AntilagNoFriendlyFire()) {
+		return true;
+	}
+	if (attacker->spectator || target->spectator) {
+		return true;
+	}
+	if (!attacker->team[0] || !target->team[0]) {
+		return true;
+	}
+
+	return strcmp(attacker->team, target->team) != 0;
+}
+
+static void SV_AntilagBuildLaggedEntities(client_t *cl, client_frame_t *frame, const usercmd_t *oldest, const usercmd_t *oldcmd, const usercmd_t *newcmd
+#ifdef MVD_PEXT1_DEBUG
+	, int *antilag_players_present
+#endif
+)
+{
+	const double max_extrapolate = 0.02;
+	double build_start = Sys_DoubleTime();
+	double build_elapsed = 0;
+	double target_time;
+	byte *pvs = NULL;
+	vec3_t pvs_org;
+	antilag_target_time_info_t timing_info;
+	antilag_decision_t decision;
+	unsigned int scanned = 0;
+	unsigned int prefiltered = 0;
+	unsigned int pvs_rejects = 0;
+	unsigned int team_rejects = 0;
+	unsigned int kept = 0;
+	unsigned int oldest_fallbacks = 0;
+	unsigned int newest_fallbacks = 0;
+	unsigned int bad_interval_fallbacks = 0;
+	unsigned int history_misses = 0;
+	int i;
+
+	cl->laggedents_count = 0;
+	cl->laggedents_frac = 1;
+	cl->antilag_requests++;
+	memset(&timing_info, 0, sizeof(timing_info));
+	memset(&decision, 0, sizeof(decision));
+	decision.server_time = sv.time;
+	decision.ping_ms = SV_AntilagClampU16((unsigned int)bound(0, Q_rint(frame->ping_time * 1000.0), 65535));
+	decision.net_drop = (byte)bound(0, cl->netchan.dropped, 255);
+
+	if (!sv_antilag.value) {
+		cl->laggedents_time = sv.time;
+		decision.target_time = sv.time;
+		decision.reason_flags |= MVD_PEXT1_ANTILAG_REASON_DISABLED;
+		build_elapsed = Sys_DoubleTime() - build_start;
+		decision.build_seconds = build_elapsed;
+		SV_AntilagStoreDecision(cl, &decision);
+		SV_AntilagPerfAddBuild(build_elapsed, 0, 0, 0, 0, 0);
+		return;
+	}
+	decision.reason_flags |= MVD_PEXT1_ANTILAG_REASON_ENABLED;
+	if (sv_antilag.value > 0 && SV_AntilagGameplayModeResolved() == 0) {
+		decision.reason_flags |= MVD_PEXT1_ANTILAG_REASON_ROLLOUT_GATE;
+	}
+
+	if (sv_antilag_ping_limit.value > 0 && frame->ping_time * 1000 > sv_antilag_ping_limit.value) {
+		cl->antilag_ping_rejects++;
+		cl->laggedents_time = sv.time;
+		decision.target_time = sv.time;
+		decision.reason_flags |= MVD_PEXT1_ANTILAG_REASON_PING_REJECT;
+		if (sv_debug_antilag.integer >= 2) {
+			Com_DPrintf("antilag %s: rejected by ping limit (%dms > %dms)\n",
+				cl->name,
+				(int)Q_rint(frame->ping_time * 1000.0),
+				(int)Q_rint(sv_antilag_ping_limit.value));
+		}
+		build_elapsed = Sys_DoubleTime() - build_start;
+		decision.build_seconds = build_elapsed;
+		SV_AntilagStoreDecision(cl, &decision);
+		SV_AntilagPerfAddBuild(build_elapsed, 0, 0, 0, 0, 0);
+		return;
+	}
+
+	target_time = SV_AntilagComputeTargetTime(cl, frame, oldest, oldcmd, newcmd, &timing_info);
+	decision.target_time = target_time;
+	decision.command_target_time = timing_info.command_target_time;
+	decision.latency_target_time = timing_info.latency_target_time;
+	decision.one_way_latency = timing_info.one_way_latency;
+	decision.interp_delay = timing_info.interp_delay;
+	decision.command_window = timing_info.command_window;
+	decision.reason_flags |= timing_info.reason_flags;
+	if (sv_antilag_prefilter_pvs.integer) {
+		decision.reason_flags |= MVD_PEXT1_ANTILAG_REASON_PREFILTER_PVS;
+		VectorAdd(cl->edict->v->origin, cl->edict->v->view_ofs, pvs_org);
+		pvs = CM_FatPVS(pvs_org);
+	}
+	if (sv_antilag_prefilter_team.integer) {
+		decision.reason_flags |= MVD_PEXT1_ANTILAG_REASON_PREFILTER_TEAM;
+	}
+
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		client_t *target_cl = &svs.clients[i];
+		antilag_resolve_mode_t resolve_mode = antilag_resolve_none;
+		qbool present = false;
+
+		scanned++;
+		// don't hit dead players
+		if (target_cl->state != cs_spawned || target_cl->antilag_position_count == 0 || (target_cl->spectator == 0 && target_cl->edict->v->health <= 0)) {
+			cl->laggedents[i].present = false;
+			prefiltered++;
+			continue;
+		}
+
+		if (!SV_AntilagRelevantTeam(cl, target_cl)) {
+			cl->laggedents[i].present = false;
+			prefiltered++;
+			team_rejects++;
+			continue;
+		}
+
+		// target player's movement commands are late, extrapolate his position based on velocity
+		if (target_time > target_cl->localtime) {
+			VectorMA(target_cl->edict->v->origin, min(target_time - target_cl->localtime, max_extrapolate), target_cl->edict->v->velocity, cl->laggedents[i].laggedpos);
+			present = true;
+		}
+		else if (!SV_AntilagResolvePosition(target_cl, target_time, cl->laggedents[i].laggedpos, &resolve_mode)) {
+			cl->antilag_history_misses++;
+			history_misses++;
+		}
+		else {
+			present = true;
+		}
+
+		cl->laggedents[i].present = present;
+		if (!present) {
+			continue;
+		}
+
+		if (!SV_AntilagPointInPVS(pvs, cl->laggedents[i].laggedpos)) {
+			cl->laggedents[i].present = false;
+			prefiltered++;
+			pvs_rejects++;
+			continue;
+		}
+		kept++;
+#ifdef MVD_PEXT1_DEBUG
+		++(*antilag_players_present);
+#endif
+
+		switch (resolve_mode) {
+		case antilag_resolve_oldest:
+			cl->antilag_history_oldest_fallbacks++;
+			oldest_fallbacks++;
+			if (sv_debug_antilag.integer >= 3) {
+				Com_DPrintf("antilag %s: target %0.3f fell before history window for %s (oldest fallback)\n",
+					cl->name, target_time, target_cl->name);
+			}
+			break;
+		case antilag_resolve_newest:
+			cl->antilag_history_newest_fallbacks++;
+			newest_fallbacks++;
+			if (sv_debug_antilag.integer >= 3) {
+				Com_DPrintf("antilag %s: target %0.3f newer than history for %s (newest fallback)\n",
+					cl->name, target_time, target_cl->name);
+			}
+			break;
+		case antilag_resolve_bad_interval:
+			cl->antilag_interp_bad_denom++;
+			bad_interval_fallbacks++;
+			if (sv_debug_antilag.integer >= 2) {
+				Com_DPrintf("antilag %s: invalid interpolation bracket for %s (bad interval fallback)\n",
+					cl->name, target_cl->name);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	cl->antilag_candidates_scanned += scanned;
+	cl->antilag_candidates_prefiltered += prefiltered;
+	cl->antilag_candidates_pvs_rejects += pvs_rejects;
+	cl->antilag_candidates_team_rejects += team_rejects;
+
+	cl->laggedents_count = MAX_CLIENTS; // FIXME: well, FTE do it a bit different way...
+	cl->laggedents_time = target_time;
+
+	if (oldest_fallbacks > 0) {
+		decision.reason_flags |= MVD_PEXT1_ANTILAG_REASON_HIST_OLDEST;
+	}
+	if (newest_fallbacks > 0) {
+		decision.reason_flags |= MVD_PEXT1_ANTILAG_REASON_HIST_NEWEST;
+	}
+	if (bad_interval_fallbacks > 0) {
+		decision.reason_flags |= MVD_PEXT1_ANTILAG_REASON_HIST_BAD_INTERVAL;
+	}
+	if (history_misses > 0) {
+		decision.reason_flags |= MVD_PEXT1_ANTILAG_REASON_HIST_MISS;
+	}
+
+	decision.scanned = SV_AntilagClampU16(scanned);
+	decision.kept = SV_AntilagClampU16(kept);
+	decision.prefiltered = SV_AntilagClampU16(prefiltered);
+	decision.pvs_rejects = SV_AntilagClampU16(pvs_rejects);
+	decision.team_rejects = SV_AntilagClampU16(team_rejects);
+	decision.oldest_fallbacks = SV_AntilagClampU16(oldest_fallbacks);
+	decision.newest_fallbacks = SV_AntilagClampU16(newest_fallbacks);
+	decision.bad_interval_fallbacks = SV_AntilagClampU16(bad_interval_fallbacks);
+	decision.history_misses = SV_AntilagClampU16(history_misses);
+	build_elapsed = Sys_DoubleTime() - build_start;
+	decision.build_seconds = build_elapsed;
+
+	SV_AntilagStoreDecision(cl, &decision);
+	SV_AntilagPerfAddBuild(build_elapsed, scanned, kept, prefiltered, pvs_rejects, team_rejects);
+}
+
 /*
 ===================
 SV_ExecuteClientMove
@@ -4184,17 +4660,37 @@ static void SV_DebugWriteServerAntilagPositions(client_t* cl, int present)
 {
 	mvdhidden_block_header_t header;
 	mvdhidden_antilag_position_header_t antilag_header;
+	mvdhidden_antilag_position_extra_t antilag_extra;
 	int i;
-	float target_time = cl->laggedents_time;
 
 	header.type_id = mvdhidden_antilag_position;
-	header.length = sizeof_mvdhidden_antilag_position_header_t + present * sizeof_mvdhidden_antilag_position_t;
+	header.length = sizeof_mvdhidden_antilag_position_header_t + sizeof_mvdhidden_antilag_position_extra_t + present * sizeof_mvdhidden_antilag_position_t;
 
 	antilag_header.incoming_seq = LittleLong(cl->netchan.incoming_sequence);
 	antilag_header.playernum = cl - svs.clients;
 	antilag_header.players = present;
-	antilag_header.server_time = LittleFloat(sv.time);
-	antilag_header.target_time = LittleFloat(target_time);
+	antilag_header.server_time = LittleFloat((float)cl->antilag_last_decision.server_time);
+	antilag_header.target_time = LittleFloat((float)cl->antilag_last_decision.target_time);
+
+	memset(&antilag_extra, 0, sizeof(antilag_extra));
+	antilag_extra.reason_flags = LittleLong(cl->antilag_last_decision.reason_flags);
+	antilag_extra.command_target_time = LittleFloat((float)cl->antilag_last_decision.command_target_time);
+	antilag_extra.latency_target_time = LittleFloat((float)cl->antilag_last_decision.latency_target_time);
+	antilag_extra.one_way_latency = LittleFloat((float)cl->antilag_last_decision.one_way_latency);
+	antilag_extra.interp_delay = LittleFloat((float)cl->antilag_last_decision.interp_delay);
+	antilag_extra.command_window = LittleFloat((float)cl->antilag_last_decision.command_window);
+	antilag_extra.build_seconds = LittleFloat((float)cl->antilag_last_decision.build_seconds);
+	antilag_extra.ping_ms = LittleShort(cl->antilag_last_decision.ping_ms);
+	antilag_extra.scanned = LittleShort(cl->antilag_last_decision.scanned);
+	antilag_extra.kept = LittleShort(cl->antilag_last_decision.kept);
+	antilag_extra.prefiltered = LittleShort(cl->antilag_last_decision.prefiltered);
+	antilag_extra.pvs_rejects = LittleShort(cl->antilag_last_decision.pvs_rejects);
+	antilag_extra.team_rejects = LittleShort(cl->antilag_last_decision.team_rejects);
+	antilag_extra.oldest_fallbacks = LittleShort(cl->antilag_last_decision.oldest_fallbacks);
+	antilag_extra.newest_fallbacks = LittleShort(cl->antilag_last_decision.newest_fallbacks);
+	antilag_extra.bad_interval_fallbacks = LittleShort(cl->antilag_last_decision.bad_interval_fallbacks);
+	antilag_extra.history_misses = LittleShort(cl->antilag_last_decision.history_misses);
+	antilag_extra.net_drop = cl->antilag_last_decision.net_drop;
 
 	if (MVDWrite_HiddenBlockBegin(sizeof_mvdhidden_block_header_t_range0 + header.length)) {
 		header.length = LittleLong(header.length);
@@ -4205,6 +4701,7 @@ static void SV_DebugWriteServerAntilagPositions(client_t* cl, int present)
 		MVD_SZ_Write(&antilag_header.incoming_seq, sizeof(antilag_header.incoming_seq));
 		MVD_SZ_Write(&antilag_header.server_time, sizeof(antilag_header.server_time));
 		MVD_SZ_Write(&antilag_header.target_time, sizeof(antilag_header.target_time));
+		MVD_SZ_Write(&antilag_extra, sizeof(antilag_extra));
 		for (i = 0; i < MAX_CLIENTS; i++) {
 			if (cl->laggedents[i].present) {
 				mvdhidden_antilag_position_t pos = { 0 };
@@ -4391,72 +4888,6 @@ void SV_ExecuteClientMessage (client_t *cl)
 	cl->laggedents_count = 0; // init at least this
 	cl->laggedents_frac = 1; // sv_antilag_frac.value;
 
-	if (sv_antilag.value)
-	{
-//#pragma msg("FIXME: make antilag optionally support non-player ents too")
-
-#define MAX_PREDICTION 0.02
-#define MAX_EXTRAPOLATE 0.02
-
-		double target_time, max_physfps = sv_maxfps.value;
-
-		if (max_physfps < 20 || max_physfps > 1000)
-			max_physfps = 77.0;
-
-		if (sv_antilag_no_pred.value) {
-			target_time = frame->sv_time;
-		} else {
-			// try to figure out what time client is currently predicting, basically this is just 6.5ms with 13ms ping and 13.5ms with higher
-			// might be off with different max_physfps values
-			target_time = min(frame->sv_time + (frame->ping_time < MAX_PREDICTION ? 1/max_physfps : MAX_PREDICTION), sv.time);
-		}
-
-		for (i = 0; i < MAX_CLIENTS; i++)
-		{
-			client_t *target_cl = &svs.clients[i];
-			antilag_position_t *base, *interpolate = NULL;
-			double factor;
-			int j;
-
-			// don't hit dead players
-			if (target_cl->state != cs_spawned || target_cl->antilag_position_next == 0 || (target_cl->spectator == 0 && target_cl->edict->v->health <= 0)) {
-				cl->laggedents[i].present = false;
-				continue;
-			}
-
-			cl->laggedents[i].present = true;
-			++antilag_players_present;
-
-			// target player's movement commands are late, extrapolate his position based on velocity
-			if (target_time > target_cl->localtime) {
-				VectorMA(target_cl->edict->v->origin, min(target_time - target_cl->localtime, MAX_EXTRAPOLATE), target_cl->edict->v->velocity, cl->laggedents[i].laggedpos);
-				continue;
-			}
-
-			// we have only one antilagged position, use that
-			if (target_cl->antilag_position_next == 1) {
-				VectorCopy(target_cl->antilag_positions[0].origin, cl->laggedents[i].laggedpos);
-				continue;
-			}
-
-			// find the position before target time (base) and the one after that (interpolate)
-			for (j = target_cl->antilag_position_next - 2; j > target_cl->antilag_position_next - 1 - MAX_ANTILAG_POSITIONS && j >= 0; j--) {
-				if (target_cl->antilag_positions[j % MAX_ANTILAG_POSITIONS].localtime < target_time)
-					break;
-			}
-
-			base = &target_cl->antilag_positions[j % MAX_ANTILAG_POSITIONS];
-			interpolate = &target_cl->antilag_positions[(j + 1) % MAX_ANTILAG_POSITIONS];
-
-			// we have two positions, just interpolate between them
-			factor = (target_time - base->localtime) / (interpolate->localtime - base->localtime);
-			VectorInterpolate(base->origin, factor, interpolate->origin, cl->laggedents[i].laggedpos);
-		}
-
-		cl->laggedents_count = MAX_CLIENTS; // FIXME: well, FTE do it a bit different way...
-		cl->laggedents_time = target_time;
-	}
-
 	// make sure the reply sequence number matches the incoming
 	// sequence number
 	if (cl->netchan.incoming_sequence >= cl->netchan.outgoing_sequence)
@@ -4614,6 +5045,12 @@ void SV_ExecuteClientMessage (client_t *cl)
 				return;
 			}
 
+#ifdef MVD_PEXT1_DEBUG
+			SV_AntilagBuildLaggedEntities(cl, frame, &oldest, &oldcmd, &newcmd, &antilag_players_present);
+#else
+			SV_AntilagBuildLaggedEntities(cl, frame, &oldest, &oldcmd, &newcmd);
+#endif
+
 #ifdef MVD_PEXT1_HIGHLAGTELEPORT
 			if (cl->mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT) {
 				if (cl->lastteleport_outgoingseq && cl->netchan.incoming_acknowledged < cl->lastteleport_outgoingseq) {
@@ -4637,13 +5074,10 @@ void SV_ExecuteClientMessage (client_t *cl)
 			cl->lastcmd.buttons = 0; // avoid multiple fires on lag
 
 			if (sv_antilag.value) {
-				if (cl->antilag_position_next == 0 || cl->antilag_positions[(cl->antilag_position_next - 1) % MAX_ANTILAG_POSITIONS].localtime < cl->localtime) {
-					cl->antilag_positions[cl->antilag_position_next % MAX_ANTILAG_POSITIONS].localtime = cl->localtime;
-					VectorCopy(cl->edict->v->origin, cl->antilag_positions[cl->antilag_position_next % MAX_ANTILAG_POSITIONS].origin);
-					cl->antilag_position_next++;
-				}
-			} else {
-				cl->antilag_position_next = 0;
+				SV_AntilagRecord(cl, false);
+			}
+			else {
+				SV_AntilagReset(cl->edict);
 			}
 			break;
 
@@ -4678,7 +5112,7 @@ void SV_ExecuteClientMessage (client_t *cl)
 	}
 
 #ifdef MVD_PEXT1_DEBUG_ANTILAG
-	if (antilag_players_present && sv_debug_antilag.value) {
+	if (sv_debug_antilag.value) {
 		SV_DebugWriteServerAntilagPositions(cl, antilag_players_present);
 	}
 #endif

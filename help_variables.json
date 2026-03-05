@@ -1386,6 +1386,12 @@
         }
       ]
     },
+    "cl_debug_antilag_hud": {
+      "default": "0",
+      "desc": "Shows anti-lag timing, rewind deltas and reason flags from debug anti-lag hidden data. Set to 2 for extended counters.",
+      "group-id": "21",
+      "type": "integer"
+    },
     "cl_debug_antilag_lines": {
       "default": "0",
       "desc": "Chooses if lines are drawn between the different player positions on supported .mvd/qtv streams.",
@@ -20509,6 +20515,65 @@
       "group-id": "43",
       "type": "float"
     },
+    "sv_antilag_projectile_full_admin": {
+      "default": "0",
+      "desc": "Admin gate for full projectile anti-lag mode.",
+      "group-id": "43",
+      "remarks": "When 0, requested sv_antilag_projectile_mode 2 is downgraded to limited mode 1 even at rollout stage 3.",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Keep full projectile mode locked.",
+          "name": "false"
+        },
+        {
+          "description": "Allow full projectile mode when rollout stage permits it.",
+          "name": "true"
+        }
+      ]
+    },
+    "sv_antilag_projectile_playtest_signoff": {
+      "default": "0",
+      "desc": "Gate for enabling projectile anti-lag during rollout.",
+      "group-id": "43",
+      "remarks": "When 0, projectile anti-lag is forced off regardless of sv_antilag_projectile_mode.",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Disable projectile rollout enablement.",
+          "name": "false"
+        },
+        {
+          "description": "Allow projectile rollout enablement for stage 2 and higher.",
+          "name": "true"
+        }
+      ]
+    },
+    "sv_antilag_rollout_stage": {
+      "default": "0",
+      "desc": "Controls anti-lag rollout stage and effective gameplay enablement.",
+      "group-id": "43",
+      "remarks": "0 instrumentation-only, 1 hitscan/melee, 2 projectile limited (requires playtest signoff), 3 full projectile eligibility (still requires admin gate).",
+      "type": "integer",
+      "values": [
+        {
+          "description": "Instrumentation only; no lagged trace application.",
+          "name": "0"
+        },
+        {
+          "description": "Enable hitscan and melee anti-lag.",
+          "name": "1"
+        },
+        {
+          "description": "Permit limited projectile anti-lag after signoff.",
+          "name": "2"
+        },
+        {
+          "description": "Permit full projectile mode if admin gate is enabled.",
+          "name": "3"
+        }
+      ]
+    },
     "sv_allowlastscores": {
       "group-id": "43",
       "type": ""
@@ -20546,6 +20611,13 @@
     "sv_default_name": {
       "group-id": "43",
       "type": "string"
+    },
+    "sv_debug_antilag": {
+      "default": "0",
+      "desc": "Controls server-side anti-lag debug verbosity and hidden MVD anti-lag payload emission.",
+      "group-id": "43",
+      "remarks": "0 = disabled. 1 = emit hidden anti-lag packets for debug-capable clients/demos. 2+ = also print timing/fallback diagnostics to console.",
+      "type": "integer"
     },
     "sv_demoClearOld": {
       "group-id": "43",

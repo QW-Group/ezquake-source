@@ -498,14 +498,7 @@ void PF2_traceline(float v1_x, float v1_y, float v1_z,
 	v2[1] = v2_y;
 	v2[2] = v2_z;
 
-	if (sv_antilag.value == 2)
-	{
-		if (!(entnum >= 1 && entnum <= MAX_CLIENTS && svs.clients[entnum - 1].isBot)) {
-			nomonsters |= MOVE_LAGGED;
-		}
-	}
-
-	trace = SV_Trace(v1, vec3_origin, vec3_origin, v2, nomonsters, ent);
+	trace = SV_AntilagTrace(v1, vec3_origin, vec3_origin, v2, nomonsters, ent, antilag_trace_hitscan);
 
 	pr_global_struct->trace_allsolid = trace.allsolid;
 	pr_global_struct->trace_startsolid = trace.startsolid;
@@ -556,7 +549,7 @@ void PF2_TraceCapsule(float v1_x, float v1_y, float v1_z,
 	v4[1] = max_y;
 	v4[2] = max_z;
 
-	trace = SV_Trace(v1, v3, v4, v2, nomonsters, ent);
+	trace = SV_AntilagTrace(v1, v3, v4, v2, nomonsters, ent, antilag_trace_melee);
 
 	pr_global_struct->trace_allsolid = trace.allsolid;
 	pr_global_struct->trace_startsolid = trace.startsolid;

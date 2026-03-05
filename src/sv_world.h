@@ -28,6 +28,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define MOVE_LAGGED		64	//trace touches current last-known-state, instead of actual ents (just affects players for now)
 // }
 
+typedef enum {
+	antilag_trace_hitscan = 0,
+	antilag_trace_melee,
+	antilag_trace_projectile
+} antilag_trace_policy_t;
+
 typedef struct areanode_s
 {
 	int		axis;		// -1 = leaf node
@@ -81,5 +87,8 @@ trace_t SV_Trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, 
 int SV_AreaEdicts (vec3_t mins, vec3_t maxs, edict_t **edicts, int max_edicts, int area);
 
 void SV_AntilagReset (edict_t *ent);
+int SV_AntilagApplyTracePolicy(int traceflags, edict_t *passedict, antilag_trace_policy_t policy);
+trace_t SV_AntilagTrace(vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int traceflags, edict_t *passedict, antilag_trace_policy_t policy);
+int SV_AntilagRunReplayTests(void);
 
 #endif /* !__WORLD_H__ */
