@@ -24,8 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define __TR_TYPES_H
 
 #ifdef X11_GAMMA_WORKAROUND
-#include <SDL.h>
-#include <SDL_syswm.h>
+#include <X11/Xlib.h>
 #include <X11/extensions/xf86vmode.h>
 #endif
 /*

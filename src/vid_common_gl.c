@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // vid_common_gl.c -- Common code for vid_wgl.c and vid_glx.c
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "quakedef.h"
 #include "gl_model.h"
