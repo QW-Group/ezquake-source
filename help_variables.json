@@ -17374,6 +17374,12 @@
       "group-id": "40",
       "type": "integer"
     },
+    "r_tracker_reverse": {
+      "default": "0",
+      "desc": "Reverse the display order of tracker messages so the most recent frag appears at the top.",
+      "group-id": "40",
+      "type": "boolean"
+    },
     "r_tracker_row_spacing": {
       "default": "0",
       "desc": "Additional pixels to add between tracker message rows. Positive values increase spacing, negative values decrease it.",
