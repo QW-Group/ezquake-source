@@ -101,7 +101,9 @@ void S_PaintChannels(int endtime);
 void S_LocalSound (char *s);
 void S_LocalSoundWithVol(char *sound, float volume);
 sfxcache_t *S_LoadSound (sfx_t *s);
+#define RAW_SOURCE_QIZMO_VOICE MAX_CLIENTS
 void S_RawAudio(int sourceid, byte *data, unsigned int speed, unsigned int samples, unsigned int channelsnum, unsigned int width);
+void S_QizmoVoice_PlayFrame(int sequence, int voice_id, const byte *data, int bytes);
 
 void SND_InitScaletable (void);
 int SND_Rate(int rate);

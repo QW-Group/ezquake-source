@@ -713,6 +713,7 @@ set(client
         ${SOURCE_DIR}/snd_main.c
         ${SOURCE_DIR}/snd_mem.c
         ${SOURCE_DIR}/snd_mix.c
+        ${SOURCE_DIR}/snd_qizmo.c
         ${SOURCE_DIR}/snd_voip.c
         ${SOURCE_DIR}/stats_grid.c
         ${SOURCE_DIR}/sys_sdl2.c

@@ -1206,7 +1206,7 @@ void S_RawAudio(int sourceid, byte *data, unsigned int speed, unsigned int sampl
 
 	S_LockMixer();
 
-	raw_flags = (sourceid >= 0 && sourceid < MAX_CLIENTS) ? CHANNEL_FLAG_VOICE : 0;
+	raw_flags = (sourceid >= 0 && sourceid <= RAW_SOURCE_QIZMO_VOICE) ? CHANNEL_FLAG_VOICE : 0;
 	raw_volume = (raw_flags & CHANNEL_FLAG_VOICE) ? 1 : s_raw_volume.value;
 
 	// search for free slot or re-use previous one with the same sourceid.

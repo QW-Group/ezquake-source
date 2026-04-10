@@ -3552,28 +3552,23 @@ void CL_MuzzleFlash (void)
 
 void CL_ParseQizmoVoice (void) 
 {
-	/* hifi: removed unused warnings, kept null logic */
-	int i;
-	MSG_ReadByte();
-	MSG_ReadByte();
+	byte frame_data[33];
+	byte sequence_low;
+	int sequence;
+	int voice_id;
 
-	for (i = 0; i < 32; i++)
-		MSG_ReadByte();
-	/*
-	   int i, seq, bits;
+	// Qizmo prefixes each frame with one low sequence byte. The next byte is
+	// mixed: bits 4-5 extend the sequence, bits 6-7 identify the voice burst,
+	// and the low nibble remains GSM data restored before decoding.
+	sequence_low = MSG_ReadByte();
 
-	// Read the two-byte header.
-	seq = MSG_ReadByte();
-	bits = MSG_ReadByte();
+	MSG_ReadData(frame_data, sizeof(frame_data));
+	sequence = sequence_low | ((frame_data[0] & 0x30) << 4);
+	voice_id = frame_data[0] >> 6;
 
-	seq |= (bits & 0x30) << 4;	// 10-bit block sequence number, strictly increasing
-	num = bits >> 6;			// 2-bit sample number, bumped at the start of a new sample
-	unknown = bits & 0x0f;		// mysterious 4 bits.  volume multiplier maybe?
-
-	// 32 bytes of voice data follow
-	for (i = 0; i < 32; i++)
-	MSG_ReadByte();
-	*/
+	if (!CL_Demo_SkipMessage(true)) {
+		S_QizmoVoice_PlayFrame(sequence, voice_id, frame_data, sizeof(frame_data));
+	}
 }
 
 #define SHOWNET(x) {if (cl_shownet.value == 2) Com_Printf ("%3i:%s\n", msg_readcount - 1, x);}
