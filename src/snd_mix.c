@@ -32,32 +32,35 @@ typedef struct portable_samplepair_s {
 	int right;
 } portable_samplepair_t;
 portable_samplepair_t paintbuffer[PAINTBUFFER_SIZE];
+static portable_samplepair_t voice_paintbuffer[PAINTBUFFER_SIZE];
+static portable_samplepair_t *painttarget = paintbuffer;
 int snd_scaletable[32][256];
 int snd_vol, *snd_p;
+static int *voice_snd_p;
 
 static int snd_linear_count;
 static short *snd_out;
 
-static void Snd_WriteLinearBlastStereo16 (int* input_buffer, short* output_buffer, int snd_vol)
+static void Snd_WriteLinearBlastStereo16 (int* input_buffer, int* voice_input_buffer, short* output_buffer, int snd_vol, int voice_vol)
 {
 	int val, i;
 
 	for (i = 0; i < snd_linear_count; i += 2) {
-		val = (input_buffer[i]*snd_vol)>>8;
+		val = ((input_buffer[i] * snd_vol) + (voice_input_buffer[i] * voice_vol)) >> 8;
 		output_buffer[i] = bound (-32768, val, 32767);
-		val = (input_buffer[i+1]*snd_vol)>>8;
+		val = ((input_buffer[i + 1] * snd_vol) + (voice_input_buffer[i + 1] * voice_vol)) >> 8;
 		output_buffer[i+1] = bound (-32768, val, 32767);
 	}
 }
 
-static void Snd_WriteLinearBlastStereo16_SwapStereo (int* input_buffer, short* output_buffer, int snd_vol)
+static void Snd_WriteLinearBlastStereo16_SwapStereo (int* input_buffer, int* voice_input_buffer, short* output_buffer, int snd_vol, int voice_vol)
 {
 	int val, i;
 
 	for (i = 0; i < snd_linear_count; i +=2 ) {
-		val = (input_buffer[i+1]*snd_vol)>>8;
+		val = ((input_buffer[i + 1] * snd_vol) + (voice_input_buffer[i + 1] * voice_vol)) >> 8;
 		output_buffer[i] = bound (-32768, val, 32767);
-		val = (input_buffer[i]*snd_vol)>>8;
+		val = ((input_buffer[i] * snd_vol) + (voice_input_buffer[i] * voice_vol)) >> 8;
 		output_buffer[i+1] = bound (-32768, val, 32767);
 	}
 }
@@ -65,11 +68,14 @@ static void Snd_WriteLinearBlastStereo16_SwapStereo (int* input_buffer, short* o
 static void S_TransferStereo16 (int endtime)
 {
 	int lpaintedtime, lpos, clientVolume;
+	int voiceVolume;
 	DWORD *pbuf;
 
 	clientVolume = snd_vol = (s_volume.value * S_VoipVoiceTransmitVolume()) * 256;
+	voiceVolume = max(0, s_raw_volume.value * 256);
 
 	snd_p = (int *) paintbuffer;
+	voice_snd_p = (int *) voice_paintbuffer;
 	lpaintedtime = shw->paintedtime;
 
 	pbuf = (DWORD *)shw->buffer;
@@ -87,15 +93,16 @@ static void S_TransferStereo16 (int endtime)
 
 		// write a linear blast of samples
 		if (s_swapstereo.value)
-			Snd_WriteLinearBlastStereo16_SwapStereo (snd_p, snd_out, clientVolume);
+			Snd_WriteLinearBlastStereo16_SwapStereo (snd_p, voice_snd_p, snd_out, clientVolume, voiceVolume);
 		else
-			Snd_WriteLinearBlastStereo16 (snd_p, snd_out, clientVolume);
+			Snd_WriteLinearBlastStereo16 (snd_p, voice_snd_p, snd_out, clientVolume, voiceVolume);
 
 		if (Movie_IsCapturing()) {
 			Movie_TransferSound (snd_out, snd_linear_count);
 		}
 
 		snd_p += snd_linear_count;
+		voice_snd_p += snd_linear_count;
 		lpaintedtime += (snd_linear_count>>1);
 	}
 }
@@ -110,6 +117,8 @@ static void S_TransferPaintBuffer(int endtime)
 	int step;
 	int val;
 	int snd_vol;
+	int voice_vol;
+	int *voice_p;
 
 	if (shw->samplebits == 16 && shw->numchannels == 2) {
 		S_TransferStereo16(endtime);
@@ -117,19 +126,22 @@ static void S_TransferPaintBuffer(int endtime)
 	}
 
 	p = (int *) paintbuffer;
+	voice_p = (int *) voice_paintbuffer;
 	count = (endtime - shw->paintedtime) * shw->numchannels;
 	out_mask = shw->samples - 1;
 	out_idx = shw->paintedtime * shw->numchannels & out_mask;
 	step = 3 - shw->numchannels;
 	snd_vol = (s_volume.value * S_VoipVoiceTransmitVolume()) * 256;
+	voice_vol = max(0, s_raw_volume.value * 256);
 
 	pbuf = (DWORD *)shw->buffer;
 
 	if (shw->samplebits == 16) {
 		short *out = (short *) pbuf;
 		while (count--) {
-			val = (*p * snd_vol) >> 8;
+			val = ((*p * snd_vol) + (*voice_p * voice_vol)) >> 8;
 			p+= step;
+			voice_p += step;
 			if (val > 0x7fff)
 				val = 0x7fff;
 			else if (val < (int)0x8000)
@@ -140,8 +152,9 @@ static void S_TransferPaintBuffer(int endtime)
 	} else if (shw->samplebits == 8) {
 		unsigned char *out = (unsigned char *) pbuf;
 		while (count--) {
-			val = (*p * snd_vol) >> 8;
+			val = ((*p * snd_vol) + (*voice_p * voice_vol)) >> 8;
 			p+= step;
+			voice_p += step;
 			if (val > 0x7fff)
 				val = 0x7fff;
 			else if (val < (int)0x8000)
@@ -176,8 +189,8 @@ static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 
 	for (i = 0; i < count ;i++) {
 		data = sfx[i];
-		paintbuffer[i].left += lscale[data];
-		paintbuffer[i].right += rscale[data];
+		painttarget[i].left += lscale[data];
+		painttarget[i].right += rscale[data];
 	}
 
 	ch->pos += count;
@@ -196,8 +209,8 @@ static void SND_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count)
 		data = sfx[i];
 		left = (data * leftvol) >> 8;
 		right = (data * rightvol) >> 8;
-		paintbuffer[i].left += left;
-		paintbuffer[i].right += right;
+		painttarget[i].left += left;
+		painttarget[i].right += right;
 	}
 
 	ch->pos += count;
@@ -228,6 +241,7 @@ void S_PaintChannels(int endtime)
 
 		// clear the paint buffer
 		memset (paintbuffer, 0, (end - shw->paintedtime) * sizeof(portable_samplepair_t));
+		memset (voice_paintbuffer, 0, (end - shw->paintedtime) * sizeof(portable_samplepair_t));
 
 		// paint in the channels.
 		ch = channels;
@@ -256,6 +270,7 @@ void S_PaintChannels(int endtime)
 			if (!sc)
 				continue;
 
+			painttarget = (ch->flags & CHANNEL_FLAG_VOICE) ? voice_paintbuffer : paintbuffer;
 			ltime = shw->paintedtime;
 
 			while (ltime < end) { // paint up to end
@@ -282,6 +297,7 @@ void S_PaintChannels(int endtime)
 				}
 			}
 		}
+		painttarget = paintbuffer;
 
 		// transfer out according to DMA format
 		S_TransferPaintBuffer(end);
