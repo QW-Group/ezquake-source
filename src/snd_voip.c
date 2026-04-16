@@ -41,7 +41,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static void S_Voip_Play_Callback (cvar_t *var, char *string, qbool *cancel);
 void CL_SendClientCommand (qbool reliable, char *format, ...);
-void S_RawAudio (int sourceid, byte *data, unsigned int speed, unsigned int samples, unsigned int channelsnum, unsigned int width);
 
 static cvar_t s_inputdevice = { "s_inputdevice", "0" };                                // SDL device to use as microphone
 static cvar_t cl_voip_send = { "cl_voip_send", "0" };                                  // Sends voice-over-ip data to the server whenever it is set.

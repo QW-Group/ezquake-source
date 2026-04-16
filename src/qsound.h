@@ -73,7 +73,10 @@ typedef struct channel_s {
 	vec3_t		origin;			// origin of sound effect
 	vec_t		dist_mult;		// distance multiplier (attenuation/clipK)
 	int		master_vol;		// 0-255 master volume
+	int		flags;
 } channel_t;
+
+#define CHANNEL_FLAG_VOICE (1 << 0)
 
 typedef struct wavinfo_s {
 	int		rate;
@@ -98,6 +101,9 @@ void S_PaintChannels(int endtime);
 void S_LocalSound (char *s);
 void S_LocalSoundWithVol(char *sound, float volume);
 sfxcache_t *S_LoadSound (sfx_t *s);
+#define RAW_SOURCE_QIZMO_VOICE MAX_CLIENTS
+void S_RawAudio(int sourceid, byte *data, unsigned int speed, unsigned int samples, unsigned int channelsnum, unsigned int width);
+void S_QizmoVoice_PlayFrame(int sequence, int voice_id, const byte *data, int bytes);
 
 void SND_InitScaletable (void);
 int SND_Rate(int rate);
@@ -128,6 +134,7 @@ extern int		soundtime;
 extern cvar_t		s_loadas8bit;
 extern cvar_t		s_khz;
 extern cvar_t		s_volume;
+extern cvar_t		s_raw_volume;
 extern cvar_t		s_swapstereo;
 extern cvar_t		bgmvolume;
 
