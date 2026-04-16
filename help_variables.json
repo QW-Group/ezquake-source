@@ -4162,6 +4162,28 @@
       "group-id": "40",
       "type": "string"
     },
+    "demo_spawnwarn": {
+      "default": "0",
+      "desc": "Warns during demo playback when the current POV crosses a deathmatch spawn or teleporter exit.",
+      "group-id": "40",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Disable spawn crossing warnings in demos.",
+          "name": "false"
+        },
+        {
+          "description": "Enable spawn crossing warnings in demos.",
+          "name": "true"
+        }
+      ]
+    },
+    "demo_spawnwarn_text": {
+      "default": "you crossed a spawn",
+      "desc": "Sets the centerprint text shown when demo_spawnwarn detects a spawn crossing.",
+      "group-id": "40",
+      "type": "string"
+    },
     "developer": {
       "default": "0",
       "desc": "Enables debug mode which prints more messages into the console than for normal user.",

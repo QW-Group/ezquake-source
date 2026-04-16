@@ -619,6 +619,7 @@ set(client_headers
         ${SOURCE_DIR}/screen.h
         ${SOURCE_DIR}/settings.h
         ${SOURCE_DIR}/settings_page.h
+        ${SOURCE_DIR}/demo_spawnwarn.h
         ${SOURCE_DIR}/stats_grid.h
         ${SOURCE_DIR}/sys.h
         ${SOURCE_DIR}/teamplay.h
@@ -705,6 +706,7 @@ set(client
         ${SOURCE_DIR}/mvd_autotrack.c
         ${SOURCE_DIR}/mvd_utils.c
         ${SOURCE_DIR}/mvd_xmlstats.c
+        ${SOURCE_DIR}/demo_spawnwarn.c
         ${SOURCE_DIR}/qtv.c
         ${SOURCE_DIR}/rulesets.c
         ${SOURCE_DIR}/sbar.c

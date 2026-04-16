@@ -44,6 +44,7 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 #include "input.h"
 #include "qtv.h"
 #include "r_brushmodel_sky.h"
+#include "demo_spawnwarn.h"
 #include "central.h"
 
 int CL_LoginImageId(const char* name);
@@ -607,6 +608,8 @@ void CL_Prespawn (void)
 
 	CL_TransmitModelCrc (cl_modelindices[mi_player], "pmodel");
 	CL_TransmitModelCrc (cl_modelindices[mi_eyes], "emodel");
+
+	CL_SpawnWarn_LoadPoints();
 
 #if 0
 //TEI: loading entitys from map, at clientside,
@@ -3382,6 +3385,7 @@ void CL_SetStat (int stat, int value)
 	// Reset safestrafe state when respawning (health goes from 0 or less to positive)
 	if (stat == STAT_HEALTH && value > 0 && cl.stats[stat] <= 0 && !cl.spectator) {
 		memset(&cl.safestrafe, 0, sizeof(cl.safestrafe));
+		CL_SpawnWarn_SuppressAfterRespawn();
 	}
 
 	cl.stats[stat] = value;

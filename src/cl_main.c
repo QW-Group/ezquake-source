@@ -70,6 +70,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 #include "r_performance.h"
 #include "r_program.h"
+#include "demo_spawnwarn.h"
 
 extern qbool ActiveApp, Minimized;
 
@@ -1239,6 +1240,7 @@ void CL_ClearState (void)
 	memset(cl_lightstyle, 0, sizeof(cl_lightstyle));
 	memset(cl_entities, 0, sizeof(cl_entities));
 	memset(cl_static_entities, 0, sizeof(cl_static_entities));
+	CL_SpawnWarn_ClearPoints();
 
 	// Set entnum for all entity baselines
 	for (i = 0; i < sizeof(cl_entities) / sizeof(cl_entities[0]); ++i) {
@@ -1832,6 +1834,8 @@ static void CL_InitLocal(void)
 	Cvar_Register(&cl_nolerp_on_entity);
 	Cvar_Register(&cl_newlerp);
 	Cvar_Register(&cl_lerp_monsters);
+	Cvar_Register(&demo_spawnwarn);
+	Cvar_Register(&demo_spawnwarn_text);
 	Cvar_Register(&cl_maxfps);
 	Cvar_Register(&cl_maxfps_menu);
 	Cvar_Register(&cl_physfps);
@@ -2687,6 +2691,7 @@ void CL_Frame(double time)
 				first_view = false;
 
 				CL_LinkEntities();
+				CL_SpawnWarn_UpdateWarning();
 
 				SCR_CalcRefdef();
 
@@ -2734,6 +2739,7 @@ void CL_Frame(double time)
 	}
 	else {
 		CL_LinkEntities();
+		CL_SpawnWarn_UpdateWarning();
 
 		R_PerformanceBeginFrame();
 		SCR_UpdateScreen();
