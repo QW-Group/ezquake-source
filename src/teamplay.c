@@ -51,6 +51,7 @@ cvar_t cl_parseFunChars = {"cl_parseFunChars", "1"};
 cvar_t cl_nofake = {"cl_nofake", "2"};
 cvar_t tp_loadlocs = {"tp_loadlocs", "1"};
 cvar_t tp_pointpriorities = {"tp_pointpriorities", "0"}; // FIXME: buggy
+cvar_t tp_tookpriorities = {"tp_tookpriorities", "0"};
 cvar_t tp_tooktimeout = {"tp_tooktimeout", "15"};
 cvar_t tp_pointtimeout = {"tp_pointtimeout", "15"};
 static cvar_t tp_poweruptextstyle = { "tp_poweruptextstyle", "0" };
@@ -2116,6 +2117,7 @@ Notice this list takes into account ctf/tf as well. Dm players don't worry about
 unsigned int pkflags = default_pkflags;
 unsigned int tookflags = default_tookflags;
 unsigned int pointflags = default_pointflags;
+byte tookpriorities[NUM_ITEMFLAGS];
 byte pointpriorities[NUM_ITEMFLAGS];
 
 static void DumpFlagCommand(FILE *f, char *name, unsigned int flags, unsigned int default_flags)
@@ -2181,6 +2183,8 @@ static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 	unsigned int flag;
 	char* p, str[255] = { 0 };
 	qbool removeflag = false;
+	byte *priorities = (flags == &tookflags) ? tookpriorities : pointpriorities;
+	qbool use_priorities = (flags == &tookflags) ? tp_tookpriorities.integer : tp_pointpriorities.integer;
 
 	c = Cmd_Argc();
 	if (c == 1) {
@@ -2188,11 +2192,11 @@ static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 		if (!*flags)
 			strlcpy(str, "none", sizeof(str));
 
-		if (tp_pointpriorities.integer) {
+		if (use_priorities) {
 			int p;
 			for (p = 0; p < NUM_ITEMFLAGS; ++p) {
 				for (i = 0; i < NUM_ITEMFLAGS; i++) {
-					if (pointpriorities[i] == p && (*flags & (1 << i))) {
+					if (priorities[i] == p && (*flags & (1 << i))) {
 						if (notfirst) {
 							Com_Printf(" ");
 						}
@@ -2202,8 +2206,7 @@ static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 					}
 				}
 			}
-		}
-		else {
+		} else {
 			for (i = 0; i < NUM_ITEMFLAGS; i++) {
 				if (*flags & (1 << i)) {
 					if (notfirst) {
@@ -2221,13 +2224,13 @@ static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 
 	if (c == 2 && !strcasecmp(Cmd_Argv(1), "none")) {
 		*flags = 0;
-		memset(pointpriorities, 0, sizeof(pointpriorities));
+		memset(priorities, 0, NUM_ITEMFLAGS);
 		return;
 	}
 
 	if (*Cmd_Argv(1) != '+' && *Cmd_Argv(1) != '-') {
 		*flags = 0;
-		memset(pointpriorities, 0, sizeof(pointpriorities));
+		memset(priorities, 0, NUM_ITEMFLAGS);
 	}
 	else if (*Cmd_Argv(1) == '+') {
 		for (i = 0; i < NUM_ITEMFLAGS; ++i) {
@@ -2284,7 +2287,7 @@ static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 
 			for (j = 1; j <= NUM_ITEMFLAGS; j++) {
 				if (flag & (1 << (j - 1))) {
-					pointpriorities[j - 1] = 0;
+					priorities[j - 1] = 0;
 				}
 			}
 		}
@@ -2293,7 +2296,7 @@ static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 
 			for (j = 1; j <= NUM_ITEMFLAGS; j++) {
 				if (flag & (1 << (j - 1))) {
-					pointpriorities[j - 1] = i + offset;
+					priorities[j - 1] = i + offset;
 				}
 			}
 		}
@@ -2565,7 +2568,51 @@ static qbool CheckTrigger (void)
 	return count;
 }
 
-static void ExecTookTrigger (char *s, int flag, vec3_t org)
+static int TP_TookPriority(unsigned int flag)
+{
+	int i, priority = 0;
+	unsigned int item_flag;
+	int item_priority;
+
+	if (!tp_tookpriorities.integer)
+		return 0;
+
+	for (i = 0; i < NUM_ITEMFLAGS; i++) {
+		item_flag = (unsigned int)1 << i;
+		item_priority = tookpriorities[i];
+
+		if (!(flag & item_flag) || !item_priority)
+			continue;
+
+		if (!priority || item_priority < priority)
+			priority = item_priority;
+	}
+
+	return priority;
+}
+
+static qbool TP_TookPriorityCanReplace(unsigned int flag)
+{
+	int priority, old_priority;
+
+	priority = TP_TookPriority(flag);
+	old_priority = TP_TookPriority((unsigned int)vars.tookflag);
+
+	return !old_priority || (priority && priority <= old_priority);
+}
+
+static qbool TP_ShouldStoreTook(unsigned int flag)
+{
+	if (TOOK_EMPTY())
+		return true;
+
+	if (!tp_tookpriorities.integer)
+		return true;
+
+	return TP_TookPriorityCanReplace(flag);
+}
+
+static void ExecTookTrigger (char *s, unsigned int flag, vec3_t org)
 {
 	int pkflags_dmm, tookflags_dmm;
 
@@ -2581,10 +2628,12 @@ static void ExecTookTrigger (char *s, int flag, vec3_t org)
 	if (!((pkflags_dmm|tookflags_dmm) & flag))
 		return;
 
-	vars.tooktime = cls.realtime;
-    vars.tookflag = flag;
-	strlcpy (vars.tookname, s, sizeof (vars.tookname));
-	strlcpy (vars.tookloc, TP_LocationName(org), sizeof(vars.tookloc));
+	if (TP_ShouldStoreTook(flag)) {
+		vars.tooktime = cls.realtime;
+		vars.tookflag = flag;
+		strlcpy(vars.tookname, s, sizeof(vars.tookname));
+		strlcpy(vars.tookloc, TP_LocationName(org), sizeof(vars.tookloc));
+	}
 
 	if ((tookflags_dmm & flag) && CheckTrigger())
 		TP_ExecTrigger ("f_took");
@@ -3241,6 +3290,7 @@ void TP_Init (void)
 	Cvar_SetCurrentGroup(CVAR_GROUP_COMMUNICATION);
 	Cvar_Register(&tp_loadlocs);
 	Cvar_Register(&tp_pointpriorities);
+	Cvar_Register(&tp_tookpriorities);
 	Cvar_Register(&tp_weapon_order);
 	Cvar_Register(&tp_tooktimeout);
 	Cvar_Register(&tp_pointtimeout);

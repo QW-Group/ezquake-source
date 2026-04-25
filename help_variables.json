@@ -21912,6 +21912,23 @@
         }
       ]
     },
+    "tp_tookpriorities": {
+      "default": "0",
+      "desc": "Controls whether the last item taken macro (%X or $took) uses the order of tp_took as item pickup priority.",
+      "group-id": "49",
+      "remarks": "When enabled, earlier items in tp_took have higher priority and can prevent lower priority pickups from replacing $took within tp_tooktimeout.\n\nExample:\ntp_took powerups rl lg ra ya ga mega pack gl sng ng ssg rockets cells nails shells health\ntp_tookpriorities 1",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Original, default behavior. The latest pickup replaces the previous one.",
+          "name": "false"
+        },
+        {
+          "description": "Use tp_took order as pickup priority.",
+          "name": "true"
+        }
+      ]
+    },
     "tp_pointtimeout": {
       "default": "15",
       "desc": "Time (in seconds) before the last pointed item (%j) is cleared.",
