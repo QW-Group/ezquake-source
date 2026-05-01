@@ -36,6 +36,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "logging.h"
 #include "version.h"
 #include "demo_controls.h"
+#include "demo_extension.h"
 #include "mvd_utils.h"
 #include "r_trace.h"
 #include "sha3.h"
@@ -3333,6 +3334,8 @@ void CL_StopPlayback(void)
 		Movie_Stop(false);
 	}
 
+	DemoExtension_StopDemo();
+
 	// Close the playback file.
 	if (playbackfile) {
 		VFS_CLOSE(playbackfile);
@@ -3481,7 +3484,8 @@ typedef enum demoprobe_parse_type_e
 // Seek the specified length and fail/abort if it fails.
 //
 #define DEMOPROBE_SEEK(file, length, message)								\
-	if (VFS_SEEK(file, length, SEEK_CUR) == -1)								\
+	if (VFS_SEEK(file, length, SEEK_CUR) == -1 ||							\
+		VFS_TELL(file) > demo_data_size)									\
 	{																		\
 		Com_DPrintf("CL_ProbeDemo: Unexpected end of demo. "message"\n");	\
 		abort = true;														\
@@ -3511,9 +3515,15 @@ qbool CL_ProbeDemo(vfsfile_t *demfile, demoprobe_parse_type_t probetype, float *
 	qbool is_mvd				= false;	// Is this an MVD. (Used when guessing if this is an MVD).
 	int mvd_only_count			= 0;		// Try to figure out if this is a MVD by looking for commands only present in MVDs.
 	qbool abort					= false;	// Something bad happened when reading the demo.
+	unsigned long demo_data_size = VFS_GETLEN(demfile);
 
 	while (!abort)
 	{
+		if (VFS_TELL(demfile) >= demo_data_size) {
+			Com_DPrintf("CL_ProbeDemo: End of demo data. All good!\n");
+			break;
+		}
+
 		// Read the time.
 		if (PARSE_AS_MVD())
 		{
@@ -3765,6 +3775,9 @@ static void CL_StartDemoCommand(void)
 
 	char *real_name;
 	char name[MAX_OSPATH];
+#ifdef WITH_ZIP
+	char unpacked_path[MAX_OSPATH];
+#endif
 
 	if (Cmd_Argc() < 2) {
 		return; // internal error
@@ -3784,17 +3797,14 @@ static void CL_StartDemoCommand(void)
 	Host_EndGame();
 
 	// VFS-FIXME: This will affect playing qwz inside a zip
-	#ifdef WITH_ZIP
-	{
-		//
-		// Unpack the demo if it's zipped or gzipped. And get the path to the unpacked demo file.
-		//
-		char unpacked_path[MAX_OSPATH];
-		if (CL_UnpackAndOpenDemo(Cmd_Argv(1), unpacked_path, sizeof(unpacked_path))) {
-			real_name = unpacked_path;
-		}
+#ifdef WITH_ZIP
+	//
+	// Unpack the demo if it's zipped or gzipped. And get the path to the unpacked demo file.
+	//
+	if (CL_UnpackAndOpenDemo(Cmd_Argv(1), unpacked_path, sizeof(unpacked_path))) {
+		real_name = unpacked_path;
 	}
-	#endif // WITH_ZIP
+#endif // WITH_ZIP
 
 	strlcpy(name, real_name, sizeof(name));
 
@@ -3849,6 +3859,10 @@ static void CL_StartDemoCommand(void)
 		}
 	}
 
+	if (playbackfile) {
+		DemoExtension_Load(playbackfile, name);
+	}
+
 	// Read the file completely into memory
 	if (playbackfile && !FSMMAP_IsMemoryMapped(playbackfile)) {
 		unsigned long len;
@@ -3895,6 +3909,7 @@ static void CL_DemoStartPlayback(const char* name)
 	cls.demo_rewindtime = 0;
 
 	CL_DemoPlaybackInit();
+	DemoExtension_StartDemo();
 	TP_ExecTrigger("f_demostart");
 
 	Com_Printf("Playing demo from %s\n", COM_SkipPath(name));
@@ -5469,6 +5484,7 @@ void CL_Demo_Init(void)
 	Cmd_AddCommand("demo_jump_status", CL_Demo_Jump_Status_f);
 	Cmd_AddCommand("demo_jump_end", CL_Demo_Jump_End_f);
 	Cmd_AddCommand("demo_controls", DemoControls_f);
+	DemoExtension_Init();
 
 	//
 	// mvd "recording"

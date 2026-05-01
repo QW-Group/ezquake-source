@@ -592,6 +592,7 @@ set(client_headers
         ${SOURCE_DIR}/config_manager.h
         ${SOURCE_DIR}/console.h
         ${SOURCE_DIR}/demo_controls.h
+        ${SOURCE_DIR}/demo_extension_voice.h
         ${SOURCE_DIR}/document_rendering.h
         ${SOURCE_DIR}/ez_button.h
         ${SOURCE_DIR}/ez_controls.h
@@ -681,6 +682,8 @@ set(client
         ${SOURCE_DIR}/config_manager.c
         ${SOURCE_DIR}/console.c
         ${SOURCE_DIR}/demo_controls.c
+        ${SOURCE_DIR}/demo_extension.c
+        ${SOURCE_DIR}/demo_extension_voice.c
         ${SOURCE_DIR}/document_rendering.c
         ${SOURCE_DIR}/ez_button.c
         ${SOURCE_DIR}/ez_controls.c

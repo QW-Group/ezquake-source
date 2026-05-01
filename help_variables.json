@@ -4140,6 +4140,38 @@
         }
       ]
     },
+    "demo_voice_enable": {
+      "default": "1",
+      "desc": "Toggles synchronized demo voice track playback.",
+      "group-id": "40",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Do not play loaded demo voice tracks.",
+          "name": "false"
+        },
+        {
+          "description": "Play loaded demo voice tracks during normal demo playback.",
+          "name": "true"
+        }
+      ]
+    },
+    "demo_voice_team_filter": {
+      "default": "1",
+      "desc": "Filters synchronized demo voice tracks by the viewed player's team.",
+      "group-id": "40",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Play all loaded demo voice tracks.",
+          "name": "false"
+        },
+        {
+          "description": "Only play tracks matching the viewed player's team.",
+          "name": "true"
+        }
+      ]
+    },
     "demo_playlist_loop": {
       "default": "0",
       "desc": "will toggle playlist looping.",

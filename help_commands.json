@@ -457,6 +457,21 @@
     "description": "You can vary the speed of demo playback with the 'demo_setspeed' command.\n'demo_setspeed x' sets the playback speed to x% of normal speed so that 'demo_setspeed 50' is half speed and 'demo_setspeed 300' gives you triple speed.",
     "syntax": "[default: 100]"
   },
+  "demo_voice_info": {
+    "description": "Shows currently loaded demo voice tracks and settings."
+  },
+  "demo_voice_load": {
+    "description": "Loads a synchronized demo voice track.",
+    "syntax": "<file> [offset <seconds>] [name <name>] [team <team>]"
+  },
+  "demo_voice_unload": {
+    "description": "Unloads one demo voice track, or all tracks if none is specified.",
+    "syntax": "[track|all]"
+  },
+  "demo_voice_volume": {
+    "description": "Shows or sets track voice volume. See demo_voice_info for numbers.",
+    "syntax": "<track|all> [volume]"
+  },
   "describe": {
     "description": "Prints manual info about given variable or command into the console.",
     "syntax": "<variable or command name>"
