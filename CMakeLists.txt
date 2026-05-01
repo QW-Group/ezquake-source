@@ -135,6 +135,15 @@ check_dependency(SpeexDSP "speexdsp"   "SpeexDSP"           "SPEEX::SPEEXDSP"   
 check_dependency(cURL     "libcurl"    "CURL"               "CURL::libcurl"                REQUIRED CONFIG)
 check_dependency(zlib     "zlib"       "ZLIB"               "ZLIB::ZLIB"                   REQUIRED)
 
+if(USE_SYSTEM_LIBS AND HAVE_MINIZIP)
+    find_path(EZQUAKE_MINIZIP_INCLUDE_DIR
+            NAMES unzip.h
+            HINTS ${MiniZip_INCLUDE_DIRS}
+            PATH_SUFFIXES minizip
+            REQUIRED
+    )
+endif()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     find_library(FRAMEWORK_APPKIT AppKit REQUIRED)
     find_library(FRAMEWORK_FOUNDATION Foundation REQUIRED)
@@ -828,6 +837,7 @@ add_executable(ezquake ${TARGET_TYPE}
 
 target_include_directories(ezquake PRIVATE
         ${SOURCE_DIR}/qwprot/src
+        ${EZQUAKE_MINIZIP_INCLUDE_DIR}
 )
 
 target_compile_definitions(ezquake PRIVATE
