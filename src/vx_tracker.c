@@ -48,6 +48,7 @@ typedef struct weapon_label_s {
 
 static int weapon_images[MAX_WEAPON_CLASSES];
 static weapon_label_t weapon_labels[MAX_WEAPON_CLASSES];
+static qbool tracker_hide_extra_images;
 
 // hard-coded values, remember tracker color codes were 0-9, not 0-F
 static const byte color_white[4] = { 255, 255, 255, 255 };
@@ -61,7 +62,7 @@ static const byte color380[4] = {  77, 227, 0, 255 };      // teamkills
 static void VX_TrackerAddSegmented4(const char* lhs_text, const byte* lhs_color, const char* center_text, const byte* center_color, const char* rhs_text, const byte* rhs_color, const char* extra_text, const byte* extra_color);
 #define VX_TrackerAddSegmented(lhs_text, lhs_color, center_text, center_color, rhs_text, rhs_color) VX_TrackerAddSegmented4(lhs_text, lhs_color, center_text, center_color, rhs_text, rhs_color, "", NULL)
 static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_color, int weapon, const char* rhs_text, const byte* rhs_color);
-static void VX_TrackerAddWeaponTextSplit(char* lhs_text, int weapon, const byte* color, char* rhs_text);
+static void VX_TrackerAddWeaponTextSplit(char* lhs_text, int weapon, const byte* lhs_color, char* rhs_text, const byte* rhs_color);
 
 //STREAKS
 typedef struct {
@@ -113,6 +114,9 @@ static cvar_t amf_tracker_color_tkbad              = {"r_tracker_color_tkbad",  
 static cvar_t amf_tracker_color_myfrag             = {"r_tracker_color_myfrag",   "090", CVAR_TRACKERCOLOR }; // use this color for frag which u done
 static cvar_t amf_tracker_color_fragonme           = {"r_tracker_color_fragonme", "900", CVAR_TRACKERCOLOR }; // use this color when u frag someone
 static cvar_t amf_tracker_color_suicide            = {"r_tracker_color_suicide",  "900", CVAR_TRACKERCOLOR }; // use this color when u suicides
+static cvar_t amf_tracker_color_quadfrag           = {"r_tracker_color_quadfrag", "",    CVAR_TRACKERCOLOR }; // use this color for player name when they have quad
+static cvar_t amf_tracker_color_quadfrag_colorfix  = {"r_tracker_color_quadfrag_colorfix", "0"}; // apply quad color to both names
+static cvar_t amf_tracker_color_quadfrag_noicon    = {"r_tracker_color_quadfrag_noicon", "0"};   // hide quad icon when quad color is active
 static cvar_t amf_tracker_string_suicides          = {"r_tracker_string_suicides", " (suicides)"};
 static cvar_t amf_tracker_string_died              = {"r_tracker_string_died",     " (died)"};
 static cvar_t amf_tracker_string_teammate          = {"r_tracker_string_teammate", "teammate"};
@@ -212,6 +216,9 @@ void InitTracker(void)
 	Cvar_Register(&amf_tracker_color_myfrag);
 	Cvar_Register(&amf_tracker_color_fragonme);
 	Cvar_Register(&amf_tracker_color_suicide);
+	Cvar_Register(&amf_tracker_color_quadfrag);
+	Cvar_Register(&amf_tracker_color_quadfrag_colorfix);
+	Cvar_Register(&amf_tracker_color_quadfrag_noicon);
 
 	Cvar_Register(&amf_tracker_string_suicides);
 	Cvar_Register(&amf_tracker_string_died);
@@ -358,7 +365,8 @@ static qbool VX_TrackerStringPrintSegmentsWithImage(const char* text1, const byt
 
 	if (R_TextureReferenceIsValid(char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].glyphs[offset].texnum)) {
 		int i;
-		for (i = 0; i < weapon_images[weapon]; ++i) {
+		int max_images = tracker_hide_extra_images ? 1 : weapon_images[weapon];
+		for (i = 0; i < max_images; ++i) {
 			imagetext[i] = base + i;
 		}
 	}
@@ -529,11 +537,14 @@ static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_
 		if (!amf_tracker_weapon_first.integer)
 			VX_TrackerAddTextSegment(msg, lhs_text, lhs_color);
 
-		for (i = 0; i < weapon_images[weapon]; ++i) {
-			mpic_t* pic = &char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].glyphs[weapon * MAX_IMAGES_PER_WEAPON + i];
+		{
+			int max_images = tracker_hide_extra_images ? 1 : weapon_images[weapon];
+			for (i = 0; i < max_images; ++i) {
+				mpic_t* pic = &char_textures[PRIVATE_USE_TRACKERIMAGES_CHARSET].glyphs[weapon * MAX_IMAGES_PER_WEAPON + i];
 
-			if (R_TextureReferenceIsValid(pic->texnum)) {
-				VX_TrackerAddImageSegment(msg, pic);
+				if (R_TextureReferenceIsValid(pic->texnum)) {
+					VX_TrackerAddImageSegment(msg, pic);
+				}
 			}
 		}
 
@@ -545,7 +556,7 @@ static void VX_TrackerAddWeaponImageSplit(const char* lhs_text, const byte* lhs_
 	}
 }
 
-static void VX_TrackerAddWeaponTextSplit(char* lhs_text, int weapon, const byte* color, char* rhs_text)
+static void VX_TrackerAddWeaponTextSplit(char* lhs_text, int weapon, const byte* lhs_color, char* rhs_text, const byte* rhs_color)
 {
 	trackmsg_t* msg;
 	int i;
@@ -557,7 +568,7 @@ static void VX_TrackerAddWeaponTextSplit(char* lhs_text, int weapon, const byte*
 
 	weapon_text = amf_tracker_inconsole_colored_weapon.integer == 0
 		? GetWeaponName(weapon)
-		: GetColoredWeaponName(weapon, color);
+		: GetColoredWeaponName(weapon, lhs_color);
 
 	if (!VX_TrackerStringPrintSegments(
 		amf_tracker_weapon_first.integer ? weapon_text : lhs_text,
@@ -574,14 +585,14 @@ static void VX_TrackerAddWeaponTextSplit(char* lhs_text, int weapon, const byte*
 			VX_TrackerAddTextSegment(
 				msg,
 				amf_tracker_colorfix.integer ? Q_normalizetext(lhs_text) : lhs_text,
-				amf_tracker_colorfix.integer ? color : color_white);
+				amf_tracker_colorfix.integer ? lhs_color : color_white);
 
 		for (i = 0; i < weapon_labels[weapon].count; ++i) {
 			if (weapon_labels[weapon].colors[i][3]) {
 				VX_TrackerAddFlaggedTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], weapon_labels[weapon].colors[i], TEXTFLAG_WEAPON);
 			}
 			else {
-				VX_TrackerAddFlaggedTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], color, TEXTFLAG_WEAPON);
+				VX_TrackerAddFlaggedTextSegment(msg, weapon_labels[weapon].label + weapon_labels[weapon].starts[i], lhs_color, TEXTFLAG_WEAPON);
 			}
 		}
 
@@ -589,12 +600,12 @@ static void VX_TrackerAddWeaponTextSplit(char* lhs_text, int weapon, const byte*
 			VX_TrackerAddTextSegment(
 				msg,
 				amf_tracker_colorfix.integer ? Q_normalizetext(lhs_text) : lhs_text,
-				amf_tracker_colorfix.integer ? color : color_white);
+				amf_tracker_colorfix.integer ? lhs_color : color_white);
 
 		VX_TrackerAddTextSegment(
 			msg,
 			amf_tracker_colorfix.integer ? Q_normalizetext(rhs_text) : rhs_text,
-			amf_tracker_colorfix.integer ? color : color_white);
+			amf_tracker_colorfix.integer ? rhs_color : color_white);
 		VX_PreProcessMessage(msg);
 	}
 }
@@ -738,7 +749,7 @@ void VX_TrackerDeath(int player, int weapon, int count)
 		}
 		else {
 			//snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r%s", VX_Name(player), SuiColor(player), GetWeaponName(weapon), amf_tracker_string_died.string);
-			VX_TrackerAddWeaponTextSplit(player_name, weapon, SuicideColor(player), amf_tracker_string_died.string);
+			VX_TrackerAddWeaponTextSplit(player_name, weapon, SuicideColor(player), amf_tracker_string_died.string, SuicideColor(player));
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
@@ -777,7 +788,7 @@ void VX_TrackerSuicide(int player, int weapon, int count)
 		}
 		else {
 			//snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r%s", VX_Name(player), SuiColor(player), GetWeaponName(weapon), amf_tracker_string_suicides.string);
-			VX_TrackerAddWeaponTextSplit(player_name, weapon, SuicideColor(player), amf_tracker_string_suicides.string);
+			VX_TrackerAddWeaponTextSplit(player_name, weapon, SuicideColor(player), amf_tracker_string_suicides.string, SuicideColor(player));
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
@@ -810,18 +821,36 @@ void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, i
 	}
 
 	if (amf_tracker_frags.integer == 2) {
+		byte* killer_color;
+		byte* player_color;
+
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
 		VX_Name(killer, killer_name, MAX_SCOREBOARDNAME);
+
+		killer_color = XvsYFullColor(player, killer);
+		player_color = colorfix ? XvsYFullColor(player, killer) : XvsYFullColor(killer, player);
+
+		// Quad override: color the killer's name (and optionally victim's) when they have quad
+		tracker_hide_extra_images = false;
+		if (amf_tracker_color_quadfrag.string[0] && (cl.players[killer].stats[STAT_ITEMS] & IT_QUAD)) {
+			killer_color = amf_tracker_color_quadfrag.color;
+			if (amf_tracker_color_quadfrag_colorfix.integer) {
+				player_color = amf_tracker_color_quadfrag.color;
+			}
+			if (amf_tracker_color_quadfrag_noicon.integer) {
+				tracker_hide_extra_images = true;
+			}
+		}
 
 		if (cl_useimagesinfraglog.integer) {
 			//snprintf(outstring, sizeof(outstring), "&c%s%s&r %s &c%s%s&r", XvsYColor(player, killer), VX_Name(killer), GetWeaponName(weapon), XvsYColor(killer, player), VX_Name(player));
 			Q_normalizetext(player_name);
 			Q_normalizetext(killer_name);
 
-			VX_TrackerAddWeaponImageSplit(killer_name, XvsYFullColor(player, killer), weapon, player_name, colorfix ? XvsYFullColor(player, killer) : XvsYFullColor(killer, player));
+			VX_TrackerAddWeaponImageSplit(killer_name, killer_color, weapon, player_name, player_color);
 		}
 		else {
-			VX_TrackerAddWeaponTextSplit(killer_name, weapon, XvsYFullColor(player, killer), player_name);
+			VX_TrackerAddWeaponTextSplit(killer_name, weapon, killer_color, player_name, player_color);
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
@@ -871,18 +900,31 @@ void VX_TrackerOddFrag(int player, int weapon, int wcount)
 	}
 
 	if (amf_tracker_frags.integer == 2) {
+		byte* player_color;
+
 		VX_Name(player, player_name, MAX_SCOREBOARDNAME);
+
+		player_color = OddFragFullColor(player);
+
+		// Quad override for the player name
+		tracker_hide_extra_images = false;
+		if (amf_tracker_color_quadfrag.string[0] && (cl.players[player].stats[STAT_ITEMS] & IT_QUAD)) {
+			player_color = amf_tracker_color_quadfrag.color;
+			if (amf_tracker_color_quadfrag_noicon.integer) {
+				tracker_hide_extra_images = true;
+			}
+		}
 
 		if (cl_useimagesinfraglog.integer) {
 			//snprintf(outstring, sizeof(outstring), "&c%s%s&r %s &c%s%s&r", OddFragColor(player), VX_Name(player), GetWeaponName(weapon), EnemyColor(), amf_tracker_string_enemy.string);
 
 			Q_normalizetext(player_name);
 
-			VX_TrackerAddWeaponImageSplit(player_name, OddFragFullColor(player), weapon, amf_tracker_string_enemy.string, EnemyFullColor());
+			VX_TrackerAddWeaponImageSplit(player_name, player_color, weapon, amf_tracker_string_enemy.string, EnemyFullColor());
 		}
 		else {
 			//snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r %s", VX_Name(player), OddFragColor(player), GetWeaponName(weapon), amf_tracker_string_enemy.string);
-			VX_TrackerAddWeaponTextSplit(player_name, weapon, OddFragFullColor(player), amf_tracker_string_enemy.string);
+			VX_TrackerAddWeaponTextSplit(player_name, weapon, player_color, amf_tracker_string_enemy.string, EnemyFullColor());
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
@@ -926,7 +968,7 @@ void VX_TrackerTK_XvsY(int player, int killer, int weapon, int p_count, int p_ic
 		}
 		else {
 			//snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r %s", VX_Name(killer), TKColor(player), GetWeaponName(weapon), VX_Name(player));
-			VX_TrackerAddWeaponTextSplit(killer_name, weapon, color, player_name);
+			VX_TrackerAddWeaponTextSplit(killer_name, weapon, color, player_name, color);
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
@@ -976,7 +1018,7 @@ void VX_TrackerOddTeamkill(int player, int weapon, int count)
 		}
 		else {
 			//snprintf(outstring, sizeof(outstring), "&r%s &c%s%s&r %s", VX_Name(player), TKColor(player), GetWeaponName(weapon), amf_tracker_string_teammate.string);
-			VX_TrackerAddWeaponTextSplit(player_name, weapon, TeamKillColor(player), amf_tracker_string_teammate.string);
+			VX_TrackerAddWeaponTextSplit(player_name, weapon, TeamKillColor(player), amf_tracker_string_teammate.string, TeamKillColor(player));
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
@@ -1003,7 +1045,7 @@ void VX_TrackerOddTeamkilled(int player, int weapon)
 			VX_TrackerAddWeaponImageSplit(amf_tracker_string_teammate.string, TeamKillColor(player), weapon, player_name, TeamKillColor(player));
 		}
 		else {
-			VX_TrackerAddWeaponTextSplit(amf_tracker_string_teammate.string, weapon, TeamKillColor(player), player_name);
+			VX_TrackerAddWeaponTextSplit(amf_tracker_string_teammate.string, weapon, TeamKillColor(player), player_name, TeamKillColor(player));
 		}
 	}
 	else if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
