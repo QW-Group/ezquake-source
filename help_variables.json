@@ -17231,6 +17231,24 @@
       "group-id": "40",
       "type": "string"
     },
+    "r_tracker_color_quadfrag": {
+      "default": "",
+      "desc": "Color to apply to the killer's name when they have quad damage. Uses tracker color format (3 digits 0-9, e.g. 099 for cyan). Empty string disables the feature.",
+      "group-id": "40",
+      "type": "string"
+    },
+    "r_tracker_color_quadfrag_colorfix": {
+      "default": "0",
+      "desc": "When enabled, r_tracker_color_quadfrag applies to both the killer and victim names instead of just the killer.",
+      "group-id": "40",
+      "type": "boolean"
+    },
+    "r_tracker_color_quadfrag_noicon": {
+      "default": "0",
+      "desc": "When enabled, hides the quad icon from the weapon image area when r_tracker_color_quadfrag is active.",
+      "group-id": "40",
+      "type": "boolean"
+    },
     "r_tracker_color_suicide": {
       "default": "900",
       "desc": "Color to use when reporting a suicide.",
@@ -17395,6 +17413,12 @@
       "desc": "If enabled frag tracker draws enemy vs enemy kills using color value of r_tracker_color_good variable.",
       "group-id": "40",
       "type": "integer"
+    },
+    "r_tracker_reverse": {
+      "default": "0",
+      "desc": "Reverse the display order of tracker messages so the most recent frag appears at the top.",
+      "group-id": "40",
+      "type": "boolean"
     },
     "r_tracker_row_spacing": {
       "default": "0",
