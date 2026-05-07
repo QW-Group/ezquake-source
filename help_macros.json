@@ -275,18 +275,6 @@
     ],
     "teamplay-restricted": true
   },
-  "mp3_volume": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
-  },
-  "mp3info": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
-  },
   "nails": {
     "description": "returns number of nails held, regardless of weapon selected",
     "teamplay-restricted": false,

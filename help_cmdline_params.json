@@ -72,11 +72,6 @@
       "incomplete"
     ]
   },
-  "-forceTextureReload": {
-    "flags": [
-      "incomplete"
-    ]
-  },
   "-forcetexturereload": {
     "system-generated": true
   },
@@ -94,9 +89,6 @@
     "flags": [
       "incomplete"
     ]
-  },
-  "-gl-debug": {
-    "description": "enables OpenGL debug output.  Must be used in conjunction with -dev"
   },
   "-gl-forward-only-profile": {
     "system-generated": true
@@ -200,11 +192,6 @@
       "incomplete"
     ]
   },
-  "-nomouse": {
-    "flags": [
-      "incomplete"
-    ]
-  },
   "-nomtex": {
     "flags": [
       "incomplete"
@@ -257,7 +244,7 @@
     ]
   },
   "-r-debug": {
-    "system-generated": true
+    "description": "enables OpenGL debug output.  Must be used in conjunction with -dev"
   },
   "-r-no-amd-fix": {
     "system-generated": true
