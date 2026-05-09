@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cl_slist.h"
 #include "movie.h"
 #include "logging.h"
+#include "demo_extension.h"
 #include "ignore.h"
 #include "fchecks.h"
 #include "config_manager.h"
@@ -2363,6 +2364,8 @@ void CL_LinkEntities (void)
 
 void CL_SoundFrame (void)
 {
+	DemoExtension_UpdateFrame();
+
 	if (cls.state == ca_active)
 	{
 		if (!ISPAUSED) {

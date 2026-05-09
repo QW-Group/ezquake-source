@@ -78,6 +78,7 @@ cbuf_t cbuf_main;
 cbuf_t cbuf_svc;
 cbuf_t cbuf_safe, cbuf_formatted_comms;
 cbuf_t cbuf_server;
+cbuf_t cbuf_demo_extension;
 
 cbuf_t *cbuf_current = NULL;
 
@@ -161,6 +162,11 @@ qbool CL_IsDownloadableFileExtension(const char *filename)
 	return is_allowed;
 }
 
+static qbool Cmd_IsCommandAllowedInDemoExtension(const char *cmd)
+{
+	return !strcasecmp(cmd, "demo_voice_load");
+}
+
 //=============================================================================
 
 //Causes execution of the remainder of the command buffer to be delayed until next frame.
@@ -200,6 +206,7 @@ void Cbuf_Execute (void)
 	Cbuf_ExecuteEx (&cbuf_safe);
 	Cbuf_ExecuteEx (&cbuf_formatted_comms);
 	Cbuf_ExecuteEx (&cbuf_server);
+	Cbuf_ExecuteEx (&cbuf_demo_extension);
 }
 
 void Cbuf_Flush(cbuf_t* cbuf)
@@ -230,6 +237,7 @@ void Cbuf_Init (void)
 	Cbuf_Register (&cbuf_safe, 1 << 11); // 2kb
 	Cbuf_Register (&cbuf_formatted_comms, 1 << 11); // 2kb
 	Cbuf_Register (&cbuf_server, 1 << 18); // 256kb
+	Cbuf_Register (&cbuf_demo_extension, 1 << 13); // 8kb
 }
 
 //Adds command text at the end of the buffer
@@ -1884,6 +1892,12 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 				Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", Cmd_Argv(0));
 				goto done;
 			}
+		} else if (cbuf_current == &cbuf_demo_extension) {
+			if (!Cmd_IsCommandAllowedInDemoExtension(Cmd_Argv(0))) {
+				Com_Printf ("Blocked %s: not allowed in demo extension\n",
+					Cmd_Argv(0));
+				goto done;
+			}
 		}
 
 		if (cmd->function) {
@@ -1915,12 +1929,22 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 			Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", Cmd_Argv(0));
 			goto done;
 		}
+		if (cbuf_current == &cbuf_demo_extension) {
+			Com_Printf ("Blocked %s: not allowed in demo extension\n", v->name);
+			goto done;
+		}
 		if (Cvar_Command())
 			goto done;
 	}
 
 	// check aliases
 checkaliases:
+	if (cbuf_current == &cbuf_demo_extension) {
+		Com_Printf ("Blocked %s: aliases are not allowed in demo extension\n",
+			Cmd_Argv(0));
+		goto done;
+	}
+
 	if ((a = Cmd_FindAlias(Cmd_Argv(0)))) {
 		is_server_alias = a->flags & ALIAS_SERVER;
 

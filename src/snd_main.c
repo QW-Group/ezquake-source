@@ -1102,7 +1102,7 @@ void S_LocalSoundWithVol(char *sound, float volume)
 // This is useful when there is one source, and the sound is to be played with no attenuation.
 //===================================================================
 
-#define MAX_RAW_CACHE (1024 * 32) // have no idea which size it actually should be.
+#define MAX_RAW_CACHE (1024 * 256)
 
 typedef struct
 {
@@ -1113,7 +1113,7 @@ typedef struct
 
 static void S_RawClearStream(streaming_t *s);
 
-#define MAX_RAW_SOURCES (MAX_CLIENTS+1)
+#define MAX_RAW_SOURCES (MAX_CLIENTS + 1 + RAW_SOURCE_DEMO_VOICE_COUNT)
 
 streaming_t s_streamers[MAX_RAW_SOURCES] = {{0}};
 
@@ -1155,8 +1155,9 @@ static void S_RawClearStream(streaming_t *s)
 	}
 
 	// free cache.
-	//if (s->sfx.buf)
-	//	Cache_Free(&s->sfx.cache);
+	if (s->sfx.buf) {
+		Q_free(s->sfx.buf);
+	}
 
 	// clear whole struct.
 	memset(s, 0, sizeof(*s));
@@ -1206,7 +1207,8 @@ void S_RawAudio(int sourceid, byte *data, unsigned int speed, unsigned int sampl
 
 	S_LockMixer();
 
-	raw_flags = (sourceid >= 0 && sourceid <= RAW_SOURCE_QIZMO_VOICE) ? CHANNEL_FLAG_VOICE : 0;
+	raw_flags = ((sourceid >= 0 && sourceid <= RAW_SOURCE_QIZMO_VOICE) ||
+		(sourceid >= RAW_SOURCE_DEMO_VOICE_BASE && sourceid <= RAW_SOURCE_DEMO_VOICE_MAX)) ? CHANNEL_FLAG_VOICE : 0;
 	raw_volume = (raw_flags & CHANNEL_FLAG_VOICE) ? 1 : s_raw_volume.value;
 
 	// search for free slot or re-use previous one with the same sourceid.
