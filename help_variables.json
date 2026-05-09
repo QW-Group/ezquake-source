@@ -18865,7 +18865,7 @@
     },
     "scr_coloredfrags": {
       "default": "0",
-      "desc": "Frag messages will be colored according to your teamcolor/enemycolor settings.",
+      "desc": "Frag messages will be colored according to your teamcolor/enemycolor settings, unless scr_coloredfrags_team or scr_coloredfrags_enemy is set.",
       "group-id": "40",
       "remarks": "Needs scr_coloredText 1, cl_parsefrags 1, cl_loadfragfiles 1.",
       "type": "boolean",
@@ -18879,6 +18879,20 @@
           "name": "true"
         }
       ]
+    },
+    "scr_coloredfrags_enemy": {
+      "default": "",
+      "desc": "Overrides the enemy player name color used by scr_coloredfrags. Accepts an RGB value.",
+      "group-id": "40",
+      "remarks": "Use three values from 0 to 255, for example \"255 64 64\". Leave empty to use the enemy/player color from scr_coloredfrags.",
+      "type": "string"
+    },
+    "scr_coloredfrags_team": {
+      "default": "",
+      "desc": "Overrides the team player name color used by scr_coloredfrags. Accepts an RGB value.",
+      "group-id": "40",
+      "remarks": "Use three values from 0 to 255, for example \"64 255 64\". Leave empty to use the team/player color from scr_coloredfrags.",
+      "type": "string"
     },
     "scr_compactHud": {
       "default": "0",

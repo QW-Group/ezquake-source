@@ -2553,6 +2553,35 @@ char *CL_Color2ConColor(int color)
 	return buf;
 }
 
+static char *CL_Color2ConColorOverride(int color)
+{
+	cvar_t *override;
+	byte rgb[4];
+	static char buf[6];
+	extern cvar_t cl_teamtopcolor, cl_enemytopcolor;
+	extern cvar_t scr_coloredfrags_team, scr_coloredfrags_enemy;
+
+	if (scr_coloredfrags_team.string[0] && color == cl_teamtopcolor.integer) {
+		override = &scr_coloredfrags_team;
+	}
+	else if (scr_coloredfrags_enemy.string[0] && color == cl_enemytopcolor.integer) {
+		override = &scr_coloredfrags_enemy;
+	}
+	else {
+		return CL_Color2ConColor(color);
+	}
+
+	if (StringToRGB_W(override->string, rgb) < 3) {
+		return CL_Color2ConColor(color);
+	}
+	buf[0] = '&';
+	buf[1] = 'c';
+	RGBToString(rgb, buf + 2);
+	buf[5] = 0;
+
+	return buf;
+}
+
 // Will add colors to nicks in "ParadokS rides JohnNy_cz's rocket"
 // source - source frag message, dest - destination buffer, destlen - length of buffer
 // cff - see the cfrags_format definition 
@@ -2564,8 +2593,8 @@ static wchar* CL_ColorizeFragMessage (const wchar *source, cfrags_format *cff)
 
 	dest[0] = 0; // new string
 
-	qwcslcpy(col1, str2wcs(CL_Color2ConColor(cff->p1col)), sizeof(col1)/sizeof(wchar));
-	qwcslcpy(col2, str2wcs(CL_Color2ConColor(cff->p2col)), sizeof(col2)/sizeof(wchar));
+	qwcslcpy(col1, str2wcs(CL_Color2ConColorOverride(cff->p1col)), sizeof(col1)/sizeof(wchar));
+	qwcslcpy(col2, str2wcs(CL_Color2ConColorOverride(cff->p2col)), sizeof(col2)/sizeof(wchar));
 
 	// before 1st nick
 	qwcslcpy(dest, source, bound(0, cff->p1pos + 1, destlen));
