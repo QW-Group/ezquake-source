@@ -2582,6 +2582,28 @@ static char *CL_Color2ConColorOverride(int color)
 	return buf;
 }
 
+static void CL_CopyFragName(wchar *dest, const wchar *source, int len, int destlen)
+{
+	extern cvar_t scr_coloredfrags_normalize;
+
+	char name[MAX_SCOREBOARDNAME];
+	int i;
+
+	if (!scr_coloredfrags_normalize.integer) {
+		qwcslcpy(dest, source, bound(0, len + 1, destlen));
+		return;
+	}
+
+	len = bound(0, len, sizeof(name) - 1);
+	for (i = 0; i < len; i++) {
+		name[i] = source[i];
+	}
+	name[len] = 0;
+
+	Q_normalizetext(name);
+	qwcslcpy(dest, str2wcs(name), bound(0, len + 1, destlen));
+}
+
 // Will add colors to nicks in "ParadokS rides JohnNy_cz's rocket"
 // source - source frag message, dest - destination buffer, destlen - length of buffer
 // cff - see the cfrags_format definition 
@@ -2607,7 +2629,7 @@ static wchar* CL_ColorizeFragMessage (const wchar *source, cfrags_format *cff)
 	destlen -= (len = qwcslen(dest));
 	dest += len;
 	// 1st nick
-	qwcslcpy(dest, source + cff->p1pos, bound(0, cff->p1len + 1, destlen));
+	CL_CopyFragName(dest, source + cff->p1pos, cff->p1len, destlen);
 	destlen -= (len = qwcslen(dest));
 	dest += len;
 	// color off
@@ -2628,7 +2650,7 @@ static wchar* CL_ColorizeFragMessage (const wchar *source, cfrags_format *cff)
 		destlen -= (len = qwcslen(dest));
 		dest += len;
 		// 2nd nick
-		qwcslcpy(dest, source + cff->p2pos, bound(0, cff->p2len + 1, destlen));
+		CL_CopyFragName(dest, source + cff->p2pos, cff->p2len, destlen);
 		destlen -= (len = qwcslen(dest));
 		dest += len;
 		// color off

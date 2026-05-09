@@ -18887,6 +18887,22 @@
       "remarks": "Use three values from 0 to 255, for example \"255 64 64\". Leave empty to use the enemy/player color from scr_coloredfrags.",
       "type": "string"
     },
+    "scr_coloredfrags_normalize": {
+      "default": "0",
+      "desc": "Normalizes player names in colored frag messages by translating red chars to white chars.",
+      "group-id": "40",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Normalization off.",
+          "name": "false"
+        },
+        {
+          "description": "Normalization on.",
+          "name": "true"
+        }
+      ]
+    },
     "scr_coloredfrags_team": {
       "default": "",
       "desc": "Overrides the team player name color used by scr_coloredfrags. Accepts an RGB value.",
