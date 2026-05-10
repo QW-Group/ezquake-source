@@ -115,6 +115,9 @@ cvar_t	cl_hud					= {"cl_hud", "1"};	// QW262 HUD.
 cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1"};
 cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
 cvar_t	scr_coloredfrags		= {"scr_coloredfrags", "0"};
+cvar_t	scr_coloredfrags_team		= {"scr_coloredfrags_team", ""};
+cvar_t	scr_coloredfrags_enemy		= {"scr_coloredfrags_enemy", ""};
+cvar_t	scr_coloredfrags_normalize	= {"scr_coloredfrags_normalize", "0"};
 
 cvar_t	scr_cursor_scale		= {"scr_cursor_scale", "0.2"};			// The mouse cursor scale.
 cvar_t	scr_cursor_iconoffset_x	= {"scr_cursor_iconoffset_x", "0"};	// How much the cursor icon should be offseted from the cursor.
@@ -1108,6 +1111,9 @@ void SCR_Init (void)
 		Cvar_Register(&show_velocity_3d_offset_down);
 
 		Cvar_Register(&scr_coloredfrags);
+		Cvar_Register(&scr_coloredfrags_team);
+		Cvar_Register(&scr_coloredfrags_enemy);
+		Cvar_Register(&scr_coloredfrags_normalize);
 
 		Cmd_AddCommand("calc_fov", tmp_calc_fov);
 
