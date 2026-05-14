@@ -476,12 +476,6 @@
     "description": "Prints manual info about given variable or command into the console.",
     "syntax": "<variable or command name>"
   },
-  "dev_cache_print": {
-    "system-generated": true
-  },
-  "dev_cache_report": {
-    "system-generated": true
-  },
   "dev_dump_defaults": {
     "system-generated": true
   },
@@ -495,9 +489,6 @@
     "system-generated": true
   },
   "dev_help_verify_config": {
-    "system-generated": true
-  },
-  "dev_hunk_print": {
     "system-generated": true
   },
   "dev_physicsnormalsave": {
@@ -971,18 +962,11 @@
     "syntax": "<filename>"
   },
   "loadFragfile": {
-    "system-generated": true
+    "description": "Loads the specified fragfile."
   },
   "loadcharset": {
     "description": "You can change your console font from within ezQuake. Put all your charset images in qw/textures/charsets/*.png (and *.tga) and use /loadcharset XXX to load XXX.png (or tga).\n\"/loadcharset original\" will restore the 8bit font in your gfx.wad (this is default).",
     "remarks": "This command is just a 'shortcut' for the new gl_consolefont variable."
-  },
-  "loadfont": {
-    "system-generated": true
-  },
-  "loadfragfile": {
-    "description": "Loads the specified fragfile.",
-    "syntax": "<filename>"
   },
   "loadloc": {
     "description": "Loads a loc file (must be located in id1/locs, qw/locs, or ezquake/locs.\nThe \".loc\" extension is optional, for example, \"loadloc dm6\"; if the file name has no extension, use its explicit name (\"loadloc dm6.\").",
@@ -1015,9 +999,6 @@
   },
   "locations_savefile": {
     "system-generated": true
-  },
-  "locname": {
-    "description": "Create a new location in the current spot."
   },
   "log": {
     "description": "If you type \"log filename\" it will log console to filename.log in your gamedir.\nIt overwrites logs without asking.",
@@ -1066,26 +1047,14 @@
   "menu_demos": {
     "description": "This command will display the demos menu."
   },
-  "menu_fps": {
-    "description": "This command will display the fps menu."
-  },
   "menu_help": {
     "description": "This command will display the help menu."
-  },
-  "menu_keys": {
-    "description": "This command will display the keys menu."
   },
   "menu_load": {
     "description": "This command will display the singleplayer load menu."
   },
   "menu_main": {
     "description": "This command will display the main menu."
-  },
-  "menu_mp3_control": {
-    "description": "This command will display the mp3 menu."
-  },
-  "menu_mp3_playlist": {
-    "description": "This command will display the mp3 playlist menu."
   },
   "menu_multiplayer": {
     "description": "This command will display the multiplayer menu."
@@ -1099,17 +1068,11 @@
   "menu_save": {
     "description": "This command will display the singleplayer save menu."
   },
-  "menu_setup": {
-    "description": "This command will display the setup menu."
-  },
   "menu_singleplayer": {
     "description": "This command will display the singleplayer menu."
   },
   "menu_slist": {
     "description": "This command will display the server browser."
-  },
-  "menu_video": {
-    "description": "This command will display the video menu."
   },
   "messagemode": {
     "description": "Prompts for string to broadcast to all other players."
@@ -1128,55 +1091,6 @@
   },
   "move": {
     "system-generated": true
-  },
-  "mp3_fadeout": {
-    "description": "Like stop but fades out."
-  },
-  "mp3_fforward": {
-    "description": "Fast forward 5seconds."
-  },
-  "mp3_loadplaylist": {
-    "description": "Loads the playlist filename.m3u\n\nExample:\nmp3_loadplaylist top10\n - loads top10.m3u.",
-    "syntax": "<filename>"
-  },
-  "mp3_next": {
-    "description": "Next song."
-  },
-  "mp3_pause": {
-    "description": "Pause mp3."
-  },
-  "mp3_play": {
-    "description": "Play mp3."
-  },
-  "mp3_playlist": {
-    "description": "Displays playlist. Currently playing track is highlighted."
-  },
-  "mp3_playtrack": {
-    "description": "Play track number #num from playlist.\n\nExample:\nmp3_playtrack 5\n - plays track 5 from playlist.",
-    "syntax": "<track>"
-  },
-  "mp3_prev": {
-    "description": "Previous song."
-  },
-  "mp3_repeat": {
-    "description": "Repeat playlist.",
-    "syntax": "<off|on>"
-  },
-  "mp3_rewind": {
-    "description": "Rewind 5seconds."
-  },
-  "mp3_shuffle": {
-    "description": "Shuffle mp3s.",
-    "syntax": "<off|on>"
-  },
-  "mp3_songinfo": {
-    "description": "Displays song title and other info like time elapsed, total time, and whether paused, stopped or playing."
-  },
-  "mp3_startwinamp": {
-    "description": "Starts winamp if it is not running."
-  },
-  "mp3_stop": {
-    "description": "Stop mp3."
   },
   "mp3_volume": {
     "system-generated": true
@@ -1312,9 +1226,6 @@
   },
   "qtv_query_sourcelist": {
     "system-generated": true
-  },
-  "qtv_reconnect": {
-    "description": "Reconnect to last QTV server the client was connected to."
   },
   "qtv_status": {
     "system-generated": true
@@ -1558,9 +1469,6 @@
   "score_enemy": {
     "description": "HUD element which displays amount of frags made by all the enemies."
   },
-  "score_own": {
-    "description": "HUD element which display your (or the person's you are observing) amount of frags."
-  },
   "score_position": {
     "description": "HUD element which displays your position on the frag leaders board."
   },
@@ -1582,9 +1490,6 @@
   },
   "serverinfo": {
     "description": "Reports the current server info."
-  },
-  "serverstatus": {
-    "description": "Prints the status of the ezQuake server."
   },
   "set": {
     "arguments": [
@@ -1788,22 +1693,6 @@
   "svadmin": {
     "system-generated": true
   },
-  "sys_forget_sandbox": {
-    "description": "Clears the currently selected sandbox directory. On the next restart, ezQuake will prompt you to select a directory again.",
-    "remarks": "macOS only"
-  },
-  "tcl_eval": {
-    "description": "Execute <string> as Tcl code.",
-    "syntax": "<string>"
-  },
-  "tcl_exec": {
-    "description": "Execute a config as Tcl script.",
-    "syntax": "<filename>"
-  },
-  "tcl_proc": {
-    "description": "Execute a Tcl procedure <name> with parameters <parameters>. Procedure must be defined before thru tcl_eval or tcl_exec commands.",
-    "syntax": "<name> [parameters]"
-  },
   "tcpconnect": {
     "arguments": [
       {
@@ -1944,9 +1833,6 @@
   "track": {
     "system-generated": true
   },
-  "track-": {
-    "description": "This means when you are spectating or watching an mvd, keys will automatically be assigned to track certain players.\nSo in a 4v4 8 keys are needed, the first 4 make you track the 4 players in the first team and the last 4 make you track the second team."
-  },
   "track1": {
     "system-generated": true
   },
@@ -2056,17 +1942,11 @@
   "vid_displaylist": {
     "system-generated": true
   },
-  "vid_forcemode": {
-    "description": "This command will force ezQuake to use a certain video mode."
-  },
   "vid_fullscreen": {
     "description": "This command will switch to a fullscreen video mode specified in the \"vid_fullscreen_mode\" variable."
   },
   "vid_gfxinfo": {
     "description": "This command will print out useful information about your video card, GL version, and refresh rate, video mode (width/height resolution and color depth) to console.\nUseful to make sure everything is right, and also to screenshot to show other people."
-  },
-  "vid_minimize": {
-    "description": "This command will minimize the windowed game screen.\nIt was made available because the game takes control over the mouse when it is moved onto the game window thus prohibiting the normal minimization of the game window."
   },
   "vid_modelist": {
     "description": "Prints all supported video modes."
@@ -2076,12 +1956,6 @@
   },
   "vid_restart": {
     "description": "Will restart your video renderer. Needed for some changes to take affect."
-  },
-  "vid_testmode": {
-    "description": "This command will switch to the specified video mode for 5-seconds in order to test it."
-  },
-  "vid_windowed": {
-    "description": "This command will switch the a windowed video mode specified in the \"vid_windowed_mode\" variable."
   },
   "viewalias": {
     "description": "Example:\nviewalias mystatus\n - prints mystatus alias."
