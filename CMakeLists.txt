@@ -657,7 +657,6 @@ set(client
         ${SOURCE_DIR}/EX_browser_net.c
         ${SOURCE_DIR}/EX_browser_pathfind.c
         ${SOURCE_DIR}/EX_browser_ping.c
-        ${SOURCE_DIR}/EX_browser_qtvlist.c
         ${SOURCE_DIR}/EX_browser_sources.c
         ${SOURCE_DIR}/EX_qtvlist.c
         ${SOURCE_DIR}/cd_null.c
