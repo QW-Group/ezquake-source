@@ -234,7 +234,6 @@ cvar_t gl_modulate                         = {"gl_modulate", "1"};
 cvar_t gl_outline                          = {"gl_outline", "0"};
 cvar_t gl_outline_color_world              = {"gl_outline_color_world", "0 0 0"};
 cvar_t gl_outline_color_model              = {"gl_outline_color_model", "0 0 0"};
-cvar_t gl_outline_scale_world              = {"gl_outline_scale_world", "1"};
 cvar_t gl_outline_scale_model              = {"gl_outline_scale_model", "1"};
 cvar_t gl_outline_world_depth_threshold    = {"gl_outline_world_depth_threshold", "4"};
 cvar_t gl_outline_world_normal_threshold   = {"gl_outline_world_normal_threshold", "0.997"};
@@ -727,7 +726,6 @@ void R_Init(void)
 	Cvar_Register(&gl_outline);
 	Cvar_Register(&gl_outline_color_world);
 	Cvar_Register(&gl_outline_color_model);
-	// Cvar_Register(&gl_outline_scale_world);
 	Cvar_Register(&gl_outline_scale_model);
 	Cvar_Register(&gl_outline_world_depth_threshold);
 	Cvar_Register(&gl_outline_world_normal_threshold);
