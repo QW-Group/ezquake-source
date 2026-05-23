@@ -164,8 +164,9 @@
     "type": "string"
   },
   "dateiso": {
-    "system-generated": true,
-    "teamplay-restricted": true
+    "description": "current local date and time in ISO-adjacent format YYYY-MM-DD_HH-MM.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "deathloc": {
     "flags": [
@@ -354,8 +355,9 @@
     "type": "string"
   },
   "timestamp": {
-    "system-generated": true,
-    "teamplay-restricted": true
+    "description": "current local date and time as a compact filesystem-safe string: YYYYMMDD-HHMM.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "took": {
     "flags": [
