@@ -167,10 +167,9 @@
     "type": "string"
   },
   "deathloc": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "map location name where the player last died, or tp_name_someplace if no death has been recorded this session.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "demolength": {
     "description": "returns the expected length of the current demo, in seconds",
@@ -212,16 +211,14 @@
     "teamplay-restricted": false
   },
   "lastip": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "IP address or hostname:port of the last server seen in console output, captured by an internal trigger pattern.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "lastloc": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "location name at time of last death if death occurred within the past 5 seconds; otherwise current location name.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "lastpowerup": {
     "description": "powerups last seen on the enemy within the past 5 seconds (e.g. \"quad pent\"); falls back to the value of tp_name_quad when no recent sighting.",
@@ -247,10 +244,9 @@
     "teamplay-restricted": false
   },
   "location": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "name of the player's current map location, as defined by the active .loc file.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "matchname": {
     "description": "current match name, derived from the active match-format template (e.g. \"duel/playerA_vs_playerB - [dm6]\"). Returns \"No match in progress\" when not connected.",
