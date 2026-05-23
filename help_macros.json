@@ -378,21 +378,18 @@
     "teamplay-restricted": true
   },
   "weapon": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "name of the currently active weapon, using tp_name_* cvar values (e.g. \"rl\", \"lg\").",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "weaponnum": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "currently active weapon as a slot number (1-8), or pre-selected best weapon number when cl_weaponpreselect is enabled.",
+    "teamplay-restricted": true,
+    "type": "integer"
   },
   "weapons": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "separator-delimited list of all weapons currently held, ordered from strongest to weakest (lg, rl, gl, sng, ng, ssg, sg, axe).",
+    "teamplay-restricted": false,
+    "type": "string"
   }
 }
