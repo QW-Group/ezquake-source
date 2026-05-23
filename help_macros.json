@@ -226,22 +226,19 @@
     "type": "string"
   },
   "latency": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current network latency in milliseconds, rounded to nearest integer.",
+    "teamplay-restricted": true,
+    "type": "integer"
   },
   "ledpoint": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "LED color code indicating the type of entity pointed at: red for enemy, green for teammate, yellow for powerup, blue for item.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "ledstatus": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "LED color code reflecting how many items the player currently needs: green for none, yellow for one, red for two or more.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "location": {
     "description": "name of the player's current map location, as defined by the active .loc file.",
@@ -269,16 +266,14 @@
     "type": "integer"
   },
   "need": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "separator-delimited list of items the player currently needs based on tp_need_* thresholds (e.g. \"armor health rl\").",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "ping": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current network latency in milliseconds, rounded to nearest integer. Alias for $latency.",
+    "teamplay-restricted": true,
+    "type": "integer"
   },
   "point": {
     "description": "name of the nearest item or entity the player is pointing at, as used in location-pointing messages; returns tp_name_nothing when the player is flashed.",
@@ -335,10 +330,9 @@
     "type": "string"
   },
   "tf_skin": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current player's skin name, with TeamFortress skin prefixes expanded to full class names (e.g. tf_demo -> demoman, tf_eng -> engineer).",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "time": {
     "description": "returns the local time in the format <hours>:<minutes>",
@@ -374,10 +368,9 @@
     "type": "boolean"
   },
   "triggermatch": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "full text of the console message that last fired a regexp trigger.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "weapon": {
     "description": "name of the currently active weapon, using tp_name_* cvar values (e.g. \"rl\", \"lg\").",
