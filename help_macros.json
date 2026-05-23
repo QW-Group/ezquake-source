@@ -325,12 +325,14 @@
     "type": "integer"
   },
   "team1": {
-    "system-generated": true,
-    "teamplay-restricted": true
+    "description": "name of the Nth team currently playing, alphabetically sorted; $team1 returns the first team, $team2 the second. In FFA (no teamplay), returns player names instead. Falls back to literal \"team1\"/\"team2\" when fewer teams exist.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "team2": {
-    "system-generated": true,
-    "teamplay-restricted": true
+    "description": "name of the Nth team currently playing, alphabetically sorted; $team1 returns the first team, $team2 the second. In FFA (no teamplay), returns player names instead. Falls back to literal \"team1\"/\"team2\" when fewer teams exist.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "tf_skin": {
     "flags": [
