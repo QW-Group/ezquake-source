@@ -130,10 +130,9 @@
     "teamplay-restricted": false
   },
   "conheight": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "console (virtual) resolution height in pixels.",
+    "teamplay-restricted": true,
+    "type": "integer"
   },
   "connectiontype": {
     "description": "returns the current type of the connection",
@@ -155,10 +154,9 @@
     "type": "string"
   },
   "conwidth": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "console (virtual) resolution width in pixels.",
+    "teamplay-restricted": true,
+    "type": "integer"
   },
   "date": {
     "description": "returns the current date in the format <day>.<month>.<year>",
@@ -191,10 +189,9 @@
     "type": "boolean"
   },
   "demotime": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current demo playback time in seconds (float). Intended for scripted and timed camera movement.",
+    "teamplay-restricted": true,
+    "type": "float"
   },
   "droploc": {
     "description": "returns the name of the location where the last backpack was dropped by the current player.",
@@ -264,10 +261,9 @@
     "teamplay-restricted": true
   },
   "matchstatus": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current match state: one of \"disconnected\", \"standby\", or \"normal\".",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "matchtype": {
     "flags": [
@@ -321,10 +317,9 @@
     "teamplay-restricted": true
   },
   "rand": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "random float in the range [0, 1).",
+    "teamplay-restricted": true,
+    "type": "float"
   },
   "rockets": {
     "description": "returns number of rockets held, regardless of weapon selected",
@@ -332,10 +327,9 @@
     "type": "integer"
   },
   "serverip": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current server IP address and port, in ip:port form.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "shells": {
     "description": "returns number of shells held, regardless of weapon selected",
