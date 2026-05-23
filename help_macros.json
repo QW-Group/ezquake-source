@@ -118,16 +118,14 @@
     "type": "string"
   },
   "colored_powerups": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "current powerups held as color-coded full names (quad, pent, ring), concatenated without separator.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "colored_short_powerups": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "current powerups held as compact color-coded initials (q=quad blue, r=ring yellow, p=pent red); output order is q-r-p. Returns empty string when no powerups held.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "conheight": {
     "description": "console (virtual) resolution height in pixels.",
@@ -226,10 +224,9 @@
     "teamplay-restricted": false
   },
   "lastpowerup": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "powerups last seen on the enemy within the past 5 seconds (e.g. \"quad pent\"); falls back to the value of tp_name_quad when no recent sighting.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "latency": {
     "flags": [
@@ -306,10 +303,9 @@
     "teamplay-restricted": false
   },
   "powerups": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "separator-delimited list of powerups currently held (quad, pent, ring, flag for CTF/TF); returns tp_name_none when none held.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "qt": {
     "description": "returns \" - useful to clear cvars in scripts",
