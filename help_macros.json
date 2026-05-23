@@ -349,22 +349,19 @@
     "type": "string"
   },
   "took": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "name of the last item picked up; returns tp_name_nothing if nothing has been picked up yet.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "tookatloc": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "last item picked up with its pickup location, in \"name at location\" format; returns tp_name_nothing when no item has been picked up.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "tookloc": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "map location name where the last item was picked up; returns tp_name_someplace when no item has been picked up.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "tp_powerups": {
     "description": "$colored_powerups or $colored_short_powerups, depending on value of tp_poweruptextstyle",
