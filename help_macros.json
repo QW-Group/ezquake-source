@@ -281,22 +281,19 @@
     "teamplay-restricted": true
   },
   "point": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "name of the nearest item or entity the player is pointing at, as used in location-pointing messages; returns tp_name_nothing when the player is flashed.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "pointatloc": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "pointed-at item name combined with its location, in \"name at location\" format; bounded by the tp_pointtimeout cvar and returns tp_name_nothing when the player is flashed or the timeout expires.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "pointloc": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "map location of the entity pointed at, or current location if no specific point location is available; returns tp_name_nothing when the player is flashed.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "powerups": {
     "description": "separator-delimited list of powerups currently held (quad, pent, ring, flag for CTF/TF); returns tp_name_none when none held.",
