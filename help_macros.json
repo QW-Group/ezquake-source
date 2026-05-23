@@ -255,10 +255,9 @@
     "teamplay-restricted": false
   },
   "matchname": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current match name, derived from the active match-format template (e.g. \"duel/playerA_vs_playerB - [dm6]\"). Returns \"No match in progress\" when not connected.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "matchstatus": {
     "description": "current match state: one of \"disconnected\", \"standby\", or \"normal\".",
@@ -266,10 +265,9 @@
     "type": "string"
   },
   "matchtype": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current match type keyword: one of duel, ffa, 2on2, 3on3, 4on4, tdm, arena, tfduel, tfclanwar, solo, coop, race, empty, unknown. Returns \"No match in progress\" when not connected.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "nails": {
     "description": "returns number of nails held, regardless of weapon selected",
