@@ -9,13 +9,13 @@
     "description": "When active the player will move backwards."
   },
   "+cl_wp_stats": {
-    "system-generated": true
+    "description": "Hold to show the weapon stats HUD overlay. Sets `hud_weaponstats_show` to 1, making the on-screen weapon accuracy panel visible. Release with `-cl_wp_stats` to hide it."
   },
   "+fire": {
-    "system-generated": true
+    "description": "Fires using a prioritized weapon list supplied as arguments (e.g. `+fire 3 5 2`). Selects the best available weapon from the list, issues the attack impulse, and tracks which key triggered the press so key-up correctly releases only the matching press. Use this for standard weapon-switch-and-fire binds. Release with `-fire`."
   },
   "+fire_ar": {
-    "system-generated": true
+    "description": "Anti-rollover variant of `+fire`. Fires and selects the best weapon from the supplied list, but tracks pressed keys in a separate stack (`cl.ar_keycodes`) so that releasing one of several simultaneously-held fire keys restores the weapon order and attack state of the key still held, rather than simply releasing attack. Use `+fire_ar` instead of `+fire` when binding fire to multiple keys that may overlap (e.g. different weapon-priority lists on mouse buttons held at the same time). Release with `-fire_ar`."
   },
   "+forward": {
     "description": "When active the player will move forward."
@@ -72,10 +72,10 @@
     "description": "When used it will activate objects in the game that have been designed to react at \"+use\""
   },
   "+voip": {
-    "system-generated": true
+    "description": "Hold to activate push-to-talk voice transmission. Sets bit 2 of `cl_voip_send`, enabling microphone capture and sending encoded voice data to the server. Release with `-voip` to stop transmitting."
   },
   "+zoom": {
-    "system-generated": true
+    "description": "Hold to enter zoom view. Saves the current fov and sensitivity values, then forces fov to 35 degrees and scales sensitivity proportionally so aim speed remains consistent at the narrower field of view. Release with `-zoom` to restore both values."
   },
   "-attack": {
     "description": "When used the player will stop firing the gun if \"+attack\" is active."
@@ -87,13 +87,13 @@
     "description": "When used the player will stop moving back if \"+back\" is active."
   },
   "-cl_wp_stats": {
-    "system-generated": true
+    "description": "Release callback for `+cl_wp_stats`. Hides the weapon stats HUD overlay (sets `hud_weaponstats_show` to 0). See `+cl_wp_stats`."
   },
   "-fire": {
-    "system-generated": true
+    "description": "Release callback for `+fire`. Cancels the attack impulse and clears the key-press tracking for the matching press. See `+fire`."
   },
   "-fire_ar": {
-    "system-generated": true
+    "description": "Release callback for `+fire_ar`. Pops the rollover key stack (`cl.ar_keycodes`) to restore the fire state of the key still held, rather than simply releasing attack like `-fire`. See `+fire_ar` for the rollover mechanism."
   },
   "-forward": {
     "description": "When used the player will stop moving forward if \"+forward\" is active."
@@ -150,10 +150,10 @@
     "description": "When used it will stop activating objects in the game that have been designed to react at \"+use\"."
   },
   "-voip": {
-    "system-generated": true
+    "description": "Release callback for `+voip`. Clears bit 2 of `cl_voip_send`, stopping push-to-talk voice transmission. See `+voip`."
   },
   "-zoom": {
-    "system-generated": true
+    "description": "Release callback for `+zoom`. Restores the saved fov and sensitivity values that `+zoom` overrode. See `+zoom`."
   },
   "acc_block": {
     "system-generated": true
