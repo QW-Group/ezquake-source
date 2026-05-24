@@ -910,7 +910,7 @@
     "description": "Ignores a team instead of players.\n\nExample:\nignore_team nine\n - ignores whole clan nine."
   },
   "ignore_voip": {
-    "system-generated": true
+    "description": "Adds a player to the VoIP-only ignore list, silencing their voice chat without affecting text messages. Accepts a player name or user ID (`ignore_voip <name|userid>`); with no argument, displays the current ignore lists. This is distinct from the text ignore command: a VoIP-ignored player can still send and receive text, but their voice transmission is suppressed via S_Voip_Ignore. The ignore state is in-memory and does not persist across sessions. Available only when the client is built with FTE_PEXT2_VOICECHAT support."
   },
   "ignorelist": {
     "description": "Prints ignore list."
@@ -1898,7 +1898,7 @@
     "description": "Removes team from ignore list."
   },
   "unignore_voip": {
-    "system-generated": true
+    "description": "Removes a player from the VoIP-only ignore list, restoring their voice chat. Accepts a player name or user ID (`unignore_voip <name|userid>`); with no argument, displays the current ignore lists. If the player was also on the text ignore list, text chat remains suppressed -- this command clears only the vignored flag. Available only when the client is built with FTE_PEXT2_VOICECHAT support."
   },
   "unset": {
     "description": "Removes user-created variable.",
