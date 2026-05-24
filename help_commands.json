@@ -419,17 +419,17 @@
     "syntax": "<start> <time> [avifile] | <stop>"
   },
   "demo_controls": {
-    "system-generated": true
+    "description": "Toggles the graphical demo controls overlay during demo playback. When turned on, displays an interactive HUD panel with playback controls (speed, jump, timeline). Press Escape inside the panel to dismiss it. Has no effect and prints an error if no demo is currently playing and the panel is not already shown."
   },
   "demo_jump": {
     "description": "Jumps playback to a point in time.\n\nExamples:\ndemo_jump 120\n - Jump playback to 120 seconds from the start of the demo.\ndemo_jump 4:30\n - Jump playback to 4 minutes and 30 seconds from the start of the demo.",
     "syntax": "[+|-][m:]<s>"
   },
   "demo_jump_end": {
-    "system-generated": true
+    "description": "Seeks to approximately 2 seconds before the final frame of the current demo. Requires a demo to be in active playback state. Prints an error and aborts the seek if you are already too close to the end -- \"too close\" is within 2 seconds of the destination normally, or within 10 seconds when the demo is in its intermission segment (the close-guard is more lenient during intermission). Also prints an error if not playing a demo or if the demo is not yet fully active."
   },
   "demo_jump_mark": {
-    "system-generated": true
+    "description": "Seeks forward in the current demo to the next demo mark (a pre-embedded timestamp anchor in the .qwd or .mvd file). Requires a demo to be in active playback state. If no mark is found before the end of the demo, playback advances as far as possible. Prints an error if not playing a demo or if the demo is not yet in the active state."
   },
   "demo_jump_status": {
     "arguments": [
@@ -1133,10 +1133,10 @@
     "system-generated": true
   },
   "mvdrecord": {
-    "system-generated": true
+    "description": "Records the currently active QTV/MVD stream to a local .mvd file. Usage: `mvdrecord <filename>`. Without arguments, reports whether recording is in progress and the current output path. Stops any existing MVD recording before starting a new one. Refuses to start when the client is mid-connection (`ca_connecting` state); permitted in both `ca_active` and fully `ca_disconnected` states. The file is written to the demo directory with a `.mvd` extension appended automatically."
   },
   "mvdstop": {
-    "system-generated": true
+    "description": "Stops an in-progress client-side MVD recording started with `mvdrecord`. Finalises the .mvd file by writing a disconnect packet and closing the file handle. Prints \"Completed demo\" on success, \"Not recording a demo\" if no MVD recording is active, or a bug notice if the recording flag is set but the file handle is unexpectedly null."
   },
   "netproblem": {
     "description": "HUD element - icon displayed when network traffic is experiencing problems like lost packets, large delay, etc."
@@ -1216,7 +1216,7 @@
     "system-generated": true
   },
   "qtv_fixuser": {
-    "system-generated": true
+    "description": "Manually overrides player userinfo fields for a specified user ID in a QTV stream, as a workaround for bugged QTV streams that send incorrect or missing player metadata. Usage: `qtv_fixuser <userid> <spectator|player> <name> [team] [topcolor] [bottomcolor]`. Without sufficient arguments, lists current players with their user IDs and frag counts. Only valid while viewing a QTV stream (`qtvplay`); has no effect on live server sessions or local demo playback."
   },
   "qtv_list": {
     "system-generated": true
@@ -1234,10 +1234,10 @@
     "system-generated": true
   },
   "qtvplay": {
-    "system-generated": true
+    "description": "Connects to and begins streaming from a QTV proxy. Usage: `qtvplay [stream@]hostname[:port] [password]`. The optional stream prefix selects a specific source on the proxy (e.g. `5@qtv.host:28000`). An HTTP watch URL (`http://host:port/watch.qtv?sid=N`) is also accepted and rewritten internally. A `.qtv` file path prefixed with `#` is accepted and dispatched to the appropriate join/observe/stream command found inside the file. Saves the connection address for use by `qtvreconnect`."
   },
   "qtvreconnect": {
-    "system-generated": true
+    "description": "Reconnects to the most recently used QTV proxy using the address and password saved from the last successful `qtvplay` call. Prints an error and does nothing if no previous QTV connection has been established in the current session."
   },
   "qtvusers": {
     "system-generated": true
@@ -1725,7 +1725,7 @@
     "syntax": "<filename>"
   },
   "timedemo2": {
-    "system-generated": true
+    "description": "Plays a demo at maximum speed and reports performance, like `timedemo`, but simulates playback at a fixed frame rate instead of uncapped. Usage: `timedemo2 <demoname> [fps]`. The optional fps argument sets the simulated frame rate; defaults to 308 fps and must be between 20 and 10000. This mode produces more consistent benchmark results across hardware compared to the classic uncapped timedemo."
   },
   "timerefresh": {
     "description": "This command will perform a 360 degree turn and calculate the frames-per-second rate."
