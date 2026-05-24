@@ -558,7 +558,7 @@
     "syntax": "<expression>"
   },
   "exec": {
-    "description": "Executes a config file from \\qw, \\id1 or \\ezquake."
+    "description": "Executes a config file from \\qw, \\id1 or \\ezquake. The companion command `serverexec` runs the same script routed to the server command buffer (`cbuf_server`) instead of the main client buffer -- useful for sending commands that should execute on the server side in listen-server builds."
   },
   "f_modified": {
     "description": "All the usual dm models, sounds, palettes etc are included in the check.\nIn Team Fortress the TF flag, dispensers and sentry guns are also checked. There is also an f_modified command which will print your f_modified response.",
@@ -1375,11 +1375,10 @@
     "description": "Reconnects to the last server/proxy."
   },
   "record": {
-    "description": "Records a demo.\n\nExample:\nrecord test\n - records test.qwd to qw folder",
-    "syntax": "<filename>"
+    "description": "Records a demo.\n\nExample:\nrecord test\n - records test.qwd to qw folder\n\nThe companion command `recordqwd` bypasses the listen-server routing branch and always records a client-side QWD; use `recordqwd` when the listen-server form of `record` would route the recording to the server-side MVD command instead."
   },
   "recordqwd": {
-    "system-generated": true
+    "description": "Forces client-side QWD demo recording, bypassing the listen-server routing branch in `CL_Record_f`. In a listen-server build, plain `record` may route to the server-side MVD recording command; `recordqwd` guarantees the recording is a client-side QWD file regardless of build configuration."
   },
   "register_qwurl_protocol": {
     "description": "Registers the qw:// URL scheme with the operating system so browsers and other applications can launch ezQuake directly from qw:// links. On Windows, writes registry entries under HKCU\\Software\\Classes\\qw to associate the scheme with the current ezQuake executable. On Linux, writes a .desktop file to ~/.local/share/applications/qw-url-handler.desktop and calls xdg-mime to activate it. macOS prints \"Not yet implemented\". Accepts an optional \"quiet\" argument to suppress the confirmation message. Available on Windows and Linux builds only."
@@ -1498,7 +1497,7 @@
     "system-generated": true
   },
   "serverexec": {
-    "system-generated": true
+    "description": "Routes the script to the server command buffer (`cbuf_server`) instead of the main client buffer used by `exec`. Useful in listen-server builds when the same script should be executed on the server side. Same script syntax as `exec`; same config-file lookup paths (\\qw, \\id1, \\ezquake)."
   },
   "serverinfo": {
     "description": "Reports the current server info."
@@ -1559,11 +1558,10 @@
     "description": "Sets a variable to the result of a richer expression than set_calc supports, using a dedicated expression evaluator (Expr_Eval). Syntax: `set_eval <cvar> <expression>`. The expression may produce an integer, float, boolean, or string result, which is written to the cvar accordingly. Blocked by the active ruleset during live matches (restrictSetEval flag); works freely in demos, spectator mode, and outside matches. Use set_calc for simple arithmetic or string operations; use set_eval when you need compound or multi-operator expressions that set_calc cannot handle."
   },
   "set_ex": {
-    "description": "Assigns a new value to a variable, expansion of %macros and variables is performed even in case if a parameter is inside the dual quotation marks.",
-    "syntax": "<cvar> <value>"
+    "description": "Assigns a new value to a variable, expansion of %macros and variables is performed even in case if a parameter is inside the dual quotation marks. The companion command `set_ex2` uses the same handler but skips fun-character parsing (`TP_ParseFunChars`), so color/special-character codes are passed through literally instead of expanded."
   },
   "set_ex2": {
-    "system-generated": true
+    "description": "Assigns a new value to a variable using the same handler as `set_ex`, but skips fun-character parsing (`TP_ParseFunChars`). Color/special-character codes in the value are passed through literally instead of being expanded. Useful when assigning values that already contain `$`/`^` sequences you want preserved exactly."
   },
   "set_tp": {
     "description": "Sets a cvar only when it carries the teamplay flag, preventing accidental writes to non-teamplay variables. Syntax: `set_tp <cvar> <value>`. If the named cvar does not exist yet it is created and tagged as a teamplay variable. If it exists but lacks the teamplay flag the command prints an error and does nothing. Useful in team-play scripts to ensure a value is only written to the intended teamplay slot."
@@ -1642,10 +1640,10 @@
     "description": "Reports information on the current connected clients and the server."
   },
   "stop": {
-    "description": "Stops demo recording."
+    "description": "Stops demo recording. The companion command `stopqwd` bypasses the listen-server routing branch in `CL_Stop_f` and always stops client-side QWD recording, whereas `stop` routes to the server-side MVD stop command in a listen-server build."
   },
   "stopqwd": {
-    "system-generated": true
+    "description": "Stops client-side QWD demo recording regardless of build configuration. Bypasses the listen-server routing branch in `CL_Stop_f`; whereas plain `stop` may route to the server-side MVD stop command in a listen-server build, `stopqwd` always stops the local client recording."
   },
   "stopsound": {
     "description": "Stops all sounds currently being played."
