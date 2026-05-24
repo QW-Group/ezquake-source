@@ -245,7 +245,7 @@
     "description": "HUD element that displays a bar representing your amount of health."
   },
   "batteryinfo": {
-    "system-generated": true
+    "description": "Reports the current battery status of the system via SDL's power info API. Prints one of: remaining charge percentage and estimated time (when on battery), charging progress, fully charged confirmation, or \"No battery available\" for desktop machines. Prints an error message if SDL cannot retrieve power state."
   },
   "bf": {
     "description": "This command shows a background screen flash that is the same one that is produced when the player picked up an item in the game.\nThis command basically serves no useful function except when people want to use it in scripts to give the user some visual feedback when an aliases is used for example."
@@ -565,7 +565,7 @@
     "remarks": "You need to install security files."
   },
   "f_ruleset": {
-    "system-generated": true
+    "description": "Provides ruleset fairness-check functionality. Usage: `f_ruleset [check]`. Without arguments, prints a help summary explaining the command's purpose and the meaning of the flag characters returned in replies (m = modified models/sounds, s = movement scripts, f = forced enemy skin, i = strafescript; + = enabled, - = disabled). With the \"check\" argument, broadcasts a \"f_ruleset\" say message to the server, prompting all clients to reply with their ruleset name and active feature flags. Spectators and clients who responded within the last 20 seconds are silently skipped when processing incoming replies."
   },
   "f_server": {
     "description": "Prints proxies you are using."
@@ -601,7 +601,7 @@
     "syntax": "<messages> <seconds> <silence>"
   },
   "floodprotmsg": {
-    "system-generated": true
+    "description": "Sets the message sent to a player who triggers flood protection on the server. Without arguments, displays the current flood protection message. With one quoted argument, sets the message to that string. Usage: `floodprotmsg \"<message>\"`. Server-side only. Companion to `floodprot`, which sets the trigger thresholds (messages / time window / silence duration). The message set here is what the silenced player sees when flood protection fires."
   },
   "flush": {
     "description": "This command will clear the current game cache.\nIt is usually used by developers to flush the memory of all game information and objects to test if the mechanism which handles the loading of the necessary files into memory works properly.\nSometimes the game cache can become filled with unnecessary information and may need to be flushed manually. This is usually not necessary since the game automatically flushes all the data between every map."
@@ -928,10 +928,13 @@
     "description": "Prints list of evdev devices.\nIf the list is empty, you probably don't have access rights to /dev/input/eventX\nsudo chmod 644 /dev/input/event* should help you."
   },
   "in_restart": {
-    "system-generated": true
+    "description": "Restarts the input subsystem (mouse and keyboard handling). Shuts down the current SDL2 input state, reinitialises it, and reactivates the mouse if it was active before the restart. Useful after changing input-related settings that require a subsystem reinitialisation to take effect."
   },
   "inc": {
     "description": "Increments a variable by one or adds to it the optional second argument.\nThere are no 'add' or 'dec' commands because 'inc' can handle both addition and subtraction.\n\nExample:\ninc sensitivity -2\n - subtracts 2 from sensitivity."
+  },
+  "irc": {
+    "description": "Provides access to the built-in IRC client. Usage: `irc <subcommand> [args]`. Supported subcommands: `connect` (connects using irc_user_nick / irc_server_address / irc_server_port / irc_server_password cvars, defaulting the nick to the player name), `disconnect`, `say <message>` (sends to current channel), `query <nick> <message>` (opens a private query and sends a message), `nick <newnick>` (changes nickname), `join <channel> [key]` / `part <channel>` (join or leave a channel), and `window next` / `prev` / `close` (navigates channel windows). Any unrecognised subcommand is sent as a raw IRC protocol string."
   },
   "itemsclock": {
     "description": "HUD element displaying items that will spawn soon in the game. Works only in MVD and QTV playback."
@@ -1085,6 +1088,9 @@
   },
   "messagemode2": {
     "description": "Prompts for string to broadcast to team members."
+  },
+  "messagemodeirc": {
+    "description": "Opens the console message input bar directed at the built-in IRC client. Text typed and submitted will be sent to the currently active IRC channel rather than to the game server. Silently has no effect unless the client is in the `ca_active` state (connected to a server). Available only in builds compiled with IRC support (`WITH_IRC`)."
   },
   "messagemodeqtvtogame": {
     "description": "Go into message mode for chatting in the QTV chat."
@@ -1765,7 +1771,7 @@
     "description": "Displays the menu screens."
   },
   "toggleproxymenu": {
-    "system-generated": true
+    "description": "Toggles the proxy configuration menu open or closed. When the proxy menu is already active, closes it and returns to the previous key destination; when the menu is not open, enters the proxy menu screen. Typically bound to a key for quick access to proxy settings without navigating the full menu tree."
   },
   "togglespec": {
     "description": "Toggles between spectator and player mode on the current server. If the spectator cvar is set (spectator mode is active), calls join to switch to player mode. If spectator is unset (player mode is active), calls observe to switch to spectator mode. Useful for binding a single key to flip between the two roles without two separate commands."
