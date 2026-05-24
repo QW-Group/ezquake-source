@@ -51,7 +51,7 @@
     "description": "When active the player will swim up when in the water."
   },
   "+qtv_delay": {
-    "system-generated": true
+    "description": "Pauses QTV stream playback while the key is held, letting the receive buffer fill. Releasing the key (via `-qtv_delay`) commits the accumulated buffer as a deliberate delay: `qtv_buffertime` is updated to the buffered duration in seconds and playback resumes from the buffered position. If no data was buffered when the key is released, playback resumes immediately with no delay applied. Only active during QTV playback."
   },
   "+right": {
     "description": "When active the player will turn right."
@@ -129,7 +129,7 @@
     "description": "When used the player will stop moving up if \"+moveup\" is active."
   },
   "-qtv_delay": {
-    "system-generated": true
+    "description": "Release callback for `+qtv_delay`. Commits the accumulated stream buffer as a deliberate delay: `qtv_buffertime` is updated to the buffered duration in seconds and playback resumes from the buffered position. See `+qtv_delay`."
   },
   "-right": {
     "description": "When used the player will stop turning right if \"+right\" is active."
@@ -1162,7 +1162,7 @@
     "description": "Connects to given server as spectator via fastest available path (ping-wise)."
   },
   "observeqtv": {
-    "system-generated": true
+    "description": "Connects to a QTV stream for the specified server IP, or for the currently viewed server if no argument is given. Usage: `observeqtv [ip]`. Looks up the server address in the cached QTV list and issues a `qtvplay <link>` command when a matching entry is found. Requires the QTV list cache to be ready (run `qtv_update` first if not); prints an error if the cache is still being rebuilt, or \"No QTV stream address found for ...\" if no matching entry is in the cache."
   },
   "order": {
     "description": "`order <element> <option>` -- controls the draw-order (z-order) of the named HUD element relative to all others. Option can be an integer (absolute order value), or one of the keywords: `backward` (decrease by 1), `forward` (increase by 1), `front` (bring to top), `back` (send to bottom). Running `order <element>` with no option prints the element's current order value. Example: `order teaminfo front`, `order clock backward`, `order fps 5`."
@@ -1228,16 +1228,16 @@
     "system-generated": true
   },
   "qtv_query_demolist": {
-    "system-generated": true
+    "description": "Queries a QTV proxy for its list of recorded demos. Usage: `qtv_query_demolist hostname[:port] [password]`. Opens a TCP connection to the proxy and sends a `DEMOLIST` request; results are buffered and printed asynchronously as the proxy responds. The companion command `qtv_query_sourcelist` sends a `SOURCELIST` request to the same proxy for the list of active streams instead."
   },
   "qtv_query_sourcelist": {
-    "system-generated": true
+    "description": "Queries a QTV proxy for its list of active sources (live streams). Usage: `qtv_query_sourcelist hostname[:port] [password]`. Opens a TCP connection to the proxy and sends a `SOURCELIST` request; results are buffered and printed asynchronously as the proxy responds. The companion command `qtv_query_demolist` sends a `DEMOLIST` request to the same proxy instead."
   },
   "qtv_status": {
     "system-generated": true
   },
   "qtv_update": {
-    "system-generated": true
+    "description": "Refreshes the internal QTV server list by spawning a background updater thread. The updated list is used by observeqtv and related commands to resolve the current server's QTV stream link. Prints an error if the required mutex is not initialised or if the thread cannot be created. Also registered as \"find_update\" (identical handler)."
   },
   "qtvplay": {
     "description": "Connects to and begins streaming from a QTV proxy. Usage: `qtvplay [stream@]hostname[:port] [password]`. The optional stream prefix selects a specific source on the proxy (e.g. `5@qtv.host:28000`). An HTTP watch URL (`http://host:port/watch.qtv?sid=N`) is also accepted and rewritten internally. A `.qtv` file path prefixed with `#` is accepted and dispatched to the appropriate join/observe/stream command found inside the file. Saves the connection address for use by `qtvreconnect`."
@@ -1246,7 +1246,7 @@
     "description": "Reconnects to the most recently used QTV proxy using the address and password saved from the last successful `qtvplay` call. Prints an error and does nothing if no previous QTV connection has been established in the current session."
   },
   "qtvusers": {
-    "system-generated": true
+    "description": "Lists all viewers currently watching the QTV stream you are connected to. Prints a table of numeric user IDs and display names, one per line, with a total count at the end. Only works during an active QTV playback session; if you are connected to a server but not watching QTV, the request is forwarded to the server instead."
   },
   "quit": {
     "description": "Exit - disconnects from the server and closes the client."
