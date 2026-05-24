@@ -1849,19 +1849,19 @@
     "syntax": "item1 item2 ... DO NOT USE QUOTES"
   },
   "track": {
-    "system-generated": true
+    "description": "Locks the spectator camera onto a specific player. Accepts a player name or user ID as its sole argument (usage: `track <userid> | <name>`). Only available while connected as a spectator. If multiview is active, targets the main view slot; the camera state is set to tracking mode and spec_locked is enabled, preventing free-fly until manually released."
   },
   "track1": {
-    "system-generated": true
+    "description": "In multiview mode, locks view slot 1 onto a specific player. Accepts a player name or user ID (usage: `track1 <userid> | <name> | off`). Pass 'off' to reset slot 1 to its default assignment. Only available while connected as a spectator. Companion commands `track2`, `track3`, and `track4` lock the corresponding view slots 2, 3, and 4 in the same manner."
   },
   "track2": {
-    "system-generated": true
+    "description": "In multiview mode, locks view slot 2 onto a specific player. Same shape as `track1` -- accepts a player name, user ID, or 'off' to reset. Only available while connected as a spectator."
   },
   "track3": {
-    "system-generated": true
+    "description": "In multiview mode, locks view slot 3 onto a specific player. Same shape as `track1` -- accepts a player name, user ID, or 'off' to reset. Only available while connected as a spectator."
   },
   "track4": {
-    "system-generated": true
+    "description": "In multiview mode, locks view slot 4 onto a specific player. Same shape as `track1` -- accepts a player name, user ID, or 'off' to reset. Only available while connected as a spectator."
   },
   "trackkiller": {
     "description": "Will switch view to the player who killed the player we are tracking at the moment."
