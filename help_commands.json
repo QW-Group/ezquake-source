@@ -986,19 +986,19 @@
     "description": "Legacy alias for `fs_locate`. Locates a file within the VFS search path and reports which search entry contains it. Prefer `fs_locate` in new configs."
   },
   "locations_add": {
-    "system-generated": true
+    "description": "Adds a new named location at the player's current position to the in-memory location list. Usage: `locations_add <name>` -- the name is a single argument (quote multi-word names). When spectating and tracking a player, the tracked player's origin is used instead of the camera position. The new entry is appended to the list and can later be saved with `locations_savefile`. Requires an active connection; prints an error if called while disconnected. Legacy alias: `addloc`."
   },
   "locations_clearall": {
-    "system-generated": true
+    "description": "Removes all locations from the in-memory location list and frees associated memory. Usage: `locations_clearall` -- takes no arguments. Prints the number of locations that were cleared. This does not delete any `.loc` file on disk; it only affects the runtime location database. Legacy alias: `clearlocs`."
   },
   "locations_loadfile": {
-    "system-generated": true
+    "description": "Loads a location file from the `locs/` directory into memory, replacing any currently loaded locations. Usage: `locations_loadfile <filename>` -- the `.loc` extension is added automatically if omitted. The file is parsed as lines of `<x> <y> <z> <name>`, where coordinates are stored as integers scaled up by 8 (file value = world coordinate * 8); the parser divides by 8 on load to recover the world coordinate. Names support `$loc_name_<item>` macro tokens that resolve against `loc_name_*` cvars. On success, prints the filename and number of points loaded; prints an error if the file cannot be found or is empty. Legacy alias: `loadloc`."
   },
   "locations_remove": {
-    "system-generated": true
+    "description": "Removes the location nearest to the player's current position from the in-memory location list. Usage: `locations_remove` -- takes no arguments. When spectating and tracking a player, the tracked player's position is used for the proximity search. The removed location's name and coordinates are printed to confirm which entry was deleted. Use `locations_savefile` afterward to persist the change to disk. Legacy alias: `removeloc`."
   },
   "locations_savefile": {
-    "system-generated": true
+    "description": "Saves the current in-memory location list to a file in the `locs/` directory. Usage: `locations_savefile <filename>` -- the `.loc` extension is added automatically if omitted. Each location is written as a line of `<x> <y> <z> <name>` where the integer coordinates are world units scaled by 8 (matching the format `locations_loadfile` parses). The command does nothing and prints an error if no locations are currently loaded. Legacy alias: `saveloc`."
   },
   "log": {
     "description": "If you type \"log filename\" it will log console to filename.log in your gamedir.\nIt overwrites logs without asking.",
