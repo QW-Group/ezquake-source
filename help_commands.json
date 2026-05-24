@@ -1090,7 +1090,7 @@
     "description": "Go into message mode for chatting in the QTV chat."
   },
   "mod": {
-    "system-generated": true
+    "description": "Server-side command that forwards the current console command to the running PR2 game VM. When a PR2 mod (native .so/.dll or .qvm bytecode) is loaded, typing an unrecognized command at the server console causes `mod` to dispatch a GAME_CONSOLE_COMMAND call into the VM, allowing the mod to handle it via its own ConsoleCommand export. If no PR2 VM is active the command is a no-op. Arguments are retrieved by the mod itself using trap_argc()/trap_argv() inside the VM."
   },
   "modfraglogfile": {
     "system-generated": true
@@ -1991,7 +1991,7 @@
     "system-generated": true
   },
   "vminfo": {
-    "system-generated": true
+    "description": "Prints diagnostic information about all registered PR2 virtual machines to the server console. For each VM slot with a loaded module it reports the module name and execution type (native, compiled-on-load, or interpreted), followed by the code segment length, instruction table length, and data segment size in bytes. Useful for confirming which game VM is active and whether it was JIT-compiled or run in bytecode mode."
   },
   "wait": {
     "description": "Adds one wait frame."
