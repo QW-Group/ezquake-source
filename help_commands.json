@@ -509,7 +509,7 @@
     "description": "Try it in cheats mode, start a map (devmap dm6) and type fly."
   },
   "dir": {
-    "system-generated": true
+    "description": "Legacy alias for `fs_dir`. Lists files in the VFS under a given directory. Prefer `fs_dir` in new configs."
   },
   "disconnect": {
     "description": "This command will disconnect you from the server/demo/proxy you are currently connected to."
@@ -617,25 +617,25 @@
     "description": "Enables logging of kills to a file.\nUseful for external frag polling programs.\nThe file name is frag_##.log"
   },
   "fs_diff": {
-    "system-generated": true
+    "description": "Debug command: performs a byte-by-byte comparison of two files. Usage: `fs_diff <file1> <file2>`. Both files are opened with `FS_NONE_OS` -- that is, as direct OS paths (no VFS search path, no pak/zip extraction). Reports whether the files match or identifies the byte offset of the first difference."
   },
   "fs_dir": {
-    "system-generated": true
+    "description": "Lists files in the VFS under a given directory, with optional filtering and display options. Usage: `fs_dir <directory> [file_suffix] [hidedir] [hideext] [hidesize]`. `<directory>` is a path within the VFS search path; an optional `<file_suffix>` filters results to files with that extension. Display flags: hidedir removes the directory prefix from each filename; hideext strips the file extension; hidesize suppresses the file size column. Each matching entry is printed with its size in bytes unless hidesize is set. Legacy alias: `dir`."
   },
   "fs_loadpak": {
-    "system-generated": true
+    "description": "Attempts to load one or more .pak files into the virtual filesystem search path. Usage: `fs_loadpak <pakname> [<pakname> ...]`. Each `<pakname>` is tried first as a bare path, then under ezquake/, qw/, and id1/ with a .pak extension appended. Note: the add operation is currently stubbed out (VFS-FIXME in source) and will always report failure; only fs_removepak reliably changes the active pak set. Cannot be used while connected to a server. Legacy alias: `loadpak`."
   },
   "fs_locate": {
-    "system-generated": true
+    "description": "Locates a file within the VFS search path and reports which search entry contains it. Usage: `fs_locate <filename>`. Prints the containing search path entry (directory or pak file). If the file is compressed inside an archive, prints \"File is compressed inside\" followed by the archive path. Prints \"Not found\" if the file does not exist in the search path. Legacy alias: `locate`."
   },
   "fs_path": {
-    "system-generated": true
+    "description": "Prints the current VFS search path to the console, showing all active directories and pak files in the order they are searched. Pure paths (server-enforced) are listed first, separated from regular paths by a dashed line. Takes no arguments."
   },
   "fs_removepak": {
-    "system-generated": true
+    "description": "Removes one or more .pak files from the virtual filesystem search path. Usage: `fs_removepak <pakname> [<pakname> ...]`. Each `<pakname>` is tried under ezquake/, qw/, and id1/ with a .pak extension; bare paths are NOT accepted for removal (to prevent accidental removal of generic names like 'pak'). The first successful match is removed and the file cache is flushed. Cannot be used while connected to a server. Legacy alias: `removepak`."
   },
   "fs_restart": {
-    "system-generated": true
+    "description": "Reloads all pack files in the current search path, rebuilding the VFS from scratch. Usage: `fs_restart [flags]`. With no argument (or 0), reloads all pack types (pak, pk3, pk4, doomwad, paklst). An optional numeric flags argument selects a subset of pack types to reload (bitmask: 2=pak, 4=pk3, 8=pk4, 16=doomwad, 32=paklst). If connected to a server, the client disconnects and reconnects automatically. Prints the resulting search path after reload (equivalent to fs_path)."
   },
   "fs_search": {
     "description": "Search the filesystem cache by suffix."
@@ -973,7 +973,7 @@
     "syntax": "<filename>"
   },
   "loadpak": {
-    "system-generated": true
+    "description": "Legacy alias for `fs_loadpak`. Attempts to load one or more `.pak` files into the VFS search path. Prefer `fs_loadpak` in new configs."
   },
   "loadsky": {
     "description": "Loads your skybox (qw\\env).\n\nExample:\nloadsky snow",
@@ -983,7 +983,7 @@
     "description": "Shows or sets localinfo variables. Useful for mod programmers who need to allow the admin to change settings.\nThis is an alternative storage space to the serverinfo space for mod variables. The variables stored in this space are not broadcast on the network.\nThis space also has a 32-kilobyte limit which is much greater then the 512-byte limit on the serverinfo space.\nSpecial Keys: (current map) (next map) - Using this combination will allow the creation of a custom map cycle without editing code.\n\nExamples:\nlocalinfo dm2 dm4\nlocalinfo dm4 dm6\nlocalinfo dm6 dm2"
   },
   "locate": {
-    "system-generated": true
+    "description": "Legacy alias for `fs_locate`. Locates a file within the VFS search path and reports which search entry contains it. Prefer `fs_locate` in new configs."
   },
   "locations_add": {
     "system-generated": true
@@ -1380,7 +1380,7 @@
     "description": "Remove the closest location (use teamsay to see which)."
   },
   "removepak": {
-    "system-generated": true
+    "description": "Legacy alias for `fs_removepak`. Removes one or more `.pak` files from the VFS search path. Prefer `fs_removepak` in new configs."
   },
   "reset": {
     "description": "`reset <element>` -- restores the named HUD element to its default screen-center position. Internally issues `place <element> screen`, `move <element> 0 0`, and `align <element> center center` as a single unit. Requires exactly one argument. Example: `reset clock`, `reset fps`."
