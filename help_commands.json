@@ -1768,10 +1768,10 @@
     "description": "Requests help at a location. Also gives your status."
   },
   "tp_msgitemsoon": {
-    "system-generated": true
+    "description": "Sends a team message indicating that an item at your location will spawn soon. Uses the TP_MSG_GENERIC macro: includes your current powerup status (if any) followed by \"item soon\" and your current location."
   },
   "tp_msgkillme": {
-    "system-generated": true
+    "description": "Sends a team message requesting a teammate to kill you at your current location. Reports the weapon you are holding (RL or LG) and remaining ammo, plus any extra rockets or cells you carry. Skipped entirely if you are already dead. If a teammate is in your point the message includes their name so the request is targeted."
   },
   "tp_msglost": {
     "description": "Will send a message to your teammates telling them you died at a location.\nAlso tells them how many enemies are there, and what weapon (if any) you dropped."
@@ -1780,7 +1780,7 @@
     "description": "Equivalent of %u (need macro).\nWill display what you need (health/armor/ammo)."
   },
   "tp_msgnocancel": {
-    "system-generated": true
+    "description": "Sends a team message signalling a negative response or cancellation, displayed in red as \"no/cancel\". Uses the TP_MSG_GENERIC macro: includes your current powerup status (if any) followed by the red-colored \"no/cancel\" text and your location."
   },
   "tp_msgpoint": {
     "description": "Will report to your team item you see in your point at its location.\nWill report team/enemy powerup if you, a teammate, or an enemy has a powerup and are in your point.",
@@ -1799,10 +1799,10 @@
     "description": "Will send a message to your teammates informing them your current location is safe.\nWill print nothing if there is enemy in your point.\nAlso reports your status."
   },
   "tp_msgslipped": {
-    "system-generated": true
+    "description": "Sends a team message reporting that an enemy slipped past you at your current location. Uses the TP_MSG_GENERIC macro: includes your current powerup status (if any) followed by \"enemy slipped\" and your location."
   },
   "tp_msgtfconced": {
-    "system-generated": true
+    "description": "TeamFortress-specific command that reports a concussion grenade event to your team. If an enemy is in your crosshair point, sends \"$point conced at [location]\"; otherwise sends the generic \"Enemy conced\" message. Appends the tp_name_filter string, which can be used in TF to tag the message for filter routing."
   },
   "tp_msgtook": {
     "description": "Informs your team of the last item you took.\nSaves each item in memory for 15 seconds."
@@ -1811,13 +1811,13 @@
     "description": "Requests a trick at a location.\nBest for cases like dm2 when you need a teammate to help you get quad from stairs."
   },
   "tp_msgutake": {
-    "system-generated": true
+    "description": "Sends a team message offering an item at your location for a teammate to take. Reports \"you take [item at location]\", or if a teammate is in your point, uses the shorter \"take [item at location]\" form addressed to them. Uses TP_FindPoint() to detect a nearby teammate and adjust the message wording accordingly."
   },
   "tp_msgwaiting": {
-    "system-generated": true
+    "description": "Sends a team message indicating you are waiting at your current location, typically used when holding a powerup spawn. Uses the TP_MSG_GENERIC macro: includes your current powerup status (if any) followed by \"waiting\" and your location."
   },
   "tp_msgyesok": {
-    "system-generated": true
+    "description": "Sends a team message with a positive affirmative response of \"yes/ok\" at your current location. Uses the TP_MSG_GENERIC macro: includes your current powerup status (if any) followed by \"yes/ok\" and your location."
   },
   "tp_pickup": {
     "description": "Item can be: quad, pent, ring, suit, ra, ya, ga, mh, health, lg, rl, gl, sng, ng, ssg, pack, cells, rockets, nails, shells, flag, armor, weapons, powerups, ammo, all, default, none"
