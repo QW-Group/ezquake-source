@@ -1958,7 +1958,7 @@
     "description": "Prints client version number and date into the console."
   },
   "vid_displaylist": {
-    "system-generated": true
+    "description": "Lists all SDL2 display outputs available to the system, printing each one as an index and display name (e.g. \"0: Generic PnP Monitor\"). Useful when configuring multi-monitor setups to identify the correct display index for vid_displayindex or similar cvars."
   },
   "vid_fullscreen": {
     "description": "This command will switch to a fullscreen video mode specified in the \"vid_fullscreen_mode\" variable."
@@ -1970,7 +1970,7 @@
     "description": "Prints all supported video modes."
   },
   "vid_reload": {
-    "system-generated": true
+    "description": "Performs a soft video reload without a full renderer restart. Reloads the palette and colormap, re-runs video startup, and clears any pending reload flag. Lighter-weight than `vid_restart`, which tears down and fully reinitialises the renderer. Used for `CVAR_RELOAD_GFX`-flagged cvars (texture/GFX settings such as `gl_picmip`, `gl_lerpimages`) that take effect as textures are reloaded. Distinct from `CVAR_LATCH_GFX`-flagged cvars, which require a full `vid_restart` (window recreation)."
   },
   "vid_restart": {
     "description": "Will restart your video renderer. Needed for some changes to take affect."
