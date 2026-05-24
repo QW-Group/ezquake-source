@@ -233,7 +233,7 @@
     "description": "Downloads all skins that is currently in use.\nUseful for refreshing skins without exiting the level."
   },
   "authenticate": {
-    "system-generated": true
+    "description": "Initiates or cancels server authentication using the login token loaded for cl_username. If already logged in (loginname is set on the local player slot), sends a logout command to the server and prints \"Logging out...\". Otherwise sends `cmd login \"<username>\"` (with the username quoted) to begin the authentication handshake. Requires cl_username to be set and a valid login token to be loaded from the configuration directory; prints guidance if either is missing. Must be connected to a server; prints \"Cannot authenticate, not connected\" otherwise."
   },
   "autotrack": {
     "description": "Toggles auto-tracking.\nAuto-tracking switches views for you when you are a spectator or when you are watching a demo or a broadcasted QTV match.\nIt chooses the best available autotrack - if you are spectator, looks for server-side command autotrack, if you are watching a demo or QTV stream, turns on both demo_autotrack and mvd_autotrack, mvd_autotrack will get turned off as soon as demo_autotrack data are found.\nAs a last resort if all previous autotrack are not available, cl_hightrack will be used."
@@ -671,7 +671,7 @@
     "remarks": "Needs cheats support by server."
   },
   "hash": {
-    "system-generated": true
+    "description": "Prints the internal hash value for a given string using the engine's sdbm-based hash function. Usage: `hash <string>`. Outputs an unsigned integer to the console. The hash is case-insensitive (letters are folded to uppercase before hashing). Primarily a developer diagnostic for inspecting cvar and alias lookup keys."
   },
   "heartbeat": {
     "description": "Forces a heartbeat to be sent to the master server.\nA heartbeat informs the master server of the server's IP address thus making sure that the master server knows that the server is still alive."
@@ -860,7 +860,7 @@
     "syntax": "<filename>"
   },
   "hud_fps_min_reset": {
-    "system-generated": true
+    "description": "Resets the minimum FPS and maximum frametime counters tracked by the HUD performance display. Sets cls.min_fps back to 9999.0 and cls.max_frametime back to 0.0, then triggers a fresh FPS calculation via CL_CalcFPS. Use this after a stutter spike to clear the worst-case reading and start a clean measurement window."
   },
   "hud_recalculate": {
     "description": "Refresh the positions of your HUD elements."
@@ -1246,7 +1246,7 @@
     "description": "Exit - disconnects from the server and closes the client."
   },
   "qwurl": {
-    "system-generated": true
+    "description": "Connects to a server or QTV stream using a qw:// URL. Usage: `qwurl <qw://host[:port][/command]>`. The URL must start with qw://. The optional path component selects the action: omitted or \"join\" or \"connect\" joins as a player; \"spectate\" or \"observe\" joins as a spectator; \"qtv[/password]\" connects to a QTV proxy. A challenge response path (\"challenge?...\") is also handled internally. Semicolons in the URL are rejected to prevent command injection. Example: `qwurl qw://qw.server.se:27500/spectate`."
   },
   "radar": {
     "description": "HUD element showing a map overview.",
@@ -1370,7 +1370,7 @@
     "system-generated": true
   },
   "register_qwurl_protocol": {
-    "system-generated": true
+    "description": "Registers the qw:// URL scheme with the operating system so browsers and other applications can launch ezQuake directly from qw:// links. On Windows, writes registry entries under HKCU\\Software\\Classes\\qw to associate the scheme with the current ezQuake executable. On Linux, writes a .desktop file to ~/.local/share/applications/qw-url-handler.desktop and calls xdg-mime to activate it. macOS prints \"Not yet implemented\". Accepts an optional \"quiet\" argument to suppress the confirmation message. Available on Windows and Linux builds only."
   },
   "removeip": {
     "description": "Removes an IP address from the server IP list.\n\nExamples:\nremoveip 123.123.123.123\nremoveip 123.123.123",
@@ -1750,7 +1750,7 @@
     "system-generated": true
   },
   "togglespec": {
-    "system-generated": true
+    "description": "Toggles between spectator and player mode on the current server. If the spectator cvar is set (spectator mode is active), calls join to switch to player mode. If spectator is unset (player mode is active), calls observe to switch to spectator mode. Useful for binding a single key to flip between the two roles without two separate commands."
   },
   "tp_msgcoming": {
     "description": "Will send a message to your teammates telling them where you are coming from, and what your status is.\nDoubles as tp_lost when you are dead (because you can't be coming from somewhere if you're dead)."
