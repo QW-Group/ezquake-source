@@ -1991,10 +1991,10 @@
     "syntax": "<name|userid>"
   },
   "unignoreAll": {
-    "description": "Removes all users from ignore list."
+    "description": "Clears the entire player text ignore list in one step. Takes no arguments. Note that VoIP-only ignores (set with ignore_voip) are stored separately and are not cleared by this command; use unignore_voip per player to remove those. The clear is in-memory only and does not persist across sessions."
   },
   "unignoreAll_team": {
-    "description": "Removes all ignored teams from ignore list."
+    "description": "Clears the entire team ignore list in one step, removing all team-level ignores added with ignore_team. Takes no arguments. Individual player ignores (set with ignore or ignore_voip) are stored separately and are unaffected. The clear is in-memory only and does not persist across sessions."
   },
   "unignore_id": {
     "description": "Removes userid from ignore list.",
