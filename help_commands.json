@@ -1693,6 +1693,15 @@
   "sv_usercmdtrace": {
     "system-generated": true
   },
+  "sv_web_get": {
+    "description": "Developer diagnostic command (SERVER_ONLY build) that sends a form-encoded HTTP request to the central.qw.nu authentication server. Takes a URL path, a request-id string, and optional key-value pairs: `sv_web_get <path> <request-id> [<key> <value> ...]`. The server base URL is taken from `sv_www_address`; an `authKey` field from `sv_www_authkey` is automatically appended to every request. Despite the name, the underlying curl layer sends a POST (not a GET) whenever form fields are present; `sv_web_get` and `sv_web_post` share the same `Web_SendRequest` implementation and the `post` flag is unused. Responses are printed to the server console via `Con_DPrintf` and may trigger a broadcast or demo-upload if the central server returns those directives."
+  },
+  "sv_web_post": {
+    "description": "Developer diagnostic command (SERVER_ONLY build) that sends a form-encoded HTTP POST request to the central.qw.nu authentication server. Takes a URL path, a request-id string, and optional key-value pairs: `sv_web_post <path> <request-id> [<key> <value> ...]`. The server base URL is taken from `sv_www_address`; `sv_www_authkey` is automatically included as the `authKey` form field. In practice this command is functionally identical to `sv_web_get` at the curl layer: both share the same `Web_SendRequest` implementation and the intended GET/POST distinction is not enforced in code. Intended for testing or manually triggering central-server API paths without a live match."
+  },
+  "sv_web_postfile": {
+    "description": "Developer diagnostic command (SERVER_ONLY build) that uploads a file to the central.qw.nu server via multipart HTTP POST. Syntax: `sv_web_postfile <path> <request-id> <file> [<key> <value> ...]`. The `<file>` argument can be a relative path under the game directory or the special token `*`, which resolves to the currently-recording MVD demo (fails with an error if no demo is active). Paths containing `.cfg` or lacking a slash are rejected as unsafe, and `FS_UnsafeFilename` is checked before the upload proceeds. The file is sent as the `file` form field; `sv_www_authkey` is added automatically. Unlike `sv_web_get`/`sv_web_post`, this command has a distinct implementation with its own file-open and safety-guard logic."
+  },
   "svadmin": {
     "system-generated": true
   },
