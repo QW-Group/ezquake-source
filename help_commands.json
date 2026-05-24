@@ -232,6 +232,12 @@
   "allskins": {
     "description": "Downloads all skins that is currently in use.\nUseful for refreshing skins without exiting the level."
   },
+  "ambient_fade": {
+    "description": "Legacy alias for the cvar `s_ambientfade`. Fade rate / distance for ambient sound attenuation. Prefer `s_ambientfade` in new configs."
+  },
+  "ambient_level": {
+    "description": "Legacy alias for the cvar `s_ambientlevel`. Volume multiplier for ambient sounds (water, wind, etc.). Prefer `s_ambientlevel` in new configs."
+  },
   "authenticate": {
     "description": "Initiates or cancels server authentication using the login token loaded for cl_username. If already logged in (loginname is set on the local player slot), sends a logout command to the server and prints \"Logging out...\". Otherwise sends `cmd login \"<username>\"` (with the username quoted) to begin the authentication handshake. Requires cl_username to be set and a valid login token to be loaded from the configuration directory; prints guidance if either is missing. Must be connected to a server; prints \"Cannot authenticate, not connected\" otherwise."
   },
@@ -335,8 +341,14 @@
   "check_maps": {
     "system-generated": true
   },
+  "cl_chatsound": {
+    "description": "Legacy alias for the cvar `s_chat_custom`. Controls which chat tiers play custom sounds (0 = none, 1 = mm1 & mm2, 2 = mm2 only). Prefer `s_chat_custom` in new configs."
+  },
   "cl_messages": {
     "description": "Prints amount and size of messages sent from server to ezQuake client."
+  },
+  "cl_truelightning": {
+    "description": "Legacy alias for the cvar `cl_fakeshaft`. Controls client-side lightning gun trail latency compensation (range 0 to 1). Prefer `cl_fakeshaft` in new configs."
   },
   "clear": {
     "description": "This command clears the console screen of any text."
@@ -360,6 +372,30 @@
     "description": "This command sets the color for the player's shirt and pants.",
     "remarks": "If only the shirt color is given, the pant color will match."
   },
+  "con_sound_mm1_file": {
+    "description": "Legacy alias for the cvar `s_mm1_file`. Sound file path played for level-1 (team-only) chat messages. Prefer `s_mm1_file` in new configs."
+  },
+  "con_sound_mm1_volume": {
+    "description": "Legacy alias for the cvar `s_mm1_volume`. Volume for level-1 (team-only) chat sound. Prefer `s_mm1_volume` in new configs."
+  },
+  "con_sound_mm2_file": {
+    "description": "Legacy alias for the cvar `s_mm2_file`. Sound file path played for level-2 (all-talk) chat messages. Prefer `s_mm2_file` in new configs."
+  },
+  "con_sound_mm2_volume": {
+    "description": "Legacy alias for the cvar `s_mm2_volume`. Volume for level-2 (all-talk) chat sound. Prefer `s_mm2_volume` in new configs."
+  },
+  "con_sound_other_file": {
+    "description": "Legacy alias for the cvar `s_otherchat_file`. Sound file path played for other chat messages. Prefer `s_otherchat_file` in new configs."
+  },
+  "con_sound_other_volume": {
+    "description": "Legacy alias for the cvar `s_otherchat_volume`. Volume for other chat sound. Prefer `s_otherchat_volume` in new configs."
+  },
+  "con_sound_spec_file": {
+    "description": "Legacy alias for the cvar `s_spec_file`. Sound file path played for spectator chat messages. Prefer `s_spec_file` in new configs."
+  },
+  "con_sound_spec_volume": {
+    "description": "Legacy alias for the cvar `s_spec_volume`. Volume for spectator chat sound. Prefer `s_spec_volume` in new configs."
+  },
   "connect": {
     "arguments": [
       {
@@ -372,6 +408,9 @@
   },
   "connectbr": {
     "description": "Connects to given server via fastest available path (ping-wise)."
+  },
+  "contrast": {
+    "description": "Legacy alias for the cvar `gl_contrast`. Contrast multiplier applied to the rendered framebuffer (typical range 1 to 3). Prefer `gl_contrast` in new configs."
   },
   "cuff": {
     "system-generated": true
@@ -477,6 +516,9 @@
   "demo_voice_volume": {
     "description": "Shows or sets track voice volume. See demo_voice_info for numbers.",
     "syntax": "<track|all> [volume]"
+  },
+  "demotimescale": {
+    "description": "Legacy alias for the cvar `cl_demospeed`. Playback speed multiplier for demos (1 = normal, 2 = double speed, etc.). Prefer `cl_demospeed` in new configs."
   },
   "describe": {
     "description": "Prints manual info about given variable or command into the console.",
@@ -671,12 +713,21 @@
   "gl_checkmodels": {
     "description": "Not well implemented yet. Quickly looks at the pmodel and emodel listed in every player's infokey and reports anything unusual it finds.\nBasically it saves you having to type \"users. user x\" and then comparing the models for everyone."
   },
+  "gl_gammacorrection": {
+    "description": "Legacy alias for the cvar `vid_gammacorrection`. Selects sRGB rendering context handling (0 = no sRGB, 1 = request sRGB, 2 = require sRGB). Prefer `vid_gammacorrection` in new configs."
+  },
   "gl_inferno": {
     "description": "Clientside (no one else can see it) hard-striking rocket, serves well for your entertainment."
+  },
+  "gl_lighting_colour": {
+    "description": "Legacy alias for the cvar `gl_lighting_color` (corrected spelling). Prefer `gl_lighting_color` in new configs."
   },
   "gl_setmode": {
     "description": "Quickly sets many variables to fit pre-defined scheme.\nTry using \"newtrails\" or \"vultwah\".",
     "syntax": "<modename>"
+  },
+  "gl_smoothfont": {
+    "description": "Legacy alias for the cvar `r_smoothtext`. Set to 0 for nearest filtering (sharp pixelated text), 1 for linear filtering (smooth text). Prefer `r_smoothtext` in new configs."
   },
   "god": {
     "description": "You are immortal with god mode on.",
@@ -979,6 +1030,9 @@
   "loadFragfile": {
     "description": "Loads the specified fragfile."
   },
+  "loadas8bit": {
+    "description": "Legacy alias for the cvar `s_loadas8bit`. Set to 1 to load sound samples as 8-bit (lower memory, lower quality). Prefer `s_loadas8bit` in new configs."
+  },
   "loadcharset": {
     "description": "You can change your console font from within ezQuake. Put all your charset images in qw/textures/charsets/*.png (and *.tga) and use /loadcharset XXX to load XXX.png (or tga).\n\"/loadcharset original\" will restore the 8bit font in your gfx.wad (this is default).",
     "remarks": "This command is just a 'shortcut' for the new gl_consolefont variable."
@@ -1163,6 +1217,9 @@
     "description": "You can fly and go thru objects free mode as spectator",
     "remarks": "Needs cheats support by server."
   },
+  "nosound": {
+    "description": "Legacy alias for the cvar `s_nosound`. Set to 1 to disable all sound playback (resets audio volume to silence). Prefer `s_nosound` in new configs."
+  },
   "nslookup": {
     "system-generated": true
   },
@@ -1213,6 +1270,9 @@
   "playvol": {
     "description": "Plays a sound at a given volume.\n\nExamples:\nplayvol items/protect.wav .5\nplayvol items/protect.wav 2",
     "syntax": "<filename> (volume)"
+  },
+  "precache": {
+    "description": "Legacy alias for the cvar `s_precache`. Set to 0 to disable automatic sound caching at startup. Prefer `s_precache` in new configs."
   },
   "profile": {
     "description": "Reports information about QuakeC stuff."
@@ -1489,6 +1549,24 @@
   "score_position": {
     "description": "HUD element which displays your position on the frag leaders board."
   },
+  "scr_printspeed": {
+    "description": "Legacy alias for the cvar `scr_centerspeed`. Print/display speed for center-screen messages (higher = faster reveal). Prefer `scr_centerspeed` in new configs."
+  },
+  "scr_weaponstats_frame_color": {
+    "description": "Legacy alias for the cvar `hud_weaponstats_frame_color`. Frame color of the HUD weapon stats panel. Prefer `hud_weaponstats_frame_color` in new configs."
+  },
+  "scr_weaponstats_order": {
+    "description": "Legacy alias for the cvar `hud_weaponstats_format`. Format string controlling the HUD weapon stats display order and layout. Prefer `hud_weaponstats_format` in new configs."
+  },
+  "scr_weaponstats_scale": {
+    "description": "Legacy alias for the cvar `hud_weaponstats_scale`. Scale factor for the HUD weapon stats panel. Prefer `hud_weaponstats_scale` in new configs."
+  },
+  "scr_weaponstats_x": {
+    "description": "Legacy alias for the cvar `hud_weaponstats_x`. X-position offset of the HUD weapon stats panel. Prefer `hud_weaponstats_x` in new configs."
+  },
+  "scr_weaponstats_y": {
+    "description": "Legacy alias for the cvar `hud_weaponstats_y`. Y-position offset of the HUD weapon stats panel. Prefer `hud_weaponstats_y` in new configs."
+  },
   "screenshot": {
     "arguments": [
       {
@@ -1625,6 +1703,9 @@
   },
   "snd_restart": {
     "description": "Legacy alias for `s_restart`. Restarts the sound system (shuts down the audio session, reinitialises the driver, and reprecaches sounds). Prefer `s_restart` in new configs."
+  },
+  "snd_show": {
+    "description": "Legacy alias for the cvar `s_show`. Sound debug printout level (0 = off, 1 = print active sound count, 2 = print volume/sample details). Prefer `s_show` in new configs."
   },
   "soundinfo": {
     "description": "Reports information on the sound system."
@@ -1969,6 +2050,9 @@
   },
   "vid_displaylist": {
     "description": "Lists all SDL2 display outputs available to the system, printing each one as an index and display name (e.g. \"0: Generic PnP Monitor\"). Useful when configuring multi-monitor setups to identify the correct display index for vid_displayindex or similar cvars."
+  },
+  "vid_framebuffer_palette": {
+    "description": "Legacy alias for the cvar `vid_software_palette`. Set to 0 to use hardware gamma (classic style), 1 to adjust gamma in post-processing. Prefer `vid_software_palette` in new configs."
   },
   "vid_fullscreen": {
     "description": "This command will switch to a fullscreen video mode specified in the \"vid_fullscreen_mode\" variable."
