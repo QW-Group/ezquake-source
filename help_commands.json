@@ -1430,13 +1430,13 @@
     "description": "Broadcasts a string to teammates.\n\nExample:\nsay_team stop boring!"
   },
   "sb_buildpingtree": {
-    "system-generated": true
+    "description": "Builds the ping tree used by the server browser to determine optimal routes to game servers via QW proxies. Runs a two-phase background process: Phase 1 initialises the tree and reads data from the server browser immediately; Phase 2 queries proxies for their ping data and runs Dijkstra's algorithm to compute shortest paths. Prints progress messages to the console. If a build is already in progress, prints \"Ping Tree is still being built...\" and returns without restarting."
   },
   "sb_pingsdump": {
     "description": "Dumps a list of pairs (IP address, ping) into the console based on the current content of the Server Browser list."
   },
   "sb_proxygetpings": {
-    "system-generated": true
+    "description": "Queries a QW proxy server at the given IP address and prints the ping list it reports for all servers it knows about. Usage: `sb_proxygetpings <ip>`. Useful for diagnosing proxy-assisted ping measurements in the server browser. Output is written to the console and terminates with \"End of list.\""
   },
   "sb_refresh": {
     "description": "Causes Server Browser refresh ping and status info for all servers."
