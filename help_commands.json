@@ -227,7 +227,7 @@
     "syntax": "[regexp]"
   },
   "align": {
-    "system-generated": true
+    "description": "`align <element> <ax> <ay>` -- sets the horizontal and vertical alignment of the named HUD element within its placement area. Horizontal values (ax): `left`, `center`, `right`, `before` (outside left), `after` (outside right). Vertical values (ay): `top`, `center`, `bottom`, `before` (outside top), `after` (outside bottom), `console` (below the console). Running `align <element>` with no alignment args prints the current alignment. Example: `align clock right bottom`, `align fps center console`."
   },
   "allskins": {
     "description": "Downloads all skins that is currently in use.\nUseful for refreshing skins without exiting the level."
@@ -680,7 +680,7 @@
     "description": "Enters manual pages. Use arrows, [Page Down], [Page Up], [Tab] and [Enter] for navigation."
   },
   "hide": {
-    "system-generated": true
+    "description": "`hide <element>` -- makes the named HUD element invisible by setting its show cvar to 0. Use `hide all` to hide every registered HUD element at once. Running `hide` with no argument prints usage and lists the current visibility status of all elements. Example: `hide teaminfo`, `hide clock`, `hide all`."
   },
   "hud262_add": {
     "arguments": [
@@ -1090,7 +1090,7 @@
     "system-generated": true
   },
   "move": {
-    "system-generated": true
+    "description": "`move <element> <x> <y>` -- sets the pixel offset of the named HUD element relative to its current placement and alignment anchor. Both x and y are floating-point values. Running `move <element>` with no coordinates prints the element's current x/y offset. Example: `move clock 10 5`, `move fps -20 0`."
   },
   "mp3_volume": {
     "system-generated": true
@@ -1159,7 +1159,7 @@
     "system-generated": true
   },
   "order": {
-    "system-generated": true
+    "description": "`order <element> <option>` -- controls the draw-order (z-order) of the named HUD element relative to all others. Option can be an integer (absolute order value), or one of the keywords: `backward` (decrease by 1), `forward` (increase by 1), `front` (bring to top), `back` (send to bottom). Running `order <element>` with no option prints the element's current order value. Example: `order teaminfo front`, `order clock backward`, `order fps 5`."
   },
   "packet": {
     "description": "Sends a packet with specified contents to the destination.\n\nExample:\npacket 123.123.123.123:27500 \"status\"",
@@ -1182,7 +1182,7 @@
     "system-generated": true
   },
   "place": {
-    "system-generated": true
+    "description": "`place <element> <area>` -- anchors the named HUD element to a named screen area or to another HUD element. Built-in area names are: `screen`, `top`, `view`, `sbar`, `ibar`, `hbar`, `sfree`, `ifree`, `hfree`. To anchor inside another element use `@elem`; to anchor outside it use the bare element name. Running `place <element>` with no area argument prints the element's current placement. An invalid area is rejected and the old value is restored. Example: `place fps view`, `place clock @ping`, `place ammo sbar`."
   },
   "play": {
     "description": "Plays a sound effect.\n\nExample:\nplay misc/runekey.wav",
@@ -1383,7 +1383,7 @@
     "system-generated": true
   },
   "reset": {
-    "system-generated": true
+    "description": "`reset <element>` -- restores the named HUD element to its default screen-center position. Internally issues `place <element> screen`, `move <element> 0 0`, and `align <element> center center` as a single unit. Requires exactly one argument. Example: `reset clock`, `reset fps`."
   },
   "rm": {
     "system-generated": true
@@ -1563,7 +1563,7 @@
     "description": "Lists the server with up to eight masters.\nWhen a server is listed with a master, the master is aware of the server's IP address and port and it is added to the list of current server connected to a master. A heartbeat is sent to the master from the server to indicated that the server is still running and alive.\n\nExamples:\nsetmaster 192.246.40.12:27002\nsetmaster 192.246.40.12:27002 192.246.40.12:27004"
   },
   "show": {
-    "system-generated": true
+    "description": "`show <element>` -- makes the named HUD element visible by setting its show cvar to 1. Use `show all` to make every registered HUD element visible at once. Running `show` with no argument prints usage and lists the current visibility status of all elements. Example: `show teaminfo`, `show clock`, `show all`."
   },
   "showskins": {
     "system-generated": true
@@ -1741,7 +1741,7 @@
     "description": "Brings the console up and down."
   },
   "togglehud": {
-    "system-generated": true
+    "description": "`togglehud <element | cvar>` -- toggles a HUD element between shown and hidden. If the argument matches a registered HUD element, its visibility is flipped; if it matches a cvar instead, the cvar value is toggled between 0 and 1. Requires exactly one argument; running without an argument prints usage. Example: `togglehud teaminfo`, `togglehud scr_fov`."
   },
   "togglemenu": {
     "description": "Displays the menu screens."
