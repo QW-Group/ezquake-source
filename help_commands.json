@@ -210,7 +210,7 @@
     "syntax": "<alias> <variable> [<options>]"
   },
   "alias_out": {
-    "system-generated": true
+    "description": "Removes the value of a cvar from the body of an alias. Syntax: `alias_out <alias> <cvar> [options]`. The options argument is a bitmask: bit 0 (value 1) performs a check-only pass without deleting the match; bit 1 (value 2) suppresses the \"not found\" error message when the cvar's value is absent from the alias. If the cvar's string is found inside the alias body it is excised in-place; otherwise an error is printed unless option bit 1 is set. Example: `alias_out myalias cl_weaponpreference` removes the current value of cl_weaponpreference from the myalias alias body, useful for dynamically collapsing toggle aliases."
   },
   "aliasedit": {
     "description": "Allows you to edit your alias in console manually.",
@@ -371,10 +371,10 @@
     "system-generated": true
   },
   "cvar_in": {
-    "system-generated": true
+    "description": "Inserts the value of one cvar into the string of another. Syntax: `cvar_in <cvar1> <cvar2> [options]`. The options bitmask mirrors alias_in: bit 0 (1) appends to the right instead of prepending to the left; bit 1 (2) skips insertion if cvar2's value already appears in cvar1; bit 2 (4) prints an error if the value is already present; bit 3 (8) creates cvar1 if it does not yet exist. cvar1 is modified in-place via Cvar_Set."
   },
   "cvar_out": {
-    "system-generated": true
+    "description": "Removes the value of one cvar from the string of another. Syntax: `cvar_out <cvar1> <cvar2> [options]`. Searches cvar1's string for cvar2's value and excises it if found, then writes the result back to cvar1 via Cvar_Set. Options bitmask: bit 0 (1) performs a check-only pass without modifying cvar1; bit 1 (2) suppresses the \"not found\" error when cvar2's value is absent from cvar1."
   },
   "cvar_reset": {
     "description": "Resets the cvar to default.\n\nExample:\ncvar_reset topcolor\n - sets topcolor to default.",
@@ -385,7 +385,7 @@
     "syntax": "[regex]"
   },
   "cvaredit": {
-    "system-generated": true
+    "description": "Loads a cvar's current value into the console input line for interactive editing. Syntax: `cvaredit <cvar>`. After calling this command the console input buffer is pre-filled with `/<cvarname> \"<currentvalue>\"` (with the value double-quoted) so you can adjust the value and press Enter to apply it, without retyping the name or the full current string. Useful for tweaking long values such as script aliases or complex weapon-priority strings. If the cvar does not exist an error is printed and nothing happens."
   },
   "cvarlist": {
     "description": "Print cvars."
@@ -1200,7 +1200,7 @@
     "description": "Reports information about QuakeC stuff."
   },
   "qstat": {
-    "system-generated": true
+    "description": "Queries a QuakeWorld server for its current status without connecting to it. Usage: `qstat <server_address>`. Sends a raw UDP status packet and prints a summary including hostname, map, game settings (deathmatch, teamplay, timelimit, fraglimit), password requirements, player count, and a ping/frags/name table for each player. The server address can include a port; if omitted, the default QW server port is used."
   },
   "qtv": {
     "arguments": [
@@ -1544,7 +1544,7 @@
     "syntax": "<cvar command cmdargs> | <cvar arg1 oper arg2>"
   },
   "set_eval": {
-    "system-generated": true
+    "description": "Sets a variable to the result of a richer expression than set_calc supports, using a dedicated expression evaluator (Expr_Eval). Syntax: `set_eval <cvar> <expression>`. The expression may produce an integer, float, boolean, or string result, which is written to the cvar accordingly. Blocked by the active ruleset during live matches (restrictSetEval flag); works freely in demos, spectator mode, and outside matches. Use set_calc for simple arithmetic or string operations; use set_eval when you need compound or multi-operator expressions that set_calc cannot handle."
   },
   "set_ex": {
     "description": "Assigns a new value to a variable, expansion of %macros and variables is performed even in case if a parameter is inside the dual quotation marks.",
@@ -1554,7 +1554,7 @@
     "system-generated": true
   },
   "set_tp": {
-    "system-generated": true
+    "description": "Sets a cvar only when it carries the teamplay flag, preventing accidental writes to non-teamplay variables. Syntax: `set_tp <cvar> <value>`. If the named cvar does not exist yet it is created and tagged as a teamplay variable. If it exists but lacks the teamplay flag the command prints an error and does nothing. Useful in team-play scripts to ensure a value is only written to the intended teamplay slot."
   },
   "setinfo": {
     "description": "Sets information about your FuhWorld user.\nUsed without a key it will list all of your current settings. Specifying a non-existent key and a value will create the new key."
@@ -1566,7 +1566,7 @@
     "description": "`show <element>` -- makes the named HUD element visible by setting its show cvar to 1. Use `show all` to make every registered HUD element visible at once. Running `show` with no argument prints usage and lists the current visibility status of all elements. Example: `show teaminfo`, `show clock`, `show all`."
   },
   "showskins": {
-    "system-generated": true
+    "description": "Lists the name and active skin for every non-spectator player currently on the server. Output is a two-column table (name, skin) with the name column width adjusted to the longest player name in the session. Only prints while connected to a server that has active players; produces no output if no players are present."
   },
   "sizedown": {
     "description": "Reduces the screen size."
@@ -2001,6 +2001,6 @@
     "description": "Records all IP addresses on the server IP list. The file name is listip.cfg."
   },
   "z_ext_list": {
-    "system-generated": true
+    "description": "Displays the ZQuake protocol extensions that are currently active on the connection to the server. Prints each active extension by name (e.g. PM_TYPE, VWEP, VIEWHEIGHT); prints NONE if no extensions are negotiated. The extension set is agreed during connection handshake and affects physics simulation, view height sync, weapon model visibility, and other protocol-level features. Useful for diagnosing unexpected movement or rendering behaviour by confirming which extensions the server supports."
   }
 }
