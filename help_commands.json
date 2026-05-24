@@ -260,6 +260,12 @@
   "bindlist": {
     "description": "Prints all binds."
   },
+  "cache_print": {
+    "description": "Lists all currently allocated entries in the hunk cache, one per line. Each line shows the allocation's size in kilobytes followed by its name (e.g., \"12.5 kB : skin/player\"). Takes no arguments. Use to inspect what content is resident in the cache between map loads."
+  },
+  "cache_report": {
+    "description": "Prints a one-line summary of hunk cache memory availability. Reports free megabytes and total hunk size (e.g., \"12.3 of 32.0 megabyte data cache free\"). Takes no arguments. Useful for a quick check of remaining cache headroom without the full per-entry listing that cache_print provides."
+  },
   "calc_fov": {
     "arguments": [
       {
@@ -866,7 +872,7 @@
     "description": "Refresh the positions of your HUD elements."
   },
   "hunk_print": {
-    "system-generated": true
+    "description": "Dumps the hunk memory allocator's block layout to the console. With no arguments, prints one totals line per named block group showing cumulative KB and name; with any argument (e.g., \"hunk_print all\"), prints every individual block with its address, size, and name. Also reports total block count and the split between low and high hunk usage. Use for low-level memory debugging when diagnosing hunk exhaustion."
   },
   "if": {
     "arguments": [
@@ -1124,13 +1130,13 @@
     "description": "Dumps statistics gathered from a MVD demo into a \"stats.xml\" file in the current working directory."
   },
   "mvd_list_items": {
-    "system-generated": true
+    "description": "Lists all persistent item-clock entries currently tracked during MVD demo playback, printed to the console as a series of ready-to-reuse mvd_name_item commands. Each line includes the item's world coordinates, type, label, and entity number as a comment. Useful for saving and restoring a named-item layout across demo sessions -- copy the output into a config or alias and replay it on the same map."
   },
   "mvd_name_item": {
-    "system-generated": true
+    "description": "Creates or updates a persistent respawn-clock entry for a map item during MVD demo playback. Takes coordinates and item type to locate the nearest matching entity. Usage: `mvd_name_item <x> <y> <z> <type> <label>`, where type is one of: axe, sg, ssg, ng, sng, gl, rl, lg, rg, qd, pt, ga, ya, ra, mh. If an entry for that entity already exists, its label is updated to the provided string and the entry is moved to the bottom of the sort order. If no entry exists yet, a new persistent placeholder clock is created -- but the provided label is NOT applied on first creation; run the command a second time (after the entity has spawned at least once) for the label to take effect. Run `mvd_list_items` to see the `mvd_name_item` commands for all currently tracked items."
   },
   "mvd_remove_item": {
-    "system-generated": true
+    "description": "Hides or suppresses the persistent respawn-clock entry for a specific item at a given map position during MVD demo playback. Usage: `mvd_remove_item <x> <y> <z> <type>`. Locates the entity of the specified type nearest to the coordinates and marks its clock as hidden so it no longer appears in the item overlay. If no persistent clock exists for that entity yet, a hidden placeholder is created to prevent the item from re-appearing when the demo restarts."
   },
   "mvdrecord": {
     "description": "Records the currently active QTV/MVD stream to a local .mvd file. Usage: `mvdrecord <filename>`. Without arguments, reports whether recording is in progress and the current output path. Stops any existing MVD recording before starting a new one. Refuses to start when the client is mid-connection (`ca_connecting` state); permitted in both `ca_active` and fully `ca_disconnected` states. The file is written to the demo directory with a `.mvd` extension appended automatically."
