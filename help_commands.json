@@ -483,28 +483,34 @@
     "syntax": "<variable or command name>"
   },
   "dev_dump_defaults": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
   },
   "dev_gfxbenchmarklightmaps": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
+  },
+  "dev_gfxtexturedump": {
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). Also requires a build compiled with `WITH_RENDERING_TRACE` and the rendering debug context active (`-r-debug` or `-r-trace` launch parameter). See source for behavior."
+  },
+  "dev_gfxtexturelist": {
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). Also requires a build compiled with `WITH_RENDERING_TRACE` and the rendering debug context active (`-r-debug` or `-r-trace` launch parameter). See source for behavior."
   },
   "dev_gfxtrace": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). Also requires a build compiled with `WITH_RENDERING_TRACE` and the rendering debug context active (`-r-debug` or `-r-trace` launch parameter). See source for behavior."
   },
   "dev_help_issues": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
   },
   "dev_help_verify_config": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
   },
   "dev_physicsnormalsave": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
   },
   "dev_physicsnormalset": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
   },
   "dev_physicsnormalshow": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
   },
   "dev_pointfile": {
     "description": "The pointfile command will load a .pts file and give a dotted line indicating where the leak(s) are on the level.",
