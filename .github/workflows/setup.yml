@@ -1,0 +1,34 @@
+name: Extract and Setup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Replace all files with zip contents
+      run: |
+        find . -mindepth 1 -maxdepth 1 \
+          ! -name '.git' \
+          ! -name 'ezquake-merged.zip' \
+          -exec rm -rf {} +
+
+        unzip -q ezquake-merged.zip
+        cp -r ezquake-merged/. .
+        rm -rf ezquake-merged
+        rm -f ezquake-merged.zip
+
+    - name: Commit
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add -A
+        git commit -m "Port unezQuake features: f_predict, mouseaccel, weapon prediction, nick override, colored f_version/f_system, rulesets extended"
+        git push
