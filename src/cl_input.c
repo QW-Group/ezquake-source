@@ -21,6 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "input.h"
 #include "pmove.h"		// PM_FLY etc
 #include "rulesets.h"
+#include "cl_mouseaccel.h"
+#include "cl_easyaircontrol.h"
 
 static void IN_AttackUp_CommonHide(void);
 
@@ -32,6 +34,8 @@ cvar_t cl_c2sdupe = { "cl_c2sdupe", "0" };
 cvar_t cl_forwardspeed = { "cl_forwardspeed","400" };
 cvar_t cl_smartjump = { "cl_smartjump", "1" };
 cvar_t cl_iDrive = { "cl_iDrive", "0", 0, Rulesets_OnChange_cl_iDrive };
+cvar_t cl_delay_input = { "cl_delay_input", "0" };
+cvar_t cl_smartspawn = { "cl_smartspawn", "0" };
 cvar_t cl_movespeedkey = { "cl_movespeedkey","2.0" };
 cvar_t cl_nodelta = { "cl_nodelta","0" };
 cvar_t cl_pitchspeed = { "cl_pitchspeed","150" };
@@ -57,6 +61,37 @@ cvar_t m_accel = { "m_accel", "0" };
 cvar_t m_accel_offset = { "m_accel_offset", "0" };
 cvar_t m_accel_power = { "m_accel_power", "2" };
 cvar_t m_accel_senscap = { "m_accel_senscap", "0" };
+cvar_t m_accel_type = { "m_accel_type", "0" };
+cvar_t m_accel_legacy = { "m_accel_legacy", "0" };
+cvar_t m_accel_classic_offset = { "m_accel_classic_offset", "0" };
+cvar_t m_accel_classic_accel = { "m_accel_classic_accel", "0" };
+cvar_t m_accel_classic_exponent = { "m_accel_classic_exponent", "2.0" };
+cvar_t m_accel_classic_cap = { "m_accel_classic_cap", "0" };
+cvar_t m_accel_linear_offset = { "m_accel_linear_offset", "0" };
+cvar_t m_accel_linear_accel = { "m_accel_linear_accel", "0" };
+cvar_t m_accel_linear_cap = { "m_accel_linear_cap", "0" };
+cvar_t m_accel_natural_offset = { "m_accel_natural_offset", "0" };
+cvar_t m_accel_natural_accel = { "m_accel_natural_accel", "0" };
+cvar_t m_accel_natural_limit = { "m_accel_natural_limit", "2.0" };
+cvar_t m_accel_jump_input = { "m_accel_jump_input", "0" };
+cvar_t m_accel_jump_output = { "m_accel_jump_output", "2.0" };
+cvar_t m_accel_jump_smooth = { "m_accel_jump_smooth", "0.5" };
+cvar_t m_accel_sync_speed = { "m_accel_sync_speed", "6.0" };
+cvar_t m_accel_sync_motivity = { "m_accel_sync_motivity", "1.5" };
+cvar_t m_accel_sync_smooth = { "m_accel_sync_smooth", "0.5" };
+cvar_t m_accel_sync_gamma = { "m_accel_sync_gamma", "1.0" };
+cvar_t m_accel_sync_min = { "m_accel_sync_min", "0.1" };
+cvar_t m_accel_sync_max = { "m_accel_sync_max", "5.0" };
+cvar_t m_accel_power_scale = { "m_accel_power_scale", "1.0" };
+cvar_t m_accel_power_exponent = { "m_accel_power_exponent", "0.05" };
+cvar_t m_accel_power_offset = { "m_accel_power_offset", "0" };
+cvar_t m_accel_power_cap = { "m_accel_power_cap", "0" };
+cvar_t m_accel_custom_points = { "m_accel_custom_points", "", CVAR_NONE, OnChange_m_accel_custom_points };
+cvar_t m_accel_smooth = { "m_accel_smooth", "0" };
+cvar_t m_accel_smooth_halflife = { "m_accel_smooth_halflife", "0" };
+cvar_t m_accel_cap_type = { "m_accel_cap_type", "0" };
+cvar_t m_accel_distance_mode = { "m_accel_distance_mode", "0" };
+cvar_t m_showspeed = { "m_showspeed", "0" };
 
 #ifdef JSS_CAM
 cvar_t cam_zoomspeed = { "cam_zoomspeed", "300" };
@@ -1090,6 +1125,9 @@ void CL_SendCmd(void)
 		Cam_Track(cmd);
 	}
 
+	if (cl_easyaircontrol.value && !(cl.onground) && !(cl.waterlevel >= 2) && cl.standby)
+		CL_EasyAirControl(cmd);
+
 	// Apply safestrafe if enabled on server
 	if ((movevars.safestrafe > 0 || cl_safestrafe.value > 0) && !cl.spectator) {
 		CL_ApplySafestrafe(cmd);
@@ -1290,6 +1328,9 @@ void CL_InitInput(void)
 	Cvar_Register(&cl_pitchspeed);
 	Cvar_Register(&cl_anglespeedkey);
 	Cvar_Register(&cl_iDrive);
+	Cvar_Register(&cl_delay_input);
+	Cvar_Register(&cl_smartspawn);
+	Cvar_Register(&cl_easyaircontrol);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_MISC);
 	Cvar_Register(&lookspring);
@@ -1309,6 +1350,38 @@ void CL_InitInput(void)
 	Cvar_Register(&m_accel_power);
 	Cvar_Register(&m_accel_offset);
 	Cvar_Register(&m_accel_senscap);
+	Cvar_Register(&m_accel_type);
+	Cvar_Register(&m_accel_legacy);
+	Cvar_Register(&m_accel_classic_offset);
+	Cvar_Register(&m_accel_classic_accel);
+	Cvar_Register(&m_accel_classic_exponent);
+	Cvar_Register(&m_accel_classic_cap);
+	Cvar_Register(&m_accel_linear_offset);
+	Cvar_Register(&m_accel_linear_accel);
+	Cvar_Register(&m_accel_linear_cap);
+	Cvar_Register(&m_accel_natural_offset);
+	Cvar_Register(&m_accel_natural_accel);
+	Cvar_Register(&m_accel_natural_limit);
+	Cvar_Register(&m_accel_jump_input);
+	Cvar_Register(&m_accel_jump_output);
+	Cvar_Register(&m_accel_jump_smooth);
+	Cvar_Register(&m_accel_sync_speed);
+	Cvar_Register(&m_accel_sync_motivity);
+	Cvar_Register(&m_accel_sync_smooth);
+	Cvar_Register(&m_accel_sync_gamma);
+	Cvar_Register(&m_accel_sync_min);
+	Cvar_Register(&m_accel_sync_max);
+	Cvar_Register(&m_accel_power_scale);
+	Cvar_Register(&m_accel_power_exponent);
+	Cvar_Register(&m_accel_power_offset);
+	Cvar_Register(&m_accel_power_cap);
+	Cvar_Register(&m_accel_custom_points);
+	Cvar_Register(&m_accel_smooth);
+	Cvar_Register(&m_accel_smooth_halflife);
+	Cvar_Register(&m_accel_cap_type);
+	Cvar_Register(&m_accel_distance_mode);
+	Cvar_Register(&m_showspeed);
+	MouseAccel_Init();
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_NETWORK);
 	Cvar_Register(&cl_nodelta);
@@ -1339,3 +1412,10 @@ void IN_ClearProtectedKeys(void)
 	KeyUp_common(&in_moveleft, VOID_KEY);
 	KeyUp_common(&in_moveright, VOID_KEY);
 }
+
+// Stub for autohop state reset - autohop is not implemented in this build
+void IN_ResetAutohopState(void)
+{
+	// no-op: autohop not implemented
+}
+

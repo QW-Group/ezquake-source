@@ -39,6 +39,7 @@ extern texture_ref shelltexture;
 
 void GLC_StateBeginMD3Draw(float alpha, qbool textured, qbool weapon, qbool additive_pass);
 void R_StateBeginDrawAliasModel(const entity_t* e, aliashdr_t* paliashdr);
+qbool R_PointInsideModelBounds(entity_t* ent, vec3_t point);
 
 // gl_mesh.c
 void R_AliasModelPopulateVBO(model_t* mod, vbo_model_vert_t* aliasModelBuffer, int position);

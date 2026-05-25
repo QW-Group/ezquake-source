@@ -86,9 +86,11 @@ function(git_extract_version target_var)
     string(SUBSTRING ${GIT_COMMIT_HASH} 0 9 GIT_COMMIT_SHORT_HASH)
 
     add_library(${target_var} INTERFACE)
+    # Note: VERSION must not contain ~ or bare hex strings when passed to RC compiler.
+    # Use a dot separator instead of ~ to keep it RC-safe.
     target_compile_definitions(${target_var} INTERFACE
             REVISION=${GIT_REVISION}
-            VERSION="${GIT_REVISION}~${GIT_COMMIT_SHORT_HASH}"
+            VERSION="${GIT_REVISION}.${GIT_COMMIT_SHORT_HASH}"
     )
 
     set(VERSION_MAJOR 0)
@@ -116,7 +118,7 @@ function(git_extract_version target_var)
 
     set_target_properties(${target_var} PROPERTIES
             REVISION      "${GIT_REVISION}"
-            VERSION       "${GIT_REVISION}~${GIT_COMMIT_SHORT_HASH}"
+            VERSION       "${GIT_REVISION}.${GIT_COMMIT_SHORT_HASH}"
             COMMIT        "${GIT_COMMIT_HASH}"
             GIT_DESCRIBE  "${GIT_DESCRIBE}"
             VERSION_MAJOR "${VERSION_MAJOR}"
@@ -124,5 +126,5 @@ function(git_extract_version target_var)
             VERSION_PATCH "${VERSION_PATCH}"
     )
 
-    message(STATUS "Version: ${GIT_DESCRIBE} (${GIT_REVISION}~${GIT_COMMIT_SHORT_HASH})")
+    message(STATUS "Version: ${GIT_DESCRIBE} (${GIT_REVISION}.${GIT_COMMIT_SHORT_HASH})")
 endfunction()

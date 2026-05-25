@@ -284,6 +284,32 @@ static qbool R_CanDrawModelShadow(entity_t* ent)
 	return (r_shadows.integer && !ent->full_light && !(ent->renderfx & RF_NOSHADOW)) && !ent->alpha;
 }
 
+qbool R_PointInsideModelBounds(entity_t* ent, vec3_t point)
+{
+	vec3_t mins, maxs;
+	int i;
+	qbool inside;
+
+	if (!ent || !ent->model) {
+		return false;
+	}
+
+	// Calculate world-space bounding box
+	for (i = 0; i < 3; i++) {
+		mins[i] = ent->origin[i] + ent->model->mins[i];
+		maxs[i] = ent->origin[i] + ent->model->maxs[i];
+	}
+
+	// Check if point is inside the bounding box
+	// Extend POV to account for camera volume
+	inside = (point[0] + 4 > mins[0] && point[0] - 4 < maxs[0] &&
+	          point[1] + 4 > mins[1] && point[1] - 4 < maxs[1] &&
+	          (point[2] + 32 > mins[2] && point[2] - 32 < maxs[2]));
+	
+	
+	return inside;
+}
+
 void R_DrawAliasModel(entity_t *ent, qbool outline)
 {
 	int anim, skinnum;
@@ -343,6 +369,13 @@ void R_DrawAliasModel(entity_t *ent, qbool outline)
 		R_PopModelviewMatrix(oldMatrix);
 		R_TraceLeaveRegion(true);
 		return;
+	}
+
+	// Skip outline if POV is inside the model's bounding box (but not for player models)
+	if (outline && gl_outline.integer && !strstr(ent->model->name, "player.mdl")) {
+		if (R_PointInsideModelBounds(ent, r_origin)) {
+			outline = false;
+		}
 	}
 
 	anim = (int)(r_refdef2.time * 10) & 3;

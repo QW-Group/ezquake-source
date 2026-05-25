@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define HUD_NO_GROW            (1 <<  9)  // no frame grow
 #define HUD_PLUSMINUS          (1 << 10)  // auto add +/- commands
 #define HUD_OPACITY				(1 << 11)
+#define HUD_BORDER				(1 << 12)
 
 #define HUD_INVENTORY          (HUD_NO_GROW)   // aply for sbar elements
 
@@ -80,6 +81,11 @@ typedef struct hud_s
     cvar_t* frame_color;                // Frame color cvar.
     byte    frame_color_cache[4];       // Cache for parsed frame color.
     qbool   frame_hide;                 // Toggle whether frame should be displayed or not.
+
+    cvar_t* border;                     // Border cvar
+    cvar_t* border_color;                // Border color cvar.
+    byte    border_color_cache[4];       // Cache for parsed border color.
+    cvar_t* border_radius;               // Border radius cvar for rounded corners.
 
 	cvar_t *opacity;					// The overall opacity of the entire HUD element.
 

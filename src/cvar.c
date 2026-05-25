@@ -57,6 +57,16 @@ static cvar_t *cvar_hash[VAR_HASHPOOL_SIZE];
 cvar_t *cvar_vars;
 static char	*cvar_null_string = "";
 
+static qbool Cvar_AllowsUserCvar(const char *name)
+{
+	if (!name) {
+		return false;
+	}
+
+	// Keep backwards compatibility with teamplay configs that rely on "set nick".
+	return !strcasecmp(name, "nick");
+}
+
 // Use this to walk through all vars
 cvar_t* Cvar_Next(cvar_t *var)
 {
@@ -796,7 +806,7 @@ void Cvar_Set_f (void)
 		Cvar_Set(var, Cmd_Argv(2));
 	}
 	else {
-		if (Cmd_Exists(var_name)) {
+		if (Cmd_Exists(var_name) && !Cvar_AllowsUserCvar(var_name)) {
 			Con_Printf("\"%s\" is a command\n", var_name);
 			return;
 		}
@@ -1135,7 +1145,7 @@ void Cvar_Set_tp_f(void)
 		}
 	}
 	else {
-		if (Cmd_Exists(var_name)) {
+		if (Cmd_Exists(var_name) && !Cvar_AllowsUserCvar(var_name)) {
 			Com_Printf("\"%s\" is a command\n", var_name);
 			return;
 		}
@@ -1166,7 +1176,7 @@ static void Cvar_Set_ex_f(void)
 	var = Cvar_Find(var_name);
 
 	if (!var) {
-		if (Cmd_Exists(var_name)) {
+		if (Cmd_Exists(var_name) && !Cvar_AllowsUserCvar(var_name)) {
 			Com_Printf("\"%s\" is a command\n", var_name);
 			return;
 		}
@@ -1200,7 +1210,7 @@ void Cvar_Set_Alias_Str_f (void)
 	v = Cmd_AliasString( alias_name );
 
 	if ( !var) {
-		if (Cmd_Exists(var_name)) {
+		if (Cmd_Exists(var_name) && !Cvar_AllowsUserCvar(var_name)) {
 			Com_Printf ("\"%s\" is a command\n", var_name);
 			return;
 		}
@@ -1240,7 +1250,7 @@ void Cvar_Set_Bind_Str_f(void)
 	keynum = Key_StringToKeynum(key_name);
 
 	if (!var) {
-		if (Cmd_Exists(var_name)) {
+		if (Cmd_Exists(var_name) && !Cvar_AllowsUserCvar(var_name)) {
 			Com_Printf("\"%s\" is a command\n", var_name);
 			return;
 		}

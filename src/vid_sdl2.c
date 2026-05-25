@@ -776,6 +776,7 @@ static void keyb_event(SDL_KeyboardEvent *event)
 static void mouse_button_event(SDL_MouseButtonEvent *event)
 {
 	unsigned key;
+	extern cvar_t cl_delay_input;
 
 	switch (event->button) {
 	case SDL_BUTTON_LEFT:
@@ -800,24 +801,39 @@ static void mouse_button_event(SDL_MouseButtonEvent *event)
 		return;
 	}
 
-	Key_Event(key, event->state);
+	if (cl_delay_input.value > 0) {
+		IN_AddButtonToDelayBuffer(key, event->state);
+	} else {
+		Key_Event(key, event->state);
+	}
 }
 
 static void mouse_wheel_event(SDL_MouseWheelEvent *event)
 {
-	if (event->y > 0) {
-		if (wheelup_deferred) {
-			Key_Event(K_MWHEELUP, false);
+    extern cvar_t cl_delay_input;
+    
+    if (cl_delay_input.value > 0) {
+        if (event->y > 0) {
+            IN_AddWheelToDelayBuffer(1);
+        }
+        else if (event->y < 0) {
+            IN_AddWheelToDelayBuffer(-1);
+        }
+    } else {
+        if (event->y > 0) {
+            if (wheelup_deferred) {
+                Key_Event(K_MWHEELUP, false);
+            }
+			Key_Event(K_MWHEELUP, true);
+			wheelup_deferred = true;
 		}
-		Key_Event(K_MWHEELUP, true);
-		wheelup_deferred = true;
-	}
-	else if (event->y < 0) {
-		if (wheeldown_deferred) {
-			Key_Event(K_MWHEELDOWN, false);
+		else if (event->y < 0) {
+			if (wheeldown_deferred) {
+				Key_Event(K_MWHEELDOWN, false);
+			}
+			Key_Event(K_MWHEELDOWN, true);
+			wheeldown_deferred = true;
 		}
-		Key_Event(K_MWHEELDOWN, true);
-		wheeldown_deferred = true;
 	}
 }
 

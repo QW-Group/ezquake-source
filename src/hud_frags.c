@@ -922,7 +922,7 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 		else {
 			for (n = 0; n < n_players; n++) {
 				player_info_t *info = &cl.players[sorted_players[n].playernum];
-				cur_length = strlen(info->name);
+				cur_length = strlen(info->shortname);
 
 				// Name.
 				if (cur_length >= max_name_length) {
@@ -1087,7 +1087,7 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 						space_x, space_y, max_name_length, max_team_length,
 						fliptext, hud_frags_padtext->value,
 						hud_frags_shownames->value, 0,
-						info->name, info->team, hud_frags_scale->value, hud_frags_proportional->integer,
+						info->shortname, info->team, hud_frags_scale->value, hud_frags_proportional->integer,
 						hud_frags_wipeout->value,
 						ti_cl->isdead,
 						ti_cl->timetospawn
@@ -1099,7 +1099,7 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 						space_x, space_y, max_name_length, max_team_length,
 						fliptext, hud_frags_padtext->value,
 						0, hud_frags_teams->value,
-						info->name, info->team, hud_frags_scale->value, hud_frags_proportional->integer,
+						info->shortname, info->team, hud_frags_scale->value, hud_frags_proportional->integer,
 						hud_frags_wipeout->value,
 						ti_cl->isdead,
 						ti_cl->timetospawn
@@ -1166,7 +1166,7 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 						space_x, space_y, max_name_length, max_team_length,
 						fliptext, hud_frags_padtext->value,
 						0, hud_frags_teams->value,
-						info->name, info->team, hud_frags_scale->value, hud_frags_proportional->integer,
+						info->shortname, info->team, hud_frags_scale->value, hud_frags_proportional->integer,
 						hud_frags_wipeout->value,
 						ti_cl->isdead,
 						ti_cl->timetospawn
@@ -1178,7 +1178,7 @@ static void SCR_HUD_DrawFrags(hud_t *hud)
 						space_x, space_y, max_name_length, max_team_length,
 						fliptext, hud_frags_padtext->value,
 						hud_frags_shownames->value, 0,
-						info->name, info->team, hud_frags_scale->value, hud_frags_proportional->integer,
+						info->shortname, info->team, hud_frags_scale->value, hud_frags_proportional->integer,
 						hud_frags_wipeout->value,
 						ti_cl->isdead,
 						ti_cl->timetospawn

@@ -54,9 +54,14 @@ static qbool HUD_ArmorLow(void)
 
 static void SCR_HUD_DrawArmor(hud_t *hud)
 {
-	int level;
+	int level, stats;
 	qbool low;
 	static cvar_t *scale = NULL, *style, *digits, *align, *pent_666, *proportional, *hidezero;
+	static cvar_t *text_color_none;
+	static cvar_t *text_color_ga_low, *text_color_ga_normal;
+	static cvar_t *text_color_ya_low, *text_color_ya_normal;
+	static cvar_t *text_color_ra_low, *text_color_ra_normal;
+	byte *text_color = NULL, *text_color_low = NULL;
 
 	if (scale == NULL) {
 		// first time called
@@ -67,6 +72,13 @@ static void SCR_HUD_DrawArmor(hud_t *hud)
 		pent_666 = HUD_FindVar(hud, "pent_666"); // Show 666 or armor value when carrying pentagram
 		proportional = HUD_FindVar(hud, "proportional");
 		hidezero = HUD_FindVar(hud, "hidezero"); //Hide armor number if zero
+		text_color_none = HUD_FindInitTextColorVar(hud, "text_color_none");
+		text_color_ga_low = HUD_FindInitTextColorVar(hud, "text_color_ga_low");
+		text_color_ga_normal = HUD_FindInitTextColorVar(hud, "text_color_ga_normal");
+		text_color_ya_low = HUD_FindInitTextColorVar(hud, "text_color_ya_low");
+		text_color_ya_normal = HUD_FindInitTextColorVar(hud, "text_color_ya_normal");
+		text_color_ra_low = HUD_FindInitTextColorVar(hud, "text_color_ra_low");
+		text_color_ra_normal = HUD_FindInitTextColorVar(hud, "text_color_ra_normal");
 	}
 
 	if (HUD_Stats(STAT_HEALTH) > 0) {
@@ -85,7 +97,38 @@ static void SCR_HUD_DrawArmor(hud_t *hud)
 	}
 	if (level == 0 && hidezero->integer == 1) return;
 	if (cl.spectator == cl.autocam) {
-		SCR_HUD_DrawNum(hud, level, low, scale->value, style->value, digits->value, align->string, proportional->integer);
+		stats = HUD_Stats(STAT_ITEMS);
+
+		if ((stats & IT_ARMOR1)) {
+			text_color = strlen(text_color_ga_normal->string) > 0
+				? text_color_ga_normal->color
+				: NULL;
+			text_color_low = strlen(text_color_ga_low->string) > 0
+				? text_color_ga_low->color
+				: NULL;
+		} else if ((stats & IT_ARMOR2)) {
+			text_color = strlen(text_color_ya_normal->string) > 0
+				? text_color_ya_normal->color
+				: NULL;
+			text_color_low = strlen(text_color_ya_low->string) > 0
+				? text_color_ya_low->color
+				: NULL;
+		} else if ((stats & IT_ARMOR3)) {
+			text_color = strlen(text_color_ra_normal->string) > 0
+				? text_color_ra_normal->color
+				: NULL;
+			text_color_low = strlen(text_color_ra_low->string) > 0
+				? text_color_ra_low->color
+				: NULL;
+		} else if (strlen(text_color_none->string) > 0) {
+			text_color = text_color_none->color;
+			text_color_low = text_color_none->color;
+		}
+
+		SCR_HUD_DrawNum2(hud, level, low,
+			scale->value, style->value, digits->value, align->string,
+			proportional->integer, true,
+			text_color_low, text_color);
 	}
 }
 
@@ -237,6 +280,13 @@ void Armor_HudInit(void)
 		"pent_666", "1",  // Show 666 instead of armor value
 		"proportional", "0",
 		"hidezero", "0", // Hide armor number if 0
+		"text_color_none", "",
+		"text_color_ga_low", "",
+		"text_color_ga_normal", "",
+		"text_color_ya_low", "",
+		"text_color_ya_normal", "",
+		"text_color_ra_low", "",
+		"text_color_ra_normal", "",
 		NULL
 	);
 

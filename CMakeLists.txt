@@ -544,6 +544,9 @@ set(common_hud
         ${SOURCE_DIR}/hud_ammo.c
         ${SOURCE_DIR}/hud_armor.c
         ${SOURCE_DIR}/hud_autoid.c
+        ${SOURCE_DIR}/hud_inlay.c
+        ${SOURCE_DIR}/hud_mapvote.c
+        ${SOURCE_DIR}/hud_total_strength.c
         ${SOURCE_DIR}/hud_centerprint.c
         ${SOURCE_DIR}/hud_clock.c
         ${SOURCE_DIR}/hud_common.c
@@ -669,6 +672,7 @@ set(client
         ${SOURCE_DIR}/cl_multiview.c
         ${SOURCE_DIR}/cl_nqdemo.c
         ${SOURCE_DIR}/cl_parse.c
+        ${SOURCE_DIR}/cl_mouseaccel.c
         ${SOURCE_DIR}/cl_pred.c
         ${SOURCE_DIR}/cl_screen.c
         ${SOURCE_DIR}/cl_screenshot.c
@@ -719,6 +723,7 @@ set(client
         ${SOURCE_DIR}/mvd_xmlstats.c
         ${SOURCE_DIR}/demo_spawnwarn.c
         ${SOURCE_DIR}/qtv.c
+        ${SOURCE_DIR}/nick_override.c
         ${SOURCE_DIR}/rulesets.c
         ${SOURCE_DIR}/sbar.c
         ${SOURCE_DIR}/settings_page.c

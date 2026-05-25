@@ -553,7 +553,7 @@ char *SV_MVDName2Txt (const char *name)
 		if (ovector[0] + 5 > MAX_OSPATH)
 			len = MAX_OSPATH - 5;
 		else
-			len = ovector[0];
+			len = (int)ovector[0];
 	}
 	s[len++] = '.';
 	s[len++] = 't';

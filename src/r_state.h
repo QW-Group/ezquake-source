@@ -311,6 +311,7 @@ typedef enum {
 
 	r_state_light_bubble,
 	r_state_chaticon,
+	r_state_decals,
 	r_state_particles_classic,
 	r_state_particles_qmb_textured_blood,
 	r_state_particles_qmb_textured,

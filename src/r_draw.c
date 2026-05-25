@@ -881,6 +881,192 @@ void Draw_AlphaCircleFill(float x, float y, float radius, byte color, float alph
 	Draw_AlphaCircle(x, y, radius, 1.0, true, color, alpha);
 }
 
+void Draw_AlphaRoundedRectangleRGB(float x, float y, float w, float h, float radius_tl, float radius_tr, float radius_br, float radius_bl, float thickness, qbool fill, color_t color)
+{
+	// If all radii are 0, just draw a regular rectangle
+	if (radius_tl <= 0 && radius_tr <= 0 && radius_br <= 0 && radius_bl <= 0) {
+		Draw_AlphaRectangleRGB(x, y, w, h, thickness, fill, color);
+		return;
+	}
+
+	// Clamp radii to half the smaller dimension
+	float max_radius = min(w, h) * 0.5f;
+	radius_tl = min(radius_tl, max_radius);
+	radius_tr = min(radius_tr, max_radius);
+	radius_br = min(radius_br, max_radius);
+	radius_bl = min(radius_bl, max_radius);
+
+	// Also ensure that adjacent corners don't overlap
+	if (radius_tl + radius_tr > w) {
+		float scale = w / (radius_tl + radius_tr);
+		radius_tl *= scale;
+		radius_tr *= scale;
+	}
+	if (radius_bl + radius_br > w) {
+		float scale = w / (radius_bl + radius_br);
+		radius_bl *= scale;
+		radius_br *= scale;
+	}
+	if (radius_tl + radius_bl > h) {
+		float scale = h / (radius_tl + radius_bl);
+		radius_tl *= scale;
+		radius_bl *= scale;
+	}
+	if (radius_tr + radius_br > h) {
+		float scale = h / (radius_tr + radius_br);
+		radius_tr *= scale;
+		radius_br *= scale;
+	}
+
+	if (fill) {
+		float left_band = max(radius_tl, radius_bl);
+		float right_band = max(radius_tr, radius_br);
+		float top_band = max(radius_tl, radius_tr);
+		float bottom_band = max(radius_bl, radius_br);
+		float center_w = w - left_band - right_band;
+		float center_h = h - top_band - bottom_band;
+		float band_start, band_end_gap, band_height;
+
+		// Center rectangle
+		if (center_w > 0 && center_h > 0) {
+			Draw_AlphaFillRGB(x + left_band, y + top_band, center_w, center_h, color);
+		}
+
+		// Top rectangle
+		if (top_band > 0) {
+			float top_width = w - radius_tl - radius_tr;
+			if (top_width > 0) {
+				Draw_AlphaFillRGB(x + radius_tl, y, top_width, top_band, color);
+			}
+		}
+
+		// Bottom rectangle
+		if (bottom_band > 0) {
+			float bottom_width = w - radius_bl - radius_br;
+			if (bottom_width > 0) {
+				Draw_AlphaFillRGB(x + radius_bl, y + h - bottom_band, bottom_width, bottom_band, color);
+			}
+		}
+
+		// Left rectangle - skip areas already filled by top/bottom strips when corner radius is zero.
+		if (left_band > 0) {
+			band_start = (radius_tl > 0) ? radius_tl : top_band;
+			band_end_gap = (radius_bl > 0) ? radius_bl : bottom_band;
+			band_height = h - band_start - band_end_gap;
+			if (band_height > 0) {
+				Draw_AlphaFillRGB(x, y + band_start, left_band, band_height, color);
+			}
+		}
+
+		// Right rectangle - same treatment to avoid overdrawing non-rounded corners.
+		if (right_band > 0) {
+			band_start = (radius_tr > 0) ? radius_tr : top_band;
+			band_end_gap = (radius_br > 0) ? radius_br : bottom_band;
+			band_height = h - band_start - band_end_gap;
+			if (band_height > 0) {
+				Draw_AlphaFillRGB(x + w - right_band, y + band_start, right_band, band_height, color);
+			}
+		}
+
+		// Fill the corners with pie slices; convert to premultiplied color so their shading matches the rectangles.
+		color_t corner_color = color;
+		if (radius_tl > 0 || radius_tr > 0 || radius_br > 0 || radius_bl > 0) {
+			byte corner_bytes[4];
+			COLOR_TO_RGBA(color, corner_bytes);
+			corner_color = RGBAVECT_TO_COLOR_PREMULT(corner_bytes);
+		}
+		
+		if (radius_tl > 0)
+			Draw_AlphaPieSliceRGB(x + radius_tl, y + radius_tl, radius_tl, 0.5 * M_PI, M_PI, 1, true, corner_color);
+		if (radius_tr > 0)
+			Draw_AlphaPieSliceRGB(x + w - radius_tr, y + radius_tr, radius_tr, 0, 0.5 * M_PI, 1, true, corner_color);
+		if (radius_br > 0)
+			Draw_AlphaPieSliceRGB(x + w - radius_br, y + h - radius_br, radius_br, 1.5 * M_PI, 2 * M_PI, 1, true, corner_color);
+		if (radius_bl > 0)
+			Draw_AlphaPieSliceRGB(x + radius_bl, y + h - radius_bl, radius_bl, M_PI, 1.5 * M_PI, 1, true, corner_color);
+	} else {
+		// For outline/border, we need to draw just the curved parts
+		// Since Draw_AlphaPieSliceRGB draws full pie slices with lines to center,
+		// we'll use Draw_AlphaCircleRGB with appropriate angles for each corner
+		
+		// Draw straight lines for the edges
+		Draw_AlphaLineRGB(x + radius_tl, y, x + w - radius_tr, y, thickness, color);
+		Draw_AlphaLineRGB(x + radius_bl, y + h, x + w - radius_br, y + h, thickness, color);
+		Draw_AlphaLineRGB(x, y + radius_tl, x, y + h - radius_bl, thickness, color);
+		Draw_AlphaLineRGB(x + w, y + radius_tr, x + w, y + h - radius_br, thickness, color);
+		
+		// For corners, we'll draw small arc segments
+		// We need to draw many small lines to approximate the curves
+		int segments = 16; // Number of segments per quarter circle
+		int i;
+		
+		// Top-left corner - arc from top to left
+		if (radius_tl > 0) {
+			float x1 = 0, y1 = 0;
+			for (i = 0; i <= segments; i++) {
+				float angle = M_PI * 0.5 + (i * 0.5 * M_PI) / segments;
+				float px = x + radius_tl + radius_tl * cos(angle);
+				float py = y + radius_tl - radius_tl * sin(angle);
+				if (i > 0) {
+					Draw_AlphaLineRGB(x1, y1, px, py, thickness, color);
+				}
+				x1 = px;
+				y1 = py;
+			}
+		}
+		
+		// Top-right corner - arc from right to top
+		if (radius_tr > 0) {
+			float x1 = 0, y1 = 0;
+			for (i = 0; i <= segments; i++) {
+				float angle = (i * 0.5 * M_PI) / segments;
+				float px = x + w - radius_tr + radius_tr * cos(angle);
+				float py = y + radius_tr - radius_tr * sin(angle);
+				if (i > 0) {
+					Draw_AlphaLineRGB(x1, y1, px, py, thickness, color);
+				}
+				x1 = px;
+				y1 = py;
+			}
+		}
+		
+		// Bottom-right corner - arc from bottom to right
+		if (radius_br > 0) {
+			float x1 = 0, y1 = 0;
+			for (i = 0; i <= segments; i++) {
+				float angle = 1.5 * M_PI + (i * 0.5 * M_PI) / segments;
+				float px = x + w - radius_br + radius_br * cos(angle);
+				float py = y + h - radius_br - radius_br * sin(angle);
+				if (i > 0) {
+					Draw_AlphaLineRGB(x1, y1, px, py, thickness, color);
+				}
+				x1 = px;
+				y1 = py;
+			}
+		}
+		
+		// Bottom-left corner - arc from left to bottom  
+		if (radius_bl > 0) {
+			float x1 = 0, y1 = 0;
+			for (i = 0; i <= segments; i++) {
+				float angle = M_PI + (i * 0.5 * M_PI) / segments;
+				float px = x + radius_bl + radius_bl * cos(angle);
+				float py = y + h - radius_bl - radius_bl * sin(angle);
+				if (i > 0) {
+					Draw_AlphaLineRGB(x1, y1, px, py, thickness, color);
+				}
+				x1 = px;
+				y1 = py;
+			}
+		}
+	}
+}
+
+void Draw_AlphaRoundedFillRGB(float x, float y, float w, float h, float radius_tl, float radius_tr, float radius_br, float radius_bl, color_t color)
+{
+	Draw_AlphaRoundedRectangleRGB(x, y, w, h, radius_tl, radius_tr, radius_br, radius_bl, 1, true, color);
+}
+
 //
 // SCALE versions of some functions
 //
@@ -1051,6 +1237,45 @@ void Draw_InitConback(void)
 
 	// Free loaded console.
 	Q_free(cb);
+}
+
+void Draw_MapVote(float x, float y, int width, int height, float alpha_override)
+{
+	mpic_t *lvlshot = NULL;
+    float alpha = alpha_override >= 0 ? alpha_override :
+                  ((SCR_NEED_CONSOLE_BACKGROUND ? 1 : bound(0, scr_conalpha.value, 1)) * overall_alpha);
+
+    if (map_vote_map[0])
+    {
+        // Load per-level conback once
+        if (strncmp(map_vote_map, last_mapname, sizeof(last_mapname)))
+        {
+            char name[MAX_QPATH];
+            mpic_t* old_levelshot = last_lvlshot;
+
+            snprintf(name, sizeof(name), "textures/levelshots/%s.xxx", map_vote_map);
+            if ((last_lvlshot = Draw_CachePicSafe(name, false, true)))
+            {
+                last_lvlshot->width  = conback.width;
+                last_lvlshot->height = conback.height;
+            }
+
+            if (last_lvlshot != old_levelshot)
+                Draw_DeleteOldLevelshot(old_levelshot);
+
+            strlcpy(last_mapname, map_vote_map, sizeof(last_mapname));
+        }
+
+        lvlshot = last_lvlshot;
+    }
+
+    if (!alpha)
+        return;
+
+    if (lvlshot)
+        Draw_FitPicAlphaCenter(x, y, width, height, lvlshot, alpha);
+    else
+        Draw_FitPicAlphaCenter(x, y, width, height, &conback, alpha);
 }
 
 void Draw_ConsoleBackground(int lines)

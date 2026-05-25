@@ -33,6 +33,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 static void Update_TeamInfo(void);
 mpic_t* SCR_GetWeaponIconByFlag(int flag);
 
+void OnChange_scr_mega_color (cvar_t *var, char *string, qbool *cancel);
+
 static cvar_t scr_shownick_order           = { "scr_shownick_order", "%p%n %a/%H %w" };
 static cvar_t scr_shownick_frame_color     = { "scr_shownick_frame_color", "10 0 0 120", CVAR_COLOR };
 static cvar_t scr_shownick_scale           = { "scr_shownick_scale",		"1" };
@@ -59,6 +61,7 @@ static cvar_t scr_teaminfo_weapon_style    = { "scr_teaminfo_weapon_style","1" }
 static cvar_t scr_teaminfo_show_ammo	   = { "scr_teaminfo_show_ammo","0" };
 static cvar_t scr_teaminfo_show_countdown  = { "scr_teaminfo_show_countdown","1" };
 static cvar_t scr_teaminfo_show_enemies    = { "scr_teaminfo_show_enemies","0" };
+static cvar_t scr_teaminfo_mega_color = { "scr_teaminfo_mega_color", "9cf", CVAR_NONE, OnChange_scr_mega_color };
 static cvar_t scr_teaminfo_show_self       = { "scr_teaminfo_show_self",   "2" };
 static cvar_t scr_teaminfo_proportional    = { "scr_teaminfo_proportional", "0"};
 cvar_t scr_teaminfo                        = { "scr_teaminfo",             "1" };   // non-static for menu
@@ -83,6 +86,12 @@ static int HUD_CompareTeamInfoSlots(const void* lhs_, const void* rhs_)
 	}
 
 	return lhs_pos - rhs_pos;
+}
+
+void OnChange_scr_mega_color (cvar_t *var, char *string, qbool *cancel)
+{
+	if (!Utils_RegExpMatch("^[0-9a-fA-F]{3}$", string))
+		*cancel = true;
 }
 
 void SCR_HUD_DrawTeamInfo(hud_t *hud)
@@ -163,7 +172,7 @@ void SCR_HUD_DrawTeamInfo(hud_t *hud)
 		}
 
 		// dynamically guess max length of name/location
-		nick = (ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].name); // we use nick or name
+		nick = (ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].shortname); // we use nick or name
 		maxname = max(maxname, strlen(TP_ParseFunChars(nick, false)));
 
 		strlcpy(tmp, TP_LocationName(ti_clients[i].org), sizeof(tmp));
@@ -396,7 +405,7 @@ static int SCR_HudDrawTeamInfoPlayer(ti_player_t *ti_cl, float x, int y, int max
 								snprintf(tmp, sizeof(tmp), "%s--", txtclr); // print dashes if dead
 							}
 							else {
-								snprintf(tmp, sizeof(tmp), "%s%d", (ti_cl->health < low_health ? "&cf00" : txtclr), ti_cl->health);
+								snprintf(tmp, sizeof(tmp), "%s%s%d", "&c", (ti_cl->health < low_health ? "f00" : (ti_cl->health > 100 ? scr_teaminfo_mega_color.string : "fff")), ti_cl->health);
 							}
 							Draw_SStringAligned(x, y, tmp, scale, alpha, proportional, (s[0] == 'h' ? text_align_right : text_align_left), x + 3 * font_width);
 						}
@@ -699,7 +708,7 @@ void SCR_Draw_TeamInfo(void)
 			continue;
 
 		// dynamically guess max length of name/location
-		nick = (ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].name); // we use nick or name
+		nick = (ti_clients[i].nick[0] ? ti_clients[i].nick : cl.players[i].shortname); // we use nick or name
 		maxname = max(maxname, strlen(TP_ParseFunChars(nick, false)));
 
 		strlcpy(tmp, TP_LocationName(ti_clients[i].org), sizeof(tmp));
@@ -901,6 +910,7 @@ void TeamInfo_HudInit(void)
 	Cvar_Register(&scr_teaminfo_show_ammo);
 	Cvar_Register(&scr_teaminfo_show_countdown);
 	Cvar_Register(&scr_teaminfo_show_enemies);
+	Cvar_Register(&scr_teaminfo_mega_color);
 	Cvar_Register(&scr_teaminfo_show_self);
 	Cvar_Register(&scr_teaminfo_proportional);
 	Cvar_Register(&scr_teaminfo);

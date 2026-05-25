@@ -69,12 +69,19 @@ typedef enum {
 void Draw_AdjustConback (void);
 
 extern	mpic_t		*draw_disc;	// also used on sbar
+extern char map_vote_map[64]; // also used in hud_mapvote
 
 #define MCHARSET_PATH "gfx/mcharset.png"
 
 typedef int color_t;
 
 extern const color_t COLOR_WHITE;
+
+typedef enum {
+	draw_layer_base = 0,
+	draw_layer_overlay = 1,
+	draw_layer_top = 2
+} draw_layer_t;
 
 color_t RGBA_TO_COLOR(byte r, byte g, byte b, byte a);
 color_t RGBAVECT_TO_COLOR(byte rgba[4]);
@@ -85,6 +92,16 @@ byte* COLOR_TO_RGBA_PREMULT(color_t i, byte rgba[4]);
 float* COLOR_TO_FLOATVEC_PREMULT(color_t i, float rgba[4]);
 void Draw_SetOverallAlpha(float opacity);
 float Draw_MultiplyOverallAlpha(float alpha);
+void Draw_SetLayer(draw_layer_t layer);
+draw_layer_t Draw_GetLayer(void);
+void Draw_PushLayer(draw_layer_t layer);
+void Draw_PopLayer(void);
+void Draw_SetTextLayer(draw_layer_t layer);
+draw_layer_t Draw_GetTextLayer(void);
+void Draw_PushTextLayer(draw_layer_t layer);
+void Draw_PopTextLayer(void);
+void Draw_SetConsoleTextMode(qbool enabled);
+void Draw_SetConsoleAlignedHud(qbool enabled);
 
 void Draw_Init(void);
 void Draw_Shutdown(void);
@@ -95,6 +112,7 @@ void Draw_SubPic(float x, float y, mpic_t *pic, int srcx, int srcy, int width, i
 void Draw_Pic(float x, float y, mpic_t *pic);
 void Draw_TransPic(float x, float y, mpic_t *pic);
 void Draw_ConsoleBackground (int lines);
+void Draw_MapVote(float x, float y, int width, int height, float alpha_override);
 void Draw_BeginDisc(void);
 void Draw_EndDisc(void);
 void Draw_TileClear(int x, int y, int w, int h);
@@ -170,6 +188,8 @@ void Draw_AlphaLine(float x_start, float y_start, float x_end, float y_end, floa
 void Draw_AlphaFill(float x, float y, float w, float h, byte c, float alpha);
 void Draw_AlphaRectangleRGB(float x, float y, float w, float h, float thickness, qbool fill, color_t color);
 void Draw_AlphaFillRGB(float x, float y, float w, float h, color_t color);
+void Draw_AlphaRoundedRectangleRGB(float x, float y, float w, float h, float radius_tl, float radius_tr, float radius_br, float radius_bl, float thickness, qbool fill, color_t color);
+void Draw_AlphaRoundedFillRGB(float x, float y, float w, float h, float radius_tl, float radius_tr, float radius_br, float radius_bl, color_t color);
 
 void Draw_AlphaSubPic(float x, float y, mpic_t *pic, int srcx, int srcy, int width, int height, float alpha);
 void Draw_SAlphaSubPic(float x, float y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha);

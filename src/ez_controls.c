@@ -260,7 +260,7 @@ static void EZ_tree_SetDrawBounds(ez_control_t *control)
 	ez_dllist_node_t *iter = NULL;
 	ez_control_t *child = NULL;
 	ez_control_t *p = control->parent;
-	qbool contained = control->ext_flags & control_contained;
+	qbool contained = (control->ext_flags & control_contained) ? true : false;
 
 	// Calculate the controls bounds.
 	int top		= control->absolute_y;
@@ -1631,8 +1631,8 @@ static void EZ_control_CalculatePositionPercentages(ez_control_t *self)
 	{
 		ez_control_t *p = self->parent;
 		// TODO: Should we ever use the normal width of the parent here? If the control is out of the parents view port in this case, it will never be visible.
-		int p_width		= (self->int_flags & control_anchor_viewport) ? p->width  : p->virtual_width;
-		int p_height	= (self->int_flags & control_anchor_viewport) ? p->height : p->virtual_height;
+		int p_width		= (self->ext_flags & control_anchor_viewport) ? p->width  : p->virtual_width;
+		int p_height	= (self->ext_flags & control_anchor_viewport) ? p->height : p->virtual_height;
 
 		self->x_percent = self->x / (float)p_width;
 		self->y_percent = self->y / (float)p_height;
@@ -1659,7 +1659,7 @@ static void EZ_control_UpdateAnchorGap(ez_control_t *self)
 	}
 	else if (self->parent)
 	{
-		qbool anchor_viewport	= self->ext_flags & control_anchor_viewport;
+		qbool anchor_viewport	= (self->ext_flags & control_anchor_viewport) ? true : false;
 		int p_height			= anchor_viewport ? self->parent->height : self->parent->virtual_height;
 		int p_width				= anchor_viewport ? self->parent->width  : self->parent->virtual_width;
 		
@@ -2020,7 +2020,7 @@ int EZ_control_OnParentResize(ez_control_t *self, void *ext_event_info)
 		int y					= self->y;
 		int new_width			= self->width;
 		int new_height			= self->height;
-		qbool anchor_viewport	= (self->ext_flags & control_anchor_viewport);
+		qbool anchor_viewport	= (self->ext_flags & control_anchor_viewport) ? true : false;
 //		int parent_prev_width	= anchor_viewport ? p->prev_width	: p->prev_virtual_width;
 //		int parent_prev_height	= anchor_viewport ? p->prev_height	: p->prev_virtual_height;
 		int parent_width		= anchor_viewport ? p->width		: p->virtual_width; 
@@ -2202,7 +2202,7 @@ int EZ_control_OnMove(ez_control_t *self, void *ext_event_info)
 {	
 	ez_control_t *child		= NULL;
 	ez_dllist_node_t *iter	= self->children.head;
-	qbool anchor_viewport	= (self->ext_flags & control_anchor_viewport);
+	qbool anchor_viewport	= (self->ext_flags & control_anchor_viewport) ? true : false;
 	int parent_x			= 0;
 	int parent_y			= 0;
 

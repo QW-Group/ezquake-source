@@ -65,6 +65,9 @@ cvar_t		con_clearnotify = {"con_clearnotify","1"};
 cvar_t		con_highlight  		= {"con_highlight","0"};
 cvar_t		con_highlight_mark 	= {"con_highlight_mark",""};
 
+cvar_t		con_highlight_broadcast		= {"con_highlight_broadcast","0"};
+cvar_t		con_highlight_broadcast_mark 	= {"con_highlight_broadcast_mark",""};
+
 cvar_t      con_sound_mm1_file      = {"s_mm1_file",      "misc/talk.wav"};
 cvar_t      con_sound_mm2_file      = {"s_mm2_file",      "misc/talk.wav"};
 cvar_t      con_sound_spec_file     = {"s_spec_file",     "misc/talk.wav"};
@@ -473,6 +476,9 @@ void Con_Init (void) {
 	Cvar_Register (&con_highlight);
 	Cvar_Register (&con_highlight_mark);
 	// added by jogi stop
+
+	Cvar_Register (&con_highlight_broadcast);
+	Cvar_Register (&con_highlight_broadcast_mark);
 
 	Cvar_Register (&con_timestamps); 
 	Cvar_Register (&con_shift); 
@@ -906,6 +912,8 @@ void Con_DrawConsole (int lines) {
 	if (lines <= 0 || Con_MenuWillDrawConsole())
 		return;
 
+	Draw_SetConsoleTextMode(true);
+
 	// draw the background
 	Draw_ConsoleBackground (lines);
 
@@ -963,7 +971,7 @@ void Con_DrawConsole (int lines) {
 		} else if (is_probing) {
 			text = "probing";
 		} else
-			return;
+			goto finish_draw;
 
 		x = con_linewidth - ((con_linewidth * 7) / 40);
 		y = x - strlen(text) - 8;
@@ -1013,7 +1021,7 @@ void Con_DrawConsole (int lines) {
 		else if (is_probing)
 			snprintf (dlbar + i, sizeof (dlbar) - i, " %02d%%", probing_progress);
 		else
-			return;
+			goto finish_draw;
 
 		// draw it
 		y = con_vislines - 22 + 8;
@@ -1022,5 +1030,7 @@ void Con_DrawConsole (int lines) {
 
 	// draw the input prompt, user text, and cursor if desired
 	Con_DrawInput ();
-}
 
+finish_draw:
+	Draw_SetConsoleTextMode(false);
+}

@@ -187,13 +187,13 @@ const char* scr_sshot_format_enum[] = {
 	"JPG", "jpg", "PNG", "png", "TGA", "tga" };
 
 extern cvar_t mvd_autotrack, mvd_moreinfo, mvd_status, cl_weaponpreselect, cl_weaponhide, con_funchars_mode, con_notifytime, scr_consize, ignore_opponents, _con_notifylines,
-	ignore_qizmo_spec, ignore_spec, msg_filter, crosshair, crosshairsize, cl_smartjump, scr_coloredText,
+	ignore_qizmo_spec, ignore_spec, msg_filter, crosshair, crosshairsize, cl_smartjump, cl_smartspawn, scr_coloredText,
 	cl_rollangle, cl_rollspeed, v_gunkick, v_kickpitch, v_kickroll, v_kicktime, v_viewheight, match_auto_sshot, match_auto_record, match_auto_logconsole,
 	r_fastturb, r_grenadetrail, cl_drawgun, r_viewmodelsize, r_viewmodeloffset, gl_outline, scr_clock, scr_gameclock, show_fps, rate, cl_c2sImpulseBackup,
 	name, team, skin, topcolor, bottomcolor, cl_teamtopcolor, cl_teambottomcolor, cl_teamquadskin, cl_teampentskin, cl_teambothskin, /*cl_enemytopcolor, cl_enemybottomcolor, */
 	cl_enemyquadskin, cl_enemypentskin, cl_enemybothskin, demo_dir, qizmo_dir, qwdtools_dir, cl_fakename, cl_fakename_suffix,
 	cl_chatsound, con_sound_mm1_volume, con_sound_mm2_volume, con_sound_spec_volume, con_sound_other_volume, s_khz, s_desiredsamples,
-	ruleset, scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode, cl_chasecam,
+	scr_sshot_dir, log_dir, cl_nolerp, cl_confirmquit, log_readable, ignore_flood, ignore_flood_duration, con_timestamps, scr_consize, scr_conspeed, cl_chatmode, cl_chasecam,
 	enemyforceskins, teamforceskins, vid_vsync_lag_fix, cl_sayfilter_coloredtext, cl_sayfilter_sendboth,
 	mvd_autotrack_lockteam, qtv_adjustbuffer, cl_earlypackets, cl_useimagesinfraglog, con_completion_format, menu_ingame, sys_inactivesound
 ;
@@ -247,7 +247,6 @@ const char* s_desired_samples_enum[] = {
 };
 
 const char* cl_nolerp_enum[] = {"on", "off"};
-const char* ruleset_enum[] = { "ezQuake default", "default", "Smackdown", "smackdown", "Thunderdome", "thunderdome", "Moscow TF League", "mtfl", "QuakeCon", "qcon", "Smackdrive", "smackdrive" };
 const char *mediaroot_enum[] = { "relative to exe", "relative to home", "full path" };
 const char *teamforceskins_enum[] = { "off", "use player's name", "use player's userid", "set t1, t2, t3, ..." };
 const char *enemyforceskins_enum[] = { "off", "use player's name", "use player's userid", "set e1, e2, e3, ..." };
@@ -892,7 +891,6 @@ setting settplayer_arr[] = {
 	ADDSET_COLOR	("Pants Color", bottomcolor),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_NUMBER	("Fullbright Skins", r_fullbrightSkins, 0, 1, 0.05),
-	ADDSET_ENUM    	("Ruleset", ruleset, ruleset_enum),
 	ADDSET_BASIC_SECTION(),
 	
 	ADDSET_SEPARATOR("Weapon Handling"),
@@ -904,6 +902,7 @@ setting settplayer_arr[] = {
 	ADDSET_CUSTOM	("Always Run", AlwaysRunRead, AlwaysRunToggle, "Maximum forward speed at all times."),
 	ADDSET_ADVANCED_SECTION(),
     ADDSET_BOOL		("Smart Jump", cl_smartjump),
+	ADDSET_BOOL		("Smart Spawn", cl_smartspawn),
 	ADDSET_NAMED	("Movement Scripts", allow_scripts, allowscripts_enum),
 	ADDSET_BASIC_SECTION(),
 	

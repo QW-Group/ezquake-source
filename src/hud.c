@@ -899,6 +899,26 @@ void HUD_OnChangeFrameColor(cvar_t *var, char *newval, qbool *cancel)
 	memcpy (hud_elem->frame_color_cache, b_colors, sizeof (byte) * 3);
 }
 
+void HUD_OnChangeBorderColor(cvar_t *var, char *newval, qbool *cancel)
+{
+	// Converts "red" into "255 0 0", etc. or returns input as it was.
+	char *new_color = ColorNameToRGBString (newval);
+	char buf[256], buf2[MAX_COM_TOKEN];
+	size_t hudname_len;
+	hud_t* hud_elem;
+	byte* b_colors;
+
+	hudname_len = min (sizeof (buf), strlen (var->name) - strlen ("_border_color") - strlen ("hud_") + 1);
+	strlcpy (buf, var->name + 4, hudname_len);
+	hud_elem = HUD_Find (buf);
+
+	strlcpy(buf2,new_color,sizeof(buf2));
+	b_colors = StringToRGB (buf2);
+
+	memcpy (hud_elem->border_color_cache, b_colors, sizeof (byte) * 3);
+}
+
+
 //
 // Draw frame for HUD element.
 //
@@ -915,6 +935,50 @@ void HUD_DrawFrame(hud_t *hud, int x, int y, int width, int height)
 	{
 		hud->frame_color_cache[3] = (byte)(255 * hud->frame->value);
 
+		// Check if we need to use rounded fill
+		if (hud->border_radius && hud->border_radius->string && hud->border_radius->string[0]) {
+			float radius_tl = 0, radius_tr = 0, radius_br = 0, radius_bl = 0;
+			char radius_buf[256];
+			int num_values = 0;
+			float values[4] = {0, 0, 0, 0};
+			
+			// Parse border radius values
+			strlcpy(radius_buf, hud->border_radius->string, sizeof(radius_buf));
+			char *token = strtok(radius_buf, " ");
+			while (token && num_values < 4) {
+				values[num_values++] = atof(token);
+				token = strtok(NULL, " ");
+			}
+			
+			// Apply CSS-style rules for radius values
+			switch (num_values) {
+				case 1:
+					radius_tl = radius_tr = radius_br = radius_bl = values[0];
+					break;
+				case 2:
+					radius_tl = radius_br = values[0];
+					radius_tr = radius_bl = values[1];
+					break;
+				case 3:
+					radius_tl = values[0];
+					radius_tr = radius_bl = values[1];
+					radius_br = values[2];
+					break;
+				case 4:
+					radius_tl = values[0];
+					radius_tr = values[1];
+					radius_br = values[2];
+					radius_bl = values[3];
+					break;
+			}
+			
+			if (radius_tl > 0 || radius_tr > 0 || radius_br > 0 || radius_bl > 0) {
+				Draw_AlphaRoundedFillRGB(x, y, width, height, radius_tl, radius_tr, radius_br, radius_bl, RGBAVECT_TO_COLOR(hud->frame_color_cache));
+				return;
+			}
+		}
+		
+		// No radius, use regular fill
 		Draw_AlphaFillRGB(x, y, width, height, RGBAVECT_TO_COLOR(hud->frame_color_cache));
 		return;
 	}
@@ -928,6 +992,87 @@ void HUD_DrawFrame(hud_t *hud, int x, int y, int width, int height)
 		default:    // More will probably come.
 			break;
 		}
+	}
+}
+
+//
+// Draw rectangle outline using lines (no filled rectangles)
+//
+static void Draw_RectangleOutline(float x, float y, float w, float h, float thickness, color_t color)
+{
+	Draw_AlphaLineRGB(x, y, x + w, y, thickness, color);                     // top
+	Draw_AlphaLineRGB(x, y + h, x + w, y + h, thickness, color);             // bottom
+	Draw_AlphaLineRGB(x, y, x, y + h, thickness, color);                     // left
+	Draw_AlphaLineRGB(x + w, y, x + w, y + h, thickness, color);             // right
+}
+
+//
+// Draw border for HUD element.
+//
+void HUD_DrawBorder(hud_t *hud, int x, int y, int width, int height)
+{
+	int border = hud->border->integer;
+	char *color_str = hud->border_color->string;
+	color_t color = color_str ? RGBAVECT_TO_COLOR(StringToRGB(color_str)) : RGBA_TO_COLOR(0, 0, 0, 255);
+	float radius_tl = 0, radius_tr = 0, radius_br = 0, radius_bl = 0;
+	char *radius_str;
+	char radius_buf[256];
+	int num_values = 0;
+	float values[4] = {0, 0, 0, 0};
+
+	if (!border)
+	 	return;
+
+	// We want a positive value to draw the border outside of the element, and a negative on the inside.
+	border *= -1; 
+
+	// Parse border radius values
+	radius_str = hud->border_radius->string;
+	if (radius_str && radius_str[0]) {
+		// Make a copy so we can tokenize it
+		strlcpy(radius_buf, radius_str, sizeof(radius_buf));
+		
+		// Parse space-separated values
+		char *token = strtok(radius_buf, " ");
+		while (token && num_values < 4) {
+			values[num_values++] = atof(token);
+			token = strtok(NULL, " ");
+		}
+		
+		// Apply CSS-style rules for radius values
+		switch (num_values) {
+			case 1:
+				// All corners
+				radius_tl = radius_tr = radius_br = radius_bl = values[0];
+				break;
+			case 2:
+				// top-left/bottom-right, top-right/bottom-left
+				radius_tl = radius_br = values[0];
+				radius_tr = radius_bl = values[1];
+				break;
+			case 3:
+				// top-left, top-right/bottom-left, bottom-right
+				radius_tl = values[0];
+				radius_tr = radius_bl = values[1];
+				radius_br = values[2];
+				break;
+			case 4:
+				// top-left, top-right, bottom-right, bottom-left (clockwise)
+				radius_tl = values[0];
+				radius_tr = values[1];
+				radius_br = values[2];
+				radius_bl = values[3];
+				break;
+		}
+	}
+
+	// Check if we have any radius values
+	if (radius_tl > 0 || radius_tr > 0 || radius_br > 0 || radius_bl > 0) {
+		// Use rounded rectangle for corners
+		Draw_AlphaRoundedRectangleRGB(x, y, width, height, radius_tl, radius_tr, radius_br, radius_bl, abs(border), false, color);
+	} else {
+		// Use simple line-based outline for consistent appearance
+		Draw_RectangleOutline(x, y, width, height, abs(border), color);
 	}
 }
 
@@ -1110,9 +1255,10 @@ qbool HUD_PrepareDraw(hud_t *hud, int width, int height, // In.
 
 	y += hud->pos_y->value;
 
-	// Draw frame.
+	// Draw frame and border.
 	if (draw) {
 		HUD_DrawFrame(hud, x, y, width, height);
+		HUD_DrawBorder(hud, x, y, width, height);
 	}
 
 	// Assign values.
@@ -1195,7 +1341,7 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 	// We want to include Frame, frame_color, item_opacity in the list of
 	// available cvar's for the user also. If any additional cvars that
 	// common for all hud elements are added this needs to be increased.
-	int			num_params = 3;
+	int			num_params = 5;
 
 	// Allocate room for the HUD.
 	hud = (hud_t *) Q_malloc(sizeof(hud_t));
@@ -1339,6 +1485,32 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 		hud->params[hud->num_params++] = hud->opacity;
 	}
 
+	//
+	// Border.
+	//
+	{
+		hud->border = HUD_CreateVar(name, "border", "0");
+		hud->params[hud->num_params++] = hud->border;
+		hud->flags |= HUD_BORDER;
+	}
+
+	//
+	// Border Color.
+	//
+	{
+		hud->border_color = HUD_CreateVar(name, "border_color", "0 0 0");
+		hud->border_color->OnChange = HUD_OnChangeBorderColor;
+		hud->params[hud->num_params++] = hud->border_color;
+	}
+
+	//
+	// Border Radius.
+	//
+	{
+		hud->border_radius = HUD_CreateVar(name, "border_radius", "0");
+		hud->params[hud->num_params++] = hud->border_radius;
+	}
+
 	// Draw... if not set, will be measured (unlike ->show) but nothing rendered (assuming it follows standard pattern)
 	hud->draw = HUD_CreateVar(name, "draw", "1");
 
@@ -1350,8 +1522,9 @@ hud_t * HUD_Register(char *name, char *var_alias, char *description,
 
 	while (subvar) {
 		char *value = va_arg(argptr, char *);
+
 		if (value == NULL || hud->num_params >= HUD_MAX_PARAMS || hud->num_params >= num_params) {
-			Sys_Error("HUD_Register: HUD_MAX_PARAMS overflow");
+			Sys_Error("HUD_Register: HUD_MAX_PARAMS overflow.");
 		}
 
 		hud->params[hud->num_params] = HUD_CreateVar(name, subvar, value);
@@ -1504,9 +1677,16 @@ void HUD_DrawObject(hud_t *hud)
 	//
 	// Let the HUD element draw itself - updates last_draw_sequence itself.
 	//
+	// Do not fade text for elements aligned to the console
+	if (hud->align_y_num == HUD_ALIGN_CONSOLE) {
+		Draw_SetConsoleAlignedHud(true);
+	}
 	Draw_SetOverallAlpha(hud->opacity->value);
 	hud->draw_func(hud);
 	Draw_SetOverallAlpha(1.0);
+	if (hud->align_y_num == HUD_ALIGN_CONSOLE) {
+		Draw_SetConsoleAlignedHud(false);
+	}
 
 	// last_draw_sequence is update by HUD_PrepareDraw
 	// if object was succesfully drawn (wasn't outside area etc..)

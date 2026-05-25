@@ -868,6 +868,32 @@
       "group-id": "9",
       "type": "float"
     },
+    "cl_autohop": {
+      "default": "0",
+      "desc": "When enabled, player will hop automatically when holding down jump button.",
+      "group-id": "8",
+      "type": "boolean"
+    },
+    "cl_autoshownick": {
+      "default": "0",
+      "desc": "Enable / disable automatically triggering shownick on teammates if they are in your crosshairs. Needs 'teammate' in tp_point list.",
+      "group-id": "8",
+      "type": "integer",
+      "values": [
+        {
+          "description": "No auto shownick.",
+          "name": "0"
+        },
+        {
+          "description": "Trigger `/shownick` when teammate is in crosshairs.",
+          "name": "1"
+        },
+        {
+          "description": "Trigger `/shownick 1` when teammate is in crosshairs.",
+          "name": "2"
+        }
+      ]
+    },
     "cl_backpackfilter": {
       "default": "0",
       "group-id": "8",
@@ -1223,6 +1249,13 @@
       "group-id": "0",
       "type": "boolean"
     },
+    "cl_delay_input": {
+      "default": "0",
+      "desc": "Delays mouse input (look position and button presses) by the specified number of milliseconds.\nUseful for simulating input lag.",
+      "group-id": "11",
+      "remarks": "Specified in ms. Maximum delay is 1000ms. Mouse wheel events are also delayed.",
+      "type": "float"
+    },
     "cl_delay_packet": {
       "default": "0",
       "desc": "Client will delay incoming and outgoing packets, allowing user to increase his ping in the game.",
@@ -1410,6 +1443,13 @@
       "remarks": "Sign of the value is ignored.",
       "type": "float"
     },
+    "cl_easyaircontrol": {
+      "default": "0",
+      "desc": "When greater than 0, this modifies your input keys held\nto make air control beeline to your held direction.",
+      "group-id": "9",
+      "remarks": "Only useful at values of 0 or [45-90], recommend 62.5 if not 0.\nOnly works during prewar.",
+      "type": "float"
+    },
     "cl_fp_messages": {
       "default": "4",
       "desc": "This variable is used in conjunction with the variable \"cl_fp_persecond\" to define when the floodprot protection should be triggered (if \"cl_floodprot\" is set to \"1\").",
@@ -1560,20 +1600,28 @@
         }
       ]
     },
-    "cl_iDrive": {
-      "default": "0",
-      "desc": "Emulates \"strafe script\". When turned on, you will always change direction instead of stopping when holding opposing movement keys +moveleft and +moveright, or +forward and +back.",
+    "cl_socd": {
+      "default": "1",
+      "desc": "Determines movement behavior when holding opposing directional keys.",
       "group-id": "9",
-      "remarks": "Reported in your f_ruleset reply with the '+i' flag.\nCan not be changed during a match.",
-      "type": "boolean",
+      "remarks": "",
+      "type": "integer",
       "values": [
         {
-          "description": "Pressing keys for both directions will stop movement on that axis.",
-          "name": "false"
+          "description": "Legacy behavior (no priority)",
+          "name": "0"
         },
         {
-          "description": "Auto-releases one of the keys when both directions are pressed.",
-          "name": "true"
+          "description": "Last Input Priority",
+          "name": "1"
+        },
+        {
+          "description": "Absolute Priority: moveleft",
+          "name": "2"
+        },
+        {
+          "description": "Absolute Priority: moveright",
+          "name": "3"
         }
       ]
     },
@@ -1682,6 +1730,12 @@
       "desc": "Rotating models bob up and down like in Quake3.",
       "group-id": "8",
       "type": "boolean"
+    },
+    "cl_model_height": {
+      "default": "0",
+      "desc": "Sets height of models. Values from 0 to 10 accepted.",
+      "group-id": "8",
+      "type": "integer"
     },
     "cl_movespeedkey": {
       "default": "2.0",
@@ -2067,6 +2121,22 @@
         }
       ]
     },
+    "cl_nopred_weapon": {
+      "default": "0",
+      "desc": "Disables weapon prediction for your character",
+      "group-id": "21",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Predict weapons",
+          "name": "false"
+        },
+        {
+          "description": "Don't predict weapons",
+          "name": "true"
+        }
+      ]
+    },
     "cl_novweps": {
       "default": "0",
       "desc": "If set, disables support for zquake vwep extension.",
@@ -2361,6 +2431,13 @@
         }
       ]
     },
+    "cl_predict_lerp": {
+      "default": "1",
+      "desc": "Sets minimum prediction error threshold for adaptive smoothing. 0 disables, values 0-1 are clamped to 1.",
+      "group-id": "21",
+      "type": "float",
+      "remarks": "Only affects other players, not your own movement. Higher values require larger prediction errors before smoothing begins. Helps reduce visual 'warping' from strafing, knockback, rocket jumps, and network jitter."
+    },
     "cl_predict_players": {
       "default": "1",
       "desc": "This toggles the prediction for other players' movement. Unless you are having problems this variable should be left at \"1\".",
@@ -2374,6 +2451,126 @@
         {
           "description": "",
           "name": "true"
+        }
+      ]
+    },
+    "cl_predict_show_errors": {
+      "default": "0",
+      "desc": "Prints prediction errors for other players when the error distance exceeds this threshold. Set to 0 to disable, or any positive value to set the threshold in units.",
+      "group-id": "21",
+      "type": "float",
+      "min-value": 0,
+      "remarks": "Useful for debugging player prediction issues. Shows player name and error distance."
+    },
+    "cl_predict_scale": {
+      "default": "1",
+      "desc": "Scales player prediction based on velocity to reduce jitter during rapid direction changes. At low speeds (< cl_predict_scale_threshold, default 320 units/s), prediction time is reduced to minimize overcorrection when players quickly change direction.",
+      "group-id": "21",
+      "type": "integer",
+      "values": [
+        {
+          "description": "Disabled - full prediction at all speeds",
+          "name": "0"
+        },
+        {
+          "description": "Enabled",
+          "name": "1"
+        }
+      ]
+    },
+    "cl_predict_scale_threshold": {
+      "default": "320",
+      "desc": "Velocity threshold (in units/second) used by cl_predict_scale. When player speed is below this value, the selected scaling curve reduces prediction time to remove jitter.",
+      "group-id": "21",
+      "type": "float",
+      "min-value": 1,
+      "remarks": "Increase the threshold to restrict prediction scaling to faster movement. Values <= 0 are clamped to 1."
+    },
+    "cl_predict_buffer": {
+      "default": "1",
+      "desc": "This variable controls how many frames will be buffered before weapon and sound prediction is used.\n\nHigher values will result in larger latency before seeing/hearing your weapon fire,\nbut with less prediction errors.",
+      "group-id": "21",
+      "type": "integer"
+    },
+    "cl_predict_jump": {
+      "default": "0",
+      "desc": "This variable controls if jump sounds will be predicted.",
+      "group-id": "21",
+      "type": "boolean"
+    },
+    "cl_predict_beam": {
+      "default": "1",
+      "desc": "This variable controls if shaft beam will be predicted, which can misbehave in water.",
+      "group-id": "21",
+      "type": "boolean"
+    },
+    "cl_predict_projectiles": {
+      "default": "0",
+      "desc": "This variable controls if projectiles will be predicted, which can cause confusion if you die at the same time you shoot.",
+      "group-id": "21",
+      "type": "boolean"
+    },
+    "cl_predict_smoothview": {
+      "default": "1",
+      "desc": "This variable determines how smoothly predicted and true positions will be blended when desynchronized from knockback or packet-loss.",
+      "group-id": "21",
+      "type": "float",
+      "values": [
+        {
+          "description": "disables smoothing (behavior prior to EzQuake 3.6)",
+          "name": "0"
+        },
+        {
+          "description": "enables smoothing, higher is smoother, lower is closer to true position on the server.",
+          "name": "0.1 to 2"
+        }
+      ]
+    },
+    "cl_predict_weaponsound": {
+      "default": "1",
+      "desc": "This variable controls if (or which) weapon sounds will be predicted.\nFor choosing specific weapons to disable, add up all desired binary flags.",
+      "group-id": "21",
+      "type": "integer",
+      "values": [
+        {
+          "description": "disable all weapon sound prediction",
+          "name": "0"
+        },
+        {
+          "description": "enable all weapon sound prediction",
+          "name": "1"
+        },
+        {
+          "description": "disable for AXE",
+          "name": "2"
+        },
+        {
+          "description": "disable for SG",
+          "name": "4"
+        },
+        {
+          "description": "disable for SSG",
+          "name": "8"
+        },
+        {
+          "description": "disable for NG",
+          "name": "16"
+        },
+        {
+          "description": "disable for SNG",
+          "name": "32"
+        },
+        {
+          "description": "disable for GL",
+          "name": "64"
+        },
+        {
+          "description": "disable for RL",
+          "name": "128"
+        },
+        {
+          "description": "disable for LG",
+          "name": "256"
         }
       ]
     },
@@ -2441,6 +2638,55 @@
       "group-id": "53",
       "type": "float"
     },
+    "cl_spray_show": {
+      "default": "0.5",
+      "desc": "Controls the local display opacity of spray decals.",
+      "group-id": "50",
+      "remarks": "Set to 0 to hide all sprays, or use partial values to control opacity.",
+      "type": "float"
+    },
+    "cl_spray_colorize": {
+      "default": "",
+      "desc": "Colorizes all spray decals to the specified RGB color. Does not affect how others see the image.",
+      "group-id": "50",
+      "remarks": "Example: \"100 200 100\" gives sprays a green tint.",
+      "type": "string"
+    },
+    "cl_spray_distance": {
+      "default": "512",
+      "desc": "Maximum distance, in map units, that the spray command traces from your view before placing a spray.",
+      "group-id": "50",
+      "remarks": "",
+      "type": "float"
+    },
+    "cl_spray_image": {
+      "default": "spray",
+      "desc": "Filename of image to be used for spray, with extension omitted.",
+      "group-id": "50",
+      "remarks": "",
+      "type": "string"
+    },
+    "cl_spray_image_path": {
+      "default": "qw/sprays",
+      "desc": "Directory where spray images are loaded from.",
+      "group-id": "50",
+      "remarks": "",
+      "type": "string"
+    },
+    "cl_spray_preview_alpha": {
+      "default": "0.125",
+      "desc": "Opacity used for the +spray preview.",
+      "group-id": "50",
+      "remarks": "",
+      "type": "float"
+    },
+    "cl_spray_size": {
+      "default": "64",
+      "desc": "Maximum displayed axis size, in map units, of newly placed spray decals.",
+      "group-id": "50",
+      "remarks": "This affects the displayed decal size on the map, not the source image dimensions. Aspect ratio is preserved.",
+      "type": "float"
+    },
     "cl_safestrafe": {
       "default": "0",
       "desc": "Enables safestrafe mode in client regardless of server enforcement.",
@@ -2461,6 +2707,50 @@
           "name": "2+"
         }
       ]
+    },
+    "cl_safestrafe_print": {
+      "default": "0",
+      "desc": "Prints the number of frames between left/right direction changes.",
+      "group-id": "9",
+      "type": "integer",
+      "values": [
+        {
+          "description": "Disabled",
+          "name": "0 "
+        },
+        {
+          "description": "Enabled",
+          "name": "1 "
+        }
+      ]
+    },
+    "cl_safeswitch": {
+      "default": "0",
+      "desc": "Switch away from LG when entering water. Mostly useful in CA/Wipeout modes where discharging has no effect on enemy.",
+      "group-id": "49",
+      "remarks": "Will select weapons according to your specified weapon order. You can also set a custom order using cl_safeswitch_order.",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Disabled",
+          "name": "0"
+        },
+        {
+          "description": "Enabled",
+          "name": "1"
+        },
+        {
+          "description": "Enabled only during CA/Wipeout",
+          "name": "2"
+        }
+      ]
+    },
+    "cl_safeswitch_order": {
+      "default": "",
+      "desc": "Sets a custom weapon order for cl_safeswitch (e.g., \"5 3 2 1\").",
+      "group-id": "49",
+      "remarks": "Leave blank to use the order from your previous weapon selection.",
+      "type": "string"
     },
     "cl_savehistory": {
       "default": "1",
@@ -2563,6 +2853,23 @@
       "desc": "Will convert +jump commands to +moveup commands when in liquid (water, lava, slime) and in spectator mode.",
       "group-id": "9",
       "type": "boolean"
+    },
+    "cl_smartspawn": {
+      "default": "0",
+      "desc": "When dead, +attack will spawn and immediately -attack to prevent weapon firing when spawning.",
+      "group-id": "9",
+      "remarks": "Spawning by jumping is preferred. This helps prevent unintentional +attack spawns.",
+      "type": "enum",
+      "values": [
+        {
+          "description": "+attack will spawn and potentially fire weapon",
+          "name": "0"
+        },
+        {
+          "description": "+attack will spawn and not fire weapon",
+          "name": "1"
+        }
+      ]
     },
     "cl_solid_players": {
       "default": "1",
@@ -3235,11 +3542,42 @@
         }
       ]
     },
-    "con_margin_left": {
+    "con_highlight_broadcast": {
       "default": "0",
-      "desc": "If set, messages are padded on the left by the number of spaces defined in the variable",
-      "group-id": "47",
-      "type": "integer"
+      "desc": "Console highlighting mode. Will highlight a line in the console which contains a broadcast message.",
+      "group-id": "5",
+      "remarks": "See con_highlight_broadcast_mark.",
+      "type": "enum",
+      "values": [
+        {
+          "description": "No highlighting",
+          "name": "0"
+        },
+        {
+          "description": "Highlighted line will be all white.",
+          "name": "1"
+        },
+        {
+          "description": "Highlighted line will start with the text given in con_highlight_broadcast_mark",
+          "name": "2"
+        },
+        {
+          "description": "Both 1 and 2: highlighted line will be white and start with special text",
+          "name": "3"
+        }
+      ]
+    },
+    "con_highlight_broadcast_mark": {
+      "default": "",
+      "desc": "Specifies the text that will be used to highlight lines with con_highlight_broadcast 2 and 3.",
+      "group-id": "5",
+      "type": "string",
+      "values": [
+        {
+          "description": "This text will be used on the beginning of the highlighted line",
+          "name": "*"
+        }
+      ]
     },
     "con_mm2_only": {
       "default": "0",
@@ -5008,7 +5346,7 @@
     },
     "gl_outline_scale_model": {
       "default": "1",
-      "desc": "Determines the scale of model outlines. Allows values 0 to 1 for rulesets smackdown, smackdrive and qcon, and 0 to 5 for other rulesets.",
+      "desc": "Determines the scale of model outlines. Allows values 0 to 1.",
       "group-id": "35",
       "remarks": "Requires vid_renderer 1",
       "type": "float"
@@ -6386,6 +6724,41 @@
       "desc": "Switches graphical style of armor level.",
       "group-id": "19",
       "type": "float"
+    },
+    "hud_armor_text_color_none": {
+      "desc": "Text color when no armor is equipped (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_armor_text_color_ga_low": {
+      "desc": "Text color when low on ga (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_armor_text_color_ga_normal": {
+      "desc": "Text color for ga (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_armor_text_color_ya_low": {
+      "desc": "Text color when low on ya (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_armor_text_color_ya_normal": {
+      "desc": "Text color for ya (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_armor_text_color_ra_low": {
+      "desc": "Text color when low on ra (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
+    },
+    "hud_armor_text_color_ra_normal": {
+      "desc": "Text color for ra (only used with style 1 or 3, format: 0-255 0-255 0-255)",
+      "group-id": "19",
+      "type": "string"
     },
     "hud_armordamage_align": {
       "desc": "Sets armordamage HUD element alignment.",
@@ -13553,7 +13926,7 @@
     },
     "m_accel_offset": {
       "default": "0",
-      "desc": "Acceleration will not be active until the mouse movement exceeds this speed (counts per millisecond).\nNegative values are supported, which has the effect of causing higher rates of acceleration to happen at lower velocities.",
+      "desc": "Acceleration will not be active until the mouse movement exceeds this speed (counts per millisecond). Only affects Classic curve (m_accel_type 0) for backward compatibility.\nEach curve type has its own offset parameter (e.g., m_accel_linear_offset, m_accel_natural_offset).\nNegative values are supported, which has the effect of causing higher rates of acceleration to happen at lower velocities.",
       "group-id": "11",
       "type": "float"
     },
@@ -13565,7 +13938,193 @@
     },
     "m_accel_senscap": {
       "default": "0",
-      "desc": "Sets an upper limit on the amplified mouse movement. Great for tuning acceleration around lower velocities while still remaining in control of fast motion such as flicking.",
+      "desc": "Global cap on the effective mouse sensitivity that applies after any curve-specific caps. Great for tuning acceleration around lower velocities while still remaining in control of fast motion such as flicking.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_type": {
+      "default": "0",
+      "desc": "Selects the mouse acceleration curve type.\n0 = None (use legacy m_accel calculations)\n1 = Classic (Raw Accel compatible power curve)\n2 = Linear (simple linear acceleration)\n3 = Natural (logarithmic curve with asymptotic limit)\n4 = Jump (step function with optional smoothing)\n5 = Motivity (synchronous/motivity curve)\n6 = Power (simplified power curve)\n7 = Custom (user-defined curve points)",
+      "group-id": "11",
+      "type": "integer"
+    },
+    "m_accel_legacy": {
+      "default": "0",
+      "desc": "When set to 1, uses Raw Accel's legacy calculation for acceleration curves instead of the newer \"gain\" method which calculates acceleration based on accumulated sensitivity changes",
+      "group-id": "11",
+      "type": "boolean"
+    },
+    "m_accel_classic_offset": {
+      "default": "0",
+      "desc": "Speed threshold for Classic curve acceleration to begin (counts per millisecond). Mouse speeds below this value will have no acceleration applied. Takes precedence over m_accel_offset when set.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_classic_accel": {
+      "default": "0.5",
+      "desc": "Acceleration multiplier for Classic curve. Higher values increase the acceleration effect. When set, takes precedence over m_accel for the Classic curve type.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_classic_exponent": {
+      "default": "2.0",
+      "desc": "Power exponent for Classic curve. Values below 2 provide sublinear acceleration, 2 is linear, and above 2 provides exponential acceleration. Takes precedence over m_accel_power when set.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_classic_cap": {
+      "default": "0",
+      "desc": "Maximum multiplier cap for Classic curve. Limits the maximum acceleration applied. Takes precedence over m_accel_senscap when set.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_linear_offset": {
+      "default": "0",
+      "desc": "Speed threshold for Linear curve acceleration to begin (counts per millisecond). Mouse speeds below this value will have no acceleration applied.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_linear_accel": {
+      "default": "0.5",
+      "desc": "Acceleration rate for Linear curve. Determines how much the multiplier increases per unit of speed above the offset.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_linear_cap": {
+      "default": "0",
+      "desc": "Maximum multiplier cap for Linear curve. Limits the maximum acceleration applied.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_natural_offset": {
+      "default": "0",
+      "desc": "Speed threshold for Natural curve acceleration to begin (counts per millisecond). Mouse speeds below this value will have no acceleration applied.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_natural_accel": {
+      "default": "0.5",
+      "desc": "Decay rate for Natural curve. Controls how quickly the acceleration approaches its limit. Higher values reach the limit faster.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_natural_limit": {
+      "default": "2.0",
+      "desc": "Maximum multiplier limit for Natural curve. The acceleration asymptotically approaches this value.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_jump_input": {
+      "default": "5.0",
+      "desc": "Speed threshold for Jump curve (counts per millisecond). When mouse speed exceeds this value, the sensitivity jumps to the output multiplier.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_jump_output": {
+      "default": "2.0",
+      "desc": "Target multiplier for Jump curve. The sensitivity multiplier applied when speed exceeds the input threshold.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_jump_smooth": {
+      "default": "0",
+      "desc": "Smoothing factor for Jump curve transition. When 0, the jump is instantaneous. Higher values create a smoother transition between base and target multiplier.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_sync_speed": {
+      "default": "6.0",
+      "desc": "Synchronous speed for Motivity curve (counts per millisecond). The speed at which the multiplier equals 1.0. Speeds above and below are adjusted based on motivity.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_sync_motivity": {
+      "default": "1.5",
+      "desc": "Motivity factor for synchronous curve. Values above 1 increase sensitivity at high speeds and decrease at low speeds. Values below 1 do the opposite.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_sync_smooth": {
+      "default": "0.5",
+      "desc": "Smoothing factor for Motivity curve transitions. Higher values create smoother transitions around the synchronous speed point.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_sync_gamma": {
+      "default": "1.0",
+      "desc": "Gamma correction for Motivity curve. Adjusts the curve shape, with values above 1 making it more aggressive and below 1 making it gentler.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_sync_min": {
+      "default": "0.1",
+      "desc": "Minimum multiplier limit for Motivity curve. Prevents sensitivity from dropping below this value at low speeds.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_sync_max": {
+      "default": "5.0",
+      "desc": "Maximum multiplier limit for Motivity curve. Caps the maximum sensitivity at high speeds. 0 means no limit.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_power_scale": {
+      "default": "1.0",
+      "desc": "Scale factor for Power curve. Multiplies the final acceleration value.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_power_exponent": {
+      "default": "0.05",
+      "desc": "Power exponent for simplified Power curve. Similar to m_accel_classic_exponent but for the Power curve type.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_power_offset": {
+      "default": "0",
+      "desc": "Speed offset for Power curve (counts per millisecond). Speeds below this value have no acceleration.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_power_cap": {
+      "default": "0",
+      "desc": "Maximum multiplier cap for Power curve. Limits the maximum acceleration applied.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_custom_points": {
+      "default": "",
+      "desc": "Custom curve control points in format 'x1,y1;x2,y2;...'. X values are speeds (counts/ms), Y values are multipliers. The curve interpolates between these points.",
+      "group-id": "11",
+      "type": "string"
+    },
+    "m_accel_smooth": {
+      "default": "0",
+      "desc": "Global input speed smoothing applied before acceleration curves using exp. moving average.\nAffects ALL acceleration types.\n0 = No smoothing (raw input)\n0.1-0.3 = Light smoothing (recommended for jittery mice)\n0.5-0.8 = Heavy smoothing (adds noticeable delay)\n1.0 = Maximum smoothing\nNote: Higher values mean LESS smoothing (more weight to current speed).\nIgnored if m_accel_smooth_halflife is set.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_smooth_halflife": {
+      "default": "0",
+      "desc": "Time-based smoothing using exponential decay (milliseconds).\nOverrides m_accel_smooth when set.\n0 = Disabled (use m_accel_smooth instead)\n5-10 = Light smoothing\n10-20 = Moderate smoothing\n20+ = Heavy smoothing\nProvides framerate-independent smoothing.\nLower values = faster response, higher values = more smoothing.",
+      "group-id": "11",
+      "type": "float"
+    },
+    "m_accel_cap_type": {
+      "default": "0",
+      "desc": "Capping mode for acceleration limits.\n0 = Output cap (limits final multiplier)\n1 = Input cap (limits speed before curve calculation)",
+      "group-id": "11",
+      "type": "integer"
+    },
+    "m_accel_distance_mode": {
+      "default": "0",
+      "desc": "Method for calculating mouse speed from X/Y components.\n0 = Euclidean (most accurate) - diagonal movements are faster\n1 = Separate (NOT IMPLEMENTED - acts same as Euclidean)\n2 = Maximum (most uniform) - all directions same speed",
+      "group-id": "11",
+      "type": "integer"
+    },
+    "m_showspeed": {
+      "default": "0",
+      "desc": "Display real-time mouse speed and acceleration multiplier in the console.\nValues greater than \"0\" act as the speed threshold for reporting.\nUseful for tuning acceleration curve parameters.",
       "group-id": "11",
       "type": "float"
     },
@@ -15048,7 +15607,7 @@
       "system-generated": true
     },
     "qws_version": {
-      "default": "0.34-beta",
+      "default": "0.34-beta-RekiFork",
       "group-id": "0",
       "system-generated": true
     },
@@ -15467,6 +16026,48 @@
         {
           "description": "None",
           "name": "10"
+        }
+      ]
+    },
+    "r_explosion_sparks": {
+      "default": "1",
+      "desc": "Controls whether sparks are displayed in blob explosions (r_explosionType 6).",
+      "group-id": "8",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Sparks disabled",
+          "name": "0"
+        },
+        {
+          "description": "Sparks enabled",
+          "name": "1"
+        }
+      ]
+    },
+    "r_explosion_scale": {
+      "default": "1",
+      "desc": "Controls the scale/size of blob explosions (r_explosionType 6).",
+      "group-id": "8",
+      "type": "float"
+    },
+    "r_explosion_color": {
+      "default": "90 47 207",
+      "desc": "Sets the RGB color of blob explosions (r_explosionType 6). Format: \"R G B\" where each value is 0-255.",
+      "group-id": "8",
+      "type": "string",
+      "values": [
+        {
+          "description": "Default purple-blue",
+          "name": "90 47 207"
+        },
+        {
+          "description": "Classic blue",
+          "name": "60 100 240"
+        },
+        {
+          "description": "Orange",
+          "name": "255 128 0"
         }
       ]
     },
@@ -16499,6 +17100,65 @@
       "remarks": "See r_skincolormode for more info.",
       "type": "string"
     },
+    "r_teammateskincolors_enable": {
+      "default": "0",
+      "desc": "Enables teammate-specific skin colors based on player name matching.",
+      "group-id": "44",
+      "remarks": "When enabled, allows r_teammateskincolor1-6 to override r_teamskincolor for specific players.",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Disabled",
+          "name": "0"
+        },
+        {
+          "description": "Enabled",
+          "name": "1"
+        }
+      ]
+    },
+    "r_teammateskincolor1": {
+      "default": "",
+      "desc": "Sets skin color for teammates whose names match specified substrings.",
+      "group-id": "44",
+      "remarks": "Format: \"R G B substring1 substring2 ...\". Example: \"0 255 0 bob alice\" colors Bob and Alice green. Use {name} for exact match. Case-insensitive matching.",
+      "type": "string"
+    },
+    "r_teammateskincolor2": {
+      "default": "",
+      "desc": "Sets skin color for teammates whose names match specified substrings.",
+      "group-id": "44",
+      "remarks": "Format: \"R G B substring1 substring2 ...\". Lower priority than r_teammateskincolor1.",
+      "type": "string"
+    },
+    "r_teammateskincolor3": {
+      "default": "",
+      "desc": "Sets skin color for teammates whose names match specified substrings.",
+      "group-id": "44",
+      "remarks": "Format: \"R G B substring1 substring2 ...\". Lower priority than r_teammateskincolor1-2.",
+      "type": "string"
+    },
+    "r_teammateskincolor4": {
+      "default": "",
+      "desc": "Sets skin color for teammates whose names match specified substrings.",
+      "group-id": "44",
+      "remarks": "Format: \"R G B substring1 substring2 ...\". Lower priority than r_teammateskincolor1-3.",
+      "type": "string"
+    },
+    "r_teammateskincolor5": {
+      "default": "",
+      "desc": "Sets skin color for teammates whose names match specified substrings.",
+      "group-id": "44",
+      "remarks": "Format: \"R G B substring1 substring2 ...\". Lower priority than r_teammateskincolor1-4.",
+      "type": "string"
+    },
+    "r_teammateskincolor6": {
+      "default": "",
+      "desc": "Sets skin color for teammates whose names match specified substrings.",
+      "group-id": "44",
+      "remarks": "Format: \"R G B substring1 substring2 ...\". Lower priority than r_teammateskincolor1-5.",
+      "type": "string"
+    },
     "r_telecolor": {
       "default": "255 60 60",
       "desc": "Changes color of teleport when r_fastturb set to 1.",
@@ -16683,6 +17343,22 @@
         {
           "description": "Range 0.1 to 10.",
           "name": "*"
+        }
+      ]
+    },
+    "r_tracker_iconoverlay": {
+      "default": "0",
+      "desc": "When enabled, powerup icons are drawn on top of the weapon icon in the tracker (images only).",
+      "group-id": "40",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Keep separate icons in the tracker.",
+          "name": "0"
+        },
+        {
+          "description": "Draw powerup icon over the weapon icon in the tracker.",
+          "name": "1"
         }
       ]
     },
@@ -17086,12 +17762,16 @@
       "group-id": "0",
       "system-generated": true
     },
-    "ruleset": {
+    "s_alsa_device": {
       "default": "default",
-      "desc": "Enforces a set of restrictions on the client features.",
-      "group-id": "37",
-      "remarks": "Most commonly used is \"smackdown\"",
+      "desc": "Sets which device ALSA will be trying to open (when s_driver is set to alsa).\nIf \"default\" fails it will try \"hw\" and if that fails too, \"plug:hw\" will be tried.",
+      "group-id": "26",
       "type": "string"
+    },
+    "s_alsa_latency": {
+      "desc": "Specifies latency for ALSA.\nIf you got distortion in sound, upper the value a bit.\nIf you experience delays, try lowering this value.",
+      "group-id": "26",
+      "type": "float"
     },
     "s_alsa_noworkaround": {
       "desc": "If you are having problems with ALSA you can try to set this var to 1 before you try legacy drivers.",
@@ -17929,6 +18609,30 @@
       "group-id": "40",
       "type": "string"
     },
+    "scr_autoid_ingame": {
+      "default": "0",
+      "desc": "Enable in-game autoID of teammates.",
+      "group-id": "40",
+      "type": "integer"
+    },
+    "scr_autoid_ingame_namelength": {
+      "default": "6",
+      "desc": "Maximum name length for in-game autoID.",
+      "group-id": "40",
+      "type": "integer"
+    },
+    "scr_autoid_ingame_weapon": {
+      "default": "1",
+      "desc": "Show best weapon in in-game teammate autoID.",
+      "group-id": "40",
+      "type": "integer"
+    },
+    "scr_autoid_ingame_armor_health": {
+      "default": "1",
+      "desc": "Show armor and health in in-game teammate autoID.",
+      "group-id": "40",
+      "type": "integer"
+    },
     "scr_autoid_namelength": {
       "default": "0",
       "desc": "Maximum number of characters for autoID player names.",
@@ -17999,6 +18703,12 @@
           "name": "64"
         }
       ]
+    },
+    "scr_autoid_yoffset": {
+      "default": "0",
+      "desc": "Adjusts the vertical offset of autoID.",
+      "group-id": "40",
+      "type": "integer"
     },
     "scr_centerMenu": {
       "default": "1",
@@ -18809,6 +19519,18 @@
       "group-id": "0",
       "system-generated": true
     },
+    "scr_scoreboard_nick_names": {
+      "default": "1",
+      "desc": "When enabled, scoreboard entries honor /nick overrides. Disable to show actual player names in the scoreboard.",
+      "group-id": "0",
+      "type": "boolean"
+    },
+    "scr_scoreboard_nick_color": {
+      "default": "191 255 255",
+      "desc": "Text color used for scoreboard names that are displayed via /nick overrides.",
+      "group-id": "0",
+      "type": "color"
+    },
     "scr_scoreboard_posx": {
       "default": "0",
       "desc": "Controls the X-offset of the scoreboard.",
@@ -18838,6 +19560,12 @@
       "desc": "Enable TrueType fonts on the scoreboard.",
       "group-id": "5",
       "type": "boolean"
+    },
+    "scr_scoreboard_scale": {
+      "default": "1",
+      "desc": "Adjusts the size of the scoreboard.",
+      "group-id": "40",
+      "type": "float"
     },
     "scr_scoreboard_qtv_name": {
       "desc": "This variable will change what qtv users are called in the scoreboard.\nWhen teamplay is not on, this variable is cut to 4 characters.\n&cRGB values are not accepted.",
@@ -18910,6 +19638,22 @@
         {
           "description": "Map name, example: dm3",
           "name": "3"
+        }
+      ]
+    },
+    "scr_scoreboard_showtracking": {
+      "default": "1",
+      "desc": "Will show names of players spectators are tracking in the scoreboard.",
+      "group-id": "47",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "Do not show who spectators are tracking.",
+          "name": "false"
+        },
+        {
+          "description": "Show who spectators are tracking.",
+          "name": "true"
         }
       ]
     },
@@ -19150,6 +19894,12 @@
           "name": "*"
         }
       ]
+    },
+    "scr_teaminfo_mega_color": {
+      "default": "9cf",
+      "desc": "Sets the color of teammate health when greater than 100.",
+      "group-id": "40",
+      "type": "string"
     },
     "scr_teaminfo_name_width": {
       "default": "6",
@@ -21627,6 +22377,13 @@
           "name": "2"
         }
       ]
+    },
+    "vid_postprocess_text": {
+      "default": "1",
+      "desc": "Controls whether charset text is affected by gamma/contrast postprocessing.",
+      "group-id": "40",
+      "remarks": "0 keeps text neutral; 1 allows text to be affected by gl_gamma/gl_contrast.",
+      "type": "boolean"
     },
     "vid_gl_core_profile": {
       "default": "0",

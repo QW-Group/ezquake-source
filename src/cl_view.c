@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud_common.h"
 #include "mvd_utils.h"
 #include "r_matrix.h"
+#include "pmove.h"
 
 #ifdef X11_GAMMA_WORKAROUND
 #include "tr_types.h"
@@ -50,7 +51,7 @@ static cvar_t cl_bobhead  = { "cl_bobhead",  "0"   };
 
 cvar_t	cl_rollspeed = {"cl_rollspeed", "200"};
 cvar_t	cl_rollangle = {"cl_rollangle", "0"};
-cvar_t	cl_rollalpha = {"cl_rollalpha", "20"};
+cvar_t	cl_rollalpha = {"cl_rollalpha", "20", 0, Rulesets_OnChange_cl_rollalpha};
 cvar_t	v_kicktime = {"v_kicktime", "0.0"};
 cvar_t	v_kickroll = {"v_kickroll", "0.0"};
 cvar_t	v_kickpitch = {"v_kickpitch", "0.0"};
@@ -850,8 +851,17 @@ static int V_CurrentWeaponModel(void)
 				return cl_modelindices[mi_vaxe];
 			}
 			if (bestgun > 1 && bestgun <= 8) {
+				if (!pmove_nopred_weapon && pmove.client_predflags & PRDFL_COILGUN)
+					if (bestgun == 2) { bestgun = 9; }
+
 				return cl_modelindices[mi_weapon1 - 1 + bestgun];
 			}
+		}
+		else if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION) {
+			if (cl.simwep == 1)
+				return cl_modelindices[mi_vaxe];
+			else if (cl.simwep > 1 && cl.simwep <= 9)
+				return cl_modelindices[mi_weapon1 - 1 + cl.simwep];
 		}
 		return cl.stats[STAT_WEAPON];
 	}
@@ -911,6 +921,9 @@ static void V_AddViewWeapon(float bob)
 		else if (scr_viewsize.value == 80)
 			cent->current.origin[2] += 0.5;
 	}
+
+	if (!pmove_nopred_weapon && cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+		view_message.weaponframe = cl.simwepframe;
 
 	if (cent->current.modelindex != gunmodel) {
 		cent->frametime = -1;

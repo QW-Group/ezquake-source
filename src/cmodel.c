@@ -1047,7 +1047,7 @@ static void CM_LoadPlanes(byte *buffer, size_t length)
 	if (length % sizeof(*in))
 		Host_Error("CM_LoadMap: funny lump size");
 
-	count = length / sizeof(*in);
+	count = (int)(length / sizeof(*in));
 	out = (mplane_t *)Hunk_AllocName(count * sizeof(*out), loadname);
 
 	map_planes = out;

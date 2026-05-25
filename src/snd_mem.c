@@ -676,7 +676,7 @@ static qbool S_ParseCueMark(const byte* chunk, int len, int cue_point_id, int* s
 		size = BuffLittleLong(chunk + pos + 4);
 
 		// Looking for ltxt chunk with purpose "mark"
-		if (size >= 20 && !strncmp(chunk + pos, "ltxt", 4) && !strncmp(chunk + pos + 16, "mark", 4)) {
+		if (size >= 20 && !strncmp((const char*)(chunk + pos), "ltxt", 4) && !strncmp((const char*)(chunk + pos + 16), "mark", 4)) {
 			// Might be for a different cue point
 			if (cue_point_id == BuffLittleLong(chunk + pos + 8)) {
 				*sample_length = BuffLittleLong(chunk + pos + 12);

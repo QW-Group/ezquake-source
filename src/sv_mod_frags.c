@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
 #ifndef SERVERONLY
+#define PCRE2_CODE_UNIT_WIDTH 8
 #include "pcre2.h"
 #endif
 #include "sv_mod_frags.h"
@@ -116,7 +117,7 @@ const char **qwmsg_pcre_check(const char *str, const char *qwm_str, int str_len)
 	pcre2_code *reg;
 	int error;
 	PCRE2_SIZE error_offset = 0;
-	const char **buf = NULL;
+	PCRE2_UCHAR8 **buf = NULL;
 	int stringcount;
 	pcre2_match_data *match_data = NULL;
 
@@ -137,21 +138,21 @@ const char **qwmsg_pcre_check(const char *str, const char *qwm_str, int str_len)
 		return NULL;
 	}
 
-	pcre2_substring_list_get(match_data, (PCRE2_UCHAR8***)&buf, NULL);
+	pcre2_substring_list_get(match_data, &buf, NULL);
 	pcre2_match_data_free (match_data);
 	pcre2_code_free(reg);
-	return buf;
+	return (const char **)buf;
 }
 
 // main function
 char *parse_mod_string(char *str)
 {
-	const char **buf;
+	const PCRE2_UCHAR8 **buf;
 	int i, str_len = strlen(str);
 	char *ret = NULL;
 	for (i = 0; qwmsg[i]; i++)
 	{
-		if ((buf = qwmsg_pcre_check(str, qwmsg[i]->str, str_len)))
+		if ((buf = (const PCRE2_UCHAR8 **)qwmsg_pcre_check(str, qwmsg[i]->str, str_len)))
 		{
 			int pl1, pl2;
 			switch (qwmsg[i]->msg_type)
@@ -164,21 +165,21 @@ char *parse_mod_string(char *str)
 					pl2 += qwmsg[i]->reverse;
 					pl1 = 3 - pl2;
 				case 1:
-					str_len = strlen(buf[pl1]) + strlen(buf[pl2]) + strlen(qw_weapon[qwmsg[i]->id]) + 5 + 10;
+					str_len = strlen((char *)buf[pl1]) + strlen((char *)buf[pl2]) + strlen(qw_weapon[qwmsg[i]->id]) + 5 + 10;
 					ret = (char *) Q_malloc (str_len);
-					snprintf(ret, str_len, "%s\\%s\\%s\\%d\n", buf[pl1], buf[pl2], qw_weapon[qwmsg[i]->id], (int)time(NULL));
+					snprintf(ret, str_len, "%s\\%s\\%s\\%d\n", (char *)buf[pl1], (char *)buf[pl2], qw_weapon[qwmsg[i]->id], (int)time(NULL));
 					break;
 				default: ret = NULL;
 				}
 				break;
 			case SYSTEM:
-				str_len = strlen(buf[1]) * 2 + strlen(qw_system[qwmsg[i]->id]) + 4 + 10;
+				str_len = strlen((char *)buf[1]) * 2 + strlen(qw_system[qwmsg[i]->id]) + 4 + 10;
 				ret = (char *) Q_malloc (str_len);
-				snprintf(ret, str_len, "%s\\%s\\%d\n", buf[1], qw_system[qwmsg[i]->id], (int)time(NULL));
+				snprintf(ret, str_len, "%s\\%s\\%d\n", (char *)buf[1], qw_system[qwmsg[i]->id], (int)time(NULL));
 				break;
 			default: ret = NULL;
 			}
-			pcre2_substring_list_free((const PCRE2_UCHAR8**)buf);
+			pcre2_substring_list_free((PCRE2_UCHAR8 **)buf);
 			break;
 		}
 	}

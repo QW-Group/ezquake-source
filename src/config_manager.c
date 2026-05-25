@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "version.h"
 #include "gl_model.h"
 #include "vfs.h"
+#include "nick_override.h"
 
 char *Key_KeynumToString (int keynum);
 
@@ -470,6 +471,9 @@ void DumpMisc(FILE *f)
 	DumpSkyGroups(f);
 	fprintf(f, "\n");
 
+	Nick_WriteOverrides(f);
+	fprintf(f, "\n");
+
 #ifndef CLIENTONLY
 	DumpFloodProtSettings(f);
 	fprintf(f, "\n");
@@ -674,6 +678,8 @@ static void ResetMiscCommands(void)
 {
 	Cbuf_AddText("mapgroup clear\n");
 	Cbuf_AddText("skygroup clear\n");
+
+	Nick_ClearOverrides();
 
 	MarkDefaultSources();
 

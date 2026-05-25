@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "gl_model.h"
 #include "rulesets.h"
 #include "teamplay.h"
+#include "nick_override.h"
 #include "pmove.h"
 #include "version.h"
 #include "qsound.h"
@@ -65,9 +66,70 @@ extern void COM_StoreOriginalCmdline(int argc, char **argv);
 
 char f_system_string[1024] = "";
 
+static char f_system_string_colored[512];
+
+// Returns colorized version of f_system_string:
+// CPU: Intel = blue (&c06f), AMD = red (&cf00)
+// GPU: NVIDIA = green (&c0f0), AMD/Radeon = red (&cf00), Intel = blue (&c06f)
 char * SYSINFO_GetString(void)
 {
-	return f_system_string;
+	char cpu_colored[256] = {0};
+	char gpu_colored[256] = {0};
+	char mem_part[32] = {0};
+	const char *cpu = SYSINFO_processor_description ? SYSINFO_processor_description : "";
+	const char *gpu = SYSINFO_3D_description ? SYSINFO_3D_description : "";
+
+	// Colorize CPU
+	if (cpu[0]) {
+		if (Q_strcasestr(cpu, "Intel"))
+			snprintf(cpu_colored, sizeof(cpu_colored), "&c06f%s&r", cpu);
+		else if (Q_strcasestr(cpu, "AMD") || Q_strcasestr(cpu, "Ryzen"))
+			snprintf(cpu_colored, sizeof(cpu_colored), "&cf00%s&r", cpu);
+		else
+			strlcpy(cpu_colored, cpu, sizeof(cpu_colored));
+	}
+
+	// Colorize GPU
+	if (gpu[0]) {
+		if (Q_strcasestr(gpu, "NVIDIA") || Q_strcasestr(gpu, "GeForce") || Q_strcasestr(gpu, "RTX") || Q_strcasestr(gpu, "GTX"))
+			snprintf(gpu_colored, sizeof(gpu_colored), "&c0f0%s&r", gpu);
+		else if (Q_strcasestr(gpu, "AMD") || Q_strcasestr(gpu, "Radeon") || Q_strcasestr(gpu, "RX "))
+			snprintf(gpu_colored, sizeof(gpu_colored), "&cf00%s&r", gpu);
+		else if (Q_strcasestr(gpu, "Intel"))
+			snprintf(gpu_colored, sizeof(gpu_colored), "&c06f%s&r", gpu);
+		else
+			strlcpy(gpu_colored, gpu, sizeof(gpu_colored));
+	}
+
+	// Extract memory part from f_system_string (always first token before comma)
+	{
+		char tmp[sizeof(f_system_string)];
+		char *comma;
+		strlcpy(tmp, f_system_string, sizeof(tmp));
+		comma = strchr(tmp, ',');
+		if (comma) *comma = '\0';
+		strlcpy(mem_part, tmp, sizeof(mem_part));
+	}
+
+	// Build colored string
+	f_system_string_colored[0] = '\0';
+	strlcat(f_system_string_colored, mem_part, sizeof(f_system_string_colored));
+	if (cpu_colored[0]) {
+		strlcat(f_system_string_colored, ", ", sizeof(f_system_string_colored));
+		strlcat(f_system_string_colored, cpu_colored, sizeof(f_system_string_colored));
+		if (SYSINFO_MHz)
+			strlcat(f_system_string_colored, va(" (%dMHz)", SYSINFO_MHz), sizeof(f_system_string_colored));
+	}
+	if (gpu_colored[0]) {
+		strlcat(f_system_string_colored, ", ", sizeof(f_system_string_colored));
+		strlcat(f_system_string_colored, gpu_colored, sizeof(f_system_string_colored));
+	}
+
+	// Fallback to plain string if something went wrong
+	if (!f_system_string_colored[0])
+		return f_system_string;
+
+	return f_system_string_colored;
 }
 
 unsigned long long	SYSINFO_memory = 0;
@@ -548,6 +610,8 @@ static void Commands_For_Configs_Init (void)
 
 	Cmd_AddCommand ("sb_sourceunmarkall", SB_SourceUnmarkAll);
 	Cmd_AddCommand ("sb_sourcemark", SB_SourceMark);
+
+	Nick_Init();
 }
 
 // meag: try to move all renamed cvars here so they exist prior to config load, and
@@ -583,6 +647,9 @@ static void Host_RegisterLegacyCvars(void)
 	Cmd_AddLegacyCommand("gamma", v_gamma.name);
 	Cmd_AddLegacyCommand("contrast", v_contrast.name);
 	Cmd_AddLegacyCommand("gl_gammacorrection", "vid_gammacorrection");
+
+	Cmd_AddLegacyCommand("cl_socd", "cl_iDrive");
+	Cmd_AddLegacyCommand("cl_idrive", "cl_iDrive");
 
 	// if you don't like renaming things in this way, let's have some talk with tea - johnnycz
 	Cmd_AddLegacyCommand("con_sound_mm1_file", "s_mm1_file");

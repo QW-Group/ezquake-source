@@ -65,6 +65,10 @@
   "+speed": {
     "description": "When active the player will run."
   },
+  "+spray": {
+    "description": "Shows a live spray preview while the key is held. The spray is placed when the matching -spray command is issued.",
+    "remarks": "The preview opacity is controlled by cl_spray_preview_alpha."
+  },
   "+strafe": {
     "description": "When active, \"+left\" and \"+right\" function like \"+moveleft\" and \"+moveright\", strafing in that direction."
   },
@@ -142,6 +146,9 @@
   },
   "-speed": {
     "description": "When used the player will walk."
+  },
+  "-spray": {
+    "description": "Places the current spray at the preview position if +spray is active."
   },
   "-strafe": {
     "description": "When used the turn left and turn right keys will once again perform their original functions."
@@ -1141,6 +1148,24 @@
   "netproblem": {
     "description": "HUD element - icon displayed when network traffic is experiencing problems like lost packets, large delay, etc."
   },
+  "nick": {
+    "description": "Overrides how specific player names appear in the scoreboard and HUD. Provide an alias followed by one or more comma separated names or userids.\nNumbers are treated as userids automatically. Wrapping a name in curly braces forces an exact name match (for example `{43}` matches the literal player named \"43\").\nExample:\nnick \"bob\" \"rob, robert, bobby, 43\"",
+    "syntax": "<alias> \"name[, ...]\""
+  },
+  "nick_clearall": {
+    "description": "Removes every nickname override entry."
+  },
+  "nick_clear": {
+    "description": "Deletes one or more nickname override entries.",
+    "syntax": "<alias> [alias2 ...]"
+  },
+  "nickedit": {
+    "description": "Opens the console input pre-filled with the selected nickname override so it can be edited.",
+    "syntax": "<alias>"
+  },
+  "nicklist": {
+    "description": "Lists all defined nickname overrides."
+  },
   "noclip": {
     "description": "You can fly and go thru objects free mode as spectator",
     "remarks": "Needs cheats support by server."
@@ -1422,6 +1447,17 @@
   },
   "say_team": {
     "description": "Broadcasts a string to teammates.\n\nExample:\nsay_team stop boring!"
+  },
+  "spray": {
+    "arguments": [
+      {
+        "description": "Optional spray image filename. If provided, cl_spray_image is set before placing the spray.",
+        "name": "image"
+      }
+    ],
+    "description": "Places a spray decal on the flat map surface under the crosshair.",
+    "remarks": "The source image is loaded from cl_spray_image_path and must be square. Images larger than the protocol limit are scaled down by the client before upload.",
+    "syntax": "[image]"
   },
   "sb_buildpingtree": {
     "system-generated": true

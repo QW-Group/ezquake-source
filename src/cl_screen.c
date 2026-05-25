@@ -47,6 +47,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "r_chaticons.h"
 #include "r_renderer.h"
 #include "r_matrix.h"
+#include "rulesets.h"
 #include "qsound.h"
 
 #ifndef CLIENTONLY
@@ -57,7 +58,9 @@ void WeaponStats_CommandInit(void);
 void SCR_DrawHud(void);
 void SCR_DrawClocks(void);
 void R_SetupFrame(void);
+extern cvar_t vid_postprocess_text;
 void SCR_Draw_TeamInfo(void);
+void SCR_Draw_Inlay(void);
 void SCR_Draw_ShowNick(void);
 void SCR_DrawQTVBuffer(void);
 void SCR_DrawFPS(void);
@@ -110,7 +113,7 @@ cvar_t	show_velocity_3d		= {"show_velocity_3d", "0"};
 cvar_t	show_velocity_3d_offset_forward	= {"show_velocity_3d_offset_forward", "2.5"};
 cvar_t	show_velocity_3d_offset_down	= {"show_velocity_3d_offset_down", "5"};
 
-cvar_t	cl_hud					= {"cl_hud", "1"};	// QW262 HUD.
+cvar_t	cl_hud					= {"cl_hud", "0", 0, Rulesets_OnChange_cl_hud};	// QW262 HUD.
 
 cvar_t	gl_triplebuffer			= {"gl_triplebuffer", "1"};
 cvar_t  r_chaticons_alpha		= {"r_chaticons_alpha", "0.8"};
@@ -621,6 +624,8 @@ static void SCR_DrawCursor(void)
 
 	// Always draw the cursor if fullscreen
 	if (IN_QuakeMouseCursorRequired()) {
+		Draw_PushLayer(draw_layer_top);
+
 		float x_coord = scr_pointer_state.x;
 		float y_coord = scr_pointer_state.y;
 
@@ -639,6 +644,8 @@ static void SCR_DrawCursor(void)
 			Draw_AlphaLineRGB(x_coord, y_coord, x_coord, y_coord + 20 * scale, 10 * scale, c);
 			Draw_AlphaLineRGB(x_coord + (20 * scale), y_coord, x_coord, y_coord + (20 * scale), 10 * scale, c);
 		}
+
+		Draw_PopLayer();
 	}
 
 	// remember the position for future
@@ -995,7 +1002,13 @@ void SCR_UpdateScreenHudOnly(void)
 
 		// Actual rendering...
 		if (r_drawhud.integer != 2) {
-			R_FlushImageDraw();
+			// When text is not postprocessed, draw base before postprocess; overlay/top layers follow after.
+			if (!vid_postprocess_text.integer) {
+				R_FlushImageDrawLayer(draw_layer_base, false);
+			}
+			else {
+				R_FlushImageDraw();
+			}
 		}
 		R_TraceLeaveNamedRegion();
 	}
@@ -1006,6 +1019,11 @@ void SCR_UpdateScreenPostPlayerView(void)
 	SCR_UpdateScreenHudOnly();
 
 	renderer.PostProcessScreen();
+	if (r_drawhud.integer && r_drawhud.integer != 2 && !vid_postprocess_text.integer) {
+		// Flush overlay and top layers after postprocess so text stays neutral.
+		R_FlushImageDrawLayer(draw_layer_overlay, false);
+		R_FlushImageDrawLayer(draw_layer_top, true);
+	}
 
 	SCR_CheckAutoScreenshot();
 

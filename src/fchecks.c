@@ -36,7 +36,8 @@ f_reply_time,
 f_mod_reply_time,
 f_version_reply_time,
 f_skins_reply_time,
-f_server_reply_time;
+f_server_reply_time,
+f_predict_reply_time;
 
 cvar_t allow_f_system  = {"allow_f_system",  "1"};
 cvar_t allow_f_cmdline = {"allow_f_cmdline", "1"};
@@ -48,11 +49,15 @@ extern cvar_t cl_delay_packet;
 extern cvar_t r_fullbrightSkins;
 extern cvar_t cl_fakeshaft;
 extern cvar_t cl_iDrive;
+extern cvar_t cl_nopred;
 
 
 static void FChecks_VersionResponse (void)
 {
-	Cbuf_AddText (va("say ezQuake %s " QW_PLATFORM ":" QW_RENDERER "\n", VersionString()));
+	// {} required for color codes to render in QW chat
+	// ice white (&ccef) for ezQuake, cyan (&c0ff) for version, gray (&c888) for platform
+	Cbuf_AddText(va("say {&ccefezQuake&r &c0ff%s&r &c888%s:%s&r}\n",
+		VersionString(), QW_PLATFORM, QW_RENDERER));
 }
 
 static char *FChecks_FServerResponse_Text(void)
@@ -336,13 +341,32 @@ static qbool FChecks_SystemRequest (const char *s)
 
 		sys_string = (allow_f_system.integer) ? SYSINFO_GetString() : "disabled";
 
-		//if (sys_string != NULL && sys_string[0]) {
-		Cbuf_AddText("say ");
-		Cbuf_AddText(sys_string);
-		Cbuf_AddText("\n");
-		//}
+		// {} required for color codes to render in QW chat
+		Cbuf_AddText(va("say {%s}\n", sys_string));
 
 		f_system_reply_time = cls.realtime;
+		return true;
+	}
+
+	return false;
+}
+
+static void FChecks_PredictResponse(void)
+{
+	if (cl_nopred.integer)
+		Cbuf_AddText("say prediction disabled (cl_nopred 1)\n");
+	else
+		Cbuf_AddText("say prediction enabled (cl_nopred 0)\n");
+}
+
+static qbool FChecks_PredictRequest(const char *s)
+{
+	if (cl.spectator || (f_predict_reply_time && cls.realtime - f_predict_reply_time < 20))
+		return false;
+
+	if (Util_F_Match(s, "f_predict")) {
+		FChecks_PredictResponse();
+		f_predict_reply_time = cls.realtime;
 		return true;
 	}
 
@@ -362,6 +386,7 @@ void FChecks_CheckRequest (const char *s)
 	fcheck |= FChecks_CheckFModRequest (s);
 	fcheck |= FChecks_CheckFServerRequest (s);
 	fcheck |= FChecks_CheckFRulesetRequest (s);
+	fcheck |= FChecks_PredictRequest (s);
 
 	if (fcheck)
 		f_reply_time = cls.realtime;
@@ -377,4 +402,5 @@ void FChecks_Init (void)
 	FMod_Init();
 	Cmd_AddCommand ("f_server", FChecks_FServerResponse);
 	Cmd_AddCommand ("f_ruleset", FChecks_FRuleset_cmd);
+	Cmd_AddCommand ("f_predict", FChecks_PredictResponse);
 }

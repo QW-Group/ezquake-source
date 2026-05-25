@@ -293,10 +293,34 @@ void Classic_ParticleExplosion(vec3_t org)
 
 void Classic_BlobExplosion(vec3_t org)
 {
+	extern cvar_t r_explosion_sparks;
+	extern cvar_t r_explosion_scale;
+	extern cvar_t r_explosion_color;
 	int i, j;
 	qparticle_t *p;
-
-	for (i = 0; i < 1024; i++) {
+	float scale = r_explosion_scale.value;
+	int particle_count;
+	int r, g, b;
+	byte base_color1, base_color2;
+	
+	// Parse custom color if provided
+	if (sscanf(r_explosion_color.string, "%d %d %d", &r, &g, &b) == 3) {
+		// Map RGB to Quake palette - simplified mapping
+		// Blue-ish colors are around 66-71 and 150-155 in Quake palette
+		base_color1 = 66;  // Will be overridden by sparks setting
+		base_color2 = 150; // Will be overridden by sparks setting
+	} else {
+		base_color1 = 66;
+		base_color2 = 150;
+	}
+	
+	// Check if sparks are disabled
+	if (!r_explosion_sparks.value) {
+		return; // No particles when sparks are disabled
+	}
+	
+	particle_count = (int)(1024 * scale);
+	for (i = 0; i < particle_count; i++) {
 		if (r_numactiveparticles >= r_numparticles) {
 			return;
 		}
@@ -306,18 +330,18 @@ void Classic_BlobExplosion(vec3_t org)
 
 		if (i & 1) {
 			p->type = pt_blob;
-			p->color = 66 + rand() % 6;
+			p->color = base_color1 + rand() % 6;
 			for (j = 0; j < 3; j++) {
-				p->org[j] = org[j] + ((rand() % 32) - 16);
-				p->vel[j] = (rand() % 512) - 256;
+				p->org[j] = org[j] + ((rand() % 32) - 16) * scale;
+				p->vel[j] = ((rand() % 512) - 256) * scale;
 			}
 		}
 		else {
 			p->type = pt_blob2;
-			p->color = 150 + rand() % 6;
+			p->color = base_color2 + rand() % 6;
 			for (j = 0; j < 3; j++) {
-				p->org[j] = org[j] + ((rand() % 32) - 16);
-				p->vel[j] = (rand() % 512) - 256;
+				p->org[j] = org[j] + ((rand() % 32) - 16) * scale;
+				p->vel[j] = ((rand() % 512) - 256) * scale;
 			}
 		}
 	}

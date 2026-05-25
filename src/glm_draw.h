@@ -2,7 +2,7 @@
 #ifndef EZQUAKE_GLM_DRAW_HEADER
 #define EZQUAKE_GLM_DRAW_HEADER
 
-#define MAX_LINES_PER_FRAME 128
+#define MAX_LINES_PER_FRAME 512
 
 typedef struct glm_line_point_s {
 	vec3_t position;

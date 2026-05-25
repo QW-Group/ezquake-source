@@ -193,6 +193,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_brushmodel, "SamplerNumber", 1, false },
 	// r_program_uniform_sprite3d_alpha_test
 	{ r_program_sprite3d, "alpha_test", 1, false },
+	// r_program_uniform_sprite3d_spray_tint
+	{ r_program_sprite3d, "spray_tint", 1, false },
 	// r_program_uniform_hud_circle_matrix
 	{ r_program_hud_circles, "matrix", 1, false },
 	// r_program_uniform_hud_circle_color
@@ -307,6 +309,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_sprites_glc, "materialSampler", 1, false },
 	// r_program_uniform_sprites_glc_alphaThreshold,
 	{ r_program_sprites_glc, "alphaThreshold", 1, false },
+	// r_program_uniform_sprites_glc_sprayTint,
+	{ r_program_sprites_glc, "sprayTint", 1, false },
 	// r_program_uniform_hud_images_glc_primarySampler,
 	{ r_program_hud_images_glc, "primarySampler", 1, false },
 	// r_program_uniform_hud_images_glc_secondarySampler

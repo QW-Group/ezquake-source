@@ -89,6 +89,7 @@ static int active_track = 0;
 static int max_active_tracks = 0;
 
 static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int name_width, qbool proportional, float scale, float image_scale, qbool align_right);
+static void OnChange_TrackerIconOverlay(cvar_t* var, char* value, qbool* cancel);
 static void OnChange_TrackerNameWidth(cvar_t* var, char* value, qbool* cancel);
 
 cvar_t r_tracker                                   = {"r_tracker", "1"};
@@ -97,7 +98,7 @@ cvar_t amf_tracker_frags                           = {"r_tracker_frags", "1"};
 cvar_t amf_tracker_streaks                         = {"r_tracker_streaks", "0"};
 cvar_t amf_tracker_time                            = {"r_tracker_time", "4"};
 cvar_t amf_tracker_messages                        = {"r_tracker_messages", "20"};
-static cvar_t amf_tracker_colorfix				         = {"r_tracker_colorfix", "0"};
+static cvar_t amf_tracker_colorfix				   = {"r_tracker_colorfix", "0"};
 static cvar_t amf_tracker_pickups                  = {"r_tracker_pickups", "0"};
 cvar_t amf_tracker_align_right                     = {"r_tracker_align_right", "1"};
 cvar_t amf_tracker_scale                           = {"r_tracker_scale", "1"};
@@ -107,6 +108,7 @@ static cvar_t amf_tracker_x                        = {"r_tracker_x", "0"};
 static cvar_t amf_tracker_y                        = {"r_tracker_y", "0"};
 static cvar_t amf_tracker_frame_color              = {"r_tracker_frame_color", "0 0 0 0", CVAR_COLOR};
 static cvar_t amf_tracker_images_scale             = {"r_tracker_images_scale", "1"};
+static cvar_t r_tracker_iconoverlay                = {"r_tracker_iconoverlay", "0", 0, OnChange_TrackerIconOverlay};
 static cvar_t amf_tracker_color_good               = {"r_tracker_color_good",     "090", CVAR_TRACKERCOLOR }; // good news
 static cvar_t amf_tracker_color_bad                = {"r_tracker_color_bad",      "900", CVAR_TRACKERCOLOR }; // bad news
 static cvar_t amf_tracker_color_tkgood             = {"r_tracker_color_tkgood",   "990", CVAR_TRACKERCOLOR }; // team kill, not on ur team
@@ -207,6 +209,7 @@ void InitTracker(void)
 	Cvar_Register(&amf_tracker_frame_color);
 	Cvar_Register(&amf_tracker_scale);
 	Cvar_Register(&amf_tracker_images_scale);
+	Cvar_Register(&r_tracker_iconoverlay);
 	Cvar_Register(&amf_tracker_pickups);
 
 	Cvar_Register(&amf_tracker_color_good);
@@ -886,7 +889,7 @@ void VX_TrackerFragXvsY(int player, int killer, int weapon, int player_wcount, i
 	}
 
 	if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator)) {
-		VX_OwnFragNew(cl.players[player].name);
+		VX_OwnFragNew(cl.players[player].shortname);
 	}
 }
 
@@ -1130,7 +1133,7 @@ void VX_TrackerStreak (int player, int count)
 	else {
 		snprintf(outstring, sizeof(outstring), "is %s (%i kills)", streak->spreestring, count);
 
-		VX_TrackerAddSegmented(cl.players[player].name, color_white, outstring, color940, "", NULL);
+		VX_TrackerAddSegmented(cl.players[player].shortname, color_white, outstring, color940, "", NULL);
 	}
 }
 
@@ -1157,34 +1160,34 @@ void VX_TrackerStreakEnd(int player, int killer, int count)
 		}
 		else if (gender == gender_male) {
 			snprintf(outstring, sizeof(outstring), " was looking good until he killed himself (%i kills)", count);
-			VX_TrackerAddSegmented(cl.players[player].name, color_white, outstring, color940, "", NULL);
+			VX_TrackerAddSegmented(cl.players[player].shortname, color_white, outstring, color940, "", NULL);
 		}
 		else if (gender == gender_female) {
 			snprintf(outstring, sizeof(outstring), " was looking good until she killed herself (%i kills)", count);
-			VX_TrackerAddSegmented(cl.players[player].name, color_white, outstring, color940, "", NULL);
+			VX_TrackerAddSegmented(cl.players[player].shortname, color_white, outstring, color940, "", NULL);
 		}
 		else if (gender == gender_neutral) {
 			snprintf(outstring, sizeof(outstring), " was looking good until it killed itself (%i kills)", count);
-			VX_TrackerAddSegmented(cl.players[player].name, color_white, outstring, color940, "", NULL);
+			VX_TrackerAddSegmented(cl.players[player].shortname, color_white, outstring, color940, "", NULL);
 		}
 		else {
 			snprintf(outstring, sizeof(outstring), " was looking good, then committed suicide (%i kills)", count);
-			VX_TrackerAddSegmented(cl.players[player].name, color_white, outstring, color940, "", NULL);
+			VX_TrackerAddSegmented(cl.players[player].shortname, color_white, outstring, color940, "", NULL);
 		}
 	}
 	else {
 		// non suicide
 		if (cl.playernum == player || (player == Cam_TrackNum() && cl.spectator)) {
 			snprintf(outstring, sizeof(outstring), " (%i kills)", count);
-			VX_TrackerAddSegmented("Your streak was ended by ", color940, cl.players[killer].name, color_white, outstring, color940);
+			VX_TrackerAddSegmented("Your streak was ended by ", color940, cl.players[killer].shortname, color_white, outstring, color940);
 		}
 		else if (cl.playernum == killer || (killer == Cam_TrackNum() && cl.spectator)) {
 			snprintf(outstring, sizeof(outstring), "'s streak was ended by you (%i kills)", count);
-			VX_TrackerAddSegmented(cl.players[player].name, color_white, outstring, color940, "", NULL);
+			VX_TrackerAddSegmented(cl.players[player].shortname, color_white, outstring, color940, "", NULL);
 		}
 		else {
 			snprintf(outstring, sizeof(outstring), " (%i kills)", count);
-			VX_TrackerAddSegmented4(cl.players[player].name, color_white, "'s streak was ended by ", color940, cl.players[killer].name, color_white, outstring, color940);
+			VX_TrackerAddSegmented4(cl.players[player].shortname, color_white, "'s streak was ended by ", color940, cl.players[killer].shortname, color_white, outstring, color940);
 		}
 	}
 }
@@ -1210,7 +1213,7 @@ void VX_TrackerStreakEndOddTeamkilled(int player, int count)
 	else {
 		snprintf(outstring, sizeof(outstring), "'s streak was ended by teammate (%i kills)", count);
 
-		VX_TrackerAddSegmented(cl.players[player].name, color_white, outstring, color940, "", NULL);
+		VX_TrackerAddSegmented(cl.players[player].shortname, color_white, outstring, color940, "", NULL);
 	}
 }
 
@@ -1218,6 +1221,7 @@ void VXSCR_MeasureTracker(float* width, float* height, float scale, qbool propor
 {
 	int i;
 	int padded_width = 8 * bound(name_width, 0, MAX_SCOREBOARDNAME - 1) * scale;
+	qbool overlay = r_tracker_iconoverlay.integer;
 
 	*width = *height = 0;
 
@@ -1248,9 +1252,12 @@ void VXSCR_MeasureTracker(float* width, float* height, float scale, qbool propor
 		// Draw the segments.
 		for (s = 0; s < trackermsg[i].segments; ++s) {
 			mpic_t* pic = trackermsg[i].images[s];
+			qbool overlay_skip = overlay && pic && s > 0 && trackermsg[i].images[s - 1];
 
 			if (pic) {
-				x += 8 * 2 * scale;
+				if (!overlay_skip) {
+					x += 8 * 2 * scale;
+				}
 			}
 			else {
 				if (trackermsg[i].pad && padded_width && !trackermsg[i].text_flags[s]) {
@@ -1261,7 +1268,9 @@ void VXSCR_MeasureTracker(float* width, float* height, float scale, qbool propor
 				}
 			}
 
-			x += 8 * scale;
+			if (!overlay_skip) {
+				x += 8 * scale;
+			}
 		}
 
 		*width = max(*width, x);
@@ -1276,6 +1285,7 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 	int		i, printable_chars, s;
 	float	alpha = 1, width_one_char;
 	int     padded_width = 8 * bound(name_width, 0, MAX_SCOREBOARDNAME - 1) * scale;
+	qbool   overlay = r_tracker_iconoverlay.integer;
 
 	scale = bound(0.1, scale, 10);
 	image_scale = bound(0.1, image_scale, 10);
@@ -1319,16 +1329,34 @@ static void VXSCR_DrawTrackerString(float x_pos, float y_pos, float width, int n
 		for (s = 0; s < msg->segments; ++s) {
 			mpic_t* pic = msg->images[s];
 
+			qbool overlay_skip = overlay && pic && s > 0 && msg->images[s - 1];
+
+			if (overlay_skip) {
+				continue;
+			}
+
 			if (pic) {
+				int end = s;
+				int k;
+
+				if (overlay) {
+					while (end + 1 < msg->segments && msg->images[end + 1]) {
+						++end;
+					}
+				}
+
 				// Draw pic
-				Draw_FitPicAlpha(
-					(float)x - 0.5 * 8 * 2 * (image_scale - 1) * scale,
-					(float)y - 0.5 * 8 * (image_scale - 1) * scale,
-					image_scale * 8 * 2 * scale,
-					image_scale * 8 * scale, pic, alpha
-				);
+				for (k = s; k <= end; ++k) {
+					Draw_FitPicAlpha(
+						(float)x - 0.5 * 8 * 2 * (image_scale - 1) * scale,
+						(float)y - 0.5 * 8 * (image_scale - 1) * scale,
+						image_scale * 8 * 2 * scale,
+						image_scale * 8 * scale, msg->images[k], alpha
+					);
+				}
 
 				x += 8 * 2 * scale;
+				s = end;
 			}
 			else {
 				// Draw text
@@ -1363,11 +1391,16 @@ static void VX_PreProcessMessage(trackmsg_t* msg)
 {
 	int s;
 	int padded_chars = bound(amf_tracker_name_width.integer, 0, MAX_SCOREBOARDNAME - 1);
+	qbool overlay = r_tracker_iconoverlay.integer;
 
 	msg->printable_characters = msg->image_characters = 0;
 	for (s = 0; s < msg->segments; ++s) {
+		qbool overlay_skip = overlay && msg->images[s] && s > 0 && msg->images[s - 1];
+
 		if (msg->images[s]) {
-			msg->image_characters += 2;
+			if (!overlay_skip) {
+				msg->image_characters += 2;
+			}
 		}
 		else  {
 			int length = 0;
@@ -1380,10 +1413,27 @@ static void VX_PreProcessMessage(trackmsg_t* msg)
 			}
 			msg->printable_characters += length;
 		}
-		++msg->printable_characters;
+		if (!overlay_skip) {
+			++msg->printable_characters;
+		}
 	}
 
 	--msg->printable_characters;
+}
+
+static void OnChange_TrackerIconOverlay(cvar_t* var, char* value, qbool* cancel)
+{
+	int i;
+
+	Cvar_SetIgnoreCallback(var, value);
+
+	for (i = 0; i < max_active_tracks; ++i) {
+		if (trackermsg[i].die < cl.time) {
+			continue;
+		}
+
+		VX_PreProcessMessage(&trackermsg[i]);
+	}
 }
 
 static void OnChange_TrackerNameWidth(cvar_t* var, char* value, qbool* cancel)

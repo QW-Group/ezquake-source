@@ -283,14 +283,16 @@ static void Rulesets_Smackdown(qbool enable)
 	extern cvar_t allow_scripts;
 	extern cvar_t cl_iDrive;
 	extern cvar_t scr_allowsnap;
+	extern cvar_t cl_easyaircontrol;
 	int i;
 
 	locked_cvar_t disabled_cvars[] = {
-		{&allow_scripts, "0"},  // disable movement scripting
-		{&cl_iDrive, "0"},      // disable strafing aid
-		{&cl_hud, "0"},         // allows you place any text on the screen & filter incoming messages (hud strings)
-		{&cl_rollalpha, "20"},  // allows you to not dodge while seeing enemies dodging
-		{&r_shiftbeam, "0"},    // perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
+		{&allow_scripts, "0"},      // disable movement scripting
+		{&cl_iDrive, "0"},          // disable strafing aid
+		{&cl_easyaircontrol, "0"},  // disable air control aid
+		{&cl_hud, "0"},             // allows you place any text on the screen & filter incoming messages (hud strings)
+		{&cl_rollalpha, "20"},      // allows you to not dodge while seeing enemies dodging
+		{&r_shiftbeam, "0"},        // perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
 		{&scr_allowsnap, "1"}
 	};
 
@@ -350,14 +352,16 @@ static void Rulesets_Qcon(qbool enable)
 	extern cvar_t r_shiftbeam;
 	extern cvar_t allow_scripts;
 	extern cvar_t cl_iDrive;
+	extern cvar_t cl_easyaircontrol;
 	int i;
 
 	locked_cvar_t disabled_cvars[] = {
-		{&allow_scripts, "0"},  // disable movement scripting
-		{&cl_iDrive, "0"},      // disable strafing aid
-		{&cl_hud, "0"},         // allows you place any text on the screen & filter incoming messages (hud strings)
-		{&cl_rollalpha, "20"},  // allows you to not dodge while seeing enemies dodging
-		{&r_shiftbeam, "0"}     // perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
+		{&allow_scripts, "0"},      // disable movement scripting
+		{&cl_iDrive, "0"},          // disable strafing aid
+		{&cl_easyaircontrol, "0"},  // disable air control aid
+		{&cl_hud, "0"},             // allows you place any text on the screen & filter incoming messages (hud strings)
+		{&cl_rollalpha, "20"},      // allows you to not dodge while seeing enemies dodging
+		{&r_shiftbeam, "0"}         // perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
 	};
 
 	if (enable) {
@@ -414,13 +418,15 @@ static void Rulesets_Thunderdome(qbool enable)
 	extern cvar_t r_shiftbeam;
 	extern cvar_t allow_scripts;
 	extern cvar_t cl_iDrive;
+	extern cvar_t cl_easyaircontrol;
 	int i;
 
 	locked_cvar_t disabled_cvars[] = {
-		{&allow_scripts, "0"},  // disable movement scripting
-		{&cl_iDrive, "0"},      // disable strafing aid
-		{&cl_hud, "0"},         // allows you place any text on the screen & filter incoming messages (hud strings)
-		{&r_shiftbeam, "0"}     // perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
+		{&allow_scripts, "0"},      // disable movement scripting
+		{&cl_iDrive, "0"},          // disable strafing aid
+		{&cl_easyaircontrol, "0"},  // disable air control aid
+		{&cl_hud, "0"},             // allows you place any text on the screen & filter incoming messages (hud strings)
+		{&r_shiftbeam, "0"}         // perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
 	};
 
 	if (enable) {
@@ -546,13 +552,15 @@ static void Rulesets_Smackdrive(qbool enable)
 	extern cvar_t r_shiftbeam;
 	extern cvar_t allow_scripts;
 	extern cvar_t scr_allowsnap;
+	extern cvar_t cl_easyaircontrol;
 	int i;
 
 	locked_cvar_t disabled_cvars[] = {
-		{&allow_scripts, "0"},  // disable movement scripting
-		{&cl_hud, "0"},         // allows you place any text on the screen & filter incoming messages (hud strings)
-		{&cl_rollalpha, "20"},  // allows you to not dodge while seeing enemies dodging
-		{&r_shiftbeam, "0"},    // perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
+		{&allow_scripts, "0"},      // disable movement scripting
+		{&cl_easyaircontrol, "0"},  // disable air control aid
+		{&cl_hud, "0"},             // allows you place any text on the screen & filter incoming messages (hud strings)
+		{&cl_rollalpha, "20"},      // allows you to not dodge while seeing enemies dodging
+		{&r_shiftbeam, "0"},        // perphaps some people would think this allows you to aim better (maybe should be added for demo playback and spectating only)
 		{&scr_allowsnap, "1"}
 	};
 
@@ -991,3 +999,100 @@ qbool Ruleset_IsLocalSinglePlayerGame(void)
 	return com_serveractive && cls.state == ca_active && !cl.deathmatch && maxclients.integer == 1;
 }
 #endif
+
+// --- Functions ported from unezQuake ---
+
+qbool Rulesets_RestrictInlay(void)
+{
+	// In ezQuake, inlay is not restricted by rulesets by default.
+	// Rulesets that want to restrict it should lock scr_teaminlay via Cvar_RulesetSet.
+	return false;
+}
+
+void Rulesets_OnChange_cl_hud(cvar_t *var, char *value, qbool *cancel)
+{
+	int ival = Q_atoi(value);
+	float fval = Q_atof(value);
+
+	if (ival == var->integer && fval == var->value)
+		return;
+
+	if (fval != 0 && fval != 1) {
+		Com_Printf("Invalid value for %s, use 0 or 1.\n", var->name);
+		*cancel = true;
+		return;
+	}
+
+	if (cls.state == ca_active) {
+		if (cl.standby) {
+			Cbuf_AddText(va("say qw262 hud: %s\n", ival ? "enabled" : "disabled"));
+		} else {
+			Com_Printf("%s changes are not allowed during the match\n", var->name);
+			*cancel = true;
+		}
+	}
+}
+
+void Rulesets_OnChange_inlay(cvar_t *var, char *value, qbool *cancel)
+{
+	int ival = Q_atoi(value);
+	float fval = Q_atof(value);
+
+	if (ival == var->integer && fval == var->value)
+		return;
+
+	if (fval != 0 && fval != 1) {
+		Com_Printf("Invalid value for %s, use 0 or 1.\n", var->name);
+		*cancel = true;
+		return;
+	}
+
+	if (cls.state == ca_active) {
+		if (cl.standby) {
+			Cbuf_AddText(va("say teaminlay: %s\n", ival ? "enabled" : "disabled"));
+		} else {
+			Com_Printf("%s changes are not allowed during the match\n", var->name);
+			*cancel = true;
+		}
+	}
+}
+
+void Rulesets_OnChange_cl_rollalpha(cvar_t *var, char *value, qbool *cancel)
+{
+	float fval = Q_atof(value);
+
+	if (!cl.spectator && cls.state != ca_disconnected) {
+		if (fval == 20)
+			Cbuf_AddText(va("say rollalpha: %s\n", "disabled"));
+		else if (fval == 0)
+			Cbuf_AddText(va("say rollalpha: %s\n", "enabled"));
+		else
+			Cbuf_AddText(va("say rollalpha: %s\n", value));
+	}
+}
+
+void Rulesets_OnChange_allow_triggers(cvar_t *var, char *value, qbool *cancel)
+{
+	int ival = Q_atoi(value);
+	float fval = Q_atof(value);
+
+	if (ival == var->integer && fval == var->value)
+		return;
+
+	if (fval != 0 && fval != 1) {
+		Com_Printf("Invalid value for %s, use 0 or 1.\n", var->name);
+		*cancel = true;
+		return;
+	}
+
+	if (!cl.spectator && cls.state != ca_disconnected) {
+		if (cls.state == ca_active) {
+			if (cl.standby) {
+				Cbuf_AddText(ival ? "say triggers enabled\n" : "say triggers disabled\n");
+			} else {
+				Com_Printf("%s changes are not allowed during the match\n", var->name);
+				*cancel = true;
+			}
+		}
+	}
+}

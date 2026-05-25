@@ -38,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "Ctrl.h"
 #include "console.h"
 #include "teamplay.h"
+#include "nick_override.h"
 #include "mvd_utils.h"
 #include "mvd_utils_common.h"
 #include "fonts.h"
@@ -59,6 +60,7 @@ void SCR_HUD_DrawTracker(hud_t* hud);
 void SCR_HUD_WeaponStats(hud_t *hud);
 void WeaponStats_HUDInit(void);
 void TeamInfo_HudInit(void);
+void Inlay_HudInit(void);
 void Speed_HudInit(void);
 void TeamHold_HudInit(void);
 void Clock_HudInit(void);
@@ -69,10 +71,12 @@ void Guns_HudInit(void);
 void Groups_HudInit(void);
 void Armor_HudInit(void);
 void Health_HudInit(void);
+void TotalStrength_HudInit(void);
 void GameSummary_HudInit(void);
 void Performance_HudInit(void);
 void Scores_HudInit(void);
 void Face_HudInit(void);
+void MapVote_HudInit(void);
 void Frags_HudInit(void);
 void Tracking_HudInit(void);
 void CenterPrint_HudInit(void);
@@ -1018,6 +1022,7 @@ void CommonDraw_Init(void)
 	Armor_HudInit();
 	Scores_HudInit();
 	Face_HudInit();
+	MapVote_HudInit();
 	GameSummary_HudInit();
 	Net_HudInit();
 	Clock_HudInit();
@@ -1025,8 +1030,10 @@ void CommonDraw_Init(void)
 	Radar_HudInit();
 	WeaponStats_HUDInit();
 	TeamInfo_HudInit();
+    Inlay_HudInit();
 	TeamHold_HudInit();
 	Health_HudInit();
+        TotalStrength_HudInit();
 	Frags_HudInit();
 	Tracking_HudInit();
 	CenterPrint_HudInit();
@@ -1064,10 +1071,15 @@ void CL_RemovePrefixFromName(int player)
 	char normalized_list[256];
 	char normalized_name[MAX_SCOREBOARDNAME];
 	const char* prefixes_list = hud_name_remove_prefixes.string;
+	const char* override_name;
 
 	strlcpy(cl.players[player].shortname, cl.players[player].name, sizeof(cl.players[player].shortname));
 
 	if (!prefixes_list || !prefixes_list[0]) {
+		override_name = Nick_OverrideForPlayer(&cl.players[player]);
+		if (override_name && override_name[0]) {
+			strlcpy(cl.players[player].shortname, override_name, sizeof(cl.players[player].shortname));
+		}
 		return;
 	}
 
@@ -1096,6 +1108,11 @@ void CL_RemovePrefixFromName(int player)
 	}
 
 	strlcpy(cl.players[player].shortname, cl.players[player].name + skip, sizeof(cl.players[player].shortname));
+
+	override_name = Nick_OverrideForPlayer(&cl.players[player]);
+	if (override_name && override_name[0]) {
+		strlcpy(cl.players[player].shortname, override_name, sizeof(cl.players[player].shortname));
+	}
 }
 
 static void OnRemovePrefixesChange(cvar_t* var, char* value, qbool* cancel)

@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud_editor.h"
 #include "input.h"
 #include "gl_model.h"
+#include "screen.h"
 #include "tr_types.h"
 #include "teamplay.h"
 #include "tp_triggers.h"
@@ -84,6 +85,8 @@ static void Dev_PhysicsNormalShow(void);
 static void Cl_Reset_Min_fps_f(void);
 void CL_QWURL_ProcessChallenge(const char *parameters);
 
+void Inlay_Update(void);
+
 // cl_input.c
 void onchange_pext_serversideweapon(cvar_t* var, char* value, qbool* cancel);
 void onchange_hud_performance_average(cvar_t* var, char* value, qbool* cancel);
@@ -116,6 +119,13 @@ cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1" }; // if set, user will b
 cvar_t  cl_pext_lagteleport = { "cl_pext_lagteleport", "1" }; // server-side adjustment of yaw angle through teleports
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 cvar_t  cl_pext_serversideweapon = { "cl_pext_serversideweapon", "0", 0, onchange_pext_serversideweapon }; // server-side weapon selection
+#endif
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+cvar_t  cl_pext_weaponprediction = { "cl_pext_weaponprediction", "1" }; // send data for client-side weapon prediction
+#endif
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+cvar_t  cl_pext_simpleprojectiles = { "cl_pext_simpleprojectiles", "1" }; // send simple stateless projectiles
+cvar_t  cl_sproj_xerp = { "cl_sproj_xerp", "0" }; // extrapolate projectiles based on ping
 #endif
 #endif
 #ifdef FTE_PEXT_256PACKETENTITIES
@@ -157,6 +167,10 @@ cvar_t  cl_independentPhysics = {"cl_independentPhysics", "1", 0, Rulesets_OnCha
 cvar_t	cl_predict_players = {"cl_predict_players", "1"};
 cvar_t	cl_solid_players = {"cl_solid_players", "1"};
 cvar_t	cl_predict_half = {"cl_predict_half", "0"};
+cvar_t	cl_predict_scale = {"cl_predict_scale", "1"};
+cvar_t cl_predict_scale_threshold = {"cl_predict_scale_threshold", "320"};
+cvar_t	cl_predict_lerp = {"cl_predict_lerp", "1"};
+cvar_t	cl_predict_show_errors = {"cl_predict_show_errors", "0"};
 
 cvar_t	hud_fps_min_reset_interval = {"hud_fps_min_reset_interval", "30"};
 cvar_t  hud_frametime_max_reset_interval = { "hud_frametime_max_reset_interval", "30" };
@@ -203,6 +217,7 @@ cvar_t cl_window_caption	= {"cl_window_caption", "1"};
 cvar_t cl_window_caption_delimiter = {"cl_window_caption_delimiter", " | "};
 
 cvar_t cl_model_bobbing		= {"cl_model_bobbing", "1"};
+cvar_t cl_model_height		= {"cl_model_height", "0"};
 cvar_t cl_nolerp			= {"cl_nolerp", "0"}; // 0 is good for indep-phys, 1 is good for old-phys
 
 //this var has effect only if cl_nolerp is 1 and indep-phys enabled
@@ -227,6 +242,9 @@ cvar_t r_grenadetrail           = {"r_grenadeTrail", "1"}; // 3
 cvar_t r_railtrail              = {"r_railTrail", "1"};
 cvar_t r_instagibtrail          = {"r_instagibTrail", "1"};
 cvar_t r_explosiontype          = {"r_explosionType", "1"}; // 7
+cvar_t r_explosion_sparks       = {"r_explosion_sparks", "1"};
+cvar_t r_explosion_scale        = {"r_explosion_scale", "1"};
+cvar_t r_explosion_color        = {"r_explosion_color", "90 47 207"};
 cvar_t r_telesplash             = {"r_telesplash", "1"}; // disconnect
 cvar_t r_shaftalpha             = {"r_shaftalpha", "1"};
 cvar_t r_lightdecayrate         = {"r_lightdecayrate", "2"}; // default 2, as CL_DecayLights() used to get called twice per frame
@@ -560,6 +578,19 @@ unsigned int CL_SupportedMVDExtensions1(void)
 		extensions_supported |= MVD_PEXT1_SERVERSIDEWEAPON;
 	}
 #endif
+
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+	if (cl_pext_weaponprediction.value) {
+		extensions_supported |= MVD_PEXT1_WEAPONPREDICTION;
+	}
+#endif
+
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+	if (cl_pext_simpleprojectiles.value) {
+		extensions_supported |= MVD_PEXT1_SIMPLEPROJECTILE;
+	}
+#endif
+
 
 #ifdef MVD_PEXT1_DEBUG_ANTILAG
 	if (cl_debug_antilag_send.integer) {
@@ -1193,6 +1224,7 @@ void CL_DNS_f(void)
 
 void SCR_ClearShownick(void);
 void SCR_ClearTeamInfo(void);
+void SCR_ClearInlay(void);
 void SCR_ClearWeaponStats(void);
 
 void CL_ClearState (void) 
@@ -1217,12 +1249,16 @@ void CL_ClearState (void)
 	if (cls.state == ca_active) {
 		int ideal_track = cl.ideal_track;
 		int autocam = cl.autocam;
+		int spec_track = cl.spec_track;
+		qbool spec_locked = cl.spec_locked;
 
 		// Wipe the entire cl structure.
 		memset(&cl, 0, sizeof(cl));
 
 		cl.ideal_track = ideal_track;
 		cl.autocam = autocam;
+		cl.spec_track = spec_track;
+		cl.spec_locked = spec_locked;
 	}
 	else {
 		// Wipe the entire cl structure.
@@ -1263,6 +1299,7 @@ void CL_ClearState (void)
 
 	// Clear teaminfo structs
 	SCR_ClearTeamInfo();
+    SCR_ClearInlay();
 
 	// Clear weapon stats structs
 	SCR_ClearWeaponStats();
@@ -1400,6 +1437,7 @@ void CL_Disconnect_f (void)
 // The server is changing levels.
 void CL_Reconnect_f (void) 
 {
+	SCR_FinishMapVote();
 	if (cls.download)
 		return; // Don't change when downloading.
 
@@ -1831,6 +1869,7 @@ static void CL_InitLocal(void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_EYECANDY);
 	Cvar_Register(&cl_model_bobbing);
+	Cvar_Register(&cl_model_height);
 	Cvar_Register(&cl_nolerp);
 	Cvar_Register(&cl_nolerp_on_entity);
 	Cvar_Register(&cl_newlerp);
@@ -1851,6 +1890,9 @@ static void CL_InitLocal(void)
 	Cvar_Register(&cl_muzzleflash);
 	Cvar_Register(&cl_rocket2grenade);
 	Cvar_Register(&r_explosiontype);
+	Cvar_Register(&r_explosion_sparks);
+	Cvar_Register(&r_explosion_scale);
+	Cvar_Register(&r_explosion_color);
 	Cvar_Register(&r_lightflicker);
 	Cvar_Register(&r_lightmap_lateupload);
 	Cvar_Register(&r_lightmap_packbytexture);
@@ -1906,6 +1948,10 @@ static void CL_InitLocal(void)
 	Cvar_Register(&cl_predict_players);
 	Cvar_Register(&cl_solid_players);
 	Cvar_Register(&cl_predict_half);
+	Cvar_Register(&cl_predict_scale);
+	Cvar_Register(&cl_predict_scale_threshold);
+	Cvar_Register(&cl_predict_lerp);
+	Cvar_Register(&cl_predict_show_errors);
 	Cvar_Register(&cl_timeout);
 	Cvar_Register(&cl_useproxy);
 	Cvar_Register(&cl_proxyaddr);
@@ -1927,6 +1973,13 @@ static void CL_InitLocal(void)
 #endif
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 	Cvar_Register(&cl_pext_serversideweapon);
+#endif
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+	Cvar_Register(&cl_pext_weaponprediction);
+#endif
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+	Cvar_Register(&cl_pext_simpleprojectiles);
+	Cvar_Register(&cl_sproj_xerp);
 #endif
 #endif // PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_256PACKETENTITIES
@@ -2173,8 +2226,6 @@ void CL_Init (void)
 	QTV_Init();
 
 	Sys_InitIPC();
-
-	Rulesets_Init();
 }
 
 //============================================================================
@@ -2773,12 +2824,16 @@ void CL_Frame(double time)
 #ifdef WITH_IRC
 	IRC_Update();
 #endif
+    
+    Inlay_Update();
 
 	SB_ExecuteQueuedTriggers();
 
 	R_ParticleEndFrame();
 
 	CL_UpdateCaption(false);
+
+	TP_AutoShowNick();
 }
 
 //============================================================================

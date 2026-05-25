@@ -20,7 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_R_LOCAL_HEADER
 #define EZQUAKE_R_LOCAL_HEADER
 
+#include "common.h"
 #include "r_buffers.h"
+#include "draw.h"
 
 extern int glx, gly, glwidth, glheight;
 
@@ -33,6 +35,7 @@ void R_StateDefault3D(void);
 
 // 2d rendering
 void R_FlushImageDraw(void);
+void R_FlushImageDrawLayer(draw_layer_t layer, qbool finalize);
 void R_EmptyImageQueue(void);
 
 // culling

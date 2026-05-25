@@ -249,6 +249,7 @@ GLuint GL_GetUniformBlockIndex(GLuint program, const GLchar *uniformBlockName);
 void GL_UniformBlockBinding(GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding);
 
 void GL_BindImageTexture(GLuint unit, texture_ref texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
+void GL_EnsureFinished(void);
 GLenum GL_ProcessAllErrors(const char* message);
 
 #ifdef WITH_RENDERING_TRACE

@@ -310,7 +310,7 @@ void EZ_button_SetToggleable(ez_button_t *button, qbool toggleable)
 //
 qbool EZ_button_GetIsToggled(ez_button_t *button)
 {
-	return (button->int_flags & button_toggled);
+	return (button->int_flags & button_toggled) ? true : false;
 }
 
 //

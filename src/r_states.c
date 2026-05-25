@@ -267,6 +267,11 @@ static void R_InitialiseSpriteStates(void)
 	state = R_Init3DSpriteRenderingState(r_state_chaticon, "chaticon_state");
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 
+	// Client-side wall sprays
+	state = R_Init3DSpriteRenderingState(r_state_decals, "decalState");
+	state->depth.mask_enabled = false;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
+
 	// Coronas
 	state = R_Init3DSpriteRenderingState(r_state_coronas, "coronaState");
 	state->blendFunc = r_blendfunc_additive_blending;

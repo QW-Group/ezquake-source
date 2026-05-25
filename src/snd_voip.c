@@ -188,21 +188,21 @@ static int S_CaptureDriverInit (int sampleRate)
 
 static void S_CaptureDriverStart (void *ctx)
 {
-	SDL_AudioDeviceID inputdevid = (SDL_AudioDeviceID)ctx;
+	SDL_AudioDeviceID inputdevid = (SDL_AudioDeviceID)(intptr_t)ctx;
 
 	SDL_PauseAudioDevice (inputdevid, 0);
 }
 
 static void S_CaptureDriverStop (void *ctx)
 {
-	SDL_AudioDeviceID inputdevid = (SDL_AudioDeviceID)ctx;
+	SDL_AudioDeviceID inputdevid = (SDL_AudioDeviceID)(intptr_t)ctx;
 
 	SDL_PauseAudioDevice (inputdevid, 1);
 }
 
 static void S_CaptureDriverShutdown (void *ctx)
 {
-	SDL_AudioDeviceID inputdevid = (SDL_AudioDeviceID)ctx;
+	SDL_AudioDeviceID inputdevid = (SDL_AudioDeviceID)(intptr_t)ctx;
 
 	if (inputdevid) {
 		SDL_CloseAudioDevice (inputdevid);
@@ -211,7 +211,7 @@ static void S_CaptureDriverShutdown (void *ctx)
 
 static unsigned int S_CaptureDriverUpdate (void* driverContext, unsigned char* buffer, int minBytes, int maxBytes)
 {
-	SDL_AudioDeviceID inputdevid = (SDL_AudioDeviceID)driverContext;
+	SDL_AudioDeviceID inputdevid = (SDL_AudioDeviceID)(intptr_t)driverContext;
 	unsigned int available = SDL_GetQueuedAudioSize (inputdevid);
 
 	if (available > minBytes) {
@@ -337,7 +337,7 @@ void S_Voip_Transmit (unsigned char clc, sizebuf_t *buf)
 		if (!S_Speex_Init ())
 			return;
 
-		s_speex.driverctx = (void*)S_CaptureDriverInit (s_speex.samplerate);
+		s_speex.driverctx = (void*)(intptr_t)S_CaptureDriverInit (s_speex.samplerate);
 	}
 
 	/*couldn't init a driver?*/

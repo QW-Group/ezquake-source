@@ -57,6 +57,8 @@ void CL_Trackkiller_f(void);
 void CL_Autotrack_f(void);
 
 double last_lock = 0;			// Last time Cam_Lock() successful
+static double auto_retrack_time = 0;	// Time when we should try to retrack
+static int auto_retrack_target = -1;	// Player we're trying to retrack after map change
 
 static int	killer = -1;		// id of the player who killed the player we are now tracking
 
@@ -204,6 +206,82 @@ void Cam_Lock(int playernum)
 
 	if (TP_NeedRefreshSkins())
 		TP_RefreshSkins();
+}
+
+// Initialize auto-retrack after map change
+void Cam_InitAutoRetrack(void)
+{
+	// If we were tracking someone before the map change, set up auto-retrack
+	if (cl.spectator && cl.spec_track >= 0 && cl.spec_track < MAX_CLIENTS) {
+		auto_retrack_target = cl.spec_track;
+		auto_retrack_time = cls.realtime + 2.0; // Wait 2 seconds before first attempt
+	} else {
+		// No tracking to restore
+		auto_retrack_target = -1;
+	}
+}
+
+// Checks if we need to auto-retrack a player after map change
+static void Cam_AutoRetrack(void)
+{
+	frame_t *frame;
+	player_state_t *player;
+	static double auto_retrack_start_time = 0;
+	
+	// Check if we have a pending auto-retrack
+	if (auto_retrack_target < 0 || auto_retrack_target >= MAX_CLIENTS)
+		return;
+		
+	// Don't try too frequently
+	if (cls.realtime < auto_retrack_time)
+		return;
+		
+	// Check if we're already tracking someone (any player)
+	if (cl.spec_track >= 0 && cl.spec_locked) {
+		// We're successfully tracking someone, cancel auto-retrack
+		auto_retrack_target = -1;
+		auto_retrack_start_time = 0;
+		return;
+	}
+	
+	frame = &cl.frames[cl.validsequence & UPDATE_MASK];
+	player = &frame->playerstate[auto_retrack_target];
+	
+	// Check if the player we want to track has reconnected
+	if (player->messagenum == cl.parsecount || player->messagenum == cl.oldparsecount) {
+		// Player is back, try to lock onto them
+		Cam_Lock(auto_retrack_target);
+		auto_retrack_target = -1; // Clear the auto-retrack
+		auto_retrack_start_time = 0; // Clear the start time
+	} else {
+		// Try again in 0.5 seconds
+		auto_retrack_time = cls.realtime + 0.5;
+		
+		// Initialize start time on first attempt
+		if (auto_retrack_start_time == 0) {
+			auto_retrack_start_time = cls.realtime;
+		}
+		
+		// Give up after 10 seconds from initial attempt
+		if (cls.realtime - auto_retrack_start_time > 10) {
+			int i;
+			player_info_t *s;
+			
+			// Player didn't reconnect during timeout period
+			// Try to find first available player to track
+			for (i = 0; i < MAX_CLIENTS; i++) {
+				s = &cl.players[i];
+				if (s->name[0] && !s->spectator) {
+					Cam_Lock(i);
+					cl.ideal_track = i;
+					break;
+				}
+			}
+			
+			auto_retrack_target = -1;
+			auto_retrack_start_time = 0;
+		}
+	}
 }
 
 trace_t Cam_DoTrace(vec3_t vec1, vec3_t vec2) {
@@ -375,6 +453,9 @@ void Cam_Track(usercmd_t *cmd)
 	if (!cl.spectator) {
 		return;
 	}
+
+	// Check for auto-retrack after map change
+	Cam_AutoRetrack();
 
 	// hack: save +movedown command
 	cmddown = cmd->upmove < 0;

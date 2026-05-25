@@ -55,12 +55,27 @@ void Draw_AdjustImages(int first, int last, float x_offset)
 void R_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText, qbool isCrosshair)
 {
 	int flags = IMAGEPROG_FLAGS_TEXTURE;
+	qbool pushed_layer = false;
+
+	if (isText && Draw_GetLayer() < Draw_GetTextLayer()) {
+		Draw_PushLayer(Draw_GetTextLayer());
+		pushed_layer = true;
+	}
 
 	if (imageData.imageCount >= MAX_MULTI_IMAGE_BATCH) {
+		if (pushed_layer) {
+			Draw_PopLayer();
+		}
 		return;
 	}
 	if (!R_LogCustomImageTypeWithTexture(imagetype_image, imageData.imageCount, texnum)) {
+		if (pushed_layer) {
+			Draw_PopLayer();
+		}
 		return;
+	}
+	if (pushed_layer) {
+		Draw_PopLayer();
 	}
 
 	flags |= (alpha_test ? IMAGEPROG_FLAGS_ALPHATEST : 0);

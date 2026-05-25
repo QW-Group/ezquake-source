@@ -24,6 +24,8 @@ void IN_Shutdown (void);
 void IN_Commands (void); // oportunity for devices to stick commands on the script buffer
 void IN_Move (usercmd_t *cmd); // add additional movement on top of the keyboard move cmd
 void IN_ClearProtectedKeys (void); // reset player movement
+void IN_AddButtonToDelayBuffer(unsigned int key, qbool pressed);
+void IN_AddWheelToDelayBuffer(int direction);
 
 //
 // cl_input.c
@@ -41,6 +43,7 @@ extern kbutton_t in_strafe;
 extern kbutton_t in_speed;
 
 void CL_InitInput (void);
+void IN_ResetAutohopState(void);
 void CL_SendClientCommand(qbool reliable, char *format, ...);
 void CL_SendCmd (void);
 void CL_BaseMove (usercmd_t *cmd);
@@ -58,6 +61,7 @@ extern cvar_t	cl_anglespeedkey;
 extern cvar_t	cl_yawspeed;
 extern cvar_t	cl_pitchspeed;
 extern cvar_t	cl_keypad;
+extern cvar_t	cl_delay_input;
 
 extern cvar_t	freelook;
 extern cvar_t	sensitivity;

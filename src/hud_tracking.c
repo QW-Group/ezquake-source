@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "hud_common.h"
 #include "sbar.h"
 #include "utils.h"
+#include "nick_override.h"
 
 // Tracking text.
 // "Tracking: [team] name, JUMP for next", "Tracking:" and "JUMP" are brown. default: "Tracking %t %n, [JUMP] for next"
@@ -48,7 +49,7 @@ static void SCR_HUD_DrawTracking(hud_t *hud)
 
 	strlcpy(track_string, hud_tracking_format->string, sizeof(track_string));
 	Replace_In_String(track_string, sizeof(track_string), '%', 2,
-		"n", cl.players[player].name,						// Replace %n with player name.
+		"n", Nick_PlayerDisplayName(&cl.players[player]),	// Replace %n with player name.
 		"t", cl.teamplay ? cl.players[player].team : "");	// Replace %t with player team if teamplay is on.
 	height = 8 * hud_tracking_scale->value;
 	width = Draw_StringLength(track_string, -1, hud_tracking_scale->value, hud_tracking_proportional->integer);
@@ -101,7 +102,7 @@ void Sbar_DrawTrackingString(void)
 	if (sb_lines > 0 && scr_newHud.value != 1 && cl.spectator && cl.autocam == CAM_TRACK) {
 		strlcpy(st, scr_tracking.string, sizeof(st));
 
-		Replace_In_String(st, sizeof(st), '%', 2, "n", cl.players[cl.spec_track].name, "t", cl.teamplay ? cl.players[cl.spec_track].team : "");
+		Replace_In_String(st, sizeof(st), '%', 2, "n", Nick_PlayerDisplayName(&cl.players[cl.spec_track]), "t", cl.teamplay ? cl.players[cl.spec_track].team : "");
 
 		// Multiview
 		// Fix displaying "tracking .." for both players with inset on
@@ -113,4 +114,3 @@ void Sbar_DrawTrackingString(void)
 		}
 	}
 }
-

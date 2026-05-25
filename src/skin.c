@@ -61,12 +61,215 @@ static cvar_t  r_skincolormode     = {"r_skincolormode",  "0", 0, OnChangeSkinFo
 static cvar_t  r_skincolormodedead = {"r_skincolormodedead", "-1", 0, OnChangeSkinForcing};
 cvar_t  r_fullbrightSkins = { "r_fullbrightSkins", "1", 0, Rulesets_OnChange_r_fullbrightSkins };
 
+// Teammate-specific skin colors
+static cvar_t r_teammateskincolors_enable = {"r_teammateskincolors_enable", "0", 0, OnChangeSkinForcing};
+static cvar_t r_teammateskincolor1 = {"r_teammateskincolor1", "", 0, OnChangeSkinForcing};
+static cvar_t r_teammateskincolor2 = {"r_teammateskincolor2", "", 0, OnChangeSkinForcing};
+static cvar_t r_teammateskincolor3 = {"r_teammateskincolor3", "", 0, OnChangeSkinForcing};
+static cvar_t r_teammateskincolor4 = {"r_teammateskincolor4", "", 0, OnChangeSkinForcing};
+static cvar_t r_teammateskincolor5 = {"r_teammateskincolor5", "", 0, OnChangeSkinForcing};
+static cvar_t r_teammateskincolor6 = {"r_teammateskincolor6", "", 0, OnChangeSkinForcing};
+
+// Data structures for teammate color rules
+#define MAX_TEAMMATE_RULES 6
+#define MAX_SUBSTRINGS_PER_RULE 16
+
+typedef struct teammate_color_rule_s {
+    byte color[3];                               // RGB color values
+    int substring_count;                         // Number of substrings for this rule
+    char substrings[MAX_SUBSTRINGS_PER_RULE][32]; // Array of substrings to match
+    qbool exact_match[MAX_SUBSTRINGS_PER_RULE];   // Whether each substring requires exact match
+    qbool valid;                                 // Whether this rule is valid/active
+} teammate_color_rule_t;
+
+static teammate_color_rule_t teammate_color_rules[MAX_TEAMMATE_RULES];
+
 char	allskins[MAX_OSPATH];
 
 #define	MAX_CACHED_SKINS	128
 static skin_t	skins[MAX_CACHED_SKINS];
 
 static int numskins;
+
+// Parse a teammate color rule from cvar value "r g b substring1 substring2 ..."
+static void TeammateColor_ParseRule(int rule_index, const char *value)
+{
+	char buffer[512];
+	const char *p;
+	int r, g, b;
+	int tokens_parsed;
+	
+	if (rule_index < 0 || rule_index >= MAX_TEAMMATE_RULES) {
+		return;
+	}
+	
+	// Reset the rule
+	teammate_color_rules[rule_index].valid = false;
+	teammate_color_rules[rule_index].substring_count = 0;
+	
+	if (!value || !value[0]) {
+		return;
+	}
+	
+	// Copy value to buffer for parsing
+	strlcpy(buffer, value, sizeof(buffer));
+	p = buffer;
+	
+	// Parse RGB values
+	tokens_parsed = sscanf(p, "%d %d %d", &r, &g, &b);
+	if (tokens_parsed != 3) {
+		Com_Printf("&cf22Invalid teammate color format:&r Expected \"r g b substring...\" got \"%s\"\n", value);
+		return;
+	}
+	
+	// Validate RGB values
+	if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255) {
+		Com_Printf("&cf22Invalid RGB values:&r Must be 0-255, got %d %d %d\n", r, g, b);
+		return;
+	}
+	
+	// Store RGB
+	teammate_color_rules[rule_index].color[0] = (byte)r;
+	teammate_color_rules[rule_index].color[1] = (byte)g;
+	teammate_color_rules[rule_index].color[2] = (byte)b;
+	
+	// Skip past RGB values
+	p = strstr(p, va("%d", r));
+	if (!p) return;
+	p = strstr(p, va("%d", g));
+	if (!p) return;
+	p = strstr(p, va("%d", b));
+	if (!p) return;
+	p += strlen(va("%d", b));
+	
+	// Parse substrings
+	while (*p && teammate_color_rules[rule_index].substring_count < MAX_SUBSTRINGS_PER_RULE) {
+		char substring[64]; // Temporary buffer, larger to hold potential braces
+		char final_substring[32];
+		int len = 0;
+		qbool exact = false;
+		
+		// Skip whitespace
+		while (*p && *p == ' ') p++;
+		if (!*p) break;
+		
+		// Read substring until space or end
+		while (*p && *p != ' ' && len < sizeof(substring) - 1) {
+			substring[len++] = *p++;
+		}
+		substring[len] = '\0';
+		
+		if (len > 0) {
+			int idx = teammate_color_rules[rule_index].substring_count;
+			
+			// Check if wrapped in curly braces (must be at start AND end)
+			if (len >= 3 && substring[0] == '{' && substring[len-1] == '}') {
+				// Extract the content between braces
+				exact = true;
+				strlcpy(final_substring, substring + 1, sizeof(final_substring));
+				final_substring[len - 2] = '\0'; // Remove the closing brace
+			} else {
+				// Use the entire substring as-is
+				strlcpy(final_substring, substring, sizeof(final_substring));
+			}
+			
+			// Store substring (lowercase for case-insensitive matching)
+			strlcpy(teammate_color_rules[rule_index].substrings[idx], final_substring, 32);
+			Q_strlwr(teammate_color_rules[rule_index].substrings[idx]);
+			teammate_color_rules[rule_index].exact_match[idx] = exact;
+			teammate_color_rules[rule_index].substring_count++;
+		}
+	}
+	
+	// Mark rule as valid if we have at least one substring
+	if (teammate_color_rules[rule_index].substring_count > 0) {
+		teammate_color_rules[rule_index].valid = true;
+	} else {
+		Com_Printf("&cf22Invalid teammate color rule:&r No substrings specified\n");
+	}
+}
+
+// Strip color codes from a string (high-bit characters become regular characters)
+static void TeammateColor_StripColors(const char *src, char *dst, size_t dst_size)
+{
+	extern char readableChars[];
+	size_t len = 0;
+	
+	while (*src && len < dst_size - 1) {
+		unsigned char c = (unsigned char)*src;
+		// Use readableChars to convert high-bit colored characters to regular ones
+		dst[len++] = readableChars[c] & 127;
+		src++;
+	}
+	dst[len] = '\0';
+}
+
+// Check if a player name matches any substring in a rule
+static qbool TeammateColor_MatchesRule(const teammate_color_rule_t *rule, const char *playername)
+{
+	char name_clean[MAX_OSPATH];
+	char name_lower[MAX_OSPATH];
+	int i;
+	
+	if (!rule->valid || !playername || !playername[0]) {
+		return false;
+	}
+	
+	// First strip color codes from the player name
+	TeammateColor_StripColors(playername, name_clean, sizeof(name_clean));
+	
+	// Convert to lowercase for case-insensitive comparison
+	strlcpy(name_lower, name_clean, sizeof(name_lower));
+	Q_strlwr(name_lower);
+	
+	// Check each substring
+	for (i = 0; i < rule->substring_count; i++) {
+		if (rule->exact_match[i]) {
+			// Exact match required
+			if (!strcasecmp(name_lower, rule->substrings[i])) {
+				return true;
+			}
+		} else {
+			// Substring match
+			if (strstr(name_lower, rule->substrings[i])) {
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
+// Get color for a specific teammate based on name matching
+static qbool TeammateColor_GetColorForPlayer(const char *playername, byte *color)
+{
+	int i;
+	
+	if (!r_teammateskincolors_enable.integer || !playername || !color) {
+		return false;
+	}
+	
+	// Check rules in priority order (1-6)
+	for (i = 0; i < MAX_TEAMMATE_RULES; i++) {
+		if (TeammateColor_MatchesRule(&teammate_color_rules[i], playername)) {
+			VectorCopy(teammate_color_rules[i].color, color);
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+// Initialize teammate color rules by parsing all cvars
+static void TeammateColor_Init(void)
+{
+	TeammateColor_ParseRule(0, r_teammateskincolor1.string);
+	TeammateColor_ParseRule(1, r_teammateskincolor2.string);
+	TeammateColor_ParseRule(2, r_teammateskincolor3.string);
+	TeammateColor_ParseRule(3, r_teammateskincolor4.string);
+	TeammateColor_ParseRule(4, r_teammateskincolor5.string);
+	TeammateColor_ParseRule(5, r_teammateskincolor6.string);
+}
 
 // return type of skin forcing if it's allowed for the player in the POV
 static int Skin_ForcingType(const char *team)
@@ -634,12 +837,21 @@ static void Skin_RemoveSkinsForPlayer(int playernum)
 static void R_BlendPlayerSkin(skin_t* skin, qbool teammate, int playernum, byte* original, int width, int height, qbool fullbright)
 {
 	cvar_t* color = teammate ? &r_teamskincolor : &r_enemyskincolor;
+	byte teammate_color[3];
+	byte* color_to_use = NULL;
 	byte* specific = Q_malloc(width * height * 4);
 	texture_ref blended;
 	char texture_name[128];
+	
+	// For teammates, check if there's a specific color rule first
+	if (teammate && TeammateColor_GetColorForPlayer(cl.players[playernum].name, teammate_color)) {
+		color_to_use = teammate_color;
+	} else if (color->string[0]) {
+		color_to_use = color->color;
+	}
 
 	snprintf(texture_name, sizeof(texture_name), "$player-skin-%d", playernum);
-	blended = Skin_ApplyRGBColor(original, width, height, specific, color->string[0] ? color->color : NULL, r_skincolormode.integer, texture_name);
+	blended = Skin_ApplyRGBColor(original, width, height, specific, color_to_use, r_skincolormode.integer, texture_name);
 	if (fullbright) {
 		playerskins[playernum].fb = blended;
 		playerskins[playernum].owned[1] = true;
@@ -650,7 +862,7 @@ static void R_BlendPlayerSkin(skin_t* skin, qbool teammate, int playernum, byte*
 
 		if (r_skincolormodedead.integer >= 0 && r_skincolormodedead.integer != r_skincolormode.integer) {
 			strlcat(texture_name, "-dead", sizeof(texture_name));
-			playerskins[playernum].dead = Skin_ApplyRGBColor(original, width, height, specific, color->color, r_skincolormodedead.integer, texture_name);
+			playerskins[playernum].dead = Skin_ApplyRGBColor(original, width, height, specific, color_to_use, r_skincolormodedead.integer, texture_name);
 			playerskins[playernum].owned[2] = true;
 		}
 	}
@@ -867,12 +1079,22 @@ void R_SetSkinForPlayerEntity(entity_t* ent, texture_ref* texture, texture_ref* 
 		if (is_player_model && R_TextureReferenceEqual(*texture, solidwhite_texture)) {
 			qbool custom_skins_blocked = cl.teamfortress || (cl.fpd & (FPD_NO_FORCE_SKIN | FPD_NO_FORCE_COLOR));
 			if (!custom_skins_blocked) {
-				cvar_t* cv = &r_enemyskincolor;
-				if (cl.teamplay && !strcmp(cl.players[playernum].team, TP_SkinForcingTeam())) {
-					cv = &r_teamskincolor;
-				}
-				if (cv->string[0]) {
-					*color32bit = cv->color;
+				byte teammate_color[3];
+				qbool is_teammate = cl.teamplay && !strcmp(cl.players[playernum].team, TP_SkinForcingTeam());
+				
+				// Check for teammate-specific color first
+				if (is_teammate && TeammateColor_GetColorForPlayer(cl.players[playernum].name, teammate_color)) {
+					static byte static_color[4];
+					static_color[0] = teammate_color[0];
+					static_color[1] = teammate_color[1];
+					static_color[2] = teammate_color[2];
+					static_color[3] = 255;
+					*color32bit = static_color;
+				} else {
+					cvar_t* cv = is_teammate ? &r_teamskincolor : &r_enemyskincolor;
+					if (cv->string[0]) {
+						*color32bit = cv->color;
+					}
 				}
 			}
 		}
@@ -897,6 +1119,18 @@ void Skin_RegisterCvars(void)
 	Cvar_Register(&r_teamskincolor);
 	Cvar_Register(&r_skincolormode);
 	Cvar_Register(&r_skincolormodedead);
+	
+	// Teammate-specific skin colors
+	Cvar_Register(&r_teammateskincolors_enable);
+	Cvar_Register(&r_teammateskincolor1);
+	Cvar_Register(&r_teammateskincolor2);
+	Cvar_Register(&r_teammateskincolor3);
+	Cvar_Register(&r_teammateskincolor4);
+	Cvar_Register(&r_teammateskincolor5);
+	Cvar_Register(&r_teammateskincolor6);
+	
+	// Parse initial values
+	TeammateColor_Init();
 }
 
 // Called when connected to server and skin-forcing rules have changed
@@ -961,6 +1195,21 @@ void OnChangeSkinForcing(cvar_t *var, char *string, qbool *cancel)
 		else if (strcmp(var->string, string)) {
 			Cbuf_AddText("say Individual enemy skins: disabled\n");
 		}
+	}
+	
+	// Handle teammate-specific color changes
+	if (var == &r_teammateskincolor1) {
+		TeammateColor_ParseRule(0, string);
+	} else if (var == &r_teammateskincolor2) {
+		TeammateColor_ParseRule(1, string);
+	} else if (var == &r_teammateskincolor3) {
+		TeammateColor_ParseRule(2, string);
+	} else if (var == &r_teammateskincolor4) {
+		TeammateColor_ParseRule(3, string);
+	} else if (var == &r_teammateskincolor5) {
+		TeammateColor_ParseRule(4, string);
+	} else if (var == &r_teammateskincolor6) {
+		TeammateColor_ParseRule(5, string);
 	}
 
 	if (cls.state == ca_active) {

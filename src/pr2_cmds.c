@@ -1125,7 +1125,7 @@ intptr_t PF2_Find(int e, int fofs, char *str)
 		if (ed->e.free)
 			continue;
 
-		if (!(intptr_t *)((byte *)ed->v + fofs))
+		if (!*(intptr_t *)((byte *)ed->v + fofs))
 			continue;
 
 		t = VM_ArgPtr(*(intptr_t *)((char *)ed->v + fofs));
@@ -2389,7 +2389,7 @@ int PF2_QVMstrftime(char *valbuff, int sizebuff, char *fmt, int offset)
 		return 0;
 	}
 
-	ret = strftime(valbuff, sizebuff-1, fmt, newtime);
+	ret = (int)strftime(valbuff, sizebuff-1, fmt, newtime);
 
 	if (!ret) {
 		valbuff[0] = 0; // or may be better set to "#bad date#" ?

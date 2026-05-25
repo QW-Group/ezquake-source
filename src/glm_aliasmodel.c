@@ -39,6 +39,9 @@ void GLM_StateBeginAliasModelZPassBatch(void);
 void GLM_StateBeginAliasModelBatch(qbool translucent, qbool additive);
 void GLM_StateBeginAliasOutlineBatch(void);
 
+extern vec3_t r_origin;
+extern cvar_t gl_outline;
+
 // MAX_STANDARD_ENTITIES used to be 512, so lets pretend like
 // there can't be more aliasmodel entities, as that will cause
 // the arrays sized according to this limit to become too big
@@ -389,8 +392,13 @@ static void GLM_QueueAliasModelDrawImpl(
 
 	// Add to queues
 	GLM_QueueDrawCall(type, vbo_start, vbo_count, alias_draw_count);
-	if (outline) {
-		GLM_QueueDrawCall(aliasmodel_draw_outlines, vbo_start, vbo_count, alias_draw_count);
+	if (outline && gl_outline.integer) {
+		// Don't hide outlines for player models
+		if (!strstr(model->name, "player.mdl") && R_PointInsideModelBounds(ent, r_origin)) {
+			// Skip outline - POV is inside model bounds
+		} else {
+			GLM_QueueDrawCall(aliasmodel_draw_outlines, vbo_start, vbo_count, alias_draw_count);
+		}
 	}
 	if (shell) {
 		GLM_QueueDrawCall(shelltype, vbo_start, vbo_count, alias_draw_count);

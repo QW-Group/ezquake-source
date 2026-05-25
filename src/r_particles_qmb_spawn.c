@@ -803,15 +803,33 @@ void QMB_RunParticleEffect(vec3_t org, vec3_t dir, int col, int count)
 
 void QMB_BlobExplosion(vec3_t org)
 {
+	extern cvar_t r_explosion_sparks;
+	extern cvar_t r_explosion_scale;
+	extern cvar_t r_explosion_color;
 	float theta;
 	col_t color;
 	vec3_t neworg, vel;
+	float scale = r_explosion_scale.value;
+	int r, g, b;
+	
+	// Parse color cvar
+	if (sscanf(r_explosion_color.string, "%d %d %d", &r, &g, &b) == 3) {
+		r = bound(0, r, 255);
+		g = bound(0, g, 255);
+		b = bound(0, b, 255);
+	} else {
+		r = 60; g = 100; b = 240; // default color
+	}
+	
+	// Sparks (controlled by r_explosion_sparks)
+	if (r_explosion_sparks.value) {
+		color[0] = r; color[1] = g; color[2] = b; color[3] = 255;
+		AddParticle(p_spark, org, 44, 250 * scale, 1.15, color, zerodir);
+	}
 
-	color[0] = 60; color[1] = 100; color[2] = 240; color[3] = 255;
-	AddParticle(p_spark, org, 44, 250, 1.15, color, zerodir);
-
-	color[0] = 90; color[1] = 47; color[2] = 207; color[3] = 255;
-	AddParticle(p_fire, org, 15, 30, 1.4, color, zerodir);
+	// Fire particle uses the same color
+	color[0] = r; color[1] = g; color[2] = b; color[3] = 255;
+	AddParticle(p_fire, org, 15 * scale, 30 * scale, 1.4, color, zerodir);
 
 	vel[2] = 0;
 	//VULT PARTICLES
@@ -820,31 +838,37 @@ void QMB_BlobExplosion(vec3_t org)
 		if (amf_part_2dshockwaves.value) {
 			vec3_t shockdir;
 			int i;
-			color[0] = (60 + (rand() & 15)); color[1] = (65 + (rand() & 15)); color[2] = (200 + (rand() & 15));
+			// Use r_explosion_color as base with some random variation
+			color[0] = bound(0, r + (rand() & 31) - 16, 255);
+			color[1] = bound(0, g + (rand() & 31) - 16, 255);
+			color[2] = bound(0, b + (rand() & 31) - 16, 255);
 			color[3] = 255;
 			for (i = 0; i<3; i++)
 				shockdir[i] = rand() % 360;
-			AddParticle(p_2dshockwave, org, 1, 30, 0.5, color, shockdir);
+			AddParticle(p_2dshockwave, org, 1, 30 * scale, 0.5, color, shockdir);
 			for (i = 0; i<3; i++)
 				shockdir[i] = rand() % 360;
-			AddParticle(p_2dshockwave, org, 1, 30, 0.5, color, shockdir);
+			AddParticle(p_2dshockwave, org, 1, 30 * scale, 0.5, color, shockdir);
 			for (i = 0; i<3; i++)
 				shockdir[i] = rand() % 360;
-			AddParticle(p_2dshockwave, org, 1, 30, 0.5, color, shockdir);
+			AddParticle(p_2dshockwave, org, 1, 30 * scale, 0.5, color, shockdir);
 		}
 		else {
 			for (theta = 0; theta < 2 * M_PI; theta += 2 * M_PI / 70) {
-				color[0] = (60 + (rand() & 15)); color[1] = (65 + (rand() & 15)); color[2] = (200 + (rand() & 15));
+				// Use r_explosion_color as base with some random variation
+				color[0] = bound(0, r + (rand() & 31) - 16, 255);
+				color[1] = bound(0, g + (rand() & 31) - 16, 255);
+				color[2] = bound(0, b + (rand() & 31) - 16, 255);
 				color[3] = 255;
 
-				vel[0] = cos(theta) * 125;
-				vel[1] = sin(theta) * 125;
-				neworg[0] = org[0] + cos(theta) * 6;
-				neworg[1] = org[1] + sin(theta) * 6;
-				neworg[2] = org[2] + 0 - 10;
-				AddParticle(p_shockwave, neworg, 1, 4, 0.8, color, vel);
-				neworg[2] = org[2] + 0 + 10;
-				AddParticle(p_shockwave, neworg, 1, 4, 0.8, color, vel);
+				vel[0] = cos(theta) * 125 * scale;
+				vel[1] = sin(theta) * 125 * scale;
+				neworg[0] = org[0] + cos(theta) * 6 * scale;
+				neworg[1] = org[1] + sin(theta) * 6 * scale;
+				neworg[2] = org[2] + 0 - 10 * scale;
+				AddParticle(p_shockwave, neworg, 1, 4 * scale, 0.8, color, vel);
+				neworg[2] = org[2] + 0 + 10 * scale;
+				AddParticle(p_shockwave, neworg, 1, 4 * scale, 0.8, color, vel);
 
 
 				vel[0] *= 1.15;
@@ -1279,20 +1303,48 @@ void VXExplosion(vec3_t org)
 //VULT PARTICLES
 void VXBlobExplosion(vec3_t org)
 {
+	extern cvar_t r_explosion_sparks;
+	extern cvar_t r_explosion_scale;
+	extern cvar_t r_explosion_color;
+	extern cvar_t amf_part_blobexplosion;
+	extern cvar_t amf_part_trailtime;
+	extern cvar_t amf_part_shockwaves;
+	extern cvar_t amf_part_2dshockwaves;
 	float theta;
 	col_t color;
 	vec3_t neworg, vel, dir;
 	int a, i;
-	color[0] = 60; color[1] = 100; color[2] = 240; color[3] = 128;
-	for (a = 0; a < 200 * amf_part_blobexplosion.value; a++) {
-		for (i = 0; i < 3; i++) {
-			dir[i] = (rand() % 1500) - 750;
+	float scale = r_explosion_scale.value;
+	int r, g, b;
+	
+	// Parse color cvar once and store base colors
+	if (sscanf(r_explosion_color.string, "%d %d %d", &r, &g, &b) == 3) {
+		r = bound(0, r, 255);
+		g = bound(0, g, 255);
+		b = bound(0, b, 255);
+	} else {
+		r = 60; g = 100; b = 240; // default color
+	}
+	
+	// Set initial color for sparks
+	color[0] = r;
+	color[1] = g;
+	color[2] = b;
+	color[3] = 128;
+	
+	// Sparks (controlled by r_explosion_sparks)
+	if (r_explosion_sparks.value) {
+		for (a = 0; a < (int)(200 * amf_part_blobexplosion.value * scale); a++) {
+			for (i = 0; i < 3; i++) {
+				dir[i] = (rand() % 1500) - 750;
+			}
+			AddParticle(p_streakwave, org, 1, 1, 1 * amf_part_trailtime.value, color, dir);
 		}
-		AddParticle(p_streakwave, org, 1, 1, 1 * amf_part_trailtime.value, color, dir);
 	}
 
-	color[0] = 90; color[1] = 47; color[2] = 207;
-	AddParticle(p_fire, org, 15, 30, 1.4, color, zerodir);
+	// Fire particle uses the same color from r_explosion_color
+	// color[3] remains unchanged for fire particle
+	AddParticle(p_fire, org, 15 * scale, 30 * scale, 1.4, color, zerodir);
 
 	vel[2] = 0;
 	//VULT PARTICLES
@@ -1300,23 +1352,29 @@ void VXBlobExplosion(vec3_t org)
 		if (amf_part_2dshockwaves.value) {
 			vec3_t shockdir;
 			int i;
-			color[0] = (60 + (rand() & 15)); color[1] = (65 + (rand() & 15)); color[2] = (200 + (rand() & 15));
+			// Use r_explosion_color as base with some random variation
+			color[0] = bound(0, r + (rand() & 31) - 16, 255);
+			color[1] = bound(0, g + (rand() & 31) - 16, 255);
+			color[2] = bound(0, b + (rand() & 31) - 16, 255);
 			for (i = 0; i < 3; i++) {
 				shockdir[i] = rand() % 360;
 			}
-			AddParticle(p_2dshockwave, org, 1, 30, 0.5, color, shockdir);
+			AddParticle(p_2dshockwave, org, 1, 30 * scale, 0.5, color, shockdir);
 			for (i = 0; i < 3; i++) {
 				shockdir[i] = rand() % 360;
 			}
-			AddParticle(p_2dshockwave, org, 1, 30, 0.5, color, shockdir);
+			AddParticle(p_2dshockwave, org, 1, 30 * scale, 0.5, color, shockdir);
 			for (i = 0; i < 3; i++) {
 				shockdir[i] = rand() % 360;
 			}
-			AddParticle(p_2dshockwave, org, 1, 30, 0.5, color, shockdir);
+			AddParticle(p_2dshockwave, org, 1, 30 * scale, 0.5, color, shockdir);
 		}
 		else {
 			for (theta = 0; theta < 2 * M_PI; theta += 2 * M_PI / 70) {
-				color[0] = (60 + (rand() & 15)); color[1] = (65 + (rand() & 15)); color[2] = (200 + (rand() & 15));
+				// Use r_explosion_color as base with some random variation
+				color[0] = bound(0, r + (rand() & 31) - 16, 255);
+				color[1] = bound(0, g + (rand() & 31) - 16, 255);
+				color[2] = bound(0, b + (rand() & 31) - 16, 255);
 
 				vel[0] = cos(theta) * 125;
 				vel[1] = sin(theta) * 125;
@@ -1324,9 +1382,9 @@ void VXBlobExplosion(vec3_t org)
 				neworg[1] = org[1] + sin(theta) * 6;
 				neworg[2] = org[2] + 0 - 10;
 
-				AddParticle(p_shockwave, neworg, 1, 4, 0.8, color, vel);
+				AddParticle(p_shockwave, neworg, 1, 4 * scale, 0.8, color, vel);
 				neworg[2] = org[2] + 0 + 10;
-				AddParticle(p_shockwave, neworg, 1, 4, 0.8, color, vel);
+				AddParticle(p_shockwave, neworg, 1, 4 * scale, 0.8, color, vel);
 
 				vel[0] *= 1.15;
 				vel[1] *= 1.15;

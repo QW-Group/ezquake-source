@@ -2693,10 +2693,26 @@ qbool SB_Players_Mouse_Event(const mouse_state_t *ms)
 
 void SB_Specials_Draw(void)
 {
-	if (show_serverinfo) Serverinfo_Draw();
-	if (ping_phase) PingPhase_Draw();
-	if (updating_sources) UpdatingSources_Draw();
-	if (confirmation) SB_Confirmation_Draw();
+	if (show_serverinfo) {
+		Draw_PushLayer(draw_layer_overlay);
+		Serverinfo_Draw();
+		Draw_PopLayer();
+	}
+	if (ping_phase) {
+		Draw_PushLayer(draw_layer_overlay);
+		PingPhase_Draw();
+		Draw_PopLayer();
+	}
+	if (updating_sources) {
+		Draw_PushLayer(draw_layer_overlay);
+		UpdatingSources_Draw();
+		Draw_PopLayer();
+	}
+	if (confirmation) {
+		Draw_PushLayer(draw_layer_overlay);
+		SB_Confirmation_Draw();
+		Draw_PopLayer();
+	}
 }
 
 qbool SB_Specials_Key(int key, wchar unichar)

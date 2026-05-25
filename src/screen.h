@@ -52,6 +52,9 @@ void SCR_CenterPrint_Clear(void);
 void SCR_CenterPrint_Init(void);
 void SCR_CenterString_Draw(void);
 
+void SCR_MapVote(char *str);
+void SCR_FinishMapVote(void);
+
 extern	float		scr_con_current;
 extern	float		scr_conlines;		// lines of console to display
 
@@ -125,6 +128,18 @@ extern double cursor_x, cursor_y;
 
 // kazik, HUD, incremented every screen update, never reset
 extern  int         host_screenupdatecount;
+
+
+// spectator info
+
+typedef struct ti_spec_s {
+
+	int 		client;
+
+	int			tracknum;
+	double		time; // when we recive last update about this player, so we can guess disconnects and etc
+
+} ti_spec_t;
 
 // scr_teaminfo
 

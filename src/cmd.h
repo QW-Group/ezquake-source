@@ -20,6 +20,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 // cmd.h -- Command buffer and command execution
 
+#ifndef CMD_H
+#define CMD_H
+
 //===========================================================================
 
 /*
@@ -230,3 +233,5 @@ typedef struct legacycmd_s
 } legacycmd_t;
 
 extern legacycmd_t* legacycmds;
+
+#endif // CMD_H

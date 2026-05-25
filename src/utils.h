@@ -88,6 +88,7 @@ int Player_NumtoSlot (int num);
 int Player_GetSlot(char *arg, qbool prioritise_user_id);
 int Player_GetTrackId(int player_id);
 char *Player_MyName(void);
+char *Player_StripNameColor(const char *name);
 
 ///
 /// Nick completion related

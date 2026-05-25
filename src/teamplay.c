@@ -135,6 +135,8 @@ cvar_t	tp_need_cells = {"tp_need_cells", "13"};
 cvar_t	tp_need_nails = {"tp_need_nails", "0"}; // not so important, so let's not have it spam msg need
 cvar_t	tp_need_shells = {"tp_need_shells", "0"}; // not so important, so let's not have it spam msg need
 
+cvar_t cl_autoshownick = {"cl_autoshownick", "0"}; // automatically shownick when team in crosshairs
+
 static qbool suppress;
 
 char *skinforcing_team = "";
@@ -824,6 +826,84 @@ done:
 void TP_GetNeed(void)
 {
 	Macro_Need();
+}
+
+static qbool TP_AutoShowNickPointHasPlayer(void)
+{
+	// Teammate is always good to shownick.
+	if (vars.pointflag & it_teammate)
+		return true;
+
+	// Only shownick enemies when not in game.
+	if (cl.standby && (vars.pointflag & it_enemy))
+		return true;
+
+	return false;
+}
+
+void TP_AutoShowNick(void)
+{
+	// Do not auto shownick if the feature is disabled.
+	if (!cl_autoshownick.integer)
+		return;
+
+	// Update a bunch of times a second but not every frame.
+	static double auto_show_nick_last_update_time = 0;
+	static const double frequency = 1.0 / 20.0;
+	if (curtime < (auto_show_nick_last_update_time + frequency))
+		return;
+	auto_show_nick_last_update_time = curtime;
+
+	// Check if the shownick server alias exists. If not, then make checks less frequently.
+	if (!Cmd_FindAlias("shownick")) {
+		auto_show_nick_last_update_time += 5.0;
+		return;
+	}
+
+	// Do not auto shownick if we are not connected to a server.
+	if (cls.state != ca_active)
+		return;
+
+	// Do not auto shownick if we are playing a demo.
+	if (cls.demoplayback)
+		return;
+
+	// Do not auto shownick if we are a spectator.
+	if (cl.spectator)
+		return;
+
+	// Do not auto shownick if we have been flashed.
+	if (flashed)
+		return;
+
+	// If cl_autoshownick is enabled, temporarily ensure teammate detection is enabled
+	extern unsigned int pointflags;
+	unsigned int saved_pointflags = pointflags;
+	if (cl_autoshownick.integer > 0 && !(pointflags & it_teammate)) {
+		// Temporarily add teammate flag to ensure we can detect teammates
+		pointflags |= it_teammate;
+	}
+	
+	// Check for a player in point to shownick.
+	TP_FindPoint();
+	
+	// Restore original pointflags
+	if (cl_autoshownick.integer > 0) {
+		pointflags = saved_pointflags;
+	}
+	
+	if (!TP_AutoShowNickPointHasPlayer())
+		return;
+
+	// shownick variants.
+	if (cl_autoshownick.integer == 1)
+		Cmd_ExecuteString("cmd shownick");
+	else
+		Cmd_ExecuteString("cmd shownick 1");
+
+	// Successful shownick, so lets give the player a chance to read it
+	// and avoid spamming the server by skipping updates for a bit.
+	auto_show_nick_last_update_time += 0.5;
 }
 
 char *Macro_Point_LED(void)
@@ -3364,6 +3444,8 @@ void TP_Init (void)
 	Cvar_Register (&tp_need_weapon);
 	Cvar_Register (&tp_need_rl);
 
+	Cvar_Register(&cl_autoshownick);
+
 	TP_LocFiles_Init();
 
 	Cvar_ResetCurrentGroup();
@@ -3371,6 +3453,7 @@ void TP_Init (void)
 	Cmd_AddCommand ("enemycolor", TP_EnemyColor_f);
 
 	Cmd_AddCommand ("tp_msgreport", TP_Msg_Report_f);
+	Cmd_AddCommand ("tp_msgreportinlay", TP_Msg_Report_Inlay_f);
 	Cmd_AddCommand ("tp_msgcoming", TP_Msg_Coming_f);
     Cmd_AddCommand ("tp_msglost", TP_Msg_Lost_f);
     Cmd_AddCommand ("tp_msgenemypwr", TP_Msg_EnemyPowerup_f);

@@ -487,7 +487,7 @@ void VM_LoadSymbols( vm_t *vm ) {
 			break;
 		}
 		chars = strlen( com_token );
-		sym = Hunk_AllocName( sizeof( *sym ) + chars, "qvm-symbols");
+		sym = Hunk_AllocName( (int)(sizeof( *sym ) + chars), "qvm-symbols");
 		*prev = sym;
 		prev = &sym->next;
 		sym->next = NULL;

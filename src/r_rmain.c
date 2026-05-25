@@ -977,6 +977,7 @@ static qbool R_DrawTrySimpleItem(entity_t* ent)
 	// brush models require some additional centering
 	if (ent->model->type == mod_brush) {
 		extern cvar_t cl_model_bobbing;
+		extern cvar_t cl_model_height;
 
 		VectorSubtract(ent->model->maxs, ent->model->mins, offset);
 		offset[2] = 0;
@@ -984,6 +985,11 @@ static qbool R_DrawTrySimpleItem(entity_t* ent)
 
 		if (cl_model_bobbing.value) {
 			org[2] += sin(autorotate / 90 * M_PI) * 5 + 5;
+		} else {
+			// Use cl_model_height when bobbing is disabled
+			// Restrict possible model heights to bobbing range
+			float height = bound(0, cl_model_height.value, 10);
+			org[2] += height;
 		}
 	}
 	org[2] += sprsize;

@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "tr_types.h"
 #include "r_matrix.h"
+#include "glsl/constants.glsl"
 
 #define MAX_2D_ELEMENTS 4096
 
@@ -30,6 +31,7 @@ typedef struct draw_hud_element_s {
 	r_image_type_t type;
 	texture_ref texture;
 	int index;
+	draw_layer_t layer;
 } draw_hud_element_t;
 
 typedef struct hud_api_s {
@@ -45,6 +47,69 @@ typedef struct hud_api_s {
 } hud_api_t;
 
 static hud_api_t hud;
+#define HUD_LAYER_STACK_MAX 8
+static draw_layer_t hud_current_layer = draw_layer_base;
+static draw_layer_t hud_layer_stack[HUD_LAYER_STACK_MAX];
+static int hud_layer_stack_depth = 0;
+static draw_layer_t hud_text_layer = draw_layer_overlay;
+static draw_layer_t hud_text_layer_stack[HUD_LAYER_STACK_MAX];
+static int hud_text_layer_stack_depth = 0;
+
+void Draw_SetLayer(draw_layer_t layer)
+{
+	hud_current_layer = bound(draw_layer_base, layer, draw_layer_top);
+}
+
+draw_layer_t Draw_GetLayer(void)
+{
+	return hud_current_layer;
+}
+
+void Draw_PushLayer(draw_layer_t layer)
+{
+	if (hud_layer_stack_depth < HUD_LAYER_STACK_MAX) {
+		hud_layer_stack[hud_layer_stack_depth++] = hud_current_layer;
+	}
+	hud_current_layer = bound(draw_layer_base, layer, draw_layer_top);
+}
+
+void Draw_PopLayer(void)
+{
+	if (hud_layer_stack_depth > 0) {
+		hud_current_layer = hud_layer_stack[--hud_layer_stack_depth];
+	}
+	else {
+		hud_current_layer = draw_layer_base;
+	}
+}
+
+void Draw_SetTextLayer(draw_layer_t layer)
+{
+	hud_text_layer = bound(draw_layer_base, layer, draw_layer_top);
+}
+
+draw_layer_t Draw_GetTextLayer(void)
+{
+	return hud_text_layer;
+}
+
+void Draw_PushTextLayer(draw_layer_t layer)
+{
+	if (hud_text_layer_stack_depth < HUD_LAYER_STACK_MAX) {
+		hud_text_layer_stack[hud_text_layer_stack_depth++] = hud_text_layer;
+	}
+	hud_text_layer = bound(draw_layer_base, layer, draw_layer_top);
+}
+
+void Draw_PopTextLayer(void)
+{
+	if (hud_text_layer_stack_depth > 0) {
+		hud_text_layer = hud_text_layer_stack[--hud_text_layer_stack_depth];
+	}
+	else {
+		hud_text_layer = draw_layer_overlay;
+	}
+}
 
 #define HudSetFunctionPointers(prefix) \
 { \
@@ -95,6 +160,82 @@ static void R_PrepareImageDraw(void)
 	R_IdentityProjectionView();
 }
 
+static void R_DrawElementRange(texture_ref texture, r_image_type_t type, int start_elem, int end_elem)
+{
+	if (type == imagetype_image) {
+		hud.types[imagetype_image].Draw(texture, hud.elements[start_elem].index, hud.elements[end_elem].index);
+	}
+	else {
+		hud.types[type].Draw(texture, hud.elements[start_elem].index, hud.elements[end_elem].index);
+	}
+}
+
+static void R_FlushImageDrawLayerInternal(draw_layer_t layer, qbool finalize)
+{
+	int start = -1;
+	texture_ref currentTexture = null_texture_reference;
+	r_image_type_t type = imagetype_image;
+	int i;
+
+	if (!hud.count || !glConfig.initialized) {
+		if (finalize) {
+			R_EmptyImageQueue();
+			hud.OnComplete();
+		}
+		return;
+	}
+
+	R_PrepareImageDraw();
+
+	for (i = 0; i < hud.count; ++i) {
+		if (hud.elements[i].layer != layer) {
+			if (start >= 0) {
+				R_DrawElementRange(currentTexture, type, start, i - 1);
+				start = -1;
+				currentTexture = null_texture_reference;
+			}
+			continue;
+		}
+
+		if (start < 0) {
+			start = i;
+			type = hud.elements[i].type;
+			currentTexture = hud.elements[i].texture;
+			continue;
+		}
+
+		{
+			qbool texture_changed = (R_TextureReferenceIsValid(currentTexture) &&
+				R_TextureReferenceIsValid(hud.elements[i].texture) &&
+				!R_TextureReferenceEqual(currentTexture, hud.elements[i].texture));
+
+			if (hud.elements[i].type != type || texture_changed) {
+				R_DrawElementRange(currentTexture, type, start, i - 1);
+				start = i;
+				type = hud.elements[i].type;
+				currentTexture = hud.elements[i].texture;
+			}
+			else if (R_TextureReferenceIsValid(hud.elements[i].texture)) {
+				currentTexture = hud.elements[i].texture;
+			}
+		}
+	}
+
+	if (start >= 0) {
+		R_DrawElementRange(currentTexture, type, start, hud.count - 1);
+	}
+
+	if (finalize) {
+		R_EmptyImageQueue();
+		hud.OnComplete();
+	}
+}
+
+void R_FlushImageDrawLayer(draw_layer_t layer, qbool finalize)
+{
+	R_FlushImageDrawLayerInternal(layer, finalize);
+}
+
 void R_DrawRectangle(float x, float y, float width, float height, byte* color);
 
 void R_DrawAlphaRectangleRGB(int x, int y, int w, int h, float thickness, qbool fill, byte* bytecolor)
@@ -125,6 +266,10 @@ void R_Draw_FadeScreen(float alpha)
 void R_EmptyImageQueue(void)
 {
 	hud.count = imageData.imageCount = circleData.circleCount = lineData.lineCount = polygonData.polygonCount = 0;
+	hud_current_layer = draw_layer_base;
+	hud_layer_stack_depth = 0;
+	hud_text_layer = draw_layer_overlay;
+	hud_text_layer_stack_depth = 0;
 }
 
 void R_FlushImageDraw(void)
@@ -138,11 +283,12 @@ void R_FlushImageDraw(void)
 		int i;
 
 		for (i = 0; i < hud.count; ++i) {
-			qbool texture_changed = (R_TextureReferenceIsValid(currentTexture) && R_TextureReferenceIsValid(hud.elements[i].texture) && !R_TextureReferenceEqual(currentTexture, hud.elements[i].texture));
+			qbool texture_changed = (R_TextureReferenceIsValid(currentTexture) &&
+				R_TextureReferenceIsValid(hud.elements[i].texture) &&
+				!R_TextureReferenceEqual(currentTexture, hud.elements[i].texture));
 
 			if (i && (hud.elements[i].type != type || texture_changed)) {
-				hud.types[type].Draw(currentTexture, hud.elements[start].index, hud.elements[i - 1].index);
-
+				R_DrawElementRange(currentTexture, type, start, i - 1);
 				start = i;
 			}
 
@@ -152,11 +298,10 @@ void R_FlushImageDraw(void)
 			type = hud.elements[i].type;
 		}
 
-		hud.types[type].Draw(currentTexture, hud.elements[start].index, hud.elements[hud.count - 1].index);
+		R_DrawElementRange(currentTexture, type, start, hud.count - 1);
 	}
 
 	R_EmptyImageQueue();
-
 	hud.OnComplete();
 }
 
@@ -169,6 +314,7 @@ qbool R_LogCustomImageType(r_image_type_t type, int index)
 	hud.elements[hud.count].type = type;
 	hud.elements[hud.count].index = index;
 	hud.elements[hud.count].texture = null_texture_reference;
+	hud.elements[hud.count].layer = hud_current_layer;
 	hud.count++;
 	return true;
 }
@@ -182,6 +328,7 @@ qbool R_LogCustomImageTypeWithTexture(r_image_type_t type, int index, texture_re
 	hud.elements[hud.count].type = type;
 	hud.elements[hud.count].index = index;
 	hud.elements[hud.count].texture = texture;
+	hud.elements[hud.count].layer = hud_current_layer;
 	hud.count++;
 	return true;
 }

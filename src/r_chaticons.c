@@ -149,6 +149,7 @@ static int CmpCI_Order(const void *p1, const void *p2)
 
 void R_SetupChatIcons(void)
 {
+	byte entity_alpha;
 	int j, tracknum = -1;
 	player_state_t *state;
 	player_info_t *info;
@@ -202,9 +203,12 @@ void R_SetupChatIcons(void)
 			fade = min(id->distance, KTX_RACING_PLAYER_MAX_DISTANCE) / KTX_RACING_PLAYER_ALPHA_SCALE;
 		}
 
+		// if state->alpha is 0, use 255 as default
+		entity_alpha = state->alpha ? state->alpha : 255;
+
 		id->size = 8; // scale baloon
 		id->rotangle = 5 * sin(2 * r_refdef2.time); // may be set to 0, if u dislike rolling
-		id->color[0] = id->color[1] = id->color[2] = id->color[3] = 255 * bound(0, r_chaticons_alpha.value, 1) * fade; // pre-multiplied alpha
+		id->color[0] = id->color[1] = id->color[2] = id->color[3] = entity_alpha * bound(0, r_chaticons_alpha.value, 1) * fade; // pre-multiplied alpha
 
 		id->flags = info->chatflag & (CIF_CHAT | CIF_AFK); // get known flags
 		id->flags = (id->flags ? id->flags : CIF_CHAT); // use chat as default if we got some unknown "chat" value

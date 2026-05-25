@@ -93,7 +93,8 @@ static const char* batch_type_names[] = {
 	"CORONATEX_EXPLOSIONFLASH7",
 	"CHATICON_AFK_CHAT",
 	"CHATICON_CHAT",
-	"CHATICON_AFK"
+	"CHATICON_AFK",
+	"DECALS"
 };
 
 #ifdef C_ASSERT
@@ -169,7 +170,8 @@ sprite_vertpool_id batch_to_vertpool[] = {
 	sprite_vertpool_qmb_particles_normal, // SPRITE3D_CORONATEX_EXPLOSIONFLASH7,
 	sprite_vertpool_game_annotations, // SPRITE3D_CHATICON_AFK_CHAT,
 	sprite_vertpool_game_annotations, // SPRITE3D_CHATICON_CHAT,
-	sprite_vertpool_game_annotations, // SPRITE3D_CHATICON_AFK
+	sprite_vertpool_game_annotations, // SPRITE3D_CHATICON_AFK,
+	sprite_vertpool_game_annotations, // SPRITE3D_DECALS
 };
 
 #ifdef C_ASSERT

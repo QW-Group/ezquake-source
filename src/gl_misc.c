@@ -26,6 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_lightmaps_internal.h"
 #include "gl_texture_internal.h"
 
+// Forward declaration to satisfy -Wmissing-declarations on macOS
+GLenum GL_ProcessAllErrors(const char* message);
+
 typedef struct gl_enum_value_s {
 	GLenum value;
 	const char* name;
@@ -82,8 +85,6 @@ void GL_EnsureFinished(void)
 {
 	glFinish();
 }
-
-GLenum GL_ProcessErrors(const char* message);
 
 GLenum GL_ProcessAllErrors(const char* message)
 {

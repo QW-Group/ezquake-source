@@ -89,6 +89,7 @@ static void OnChange_remote_capabilities(cvar_t *var, char *string, qbool *cance
 	if (cls.state != ca_disconnected)
 	{
 		Com_Printf("You cannot change remote capabilities unless you are disconnected\n");
+		*cancel = true;
 		return;
 	}
 
@@ -562,10 +563,25 @@ void Cmd_Exec_f (void)
 	char *f, name[MAX_OSPATH];
 	char reset_bindphysical[128];
 	qbool server_command = false;
+	const int max_exec_calls = 2;
 
-	if (Rulesets_RestrictExec()) {
-		Com_Printf("The use of exec is not allowed during matches\n");
-		return;
+	if (Rulesets_RestrictExec())
+	{
+		if (cl.exec_count >= max_exec_calls)
+		{
+			Com_Printf("You have no remaining exec calls for this game\n");
+			return;
+		}
+
+		cl.exec_count++;
+		if (cl.exec_count < max_exec_calls)
+		{
+			Com_Printf("You have %d exec calls remaining\n", max_exec_calls - cl.exec_count);
+		}
+		else
+		{
+			Com_Printf("This was your last exec call for this game\n");
+		}
 	}
 
 	if (Cmd_Argc () != 2) {
@@ -1794,8 +1810,12 @@ char *formatted_comms_commands[] = {
 	"tp_msggetquad", "tp_msggetpent", "tp_msgpoint", "tp_msgtook",
 	"tp_msgtrick", "tp_msgreplace", "tp_msgneed", "tp_msgyesok",
 	"tp_msgnocancel", "tp_msgutake", "tp_msgitemsoon", "tp_msgwaiting",
-	"tp_msgslipped",
+	"tp_msgslipped", "tp_msgreportinlay",
     NULL
+};
+
+char *formatted_comms_cvars[] = {
+	"teaminlay_msg", "teaminlay_msg_duration", NULL
 };
 
 float	impulse_time = -9999;
@@ -1841,6 +1861,16 @@ static qbool Cmd_IsCommandAllowedInTeamPlayMacros( const char *command )
 {
 	char **s;
 	for (s = formatted_comms_commands; *s; s++) {
+		if (!strcasecmp(command, *s))
+			break;
+	}
+	return *s != NULL;
+}
+
+static qbool Cmd_IsCvarAllowedInTeamPlayMacros( const char *command )
+{
+	char **s;
+	for (s = formatted_comms_cvars; *s; s++) {
 		if (!strcasecmp(command, *s))
 			break;
 	}
@@ -1926,8 +1956,10 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 		}
 
 		if (cbuf_current == &cbuf_formatted_comms) {
-			Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", Cmd_Argv(0));
-			goto done;
+			if (!Cmd_IsCvarAllowedInTeamPlayMacros(Cmd_Argv(0))) {
+				Com_Printf ("\"%s\" cannot be used in combination with teamplay $macros\n", Cmd_Argv(0));
+				goto done;
+			}
 		}
 		if (cbuf_current == &cbuf_demo_extension) {
 			Com_Printf ("Blocked %s: not allowed in demo extension\n", v->name);

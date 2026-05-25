@@ -1,7 +1,0 @@
-[submodule "src/qwprot"]
-	path = src/qwprot
-	url = https://github.com/QW-Group/qwprot.git
-	branch = master
-[submodule "vcpkg"]
-	path = vcpkg
-	url = https://github.com/Microsoft/vcpkg
