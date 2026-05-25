@@ -17,13 +17,13 @@ jobs:
       run: |
         find . -mindepth 1 -maxdepth 1 \
           ! -name '.git' \
-          ! -name 'ezquake-merged.zip' \
+          ! -name 'ezquake-merged-final.zip' \
           -exec rm -rf {} +
 
-        unzip -q ezquake-merged.zip
+        unzip -q ezquake-merged-final.zip
         cp -r ezquake-merged/. .
         rm -rf ezquake-merged
-        rm -f ezquake-merged.zip
+        rm -f ezquake-merged-final.zip
 
     - name: Commit
       run: |
