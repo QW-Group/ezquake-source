@@ -14,9 +14,7 @@
     "description": "Allows setting of 'r_colorbits' cvar during start-up"
   },
   "-cdaudio": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Enables CD audio playback in builds compiled against `cd_linux.c` or `cd_win.c`; the default build links `cd_null.c` which is a no-op."
   },
   "-cddev": {
     "arguments": "<path>",
@@ -163,9 +161,7 @@
     "description": "Sets the UDP port the internal server listens on (`-port <number>`), overriding the default of 27500. No effect on the client's outbound socket (see `-clientport`)."
   },
   "-progtype": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the QuakeC VM interpreter type used by the server (`-progtype <int>`), overriding `sv_progtype`. Valid values: 0 = none/legacy QWC, 1 = native (.so/.dll), 2 = bytecode, 3 = compiled. Out-of-range values silently fall back to 0."
   },
   "-r-debug": {
     "description": "enables OpenGL debug output.  Must be used in conjunction with -dev"
@@ -192,9 +188,7 @@
     "description": "Write expanded shader source to qw/shaders/<name>.<type>"
   },
   "-ruleset": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the active ruleset at startup by name (`-ruleset <name>`), applied before any config loads. Reliably-working values at HEAD: `smackdown`, `thunderdome`, `mtfl`. Unrecognized values fall back to default."
   },
   "-startwindowed": {
     "description": "Starts ezQuake in windowed (non-fullscreen) mode. Similar to `-window` but does not affect how `-width`, `-height`, or `-display` are routed to cvars."
