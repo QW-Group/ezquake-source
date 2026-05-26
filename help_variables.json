@@ -10953,6 +10953,7 @@
       ]
     },
     "hud_score_difference_align": {
+      "desc": "Horizontal alignment of the score-difference readout ('left' | 'center' | 'right'). See hud_score_difference_digits.",
       "group-id": "19",
       "type": "string"
     },
@@ -10965,10 +10966,12 @@
       "type": "string"
     },
     "hud_score_difference_colorize": {
+      "desc": "Colorization mode for the score-difference readout (0 = off, 1 = red when negative, 2 = always red). See hud_score_difference_digits.",
       "group-id": "19",
       "type": ""
     },
     "hud_score_difference_digits": {
+      "desc": "Controls the score_difference HUD element: minimum character width (digits, 0=auto), text alignment (align: left/center/right), and colorization (colorize: 0=off, 1=red when losing/negative, 2=always red) for the team-minus-enemy score delta. Default colorize=1 so the number turns red automatically when behind.",
       "group-id": "19",
       "type": ""
     },
@@ -11013,6 +11016,7 @@
       "type": ""
     },
     "hud_score_enemy_align": {
+      "desc": "Horizontal alignment of the enemy score readout ('left' | 'center' | 'right'). See hud_score_enemy_digits.",
       "group-id": "19",
       "type": "string"
     },
@@ -11025,10 +11029,12 @@
       "type": "string"
     },
     "hud_score_enemy_colorize": {
+      "desc": "Colorization mode for the enemy score readout (0 = off, 1 = red when negative, 2 = always red). See hud_score_enemy_digits.",
       "group-id": "19",
       "type": ""
     },
     "hud_score_enemy_digits": {
+      "desc": "Controls the score_enemy HUD element: minimum character width (digits, 0=auto), text alignment (align: left/center/right), and colorization (colorize: 0=off, 1=red when negative, 2=always red) for the top enemy score. In non-teamplay, shows the highest-scoring opponent; in teamplay, shows the enemy team total.",
       "group-id": "19",
       "type": ""
     },
@@ -11073,6 +11079,7 @@
       "type": ""
     },
     "hud_score_position_align": {
+      "desc": "Horizontal alignment of the position-rank readout ('left' | 'center' | 'right'). See hud_score_position_digits.",
       "group-id": "19",
       "type": "string"
     },
@@ -11085,10 +11092,12 @@
       "type": "string"
     },
     "hud_score_position_colorize": {
+      "desc": "Colorization mode for the position-rank readout (0 = off, 1 = red when negative, 2 = always red). See hud_score_position_digits.",
       "group-id": "19",
       "type": ""
     },
     "hud_score_position_digits": {
+      "desc": "Controls the score_position HUD element: minimum character width (digits, 0=auto), text alignment (align: left/center/right), and colorization (colorize: 0=off, 1=red when not in 1st place, 2=always red) for the current scoreboard rank. Counts teams in teamplay, players in FFA. Default colorize=1.",
       "group-id": "19",
       "type": ""
     },
@@ -11133,6 +11142,7 @@
       "type": ""
     },
     "hud_score_team_align": {
+      "desc": "Horizontal alignment of the own-team score readout ('left' | 'center' | 'right'). See hud_score_team_digits.",
       "group-id": "19",
       "type": "string"
     },
@@ -11145,10 +11155,12 @@
       "type": "string"
     },
     "hud_score_team_colorize": {
+      "desc": "Colorization mode for the own-team score readout (0 = off, 1 = red when negative, 2 = always red). See hud_score_team_digits.",
       "group-id": "19",
       "type": ""
     },
     "hud_score_team_digits": {
+      "desc": "Controls the score_team HUD element: minimum character width (digits, 0=auto), text alignment (align: left/center/right), and colorization (colorize: 0=off, 1=red when negative, 2=always red) for the own-team score display.",
       "group-id": "19",
       "type": ""
     },
