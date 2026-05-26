@@ -30,9 +30,7 @@
     "description": "enable cheats on local server (/noclip etc)"
   },
   "-clientport": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the local UDP port the client socket binds to on startup (`-clientport <number>`), overriding the `cl_net_clientport` cvar default (27001). If the requested port is unavailable, a dynamic port is assigned. Use to pin the client to a specific outbound port."
   },
   "-conbufsize": {
     "arguments": "<size-in-kb>",
@@ -100,9 +98,7 @@
     "description": "Sets the vertical resolution in pixels (`-height <pixels>`). Applies to `vid_height` (fullscreen) or `vid_win_height` (windowed, when `-window` is present). Should be paired with `-width`."
   },
   "-ip": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Binds all network sockets to the specified local IP address rather than all interfaces (`-ip <address>`). Affects both UDP and TCP listen sockets (client and server). Default is `INADDR_ANY`."
   },
   "-maxtmu2": {
     "description": "Caps the number of active texture units to 2 even if the hardware reports more. Use on older hardware where multitexturing with more than 2 TMUs causes rendering problems."
@@ -182,9 +178,7 @@
     "description": "Sets the maximum number of simultaneously active particles to `<count>` (`-particles <count>`), overriding the `r_particles_count` cvar at startup. Default is 2048; the active particle subsystem clamps to its own range (classic: 512-8192, QMB: 256-32768)."
   },
   "-port": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the UDP port the internal server listens on (`-port <number>`), overriding the default of 27500. No effect on the client's outbound socket (see `-clientport`)."
   },
   "-progtype": {
     "flags": [
