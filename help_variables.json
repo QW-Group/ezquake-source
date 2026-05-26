@@ -6358,6 +6358,7 @@
       "type": "integer"
     },
     "hud_armor_pent_666": {
+      "desc": "Replace the armor value with \"666\" while carrying the Pentagram of Protection (invulnerability), mimicking the classic status bar display.",
       "group-id": "19",
       "type": ""
     },
@@ -7099,6 +7100,7 @@
       "type": "float"
     },
     "hud_fps_min_reset_interval": {
+      "desc": "How many seconds before the minimum-FPS tracker resets its baseline (default 30); once elapsed, the lowest observed FPS is replaced by the current value.",
       "group-id": "8",
       "type": ""
     },
@@ -9800,6 +9802,7 @@
       "type": ""
     },
     "hud_itemsclock_timelimit": {
+      "desc": "Look-ahead window in seconds for pending item respawns. Live items on the map are always shown regardless of this setting. Default 5.",
       "group-id": "19",
       "type": ""
     },
@@ -10223,6 +10226,7 @@
       "type": ""
     },
     "hud_notify_time": {
+      "desc": "Seconds each console notification line stays visible in the notify HUD element. Default 4.",
       "group-id": "19",
       "type": ""
     },
@@ -10271,6 +10275,7 @@
       "type": ""
     },
     "hud_ownfrags_timeout": {
+      "desc": "Seconds the \"You fragged <player>\" banner stays visible before disappearing. Default 3. (A fade alpha is computed but not currently applied at the draw call.)",
       "group-id": "19",
       "type": ""
     },
@@ -12727,6 +12732,7 @@
       "type": "float"
     },
     "hud_teaminfo_layout": {
+      "desc": "Format string controlling which fields appear in each teaminfo row; tokens include %p (powerup), %n (name), %l (location), %a (armor), %H (health), %w (weapon), with $x10/$x11 for column separators.",
       "group-id": "19",
       "type": "string"
     },
@@ -12736,6 +12742,7 @@
       "type": "integer"
     },
     "hud_teaminfo_low_health": {
+      "desc": "Health threshold below which a teammate's health value is rendered in red (default 25).",
       "group-id": "19",
       "type": ""
     },
