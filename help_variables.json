@@ -18803,23 +18803,23 @@
     },
     "scr_scoreboard_login_color": {
       "default": "255 255 192",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "RGB tint applied to the login-name column when shown via scr_scoreboard_login_names. Default `255 255 192` (warm yellow).",
+      "group-id": "0"
     },
     "scr_scoreboard_login_flagfile": {
       "default": "flags",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Image atlas file for country flags drawn next to logged-in players on the scoreboard. Default `flags`. When a player has no country flag (or the atlas does not include theirs), scr_scoreboard_login_indicator is shown instead.",
+      "group-id": "0"
     },
     "scr_scoreboard_login_indicator": {
       "default": "&cffc*&r",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Marker shown next to logged-in players who don't have a country flag drawn; accepts ezQuake colour codes. Default `&cffc*&r` (yellow asterisk). See scr_scoreboard_login_flagfile for the country-flag source.",
+      "group-id": "0"
     },
     "scr_scoreboard_login_names": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Shows the QuakeWorld.nu login-name column on the scoreboard for authenticated players. Default 1. See scr_scoreboard_login_color for the name tint.",
+      "group-id": "0"
     },
     "scr_scoreboard_posx": {
       "default": "0",
