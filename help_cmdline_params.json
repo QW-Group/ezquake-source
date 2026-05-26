@@ -90,9 +90,7 @@
     "system-generated": true
   },
   "-gl_ext": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Prints the GL_EXTENSIONS string to the console at startup. Non-Windows/non-Linux only; on modern OpenGL reports `(using modern OpenGL)` instead of the extension list."
   },
   "-glsl-renderer": {
     "description": "Forces the GLSL (modern OpenGL) renderer by setting `vid_renderer` to 1 at startup. Only available in builds compiled with `EZ_MULTIPLE_RENDERERS` and `RENDERER_OPTION_MODERN_OPENGL`."
@@ -133,7 +131,7 @@
     "description": "Disables loading of 24-bit (high-resolution) replacement textures (PNG/TGA external files), forcing the engine to use original 8-bit palette textures only. Runtime equivalent: `gl_no24bit` cvar."
   },
   "-noatlas": {
-    "system-generated": true
+    "description": "Disables texture-atlas batching of HUD/UI graphics; each draw call binds its own texture instead of sampling from a packed atlas. Use to work around atlas-related rendering issues."
   },
   "-noconinput": {
     "flags": [
@@ -188,12 +186,10 @@
     ]
   },
   "-oldgamma": {
-    "system-generated": true
+    "description": "Switches gamma correction to the legacy palette-baking method, applying `vid_gamma_table` to texture data at load time instead of using the hardware gamma ramp. Distinct from `-nohwgamma`, which disables hardware gamma without activating palette baking."
   },
   "-particles": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the maximum number of simultaneously active particles to `<count>` (`-particles <count>`), overriding the `r_particles_count` cvar at startup. Default is 2048; the active particle subsystem clamps to its own range (classic: 512-8192, QMB: 256-32768)."
   },
   "-port": {
     "flags": [
@@ -218,7 +214,7 @@
     "description": "Disables use of `glBindTextures` (GL 4.4 / `GL_ARB_multi_bind`) for batched texture-unit binding. The engine auto-disables this on known-broken AMD driver versions (github bug #416); use this flag to force the same workaround on other drivers."
   },
   "-r-novao": {
-    "system-generated": true
+    "description": "Disables Vertex Array Object support in the Classic renderer; falls back to manual vertex-attribute setup per draw call."
   },
   "-r-trace": {
     "description": "Enables full per-call GL API tracing to timestamped text files. Activates all of `-r-debug` without requiring `-dev`, and additionally logs GL function calls (function name, args where instrumented, and call site) to `qw/trace/frame_<timestamp>.txt` (one file per frame). Tracing starts before `Host_Init` completes."
