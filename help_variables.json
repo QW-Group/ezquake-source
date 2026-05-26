@@ -16835,11 +16835,13 @@
     },
     "r_tracker_string_suicides": {
       "default": " (suicides)",
+      "desc": "Label appended to suicide frag-tracker messages; contrasted with r_tracker_string_died (world kills) and r_tracker_string_teammate / r_tracker_string_enemy.",
       "group-id": "40",
       "type": "string"
     },
     "r_tracker_string_teammate": {
       "default": "teammate",
+      "desc": "Teammate role label shown in team-kill tracker lines -- appears as either the killer or the victim label depending on which player is the teammate in the event; contrasts with r_tracker_string_enemy (opponent kills) and r_tracker_string_suicides.",
       "group-id": "40",
       "type": "string"
     },
