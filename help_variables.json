@@ -18269,23 +18269,23 @@
     },
     "scr_damage_floating": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enables floating damage numbers above the point of impact (default 0 = off); when active, damage indicators are projected into 3D space and drift upward with gravity applied over their lifetime.",
+      "group-id": "0"
     },
     "scr_damage_hitbeep": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "When enabled, plays dmg-notification.wav each time damage is dealt (default 0 = off); fires independently of scr_damage_floating so the audio cue can be enabled without the floating numbers.",
+      "group-id": "0"
     },
     "scr_damage_offset_ingame": {
       "default": "14",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Vertical world-space offset applied to the spawn origin of floating damage numbers when playing (default 14 units); shifts the indicator above the impact point so it is readable at head-height. Compare scr_damage_offset_spectator.",
+      "group-id": "0"
     },
     "scr_damage_offset_spectator": {
       "default": "28",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Vertical world-space offset for floating damage numbers when spectating (default 28 units, twice the ingame default); higher because spectators typically view from a wider angle and need more separation from the model.",
+      "group-id": "0"
     },
     "scr_damage_proportional": {
       "default": "0",
@@ -18295,8 +18295,8 @@
     },
     "scr_damage_scale": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Text scale multiplier for floating damage numbers (default 1 = normal size); values of 0 or below are treated as 1.",
+      "group-id": "0"
     },
     "scr_drawHFrags": {
       "default": "1",
