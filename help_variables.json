@@ -13666,11 +13666,13 @@
     },
     "match_auto_logupload_token": {
       "default": "",
+      "desc": "Authentication token for the challenge-mode log upload service; included in the SHA1 hash used to verify match authenticity, and cannot be changed during a live match.",
       "group-id": "16",
       "type": "string"
     },
     "match_auto_logurl": {
       "default": "http://stats.quakeworld.nu/logupload",
+      "desc": "URL endpoint where match logs are posted after a challenge-mode game; default targets the quakeworld.nu log upload service.",
       "group-id": "16",
       "type": "string"
     },
