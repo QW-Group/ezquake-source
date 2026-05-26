@@ -66,9 +66,7 @@
     "description": "Selects the monitor index (0-based) for rendering (`-display <index>`). Sets `vid_displaynumber` in fullscreen mode or `vid_win_displaynumber` in windowed mode (when `-window` is also present)."
   },
   "-enablelocalcommand": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Enables the server-side `localcommand` console command, which executes an arbitrary OS shell command on the server host. SERVERONLY builds only. **Security note:** the implementation calls `system()` with unsanitized input and is marked \"REMOVE ME\" in source; use only as a diagnostic tool in controlled environments."
   },
   "-forcetexturereload": {
     "description": "Forces textures to reload from disk on every load call, bypassing the in-memory cache check that normally skips re-uploading a texture whose path and dimensions already match."
@@ -87,7 +85,7 @@
     ]
   },
   "-gl-forward-only-profile": {
-    "system-generated": true
+    "description": "Requests an OpenGL forward-compatibility context flag (`SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG`) when creating a core-profile GL context on non-Apple platforms. No effect on compatibility-profile contexts or macOS."
   },
   "-gl_ext": {
     "description": "Prints the GL_EXTENSIONS string to the console at startup. Non-Windows/non-Linux only; on modern OpenGL reports `(using modern OpenGL)` instead of the extension list."
@@ -150,9 +148,7 @@
     "description": "Disables hardware gamma ramp support. Has no effect under the `mtfl` ruleset, which blocks this override."
   },
   "-nohwtimer": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables the Windows high-resolution hardware timer (`QueryPerformanceCounter`) and falls back to the multimedia timer at 1 ms resolution. Windows only. Use when `QueryPerformanceCounter` produces unreliable results on certain hardware or VM configurations."
   },
   "-noindphys": {
     "flags": [
