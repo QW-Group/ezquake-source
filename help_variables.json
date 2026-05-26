@@ -14280,6 +14280,7 @@
     },
     "mvd_info_setup": {
       "default": "%p%n \u0010%l\u0011 %h/%a %w",
+      "desc": "Format string for per-player rows in the MVD info overlay; supports % tokens: %n name, %l location, %h health, %a armor, %w current weapon, %W best weapon, %f frags, %P ping, %v value.",
       "group-id": "20",
       "type": "string"
     },
