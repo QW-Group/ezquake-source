@@ -71,7 +71,7 @@
     ]
   },
   "-forcetexturereload": {
-    "system-generated": true
+    "description": "Forces textures to reload from disk on every load call, bypassing the in-memory cache check that normally skips re-uploading a texture whose path and dimensions already match."
   },
   "-freq": {
     "description": "Sets the fullscreen display refresh rate in Hz at startup (`-freq <hz>`), overriding `vid_displayfrequency`. A value of 0 (default) lets the engine auto-select."
@@ -130,9 +130,7 @@
     "description": "Disables persistent-mapped triple-buffering of GPU streaming buffers (VBOs used for once-per-frame uploads). When enabled, streaming buffers are allocated at 3x size, persistently mapped, and rotated with `glFenceSync` to avoid CPU/GPU stalls. Requires modern OpenGL with buffer-storage, sync, and map-buffer-range extensions; auto-disabled when any are absent. Use to fall back to standard mutable-buffer uploads when persistent mapping causes driver issues."
   },
   "-no24bit": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables loading of 24-bit (high-resolution) replacement textures (PNG/TGA external files), forcing the engine to use original 8-bit palette textures only. Runtime equivalent: `gl_no24bit` cvar."
   },
   "-noatlas": {
     "system-generated": true
@@ -167,7 +165,7 @@
     "description": "Disables OpenGL multitexturing in the Classic renderer (prevents loading of `glMultiTexCoord2f`, `glActiveTexture`, and `glClientActiveTexture`), and additionally disables fog rendering engine-wide. Use when multitexturing causes corruption on old or non-standard GL drivers."
   },
   "-nonpot": {
-    "system-generated": true
+    "description": "Disables NPOT (non-power-of-two) texture support, forcing the renderer to treat `GL_ARB_texture_non_power_of_two` as unavailable regardless of hardware capability."
   },
   "-norjscripts": {
     "flags": [
