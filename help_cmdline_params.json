@@ -63,9 +63,7 @@
     "system-generated": true
   },
   "-display": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Selects the monitor index (0-based) for rendering (`-display <index>`). Sets `vid_displaynumber` in fullscreen mode or `vid_win_displaynumber` in windowed mode (when `-window` is also present)."
   },
   "-enablelocalcommand": {
     "flags": [
@@ -76,9 +74,7 @@
     "system-generated": true
   },
   "-freq": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the fullscreen display refresh rate in Hz at startup (`-freq <hz>`), overriding `vid_displayfrequency`. A value of 0 (default) lets the engine auto-select."
   },
   "-game": {
     "flags": [
@@ -99,9 +95,7 @@
     ]
   },
   "-glsl-renderer": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Forces the GLSL (modern OpenGL) renderer by setting `vid_renderer` to 1 at startup. Only available in builds compiled with `EZ_MULTIPLE_RENDERERS` and `RENDERER_OPTION_MODERN_OPENGL`."
   },
   "-heapsize": {
     "flags": [
@@ -109,9 +103,7 @@
     ]
   },
   "-height": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the vertical resolution in pixels (`-height <pixels>`). Applies to `vid_height` (fullscreen) or `vid_win_height` (windowed, when `-window` is present). Should be paired with `-width`."
   },
   "-ip": {
     "flags": [
@@ -155,7 +147,7 @@
     ]
   },
   "-nodesktopres": {
-    "system-generated": true
+    "description": "Disables use of the desktop resolution for fullscreen mode, forcing the engine to apply an explicit resolution instead of matching the current desktop size."
   },
   "-nohome": {
     "flags": [
@@ -163,9 +155,7 @@
     ]
   },
   "-nohwgamma": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables hardware gamma ramp support. Has no effect under the `mtfl` ruleset, which blocks this override."
   },
   "-nohwtimer": {
     "flags": [
@@ -253,9 +243,7 @@
     ]
   },
   "-startwindowed": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Starts ezQuake in windowed (non-fullscreen) mode. Similar to `-window` but does not affect how `-width`, `-height`, or `-display` are routed to cvars."
   },
   "-userdir": {
     "flags": [
@@ -263,13 +251,9 @@
     ]
   },
   "-width": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the horizontal resolution in pixels (`-width <pixels>`). Applies to `vid_width` (fullscreen) or `vid_win_width` (windowed, when `-window` is present). Should be paired with `-height`."
   },
   "-window": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Starts ezQuake in windowed mode and routes `-width`, `-height`, and `-display` to the windowed resolution cvars (`vid_win_*`) instead of the fullscreen ones. Distinct from `-startwindowed`, which sets windowed mode without affecting cvar routing."
   }
 }
