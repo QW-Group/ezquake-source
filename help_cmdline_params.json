@@ -47,7 +47,7 @@
     "description": "set vid_conwidth during startup"
   },
   "-data": {
-    "system-generated": true
+    "description": "Adds `<datadir>` as an additional game data directory on top of the standard search path (`-data <path>`); may be specified multiple times."
   },
   "-democache": {
     "arguments": "<size-in-kb>",
@@ -73,9 +73,7 @@
     "description": "Sets the fullscreen display refresh rate in Hz at startup (`-freq <hz>`), overriding `vid_displayfrequency`. A value of 0 (default) lets the engine auto-select."
   },
   "-game": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the active game directory to `<modname>` (`-game <modname>`), overriding the default mod search path; affects which directory generated files are read from and written to (subject to `-nohome` / `+gamedir` interaction)."
   },
   "-gamma": {
     "flags": [
@@ -130,9 +128,7 @@
     "description": "Disables use of the desktop resolution for fullscreen mode, forcing the engine to apply an explicit resolution instead of matching the current desktop size."
   },
   "-nohome": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables the per-user home directory (`Documents\\ezQuake` on Windows, `~/.ezquake` on Linux/macOS), forcing all file I/O to use the base game directory only."
   },
   "-nohwgamma": {
     "description": "Disables hardware gamma ramp support. Has no effect under the `mtfl` ruleset, which blocks this override."
@@ -218,9 +214,7 @@
     "description": "Starts ezQuake in windowed (non-fullscreen) mode. Similar to `-window` but does not affect how `-width`, `-height`, or `-display` are routed to cvars."
   },
   "-userdir": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets a named user-data subdirectory and path layout (`-userdir <dirname> <type>`), where `<type>` is an integer 0-5 selecting the path-construction formula (case 0 = relative to game directory, cases 1-4 = base-directory variants, case 5 = relative to home directory). Two-argument form; inherited from QW262."
   },
   "-width": {
     "description": "Sets the horizontal resolution in pixels (`-width <pixels>`). Applies to `vid_width` (fullscreen) or `vid_win_width` (windowed, when `-window` is present). Should be paired with `-height`."
