@@ -177,21 +177,6 @@
       "incomplete"
     ]
   },
-  "-noinvlmaps": {
-    "flags": [
-      "incomplete"
-    ]
-  },
-  "-nolibjpeg": {
-    "flags": [
-      "incomplete"
-    ]
-  },
-  "-nolibpng": {
-    "flags": [
-      "incomplete"
-    ]
-  },
   "-nomtex": {
     "flags": [
       "incomplete"
@@ -199,11 +184,6 @@
   },
   "-nonpot": {
     "system-generated": true
-  },
-  "-nopriority": {
-    "flags": [
-      "incomplete"
-    ]
   },
   "-norjscripts": {
     "flags": [
@@ -268,11 +248,6 @@
     "description": "Write expanded shader source to qw/shaders/<name>.<type>"
   },
   "-ruleset": {
-    "flags": [
-      "incomplete"
-    ]
-  },
-  "-showliberrors": {
     "flags": [
       "incomplete"
     ]
