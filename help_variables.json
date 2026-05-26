@@ -17055,43 +17055,43 @@
     },
     "re_trigger_match_2": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 2 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_3": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 3 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_4": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 4 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_5": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 5 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_6": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 6 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_7": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 7 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_8": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 8 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_9": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 9 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "registered": {
       "default": "1",
