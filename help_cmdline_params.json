@@ -111,9 +111,7 @@
     ]
   },
   "-maxtmu2": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Caps the number of active texture units to 2 even if the hardware reports more. Use on older hardware where multitexturing with more than 2 TMUs causes rendering problems."
   },
   "-mem": {
     "flags": [
@@ -129,9 +127,7 @@
     "description": "Requests un-accelerated graphics (used in debugging to create OpenGL 1.1 context)"
   },
   "-no-triple-gl-buffer": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables persistent-mapped triple-buffering of GPU streaming buffers (VBOs used for once-per-frame uploads). When enabled, streaming buffers are allocated at 3x size, persistently mapped, and rotated with `glFenceSync` to avoid CPU/GPU stalls. Requires modern OpenGL with buffer-storage, sync, and map-buffer-range extensions; auto-disabled when any are absent. Use to fall back to standard mutable-buffer uploads when persistent mapping causes driver issues."
   },
   "-no24bit": {
     "flags": [
@@ -168,9 +164,7 @@
     ]
   },
   "-nomtex": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables OpenGL multitexturing in the Classic renderer (prevents loading of `glMultiTexCoord2f`, `glActiveTexture`, and `glClientActiveTexture`), and additionally disables fog rendering engine-wide. Use when multitexturing causes corruption on old or non-standard GL drivers."
   },
   "-nonpot": {
     "system-generated": true
@@ -223,7 +217,7 @@
     "description": "Disables `glDebugMessageCallback` and `glDebugMessageControl` setup when the GL debug context is active (i.e. `-r-debug` with `-dev`, or `-r-trace` alone). Use when the driver's debug callback delivery is unreliable but GL error checking is still needed."
   },
   "-r-nomultibind": {
-    "system-generated": true
+    "description": "Disables use of `glBindTextures` (GL 4.4 / `GL_ARB_multi_bind`) for batched texture-unit binding. The engine auto-disables this on known-broken AMD driver versions (github bug #416); use this flag to force the same workaround on other drivers."
   },
   "-r-novao": {
     "system-generated": true
