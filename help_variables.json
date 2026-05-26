@@ -5476,21 +5476,25 @@
     },
     "gl_powerupshells_base1level": {
       "default": "0.05",
+      "desc": "Baseline color level for the first powerup-shell layer (0-1, default 0.05). Adds a faint floor to all color channels regardless of which powerup is active.",
       "group-id": "8",
       "type": "float"
     },
     "gl_powerupshells_base2level": {
       "default": "0.1",
+      "desc": "Baseline color level for the second powerup-shell layer (0-1, default 0.1). See gl_powerupshells_base1level.",
       "group-id": "8",
       "type": "float"
     },
     "gl_powerupshells_effect1level": {
       "default": "0.75",
+      "desc": "Color intensity for the first powerup-shell layer (0-1, default 0.75). Higher values make the powerup's color more saturated (e.g., blue for Quad, red for Pentagram).",
       "group-id": "8",
       "type": "float"
     },
     "gl_powerupshells_effect2level": {
       "default": "0.4",
+      "desc": "Color intensity for the second powerup-shell layer (0-1, default 0.4). See gl_powerupshells_effect1level.",
       "group-id": "8",
       "type": "float"
     },
