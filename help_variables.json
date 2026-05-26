@@ -1887,33 +1887,33 @@
     },
     "cl_mvinset_offset_x": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Pixel offset applied to the multiview inset window along the X axis. Positive values shift the inset right; combine with cl_mvinset_offset_y to fine-tune inset placement relative to its corner anchor.",
+      "group-id": "0"
     },
     "cl_mvinset_offset_y": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Pixel offset applied to the multiview inset window along the Y axis. Positive values shift the inset down on screen. See cl_mvinset_offset_x.",
+      "group-id": "0"
     },
     "cl_mvinset_right": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "When 1 (default), anchors the multiview inset to the right side of the screen; when 0, anchors it to the left. Pairs with cl_mvinset_top.",
+      "group-id": "0"
     },
     "cl_mvinset_size_x": {
       "default": "0.333",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Width of the multiview inset window as a fraction of the total view width (default 0.333 = one third).",
+      "group-id": "0"
     },
     "cl_mvinset_size_y": {
       "default": "0.333",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Height of the multiview inset window as a fraction of the total view height (default 0.333 = one third). See cl_mvinset_size_x.",
+      "group-id": "0"
     },
     "cl_mvinset_top": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "When 1 (default), anchors the multiview inset to the top of the screen; when 0, anchors it to the bottom. Pairs with cl_mvinset_right.",
+      "group-id": "0"
     },
     "cl_mvinsetcrosshair": {
       "default": "1",
