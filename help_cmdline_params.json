@@ -58,7 +58,7 @@
     "description": "sets /gl_particle_fulldetail 1 during startup"
   },
   "-dev": {
-    "system-generated": true
+    "description": "Enables developer mode, which unlocks development-only commands (`devmap` plus the `dev_*` family including `dev_physicsnormalset`, `dev_help_issues`, `dev_help_verify_config`, `dev_dump_defaults`) and extra cvars (`r_speeds`), and activates Vulkan validation layers when using the Vulkan renderer."
   },
   "-display": {
     "description": "Selects the monitor index (0-based) for rendering (`-display <index>`). Sets `vid_displaynumber` in fullscreen mode or `vid_win_displaynumber` in windowed mode (when `-window` is also present)."
@@ -76,9 +76,7 @@
     "description": "Sets the active game directory to `<modname>` (`-game <modname>`), overriding the default mod search path; affects which directory generated files are read from and written to (subject to `-nohome` / `+gamedir` interaction)."
   },
   "-gamma": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the initial gamma value at startup (`-gamma <float>`, range 0.3-3.0), overriding the `gl_gamma` cvar default before the first frame."
   },
   "-gl-forward-only-profile": {
     "description": "Requests an OpenGL forward-compatibility context flag (`SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG`) when creating a core-profile GL context on non-Apple platforms. No effect on compatibility-profile contexts or macOS."
@@ -135,9 +133,7 @@
     "description": "Disables the Windows high-resolution hardware timer (`QueryPerformanceCounter`) and falls back to the multimedia timer at 1 ms resolution. Windows only. Use when `QueryPerformanceCounter` produces unreliable results on certain hardware or VM configurations."
   },
   "-noindphys": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables independent physics tick rate by setting `cl_independentPhysics` to 0 and `cl_nolerp` to 1, restoring the classic coupled rendering-and-physics frame timing."
   },
   "-nomtex": {
     "description": "Disables OpenGL multitexturing in the Classic renderer (prevents loading of `glMultiTexCoord2f`, `glActiveTexture`, and `glClientActiveTexture`), and additionally disables fog rendering engine-wide. Use when multitexturing causes corruption on old or non-standard GL drivers."
@@ -146,14 +142,10 @@
     "description": "Disables NPOT (non-power-of-two) texture support, forcing the renderer to treat `GL_ARB_texture_non_power_of_two` as unavailable regardless of hardware capability."
   },
   "-norjscripts": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables movement scripting at startup; alias for `-noscripts` with identical runtime effect."
   },
   "-noscripts": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables movement scripting at startup by setting `allow_scripts` to 0, preventing use of advanced movement scripts such as rocket-jump or bunny-hop automation. Default allow_scripts is 2 (all scripts enabled)."
   },
   "-nosound": {
     "description": "Skips SDL audio initialization entirely, leaving all sound subsystems inactive for the session. Distinct from the `s_nosound` cvar, which allows initialization but suppresses playback at runtime."
