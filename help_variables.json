@@ -1887,33 +1887,33 @@
     },
     "cl_mvinset_offset_x": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Pixel offset applied to the multiview inset window along the X axis. Positive values shift the inset right; combine with cl_mvinset_offset_y to fine-tune inset placement relative to its corner anchor.",
+      "group-id": "0"
     },
     "cl_mvinset_offset_y": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Pixel offset applied to the multiview inset window along the Y axis. Positive values shift the inset down on screen. See cl_mvinset_offset_x.",
+      "group-id": "0"
     },
     "cl_mvinset_right": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "When 1 (default), anchors the multiview inset to the right side of the screen; when 0, anchors it to the left. Pairs with cl_mvinset_top.",
+      "group-id": "0"
     },
     "cl_mvinset_size_x": {
       "default": "0.333",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Width of the multiview inset window as a fraction of the total view width (default 0.333 = one third).",
+      "group-id": "0"
     },
     "cl_mvinset_size_y": {
       "default": "0.333",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Height of the multiview inset window as a fraction of the total view height (default 0.333 = one third). See cl_mvinset_size_x.",
+      "group-id": "0"
     },
     "cl_mvinset_top": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "When 1 (default), anchors the multiview inset to the top of the screen; when 0, anchors it to the bottom. Pairs with cl_mvinset_right.",
+      "group-id": "0"
     },
     "cl_mvinsetcrosshair": {
       "default": "1",
@@ -2705,8 +2705,8 @@
     },
     "cl_voip_demorecord": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Controls whether VoIP audio is recorded into demos; currently registered but the flag is not read in existing code -- may be reserved for future implementation.",
+      "group-id": "0"
     },
     "cl_voip_micamp": {
       "default": "2",
@@ -4303,8 +4303,8 @@
     },
     "fs_savegame_home": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "When enabled (default), save games are written under the ezQuake home directory: `~/.ezquake/<gamedir>/save/` on Linux/macOS, `Documents\\ezQuake\\<gamedir>\\save\\` on Windows. When disabled, saves go to the game directory alongside the pak files.",
+      "group-id": "0"
     },
     "gender": {
       "default": "",
@@ -5476,21 +5476,25 @@
     },
     "gl_powerupshells_base1level": {
       "default": "0.05",
+      "desc": "Baseline color level for the first powerup-shell layer (0-1, default 0.05). Adds a faint floor to all color channels regardless of which powerup is active.",
       "group-id": "8",
       "type": "float"
     },
     "gl_powerupshells_base2level": {
       "default": "0.1",
+      "desc": "Baseline color level for the second powerup-shell layer (0-1, default 0.1). See gl_powerupshells_base1level.",
       "group-id": "8",
       "type": "float"
     },
     "gl_powerupshells_effect1level": {
       "default": "0.75",
+      "desc": "Color intensity for the first powerup-shell layer (0-1, default 0.75). Higher values make the powerup's color more saturated (e.g., blue for Quad, red for Pentagram).",
       "group-id": "8",
       "type": "float"
     },
     "gl_powerupshells_effect2level": {
       "default": "0.4",
+      "desc": "Color intensity for the second powerup-shell layer (0-1, default 0.4). See gl_powerupshells_effect1level.",
       "group-id": "8",
       "type": "float"
     },
@@ -6354,6 +6358,7 @@
       "type": "integer"
     },
     "hud_armor_pent_666": {
+      "desc": "Replace the armor value with \"666\" while carrying the Pentagram of Protection (invulnerability), mimicking the classic status bar display.",
       "group-id": "19",
       "type": ""
     },
@@ -7095,6 +7100,7 @@
       "type": "float"
     },
     "hud_fps_min_reset_interval": {
+      "desc": "How many seconds before the minimum-FPS tracker resets its baseline (default 30); once elapsed, the lowest observed FPS is replaced by the current value.",
       "group-id": "8",
       "type": ""
     },
@@ -9796,6 +9802,7 @@
       "type": ""
     },
     "hud_itemsclock_timelimit": {
+      "desc": "Look-ahead window in seconds for pending item respawns. Live items on the map are always shown regardless of this setting. Default 5.",
       "group-id": "19",
       "type": ""
     },
@@ -10219,6 +10226,7 @@
       "type": ""
     },
     "hud_notify_time": {
+      "desc": "Seconds each console notification line stays visible in the notify HUD element. Default 4.",
       "group-id": "19",
       "type": ""
     },
@@ -10267,6 +10275,7 @@
       "type": ""
     },
     "hud_ownfrags_timeout": {
+      "desc": "Seconds the \"You fragged <player>\" banner stays visible before disappearing. Default 3. (A fade alpha is computed but not currently applied at the draw call.)",
       "group-id": "19",
       "type": ""
     },
@@ -10953,6 +10962,7 @@
       ]
     },
     "hud_score_difference_align": {
+      "desc": "Horizontal alignment of the score-difference readout ('left' | 'center' | 'right'). See hud_score_difference_digits.",
       "group-id": "19",
       "type": "string"
     },
@@ -10965,10 +10975,12 @@
       "type": "string"
     },
     "hud_score_difference_colorize": {
+      "desc": "Colorization mode for the score-difference readout (0 = off, 1 = red when negative, 2 = always red). See hud_score_difference_digits.",
       "group-id": "19",
       "type": ""
     },
     "hud_score_difference_digits": {
+      "desc": "Controls the score_difference HUD element: minimum character width (digits, 0=auto), text alignment (align: left/center/right), and colorization (colorize: 0=off, 1=red when losing/negative, 2=always red) for the team-minus-enemy score delta. Default colorize=1 so the number turns red automatically when behind.",
       "group-id": "19",
       "type": ""
     },
@@ -11013,6 +11025,7 @@
       "type": ""
     },
     "hud_score_enemy_align": {
+      "desc": "Horizontal alignment of the enemy score readout ('left' | 'center' | 'right'). See hud_score_enemy_digits.",
       "group-id": "19",
       "type": "string"
     },
@@ -11025,10 +11038,12 @@
       "type": "string"
     },
     "hud_score_enemy_colorize": {
+      "desc": "Colorization mode for the enemy score readout (0 = off, 1 = red when negative, 2 = always red). See hud_score_enemy_digits.",
       "group-id": "19",
       "type": ""
     },
     "hud_score_enemy_digits": {
+      "desc": "Controls the score_enemy HUD element: minimum character width (digits, 0=auto), text alignment (align: left/center/right), and colorization (colorize: 0=off, 1=red when negative, 2=always red) for the top enemy score. In non-teamplay, shows the highest-scoring opponent; in teamplay, shows the enemy team total.",
       "group-id": "19",
       "type": ""
     },
@@ -11073,6 +11088,7 @@
       "type": ""
     },
     "hud_score_position_align": {
+      "desc": "Horizontal alignment of the position-rank readout ('left' | 'center' | 'right'). See hud_score_position_digits.",
       "group-id": "19",
       "type": "string"
     },
@@ -11085,10 +11101,12 @@
       "type": "string"
     },
     "hud_score_position_colorize": {
+      "desc": "Colorization mode for the position-rank readout (0 = off, 1 = red when negative, 2 = always red). See hud_score_position_digits.",
       "group-id": "19",
       "type": ""
     },
     "hud_score_position_digits": {
+      "desc": "Controls the score_position HUD element: minimum character width (digits, 0=auto), text alignment (align: left/center/right), and colorization (colorize: 0=off, 1=red when not in 1st place, 2=always red) for the current scoreboard rank. Counts teams in teamplay, players in FFA. Default colorize=1.",
       "group-id": "19",
       "type": ""
     },
@@ -11133,6 +11151,7 @@
       "type": ""
     },
     "hud_score_team_align": {
+      "desc": "Horizontal alignment of the own-team score readout ('left' | 'center' | 'right'). See hud_score_team_digits.",
       "group-id": "19",
       "type": "string"
     },
@@ -11145,10 +11164,12 @@
       "type": "string"
     },
     "hud_score_team_colorize": {
+      "desc": "Colorization mode for the own-team score readout (0 = off, 1 = red when negative, 2 = always red). See hud_score_team_digits.",
       "group-id": "19",
       "type": ""
     },
     "hud_score_team_digits": {
+      "desc": "Controls the score_team HUD element: minimum character width (digits, 0=auto), text alignment (align: left/center/right), and colorization (colorize: 0=off, 1=red when negative, 2=always red) for the own-team score display.",
       "group-id": "19",
       "type": ""
     },
@@ -12711,6 +12732,7 @@
       "type": "float"
     },
     "hud_teaminfo_layout": {
+      "desc": "Format string controlling which fields appear in each teaminfo row; tokens include %p (powerup), %n (name), %l (location), %a (armor), %H (health), %w (weapon), with $x10/$x11 for column separators.",
       "group-id": "19",
       "type": "string"
     },
@@ -12720,6 +12742,7 @@
       "type": "integer"
     },
     "hud_teaminfo_low_health": {
+      "desc": "Health threshold below which a teammate's health value is rendered in red (default 25).",
       "group-id": "19",
       "type": ""
     },
@@ -13507,6 +13530,7 @@
     },
     "localid": {
       "default": "",
+      "desc": "Secret token used to authenticate remote-control command packets sent from a local server browser or front-end; once set, command packets without a matching token are rejected.",
       "group-id": "2",
       "type": "string"
     },
@@ -13643,11 +13667,13 @@
     },
     "match_auto_logupload_token": {
       "default": "",
+      "desc": "Authentication token for the challenge-mode log upload service; included in the SHA1 hash used to verify match authenticity, and cannot be changed during a live match.",
       "group-id": "16",
       "type": "string"
     },
     "match_auto_logurl": {
       "default": "http://stats.quakeworld.nu/logupload",
+      "desc": "URL endpoint where match logs are posted after a challenge-mode game; default targets the quakeworld.nu log upload service.",
       "group-id": "16",
       "type": "string"
     },
@@ -14255,6 +14281,7 @@
     },
     "mvd_info_setup": {
       "default": "%p%n \u0010%l\u0011 %h/%a %w",
+      "desc": "Format string for per-player rows in the MVD info overlay; supports % tokens: %n name, %l location, %h health, %a armor, %w current weapon, %W best weapon, %f frags, %P ping, %v value.",
       "group-id": "20",
       "type": "string"
     },
@@ -15238,8 +15265,8 @@
     },
     "r_drawhud": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Toggles HUD rendering. 1 (default) draws the HUD; 0 hides it.",
+      "group-id": "0"
     },
     "r_drawparticles": {
       "default": "1",
@@ -15310,8 +15337,8 @@
     },
     "r_drawworld": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Setting to 0 suppresses world (BSP brush) draw during timedemos only; no effect during normal play.",
+      "group-id": "0"
     },
     "r_dspeeds": {
       "group-id": "31",
@@ -16819,11 +16846,13 @@
     },
     "r_tracker_string_suicides": {
       "default": " (suicides)",
+      "desc": "Label appended to suicide frag-tracker messages; contrasted with r_tracker_string_died (world kills) and r_tracker_string_teammate / r_tracker_string_enemy.",
       "group-id": "40",
       "type": "string"
     },
     "r_tracker_string_teammate": {
       "default": "teammate",
+      "desc": "Teammate role label shown in team-kill tracker lines -- appears as either the killer or the victim label depending on which player is the teammate in the event; contrasts with r_tracker_string_enemy (opponent kills) and r_tracker_string_suicides.",
       "group-id": "40",
       "type": "string"
     },
@@ -17043,43 +17072,43 @@
     },
     "re_trigger_match_2": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 2 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_3": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 3 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_4": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 4 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_5": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 5 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_6": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 6 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_7": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 7 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_8": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 8 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "re_trigger_match_9": {
       "default": "",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Capture group 9 from the most recent re_trigger or re_trigger_match. Empty if no such group existed. See re_trigger_match_0.",
+      "group-id": "0"
     },
     "registered": {
       "default": "1",
@@ -17498,6 +17527,7 @@
     },
     "sb_ignore_proxy": {
       "default": "",
+      "desc": "Excludes specific proxies from the automatic best-route ping lookup. Example: `sb_ignore_proxy \"1.2.3.4:27500 5.6.7.8:27500\"`. Leave empty to allow all discovered proxies; only relevant when sb_findroutes is enabled.",
       "group-id": "42",
       "type": "string"
     },
@@ -18253,23 +18283,23 @@
     },
     "scr_damage_floating": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Enables floating damage numbers above the point of impact (default 0 = off); when active, damage indicators are projected into 3D space and drift upward with gravity applied over their lifetime.",
+      "group-id": "0"
     },
     "scr_damage_hitbeep": {
       "default": "0",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "When enabled, plays dmg-notification.wav each time damage is dealt (default 0 = off); fires independently of scr_damage_floating so the audio cue can be enabled without the floating numbers.",
+      "group-id": "0"
     },
     "scr_damage_offset_ingame": {
       "default": "14",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Vertical world-space offset applied to the spawn origin of floating damage numbers when playing (default 14 units); shifts the indicator above the impact point so it is readable at head-height. Compare scr_damage_offset_spectator.",
+      "group-id": "0"
     },
     "scr_damage_offset_spectator": {
       "default": "28",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Vertical world-space offset for floating damage numbers when spectating (default 28 units, twice the ingame default); higher because spectators typically view from a wider angle and need more separation from the model.",
+      "group-id": "0"
     },
     "scr_damage_proportional": {
       "default": "0",
@@ -18279,8 +18309,8 @@
     },
     "scr_damage_scale": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Text scale multiplier for floating damage numbers (default 1 = normal size); values of 0 or below are treated as 1.",
+      "group-id": "0"
     },
     "scr_drawHFrags": {
       "default": "1",
@@ -18791,23 +18821,23 @@
     },
     "scr_scoreboard_login_color": {
       "default": "255 255 192",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "RGB tint applied to the login-name column when shown via scr_scoreboard_login_names. Default `255 255 192` (warm yellow).",
+      "group-id": "0"
     },
     "scr_scoreboard_login_flagfile": {
       "default": "flags",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Image atlas file for country flags drawn next to logged-in players on the scoreboard. Default `flags`. When a player has no country flag (or the atlas does not include theirs), scr_scoreboard_login_indicator is shown instead.",
+      "group-id": "0"
     },
     "scr_scoreboard_login_indicator": {
       "default": "&cffc*&r",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Marker shown next to logged-in players who don't have a country flag drawn; accepts ezQuake colour codes. Default `&cffc*&r` (yellow asterisk). See scr_scoreboard_login_flagfile for the country-flag source.",
+      "group-id": "0"
     },
     "scr_scoreboard_login_names": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Shows the QuakeWorld.nu login-name column on the scoreboard for authenticated players. Default 1. See scr_scoreboard_login_color for the name tint.",
+      "group-id": "0"
     },
     "scr_scoreboard_posx": {
       "default": "0",
@@ -21893,8 +21923,8 @@
     },
     "vm_rtChecks": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Bitmask enabling runtime safety checks in the x86 JIT VM: bit 1 = stack underflow, bit 2 = opstack overflow, bit 4 = pointer bounds, bit 8 = data segment mask. Disable specific checks with care; disabling all (0) reduces safety for untrusted progs.",
+      "group-id": "0"
     },
     "volume": {
       "default": "0.7",
