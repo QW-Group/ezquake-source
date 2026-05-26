@@ -94,9 +94,7 @@
     "description": "Forces the GLSL (modern OpenGL) renderer by setting `vid_renderer` to 1 at startup. Only available in builds compiled with `EZ_MULTIPLE_RENDERERS` and `RENDERER_OPTION_MODERN_OPENGL`."
   },
   "-heapsize": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the hunk memory allocation to `<kilobytes>` (`-heapsize <kb>`, e.g. `-heapsize 65536` for 64 MB). Legacy KB-denominated form; if both `-heapsize` and `-mem` are present, `-mem` wins."
   },
   "-height": {
     "description": "Sets the vertical resolution in pixels (`-height <pixels>`). Applies to `vid_height` (fullscreen) or `vid_win_height` (windowed, when `-window` is present). Should be paired with `-width`."
@@ -110,14 +108,10 @@
     "description": "Caps the number of active texture units to 2 even if the hardware reports more. Use on older hardware where multitexturing with more than 2 TMUs causes rendering problems."
   },
   "-mem": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the hunk memory allocation to `<megabytes>` (`-mem <mb>`, e.g. `-mem 64`). Canonical form; overrides `-heapsize` when both are specified."
   },
   "-minmemory": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the hunk allocation to the engine minimum (~5.3 MB); takes no argument. Superseded by any subsequent `-heapsize` or `-mem` on the same command line. Use when testing under minimal memory conditions."
   },
   "-no-accel-visuals": {
     "description": "Requests un-accelerated graphics (used in debugging to create OpenGL 1.1 context)"
