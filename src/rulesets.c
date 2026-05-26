@@ -626,10 +626,13 @@ void Rulesets_Init(void)
 		} else if (!strcasecmp(COM_Argv(temp + 1), "mtfl")) {
 			Cvar_Set(&ruleset, "mtfl");
 			return;
-		} else if (strcasecmp(COM_Argv(temp + 1), "qcon")) {
+		} else if (!strcasecmp(COM_Argv(temp + 1), "qcon")) {
 			Cvar_Set(&ruleset, "qcon");
 			return;
-		} else if (strcasecmp(COM_Argv(temp + 1), "default")){
+		} else if (!strcasecmp(COM_Argv(temp + 1), "smackdrive")) {
+			Cvar_Set(&ruleset, "smackdrive");
+			return;
+		} else if (!strcasecmp(COM_Argv(temp + 1), "default")){
 			Cvar_Set(&ruleset, "default");
 			return;
 		} else {
