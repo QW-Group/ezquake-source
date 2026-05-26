@@ -74,8 +74,6 @@ void Sys_Printf (char *fmt, ...)
 	char text[2048];
 	unsigned char *p;
 
-	return;
-
 	va_start (argptr,fmt);
 	vsnprintf (text, sizeof(text), fmt, argptr);
 	va_end (argptr);
