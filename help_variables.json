@@ -2705,8 +2705,8 @@
     },
     "cl_voip_demorecord": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Controls whether VoIP audio is recorded into demos; currently registered but the flag is not read in existing code -- may be reserved for future implementation.",
+      "group-id": "0"
     },
     "cl_voip_micamp": {
       "default": "2",
@@ -4303,8 +4303,8 @@
     },
     "fs_savegame_home": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "When enabled (default), save games are written under the ezQuake home directory: `~/.ezquake/<gamedir>/save/` on Linux/macOS, `Documents\\ezQuake\\<gamedir>\\save\\` on Windows. When disabled, saves go to the game directory alongside the pak files.",
+      "group-id": "0"
     },
     "gender": {
       "default": "",
@@ -13530,6 +13530,7 @@
     },
     "localid": {
       "default": "",
+      "desc": "Secret token used to authenticate remote-control command packets sent from a local server browser or front-end; once set, command packets without a matching token are rejected.",
       "group-id": "2",
       "type": "string"
     },
@@ -17526,6 +17527,7 @@
     },
     "sb_ignore_proxy": {
       "default": "",
+      "desc": "Excludes specific proxies from the automatic best-route ping lookup. Example: `sb_ignore_proxy \"1.2.3.4:27500 5.6.7.8:27500\"`. Leave empty to allow all discovered proxies; only relevant when sb_findroutes is enabled.",
       "group-id": "42",
       "type": "string"
     },
@@ -21921,8 +21923,8 @@
     },
     "vm_rtChecks": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Bitmask enabling runtime safety checks in the x86 JIT VM: bit 1 = stack underflow, bit 2 = opstack overflow, bit 4 = pointer bounds, bit 8 = data segment mask. Disable specific checks with care; disabling all (0) reduces safety for untrusted progs.",
+      "group-id": "0"
     },
     "volume": {
       "default": "0.7",
