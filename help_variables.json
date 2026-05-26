@@ -15263,8 +15263,8 @@
     },
     "r_drawhud": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Toggles HUD rendering. 1 (default) draws the HUD; 0 hides it.",
+      "group-id": "0"
     },
     "r_drawparticles": {
       "default": "1",
@@ -15335,8 +15335,8 @@
     },
     "r_drawworld": {
       "default": "1",
-      "group-id": "0",
-      "system-generated": true
+      "desc": "Setting to 0 suppresses world (BSP brush) draw during timedemos only; no effect during normal play.",
+      "group-id": "0"
     },
     "r_dspeeds": {
       "group-id": "31",
