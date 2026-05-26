@@ -120,9 +120,7 @@
     "description": "Disables texture-atlas batching of HUD/UI graphics; each draw call binds its own texture instead of sampling from a packed atlas. Use to work around atlas-related rendering issues."
   },
   "-noconinput": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables reading console commands from stdin. POSIX/Linux only."
   },
   "-nodesktopres": {
     "description": "Disables use of the desktop resolution for fullscreen mode, forcing the engine to apply an explicit resolution instead of matching the current desktop size."
@@ -158,14 +156,10 @@
     ]
   },
   "-nosound": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Skips SDL audio initialization entirely, leaving all sound subsystems inactive for the session. Distinct from the `s_nosound` cvar, which allows initialization but suppresses playback at runtime."
   },
   "-nostdout": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Suppresses stdout output on POSIX by setting `sys_nostdout=1` before `Host_Init`. POSIX/Linux only."
   },
   "-oldgamma": {
     "description": "Switches gamma correction to the legacy palette-baking method, applying `vid_gamma_table` to texture data at load time instead of using the hardware gamma ramp. Distinct from `-nohwgamma`, which disables hardware gamma without activating palette baking."
