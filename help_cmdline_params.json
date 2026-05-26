@@ -217,10 +217,10 @@
     "description": "enables OpenGL debug output.  Must be used in conjunction with -dev"
   },
   "-r-no-amd-fix": {
-    "system-generated": true
+    "description": "Disables the ATI/AMD driver workaround that avoids `glBindTextures` and forces `glMultiDrawArrays` in place of `glDrawArrays` on driver version strings containing `.13399` (github bug #416). Forces the standard code paths active regardless of detected GPU vendor."
   },
   "-r-nocallback": {
-    "system-generated": true
+    "description": "Disables `glDebugMessageCallback` and `glDebugMessageControl` setup when the GL debug context is active (i.e. `-r-debug` with `-dev`, or `-r-trace` alone). Use when the driver's debug callback delivery is unreliable but GL error checking is still needed."
   },
   "-r-nomultibind": {
     "system-generated": true
@@ -229,10 +229,10 @@
     "system-generated": true
   },
   "-r-trace": {
-    "system-generated": true
+    "description": "Enables full per-call GL API tracing to timestamped text files. Activates all of `-r-debug` without requiring `-dev`, and additionally logs GL function calls (function name, args where instrumented, and call site) to `qw/trace/frame_<timestamp>.txt` (one file per frame). Tracing starts before `Host_Init` completes."
   },
   "-r-verify": {
-    "system-generated": true
+    "description": "Enables per-frame GL state verification: calls `GL_VerifyState` each frame to download actual OpenGL state from the driver and diff it against ezQuake's internal state tracker, logging any mismatches. Available only in builds compiled with `WITH_RENDERING_TRACE`."
   },
   "-r-dump-shaders": {
     "description": "Write expanded shader source to qw/shaders/<name>.<type>"
