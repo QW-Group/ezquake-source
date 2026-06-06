@@ -14,9 +14,7 @@
     "description": "Allows setting of 'r_colorbits' cvar during start-up"
   },
   "-cdaudio": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Enables CD audio playback in builds compiled against `cd_linux.c` or `cd_win.c`; the default build links `cd_null.c` which is a no-op."
   },
   "-cddev": {
     "arguments": "<path>",
@@ -30,9 +28,7 @@
     "description": "enable cheats on local server (/noclip etc)"
   },
   "-clientport": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the local UDP port the client socket binds to on startup (`-clientport <number>`), overriding the `cl_net_clientport` cvar default (27001). If the requested port is unavailable, a dynamic port is assigned. Use to pin the client to a specific outbound port."
   },
   "-conbufsize": {
     "arguments": "<size-in-kb>",
@@ -49,7 +45,7 @@
     "description": "set vid_conwidth during startup"
   },
   "-data": {
-    "system-generated": true
+    "description": "Adds `<datadir>` as an additional game data directory on top of the standard search path (`-data <path>`); may be specified multiple times."
   },
   "-democache": {
     "arguments": "<size-in-kb>",
@@ -60,241 +56,150 @@
     "description": "sets /gl_particle_fulldetail 1 during startup"
   },
   "-dev": {
-    "system-generated": true
+    "description": "Enables developer mode, which unlocks development-only commands (`devmap` plus the `dev_*` family including `dev_physicsnormalset`, `dev_help_issues`, `dev_help_verify_config`, `dev_dump_defaults`) and extra cvars (`r_speeds`), and activates Vulkan validation layers when using the Vulkan renderer."
   },
   "-display": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Selects the monitor index (0-based) for rendering (`-display <index>`). Sets `vid_displaynumber` in fullscreen mode or `vid_win_displaynumber` in windowed mode (when `-window` is also present)."
   },
   "-enablelocalcommand": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Enables the server-side `localcommand` console command, which executes an arbitrary OS shell command on the server host. SERVERONLY builds only. **Security note:** the implementation calls `system()` with unsanitized input and is marked \"REMOVE ME\" in source; use only as a diagnostic tool in controlled environments."
   },
   "-forcetexturereload": {
-    "system-generated": true
+    "description": "Forces textures to reload from disk on every load call, bypassing the in-memory cache check that normally skips re-uploading a texture whose path and dimensions already match."
   },
   "-freq": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the fullscreen display refresh rate in Hz at startup (`-freq <hz>`), overriding `vid_displayfrequency`. A value of 0 (default) lets the engine auto-select."
   },
   "-game": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the active game directory to `<modname>` (`-game <modname>`), overriding the default mod search path; affects which directory generated files are read from and written to (subject to `-nohome` / `+gamedir` interaction)."
   },
   "-gamma": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the initial gamma value at startup (`-gamma <float>`, range 0.3-3.0), overriding the `gl_gamma` cvar default before the first frame."
   },
   "-gl-forward-only-profile": {
-    "system-generated": true
+    "description": "Requests an OpenGL forward-compatibility context flag (`SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG`) when creating a core-profile GL context on non-Apple platforms. No effect on compatibility-profile contexts or macOS."
   },
   "-gl_ext": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Prints the GL_EXTENSIONS string to the console at startup. Non-Windows/non-Linux only; on modern OpenGL reports `(using modern OpenGL)` instead of the extension list."
   },
   "-glsl-renderer": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Forces the GLSL (modern OpenGL) renderer by setting `vid_renderer` to 1 at startup. Only available in builds compiled with `EZ_MULTIPLE_RENDERERS` and `RENDERER_OPTION_MODERN_OPENGL`."
   },
   "-heapsize": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the hunk memory allocation to `<kilobytes>` (`-heapsize <kb>`, e.g. `-heapsize 65536` for 64 MB). Legacy KB-denominated form; if both `-heapsize` and `-mem` are present, `-mem` wins."
   },
   "-height": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the vertical resolution in pixels (`-height <pixels>`). Applies to `vid_height` (fullscreen) or `vid_win_height` (windowed, when `-window` is present). Should be paired with `-width`."
   },
   "-ip": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Binds all network sockets to the specified local IP address rather than all interfaces (`-ip <address>`). Affects both UDP and TCP listen sockets (client and server). Default is `INADDR_ANY`."
   },
   "-maxtmu2": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Caps the number of active texture units to 2 even if the hardware reports more. Use on older hardware where multitexturing with more than 2 TMUs causes rendering problems."
   },
   "-mem": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the hunk memory allocation to `<megabytes>` (`-mem <mb>`, e.g. `-mem 64`). Canonical form; overrides `-heapsize` when both are specified."
   },
   "-minmemory": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the hunk allocation to the engine minimum (~5.3 MB); takes no argument. Superseded by any subsequent `-heapsize` or `-mem` on the same command line. Use when testing under minimal memory conditions."
   },
   "-no-accel-visuals": {
     "description": "Requests un-accelerated graphics (used in debugging to create OpenGL 1.1 context)"
   },
   "-no-triple-gl-buffer": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables persistent-mapped triple-buffering of GPU streaming buffers (VBOs used for once-per-frame uploads). When enabled, streaming buffers are allocated at 3x size, persistently mapped, and rotated with `glFenceSync` to avoid CPU/GPU stalls. Requires modern OpenGL with buffer-storage, sync, and map-buffer-range extensions; auto-disabled when any are absent. Use to fall back to standard mutable-buffer uploads when persistent mapping causes driver issues."
   },
   "-no24bit": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables loading of 24-bit (high-resolution) replacement textures (PNG/TGA external files), forcing the engine to use original 8-bit palette textures only. Runtime equivalent: `gl_no24bit` cvar."
   },
   "-noatlas": {
-    "system-generated": true
+    "description": "Disables texture-atlas batching of HUD/UI graphics; each draw call binds its own texture instead of sampling from a packed atlas. Use to work around atlas-related rendering issues."
   },
   "-noconinput": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables reading console commands from stdin. POSIX/Linux only."
   },
   "-nodesktopres": {
-    "system-generated": true
+    "description": "Disables use of the desktop resolution for fullscreen mode, forcing the engine to apply an explicit resolution instead of matching the current desktop size."
   },
   "-nohome": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables the per-user home directory (`Documents\\ezQuake` on Windows, `~/.ezquake` on Linux/macOS), forcing all file I/O to use the base game directory only."
   },
   "-nohwgamma": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables hardware gamma ramp support. Has no effect under the `mtfl` ruleset, which blocks this override."
   },
   "-nohwtimer": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables the Windows high-resolution hardware timer (`QueryPerformanceCounter`) and falls back to the multimedia timer at 1 ms resolution. Windows only. Use when `QueryPerformanceCounter` produces unreliable results on certain hardware or VM configurations."
   },
   "-noindphys": {
-    "flags": [
-      "incomplete"
-    ]
-  },
-  "-noinvlmaps": {
-    "flags": [
-      "incomplete"
-    ]
-  },
-  "-nolibjpeg": {
-    "flags": [
-      "incomplete"
-    ]
-  },
-  "-nolibpng": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables independent physics tick rate by setting `cl_independentPhysics` to 0 and `cl_nolerp` to 1, restoring the classic coupled rendering-and-physics frame timing."
   },
   "-nomtex": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables OpenGL multitexturing in the Classic renderer (prevents loading of `glMultiTexCoord2f`, `glActiveTexture`, and `glClientActiveTexture`), and additionally disables fog rendering engine-wide. Use when multitexturing causes corruption on old or non-standard GL drivers."
   },
   "-nonpot": {
-    "system-generated": true
-  },
-  "-nopriority": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables NPOT (non-power-of-two) texture support, forcing the renderer to treat `GL_ARB_texture_non_power_of_two` as unavailable regardless of hardware capability."
   },
   "-norjscripts": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables movement scripting at startup; alias for `-noscripts` with identical runtime effect."
   },
   "-noscripts": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Disables movement scripting at startup by setting `allow_scripts` to 0, preventing use of advanced movement scripts such as rocket-jump or bunny-hop automation. Default allow_scripts is 2 (all scripts enabled)."
   },
   "-nosound": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Skips SDL audio initialization entirely, leaving all sound subsystems inactive for the session. Distinct from the `s_nosound` cvar, which allows initialization but suppresses playback at runtime."
   },
   "-nostdout": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Suppresses stdout output on POSIX by setting `sys_nostdout=1` before `Host_Init`. POSIX/Linux only."
   },
   "-oldgamma": {
-    "system-generated": true
+    "description": "Switches gamma correction to the legacy palette-baking method, applying `vid_gamma_table` to texture data at load time instead of using the hardware gamma ramp. Distinct from `-nohwgamma`, which disables hardware gamma without activating palette baking."
   },
   "-particles": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the maximum number of simultaneously active particles to `<count>` (`-particles <count>`), overriding the `r_particles_count` cvar at startup. Default is 2048; the active particle subsystem clamps to its own range (classic: 512-8192, QMB: 256-32768)."
   },
   "-port": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the UDP port the internal server listens on (`-port <number>`), overriding the default of 27500. No effect on the client's outbound socket (see `-clientport`)."
   },
   "-progtype": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the QuakeC VM interpreter type used by the server (`-progtype <int>`), overriding `sv_progtype`. Valid values: 0 = none/legacy QWC, 1 = native (.so/.dll), 2 = bytecode, 3 = compiled. Out-of-range values silently fall back to 0."
   },
   "-r-debug": {
     "description": "enables OpenGL debug output.  Must be used in conjunction with -dev"
   },
   "-r-no-amd-fix": {
-    "system-generated": true
+    "description": "Disables the ATI/AMD driver workaround that avoids `glBindTextures` and forces `glMultiDrawArrays` in place of `glDrawArrays` on driver version strings containing `.13399` (github bug #416). Forces the standard code paths active regardless of detected GPU vendor."
   },
   "-r-nocallback": {
-    "system-generated": true
+    "description": "Disables `glDebugMessageCallback` and `glDebugMessageControl` setup when the GL debug context is active (i.e. `-r-debug` with `-dev`, or `-r-trace` alone). Use when the driver's debug callback delivery is unreliable but GL error checking is still needed."
   },
   "-r-nomultibind": {
-    "system-generated": true
+    "description": "Disables use of `glBindTextures` (GL 4.4 / `GL_ARB_multi_bind`) for batched texture-unit binding. The engine auto-disables this on known-broken AMD driver versions (github bug #416); use this flag to force the same workaround on other drivers."
   },
   "-r-novao": {
-    "system-generated": true
+    "description": "Disables Vertex Array Object support in the Classic renderer; falls back to manual vertex-attribute setup per draw call."
   },
   "-r-trace": {
-    "system-generated": true
+    "description": "Enables full per-call GL API tracing to timestamped text files. Activates all of `-r-debug` without requiring `-dev`, and additionally logs GL function calls (function name, args where instrumented, and call site) to `qw/trace/frame_<timestamp>.txt` (one file per frame). Tracing starts before `Host_Init` completes."
   },
   "-r-verify": {
-    "system-generated": true
+    "description": "Enables per-frame GL state verification: calls `GL_VerifyState` each frame to download actual OpenGL state from the driver and diff it against ezQuake's internal state tracker, logging any mismatches. Available only in builds compiled with `WITH_RENDERING_TRACE`."
   },
   "-r-dump-shaders": {
     "description": "Write expanded shader source to qw/shaders/<name>.<type>"
   },
   "-ruleset": {
-    "flags": [
-      "incomplete"
-    ]
-  },
-  "-showliberrors": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the active ruleset at startup by name (`-ruleset <name>`), applied before any config loads. Reliably-working values at HEAD: `smackdown`, `thunderdome`, `mtfl`. Unrecognized values fall back to default."
   },
   "-startwindowed": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Starts ezQuake in windowed (non-fullscreen) mode. Similar to `-window` but does not affect how `-width`, `-height`, or `-display` are routed to cvars."
   },
   "-userdir": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets a named user-data subdirectory and path layout (`-userdir <dirname> <type>`), where `<type>` is an integer 0-5 selecting the path-construction formula (case 0 = relative to game directory, cases 1-4 = base-directory variants, case 5 = relative to home directory). Two-argument form; inherited from QW262."
   },
   "-width": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Sets the horizontal resolution in pixels (`-width <pixels>`). Applies to `vid_width` (fullscreen) or `vid_win_width` (windowed, when `-window` is present). Should be paired with `-height`."
   },
   "-window": {
-    "flags": [
-      "incomplete"
-    ]
+    "description": "Starts ezQuake in windowed mode and routes `-width`, `-height`, and `-display` to the windowed resolution cvars (`vid_win_*`) instead of the fullscreen ones. Distinct from `-startwindowed`, which sets windowed mode without affecting cvar routing."
   }
 }
