@@ -9,13 +9,13 @@
     "description": "When active the player will move backwards."
   },
   "+cl_wp_stats": {
-    "system-generated": true
+    "description": "Hold to show the weapon stats HUD overlay. Sets `hud_weaponstats_show` to 1, making the on-screen weapon accuracy panel visible. Release with `-cl_wp_stats` to hide it."
   },
   "+fire": {
-    "system-generated": true
+    "description": "Fires using a prioritized weapon list supplied as arguments (e.g. `+fire 3 5 2`). Selects the best available weapon from the list, issues the attack impulse, and tracks which key triggered the press so key-up correctly releases only the matching press. Use this for standard weapon-switch-and-fire binds. Release with `-fire`."
   },
   "+fire_ar": {
-    "system-generated": true
+    "description": "Anti-rollover variant of `+fire`. Fires and selects the best weapon from the supplied list, but tracks pressed keys in a separate stack (`cl.ar_keycodes`) so that releasing one of several simultaneously-held fire keys restores the weapon order and attack state of the key still held, rather than simply releasing attack. Use `+fire_ar` instead of `+fire` when binding fire to multiple keys that may overlap (e.g. different weapon-priority lists on mouse buttons held at the same time). Release with `-fire_ar`."
   },
   "+forward": {
     "description": "When active the player will move forward."
@@ -51,7 +51,7 @@
     "description": "When active the player will swim up when in the water."
   },
   "+qtv_delay": {
-    "system-generated": true
+    "description": "Pauses QTV stream playback while the key is held, letting the receive buffer fill. Releasing the key (via `-qtv_delay`) commits the accumulated buffer as a deliberate delay: `qtv_buffertime` is updated to the buffered duration in seconds and playback resumes from the buffered position. If no data was buffered when the key is released, playback resumes immediately with no delay applied. Only active during QTV playback."
   },
   "+right": {
     "description": "When active the player will turn right."
@@ -72,10 +72,10 @@
     "description": "When used it will activate objects in the game that have been designed to react at \"+use\""
   },
   "+voip": {
-    "system-generated": true
+    "description": "Hold to activate push-to-talk voice transmission. Sets bit 2 of `cl_voip_send`, enabling microphone capture and sending encoded voice data to the server. Release with `-voip` to stop transmitting."
   },
   "+zoom": {
-    "system-generated": true
+    "description": "Hold to enter zoom view. Saves the current fov and sensitivity values, then forces fov to 35 degrees and scales sensitivity proportionally so aim speed remains consistent at the narrower field of view. Release with `-zoom` to restore both values."
   },
   "-attack": {
     "description": "When used the player will stop firing the gun if \"+attack\" is active."
@@ -87,13 +87,13 @@
     "description": "When used the player will stop moving back if \"+back\" is active."
   },
   "-cl_wp_stats": {
-    "system-generated": true
+    "description": "Release callback for `+cl_wp_stats`. Hides the weapon stats HUD overlay (sets `hud_weaponstats_show` to 0). See `+cl_wp_stats`."
   },
   "-fire": {
-    "system-generated": true
+    "description": "Release callback for `+fire`. Cancels the attack impulse and clears the key-press tracking for the matching press. See `+fire`."
   },
   "-fire_ar": {
-    "system-generated": true
+    "description": "Release callback for `+fire_ar`. Pops the rollover key stack (`cl.ar_keycodes`) to restore the fire state of the key still held, rather than simply releasing attack like `-fire`. See `+fire_ar` for the rollover mechanism."
   },
   "-forward": {
     "description": "When used the player will stop moving forward if \"+forward\" is active."
@@ -129,7 +129,7 @@
     "description": "When used the player will stop moving up if \"+moveup\" is active."
   },
   "-qtv_delay": {
-    "system-generated": true
+    "description": "Release callback for `+qtv_delay`. Commits the accumulated stream buffer as a deliberate delay: `qtv_buffertime` is updated to the buffered duration in seconds and playback resumes from the buffered position. See `+qtv_delay`."
   },
   "-right": {
     "description": "When used the player will stop turning right if \"+right\" is active."
@@ -150,10 +150,10 @@
     "description": "When used it will stop activating objects in the game that have been designed to react at \"+use\"."
   },
   "-voip": {
-    "system-generated": true
+    "description": "Release callback for `+voip`. Clears bit 2 of `cl_voip_send`, stopping push-to-talk voice transmission. See `+voip`."
   },
   "-zoom": {
-    "system-generated": true
+    "description": "Release callback for `+zoom`. Restores the saved fov and sensitivity values that `+zoom` overrode. See `+zoom`."
   },
   "acc_block": {
     "system-generated": true
@@ -210,7 +210,7 @@
     "syntax": "<alias> <variable> [<options>]"
   },
   "alias_out": {
-    "system-generated": true
+    "description": "Removes the value of a cvar from the body of an alias. Syntax: `alias_out <alias> <cvar> [options]`. The options argument is a bitmask: bit 0 (value 1) performs a check-only pass without deleting the match; bit 1 (value 2) suppresses the \"not found\" error message when the cvar's value is absent from the alias. If the cvar's string is found inside the alias body it is excised in-place; otherwise an error is printed unless option bit 1 is set. Example: `alias_out myalias cl_weaponpreference` removes the current value of cl_weaponpreference from the myalias alias body, useful for dynamically collapsing toggle aliases."
   },
   "aliasedit": {
     "description": "Allows you to edit your alias in console manually.",
@@ -227,13 +227,19 @@
     "syntax": "[regexp]"
   },
   "align": {
-    "system-generated": true
+    "description": "`align <element> <ax> <ay>` -- sets the horizontal and vertical alignment of the named HUD element within its placement area. Horizontal values (ax): `left`, `center`, `right`, `before` (outside left), `after` (outside right). Vertical values (ay): `top`, `center`, `bottom`, `before` (outside top), `after` (outside bottom), `console` (below the console). Running `align <element>` with no alignment args prints the current alignment. Example: `align clock right bottom`, `align fps center console`."
   },
   "allskins": {
     "description": "Downloads all skins that is currently in use.\nUseful for refreshing skins without exiting the level."
   },
+  "ambient_fade": {
+    "description": "Legacy alias for the cvar `s_ambientfade`. Fade rate / distance for ambient sound attenuation. Prefer `s_ambientfade` in new configs."
+  },
+  "ambient_level": {
+    "description": "Legacy alias for the cvar `s_ambientlevel`. Volume multiplier for ambient sounds (water, wind, etc.). Prefer `s_ambientlevel` in new configs."
+  },
   "authenticate": {
-    "system-generated": true
+    "description": "Initiates or cancels server authentication using the login token loaded for cl_username. If already logged in (loginname is set on the local player slot), sends a logout command to the server and prints \"Logging out...\". Otherwise sends `cmd login \"<username>\"` (with the username quoted) to begin the authentication handshake. Requires cl_username to be set and a valid login token to be loaded from the configuration directory; prints guidance if either is missing. Must be connected to a server; prints \"Cannot authenticate, not connected\" otherwise."
   },
   "autotrack": {
     "description": "Toggles auto-tracking.\nAuto-tracking switches views for you when you are a spectator or when you are watching a demo or a broadcasted QTV match.\nIt chooses the best available autotrack - if you are spectator, looks for server-side command autotrack, if you are watching a demo or QTV stream, turns on both demo_autotrack and mvd_autotrack, mvd_autotrack will get turned off as soon as demo_autotrack data are found.\nAs a last resort if all previous autotrack are not available, cl_hightrack will be used."
@@ -245,7 +251,7 @@
     "description": "HUD element that displays a bar representing your amount of health."
   },
   "batteryinfo": {
-    "system-generated": true
+    "description": "Reports the current battery status of the system via SDL's power info API. Prints one of: remaining charge percentage and estimated time (when on battery), charging progress, fully charged confirmation, or \"No battery available\" for desktop machines. Prints an error message if SDL cannot retrieve power state."
   },
   "bf": {
     "description": "This command shows a background screen flash that is the same one that is produced when the player picked up an item in the game.\nThis command basically serves no useful function except when people want to use it in scripts to give the user some visual feedback when an aliases is used for example."
@@ -259,6 +265,12 @@
   },
   "bindlist": {
     "description": "Prints all binds."
+  },
+  "cache_print": {
+    "description": "Lists all currently allocated entries in the hunk cache, one per line. Each line shows the allocation's size in kilobytes followed by its name (e.g., \"12.5 kB : skin/player\"). Takes no arguments. Use to inspect what content is resident in the cache between map loads."
+  },
+  "cache_report": {
+    "description": "Prints a one-line summary of hunk cache memory availability. Reports free megabytes and total hunk size (e.g., \"12.3 of 32.0 megabyte data cache free\"). Takes no arguments. Useful for a quick check of remaining cache headroom without the full per-entry listing that cache_print provides."
   },
   "calc_fov": {
     "arguments": [
@@ -329,8 +341,14 @@
   "check_maps": {
     "system-generated": true
   },
+  "cl_chatsound": {
+    "description": "Legacy alias for the cvar `s_chat_custom`. Controls which chat tiers play custom sounds (0 = none, 1 = mm1 & mm2, 2 = mm2 only). Prefer `s_chat_custom` in new configs."
+  },
   "cl_messages": {
     "description": "Prints amount and size of messages sent from server to ezQuake client."
+  },
+  "cl_truelightning": {
+    "description": "Legacy alias for the cvar `cl_fakeshaft`. Controls client-side lightning gun trail latency compensation (range 0 to 1). Prefer `cl_fakeshaft` in new configs."
   },
   "clear": {
     "description": "This command clears the console screen of any text."
@@ -354,6 +372,30 @@
     "description": "This command sets the color for the player's shirt and pants.",
     "remarks": "If only the shirt color is given, the pant color will match."
   },
+  "con_sound_mm1_file": {
+    "description": "Legacy alias for the cvar `s_mm1_file`. Sound file path played for level-1 (team-only) chat messages. Prefer `s_mm1_file` in new configs."
+  },
+  "con_sound_mm1_volume": {
+    "description": "Legacy alias for the cvar `s_mm1_volume`. Volume for level-1 (team-only) chat sound. Prefer `s_mm1_volume` in new configs."
+  },
+  "con_sound_mm2_file": {
+    "description": "Legacy alias for the cvar `s_mm2_file`. Sound file path played for level-2 (all-talk) chat messages. Prefer `s_mm2_file` in new configs."
+  },
+  "con_sound_mm2_volume": {
+    "description": "Legacy alias for the cvar `s_mm2_volume`. Volume for level-2 (all-talk) chat sound. Prefer `s_mm2_volume` in new configs."
+  },
+  "con_sound_other_file": {
+    "description": "Legacy alias for the cvar `s_otherchat_file`. Sound file path played for other chat messages. Prefer `s_otherchat_file` in new configs."
+  },
+  "con_sound_other_volume": {
+    "description": "Legacy alias for the cvar `s_otherchat_volume`. Volume for other chat sound. Prefer `s_otherchat_volume` in new configs."
+  },
+  "con_sound_spec_file": {
+    "description": "Legacy alias for the cvar `s_spec_file`. Sound file path played for spectator chat messages. Prefer `s_spec_file` in new configs."
+  },
+  "con_sound_spec_volume": {
+    "description": "Legacy alias for the cvar `s_spec_volume`. Volume for spectator chat sound. Prefer `s_spec_volume` in new configs."
+  },
   "connect": {
     "arguments": [
       {
@@ -367,14 +409,17 @@
   "connectbr": {
     "description": "Connects to given server via fastest available path (ping-wise)."
   },
+  "contrast": {
+    "description": "Legacy alias for the cvar `gl_contrast`. Contrast multiplier applied to the rendered framebuffer (typical range 1 to 3). Prefer `gl_contrast` in new configs."
+  },
   "cuff": {
     "system-generated": true
   },
   "cvar_in": {
-    "system-generated": true
+    "description": "Inserts the value of one cvar into the string of another. Syntax: `cvar_in <cvar1> <cvar2> [options]`. The options bitmask mirrors alias_in: bit 0 (1) appends to the right instead of prepending to the left; bit 1 (2) skips insertion if cvar2's value already appears in cvar1; bit 2 (4) prints an error if the value is already present; bit 3 (8) creates cvar1 if it does not yet exist. cvar1 is modified in-place via Cvar_Set."
   },
   "cvar_out": {
-    "system-generated": true
+    "description": "Removes the value of one cvar from the string of another. Syntax: `cvar_out <cvar1> <cvar2> [options]`. Searches cvar1's string for cvar2's value and excises it if found, then writes the result back to cvar1 via Cvar_Set. Options bitmask: bit 0 (1) performs a check-only pass without modifying cvar1; bit 1 (2) suppresses the \"not found\" error when cvar2's value is absent from cvar1."
   },
   "cvar_reset": {
     "description": "Resets the cvar to default.\n\nExample:\ncvar_reset topcolor\n - sets topcolor to default.",
@@ -385,7 +430,7 @@
     "syntax": "[regex]"
   },
   "cvaredit": {
-    "system-generated": true
+    "description": "Loads a cvar's current value into the console input line for interactive editing. Syntax: `cvaredit <cvar>`. After calling this command the console input buffer is pre-filled with `/<cvarname> \"<currentvalue>\"` (with the value double-quoted) so you can adjust the value and press Enter to apply it, without retyping the name or the full current string. Useful for tweaking long values such as script aliases or complex weapon-priority strings. If the cvar does not exist an error is printed and nothing happens."
   },
   "cvarlist": {
     "description": "Print cvars."
@@ -419,17 +464,17 @@
     "syntax": "<start> <time> [avifile] | <stop>"
   },
   "demo_controls": {
-    "system-generated": true
+    "description": "Toggles the graphical demo controls overlay during demo playback. When turned on, displays an interactive HUD panel with playback controls (speed, jump, timeline). Press Escape inside the panel to dismiss it. Has no effect and prints an error if no demo is currently playing and the panel is not already shown."
   },
   "demo_jump": {
     "description": "Jumps playback to a point in time.\n\nExamples:\ndemo_jump 120\n - Jump playback to 120 seconds from the start of the demo.\ndemo_jump 4:30\n - Jump playback to 4 minutes and 30 seconds from the start of the demo.",
     "syntax": "[+|-][m:]<s>"
   },
   "demo_jump_end": {
-    "system-generated": true
+    "description": "Seeks to approximately 2 seconds before the final frame of the current demo. Requires a demo to be in active playback state. Prints an error and aborts the seek if you are already too close to the end -- \"too close\" is within 2 seconds of the destination normally, or within 10 seconds when the demo is in its intermission segment (the close-guard is more lenient during intermission). Also prints an error if not playing a demo or if the demo is not yet fully active."
   },
   "demo_jump_mark": {
-    "system-generated": true
+    "description": "Seeks forward in the current demo to the next demo mark (a pre-embedded timestamp anchor in the .qwd or .mvd file). Requires a demo to be in active playback state. If no mark is found before the end of the demo, playback advances as far as possible. Prints an error if not playing a demo or if the demo is not yet in the active state."
   },
   "demo_jump_status": {
     "arguments": [
@@ -472,33 +517,42 @@
     "description": "Shows or sets track voice volume. See demo_voice_info for numbers.",
     "syntax": "<track|all> [volume]"
   },
+  "demotimescale": {
+    "description": "Legacy alias for the cvar `cl_demospeed`. Playback speed multiplier for demos (1 = normal, 2 = double speed, etc.). Prefer `cl_demospeed` in new configs."
+  },
   "describe": {
     "description": "Prints manual info about given variable or command into the console.",
     "syntax": "<variable or command name>"
   },
   "dev_dump_defaults": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
   },
   "dev_gfxbenchmarklightmaps": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
+  },
+  "dev_gfxtexturedump": {
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). Also requires a build compiled with `WITH_RENDERING_TRACE` and the rendering debug context active (`-r-debug` or `-r-trace` launch parameter). See source for behavior."
+  },
+  "dev_gfxtexturelist": {
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). Also requires a build compiled with `WITH_RENDERING_TRACE` and the rendering debug context active (`-r-debug` or `-r-trace` launch parameter). See source for behavior."
   },
   "dev_gfxtrace": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). Also requires a build compiled with `WITH_RENDERING_TRACE` and the rendering debug context active (`-r-debug` or `-r-trace` launch parameter). See source for behavior."
   },
   "dev_help_issues": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
   },
   "dev_help_verify_config": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
   },
   "dev_physicsnormalsave": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
   },
   "dev_physicsnormalset": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
   },
   "dev_physicsnormalshow": {
-    "system-generated": true
+    "description": "Developer-only command (registered only when ezQuake is launched with `-developer` and not built with `CLIENTONLY`). See source for behavior."
   },
   "dev_pointfile": {
     "description": "The pointfile command will load a .pts file and give a dotted line indicating where the leak(s) are on the level.",
@@ -509,7 +563,7 @@
     "description": "Try it in cheats mode, start a map (devmap dm6) and type fly."
   },
   "dir": {
-    "system-generated": true
+    "description": "Legacy alias for `fs_dir`. Lists files in the VFS under a given directory. Prefer `fs_dir` in new configs."
   },
   "disconnect": {
     "description": "This command will disconnect you from the server/demo/proxy you are currently connected to."
@@ -552,14 +606,14 @@
     "syntax": "<expression>"
   },
   "exec": {
-    "description": "Executes a config file from \\qw, \\id1 or \\ezquake."
+    "description": "Executes a config file from \\qw, \\id1 or \\ezquake. The companion command `serverexec` runs the same script routed to the server command buffer (`cbuf_server`) instead of the main client buffer -- useful for sending commands that should execute on the server side in listen-server builds."
   },
   "f_modified": {
     "description": "All the usual dm models, sounds, palettes etc are included in the check.\nIn Team Fortress the TF flag, dispensers and sentry guns are also checked. There is also an f_modified command which will print your f_modified response.",
     "remarks": "You need to install security files."
   },
   "f_ruleset": {
-    "system-generated": true
+    "description": "Provides ruleset fairness-check functionality. Usage: `f_ruleset [check]`. Without arguments, prints a help summary explaining the command's purpose and the meaning of the flag characters returned in replies (m = modified models/sounds, s = movement scripts, f = forced enemy skin, i = strafescript; + = enabled, - = disabled). With the \"check\" argument, broadcasts a \"f_ruleset\" say message to the server, prompting all clients to reply with their ruleset name and active feature flags. Spectators and clients who responded within the last 20 seconds are silently skipped when processing incoming replies."
   },
   "f_server": {
     "description": "Prints proxies you are using."
@@ -595,7 +649,7 @@
     "syntax": "<messages> <seconds> <silence>"
   },
   "floodprotmsg": {
-    "system-generated": true
+    "description": "Sets the message sent to a player who triggers flood protection on the server. Without arguments, displays the current flood protection message. With one quoted argument, sets the message to that string. Usage: `floodprotmsg \"<message>\"`. Server-side only. Companion to `floodprot`, which sets the trigger thresholds (messages / time window / silence duration). The message set here is what the silenced player sees when flood protection fires."
   },
   "flush": {
     "description": "This command will clear the current game cache.\nIt is usually used by developers to flush the memory of all game information and objects to test if the mechanism which handles the loading of the necessary files into memory works properly.\nSometimes the game cache can become filled with unnecessary information and may need to be flushed manually. This is usually not necessary since the game automatically flushes all the data between every map."
@@ -617,25 +671,25 @@
     "description": "Enables logging of kills to a file.\nUseful for external frag polling programs.\nThe file name is frag_##.log"
   },
   "fs_diff": {
-    "system-generated": true
+    "description": "Debug command: performs a byte-by-byte comparison of two files. Usage: `fs_diff <file1> <file2>`. Both files are opened with `FS_NONE_OS` -- that is, as direct OS paths (no VFS search path, no pak/zip extraction). Reports whether the files match or identifies the byte offset of the first difference."
   },
   "fs_dir": {
-    "system-generated": true
+    "description": "Lists files in the VFS under a given directory, with optional filtering and display options. Usage: `fs_dir <directory> [file_suffix] [hidedir] [hideext] [hidesize]`. `<directory>` is a path within the VFS search path; an optional `<file_suffix>` filters results to files with that extension. Display flags: hidedir removes the directory prefix from each filename; hideext strips the file extension; hidesize suppresses the file size column. Each matching entry is printed with its size in bytes unless hidesize is set. Legacy alias: `dir`."
   },
   "fs_loadpak": {
-    "system-generated": true
+    "description": "Attempts to load one or more .pak files into the virtual filesystem search path. Usage: `fs_loadpak <pakname> [<pakname> ...]`. Each `<pakname>` is tried first as a bare path, then under ezquake/, qw/, and id1/ with a .pak extension appended. Note: the add operation is currently stubbed out (VFS-FIXME in source) and will always report failure; only fs_removepak reliably changes the active pak set. Cannot be used while connected to a server. Legacy alias: `loadpak`."
   },
   "fs_locate": {
-    "system-generated": true
+    "description": "Locates a file within the VFS search path and reports which search entry contains it. Usage: `fs_locate <filename>`. Prints the containing search path entry (directory or pak file). If the file is compressed inside an archive, prints \"File is compressed inside\" followed by the archive path. Prints \"Not found\" if the file does not exist in the search path. Legacy alias: `locate`."
   },
   "fs_path": {
-    "system-generated": true
+    "description": "Prints the current VFS search path to the console, showing all active directories and pak files in the order they are searched. Pure paths (server-enforced) are listed first, separated from regular paths by a dashed line. Takes no arguments."
   },
   "fs_removepak": {
-    "system-generated": true
+    "description": "Removes one or more .pak files from the virtual filesystem search path. Usage: `fs_removepak <pakname> [<pakname> ...]`. Each `<pakname>` is tried under ezquake/, qw/, and id1/ with a .pak extension; bare paths are NOT accepted for removal (to prevent accidental removal of generic names like 'pak'). The first successful match is removed and the file cache is flushed. Cannot be used while connected to a server. Legacy alias: `removepak`."
   },
   "fs_restart": {
-    "system-generated": true
+    "description": "Reloads all pack files in the current search path, rebuilding the VFS from scratch. Usage: `fs_restart [flags]`. With no argument (or 0), reloads all pack types (pak, pk3, pk4, doomwad, paklst). An optional numeric flags argument selects a subset of pack types to reload (bitmask: 2=pak, 4=pk3, 8=pk4, 16=doomwad, 32=paklst). If connected to a server, the client disconnects and reconnects automatically. Prints the resulting search path after reload (equivalent to fs_path)."
   },
   "fs_search": {
     "description": "Search the filesystem cache by suffix."
@@ -659,19 +713,28 @@
   "gl_checkmodels": {
     "description": "Not well implemented yet. Quickly looks at the pmodel and emodel listed in every player's infokey and reports anything unusual it finds.\nBasically it saves you having to type \"users. user x\" and then comparing the models for everyone."
   },
+  "gl_gammacorrection": {
+    "description": "Legacy alias for the cvar `vid_gammacorrection`. Selects sRGB rendering context handling (0 = no sRGB, 1 = request sRGB, 2 = require sRGB). Prefer `vid_gammacorrection` in new configs."
+  },
   "gl_inferno": {
     "description": "Clientside (no one else can see it) hard-striking rocket, serves well for your entertainment."
+  },
+  "gl_lighting_colour": {
+    "description": "Legacy alias for the cvar `gl_lighting_color` (corrected spelling). Prefer `gl_lighting_color` in new configs."
   },
   "gl_setmode": {
     "description": "Quickly sets many variables to fit pre-defined scheme.\nTry using \"newtrails\" or \"vultwah\".",
     "syntax": "<modename>"
+  },
+  "gl_smoothfont": {
+    "description": "Legacy alias for the cvar `r_smoothtext`. Set to 0 for nearest filtering (sharp pixelated text), 1 for linear filtering (smooth text). Prefer `r_smoothtext` in new configs."
   },
   "god": {
     "description": "You are immortal with god mode on.",
     "remarks": "Needs cheats support by server."
   },
   "hash": {
-    "system-generated": true
+    "description": "Prints the internal hash value for a given string using the engine's sdbm-based hash function. Usage: `hash <string>`. Outputs an unsigned integer to the console. The hash is case-insensitive (letters are folded to uppercase before hashing). Primarily a developer diagnostic for inspecting cvar and alias lookup keys."
   },
   "heartbeat": {
     "description": "Forces a heartbeat to be sent to the master server.\nA heartbeat informs the master server of the server's IP address thus making sure that the master server knows that the server is still alive."
@@ -680,7 +743,7 @@
     "description": "Enters manual pages. Use arrows, [Page Down], [Page Up], [Tab] and [Enter] for navigation."
   },
   "hide": {
-    "system-generated": true
+    "description": "`hide <element>` -- makes the named HUD element invisible by setting its show cvar to 0. Use `hide all` to hide every registered HUD element at once. Running `hide` with no argument prints usage and lists the current visibility status of all elements. Example: `hide teaminfo`, `hide clock`, `hide all`."
   },
   "hud262_add": {
     "arguments": [
@@ -860,13 +923,13 @@
     "syntax": "<filename>"
   },
   "hud_fps_min_reset": {
-    "system-generated": true
+    "description": "Resets the minimum FPS and maximum frametime counters tracked by the HUD performance display. Sets cls.min_fps back to 9999.0 and cls.max_frametime back to 0.0, then triggers a fresh FPS calculation via CL_CalcFPS. Use this after a stutter spike to clear the worst-case reading and start a clean measurement window."
   },
   "hud_recalculate": {
     "description": "Refresh the positions of your HUD elements."
   },
   "hunk_print": {
-    "system-generated": true
+    "description": "Dumps the hunk memory allocator's block layout to the console. With no arguments, prints one totals line per named block group showing cumulative KB and name; with any argument (e.g., \"hunk_print all\"), prints every individual block with its address, size, and name. Also reports total block count and the split between low and high hunk usage. Use for low-level memory debugging when diagnosing hunk exhaustion."
   },
   "if": {
     "arguments": [
@@ -910,7 +973,7 @@
     "description": "Ignores a team instead of players.\n\nExample:\nignore_team nine\n - ignores whole clan nine."
   },
   "ignore_voip": {
-    "system-generated": true
+    "description": "Adds a player to the VoIP-only ignore list, silencing their voice chat without affecting text messages. Accepts a player name or user ID (`ignore_voip <name|userid>`); with no argument, displays the current ignore lists. This is distinct from the text ignore command: a VoIP-ignored player can still send and receive text, but their voice transmission is suppressed via S_Voip_Ignore. The ignore state is in-memory and does not persist across sessions. Available only when the client is built with FTE_PEXT2_VOICECHAT support."
   },
   "ignorelist": {
     "description": "Prints ignore list."
@@ -922,10 +985,13 @@
     "description": "Prints list of evdev devices.\nIf the list is empty, you probably don't have access rights to /dev/input/eventX\nsudo chmod 644 /dev/input/event* should help you."
   },
   "in_restart": {
-    "system-generated": true
+    "description": "Restarts the input subsystem (mouse and keyboard handling). Shuts down the current SDL2 input state, reinitialises it, and reactivates the mouse if it was active before the restart. Useful after changing input-related settings that require a subsystem reinitialisation to take effect."
   },
   "inc": {
     "description": "Increments a variable by one or adds to it the optional second argument.\nThere are no 'add' or 'dec' commands because 'inc' can handle both addition and subtraction.\n\nExample:\ninc sensitivity -2\n - subtracts 2 from sensitivity."
+  },
+  "irc": {
+    "description": "Provides access to the built-in IRC client. Usage: `irc <subcommand> [args]`. Supported subcommands: `connect` (connects using irc_user_nick / irc_server_address / irc_server_port / irc_server_password cvars, defaulting the nick to the player name), `disconnect`, `say <message>` (sends to current channel), `query <nick> <message>` (opens a private query and sends a message), `nick <newnick>` (changes nickname), `join <channel> [key]` / `part <channel>` (join or leave a channel), and `window next` / `prev` / `close` (navigates channel windows). Any unrecognised subcommand is sent as a raw IRC protocol string."
   },
   "itemsclock": {
     "description": "HUD element displaying items that will spawn soon in the game. Works only in MVD and QTV playback."
@@ -964,6 +1030,9 @@
   "loadFragfile": {
     "description": "Loads the specified fragfile."
   },
+  "loadas8bit": {
+    "description": "Legacy alias for the cvar `s_loadas8bit`. Set to 1 to load sound samples as 8-bit (lower memory, lower quality). Prefer `s_loadas8bit` in new configs."
+  },
   "loadcharset": {
     "description": "You can change your console font from within ezQuake. Put all your charset images in qw/textures/charsets/*.png (and *.tga) and use /loadcharset XXX to load XXX.png (or tga).\n\"/loadcharset original\" will restore the 8bit font in your gfx.wad (this is default).",
     "remarks": "This command is just a 'shortcut' for the new gl_consolefont variable."
@@ -973,7 +1042,7 @@
     "syntax": "<filename>"
   },
   "loadpak": {
-    "system-generated": true
+    "description": "Legacy alias for `fs_loadpak`. Attempts to load one or more `.pak` files into the VFS search path. Prefer `fs_loadpak` in new configs."
   },
   "loadsky": {
     "description": "Loads your skybox (qw\\env).\n\nExample:\nloadsky snow",
@@ -983,22 +1052,22 @@
     "description": "Shows or sets localinfo variables. Useful for mod programmers who need to allow the admin to change settings.\nThis is an alternative storage space to the serverinfo space for mod variables. The variables stored in this space are not broadcast on the network.\nThis space also has a 32-kilobyte limit which is much greater then the 512-byte limit on the serverinfo space.\nSpecial Keys: (current map) (next map) - Using this combination will allow the creation of a custom map cycle without editing code.\n\nExamples:\nlocalinfo dm2 dm4\nlocalinfo dm4 dm6\nlocalinfo dm6 dm2"
   },
   "locate": {
-    "system-generated": true
+    "description": "Legacy alias for `fs_locate`. Locates a file within the VFS search path and reports which search entry contains it. Prefer `fs_locate` in new configs."
   },
   "locations_add": {
-    "system-generated": true
+    "description": "Adds a new named location at the player's current position to the in-memory location list. Usage: `locations_add <name>` -- the name is a single argument (quote multi-word names). When spectating and tracking a player, the tracked player's origin is used instead of the camera position. The new entry is appended to the list and can later be saved with `locations_savefile`. Requires an active connection; prints an error if called while disconnected. Legacy alias: `addloc`."
   },
   "locations_clearall": {
-    "system-generated": true
+    "description": "Removes all locations from the in-memory location list and frees associated memory. Usage: `locations_clearall` -- takes no arguments. Prints the number of locations that were cleared. This does not delete any `.loc` file on disk; it only affects the runtime location database. Legacy alias: `clearlocs`."
   },
   "locations_loadfile": {
-    "system-generated": true
+    "description": "Loads a location file from the `locs/` directory into memory, replacing any currently loaded locations. Usage: `locations_loadfile <filename>` -- the `.loc` extension is added automatically if omitted. The file is parsed as lines of `<x> <y> <z> <name>`, where coordinates are stored as integers scaled up by 8 (file value = world coordinate * 8); the parser divides by 8 on load to recover the world coordinate. Names support `$loc_name_<item>` macro tokens that resolve against `loc_name_*` cvars. On success, prints the filename and number of points loaded; prints an error if the file cannot be found or is empty. Legacy alias: `loadloc`."
   },
   "locations_remove": {
-    "system-generated": true
+    "description": "Removes the location nearest to the player's current position from the in-memory location list. Usage: `locations_remove` -- takes no arguments. When spectating and tracking a player, the tracked player's position is used for the proximity search. The removed location's name and coordinates are printed to confirm which entry was deleted. Use `locations_savefile` afterward to persist the change to disk. Legacy alias: `removeloc`."
   },
   "locations_savefile": {
-    "system-generated": true
+    "description": "Saves the current in-memory location list to a file in the `locs/` directory. Usage: `locations_savefile <filename>` -- the `.loc` extension is added automatically if omitted. Each location is written as a line of `<x> <y> <z> <name>` where the integer coordinates are world units scaled by 8 (matching the format `locations_loadfile` parses). The command does nothing and prints an error if no locations are currently loaded. Legacy alias: `saveloc`."
   },
   "log": {
     "description": "If you type \"log filename\" it will log console to filename.log in your gamedir.\nIt overwrites logs without asking.",
@@ -1080,17 +1149,20 @@
   "messagemode2": {
     "description": "Prompts for string to broadcast to team members."
   },
+  "messagemodeirc": {
+    "description": "Opens the console message input bar directed at the built-in IRC client. Text typed and submitted will be sent to the currently active IRC channel rather than to the game server. Silently has no effect unless the client is in the `ca_active` state (connected to a server). Available only in builds compiled with IRC support (`WITH_IRC`)."
+  },
   "messagemodeqtvtogame": {
     "description": "Go into message mode for chatting in the QTV chat."
   },
   "mod": {
-    "system-generated": true
+    "description": "Server-side command that forwards the current console command to the running PR2 game VM. When a PR2 mod (native .so/.dll or .qvm bytecode) is loaded, typing an unrecognized command at the server console causes `mod` to dispatch a GAME_CONSOLE_COMMAND call into the VM, allowing the mod to handle it via its own ConsoleCommand export. If no PR2 VM is active the command is a no-op. Arguments are retrieved by the mod itself using trap_argc()/trap_argv() inside the VM."
   },
   "modfraglogfile": {
     "system-generated": true
   },
   "move": {
-    "system-generated": true
+    "description": "`move <element> <x> <y>` -- sets the pixel offset of the named HUD element relative to its current placement and alignment anchor. Both x and y are floating-point values. Running `move <element>` with no coordinates prints the element's current x/y offset. Example: `move clock 10 5`, `move fps -20 0`."
   },
   "mp3_volume": {
     "system-generated": true
@@ -1118,25 +1190,25 @@
     "system-generated": true
   },
   "mutesound": {
-    "system-generated": true
+    "description": "Toggles audio mute on and off. When muting, saves the current s_volume value and sets it to 0; when unmuting, restores the saved volume and prints the restored level to console. State is preserved across repeated calls within the same session. Bound by default in the options menu under \"Mute/Unmute\"."
   },
   "mvd_dumpstats": {
     "description": "Dumps statistics gathered from a MVD demo into a \"stats.xml\" file in the current working directory."
   },
   "mvd_list_items": {
-    "system-generated": true
+    "description": "Lists all persistent item-clock entries currently tracked during MVD demo playback, printed to the console as a series of ready-to-reuse mvd_name_item commands. Each line includes the item's world coordinates, type, label, and entity number as a comment. Useful for saving and restoring a named-item layout across demo sessions -- copy the output into a config or alias and replay it on the same map."
   },
   "mvd_name_item": {
-    "system-generated": true
+    "description": "Creates or updates a persistent respawn-clock entry for a map item during MVD demo playback. Takes coordinates and item type to locate the nearest matching entity. Usage: `mvd_name_item <x> <y> <z> <type> <label>`, where type is one of: axe, sg, ssg, ng, sng, gl, rl, lg, rg, qd, pt, ga, ya, ra, mh. If an entry for that entity already exists, its label is updated to the provided string and the entry is moved to the bottom of the sort order. If no entry exists yet, a new persistent placeholder clock is created -- but the provided label is NOT applied on first creation; run the command a second time (after the entity has spawned at least once) for the label to take effect. Run `mvd_list_items` to see the `mvd_name_item` commands for all currently tracked items."
   },
   "mvd_remove_item": {
-    "system-generated": true
+    "description": "Hides or suppresses the persistent respawn-clock entry for a specific item at a given map position during MVD demo playback. Usage: `mvd_remove_item <x> <y> <z> <type>`. Locates the entity of the specified type nearest to the coordinates and marks its clock as hidden so it no longer appears in the item overlay. If no persistent clock exists for that entity yet, a hidden placeholder is created to prevent the item from re-appearing when the demo restarts."
   },
   "mvdrecord": {
-    "system-generated": true
+    "description": "Records the currently active QTV/MVD stream to a local .mvd file. Usage: `mvdrecord <filename>`. Without arguments, reports whether recording is in progress and the current output path. Stops any existing MVD recording before starting a new one. Refuses to start when the client is mid-connection (`ca_connecting` state); permitted in both `ca_active` and fully `ca_disconnected` states. The file is written to the demo directory with a `.mvd` extension appended automatically."
   },
   "mvdstop": {
-    "system-generated": true
+    "description": "Stops an in-progress client-side MVD recording started with `mvdrecord`. Finalises the .mvd file by writing a disconnect packet and closing the file handle. Prints \"Completed demo\" on success, \"Not recording a demo\" if no MVD recording is active, or a bug notice if the recording flag is set but the file handle is unexpectedly null."
   },
   "netproblem": {
     "description": "HUD element - icon displayed when network traffic is experiencing problems like lost packets, large delay, etc."
@@ -1144,6 +1216,9 @@
   "noclip": {
     "description": "You can fly and go thru objects free mode as spectator",
     "remarks": "Needs cheats support by server."
+  },
+  "nosound": {
+    "description": "Legacy alias for the cvar `s_nosound`. Set to 1 to disable all sound playback (resets audio volume to silence). Prefer `s_nosound` in new configs."
   },
   "nslookup": {
     "system-generated": true
@@ -1156,10 +1231,10 @@
     "description": "Connects to given server as spectator via fastest available path (ping-wise)."
   },
   "observeqtv": {
-    "system-generated": true
+    "description": "Connects to a QTV stream for the specified server IP, or for the currently viewed server if no argument is given. Usage: `observeqtv [ip]`. Looks up the server address in the cached QTV list and issues a `qtvplay <link>` command when a matching entry is found. Requires the QTV list cache to be ready (run `qtv_update` first if not); prints an error if the cache is still being rebuilt, or \"No QTV stream address found for ...\" if no matching entry is in the cache."
   },
   "order": {
-    "system-generated": true
+    "description": "`order <element> <option>` -- controls the draw-order (z-order) of the named HUD element relative to all others. Option can be an integer (absolute order value), or one of the keywords: `backward` (decrease by 1), `forward` (increase by 1), `front` (bring to top), `back` (send to bottom). Running `order <element>` with no option prints the element's current order value. Example: `order teaminfo front`, `order clock backward`, `order fps 5`."
   },
   "packet": {
     "description": "Sends a packet with specified contents to the destination.\n\nExample:\npacket 123.123.123.123:27500 \"status\"",
@@ -1182,7 +1257,7 @@
     "system-generated": true
   },
   "place": {
-    "system-generated": true
+    "description": "`place <element> <area>` -- anchors the named HUD element to a named screen area or to another HUD element. Built-in area names are: `screen`, `top`, `view`, `sbar`, `ibar`, `hbar`, `sfree`, `ifree`, `hfree`. To anchor inside another element use `@elem`; to anchor outside it use the bare element name. Running `place <element>` with no area argument prints the element's current placement. An invalid area is rejected and the old value is restored. Example: `place fps view`, `place clock @ping`, `place ammo sbar`."
   },
   "play": {
     "description": "Plays a sound effect.\n\nExample:\nplay misc/runekey.wav",
@@ -1196,11 +1271,14 @@
     "description": "Plays a sound at a given volume.\n\nExamples:\nplayvol items/protect.wav .5\nplayvol items/protect.wav 2",
     "syntax": "<filename> (volume)"
   },
+  "precache": {
+    "description": "Legacy alias for the cvar `s_precache`. Set to 0 to disable automatic sound caching at startup. Prefer `s_precache` in new configs."
+  },
   "profile": {
     "description": "Reports information about QuakeC stuff."
   },
   "qstat": {
-    "system-generated": true
+    "description": "Queries a QuakeWorld server for its current status without connecting to it. Usage: `qstat <server_address>`. Sends a raw UDP status packet and prints a summary including hostname, map, game settings (deathmatch, teamplay, timelimit, fraglimit), password requirements, player count, and a ping/frags/name table for each player. The server address can include a port; if omitted, the default QW server port is used."
   },
   "qtv": {
     "arguments": [
@@ -1216,37 +1294,37 @@
     "system-generated": true
   },
   "qtv_fixuser": {
-    "system-generated": true
+    "description": "Manually overrides player userinfo fields for a specified user ID in a QTV stream, as a workaround for bugged QTV streams that send incorrect or missing player metadata. Usage: `qtv_fixuser <userid> <spectator|player> <name> [team] [topcolor] [bottomcolor]`. Without sufficient arguments, lists current players with their user IDs and frag counts. Only valid while viewing a QTV stream (`qtvplay`); has no effect on live server sessions or local demo playback."
   },
   "qtv_list": {
     "system-generated": true
   },
   "qtv_query_demolist": {
-    "system-generated": true
+    "description": "Queries a QTV proxy for its list of recorded demos. Usage: `qtv_query_demolist hostname[:port] [password]`. Opens a TCP connection to the proxy and sends a `DEMOLIST` request; results are buffered and printed asynchronously as the proxy responds. The companion command `qtv_query_sourcelist` sends a `SOURCELIST` request to the same proxy for the list of active streams instead."
   },
   "qtv_query_sourcelist": {
-    "system-generated": true
+    "description": "Queries a QTV proxy for its list of active sources (live streams). Usage: `qtv_query_sourcelist hostname[:port] [password]`. Opens a TCP connection to the proxy and sends a `SOURCELIST` request; results are buffered and printed asynchronously as the proxy responds. The companion command `qtv_query_demolist` sends a `DEMOLIST` request to the same proxy instead."
   },
   "qtv_status": {
     "system-generated": true
   },
   "qtv_update": {
-    "system-generated": true
+    "description": "Refreshes the internal QTV server list by spawning a background updater thread. The updated list is used by observeqtv and related commands to resolve the current server's QTV stream link. Prints an error if the required mutex is not initialised or if the thread cannot be created. Also registered as \"find_update\" (identical handler)."
   },
   "qtvplay": {
-    "system-generated": true
+    "description": "Connects to and begins streaming from a QTV proxy. Usage: `qtvplay [stream@]hostname[:port] [password]`. The optional stream prefix selects a specific source on the proxy (e.g. `5@qtv.host:28000`). An HTTP watch URL (`http://host:port/watch.qtv?sid=N`) is also accepted and rewritten internally. A `.qtv` file path prefixed with `#` is accepted and dispatched to the appropriate join/observe/stream command found inside the file. Saves the connection address for use by `qtvreconnect`."
   },
   "qtvreconnect": {
-    "system-generated": true
+    "description": "Reconnects to the most recently used QTV proxy using the address and password saved from the last successful `qtvplay` call. Prints an error and does nothing if no previous QTV connection has been established in the current session."
   },
   "qtvusers": {
-    "system-generated": true
+    "description": "Lists all viewers currently watching the QTV stream you are connected to. Prints a table of numeric user IDs and display names, one per line, with a total count at the end. Only works during an active QTV playback session; if you are connected to a server but not watching QTV, the request is forwarded to the server instead."
   },
   "quit": {
     "description": "Exit - disconnects from the server and closes the client."
   },
   "qwurl": {
-    "system-generated": true
+    "description": "Connects to a server or QTV stream using a qw:// URL. Usage: `qwurl <qw://host[:port][/command]>`. The URL must start with qw://. The optional path component selects the action: omitted or \"join\" or \"connect\" joins as a player; \"spectate\" or \"observe\" joins as a spectator; \"qtv[/password]\" connects to a QTV proxy. A challenge response path (\"challenge?...\") is also handled internally. Semicolons in the URL are rejected to prevent command injection. Example: `qwurl qw://qw.server.se:27500/spectate`."
   },
   "radar": {
     "description": "HUD element showing a map overview.",
@@ -1363,14 +1441,13 @@
     "description": "Reconnects to the last server/proxy."
   },
   "record": {
-    "description": "Records a demo.\n\nExample:\nrecord test\n - records test.qwd to qw folder",
-    "syntax": "<filename>"
+    "description": "Records a demo.\n\nExample:\nrecord test\n - records test.qwd to qw folder\n\nThe companion command `recordqwd` bypasses the listen-server routing branch and always records a client-side QWD; use `recordqwd` when the listen-server form of `record` would route the recording to the server-side MVD command instead."
   },
   "recordqwd": {
-    "system-generated": true
+    "description": "Forces client-side QWD demo recording, bypassing the listen-server routing branch in `CL_Record_f`. In a listen-server build, plain `record` may route to the server-side MVD recording command; `recordqwd` guarantees the recording is a client-side QWD file regardless of build configuration."
   },
   "register_qwurl_protocol": {
-    "system-generated": true
+    "description": "Registers the qw:// URL scheme with the operating system so browsers and other applications can launch ezQuake directly from qw:// links. On Windows, writes registry entries under HKCU\\Software\\Classes\\qw to associate the scheme with the current ezQuake executable. On Linux, writes a .desktop file to ~/.local/share/applications/qw-url-handler.desktop and calls xdg-mime to activate it. macOS prints \"Not yet implemented\". Accepts an optional \"quiet\" argument to suppress the confirmation message. Available on Windows and Linux builds only."
   },
   "removeip": {
     "description": "Removes an IP address from the server IP list.\n\nExamples:\nremoveip 123.123.123.123\nremoveip 123.123.123",
@@ -1380,10 +1457,10 @@
     "description": "Remove the closest location (use teamsay to see which)."
   },
   "removepak": {
-    "system-generated": true
+    "description": "Legacy alias for `fs_removepak`. Removes one or more `.pak` files from the VFS search path. Prefer `fs_removepak` in new configs."
   },
   "reset": {
-    "system-generated": true
+    "description": "`reset <element>` -- restores the named HUD element to its default screen-center position. Internally issues `place <element> screen`, `move <element> 0 0`, and `align <element> center center` as a single unit. Requires exactly one argument. Example: `reset clock`, `reset fps`."
   },
   "rm": {
     "system-generated": true
@@ -1396,13 +1473,13 @@
     "remarks": "Negative values can also be used for the desired angle."
   },
   "s_audiodevicelist": {
-    "system-generated": true
+    "description": "Lists all available audio playback and input devices as reported by SDL2. Prints two sections -- \"Playback devices\" and \"Input devices\" -- each with a numbered id and device name. Device id 0 in each section represents the system default. Use the playback id with s_audiodevice to select a specific output device without restarting."
   },
   "s_listdrivers": {
-    "system-generated": true
+    "description": "Lists the audio drivers compiled into the SDL2 library. Prints one driver name per line to the console. Useful for diagnosing which audio backends are available on the current system (e.g. pulseaudio, alsa, pipewire on Linux; wasapi, directsound on Windows)."
   },
   "s_restart": {
-    "system-generated": true
+    "description": "Restarts the sound system. Shuts down the current audio session, reinitialises the audio driver, and reprecaches all sounds the server has already sent to the client. Use after changing audio settings (such as s_khz or s_desiredsamples) that require a full audio reset to take effect. The legacy alias snd_restart is equivalent."
   },
   "save": {
     "description": "Saves a game in singleplayer.\n\nExample:\nsave 123"
@@ -1424,13 +1501,13 @@
     "description": "Broadcasts a string to teammates.\n\nExample:\nsay_team stop boring!"
   },
   "sb_buildpingtree": {
-    "system-generated": true
+    "description": "Builds the ping tree used by the server browser to determine optimal routes to game servers via QW proxies. Runs a two-phase background process: Phase 1 initialises the tree and reads data from the server browser immediately; Phase 2 queries proxies for their ping data and runs Dijkstra's algorithm to compute shortest paths. Prints progress messages to the console. If a build is already in progress, prints \"Ping Tree is still being built...\" and returns without restarting."
   },
   "sb_pingsdump": {
     "description": "Dumps a list of pairs (IP address, ping) into the console based on the current content of the Server Browser list."
   },
   "sb_proxygetpings": {
-    "system-generated": true
+    "description": "Queries a QW proxy server at the given IP address and prints the ping list it reports for all servers it knows about. Usage: `sb_proxygetpings <ip>`. Useful for diagnosing proxy-assisted ping measurements in the server browser. Output is written to the console and terminates with \"End of list.\""
   },
   "sb_refresh": {
     "description": "Causes Server Browser refresh ping and status info for all servers."
@@ -1472,6 +1549,24 @@
   "score_position": {
     "description": "HUD element which displays your position on the frag leaders board."
   },
+  "scr_printspeed": {
+    "description": "Legacy alias for the cvar `scr_centerspeed`. Print/display speed for center-screen messages (higher = faster reveal). Prefer `scr_centerspeed` in new configs."
+  },
+  "scr_weaponstats_frame_color": {
+    "description": "Legacy alias for the cvar `hud_weaponstats_frame_color`. Frame color of the HUD weapon stats panel. Prefer `hud_weaponstats_frame_color` in new configs."
+  },
+  "scr_weaponstats_order": {
+    "description": "Legacy alias for the cvar `hud_weaponstats_format`. Format string controlling the HUD weapon stats display order and layout. Prefer `hud_weaponstats_format` in new configs."
+  },
+  "scr_weaponstats_scale": {
+    "description": "Legacy alias for the cvar `hud_weaponstats_scale`. Scale factor for the HUD weapon stats panel. Prefer `hud_weaponstats_scale` in new configs."
+  },
+  "scr_weaponstats_x": {
+    "description": "Legacy alias for the cvar `hud_weaponstats_x`. X-position offset of the HUD weapon stats panel. Prefer `hud_weaponstats_x` in new configs."
+  },
+  "scr_weaponstats_y": {
+    "description": "Legacy alias for the cvar `hud_weaponstats_y`. Y-position offset of the HUD weapon stats panel. Prefer `hud_weaponstats_y` in new configs."
+  },
   "screenshot": {
     "arguments": [
       {
@@ -1486,7 +1581,7 @@
     "system-generated": true
   },
   "serverexec": {
-    "system-generated": true
+    "description": "Routes the script to the server command buffer (`cbuf_server`) instead of the main client buffer used by `exec`. Useful in listen-server builds when the same script should be executed on the server side. Same script syntax as `exec`; same config-file lookup paths (\\qw, \\id1, \\ezquake)."
   },
   "serverinfo": {
     "description": "Reports the current server info."
@@ -1544,17 +1639,16 @@
     "syntax": "<cvar command cmdargs> | <cvar arg1 oper arg2>"
   },
   "set_eval": {
-    "system-generated": true
+    "description": "Sets a variable to the result of a richer expression than set_calc supports, using a dedicated expression evaluator (Expr_Eval). Syntax: `set_eval <cvar> <expression>`. The expression may produce an integer, float, boolean, or string result, which is written to the cvar accordingly. Blocked by the active ruleset during live matches (restrictSetEval flag); works freely in demos, spectator mode, and outside matches. Use set_calc for simple arithmetic or string operations; use set_eval when you need compound or multi-operator expressions that set_calc cannot handle."
   },
   "set_ex": {
-    "description": "Assigns a new value to a variable, expansion of %macros and variables is performed even in case if a parameter is inside the dual quotation marks.",
-    "syntax": "<cvar> <value>"
+    "description": "Assigns a new value to a variable, expansion of %macros and variables is performed even in case if a parameter is inside the dual quotation marks. The companion command `set_ex2` uses the same handler but skips fun-character parsing (`TP_ParseFunChars`), so color/special-character codes are passed through literally instead of expanded."
   },
   "set_ex2": {
-    "system-generated": true
+    "description": "Assigns a new value to a variable using the same handler as `set_ex`, but skips fun-character parsing (`TP_ParseFunChars`). Color/special-character codes in the value are passed through literally instead of being expanded. Useful when assigning values that already contain `$`/`^` sequences you want preserved exactly."
   },
   "set_tp": {
-    "system-generated": true
+    "description": "Sets a cvar only when it carries the teamplay flag, preventing accidental writes to non-teamplay variables. Syntax: `set_tp <cvar> <value>`. If the named cvar does not exist yet it is created and tagged as a teamplay variable. If it exists but lacks the teamplay flag the command prints an error and does nothing. Useful in team-play scripts to ensure a value is only written to the intended teamplay slot."
   },
   "setinfo": {
     "description": "Sets information about your FuhWorld user.\nUsed without a key it will list all of your current settings. Specifying a non-existent key and a value will create the new key."
@@ -1563,10 +1657,10 @@
     "description": "Lists the server with up to eight masters.\nWhen a server is listed with a master, the master is aware of the server's IP address and port and it is added to the list of current server connected to a master. A heartbeat is sent to the master from the server to indicated that the server is still running and alive.\n\nExamples:\nsetmaster 192.246.40.12:27002\nsetmaster 192.246.40.12:27002 192.246.40.12:27004"
   },
   "show": {
-    "system-generated": true
+    "description": "`show <element>` -- makes the named HUD element visible by setting its show cvar to 1. Use `show all` to make every registered HUD element visible at once. Running `show` with no argument prints usage and lists the current visibility status of all elements. Example: `show teaminfo`, `show clock`, `show all`."
   },
   "showskins": {
-    "system-generated": true
+    "description": "Lists the name and active skin for every non-spectator player currently on the server. Output is a two-column table (name, skin) with the name column width adjusted to the longest player name in the session. Only prints while connected to a server that has active players; produces no output if no players are present."
   },
   "sizedown": {
     "description": "Reduces the screen size."
@@ -1607,6 +1701,12 @@
   "snapall": {
     "description": "Remote screenshots from all players."
   },
+  "snd_restart": {
+    "description": "Legacy alias for `s_restart`. Restarts the sound system (shuts down the audio session, reinitialises the driver, and reprecaches sounds). Prefer `s_restart` in new configs."
+  },
+  "snd_show": {
+    "description": "Legacy alias for the cvar `s_show`. Sound debug printout level (0 = off, 1 = print active sound count, 2 = print volume/sample details). Prefer `s_show` in new configs."
+  },
   "soundinfo": {
     "description": "Reports information on the sound system."
   },
@@ -1627,16 +1727,16 @@
     "description": "Reports information on the current connected clients and the server."
   },
   "stop": {
-    "description": "Stops demo recording."
+    "description": "Stops demo recording. The companion command `stopqwd` bypasses the listen-server routing branch in `CL_Stop_f` and always stops client-side QWD recording, whereas `stop` routes to the server-side MVD stop command in a listen-server build."
   },
   "stopqwd": {
-    "system-generated": true
+    "description": "Stops client-side QWD demo recording regardless of build configuration. Bypasses the listen-server routing branch in `CL_Stop_f`; whereas plain `stop` may route to the server-side MVD stop command in a listen-server build, `stopqwd` always stops the local client recording."
   },
   "stopsound": {
     "description": "Stops all sounds currently being played."
   },
   "stopsound_script": {
-    "system-generated": true
+    "description": "Stops the sound currently playing on the local player's script channel (channel 0 of the SELF_SOUND_ENTITY). This is the channel used by the play and playvol commands when triggered from scripts or the console, so stopsound_script silences a script-initiated sound without affecting other in-game sounds. Contrast with stopsound, which stops all sounds simultaneously."
   },
   "sv_democancel": {
     "system-generated": true
@@ -1690,6 +1790,15 @@
   "sv_usercmdtrace": {
     "system-generated": true
   },
+  "sv_web_get": {
+    "description": "Developer diagnostic command (SERVER_ONLY build) that sends a form-encoded HTTP request to the central.qw.nu authentication server. Takes a URL path, a request-id string, and optional key-value pairs: `sv_web_get <path> <request-id> [<key> <value> ...]`. The server base URL is taken from `sv_www_address`; an `authKey` field from `sv_www_authkey` is automatically appended to every request. Despite the name, the underlying curl layer sends a POST (not a GET) whenever form fields are present; `sv_web_get` and `sv_web_post` share the same `Web_SendRequest` implementation and the `post` flag is unused. Responses are printed to the server console via `Con_DPrintf` and may trigger a broadcast or demo-upload if the central server returns those directives."
+  },
+  "sv_web_post": {
+    "description": "Developer diagnostic command (SERVER_ONLY build) that sends a form-encoded HTTP POST request to the central.qw.nu authentication server. Takes a URL path, a request-id string, and optional key-value pairs: `sv_web_post <path> <request-id> [<key> <value> ...]`. The server base URL is taken from `sv_www_address`; `sv_www_authkey` is automatically included as the `authKey` form field. In practice this command is functionally identical to `sv_web_get` at the curl layer: both share the same `Web_SendRequest` implementation and the intended GET/POST distinction is not enforced in code. Intended for testing or manually triggering central-server API paths without a live match."
+  },
+  "sv_web_postfile": {
+    "description": "Developer diagnostic command (SERVER_ONLY build) that uploads a file to the central.qw.nu server via multipart HTTP POST. Syntax: `sv_web_postfile <path> <request-id> <file> [<key> <value> ...]`. The `<file>` argument can be a relative path under the game directory or the special token `*`, which resolves to the currently-recording MVD demo (fails with an error if no demo is active). Paths containing `.cfg` or lacking a slash are rejected as unsafe, and `FS_UnsafeFilename` is checked before the upload proceeds. The file is sent as the `file` form field; `sv_www_authkey` is added automatically. Unlike `sv_web_get`/`sv_web_post`, this command has a distinct implementation with its own file-open and safety-guard logic."
+  },
   "svadmin": {
     "system-generated": true
   },
@@ -1725,7 +1834,7 @@
     "syntax": "<filename>"
   },
   "timedemo2": {
-    "system-generated": true
+    "description": "Plays a demo at maximum speed and reports performance, like `timedemo`, but simulates playback at a fixed frame rate instead of uncapped. Usage: `timedemo2 <demoname> [fps]`. The optional fps argument sets the simulated frame rate; defaults to 308 fps and must be between 20 and 10000. This mode produces more consistent benchmark results across hardware compared to the classic uncapped timedemo."
   },
   "timerefresh": {
     "description": "This command will perform a 360 degree turn and calculate the frames-per-second rate."
@@ -1741,16 +1850,16 @@
     "description": "Brings the console up and down."
   },
   "togglehud": {
-    "system-generated": true
+    "description": "`togglehud <element | cvar>` -- toggles a HUD element between shown and hidden. If the argument matches a registered HUD element, its visibility is flipped; if it matches a cvar instead, the cvar value is toggled between 0 and 1. Requires exactly one argument; running without an argument prints usage. Example: `togglehud teaminfo`, `togglehud scr_fov`."
   },
   "togglemenu": {
     "description": "Displays the menu screens."
   },
   "toggleproxymenu": {
-    "system-generated": true
+    "description": "Toggles the proxy configuration menu open or closed. When the proxy menu is already active, closes it and returns to the previous key destination; when the menu is not open, enters the proxy menu screen. Typically bound to a key for quick access to proxy settings without navigating the full menu tree."
   },
   "togglespec": {
-    "system-generated": true
+    "description": "Toggles between spectator and player mode on the current server. If the spectator cvar is set (spectator mode is active), calls join to switch to player mode. If spectator is unset (player mode is active), calls observe to switch to spectator mode. Useful for binding a single key to flip between the two roles without two separate commands."
   },
   "tp_msgcoming": {
     "description": "Will send a message to your teammates telling them where you are coming from, and what your status is.\nDoubles as tp_lost when you are dead (because you can't be coming from somewhere if you're dead)."
@@ -1768,10 +1877,10 @@
     "description": "Requests help at a location. Also gives your status."
   },
   "tp_msgitemsoon": {
-    "system-generated": true
+    "description": "Sends a team message indicating that an item at your location will spawn soon. Uses the TP_MSG_GENERIC macro: includes your current powerup status (if any) followed by \"item soon\" and your current location."
   },
   "tp_msgkillme": {
-    "system-generated": true
+    "description": "Sends a team message requesting a teammate to kill you at your current location. Reports the weapon you are holding (RL or LG) and remaining ammo, plus any extra rockets or cells you carry. Skipped entirely if you are already dead. If a teammate is in your point the message includes their name so the request is targeted."
   },
   "tp_msglost": {
     "description": "Will send a message to your teammates telling them you died at a location.\nAlso tells them how many enemies are there, and what weapon (if any) you dropped."
@@ -1780,7 +1889,7 @@
     "description": "Equivalent of %u (need macro).\nWill display what you need (health/armor/ammo)."
   },
   "tp_msgnocancel": {
-    "system-generated": true
+    "description": "Sends a team message signalling a negative response or cancellation, displayed in red as \"no/cancel\". Uses the TP_MSG_GENERIC macro: includes your current powerup status (if any) followed by the red-colored \"no/cancel\" text and your location."
   },
   "tp_msgpoint": {
     "description": "Will report to your team item you see in your point at its location.\nWill report team/enemy powerup if you, a teammate, or an enemy has a powerup and are in your point.",
@@ -1799,10 +1908,10 @@
     "description": "Will send a message to your teammates informing them your current location is safe.\nWill print nothing if there is enemy in your point.\nAlso reports your status."
   },
   "tp_msgslipped": {
-    "system-generated": true
+    "description": "Sends a team message reporting that an enemy slipped past you at your current location. Uses the TP_MSG_GENERIC macro: includes your current powerup status (if any) followed by \"enemy slipped\" and your location."
   },
   "tp_msgtfconced": {
-    "system-generated": true
+    "description": "TeamFortress-specific command that reports a concussion grenade event to your team. If an enemy is in your crosshair point, sends \"$point conced at [location]\"; otherwise sends the generic \"Enemy conced\" message. Appends the tp_name_filter string, which can be used in TF to tag the message for filter routing."
   },
   "tp_msgtook": {
     "description": "Informs your team of the last item you took.\nSaves each item in memory for 15 seconds."
@@ -1811,13 +1920,13 @@
     "description": "Requests a trick at a location.\nBest for cases like dm2 when you need a teammate to help you get quad from stairs."
   },
   "tp_msgutake": {
-    "system-generated": true
+    "description": "Sends a team message offering an item at your location for a teammate to take. Reports \"you take [item at location]\", or if a teammate is in your point, uses the shorter \"take [item at location]\" form addressed to them. Uses TP_FindPoint() to detect a nearby teammate and adjust the message wording accordingly."
   },
   "tp_msgwaiting": {
-    "system-generated": true
+    "description": "Sends a team message indicating you are waiting at your current location, typically used when holding a powerup spawn. Uses the TP_MSG_GENERIC macro: includes your current powerup status (if any) followed by \"waiting\" and your location."
   },
   "tp_msgyesok": {
-    "system-generated": true
+    "description": "Sends a team message with a positive affirmative response of \"yes/ok\" at your current location. Uses the TP_MSG_GENERIC macro: includes your current powerup status (if any) followed by \"yes/ok\" and your location."
   },
   "tp_pickup": {
     "description": "Item can be: quad, pent, ring, suit, ra, ya, ga, mh, health, lg, rl, gl, sng, ng, ssg, pack, cells, rockets, nails, shells, flag, armor, weapons, powerups, ammo, all, default, none"
@@ -1831,19 +1940,19 @@
     "syntax": "item1 item2 ... DO NOT USE QUOTES"
   },
   "track": {
-    "system-generated": true
+    "description": "Locks the spectator camera onto a specific player. Accepts a player name or user ID as its sole argument (usage: `track <userid> | <name>`). Only available while connected as a spectator. If multiview is active, targets the main view slot; the camera state is set to tracking mode and spec_locked is enabled, preventing free-fly until manually released."
   },
   "track1": {
-    "system-generated": true
+    "description": "In multiview mode, locks view slot 1 onto a specific player. Accepts a player name or user ID (usage: `track1 <userid> | <name> | off`). Pass 'off' to reset slot 1 to its default assignment. Only available while connected as a spectator. Companion commands `track2`, `track3`, and `track4` lock the corresponding view slots 2, 3, and 4 in the same manner."
   },
   "track2": {
-    "system-generated": true
+    "description": "In multiview mode, locks view slot 2 onto a specific player. Same shape as `track1` -- accepts a player name, user ID, or 'off' to reset. Only available while connected as a spectator."
   },
   "track3": {
-    "system-generated": true
+    "description": "In multiview mode, locks view slot 3 onto a specific player. Same shape as `track1` -- accepts a player name, user ID, or 'off' to reset. Only available while connected as a spectator."
   },
   "track4": {
-    "system-generated": true
+    "description": "In multiview mode, locks view slot 4 onto a specific player. Same shape as `track1` -- accepts a player name, user ID, or 'off' to reset. Only available while connected as a spectator."
   },
   "trackkiller": {
     "description": "Will switch view to the player who killed the player we are tracking at the moment."
@@ -1882,10 +1991,10 @@
     "syntax": "<name|userid>"
   },
   "unignoreAll": {
-    "description": "Removes all users from ignore list."
+    "description": "Clears the entire player text ignore list in one step. Takes no arguments. Note that VoIP-only ignores (set with ignore_voip) are stored separately and are not cleared by this command; use unignore_voip per player to remove those. The clear is in-memory only and does not persist across sessions."
   },
   "unignoreAll_team": {
-    "description": "Removes all ignored teams from ignore list."
+    "description": "Clears the entire team ignore list in one step, removing all team-level ignores added with ignore_team. Takes no arguments. Individual player ignores (set with ignore or ignore_voip) are stored separately and are unaffected. The clear is in-memory only and does not persist across sessions."
   },
   "unignore_id": {
     "description": "Removes userid from ignore list.",
@@ -1895,7 +2004,7 @@
     "description": "Removes team from ignore list."
   },
   "unignore_voip": {
-    "system-generated": true
+    "description": "Removes a player from the VoIP-only ignore list, restoring their voice chat. Accepts a player name or user ID (`unignore_voip <name|userid>`); with no argument, displays the current ignore lists. If the player was also on the text ignore list, text chat remains suppressed -- this command clears only the vignored flag. Available only when the client is built with FTE_PEXT2_VOICECHAT support."
   },
   "unset": {
     "description": "Removes user-created variable.",
@@ -1940,7 +2049,10 @@
     "description": "Prints client version number and date into the console."
   },
   "vid_displaylist": {
-    "system-generated": true
+    "description": "Lists all SDL2 display outputs available to the system, printing each one as an index and display name (e.g. \"0: Generic PnP Monitor\"). Useful when configuring multi-monitor setups to identify the correct display index for vid_displayindex or similar cvars."
+  },
+  "vid_framebuffer_palette": {
+    "description": "Legacy alias for the cvar `vid_software_palette`. Set to 0 to use hardware gamma (classic style), 1 to adjust gamma in post-processing. Prefer `vid_software_palette` in new configs."
   },
   "vid_fullscreen": {
     "description": "This command will switch to a fullscreen video mode specified in the \"vid_fullscreen_mode\" variable."
@@ -1952,7 +2064,7 @@
     "description": "Prints all supported video modes."
   },
   "vid_reload": {
-    "system-generated": true
+    "description": "Performs a soft video reload without a full renderer restart. Reloads the palette and colormap, re-runs video startup, and clears any pending reload flag. Lighter-weight than `vid_restart`, which tears down and fully reinitialises the renderer. Used for `CVAR_RELOAD_GFX`-flagged cvars (texture/GFX settings such as `gl_picmip`, `gl_lerpimages`) that take effect as textures are reloaded. Distinct from `CVAR_LATCH_GFX`-flagged cvars, which require a full `vid_restart` (window recreation)."
   },
   "vid_restart": {
     "description": "Will restart your video renderer. Needed for some changes to take affect."
@@ -1973,7 +2085,7 @@
     "system-generated": true
   },
   "vminfo": {
-    "system-generated": true
+    "description": "Prints diagnostic information about all registered PR2 virtual machines to the server console. For each VM slot with a loaded module it reports the module name and execution type (native, compiled-on-load, or interpreted), followed by the code segment length, instruction table length, and data segment size in bytes. Useful for confirming which game VM is active and whether it was JIT-compiled or run in bytecode mode."
   },
   "wait": {
     "description": "Adds one wait frame."
@@ -1989,6 +2101,6 @@
     "description": "Records all IP addresses on the server IP list. The file name is listip.cfg."
   },
   "z_ext_list": {
-    "system-generated": true
+    "description": "Displays the ZQuake protocol extensions that are currently active on the connection to the server. Prints each active extension by name (e.g. PM_TYPE, VWEP, VIEWHEIGHT); prints NONE if no extensions are negotiated. The extension set is agreed during connection handshake and affects physics simulation, view height sync, weapon model visibility, and other protocol-level features. Useful for diagnosing unexpected movement or rendering behaviour by confirming which extensions the server supports."
   }
 }
