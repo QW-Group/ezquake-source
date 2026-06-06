@@ -118,22 +118,19 @@
     "type": "string"
   },
   "colored_powerups": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "current powerups held as color-coded full names (quad, pent, ring), concatenated without separator.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "colored_short_powerups": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "current powerups held as compact color-coded initials (q=quad blue, r=ring yellow, p=pent red); output order is q-r-p. Returns empty string when no powerups held.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "conheight": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "console (virtual) resolution height in pixels.",
+    "teamplay-restricted": true,
+    "type": "integer"
   },
   "connectiontype": {
     "description": "returns the current type of the connection",
@@ -155,10 +152,9 @@
     "type": "string"
   },
   "conwidth": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "console (virtual) resolution width in pixels.",
+    "teamplay-restricted": true,
+    "type": "integer"
   },
   "date": {
     "description": "returns the current date in the format <day>.<month>.<year>",
@@ -166,14 +162,14 @@
     "type": "string"
   },
   "dateiso": {
-    "system-generated": true,
-    "teamplay-restricted": true
+    "description": "current local date and time in ISO-adjacent format YYYY-MM-DD_HH-MM.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "deathloc": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "map location name where the player last died, or tp_name_someplace if no death has been recorded this session.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "demolength": {
     "description": "returns the expected length of the current demo, in seconds",
@@ -191,10 +187,9 @@
     "type": "boolean"
   },
   "demotime": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current demo playback time in seconds (float). Intended for scripted and timed camera movement.",
+    "teamplay-restricted": true,
+    "type": "float"
   },
   "droploc": {
     "description": "returns the name of the location where the last backpack was dropped by the current player.",
@@ -216,64 +211,54 @@
     "teamplay-restricted": false
   },
   "lastip": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "IP address or hostname:port of the last server seen in console output, captured by an internal trigger pattern.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "lastloc": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "location name at time of last death if death occurred within the past 5 seconds; otherwise current location name.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "lastpowerup": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "powerups last seen on the enemy within the past 5 seconds (e.g. \"quad pent\"); falls back to the value of tp_name_quad when no recent sighting.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "latency": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current network latency in milliseconds, rounded to nearest integer.",
+    "teamplay-restricted": true,
+    "type": "integer"
   },
   "ledpoint": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "LED color code indicating the type of entity pointed at: red for enemy, green for teammate, yellow for powerup, blue for item.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "ledstatus": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "LED color code reflecting how many items the player currently needs: green for none, yellow for one, red for two or more.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "location": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "name of the player's current map location, as defined by the active .loc file.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "matchname": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current match name, derived from the active match-format template (e.g. \"duel/playerA_vs_playerB - [dm6]\"). Returns \"No match in progress\" when not connected.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "matchstatus": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current match state: one of \"disconnected\", \"standby\", or \"normal\".",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "matchtype": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current match type keyword: one of duel, ffa, 2on2, 3on3, 4on4, tdm, arena, tfduel, tfclanwar, solo, coop, race, empty, unknown. Returns \"No match in progress\" when not connected.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "nails": {
     "description": "returns number of nails held, regardless of weapon selected",
@@ -281,50 +266,43 @@
     "type": "integer"
   },
   "need": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "separator-delimited list of items the player currently needs based on tp_need_* thresholds (e.g. \"armor health rl\").",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "ping": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current network latency in milliseconds, rounded to nearest integer. Alias for $latency.",
+    "teamplay-restricted": true,
+    "type": "integer"
   },
   "point": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "name of the nearest item or entity the player is pointing at, as used in location-pointing messages; returns tp_name_nothing when the player is flashed.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "pointatloc": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "pointed-at item name combined with its location, in \"name at location\" format; bounded by the tp_pointtimeout cvar and returns tp_name_nothing when the player is flashed or the timeout expires.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "pointloc": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "map location of the entity pointed at, or current location if no specific point location is available; returns tp_name_nothing when the player is flashed.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "powerups": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "separator-delimited list of powerups currently held (quad, pent, ring, flag for CTF/TF); returns tp_name_none when none held.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "qt": {
     "description": "returns \" - useful to clear cvars in scripts",
     "teamplay-restricted": true
   },
   "rand": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "random float in the range [0, 1).",
+    "teamplay-restricted": true,
+    "type": "float"
   },
   "rockets": {
     "description": "returns number of rockets held, regardless of weapon selected",
@@ -332,10 +310,9 @@
     "type": "integer"
   },
   "serverip": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current server IP address and port, in ip:port form.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "shells": {
     "description": "returns number of shells held, regardless of weapon selected",
@@ -343,18 +320,19 @@
     "type": "integer"
   },
   "team1": {
-    "system-generated": true,
-    "teamplay-restricted": true
+    "description": "name of the Nth team currently playing, alphabetically sorted; $team1 returns the first team, $team2 the second. In FFA (no teamplay), returns player names instead. Falls back to literal \"team1\"/\"team2\" when fewer teams exist.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "team2": {
-    "system-generated": true,
-    "teamplay-restricted": true
+    "description": "name of the Nth team currently playing, alphabetically sorted; $team1 returns the first team, $team2 the second. In FFA (no teamplay), returns player names instead. Falls back to literal \"team1\"/\"team2\" when fewer teams exist.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "tf_skin": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "current player's skin name, with TeamFortress skin prefixes expanded to full class names (e.g. tf_demo -> demoman, tf_eng -> engineer).",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "time": {
     "description": "returns the local time in the format <hours>:<minutes>",
@@ -362,26 +340,24 @@
     "type": "string"
   },
   "timestamp": {
-    "system-generated": true,
-    "teamplay-restricted": true
+    "description": "current local date and time as a compact filesystem-safe string: YYYYMMDD-HHMM.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "took": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "name of the last item picked up; returns tp_name_nothing if nothing has been picked up yet.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "tookatloc": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "last item picked up with its pickup location, in \"name at location\" format; returns tp_name_nothing when no item has been picked up.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "tookloc": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "map location name where the last item was picked up; returns tp_name_someplace when no item has been picked up.",
+    "teamplay-restricted": false,
+    "type": "string"
   },
   "tp_powerups": {
     "description": "$colored_powerups or $colored_short_powerups, depending on value of tp_poweruptextstyle",
@@ -392,27 +368,23 @@
     "type": "boolean"
   },
   "triggermatch": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "full text of the console message that last fired a regexp trigger.",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "weapon": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "name of the currently active weapon, using tp_name_* cvar values (e.g. \"rl\", \"lg\").",
+    "teamplay-restricted": true,
+    "type": "string"
   },
   "weaponnum": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": true
+    "description": "currently active weapon as a slot number (1-8), or pre-selected best weapon number when cl_weaponpreselect is enabled.",
+    "teamplay-restricted": true,
+    "type": "integer"
   },
   "weapons": {
-    "flags": [
-      "incomplete"
-    ],
-    "teamplay-restricted": false
+    "description": "separator-delimited list of all weapons currently held, ordered from strongest to weakest (lg, rl, gl, sng, ng, ssg, sg, axe).",
+    "teamplay-restricted": false,
+    "type": "string"
   }
 }
