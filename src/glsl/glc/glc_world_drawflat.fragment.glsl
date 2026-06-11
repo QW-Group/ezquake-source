@@ -28,6 +28,6 @@ void main()
 	gl_FragColor = color * lightmap;
 
 #ifdef DRAW_FOG
-	gl_FragColor = applyFog(gl_FragColor, fogScale * gl_FragCoord.z / gl_FragCoord.w);
+	gl_FragColor = applyFog(gl_FragColor, fogScale * fogFragDepth());
 #endif
 }

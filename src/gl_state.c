@@ -365,8 +365,8 @@ void GL_ApplyRenderingState(r_state_id id)
 	extern cvar_t gl_brush_polygonoffset;
 	rendering_state_t* current = &opengl.rendering_state;
 	float zRange[2] = {
-		glConfig.reversed_depth && false ? 1.0f - state->depth.nearRange : state->depth.nearRange,
-		glConfig.reversed_depth && false ? 1.0f - state->depth.farRange : state->depth.farRange,
+		glConfig.reversed_depth ? 1.0f - state->depth.farRange  : state->depth.nearRange,
+		glConfig.reversed_depth ? 1.0f - state->depth.nearRange : state->depth.farRange,
 	};
 
 	R_TraceEnterRegion(va("GL_ApplyRenderingState(%s)", state->name), true);
@@ -589,6 +589,17 @@ void GL_InitialiseState(void)
 {
 	R_InitRenderingState(r_state_default_opengl, false, "opengl", vao_none);
 	opengl.rendering_state = states[r_state_default_opengl];
+
+	// The state tracker seeds depth.func without issuing GL calls; GL's boot default
+	// is GL_LESS, so under reverse-z change-elision would strand the real state at
+	// GL_LESS. Force one explicit glDepthFunc for the seeded func.
+	if (glConfig.reversed_depth) {
+		glDepthFunc(glReversedDepthFunctions[opengl.rendering_state.depth.func]);
+	}
+	else {
+		glDepthFunc(glDepthFunctions[opengl.rendering_state.depth.func]);
+	}
+
 	R_InitialiseStates();
 
 	R_SetIdentityMatrix(R_ProjectionMatrix());
@@ -954,6 +965,12 @@ void R_CustomPolygonOffset(r_polygonoffset_t mode)
 		float factor = (mode == r_polygonoffset_standard ? bound(-1, gl_brush_polygonoffset_factor.value, 1) : 1);
 		float units = (mode == r_polygonoffset_standard ? bound(0, gl_brush_polygonoffset.value, 2) : 1);
 		qbool enabled = (mode == r_polygonoffset_standard || mode == r_polygonoffset_outlines) && units != 0;
+
+		if (glConfig.reversed_depth) {
+			// "farther" = smaller depth under reverse-z; negation preserves non-zero
+			factor = -factor;
+			units = -units;
+		}
 
 		if (enabled) {
 			if (!current->polygonOffset.fillEnabled) {

@@ -279,13 +279,36 @@ void GL_InitialiseFramebufferHandling(void)
 		GL_LoadOptionalFunction(glNamedRenderbufferStorageMultisample);
 	}
 
-	// meag: disabled (classic needs glFrustum replaced, modern needs non-rubbish viewweapon
-	//                 depth hack, and near-plane clipping issues when the player is gibbed)
-	/*if (GL_VersionAtLeast(4, 5) || SDL_GL_ExtensionSupported("GL_ARB_clip_control")) {
+	if (GL_VersionAtLeast(4, 5) || SDL_GL_ExtensionSupported("GL_ARB_clip_control")) {
 		GL_LoadOptionalFunction(glClipControl);
-	}*/
+	}
 
 	memset(framebuffer_data, 0, sizeof(framebuffer_data));
+}
+
+void GL_InitialiseReversedDepth(void)
+{
+	extern cvar_t gl_reverse_z;
+	int depthformat = bound(0, vid_framebuffer_depthformat.integer, r_depthformat_count - 1);
+	qbool high_res_depth;
+
+	// reverse-z only pays off with a floating-point depth buffer, which requires
+	// rendering 3D to a framebuffer object (the default framebuffer is fixed-point)
+	high_res_depth = vid_framebuffer.integer && GL_Supported(R_SUPPORT_DEPTH32F) &&
+		(depthformat == r_depthformat_best || depthformat == r_depthformat_32bit_float);
+
+	glConfig.reversed_depth = (gl_reverse_z.integer && GL_Available(glClipControl) && high_res_depth);
+
+	if (glConfig.reversed_depth) {
+		// near plane maps to depth 1, infinity to 0, clear depth 0
+		GL_Procedure(glClipControl, GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+		glClearDepth(0.0f);
+	}
+	else {
+		// fresh contexts default to GL_NEGATIVE_ONE_TO_ONE; don't call clipControl
+		// here as the pointer may be NULL
+		glClearDepth(1.0f);
+	}
 }
 
 void GL_FramebufferSetFiltering(qbool linear)
@@ -381,7 +404,7 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 	if (framebuffer_depth_buffer[id]) {
 		GLenum depthFormat = glDepthFormats[bound(0, vid_framebuffer_depthformat.integer, r_depthformat_count - 1)];
 		if (depthFormat == 0) {
-			depthFormat = GL_Available(glClipControl) ? GL_DEPTH_COMPONENT32F : GL_DEPTH_COMPONENT32;
+			depthFormat = glConfig.reversed_depth ? GL_DEPTH_COMPONENT32F : GL_DEPTH_COMPONENT32;
 		}
 		if (depthFormat == GL_DEPTH_COMPONENT32F && !GL_Supported(R_SUPPORT_DEPTH32F)) {
 			depthFormat = GL_DEPTH_COMPONENT32;
@@ -411,23 +434,6 @@ qbool GL_FramebufferCreate(framebuffer_id id, int width, int height)
 
 		GL_FramebufferTexture(fb->glref, GL_DEPTH_ATTACHMENT, GL_TextureNameFromReference(fb->texture[fbtex_depth]), 0);
 #endif
-
-		if (GL_Available(glClipControl)) {
-			if (depthFormat == GL_DEPTH_COMPONENT32F) {
-				GL_Procedure(glClipControl, GL_LOWER_LEFT, GL_ZERO_TO_ONE);
-				glClearDepth(0.0f);
-				glConfig.reversed_depth = true;
-			}
-			else {
-				GL_Procedure(glClipControl, GL_LOWER_LEFT, GL_NEGATIVE_ONE_TO_ONE);
-				glClearDepth(1.0f);
-				glConfig.reversed_depth = false;
-			}
-		}
-		else {
-			glConfig.reversed_depth = false;
-			glClearDepth(1.0f);
-		}
 	}
 
 	GL_FramebufferTexture(fb->glref, GL_COLOR_ATTACHMENT0, GL_TextureNameFromReference(fb->texture[fbtex_standard]), 0);

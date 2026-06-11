@@ -108,7 +108,6 @@ extern float r_framelerp;
 
 #define DRAW_DETAIL_TEXTURES      (1 << 0)
 #define DRAW_CAUSTIC_TEXTURES     (1 << 1)
-#define DRAW_REVERSED_DEPTH       (1 << 2)
 #define DRAW_LERP_MUZZLEHACK      (1 << 3)
 #define DRAW_FLAT_SHADING         (1 << 4)
 #define DRAW_INSTANCED            (1 << 5)
@@ -153,7 +152,6 @@ qbool GLM_CompileAliasModelProgram(void)
 
 	unsigned int drawAlias_desiredOptions =
 		(r_refdef2.drawCaustics ? DRAW_CAUSTIC_TEXTURES : 0) |
-		(glConfig.reversed_depth ? DRAW_REVERSED_DEPTH : 0) |
 		(r_lerpmuzzlehack.integer ? DRAW_LERP_MUZZLEHACK : 0) |
 		(gl_smoothmodels.integer ? 0 : DRAW_FLAT_SHADING) |
 		(GL_Supported(R_SUPPORT_INSTANCED_RENDERING) ? DRAW_INSTANCED : 0);
@@ -179,9 +177,6 @@ qbool GLM_CompileAliasModelProgram(void)
 		}
 
 		strlcat(included_definitions, va("#define SAMPLER_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
-		if (drawAlias_desiredOptions & DRAW_REVERSED_DEPTH) {
-			strlcat(included_definitions, "#define EZQ_REVERSED_DEPTH\n", sizeof(included_definitions));
-		}
 		if (drawAlias_desiredOptions & DRAW_LERP_MUZZLEHACK) {
 			strlcat(included_definitions, "#define EZQ_ALIASMODEL_MUZZLEHACK\n", sizeof(included_definitions));
 		}

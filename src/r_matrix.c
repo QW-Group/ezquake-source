@@ -338,8 +338,9 @@ void R_Frustum(double left, double right, double bottom, double top, double zNea
 	perspective[14] = -2 * (zFar * zNear) / (zFar - zNear);
 
 	if (glConfig.reversed_depth) {
-		perspective[10] = -zFar / (zNear - zFar) - 1;
-		perspective[14] = -(zNear * zFar) / (zNear - zFar);
+		// infinite far plane: z_ndc = zNear/dist, so near->1, infinity->0 (zFar unused)
+		perspective[10] = 0;
+		perspective[14] = zNear;
 	}
 
 	R_MultiplyMatrix(perspective, R_ProjectionMatrix(), new_projection);
@@ -347,7 +348,15 @@ void R_Frustum(double left, double right, double bottom, double top, double zNea
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	if (R_UseImmediateOpenGL()) {
-		GLC_Frustum(left, right, bottom, top, zNear, zFar);
+		// all callers run R_IdentityProjectionView() first, so loading the computed
+		// matrix is equivalent to multiplying here; glClipControl applies to the
+		// fixed-function pipeline so GLC needs nothing else
+		if (glConfig.reversed_depth) {
+			GLC_PopProjectionMatrix(R_ProjectionMatrix());
+		}
+		else {
+			GLC_Frustum(left, right, bottom, top, zNear, zFar);
+		}
 	}
 #endif
 }
@@ -396,6 +405,8 @@ qbool R_Project3DCoordinates(float objx, float objy, float objz, float* winx, fl
 	VectorScale(in, 1 / in[3], in);
 	*winx = view[0] + (1 + in[0]) * view[2] / 2;
 	*winy = view[1] + (1 + in[1]) * view[3] / 2;
+	// winz assumes [-1,1] NDC; under reverse-z this value is wrong, but it is
+	// computed-and-ignored by all callers
 	*winz = (1 + in[2]) / 2;
 
 	return true;

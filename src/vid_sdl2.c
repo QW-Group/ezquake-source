@@ -238,6 +238,7 @@ cvar_t vid_framebuffer_width       = {"vid_framebuffer_width",         "0",     
 cvar_t vid_framebuffer_height      = {"vid_framebuffer_height",        "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
 cvar_t vid_framebuffer_scale       = {"vid_framebuffer_scale",         "1",       CVAR_NO_RESET, conres_changed_callback };
 cvar_t vid_framebuffer_depthformat = {"vid_framebuffer_depthformat",   "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
+cvar_t gl_reverse_z                = {"gl_reverse_z",                  "1",       CVAR_LATCH_GFX };
 cvar_t vid_framebuffer_hdr         = {"vid_framebuffer_hdr",           "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
 cvar_t vid_framebuffer_hdr_tonemap = {"vid_framebuffer_hdr_tonemap",   "0" };
 cvar_t vid_framebuffer_smooth      = {"vid_framebuffer_smooth",        "1",       CVAR_NO_RESET, framebuffer_smooth_changed_callback };
@@ -1030,6 +1031,7 @@ static void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_framebuffer);
 	Cvar_Register(&vid_software_palette);
 	Cvar_Register(&vid_framebuffer_depthformat);
+	Cvar_Register(&gl_reverse_z);
 	Cvar_Register(&vid_framebuffer_hdr);
 
 #ifdef X11_GAMMA_WORKAROUND

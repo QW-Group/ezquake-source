@@ -91,7 +91,10 @@ void main()
 
 	if ((fsFlags & AMF_WEAPONMODEL) != 0) {
 #ifdef EZQ_REVERSED_DEPTH
-		gl_Position.z *= 1 / 0.3;
+		// compress depth to the nearest 30% of the window range, equivalent to
+		// glDepthRange(0.7, 1.0): window z becomes 0.7 + 0.3 * z_ndc, and clip
+		// z stays within [0.7w, w] so the near plane can never clip it
+		gl_Position.z = 0.7 * gl_Position.w + 0.3 * gl_Position.z;
 #else
 		gl_Position.z *= 0.3;
 #endif

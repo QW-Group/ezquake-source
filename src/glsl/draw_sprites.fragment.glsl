@@ -19,6 +19,6 @@ void main()
 	}
 
 #ifdef DRAW_FOG
-	frag_color = applyFogBlend(frag_color, gl_FragCoord.z / gl_FragCoord.w);
+	frag_color = applyFogBlend(frag_color, fogFragDepth());
 #endif
 }

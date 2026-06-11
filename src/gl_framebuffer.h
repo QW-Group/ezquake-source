@@ -43,6 +43,7 @@ typedef enum {
 } fbtex_id;
 
 void GL_InitialiseFramebufferHandling(void);
+void GL_InitialiseReversedDepth(void);
 qbool GL_FramebufferCreate(framebuffer_id id, int width, int height);
 void GL_FramebufferDelete(framebuffer_id id);
 void GL_FramebufferStartUsing(framebuffer_id id);
