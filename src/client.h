@@ -1051,13 +1051,13 @@ void CL_UpdateTEnts(void);
 
 // cl_ents.c
 typedef enum cl_modelindex_s {
-	mi_spike, mi_player, mi_eyes, mi_flag, mi_tf_flag, mi_tf_stan, mi_stag, mi_basrkey, mi_basbkey, mi_w_s_key, mi_w_g_key, mi_b_g_key, mi_b_s_key, mi_ff_flag, mi_harbflag, mi_princess, mi_explod1, mi_explod2, mi_h_player,
+	mi_spike, mi_s_spike, mi_player, mi_eyes, mi_flag, mi_tf_flag, mi_tf_stan, mi_stag, mi_basrkey, mi_basbkey, mi_w_s_key, mi_w_g_key, mi_b_g_key, mi_b_s_key, mi_ff_flag, mi_harbflag, mi_princess, mi_explod1, mi_explod2, mi_h_player,
 	mi_gib1, mi_gib2, mi_gib3, mi_rocket, mi_grenade, mi_bubble,
 	mi_vaxe, mi_vbio, mi_vgrap, mi_vknife, mi_vknife2, mi_vmedi, mi_vspan,
 	mi_flame,	//joe: for changing flame/flame0 models
 	mi_monster1,mi_m2,mi_m3,mi_m4,mi_m5,mi_m6,mi_m7,mi_m8,mi_m9,mi_m10,mi_m11,mi_m12,
 	mi_m13, mi_m14, mi_m15, mi_m16, mi_m17,
-	mi_weapon1, mi_weapon2, mi_weapon3, mi_weapon4, mi_weapon5, mi_weapon6, mi_weapon7, mi_weapon8,
+	mi_weapon1, mi_weapon2, mi_weapon3, mi_weapon4, mi_weapon5, mi_weapon6, mi_weapon7, mi_weapon8, mi_coilgun, mi_hook,
 	cl_num_modelindices,
 } cl_modelindex_t;
 

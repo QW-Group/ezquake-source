@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qmb_particles.h"
 #include "rulesets.h"
 #include "teamplay.h"
+#include "cl_tent.h"
 
 static int MVD_TranslateFlags(int src);
 void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);	
@@ -62,6 +63,7 @@ void CL_InitEnts(void) {
 	memset(cl_modelnames, 0, sizeof(cl_modelnames));
 
 	cl_modelnames[mi_spike] = "progs/spike.mdl";
+	cl_modelnames[mi_s_spike] = "progs/s_spike.mdl";
 	cl_modelnames[mi_player] = "progs/player.mdl";
 	cl_modelnames[mi_eyes] = "progs/eyes.mdl";
 	cl_modelnames[mi_flag] = "progs/flag.mdl";
@@ -97,6 +99,8 @@ void CL_InitEnts(void) {
 	cl_modelnames[mi_weapon6] = "progs/v_rock.mdl";
 	cl_modelnames[mi_weapon7] = "progs/v_rock2.mdl";
 	cl_modelnames[mi_weapon8] = "progs/v_light.mdl";
+	cl_modelnames[mi_coilgun] = "progs/v_coil.mdl";
+	cl_modelnames[mi_hook] = "progs/v_star.mdl";
 
 	cl_modelnames[mi_vaxe] = "progs/v_axe.mdl";
 	cl_modelnames[mi_vbio] = "progs/v_bio.mdl";
@@ -1009,10 +1013,17 @@ void CL_LinkPacketEntities(void)
 
 		ent.model = model;
 
-		if (state->modelindex == cl_modelindices[mi_rocket]) 
+		if (state->modelindex == cl_modelindices[mi_rocket])
 		{
 			if (cl_rocket2grenade.value && cl_modelindices[mi_grenade] != -1)
 				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
+#ifdef EZQ_FAKEPROJ
+			CL_MatchFakeProjectile(cent);
+		}
+		else if (state->modelindex == cl_modelindices[mi_grenade])
+		{
+			CL_MatchFakeProjectile(cent);
+#endif
 		}
 
 		ent.skinnum = state->skinnum;

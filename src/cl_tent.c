@@ -28,8 +28,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "qsound.h"
 #include "qmb_particles.h"
+#include "cl_tent.h"
 
 extern cvar_t gl_no24bit;
+#ifdef EZQ_FAKEPROJ
+extern cvar_t cl_rocket2grenade;
+#endif
 
 temp_entity_list_t temp_entities;
 
@@ -60,6 +64,10 @@ typedef struct explosion_s
 // cl_free_explosions = linear linked list of free explosions
 explosion_t	cl_explosions[MAX_EXPLOSIONS];
 explosion_t cl_explosions_headnode, *cl_free_explosions;
+
+#ifdef EZQ_FAKEPROJ
+fproj_t cl_fakeprojectiles[MAX_FAKEPROJ];
+#endif
 
 static model_t	*cl_explo_mod, *cl_bolt1_mod, *cl_bolt2_mod, *cl_bolt3_mod, *cl_beam_mod;
 
@@ -101,6 +109,9 @@ void CL_ClearTEnts(void)
 
 	memset (&cl_beams, 0, sizeof(cl_beams));
 	memset (&cl_explosions, 0, sizeof(cl_explosions));
+#ifdef EZQ_FAKEPROJ
+	memset (&cl_fakeprojectiles, 0, sizeof(cl_fakeprojectiles));
+#endif
 
 	// link explosions 
 	cl_free_explosions = cl_explosions; 
@@ -148,12 +159,195 @@ void CL_FreeExplosion(explosion_t *ex)
 	cl_free_explosions = ex;
 }
 
+#ifdef EZQ_FAKEPROJ
+
+// Removes the dynamic light owned by a fake projectile, if any.
+static void CL_FakeProjectile_KillDlight(fproj_t *prj)
+{
+	dlight_t *dl;
+	int i;
+
+	if (!prj->dl_key)
+		return;
+
+	for (i = 0, dl = cl_dlights; i < MAX_DLIGHTS; i++, dl++) {
+		if (dl->key == prj->dl_key) {
+			memset(dl, 0, sizeof(*dl));
+			cl_dlight_active[i / 32] &= ~(1 << (i % 32));
+		}
+	}
+
+	prj->dl_key = 0;
+}
+
+static void CL_SetTrailStops(centity_t *cent, const vec3_t stop)
+{
+	int i;
+
+	for (i = 0; i < sizeof(cent->trails) / sizeof(cent->trails[0]); i++) {
+		VectorCopy(stop, cent->trails[i].stop);
+	}
+}
+
+// Merge an incoming server projectile entity with a fake projectile that is
+// about to expire, so trails continue smoothly instead of restarting.
+void CL_MatchFakeProjectile(centity_t *cent)
+{
+	fproj_t *prj;
+	int i;
+
+	for (i = 0, prj = cl_fakeprojectiles; i < MAX_FAKEPROJ; i++, prj++)
+	{
+		// only consider fake projectiles that ended recently (or end soon)
+		if (prj->endtime >= cl.time && prj->endtime <= cl.time + 0.08)
+		{
+			if (VectorDistance(cent->lerp_origin, prj->org) < 24)
+			{
+				if (prj->partcount)
+				{
+					CL_SetTrailStops(cent, prj->partorg);
+				}
+
+				CL_FakeProjectile_KillDlight(prj);
+
+				memset(prj, 0, sizeof(fproj_t));
+				return;
+			}
+		}
+	}
+}
+
+fproj_t *CL_AllocFakeProjectile(void)
+{
+	fproj_t *prj;
+	int i;
+	float cull_distance;
+	int cull_index;
+
+	for (i = 0, prj = cl_fakeprojectiles; i < MAX_FAKEPROJ; i++, prj++)
+	{
+		if (prj->endtime < cl.time)
+		{
+			memset(prj, 0, sizeof(fproj_t));
+			prj->dl_key = MAX_EDICTS + i; // make sure not to collide with entity dlight keys
+			prj->index = i;
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+			prj->owner = cl.viewplayernum + 1;
+			prj->entnum = 0;
+#endif
+			return prj;
+		}
+	}
+
+	// out of free slots, cull the projectile furthest away from the player
+	cull_distance = 1;
+	cull_index = 0;
+	for (i = 0, prj = cl_fakeprojectiles; i < MAX_FAKEPROJ; i++, prj++)
+	{
+		float temp_dist;
+
+		temp_dist = VectorDistance(prj->org, cl.simorg);
+		if (temp_dist > cull_distance)
+		{
+			if (temp_dist > 2048) // it's so far away, just use this and hope for the best
+				break;
+
+			cull_distance = temp_dist;
+			cull_index = i;
+		}
+	}
+
+	prj = &cl_fakeprojectiles[cull_index];
+	memset(prj, 0, sizeof(fproj_t));
+	prj->index = cull_index;
+	prj->dl_key = MAX_EDICTS + cull_index;
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+	prj->owner = cl.viewplayernum + 1;
+	prj->entnum = 0;
+#endif
+	return prj;
+}
+
+#define MAX_CLIP_PLANES 5
+
+static void Fproj_Physics_ClipVelocity(vec3_t vel, vec3_t norm, float f)
+{
+	vec3_t vel2;
+
+	VectorScale(norm, DotProduct(vel, norm), vel2);
+	VectorScale(vel2, f, vel2);
+	VectorSubtract(vel, vel2, vel);
+
+	if (vel[0] > -0.1 && vel[0] < 0.1) vel[0] = 0;
+	if (vel[1] > -0.1 && vel[1] < 0.1) vel[1] = 0;
+	if (vel[2] > -0.1 && vel[2] < 0.1) vel[2] = 0;
+}
+
+// Grenade-style movement: gravity plus bouncing against world geometry.
+// Flag 512 marks a projectile that has come to rest.
+void Fproj_Physics_Bounce(fproj_t *proj, float dt)
+{
+	float gravity_value = movevars.gravity;
+	float movetime, bump;
+
+	if (proj->flags & 512)
+	{
+		if (proj->vel[2] >= 1 / 32)
+			proj->flags &= ~512;
+	}
+
+	proj->vel[2] -= 0.5 * dt * gravity_value;
+
+	VectorMA(proj->angs, dt, proj->avel, proj->angs);
+
+	movetime = dt;
+	for (bump = 0; bump < MAX_CLIP_PLANES && movetime > 0; ++bump)
+	{
+		float d, bouncefac, bouncestp;
+		vec3_t move, to;
+		trace_t phytrace;
+
+		VectorScale(proj->vel, movetime, move);
+		VectorAdd(proj->org, move, to);
+		phytrace = PM_TraceLine(proj->org, to);
+		VectorCopy(phytrace.endpos, proj->org);
+
+		if (phytrace.fraction == 1)
+			break;
+
+		movetime *= 1 - min(1, phytrace.fraction);
+
+		bouncefac = 0.5;
+		bouncestp = 60 / 800;
+		bouncestp *= gravity_value;
+
+		Fproj_Physics_ClipVelocity(proj->vel, phytrace.plane.normal, 1 + bouncefac);
+
+		d = DotProduct(phytrace.plane.normal, proj->vel);
+		if (phytrace.plane.normal[2] > 0.7 && d < bouncestp && d > -bouncestp)
+		{
+			proj->flags |= 512;
+			VectorClear(proj->vel);
+			VectorClear(proj->avel);
+		}
+		else
+		{
+			proj->flags &= ~512;
+		}
+	}
+
+	if (!(proj->flags & 512))
+	{
+		proj->vel[2] -= 0.5 * dt * gravity_value;
+	}
+}
+
+#endif // EZQ_FAKEPROJ
+
 static void CL_ParseBeam(int type, vec3_t end)
 {
-	int ent, i;
+	int ent;
 	vec3_t start;
-	beam_t *b;
-	struct model_s *m;
 
 	ent = MSG_ReadShort();
 
@@ -164,6 +358,15 @@ static void CL_ParseBeam(int type, vec3_t end)
 	end[0] = MSG_ReadCoord();
 	end[1] = MSG_ReadCoord();
 	end[2] = MSG_ReadCoord();
+
+	CL_CreateBeam(type, ent, start, end);
+}
+
+void CL_CreateBeam(int type, int ent, vec3_t start, vec3_t end)
+{
+	int i;
+	beam_t *b;
+	struct model_s *m;
 
 	if (CL_Demo_SkipMessage(true))
 		return;
@@ -954,9 +1157,132 @@ static void CL_UpdateExplosions(void)
 	}
 }
 
+#ifdef EZQ_FAKEPROJ
+// Run physics for and draw all live fake projectiles.
+static void CL_UpdateFakeProjectiles(void)
+{
+	int i;
+	fproj_t *prj;
+	centity_t *cent;
+	entity_t ent;
+	entity_state_t centstate;
+	customlight_t cst_lt = { 0 };
+
+	memset(&centstate, 0, sizeof(entity_state_t));
+	memset(&ent, 0, sizeof(entity_t));
+	ent.colormap = vid.colormap;
+
+	for (i = 0; i < MAX_FAKEPROJ; i++) {
+		prj = &cl_fakeprojectiles[i];
+		cent = &prj->cent;
+
+		if (cl.time <= prj->starttime)
+		{
+			continue;
+		}
+		else if (cl.time >= prj->endtime)
+		{
+			CL_FakeProjectile_KillDlight(prj);
+			continue;
+		}
+
+		cent->current = centstate;
+
+		if (!prj->modelindex || !cl.model_precache[prj->modelindex] || prj->modelindex >= MAX_MODELS)
+			continue;
+
+		ent.model = cl.model_precache[prj->modelindex];
+		centstate.modelindex = prj->modelindex;
+		centstate.number = prj->dl_key;
+
+		if (prj->type == 1)
+		{
+			// grenade: bounce physics
+			Fproj_Physics_Bounce(prj, cls.frametime);
+
+			VectorCopy(prj->org, ent.origin);
+			VectorCopy(prj->angs, ent.angles);
+		}
+		else
+		{
+			// linear flight, extrapolated from start position
+			vec3_t traveled;
+			trace_t trace;
+
+			VectorCopy(prj->start, ent.origin);
+			VectorScale(prj->vel, (cl.time - prj->starttime) + 0.02, traveled);
+			VectorAdd(ent.origin, traveled, ent.origin);
+			VectorCopy(prj->angs, ent.angles);
+			VectorCopy(ent.origin, prj->org);
+
+			trace = PM_TraceLine(prj->start, ent.origin);
+			if (trace.fraction < 1)
+			{
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+				if (prj->parttime)
+					continue;
+				else
+					VectorCopy(trace.endpos, prj->org);
+#else
+				continue;
+#endif
+			}
+		}
+
+		if (prj->effects)
+		{
+			if (cl.time >= prj->parttime)
+			{
+				prj->parttime = cl.time + 0.013;
+				if (!VectorLength(prj->partorg))
+				{
+					VectorCopy(prj->org, prj->partorg);
+					CL_SetTrailStops(cent, prj->partorg);
+				}
+
+				prj->partcount++;
+				VectorCopy(prj->partorg, cent->old_origin);
+				CL_SetTrailStops(cent, prj->partorg);
+				VectorCopy(ent.origin, cent->current.origin);
+				VectorCopy(ent.origin, cent->lerp_origin);
+				VectorCopy(ent.origin, prj->partorg);
+
+				if (prj->effects & 256)
+				{
+					// nail trail
+					if (amf_nailtrail.integer && !gl_no24bit.integer && amf_nailtrail_plasma.integer) {
+						byte color[3];
+						color[0] = 0; color[1] = 70; color[2] = 255;
+						FireballTrail(cent, color, 0.6, 0.3);
+					}
+				}
+				else
+				{
+					CL_AddParticleTrail(&ent, cent, &cst_lt, &centstate);
+				}
+			}
+		}
+
+		// hacky fix for cl_r2g, we have to change the model after the particles have been handled
+		if (prj->effects & EF_ROCKET)
+		{
+			if (cl_rocket2grenade.integer)
+			{
+				ent.model = cl.model_precache[cl_modelindices[mi_grenade]];
+			}
+		}
+
+		CL_AddEntity(&ent);
+	}
+}
+#endif // EZQ_FAKEPROJ
+
 void CL_UpdateTEnts (void)
 {
 	CL_UpdateBeams();
 	CL_UpdateExplosions();
+#ifdef EZQ_FAKEPROJ
+	CL_UpdateFakeProjectiles();
+#endif
 }
 
