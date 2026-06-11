@@ -1346,6 +1346,9 @@ void CL_ParsePlayerinfo (void)
 
 	player_state_t *prevstate, dummy;
 	int num, i;
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+	int wep_predict = 0;
+#endif
 
 	extern void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);
 
@@ -1532,7 +1535,40 @@ void CL_ParsePlayerinfo (void)
 			state->effects = 0;
 
 		if (flags & PF_WEAPONFRAME)
+		{
 			state->weaponframe = MSG_ReadByte ();
+
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+			if (cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+			{
+				wep_predict = MSG_ReadByte();
+				if (wep_predict)
+				{
+					state->impulse = MSG_ReadByte();
+
+					state->weapon = MSG_ReadShort();
+					state->items = cl.stats[STAT_ITEMS];
+
+					state->client_time = MSG_ReadFloat();
+					state->attack_finished = MSG_ReadFloat();
+					state->client_nextthink = MSG_ReadFloat();
+					state->client_thinkindex = MSG_ReadByte();
+					state->client_ping = MSG_ReadByte();
+					state->client_predflags = MSG_ReadByte();
+
+					state->ammo_shells = MSG_ReadByte();
+					state->ammo_nails = MSG_ReadByte();
+					state->ammo_rockets = MSG_ReadByte();
+					state->ammo_cells = MSG_ReadByte();
+				}
+			}
+			else
+			{
+				state->weapon = cl.stats[STAT_ACTIVEWEAPON];
+				state->items = cl.stats[STAT_ITEMS];
+			}
+#endif
+		}
 		else
 			state->weaponframe = 0;
 
@@ -1654,7 +1690,33 @@ guess_pm_type:
 			if (flags & PF_EFFECTS)
 				MSG_WriteByte(&cls.demomessage, state->effects);
 			if (flags & PF_WEAPONFRAME)
+			{
 				MSG_WriteByte(&cls.demomessage, state->weaponframe);
+
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+				if (cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION)
+				{
+					MSG_WriteByte(&cls.demomessage, wep_predict);
+					if (wep_predict)
+					{
+						MSG_WriteByte(&cls.demomessage, state->impulse);
+						MSG_WriteShort(&cls.demomessage, state->weapon);
+
+						MSG_WriteFloat(&cls.demomessage, state->client_time);
+						MSG_WriteFloat(&cls.demomessage, state->attack_finished);
+						MSG_WriteFloat(&cls.demomessage, state->client_nextthink);
+						MSG_WriteByte(&cls.demomessage, state->client_thinkindex);
+						MSG_WriteByte(&cls.demomessage, state->client_ping);
+						MSG_WriteByte(&cls.demomessage, state->client_predflags);
+
+						MSG_WriteByte(&cls.demomessage, state->ammo_shells);
+						MSG_WriteByte(&cls.demomessage, state->ammo_nails);
+						MSG_WriteByte(&cls.demomessage, state->ammo_rockets);
+						MSG_WriteByte(&cls.demomessage, state->ammo_cells);
+					}
+				}
+#endif
+			}
 #ifdef FTE_PEXT_TRANS
 			if (flags & PF_TRANS_Z && cls.fteprotocolextensions & FTE_PEXT_TRANS)
 				MSG_WriteByte(&cls.demomessage, state->alpha);		
@@ -1981,7 +2043,7 @@ static void CL_LinkPlayers(void)
 
 			oldphysent = pmove.numphysent;
 			CL_SetSolidPlayers(j);
-			CL_PredictUsercmd(state, &exact, &state->command);
+			CL_PredictUsercmd(state, &exact, &state->command, false);
 			pmove.numphysent = oldphysent;
 			VectorCopy(exact.origin, ent.origin);
 			VectorCopy(exact.origin, predicted_players[j].drawn_origin);
@@ -2220,7 +2282,7 @@ void CL_SetUpPlayerPrediction(qbool dopred)
 					msec = 255;
 				state->command.msec = msec;
 
-				CL_PredictUsercmd (state, &exact, &state->command);
+				CL_PredictUsercmd (state, &exact, &state->command, false);
 				VectorCopy (exact.origin, pplayer->origin);
 			}
 		}
@@ -2520,6 +2582,12 @@ void MVD_Interpolate(void)
 void CL_ClearPredict(void) {
 	memset(predicted_players, 0, sizeof(predicted_players));
 	mvd_fixangle = 0;
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+	pmove.effect_frame = 0;
+	pmove.t_width = 0;
+	pmove.impulse = 0;
+	pmove.client_predflags = 0; // don't carry PRDFL_* over to the next server
+#endif
 }
 
 void CL_CalcPlayerFPS(player_info_t *info, int msec)

@@ -83,9 +83,40 @@ enum {
 	dbg_antilag_position_set   = 4
 };
 
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+// events generated during weapon prediction; played back slightly delayed
+// depending on cl_predict_buffer (see CL_PlayEvents)
+typedef struct prediction_event_sound_s
+{
+	int				frame_num;
+
+	int				chan;
+	struct sfx_s	*sample;
+	float			vol;
+
+	struct prediction_event_sound_s *next;
+} prediction_event_sound_t;
+
+typedef struct prediction_event_fakeproj_s
+{
+	int			frame_num;
+
+	int			type;		// IT_* weapon that fired
+	vec3_t		origin;
+	vec3_t		angles;
+	vec3_t		velocity;
+	vec3_t		avelocity;
+
+	struct prediction_event_fakeproj_s *next;
+} prediction_event_fakeproj_t;
+
+extern prediction_event_fakeproj_t	*p_event_fakeproj;
+extern prediction_event_sound_t		*p_event_sound;
+#endif // MVD_PEXT1_WEAPONPREDICTION
+
 // player_state_t is the information needed by a player entity
 // to do move prediction and to generate a drawable entity
-typedef struct 
+typedef struct
 {
 	int			messagenum;		// All players won't be updated each frame.
 
@@ -97,6 +128,27 @@ typedef struct
 	vec3_t		viewangles;		// Only for demos, not from server.
 	vec3_t		velocity;
 	int			weaponframe;
+
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+	// weapon prediction state for the local player, sent by the server
+	// under PF_WEAPONFRAME (see CL_ParsePlayerinfo)
+	int			weapon_index;
+	int			weapon;
+	int			items;
+	int			impulse;
+
+	byte		ammo_shells;
+	byte		ammo_nails;
+	byte		ammo_rockets;
+	byte		ammo_cells;
+
+	float		attack_finished;
+	float		client_time;
+	float		client_nextthink;
+	int			client_thinkindex;
+	int			client_ping;
+	int			client_predflags;
+#endif
 
 	int			modelindex;
 	int			frame;
@@ -633,6 +685,17 @@ typedef struct {
 	vec3_t		simorg;
 	vec3_t		simvel;
 	vec3_t		simangles;
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+	int			simwep;			// predicted weapon (weapon_index) to display
+	int			simwepframe;	// predicted weapon animation frame
+	// prediction error smoothing (cl_predict_smoothview)
+	float		simerr_lastcheck;
+	int			simerr_frame;
+	int			simerr_wepframe;
+	int			simerr_wep;
+	vec3_t		simerr_nudge;
+	vec3_t		simerr_org;
+#endif
 
 	// pitch drifting vars
 	float		pitchvel;
@@ -1094,8 +1157,11 @@ void CL_ParseProjectiles(qbool indexed);
 
 // cl_pred.c
 void CL_InitPrediction(void);
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+void CL_InitWepSounds(void);
+#endif
 void CL_PredictMove(qbool physframe);
-void CL_PredictUsercmd(player_state_t *from, player_state_t *to, usercmd_t *u);
+void CL_PredictUsercmd(player_state_t *from, player_state_t *to, usercmd_t *u, qbool local);
 void CL_DisableLerpMove(void);
 
 // cl_cam.c

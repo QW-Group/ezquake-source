@@ -200,6 +200,7 @@ set(common
         ${SOURCE_DIR}/net_chan.c
         ${SOURCE_DIR}/parser.c
         ${SOURCE_DIR}/pmove.c
+        ${SOURCE_DIR}/pmove_weapon.c
         ${SOURCE_DIR}/pmovetst.c
         ${SOURCE_DIR}/q_shared.c
         ${SOURCE_DIR}/sha1.c

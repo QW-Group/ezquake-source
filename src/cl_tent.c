@@ -342,6 +342,65 @@ void Fproj_Physics_Bounce(fproj_t *proj, float dt)
 	}
 }
 
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+
+// Constructor for locally predicted projectiles. Lifetimes are derived
+// from the connection latency: the fake projectile only covers the gap
+// until the server's own projectile entity is expected to arrive.
+static fproj_t *CL_CreateFakeProjectile(cl_modelindex_t model, float lifetime, int effects)
+{
+	fproj_t *newmis;
+	float latency = cls.latency;
+
+	if (pmove.client_ping == 0)
+		return NULL;
+
+	newmis = CL_AllocFakeProjectile();
+	newmis->modelindex = cl_modelindices[model];
+	newmis->starttime = cl.time + max((latency - 0.013) - ((float)pmove.client_ping / 1000), 0);
+	newmis->endtime = cl.time + latency + lifetime;
+	newmis->effects = effects;
+
+	return newmis;
+}
+
+fproj_t *CL_CreateFakeNail(void)
+{
+	return CL_CreateFakeProjectile(mi_spike, 0.013, 256);
+}
+
+fproj_t *CL_CreateFakeSuperNail(void)
+{
+	return CL_CreateFakeProjectile(mi_s_spike, 0.013, 256);
+}
+
+fproj_t *CL_CreateFakeGrenade(void)
+{
+	fproj_t *newmis = CL_CreateFakeProjectile(mi_grenade, 0, EF_GRENADE);
+
+	if (newmis)
+	{
+		newmis->parttime = newmis->starttime + 0.013;
+		newmis->type = 1; // bounce physics
+	}
+
+	return newmis;
+}
+
+fproj_t *CL_CreateFakeRocket(void)
+{
+	fproj_t *newmis = CL_CreateFakeProjectile(mi_rocket, 0.013, EF_ROCKET);
+
+	if (newmis)
+	{
+		newmis->parttime = newmis->starttime + 0.013; // delay trail a tiny bit, otherwise it looks funny
+	}
+
+	return newmis;
+}
+
+#endif // MVD_PEXT1_WEAPONPREDICTION
+
 #endif // EZQ_FAKEPROJ
 
 static void CL_ParseBeam(int type, vec3_t end)
@@ -358,6 +417,15 @@ static void CL_ParseBeam(int type, vec3_t end)
 	end[0] = MSG_ReadCoord();
 	end[1] = MSG_ReadCoord();
 	end[2] = MSG_ReadCoord();
+
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+	if (ent == cl.playernum + 1)
+	{
+		// the local beam is already drawn by prediction
+		if (PM_WeaponPredictionActive() && cl_predict_beam.integer)
+			return;
+	}
+#endif
 
 	CL_CreateBeam(type, ent, start, end);
 }

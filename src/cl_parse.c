@@ -1969,6 +1969,53 @@ void CL_ParseStartSoundPacket(void)
 	if (ent > CL_MAX_EDICTS)
 		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
 
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+	// skip our own weapon/jump sounds if we are predicting them
+	if (ent == cl.playernum + 1 && PM_WeaponPredictionActive())
+	{
+		extern cvar_t cl_nopred;
+
+		if (cl_predict_weaponsound.integer != 0)
+		{
+			if (channel == 1)
+			{
+				int predict_sound = true;
+
+				if (cl_predict_weaponsound.integer > 1)
+				{
+					predict_sound = PM_FilterWeaponSound(sound_num);
+				}
+				else if (strcmp(cl.sound_precache[sound_num]->name, "player/axhit2.wav") == 0)
+				{
+					predict_sound = false;
+				}
+
+				if (predict_sound)
+					return;
+			}
+
+			// the lightning start sound is played on channel 0, not the weapon channel
+			if (channel == 0)
+			{
+				if (!(cl_predict_weaponsound.integer & 256))
+				{
+					if (strcmp(cl.sound_precache[sound_num]->name, "weapons/lstart.wav") == 0)
+						return;
+				}
+			}
+		}
+
+		if (cl_predict_jump.integer && !cl_nopred.integer)
+		{
+			if (channel == 4)
+			{
+				if (strcmp(cl.sound_precache[sound_num]->name, "player/plyrjmp8.wav") == 0)
+					return;
+			}
+		}
+	}
+#endif
+
 	// MVD Playback
     if (cls.mvdplayback)
 	{

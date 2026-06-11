@@ -54,6 +54,33 @@ typedef struct {
 	float		waterjumptime;
 	int			pm_type;
 
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+	// weapon prediction state, mirrored from/into player_state_t for the
+	// local player only (see CL_PredictUsercmd)
+	int			weapon;
+	int			weapon_index;
+	int			weaponframe;
+
+	int			current_ammo;
+	int			items;
+	int			impulse;
+	float		client_time;
+	float		attack_finished;
+	float		client_nextthink;
+	byte		client_thinkindex;
+	byte		client_ping;
+	byte		client_predflags;
+	int			frame_current;	// outgoing sequence number of the frame being predicted
+	int			effect_frame;	// last frame whose prediction events have been played
+
+	short		ammo_shells;
+	short		ammo_nails;
+	short		ammo_rockets;
+	short		ammo_cells;
+
+	float		t_width;		// re-trigger time for the predicted lightning hit sound
+#endif
+
 	// world state
 	int			numphysent;
 	physent_t	physents[MAX_PHYSENTS]; // 0 should be the world
@@ -94,6 +121,38 @@ typedef struct {
 
 extern movevars_t movevars;
 extern playermove_t pmove;
+
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+#include "qsound.h"
+
+// client_predflags values sent by the server
+#define PRDFL_MIDAIR	1
+#define PRDFL_COILGUN	2
+#define PRDFL_FORCEOFF	255
+
+extern int pmove_nopred_weapon;
+
+// true when the negotiated extension is in effect and weapon prediction has
+// not been disabled by the user, the server (PRDFL_FORCEOFF) or spectating
+#define PM_WeaponPredictionActive() \
+	(!pmove_nopred_weapon && (cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION))
+
+// predicted weapon sounds, precached by CL_InitWepSounds (cl_pred.c)
+extern sfx_t *cl_sfx_jump, *cl_sfx_ax1, *cl_sfx_sg, *cl_sfx_ssg, *cl_sfx_ng,
+	*cl_sfx_sng, *cl_sfx_gl, *cl_sfx_rl, *cl_sfx_lg, *cl_sfx_lghit, *cl_sfx_coil;
+
+extern cvar_t cl_nopred_weapon;
+extern cvar_t cl_predict_weaponsound;
+extern cvar_t cl_predict_smoothview;
+extern cvar_t cl_predict_beam;
+extern cvar_t cl_predict_projectiles;
+extern cvar_t cl_predict_jump;
+extern cvar_t cl_predict_buffer;
+
+void PM_PlayerWeapon (void);
+int PM_FilterWeaponSound (byte sound_num);
+void PM_SoundEffect (sfx_t *sample, int chan);
+#endif
 
 int PM_PlayerMove (void);
 

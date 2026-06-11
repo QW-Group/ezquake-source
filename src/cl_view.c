@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud_common.h"
 #include "mvd_utils.h"
 #include "r_matrix.h"
+#include "pmove.h"
 
 #ifdef X11_GAMMA_WORKAROUND
 #include "tr_types.h"
@@ -850,9 +851,22 @@ static int V_CurrentWeaponModel(void)
 				return cl_modelindices[mi_vaxe];
 			}
 			if (bestgun > 1 && bestgun <= 8) {
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+				if (!pmove_nopred_weapon && pmove.client_predflags & PRDFL_COILGUN)
+					if (bestgun == 2) { bestgun = 9; }
+#endif
 				return cl_modelindices[mi_weapon1 - 1 + bestgun];
 			}
 		}
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+		else if (PM_WeaponPredictionActive()) {
+			// show the predicted weapon (weapon_index 9 maps to mi_coilgun)
+			if (cl.simwep == 1)
+				return cl_modelindices[mi_vaxe];
+			else if (cl.simwep > 1 && cl.simwep <= 9)
+				return cl_modelindices[mi_weapon1 - 1 + cl.simwep];
+		}
+#endif
 		return cl.stats[STAT_WEAPON];
 	}
 }
@@ -911,6 +925,11 @@ static void V_AddViewWeapon(float bob)
 		else if (scr_viewsize.value == 80)
 			cent->current.origin[2] += 0.5;
 	}
+
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+	if (PM_WeaponPredictionActive())
+		view_message.weaponframe = cl.simwepframe;
+#endif
 
 	if (cent->current.modelindex != gunmodel) {
 		cent->frametime = -1;
