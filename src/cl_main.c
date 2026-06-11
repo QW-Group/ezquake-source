@@ -138,6 +138,10 @@ cvar_t cl_pext_alpha = {"cl_pext_alpha", "1"};
 cvar_t cl_pext_colourmod = {"cl_pext_colourmod", "1"};
 #endif
 
+#ifdef FTE_PEXT_ACCURATETIMINGS
+cvar_t cl_pext_accuratetimings = {"cl_pext_accuratetimings", "1"};
+#endif
+
 #ifdef CLIENTONLY
 #define PROCESS_SERVERPACKETS_IMMEDIATELY (0)
 #else
@@ -504,11 +508,13 @@ unsigned int CL_SupportedFTEExtensions (void)
 #endif
 	}
 
-	if (cl_pext_other.value)
-	{
 #ifdef FTE_PEXT_ACCURATETIMINGS
+	if (cl_pext_accuratetimings.value)
 		fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
 #endif
+
+	if (cl_pext_other.value)
+	{
 #ifdef FTE_PEXT_HLBSP
 		fteprotextsupported |= FTE_PEXT_HLBSP;
 #endif
@@ -1946,6 +1952,9 @@ static void CL_InitLocal(void)
 #endif
 #ifdef FTE_PEXT_COLOURMOD
 	Cvar_Register(&cl_pext_colourmod);
+#endif
+#ifdef FTE_PEXT_ACCURATETIMINGS
+	Cvar_Register(&cl_pext_accuratetimings);
 #endif
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_INPUT_KEYBOARD);
