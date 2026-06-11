@@ -2067,6 +2067,12 @@
         }
       ]
     },
+    "cl_nopred_weapon": {
+      "default": "0",
+      "desc": "Disables the antilag 1 client-side weapon prediction (predicted weapon firing, sounds, projectiles and beams) even when the server supports it.",
+      "group-id": "21",
+      "type": "boolean"
+    },
     "cl_novweps": {
       "default": "0",
       "desc": "If set, disables support for zquake vwep extension.",
@@ -2185,6 +2191,12 @@
         }
       ]
     },
+    "cl_pext_accuratetimings": {
+      "default": "1",
+      "desc": "If set, requests FTE's accurate timings protocol extension during connect, giving millisecond-precision server time for entity interpolation. Used by the antilag 1 prototype.",
+      "group-id": "21",
+      "type": "boolean"
+    },
     "cl_pext_alpha": {
       "default": "1",
       "desc": "If set, enable support for FTE's alpha attribute protocol extension.",
@@ -2274,9 +2286,21 @@
       "group-id": "0",
       "type": "boolean"
     },
+    "cl_pext_simpleprojectiles": {
+      "default": "1",
+      "desc": "When 1, requests the MVD PEXT1 simple projectiles extension during connect. Supporting servers then send nails, grenades and rockets as lightweight stateless projectiles that the client flies locally, instead of interpolated entities. Part of the antilag 1 prototype.",
+      "group-id": "21",
+      "type": "boolean"
+    },
     "cl_pext_warndemos": {
       "default": "1",
       "desc": "If set, warning will be displayed when recording a demo that is not backwards compatible with old clients.",
+      "group-id": "21",
+      "type": "boolean"
+    },
+    "cl_pext_weaponprediction": {
+      "default": "1",
+      "desc": "When 1, requests the MVD PEXT1 weapon prediction extension during connect. Supporting servers then send the local player's weapon simulation state and the client predicts weapon firing, sounds, projectiles and beams ahead of the server. Part of the antilag 1 prototype.",
       "group-id": "21",
       "type": "boolean"
     },
@@ -2345,6 +2369,18 @@
         }
       ]
     },
+    "cl_predict_beam": {
+      "default": "1",
+      "desc": "With weapon prediction active, draws your own lightning beam immediately from the predicted state and suppresses the server-sent one.",
+      "group-id": "21",
+      "type": "boolean"
+    },
+    "cl_predict_buffer": {
+      "default": "1",
+      "desc": "Number of frames to delay predicted weapon effects, allowing mispredictions to be corrected before sounds and projectiles are shown. Higher values are safer but reduce the antilag benefit.",
+      "group-id": "21",
+      "type": "integer"
+    },
     "cl_predict_half": {
       "default": "0",
       "group-id": "21",
@@ -2361,6 +2397,12 @@
         }
       ]
     },
+    "cl_predict_jump": {
+      "default": "1",
+      "desc": "With weapon prediction active, plays your own jump sound immediately and ignores the server-sent one.",
+      "group-id": "21",
+      "type": "boolean"
+    },
     "cl_predict_players": {
       "default": "1",
       "desc": "This toggles the prediction for other players' movement. Unless you are having problems this variable should be left at \"1\".",
@@ -2376,6 +2418,24 @@
           "name": "true"
         }
       ]
+    },
+    "cl_predict_projectiles": {
+      "default": "1",
+      "desc": "With weapon prediction active, spawns your own nails, grenades and rockets immediately as locally simulated projectiles, which are merged with the server's projectiles when they arrive.",
+      "group-id": "21",
+      "type": "boolean"
+    },
+    "cl_predict_smoothview": {
+      "default": "1",
+      "desc": "With weapon prediction active, smooths out prediction error corrections of your view position instead of snapping. Values towards 2 decay the error faster, values towards 0.1 slower; 0 disables smoothing.",
+      "group-id": "21",
+      "type": "float"
+    },
+    "cl_predict_weaponsound": {
+      "default": "1",
+      "desc": "With weapon prediction active, plays your own weapon sounds immediately and ignores the server-sent ones. 0 disables, 1 predicts all weapon sounds, higher values are a bitmask excluding specific weapons from prediction: 2 axe, 4 shotgun/coilgun, 8 super shotgun, 16 nailgun, 32 super nailgun, 64 grenade launcher, 128 rocket launcher, 256 lightning gun.",
+      "group-id": "21",
+      "type": "integer"
     },
     "cl_proxyaddr": {
       "default": "",
@@ -2567,6 +2627,12 @@
     "cl_solid_players": {
       "default": "1",
       "desc": "If not set then client will not perform collision detection against other players.",
+      "group-id": "21",
+      "type": "boolean"
+    },
+    "cl_sproj_xerp": {
+      "default": "0",
+      "desc": "Extrapolates other players' simple projectiles by your latency (capped at 150 ms) so they are shown closer to where the server has them.",
       "group-id": "21",
       "type": "boolean"
     },
