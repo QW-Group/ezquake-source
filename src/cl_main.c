@@ -596,6 +596,134 @@ unsigned int CL_SupportedMVDExtensions1(void)
 }
 #endif
 
+#if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
+typedef struct pext_info_s {
+	unsigned int bit;
+	const char *name;
+} pext_info_t;
+
+static void CL_PrintPextGroup(const char *group, unsigned int active, const pext_info_t *info)
+{
+	unsigned int known = 0;
+
+	Com_Printf("%s: 0x%08x\n", group, active);
+	for (; info->name; info++) {
+		known |= info->bit;
+		if (active & info->bit) {
+			Com_Printf("  %s\n", info->name);
+		}
+	}
+	if (active & ~known) {
+		Com_Printf("  unknown bits: 0x%08x\n", active & ~known);
+	}
+}
+
+// Prints the protocol extensions that were enabled by the client/server
+// negotiation of the current connection (or the demo being played).
+static void CL_PextList_f(void)
+{
+#ifdef PROTOCOL_VERSION_FTE
+	static const pext_info_t fte_pexts[] = {
+#ifdef FTE_PEXT_TRANS
+		{ FTE_PEXT_TRANS, "FTE_PEXT_TRANS" },
+#endif
+#ifdef FTE_PEXT_ACCURATETIMINGS
+		{ FTE_PEXT_ACCURATETIMINGS, "FTE_PEXT_ACCURATETIMINGS" },
+#endif
+#ifdef FTE_PEXT_HLBSP
+		{ FTE_PEXT_HLBSP, "FTE_PEXT_HLBSP" },
+#endif
+#ifdef FTE_PEXT_MODELDBL
+		{ FTE_PEXT_MODELDBL, "FTE_PEXT_MODELDBL" },
+#endif
+#ifdef FTE_PEXT_ENTITYDBL
+		{ FTE_PEXT_ENTITYDBL, "FTE_PEXT_ENTITYDBL" },
+#endif
+#ifdef FTE_PEXT_ENTITYDBL2
+		{ FTE_PEXT_ENTITYDBL2, "FTE_PEXT_ENTITYDBL2" },
+#endif
+#ifdef FTE_PEXT_FLOATCOORDS
+		{ FTE_PEXT_FLOATCOORDS, "FTE_PEXT_FLOATCOORDS" },
+#endif
+#ifdef FTE_PEXT_SPAWNSTATIC2
+		{ FTE_PEXT_SPAWNSTATIC2, "FTE_PEXT_SPAWNSTATIC2" },
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+		{ FTE_PEXT_COLOURMOD, "FTE_PEXT_COLOURMOD" },
+#endif
+#ifdef FTE_PEXT_256PACKETENTITIES
+		{ FTE_PEXT_256PACKETENTITIES, "FTE_PEXT_256PACKETENTITIES" },
+#endif
+#ifdef FTE_PEXT_CHUNKEDDOWNLOADS
+		{ FTE_PEXT_CHUNKEDDOWNLOADS, "FTE_PEXT_CHUNKEDDOWNLOADS" },
+#endif
+#ifdef FTE_PEXT_CSQC
+		{ FTE_PEXT_CSQC, "FTE_PEXT_CSQC" },
+#endif
+#ifdef FTE_PEXT_DPFLAGS
+		{ FTE_PEXT_DPFLAGS, "FTE_PEXT_DPFLAGS" },
+#endif
+		{ 0, NULL }
+	};
+#endif
+#ifdef PROTOCOL_VERSION_FTE2
+	static const pext_info_t fte2_pexts[] = {
+#ifdef FTE_PEXT2_VOICECHAT
+		{ FTE_PEXT2_VOICECHAT, "FTE_PEXT2_VOICECHAT" },
+#endif
+		{ 0, NULL }
+	};
+#endif
+#ifdef PROTOCOL_VERSION_MVD1
+	static const pext_info_t mvd1_pexts[] = {
+#ifdef MVD_PEXT1_FLOATCOORDS
+		{ MVD_PEXT1_FLOATCOORDS, "MVD_PEXT1_FLOATCOORDS" },
+#endif
+#ifdef MVD_PEXT1_HIGHLAGTELEPORT
+		{ MVD_PEXT1_HIGHLAGTELEPORT, "MVD_PEXT1_HIGHLAGTELEPORT" },
+#endif
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON
+		{ MVD_PEXT1_SERVERSIDEWEAPON, "MVD_PEXT1_SERVERSIDEWEAPON" },
+#endif
+#ifdef MVD_PEXT1_DEBUG_WEAPON
+		{ MVD_PEXT1_DEBUG_WEAPON, "MVD_PEXT1_DEBUG_WEAPON" },
+#endif
+#ifdef MVD_PEXT1_DEBUG_ANTILAG
+		{ MVD_PEXT1_DEBUG_ANTILAG, "MVD_PEXT1_DEBUG_ANTILAG" },
+#endif
+#ifdef MVD_PEXT1_HIDDEN_MESSAGES
+		{ MVD_PEXT1_HIDDEN_MESSAGES, "MVD_PEXT1_HIDDEN_MESSAGES" },
+#endif
+#ifdef MVD_PEXT1_SERVERSIDEWEAPON2
+		{ MVD_PEXT1_SERVERSIDEWEAPON2, "MVD_PEXT1_SERVERSIDEWEAPON2" },
+#endif
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+		{ MVD_PEXT1_WEAPONPREDICTION, "MVD_PEXT1_WEAPONPREDICTION" },
+#endif
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+		{ MVD_PEXT1_SIMPLEPROJECTILE, "MVD_PEXT1_SIMPLEPROJECTILE" },
+#endif
+		{ 0, NULL }
+	};
+#endif
+
+	if (cls.state == ca_disconnected) {
+		Com_Printf("Not connected.\n");
+		return;
+	}
+
+#ifdef PROTOCOL_VERSION_FTE
+	CL_PrintPextGroup("FTE extensions", cls.fteprotocolextensions, fte_pexts);
+#endif
+#ifdef PROTOCOL_VERSION_FTE2
+	CL_PrintPextGroup("FTE2 extensions", cls.fteprotocolextensions2, fte2_pexts);
+#endif
+#ifdef PROTOCOL_VERSION_MVD1
+	CL_PrintPextGroup("MVD1 extensions", cls.mvdprotocolextensions1, mvd1_pexts);
+#endif
+}
+#endif
+
 // Called by CL_Connect_f and CL_CheckResend
 static void CL_SendConnectPacket(
 #ifdef PROTOCOL_VERSION_FTE
@@ -2057,6 +2185,9 @@ static void CL_InitLocal(void)
 	Cmd_AddCommand ("dns", CL_DNS_f);
 	Cmd_AddCommand ("hash", CL_Hash_f);
 	Cmd_AddCommand ("reconnect", CL_Reconnect_f);
+#if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
+	Cmd_AddCommand ("pext_list", CL_PextList_f);
+#endif
 
 	Cmd_AddMacro(macro_connectiontype, CL_Macro_ConnectionType);
 	Cmd_AddMacro(macro_demoplayback, CL_Macro_Demoplayback);
