@@ -104,8 +104,21 @@ ldd "$DIR/AppDir/usr/bin/ezquake-linux-$ARCH" | \
 	grep --color=never -v libGL| \
 	grep --color=never -v libdrm.so | \
 	grep --color=never -v libgbm.so | \
-	awk '{print $3}'| \
+	awk '{print $3}' | \
 	xargs -I% cp -Lf "%" "$DIR/AppDir/usr/lib/." || exit 5
+
+#libSDL3 and deps
+if find /usr/lib -maxdepth 2 -type f 2>&1|grep libSDL3 >/dev/null 2>&1;then
+	find /usr/lib -maxdepth 2 \( -type f -o -type l \) -name '*SDL*' | \
+		xargs -I% cp -Lf "%" "$DIR/AppDir/usr/lib/." || exit 5
+	ldd "$DIR/AppDir/usr/lib/libSDL"* | \
+		grep --color=never -v libGL| \
+		grep --color=never -v libdrm.so | \
+		grep --color=never -v libgbm.so | \
+		awk '{print $3}' | \
+		xargs -I% cp -Lf "%" "$DIR/AppDir/usr/lib/." || exit 5
+fi
+
 strip -s "$DIR/AppDir/usr/lib/"* || exit 5
 strip -s "$DIR/AppDir/usr/bin/"* || exit 5
 mv -f "$DIR/AppDir/usr/lib/libc.so.6" "$DIR/AppDir/usr/lib-override/."
