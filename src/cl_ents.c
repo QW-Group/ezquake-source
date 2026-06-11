@@ -856,6 +856,210 @@ void CL_ParsePacketEntities (qbool delta)
 	}
 }
 
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+
+static cs_sprojectile_t cs_sprojectiles[CL_MAX_EDICTS];
+
+// Called from CL_ClearTEnts so no projectile state survives a map change
+// or reconnect.
+void CL_ClearSimpleProjectiles(void)
+{
+	memset(cs_sprojectiles, 0, sizeof(cs_sprojectiles));
+}
+
+// Find the fake projectile a server-sent simple projectile corresponds to:
+// either the one it was matched to before, or (with weapon prediction) a
+// locally predicted projectile from the same owner close to its position.
+static int CL_SimpleProjectile_MatchFakeProj(cs_sprojectile_t *sproj, int entnum)
+{
+	fproj_t *prj;
+	int i;
+
+	for (i = 0, prj = cl_fakeprojectiles; i < MAX_FAKEPROJ; i++, prj++)
+	{
+		if (prj->endtime == 0)
+			continue;
+
+		if (prj->owner != sproj->owner)
+			continue;
+
+		if (cl.time > prj->endtime + 0.1)
+			continue;
+
+		if (prj->entnum == sproj->fproj_number)
+		{
+			return i;
+		}
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+		else if (cls.mvdprotocolextensions1 & MVD_PEXT1_WEAPONPREDICTION && prj->entnum == 0)
+		{
+			if (VectorDistance(sproj->origin, prj->org) > 24)
+				continue;
+
+			prj->entnum = entnum;
+			prj->endtime = prj->starttime + 5;
+			return i;
+		}
+#endif
+	}
+
+	return -1;
+}
+
+// An svc_packetsprojectiles message has just been parsed, deal with the rest
+// of the data stream: a frame number followed by (entnum, sendflags, fields)
+// triples, terminated by entnum 0. Entnum bit 0x8000 means removal.
+void CL_ParsePacketSimpleProjectiles(void)
+{
+	int word, sendflags;
+
+	MSG_ReadLong(); // frame number, used only by the disabled clc_ackframe path
+
+	while (true)
+	{
+		word = (unsigned short)MSG_ReadShort();
+
+		if (msg_badread) // something didn't parse right...
+			Host_Error("msg_badread in packetsprojectiles");
+
+		if (word == 0)
+			break;
+
+		if (word & 0x8000)
+		{
+			fproj_t *mis;
+
+			word &= ~0x8000;
+			word = bound(0, word, CL_MAX_EDICTS - 1);
+
+			mis = &cl_fakeprojectiles[cs_sprojectiles[word].fproj_number];
+			if (mis->entnum == word)
+			{
+				memset(mis, 0, sizeof(fproj_t));
+				mis->endtime = -1;
+				mis->index = 0;
+			}
+			memset(&cs_sprojectiles[word], 0, sizeof(cs_sprojectile_t));
+
+			continue;
+		}
+
+		word = bound(0, word, CL_MAX_EDICTS - 1);
+
+		fproj_t *mis;
+		int mis_new = 0;
+		if (cs_sprojectiles[word].active == false)
+			mis_new = 1;
+
+		cs_sprojectiles[word].active = true;
+		cs_sprojectile_t *cs_sproj = &cs_sprojectiles[word];
+		cs_sproj->fproj_number = bound(0, cs_sproj->fproj_number, MAX_FAKEPROJ - 1);
+		mis = &cl_fakeprojectiles[cs_sproj->fproj_number];
+
+		sendflags = (unsigned short)MSG_ReadShort();
+
+		if (sendflags & U_ORIGIN1)
+		{
+			cs_sproj->origin[0] = MSG_ReadFloat();
+			cs_sproj->origin[1] = MSG_ReadFloat();
+			cs_sproj->origin[2] = MSG_ReadFloat();
+
+			cs_sproj->velocity[0] = MSG_ReadFloat();
+			cs_sproj->velocity[1] = MSG_ReadFloat();
+			cs_sproj->velocity[2] = MSG_ReadFloat();
+		}
+
+		if (sendflags & U_ANGLE1)
+		{
+			cs_sproj->angles[0] = MSG_ReadAngle();
+			cs_sproj->angles[1] = MSG_ReadAngle();
+			cs_sproj->angles[2] = MSG_ReadAngle();
+		}
+
+		if (sendflags & U_MODEL)
+		{
+			cs_sproj->modelindex = MSG_ReadShort();
+			cs_sproj->owner = MSG_ReadShort();
+		}
+
+		if (sendflags & U_ORIGIN3)
+		{
+			cs_sproj->time_offset = -(float)MSG_ReadByte() / 255;
+		}
+
+		if (mis_new)
+		{
+			cs_sproj->fproj_number = -1;
+			cs_sproj->fproj_number = CL_SimpleProjectile_MatchFakeProj(cs_sproj, word);
+			if (cs_sproj->fproj_number < 0)
+			{
+				mis_new = 2;
+				mis = CL_AllocFakeProjectile();
+				cs_sproj->fproj_number = mis->index;
+			}
+
+			mis = &cl_fakeprojectiles[cs_sproj->fproj_number];
+
+			mis->starttime = cl.time;
+			VectorCopy(cs_sproj->origin, mis->start);
+		}
+
+		if (sendflags & U_ORIGIN1)
+		{
+			VectorCopy(cs_sproj->origin, mis->org);
+			VectorCopy(cs_sproj->velocity, mis->vel);
+
+			mis->starttime = cl.time;
+			VectorCopy(mis->org, mis->start);
+		}
+
+		if (sendflags & U_ANGLE1)
+		{
+			VectorCopy(cs_sproj->angles, mis->angs);
+		}
+
+		if (sendflags & U_MODEL)
+		{
+			mis->modelindex = cs_sproj->modelindex;
+			mis->owner = cs_sproj->owner;
+
+			if (mis->modelindex != 0 && cl.model_precache[mis->modelindex])
+			{
+				// apply the model's effect flags
+				mis->effects = cl.model_precache[mis->modelindex]->flags;
+
+				// a yucky hack to add nail trails
+				if (mis->modelindex == cl_modelindices[mi_spike] || mis->modelindex == cl_modelindices[mi_s_spike])
+				{
+					mis->effects |= 256;
+				}
+			}
+		}
+
+		mis->endtime = cl.time + 20;
+		if (mis_new)
+		{
+			mis->entnum = word;
+			if (mis_new == 2)
+			{
+				memset(&cl_entities[mis->entnum], 0, sizeof(centity_t));
+
+				VectorCopy(mis->org, mis->partorg);
+				if (cs_sproj->time_offset)
+				{
+					VectorMA(mis->partorg, cs_sproj->time_offset, cs_sproj->velocity, mis->partorg);
+				}
+			}
+			else
+			{
+				cl_entities[mis->entnum] = mis->cent;
+			}
+		}
+	}
+}
+
+#endif // MVD_PEXT1_SIMPLEPROJECTILE
+
 static qbool CL_SetAlphaByDistance(entity_t* ent)
 {
 	vec3_t diff;

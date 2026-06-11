@@ -34,6 +34,9 @@ extern cvar_t gl_no24bit;
 #ifdef EZQ_FAKEPROJ
 extern cvar_t cl_rocket2grenade;
 #endif
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+extern cvar_t cl_sproj_xerp;
+#endif
 
 temp_entity_list_t temp_entities;
 
@@ -111,6 +114,9 @@ void CL_ClearTEnts(void)
 	memset (&cl_explosions, 0, sizeof(cl_explosions));
 #ifdef EZQ_FAKEPROJ
 	memset (&cl_fakeprojectiles, 0, sizeof(cl_fakeprojectiles));
+#endif
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+	CL_ClearSimpleProjectiles();
 #endif
 
 	// link explosions 
@@ -1276,9 +1282,21 @@ static void CL_UpdateFakeProjectiles(void)
 			// linear flight, extrapolated from start position
 			vec3_t traveled;
 			trace_t trace;
+			float modified_time = cl.time;
+
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+			if (cl_sproj_xerp.value)
+			{
+				// extrapolate other players' projectiles over our latency
+				if (prj->owner != (cl.viewplayernum + 1))
+				{
+					modified_time += min(150, cls.latency);
+				}
+			}
+#endif
 
 			VectorCopy(prj->start, ent.origin);
-			VectorScale(prj->vel, (cl.time - prj->starttime) + 0.02, traveled);
+			VectorScale(prj->vel, (modified_time - prj->starttime) + 0.02, traveled);
 			VectorAdd(ent.origin, traveled, ent.origin);
 			VectorCopy(prj->angs, ent.angles);
 			VectorCopy(ent.origin, prj->org);

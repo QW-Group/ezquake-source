@@ -120,6 +120,10 @@ cvar_t  cl_pext_serversideweapon = { "cl_pext_serversideweapon", "0", 0, onchang
 #ifdef MVD_PEXT1_WEAPONPREDICTION
 cvar_t  cl_pext_weaponprediction = { "cl_pext_weaponprediction", "1" }; // client-side weapon prediction
 #endif
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+cvar_t  cl_pext_simpleprojectiles = { "cl_pext_simpleprojectiles", "1" }; // send simple stateless projectiles
+cvar_t  cl_sproj_xerp = { "cl_sproj_xerp", "0" }; // extrapolate projectiles based on ping
+#endif
 #endif
 #ifdef FTE_PEXT_256PACKETENTITIES
 cvar_t	cl_pext_256packetentities = {"cl_pext_256packetentities", "1"};
@@ -573,6 +577,12 @@ unsigned int CL_SupportedMVDExtensions1(void)
 #ifdef MVD_PEXT1_WEAPONPREDICTION
 	if (cl_pext_weaponprediction.integer) {
 		extensions_supported |= MVD_PEXT1_WEAPONPREDICTION;
+	}
+#endif
+
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+	if (cl_pext_simpleprojectiles.integer) {
+		extensions_supported |= MVD_PEXT1_SIMPLEPROJECTILE;
 	}
 #endif
 
@@ -1945,6 +1955,10 @@ static void CL_InitLocal(void)
 #endif
 #ifdef MVD_PEXT1_WEAPONPREDICTION
 	Cvar_Register(&cl_pext_weaponprediction);
+#endif
+#ifdef MVD_PEXT1_SIMPLEPROJECTILE
+	Cvar_Register(&cl_pext_simpleprojectiles);
+	Cvar_Register(&cl_sproj_xerp);
 #endif
 #endif // PROTOCOL_VERSION_FTE
 #ifdef FTE_PEXT_256PACKETENTITIES
