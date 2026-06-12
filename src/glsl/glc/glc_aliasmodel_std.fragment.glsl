@@ -54,6 +54,6 @@ void main()
 #endif // BACKFACE_PASS
 
 #ifdef DRAW_FOG
-	gl_FragColor = applyFog(gl_FragColor, gl_FragCoord.z / gl_FragCoord.w);
+	gl_FragColor = applyFog(gl_FragColor, fogFragDepth());
 #endif
 }

@@ -89,7 +89,7 @@ void main()
 
 			frag_colour = color1 * tex + color2 * altTex;
 #ifdef DRAW_FOG
-			frag_colour = applyFogBlend(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+			frag_colour = applyFogBlend(frag_colour, fogFragDepth());
 #endif
 			frag_colour *= shell_alpha;
 		}
@@ -105,13 +105,13 @@ void main()
 			}
 #endif
 #ifdef DRAW_FOG
-			frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+			frag_colour = applyFog(frag_colour, fogFragDepth());
 #endif
 			frag_colour *= fsBaseColor.a;
 		}
 	} else {
 #ifdef DRAW_FOG
-		frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+		frag_colour = applyFog(frag_colour, fogFragDepth());
 #endif
 	}
 }

@@ -53,6 +53,7 @@ static qbool GL_InitialiseRenderer(void)
 	glConfig.broken_features = 0;
 
 	GL_InitialiseFramebufferHandling();
+	GL_InitialiseReversedDepth();
 	GL_LoadProgramFunctions();
 	GL_LoadStateFunctions();
 	GL_LoadTextureManagementFunctions();
@@ -124,6 +125,20 @@ static qbool GL_InitialiseRenderer(void)
 	}
 	if (glConfig.supported_features & R_SUPPORT_FOG) {
 		R_TraceAPI("... fog");
+	}
+	if (glConfig.reversed_depth) {
+		R_TraceAPI("... reverse-z depth buffering (infinite far plane)");
+	}
+
+	{
+		extern cvar_t gl_reverse_z;
+
+		if (glConfig.reversed_depth) {
+			Com_Printf_State(PRINT_OK, "Reverse-Z depth buffering enabled (infinite far plane)\n");
+		}
+		else if (gl_reverse_z.integer) {
+			Com_Printf_State(PRINT_INFO, "Reverse-Z unavailable: requires vid_framebuffer 1, a 32-bit float depth buffer (vid_framebuffer_depthformat 0 or 4) and GL_ARB_clip_control\n");
+		}
 	}
 
 	if (glConfig.broken_features) {

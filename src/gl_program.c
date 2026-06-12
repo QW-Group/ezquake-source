@@ -1498,6 +1498,20 @@ static void GL_BuildCoreDefinitions(void)
 	memset(macro_definitions, 0, sizeof(macro_definitions));
 	strlcpy(macro_definitions, (R_UseModernOpenGL() ? "#define EZ_MODERN_GL\n" : "#define EZ_LEGACY_GL\n"), sizeof(macro_definitions));
 
+	// Reverse-z define + fog depth helper (reaches every GLM and GLC shader).
+	// gl_FragCoord.z/gl_FragCoord.w inverts under reverse-z (fog would vanish);
+	// 1.0/gl_FragCoord.w = w_clip = eye distance, depth-convention independent.
+	if (glConfig.reversed_depth) {
+		strlcat(macro_definitions, "#define EZQ_REVERSED_DEPTH\n", sizeof(macro_definitions));
+	}
+	strlcat(macro_definitions,
+		"#ifdef EZQ_REVERSED_DEPTH\n"
+		"#define fogFragDepth() (1.0 / gl_FragCoord.w)\n"
+		"#else\n"
+		"#define fogFragDepth() (gl_FragCoord.z / gl_FragCoord.w)\n"
+		"#endif\n",
+		sizeof(macro_definitions));
+
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
 		if (GL_VersionAtLeast(4, 3)) {

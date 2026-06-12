@@ -167,7 +167,7 @@ void main()
 				frag_colour = vec4(FlatColor, 1);
 			}
 #ifdef DRAW_FOG
-			frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+			frag_colour = applyFog(frag_colour, fogFragDepth());
 #endif
 #ifdef DRAW_ALPHATEST_ENABLED
 			frag_colour *= alpha;
@@ -212,7 +212,7 @@ void main()
 				frag_colour = vec4(lmColor.rgb, 1) * frag_colour;
 			}
 #ifdef DRAW_FOG
-			frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+			frag_colour = applyFog(frag_colour, fogFragDepth());
 #endif
 #ifdef DRAW_ALPHATEST_ENABLED
 			frag_colour *= alpha;
@@ -262,7 +262,7 @@ void main()
 #endif
 
 #ifdef DRAW_FOG
-		frag_colour = applyFog(frag_colour, gl_FragCoord.z / gl_FragCoord.w);
+		frag_colour = applyFog(frag_colour, fogFragDepth());
 #endif
 
 #ifdef DRAW_ALPHATEST_ENABLED
