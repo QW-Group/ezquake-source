@@ -1514,7 +1514,6 @@ void GLC_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 	qbool drawFlatFloors = clmodel->isworldmodel && (r_drawflat.integer == 2 || r_drawflat.integer == 1) && r_drawflat_mode.integer == 0;
 	qbool drawFlatWalls = clmodel->isworldmodel && (r_drawflat.integer == 3 || r_drawflat.integer == 1) && r_drawflat_mode.integer == 0;
 	extern msurface_t* skychain;
-	extern msurface_t* alphachain;
 
 	psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
 	for (i = 0; i < clmodel->nummodelsurfaces; i++, psurf++) {
@@ -1543,7 +1542,13 @@ void GLC_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 				GLC_EmitWaterPoly(psurf);
 			}
 			else if (psurf->flags & SURF_DRAWALPHA) {
-				CHAIN_SURF_B2F(psurf, alphachain);
+				// Chain onto the per-texture chain for the alpha pass; the global
+				// alphachain is never drawn for brush models.
+				CHAIN_SURF_B2F(psurf, psurf->texinfo->texture->texturechain);
+				clmodel->alphapass_todo = true;
+				clmodel->texturechains_have_lumas |= R_TextureAnimation(ent, psurf->texinfo->texture)->isLumaTexture;
+				clmodel->first_texture_chained = min(clmodel->first_texture_chained, psurf->texinfo->miptex);
+				clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
 			}
 			else {
 				if (drawFlatFloors && isFloor) {

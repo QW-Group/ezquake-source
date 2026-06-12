@@ -161,11 +161,15 @@ void GLM_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 			clmodel->last_texture_chained = max(clmodel->last_texture_chained, psurf->texinfo->miptex);
 		}
 		else {
-			if (drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
+			// Keep alpha-tested (fence) surfaces out of the drawflat chain, which is
+			// drawn without alpha test; the texture chain still applies the drawflat tint.
+			qbool alphaSurface = (psurf->flags & SURF_DRAWALPHA);
+
+			if (!alphaSurface && drawFlatFloors && (psurf->flags & SURF_DRAWFLAT_FLOOR)) {
 				chain_surfaces_simple_drawflat(&clmodel->drawflat_chain, psurf);
 				clmodel->drawflat_todo = true;
 			}
-			else if (drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
+			else if (!alphaSurface && drawFlatWalls && !(psurf->flags & SURF_DRAWFLAT_FLOOR)) {
 				chain_surfaces_simple_drawflat(&clmodel->drawflat_chain, psurf);
 				clmodel->drawflat_todo = true;
 			}
