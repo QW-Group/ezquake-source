@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "quakedef.h"
 #include "EX_browser.h"
 #include "fs.h"
@@ -644,7 +644,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
 
-	if (SDL_Init(0) != 0)
+	if (!SDL_Init(0))
 	{
 		fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError());
 		exit(EXIT_FAILURE);

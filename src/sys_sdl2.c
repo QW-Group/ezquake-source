@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 cvar_t sys_yieldcpu = {"sys_yieldcpu", "0"};
 cvar_t sys_inactivesound = {"sys_inactivesound", "0", CVAR_ARCHIVE};

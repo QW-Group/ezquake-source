@@ -164,7 +164,7 @@ static unsigned int mouse_hovered_column;
 
 extern cvar_t cl_proxyaddr;
 
-static SDL_mutex* serverlist_mutex = NULL;
+static SDL_Mutex* serverlist_mutex = NULL;
 sem_t serverinfo_semaphore;
 
 typedef struct sb_column_t {

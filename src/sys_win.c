@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "server.h"
 #include "pcre2.h"
 #include <shlobj.h>
+#include <SDL3/SDL_main.h>
 
 // "Starting with the Release 302 drivers, application developers can direct the
 // Optimus driver at runtime to use the High Performance Graphics to render any
@@ -723,66 +724,6 @@ void Sys_Init_ (void)
 	Sys_InitDoubleTime ();
 }
 
-
-//==============================================================================
-// WINDOWS CRAP
-//==============================================================================
-
-#define MAX_NUM_ARGVS	50
-
-int		argc;
-char	*argv[MAX_NUM_ARGVS];
-static char exename[1024] = {0};
-
-void ParseCommandLine (char *lpCmdLine) 
-{
-    int i;
-	argc = 1;
-	argv[0] = exename;
-
-	if(!(i = GetModuleFileName(NULL, exename, sizeof(exename)-1))) // here we get loong string, with full path
-		exename[0] = 0; // oh, something bad
-	else 
-	{
-		exename[i] = 0; // ensure null terminator
-		strlcpy(exename, COM_SkipPath(exename), sizeof(exename));
-	}
-
-	while (*lpCmdLine && (argc < MAX_NUM_ARGVS))
-	{
-		while (*lpCmdLine && ((*lpCmdLine <= 32) || (*lpCmdLine > 126)))
-			lpCmdLine++;
-
-		if (*lpCmdLine)
-		{
-			if (*lpCmdLine == '\"')
-			{
-				lpCmdLine++;
-
-				argv[argc] = lpCmdLine;
-				argc++;
-
-				while (*lpCmdLine && *lpCmdLine != '\"') // this include chars less that 32 and greate than 126... is that evil?
-					lpCmdLine++;
-			}
-			else
-			{
-				argv[argc] = lpCmdLine;
-				argc++;
-
-				while (*lpCmdLine && ((*lpCmdLine > 32) && (*lpCmdLine <= 126)))
-					lpCmdLine++;
-			}
-
-			if (*lpCmdLine)
-			{
-				*lpCmdLine = 0;
-				lpCmdLine++;
-			}
-		}
-	}
-}
-
 #define QW_URL_ROOT_REGKEY         "Software\\Classes\\qw"
 #define QW_URL_OPEN_CMD_REGKEY     QW_URL_ROOT_REGKEY"\\shell\\Open\\Command"
 #define QW_URL_DEFAULTICON_REGKEY  QW_URL_ROOT_REGKEY"\\DefaultIcon"
@@ -1251,20 +1192,18 @@ qbool WinCheckQWURL(void)
 //
 // Application entry point.
 //
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) 
+int main(int argc, char **argv)
 {
 	int memsize, i;
 	double time, oldtime, newtime;
 	MEMORYSTATUS lpBuffer;
 
-	global_hInstance = hInstance;
+	global_hInstance = GetModuleHandle(NULL);
 
 	WinCheckOSInfo();
 
-	ParseCommandLine(lpCmdLine);
-
 	// Check if we're the registered QW url protocol handler.
-	if (!WinCheckQWURL() && ((argc + 3) < MAX_NUM_ARGVS))
+	if (!WinCheckQWURL())
 	{
 		// User doesn't want to be bothered again.
 		argv[argc++] = "+cl_verify_qwprotocol";

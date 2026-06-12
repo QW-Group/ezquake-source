@@ -20,14 +20,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <curl/curl.h>
 #include <jansson.h>
-#include <SDL_thread.h>
+#include <SDL3/SDL.h>
 #include "quakedef.h"
 #include "EX_qtvlist.h"
 
 cvar_t qtv_api_url = {"qtv_api_url", "http://qtvapi.quakeworld.nu/api/v1/servers"};
 
 static json_t *root;
-static SDL_mutex *qtvlist_mutex;
+static SDL_Mutex *qtvlist_mutex;
 
 extern char *CL_QTV_GetCurrentStream(void);
 
@@ -460,7 +460,7 @@ static void qtvlist_qtv_cmd(void)
 		port++;
 	}
 
-	if (SDL_TryLockMutex(qtvlist_mutex) != 0) {
+	if (!SDL_TryLockMutex(qtvlist_mutex)) {
 		Com_Printf("QTV list is being updated, please try again soon\n");
 		return;
 	}
@@ -482,17 +482,11 @@ static int qtvlist_update(void *unused)
 {
 	char *jsondata = NULL;
 	int ret = -1;
-	int res;
 	(void)unused;
 
-	res = SDL_TryLockMutex(qtvlist_mutex);
-
-	if (res == SDL_MUTEX_TIMEDOUT) {
+	if (!SDL_TryLockMutex(qtvlist_mutex)) {
 		Com_Printf("The qtvlist is already in the process of being updated\n");
-		goto out;
-	} else if (res < 0) {
-		Com_Printf("error: mutex lock failed (SDL2): %s\n", SDL_GetError());
-		goto out;
+		return ret;
 	}
 
 	jsondata = qtvlist_get_jsondata();
@@ -508,10 +502,10 @@ static int qtvlist_update(void *unused)
 	}
 
 	ret = 0;
+
 out:
-	if (res == 0) {
-		SDL_UnlockMutex(qtvlist_mutex);
-	}
+	SDL_UnlockMutex(qtvlist_mutex);
+
 	return ret;
 }
 
@@ -531,7 +525,7 @@ static void qtvlist_find_player_cmd(void)
 		return;
 	}
 
-	if (SDL_TryLockMutex(qtvlist_mutex) != 0) {
+	if (!SDL_TryLockMutex(qtvlist_mutex)) {
 		Com_Printf("Player list is being updated, please try again soon\n");
 		return;
 	}
@@ -557,7 +551,7 @@ static void qtvlist_find_and_follow_player_cmd(void)
 		return;
 	}
 
-	if (SDL_TryLockMutex(qtvlist_mutex) != 0) {
+	if (!SDL_TryLockMutex(qtvlist_mutex)) {
 		Com_Printf("Player list is being updated, please try again soon\n");
 		return;
 	}
@@ -612,7 +606,7 @@ void qtvlist_joinfromqtv_cmd(void)
 	
 	snprintf(&httpaddr[0], sizeof(httpaddr), "http://%s/watch.qtv?sid=%s", server, &addr[0]);
 
-	if (SDL_TryLockMutex(qtvlist_mutex) != 0) {
+	if (!SDL_TryLockMutex(qtvlist_mutex)) {
 		Com_Printf("qtvlist is being updated, please try again soon\n");
 		return;
 	}
