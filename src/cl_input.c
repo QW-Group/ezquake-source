@@ -946,9 +946,15 @@ void CL_FinishMove(usercmd_t* cmd)
 		)
 		) {
 		cmd->impulse = 0;
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+		cmd->impulse_pred = 0;
+#endif
 	}
 	else {
 		cmd->impulse = in_impulse;
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+		cmd->impulse_pred = in_impulse;
+#endif
 	}
 	// } shaman RFE 1030281
 	in_impulse = 0;

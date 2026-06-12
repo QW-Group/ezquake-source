@@ -1256,6 +1256,9 @@
   "penaltyremove": {
     "system-generated": true
   },
+  "pext_list": {
+    "description": "Prints the protocol extensions enabled by the client/server negotiation of the current connection (or the demo being played), grouped as FTE, FTE2 and MVD1 extensions with their hex masks. Extensions the server offered but the client declined (or vice versa) are not listed. Prints \"Not connected.\" when disconnected."
+  },
   "place": {
     "description": "`place <element> <area>` -- anchors the named HUD element to a named screen area or to another HUD element. Built-in area names are: `screen`, `top`, `view`, `sbar`, `ibar`, `hbar`, `sfree`, `ifree`, `hfree`. To anchor inside another element use `@elem`; to anchor outside it use the bare element name. Running `place <element>` with no area argument prints the element's current placement. An invalid area is rejected and the old value is restored. Example: `place fps view`, `place clock @ping`, `place ammo sbar`."
   },

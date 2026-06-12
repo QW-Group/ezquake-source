@@ -712,6 +712,13 @@ static void PM_CheckJump (void)
 	if (pmove.jump_held && !pmove.jump_msec)
 		return; // don't pogo stick
 
+#if defined(MVD_PEXT1_WEAPONPREDICTION) && !defined(SERVERONLY)
+	if (cl_predict_jump.integer && PM_WeaponPredictionActive())
+	{
+		PM_SoundEffect(cl_sfx_jump, 4);
+	}
+#endif
+
 	if (!movevars.pground) {
 		// check for jump bug
 		// groundplane normal was set in the call to PM_CategorizePosition

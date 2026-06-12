@@ -402,6 +402,9 @@ static void S_Restart_f (void)
 	S_Startup();
 
 	CL_InitTEnts();
+#ifdef MVD_PEXT1_WEAPONPREDICTION
+	CL_InitWepSounds();
+#endif
 	for (i=1; i < MAX_SOUNDS; i++) {
 
 		if (!cl.sound_name[i][0])

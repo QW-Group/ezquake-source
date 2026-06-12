@@ -10,6 +10,7 @@ option(USE_SYSTEM_LIBS          "Use system libraries instead of VCPKG"       ON
 option(RENDERER_MODERN_OPENGL   "Enable modern OpenGL renderer"               ON)
 option(RENDERER_CLASSIC_OPENGL  "Enable classic OpenGL renderer"              ON)
 option(DEBUG_MEMORY_ALLOCATIONS "Enable debug prints for memory allocations" OFF)
+option(ANTILAG                  "Enable antilag 1 prototype protocol extensions (client-side)" ON)
 option(ENABLE_SANDBOX           "Enables application sandboxing (macOS)"      ON)
 option(ENABLE_LTO               "Enable Link Time Optimization"               ON)
 
@@ -199,6 +200,7 @@ set(common
         ${SOURCE_DIR}/net_chan.c
         ${SOURCE_DIR}/parser.c
         ${SOURCE_DIR}/pmove.c
+        ${SOURCE_DIR}/pmove_weapon.c
         ${SOURCE_DIR}/pmovetst.c
         ${SOURCE_DIR}/q_shared.c
         ${SOURCE_DIR}/sha1.c
@@ -867,6 +869,13 @@ target_compile_definitions(ezquake PRIVATE
         $<$<BOOL:${HAVE_FREETYPE}>:EZ_FREETYPE_SUPPORT_STATIC>
 
         $<$<AND:$<BOOL:${HAVE_SPEEX}>,$<BOOL:${HAVE_SPEEXDSP}>>:WITH_SPEEX>
+
+        # antilag 1 prototype protocol extensions; values must match the
+        # commented-out defines in src/qwprot/src/protocol.h (shared with
+        # mvdsv, hence supplied from the compile command for client builds)
+        $<$<BOOL:${ANTILAG}>:MVD_PEXT1_WEAPONPREDICTION=128>
+        $<$<BOOL:${ANTILAG}>:MVD_PEXT1_SIMPLEPROJECTILE=256>
+        $<$<BOOL:${ANTILAG}>:FTE_PEXT_ACCURATETIMINGS=0x00000040>
 
         PCRE2_CODE_UNIT_WIDTH=8
 )
