@@ -1244,6 +1244,8 @@ void QTV_ReadInput( mvddest_t *d )
 			Sys_Printf("QTV_ReadInput: can't handle clc %i\n", clc);
 			return;
 		}
+
+		buf.readpos = parse_end; // enforce packet boundary after processing
 	}
 
 	if (parse_end)
