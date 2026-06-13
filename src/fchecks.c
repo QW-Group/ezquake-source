@@ -25,6 +25,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fmod.h"
 #include "utils.h"
 
+// Compile-time platform color for f_version display
+#if defined(_WIN32)
+#define QW_PLATFORM_COLOR "&c4af"   // light blue  - Windows
+#elif defined(__linux__)
+#define QW_PLATFORM_COLOR "&cfa0"   // orange      - Linux
+#elif defined(__APPLE__)
+#define QW_PLATFORM_COLOR "&caaa"   // silver      - macOS
+#else
+#define QW_PLATFORM_COLOR "&c888"   // gray        - other
+#endif
+
 
 static float
 f_system_reply_time,
@@ -53,8 +64,8 @@ extern cvar_t cl_iDrive;
 static void FChecks_VersionResponse (void)
 {
 	// {} required for color codes to render in QW chat
-	// ice white (&ccef) for ezQuake, cyan (&c0ff) for version, gray (&c888) for platform
-	Cbuf_AddText(va("say {&ccefezQuake&r &c0ff%s&r &c888%s:%s&r}\n",
+	// ice white for ezQuake, cyan for version, platform color varies by OS, gray for renderer
+	Cbuf_AddText(va("say {&ccefezQuake&r &c0ff%s&r " QW_PLATFORM_COLOR "%s&r:&c888%s&r}\n",
 		VersionString(), QW_PLATFORM, QW_RENDERER));
 }
 
@@ -250,6 +261,18 @@ const char* FChecks_RulesetAdditionString(void)
 	return features;
 }
 
+// Color per ruleset reflects permissiveness: gray=open, yellow=competitive, orange=strict, red=tournament
+static const char *FChecks_RulesetColor(const char *ruleset)
+{
+	if (!strcmp(ruleset, "default"))     return "&caaa"; // gray        - no restrictions
+	if (!strcmp(ruleset, "smackdown"))   return "&cff0"; // yellow      - standard competitive
+	if (!strcmp(ruleset, "smackdrive"))  return "&caf0"; // lime        - smackdown + iDrive
+	if (!strcmp(ruleset, "thunderdome")) return "&cfa0"; // orange      - strict tournament
+	if (!strcmp(ruleset, "MTFL"))        return "&cf80"; // orange-red  - league rules
+	if (!strcmp(ruleset, "qcon"))        return "&cf44"; // red         - QuakeCon / strictest
+	return "&caaa";
+}
+
 static qbool FChecks_CheckFRulesetRequest (const char *s)
 {
 	// format of the reply:
@@ -280,8 +303,10 @@ static qbool FChecks_CheckFRulesetRequest (const char *s)
 			fServer = "server-na";
 		}
 
-		Cbuf_AddText(va("say \"%*s%21s %16s %s%s\"\n",
-			pad_len, emptystring, fServer, brief_version, ruleset, features));
+		// {} required for color codes; ruleset colored by strictness level
+		Cbuf_AddText(va("say \"{%*s%21s %16s %s%s&r%s}\"\n",
+			pad_len, emptystring, fServer, brief_version,
+			FChecks_RulesetColor(ruleset), ruleset, features));
 		f_ruleset_reply_time = cls.realtime;
 		return true;
 	}
