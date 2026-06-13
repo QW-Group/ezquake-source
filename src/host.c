@@ -65,15 +65,86 @@ extern void COM_StoreOriginalCmdline(int argc, char **argv);
 
 char f_system_string[1024] = "";
 
-char * SYSINFO_GetString(void)
-{
-	return f_system_string;
-}
-
 unsigned long long	SYSINFO_memory = 0;
 int					SYSINFO_MHz = 0;
 char				*SYSINFO_processor_description = NULL;
 char				*SYSINFO_3D_description        = NULL;
+
+static char f_system_string_colored[512];
+
+static int SYSINFO_ContainsStr(const char *haystack, const char *needle)
+{
+	char h[256], n[64];
+	int i;
+	for (i = 0; haystack[i] && i < (int)sizeof(h)-1; i++)
+		h[i] = (haystack[i] >= 'A' && haystack[i] <= 'Z') ? haystack[i]+32 : haystack[i];
+	h[i] = '\0';
+	for (i = 0; needle[i] && i < (int)sizeof(n)-1; i++)
+		n[i] = (needle[i] >= 'A' && needle[i] <= 'Z') ? needle[i]+32 : needle[i];
+	n[i] = '\0';
+	return strstr(h, n) != NULL;
+}
+
+// Returns f_system string with vendor color codes for chat display.
+// CPU: Intel=blue(&c06f) AMD/Ryzen=red(&cf00)
+// GPU: NVIDIA/GeForce/RTX/GTX=green(&c0f0) AMD/Radeon=red(&cf00) Intel=blue(&c06f)
+char * SYSINFO_GetString(void)
+{
+	char cpu_colored[256] = {0};
+	char gpu_colored[256] = {0};
+	char mem_part[32] = {0};
+	const char *cpu = SYSINFO_processor_description ? SYSINFO_processor_description : "";
+	const char *gpu = SYSINFO_3D_description ? SYSINFO_3D_description : "";
+
+	if (cpu[0]) {
+		if (SYSINFO_ContainsStr(cpu, "Intel"))
+			snprintf(cpu_colored, sizeof(cpu_colored), "&c06f%s&r", cpu);
+		else if (SYSINFO_ContainsStr(cpu, "AMD") || SYSINFO_ContainsStr(cpu, "Ryzen"))
+			snprintf(cpu_colored, sizeof(cpu_colored), "&cf00%s&r", cpu);
+		else
+			strlcpy(cpu_colored, cpu, sizeof(cpu_colored));
+	}
+
+	if (gpu[0]) {
+		if (SYSINFO_ContainsStr(gpu, "NVIDIA") || SYSINFO_ContainsStr(gpu, "GeForce") ||
+		    SYSINFO_ContainsStr(gpu, "RTX") || SYSINFO_ContainsStr(gpu, "GTX"))
+			snprintf(gpu_colored, sizeof(gpu_colored), "&c0f0%s&r", gpu);
+		else if (SYSINFO_ContainsStr(gpu, "AMD") || SYSINFO_ContainsStr(gpu, "Radeon") ||
+		         SYSINFO_ContainsStr(gpu, "RX "))
+			snprintf(gpu_colored, sizeof(gpu_colored), "&cf00%s&r", gpu);
+		else if (SYSINFO_ContainsStr(gpu, "Intel"))
+			snprintf(gpu_colored, sizeof(gpu_colored), "&c06f%s&r", gpu);
+		else
+			strlcpy(gpu_colored, gpu, sizeof(gpu_colored));
+	}
+
+	{
+		char tmp[sizeof(f_system_string)];
+		char *comma;
+		strlcpy(tmp, f_system_string, sizeof(tmp));
+		comma = strchr(tmp, ',');
+		if (comma) *comma = '\0';
+		strlcpy(mem_part, tmp, sizeof(mem_part));
+	}
+
+	f_system_string_colored[0] = '\0';
+	strlcat(f_system_string_colored, mem_part, sizeof(f_system_string_colored));
+	if (cpu_colored[0]) {
+		strlcat(f_system_string_colored, ", ", sizeof(f_system_string_colored));
+		strlcat(f_system_string_colored, cpu_colored, sizeof(f_system_string_colored));
+		if (SYSINFO_MHz)
+			strlcat(f_system_string_colored, va(" (%dMHz)", SYSINFO_MHz), sizeof(f_system_string_colored));
+	}
+	if (gpu_colored[0]) {
+		strlcat(f_system_string_colored, ", ", sizeof(f_system_string_colored));
+		strlcat(f_system_string_colored, gpu_colored, sizeof(f_system_string_colored));
+	}
+
+	if (!f_system_string_colored[0])
+		return f_system_string;
+
+	return f_system_string_colored;
+}
 
 static void SYSINFO_Shutdown(void)
 {

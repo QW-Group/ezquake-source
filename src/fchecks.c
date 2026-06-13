@@ -25,6 +25,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fmod.h"
 #include "utils.h"
 
+// Compile-time platform color for f_version display
+#if defined(_WIN32)
+#define QW_PLATFORM_COLOR "&c4af"   // light blue  - Windows
+#elif defined(__linux__)
+#define QW_PLATFORM_COLOR "&cfa0"   // orange      - Linux
+#elif defined(__APPLE__)
+#define QW_PLATFORM_COLOR "&caaa"   // silver      - macOS
+#else
+#define QW_PLATFORM_COLOR "&c888"   // gray        - other
+#endif
+
 
 static float
 f_system_reply_time,
@@ -52,7 +63,10 @@ extern cvar_t cl_iDrive;
 
 static void FChecks_VersionResponse (void)
 {
-	Cbuf_AddText (va("say ezQuake %s " QW_PLATFORM ":" QW_RENDERER "\n", VersionString()));
+	// {} required for color codes to render in QW chat
+	// ice white for ezQuake, cyan for version, platform color varies by OS, gray for renderer
+	Cbuf_AddText(va("say {&ccefezQuake&r &c0ff%s&r " QW_PLATFORM_COLOR "%s&r:&c888%s&r}\n",
+		VersionString(), QW_PLATFORM, QW_RENDERER));
 }
 
 static char *FChecks_FServerResponse_Text(void)
@@ -247,6 +261,18 @@ const char* FChecks_RulesetAdditionString(void)
 	return features;
 }
 
+// Color per ruleset reflects permissiveness: gray=open, yellow=competitive, orange=strict, red=tournament
+static const char *FChecks_RulesetColor(const char *ruleset)
+{
+	if (!strcmp(ruleset, "default"))     return "&caaa"; // gray        - no restrictions
+	if (!strcmp(ruleset, "smackdown"))   return "&cff0"; // yellow      - standard competitive
+	if (!strcmp(ruleset, "smackdrive"))  return "&caf0"; // lime        - smackdown + iDrive
+	if (!strcmp(ruleset, "thunderdome")) return "&cfa0"; // orange      - strict tournament
+	if (!strcmp(ruleset, "MTFL"))        return "&cf80"; // orange-red  - league rules
+	if (!strcmp(ruleset, "qcon"))        return "&cf44"; // red         - QuakeCon / strictest
+	return "&caaa";
+}
+
 static qbool FChecks_CheckFRulesetRequest (const char *s)
 {
 	// format of the reply:
@@ -277,8 +303,10 @@ static qbool FChecks_CheckFRulesetRequest (const char *s)
 			fServer = "server-na";
 		}
 
-		Cbuf_AddText(va("say \"%*s%21s %16s %s%s\"\n",
-			pad_len, emptystring, fServer, brief_version, ruleset, features));
+		// {} required for color codes; ruleset colored by strictness level
+		Cbuf_AddText(va("say \"{%*s%21s %16s %s%s&r%s}\"\n",
+			pad_len, emptystring, fServer, brief_version,
+			FChecks_RulesetColor(ruleset), ruleset, features));
 		f_ruleset_reply_time = cls.realtime;
 		return true;
 	}
@@ -336,11 +364,8 @@ static qbool FChecks_SystemRequest (const char *s)
 
 		sys_string = (allow_f_system.integer) ? SYSINFO_GetString() : "disabled";
 
-		//if (sys_string != NULL && sys_string[0]) {
-		Cbuf_AddText("say ");
-		Cbuf_AddText(sys_string);
-		Cbuf_AddText("\n");
-		//}
+		// {} required for color codes to render in QW chat
+		Cbuf_AddText(va("say {%s}\n", sys_string));
 
 		f_system_reply_time = cls.realtime;
 		return true;

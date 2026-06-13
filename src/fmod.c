@@ -655,5 +655,12 @@ char *FMod_Response_Text(void)
 
 void FMod_Response (void)
 {
-	Cbuf_AddText (va ("%s %s\n", cls.state == ca_disconnected ? "echo" : "say", FMod_Response_Text()));
+	const char *text = FMod_Response_Text();
+	const char *cmd  = cls.state == ca_disconnected ? "echo" : "say";
+
+	// {} required for color codes; green = clean, red = modified files detected
+	if (strcmp(text, "all models ok") == 0)
+		Cbuf_AddText(va("%s {&c0f0%s&r}\n", cmd, text));
+	else
+		Cbuf_AddText(va("%s {&cf00%s&r}\n", cmd, text));
 }
