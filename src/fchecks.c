@@ -52,7 +52,10 @@ extern cvar_t cl_iDrive;
 
 static void FChecks_VersionResponse (void)
 {
-	Cbuf_AddText (va("say ezQuake %s " QW_PLATFORM ":" QW_RENDERER "\n", VersionString()));
+	// {} required for color codes to render in QW chat
+	// ice white (&ccef) for ezQuake, cyan (&c0ff) for version, gray (&c888) for platform
+	Cbuf_AddText(va("say {&ccefezQuake&r &c0ff%s&r &c888%s:%s&r}\n",
+		VersionString(), QW_PLATFORM, QW_RENDERER));
 }
 
 static char *FChecks_FServerResponse_Text(void)
@@ -336,11 +339,8 @@ static qbool FChecks_SystemRequest (const char *s)
 
 		sys_string = (allow_f_system.integer) ? SYSINFO_GetString() : "disabled";
 
-		//if (sys_string != NULL && sys_string[0]) {
-		Cbuf_AddText("say ");
-		Cbuf_AddText(sys_string);
-		Cbuf_AddText("\n");
-		//}
+		// {} required for color codes to render in QW chat
+		Cbuf_AddText(va("say {%s}\n", sys_string));
 
 		f_system_reply_time = cls.realtime;
 		return true;
