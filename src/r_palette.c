@@ -56,7 +56,7 @@ void Check_Gamma(unsigned char *pal)
 	memcpy(pal, palette, sizeof(palette));
 }
 
-/************************************* HW GAMMA *************************************/
+/************************************* PALETTE *************************************/
 
 void VID_SetPalette(unsigned char *palette)
 {

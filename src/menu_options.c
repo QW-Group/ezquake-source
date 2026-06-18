@@ -422,7 +422,7 @@ const char* gl_texturemode_enum[] = {
 };
 
 const char* vid_software_palette_enum[] = {
-	"hardware", "0",
+	"off", "0",
 	"shader", "1"
 };
 
