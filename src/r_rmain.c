@@ -817,7 +817,7 @@ static void R_Clear(void)
 	// This used to cause a bug with some graphics cards when
 	// in multiview mode. It would clear all but the last
 	// drawn views.
-	clear_color |= (!cl_multiview.integer && (gl_clear.integer || (!vid_hwgamma_enabled && v_contrast.value > 1)));
+	clear_color |= (!cl_multiview.integer && (gl_clear.integer || v_contrast.value > 1));
 
 	// If outside level or in wall, sky is usually visible
 	clear_color |= (r_viewleaf->contents == CONTENTS_SOLID && (R_UseModernOpenGL() || r_fastsky.integer));
@@ -1102,11 +1102,23 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 	}
 }
 
+// With the software palette the post-process shader applies the view blend.
+// With vid_framebuffer 2 the HUD has its own layer and stays on top of the
+// blend; otherwise the HUD is already in the image and gets blended too.
+// Multiview draws a quad over each view instead, since the shader runs once
+// per frame and every view has its own blend. Team Fortress also keeps the
+// quad: a flash grenade blends the view almost opaque white, and the quad
+// keeps the HUD readable on top of it.
+qbool R_PostProcessViewBlend(void)
+{
+	extern cvar_t vid_software_palette;
+
+	return vid_software_palette.integer && !cl_multiview.integer && !cl.teamfortress;
+}
+
 void R_PolyBlend(void)
 {
-	extern cvar_t gl_hwblend;
-
-	if (vid_hwgamma_enabled && gl_hwblend.value && !cl.teamfortress) {
+	if (R_PostProcessViewBlend()) {
 		return;
 	}
 	if (!v_blend[3]) {
