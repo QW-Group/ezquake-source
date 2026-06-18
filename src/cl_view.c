@@ -30,9 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "pmove.h"
 
-#ifdef X11_GAMMA_WORKAROUND
-#include "tr_types.h"
-#endif
 #include "r_local.h"
 #include "r_renderer.h"
 #include "r_brushmodel.h"
@@ -80,9 +77,6 @@ cvar_t	crosshaircolor = {"crosshaircolor", "255 0 0", CVAR_COLOR};
 cvar_t	crosshairsize	= {"crosshairsize", "1"};
 cvar_t  cl_crossx = {"cl_crossx", "0"};
 cvar_t  cl_crossy = {"cl_crossy", "0"};
-
-// gamma updates are expensive in hw: update at lower fps, otherwise drops are severe
-static cvar_t vid_hwgamma_fps = { "vid_hwgamma_fps", "60" };
 
 // QW262: less flash grenade effect in demos
 cvar_t cl_demoplay_flash       = { "cl_demoplay_flash",      "0.33" };
@@ -254,7 +248,6 @@ cshift_t	cshift_slime = { {0,25,5}, 150 };
 cshift_t	cshift_lava = { {255,80,0}, 150 };
 
 cvar_t		gl_cshiftpercent = {"gl_cshiftpercent", "100"};
-cvar_t		gl_hwblend = {"gl_hwblend", "0"};
 float		v_blend[4];		// rgba 0.0 - 1.0
 cvar_t		v_gamma = {"gl_gamma", "1.0"};
 cvar_t		v_contrast = {"gl_contrast", "1.0"};
@@ -1114,8 +1107,6 @@ void V_Init (void) {
 	Cvar_Register(&v_dlightcolor);
 	Cvar_Register(&v_dlightcshiftpercent);
 	Cvar_Register(&gl_cshiftpercent);
-	Cvar_Register(&gl_hwblend);
-	Cvar_Register(&vid_hwgamma_fps);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register(&v_gamma);

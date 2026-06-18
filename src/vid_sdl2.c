@@ -26,10 +26,6 @@
 #include <SDL.h>
 #include <SDL_syswm.h>
 
-#ifdef X11_GAMMA_WORKAROUND
-#include <X11/extensions/xf86vmode.h>
-#endif
-
 #ifdef _WIN32
 #include <windows.h>
 
@@ -108,7 +104,6 @@ static SDL_Window       *sdl_window;
 static SDL_GLContext    sdl_context;
 
 glconfig_t glConfig;
-qbool vid_hwgamma_enabled = false;
 static qbool mouse_active = false;
 qbool mouseinitialized = false; // unfortunately non static, lame...
 int mx, my;
@@ -123,10 +118,6 @@ double vid_last_swap_time;
 
 static SDL_DisplayMode *modelist;
 static int modelist_count;
-
-#ifdef X11_GAMMA_WORKAROUND
-static unsigned short sysramps[3*4096];
-#endif
 
 qbool vid_initialized = false;
 
@@ -186,11 +177,6 @@ cvar_t vid_width                  = {"vid_width",                  "0",       CV
 cvar_t vid_height                 = {"vid_height",                 "0",       CVAR_LATCH_GFX | CVAR_AUTO };
 cvar_t vid_win_width              = {"vid_win_width",              "640",     CVAR_LATCH_GFX };
 cvar_t vid_win_height             = {"vid_win_height",             "480",     CVAR_LATCH_GFX };
-#ifdef __APPLE__
-cvar_t vid_hwgammacontrol         = {"vid_hwgammacontrol",         "2",       CVAR_LATCH_GFX };
-#else
-cvar_t vid_hwgammacontrol         = {"vid_hwgammacontrol",         "0",       CVAR_LATCH_GFX };
-#endif
 cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CVAR_LATCH_GFX };
 // TODO: Move the in_* cvars
 cvar_t in_raw                     = {"in_raw",                     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
@@ -200,10 +186,6 @@ cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          "0",       CV
 cvar_t vid_renderer               = {"vid_renderer",               "1",       CVAR_LATCH_GFX };
 #endif
 cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH_GFX };
-
-#ifdef X11_GAMMA_WORKAROUND
-cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH_GFX };
-#endif
 
 cvar_t in_release_mouse_modes     = {"in_release_mouse_modes",     "2",       CVAR_SILENT };
 cvar_t in_ignore_touch_events     = {"in_ignore_touch_events",     "1",       CVAR_SILENT };
@@ -482,64 +464,6 @@ static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
 	*y = bounds.y + min(*y, bounds.h - 30);
 }
 
-static int VID_SetDeviceGammaRampReal(unsigned short *ramps)
-{
-#ifdef X11_GAMMA_WORKAROUND
-	static short once = 1;
-	static short gamma_works = 0;
-
-	if (!vid_gamma_workaround.integer) {
-		SDL_SetWindowGammaRamp(sdl_window, ramps, ramps + 4096, ramps + (2 * 4096));
-		vid_hwgamma_enabled = true;
-		return 0;
-	}
-
-	if (once) {
-		if (glConfig.gammacrap.size < 0 || glConfig.gammacrap.size > 4096) {
-			Com_Printf("error: gamma size is broken, gamma won't work (reported size %d)\n", glConfig.gammacrap.size);
-			once = 0;
-			return 0;
-		}
-		if (!XF86VidModeGetGammaRamp(glConfig.gammacrap.display, glConfig.gammacrap.screen, glConfig.gammacrap.size, sysramps, sysramps + 4096, sysramps + (2 * 4096))) {
-			Com_Printf("error: cannot get system gamma ramps, gamma won't work\n");
-			once = 0;
-			return 0;
-		}
-		once = 0;
-		gamma_works = 1;
-	}
-
-	if (gamma_works) {
-		/* Just double check the gamma size... */
-		if (glConfig.gammacrap.size < 0 || glConfig.gammacrap.size > 4096) {
-			Com_Printf("error: gamma size broken but worked initially, wtf?! gamma won't work\n");
-			gamma_works = 0;
-			vid_hwgamma_enabled = false;
-		}
-		/* It returns true unconditionally ... */
-		XF86VidModeSetGammaRamp(glConfig.gammacrap.display, glConfig.gammacrap.screen, glConfig.gammacrap.size, ramps, ramps + 4096, ramps + (2 * 4096));
-		vid_hwgamma_enabled = true;
-	}
-	return 0;
-#else
-	if (SDL_SetWindowGammaRamp(sdl_window, ramps, ramps + 256, ramps + 512) == 0) {
-		vid_hwgamma_enabled = true;
-		return 0;
-	}
-	return -1;
-#endif
-}
-
-#ifdef X11_GAMMA_WORKAROUND
-static void VID_RestoreSystemGamma(void)
-{
-	if (!sdl_window || COM_CheckParm(cmdline_param_client_nohardwaregamma)) {
-		return;
-	}
-	VID_SetDeviceGammaRampReal(sysramps);
-}
-#endif
-
 static void window_event(SDL_WindowEvent *event)
 {
 	extern qbool scr_skipupdate;
@@ -554,13 +478,6 @@ static void window_event(SDL_WindowEvent *event)
 #ifdef __linux__
 			block_keyboard_input = in_ignore_unfocused_keyb.integer;
 #endif
-#ifdef X11_GAMMA_WORKAROUND
-			if (vid_gamma_workaround.integer) {
-				if (Minimized || vid_hwgammacontrol.integer != 3) {
-					VID_RestoreSystemGamma();
-				}
-			}
-#endif
 #ifdef _WIN32
 			Sys_ActiveAppChanged ();
 #endif
@@ -573,11 +490,6 @@ static void window_event(SDL_WindowEvent *event)
 			Minimized = false;
 			ActiveApp = true;
 			scr_skipupdate = 0;
-#ifdef X11_GAMMA_WORKAROUND
-			if (vid_gamma_workaround.integer) {
-				v_gamma.modified = true;
-			}
-#endif
 #ifdef _WIN32
 			Sys_ActiveAppChanged ();
 #endif
@@ -953,12 +865,6 @@ void VID_Shutdown(qbool restart)
 
 	SDL_StopTextInput();
 
-#ifdef X11_GAMMA_WORKAROUND
-	if (vid_gamma_workaround.integer) {
-		VID_RestoreSystemGamma();
-	}
-#endif
-
 	R_Shutdown(restart ? r_shutdown_restart : r_shutdown_full);
 
 	if (sdl_context) {
@@ -981,7 +887,6 @@ void VID_Shutdown(qbool restart)
 
 	Q_free(modelist);
 	modelist_count = 0;
-	vid_hwgamma_enabled = false;
 	vid_initialized = false;
 
 	if (!restart) {
@@ -1013,7 +918,6 @@ static void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_height);
 	Cvar_Register(&vid_win_width);
 	Cvar_Register(&vid_win_height);
-	Cvar_Register(&vid_hwgammacontrol);
 	Cvar_Register(&r_colorbits);
 	Cvar_Register(&r_24bit_depth);
 	Cvar_Register(&r_fullscreen);
@@ -1034,9 +938,6 @@ static void VID_RegisterLatchCvars(void)
 	Cvar_Register(&gl_reverse_z);
 	Cvar_Register(&vid_framebuffer_hdr);
 
-#ifdef X11_GAMMA_WORKAROUND
-	Cvar_Register(&vid_gamma_workaround);
-#endif
 	Cvar_Register(&vid_gammacorrection);
 
 	Cvar_ResetCurrentGroup();
@@ -1305,40 +1206,6 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 	}
 }
 
-#ifdef X11_GAMMA_WORKAROUND
-static void VID_X11_GetGammaRampSize(void)
-{
-	glConfig.gammacrap.size = -1;
-
-	SDL_VERSION(&glConfig.gammacrap.info.version);
-	glConfig.gammacrap.screen = SDL_GetWindowDisplayIndex(sdl_window);
-
-	if (glConfig.gammacrap.screen < 0) {
-		Com_Printf("error: couldn't get screen number to set gamma\n");
-		return;
-	}
-
-	if (SDL_GetWindowWMInfo(sdl_window, &glConfig.gammacrap.info) != SDL_TRUE) {
-		Com_Printf("error: can not get display pointer, gamma won't work: %s\n", SDL_GetError());
-		return;
-	}
-
-	if (glConfig.gammacrap.info.subsystem != SDL_SYSWM_X11) {
-		Com_Printf("error: not x11, gamma won't work\n");
-		return;
-	}
-
-	glConfig.gammacrap.display = glConfig.gammacrap.info.info.x11.display;
-	XF86VidModeGetGammaRampSize(glConfig.gammacrap.display, glConfig.gammacrap.screen, &glConfig.gammacrap.size);
-
-	if (glConfig.gammacrap.size <= 0 || glConfig.gammacrap.size > 4096) {
-		Com_Printf("error: gamma size '%d' seems weird, refusing to use it\n", glConfig.gammacrap.size);
-		glConfig.gammacrap.size = -1;
-		return;
-	}
-}
-#endif
-
 static void VID_SetWindowResolution(void)
 {
 	if (r_fullscreen.integer > 0 && vid_usedesktopres.integer != 1) {
@@ -1526,15 +1393,6 @@ static void VID_SDL_Init(void)
 	v_gamma.modified = true;
 	r_swapInterval.modified = true;
 
-#ifdef X11_GAMMA_WORKAROUND
-	/* PLEASE REMOVE ME AS SOON AS SDL2 AND XORG ARE TALKING NICELY TO EACHOTHER AGAIN IN TERMS OF GAMMA */
-	if (vid_gamma_workaround.integer != 0) {
-		VID_X11_GetGammaRampSize();
-	} else {
-		glConfig.gammacrap.size = 256;
-	}
-#endif
-
 	R_Initialise();
 
 	//always get/set refresh rate
@@ -1659,27 +1517,7 @@ void VID_NotifyActivity(void)
 #endif
 }
 
-int VID_SetDeviceGammaRamp(unsigned short *ramps)
-{
-	if (!sdl_window || (COM_CheckParm(cmdline_param_client_nohardwaregamma) && Ruleset_AllowNoHardwareGamma())) {
-		return 0;
-	}
-
-	if (r_fullscreen.integer > 0) {
-		if (vid_hwgammacontrol.integer > 0) {
-			return VID_SetDeviceGammaRampReal(ramps);
-		}
-	}
-	else {
-		if (vid_hwgammacontrol.integer >= 2) {
-			return VID_SetDeviceGammaRampReal(ramps);
-		}
-	}
-
-	return 0;
-}
-
-void VID_Minimize (void) 
+void VID_Minimize (void)
 {
 	if (!sdl_window) {
 		return;
