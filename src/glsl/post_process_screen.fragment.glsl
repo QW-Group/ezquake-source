@@ -66,8 +66,8 @@ void main()
 #endif
 
 #ifdef EZ_POSTPROCESS_PALETTE
-	// apply blend & contrast
-	result = vec4((result.rgb * v_blend.a + v_blend.rgb) * contrast, 1);
+	// apply contrast
+	result = vec4(result.rgb * contrast, 1);
 
 	// apply gamma
 	result = vec4(pow(result.rgb, vec3(gamma)), 1);

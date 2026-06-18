@@ -8,7 +8,6 @@ uniform sampler2D overlay;
 #endif
 
 uniform float gamma;
-uniform vec4 v_blend;
 uniform float contrast;
 uniform float r_inv_width;
 uniform float r_inv_height;
@@ -63,8 +62,8 @@ void main()
 #endif
 
 #ifdef EZ_POSTPROCESS_PALETTE
-	// apply blend & contrast
-	frag_colour = vec4((frag_colour.rgb * v_blend.a + v_blend.rgb) * contrast, 1);
+	// apply contrast
+	frag_colour = vec4(frag_colour.rgb * contrast, 1);
 
 	// apply gamma
 	frag_colour = vec4(pow(frag_colour.rgb, vec3(gamma)), 1);

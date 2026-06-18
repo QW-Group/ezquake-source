@@ -203,8 +203,6 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_post_process_glc, "base", 1, false },
 	// r_program_uniform_post_process_glc_overlay,
 	{ r_program_post_process_glc, "overlay", 1, false },
-	// r_program_uniform_post_process_glc_v_blend,
-	{ r_program_post_process_glc, "v_blend", 1, false },
 	// r_program_uniform_post_process_glc_contrast,
 	{ r_program_post_process_glc, "contrast", 1, false },
 	// r_program_uniform_post_process_glc_r_inv_width,
