@@ -63,8 +63,8 @@ cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 				"on_connect_ctf,on_connect_ffa,on_enter,on_enter_ctf,on_enter_ffa,on_matchend," \
 				"on_matchstart,on_observe,on_observe_ctf,on_observe_ffa,on_spec_enter," \
 				"on_spec_enter_ctf,on_spec_enter_ffa,on_spec_matchend,on_spec_matchstart," \
-				"on_unadmin,packet,play,rate,reconnect,say,sinfoset,skin,skins,team,tempalias," \
-				"track,wait"
+				"on_unadmin,on_countdown,on_spec_countdown,packet,play,rate,reconnect,say,sinfoset," \
+				"skin,skins,team,tempalias,track,wait"
 
 static void OnChange_remote_capabilities(cvar_t *var, char *string, qbool *cancel);
 cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, 0,
