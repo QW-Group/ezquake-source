@@ -27,11 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <SDL.h>
 #include <SDL_vulkan.h>
-#ifdef __ANDROID__
-#include <jni.h>
-#include <SDL_system.h>
-#include <android/log.h>
-#endif
 
 #include "gl_model.h"
 #include "r_aliasmodel.h"
@@ -44,43 +39,6 @@ vk_options_t vk_options;
 static qbool vk_recreate_swapchain_requested;
 static qbool vk_recreate_surface_requested;
 
-#ifdef __ANDROID__
-static qbool vk_android_startup_splash_hidden;
-static double vk_profile_recording_start;
-
-static void VK_AndroidHideStartupSplash(void)
-{
-	JNIEnv* env;
-	jobject activity;
-	jclass activity_class;
-	jmethodID hide_method;
-
-	if (vk_android_startup_splash_hidden) {
-		return;
-	}
-
-	env = (JNIEnv*) SDL_AndroidGetJNIEnv();
-	activity = (jobject) SDL_AndroidGetActivity();
-	if (!env || !activity) {
-		return;
-	}
-
-	activity_class = (*env)->GetObjectClass(env, activity);
-	if (!activity_class) {
-		(*env)->DeleteLocalRef(env, activity);
-		return;
-	}
-
-	hide_method = (*env)->GetMethodID(env, activity_class, "hideStartupSplash", "()V");
-	if (hide_method) {
-		(*env)->CallVoidMethod(env, activity, hide_method);
-		vk_android_startup_splash_hidden = true;
-	}
-
-	(*env)->DeleteLocalRef(env, activity_class);
-	(*env)->DeleteLocalRef(env, activity);
-}
-#endif
 
 void VK_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, int flags);
 void VK_DrawRectangle(float x, float y, float width, float height, byte* color);
@@ -505,32 +463,6 @@ void VK_RequestSurfaceRecreate(void)
 	vk_recreate_swapchain_requested = true;
 }
 
-#ifdef __ANDROID__
-typedef struct vk_profile_accum_s {
-	double accum;
-	double min;
-	double max;
-	unsigned int count;
-} vk_profile_accum_t;
-
-// Shared 60-sample rolling average logger for the per-frame timing points
-// below (acquire/present/etc) -- avoids repeating the same accumulate+log
-// boilerplate at every call site.
-static void VK_ProfileAccumulate(vk_profile_accum_t* a, const char* label, double dt)
-{
-	a->accum += dt;
-	a->min = (a->count == 0) ? dt : min(a->min, dt);
-	a->max = max(a->max, dt);
-	if (++a->count >= 60) {
-		__android_log_print(ANDROID_LOG_INFO, "VK_PROFILE", "%s avg=%.2fms min=%.2fms max=%.2fms",
-			label, (a->accum / a->count) * 1000.0, a->min * 1000.0, a->max * 1000.0);
-		a->accum = 0;
-		a->min = 1e9;
-		a->max = 0;
-		a->count = 0;
-	}
-}
-#endif
 
 void VK_BeginFrame(void)
 {
@@ -541,36 +473,7 @@ void VK_BeginFrame(void)
 	VkCommandBuffer commandBuffer;
 	uint32_t frameIndex;
 	VkFence frameFence;
-
-#ifdef __ANDROID__
-	{
-		static double profile_last_time;
-		static double profile_accum;
-		static double profile_min = 1e9;
-		static double profile_max;
-		static unsigned int profile_count;
-		double now = Sys_DoubleTime();
-
-		if (profile_last_time > 0) {
-			double dt = now - profile_last_time;
-
-			profile_accum += dt;
-			profile_min = min(profile_min, dt);
-			profile_max = max(profile_max, dt);
-			if (++profile_count >= 60) {
-				__android_log_print(ANDROID_LOG_INFO, "VK_PROFILE",
-					"frame interval avg=%.2fms min=%.2fms max=%.2fms (%.1f fps avg)",
-					(profile_accum / profile_count) * 1000.0, profile_min * 1000.0, profile_max * 1000.0,
-					profile_count / profile_accum);
-				profile_accum = 0;
-				profile_min = 1e9;
-				profile_max = 0;
-				profile_count = 0;
-			}
-		}
-		profile_last_time = now;
-	}
-#endif
+	VkResult waitResult;
 
 	if (vk_options.logicalDevice == VK_NULL_HANDLE || vk_options.frame.active) {
 		return;
@@ -601,39 +504,10 @@ void VK_BeginFrame(void)
 
 	frameIndex = vk_options.frame.currentFrame;
 	frameFence = vk_options.frame.inFlightFences[frameIndex];
-#ifdef __ANDROID__
-	// CPU-vs-GPU split: time blocked here is the CPU sitting idle waiting for
-	// the GPU to finish a previous frame. Compared against the frame interval
-	// logged above, a wait that tracks the interval closely means we are
-	// GPU-bound; a wait near zero means the bottleneck is elsewhere (CPU game
-	// logic, command recording, present/compositor).
-	{
-		static double profile_wait_accum;
-		static double profile_wait_min = 1e9;
-		static double profile_wait_max;
-		static unsigned int profile_wait_count;
-		double waitStart = Sys_DoubleTime();
-		double waitDt;
-
-		vkWaitForFences(vk_options.logicalDevice, 1, &frameFence, VK_TRUE, UINT64_MAX);
-		waitDt = Sys_DoubleTime() - waitStart;
-
-		profile_wait_accum += waitDt;
-		profile_wait_min = min(profile_wait_min, waitDt);
-		profile_wait_max = max(profile_wait_max, waitDt);
-		if (++profile_wait_count >= 60) {
-			__android_log_print(ANDROID_LOG_INFO, "VK_PROFILE",
-				"gpu fence wait avg=%.2fms min=%.2fms max=%.2fms",
-				(profile_wait_accum / profile_wait_count) * 1000.0, profile_wait_min * 1000.0, profile_wait_max * 1000.0);
-			profile_wait_accum = 0;
-			profile_wait_min = 1e9;
-			profile_wait_max = 0;
-			profile_wait_count = 0;
-		}
+	waitResult = vkWaitForFences(vk_options.logicalDevice, 1, &frameFence, VK_TRUE, UINT64_MAX);
+	if (waitResult != VK_SUCCESS) {
+		Sys_Error("vulkan: frame fence wait failed: %d", waitResult);
 	}
-#else
-	vkWaitForFences(vk_options.logicalDevice, 1, &frameFence, VK_TRUE, UINT64_MAX);
-#endif
 
 	// Finite timeout, not UINT64_MAX: with non-blocking present modes
 	// (IMMEDIATE/MAILBOX) the CPU can render faster than the compositor
@@ -644,16 +518,7 @@ void VK_BeginFrame(void)
 	// with no way to recover. A finite wait turns that into a recoverable
 	// "no frame this loop", same idea as the OUT_OF_DATE/SUBOPTIMAL handling
 	// below.
-#ifdef __ANDROID__
-	{
-		static vk_profile_accum_t acquireAccum;
-		double t0 = Sys_DoubleTime();
-		result = vkAcquireNextImageKHR(vk_options.logicalDevice, vk_options.swapChain.handle, 1000000000ULL, vk_options.frame.imageAvailableSemaphores[frameIndex], VK_NULL_HANDLE, &vk_options.frame.imageIndex);
-		VK_ProfileAccumulate(&acquireAccum, "vkAcquireNextImageKHR", Sys_DoubleTime() - t0);
-	}
-#else
 	result = vkAcquireNextImageKHR(vk_options.logicalDevice, vk_options.swapChain.handle, 1000000000ULL, vk_options.frame.imageAvailableSemaphores[frameIndex], VK_NULL_HANDLE, &vk_options.frame.imageIndex);
-#endif
 	if (result == VK_TIMEOUT || result == VK_NOT_READY) {
 		return;
 	}
@@ -661,35 +526,31 @@ void VK_BeginFrame(void)
 		VK_RequestSwapChainRecreate();
 		return;
 	}
-	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-		Con_DPrintf("vulkan: vkAcquireNextImageKHR failed: %d\n", result);
+	if (result == VK_ERROR_SURFACE_LOST_KHR) {
+		VK_RequestSurfaceRecreate();
 		return;
 	}
+	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		Sys_Error("vulkan: vkAcquireNextImageKHR failed: %d", result);
+	}
 	if (vk_options.frame.imageInFlightFences[vk_options.frame.imageIndex] != VK_NULL_HANDLE) {
-		VkResult waitResult;
-#ifdef __ANDROID__
-		{
-			static vk_profile_accum_t imageWaitAccum;
-			double t0 = Sys_DoubleTime();
-			waitResult = vkWaitForFences(vk_options.logicalDevice, 1, &vk_options.frame.imageInFlightFences[vk_options.frame.imageIndex], VK_TRUE, 1000000000ULL);
-			VK_ProfileAccumulate(&imageWaitAccum, "image-in-flight wait", Sys_DoubleTime() - t0);
-		}
-#else
-		waitResult = vkWaitForFences(vk_options.logicalDevice, 1, &vk_options.frame.imageInFlightFences[vk_options.frame.imageIndex], VK_TRUE, 1000000000ULL);
-#endif
-		if (waitResult == VK_TIMEOUT) {
-			return;
+		waitResult = vkWaitForFences(vk_options.logicalDevice, 1, &vk_options.frame.imageInFlightFences[vk_options.frame.imageIndex], VK_TRUE, UINT64_MAX);
+		if (waitResult != VK_SUCCESS) {
+			Sys_Error("vulkan: swapchain image fence wait failed: %d", waitResult);
 		}
 	}
 	vk_options.frame.imageInFlightFences[vk_options.frame.imageIndex] = frameFence;
 
 	commandBuffer = vk_options.frame.commandBuffers[vk_options.frame.imageIndex];
-	vkResetCommandBuffer(commandBuffer, 0);
+	result = vkResetCommandBuffer(commandBuffer, 0);
+	if (result != VK_SUCCESS) {
+		Sys_Error("vulkan: vkResetCommandBuffer failed: %d", result);
+	}
 
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-		Con_DPrintf("vulkan: vkBeginCommandBuffer failed\n");
-		return;
+	result = vkBeginCommandBuffer(commandBuffer, &beginInfo);
+	if (result != VK_SUCCESS) {
+		Sys_Error("vulkan: vkBeginCommandBuffer failed: %d", result);
 	}
 
 	// Dynamic lightmaps queued by the previous frame are copied before the
@@ -715,9 +576,6 @@ void VK_BeginFrame(void)
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	vk_options.frame.active = true;
-#ifdef __ANDROID__
-	vk_profile_recording_start = Sys_DoubleTime();
-#endif
 }
 
 VkCommandBuffer VK_CurrentCommandBuffer(void)
@@ -747,17 +605,10 @@ void VK_EndFrame(void)
 
 	commandBuffer = vk_options.frame.commandBuffers[vk_options.frame.imageIndex];
 	vkCmdEndRenderPass(commandBuffer);
-	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-		vk_options.frame.active = false;
-		Con_DPrintf("vulkan: vkEndCommandBuffer failed\n");
-		return;
+	result = vkEndCommandBuffer(commandBuffer);
+	if (result != VK_SUCCESS) {
+		Sys_Error("vulkan: vkEndCommandBuffer failed: %d", result);
 	}
-#ifdef __ANDROID__
-	if (vk_profile_recording_start > 0) {
-		static vk_profile_accum_t recordingAccum;
-		VK_ProfileAccumulate(&recordingAccum, "command recording (3D+HUD)", Sys_DoubleTime() - vk_profile_recording_start);
-	}
-#endif
 
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.waitSemaphoreCount = 1;
@@ -768,26 +619,14 @@ void VK_EndFrame(void)
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = &vk_options.frame.renderFinishedSemaphores[frameIndex];
 
-	vkResetFences(vk_options.logicalDevice, 1, &frameFence);
-#ifdef __ANDROID__
-	{
-		static vk_profile_accum_t submitAccum;
-		double t0 = Sys_DoubleTime();
-		result = vkQueueSubmit(vk_options.graphicsQueue, 1, &submitInfo, frameFence) == VK_SUCCESS ? VK_SUCCESS : VK_ERROR_UNKNOWN;
-		VK_ProfileAccumulate(&submitAccum, "vkQueueSubmit", Sys_DoubleTime() - t0);
-		if (result != VK_SUCCESS) {
-			vk_options.frame.active = false;
-			Con_DPrintf("vulkan: vkQueueSubmit failed\n");
-			return;
-		}
+	result = vkResetFences(vk_options.logicalDevice, 1, &frameFence);
+	if (result != VK_SUCCESS) {
+		Sys_Error("vulkan: vkResetFences failed: %d", result);
 	}
-#else
-	if (vkQueueSubmit(vk_options.graphicsQueue, 1, &submitInfo, frameFence) != VK_SUCCESS) {
-		vk_options.frame.active = false;
-		Con_DPrintf("vulkan: vkQueueSubmit failed\n");
-		return;
+	result = vkQueueSubmit(vk_options.graphicsQueue, 1, &submitInfo, frameFence);
+	if (result != VK_SUCCESS) {
+		Sys_Error("vulkan: vkQueueSubmit failed: %d", result);
 	}
-#endif
 
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
@@ -796,26 +635,18 @@ void VK_EndFrame(void)
 	presentInfo.pSwapchains = &vk_options.swapChain.handle;
 	presentInfo.pImageIndices = &vk_options.frame.imageIndex;
 
-#ifdef __ANDROID__
-	{
-		static vk_profile_accum_t presentAccum;
-		double t0 = Sys_DoubleTime();
-		result = vkQueuePresentKHR(vk_options.presentQueue, &presentInfo);
-		VK_ProfileAccumulate(&presentAccum, "vkQueuePresentKHR", Sys_DoubleTime() - t0);
-	}
-#else
 	result = vkQueuePresentKHR(vk_options.presentQueue, &presentInfo);
-#endif
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 		// Only a real error requires recreating the swapchain. SUBOPTIMAL is
 		// just advisory -- the image was still presented fine, it just isn't
 		// an exact match for the surface's "ideal" current extent. We
-		// deliberately render at a smaller-than-display buffer size on
-		// Android (see SDLSurface's render-scaling cap), so SUBOPTIMAL is the
-		// expected steady state, not a transient condition: treating it as a
-		// recreate trigger meant the swapchain (and a vkDeviceWaitIdle) was
-		// being torn down and rebuilt on every single frame.
+		// SUBOPTIMAL is advisory and the image was presented successfully.
+		// Recreating here can cause a permanent recreate loop on surfaces whose
+		// preferred extent never exactly matches the selected swapchain extent.
 		VK_RequestSwapChainRecreate();
+	}
+	else if (result == VK_ERROR_SURFACE_LOST_KHR) {
+		VK_RequestSurfaceRecreate();
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 		Con_DPrintf("vulkan: vkQueuePresentKHR failed: %d\n", result);
@@ -823,11 +654,6 @@ void VK_EndFrame(void)
 	else {
 		presented = true;
 	}
-#ifdef __ANDROID__
-	if (presented) {
-		VK_AndroidHideStartupSplash();
-	}
-#endif
 
 	vk_options.frame.active = false;
 	vk_options.frame.currentFrame = (frameIndex + 1) % VK_MAX_FRAMES_IN_FLIGHT;
