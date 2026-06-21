@@ -160,10 +160,8 @@ static void GFXPresetExec(const char *cfg)
 	 * and crash when cycling away from eyecandy. Batch the changes and perform
 	 * one reload after the cfg has fully executed.
 	 *
-	 * Vulkan on Android currently does not survive the texture reload path
-	 * reliably: it can keep the process alive but stop presenting frames while
-	 * memory grows rapidly. Skip the explicit reload there; immediate cvars
-	 * still apply, and reload-only texture changes can wait for a restart.
+	 * The Vulkan backend requires a full restart for reload-only texture
+	 * changes, so immediate cvars apply now and those changes wait for restart.
 	 */
 	if (vid_reload_auto) {
 		Cvar_Set(vid_reload_auto, "0");
@@ -462,7 +460,7 @@ const char* vid_renderer_enum[] = {
 	"modern", "1",
 #endif
 #ifdef RENDERER_OPTION_VULKAN
-	"vulkan", "2",
+	"vulkan (experimental)", "2",
 #endif
 	NULL
 };

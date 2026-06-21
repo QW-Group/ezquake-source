@@ -47,6 +47,8 @@ extern struct mleaf_s* r_viewleaf2;
 extern struct mleaf_s* r_oldviewleaf2;	// 2 is for watervis hack
 
 // Using multiple renderers?
+extern cvar_t vid_renderer;
+
 #ifdef EZ_MULTIPLE_RENDERERS
 #undef EZ_MULTIPLE_RENDERERS
 #endif
@@ -56,7 +58,6 @@ extern struct mleaf_s* r_oldviewleaf2;	// 2 is for watervis hack
 	(defined(RENDERER_OPTION_MODERN_OPENGL) && defined(RENDERER_OPTION_VULKAN))
 #define EZ_MULTIPLE_RENDERERS
 
-extern cvar_t vid_renderer;
 #define R_UseImmediateOpenGL()    (vid_renderer.integer == 0)
 #define R_UseModernOpenGL()       (vid_renderer.integer == 1)
 #define R_UseVulkan()             (vid_renderer.integer == 2)
