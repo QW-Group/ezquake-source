@@ -11,9 +11,6 @@ of the License, or (at your option) any later version.
 
 #include <vulkan/vulkan.h>
 #include "quakedef.h"
-#ifdef __ANDROID__
-#include <android/log.h>
-#endif
 
 #include "r_renderer.h"
 #include "r_texture_internal.h"
@@ -135,6 +132,16 @@ static void VK_TextureDestroyObjects(texture_ref texture)
 	}
 
 	vktex = &textureData[texture.index];
+
+	// The GPU may still be reading this texture's image/descriptor from an
+	// in-flight command buffer (we run up to VK_MAX_FRAMES_IN_FLIGHT frames
+	// ahead of the GPU). Destroying it underneath an in-progress draw is
+	// undefined behaviour. Only pay the (otherwise idle, near-free) wait when
+	// there's an actual GPU resource to tear down.
+	if (vktex->image != VK_NULL_HANDLE) {
+		vkDeviceWaitIdle(vk_options.logicalDevice);
+	}
+
 	if (vktex->descriptorSet != VK_NULL_HANDLE && textureDescriptorPool != VK_NULL_HANDLE) {
 		vkFreeDescriptorSets(vk_options.logicalDevice, textureDescriptorPool, 1, &vktex->descriptorSet);
 	}
@@ -745,25 +752,6 @@ void VK_TextureFlushPendingUploads(VkCommandBuffer commandBuffer, uint32_t frame
 	VkDeviceSize requiredCapacity;
 	int i;
 
-#ifdef __ANDROID__
-	{
-		static unsigned int profile_frames;
-		static unsigned int profile_uploads_accum;
-		static VkDeviceSize profile_bytes_accum;
-
-		profile_uploads_accum += (unsigned int)pendingTextureUploadCount;
-		profile_bytes_accum += pendingTextureUploadDataSize;
-		if (++profile_frames >= 60) {
-			__android_log_print(ANDROID_LOG_INFO, "VK_PROFILE",
-				"lightmap uploads avg count=%.1f avg bytes=%.0f per frame",
-				profile_uploads_accum / (float)profile_frames,
-				profile_bytes_accum / (float)profile_frames);
-			profile_frames = 0;
-			profile_uploads_accum = 0;
-			profile_bytes_accum = 0;
-		}
-	}
-#endif
 
 	if (commandBuffer == VK_NULL_HANDLE || frameIndex >= VK_MAX_FRAMES_IN_FLIGHT || pendingTextureUploadCount == 0 || pendingTextureUploadDataSize == 0) return;
 
