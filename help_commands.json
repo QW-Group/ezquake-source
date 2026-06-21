@@ -1476,10 +1476,10 @@
     "remarks": "Negative values can also be used for the desired angle."
   },
   "s_audiodevicelist": {
-    "description": "Lists all available audio playback and input devices as reported by SDL2. Prints two sections -- \"Playback devices\" and \"Input devices\" -- each with a numbered id and device name. Device id 0 in each section represents the system default. Use the playback id with s_audiodevice to select a specific output device without restarting."
+    "description": "Lists audio playback and input devices reported by the active sound backend. SDL builds print enumerated playback/input devices; Android Oboe builds use the system default output and report local capture as deferred. Device id 0 represents the system default."
   },
   "s_listdrivers": {
-    "description": "Lists the audio drivers compiled into the SDL2 library. Prints one driver name per line to the console. Useful for diagnosing which audio backends are available on the current system (e.g. pulseaudio, alsa, pipewire on Linux; wasapi, directsound on Windows)."
+    "description": "Lists diagnostic information for the active sound backend. SDL builds print compiled-in SDL audio drivers; Android Oboe builds print the native Oboe output path."
   },
   "s_restart": {
     "description": "Restarts the sound system. Shuts down the current audio session, reinitialises the audio driver, and reprecaches all sounds the server has already sent to the client. Use after changing audio settings (such as s_khz or s_desiredsamples) that require a full audio reset to take effect. The legacy alias snd_restart is equivalent."

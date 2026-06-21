@@ -17260,7 +17260,7 @@
       "default": "11",
       "desc": "Sets the audio sampling rate.\nIn ezQuake, this introduces artifacts which give a \"crisper\"/\"grainy\" feel to some sounds, as the interpolation is not perfect. All the original sounds are 11k, except for shaft which is 22k and will sound different when setting s_khz over 11.",
       "group-id": "45",
-      "remarks": "If you dislike the changes in sound, you can i.e. convert the shaft sounds down to 11k (and fail \"f_modified\" checks), go back to s_khz 11, or use s_linearresample for perfect resampling.",
+      "remarks": "If you dislike the changes in sound, you can i.e. convert the shaft sounds down to 11k (and fail \"f_modified\" checks), go back to s_khz 11, or use s_linearresample for perfect resampling. Android Oboe builds default to 48kHz for the native low-latency output path.",
       "type": "enum",
       "values": [
         {
