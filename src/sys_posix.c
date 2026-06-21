@@ -41,7 +41,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <errno.h>
 #include <dirent.h>
 #include <sys/resource.h>
-#include <time.h>
 
 #include <SDL.h>
 #include <dlfcn.h>
@@ -67,152 +66,6 @@ void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
 cvar_t sys_highpriority = {"sys_highpriority", "", 0, OnChange_sys_highpriority};
 cvar_t sys_nostdout     = {"sys_nostdout", "0" };
 cvar_t sys_fontsdir     = {"sys_fontsdir", "/usr/local/share/fonts/"};
-
-#ifdef __ANDROID__
-#define ANDROID_EZQUAKE_BASEDIR "/storage/emulated/0/Documents/ezQuake"
-#define ANDROID_MAX_ARGC 64
-
-static const char android_missing_data_message[] =
-	"Missing Quake data\n\n"
-	"Put your files in:\n"
-	ANDROID_EZQUAKE_BASEDIR "\n\n"
-	"Minimum:\n"
-	"id1/pak0.pak\n\n"
-	"Recommended full install:\n"
-	"id1/pak0.pak\n"
-	"id1/pak1.pak\n\n"
-	"nQuake/QuakeWorld extras can go in:\n"
-	"qw/\n"
-	"ezquake/";
-
-static const char android_storage_access_message[] =
-	"Cannot read Quake data folder\n\n"
-	"ezQuake needs direct file access to:\n"
-	ANDROID_EZQUAKE_BASEDIR "\n\n"
-	"Enable all files access for ezQuake in Android settings, "
-	"or make sure this folder is readable, then launch again.";
-
-static qbool Android_IsPermissionError(void)
-{
-	return errno == EACCES || errno == EPERM;
-}
-
-static qbool Android_ReadableFile(const char *path, qbool *permission_denied)
-{
-	FILE *f = fopen(path, "rb");
-	if (f) {
-		fclose(f);
-		return true;
-	}
-
-	if (Android_IsPermissionError()) {
-		*permission_denied = true;
-	}
-
-	return false;
-}
-
-static qbool Android_HasUsableBaseData(qbool *permission_denied)
-{
-	char path[MAX_OSPATH];
-	static const char *candidates[] = {
-		"id1/pak0.pak",
-		"id1/PAK0.PAK",
-		"id1/gfx.wad",
-		"id1/gfx/palette.lmp"
-	};
-	size_t i;
-
-	for (i = 0; i < sizeof(candidates) / sizeof(candidates[0]); ++i) {
-		snprintf(path, sizeof(path), "%s/%s", ANDROID_EZQUAKE_BASEDIR, candidates[i]);
-		if (Android_ReadableFile(path, permission_denied)) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-static void Android_ShowStartupError(const char *title, const char *message)
-{
-	fprintf(stderr, "%s: %s\n", title, message);
-
-	if (SDL_Init(0)) {
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, message, NULL);
-		SDL_Quit();
-	}
-
-	exit(1);
-}
-
-static void Android_PreflightDataFolder(void)
-{
-	DIR *dir;
-	struct stat st;
-	qbool permission_denied = false;
-
-	if (stat(ANDROID_EZQUAKE_BASEDIR, &st) != 0) {
-		Android_ShowStartupError(
-			Android_IsPermissionError() ? "Storage access required" : "Missing Quake data",
-			Android_IsPermissionError() ? android_storage_access_message : android_missing_data_message);
-	}
-
-	if (!S_ISDIR(st.st_mode)) {
-		Android_ShowStartupError("Missing Quake data", android_missing_data_message);
-	}
-
-	dir = opendir(ANDROID_EZQUAKE_BASEDIR);
-	if (!dir) {
-		Android_ShowStartupError(
-			Android_IsPermissionError() ? "Storage access required" : "Missing Quake data",
-			Android_IsPermissionError() ? android_storage_access_message : android_missing_data_message);
-	}
-	closedir(dir);
-
-	if (!Android_HasUsableBaseData(&permission_denied)) {
-		Android_ShowStartupError(
-			permission_denied ? "Storage access required" : "Missing Quake data",
-			permission_denied ? android_storage_access_message : android_missing_data_message);
-	}
-}
-
-static void Android_EnforceDataArgs(int *argc, char ***argv)
-{
-	static char *android_argv[ANDROID_MAX_ARGC];
-	char **in_argv = *argv;
-	int in_argc = *argc;
-	int out_argc = 0;
-	int i;
-
-	for (i = 0; i < in_argc && out_argc < ANDROID_MAX_ARGC - 4; ++i) {
-		if (!in_argv[i]) {
-			continue;
-		}
-		if (!strcmp(in_argv[i], "-basedir")) {
-			if (i + 1 < in_argc) {
-				++i;
-			}
-			continue;
-		}
-		if (!strcmp(in_argv[i], "-nohome")) {
-			continue;
-		}
-		android_argv[out_argc++] = in_argv[i];
-	}
-
-	if (out_argc == 0) {
-		android_argv[out_argc++] = (char *)"ezquake";
-	}
-
-	android_argv[out_argc++] = (char *)"-basedir";
-	android_argv[out_argc++] = (char *)ANDROID_EZQUAKE_BASEDIR;
-	android_argv[out_argc++] = (char *)"-nohome";
-	android_argv[out_argc] = NULL;
-
-	*argc = out_argc;
-	*argv = android_argv;
-}
-#endif
 
 void Sys_Printf (char *fmt, ...)
 {
@@ -460,18 +313,10 @@ double Sys_DoubleTime(void)
 }
 #endif
 
-#ifdef __ANDROID__
-__attribute__((visibility("default")))
-#endif
 int main(int argc, char **argv)
 {
 	double time, oldtime, newtime;
 	int i;
-
-#ifdef __ANDROID__
-	Android_EnforceDataArgs(&argc, &argv);
-	Android_PreflightDataFolder();
-#endif
 
 #ifdef __linux__
 	extern void InitSig(void);
@@ -492,7 +337,7 @@ int main(int argc, char **argv)
 
 	// we need to check for -noconinput and -nostdout before Host_Init is called
 	if (!(noconinput = COM_CheckParm(cmdline_param_client_nostdinput)))
-		fcntl(0, F_SETFL, fcntl (0, F_GETFL, 0) | O_NDELAY);
+		fcntl(0, F_SETFL, fcntl (0, F_GETFL, 0) | FNDELAY);
 
 	if (COM_CheckParm(cmdline_param_client_nostdoutput))
 		sys_nostdout.value = 1;

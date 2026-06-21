@@ -97,7 +97,7 @@ static cvar_t in_ignore_deadkeys = { "in_ignore_deadkeys", "1", CVAR_SILENT };
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
 #define VID_RENDERER_MIN 0
-#define VID_RENDERER_MAX 1
+#define VID_RENDERER_MAX 2
 
 #define VID_MULTISAMPLED   1
 #define VID_ACCELERATED    2
@@ -1999,21 +1999,11 @@ void VID_SetCaption (char *text)
 void VID_NotifyActivity(void)
 {
 #ifdef _WIN32
-	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-
-	if (ActiveApp || !vid_flashonactivity.value) {
+	if (ActiveApp || !vid_flashonactivity.value || !sdl_window) {
 		return;
 	}
 
-	if (SDL_GetWindowWMInfo(sdl_window, &info) == SDL_TRUE) {
-		if (info.subsystem == SDL_SYSWM_WINDOWS) {
-			FlashWindow(info.info.win.window, TRUE);
-		}
-	}
-	else {
-		Com_DPrintf("Sys_NotifyActivity: SDL_GetWindowWMInfo failed: %s\n", SDL_GetError());
-	}
+	SDL_FlashWindow(sdl_window, SDL_FLASH_BRIEFLY);
 #endif
 }
 

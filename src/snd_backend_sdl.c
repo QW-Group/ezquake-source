@@ -23,11 +23,24 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qsound.h"
 #include "snd_backend.h"
 
-static SDL_AudioDeviceID audiodevid;
+static SDL_AudioStream *audiostream;
 
-static void S_SDL_callback(void *userdata, Uint8 *stream, int len)
+static void S_SDL_callback(void *userdata, SDL_AudioStream *stream, int additional_amount, int total_amount)
 {
-	S_MixOutput(stream, len, true);
+	Uint8 *data;
+
+	if (additional_amount <= 0) {
+		return;
+	}
+
+	data = SDL_stack_alloc(Uint8, additional_amount);
+	if (!data) {
+		return;
+	}
+
+	S_MixOutput(data, additional_amount, true);
+	SDL_PutAudioStreamData(stream, data, additional_amount);
+	SDL_stack_free(data);
 }
 
 void S_Backend_Update(void)
@@ -48,12 +61,17 @@ void S_Backend_ListDrivers(void)
 
 static void S_SDL_ListAudioDevicesInternal(qbool capture)
 {
-	int i = 0, numdevices;
+	int i, numdevices;
+	SDL_AudioDeviceID *devices = capture ? SDL_GetAudioRecordingDevices(&numdevices) : SDL_GetAudioPlaybackDevices(&numdevices);
 
-	numdevices = SDL_GetNumAudioDevices(capture); /* arg is iscapture */
-	for (; i < numdevices; i++) {
-		Com_Printf(" %2d  %s\n", i+1, SDL_GetAudioDeviceName(i, capture));
+	if (!devices) {
+		return;
 	}
+
+	for (i = 0; i < numdevices; i++) {
+		Com_Printf(" %2d  %s\n", i + 1, SDL_GetAudioDeviceName(devices[i]));
+	}
+	SDL_free(devices);
 }
 
 void S_Backend_ListAudioDevices(void)
@@ -82,9 +100,9 @@ void S_Backend_Shutdown(void)
 {
 	Con_Printf("Shutting down SDL audio.\n");
 
-	if (audiodevid) {
-		SDL_CloseAudioDevice(audiodevid);
-		audiodevid = 0;
+	if (audiostream) {
+		SDL_DestroyAudioStream(audiostream);
+		audiostream = NULL;
 	}
 
 	if (SDL_WasInit(SDL_INIT_AUDIO) != 0)
@@ -100,10 +118,10 @@ void S_Backend_Shutdown(void)
 
 qbool S_Backend_Init(void)
 {
-	SDL_AudioSpec desired, obtained;
+	SDL_AudioSpec desired;
 	soundhw_t *shw_tmp = NULL;
-	int ret = 0;
-	const char *requested_device = NULL;
+	int ret = 0, desired_samples = 0;
+	SDL_AudioDeviceID requested_device = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK;
 
 	if (SDL_WasInit(SDL_INIT_AUDIO) == 0)
 		ret = SDL_InitSubSystem(SDL_INIT_AUDIO);
@@ -117,47 +135,44 @@ qbool S_Backend_Init(void)
 
 	memset(&desired, 0, sizeof(desired));
 	desired.freq = S_SampleRateFromKHzCvar();
-	desired.samples = S_DefaultBufferSamplesForKHz(s_khz.integer);
+	desired_samples = S_DefaultBufferSamplesForKHz(s_khz.integer);
 
-	desired.format = AUDIO_S16LSB;
+	desired.format = SDL_AUDIO_S16LE;
 	desired.channels = 2;
 	if (s_desiredsamples.integer) {
-		int desired_samples = 1;
+		desired_samples = 1;
 
 		// make sure it's a power of 2
 		while (desired_samples < s_desiredsamples.integer)
 			desired_samples <<= 1;
-
-		desired.samples = desired_samples;
 	}
-	desired.callback = S_SDL_callback;
 
 	/* Make audiodevice list start from index 1 so that 0 can be system default */
 	if (s_audiodevice.integer > 0) {
-		requested_device = SDL_GetAudioDeviceName(s_audiodevice.integer - 1, 0);
+		int numdevices = 0;
+		SDL_AudioDeviceID *devices = SDL_GetAudioPlaybackDevices(&numdevices);
+
+		if (devices) {
+			if (s_audiodevice.integer - 1 < numdevices) {
+				requested_device = devices[s_audiodevice.integer - 1];
+			}
+			SDL_free(devices);
+		}
 	}
 
-	if ((audiodevid = SDL_OpenAudioDevice(requested_device, 0, &desired, &obtained, 0)) <= 0) {
+	audiostream = SDL_OpenAudioDeviceStream(requested_device, &desired, S_SDL_callback, NULL);
+	if (!audiostream && requested_device != SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK) {
 		Com_Printf("sound: couldn't open SDL audio: %s\n", SDL_GetError());
-		if (requested_device != NULL) {
-			Com_Printf("sound: retrying with default audio device\n");
-			if ((audiodevid = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, 0)) <= 0) {
-				Com_Printf("sound: failure again, aborting...\n");
-				return false;
-			}
+		Com_Printf("sound: retrying with default audio device\n");
+		audiostream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &desired, S_SDL_callback, NULL);
+		if (audiostream) {
 			Cvar_LatchedSet(&s_audiodevice, "0");
 		}
+	}
+
+	if (!audiostream) {
+		Com_Printf("sound: couldn't open SDL audio: %s\n", SDL_GetError());
 		return false;
-	}
-
-	if (obtained.format != AUDIO_S16LSB) {
-		Com_Printf("SDL audio format %d unsupported.\n", obtained.format);
-		goto fail;
-	}
-
-	if (obtained.channels != 1 && obtained.channels != 2) {
-		Com_Printf("SDL audio channels %d unsupported.\n", obtained.channels);
-		goto fail;
 	}
 
 	shw_tmp = Q_calloc(1, sizeof(*shw_tmp));
@@ -166,18 +181,18 @@ qbool S_Backend_Init(void)
 		goto fail;
 	}
 
-	shw_tmp->khz = obtained.freq;
-	shw_tmp->numchannels = obtained.channels;
-	shw_tmp->samplebits = obtained.format & 0xFF;
+	shw_tmp->khz = desired.freq;
+	shw_tmp->numchannels = desired.channels;
+	shw_tmp->samplebits = 16;
 	shw_tmp->samples = 65536;
 
-	Cvar_AutoSetInt(&s_desiredsamples, obtained.samples);
+	Cvar_AutoSetInt(&s_desiredsamples, desired_samples);
 
 	shw = shw_tmp;
 
-	Com_Printf("Using SDL audio driver: %s @ %d Hz\n", SDL_GetCurrentAudioDriver(), obtained.freq);
+	Com_Printf("Using SDL audio driver: %s @ %d Hz\n", SDL_GetCurrentAudioDriver(), desired.freq);
 
-	SDL_PauseAudioDevice(audiodevid, 0);
+	SDL_ResumeAudioStreamDevice(audiostream);
 
 	return true;
 

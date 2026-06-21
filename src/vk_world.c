@@ -74,6 +74,7 @@ typedef struct vk_world_draw_s {
 	qbool lightmapped;
 	qbool blended;
 	qbool detail;
+	qbool polygonOffset;
 	int overlayMode;
 } vk_world_draw_t;
 
@@ -438,7 +439,7 @@ static texture_ref VK_WorldLightmapTextureForSurface(msurface_t* surf)
 	return VK_TextureReady(lightmap) ? lightmap : null_texture_reference;
 }
 
-static void VK_WorldQueueSurface(model_t* model, msurface_t* surf, qbool drawflat, texture_t* materialTexture, texture_ref texture, float alpha, qbool blended, const float* modelView)
+static void VK_WorldQueueSurface(model_t* model, msurface_t* surf, qbool drawflat, texture_t* materialTexture, texture_ref texture, float alpha, qbool blended, const float* modelView, qbool polygonOffset)
 {
 	uint32_t firstIndex;
 	uint32_t emittedPolys = 0;
@@ -480,6 +481,7 @@ static void VK_WorldQueueSurface(model_t* model, msurface_t* surf, qbool drawfla
 	draw->lightmapped = draw->textured && !blended && VK_TextureReady(lightmap);
 	draw->blended = blended;
 	draw->detail = model->isworldmodel && !(surf->flags & (SURF_DRAWSKY | SURF_DRAWTURB));
+	draw->polygonOffset = polygonOffset;
 	draw->overlayMode = draw->textured ? VK_WorldOverlayMode(materialTexture) : VK_WORLD_OVERLAY_NONE;
 	VK_WorldDebugLog(
 		"queued surface model=%s draw=%d surface=%d first=%u count=%u polys=%u textured=%d lightmapped=%d blended=%d overlay=%d alpha=%.2f type=%.0f tex=%u lightmap=%u",
@@ -499,16 +501,16 @@ static void VK_WorldQueueSurface(model_t* model, msurface_t* surf, qbool drawfla
 		lightmap.index);
 }
 
-static void VK_WorldQueueDrawflatSurfaces(model_t* model, const float* modelView)
+static void VK_WorldQueueDrawflatSurfaces(model_t* model, const float* modelView, qbool polygonOffset)
 {
 	msurface_t* surf;
 
 	for (surf = model ? model->drawflat_chain : NULL; surf; surf = surf->drawflatchain) {
-		VK_WorldQueueSurface(model, surf, true, NULL, null_texture_reference, 1.0f, false, modelView);
+		VK_WorldQueueSurface(model, surf, true, NULL, null_texture_reference, 1.0f, false, modelView, polygonOffset);
 	}
 }
 
-static void VK_WorldQueueModel(model_t* model, entity_t* ent)
+static void VK_WorldQueueModel(model_t* model, entity_t* ent, qbool polygonOffset)
 {
 	int i;
 	float modelView[16];
@@ -518,7 +520,7 @@ static void VK_WorldQueueModel(model_t* model, entity_t* ent)
 	}
 
 	R_GetModelviewMatrix(modelView);
-	VK_WorldQueueDrawflatSurfaces(model, modelView);
+	VK_WorldQueueDrawflatSurfaces(model, modelView, polygonOffset);
 
 	for (i = max(model->first_texture_chained, 0); i <= model->last_texture_chained && i < model->numtextures; ++i) {
 		texture_t* texture = model->textures[i];
@@ -531,7 +533,7 @@ static void VK_WorldQueueModel(model_t* model, entity_t* ent)
 
 		animatedTexture = R_TextureAnimation(ent, texture);
 		for (surf = texture->texturechain; surf; surf = surf->texturechain) {
-			VK_WorldQueueSurface(model, surf, false, animatedTexture, animatedTexture ? animatedTexture->gl_texturenum : null_texture_reference, 1.0f, false, modelView);
+			VK_WorldQueueSurface(model, surf, false, animatedTexture, animatedTexture ? animatedTexture->gl_texturenum : null_texture_reference, 1.0f, false, modelView, polygonOffset);
 		}
 	}
 }
@@ -551,7 +553,7 @@ static qbool VK_WorldCreateFlatPipeline(void)
 	VkPipelineDepthStencilStateCreateInfo depthStencil;
 	VkPipelineColorBlendAttachmentState colorBlendAttachment;
 	VkPipelineColorBlendStateCreateInfo colorBlending;
-	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_BLEND_CONSTANTS };
+	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_BLEND_CONSTANTS, VK_DYNAMIC_STATE_DEPTH_BIAS };
 	VkPipelineDynamicStateCreateInfo dynamicState;
 	VkPushConstantRange pushConstantRange;
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
@@ -631,6 +633,7 @@ static qbool VK_WorldCreateFlatPipeline(void)
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_NONE;
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.depthBiasEnable = VK_TRUE;
 
 	VK_InitialiseStructure(multisampling);
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -720,7 +723,7 @@ static qbool VK_WorldCreateTexturedPipeline(void)
 	VkPipelineDepthStencilStateCreateInfo depthStencil;
 	VkPipelineColorBlendAttachmentState colorBlendAttachment;
 	VkPipelineColorBlendStateCreateInfo colorBlending;
-	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_DEPTH_BIAS };
 	VkPipelineDynamicStateCreateInfo dynamicState;
 	VkPushConstantRange pushConstantRange;
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
@@ -811,6 +814,7 @@ static qbool VK_WorldCreateTexturedPipeline(void)
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_NONE;
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.depthBiasEnable = VK_TRUE;
 
 	VK_InitialiseStructure(multisampling);
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -900,7 +904,7 @@ static qbool VK_WorldCreateOverlayPipeline(qbool luma)
 	VkPipelineDepthStencilStateCreateInfo depthStencil;
 	VkPipelineColorBlendAttachmentState colorBlendAttachment;
 	VkPipelineColorBlendStateCreateInfo colorBlending;
-	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_DEPTH_BIAS };
 	VkPipelineDynamicStateCreateInfo dynamicState;
 	VkPushConstantRange pushConstantRange;
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
@@ -992,6 +996,7 @@ static qbool VK_WorldCreateOverlayPipeline(qbool luma)
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_NONE;
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.depthBiasEnable = VK_TRUE;
 
 	VK_InitialiseStructure(multisampling);
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -1089,7 +1094,7 @@ static qbool VK_WorldCreateAlphaTexturedPipeline(void)
 	VkPipelineDepthStencilStateCreateInfo depthStencil;
 	VkPipelineColorBlendAttachmentState colorBlendAttachment;
 	VkPipelineColorBlendStateCreateInfo colorBlending;
-	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_DEPTH_BIAS };
 	VkPipelineDynamicStateCreateInfo dynamicState;
 	VkPushConstantRange pushConstantRange;
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
@@ -1180,6 +1185,7 @@ static qbool VK_WorldCreateAlphaTexturedPipeline(void)
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_NONE;
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.depthBiasEnable = VK_TRUE;
 
 	VK_InitialiseStructure(multisampling);
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -1275,7 +1281,7 @@ static qbool VK_WorldCreateLightmappedPipeline(void)
 	VkPipelineDepthStencilStateCreateInfo depthStencil;
 	VkPipelineColorBlendAttachmentState colorBlendAttachment;
 	VkPipelineColorBlendStateCreateInfo colorBlending;
-	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR, VK_DYNAMIC_STATE_DEPTH_BIAS };
 	VkPipelineDynamicStateCreateInfo dynamicState;
 	VkPushConstantRange pushConstantRange;
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
@@ -1373,6 +1379,7 @@ static qbool VK_WorldCreateLightmappedPipeline(void)
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_NONE;
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	rasterizer.depthBiasEnable = VK_TRUE;
 
 	VK_InitialiseStructure(multisampling);
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -1549,7 +1556,7 @@ void VK_DrawWorld(void)
 		return;
 	}
 
-	VK_WorldQueueModel(cl.worldmodel, NULL);
+	VK_WorldQueueModel(cl.worldmodel, NULL, false);
 }
 
 void VK_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
@@ -1609,14 +1616,13 @@ void VK_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 
 void VK_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 {
-	(void)polygonOffset;
 	(void)caustics;
 
 	if (!ent || !ent->model) {
 		return;
 	}
 
-	VK_WorldQueueModel(ent->model, ent);
+	VK_WorldQueueModel(ent->model, ent, polygonOffset);
 }
 
 void VK_DrawWaterSurfaces(void)
@@ -1644,7 +1650,8 @@ void VK_DrawWaterSurfaces(void)
 			texture ? texture->gl_texturenum : null_texture_reference,
 			alpha,
 			true,
-			modelView);
+			modelView,
+			false);
 	}
 
 	waterchain = NULL;
@@ -1701,6 +1708,7 @@ void VK_RenderView(void)
 	qbool alphaTexturedPipelineReady = false;
 	qbool lumaPipelineReady = false;
 	qbool fullbrightPipelineReady = false;
+	qbool depthBiasActive = false;
 
 	if (!worldDrawCount || !worldIndexCount) {
 		VK_WorldDebugLog("render skipped: draws=%d indices=%u", worldDrawCount, worldIndexCount);
@@ -1777,6 +1785,11 @@ void VK_RenderView(void)
 	VK_WorldSetViewportScissor(commandBuffer);
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &vertexOffset);
 	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+	// VK_DYNAMIC_STATE_DEPTH_BIAS must be set at least once before any draw call
+	// that uses a pipeline with depthBiasEnable=VK_TRUE, or its value is
+	// undefined; this establishes the disabled baseline before the loop below
+	// only toggles it on/off when a draw's polygonOffset flag actually changes.
+	vkCmdSetDepthBias(commandBuffer, 0.0f, 0.0f, 0.0f);
 
 	for (pass = 0; pass < 2; ++pass) {
 		qbool blendedPass = (pass != 0);
@@ -1878,6 +1891,16 @@ void VK_RenderView(void)
 				if (VK_WorldFlatSkyDescriptorSet(&descriptorSet)) {
 					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, worldFlatPipelineLayout, 0, 1, &descriptorSet, 0, NULL);
 				}
+			}
+
+			if (!!worldDraws[i].polygonOffset != depthBiasActive) {
+				depthBiasActive = worldDraws[i].polygonOffset;
+				// Pushes brush-model entities (doors, plats, buttons, ...) embedded flush
+				// against world geometry slightly toward the camera so they win the depth
+				// test deterministically instead of z-fighting/flickering against the
+				// static world surface they're attached to. Same constants vkQuake uses
+				// for a D32_SFLOAT depth buffer; matches gl_brush_polygonoffset on GLC/GLM.
+				vkCmdSetDepthBias(commandBuffer, depthBiasActive ? -4.0f : 0.0f, 0.0f, depthBiasActive ? -0.125f : 0.0f);
 			}
 
 			vkCmdPushConstants(commandBuffer, layout, pushStages, 0, sizeof(push), &push);

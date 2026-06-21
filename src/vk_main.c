@@ -241,17 +241,122 @@ static const char* VK_DescriptiveString(void)
 
 static void VK_Screenshot(byte* buffer, size_t size)
 {
+	VkCommandBuffer cmd;
+	VkBuffer stagingBuffer = VK_NULL_HANDLE;
+	VkDeviceMemory stagingMemory = VK_NULL_HANDLE;
+	VkImage srcImage;
+	VkImageMemoryBarrier barrier;
+	VkBufferImageCopy region;
+	void* mapped;
+	uint32_t width, height;
+	qbool swizzleBGRA;
+
 	memset(buffer, 0, size);
+
+	if (vk_options.logicalDevice == VK_NULL_HANDLE || !vk_options.swapChain.images || vk_options.swapChain.imageCount <= 0) {
+		return;
+	}
+
+	width = vk_options.swapChain.imageSize.width;
+	height = vk_options.swapChain.imageSize.height;
+	if (!width || !height || size < (size_t)width * height * 3 || vk_options.frame.imageIndex >= (uint32_t)vk_options.swapChain.imageCount) {
+		return;
+	}
+
+	// Screenshots are rare/not perf-sensitive, so a full vkDeviceWaitIdle to make
+	// sure the swapchain image we're about to read has actually finished
+	// presenting is fine here -- unlike the per-frame path, this has no business
+	// being clever about synchronization.
+	vkDeviceWaitIdle(vk_options.logicalDevice);
+
+	srcImage = vk_options.swapChain.images[vk_options.frame.imageIndex];
+
+	if (!VK_CreateBufferResource((VkDeviceSize)width * height * 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingMemory)) {
+		return;
+	}
+
+	cmd = VK_BeginImmediateCommands();
+	if (cmd == VK_NULL_HANDLE) {
+		vkDestroyBuffer(vk_options.logicalDevice, stagingBuffer, NULL);
+		vkFreeMemory(vk_options.logicalDevice, stagingMemory, NULL);
+		return;
+	}
+
+	VK_InitialiseStructure(barrier);
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.image = srcImage;
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.levelCount = 1;
+	barrier.subresourceRange.layerCount = 1;
+	barrier.srcAccessMask = 0;
+	barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+	vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1, &barrier);
+
+	VK_InitialiseStructure(region);
+	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	region.imageSubresource.layerCount = 1;
+	region.imageExtent.width = width;
+	region.imageExtent.height = height;
+	region.imageExtent.depth = 1;
+	vkCmdCopyImageToBuffer(cmd, srcImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, stagingBuffer, 1, &region);
+
+	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+	barrier.dstAccessMask = 0;
+	vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, NULL, 0, NULL, 1, &barrier);
+
+	VK_EndImmediateCommands(cmd);
+
+	swizzleBGRA = (vk_options.physicalDeviceSurfaceFormat.format == VK_FORMAT_B8G8R8A8_UNORM ||
+		vk_options.physicalDeviceSurfaceFormat.format == VK_FORMAT_B8G8R8A8_SRGB);
+
+	if (vkMapMemory(vk_options.logicalDevice, stagingMemory, 0, (VkDeviceSize)width * height * 4, 0, &mapped) == VK_SUCCESS) {
+		uint32_t x, y;
+
+		// Vulkan images are stored top-down; callers of renderer.Screenshot()
+		// (SCR_ScreenshotWrite, Image_WriteJPEG with a negative stride, ...)
+		// expect the GL convention instead: row 0 is the bottom of the image.
+		for (y = 0; y < height; ++y) {
+			const byte* srcRow = (const byte*)mapped + (size_t)y * width * 4;
+			byte* dstRow = buffer + (size_t)(height - 1 - y) * width * 3;
+
+			for (x = 0; x < width; ++x) {
+				const byte* px = srcRow + (size_t)x * 4;
+				byte* out = dstRow + (size_t)x * 3;
+
+				if (swizzleBGRA) {
+					out[0] = px[2];
+					out[1] = px[1];
+					out[2] = px[0];
+				}
+				else {
+					out[0] = px[0];
+					out[1] = px[1];
+					out[2] = px[2];
+				}
+			}
+		}
+		vkUnmapMemory(vk_options.logicalDevice, stagingMemory);
+	}
+
+	vkDestroyBuffer(vk_options.logicalDevice, stagingBuffer, NULL);
+	vkFreeMemory(vk_options.logicalDevice, stagingMemory, NULL);
 }
 
 static size_t VK_ScreenshotWidth(void)
 {
-	return glConfig.vidWidth;
+	return vk_options.swapChain.imageSize.width ? vk_options.swapChain.imageSize.width : glConfig.vidWidth;
 }
 
 static size_t VK_ScreenshotHeight(void)
 {
-	return glConfig.vidHeight;
+	return vk_options.swapChain.imageSize.height ? vk_options.swapChain.imageSize.height : glConfig.vidHeight;
 }
 
 static void VK_ClearRenderingSurface(qbool clear_color)
@@ -530,16 +635,28 @@ void VK_BeginFrame(void)
 	vkWaitForFences(vk_options.logicalDevice, 1, &frameFence, VK_TRUE, UINT64_MAX);
 #endif
 
+	// Finite timeout, not UINT64_MAX: with non-blocking present modes
+	// (IMMEDIATE/MAILBOX) the CPU can render faster than the compositor
+	// drains the swapchain's buffer queue for long enough to exhaust every
+	// image. When that happens the compositor stops handing back buffers
+	// (observed as BLASTBufferQueue "NO_BUFFER_AVAILABLE" in logcat) and an
+	// infinite-timeout wait here never returns -- the app freezes forever
+	// with no way to recover. A finite wait turns that into a recoverable
+	// "no frame this loop", same idea as the OUT_OF_DATE/SUBOPTIMAL handling
+	// below.
 #ifdef __ANDROID__
 	{
 		static vk_profile_accum_t acquireAccum;
 		double t0 = Sys_DoubleTime();
-		result = vkAcquireNextImageKHR(vk_options.logicalDevice, vk_options.swapChain.handle, UINT64_MAX, vk_options.frame.imageAvailableSemaphores[frameIndex], VK_NULL_HANDLE, &vk_options.frame.imageIndex);
+		result = vkAcquireNextImageKHR(vk_options.logicalDevice, vk_options.swapChain.handle, 1000000000ULL, vk_options.frame.imageAvailableSemaphores[frameIndex], VK_NULL_HANDLE, &vk_options.frame.imageIndex);
 		VK_ProfileAccumulate(&acquireAccum, "vkAcquireNextImageKHR", Sys_DoubleTime() - t0);
 	}
 #else
-	result = vkAcquireNextImageKHR(vk_options.logicalDevice, vk_options.swapChain.handle, UINT64_MAX, vk_options.frame.imageAvailableSemaphores[frameIndex], VK_NULL_HANDLE, &vk_options.frame.imageIndex);
+	result = vkAcquireNextImageKHR(vk_options.logicalDevice, vk_options.swapChain.handle, 1000000000ULL, vk_options.frame.imageAvailableSemaphores[frameIndex], VK_NULL_HANDLE, &vk_options.frame.imageIndex);
 #endif
+	if (result == VK_TIMEOUT || result == VK_NOT_READY) {
+		return;
+	}
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 		VK_RequestSwapChainRecreate();
 		return;
@@ -549,16 +666,20 @@ void VK_BeginFrame(void)
 		return;
 	}
 	if (vk_options.frame.imageInFlightFences[vk_options.frame.imageIndex] != VK_NULL_HANDLE) {
+		VkResult waitResult;
 #ifdef __ANDROID__
 		{
 			static vk_profile_accum_t imageWaitAccum;
 			double t0 = Sys_DoubleTime();
-			vkWaitForFences(vk_options.logicalDevice, 1, &vk_options.frame.imageInFlightFences[vk_options.frame.imageIndex], VK_TRUE, UINT64_MAX);
+			waitResult = vkWaitForFences(vk_options.logicalDevice, 1, &vk_options.frame.imageInFlightFences[vk_options.frame.imageIndex], VK_TRUE, 1000000000ULL);
 			VK_ProfileAccumulate(&imageWaitAccum, "image-in-flight wait", Sys_DoubleTime() - t0);
 		}
 #else
-		vkWaitForFences(vk_options.logicalDevice, 1, &vk_options.frame.imageInFlightFences[vk_options.frame.imageIndex], VK_TRUE, UINT64_MAX);
+		waitResult = vkWaitForFences(vk_options.logicalDevice, 1, &vk_options.frame.imageInFlightFences[vk_options.frame.imageIndex], VK_TRUE, 1000000000ULL);
 #endif
+		if (waitResult == VK_TIMEOUT) {
+			return;
+		}
 	}
 	vk_options.frame.imageInFlightFences[vk_options.frame.imageIndex] = frameFence;
 

@@ -82,12 +82,21 @@ qbool VK_RenderPassCreate(void)
 	subpass.pColorAttachments = &colorAttachmentRef;
 	subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
+	// The depth image (unlike the swapchain color image) is a single resource
+	// shared by every frame in flight, not duplicated per-frame. EARLY_FRAGMENT_TESTS
+	// alone only covers the depth *test*; the actual depth *write* for a passing
+	// fragment retires in LATE_FRAGMENT_TESTS. Without it here, this renderpass's
+	// CLEAR/write of the depth attachment can start before the previous frame's
+	// depth writes have actually landed once the GPU is fed fast enough (high,
+	// uncapped fps) to have two frames' worth of fragment work overlapping --
+	// observed as walls flickering/briefly showing through, worse at high fps,
+	// almost gone when fps is capped lower.
 	VK_InitialiseStructure(dependency);
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+	dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
 	// Render pass

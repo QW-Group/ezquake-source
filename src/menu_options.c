@@ -145,6 +145,33 @@ const char* GFXPresetRead(void) {
 	default: return "eyecandy";
 	}
 }
+
+static void GFXPresetExec(const char *cfg)
+{
+	cvar_t *vid_reload_auto = Cvar_Find("vid_reload_auto");
+	int restore_vid_reload_auto = vid_reload_auto ? vid_reload_auto->integer : 1;
+	qbool reload_after_preset = !R_UseVulkan();
+
+	/*
+	 * The gfx preset cfgs touch several CVAR_RELOAD_GFX variables. If
+	 * vid_reload_auto is left enabled, every changed cvar can request a
+	 * renderer reload while the menu is still applying the preset. On mobile
+	 * renderers this can recreate texture/framebuffer state at a fragile time
+	 * and crash when cycling away from eyecandy. Batch the changes and perform
+	 * one reload after the cfg has fully executed.
+	 *
+	 * Vulkan on Android currently does not survive the texture reload path
+	 * reliably: it can keep the process alive but stop presenting frames while
+	 * memory grows rapidly. Skip the explicit reload there; immediate cvars
+	 * still apply, and reload-only texture changes can wait for a restart.
+	 */
+	if (vid_reload_auto) {
+		Cvar_Set(vid_reload_auto, "0");
+	}
+
+	Cbuf_AddText(va("exec %s\nvid_reload_auto %d\n%s", cfg, restore_vid_reload_auto, reload_after_preset ? "vid_reload\n" : ""));
+}
+
 void GFXPresetToggle(qbool back) {
 	if (back) {
 		if (fps_mode <= 0) {
@@ -160,10 +187,10 @@ void GFXPresetToggle(qbool back) {
 	}
 
 	switch (GFXPreset()) {
-	case mode_fastest: Cbuf_AddText ("exec cfg/gfx_gl_fast.cfg\n"); return;
-	case mode_higheyecandy: Cbuf_AddText ("exec cfg/gfx_gl_higheyecandy.cfg\n"); return;
-	case mode_faithful: Cbuf_AddText ("exec cfg/gfx_gl_faithful.cfg\n"); return;
-	case mode_eyecandy: Cbuf_AddText ("exec cfg/gfx_gl_eyecandy.cfg\n"); return;
+	case mode_fastest: GFXPresetExec("cfg/gfx_gl_fast.cfg"); return;
+	case mode_higheyecandy: GFXPresetExec("cfg/gfx_gl_higheyecandy.cfg"); return;
+	case mode_faithful: GFXPresetExec("cfg/gfx_gl_faithful.cfg"); return;
+	case mode_eyecandy: GFXPresetExec("cfg/gfx_gl_eyecandy.cfg"); return;
 	}
 }
 
