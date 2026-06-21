@@ -6,54 +6,16 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     enable_language(OBJC)
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Android")
-    set(EZQUAKE_ANDROID TRUE)
-    set(EZQUAKE_DEFAULT_RENDERER_MODERN_OPENGL OFF)
-    set(EZQUAKE_DEFAULT_RENDERER_CLASSIC_OPENGL OFF)
-    set(EZQUAKE_DEFAULT_RENDERER_VULKAN ON)
-    set(EZQUAKE_DEFAULT_SOUND_BACKEND "OBOE")
-else()
-    set(EZQUAKE_ANDROID FALSE)
-    set(EZQUAKE_DEFAULT_RENDERER_MODERN_OPENGL ON)
-    set(EZQUAKE_DEFAULT_RENDERER_CLASSIC_OPENGL ON)
-    set(EZQUAKE_DEFAULT_RENDERER_VULKAN OFF)
-    set(EZQUAKE_DEFAULT_SOUND_BACKEND "SDL")
-endif()
-
 option(USE_SYSTEM_LIBS          "Use system libraries instead of VCPKG"       ON)
-option(RENDERER_MODERN_OPENGL   "Enable modern OpenGL renderer"               ${EZQUAKE_DEFAULT_RENDERER_MODERN_OPENGL})
-option(RENDERER_CLASSIC_OPENGL  "Enable classic OpenGL renderer"              ${EZQUAKE_DEFAULT_RENDERER_CLASSIC_OPENGL})
-option(RENDERER_VULKAN          "Enable Vulkan renderer"                      ${EZQUAKE_DEFAULT_RENDERER_VULKAN})
+option(RENDERER_MODERN_OPENGL   "Enable modern OpenGL renderer"               ON)
+option(RENDERER_CLASSIC_OPENGL  "Enable classic OpenGL renderer"              ON)
+option(RENDERER_VULKAN          "Enable experimental Vulkan renderer"         OFF)
 option(DEBUG_MEMORY_ALLOCATIONS "Enable debug prints for memory allocations" OFF)
 option(ANTILAG                  "Enable antilag 1 prototype protocol extensions (client-side)" ON)
 option(ENABLE_SANDBOX           "Enables application sandboxing (macOS)"      ON)
 option(ENABLE_LTO               "Enable Link Time Optimization"               ON)
-set(EZQUAKE_SOUND_BACKEND "${EZQUAKE_DEFAULT_SOUND_BACKEND}" CACHE STRING "Sound playback backend: SDL or OBOE")
-set_property(CACHE EZQUAKE_SOUND_BACKEND PROPERTY STRINGS SDL OBOE)
-string(TOUPPER "${EZQUAKE_SOUND_BACKEND}" EZQUAKE_SOUND_BACKEND)
-
-if(NOT EZQUAKE_SOUND_BACKEND STREQUAL "SDL" AND NOT EZQUAKE_SOUND_BACKEND STREQUAL "OBOE")
-    message(FATAL_ERROR "EZQUAKE_SOUND_BACKEND must be SDL or OBOE.")
-endif()
-
-if(EZQUAKE_SOUND_BACKEND STREQUAL "OBOE")
-    if(NOT EZQUAKE_ANDROID)
-        message(FATAL_ERROR "The Oboe sound backend is Android-only.")
-    endif()
-    set(EZQUAKE_SOUND_BACKEND_OBOE TRUE)
-    set(EZQUAKE_SOUND_BACKEND_SDL FALSE)
-    enable_language(CXX)
-else()
-    set(EZQUAKE_SOUND_BACKEND_OBOE FALSE)
-    set(EZQUAKE_SOUND_BACKEND_SDL TRUE)
-endif()
-
 if(NOT RENDERER_CLASSIC_OPENGL AND NOT RENDERER_MODERN_OPENGL AND NOT RENDERER_VULKAN)
     message(FATAL_ERROR "At least one renderer must be enabled.")
-endif()
-
-if(EZQUAKE_ANDROID AND (RENDERER_CLASSIC_OPENGL OR RENDERER_MODERN_OPENGL))
-    message(FATAL_ERROR "Android builds currently support RENDERER_VULKAN only; disable the OpenGL renderers.")
 endif()
 
 if(RENDERER_CLASSIC_OPENGL OR RENDERER_MODERN_OPENGL)
@@ -166,7 +128,7 @@ if(RENDERER_OPENGL)
     find_package(OpenGL REQUIRED)
 endif()
 
-if(RENDERER_VULKAN AND NOT EZQUAKE_ANDROID)
+if(RENDERER_VULKAN)
     find_package(Vulkan REQUIRED)
 endif()
 find_package(Threads REQUIRED)
@@ -204,27 +166,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     find_library(FRAMEWORK_FOUNDATION Foundation REQUIRED)
     find_library(FRAMEWORK_CORESERVICES CoreServices REQUIRED)
     find_library(FRAMEWORK_GAMECONTROLLER GameController REQUIRED)
-endif()
-
-if(EZQUAKE_ANDROID)
-    find_library(ANDROID_LIBRARY android REQUIRED)
-    find_library(ANDROID_LOG_LIBRARY log REQUIRED)
-    find_library(ANDROID_VULKAN_LIBRARY vulkan REQUIRED)
-endif()
-
-if(EZQUAKE_SOUND_BACKEND_OBOE)
-    find_package(oboe CONFIG QUIET)
-    if(TARGET oboe::oboe)
-        set(EZQUAKE_OBOE_TARGET oboe::oboe)
-    elseif(TARGET oboe)
-        set(EZQUAKE_OBOE_TARGET oboe)
-    else()
-        find_path(OBOE_INCLUDE_DIR NAMES oboe/Oboe.h REQUIRED)
-        find_library(OBOE_LIBRARY NAMES oboe REQUIRED)
-        set(EZQUAKE_OBOE_TARGET ${OBOE_LIBRARY})
-    endif()
-    find_library(ANDROID_OPENSLES_LIBRARY OpenSLES REQUIRED)
-    find_library(ANDROID_AAUDIO_LIBRARY aaudio REQUIRED)
 endif()
 
 # Place special CMake targets in separate VS/Xcode folder
@@ -898,11 +839,7 @@ set(client
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     list(APPEND client ${SOURCE_DIR}/movie_avi.c)
 endif()
-if(EZQUAKE_SOUND_BACKEND_OBOE)
-    list(APPEND client ${SOURCE_DIR}/snd_backend_oboe.cpp)
-else()
-    list(APPEND client ${SOURCE_DIR}/snd_backend_sdl.c)
-endif()
+list(APPEND client ${SOURCE_DIR}/snd_backend_sdl.c)
 source_group(TREE ${SOURCE_DIR} PREFIX "Source Files/client" FILES ${client})
 source_group(TREE ${SOURCE_DIR} PREFIX "Header Files/client" FILES ${client_headers})
 
@@ -994,17 +931,12 @@ set(ezquake_sources
         $<IF:$<PLATFORM_ID:Windows>,${windows_icon},>
 )
 
-if(EZQUAKE_ANDROID)
-    add_library(ezquake SHARED ${ezquake_sources})
-else()
-    add_executable(ezquake ${TARGET_TYPE} ${ezquake_sources})
-endif()
+add_executable(ezquake ${TARGET_TYPE} ${ezquake_sources})
 
 target_include_directories(ezquake PRIVATE
         ${SOURCE_DIR}/qwprot/src
         ${EZQUAKE_SDL_INCLUDE_DIR}
         ${EZQUAKE_MINIZIP_INCLUDE_DIR}
-        ${OBOE_INCLUDE_DIR}
 )
 
 target_compile_definitions(ezquake PRIVATE
@@ -1026,8 +958,7 @@ target_compile_definitions(ezquake PRIVATE
         $<$<BOOL:${RENDERER_MODERN_OPENGL}>:RENDERER_OPTION_MODERN_OPENGL>
         $<$<BOOL:${RENDERER_CLASSIC_OPENGL}>:RENDERER_OPTION_CLASSIC_OPENGL>
         $<$<BOOL:${RENDERER_VULKAN}>:RENDERER_OPTION_VULKAN>
-        $<$<BOOL:${EZQUAKE_SOUND_BACKEND_OBOE}>:EZQUAKE_SOUND_BACKEND_OBOE>
-        $<$<BOOL:${EZQUAKE_SOUND_BACKEND_SDL}>:EZQUAKE_SOUND_BACKEND_SDL>
+        EZQUAKE_SOUND_BACKEND_SDL
 
         WITH_PNG
         WITH_JPEG
@@ -1090,37 +1021,17 @@ if(RENDERER_OPENGL)
 endif()
 
 if(RENDERER_VULKAN)
-    if(EZQUAKE_ANDROID)
-        target_link_libraries(ezquake PRIVATE
-                ${ANDROID_LIBRARY}
-                ${ANDROID_LOG_LIBRARY}
-                ${ANDROID_VULKAN_LIBRARY}
-        )
-    else()
-        target_link_libraries(ezquake PRIVATE Vulkan::Vulkan)
-    endif()
+    target_link_libraries(ezquake PRIVATE Vulkan::Vulkan)
 endif()
 
 if(MATH)
     target_link_libraries(ezquake PRIVATE ${MATH})
 endif()
 
-if(EZQUAKE_SOUND_BACKEND_OBOE)
-    target_compile_features(ezquake PRIVATE cxx_std_17)
-    target_link_libraries(ezquake PRIVATE
-            ${EZQUAKE_OBOE_TARGET}
-            ${ANDROID_LOG_LIBRARY}
-            ${ANDROID_OPENSLES_LIBRARY}
-            ${ANDROID_AAUDIO_LIBRARY}
-    )
-endif()
-
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     string(TOLOWER "ezQuake" EXECUTABLE_NAME)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     string(TOLOWER "ezquake" EXECUTABLE_NAME)
-elseif(EZQUAKE_ANDROID)
-    set(EXECUTABLE_NAME "ezquake")
 else()
     string(TOLOWER "ezquake-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}" EXECUTABLE_NAME)
 endif()

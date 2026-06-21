@@ -27,9 +27,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <SDL.h>
 #include <SDL_vulkan.h>
-#ifdef __ANDROID__
-#include <android/log.h>
-#endif
 
 #include "vk_local.h"
 
@@ -101,12 +98,6 @@ qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR s
 	if (vk_options.physicalDeviceSurfaceCapabilities.maxImageCount > 0) {
 		requestedImageCount = min(requestedImageCount, vk_options.physicalDeviceSurfaceCapabilities.maxImageCount);
 	}
-#ifdef __ANDROID__
-	__android_log_print(ANDROID_LOG_INFO, "VK_PROFILE",
-		"swapchain present mode=%d (0=IMMEDIATE 1=MAILBOX 2=FIFO 3=FIFO_RELAXED) images requested=%u min=%u max=%u",
-		(int)vk_options.physicalDevicePresentationMode, requestedImageCount,
-		vk_options.physicalDeviceSurfaceCapabilities.minImageCount, vk_options.physicalDeviceSurfaceCapabilities.maxImageCount);
-#endif
 
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	createInfo.minImageCount = requestedImageCount;
@@ -142,12 +133,6 @@ qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR s
 		createInfo.queueFamilyIndexCount = 0;
 		createInfo.pQueueFamilyIndices = NULL;
 	}
-#ifdef __ANDROID__
-	if (vk_options.physicalDeviceSurfaceCapabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) {
-		createInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
-	}
-	else
-#endif
 	{
 		createInfo.preTransform = vk_options.physicalDeviceSurfaceCapabilities.currentTransform;
 	}

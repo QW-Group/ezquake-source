@@ -13,9 +13,6 @@ of the License, or (at your option) any later version.
 #include "quakedef.h"
 
 #include <stdarg.h>
-#ifdef __ANDROID__
-#include <android/log.h>
-#endif
 
 #include "gl_model.h"
 #include "r_aliasmodel.h"
@@ -1898,8 +1895,8 @@ void VK_RenderView(void)
 				// Pushes brush-model entities (doors, plats, buttons, ...) embedded flush
 				// against world geometry slightly toward the camera so they win the depth
 				// test deterministically instead of z-fighting/flickering against the
-				// static world surface they're attached to. Same constants vkQuake uses
-				// for a D32_SFLOAT depth buffer; matches gl_brush_polygonoffset on GLC/GLM.
+				// static world surface they're attached to. These values target a
+				// D32_SFLOAT depth buffer and match gl_brush_polygonoffset on GLC/GLM.
 				vkCmdSetDepthBias(commandBuffer, depthBiasActive ? -4.0f : 0.0f, 0.0f, depthBiasActive ? -0.125f : 0.0f);
 			}
 
@@ -1923,26 +1920,6 @@ void VK_RenderView(void)
 		worldDraws[0].firstIndex,
 		worldDraws[0].indexCount);
 
-#ifdef __ANDROID__
-	{
-		static unsigned int profile_frames;
-		static unsigned int profile_draws_accum;
-		static unsigned int profile_indices_accum;
-
-		profile_draws_accum += worldDrawCount;
-		profile_indices_accum += worldIndexCount;
-		if (++profile_frames >= 60) {
-			__android_log_print(ANDROID_LOG_INFO, "VK_PROFILE",
-				"world avg draws=%.1f avg indices=%.0f (last textured=%d lightmapped=%d blended=%d luma=%d fullbright=%d)",
-				profile_draws_accum / (float)profile_frames,
-				profile_indices_accum / (float)profile_frames,
-				texturedDraws, lightmappedDraws, blendedDraws, lumaDraws, fullbrightDraws);
-			profile_frames = 0;
-			profile_draws_accum = 0;
-			profile_indices_accum = 0;
-		}
-	}
-#endif
 }
 
 #endif // RENDERER_OPTION_VULKAN

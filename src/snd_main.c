@@ -95,11 +95,7 @@ cvar_t s_show = {"s_show", "0"};
 cvar_t s_swapstereo = {"s_swapstereo", "0"};
 cvar_t s_linearresample = {"s_linearresample", "0", CVAR_LATCH_SOUND };
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
-#ifdef __ANDROID__
-cvar_t s_khz = {"s_khz", "48", CVAR_NONE, OnChange_s_khz}; // Android low-latency paths are usually 48 kHz.
-#else
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz}; // If > 11, default sounds are noticeably different.
-#endif
 cvar_t s_desiredsamples = {"s_desiredsamples", "0", CVAR_AUTO, OnChange_s_desiredsamples };
 cvar_t s_audiodevice = {"s_audiodevice", "0", CVAR_LATCH_SOUND };
 cvar_t s_silent_racing = { "s_silent_racing", "0" };
