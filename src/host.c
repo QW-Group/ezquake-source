@@ -33,6 +33,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
+#ifdef __ANDROID__
+#include <sys/system_properties.h>
+#include <unistd.h>
+#endif
 #include <SDL.h>
 #include "quakedef.h"
 #include "EX_browser.h"
@@ -236,6 +240,80 @@ void SYSINFO_Init(void)
 		strlcat(f_system_string, va(" %dMHz", SYSINFO_MHz), sizeof(f_system_string));
 	}
 
+	if (SYSINFO_3D_description) {
+		strlcat(f_system_string, ", ", sizeof(f_system_string));
+		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
+	}
+}
+#elif defined(__ANDROID__)
+void SYSINFO_Init(void)
+{
+	char model[PROP_VALUE_MAX] = {0};
+	char manufacturer[PROP_VALUE_MAX] = {0};
+	char soc_manufacturer[PROP_VALUE_MAX] = {0};
+	char soc_model[PROP_VALUE_MAX] = {0};
+	char board_platform[PROP_VALUE_MAX] = {0};
+	char device[192] = {0};
+	long pages, page_size;
+	const char *gl_renderer = renderer.DescriptiveString();
+
+	f_system_string[0] = 0;
+
+	pages = sysconf(_SC_PHYS_PAGES);
+	page_size = sysconf(_SC_PAGE_SIZE);
+	if (pages > 0 && page_size > 0) {
+		SYSINFO_memory = ((unsigned long long)pages * (unsigned long long)page_size) / 1024 / 1024;
+	}
+
+	__system_property_get("ro.product.manufacturer", manufacturer);
+	__system_property_get("ro.product.model", model);
+	__system_property_get("ro.soc.manufacturer", soc_manufacturer);
+	__system_property_get("ro.soc.model", soc_model);
+	__system_property_get("ro.board.platform", board_platform);
+
+	if (manufacturer[0] && model[0]) {
+		snprintf(device, sizeof(device), "%s %s", manufacturer, model);
+	}
+	else if (model[0]) {
+		strlcpy(device, model, sizeof(device));
+	}
+
+	if (soc_manufacturer[0] || soc_model[0] || board_platform[0]) {
+		char soc[96] = {0};
+		if (soc_manufacturer[0] && soc_model[0]) {
+			snprintf(soc, sizeof(soc), "%s %s", soc_manufacturer, soc_model);
+		}
+		else if (soc_model[0]) {
+			strlcpy(soc, soc_model, sizeof(soc));
+		}
+		else {
+			strlcpy(soc, board_platform, sizeof(soc));
+		}
+
+		if (device[0] && soc[0]) {
+			strlcat(device, " (", sizeof(device));
+			strlcat(device, soc, sizeof(device));
+			strlcat(device, ")", sizeof(device));
+		}
+		else if (soc[0] && !device[0]) {
+			strlcpy(device, soc, sizeof(device));
+		}
+	}
+
+	if (device[0]) {
+		SYSINFO_processor_description = Q_strdup(device);
+	}
+
+	if (gl_renderer && gl_renderer[0]) {
+		SYSINFO_3D_description = Q_strdup(gl_renderer);
+	}
+
+	snprintf(f_system_string, sizeof(f_system_string), "%dMB", (int)(SYSINFO_memory));
+
+	if (SYSINFO_processor_description) {
+		strlcat(f_system_string, ", ", sizeof(f_system_string));
+		strlcat(f_system_string, SYSINFO_processor_description, sizeof(f_system_string));
+	}
 	if (SYSINFO_3D_description) {
 		strlcat(f_system_string, ", ", sizeof(f_system_string));
 		strlcat(f_system_string, SYSINFO_3D_description, sizeof(f_system_string));
@@ -715,7 +793,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
 
-	if (SDL_Init(0) != 0)
+	if (!SDL_Init(0))
 	{
 		fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError());
 		exit(EXIT_FAILURE);

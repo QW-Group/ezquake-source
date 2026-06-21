@@ -460,7 +460,7 @@ static void qtvlist_qtv_cmd(void)
 		port++;
 	}
 
-	if (SDL_TryLockMutex(qtvlist_mutex) != 0) {
+	if (!SDL_TryLockMutex(qtvlist_mutex)) {
 		Com_Printf("QTV list is being updated, please try again soon\n");
 		return;
 	}
@@ -482,18 +482,14 @@ static int qtvlist_update(void *unused)
 {
 	char *jsondata = NULL;
 	int ret = -1;
-	int res;
+	qbool locked = false;
 	(void)unused;
 
-	res = SDL_TryLockMutex(qtvlist_mutex);
-
-	if (res == SDL_MUTEX_TIMEDOUT) {
+	if (!SDL_TryLockMutex(qtvlist_mutex)) {
 		Com_Printf("The qtvlist is already in the process of being updated\n");
 		goto out;
-	} else if (res < 0) {
-		Com_Printf("error: mutex lock failed (SDL2): %s\n", SDL_GetError());
-		goto out;
 	}
+	locked = true;
 
 	jsondata = qtvlist_get_jsondata();
 	if (jsondata == NULL) {
@@ -509,7 +505,7 @@ static int qtvlist_update(void *unused)
 
 	ret = 0;
 out:
-	if (res == 0) {
+	if (locked) {
 		SDL_UnlockMutex(qtvlist_mutex);
 	}
 	return ret;
@@ -531,7 +527,7 @@ static void qtvlist_find_player_cmd(void)
 		return;
 	}
 
-	if (SDL_TryLockMutex(qtvlist_mutex) != 0) {
+	if (!SDL_TryLockMutex(qtvlist_mutex)) {
 		Com_Printf("Player list is being updated, please try again soon\n");
 		return;
 	}
@@ -557,7 +553,7 @@ static void qtvlist_find_and_follow_player_cmd(void)
 		return;
 	}
 
-	if (SDL_TryLockMutex(qtvlist_mutex) != 0) {
+	if (!SDL_TryLockMutex(qtvlist_mutex)) {
 		Com_Printf("Player list is being updated, please try again soon\n");
 		return;
 	}
@@ -612,7 +608,7 @@ void qtvlist_joinfromqtv_cmd(void)
 	
 	snprintf(&httpaddr[0], sizeof(httpaddr), "http://%s/watch.qtv?sid=%s", server, &addr[0]);
 
-	if (SDL_TryLockMutex(qtvlist_mutex) != 0) {
+	if (!SDL_TryLockMutex(qtvlist_mutex)) {
 		Com_Printf("qtvlist is being updated, please try again soon\n");
 		return;
 	}

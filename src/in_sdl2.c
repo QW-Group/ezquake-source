@@ -183,6 +183,16 @@ enum _ControlList {
 };
 
 static SDL_Joystick	*joy_dev;
+
+static SDL_Joystick *IN_OpenJoystickIndex(int index)
+{
+	int count = 0;
+	SDL_Joystick *joystick = NULL;
+	SDL_JoystickID *ids = SDL_GetJoysticks(&count);
+	if (ids && index >= 0 && index < count) joystick = SDL_OpenJoystick(ids[index]);
+	SDL_free(ids);
+	return joystick;
+}
 static uint32_t		joy_prevbuttons;
 static uint16_t		axis_map[JOY_MAX_AXES];
 static uint16_t		control_map[JOY_MAX_AXES];
@@ -263,7 +273,7 @@ Joy_AdvancedUpdate_f (void)
 	if (joy_devidx != joy_index.integer) {
 		SDL_Joystick *newdev;
 
-		newdev = SDL_JoystickOpen (joy_index.integer);
+		newdev = IN_OpenJoystickIndex(joy_index.integer);
 		if (newdev) {
 			if (joy_dev) {
 				/*  Close the old one.  */
@@ -505,15 +515,17 @@ IN_StartupJoystick (void)
 	if (!in_joystick.value) return;
 
 	if (SDL_WasInit (SDL_INIT_JOYSTICK) == 0) {
-		int ret = SDL_InitSubSystem (SDL_INIT_JOYSTICK);
-		if (ret == -1) {
+		if (!SDL_InitSubSystem (SDL_INIT_JOYSTICK)) {
 			Com_Printf ("\nSDL joystick subsystem init failed.\n");
 			return;
 		}
 	}
 
 	/*  See if there are any joysticks at all.  */
-	numdevs = SDL_NumJoysticks();
+	{
+		SDL_JoystickID *ids = SDL_GetJoysticks(&numdevs);
+		SDL_free(ids);
+	}
 	if (!numdevs) {
 		Com_Printf ("\nno joysticks detected by SDL\n\n");
 		return;
@@ -521,7 +533,7 @@ IN_StartupJoystick (void)
 
 	/*  Check if we can open any of them.  */
 	for (i = 0;  i < numdevs;  ++i) {
-		jdev = SDL_JoystickOpen (i);
+		jdev = IN_OpenJoystickIndex(i);
 		if (jdev) {
 			Com_Printf ("Detected joystick %d: %d axes, %d buttons: \"%s\"\n",
 			            i,

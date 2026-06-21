@@ -24,7 +24,12 @@
 #include "quakedef.h"
 
 #include <SDL.h>
+#if SDL_MAJOR_VERSION < 3
 #include <SDL_syswm.h>
+#endif
+#if defined(__ANDROID__) && defined(RENDERER_OPTION_VULKAN)
+#include <SDL_vulkan.h>
+#endif
 
 #ifdef X11_GAMMA_WORKAROUND
 #include <X11/extensions/xf86vmode.h>
@@ -37,11 +42,16 @@ void Sys_ActiveAppChanged (void);
 #endif
 
 #ifdef __APPLE__
+#include "in_osx.h"
+#endif
+
+#if defined(RENDERER_OPTION_CLASSIC_OPENGL) || defined(RENDERER_OPTION_MODERN_OPENGL)
+#ifdef __APPLE__
 #include <OpenGL/gl.h>
 #include <OpenGL/OpenGL.h>
-#include "in_osx.h"
 #else
 #include <GL/gl.h>
+#endif
 #endif
 
 #include "ezquake-icon.c"
@@ -63,6 +73,12 @@ void Sys_ActiveAppChanged (void);
 
 SDL_GLContext GLM_SDL_CreateContext(SDL_Window* window);
 SDL_GLContext GLC_SDL_CreateContext(SDL_Window* window);
+qbool VK_Initialise(SDL_Window* window);
+#ifdef RENDERER_OPTION_VULKAN
+void VK_RequestSwapChainRecreate(void);
+void VK_RequestSurfaceRecreate(void);
+qbool VK_RefreshPresentationMode(void);
+#endif
 
 #ifdef __linux__
 // This is hack to ignore keyboard events we receive between FOCUS_GAINED & TAKE_FOCUS
@@ -102,6 +118,8 @@ static void vid_reload_callback(cvar_t* var, char* string, qbool* cancel);
 static void GrabMouse(qbool grab, qbool raw);
 static void HandleEvents(void);
 static void VID_UpdateConRes(void);
+static void VID_SDL_SetHints(void);
+static void IN_UpdateTextInputState(void);
 void IN_Restart_f(void);
 
 static SDL_Window       *sdl_window;
@@ -120,6 +138,11 @@ qbool Minimized = false;
 
 double vid_vsync_lag;
 double vid_last_swap_time;
+
+#ifdef __ANDROID__
+static void VID_SDL_NormalizeLandscapeSize(int *width, int *height);
+static qbool VID_SDL_ApplyAndroidDrawableResolution(const char *reason);
+#endif
 
 static SDL_DisplayMode *modelist;
 static int modelist_count;
@@ -197,7 +220,13 @@ cvar_t in_raw                     = {"in_raw",                     "1",       CV
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
 cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          "0",       CVAR_LATCH_GFX }; /* Needs vid_restart thus vid_.... */
 #ifdef EZ_MULTIPLE_RENDERERS
+#if defined(RENDERER_OPTION_MODERN_OPENGL)
 cvar_t vid_renderer               = {"vid_renderer",               "1",       CVAR_LATCH_GFX };
+#elif defined(RENDERER_OPTION_CLASSIC_OPENGL)
+cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH_GFX };
+#else
+cvar_t vid_renderer               = {"vid_renderer",               "2",       CVAR_LATCH_GFX };
+#endif
 #endif
 cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH_GFX };
 
@@ -207,6 +236,9 @@ cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CV
 
 cvar_t in_release_mouse_modes     = {"in_release_mouse_modes",     "2",       CVAR_SILENT };
 cvar_t in_ignore_touch_events     = {"in_ignore_touch_events",     "1",       CVAR_SILENT };
+#ifdef __ANDROID__
+cvar_t in_android_diagnostics     = {"in_android_diagnostics",     "0",       CVAR_SILENT };
+#endif
 #ifdef __linux__
 cvar_t in_ignore_unfocused_keyb   = {"in_ignore_unfocused_keyb",   "0",       CVAR_SILENT };
 #endif
@@ -245,6 +277,75 @@ cvar_t vid_framebuffer_smooth      = {"vid_framebuffer_smooth",        "1",     
 cvar_t vid_framebuffer_sshotmode   = {"vid_framebuffer_sshotmode",     "0" };
 cvar_t vid_framebuffer_multisample = {"vid_framebuffer_multisample",   "0" };
 cvar_t vid_framebuffer_fxaa        = {"vid_framebuffer_fxaa",          "0" };
+
+#ifdef __ANDROID__
+static void VID_SDL_NormalizeLandscapeSize(int *width, int *height)
+{
+	if (width && height && *width > 0 && *height > 0 && *width < *height) {
+		int temp = *width;
+		*width = *height;
+		*height = temp;
+	}
+}
+
+static qbool VID_SDL_GetDrawableSize(int *width, int *height)
+{
+	int drawable_width = 0;
+	int drawable_height = 0;
+
+	if (!sdl_window || !width || !height) {
+		return false;
+	}
+
+#ifdef RENDERER_OPTION_VULKAN
+	if (R_UseVulkan()) {
+		SDL_GetWindowSizeInPixels(sdl_window, &drawable_width, &drawable_height);
+	}
+	else
+#endif
+	{
+		SDL_GetWindowSizeInPixels(sdl_window, &drawable_width, &drawable_height);
+	}
+
+	if (drawable_width <= 0 || drawable_height <= 0) {
+		SDL_GetWindowSize(sdl_window, &drawable_width, &drawable_height);
+	}
+	if (drawable_width <= 0 || drawable_height <= 0) {
+		return false;
+	}
+
+	VID_SDL_NormalizeLandscapeSize(&drawable_width, &drawable_height);
+	*width = drawable_width;
+	*height = drawable_height;
+	return true;
+}
+
+static qbool VID_SDL_ApplyAndroidDrawableResolution(const char *reason)
+{
+	int drawable_width;
+	int drawable_height;
+
+	if (!VID_SDL_GetDrawableSize(&drawable_width, &drawable_height)) {
+		return false;
+	}
+	if (glConfig.vidWidth == drawable_width && glConfig.vidHeight == drawable_height) {
+		return false;
+	}
+
+	glConfig.vidWidth = drawable_width;
+	glConfig.vidHeight = drawable_height;
+	last_working_width = drawable_width;
+	last_working_height = drawable_height;
+	last_working_values = true;
+	Cvar_AutoSetInt(&vid_width, drawable_width);
+	Cvar_AutoSetInt(&vid_height, drawable_height);
+
+	if (developer.integer || r_verbose.integer) {
+		Com_Printf("android video: %s drawable resolution %dx%d\n", reason ? reason : "updated", drawable_width, drawable_height);
+	}
+	return true;
+}
+#endif
 
 //
 // function declaration
@@ -292,8 +393,34 @@ static void in_grab_windowed_mouse_callback(cvar_t *val, char *value, qbool *can
 	GrabMouse((atoi(value) > 0 ? true : false), in_raw.integer);
 }
 
+#ifdef __ANDROID__
+static qbool IN_AndroidDiagnosticsEnabled(void)
+{
+	return in_android_diagnostics.integer || developer.integer >= 2;
+}
+
+static void IN_AndroidDiagnosticPrintf(const char *fmt, ...)
+{
+	char text[1024];
+	va_list argptr;
+
+	if (!IN_AndroidDiagnosticsEnabled()) {
+		return;
+	}
+
+	va_start(argptr, fmt);
+	vsnprintf(text, sizeof(text), fmt, argptr);
+	va_end(argptr);
+
+	SDL_Log("%s", text);
+	Com_Printf("%s\n", text);
+}
+#endif
+
 static void GrabMouse(qbool grab, qbool raw)
 {
+	qbool relative = raw && grab;
+
 	if ((grab && mouse_active && raw == in_raw.integer) || (!grab && !mouse_active) || !mouseinitialized || !sdl_window) {
 		return;
 	}
@@ -312,21 +439,35 @@ static void GrabMouse(qbool grab, qbool raw)
 		IN_SnapMouseBackToCentre();
 	}
 
-	SDL_SetWindowGrab(sdl_window, grab ? SDL_TRUE : SDL_FALSE);
-	SDL_SetRelativeMouseMode((raw && grab) ? SDL_TRUE : SDL_FALSE);
+	SDL_SetWindowMouseGrab(sdl_window, grab);
+	if (!SDL_SetWindowRelativeMouseMode(sdl_window, relative)) {
+#ifdef __ANDROID__
+		IN_AndroidDiagnosticPrintf("android input: relative mouse mode %s failed: %s", relative ? "enable" : "disable", SDL_GetError());
+#else
+		Com_DPrintf("relative mouse mode %s failed: %s\n", relative ? "enable" : "disable", SDL_GetError());
+#endif
+		if (relative) {
+			SDL_SetWindowRelativeMouseMode(sdl_window, false);
+			IN_SnapMouseBackToCentre();
+		}
+	}
 	SDL_GetRelativeMouseState(NULL, NULL);
 
 	// never show real cursor in fullscreen
 	if (r_fullscreen.integer) {
-		SDL_ShowCursor(SDL_DISABLE);
+		SDL_HideCursor();
 	} else {
-		SDL_ShowCursor(grab ? SDL_DISABLE : SDL_ENABLE);
+		if (grab) SDL_HideCursor(); else SDL_ShowCursor();
 	}
 
 	// Force rewrite of it
 	SDL_SetCursor(NULL);
 
 	mouse_active = grab;
+
+#ifdef __ANDROID__
+	IN_AndroidDiagnosticPrintf("android input: mouse grab=%d raw=%d relative=%d", grab, raw, SDL_GetWindowRelativeMouseMode(sdl_window));
+#endif
 }
 
 void IN_StartupMouse(void)
@@ -335,6 +476,9 @@ void IN_StartupMouse(void)
 	Cvar_Register(&in_grab_windowed_mouse);
 	Cvar_Register(&in_release_mouse_modes);
 	Cvar_Register(&in_ignore_touch_events);
+#ifdef __ANDROID__
+	Cvar_Register(&in_android_diagnostics);
+#endif
 #ifdef __APPLE__
 	Cvar_Register(&in_ignore_deadkeys);
 
@@ -380,11 +524,14 @@ static void IN_Frame(void)
 		IN_ActivateMouse();
 	}
 
-	if (mouse_active && SDL_GetRelativeMouseMode()) {
+	if (mouse_active && SDL_GetWindowRelativeMouseMode(sdl_window)) {
 #ifdef __APPLE__
 		OSX_Mouse_GetMouseMovement(&mx, &my);
 #else
-		SDL_GetRelativeMouseState(&mx, &my);
+		float dx, dy;
+		SDL_GetRelativeMouseState(&dx, &dy);
+		mx = (int)dx;
+		my = (int)dy;
 #endif
 	}
 	
@@ -434,28 +581,36 @@ void IN_Restart_f(void)
 	}
 }
 
+static SDL_DisplayID VID_SDL_DisplayIDFromIndex(int index)
+{
+	int count = 0;
+	SDL_DisplayID result = SDL_GetPrimaryDisplay();
+	SDL_DisplayID *display_ids = SDL_GetDisplays(&count);
+	if (display_ids && index >= 0 && index < count) result = display_ids[index];
+	SDL_free(display_ids);
+	return result;
+}
+
 // Converts co-ordinates for the whole desktop to co-ordinates for a specific display
 static void VID_RelativePositionFromAbsolute(int* x, int* y, int* display)
 {
-	int displays = SDL_GetNumVideoDisplays();
-	int i = 0;
+	int displays = 0;
+	int i;
+	SDL_DisplayID *display_ids = SDL_GetDisplays(&displays);
 
-	for (i = 0; i < displays; ++i)
-	{
+	for (i = 0; display_ids && i < displays; ++i) {
 		SDL_Rect bounds;
-
-		if (SDL_GetDisplayBounds(i, &bounds) == 0)
-		{
-			if (*x >= bounds.x && *x < bounds.x + bounds.w && *y >= bounds.y && *y < bounds.y + bounds.h)
-			{
-				*x = *x - bounds.x;
-				*y = *y - bounds.y;
-				*display = i;
-				return;
-			}
+		if (SDL_GetDisplayBounds(display_ids[i], &bounds) &&
+			*x >= bounds.x && *x < bounds.x + bounds.w && *y >= bounds.y && *y < bounds.y + bounds.h) {
+			*x -= bounds.x;
+			*y -= bounds.y;
+			*display = i;
+			SDL_free(display_ids);
+			return;
 		}
 	}
 
+	SDL_free(display_ids);
 	*display = 0;
 }
 
@@ -465,10 +620,10 @@ static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
 	SDL_Rect bounds;
 	
 	// Try and get bounds for the specified display - default back to main display if there's an issue
-	if (SDL_GetDisplayBounds(*display, &bounds))
+	if (!SDL_GetDisplayBounds(VID_SDL_DisplayIDFromIndex(*display), &bounds))
 	{
 		*display = 0;
-		if (SDL_GetDisplayBounds(*display, &bounds))
+		if (!SDL_GetDisplayBounds(SDL_GetPrimaryDisplay(), &bounds))
 		{
 			// Still an issue - reset back to top-left of screen
 			Com_Printf("Error detecting resolution...\n");
@@ -522,10 +677,7 @@ static int VID_SetDeviceGammaRampReal(unsigned short *ramps)
 	}
 	return 0;
 #else
-	if (SDL_SetWindowGammaRamp(sdl_window, ramps, ramps + 256, ramps + 512) == 0) {
-		vid_hwgamma_enabled = true;
-		return 0;
-	}
+	(void)ramps;
 	return -1;
 #endif
 }
@@ -545,12 +697,16 @@ static void window_event(SDL_WindowEvent *event)
 	extern qbool scr_skipupdate;
 	int flags = SDL_GetWindowFlags(sdl_window);
 
-	switch (event->event) {
-		case SDL_WINDOWEVENT_MINIMIZED:
+	switch (event->type) {
+		case SDL_EVENT_WINDOW_HIDDEN:
+		case SDL_EVENT_WINDOW_MINIMIZED:
 			Minimized = true;
 
-		case SDL_WINDOWEVENT_FOCUS_LOST:
+		case SDL_EVENT_WINDOW_FOCUS_LOST:
 			ActiveApp = false;
+#ifdef __ANDROID__
+			Minimized = true;
+#endif
 #ifdef __linux__
 			block_keyboard_input = in_ignore_unfocused_keyb.integer;
 #endif
@@ -566,13 +722,20 @@ static void window_event(SDL_WindowEvent *event)
 #endif
 			break;
 
-		case SDL_WINDOWEVENT_FOCUS_GAINED:
+		case SDL_EVENT_WINDOW_FOCUS_GAINED:
 			TP_ExecTrigger("f_focusgained");
 			/* Fall through */
-		case SDL_WINDOWEVENT_RESTORED:
+		case SDL_EVENT_WINDOW_SHOWN:
+		case SDL_EVENT_WINDOW_EXPOSED:
+		case SDL_EVENT_WINDOW_RESTORED:
 			Minimized = false;
 			ActiveApp = true;
 			scr_skipupdate = 0;
+#if defined(__ANDROID__) && defined(RENDERER_OPTION_VULKAN)
+			if (R_UseVulkan()) {
+				VK_RequestSurfaceRecreate();
+			}
+#endif
 #ifdef X11_GAMMA_WORKAROUND
 			if (vid_gamma_workaround.integer) {
 				v_gamma.modified = true;
@@ -583,7 +746,7 @@ static void window_event(SDL_WindowEvent *event)
 #endif
 			break;
 
-		case SDL_WINDOWEVENT_MOVED:
+		case SDL_EVENT_WINDOW_MOVED:
 			if (!(flags & SDL_WINDOW_FULLSCREEN) && r_win_save_pos.integer) {
 				int displayNumber = 0;
 				int x = event->data1;
@@ -597,28 +760,39 @@ static void window_event(SDL_WindowEvent *event)
 			}
 			break;
 
-		case SDL_WINDOWEVENT_RESIZED:
+		case SDL_EVENT_WINDOW_RESIZED:
+		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 			if (!(flags & SDL_WINDOW_FULLSCREEN)) {
-				glConfig.vidWidth = event->data1;
-				glConfig.vidHeight = event->data2;
+				int width = event->data1;
+				int height = event->data2;
+#ifdef __ANDROID__
+				if (!VID_SDL_GetDrawableSize(&width, &height)) {
+					VID_SDL_NormalizeLandscapeSize(&width, &height);
+				}
+#endif
+				glConfig.vidWidth = width;
+				glConfig.vidHeight = height;
 				if (r_win_save_size.integer) {
-					Cvar_LatchedSetValue(&vid_win_width, event->data1);
-					Cvar_LatchedSetValue(&vid_win_height, event->data2);
+					Cvar_LatchedSetValue(&vid_win_width, width);
+					Cvar_LatchedSetValue(&vid_win_height, height);
 				}
 				if (!r_conwidth.integer || !r_conheight.integer)
 					VID_UpdateConRes();
 			}
+#ifdef __ANDROID__
+			else if (VID_SDL_ApplyAndroidDrawableResolution("event")) {
+				VID_UpdateConRes();
+			}
+#endif
 			if (renderer.InvalidateViewport)
 				renderer.InvalidateViewport();
+#if defined(__ANDROID__) && defined(RENDERER_OPTION_VULKAN)
+			if (R_UseVulkan()) {
+				VK_RequestSwapChainRecreate();
+			}
+#endif
 			break;
 
-#ifdef __linux__
-		case SDL_WINDOWEVENT_TAKE_FOCUS:
-			// On X, sequence is FOCUS_GAINED, [Keyboard 'down' events], TAKE_FOCUS
-			// On Windows, it's just FOCUS_GAINED then TAKE_FOCUS, so nothing to block really
-			block_keyboard_input = false;
-			break;
-#endif
 	}
 }
 
@@ -696,14 +870,14 @@ byte Key_CharacterToQuakeCode(char ch)
 	// Uses fact that SDLK_a == 'a'... is this okay?
 	
 	// Convert from key-code to scan-code to see what physical button they pressed
-	int scancode = SDL_GetScancodeFromKey(ch);
+	int scancode = SDL_GetScancodeFromKey(ch, NULL);
 
 	return Key_ScancodeToQuakeCode(scancode);
 }
 
 wchar Key_Event_TextInput(wchar unichar);
 
-static void keyb_textinputevent(char* text)
+static void keyb_textinputevent(const char* text)
 {
 	int i = 0;
 	int len = 0;
@@ -739,9 +913,30 @@ static void keyb_textinputevent(char* text)
 	}
 }
 
+static void IN_UpdateTextInputState(void)
+{
+#ifdef __ANDROID__
+	bool active = SDL_TextInputActive(sdl_window);
+
+	if (active) {
+		SDL_StopTextInput(sdl_window);
+	}
+#endif
+}
+
+static byte IN_KeyboardEventToQuakeCode(SDL_KeyboardEvent *event)
+{
+#ifdef __ANDROID__
+	if (event->scancode == SDL_SCANCODE_AC_BACK) {
+		return K_ESCAPE;
+	}
+#endif
+	return Key_ScancodeToQuakeCode(event->scancode);
+}
+
 static void keyb_event(SDL_KeyboardEvent *event)
 {
-	byte result = Key_ScancodeToQuakeCode(event->keysym.scancode);
+	byte result = IN_KeyboardEventToQuakeCode(event);
 
 #ifdef __APPLE__
 	if (in_ignore_deadkeys.integer) {
@@ -761,17 +956,17 @@ static void keyb_event(SDL_KeyboardEvent *event)
 #endif
 
 	if (result == 0) {
-		Com_DPrintf("%s: unknown scancode %d\n", __func__, event->keysym.scancode);
+		Com_DPrintf("%s: unknown scancode %d\n", __func__, event->scancode);
 		return;
 	}
 
 #ifdef __linux__
 	if (block_keyboard_input) {
-		Com_DPrintf("%s: scan-code %d, qchar %d: suppressed\n", __func__, event->keysym.scancode, result);
+		Com_DPrintf("%s: scan-code %d, qchar %d: suppressed\n", __func__, event->scancode, result);
 		return;
 	}
 #endif
-	Key_Event(result, event->state);
+	Key_Event(result, event->down);
 }
 
 static void mouse_button_event(SDL_MouseButtonEvent *event)
@@ -801,7 +996,7 @@ static void mouse_button_event(SDL_MouseButtonEvent *event)
 		return;
 	}
 
-	Key_Event(key, event->state);
+	Key_Event(key, event->down);
 }
 
 static void mouse_wheel_event(SDL_MouseWheelEvent *event)
@@ -846,7 +1041,7 @@ static void HandleWindowsKeyboardEvents(unsigned int flags, qbool down)
 static void HandleEvents(void)
 {
 	SDL_Event event;
-	qbool track_movement_through_state = (mouse_active && !SDL_GetRelativeMouseMode());
+	qbool track_movement_through_state = (mouse_active && !SDL_GetWindowRelativeMouseMode(sdl_window));
 
 #if defined(_WIN32) && !defined(WITHOUT_WINKEYHOOK)
 	HandleWindowsKeyboardEvents(windows_keys_down, true);
@@ -860,9 +1055,36 @@ static void HandleEvents(void)
 		case SDL_QUIT:
 			Sys_Quit();
 			break;
-		case SDL_WINDOWEVENT:
+		case SDL_EVENT_WINDOW_SHOWN:
+		case SDL_EVENT_WINDOW_HIDDEN:
+		case SDL_EVENT_WINDOW_EXPOSED:
+		case SDL_EVENT_WINDOW_MOVED:
+		case SDL_EVENT_WINDOW_RESIZED:
+		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+		case SDL_EVENT_WINDOW_MINIMIZED:
+		case SDL_EVENT_WINDOW_MAXIMIZED:
+		case SDL_EVENT_WINDOW_RESTORED:
+		case SDL_EVENT_WINDOW_FOCUS_GAINED:
+		case SDL_EVENT_WINDOW_FOCUS_LOST:
 			window_event(&event.window);
 			break;
+#ifdef __ANDROID__
+		case SDL_APP_WILLENTERBACKGROUND:
+		case SDL_APP_DIDENTERBACKGROUND:
+			ActiveApp = false;
+			Minimized = true;
+			break;
+		case SDL_APP_WILLENTERFOREGROUND:
+		case SDL_APP_DIDENTERFOREGROUND:
+			ActiveApp = true;
+			Minimized = false;
+#ifdef RENDERER_OPTION_VULKAN
+			if (R_UseVulkan()) {
+				VK_RequestSurfaceRecreate();
+			}
+#endif
+			break;
+#endif
 		case SDL_KEYDOWN:
 		case SDL_KEYUP:
 #ifdef __APPLE__
@@ -870,9 +1092,15 @@ static void HandleEvents(void)
 				Con_Printf("key%s event, scan=%d, sym=%d, mod=%d\n", event.type == SDL_KEYDOWN ? "down" : "up", event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod);
 			}
 #endif
+#ifdef __ANDROID__
+			IN_AndroidDiagnosticPrintf("android input: key%s scan=%d sym=%d mod=%d repeat=%d mapped=%d", event.type == SDL_KEYDOWN ? "down" : "up", event.key.scancode, event.key.key, event.key.mod, event.key.repeat, IN_KeyboardEventToQuakeCode(&event.key));
+#endif
 			keyb_event(&event.key);
 			break;
 		case SDL_TEXTINPUT:
+#ifdef __ANDROID__
+			IN_AndroidDiagnosticPrintf("android input: textinput \"%s\"", event.text.text);
+#endif
 			keyb_textinputevent(event.text.text);
 			break;
 		case SDL_MOUSEMOTION:
@@ -881,6 +1109,9 @@ static void HandleEvents(void)
 				if (developer.integer == 2) {
 					Con_Printf("motion event, which=%d\n", event.motion.which);
 				}
+#endif
+#ifdef __ANDROID__
+				IN_AndroidDiagnosticPrintf("android input: motion which=%d xrel=%.0f yrel=%.0f relmode=%d", event.motion.which, event.motion.xrel, event.motion.yrel, SDL_GetWindowRelativeMouseMode(sdl_window));
 #endif
 				if (!track_movement_through_state) {
 					float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
@@ -901,36 +1132,43 @@ static void HandleEvents(void)
 			}
 #endif
 			if (event.button.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
+#ifdef __ANDROID__
+				IN_AndroidDiagnosticPrintf("android input: mouse%s which=%d button=%d", event.type == SDL_MOUSEBUTTONDOWN ? "down" : "up", event.button.which, event.button.button);
+#endif
 				mouse_button_event(&event.button);
 			}
 			break;
 		case SDL_MOUSEWHEEL:
 			if (event.wheel.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
+#ifdef __ANDROID__
+				IN_AndroidDiagnosticPrintf("android input: wheel which=%d x=%d y=%d direction=%d", event.wheel.which, event.wheel.x, event.wheel.y, event.wheel.direction);
+#endif
 				mouse_wheel_event(&event.wheel);
 			}
 			break;
 		case SDL_DROPFILE:
 			/* TODO: Add handling for different file types */
-			if (strncmp(event.drop.file, "qw://", 5) == 0) {
+			if (strncmp(event.drop.data, "qw://", 5) == 0) {
 				Cbuf_AddText("qwurl ");
 			} else {
 				Cbuf_AddText("playdemo ");
 			}
-			Cbuf_AddText(event.drop.file);
+			Cbuf_AddText(event.drop.data);
 			Cbuf_AddText("\n");
-			SDL_free(event.drop.file);
 			break;
 		}
 	}
 
+	IN_UpdateTextInputState();
+
 	if (track_movement_through_state) {
 		float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
-		int pos_x, pos_y;
+		float pos_x, pos_y;
 
 		SDL_GetMouseState(&pos_x, &pos_y);
 
-		mx = pos_x - old_x;
-		my = pos_y - old_y;
+		mx = (int)pos_x - old_x;
+		my = (int)pos_y - old_y;
 
 		cursor_x = min(max(0, cursor_x + (pos_x - glConfig.vidWidth / 2) * factor), VID_RenderWidth2D());
 		cursor_y = min(max(0, cursor_y + (pos_y - glConfig.vidHeight / 2) * factor), VID_RenderHeight2D());
@@ -951,7 +1189,7 @@ void VID_Shutdown(qbool restart)
 {
 	IN_DeactivateMouse();
 
-	SDL_StopTextInput();
+	if (sdl_window) SDL_StopTextInput(sdl_window);
 
 #ifdef X11_GAMMA_WORKAROUND
 	if (vid_gamma_workaround.integer) {
@@ -961,17 +1199,19 @@ void VID_Shutdown(qbool restart)
 
 	R_Shutdown(restart ? r_shutdown_restart : r_shutdown_full);
 
-	if (sdl_context) {
+	if (sdl_context && !R_UseVulkan()) {
 		SDL_GL_DeleteContext(sdl_context);
-		sdl_context = NULL;
 	}
+	sdl_context = NULL;
 
 	if (sdl_window) {
 		SDL_DestroyWindow(sdl_window);
 		sdl_window = NULL;
 	}
 
-	SDL_GL_ResetAttributes();
+	if (!R_UseVulkan()) {
+		SDL_GL_ResetAttributes();
+	}
 
 	if (SDL_WasInit(SDL_INIT_VIDEO) != 0) {
 		SDL_QuitSubSystem(SDL_INIT_VIDEO);
@@ -992,15 +1232,67 @@ void VID_Shutdown(qbool restart)
 static int VID_SDL_InitSubSystem(void)
 {
 	if (SDL_WasInit(SDL_INIT_VIDEO) == 0) {
-		if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0) {
+		if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
 			Sys_Error("Couldn't initialize SDL video: %s\n", SDL_GetError());
 			return -1;
 		}
 	}
 
-	SDL_StartTextInput();
+#ifdef __ANDROID__
+	IN_UpdateTextInputState();
+#else
+	SDL_StartTextInput(sdl_window);
+#endif
 
 	return 0;
+}
+
+static void VID_SDL_SetHints(void)
+{
+	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, vid_minimize_on_focus_loss.integer == 0 ? "0" : "1");
+#ifdef __APPLE__
+	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
+#endif
+
+#if defined(__APPLE__) || defined(__ANDROID__)
+#ifdef SDL_HINT_TOUCH_MOUSE_EVENTS
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+#endif
+#endif
+
+#ifdef __ANDROID__
+#ifdef SDL_HINT_ENABLE_SCREEN_KEYBOARD
+	SDL_SetHintWithPriority(SDL_HINT_ENABLE_SCREEN_KEYBOARD, "0", SDL_HINT_OVERRIDE);
+#endif
+#ifdef SDL_HINT_ORIENTATIONS
+	SDL_SetHintWithPriority(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight", SDL_HINT_OVERRIDE);
+#endif
+#ifdef SDL_HINT_MOUSE_TOUCH_EVENTS
+	SDL_SetHint(SDL_HINT_MOUSE_TOUCH_EVENTS, "0");
+#endif
+#ifdef SDL_HINT_ANDROID_TRAP_BACK_BUTTON
+	SDL_SetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON, "1");
+#endif
+
+	if (developer.integer || r_verbose.integer) {
+		Com_Printf("android input: SDL platform=%s version=%d.%d.%d\n", SDL_GetPlatform(), SDL_MAJOR_VERSION, SDL_MINOR_VERSION, SDL_PATCHLEVEL);
+#ifdef SDL_HINT_TOUCH_MOUSE_EVENTS
+		Com_Printf("android input: %s=%s\n", SDL_HINT_TOUCH_MOUSE_EVENTS, SDL_GetHint(SDL_HINT_TOUCH_MOUSE_EVENTS));
+#endif
+#ifdef SDL_HINT_MOUSE_TOUCH_EVENTS
+		Com_Printf("android input: %s=%s\n", SDL_HINT_MOUSE_TOUCH_EVENTS, SDL_GetHint(SDL_HINT_MOUSE_TOUCH_EVENTS));
+#endif
+#ifdef SDL_HINT_ANDROID_TRAP_BACK_BUTTON
+		Com_Printf("android input: %s=%s\n", SDL_HINT_ANDROID_TRAP_BACK_BUTTON, SDL_GetHint(SDL_HINT_ANDROID_TRAP_BACK_BUTTON));
+#endif
+#ifdef SDL_HINT_ENABLE_SCREEN_KEYBOARD
+		Com_Printf("android input: %s=%s\n", SDL_HINT_ENABLE_SCREEN_KEYBOARD, SDL_GetHint(SDL_HINT_ENABLE_SCREEN_KEYBOARD));
+#endif
+#ifdef SDL_HINT_ORIENTATIONS
+		Com_Printf("android input: %s=%s\n", SDL_HINT_ORIENTATIONS, SDL_GetHint(SDL_HINT_ORIENTATIONS));
+#endif
+	}
+#endif
 }
 
 // This is called during video initialisation & vid_restart, but not vid_reload
@@ -1083,18 +1375,24 @@ void VID_RegisterCvars(void)
 int VID_DisplayNumber(qbool fullscreen)
 {
 	int displayNumber = (fullscreen ? vid_displayNumber.value : vid_win_displayNumber.value);
-	int displays = SDL_GetNumVideoDisplays();
+	int displays = 0;
+	SDL_DisplayID *display_ids = SDL_GetDisplays(&displays);
+	SDL_free(display_ids);
 
 	return max(0, min(displays - 1, displayNumber));
+}
+
+static SDL_DisplayID VID_SDL_DisplayID(qbool fullscreen)
+{
+	return VID_SDL_DisplayIDFromIndex(VID_DisplayNumber(fullscreen));
 }
 
 static void VID_SetupModeList(void)
 {
 	int i;
+	SDL_DisplayMode **modes = SDL_GetFullscreenDisplayModes(VID_SDL_DisplayID(r_fullscreen.integer == 1), &modelist_count);
 
-	modelist_count = SDL_GetNumDisplayModes(VID_DisplayNumber(r_fullscreen.integer == 1));
-
-	if (modelist_count <= 0) {
+	if (!modes || modelist_count <= 0) {
 		Com_Printf("error getting display modes: %s\n", SDL_GetError());
 		modelist_count = 0;
 	}
@@ -1102,8 +1400,9 @@ static void VID_SetupModeList(void)
 	modelist = Q_calloc(modelist_count, sizeof(*modelist));
 
 	for (i = 0; i < modelist_count; i++) {
-		SDL_GetDisplayMode(0, i, &modelist[i]);
+		modelist[i] = *modes[i];
 	}
+	SDL_free(modes);
 }
 
 static void VID_SetupResolution(void)
@@ -1114,14 +1413,21 @@ static void VID_SetupResolution(void)
 	if (r_fullscreen.integer) {
 		display_nbr = VID_DisplayNumber(true);
 		if (vid_usedesktopres.integer == 1) {
-			if (SDL_GetDesktopDisplayMode(display_nbr, &display_mode) == 0) {
+			const SDL_DisplayMode *desktop_mode = SDL_GetDesktopDisplayMode(VID_SDL_DisplayID(true));
+			if (desktop_mode) {
+				display_mode = *desktop_mode;
 				glConfig.vidWidth = last_working_width = display_mode.w;
 				glConfig.vidHeight = last_working_height = display_mode.h;
+#ifdef __ANDROID__
+				VID_SDL_NormalizeLandscapeSize(&glConfig.vidWidth, &glConfig.vidHeight);
+				last_working_width = glConfig.vidWidth;
+				last_working_height = glConfig.vidHeight;
+#endif
 				glConfig.displayFrequency = last_working_hz = display_mode.refresh_rate;
 				last_working_display = display_nbr;
 				last_working_values = true;
-				Cvar_AutoSetInt(&vid_width, display_mode.w);
-				Cvar_AutoSetInt(&vid_height, display_mode.h);
+				Cvar_AutoSetInt(&vid_width, glConfig.vidWidth);
+				Cvar_AutoSetInt(&vid_height, glConfig.vidHeight);
 				Cvar_AutoSetInt(&r_displayRefresh, display_mode.refresh_rate);
 				return;
 			} else {
@@ -1159,6 +1465,10 @@ static void VID_SetupResolution(void)
 		glConfig.vidHeight = bound(240, vid_win_height.integer, vid_win_height.integer);
 		glConfig.displayFrequency = 0;
 	}
+
+#ifdef __ANDROID__
+	VID_SDL_NormalizeLandscapeSize(&glConfig.vidWidth, &glConfig.vidHeight);
+#endif
 }
 
 int VID_GetCurrentModeIndex(void)
@@ -1243,7 +1553,7 @@ static SDL_GLContext VID_SDL_GL_SetupContextAttributes(void)
 #endif
 #ifdef RENDERER_OPTION_VULKAN
 	if (R_UseVulkan()) {
-		//return VK_SDL_CreateContext(sdl_window);
+		return VK_Initialise(sdl_window) ? (SDL_GLContext)sdl_window : NULL;
 	}
 #endif
 
@@ -1258,9 +1568,8 @@ static int VID_SetWindowIcon(SDL_Window *sdl_window)
 	return 0;
 #else
 	SDL_Surface *icon_surface;
-        icon_surface = SDL_CreateRGBSurfaceFrom((void *)ezquake_icon.pixel_data, ezquake_icon.width, ezquake_icon.height, ezquake_icon.bytes_per_pixel * 8,
-                ezquake_icon.width * ezquake_icon.bytes_per_pixel,
-                0x000000FF,0x0000FF00,0x00FF0000,0xFF000000);
+	icon_surface = SDL_CreateSurfaceFrom(ezquake_icon.width, ezquake_icon.height, SDL_PIXELFORMAT_RGBA32,
+		(void *)ezquake_icon.pixel_data, ezquake_icon.width * ezquake_icon.bytes_per_pixel);
 
 	if (icon_surface) {
 		SDL_SetWindowIcon(sdl_window, icon_surface);
@@ -1281,7 +1590,9 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 
 		VID_AbsolutePositionFromRelative(&xpos, &ypos, &displayNumber);
 
-		return SDL_CreateWindow(WINDOW_CLASS_NAME, xpos, ypos, glConfig.vidWidth, glConfig.vidHeight, flags);
+		SDL_Window *window = SDL_CreateWindow(WINDOW_CLASS_NAME, glConfig.vidWidth, glConfig.vidHeight, flags);
+		if (window) SDL_SetWindowPosition(window, xpos, ypos);
+		return window;
 	}
 	else {
 		int windowWidth = glConfig.vidWidth;
@@ -1291,7 +1602,7 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 		int displayNumber = VID_DisplayNumber(true);
 		SDL_Rect bounds;
 
-		if (SDL_GetDisplayBounds(displayNumber, &bounds) == 0) {
+		if (SDL_GetDisplayBounds(VID_SDL_DisplayID(true), &bounds)) {
 			windowX = bounds.x;
 			windowY = bounds.y;
 			windowWidth = bounds.w;
@@ -1301,7 +1612,9 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 			Com_Printf("Couldn't determine bounds of display #%d, defaulting to main display\n", displayNumber);
 		}
 
-		return SDL_CreateWindow(WINDOW_CLASS_NAME, windowX, windowY, windowWidth, windowHeight, flags);
+		SDL_Window *window = SDL_CreateWindow(WINDOW_CLASS_NAME, windowWidth, windowHeight, flags);
+		if (window) SDL_SetWindowPosition(window, windowX, windowY);
+		return window;
 	}
 }
 
@@ -1365,7 +1678,7 @@ static void VID_SetWindowResolution(void)
 			VID_SetupResolution();
 		}
 		else {
-			if (SDL_SetWindowDisplayMode(sdl_window, &modelist[index]) != 0) {
+			if (!SDL_SetWindowFullscreenMode(sdl_window, &modelist[index])) {
 				Com_Printf("sdl error: %s\n", SDL_GetError());
 			}
 			else {
@@ -1377,7 +1690,7 @@ static void VID_SetWindowResolution(void)
 			}
 		}
 
-		if (SDL_SetWindowFullscreen(sdl_window, SDL_WINDOW_FULLSCREEN) < 0) {
+		if (!SDL_SetWindowFullscreen(sdl_window, true)) {
 			Com_Printf("Failed to change to fullscreen mode\n");
 		}
 	}
@@ -1393,9 +1706,15 @@ static void VID_SDL_Init(void)
 		return;
 	}
 
+	VID_SDL_SetHints();
 	VID_SDL_InitSubSystem();
 
-	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
+	flags = SDL_WINDOW_RESIZABLE;
+#ifdef RENDERER_OPTION_VULKAN
+	flags |= R_UseVulkan() ? SDL_WINDOW_VULKAN : SDL_WINDOW_OPENGL;
+#else
+	flags |= SDL_WINDOW_OPENGL;
+#endif
 	// MEAG: deliberately not specifying SDL_WINDOW_ALLOW_HIGHDPI as in our current workflow, it
 	//          breaks retina devices (we ask for display resolution and get told lower value)
 	//       Understand this is meant to be helped by NSHighResolutionCapable in Info.plist, but
@@ -1403,23 +1722,11 @@ static void VID_SDL_Init(void)
 	//          for the moment.
 	//       Flag has no effect on Windows (see SetProcessDpiAwarenessFunc in sys_win.c)
 	if (r_fullscreen.integer > 0) {
-		flags |= (vid_usedesktopres.integer == 1 ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+		flags |= (vid_usedesktopres.integer == 1 ? SDL_WINDOW_FULLSCREEN : 0);
 	}
 	else {
 		flags |= (vid_win_borderless.integer > 0 ? SDL_WINDOW_BORDERLESS : 0);
 	}
-
-	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, vid_minimize_on_focus_loss.integer == 0 ? "0" : "1");
-#ifdef __APPLE__
-	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
-#endif
-	SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, vid_grab_keyboard.integer == 0 ? "0" : "1");
-	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
-#ifdef __APPLE__
-#ifdef SDL_HINT_TOUCH_MOUSE_EVENTS
-	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
-#endif
-#endif
 
 	{
 		int i;
@@ -1460,7 +1767,9 @@ static void VID_SDL_Init(void)
 				}
 
 				sdl_window = NULL;
-				VID_SDL_GL_SetupWindowAttributes(vid_options[i]);
+				if (!R_UseVulkan()) {
+					VID_SDL_GL_SetupWindowAttributes(vid_options[i]);
+				}
 				VID_SetupModeList();
 				VID_SetupResolution();
 				sdl_window = VID_SDL_CreateWindow(flags);
@@ -1476,6 +1785,9 @@ static void VID_SDL_Init(void)
 						sdl_window = NULL;
 					}
 					else {
+#ifdef __ANDROID__
+						VID_SDL_ApplyAndroidDrawableResolution("initial");
+#endif
 						break;
 					}
 				}
@@ -1542,8 +1854,9 @@ static void VID_SDL_Init(void)
 	int display_nbr;
 
 	display_nbr = VID_DisplayNumber(true);
-	if (SDL_GetDesktopDisplayMode(display_nbr, &display_mode) == 0) {
-		Cvar_AutoSetInt(&r_displayRefresh, display_mode.refresh_rate);
+	{
+		const SDL_DisplayMode *desktop_mode = SDL_GetDesktopDisplayMode(VID_SDL_DisplayID(true));
+		if (desktop_mode) Cvar_AutoSetInt(&r_displayRefresh, desktop_mode->refresh_rate);
 	}
 
 	glConfig.initialized = true;
@@ -1551,6 +1864,11 @@ static void VID_SDL_Init(void)
 
 static void VID_SwapBuffers (void)
 {
+#ifdef RENDERER_OPTION_VULKAN
+	if (R_UseVulkan()) {
+		return;
+	}
+#endif
 	SDL_GL_SwapWindow(sdl_window);
 }
 
@@ -1558,6 +1876,11 @@ static void VID_SwapBuffersWithVsyncFix(void)
 {
 	double time_before_swap;
 
+#ifdef RENDERER_OPTION_VULKAN
+	if (R_UseVulkan()) {
+		return;
+	}
+#endif
 	time_before_swap = Sys_DoubleTime();
 
 	SDL_GL_SwapWindow(sdl_window);
@@ -1572,6 +1895,10 @@ void R_BeginRendering(int *x, int *y, int *width, int *height)
 	*x = *y = 0;
 	*width = glConfig.vidWidth;
 	*height = glConfig.vidHeight;
+
+	if (renderer.BeginFrame) {
+		renderer.BeginFrame();
+	}
 
 	if (renderer.IsFramebufferEnabled3D()) {
 		int scaled_width = VID_ScaledWidth3D();
@@ -1590,6 +1917,33 @@ void R_BeginRendering(int *x, int *y, int *width, int *height)
 
 void R_EndRendering(void)
 {
+#ifdef RENDERER_OPTION_VULKAN
+	if (R_UseVulkan()) {
+		if (r_swapInterval.modified) {
+			// SDL_GL_SetSwapInterval below only applies to the OpenGL
+			// backend; Vulkan picks its present mode (which encodes vsync
+			// on/off) once, at swapchain creation, so toggling "Vertical
+			// Sync" in the menu had no effect at all until the swapchain
+			// was recreated for some unrelated reason. Re-evaluate the
+			// present mode here specifically (while the surface is in a
+			// known-good, non-transitional state) rather than inside the
+			// generic swapchain-recreate path, which also runs for
+			// unrelated reasons (GFX preset reload, resize) where
+			// re-enumerating present modes mid-transition was observed to
+			// occasionally drop MAILBOX and settle on IMMEDIATE permanently,
+			// saturating the compositor's buffer queue and freezing the app.
+			VK_RefreshPresentationMode();
+			VK_RequestSwapChainRecreate();
+			r_swapInterval.modified = false;
+		}
+		if (renderer.EndFrame) {
+			renderer.EndFrame();
+		}
+		buffers.EndFrame();
+		return;
+	}
+#endif
+
 	if (r_swapInterval.modified) {
 		if (r_swapInterval.integer == 0) {
 			if (SDL_GL_SetSwapInterval(0)) {
@@ -1624,6 +1978,10 @@ void R_EndRendering(void)
 		else {
 			VID_SwapBuffers(); 
 		}
+	}
+
+	if (renderer.EndFrame) {
+		renderer.EndFrame();
 	}
 
 	buffers.EndFrame();
@@ -1841,16 +2199,18 @@ static void VID_Restart_f(void)
 
 static void VID_DisplayList_f(void)
 {
-	int displays = SDL_GetNumVideoDisplays();
+	int displays = 0;
+	SDL_DisplayID *display_ids = SDL_GetDisplays(&displays);
 	int i;
 
 	for (i = 0; i < displays; i++) {
-		const char *displayname = SDL_GetDisplayName(i);
+		const char *displayname = SDL_GetDisplayName(display_ids[i]);
 		if (displayname == NULL) {
 			displayname = "Unknown";
 		}
 		Com_Printf("%d: %s\n", i, displayname);
 	}
+	SDL_free(display_ids);
 }
 
 static void VID_ModeList_f(void)

@@ -583,7 +583,7 @@ static int Movie_BackgroundThread(void* thread_data)
 		SDL_SemWait(thread->signal);
 
 		SDL_LockMutex(thread->mutex);
-		if (SDL_SemTryWait(thread->finished) == SDL_MUTEX_TIMEDOUT) {
+		if (!SDL_TryWaitSemaphore(thread->finished)) {
 			SCR_ScreenshotWrite(thread->data);
 			SDL_UnlockMutex(thread->mutex);
 		}
