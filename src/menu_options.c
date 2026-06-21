@@ -428,8 +428,16 @@ const char* vid_software_palette_enum[] = {
 
 #ifdef EZ_MULTIPLE_RENDERERS
 const char* vid_renderer_enum[] = {
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	"classic", "0",
-	"modern", "1"
+#endif
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+	"modern", "1",
+#endif
+#ifdef RENDERER_OPTION_VULKAN
+	"vulkan", "2",
+#endif
+	NULL
 };
 #endif
 
@@ -548,7 +556,7 @@ const char* ResolutionRead(void)
 		return "";
 	}
 
-	snprintf(buf, sizeof(buf), "%dx%d@%dHz", mode->w, mode->h, mode->refresh_rate);
+	snprintf(buf, sizeof(buf), "%dx%d@%dHz", mode->w, mode->h, (int)mode->refresh_rate);
 		
 	return buf;
 }

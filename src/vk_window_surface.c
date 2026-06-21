@@ -32,9 +32,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 qbool VK_CreateWindowSurface(SDL_Window* window, VkInstance instance, VkSurfaceKHR* surface)
 {
-	surface = VK_NULL_HANDLE;
+	*surface = VK_NULL_HANDLE;
 
-	if (SDL_Vulkan_CreateSurface(window, instance, surface) != SDL_TRUE) {
+	if (!SDL_Vulkan_CreateSurface(window, instance, NULL, surface)) {
 		return false;
 	}
 

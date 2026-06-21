@@ -31,25 +31,35 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef struct vk_buffer_s {
 	VkBuffer handle;
+	VkDeviceMemory memory;
+	buffertype_t type;
+	bufferusage_t usage;
+	size_t size;
 } vk_buffer_t;
 
-static vk_buffer_t bufferData[64];
+static vk_buffer_t bufferData[r_buffer_count];
 
-static VkBufferUsageFlags VK_BufferMemoryStyle(bufferusage_t usage)
+static void VK_BufferResize(r_buffer_id id, int size, void* data);
+static void VK_BufferUpdateSection(r_buffer_id id, ptrdiff_t offset, int size, const void* data);
+
+static VkMemoryPropertyFlags VK_BufferMemoryStyle(bufferusage_t usage)
 {
 	switch (usage) {
 		case bufferusage_once_per_frame:
 			// filled & used once per frame
-			break;
+			return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 		case bufferusage_reuse_per_frame:
 			// filled & used many times per frame
-			break;
+			return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 		case bufferusage_reuse_many_frames:
 			// filled once, expect to use many times over subsequent frames
-			break;
+			return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 		case bufferusage_constant_data:
 			// filled once, never updated again
-			break;
+			return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		default:
+			assert(false);
+			return 0;
 	}
 }
 
@@ -86,54 +96,79 @@ static qbool VK_BufferReady(void)
 	return true;
 }
 
-static buffer_ref VK_BufferCreate(buffertype_t type, const char* name, int size, void* data, bufferusage_t usage)
+static qbool VK_BufferCreate(r_buffer_id id, buffertype_t type, const char* name, int size, void* data, bufferusage_t usage)
 {
-	VkBuffer buffer = { 0 };
-	VkBufferCreateInfo bufferInfo = { 0 };
-	VkMemoryRequirements memRequirements = { 0 };
+	vk_buffer_t* slot;
+	VkBufferUsageFlags bufferUsage;
+	VkMemoryPropertyFlags memoryStyle;
+	void* mapped;
 
-	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = size;
-	bufferInfo.usage = VK_BufferUsageForType(type);
-	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE; // FIXME: compute queue?
-	if (vkCreateBuffer(vk_options.logicalDevice, &bufferInfo, NULL, &buffer) != VK_SUCCESS) {
-		return null_buffer_reference;
+	assert(id > r_buffer_none && id < r_buffer_count);
+	if (id <= r_buffer_none || id >= r_buffer_count || size <= 0) {
+		return false;
 	}
 
-	vkGetBufferMemoryRequirements(vk_options.logicalDevice, buffer, &memRequirements);
+	slot = &bufferData[id];
+	if (slot->handle != VK_NULL_HANDLE) {
+		vkDestroyBuffer(vk_options.logicalDevice, slot->handle, NULL);
+	}
+	if (slot->memory != VK_NULL_HANDLE) {
+		vkFreeMemory(vk_options.logicalDevice, slot->memory, NULL);
+	}
+	memset(slot, 0, sizeof(*slot));
 
-	// TODO
-	//memRequirements.
-	return null_buffer_reference;
+	bufferUsage = VK_BufferUsageForType(type) | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+	memoryStyle = VK_BufferMemoryStyle(usage);
+	(void)name;
+	if (!VK_CreateBufferResource(size, bufferUsage, memoryStyle, &slot->handle, &slot->memory)) {
+		return false;
+	}
+
+	slot->type = type;
+	slot->usage = usage;
+	slot->size = size;
+
+	if (data && vkMapMemory(vk_options.logicalDevice, slot->memory, 0, size, 0, &mapped) == VK_SUCCESS) {
+		memcpy(mapped, data, size);
+		vkUnmapMemory(vk_options.logicalDevice, slot->memory);
+	}
+
+	return true;
 }
 
-static void VK_BufferEnsureSize(buffer_ref buffer, int size)
+static void VK_BufferEnsureSize(r_buffer_id id, int size)
 {
+	if (id <= r_buffer_none || id >= r_buffer_count || size <= 0) {
+		return;
+	}
+	if (bufferData[id].handle == VK_NULL_HANDLE || bufferData[id].size < (size_t)size) {
+		VK_BufferResize(id, size, NULL);
+	}
 }
 
 static void VK_BufferInitialiseState(void)
 {
 }
 
-static size_t VK_BufferSize(buffer_ref vbo)
+static size_t VK_BufferSize(r_buffer_id id)
+{
+	return (id > r_buffer_none && id < r_buffer_count) ? bufferData[id].size : 0;
+}
+
+static uintptr_t VK_BufferOffset(r_buffer_id id)
 {
 	return 0;
 }
 
-static uintptr_t VK_BufferOffset(buffer_ref ref)
-{
-	return 0;
-}
-
-static void VK_BufferBind(buffer_ref ref)
+static void VK_BufferBind(r_buffer_id id)
 {
 }
 
-static void VK_BufferBindBase(buffer_ref ref, unsigned int index)
+static void VK_BufferBindBase(r_buffer_id id, unsigned int index)
 {
 }
 
-static void VK_BufferBindRange(buffer_ref ref, unsigned int index, ptrdiff_t offset, int size)
+static void VK_BufferBindRange(r_buffer_id id, unsigned int index, ptrdiff_t offset, int size)
 {
 }
 
@@ -141,32 +176,97 @@ static void VK_BufferUnBind(buffertype_t type)
 {
 }
 
-static void VK_BufferUpdate(buffer_ref vbo, int size, void* data)
+static void VK_BufferUpdate(r_buffer_id id, int size, void* data)
 {
+	VK_BufferUpdateSection(id, 0, size, data);
 }
 
-static void VK_BufferUpdateSection(buffer_ref vbo, ptrdiff_t offset, int size, const void* data)
+static void VK_BufferUpdateSection(r_buffer_id id, ptrdiff_t offset, int size, const void* data)
 {
+	vk_buffer_t* slot;
+	void* mapped;
+
+	if (id <= r_buffer_none || id >= r_buffer_count || size <= 0 || !data) {
+		return;
+	}
+
+	slot = &bufferData[id];
+	if (slot->handle == VK_NULL_HANDLE || offset < 0 || (size_t)(offset + size) > slot->size) {
+		VK_BufferEnsureSize(id, offset + size);
+		slot = &bufferData[id];
+	}
+	if (slot->handle == VK_NULL_HANDLE) {
+		return;
+	}
+
+	if (vkMapMemory(vk_options.logicalDevice, slot->memory, offset, size, 0, &mapped) == VK_SUCCESS) {
+		memcpy(mapped, data, size);
+		vkUnmapMemory(vk_options.logicalDevice, slot->memory);
+	}
 }
 
-static buffer_ref VK_BufferResize(buffer_ref vbo, int size, void* data)
+static void VK_BufferResize(r_buffer_id id, int size, void* data)
 {
-	return null_buffer_reference;
+	vk_buffer_t old;
+
+	if (id <= r_buffer_none || id >= r_buffer_count || size <= 0) {
+		return;
+	}
+
+	old = bufferData[id];
+	memset(&bufferData[id], 0, sizeof(bufferData[id]));
+
+	if (!VK_BufferCreate(id, old.type ? old.type : buffertype_vertex, NULL, size, data, old.usage ? old.usage : bufferusage_once_per_frame)) {
+		bufferData[id] = old;
+		return;
+	}
+
+	if (old.handle != VK_NULL_HANDLE) {
+		vkDestroyBuffer(vk_options.logicalDevice, old.handle, NULL);
+	}
+	if (old.memory != VK_NULL_HANDLE) {
+		vkFreeMemory(vk_options.logicalDevice, old.memory, NULL);
+	}
 }
 
-static qbool VK_BufferIsValid(buffer_ref ref)
+static qbool VK_BufferIsValid(r_buffer_id id)
 {
-	return false;
+	return (id > r_buffer_none && id < r_buffer_count && bufferData[id].handle != VK_NULL_HANDLE);
 }
 
-static void VK_BufferSetElementArray(buffer_ref ref)
+static void VK_BufferSetElementArray(r_buffer_id id)
 {
 	return;
 }
 
 static void VK_BufferShutdown(void)
 {
+	int i;
+
+	for (i = 0; i < r_buffer_count; ++i) {
+		if (bufferData[i].handle != VK_NULL_HANDLE) {
+			vkDestroyBuffer(vk_options.logicalDevice, bufferData[i].handle, NULL);
+		}
+		if (bufferData[i].memory != VK_NULL_HANDLE) {
+			vkFreeMemory(vk_options.logicalDevice, bufferData[i].memory, NULL);
+		}
+	}
+	memset(bufferData, 0, sizeof(bufferData));
 	return;
+}
+
+VkBuffer VK_BufferHandle(r_buffer_id id)
+{
+	if (id <= r_buffer_none || id >= r_buffer_count) {
+		return VK_NULL_HANDLE;
+	}
+	return bufferData[id].handle;
+}
+
+VkDeviceSize VK_BufferDeviceOffset(r_buffer_id id)
+{
+	(void)id;
+	return 0;
 }
 
 #ifdef WITH_RENDERING_TRACE

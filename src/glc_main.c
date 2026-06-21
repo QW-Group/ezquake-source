@@ -124,6 +124,8 @@ static void GLC_Begin2DRendering(void)
 #define GLC_ProgramsShutdown               GL_ProgramsShutdown
 #define GLC_FramebufferCreate              GL_FramebufferCreate
 #define GLC_PrepareAliasModel              GL_PrepareAliasModel
+#define GLC_BeginFrame                     GLC_NoOperation
+#define GLC_EndFrame                       GLC_NoOperation
 
 #define RENDERER_METHOD(returntype, name, ...) \
 { \

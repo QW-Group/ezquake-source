@@ -51,7 +51,9 @@ extern struct mleaf_s* r_oldviewleaf2;	// 2 is for watervis hack
 #undef EZ_MULTIPLE_RENDERERS
 #endif
 
-#if defined(RENDERER_OPTION_CLASSIC_OPENGL) && defined(RENDERER_OPTION_MODERN_OPENGL)
+#if (defined(RENDERER_OPTION_CLASSIC_OPENGL) && defined(RENDERER_OPTION_MODERN_OPENGL)) || \
+	(defined(RENDERER_OPTION_CLASSIC_OPENGL) && defined(RENDERER_OPTION_VULKAN)) || \
+	(defined(RENDERER_OPTION_MODERN_OPENGL) && defined(RENDERER_OPTION_VULKAN))
 #define EZ_MULTIPLE_RENDERERS
 
 extern cvar_t vid_renderer;
@@ -72,6 +74,10 @@ void R_SelectRenderer(void);
 #define R_UseImmediateOpenGL()    (0)
 #define R_UseModernOpenGL()       (1)
 #define R_UseVulkan()             (0)
+#elif defined(RENDERER_OPTION_VULKAN)
+#define R_UseImmediateOpenGL()    (0)
+#define R_UseModernOpenGL()       (0)
+#define R_UseVulkan()             (1)
 #else
 #error No renderer options defined
 #endif
@@ -81,7 +87,7 @@ void R_SelectRenderer(void);
 #define R_DebugProfileContext()  ((IsDeveloperMode() && COM_CheckParm(cmdline_param_client_video_r_debug)) || COM_CheckParm(cmdline_param_client_video_r_trace))
 #define R_CompressFullbrightTextures() (!R_UseImmediateOpenGL())
 #define R_LumaTexturesMustMatchDimensions() (!R_UseImmediateOpenGL())
-#define R_UseCubeMapForSkyBox() (!R_UseImmediateOpenGL() || GL_Supported(R_SUPPORT_SEAMLESS_CUBEMAPS))
+#define R_UseCubeMapForSkyBox() (!R_UseVulkan() && (!R_UseImmediateOpenGL() || GL_Supported(R_SUPPORT_SEAMLESS_CUBEMAPS)))
 
 // bloom.c
 void R_InitBloomTextures(void);

@@ -272,7 +272,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 			turbSurface = (surf->flags & SURF_DRAWTURB);
 			alphaSurface = (surf->flags & SURF_DRAWALPHA);
 			if (surf->flags & SURF_DRAWSKY) {
-				if (r_fastsky.integer || R_UseModernOpenGL()) {
+				if (r_fastsky.integer || R_UseModernOpenGL() || R_UseVulkan()) {
 					chain_surfaces_simple_drawflat(&cl.worldmodel->drawflat_chain, surf);
 					cl.worldmodel->drawflat_todo = true;
 				}
@@ -285,7 +285,7 @@ void R_RecursiveWorldNode(mnode_t *node, int clipflags)
 					chain_surfaces_simple_drawflat(&cl.worldmodel->drawflat_chain, surf);
 					cl.worldmodel->drawflat_todo = true;
 				}
-				else if (r_refdef2.solidTexTurb && R_UseModernOpenGL()) {
+				else if (r_refdef2.solidTexTurb && (R_UseModernOpenGL() || R_UseVulkan())) {
 					chain_surfaces_simple(&surf->texinfo->texture->texturechain, surf);
 				}
 				else {

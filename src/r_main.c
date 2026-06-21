@@ -12,6 +12,11 @@
 
 void GLM_Initialise(void);
 void GLC_Initialise(void);
+#ifdef RENDERER_OPTION_VULKAN
+void VK_PopulateConfig(void);
+qbool VK_InitialiseVAOHandling(void);
+void VK_InitialiseBufferHandling(api_buffers_t* api);
+#endif
 
 void CachePics_Shutdown(void);
 void R_LightmapShutdown(void);
@@ -101,11 +106,9 @@ void R_Initialise(void)
 #endif
 #ifdef RENDERER_OPTION_VULKAN
 	if (R_UseVulkan()) {
-		VK_Initialise();
 		VK_PopulateConfig();
 		VK_InitialiseVAOHandling();
 		VK_InitialiseBufferHandling(&buffers);
-		VK_InitialiseState();
 	}
 #endif
 	R_Hud_Initialise();

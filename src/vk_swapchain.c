@@ -27,8 +27,64 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <SDL.h>
 #include <SDL_vulkan.h>
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
 
 #include "vk_local.h"
+
+static void VK_DestroySwapChainDepthResources(void)
+{
+	if (vk_options.swapChain.depthImageView != VK_NULL_HANDLE) {
+		vkDestroyImageView(vk_options.logicalDevice, vk_options.swapChain.depthImageView, NULL);
+		vk_options.swapChain.depthImageView = VK_NULL_HANDLE;
+	}
+	if (vk_options.swapChain.depthImage != VK_NULL_HANDLE) {
+		vkDestroyImage(vk_options.logicalDevice, vk_options.swapChain.depthImage, NULL);
+		vk_options.swapChain.depthImage = VK_NULL_HANDLE;
+	}
+	if (vk_options.swapChain.depthImageMemory != VK_NULL_HANDLE) {
+		vkFreeMemory(vk_options.logicalDevice, vk_options.swapChain.depthImageMemory, NULL);
+		vk_options.swapChain.depthImageMemory = VK_NULL_HANDLE;
+	}
+}
+
+static qbool VK_CreateSwapChainDepthResources(void)
+{
+	VkImageViewCreateInfo createImageViewInfo;
+
+	VK_DestroySwapChainDepthResources();
+
+	if (!VK_CreateImageResource(
+			vk_options.swapChain.imageSize.width,
+			vk_options.swapChain.imageSize.height,
+			VK_DepthFormat(),
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			&vk_options.swapChain.depthImage,
+			&vk_options.swapChain.depthImageMemory)) {
+		return false;
+	}
+
+	VK_InitialiseStructure(createImageViewInfo);
+	createImageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	createImageViewInfo.image = vk_options.swapChain.depthImage;
+	createImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	createImageViewInfo.format = VK_DepthFormat();
+	createImageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	createImageViewInfo.subresourceRange.baseMipLevel = 0;
+	createImageViewInfo.subresourceRange.levelCount = 1;
+	createImageViewInfo.subresourceRange.baseArrayLayer = 0;
+	createImageViewInfo.subresourceRange.layerCount = 1;
+
+	if (vkCreateImageView(vk_options.logicalDevice, &createImageViewInfo, NULL, &vk_options.swapChain.depthImageView) != VK_SUCCESS) {
+		VK_DestroySwapChainDepthResources();
+		return false;
+	}
+
+	return true;
+}
 
 qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR surface)
 {
@@ -45,6 +101,12 @@ qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR s
 	if (vk_options.physicalDeviceSurfaceCapabilities.maxImageCount > 0) {
 		requestedImageCount = min(requestedImageCount, vk_options.physicalDeviceSurfaceCapabilities.maxImageCount);
 	}
+#ifdef __ANDROID__
+	__android_log_print(ANDROID_LOG_INFO, "VK_PROFILE",
+		"swapchain present mode=%d (0=IMMEDIATE 1=MAILBOX 2=FIFO 3=FIFO_RELAXED) images requested=%u min=%u max=%u",
+		(int)vk_options.physicalDevicePresentationMode, requestedImageCount,
+		vk_options.physicalDeviceSurfaceCapabilities.minImageCount, vk_options.physicalDeviceSurfaceCapabilities.maxImageCount);
+#endif
 
 	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	createInfo.minImageCount = requestedImageCount;
@@ -52,13 +114,13 @@ qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR s
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageColorSpace = vk_options.physicalDeviceSurfaceFormat.colorSpace;
 	createInfo.imageFormat = vk_options.physicalDeviceSurfaceFormat.format;
-	if (vk_options.physicalDeviceSurfaceCapabilities.currentExtent.width == ~(uint32_t)0) {
+	if (vk_options.physicalDeviceSurfaceCapabilities.currentExtent.width != ~(uint32_t)0) {
 		createInfo.imageExtent = vk_options.physicalDeviceSurfaceCapabilities.currentExtent;
 	}
 	else {
 		int width, height;
 
-		SDL_GL_GetDrawableSize(window, &width, &height);
+		SDL_GetWindowSizeInPixels(window, &width, &height);
 
 		width = bound(vk_options.physicalDeviceSurfaceCapabilities.minImageExtent.width, width, vk_options.physicalDeviceSurfaceCapabilities.maxImageExtent.width);
 		height = bound(vk_options.physicalDeviceSurfaceCapabilities.minImageExtent.height, height, vk_options.physicalDeviceSurfaceCapabilities.maxImageExtent.height);
@@ -80,7 +142,15 @@ qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR s
 		createInfo.queueFamilyIndexCount = 0;
 		createInfo.pQueueFamilyIndices = NULL;
 	}
-	createInfo.preTransform = vk_options.physicalDeviceSurfaceCapabilities.currentTransform;
+#ifdef __ANDROID__
+	if (vk_options.physicalDeviceSurfaceCapabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) {
+		createInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+	}
+	else
+#endif
+	{
+		createInfo.preTransform = vk_options.physicalDeviceSurfaceCapabilities.currentTransform;
+	}
 	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	createInfo.presentMode = vk_options.physicalDevicePresentationMode;
 	createInfo.clipped = VK_FALSE; // meag: setting this to false so we can read-back for screenshots
@@ -128,8 +198,63 @@ qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR s
 	return true;
 }
 
+qbool VK_CreateSwapChainFramebuffers(void)
+{
+	uint32_t i;
+	VkRenderPass renderPass = VK_MainRenderPass();
+
+	if (renderPass == VK_NULL_HANDLE || !vk_options.swapChain.imageViews) {
+		return false;
+	}
+
+	if (!VK_CreateSwapChainDepthResources()) {
+		return false;
+	}
+
+	vk_options.swapChain.framebuffers = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.framebuffers[0]));
+	for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+		VkImageView attachments[] = { vk_options.swapChain.imageViews[i], vk_options.swapChain.depthImageView };
+		VkFramebufferCreateInfo framebufferInfo = { 0 };
+
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = renderPass;
+		framebufferInfo.attachmentCount = sizeof(attachments) / sizeof(attachments[0]);
+		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.width = vk_options.swapChain.imageSize.width;
+		framebufferInfo.height = vk_options.swapChain.imageSize.height;
+		framebufferInfo.layers = 1;
+
+		if (vkCreateFramebuffer(vk_options.logicalDevice, &framebufferInfo, NULL, &vk_options.swapChain.framebuffers[i]) != VK_SUCCESS) {
+			VK_DestroySwapChainFramebuffers();
+			return false;
+		}
+	}
+
+	return true;
+}
+
+void VK_DestroySwapChainFramebuffers(void)
+{
+	if (vk_options.swapChain.framebuffers) {
+		uint32_t i;
+
+		for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.swapChain.framebuffers[i] != VK_NULL_HANDLE) {
+				vkDestroyFramebuffer(vk_options.logicalDevice, vk_options.swapChain.framebuffers[i], NULL);
+			}
+		}
+
+		Q_free(vk_options.swapChain.framebuffers);
+		vk_options.swapChain.framebuffers = NULL;
+	}
+
+	VK_DestroySwapChainDepthResources();
+}
+
 void VK_DestroySwapChain(void)
 {
+	VK_DestroySwapChainFramebuffers();
+
 	if (vk_options.swapChain.imageViews) {
 		uint32_t i;
 
@@ -138,12 +263,17 @@ void VK_DestroySwapChain(void)
 		}
 
 		Q_free(vk_options.swapChain.imageViews);
+		vk_options.swapChain.imageViews = NULL;
 	}
 
 	if (vk_options.swapChain.handle != VK_NULL_HANDLE) {
 		vkDestroySwapchainKHR(vk_options.logicalDevice, vk_options.swapChain.handle, NULL);
 		vk_options.swapChain.handle = VK_NULL_HANDLE;
 	}
+
+	Q_free(vk_options.swapChain.images);
+	vk_options.swapChain.images = NULL;
+	vk_options.swapChain.imageCount = 0;
 }
 
 #endif // RENDERER_OPTION_VULKAN

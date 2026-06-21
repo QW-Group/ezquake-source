@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "vk_local.h"
 
-static const char* validationLayers[] = { "VK_LAYER_LUNARG_standard_validation" };
+static const char* validationLayers[] = { "VK_LAYER_KHRONOS_validation" };
 static const char* requiredDeviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 static void VK_PhysicalDeviceQueryQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, int* graphics_queue_index, int* compute_queue_index, int* present_queue_index)
@@ -45,19 +45,20 @@ static void VK_PhysicalDeviceQueryQueueFamilies(VkPhysicalDevice device, VkSurfa
 	*graphics_queue_index = *compute_queue_index = *present_queue_index = -1;
 	for (j = 0; j < queue_families_count; ++j) {
 		if (queue_family_properties[j].queueCount > 0) {
-			if (queue_family_properties[j].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+			if ((queue_family_properties[j].queueFlags & VK_QUEUE_GRAPHICS_BIT) && *graphics_queue_index < 0) {
 				*graphics_queue_index = j;
-
-				if (surface != VK_NULL_HANDLE) {
-					VkBool32 present_supported;
-
-					if (vkGetPhysicalDeviceSurfaceSupportKHR(device, j, surface, &present_supported) == VK_SUCCESS && present_supported) {
-						*present_queue_index = j;
-					}
-				}
 			}
-			else if (queue_family_properties[j].queueFlags & VK_QUEUE_COMPUTE_BIT) {
+
+			if ((queue_family_properties[j].queueFlags & VK_QUEUE_COMPUTE_BIT) && *compute_queue_index < 0) {
 				*compute_queue_index = j;
+			}
+
+			if (surface != VK_NULL_HANDLE && *present_queue_index < 0) {
+				VkBool32 present_supported = VK_FALSE;
+
+				if (vkGetPhysicalDeviceSurfaceSupportKHR(device, j, surface, &present_supported) == VK_SUCCESS && present_supported) {
+					*present_queue_index = j;
+				}
 			}
 		}
 	}
@@ -131,6 +132,25 @@ static qbool VK_PhysicalDeviceBestPresentationMode(VkPhysicalDevice device, VkSu
 
 	Q_free(presentationModes);
 	*best = VK_PRESENT_MODE_FIFO_KHR;
+	return true;
+}
+
+// Re-evaluates the present mode against the current r_swapInterval value.
+// VK_PhysicalDeviceBestPresentationMode() is normally only invoked once,
+// while picking the physical device at startup; toggling "Vertical Sync" in
+// the menu needs this re-run before the swapchain is recreated, otherwise
+// the swapchain just gets rebuilt with the same present mode it already had.
+qbool VK_RefreshPresentationMode(void)
+{
+	VkPresentModeKHR best;
+
+	if (vk_options.physicalDevice == VK_NULL_HANDLE || vk_options.surface == VK_NULL_HANDLE) {
+		return false;
+	}
+	if (!VK_PhysicalDeviceBestPresentationMode(vk_options.physicalDevice, vk_options.surface, &best)) {
+		return false;
+	}
+	vk_options.physicalDevicePresentationMode = best;
 	return true;
 }
 
@@ -212,6 +232,7 @@ qbool VK_SelectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
 		VkSurfaceCapabilitiesKHR capabilities;
 
 		vkGetPhysicalDeviceProperties(physicalDevices[i], &properties);
+		vkGetPhysicalDeviceFeatures(physicalDevices[i], &features);
 		Con_Printf("Device %d: %s\n", i, properties.deviceName);
 
 		if (!VK_PhysicalDeviceSupportsRequiredExtensions(physicalDevices[i])) {
@@ -221,6 +242,12 @@ qbool VK_SelectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
 		// Must support graphics queues
 		VK_PhysicalDeviceQueryQueueFamilies(physicalDevices[i], surface, &graphics_queue_index, &compute_queue_index, &present_queue_index);
 		if (graphics_queue_index < 0) {
+			continue;
+		}
+		if (compute_queue_index < 0) {
+			compute_queue_index = graphics_queue_index;
+		}
+		if (present_queue_index < 0) {
 			continue;
 		}
 
@@ -352,10 +379,11 @@ qbool VK_CreateLogicalDevice(VkInstance instance)
 
 	deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	deviceInfo.pQueueCreateInfos = queueInfos;
-	deviceInfo.queueCreateInfoCount = sizeof(queueInfos) / sizeof(queueInfos[0]);
+	deviceInfo.queueCreateInfoCount = queueCount;
 	deviceInfo.pEnabledFeatures = &deviceFeatures;
 
-	deviceInfo.enabledExtensionCount = 0;
+	deviceInfo.enabledExtensionCount = sizeof(requiredDeviceExtensions) / sizeof(requiredDeviceExtensions[0]);
+	deviceInfo.ppEnabledExtensionNames = requiredDeviceExtensions;
 	VK_AddDeviceValidationLayers(&deviceInfo);
 
 	vk_options.logicalDevice = VK_NULL_HANDLE;

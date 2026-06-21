@@ -83,6 +83,7 @@ qbool VK_CreateInstance(SDL_Window* window, VkInstance* instance)
 	VkApplicationInfo appInfo = { 0 };
 	VkResult result;
 	uint32_t extensionCount = 0;
+	const char* const* sdlExtensionStrings;
 	const char** extensionStrings;
 
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -95,16 +96,15 @@ qbool VK_CreateInstance(SDL_Window* window, VkInstance* instance)
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
 
-	if (!SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, NULL)) {
+	(void)window;
+	sdlExtensionStrings = SDL_Vulkan_GetInstanceExtensions(&extensionCount);
+	if (!sdlExtensionStrings) {
 		Con_Printf("vulkan:GetInstanceExtensions() failed\n");
 		return false;
 	}
 
 	extensionStrings = Q_malloc(sizeof(extensionStrings[0]) * (extensionCount + EZ_MAX_ADDITIONAL_EXTENSIONS));
-	if (!SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, extensionStrings)) {
-		Con_Printf("vulkan:GetInstanceExtensions() failed\n");
-		return false;
-	}
+	memcpy(extensionStrings, sdlExtensionStrings, sizeof(extensionStrings[0]) * extensionCount);
 
 	if (VK_AddValidationLayers(&createInfo)) {
 		// Add VK_EXT_DEBUG_REPORT_EXTENSION_NAME
@@ -117,7 +117,7 @@ qbool VK_CreateInstance(SDL_Window* window, VkInstance* instance)
 	createInfo.ppEnabledExtensionNames = extensionStrings;
 
 	result = vkCreateInstance(&createInfo, NULL, instance);
-	Q_free((void*)extensionStrings);
+	Q_free(extensionStrings);
 	if (result != VK_SUCCESS) {
 		*instance = NULL;
 		Con_Printf("vulkan:GetInstanceExtensions() failed\n");

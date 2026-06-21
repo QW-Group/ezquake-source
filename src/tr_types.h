@@ -120,7 +120,8 @@ typedef struct {
 	qbool reversed_depth;
 } glconfig_t;
 
-#define GL_Supported(x) ((glConfig.supported_features & (x)) == (x))
+#define R_Supported(x) ((glConfig.supported_features & (x)) == (x))
+#define GL_Supported(x) R_Supported(x)
 #define GL_WorkaroundNeeded(x) ((glConfig.broken_features & (x)) == (x))
 
 extern glconfig_t	glConfig;

@@ -115,6 +115,12 @@ static void DeleteOldTextures(void)
 
 void Atlas_SolidTextureCoordinates(texture_ref* ref, float* s, float* t)
 {
+	if (!R_TextureReferenceIsValid(solid_texnum)) {
+		solid_texnum = solidwhite_texture;
+		solid_s = 0.5;
+		solid_t = 0.5;
+	}
+
 	if (ref) {
 		*ref = solid_texnum;
 	}
@@ -253,7 +259,7 @@ static int CachePics_AddToAtlas(mpic_t* pic)
 
 		pic->tl = pic->sl = 0;
 		pic->th = pic->sh = 1;
-		pic->texnum = R_LoadTexturePixels(buffer, "", width, height, TEX_ALPHA);
+		pic->texnum = R_LoadTexturePixels(buffer, "", width, height, TEX_ALPHA | TEX_PREMUL_ALPHA);
 	}
 	else {
 		R_TraceAPI("  !unable to move to atlas");
@@ -274,7 +280,7 @@ void CachePics_AtlasUpload(void)
 {
 	if (atlas_dirty) {
 		R_TraceEnterFunctionRegion;
-		atlas_texnum = R_LoadTexture("cachepics:atlas", atlas_texture_width, atlas_texture_height, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
+		atlas_texnum = R_LoadTexture("cachepics:atlas", atlas_texture_width, atlas_texture_height, atlas_texels, TEX_ALPHA | TEX_PREMUL_ALPHA | TEX_NOSCALE, 4);
 		renderer.TextureSetFiltering(atlas_texnum, texture_minification_linear, texture_magnification_linear);
 		renderer.TextureWrapModeClamp(atlas_texnum);
 		R_TraceLeaveFunctionRegion;
@@ -375,7 +381,7 @@ void CachePics_LoadAmmoPics(mpic_t* ibar)
 		}
 
 		targPic = wad_pictures[i].pic = &sb_ib_ammo[num];
-		targPic->texnum = R_LoadTexture(name, realwidth, realheight, target, TEX_NOCOMPRESS | TEX_ALPHA | TEX_NOSCALE | TEX_NO_TEXTUREMODE, 4);
+		targPic->texnum = R_LoadTexture(name, realwidth, realheight, target, TEX_NOCOMPRESS | TEX_ALPHA | TEX_PREMUL_ALPHA | TEX_NOSCALE | TEX_NO_TEXTUREMODE, 4);
 		targPic->sl = 0;
 		targPic->sh = 1;
 		targPic->tl = 0;
