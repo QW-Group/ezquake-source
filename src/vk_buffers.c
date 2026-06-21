@@ -37,10 +37,45 @@ typedef struct vk_buffer_s {
 	size_t size;
 } vk_buffer_t;
 
-static vk_buffer_t bufferData[r_buffer_count];
+// Each r_buffer_id gets one VkBuffer per frame-in-flight, not a single shared
+// one. With VK_MAX_FRAMES_IN_FLIGHT > 1 the CPU can be writing this frame's
+// dynamic vertex/index/uniform data while the GPU is still reading the
+// previous frame's data from an in-flight command buffer; without per-frame
+// copies that's a write-after-read race (visible as flickering/popping
+// geometry, worse at higher framerates since frames overlap more). The fix is
+// to duplicate the dynamic buffer storage per frame-in-flight and select the
+// live copy with the same index used for that frame's fence.
+static vk_buffer_t bufferData[r_buffer_count][VK_MAX_FRAMES_IN_FLIGHT];
 
 static void VK_BufferResize(r_buffer_id id, int size, void* data);
 static void VK_BufferUpdateSection(r_buffer_id id, ptrdiff_t offset, int size, const void* data);
+
+static vk_buffer_t* VK_BufferCurrentSlot(r_buffer_id id)
+{
+	return &bufferData[id][vk_options.frame.currentFrame];
+}
+
+static void VK_BufferDestroyCopies(r_buffer_id id)
+{
+	uint32_t i;
+
+	if (vk_options.logicalDevice == VK_NULL_HANDLE) {
+		memset(bufferData[id], 0, sizeof(bufferData[id]));
+		return;
+	}
+
+	for (i = 0; i < VK_MAX_FRAMES_IN_FLIGHT; ++i) {
+		vk_buffer_t* slot = &bufferData[id][i];
+
+		if (slot->handle != VK_NULL_HANDLE) {
+			vkDestroyBuffer(vk_options.logicalDevice, slot->handle, NULL);
+		}
+		if (slot->memory != VK_NULL_HANDLE) {
+			vkFreeMemory(vk_options.logicalDevice, slot->memory, NULL);
+		}
+		memset(slot, 0, sizeof(*slot));
+	}
+}
 
 static VkMemoryPropertyFlags VK_BufferMemoryStyle(bufferusage_t usage)
 {
@@ -98,39 +133,47 @@ static qbool VK_BufferReady(void)
 
 static qbool VK_BufferCreate(r_buffer_id id, buffertype_t type, const char* name, int size, void* data, bufferusage_t usage)
 {
-	vk_buffer_t* slot;
 	VkBufferUsageFlags bufferUsage;
 	VkMemoryPropertyFlags memoryStyle;
-	void* mapped;
+	uint32_t i;
 
 	assert(id > r_buffer_none && id < r_buffer_count);
 	if (id <= r_buffer_none || id >= r_buffer_count || size <= 0) {
 		return false;
 	}
 
-	slot = &bufferData[id];
-	if (slot->handle != VK_NULL_HANDLE) {
-		vkDestroyBuffer(vk_options.logicalDevice, slot->handle, NULL);
-	}
-	if (slot->memory != VK_NULL_HANDLE) {
-		vkFreeMemory(vk_options.logicalDevice, slot->memory, NULL);
-	}
-	memset(slot, 0, sizeof(*slot));
-
 	bufferUsage = VK_BufferUsageForType(type) | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	memoryStyle = VK_BufferMemoryStyle(usage);
 	(void)name;
-	if (!VK_CreateBufferResource(size, bufferUsage, memoryStyle, &slot->handle, &slot->memory)) {
-		return false;
+
+	// Re-creation is uncommon and may replace copies still referenced by either
+	// in-flight frame. Keep this path synchronous until buffer retirement is
+	// tracked per frame.
+	if (bufferData[id][0].handle != VK_NULL_HANDLE) {
+		vkDeviceWaitIdle(vk_options.logicalDevice);
+		VK_BufferDestroyCopies(id);
 	}
 
-	slot->type = type;
-	slot->usage = usage;
-	slot->size = size;
+	// Recreate every frame's copy with the same size/initial contents so the
+	// buffer reads correctly regardless of which frame-in-flight slot is
+	// currently live.
+	for (i = 0; i < VK_MAX_FRAMES_IN_FLIGHT; ++i) {
+		vk_buffer_t* slot = &bufferData[id][i];
+		void* mapped;
 
-	if (data && vkMapMemory(vk_options.logicalDevice, slot->memory, 0, size, 0, &mapped) == VK_SUCCESS) {
-		memcpy(mapped, data, size);
-		vkUnmapMemory(vk_options.logicalDevice, slot->memory);
+		if (!VK_CreateBufferResource(size, bufferUsage, memoryStyle, &slot->handle, &slot->memory)) {
+			VK_BufferDestroyCopies(id);
+			return false;
+		}
+
+		slot->type = type;
+		slot->usage = usage;
+		slot->size = size;
+
+		if (data && vkMapMemory(vk_options.logicalDevice, slot->memory, 0, size, 0, &mapped) == VK_SUCCESS) {
+			memcpy(mapped, data, size);
+			vkUnmapMemory(vk_options.logicalDevice, slot->memory);
+		}
 	}
 
 	return true;
@@ -141,7 +184,7 @@ static void VK_BufferEnsureSize(r_buffer_id id, int size)
 	if (id <= r_buffer_none || id >= r_buffer_count || size <= 0) {
 		return;
 	}
-	if (bufferData[id].handle == VK_NULL_HANDLE || bufferData[id].size < (size_t)size) {
+	if (bufferData[id][0].handle == VK_NULL_HANDLE || bufferData[id][0].size < (size_t)size) {
 		VK_BufferResize(id, size, NULL);
 	}
 }
@@ -152,7 +195,7 @@ static void VK_BufferInitialiseState(void)
 
 static size_t VK_BufferSize(r_buffer_id id)
 {
-	return (id > r_buffer_none && id < r_buffer_count) ? bufferData[id].size : 0;
+	return (id > r_buffer_none && id < r_buffer_count) ? bufferData[id][0].size : 0;
 }
 
 static uintptr_t VK_BufferOffset(r_buffer_id id)
@@ -190,10 +233,10 @@ static void VK_BufferUpdateSection(r_buffer_id id, ptrdiff_t offset, int size, c
 		return;
 	}
 
-	slot = &bufferData[id];
+	slot = VK_BufferCurrentSlot(id);
 	if (slot->handle == VK_NULL_HANDLE || offset < 0 || (size_t)(offset + size) > slot->size) {
 		VK_BufferEnsureSize(id, offset + size);
-		slot = &bufferData[id];
+		slot = VK_BufferCurrentSlot(id);
 	}
 	if (slot->handle == VK_NULL_HANDLE) {
 		return;
@@ -207,31 +250,21 @@ static void VK_BufferUpdateSection(r_buffer_id id, ptrdiff_t offset, int size, c
 
 static void VK_BufferResize(r_buffer_id id, int size, void* data)
 {
-	vk_buffer_t old;
+	buffertype_t type;
+	bufferusage_t usage;
 
 	if (id <= r_buffer_none || id >= r_buffer_count || size <= 0) {
 		return;
 	}
 
-	old = bufferData[id];
-	memset(&bufferData[id], 0, sizeof(bufferData[id]));
-
-	if (!VK_BufferCreate(id, old.type ? old.type : buffertype_vertex, NULL, size, data, old.usage ? old.usage : bufferusage_once_per_frame)) {
-		bufferData[id] = old;
-		return;
-	}
-
-	if (old.handle != VK_NULL_HANDLE) {
-		vkDestroyBuffer(vk_options.logicalDevice, old.handle, NULL);
-	}
-	if (old.memory != VK_NULL_HANDLE) {
-		vkFreeMemory(vk_options.logicalDevice, old.memory, NULL);
-	}
+	type = bufferData[id][0].type ? bufferData[id][0].type : buffertype_vertex;
+	usage = bufferData[id][0].usage ? bufferData[id][0].usage : bufferusage_once_per_frame;
+	VK_BufferCreate(id, type, NULL, size, data, usage);
 }
 
 static qbool VK_BufferIsValid(r_buffer_id id)
 {
-	return (id > r_buffer_none && id < r_buffer_count && bufferData[id].handle != VK_NULL_HANDLE);
+	return (id > r_buffer_none && id < r_buffer_count && VK_BufferCurrentSlot(id)->handle != VK_NULL_HANDLE);
 }
 
 static void VK_BufferSetElementArray(r_buffer_id id)
@@ -244,14 +277,8 @@ static void VK_BufferShutdown(void)
 	int i;
 
 	for (i = 0; i < r_buffer_count; ++i) {
-		if (bufferData[i].handle != VK_NULL_HANDLE) {
-			vkDestroyBuffer(vk_options.logicalDevice, bufferData[i].handle, NULL);
-		}
-		if (bufferData[i].memory != VK_NULL_HANDLE) {
-			vkFreeMemory(vk_options.logicalDevice, bufferData[i].memory, NULL);
-		}
+		VK_BufferDestroyCopies(i);
 	}
-	memset(bufferData, 0, sizeof(bufferData));
 	return;
 }
 
@@ -260,7 +287,7 @@ VkBuffer VK_BufferHandle(r_buffer_id id)
 	if (id <= r_buffer_none || id >= r_buffer_count) {
 		return VK_NULL_HANDLE;
 	}
-	return bufferData[id].handle;
+	return VK_BufferCurrentSlot(id)->handle;
 }
 
 VkDeviceSize VK_BufferDeviceOffset(r_buffer_id id)
