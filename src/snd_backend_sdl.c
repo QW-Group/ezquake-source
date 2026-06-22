@@ -147,6 +147,12 @@ qbool S_Backend_Init(void)
 			desired_samples <<= 1;
 	}
 
+	// SDL3 otherwise picks its own device buffer size, which can drift from
+	// the size this mixer's callback cadence actually expects. This hint
+	// asks for the size we computed above (SDL may still clamp/ignore it on
+	// platforms that don't support it).
+	SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, va("%d", desired_samples));
+
 	/* Make audiodevice list start from index 1 so that 0 can be system default */
 	if (s_audiodevice.integer > 0) {
 		int numdevices = 0;
