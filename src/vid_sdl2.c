@@ -121,6 +121,10 @@ void IN_Restart_f(void);
 
 static SDL_Window       *sdl_window;
 static SDL_GLContext    sdl_context;
+// Renderer that last completed VID_SDL_Init() successfully, so a failed
+// vid_renderer switch can fall back to what the user actually had working
+// instead of always forcing classic OpenGL. -1 means "not known yet".
+static int s_lastWorkingRenderer = -1;
 
 glconfig_t glConfig;
 qbool vid_hwgamma_enabled = false;
@@ -1382,7 +1386,12 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 		VID_AbsolutePositionFromRelative(&xpos, &ypos, &displayNumber);
 
 		SDL_Window *window = SDL_CreateWindow(WINDOW_CLASS_NAME, glConfig.vidWidth, glConfig.vidHeight, flags);
-		if (window) SDL_SetWindowPosition(window, xpos, ypos);
+		if (window) {
+			SDL_SetWindowPosition(window, xpos, ypos);
+		}
+		else {
+			Com_Printf("SDL_CreateWindow() failed: %s\n", SDL_GetError());
+		}
 		return window;
 	}
 	else {
@@ -1404,7 +1413,12 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 		}
 
 		SDL_Window *window = SDL_CreateWindow(WINDOW_CLASS_NAME, windowWidth, windowHeight, flags);
-		if (window) SDL_SetWindowPosition(window, windowX, windowY);
+		if (window) {
+			SDL_SetWindowPosition(window, windowX, windowY);
+		}
+		else {
+			Com_Printf("SDL_CreateWindow() failed: %s\n", SDL_GetError());
+		}
 		return window;
 	}
 }
@@ -1584,9 +1598,16 @@ static void VID_SDL_Init(void)
 #if defined(RENDERER_OPTION_CLASSIC_OPENGL) && defined(EZ_MULTIPLE_RENDERERS)
 			// Covers both Modern OpenGL and Vulkan failing to create a context/device.
 			if (!sdl_window && !R_UseImmediateOpenGL()) {
-				Con_Printf("&cf00Error&r: failed to create rendering context, trying classic OpenGL...\n");
+				// Prefer falling back to whatever renderer was actually working before this
+				// switch, rather than always forcing classic OpenGL -- the user may have been
+				// on classic intentionally, or on modern GL, and a failed vid_renderer 2
+				// shouldn't silently move them somewhere they didn't ask for if we already
+				// know a different renderer works on this machine.
+				int fallback_renderer = (s_lastWorkingRenderer >= 0 && s_lastWorkingRenderer != vid_renderer.integer) ? s_lastWorkingRenderer : 0;
 
-				Cvar_LatchedSetValue(&vid_renderer, 0);
+				Con_Printf("&cf00Error&r: failed to create rendering context, trying renderer %d...\n", fallback_renderer);
+
+				Cvar_LatchedSetValue(&vid_renderer, fallback_renderer);
 				continue;
 			}
 #endif
@@ -1597,6 +1618,8 @@ static void VID_SDL_Init(void)
 		if (!sdl_window) {
 			Sys_Error("Failed to create SDL window/context: %s\n", SDL_GetError());
 		}
+
+		s_lastWorkingRenderer = vid_renderer.integer;
 
 		// Alert user if our mode doesn't match what they requested
 		if (!(vid_options[i] & VID_MULTISAMPLED) && gl_multisamples.integer > 0) {
