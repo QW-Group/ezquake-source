@@ -1113,8 +1113,6 @@ static int VID_SDL_InitSubSystem(void)
 		}
 	}
 
-	SDL_StartTextInput(sdl_window);
-
 	return 0;
 }
 
@@ -1685,6 +1683,14 @@ static void VID_SDL_Init(void)
 	// SDL_HINT_GRAB_KEYBOARD was removed in SDL3; apply vid_grab_keyboard directly instead.
 	SDL_SetWindowKeyboardGrab(sdl_window, vid_grab_keyboard.integer != 0);
 
+	// SDL3's text input is per-window (used to be global), so this has to happen
+	// once we actually have a window -- calling it earlier with a NULL sdl_window
+	// silently never enables text input, meaning SDL_EVENT_TEXT_INPUT never fires
+	// and Key_Event_TextInput() (which is what makes in_builtinkeymap 0 use the
+	// OS/layout-aware keymap) never gets invoked; every key falls back to the
+	// builtin scancode->QWERTY mapping regardless of the cvar's value.
+	SDL_StartTextInput(sdl_window);
+
 	v_gamma.modified = true;
 	r_swapInterval.modified = true;
 
@@ -1795,7 +1801,7 @@ void R_EndRendering(void)
 
 	if (r_swapInterval.modified) {
 		if (r_swapInterval.integer == 0) {
-			if (SDL_GL_SetSwapInterval(0)) {
+			if (!SDL_GL_SetSwapInterval(0)) {
 				Con_Printf("vsync: Failed to disable vsync...\n");
 			}
             // MacOS vsync fix
@@ -1805,14 +1811,14 @@ void R_EndRendering(void)
             CGLSetParameter(ctx, kCGLCPSwapInterval, &sync);
             #endif
 		} else if (r_swapInterval.integer == -1) {
-			if (SDL_GL_SetSwapInterval(-1)) {
+			if (!SDL_GL_SetSwapInterval(-1)) {
 				Con_Printf("vsync: Failed to enable late swap tearing (vid_vsync -1), setting vid_vsync 1 instead...\n");
 				Cvar_SetValueByName("vid_vsync", 1);
 			}
 		}
 
 		if (r_swapInterval.integer == 1) {
-			if (SDL_GL_SetSwapInterval(1)) {
+			if (!SDL_GL_SetSwapInterval(1)) {
 				Con_Printf("vsync: Failed to enable vsync...\n");
 			}
 		}
