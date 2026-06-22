@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 */
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "quakedef.h"
 #include "gl_local.h"
 
@@ -80,12 +80,12 @@ SDL_GLContext GL_SDL_CreateBestContext(SDL_Window* window, const opengl_version_
 		}
 
 #ifdef _WIN32
-		// SDL2 falls back to not even asking if it's accelerated, so we might get software :(
+		// SDL may fall back to not even asking if it's accelerated, so we might get software :(
 		if (context && (version->core || accelerated) && strstr((const char*)glGetString(GL_VENDOR), "Microsoft") != NULL) {
 			if (COM_CheckParm(cmdline_param_console_debug)) {
 				Con_Printf("... rejecting unaccelerated context\n");
 			}
-			SDL_GL_DeleteContext(context);
+			SDL_GL_DestroyContext(context);
 			context = NULL;
 		}
 #endif
@@ -97,7 +97,7 @@ SDL_GLContext GL_SDL_CreateBestContext(SDL_Window* window, const opengl_version_
 			if (COM_CheckParm(cmdline_param_console_debug)) {
 				Con_Printf("... rejecting lower OpenGL version (%d vs %d)\n", atoi((const char*)glGetString(GL_VERSION)), version->majorVersion);
 			}
-			SDL_GL_DeleteContext(context);
+			SDL_GL_DestroyContext(context);
 			context = NULL;
 		}
 	}

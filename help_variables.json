@@ -4744,13 +4744,6 @@
         }
       ]
     },
-    "gl_hwblend": {
-      "default": "0",
-      "desc": "Toggles between OpenGL and Hardware palette changing.",
-      "group-id": "39",
-      "remarks": "1 can be slow on WinNT/2K.",
-      "type": "boolean"
-    },
     "gl_inferno_speed": {
       "default": "1000",
       "desc": "Changes speed of gl_inferno missile trail.",
@@ -21760,46 +21753,6 @@
       "remarks": "This value is ignored if vid_usedesktopres is set.",
       "type": "integer"
     },
-    "vid_hwgamma_fps": {
-      "default": "60",
-      "desc": "Controls the frequency of hardware gamma updates per second. These updates have a performance cost, so it is preferred to not update every frame when playing at thousands of FPS.",
-      "group-id": "52",
-      "remarks": "This can really hurt performance on screen flashing effects, i.e when taking damage - the worst moment to suffer framerate dips!",
-      "type": "integer",
-      "values": [
-        {
-          "description": "Update hardware gamma every frame.",
-          "name": "0"
-        },
-        {
-          "description": "Update hardware gamma at the specified frame rate.",
-          "name": "*"
-        }
-      ]
-    },
-    "vid_hwgammacontrol": {
-      "default": "0",
-      "group-id": "52",
-      "type": "enum",
-      "values": [
-        {
-          "description": "Disables hwgamma control.",
-          "name": "0"
-        },
-        {
-          "description": "Enables hwgamma control for fullscreen mode.",
-          "name": "1"
-        },
-        {
-          "description": "Enables hwgamma control for fullscreen and windowed mode.",
-          "name": "2"
-        },
-        {
-          "description": "Enables hwgamma even when window focus is lost but not minimized (Xorg only).",
-          "name": "3"
-        }
-      ]
-    },
     "vid_minimize_on_focus_loss": {
       "default": "1",
       "desc": "If set, ezQuake will minimise when running in fullscreen mode and it loses focus (e.g. alt-tab).",
@@ -21837,12 +21790,12 @@
     },
     "vid_software_palette": {
       "default": "1",
-      "desc": "Controls whether to adjust gamma at the display level, or as a color correction rendering effect.",
+      "desc": "Controls whether gamma and contrast are applied as a post-processing color-correction effect.",
       "group-id": "52",
       "type": "boolean",
       "values": [
         {
-          "description": "Use hardware gamma (classic style).",
+          "description": "Classic style: gamma is not adjusted in post-processing.",
           "name": "false"
         },
         {

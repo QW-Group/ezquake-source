@@ -98,7 +98,7 @@ static void Web_SubmitRequestFormGeneric(const char* url, struct curl_httppost* 
 	curl_easy_setopt(req, CURLOPT_WRITEDATA, data);
 	curl_easy_setopt(req, CURLOPT_WRITEFUNCTION, Web_StandardTokenWrite);
 	if (first_form_ptr) {
-		curl_easy_setopt(req, CURLOPT_POST, 1);
+		curl_easy_setopt(req, CURLOPT_POST, 1L);
 		curl_easy_setopt(req, CURLOPT_HTTPPOST, first_form_ptr);
 	}
 
