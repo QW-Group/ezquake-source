@@ -32,6 +32,36 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static const char* validationLayers[] = { "VK_LAYER_KHRONOS_validation" };
 static const char* requiredDeviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
+static int VK_PhysicalDeviceTypeScore(VkPhysicalDeviceType type)
+{
+	switch (type) {
+		case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+			return 3;
+		case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+			return 2;
+		case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+static const char* VK_PhysicalDeviceTypeName(VkPhysicalDeviceType type)
+{
+	switch (type) {
+		case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+			return "discrete";
+		case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+			return "virtual";
+		case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+			return "integrated";
+		case VK_PHYSICAL_DEVICE_TYPE_CPU:
+			return "cpu";
+		default:
+			return "other";
+	}
+}
+
 static void VK_PhysicalDeviceQueryQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, int* graphics_queue_index, int* compute_queue_index, int* present_queue_index)
 {
 	uint32_t queue_families_count;
@@ -202,10 +232,12 @@ static qbool VK_PhysicalDeviceSwapChainCompatible(VkPhysicalDevice device, VkSur
 
 qbool VK_SelectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
 {
+	extern cvar_t vid_vulkan_device;
 	uint32_t deviceCount = 0;
 	VkResult result;
 	VkPhysicalDevice* physicalDevices;
 	uint32_t i;
+	int best_score = -1;
 
 	result = vkEnumeratePhysicalDevices(instance, &deviceCount, NULL);
 	if (result != VK_SUCCESS) {
@@ -233,7 +265,12 @@ qbool VK_SelectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
 
 		vkGetPhysicalDeviceProperties(physicalDevices[i], &properties);
 		vkGetPhysicalDeviceFeatures(physicalDevices[i], &features);
-		Con_Printf("Device %d: %s\n", i, properties.deviceName);
+		Con_Printf("Device %d: %s (%s)\n", i, properties.deviceName, VK_PhysicalDeviceTypeName(properties.deviceType));
+
+		if (vid_vulkan_device.integer >= 0 && (uint32_t)vid_vulkan_device.integer != i) {
+			Com_Printf("Device %d: %s - skipped, vid_vulkan_device is forcing device %d\n", i, properties.deviceName, vid_vulkan_device.integer);
+			continue;
+		}
 
 		if (!VK_PhysicalDeviceSupportsRequiredExtensions(physicalDevices[i])) {
 			Com_Printf("Device %d: %s - rejected, missing required extension(s) (VK_KHR_swapchain)\n", i, properties.deviceName);
@@ -264,14 +301,17 @@ qbool VK_SelectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
 			continue;
 		}
 
-		if (vk_options.physicalDevice != VK_NULL_HANDLE) {
-			// Score?  Or cvar...
-			/*
-			vkGetPhysicalDeviceFeatures(physicalDevices[i], &features);
+		// Prefer discrete GPUs over integrated/virtual/CPU ones, unless vid_vulkan_device
+		// is forcing a specific index (handled above) -- a laptop with both an Intel/AMD
+		// iGPU and a dedicated NVIDIA/AMD GPU should not end up running on the iGPU just
+		// because it happened to enumerate first.
+		{
+			int score = VK_PhysicalDeviceTypeScore(properties.deviceType);
+			new_best = (vk_options.physicalDevice == VK_NULL_HANDLE || score > best_score);
 
-			if (properties.deviceType == )
-			physicalDevices[i]*/
-			new_best = false;
+			if (new_best) {
+				best_score = score;
+			}
 		}
 
 		if (new_best) {
@@ -293,7 +333,7 @@ qbool VK_SelectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
 		return false;
 	}
 
-	Com_Printf("Selected device: %s\n", vk_options.physicalDeviceProperties.deviceName);
+	Com_Printf("Selected device: %s (%s)\n", vk_options.physicalDeviceProperties.deviceName, VK_PhysicalDeviceTypeName(vk_options.physicalDeviceProperties.deviceType));
 
 	return true;
 }

@@ -258,6 +258,9 @@ cvar_t r_verbose                  = {"vid_verbose",                "0",       CV
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
 cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH_GFX | CVAR_AUTO }; // It's here because it needs to be registered before window creation
 cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "0",       CVAR_LATCH_GFX };
+#ifdef RENDERER_OPTION_VULKAN
+cvar_t vid_vulkan_device          = {"vid_vulkan_device",           "-1",      CVAR_LATCH_GFX };
+#endif
 #ifdef __APPLE__
 cvar_t vid_software_palette       = {"vid_software_palette",       "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
 #else
@@ -1123,6 +1126,9 @@ static void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_gamma_workaround);
 #endif
 	Cvar_Register(&vid_gammacorrection);
+#ifdef RENDERER_OPTION_VULKAN
+	Cvar_Register(&vid_vulkan_device);
+#endif
 
 	Cvar_ResetCurrentGroup();
 }
