@@ -72,6 +72,7 @@ void VK_DestroySwapChainFramebuffers(void);
 qbool VK_RenderPassCreate(void);
 void VK_RenderPassDelete(void);
 VkRenderPass VK_MainRenderPass(void);
+VkRenderPass VK_FrameRenderPass(qbool clear_color);
 VkFormat VK_DepthFormat(void);
 
 // vk_blending.c

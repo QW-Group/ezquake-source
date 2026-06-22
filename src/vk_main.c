@@ -39,6 +39,17 @@ vk_options_t vk_options;
 static qbool vk_recreate_swapchain_requested;
 static qbool vk_recreate_surface_requested;
 
+// Mirrors the cvar-driven part of R_Clear()'s clear_color decision in
+// r_rmain.c. The view-leaf-dependent part of that condition (sky visible
+// through a wall) isn't known yet this early in the frame -- R_MarkLeaves()
+// hasn't run -- and is an old GL-driver workaround that doesn't apply to
+// Vulkan's own sky pipeline (vk_world.c), so it's intentionally not
+// replicated here.
+extern cvar_t gl_clear;
+extern cvar_t cl_multiview;
+extern cvar_t v_contrast;
+extern qbool vid_hwgamma_enabled;
+
 
 void VK_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, int flags);
 void VK_DrawRectangle(float x, float y, float width, float height, byte* color);
@@ -319,6 +330,14 @@ static size_t VK_ScreenshotHeight(void)
 
 static void VK_ClearRenderingSurface(qbool clear_color)
 {
+	// By the time R_Clear() calls this (from R_RenderView(), after
+	// R_BeginRendering() -> renderer.BeginFrame() already ran), the render
+	// pass for this frame has already begun with its loadOp baked in --
+	// Vulkan render passes can't change that mid-recording. VK_BeginFrame()
+	// (vk_main.c) makes the equivalent decision itself, before beginning the
+	// render pass, by picking between vk_renderpass_main (CLEAR) and
+	// vk_renderpass_main_noclear (LOAD) via VK_FrameRenderPass(). Nothing
+	// left to do here.
 	(void)clear_color;
 }
 
@@ -477,6 +496,7 @@ void VK_BeginFrame(void)
 	uint32_t frameIndex;
 	VkFence frameFence;
 	VkResult waitResult;
+	qbool clear_color = !cl_multiview.integer && (gl_clear.integer || (!vid_hwgamma_enabled && v_contrast.value > 1));
 
 	if (vk_options.logicalDevice == VK_NULL_HANDLE || vk_options.frame.active) {
 		return;
@@ -569,7 +589,7 @@ void VK_BeginFrame(void)
 	clearValues[1].depthStencil.stencil = 0;
 
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = VK_MainRenderPass();
+	renderPassInfo.renderPass = VK_FrameRenderPass(clear_color);
 	renderPassInfo.framebuffer = vk_options.swapChain.framebuffers[vk_options.frame.imageIndex];
 	renderPassInfo.renderArea.offset.x = 0;
 	renderPassInfo.renderArea.offset.y = 0;

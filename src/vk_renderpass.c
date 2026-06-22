@@ -30,13 +30,21 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 typedef enum {
 	vk_renderpass_main,
+	// Same attachments/subpass/dependency as vk_renderpass_main, except the
+	// color attachment uses LOAD instead of CLEAR -- backs "Clear Video
+	// Buffer" off (gl_clear 0). Render pass compatibility (Vulkan spec 7.2)
+	// only depends on attachment format/sample count, not loadOp/layouts, so
+	// pipelines and framebuffers built against vk_renderpass_main are equally
+	// valid to use with this one; only vkCmdBeginRenderPass needs to pick
+	// between them, done once per frame in VK_BeginFrame().
+	vk_renderpass_main_noclear,
 
 	vk_renderpass_count
 } vk_renderpass_id;
 
 static VkRenderPass renderPasses[vk_renderpass_count];
 
-qbool VK_RenderPassCreate(void)
+static qbool VK_RenderPassCreateVariant(vk_renderpass_id id, qbool clearColor)
 {
 	VkAttachmentDescription attachments[2];
 	VkAttachmentReference colorAttachmentRef;
@@ -44,21 +52,28 @@ qbool VK_RenderPassCreate(void)
 	VkSubpassDescription subpass;
 	VkSubpassDependency dependency;
 	VkRenderPassCreateInfo renderPassInfo;
-	const vk_renderpass_id id = vk_renderpass_main;
 
 	VK_InitialiseStructure(attachments[0]);
 	attachments[0].format = vk_options.physicalDeviceSurfaceFormat.format;
 	attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
-	attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[0].loadOp = clearColor ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
 	attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	// LOAD requires the attachment to already be in the layout it's loaded
+	// from -- swapchain images sit in PRESENT_SRC_KHR between frames (that's
+	// this same render pass's finalLayout below), so that's what the
+	// no-clear variant declares as its initialLayout to preserve content
+	// instead of triggering an undefined-content layout transition.
+	attachments[0].initialLayout = clearColor ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
 	VK_InitialiseStructure(attachments[1]);
 	attachments[1].format = VK_DepthFormat();
 	attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+	// Depth always clears regardless of gl_clear -- matches GL_Clear() in
+	// gl_misc.c, which only gates GL_COLOR_BUFFER_BIT on clear_color and
+	// always ORs in GL_DEPTH_BUFFER_BIT.
 	attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -120,9 +135,19 @@ qbool VK_RenderPassCreate(void)
 	return true;
 }
 
+qbool VK_RenderPassCreate(void)
+{
+	return VK_RenderPassCreateVariant(vk_renderpass_main, true) && VK_RenderPassCreateVariant(vk_renderpass_main_noclear, false);
+}
+
 VkRenderPass VK_MainRenderPass(void)
 {
 	return renderPasses[vk_renderpass_main];
+}
+
+VkRenderPass VK_FrameRenderPass(qbool clear_color)
+{
+	return renderPasses[clear_color ? vk_renderpass_main : vk_renderpass_main_noclear];
 }
 
 VkFormat VK_DepthFormat(void)
