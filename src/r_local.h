@@ -108,6 +108,7 @@ void R_NewMapPrepare(qbool vid_restart);
 void R_Shutdown(r_shutdown_mode_t mode);
 void VID_GfxInfo_f(void);
 int VID_DisplayNumber(qbool fullscreen);
+unsigned int VID_SDL_DisplayID(qbool fullscreen);
 
 // Shorthand
 #define ISUNDERWATER(contents) (contents == CONTENTS_WATER || contents == CONTENTS_SLIME || contents == CONTENTS_LAVA)

@@ -209,7 +209,7 @@ void GL_PrintGfxInfo(void)
 	GL_PrintInfoLine("HW lighting:", 15, "%s", GL_Supported(R_SUPPORT_FEATURE_HW_LIGHTING) ? "&c0f0available&r" : "&cf00unsupported&r");
 
 	{
-		const SDL_DisplayMode *current_mode = SDL_GetCurrentDisplayMode(VID_DisplayNumber(r_fullscreen.value));
+		const SDL_DisplayMode *current_mode = SDL_GetCurrentDisplayMode(VID_SDL_DisplayID(r_fullscreen.value));
 		if (current_mode) {
 			current = *current_mode;
 		}

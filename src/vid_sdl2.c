@@ -1175,7 +1175,7 @@ int VID_DisplayNumber(qbool fullscreen)
 	return max(0, min(displays - 1, displayNumber));
 }
 
-static SDL_DisplayID VID_SDL_DisplayID(qbool fullscreen)
+SDL_DisplayID VID_SDL_DisplayID(qbool fullscreen)
 {
 	return VID_SDL_DisplayIDFromIndex(VID_DisplayNumber(fullscreen));
 }
@@ -1358,7 +1358,7 @@ static int VID_SetWindowIcon(SDL_Window *sdl_window)
 
 	if (icon_surface) {
 		SDL_SetWindowIcon(sdl_window, icon_surface);
-		SDL_FreeSurface(icon_surface);
+		SDL_DestroySurface(icon_surface);
 		return 0;
 	}
 
