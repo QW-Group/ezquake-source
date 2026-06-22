@@ -35,6 +35,7 @@ qbool VK_CreateWindowSurface(SDL_Window* window, VkInstance instance, VkSurfaceK
 	*surface = VK_NULL_HANDLE;
 
 	if (!SDL_Vulkan_CreateSurface(window, instance, NULL, surface)) {
+		Com_Printf("vulkan: SDL_Vulkan_CreateSurface() failed: %s\n", SDL_GetError());
 		return false;
 	}
 

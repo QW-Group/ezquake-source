@@ -109,8 +109,12 @@ qbool VK_RenderPassCreate(void)
 	renderPassInfo.dependencyCount = 1;
 	renderPassInfo.pDependencies = &dependency;
 
-	if (vkCreateRenderPass(vk_options.logicalDevice, &renderPassInfo, NULL, &renderPasses[id]) != VK_SUCCESS) {
-		return false;
+	{
+		VkResult result = vkCreateRenderPass(vk_options.logicalDevice, &renderPassInfo, NULL, &renderPasses[id]);
+		if (result != VK_SUCCESS) {
+			Com_Printf("vulkan: vkCreateRenderPass() failed: %d\n", result);
+			return false;
+		}
 	}
 
 	return true;

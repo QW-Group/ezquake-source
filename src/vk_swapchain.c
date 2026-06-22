@@ -61,6 +61,7 @@ static qbool VK_CreateSwapChainDepthResources(void)
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			&vk_options.swapChain.depthImage,
 			&vk_options.swapChain.depthImageMemory)) {
+		Com_Printf("vulkan: failed to create depth image resource\n");
 		return false;
 	}
 
@@ -75,9 +76,13 @@ static qbool VK_CreateSwapChainDepthResources(void)
 	createImageViewInfo.subresourceRange.baseArrayLayer = 0;
 	createImageViewInfo.subresourceRange.layerCount = 1;
 
-	if (vkCreateImageView(vk_options.logicalDevice, &createImageViewInfo, NULL, &vk_options.swapChain.depthImageView) != VK_SUCCESS) {
-		VK_DestroySwapChainDepthResources();
-		return false;
+	{
+		VkResult result = vkCreateImageView(vk_options.logicalDevice, &createImageViewInfo, NULL, &vk_options.swapChain.depthImageView);
+		if (result != VK_SUCCESS) {
+			Com_Printf("vulkan: vkCreateImageView() failed for depth buffer: %d\n", result);
+			VK_DestroySwapChainDepthResources();
+			return false;
+		}
 	}
 
 	return true;
@@ -141,17 +146,23 @@ qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR s
 	createInfo.clipped = VK_FALSE; // meag: setting this to false so we can read-back for screenshots
 	createInfo.oldSwapchain = vk_options.swapChain.handle;
 
-	if (vkCreateSwapchainKHR(vk_options.logicalDevice, &createInfo, NULL, &vk_options.swapChain.handle) != VK_SUCCESS) {
-		return false;
+	{
+		VkResult result = vkCreateSwapchainKHR(vk_options.logicalDevice, &createInfo, NULL, &vk_options.swapChain.handle);
+		if (result != VK_SUCCESS) {
+			Com_Printf("vulkan: vkCreateSwapchainKHR() failed: %d\n", result);
+			return false;
+		}
 	}
 
 	// Create images
 	Q_free(vk_options.swapChain.images);
 	if (vkGetSwapchainImagesKHR(vk_options.logicalDevice, vk_options.swapChain.handle, &swapChainImageCount, NULL) != VK_SUCCESS) {
+		Com_Printf("vulkan: vkGetSwapchainImagesKHR() (count query) failed\n");
 		return false;
 	}
 	vk_options.swapChain.images = Q_malloc(swapChainImageCount * sizeof(vk_options.swapChain.images[0]));
 	if (vkGetSwapchainImagesKHR(vk_options.logicalDevice, vk_options.swapChain.handle, &swapChainImageCount, vk_options.swapChain.images) != VK_SUCCESS) {
+		Com_Printf("vulkan: vkGetSwapchainImagesKHR() failed\n");
 		Q_free(vk_options.swapChain.images);
 		return false;
 	}
@@ -176,6 +187,7 @@ qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR s
 		createImageViewInfo.subresourceRange.baseArrayLayer = 0;
 		createImageViewInfo.subresourceRange.layerCount = 1;
 		if (vkCreateImageView(vk_options.logicalDevice, &createImageViewInfo, NULL, &vk_options.swapChain.imageViews[i]) != VK_SUCCESS) {
+			Com_Printf("vulkan: vkCreateImageView() failed for swapchain image %d\n", i);
 			return false;
 		}
 	}
@@ -189,6 +201,7 @@ qbool VK_CreateSwapChainFramebuffers(void)
 	VkRenderPass renderPass = VK_MainRenderPass();
 
 	if (renderPass == VK_NULL_HANDLE || !vk_options.swapChain.imageViews) {
+		Com_Printf("vulkan: VK_CreateSwapChainFramebuffers() called before render pass/swapchain images were ready\n");
 		return false;
 	}
 
@@ -210,6 +223,7 @@ qbool VK_CreateSwapChainFramebuffers(void)
 		framebufferInfo.layers = 1;
 
 		if (vkCreateFramebuffer(vk_options.logicalDevice, &framebufferInfo, NULL, &vk_options.swapChain.framebuffers[i]) != VK_SUCCESS) {
+			Com_Printf("vulkan: vkCreateFramebuffer() failed for swapchain image %d\n", i);
 			VK_DestroySwapChainFramebuffers();
 			return false;
 		}

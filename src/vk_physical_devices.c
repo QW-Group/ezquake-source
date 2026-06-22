@@ -236,26 +236,31 @@ qbool VK_SelectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
 		Con_Printf("Device %d: %s\n", i, properties.deviceName);
 
 		if (!VK_PhysicalDeviceSupportsRequiredExtensions(physicalDevices[i])) {
+			Com_Printf("Device %d: %s - rejected, missing required extension(s) (VK_KHR_swapchain)\n", i, properties.deviceName);
 			continue;
 		}
 
 		// Must support graphics queues
 		VK_PhysicalDeviceQueryQueueFamilies(physicalDevices[i], surface, &graphics_queue_index, &compute_queue_index, &present_queue_index);
 		if (graphics_queue_index < 0) {
+			Com_Printf("Device %d: %s - rejected, no graphics-capable queue family\n", i, properties.deviceName);
 			continue;
 		}
 		if (compute_queue_index < 0) {
 			compute_queue_index = graphics_queue_index;
 		}
 		if (present_queue_index < 0) {
+			Com_Printf("Device %d: %s - rejected, no queue family can present to this surface\n", i, properties.deviceName);
 			continue;
 		}
 
 		if (!VK_PhysicalDeviceSwapChainCompatible(physicalDevices[i], surface, &preferred_format, &capabilities)) {
+			Com_Printf("Device %d: %s - rejected, incompatible swapchain/surface (capabilities or formats query failed)\n", i, properties.deviceName);
 			continue;
 		}
 
 		if (!VK_PhysicalDeviceBestPresentationMode(physicalDevices[i], surface, &best_presentation_mode)) {
+			Com_Printf("Device %d: %s - rejected, failed to query present modes\n", i, properties.deviceName);
 			continue;
 		}
 
@@ -387,9 +392,12 @@ qbool VK_CreateLogicalDevice(VkInstance instance)
 	VK_AddDeviceValidationLayers(&deviceInfo);
 
 	vk_options.logicalDevice = VK_NULL_HANDLE;
-	if (vkCreateDevice(vk_options.physicalDevice, &deviceInfo, NULL, &vk_options.logicalDevice) != VK_SUCCESS) {
-		Con_Printf("vkCreateDevice() failed\n");
-		return false;
+	{
+		VkResult result = vkCreateDevice(vk_options.physicalDevice, &deviceInfo, NULL, &vk_options.logicalDevice);
+		if (result != VK_SUCCESS) {
+			Con_Printf("vulkan: vkCreateDevice() failed: %d\n", result);
+			return false;
+		}
 	}
 
 	vkGetDeviceQueue(vk_options.logicalDevice, VK_PhysicalDeviceGraphicsQueueFamilyIndex(), 0, &vk_options.graphicsQueue);

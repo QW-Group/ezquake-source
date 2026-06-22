@@ -361,6 +361,7 @@ static qbool VK_CreateFrameResources(void)
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	poolInfo.queueFamilyIndex = VK_PhysicalDeviceGraphicsQueueFamilyIndex();
 	if (vkCreateCommandPool(vk_options.logicalDevice, &poolInfo, NULL, &vk_options.frame.commandPool) != VK_SUCCESS) {
+		Com_Printf("vulkan: vkCreateCommandPool() failed\n");
 		return false;
 	}
 
@@ -370,6 +371,7 @@ static qbool VK_CreateFrameResources(void)
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = vk_options.swapChain.imageCount;
 	if (vkAllocateCommandBuffers(vk_options.logicalDevice, &allocInfo, vk_options.frame.commandBuffers) != VK_SUCCESS) {
+		Com_Printf("vulkan: vkAllocateCommandBuffers() failed\n");
 		VK_DestroyFrameResources();
 		return false;
 	}
@@ -381,6 +383,7 @@ static qbool VK_CreateFrameResources(void)
 		if (vkCreateSemaphore(vk_options.logicalDevice, &semaphoreInfo, NULL, &vk_options.frame.imageAvailableSemaphores[i]) != VK_SUCCESS ||
 			vkCreateSemaphore(vk_options.logicalDevice, &semaphoreInfo, NULL, &vk_options.frame.renderFinishedSemaphores[i]) != VK_SUCCESS ||
 			vkCreateFence(vk_options.logicalDevice, &fenceInfo, NULL, &vk_options.frame.inFlightFences[i]) != VK_SUCCESS) {
+			Com_Printf("vulkan: failed to create per-frame semaphores/fence (frame %d)\n", i);
 			VK_DestroyFrameResources();
 			return false;
 		}

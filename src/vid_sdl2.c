@@ -1576,7 +1576,7 @@ static void VID_SDL_Init(void)
 			}
 
 #if defined(RENDERER_OPTION_CLASSIC_OPENGL) && defined(EZ_MULTIPLE_RENDERERS)
-			// FIXME: Implement falling back from Vulkan too
+			// Covers both Modern OpenGL and Vulkan failing to create a context/device.
 			if (!sdl_window && !R_UseImmediateOpenGL()) {
 				Con_Printf("&cf00Error&r: failed to create rendering context, trying classic OpenGL...\n");
 
