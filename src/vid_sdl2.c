@@ -78,8 +78,11 @@ qbool VK_RefreshPresentationMode(void);
 #endif
 
 #ifdef __linux__
-// This is hack to ignore keyboard events we receive between FOCUS_GAINED & TAKE_FOCUS
-// Without it the keys you press to switch back to ezQuake will fire, which is probably not desired
+// This is a hack to ignore keyboard events received while the window is unfocused.
+// SDL2 used to clear this between FOCUS_GAINED & TAKE_FOCUS (filtering out the very
+// keystroke used to switch back to ezQuake); SDL3 removed TAKE_FOCUS, so this is now
+// cleared directly on FOCUS_GAINED instead -- still blocks input while unfocused, just
+// without filtering that one alt-tab-back keystroke.
 // Affects X11 only - might also be needed on FreeBSD/OSX?
 static qbool block_keyboard_input = false;
 #endif
@@ -453,10 +456,18 @@ static void IN_Frame(void)
 #ifdef __APPLE__
 		OSX_Mouse_GetMouseMovement(&mx, &my);
 #else
-		float dx, dy;
-		SDL_GetRelativeMouseState(&dx, &dy);
-		mx = (int)dx;
-		my = (int)dy;
+		// SDL3 reports relative motion as float; carry the sub-pixel remainder
+		// across frames instead of truncating it away each time, or slow/low
+		// sensitivity movement (often under 1px/frame) never registers at all.
+		static float rem_x = 0.0f, rem_y = 0.0f;
+		float fmx, fmy;
+		SDL_GetRelativeMouseState(&fmx, &fmy);
+		fmx += rem_x;
+		fmy += rem_y;
+		mx = (int)fmx;
+		my = (int)fmy;
+		rem_x = fmx - mx;
+		rem_y = fmy - my;
 #endif
 	}
 	
@@ -646,6 +657,12 @@ static void window_event(SDL_WindowEvent *event)
 
 		case SDL_EVENT_WINDOW_FOCUS_GAINED:
 			TP_ExecTrigger("f_focusgained");
+#ifdef __linux__
+			// SDL3 removed SDL_WINDOWEVENT_TAKE_FOCUS, which used to be what
+			// cleared this; without it, once set, keyboard input would stay
+			// blocked for the rest of the session after any focus loss/regain.
+			block_keyboard_input = false;
+#endif
 			/* Fall through */
 		case SDL_EVENT_WINDOW_SHOWN:
 		case SDL_EVENT_WINDOW_EXPOSED:
@@ -1664,6 +1681,9 @@ static void VID_SDL_Init(void)
 	if (VID_SetWindowIcon(sdl_window) < 0) {
 		Com_Printf("Failed to set window icon");
 	}
+
+	// SDL_HINT_GRAB_KEYBOARD was removed in SDL3; apply vid_grab_keyboard directly instead.
+	SDL_SetWindowKeyboardGrab(sdl_window, vid_grab_keyboard.integer != 0);
 
 	v_gamma.modified = true;
 	r_swapInterval.modified = true;
