@@ -245,12 +245,14 @@ cvar_t vid_renderer               = {"vid_renderer",               "0",       CV
 #else
 cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_ROM };
 #endif
-#else
+#elif defined(RENDERER_OPTION_VULKAN)
 #ifdef EZ_MULTIPLE_RENDERERS
 cvar_t vid_renderer               = {"vid_renderer",               "2",       CVAR_LATCH_GFX };
 #else
 cvar_t vid_renderer               = {"vid_renderer",               "2",       CVAR_ROM };
 #endif
+#else
+#error "At least one of RENDERER_OPTION_CLASSIC_OPENGL, RENDERER_OPTION_MODERN_OPENGL or RENDERER_OPTION_VULKAN must be defined"
 #endif
 cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH_GFX };
 
