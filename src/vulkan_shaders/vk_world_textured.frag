@@ -16,7 +16,8 @@ layout(push_constant) uniform PushConstants {
 	float useSkyTexture;
 	float fastTurb;
 	float detailEnabled;
-	vec2 padding;
+	float textureless;
+	float padding;
 } pushConstants;
 
 layout(location = 0) out vec4 fragColour;
@@ -32,6 +33,9 @@ void main()
 
 		texCoord.s += sin((inTexCoord.t + pushConstants.time) * 1.5) * 0.125;
 		texCoord.t += sin((inTexCoord.s + pushConstants.time) * 1.5) * 0.125;
+	}
+	else if (pushConstants.textureless > 0.5) {
+		texCoord = vec2(0.0);
 	}
 
 	vec4 texColour = texture(worldTexture[0], texCoord);

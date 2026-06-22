@@ -50,6 +50,7 @@ extern cvar_t r_drawflat;
 extern cvar_t r_drawflat_mode;
 extern cvar_t r_fastsky;
 extern cvar_t r_fastturb;
+extern cvar_t gl_textureless;
 extern cvar_t r_skycolor;
 extern cvar_t gl_fb_bmodels;
 extern cvar_t gl_lumatextures;
@@ -85,7 +86,8 @@ typedef struct vk_world_push_s {
 	float useSkyTexture;
 	float fastTurb;
 	float detailEnabled;
-	float padding[2];
+	float textureless;
+	float padding[1];
 } vk_world_push_t;
 
 static VkPipelineLayout worldFlatPipelineLayout;
@@ -1824,6 +1826,12 @@ void VK_RenderView(void)
 			push.useSkyTexture = VK_WORLD_SKY_MODE_NONE;
 			push.fastTurb = (worldDraws[i].surfaceType > 0.5f && worldDraws[i].surfaceType < 5.5f && r_fastturb.integer) ? 1.0f : 0.0f;
 			push.detailEnabled = (worldDraws[i].detail && VK_WorldDetailTextureReady()) ? 1.0f : 0.0f;
+			// Matches Modern OpenGL's DRAW_TEXTURELESS: keep the normal
+			// lit/lightmapped pipeline (so depth shading, outlines, detail
+			// textures etc. are unaffected), just force the diffuse texture
+			// sample to a single fixed texel in the fragment shader instead
+			// of the surface's real UVs.
+			push.textureless = gl_textureless.integer ? 1.0f : 0.0f;
 			if (worldDraws[i].surfaceType == TEXTURE_TURB_SKY) {
 				if (VK_WorldSkyboxTexturesReady()) {
 					push.useSkyTexture = VK_WORLD_SKY_MODE_SKYBOX;
