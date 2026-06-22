@@ -141,10 +141,15 @@ void IN_Restart_f(void);
 
 static SDL_Window       *sdl_window;
 static SDL_GLContext    sdl_context;
+#if defined(RENDERER_OPTION_CLASSIC_OPENGL) && defined(EZ_MULTIPLE_RENDERERS)
 // Renderer that last completed VID_SDL_Init() successfully, so a failed
 // vid_renderer switch can fall back to what the user actually had working
 // instead of always forcing classic OpenGL. -1 means "not known yet".
+// Only meaningful when classic OpenGL is compiled in as a fallback target
+// (see the read site below) -- declaring it outside that guard left it as
+// a dead store in single-renderer / non-classic builds.
 static int s_lastWorkingRenderer = -1;
+#endif
 
 glconfig_t glConfig;
 qbool vid_hwgamma_enabled = false;
@@ -1653,7 +1658,9 @@ static void VID_SDL_Init(void)
 			Sys_Error("Failed to create SDL window/context: %s\n", SDL_GetError());
 		}
 
+#if defined(RENDERER_OPTION_CLASSIC_OPENGL) && defined(EZ_MULTIPLE_RENDERERS)
 		s_lastWorkingRenderer = vid_renderer.integer;
+#endif
 
 		// Alert user if our mode doesn't match what they requested
 		if (!(vid_options[i] & VID_MULTISAMPLED) && gl_multisamples.integer > 0) {
