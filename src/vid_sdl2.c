@@ -1632,7 +1632,6 @@ static void VID_SDL_Init(void)
 	R_Initialise();
 
 	//always get/set refresh rate
-	SDL_DisplayMode display_mode;
 	int display_nbr;
 
 	display_nbr = VID_DisplayNumber(true);
