@@ -93,8 +93,25 @@ static cvar_t in_ignore_deadkeys = { "in_ignore_deadkeys", "1", CVAR_SILENT };
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
-#define VID_RENDERER_MIN 0
-#define VID_RENDERER_MAX 2
+// Membership check, not a min/max range: the compiled-in renderer ids are not
+// necessarily contiguous (e.g. classic + vulkan without modern), so a simple
+// range like "0 <= x <= 2" would wrongly accept an id whose renderer isn't
+// actually compiled into this build.
+static qbool VID_RendererValid(int value)
+{
+	switch (value) {
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+		case 0: return true;
+#endif
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+		case 1: return true;
+#endif
+#ifdef RENDERER_OPTION_VULKAN
+		case 2: return true;
+#endif
+		default: return false;
+	}
+}
 
 #define VID_MULTISAMPLED   1
 #define VID_ACCELERATED    2
@@ -1326,10 +1343,10 @@ static void VID_SDL_GL_SetupWindowAttributes(int options)
 static SDL_GLContext VID_SDL_GL_SetupContextAttributes(void)
 {
 #ifdef EZ_MULTIPLE_RENDERERS
-	if (vid_renderer.integer < VID_RENDERER_MIN || vid_renderer.integer > VID_RENDERER_MAX) {
+	if (!VID_RendererValid(vid_renderer.integer)) {
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 		Con_Printf("Invalid vid_renderer value detected, falling back to default.\n");
-		Cvar_LatchedSetValue(&vid_renderer, VID_RENDERER_MIN);
+		Cvar_LatchedSetValue(&vid_renderer, 0);
 #else
 		Sys_Error("Invalid vid_renderer value detected");
 #endif
