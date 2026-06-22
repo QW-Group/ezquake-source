@@ -808,13 +808,13 @@ static void keyb_event(SDL_KeyboardEvent *event)
 		int left_alt = (in_ignore_deadkeys.integer == 2 ? SDLK_LALT : SDLK_LGUI);
 		int right_alt = (in_ignore_deadkeys.integer == 2 ? SDLK_RALT : SDLK_RGUI);
 
-		if (event->keysym.sym == left_alt) {
+		if (event->key == left_alt) {
 			deadkey_modifiers_held_down ^= APPLE_LALT_HELD_DOWN;
-			deadkey_modifiers_held_down |= (event->state ? APPLE_LALT_HELD_DOWN : 0);
+			deadkey_modifiers_held_down |= (event->down ? APPLE_LALT_HELD_DOWN : 0);
 		}
-		else if (event->keysym.sym == right_alt) {
+		else if (event->key == right_alt) {
 			deadkey_modifiers_held_down ^= APPLE_RALT_HELD_DOWN;
-			deadkey_modifiers_held_down |= (event->state ? APPLE_RALT_HELD_DOWN : 0);
+			deadkey_modifiers_held_down |= (event->down ? APPLE_RALT_HELD_DOWN : 0);
 		}
 	}
 #endif
@@ -936,7 +936,7 @@ static void HandleEvents(void)
 		case SDL_KEYUP:
 #ifdef __APPLE__
 			if (developer.integer == 2) {
-				Con_Printf("key%s event, scan=%d, sym=%d, mod=%d\n", event.type == SDL_KEYDOWN ? "down" : "up", event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod);
+				Con_Printf("key%s event, scan=%d, sym=%d, mod=%d\n", event.type == SDL_KEYDOWN ? "down" : "up", event.key.scancode, event.key.key, event.key.mod);
 			}
 #endif
 			keyb_event(&event.key);
