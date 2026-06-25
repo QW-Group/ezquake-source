@@ -55,6 +55,7 @@ static qbool VK_CreateSwapChainDepthResources(void)
 	if (!VK_CreateImageResource(
 			vk_options.swapChain.imageSize.width,
 			vk_options.swapChain.imageSize.height,
+			1,
 			VK_DepthFormat(),
 			VK_IMAGE_TILING_OPTIMAL,
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,

@@ -64,7 +64,7 @@ qbool VK_CreateBufferResource(VkDeviceSize size, VkBufferUsageFlags usage, VkMem
 	return true;
 }
 
-qbool VK_CreateImageResource(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* memory)
+qbool VK_CreateImageResource(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* memory)
 {
 	VkImageCreateInfo imageInfo;
 	VkMemoryRequirements memRequirements;
@@ -76,7 +76,7 @@ qbool VK_CreateImageResource(uint32_t width, uint32_t height, VkFormat format, V
 	imageInfo.extent.width = width;
 	imageInfo.extent.height = height;
 	imageInfo.extent.depth = 1;
-	imageInfo.mipLevels = 1;
+	imageInfo.mipLevels = max(1, mipLevels);
 	imageInfo.arrayLayers = 1;
 	imageInfo.format = format;
 	imageInfo.tiling = tiling;

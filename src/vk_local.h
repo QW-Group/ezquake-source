@@ -81,7 +81,7 @@ void VK_BlendingConfigure(VkPipelineColorBlendStateCreateInfo* info, VkPipelineC
 // vk_resources.c
 uint32_t VK_FindMemoryType(uint32_t type_filter, VkMemoryPropertyFlags properties);
 qbool VK_CreateBufferResource(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* memory);
-qbool VK_CreateImageResource(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* memory);
+qbool VK_CreateImageResource(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* memory);
 VkCommandBuffer VK_BeginImmediateCommands(void);
 qbool VK_EndImmediateCommands(VkCommandBuffer command_buffer);
 void VK_DestroyImmediateCommandPool(void);

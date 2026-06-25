@@ -15,13 +15,14 @@ of the License, or (at your option) any later version.
 #include "r_renderer.h"
 #include "r_texture_internal.h"
 #include "vk_local.h"
+#include "image.h"
 
 typedef struct vk_texture_s {
 	VkImage image;
 	VkDeviceMemory memory;
 	VkImageView imageView;
-	VkSampler linearSampler;
-	VkSampler nearestSampler;
+	VkSampler modeSampler;
+	VkSampler forcedNearestSampler;
 	VkDescriptorSet descriptorSet;
 	VkImageLayout layout;
 	byte* pixels;
@@ -32,6 +33,8 @@ typedef struct vk_texture_s {
 	qbool clamp;
 	texture_minification_id minFilter;
 	texture_magnification_id magFilter;
+	float anisotropy;
+	int mipLevels;
 } vk_texture_t;
 
 static vk_texture_t textureData[MAX_GLTEXTURES];
@@ -47,6 +50,7 @@ typedef struct vk_pending_texture_upload_s {
 	int offsety;
 	int width;
 	int height;
+	int mipLevel;
 } vk_pending_texture_upload_t;
 
 static vk_pending_texture_upload_t pendingTextureUploads[VK_MAX_PENDING_TEXTURE_UPLOADS];
@@ -95,7 +99,7 @@ static qbool VK_TextureReferenceInRange(texture_ref texture)
 // pixel data for upload on the next VK_TextureFlushPendingUploads call instead
 // of an immediate per-texture submit+vkQueueWaitIdle. Returns false if the
 // batch is full so callers can fall back to an immediate upload.
-static qbool VK_TextureQueuePendingUpload(texture_ref texture, int offsetx, int offsety, int width, int height, const byte* buffer)
+static qbool VK_TextureQueuePendingUpload(texture_ref texture, int offsetx, int offsety, int width, int height, int mipLevel, const byte* buffer)
 {
 	VkDeviceSize imageSize = (VkDeviceSize)width * height * 4;
 	vk_pending_texture_upload_t* upload;
@@ -118,6 +122,7 @@ static qbool VK_TextureQueuePendingUpload(texture_ref texture, int offsetx, int 
 	upload->offsety = offsety;
 	upload->width = width;
 	upload->height = height;
+	upload->mipLevel = mipLevel;
 	memcpy(pendingTextureUploadData + pendingTextureUploadDataSize, buffer, (size_t)imageSize);
 	pendingTextureUploadDataSize = requiredSize;
 	return true;
@@ -145,12 +150,11 @@ static void VK_TextureDestroyObjects(texture_ref texture)
 	if (vktex->descriptorSet != VK_NULL_HANDLE && textureDescriptorPool != VK_NULL_HANDLE) {
 		vkFreeDescriptorSets(vk_options.logicalDevice, textureDescriptorPool, 1, &vktex->descriptorSet);
 	}
-	if (vktex->linearSampler != VK_NULL_HANDLE) {
-		vkDestroySampler(vk_options.logicalDevice, vktex->linearSampler, NULL);
-	}
-	if (vktex->nearestSampler != VK_NULL_HANDLE) {
-		vkDestroySampler(vk_options.logicalDevice, vktex->nearestSampler, NULL);
-	}
+	// modeSampler/forcedNearestSampler are borrowed references into the shared
+	// samplerCache (see VK_TextureCachedSampler) -- the cache owns them, not
+	// this texture, so they're cleared (by the memset below) but not
+	// destroyed here. Destroyed once at full shutdown by
+	// VK_TextureSamplerCacheShutdown instead.
 	if (vktex->imageView != VK_NULL_HANDLE) {
 		vkDestroyImageView(vk_options.logicalDevice, vktex->imageView, NULL);
 	}
@@ -213,36 +217,143 @@ static qbool VK_TextureEnsureInfrastructure(void)
 	return true;
 }
 
-static qbool VK_TextureCreateSampler(vk_texture_t* vktex, VkFilter filter, VkSampler* sampler)
+// Samplers bake filter/clamp/anisotropy in at creation time (can't be edited
+// in place), but nearly every texture shares one of a handful of
+// combinations -- the same global gl_anisotropy level, one of the 6 GL
+// min-filter/mipmap combos, linear or nearest magnification, clamped or
+// repeat. Caching by that combination instead of giving every texture its
+// own sampler objects means switching anisotropy, gl_texturemode or wrap
+// mode is just a lookup, not a destroy+recreate+vkDeviceWaitIdle -- which
+// matters because filtering and anisotropy are both applied right after
+// every single texture load (R_TextureUtil_SetFiltering), so a per-texture
+// recreate would mean a full GPU drain per texture during map load, the
+// same class of stall VK_TextureQueuePendingUpload's batching elsewhere was
+// written to avoid.
+#define VK_SAMPLER_CACHE_ANISOTROPY_LEVELS 17 /* 0-16 */
+#define VK_SAMPLER_CACHE_SIZE (2 /* minFilter */ * 2 /* magFilter */ * 2 /* mipmapMode */ * 2 /* clamp */ * VK_SAMPLER_CACHE_ANISOTROPY_LEVELS)
+static VkSampler samplerCache[VK_SAMPLER_CACHE_SIZE];
+static qbool samplerCacheValid[VK_SAMPLER_CACHE_SIZE];
+
+static int VK_SamplerCacheIndex(VkFilter minFilter, VkFilter magFilter, VkSamplerMipmapMode mipmapMode, qbool clamp, int anisotropy)
 {
-	VkSamplerCreateInfo samplerInfo;
+	int minIdx = (minFilter == VK_FILTER_LINEAR) ? 0 : 1;
+	int magIdx = (magFilter == VK_FILTER_LINEAR) ? 0 : 1;
+	int mipIdx = (mipmapMode == VK_SAMPLER_MIPMAP_MODE_LINEAR) ? 0 : 1;
+	int clampIdx = clamp ? 1 : 0;
+	int anisoIdx = bound(0, anisotropy, VK_SAMPLER_CACHE_ANISOTROPY_LEVELS - 1);
 
-	VK_InitialiseStructure(samplerInfo);
-	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	samplerInfo.magFilter = filter;
-	samplerInfo.minFilter = filter;
-	samplerInfo.addressModeU = vktex->clamp ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.addressModeV = samplerInfo.addressModeU;
-	samplerInfo.addressModeW = samplerInfo.addressModeU;
-	samplerInfo.anisotropyEnable = VK_FALSE;
-	samplerInfo.maxAnisotropy = 1.0f;
-	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-	samplerInfo.unnormalizedCoordinates = VK_FALSE;
-	samplerInfo.compareEnable = VK_FALSE;
-	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-	samplerInfo.mipmapMode = (filter == VK_FILTER_LINEAR) ? VK_SAMPLER_MIPMAP_MODE_LINEAR : VK_SAMPLER_MIPMAP_MODE_NEAREST;
-	samplerInfo.minLod = 0.0f;
-	samplerInfo.maxLod = 0.0f;
+	return (((minIdx * 2 + magIdx) * 2 + mipIdx) * 2 + clampIdx) * VK_SAMPLER_CACHE_ANISOTROPY_LEVELS + anisoIdx;
+}
 
-	return vkCreateSampler(vk_options.logicalDevice, &samplerInfo, NULL, sampler) == VK_SUCCESS;
+static VkSampler VK_TextureCachedSampler(VkFilter minFilter, VkFilter magFilter, VkSamplerMipmapMode mipmapMode, qbool clamp, int anisotropy)
+{
+	int index = VK_SamplerCacheIndex(minFilter, magFilter, mipmapMode, clamp, anisotropy);
+
+	if (!samplerCacheValid[index]) {
+		VkSamplerCreateInfo samplerInfo;
+
+		VK_InitialiseStructure(samplerInfo);
+		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerInfo.magFilter = magFilter;
+		samplerInfo.minFilter = minFilter;
+		samplerInfo.addressModeU = clamp ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT;
+		samplerInfo.addressModeV = samplerInfo.addressModeU;
+		samplerInfo.addressModeW = samplerInfo.addressModeU;
+		samplerInfo.anisotropyEnable = (anisotropy > 1 && vk_options.physicalDeviceFeatures.samplerAnisotropy) ? VK_TRUE : VK_FALSE;
+		samplerInfo.maxAnisotropy = samplerInfo.anisotropyEnable
+			? min((float)anisotropy, vk_options.physicalDeviceProperties.limits.maxSamplerAnisotropy)
+			: 1.0f;
+		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		samplerInfo.unnormalizedCoordinates = VK_FALSE;
+		samplerInfo.compareEnable = VK_FALSE;
+		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+		samplerInfo.mipmapMode = mipmapMode;
+		samplerInfo.minLod = 0.0f;
+		// VK_LOD_CLAMP_NONE instead of a fixed value: this sampler is shared
+		// across every texture with this (filter, clamp, anisotropy) combo,
+		// and they don't all have the same mip count. Each texture's own
+		// image view subresourceRange.levelCount (set from vktex->mipLevels)
+		// is what actually limits which levels are sampled; the sampler just
+		// needs to not clamp below that.
+		samplerInfo.maxLod = VK_LOD_CLAMP_NONE;
+
+		if (vkCreateSampler(vk_options.logicalDevice, &samplerInfo, NULL, &samplerCache[index]) != VK_SUCCESS) {
+			return VK_NULL_HANDLE;
+		}
+		samplerCacheValid[index] = true;
+	}
+	return samplerCache[index];
+}
+
+// texture_minification_id packs both the base filter and the inter-mip blend
+// mode (GL_*_MIPMAP_* has no Vulkan equivalent enum, hence the split out
+// param); texture_magnification_id only ever carries NEAREST or LINEAR, GL
+// has no magnification-mipmap combination.
+static void VK_FilterFromMinification(texture_minification_id id, VkFilter* filter, VkSamplerMipmapMode* mipmapMode)
+{
+	switch (id) {
+		case texture_minification_nearest:
+			*filter = VK_FILTER_NEAREST;
+			*mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+			break;
+		case texture_minification_nearest_mipmap_nearest:
+			*filter = VK_FILTER_NEAREST;
+			*mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+			break;
+		case texture_minification_nearest_mipmap_linear:
+			*filter = VK_FILTER_NEAREST;
+			*mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			break;
+		case texture_minification_linear_mipmap_nearest:
+			*filter = VK_FILTER_LINEAR;
+			*mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+			break;
+		case texture_minification_linear_mipmap_linear:
+			*filter = VK_FILTER_LINEAR;
+			*mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			break;
+		case texture_minification_linear:
+		default:
+			*filter = VK_FILTER_LINEAR;
+			*mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			break;
+	}
+}
+
+static VkFilter VK_FilterFromMagnification(texture_magnification_id id)
+{
+	return (id == texture_magnification_nearest) ? VK_FILTER_NEAREST : VK_FILTER_LINEAR;
+}
+
+static void VK_TextureSamplerCacheShutdown(void)
+{
+	int i;
+
+	for (i = 0; i < VK_SAMPLER_CACHE_SIZE; ++i) {
+		if (samplerCacheValid[i]) {
+			vkDestroySampler(vk_options.logicalDevice, samplerCache[i], NULL);
+			samplerCache[i] = VK_NULL_HANDLE;
+			samplerCacheValid[i] = false;
+		}
+	}
 }
 
 static qbool VK_TextureEnsureSamplers(vk_texture_t* vktex)
 {
-	if (vktex->linearSampler == VK_NULL_HANDLE && !VK_TextureCreateSampler(vktex, VK_FILTER_LINEAR, &vktex->linearSampler)) {
-		return false;
-	}
-	if (vktex->nearestSampler == VK_NULL_HANDLE && !VK_TextureCreateSampler(vktex, VK_FILTER_NEAREST, &vktex->nearestSampler)) {
+	VkFilter minFilter, magFilter;
+	VkSamplerMipmapMode mipmapMode;
+
+	VK_FilterFromMinification(vktex->minFilter, &minFilter, &mipmapMode);
+	magFilter = VK_FilterFromMagnification(vktex->magFilter);
+
+	// modeSampler actually reflects this texture's gl_texturemode-driven
+	// filter/mipmap settings; forcedNearestSampler is a fixed pixel-perfect
+	// override slot some draws (HUD icons, crosshair) explicitly opt into via
+	// VK_TextureDescriptorImageInfo's nearest param, independent of
+	// gl_texturemode -- see hudTexture[0]/[1] in vk_hud_image.frag.
+	vktex->modeSampler = VK_TextureCachedSampler(minFilter, magFilter, mipmapMode, vktex->clamp, (int)vktex->anisotropy);
+	vktex->forcedNearestSampler = VK_TextureCachedSampler(VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST, vktex->clamp, 1);
+	if (vktex->modeSampler == VK_NULL_HANDLE || vktex->forcedNearestSampler == VK_NULL_HANDLE) {
 		return false;
 	}
 	return true;
@@ -281,24 +392,29 @@ static qbool VK_TextureUpdateDescriptor(texture_ref texture)
 	vk_texture_t* vktex;
 	VkDescriptorImageInfo imageInfos[2];
 	VkWriteDescriptorSet descriptorWrite;
+	qbool wasAlreadyAllocated;
 
 	if (!VK_TextureReferenceInRange(texture)) {
 		return false;
 	}
 	vktex = &textureData[texture.index];
-	if (vktex->imageView == VK_NULL_HANDLE || !VK_TextureEnsureSamplers(vktex) || !VK_TextureEnsureDescriptor(texture)) {
+	if (vktex->imageView == VK_NULL_HANDLE || !VK_TextureEnsureSamplers(vktex)) {
+		return false;
+	}
+	wasAlreadyAllocated = (vktex->descriptorSet != VK_NULL_HANDLE);
+	if (!VK_TextureEnsureDescriptor(texture)) {
 		return false;
 	}
 
 	VK_InitialiseStructure(imageInfos[0]);
 	imageInfos[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageInfos[0].imageView = vktex->imageView;
-	imageInfos[0].sampler = vktex->linearSampler;
+	imageInfos[0].sampler = vktex->modeSampler;
 
 	VK_InitialiseStructure(imageInfos[1]);
 	imageInfos[1].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageInfos[1].imageView = vktex->imageView;
-	imageInfos[1].sampler = vktex->nearestSampler;
+	imageInfos[1].sampler = vktex->forcedNearestSampler;
 
 	VK_InitialiseStructure(descriptorWrite);
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -308,6 +424,21 @@ static qbool VK_TextureUpdateDescriptor(texture_ref texture)
 	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorWrite.descriptorCount = 2;
 	descriptorWrite.pImageInfo = imageInfos;
+
+	// A descriptor set that already existed may be bound into a command
+	// buffer still executing on the GPU (we run up to VK_MAX_FRAMES_IN_FLIGHT
+	// frames ahead of it) -- vkUpdateDescriptorSets on a set in that pending
+	// state is undefined per spec without UPDATE_AFTER_BIND, confirmed by
+	// validation layers corrupting unrelated in-flight draws (one texture's
+	// image showing up on a completely different surface). A set we just
+	// allocated above can't be bound to anything yet, so only the
+	// reconfigure-an-existing-texture path (filtering/anisotropy/clamp
+	// changes) needs to wait; VK_UploadTexture's own path already frees and
+	// reallocates the descriptor via VK_TextureDestroyObjects beforehand
+	// (which already waits), so this doesn't double up there.
+	if (wasAlreadyAllocated) {
+		vkDeviceWaitIdle(vk_options.logicalDevice);
+	}
 
 	vkUpdateDescriptorSets(vk_options.logicalDevice, 1, &descriptorWrite, 0, NULL);
 	return true;
@@ -332,7 +463,7 @@ static void VK_TextureRecordTransitionBarrier(VkCommandBuffer commandBuffer, vk_
 	barrier.image = vktex->image;
 	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	barrier.subresourceRange.baseMipLevel = 0;
-	barrier.subresourceRange.levelCount = 1;
+	barrier.subresourceRange.levelCount = max(1, vktex->mipLevels);
 	barrier.subresourceRange.baseArrayLayer = 0;
 	barrier.subresourceRange.layerCount = 1;
 
@@ -370,10 +501,9 @@ static void VK_TextureRecordTransitionBarrier(VkCommandBuffer commandBuffer, vk_
 // vkQueueWaitIdle, so calling it 3x per texture (as the old TransitionLayout/
 // CopyBufferToImage call sequence did) meant 3 full GPU drains per texture --
 // for a dm3-scale map's ~420 world textures that is ~1260 drains during load.
-static void VK_TextureUploadBufferToImageImmediate(VkBuffer buffer, vk_texture_t* vktex, int offsetx, int offsety, int width, int height)
+static void VK_TextureUploadBufferToImageImmediate(VkBuffer buffer, vk_texture_t* vktex, const VkBufferImageCopy* regions, uint32_t regionCount)
 {
 	VkCommandBuffer commandBuffer;
-	VkBufferImageCopy region;
 
 	commandBuffer = VK_BeginImmediateCommands();
 	if (commandBuffer == VK_NULL_HANDLE) {
@@ -381,23 +511,7 @@ static void VK_TextureUploadBufferToImageImmediate(VkBuffer buffer, vk_texture_t
 	}
 
 	VK_TextureRecordTransitionBarrier(commandBuffer, vktex, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-	VK_InitialiseStructure(region);
-	region.bufferOffset = 0;
-	region.bufferRowLength = 0;
-	region.bufferImageHeight = 0;
-	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	region.imageSubresource.mipLevel = 0;
-	region.imageSubresource.baseArrayLayer = 0;
-	region.imageSubresource.layerCount = 1;
-	region.imageOffset.x = offsetx;
-	region.imageOffset.y = offsety;
-	region.imageOffset.z = 0;
-	region.imageExtent.width = width;
-	region.imageExtent.height = height;
-	region.imageExtent.depth = 1;
-	vkCmdCopyBufferToImage(commandBuffer, buffer, vktex->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
+	vkCmdCopyBufferToImage(commandBuffer, buffer, vktex->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, regionCount, regions);
 	VK_TextureRecordTransitionBarrier(commandBuffer, vktex, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	VK_EndImmediateCommands(commandBuffer);
@@ -416,7 +530,7 @@ static qbool VK_TextureCreateImageView(texture_ref texture)
 	viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
 	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	viewInfo.subresourceRange.baseMipLevel = 0;
-	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.levelCount = max(1, vktex->mipLevels);
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = 1;
 
@@ -430,10 +544,61 @@ void VK_AllocateTextureNames(gltexture_t* glt)
 	}
 }
 
+#define VK_MAX_TEXTURE_MIPS 16
+
+typedef struct vk_mip_level_s {
+	int width;
+	int height;
+	size_t offset;
+	size_t size;
+} vk_mip_level_t;
+
+// Mirrors vkQuake's approach (TexMgr_LoadImage32): derive the mip count,
+// downsample into one contiguous staging buffer, then a single multi-region
+// vkCmdCopyBufferToImage with two layout transitions total -- instead of a
+// vkCmdBlitImage chain with barriers between every level. Built on this
+// codebase's own Image_MipReduce downsampler (already used for picmip/
+// max-size scaling in r_texture_load.c) rather than adding vkQuake's
+// stb_image_resize dependency for something we already have an equivalent
+// of. Terminates when both dimensions reach 1 (matching Image_MipReduce's
+// own clamp-at-1 behaviour), not vkQuake's let-a-dimension-hit-0 loop.
+static int VK_BuildMipPyramid(const byte* baseData, int baseWidth, int baseHeight, byte* outBuffer, vk_mip_level_t* levels)
+{
+	int numLevels = 1;
+
+	levels[0].width = baseWidth;
+	levels[0].height = baseHeight;
+	levels[0].offset = 0;
+	levels[0].size = (size_t)baseWidth * baseHeight * 4;
+	memcpy(outBuffer, baseData, levels[0].size);
+
+	while ((levels[numLevels - 1].width > 1 || levels[numLevels - 1].height > 1) && numLevels < VK_MAX_TEXTURE_MIPS) {
+		int width = levels[numLevels - 1].width;
+		int height = levels[numLevels - 1].height;
+		size_t offset = levels[numLevels - 1].offset + levels[numLevels - 1].size;
+
+		memcpy(outBuffer + offset, outBuffer + levels[numLevels - 1].offset, levels[numLevels - 1].size);
+		Image_MipReduce(outBuffer + offset, outBuffer + offset, &width, &height, 4);
+
+		levels[numLevels].width = width;
+		levels[numLevels].height = height;
+		levels[numLevels].offset = offset;
+		levels[numLevels].size = (size_t)width * height * 4;
+		++numLevels;
+	}
+	return numLevels;
+}
+
 void VK_UploadTexture(texture_ref texture, int mode, int width, int height, byte* data)
 {
 	vk_texture_t* vktex;
 	VkDeviceSize imageSize;
+	qbool wantsMipmap;
+	vk_mip_level_t mipLevelInfo[VK_MAX_TEXTURE_MIPS];
+	int numMipLevels;
+	byte* pyramid;
+	size_t pyramidSize;
+	int i;
 
 	if (!VK_TextureReferenceInRange(texture) || vk_options.logicalDevice == VK_NULL_HANDLE || width <= 0 || height <= 0) {
 		return;
@@ -457,39 +622,98 @@ void VK_UploadTexture(texture_ref texture, int mode, int width, int height, byte
 		memset(vktex->pixels, 0, vktex->pixelsSize);
 	}
 
-	if (!VK_CreateImageResource(width, height, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vktex->image, &vktex->memory)) {
+	// vktex->pixels stays base-level-only (VK_TextureGet/screenshot readback
+	// depend on that); the mip pyramid is a separate, short-lived buffer.
+	wantsMipmap = (mode & TEX_MIPMAP) ? true : false;
+	numMipLevels = 1;
+	pyramid = NULL;
+	pyramidSize = (size_t)imageSize;
+
+	if (wantsMipmap) {
+		// Geometric series of halvings sums to < 4/3 of the base level; 2x is
+		// generous headroom without bothering to derive the exact total.
+		pyramid = Q_malloc((size_t)imageSize * 2);
+		numMipLevels = VK_BuildMipPyramid(vktex->pixels, width, height, pyramid, mipLevelInfo);
+		pyramidSize = mipLevelInfo[numMipLevels - 1].offset + mipLevelInfo[numMipLevels - 1].size;
+	}
+	vktex->mipLevels = numMipLevels;
+
+	if (!VK_CreateImageResource(width, height, numMipLevels, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vktex->image, &vktex->memory)) {
+		Q_free(pyramid);
 		VK_TextureDestroyObjects(texture);
 		return;
 	}
 	if (!VK_TextureCreateImageView(texture)) {
+		Q_free(pyramid);
 		VK_TextureDestroyObjects(texture);
 		return;
 	}
 	if (!VK_TextureUpdateDescriptor(texture)) {
+		Q_free(pyramid);
 		VK_TextureDestroyObjects(texture);
 		return;
 	}
 
-	// Queue the GPU upload through the same shared per-frame batch the
-	// dynamic lightmap path uses, instead of an immediate submit+wait per
-	// texture: bulk map loads create hundreds of world textures back to
-	// back, and that used to mean one full GPU drain each. Falls back to a
-	// single immediate upload only if the batch capacity is exhausted.
-	if (!VK_TextureQueuePendingUpload(texture, 0, 0, width, height, vktex->pixels)) {
+	if (!wantsMipmap) {
+		// Queue the GPU upload through the same shared per-frame batch the
+		// dynamic lightmap path uses, instead of an immediate submit+wait per
+		// texture: bulk map loads create hundreds of world textures back to
+		// back, and that used to mean one full GPU drain each. Falls back to
+		// a single immediate upload only if the batch capacity is exhausted.
+		if (!VK_TextureQueuePendingUpload(texture, 0, 0, width, height, 0, vktex->pixels)) {
+			VkBuffer stagingBuffer = VK_NULL_HANDLE;
+			VkDeviceMemory stagingMemory = VK_NULL_HANDLE;
+			void* mapped;
+			VkBufferImageCopy region;
+
+			if (!VK_CreateBufferResource(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingMemory)) {
+				return;
+			}
+			if (vkMapMemory(vk_options.logicalDevice, stagingMemory, 0, imageSize, 0, &mapped) == VK_SUCCESS) {
+				memcpy(mapped, vktex->pixels, (size_t)imageSize);
+				vkUnmapMemory(vk_options.logicalDevice, stagingMemory);
+			}
+			VK_InitialiseStructure(region);
+			region.bufferOffset = 0;
+			region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			region.imageSubresource.mipLevel = 0;
+			region.imageSubresource.baseArrayLayer = 0;
+			region.imageSubresource.layerCount = 1;
+			region.imageExtent.width = width;
+			region.imageExtent.height = height;
+			region.imageExtent.depth = 1;
+			VK_TextureUploadBufferToImageImmediate(stagingBuffer, vktex, &region, 1);
+			vkDestroyBuffer(vk_options.logicalDevice, stagingBuffer, NULL);
+			vkFreeMemory(vk_options.logicalDevice, stagingMemory, NULL);
+		}
+	}
+	else {
 		VkBuffer stagingBuffer = VK_NULL_HANDLE;
 		VkDeviceMemory stagingMemory = VK_NULL_HANDLE;
 		void* mapped;
+		VkBufferImageCopy regions[VK_MAX_TEXTURE_MIPS];
 
-		if (!VK_CreateBufferResource(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingMemory)) {
-			return;
+		if (VK_CreateBufferResource(pyramidSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingMemory)) {
+			if (vkMapMemory(vk_options.logicalDevice, stagingMemory, 0, pyramidSize, 0, &mapped) == VK_SUCCESS) {
+				memcpy(mapped, pyramid, pyramidSize);
+				vkUnmapMemory(vk_options.logicalDevice, stagingMemory);
+			}
+			for (i = 0; i < numMipLevels; ++i) {
+				VK_InitialiseStructure(regions[i]);
+				regions[i].bufferOffset = mipLevelInfo[i].offset;
+				regions[i].imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+				regions[i].imageSubresource.mipLevel = i;
+				regions[i].imageSubresource.baseArrayLayer = 0;
+				regions[i].imageSubresource.layerCount = 1;
+				regions[i].imageExtent.width = mipLevelInfo[i].width;
+				regions[i].imageExtent.height = mipLevelInfo[i].height;
+				regions[i].imageExtent.depth = 1;
+			}
+			VK_TextureUploadBufferToImageImmediate(stagingBuffer, vktex, regions, numMipLevels);
+			vkDestroyBuffer(vk_options.logicalDevice, stagingBuffer, NULL);
+			vkFreeMemory(vk_options.logicalDevice, stagingMemory, NULL);
 		}
-		if (vkMapMemory(vk_options.logicalDevice, stagingMemory, 0, imageSize, 0, &mapped) == VK_SUCCESS) {
-			memcpy(mapped, vktex->pixels, (size_t)imageSize);
-			vkUnmapMemory(vk_options.logicalDevice, stagingMemory);
-		}
-		VK_TextureUploadBufferToImageImmediate(stagingBuffer, vktex, 0, 0, width, height);
-		vkDestroyBuffer(vk_options.logicalDevice, stagingBuffer, NULL);
-		vkFreeMemory(vk_options.logicalDevice, stagingMemory, NULL);
+		Q_free(pyramid);
 	}
 
 	gltextures[texture.index].texnum = texture.index;
@@ -524,7 +748,7 @@ qbool VK_TextureDescriptorImageInfo(texture_ref texture, qbool nearest, VkDescri
 	VK_InitialiseStructure(*info);
 	info->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	info->imageView = vktex->imageView;
-	info->sampler = nearest ? vktex->nearestSampler : vktex->linearSampler;
+	info->sampler = nearest ? vktex->forcedNearestSampler : vktex->modeSampler;
 	return info->sampler != VK_NULL_HANDLE;
 }
 
@@ -579,6 +803,8 @@ void VK_TextureShutdown(void)
 		VK_TextureDestroyObjects(ref);
 	}
 
+	VK_TextureSamplerCacheShutdown();
+
 	if (textureDescriptorPool != VK_NULL_HANDLE) {
 		vkDestroyDescriptorPool(vk_options.logicalDevice, textureDescriptorPool, NULL);
 		textureDescriptorPool = VK_NULL_HANDLE;
@@ -612,14 +838,10 @@ void VK_TextureWrapModeClamp(texture_ref texture)
 	}
 	vktex = &textureData[texture.index];
 	vktex->clamp = true;
-	if (vktex->linearSampler != VK_NULL_HANDLE) {
-		vkDestroySampler(vk_options.logicalDevice, vktex->linearSampler, NULL);
-		vktex->linearSampler = VK_NULL_HANDLE;
-	}
-	if (vktex->nearestSampler != VK_NULL_HANDLE) {
-		vkDestroySampler(vk_options.logicalDevice, vktex->nearestSampler, NULL);
-		vktex->nearestSampler = VK_NULL_HANDLE;
-	}
+	// No destroy needed: VK_TextureEnsureSamplers re-resolves both samplers
+	// from samplerCache on every call, including picking up the new clamp
+	// mode, since it's keyed by (filter, clamp, anisotropy) rather than
+	// owning a sampler outright.
 	VK_TextureUpdateDescriptor(texture);
 }
 
@@ -786,6 +1008,7 @@ void VK_TextureFlushPendingUploads(VkCommandBuffer commandBuffer, uint32_t frame
 		VK_InitialiseStructure(region);
 		region.bufferOffset = upload->dataOffset;
 		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.mipLevel = upload->mipLevel;
 		region.imageSubresource.layerCount = 1;
 		region.imageOffset.x = upload->offsetx;
 		region.imageOffset.y = upload->offsety;
@@ -826,7 +1049,7 @@ void VK_TextureReplaceSubImageRGBA(texture_ref texture, int offsetx, int offsety
 	// outside the render loop (initial lightmap build at map load) rely on
 	// this path too, so the whole batch gets flushed through one shared
 	// command buffer/wait instead of one immediate submit per surface.
-	if (VK_TextureQueuePendingUpload(texture, offsetx, offsety, width, height, buffer)) {
+	if (VK_TextureQueuePendingUpload(texture, offsetx, offsety, width, height, 0, buffer)) {
 		return;
 	}
 	if (!VK_CreateBufferResource(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingMemory)) {
@@ -837,7 +1060,23 @@ void VK_TextureReplaceSubImageRGBA(texture_ref texture, int offsetx, int offsety
 		vkUnmapMemory(vk_options.logicalDevice, stagingMemory);
 	}
 
-	VK_TextureUploadBufferToImageImmediate(stagingBuffer, vktex, offsetx, offsety, width, height);
+	{
+		VkBufferImageCopy region;
+
+		VK_InitialiseStructure(region);
+		region.bufferOffset = 0;
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.baseArrayLayer = 0;
+		region.imageSubresource.layerCount = 1;
+		region.imageOffset.x = offsetx;
+		region.imageOffset.y = offsety;
+		region.imageOffset.z = 0;
+		region.imageExtent.width = width;
+		region.imageExtent.height = height;
+		region.imageExtent.depth = 1;
+		VK_TextureUploadBufferToImageImmediate(stagingBuffer, vktex, &region, 1);
+	}
 
 	vkDestroyBuffer(vk_options.logicalDevice, stagingBuffer, NULL);
 	vkFreeMemory(vk_options.logicalDevice, stagingMemory, NULL);
@@ -858,8 +1097,21 @@ void VK_TextureSetFiltering(texture_ref texture, texture_minification_id min_fil
 
 void VK_TextureSetAnisotropy(texture_ref texture, int anisotropy)
 {
-	(void)texture;
-	(void)anisotropy;
+	vk_texture_t* vktex;
+
+	if (!VK_TextureReferenceInRange(texture)) {
+		return;
+	}
+	vktex = &textureData[texture.index];
+	if (vktex->anisotropy == (float)anisotropy) {
+		return;
+	}
+	vktex->anisotropy = (float)anisotropy;
+
+	// No destroy/recreate (and no vkDeviceWaitIdle) needed here: see
+	// VK_TextureCachedSampler -- this just switches which cached sampler
+	// VK_TextureEnsureSamplers resolves to next.
+	VK_TextureUpdateDescriptor(texture);
 }
 
 void VK_TextureLoadCubemapFace(texture_ref cubemap, r_cubemap_direction_id direction, const byte* data, int width, int height)
