@@ -87,14 +87,30 @@ typedef struct vk_world_push_s {
 	float fastTurb;
 	float detailEnabled;
 	float textureless;
-	float padding[1];
+	// vk_world_flat.vert/.frag end their matching GLSL struct with a trailing
+	// vec3, which the std430-style push-constant layout rules align to 16
+	// bytes -- bumping that shader's real compiled block to 140 bytes even
+	// though every *other* field here is a plain scalar/array with no such
+	// jump. Padded to 144 (next 16-byte multiple) so this one shared C
+	// struct covers all 5 world pipelines that reuse it; previously only 128
+	// bytes, which validation correctly flagged as undersized for world_flat.
+	float padding[5];
 } vk_world_push_t;
 
 static VkPipelineLayout worldFlatPipelineLayout;
 static VkPipeline worldFlatPipeline;
 static VkDescriptorSetLayout worldFlatSkyDescriptorSetLayout;
 static VkDescriptorPool worldFlatSkyDescriptorPool;
-static VkDescriptorSet worldFlatSkyDescriptorSet;
+// One set per frame-in-flight: this set's bindings get rewritten every time
+// the sky is drawn (textures can change underneath via r_skyname/skywind),
+// and a single shared set would mean rewriting one that's still bound to a
+// previous frame's command buffer still executing on the GPU -- the same
+// pending-descriptor-set hazard fixed for per-texture descriptors in
+// vk_texture.c, but here it fired every frame instead of only on a cvar
+// change. Each frame index is exclusively owned by the CPU until that
+// frame's command buffer is submitted, so rewriting frameIndex's slot is
+// safe the moment VK_BeginFrame's fence wait for that slot has returned.
+static VkDescriptorSet worldFlatSkyDescriptorSets[VK_MAX_FRAMES_IN_FLIGHT];
 static VkPipelineLayout worldTexturedPipelineLayout;
 static VkPipeline worldTexturedPipeline;
 static VkPipelineLayout worldOverlayPipelineLayout;
@@ -223,8 +239,10 @@ static qbool VK_WorldEnsureFlatSkyDescriptorSet(void)
 	VkDescriptorPoolSize poolSize;
 	VkDescriptorPoolCreateInfo poolInfo;
 	VkDescriptorSetAllocateInfo allocInfo;
+	VkDescriptorSetLayout layouts[VK_MAX_FRAMES_IN_FLIGHT];
+	int i;
 
-	if (worldFlatSkyDescriptorSet != VK_NULL_HANDLE) {
+	if (worldFlatSkyDescriptorSets[0] != VK_NULL_HANDLE) {
 		return true;
 	}
 	if (!VK_WorldEnsureFlatSkyDescriptorSetLayout()) {
@@ -233,26 +251,30 @@ static qbool VK_WorldEnsureFlatSkyDescriptorSet(void)
 	if (worldFlatSkyDescriptorPool == VK_NULL_HANDLE) {
 		VK_InitialiseStructure(poolSize);
 		poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		poolSize.descriptorCount = VK_WORLD_SKY_TEXTURE_COUNT;
+		poolSize.descriptorCount = VK_WORLD_SKY_TEXTURE_COUNT * VK_MAX_FRAMES_IN_FLIGHT;
 
 		VK_InitialiseStructure(poolInfo);
 		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		poolInfo.poolSizeCount = 1;
 		poolInfo.pPoolSizes = &poolSize;
-		poolInfo.maxSets = 1;
+		poolInfo.maxSets = VK_MAX_FRAMES_IN_FLIGHT;
 
 		if (vkCreateDescriptorPool(vk_options.logicalDevice, &poolInfo, NULL, &worldFlatSkyDescriptorPool) != VK_SUCCESS) {
 			return false;
 		}
 	}
 
+	for (i = 0; i < VK_MAX_FRAMES_IN_FLIGHT; ++i) {
+		layouts[i] = worldFlatSkyDescriptorSetLayout;
+	}
+
 	VK_InitialiseStructure(allocInfo);
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = worldFlatSkyDescriptorPool;
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = &worldFlatSkyDescriptorSetLayout;
+	allocInfo.descriptorSetCount = VK_MAX_FRAMES_IN_FLIGHT;
+	allocInfo.pSetLayouts = layouts;
 
-	return vkAllocateDescriptorSets(vk_options.logicalDevice, &allocInfo, &worldFlatSkyDescriptorSet) == VK_SUCCESS;
+	return vkAllocateDescriptorSets(vk_options.logicalDevice, &allocInfo, worldFlatSkyDescriptorSets) == VK_SUCCESS;
 }
 
 static qbool VK_WorldFlatSkyDescriptorSet(VkDescriptorSet* descriptorSet)
@@ -262,8 +284,9 @@ static qbool VK_WorldFlatSkyDescriptorSet(VkDescriptorSet* descriptorSet)
 	VkWriteDescriptorSet descriptorWrites[VK_WORLD_SKY_TEXTURE_COUNT];
 	texture_ref textures[VK_WORLD_SKY_TEXTURE_COUNT];
 	int i;
+	uint32_t frameIndex = vk_options.frame.currentFrame;
 
-	if (!descriptorSet || !VK_WorldEnsureFlatSkyDescriptorSet()) {
+	if (frameIndex >= VK_MAX_FRAMES_IN_FLIGHT || !descriptorSet || !VK_WorldEnsureFlatSkyDescriptorSet()) {
 		return false;
 	}
 
@@ -281,7 +304,7 @@ static qbool VK_WorldFlatSkyDescriptorSet(VkDescriptorSet* descriptorSet)
 
 		VK_InitialiseStructure(descriptorWrites[i]);
 		descriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[i].dstSet = worldFlatSkyDescriptorSet;
+		descriptorWrites[i].dstSet = worldFlatSkyDescriptorSets[frameIndex];
 		descriptorWrites[i].dstBinding = i;
 		descriptorWrites[i].descriptorCount = 1;
 		descriptorWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -289,7 +312,7 @@ static qbool VK_WorldFlatSkyDescriptorSet(VkDescriptorSet* descriptorSet)
 	}
 
 	vkUpdateDescriptorSets(vk_options.logicalDevice, VK_WORLD_SKY_TEXTURE_COUNT, descriptorWrites, 0, NULL);
-	*descriptorSet = worldFlatSkyDescriptorSet;
+	*descriptorSet = worldFlatSkyDescriptorSets[frameIndex];
 	return true;
 }
 
@@ -1467,7 +1490,7 @@ void VK_WorldResourcesShutdown(void)
 		if (worldFlatSkyDescriptorPool != VK_NULL_HANDLE) {
 			vkDestroyDescriptorPool(vk_options.logicalDevice, worldFlatSkyDescriptorPool, NULL);
 			worldFlatSkyDescriptorPool = VK_NULL_HANDLE;
-			worldFlatSkyDescriptorSet = VK_NULL_HANDLE;
+			memset(worldFlatSkyDescriptorSets, 0, sizeof(worldFlatSkyDescriptorSets));
 		}
 		if (worldFlatSkyDescriptorSetLayout != VK_NULL_HANDLE) {
 			vkDestroyDescriptorSetLayout(vk_options.logicalDevice, worldFlatSkyDescriptorSetLayout, NULL);

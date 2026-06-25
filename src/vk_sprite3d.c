@@ -36,7 +36,12 @@ typedef struct vk_sprite3d_push_s {
 	float modelView[16];
 	float projection[16];
 	float alphaThreshold;
-	float padding[3];
+	// vk_sprite3d.vert/.frag's matching GLSL struct ends with a vec3, which
+	// std430-style push-constant rules align to 16 bytes -- the real
+	// compiled block is 156 bytes, not the 144 this plain-float-array struct
+	// summed to (no such alignment jump for a C float[3]). Padded to 160
+	// (next 16-byte multiple) to cover it.
+	float padding[7];
 } vk_sprite3d_push_t;
 
 typedef enum vk_sprite_pipeline_id_s {
