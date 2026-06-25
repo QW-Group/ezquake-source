@@ -132,7 +132,7 @@ qbool VK_CreateAliasModelPipeline(r_buffer_id aliasModelVBO, r_buffer_id instanc
 
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisampling.sampleShadingEnable = VK_FALSE;
-	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampling.rasterizationSamples = vk_options.msaaSamples ? vk_options.msaaSamples : VK_SAMPLE_COUNT_1_BIT;
 	multisampling.minSampleShading = 1.0f; // Optional
 	multisampling.pSampleMask = NULL; // Optional
 	multisampling.alphaToCoverageEnable = VK_FALSE; // Optional

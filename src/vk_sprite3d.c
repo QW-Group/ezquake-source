@@ -277,7 +277,7 @@ static qbool VK_SpriteCreatePipeline(r_primitive_id primitive, vk_sprite_pipelin
 
 	VK_InitialiseStructure(multisampling);
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampling.rasterizationSamples = vk_options.msaaSamples ? vk_options.msaaSamples : VK_SAMPLE_COUNT_1_BIT;
 
 	VK_InitialiseStructure(depthStencil);
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;

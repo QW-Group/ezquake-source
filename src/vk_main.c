@@ -38,6 +38,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 vk_options_t vk_options;
 static qbool vk_recreate_swapchain_requested;
 static qbool vk_recreate_surface_requested;
+// A freshly (re)created swapchain/MSAA image's real Vulkan layout is
+// VK_IMAGE_LAYOUT_UNDEFINED -- it has never been rendered to or presented.
+// vk_renderpass_main_noclear's LOAD op (picked whenever clear_color below
+// would otherwise be false) declares its initialLayout as PRESENT_SRC_KHR/
+// COLOR_ATTACHMENT_OPTIMAL, assuming a previous frame already left it there;
+// using it on a genuinely fresh image is a real validation error ("expects
+// ... to be in layout X--instead, current layout is UNDEFINED"), not a false
+// positive. Forcing the CLEAR variant for each image's first use after any
+// (re)creation guarantees every image has gone through the one transition
+// that actually establishes its layout before anything ever tries to LOAD
+// from it.
+static uint32_t vk_force_clear_frames_remaining;
 
 // Mirrors the cvar-driven part of R_Clear()'s clear_color decision in
 // r_rmain.c. The view-leaf-dependent part of that condition (sky visible
@@ -435,6 +447,7 @@ static qbool VK_RecreateSwapChain(void)
 	if (!VK_CreateSwapChainFramebuffers()) {
 		return false;
 	}
+	vk_force_clear_frames_remaining = vk_options.swapChain.imageCount * 2;
 	if (!VK_CreateFrameResources()) {
 		return false;
 	}
@@ -468,6 +481,7 @@ static qbool VK_RecreateSurfaceAndSwapChain(void)
 	if (!VK_CreateSwapChainFramebuffers()) {
 		return false;
 	}
+	vk_force_clear_frames_remaining = vk_options.swapChain.imageCount * 2;
 	if (!VK_CreateFrameResources()) {
 		return false;
 	}
@@ -498,7 +512,7 @@ void VK_BeginFrame(void)
 	uint32_t frameIndex;
 	VkFence frameFence;
 	VkResult waitResult;
-	qbool clear_color = !cl_multiview.integer && (gl_clear.integer || (!vid_hwgamma_enabled && v_contrast.value > 1));
+	qbool clear_color;
 
 	if (vk_options.logicalDevice == VK_NULL_HANDLE || vk_options.frame.active) {
 		return;
@@ -582,6 +596,12 @@ void VK_BeginFrame(void)
 	// render pass. This keeps transfer work on the frame submission and avoids
 	// the queue-wide stalls caused by immediate command buffers.
 	VK_TextureFlushPendingUploads(commandBuffer, frameIndex);
+
+	clear_color = !cl_multiview.integer && (gl_clear.integer || (!vid_hwgamma_enabled && v_contrast.value > 1));
+	if (vk_force_clear_frames_remaining > 0) {
+		clear_color = true;
+		--vk_force_clear_frames_remaining;
+	}
 
 	clearValues[0].color.float32[0] = vk_options.clearColor[0];
 	clearValues[0].color.float32[1] = vk_options.clearColor[1];
@@ -704,6 +724,8 @@ qbool VK_Initialise(SDL_Window* window)
 		return false;
 	}
 
+	VK_DetermineMSAASampleCount();
+
 	if (!VK_CreateLogicalDevice(vk_options.instance)) {
 		VK_Shutdown(r_shutdown_full);
 		return false;
@@ -723,6 +745,7 @@ qbool VK_Initialise(SDL_Window* window)
 		VK_Shutdown(r_shutdown_full);
 		return false;
 	}
+	vk_force_clear_frames_remaining = vk_options.swapChain.imageCount * 2;
 
 	if (!VK_CreateFrameResources()) {
 		VK_Shutdown(r_shutdown_full);

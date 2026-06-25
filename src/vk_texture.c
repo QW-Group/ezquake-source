@@ -638,7 +638,7 @@ void VK_UploadTexture(texture_ref texture, int mode, int width, int height, byte
 	}
 	vktex->mipLevels = numMipLevels;
 
-	if (!VK_CreateImageResource(width, height, numMipLevels, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vktex->image, &vktex->memory)) {
+	if (!VK_CreateImageResource(width, height, numMipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &vktex->image, &vktex->memory)) {
 		Q_free(pyramid);
 		VK_TextureDestroyObjects(texture);
 		return;

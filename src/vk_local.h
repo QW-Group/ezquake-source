@@ -57,6 +57,7 @@ uint32_t VK_PhysicalDeviceComputeQueueFamilyIndex(void);
 qbool VK_RefreshPresentationMode(void);
 uint32_t VK_PhysicalDevicePresentQueueFamilyIndex(void);
 qbool VK_CreateLogicalDevice(VkInstance instance);
+void VK_DetermineMSAASampleCount(void);
 
 // vk_window_surface.c
 qbool VK_CreateWindowSurface(SDL_Window* window, VkInstance instance, VkSurfaceKHR* surface);
@@ -81,7 +82,7 @@ void VK_BlendingConfigure(VkPipelineColorBlendStateCreateInfo* info, VkPipelineC
 // vk_resources.c
 uint32_t VK_FindMemoryType(uint32_t type_filter, VkMemoryPropertyFlags properties);
 qbool VK_CreateBufferResource(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* memory);
-qbool VK_CreateImageResource(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* memory);
+qbool VK_CreateImageResource(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits samples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* memory);
 VkCommandBuffer VK_BeginImmediateCommands(void);
 qbool VK_EndImmediateCommands(VkCommandBuffer command_buffer);
 void VK_DestroyImmediateCommandPool(void);
@@ -166,6 +167,15 @@ typedef struct vk_options_s {
 	VkDevice logicalDevice;
 	VkQueue graphicsQueue;
 	VkQueue presentQueue;
+	// Determined once in VK_Initialise from vid_framebuffer_multisample,
+	// clamped against the physical device's actual limits (see
+	// VK_DetermineMSAASampleCount). VK_SAMPLE_COUNT_1_BIT (the default,
+	// matching vid_framebuffer_multisample's "0") means no MSAA: render pass/
+	// framebuffer/pipeline creation all take the exact same path as before
+	// this feature existed. Changing the cvar requires a full vid_restart
+	// (same as the other Framebuffer menu options) -- this is read once at
+	// init, not polled per frame.
+	VkSampleCountFlagBits msaaSamples;
 	struct {
 		VkSwapchainKHR handle;
 		VkImage* images;
@@ -174,6 +184,15 @@ typedef struct vk_options_s {
 		VkImage depthImage;
 		VkDeviceMemory depthImageMemory;
 		VkImageView depthImageView;
+		// Only allocated when msaaSamples > VK_SAMPLE_COUNT_1_BIT: the
+		// multisampled color attachment the main render pass draws into,
+		// resolved straight to the swapchain image via the render pass's
+		// resolve attachment. Never sampled/read, so there's exactly one of
+		// these shared across every swapchain image (like depthImage above),
+		// not one per image.
+		VkImage msaaColorImage;
+		VkDeviceMemory msaaColorImageMemory;
+		VkImageView msaaColorImageView;
 		VkExtent2D imageSize;
 		int imageCount;
 	} swapChain;

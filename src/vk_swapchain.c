@@ -56,6 +56,7 @@ static qbool VK_CreateSwapChainDepthResources(void)
 			vk_options.swapChain.imageSize.width,
 			vk_options.swapChain.imageSize.height,
 			1,
+			vk_options.msaaSamples,
 			VK_DepthFormat(),
 			VK_IMAGE_TILING_OPTIMAL,
 			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
@@ -84,6 +85,71 @@ static qbool VK_CreateSwapChainDepthResources(void)
 			VK_DestroySwapChainDepthResources();
 			return false;
 		}
+	}
+
+	return true;
+}
+
+static void VK_DestroySwapChainMSAAColorResources(void)
+{
+	if (vk_options.swapChain.msaaColorImageView != VK_NULL_HANDLE) {
+		vkDestroyImageView(vk_options.logicalDevice, vk_options.swapChain.msaaColorImageView, NULL);
+		vk_options.swapChain.msaaColorImageView = VK_NULL_HANDLE;
+	}
+	if (vk_options.swapChain.msaaColorImage != VK_NULL_HANDLE) {
+		vkDestroyImage(vk_options.logicalDevice, vk_options.swapChain.msaaColorImage, NULL);
+		vk_options.swapChain.msaaColorImage = VK_NULL_HANDLE;
+	}
+	if (vk_options.swapChain.msaaColorImageMemory != VK_NULL_HANDLE) {
+		vkFreeMemory(vk_options.logicalDevice, vk_options.swapChain.msaaColorImageMemory, NULL);
+		vk_options.swapChain.msaaColorImageMemory = VK_NULL_HANDLE;
+	}
+}
+
+// Only called when vk_options.msaaSamples > VK_SAMPLE_COUNT_1_BIT (see
+// VK_CreateSwapChainFramebuffers). This image is the multisampled render
+// target the main render pass actually draws into; the render pass resolves
+// it straight into the real swapchain image via a resolve attachment, so it's
+// never sampled or read back -- TRANSIENT_ATTACHMENT_BIT lets tile-based GPUs
+// (most Android hardware) keep it in on-chip tile memory instead of writing
+// it out to VRAM, which is the whole point of doing MSAA this way instead of
+// through an offscreen target meant to be read later.
+static qbool VK_CreateSwapChainMSAAColorResources(void)
+{
+	VkImageViewCreateInfo createImageViewInfo;
+
+	VK_DestroySwapChainMSAAColorResources();
+
+	if (!VK_CreateImageResource(
+			vk_options.swapChain.imageSize.width,
+			vk_options.swapChain.imageSize.height,
+			1,
+			vk_options.msaaSamples,
+			vk_options.physicalDeviceSurfaceFormat.format,
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			&vk_options.swapChain.msaaColorImage,
+			&vk_options.swapChain.msaaColorImageMemory)) {
+		Com_Printf("vulkan: failed to create MSAA color image resource\n");
+		return false;
+	}
+
+	VK_InitialiseStructure(createImageViewInfo);
+	createImageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	createImageViewInfo.image = vk_options.swapChain.msaaColorImage;
+	createImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	createImageViewInfo.format = vk_options.physicalDeviceSurfaceFormat.format;
+	createImageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	createImageViewInfo.subresourceRange.baseMipLevel = 0;
+	createImageViewInfo.subresourceRange.levelCount = 1;
+	createImageViewInfo.subresourceRange.baseArrayLayer = 0;
+	createImageViewInfo.subresourceRange.layerCount = 1;
+
+	if (vkCreateImageView(vk_options.logicalDevice, &createImageViewInfo, NULL, &vk_options.swapChain.msaaColorImageView) != VK_SUCCESS) {
+		Com_Printf("vulkan: vkCreateImageView() failed for MSAA color buffer\n");
+		VK_DestroySwapChainMSAAColorResources();
+		return false;
 	}
 
 	return true;
@@ -210,14 +276,35 @@ qbool VK_CreateSwapChainFramebuffers(void)
 		return false;
 	}
 
+	if (vk_options.msaaSamples > VK_SAMPLE_COUNT_1_BIT && !VK_CreateSwapChainMSAAColorResources()) {
+		return false;
+	}
+
 	vk_options.swapChain.framebuffers = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.framebuffers[0]));
 	for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
-		VkImageView attachments[] = { vk_options.swapChain.imageViews[i], vk_options.swapChain.depthImageView };
+		// With MSAA, the render pass's color attachment 0 is the shared
+		// multisampled image (one resource for every swapchain image, like
+		// depth above) and the per-image swapchain view only appears as the
+		// resolve attachment (2) -- see VK_RenderPassCreateVariant. Without
+		// MSAA, attachment 0 is the swapchain image directly, same as before
+		// this feature existed.
+		qbool msaa = vk_options.msaaSamples > VK_SAMPLE_COUNT_1_BIT;
+		VkImageView attachments[3];
 		VkFramebufferCreateInfo framebufferInfo = { 0 };
+
+		if (msaa) {
+			attachments[0] = vk_options.swapChain.msaaColorImageView;
+			attachments[1] = vk_options.swapChain.depthImageView;
+			attachments[2] = vk_options.swapChain.imageViews[i];
+		}
+		else {
+			attachments[0] = vk_options.swapChain.imageViews[i];
+			attachments[1] = vk_options.swapChain.depthImageView;
+		}
 
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferInfo.renderPass = renderPass;
-		framebufferInfo.attachmentCount = sizeof(attachments) / sizeof(attachments[0]);
+		framebufferInfo.attachmentCount = msaa ? 3 : 2;
 		framebufferInfo.pAttachments = attachments;
 		framebufferInfo.width = vk_options.swapChain.imageSize.width;
 		framebufferInfo.height = vk_options.swapChain.imageSize.height;
@@ -248,6 +335,7 @@ void VK_DestroySwapChainFramebuffers(void)
 		vk_options.swapChain.framebuffers = NULL;
 	}
 
+	VK_DestroySwapChainMSAAColorResources();
 	VK_DestroySwapChainDepthResources();
 }
 

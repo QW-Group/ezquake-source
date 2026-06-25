@@ -46,31 +46,52 @@ static VkRenderPass renderPasses[vk_renderpass_count];
 
 static qbool VK_RenderPassCreateVariant(vk_renderpass_id id, qbool clearColor)
 {
-	VkAttachmentDescription attachments[2];
+	qbool msaa = vk_options.msaaSamples > VK_SAMPLE_COUNT_1_BIT;
+	VkAttachmentDescription attachments[3];
 	VkAttachmentReference colorAttachmentRef;
 	VkAttachmentReference depthAttachmentRef;
+	VkAttachmentReference resolveAttachmentRef;
 	VkSubpassDescription subpass;
 	VkSubpassDependency dependency;
 	VkRenderPassCreateInfo renderPassInfo;
 
+	// Attachment 0: the color attachment every pipeline actually draws into.
+	// Without MSAA this *is* the swapchain image (presented directly, hence
+	// finalLayout PRESENT_SRC_KHR below). With MSAA it's the offscreen
+	// multisampled image from VK_CreateSwapChainMSAAColorResources -- it's
+	// never presented, only resolved into attachment 2, so it stays in
+	// COLOR_ATTACHMENT_OPTIMAL the whole time and is never stored (resolve
+	// reads it instead of a STORE_OP write).
 	VK_InitialiseStructure(attachments[0]);
 	attachments[0].format = vk_options.physicalDeviceSurfaceFormat.format;
-	attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[0].samples = vk_options.msaaSamples ? vk_options.msaaSamples : VK_SAMPLE_COUNT_1_BIT;
 	attachments[0].loadOp = clearColor ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-	attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[0].storeOp = msaa ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
 	attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	// LOAD requires the attachment to already be in the layout it's loaded
-	// from -- swapchain images sit in PRESENT_SRC_KHR between frames (that's
-	// this same render pass's finalLayout below), so that's what the
-	// no-clear variant declares as its initialLayout to preserve content
-	// instead of triggering an undefined-content layout transition.
-	attachments[0].initialLayout = clearColor ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-	attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	if (msaa) {
+		// The multisampled image is exclusively a render target -- LOAD's
+		// "preserve previous content" only matters for the resolved/
+		// presented attachment 2 below, so this one simply always starts
+		// from COLOR_ATTACHMENT_OPTIMAL (its only other state, set by this
+		// same finalLayout) rather than PRESENT_SRC_KHR, which it never is.
+		attachments[0].initialLayout = clearColor ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		attachments[0].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	}
+	else {
+		// LOAD requires the attachment to already be in the layout it's
+		// loaded from -- swapchain images sit in PRESENT_SRC_KHR between
+		// frames (that's this same render pass's finalLayout below), so
+		// that's what the no-clear variant declares as its initialLayout to
+		// preserve content instead of triggering an undefined-content
+		// layout transition.
+		attachments[0].initialLayout = clearColor ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	}
 
 	VK_InitialiseStructure(attachments[1]);
 	attachments[1].format = VK_DepthFormat();
-	attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[1].samples = attachments[0].samples;
 	// Depth always clears regardless of gl_clear -- matches GL_Clear() in
 	// gl_misc.c, which only gates GL_COLOR_BUFFER_BIT on clear_color and
 	// always ORs in GL_DEPTH_BUFFER_BIT.
@@ -81,6 +102,23 @@ static qbool VK_RenderPassCreateVariant(vk_renderpass_id id, qbool clearColor)
 	attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+	// Attachment 2 (MSAA only): the actual swapchain image, written only by
+	// the resolve at the end of the subpass -- same PRESENT_SRC_KHR
+	// load/store semantics the non-MSAA attachment 0 has above, just moved
+	// here since the swapchain image itself is never drawn into directly
+	// when multisampling.
+	if (msaa) {
+		VK_InitialiseStructure(attachments[2]);
+		attachments[2].format = vk_options.physicalDeviceSurfaceFormat.format;
+		attachments[2].samples = VK_SAMPLE_COUNT_1_BIT;
+		attachments[2].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachments[2].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachments[2].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachments[2].initialLayout = clearColor ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+		attachments[2].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	}
+
 	// attachment reference
 	VK_InitialiseStructure(colorAttachmentRef);
 	colorAttachmentRef.attachment = 0;
@@ -90,12 +128,17 @@ static qbool VK_RenderPassCreateVariant(vk_renderpass_id id, qbool clearColor)
 	depthAttachmentRef.attachment = 1;
 	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+	VK_InitialiseStructure(resolveAttachmentRef);
+	resolveAttachmentRef.attachment = 2;
+	resolveAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
 	// Sub-passes
 	VK_InitialiseStructure(subpass);
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &colorAttachmentRef;
 	subpass.pDepthStencilAttachment = &depthAttachmentRef;
+	subpass.pResolveAttachments = msaa ? &resolveAttachmentRef : NULL;
 
 	// The depth image (unlike the swapchain color image) is a single resource
 	// shared by every frame in flight, not duplicated per-frame. EARLY_FRAGMENT_TESTS
@@ -117,7 +160,7 @@ static qbool VK_RenderPassCreateVariant(vk_renderpass_id id, qbool clearColor)
 	// Render pass
 	VK_InitialiseStructure(renderPassInfo);
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = sizeof(attachments) / sizeof(attachments[0]);
+	renderPassInfo.attachmentCount = msaa ? 3 : 2;
 	renderPassInfo.pAttachments = attachments;
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;

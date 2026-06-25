@@ -659,7 +659,7 @@ static qbool VK_WorldCreateFlatPipeline(void)
 
 	VK_InitialiseStructure(multisampling);
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampling.rasterizationSamples = vk_options.msaaSamples ? vk_options.msaaSamples : VK_SAMPLE_COUNT_1_BIT;
 
 	VK_InitialiseStructure(depthStencil);
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -840,7 +840,7 @@ static qbool VK_WorldCreateTexturedPipeline(void)
 
 	VK_InitialiseStructure(multisampling);
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampling.rasterizationSamples = vk_options.msaaSamples ? vk_options.msaaSamples : VK_SAMPLE_COUNT_1_BIT;
 
 	VK_InitialiseStructure(depthStencil);
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -1022,7 +1022,7 @@ static qbool VK_WorldCreateOverlayPipeline(qbool luma)
 
 	VK_InitialiseStructure(multisampling);
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampling.rasterizationSamples = vk_options.msaaSamples ? vk_options.msaaSamples : VK_SAMPLE_COUNT_1_BIT;
 
 	VK_InitialiseStructure(depthStencil);
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -1211,7 +1211,7 @@ static qbool VK_WorldCreateAlphaTexturedPipeline(void)
 
 	VK_InitialiseStructure(multisampling);
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampling.rasterizationSamples = vk_options.msaaSamples ? vk_options.msaaSamples : VK_SAMPLE_COUNT_1_BIT;
 
 	VK_InitialiseStructure(depthStencil);
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
@@ -1405,7 +1405,7 @@ static qbool VK_WorldCreateLightmappedPipeline(void)
 
 	VK_InitialiseStructure(multisampling);
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	multisampling.rasterizationSamples = vk_options.msaaSamples ? vk_options.msaaSamples : VK_SAMPLE_COUNT_1_BIT;
 
 	VK_InitialiseStructure(depthStencil);
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;

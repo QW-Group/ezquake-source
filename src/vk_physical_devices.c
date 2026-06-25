@@ -337,6 +337,51 @@ qbool VK_SelectPhysicalDevice(VkInstance instance, VkSurfaceKHR surface)
 	return true;
 }
 
+// Called once from VK_Initialise, right after VK_SelectPhysicalDevice has
+// populated vk_options.physicalDeviceProperties -- needs the device's actual
+// limits before render pass/swapchain/pipeline creation, all of which read
+// vk_options.msaaSamples. vid_framebuffer_multisample is the same cvar the GL
+// renderers already use for their own framebuffer MSAA (see gl_framebuffer.c);
+// "0" (its default) maps to VK_SAMPLE_COUNT_1_BIT, i.e. no MSAA, taking the
+// exact same render pass/framebuffer/pipeline path as before this feature
+// existed.
+void VK_DetermineMSAASampleCount(void)
+{
+	extern cvar_t vid_framebuffer_multisample;
+	VkSampleCountFlags supported;
+	int requestedInt;
+	VkSampleCountFlagBits candidate;
+
+	vk_options.msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+
+	if (vid_framebuffer_multisample.integer <= 1) {
+		return;
+	}
+
+	// Needs to be supported for *both* color and depth attachments, since
+	// they're both in the same subpass at the same sample count.
+	supported = vk_options.physicalDeviceProperties.limits.framebufferColorSampleCounts &
+		vk_options.physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+
+	Q_ROUND_POWER2(min(vid_framebuffer_multisample.integer, 64), requestedInt);
+
+	// Walk down from the requested count to the largest supported count that
+	// doesn't exceed it, rather than failing outright on hardware that caps
+	// out lower than requested (e.g. requesting 16x on a device that maxes
+	// out at 4x should silently give 4x, not 1x/none).
+	for (candidate = (VkSampleCountFlagBits)requestedInt; candidate > VK_SAMPLE_COUNT_1_BIT; candidate >>= 1) {
+		if (supported & candidate) {
+			vk_options.msaaSamples = candidate;
+			if (vk_options.msaaSamples != requestedInt) {
+				Con_Printf("vulkan: %dx multisampling requested, device supports up to %dx\n", requestedInt, (int)vk_options.msaaSamples);
+			}
+			return;
+		}
+	}
+
+	Con_Printf("vulkan: device doesn't support multisampling, vid_framebuffer_multisample disabled\n");
+}
+
 uint32_t VK_PhysicalDeviceGraphicsQueueFamilyIndex(void)
 {
 	assert(vk_options.physicalDevice != VK_NULL_HANDLE);
