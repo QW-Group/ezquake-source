@@ -19,6 +19,7 @@ of the License, or (at your option) any later version.
 #include "r_buffers.h"
 #include "r_draw.h"
 #include "r_matrix.h"
+#include "r_local.h"
 #include "r_renderer.h"
 #include "r_state.h"
 #include "r_texture_internal.h"
@@ -58,6 +59,7 @@ static VkPipelineLayout hudColorPipelineLayout;
 static VkPipeline hudImagePipeline;
 static VkPipeline hudCircleFillPipeline;
 static VkPipeline hudCircleLinePipeline;
+static VkPipeline hudBrightenPipeline;
 static qbool hudImageBufferDirty;
 
 static glm_image_t lineQuadData[MAX_LINES_PER_FRAME * 4];
@@ -292,7 +294,7 @@ static qbool VK_HudCreateImagePipeline(void)
 	return hudImagePipeline != VK_NULL_HANDLE;
 }
 
-static qbool VK_HudCreateColorPipeline(VkPrimitiveTopology topology, VkPipeline* pipeline)
+static qbool VK_HudCreateColorPipeline(VkPrimitiveTopology topology, r_blendfunc_t blendFunc, VkPipeline* pipeline)
 {
 	VkShaderModule vertShaderModule;
 	VkShaderModule fragShaderModule;
@@ -396,7 +398,7 @@ static qbool VK_HudCreateColorPipeline(VkPrimitiveTopology topology, VkPipeline*
 	depthStencil.depthTestEnable = VK_FALSE;
 	depthStencil.depthWriteEnable = VK_FALSE;
 
-	VK_BlendingConfigure(&colorBlending, &blending, r_blendfunc_premultiplied_alpha);
+	VK_BlendingConfigure(&colorBlending, &blending, blendFunc);
 
 	VK_InitialiseStructure(dynamicState);
 	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -458,14 +460,30 @@ static qbool VK_HudEnsureResources(void)
 			return false;
 		}
 	}
+	if (!R_BufferReferenceIsValid(r_buffer_hud_brighten_vertex_data)) {
+		// NDC-space full-screen quad, triangle-strip order (TL, BL, TR, BR)
+		// matching VK_SetCoordinates' convention elsewhere in this file.
+		static const float fullscreenQuad[] = {
+			-1.0f, -1.0f,
+			-1.0f,  1.0f,
+			 1.0f, -1.0f,
+			 1.0f,  1.0f,
+		};
+		if (!buffers.Create(r_buffer_hud_brighten_vertex_data, buffertype_vertex, "vk-hud-brighten-vbo", sizeof(fullscreenQuad), (void*)fullscreenQuad, bufferusage_constant_data)) {
+			return false;
+		}
+	}
 
 	if (!VK_HudCreateImagePipeline()) {
 		return false;
 	}
-	if (!VK_HudCreateColorPipeline(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, &hudCircleFillPipeline)) {
+	if (!VK_HudCreateColorPipeline(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, r_blendfunc_premultiplied_alpha, &hudCircleFillPipeline)) {
 		return false;
 	}
-	if (!VK_HudCreateColorPipeline(VK_PRIMITIVE_TOPOLOGY_LINE_STRIP, &hudCircleLinePipeline)) {
+	if (!VK_HudCreateColorPipeline(VK_PRIMITIVE_TOPOLOGY_LINE_STRIP, r_blendfunc_premultiplied_alpha, &hudCircleLinePipeline)) {
+		return false;
+	}
+	if (!VK_HudCreateColorPipeline(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, r_blendfunc_additive_blending, &hudBrightenPipeline)) {
 		return false;
 	}
 	return true;
@@ -553,6 +571,62 @@ void VK_HudDrawCircles(texture_ref texture, int start, int end)
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, circleData.drawCircleFill[i] ? hudCircleFillPipeline : hudCircleLinePipeline);
 		vkCmdPushConstants(commandBuffer, hudColorPipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push), &push);
 		vkCmdDraw(commandBuffer, circleData.drawCirclePoints[i], 1, firstVertex, 0);
+	}
+}
+
+// Vulkan has no post-process/palette pass (renderer.RenderFramebuffers and
+// renderer.PostProcessScreen are both no-ops here), so unlike GLC/GLM this is
+// not just a fallback for the vid_software_palette-disabled case -- it's the
+// only contrast boost Vulkan has. Same technique as GLC_BrightenScreen: redraw
+// a full-screen quad with additive blending, halving brightness each pass,
+// until the requested contrast is exhausted. This only covers v_contrast > 1;
+// a real v_gamma curve (including darkening, gamma < 1) would need an actual
+// post-process pass reading back the rendered frame, which Vulkan doesn't
+// have yet -- see AGENTS.md for the tracked limitation.
+void VK_BrightenScreen(void)
+{
+	VkCommandBuffer commandBuffer;
+	VkBuffer vertexBuffer;
+	VkDeviceSize offsets[] = { 0 };
+	extern cvar_t v_contrast;
+	float f;
+
+	if (v_contrast.value <= 1.0) {
+		return;
+	}
+
+	commandBuffer = VK_CurrentCommandBuffer();
+	if (commandBuffer == VK_NULL_HANDLE || !VK_HudEnsureResources()) {
+		return;
+	}
+
+	f = min(v_contrast.value, 3);
+	if (R_OldGammaBehaviour()) {
+		extern float vid_gamma;
+
+		f = pow(f, vid_gamma);
+	}
+
+	vertexBuffer = VK_BufferHandle(r_buffer_hud_brighten_vertex_data);
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
+	VK_HudSetViewportScissor(commandBuffer);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hudBrightenPipeline);
+
+	while (f > 1) {
+		vk_hud_color_push_t push;
+
+		if (f >= 2) {
+			push.color[0] = push.color[1] = push.color[2] = 1.0f;
+		}
+		else {
+			push.color[0] = push.color[1] = push.color[2] = f - 1;
+		}
+		push.color[3] = 1.0f;
+
+		vkCmdPushConstants(commandBuffer, hudColorPipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push), &push);
+		vkCmdDraw(commandBuffer, 4, 1, 0, 0);
+
+		f *= 0.5f;
 	}
 }
 
@@ -760,6 +834,21 @@ void VK_AdjustImages(int first, int last, float x_offset)
 		imageData.images[i * 4 + 2].pos[0] += x_offset;
 		imageData.images[i * 4 + 3].pos[0] += x_offset;
 	}
+}
+
+// Damage/pickup/quad/pent screen tint and underwater colour, same technique
+// as GLC_PolyBlend/GLM_PolyBlend: a single translucent rectangle over the
+// 3D viewport using the existing premultiplied-alpha HUD rectangle pipeline.
+void VK_PolyBlend(float v_blend[4])
+{
+	byte color[4];
+
+	color[0] = (byte)(bound(0, v_blend[0], 1) * 255);
+	color[1] = (byte)(bound(0, v_blend[1], 1) * 255);
+	color[2] = (byte)(bound(0, v_blend[2], 1) * 255);
+	color[3] = (byte)(bound(0, v_blend[3], 1) * 255);
+
+	VK_DrawRectangle((float)r_refdef.vrect.x, (float)r_refdef.vrect.y, (float)r_refdef.vrect.width, (float)r_refdef.vrect.height, color);
 }
 
 void VK_HudResourcesShutdown(void)

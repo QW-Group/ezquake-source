@@ -54,6 +54,8 @@ extern qbool vid_hwgamma_enabled;
 void VK_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, int flags);
 void VK_DrawRectangle(float x, float y, float width, float height, byte* color);
 void VK_AdjustImages(int first, int last, float x_offset);
+void VK_PolyBlend(float v_blend[4]);
+void VK_BrightenScreen(void);
 void VK_TextureLoadCubemapFace(texture_ref cubemap, r_cubemap_direction_id direction, const byte* data, int width, int height);
 void VK_CreateLightmapTextures(void);
 void VK_UploadLightmap(int textureUnit, int lightmapnum);
@@ -826,9 +828,9 @@ void VK_PopulateConfig(void)
 #define VK_IsFramebufferEnabled3D         VK_False
 #define VK_RenderView                     VK_RenderView
 #define VK_PreRenderView                  VK_PreRenderView
-#define VK_PostProcessScreen              VK_NoOperation
-#define VK_BrightenScreen                 VK_NoOperation
-#define VK_PolyBlend                      VK_NoOperationFloat4
+#define VK_PostProcessScreen              VK_BrightenScreen
+#define VK_BrightenScreen                 VK_BrightenScreen
+#define VK_PolyBlend                      VK_PolyBlend
 #define VK_TimeRefresh                    VK_NoOperation
 #define VK_Screenshot                     VK_Screenshot
 #define VK_ScreenshotWidth                VK_ScreenshotWidth
