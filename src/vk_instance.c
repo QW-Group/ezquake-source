@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // VK_EXT_debug_report extension to get debug messages 
 #define EZ_MAX_ADDITIONAL_EXTENSIONS 1
 
-static const char* validationLayers[] = { "VK_LAYER_LUNARG_standard_validation" };
+static const char* validationLayers[] = { "VK_LAYER_KHRONOS_validation" };
 
 static qbool VK_AddValidationLayers(VkInstanceCreateInfo* createInfo)
 {
