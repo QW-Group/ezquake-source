@@ -2110,8 +2110,9 @@ static void VID_UpdateConRes(void)
 	int vidWidth = glConfig.vidWidth;
 	int vidHeight = glConfig.vidHeight;
 
-	int effective_width = vid_framebuffer.integer == 1 ? VID_ScaledWidth3D() : 0;
-	int effective_height = vid_framebuffer.integer == 1 ? VID_ScaledHeight3D() : 0;
+	qbool framebuffer_enabled_3d = renderer.IsFramebufferEnabled3D && renderer.IsFramebufferEnabled3D();
+	int effective_width = (vid_framebuffer.integer == 1 && framebuffer_enabled_3d) ? VID_ScaledWidth3D() : 0;
+	int effective_height = (vid_framebuffer.integer == 1 && framebuffer_enabled_3d) ? VID_ScaledHeight3D() : 0;
 
 	if (effective_width && effective_height) {
 		vidWidth = effective_width;

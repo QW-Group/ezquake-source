@@ -786,13 +786,11 @@ void VK_PopulateConfig(void)
 	glConfig.uniformBufferOffsetAlignment = (int)limits->minUniformBufferOffsetAlignment;
 	glConfig.shaderStorageBufferOffsetAlignment = (int)limits->minStorageBufferOffsetAlignment;
 	glConfig.supported_features =
-		R_SUPPORT_FRAMEBUFFERS |
 		R_SUPPORT_RENDERING_SHADERS |
 		R_SUPPORT_PRIMITIVERESTART |
 		R_SUPPORT_MULTITEXTURING |
 		R_SUPPORT_TEXTURE_SAMPLERS |
-		R_SUPPORT_CUBE_MAPS |
-		R_SUPPORT_FRAMEBUFFERS_SRGB;
+		R_SUPPORT_CUBE_MAPS;
 
 #define VK_CvarForceRecompile             VK_NoOperationCvar
 #define VK_PrintGfxInfo                   VK_PrintGfxInfo
