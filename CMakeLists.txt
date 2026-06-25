@@ -490,6 +490,8 @@ if(RENDERER_VULKAN)
     add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_alias_model.frag vk_alias_model_frag.spv)
     add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_sprite3d.vert vk_sprite3d_vert.spv)
     add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_sprite3d.frag vk_sprite3d_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_post_process.vert vk_post_process_vert.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_post_process.frag vk_post_process_frag.spv)
     add_resources(shaders_vulkan ${vulkan_spirv_shaders})
 
     set(vulkan_renderer_headers

@@ -227,7 +227,16 @@ cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CV
 cvar_t in_raw                     = {"in_raw",                     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
 cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          "0",       CVAR_LATCH_GFX }; /* Needs vid_restart thus vid_.... */
-#if defined(RENDERER_OPTION_MODERN_OPENGL)
+#if defined(RENDERER_OPTION_VULKAN)
+// This branch builds Vulkan alongside the GL renderers (see RENDERER_VULKAN
+// in CMakeLists.txt) -- default to it here so a fresh exe/config actually
+// exercises Vulkan instead of silently falling back to modern GL.
+#ifdef EZ_MULTIPLE_RENDERERS
+cvar_t vid_renderer               = {"vid_renderer",               "2",       CVAR_LATCH_GFX };
+#else
+cvar_t vid_renderer               = {"vid_renderer",               "2",       CVAR_ROM };
+#endif
+#elif defined(RENDERER_OPTION_MODERN_OPENGL)
 #ifdef EZ_MULTIPLE_RENDERERS
 cvar_t vid_renderer               = {"vid_renderer",               "1",       CVAR_LATCH_GFX };
 #else

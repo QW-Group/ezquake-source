@@ -676,9 +676,20 @@ void VK_BeginFrame(void)
 	clearValues[1].depthStencil.depth = glConfig.reversed_depth ? 0.0f : 1.0f;
 	clearValues[1].depthStencil.stencil = 0;
 
+	// Real gamma/contrast/FXAA (VK_PostProcessActive) route the main pass into
+	// the offscreen target instead of the swapchain image directly; the
+	// composite pass that reads it back and writes the swapchain image runs
+	// at the end of VK_EndFrame, after this render pass ends.
+	vk_options.swapChain.postProcessActive = VK_PostProcessActive();
+
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = VK_FrameRenderPass(clear_color);
-	renderPassInfo.framebuffer = vk_options.swapChain.framebuffers[vk_options.frame.imageIndex];
+	renderPassInfo.framebuffer = vk_options.swapChain.postProcessActive ?
+		VK_PostProcessFramebuffer(vk_options.frame.imageIndex) : vk_options.swapChain.framebuffers[vk_options.frame.imageIndex];
+	if (renderPassInfo.framebuffer == VK_NULL_HANDLE) {
+		vk_options.swapChain.postProcessActive = false;
+		renderPassInfo.framebuffer = vk_options.swapChain.framebuffers[vk_options.frame.imageIndex];
+	}
 	renderPassInfo.renderArea.offset.x = 0;
 	renderPassInfo.renderArea.offset.y = 0;
 	renderPassInfo.renderArea.extent = vk_options.swapChain.imageSize;
@@ -717,6 +728,28 @@ void VK_EndFrame(void)
 
 	commandBuffer = vk_options.frame.commandBuffers[vk_options.frame.imageIndex];
 	vkCmdEndRenderPass(commandBuffer);
+
+	if (vk_options.swapChain.postProcessActive) {
+		VkFramebuffer compositeFramebuffer = VK_PostProcessCompositeFramebuffer(vk_options.frame.imageIndex);
+
+		if (compositeFramebuffer != VK_NULL_HANDLE) {
+			VkRenderPassBeginInfo compositePassInfo = { 0 };
+
+			VK_PostProcessTransitionForSampling(commandBuffer, vk_options.frame.imageIndex);
+
+			compositePassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+			compositePassInfo.renderPass = VK_PostProcessRenderPass();
+			compositePassInfo.framebuffer = compositeFramebuffer;
+			compositePassInfo.renderArea.offset.x = 0;
+			compositePassInfo.renderArea.offset.y = 0;
+			compositePassInfo.renderArea.extent = vk_options.swapChain.imageSize;
+
+			vkCmdBeginRenderPass(commandBuffer, &compositePassInfo, VK_SUBPASS_CONTENTS_INLINE);
+			VK_PostProcessComposite(commandBuffer, vk_options.frame.imageIndex);
+			vkCmdEndRenderPass(commandBuffer);
+		}
+	}
+
 	result = vkEndCommandBuffer(commandBuffer);
 	if (result != VK_SUCCESS) {
 		Sys_Error("vulkan: vkEndCommandBuffer failed: %d", result);
@@ -810,6 +843,42 @@ void VK_EndFrame(void)
 
 	vk_options.frame.active = false;
 	vk_options.frame.currentFrame = (frameIndex + 1) % VK_MAX_FRAMES_IN_FLIGHT;
+}
+
+// GLC_TimeRefresh/GLM_TimeRefresh spin the view through 360 degrees over 128
+// R_RenderView() calls inside a single already-open GL context and measure
+// wall time around that loop, relying on a final EnsureFinished (glFinish-
+// equivalent) to flush. Vulkan has no equivalent mid-frame flush -- draw
+// commands here only become real GPU work once a frame is submitted via
+// VK_EndFrame -- so each iteration has to be a full R_BeginRendering/
+// R_RenderView/R_EndRendering cycle (begin command buffer, draw, submit,
+// present), same as a normal render frame minus 2D/HUD. The closing
+// vkDeviceWaitIdle (not just EnsureFinished, which is a no-op here -- see
+// the VK_EnsureFinished define) ensures the timing includes the last
+// submitted frame's actual GPU completion, not just CPU-side queuing.
+void VK_TimeRefresh(void)
+{
+	extern void R_SetupFrame(void);
+	int i;
+	int x, y, width, height;
+	float start, stop, time;
+
+	start = Sys_DoubleTime();
+	for (i = 0; i < 128; i++) {
+		r_refdef.viewangles[1] = i * (360.0 / 128.0);
+
+		R_BeginRendering(&x, &y, &width, &height);
+		R_SetupFrame();
+		R_RenderView();
+		R_EndRendering();
+	}
+
+	if (vk_options.logicalDevice != VK_NULL_HANDLE) {
+		vkDeviceWaitIdle(vk_options.logicalDevice);
+	}
+	stop = Sys_DoubleTime();
+	time = stop - start;
+	Com_Printf("%f seconds (%f fps)\n", time, 128 / time);
 }
 
 qbool VK_Initialise(SDL_Window* window)
@@ -967,7 +1036,7 @@ void VK_PopulateConfig(void)
 #define VK_PostProcessScreen              VK_BrightenScreen
 #define VK_BrightenScreen                 VK_BrightenScreen
 #define VK_PolyBlend                      VK_PolyBlend
-#define VK_TimeRefresh                    VK_NoOperation
+#define VK_TimeRefresh                    VK_TimeRefresh
 #define VK_Screenshot                     VK_Screenshot
 #define VK_ScreenshotWidth                VK_ScreenshotWidth
 #define VK_ScreenshotHeight               VK_ScreenshotHeight

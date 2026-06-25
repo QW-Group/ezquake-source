@@ -42,6 +42,10 @@ extern const unsigned char vk_hud_color_vert_spv[];
 extern const unsigned int vk_hud_color_vert_spv_len;
 extern const unsigned char vk_hud_color_frag_spv[];
 extern const unsigned int vk_hud_color_frag_spv_len;
+extern const unsigned char vk_post_process_vert_spv[];
+extern const unsigned int vk_post_process_vert_spv_len;
+extern const unsigned char vk_post_process_frag_spv[];
+extern const unsigned int vk_post_process_frag_spv_len;
 
 typedef struct vk_hud_image_push_s {
 	float alphaTestFont;
@@ -54,6 +58,15 @@ typedef struct vk_hud_color_push_s {
 	float color[4];
 } vk_hud_color_push_t;
 
+typedef struct vk_post_process_push_s {
+	float blend[4];
+	float gamma;
+	float contrast;
+	float invWidth;
+	float invHeight;
+	int fxaaEnabled;
+} vk_post_process_push_t;
+
 static VkPipelineLayout hudImagePipelineLayout;
 static VkPipelineLayout hudColorPipelineLayout;
 static VkPipeline hudImagePipeline;
@@ -61,6 +74,11 @@ static VkPipeline hudCircleFillPipeline;
 static VkPipeline hudCircleLinePipeline;
 static VkPipeline hudBrightenPipeline;
 static qbool hudImageBufferDirty;
+
+static VkDescriptorSetLayout postProcessDescriptorSetLayout;
+static VkPipelineLayout postProcessPipelineLayout;
+static VkPipeline postProcessPipeline;
+static VkSampler postProcessSampler;
 
 static glm_image_t lineQuadData[MAX_LINES_PER_FRAME * 4];
 
@@ -430,6 +448,285 @@ static qbool VK_HudCreateColorPipeline(VkPrimitiveTopology topology, r_blendfunc
 	return *pipeline != VK_NULL_HANDLE;
 }
 
+static qbool VK_PostProcessCreatePipeline(void)
+{
+	VkShaderModule vertShaderModule;
+	VkShaderModule fragShaderModule;
+	VkPipelineShaderStageCreateInfo shaderStages[2];
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo;
+	VkPipelineInputAssemblyStateCreateInfo inputAssembly;
+	VkPipelineViewportStateCreateInfo viewportState;
+	VkPipelineRasterizationStateCreateInfo rasterizer;
+	VkPipelineMultisampleStateCreateInfo multisampling;
+	VkPipelineDepthStencilStateCreateInfo depthStencil;
+	VkPipelineColorBlendAttachmentState blending;
+	VkPipelineColorBlendStateCreateInfo colorBlending;
+	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	VkPipelineDynamicStateCreateInfo dynamicState;
+	VkPushConstantRange pushConstantRange;
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
+	VkGraphicsPipelineCreateInfo pipelineInfo;
+	VkSamplerCreateInfo samplerInfo;
+	VkDescriptorSetLayoutBinding binding;
+	VkDescriptorSetLayoutCreateInfo layoutInfo;
+
+	if (postProcessPipeline != VK_NULL_HANDLE) {
+		return true;
+	}
+
+	if (postProcessSampler == VK_NULL_HANDLE) {
+		VK_InitialiseStructure(samplerInfo);
+		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerInfo.magFilter = VK_FILTER_LINEAR;
+		samplerInfo.minFilter = VK_FILTER_LINEAR;
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.maxAnisotropy = 1.0f;
+		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		samplerInfo.unnormalizedCoordinates = VK_FALSE;
+		if (vkCreateSampler(vk_options.logicalDevice, &samplerInfo, NULL, &postProcessSampler) != VK_SUCCESS) {
+			return false;
+		}
+	}
+
+	if (postProcessDescriptorSetLayout == VK_NULL_HANDLE) {
+		VK_InitialiseStructure(binding);
+		binding.binding = 0;
+		binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		binding.descriptorCount = 1;
+		binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+		VK_InitialiseStructure(layoutInfo);
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = 1;
+		layoutInfo.pBindings = &binding;
+		if (vkCreateDescriptorSetLayout(vk_options.logicalDevice, &layoutInfo, NULL, &postProcessDescriptorSetLayout) != VK_SUCCESS) {
+			return false;
+		}
+	}
+
+	vertShaderModule = VK_HudCreateShaderModule(vk_post_process_vert_spv, vk_post_process_vert_spv_len);
+	fragShaderModule = VK_HudCreateShaderModule(vk_post_process_frag_spv, vk_post_process_frag_spv_len);
+	if (vertShaderModule == VK_NULL_HANDLE || fragShaderModule == VK_NULL_HANDLE) {
+		return false;
+	}
+
+	VK_InitialiseStructure(shaderStages[0]);
+	shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	shaderStages[0].module = vertShaderModule;
+	shaderStages[0].pName = "main";
+
+	VK_InitialiseStructure(shaderStages[1]);
+	shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	shaderStages[1].module = fragShaderModule;
+	shaderStages[1].pName = "main";
+
+	VK_InitialiseStructure(vertexInputInfo);
+	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+	VK_InitialiseStructure(inputAssembly);
+	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+	VK_InitialiseStructure(viewportState);
+	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	viewportState.viewportCount = 1;
+	viewportState.scissorCount = 1;
+
+	VK_InitialiseStructure(rasterizer);
+	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+	rasterizer.lineWidth = 1.0f;
+	rasterizer.cullMode = VK_CULL_MODE_NONE;
+	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+
+	VK_InitialiseStructure(multisampling);
+	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+	VK_InitialiseStructure(depthStencil);
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = VK_FALSE;
+	depthStencil.depthWriteEnable = VK_FALSE;
+
+	VK_BlendingConfigure(&colorBlending, &blending, r_blendfunc_overwrite);
+
+	VK_InitialiseStructure(dynamicState);
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = sizeof(dynamicStates) / sizeof(dynamicStates[0]);
+	dynamicState.pDynamicStates = dynamicStates;
+
+	if (postProcessPipelineLayout == VK_NULL_HANDLE) {
+		VK_InitialiseStructure(pushConstantRange);
+		pushConstantRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		pushConstantRange.offset = 0;
+		pushConstantRange.size = sizeof(vk_post_process_push_t);
+
+		VK_InitialiseStructure(pipelineLayoutInfo);
+		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutInfo.setLayoutCount = 1;
+		pipelineLayoutInfo.pSetLayouts = &postProcessDescriptorSetLayout;
+		pipelineLayoutInfo.pushConstantRangeCount = 1;
+		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+		if (vkCreatePipelineLayout(vk_options.logicalDevice, &pipelineLayoutInfo, NULL, &postProcessPipelineLayout) != VK_SUCCESS) {
+			vkDestroyShaderModule(vk_options.logicalDevice, fragShaderModule, NULL);
+			vkDestroyShaderModule(vk_options.logicalDevice, vertShaderModule, NULL);
+			return false;
+		}
+	}
+
+	VK_InitialiseStructure(pipelineInfo);
+	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	pipelineInfo.stageCount = 2;
+	pipelineInfo.pStages = shaderStages;
+	pipelineInfo.pVertexInputState = &vertexInputInfo;
+	pipelineInfo.pInputAssemblyState = &inputAssembly;
+	pipelineInfo.pViewportState = &viewportState;
+	pipelineInfo.pRasterizationState = &rasterizer;
+	pipelineInfo.pMultisampleState = &multisampling;
+	pipelineInfo.pDepthStencilState = &depthStencil;
+	pipelineInfo.pColorBlendState = &colorBlending;
+	pipelineInfo.pDynamicState = &dynamicState;
+	pipelineInfo.layout = postProcessPipelineLayout;
+	pipelineInfo.renderPass = VK_PostProcessRenderPass();
+	pipelineInfo.subpass = 0;
+
+	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &postProcessPipeline) != VK_SUCCESS) {
+		postProcessPipeline = VK_NULL_HANDLE;
+	}
+
+	vkDestroyShaderModule(vk_options.logicalDevice, fragShaderModule, NULL);
+	vkDestroyShaderModule(vk_options.logicalDevice, vertShaderModule, NULL);
+	return postProcessPipeline != VK_NULL_HANDLE;
+}
+
+// Allocates/updates the descriptor set for swapchain image imageIndex,
+// pointing the sampler at that image's offscreen post-process color target.
+// Done lazily here (not in VK_CreatePostProcessResources) because the
+// descriptor *contents* depend on the sampler/layout created above, which in
+// turn are only created the first time post-process is actually used.
+static VkDescriptorSet VK_PostProcessDescriptorSet(uint32_t imageIndex)
+{
+	VkDescriptorSet set;
+	VkDescriptorSetAllocateInfo allocInfo;
+	VkDescriptorImageInfo imageInfo;
+	VkWriteDescriptorSet write;
+
+	if (!vk_options.swapChain.postProcessDescriptorSets || imageIndex >= vk_options.swapChain.imageCount) {
+		return VK_NULL_HANDLE;
+	}
+
+	set = vk_options.swapChain.postProcessDescriptorSets[imageIndex];
+	if (set != VK_NULL_HANDLE) {
+		return set;
+	}
+
+	VK_InitialiseStructure(allocInfo);
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = vk_options.swapChain.postProcessDescriptorPool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &postProcessDescriptorSetLayout;
+	if (vkAllocateDescriptorSets(vk_options.logicalDevice, &allocInfo, &set) != VK_SUCCESS) {
+		return VK_NULL_HANDLE;
+	}
+
+	VK_InitialiseStructure(imageInfo);
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = vk_options.swapChain.postProcessColorImageViews[imageIndex];
+	imageInfo.sampler = postProcessSampler;
+
+	VK_InitialiseStructure(write);
+	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	write.dstSet = set;
+	write.dstBinding = 0;
+	write.dstArrayElement = 0;
+	write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	write.descriptorCount = 1;
+	write.pImageInfo = &imageInfo;
+	vkUpdateDescriptorSets(vk_options.logicalDevice, 1, &write, 0, NULL);
+
+	vk_options.swapChain.postProcessDescriptorSets[imageIndex] = set;
+	return set;
+}
+
+// Composite pass: reads the offscreen target the main render pass just wrote
+// for this swapchain image, applies real gamma/contrast and (optionally) FXAA,
+// writes the swapchain image directly. Caller (VK_EndFrame) has already begun
+// VK_PostProcessRenderPass() against VK_PostProcessFramebuffer(imageIndex)
+// before calling this.
+// VK_MainRenderPass() leaves the offscreen target in PRESENT_SRC_KHR (same
+// finalLayout it uses for the swapchain image in the no-postprocess path, see
+// VK_RenderPassCreate) -- transition it to something the sampler can actually
+// read. Must run outside the composite render pass instance (before
+// vkCmdBeginRenderPass), since this barrier targets an image that isn't an
+// attachment of that render pass. No barrier back afterwards: next frame's
+// main pass attachment has initialLayout=UNDEFINED and loadOp=CLEAR, so
+// whatever layout this image is in when that pass starts doesn't matter.
+void VK_PostProcessTransitionForSampling(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+{
+	VkImageMemoryBarrier barrier;
+
+	if (!vk_options.swapChain.postProcessColorImages || imageIndex >= vk_options.swapChain.imageCount) {
+		return;
+	}
+
+	VK_InitialiseStructure(barrier);
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.image = vk_options.swapChain.postProcessColorImages[imageIndex];
+	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.baseMipLevel = 0;
+	barrier.subresourceRange.levelCount = 1;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+	barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, NULL, 0, NULL, 1, &barrier);
+}
+
+void VK_PostProcessComposite(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+{
+	extern cvar_t v_gamma, v_contrast;
+	extern cvar_t vid_framebuffer_fxaa;
+	extern cvar_t vid_software_palette;
+	VkDescriptorSet descriptorSet;
+	vk_post_process_push_t push;
+	qbool paletteActive = vid_software_palette.integer != 0;
+
+	if (!VK_PostProcessCreatePipeline()) {
+		return;
+	}
+
+	descriptorSet = VK_PostProcessDescriptorSet(imageIndex);
+	if (descriptorSet == VK_NULL_HANDLE) {
+		return;
+	}
+
+	push.blend[0] = push.blend[1] = push.blend[2] = 0.0f;
+	push.blend[3] = 1.0f;
+	// Same POST_PROCESS_PALETTE gate as GLM_CompilePostProcessProgram() --
+	// see VK_PostProcessActive(). Without it, gl_gamma/gl_contrast values meant
+	// for the (unimplemented here) hardware gamma ramp get applied as a shader
+	// curve instead, which can wash the image to solid white.
+	push.gamma = paletteActive ? bound(0.3f, v_gamma.value, 3.0f) : 1.0f;
+	push.contrast = paletteActive ? bound(1.0f, v_contrast.value, 3.0f) : 1.0f;
+	push.invWidth = 1.0f / (float)max(1, vk_options.swapChain.imageSize.width);
+	push.invHeight = 1.0f / (float)max(1, vk_options.swapChain.imageSize.height);
+	push.fxaaEnabled = vid_framebuffer_fxaa.integer != 0 ? 1 : 0;
+
+	VK_HudSetViewportScissor(commandBuffer);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, postProcessPipeline);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, postProcessPipelineLayout, 0, 1, &descriptorSet, 0, NULL);
+	vkCmdPushConstants(commandBuffer, postProcessPipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push), &push);
+	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+}
+
 static qbool VK_HudEnsureResources(void)
 {
 	if (!R_BufferReferenceIsValid(r_buffer_hud_image_vertex_data)) {
@@ -483,7 +780,11 @@ static qbool VK_HudEnsureResources(void)
 	if (!VK_HudCreateColorPipeline(VK_PRIMITIVE_TOPOLOGY_LINE_STRIP, r_blendfunc_premultiplied_alpha, &hudCircleLinePipeline)) {
 		return false;
 	}
-	if (!VK_HudCreateColorPipeline(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, r_blendfunc_additive_blending, &hudBrightenPipeline)) {
+	// Must match GLC/GLM's r_state_brighten_screen exactly: dst*(1+src), not
+	// flat additive (src+dst) -- additive saturates to solid white on the
+	// very first f>=2 pass regardless of the underlying scene, since it adds
+	// pure white instead of scaling the existing pixel up.
+	if (!VK_HudCreateColorPipeline(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP, r_blendfunc_src_dst_color_dest_one, &hudBrightenPipeline)) {
 		return false;
 	}
 	return true;
@@ -876,6 +1177,22 @@ void VK_HudResourcesShutdown(void)
 	if (hudColorPipelineLayout != VK_NULL_HANDLE) {
 		vkDestroyPipelineLayout(vk_options.logicalDevice, hudColorPipelineLayout, NULL);
 		hudColorPipelineLayout = VK_NULL_HANDLE;
+	}
+	if (postProcessPipeline != VK_NULL_HANDLE) {
+		vkDestroyPipeline(vk_options.logicalDevice, postProcessPipeline, NULL);
+		postProcessPipeline = VK_NULL_HANDLE;
+	}
+	if (postProcessPipelineLayout != VK_NULL_HANDLE) {
+		vkDestroyPipelineLayout(vk_options.logicalDevice, postProcessPipelineLayout, NULL);
+		postProcessPipelineLayout = VK_NULL_HANDLE;
+	}
+	if (postProcessDescriptorSetLayout != VK_NULL_HANDLE) {
+		vkDestroyDescriptorSetLayout(vk_options.logicalDevice, postProcessDescriptorSetLayout, NULL);
+		postProcessDescriptorSetLayout = VK_NULL_HANDLE;
+	}
+	if (postProcessSampler != VK_NULL_HANDLE) {
+		vkDestroySampler(vk_options.logicalDevice, postProcessSampler, NULL);
+		postProcessSampler = VK_NULL_HANDLE;
 	}
 	hudImageBufferDirty = false;
 }

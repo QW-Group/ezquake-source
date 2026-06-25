@@ -38,6 +38,12 @@ typedef enum {
 	// valid to use with this one; only vkCmdBeginRenderPass needs to pick
 	// between them, done once per frame in VK_BeginFrame().
 	vk_renderpass_main_noclear,
+	// Second pass used only when VK_PostProcessActive() is true: a single
+	// fullscreen-quad subpass that reads the offscreen color target the main
+	// pass just wrote (see VK_CreatePostProcessResources) via sampler, applies
+	// real gamma/contrast/FXAA, and writes the swapchain image directly --
+	// see VK_PostProcessComposite in vk_draw.c.
+	vk_renderpass_postprocess,
 
 	vk_renderpass_count
 } vk_renderpass_id;
@@ -183,6 +189,63 @@ qbool VK_RenderPassCreate(void)
 	return VK_RenderPassCreateVariant(vk_renderpass_main, true) && VK_RenderPassCreateVariant(vk_renderpass_main_noclear, false);
 }
 
+// Single subpass, single color attachment (the swapchain image), no depth --
+// pure composition. Source attachment (the offscreen target) is bound as a
+// sampled descriptor by the pipeline in vk_draw.c, not as a render-pass
+// attachment, so no input-attachment subpass dependency is needed here beyond
+// the usual external one.
+static qbool VK_PostProcessRenderPassCreate(void)
+{
+	VkAttachmentDescription colorAttachment;
+	VkAttachmentReference colorAttachmentRef;
+	VkSubpassDescription subpass;
+	VkSubpassDependency dependency;
+	VkRenderPassCreateInfo renderPassInfo;
+
+	VK_InitialiseStructure(colorAttachment);
+	colorAttachment.format = vk_options.physicalDeviceSurfaceFormat.format;
+	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	VK_InitialiseStructure(colorAttachmentRef);
+	colorAttachmentRef.attachment = 0;
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VK_InitialiseStructure(subpass);
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &colorAttachmentRef;
+
+	// The read hazard (sampling the offscreen target) is handled explicitly by
+	// the VK_PostProcessTransitionForSampling barrier before this render pass
+	// begins, not by this dependency -- this only needs to order against
+	// whatever previously used the swapchain image (the presentation engine,
+	// same as the main render pass's own external dependency pattern).
+	VK_InitialiseStructure(dependency);
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	VK_InitialiseStructure(renderPassInfo);
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = 1;
+	renderPassInfo.pAttachments = &colorAttachment;
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpass;
+	renderPassInfo.dependencyCount = 1;
+	renderPassInfo.pDependencies = &dependency;
+
+	return vkCreateRenderPass(vk_options.logicalDevice, &renderPassInfo, NULL, &renderPasses[vk_renderpass_postprocess]) == VK_SUCCESS;
+}
+
 VkRenderPass VK_MainRenderPass(void)
 {
 	return renderPasses[vk_renderpass_main];
@@ -191,6 +254,14 @@ VkRenderPass VK_MainRenderPass(void)
 VkRenderPass VK_FrameRenderPass(qbool clear_color)
 {
 	return renderPasses[clear_color ? vk_renderpass_main : vk_renderpass_main_noclear];
+}
+
+VkRenderPass VK_PostProcessRenderPass(void)
+{
+	if (renderPasses[vk_renderpass_postprocess] == VK_NULL_HANDLE) {
+		VK_PostProcessRenderPassCreate();
+	}
+	return renderPasses[vk_renderpass_postprocess];
 }
 
 VkFormat VK_DepthFormat(void)

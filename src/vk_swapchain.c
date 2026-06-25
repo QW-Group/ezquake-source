@@ -155,6 +155,242 @@ static qbool VK_CreateSwapChainMSAAColorResources(void)
 	return true;
 }
 
+static void VK_DestroyPostProcessDescriptors(void)
+{
+	if (vk_options.swapChain.postProcessDescriptorPool != VK_NULL_HANDLE) {
+		vkDestroyDescriptorPool(vk_options.logicalDevice, vk_options.swapChain.postProcessDescriptorPool, NULL);
+		vk_options.swapChain.postProcessDescriptorPool = VK_NULL_HANDLE;
+	}
+	Q_free(vk_options.swapChain.postProcessDescriptorSets);
+	vk_options.swapChain.postProcessDescriptorSets = NULL;
+}
+
+void VK_DestroyPostProcessResources(void)
+{
+	uint32_t i;
+
+	VK_DestroyPostProcessDescriptors();
+
+	if (vk_options.swapChain.postProcessFramebuffers) {
+		for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.swapChain.postProcessFramebuffers[i] != VK_NULL_HANDLE) {
+				vkDestroyFramebuffer(vk_options.logicalDevice, vk_options.swapChain.postProcessFramebuffers[i], NULL);
+			}
+		}
+		Q_free(vk_options.swapChain.postProcessFramebuffers);
+		vk_options.swapChain.postProcessFramebuffers = NULL;
+	}
+
+	if (vk_options.swapChain.postProcessCompositeFramebuffers) {
+		for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.swapChain.postProcessCompositeFramebuffers[i] != VK_NULL_HANDLE) {
+				vkDestroyFramebuffer(vk_options.logicalDevice, vk_options.swapChain.postProcessCompositeFramebuffers[i], NULL);
+			}
+		}
+		Q_free(vk_options.swapChain.postProcessCompositeFramebuffers);
+		vk_options.swapChain.postProcessCompositeFramebuffers = NULL;
+	}
+
+	if (vk_options.swapChain.postProcessColorImageViews) {
+		for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.swapChain.postProcessColorImageViews[i] != VK_NULL_HANDLE) {
+				vkDestroyImageView(vk_options.logicalDevice, vk_options.swapChain.postProcessColorImageViews[i], NULL);
+			}
+		}
+		Q_free(vk_options.swapChain.postProcessColorImageViews);
+		vk_options.swapChain.postProcessColorImageViews = NULL;
+	}
+
+	if (vk_options.swapChain.postProcessColorImages) {
+		for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.swapChain.postProcessColorImages[i] != VK_NULL_HANDLE) {
+				vkDestroyImage(vk_options.logicalDevice, vk_options.swapChain.postProcessColorImages[i], NULL);
+			}
+		}
+		Q_free(vk_options.swapChain.postProcessColorImages);
+		vk_options.swapChain.postProcessColorImages = NULL;
+	}
+
+	if (vk_options.swapChain.postProcessColorImageMemory) {
+		for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.swapChain.postProcessColorImageMemory[i] != VK_NULL_HANDLE) {
+				vkFreeMemory(vk_options.logicalDevice, vk_options.swapChain.postProcessColorImageMemory[i], NULL);
+			}
+		}
+		Q_free(vk_options.swapChain.postProcessColorImageMemory);
+		vk_options.swapChain.postProcessColorImageMemory = NULL;
+	}
+
+	vk_options.swapChain.postProcessActive = false;
+}
+
+// Real gamma/contrast curve and/or FXAA only differ from the GLM/GLC shader
+// path here -- this is what gates whether the main render pass draws into the
+// offscreen target + composite pass, or straight into the swapchain image
+// like before this feature existed. v_gamma/v_contrast/vid_framebuffer_fxaa
+// are all unlatched (no vid_restart needed to change them), so this is a
+// plain per-frame check, not a one-time decision -- the offscreen resources
+// themselves are allocated unconditionally in VK_CreatePostProcessResources
+// (called once per swapchain build) so toggling these cvars live never needs
+// a restart.
+qbool VK_PostProcessActive(void)
+{
+	extern cvar_t v_gamma, v_contrast;
+	extern cvar_t vid_framebuffer_fxaa;
+	extern cvar_t vid_software_palette;
+
+	// Matches GLM_CompilePostProcessProgram()'s POST_PROCESS_PALETTE gate: the
+	// real gamma/contrast curve is only a shader pass when vid_software_palette
+	// is on -- otherwise GL leaves gamma to the OS/hardware gamma ramp and this
+	// shader must stay a no-op, or any non-default gl_gamma/gl_contrast washes
+	// the image out (e.g. gl_gamma 0.4 + gl_contrast 2 -> pow(2,0.4) > 1, clamps
+	// to white) even though GL itself never applies that curve in this mode.
+	if (!vid_software_palette.integer) {
+		return vid_framebuffer_fxaa.integer != 0;
+	}
+
+	return v_gamma.value != 1.0f || v_contrast.value != 1.0f || vid_framebuffer_fxaa.integer != 0;
+}
+
+qbool VK_CreatePostProcessResources(void)
+{
+	uint32_t i;
+	qbool msaa = vk_options.msaaSamples > VK_SAMPLE_COUNT_1_BIT;
+	VkRenderPass mainRenderPass = VK_MainRenderPass();
+	VkRenderPass compositeRenderPass = VK_PostProcessRenderPass();
+	VkDescriptorPoolSize poolSize;
+	VkDescriptorPoolCreateInfo poolInfo;
+
+	VK_DestroyPostProcessResources();
+
+	if (mainRenderPass == VK_NULL_HANDLE || compositeRenderPass == VK_NULL_HANDLE || !vk_options.swapChain.imageCount) {
+		return false;
+	}
+
+	vk_options.swapChain.postProcessColorImages = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.postProcessColorImages[0]));
+	vk_options.swapChain.postProcessColorImageMemory = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.postProcessColorImageMemory[0]));
+	vk_options.swapChain.postProcessColorImageViews = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.postProcessColorImageViews[0]));
+	// postProcessFramebuffers: what the main render pass draws into (offscreen
+	// target as attachment 0, same depth/MSAA attachments VK_CreateSwapChainFramebuffers
+	// uses) -- bound in VK_BeginFrame when VK_PostProcessActive(). postProcessCompositeFramebuffers:
+	// the composite pass's target -- single color attachment, the real
+	// swapchain image view, built against VK_PostProcessRenderPass() -- bound
+	// in VK_EndFrame via VK_PostProcessFramebuffer().
+	vk_options.swapChain.postProcessFramebuffers = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.postProcessFramebuffers[0]));
+	vk_options.swapChain.postProcessCompositeFramebuffers = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.postProcessCompositeFramebuffers[0]));
+
+	for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+		VkImageViewCreateInfo viewInfo;
+		VkFramebufferCreateInfo framebufferInfo;
+		VkImageView mainAttachments[3];
+
+		if (!VK_CreateImageResource(
+				vk_options.swapChain.imageSize.width,
+				vk_options.swapChain.imageSize.height,
+				1,
+				VK_SAMPLE_COUNT_1_BIT,
+				vk_options.physicalDeviceSurfaceFormat.format,
+				VK_IMAGE_TILING_OPTIMAL,
+				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				&vk_options.swapChain.postProcessColorImages[i],
+				&vk_options.swapChain.postProcessColorImageMemory[i])) {
+			VK_DestroyPostProcessResources();
+			return false;
+		}
+
+		VK_InitialiseStructure(viewInfo);
+		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.image = vk_options.swapChain.postProcessColorImages[i];
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		viewInfo.format = vk_options.physicalDeviceSurfaceFormat.format;
+		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		viewInfo.subresourceRange.baseMipLevel = 0;
+		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.baseArrayLayer = 0;
+		viewInfo.subresourceRange.layerCount = 1;
+
+		if (vkCreateImageView(vk_options.logicalDevice, &viewInfo, NULL, &vk_options.swapChain.postProcessColorImageViews[i]) != VK_SUCCESS) {
+			VK_DestroyPostProcessResources();
+			return false;
+		}
+
+		if (msaa) {
+			mainAttachments[0] = vk_options.swapChain.msaaColorImageView;
+			mainAttachments[1] = vk_options.swapChain.depthImageView;
+			mainAttachments[2] = vk_options.swapChain.postProcessColorImageViews[i];
+		}
+		else {
+			mainAttachments[0] = vk_options.swapChain.postProcessColorImageViews[i];
+			mainAttachments[1] = vk_options.swapChain.depthImageView;
+		}
+
+		VK_InitialiseStructure(framebufferInfo);
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = mainRenderPass;
+		framebufferInfo.attachmentCount = msaa ? 3 : 2;
+		framebufferInfo.pAttachments = mainAttachments;
+		framebufferInfo.width = vk_options.swapChain.imageSize.width;
+		framebufferInfo.height = vk_options.swapChain.imageSize.height;
+		framebufferInfo.layers = 1;
+
+		if (vkCreateFramebuffer(vk_options.logicalDevice, &framebufferInfo, NULL, &vk_options.swapChain.postProcessFramebuffers[i]) != VK_SUCCESS) {
+			VK_DestroyPostProcessResources();
+			return false;
+		}
+
+		VK_InitialiseStructure(framebufferInfo);
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = compositeRenderPass;
+		framebufferInfo.attachmentCount = 1;
+		framebufferInfo.pAttachments = &vk_options.swapChain.imageViews[i];
+		framebufferInfo.width = vk_options.swapChain.imageSize.width;
+		framebufferInfo.height = vk_options.swapChain.imageSize.height;
+		framebufferInfo.layers = 1;
+
+		if (vkCreateFramebuffer(vk_options.logicalDevice, &framebufferInfo, NULL, &vk_options.swapChain.postProcessCompositeFramebuffers[i]) != VK_SUCCESS) {
+			VK_DestroyPostProcessResources();
+			return false;
+		}
+	}
+
+	VK_InitialiseStructure(poolSize);
+	poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSize.descriptorCount = vk_options.swapChain.imageCount;
+
+	VK_InitialiseStructure(poolInfo);
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.poolSizeCount = 1;
+	poolInfo.pPoolSizes = &poolSize;
+	poolInfo.maxSets = vk_options.swapChain.imageCount;
+
+	if (vkCreateDescriptorPool(vk_options.logicalDevice, &poolInfo, NULL, &vk_options.swapChain.postProcessDescriptorPool) != VK_SUCCESS) {
+		VK_DestroyPostProcessResources();
+		return false;
+	}
+
+	vk_options.swapChain.postProcessDescriptorSets = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.postProcessDescriptorSets[0]));
+
+	vk_options.swapChain.postProcessActive = true;
+	return true;
+}
+
+VkFramebuffer VK_PostProcessFramebuffer(uint32_t imageIndex)
+{
+	if (!vk_options.swapChain.postProcessFramebuffers || imageIndex >= vk_options.swapChain.imageCount) {
+		return VK_NULL_HANDLE;
+	}
+	return vk_options.swapChain.postProcessFramebuffers[imageIndex];
+}
+
+VkFramebuffer VK_PostProcessCompositeFramebuffer(uint32_t imageIndex)
+{
+	if (!vk_options.swapChain.postProcessCompositeFramebuffers || imageIndex >= vk_options.swapChain.imageCount) {
+		return VK_NULL_HANDLE;
+	}
+	return vk_options.swapChain.postProcessCompositeFramebuffers[imageIndex];
+}
+
 qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR surface)
 {
 	uint32_t requestedImageCount;
@@ -317,11 +553,22 @@ qbool VK_CreateSwapChainFramebuffers(void)
 		}
 	}
 
+	// Allocated unconditionally alongside the main framebuffers (not gated on
+	// VK_PostProcessActive() right now) since v_gamma/v_contrast/
+	// vid_framebuffer_fxaa can all change without a vid_restart -- see the
+	// comment on VK_PostProcessActive itself.
+	if (!VK_CreatePostProcessResources()) {
+		VK_DestroySwapChainFramebuffers();
+		return false;
+	}
+
 	return true;
 }
 
 void VK_DestroySwapChainFramebuffers(void)
 {
+	VK_DestroyPostProcessResources();
+
 	if (vk_options.swapChain.framebuffers) {
 		uint32_t i;
 

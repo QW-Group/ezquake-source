@@ -128,6 +128,23 @@ static qbool VK_TextureQueuePendingUpload(texture_ref texture, int offsetx, int 
 	return true;
 }
 
+// A texture slot can be destroyed/recreated at a different size within the
+// same frame it queued a pending upload (e.g. map-load texture churn). Without
+// this, VK_TextureFlushPendingUploads would later copy the stale queued
+// width/height into the slot's new (possibly smaller) image, tripping
+// vkCmdCopyBufferToImage's extent validation and corrupting the command
+// buffer for the rest of the frame.
+static void VK_TextureInvalidatePendingUploads(texture_ref texture)
+{
+	int i;
+
+	for (i = 0; i < pendingTextureUploadCount; ++i) {
+		if (pendingTextureUploads[i].texture.index == texture.index) {
+			pendingTextureUploads[i].texture.index = -1;
+		}
+	}
+}
+
 static void VK_TextureDestroyObjects(texture_ref texture)
 {
 	vk_texture_t* vktex;
@@ -135,6 +152,8 @@ static void VK_TextureDestroyObjects(texture_ref texture)
 	if (!VK_TextureReferenceInRange(texture) || vk_options.logicalDevice == VK_NULL_HANDLE) {
 		return;
 	}
+
+	VK_TextureInvalidatePendingUploads(texture);
 
 	vktex = &textureData[texture.index];
 
