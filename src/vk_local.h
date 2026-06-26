@@ -176,6 +176,26 @@ typedef struct vk_options_s {
 	// (same as the other Framebuffer menu options) -- this is read once at
 	// init, not polled per frame.
 	VkSampleCountFlagBits msaaSamples;
+	// Anti-lag / low-latency support: detected once in VK_CreateLogicalDevice
+	// from the optional extensions the chosen physical device actually
+	// supports (VK_AMD_anti_lag requires its pNext feature bit too, not just
+	// the extension string -- see VK_PhysicalDeviceSupportsOptionalExtensions).
+	// vid_vulkan_antilag is polled per-frame in VK_BeginFrame/VK_EndFrame, no
+	// vid_restart needed: it only gates whether these calls happen, nothing
+	// about pipeline/render pass/swapchain creation changes.
+	qbool supportsAmdAntiLag;
+	qbool supportsNvLowLatency2;
+	uint64_t antiLagFrameIndex;
+	PFN_vkAntiLagUpdateAMD antiLagUpdateAMD;
+	PFN_vkSetLatencySleepModeNV setLatencySleepModeNV;
+	PFN_vkLatencySleepNV latencySleepNV;
+	PFN_vkSetLatencyMarkerNV setLatencyMarkerNV;
+	// Dedicated binary semaphore signalled by the driver from vkLatencySleepNV
+	// once it's time to let the CPU proceed -- vkLatencySleepNV itself only
+	// schedules that signal, it does not block, so VK_BeginFrame must wait on
+	// this semaphore right after calling it.
+	VkSemaphore latencySleepSemaphore;
+	qbool latencySleepModeSet;
 	struct {
 		VkSwapchainKHR handle;
 		VkImage* images;

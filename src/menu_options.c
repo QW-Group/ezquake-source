@@ -56,7 +56,7 @@ extern cvar_t r_farclip, gl_max_size, gl_miptexLevel;
 extern cvar_t r_bloom;
 extern cvar_t gl_flashblend, r_dynamic, gl_lightmode, gl_modulate;
 
-extern cvar_t vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap, vid_framebuffer_scale, vid_framebuffer_multisample, vid_framebuffer_fxaa;
+extern cvar_t vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap, vid_framebuffer_scale, vid_framebuffer_multisample, vid_framebuffer_fxaa, vid_vulkan_antilag;
 
 extern cvar_t vid_software_palette;
 
@@ -1316,6 +1316,7 @@ setting settsystem_arr[] = {
 	ADDSET_BOOL("Vertical Sync", r_swapInterval),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL("Vsync Lag Fix", vid_vsync_lag_fix),
+	ADDSET_BOOL("Reduce Input Lag (Vulkan)", vid_vulkan_antilag),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_CUSTOM("Bit Depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),

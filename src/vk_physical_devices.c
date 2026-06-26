@@ -61,6 +61,11 @@ static const char* VK_PhysicalDeviceTypeName(VkPhysicalDeviceType type)
 	}
 }
 
+// Anti-lag / low-latency extensions are optional, vendor-specific, and never
+// disqualify a device when missing -- unlike requiredDeviceExtensions above,
+// where any miss rules the device out entirely.
+static const char* optionalAntiLagExtensions[] = { VK_AMD_ANTI_LAG_EXTENSION_NAME, VK_NV_LOW_LATENCY_2_EXTENSION_NAME };
+
 static void VK_PhysicalDeviceQueryQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, int* graphics_queue_index, int* compute_queue_index, int* present_queue_index)
 {
 	uint32_t queue_families_count;
@@ -118,6 +123,38 @@ static qbool VK_PhysicalDeviceSupportsRequiredExtensions(VkPhysicalDevice device
 	Q_free(properties);
 
 	return (foundCount == sizeof(requiredDeviceExtensions) / sizeof(requiredDeviceExtensions[0]));
+}
+
+// Unlike VK_PhysicalDeviceSupportsRequiredExtensions, this never fails the
+// device -- it just reports which of optionalAntiLagExtensions[] are present,
+// so VK_CreateLogicalDevice can enable exactly those by name. AMD's anti-lag
+// extension additionally needs its pNext feature bit confirmed separately
+// (see the VkPhysicalDeviceAntiLagFeaturesAMD query in VK_CreateLogicalDevice)
+// before it's safe to treat as supported -- the extension string alone isn't
+// enough, same as how samplerAnisotropy can't just be assumed from a feature
+// existing in the struct.
+static void VK_PhysicalDeviceSupportsOptionalExtensions(VkPhysicalDevice device, qbool* supportsAmdAntiLagExt, qbool* supportsNvLowLatency2)
+{
+	uint32_t count;
+	VkExtensionProperties* properties;
+	uint32_t i;
+
+	*supportsAmdAntiLagExt = false;
+	*supportsNvLowLatency2 = false;
+
+	vkEnumerateDeviceExtensionProperties(device, NULL, &count, NULL);
+	properties = Q_malloc(count * sizeof(VkExtensionProperties));
+	vkEnumerateDeviceExtensionProperties(device, NULL, &count, properties);
+
+	for (i = 0; i < count; ++i) {
+		if (!strcmp(properties[i].extensionName, VK_AMD_ANTI_LAG_EXTENSION_NAME)) {
+			*supportsAmdAntiLagExt = true;
+		}
+		else if (!strcmp(properties[i].extensionName, VK_NV_LOW_LATENCY_2_EXTENSION_NAME)) {
+			*supportsNvLowLatency2 = true;
+		}
+	}
+	Q_free(properties);
 }
 
 static qbool VK_PhysicalDeviceBestPresentationMode(VkPhysicalDevice device, VkSurfaceKHR surface, VkPresentModeKHR* best)
@@ -408,8 +445,15 @@ qbool VK_CreateLogicalDevice(VkInstance instance)
 	VkDeviceQueueCreateInfo queueInfos[2] = { { 0 } };
 	VkDeviceCreateInfo deviceInfo = { 0 };
 	VkPhysicalDeviceFeatures deviceFeatures = { 0 };
+	VkPhysicalDeviceAntiLagFeaturesAMD antiLagFeatures = { 0 };
+	VkPhysicalDeviceFeatures2 features2 = { 0 };
 	float priorities[] = { 1.0f };
 	uint32_t queueCount = 0;
+	const char* enabledExtensions[4];
+	uint32_t enabledExtensionCount = 0;
+	qbool amdAntiLagExtPresent = false;
+	qbool nvLowLatency2Present = false;
+	uint32_t i;
 
 	// gl_anisotropy needs this enabled device-wide before any sampler can
 	// set anisotropyEnable -- only requested if the physical device actually
@@ -417,6 +461,48 @@ qbool VK_CreateLogicalDevice(VkInstance instance)
 	// VK_SelectPhysicalDevice), so it's a no-op rather than a vkCreateDevice
 	// failure on whatever hardware doesn't.
 	deviceFeatures.samplerAnisotropy = vk_options.physicalDeviceFeatures.samplerAnisotropy;
+
+	for (i = 0; i < sizeof(requiredDeviceExtensions) / sizeof(requiredDeviceExtensions[0]); ++i) {
+		enabledExtensions[enabledExtensionCount++] = requiredDeviceExtensions[i];
+	}
+
+	// Only probe/enable the vendor low-latency extensions when the user has
+	// actually opted in via vid_vulkan_antilag. Enabling either extension on
+	// the device unconditionally (regardless of whether anything ever calls
+	// its functions) was found to cause VK_ERROR_DEVICE_LOST on NVIDIA during
+	// normal Vulkan init, even with the cvar left at its default of 0 -- the
+	// AMD path never exercises this since the AMD driver used for testing
+	// didn't report support, but better to not enable either string unless
+	// requested.
+	{
+		extern cvar_t vid_vulkan_antilag;
+
+		if (vid_vulkan_antilag.integer) {
+			VK_PhysicalDeviceSupportsOptionalExtensions(vk_options.physicalDevice, &amdAntiLagExtPresent, &nvLowLatency2Present);
+		}
+	}
+
+	vk_options.supportsAmdAntiLag = false;
+	if (amdAntiLagExtPresent) {
+		// VK_AMD_anti_lag also gates itself behind a pNext feature bit --
+		// the extension being present in vkEnumerateDeviceExtensionProperties
+		// is not sufficient on its own (some drivers expose the extension
+		// string but report the feature as unsupported).
+		antiLagFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ANTI_LAG_FEATURES_AMD;
+		features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		features2.pNext = &antiLagFeatures;
+		vkGetPhysicalDeviceFeatures2(vk_options.physicalDevice, &features2);
+
+		if (antiLagFeatures.antiLag) {
+			vk_options.supportsAmdAntiLag = true;
+			enabledExtensions[enabledExtensionCount++] = VK_AMD_ANTI_LAG_EXTENSION_NAME;
+		}
+	}
+
+	vk_options.supportsNvLowLatency2 = nvLowLatency2Present;
+	if (nvLowLatency2Present) {
+		enabledExtensions[enabledExtensionCount++] = VK_NV_LOW_LATENCY_2_EXTENSION_NAME;
+	}
 
 	queueInfos[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 	queueInfos[0].queueFamilyIndex = VK_PhysicalDeviceGraphicsQueueFamilyIndex();
@@ -437,8 +523,16 @@ qbool VK_CreateLogicalDevice(VkInstance instance)
 	deviceInfo.queueCreateInfoCount = queueCount;
 	deviceInfo.pEnabledFeatures = &deviceFeatures;
 
-	deviceInfo.enabledExtensionCount = sizeof(requiredDeviceExtensions) / sizeof(requiredDeviceExtensions[0]);
-	deviceInfo.ppEnabledExtensionNames = requiredDeviceExtensions;
+	if (vk_options.supportsAmdAntiLag) {
+		// Re-using antiLagFeatures (already populated above) to actually
+		// request the feature be enabled on the logical device, same struct
+		// instance just attached to a different sType-chain root this time.
+		antiLagFeatures.pNext = NULL;
+		deviceInfo.pNext = &antiLagFeatures;
+	}
+
+	deviceInfo.enabledExtensionCount = enabledExtensionCount;
+	deviceInfo.ppEnabledExtensionNames = enabledExtensions;
 	// Device-level layers are legacy/ignored since Vulkan 1.0 -- only
 	// instance layers (VK_CreateInstance/VK_AddValidationLayers) matter.
 	// Leaving enabledLayerCount non-zero here just trips validation:
@@ -460,6 +554,45 @@ qbool VK_CreateLogicalDevice(VkInstance instance)
 	}
 	else {
 		vk_options.presentQueue = vk_options.graphicsQueue;
+	}
+
+	if (vk_options.supportsAmdAntiLag) {
+		vk_options.antiLagUpdateAMD = (PFN_vkAntiLagUpdateAMD)vkGetDeviceProcAddr(vk_options.logicalDevice, "vkAntiLagUpdateAMD");
+		vk_options.supportsAmdAntiLag = (vk_options.antiLagUpdateAMD != NULL);
+	}
+
+	if (vk_options.supportsNvLowLatency2) {
+		vk_options.setLatencySleepModeNV = (PFN_vkSetLatencySleepModeNV)vkGetDeviceProcAddr(vk_options.logicalDevice, "vkSetLatencySleepModeNV");
+		vk_options.latencySleepNV = (PFN_vkLatencySleepNV)vkGetDeviceProcAddr(vk_options.logicalDevice, "vkLatencySleepNV");
+		vk_options.setLatencyMarkerNV = (PFN_vkSetLatencyMarkerNV)vkGetDeviceProcAddr(vk_options.logicalDevice, "vkSetLatencyMarkerNV");
+		vk_options.supportsNvLowLatency2 = (vk_options.setLatencySleepModeNV && vk_options.latencySleepNV && vk_options.setLatencyMarkerNV);
+
+		if (vk_options.supportsNvLowLatency2) {
+			// vkLatencySleepNV signals via signalSemaphore/value, which the
+			// app then waits on with vkWaitSemaphores -- that wait-by-value
+			// API only works against a timeline semaphore, not a plain
+			// binary one, so this needs the VkSemaphoreTypeCreateInfo pNext.
+			VkSemaphoreTypeCreateInfo typeInfo = { 0 };
+			VkSemaphoreCreateInfo semaphoreInfo = { 0 };
+
+			typeInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
+			typeInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
+			typeInfo.initialValue = 0;
+
+			semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+			semaphoreInfo.pNext = &typeInfo;
+			if (vkCreateSemaphore(vk_options.logicalDevice, &semaphoreInfo, NULL, &vk_options.latencySleepSemaphore) != VK_SUCCESS) {
+				vk_options.supportsNvLowLatency2 = false;
+				vk_options.latencySleepSemaphore = VK_NULL_HANDLE;
+			}
+		}
+	}
+
+	if (vk_options.supportsAmdAntiLag) {
+		Com_Printf("vulkan: AMD Anti-Lag supported\n");
+	}
+	if (vk_options.supportsNvLowLatency2) {
+		Com_Printf("vulkan: NVIDIA Low Latency 2 supported\n");
 	}
 
 	return true;
