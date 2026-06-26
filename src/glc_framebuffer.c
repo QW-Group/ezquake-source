@@ -125,15 +125,8 @@ void GLC_RenderFramebuffers(void)
 	qbool flip3d = GL_FramebufferEnabled3D();
 
 	if (GLC_CompilePostProcessProgram()) {
-		extern cvar_t gl_hwblend;
-
-		float blend_alpha = (!vid_hwgamma_enabled || !gl_hwblend.value || cl.teamfortress) ? 0 : v_blend[3];
-		float blend_values[4] = {
-			v_blend[0] * blend_alpha,
-			v_blend[1] * blend_alpha,
-			v_blend[2] * blend_alpha,
-			1 - blend_alpha
-		};
+		// R_PolyBlend() already applies v_blend separately; this pass never blends.
+		float blend_values[4] = { 0, 0, 0, 1 };
 
 		R_ProgramUse(r_program_post_process_glc);
 		R_ProgramUniform1f(r_program_uniform_post_process_glc_gamma, v_gamma.value);

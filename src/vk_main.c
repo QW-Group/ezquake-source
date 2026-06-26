@@ -60,7 +60,6 @@ static uint32_t vk_force_clear_frames_remaining;
 extern cvar_t gl_clear;
 extern cvar_t cl_multiview;
 extern cvar_t v_contrast;
-extern qbool vid_hwgamma_enabled;
 
 
 void VK_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, int flags);
@@ -597,7 +596,7 @@ void VK_BeginFrame(void)
 	// the queue-wide stalls caused by immediate command buffers.
 	VK_TextureFlushPendingUploads(commandBuffer, frameIndex);
 
-	clear_color = !cl_multiview.integer && (gl_clear.integer || (!vid_hwgamma_enabled && v_contrast.value > 1));
+	clear_color = !cl_multiview.integer && (gl_clear.integer || v_contrast.value > 1);
 	if (vk_force_clear_frames_remaining > 0) {
 		clear_color = true;
 		--vk_force_clear_frames_remaining;
