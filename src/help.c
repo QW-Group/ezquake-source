@@ -560,7 +560,7 @@ void Help_VarDescription (const char *varname, char* buf, size_t bufsize)
 		strlcat(buf, varname, bufsize);
 		strlcat(buf, "\n", bufsize);
 
-		if (var->default_value) {
+		if (var && var->default_value) {
 			strlcat(buf, CharsToBrownStatic("Default: "), bufsize);
 			strlcat(buf, var->default_value, bufsize);
 			strlcat(buf, "\n", bufsize);

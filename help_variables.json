@@ -21890,6 +21890,13 @@
       "remarks": "When vid_vsync is set to 1, an artificial delay in the input can appear, enabling this should eliminate the delay.",
       "type": "boolean"
     },
+    "vid_vulkan_antilag": {
+      "default": "0",
+      "desc": "Reduces input lag in the Vulkan renderer using the GPU vendor's native low-latency extension (AMD Anti-Lag or NVIDIA Low Latency 2).",
+      "group-id": "52",
+      "remarks": "Only has an effect when using the Vulkan renderer on a GPU/driver that supports VK_AMD_anti_lag or VK_NV_low_latency2; otherwise this setting is a no-op.",
+      "type": "boolean"
+    },
     "vid_vsync_lag_tweak": {
       "default": "1.0",
       "desc": "Custom value for experimental vertical synchronization delay reduction.",
