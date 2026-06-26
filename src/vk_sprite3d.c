@@ -50,6 +50,7 @@ typedef enum vk_sprite_pipeline_id_s {
 	VK_SPRITE_PIPELINE_ENTITY_ALPHA_TEST,
 	VK_SPRITE_PIPELINE_DARKEN_DEPTH,
 	VK_SPRITE_PIPELINE_ADDITIVE_NODEPTH,
+	VK_SPRITE_PIPELINE_ADDITIVE_DEPTH,
 
 	VK_SPRITE_PIPELINE_COUNT
 } vk_sprite_pipeline_id_t;
@@ -70,6 +71,7 @@ static const vk_sprite_pipeline_state_t spritePipelineStates[VK_SPRITE_PIPELINE_
 	{ r_blendfunc_premultiplied_alpha, true,  true,  true  },
 	{ r_blendfunc_src_zero_dest_one_minus_src_color, true, false, false },
 	{ r_blendfunc_additive_blending, false, false, false },
+	{ r_blendfunc_additive_blending, true,  false, false },
 };
 
 static vk_sprite_pipeline_id_t VK_SpritePipelineForBatch(const gl_sprite3d_batch_t* batch)
@@ -85,6 +87,8 @@ static vk_sprite_pipeline_id_t VK_SpritePipelineForBatch(const gl_sprite3d_batch
 			return VK_SPRITE_PIPELINE_PREMULT_DEPTH_WRITE;
 		case r_state_particles_qmb_textured_blood:
 			return VK_SPRITE_PIPELINE_DARKEN_DEPTH;
+		case r_state_light_bubble:
+			return VK_SPRITE_PIPELINE_ADDITIVE_DEPTH;
 		case r_state_coronas:
 			return VK_SPRITE_PIPELINE_ADDITIVE_NODEPTH;
 		default:
