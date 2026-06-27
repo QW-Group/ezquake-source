@@ -602,6 +602,7 @@ static void R_SetupGL(void)
 
 void R_Init(void)
 {
+	if (!host_initialized) {
 	R_SkyRegisterCvars();
 	Cmd_AddCommand("timerefresh", R_TimeRefresh_f);
 #ifndef CLIENTONLY
@@ -764,6 +765,7 @@ void R_Init(void)
 	Cvar_Register(&r_remove_collinear_vertices);
 
 	Cvar_ResetCurrentGroup();
+	}
 
 	if (!hud_netgraph) {
 		hud_netgraph = HUD_Register(
