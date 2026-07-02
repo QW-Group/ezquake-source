@@ -246,20 +246,42 @@ static qbool VK_PhysicalDeviceSwapChainCompatible(VkPhysicalDevice device, VkSur
 		preferred_format->format = VK_FORMAT_B8G8R8A8_UNORM;
 	}
 	else {
-		// Find optimal format.... FIXME (what are we really doing here?)
+		// vkGetPhysicalDeviceSurfaceFormatsKHR's enumeration order isn't
+		// guaranteed by the spec, so it varies by vendor -- falling back to
+		// formats[0] unconditionally (as this used to) risked picking
+		// whatever the driver happened to list first, with no format or
+		// colorspace preference at all, on any device where the exact
+		// B8G8R8A8_UNORM/req_color_space combination below isn't offered.
+		// The two-pass search below still prefers an exact match, but the
+		// fallback now prefers matching just the format (any colorspace),
+		// then just the colorspace (any 8-bit BGRA/RGBA format), before
+		// finally taking formats[0] as a last resort.
 		uint32_t i;
+		int best_format_only = -1;
+		int best_colorspace_only = -1;
 
 		for (i = 0; i < num_formats; ++i) {
-			if (formats[i].format == VK_FORMAT_B8G8R8A8_UNORM && formats[i].colorSpace == req_color_space) {
+			qbool format_match = (formats[i].format == VK_FORMAT_B8G8R8A8_UNORM);
+			qbool colorspace_match = (formats[i].colorSpace == req_color_space);
+
+			if (format_match && colorspace_match) {
 				preferred_format->colorSpace = req_color_space;
 				preferred_format->format = VK_FORMAT_B8G8R8A8_UNORM;
 				break;
 			}
+			if (format_match && best_format_only < 0) {
+				best_format_only = (int)i;
+			}
+			if (colorspace_match && best_colorspace_only < 0) {
+				best_colorspace_only = (int)i;
+			}
 		}
 
 		if (i >= num_formats) {
-			preferred_format->colorSpace = formats[0].colorSpace;
-			preferred_format->format = formats[0].format;
+			int fallback = (best_format_only >= 0) ? best_format_only : (best_colorspace_only >= 0 ? best_colorspace_only : 0);
+
+			preferred_format->colorSpace = formats[fallback].colorSpace;
+			preferred_format->format = formats[fallback].format;
 		}
 	}
 	Q_free(formats);
