@@ -400,7 +400,13 @@ qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR s
 	VkSwapchainCreateInfoKHR createInfo = { 0 };
 
 	requestedImageCount = vk_options.physicalDeviceSurfaceCapabilities.minImageCount;
-	if (vk_options.physicalDevicePresentationMode == VK_PRESENT_MODE_MAILBOX_KHR) {
+	// The "+1" is only needed to turn a tight (2-image) minimum into the 3
+	// images MAILBOX needs to be truly non-blocking. Some WSI drivers already
+	// report a generous minImageCount for the surface; piling another image
+	// on top of that can exceed what the platform's present queue can
+	// actually keep acquired at once.
+	if (vk_options.physicalDevicePresentationMode == VK_PRESENT_MODE_MAILBOX_KHR &&
+		vk_options.physicalDeviceSurfaceCapabilities.minImageCount < 3) {
 		requestedImageCount += 1;
 	}
 	if (vk_options.physicalDeviceSurfaceCapabilities.maxImageCount > 0) {
