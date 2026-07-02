@@ -339,7 +339,7 @@ static qbool VK_SpriteCreatePipeline(r_primitive_id primitive, vk_sprite_pipelin
 	pipelineInfo.renderPass = VK_MainRenderPass();
 	pipelineInfo.subpass = 0;
 
-	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, pipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, vk_options.pipelineCache, 1, &pipelineInfo, NULL, pipeline) != VK_SUCCESS) {
 		*pipeline = VK_NULL_HANDLE;
 	}
 

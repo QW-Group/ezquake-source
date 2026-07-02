@@ -84,20 +84,26 @@ static glm_image_t lineQuadData[MAX_LINES_PER_FRAME * 4];
 
 static void VK_SetCoordinates(glm_image_t* targ, float x1, float y1, float x2, float y2, float s, float s_width, float t, float t_height, int flags)
 {
-	float v1[4] = { x1, y1, 0, 1 };
-	float v2[4] = { x2, y2, 0, 1 };
+	// Transform all 4 corners independently rather than 2 diagonal corners
+	// (v1,v2) and mixing v1.x/v2.y to build the other two -- that mixing is
+	// only valid when cachedMatrix is axis-aligned (no x/y swap). Today
+	// cachedMatrix is always axis-aligned on desktop, so this isn't an active
+	// bug, but transforming all 4 corners is more robust to future matrix
+	// changes and costs nothing measurable.
+	float vTL[4] = { x1, y1, 0, 1 };
+	float vTR[4] = { x2, y1, 0, 1 };
+	float vBL[4] = { x1, y2, 0, 1 };
+	float vBR[4] = { x2, y2, 0, 1 };
 
-	R_MultiplyVector(cachedMatrix, v1, v1);
-	R_MultiplyVector(cachedMatrix, v2, v2);
+	R_MultiplyVector(cachedMatrix, vTL, vTL);
+	R_MultiplyVector(cachedMatrix, vTR, vTR);
+	R_MultiplyVector(cachedMatrix, vBL, vBL);
+	R_MultiplyVector(cachedMatrix, vBR, vBR);
 
-	targ[0].pos[0] = v1[0]; targ[0].tex[0] = s;
-	targ[1].pos[0] = v1[0]; targ[1].tex[0] = s;
-	targ[2].pos[0] = v2[0]; targ[2].tex[0] = s + s_width;
-	targ[3].pos[0] = v2[0]; targ[3].tex[0] = s + s_width;
-	targ[0].pos[1] = v1[1]; targ[0].tex[1] = t;
-	targ[1].pos[1] = v2[1]; targ[1].tex[1] = t + t_height;
-	targ[2].pos[1] = v1[1]; targ[2].tex[1] = t;
-	targ[3].pos[1] = v2[1]; targ[3].tex[1] = t + t_height;
+	targ[0].pos[0] = vTL[0]; targ[0].pos[1] = vTL[1]; targ[0].tex[0] = s;           targ[0].tex[1] = t;
+	targ[1].pos[0] = vBL[0]; targ[1].pos[1] = vBL[1]; targ[1].tex[0] = s;           targ[1].tex[1] = t + t_height;
+	targ[2].pos[0] = vTR[0]; targ[2].pos[1] = vTR[1]; targ[2].tex[0] = s + s_width; targ[2].tex[1] = t;
+	targ[3].pos[0] = vBR[0]; targ[3].pos[1] = vBR[1]; targ[3].tex[0] = s + s_width; targ[3].tex[1] = t + t_height;
 
 	targ[0].flags = targ[1].flags = targ[2].flags = targ[3].flags = flags;
 }
@@ -303,7 +309,7 @@ static qbool VK_HudCreateImagePipeline(void)
 	pipelineInfo.renderPass = VK_MainRenderPass();
 	pipelineInfo.subpass = 0;
 
-	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &hudImagePipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, vk_options.pipelineCache, 1, &pipelineInfo, NULL, &hudImagePipeline) != VK_SUCCESS) {
 		hudImagePipeline = VK_NULL_HANDLE;
 	}
 
@@ -439,7 +445,7 @@ static qbool VK_HudCreateColorPipeline(VkPrimitiveTopology topology, r_blendfunc
 	pipelineInfo.renderPass = VK_MainRenderPass();
 	pipelineInfo.subpass = 0;
 
-	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, pipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, vk_options.pipelineCache, 1, &pipelineInfo, NULL, pipeline) != VK_SUCCESS) {
 		*pipeline = VK_NULL_HANDLE;
 	}
 
@@ -594,7 +600,7 @@ static qbool VK_PostProcessCreatePipeline(void)
 	pipelineInfo.renderPass = VK_PostProcessRenderPass();
 	pipelineInfo.subpass = 0;
 
-	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &postProcessPipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, vk_options.pipelineCache, 1, &pipelineInfo, NULL, &postProcessPipeline) != VK_SUCCESS) {
 		postProcessPipeline = VK_NULL_HANDLE;
 	}
 
@@ -1169,6 +1175,10 @@ void VK_HudResourcesShutdown(void)
 	if (hudCircleLinePipeline != VK_NULL_HANDLE) {
 		vkDestroyPipeline(vk_options.logicalDevice, hudCircleLinePipeline, NULL);
 		hudCircleLinePipeline = VK_NULL_HANDLE;
+	}
+	if (hudBrightenPipeline != VK_NULL_HANDLE) {
+		vkDestroyPipeline(vk_options.logicalDevice, hudBrightenPipeline, NULL);
+		hudBrightenPipeline = VK_NULL_HANDLE;
 	}
 	if (hudImagePipelineLayout != VK_NULL_HANDLE) {
 		vkDestroyPipelineLayout(vk_options.logicalDevice, hudImagePipelineLayout, NULL);

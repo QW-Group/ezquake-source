@@ -617,7 +617,95 @@ qbool VK_CreateLogicalDevice(VkInstance instance)
 		Com_Printf("vulkan: NVIDIA Low Latency 2 supported\n");
 	}
 
+	VK_LoadPipelineCache();
+
 	return true;
+}
+
+#define VK_PIPELINE_CACHE_FILE "vulkan/pipeline_cache.bin"
+
+// VkPipelineCacheHeaderVersionOne, the layout of the first bytes of any
+// pipeline cache blob (Vulkan spec 10.9, "Pipeline Cache"). Not exposed as a
+// struct by the headers this project builds against, so laid out by hand
+// here purely to validate a blob before ever handing it to the driver.
+#pragma pack(push, 1)
+typedef struct {
+	uint32_t headerSize;
+	uint32_t headerVersion;
+	uint32_t vendorID;
+	uint32_t deviceID;
+	uint8_t  pipelineCacheUUID[VK_UUID_SIZE];
+} vk_pipeline_cache_header_t;
+#pragma pack(pop)
+
+// Loads a previously saved driver pipeline cache blob, if any, so
+// vkCreateGraphicsPipelines() at the various call sites can skip re-compiling
+// shaders/pipelines it has already seen on this GPU+driver. A missing, empty,
+// or driver-rejected (stale/foreign) blob is not an error: VkPipelineCache is
+// purely an optimization hint, and vkCreatePipelineCache() with no/garbage
+// initial data still returns a valid, usable (just initially empty) cache.
+//
+// The header is still checked by hand before that, rather than trusting the
+// driver to reject a mismatched blob cleanly: this file's on-disk cache can
+// span multiple ezquake builds/driver updates/GPU swaps over its lifetime,
+// and hasn't been proven safe to hand a blob from a different GPU/driver to
+// vkCreatePipelineCache() on every driver this project supports -- cheaper to
+// just not pass it through at all when the header doesn't match this device.
+void VK_LoadPipelineCache(void)
+{
+	VkPipelineCacheCreateInfo cacheInfo = { 0 };
+	int cacheLen = 0;
+	byte* cacheData = FS_LoadHeapFile(VK_PIPELINE_CACHE_FILE, &cacheLen);
+	qbool headerValid = false;
+
+	if (cacheData && (size_t)cacheLen >= sizeof(vk_pipeline_cache_header_t)) {
+		vk_pipeline_cache_header_t* header = (vk_pipeline_cache_header_t*)cacheData;
+
+		headerValid = (
+			header->headerVersion == VK_PIPELINE_CACHE_HEADER_VERSION_ONE &&
+			header->vendorID == vk_options.physicalDeviceProperties.vendorID &&
+			header->deviceID == vk_options.physicalDeviceProperties.deviceID &&
+			memcmp(header->pipelineCacheUUID, vk_options.physicalDeviceProperties.pipelineCacheUUID, VK_UUID_SIZE) == 0
+		);
+	}
+
+	cacheInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+	if (headerValid) {
+		cacheInfo.initialDataSize = (size_t)cacheLen;
+		cacheInfo.pInitialData = cacheData;
+	}
+
+	vk_options.pipelineCache = VK_NULL_HANDLE;
+	if (vkCreatePipelineCache(vk_options.logicalDevice, &cacheInfo, NULL, &vk_options.pipelineCache) != VK_SUCCESS) {
+		vk_options.pipelineCache = VK_NULL_HANDLE;
+	}
+
+	if (cacheData) {
+		Q_free(cacheData);
+	}
+}
+
+// Persists the (possibly now-larger) pipeline cache so the next run starts
+// warm. Called once on shutdown, after every pipeline that might be created
+// this session already has been -- see VK_Shutdown.
+void VK_SavePipelineCache(void)
+{
+	size_t dataSize = 0;
+	void* data;
+
+	if (vk_options.pipelineCache == VK_NULL_HANDLE || vk_options.logicalDevice == VK_NULL_HANDLE) {
+		return;
+	}
+
+	if (vkGetPipelineCacheData(vk_options.logicalDevice, vk_options.pipelineCache, &dataSize, NULL) != VK_SUCCESS || dataSize == 0) {
+		return;
+	}
+
+	data = Q_malloc(dataSize);
+	if (vkGetPipelineCacheData(vk_options.logicalDevice, vk_options.pipelineCache, &dataSize, data) == VK_SUCCESS) {
+		FS_WriteFile(VK_PIPELINE_CACHE_FILE, data, (int)dataSize);
+	}
+	Q_free(data);
 }
 
 #endif // RENDERER_OPTION_VULKAN

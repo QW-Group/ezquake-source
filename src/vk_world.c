@@ -721,7 +721,7 @@ static qbool VK_WorldCreateFlatPipeline(void)
 	pipelineInfo.renderPass = VK_MainRenderPass();
 	pipelineInfo.subpass = 0;
 
-	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &worldFlatPipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, vk_options.pipelineCache, 1, &pipelineInfo, NULL, &worldFlatPipeline) != VK_SUCCESS) {
 		worldFlatPipeline = VK_NULL_HANDLE;
 	}
 
@@ -902,7 +902,7 @@ static qbool VK_WorldCreateTexturedPipeline(void)
 	pipelineInfo.renderPass = VK_MainRenderPass();
 	pipelineInfo.subpass = 0;
 
-	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &worldTexturedPipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, vk_options.pipelineCache, 1, &pipelineInfo, NULL, &worldTexturedPipeline) != VK_SUCCESS) {
 		worldTexturedPipeline = VK_NULL_HANDLE;
 	}
 
@@ -1092,7 +1092,7 @@ static qbool VK_WorldCreateOverlayPipeline(qbool luma)
 	pipelineInfo.renderPass = VK_MainRenderPass();
 	pipelineInfo.subpass = 0;
 
-	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, pipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, vk_options.pipelineCache, 1, &pipelineInfo, NULL, pipeline) != VK_SUCCESS) {
 		*pipeline = VK_NULL_HANDLE;
 	}
 
@@ -1279,7 +1279,7 @@ static qbool VK_WorldCreateAlphaTexturedPipeline(void)
 	pipelineInfo.renderPass = VK_MainRenderPass();
 	pipelineInfo.subpass = 0;
 
-	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &worldAlphaTexturedPipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, vk_options.pipelineCache, 1, &pipelineInfo, NULL, &worldAlphaTexturedPipeline) != VK_SUCCESS) {
 		worldAlphaTexturedPipeline = VK_NULL_HANDLE;
 	}
 
@@ -1467,7 +1467,7 @@ static qbool VK_WorldCreateLightmappedPipeline(void)
 	pipelineInfo.renderPass = VK_MainRenderPass();
 	pipelineInfo.subpass = 0;
 
-	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, NULL, &worldLightmappedPipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, vk_options.pipelineCache, 1, &pipelineInfo, NULL, &worldLightmappedPipeline) != VK_SUCCESS) {
 		worldLightmappedPipeline = VK_NULL_HANDLE;
 	}
 
