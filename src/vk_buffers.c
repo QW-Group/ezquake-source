@@ -35,6 +35,13 @@ typedef struct vk_buffer_s {
 	buffertype_t type;
 	bufferusage_t usage;
 	size_t size;
+	// Persistently mapped for the buffer's whole lifetime (all four
+	// bufferusage_t styles use HOST_VISIBLE|HOST_COHERENT memory, so this is
+	// legal per spec and needs no explicit flush): VK_BufferUpdateSection
+	// used to vkMapMemory/vkUnmapMemory on every single call, which is
+	// pointless host-driver overhead for memory that's always
+	// host-coherent anyway. NULL only while the buffer doesn't exist yet.
+	void* mapped;
 } vk_buffer_t;
 
 // Each r_buffer_id gets one VkBuffer per frame-in-flight, not a single shared
@@ -159,7 +166,6 @@ static qbool VK_BufferCreate(r_buffer_id id, buffertype_t type, const char* name
 	// currently live.
 	for (i = 0; i < VK_MAX_FRAMES_IN_FLIGHT; ++i) {
 		vk_buffer_t* slot = &bufferData[id][i];
-		void* mapped;
 
 		if (!VK_CreateBufferResource(size, bufferUsage, memoryStyle, &slot->handle, &slot->memory)) {
 			VK_BufferDestroyCopies(id);
@@ -169,10 +175,14 @@ static qbool VK_BufferCreate(r_buffer_id id, buffertype_t type, const char* name
 		slot->type = type;
 		slot->usage = usage;
 		slot->size = size;
+		slot->mapped = NULL;
 
-		if (data && vkMapMemory(vk_options.logicalDevice, slot->memory, 0, size, 0, &mapped) == VK_SUCCESS) {
-			memcpy(mapped, data, size);
-			vkUnmapMemory(vk_options.logicalDevice, slot->memory);
+		if (vkMapMemory(vk_options.logicalDevice, slot->memory, 0, size, 0, &slot->mapped) != VK_SUCCESS) {
+			VK_BufferDestroyCopies(id);
+			return false;
+		}
+		if (data) {
+			memcpy(slot->mapped, data, size);
 		}
 	}
 
@@ -227,7 +237,6 @@ static void VK_BufferUpdate(r_buffer_id id, int size, void* data)
 static void VK_BufferUpdateSection(r_buffer_id id, ptrdiff_t offset, int size, const void* data)
 {
 	vk_buffer_t* slot;
-	void* mapped;
 
 	if (id <= r_buffer_none || id >= r_buffer_count || size <= 0 || !data) {
 		return;
@@ -238,14 +247,16 @@ static void VK_BufferUpdateSection(r_buffer_id id, ptrdiff_t offset, int size, c
 		VK_BufferEnsureSize(id, offset + size);
 		slot = VK_BufferCurrentSlot(id);
 	}
-	if (slot->handle == VK_NULL_HANDLE) {
+	if (slot->handle == VK_NULL_HANDLE || !slot->mapped) {
 		return;
 	}
 
-	if (vkMapMemory(vk_options.logicalDevice, slot->memory, offset, size, 0, &mapped) == VK_SUCCESS) {
-		memcpy(mapped, data, size);
-		vkUnmapMemory(vk_options.logicalDevice, slot->memory);
-	}
+	// Persistently mapped in VK_BufferCreate/VK_BufferResize -- no
+	// vkMapMemory/vkUnmapMemory needed per update, and no explicit flush
+	// either: every bufferusage_t style uses HOST_COHERENT memory (see
+	// VK_BufferMemoryStyle), which guarantees the GPU sees this write
+	// without one.
+	memcpy((byte*)slot->mapped + offset, data, size);
 }
 
 static void VK_BufferResize(r_buffer_id id, int size, void* data)
