@@ -39,6 +39,7 @@ struct model_s;
 // vk_main.c
 qbool VK_Initialise(SDL_Window* window);
 void VK_Shutdown(r_shutdown_mode_t mode);
+void VK_AbandonActiveFrame(void);
 void VK_PopulateConfig(void);
 void VK_RequestSwapChainRecreate(void);
 void VK_RequestSurfaceRecreate(void);
@@ -58,6 +59,8 @@ qbool VK_RefreshPresentationMode(void);
 uint32_t VK_PhysicalDevicePresentQueueFamilyIndex(void);
 qbool VK_CreateLogicalDevice(VkInstance instance);
 void VK_DetermineMSAASampleCount(void);
+void VK_LoadPipelineCache(void);
+void VK_SavePipelineCache(void);
 
 // vk_window_surface.c
 qbool VK_CreateWindowSurface(SDL_Window* window, VkInstance instance, VkSurfaceKHR* surface);
@@ -208,6 +211,10 @@ typedef struct vk_options_s {
 	// this semaphore right after calling it.
 	VkSemaphore latencySleepSemaphore;
 	qbool latencySleepModeSet;
+	// Persisted across runs via VK_LoadPipelineCache/VK_SavePipelineCache so
+	// vkCreateGraphicsPipelines() at the various call sites can skip
+	// re-compiling shaders/pipelines already seen on this GPU+driver.
+	VkPipelineCache pipelineCache;
 	struct {
 		VkSwapchainKHR handle;
 		VkImage* images;

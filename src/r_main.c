@@ -49,6 +49,8 @@ void R_Shutdown(r_shutdown_mode_t mode)
 	// vid_restart away from the Vulkan renderer. GL is unaffected by the
 	// ordering since its context isn't destroyed until later in
 	// VID_Shutdown(), well after R_Shutdown() returns.
+	extern void VK_AbandonActiveFrame(void);
+	VK_AbandonActiveFrame();
 	if (mode != r_shutdown_reload) {
 		R_BrushModelFreeMemory();
 		if (renderer.DeleteVAOs) {

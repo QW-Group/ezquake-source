@@ -276,6 +276,18 @@ static void VK_BufferShutdown(void)
 {
 	int i;
 
+	// R_Shutdown() calls this while the device is still alive, before any
+	// frame the GPU is still executing has been waited on (that's the whole
+	// point of the ordering -- see the comment in r_main.c). Without this
+	// wait, vkDestroyBuffer()/vkFreeMemory() below can run against a buffer
+	// the GPU is still reading from an in-flight frame's draw calls, which
+	// showed up as a full driver TDR (all monitors blanking) on vid_restart
+	// during a live session, not just on the boot-time no-op case where
+	// nothing was ever in flight.
+	if (vk_options.logicalDevice != VK_NULL_HANDLE) {
+		vkDeviceWaitIdle(vk_options.logicalDevice);
+	}
+
 	for (i = 0; i < r_buffer_count; ++i) {
 		VK_BufferDestroyCopies(i);
 	}
