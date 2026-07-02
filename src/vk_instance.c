@@ -91,7 +91,13 @@ qbool VK_CreateInstance(SDL_Window* window, VkInstance* instance)
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "?";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = VK_API_VERSION_1_0;
+	// 1.2, not 1.0: vkGetPhysicalDeviceFeatures2 (used unconditionally by
+	// VK_CreateLogicalDevice to probe VK_AMD_anti_lag's feature bit) is core
+	// in 1.1+, and VK_NV_low_latency2 depends on timeline semaphores, core
+	// in 1.2 -- declaring 1.0 while relying on both left their preconditions
+	// implicit instead of guaranteed, which was suspected in a device-lost
+	// seen on NVIDIA when the low-latency extension was enabled.
+	appInfo.apiVersion = VK_API_VERSION_1_2;
 
 	createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	createInfo.pApplicationInfo = &appInfo;
