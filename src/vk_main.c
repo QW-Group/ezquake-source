@@ -933,9 +933,50 @@ qbool VK_Initialise(SDL_Window* window)
 	return true;
 }
 
+// vid_restart can run mid-frame: the console command is processed from
+// Cbuf_Execute() inside the same Host_Frame() that already called
+// VK_BeginFrame() for this frame (world/HUD draw calls recorded commands
+// into it), with VK_EndFrame() not reached yet because the restart itself
+// is what's running right now. That leaves the frame's command buffer in
+// the "recording" state, still referencing this frame's descriptor
+// sets/pipeline, when VK_Shutdown() goes on to destroy exactly those
+// resources. Nothing was ever submitted to the GPU, so vkDeviceWaitIdle
+// has nothing to wait for and doesn't protect this -- validation layers
+// (VK_LAYER_KHRONOS_validation) confirmed this exact sequence: repeated
+// "commandBuffer must be in the recording state" / "VkDescriptorSet was
+// destroyed" errors immediately after a vid_restart, then an invalid
+// VkPipeline handle on the next vkCmdBindPipeline. Ending the command
+// buffer (without submitting it -- there's nothing valid left to present)
+// before any of that teardown starts takes it out of the recording state
+// cleanly, so the pool/device/instance destruction below has nothing
+// left referencing torn-down objects.
+void VK_AbandonActiveFrame(void)
+{
+	if (vk_options.frame.active && vk_options.frame.commandBuffers) {
+		VkCommandBuffer commandBuffer = vk_options.frame.commandBuffers[vk_options.frame.imageIndex];
+
+		vkEndCommandBuffer(commandBuffer);
+		vk_options.frame.active = false;
+	}
+}
+
 void VK_Shutdown(r_shutdown_mode_t mode)
 {
+	VK_AbandonActiveFrame();
 	if (mode != r_shutdown_reload) {
+		// VK_AMD_anti_lag requires a final OFF update before the device is
+		// idled/destroyed -- otherwise the driver is left waiting on the next
+		// half of an input/present marker pair that will never arrive, which
+		// can hang vkDeviceWaitIdle below into an AMD driver TDR (timeout
+		// detection/recovery) on vid_restart while antilag was on.
+		if (vk_options.supportsAmdAntiLag && vk_options.logicalDevice != VK_NULL_HANDLE) {
+			VkAntiLagDataAMD antiLagData = { 0 };
+
+			antiLagData.sType = VK_STRUCTURE_TYPE_ANTI_LAG_DATA_AMD;
+			antiLagData.mode = VK_ANTI_LAG_MODE_OFF_AMD;
+			vk_options.antiLagUpdateAMD(vk_options.logicalDevice, &antiLagData);
+		}
+
 		if (vk_options.logicalDevice != VK_NULL_HANDLE) {
 			vkDeviceWaitIdle(vk_options.logicalDevice);
 		}
@@ -955,6 +996,12 @@ void VK_Shutdown(r_shutdown_mode_t mode)
 		if (vk_options.latencySleepSemaphore != VK_NULL_HANDLE) {
 			vkDestroySemaphore(vk_options.logicalDevice, vk_options.latencySleepSemaphore, NULL);
 			vk_options.latencySleepSemaphore = VK_NULL_HANDLE;
+		}
+
+		VK_SavePipelineCache();
+		if (vk_options.pipelineCache != VK_NULL_HANDLE) {
+			vkDestroyPipelineCache(vk_options.logicalDevice, vk_options.pipelineCache, NULL);
+			vk_options.pipelineCache = VK_NULL_HANDLE;
 		}
 
 		if (vk_options.logicalDevice != VK_NULL_HANDLE) {
