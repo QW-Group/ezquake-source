@@ -150,7 +150,7 @@ static void GFXPresetExec(const char *cfg)
 {
 	cvar_t *vid_reload_auto = Cvar_Find("vid_reload_auto");
 	int restore_vid_reload_auto = vid_reload_auto ? vid_reload_auto->integer : 1;
-	qbool reload_after_preset = !R_UseVulkan();
+	qbool use_vulkan = R_UseVulkan();
 
 	/*
 	 * The gfx preset cfgs touch several CVAR_RELOAD_GFX variables. If
@@ -160,14 +160,18 @@ static void GFXPresetExec(const char *cfg)
 	 * and crash when cycling away from eyecandy. Batch the changes and perform
 	 * one reload after the cfg has fully executed.
 	 *
-	 * The Vulkan backend requires a full restart for reload-only texture
-	 * changes, so immediate cvars apply now and those changes wait for restart.
+	 * The Vulkan backend doesn't support the GL-only soft-reload path at all
+	 * (VID_ReloadCvarChanged never sets vid_reload_pending while R_UseVulkan()
+	 * is true, so a plain "vid_reload" here would be a no-op) -- it needs an
+	 * explicit vid_restart instead, or the cvars the preset just changed
+	 * (e.g. surface/texture-affecting ones) never actually get applied to the
+	 * renderer's resources.
 	 */
 	if (vid_reload_auto) {
 		Cvar_Set(vid_reload_auto, "0");
 	}
 
-	Cbuf_AddText(va("exec %s\nvid_reload_auto %d\n%s", cfg, restore_vid_reload_auto, reload_after_preset ? "vid_reload\n" : ""));
+	Cbuf_AddText(va("exec %s\nvid_reload_auto %d\n%s", cfg, restore_vid_reload_auto, use_vulkan ? "vid_restart\n" : "vid_reload\n"));
 }
 
 void GFXPresetToggle(qbool back) {
