@@ -1731,6 +1731,15 @@ void VK_RenderView(void)
 	qbool lumaPipelineReady = false;
 	qbool fullbrightPipelineReady = false;
 	qbool depthBiasActive = false;
+	// The overwhelming majority of draws are static world geometry sharing
+	// the same view matrix (only brush-model entities like doors/plats have
+	// their own); caching the last modelView this multiplied against skips
+	// R_MultiplyMatrix's 4x4 multiply-add for every draw that repeats it,
+	// without changing what's drawn or how -- purely a redundant-recompute
+	// skip, not a batching/merging change.
+	float lastMultipliedModelView[16];
+	float lastMvp[16];
+	qbool haveLastMvp = false;
 
 	if (!worldDrawCount || !worldIndexCount) {
 		VK_WorldDebugLog("render skipped: draws=%d indices=%u", worldDrawCount, worldIndexCount);
@@ -1837,7 +1846,15 @@ void VK_RenderView(void)
 			}
 
 			memset(&push, 0, sizeof(push));
-			R_MultiplyMatrix(worldDraws[i].modelView, R_ProjectionMatrix(), push.mvp);
+			if (haveLastMvp && memcmp(lastMultipliedModelView, worldDraws[i].modelView, sizeof(lastMultipliedModelView)) == 0) {
+				memcpy(push.mvp, lastMvp, sizeof(push.mvp));
+			}
+			else {
+				R_MultiplyMatrix(worldDraws[i].modelView, R_ProjectionMatrix(), push.mvp);
+				memcpy(lastMultipliedModelView, worldDraws[i].modelView, sizeof(lastMultipliedModelView));
+				memcpy(lastMvp, push.mvp, sizeof(lastMvp));
+				haveLastMvp = true;
+			}
 			memcpy(push.color, worldDraws[i].flatColor, sizeof(push.color));
 			push.cameraPosition[0] = r_refdef.vieworg[0];
 			push.cameraPosition[1] = r_refdef.vieworg[1];
