@@ -26,14 +26,14 @@ jobs:
             buildPreset: macos-arm64-release
             name: ezQuake-macOS-arm64
             artifact: "ezQuake.zip"
-            packages: ["autoconf", "automake", "libtool"]
+            packages: ["autoconf", "automake", "libtool", "molten-vk", "vulkan-headers", "vulkan-loader"]
             container: null
           - os: macos-latest
             configurePreset: macos-x64
             buildPreset: macos-x64-release
             name: ezQuake-macOS-x64
             artifact: "ezQuake.zip"
-            packages: ["autoconf", "automake", "libtool"]
+            packages: ["autoconf", "automake", "libtool", "molten-vk", "vulkan-headers", "vulkan-loader"]
             container: null
           - os: ubuntu-latest
             configurePreset: dynamic
@@ -41,7 +41,7 @@ jobs:
             name: ezQuake-linux-x86_64
             artifact: "ezQuake-x86_64.AppImage"
             cflags: "-march=nehalem"
-            packages: ["build-essential", "ca-certificates", "cmake", "curl", "file", "git", "libcurl4-openssl-dev", "libexpat1-dev", "libfreetype-dev", "libfuse3-dev", "libjansson-dev", "libjpeg-dev", "libminizip-dev", "libpcre2-dev", "libpng-dev", "libsdl3-0", "libsdl3-dev", "libsndfile1-dev", "libspeex-dev", "libspeexdsp-dev", "ninja-build", "unzip"]
+            packages: ["build-essential", "ca-certificates", "cmake", "curl", "file", "git", "libcurl4-openssl-dev", "libexpat1-dev", "libfreetype-dev", "libfuse3-dev", "libjansson-dev", "libjpeg-dev", "libminizip-dev", "libpcre2-dev", "libpng-dev", "libsdl3-0", "libsdl3-dev", "libsndfile1-dev", "libspeex-dev", "libspeexdsp-dev", "libvulkan-dev", "ninja-build", "unzip"]
             container:
               image: debian:testing
               options: --privileged
@@ -60,6 +60,24 @@ jobs:
     - name: Prepare macOS environment
       run: brew install -q ${{ join(matrix.packages, ' ') }}
       if: matrix.os == 'macos-latest'
+
+    - name: Install Vulkan SDK
+      shell: pwsh
+      run: |
+        # Pinned to a version confirmed present on the LunarG CDN at the time
+        # of writing (curl -I on the versioned URL 404's for stale/removed
+        # releases -- "latest" resolved to this version when checked).
+        $ver = "1.4.350.0"
+        $url = "https://sdk.lunarg.com/sdk/download/$ver/windows/vulkansdk-windows-X64-$ver.exe"
+        Invoke-WebRequest -Uri $url -OutFile vulkan-sdk.exe
+        # Qt IFW-based installer (LunarG SDK >= 1.2.189): silent/unattended
+        # flags, no license prompt. --root pins a fixed path we can point
+        # CMake's FindVulkan (VULKAN_SDK env var) at without probing the
+        # registry for whatever version got installed.
+        Start-Process -FilePath .\vulkan-sdk.exe -ArgumentList "--root C:\VulkanSDK\$ver --accept-licenses --default-answer --confirm-command install" -Wait -NoNewWindow
+        echo "VULKAN_SDK=C:\VulkanSDK\$ver" >> $env:GITHUB_ENV
+        echo "C:\VulkanSDK\$ver\Bin" >> $env:GITHUB_PATH
+      if: matrix.os == 'windows-2025-vs2026'
 
     - name: Check out code
       uses: actions/checkout@v4
@@ -101,6 +119,7 @@ jobs:
       uses: lukka/run-cmake@v10
       with:
         configurePreset: ${{ matrix.configurePreset }}
+        configurePresetAdditionalArgs: "['-DRENDERER_VULKAN=ON']"
         buildPreset: ${{ matrix.buildPreset }}
       env:
         CFLAGS: ${{ matrix.cflags }}

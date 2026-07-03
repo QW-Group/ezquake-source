@@ -61,11 +61,6 @@ static const char* VK_PhysicalDeviceTypeName(VkPhysicalDeviceType type)
 	}
 }
 
-// Anti-lag / low-latency extensions are optional, vendor-specific, and never
-// disqualify a device when missing -- unlike requiredDeviceExtensions above,
-// where any miss rules the device out entirely.
-static const char* optionalAntiLagExtensions[] = { VK_AMD_ANTI_LAG_EXTENSION_NAME, VK_NV_LOW_LATENCY_2_EXTENSION_NAME };
-
 static void VK_PhysicalDeviceQueryQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface, int* graphics_queue_index, int* compute_queue_index, int* present_queue_index)
 {
 	uint32_t queue_families_count;
@@ -126,8 +121,8 @@ static qbool VK_PhysicalDeviceSupportsRequiredExtensions(VkPhysicalDevice device
 }
 
 // Unlike VK_PhysicalDeviceSupportsRequiredExtensions, this never fails the
-// device -- it just reports which of optionalAntiLagExtensions[] are present,
-// so VK_CreateLogicalDevice can enable exactly those by name. AMD's anti-lag
+// device -- it just reports which anti-lag/low-latency extensions are
+// present, so VK_CreateLogicalDevice can enable exactly those by name. AMD's anti-lag
 // extension additionally needs its pNext feature bit confirmed separately
 // (see the VkPhysicalDeviceAntiLagFeaturesAMD query in VK_CreateLogicalDevice)
 // before it's safe to treat as supported -- the extension string alone isn't

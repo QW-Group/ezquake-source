@@ -107,52 +107,12 @@ static void VK_NoOperationEntity(entity_t* ent)
 	(void)ent;
 }
 
-static void VK_NoOperationFloat4(float v[4])
-{
-	(void)v;
-}
-
 static void VK_NoOperationViewport(int x, int y, int width, int height)
 {
 	(void)x;
 	(void)y;
 	(void)width;
 	(void)height;
-}
-
-static void VK_NoOperationAliasModel(model_t* model, aliashdr_t* hdr)
-{
-	(void)model;
-	(void)hdr;
-}
-
-static void VK_NoOperationAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, texture_ref texture, texture_ref fb_texture, qbool outline, int effects, int render_effects, float lerpfrac)
-{
-	(void)ent;
-	(void)model;
-	(void)pose1;
-	(void)pose2;
-	(void)texture;
-	(void)fb_texture;
-	(void)outline;
-	(void)effects;
-	(void)render_effects;
-	(void)lerpfrac;
-}
-
-static void VK_NoOperationSimpleItem(model_t* model, int skin, vec3_t origin, float scale, vec3_t up, vec3_t right)
-{
-	(void)model;
-	(void)skin;
-	(void)origin;
-	(void)scale;
-	(void)up;
-	(void)right;
-}
-
-static void VK_NoOperationParticles(int count)
-{
-	(void)count;
 }
 
 static int VK_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position, float* source, int lightmap, int material, float scaleS, float scaleT, msurface_t* surf, qbool has_fb_texture, qbool has_luma_texture)
