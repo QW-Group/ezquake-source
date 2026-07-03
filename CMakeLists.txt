@@ -459,7 +459,19 @@ if(RENDERER_VULKAN)
     # binary under its "tools" feature, not the older `glslangValidator`
     # name that apt's glslang-tools / a locally installed Vulkan SDK still
     # ship -- both accept the same -V flag, so either name works here.
-    find_program(GLSLANG_VALIDATOR NAMES glslangValidator glslang REQUIRED)
+    #
+    # On a cross-compile (e.g. building x64-osx on an arm64 host), the
+    # "host": true glslang dependency is installed under the *host*
+    # triplet's vcpkg_installed tree, not the target triplet's -- but the
+    # vcpkg toolchain doesn't reliably add that host tools/ directory to
+    # CMAKE_PROGRAM_PATH with the Xcode generator (confirmed: macOS x64 CI
+    # failed to find it even though the arm64-osx package built fine).
+    # Adding every triplet's tools/glslang dir as an explicit hint makes
+    # this work regardless of which triplet ends up being the host one.
+    if(DEFINED VCPKG_INSTALLED_DIR)
+        file(GLOB _glslang_tool_hints "${VCPKG_INSTALLED_DIR}/*/tools/glslang")
+    endif()
+    find_program(GLSLANG_VALIDATOR NAMES glslangValidator glslang HINTS ${_glslang_tool_hints} REQUIRED)
     set(VULKAN_SHADER_DIR ${SOURCE_DIR}/vulkan_shaders)
     set(VULKAN_SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/vulkan_shaders)
     file(MAKE_DIRECTORY ${VULKAN_SHADER_BINARY_DIR})
