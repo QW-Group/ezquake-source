@@ -92,7 +92,11 @@ jobs:
         url="https://sdk.lunarg.com/sdk/download/$ver/mac/vulkansdk-macos-$ver.zip"
         curl -sSL -o vulkan-sdk.zip "$url"
         unzip -q vulkan-sdk.zip
-        installer_app=$(echo InstallVulkan-*.app)
+        # The .app's name/casing (vulkansdk-macOS-<ver>.app, not
+        # InstallVulkan-*.app) matched neither a first-guess pattern nor the
+        # Windows installer's InstallVulkan-* naming -- confirmed by
+        # unzip -l against the real archive rather than assuming.
+        installer_app=$(echo vulkansdk-macOS-*.app)
         installer_bin="$installer_app/Contents/MacOS/$(basename "$installer_app" .app)"
         root="$HOME/VulkanSDK/$ver"
         "$installer_bin" --root "$root" --accept-licenses --default-answer --confirm-command install
