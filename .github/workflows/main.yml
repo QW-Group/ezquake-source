@@ -26,14 +26,14 @@ jobs:
             buildPreset: macos-arm64-release
             name: ezQuake-macOS-arm64
             artifact: "ezQuake.zip"
-            packages: ["autoconf", "automake", "libtool", "molten-vk", "vulkan-headers", "vulkan-loader"]
+            packages: ["autoconf", "automake", "libtool"]
             container: null
           - os: macos-latest
             configurePreset: macos-x64
             buildPreset: macos-x64-release
             name: ezQuake-macOS-x64
             artifact: "ezQuake.zip"
-            packages: ["autoconf", "automake", "libtool", "molten-vk", "vulkan-headers", "vulkan-loader"]
+            packages: ["autoconf", "automake", "libtool"]
             container: null
           - os: ubuntu-latest
             configurePreset: dynamic
@@ -78,6 +78,27 @@ jobs:
         echo "VULKAN_SDK=C:\VulkanSDK\$ver" >> $env:GITHUB_ENV
         echo "C:\VulkanSDK\$ver\Bin" >> $env:GITHUB_PATH
       if: matrix.os == 'windows-2025-vs2026'
+
+    - name: Install Vulkan SDK
+      shell: bash
+      run: |
+        # brew's vulkan-loader/molten-vk are arm64-only on this Apple Silicon
+        # runner -- linking the x64-osx job against them failed with every
+        # vk* symbol undefined (wrong architecture, not a missing package).
+        # The LunarG SDK's macOS loader/MoltenVK libs are universal
+        # (arm64+x86_64 fat binaries, confirmed via lipo -info), so the same
+        # install serves both macos-arm64 and macos-x64 configurePresets.
+        ver="1.4.350.1"
+        url="https://sdk.lunarg.com/sdk/download/$ver/mac/vulkansdk-macos-$ver.zip"
+        curl -sSL -o vulkan-sdk.zip "$url"
+        unzip -q vulkan-sdk.zip
+        installer_app=$(echo InstallVulkan-*.app)
+        installer_bin="$installer_app/Contents/MacOS/$(basename "$installer_app" .app)"
+        root="$HOME/VulkanSDK/$ver"
+        "$installer_bin" --root "$root" --accept-licenses --default-answer --confirm-command install
+        echo "VULKAN_SDK=$root/macOS" >> $GITHUB_ENV
+        echo "$root/macOS/bin" >> $GITHUB_PATH
+      if: matrix.os == 'macos-latest'
 
     - name: Check out code
       uses: actions/checkout@v4
