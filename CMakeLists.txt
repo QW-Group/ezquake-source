@@ -455,7 +455,11 @@ if(RENDERER_OPENGL)
 endif()
 
 if(RENDERER_VULKAN)
-    find_program(GLSLANG_VALIDATOR glslangValidator REQUIRED)
+    # vcpkg's glslang port (>=16.x) only installs the renamed `glslang`
+    # binary under its "tools" feature, not the older `glslangValidator`
+    # name that apt's glslang-tools / a locally installed Vulkan SDK still
+    # ship -- both accept the same -V flag, so either name works here.
+    find_program(GLSLANG_VALIDATOR NAMES glslangValidator glslang REQUIRED)
     set(VULKAN_SHADER_DIR ${SOURCE_DIR}/vulkan_shaders)
     set(VULKAN_SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/vulkan_shaders)
     file(MAKE_DIRECTORY ${VULKAN_SHADER_BINARY_DIR})
