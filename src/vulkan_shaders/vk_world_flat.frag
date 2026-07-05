@@ -2,6 +2,7 @@
 
 layout(location = 0) in vec3 inFlatColor;
 layout(location = 1) in vec3 inDirection;
+layout(location = 2) in vec2 inLightmapCoord;
 
 layout(set = 0, binding = 0) uniform sampler2D skyTexture;
 layout(set = 0, binding = 1) uniform sampler2D skyCloudTexture;
@@ -11,6 +12,7 @@ layout(set = 0, binding = 4) uniform sampler2D skyboxFace2;
 layout(set = 0, binding = 5) uniform sampler2D skyboxFace3;
 layout(set = 0, binding = 6) uniform sampler2D skyboxFace4;
 layout(set = 0, binding = 7) uniform sampler2D skyboxFace5;
+layout(set = 1, binding = 0) uniform sampler2D lightmapTexture[2];
 
 layout(push_constant) uniform PushConstants {
 	mat4 mvp;
@@ -21,7 +23,9 @@ layout(push_constant) uniform PushConstants {
 	float surfaceType;
 	float useSkyTexture;
 	float fastTurb;
-	vec3 padding;
+	float detailEnabled;
+	float textureless;
+	float drawflatColor;
 } pushConstants;
 
 layout(location = 0) out vec4 fragColour;
@@ -103,7 +107,16 @@ vec3 sampleSkyboxFace(int face, vec2 uv)
 
 void main()
 {
-	vec3 base = pushConstants.surfaceType > 0.5 ? pushConstants.color.rgb : max(inFlatColor, vec3(0.08));
+	vec3 base = (pushConstants.surfaceType > 0.5 || pushConstants.drawflatColor > 0.5)
+		? pushConstants.color.rgb
+		: max(inFlatColor, vec3(0.08));
+
+	// True r_drawflat surfaces (not sky/turb, no fallback) still get shaded
+	// by the surface's real lightmap, same as GLC/GLM's drawflat mode -- a
+	// solid, completely unlit fill would otherwise flatten all depth cues.
+	if (pushConstants.drawflatColor > 0.5 && pushConstants.surfaceType < 0.5) {
+		base *= texture(lightmapTexture[0], inLightmapCoord).rgb;
+	}
 
 	if (pushConstants.surfaceType > 5.5) {
 		if (pushConstants.useSkyTexture > 1.5) {

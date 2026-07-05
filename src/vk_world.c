@@ -52,6 +52,8 @@ extern cvar_t r_fastsky;
 extern cvar_t r_fastturb;
 extern cvar_t gl_textureless;
 extern cvar_t r_skycolor;
+extern cvar_t r_floorcolor;
+extern cvar_t r_wallcolor;
 extern cvar_t gl_fb_bmodels;
 extern cvar_t gl_lumatextures;
 extern cvar_t gl_detail;
@@ -68,6 +70,7 @@ typedef struct vk_world_draw_s {
 	float alpha;
 	float flatColor[4];
 	float surfaceType;
+	qbool drawflatCvar;
 	qbool textured;
 	qbool lightmapped;
 	qbool blended;
@@ -87,6 +90,12 @@ typedef struct vk_world_push_s {
 	float fastTurb;
 	float detailEnabled;
 	float textureless;
+	// 1.0 tells vk_world_flat.frag to paint surfaceType==0 (normal wall/floor)
+	// surfaces with pushConstants.color -- the real r_wallcolor/r_floorcolor
+	// value computed by VK_WorldFlatColorForSurface -- instead of the
+	// per-vertex baked texture-average color it otherwise falls back to for
+	// surfaces whose real texture just isn't ready yet on Vulkan.
+	float drawflatColor;
 	// vk_world_flat.vert/.frag end their matching GLSL struct with a trailing
 	// vec3, which the std430-style push-constant layout rules align to 16
 	// bytes -- bumping that shader's real compiled block to 140 bytes even
@@ -94,7 +103,7 @@ typedef struct vk_world_push_s {
 	// jump. Padded to 144 (next 16-byte multiple) so this one shared C
 	// struct covers all 5 world pipelines that reuse it; previously only 128
 	// bytes, which validation correctly flagged as undersized for world_flat.
-	float padding[5];
+	float padding[4];
 } vk_world_push_t;
 
 static VkPipelineLayout worldFlatPipelineLayout;
@@ -179,6 +188,23 @@ static void VK_WorldFlatColorForSurface(msurface_t* surf, float* color)
 		return;
 	}
 
+	if (surf->flags & SURF_DRAWFLAT_FLOOR) {
+		color[0] = (float)r_floorcolor.color[0] / 255.0f;
+		color[1] = (float)r_floorcolor.color[1] / 255.0f;
+		color[2] = (float)r_floorcolor.color[2] / 255.0f;
+		return;
+	}
+	if (r_drawflat.integer) {
+		color[0] = (float)r_wallcolor.color[0] / 255.0f;
+		color[1] = (float)r_wallcolor.color[1] / 255.0f;
+		color[2] = (float)r_wallcolor.color[2] / 255.0f;
+		return;
+	}
+
+	// Fallback path only (texture not ready yet on Vulkan while r_drawflat is
+	// off): the flat pipeline is still bound so *something* has to go into
+	// this push constant, even though the fragment shader actually paints
+	// this case with the per-vertex baked texture-average color instead.
 	COLOR_TO_RGBA(surf->texinfo->texture->flatcolor3ub, rgba);
 	color[0] = (float)rgba[0] / 255.0f;
 	color[1] = (float)rgba[1] / 255.0f;
@@ -498,6 +524,7 @@ static void VK_WorldQueueSurface(model_t* model, msurface_t* surf, qbool drawfla
 	draw->overlayTexture = materialTexture ? materialTexture->fb_texturenum : null_texture_reference;
 	draw->alpha = bound(0.0f, alpha, 1.0f);
 	VK_WorldFlatColorForSurface(surf, draw->flatColor);
+	draw->drawflatCvar = drawflat;
 	draw->surfaceType = VK_WorldSurfaceType(surf);
 	draw->textured = !drawflat && VK_TextureReady(texture);
 	draw->lightmapped = draw->textured && !blended && VK_TextureReady(lightmap);
@@ -566,7 +593,7 @@ static qbool VK_WorldCreateFlatPipeline(void)
 	VkShaderModule fragShaderModule;
 	VkPipelineShaderStageCreateInfo shaderStages[2];
 	VkVertexInputBindingDescription bindingDescription;
-	VkVertexInputAttributeDescription attributeDescriptions[2];
+	VkVertexInputAttributeDescription attributeDescriptions[3];
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo;
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly;
 	VkPipelineViewportStateCreateInfo viewportState;
@@ -579,6 +606,7 @@ static qbool VK_WorldCreateFlatPipeline(void)
 	VkPipelineDynamicStateCreateInfo dynamicState;
 	VkPushConstantRange pushConstantRange;
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
+	VkDescriptorSetLayout setLayouts[2];
 	VkGraphicsPipelineCreateInfo pipelineInfo;
 
 	if (worldFlatPipeline != VK_NULL_HANDLE) {
@@ -629,6 +657,12 @@ static qbool VK_WorldCreateFlatPipeline(void)
 	attributeDescriptions[1].location = 1;
 	attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 	attributeDescriptions[1].offset = VK_VBO_FIELDOFFSET(vbo_world_vert_t, flatcolor);
+
+	VK_InitialiseStructure(attributeDescriptions[2]);
+	attributeDescriptions[2].binding = 0;
+	attributeDescriptions[2].location = 2;
+	attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+	attributeDescriptions[2].offset = VK_VBO_FIELDOFFSET(vbo_world_vert_t, lightmap_coords);
 
 	VK_InitialiseStructure(vertexInputInfo);
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -693,10 +727,18 @@ static qbool VK_WorldCreateFlatPipeline(void)
 	pushConstantRange.offset = 0;
 	pushConstantRange.size = sizeof(vk_world_push_t);
 
+	setLayouts[0] = worldFlatSkyDescriptorSetLayout;
+	setLayouts[1] = VK_TextureDescriptorSetLayout();
+	if (setLayouts[1] == VK_NULL_HANDLE) {
+		vkDestroyShaderModule(vk_options.logicalDevice, fragShaderModule, NULL);
+		vkDestroyShaderModule(vk_options.logicalDevice, vertShaderModule, NULL);
+		return false;
+	}
+
 	VK_InitialiseStructure(pipelineLayoutInfo);
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &worldFlatSkyDescriptorSetLayout;
+	pipelineLayoutInfo.setLayoutCount = 2;
+	pipelineLayoutInfo.pSetLayouts = setLayouts;
 	pipelineLayoutInfo.pushConstantRangeCount = 1;
 	pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 	if (vkCreatePipelineLayout(vk_options.logicalDevice, &pipelineLayoutInfo, NULL, &worldFlatPipelineLayout) != VK_SUCCESS) {
@@ -1930,11 +1972,14 @@ void VK_RenderView(void)
 				}
 			}
 			if (!drawBlended && !drawLightmapped && !drawTextured) {
-				VkDescriptorSet descriptorSet;
+				VkDescriptorSet descriptorSets[2];
+				texture_ref lightmapTex = VK_TextureReady(worldDraws[i].lightmap) ? worldDraws[i].lightmap : solidwhite_texture;
 
+				push.drawflatColor = worldDraws[i].drawflatCvar ? 1.0f : 0.0f;
 				vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, worldFlatPipeline);
-				if (VK_WorldFlatSkyDescriptorSet(&descriptorSet)) {
-					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, worldFlatPipelineLayout, 0, 1, &descriptorSet, 0, NULL);
+				descriptorSets[1] = VK_TextureDescriptorSet(lightmapTex);
+				if (VK_WorldFlatSkyDescriptorSet(&descriptorSets[0]) && descriptorSets[1] != VK_NULL_HANDLE) {
+					vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, worldFlatPipelineLayout, 0, 2, descriptorSets, 0, NULL);
 				}
 			}
 
