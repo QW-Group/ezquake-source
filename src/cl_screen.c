@@ -1373,6 +1373,10 @@ void CL_ReadKtxDamageIndicatorString(const char* s)
 
 static void SCR_RegisterDamageIndicatorCvars(void)
 {
+	if (host_initialized) {
+		return;
+	}
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register(&scr_damage_proportional);
 	Cvar_Register(&scr_damage_floating);

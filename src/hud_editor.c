@@ -2791,6 +2791,7 @@ void HUD_Editor_Init(void)
 
 #endif
 
+	if (!host_initialized) {
 	// Register commands.
 	Cmd_AddCommand("hud_editor", HUD_Editor_Toggle_f);
 
@@ -2801,6 +2802,7 @@ void HUD_Editor_Init(void)
 	Cvar_Register(&hud_editor_allowplace);
 	Cvar_Register(&hud_editor_allowalign);
     Cvar_ResetCurrentGroup();
+	}
 
 	// Load HUD editor cursor icons.
 	hud_editor_move_icon = SCR_LoadCursorImage("gfx/hud_move_icon");

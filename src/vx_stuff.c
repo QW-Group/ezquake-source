@@ -291,6 +291,10 @@ void InitVXStuff(void)
 
 	Init_VLights(); // safe re-init imo
 
+	if (host_initialized) {
+		return;
+	}
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register(&amf_stat_loss);
 	Cvar_ResetCurrentGroup();
