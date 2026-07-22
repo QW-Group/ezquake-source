@@ -1636,8 +1636,22 @@ void VK_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 		return;
 	}
 
-	drawFlatFloors = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 2 || r_drawflat.integer == 1) && clmodel->isworldmodel;
-	drawFlatWalls = r_drawflat_mode.integer == 0 && (r_drawflat.integer == 3 || r_drawflat.integer == 1) && clmodel->isworldmodel;
+	// r_drawflat_mode only selects a color-blend *style* on GLC/GLM (0=normal
+	// solid replace, 1=tinted multiply, 2=bright luminance-multiply -- see
+	// applyColorTinting() in glc_world_textured.fragment.glsl) -- it must not
+	// gate whether drawflat activates at all. The old `mode == 0` guard here
+	// meant any config with r_drawflat_mode 1 or 2 (e.g. a real user's
+	// racat.cfg, mode 2/"bright") silently disabled drawflat under Vulkan
+	// while GL still rendered flat-colored floors/walls, which is exactly the
+	// "world looks different between GL and Vulkan" symptom reported by a
+	// user comparing the same config across renderers. The Vulkan drawflat
+	// pipeline (vk_world_flat.frag) only has a solid-color path (no texture
+	// sampler bound), so mode 1/2 currently render identically to mode 0
+	// here -- tracked as a known gap, not implemented, since neither FTEQW
+	// nor vkQuake implement a textured tinted/bright drawflat variant either
+	// (see research notes from this investigation).
+	drawFlatFloors = (r_drawflat.integer == 2 || r_drawflat.integer == 1) && clmodel->isworldmodel;
+	drawFlatWalls = (r_drawflat.integer == 3 || r_drawflat.integer == 1) && clmodel->isworldmodel;
 
 	psurf = &clmodel->surfaces[clmodel->firstmodelsurface];
 	for (i = 0; i < clmodel->nummodelsurfaces; i++, psurf++) {
