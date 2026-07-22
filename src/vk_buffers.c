@@ -84,6 +84,21 @@ static void VK_BufferDestroyCopies(r_buffer_id id)
 	}
 }
 
+// Both bufferusage_reuse_many_frames (e.g. the world's static vertex data,
+// re-created whole on map load / vid_restart but never updated in place
+// afterwards) and bufferusage_constant_data (e.g. small fixed vertex
+// buffers like the HUD brighten quad) are written exactly once at
+// VK_BufferCreate time and read by the GPU every frame after that for as
+// long as they exist. DEVICE_LOCAL memory makes those reads not go through
+// PCIe on a discrete desktop GPU (host-visible memory is typically a small,
+// slower BAR-mapped window on those); VK_BufferCreate below stages the
+// initial data through a HOST_VISIBLE buffer and vkCmdCopyBuffer's it in,
+// since DEVICE_LOCAL memory usually isn't itself host-visible.
+static qbool VK_BufferMemoryIsDeviceLocal(bufferusage_t usage)
+{
+	return usage == bufferusage_reuse_many_frames || usage == bufferusage_constant_data;
+}
+
 static VkMemoryPropertyFlags VK_BufferMemoryStyle(bufferusage_t usage)
 {
 	switch (usage) {
@@ -95,10 +110,10 @@ static VkMemoryPropertyFlags VK_BufferMemoryStyle(bufferusage_t usage)
 			return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 		case bufferusage_reuse_many_frames:
 			// filled once, expect to use many times over subsequent frames
-			return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+			return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		case bufferusage_constant_data:
 			// filled once, never updated again
-			return VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+			return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
 		default:
 			assert(false);
 			return 0;
@@ -177,11 +192,45 @@ static qbool VK_BufferCreate(r_buffer_id id, buffertype_t type, const char* name
 		slot->size = size;
 		slot->mapped = NULL;
 
-		if (vkMapMemory(vk_options.logicalDevice, slot->memory, 0, size, 0, &slot->mapped) != VK_SUCCESS) {
+		if (VK_BufferMemoryIsDeviceLocal(usage)) {
+			// DEVICE_LOCAL memory usually isn't host-visible, so the initial
+			// contents (this style is always "filled once" -- there's no
+			// VK_BufferUpdateSection path for it after this) go through a
+			// temporary HOST_VISIBLE staging buffer and a GPU-side copy
+			// instead of a direct memcpy into slot->memory.
+			if (data) {
+				VkBuffer stagingBuffer = VK_NULL_HANDLE;
+				VkDeviceMemory stagingMemory = VK_NULL_HANDLE;
+				void* stagingMapped;
+				VkCommandBuffer commandBuffer;
+				VkBufferCopy copyRegion;
+
+				if (!VK_CreateBufferResource(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingMemory)) {
+					VK_BufferDestroyCopies(id);
+					return false;
+				}
+				if (vkMapMemory(vk_options.logicalDevice, stagingMemory, 0, size, 0, &stagingMapped) == VK_SUCCESS) {
+					memcpy(stagingMapped, data, size);
+					vkUnmapMemory(vk_options.logicalDevice, stagingMemory);
+				}
+
+				commandBuffer = VK_BeginImmediateCommands();
+				if (commandBuffer != VK_NULL_HANDLE) {
+					VK_InitialiseStructure(copyRegion);
+					copyRegion.size = size;
+					vkCmdCopyBuffer(commandBuffer, stagingBuffer, slot->handle, 1, &copyRegion);
+					VK_EndImmediateCommands(commandBuffer);
+				}
+
+				vkDestroyBuffer(vk_options.logicalDevice, stagingBuffer, NULL);
+				vkFreeMemory(vk_options.logicalDevice, stagingMemory, NULL);
+			}
+		}
+		else if (vkMapMemory(vk_options.logicalDevice, slot->memory, 0, size, 0, &slot->mapped) != VK_SUCCESS) {
 			VK_BufferDestroyCopies(id);
 			return false;
 		}
-		if (data) {
+		else if (data) {
 			memcpy(slot->mapped, data, size);
 		}
 	}
