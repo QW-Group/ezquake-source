@@ -1,5 +1,68 @@
 # Onde paramos — Vulkan renderer / SDL3 port
 
+Atualizado em: 2026-07-22 (sessão Claude, Windows) — ver seção "Sessão 2026-07-22" logo abaixo para o estado mais recente. O restante do arquivo (a partir de "Sessão 2026-07-05") é histórico de uma sessão anterior (Codex, Linux) e continua válido como referência, mas não reflete mais o HEAD atual do branch.
+
+## Regra permanente (Tiago pediu explicitamente, sessão 2026-07-22)
+
+Manter este arquivo (`CONTINUE.md`, maiúsculo — é o mesmo slot de arquivo que `continue.md` em filesystems case-insensitive como Windows, não criar um `continue.md` separado) atualizado sempre que uma sessão avançar ou pausar, tanto aqui quanto em `E:\Projetos Linux\ezquake-source\continue.md` (worktree Android, esse sim minúsculo, filesystem diferente/caso não colide lá). Objetivo: qualquer sessão futura (Claude ou Codex, Windows ou Linux) sabe onde o trabalho parou.
+
+## Sessão 2026-07-22 (Claude, Windows, worktree `E:\Projetos Linux\ezquake-sdl3-vulkan-pr`)
+
+**5 commits novos, feitos em cima do trabalho da sessão anterior (Codex/Linux, `e5d4f778`/`48ca9805`/`c87251f5` abaixo), testados visualmente e aprovados pelo Tiago ("funcionou ok sem bugs"). Rebase feito sobre `origin/feature/sdl3-vulkan-pr` sem perda de trabalho de nenhum dos dois lados — só um conflito real em `src/vk_world.c` no branch flat (o commit remoto `48ca9805` mudou esse branch para 2 descriptor sets/lightmap; meu bind-cache foi adaptado a esse formato novo, resolvido manualmente).**
+
+1. `973cfe9d` (era `b3ada541` antes do rebase) — cache de last-bound-pipeline/descriptor-set no loop de draw do mundo (`vk_world.c`, nova função `VK_WorldBindIfChanged`). Pula `vkCmdBindPipeline`/`vkCmdBindDescriptorSets` quando o estado já é igual ao draw anterior (comum, já que draws vêm agrupados por material). Não toca em geometria/contagem/ordem de draws. Cache é invalidado sempre que algo externo (alias models, sprites 3D, overlay luma/fullbright) faz bind no mesmo command buffer entre draws do mundo. **Achado pelo Fable 5** numa investigação dedicada de performance (ver seção logo abaixo).
+2. `e3eff48b` (era `00e4ff14`) — fix do drawflat Vulkan (bug do racat): `r_drawflat_mode` só deveria ser um estilo de cor (0=normal/1=tinted/2=bright), não um gate de ativação — bug diferente do que a sessão anterior já tinha corrigido (cores erradas + falta de lightmap shading, `48ca9805`); esse aqui é sobre o `r_drawflat_mode != 0` desligando o efeito inteiro. Tinted/bright continuam lacuna conhecida no Vulkan (só "normal" implementado), documentado, não implementado — nem FTEQW nem vkQuake implementam isso.
+3. `281353b3` (era `a389be91`) — fix real de CMake: `string(REGEX REPLACE ...)` sem match retorna a string original, causava `FILEVERSION` inválido no `.rc` do Windows quando o clone não tem tags alcançáveis.
+4. `8a7a350a` (era `0493ea03`) — fix de build: preset `msvc-x64` não fixava `RENDERER_VULKAN=ON`, então qualquer reconfiguração do zero silenciosamente gerava um build OpenGL-only, causando "Invalid vid_renderer value detected". Corrigido fixando a flag como `cacheVariable` do preset. **Específico do preset Windows/MSVC** — não afeta Linux (ver pedido de build Linux abaixo, que usa outro preset/toolchain).
+5. `1c578ad4` (era `8c801c33`) — buffers estáticos do mundo (`bufferusage_reuse_many_frames`/`bufferusage_constant_data`) agora usam memória `DEVICE_LOCAL` com staging upload, em vez de `HOST_VISIBLE|HOST_COHERENT`.
+
+**Push feito para `origin feature/sdl3-vulkan-pr` nesta sessão** (autorizado explicitamente pelo Tiago).
+
+**Pedido em andamento**: compilar uma build Linux para o Tiago testar no Zorin OS (ele roda a sessão Codex anterior em `/home/tiago/...` segundo o histórico abaixo, então o projeto já tem precedente de build Linux funcional — não é a primeira vez). Ver se há um preset CMake Linux/GCC ou se é `USE_SYSTEM_LIBS=ON` (mencionado no handoff Codex abaixo) + toolchain nativo.
+
+### Investigação de performance desta sessão (Fable 5, 3 consultas)
+
+Tiago pediu para revisar uma proposta de arquitetura de terceiros (RHI, migração por sistema, instancing, command buffers secundários, HUD SDF) e depois focar especificamente em performance real ainda não explorada.
+
+**Veredito sobre a proposta de RHI/arquitetura**: a maior parte já existe no projeto, só com nomes diferentes — `renderer_api_t` (`r_renderer.h`) já é a "RHI" (dispatch `renderer.DrawWorld()` etc. pros 3 backends), migração por sistema já é como os arquivos são organizados (`vk_world.c`, `vk_aliasmodel.c`, etc.), shaders já são um-por-sistema em `vulkan_shaders/`. **Não vale aplicar** — não é modernização, é redescoberta com outro vocabulário.
+
+**Itens genuinamente ausentes, investigados e descartados por ora**:
+- Instancing de alias models: infra existe mas vestigial (binding de instância nunca alimentado, `instanceCount=1` hardcoded). Exigiria mover push-constants pra buffer de instância + reescrever shader. Volume de alias models simultâneos em QuakeWorld é baixo — não vale o esforço/risco agora.
+- Command buffers secundários: zero threading de render no projeto, nenhum profiling mediu gravação de comandos como gargalo. Não vale.
+- HUD batched com SDF: HUD já tem batching parcial (`VK_HudDrawImages`), overhead de draw calls do HUD é trivial frente ao mundo 3D. Não vale.
+
+**Achado real e aplicado**: bind cache de pipeline/descriptor-set no loop do mundo (commit 1 acima) — única coisa encontrada com ganho mensurável em CPU-bound desktop, risco baixo.
+
+**Push constants do mundo**: no momento da investigação, 144 bytes (acima dos 128 garantidos pelo spec Vulkan) — nota: a sessão Codex anterior (`48ca9805`) também mexeu nesse struct (fog + drawflatColor), então esse número pode ter mudado depois do rebase; conferir `sizeof(vk_world_push_t)` de novo antes de assumir. Funciona hoje (AMD/Adreno/Mali topo de linha suportam mais), mas é risco de portabilidade, não performance.
+
+### Trabalho pendente identificado mas não iniciado: outline de mundo no Vulkan
+
+`gl_outline` é bitmask: bit 1 (modelos) já funciona no Vulkan (`VK_ALIAS_MODE_OUTLINE`, `vk_aliasmodel.c`). Bit 2 (mundo) não existe no Vulkan ainda — relacionado mas DIFERENTE do "world outlines" mencionado na auditoria GLM→Vulkan da sessão Codex abaixo (aquela lista trata de outros gaps de paridade visual; conferir se já cobre isso ou se é mais um item da mesma lista antes de duplicar trabalho). Investigado a fundo (dois backends de referência):
+- Classic GL (`glc_surf.c`): wireframe simples, `GL_LINE_LOOP` por polígono.
+- Modern GL (`glm_rsurf.c`, `gl_framebuffer.c`): post-processing de verdade — segundo color attachment (`fbtex_worldnormals`, RGBA16F) escrito pelo shader do mundo (normal + depth linearizada, com quebra forçada entre tipos de turb), depois edge-detect num passo de pós-processo separado.
+
+Consultado o Fable 5 sobre arquitetura Vulkan para isso. Recomendações principais:
+1. Sem `VK_KHR_dynamic_rendering` — ficar em render pass clássico (apiVersion real no código é 1.0).
+2. Attachment de normais **sempre alocado**, mesmo com outline desligado — gatear só a escrita via push constant (mesmo padrão do `pc.fxaaEnabled` no post-process), nunca duplicar pipelines.
+3. Reusar `push.surfaceType` já existente, mas validar granularidade dos subtipos de turb antes de assumir 1:1 com o GL.
+4. Estender `vk_post_process.frag` existente com um segundo binding, em vez de shader separado.
+5. **Maior risco técnico**: MSAA + attachment de normais — todos os attachments de um subpass precisam da mesma contagem de samples; normais devem ser sempre single-sample, o que pode forçar mover pra subpass separado se MSAA estiver ativo. Resolver esse ponto de design antes de escrever qualquer código.
+
+Outros cuidados: layout transition write→read do novo attachment (mesma barreira que já existe pra `sceneColor`, cuidando dos 2 frames em voo), formato RGBA16F pode ser caro em GPU mobile (considerar normal octaédrica `R16G16_SFLOAT`), `LOAD_OP_CLEAR` explícito pra não herdar lixo de tile em superfícies que pulam esse pipeline.
+
+**Não iniciado ainda** — Tiago decidiu focar em performance primeiro. Retomar quando ele quiser.
+
+### Regras e lições (sessão 2026-07-22)
+
+- Nunca commitar/push sem autorização explícita do Tiago no momento da conversa atual.
+- Build Windows deste worktree: junction `C:\eqspr`, script `_build_wip.bat`. Build gerado em `build-msvc-x64/RelWithDebInfo/ezquake.exe`, copiar para `C:\ezquake\ezquake.exe`. **Antes de copiar, sempre fechar o `ezquake.exe` em execução** (`Stop-Process -Force`) ou o `cp` falha com "Device or resource busy".
+- **Cuidado com `continue.md`/`CONTINUE.md` em filesystem case-insensitive (Windows)**: são o MESMO arquivo físico. Um `git rebase`/`checkout` que troca entre um commit com `continue.md` e outro com `CONTINUE.md` pode sobrescrever silenciosamente o conteúdo sem conflito aparente. Sempre usar um só (este, maiúsculo, já que é o que está commitado) e nunca criar a variante minúscula à parte.
+- Fable 5 é útil para segunda opinião de arquitetura/performance — mas sempre peça pra ele investigar o código real (Explore/leitura de arquivos), não opinar em abstrato, e sempre valide as conclusões dele contra o código antes de agir.
+- Duas branches/worktrees irmãs, mesmo renderer Vulkan (`vk_*.c`): **Desktop** `E:\Projetos Linux\ezquake-sdl3-vulkan-pr` (branch `feature/sdl3-vulkan-pr`, PR #1145, regra inegociável: nada Android pode vazar pra cá) e **Android** `E:\Projetos Linux\ezquake-source` (branch `feature/android-pocket-vulkan`, sem PR ainda). Trabalho de Vulkan validado no desktop deve, quando não quebrar o Android, ser portado para os dois.
+- **Este projeto tem pelo menos 3 frentes de trabalho concorrentes**: Codex rodando em Linux (`/home/tiago/...`, ver histórico abaixo), Claude rodando em Windows (`E:\Projetos Linux\...`), e o próprio Tiago. Sempre `git fetch`/checar `git log HEAD..origin/<branch>` antes de push — presumir que o remoto não mudou é o tipo de erro que quase causou perda de trabalho nesta sessão.
+
+## Sessão 2026-07-05 (Codex, Linux) — histórico anterior, mantido como referência
+
 Atualizado em: 2026-07-05 (sessão longa, muita coisa mudou — leia isso todo antes de continuar)
 
 ## Contexto geral
