@@ -18,6 +18,8 @@ Ciscon tinha testado especificamente outline de *mundo* (confirmado com o Tiago)
 
 Outline de *modelo* (bit 1, `VK_ALIAS_MODE_OUTLINE` em `vk_aliasmodel.c`) foi auditado pelo Fable via leitura estática (dispatch, gating por ruleset, pipeline sempre criado, ordem de draw) e parece correto — não mexido nesta sessão.
 
+**Decisão explícita do Tiago nesta sessão**: outline de mundo (bit 2) fica pra uma sessão futura de propósito — não é um bug a corrigir, é uma feature inteira a implementar (segundo attachment de cor pra normais + passo de pós-processamento de edge-detect, ver notas de arquitetura na seção "Sessão 2026-07-22 (Claude, Windows)" mais abaixo, incluindo os cuidados com MSAA). Perguntado e adiado deliberadamente — não reabrir como "ainda não corrigido" numa próxima sessão sem checar aqui primeiro.
+
 ### 2. `r_drawflat_mode` 1 (tinted) / 2 (bright) não tinha efeito nenhum no Vulkan — CORRIGIDO E CONFIRMADO
 
 Causa raiz (achada pelo Fable, confirmada lendo o código): `r_refdef2.drawFlatFloors`/`drawFlatWalls` (`src/cl_view.c:1024-1025`, compartilhado pelas 3 renderers) só fica `true` quando `r_drawflat_mode == 0` — isso só controla se a superfície vai pro chain "flat puro" (`vk_world_flat.frag`, sem textura) ou pro chain de textura normal. GLC/GLM não dependem desse gate pra tinted/bright: eles reaplicam a cor por cima da textura real dentro do PRÓPRIO shader texturizado (`applyColorTinting()` em `draw_world.fragment.glsl`, gateado só por `r_drawflat.integer`, não pelo mode). Os shaders texturizados do Vulkan (`vk_world_textured.frag`, `vk_world_lightmapped.frag`) não tinham nenhum equivalente — por isso mode 1/2 renderizava 100% textura normal, sem efeito algum.
