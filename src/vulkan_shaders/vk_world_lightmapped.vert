@@ -4,6 +4,7 @@ layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec2 inTexCoord;
 layout(location = 2) in vec3 inLightmapCoord;
 layout(location = 3) in vec2 inDetailCoord;
+layout(location = 4) in uint inFlags;
 
 layout(push_constant) uniform PushConstants {
 	mat4 mvp;
@@ -21,6 +22,7 @@ layout(push_constant) uniform PushConstants {
 layout(location = 0) out vec2 outTexCoord;
 layout(location = 1) out vec2 outLightmapCoord;
 layout(location = 2) out vec2 outDetailCoord;
+layout(location = 3) flat out uint outFlags;
 
 void main()
 {
@@ -33,4 +35,5 @@ void main()
 	outTexCoord = inTexCoord;
 	outLightmapCoord = inLightmapCoord.xy;
 	outDetailCoord = inDetailCoord;
+	outFlags = inFlags;
 }

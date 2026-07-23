@@ -96,14 +96,37 @@ typedef struct vk_world_push_s {
 	// per-vertex baked texture-average color it otherwise falls back to for
 	// surfaces whose real texture just isn't ready yet on Vulkan.
 	float drawflatColor;
+	// Textured/lightmapped-pipeline equivalent of GLC/GLM's applyColorTinting():
+	// r_drawflat_mode 1 (tinted) multiplies the real texture by these colors,
+	// mode 2 (bright) replaces it with a luminance-preserving recolor, gated
+	// per-fragment by the EZQ_SURFACE_IS_FLOOR bit carried in vbo_world_vert_t's
+	// flags field (see the new location-3/4 "inFlags" vertex attribute in
+	// vk_world_textured.vert/vk_world_lightmapped.vert). Unlike vk_world_flat's
+	// drawflatColor (mode 0, whole surface replaced with a solid fill, routed
+	// through a completely separate pipeline), this keeps the real texture
+	// visible -- matching GLC/GLM, where tinted/bright surfaces never leave the
+	// normal textured draw path.
+	float floorColor[4];
+	float wallColor[4];
+	// 0 = off, 1 = tinted, 2 = bright -- mirrors r_drawflat_mode.integer.
+	float drawflatMode;
+	// Independently gate floor vs wall tinting, matching GLC/GLM's
+	// DRAW_FLATFLOORS/DRAW_FLATWALLS (r_drawflat 1 = both, 2 = floors only,
+	// 3 = walls only) -- these are NOT gated by drawflatMode/r_drawflat_mode,
+	// only by r_drawflat itself, same as the GLSL side.
+	float tintFloors;
+	float tintWalls;
 	// vk_world_flat.vert/.frag end their matching GLSL struct with a trailing
 	// vec3, which the std430-style push-constant layout rules align to 16
 	// bytes -- bumping that shader's real compiled block to 140 bytes even
 	// though every *other* field here is a plain scalar/array with no such
-	// jump. Padded to 144 (next 16-byte multiple) so this one shared C
-	// struct covers all 5 world pipelines that reuse it; previously only 128
-	// bytes, which validation correctly flagged as undersized for world_flat.
-	float padding[4];
+	// jump. Padded to the next 16-byte multiple so this one shared C struct
+	// covers all 5 world pipelines that reuse it; validation correctly flags
+	// an undersized block for world_flat otherwise. 176 bytes total, above the
+	// Vulkan-guaranteed minimum of 128 but comfortably within the 256 typical
+	// desktop AMD/NVIDIA/Intel drivers expose -- same portability caveat as
+	// the rest of this struct (desktop-only branch; do not carry to Android).
+	float padding;
 } vk_world_push_t;
 
 static VkPipelineLayout worldFlatPipelineLayout;
@@ -778,7 +801,7 @@ static qbool VK_WorldCreateTexturedPipeline(void)
 	VkShaderModule fragShaderModule;
 	VkPipelineShaderStageCreateInfo shaderStages[2];
 	VkVertexInputBindingDescription bindingDescription;
-	VkVertexInputAttributeDescription attributeDescriptions[3];
+	VkVertexInputAttributeDescription attributeDescriptions[4];
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo;
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly;
 	VkPipelineViewportStateCreateInfo viewportState;
@@ -852,6 +875,12 @@ static qbool VK_WorldCreateTexturedPipeline(void)
 	attributeDescriptions[2].location = 2;
 	attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
 	attributeDescriptions[2].offset = VK_VBO_FIELDOFFSET(vbo_world_vert_t, detail_coords);
+
+	VK_InitialiseStructure(attributeDescriptions[3]);
+	attributeDescriptions[3].binding = 0;
+	attributeDescriptions[3].location = 3;
+	attributeDescriptions[3].format = VK_FORMAT_R32_UINT;
+	attributeDescriptions[3].offset = VK_VBO_FIELDOFFSET(vbo_world_vert_t, flags);
 
 	VK_InitialiseStructure(vertexInputInfo);
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -1336,7 +1365,7 @@ static qbool VK_WorldCreateLightmappedPipeline(void)
 	VkShaderModule fragShaderModule;
 	VkPipelineShaderStageCreateInfo shaderStages[2];
 	VkVertexInputBindingDescription bindingDescription;
-	VkVertexInputAttributeDescription attributeDescriptions[4];
+	VkVertexInputAttributeDescription attributeDescriptions[5];
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo;
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly;
 	VkPipelineViewportStateCreateInfo viewportState;
@@ -1417,6 +1446,12 @@ static qbool VK_WorldCreateLightmappedPipeline(void)
 	attributeDescriptions[3].location = 3;
 	attributeDescriptions[3].format = VK_FORMAT_R32G32_SFLOAT;
 	attributeDescriptions[3].offset = VK_VBO_FIELDOFFSET(vbo_world_vert_t, detail_coords);
+
+	VK_InitialiseStructure(attributeDescriptions[4]);
+	attributeDescriptions[4].binding = 0;
+	attributeDescriptions[4].location = 4;
+	attributeDescriptions[4].format = VK_FORMAT_R32_UINT;
+	attributeDescriptions[4].offset = VK_VBO_FIELDOFFSET(vbo_world_vert_t, flags);
 
 	VK_InitialiseStructure(vertexInputInfo);
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -1971,6 +2006,25 @@ void VK_RenderView(void)
 			// sample to a single fixed texel in the fragment shader instead
 			// of the surface's real UVs.
 			push.textureless = gl_textureless.integer ? 1.0f : 0.0f;
+			// Tinted/bright r_drawflat_mode (1/2) for the textured/lightmapped
+			// pipelines -- mode 0 ("normal", solid replace) is already handled
+			// entirely by the separate vk_world_flat pipeline via drawflatColor
+			// above and must stay untouched here. See vk_world_textured.frag /
+			// vk_world_lightmapped.frag for how these are applied per-fragment,
+			// gated by the surface's EZQ_SURFACE_IS_FLOOR bit (inFlags).
+			if (r_drawflat.integer && r_drawflat_mode.integer) {
+				push.drawflatMode = (float)r_drawflat_mode.integer;
+				push.tintFloors = (r_drawflat.integer == 1 || r_drawflat.integer == 2) ? 1.0f : 0.0f;
+				push.tintWalls = (r_drawflat.integer == 1 || r_drawflat.integer == 3) ? 1.0f : 0.0f;
+				push.floorColor[0] = (float)r_floorcolor.color[0] / 255.0f;
+				push.floorColor[1] = (float)r_floorcolor.color[1] / 255.0f;
+				push.floorColor[2] = (float)r_floorcolor.color[2] / 255.0f;
+				push.floorColor[3] = 1.0f;
+				push.wallColor[0] = (float)r_wallcolor.color[0] / 255.0f;
+				push.wallColor[1] = (float)r_wallcolor.color[1] / 255.0f;
+				push.wallColor[2] = (float)r_wallcolor.color[2] / 255.0f;
+				push.wallColor[3] = 1.0f;
+			}
 			if (worldDraws[i].surfaceType == TEXTURE_TURB_SKY) {
 				if (VK_WorldSkyboxTexturesReady()) {
 					push.useSkyTexture = VK_WORLD_SKY_MODE_SKYBOX;

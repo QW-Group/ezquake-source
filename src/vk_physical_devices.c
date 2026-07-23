@@ -155,9 +155,22 @@ static void VK_PhysicalDeviceSupportsOptionalExtensions(VkPhysicalDevice device,
 static qbool VK_PhysicalDeviceBestPresentationMode(VkPhysicalDevice device, VkSurfaceKHR surface, VkPresentModeKHR* best)
 {
 	extern cvar_t r_swapInterval;
+	// With vsync off, GLC/GLM give real swap-interval-0 tearing/uncapped
+	// behaviour (SDL_GL_SetSwapInterval(0)); IMMEDIATE_KHR is the Vulkan
+	// equivalent. MAILBOX_KHR is still vsync'd to the display (no tearing,
+	// frame replacement instead of blocking) -- picking it ahead of
+	// IMMEDIATE when the user asked for vsync off silently gave a
+	// synced/capped Vulkan present regardless of the vid_vsync setting.
+	// IMMEDIATE first (matches vid_vsync 0 semantics), MAILBOX as the next
+	// best low-latency fallback if unsupported. The historical concern with
+	// IMMEDIATE (see R_EndRendering()'s comment in vid_sdl2.c: mid-transition
+	// re-enumeration during unrelated swapchain recreates was observed to
+	// settle on IMMEDIATE permanently and freeze the app) is about *when*
+	// this function gets called, not which mode it prefers here -- that call
+	// site already scopes re-evaluation to explicit r_swapInterval changes.
 	VkPresentModeKHR preferredModes[] = {
-		VK_PRESENT_MODE_MAILBOX_KHR,       // triple buffered
-		VK_PRESENT_MODE_IMMEDIATE_KHR,     // tearing
+		VK_PRESENT_MODE_IMMEDIATE_KHR,     // tearing, uncapped -- matches vid_vsync 0
+		VK_PRESENT_MODE_MAILBOX_KHR,       // triple buffered, still vsync'd
 		VK_PRESENT_MODE_FIFO_RELAXED_KHR,
 		VK_PRESENT_MODE_FIFO_KHR
 	};
@@ -181,9 +194,26 @@ static qbool VK_PhysicalDeviceBestPresentationMode(VkPhysicalDevice device, VkSu
 		return false;
 	}
 
+	// TEMP diagnostic (Ciscon's "vsync 0 still capped at monitor Hz" report,
+	// investigating whether IMMEDIATE_KHR is actually offered by this
+	// WSI/compositor -- known to be commonly absent under Wayland).
+	{
+		const char* names[] = { "?", "MAILBOX", "IMMEDIATE", "FIFO_RELAXED", "FIFO", "SHARED_DEMAND_REFRESH", "SHARED_CONTINUOUS_REFRESH" };
+		for (j = 0; j < count; ++j) {
+			VkPresentModeKHR m = presentationModes[j];
+			const char* name =
+				m == VK_PRESENT_MODE_MAILBOX_KHR ? names[1] :
+				m == VK_PRESENT_MODE_IMMEDIATE_KHR ? names[2] :
+				m == VK_PRESENT_MODE_FIFO_RELAXED_KHR ? names[3] :
+				m == VK_PRESENT_MODE_FIFO_KHR ? names[4] : names[0];
+			Con_Printf("vulkan: surface offers present mode %d (%s)\n", (int)m, name);
+		}
+	}
+
 	for (i = 0; i < sizeof(preferredModes) / sizeof(preferredModes[0]); ++i) {
 		for (j = 0; j < count; ++j) {
 			if (preferredModes[i] == presentationModes[j]) {
+				Con_Printf("vulkan: selected present mode %d\n", (int)preferredModes[i]);
 				Q_free(presentationModes);
 				*best = preferredModes[i];
 				return true;

@@ -3,6 +3,7 @@
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec2 inTexCoord;
 layout(location = 2) in vec2 inDetailCoord;
+layout(location = 3) in uint inFlags;
 
 layout(push_constant) uniform PushConstants {
 	mat4 mvp;
@@ -19,6 +20,7 @@ layout(push_constant) uniform PushConstants {
 
 layout(location = 0) out vec2 outTexCoord;
 layout(location = 1) out vec2 outDetailCoord;
+layout(location = 2) flat out uint outFlags;
 
 void main()
 {
@@ -30,4 +32,5 @@ void main()
 	gl_Position = clip;
 	outTexCoord = inTexCoord;
 	outDetailCoord = inDetailCoord;
+	outFlags = inFlags;
 }

@@ -405,7 +405,21 @@ qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR s
 	// report a generous minImageCount for the surface; piling another image
 	// on top of that can exceed what the platform's present queue can
 	// actually keep acquired at once.
-	if (vk_options.physicalDevicePresentationMode == VK_PRESENT_MODE_MAILBOX_KHR &&
+	//
+	// IMMEDIATE gets the same bump: some WSI implementations (observed on
+	// Wayland/RADV) don't release swapchain images back to the app as fast
+	// as a spec-compliant non-blocking IMMEDIATE present implies -- buffer
+	// release ends up paced by the compositor's own repaint cadence unless
+	// the compositor negotiates an explicit tearing protocol
+	// (wp_tearing_control_v1) with the driver, which isn't universal. With
+	// only 2 images that shows up as vkAcquireNextImageKHR effectively
+	// blocking at vsync cadence despite IMMEDIATE being selected -- a strict
+	// FPS cap at monitor refresh even with vid_vsync 0 and cl_maxfps
+	// unbounded. A 3rd image gives the CPU more slack before it has to wait
+	// on a release; doesn't fix a compositor that refuses to tear at all,
+	// but removes this as a contributing factor.
+	if ((vk_options.physicalDevicePresentationMode == VK_PRESENT_MODE_MAILBOX_KHR ||
+		vk_options.physicalDevicePresentationMode == VK_PRESENT_MODE_IMMEDIATE_KHR) &&
 		vk_options.physicalDeviceSurfaceCapabilities.minImageCount < 3) {
 		requestedImageCount += 1;
 	}
@@ -477,6 +491,9 @@ qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR s
 	}
 	vk_options.swapChain.imageCount = swapChainImageCount;
 	vk_options.swapChain.imageSize = createInfo.imageExtent;
+	// TEMP diagnostic (frame-cap-despite-IMMEDIATE investigation).
+	Com_Printf("vulkan: swapchain created with %u images (requested %u), present mode %d\n",
+		swapChainImageCount, requestedImageCount, (int)vk_options.physicalDevicePresentationMode);
 
 	// Create image views
 	vk_options.swapChain.imageViews = Q_malloc(swapChainImageCount * sizeof(vk_options.swapChain.imageViews[0]));

@@ -1,10 +1,62 @@
 # Onde paramos — Vulkan renderer / SDL3 port
 
-Atualizado em: 2026-07-22 (sessão Claude, Linux, `tiba@tiba-System-Product-Name`) — ver seção "Sessão 2026-07-22 (Claude, Linux)" logo abaixo para o estado mais recente. A seção "Sessão 2026-07-22 (Claude, Windows)" e o restante do arquivo continuam válidos como histórico.
+Atualizado em: 2026-07-23 (sessão Claude, Linux, `tiba@tiba-System-Product-Name`) — ver seção "Sessão 2026-07-23 (Claude, Linux)" logo abaixo para o estado mais recente. As seções "Sessão 2026-07-22" e o restante do arquivo continuam válidas como histórico.
 
 ## Regra permanente (Tiago pediu explicitamente, sessão 2026-07-22)
 
 Manter este arquivo (`CONTINUE.md`, maiúsculo — é o mesmo slot de arquivo que `continue.md` em filesystems case-insensitive como Windows, não criar um `continue.md` separado) atualizado sempre que uma sessão avançar ou pausar, tanto aqui quanto em `E:\Projetos Linux\ezquake-source\continue.md` (worktree Android, esse sim minúsculo, filesystem diferente/caso não colide lá). Objetivo: qualquer sessão futura (Claude ou Codex, Windows ou Linux) sabe onde o trabalho parou.
+
+## Sessão 2026-07-23 (Claude, Linux, `/home/tiba/src/ezquake-source`) — 4 bugs reportados pelo Ciscon testando o build da sessão anterior
+
+**Contexto**: Ciscon (outro tester) testou o build Linux gerado na sessão de 2026-07-22 (mesma máquina do Tiago, mesma família de GPU AMD/RADV) e reportou 4 problemas: itens pretos, `r_drawflat_mode` 1/2 sem efeito, outlines não funcionando, `vid_vsync` não respeitando modo imediato. Investigado com o Fable 5 (duas consultas dedicadas, sempre pedindo pra ele ler o código real antes de opinar — ver regra na seção de 2026-07-22 Windows) + verificação ao vivo nesta máquina (AMD RX 6800 XT, Mesa RADV, Wayland, monitor 360Hz).
+
+**Ainda sem commit/push no momento em que este texto foi escrito** — aguardando autorização explícita do Tiago pra commitar as mudanças de código abaixo (só o próprio CONTINUE.md pode já ter sido commitado, conferir `git log` antes de assumir).
+
+### 1. Outline do mundo (`gl_outline 2`/`3`) — NÃO é bug, é gap conhecido
+
+Ciscon tinha testado especificamente outline de *mundo* (confirmado com o Tiago). Bit 2 (`gl_outline & 2`, outline de geometria do mundo via MRT + edge-detect) simplesmente não existe na árvore atual — nenhum `worldNormals*`/`vk_world_normals.*` em lugar nenhum. **Achado importante do Fable**: o CONTINUE.md antigo (seção Windows) descreve esse trabalho como "implementado então desabilitado", mas isso nunca foi commitado neste branch — ficou só numa sessão local/Windows não sincronizada. Tratar CONTINUE.md como log narrativo, não como fonte de verdade do que está na árvore — sempre `grep`/ler o HEAD real antes de assumir que algo existe.
+
+Outline de *modelo* (bit 1, `VK_ALIAS_MODE_OUTLINE` em `vk_aliasmodel.c`) foi auditado pelo Fable via leitura estática (dispatch, gating por ruleset, pipeline sempre criado, ordem de draw) e parece correto — não mexido nesta sessão.
+
+### 2. `r_drawflat_mode` 1 (tinted) / 2 (bright) não tinha efeito nenhum no Vulkan — CORRIGIDO E CONFIRMADO
+
+Causa raiz (achada pelo Fable, confirmada lendo o código): `r_refdef2.drawFlatFloors`/`drawFlatWalls` (`src/cl_view.c:1024-1025`, compartilhado pelas 3 renderers) só fica `true` quando `r_drawflat_mode == 0` — isso só controla se a superfície vai pro chain "flat puro" (`vk_world_flat.frag`, sem textura) ou pro chain de textura normal. GLC/GLM não dependem desse gate pra tinted/bright: eles reaplicam a cor por cima da textura real dentro do PRÓPRIO shader texturizado (`applyColorTinting()` em `draw_world.fragment.glsl`, gateado só por `r_drawflat.integer`, não pelo mode). Os shaders texturizados do Vulkan (`vk_world_textured.frag`, `vk_world_lightmapped.frag`) não tinham nenhum equivalente — por isso mode 1/2 renderizava 100% textura normal, sem efeito algum.
+
+**Não mexer em `cl_view.c`** (avisado pelo Tiago em tempo real) — isso afetaria GLC/GLM também. O fix ficou inteiramente no lado Vulkan:
+
+- `src/vk_world.c`: `vk_world_push_t` ganhou `floorColor`/`wallColor`/`drawflatMode`/`tintFloors`/`tintWalls` (struct de 144 → 176 bytes — acima do mínimo garantido de 128 do Vulkan mas dentro dos 256 típicos de desktop AMD/NVIDIA/Intel; **não portar pro branch Android** sem reconferir o limite lá). Preenchidos no loop de draw só quando `r_drawflat_mode != 0` (mode 0 continua 100% do pipeline `vk_world_flat` de sempre, intocado).
+- Novo atributo de vértice `flags` (location 3/4 conforme o pipeline) adicionado em `VK_WorldCreateTexturedPipeline`/`VK_WorldCreateLightmappedPipeline` — já existia no VBO compartilhado (`vbo_world_vert_t.flags`, com o bit `EZQ_SURFACE_IS_FLOOR` já preenchido em `vk_main.c:147` desde sempre) mas nenhum pipeline texturizado consumia. **Não precisou mudar o VBO/vertex builder** — só passou a ler o que já existia.
+- `src/vulkan_shaders/vk_world_textured.{vert,frag}` e `vk_world_lightmapped.{vert,frag}`: recebem o novo atributo, portam `applyDrawflatTint()` (equivalente ao `applyColorTinting()` do GLM: tinted = multiply, bright = recolor por luminância).
+- **Testado e confirmado visualmente pelo Tiago** (`r_floorcolor 255 0 0` / `r_wallcolor 0 255 0` com `r_drawflat_mode 1` → chão vermelho / parede verde, textura ainda visível por baixo).
+- Achado à parte durante a investigação, não corrigido (fora de escopo, documentado pelo Fable): `R_SetNonPowerOfTwoSupport()` só é chamado do init GL (`vid_common_gl.c`), nunca do Vulkan — `r_texture_support_non_power_of_two` fica sempre `false` no Vulkan, forçando resample de toda textura NPOT. Provavelmente invisível na maioria dos casos (a maioria das skins MDL já é POT) mas é um bug real, renderer-wide, pendente.
+
+### 3. `vid_vsync 0` não usava modo imediato — CORRIGIDO E CONFIRMADO (com pegadinha)
+
+Duas causas, achadas em duas rodadas:
+
+**3a. Ordem de preferência errada** (`src/vk_physical_devices.c`, `VK_PhysicalDeviceBestPresentationMode`): com vsync off, a lista de preferência tentava `MAILBOX_KHR` antes de `IMMEDIATE_KHR`. MAILBOX ainda é sincronizado com a tela (troca de frame em vez de bloquear, mas sem tearing) — diferente do `SDL_GL_SetSwapInterval(0)` real que GLC/GLM usam. Trocada a ordem pra `IMMEDIATE` primeiro quando `r_swapInterval.integer == 0`.
+
+**3b. Só a ordem não bastou** — Ciscon (e depois o próprio Tiago) confirmaram log mostrando `IMMEDIATE` corretamente selecionado, mas o FPS continuava travado no refresh do monitor (360). Causa: `VK_CreateSwapChain` (`src/vk_swapchain.c:402-411`) só pedia um buffer extra (`minImageCount + 1`) para `MAILBOX`, nunca para `IMMEDIATE` — rodando com só 2 imagens. Nesse Wayland/RADV específico, o *release* dos buffers de volta pro app parece ficar pautado pelo próprio ritmo de repaint do compositor a menos que `wp_tearing_control_v1` seja negociado entre driver e compositor (não universal) — com só 2 imagens isso vira um cap efetivo de fps no refresh rate, apesar do present mode certo. Estendida a condição do `+1` pra cobrir `IMMEDIATE` também.
+
+**Confirmado com `timedemo` (`qw/matchinfo/demos/weirdrocket.qwd`, 25581 frames) rodando local, sem servidor/rede no caminho**:
+- `vid_vsync 0` + `cl_maxfps 0`: **1727.2 fps** (bem acima do monitor de 360Hz — antes ficava preso em ~360 mesmo com maxfps liberado).
+- `vid_vsync 1`: jogo interativo normal (`map dm3`) funciona bem, sem travar.
+
+**Bug novo encontrado, não corrigido, baixa prioridade**: `timedemo` combinado com `vid_vsync 1` (FIFO) trava o processo (CPU cai a ~0%, estado sleeping, nunca termina/imprime relatório). Interativo com `vid_vsync 1` funciona normal — parece específico da combinação timedemo+FIFO, não do gameplay normal. Provável relacionado ao `vkWaitForFences(..., UINT64_MAX)` em `VK_BeginFrame` (`src/vk_main.c`, perto de onde já existe um comentário sobre trocar timeout infinito por finito no `vkAcquireNextImageKHR` por uma razão parecida — mesma área de código, não investigado a fundo ainda). **Não iniciado.**
+
+Diagnóstico temporário deixado no código (`Com_Printf`/`Con_Printf` com prefixo "TEMP diagnostic" em `vk_physical_devices.c` e `vk_swapchain.c`, listando present modes disponíveis e `imageCount` real) — decidir se remove antes de commitar ou deixa (é só log, não afeta comportamento).
+
+### 4. Itens pretos — NÃO REPRODUZIDO nesta máquina, causa raiz não encontrada
+
+Mesma família de GPU/driver (AMD/RADV) nas duas máquinas (Tiago e Ciscon), então não é claramente uma questão de fabricante — pode ser geração de GPU, versão de driver/Mesa, ou uma race condition que só se manifesta em certas condições de timing. O Fable investigou fundo (pipeline de alias models, descriptor sets, upload de textura, mip pyramid, sampler) e eliminou várias hipóteses com evidência, mas não achou a causa raiz por leitura estática — ver relatório completo dele nesta sessão (não resumido aqui por já estar bem detalhado, procurar no transcript se precisar). Sugestão dele: habilitar o log `VK_AliasDebugLog` já existente em `vk_aliasmodel.c` e testar na máquina do Ciscon, ou usar RenderDoc/validation layers lá. **Precisa da máquina do Ciscon pra progredir** — não dá pra reproduzir/depurar daqui.
+
+### Notas técnicas gerais desta sessão
+
+- **`sudo` não funciona de dentro do harness do Claude Code** (sem TTY pra senha) — nem via Bash nem via `!comando` do usuário. Instalação de pacotes precisou ser feita pelo próprio Tiago num terminal separado.
+- **Push pro GitHub precisa de token** — sem credencial configurada na máquina por padrão. Token fine-grained do GitHub precisa explicitamente de "Contents: Read and write" nas Permissions (não só "Repository access"), senão dá 403 mesmo autenticando certo (leitura/`git ls-remote` funciona, push não).
+- **Cuidado com comandos em cadeia no Bash tool desta sessão**: se um comando no meio de um script multi-linha retorna código de saída != 0 (mesmo um `pkill` sem processo pra matar, que é normal/esperado), os comandos SEGUINTES na mesma chamada não executam. Rodar `pkill`/checks-que-podem-falhar em chamadas separadas dos comandos que realmente importam (`cp`, `chmod`, etc.), não em sequência na mesma call.
+- **AppImage é o método padrão agora pra empacotar builds de teste pra compartilhar** (pedido explícito do Tiago) — usar `misc/appimage/appimage-manual_creation.sh` com `EXECUTABLE`/`SKIP_DEPS=1` já setados pro binário já compilado, não o tarball manual com libs soltas usado uma vez no início desta sessão (descartado).
+- **`timedemo` é a forma limpa de medir fps sem depender de olho humano/screenshot** — mas só funciona de forma confiável com `qw/autoexec.cfg` renomeado temporariamente pra fora do caminho primeiro (senão o auto-connect do config corrida com o carregamento da demo e derruba o teste no meio). Lembrar de restaurar o nome depois.
 
 ## Sessão 2026-07-22 (Claude, Linux, `/home/tiba/src/ezquake-source`, Zorin OS 18.1 / Ubuntu 24.04 "noble")
 
