@@ -1,10 +1,32 @@
 # Onde paramos — Vulkan renderer / SDL3 port
 
-Atualizado em: 2026-07-22 (sessão Claude, Windows) — ver seção "Sessão 2026-07-22" logo abaixo para o estado mais recente. O restante do arquivo (a partir de "Sessão 2026-07-05") é histórico de uma sessão anterior (Codex, Linux) e continua válido como referência, mas não reflete mais o HEAD atual do branch.
+Atualizado em: 2026-07-22 (sessão Claude, Linux, `tiba@tiba-System-Product-Name`) — ver seção "Sessão 2026-07-22 (Claude, Linux)" logo abaixo para o estado mais recente. A seção "Sessão 2026-07-22 (Claude, Windows)" e o restante do arquivo continuam válidos como histórico.
 
 ## Regra permanente (Tiago pediu explicitamente, sessão 2026-07-22)
 
 Manter este arquivo (`CONTINUE.md`, maiúsculo — é o mesmo slot de arquivo que `continue.md` em filesystems case-insensitive como Windows, não criar um `continue.md` separado) atualizado sempre que uma sessão avançar ou pausar, tanto aqui quanto em `E:\Projetos Linux\ezquake-source\continue.md` (worktree Android, esse sim minúsculo, filesystem diferente/caso não colide lá). Objetivo: qualquer sessão futura (Claude ou Codex, Windows ou Linux) sabe onde o trabalho parou.
+
+## Sessão 2026-07-22 (Claude, Linux, `/home/tiba/src/ezquake-source`, Zorin OS 18.1 / Ubuntu 24.04 "noble")
+
+**Pedido do Tiago**: compilar o branch `feature/sdl3-vulkan-pr` (HEAD `36057234`, o mesmo commit documentado na sessão Windows acima) numa máquina Linux nova (`/home/tiba`, diferente do `/home/tiago` da sessão Codex de 2026-07-05 citada abaixo) e colocar o binário em `/home/tiba/nquake` pra ele testar. **Testado visualmente e confirmado pelo Tiago** ("Sim, abriu normalmente").
+
+Achados relevantes pra quem for reproduzir este build em outra máquina Ubuntu/Debian-based sem `libsdl3-dev` empacotado:
+
+1. **Ubuntu 24.04 não tem `libsdl3-dev` nos repos** (só existe no Debian testing/sid, que é por isso que o job Linux do CI roda dentro de um container `debian:testing`, não direto no runner `ubuntu-latest` — ver `.github/workflows/main.yml`). Sem SDL3 do sistema, `USE_SYSTEM_LIBS=ON` (padrão) falha o `pkg_check_modules(sdl3)`.
+2. **Solução usada**: compilar SDL3 3.2.20 a partir do código-fonte (`github.com/libsdl-org/SDL`, tag `release-3.2.20`) e instalar num prefixo local não-privilegiado (`/home/tiba/src/sdl3-install`, sem `sudo`), com Wayland+X11+Vulkan+ALSA+PulseAudio habilitados (todos detectados automaticamente pelo CMake do SDL desde que os `-dev` de X11/Wayland/libdecor/etc. estejam instalados — ver lista de pacotes abaixo). `PKG_CONFIG_PATH=/home/tiba/src/sdl3-install/lib/pkgconfig` faz o `pkg-config --modversion sdl3` do CMake do ezquake achar essa instalação. O binário final carrega `libSDL3.so.0` via `RUNPATH` absoluto que o CMake já embute sozinho (confirmado com `readelf -d`), então não precisa de `LD_LIBRARY_PATH` na hora de rodar.
+3. **`libvulkan-dev` do Ubuntu 24.04 (1.3.275) é headers demais antigos** — o código usa `VK_AMD_anti_lag` (`VkAntiLagDataAMD`, `VK_STRUCTURE_TYPE_ANTI_LAG_DATA_AMD` etc. em `src/vk_main.c`), extensão só presente em headers Vulkan mais recentes (~1.3.28x+). Erro de compilação: "unknown type name 'VkAntiLagDataAMD'" / "request for member ... in something not a structure or union". **Solução**: clonar `github.com/KhronosGroup/Vulkan-Headers` (branch default, header version 357 no momento) e passar `-DVulkan_INCLUDE_DIR=/home/tiba/src/Vulkan-Headers/include` no configure — a lib/loader do sistema (`libvulkan.so.1`, ABI estável) continua sendo usada normalmente, só os headers de compilação são mais novos. Não precisou trocar `libvulkan1`/driver do sistema.
+4. **Comando de configure completo que funcionou**:
+   ```
+   export PKG_CONFIG_PATH=/home/tiba/src/sdl3-install/lib/pkgconfig
+   cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DRENDERER_VULKAN=ON \
+     -DCMAKE_PREFIX_PATH=/home/tiba/src/sdl3-install \
+     -DVulkan_INCLUDE_DIR=/home/tiba/src/Vulkan-Headers/include
+   cmake --build build --parallel $(nproc)
+   ```
+5. **Pacotes apt necessários** (além dos já listados em `build-linux.sh`/CI, que ainda faltam alguns pro SDL3 compilar do zero): `cmake ninja-build pkg-config glslang-tools libcurl4-openssl-dev libexpat1-dev libfreetype-dev libjansson-dev libjpeg-dev libminizip-dev libpcre2-dev libpng-dev libsndfile1-dev libspeex-dev libspeexdsp-dev libvulkan-dev libwayland-dev wayland-protocols libxkbcommon-dev libegl1-mesa-dev libgles2-mesa-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev libxtst-dev libpulse-dev libasound2-dev libdrm-dev libgbm-dev libdecor-0-dev libibus-1.0-dev`.
+6. Binário final copiado pra `/home/tiba/nquake/ezquake-linux-x86_64` (o binário anterior que estava lá, linkado contra um SDL3 inexistente no sistema — provavelmente de uma tentativa anterior de build/CI download — foi preservado como `ezquake-linux-x86_64.bak-nosdl3`). Testar com `-vulkan` na linha de comando.
+7. **Nenhuma mudança de código nesta sessão** — só descoberta de receita de build local. Nada commitado além deste próprio arquivo.
+8. Sudo não funciona de dentro do harness do Claude Code neste ambiente (sem TTY pra senha, `sudo -n` falha) — os `apt-get install` precisaram ser rodados pelo próprio Tiago num terminal separado. Por isso a decisão de instalar SDL3/usar Vulkan-Headers em prefixos locais sem privilégio, evitando depender de mais `sudo` pro resto do processo.
 
 ## Sessão 2026-07-22 (Claude, Windows, worktree `E:\Projetos Linux\ezquake-sdl3-vulkan-pr`)
 
