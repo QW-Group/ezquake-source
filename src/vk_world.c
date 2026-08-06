@@ -2283,7 +2283,13 @@ void VK_RenderView(void)
 	// Only tracks what each branch below actually binds (pipeline + its
 	// descriptor sets); doesn't touch draw ordering, geometry, or call count.
 	VkPipeline lastBoundPipeline = VK_NULL_HANDLE;
-	VkDescriptorSet lastBoundDescriptorSets[3] = { VK_NULL_HANDLE, VK_NULL_HANDLE, VK_NULL_HANDLE };
+	// 4, not 3: the lightmapped pipeline now binds 4 descriptor sets (texture,
+	// lightmap, detail, caustics) since the underwater-caustics work added a
+	// 4th set -- this array used to be sized for the old 3-set maximum and
+	// silently overflowed by one VkDescriptorSet (8 bytes) on every bind of
+	// that pipeline. Caught by GCC's -Wstringop-overflow on the Linux build,
+	// not by MSVC.
+	VkDescriptorSet lastBoundDescriptorSets[4] = { VK_NULL_HANDLE, VK_NULL_HANDLE, VK_NULL_HANDLE, VK_NULL_HANDLE };
 	int lastBoundDescriptorSetCount = 0;
 	qbool worldOutline = false;
 
