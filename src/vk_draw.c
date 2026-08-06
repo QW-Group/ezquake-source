@@ -1509,6 +1509,32 @@ void VK_HudResourcesShutdown(void)
 		vkDestroySampler(vk_options.logicalDevice, postProcessSampler, NULL);
 		postProcessSampler = VK_NULL_HANDLE;
 	}
+	// World-outline composite resources: exactly the same lifetime rules as
+	// the post-process ones above. They MUST be torn down here and not just
+	// at device destruction: VK_HudSwapchainChanged() calls this on every
+	// swapchain recreate, right after VK_DestroyWorldNormalsResources() has
+	// destroyed the descriptor pool the outline sets were allocated from and
+	// the image views they point at. Leaving worldOutlinePipeline non-NULL
+	// makes VK_WorldOutlineCreatePipeline() early-out on the next frame and
+	// keep using the stale sampler/set-layout against a freshly created pool,
+	// and leaving them alive through VK_Shutdown leaks a pipeline + layout +
+	// set-layout + sampler per vid_restart.
+	if (worldOutlinePipeline != VK_NULL_HANDLE) {
+		vkDestroyPipeline(vk_options.logicalDevice, worldOutlinePipeline, NULL);
+		worldOutlinePipeline = VK_NULL_HANDLE;
+	}
+	if (worldOutlinePipelineLayout != VK_NULL_HANDLE) {
+		vkDestroyPipelineLayout(vk_options.logicalDevice, worldOutlinePipelineLayout, NULL);
+		worldOutlinePipelineLayout = VK_NULL_HANDLE;
+	}
+	if (worldOutlineDescriptorSetLayout != VK_NULL_HANDLE) {
+		vkDestroyDescriptorSetLayout(vk_options.logicalDevice, worldOutlineDescriptorSetLayout, NULL);
+		worldOutlineDescriptorSetLayout = VK_NULL_HANDLE;
+	}
+	if (worldNormalsSampler != VK_NULL_HANDLE) {
+		vkDestroySampler(vk_options.logicalDevice, worldNormalsSampler, NULL);
+		worldNormalsSampler = VK_NULL_HANDLE;
+	}
 	hudImageBufferDirty = false;
 }
 
