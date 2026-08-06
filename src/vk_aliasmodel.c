@@ -90,6 +90,10 @@ static vk_alias_draw_t* aliasDraws;
 static int aliasDrawCount;
 static int aliasDrawCapacity;
 
+// Diagnostic-only: flip to the vsnprintf/Con_Printf body below to re-enable.
+// Left as a no-op by default -- at full alias-model draw volume this produces
+// millions of console lines per session, which was confirmed to cause audio
+// crackling (console I/O competing with the audio callback thread).
 static void VK_AliasDebugLog(const char* fmt, ...)
 {
 	(void)fmt;
@@ -550,6 +554,7 @@ static void VK_AliasQueuePreparedDraw(
 	draw->scrollT = scrollT;
 	draw->pad0 = 0.0f;
 	draw->texture = draw->textured ? texture : solidwhite_texture;
+	VK_AliasDebugLog("queue texIdx=%d ready=%d weapon=%d player=%d mode=%d", texture.index, (int)textureReady, (render_effects & RF_WEAPONMODEL) ? 1 : 0, (render_effects & RF_PLAYERMODEL) ? 1 : 0, (int)mode);
 	if (requestedBlendMode != VK_ALIAS_BLEND_AUTO) {
 		draw->blendMode = requestedBlendMode;
 	}

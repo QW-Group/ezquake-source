@@ -526,5 +526,15 @@ qbool R_DrawWorldOutlines(void)
 {
 	extern cvar_t gl_outline;
 
-	return (gl_outline.integer & 2) && !RuleSets_DisallowModelOutline(NULL);
+	// RuleSets_AllowEdgeOutline() is the world/edge-outline gate (gl_outline
+	// 2 and 3) -- it only restricts the rs_qcon ruleset, no cheats required.
+	// RuleSets_DisallowModelOutline() is a *different* gate, for model
+	// outlines (gl_outline 1), whose mod==NULL "world model" case requires
+	// cheats/demo playback. This function used to call the model-outline
+	// gate by mistake (likely a copy/paste from GL_FramebufferStartWorldNormally's
+	// neighbourhood), which meant gl_outline 2/3 silently produced no world
+	// outline outside of cheats/demo -- GLM's own GL_FramebufferStartWorldNormals
+	// (gl_framebuffer.c) already called the correct RuleSets_AllowEdgeOutline,
+	// so this only ever manifested through this shared helper.
+	return (gl_outline.integer & 2) && RuleSets_AllowEdgeOutline();
 }

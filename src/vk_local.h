@@ -25,7 +25,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_local.h"
 #include "r_state.h"
 
-#define VK_MAX_FRAMES_IN_FLIGHT 2
+// Depth of the CPU->GPU pipeline: how many frames the CPU is allowed to get
+// ahead of the GPU before it must block on a fence. Every per-frame CPU-written
+// resource (dynamic buffers in vk_buffers.c, texture upload staging in
+// vk_texture.c, the world flat-sky descriptor sets in vk_world.c) is
+// double/triple-buffered by this count and indexed by frame.currentFrame, so
+// the inFlightFences[currentFrame] wait at the top of VK_BeginFrame is what
+// guarantees the GPU finished reading a slot before the CPU rewrites it --
+// raising this number widens that safety window, it does not remove it.
+//
+// Bumped 2 -> 3: with only 2 frames in flight and a swapchain that now runs 3
+// images in IMMEDIATE/MAILBOX (see VK_CreateSwapChain), the CPU had to block on
+// the GPU almost every frame in uncapped/no-compositor present modes, so each
+// vkWaitForFences turned into a near-full-frame stall (the "internal pacing"
+// the Linux testers measured as ~1700fps where the GPU could sustain ~5000).
+// A third in-flight frame lets the CPU stay one more frame ahead and keeps the
+// GPU fed. Changing this resizes the frame-indexed arrays in all of the files
+// listed above in lockstep (they are all sized by this macro), so the buffer
+// reuse hazard the fences protect against is preserved.
+#define VK_MAX_FRAMES_IN_FLIGHT 3
 
 typedef struct SDL_Window SDL_Window;
 typedef struct gltexture_s gltexture_t;
@@ -78,7 +96,9 @@ void VK_RenderPassDelete(void);
 VkRenderPass VK_MainRenderPass(void);
 VkRenderPass VK_FrameRenderPass(qbool clear_color);
 VkRenderPass VK_PostProcessRenderPass(void);
+VkRenderPass VK_WorldNormalsRenderPass(void);
 VkFormat VK_DepthFormat(void);
+VkFormat VK_WorldNormalsFormat(void);
 
 // vk_swapchain.c
 qbool VK_PostProcessActive(void);
@@ -86,10 +106,17 @@ qbool VK_CreatePostProcessResources(void);
 void VK_DestroyPostProcessResources(void);
 VkFramebuffer VK_PostProcessFramebuffer(uint32_t imageIndex);
 VkFramebuffer VK_PostProcessCompositeFramebuffer(uint32_t imageIndex);
+qbool VK_CreateWorldNormalsResources(void);
+void VK_DestroyWorldNormalsResources(void);
+VkFramebuffer VK_WorldNormalsFramebuffer(uint32_t imageIndex);
+VkDescriptorSet VK_WorldNormalsDescriptorSet(uint32_t imageIndex);
 
 // vk_draw.c
 void VK_PostProcessTransitionForSampling(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 void VK_PostProcessComposite(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+void VK_WorldNormalsTransitionForSampling(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+void VK_WorldOutlineComposite(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+qbool VK_WorldOutlineActive(void);
 
 // vk_blending.c
 void VK_BlendingConfigure(VkPipelineColorBlendStateCreateInfo* info, VkPipelineColorBlendAttachmentState* blending, r_blendfunc_t func);
@@ -100,6 +127,7 @@ qbool VK_CreateBufferResource(VkDeviceSize size, VkBufferUsageFlags usage, VkMem
 qbool VK_CreateImageResource(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits samples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* memory);
 VkCommandBuffer VK_BeginImmediateCommands(void);
 qbool VK_EndImmediateCommands(VkCommandBuffer command_buffer);
+qbool VK_EndImmediateCommandsAfter(VkCommandBuffer command_buffer, VkSemaphore waitSemaphore, VkPipelineStageFlags waitStage);
 void VK_DestroyImmediateCommandPool(void);
 
 // vk_buffers.c
@@ -128,6 +156,7 @@ void VK_TextureCreate2D(texture_ref* reference, int width, int height, const cha
 void VK_TexturesCreate(r_texture_type_id type, int count, texture_ref* textures);
 void VK_TextureReplaceSubImageRGBA(texture_ref texture, int offsetx, int offsety, int width, int height, byte* buffer);
 void VK_TextureFlushPendingUploads(VkCommandBuffer commandBuffer, uint32_t frameIndex);
+void VK_TextureApplyDeferredUploads(void);
 void VK_TextureSetFiltering(texture_ref texture, texture_minification_id min_filter, texture_magnification_id mag_filter);
 void VK_TextureSetAnisotropy(texture_ref texture, int anisotropy);
 
@@ -252,12 +281,45 @@ typedef struct vk_options_s {
 		VkDescriptorPool postProcessDescriptorPool;
 		VkDescriptorSet* postProcessDescriptorSets;
 		qbool postProcessActive;
+		// gl_outline & 2 (world outline) prepass resources -- see
+		// VK_CreateWorldNormalsResources. One per swapchain image, same
+		// reasoning as the postProcess* fields above: this pass's framebuffer
+		// for image N could still be draining GPU work from a previous frame
+		// while frame N+1 (targeting a different swapchain image) starts
+		// drawing into its own copy. Allocated unconditionally alongside the
+		// swapchain (gl_outline is unlatched, changeable without vid_restart
+		// -- same reasoning as postProcess* above).
+		VkImage* worldNormalsColorImages;
+		VkDeviceMemory* worldNormalsColorImageMemory;
+		VkImageView* worldNormalsColorImageViews;
+		VkImage* worldNormalsDepthImages;
+		VkDeviceMemory* worldNormalsDepthImageMemory;
+		VkImageView* worldNormalsDepthImageViews;
+		VkFramebuffer* worldNormalsFramebuffers;
+		VkDescriptorPool worldNormalsDescriptorPool;
+		VkDescriptorSet* worldNormalsDescriptorSets;
 	} swapChain;
 	struct {
 		VkCommandPool commandPool;
 		VkCommandBuffer* commandBuffers;
+		// Acquire semaphore: signalled by vkAcquireNextImageKHR, waited on by the
+		// frame's queue submit. Safe to index per frame-in-flight because the
+		// inFlightFences[currentFrame] wait at the top of VK_BeginFrame already
+		// guarantees the previous use of this frame slot's submit (the only
+		// waiter of this semaphore) has completed before it is reused.
 		VkSemaphore imageAvailableSemaphores[VK_MAX_FRAMES_IN_FLIGHT];
-		VkSemaphore renderFinishedSemaphores[VK_MAX_FRAMES_IN_FLIGHT];
+		// Present ("render finished") semaphore: signalled by the queue submit,
+		// waited on by vkQueuePresentKHR for a SPECIFIC swapchain image. This
+		// MUST be indexed by swapchain imageIndex, not frame-in-flight: when
+		// frames-in-flight != imageCount the two counters drift, and a
+		// per-frame semaphore can be re-signalled by a new submit while
+		// vkQueuePresentKHR is still consuming it for a different image that
+		// hasn't been re-acquired yet (Vulkan WSI hazard, VUID on semaphore
+		// reuse). One per swapchain image removes that class of bug and is the
+		// pattern the Vulkan docs recommend
+		// (swapchain_semaphore_reuse.html). Allocated with imageCount entries in
+		// VK_CreateFrameResources.
+		VkSemaphore* renderFinishedSemaphores;
 		VkFence inFlightFences[VK_MAX_FRAMES_IN_FLIGHT];
 		VkFence* imageInFlightFences;
 		uint32_t currentFrame;

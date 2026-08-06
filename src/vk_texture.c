@@ -65,6 +65,81 @@ static void* frameUploadMapped[VK_MAX_FRAMES_IN_FLIGHT];
 
 static qbool VK_TextureReferenceInRange(texture_ref texture);
 
+// A texture load can be triggered by gameplay in the MIDDLE of a frame that is
+// already recording commands (vk_options.frame.active): e.g. picking up an item
+// lazily loads its HUD ammo icon / model skin during SCR_UpdateScreen, after the
+// world/HUD draws of this same frame already recorded vkCmdBindDescriptorSets
+// referencing existing texture descriptor sets. VK_UploadTexture destroys and
+// reallocates the texture's image + descriptor set (VK_TextureDestroyObjects ->
+// vkFreeDescriptorSets). vkDeviceWaitIdle only drains work already SUBMITTED to
+// the GPU; it cannot undo a bind already recorded into the current frame's
+// command buffer that has not been submitted yet. Freeing a descriptor set that
+// is still referenced by a recording command buffer invalidates that command
+// buffer for the rest of the frame (validation: "VkCommandBuffer ... is now in
+// an invalid state ... VkDescriptorSet was destroyed or updated without
+// UPDATE_AFTER_BIND"), so every subsequent draw is dropped -- observed as alias
+// models rendering black/untextured. To avoid it we defer the whole upload to
+// the next VK_BeginFrame, applied at a clean frame boundary before any command
+// buffer starts recording. Map-load uploads (frame not active) are unaffected
+// and still run immediately.
+typedef struct vk_deferred_texture_upload_s {
+	texture_ref texture;
+	int mode;
+	int width;
+	int height;
+	byte* data;      // owned copy, freed after the deferred upload runs
+	size_t dataSize;
+} vk_deferred_texture_upload_t;
+
+#define VK_MAX_DEFERRED_TEXTURE_UPLOADS 256
+static vk_deferred_texture_upload_t deferredTextureUploads[VK_MAX_DEFERRED_TEXTURE_UPLOADS];
+static int deferredTextureUploadCount;
+
+// Same in-flight hazard as the deferred uploads above, but for the texture state
+// setters (VK_TextureSetFiltering / VK_TextureSetAnisotropy / VK_TextureWrapModeClamp).
+// Those change filtering/anisotropy/clamp on an EXISTING texture, whose descriptor
+// set may already be recorded (vkCmdBindDescriptorSets) into the current frame's
+// command buffer. VK_TextureUpdateDescriptor runs vkUpdateDescriptorSets on it,
+// which is the "updated ... without UPDATE_AFTER_BIND" half of the validation
+// error (the uploads above are the "destroyed" half) -- it invalidates the
+// recording command buffer for the rest of the frame, dropping every later draw
+// (observed as ground weapon/item models rendering black from the very first
+// frame after entering a map, e.g. dm3). vkDeviceWaitIdle only drains SUBMITTED
+// work; it cannot undo a bind already recorded but not yet submitted. So when a
+// frame is active we only stash the new CPU-side state on the texture (harmless)
+// and defer the actual descriptor refresh to the next VK_BeginFrame boundary,
+// before any command buffer starts recording. Off-frame calls (map load,
+// vid_restart) still refresh immediately.
+#define VK_MAX_DEFERRED_DESCRIPTOR_REFRESHES 1024
+static texture_ref deferredDescriptorRefreshes[VK_MAX_DEFERRED_DESCRIPTOR_REFRESHES];
+static int deferredDescriptorRefreshCount;
+
+// The "destroyed" half of the same hazard, on a DIFFERENT path than the deferred
+// uploads above: R_TextureAllocateSlot (r_texture.c) calls R_DeleteTexture ->
+// VK_TextureDelete -> VK_TextureDestroyObjects -> vkFreeDescriptorSets directly,
+// SYNCHRONOUSLY, whenever gameplay reloads a texture "over" an existing slot at a
+// different size (player-skin translation on connect/skin change, HUD/ammo icon
+// reload after an item pickup, weapon-model skin swap). That runs from CPU
+// gameplay/HUD code during SCR_UpdateScreen, mid-frame, AFTER this frame's world/
+// HUD draws already recorded vkCmdBindDescriptorSets against the old descriptor
+// set. Unlike VK_UploadTexture, this slot-delete path is NOT gated on
+// frame.active and was never deferred -- it is the third free/update site that
+// escaped fixes #1 (deferred uploads) and #2 (deferred setter refreshes), so the
+// "VkDescriptorSet was destroyed or updated without UPDATE_AFTER_BIND" validation
+// error and its command-buffer-invalidation cascade still fired right after an
+// item pickup. vkDeviceWaitIdle (which VK_TextureDestroyObjects already does)
+// only drains SUBMITTED work; it cannot undo a bind recorded into the current,
+// not-yet-submitted command buffer. So when a frame is active we capture just the
+// descriptor set handle here and free it at the next VK_BeginFrame boundary,
+// before any command buffer records. The image/view/memory teardown (guarded by
+// vkDeviceWaitIdle) stays immediate -- only descriptor set free/update trips the
+// UPDATE_AFTER_BIND validation and corrupts the recording command buffer.
+#define VK_MAX_DEFERRED_DESCRIPTOR_FREES 1024
+static VkDescriptorSet deferredDescriptorFrees[VK_MAX_DEFERRED_DESCRIPTOR_FREES];
+static int deferredDescriptorFreeCount;
+
+static void VK_UploadTextureImmediate(texture_ref texture, int mode, int width, int height, byte* data);
+
 static void VK_TextureDestroyFrameUploadBuffer(uint32_t frameIndex)
 {
 	if (frameIndex >= VK_MAX_FRAMES_IN_FLIGHT) return;
@@ -88,6 +163,46 @@ static void VK_TextureDestroyFrameUploadResources(void)
 	pendingTextureUploadDataSize = 0;
 	pendingTextureUploadDataCapacity = 0;
 	pendingTextureUploadCount = 0;
+}
+
+static void VK_TextureDiscardDeferredUploads(void)
+{
+	int i;
+	for (i = 0; i < deferredTextureUploadCount; ++i) {
+		Q_free(deferredTextureUploads[i].data);
+		deferredTextureUploads[i].data = NULL;
+	}
+	deferredTextureUploadCount = 0;
+	deferredDescriptorRefreshCount = 0;
+	// Queued handles belong to textureDescriptorPool, which every caller of this
+	// (vid_restart full-reset, shutdown) destroys wholesale right after -- that
+	// frees the sets, so just drop the queue rather than free individually.
+	deferredDescriptorFreeCount = 0;
+}
+
+static qbool VK_TextureUpdateDescriptor(texture_ref texture);
+
+// Called by the texture state setters while a frame is recording: record the
+// request so the descriptor gets refreshed at the next frame boundary instead
+// of mid-recording. Coalesces duplicates (same texture set repeatedly in one
+// frame) and falls back to an immediate refresh only if the (large) queue fills.
+static void VK_TextureQueueDeferredDescriptorRefresh(texture_ref texture)
+{
+	int i;
+
+	for (i = 0; i < deferredDescriptorRefreshCount; ++i) {
+		if (deferredDescriptorRefreshes[i].index == texture.index) {
+			return;
+		}
+	}
+	if (deferredDescriptorRefreshCount >= VK_MAX_DEFERRED_DESCRIPTOR_REFRESHES) {
+		// Pathological (a single frame reconfigured >1024 distinct textures).
+		// An immediate refresh may still trip the hazard for this one texture,
+		// but that is strictly better than never applying the state change.
+		VK_TextureUpdateDescriptor(texture);
+		return;
+	}
+	deferredDescriptorRefreshes[deferredDescriptorRefreshCount++] = texture;
 }
 
 static qbool VK_TextureReferenceInRange(texture_ref texture)
@@ -167,7 +282,23 @@ static void VK_TextureDestroyObjects(texture_ref texture)
 	}
 
 	if (vktex->descriptorSet != VK_NULL_HANDLE && textureDescriptorPool != VK_NULL_HANDLE) {
-		vkFreeDescriptorSets(vk_options.logicalDevice, textureDescriptorPool, 1, &vktex->descriptorSet);
+		// Mid-frame (gameplay reloading a skin/HUD icon over an existing slot):
+		// this descriptor set may already be bound into the current recording
+		// command buffer. Freeing it now would invalidate that command buffer
+		// for the rest of the frame (UPDATE_AFTER_BIND validation error +
+		// cascade). Defer the free to the next frame boundary instead. The
+		// handle is captured here; the memset() below clears vktex->descriptorSet
+		// so the slot can be safely reused (reallocating a distinct new set) this
+		// same frame without touching the still-queued old one.
+		if (vk_options.frame.active && deferredDescriptorFreeCount < VK_MAX_DEFERRED_DESCRIPTOR_FREES) {
+			deferredDescriptorFrees[deferredDescriptorFreeCount++] = vktex->descriptorSet;
+		}
+		else {
+			// Off-frame (map load, vid_restart, shutdown) or the queue is full:
+			// safe/necessary to free immediately. vkDeviceWaitIdle above already
+			// drained any submitted frame still reading this set.
+			vkFreeDescriptorSets(vk_options.logicalDevice, textureDescriptorPool, 1, &vktex->descriptorSet);
+		}
 	}
 	// modeSampler/forcedNearestSampler are borrowed references into the shared
 	// samplerCache (see VK_TextureCachedSampler) -- the cache owns them, not
@@ -249,24 +380,34 @@ static qbool VK_TextureEnsureInfrastructure(void)
 // same class of stall VK_TextureQueuePendingUpload's batching elsewhere was
 // written to avoid.
 #define VK_SAMPLER_CACHE_ANISOTROPY_LEVELS 17 /* 0-16 */
-#define VK_SAMPLER_CACHE_SIZE (2 /* minFilter */ * 2 /* magFilter */ * 2 /* mipmapMode */ * 2 /* clamp */ * VK_SAMPLER_CACHE_ANISOTROPY_LEVELS)
+#define VK_SAMPLER_CACHE_SIZE (2 /* minFilter */ * 2 /* magFilter */ * 2 /* mipmapMode */ * 2 /* clamp */ * 2 /* hasMipmap */ * VK_SAMPLER_CACHE_ANISOTROPY_LEVELS)
 static VkSampler samplerCache[VK_SAMPLER_CACHE_SIZE];
 static qbool samplerCacheValid[VK_SAMPLER_CACHE_SIZE];
 
-static int VK_SamplerCacheIndex(VkFilter minFilter, VkFilter magFilter, VkSamplerMipmapMode mipmapMode, qbool clamp, int anisotropy)
+static int VK_SamplerCacheIndex(VkFilter minFilter, VkFilter magFilter, VkSamplerMipmapMode mipmapMode, qbool clamp, qbool hasMipmap, int anisotropy)
 {
 	int minIdx = (minFilter == VK_FILTER_LINEAR) ? 0 : 1;
 	int magIdx = (magFilter == VK_FILTER_LINEAR) ? 0 : 1;
 	int mipIdx = (mipmapMode == VK_SAMPLER_MIPMAP_MODE_LINEAR) ? 0 : 1;
 	int clampIdx = clamp ? 1 : 0;
+	int hasMipmapIdx = hasMipmap ? 1 : 0;
 	int anisoIdx = bound(0, anisotropy, VK_SAMPLER_CACHE_ANISOTROPY_LEVELS - 1);
 
-	return (((minIdx * 2 + magIdx) * 2 + mipIdx) * 2 + clampIdx) * VK_SAMPLER_CACHE_ANISOTROPY_LEVELS + anisoIdx;
+	return ((((minIdx * 2 + magIdx) * 2 + mipIdx) * 2 + clampIdx) * 2 + hasMipmapIdx) * VK_SAMPLER_CACHE_ANISOTROPY_LEVELS + anisoIdx;
 }
 
-static VkSampler VK_TextureCachedSampler(VkFilter minFilter, VkFilter magFilter, VkSamplerMipmapMode mipmapMode, qbool clamp, int anisotropy)
+// hasMipmap distinguishes GL_NEAREST/GL_LINEAR (texture_minification_nearest/
+// _linear -- no "_mipmap_" suffix) from the other 4 gl_texturemode values:
+// on GL those two sample only mip 0, giving the pixel-perfect/software-like
+// look at any distance, everything else blends across the full mip chain.
+// mipmapMode alone can't express that in Vulkan -- it only picks how to
+// interpolate *between* mips once sampling has decided to use more than one,
+// it doesn't disable the chain -- so hasMipmap=false additionally clamps
+// maxLod to 0.25f (the standard "round down to mip 0, never reach mip 1"
+// trick) instead of the usual VK_LOD_CLAMP_NONE.
+static VkSampler VK_TextureCachedSampler(VkFilter minFilter, VkFilter magFilter, VkSamplerMipmapMode mipmapMode, qbool clamp, qbool hasMipmap, int anisotropy)
 {
-	int index = VK_SamplerCacheIndex(minFilter, magFilter, mipmapMode, clamp, anisotropy);
+	int index = VK_SamplerCacheIndex(minFilter, magFilter, mipmapMode, clamp, hasMipmap, anisotropy);
 
 	if (!samplerCacheValid[index]) {
 		VkSamplerCreateInfo samplerInfo;
@@ -288,13 +429,18 @@ static VkSampler VK_TextureCachedSampler(VkFilter minFilter, VkFilter magFilter,
 		samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
 		samplerInfo.mipmapMode = mipmapMode;
 		samplerInfo.minLod = 0.0f;
-		// VK_LOD_CLAMP_NONE instead of a fixed value: this sampler is shared
-		// across every texture with this (filter, clamp, anisotropy) combo,
-		// and they don't all have the same mip count. Each texture's own
-		// image view subresourceRange.levelCount (set from vktex->mipLevels)
-		// is what actually limits which levels are sampled; the sampler just
-		// needs to not clamp below that.
-		samplerInfo.maxLod = VK_LOD_CLAMP_NONE;
+		if (hasMipmap) {
+			// VK_LOD_CLAMP_NONE instead of a fixed value: this sampler is shared
+			// across every texture with this (filter, clamp, anisotropy) combo,
+			// and they don't all have the same mip count. Each texture's own
+			// image view subresourceRange.levelCount (set from vktex->mipLevels)
+			// is what actually limits which levels are sampled; the sampler just
+			// needs to not clamp below that.
+			samplerInfo.maxLod = VK_LOD_CLAMP_NONE;
+		}
+		else {
+			samplerInfo.maxLod = 0.25f;
+		}
 
 		if (vkCreateSampler(vk_options.logicalDevice, &samplerInfo, NULL, &samplerCache[index]) != VK_SUCCESS) {
 			return VK_NULL_HANDLE;
@@ -307,13 +453,17 @@ static VkSampler VK_TextureCachedSampler(VkFilter minFilter, VkFilter magFilter,
 // texture_minification_id packs both the base filter and the inter-mip blend
 // mode (GL_*_MIPMAP_* has no Vulkan equivalent enum, hence the split out
 // param); texture_magnification_id only ever carries NEAREST or LINEAR, GL
-// has no magnification-mipmap combination.
-static void VK_FilterFromMinification(texture_minification_id id, VkFilter* filter, VkSamplerMipmapMode* mipmapMode)
+// has no magnification-mipmap combination. hasMipmap is false only for the
+// two non-"_mipmap_" GL modes (GL_NEAREST/GL_LINEAR) -- see
+// VK_TextureCachedSampler for what that actually changes.
+static void VK_FilterFromMinification(texture_minification_id id, VkFilter* filter, VkSamplerMipmapMode* mipmapMode, qbool* hasMipmap)
 {
+	*hasMipmap = true;
 	switch (id) {
 		case texture_minification_nearest:
 			*filter = VK_FILTER_NEAREST;
 			*mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+			*hasMipmap = false;
 			break;
 		case texture_minification_nearest_mipmap_nearest:
 			*filter = VK_FILTER_NEAREST;
@@ -332,6 +482,10 @@ static void VK_FilterFromMinification(texture_minification_id id, VkFilter* filt
 			*mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 			break;
 		case texture_minification_linear:
+			*filter = VK_FILTER_LINEAR;
+			*mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+			*hasMipmap = false;
+			break;
 		default:
 			*filter = VK_FILTER_LINEAR;
 			*mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
@@ -361,17 +515,20 @@ static qbool VK_TextureEnsureSamplers(vk_texture_t* vktex)
 {
 	VkFilter minFilter, magFilter;
 	VkSamplerMipmapMode mipmapMode;
+	qbool hasMipmap;
 
-	VK_FilterFromMinification(vktex->minFilter, &minFilter, &mipmapMode);
+	VK_FilterFromMinification(vktex->minFilter, &minFilter, &mipmapMode, &hasMipmap);
 	magFilter = VK_FilterFromMagnification(vktex->magFilter);
 
 	// modeSampler actually reflects this texture's gl_texturemode-driven
 	// filter/mipmap settings; forcedNearestSampler is a fixed pixel-perfect
 	// override slot some draws (HUD icons, crosshair) explicitly opt into via
 	// VK_TextureDescriptorImageInfo's nearest param, independent of
-	// gl_texturemode -- see hudTexture[0]/[1] in vk_hud_image.frag.
-	vktex->modeSampler = VK_TextureCachedSampler(minFilter, magFilter, mipmapMode, vktex->clamp, (int)vktex->anisotropy);
-	vktex->forcedNearestSampler = VK_TextureCachedSampler(VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST, vktex->clamp, 1);
+	// gl_texturemode -- see hudTexture[0]/[1] in vk_hud_image.frag. Forced
+	// nearest always disables mipmapping too (matches its "pixel-perfect"
+	// intent regardless of gl_texturemode's own mip setting).
+	vktex->modeSampler = VK_TextureCachedSampler(minFilter, magFilter, mipmapMode, vktex->clamp, hasMipmap, (int)vktex->anisotropy);
+	vktex->forcedNearestSampler = VK_TextureCachedSampler(VK_FILTER_NEAREST, VK_FILTER_NEAREST, VK_SAMPLER_MIPMAP_MODE_NEAREST, vktex->clamp, false, 1);
 	if (vktex->modeSampler == VK_NULL_HANDLE || vktex->forcedNearestSampler == VK_NULL_HANDLE) {
 		return false;
 	}
@@ -608,7 +765,7 @@ static int VK_BuildMipPyramid(const byte* baseData, int baseWidth, int baseHeigh
 	return numLevels;
 }
 
-void VK_UploadTexture(texture_ref texture, int mode, int width, int height, byte* data)
+static void VK_UploadTextureImmediate(texture_ref texture, int mode, int width, int height, byte* data)
 {
 	vk_texture_t* vktex;
 	VkDeviceSize imageSize;
@@ -738,6 +895,111 @@ void VK_UploadTexture(texture_ref texture, int mode, int width, int height, byte
 	gltextures[texture.index].texnum = texture.index;
 }
 
+// If an earlier deferred upload for this same texture is still queued, drop it:
+// this newer call supersedes it, and letting the stale copy run later would
+// overwrite the fresh contents (and leak its data buffer).
+static void VK_TextureDropDeferredUpload(texture_ref texture)
+{
+	int i;
+
+	for (i = 0; i < deferredTextureUploadCount; ++i) {
+		if (deferredTextureUploads[i].texture.index == texture.index) {
+			Q_free(deferredTextureUploads[i].data);
+			deferredTextureUploads[i] = deferredTextureUploads[--deferredTextureUploadCount];
+			--i;
+		}
+	}
+}
+
+void VK_UploadTexture(texture_ref texture, int mode, int width, int height, byte* data)
+{
+	vk_deferred_texture_upload_t* deferred;
+	size_t dataSize;
+
+	if (!VK_TextureReferenceInRange(texture) || vk_options.logicalDevice == VK_NULL_HANDLE || width <= 0 || height <= 0) {
+		return;
+	}
+
+	// Not mid-frame (map load, init, vid_restart): safe to tear down and
+	// recreate the image/descriptor right now -- no command buffer is
+	// recording, so nothing can be holding a stale bind.
+	if (!vk_options.frame.active) {
+		VK_TextureDropDeferredUpload(texture);
+		VK_UploadTextureImmediate(texture, mode, width, height, data);
+		return;
+	}
+
+	// Mid-frame: capture the request (with a private copy of the pixels, since
+	// the caller frees its buffer right after returning) and apply it at the
+	// next frame boundary in VK_TextureApplyDeferredUploads.
+	VK_TextureDropDeferredUpload(texture);
+	if (deferredTextureUploadCount >= VK_MAX_DEFERRED_TEXTURE_UPLOADS) {
+		// Queue full (pathological). Falling back to an immediate upload here
+		// is the lesser evil: it may still trip the in-flight-descriptor hazard
+		// for this one texture, but dropping the upload entirely would leave the
+		// texture permanently wrong. In practice a single frame never loads
+		// hundreds of new textures once past map load.
+		VK_UploadTextureImmediate(texture, mode, width, height, data);
+		return;
+	}
+
+	dataSize = (size_t)width * height * 4;
+	deferred = &deferredTextureUploads[deferredTextureUploadCount++];
+	deferred->texture = texture;
+	deferred->mode = mode;
+	deferred->width = width;
+	deferred->height = height;
+	deferred->dataSize = dataSize;
+	deferred->data = Q_malloc(dataSize);
+	if (data) {
+		memcpy(deferred->data, data, dataSize);
+	}
+	else {
+		memset(deferred->data, 0, dataSize);
+	}
+}
+
+// Called from VK_BeginFrame before the frame's command buffer starts recording,
+// so the destroy/recreate of image + descriptor set below happens at a point
+// where no command buffer references the old descriptor set. VK_UploadTextureImmediate
+// still runs its own vkDeviceWaitIdle (via VK_TextureDestroyObjects) to cover
+// any previously-submitted frame that is still executing on the GPU.
+void VK_TextureApplyDeferredUploads(void)
+{
+	int i;
+
+	// Descriptor set frees deferred from mid-frame slot deletes
+	// (VK_TextureDestroyObjects via R_TextureAllocateSlot). Freed first, at the
+	// frame boundary before any command buffer records and before the uploads
+	// below allocate new sets, so no recording command buffer still references a
+	// set being freed, and the pool capacity is reclaimed ahead of new allocs.
+	if (deferredDescriptorFreeCount > 0 && textureDescriptorPool != VK_NULL_HANDLE) {
+		vkFreeDescriptorSets(vk_options.logicalDevice, textureDescriptorPool, deferredDescriptorFreeCount, deferredDescriptorFrees);
+	}
+	deferredDescriptorFreeCount = 0;
+
+	// Uploads first: VK_UploadTextureImmediate fully reallocates the image and
+	// descriptor set, so a refresh queued for the same texture the same frame
+	// becomes redundant afterwards (but stays harmless -- it just re-writes the
+	// same already-correct descriptor).
+	for (i = 0; i < deferredTextureUploadCount; ++i) {
+		vk_deferred_texture_upload_t* deferred = &deferredTextureUploads[i];
+		VK_UploadTextureImmediate(deferred->texture, deferred->mode, deferred->width, deferred->height, deferred->data);
+		Q_free(deferred->data);
+		deferred->data = NULL;
+	}
+	deferredTextureUploadCount = 0;
+
+	// Descriptor refreshes deferred from mid-frame texture state setters
+	// (filtering/anisotropy/clamp). Applied here at the frame boundary, before
+	// this frame's command buffer starts recording, so vkUpdateDescriptorSets
+	// can't invalidate an already-bound-and-recording descriptor set.
+	for (i = 0; i < deferredDescriptorRefreshCount; ++i) {
+		VK_TextureUpdateDescriptor(deferredDescriptorRefreshes[i]);
+	}
+	deferredDescriptorRefreshCount = 0;
+}
+
 VkDescriptorSetLayout VK_TextureDescriptorSetLayout(void)
 {
 	VK_TextureEnsureInfrastructure();
@@ -795,6 +1057,11 @@ void VK_TextureInitialiseState(void)
 		VK_TextureDestroyObjects(ref);
 	}
 
+	// Drop any queued deferred descriptor frees: their handles belong to the
+	// pool destroyed just below (which frees them wholesale), and freeing them
+	// individually afterwards would use a dangling pool handle.
+	deferredDescriptorFreeCount = 0;
+
 	if (textureDescriptorPool != VK_NULL_HANDLE) {
 		vkDestroyDescriptorPool(vk_options.logicalDevice, textureDescriptorPool, NULL);
 		textureDescriptorPool = VK_NULL_HANDLE;
@@ -815,6 +1082,7 @@ void VK_TextureShutdown(void)
 		return;
 	}
 	VK_TextureDestroyFrameUploadResources();
+	VK_TextureDiscardDeferredUploads();
 
 	for (i = 0; i < MAX_GLTEXTURES; ++i) {
 		texture_ref ref;
@@ -861,7 +1129,12 @@ void VK_TextureWrapModeClamp(texture_ref texture)
 	// from samplerCache on every call, including picking up the new clamp
 	// mode, since it's keyed by (filter, clamp, anisotropy) rather than
 	// owning a sampler outright.
-	VK_TextureUpdateDescriptor(texture);
+	if (vk_options.frame.active) {
+		VK_TextureQueueDeferredDescriptorRefresh(texture);
+	}
+	else {
+		VK_TextureUpdateDescriptor(texture);
+	}
 }
 
 void VK_TextureLabelSet(texture_ref texture, const char* label)
@@ -1111,7 +1384,12 @@ void VK_TextureSetFiltering(texture_ref texture, texture_minification_id min_fil
 	vktex = &textureData[texture.index];
 	vktex->minFilter = min_filter;
 	vktex->magFilter = mag_filter;
-	VK_TextureUpdateDescriptor(texture);
+	if (vk_options.frame.active) {
+		VK_TextureQueueDeferredDescriptorRefresh(texture);
+	}
+	else {
+		VK_TextureUpdateDescriptor(texture);
+	}
 }
 
 void VK_TextureSetAnisotropy(texture_ref texture, int anisotropy)
@@ -1130,7 +1408,12 @@ void VK_TextureSetAnisotropy(texture_ref texture, int anisotropy)
 	// No destroy/recreate (and no vkDeviceWaitIdle) needed here: see
 	// VK_TextureCachedSampler -- this just switches which cached sampler
 	// VK_TextureEnsureSamplers resolves to next.
-	VK_TextureUpdateDescriptor(texture);
+	if (vk_options.frame.active) {
+		VK_TextureQueueDeferredDescriptorRefresh(texture);
+	}
+	else {
+		VK_TextureUpdateDescriptor(texture);
+	}
 }
 
 void VK_TextureLoadCubemapFace(texture_ref cubemap, r_cubemap_direction_id direction, const byte* data, int width, int height)

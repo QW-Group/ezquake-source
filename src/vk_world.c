@@ -21,6 +21,7 @@ of the License, or (at your option) any later version.
 #include "r_brushmodel_sky.h"
 #include "r_lightmaps.h"
 #include "r_lightmaps_internal.h"
+#include "r_local.h"
 #include "r_matrix.h"
 #include "r_texture.h"
 #include "glsl/constants.glsl"
@@ -45,6 +46,10 @@ extern const unsigned char vk_world_alpha_textured_vert_spv[];
 extern const unsigned int vk_world_alpha_textured_vert_spv_len;
 extern const unsigned char vk_world_alpha_textured_frag_spv[];
 extern const unsigned int vk_world_alpha_textured_frag_spv_len;
+extern const unsigned char vk_world_normals_vert_spv[];
+extern const unsigned int vk_world_normals_vert_spv_len;
+extern const unsigned char vk_world_normals_frag_spv[];
+extern const unsigned int vk_world_normals_frag_spv_len;
 
 extern cvar_t r_drawflat;
 extern cvar_t r_drawflat_mode;
@@ -57,6 +62,11 @@ extern cvar_t r_wallcolor;
 extern cvar_t gl_fb_bmodels;
 extern cvar_t gl_lumatextures;
 extern cvar_t gl_detail;
+// Normalizes the normals pass's linear depth the same way the outline shader
+// un-normalizes it (see vk_world_normals.frag / vk_world_outline.frag) -- both
+// sides must agree on this value or the depth-discontinuity threshold is
+// meaningless.
+extern cvar_t r_farclip;
 
 byte* SurfaceFlatTurbColor(texture_t* texture);
 
@@ -75,6 +85,7 @@ typedef struct vk_world_draw_s {
 	qbool lightmapped;
 	qbool blended;
 	qbool detail;
+	qbool caustics;
 	qbool polygonOffset;
 	int overlayMode;
 } vk_world_draw_t;
@@ -126,8 +137,23 @@ typedef struct vk_world_push_s {
 	// Vulkan-guaranteed minimum of 128 but comfortably within the 256 typical
 	// desktop AMD/NVIDIA/Intel drivers expose -- same portability caveat as
 	// the rest of this struct (desktop-only branch; do not carry to Android).
-	float padding;
+	// This trailing slot used to be pure padding; the textured/lightmapped/
+	// alpha_textured shaders never read a drawflatColor-shaped field here, so
+	// it's repurposed as causticsEnabled (GLC/GLM's gl_caustics, applied only
+	// to EZQ_SURFACE_UNDERWATER fragments) without growing the struct.
+	float causticsEnabled;
 } vk_world_push_t;
+
+// Must match the push_constant block in vk_world_normals.vert /
+// vk_world_normals.frag exactly. mat4 + vec4 + 2 floats = 88 bytes, well
+// inside the 128-byte guaranteed minimum (unlike vk_world_push_t, which is
+// desktop-only at 176) -- this one is portable as-is.
+typedef struct vk_world_normals_push_s {
+	float mvp[16];
+	float cameraPosition[4];
+	float surfaceType;
+	float zFar;
+} vk_world_normals_push_t;
 
 static VkPipelineLayout worldFlatPipelineLayout;
 static VkPipeline worldFlatPipeline;
@@ -152,6 +178,13 @@ static VkPipelineLayout worldLightmappedPipelineLayout;
 static VkPipeline worldLightmappedPipeline;
 static VkPipelineLayout worldAlphaTexturedPipelineLayout;
 static VkPipeline worldAlphaTexturedPipeline;
+// gl_outline & 2 world-outline normals prepass. Deliberately NOT sharing
+// vk_world_push_t: this pipeline has no descriptor sets at all and its
+// shaders declare their own much smaller block (see vk_world_normals.vert),
+// so reusing the 176-byte world block would just push 160 bytes of garbage
+// the shader never reads.
+static VkPipelineLayout worldNormalsPipelineLayout;
+static VkPipeline worldNormalsPipeline;
 static vk_world_draw_t* worldDraws;
 static int worldDrawCount;
 static int worldDrawCapacity;
@@ -388,6 +421,23 @@ static VkDescriptorSet VK_WorldDetailDescriptorSet(void)
 	return VK_TextureDescriptorSet(texture);
 }
 
+// GLC/GLM's gl_caustics: an animated multiplicative overlay applied only to
+// EZQ_SURFACE_UNDERWATER fragments (see vk_world_textured.frag/vk_world_
+// lightmapped.frag/vk_world_alpha_textured.frag). r_refdef2.drawCaustics
+// (cl_view.c) already gates on both gl_caustics and underwatertexture being
+// loaded; VK_TextureReady additionally confirms the GPU-side upload landed.
+static qbool VK_WorldCausticsTextureReady(void)
+{
+	return r_refdef2.drawCaustics && VK_TextureReady(underwatertexture);
+}
+
+static VkDescriptorSet VK_WorldCausticsDescriptorSet(void)
+{
+	texture_ref texture = VK_WorldCausticsTextureReady() ? underwatertexture : solidwhite_texture;
+
+	return VK_TextureDescriptorSet(texture);
+}
+
 static void VK_WorldDebugLog(const char* fmt, ...)
 {
 	(void)fmt;
@@ -553,6 +603,12 @@ static void VK_WorldQueueSurface(model_t* model, msurface_t* surf, qbool drawfla
 	draw->lightmapped = draw->textured && !blended && VK_TextureReady(lightmap);
 	draw->blended = blended;
 	draw->detail = model->isworldmodel && !(surf->flags & (SURF_DRAWSKY | SURF_DRAWTURB));
+	// GLM gates caustics purely on the per-vertex EZQ_SURFACE_UNDERWATER flag
+	// (draw_world.fragment.glsl), not on a per-model/per-surface CPU decision
+	// beyond "this is a normal textured surface" -- the fragment shader does
+	// the real filtering. Excluding sky/turb here just avoids wasting the
+	// uniform on pipelines that don't carry inFlags meaningfully for it.
+	draw->caustics = draw->textured && !(surf->flags & (SURF_DRAWSKY | SURF_DRAWTURB));
 	draw->polygonOffset = polygonOffset;
 	draw->overlayMode = draw->textured ? VK_WorldOverlayMode(materialTexture) : VK_WORLD_OVERLAY_NONE;
 	VK_WorldDebugLog(
@@ -816,7 +872,7 @@ static qbool VK_WorldCreateTexturedPipeline(void)
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
 	VkGraphicsPipelineCreateInfo pipelineInfo;
 	VkDescriptorSetLayout descriptorSetLayout;
-	VkDescriptorSetLayout descriptorSetLayouts[2];
+	VkDescriptorSetLayout descriptorSetLayouts[3];
 
 	if (worldTexturedPipeline != VK_NULL_HANDLE) {
 		return true;
@@ -828,6 +884,7 @@ static qbool VK_WorldCreateTexturedPipeline(void)
 	}
 	descriptorSetLayouts[0] = descriptorSetLayout;
 	descriptorSetLayouts[1] = descriptorSetLayout;
+	descriptorSetLayouts[2] = descriptorSetLayout;
 
 	vertShaderModule = VK_WorldCreateShaderModule(vk_world_textured_vert_spv, vk_world_textured_vert_spv_len);
 	fragShaderModule = VK_WorldCreateShaderModule(vk_world_textured_frag_spv, vk_world_textured_frag_spv_len);
@@ -988,7 +1045,7 @@ static qbool VK_WorldCreateOverlayPipeline(qbool luma)
 	VkShaderModule fragShaderModule;
 	VkPipelineShaderStageCreateInfo shaderStages[2];
 	VkVertexInputBindingDescription bindingDescription;
-	VkVertexInputAttributeDescription attributeDescriptions[3];
+	VkVertexInputAttributeDescription attributeDescriptions[4];
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo;
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly;
 	VkPipelineViewportStateCreateInfo viewportState;
@@ -1063,6 +1120,22 @@ static qbool VK_WorldCreateOverlayPipeline(qbool luma)
 	attributeDescriptions[2].location = 2;
 	attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
 	attributeDescriptions[2].offset = VK_VBO_FIELDOFFSET(vbo_world_vert_t, detail_coords);
+
+	// vk_world_textured_vert (reused here for the fullbright/luma overlay
+	// pass) gained an "inFlags" location-3 input when r_drawflat_mode
+	// tinted/bright support was added to it -- this pipeline shares that
+	// same shader module but its vertex input state wasn't updated to
+	// match, leaving vkCreateGraphicsPipelines to build a pipeline with an
+	// unbound input at that location. Some AMD/RADV driver versions
+	// silently mis-render instead of failing pipeline creation outright,
+	// which is the likely root cause of a reported bug where world/alias
+	// models render black/translucent and item models lose their texture
+	// entirely under Vulkan.
+	VK_InitialiseStructure(attributeDescriptions[3]);
+	attributeDescriptions[3].binding = 0;
+	attributeDescriptions[3].location = 3;
+	attributeDescriptions[3].format = VK_FORMAT_R32_UINT;
+	attributeDescriptions[3].offset = VK_VBO_FIELDOFFSET(vbo_world_vert_t, flags);
 
 	VK_InitialiseStructure(vertexInputInfo);
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -1178,7 +1251,7 @@ static qbool VK_WorldCreateAlphaTexturedPipeline(void)
 	VkShaderModule fragShaderModule;
 	VkPipelineShaderStageCreateInfo shaderStages[2];
 	VkVertexInputBindingDescription bindingDescription;
-	VkVertexInputAttributeDescription attributeDescriptions[3];
+	VkVertexInputAttributeDescription attributeDescriptions[4];
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo;
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly;
 	VkPipelineViewportStateCreateInfo viewportState;
@@ -1193,7 +1266,7 @@ static qbool VK_WorldCreateAlphaTexturedPipeline(void)
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
 	VkGraphicsPipelineCreateInfo pipelineInfo;
 	VkDescriptorSetLayout descriptorSetLayout;
-	VkDescriptorSetLayout descriptorSetLayouts[2];
+	VkDescriptorSetLayout descriptorSetLayouts[3];
 
 	if (worldAlphaTexturedPipeline != VK_NULL_HANDLE) {
 		return true;
@@ -1205,6 +1278,7 @@ static qbool VK_WorldCreateAlphaTexturedPipeline(void)
 	}
 	descriptorSetLayouts[0] = descriptorSetLayout;
 	descriptorSetLayouts[1] = descriptorSetLayout;
+	descriptorSetLayouts[2] = descriptorSetLayout;
 
 	vertShaderModule = VK_WorldCreateShaderModule(vk_world_alpha_textured_vert_spv, vk_world_alpha_textured_vert_spv_len);
 	fragShaderModule = VK_WorldCreateShaderModule(vk_world_alpha_textured_frag_spv, vk_world_alpha_textured_frag_spv_len);
@@ -1252,6 +1326,12 @@ static qbool VK_WorldCreateAlphaTexturedPipeline(void)
 	attributeDescriptions[2].location = 2;
 	attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
 	attributeDescriptions[2].offset = VK_VBO_FIELDOFFSET(vbo_world_vert_t, detail_coords);
+
+	VK_InitialiseStructure(attributeDescriptions[3]);
+	attributeDescriptions[3].binding = 0;
+	attributeDescriptions[3].location = 3;
+	attributeDescriptions[3].format = VK_FORMAT_R32_UINT;
+	attributeDescriptions[3].offset = VK_VBO_FIELDOFFSET(vbo_world_vert_t, flags);
 
 	VK_InitialiseStructure(vertexInputInfo);
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -1380,7 +1460,7 @@ static qbool VK_WorldCreateLightmappedPipeline(void)
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
 	VkGraphicsPipelineCreateInfo pipelineInfo;
 	VkDescriptorSetLayout descriptorSetLayout;
-	VkDescriptorSetLayout descriptorSetLayouts[3];
+	VkDescriptorSetLayout descriptorSetLayouts[4];
 
 	if (worldLightmappedPipeline != VK_NULL_HANDLE) {
 		return true;
@@ -1393,6 +1473,7 @@ static qbool VK_WorldCreateLightmappedPipeline(void)
 	descriptorSetLayouts[0] = descriptorSetLayout;
 	descriptorSetLayouts[1] = descriptorSetLayout;
 	descriptorSetLayouts[2] = descriptorSetLayout;
+	descriptorSetLayouts[3] = descriptorSetLayout;
 
 	vertShaderModule = VK_WorldCreateShaderModule(vk_world_lightmapped_vert_spv, vk_world_lightmapped_vert_spv_len);
 	fragShaderModule = VK_WorldCreateShaderModule(vk_world_lightmapped_frag_spv, vk_world_lightmapped_frag_spv_len);
@@ -1553,6 +1634,184 @@ static qbool VK_WorldCreateLightmappedPipeline(void)
 	return worldLightmappedPipeline != VK_NULL_HANDLE;
 }
 
+// Minimal position-only pipeline for the gl_outline & 2 normals prepass.
+// Belongs to vk_renderpass_worldnormals (always single-sample, its own
+// depth), NOT the main render pass -- hence the hardcoded
+// VK_SAMPLE_COUNT_1_BIT instead of vk_options.msaaSamples that every other
+// pipeline in this file uses. No descriptor sets: the fragment shader only
+// needs the interpolated world position and the push block.
+static qbool VK_WorldCreateNormalsPipeline(void)
+{
+	VkShaderModule vertShaderModule;
+	VkShaderModule fragShaderModule;
+	VkPipelineShaderStageCreateInfo shaderStages[2];
+	VkVertexInputBindingDescription bindingDescription;
+	VkVertexInputAttributeDescription attributeDescription;
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo;
+	VkPipelineInputAssemblyStateCreateInfo inputAssembly;
+	VkPipelineViewportStateCreateInfo viewportState;
+	VkPipelineRasterizationStateCreateInfo rasterizer;
+	VkPipelineMultisampleStateCreateInfo multisampling;
+	VkPipelineDepthStencilStateCreateInfo depthStencil;
+	VkPipelineColorBlendAttachmentState colorBlendAttachment;
+	VkPipelineColorBlendStateCreateInfo colorBlending;
+	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	VkPipelineDynamicStateCreateInfo dynamicState;
+	VkPushConstantRange pushConstantRange;
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
+	VkGraphicsPipelineCreateInfo pipelineInfo;
+	VkRenderPass renderPass;
+
+	if (worldNormalsPipeline != VK_NULL_HANDLE) {
+		return true;
+	}
+
+	renderPass = VK_WorldNormalsRenderPass();
+	if (renderPass == VK_NULL_HANDLE) {
+		return false;
+	}
+
+	vertShaderModule = VK_WorldCreateShaderModule(vk_world_normals_vert_spv, vk_world_normals_vert_spv_len);
+	fragShaderModule = VK_WorldCreateShaderModule(vk_world_normals_frag_spv, vk_world_normals_frag_spv_len);
+	if (vertShaderModule == VK_NULL_HANDLE || fragShaderModule == VK_NULL_HANDLE) {
+		if (fragShaderModule != VK_NULL_HANDLE) {
+			vkDestroyShaderModule(vk_options.logicalDevice, fragShaderModule, NULL);
+		}
+		if (vertShaderModule != VK_NULL_HANDLE) {
+			vkDestroyShaderModule(vk_options.logicalDevice, vertShaderModule, NULL);
+		}
+		return false;
+	}
+
+	VK_InitialiseStructure(shaderStages[0]);
+	shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	shaderStages[0].module = vertShaderModule;
+	shaderStages[0].pName = "main";
+
+	VK_InitialiseStructure(shaderStages[1]);
+	shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	shaderStages[1].module = fragShaderModule;
+	shaderStages[1].pName = "main";
+
+	// Same vertex buffer and stride as every other world pipeline -- only the
+	// position attribute is bound, so the normals pass can reuse the exact
+	// buffers/indices the main loop already uploaded without a second copy.
+	VK_InitialiseStructure(bindingDescription);
+	bindingDescription.binding = 0;
+	bindingDescription.stride = sizeof(vbo_world_vert_t);
+	bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+	VK_InitialiseStructure(attributeDescription);
+	attributeDescription.binding = 0;
+	attributeDescription.location = 0;
+	attributeDescription.format = VK_FORMAT_R32G32B32_SFLOAT;
+	attributeDescription.offset = VK_VBO_FIELDOFFSET(vbo_world_vert_t, position);
+
+	VK_InitialiseStructure(vertexInputInfo);
+	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+	vertexInputInfo.vertexAttributeDescriptionCount = 1;
+	vertexInputInfo.pVertexAttributeDescriptions = &attributeDescription;
+
+	// Same topology/restart as the main world pipelines -- the index buffer
+	// being reused is built with UINT32_MAX restart separators.
+	VK_InitialiseStructure(inputAssembly);
+	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+	inputAssembly.primitiveRestartEnable = VK_TRUE;
+
+	VK_InitialiseStructure(viewportState);
+	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	viewportState.viewportCount = 1;
+	viewportState.scissorCount = 1;
+
+	VK_InitialiseStructure(rasterizer);
+	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+	rasterizer.lineWidth = 1.0f;
+	rasterizer.cullMode = VK_CULL_MODE_NONE;
+	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	// No depth bias here (unlike the main world pipelines): polygonOffset only
+	// exists to stop brush-model entities z-fighting the world surface they're
+	// flush against in the *visible* image. In the normals buffer a 1-pixel
+	// z-fight between two surfaces with near-identical normals produces no
+	// edge either way, so the dynamic state is simply not needed.
+	rasterizer.depthBiasEnable = VK_FALSE;
+
+	VK_InitialiseStructure(multisampling);
+	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+	VK_InitialiseStructure(depthStencil);
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = VK_TRUE;
+	depthStencil.depthWriteEnable = VK_TRUE;
+	depthStencil.depthCompareOp = glConfig.reversed_depth ? VK_COMPARE_OP_GREATER_OR_EQUAL : VK_COMPARE_OP_LESS_OR_EQUAL;
+
+	VK_InitialiseStructure(colorBlendAttachment);
+	colorBlendAttachment.colorWriteMask =
+		VK_COLOR_COMPONENT_R_BIT |
+		VK_COLOR_COMPONENT_G_BIT |
+		VK_COLOR_COMPONENT_B_BIT |
+		VK_COLOR_COMPONENT_A_BIT;
+	colorBlendAttachment.blendEnable = VK_FALSE;
+
+	VK_InitialiseStructure(colorBlending);
+	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	colorBlending.attachmentCount = 1;
+	colorBlending.pAttachments = &colorBlendAttachment;
+
+	VK_InitialiseStructure(dynamicState);
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = sizeof(dynamicStates) / sizeof(dynamicStates[0]);
+	dynamicState.pDynamicStates = dynamicStates;
+
+	if (worldNormalsPipelineLayout == VK_NULL_HANDLE) {
+		VK_InitialiseStructure(pushConstantRange);
+		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+		pushConstantRange.offset = 0;
+		pushConstantRange.size = sizeof(vk_world_normals_push_t);
+
+		VK_InitialiseStructure(pipelineLayoutInfo);
+		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutInfo.setLayoutCount = 0;
+		pipelineLayoutInfo.pushConstantRangeCount = 1;
+		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+		if (vkCreatePipelineLayout(vk_options.logicalDevice, &pipelineLayoutInfo, NULL, &worldNormalsPipelineLayout) != VK_SUCCESS) {
+			vkDestroyShaderModule(vk_options.logicalDevice, fragShaderModule, NULL);
+			vkDestroyShaderModule(vk_options.logicalDevice, vertShaderModule, NULL);
+			return false;
+		}
+	}
+
+	VK_InitialiseStructure(pipelineInfo);
+	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	pipelineInfo.stageCount = 2;
+	pipelineInfo.pStages = shaderStages;
+	pipelineInfo.pVertexInputState = &vertexInputInfo;
+	pipelineInfo.pInputAssemblyState = &inputAssembly;
+	pipelineInfo.pViewportState = &viewportState;
+	pipelineInfo.pRasterizationState = &rasterizer;
+	pipelineInfo.pMultisampleState = &multisampling;
+	pipelineInfo.pDepthStencilState = &depthStencil;
+	pipelineInfo.pColorBlendState = &colorBlending;
+	pipelineInfo.pDynamicState = &dynamicState;
+	pipelineInfo.layout = worldNormalsPipelineLayout;
+	pipelineInfo.renderPass = renderPass;
+	pipelineInfo.subpass = 0;
+
+	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, vk_options.pipelineCache, 1, &pipelineInfo, NULL, &worldNormalsPipeline) != VK_SUCCESS) {
+		worldNormalsPipeline = VK_NULL_HANDLE;
+	}
+
+	vkDestroyShaderModule(vk_options.logicalDevice, fragShaderModule, NULL);
+	vkDestroyShaderModule(vk_options.logicalDevice, vertShaderModule, NULL);
+	return worldNormalsPipeline != VK_NULL_HANDLE;
+}
+
 void VK_WorldResourcesShutdown(void)
 {
 	if (vk_options.logicalDevice != VK_NULL_HANDLE) {
@@ -1608,6 +1867,14 @@ void VK_WorldResourcesShutdown(void)
 		if (worldAlphaTexturedPipelineLayout != VK_NULL_HANDLE) {
 			vkDestroyPipelineLayout(vk_options.logicalDevice, worldAlphaTexturedPipelineLayout, NULL);
 			worldAlphaTexturedPipelineLayout = VK_NULL_HANDLE;
+		}
+		if (worldNormalsPipeline != VK_NULL_HANDLE) {
+			vkDestroyPipeline(vk_options.logicalDevice, worldNormalsPipeline, NULL);
+			worldNormalsPipeline = VK_NULL_HANDLE;
+		}
+		if (worldNormalsPipelineLayout != VK_NULL_HANDLE) {
+			vkDestroyPipelineLayout(vk_options.logicalDevice, worldNormalsPipelineLayout, NULL);
+			worldNormalsPipelineLayout = VK_NULL_HANDLE;
 		}
 	}
 
@@ -1729,6 +1996,14 @@ void VK_ChainBrushModelSurfaces(model_t* clmodel, entity_t* ent)
 
 void VK_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 {
+	// Unlike GLC (which ORs this per-model flag into its per-surface
+	// SURF_UNDERWATER check), GLM ignores it and gates caustics purely on the
+	// per-vertex EZQ_SURFACE_UNDERWATER flag baked into the surface itself
+	// (draw_world.fragment.glsl). We follow GLM here -- see draw->caustics in
+	// VK_WorldQueueSurface -- since GLM is the shader-based reference this
+	// port is closest to architecturally. The parameter stays in the
+	// signature to match renderer_api_t's shared dispatch shape across all
+	// three backends.
 	(void)caustics;
 
 	if (!ent || !ent->model) {
@@ -1831,6 +2106,147 @@ static void VK_WorldBindIfChanged(VkCommandBuffer commandBuffer, VkPipeline pipe
 	}
 }
 
+// Reopens the main render pass mid-frame, after the normals prepass below has
+// ended it. Mirrors VK_BeginFrame's own framebuffer selection exactly (the
+// post-process offscreen target when active, the swapchain image otherwise) --
+// getting this wrong would draw the rest of the frame into the wrong image.
+//
+// Uses the LOAD (noclear) variant so the colour the first main-pass instance
+// produced survives. Note the depth attachment still CLEARs in *both*
+// variants (see VK_RenderPassCreateVariant: depth always clears, matching
+// GL_Clear()), which is precisely why this reopen has to happen before any
+// world geometry is drawn -- at this point the first main-pass instance
+// contained nothing but its own clear, so re-clearing depth loses nothing.
+static void VK_WorldBeginMainRenderPassNoClear(VkCommandBuffer commandBuffer)
+{
+	VkRenderPassBeginInfo renderPassInfo = { 0 };
+	VkClearValue clearValues[3] = { { { { 0 } } } };
+	uint32_t imageIndex = vk_options.frame.imageIndex;
+
+	clearValues[1].depthStencil.depth = glConfig.reversed_depth ? 0.0f : 1.0f;
+	clearValues[1].depthStencil.stencil = 0;
+
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = VK_FrameRenderPass(false);
+	renderPassInfo.framebuffer = vk_options.swapChain.postProcessActive ?
+		VK_PostProcessFramebuffer(imageIndex) : vk_options.swapChain.framebuffers[imageIndex];
+	if (renderPassInfo.framebuffer == VK_NULL_HANDLE) {
+		renderPassInfo.framebuffer = vk_options.swapChain.framebuffers[imageIndex];
+	}
+	renderPassInfo.renderArea.offset.x = 0;
+	renderPassInfo.renderArea.offset.y = 0;
+	renderPassInfo.renderArea.extent = vk_options.swapChain.imageSize;
+	renderPassInfo.clearValueCount = sizeof(clearValues) / sizeof(clearValues[0]);
+	renderPassInfo.pClearValues = clearValues;
+
+	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
+
+// gl_outline & 2 normals prepass. Called from VK_RenderView with the main
+// render pass ALREADY ENDED by the caller, and leaves it re-begun on return
+// (so the caller's existing draw loop continues unchanged).
+//
+// Why a separate geometry pass at all, when GLM gets this for free: GLM's
+// GL_FramebufferStartWorldNormals attaches a second colour target and its
+// world shaders write normals via MRT in the same draw. Replicating that here
+// would mean giving all five world pipelines a second colour attachment plus
+// a matching main-render-pass variant for every MSAA/post-process
+// combination. Redrawing position-only geometry into a tiny dedicated pass is
+// far less invasive and touches none of the existing pipelines -- at the cost
+// of a second pass over the world's vertices, which is why the whole thing is
+// gated on VK_WorldOutlineActive().
+//
+// Returns false if anything was unavailable, in which case the main render
+// pass has NOT been disturbed and the caller should just proceed normally.
+static qbool VK_DrawWorldNormalsPass(VkCommandBuffer commandBuffer, VkBuffer vertexBuffer, VkBuffer indexBuffer)
+{
+	VkRenderPassBeginInfo renderPassInfo = { 0 };
+	VkClearValue clearValues[2] = { { { { 0 } } } };
+	VkFramebuffer framebuffer;
+	VkDeviceSize vertexOffset = 0;
+	float lastModelView[16];
+	float lastMvp[16];
+	qbool haveLastMvp = false;
+	float zFar;
+	int i;
+
+	if (!VK_WorldCreateNormalsPipeline()) {
+		return false;
+	}
+
+	framebuffer = VK_WorldNormalsFramebuffer(vk_options.frame.imageIndex);
+	if (framebuffer == VK_NULL_HANDLE) {
+		return false;
+	}
+
+	zFar = bound(R_MINIMUM_FARCLIP, r_farclip.value, R_MAXIMUM_FARCLIP);
+
+	// Colour clears to all-zero: the outline shader treats alpha == 0 as
+	// "nothing drawn here" and skips those pixels entirely, so this is what
+	// makes sky/empty regions produce no spurious edges.
+	clearValues[1].depthStencil.depth = glConfig.reversed_depth ? 0.0f : 1.0f;
+	clearValues[1].depthStencil.stencil = 0;
+
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = VK_WorldNormalsRenderPass();
+	renderPassInfo.framebuffer = framebuffer;
+	renderPassInfo.renderArea.offset.x = 0;
+	renderPassInfo.renderArea.offset.y = 0;
+	renderPassInfo.renderArea.extent = vk_options.swapChain.imageSize;
+	renderPassInfo.clearValueCount = sizeof(clearValues) / sizeof(clearValues[0]);
+	renderPassInfo.pClearValues = clearValues;
+
+	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	VK_WorldSetViewportScissor(commandBuffer);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, worldNormalsPipeline);
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &vertexOffset);
+	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+	for (i = 0; i < worldDrawCount; ++i) {
+		vk_world_normals_push_t push;
+
+		// Opaque geometry only -- matches GLM, where the normals MRT target is
+		// only bound for GLM_DrawWorldModelBatch(opaque_world) and the
+		// alpha_surfaces batch is drawn later, after the outline is already
+		// composited. Water/alpha surfaces contributing normals here would
+		// outline things the player sees through.
+		if (worldDraws[i].blended) {
+			continue;
+		}
+
+		memset(&push, 0, sizeof(push));
+		// Same redundant-recompute skip as the main loop's MVP cache.
+		if (haveLastMvp && memcmp(lastModelView, worldDraws[i].modelView, sizeof(lastModelView)) == 0) {
+			memcpy(push.mvp, lastMvp, sizeof(push.mvp));
+		}
+		else {
+			R_MultiplyMatrix(worldDraws[i].modelView, R_ProjectionMatrix(), push.mvp);
+			memcpy(lastModelView, worldDraws[i].modelView, sizeof(lastModelView));
+			memcpy(lastMvp, push.mvp, sizeof(lastMvp));
+			haveLastMvp = true;
+		}
+		push.cameraPosition[0] = r_refdef.vieworg[0];
+		push.cameraPosition[1] = r_refdef.vieworg[1];
+		push.cameraPosition[2] = r_refdef.vieworg[2];
+		push.cameraPosition[3] = 0.0f;
+		push.surfaceType = worldDraws[i].surfaceType;
+		push.zFar = zFar;
+
+		vkCmdPushConstants(commandBuffer, worldNormalsPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push), &push);
+		vkCmdDrawIndexed(commandBuffer, worldDraws[i].indexCount, 1, worldDraws[i].firstIndex, 0, 0);
+	}
+
+	vkCmdEndRenderPass(commandBuffer);
+
+	// No-op today (the render pass's finalLayout already leaves the colour
+	// attachment in SHADER_READ_ONLY_OPTIMAL), kept as the named seam for
+	// that guarantee -- see vk_draw.c.
+	VK_WorldNormalsTransitionForSampling(commandBuffer, vk_options.frame.imageIndex);
+
+	return true;
+}
+
 void VK_RenderView(void)
 {
 	VkCommandBuffer commandBuffer;
@@ -1869,6 +2285,7 @@ void VK_RenderView(void)
 	VkPipeline lastBoundPipeline = VK_NULL_HANDLE;
 	VkDescriptorSet lastBoundDescriptorSets[3] = { VK_NULL_HANDLE, VK_NULL_HANDLE, VK_NULL_HANDLE };
 	int lastBoundDescriptorSetCount = 0;
+	qbool worldOutline = false;
 
 	if (!worldDrawCount || !worldIndexCount) {
 		VK_WorldDebugLog("render skipped: draws=%d indices=%u", worldDrawCount, worldIndexCount);
@@ -1942,6 +2359,26 @@ void VK_RenderView(void)
 		return;
 	}
 
+	// gl_outline & 2 (world outline). The normals prepass needs its own render
+	// pass, and Vulkan render passes cannot nest -- so the main render pass
+	// VK_BeginFrame opened has to be closed and reopened around it. This is
+	// the earliest point in the frame where worldDraws[] is fully populated
+	// (R_DrawWorld/R_DrawEntities already ran, feeding VK_WorldQueueModel) AND
+	// nothing has been drawn into the main pass yet beyond its own clear --
+	// which is what makes closing it here lossless, since the LOAD variant
+	// used to reopen it still re-clears depth. Doing this any later (e.g. after
+	// the opaque loop) would throw away the world's depth buffer.
+	//
+	// Everything is inside the same command buffer, sequentially; no extra
+	// barrier is needed beyond the normals render pass's own attachment
+	// finalLayout, and render-pass boundaries themselves guarantee the
+	// write-then-sample ordering the composite depends on.
+	if (VK_WorldOutlineActive()) {
+		vkCmdEndRenderPass(commandBuffer);
+		worldOutline = VK_DrawWorldNormalsPass(commandBuffer, vertexBuffer, indexBuffer);
+		VK_WorldBeginMainRenderPassNoClear(commandBuffer);
+	}
+
 	VK_WorldSetViewportScissor(commandBuffer);
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &vertexOffset);
 	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
@@ -1955,6 +2392,21 @@ void VK_RenderView(void)
 		qbool blendedPass = (pass != 0);
 
 		if (blendedPass) {
+			// Composite the outline here, between the opaque world batch and
+			// everything that follows -- the same slot GLM_RenderView uses
+			// (GLM_DrawWorldOutlines right after
+			// GLM_DrawWorldModelBatch(opaque_world), before alias models,
+			// sprites and the alpha_surfaces batch). Compositing any earlier
+			// would just be painted over by the opaque geometry; any later
+			// would draw outlines on top of models and water that GL does not.
+			if (worldOutline) {
+				VK_WorldOutlineComposite(commandBuffer, vk_options.frame.imageIndex);
+				// The composite bound its own fullscreen pipeline/descriptor
+				// set and reset the viewport; invalidate the world bind cache
+				// and restore state, same as the alias-model/sprite path below.
+				lastBoundPipeline = VK_NULL_HANDLE;
+				lastBoundDescriptorSetCount = 0;
+			}
 			VK_RenderAliasModels(false);
 			VK_Draw3DSprites();
 			VK_WorldSetViewportScissor(commandBuffer);
@@ -2000,6 +2452,7 @@ void VK_RenderView(void)
 			push.useSkyTexture = VK_WORLD_SKY_MODE_NONE;
 			push.fastTurb = (worldDraws[i].surfaceType > 0.5f && worldDraws[i].surfaceType < 5.5f && r_fastturb.integer) ? 1.0f : 0.0f;
 			push.detailEnabled = (worldDraws[i].detail && VK_WorldDetailTextureReady()) ? 1.0f : 0.0f;
+			push.causticsEnabled = (worldDraws[i].caustics && VK_WorldCausticsTextureReady()) ? 1.0f : 0.0f;
 			// Matches Modern OpenGL's DRAW_TEXTURELESS: keep the normal
 			// lit/lightmapped pipeline (so depth shading, outlines, detail
 			// textures etc. are unaffected), just force the diffuse texture
@@ -2035,15 +2488,16 @@ void VK_RenderView(void)
 			}
 
 			if (drawBlended) {
-				VkDescriptorSet descriptorSets[2];
+				VkDescriptorSet descriptorSets[3];
 
 				descriptorSets[0] = VK_TextureDescriptorSet(worldDraws[i].texture);
 				descriptorSets[1] = VK_WorldDetailDescriptorSet();
-				if (descriptorSets[0] != VK_NULL_HANDLE && descriptorSets[1] != VK_NULL_HANDLE) {
+				descriptorSets[2] = VK_WorldCausticsDescriptorSet();
+				if (descriptorSets[0] != VK_NULL_HANDLE && descriptorSets[1] != VK_NULL_HANDLE && descriptorSets[2] != VK_NULL_HANDLE) {
 					float blendConstants[4] = { 0.0f, 0.0f, 0.0f, worldDraws[i].alpha };
 
 					layout = worldAlphaTexturedPipelineLayout;
-					VK_WorldBindIfChanged(commandBuffer, worldAlphaTexturedPipeline, layout, descriptorSets, 2,
+					VK_WorldBindIfChanged(commandBuffer, worldAlphaTexturedPipeline, layout, descriptorSets, 3,
 						&lastBoundPipeline, lastBoundDescriptorSets, &lastBoundDescriptorSetCount);
 					vkCmdSetBlendConstants(commandBuffer, blendConstants);
 					drawTextured = false;
@@ -2053,14 +2507,15 @@ void VK_RenderView(void)
 				}
 			}
 			if (!drawBlended && drawLightmapped) {
-				VkDescriptorSet descriptorSets[3];
+				VkDescriptorSet descriptorSets[4];
 
 				descriptorSets[0] = VK_TextureDescriptorSet(worldDraws[i].texture);
 				descriptorSets[1] = VK_TextureDescriptorSet(worldDraws[i].lightmap);
 				descriptorSets[2] = VK_WorldDetailDescriptorSet();
-				if (descriptorSets[0] != VK_NULL_HANDLE && descriptorSets[1] != VK_NULL_HANDLE && descriptorSets[2] != VK_NULL_HANDLE) {
+				descriptorSets[3] = VK_WorldCausticsDescriptorSet();
+				if (descriptorSets[0] != VK_NULL_HANDLE && descriptorSets[1] != VK_NULL_HANDLE && descriptorSets[2] != VK_NULL_HANDLE && descriptorSets[3] != VK_NULL_HANDLE) {
 					layout = worldLightmappedPipelineLayout;
-					VK_WorldBindIfChanged(commandBuffer, worldLightmappedPipeline, layout, descriptorSets, 3,
+					VK_WorldBindIfChanged(commandBuffer, worldLightmappedPipeline, layout, descriptorSets, 4,
 						&lastBoundPipeline, lastBoundDescriptorSets, &lastBoundDescriptorSetCount);
 					drawTextured = false;
 				}
@@ -2069,13 +2524,14 @@ void VK_RenderView(void)
 				}
 			}
 			if (!drawBlended && !drawLightmapped && drawTextured) {
-				VkDescriptorSet descriptorSets[2];
+				VkDescriptorSet descriptorSets[3];
 
 				descriptorSets[0] = VK_TextureDescriptorSet(worldDraws[i].texture);
 				descriptorSets[1] = VK_WorldDetailDescriptorSet();
-				if (descriptorSets[0] != VK_NULL_HANDLE && descriptorSets[1] != VK_NULL_HANDLE) {
+				descriptorSets[2] = VK_WorldCausticsDescriptorSet();
+				if (descriptorSets[0] != VK_NULL_HANDLE && descriptorSets[1] != VK_NULL_HANDLE && descriptorSets[2] != VK_NULL_HANDLE) {
 					layout = worldTexturedPipelineLayout;
-					VK_WorldBindIfChanged(commandBuffer, worldTexturedPipeline, layout, descriptorSets, 2,
+					VK_WorldBindIfChanged(commandBuffer, worldTexturedPipeline, layout, descriptorSets, 3,
 						&lastBoundPipeline, lastBoundDescriptorSets, &lastBoundDescriptorSetCount);
 				}
 				else {
@@ -2086,7 +2542,10 @@ void VK_RenderView(void)
 				VkDescriptorSet descriptorSets[2];
 				texture_ref lightmapTex = VK_TextureReady(worldDraws[i].lightmap) ? worldDraws[i].lightmap : solidwhite_texture;
 
-				push.drawflatColor = worldDraws[i].drawflatCvar ? 1.0f : 0.0f;
+				// This C field is causticsEnabled everywhere else, but
+				// vk_world_flat's own GLSL block still names the same byte
+				// offset drawflatColor -- see vk_world_push_t's comment.
+				push.causticsEnabled = worldDraws[i].drawflatCvar ? 1.0f : 0.0f;
 				descriptorSets[1] = VK_TextureDescriptorSet(lightmapTex);
 				if (VK_WorldFlatSkyDescriptorSet(&descriptorSets[0]) && descriptorSets[1] != VK_NULL_HANDLE) {
 					VK_WorldBindIfChanged(commandBuffer, worldFlatPipeline, worldFlatPipelineLayout, descriptorSets, 2,

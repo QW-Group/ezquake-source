@@ -145,6 +145,15 @@ VkCommandBuffer VK_BeginImmediateCommands(void)
 
 qbool VK_EndImmediateCommands(VkCommandBuffer command_buffer)
 {
+	return VK_EndImmediateCommandsAfter(command_buffer, VK_NULL_HANDLE, 0);
+}
+
+// Same as VK_EndImmediateCommands, but the submit waits on waitSemaphore at
+// waitStage first -- for command buffers (like VK_Screenshot's copy) that
+// touch a swapchain image and must not start before the image has actually
+// been returned by vkAcquireNextImageKHR's own semaphore signal.
+qbool VK_EndImmediateCommandsAfter(VkCommandBuffer command_buffer, VkSemaphore waitSemaphore, VkPipelineStageFlags waitStage)
+{
 	VkSubmitInfo submitInfo;
 	qbool success = true;
 
@@ -158,6 +167,11 @@ qbool VK_EndImmediateCommands(VkCommandBuffer command_buffer)
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &command_buffer;
+	if (waitSemaphore != VK_NULL_HANDLE) {
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &waitSemaphore;
+		submitInfo.pWaitDstStageMask = &waitStage;
+	}
 
 	if (vkQueueSubmit(vk_options.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
 		success = false;

@@ -25,8 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <vulkan/vulkan.h>
 #include "quakedef.h"
 
-#include <SDL.h>
-#include <SDL_vulkan.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
 
 #include "vk_local.h"
 
@@ -391,6 +391,226 @@ VkFramebuffer VK_PostProcessCompositeFramebuffer(uint32_t imageIndex)
 	return vk_options.swapChain.postProcessCompositeFramebuffers[imageIndex];
 }
 
+void VK_DestroyWorldNormalsResources(void)
+{
+	uint32_t i;
+
+	if (vk_options.swapChain.worldNormalsDescriptorPool != VK_NULL_HANDLE) {
+		vkDestroyDescriptorPool(vk_options.logicalDevice, vk_options.swapChain.worldNormalsDescriptorPool, NULL);
+		vk_options.swapChain.worldNormalsDescriptorPool = VK_NULL_HANDLE;
+	}
+	Q_free(vk_options.swapChain.worldNormalsDescriptorSets);
+	vk_options.swapChain.worldNormalsDescriptorSets = NULL;
+
+	if (vk_options.swapChain.worldNormalsFramebuffers) {
+		for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.swapChain.worldNormalsFramebuffers[i] != VK_NULL_HANDLE) {
+				vkDestroyFramebuffer(vk_options.logicalDevice, vk_options.swapChain.worldNormalsFramebuffers[i], NULL);
+			}
+		}
+		Q_free(vk_options.swapChain.worldNormalsFramebuffers);
+		vk_options.swapChain.worldNormalsFramebuffers = NULL;
+	}
+
+	if (vk_options.swapChain.worldNormalsColorImageViews) {
+		for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.swapChain.worldNormalsColorImageViews[i] != VK_NULL_HANDLE) {
+				vkDestroyImageView(vk_options.logicalDevice, vk_options.swapChain.worldNormalsColorImageViews[i], NULL);
+			}
+		}
+		Q_free(vk_options.swapChain.worldNormalsColorImageViews);
+		vk_options.swapChain.worldNormalsColorImageViews = NULL;
+	}
+	if (vk_options.swapChain.worldNormalsColorImages) {
+		for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.swapChain.worldNormalsColorImages[i] != VK_NULL_HANDLE) {
+				vkDestroyImage(vk_options.logicalDevice, vk_options.swapChain.worldNormalsColorImages[i], NULL);
+			}
+		}
+		Q_free(vk_options.swapChain.worldNormalsColorImages);
+		vk_options.swapChain.worldNormalsColorImages = NULL;
+	}
+	if (vk_options.swapChain.worldNormalsColorImageMemory) {
+		for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.swapChain.worldNormalsColorImageMemory[i] != VK_NULL_HANDLE) {
+				vkFreeMemory(vk_options.logicalDevice, vk_options.swapChain.worldNormalsColorImageMemory[i], NULL);
+			}
+		}
+		Q_free(vk_options.swapChain.worldNormalsColorImageMemory);
+		vk_options.swapChain.worldNormalsColorImageMemory = NULL;
+	}
+
+	if (vk_options.swapChain.worldNormalsDepthImageViews) {
+		for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.swapChain.worldNormalsDepthImageViews[i] != VK_NULL_HANDLE) {
+				vkDestroyImageView(vk_options.logicalDevice, vk_options.swapChain.worldNormalsDepthImageViews[i], NULL);
+			}
+		}
+		Q_free(vk_options.swapChain.worldNormalsDepthImageViews);
+		vk_options.swapChain.worldNormalsDepthImageViews = NULL;
+	}
+	if (vk_options.swapChain.worldNormalsDepthImages) {
+		for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.swapChain.worldNormalsDepthImages[i] != VK_NULL_HANDLE) {
+				vkDestroyImage(vk_options.logicalDevice, vk_options.swapChain.worldNormalsDepthImages[i], NULL);
+			}
+		}
+		Q_free(vk_options.swapChain.worldNormalsDepthImages);
+		vk_options.swapChain.worldNormalsDepthImages = NULL;
+	}
+	if (vk_options.swapChain.worldNormalsDepthImageMemory) {
+		for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.swapChain.worldNormalsDepthImageMemory[i] != VK_NULL_HANDLE) {
+				vkFreeMemory(vk_options.logicalDevice, vk_options.swapChain.worldNormalsDepthImageMemory[i], NULL);
+			}
+		}
+		Q_free(vk_options.swapChain.worldNormalsDepthImageMemory);
+		vk_options.swapChain.worldNormalsDepthImageMemory = NULL;
+	}
+}
+
+// gl_outline & 2 (world outline) prepass: a small always-single-sample color
+// (normal+depth, see VK_WorldNormalsFormat) + depth attachment pair, entirely
+// separate from the main render pass's own MSAA/post-process attachments --
+// see vk_renderpass.c's VK_WorldNormalsRenderPassCreate for why. Allocated
+// unconditionally (like VK_CreatePostProcessResources) since gl_outline is
+// unlatched and can change without a vid_restart.
+qbool VK_CreateWorldNormalsResources(void)
+{
+	uint32_t i;
+	VkRenderPass renderPass = VK_WorldNormalsRenderPass();
+
+	VK_DestroyWorldNormalsResources();
+
+	if (renderPass == VK_NULL_HANDLE || !vk_options.swapChain.imageCount) {
+		return false;
+	}
+
+	vk_options.swapChain.worldNormalsColorImages = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.worldNormalsColorImages[0]));
+	vk_options.swapChain.worldNormalsColorImageMemory = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.worldNormalsColorImageMemory[0]));
+	vk_options.swapChain.worldNormalsColorImageViews = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.worldNormalsColorImageViews[0]));
+	vk_options.swapChain.worldNormalsDepthImages = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.worldNormalsDepthImages[0]));
+	vk_options.swapChain.worldNormalsDepthImageMemory = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.worldNormalsDepthImageMemory[0]));
+	vk_options.swapChain.worldNormalsDepthImageViews = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.worldNormalsDepthImageViews[0]));
+	vk_options.swapChain.worldNormalsFramebuffers = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.worldNormalsFramebuffers[0]));
+
+	for (i = 0; i < vk_options.swapChain.imageCount; ++i) {
+		VkImageViewCreateInfo viewInfo;
+		VkFramebufferCreateInfo framebufferInfo;
+		VkImageView attachments[2];
+
+		if (!VK_CreateImageResource(
+				vk_options.swapChain.imageSize.width,
+				vk_options.swapChain.imageSize.height,
+				1,
+				VK_SAMPLE_COUNT_1_BIT,
+				VK_WorldNormalsFormat(),
+				VK_IMAGE_TILING_OPTIMAL,
+				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				&vk_options.swapChain.worldNormalsColorImages[i],
+				&vk_options.swapChain.worldNormalsColorImageMemory[i])) {
+			VK_DestroyWorldNormalsResources();
+			return false;
+		}
+
+		VK_InitialiseStructure(viewInfo);
+		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.image = vk_options.swapChain.worldNormalsColorImages[i];
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		viewInfo.format = VK_WorldNormalsFormat();
+		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		viewInfo.subresourceRange.baseMipLevel = 0;
+		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.baseArrayLayer = 0;
+		viewInfo.subresourceRange.layerCount = 1;
+		if (vkCreateImageView(vk_options.logicalDevice, &viewInfo, NULL, &vk_options.swapChain.worldNormalsColorImageViews[i]) != VK_SUCCESS) {
+			VK_DestroyWorldNormalsResources();
+			return false;
+		}
+
+		// Not reused from vk_options.swapChain.depthImage: that one is
+		// N-sample when MSAA is active (tracks the main pass), and this pass
+		// must always be single-sample -- see the render pass comment.
+		if (!VK_CreateImageResource(
+				vk_options.swapChain.imageSize.width,
+				vk_options.swapChain.imageSize.height,
+				1,
+				VK_SAMPLE_COUNT_1_BIT,
+				VK_DepthFormat(),
+				VK_IMAGE_TILING_OPTIMAL,
+				VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				&vk_options.swapChain.worldNormalsDepthImages[i],
+				&vk_options.swapChain.worldNormalsDepthImageMemory[i])) {
+			VK_DestroyWorldNormalsResources();
+			return false;
+		}
+
+		VK_InitialiseStructure(viewInfo);
+		viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.image = vk_options.swapChain.worldNormalsDepthImages[i];
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		viewInfo.format = VK_DepthFormat();
+		viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+		viewInfo.subresourceRange.baseMipLevel = 0;
+		viewInfo.subresourceRange.levelCount = 1;
+		viewInfo.subresourceRange.baseArrayLayer = 0;
+		viewInfo.subresourceRange.layerCount = 1;
+		if (vkCreateImageView(vk_options.logicalDevice, &viewInfo, NULL, &vk_options.swapChain.worldNormalsDepthImageViews[i]) != VK_SUCCESS) {
+			VK_DestroyWorldNormalsResources();
+			return false;
+		}
+
+		attachments[0] = vk_options.swapChain.worldNormalsColorImageViews[i];
+		attachments[1] = vk_options.swapChain.worldNormalsDepthImageViews[i];
+
+		VK_InitialiseStructure(framebufferInfo);
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = renderPass;
+		framebufferInfo.attachmentCount = 2;
+		framebufferInfo.pAttachments = attachments;
+		framebufferInfo.width = vk_options.swapChain.imageSize.width;
+		framebufferInfo.height = vk_options.swapChain.imageSize.height;
+		framebufferInfo.layers = 1;
+		if (vkCreateFramebuffer(vk_options.logicalDevice, &framebufferInfo, NULL, &vk_options.swapChain.worldNormalsFramebuffers[i]) != VK_SUCCESS) {
+			VK_DestroyWorldNormalsResources();
+			return false;
+		}
+	}
+
+	{
+		VkDescriptorPoolSize poolSize;
+		VkDescriptorPoolCreateInfo poolInfo;
+
+		VK_InitialiseStructure(poolSize);
+		poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		poolSize.descriptorCount = vk_options.swapChain.imageCount;
+
+		VK_InitialiseStructure(poolInfo);
+		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		poolInfo.poolSizeCount = 1;
+		poolInfo.pPoolSizes = &poolSize;
+		poolInfo.maxSets = vk_options.swapChain.imageCount;
+		if (vkCreateDescriptorPool(vk_options.logicalDevice, &poolInfo, NULL, &vk_options.swapChain.worldNormalsDescriptorPool) != VK_SUCCESS) {
+			VK_DestroyWorldNormalsResources();
+			return false;
+		}
+	}
+
+	vk_options.swapChain.worldNormalsDescriptorSets = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.swapChain.worldNormalsDescriptorSets[0]));
+
+	return true;
+}
+
+VkFramebuffer VK_WorldNormalsFramebuffer(uint32_t imageIndex)
+{
+	if (!vk_options.swapChain.worldNormalsFramebuffers || imageIndex >= vk_options.swapChain.imageCount) {
+		return VK_NULL_HANDLE;
+	}
+	return vk_options.swapChain.worldNormalsFramebuffers[imageIndex];
+}
+
 qbool VK_CreateSwapChain(SDL_Window* window, VkInstance instance, VkSurfaceKHR surface)
 {
 	uint32_t requestedImageCount;
@@ -585,12 +805,20 @@ qbool VK_CreateSwapChainFramebuffers(void)
 		return false;
 	}
 
+	// Same unconditional-allocation reasoning as post-process above:
+	// gl_outline is unlatched.
+	if (!VK_CreateWorldNormalsResources()) {
+		VK_DestroySwapChainFramebuffers();
+		return false;
+	}
+
 	return true;
 }
 
 void VK_DestroySwapChainFramebuffers(void)
 {
 	VK_DestroyPostProcessResources();
+	VK_DestroyWorldNormalsResources();
 
 	if (vk_options.swapChain.framebuffers) {
 		uint32_t i;

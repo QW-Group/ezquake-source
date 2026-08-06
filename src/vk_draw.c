@@ -46,6 +46,8 @@ extern const unsigned char vk_post_process_vert_spv[];
 extern const unsigned int vk_post_process_vert_spv_len;
 extern const unsigned char vk_post_process_frag_spv[];
 extern const unsigned int vk_post_process_frag_spv_len;
+extern const unsigned char vk_world_outline_frag_spv[];
+extern const unsigned int vk_world_outline_frag_spv_len;
 
 typedef struct vk_hud_image_push_s {
 	float alphaTestFont;
@@ -65,7 +67,18 @@ typedef struct vk_post_process_push_s {
 	float invWidth;
 	float invHeight;
 	int fxaaEnabled;
+	float fxaaQuality;
 } vk_post_process_push_t;
+
+typedef struct vk_world_outline_push_s {
+	float outlineColor[3];
+	float outlineScale;
+	float outlineDepthThreshold;
+	float outlineNormalThreshold;
+	float invWidth;
+	float invHeight;
+	float zFar;
+} vk_world_outline_push_t;
 
 static VkPipelineLayout hudImagePipelineLayout;
 static VkPipelineLayout hudColorPipelineLayout;
@@ -79,6 +92,15 @@ static VkDescriptorSetLayout postProcessDescriptorSetLayout;
 static VkPipelineLayout postProcessPipelineLayout;
 static VkPipeline postProcessPipeline;
 static VkSampler postProcessSampler;
+
+static VkDescriptorSetLayout worldOutlineDescriptorSetLayout;
+static VkPipelineLayout worldOutlinePipelineLayout;
+static VkPipeline worldOutlinePipeline;
+// NEAREST, not postProcessSampler's LINEAR: the outline shader is a direct
+// port of GLM's texelFetch()-based edge detect (fx_world_geometry.fragment.
+// glsl) -- bilinear filtering here would blur exactly the discontinuities
+// it's trying to measure.
+static VkSampler worldNormalsSampler;
 
 static glm_image_t lineQuadData[MAX_LINES_PER_FRAME * 4];
 
@@ -725,11 +747,294 @@ void VK_PostProcessComposite(VkCommandBuffer commandBuffer, uint32_t imageIndex)
 	push.invWidth = 1.0f / (float)max(1, vk_options.swapChain.imageSize.width);
 	push.invHeight = 1.0f / (float)max(1, vk_options.swapChain.imageSize.height);
 	push.fxaaEnabled = vid_framebuffer_fxaa.integer != 0 ? 1 : 0;
+	// GLC/GLM select one of 17 distinct FXAA_QUALITY__PRESET shader variants
+	// (GL_FramebufferFxaaPreset); this single-pass approximation has no
+	// variants to switch between, so the preset index instead scales the
+	// algorithm's two continuous knobs -- see vk_post_process.frag's
+	// ApplyFXAA for what 0..1 actually changes. bound(0,17) here mirrors
+	// GL_FramebufferFxaaPreset's own clamp of the same cvar.
+	push.fxaaQuality = (float)bound(0, vid_framebuffer_fxaa.integer, 17) / 17.0f;
 
 	VK_HudSetViewportScissor(commandBuffer);
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, postProcessPipeline);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, postProcessPipelineLayout, 0, 1, &descriptorSet, 0, NULL);
 	vkCmdPushConstants(commandBuffer, postProcessPipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push), &push);
+	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+}
+
+// gl_outline & 2: matches GLM's R_DrawWorldOutlines() gate (r_brushmodel_
+// surfaces.c) -- world geometry outlines, independent of gl_outline & 1
+// (model outlines, handled entirely in vk_aliasmodel.c).
+qbool VK_WorldOutlineActive(void)
+{
+	extern qbool R_DrawWorldOutlines(void);
+	return R_DrawWorldOutlines();
+}
+
+static qbool VK_WorldOutlineCreatePipeline(void)
+{
+	VkShaderModule vertShaderModule;
+	VkShaderModule fragShaderModule;
+	VkPipelineShaderStageCreateInfo shaderStages[2];
+	VkPipelineVertexInputStateCreateInfo vertexInputInfo;
+	VkPipelineInputAssemblyStateCreateInfo inputAssembly;
+	VkPipelineViewportStateCreateInfo viewportState;
+	VkPipelineRasterizationStateCreateInfo rasterizer;
+	VkPipelineMultisampleStateCreateInfo multisampling;
+	VkPipelineDepthStencilStateCreateInfo depthStencil;
+	VkPipelineColorBlendAttachmentState blending;
+	VkPipelineColorBlendStateCreateInfo colorBlending;
+	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	VkPipelineDynamicStateCreateInfo dynamicState;
+	VkPushConstantRange pushConstantRange;
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo;
+	VkGraphicsPipelineCreateInfo pipelineInfo;
+	VkSamplerCreateInfo samplerInfo;
+	VkDescriptorSetLayoutBinding binding;
+	VkDescriptorSetLayoutCreateInfo layoutInfo;
+
+	if (worldOutlinePipeline != VK_NULL_HANDLE) {
+		return true;
+	}
+
+	if (worldNormalsSampler == VK_NULL_HANDLE) {
+		VK_InitialiseStructure(samplerInfo);
+		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+		samplerInfo.magFilter = VK_FILTER_NEAREST;
+		samplerInfo.minFilter = VK_FILTER_NEAREST;
+		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+		samplerInfo.maxAnisotropy = 1.0f;
+		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+		samplerInfo.unnormalizedCoordinates = VK_FALSE;
+		if (vkCreateSampler(vk_options.logicalDevice, &samplerInfo, NULL, &worldNormalsSampler) != VK_SUCCESS) {
+			return false;
+		}
+	}
+
+	if (worldOutlineDescriptorSetLayout == VK_NULL_HANDLE) {
+		VK_InitialiseStructure(binding);
+		binding.binding = 0;
+		binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		binding.descriptorCount = 1;
+		binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+		VK_InitialiseStructure(layoutInfo);
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.bindingCount = 1;
+		layoutInfo.pBindings = &binding;
+		if (vkCreateDescriptorSetLayout(vk_options.logicalDevice, &layoutInfo, NULL, &worldOutlineDescriptorSetLayout) != VK_SUCCESS) {
+			return false;
+		}
+	}
+
+	vertShaderModule = VK_HudCreateShaderModule(vk_post_process_vert_spv, vk_post_process_vert_spv_len);
+	fragShaderModule = VK_HudCreateShaderModule(vk_world_outline_frag_spv, vk_world_outline_frag_spv_len);
+	if (vertShaderModule == VK_NULL_HANDLE || fragShaderModule == VK_NULL_HANDLE) {
+		return false;
+	}
+
+	VK_InitialiseStructure(shaderStages[0]);
+	shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
+	shaderStages[0].module = vertShaderModule;
+	shaderStages[0].pName = "main";
+
+	VK_InitialiseStructure(shaderStages[1]);
+	shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	shaderStages[1].module = fragShaderModule;
+	shaderStages[1].pName = "main";
+
+	VK_InitialiseStructure(vertexInputInfo);
+	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+	VK_InitialiseStructure(inputAssembly);
+	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+	VK_InitialiseStructure(viewportState);
+	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	viewportState.viewportCount = 1;
+	viewportState.scissorCount = 1;
+
+	VK_InitialiseStructure(rasterizer);
+	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+	rasterizer.lineWidth = 1.0f;
+	rasterizer.cullMode = VK_CULL_MODE_NONE;
+	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+
+	// Drawn inline in the main render pass (whatever MSAA state it has) --
+	// unlike post-process, this pipeline is not its own separate render pass,
+	// it composites over the already-drawn scene alongside HUD/alias-model
+	// draws in the same pass instance.
+	VK_InitialiseStructure(multisampling);
+	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	multisampling.rasterizationSamples = vk_options.msaaSamples ? vk_options.msaaSamples : VK_SAMPLE_COUNT_1_BIT;
+
+	VK_InitialiseStructure(depthStencil);
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = VK_FALSE;
+	depthStencil.depthWriteEnable = VK_FALSE;
+
+	// The shader only ever writes colour when alpha is exactly 1 (edge) or
+	// leaves it 0 (no edge) -- at those two endpoints premultiplied-alpha
+	// blending (ONE, ONE_MINUS_SRC_ALPHA) is identical to a straight alpha-
+	// over, so the pipeline reuses that existing blend mode rather than
+	// adding a new one just for this binary case.
+	VK_BlendingConfigure(&colorBlending, &blending, r_blendfunc_premultiplied_alpha);
+
+	VK_InitialiseStructure(dynamicState);
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = sizeof(dynamicStates) / sizeof(dynamicStates[0]);
+	dynamicState.pDynamicStates = dynamicStates;
+
+	if (worldOutlinePipelineLayout == VK_NULL_HANDLE) {
+		VK_InitialiseStructure(pushConstantRange);
+		pushConstantRange.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+		pushConstantRange.offset = 0;
+		pushConstantRange.size = sizeof(vk_world_outline_push_t);
+
+		VK_InitialiseStructure(pipelineLayoutInfo);
+		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutInfo.setLayoutCount = 1;
+		pipelineLayoutInfo.pSetLayouts = &worldOutlineDescriptorSetLayout;
+		pipelineLayoutInfo.pushConstantRangeCount = 1;
+		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+		if (vkCreatePipelineLayout(vk_options.logicalDevice, &pipelineLayoutInfo, NULL, &worldOutlinePipelineLayout) != VK_SUCCESS) {
+			vkDestroyShaderModule(vk_options.logicalDevice, fragShaderModule, NULL);
+			vkDestroyShaderModule(vk_options.logicalDevice, vertShaderModule, NULL);
+			return false;
+		}
+	}
+
+	VK_InitialiseStructure(pipelineInfo);
+	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	pipelineInfo.stageCount = 2;
+	pipelineInfo.pStages = shaderStages;
+	pipelineInfo.pVertexInputState = &vertexInputInfo;
+	pipelineInfo.pInputAssemblyState = &inputAssembly;
+	pipelineInfo.pViewportState = &viewportState;
+	pipelineInfo.pRasterizationState = &rasterizer;
+	pipelineInfo.pMultisampleState = &multisampling;
+	pipelineInfo.pDepthStencilState = &depthStencil;
+	pipelineInfo.pColorBlendState = &colorBlending;
+	pipelineInfo.pDynamicState = &dynamicState;
+	pipelineInfo.layout = worldOutlinePipelineLayout;
+	pipelineInfo.renderPass = VK_MainRenderPass();
+	pipelineInfo.subpass = 0;
+
+	if (vkCreateGraphicsPipelines(vk_options.logicalDevice, vk_options.pipelineCache, 1, &pipelineInfo, NULL, &worldOutlinePipeline) != VK_SUCCESS) {
+		worldOutlinePipeline = VK_NULL_HANDLE;
+	}
+
+	vkDestroyShaderModule(vk_options.logicalDevice, fragShaderModule, NULL);
+	vkDestroyShaderModule(vk_options.logicalDevice, vertShaderModule, NULL);
+	return worldOutlinePipeline != VK_NULL_HANDLE;
+}
+
+// Same lazy-allocate-and-cache pattern as VK_PostProcessDescriptorSet.
+static VkDescriptorSet VK_WorldOutlineDescriptorSet(uint32_t imageIndex)
+{
+	VkDescriptorSet set;
+	VkDescriptorSetAllocateInfo allocInfo;
+	VkDescriptorImageInfo imageInfo;
+	VkWriteDescriptorSet write;
+
+	if (!vk_options.swapChain.worldNormalsDescriptorSets || imageIndex >= vk_options.swapChain.imageCount) {
+		return VK_NULL_HANDLE;
+	}
+
+	set = vk_options.swapChain.worldNormalsDescriptorSets[imageIndex];
+	if (set != VK_NULL_HANDLE) {
+		return set;
+	}
+
+	VK_InitialiseStructure(allocInfo);
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = vk_options.swapChain.worldNormalsDescriptorPool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &worldOutlineDescriptorSetLayout;
+	if (vkAllocateDescriptorSets(vk_options.logicalDevice, &allocInfo, &set) != VK_SUCCESS) {
+		return VK_NULL_HANDLE;
+	}
+
+	VK_InitialiseStructure(imageInfo);
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = vk_options.swapChain.worldNormalsColorImageViews[imageIndex];
+	imageInfo.sampler = worldNormalsSampler;
+
+	VK_InitialiseStructure(write);
+	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	write.dstSet = set;
+	write.dstBinding = 0;
+	write.dstArrayElement = 0;
+	write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	write.descriptorCount = 1;
+	write.pImageInfo = &imageInfo;
+	vkUpdateDescriptorSets(vk_options.logicalDevice, 1, &write, 0, NULL);
+
+	vk_options.swapChain.worldNormalsDescriptorSets[imageIndex] = set;
+	return set;
+}
+
+// VK_WorldNormalsRenderPassCreate leaves the colour attachment in
+// SHADER_READ_ONLY_OPTIMAL as its finalLayout already, so unlike
+// VK_PostProcessTransitionForSampling this needs no barrier -- kept as a
+// named entry point (called right after the normals pass ends, before the
+// main render pass begins) in case that render pass's finalLayout choice
+// ever changes.
+void VK_WorldNormalsTransitionForSampling(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+{
+	(void)commandBuffer;
+	(void)imageIndex;
+}
+
+// Composites the outline over the scene the main render pass has already
+// drawn (world + entities so far) -- caller (VK_DrawWorld, right after the
+// opaque world batch, matching GLM_RenderView's GLM_DrawWorldOutlines() call
+// site) is inside the main render pass instance already; this just adds one
+// more draw to it.
+void VK_WorldOutlineComposite(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+{
+	extern cvar_t gl_outline_color_world, gl_outline_world_depth_threshold, gl_outline_world_normal_threshold;
+	extern cvar_t r_farclip;
+	VkDescriptorSet descriptorSet;
+	vk_world_outline_push_t push;
+	float fbScaleX, fbScaleY;
+
+	if (!VK_WorldOutlineCreatePipeline()) {
+		return;
+	}
+
+	descriptorSet = VK_WorldOutlineDescriptorSet(imageIndex);
+	if (descriptorSet == VK_NULL_HANDLE) {
+		return;
+	}
+
+	push.outlineColor[0] = (float)gl_outline_color_world.color[0] / 255.0f;
+	push.outlineColor[1] = (float)gl_outline_color_world.color[1] / 255.0f;
+	push.outlineColor[2] = (float)gl_outline_color_world.color[2] / 255.0f;
+	push.outlineDepthThreshold = bound(1.0f, gl_outline_world_depth_threshold.value, 16.0f);
+	push.outlineNormalThreshold = bound(0.0f, gl_outline_world_normal_threshold.value, 0.999f);
+	push.invWidth = 1.0f / (float)max(1, vk_options.swapChain.imageSize.width);
+	push.invHeight = 1.0f / (float)max(1, vk_options.swapChain.imageSize.height);
+	push.zFar = bound(R_MINIMUM_FARCLIP, r_farclip.value, R_MAXIMUM_FARCLIP);
+
+	// Same scaling logic as GLM_DrawWorldOutlines: the normals target is
+	// rendered at the real 3D viewport resolution, which can differ from the
+	// window resolution (viewsize / scr_scale) -- scale the sample offset so
+	// the outline stays roughly 1 screen pixel wide either way.
+	fbScaleX = (float)VID_ScaledWidth3D() / (float)max(1, glConfig.vidWidth);
+	fbScaleY = (float)VID_ScaledHeight3D() / (float)max(1, glConfig.vidHeight);
+	push.outlineScale = bound(1.0f, max(fbScaleX, fbScaleY), 4.0f);
+
+	VK_HudSetViewportScissor(commandBuffer);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, worldOutlinePipeline);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, worldOutlinePipelineLayout, 0, 1, &descriptorSet, 0, NULL);
+	vkCmdPushConstants(commandBuffer, worldOutlinePipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push), &push);
 	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 }
 

@@ -24,8 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <vulkan/vulkan.h>
 #include "quakedef.h"
 
-#include <SDL.h>
-#include <SDL_vulkan.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
 
 #include "vk_local.h"
 
@@ -163,25 +163,48 @@ static qbool VK_PhysicalDeviceBestPresentationMode(VkPhysicalDevice device, VkSu
 	// synced/capped Vulkan present regardless of the vid_vsync setting.
 	// IMMEDIATE first (matches vid_vsync 0 semantics), MAILBOX as the next
 	// best low-latency fallback if unsupported. The historical concern with
-	// IMMEDIATE (see R_EndRendering()'s comment in vid_sdl2.c: mid-transition
+	// IMMEDIATE (see R_EndRendering()'s comment in vid_sdl.c: mid-transition
 	// re-enumeration during unrelated swapchain recreates was observed to
 	// settle on IMMEDIATE permanently and freeze the app) is about *when*
 	// this function gets called, not which mode it prefers here -- that call
 	// site already scopes re-evaluation to explicit r_swapInterval changes.
-	VkPresentModeKHR preferredModes[] = {
+	VkPresentModeKHR preferredModesOff[] = {
 		VK_PRESENT_MODE_IMMEDIATE_KHR,     // tearing, uncapped -- matches vid_vsync 0
 		VK_PRESENT_MODE_MAILBOX_KHR,       // triple buffered, still vsync'd
 		VK_PRESENT_MODE_FIFO_RELAXED_KHR,
 		VK_PRESENT_MODE_FIFO_KHR
 	};
+	// GLC/GLM's vid_vsync -1 -> SDL_GL_SetSwapInterval(-1) ("adaptive" vsync):
+	// vsync'd normally, but if a frame missed its interval the next present
+	// goes out immediately instead of waiting a full extra interval like FIFO
+	// would -- FIFO_RELAXED_KHR is Vulkan's direct equivalent (KHR spec:
+	// behaves like FIFO except a late frame presents immediately without
+	// waiting for the next vblank). r_swapInterval.integer was truthy for any
+	// nonzero value including -1, so this used to fall into the `> 0` FIFO
+	// branch below and silently give plain FIFO instead.
+	VkPresentModeKHR preferredModesAdaptive[] = {
+		VK_PRESENT_MODE_FIFO_RELAXED_KHR,
+		VK_PRESENT_MODE_FIFO_KHR
+	};
+	VkPresentModeKHR* preferredModes;
+	uint32_t preferredModeCount;
 	VkPresentModeKHR* presentationModes;
 	uint32_t count;
 	uint32_t i, j;
 
 	// This is guaranteed to be supported
-	if (r_swapInterval.integer) {
+	if (r_swapInterval.integer > 0) {
 		*best = VK_PRESENT_MODE_FIFO_KHR;
 		return true;
+	}
+
+	if (r_swapInterval.integer < 0) {
+		preferredModes = preferredModesAdaptive;
+		preferredModeCount = sizeof(preferredModesAdaptive) / sizeof(preferredModesAdaptive[0]);
+	}
+	else {
+		preferredModes = preferredModesOff;
+		preferredModeCount = sizeof(preferredModesOff) / sizeof(preferredModesOff[0]);
 	}
 
 	if (vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &count, NULL) != VK_SUCCESS) {
@@ -210,7 +233,7 @@ static qbool VK_PhysicalDeviceBestPresentationMode(VkPhysicalDevice device, VkSu
 		}
 	}
 
-	for (i = 0; i < sizeof(preferredModes) / sizeof(preferredModes[0]); ++i) {
+	for (i = 0; i < preferredModeCount; ++i) {
 		for (j = 0; j < count; ++j) {
 			if (preferredModes[i] == presentationModes[j]) {
 				Con_Printf("vulkan: selected present mode %d\n", (int)preferredModes[i]);
@@ -304,6 +327,19 @@ static qbool VK_PhysicalDeviceSwapChainCompatible(VkPhysicalDevice device, VkSur
 
 		if (i >= num_formats) {
 			int fallback = (best_format_only >= 0) ? best_format_only : (best_colorspace_only >= 0 ? best_colorspace_only : 0);
+
+			// vid_gammacorrection 2 ("require sRGB, reject the device rather
+			// than fall back") only makes that promise for the colorspace --
+			// matches GLC/GLM's vid_options[] fallback ladder (vid_sdl.c),
+			// which for gammacorrection==2 skips every candidate lacking
+			// VID_GAMMACORRECTED instead of silently accepting a
+			// non-sRGB-capable context. Without this, 1 and 2 were
+			// indistinguishable: both accepted whatever colorspace the
+			// fallback search above landed on.
+			if (vid_gammacorrection.integer == 2 && formats[fallback].colorSpace != req_color_space) {
+				Q_free(formats);
+				return false;
+			}
 
 			preferred_format->colorSpace = formats[fallback].colorSpace;
 			preferred_format->format = formats[fallback].format;

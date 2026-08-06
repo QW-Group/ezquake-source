@@ -25,8 +25,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <vulkan/vulkan.h>
 #include "quakedef.h"
 
-#include <SDL.h>
-#include <SDL_vulkan.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
 
 #include "gl_model.h"
 #include "r_aliasmodel.h"
@@ -181,6 +181,21 @@ static const char* VK_DescriptiveString(void)
 	return "Vulkan";
 }
 
+// SCR_Screenshot()/the "screenshot" console command call this synchronously
+// from the event loop, outside any VK_BeginFrame/VK_EndFrame pair -- at that
+// point vk_options.frame.imageIndex still names whichever swapchain image was
+// presented last frame, but per the Vulkan spec that image only belongs to
+// the application between vkAcquireNextImageKHR returning it and the matching
+// vkQueuePresentKHR handing it back to the WSI; once presented, its layout is
+// no longer guaranteed to still be PRESENT_SRC_KHR from the application's
+// point of view; touching it here (which is what this function used to do
+// unconditionally) is a real "image has not been acquired" validation error,
+// not just a benign warning. Acquiring a fresh image, copying out whatever
+// content the compositor already has for it (this is a *read*, so whatever
+// was already displayed last frame is exactly what a screenshot should
+// capture), and presenting it right back unmodified keeps this a read-only
+// operation with no visible effect on the running frame loop, while staying
+// inside the same acquire/present window the spec requires.
 static void VK_Screenshot(byte* buffer, size_t size)
 {
 	VkCommandBuffer cmd;
@@ -191,30 +206,49 @@ static void VK_Screenshot(byte* buffer, size_t size)
 	VkBufferImageCopy region;
 	void* mapped;
 	uint32_t width, height;
+	uint32_t imageIndex;
 	qbool swizzleBGRA;
+	VkResult result;
+	VkSemaphore acquireSemaphore = VK_NULL_HANDLE;
+	VkSemaphoreCreateInfo semaphoreInfo;
+	VkPresentInfoKHR presentInfo;
 
 	memset(buffer, 0, size);
 
-	if (vk_options.logicalDevice == VK_NULL_HANDLE || !vk_options.swapChain.images || vk_options.swapChain.imageCount <= 0) {
+	if (vk_options.logicalDevice == VK_NULL_HANDLE || vk_options.swapChain.handle == VK_NULL_HANDLE || !vk_options.swapChain.images || vk_options.swapChain.imageCount <= 0) {
 		return;
 	}
 
 	width = vk_options.swapChain.imageSize.width;
 	height = vk_options.swapChain.imageSize.height;
-	if (!width || !height || size < (size_t)width * height * 3 || vk_options.frame.imageIndex >= (uint32_t)vk_options.swapChain.imageCount) {
+	if (!width || !height || size < (size_t)width * height * 3) {
 		return;
 	}
 
-	// Screenshots are rare/not perf-sensitive, so a full vkDeviceWaitIdle to make
-	// sure the swapchain image we're about to read has actually finished
-	// presenting is fine here -- unlike the per-frame path, this has no business
-	// being clever about synchronization.
+	// Screenshots are rare/not perf-sensitive: draining the whole device
+	// first means the acquire below can't race an in-flight VK_BeginFrame/
+	// VK_EndFrame pair started from elsewhere (there isn't one on this
+	// thread, but this keeps the function safe to call at any point in the
+	// frame loop, not just between frames).
 	vkDeviceWaitIdle(vk_options.logicalDevice);
 
-	srcImage = vk_options.swapChain.images[vk_options.frame.imageIndex];
+	VK_InitialiseStructure(semaphoreInfo);
+	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	if (vkCreateSemaphore(vk_options.logicalDevice, &semaphoreInfo, NULL, &acquireSemaphore) != VK_SUCCESS) {
+		return;
+	}
+
+	result = vkAcquireNextImageKHR(vk_options.logicalDevice, vk_options.swapChain.handle, 1000000000ULL, acquireSemaphore, VK_NULL_HANDLE, &imageIndex);
+	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		vkDestroySemaphore(vk_options.logicalDevice, acquireSemaphore, NULL);
+		return;
+	}
+
+	srcImage = vk_options.swapChain.images[imageIndex];
 
 	if (!VK_CreateBufferResource((VkDeviceSize)width * height * 4, VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &stagingBuffer, &stagingMemory)) {
+		vkDestroySemaphore(vk_options.logicalDevice, acquireSemaphore, NULL);
 		return;
 	}
 
@@ -222,6 +256,7 @@ static void VK_Screenshot(byte* buffer, size_t size)
 	if (cmd == VK_NULL_HANDLE) {
 		vkDestroyBuffer(vk_options.logicalDevice, stagingBuffer, NULL);
 		vkFreeMemory(vk_options.logicalDevice, stagingMemory, NULL);
+		vkDestroySemaphore(vk_options.logicalDevice, acquireSemaphore, NULL);
 		return;
 	}
 
@@ -253,7 +288,23 @@ static void VK_Screenshot(byte* buffer, size_t size)
 	barrier.dstAccessMask = 0;
 	vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, NULL, 0, NULL, 1, &barrier);
 
-	VK_EndImmediateCommands(cmd);
+	// Waits on acquireSemaphore -- the copy above must not start on the GPU
+	// until vkAcquireNextImageKHR's own semaphore signal confirms srcImage is
+	// actually ready, even though the CPU-side vkDeviceWaitIdle already ran.
+	VK_EndImmediateCommandsAfter(cmd, acquireSemaphore, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+	// Hand the (unmodified) image straight back to the WSI -- this function
+	// never draws into it, so presenting here is invisible to the user; it's
+	// only needed because vkAcquireNextImageKHR above took ownership of it
+	// and the spec requires every acquired image to eventually be presented
+	// (or the swapchain leaks that slot).
+	VK_InitialiseStructure(presentInfo);
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = &vk_options.swapChain.handle;
+	presentInfo.pImageIndices = &imageIndex;
+	vkQueuePresentKHR(vk_options.presentQueue, &presentInfo);
+	vkDestroySemaphore(vk_options.logicalDevice, acquireSemaphore, NULL);
 
 	swizzleBGRA = (vk_options.physicalDeviceSurfaceFormat.format == VK_FORMAT_B8G8R8A8_UNORM ||
 		vk_options.physicalDeviceSurfaceFormat.format == VK_FORMAT_B8G8R8A8_SRGB);
@@ -326,17 +377,22 @@ static void VK_DestroyFrameResources(void)
 		if (vk_options.frame.imageAvailableSemaphores[i] != VK_NULL_HANDLE) {
 			vkDestroySemaphore(vk_options.logicalDevice, vk_options.frame.imageAvailableSemaphores[i], NULL);
 		}
-		if (vk_options.frame.renderFinishedSemaphores[i] != VK_NULL_HANDLE) {
-			vkDestroySemaphore(vk_options.logicalDevice, vk_options.frame.renderFinishedSemaphores[i], NULL);
-		}
 		if (vk_options.frame.inFlightFences[i] != VK_NULL_HANDLE) {
 			vkDestroyFence(vk_options.logicalDevice, vk_options.frame.inFlightFences[i], NULL);
+		}
+	}
+	if (vk_options.frame.renderFinishedSemaphores) {
+		for (i = 0; i < (uint32_t)vk_options.swapChain.imageCount; ++i) {
+			if (vk_options.frame.renderFinishedSemaphores[i] != VK_NULL_HANDLE) {
+				vkDestroySemaphore(vk_options.logicalDevice, vk_options.frame.renderFinishedSemaphores[i], NULL);
+			}
 		}
 	}
 	if (vk_options.frame.commandPool != VK_NULL_HANDLE) {
 		vkDestroyCommandPool(vk_options.logicalDevice, vk_options.frame.commandPool, NULL);
 	}
 	Q_free(vk_options.frame.commandBuffers);
+	Q_free(vk_options.frame.renderFinishedSemaphores);
 	Q_free(vk_options.frame.imageInFlightFences);
 	memset(&vk_options.frame, 0, sizeof(vk_options.frame));
 }
@@ -373,9 +429,19 @@ static qbool VK_CreateFrameResources(void)
 	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 	for (i = 0; i < VK_MAX_FRAMES_IN_FLIGHT; ++i) {
 		if (vkCreateSemaphore(vk_options.logicalDevice, &semaphoreInfo, NULL, &vk_options.frame.imageAvailableSemaphores[i]) != VK_SUCCESS ||
-			vkCreateSemaphore(vk_options.logicalDevice, &semaphoreInfo, NULL, &vk_options.frame.renderFinishedSemaphores[i]) != VK_SUCCESS ||
 			vkCreateFence(vk_options.logicalDevice, &fenceInfo, NULL, &vk_options.frame.inFlightFences[i]) != VK_SUCCESS) {
 			Com_Printf("vulkan: failed to create per-frame semaphores/fence (frame %d)\n", i);
+			VK_DestroyFrameResources();
+			return false;
+		}
+	}
+	// renderFinishedSemaphores are per swapchain image (see vk_local.h): the
+	// present of image N waits on this semaphore, so it must not be reused by a
+	// different frame's submit while that present is still pending.
+	vk_options.frame.renderFinishedSemaphores = Q_calloc(vk_options.swapChain.imageCount, sizeof(vk_options.frame.renderFinishedSemaphores[0]));
+	for (i = 0; i < (uint32_t)vk_options.swapChain.imageCount; ++i) {
+		if (vkCreateSemaphore(vk_options.logicalDevice, &semaphoreInfo, NULL, &vk_options.frame.renderFinishedSemaphores[i]) != VK_SUCCESS) {
+			Com_Printf("vulkan: failed to create per-image render-finished semaphore (image %d)\n", i);
 			VK_DestroyFrameResources();
 			return false;
 		}
@@ -606,6 +672,14 @@ void VK_BeginFrame(void)
 		}
 	}
 
+	// Apply any texture uploads that gameplay deferred from mid-frame (item
+	// pickup loading a HUD icon / model skin while the previous frame's command
+	// buffer was still recording). Done here, at a clean frame boundary before
+	// this frame's command buffer starts recording, so destroying/recreating a
+	// texture's descriptor set can't invalidate a command buffer that already
+	// bound it. See VK_UploadTexture / VK_TextureApplyDeferredUploads.
+	VK_TextureApplyDeferredUploads();
+
 	commandBuffer = vk_options.frame.commandBuffers[vk_options.frame.imageIndex];
 	result = vkResetCommandBuffer(commandBuffer, 0);
 	if (result != VK_SUCCESS) {
@@ -722,7 +796,10 @@ void VK_EndFrame(void)
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffer;
 	submitInfo.signalSemaphoreCount = 1;
-	submitInfo.pSignalSemaphores = &vk_options.frame.renderFinishedSemaphores[frameIndex];
+	// Signal the per-image render-finished semaphore (indexed by imageIndex,
+	// not frameIndex) so the matching present below waits on exactly the
+	// semaphore tied to this swapchain image -- see vk_local.h.
+	submitInfo.pSignalSemaphores = &vk_options.frame.renderFinishedSemaphores[vk_options.frame.imageIndex];
 
 	result = vkResetFences(vk_options.logicalDevice, 1, &frameFence);
 	if (result != VK_SUCCESS) {
@@ -735,7 +812,7 @@ void VK_EndFrame(void)
 
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
-	presentInfo.pWaitSemaphores = &vk_options.frame.renderFinishedSemaphores[frameIndex];
+	presentInfo.pWaitSemaphores = &vk_options.frame.renderFinishedSemaphores[vk_options.frame.imageIndex];
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = &vk_options.swapChain.handle;
 	presentInfo.pImageIndices = &vk_options.frame.imageIndex;

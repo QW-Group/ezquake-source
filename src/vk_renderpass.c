@@ -44,6 +44,14 @@ typedef enum {
 	// real gamma/contrast/FXAA, and writes the swapchain image directly --
 	// see VK_PostProcessComposite in vk_draw.c.
 	vk_renderpass_postprocess,
+	// World-outline normals prepass (gl_outline & 2): a small, always
+	// single-sample render pass with its own color (normal+linear-depth,
+	// RGBA16F) and depth attachments, entirely separate from the main
+	// render pass's MSAA/post-process attachment matrix -- see
+	// VK_CreateWorldNormalsResources in vk_swapchain.c for why. Its color
+	// attachment is later sampled (not presented) by the outline composite
+	// pipeline drawn inline in the main render pass.
+	vk_renderpass_worldnormals,
 
 	vk_renderpass_count
 } vk_renderpass_id;
@@ -246,6 +254,83 @@ static qbool VK_PostProcessRenderPassCreate(void)
 	return vkCreateRenderPass(vk_options.logicalDevice, &renderPassInfo, NULL, &renderPasses[vk_renderpass_postprocess]) == VK_SUCCESS;
 }
 
+// See VK_WorldNormalsFormat above for the color format. Always
+// single-sample regardless of vid_framebuffer_multisample -- the whole point
+// of this being a separate render pass instead of a second attachment on the
+// main one is to sidestep having to make normals+depth track the main pass's
+// MSAA on/off and post-process on/off state (4 combinations already; adding
+// this attachment there would multiply that to 8). CLEAR is mandatory on the
+// color attachment (not LOAD/DONT_CARE): the composite pass distinguishes
+// "surface drawn here" from "nothing drawn here" by alpha, and undefined
+// contents on skipped pixels would make that unreliable.
+static qbool VK_WorldNormalsRenderPassCreate(void)
+{
+	VkAttachmentDescription attachments[2];
+	VkAttachmentReference colorAttachmentRef;
+	VkAttachmentReference depthAttachmentRef;
+	VkSubpassDescription subpass;
+	VkSubpassDependency dependency;
+	VkRenderPassCreateInfo renderPassInfo;
+
+	VK_InitialiseStructure(attachments[0]);
+	attachments[0].format = VK_WorldNormalsFormat();
+	attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	VK_InitialiseStructure(attachments[1]);
+	attachments[1].format = VK_DepthFormat();
+	attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+	attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VK_InitialiseStructure(colorAttachmentRef);
+	colorAttachmentRef.attachment = 0;
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VK_InitialiseStructure(depthAttachmentRef);
+	depthAttachmentRef.attachment = 1;
+	depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VK_InitialiseStructure(subpass);
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &colorAttachmentRef;
+	subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
+	// Ordered before the main render pass's own external dependency in
+	// VK_BeginFrame -- this only needs to make sure nothing reads this
+	// attachment as a sampler (the composite pipeline's read, later in the
+	// same command buffer within the main render pass) before this pass's
+	// color write actually lands.
+	VK_InitialiseStructure(dependency);
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+	VK_InitialiseStructure(renderPassInfo);
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = 2;
+	renderPassInfo.pAttachments = attachments;
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpass;
+	renderPassInfo.dependencyCount = 1;
+	renderPassInfo.pDependencies = &dependency;
+
+	return vkCreateRenderPass(vk_options.logicalDevice, &renderPassInfo, NULL, &renderPasses[vk_renderpass_worldnormals]) == VK_SUCCESS;
+}
+
 VkRenderPass VK_MainRenderPass(void)
 {
 	return renderPasses[vk_renderpass_main];
@@ -264,9 +349,30 @@ VkRenderPass VK_PostProcessRenderPass(void)
 	return renderPasses[vk_renderpass_postprocess];
 }
 
+VkRenderPass VK_WorldNormalsRenderPass(void)
+{
+	if (renderPasses[vk_renderpass_worldnormals] == VK_NULL_HANDLE) {
+		VK_WorldNormalsRenderPassCreate();
+	}
+	return renderPasses[vk_renderpass_worldnormals];
+}
+
 VkFormat VK_DepthFormat(void)
 {
 	return VK_FORMAT_D32_SFLOAT;
+}
+
+// RGBA16F: .rgb is the world-space face normal (from dFdx/dFdy of the
+// interpolated world position in vk_world_normals.frag -- exact for Quake's
+// planar BSP faces, not an approximation), .a is GLM's surfaceType-or-depth
+// sentinel (see draw_world.fragment.glsl's normals pass and
+// vk_world_normals.frag). Octahedral-encoded R16G16 would halve this, but
+// GLM's own .a-as-depth-sentinel trick doesn't fit in 2 channels -- left as a
+// follow-up if memory/bandwidth on mobile ever needs it (desktop-only path
+// for now, see VK_MAX_FRAMES_IN_FLIGHT's comment on this branch).
+VkFormat VK_WorldNormalsFormat(void)
+{
+	return VK_FORMAT_R16G16B16A16_SFLOAT;
 }
 
 void VK_RenderPassDelete(void)
