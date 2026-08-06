@@ -148,10 +148,6 @@ check_dependency(SpeexDSP "speexdsp"   "SpeexDSP"           "SPEEX::SPEEXDSP"   
 check_dependency(cURL     "libcurl"    "CURL"               "CURL::libcurl"                REQUIRED CONFIG)
 check_dependency(zlib     "zlib"       "ZLIB"               "ZLIB::ZLIB"                   REQUIRED)
 
-# ezQuake's SDL platform sources historically include headers without the
-# SDL3/ prefix. Keep that source layout while using SDL3's namespaced install.
-find_path(EZQUAKE_SDL_INCLUDE_DIR NAMES SDL.h PATH_SUFFIXES SDL3 REQUIRED)
-
 if(USE_SYSTEM_LIBS AND HAVE_MINIZIP)
     find_path(EZQUAKE_MINIZIP_INCLUDE_DIR
             NAMES unzip.h
@@ -508,6 +504,9 @@ if(RENDERER_VULKAN)
     add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_sprite3d.frag vk_sprite3d_frag.spv)
     add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_post_process.vert vk_post_process_vert.spv)
     add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_post_process.frag vk_post_process_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_normals.vert vk_world_normals_vert.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_normals.frag vk_world_normals_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_outline.frag vk_world_outline_frag.spv)
     add_resources(shaders_vulkan ${vulkan_spirv_shaders})
 
     set(vulkan_renderer_headers
@@ -810,7 +809,7 @@ set(client
         ${SOURCE_DIR}/host.c
         ${SOURCE_DIR}/ignore.c
         ${SOURCE_DIR}/image.c
-        ${SOURCE_DIR}/in_sdl2.c
+        ${SOURCE_DIR}/in_sdl.c
         ${SOURCE_DIR}/irc.c
         ${SOURCE_DIR}/irc_filter.c
         ${SOURCE_DIR}/keys.c
@@ -839,14 +838,14 @@ set(client
         ${SOURCE_DIR}/snd_qizmo.c
         ${SOURCE_DIR}/snd_voip.c
         ${SOURCE_DIR}/stats_grid.c
-        ${SOURCE_DIR}/sys_sdl2.c
+        ${SOURCE_DIR}/sys_sdl.c
         ${SOURCE_DIR}/teamplay.c
         ${SOURCE_DIR}/teamplay_locfiles.c
         ${SOURCE_DIR}/textencoding.c
         ${SOURCE_DIR}/tp_msgs.c
         ${SOURCE_DIR}/tp_triggers.c
         ${SOURCE_DIR}/utils.c
-        ${SOURCE_DIR}/vid_sdl2.c
+        ${SOURCE_DIR}/vid_sdl.c
         ${SOURCE_DIR}/vid_vsync.c
         ${SOURCE_DIR}/vx_tracker.c
         ${SOURCE_DIR}/wad.c
@@ -953,7 +952,6 @@ add_executable(ezquake ${TARGET_TYPE} ${ezquake_sources})
 
 target_include_directories(ezquake PRIVATE
         ${SOURCE_DIR}/qwprot/src
-        ${EZQUAKE_SDL_INCLUDE_DIR}
         ${EZQUAKE_MINIZIP_INCLUDE_DIR}
 )
 
@@ -962,7 +960,6 @@ target_compile_definitions(ezquake PRIVATE
         CPUSTRING="${CMAKE_SYSTEM_PROCESSOR}"
 
         EZQUAKE_SDL3
-        SDL_ENABLE_OLD_NAMES
 
         JSS_CAM
         USE_PR2

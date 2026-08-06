@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // snd_dma.c -- main control for any streaming sound output device
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "quakedef.h"
 #include "qsound.h"
 #include "snd_backend.h"
@@ -100,7 +100,7 @@ cvar_t s_desiredsamples = {"s_desiredsamples", "0", CVAR_AUTO, OnChange_s_desire
 cvar_t s_audiodevice = {"s_audiodevice", "0", CVAR_LATCH_SOUND };
 cvar_t s_silent_racing = { "s_silent_racing", "0" };
 
-SDL_mutex *smutex;
+SDL_Mutex *smutex;
 soundhw_t *shw;
 
 qbool S_Backend_AllocSoundHardware(int khz, int channels, int samplebits)

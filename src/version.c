@@ -30,8 +30,8 @@
 #include "version.h"
 
 #include <jansson.h>
-#include <SDL_mutex.h>
-#include <SDL_thread.h>
+#include <SDL3/SDL_mutex.h>
+#include <SDL3/SDL_thread.h>
 #include <curl/curl.h>
 
 
@@ -41,7 +41,7 @@
 
 static char version_latest[VERSION_MAX_LEN] = VERSION_UNKNOWN;
 static qbool version_refreshing = false;
-static SDL_mutex *version_mutex = NULL;
+static SDL_Mutex *version_mutex = NULL;
 
 static void VersionCheck_OnConfigChange(cvar_t *var, char *string, qbool *cancel);
 static cvar_t allow_update_check  = {"sys_update_check",  "1", CVAR_NONE, VersionCheck_OnConfigChange};

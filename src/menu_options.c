@@ -530,7 +530,7 @@ static void ApplyVideoSettings(const menu_system_settings_t *s)
 
 	Cvar_SetValue(&vid_width, current->w);
 	Cvar_SetValue(&vid_height, current->h);
-	Cvar_SetValue(&r_displayRefresh,current->refresh_rate);
+	Cvar_SetValue(&r_displayRefresh, (float)(int)(current->refresh_rate + 0.5f));
 	Cvar_SetValue(&r_colorbits, s->bpp);
 	Cvar_SetValue(&r_fullscreen, s->fullscreen);
 	Cbuf_AddText("vid_restart\n");

@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Original code taken from ezquake 2.2, which used speex
 // Now using SDL audio capture (requires SDL 2.0.5 or above)
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "quakedef.h"
 #include "qsound.h"
 
@@ -132,13 +132,9 @@ static void *S_CaptureDriverInit (int sampleRate)
 {
 	SDL_AudioStream *stream;
 	SDL_AudioSpec desired;
-	int ret = 0;
 	SDL_AudioDeviceID requested_device = SDL_AUDIO_DEVICE_DEFAULT_RECORDING;
 
-	if (SDL_WasInit (SDL_INIT_AUDIO) == 0)
-		ret = SDL_InitSubSystem (SDL_INIT_AUDIO);
-
-	if (ret == -1) {
+	if (SDL_WasInit (SDL_INIT_AUDIO) == 0 && !SDL_InitSubSystem (SDL_INIT_AUDIO)) {
 		Con_Printf ("Couldn't initialize SDL audio: %s\n", SDL_GetError ());
 		return NULL;
 	}

@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "quakedef.h"
 #include "EX_browser.h"
 #include "fs.h"

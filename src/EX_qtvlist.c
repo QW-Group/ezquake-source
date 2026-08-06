@@ -20,14 +20,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <curl/curl.h>
 #include <jansson.h>
-#include <SDL_thread.h>
+#include <SDL3/SDL_thread.h>
 #include "quakedef.h"
 #include "EX_qtvlist.h"
 
 cvar_t qtv_api_url = {"qtv_api_url", "http://qtvapi.quakeworld.nu/api/v1/servers"};
 
 static json_t *root;
-static SDL_mutex *qtvlist_mutex;
+static SDL_Mutex *qtvlist_mutex;
 
 extern char *CL_QTV_GetCurrentStream(void);
 

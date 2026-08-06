@@ -17,7 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "quakedef.h"
 #include "qsound.h"
@@ -120,13 +120,10 @@ qbool S_Backend_Init(void)
 {
 	SDL_AudioSpec desired;
 	soundhw_t *shw_tmp = NULL;
-	int ret = 0, desired_samples = 0;
+	int desired_samples = 0;
 	SDL_AudioDeviceID requested_device = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK;
 
-	if (SDL_WasInit(SDL_INIT_AUDIO) == 0)
-		ret = SDL_InitSubSystem(SDL_INIT_AUDIO);
-
-	if (ret == -1) {
+	if (SDL_WasInit(SDL_INIT_AUDIO) == 0 && !SDL_InitSubSystem(SDL_INIT_AUDIO)) {
 		Con_Printf("Couldn't initialize SDL audio: %s\n", SDL_GetError());
 		return false;
 	}

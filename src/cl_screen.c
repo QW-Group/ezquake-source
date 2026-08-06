@@ -651,7 +651,7 @@ static void SCR_UpdateCursor(void)
 	int max_x = VID_RenderWidth2D();
 	int max_y = VID_RenderHeight2D();
 
-	// vid_sdl2 updates absolute cursor position when not locked
+	// vid_sdl updates absolute cursor position when not locked
 	scr_pointer_state.x = bound(0, (cursor_x * vid.conwidth) / max_x, max_x - 1);
 	scr_pointer_state.y = bound(0, (cursor_y * vid.conheight) / max_y, max_y - 1);
 

@@ -17,8 +17,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <stdint.h>
 
-#include "SDL.h"
-#include "SDL_joystick.h"
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_joystick.h>
 #include "common.h"
 #include "cvar.h"
 #include "quakedef.h"
@@ -42,6 +42,7 @@ cvar_t	cl_keypad       = {"cl_keypad",      "1", CVAR_SILENT};
 /*  Joystick cvars.  */
 cvar_t	in_joystick		= {"joystick",			"0",	CVAR_SILENT, in_joystick_callback };
 cvar_t	joy_index		= {"joyindex",			"0",	CVAR_SILENT };
+cvar_t	joy_id			= {"joy_id",			"-1",	CVAR_SILENT };
 cvar_t	joy_name		= {"joyname",			"joystick", CVAR_SILENT };
 cvar_t	joy_advanced		= {"joyadvanced",		"0",	CVAR_SILENT };
 cvar_t	joy_advaxisx		= {"joyadvaxisx",		"0",	CVAR_SILENT };
@@ -193,12 +194,37 @@ static SDL_Joystick *IN_OpenJoystickIndex(int index)
 	SDL_free(ids);
 	return joystick;
 }
+
+/*
+ * joy_id (SDL_JoystickID) takes priority over joyindex (positional index)
+ * when set to anything other than -1. It's the stable, hot-plug-safe way to
+ * pick a device -- SDL_JoystickID doesn't shift around when other devices
+ * are connected/disconnected, unlike a positional index. joyindex remains
+ * the default so that existing configs keep working unchanged.
+ */
+static SDL_Joystick *IN_OpenJoystickId(SDL_JoystickID id)
+{
+	int count = 0, i;
+	SDL_Joystick *joystick = NULL;
+	SDL_JoystickID *ids = SDL_GetJoysticks(&count);
+	if (ids) {
+		for (i = 0; i < count; ++i) {
+			if (ids[i] == id) {
+				joystick = SDL_OpenJoystick(ids[i]);
+				break;
+			}
+		}
+	}
+	SDL_free(ids);
+	return joystick;
+}
 static uint32_t		joy_prevbuttons;
 static uint16_t		axis_map[JOY_MAX_AXES];
 static uint16_t		control_map[JOY_MAX_AXES];
 static uint16_t		joy_numbuttons,
 			joy_numaxes;
-static int16_t		joy_devidx = -1;
+static int16_t		joy_devidx = -1;	// last joyindex we opened (only meaningful while joy_id is unset)
+static SDL_JoystickID	joy_devid = 0;		// last joy_id we opened (0 is never a valid SDL_JoystickID)
 static uint8_t		joy_prevpov;
 static qbool		joy_avail, joy_haspov, joy_advancedinit;
 
@@ -268,30 +294,51 @@ Joy_AdvancedUpdate_f (void)
 	}
 
 	/*
-	 * If the requested joystick device index has changed, try opening it.
+	 * joy_id (a stable SDL_JoystickID) takes priority over joyindex (a
+	 * positional index into the currently connected device list) whenever
+	 * it's set to anything other than -1. Re-open only if the requested
+	 * device actually changed.
 	 */
-	if (joy_devidx != joy_index.integer) {
-		SDL_Joystick *newdev;
+	{
+		qbool use_id = (joy_id.integer >= 0);
+		qbool want_new_device = use_id
+			? (joy_devidx != -2 || (SDL_JoystickID)joy_id.integer != joy_devid)
+			: (joy_devidx != joy_index.integer);
 
-		newdev = IN_OpenJoystickIndex(joy_index.integer);
-		if (newdev) {
-			if (joy_dev) {
-				/*  Close the old one.  */
-				SDL_JoystickClose (joy_dev);
+		if (want_new_device) {
+			SDL_Joystick *newdev = use_id
+				? IN_OpenJoystickId ((SDL_JoystickID)joy_id.integer)
+				: IN_OpenJoystickIndex (joy_index.integer);
+
+			if (newdev) {
+				if (joy_dev) {
+					/*  Close the old one.  */
+					SDL_CloseJoystick (joy_dev);
+				}
+				joy_dev		= newdev;
+				joy_devidx	= use_id ? -2 : joy_index.integer;
+				joy_devid	= use_id ? (SDL_JoystickID)joy_id.integer : 0;
+				joy_numaxes	= SDL_GetNumJoystickAxes (joy_dev);
+				joy_numbuttons	= SDL_GetNumJoystickButtons (joy_dev);
+				joy_haspov	= (SDL_GetNumJoystickHats (joy_dev) > 0);
+				if (joy_numbuttons > sizeof (joy_prevbuttons) * 8) {
+					/*  We can't handle more than 32 buttons.  */
+					joy_numbuttons = sizeof (joy_prevbuttons) * 8;
+				}
+				if (use_id) {
+					Con_Printf ("Opened joystick id %d: \"%s\"\n",
+					            joy_id.integer, SDL_GetJoystickName (joy_dev));
+				} else {
+					Con_Printf ("Opened joystick index %d: \"%s\"\n",
+					            joy_index.integer, SDL_GetJoystickName (joy_dev));
+				}
+			} else {
+				if (use_id) {
+					Con_Printf ("Failed to open joystick id %d\n", joy_id.integer);
+				} else {
+					Con_Printf ("Failed to open joystick index %d\n", joy_index.integer);
+				}
 			}
-			joy_dev		= newdev;
-			joy_devidx	= joy_index.integer;
-			joy_numaxes	= SDL_JoystickNumAxes (joy_dev);
-			joy_numbuttons	= SDL_JoystickNumButtons (joy_dev);
-			joy_haspov	= (SDL_JoystickNumHats (joy_dev) > 0);
-			if (joy_numbuttons > sizeof (joy_prevbuttons) * 8) {
-				/*  We can't handle more than 32 buttons.  */
-				joy_numbuttons = sizeof (joy_prevbuttons) * 8;
-			}
-			Con_Printf ("Opened joystick index %d: \"%s\"\n",
-			            joy_index.integer, SDL_JoystickName (joy_dev));
-		} else {
-			Con_Printf ("Failed to open joystick index %d\n", joy_index.integer);
 		}
 	}
 }
@@ -312,7 +359,7 @@ IN_Commands (void)
 	 */
 	buttonstate = 0;
 	for (i = 0;  i < joy_numbuttons;  ++i) {
-		uint8_t val = SDL_JoystickGetButton (joy_dev, i);
+		uint8_t val = SDL_GetJoystickButton (joy_dev, i);
 
 		buttonstate |= val << i;
 		buttonmask = 1 << i;
@@ -326,11 +373,11 @@ IN_Commands (void)
 
 	if (joy_haspov) {
 		/*
-		 * SDL_JoystickGetHat() returns a bitmask of the four cardinal
+		 * SDL_GetJoystickHat() returns a bitmask of the four cardinal
 		 * directions in up/right/down/left order from bit 0.  Only
 		 * the first POV hat is used.
 		 */
-		uint8_t povstate = SDL_JoystickGetHat (joy_dev, 0);
+		uint8_t povstate = SDL_GetJoystickHat (joy_dev, 0);
 		uint8_t povmask;
 
 		for (i = 0;  i < 4;  ++i) {
@@ -381,7 +428,7 @@ IN_JoyMove (usercmd_t *cmd)
 		if (axis_map[i] == AXIS__NONE  ||  i >= joy_numaxes) {
 			continue;
 		}
-		axisval = SDL_JoystickGetAxis (joy_dev, i);
+		axisval = SDL_GetJoystickAxis (joy_dev, i);
 
 		// Convert range from -32768..32767 to -1..1
 		axisval /= 32768.0;
@@ -489,6 +536,7 @@ IN_StartupJoystick (void)
 		Cvar_SetCurrentGroup (CVAR_GROUP_INPUT_JOYSTICK);
 		Cvar_Register (&in_joystick);
 		Cvar_Register (&joy_index);
+		Cvar_Register (&joy_id);
 		Cvar_Register (&joy_name);
 		Cvar_Register (&joy_advanced);
 		Cvar_Register (&joy_advaxisx);
@@ -524,6 +572,7 @@ IN_StartupJoystick (void)
 	/*  See if there are any joysticks at all.  */
 	{
 		SDL_JoystickID *ids = SDL_GetJoysticks(&numdevs);
+		if (!ids) numdevs = 0;
 		SDL_free(ids);
 	}
 	if (!numdevs) {
@@ -537,10 +586,10 @@ IN_StartupJoystick (void)
 		if (jdev) {
 			Com_Printf ("Detected joystick %d: %d axes, %d buttons: \"%s\"\n",
 			            i,
-			            SDL_JoystickNumAxes (jdev),
-			            SDL_JoystickNumButtons (jdev),
-			            SDL_JoystickName (jdev));
-			SDL_JoystickClose (jdev);
+			            SDL_GetNumJoystickAxes (jdev),
+			            SDL_GetNumJoystickButtons (jdev),
+			            SDL_GetJoystickName (jdev));
+			SDL_CloseJoystick (jdev);
 			joy_avail = true;
 		}
 	}
@@ -549,8 +598,14 @@ IN_StartupJoystick (void)
 void
 IN_DeactivateJoystick (void)
 {
-	// Close the device here.
-	return;
+	if (joy_dev) {
+		SDL_CloseJoystick (joy_dev);
+		joy_dev = NULL;
+	}
+	joy_devidx = -1;
+	joy_devid = 0;
+	joy_avail = false;
+	joy_advancedinit = false;
 }
 
 void IN_Move (usercmd_t *cmd)
@@ -579,6 +634,7 @@ void IN_Init (void)
 void IN_Shutdown(void)
 {
 	IN_DeactivateMouse(); // btw we trying de init this in video shutdown too...
+	IN_DeactivateJoystick();
 
 #ifdef __APPLE__
 	OSX_Mouse_Shutdown(); // Safe to call, will just return if it's not running

@@ -23,10 +23,8 @@
 
 #include "quakedef.h"
 
-#include <SDL.h>
-#if SDL_MAJOR_VERSION < 3
-#include <SDL_syswm.h>
-#endif
+#include <math.h>
+#include <SDL3/SDL.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -584,6 +582,27 @@ static void window_event(SDL_WindowEvent *event)
 			ActiveApp = false;
 #ifdef __linux__
 			block_keyboard_input = in_ignore_unfocused_keyb.integer;
+			// SDL3 removed SDL_WINDOWEVENT_TAKE_FOCUS (the ICCCM WM_TAKE_FOCUS
+			// handshake SDL2 used to answer), so an X11 window can be left
+			// claiming input state after alt-tab even though it no longer has
+			// focus -- the WM can end up unable to hand keyboard focus to any
+			// other window (reported by a tester: WM input effectively dead
+			// until the process is killed from a tty). Confirmed reproducible
+			// even in plain *windowed* mode (vid_fullscreen 0) with
+			// in_grab_windowed_mouse 1 + in_raw 1 -- i.e. relative mouse mode
+			// on a normal desktop window, not just fullscreen exclusive.
+			// Explicitly drop every grab/mode here regardless of their cvars,
+			// since none of these are otherwise re-applied on focus changes:
+			// SDL_SetWindowKeyboardGrab/MouseGrab are only ever called once
+			// at window creation, and relative mouse mode is normally only
+			// re-evaluated by IN_Frame() -- which itself won't run again
+			// until ActiveApp flips back, so nothing releases it here
+			// otherwise. This does NOT change which fullscreen mode is used
+			// -- that is still entirely controlled by
+			// vid_fullscreen/vid_usedesktopres.
+			SDL_SetWindowKeyboardGrab(sdl_window, false);
+			SDL_SetWindowMouseGrab(sdl_window, false);
+			SDL_SetWindowRelativeMouseMode(sdl_window, false);
 #endif
 #ifdef _WIN32
 			Sys_ActiveAppChanged ();
@@ -597,6 +616,8 @@ static void window_event(SDL_WindowEvent *event)
 			// cleared this; without it, once set, keyboard input would stay
 			// blocked for the rest of the session after any focus loss/regain.
 			block_keyboard_input = false;
+			// Restore the keyboard grab dropped above, if the user wants one.
+			SDL_SetWindowKeyboardGrab(sdl_window, vid_grab_keyboard.integer != 0);
 #endif
 			/* Fall through */
 		case SDL_EVENT_WINDOW_SHOWN:
@@ -764,6 +785,23 @@ static void keyb_textinputevent(const char* text)
 
 static void IN_UpdateTextInputState(void)
 {
+	// Text input stays enabled for the whole session (see the comment in
+	// VID_SDL_Init() where SDL_StartTextInput() is called): it's what makes
+	// in_builtinkeymap 0 receive OS/layout-aware key events even outside
+	// console/message, not just console/message text entry. Here we only need
+	// to keep the IME composition window positioned sensibly while it's
+	// actually being used for text entry -- called every time we're taking
+	// text so it stays correct across vid_restart (no state to go stale).
+	qbool taking_text = (key_dest == key_console || key_dest == key_message);
+
+	if (!sdl_window) {
+		return;
+	}
+
+	if (taking_text) {
+		SDL_Rect area = { 0, 0, glConfig.vidWidth, glConfig.vidHeight };
+		SDL_SetTextInputArea(sdl_window, &area, 0);
+	}
 }
 
 static byte IN_KeyboardEventToQuakeCode(SDL_KeyboardEvent *event)
@@ -889,7 +927,7 @@ static void HandleEvents(void)
 
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
-		case SDL_QUIT:
+		case SDL_EVENT_QUIT:
 			Sys_Quit();
 			break;
 		case SDL_EVENT_WINDOW_SHOWN:
@@ -905,19 +943,19 @@ static void HandleEvents(void)
 		case SDL_EVENT_WINDOW_FOCUS_LOST:
 			window_event(&event.window);
 			break;
-		case SDL_KEYDOWN:
-		case SDL_KEYUP:
+		case SDL_EVENT_KEY_DOWN:
+		case SDL_EVENT_KEY_UP:
 #ifdef __APPLE__
 			if (developer.integer == 2) {
-				Con_Printf("key%s event, scan=%d, sym=%d, mod=%d\n", event.type == SDL_KEYDOWN ? "down" : "up", event.key.scancode, event.key.key, event.key.mod);
+				Con_Printf("key%s event, scan=%d, sym=%d, mod=%d\n", event.type == SDL_EVENT_KEY_DOWN ? "down" : "up", event.key.scancode, event.key.key, event.key.mod);
 			}
 #endif
 			keyb_event(&event.key);
 			break;
-		case SDL_TEXTINPUT:
+		case SDL_EVENT_TEXT_INPUT:
 			keyb_textinputevent(event.text.text);
 			break;
-		case SDL_MOUSEMOTION:
+		case SDL_EVENT_MOUSE_MOTION:
 			if (event.motion.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
 #ifdef __APPLE__
 				if (developer.integer == 2) {
@@ -935,23 +973,23 @@ static void HandleEvents(void)
 				}
 			}
 			break;
-		case SDL_MOUSEBUTTONDOWN:
-		case SDL_MOUSEBUTTONUP:
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+		case SDL_EVENT_MOUSE_BUTTON_UP:
 #ifdef __APPLE__
 			if (developer.integer == 2) {
-				Con_Printf("mouse%s event, which=%d, button=%d\n", event.type == SDL_MOUSEBUTTONDOWN ? "down" : "up", event.button.which, event.button.button);
+				Con_Printf("mouse%s event, which=%d, button=%d\n", event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ? "down" : "up", event.button.which, event.button.button);
 			}
 #endif
 			if (event.button.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
 				mouse_button_event(&event.button);
 			}
 			break;
-		case SDL_MOUSEWHEEL:
+		case SDL_EVENT_MOUSE_WHEEL:
 			if (event.wheel.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
 				mouse_wheel_event(&event.wheel);
 			}
 			break;
-		case SDL_DROPFILE:
+		case SDL_EVENT_DROP_FILE:
 			/* TODO: Add handling for different file types */
 			if (strncmp(event.drop.data, "qw://", 5) == 0) {
 				Cbuf_AddText("qwurl ");
@@ -999,7 +1037,7 @@ void VID_Shutdown(qbool restart)
 	R_Shutdown(restart ? r_shutdown_restart : r_shutdown_full);
 
 	if (sdl_context && !R_UseVulkan()) {
-		SDL_GL_DeleteContext(sdl_context);
+		SDL_GL_DestroyContext(sdl_context);
 	}
 	sdl_context = NULL;
 
@@ -1180,7 +1218,7 @@ static void VID_SetupResolution(void)
 				last_working_values = true;
 				Cvar_AutoSetInt(&vid_width, glConfig.vidWidth);
 				Cvar_AutoSetInt(&vid_height, glConfig.vidHeight);
-				Cvar_AutoSetInt(&r_displayRefresh, display_mode.refresh_rate);
+				Cvar_AutoSetInt(&r_displayRefresh, (int)(display_mode.refresh_rate + 0.5f));
 				return;
 			} else {
 				Com_Printf("warning: failed to get desktop resolution\n");
@@ -1224,13 +1262,13 @@ int VID_GetCurrentModeIndex(void)
 {
 	int i;
 
-	int best_freq = 0;
+	float best_freq = 0;
 	int best_idx = -1;
 
 	for (i = 0; i < modelist_count; i++) {
 		if (modelist[i].w == vid_width.integer && modelist[i].h == vid_height.integer) {
-			if (modelist[i].refresh_rate == r_displayRefresh.integer) {
-				Com_DPrintf("MATCHED: %dx%d hz:%d\n", modelist[i].w, modelist[i].h, modelist[i].refresh_rate);
+			if (fabsf(modelist[i].refresh_rate - (float)r_displayRefresh.integer) < 0.5f) {
+				Com_DPrintf("MATCHED: %dx%d hz:%d\n", modelist[i].w, modelist[i].h, (int)modelist[i].refresh_rate);
 				return i;
 			}
 
@@ -1243,7 +1281,7 @@ int VID_GetCurrentModeIndex(void)
 
 	/* width/height matched but not hz, using the best available */
 	if (best_idx >= 0) {
-		Cvar_AutoSetInt(&r_displayRefresh, modelist[best_idx].refresh_rate);
+		Cvar_AutoSetInt(&r_displayRefresh, (int)(modelist[best_idx].refresh_rate + 0.5f));
 	}
 
 	return best_idx;
@@ -1590,7 +1628,7 @@ static void VID_SDL_Init(void)
 	display_nbr = VID_DisplayNumber(true);
 	{
 		const SDL_DisplayMode *desktop_mode = SDL_GetDesktopDisplayMode(VID_SDL_DisplayID(true));
-		if (desktop_mode) Cvar_AutoSetInt(&r_displayRefresh, desktop_mode->refresh_rate);
+		if (desktop_mode) Cvar_AutoSetInt(&r_displayRefresh, (int)(desktop_mode->refresh_rate + 0.5f));
 	}
 
 	glConfig.initialized = true;
@@ -1938,7 +1976,7 @@ static void VID_ModeList_f(void)
 	}
 	
 	for (; i < modelist_count; i++) {
-		Com_Printf("%dx%d@%dHz\n", (&modelist[i])->w, (&modelist[i])->h, (&modelist[i])->refresh_rate);
+		Com_Printf("%dx%d@%dHz\n", (&modelist[i])->w, (&modelist[i])->h, (int)(&modelist[i])->refresh_rate);
 	}
 }
 

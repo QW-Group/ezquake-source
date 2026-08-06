@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifdef RENDERER_OPTION_VULKAN
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "quakedef.h"
 
 void VK_SDL_SetupAttributes(void)
