@@ -530,6 +530,8 @@ qbool VK_CreateLogicalDevice(VkInstance instance)
 	VkPhysicalDeviceFeatures deviceFeatures = { 0 };
 	VkPhysicalDeviceAntiLagFeaturesAMD antiLagFeatures = { 0 };
 	VkPhysicalDeviceFeatures2 features2 = { 0 };
+	VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingQuery = { 0 };
+	VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingEnable = { 0 };
 	float priorities[] = { 1.0f };
 	uint32_t queueCount = 0;
 	const char* enabledExtensions[4];
@@ -587,6 +589,27 @@ qbool VK_CreateLogicalDevice(VkInstance instance)
 		enabledExtensions[enabledExtensionCount++] = VK_NV_LOW_LATENCY_2_EXTENSION_NAME;
 	}
 
+	// Core-in-1.2 feature, no extension string needed -- just query support
+	// via the pNext chain (same pattern as antiLagFeatures above) and, if
+	// present, request it be enabled on the logical device via the same
+	// pNext chain below. See VK_TextureBindlessDescriptorSet in vk_texture.c
+	// for what this unlocks.
+	{
+		VkPhysicalDeviceFeatures2 indexingQueryFeatures2 = { 0 };
+
+		descriptorIndexingQuery.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+		indexingQueryFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		indexingQueryFeatures2.pNext = &descriptorIndexingQuery;
+		vkGetPhysicalDeviceFeatures2(vk_options.physicalDevice, &indexingQueryFeatures2);
+
+		vk_options.supportsDescriptorIndexing =
+			descriptorIndexingQuery.shaderSampledImageArrayNonUniformIndexing &&
+			descriptorIndexingQuery.descriptorBindingPartiallyBound &&
+			descriptorIndexingQuery.descriptorBindingVariableDescriptorCount &&
+			descriptorIndexingQuery.runtimeDescriptorArray &&
+			descriptorIndexingQuery.descriptorBindingSampledImageUpdateAfterBind;
+	}
+
 	queueInfos[0].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 	queueInfos[0].queueFamilyIndex = VK_PhysicalDeviceGraphicsQueueFamilyIndex();
 	queueInfos[0].queueCount = sizeof(priorities) / sizeof(priorities[0]);
@@ -606,11 +629,32 @@ qbool VK_CreateLogicalDevice(VkInstance instance)
 	deviceInfo.queueCreateInfoCount = queueCount;
 	deviceInfo.pEnabledFeatures = &deviceFeatures;
 
+	// Chain every optional pNext feature struct we're actually requesting onto
+	// deviceInfo.pNext together -- each assignment below only ever OVERWRITES
+	// deviceInfo.pNext if it hasn't been claimed by an earlier one, otherwise
+	// it links onto the existing chain, so enabling more than one of these
+	// doesn't silently drop an earlier request.
+	if (vk_options.supportsDescriptorIndexing) {
+		// Re-using descriptorIndexingEnable as a fresh request struct (only
+		// the 5 bits VK_CreateLogicalDevice actually checked support for
+		// above are requested here, not a blind copy of the query result --
+		// the query struct may report other descriptor-indexing bits this
+		// code doesn't use and has no business requesting).
+		descriptorIndexingEnable.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+		descriptorIndexingEnable.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+		descriptorIndexingEnable.descriptorBindingPartiallyBound = VK_TRUE;
+		descriptorIndexingEnable.descriptorBindingVariableDescriptorCount = VK_TRUE;
+		descriptorIndexingEnable.runtimeDescriptorArray = VK_TRUE;
+		descriptorIndexingEnable.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
+		descriptorIndexingEnable.pNext = (void*)deviceInfo.pNext;
+		deviceInfo.pNext = &descriptorIndexingEnable;
+	}
+
 	if (vk_options.supportsAmdAntiLag) {
 		// Re-using antiLagFeatures (already populated above) to actually
 		// request the feature be enabled on the logical device, same struct
 		// instance just attached to a different sType-chain root this time.
-		antiLagFeatures.pNext = NULL;
+		antiLagFeatures.pNext = (void*)deviceInfo.pNext;
 		deviceInfo.pNext = &antiLagFeatures;
 	}
 

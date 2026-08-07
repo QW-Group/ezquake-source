@@ -167,8 +167,25 @@ static VkDescriptorPool worldFlatSkyDescriptorPool;
 // vk_texture.c, but here it fired every frame instead of only on a cvar
 // change. Each frame index is exclusively owned by the CPU until that
 // frame's command buffer is submitted, so rewriting frameIndex's slot is
-// safe the moment VK_BeginFrame's fence wait for that slot has returned.
+// safe the moment VK_BeginFrame's fence wait for that slot has returned --
+// BUT that reasoning only covers reuse ACROSS frames. VK_WorldFlatSkyDescriptorSet
+// is called once per flat-pipeline surface drawn (there can be several sky/
+// flat surfaces visible in one frame), and until the fix below it re-ran
+// vkUpdateDescriptorSets on worldFlatSkyDescriptorSets[frameIndex] every
+// single call -- including the 2nd, 3rd, ... call in the SAME frame, on a
+// set that vkCmdBindDescriptorSets had already bound into this frame's
+// still-recording command buffer moments earlier. worldFlatSkyDescriptorSetLayout
+// has no UPDATE_AFTER_BIND_BIT (confirmed against the Vulkan spec: without
+// that flag, a bound descriptor set must not be updated between binding and
+// submission), so that update corrupted the command buffer -- confirmed live
+// as the actual, previously-unidentified source of "VkDescriptorSet was
+// destroyed or updated without UPDATE_AFTER_BIND" recurring throughout a
+// session (every other candidate in vk_texture.c was ruled out first via
+// targeted diagnostic logging). worldFlatSkyUpdatedThisFrame tracks whether
+// this frame index's set has already been written this frame so repeat
+// calls just reuse it.
 static VkDescriptorSet worldFlatSkyDescriptorSets[VK_MAX_FRAMES_IN_FLIGHT];
+static qbool worldFlatSkyUpdatedThisFrame[VK_MAX_FRAMES_IN_FLIGHT];
 static VkPipelineLayout worldTexturedPipelineLayout;
 static VkPipeline worldTexturedPipeline;
 static VkPipelineLayout worldOverlayPipelineLayout;
@@ -372,6 +389,18 @@ static qbool VK_WorldFlatSkyDescriptorSet(VkDescriptorSet* descriptorSet)
 		return false;
 	}
 
+	// Only the first call this frame index actually needs to write the set --
+	// see the comment on worldFlatSkyUpdatedThisFrame above for why repeat
+	// calls (multiple flat/sky surfaces in one frame) must NOT re-run
+	// vkUpdateDescriptorSets on a set already bound into this frame's
+	// recording command buffer. Cleared once per frame in VK_RenderView
+	// (mirrors the once-per-frame reset every other "already bound this
+	// frame" cache in this file uses).
+	if (worldFlatSkyUpdatedThisFrame[frameIndex]) {
+		*descriptorSet = worldFlatSkyDescriptorSets[frameIndex];
+		return true;
+	}
+
 	textures[0] = VK_TextureReady(solidskytexture) ? solidskytexture : solidwhite_texture;
 	textures[1] = VK_TextureReady(alphaskytexture) ? alphaskytexture : transparent_texture;
 	for (i = 0; i < MAX_SKYBOXTEXTURES; ++i) {
@@ -394,6 +423,7 @@ static qbool VK_WorldFlatSkyDescriptorSet(VkDescriptorSet* descriptorSet)
 	}
 
 	vkUpdateDescriptorSets(vk_options.logicalDevice, VK_WORLD_SKY_TEXTURE_COUNT, descriptorWrites, 0, NULL);
+	worldFlatSkyUpdatedThisFrame[frameIndex] = true;
 	*descriptorSet = worldFlatSkyDescriptorSets[frameIndex];
 	return true;
 }
@@ -2255,6 +2285,15 @@ void VK_RenderView(void)
 	VkDeviceSize vertexOffset = 0;
 	int i;
 	int pass;
+	int passIdx;
+
+	// See worldFlatSkyUpdatedThisFrame's declaration: this frame index's flat
+	// sky descriptor set may have been written last time this same ring slot
+	// was used (VK_MAX_FRAMES_IN_FLIGHT frames ago); by this point
+	// VK_BeginFrame's fence wait for vk_options.frame.currentFrame has
+	// already returned, so that submission has retired and it's safe to
+	// allow one fresh vkUpdateDescriptorSets for this new frame.
+	worldFlatSkyUpdatedThisFrame[vk_options.frame.currentFrame] = false;
 	int texturedDraws = 0;
 	int lightmappedDraws = 0;
 	int blendedDraws = 0;
@@ -2292,6 +2331,16 @@ void VK_RenderView(void)
 	VkDescriptorSet lastBoundDescriptorSets[4] = { VK_NULL_HANDLE, VK_NULL_HANDLE, VK_NULL_HANDLE, VK_NULL_HANDLE };
 	int lastBoundDescriptorSetCount = 0;
 	qbool worldOutline = false;
+	// Partition worldDraws[] indices by pass once, up front, instead of the
+	// draw loop below scanning all worldDrawCount entries twice (once per
+	// pass) and `continue`-ing past the ones that don't belong to the current
+	// pass. Same draws, same per-pass relative order (a stable partition,
+	// not a sort) -- this only cuts wasted loop iterations/push-constant
+	// fills/bind-cache checks on entries that get skipped anyway, it doesn't
+	// change what's drawn, when, or in what order within a pass.
+	int* passIndices = NULL;
+	int opaqueCount = 0;
+	int blendedCount = 0;
 
 	if (!worldDrawCount || !worldIndexCount) {
 		VK_WorldDebugLog("render skipped: draws=%d indices=%u", worldDrawCount, worldIndexCount);
@@ -2365,6 +2414,26 @@ void VK_RenderView(void)
 		return;
 	}
 
+	// Stable partition into opaque-pass and blended-pass index lists, built
+	// once here instead of the draw loop below re-scanning worldDrawCount
+	// twice with `continue`. Opaque entries land in passIndices[0..opaqueCount),
+	// blended entries in passIndices[opaqueCount..opaqueCount+blendedCount) --
+	// each group keeps its original relative order (a stable partition), which
+	// the blended group in particular depends on for correct back-to-front
+	// alpha compositing.
+	passIndices = Q_malloc(worldDrawCount * sizeof(passIndices[0]));
+	for (i = 0; i < worldDrawCount; ++i) {
+		if (!worldDraws[i].blended) {
+			passIndices[opaqueCount++] = i;
+		}
+	}
+	for (i = 0; i < worldDrawCount; ++i) {
+		if (worldDraws[i].blended) {
+			passIndices[opaqueCount + blendedCount] = i;
+			++blendedCount;
+		}
+	}
+
 	// gl_outline & 2 (world outline). The normals prepass needs its own render
 	// pass, and Vulkan render passes cannot nest -- so the main render pass
 	// VK_BeginFrame opened has to be closed and reopened around it. This is
@@ -2425,17 +2494,21 @@ void VK_RenderView(void)
 			lastBoundDescriptorSetCount = 0;
 		}
 
-		for (i = 0; i < worldDrawCount; ++i) {
+		int passStart = blendedPass ? opaqueCount : 0;
+		int passCount = blendedPass ? blendedCount : opaqueCount;
+
+		for (passIdx = 0; passIdx < passCount; ++passIdx) {
 			vk_world_push_t push;
 			VkPipelineLayout layout = worldFlatPipelineLayout;
 			VkShaderStageFlags pushStages = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-			qbool drawBlended = worldDraws[i].blended && worldDraws[i].textured && alphaTexturedPipelineReady;
-			qbool drawLightmapped = !drawBlended && worldDraws[i].lightmapped && lightmappedPipelineReady;
-			qbool drawTextured = worldDraws[i].textured && texturedPipelineReady;
+			qbool drawBlended;
+			qbool drawLightmapped;
+			qbool drawTextured;
 
-			if (!!worldDraws[i].blended != blendedPass) {
-				continue;
-			}
+			i = passIndices[passStart + passIdx];
+			drawBlended = worldDraws[i].blended && worldDraws[i].textured && alphaTexturedPipelineReady;
+			drawLightmapped = !drawBlended && worldDraws[i].lightmapped && lightmappedPipelineReady;
+			drawTextured = worldDraws[i].textured && texturedPipelineReady;
 
 			memset(&push, 0, sizeof(push));
 			if (haveLastMvp && memcmp(lastMultipliedModelView, worldDraws[i].modelView, sizeof(lastMultipliedModelView)) == 0) {
@@ -2548,10 +2621,16 @@ void VK_RenderView(void)
 				VkDescriptorSet descriptorSets[2];
 				texture_ref lightmapTex = VK_TextureReady(worldDraws[i].lightmap) ? worldDraws[i].lightmap : solidwhite_texture;
 
-				// This C field is causticsEnabled everywhere else, but
-				// vk_world_flat's own GLSL block still names the same byte
-				// offset drawflatColor -- see vk_world_push_t's comment.
-				push.causticsEnabled = worldDraws[i].drawflatCvar ? 1.0f : 0.0f;
+				// vk_world_flat.frag's push-constant block is a strict prefix of
+				// vk_world_push_t (it ends right after this field), so its
+				// "drawflatColor" lands at the same byte offset as this struct's
+				// OWN drawflatColor field -- not causticsEnabled, which lives much
+				// further along in the full 176-byte block that only the
+				// textured/lightmapped shaders read. Writing causticsEnabled here
+				// left the real drawflatColor slot zeroed (memset above), so the
+				// flat fragment shader always took its "texture not ready yet"
+				// fallback branch instead of painting r_wallcolor/r_floorcolor.
+				push.drawflatColor = worldDraws[i].drawflatCvar ? 1.0f : 0.0f;
 				descriptorSets[1] = VK_TextureDescriptorSet(lightmapTex);
 				if (VK_WorldFlatSkyDescriptorSet(&descriptorSets[0]) && descriptorSets[1] != VK_NULL_HANDLE) {
 					VK_WorldBindIfChanged(commandBuffer, worldFlatPipeline, worldFlatPipelineLayout, descriptorSets, 2,
@@ -2597,6 +2676,7 @@ void VK_RenderView(void)
 		worldDraws[0].firstIndex,
 		worldDraws[0].indexCount);
 
+	Q_free(passIndices);
 }
 
 #endif // RENDERER_OPTION_VULKAN

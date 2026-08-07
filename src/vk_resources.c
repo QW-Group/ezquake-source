@@ -32,7 +32,14 @@ uint32_t VK_FindMemoryType(uint32_t type_filter, VkMemoryPropertyFlags propertie
 	return 0;
 }
 
-qbool VK_CreateBufferResource(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* memory)
+// memoryTypeSelector lets callers pick a memory type from the buffer's real
+// memoryTypeBits instead of a fixed VkMemoryPropertyFlags match -- used by
+// vk_buffers.c to prefer a DEVICE_LOCAL|HOST_VISIBLE heap when the device
+// exposes one for this resource, falling back to plain HOST_VISIBLE
+// otherwise (VK_BufferPreferredMemoryType). NULL selector keeps the
+// original exact-flags behaviour via VK_FindMemoryType.
+static qbool VK_CreateBufferResourceInternal(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+	uint32_t (*memoryTypeSelector)(VkMemoryPropertyFlags, uint32_t), VkBuffer* buffer, VkDeviceMemory* memory)
 {
 	VkBufferCreateInfo bufferInfo;
 	VkMemoryRequirements memRequirements;
@@ -52,7 +59,9 @@ qbool VK_CreateBufferResource(VkDeviceSize size, VkBufferUsageFlags usage, VkMem
 	VK_InitialiseStructure(allocInfo);
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = VK_FindMemoryType(memRequirements.memoryTypeBits, properties);
+	allocInfo.memoryTypeIndex = memoryTypeSelector ?
+		memoryTypeSelector(properties, memRequirements.memoryTypeBits) :
+		VK_FindMemoryType(memRequirements.memoryTypeBits, properties);
 
 	if (vkAllocateMemory(vk_options.logicalDevice, &allocInfo, NULL, memory) != VK_SUCCESS) {
 		vkDestroyBuffer(vk_options.logicalDevice, *buffer, NULL);
@@ -62,6 +71,17 @@ qbool VK_CreateBufferResource(VkDeviceSize size, VkBufferUsageFlags usage, VkMem
 
 	vkBindBufferMemory(vk_options.logicalDevice, *buffer, *memory, 0);
 	return true;
+}
+
+qbool VK_CreateBufferResource(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* memory)
+{
+	return VK_CreateBufferResourceInternal(size, usage, properties, NULL, buffer, memory);
+}
+
+qbool VK_CreateBufferResourceWithSelector(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+	uint32_t (*memoryTypeSelector)(VkMemoryPropertyFlags, uint32_t), VkBuffer* buffer, VkDeviceMemory* memory)
+{
+	return VK_CreateBufferResourceInternal(size, usage, properties, memoryTypeSelector, buffer, memory);
 }
 
 qbool VK_CreateImageResource(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits samples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* memory)

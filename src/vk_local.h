@@ -124,6 +124,8 @@ void VK_BlendingConfigure(VkPipelineColorBlendStateCreateInfo* info, VkPipelineC
 // vk_resources.c
 uint32_t VK_FindMemoryType(uint32_t type_filter, VkMemoryPropertyFlags properties);
 qbool VK_CreateBufferResource(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer* buffer, VkDeviceMemory* memory);
+qbool VK_CreateBufferResourceWithSelector(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+	uint32_t (*memoryTypeSelector)(VkMemoryPropertyFlags, uint32_t), VkBuffer* buffer, VkDeviceMemory* memory);
 qbool VK_CreateImageResource(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits samples, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage* image, VkDeviceMemory* memory);
 VkCommandBuffer VK_BeginImmediateCommands(void);
 qbool VK_EndImmediateCommands(VkCommandBuffer command_buffer);
@@ -139,6 +141,8 @@ void VK_AllocateTextureNames(gltexture_t* glt);
 void VK_UploadTexture(texture_ref texture, int mode, int width, int height, byte* data);
 VkDescriptorSetLayout VK_TextureDescriptorSetLayout(void);
 VkDescriptorSet VK_TextureDescriptorSet(texture_ref texture);
+VkDescriptorSetLayout VK_TextureBindlessDescriptorSetLayout(void);
+VkDescriptorSet VK_TextureBindlessDescriptorSet(void);
 qbool VK_TextureDescriptorImageInfo(texture_ref texture, qbool nearest, VkDescriptorImageInfo* info);
 qbool VK_TextureReady(texture_ref texture);
 void VK_TextureInitialiseState(void);
@@ -229,6 +233,16 @@ typedef struct vk_options_s {
 	// about pipeline/render pass/swapchain creation changes.
 	qbool supportsAmdAntiLag;
 	qbool supportsNvLowLatency2;
+	// Core-in-1.2 descriptor indexing features needed for a bindless texture
+	// array (VK_TextureBindlessDescriptorSet in vk_texture.c): lets shaders
+	// index sampler2D textures[] by a non-constant (push constant) index, and
+	// lets that array's descriptor set be updated with UPDATE_AFTER_BIND_BIT
+	// while other in-flight command buffers still reference it -- eliminating
+	// the whole class of "descriptor set destroyed/updated while still bound"
+	// hazard the per-texture descriptor-set path needs manual deferral for.
+	// Detected once in VK_CreateLogicalDevice; VK_TextureBindlessDescriptorSet
+	// falls back to the legacy per-texture path when false.
+	qbool supportsDescriptorIndexing;
 	uint64_t antiLagFrameIndex;
 	PFN_vkAntiLagUpdateAMD antiLagUpdateAMD;
 	PFN_vkSetLatencySleepModeNV setLatencySleepModeNV;

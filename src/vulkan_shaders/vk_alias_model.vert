@@ -16,7 +16,7 @@ layout(push_constant) uniform PushConstants {
 	float minLumaMix;
 	float scrollS;
 	float scrollT;
-	float pad0;
+	float textureIndex;
 } pushConstants;
 
 layout(location = 0) out vec2 outTexCoord;

@@ -42,6 +42,26 @@ static VkDescriptorSetLayout textureDescriptorSetLayout;
 static VkDescriptorPool textureDescriptorPool;
 static texture_ref boundTextures[16];
 
+// Bindless texture array: one descriptor set for the whole renderer, two
+// bindings (binding 0 = "mode" sampler i.e. filtered/mipmapped, binding 1 =
+// forced-nearest sampler -- the same two variants the legacy per-texture set
+// exposes as modelTexture[0]/[1]), each a runtime array of MAX_GLTEXTURES
+// combined-image-samplers indexed by texture_ref.index via a push constant in
+// the shader. Updated with UPDATE_AFTER_BIND_BIT, so a texture reload can
+// write its new slot into this set while a different, already-recording (or
+// even GPU-in-flight) command buffer still references the SAME descriptor
+// set for a DIFFERENT slot -- unlike the legacy per-texture set, there is no
+// hazard here to defer around, because the set itself is never destroyed or
+// reallocated, only individual array elements are rewritten. This is what
+// eliminates the "VkDescriptorSet was destroyed or updated without
+// UPDATE_AFTER_BIND" class of bug the legacy path needs manual frame-deferral
+// for. Only created/used when vk_options.supportsDescriptorIndexing; callers
+// needing a descriptor set must fall back to the legacy per-texture path
+// otherwise (see VK_TextureDescriptorSet).
+static VkDescriptorSetLayout bindlessTextureDescriptorSetLayout;
+static VkDescriptorPool bindlessTextureDescriptorPool;
+static VkDescriptorSet bindlessTextureDescriptorSet;
+
 #define VK_MAX_PENDING_TEXTURE_UPLOADS 1024
 typedef struct vk_pending_texture_upload_s {
 	texture_ref texture;
@@ -138,6 +158,14 @@ static int deferredDescriptorRefreshCount;
 static VkDescriptorSet deferredDescriptorFrees[VK_MAX_DEFERRED_DESCRIPTOR_FREES];
 static int deferredDescriptorFreeCount;
 
+// See VK_TextureQueueDeferredBindlessSlotRefresh (defined further below,
+// after VK_TextureBindlessUpdateSlot exists to call) for why this queue
+// exists; declared here so VK_TextureDiscardDeferredUploads above it in this
+// file can clear it on vid_restart/shutdown.
+#define VK_MAX_DEFERRED_BINDLESS_SLOT_REFRESHES 1024
+static texture_ref deferredBindlessSlotRefreshes[VK_MAX_DEFERRED_BINDLESS_SLOT_REFRESHES];
+static int deferredBindlessSlotRefreshCount;
+
 static void VK_UploadTextureImmediate(texture_ref texture, int mode, int width, int height, byte* data);
 
 static void VK_TextureDestroyFrameUploadBuffer(uint32_t frameIndex)
@@ -178,9 +206,11 @@ static void VK_TextureDiscardDeferredUploads(void)
 	// (vid_restart full-reset, shutdown) destroys wholesale right after -- that
 	// frees the sets, so just drop the queue rather than free individually.
 	deferredDescriptorFreeCount = 0;
+	deferredBindlessSlotRefreshCount = 0;
 }
 
 static qbool VK_TextureUpdateDescriptor(texture_ref texture);
+static qbool VK_TextureBindlessUpdateSlot(texture_ref texture);
 
 // Called by the texture state setters while a frame is recording: record the
 // request so the descriptor gets refreshed at the next frame boundary instead
@@ -203,6 +233,37 @@ static void VK_TextureQueueDeferredDescriptorRefresh(texture_ref texture)
 		return;
 	}
 	deferredDescriptorRefreshes[deferredDescriptorRefreshCount++] = texture;
+}
+
+// Same idea as VK_TextureQueueDeferredDescriptorRefresh above, but for the
+// bindless array slot instead of the legacy per-texture descriptor set: a
+// texture.index freshly (re)allocated from the LIFO free list (see
+// next_free_texture in r_texture.c) can be the SAME index a draw already
+// recorded into this frame's command buffer just read for the texture that
+// used to occupy that slot (the common case: a player's skin changing mid-
+// frame frees 1-3 textures and immediately reallocates new ones over the
+// same indices). Writing the new image into that array element right away
+// is the "destroyed or updated while still bound" hazard even with
+// UPDATE_AFTER_BIND, which only covers elements NOT already read by
+// not-yet-retired work. Defer to the next frame boundary instead, mirroring
+// the legacy queue's coalesce-duplicates/overflow-fallback behaviour.
+static void VK_TextureQueueDeferredBindlessSlotRefresh(texture_ref texture)
+{
+	int i;
+
+	for (i = 0; i < deferredBindlessSlotRefreshCount; ++i) {
+		if (deferredBindlessSlotRefreshes[i].index == texture.index) {
+			return;
+		}
+	}
+	if (deferredBindlessSlotRefreshCount >= VK_MAX_DEFERRED_BINDLESS_SLOT_REFRESHES) {
+		// Pathological (a single frame reconfigured >1024 distinct textures).
+		// An immediate refresh may still trip the hazard for this one texture,
+		// but that is strictly better than never applying the state change.
+		VK_TextureBindlessUpdateSlot(texture);
+		return;
+	}
+	deferredBindlessSlotRefreshes[deferredBindlessSlotRefreshCount++] = texture;
 }
 
 static qbool VK_TextureReferenceInRange(texture_ref texture)
@@ -277,7 +338,7 @@ static void VK_TextureDestroyObjects(texture_ref texture)
 	// ahead of the GPU). Destroying it underneath an in-progress draw is
 	// undefined behaviour. Only pay the (otherwise idle, near-free) wait when
 	// there's an actual GPU resource to tear down.
-	if (vktex->image != VK_NULL_HANDLE) {
+	if (vktex->image != VK_NULL_HANDLE || vktex->descriptorSet != VK_NULL_HANDLE) {
 		vkDeviceWaitIdle(vk_options.logicalDevice);
 	}
 
@@ -365,6 +426,89 @@ static qbool VK_TextureEnsureInfrastructure(void)
 	}
 
 	return true;
+}
+
+// Creates (once) the bindless texture array described where
+// bindlessTextureDescriptorSet is declared above. No-op (returns true) if the
+// device doesn't support descriptor indexing or the set already exists.
+// Slots aren't written here -- VK_TextureBindlessUpdateSlot below writes
+// individual array elements as textures load; PARTIALLY_BOUND_BIT means the
+// unwritten slots for textures that haven't loaded yet are legal to leave
+// alone (shaders must simply not sample an index that hasn't been written).
+static qbool VK_TextureEnsureBindlessInfrastructure(void)
+{
+	VkDescriptorSetLayoutBinding bindings[2];
+	VkDescriptorBindingFlags bindingFlags[2];
+	VkDescriptorSetLayoutBindingFlagsCreateInfo bindingFlagsInfo;
+	VkDescriptorSetLayoutCreateInfo layoutInfo;
+	VkDescriptorPoolSize poolSizes[2];
+	VkDescriptorPoolCreateInfo poolInfo;
+	VkDescriptorSetAllocateInfo allocInfo;
+
+	if (!vk_options.supportsDescriptorIndexing) {
+		return false;
+	}
+	if (bindlessTextureDescriptorSet != VK_NULL_HANDLE) {
+		return true;
+	}
+
+	if (bindlessTextureDescriptorSetLayout == VK_NULL_HANDLE) {
+		VK_InitialiseStructure(bindings[0]);
+		bindings[0].binding = 0;
+		bindings[0].descriptorCount = MAX_GLTEXTURES;
+		bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		bindings[0].pImmutableSamplers = NULL;
+		bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+		bindings[1] = bindings[0];
+		bindings[1].binding = 1;
+
+		bindingFlags[0] = bindingFlags[1] =
+			VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT |
+			VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT;
+
+		VK_InitialiseStructure(bindingFlagsInfo);
+		bindingFlagsInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+		bindingFlagsInfo.bindingCount = 2;
+		bindingFlagsInfo.pBindingFlags = bindingFlags;
+
+		VK_InitialiseStructure(layoutInfo);
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT;
+		layoutInfo.bindingCount = 2;
+		layoutInfo.pBindings = bindings;
+		layoutInfo.pNext = &bindingFlagsInfo;
+
+		if (vkCreateDescriptorSetLayout(vk_options.logicalDevice, &layoutInfo, NULL, &bindlessTextureDescriptorSetLayout) != VK_SUCCESS) {
+			return false;
+		}
+	}
+
+	if (bindlessTextureDescriptorPool == VK_NULL_HANDLE) {
+		VK_InitialiseStructure(poolSizes[0]);
+		poolSizes[0].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		poolSizes[0].descriptorCount = MAX_GLTEXTURES;
+		poolSizes[1] = poolSizes[0];
+
+		VK_InitialiseStructure(poolInfo);
+		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
+		poolInfo.poolSizeCount = 2;
+		poolInfo.pPoolSizes = poolSizes;
+		poolInfo.maxSets = 1;
+
+		if (vkCreateDescriptorPool(vk_options.logicalDevice, &poolInfo, NULL, &bindlessTextureDescriptorPool) != VK_SUCCESS) {
+			return false;
+		}
+	}
+
+	VK_InitialiseStructure(allocInfo);
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = bindlessTextureDescriptorPool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &bindlessTextureDescriptorSetLayout;
+
+	return vkAllocateDescriptorSets(vk_options.logicalDevice, &allocInfo, &bindlessTextureDescriptorSet) == VK_SUCCESS;
 }
 
 // Samplers bake filter/clamp/anisotropy in at creation time (can't be edited
@@ -578,6 +722,20 @@ static qbool VK_TextureUpdateDescriptor(texture_ref texture)
 		return false;
 	}
 	wasAlreadyAllocated = (vktex->descriptorSet != VK_NULL_HANDLE);
+
+	// Same in-flight hazard as the deferred paths above, hit here by the two
+	// "queue is full" fallbacks (VK_TextureQueueDeferredDescriptorRefresh and
+	// VK_UploadTexture) that call straight into this function instead of
+	// deferring: if a frame is actively recording, vkDeviceWaitIdle below
+	// cannot undo a vkCmdBindDescriptorSets already recorded (not yet
+	// submitted) into it, so updating the set corrupts the rest of the frame
+	// exactly like the freed-set case. Route back through the deferred queue
+	// instead of updating immediately.
+	if (wasAlreadyAllocated && vk_options.frame.active) {
+		VK_TextureQueueDeferredDescriptorRefresh(texture);
+		return true;
+	}
+
 	if (!VK_TextureEnsureDescriptor(texture)) {
 		return false;
 	}
@@ -606,10 +764,12 @@ static qbool VK_TextureUpdateDescriptor(texture_ref texture)
 	// frames ahead of it) -- vkUpdateDescriptorSets on a set in that pending
 	// state is undefined per spec without UPDATE_AFTER_BIND, confirmed by
 	// validation layers corrupting unrelated in-flight draws (one texture's
-	// image showing up on a completely different surface). A set we just
-	// allocated above can't be bound to anything yet, so only the
-	// reconfigure-an-existing-texture path (filtering/anisotropy/clamp
-	// changes) needs to wait; VK_UploadTexture's own path already frees and
+	// image showing up on a completely different surface). The mid-frame case
+	// is already routed back through the deferred queue above, so by this
+	// point wasAlreadyAllocated only happens off-frame, where a plain
+	// vkDeviceWaitIdle is sufficient (it drains the last submitted frame that
+	// could still be reading this set). A set we just allocated above can't be
+	// bound to anything yet; VK_UploadTexture's own path already frees and
 	// reallocates the descriptor via VK_TextureDestroyObjects beforehand
 	// (which already waits), so this doesn't double up there.
 	if (wasAlreadyAllocated) {
@@ -617,6 +777,103 @@ static qbool VK_TextureUpdateDescriptor(texture_ref texture)
 	}
 
 	vkUpdateDescriptorSets(vk_options.logicalDevice, 1, &descriptorWrite, 0, NULL);
+
+	// Keep the bindless array (if the device supports it) in sync with every
+	// legacy-path update too -- both systems run in parallel while callers
+	// migrate one at a time (see VK_TextureDescriptorSet / task #3), and a
+	// stale bindless slot would show the wrong texture to any pipeline
+	// already migrated to sample from it.
+	//
+	// Same in-flight hazard as the legacy path above applies here too, and
+	// UPDATE_AFTER_BIND does NOT make it moot: this reaches here on the
+	// "brand new descriptor set" path (wasAlreadyAllocated == false), which
+	// looks safe in isolation (nothing could have bound a set that didn't
+	// exist yet) -- but texture.index itself can be a RECYCLED slot. Texture
+	// slots are freed onto a LIFO free list (see next_free_texture in
+	// r_texture.c) and immediately reallocated, which is exactly what
+	// happens every time a player's skin changes (Skin_RemoveSkinsForPlayer
+	// deletes 1-3 textures, R_BlendPlayerSkin immediately loads new ones,
+	// commonly reusing the same just-freed index the same frame). If a draw
+	// already recorded into this frame's command buffer read this array
+	// element for the OLD texture that used to live at this index, writing
+	// the new texture into the same element now is exactly the "destroyed or
+	// updated while still bound" hazard UPDATE_AFTER_BIND covers only for
+	// elements NOT already read by not-yet-retired work -- and confirmed
+	// live (VkDescriptorSet "destroyed or updated without UPDATE_AFTER_BIND"
+	// recurring throughout a session, not just once at connect) that this
+	// path was the actual source. Defer exactly like the wasAlreadyAllocated
+	// branch above.
+	if (vk_options.frame.active) {
+		VK_TextureQueueDeferredBindlessSlotRefresh(texture);
+	}
+	else {
+		VK_TextureBindlessUpdateSlot(texture);
+	}
+	return true;
+}
+
+// Writes/rewrites texture.index's two array elements (binding 0 = mode
+// sampler, binding 1 = forced-nearest, matching VK_TextureUpdateDescriptor's
+// two bindings above) in the single global bindless set. Unlike
+// VK_TextureUpdateDescriptor, this needs no frame-active check, no deferral,
+// and no vkDeviceWaitIdle: UPDATE_AFTER_BIND_BIT on the set's layout/pool
+// makes it legal per spec to write this element while a different,
+// already-recording or GPU-in-flight command buffer still has this same
+// VkDescriptorSet bound (reading a DIFFERENT, unrelated array element from
+// it) -- the hazard the legacy per-texture path exists entirely to work
+// around doesn't apply here. Safe to call any time a texture's image/sampler
+// state changes: initial load, filter/anisotropy/clamp change, or reload.
+static qbool VK_TextureBindlessUpdateSlot(texture_ref texture)
+{
+	vk_texture_t* vktex;
+	VkDescriptorImageInfo imageInfo;
+	VkWriteDescriptorSet writes[2];
+
+	if (!VK_TextureReferenceInRange(texture) || !VK_TextureEnsureBindlessInfrastructure()) {
+		return false;
+	}
+	vktex = &textureData[texture.index];
+	if (vktex->imageView == VK_NULL_HANDLE || !VK_TextureEnsureSamplers(vktex)) {
+		return false;
+	}
+
+	VK_InitialiseStructure(imageInfo);
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = vktex->imageView;
+	imageInfo.sampler = vktex->modeSampler;
+
+	VK_InitialiseStructure(writes[0]);
+	writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writes[0].dstSet = bindlessTextureDescriptorSet;
+	writes[0].dstBinding = 0;
+	writes[0].dstArrayElement = (uint32_t)texture.index;
+	writes[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	writes[0].descriptorCount = 1;
+	writes[0].pImageInfo = &imageInfo;
+
+	// Second write needs its own VkDescriptorImageInfo -- pImageInfo of
+	// writes[0] can't be reused with a different sampler, and both writes are
+	// submitted in the same vkUpdateDescriptorSets call below so imageInfo
+	// can't be mutated and reused between them either.
+	{
+		VkDescriptorImageInfo nearestImageInfo;
+
+		VK_InitialiseStructure(nearestImageInfo);
+		nearestImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		nearestImageInfo.imageView = vktex->imageView;
+		nearestImageInfo.sampler = vktex->forcedNearestSampler;
+
+		VK_InitialiseStructure(writes[1]);
+		writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		writes[1].dstSet = bindlessTextureDescriptorSet;
+		writes[1].dstBinding = 1;
+		writes[1].dstArrayElement = (uint32_t)texture.index;
+		writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		writes[1].descriptorCount = 1;
+		writes[1].pImageInfo = &nearestImageInfo;
+
+		vkUpdateDescriptorSets(vk_options.logicalDevice, 2, writes, 0, NULL);
+	}
 	return true;
 }
 
@@ -973,7 +1230,21 @@ void VK_TextureApplyDeferredUploads(void)
 	// frame boundary before any command buffer records and before the uploads
 	// below allocate new sets, so no recording command buffer still references a
 	// set being freed, and the pool capacity is reclaimed ahead of new allocs.
+	//
+	// This runs at the START of VK_BeginFrame though, one frame boundary --
+	// not one GPU-completed frame. We run VK_MAX_FRAMES_IN_FLIGHT (3) frames
+	// ahead of the GPU, so the command buffer that bound this set could be from
+	// 1-2 frames ago and still executing on the GPU right now; the fence wait
+	// earlier in VK_BeginFrame only guarantees the frame 3 slots back (same
+	// ring index) has retired, not frame N-1 or N-2. Confirmed live: freeing
+	// here without this wait was the actual source of a "VkDescriptorSet was
+	// destroyed ... without UPDATE_AFTER_BIND" + command-buffer-invalidation
+	// cascade reproducible right after a player's skin translation deletes and
+	// reallocates their skin texture (R_TranslatePlayerSkin ->
+	// Skin_RemoveSkinsForPlayer -> R_DeleteTexture, correctly deferred to this
+	// function, but freed here too early relative to the GPU).
 	if (deferredDescriptorFreeCount > 0 && textureDescriptorPool != VK_NULL_HANDLE) {
+		vkDeviceWaitIdle(vk_options.logicalDevice);
 		vkFreeDescriptorSets(vk_options.logicalDevice, textureDescriptorPool, deferredDescriptorFreeCount, deferredDescriptorFrees);
 	}
 	deferredDescriptorFreeCount = 0;
@@ -998,6 +1269,19 @@ void VK_TextureApplyDeferredUploads(void)
 		VK_TextureUpdateDescriptor(deferredDescriptorRefreshes[i]);
 	}
 	deferredDescriptorRefreshCount = 0;
+
+	// Bindless array slots deferred because texture.index was a just-recycled
+	// slot a draw already recorded this frame may have read (see
+	// VK_TextureQueueDeferredBindlessSlotRefresh). VK_TextureUpdateDescriptor
+	// above already re-syncs the bindless slot for anything that went through
+	// it (deferredDescriptorRefreshes or the fresh-allocation path off-frame),
+	// so this only needs to catch entries queued directly by
+	// VK_TextureUpdateDescriptor's own frame.active branch, which by
+	// definition couldn't call VK_TextureBindlessUpdateSlot itself yet.
+	for (i = 0; i < deferredBindlessSlotRefreshCount; ++i) {
+		VK_TextureBindlessUpdateSlot(deferredBindlessSlotRefreshes[i]);
+	}
+	deferredBindlessSlotRefreshCount = 0;
 }
 
 VkDescriptorSetLayout VK_TextureDescriptorSetLayout(void)
@@ -1012,6 +1296,28 @@ VkDescriptorSet VK_TextureDescriptorSet(texture_ref texture)
 		return VK_NULL_HANDLE;
 	}
 	return textureData[texture.index].descriptorSet;
+}
+
+// The bindless array itself doesn't vary per texture -- callers migrated to
+// it (see task #3) bind this ONE set once per draw batch, then select which
+// texture to sample via a push-constant index (texture.index), instead of
+// binding a different descriptor set per texture like the legacy path. Only
+// meaningful when vk_options.supportsDescriptorIndexing; returns
+// VK_NULL_HANDLE otherwise so callers know to fall back.
+VkDescriptorSetLayout VK_TextureBindlessDescriptorSetLayout(void)
+{
+	if (!VK_TextureEnsureBindlessInfrastructure()) {
+		return VK_NULL_HANDLE;
+	}
+	return bindlessTextureDescriptorSetLayout;
+}
+
+VkDescriptorSet VK_TextureBindlessDescriptorSet(void)
+{
+	if (!VK_TextureEnsureBindlessInfrastructure()) {
+		return VK_NULL_HANDLE;
+	}
+	return bindlessTextureDescriptorSet;
 }
 
 qbool VK_TextureDescriptorImageInfo(texture_ref texture, qbool nearest, VkDescriptorImageInfo* info)
@@ -1070,6 +1376,23 @@ void VK_TextureInitialiseState(void)
 		vkDestroyDescriptorSetLayout(vk_options.logicalDevice, textureDescriptorSetLayout, NULL);
 		textureDescriptorSetLayout = VK_NULL_HANDLE;
 	}
+	// bindlessTextureDescriptorSet is allocated from bindlessTextureDescriptorPool,
+	// so destroying the pool implicitly frees the set -- only the pool and
+	// layout need an explicit vkDestroy call. Both must be torn down here too
+	// (this runs on every vid_restart, i.e. every time the logical device is
+	// recreated): leaving stale handles in these statics past a vid_restart
+	// means the NEXT VK_TextureBindlessUpdateSlot call writes into a
+	// VkDescriptorSet belonging to the just-destroyed device, which the
+	// validation layer flags as "Invalid VkDescriptorSet" (confirmed live).
+	if (bindlessTextureDescriptorPool != VK_NULL_HANDLE) {
+		vkDestroyDescriptorPool(vk_options.logicalDevice, bindlessTextureDescriptorPool, NULL);
+		bindlessTextureDescriptorPool = VK_NULL_HANDLE;
+	}
+	if (bindlessTextureDescriptorSetLayout != VK_NULL_HANDLE) {
+		vkDestroyDescriptorSetLayout(vk_options.logicalDevice, bindlessTextureDescriptorSetLayout, NULL);
+		bindlessTextureDescriptorSetLayout = VK_NULL_HANDLE;
+	}
+	bindlessTextureDescriptorSet = VK_NULL_HANDLE;
 	memset(boundTextures, 0, sizeof(boundTextures));
 	VK_TextureEnsureInfrastructure();
 }
@@ -1100,6 +1423,18 @@ void VK_TextureShutdown(void)
 		vkDestroyDescriptorSetLayout(vk_options.logicalDevice, textureDescriptorSetLayout, NULL);
 		textureDescriptorSetLayout = VK_NULL_HANDLE;
 	}
+	// See the matching block in VK_TextureInitialiseState for why both of
+	// these need explicit teardown (destroying the pool implicitly frees the
+	// set allocated from it).
+	if (bindlessTextureDescriptorPool != VK_NULL_HANDLE) {
+		vkDestroyDescriptorPool(vk_options.logicalDevice, bindlessTextureDescriptorPool, NULL);
+		bindlessTextureDescriptorPool = VK_NULL_HANDLE;
+	}
+	if (bindlessTextureDescriptorSetLayout != VK_NULL_HANDLE) {
+		vkDestroyDescriptorSetLayout(vk_options.logicalDevice, bindlessTextureDescriptorSetLayout, NULL);
+		bindlessTextureDescriptorSetLayout = VK_NULL_HANDLE;
+	}
+	bindlessTextureDescriptorSet = VK_NULL_HANDLE;
 	memset(boundTextures, 0, sizeof(boundTextures));
 }
 

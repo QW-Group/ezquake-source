@@ -893,20 +893,107 @@ void VK_EndFrame(void)
 // vkDeviceWaitIdle (not just EnsureFinished, which is a no-op here -- see
 // the VK_EnsureFinished define) ensures the timing includes the last
 // submitted frame's actual GPU completion, not just CPU-side queuing.
+//
+// IMPORTANT CAVEAT for comparing this fps number against GLC/GLM's: the two
+// are NOT measuring the same thing. GLC_TimeRefresh/GLM_TimeRefresh never
+// call SwapBuffers across their 128 iterations -- they render repeatedly into
+// the same framebuffer and only sync the GPU once at the very end, so their
+// number is close to pure render throughput. The wall-clock loop below goes
+// through a full R_BeginRendering/R_EndRendering cycle every iteration,
+// which for Vulkan means a real vkAcquireNextImageKHR + vkQueuePresentKHR
+// 128 times -- i.e. it also measures 128 real present cycles and whatever
+// pacing the OS compositor imposes on them, which can dominate the number
+// and swing session to session (confirmed live: the same unchanged binary
+// measured both ~800fps and ~480fps a half hour apart with no code change,
+// while GL's equivalent stayed consistent). Use gpuMs below (measured via
+// VK_QUERY_TYPE_TIMESTAMP, GPU work only, no acquire/present in the window)
+// for anything meant to compare against GL or to judge a code change's real
+// rendering cost; keep the wall-clock number only as a rough "how does this
+// feel in practice, presentation pacing included" indicator.
 void VK_TimeRefresh(void)
 {
 	extern void R_SetupFrame(void);
 	int i;
 	int x, y, width, height;
 	float start, stop, time;
+	VkQueryPool timestampPool = VK_NULL_HANDLE;
+	qbool haveTimestamps = vk_options.logicalDevice != VK_NULL_HANDLE &&
+		vk_options.physicalDeviceProperties.limits.timestampComputeAndGraphics &&
+		vk_options.physicalDeviceProperties.limits.timestampPeriod > 0.0f;
+
+	// 256 slots: one begin/end timestamp pair per iteration (2 * 128), not a
+	// single pair around the whole loop -- vkCmdWriteTimestamp must be
+	// recorded outside any active render pass instance (Vulkan spec,
+	// queries chapter), and VK_RenderView opens/closes the main render pass
+	// internally, so there is no single "outside all render passes" point
+	// spanning multiple iterations to bracket. Summing 128 small GPU
+	// durations instead still isolates pure render work from acquire/present
+	// exactly as well, since none of the excluded time falls inside any of
+	// the 128 measured windows either way.
+	if (haveTimestamps) {
+		VkQueryPoolCreateInfo poolInfo = { 0 };
+
+		poolInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+		poolInfo.queryType = VK_QUERY_TYPE_TIMESTAMP;
+		poolInfo.queryCount = 256;
+		if (vkCreateQueryPool(vk_options.logicalDevice, &poolInfo, NULL, &timestampPool) != VK_SUCCESS) {
+			timestampPool = VK_NULL_HANDLE;
+			haveTimestamps = false;
+		}
+		else {
+			// vkCmdResetQueryPool must run entirely outside any render pass
+			// instance (Vulkan spec, queries chapter -- confirmed live: doing
+			// this inline inside VK_BeginFrame's already-open render pass
+			// below trips "It is invalid to issue this call inside an active
+			// VkRenderPass"). Reset every slot exactly once, here, in its own
+			// immediate command buffer before the loop opens any render pass,
+			// rather than per-iteration -- each iteration's writes below only
+			// touch its own 2 slots, so a single upfront reset of all 256 is
+			// equivalent to resetting each pair right before its first write.
+			VkCommandBuffer resetCommandBuffer = VK_BeginImmediateCommands();
+
+			if (resetCommandBuffer != VK_NULL_HANDLE) {
+				vkCmdResetQueryPool(resetCommandBuffer, timestampPool, 0, 256);
+				if (!VK_EndImmediateCommands(resetCommandBuffer)) {
+					vkDestroyQueryPool(vk_options.logicalDevice, timestampPool, NULL);
+					timestampPool = VK_NULL_HANDLE;
+					haveTimestamps = false;
+				}
+			}
+			else {
+				vkDestroyQueryPool(vk_options.logicalDevice, timestampPool, NULL);
+				timestampPool = VK_NULL_HANDLE;
+				haveTimestamps = false;
+			}
+		}
+	}
 
 	start = Sys_DoubleTime();
 	for (i = 0; i < 128; i++) {
+		VkCommandBuffer commandBuffer;
+
 		r_refdef.viewangles[1] = i * (360.0 / 128.0);
 
 		R_BeginRendering(&x, &y, &width, &height);
+
+		// Recorded right after VK_BeginFrame has opened the main render
+		// pass and right before VK_EndFrame closes it, so these two writes
+		// bracket exactly R_SetupFrame + R_RenderView's GPU-side work for
+		// this iteration -- not the acquire/present machinery around them.
+		// (Resetting happened once, upfront, outside any render pass --
+		// see above.)
+		commandBuffer = haveTimestamps ? VK_CurrentCommandBuffer() : VK_NULL_HANDLE;
+		if (commandBuffer != VK_NULL_HANDLE) {
+			vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, timestampPool, i * 2);
+		}
+
 		R_SetupFrame();
 		R_RenderView();
+
+		if (commandBuffer != VK_NULL_HANDLE) {
+			vkCmdWriteTimestamp(commandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, timestampPool, i * 2 + 1);
+		}
+
 		R_EndRendering();
 	}
 
@@ -916,6 +1003,29 @@ void VK_TimeRefresh(void)
 	stop = Sys_DoubleTime();
 	time = stop - start;
 	Com_Printf("%f seconds (%f fps)\n", time, 128 / time);
+
+	if (haveTimestamps) {
+		uint64_t results[256];
+		VkResult queryResult = vkGetQueryPoolResults(vk_options.logicalDevice, timestampPool, 0, 256,
+			sizeof(results), results, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+
+		if (queryResult == VK_SUCCESS) {
+			double totalGpuNs = 0.0;
+			double period = vk_options.physicalDeviceProperties.limits.timestampPeriod;
+
+			for (i = 0; i < 128; i++) {
+				uint64_t beginTicks = results[i * 2];
+				uint64_t endTicks = results[i * 2 + 1];
+
+				if (endTicks > beginTicks) {
+					totalGpuNs += (double)(endTicks - beginTicks) * period;
+				}
+			}
+			Com_Printf("gpu: %f seconds (%f fps) -- render work only, excludes acquire/present\n",
+				totalGpuNs / 1e9, 128.0 / (totalGpuNs / 1e9));
+		}
+		vkDestroyQueryPool(vk_options.logicalDevice, timestampPool, NULL);
+	}
 }
 
 qbool VK_Initialise(SDL_Window* window)
@@ -967,6 +1077,7 @@ qbool VK_Initialise(SDL_Window* window)
 	}
 
 	Con_Printf("Vulkan initialised successfully\n");
+	Con_Printf("vulkan: descriptor indexing (bindless) %s\n", vk_options.supportsDescriptorIndexing ? "supported" : "NOT supported, falling back to per-texture descriptor sets");
 	return true;
 }
 

@@ -78,10 +78,17 @@ typedef struct vk_alias_push_s {
 	float minLumaMix;
 	float scrollS;
 	float scrollT;
-	float pad0;
+	float textureIndex;
 } vk_alias_push_t;
 
+// aliasPipelineLayout is built against the bindless texture array
+// (VK_TextureBindlessDescriptorSetLayout) when the device supports descriptor
+// indexing, falling back to the legacy per-texture layout otherwise --
+// aliasUsingBindless records which one so VK_RenderAliasModels knows whether
+// to bind the one global set + push the texture index, or bind a fresh
+// per-draw descriptor set like before.
 static VkPipelineLayout aliasPipelineLayout;
+static qbool aliasUsingBindless;
 static VkPipeline aliasOpaquePipeline;
 static VkPipeline aliasBlendedPipeline;
 static VkPipeline aliasAdditivePipeline;
@@ -195,10 +202,21 @@ static qbool VK_AliasCreatePipeline(int blendMode)
 		return true;
 	}
 
-	descriptorSetLayout = VK_TextureDescriptorSetLayout();
+	// vk_alias_model.frag now always declares bindless-style runtime sampler
+	// arrays (modelTextureMode[]/modelTextureNearest[], see task #3
+	// migration) instead of the legacy fixed 2-element array, so the pipeline
+	// layout MUST be built against the bindless set layout -- there is no
+	// legacy-compatible shader variant to fall back to. Alias models
+	// therefore require vk_options.supportsDescriptorIndexing; hardware
+	// without it fails pipeline creation here exactly like any other missing
+	// piece of required infrastructure (matches how every other
+	// VK_*CreatePipeline in this codebase already fails outright rather than
+	// degrading, e.g. missing shader compilation).
+	descriptorSetLayout = VK_TextureBindlessDescriptorSetLayout();
 	if (descriptorSetLayout == VK_NULL_HANDLE) {
 		return false;
 	}
+	aliasUsingBindless = true;
 
 	vertShaderModule = VK_AliasCreateShaderModule(vk_alias_model_vert_spv, vk_alias_model_vert_spv_len);
 	fragShaderModule = VK_AliasCreateShaderModule(vk_alias_model_frag_spv, vk_alias_model_frag_spv_len);
@@ -761,6 +779,7 @@ void VK_RenderAliasModels(qbool postscene)
 	int queuedWeapons = 0;
 	int queuedPlayers = 0;
 	int skippedTexture = 0;
+	VkPipeline lastPipeline = VK_NULL_HANDLE;
 
 	if (!aliasDrawCount || !R_BufferReferenceIsValid(r_buffer_aliasmodel_vertex_data)) {
 		return;
@@ -786,10 +805,22 @@ void VK_RenderAliasModels(qbool postscene)
 	VK_AliasSetViewportScissor(commandBuffer);
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &vertexOffset);
 
+	// Bindless: the one global texture-array descriptor set never changes
+	// between draws (which texture each draw samples is selected by
+	// push_constant.textureIndex instead), so it only needs binding once per
+	// pipeline change -- no more per-draw descriptor-set lookup/compare/bind.
+	{
+		VkDescriptorSet bindlessSet = VK_TextureBindlessDescriptorSet();
+
+		if (bindlessSet == VK_NULL_HANDLE) {
+			return;
+		}
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, aliasPipelineLayout, 0, 1, &bindlessSet, 0, NULL);
+	}
+
 	for (i = 0; i < aliasDrawCount; ++i) {
 		vk_alias_draw_t* draw = &aliasDraws[i];
 		texture_ref texture = VK_TextureReady(draw->texture) ? draw->texture : solidwhite_texture;
-		VkDescriptorSet descriptorSet;
 		vk_alias_push_t push;
 
 		if (draw->postscene != postscene) {
@@ -804,12 +835,6 @@ void VK_RenderAliasModels(qbool postscene)
 			continue;
 		}
 
-		descriptorSet = VK_TextureDescriptorSet(texture);
-		if (descriptorSet == VK_NULL_HANDLE) {
-			++skippedTexture;
-			continue;
-		}
-
 		memcpy(push.mvp, draw->mvp, sizeof(push.mvp));
 		memcpy(push.color, draw->color, sizeof(push.color));
 		memcpy(push.altColor, draw->altColor, sizeof(push.altColor));
@@ -820,17 +845,20 @@ void VK_RenderAliasModels(qbool postscene)
 		push.minLumaMix = draw->minLumaMix;
 		push.scrollS = draw->scrollS;
 		push.scrollT = draw->scrollT;
-		push.pad0 = 0.0f;
+		push.textureIndex = (float)texture.index;
 
-		vkCmdBindPipeline(
-			commandBuffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			draw->blendMode == VK_ALIAS_BLEND_SHADOW ? aliasShadowPipeline :
-			draw->blendMode == VK_ALIAS_BLEND_ADDITIVE ? aliasAdditivePipeline :
-			draw->blendMode == VK_ALIAS_BLEND_ALPHA ? aliasBlendedPipeline :
-			aliasOpaquePipeline
-		);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, aliasPipelineLayout, 0, 1, &descriptorSet, 0, NULL);
+		{
+			VkPipeline pipeline =
+				draw->blendMode == VK_ALIAS_BLEND_SHADOW ? aliasShadowPipeline :
+				draw->blendMode == VK_ALIAS_BLEND_ADDITIVE ? aliasAdditivePipeline :
+				draw->blendMode == VK_ALIAS_BLEND_ALPHA ? aliasBlendedPipeline :
+				aliasOpaquePipeline;
+
+			if (pipeline != lastPipeline) {
+				vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+				lastPipeline = pipeline;
+			}
+		}
 		vkCmdPushConstants(commandBuffer, aliasPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push), &push);
 		vkCmdDraw(commandBuffer, draw->vertexCount, 1, draw->firstVertex, 0);
 		++submitted;

@@ -99,6 +99,20 @@ static qbool VK_BufferMemoryIsDeviceLocal(bufferusage_t usage)
 	return usage == bufferusage_reuse_many_frames || usage == bufferusage_constant_data;
 }
 
+// once_per_frame/reuse_per_frame buffers (world index buffer, per-frame
+// vertex scratch data, ...) are rewritten by the CPU every single frame, so
+// they can't use the staging+vkCmdCopyBuffer path above without adding a
+// second GPU-side copy on top of the write that already has to happen --
+// that would cost more than it saves. What actually helps a buffer this
+// hot is the small DEVICE_LOCAL-and-HOST_VISIBLE heap AMD/NVIDIA expose on
+// discrete GPUs (up to 256MB pre-ReBAR, much larger with Resizable BAR
+// enabled, which this session's RX 6800 XT has): it's mapped directly like
+// ordinary host-visible memory (no staging buffer, no vkCmdCopyBuffer, same
+// VK_BufferUpdateSection memcpy as before) but the GPU reads it locally
+// instead of over PCIe like plain HOST_VISIBLE|HOST_COHERENT memory does.
+// Falls back to the always-available HOST_VISIBLE|HOST_COHERENT type if the
+// combined heap doesn't exist on this device (older GPUs, iGPUs, no ReBAR)
+// -- see VK_BufferPreferredMemoryType below.
 static VkMemoryPropertyFlags VK_BufferMemoryStyle(bufferusage_t usage)
 {
 	switch (usage) {
@@ -118,6 +132,32 @@ static VkMemoryPropertyFlags VK_BufferMemoryStyle(bufferusage_t usage)
 			assert(false);
 			return 0;
 	}
+}
+
+// Returns the best available memory type index for a per-frame-updated
+// buffer (once_per_frame/reuse_per_frame): DEVICE_LOCAL|HOST_VISIBLE if the
+// device exposes that combined heap for this resource, otherwise plain
+// HOST_VISIBLE|HOST_COHERENT. Both candidates already include
+// HOST_COHERENT so VK_BufferUpdateSection's unconditional memcpy-without-
+// flush stays correct either way.
+static uint32_t VK_BufferPreferredMemoryType(VkMemoryPropertyFlags baseStyle, uint32_t memoryTypeBits)
+{
+	VkPhysicalDeviceMemoryProperties memoryProperties;
+	VkMemoryPropertyFlags preferred = baseStyle | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+	uint32_t i;
+
+	if ((baseStyle & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) == 0) {
+		return VK_FindMemoryType(memoryTypeBits, baseStyle);
+	}
+
+	vkGetPhysicalDeviceMemoryProperties(vk_options.physicalDevice, &memoryProperties);
+	for (i = 0; i < memoryProperties.memoryTypeCount; ++i) {
+		if ((memoryTypeBits & (1u << i)) && (memoryProperties.memoryTypes[i].propertyFlags & preferred) == preferred) {
+			return i;
+		}
+	}
+
+	return VK_FindMemoryType(memoryTypeBits, baseStyle);
 }
 
 static VkBufferUsageFlags VK_BufferUsageForType(buffertype_t type)
@@ -181,8 +221,11 @@ static qbool VK_BufferCreate(r_buffer_id id, buffertype_t type, const char* name
 	// currently live.
 	for (i = 0; i < VK_MAX_FRAMES_IN_FLIGHT; ++i) {
 		vk_buffer_t* slot = &bufferData[id][i];
+		qbool created = (usage == bufferusage_once_per_frame || usage == bufferusage_reuse_per_frame) ?
+			VK_CreateBufferResourceWithSelector(size, bufferUsage, memoryStyle, VK_BufferPreferredMemoryType, &slot->handle, &slot->memory) :
+			VK_CreateBufferResource(size, bufferUsage, memoryStyle, &slot->handle, &slot->memory);
 
-		if (!VK_CreateBufferResource(size, bufferUsage, memoryStyle, &slot->handle, &slot->memory)) {
+		if (!created) {
 			VK_BufferDestroyCopies(id);
 			return false;
 		}
