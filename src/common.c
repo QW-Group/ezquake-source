@@ -839,7 +839,7 @@ char *Info_ValueForKey (char *s, char *key) {
 	while (1) {
 		o = pkey;
 		while (*s != '\\') {
-			if (!*s)
+			if (!*s || o >= pkey + sizeof(pkey) - 1)
 				return "";
 			*o++ = *s++;
 		}
@@ -849,7 +849,7 @@ char *Info_ValueForKey (char *s, char *key) {
 		o = value[valueindex];
 
 		while (*s != '\\' && *s) {
-			if (!*s)
+			if (!*s || o >= value[valueindex] + sizeof(value[valueindex]) - 1)
 				return "";
 			*o++ = *s++;
 		}
@@ -878,7 +878,7 @@ void Info_RemoveKey (char *s, char *key) {
 			s++;
 		o = pkey;
 		while (*s != '\\') {
-			if (!*s)
+			if (!*s || o >= pkey + sizeof(pkey) - 1)
 				return;
 			*o++ = *s++;
 		}
@@ -887,7 +887,7 @@ void Info_RemoveKey (char *s, char *key) {
 
 		o = value;
 		while (*s != '\\' && *s) {
-			if (!*s)
+			if (!*s || o >= value + sizeof(value) - 1)
 				return;
 			*o++ = *s++;
 		}
@@ -1037,13 +1037,22 @@ void Info_SetValueForKey (char *s, char *key, char *value, int maxsize)
 void Info_Print (char *s) {
 	char key[512], value[512], *o;
 	int l;
+	qbool truncated;
 
 	if (*s == '\\')
 		s++;
 	while (*s) {
 		o = key;
-		while (*s && *s != '\\')
-			*o++ = *s++;
+		truncated = false;
+		while (*s && *s != '\\') {
+			if (o < key + sizeof(key) - 1)
+				*o++ = *s;
+			else
+				truncated = true;
+			s++;
+		}
+		if (truncated)
+			memcpy(o - 3, "...", 3);
 
 		l = o - key;
 		if (l < INFO_PRINT_FIRST_COLUMN_WIDTH) {
@@ -1061,8 +1070,16 @@ void Info_Print (char *s) {
 
 		o = value;
 		s++;
-		while (*s && *s != '\\')
-			*o++ = *s++;
+		truncated = false;
+		while (*s && *s != '\\') {
+			if (o < value + sizeof(value) - 1)
+				*o++ = *s;
+			else
+				truncated = true;
+			s++;
+		}
+		if (truncated)
+			memcpy(o - 3, "...", 3);
 		*o = 0;
 
 		if (*s)
