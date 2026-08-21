@@ -957,6 +957,23 @@ void CL_QWURL_f (void)
 
 		Cbuf_AddText(va("qtvplay %s%s\n", connection_str, password));
 	}
+	else if (!strncasecmp(command, "qwl", 3))
+	{
+		char *token = command + 3;
+
+		if (*token == '/') {
+			token++; // Skip the '/'
+		} else {
+			token = NULL; // No token supplied
+		}
+
+		if (token && *token) {
+			Cbuf_AddText(va("setinfo qwl_token %s\n", token));
+			Cbuf_AddText(va("connect %s\n", connection_str));
+		} else {
+			Com_Printf("QW League: No token supplied - unable to connect to match.\n");
+		}
+	}
 	else
 	{
 		Com_Printf("%s: Illegal command %s\n", Cmd_Argv(0), command);
