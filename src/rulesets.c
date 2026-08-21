@@ -480,7 +480,6 @@ static void Rulesets_MTFL(qbool enable)
 	extern cvar_t cl_c2spps, r_fullbrightSkins;
 	extern cvar_t amf_detpacklights;
 	extern cvar_t gl_picmip, gl_max_size, r_drawflat;
-	extern cvar_t vid_hwgammacontrol;
 	extern cvar_t gl_textureless;
 
 	int i = 0;
@@ -490,7 +489,6 @@ static void Rulesets_MTFL(qbool enable)
 		{&amf_detpacklights, "0"},
 		{&gl_textureless, "0"},
 		{&r_fullbrightSkins, "0"},
-		{&vid_hwgammacontrol, "2"},
 		{&cl_c2spps, "0"},
 	};
 
@@ -969,11 +967,6 @@ qbool Ruleset_AllowPowerupShell(model_t* model)
 qbool Ruleset_CanLogConsole(void)
 {
 	return cls.demoplayback || cls.state != ca_active || cl.standby || cl.countdown || !rulesetDef.restrictLogging;
-}
-
-qbool Ruleset_AllowNoHardwareGamma(void)
-{
-	return rulesetDef.ruleset != rs_mtfl;
 }
 
 float Ruleset_RollAngle(void)

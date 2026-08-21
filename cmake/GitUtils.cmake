@@ -95,7 +95,20 @@ function(git_extract_version target_var)
     set(VERSION_MINOR 0)
     set(VERSION_PATCH 0)
 
-    string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+).*" "\\1;\\2;\\3" SEMVER_MATCH "${GIT_DESCRIBE}")
+    # string(REGEX REPLACE ...) returns the *original* string unchanged when
+    # the pattern doesn't match (a well-known CMake gotcha, not "no match ==
+    # empty result") -- without this MATCHES guard, a GIT_DESCRIBE that isn't
+    # semver-shaped (e.g. `git describe --always` falling back to a bare
+    # commit hash like "c5456aed" when no tags are reachable, which happens
+    # on any shallow/tagless clone of this repo) silently made SEMVER_MATCH
+    # equal to that hash string, which list(GET ... 0 VERSION_MAJOR) then
+    # took as a literal, non-numeric FILEVERSION field -- breaking the
+    # Windows .rc resource compiler with "undefined keyword or key name".
+    if("${GIT_DESCRIBE}" MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)")
+        string(REGEX REPLACE "^([0-9]+)\\.([0-9]+)\\.([0-9]+).*" "\\1;\\2;\\3" SEMVER_MATCH "${GIT_DESCRIBE}")
+    else()
+        set(SEMVER_MATCH "")
+    endif()
     list(LENGTH SEMVER_MATCH PARTS_SIZE)
 
     if(SEMVER_MATCH)

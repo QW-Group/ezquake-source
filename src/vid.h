@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_VID_HEADER
 #define EZQUAKE_VID_HEADER
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #define VID_CBITS 6
 #define VID_GRADES (1 << VID_CBITS)
@@ -81,9 +81,6 @@ qbool IN_MouseTrackingRequired (void);
 void VID_NotifyActivity(void);
 
 void VID_SetCaption (char *text);
-
-int VID_SetDeviceGammaRamp (unsigned short *ramps);
-extern qbool vid_hwgamma_enabled;
 
 extern int glx, gly, glwidth, glheight;
 

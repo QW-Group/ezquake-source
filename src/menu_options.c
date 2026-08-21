@@ -56,7 +56,7 @@ extern cvar_t r_farclip, gl_max_size, gl_miptexLevel;
 extern cvar_t r_bloom;
 extern cvar_t gl_flashblend, r_dynamic, gl_lightmode, gl_modulate;
 
-extern cvar_t vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap, vid_framebuffer_scale, vid_framebuffer_multisample, vid_framebuffer_fxaa;
+extern cvar_t vid_framebuffer, vid_framebuffer_hdr, vid_framebuffer_hdr_tonemap, vid_framebuffer_scale, vid_framebuffer_multisample, vid_framebuffer_fxaa, vid_vulkan_antilag;
 
 extern cvar_t vid_software_palette;
 
@@ -145,6 +145,35 @@ const char* GFXPresetRead(void) {
 	default: return "eyecandy";
 	}
 }
+
+static void GFXPresetExec(const char *cfg)
+{
+	cvar_t *vid_reload_auto = Cvar_Find("vid_reload_auto");
+	int restore_vid_reload_auto = vid_reload_auto ? vid_reload_auto->integer : 1;
+	qbool use_vulkan = R_UseVulkan();
+
+	/*
+	 * The gfx preset cfgs touch several CVAR_RELOAD_GFX variables. If
+	 * vid_reload_auto is left enabled, every changed cvar can request a
+	 * renderer reload while the menu is still applying the preset. On mobile
+	 * renderers this can recreate texture/framebuffer state at a fragile time
+	 * and crash when cycling away from eyecandy. Batch the changes and perform
+	 * one reload after the cfg has fully executed.
+	 *
+	 * The Vulkan backend doesn't support the GL-only soft-reload path at all
+	 * (VID_ReloadCvarChanged never sets vid_reload_pending while R_UseVulkan()
+	 * is true, so a plain "vid_reload" here would be a no-op) -- it needs an
+	 * explicit vid_restart instead, or the cvars the preset just changed
+	 * (e.g. surface/texture-affecting ones) never actually get applied to the
+	 * renderer's resources.
+	 */
+	if (vid_reload_auto) {
+		Cvar_Set(vid_reload_auto, "0");
+	}
+
+	Cbuf_AddText(va("exec %s\nvid_reload_auto %d\n%s", cfg, restore_vid_reload_auto, use_vulkan ? "vid_restart\n" : "vid_reload\n"));
+}
+
 void GFXPresetToggle(qbool back) {
 	if (back) {
 		if (fps_mode <= 0) {
@@ -160,10 +189,10 @@ void GFXPresetToggle(qbool back) {
 	}
 
 	switch (GFXPreset()) {
-	case mode_fastest: Cbuf_AddText ("exec cfg/gfx_gl_fast.cfg\n"); return;
-	case mode_higheyecandy: Cbuf_AddText ("exec cfg/gfx_gl_higheyecandy.cfg\n"); return;
-	case mode_faithful: Cbuf_AddText ("exec cfg/gfx_gl_faithful.cfg\n"); return;
-	case mode_eyecandy: Cbuf_AddText ("exec cfg/gfx_gl_eyecandy.cfg\n"); return;
+	case mode_fastest: GFXPresetExec("cfg/gfx_gl_fast.cfg"); return;
+	case mode_higheyecandy: GFXPresetExec("cfg/gfx_gl_higheyecandy.cfg"); return;
+	case mode_faithful: GFXPresetExec("cfg/gfx_gl_faithful.cfg"); return;
+	case mode_eyecandy: GFXPresetExec("cfg/gfx_gl_eyecandy.cfg"); return;
 	}
 }
 
@@ -428,8 +457,16 @@ const char* vid_software_palette_enum[] = {
 
 #ifdef EZ_MULTIPLE_RENDERERS
 const char* vid_renderer_enum[] = {
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
 	"classic", "0",
-	"modern", "1"
+#endif
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+	"modern", "1",
+#endif
+#ifdef RENDERER_OPTION_VULKAN
+	"vulkan (experimental)", "2",
+#endif
+	NULL
 };
 #endif
 
@@ -493,7 +530,7 @@ static void ApplyVideoSettings(const menu_system_settings_t *s)
 
 	Cvar_SetValue(&vid_width, current->w);
 	Cvar_SetValue(&vid_height, current->h);
-	Cvar_SetValue(&r_displayRefresh,current->refresh_rate);
+	Cvar_SetValue(&r_displayRefresh, (float)(int)(current->refresh_rate + 0.5f));
 	Cvar_SetValue(&r_colorbits, s->bpp);
 	Cvar_SetValue(&r_fullscreen, s->fullscreen);
 	Cbuf_AddText("vid_restart\n");
@@ -548,7 +585,7 @@ const char* ResolutionRead(void)
 		return "";
 	}
 
-	snprintf(buf, sizeof(buf), "%dx%d@%dHz", mode->w, mode->h, mode->refresh_rate);
+	snprintf(buf, sizeof(buf), "%dx%d@%dHz", mode->w, mode->h, (int)mode->refresh_rate);
 		
 	return buf;
 }
@@ -1283,6 +1320,7 @@ setting settsystem_arr[] = {
 	ADDSET_BOOL("Vertical Sync", r_swapInterval),
 	ADDSET_ADVANCED_SECTION(),
 	ADDSET_BOOL("Vsync Lag Fix", vid_vsync_lag_fix),
+	ADDSET_BOOL("Reduce Input Lag (Vulkan)", vid_vulkan_antilag),
 	ADDSET_BASIC_SECTION(),
 	ADDSET_CUSTOM("Bit Depth", BitDepthRead, BitDepthToggle, "Choose 16bit or 32bit color mode for your screen."),
 	ADDSET_CUSTOM("Fullscreen", FullScreenRead, FullScreenToggle, "Toggle between fullscreen and windowed mode."),

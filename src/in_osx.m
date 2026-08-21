@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static id mouseAddedObserver = nil;
 static id mouseRemovedObserver = nil;
-static SDL_mutex *mouse_mutex = NULL;
+static SDL_Mutex *mouse_mutex = NULL;
 static float mouse_x = 0;
 static float mouse_y = 0;
 

@@ -20,10 +20,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_R_LIGHTMAPS_HEADER
 #define EZQUAKE_R_LIGHTMAPS_HEADER
 
+struct msurface_s;
+
 void R_BuildLightmaps(void);
 qbool R_FullBrightAllowed(void);
 void R_CheckReloadLightmaps(void);
 void R_RenderAllDynamicLightmaps(struct model_s* model);
+void R_RenderDynamicLightmaps(struct msurface_s* surface, qbool world);
+void R_UploadChangedLightmaps(void);
 void R_LightmapFrameInit(void);
 void R_ForceReloadLightMaps(void);
 unsigned int R_LightmapCount(void);

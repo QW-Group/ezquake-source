@@ -28,6 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "glc_vao.h"
 #include "r_buffers.h"
 #include "r_renderer.h"
+#include "r_texture_internal.h"
 
 extern cvar_t r_smoothtext, r_smoothcrosshair, r_smoothimages;
 float cachedMatrix[16];

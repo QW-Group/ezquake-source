@@ -23,12 +23,8 @@
 
 #include "quakedef.h"
 
-#include <SDL.h>
-#include <SDL_syswm.h>
-
-#ifdef X11_GAMMA_WORKAROUND
-#include <X11/extensions/xf86vmode.h>
-#endif
+#include <math.h>
+#include <SDL3/SDL.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -37,11 +33,16 @@ void Sys_ActiveAppChanged (void);
 #endif
 
 #ifdef __APPLE__
+#include "in_osx.h"
+#endif
+
+#if defined(RENDERER_OPTION_CLASSIC_OPENGL) || defined(RENDERER_OPTION_MODERN_OPENGL)
+#ifdef __APPLE__
 #include <OpenGL/gl.h>
 #include <OpenGL/OpenGL.h>
-#include "in_osx.h"
 #else
 #include <GL/gl.h>
+#endif
 #endif
 
 #include "ezquake-icon.c"
@@ -63,10 +64,19 @@ void Sys_ActiveAppChanged (void);
 
 SDL_GLContext GLM_SDL_CreateContext(SDL_Window* window);
 SDL_GLContext GLC_SDL_CreateContext(SDL_Window* window);
+qbool VK_Initialise(SDL_Window* window);
+#ifdef RENDERER_OPTION_VULKAN
+void VK_RequestSwapChainRecreate(void);
+void VK_RequestSurfaceRecreate(void);
+qbool VK_RefreshPresentationMode(void);
+#endif
 
 #ifdef __linux__
-// This is hack to ignore keyboard events we receive between FOCUS_GAINED & TAKE_FOCUS
-// Without it the keys you press to switch back to ezQuake will fire, which is probably not desired
+// This is a hack to ignore keyboard events received while the window is unfocused.
+// SDL2 used to clear this between FOCUS_GAINED & TAKE_FOCUS (filtering out the very
+// keystroke used to switch back to ezQuake); SDL3 removed TAKE_FOCUS, so this is now
+// cleared directly on FOCUS_GAINED instead -- still blocks input while unfocused, just
+// without filtering that one alt-tab-back keystroke.
 // Affects X11 only - might also be needed on FreeBSD/OSX?
 static qbool block_keyboard_input = false;
 #endif
@@ -80,8 +90,25 @@ static cvar_t in_ignore_deadkeys = { "in_ignore_deadkeys", "1", CVAR_SILENT };
 
 #define	WINDOW_CLASS_NAME	"ezQuake"
 
-#define VID_RENDERER_MIN 0
-#define VID_RENDERER_MAX 1
+// Membership check, not a min/max range: the compiled-in renderer ids are not
+// necessarily contiguous (e.g. classic + vulkan without modern), so a simple
+// range like "0 <= x <= 2" would wrongly accept an id whose renderer isn't
+// actually compiled into this build.
+static qbool VID_RendererValid(int value)
+{
+	switch (value) {
+#ifdef RENDERER_OPTION_CLASSIC_OPENGL
+		case 0: return true;
+#endif
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+		case 1: return true;
+#endif
+#ifdef RENDERER_OPTION_VULKAN
+		case 2: return true;
+#endif
+		default: return false;
+	}
+}
 
 #define VID_MULTISAMPLED   1
 #define VID_ACCELERATED    2
@@ -102,13 +129,23 @@ static void vid_reload_callback(cvar_t* var, char* string, qbool* cancel);
 static void GrabMouse(qbool grab, qbool raw);
 static void HandleEvents(void);
 static void VID_UpdateConRes(void);
+static void VID_SDL_SetHints(void);
+static void IN_UpdateTextInputState(void);
 void IN_Restart_f(void);
 
 static SDL_Window       *sdl_window;
 static SDL_GLContext    sdl_context;
+#if defined(RENDERER_OPTION_CLASSIC_OPENGL) && defined(EZ_MULTIPLE_RENDERERS)
+// Renderer that last completed VID_SDL_Init() successfully, so a failed
+// vid_renderer switch can fall back to what the user actually had working
+// instead of always forcing classic OpenGL. -1 means "not known yet".
+// Only meaningful when classic OpenGL is compiled in as a fallback target
+// (see the read site below) -- declaring it outside that guard left it as
+// a dead store in single-renderer / non-classic builds.
+static int s_lastWorkingRenderer = -1;
+#endif
 
 glconfig_t glConfig;
-qbool vid_hwgamma_enabled = false;
 static qbool mouse_active = false;
 qbool mouseinitialized = false; // unfortunately non static, lame...
 int mx, my;
@@ -121,12 +158,9 @@ qbool Minimized = false;
 double vid_vsync_lag;
 double vid_last_swap_time;
 
+
 static SDL_DisplayMode *modelist;
 static int modelist_count;
-
-#ifdef X11_GAMMA_WORKAROUND
-static unsigned short sysramps[3*4096];
-#endif
 
 qbool vid_initialized = false;
 
@@ -149,7 +183,7 @@ static void vid_reload_callback(cvar_t* var, char* string, qbool* cancel)
 {
 	vid_reload_pending = false;
 
-	if (atoi(string) != 0) {
+	if (atoi(string) != 0 && !R_UseVulkan()) {
 		vid_reload_pending = Cvar_AnyModified(CVAR_RELOAD_GFX);
 	}
 }
@@ -186,24 +220,42 @@ cvar_t vid_width                  = {"vid_width",                  "0",       CV
 cvar_t vid_height                 = {"vid_height",                 "0",       CVAR_LATCH_GFX | CVAR_AUTO };
 cvar_t vid_win_width              = {"vid_win_width",              "640",     CVAR_LATCH_GFX };
 cvar_t vid_win_height             = {"vid_win_height",             "480",     CVAR_LATCH_GFX };
-#ifdef __APPLE__
-cvar_t vid_hwgammacontrol         = {"vid_hwgammacontrol",         "2",       CVAR_LATCH_GFX };
-#else
-cvar_t vid_hwgammacontrol         = {"vid_hwgammacontrol",         "0",       CVAR_LATCH_GFX };
-#endif
 cvar_t vid_minimize_on_focus_loss = {"vid_minimize_on_focus_loss", CVAR_DEF1, CVAR_LATCH_GFX };
 // TODO: Move the in_* cvars
 cvar_t in_raw                     = {"in_raw",                     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_raw_callback};
 cvar_t in_grab_windowed_mouse     = {"in_grab_windowed_mouse",     "1",       CVAR_ARCHIVE | CVAR_SILENT, in_grab_windowed_mouse_callback};
 cvar_t vid_grab_keyboard          = {"vid_grab_keyboard",          "0",       CVAR_LATCH_GFX }; /* Needs vid_restart thus vid_.... */
+#if defined(RENDERER_OPTION_VULKAN)
+// This branch builds Vulkan alongside the GL renderers (see RENDERER_VULKAN
+// in CMakeLists.txt) -- default to it here so a fresh exe/config actually
+// exercises Vulkan instead of silently falling back to modern GL.
+#ifdef EZ_MULTIPLE_RENDERERS
+cvar_t vid_renderer               = {"vid_renderer",               "2",       CVAR_LATCH_GFX };
+#else
+cvar_t vid_renderer               = {"vid_renderer",               "2",       CVAR_ROM };
+#endif
+#elif defined(RENDERER_OPTION_MODERN_OPENGL)
 #ifdef EZ_MULTIPLE_RENDERERS
 cvar_t vid_renderer               = {"vid_renderer",               "1",       CVAR_LATCH_GFX };
+#else
+cvar_t vid_renderer               = {"vid_renderer",               "1",       CVAR_ROM };
+#endif
+#elif defined(RENDERER_OPTION_CLASSIC_OPENGL)
+#ifdef EZ_MULTIPLE_RENDERERS
+cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_LATCH_GFX };
+#else
+cvar_t vid_renderer               = {"vid_renderer",               "0",       CVAR_ROM };
+#endif
+#elif defined(RENDERER_OPTION_VULKAN)
+#ifdef EZ_MULTIPLE_RENDERERS
+cvar_t vid_renderer               = {"vid_renderer",               "2",       CVAR_LATCH_GFX };
+#else
+cvar_t vid_renderer               = {"vid_renderer",               "2",       CVAR_ROM };
+#endif
+#else
+#error "At least one of RENDERER_OPTION_CLASSIC_OPENGL, RENDERER_OPTION_MODERN_OPENGL or RENDERER_OPTION_VULKAN must be defined"
 #endif
 cvar_t vid_gl_core_profile        = {"vid_gl_core_profile",        "0",       CVAR_LATCH_GFX };
-
-#ifdef X11_GAMMA_WORKAROUND
-cvar_t vid_gamma_workaround       = {"vid_gamma_workaround",       "1",       CVAR_LATCH_GFX };
-#endif
 
 cvar_t in_release_mouse_modes     = {"in_release_mouse_modes",     "2",       CVAR_SILENT };
 cvar_t in_ignore_touch_events     = {"in_ignore_touch_events",     "1",       CVAR_SILENT };
@@ -226,6 +278,9 @@ cvar_t r_verbose                  = {"vid_verbose",                "0",       CV
 cvar_t r_showextensions           = {"vid_showextensions",         "0",       CVAR_SILENT };
 cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CVAR_LATCH_GFX | CVAR_AUTO }; // It's here because it needs to be registered before window creation
 cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "0",       CVAR_LATCH_GFX };
+#ifdef RENDERER_OPTION_VULKAN
+cvar_t vid_vulkan_device          = {"vid_vulkan_device",           "-1",      CVAR_LATCH_GFX };
+#endif
 #ifdef __APPLE__
 cvar_t vid_software_palette       = {"vid_software_palette",       "0",       CVAR_NO_RESET | CVAR_LATCH_GFX };
 #else
@@ -245,6 +300,8 @@ cvar_t vid_framebuffer_smooth      = {"vid_framebuffer_smooth",        "1",     
 cvar_t vid_framebuffer_sshotmode   = {"vid_framebuffer_sshotmode",     "0" };
 cvar_t vid_framebuffer_multisample = {"vid_framebuffer_multisample",   "0" };
 cvar_t vid_framebuffer_fxaa        = {"vid_framebuffer_fxaa",          "0" };
+cvar_t vid_vulkan_antilag          = {"vid_vulkan_antilag",            "0" };
+
 
 //
 // function declaration
@@ -292,8 +349,11 @@ static void in_grab_windowed_mouse_callback(cvar_t *val, char *value, qbool *can
 	GrabMouse((atoi(value) > 0 ? true : false), in_raw.integer);
 }
 
+
 static void GrabMouse(qbool grab, qbool raw)
 {
+	qbool relative = raw && grab;
+
 	if ((grab && mouse_active && raw == in_raw.integer) || (!grab && !mouse_active) || !mouseinitialized || !sdl_window) {
 		return;
 	}
@@ -312,21 +372,28 @@ static void GrabMouse(qbool grab, qbool raw)
 		IN_SnapMouseBackToCentre();
 	}
 
-	SDL_SetWindowGrab(sdl_window, grab ? SDL_TRUE : SDL_FALSE);
-	SDL_SetRelativeMouseMode((raw && grab) ? SDL_TRUE : SDL_FALSE);
+	SDL_SetWindowMouseGrab(sdl_window, grab);
+	if (!SDL_SetWindowRelativeMouseMode(sdl_window, relative)) {
+		Com_DPrintf("relative mouse mode %s failed: %s\n", relative ? "enable" : "disable", SDL_GetError());
+		if (relative) {
+			SDL_SetWindowRelativeMouseMode(sdl_window, false);
+			IN_SnapMouseBackToCentre();
+		}
+	}
 	SDL_GetRelativeMouseState(NULL, NULL);
 
 	// never show real cursor in fullscreen
 	if (r_fullscreen.integer) {
-		SDL_ShowCursor(SDL_DISABLE);
+		SDL_HideCursor();
 	} else {
-		SDL_ShowCursor(grab ? SDL_DISABLE : SDL_ENABLE);
+		if (grab) SDL_HideCursor(); else SDL_ShowCursor();
 	}
 
 	// Force rewrite of it
 	SDL_SetCursor(NULL);
 
 	mouse_active = grab;
+
 }
 
 void IN_StartupMouse(void)
@@ -380,11 +447,22 @@ static void IN_Frame(void)
 		IN_ActivateMouse();
 	}
 
-	if (mouse_active && SDL_GetRelativeMouseMode()) {
+	if (mouse_active && SDL_GetWindowRelativeMouseMode(sdl_window)) {
 #ifdef __APPLE__
 		OSX_Mouse_GetMouseMovement(&mx, &my);
 #else
-		SDL_GetRelativeMouseState(&mx, &my);
+		// SDL3 reports relative motion as float; carry the sub-pixel remainder
+		// across frames instead of truncating it away each time, or slow/low
+		// sensitivity movement (often under 1px/frame) never registers at all.
+		static float rem_x = 0.0f, rem_y = 0.0f;
+		float fmx, fmy;
+		SDL_GetRelativeMouseState(&fmx, &fmy);
+		fmx += rem_x;
+		fmy += rem_y;
+		mx = (int)fmx;
+		my = (int)fmy;
+		rem_x = fmx - mx;
+		rem_y = fmy - my;
 #endif
 	}
 	
@@ -434,28 +512,36 @@ void IN_Restart_f(void)
 	}
 }
 
+static SDL_DisplayID VID_SDL_DisplayIDFromIndex(int index)
+{
+	int count = 0;
+	SDL_DisplayID result = SDL_GetPrimaryDisplay();
+	SDL_DisplayID *display_ids = SDL_GetDisplays(&count);
+	if (display_ids && index >= 0 && index < count) result = display_ids[index];
+	SDL_free(display_ids);
+	return result;
+}
+
 // Converts co-ordinates for the whole desktop to co-ordinates for a specific display
 static void VID_RelativePositionFromAbsolute(int* x, int* y, int* display)
 {
-	int displays = SDL_GetNumVideoDisplays();
-	int i = 0;
+	int displays = 0;
+	int i;
+	SDL_DisplayID *display_ids = SDL_GetDisplays(&displays);
 
-	for (i = 0; i < displays; ++i)
-	{
+	for (i = 0; display_ids && i < displays; ++i) {
 		SDL_Rect bounds;
-
-		if (SDL_GetDisplayBounds(i, &bounds) == 0)
-		{
-			if (*x >= bounds.x && *x < bounds.x + bounds.w && *y >= bounds.y && *y < bounds.y + bounds.h)
-			{
-				*x = *x - bounds.x;
-				*y = *y - bounds.y;
-				*display = i;
-				return;
-			}
+		if (SDL_GetDisplayBounds(display_ids[i], &bounds) &&
+			*x >= bounds.x && *x < bounds.x + bounds.w && *y >= bounds.y && *y < bounds.y + bounds.h) {
+			*x -= bounds.x;
+			*y -= bounds.y;
+			*display = i;
+			SDL_free(display_ids);
+			return;
 		}
 	}
 
+	SDL_free(display_ids);
 	*display = 0;
 }
 
@@ -465,10 +551,10 @@ static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
 	SDL_Rect bounds;
 	
 	// Try and get bounds for the specified display - default back to main display if there's an issue
-	if (SDL_GetDisplayBounds(*display, &bounds))
+	if (!SDL_GetDisplayBounds(VID_SDL_DisplayIDFromIndex(*display), &bounds))
 	{
 		*display = 0;
-		if (SDL_GetDisplayBounds(*display, &bounds))
+		if (!SDL_GetDisplayBounds(SDL_GetPrimaryDisplay(), &bounds))
 		{
 			// Still an issue - reset back to top-left of screen
 			Com_Printf("Error detecting resolution...\n");
@@ -482,108 +568,70 @@ static void VID_AbsolutePositionFromRelative(int* x, int* y, int* display)
 	*y = bounds.y + min(*y, bounds.h - 30);
 }
 
-static int VID_SetDeviceGammaRampReal(unsigned short *ramps)
-{
-#ifdef X11_GAMMA_WORKAROUND
-	static short once = 1;
-	static short gamma_works = 0;
-
-	if (!vid_gamma_workaround.integer) {
-		SDL_SetWindowGammaRamp(sdl_window, ramps, ramps + 4096, ramps + (2 * 4096));
-		vid_hwgamma_enabled = true;
-		return 0;
-	}
-
-	if (once) {
-		if (glConfig.gammacrap.size < 0 || glConfig.gammacrap.size > 4096) {
-			Com_Printf("error: gamma size is broken, gamma won't work (reported size %d)\n", glConfig.gammacrap.size);
-			once = 0;
-			return 0;
-		}
-		if (!XF86VidModeGetGammaRamp(glConfig.gammacrap.display, glConfig.gammacrap.screen, glConfig.gammacrap.size, sysramps, sysramps + 4096, sysramps + (2 * 4096))) {
-			Com_Printf("error: cannot get system gamma ramps, gamma won't work\n");
-			once = 0;
-			return 0;
-		}
-		once = 0;
-		gamma_works = 1;
-	}
-
-	if (gamma_works) {
-		/* Just double check the gamma size... */
-		if (glConfig.gammacrap.size < 0 || glConfig.gammacrap.size > 4096) {
-			Com_Printf("error: gamma size broken but worked initially, wtf?! gamma won't work\n");
-			gamma_works = 0;
-			vid_hwgamma_enabled = false;
-		}
-		/* It returns true unconditionally ... */
-		XF86VidModeSetGammaRamp(glConfig.gammacrap.display, glConfig.gammacrap.screen, glConfig.gammacrap.size, ramps, ramps + 4096, ramps + (2 * 4096));
-		vid_hwgamma_enabled = true;
-	}
-	return 0;
-#else
-	if (SDL_SetWindowGammaRamp(sdl_window, ramps, ramps + 256, ramps + 512) == 0) {
-		vid_hwgamma_enabled = true;
-		return 0;
-	}
-	return -1;
-#endif
-}
-
-#ifdef X11_GAMMA_WORKAROUND
-static void VID_RestoreSystemGamma(void)
-{
-	if (!sdl_window || COM_CheckParm(cmdline_param_client_nohardwaregamma)) {
-		return;
-	}
-	VID_SetDeviceGammaRampReal(sysramps);
-}
-#endif
-
 static void window_event(SDL_WindowEvent *event)
 {
 	extern qbool scr_skipupdate;
 	int flags = SDL_GetWindowFlags(sdl_window);
 
-	switch (event->event) {
-		case SDL_WINDOWEVENT_MINIMIZED:
+	switch (event->type) {
+		case SDL_EVENT_WINDOW_HIDDEN:
+		case SDL_EVENT_WINDOW_MINIMIZED:
 			Minimized = true;
 
-		case SDL_WINDOWEVENT_FOCUS_LOST:
+		case SDL_EVENT_WINDOW_FOCUS_LOST:
 			ActiveApp = false;
 #ifdef __linux__
 			block_keyboard_input = in_ignore_unfocused_keyb.integer;
-#endif
-#ifdef X11_GAMMA_WORKAROUND
-			if (vid_gamma_workaround.integer) {
-				if (Minimized || vid_hwgammacontrol.integer != 3) {
-					VID_RestoreSystemGamma();
-				}
-			}
+			// SDL3 removed SDL_WINDOWEVENT_TAKE_FOCUS (the ICCCM WM_TAKE_FOCUS
+			// handshake SDL2 used to answer), so an X11 window can be left
+			// claiming input state after alt-tab even though it no longer has
+			// focus -- the WM can end up unable to hand keyboard focus to any
+			// other window (reported by a tester: WM input effectively dead
+			// until the process is killed from a tty). Confirmed reproducible
+			// even in plain *windowed* mode (vid_fullscreen 0) with
+			// in_grab_windowed_mouse 1 + in_raw 1 -- i.e. relative mouse mode
+			// on a normal desktop window, not just fullscreen exclusive.
+			// Explicitly drop every grab/mode here regardless of their cvars,
+			// since none of these are otherwise re-applied on focus changes:
+			// SDL_SetWindowKeyboardGrab/MouseGrab are only ever called once
+			// at window creation, and relative mouse mode is normally only
+			// re-evaluated by IN_Frame() -- which itself won't run again
+			// until ActiveApp flips back, so nothing releases it here
+			// otherwise. This does NOT change which fullscreen mode is used
+			// -- that is still entirely controlled by
+			// vid_fullscreen/vid_usedesktopres.
+			SDL_SetWindowKeyboardGrab(sdl_window, false);
+			SDL_SetWindowMouseGrab(sdl_window, false);
+			SDL_SetWindowRelativeMouseMode(sdl_window, false);
 #endif
 #ifdef _WIN32
 			Sys_ActiveAppChanged ();
 #endif
 			break;
 
-		case SDL_WINDOWEVENT_FOCUS_GAINED:
+		case SDL_EVENT_WINDOW_FOCUS_GAINED:
 			TP_ExecTrigger("f_focusgained");
+#ifdef __linux__
+			// SDL3 removed SDL_WINDOWEVENT_TAKE_FOCUS, which used to be what
+			// cleared this; without it, once set, keyboard input would stay
+			// blocked for the rest of the session after any focus loss/regain.
+			block_keyboard_input = false;
+			// Restore the keyboard grab dropped above, if the user wants one.
+			SDL_SetWindowKeyboardGrab(sdl_window, vid_grab_keyboard.integer != 0);
+#endif
 			/* Fall through */
-		case SDL_WINDOWEVENT_RESTORED:
+		case SDL_EVENT_WINDOW_SHOWN:
+		case SDL_EVENT_WINDOW_EXPOSED:
+		case SDL_EVENT_WINDOW_RESTORED:
 			Minimized = false;
 			ActiveApp = true;
 			scr_skipupdate = 0;
-#ifdef X11_GAMMA_WORKAROUND
-			if (vid_gamma_workaround.integer) {
-				v_gamma.modified = true;
-			}
-#endif
 #ifdef _WIN32
 			Sys_ActiveAppChanged ();
 #endif
 			break;
 
-		case SDL_WINDOWEVENT_MOVED:
+		case SDL_EVENT_WINDOW_MOVED:
 			if (!(flags & SDL_WINDOW_FULLSCREEN) && r_win_save_pos.integer) {
 				int displayNumber = 0;
 				int x = event->data1;
@@ -597,13 +645,16 @@ static void window_event(SDL_WindowEvent *event)
 			}
 			break;
 
-		case SDL_WINDOWEVENT_RESIZED:
+		case SDL_EVENT_WINDOW_RESIZED:
+		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 			if (!(flags & SDL_WINDOW_FULLSCREEN)) {
-				glConfig.vidWidth = event->data1;
-				glConfig.vidHeight = event->data2;
+				int width = event->data1;
+				int height = event->data2;
+				glConfig.vidWidth = width;
+				glConfig.vidHeight = height;
 				if (r_win_save_size.integer) {
-					Cvar_LatchedSetValue(&vid_win_width, event->data1);
-					Cvar_LatchedSetValue(&vid_win_height, event->data2);
+					Cvar_LatchedSetValue(&vid_win_width, width);
+					Cvar_LatchedSetValue(&vid_win_height, height);
 				}
 				if (!r_conwidth.integer || !r_conheight.integer)
 					VID_UpdateConRes();
@@ -612,13 +663,6 @@ static void window_event(SDL_WindowEvent *event)
 				renderer.InvalidateViewport();
 			break;
 
-#ifdef __linux__
-		case SDL_WINDOWEVENT_TAKE_FOCUS:
-			// On X, sequence is FOCUS_GAINED, [Keyboard 'down' events], TAKE_FOCUS
-			// On Windows, it's just FOCUS_GAINED then TAKE_FOCUS, so nothing to block really
-			block_keyboard_input = false;
-			break;
-#endif
 	}
 }
 
@@ -696,14 +740,14 @@ byte Key_CharacterToQuakeCode(char ch)
 	// Uses fact that SDLK_a == 'a'... is this okay?
 	
 	// Convert from key-code to scan-code to see what physical button they pressed
-	int scancode = SDL_GetScancodeFromKey(ch);
+	int scancode = SDL_GetScancodeFromKey(ch, NULL);
 
 	return Key_ScancodeToQuakeCode(scancode);
 }
 
 wchar Key_Event_TextInput(wchar unichar);
 
-static void keyb_textinputevent(char* text)
+static void keyb_textinputevent(const char* text)
 {
 	int i = 0;
 	int len = 0;
@@ -739,9 +783,35 @@ static void keyb_textinputevent(char* text)
 	}
 }
 
+static void IN_UpdateTextInputState(void)
+{
+	// Text input stays enabled for the whole session (see the comment in
+	// VID_SDL_Init() where SDL_StartTextInput() is called): it's what makes
+	// in_builtinkeymap 0 receive OS/layout-aware key events even outside
+	// console/message, not just console/message text entry. Here we only need
+	// to keep the IME composition window positioned sensibly while it's
+	// actually being used for text entry -- called every time we're taking
+	// text so it stays correct across vid_restart (no state to go stale).
+	qbool taking_text = (key_dest == key_console || key_dest == key_message);
+
+	if (!sdl_window) {
+		return;
+	}
+
+	if (taking_text) {
+		SDL_Rect area = { 0, 0, glConfig.vidWidth, glConfig.vidHeight };
+		SDL_SetTextInputArea(sdl_window, &area, 0);
+	}
+}
+
+static byte IN_KeyboardEventToQuakeCode(SDL_KeyboardEvent *event)
+{
+	return Key_ScancodeToQuakeCode(event->scancode);
+}
+
 static void keyb_event(SDL_KeyboardEvent *event)
 {
-	byte result = Key_ScancodeToQuakeCode(event->keysym.scancode);
+	byte result = IN_KeyboardEventToQuakeCode(event);
 
 #ifdef __APPLE__
 	if (in_ignore_deadkeys.integer) {
@@ -749,29 +819,29 @@ static void keyb_event(SDL_KeyboardEvent *event)
 		int left_alt = (in_ignore_deadkeys.integer == 2 ? SDLK_LALT : SDLK_LGUI);
 		int right_alt = (in_ignore_deadkeys.integer == 2 ? SDLK_RALT : SDLK_RGUI);
 
-		if (event->keysym.sym == left_alt) {
+		if (event->key == left_alt) {
 			deadkey_modifiers_held_down ^= APPLE_LALT_HELD_DOWN;
-			deadkey_modifiers_held_down |= (event->state ? APPLE_LALT_HELD_DOWN : 0);
+			deadkey_modifiers_held_down |= (event->down ? APPLE_LALT_HELD_DOWN : 0);
 		}
-		else if (event->keysym.sym == right_alt) {
+		else if (event->key == right_alt) {
 			deadkey_modifiers_held_down ^= APPLE_RALT_HELD_DOWN;
-			deadkey_modifiers_held_down |= (event->state ? APPLE_RALT_HELD_DOWN : 0);
+			deadkey_modifiers_held_down |= (event->down ? APPLE_RALT_HELD_DOWN : 0);
 		}
 	}
 #endif
 
 	if (result == 0) {
-		Com_DPrintf("%s: unknown scancode %d\n", __func__, event->keysym.scancode);
+		Com_DPrintf("%s: unknown scancode %d\n", __func__, event->scancode);
 		return;
 	}
 
 #ifdef __linux__
 	if (block_keyboard_input) {
-		Com_DPrintf("%s: scan-code %d, qchar %d: suppressed\n", __func__, event->keysym.scancode, result);
+		Com_DPrintf("%s: scan-code %d, qchar %d: suppressed\n", __func__, event->scancode, result);
 		return;
 	}
 #endif
-	Key_Event(result, event->state);
+	Key_Event(result, event->down);
 }
 
 static void mouse_button_event(SDL_MouseButtonEvent *event)
@@ -801,7 +871,7 @@ static void mouse_button_event(SDL_MouseButtonEvent *event)
 		return;
 	}
 
-	Key_Event(key, event->state);
+	Key_Event(key, event->down);
 }
 
 static void mouse_wheel_event(SDL_MouseWheelEvent *event)
@@ -846,7 +916,7 @@ static void HandleWindowsKeyboardEvents(unsigned int flags, qbool down)
 static void HandleEvents(void)
 {
 	SDL_Event event;
-	qbool track_movement_through_state = (mouse_active && !SDL_GetRelativeMouseMode());
+	qbool track_movement_through_state = (mouse_active && !SDL_GetWindowRelativeMouseMode(sdl_window));
 
 #if defined(_WIN32) && !defined(WITHOUT_WINKEYHOOK)
 	HandleWindowsKeyboardEvents(windows_keys_down, true);
@@ -857,25 +927,35 @@ static void HandleEvents(void)
 
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
-		case SDL_QUIT:
+		case SDL_EVENT_QUIT:
 			Sys_Quit();
 			break;
-		case SDL_WINDOWEVENT:
+		case SDL_EVENT_WINDOW_SHOWN:
+		case SDL_EVENT_WINDOW_HIDDEN:
+		case SDL_EVENT_WINDOW_EXPOSED:
+		case SDL_EVENT_WINDOW_MOVED:
+		case SDL_EVENT_WINDOW_RESIZED:
+		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+		case SDL_EVENT_WINDOW_MINIMIZED:
+		case SDL_EVENT_WINDOW_MAXIMIZED:
+		case SDL_EVENT_WINDOW_RESTORED:
+		case SDL_EVENT_WINDOW_FOCUS_GAINED:
+		case SDL_EVENT_WINDOW_FOCUS_LOST:
 			window_event(&event.window);
 			break;
-		case SDL_KEYDOWN:
-		case SDL_KEYUP:
+		case SDL_EVENT_KEY_DOWN:
+		case SDL_EVENT_KEY_UP:
 #ifdef __APPLE__
 			if (developer.integer == 2) {
-				Con_Printf("key%s event, scan=%d, sym=%d, mod=%d\n", event.type == SDL_KEYDOWN ? "down" : "up", event.key.keysym.scancode, event.key.keysym.sym, event.key.keysym.mod);
+				Con_Printf("key%s event, scan=%d, sym=%d, mod=%d\n", event.type == SDL_EVENT_KEY_DOWN ? "down" : "up", event.key.scancode, event.key.key, event.key.mod);
 			}
 #endif
 			keyb_event(&event.key);
 			break;
-		case SDL_TEXTINPUT:
+		case SDL_EVENT_TEXT_INPUT:
 			keyb_textinputevent(event.text.text);
 			break;
-		case SDL_MOUSEMOTION:
+		case SDL_EVENT_MOUSE_MOTION:
 			if (event.motion.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
 #ifdef __APPLE__
 				if (developer.integer == 2) {
@@ -893,44 +973,45 @@ static void HandleEvents(void)
 				}
 			}
 			break;
-		case SDL_MOUSEBUTTONDOWN:
-		case SDL_MOUSEBUTTONUP:
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+		case SDL_EVENT_MOUSE_BUTTON_UP:
 #ifdef __APPLE__
 			if (developer.integer == 2) {
-				Con_Printf("mouse%s event, which=%d, button=%d\n", event.type == SDL_MOUSEBUTTONDOWN ? "down" : "up", event.button.which, event.button.button);
+				Con_Printf("mouse%s event, which=%d, button=%d\n", event.type == SDL_EVENT_MOUSE_BUTTON_DOWN ? "down" : "up", event.button.which, event.button.button);
 			}
 #endif
 			if (event.button.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
 				mouse_button_event(&event.button);
 			}
 			break;
-		case SDL_MOUSEWHEEL:
+		case SDL_EVENT_MOUSE_WHEEL:
 			if (event.wheel.which != SDL_TOUCH_MOUSEID || !in_ignore_touch_events.integer) {
 				mouse_wheel_event(&event.wheel);
 			}
 			break;
-		case SDL_DROPFILE:
+		case SDL_EVENT_DROP_FILE:
 			/* TODO: Add handling for different file types */
-			if (strncmp(event.drop.file, "qw://", 5) == 0) {
+			if (strncmp(event.drop.data, "qw://", 5) == 0) {
 				Cbuf_AddText("qwurl ");
 			} else {
 				Cbuf_AddText("playdemo ");
 			}
-			Cbuf_AddText(event.drop.file);
+			Cbuf_AddText(event.drop.data);
 			Cbuf_AddText("\n");
-			SDL_free(event.drop.file);
 			break;
 		}
 	}
 
+	IN_UpdateTextInputState();
+
 	if (track_movement_through_state) {
 		float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
-		int pos_x, pos_y;
+		float pos_x, pos_y;
 
 		SDL_GetMouseState(&pos_x, &pos_y);
 
-		mx = pos_x - old_x;
-		my = pos_y - old_y;
+		mx = (int)pos_x - old_x;
+		my = (int)pos_y - old_y;
 
 		cursor_x = min(max(0, cursor_x + (pos_x - glConfig.vidWidth / 2) * factor), VID_RenderWidth2D());
 		cursor_y = min(max(0, cursor_y + (pos_y - glConfig.vidHeight / 2) * factor), VID_RenderHeight2D());
@@ -951,27 +1032,23 @@ void VID_Shutdown(qbool restart)
 {
 	IN_DeactivateMouse();
 
-	SDL_StopTextInput();
-
-#ifdef X11_GAMMA_WORKAROUND
-	if (vid_gamma_workaround.integer) {
-		VID_RestoreSystemGamma();
-	}
-#endif
+	if (sdl_window) SDL_StopTextInput(sdl_window);
 
 	R_Shutdown(restart ? r_shutdown_restart : r_shutdown_full);
 
-	if (sdl_context) {
-		SDL_GL_DeleteContext(sdl_context);
-		sdl_context = NULL;
+	if (sdl_context && !R_UseVulkan()) {
+		SDL_GL_DestroyContext(sdl_context);
 	}
+	sdl_context = NULL;
 
 	if (sdl_window) {
 		SDL_DestroyWindow(sdl_window);
 		sdl_window = NULL;
 	}
 
-	SDL_GL_ResetAttributes();
+	if (!R_UseVulkan()) {
+		SDL_GL_ResetAttributes();
+	}
 
 	if (SDL_WasInit(SDL_INIT_VIDEO) != 0) {
 		SDL_QuitSubSystem(SDL_INIT_VIDEO);
@@ -981,7 +1058,6 @@ void VID_Shutdown(qbool restart)
 
 	Q_free(modelist);
 	modelist_count = 0;
-	vid_hwgamma_enabled = false;
 	vid_initialized = false;
 
 	if (!restart) {
@@ -992,15 +1068,28 @@ void VID_Shutdown(qbool restart)
 static int VID_SDL_InitSubSystem(void)
 {
 	if (SDL_WasInit(SDL_INIT_VIDEO) == 0) {
-		if (SDL_InitSubSystem(SDL_INIT_VIDEO) < 0) {
+		if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
 			Sys_Error("Couldn't initialize SDL video: %s\n", SDL_GetError());
 			return -1;
 		}
 	}
 
-	SDL_StartTextInput();
-
 	return 0;
+}
+
+static void VID_SDL_SetHints(void)
+{
+	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, vid_minimize_on_focus_loss.integer == 0 ? "0" : "1");
+#ifdef __APPLE__
+	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
+#endif
+
+#if defined(__APPLE__)
+#ifdef SDL_HINT_TOUCH_MOUSE_EVENTS
+	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
+#endif
+#endif
+
 }
 
 // This is called during video initialisation & vid_restart, but not vid_reload
@@ -1013,7 +1102,6 @@ static void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_height);
 	Cvar_Register(&vid_win_width);
 	Cvar_Register(&vid_win_height);
-	Cvar_Register(&vid_hwgammacontrol);
 	Cvar_Register(&r_colorbits);
 	Cvar_Register(&r_24bit_depth);
 	Cvar_Register(&r_fullscreen);
@@ -1024,9 +1112,7 @@ static void VID_RegisterLatchCvars(void)
 	Cvar_Register(&vid_displayNumber);
 	Cvar_Register(&vid_minimize_on_focus_loss);
 	Cvar_Register(&vid_grab_keyboard);
-#ifdef EZ_MULTIPLE_RENDERERS
 	Cvar_Register(&vid_renderer);
-#endif
 	Cvar_Register(&vid_gl_core_profile);
 	Cvar_Register(&vid_framebuffer);
 	Cvar_Register(&vid_software_palette);
@@ -1034,10 +1120,10 @@ static void VID_RegisterLatchCvars(void)
 	Cvar_Register(&gl_reverse_z);
 	Cvar_Register(&vid_framebuffer_hdr);
 
-#ifdef X11_GAMMA_WORKAROUND
-	Cvar_Register(&vid_gamma_workaround);
-#endif
 	Cvar_Register(&vid_gammacorrection);
+#ifdef RENDERER_OPTION_VULKAN
+	Cvar_Register(&vid_vulkan_device);
+#endif
 
 	Cvar_ResetCurrentGroup();
 }
@@ -1073,6 +1159,7 @@ void VID_RegisterCvars(void)
 	Cvar_Register(&vid_framebuffer_sshotmode);
 	Cvar_Register(&vid_framebuffer_multisample);
 	Cvar_Register(&vid_framebuffer_fxaa);
+	Cvar_Register(&vid_vulkan_antilag);
 
 	Cvar_Register(&vid_reload_auto);
 
@@ -1083,18 +1170,24 @@ void VID_RegisterCvars(void)
 int VID_DisplayNumber(qbool fullscreen)
 {
 	int displayNumber = (fullscreen ? vid_displayNumber.value : vid_win_displayNumber.value);
-	int displays = SDL_GetNumVideoDisplays();
+	int displays = 0;
+	SDL_DisplayID *display_ids = SDL_GetDisplays(&displays);
+	SDL_free(display_ids);
 
 	return max(0, min(displays - 1, displayNumber));
+}
+
+SDL_DisplayID VID_SDL_DisplayID(qbool fullscreen)
+{
+	return VID_SDL_DisplayIDFromIndex(VID_DisplayNumber(fullscreen));
 }
 
 static void VID_SetupModeList(void)
 {
 	int i;
+	SDL_DisplayMode **modes = SDL_GetFullscreenDisplayModes(VID_SDL_DisplayID(r_fullscreen.integer == 1), &modelist_count);
 
-	modelist_count = SDL_GetNumDisplayModes(VID_DisplayNumber(r_fullscreen.integer == 1));
-
-	if (modelist_count <= 0) {
+	if (!modes || modelist_count <= 0) {
 		Com_Printf("error getting display modes: %s\n", SDL_GetError());
 		modelist_count = 0;
 	}
@@ -1102,8 +1195,9 @@ static void VID_SetupModeList(void)
 	modelist = Q_calloc(modelist_count, sizeof(*modelist));
 
 	for (i = 0; i < modelist_count; i++) {
-		SDL_GetDisplayMode(0, i, &modelist[i]);
+		modelist[i] = *modes[i];
 	}
+	SDL_free(modes);
 }
 
 static void VID_SetupResolution(void)
@@ -1114,15 +1208,17 @@ static void VID_SetupResolution(void)
 	if (r_fullscreen.integer) {
 		display_nbr = VID_DisplayNumber(true);
 		if (vid_usedesktopres.integer == 1) {
-			if (SDL_GetDesktopDisplayMode(display_nbr, &display_mode) == 0) {
+			const SDL_DisplayMode *desktop_mode = SDL_GetDesktopDisplayMode(VID_SDL_DisplayID(true));
+			if (desktop_mode) {
+				display_mode = *desktop_mode;
 				glConfig.vidWidth = last_working_width = display_mode.w;
 				glConfig.vidHeight = last_working_height = display_mode.h;
 				glConfig.displayFrequency = last_working_hz = display_mode.refresh_rate;
 				last_working_display = display_nbr;
 				last_working_values = true;
-				Cvar_AutoSetInt(&vid_width, display_mode.w);
-				Cvar_AutoSetInt(&vid_height, display_mode.h);
-				Cvar_AutoSetInt(&r_displayRefresh, display_mode.refresh_rate);
+				Cvar_AutoSetInt(&vid_width, glConfig.vidWidth);
+				Cvar_AutoSetInt(&vid_height, glConfig.vidHeight);
+				Cvar_AutoSetInt(&r_displayRefresh, (int)(display_mode.refresh_rate + 0.5f));
 				return;
 			} else {
 				Com_Printf("warning: failed to get desktop resolution\n");
@@ -1159,19 +1255,20 @@ static void VID_SetupResolution(void)
 		glConfig.vidHeight = bound(240, vid_win_height.integer, vid_win_height.integer);
 		glConfig.displayFrequency = 0;
 	}
+
 }
 
 int VID_GetCurrentModeIndex(void)
 {
 	int i;
 
-	int best_freq = 0;
+	float best_freq = 0;
 	int best_idx = -1;
 
 	for (i = 0; i < modelist_count; i++) {
 		if (modelist[i].w == vid_width.integer && modelist[i].h == vid_height.integer) {
-			if (modelist[i].refresh_rate == r_displayRefresh.integer) {
-				Com_DPrintf("MATCHED: %dx%d hz:%d\n", modelist[i].w, modelist[i].h, modelist[i].refresh_rate);
+			if (fabsf(modelist[i].refresh_rate - (float)r_displayRefresh.integer) < 0.5f) {
+				Com_DPrintf("MATCHED: %dx%d hz:%d\n", modelist[i].w, modelist[i].h, (int)modelist[i].refresh_rate);
 				return i;
 			}
 
@@ -1184,7 +1281,7 @@ int VID_GetCurrentModeIndex(void)
 
 	/* width/height matched but not hz, using the best available */
 	if (best_idx >= 0) {
-		Cvar_AutoSetInt(&r_displayRefresh, modelist[best_idx].refresh_rate);
+		Cvar_AutoSetInt(&r_displayRefresh, (int)(modelist[best_idx].refresh_rate + 0.5f));
 	}
 
 	return best_idx;
@@ -1221,10 +1318,10 @@ static void VID_SDL_GL_SetupWindowAttributes(int options)
 static SDL_GLContext VID_SDL_GL_SetupContextAttributes(void)
 {
 #ifdef EZ_MULTIPLE_RENDERERS
-	if (vid_renderer.integer < VID_RENDERER_MIN || vid_renderer.integer > VID_RENDERER_MAX) {
+	if (!VID_RendererValid(vid_renderer.integer)) {
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL
 		Con_Printf("Invalid vid_renderer value detected, falling back to default.\n");
-		Cvar_LatchedSetValue(&vid_renderer, VID_RENDERER_MIN);
+		Cvar_LatchedSetValue(&vid_renderer, 0);
 #else
 		Sys_Error("Invalid vid_renderer value detected");
 #endif
@@ -1243,7 +1340,7 @@ static SDL_GLContext VID_SDL_GL_SetupContextAttributes(void)
 #endif
 #ifdef RENDERER_OPTION_VULKAN
 	if (R_UseVulkan()) {
-		//return VK_SDL_CreateContext(sdl_window);
+		return VK_Initialise(sdl_window) ? (SDL_GLContext)sdl_window : NULL;
 	}
 #endif
 
@@ -1258,13 +1355,12 @@ static int VID_SetWindowIcon(SDL_Window *sdl_window)
 	return 0;
 #else
 	SDL_Surface *icon_surface;
-        icon_surface = SDL_CreateRGBSurfaceFrom((void *)ezquake_icon.pixel_data, ezquake_icon.width, ezquake_icon.height, ezquake_icon.bytes_per_pixel * 8,
-                ezquake_icon.width * ezquake_icon.bytes_per_pixel,
-                0x000000FF,0x0000FF00,0x00FF0000,0xFF000000);
+	icon_surface = SDL_CreateSurfaceFrom(ezquake_icon.width, ezquake_icon.height, SDL_PIXELFORMAT_RGBA32,
+		(void *)ezquake_icon.pixel_data, ezquake_icon.width * ezquake_icon.bytes_per_pixel);
 
 	if (icon_surface) {
 		SDL_SetWindowIcon(sdl_window, icon_surface);
-		SDL_FreeSurface(icon_surface);
+		SDL_DestroySurface(icon_surface);
 		return 0;
 	}
 
@@ -1281,7 +1377,14 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 
 		VID_AbsolutePositionFromRelative(&xpos, &ypos, &displayNumber);
 
-		return SDL_CreateWindow(WINDOW_CLASS_NAME, xpos, ypos, glConfig.vidWidth, glConfig.vidHeight, flags);
+		SDL_Window *window = SDL_CreateWindow(WINDOW_CLASS_NAME, glConfig.vidWidth, glConfig.vidHeight, flags);
+		if (window) {
+			SDL_SetWindowPosition(window, xpos, ypos);
+		}
+		else {
+			Com_Printf("SDL_CreateWindow() failed: %s\n", SDL_GetError());
+		}
+		return window;
 	}
 	else {
 		int windowWidth = glConfig.vidWidth;
@@ -1291,7 +1394,7 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 		int displayNumber = VID_DisplayNumber(true);
 		SDL_Rect bounds;
 
-		if (SDL_GetDisplayBounds(displayNumber, &bounds) == 0) {
+		if (SDL_GetDisplayBounds(VID_SDL_DisplayID(true), &bounds)) {
 			windowX = bounds.x;
 			windowY = bounds.y;
 			windowWidth = bounds.w;
@@ -1301,43 +1404,16 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 			Com_Printf("Couldn't determine bounds of display #%d, defaulting to main display\n", displayNumber);
 		}
 
-		return SDL_CreateWindow(WINDOW_CLASS_NAME, windowX, windowY, windowWidth, windowHeight, flags);
+		SDL_Window *window = SDL_CreateWindow(WINDOW_CLASS_NAME, windowWidth, windowHeight, flags);
+		if (window) {
+			SDL_SetWindowPosition(window, windowX, windowY);
+		}
+		else {
+			Com_Printf("SDL_CreateWindow() failed: %s\n", SDL_GetError());
+		}
+		return window;
 	}
 }
-
-#ifdef X11_GAMMA_WORKAROUND
-static void VID_X11_GetGammaRampSize(void)
-{
-	glConfig.gammacrap.size = -1;
-
-	SDL_VERSION(&glConfig.gammacrap.info.version);
-	glConfig.gammacrap.screen = SDL_GetWindowDisplayIndex(sdl_window);
-
-	if (glConfig.gammacrap.screen < 0) {
-		Com_Printf("error: couldn't get screen number to set gamma\n");
-		return;
-	}
-
-	if (SDL_GetWindowWMInfo(sdl_window, &glConfig.gammacrap.info) != SDL_TRUE) {
-		Com_Printf("error: can not get display pointer, gamma won't work: %s\n", SDL_GetError());
-		return;
-	}
-
-	if (glConfig.gammacrap.info.subsystem != SDL_SYSWM_X11) {
-		Com_Printf("error: not x11, gamma won't work\n");
-		return;
-	}
-
-	glConfig.gammacrap.display = glConfig.gammacrap.info.info.x11.display;
-	XF86VidModeGetGammaRampSize(glConfig.gammacrap.display, glConfig.gammacrap.screen, &glConfig.gammacrap.size);
-
-	if (glConfig.gammacrap.size <= 0 || glConfig.gammacrap.size > 4096) {
-		Com_Printf("error: gamma size '%d' seems weird, refusing to use it\n", glConfig.gammacrap.size);
-		glConfig.gammacrap.size = -1;
-		return;
-	}
-}
-#endif
 
 static void VID_SetWindowResolution(void)
 {
@@ -1365,7 +1441,7 @@ static void VID_SetWindowResolution(void)
 			VID_SetupResolution();
 		}
 		else {
-			if (SDL_SetWindowDisplayMode(sdl_window, &modelist[index]) != 0) {
+			if (!SDL_SetWindowFullscreenMode(sdl_window, &modelist[index])) {
 				Com_Printf("sdl error: %s\n", SDL_GetError());
 			}
 			else {
@@ -1377,7 +1453,7 @@ static void VID_SetWindowResolution(void)
 			}
 		}
 
-		if (SDL_SetWindowFullscreen(sdl_window, SDL_WINDOW_FULLSCREEN) < 0) {
+		if (!SDL_SetWindowFullscreen(sdl_window, true)) {
 			Com_Printf("Failed to change to fullscreen mode\n");
 		}
 	}
@@ -1393,9 +1469,15 @@ static void VID_SDL_Init(void)
 		return;
 	}
 
+	VID_SDL_SetHints();
 	VID_SDL_InitSubSystem();
 
-	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_SHOWN;
+	flags = SDL_WINDOW_RESIZABLE;
+#ifdef RENDERER_OPTION_VULKAN
+	flags |= R_UseVulkan() ? SDL_WINDOW_VULKAN : SDL_WINDOW_OPENGL;
+#else
+	flags |= SDL_WINDOW_OPENGL;
+#endif
 	// MEAG: deliberately not specifying SDL_WINDOW_ALLOW_HIGHDPI as in our current workflow, it
 	//          breaks retina devices (we ask for display resolution and get told lower value)
 	//       Understand this is meant to be helped by NSHighResolutionCapable in Info.plist, but
@@ -1403,23 +1485,11 @@ static void VID_SDL_Init(void)
 	//          for the moment.
 	//       Flag has no effect on Windows (see SetProcessDpiAwarenessFunc in sys_win.c)
 	if (r_fullscreen.integer > 0) {
-		flags |= (vid_usedesktopres.integer == 1 ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+		flags |= (vid_usedesktopres.integer == 1 ? SDL_WINDOW_FULLSCREEN : 0);
 	}
 	else {
 		flags |= (vid_win_borderless.integer > 0 ? SDL_WINDOW_BORDERLESS : 0);
 	}
-
-	SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, vid_minimize_on_focus_loss.integer == 0 ? "0" : "1");
-#ifdef __APPLE__
-	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
-#endif
-	SDL_SetHint(SDL_HINT_GRAB_KEYBOARD, vid_grab_keyboard.integer == 0 ? "0" : "1");
-	SDL_SetHintWithPriority(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0", SDL_HINT_OVERRIDE);
-#ifdef __APPLE__
-#ifdef SDL_HINT_TOUCH_MOUSE_EVENTS
-	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
-#endif
-#endif
 
 	{
 		int i;
@@ -1460,7 +1530,9 @@ static void VID_SDL_Init(void)
 				}
 
 				sdl_window = NULL;
-				VID_SDL_GL_SetupWindowAttributes(vid_options[i]);
+				if (!R_UseVulkan()) {
+					VID_SDL_GL_SetupWindowAttributes(vid_options[i]);
+				}
 				VID_SetupModeList();
 				VID_SetupResolution();
 				sdl_window = VID_SDL_CreateWindow(flags);
@@ -1482,11 +1554,18 @@ static void VID_SDL_Init(void)
 			}
 
 #if defined(RENDERER_OPTION_CLASSIC_OPENGL) && defined(EZ_MULTIPLE_RENDERERS)
-			// FIXME: Implement falling back from Vulkan too
+			// Covers both Modern OpenGL and Vulkan failing to create a context/device.
 			if (!sdl_window && !R_UseImmediateOpenGL()) {
-				Con_Printf("&cf00Error&r: failed to create rendering context, trying classic OpenGL...\n");
+				// Prefer falling back to whatever renderer was actually working before this
+				// switch, rather than always forcing classic OpenGL -- the user may have been
+				// on classic intentionally, or on modern GL, and a failed vid_renderer 2
+				// shouldn't silently move them somewhere they didn't ask for if we already
+				// know a different renderer works on this machine.
+				int fallback_renderer = (s_lastWorkingRenderer >= 0 && s_lastWorkingRenderer != vid_renderer.integer) ? s_lastWorkingRenderer : 0;
 
-				Cvar_LatchedSetValue(&vid_renderer, 0);
+				Con_Printf("&cf00Error&r: failed to create rendering context, trying renderer %d...\n", fallback_renderer);
+
+				Cvar_LatchedSetValue(&vid_renderer, fallback_renderer);
 				continue;
 			}
 #endif
@@ -1497,6 +1576,10 @@ static void VID_SDL_Init(void)
 		if (!sdl_window) {
 			Sys_Error("Failed to create SDL window/context: %s\n", SDL_GetError());
 		}
+
+#if defined(RENDERER_OPTION_CLASSIC_OPENGL) && defined(EZ_MULTIPLE_RENDERERS)
+		s_lastWorkingRenderer = vid_renderer.integer;
+#endif
 
 		// Alert user if our mode doesn't match what they requested
 		if (!(vid_options[i] & VID_MULTISAMPLED) && gl_multisamples.integer > 0) {
@@ -1523,27 +1606,29 @@ static void VID_SDL_Init(void)
 		Com_Printf("Failed to set window icon");
 	}
 
+	// SDL_HINT_GRAB_KEYBOARD was removed in SDL3; apply vid_grab_keyboard directly instead.
+	SDL_SetWindowKeyboardGrab(sdl_window, vid_grab_keyboard.integer != 0);
+
+	// SDL3's text input is per-window (used to be global), so this has to happen
+	// once we actually have a window -- calling it earlier with a NULL sdl_window
+	// silently never enables text input, meaning SDL_EVENT_TEXT_INPUT never fires
+	// and Key_Event_TextInput() (which is what makes in_builtinkeymap 0 use the
+	// OS/layout-aware keymap) never gets invoked; every key falls back to the
+	// builtin scancode->QWERTY mapping regardless of the cvar's value.
+	SDL_StartTextInput(sdl_window);
+
 	v_gamma.modified = true;
 	r_swapInterval.modified = true;
-
-#ifdef X11_GAMMA_WORKAROUND
-	/* PLEASE REMOVE ME AS SOON AS SDL2 AND XORG ARE TALKING NICELY TO EACHOTHER AGAIN IN TERMS OF GAMMA */
-	if (vid_gamma_workaround.integer != 0) {
-		VID_X11_GetGammaRampSize();
-	} else {
-		glConfig.gammacrap.size = 256;
-	}
-#endif
 
 	R_Initialise();
 
 	//always get/set refresh rate
-	SDL_DisplayMode display_mode;
 	int display_nbr;
 
 	display_nbr = VID_DisplayNumber(true);
-	if (SDL_GetDesktopDisplayMode(display_nbr, &display_mode) == 0) {
-		Cvar_AutoSetInt(&r_displayRefresh, display_mode.refresh_rate);
+	{
+		const SDL_DisplayMode *desktop_mode = SDL_GetDesktopDisplayMode(VID_SDL_DisplayID(true));
+		if (desktop_mode) Cvar_AutoSetInt(&r_displayRefresh, (int)(desktop_mode->refresh_rate + 0.5f));
 	}
 
 	glConfig.initialized = true;
@@ -1551,6 +1636,11 @@ static void VID_SDL_Init(void)
 
 static void VID_SwapBuffers (void)
 {
+#ifdef RENDERER_OPTION_VULKAN
+	if (R_UseVulkan()) {
+		return;
+	}
+#endif
 	SDL_GL_SwapWindow(sdl_window);
 }
 
@@ -1558,6 +1648,11 @@ static void VID_SwapBuffersWithVsyncFix(void)
 {
 	double time_before_swap;
 
+#ifdef RENDERER_OPTION_VULKAN
+	if (R_UseVulkan()) {
+		return;
+	}
+#endif
 	time_before_swap = Sys_DoubleTime();
 
 	SDL_GL_SwapWindow(sdl_window);
@@ -1572,6 +1667,10 @@ void R_BeginRendering(int *x, int *y, int *width, int *height)
 	*x = *y = 0;
 	*width = glConfig.vidWidth;
 	*height = glConfig.vidHeight;
+
+	if (renderer.BeginFrame) {
+		renderer.BeginFrame();
+	}
 
 	if (renderer.IsFramebufferEnabled3D()) {
 		int scaled_width = VID_ScaledWidth3D();
@@ -1590,9 +1689,36 @@ void R_BeginRendering(int *x, int *y, int *width, int *height)
 
 void R_EndRendering(void)
 {
+#ifdef RENDERER_OPTION_VULKAN
+	if (R_UseVulkan()) {
+		if (r_swapInterval.modified) {
+			// SDL_GL_SetSwapInterval below only applies to the OpenGL
+			// backend; Vulkan picks its present mode (which encodes vsync
+			// on/off) once, at swapchain creation, so toggling "Vertical
+			// Sync" in the menu had no effect at all until the swapchain
+			// was recreated for some unrelated reason. Re-evaluate the
+			// present mode here specifically (while the surface is in a
+			// known-good, non-transitional state) rather than inside the
+			// generic swapchain-recreate path, which also runs for
+			// unrelated reasons (GFX preset reload, resize) where
+			// re-enumerating present modes mid-transition was observed to
+			// occasionally drop MAILBOX and settle on IMMEDIATE permanently,
+			// saturating the compositor's buffer queue and freezing the app.
+			VK_RefreshPresentationMode();
+			VK_RequestSwapChainRecreate();
+			r_swapInterval.modified = false;
+		}
+		if (renderer.EndFrame) {
+			renderer.EndFrame();
+		}
+		buffers.EndFrame();
+		return;
+	}
+#endif
+
 	if (r_swapInterval.modified) {
 		if (r_swapInterval.integer == 0) {
-			if (SDL_GL_SetSwapInterval(0)) {
+			if (!SDL_GL_SetSwapInterval(0)) {
 				Con_Printf("vsync: Failed to disable vsync...\n");
 			}
             // MacOS vsync fix
@@ -1602,14 +1728,14 @@ void R_EndRendering(void)
             CGLSetParameter(ctx, kCGLCPSwapInterval, &sync);
             #endif
 		} else if (r_swapInterval.integer == -1) {
-			if (SDL_GL_SetSwapInterval(-1)) {
+			if (!SDL_GL_SetSwapInterval(-1)) {
 				Con_Printf("vsync: Failed to enable late swap tearing (vid_vsync -1), setting vid_vsync 1 instead...\n");
 				Cvar_SetValueByName("vid_vsync", 1);
 			}
 		}
 
 		if (r_swapInterval.integer == 1) {
-			if (SDL_GL_SetSwapInterval(1)) {
+			if (!SDL_GL_SetSwapInterval(1)) {
 				Con_Printf("vsync: Failed to enable vsync...\n");
 			}
 		}
@@ -1624,6 +1750,10 @@ void R_EndRendering(void)
 		else {
 			VID_SwapBuffers(); 
 		}
+	}
+
+	if (renderer.EndFrame) {
+		renderer.EndFrame();
 	}
 
 	buffers.EndFrame();
@@ -1641,42 +1771,12 @@ void VID_SetCaption (char *text)
 void VID_NotifyActivity(void)
 {
 #ifdef _WIN32
-	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-
-	if (ActiveApp || !vid_flashonactivity.value) {
+	if (ActiveApp || !vid_flashonactivity.value || !sdl_window) {
 		return;
 	}
 
-	if (SDL_GetWindowWMInfo(sdl_window, &info) == SDL_TRUE) {
-		if (info.subsystem == SDL_SYSWM_WINDOWS) {
-			FlashWindow(info.info.win.window, TRUE);
-		}
-	}
-	else {
-		Com_DPrintf("Sys_NotifyActivity: SDL_GetWindowWMInfo failed: %s\n", SDL_GetError());
-	}
+	SDL_FlashWindow(sdl_window, SDL_FLASH_BRIEFLY);
 #endif
-}
-
-int VID_SetDeviceGammaRamp(unsigned short *ramps)
-{
-	if (!sdl_window || (COM_CheckParm(cmdline_param_client_nohardwaregamma) && Ruleset_AllowNoHardwareGamma())) {
-		return 0;
-	}
-
-	if (r_fullscreen.integer > 0) {
-		if (vid_hwgammacontrol.integer > 0) {
-			return VID_SetDeviceGammaRampReal(ramps);
-		}
-	}
-	else {
-		if (vid_hwgammacontrol.integer >= 2) {
-			return VID_SetDeviceGammaRampReal(ramps);
-		}
-	}
-
-	return 0;
 }
 
 void VID_Minimize (void) 
@@ -1792,6 +1892,11 @@ static void VID_Startup(void)
 
 void VID_ReloadCvarChanged(cvar_t* var)
 {
+	if (R_UseVulkan()) {
+		Con_Printf("%s needs vid_restart to take effect with the experimental Vulkan renderer.\n", var->name);
+		return;
+	}
+
 	if (!vid_reload_auto.integer) {
 		Con_Printf("%s needs %s to immediately take effect.\n", var->name, CVAR_RELOAD_GFX_COMMAND);
 	}
@@ -1804,6 +1909,12 @@ static void VID_Reload_f(void)
 {
 	if (!host_initialized) { // sanity
 		Com_Printf("Can't do %s yet\n", Cmd_Argv(0));
+		return;
+	}
+	if (R_UseVulkan()) {
+		Com_Printf("The experimental Vulkan renderer requires a full vid_restart.\n");
+		Cbuf_AddText("vid_restart\n");
+		vid_reload_pending = false;
 		return;
 	}
 
@@ -1841,16 +1952,18 @@ static void VID_Restart_f(void)
 
 static void VID_DisplayList_f(void)
 {
-	int displays = SDL_GetNumVideoDisplays();
+	int displays = 0;
+	SDL_DisplayID *display_ids = SDL_GetDisplays(&displays);
 	int i;
 
 	for (i = 0; i < displays; i++) {
-		const char *displayname = SDL_GetDisplayName(i);
+		const char *displayname = SDL_GetDisplayName(display_ids[i]);
 		if (displayname == NULL) {
 			displayname = "Unknown";
 		}
 		Com_Printf("%d: %s\n", i, displayname);
 	}
+	SDL_free(display_ids);
 }
 
 static void VID_ModeList_f(void)
@@ -1863,7 +1976,7 @@ static void VID_ModeList_f(void)
 	}
 	
 	for (; i < modelist_count; i++) {
-		Com_Printf("%dx%d@%dHz\n", (&modelist[i])->w, (&modelist[i])->h, (&modelist[i])->refresh_rate);
+		Com_Printf("%dx%d@%dHz\n", (&modelist[i])->w, (&modelist[i])->h, (int)(&modelist[i])->refresh_rate);
 	}
 }
 
@@ -1887,8 +2000,9 @@ static void VID_UpdateConRes(void)
 	int vidWidth = glConfig.vidWidth;
 	int vidHeight = glConfig.vidHeight;
 
-	int effective_width = vid_framebuffer.integer == 1 ? VID_ScaledWidth3D() : 0;
-	int effective_height = vid_framebuffer.integer == 1 ? VID_ScaledHeight3D() : 0;
+	qbool framebuffer_enabled_3d = renderer.IsFramebufferEnabled3D && renderer.IsFramebufferEnabled3D();
+	int effective_width = (vid_framebuffer.integer == 1 && framebuffer_enabled_3d) ? VID_ScaledWidth3D() : 0;
+	int effective_height = (vid_framebuffer.integer == 1 && framebuffer_enabled_3d) ? VID_ScaledHeight3D() : 0;
 
 	if (effective_width && effective_height) {
 		vidWidth = effective_width;

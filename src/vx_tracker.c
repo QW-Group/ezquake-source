@@ -190,6 +190,10 @@ static struct {
 
 void InitTracker(void)
 {
+	if (host_initialized) {
+		return;
+	}
+
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 
 	Cvar_Register(&r_tracker);

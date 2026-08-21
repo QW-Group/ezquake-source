@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": [
     { "name": "pkgconf", "default-features": false, "platform": "osx", "host": true },
+    { "name": "glslang", "default-features": false, "host": true, "features": ["tools"], "platform": "windows, osx" },
     { "name": "zlib", "default-features": false },
     { "name": "pcre2", "default-features": false },
     { "name": "minizip", "default-features": false },
@@ -18,7 +19,7 @@
     { "name": "speexdsp", "default-features": false },
     { "name": "libsndfile", "default-features": false, "features": ["external-libs"] },
     { "name": "alsa", "default-features": false, "platform": "linux" },
-    { "name": "sdl2", "default-features": false, "platform": "windows, osx" },
-    { "name": "sdl2", "default-features": false, "features": ["wayland", "x11", "alsa"], "platform": "linux" }
+    { "name": "sdl3", "default-features": false, "features": ["vulkan"], "platform": "windows, osx" },
+    { "name": "sdl3", "default-features": false, "features": ["wayland", "x11", "alsa"], "platform": "linux" }
   ]
 }

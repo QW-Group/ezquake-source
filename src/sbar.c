@@ -290,6 +290,7 @@ void Sbar_Init(void)
 	sb_ibar = Draw_CacheWadPic("ibar", WADPIC_SB_IBAR);
 	sb_scorebar = Draw_CacheWadPic("scorebar", WADPIC_SB_SCOREBAR);
 
+	if (!host_initialized) {
 	Cvar_SetCurrentGroup(CVAR_GROUP_SBAR);
 	Cvar_Register(&scr_centerSbar);
 
@@ -352,6 +353,7 @@ void Sbar_Init(void)
 
 	Cmd_AddCommand("+showteamscores", Sbar_ShowTeamScores);
 	Cmd_AddCommand("-showteamscores", Sbar_DontShowTeamScores);
+	}
 
 	CL_LoginImageLoad(scr_scoreboard_login_flagfile.string);
 }

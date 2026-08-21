@@ -985,7 +985,7 @@
     "description": "Prints list of evdev devices.\nIf the list is empty, you probably don't have access rights to /dev/input/eventX\nsudo chmod 644 /dev/input/event* should help you."
   },
   "in_restart": {
-    "description": "Restarts the input subsystem (mouse and keyboard handling). Shuts down the current SDL2 input state, reinitialises it, and reactivates the mouse if it was active before the restart. Useful after changing input-related settings that require a subsystem reinitialisation to take effect."
+    "description": "Restarts the input subsystem (mouse and keyboard handling). Shuts down the current SDL3 input state, reinitialises it, and reactivates the mouse if it was active before the restart. Useful after changing input-related settings that require a subsystem reinitialisation to take effect."
   },
   "inc": {
     "description": "Increments a variable by one or adds to it the optional second argument.\nThere are no 'add' or 'dec' commands because 'inc' can handle both addition and subtraction.\n\nExample:\ninc sensitivity -2\n - subtracts 2 from sensitivity."
@@ -1476,10 +1476,10 @@
     "remarks": "Negative values can also be used for the desired angle."
   },
   "s_audiodevicelist": {
-    "description": "Lists all available audio playback and input devices as reported by SDL2. Prints two sections -- \"Playback devices\" and \"Input devices\" -- each with a numbered id and device name. Device id 0 in each section represents the system default. Use the playback id with s_audiodevice to select a specific output device without restarting."
+    "description": "Lists all available audio playback and input devices as reported by SDL3. Prints two sections -- \"Playback devices\" and \"Input devices\" -- each with a numbered id and device name. Device id 0 in each section represents the system default. Use the playback id with s_audiodevice to select a specific output device without restarting."
   },
   "s_listdrivers": {
-    "description": "Lists the audio drivers compiled into the SDL2 library. Prints one driver name per line to the console. Useful for diagnosing which audio backends are available on the current system (e.g. pulseaudio, alsa, pipewire on Linux; wasapi, directsound on Windows)."
+    "description": "Lists the audio drivers compiled into the SDL3 library. Prints one driver name per line to the console. Useful for diagnosing which audio backends are available on the current system (e.g. pulseaudio, alsa, pipewire on Linux; wasapi, directsound on Windows)."
   },
   "s_restart": {
     "description": "Restarts the sound system. Shuts down the current audio session, reinitialises the audio driver, and reprecaches all sounds the server has already sent to the client. Use after changing audio settings (such as s_khz or s_desiredsamples) that require a full audio reset to take effect. The legacy alias snd_restart is equivalent."
@@ -2052,7 +2052,7 @@
     "description": "Prints client version number and date into the console."
   },
   "vid_displaylist": {
-    "description": "Lists all SDL2 display outputs available to the system, printing each one as an index and display name (e.g. \"0: Generic PnP Monitor\"). Useful when configuring multi-monitor setups to identify the correct display index for vid_displayindex or similar cvars."
+    "description": "Lists all SDL3 display outputs available to the system, printing each one as an index and display name (e.g. \"0: Generic PnP Monitor\"). Useful when configuring multi-monitor setups to identify the correct display index for vid_displayindex or similar cvars."
   },
   "vid_framebuffer_palette": {
     "description": "Legacy alias for the cvar `vid_software_palette`. Set to 0 to use hardware gamma (classic style), 1 to adjust gamma in post-processing. Prefer `vid_software_palette` in new configs."

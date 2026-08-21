@@ -602,6 +602,7 @@ static void R_SetupGL(void)
 
 void R_Init(void)
 {
+	if (!host_initialized) {
 	R_SkyRegisterCvars();
 	Cmd_AddCommand("timerefresh", R_TimeRefresh_f);
 #ifndef CLIENTONLY
@@ -764,6 +765,7 @@ void R_Init(void)
 	Cvar_Register(&r_remove_collinear_vertices);
 
 	Cvar_ResetCurrentGroup();
+	}
 
 	if (!hud_netgraph) {
 		hud_netgraph = HUD_Register(
@@ -817,7 +819,7 @@ static void R_Clear(void)
 	// This used to cause a bug with some graphics cards when
 	// in multiview mode. It would clear all but the last
 	// drawn views.
-	clear_color |= (!cl_multiview.integer && (gl_clear.integer || (!vid_hwgamma_enabled && v_contrast.value > 1)));
+	clear_color |= (!cl_multiview.integer && (gl_clear.integer || v_contrast.value > 1));
 
 	// If outside level or in wall, sky is usually visible
 	clear_color |= (r_viewleaf->contents == CONTENTS_SOLID && (R_UseModernOpenGL() || r_fastsky.integer));
@@ -1103,11 +1105,6 @@ static void R_DrawEntitiesOnList(visentlist_t *vislist, visentlist_entrytype_t t
 
 void R_PolyBlend(void)
 {
-	extern cvar_t gl_hwblend;
-
-	if (vid_hwgamma_enabled && gl_hwblend.value && !cl.teamfortress) {
-		return;
-	}
 	if (!v_blend[3]) {
 		return;
 	}

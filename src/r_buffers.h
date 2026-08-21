@@ -23,6 +23,7 @@ typedef enum {
 	r_buffer_hud_image_vertex_data,
 	r_buffer_hud_image_index_data,
 	r_buffer_hud_circle_vertex_data,
+	r_buffer_hud_brighten_vertex_data,
 	r_buffer_postprocess_vertex_data,
 	r_buffer_frame_constants,
 
