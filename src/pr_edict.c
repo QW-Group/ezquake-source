@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
+#include "pr1vm.h"
+#include <limits.h>
 
 dprograms_t		*progs;
 dfunction_t		*pr_functions;
@@ -1135,6 +1137,318 @@ void PR_InitPatchTables (void)
 }
 #endif
 
+/*
+=================
+PR1VM_FillAndSwapLumps
+
+PR1VM: из уже байтсвопнутого заголовка заполняет зеркала инстанса и делает
+байтсвоп lumps. Общий для v6 и v7 (первые 15 полей заголовка совпадают;
+v7 дополняет их полями отладки/типов после entityfields).
+=================
+*/
+static void PR1VM_FillAndSwapLumps (pr1vm_t *vm, dprograms_t *p)
+{
+	int i;
+
+	vm->progs = p;
+	vm->functions = (dfunction_t *)((byte *)p + p->ofs_functions);
+	vm->strings = (char *)p + p->ofs_strings;
+	vm->globaldefs = (ddef_t *)((byte *)p + p->ofs_globaldefs);
+	vm->fielddefs = (ddef_t *)((byte *)p + p->ofs_fielddefs);
+	vm->statements = (dstatement_t *)((byte *)p + p->ofs_statements);
+	vm->global_struct = (globalvars_t *)((byte *)p + p->ofs_globals);
+	vm->globals = (float *)vm->global_struct;
+	vm->edict_size = p->entityfields * 4;
+
+	for (i = 0; i < p->numstatements; i++)
+	{
+		vm->statements[i].op = LittleShort(vm->statements[i].op);
+		vm->statements[i].a = LittleShort(vm->statements[i].a);
+		vm->statements[i].b = LittleShort(vm->statements[i].b);
+		vm->statements[i].c = LittleShort(vm->statements[i].c);
+	}
+
+	for (i = 0; i < p->numfunctions; i++)
+	{
+		vm->functions[i].first_statement = LittleLong (vm->functions[i].first_statement);
+		vm->functions[i].parm_start = LittleLong (vm->functions[i].parm_start);
+		vm->functions[i].s_name = LittleLong (vm->functions[i].s_name);
+		vm->functions[i].s_file = LittleLong (vm->functions[i].s_file);
+		vm->functions[i].numparms = LittleLong (vm->functions[i].numparms);
+		vm->functions[i].locals = LittleLong (vm->functions[i].locals);
+	}
+
+	for (i = 0; i < p->numglobaldefs; i++)
+	{
+		vm->globaldefs[i].type = LittleShort (vm->globaldefs[i].type);
+		vm->globaldefs[i].ofs = LittleShort (vm->globaldefs[i].ofs);
+		vm->globaldefs[i].s_name = LittleLong (vm->globaldefs[i].s_name);
+	}
+
+	for (i = 0; i < p->numfielddefs; i++)
+	{
+		vm->fielddefs[i].type = LittleShort (vm->fielddefs[i].type);
+		vm->fielddefs[i].ofs = LittleShort (vm->fielddefs[i].ofs);
+		vm->fielddefs[i].s_name = LittleLong (vm->fielddefs[i].s_name);
+	}
+
+	for (i = 0; i < p->numglobals; i++)
+		((int *)vm->globals)[i] = LittleLong (((int *)vm->globals)[i]);
+}
+
+/*
+=================
+PR1VM_LoadData
+
+PR1VM (S2): заполняет инстанс из файла progs (v6). Байтсвоп заголовка и lumps;
+валидацию версии/CRC и тексты ошибок оставляет серверной обёртке PR1_LoadProgs.
+=================
+*/
+void PR1VM_LoadData (pr1vm_t *vm, dprograms_t *hdr)
+{
+	int i;
+	dprograms_t *p = hdr;
+
+	for (i = 0; i < (int) sizeof(*p) / 4 ; i++)
+		((int *)p)[i] = LittleLong ( ((int *)p)[i] );
+
+	PR1VM_FillAndSwapLumps (vm, p);
+}
+
+/*
+=================
+PR1VM_CommitServer
+
+PR1VM (S2): сервер — зеркала инстанса -> общие «модульные» глобалы (их читают
+PR2 и sv_*.c). Зовётся после успешной PR1VM_LoadData.
+=================
+*/
+void PR1VM_CommitServer (pr1vm_t *vm)
+{
+	progs = vm->progs;
+	pr_functions = vm->functions;
+	pr_strings = vm->strings;
+	pr_globaldefs = vm->globaldefs;
+	pr_fielddefs = vm->fielddefs;
+	pr_statements = vm->statements;
+	pr_global_struct = vm->global_struct;
+	pr_globals = vm->globals;
+	pr_edict_size = vm->edict_size;
+}
+
+/*
+=================
+PR1VM_LoadClientV7
+
+PR1VM (S3): клиентский v7-secondary16 loader (наш csprogs.dat, «пустой»
+extended). CRC не проверяется; ошибки -> false + Con_Printf (без SV_Error).
+=================
+*/
+#define PR1VM_SECONDARYVERSION16 0x021b1461
+
+qbool PR1VM_LoadClientV7 (pr1vm_t *vm, const byte *data, int filesize)
+{
+	int i;
+	int *h = (int *)(void *)data;
+	int numtypes, numbodylessfuncs, blockscompressed, secondaryversion;
+
+	if (!data || filesize < 23 * (int)sizeof(int))
+	{
+		Con_Printf ("PR1VM_LoadClientV7: file too small (%d bytes)\n", filesize);
+		return false;
+	}
+
+	// смотрим сырую LE-версию до байтсвопа
+	if (LittleLong(h[0]) != 7)
+	{
+		Con_Printf ("PR1VM_LoadClientV7: not a v7 progs (version=%d)\n", LittleLong(h[0]));
+		return false;
+	}
+
+	// byte swap the (23-int) header
+	for (i = 0; i < 23; i++)
+		h[i] = LittleLong (h[i]);
+
+	// поля за пределами классического dprograms_t (индексы v7-заголовка)
+	numbodylessfuncs = h[18];
+	numtypes = h[20];
+	blockscompressed = h[21];
+	secondaryversion = h[22];
+
+	if (secondaryversion != PR1VM_SECONDARYVERSION16)
+	{
+		Con_Printf ("PR1VM_LoadClientV7: not an FTE-16 progs (secondaryversion=0x%x)\n", secondaryversion);
+		return false;
+	}
+	if (numtypes != 0 || numbodylessfuncs != 0 || blockscompressed != 0)
+	{
+		Con_Printf ("PR1VM_LoadClientV7: non-empty extended progs unsupported "
+			"(numtypes=%d numbodylessfuncs=%d blockscompressed=%d)\n",
+			numtypes, numbodylessfuncs, blockscompressed);
+		return false;
+	}
+
+	PR1VM_FillAndSwapLumps (vm, (dprograms_t *)data);
+	return true;
+}
+
+char *PR1VM_GetString (pr1vm_t *vm, int num)
+{
+	if (!vm)
+		return NULL;
+
+	// dual: серверный инстанс делегирует глобальным таблицам (их читают PR2/sv_*)
+	if (vm == PR1VM_Server())
+		return PR1_GetString (num);
+
+	if (!vm->strings)
+		return NULL;
+
+	if (num < 0)
+	{
+		int idx;
+
+		// INT_MIN cannot be negated (UB, and -INT_MIN stays negative); reject any
+		// value outside the addressable negative-string range before negating.
+		if (num == INT_MIN || num <= -2 * MAX_PRSTR)
+			return NULL;
+
+		idx = -num;
+		if (idx >= 2 * MAX_PRSTR)
+			return NULL;
+		if (idx >= MAX_PRSTR)
+			return vm->newstrtbl[idx - MAX_PRSTR];
+		return vm->strtbl[idx];
+	}
+	return vm->strings + num;
+}
+
+void PR1VM_SetString (pr1vm_t *vm, string_t *address, char *s)
+{
+	int i;
+
+	if (!address)
+		return;
+
+	// dual: серверный инстанс — глобальная таблица (как раньше)
+	if (vm == PR1VM_Server())
+	{
+		PR1_SetString (address, s);
+		return;
+	}
+
+	if (!s || !s[0])
+	{
+		*address = 0;
+		return;
+	}
+
+	if (!vm->strings)
+		return;
+
+	if (s - vm->strings < 0 || s - vm->strings > INT_MAX)
+	{
+		for (i = 0; i < vm->numstr; i++)
+		{
+			if (vm->strtbl[i] == s)
+			{
+				*address = -i;
+				return;
+			}
+		}
+		if (vm->numstr + 1 >= MAX_PRSTR)
+			return;	// клиент: без фатала (S4; расширится с builtins в S5)
+		vm->strtbl[++vm->numstr] = s;
+		*address = -vm->numstr;
+	}
+	else
+	{
+		*address = (int)(s - vm->strings);
+	}
+}
+
+dfunction_t *PR1VM_FindFunction (pr1vm_t *vm, const char *name)
+{
+	int i;
+
+	if (!vm || !vm->functions || !name)
+		return NULL;
+
+	for (i = 0; i < vm->progs->numfunctions; i++)
+	{
+		char *s = PR1VM_GetString (vm, vm->functions[i].s_name);
+		if (s && s[0] && !strcmp (s, name))
+			return &vm->functions[i];
+	}
+	return NULL;
+}
+
+int PR1VM_FindGlobal (pr1vm_t *vm, const char *name)
+{
+	int i;
+
+	if (!vm || !vm->globaldefs || !name)
+		return -1;
+
+	for (i = 0; i < vm->progs->numglobaldefs; i++)
+	{
+		char *s = PR1VM_GetString (vm, vm->globaldefs[i].s_name);
+		if (s && s[0] && !strcmp (s, name))
+			return vm->globaldefs[i].ofs;
+	}
+	return -1;
+}
+
+/*
+=================
+PR1VM_CSQCSmoke_f
+
+PR1VM (S3, debug): загружает csprogs.dat (v7) из текущего gamedir в
+статический клиентский инстанс, резолвит CSQC-функции и исполняет
+CSQC_WorldLoaded (пустое тело — builtins клиента ещё не подключены, S5).
+=================
+*/
+static pr1vm_t csqc_smoke_vm;
+
+void PR1VM_CSQCSmoke_f (void)
+{
+	byte *data;
+	int filesize;
+	pr1vm_t *vm = &csqc_smoke_vm;
+	dfunction_t *f;
+	func_t idx;
+
+	data = (byte *)FS_LoadHunkFile ("csprogs.dat", &filesize);
+	if (!data)
+	{
+		Con_Printf ("csqc_smoke: couldn't load csprogs.dat from gamedir\n");
+		return;
+	}
+
+	PR1VM_Reset (vm);
+	if (!PR1VM_LoadClientV7 (vm, data, filesize))
+	{
+		Con_Printf ("csqc_smoke: v7 load failed\n");
+		return;
+	}
+
+	Con_Printf ("csqc_smoke: client v7: statements=%d functions=%d globals=%d"
+		" (server PR1: statements=%d functions=%d)\n",
+		vm->progs->numstatements, vm->progs->numfunctions, vm->progs->numglobals,
+		progs ? progs->numstatements : -1, progs ? progs->numfunctions : -1);
+
+	f = PR1VM_FindFunction (vm, "CSQC_Init");
+	Con_Printf ("csqc_smoke: CSQC_Init %s\n", f ? "found" : "MISSING");
+	f = PR1VM_FindFunction (vm, "CSQC_WorldLoaded");
+	Con_Printf ("csqc_smoke: CSQC_WorldLoaded %s\n", f ? "found" : "MISSING");
+	if (!f)
+		return;
+
+	idx = (func_t)(f - vm->functions);
+	PR1VM_ExecuteProgram (vm, idx);
+	Con_Printf ("csqc_smoke: CSQC_WorldLoaded executed ok (server PR1 still alive)\n");
+}
+
 void PR1_LoadProgs (void)
 {
 	int	i;
@@ -1186,65 +1500,30 @@ void PR1_LoadProgs (void)
 	snprintf (num, sizeof(num), "%i", CRC_Block ((byte *)progs, filesize));
 	Info_SetValueForStarKey (svs.info, "*progs", num, MAX_SERVERINFO_STRING);
 
-	// byte swap the header
-	for (i = 0; i < (int) sizeof(*progs) / 4 ; i++)
-		((int *)progs)[i] = LittleLong ( ((int *)progs)[i] );
-
-	if (progs->version != PROG_VERSION)
-		SV_Error ("qwprogs.dat has wrong version number (%i should be %i)", progs->version, PROG_VERSION);
-	if (progs->crc != (pr_nqprogs ? NQ_PROGHEADER_CRC : PROGHEADER_CRC))
-		SV_Error ("You must have the qwprogs.dat from QuakeWorld installed");
-
-	pr_functions = (dfunction_t *)((byte *)progs + progs->ofs_functions);
-	pr_strings = (char *)progs + progs->ofs_strings;
-	pr_globaldefs = (ddef_t *)((byte *)progs + progs->ofs_globaldefs);
-	pr_fielddefs = (ddef_t *)((byte *)progs + progs->ofs_fielddefs);
-	pr_statements = (dstatement_t *)((byte *)progs + progs->ofs_statements);
-
-	num_prstr = 0;
-
-	pr_global_struct = (globalvars_t *)((byte *)progs + progs->ofs_globals);
-	pr_globals = (float *)pr_global_struct;
-
-	pr_edict_size = progs->entityfields * 4;
-
-	// byte swap the lumps
-	for (i = 0; i < progs->numstatements; i++)
+	// PR1VM (S2): загрузка в инстанс (swap заголовка+lumps) + проверки,
+	// затем коммит зеркал в общие глобалы.
 	{
-		pr_statements[i].op = LittleShort(pr_statements[i].op);
-		pr_statements[i].a = LittleShort(pr_statements[i].a);
-		pr_statements[i].b = LittleShort(pr_statements[i].b);
-		pr_statements[i].c = LittleShort(pr_statements[i].c);
-	}
+		pr1vm_t *vm = PR1VM_Server();
 
-	for (i = 0; i < progs->numfunctions; i++)
-	{
-		pr_functions[i].first_statement = LittleLong (pr_functions[i].first_statement);
-		pr_functions[i].parm_start = LittleLong (pr_functions[i].parm_start);
-		pr_functions[i].s_name = LittleLong (pr_functions[i].s_name);
-		pr_functions[i].s_file = LittleLong (pr_functions[i].s_file);
-		pr_functions[i].numparms = LittleLong (pr_functions[i].numparms);
-		pr_functions[i].locals = LittleLong (pr_functions[i].locals);
-	}
+		// S6: каждая загрузка (включая повторные/после ошибок) начинается с
+		// чистого инстанса — чинит стейл-зеркала после неудачного load.
+		PR1VM_UnLoad (vm);
 
-	for (i = 0; i < progs->numglobaldefs; i++)
-	{
-		pr_globaldefs[i].type = LittleShort (pr_globaldefs[i].type);
-		pr_globaldefs[i].ofs = LittleShort (pr_globaldefs[i].ofs);
-		pr_globaldefs[i].s_name = LittleLong (pr_globaldefs[i].s_name);
-	}
+		num_prstr = 0;
 
-	for (i = 0; i < progs->numfielddefs; i++)
-	{
-		pr_fielddefs[i].type = LittleShort (pr_fielddefs[i].type);
-		if (pr_fielddefs[i].type & DEF_SAVEGLOBAL)
-			SV_Error ("PR1_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
-		pr_fielddefs[i].ofs = LittleShort (pr_fielddefs[i].ofs);
-		pr_fielddefs[i].s_name = LittleLong (pr_fielddefs[i].s_name);
-	}
+		PR1VM_LoadData(vm, progs);
 
-	for (i = 0; i < progs->numglobals; i++)
-		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
+		if (vm->progs->version != PROG_VERSION)
+			SV_Error ("qwprogs.dat has wrong version number (%i should be %i)", vm->progs->version, PROG_VERSION);
+		if (vm->progs->crc != (pr_nqprogs ? NQ_PROGHEADER_CRC : PROGHEADER_CRC))
+			SV_Error ("You must have the qwprogs.dat from QuakeWorld installed");
+
+		for (i = 0; i < vm->progs->numfielddefs; i++)
+			if (vm->fielddefs[i].type & DEF_SAVEGLOBAL)
+				SV_Error ("PR1_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
+
+		PR1VM_CommitServer(vm);
+	}
 
 	PR_InitBuiltins();
 }
@@ -1273,6 +1552,9 @@ void PR1_Init (void)
 	Cmd_AddCommand ("profile", PR_Profile_f);
 
 	memset(pr_newstrtbl, 0, sizeof(pr_newstrtbl));
+
+	// PR1VM: серверный инстанс исполнения (S1) — обнуляем состояние.
+	PR1VM_Reset(PR1VM_Server());
 }
 
 edict_t *EDICT_NUM(int n)

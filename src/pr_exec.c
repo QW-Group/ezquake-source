@@ -21,29 +21,93 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
+#include "pr1vm.h"
 #include <limits.h>
 
-typedef struct prstack_s
+// Состояние исполнения PR1 перенесено в pr1vm_t (pr1vm.h). Остаются общими:
+// pr_trace (флаг отладки) и pr_argc (число аргументов вызова builtin) — до S5.
+
+static pr1vm_t sv_pr1vm;	// серверный инстанс (default для PR_* обёрток)
+static pr1vm_t *g_active;	// инстанс, внутри которого сейчас исполняется PR1
+
+pr1vm_t *PR1VM_Active(void)
 {
-	int s;
-	dfunction_t *f;
-} prstack_t;
+	return g_active;
+}
 
-#define	MAX_STACK_DEPTH 32
-prstack_t	pr_stack[MAX_STACK_DEPTH];
-int			pr_depth;
+pr1vm_t *PR1VM_Server(void)
+{
+	return &sv_pr1vm;
+}
 
-#define	LOCALSTACK_SIZE 2048
-int			localstack[LOCALSTACK_SIZE];
-int			localstack_used;
+void PR1VM_Reset(pr1vm_t *vm)
+{
+	memset(vm, 0, sizeof(*vm));
+}
 
+// S6: полный сброс зеркал/exec-состояния, host-колбэки сохраняются.
+void PR1VM_UnLoad (pr1vm_t *vm)
+{
+	void (*host_error)(pr1vm_t *, const char *) = vm->host_error;
+	void (*host_print)(pr1vm_t *, const char *) = vm->host_print;
+	void *host_udata = vm->host_udata;
 
-qbool		pr_trace;
-dfunction_t	*pr_xfunction;
-int			pr_xstatement;
+	memset (vm, 0, sizeof (*vm));
+	vm->host_error = host_error;
+	vm->host_print = host_print;
+	vm->host_udata = host_udata;
+}
 
+// forward decls (определены ниже в этом файле)
+void PR_PrintStatement (dstatement_t *s);
+void PR_StackTrace (void);
 
-int			pr_argc;
+// Серверный host_error: печатает statement/стек и завершает как раньше
+// (PR_RunError-поведение до S4). Клиентский инстанс получит свой колбэк в S5.
+static void PR1VM_ServerHostError (pr1vm_t *vm, const char *msg)
+{
+	sv_error = true;
+	if (vm && vm->xfunction)
+	{
+		PR_PrintStatement (vm->statements + vm->xstatement);
+		PR_StackTrace ();
+		vm->depth = 0; // dump the stack so SV_Error can shutdown functions
+	}
+	Con_Printf ("%s\n", msg);
+	SV_Error ("Program error (PR_RunError)");
+}
+
+void PR1VM_BindServer(pr1vm_t *vm)
+{
+	// Зеркала общих «модульных» глобалов (см. pr1vm.h). Exec-состояние не трогаем:
+	// BindServer может вызываться и на вложенном (рекурсивном) PR_ExecuteProgram.
+	vm->progs = progs;
+	vm->functions = pr_functions;
+	vm->fielddefs = pr_fielddefs;
+	vm->globaldefs = pr_globaldefs;
+	vm->statements = pr_statements;
+	vm->strings = pr_strings;
+	vm->global_struct = pr_global_struct;
+	vm->globals = pr_globals;
+	vm->edict_size = pr_edict_size;
+	vm->edicts = (edict_t *)sv.edicts;
+	vm->num_edicts = sv.num_edicts;
+	vm->max_edicts = sv.max_edicts;
+	vm->state = sv.state;
+	vm->game_edicts = sv.game_edicts;
+	vm->host_error = PR1VM_ServerHostError;
+}
+
+// S4 debug: провокация PR_RunError на серверном инстансе (проверка host_error).
+void PR1VM_TestError_f (void)
+{
+	pr1vm_t *vm = PR1VM_Server ();
+	PR1VM_BindServer (vm);
+	g_active = vm;
+	PR_RunError ("PR1VM test error (host_error path)");
+}
+
+// pr_argc/pr_trace перенесены в pr1vm_t (S5): vm->argc / vm->trace.
 
 char *pr_opnames[] =
     {
@@ -191,17 +255,18 @@ void PR_StackTrace (void)
 {
 	dfunction_t *f;
 	int i;
+	pr1vm_t *vm = g_active;
 
-	if (pr_depth == 0)
+	if (!vm || vm->depth == 0)
 	{
 		Con_Printf ("<NO STACK>\n");
 		return;
 	}
 
-	pr_stack[pr_depth].f = pr_xfunction;
-	for (i=pr_depth ; i>0 ; i--)
+	vm->stack[vm->depth].f = vm->xfunction;
+	for (i=vm->depth ; i>0 ; i--)
 	{
-		f = pr_stack[i].f;
+		f = vm->stack[i].f;
 
 		if (!f)
 			Con_Printf ("<NO FUNCTION>\n");
@@ -264,48 +329,69 @@ void PR_RunError (char *error, ...)
 {
 	va_list argptr;
 	char string[1024];
+	pr1vm_t *vm = g_active;
 
 	va_start (argptr,error);
 	vsnprintf (string, sizeof(string), error, argptr);
 	va_end (argptr);
 
+	if (vm && vm->host_error)
+	{
+		vm->host_error (vm, string);
+		return;
+	}
 
+	// fallback (vm==NULL или host_error не назначен): прежнее поведение
 	sv_error = true;
-
-	PR_PrintStatement (pr_statements + pr_xstatement);
-	PR_StackTrace ();
+	if (vm)
+	{
+		if (vm->xfunction)
+		{
+			PR_PrintStatement (vm->statements + vm->xstatement);
+			PR_StackTrace ();
+		}
+		vm->depth = 0; // dump the stack so SV_Error can shutdown functions
+	}
 	Con_Printf ("%s\n", string);
-
-	pr_depth = 0; // dump the stack so SV_Error can shutdown functions
 
 	SV_Error ("Program error (PR_RunError)");
 }
 
+// PR1VM S5b: entity-адресация через зеркала инстанса (формулы из progs.h на vm).
+static edict_t *PR1VM_ProgToEdict (pr1vm_t *vm, int e)
+{
+	return &vm->edicts[e / vm->edict_size];
+}
+
 /*
 ====================
-PR_EnterFunction
+PR1VM_EnterFunction
 
 Returns the new program statement counter
 ====================
 */
-int PR_EnterFunction (dfunction_t *f)
+int PR1VM_EnterFunction (pr1vm_t *vm, dfunction_t *f)
 {
 	int i, j, c, o;
 
-	pr_stack[pr_depth].s = pr_xstatement;
-	pr_stack[pr_depth].f = pr_xfunction;
-	pr_depth++;
-	if (pr_depth >= MAX_STACK_DEPTH)
+	vm->stack[vm->depth].s = vm->xstatement;
+	vm->stack[vm->depth].f = vm->xfunction;
+	vm->depth++;
+	if (vm->depth >= PR1VM_MAX_STACK)
 		PR_RunError ("stack overflow");
 
 	// save off any locals that the new function steps on
 	c = f->locals;
-	if (localstack_used + c > LOCALSTACK_SIZE)
+	// Overflow-safe checks (no signed sums): locals must fit both the local stack
+	// and the globals block starting at parm_start.
+	if (c < 0 || c > PR1VM_LOCALSTACK - vm->localstack_used)
 		PR_RunError ("PR_ExecuteProgram: locals stack overflow\n");
+	if (f->parm_start < 0 || c > vm->progs->numglobals - f->parm_start)
+		PR_RunError ("PR_ExecuteProgram: bad parm_start %d\n", f->parm_start);
 
 	for (i=0 ; i < c ; i++)
-		localstack[localstack_used+i] = ((int *)pr_globals)[f->parm_start + i];
-	localstack_used += c;
+		vm->localstack[vm->localstack_used+i] = ((int *)vm->globals)[f->parm_start + i];
+	vm->localstack_used += c;
 
 	// copy parameters
 	o = f->parm_start;
@@ -313,52 +399,46 @@ int PR_EnterFunction (dfunction_t *f)
 	{
 		for (j=0 ; j<f->parm_size[i] ; j++)
 		{
-			((int *)pr_globals)[o] = ((int *)pr_globals)[OFS_PARM0+i*3+j];
+			((int *)vm->globals)[o] = ((int *)vm->globals)[OFS_PARM0+i*3+j];
 			o++;
 		}
 	}
 
-	pr_xfunction = f;
+	vm->xfunction = f;
 	return f->first_statement - 1; // offset the s++
 }
 
-/*
-====================
-PR_LeaveFunction
-====================
-*/
-int PR_LeaveFunction (void)
+int PR1VM_LeaveFunction (pr1vm_t *vm)
 {
 	int i, c;
 
-	if (pr_depth <= 0)
+	if (vm->depth <= 0)
 		SV_Error ("prog stack underflow");
 
-	// restore locals from the stack
-	c = pr_xfunction->locals;
-	localstack_used -= c;
-	if (localstack_used < 0)
+	c = vm->xfunction->locals;
+	vm->localstack_used -= c;
+	if (vm->localstack_used < 0)
 		PR_RunError ("PR_ExecuteProgram: locals stack underflow\n");
 
 	for (i=0 ; i < c ; i++)
-		((int *)pr_globals)[pr_xfunction->parm_start + i] = localstack[localstack_used+i];
+		((int *)vm->globals)[vm->xfunction->parm_start + i] = vm->localstack[vm->localstack_used+i];
 
-	// up stack
-	pr_depth--;
-	pr_xfunction = pr_stack[pr_depth].f;
-	return pr_stack[pr_depth].s;
+	vm->depth--;
+	vm->xfunction = vm->stack[vm->depth].f;
+	return vm->stack[vm->depth].s;
 }
 
 /*
 ============================================================================
-PR_ExecuteProgram
+PR1VM_ExecuteProgram
 
-The interpretation main loop
+The interpretation main loop (per-instance)
 ============================================================================
 */
-void PR_ExecuteProgram (func_t fnum)
+void PR1VM_ExecuteProgram (pr1vm_t *vm, func_t fnum)
 {
 	eval_t *a = NULL, *b = NULL, *c = NULL;
+	pr1vm_t *saved_active;
 	int s;
 	dstatement_t *st = NULL;
 	dfunction_t *f, *newf;
@@ -368,39 +448,42 @@ void PR_ExecuteProgram (func_t fnum)
 	int exitdepth;
 	eval_t *ptr;
 
-	if (!fnum || fnum >= progs->numfunctions)
+	saved_active = g_active;
+	g_active = vm;
+
+	if (!fnum || fnum >= vm->progs->numfunctions)
 	{
-		if (pr_global_struct->self)
-			ED_Print (PROG_TO_EDICT(pr_global_struct->self));
+		if (vm->global_struct && vm->global_struct->self && vm->edicts)
+			ED_Print (PR1VM_ProgToEdict(vm, vm->global_struct->self));
 		SV_Error ("PR_ExecuteProgram: NULL function");
 	}
 
-	f = &pr_functions[fnum];
+	f = &vm->functions[fnum];
 
 	runaway = 100000;
-	pr_trace = false;
+	vm->trace = false;
 
 	// make a stack frame
-	exitdepth = pr_depth;
+	exitdepth = vm->depth;
 
-	s = PR_EnterFunction (f);
+	s = PR1VM_EnterFunction (vm, f);
 
 	while (1)
 	{
 		s++; // next statement
 
-		st = &pr_statements[s];
-		a = (eval_t *)&pr_globals[st->a];
-		b = (eval_t *)&pr_globals[st->b];
-		c = (eval_t *)&pr_globals[st->c];
+		st = &vm->statements[s];
+		a = (eval_t *)&vm->globals[st->a];
+		b = (eval_t *)&vm->globals[st->b];
+		c = (eval_t *)&vm->globals[st->c];
 
 		if (--runaway == 0)
 			PR_RunError ("runaway loop error");
 
-		pr_xfunction->profile++;
-		pr_xstatement = s;
+		vm->xfunction->profile++;
+		vm->xstatement = s;
 
-		if (pr_trace)
+		if (vm->trace)
 			PR_PrintStatement (st);
 
 		switch (st->op)
@@ -481,13 +564,15 @@ void PR_ExecuteProgram (func_t fnum)
 			c->_float = !a->vector[0] && !a->vector[1] && !a->vector[2];
 			break;
 		case OP_NOT_S:
-			c->_float = !a->string || !*PR1_GetString(a->string);
+			c->_float = !a->string || !*PR1VM_GetString(vm, a->string);
 			break;
 		case OP_NOT_FNC:
 			c->_float = !a->function;
 			break;
 		case OP_NOT_ENT:
-			c->_float = (PROG_TO_EDICT(a->edict) == sv.edicts);
+			// FTE: !OPA->edict (raw prog number). ProgToEdict would raise
+			// "bad entity number" on an out-of-range value and disable the module.
+			c->_float = (a->edict == 0);
 			break;
 
 		case OP_EQ_F:
@@ -499,7 +584,7 @@ void PR_ExecuteProgram (func_t fnum)
 			            (a->vector[2] == b->vector[2]);
 			break;
 		case OP_EQ_S:
-			c->_float = !strcmp(PR1_GetString(a->string), PR1_GetString(b->string));
+			c->_float = !strcmp(PR1VM_GetString(vm, a->string), PR1VM_GetString(vm, b->string));
 			break;
 		case OP_EQ_E:
 			c->_float = a->_int == b->_int;
@@ -518,7 +603,7 @@ void PR_ExecuteProgram (func_t fnum)
 			            (a->vector[2] != b->vector[2]);
 			break;
 		case OP_NE_S:
-			c->_float = strcmp(PR1_GetString(a->string), PR1_GetString(b->string));
+			c->_float = strcmp(PR1VM_GetString(vm, a->string), PR1VM_GetString(vm, b->string));
 			break;
 		case OP_NE_E:
 			c->_float = a->_int != b->_int;
@@ -546,24 +631,26 @@ void PR_ExecuteProgram (func_t fnum)
 		case OP_STOREP_FLD:		// integers
 		case OP_STOREP_S:
 		case OP_STOREP_FNC:		// pointers
-			ptr = (eval_t *)((byte *)sv.game_edicts + b->_int);
+			ptr = (eval_t *)((byte *)vm->game_edicts + b->_int);
 			ptr->_int = a->_int;
 			break;
 		case OP_STOREP_V:
-			ptr = (eval_t *)((byte *)sv.game_edicts + b->_int);
+			ptr = (eval_t *)((byte *)vm->game_edicts + b->_int);
 			ptr->vector[0] = a->vector[0];
 			ptr->vector[1] = a->vector[1];
 			ptr->vector[2] = a->vector[2];
 			break;
 
 		case OP_ADDRESS:
-			ed = PROG_TO_EDICT(a->edict);
+			ed = PR1VM_ProgToEdict(vm, a->edict);
 #ifdef PARANOID
 			NUM_FOR_EDICT(ed);		// make sure it's in range
 #endif
-			if (ed == (edict_t *)sv.edicts && sv.state == ss_active)
+			// The client instance keeps state 0 (not ss_active), so gate world
+			// writes on abortbuf_valid too: an untrusted module must not mutate world.
+			if (ed == vm->edicts && (vm->state == ss_active || vm->abortbuf_valid))
 				PR_RunError ("assignment to world entity");
-			c->_int = (byte *)((int *)ed->v + PR_FIELDOFS(b->_int)) - (byte *)sv.game_edicts;
+			c->_int = (byte *)((int *)ed->v + PR_FIELDOFS(b->_int)) - (byte *)vm->game_edicts;
 			break;
 
 		case OP_LOAD_F:
@@ -571,7 +658,7 @@ void PR_ExecuteProgram (func_t fnum)
 		case OP_LOAD_ENT:
 		case OP_LOAD_S:
 		case OP_LOAD_FNC:
-			ed = PROG_TO_EDICT(a->edict);
+			ed = PR1VM_ProgToEdict(vm, a->edict);
 #ifdef PARANOID
 			NUM_FOR_EDICT(ed);		// make sure it's in range
 #endif
@@ -586,7 +673,7 @@ void PR_ExecuteProgram (func_t fnum)
 			break;
 
 		case OP_LOAD_V:
-			ed = PROG_TO_EDICT(a->edict);
+			ed = PR1VM_ProgToEdict(vm, a->edict);
 #ifdef PARANOID
 			NUM_FOR_EDICT(ed);		// make sure it's in range
 #endif
@@ -621,39 +708,42 @@ void PR_ExecuteProgram (func_t fnum)
 		case OP_CALL6:
 		case OP_CALL7:
 		case OP_CALL8:
-			pr_argc = st->op - OP_CALL0;
+			vm->argc = st->op - OP_CALL0;
 			if (!a->function)
 				PR_RunError ("NULL function");
 
-			newf = &pr_functions[a->function];
+			newf = &vm->functions[a->function];
 
 			if (newf->first_statement < 0)
 			{	// negative statements are built in functions
 				i = -newf->first_statement;
-				if (i >= pr_numbuiltins)
+				if (i >= vm->numbuiltins)
 					PR_RunError ("Bad builtin call number");
-				pr_builtins[i] ();
+				vm->builtins[i] ();
 				break;
 			}
 
-			s = PR_EnterFunction (newf);
+			s = PR1VM_EnterFunction (vm, newf);
 
 			break;
 
 		case OP_DONE:
 		case OP_RETURN:
-			pr_globals[OFS_RETURN] = pr_globals[st->a];
-			pr_globals[OFS_RETURN+1] = pr_globals[st->a+1];
-			pr_globals[OFS_RETURN+2] = pr_globals[st->a+2];
+			vm->globals[OFS_RETURN] = vm->globals[st->a];
+			vm->globals[OFS_RETURN+1] = vm->globals[st->a+1];
+			vm->globals[OFS_RETURN+2] = vm->globals[st->a+2];
 
-			s = PR_LeaveFunction ();
-			if (pr_depth == exitdepth)
+			s = PR1VM_LeaveFunction (vm);
+			if (vm->depth == exitdepth)
+			{
+				g_active = saved_active;
 				return;		// all done
+			}
 			break;
 
 		case OP_STATE:
-			ed = PROG_TO_EDICT(pr_global_struct->self);
-			ed->v->nextthink = pr_global_struct->time + 0.1;
+			ed = PR1VM_ProgToEdict(vm, vm->global_struct->self);
+			ed->v->nextthink = vm->global_struct->time + 0.1;
 			if (a->_float != ed->v->frame)
 			{
 				ed->v->frame = a->_float;
@@ -666,6 +756,20 @@ void PR_ExecuteProgram (func_t fnum)
 		}
 	}
 
+}
+
+/*
+============
+PR_ExecuteProgram
+
+Server-facing wrapper: runs on the server PR1 instance (зеркала из общих
+глобалов обновляются перед каждым вызовом).
+============
+*/
+void PR_ExecuteProgram (func_t fnum)
+{
+	PR1VM_BindServer (&sv_pr1vm);
+	PR1VM_ExecuteProgram (&sv_pr1vm, fnum);
 }
 
 //=============================================================================
@@ -865,12 +969,13 @@ void PR1_UnLoadProgs(void)
 {
 	if (progs)
 	{
-		// FIXME: There should be done alot of variables reseting...
-
 #ifdef WITH_NQPROGS
 		pr_nqprogs = false;
 #endif
 		progs = NULL;
+
+		// PR1VM S6: инстанс больше не ссылается на освобождаемый модуль.
+		PR1VM_UnLoad (PR1VM_Server ());
 	}
 }
 

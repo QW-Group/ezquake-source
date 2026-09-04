@@ -228,6 +228,7 @@ source_group(TREE ${QWPROT_SOURCE_DIR} PREFIX "Header Files/qwprot" FILES ${qwpr
 
 set(server_headers
         ${SOURCE_DIR}/g_public.h
+        ${SOURCE_DIR}/pr1vm.h
         ${SOURCE_DIR}/pr2.h
         ${SOURCE_DIR}/pr_comp.h
         ${SOURCE_DIR}/progdefs.h

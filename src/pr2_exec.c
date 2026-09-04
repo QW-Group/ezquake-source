@@ -25,6 +25,7 @@
 
 #include "qwsvdef.h"
 #include "vm_local.h"
+#include "pr1vm.h"
 
 gameData_t gamedata;
 extern field_t *fields;
@@ -69,6 +70,8 @@ void PR2_Init(void)
 	Cmd_AddCommand ("edictcount", ED_Count);
 	Cmd_AddCommand ("profile", PR2_Profile_f);
 	Cmd_AddCommand ("mod", PR2_GameConsoleCommand);
+	Cmd_AddCommand ("csqc_smoke", PR1VM_CSQCSmoke_f);	// PR1VM S3 debug
+	Cmd_AddCommand ("pr1vm_test_error", PR1VM_TestError_f);	// PR1VM debug
 
 	Cmd_AddCommand ("vminfo", VM_VmInfo_f);
 	memset(pr_newstrtbl, 0, sizeof(pr_newstrtbl));
