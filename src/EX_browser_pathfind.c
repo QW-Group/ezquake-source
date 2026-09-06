@@ -56,6 +56,12 @@ extern cvar_t sb_listcache;
 #define PROXY_REPLY_ENTRY_LEN 8
 #define PROXY_REPLY_BUFFER_SIZE (PROXY_REPLY_ENTRY_LEN*MAX_SERVERS)
 
+// qwfwd mesh-capable reply: OOB + 'Q''M' + type(1) + nonce(4), followed
+// by ip(4), port(2), average ping(2), jitter(2), loss percent(2).
+#define MESH_REPLY_HEADER_LEN 11
+#define MESH_REPLY_ENTRY_LEN 12
+#define MESH_MSG_PINGSTATUS_REPLY 1
+
 // current amount of qw servers ~ 300... but neighbour count means MAX_SERVERS*MAX_NONLEAVES
 #define INVALID_NODE (-1)
 typedef int nodeid_t;
@@ -90,6 +96,8 @@ typedef struct proxy_query_request_t {
 	socket_t sock;
 	nodeid_t nodeid;
 	qbool done;
+	qbool ping_received;
+	unsigned int mesh_nonce;
 } proxy_query_request_t;
 
 typedef struct proxy_request_queue_t {
@@ -110,6 +118,7 @@ static nodeid_t startnode_id = 0;
 
 static qbool building_pingtree = false; // when true, the pingtree build thread is still working
 static qbool pingtree_built = false;
+static double pingtree_built_at;
 
 static sem_t phase2thread_lock;
 
@@ -292,6 +301,55 @@ static void SB_Proxy_ParseReply(const byte *buf, size_t buflen, proxy_ping_repor
 	}
 }
 
+static qbool SB_Mesh_ParseReply(const byte *buf, size_t buflen,
+	unsigned int expected_nonce, proxy_ping_report_callback callback)
+{
+	size_t offset;
+	unsigned int nonce;
+
+	if (buflen < MESH_REPLY_HEADER_LEN ||
+	    buf[0] != 0xff || buf[1] != 0xff || buf[2] != 0xff || buf[3] != 0xff ||
+	    buf[4] != 'Q' || buf[5] != 'M' ||
+	    buf[6] != MESH_MSG_PINGSTATUS_REPLY ||
+	    (buflen - MESH_REPLY_HEADER_LEN) % MESH_REPLY_ENTRY_LEN != 0)
+		return false;
+
+	nonce = (unsigned int)buf[7] |
+	        ((unsigned int)buf[8] << 8) |
+	        ((unsigned int)buf[9] << 16) |
+	        ((unsigned int)buf[10] << 24);
+	if (!nonce || nonce != expected_nonce)
+		return false;
+
+	for (offset = MESH_REPLY_HEADER_LEN;
+	     offset + MESH_REPLY_ENTRY_LEN <= buflen;
+	     offset += MESH_REPLY_ENTRY_LEN) {
+		netadr_t adr;
+		int ping, jitter, loss, quality_cost;
+
+		memset(&adr, 0, sizeof(adr));
+		adr.type = NA_IP;
+		memcpy(adr.ip, buf + offset, 4);
+		adr.port = htons((unsigned short)(buf[offset + 4] |
+		                              (buf[offset + 5] << 8)));
+		ping = (short)(buf[offset + 6] | (buf[offset + 7] << 8));
+		jitter = (short)(buf[offset + 8] | (buf[offset + 9] << 8));
+		loss = (short)(buf[offset + 10] | (buf[offset + 11] << 8));
+		if (ping < 0 || jitter < 0 || loss < 0 || loss > 100)
+			continue;
+
+		// Preserve the existing dist_t graph while making route selection
+		// quality-aware.  A small ping advantage no longer beats severe
+		// jitter/loss; UI bestping remains an estimated route cost.
+		quality_cost = ping + jitter / 2 + loss * 2;
+		if (quality_cost > SHRT_MAX)
+			quality_cost = SHRT_MAX;
+		callback(adr, (dist_t)quality_cost);
+	}
+
+	return true;
+}
+
 void SB_Proxy_QueryForPingList(const netadr_t *address, proxy_ping_report_callback callback)
 {
 	byte buf[PROXY_REPLY_BUFFER_SIZE];
@@ -398,6 +456,8 @@ int SB_PingTree_SendQueryThread(void *thread_arg)
 		if (!queue->data[i].done) {
 			struct sockaddr_storage addr_to;
 			netadr_t netadr;
+			char mesh_query[64];
+			int mesh_query_len;
 
 			// Validate nodeid
 			if (queue->data[i].nodeid < 0 || queue->data[i].nodeid >= ping_nodes_count) {
@@ -408,11 +468,23 @@ int SB_PingTree_SendQueryThread(void *thread_arg)
 			netadr = SB_NodeNetadr_Get(queue->data[i].nodeid);
 
 			NetadrToSockadr(&netadr, &addr_to);
-			ret = sendto(queue->data[i].sock,
-				PROXY_PINGLIST_QUERY, PROXY_PINGLIST_QUERY_LEN, 0,
+			// Always ask for the rich mesh snapshot first.  Updated qwfwd
+			// instances answer with avg/jitter/loss; legacy instances ignore it.
+			mesh_query_len = snprintf(mesh_query, sizeof(mesh_query),
+				"\xff\xff\xff\xffmeshprobe %u", queue->data[i].mesh_nonce);
+			ret = sendto(queue->data[i].sock, mesh_query, mesh_query_len, 0,
 				(struct sockaddr *) &addr_to, sizeof (struct sockaddr));
-			if (ret < 0) {
-				Com_DPrintf("SB_PingTree_SendQueryThread sendto returned %d\n", ret);
+			if (ret < 0)
+				Com_DPrintf("SB_PingTree_SendQueryThread mesh sendto returned %d\n", ret);
+
+			// Keep byte-for-byte legacy compatibility and provide an immediate
+			// fallback when the remote proxy has not been upgraded.
+			if (!queue->data[i].ping_received) {
+				ret = sendto(queue->data[i].sock,
+					PROXY_PINGLIST_QUERY, PROXY_PINGLIST_QUERY_LEN, 0,
+					(struct sockaddr *) &addr_to, sizeof (struct sockaddr));
+				if (ret < 0)
+					Com_DPrintf("SB_PingTree_SendQueryThread ping sendto returned %d\n", ret);
 			}
 			Sys_MSleep(interval_ms);
 		}
@@ -505,6 +577,7 @@ static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue, FILE *f)
 			if (!queue->data[i].done && FD_ISSET(queue->data[i].sock, &recvset)) {
 				byte buf[PROXY_REPLY_BUFFER_SIZE];
 				struct sockaddr_storage addr_from;
+				netadr_t from, expected;
 				socklen_t addr_from_len = sizeof(struct sockaddr_in);
 
 				ret = recvfrom(queue->data[i].sock, (char *) buf, PROXY_REPLY_BUFFER_SIZE, 0, (struct sockaddr *) &addr_from, &addr_from_len);
@@ -513,14 +586,37 @@ static qbool SB_PingTree_RecvQuery(proxy_request_queue *queue, FILE *f)
 					continue;
 				}
 
-				if (strncmp("\xff\xff\xff\xffn", (char *) buf, 5) == 0) {
+				SockadrToNetadr(&addr_from, &from);
+				expected = SB_NodeNetadr_Get(queue->data[i].nodeid);
+				if (!NET_CompareAdr(from, expected)) {
+					Com_DPrintf("SB_PingTree_RecvQuery ignored unexpected source\n");
+					continue;
+				}
+
+				if (ret >= 5 && !queue->data[i].ping_received &&
+				    memcmp("\xff\xff\xff\xffn", buf, 5) == 0) {
 					nodeid_t id = queue->data[i].nodeid;
-					queue->data[i].done = true;
+					queue->data[i].ping_received = true;
 					ping_nodes[id].nlist_start = ping_neighbours_count;
 					if (f && ret > 5)
 							SB_Proxylist_Serialize_Reply(f, SB_NodeNetadr_Get(id), buf+5, ret-5);
 					SB_Proxy_ParseReply(buf+5, ret-5, SB_PingTree_AddProxyPing);
 					ping_nodes[id].nlist_end = ping_neighbours_count;
+				}
+				else if (ret >= MESH_REPLY_HEADER_LEN) {
+					nodeid_t id = queue->data[i].nodeid;
+					nodeid_t old_start = ping_nodes[id].nlist_start;
+					nodeid_t old_end = ping_nodes[id].nlist_end;
+					ping_nodes[id].nlist_start = ping_neighbours_count;
+					if (SB_Mesh_ParseReply(buf, (size_t)ret,
+					        queue->data[i].mesh_nonce, SB_PingTree_AddProxyPing)) {
+						ping_nodes[id].nlist_end = ping_neighbours_count;
+						queue->data[i].done = true;
+					}
+					else {
+						ping_nodes[id].nlist_start = old_start;
+						ping_nodes[id].nlist_end = old_end;
+					}
 				}
 				else {
 					Com_DPrintf("Invalid reply received\n");
@@ -573,7 +669,12 @@ static void SB_PingTree_ScanProxies(void)
 	for (i = 0; i < ping_nodes_count; i++) {
 		if (ping_nodes[i].proxport) {
 			queue->data[request].done = false;
+			queue->data[request].ping_received = false;
 			queue->data[request].nodeid = i;
+			queue->data[request].mesh_nonce =
+				((unsigned int)rand() << 16) ^ (unsigned int)rand() ^ (unsigned int)(request + 1);
+			if (!queue->data[request].mesh_nonce)
+				queue->data[request].mesh_nonce = (unsigned int)(request + 1);
 			queue->data[request].sock = UDP_OpenSocket(PORT_ANY);
 			request++;
 		}
@@ -691,13 +792,19 @@ int SB_PingTree_Phase2(void *ignored_arg)
 	Sys_SemPost(&phase2thread_lock);
 	building_pingtree = false;
 	pingtree_built = true;
+	pingtree_built_at = Sys_DoubleTime();
 	return 0;
 }
 
 /// Has the Ping Tree been already built?
 qbool SB_PingTree_Built(void)
 {
-	return ping_nodes_count > 0;
+	return pingtree_built;
+}
+
+double SB_PingTree_Age(void)
+{
+	return pingtree_built_at > 0 ? Sys_DoubleTime() - pingtree_built_at : DBL_MAX;
 }
 
 /// Creates whole graph structure for looking up shortest paths to servers (ping-wise).
@@ -711,6 +818,8 @@ void SB_PingTree_Build(void)
 	}
 	// no race condition here, as this must always get executed by the main thread
 	building_pingtree = true;
+	pingtree_built = false;
+	pingtree_built_at = 0;
 	Com_Printf("Building the Ping Tree...\n");
 
 	// first quick phase is initialization + quick read of data from the server browser
@@ -719,6 +828,9 @@ void SB_PingTree_Build(void)
 	Sys_SemWait(&phase2thread_lock);
 	if (Sys_CreateDetachedThread(SB_PingTree_Phase2, NULL) < 0) {
 		Com_Printf("Failed to create SB_PingTree_Phase2 thread\n");
+		building_pingtree = false;
+		pingtree_built = false;
+		Sys_SemPost(&phase2thread_lock);
 	}
 }
 
@@ -765,6 +877,241 @@ int SB_PingTree_GetPathLen(const netadr_t *addr)
 
 		return proxies;
 	}
+}
+
+/// Returns the proxy chain string for the best path to addr.
+/// Does NOT modify cl_proxyaddr, does NOT issue any connect command.
+///
+/// out receives the proxylist string, e.g. "1.2.3.4:30000" or
+/// "1.2.3.4:30000@5.6.7.8:30000" for multi-hop routes.
+/// out_total_ping_ms receives the Dijkstra total ping estimate.
+///
+/// Returns true  if a proxy route was found and written to out.
+/// Returns false if direct connection is best, or no route exists.
+qbool SB_PingTree_GetProxyString(const netadr_t *addr, char *out, size_t outsz,
+                                  int *out_total_ping_ms)
+{
+	nodeid_t target = SB_PingTree_FindIp(SB_Netaddr2Ipaddr(addr));
+
+	out[0] = '\0';
+	*out_total_ping_ms = 0;
+
+	if (target == INVALID_NODE || ping_nodes[target].prev == INVALID_NODE) {
+		return false;
+	}
+
+	*out_total_ping_ms = (int)ping_nodes[target].dist;
+
+	if (ping_nodes[target].prev == startnode_id) {
+		return false;
+	}
+
+	{
+		char proxylist_buf[32 * MAX_NONLEAVES];
+		nodeid_t current = ping_nodes[target].prev;
+
+		proxylist_buf[0] = '\0';
+
+		while (current != startnode_id && current != INVALID_NODE) {
+			byte *ip = ping_nodes[current].ipaddr.data;
+			char newval[2048];
+
+			snprintf(&newval[0], sizeof(newval), "%d.%d.%d.%d:%d%s%s",
+			         (int)ip[0], (int)ip[1], (int)ip[2], (int)ip[3],
+			         (int)ntohs(ping_nodes[current].proxport),
+			         *proxylist_buf ? "@" : "",
+			         proxylist_buf);
+			strlcpy(proxylist_buf, newval, sizeof(proxylist_buf));
+
+			current = ping_nodes[current].prev;
+		}
+
+		strlcpy(out, proxylist_buf, outsz);
+	}
+
+	return (out[0] != '\0');
+}
+
+/*
+ * Return the best route for every viable first hop.  This keeps route
+ * discovery in sb_findroutes: connectbr is only a user-facing selector and
+ * connectnext advances through this cached ranking without probing again.
+ *
+ * One reverse Dijkstra from the destination gives the cheapest continuation
+ * from every proxy.  Combining that with each measured local->proxy edge
+ * produces independent alternatives without maintaining a second graph.
+ */
+int SB_PingTree_GetRoutes(const netadr_t *addr, sb_route_t *routes, int max_routes)
+{
+	nodeid_t target;
+	int *heads, *rev_next, *rev_source, *dist, *next_hop, *route_hops;
+	qbool *visited;
+	int reverse_count = 0;
+	int i, source, count = 0;
+
+	if (!routes || max_routes <= 0 || !SB_PingTree_Built() || building_pingtree)
+		return 0;
+	if (max_routes > SB_ROUTE_MAX_ALTERNATIVES)
+		max_routes = SB_ROUTE_MAX_ALTERNATIVES;
+
+	target = SB_PingTree_FindIp(SB_Netaddr2Ipaddr(addr));
+	if (target == INVALID_NODE)
+		return 0;
+
+	heads = (int *)Q_malloc(sizeof(int) * ping_nodes_count);
+	rev_next = (int *)Q_malloc(sizeof(int) * ping_neighbours_count);
+	rev_source = (int *)Q_malloc(sizeof(int) * ping_neighbours_count);
+	dist = (int *)Q_malloc(sizeof(int) * ping_nodes_count);
+	next_hop = (int *)Q_malloc(sizeof(int) * ping_nodes_count);
+	route_hops = (int *)Q_malloc(sizeof(int) * ping_nodes_count);
+	visited = (qbool *)Q_malloc(sizeof(qbool) * ping_nodes_count);
+	if (!heads || !rev_next || !rev_source || !dist || !next_hop || !route_hops || !visited)
+		goto cleanup;
+
+	for (i = 0; i < ping_nodes_count; i++) {
+		heads[i] = -1;
+		dist[i] = INT_MAX;
+		next_hop[i] = INVALID_NODE;
+		route_hops[i] = INT_MAX;
+		visited[i] = false;
+	}
+
+	for (source = 0; source < ping_nodes_count; source++) {
+		if (ping_nodes[source].nlist_start == INVALID_NODE)
+			continue;
+		for (i = ping_nodes[source].nlist_start; i < ping_nodes[source].nlist_end; i++) {
+			nodeid_t destination = ping_neighbours[i].id;
+			rev_source[reverse_count] = source;
+			rev_next[reverse_count] = heads[destination];
+			heads[destination] = reverse_count++;
+		}
+	}
+
+	dist[target] = 0;
+	route_hops[target] = 0;
+	for (;;) {
+		nodeid_t current = INVALID_NODE;
+		int best = INT_MAX;
+		for (i = 0; i < ping_nodes_count; i++) {
+			if (!visited[i] && dist[i] < best) {
+				best = dist[i];
+				current = i;
+			}
+		}
+		if (current == INVALID_NODE)
+			break;
+		visited[current] = true;
+		for (i = heads[current]; i >= 0; i = rev_next[i]) {
+			nodeid_t predecessor = rev_source[i];
+			int edge_index;
+			if (predecessor == startnode_id || route_hops[current] >= MAX_NONLEAVES)
+				continue;
+			for (edge_index = ping_nodes[predecessor].nlist_start;
+			     edge_index < ping_nodes[predecessor].nlist_end; edge_index++) {
+				if (ping_neighbours[edge_index].id == current) {
+					int alternative;
+					if (ping_neighbours[edge_index].dist < 0 ||
+					    dist[current] > INT_MAX - ping_neighbours[edge_index].dist)
+						break;
+					alternative = dist[current] + ping_neighbours[edge_index].dist;
+					if (alternative < dist[predecessor]) {
+						dist[predecessor] = alternative;
+						next_hop[predecessor] = current;
+						route_hops[predecessor] = route_hops[current] + 1;
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	if (ping_nodes[startnode_id].nlist_start != INVALID_NODE) {
+		for (i = ping_nodes[startnode_id].nlist_start;
+		     i < ping_nodes[startnode_id].nlist_end; i++) {
+			nodeid_t first = ping_neighbours[i].id;
+			sb_route_t candidate;
+			nodeid_t current;
+			int duplicate = false;
+			int safety = 0;
+
+			memset(&candidate, 0, sizeof(candidate));
+			if (first == target) {
+				candidate.total_cost_ms = ping_neighbours[i].dist;
+			}
+			else {
+				if (!ping_nodes[first].proxport || dist[first] == INT_MAX)
+					continue;
+				if (ping_neighbours[i].dist < 0 ||
+				    dist[first] > INT_MAX - ping_neighbours[i].dist)
+					continue;
+				candidate.total_cost_ms = ping_neighbours[i].dist + dist[first];
+				current = first;
+				while (current != target && current != INVALID_NODE && safety++ < MAX_NONLEAVES) {
+					byte *ip = ping_nodes[current].ipaddr.data;
+					char proxy[48];
+					if (!ping_nodes[current].proxport) {
+						candidate.proxylist[0] = '\0';
+						break;
+					}
+					snprintf(proxy, sizeof(proxy), "%d.%d.%d.%d:%d",
+					         ip[0], ip[1], ip[2], ip[3], ntohs(ping_nodes[current].proxport));
+					if (strlen(candidate.proxylist) + (candidate.proxylist[0] ? 1 : 0) +
+					    strlen(proxy) + 1 > sizeof(candidate.proxylist)) {
+						candidate.proxylist[0] = '\0';
+						break;
+					}
+					if (candidate.proxylist[0])
+						strlcat(candidate.proxylist, "@", sizeof(candidate.proxylist));
+					strlcat(candidate.proxylist, proxy, sizeof(candidate.proxylist));
+					candidate.hops++;
+					current = next_hop[current];
+				}
+				if (current != target || !candidate.proxylist[0])
+					continue;
+			}
+
+			for (source = 0; source < count; source++) {
+				if (!strcmp(routes[source].proxylist, candidate.proxylist)) {
+					duplicate = true;
+					break;
+				}
+			}
+			if (!duplicate) {
+				if (count < max_routes) {
+					routes[count++] = candidate;
+				}
+				else {
+					int worst = 0;
+					for (source = 1; source < count; source++)
+						if (routes[source].total_cost_ms > routes[worst].total_cost_ms)
+							worst = source;
+					if (candidate.total_cost_ms < routes[worst].total_cost_ms)
+						routes[worst] = candidate;
+				}
+			}
+		}
+	}
+
+	/* The candidate count is small; insertion sort keeps this C89-friendly. */
+	for (i = 1; i < count; i++) {
+		sb_route_t value = routes[i];
+		int pos = i;
+		while (pos > 0 && routes[pos - 1].total_cost_ms > value.total_cost_ms) {
+			routes[pos] = routes[pos - 1];
+			pos--;
+		}
+		routes[pos] = value;
+	}
+
+cleanup:
+	Q_free(heads);
+	Q_free(rev_next);
+	Q_free(rev_source);
+	Q_free(dist);
+	Q_free(next_hop);
+	Q_free(route_hops);
+	Q_free(visited);
+	return count;
 }
 
 /// Connects to given QW server using the best available route
@@ -872,6 +1219,7 @@ void SB_Proxylist_Unserialize_f(void)
 		SB_PingTree_Dijkstra();
 		SB_PingTree_UpdateServerList();
 		pingtree_built = true;
+		pingtree_built_at = Sys_DoubleTime();
 	}
 	else if (err == -1) {
 		Com_Printf("Format didn't match\n");
