@@ -46,6 +46,8 @@ RENDERER_METHOD(void, InvalidateLightmapTextures, void)
 RENDERER_METHOD(void, LightmapShutdown, void)
 
 // Rendering loop
+RENDERER_METHOD(void, BeginFrame, void)
+RENDERER_METHOD(void, EndFrame, void)
 RENDERER_METHOD(void, SetupGL, void)
 RENDERER_METHOD(void, ChainBrushModelSurfaces, model_t* model, entity_t* ent)
 RENDERER_METHOD(void, DrawBrushModel, entity_t* ent, qbool polygonOffset, qbool caustics)

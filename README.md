@@ -22,7 +22,7 @@ gameplay.
  * Recorded games browser
  * Customization of all possible graphics elements of the game including Heads Up Display
  * All sorts of scripting possibilities
- * Windows, Linux, MacOSX and FreeBSD platforms supported (SDL2).
+ * Windows, Linux, MacOSX and FreeBSD platforms supported (SDL3).
 
 Our client comes only with bare minimum of game media. If you want to
 experience ezQuake with modern graphics and other additional media including

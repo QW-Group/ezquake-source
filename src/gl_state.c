@@ -260,7 +260,7 @@ rendering_state_t* R_InitRenderingState(r_state_id id, qbool default_state, cons
 
 	state->currentViewportX = 0;
 	state->currentViewportY = 0;
-	SDL_GL_GetDrawableSize(window, &state->currentViewportWidth, &state->currentViewportHeight);
+	SDL_GetWindowSizeInPixels(window, &state->currentViewportWidth, &state->currentViewportHeight);
 
 	state->cullface.enabled = false;
 	state->cullface.mode = r_cullface_back;

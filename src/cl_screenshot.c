@@ -29,9 +29,6 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "utils.h"
 #include "r_local.h"
 #include "r_renderer.h"
-#ifdef X11_GAMMA_WORKAROUND
-#include "tr_types.h"
-#endif
 
 #define	DEFAULT_SSHOT_FORMAT "png"
 
@@ -105,37 +102,6 @@ static char *Sshot_SshotDirectory(void)
 	return dir;
 }
 
-#ifdef X11_GAMMA_WORKAROUND
-extern unsigned short ramps[3][4096];
-#else
-extern unsigned short ramps[3][256];
-#endif
-
-//applies hwgamma to RGB data
-static void applyHWGamma(byte *buffer, size_t size)
-{
-	int i;
-
-	if (vid_hwgamma_enabled) {
-		for (i = 0; i < size; i += 3) {
-			int r = buffer[i + 0];
-			int g = buffer[i + 1];
-			int b = buffer[i + 2];
-
-#ifdef X11_GAMMA_WORKAROUND
-			if (glConfig.gammacrap.size >= 256 && glConfig.gammacrap.size <= 4096) {
-				r = (int)((r * glConfig.gammacrap.size) / 256.0f);
-				g = (int)((g * glConfig.gammacrap.size) / 256.0f);
-				b = (int)((b * glConfig.gammacrap.size) / 256.0f);
-			}
-#endif
-			buffer[i + 0] = ramps[0][r] >> 8;
-			buffer[i + 1] = ramps[1][g] >> 8;
-			buffer[i + 2] = ramps[2][b] >> 8;
-		}
-	}
-}
-
 int SCR_Screenshot(char *name, qbool movie_capture)
 {
 	scr_sshot_target_t* target_params = Q_malloc(sizeof(scr_sshot_target_t));
@@ -178,8 +144,6 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 
 #ifdef WITH_PNG
 	if (format == IMAGE_PNG) {
-		applyHWGamma(buffer, buffersize);
-
 		if (target_params->movie_capture && Movie_AnimatedPNG()) {
 			extern cvar_t movie_fps;
 
@@ -193,7 +157,6 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 
 #ifdef WITH_JPEG
 	if (format == IMAGE_JPEG) {
-		applyHWGamma(buffer, buffersize);
 		success = Image_WriteJPEG(
 			name, image_jpeg_quality_level.value,
 			buffer + buffersize - 3 * target_params->width, -(int)target_params->width, (int)target_params->height
@@ -208,7 +171,6 @@ int SCR_ScreenshotWrite(scr_sshot_target_t* target_params)
 			buffer[i] = buffer[i + 2];
 			buffer[i + 2] = temp;
 		}
-		applyHWGamma(buffer, buffersize);
 		success = Image_WriteTGA(name, buffer, target_params->width, target_params->height) ? SSHOT_SUCCESS : SSHOT_FAILED;
 	}
 
@@ -433,10 +395,9 @@ void SCR_Movieshot(char *name)
 		// Set buffer size to fit RGB data for the image.
 		size = glwidth * glheight * 3;
 
-		// Allocate the RGB buffer, get the pixels from GL and apply the gamma.
+		// Allocate the RGB buffer and get the pixels from GL.
 		buffer = (byte *)Q_malloc(size);
 		renderer.Screenshot(buffer, size);
-		applyHWGamma(buffer, size);
 
 		// We now have a byte buffer with RGB values, but
 		// before we write it to the file, we need to swap

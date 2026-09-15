@@ -97,7 +97,8 @@
             "generator": "Ninja Multi-Config",
             "inherits": "template-vcpkg",
             "cacheVariables": {
-                "VCPKG_TARGET_TRIPLET": "x64-windows-static"
+                "VCPKG_TARGET_TRIPLET": "x64-windows-static",
+                "RENDERER_VULKAN": "ON"
             },
             "condition": {
                 "type": "equals",

@@ -101,6 +101,13 @@ void VK_BlendingConfigure(VkPipelineColorBlendStateCreateInfo* info, VkPipelineC
 			blending->dstColorBlendFactor = blending->dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
 			blending->blendEnable = true;
 			break;
+		case r_blendfunc_src_one_dest_one_minus_src_color:
+			blending->srcColorBlendFactor = blending->srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+			blending->dstColorBlendFactor = blending->dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+			blending->blendEnable = true;
+			break;
+		case r_blendfunc_count:
+			break;
 	}
 }
 

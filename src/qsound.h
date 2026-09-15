@@ -136,9 +136,11 @@ extern int		soundtime;
 
 extern cvar_t		s_loadas8bit;
 extern cvar_t		s_khz;
+extern cvar_t		s_desiredsamples;
 extern cvar_t		s_volume;
 extern cvar_t		s_raw_volume;
 extern cvar_t		s_swapstereo;
+extern cvar_t		s_audiodevice;
 extern cvar_t		bgmvolume;
 
 #endif

@@ -94,9 +94,7 @@ void SysLibrarySupportDir(char *basedir, int length)
 	@autoreleasepool {
 		// Need to temporarily start SDL here to not break initialization of application which
 		// prevents both the dummy menu, and more importantly mouseMovedHandler from working.
-		SDL_Window *window = SDL_CreateWindow(
-				"ezQuake", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_HIDDEN
-		);
+		SDL_Window *window = SDL_CreateWindow("ezQuake", 0, 0, SDL_WINDOW_HIDDEN);
 
 		if (EzCheckExistingSettings(basedir, length)) {
 			SDL_DestroyWindow(window);

@@ -922,9 +922,6 @@ void GL_FramebufferPostProcessScreen(void)
 
 	if (!vid_software_palette.integer) {
 		renderer.BrightenScreen();
-
-		// Hardware palette changes
-		V_UpdatePalette();
 	}
 }
 

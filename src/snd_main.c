@@ -20,9 +20,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // snd_dma.c -- main control for any streaming sound output device
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "quakedef.h"
 #include "qsound.h"
+#include "snd_backend.h"
 #include "utils.h"
 #include "rulesets.h"
 #include "fmod.h"
@@ -99,53 +100,110 @@ cvar_t s_desiredsamples = {"s_desiredsamples", "0", CVAR_AUTO, OnChange_s_desire
 cvar_t s_audiodevice = {"s_audiodevice", "0", CVAR_LATCH_SOUND };
 cvar_t s_silent_racing = { "s_silent_racing", "0" };
 
-SDL_mutex *smutex;
+SDL_Mutex *smutex;
 soundhw_t *shw;
-static SDL_AudioDeviceID audiodevid;
 
-static void S_ListDrivers(void)
+qbool S_Backend_AllocSoundHardware(int khz, int channels, int samplebits)
 {
-	int i = 0, numdrivers;
+	soundhw_t *shw_tmp = Q_calloc(1, sizeof(*shw_tmp));
 
-	numdrivers = SDL_GetNumAudioDrivers();
+	if (!shw_tmp) {
+		Com_Printf("Failed to alloc memory for sound structure\n");
+		return false;
+	}
 
-	Com_Printf("Audio driver support compiled into SDL:\n");
-	for (; i < numdrivers; i++) {
-		Com_Printf("%s\n", SDL_GetAudioDriver(i));
+	shw_tmp->khz = khz;
+	shw_tmp->numchannels = channels;
+	shw_tmp->samplebits = samplebits;
+	shw_tmp->samples = 65536;
+
+	shw = shw_tmp;
+	return true;
+}
+
+void S_Backend_FreeSoundHardware(void)
+{
+	if (shw != NULL) {
+		Q_free(shw);
+		shw = NULL;
 	}
 }
 
-static void S_ListAudioDevicesInternal(qbool capture)
+int S_Backend_DesiredBufferSamples(void)
 {
-	int i = 0, numdevices;
+	return s_desiredsamples.integer;
+}
 
-	numdevices = SDL_GetNumAudioDevices(capture); /* arg is iscapture */
-	for (; i < numdevices; i++) {
-		Com_Printf(" %2d  %s\n", i+1, SDL_GetAudioDeviceName(i, 0));
-	}
+void S_Backend_SetActualBufferSamples(int samples)
+{
+	Cvar_AutoSetInt(&s_desiredsamples, samples);
+}
+
+static void S_ListDrivers(void)
+{
+	S_Backend_ListDrivers();
 }
 
 static void S_ListAudioDevices(void)
 {
-	Com_Printf("Playback devices:\n");
-	Com_Printf(" id  device name\n-------------------------\n");
-	Com_Printf("  0  system default\n");
-	S_ListAudioDevicesInternal (false);
-
-	Com_Printf("\nInput devices:\n");
-	Com_Printf(" id  device name\n-------------------------\n");
-	Com_Printf("  0  system default\n");
-	S_ListAudioDevicesInternal (true);
+	S_Backend_ListAudioDevices();
 }
 
-static void S_LockMixer(void)
+void S_MixerLock_Init(void)
+{
+	if (!smutex) {
+		smutex = SDL_CreateMutex();
+	}
+}
+
+void S_MixerLock_Shutdown(void)
+{
+	if (smutex) {
+		SDL_DestroyMutex(smutex);
+		smutex = NULL;
+	}
+}
+
+void S_LockMixer(void)
 {
 	SDL_LockMutex(smutex);
 }
 
-static void S_UnlockMixer(void)
+qbool S_TryLockMixer(void)
+{
+	return smutex && SDL_TryLockMutex(smutex);
+}
+
+void S_UnlockMixer(void)
 {
 	SDL_UnlockMutex(smutex);
+}
+
+int S_SampleRateFromKHzCvar(void)
+{
+	switch (s_khz.integer) {
+		case 48:
+			return 48000;
+		case 44:
+			return 44100;
+		case 22:
+			return 22050;
+		default:
+			return 11025;
+	}
+}
+
+int S_DefaultBufferSamplesForKHz(int khz)
+{
+	switch (khz) {
+		case 48:
+		case 44:
+			return 512;
+		case 22:
+			return 256;
+		default:
+			return 128;
+	}
 }
 
 static void S_SoundInfo_f (void)
@@ -160,17 +218,34 @@ static void S_SoundInfo_f (void)
 	Com_Printf("%5d samplebits\n", shw->samplebits);
 	Com_Printf("%5d kHz\n", shw->khz);
 	Com_Printf("%5u total_channels\n", total_channels);
+	S_Backend_PrintSoundInfo();
 }
 
-static void S_SDL_callback(void *userdata, Uint8 *stream, int len)
+void S_MixOutput(byte *stream, int len, qbool blocking_lock)
 {
-	// Mixer is run in main thread when capturing, play silence instead
-	if (Movie_IsCapturing()) {
-		SDL_memset(stream, 0, len);
+	if (!stream || len <= 0) {
 		return;
 	}
 
-	S_LockMixer();
+	if (!shw) {
+		memset(stream, 0, len);
+		return;
+	}
+
+	// Mixer is run in main thread when capturing, play silence instead
+	if (Movie_IsCapturing()) {
+		memset(stream, 0, len);
+		return;
+	}
+
+	if (blocking_lock) {
+		S_LockMixer();
+	}
+	else if (!S_TryLockMixer()) {
+		memset(stream, 0, len);
+		return;
+	}
+
 	shw->buffer = stream;
 	shw->samples = len / shw->numchannels;
 	S_Update_();
@@ -179,135 +254,8 @@ static void S_SDL_callback(void *userdata, Uint8 *stream, int len)
 
 	// Implicit Minimized in first case
 	if ((sys_inactivesound.integer == 0 && !ActiveApp) || (sys_inactivesound.integer == 2 && Minimized) || cls.demoseeking) {
-		SDL_memset(stream, 0, len);
+		memset(stream, 0, len);
 	}
-}
-
-static void S_SDL_Shutdown(void)
-{
-	Con_Printf("Shutting down SDL audio.\n");
-
-	SDL_CloseAudioDevice(audiodevid);
-	audiodevid = 0;
-
-	if (SDL_WasInit(SDL_INIT_AUDIO) != 0)
-		SDL_QuitSubSystem(SDL_INIT_AUDIO);
-
-	if (smutex) {
-		SDL_DestroyMutex(smutex);
-		smutex = NULL;
-	}
-
-	if (shw != NULL) {
-		Q_free(shw);
-		shw = NULL;
-	}
-}
-
-static qbool S_SDL_Init(void)
-{
-	SDL_AudioSpec desired, obtained;
-	soundhw_t *shw_tmp = NULL;
-	int ret = 0;
-	const char *requested_device = NULL;
-
-	if (SDL_WasInit(SDL_INIT_AUDIO) == 0)
-		ret = SDL_InitSubSystem(SDL_INIT_AUDIO);
-
-	if (ret == -1) {
-		Con_Printf("Couldn't initialize SDL audio: %s\n", SDL_GetError());
-		return false;
-	}
-
-	if (!smutex) {
-		smutex = SDL_CreateMutex();
-	}
-
-	memset(&desired, 0, sizeof(desired));
-	switch (s_khz.integer) {
-		case 48:
-			desired.freq = 48000;
-			desired.samples = 512;
-			break;
-		case 44:
-			desired.freq = 44100;
-			desired.samples = 512;
-			break;
-		case 22:
-			desired.freq = 22050;
-			desired.samples = 256;
-			break;
-		default:
-			desired.freq = 11025;
-			desired.samples = 128;
-			break;
-	}
-
-	desired.format = AUDIO_S16LSB;
-	desired.channels = 2;
-	if (s_desiredsamples.integer) {
-		int desired_samples = 1;
-
-		// make sure it's a power of 2
-		while (desired_samples < s_desiredsamples.integer)
-			desired_samples <<= 1;
-
-		desired.samples = desired_samples;
-	}
-	desired.callback = S_SDL_callback;
-
-	/* Make audiodevice list start from index 1 so that 0 can be system default */
-	if (s_audiodevice.integer > 0) {
-		requested_device = SDL_GetAudioDeviceName(s_audiodevice.integer - 1, 0);
-	}
-
-	if ((audiodevid = SDL_OpenAudioDevice(requested_device, 0, &desired, &obtained, 0)) <= 0) {
-		Com_Printf("sound: couldn't open SDL audio: %s\n", SDL_GetError());
-		if (requested_device != NULL) {
-			Com_Printf("sound: retrying with default audio device\n");
-			if ((audiodevid = SDL_OpenAudioDevice(NULL, 0, &desired, &obtained, 0)) <= 0) {
-				Com_Printf("sound: failure again, aborting...\n");
-				return false;
-			}
-			Cvar_LatchedSet(&s_audiodevice, "0");
-		}
-		return false;
-	}
-
-	if (obtained.format != AUDIO_S16LSB) {
-		Com_Printf("SDL audio format %d unsupported.\n", obtained.format);
-		goto fail;
-	}
-
-	if (obtained.channels != 1 && obtained.channels != 2) {
-		Com_Printf("SDL audio channels %d unsupported.\n", obtained.channels);
-		goto fail;
-	}
-
-	shw_tmp = Q_calloc(1, sizeof(*shw));
-	if (!shw_tmp) {
-		Com_Printf("Failed to alloc memory for sound structure\n");
-		goto fail;
-	}
-
-	shw_tmp->khz = obtained.freq;
-	shw_tmp->numchannels = obtained.channels;
-	shw_tmp->samplebits = obtained.format & 0xFF;
-	shw_tmp->samples = 65536;
-
-	Cvar_AutoSetInt(&s_desiredsamples, obtained.samples);
-
-	shw = shw_tmp;
-
-	Com_Printf("Using SDL audio driver: %s @ %d Hz\n", SDL_GetCurrentAudioDriver(), obtained.freq);
-
-	SDL_PauseAudioDevice(audiodevid, 0);
-
-	return true;
-
-fail:
-	S_SDL_Shutdown();
-	return false;
 }
 
 static void S_FModCheckExtraSounds(void)
@@ -346,7 +294,7 @@ static qbool S_Startup (void)
 	}
 	num_sfx = 0;
 
-	if (!S_SDL_Init()) {
+	if (!S_Backend_Init()) {
 		Com_Printf ("S_Startup: S_Init failed.\n");
 		snd_started = false;
 		sound_spatialized = false;
@@ -376,7 +324,7 @@ void S_Shutdown (void)
 #ifdef FTE_PEXT2_VOICECHAT
 	S_Capture_Shutdown();
 #endif
-	S_SDL_Shutdown();
+	S_Backend_Shutdown();
 
 	if (known_sfx != NULL) {
 		int i;
@@ -852,6 +800,8 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 
 	if (!snd_initialized || !snd_started || !shw)
 		return;
+
+	S_Backend_Update();
 
 	S_LockMixer();
 

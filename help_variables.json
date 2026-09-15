@@ -5024,7 +5024,7 @@
       "default": "0",
       "desc": "Controls outlining of models and map. Disallowed in qcon ruleset.",
       "group-id": "35",
-      "remarks": "World outlines require vid_framebuffer 1|2 and Modern OpenGL (vid_renderer 1). With vid_renderer 0, ruleset default and sv_cheats 1, gl_outline 2 draws outlines of every surface that is rendered.",
+      "remarks": "World outlines (bit 2): on Modern OpenGL (vid_renderer 1) requires vid_framebuffer 1|2 and GL 4.3+. On Vulkan (vid_renderer 2) works standalone, no vid_framebuffer needed. Not implemented on Classic OpenGL (vid_renderer 0) -- with ruleset default and sv_cheats 1, gl_outline 2 there draws outlines of every surface that is rendered instead, which is unrelated.",
       "type": "enum",
       "values": [
         {
@@ -13539,7 +13539,13 @@
     },
     "joyindex": {
       "default": "0",
-      "desc": "Index number of joystick device to use.\nDevices typically start numbering from 0.",
+      "desc": "Index number of joystick device to use.\nDevices typically start numbering from 0.\nIgnored while joy_id is set to anything other than -1.",
+      "group-id": "28",
+      "type": "integer"
+    },
+    "joy_id": {
+      "default": "-1",
+      "desc": "Stable device ID of the joystick to use, as reported by the OS/driver, instead of a connection-order index.\nTakes priority over joyindex when set to anything other than -1.\nUnlike joyindex, this stays correct even if other controllers are plugged/unplugged in a different order.\nUse the joystick's reported ID from the console log when it's detected.",
       "group-id": "28",
       "type": "integer"
     },
@@ -21826,6 +21832,10 @@
         {
           "description": "OpenGL, GLSL-only (requires OpenGL 4.3 driver)",
           "name": "1"
+        },
+        {
+          "description": "Vulkan renderer (experimental). Requires vid_restart when changed.",
+          "name": "2"
         }
       ]
     },
@@ -21867,15 +21877,20 @@
       "default": "0",
       "desc": "Syncs your FPS with your monitor's vertical refresh rate. This will override cl_maxfps.",
       "group-id": "52",
-      "type": "boolean",
+      "remarks": "-1 (adaptive/late-swap-tearing vsync) falls back to 1 if the driver doesn't support it. On Vulkan (vid_renderer 2) this selects VK_PRESENT_MODE_FIFO_RELAXED_KHR if the surface offers it, falling back to regular FIFO otherwise.",
+      "type": "enum",
       "values": [
         {
           "description": "Disable vsync.",
-          "name": "false"
+          "name": "0"
         },
         {
           "description": "Enable vsync.",
-          "name": "true"
+          "name": "1"
+        },
+        {
+          "description": "Adaptive vsync: synced normally, but a late frame presents immediately instead of waiting for the next refresh.",
+          "name": "-1"
         }
       ]
     },
@@ -21884,6 +21899,13 @@
       "desc": "Enables experimental fix for a delay vertical synchronization mode.",
       "group-id": "52",
       "remarks": "When vid_vsync is set to 1, an artificial delay in the input can appear, enabling this should eliminate the delay.",
+      "type": "boolean"
+    },
+    "vid_vulkan_antilag": {
+      "default": "0",
+      "desc": "Reduces input lag in the Vulkan renderer using the GPU vendor's native low-latency extension (AMD Anti-Lag or NVIDIA Low Latency 2).",
+      "group-id": "52",
+      "remarks": "Only has an effect when using the Vulkan renderer on a GPU/driver that supports VK_AMD_anti_lag or VK_NV_low_latency2; otherwise this setting is a no-op.",
       "type": "boolean"
     },
     "vid_vsync_lag_tweak": {

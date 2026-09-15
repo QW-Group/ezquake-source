@@ -25,16 +25,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <vulkan/vulkan.h>
 #include "quakedef.h"
 
-#include <SDL.h>
-#include <SDL_vulkan.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_vulkan.h>
 
 #include "vk_local.h"
 
 qbool VK_CreateWindowSurface(SDL_Window* window, VkInstance instance, VkSurfaceKHR* surface)
 {
-	surface = VK_NULL_HANDLE;
+	*surface = VK_NULL_HANDLE;
 
-	if (SDL_Vulkan_CreateSurface(window, instance, surface) != SDL_TRUE) {
+	if (!SDL_Vulkan_CreateSurface(window, instance, NULL, surface)) {
+		Com_Printf("vulkan: SDL_Vulkan_CreateSurface() failed: %s\n", SDL_GetError());
 		return false;
 	}
 

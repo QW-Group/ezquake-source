@@ -9,13 +9,19 @@ endif()
 option(USE_SYSTEM_LIBS          "Use system libraries instead of VCPKG"       ON)
 option(RENDERER_MODERN_OPENGL   "Enable modern OpenGL renderer"               ON)
 option(RENDERER_CLASSIC_OPENGL  "Enable classic OpenGL renderer"              ON)
+option(RENDERER_VULKAN          "Enable experimental Vulkan renderer"         OFF)
 option(DEBUG_MEMORY_ALLOCATIONS "Enable debug prints for memory allocations" OFF)
 option(ANTILAG                  "Enable antilag 1 prototype protocol extensions (client-side)" ON)
 option(ENABLE_SANDBOX           "Enables application sandboxing (macOS)"      ON)
 option(ENABLE_LTO               "Enable Link Time Optimization"               ON)
+if(NOT RENDERER_CLASSIC_OPENGL AND NOT RENDERER_MODERN_OPENGL AND NOT RENDERER_VULKAN)
+    message(FATAL_ERROR "At least one renderer must be enabled.")
+endif()
 
-if(NOT RENDERER_CLASSIC_OPENGL AND NOT RENDERER_MODERN_OPENGL)
-    message(FATAL_ERROR "At least one of RENDERER_CLASSIC_OPENGL or RENDERER_MODERN_OPENGL must be enabled.")
+if(RENDERER_CLASSIC_OPENGL OR RENDERER_MODERN_OPENGL)
+    set(RENDERER_OPENGL ON)
+else()
+    set(RENDERER_OPENGL OFF)
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
@@ -66,7 +72,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
     endif()
 else()
     add_compile_options(
-            -std=gnu89
+            $<$<COMPILE_LANGUAGE:C>:-std=gnu89>
 
             -Wall
             -Wno-pointer-to-int-cast
@@ -77,8 +83,8 @@ else()
             -fvisibility=hidden
 
             -Werror=format
-            -Werror=strict-prototypes
-            -Werror=old-style-definition
+            $<$<COMPILE_LANGUAGE:C>:-Werror=strict-prototypes>
+            $<$<COMPILE_LANGUAGE:C>:-Werror=old-style-definition>
 
             $<$<CONFIG:Release>:-Werror=unused-function>
             $<$<CONFIG:Release>:-Werror=unused-variable>
@@ -86,39 +92,45 @@ else()
 
     check_c_compiler_flag("-Wstrlcpy-strlcat-size" HAS_STRLCPY_STRLCAT_SIZE)
     if(HAS_STRLCPY_STRLCAT_SIZE)
-        add_compile_options("-Werror=strlcpy-strlcat-size")
+        add_compile_options($<$<COMPILE_LANGUAGE:C>:-Werror=strlcpy-strlcat-size>)
     endif()
     check_c_compiler_flag("-Wformat-truncation" HAS_FORMAT_TRUNCATION)
     if(HAS_FORMAT_TRUNCATION)
-        add_compile_options("-Wno-error=format-truncation" "-Wno-format-truncation")
+        add_compile_options($<$<COMPILE_LANGUAGE:C>:-Wno-error=format-truncation> $<$<COMPILE_LANGUAGE:C>:-Wno-format-truncation>)
     endif()
     check_c_compiler_flag("-Wparentheses" HAS_PARENTHESIS)
     if(HAS_PARENTHESIS)
-        add_compile_options("-Wno-parentheses")
+        add_compile_options($<$<COMPILE_LANGUAGE:C>:-Wno-parentheses>)
     endif()
     check_c_compiler_flag("-Wmisleading-indentation" HAS_MISLEADING_INDENTATION)
     if(HAS_MISLEADING_INDENTATION)
-        add_compile_options("-Wno-misleading-indentation")
+        add_compile_options($<$<COMPILE_LANGUAGE:C>:-Wno-misleading-indentation>)
     endif()
     # While not gnu89, it's in practice allowed by all supported compilers
     check_c_compiler_flag("-Wtypedef-redefinition" HAS_TYPE_REDEFINITION)
     if(HAS_TYPE_REDEFINITION)
-        add_compile_options("-Wno-typedef-redefinition")
+        add_compile_options($<$<COMPILE_LANGUAGE:C>:-Wno-typedef-redefinition>)
     endif()
     # Should mostly be fixed in mvdsv, and next sync can remove this
     check_c_compiler_flag("-Wshorten-64-to-32" HAS_SHORTEN_64_TO_32)
     if(HAS_TYPE_REDEFINITION)
-        add_compile_options("-Wno-shorten-64-to-32")
+        add_compile_options($<$<COMPILE_LANGUAGE:C>:-Wno-shorten-64-to-32>)
     endif()
 endif()
 
 find_library(MATH m)
 
-# Override by configuring with -DOpenGL_GL_PREFERENCE=GLVND
-if(NOT OpenGL_GL_PREFERENCE)
-    set(OpenGL_GL_PREFERENCE LEGACY)
+if(RENDERER_OPENGL)
+    # Override by configuring with -DOpenGL_GL_PREFERENCE=GLVND
+    if(NOT OpenGL_GL_PREFERENCE)
+        set(OpenGL_GL_PREFERENCE LEGACY)
+    endif()
+    find_package(OpenGL REQUIRED)
 endif()
-find_package(OpenGL REQUIRED)
+
+if(RENDERER_VULKAN)
+    find_package(Vulkan REQUIRED)
+endif()
 find_package(Threads REQUIRED)
 
 # Args: target name, pkg-config name, vcpkg package name, vcpkg target name, extra args
@@ -129,7 +141,7 @@ check_dependency(Jansson  "jansson"    "jansson"            "jansson::jansson"  
 check_dependency(MiniZip  "minizip"    "unofficial-minizip" "unofficial::minizip::minizip" REQUIRED)
 check_dependency(PCRE2    "libpcre2-8" "PCRE2"              "pcre2::pcre2-8-static"        REQUIRED)
 check_dependency(PNG      "libpng"     "PNG"                "PNG::PNG"                     REQUIRED)
-check_dependency(SDL2     "sdl2"       "SDL2"               "SDL2::SDL2-static"            REQUIRED)
+check_dependency(SDL3     "sdl3"       "SDL3"               "SDL3::SDL3-static"            REQUIRED)
 check_dependency(SndFile  "sndfile"    "SndFile"            "SndFile::sndfile"             REQUIRED)
 check_dependency(Speex    "speex"      "Speex"              "SPEEX::SPEEX"                 OPTIONAL)
 check_dependency(SpeexDSP "speexdsp"   "SpeexDSP"           "SPEEX::SPEEXDSP"              OPTIONAL)
@@ -272,7 +284,7 @@ set(server
 source_group(TREE ${SOURCE_DIR} PREFIX "Source Files/server" FILES ${server})
 source_group(TREE ${SOURCE_DIR} PREFIX "Header Files/server" FILES ${server_headers})
 
-if(RENDERER_MODERN_OPENGL OR RENDERER_CLASSIC_OPENGL)
+if(RENDERER_OPENGL)
     set(SHARED_GLSL_DIR ${SOURCE_DIR}/glsl/shared)
     add_resources(shaders_shared
             ${SHARED_GLSL_DIR}/fxaa.h.glsl
@@ -408,33 +420,127 @@ if(RENDERER_CLASSIC_OPENGL)
     source_group(TREE ${SOURCE_DIR} PREFIX "Header Files/classic_opengl" FILES ${classic_opengl_headers})
 endif()
 
-set(common_opengl_headers
-        ${SOURCE_DIR}/gl_framebuffer.h
-        ${SOURCE_DIR}/gl_local.h
-        ${SOURCE_DIR}/gl_sprite3d.h
-        ${SOURCE_DIR}/gl_texture.h
-        ${SOURCE_DIR}/gl_texture_internal.h
-)
-set(common_opengl
-        ${SOURCE_DIR}/gl_aliasmodel.c
-        ${SOURCE_DIR}/gl_aliasmodel_md3.c
-        ${SOURCE_DIR}/gl_buffers.c
-        ${SOURCE_DIR}/gl_debug.c
-        ${SOURCE_DIR}/gl_drawcall_wrappers.c
-        ${SOURCE_DIR}/gl_framebuffer.c
-        ${SOURCE_DIR}/gl_misc.c
-        ${SOURCE_DIR}/gl_program.c
-        ${SOURCE_DIR}/gl_sdl.c
-        ${SOURCE_DIR}/gl_sprite3d.c
-        ${SOURCE_DIR}/gl_state.c
-        ${SOURCE_DIR}/gl_texture.c
-        ${SOURCE_DIR}/gl_texture_functions.c
-        ${SOURCE_DIR}/vid_common_gl.c
-        ${SOURCE_DIR}/r_vao.h
-        ${common_opengl_headers}
-)
-source_group(TREE ${SOURCE_DIR} PREFIX "Source Files/common_opengl" FILES ${common_opengl})
-source_group(TREE ${SOURCE_DIR} PREFIX "Header Files/common_opengl" FILES ${common_opengl_headers})
+if(RENDERER_OPENGL)
+    set(common_opengl_headers
+            ${SOURCE_DIR}/gl_framebuffer.h
+            ${SOURCE_DIR}/gl_local.h
+            ${SOURCE_DIR}/gl_sprite3d.h
+            ${SOURCE_DIR}/gl_texture.h
+            ${SOURCE_DIR}/gl_texture_internal.h
+    )
+    set(common_opengl
+            ${SOURCE_DIR}/gl_aliasmodel.c
+            ${SOURCE_DIR}/gl_aliasmodel_md3.c
+            ${SOURCE_DIR}/gl_buffers.c
+            ${SOURCE_DIR}/gl_debug.c
+            ${SOURCE_DIR}/gl_drawcall_wrappers.c
+            ${SOURCE_DIR}/gl_framebuffer.c
+            ${SOURCE_DIR}/gl_misc.c
+            ${SOURCE_DIR}/gl_program.c
+            ${SOURCE_DIR}/gl_sdl.c
+            ${SOURCE_DIR}/gl_sprite3d.c
+            ${SOURCE_DIR}/gl_state.c
+            ${SOURCE_DIR}/gl_texture.c
+            ${SOURCE_DIR}/gl_texture_functions.c
+            ${SOURCE_DIR}/vid_common_gl.c
+            ${SOURCE_DIR}/r_vao.h
+            ${common_opengl_headers}
+    )
+    source_group(TREE ${SOURCE_DIR} PREFIX "Source Files/common_opengl" FILES ${common_opengl})
+    source_group(TREE ${SOURCE_DIR} PREFIX "Header Files/common_opengl" FILES ${common_opengl_headers})
+endif()
+
+if(RENDERER_VULKAN)
+    # vcpkg's glslang port (>=16.x) only installs the renamed `glslang`
+    # binary under its "tools" feature, not the older `glslangValidator`
+    # name that apt's glslang-tools / a locally installed Vulkan SDK still
+    # ship -- both accept the same -V flag, so either name works here.
+    #
+    # On a cross-compile (e.g. building x64-osx on an arm64 host), the
+    # "host": true glslang dependency is installed under the *host*
+    # triplet's vcpkg_installed tree, not the target triplet's -- but the
+    # vcpkg toolchain doesn't reliably add that host tools/ directory to
+    # CMAKE_PROGRAM_PATH with the Xcode generator (confirmed: macOS x64 CI
+    # failed to find it even though the arm64-osx package built fine).
+    # Adding every triplet's tools/glslang dir as an explicit hint makes
+    # this work regardless of which triplet ends up being the host one.
+    if(DEFINED VCPKG_INSTALLED_DIR)
+        file(GLOB _glslang_tool_hints "${VCPKG_INSTALLED_DIR}/*/tools/glslang")
+    endif()
+    find_program(GLSLANG_VALIDATOR NAMES glslangValidator glslang HINTS ${_glslang_tool_hints} REQUIRED)
+    set(VULKAN_SHADER_DIR ${SOURCE_DIR}/vulkan_shaders)
+    set(VULKAN_SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/vulkan_shaders)
+    file(MAKE_DIRECTORY ${VULKAN_SHADER_BINARY_DIR})
+
+    function(add_vulkan_shader output_var source_file output_name)
+        set(output_file ${VULKAN_SHADER_BINARY_DIR}/${output_name})
+        add_custom_command(
+                OUTPUT ${output_file}
+                COMMAND ${GLSLANG_VALIDATOR} -V ${source_file} -o ${output_file}
+                DEPENDS ${source_file}
+                COMMENT "Compiling Vulkan shader ${source_file}"
+                VERBATIM
+        )
+        set(${output_var} ${${output_var}} ${output_file} PARENT_SCOPE)
+    endfunction()
+
+    set(vulkan_spirv_shaders)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_hud_image.vert vk_hud_image_vert.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_hud_image.frag vk_hud_image_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_hud_color.vert vk_hud_color_vert.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_hud_color.frag vk_hud_color_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_flat.vert vk_world_flat_vert.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_flat.frag vk_world_flat_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_textured.vert vk_world_textured_vert.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_textured.frag vk_world_textured_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_overlay.frag vk_world_overlay_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_lightmapped.vert vk_world_lightmapped_vert.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_lightmapped.frag vk_world_lightmapped_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_alpha_textured.vert vk_world_alpha_textured_vert.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_alpha_textured.frag vk_world_alpha_textured_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_alias_model.vert vk_alias_model_vert.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_alias_model.frag vk_alias_model_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_sprite3d.vert vk_sprite3d_vert.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_sprite3d.frag vk_sprite3d_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_post_process.vert vk_post_process_vert.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_post_process.frag vk_post_process_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_normals.vert vk_world_normals_vert.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_normals.frag vk_world_normals_frag.spv)
+    add_vulkan_shader(vulkan_spirv_shaders ${VULKAN_SHADER_DIR}/vk_world_outline.frag vk_world_outline_frag.spv)
+    add_resources(shaders_vulkan ${vulkan_spirv_shaders})
+
+    set(vulkan_renderer_headers
+            ${SOURCE_DIR}/vk_local.h
+            ${SOURCE_DIR}/vk_vao.h
+    )
+    set(vulkan_renderer
+            ${SOURCE_DIR}/vk_aliasmodel.c
+            ${SOURCE_DIR}/vk_blending.c
+            ${SOURCE_DIR}/vk_buffers.c
+            ${SOURCE_DIR}/vk_debug.c
+            ${SOURCE_DIR}/vk_draw.c
+            ${SOURCE_DIR}/vk_graphics_pipeline.c
+            ${SOURCE_DIR}/vk_instance.c
+            ${SOURCE_DIR}/vk_lightmaps.c
+            ${SOURCE_DIR}/vk_main.c
+            ${SOURCE_DIR}/vk_md3.c
+            ${SOURCE_DIR}/vk_misc.c
+            ${SOURCE_DIR}/vk_physical_devices.c
+            ${SOURCE_DIR}/vk_resources.c
+            ${SOURCE_DIR}/vk_renderpass.c
+            ${SOURCE_DIR}/vk_renderer_stubs.c
+            ${SOURCE_DIR}/vk_sdl.c
+            ${SOURCE_DIR}/vk_sprite3d.c
+            ${SOURCE_DIR}/vk_swapchain.c
+            ${SOURCE_DIR}/vk_texture.c
+            ${SOURCE_DIR}/vk_vao.c
+            ${SOURCE_DIR}/vk_window_surface.c
+            ${SOURCE_DIR}/vk_world.c
+            ${vulkan_renderer_headers}
+    )
+    source_group(TREE ${SOURCE_DIR} PREFIX "Source Files/vulkan" FILES ${vulkan_renderer})
+    source_group(TREE ${SOURCE_DIR} PREFIX "Header Files/vulkan" FILES ${vulkan_renderer_headers})
+endif()
 
 set(common_renderer_headers
         ${SOURCE_DIR}/anorm_dots.h
@@ -632,6 +738,7 @@ set(client_headers
         ${SOURCE_DIR}/settings.h
         ${SOURCE_DIR}/settings_page.h
         ${SOURCE_DIR}/demo_spawnwarn.h
+        ${SOURCE_DIR}/snd_backend.h
         ${SOURCE_DIR}/stats_grid.h
         ${SOURCE_DIR}/sys.h
         ${SOURCE_DIR}/teamplay.h
@@ -702,7 +809,7 @@ set(client
         ${SOURCE_DIR}/host.c
         ${SOURCE_DIR}/ignore.c
         ${SOURCE_DIR}/image.c
-        ${SOURCE_DIR}/in_sdl2.c
+        ${SOURCE_DIR}/in_sdl.c
         ${SOURCE_DIR}/irc.c
         ${SOURCE_DIR}/irc_filter.c
         ${SOURCE_DIR}/keys.c
@@ -731,14 +838,14 @@ set(client
         ${SOURCE_DIR}/snd_qizmo.c
         ${SOURCE_DIR}/snd_voip.c
         ${SOURCE_DIR}/stats_grid.c
-        ${SOURCE_DIR}/sys_sdl2.c
+        ${SOURCE_DIR}/sys_sdl.c
         ${SOURCE_DIR}/teamplay.c
         ${SOURCE_DIR}/teamplay_locfiles.c
         ${SOURCE_DIR}/textencoding.c
         ${SOURCE_DIR}/tp_msgs.c
         ${SOURCE_DIR}/tp_triggers.c
         ${SOURCE_DIR}/utils.c
-        ${SOURCE_DIR}/vid_sdl2.c
+        ${SOURCE_DIR}/vid_sdl.c
         ${SOURCE_DIR}/vid_vsync.c
         ${SOURCE_DIR}/vx_tracker.c
         ${SOURCE_DIR}/wad.c
@@ -749,6 +856,7 @@ set(client
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     list(APPEND client ${SOURCE_DIR}/movie_avi.c)
 endif()
+list(APPEND client ${SOURCE_DIR}/snd_backend_sdl.c)
 source_group(TREE ${SOURCE_DIR} PREFIX "Source Files/client" FILES ${client})
 source_group(TREE ${SOURCE_DIR} PREFIX "Header Files/client" FILES ${client_headers})
 
@@ -819,7 +927,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(TARGET_TYPE MACOSX_BUNDLE)
 endif()
 
-add_executable(ezquake ${TARGET_TYPE}
+set(ezquake_sources
         ${main}
         ${sys}
         ${central}
@@ -832,12 +940,15 @@ add_executable(ezquake ${TARGET_TYPE}
         ${common_renderer}
         $<$<BOOL:${RENDERER_MODERN_OPENGL}>:${modern_opengl}>
         $<$<BOOL:${RENDERER_CLASSIC_OPENGL}>:${classic_opengl}>
+        $<$<BOOL:${RENDERER_VULKAN}>:${vulkan_renderer}>
 
         ${qwprot_headers}
 
         $<IF:$<PLATFORM_ID:Darwin>,${macos_icon},>
         $<IF:$<PLATFORM_ID:Windows>,${windows_icon},>
 )
+
+add_executable(ezquake ${TARGET_TYPE} ${ezquake_sources})
 
 target_include_directories(ezquake PRIVATE
         ${SOURCE_DIR}/qwprot/src
@@ -848,17 +959,21 @@ target_compile_definitions(ezquake PRIVATE
         BUILDSTRING="${CMAKE_SYSTEM_NAME}"
         CPUSTRING="${CMAKE_SYSTEM_PROCESSOR}"
 
+        EZQUAKE_SDL3
+
         JSS_CAM
         USE_PR2
         WITH_NQPROGS
 
         $<$<BOOL:${DEBUG_MEMORY_ALLOCATIONS}>:DEBUG_MEMORY_ALLOCATIONS>
-        $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:WITH_RENDERING_TRACE>
+        $<$<AND:$<BOOL:${RENDERER_OPENGL}>,$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>>:WITH_RENDERING_TRACE>
 
         $<$<PLATFORM_ID:Darwin>:GL_SILENCE_DEPRECATION>
 
         $<$<BOOL:${RENDERER_MODERN_OPENGL}>:RENDERER_OPTION_MODERN_OPENGL>
         $<$<BOOL:${RENDERER_CLASSIC_OPENGL}>:RENDERER_OPTION_CLASSIC_OPENGL>
+        $<$<BOOL:${RENDERER_VULKAN}>:RENDERER_OPTION_VULKAN>
+        EZQUAKE_SOUND_BACKEND_SDL
 
         WITH_PNG
         WITH_JPEG
@@ -883,7 +998,7 @@ target_compile_definitions(ezquake PRIVATE
 target_link_libraries(ezquake PRIVATE
         $<$<BOOL:${RENDERER_MODERN_OPENGL}>:shaders_modern>
         $<$<BOOL:${RENDERER_CLASSIC_OPENGL}>:shaders_classic>
-        shaders_shared
+        $<$<BOOL:${RENDERER_VULKAN}>:shaders_vulkan>
         documentation
         git_version
 
@@ -894,7 +1009,7 @@ target_link_libraries(ezquake PRIVATE
         Dep::Expat
         Dep::JPEG
         Dep::PCRE2
-        Dep::SDL2
+        Dep::SDL3
         Dep::Jansson
         Dep::SndFile
         Dep::PNG
@@ -905,7 +1020,6 @@ target_link_libraries(ezquake PRIVATE
         $<$<AND:$<BOOL:${HAVE_SPEEX}>,$<BOOL:${HAVE_SPEEXDSP}>>:Dep::Speex>
         $<$<AND:$<BOOL:${HAVE_SPEEX}>,$<BOOL:${HAVE_SPEEXDSP}>>:Dep::SpeexDSP>
 
-        OpenGL::GL
         Threads::Threads
 
         ${FRAMEWORK_APPKIT}
@@ -913,6 +1027,17 @@ target_link_libraries(ezquake PRIVATE
         ${FRAMEWORK_CORESERVICES}
         ${FRAMEWORK_GAMECONTROLLER}
 )
+
+if(RENDERER_OPENGL)
+    target_link_libraries(ezquake PRIVATE
+            shaders_shared
+            OpenGL::GL
+    )
+endif()
+
+if(RENDERER_VULKAN)
+    target_link_libraries(ezquake PRIVATE Vulkan::Vulkan)
+endif()
 
 if(MATH)
     target_link_libraries(ezquake PRIVATE ${MATH})

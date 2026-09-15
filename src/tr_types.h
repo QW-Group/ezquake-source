@@ -23,11 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #ifndef __TR_TYPES_H
 #define __TR_TYPES_H
 
-#ifdef X11_GAMMA_WORKAROUND
-#include <SDL.h>
-#include <SDL_syswm.h>
-#include <X11/extensions/xf86vmode.h>
-#endif
 /*
 ** glconfig_t
 **
@@ -93,14 +88,6 @@ typedef struct {
 	glHardwareType_t			hardwareType;
 
 	qbool					initialized;
-#ifdef X11_GAMMA_WORKAROUND
-	struct {
-		SDL_SysWMinfo info;
-		Display *display;
-		int screen;
-		int size;
-	} gammacrap;
-#endif
 
 	int gl_max_size_default;
 	int max_3d_texture_size;
@@ -120,7 +107,8 @@ typedef struct {
 	qbool reversed_depth;
 } glconfig_t;
 
-#define GL_Supported(x) ((glConfig.supported_features & (x)) == (x))
+#define R_Supported(x) ((glConfig.supported_features & (x)) == (x))
+#define GL_Supported(x) R_Supported(x)
 #define GL_WorkaroundNeeded(x) ((glConfig.broken_features & (x)) == (x))
 
 extern glconfig_t	glConfig;

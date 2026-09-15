@@ -32,6 +32,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 #include "image.h"
 
+#ifdef RENDERER_OPTION_VULKAN
+void VK_AllocateTextureNames(gltexture_t* glt);
+#endif
+
 #ifdef WITH_RENDERING_TRACE
 #include "utils.h"
 #endif
@@ -567,7 +571,9 @@ static void R_AllocateTextureNames(gltexture_t* glt)
 		GL_AllocateTextureNames(glt);
 	}
 	else if (R_UseVulkan()) {
-		// VK_AllocateTextureNames(...);
+#ifdef RENDERER_OPTION_VULKAN
+		VK_AllocateTextureNames(glt);
+#endif
 	}
 }
 

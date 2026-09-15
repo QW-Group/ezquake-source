@@ -12,6 +12,11 @@
 
 void GLM_Initialise(void);
 void GLC_Initialise(void);
+#ifdef RENDERER_OPTION_VULKAN
+void VK_PopulateConfig(void);
+qbool VK_InitialiseVAOHandling(void);
+void VK_InitialiseBufferHandling(api_buffers_t* api);
+#endif
 
 void CachePics_Shutdown(void);
 void R_LightmapShutdown(void);
@@ -35,14 +40,19 @@ void VID_GfxInfo_f(void)
 
 void R_Shutdown(r_shutdown_mode_t mode)
 {
-	if (renderer.Shutdown) {
-		renderer.Shutdown(mode);
-	}
-
-	CachePics_Shutdown();
-	R_LightmapShutdown();
-
-	// Not texture related so leave alone (FIXME: move to renderer.Shutdown)
+	// VAOs/buffers must be torn down while the renderer's context/device is
+	// still alive. For Vulkan, renderer.Shutdown() (VK_Shutdown) destroys the
+	// VkDevice/VkInstance and zeroes vk_options outright, so calling
+	// VK_DeleteVAOs/VK_BufferShutdown afterwards meant vkDestroyBuffer() etc.
+	// ran against an already-NULL VkDevice -- the loader dereferences that to
+	// find the dispatch table, which crashed in vulkan-1.dll on every
+	// vid_restart away from the Vulkan renderer. GL is unaffected by the
+	// ordering since its context isn't destroyed until later in
+	// VID_Shutdown(), well after R_Shutdown() returns.
+#ifdef RENDERER_OPTION_VULKAN
+	extern void VK_AbandonActiveFrame(void);
+	VK_AbandonActiveFrame();
+#endif
 	if (mode != r_shutdown_reload) {
 		R_BrushModelFreeMemory();
 		if (renderer.DeleteVAOs) {
@@ -52,6 +62,14 @@ void R_Shutdown(r_shutdown_mode_t mode)
 			buffers.Shutdown();
 		}
 	}
+
+	if (renderer.Shutdown) {
+		renderer.Shutdown(mode);
+	}
+
+	CachePics_Shutdown();
+	R_LightmapShutdown();
+
 	R_DeleteTextures();
 	R_TexturesInvalidateAllReferences();
 }
@@ -101,11 +119,9 @@ void R_Initialise(void)
 #endif
 #ifdef RENDERER_OPTION_VULKAN
 	if (R_UseVulkan()) {
-		VK_Initialise();
 		VK_PopulateConfig();
 		VK_InitialiseVAOHandling();
 		VK_InitialiseBufferHandling(&buffers);
-		VK_InitialiseState();
 	}
 #endif
 	R_Hud_Initialise();
