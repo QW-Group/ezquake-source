@@ -17,8 +17,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <stdint.h>
 
-#include "SDL.h"
-#include "SDL_joystick.h"
+#include <SDL3/SDL.h>
 #include "common.h"
 #include "cvar.h"
 #include "quakedef.h"
@@ -30,9 +29,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/time.h>
 #endif
 
-#ifdef __APPLE__
-#include "in_osx.h"
-#endif
 
 static void in_joystick_callback(cvar_t *var, char *value, qbool *cancel);
 
@@ -261,25 +257,31 @@ Joy_AdvancedUpdate_f (void)
 	 * If the requested joystick device index has changed, try opening it.
 	 */
 	if (joy_devidx != joy_index.integer) {
-		SDL_Joystick *newdev;
+		SDL_Joystick *newdev = NULL;
+		int joy_count = 0;
+		SDL_JoystickID *joy_ids = SDL_GetJoysticks(&joy_count);
 
-		newdev = SDL_JoystickOpen (joy_index.integer);
+		if (joy_ids && joy_index.integer >= 0 && joy_index.integer < joy_count) {
+			newdev = SDL_OpenJoystick(joy_ids[joy_index.integer]);
+		}
+		SDL_free(joy_ids);
+
 		if (newdev) {
 			if (joy_dev) {
 				/*  Close the old one.  */
-				SDL_JoystickClose (joy_dev);
+				SDL_CloseJoystick(joy_dev);
 			}
 			joy_dev		= newdev;
 			joy_devidx	= joy_index.integer;
-			joy_numaxes	= SDL_JoystickNumAxes (joy_dev);
-			joy_numbuttons	= SDL_JoystickNumButtons (joy_dev);
-			joy_haspov	= (SDL_JoystickNumHats (joy_dev) > 0);
+			joy_numaxes	= SDL_GetNumJoystickAxes(joy_dev);
+			joy_numbuttons	= SDL_GetNumJoystickButtons(joy_dev);
+			joy_haspov	= (SDL_GetNumJoystickHats(joy_dev) > 0);
 			if (joy_numbuttons > sizeof (joy_prevbuttons) * 8) {
 				/*  We can't handle more than 32 buttons.  */
 				joy_numbuttons = sizeof (joy_prevbuttons) * 8;
 			}
 			Con_Printf ("Opened joystick index %d: \"%s\"\n",
-			            joy_index.integer, SDL_JoystickName (joy_dev));
+			            joy_index.integer, SDL_GetJoystickName(joy_dev));
 		} else {
 			Con_Printf ("Failed to open joystick index %d\n", joy_index.integer);
 		}
@@ -302,7 +304,7 @@ IN_Commands (void)
 	 */
 	buttonstate = 0;
 	for (i = 0;  i < joy_numbuttons;  ++i) {
-		uint8_t val = SDL_JoystickGetButton (joy_dev, i);
+		uint8_t val = SDL_GetJoystickButton(joy_dev, i);
 
 		buttonstate |= val << i;
 		buttonmask = 1 << i;
@@ -320,7 +322,7 @@ IN_Commands (void)
 		 * directions in up/right/down/left order from bit 0.  Only
 		 * the first POV hat is used.
 		 */
-		uint8_t povstate = SDL_JoystickGetHat (joy_dev, 0);
+		uint8_t povstate = SDL_GetJoystickHat(joy_dev, 0);
 		uint8_t povmask;
 
 		for (i = 0;  i < 4;  ++i) {
@@ -371,7 +373,7 @@ IN_JoyMove (usercmd_t *cmd)
 		if (axis_map[i] == AXIS__NONE  ||  i >= joy_numaxes) {
 			continue;
 		}
-		axisval = SDL_JoystickGetAxis (joy_dev, i);
+		axisval = SDL_GetJoystickAxis(joy_dev, i);
 
 		// Convert range from -32768..32767 to -1..1
 		axisval /= 32768.0;
@@ -470,6 +472,7 @@ IN_JoyMove (usercmd_t *cmd)
 static void
 IN_StartupJoystick (void)
 {
+	SDL_JoystickID	*joy_ids;
 	SDL_Joystick	*jdev;
 	int		numdevs, i;
 
@@ -505,33 +508,34 @@ IN_StartupJoystick (void)
 	if (!in_joystick.value) return;
 
 	if (SDL_WasInit (SDL_INIT_JOYSTICK) == 0) {
-		int ret = SDL_InitSubSystem (SDL_INIT_JOYSTICK);
-		if (ret == -1) {
+		if (!SDL_InitSubSystem(SDL_INIT_JOYSTICK)) {
 			Com_Printf ("\nSDL joystick subsystem init failed.\n");
 			return;
 		}
 	}
 
 	/*  See if there are any joysticks at all.  */
-	numdevs = SDL_NumJoysticks();
-	if (!numdevs) {
+	joy_ids = SDL_GetJoysticks(&numdevs);
+	if (!numdevs || !joy_ids) {
+		SDL_free(joy_ids);
 		Com_Printf ("\nno joysticks detected by SDL\n\n");
 		return;
 	}
 
 	/*  Check if we can open any of them.  */
 	for (i = 0;  i < numdevs;  ++i) {
-		jdev = SDL_JoystickOpen (i);
+		jdev = SDL_OpenJoystick(joy_ids[i]);
 		if (jdev) {
 			Com_Printf ("Detected joystick %d: %d axes, %d buttons: \"%s\"\n",
 			            i,
-			            SDL_JoystickNumAxes (jdev),
-			            SDL_JoystickNumButtons (jdev),
-			            SDL_JoystickName (jdev));
-			SDL_JoystickClose (jdev);
+			            SDL_GetNumJoystickAxes(jdev),
+			            SDL_GetNumJoystickButtons(jdev),
+			            SDL_GetJoystickName(jdev));
+			SDL_CloseJoystick(jdev);
 			joy_avail = true;
 		}
 	}
+	SDL_free(joy_ids);
 }
 
 void
@@ -567,10 +571,6 @@ void IN_Init (void)
 void IN_Shutdown(void)
 {
 	IN_DeactivateMouse(); // btw we trying de init this in video shutdown too...
-
-#ifdef __APPLE__
-	OSX_Mouse_Shutdown(); // Safe to call, will just return if it's not running
-#endif
 
 	mouseinitialized = false;
 }

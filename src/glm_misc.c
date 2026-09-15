@@ -64,7 +64,7 @@ void GLM_PreRenderView(void)
 {
 	extern cvar_t gl_alphafont, gl_max_size;
 	extern cvar_t r_telecolor, r_lavacolor, r_slimecolor, r_watercolor, r_fastturb, r_skycolor;
-	extern cvar_t gl_textureless, gl_hwblend;
+	extern cvar_t gl_textureless;
 	int i, active_lights = 0;
 	float blend_alpha;
 
@@ -73,7 +73,8 @@ void GLM_PreRenderView(void)
 	frameConstants.gamma = bound(0.3, v_gamma.value, 3);
 	frameConstants.contrast = bound(1, v_contrast.value, 3);
 	frameConstants.r_alphatestfont = gl_alphafont.integer ? 0 : 1;
-	blend_alpha = (!vid_hwgamma_enabled || !gl_hwblend.value || cl.teamfortress) ? 0 : v_blend[3];
+	// In software-palette mode the post-process shader applies the view blend
+	blend_alpha = cl.teamfortress ? 0 : v_blend[3];
 	frameConstants.v_blend[0] = v_blend[0] * blend_alpha;
 	frameConstants.v_blend[1] = v_blend[1] * blend_alpha;
 	frameConstants.v_blend[2] = v_blend[2] * blend_alpha;

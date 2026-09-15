@@ -62,8 +62,8 @@ typedef struct {
 	char *original_addr;
 } portpingprobe_orchestrator_args_t;
 
-static SDL_atomic_t portpingprobe_status;
-static SDL_atomic_t portpingprobe_progress;
+static SDL_AtomicInt portpingprobe_status;
+static SDL_AtomicInt portpingprobe_progress;
 
 static void cl_portpingprobe_probes_changed(cvar_t *var, char *val, qbool *cancel);
 static void cl_portpingprobe_port_probes_changed(cvar_t *var, char *val, qbool *cancel);
@@ -1790,7 +1790,7 @@ static int NET_PortPingProbeWorker(void *data)
 		Com_DPrintf("[%d]: Probing port %d: RTT = %f ms\n", args->thread_id, port, rtt*1000.0);
 
 		// Increment the progress counter.
-		SDL_AtomicIncRef(&portpingprobe_progress);
+		SDL_AddAtomicInt(&portpingprobe_progress, 1);
 	}
 
 cleanup:
@@ -1863,7 +1863,7 @@ static int NET_PortPingProbeOrchestrator(void *data)
 	netadr_t net_addr;
 	double best_rtt = 100000;
 	int best_port = cl_net_clientport.integer;
-	int num_cores = SDL_GetCPUCount();
+	int num_cores = SDL_GetNumLogicalCPUCores();
 	int num_threads = num_cores - 4;
 	int i;
 
@@ -1896,7 +1896,7 @@ static int NET_PortPingProbeOrchestrator(void *data)
 	// Reset the progress counter. The worker threads will increment the
 	// counter during the probing, and the results will be rendered using
 	// the progress bar from console.c
-	SDL_AtomicSet(&portpingprobe_progress, 0);
+	SDL_SetAtomicInt(&portpingprobe_progress, 0);
 
 	Com_Printf("Probing %s to find the best source port (%d probes, %d threads, %d %s per port)\n",
 		args->target_addr, cl_portpingprobe_probes.integer, num_threads,
@@ -1984,15 +1984,15 @@ void NET_PortPingProbe(const char *target_addr, const char *original_addr)
 
 void NET_SetPortPingProbeStatus(const portpingprobe_status_t status)
 {
-	SDL_AtomicSet(&portpingprobe_status, (int)status);
+	SDL_SetAtomicInt(&portpingprobe_status, (int)status);
 }
 
 portpingprobe_status_t NET_GetPortPingProbeStatus(void)
 {
-	return (portpingprobe_status_t)SDL_AtomicGet(&portpingprobe_status);
+	return (portpingprobe_status_t)SDL_GetAtomicInt(&portpingprobe_status);
 }
 
 int NET_GetPortPingProbeProgress(void)
 {
-	return ((float)SDL_AtomicGet(&portpingprobe_progress) / (cl_portpingprobe_probes.integer * cl_portpingprobe_port_probes.integer)) * 100;
+	return ((float)SDL_GetAtomicInt(&portpingprobe_progress) / (cl_portpingprobe_probes.integer * cl_portpingprobe_port_probes.integer)) * 100;
 }

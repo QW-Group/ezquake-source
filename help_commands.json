@@ -2055,7 +2055,7 @@
     "description": "Lists all SDL2 display outputs available to the system, printing each one as an index and display name (e.g. \"0: Generic PnP Monitor\"). Useful when configuring multi-monitor setups to identify the correct display index for vid_displayindex or similar cvars."
   },
   "vid_framebuffer_palette": {
-    "description": "Legacy alias for the cvar `vid_software_palette`. Set to 0 to use hardware gamma (classic style), 1 to adjust gamma in post-processing. Prefer `vid_software_palette` in new configs."
+    "description": "Legacy alias for the cvar `vid_software_palette`. Set to 0 for the classic style (gamma not adjusted in post-processing), 1 to adjust gamma in post-processing. Prefer `vid_software_palette` in new configs."
   },
   "vid_fullscreen": {
     "description": "This command will switch to a fullscreen video mode specified in the \"vid_fullscreen_mode\" variable."

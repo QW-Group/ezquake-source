@@ -48,7 +48,7 @@ void *Sys_DLProc(DL_t dl, const char *name);
 
 #include "localtime.h"
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 // create detached thread
 int  Sys_CreateDetachedThread(int (*func)(void *), void *data);
