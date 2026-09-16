@@ -1290,7 +1290,10 @@ void Cmd_AddCommand (char *cmd_name, xcommand_t function)
 	// fail if the command already exists
 	for (cmd = cmd_hash_array[key]; cmd; cmd=cmd->hash_next) {
 		if (!strcasecmp (cmd_name, cmd->name)) {
-			Com_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
+			// Renderer restarts may register the same static command again.
+			if (cmd->function != function) {
+				Com_Printf ("Cmd_AddCommand: %s already defined\n", cmd_name);
+			}
 			return;
 		}
 	}
