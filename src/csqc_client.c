@@ -79,6 +79,7 @@ typedef struct csqc_client_state_s
 	int			func_entupdate, func_entremove, func_parseevent;
 	int			func_parseprint, func_parsecp;	// Э1: CSQC_Parse_Print / CSQC_Parse_CenterPrint
 	int			func_parsedamage;	// Э2: CSQC_Parse_Damage (или -1)
+	int			func_eventsound;	// Э3: CSQC_Event_Sound (или -1)
 	int			func_entspawn;	// CSQC_Ent_Spawn (или -1; R7/T1.3a, FTE-паритет)
 	int			func_input;		// CSQC_Input_Frame (или -1)
 	int			func_inputevent;	// CSQC_InputEvent (или -1; C1.2)
@@ -3187,6 +3188,7 @@ static qbool CSQC_Client_Load (const char *path)
 	s_csqc.func_entupdate = s_csqc.func_entremove = s_csqc.func_parseevent = -1;
 	s_csqc.func_parseprint = s_csqc.func_parsecp = -1;
 	s_csqc.func_parsedamage = -1;
+	s_csqc.func_eventsound = -1;
 	s_csqc.func_entspawn = -1;
 	s_csqc.mayread = false;
 	s_csqc.func_input = -1;
@@ -3280,6 +3282,10 @@ static qbool CSQC_Client_Load (const char *path)
 	f = PR1VM_FindFunction (vm, "CSQC_Parse_Damage");
 	if (f)
 		s_csqc.func_parsedamage = (int)(f - vm->functions);
+	// Э3: сетевой колбэк звука (FTE pr_common.h:1106, pr_csqc.c:9453).
+	f = PR1VM_FindFunction (vm, "CSQC_Event_Sound");
+	if (f)
+		s_csqc.func_eventsound = (int)(f - vm->functions);
 	f = PR1VM_FindFunction (vm, "CSQC_Input_Frame");
 	if (f)
 		s_csqc.func_input = (int)(f - vm->functions);
@@ -4201,6 +4207,49 @@ qbool CSQC_Client_ParseDamage (float save, float take, const vec3_t source)
 	vm->globals[OFS_PARM2 + 1] = source[1];
 	vm->globals[OFS_PARM2 + 2] = source[2];
 	CSQC_Client_ExecRet (s_csqc.func_parsedamage, &ret);
+	return ret != 0;
+}
+
+/*
+=================
+CSQC_Client_EventSound
+
+Э3: CSQC_Event_Sound(entnum, channel, soundname, vol, attenuation, pos, pitchmod, flags) —
+разбор svc_sound (CL_ParseStartSoundPacket / NQD_ParseStartSoundPacket). FTE
+pr_csqc.c:9453-9484: PARM0=entnum…PARM5=pos, PARM6=pitchmod*100, PARM7=flags; self =
+csqc-энтити по номеру или world (pr_csqc.c:9464-9469). Возврат ≠0 ⇒ движок звук не играет
+(FTE cl_parse.c:5336/5543). self выставляется и не восстанавливается (FTE-паритет).
+=================
+*/
+qbool CSQC_Client_EventSound (int entnum, int channel, const char *name, float vol,
+							  float atten, const vec3_t pos, float pitchmod, float flags)
+{
+	pr1vm_t *vm = &s_csqc.vm;
+	float ret = 0;
+	int slot;
+
+	if (!s_csqc.loaded || s_csqc.errored || s_csqc.func_eventsound <= 0)
+		return false;
+
+	// FTE pr_csqc.c:9464-9469: self = arena-энтити по номеру или 0 (world).
+	slot = CSQC_Client_NumToSlot (entnum);
+	if (slot > 0 && slot < CSQC_MAX_EDICTS && CSQC_Client_EntUsed (slot))
+		CSQC_Client_SetContextSlot (vm, (unsigned)slot, (unsigned)entnum);
+	else if (s_csqc.global_self >= 0)
+		*(int *)&vm->globals[s_csqc.global_self] = 0;
+
+	vm->globals[OFS_PARM0] = (float)entnum;
+	vm->globals[OFS_PARM1] = (float)channel;
+	PR1VM_ClientSetString (vm, (string_t *)&vm->globals[OFS_PARM2], (char *)(name ? name : ""));
+	vm->globals[OFS_PARM3] = vol;
+	vm->globals[OFS_PARM4] = atten;
+	vm->globals[OFS_PARM5 + 0] = pos[0];
+	vm->globals[OFS_PARM5 + 1] = pos[1];
+	vm->globals[OFS_PARM5 + 2] = pos[2];
+	vm->globals[OFS_PARM6] = pitchmod * 100.0f;	// FTE pr_csqc.c:9477
+	vm->globals[OFS_PARM7] = flags;
+
+	CSQC_Client_ExecRet (s_csqc.func_eventsound, &ret);
 	return ret != 0;
 }
 
@@ -5164,6 +5213,7 @@ void CSQC_Client_Disconnect (void)
 	s_csqc.func_entupdate = s_csqc.func_entremove = s_csqc.func_parseevent = -1;
 	s_csqc.func_parseprint = s_csqc.func_parsecp = -1;
 	s_csqc.func_parsedamage = -1;
+	s_csqc.func_eventsound = -1;
 	s_csqc.func_entspawn = -1;
 	s_csqc.mayread = false;
 	s_csqc.func_input = -1;

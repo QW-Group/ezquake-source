@@ -2033,7 +2033,8 @@ void CL_ParseStartSoundPacket(void)
 	if (CL_Demo_SkipMessage(true))
 		return;
 
-    S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
+	if (!CSQC_Client_EventSound (ent, channel, cl.sound_name[sound_num], volume / 255.0, attenuation, pos, 1.0f, 0.0f))
+		S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 
 	if (ent == cl.playernum+1)
 		TP_CheckPickupSound (cl.sound_name[sound_num], pos);

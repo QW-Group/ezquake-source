@@ -279,6 +279,11 @@ qbool CSQC_Client_ParseCenterPrint (const char *msg);
 // view-kick движка, FTE pr_csqc.c:9287, view.c:513).
 qbool CSQC_Client_ParseDamage (float save, float take, const vec3_t source);
 
+// Э3: сетевой колбэк звука. true, если модуль вернул != 0 (движок звук не играет,
+// FTE pr_csqc.c:9453, cl_parse.c:5336/5543). self = arena-энтити по entnum или world.
+qbool CSQC_Client_EventSound (int entnum, int channel, const char *name, float vol,
+							  float atten, const vec3_t pos, float pitchmod, float flags);
+
 // Register the builtin table of the client instance (implemented in csqc_builtins.c).
 void CSQCVM_RegisterBuiltins (struct pr1vm_s *vm);
 

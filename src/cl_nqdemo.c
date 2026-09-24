@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "qsound.h"
 #include "hud.h"
 #include "hud_common.h"
+#include "csqc_client.h"
 #include "vx_stuff.h"
 #include "settings.h"
 #include "teamplay.h"
@@ -643,7 +644,8 @@ static void NQD_ParseStartSoundPacket(void)
 	for (i=0 ; i<3 ; i++)
 		pos[i] = MSG_ReadCoord ();
  
-    S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
+	if (!CSQC_Client_EventSound (ent, channel, cl.sound_name[sound_num], volume / 255.0, attenuation, pos, 1.0f, 0.0f))
+		S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 }       
 
 
