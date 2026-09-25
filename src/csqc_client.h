@@ -284,6 +284,10 @@ qbool CSQC_Client_ParseDamage (float save, float take, const vec3_t source);
 qbool CSQC_Client_EventSound (int entnum, int channel, const char *name, float vol,
 							  float atten, const vec3_t pos, float pitchmod, float flags);
 
+// Э4: сетевой колбэк принудительных углов. true, если модуль вернул != 0 (движок свой
+// угол не применяет, FTE pr_csqc.c:9400, cl_parse.c:7527/7857/9816).
+qbool CSQC_Client_ParseSetAngles (const float *angles, float isdelta);
+
 // Register the builtin table of the client instance (implemented in csqc_builtins.c).
 void CSQCVM_RegisterBuiltins (struct pr1vm_s *vm);
 

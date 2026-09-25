@@ -1191,8 +1191,18 @@ static void NQD_ParseServerMessage (void)
 			break;
 
 		case svc_setangle:
-			for (i=0 ; i<3 ; i++)
-				nq_last_fixangle[i] = cl.simangles[i] = cl.viewangles[i] = MSG_ReadAngle ();
+			{
+				vec3_t sa_ang;
+
+				for (i=0 ; i<3 ; i++)
+					sa_ang[i] = MSG_ReadAngle ();
+
+				// Э4: FTE NQ-путь хук вызывает (FTE cl_parse.c:9816); return != 0 ⇒
+				// движок свой угол не применяет (не обновляем viewangles/simangles/fixangle).
+				if (!CSQC_Client_ParseSetAngles (sa_ang, false))
+					for (i=0 ; i<3 ; i++)
+						nq_last_fixangle[i] = cl.simangles[i] = cl.viewangles[i] = sa_ang[i];
+			}
 			break;
 
 		case nq_svc_setview:

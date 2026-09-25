@@ -3869,6 +3869,8 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_setangle:
 				{
+					qbool sa_handled = false;
+
 					if (cls.mvdplayback || (cls.mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT)) {
 						j = MSG_ReadByte();
 					}
@@ -3883,6 +3885,12 @@ void CL_ParseServerMessage (void)
 
 					CL_DisableLerpMove();
 
+					// Э4: FTE-паритет — CSQC_Parse_SetAngles вызывается только для non-MVD
+					// (FTE cl_parse.c:7827 DPB_MVD-ветка хук не вызывает). Возврат != 0 ⇒
+					// движок свой угол не применяет (весь apply-блок пропускается).
+					if (!cls.mvdplayback)
+						sa_handled = CSQC_Client_ParseSetAngles (newangles, false);
+
 					if (cls.mvdplayback) 
 					{
 						mvd_fixangle |= 1 << j;
@@ -3891,7 +3899,7 @@ void CL_ParseServerMessage (void)
 							VectorCopy(newangles, cl.viewangles);
 						}
 					} 
-					else {
+					else if (!sa_handled) {
 						VectorCopy (newangles, cl.viewangles);
 
 						if ((cls.mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT) && j) {

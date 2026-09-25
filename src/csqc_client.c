@@ -80,6 +80,7 @@ typedef struct csqc_client_state_s
 	int			func_parseprint, func_parsecp;	// Э1: CSQC_Parse_Print / CSQC_Parse_CenterPrint
 	int			func_parsedamage;	// Э2: CSQC_Parse_Damage (или -1)
 	int			func_eventsound;	// Э3: CSQC_Event_Sound (или -1)
+	int			func_parsesetangles;	// Э4: CSQC_Parse_SetAngles (или -1)
 	int			func_entspawn;	// CSQC_Ent_Spawn (или -1; R7/T1.3a, FTE-паритет)
 	int			func_input;		// CSQC_Input_Frame (или -1)
 	int			func_inputevent;	// CSQC_InputEvent (или -1; C1.2)
@@ -3189,6 +3190,7 @@ static qbool CSQC_Client_Load (const char *path)
 	s_csqc.func_parseprint = s_csqc.func_parsecp = -1;
 	s_csqc.func_parsedamage = -1;
 	s_csqc.func_eventsound = -1;
+	s_csqc.func_parsesetangles = -1;
 	s_csqc.func_entspawn = -1;
 	s_csqc.mayread = false;
 	s_csqc.func_input = -1;
@@ -3286,6 +3288,10 @@ static qbool CSQC_Client_Load (const char *path)
 	f = PR1VM_FindFunction (vm, "CSQC_Event_Sound");
 	if (f)
 		s_csqc.func_eventsound = (int)(f - vm->functions);
+	// Э4: сетевой колбэк углов (FTE pr_common.h:1091, pr_csqc.c:9400).
+	f = PR1VM_FindFunction (vm, "CSQC_Parse_SetAngles");
+	if (f)
+		s_csqc.func_parsesetangles = (int)(f - vm->functions);
 	f = PR1VM_FindFunction (vm, "CSQC_Input_Frame");
 	if (f)
 		s_csqc.func_input = (int)(f - vm->functions);
@@ -4255,6 +4261,33 @@ qbool CSQC_Client_EventSound (int entnum, int channel, const char *name, float v
 
 /*
 =================
+CSQC_Client_ParseSetAngles
+
+Э4: CSQC_Parse_SetAngles(vector angles, float isdelta) — разбор svc_setangle
+(cl_parse.c live/QW-demo, cl_nqdemo.c NQ-demo). FTE pr_csqc.c:9400-9416, pr_common.h:1091:
+PARM0+0..2=вектор углов (3 слова), PARM1=isdelta; return≠0 ⇒ движок свой угол не применяет
+(FTE cl_parse.c:7527/7857/9816; MVD DPB_MVD-ветка хук не вызывает). Возврат — подавлять ли
+движковое применение угла.
+=================
+*/
+qbool CSQC_Client_ParseSetAngles (const float *angles, float isdelta)
+{
+	pr1vm_t *vm = &s_csqc.vm;
+	float ret = 0;
+
+	if (!s_csqc.loaded || s_csqc.errored || s_csqc.func_parsesetangles <= 0)
+		return false;
+
+	vm->globals[OFS_PARM0 + 0] = angles[0];
+	vm->globals[OFS_PARM0 + 1] = angles[1];
+	vm->globals[OFS_PARM0 + 2] = angles[2];
+	vm->globals[OFS_PARM1] = isdelta;
+	CSQC_Client_ExecRet (s_csqc.func_parsesetangles, &ret);
+	return ret != 0;
+}
+
+/*
+=================
 CSQC_Client_ParseEntities
 
 Парсинг svc_fte_csqcentities(76)/sized(92):
@@ -5214,6 +5247,7 @@ void CSQC_Client_Disconnect (void)
 	s_csqc.func_parseprint = s_csqc.func_parsecp = -1;
 	s_csqc.func_parsedamage = -1;
 	s_csqc.func_eventsound = -1;
+	s_csqc.func_parsesetangles = -1;
 	s_csqc.func_entspawn = -1;
 	s_csqc.mayread = false;
 	s_csqc.func_input = -1;
