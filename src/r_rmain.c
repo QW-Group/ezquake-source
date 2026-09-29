@@ -68,6 +68,7 @@ void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
 void OnChange_r_drawflat(cvar_t *v, char *skyname, qbool *cancel);
 void OnChange_r_skyname(cvar_t *v, char *s, qbool *cancel);
 void R_MarkLeaves(void);
+void R_SetFrustum(void);
 void R_InitBubble(void);
 void R_InitAliasModelCvars(void);
 void R_CreateWorldTextureChains(void);
