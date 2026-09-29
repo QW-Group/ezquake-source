@@ -3455,12 +3455,12 @@ void CL_SetStat (int stat, int value)
 	int	j;
 	extern cvar_t scr_gameclock;
 
-	if (stat < 0 || stat > 127) {
+	if (stat < 0 || stat > 255) {
 		Host_Error("CL_SetStat: %i is invalid", stat);
 		return;
 	}
 
-	// Extended CSQC-статы 32..127 (mvdsv шлёт их клиентам с FTE_PEXT_CSQC).
+	// Extended CSQC-статы 32..255 (mvdsv шлёт их клиентам с FTE_PEXT_CSQC).
 	// cl.stats[] хранит только стандартные 0..31 — расширенные складываются
 	// в хранилище клиентского CSQC (getstati/f читают их оттуда).
 	if (stat >= MAX_CL_STATS)
@@ -3839,15 +3839,12 @@ void CL_ParseServerMessage (void)
 					if (CL_Demo_SkipMessage (true))
 						break;
 
-					if (!cls.demoseeking)
-					{
-						// Э1: CSQC_Parse_CenterPrint — перехват (FTE cl_screen.c:448).
-						if (CSQC_Client_ParseCenterPrint(s))
-							break;
-						if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
-							SCR_CenterPrint(s);
-						Print_flags[Print_current] = 0;
-					}
+					// Э1: CSQC_Parse_CenterPrint — перехват (FTE cl_screen.c:448).
+					if (CSQC_Client_ParseCenterPrint(s))
+						break;
+					if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
+						SCR_CenterPrint(s);
+					Print_flags[Print_current] = 0;
 					break;
 				}
 			case svc_stufftext:
@@ -4151,7 +4148,7 @@ void CL_ParseServerMessage (void)
 				}
 			case svcfte_updatestatstring:
 				{
-					// CSQC string-стат 32..127 (mvdsv PR228 rev [18]): [byte][string].
+					// CSQC string-стат 32..255 (mvdsv PR228 rev [18]): [byte][string].
 					i = MSG_ReadByte();
 					s = MSG_ReadString();
 					CSQC_Client_SetStatString(i, s);
@@ -4159,7 +4156,7 @@ void CL_ParseServerMessage (void)
 				}
 			case svcfte_updatestatfloat:
 				{
-					// CSQC float-стат 32..127: [byte][float].
+					// CSQC float-стат 32..255: [byte][float].
 					i = MSG_ReadByte();
 					CSQC_Client_SetStatFloat(i, MSG_ReadFloat());
 					break;

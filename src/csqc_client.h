@@ -14,17 +14,22 @@ csqc_client.h -- клиентская обвязка PR1VM (наш csprogs.dat),
 struct usercmd_s;	// ezquake usercmd_t (common.h -> protocol.h); без зависимостей в шапке
 struct pr1vm_s;		// PR1 инстанс (pr1vm.h); здесь — только opaque-указатель
 
+// Extended CSQC stats 32..255 live in a dedicated client store (stat index on the
+// wire is always a byte, 0..255; FTE-parity MAX_CL_STATS=256). Standard 0..31 stay
+// in cl.stats[].
+#define MAX_EXTENDED_CL_STATS 256
+
 // Доступ к клиентскому состоянию/выводу (реализация в csqc_client.c):
-float CSQC_Client_GetStat (int idx);				// 0..31 -> cl.stats, 32..127 -> ext-статы (int)
-void CSQC_Client_SetStat (int idx, int value);		// приём ext-статов 32..127 (CL_SetStat)
-// Stat wire 78/79 (float/string CSQC-статы 32..127): приём из svcfte_updatestatfloat/string
+float CSQC_Client_GetStat (int idx);				// 0..31 -> cl.stats, 32..255 -> ext-статы (int)
+void CSQC_Client_SetStat (int idx, int value);		// приём ext-статов 32..255 (CL_SetStat)
+// Stat wire 78/79 (float/string CSQC-статы 32..255): приём из svcfte_updatestatfloat/string
 // и выдача через #331 getstatf / #332 getstats. В FTE — per-player statsf[]/statsstr[]
 // (pr_csqc.c CL_SetStatNumeric/CL_SetStatString); здесь — единое CSQC-хранилище модуля.
 // GetStatInt — точное int-значение для бит-выборки #331 (getstatbits): float-путь теряет
 // младшие биты больших int (паритет FTE pr_csqc.c:2826 читает stats[] как int).
-int CSQC_Client_GetStatInt (int idx);			// 0..31 -> cl.stats, 32..127 -> ext (int)
-float CSQC_Client_GetStatFloat (int idx);			// 0..31 -> cl.stats, 32..127 -> statsf
-const char *CSQC_Client_GetStatString (int idx);	// 32..127 -> statss, иначе ""
+int CSQC_Client_GetStatInt (int idx);			// 0..31 -> cl.stats, 32..255 -> ext (int)
+float CSQC_Client_GetStatFloat (int idx);			// 0..31 -> cl.stats, 32..255 -> statsf
+const char *CSQC_Client_GetStatString (int idx);	// 32..255 -> statss, иначе ""
 void CSQC_Client_SetStatFloat (int idx, float value);		// svcfte_updatestatfloat (79)
 void CSQC_Client_SetStatString (int idx, const char *s);	// svcfte_updatestatstring (78)
 void CSQC_Client_GetScreenSize (int *w, int *h);	// vid.width/height (VF_SCREENVSIZE)

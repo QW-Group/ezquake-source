@@ -864,7 +864,7 @@ static void csqc_drawstring (void)
 float(float stnum) getstati = #330
 FTE PF_cs_getstat_int (pr_csqc.c:2812): G_INT(OFS_RETURN) = stats[stnum] — возвращаются
 raw int-биты (не число). Числовое значение модуль читает через getstatf (#331).
-0..31 — cl.stats, 32..127 — ext-хранилище (CSQC_Client_GetStatInt).
+0..31 — cl.stats, 32..255 — ext-хранилище (CSQC_Client_GetStatInt).
 */
 static void csqc_getstati (void)
 {
@@ -887,7 +887,7 @@ static void csqc_getstatf (void)
 	if (!vm)
 		return;
 	stnum = (int)vm->globals[OFS_PARM0];
-	if (stnum < 0 || stnum >= 128)
+	if (stnum < 0 || stnum >= MAX_EXTENDED_CL_STATS)
 	{
 		vm->globals[OFS_RETURN] = 0;
 		return;

@@ -251,14 +251,14 @@ static int s_numslot[CSQC_MAX_NUM];
 // освобождение слота — иначе движок возьмёт stale-слот (review add #9).
 static int s_slotnum[CSQC_MAX_EDICTS];
 
-// Extended CSQC-статы 32..127 (clientstat/pointerstat от mvdsv). Стандартные
+// Extended CSQC-статы 32..255 (clientstat/pointerstat от mvdsv). Стандартные
 // 0..31 живут в cl.stats[] (клиентская структура); расширенные хранятся здесь
 // (см. CSQC_Client_GetStat/SetStat). Stat wire 78/79 кладёт float/string-статы:
 // statsf — точное значение (приём и из 79, и из int-пути svc_updatestat), statss —
 // строка (Q_strdup, освобождается в CSQC_Client_Disconnect).
-static int s_csqc_stat[128];
-static float s_csqc_statsf[128];
-static char *s_csqc_statss[128];
+static int s_csqc_stat[MAX_EXTENDED_CL_STATS];
+static float s_csqc_statsf[MAX_EXTENDED_CL_STATS];
+static char *s_csqc_statss[MAX_EXTENDED_CL_STATS];
 
 /*
 =================
@@ -270,7 +270,7 @@ float CSQC_Client_GetStat (int idx)
 {
 	if (idx >= 0 && idx < 32)
 		return (float)cl.stats[idx];
-	if (idx >= 32 && idx < 128)
+	if (idx >= 32 && idx < MAX_EXTENDED_CL_STATS)
 		return (float)s_csqc_stat[idx];
 	return 0;
 }
@@ -279,7 +279,7 @@ int CSQC_Client_GetStatInt (int idx)
 {
 	if (idx >= 0 && idx < 32)
 		return cl.stats[idx];
-	if (idx >= 32 && idx < 128)
+	if (idx >= 32 && idx < MAX_EXTENDED_CL_STATS)
 		return s_csqc_stat[idx];
 	return 0;
 }
@@ -288,21 +288,21 @@ float CSQC_Client_GetStatFloat (int idx)
 {
 	if (idx >= 0 && idx < 32)
 		return (float)cl.stats[idx];
-	if (idx >= 32 && idx < 128)
+	if (idx >= 32 && idx < MAX_EXTENDED_CL_STATS)
 		return s_csqc_statsf[idx];
 	return 0;
 }
 
 const char *CSQC_Client_GetStatString (int idx)
 {
-	if (idx >= 32 && idx < 128 && s_csqc_statss[idx])
+	if (idx >= 32 && idx < MAX_EXTENDED_CL_STATS && s_csqc_statss[idx])
 		return s_csqc_statss[idx];
 	return "";
 }
 
 void CSQC_Client_SetStat (int idx, int value)
 {
-	if (idx >= 32 && idx < 128)
+	if (idx >= 32 && idx < MAX_EXTENDED_CL_STATS)
 	{
 		s_csqc_stat[idx] = value;
 		// Сервер при int-эмиссии float-стата держит int-кэш в синхроне
@@ -313,7 +313,7 @@ void CSQC_Client_SetStat (int idx, int value)
 
 void CSQC_Client_SetStatFloat (int idx, float value)
 {
-	if (idx >= 32 && idx < 128)
+	if (idx >= 32 && idx < MAX_EXTENDED_CL_STATS)
 	{
 		// Паритет FTE CL_SetStatNumeric (cl_parse.c:6110): int=(int)fvalue.
 		s_csqc_statsf[idx] = value;
@@ -323,7 +323,7 @@ void CSQC_Client_SetStatFloat (int idx, float value)
 
 void CSQC_Client_SetStatString (int idx, const char *s)
 {
-	if (idx >= 32 && idx < 128)
+	if (idx >= 32 && idx < MAX_EXTENDED_CL_STATS)
 	{
 		Q_free (s_csqc_statss[idx]);
 		s_csqc_statss[idx] = Q_strdup (s ? s : "");
@@ -5236,7 +5236,7 @@ void CSQC_Client_Disconnect (void)
 	memset (s_csqc_stat, 0, sizeof (s_csqc_stat));
 	memset (s_csqc_statsf, 0, sizeof (s_csqc_statsf));
 	// Stat wire 78/79: строковые статы — глубокие копии (Q_strdup).
-	for (i = 0; i < 128; i++)
+	for (i = 0; i < MAX_EXTENDED_CL_STATS; i++)
 	{
 		Q_free (s_csqc_statss[i]);
 		s_csqc_statss[i] = NULL;

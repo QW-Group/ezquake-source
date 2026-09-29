@@ -391,9 +391,15 @@ static void NQD_ParsePrint (void)
 
 	char *s = MSG_ReadString();
 	if (s[0] == 1) {	// chat
+		// CSQC_Client_ParsePrint returns nonzero if the module handled the
+		// message; the engine then suppresses its own print (FTE cl_parse.c:9468).
+		if (CSQC_Client_ParsePrint (s + 1, PRINT_CHAT))
+			return;
 		if (cl_chatsound.value)
 			S_LocalSound ("misc/talk.wav");
 	}
+	else if (CSQC_Client_ParsePrint (s, PRINT_HIGH))
+		return;
 	Com_Printf ("%s", s);
 }
 
@@ -1175,7 +1181,13 @@ static void NQD_ParseServerMessage (void)
 			break;
 			
 		case svc_centerprint:
-			SCR_CenterPrint (MSG_ReadString ());
+			{
+				char *s = MSG_ReadString ();
+				// CSQC_Client_ParseCenterPrint returns nonzero if the module
+				// handled it; engine then skips its own centerprint (FTE cl_screen.c:448).
+				if (!CSQC_Client_ParseCenterPrint (s))
+					SCR_CenterPrint (s);
+			}
 			break;
 
 		case svc_stufftext:
