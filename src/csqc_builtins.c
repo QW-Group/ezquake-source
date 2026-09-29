@@ -4153,6 +4153,11 @@ static void csqc_find (void)
 	e = csqc_ent_of (vm, OFS_PARM0);
 	f = *(int *)&vm->globals[OFS_PARM0 + 3];
 	s = CSQCVM_Str (OFS_PARM0 + 6);
+	if (f < 0 || f >= vm->progs->entityfields)
+	{
+		CSQC_Client_Abort ("PF_Find: bad field reference");
+		return;
+	}
 	if (e < 0)
 		e = 0;
 	if (s)
@@ -4227,6 +4232,188 @@ static void csqc_findradius (void)
 			if (chslot)
 				*(int *)&chslot[chain_ofs] = prev * vm->edict_size;
 		}
+		prev = e;
+	}
+	csqc_ret_entity (vm, prev);
+}
+
+/*
+L2 — «Entity-поиск/копия» (#400/#402/#403/#449/#450). FTE oracle — pr_bgcmd.c:
+PF_copyentity (:4213), PF_findchain (:1569), PF_findchainfloat (:1531),
+PF_FindFlags (:1611), PF_findchainflags (:1493). Arena fields are float-word
+offsets (ddef_t.ofs), entity value PR1 = slot*edict_size (ADR 0017). The chain
+link writes the previous entity value into the chainfield (terminator world(0)),
+same as csqc_findradius (#22).
+*/
+
+/* void(entity from, entity to) copyentity = #400 */
+static void csqc_copyentity (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	int from, to;
+	float *src, *dst;
+	if (!vm)
+		return;
+	from = csqc_ent_of (vm, OFS_PARM0);
+	if (vm->argc <= 1)
+		to = CSQC_Client_EntAlloc (vm);
+	else
+		to = csqc_ent_of (vm, OFS_PARM0 + 3);
+	// FTE pr_bgcmd.c:4228-4231 — free source/dest is fatal (readonly/fieldsize
+	// have no ezq-arena counterpart: no readonly, single edict_size).
+	if (from <= 0 || !CSQC_Client_EntUsed (from))
+	{
+		CSQC_Client_Abort ("PF_copyentity: source is free");
+		return;
+	}
+	if (to <= 0 || !CSQC_Client_EntUsed (to))
+	{
+		CSQC_Client_Abort ("PF_copyentity: destination is free");
+		return;
+	}
+	src = csqc_ent_slot (vm, from);
+	dst = csqc_ent_slot (vm, to);
+	if (!src || !dst)
+		return;
+	memcpy (dst, src, vm->edict_size);
+	// FTE pr_bgcmd.c:4235 World_LinkEdict — accept+doc: no client linking
+	// (per-frame culling, ADR 0028). FTE returns dest; csdefs declares void.
+	csqc_ret_entity (vm, to);
+}
+
+/* entity(.string field, string match, .entity chainfield) findchain = #402 */
+static void csqc_findchain (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	int f, cf, e, prev;
+	char *s, *t;
+	float *slot;
+	if (!vm)
+		return;
+	f = *(int *)&vm->globals[OFS_PARM0];
+	s = CSQCVM_Str (OFS_PARM0 + 3);
+	cf = (vm->argc > 2) ? *(int *)&vm->globals[OFS_PARM0 + 6]
+		: CSQC_Client_FieldOfs (vm, CSQC_FLD_CHAIN);
+	if (f < 0 || f >= vm->progs->entityfields || cf < 0 || cf >= vm->progs->entityfields)
+	{
+		CSQC_Client_Abort ("PF_FindChain: bad field reference");
+		return;
+	}
+	prev = 0;
+	for (e = CSQC_Client_EntSpawnBase (); e < vm->num_edicts; e++)
+	{
+		if (!CSQC_Client_EntUsed (e))
+			continue;
+		slot = csqc_ent_slot (vm, e);
+		if (!slot)
+			continue;
+		t = CSQC_Client_GetString (vm, *(int *)&slot[f]);
+		if (!t)
+			continue;
+		if (strcmp (t, s ? s : ""))
+			continue;
+		*(int *)&slot[cf] = prev * vm->edict_size;
+		prev = e;
+	}
+	csqc_ret_entity (vm, prev);
+}
+
+/* entity(.float fld, float match, .entity chainfield) findchainfloat = #403 */
+static void csqc_findchainfloat (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	int f, cf, e, prev;
+	float match, *slot;
+	if (!vm)
+		return;
+	f = *(int *)&vm->globals[OFS_PARM0];
+	match = vm->globals[OFS_PARM0 + 3];
+	cf = (vm->argc > 2) ? *(int *)&vm->globals[OFS_PARM0 + 6]
+		: CSQC_Client_FieldOfs (vm, CSQC_FLD_CHAIN);
+	if (f < 0 || f >= vm->progs->entityfields || cf < 0 || cf >= vm->progs->entityfields)
+	{
+		CSQC_Client_Abort ("PF_FindChain: bad field reference");
+		return;
+	}
+	prev = 0;
+	for (e = CSQC_Client_EntSpawnBase (); e < vm->num_edicts; e++)
+	{
+		if (!CSQC_Client_EntUsed (e))
+			continue;
+		slot = csqc_ent_slot (vm, e);
+		if (!slot)
+			continue;
+		// FTE pr_bgcmd.c:1531 — float equality (not int bits, unlike findfloat #98).
+		if (slot[f] != match)
+			continue;
+		*(int *)&slot[cf] = prev * vm->edict_size;
+		prev = e;
+	}
+	csqc_ret_entity (vm, prev);
+}
+
+/* entity(entity start, .float fld, float match) findflags = #449 */
+static void csqc_findflags (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	int e, f;
+	float match, *slot;
+	if (!vm)
+		return;
+	e = csqc_ent_of (vm, OFS_PARM0);
+	f = *(int *)&vm->globals[OFS_PARM0 + 3];
+	match = vm->globals[OFS_PARM0 + 6];
+	if (f < 0 || f >= vm->progs->entityfields)
+	{
+		CSQC_Client_Abort ("PF_FindFlags: bad field reference");
+		return;
+	}
+	if (e < 0)
+		e = 0;
+	for (e++; e < vm->num_edicts; e++)
+	{
+		if (!CSQC_Client_EntUsed (e))
+			continue;
+		slot = csqc_ent_slot (vm, e);
+		if (!slot)
+			continue;
+		if (*(int *)&slot[f] & *(int *)&match)
+		{
+			csqc_ret_entity (vm, e);
+			return;
+		}
+	}
+	csqc_ret_entity (vm, 0);
+}
+
+/* entity(.float fld, float match, .entity chainfield) findchainflags = #450 */
+static void csqc_findchainflags (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	int f, cf, e, prev;
+	float match, *slot;
+	if (!vm)
+		return;
+	f = *(int *)&vm->globals[OFS_PARM0];
+	match = vm->globals[OFS_PARM0 + 3];
+	cf = (vm->argc > 2) ? *(int *)&vm->globals[OFS_PARM0 + 6]
+		: CSQC_Client_FieldOfs (vm, CSQC_FLD_CHAIN);
+	if (f < 0 || f >= vm->progs->entityfields || cf < 0 || cf >= vm->progs->entityfields)
+	{
+		CSQC_Client_Abort ("PF_FindChain: bad field reference");
+		return;
+	}
+	prev = 0;
+	for (e = CSQC_Client_EntSpawnBase (); e < vm->num_edicts; e++)
+	{
+		if (!CSQC_Client_EntUsed (e))
+			continue;
+		slot = csqc_ent_slot (vm, e);
+		if (!slot)
+			continue;
+		if (!(*(int *)&slot[f] & *(int *)&match))
+			continue;
+		*(int *)&slot[cf] = prev * vm->edict_size;
 		prev = e;
 	}
 	csqc_ret_entity (vm, prev);
@@ -5365,6 +5552,11 @@ static void csqc_findfloat (void)
 	e = csqc_ent_of (vm, OFS_PARM0);
 	f = *(int *)&vm->globals[OFS_PARM0 + 3];
 	match = vm->globals[OFS_PARM0 + 6];
+	if (f < 0 || f >= vm->progs->entityfields)
+	{
+		CSQC_Client_Abort ("PF_FindFloat: bad field reference");
+		return;
+	}
 	if (e < 0)
 		e = 0;
 	for (e++; e < vm->num_edicts; e++)
@@ -5868,7 +6060,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 386, (builtin_t)csqc_vmrest_nop); // #386 void(__variant *dst, __variant *src, int size) memcpy — no-op v6 (ADR 0020): типизированный указатель (нет pointer-модели в v6)
 	PR1VM_RegisterBuiltin (vm, 387, (builtin_t)csqc_vmrest_nop); // #387 void(__variant *dst, int val, int size) memfill8 — no-op v6 (ADR 0020): типизированный указатель (нет pointer-модели в v6)
 	PR1VM_RegisterBuiltin (vm, 389, (builtin_t)csqc_vmrest_nop); // #389 void(__variant *dst, float ofs, __variant val) memsetval — no-op v6 (ADR 0020): типизированный указатель + runtime-тип значения
-	PR1VM_RegisterBuiltin (vm, 400, (builtin_t)csqc_vmrest_nop); // #400 void(entity from, entity to) copyentity (DP_QC_COPYENTITY)
+	PR1VM_RegisterBuiltin (vm, 400, (builtin_t)csqc_copyentity); // #400 void(entity from, entity to) copyentity (DP_QC_COPYENTITY)
 	PR1VM_RegisterBuiltin (vm, 404, (builtin_t)csqc_vmrest_nop); // #404 void(vector org, string modelname, float startframe, float endframe, float framerate) effect (DP_SV_EFFECT)
 	PR1VM_RegisterBuiltin (vm, 426, (builtin_t)csqc_vmrest_nop); // #426 void(vector org) te_teleport (DP_TE_STANDARDEFFECTBUILTINS)
 	PR1VM_RegisterBuiltin (vm, 432, (builtin_t)csqc_vectorvectors); // #432 void(vector dir) vectorvectors (DP_QC_VECTORVECTORS)
@@ -5931,12 +6123,12 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 384, (builtin_t)csqc_light_nop_ret0); // #384 __variant*(int size) memalloc — no-op v6 (ADR 0020): типизированный указатель (нет pointer-модели в v6)
 	PR1VM_RegisterBuiltin (vm, 388, (builtin_t)csqc_light_nop_ret0); // #388 __variant(__variant *dst, float ofs) memgetval — no-op v6 (ADR 0020): типизированный указатель + runtime-тип значения
 	PR1VM_RegisterBuiltin (vm, 390, (builtin_t)csqc_light_nop_ret0); // #390 __variant*(__variant *base, float ofs) memptradd — no-op v6 (ADR 0020): арифметика нативных указателей (нет pointer в v6)
-	PR1VM_RegisterBuiltin (vm, 402, (builtin_t)csqc_light_nop_ret0); // #402 entity(string field, string match) findchain (DP_QC_FINDCHAIN)
-	PR1VM_RegisterBuiltin (vm, 403, (builtin_t)csqc_light_nop_ret0); // #403 entity(float fld, float match) findchainfloat (DP_QC_FINDCHAINFLOAT)
+	PR1VM_RegisterBuiltin (vm, 402, (builtin_t)csqc_findchain); // #402 entity(.string field, string match, .entity chainfield) findchain (DP_QC_FINDCHAIN)
+	PR1VM_RegisterBuiltin (vm, 403, (builtin_t)csqc_findchainfloat); // #403 entity(.float fld, float match, .entity chainfield) findchainfloat (DP_QC_FINDCHAINFLOAT)
 	PR1VM_RegisterBuiltin (vm, 444, (builtin_t)csqc_light_nop_ret0); // #444 float	search_begin(string pattern, float caseinsensitive, float quiet) (DP_QC_FS_SEARCH)
 	PR1VM_RegisterBuiltin (vm, 446, (builtin_t)csqc_light_nop_ret0); // #446 float	search_getsize(float handle) (DP_QC_FS_SEARCH)
-	PR1VM_RegisterBuiltin (vm, 449, (builtin_t)csqc_light_nop_ret0); // #449 entity(entity start, .entity fld, float match) findflags (DP_QC_FINDFLAGS)
-	PR1VM_RegisterBuiltin (vm, 450, (builtin_t)csqc_light_nop_ret0); // #450 entity(.float fld, float match) findchainflags (DP_QC_FINDCHAINFLAGS)
+	PR1VM_RegisterBuiltin (vm, 449, (builtin_t)csqc_findflags); // #449 entity(entity start, .float fld, float match) findflags (DP_QC_FINDFLAGS)
+	PR1VM_RegisterBuiltin (vm, 450, (builtin_t)csqc_findchainflags); // #450 entity(.float fld, float match, .entity chainfield) findchainflags (DP_QC_FINDCHAINFLAGS)
 	PR1VM_RegisterBuiltin (vm, 451, (builtin_t)csqc_light_nop_ret0); // #451 float(entity ent, string tagname) gettagindex (DP_MD3_TAGSINFO)
 	PR1VM_RegisterBuiltin (vm, 476, (builtin_t)csqc_strlennocol); // #476 float(string s) strlennocol
 	PR1VM_RegisterBuiltin (vm, 487, (builtin_t)csqc_light_nop_ret0); // #487 float(string name)
