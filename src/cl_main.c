@@ -113,13 +113,13 @@ cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
 cvar_t  cl_pext = {"cl_pext", "1"};					// allow/disallow protocol extensions at all.
 													// some extensions can be explicitly controlled.
- cvar_t  cl_pext_limits = { "cl_pext_limits", "1" }; // enhanced protocol limits
- cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
+cvar_t  cl_pext_limits = { "cl_pext_limits", "1" }; // enhanced protocol limits
+cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
 #ifdef FTE_PEXT_CSQC
 #ifndef CLIENTONLY
- cvar_t  cl_pext_csqc = {"cl_pext_csqc", "1"};			// CSQC (наш клиентский PR1VM, csqc_client.c)
+cvar_t  cl_pext_csqc = {"cl_pext_csqc", "1"};			// CSQC (наш клиентский PR1VM, csqc_client.c)
  // T1.6a (D-I, FTE-паритет cl_download_csprogs): разрешить скачивание csprogs.dat с сервера.
- cvar_t  cl_download_csprogs = {"cl_download_csprogs", "1", CVAR_ARCHIVE};
+cvar_t  cl_download_csprogs = {"cl_download_csprogs", "1", CVAR_ARCHIVE};
 #endif
 #endif
 cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1" }; // if set, user will be warned when saving demos that are not backwards compatible
@@ -2112,12 +2112,12 @@ static void CL_InitLocal(void)
 
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
 	Cvar_Register(&cl_pext);
- 	Cvar_Register(&cl_pext_limits);
- 	Cvar_Register(&cl_pext_other);
+	Cvar_Register(&cl_pext_limits);
+	Cvar_Register(&cl_pext_other);
 #ifdef FTE_PEXT_CSQC
 #ifndef CLIENTONLY
- 	Cvar_Register(&cl_pext_csqc);
- 	Cvar_Register(&cl_download_csprogs);
+	Cvar_Register(&cl_pext_csqc);
+	Cvar_Register(&cl_download_csprogs);
 #endif
 #endif
  	Cvar_Register(&cl_pext_warndemos);

@@ -108,7 +108,11 @@ void IN_MouseMove (usercmd_t *cmd)
 		if (m_accel.value > 0.0f) {
 			// C1.1 #346: CSQC-модуль может временно масштабировать чувствительность
 			// (sensitivity * scale; неактивен — scale=1, как FTE in_sensitivityscale).
+#ifndef CLIENTONLY
 			float accelsens = sensitivity.value * CSQC_Client_SensitivityScale ();
+#else
+			float accelsens = sensitivity.value;
+#endif
 			float mousespeed = (sqrt (mx * mx + my * my)) / (1000.0f * (float) cls.trueframetime);
 
 			mousespeed -= m_accel_offset.value;
@@ -127,7 +131,11 @@ void IN_MouseMove (usercmd_t *cmd)
 			mouse_x *= accelsens;
 			mouse_y *= accelsens;
 		} else {
+#ifndef CLIENTONLY
 			float sens = sensitivity.value * CSQC_Client_SensitivityScale ();
+#else
+			float sens = sensitivity.value;
+#endif
 			mouse_x *= sens;
 			mouse_y *= sens;
 		}

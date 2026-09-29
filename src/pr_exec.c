@@ -155,7 +155,12 @@ void PR1VM_BindServer(pr1vm_t *vm)
 // S4 debug: provoke PR_RunError on the server instance (host_error check).
 void PR1VM_TestError_f (void)
 {
-	pr1vm_t *vm = PR1VM_Server ();
+	pr1vm_t *vm;
+
+	if (!developer.value)
+		return;
+
+	vm = PR1VM_Server ();
 	PR1VM_BindServer (vm);
 	g_active = vm;
 	PR_RunError ("PR1VM test error (host_error path)");

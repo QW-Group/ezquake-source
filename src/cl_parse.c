@@ -4289,6 +4289,7 @@ void CL_ParseServerMessage (void)
 					CL_ParseQizmoVoice();
 					break;
 				}
+#if defined(FTE_PEXT_CSQC) && !defined(CLIENTONLY)
 			case svc_fte_cgamepacket_sized:
 				{
 					// Sized cgamepacket (90, mvdsv под sv_csqcdebug): [90][len][payload]
@@ -4297,11 +4298,9 @@ void CL_ParseServerMessage (void)
 					// включает 2 байта длины и skip недосигает на 2.
 					int payload_len = MSG_ReadShort ();
 					int payload_start = msg_readcount;
-#if defined(FTE_PEXT_CSQC) && !defined(CLIENTONLY)
 					extern cvar_t cl_pext_csqc;
 					if (cl_pext_csqc.value && (cls.fteprotocolextensions & FTE_PEXT_CSQC))
 						CSQC_Client_ParseEvent (true);
-#endif
 					// skip-защита: дочитать невычитанный остаток payload
 					{
 						int used = msg_readcount - payload_start;
@@ -4310,6 +4309,7 @@ void CL_ParseServerMessage (void)
 					}
 					break;
 				}
+#endif
 #ifdef MVD_PEXT1_SIMPLEPROJECTILE
 			case svc_packetsprojectiles:
 				{

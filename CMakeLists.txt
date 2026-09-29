@@ -249,8 +249,6 @@ set(server
         ${SOURCE_DIR}/pr_cmds.c
         ${SOURCE_DIR}/pr_edict.c
         ${SOURCE_DIR}/pr_exec.c
-        ${SOURCE_DIR}/csqc_builtins.c
-        ${SOURCE_DIR}/csqc_client.c
         ${SOURCE_DIR}/sv_ccmds.c
         ${SOURCE_DIR}/sv_demo.c
         ${SOURCE_DIR}/sv_demo_misc.c
@@ -686,6 +684,8 @@ set(client
         ${SOURCE_DIR}/common_draw.c
         ${SOURCE_DIR}/config_manager.c
         ${SOURCE_DIR}/console.c
+        ${SOURCE_DIR}/csqc_builtins.c
+        ${SOURCE_DIR}/csqc_client.c
         ${SOURCE_DIR}/demo_controls.c
         ${SOURCE_DIR}/demo_extension.c
         ${SOURCE_DIR}/demo_extension_voice.c
