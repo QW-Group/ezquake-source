@@ -3608,15 +3608,24 @@ static void csqc_sound (void)
 }
 
 /*
-void(string str) precache_sound = #19/#76 — FTE-паритет (PF_cs_PrecacheSound,
-pr_csqc.c:3268): void — OFS_RETURN не пишем (модуль на возврат не опирается).
+void(string str) precache_sound = #19/#76 — FTE parity (PF_cs_PrecacheSound,
+pr_csqc.c:3268): local precache + queue a missing sound for download
+(PF_cs_PrecacheSound -> Sound_CheckDownload, cl_parse.c:1573).
+void — OFS_RETURN is not written (module does not rely on the return value).
 */
 static void csqc_precache_sound (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
 	char *n = CSQCVM_Str (OFS_PARM0);
 	if (vm && n && n[0])
+	{
 		S_PrecacheSound (n);
+		// FTE parity: queue the missing sound (`sound/<name>`). Caller-side guard on
+		// `cls.download`: ezq download is single-slot (cl_parse.c:482), so a second request
+		// would clobber the in-flight one. `*` = sexed sound (not downloadable).
+		if (n[0] != '*' && !cls.download)
+			CL_CheckOrDownloadFile (va ("sound/%s", n));
+	}
 }
 
 static void csqc_precache_model (void)
@@ -3624,7 +3633,13 @@ static void csqc_precache_model (void)
 	pr1vm_t *vm = CSQCVM_Active ();
 	char *n = CSQCVM_Str (OFS_PARM0);
 	if (vm && n && n[0])
-		CSQC_Client_ModelIndex (n);	// Ф3: загрузка + регистрация в CSQC-реестре
+	{
+		// CSQC_Client_ModelIndex returns 0 when the file is missing (Mod_ForName failed).
+		// FTE parity (PF_cs_PrecacheModel_Internal, pr_csqc.c:3218): queue the model for
+		// download. Same single-slot `cls.download` guard as precache_sound.
+		if (!CSQC_Client_ModelIndex (n) && n[0] != '*' && !cls.download)
+			CL_CheckOrDownloadFile (n);
+	}
 	CSQCVM_SetRetStr (n ? n : "");
 }
 
