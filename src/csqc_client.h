@@ -142,6 +142,9 @@ int CSQC_Client_ModelIndex (const char *name);		// 0 если не загруз�
 struct model_s *CSQC_Client_ModelForIndex (int idx);	// NULL если нет
 const char *CSQC_Client_ModelNameForIndex (int idx);	// #334: обратный резолв (NULL если нет)
 void CSQC_Client_ModelReset (void);
+// T4 reload-on-download: перезагрузить CSQC-модель(и), чьё имя совпало со скачанным
+// файлом (downloadname = cls.downloadname "<gamedir>/<file>"). Вызывается из CL_FinishDownload.
+void CSQC_Client_ModelDownloadFinished (const char *downloadname);
 
 // Точки вызова клиентского жизненного цикла CSQC-VM:
 int CSQC_Client_Active (void);			// модуль загружен и не в ошибке

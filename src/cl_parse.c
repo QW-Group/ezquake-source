@@ -1062,6 +1062,11 @@ void CL_FinishDownload(void)
 			if (strcmp(cls.downloadtempname, cls.downloadname))
 				if (rename(cls.downloadtempname, cls.downloadname))
 					Com_Printf ("Failed to rename %s to %s.\n",	cls.downloadtempname, cls.downloadname);
+
+			// T4 precache_model re-trigger: auto-reload a matching CSQC model so its
+			// stable index turns render-usable without a module re-precache (FTE
+			// CL_DownloadFinished, cl_parse.c:858-868). No-op without a CSQC module.
+			CSQC_Client_ModelDownloadFinished (cls.downloadname);
 		} else {
 			/* If download didn't complete, remove the unfinished leftover .tmp file ... */
 			unlink(cls.downloadtempname);

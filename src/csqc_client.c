@@ -1291,6 +1291,11 @@ float CSQC_Client_CallPredraw (int slot, int fidx, qbool *removed)
 getmodelindex / #333 setmodelindex и поле `.modelindex` работают с этим индексом
 (отклонение от FTE: у FTE отдельное пространство индексов для csqc-only моделей;
 у нас — единый реестр поверх Mod_ForName). Индекс module-opaque.
+
+T4 precache_model re-trigger: имя регистрируется даже при отсутствующем файле
+(Mod_ForName возвращает NULL) — слот хранит NULL-заглушку, но индекс стабилен
+(FTE pr_csqc.c:3215). После успешного скачивания заглушка заполняется в
+CSQC_Client_ModelDownloadFinished (drop-in без повторного precache моделью).
 =================
 */
 #define CSQC_MAX_MODELS 512
@@ -1317,9 +1322,11 @@ int CSQC_Client_ModelIndex (const char *name)
 		return idx;
 	if (s_nmodels >= CSQC_MAX_MODELS)
 		return 0;
+	// T4 precache_model re-trigger (FTE pr_csqc.c:3215): register the name even if the
+	// file is missing (Mod_ForName == NULL) so the returned index stays stable; the slot
+	// then holds a NULL placeholder until the model is loaded after a successful download
+	// (CSQC_Client_ModelDownloadFinished). "!= 0" therefore means "registered", not "loaded".
 	m = Mod_ForName (name, false);
-	if (!m)
-		return 0;
 	strlcpy (s_modelnames[s_nmodels], name, MAX_QPATH);
 	s_models[s_nmodels] = m;
 	return ++s_nmodels;
@@ -1341,6 +1348,39 @@ void CSQC_Client_ModelReset (void)
 	memset (s_modelnames, 0, sizeof (s_modelnames));
 	memset (s_models, 0, sizeof (s_models));
 	s_nmodels = 0;
+}
+
+/*
+=================
+T4 precache_model re-trigger: reload-on-download (FTE CL_DownloadFinished, cl_parse.c:858-868).
+
+Called from CL_FinishDownload after a successful download. `downloadname` is
+cls.downloadname (="<gamedir>/<file>", cl_parse.c:510), so the gamedir prefix is
+stripped and the rest matched against the CSQC model registry. A matching slot is
+(re)loaded via Mod_ForName: a NULL placeholder becomes the loaded model, so its stable
+index turns render-usable without the module re-calling precache_model. A no-op when
+the registry is empty (no CSQC module / nothing precached).
+=================
+*/
+void CSQC_Client_ModelDownloadFinished (const char *downloadname)
+{
+	const char *raw;
+	int i, prefix;
+
+	if (!downloadname || !downloadname[0] || s_nmodels <= 0)
+		return;
+
+	prefix = (int)strlen (cls.gamedir);
+	if (prefix <= 0 || strncmp (downloadname, cls.gamedir, prefix) || downloadname[prefix] != '/')
+		return;
+	raw = downloadname + prefix + 1;
+
+	for (i = 0; i < s_nmodels; i++)
+	{
+		if (strcmp (s_modelnames[i], raw))
+			continue;
+		s_models[i] = Mod_ForName (s_modelnames[i], false);
+	}
 }
 
 /*

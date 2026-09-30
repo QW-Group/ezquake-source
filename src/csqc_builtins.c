@@ -3634,10 +3634,13 @@ static void csqc_precache_model (void)
 	char *n = CSQCVM_Str (OFS_PARM0);
 	if (vm && n && n[0])
 	{
-		// CSQC_Client_ModelIndex returns 0 when the file is missing (Mod_ForName failed).
-		// FTE parity (PF_cs_PrecacheModel_Internal, pr_csqc.c:3218): queue the model for
-		// download. Same single-slot `cls.download` guard as precache_sound.
-		if (!CSQC_Client_ModelIndex (n) && n[0] != '*' && !cls.download)
+		int idx = CSQC_Client_ModelIndex (n);
+		// T4 precache_model re-trigger: ModelIndex now returns a stable index even for a
+		// missing model (NULL placeholder), so "file missing" is detected by the model
+		// being not loaded, not by index==0. FTE parity (PF_cs_PrecacheModel_Internal,
+		// pr_csqc.c:3218): queue the model for download. Same single-slot `cls.download`
+		// guard as precache_sound.
+		if (!CSQC_Client_ModelForIndex (idx) && n[0] != '*' && !cls.download)
 			CL_CheckOrDownloadFile (n);
 	}
 	CSQCVM_SetRetStr (n ? n : "");
