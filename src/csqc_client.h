@@ -22,7 +22,7 @@ struct pr1vm_s;		// PR1 инстанс (pr1vm.h); здесь — только op
 // Доступ к клиентскому состоянию/выводу (реализация в csqc_client.c):
 float CSQC_Client_GetStat (int idx);				// 0..31 -> cl.stats, 32..255 -> ext-статы (int)
 void CSQC_Client_SetStat (int idx, int value);		// приём ext-статов 32..255 (CL_SetStat)
-// Stat wire 78/79 (float/string CSQC-статы 32..255): приём из svcfte_updatestatfloat/string
+// Stat wire 78/79 (float/string CSQC-статы 32..255): приём из svc_fte_updatestatfloat/string
 // и выдача через #331 getstatf / #332 getstats. В FTE — per-player statsf[]/statsstr[]
 // (pr_csqc.c CL_SetStatNumeric/CL_SetStatString); здесь — единое CSQC-хранилище модуля.
 // GetStatInt — точное int-значение для бит-выборки #331 (getstatbits): float-путь теряет
@@ -30,8 +30,8 @@ void CSQC_Client_SetStat (int idx, int value);		// приём ext-статов 3
 int CSQC_Client_GetStatInt (int idx);			// 0..31 -> cl.stats, 32..255 -> ext (int)
 float CSQC_Client_GetStatFloat (int idx);			// 0..31 -> cl.stats, 32..255 -> statsf
 const char *CSQC_Client_GetStatString (int idx);	// 32..255 -> statss, иначе ""
-void CSQC_Client_SetStatFloat (int idx, float value);		// svcfte_updatestatfloat (79)
-void CSQC_Client_SetStatString (int idx, const char *s);	// svcfte_updatestatstring (78)
+void CSQC_Client_SetStatFloat (int idx, float value);		// svc_fte_updatestatfloat (79)
+void CSQC_Client_SetStatString (int idx, const char *s);	// svc_fte_updatestatstring (78)
 void CSQC_Client_GetScreenSize (int *w, int *h);	// vid.width/height (VF_SCREENVSIZE)
 void CSQC_Client_DrawText (float x, float y, const char *text, int r, int g, int b, float alpha, float scale);
 void CSQC_Client_RegisterCommand (const char *cmd);	// привязка registercommand -> консоль
@@ -250,14 +250,16 @@ int CSQC_Client_QCToKeynum (int code);
 // svc_fte_csqcentities_sized 92, clcfte_qcrequest 81) приходят из qwprot
 // src/protocol.h под #ifdef FTE_PEXT_CSQC (upstream master dd211a5+).
 //
-// 78/79 в qwprot нет (upstream master dd211a5), поэтому определяем локально —
-// как mvdsv/src/server.h:152-156; значения и формат — FTE protocol.h:351-352,
+// 78/79 в qwprot-пине нет (upstream master dd211a5): добавлены в ветке qwprot
+// csqc-stat-message-numbers. До бампа пина определяем локально (guard) —
+// как mvdsv/src/server.h:152-156; после мержа guard станет инертным.
+// Стиль имён — qwprot (svc_fte_*). Формат — FTE protocol.h:351-352,
 // fteqw/engine/client/cl_parse.c:8031-8040.
-#ifndef svcfte_updatestatstring
-#define svcfte_updatestatstring	78	// [byte statnum] [string]
+#ifndef svc_fte_updatestatstring
+#define svc_fte_updatestatstring	78	// [byte statnum] [string]
 #endif
-#ifndef svcfte_updatestatfloat
-#define svcfte_updatestatfloat	79	// [byte statnum] [float]
+#ifndef svc_fte_updatestatfloat
+#define svc_fte_updatestatfloat	79	// [byte statnum] [float]
 #endif
 
 // Runtime-гейт CSQC-парсеров (R5): договорён FTE_PEXT_CSQC и включён cl_pext_csqc

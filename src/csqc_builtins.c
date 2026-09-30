@@ -914,7 +914,7 @@ static void csqc_getstatf (void)
 /*
 string(float firststnum) getstats = #332
 Паритет FTE PF_cs_getstat_string при PEXT_CSQC (pr_csqc.c:2844-2854):
-statsstr[stnum], приём stat wire 78 (svcfte_updatestatstring). Legacy packed-int
+statsstr[stnum], приём stat wire 78 (svc_fte_updatestatstring). Legacy packed-int
 вариант (4 int-стата, старые движки) не реализован — наш клиент всегда на
 FTE_PEXT_CSQC (модуль запускается только при нём).
 */

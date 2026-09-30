@@ -4146,7 +4146,7 @@ void CL_ParseServerMessage (void)
 					CSQC_Client_ParseEntities (true);
 					break;
 				}
-			case svcfte_updatestatstring:
+			case svc_fte_updatestatstring:
 				{
 					// CSQC string-стат 32..255 (mvdsv PR228 rev [18]): [byte][string].
 					i = MSG_ReadByte();
@@ -4154,7 +4154,7 @@ void CL_ParseServerMessage (void)
 					CSQC_Client_SetStatString(i, s);
 					break;
 				}
-			case svcfte_updatestatfloat:
+			case svc_fte_updatestatfloat:
 				{
 					// CSQC float-стат 32..255: [byte][float].
 					i = MSG_ReadByte();
