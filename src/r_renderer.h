@@ -32,6 +32,10 @@ typedef struct renderer_api_s {
 
 extern renderer_api_t renderer;
 
+// Э5: имя бэкенда рендерера ("OpenGL"/"Vulkan") для CSQC_RendererRestarted
+// (FTE-паритет с rendererinfo_t.description; не GPU-строка).
+const char *R_RendererDescription(void);
+
 #undef RENDERER_METHOD
 
 #endif // EZQUAKE_R_RENDERER_HEADER

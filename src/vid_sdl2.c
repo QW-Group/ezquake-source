@@ -1805,6 +1805,11 @@ static void VID_Startup(void)
 	R_ProgramCompileAll();
 
 	Cvar_ClearAllModifiedFlags(CVAR_RELOAD_GFX);
+
+	// Э5: уведомить CSQC-модуль о переинициализации рендерера (vid_restart hard / vid_reload
+	// soft; общий хвост обоих путей). FTE-паритет (pr_csqc.c:8314, renderer.c:1918). No-op
+	// без активного модуля.
+	CSQC_Client_RendererRestarted (R_RendererDescription ());
 }
 
 void VID_ReloadCvarChanged(cvar_t* var)

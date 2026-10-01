@@ -26,6 +26,7 @@ csprogs.dat.
 #include "r_texture.h"		// R_LoadPicImage/TEX_ALPHA (#318)
 #include "r_matrix.h"		// R_Project3DCoordinates/R_Get*Matrix (#310/#311)
 #include "gl_model.h"		// model_t mins/maxs (#504 getentity)
+#include "r_renderer.h"		// R_RendererDescription (Э5 CSQC_RendererRestarted)
 #include "input.h"		// CL_SendClientCommand (enablecsqc/disablecsqc, T1.6a)
 #include "version.h"		// VERSION_NUM (CSQC_Init enginever, T1.6a)
 
@@ -81,6 +82,7 @@ typedef struct csqc_client_state_s
 	int			func_parsedamage;	// Э2: CSQC_Parse_Damage (или -1)
 	int			func_eventsound;	// Э3: CSQC_Event_Sound (или -1)
 	int			func_parsesetangles;	// Э4: CSQC_Parse_SetAngles (или -1)
+	int			func_rr;	// Э5: CSQC_RendererRestarted (или -1)
 	int			func_entspawn;	// CSQC_Ent_Spawn (или -1; R7/T1.3a, FTE-паритет)
 	int			func_input;		// CSQC_Input_Frame (или -1)
 	int			func_inputevent;	// CSQC_InputEvent (или -1; C1.2)
@@ -3231,6 +3233,7 @@ static qbool CSQC_Client_Load (const char *path)
 	s_csqc.func_parsedamage = -1;
 	s_csqc.func_eventsound = -1;
 	s_csqc.func_parsesetangles = -1;
+	s_csqc.func_rr = -1;
 	s_csqc.func_entspawn = -1;
 	s_csqc.mayread = false;
 	s_csqc.func_input = -1;
@@ -3332,6 +3335,10 @@ static qbool CSQC_Client_Load (const char *path)
 	f = PR1VM_FindFunction (vm, "CSQC_Parse_SetAngles");
 	if (f)
 		s_csqc.func_parsesetangles = (int)(f - vm->functions);
+	// Э5: движковый колбэк переинициализации рендерера (FTE pr_common.h:1096, pr_csqc.c:8314).
+	f = PR1VM_FindFunction (vm, "CSQC_RendererRestarted");
+	if (f)
+		s_csqc.func_rr = (int)(f - vm->functions);
 	f = PR1VM_FindFunction (vm, "CSQC_Input_Frame");
 	if (f)
 		s_csqc.func_input = (int)(f - vm->functions);
@@ -3433,6 +3440,9 @@ static qbool CSQC_Client_Load (const char *path)
 		CSQC_Client_Exec (s_csqc.func_init);
 		s_csqc.inited = !s_csqc.errored;
 	}
+	// Э5: сразу после CSQC_Init уведомить модуль о (пере)инициализации рендерера — FTE-паритет
+	// (pr_csqc.c:8305 `CSQC_RendererRestarted(true)`), до первого CSQC_WorldLoaded.
+	CSQC_Client_RendererRestarted (R_RendererDescription ());
 	// C3 (Wave C): модуль зарегистрировал csqc_dbg через registercvar (#93) в
 	// CSQC_Init — кэшируем указатель для горячего пути (CSQC_Client_ParseEntities).
 	s_csqc.csqc_dbg_cvar = Cvar_Find ("csqc_dbg");
@@ -4324,6 +4334,36 @@ qbool CSQC_Client_ParseSetAngles (const float *angles, float isdelta)
 	vm->globals[OFS_PARM1] = isdelta;
 	CSQC_Client_ExecRet (s_csqc.func_parsesetangles, &ret);
 	return ret != 0;
+}
+
+/*
+=================
+CSQC_Client_RendererRestarted
+
+Э5: CSQC_RendererRestarted(string rendererdescription) — движковый колбэк при
+переинициализации рендерера (vid_restart/vid_reload, VID_Startup) и при загрузке
+модуля (CSQC_Client_Load, после CSQC_Init). FTE pr_csqc.c:8314-8363, pr_common.h:1096:
+PARM0 = строка-описание рендерера; возврат движок не читает (suppress-семантики нет).
+
+Строка persistent (в отличие от temp-колбэков Э1–Э4): модуль может сохранить её в
+глобале (канарейка `g_rr_desc = rrdesc`), а кольцо PR1VM_ClientSetString перезаписывает
+слоты. Поэтому держим собственную переиспользуемую копию и регистрируем её в strtbl
+напрямую (PR1VM_SetString) — offset стабилен между вызовами, GL-указатель (glGetString)
+после vid_restart не переиспользуется.
+=================
+*/
+static char s_rr_desc[256];
+
+void CSQC_Client_RendererRestarted (const char *desc)
+{
+	pr1vm_t *vm = &s_csqc.vm;
+
+	if (!s_csqc.loaded || s_csqc.errored || s_csqc.func_rr <= 0)
+		return;
+
+	strlcpy (s_rr_desc, desc ? desc : "", sizeof (s_rr_desc));
+	PR1VM_SetString (vm, (string_t *)&vm->globals[OFS_PARM0], s_rr_desc);
+	CSQC_Client_Exec (s_csqc.func_rr);
 }
 
 /*
@@ -5288,6 +5328,7 @@ void CSQC_Client_Disconnect (void)
 	s_csqc.func_parsedamage = -1;
 	s_csqc.func_eventsound = -1;
 	s_csqc.func_parsesetangles = -1;
+	s_csqc.func_rr = -1;
 	s_csqc.func_entspawn = -1;
 	s_csqc.mayread = false;
 	s_csqc.func_input = -1;

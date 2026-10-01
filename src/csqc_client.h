@@ -298,6 +298,11 @@ qbool CSQC_Client_EventSound (int entnum, int channel, const char *name, float v
 // угол не применяет, FTE pr_csqc.c:9400, cl_parse.c:7527/7857/9816).
 qbool CSQC_Client_ParseSetAngles (const float *angles, float isdelta);
 
+// Э5: движковый колбэк CSQC_RendererRestarted(string rendererdescription) — вызывается
+// при переинициализации рендерера (vid_restart/vid_reload) и при загрузке модуля.
+// FTE pr_csqc.c:8314, pr_common.h:1096: return не читается (suppress нет).
+void CSQC_Client_RendererRestarted (const char *desc);
+
 // Register the builtin table of the client instance (implemented in csqc_builtins.c).
 void CSQCVM_RegisterBuiltins (struct pr1vm_s *vm);
 
