@@ -249,21 +249,10 @@ int CSQC_Client_QCToKeynum (int code);
 #define IE_JOYAXIS		6
 #endif
 
-// CSQC wire-номера (svc_fte_cgamepacket 83, svc_fte_cgamepacket_sized 90,
-// svc_fte_csqcentities_sized 92, clcfte_qcrequest 81) приходят из qwprot
-// src/protocol.h под #ifdef FTE_PEXT_CSQC (upstream master dd211a5+).
-//
-// 78/79 в qwprot-пине нет (upstream master dd211a5): добавлены в ветке qwprot
-// csqc-stat-message-numbers. До бампа пина определяем локально (guard) —
-// как mvdsv/src/server.h:152-156; после мержа guard станет инертным.
-// Стиль имён — qwprot (svc_fte_*). Формат — FTE protocol.h:351-352,
-// fteqw/engine/client/cl_parse.c:8031-8040.
-#ifndef svc_fte_updatestatstring
-#define svc_fte_updatestatstring	78	// [byte statnum] [string]
-#endif
-#ifndef svc_fte_updatestatfloat
-#define svc_fte_updatestatfloat	79	// [byte statnum] [float]
-#endif
+// CSQC wire-номера (svc_fte_updatestatstring/float 78/79, svc_fte_cgamepacket 83,
+// svc_fte_cgamepacket_sized 90, svc_fte_csqcentities_sized 92, clcfte_qcrequest 81)
+// приходят из qwprot src/protocol.h под #ifdef FTE_PEXT_CSQC (upstream master d29fbd4+).
+// Формат 78/79 — FTE protocol.h:351-352, fteqw/engine/client/cl_parse.c:8031-8040.
 
 // Runtime-гейт CSQC-парсеров (R5): договорён FTE_PEXT_CSQC и включён cl_pext_csqc
 // (как в cl_parse.c case 83/90). Без него 76/92 не должны трактоваться как CSQC.
