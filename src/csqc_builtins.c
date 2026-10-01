@@ -24,7 +24,8 @@ implemented (drawstring/getstatf/read builtins/sprintf are P2.2/P2.3).
 #include "qsound.h"		// S_LocalSoundWithVol (C3.1 #177)
 #include "cl_tent.h"		// CL_CreateBeam (C3.3b #428-431)
 #include "gl_model.h"		// custom_model_*/Mod_CustomModel (#431 no-op, C6.1)
-#include "crc.h"		// CRC_Init/CRC_ProcessByte/CRC_Value (#494 crc16)
+#include "crc.h"		// CRC_Init/CRC_ProcessByte/CRC_Value (#494 crc16, #639 digest_hex)
+#include "sha1.h"		// SHA1Init/SHA1Update/SHA1Final reentrant API (#639 digest_hex)
 #include "screen.h"		// SCR_CenterPrint (#338 cprint)
 #include "pr1vm.h"
 #include "csqc_client.h"	// accessor'ы к клиентскому состоянию/выводу (Фаза 5)
@@ -3357,6 +3358,7 @@ static void csqc_checkextension (void)
 		"FTE_STRINGS",
 		"DP_TE_STANDARDEFFECTBUILTINS",
 		"FTE_TE_STANDARDEFFECTBUILTINS",
+		"FTE_QC_DIGEST_SHA1",	// #639 digest_hex (SHA1 only; SHA224/384/512 not implemented — class D)
 		NULL
 	};
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5705,6 +5707,92 @@ static void csqc_changepitch (void)
 	/* no-op (документировано; как changeyaw #49) */
 }
 
+/*
+#639 digest_hex (FTE parity, PF_digest_hex pr_bgcmd.c:5826): hash the varargs
+concatenation (from parm1) into a lowercase-hex tempstring. Supported names
+(exact uppercase match, FTE pr_bgcmd.c:5792-5807): "SHA1", "MD4", "CRC16".
+MD5/SHA-2 are not implemented in ezq (class D deviation, ADR 0040) — any other
+name (or a lowercase one) returns "" like FTE (pr_bgcmd.c:5808-5809,5823).
+ezq bin2hex is UPPERCASE (sha1.c:151-158) — not usable, hence the local helper.
+*/
+/* MD4 context mirror of md4.c:52-57 (md4.c has no header and is shared with
+   mvdsv — ADR 0022, do not touch). UINT4 == unsigned int on LP64/x86_64; RSA
+   MD4 layout is stable, keep in sync with md4.c. */
+typedef struct {
+	unsigned int state[4];
+	unsigned int count[2];
+	unsigned char buffer[64];
+} csqc_md4_ctx_t;
+
+extern void MD4Init (csqc_md4_ctx_t *);
+extern void MD4Update (csqc_md4_ctx_t *, unsigned char *, unsigned int);
+extern void MD4Final (unsigned char[16], csqc_md4_ctx_t *);
+
+static void csqc_digest_to_hex (char *out, const unsigned char *digest, int len)
+{
+	static const char hex[] = "0123456789abcdef";
+	int i;
+	for (i = 0; i < len; i++)
+	{
+		out[i * 2 + 0] = hex[digest[i] >> 4];
+		out[i * 2 + 1] = hex[digest[i] & 0xf];
+	}
+	out[i * 2] = 0;
+}
+
+static void csqc_digest_hex (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	unsigned char digest[DIGEST_SIZE];	// max digest here is SHA1 (20 bytes)
+	char *name, *data, out[DIGEST_SIZE * 2 + 1];
+	int len = 0;
+
+	if (!vm)
+		return;
+	name = CSQCVM_Str (OFS_PARM0);
+	data = CSQCVM_VarString (1);
+	if (!name)
+	{
+		CSQCVM_SetRetStr ("");
+		return;
+	}
+	if (!strcmp (name, "SHA1"))
+	{
+		SHA1_CTX ctx;
+		SHA1Init (&ctx);
+		SHA1Update (&ctx, (unsigned char *)data, strlen (data));
+		SHA1Final (digest, &ctx);
+		len = DIGEST_SIZE;
+	}
+	else if (!strcmp (name, "MD4"))
+	{
+		csqc_md4_ctx_t ctx;
+		MD4Init (&ctx);
+		MD4Update (&ctx, (unsigned char *)data, (unsigned int)strlen (data));
+		MD4Final (digest, &ctx);
+		len = 16;
+	}
+	else if (!strcmp (name, "CRC16"))
+	{
+		unsigned short crc;
+		int i;
+		CRC_Init (&crc);
+		for (i = 0; i < (int)strlen (data); i++)
+			CRC_ProcessByte (&crc, (unsigned char)data[i]);
+		crc = CRC_Value (crc);
+		digest[0] = crc & 0xff;		// little-endian bytes, like FTE hash_crc16 (crc.c:86-87)
+		digest[1] = (crc >> 8) & 0xff;
+		len = 2;
+	}
+	if (len)
+	{
+		csqc_digest_to_hex (out, digest, len);
+		CSQCVM_SetRetStr (out);
+	}
+	else
+		CSQCVM_SetRetStr ("");	// MD5/SHA-2/unknown — class D deviation (ADR 0040)
+}
+
 /* #355 getentitytoken — deprecated/не нужен: возврат "" (""). */
 static void csqc_nop_str (void)
 {
@@ -6180,7 +6268,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 624, (builtin_t)csqc_nop_str); // #624 string() getextresponse
 	PR1VM_RegisterBuiltin (vm, 625, (builtin_t)csqc_nop_str); // #625 string(string dnsname, optional float defport) netaddress_resolve
 	PR1VM_RegisterBuiltin (vm, 626, (builtin_t)csqc_nop_str); // #626 string() getgamedirinfo
-	PR1VM_RegisterBuiltin (vm, 639, (builtin_t)csqc_nop_str); // #639 string(string digest, string data, ...) digest_hex
+	PR1VM_RegisterBuiltin (vm, 639, (builtin_t)csqc_digest_hex); // #639 string(string digest, string data, ...) digest_hex
 	// L2 заглушки: VECTOR (7) — тип-correct no-op.
 	PR1VM_RegisterBuiltin (vm, 244, (builtin_t)csqc_bsp_nop_vec); // #244 vector(entity ent, float tagnum) rotatevectorsbytag
 	PR1VM_RegisterBuiltin (vm, 269, (builtin_t)csqc_bsp_nop_vec); // #269 vector(float skel, float bonenum) skel_get_bonerel
