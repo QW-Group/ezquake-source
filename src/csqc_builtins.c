@@ -293,7 +293,6 @@ static void csqc_vectoangles (void)
 	pr1vm_t *vm = CSQCVM_Active ();
 	const float *forward;
 	float *up;
-	float yaw, pitch, roll;
 	float result[3];
 
 	if (!vm)
@@ -301,46 +300,7 @@ static void csqc_vectoangles (void)
 	forward = &vm->globals[OFS_PARM0];
 	up = (vm->argc >= 2) ? &vm->globals[OFS_PARM0 + 3] : NULL;
 
-	if (forward[1] == 0 && forward[0] == 0)
-	{
-		if (forward[2] > 0)
-		{
-			pitch = -M_PI * 0.5;
-			yaw = up ? atan2 (-up[1], -up[0]) : 0;
-		}
-		else
-		{
-			pitch = M_PI * 0.5;
-			yaw = up ? atan2 (up[1], up[0]) : 0;
-		}
-		roll = 0;
-	}
-	else
-	{
-		float cp, sp, cy, sy;
-		yaw = atan2 (forward[1], forward[0]);
-		pitch = -atan2 (forward[2], sqrt (forward[0] * forward[0] + forward[1] * forward[1]));
-		if (up)
-		{
-			float tleft[3], tup[3];
-			cp = cos (pitch); sp = sin (pitch);
-			cy = cos (yaw); sy = sin (yaw);
-			tleft[0] = -sy; tleft[1] = cy; tleft[2] = 0;
-			tup[0] = sp * cy; tup[1] = sp * sy; tup[2] = cp;
-			roll = -atan2 (up[0] * tleft[0] + up[1] * tleft[1] + up[2] * tleft[2],
-				up[0] * tup[0] + up[1] * tup[1] + up[2] * tup[2]);
-		}
-		else
-			roll = 0;
-	}
-	pitch *= 180 / M_PI;
-	yaw *= 180 / M_PI;
-	roll *= 180 / M_PI;
-	/* meshpitch=1: r_meshpitch/r_meshroll не применяем (отклонение) */
-	if (pitch < 0) pitch += 360;
-	if (yaw < 0) yaw += 360;
-	if (roll < 0) roll += 360;
-	result[0] = pitch; result[1] = yaw; result[2] = roll;
+	CSQC_VectorAngles (forward, up, result);
 	vm->globals[OFS_RETURN] = result[0];
 	vm->globals[OFS_RETURN + 1] = result[1];
 	vm->globals[OFS_RETURN + 2] = result[2];
@@ -5533,6 +5493,29 @@ static void csqc_isfunction (void)
 }
 
 /*
+void(vector anglechange, optional float seat) CL_RotateMoves = #638 — FTE-паритет
+(PF_cl_RotateMoves fteqw/engine/client/pr_csqc.c:4094; класс I, ADR 0040): поворот
+углов неподтверждённых usercmd. Тело — CSQC_Client_RotateMoves (s_inhist).
+Невалидный seat → 0 (FTE :4102-4106); при валидном seat return-значение FTE не
+задаёт (csdefs — void) — оставляем как есть.
+*/
+static void csqc_cl_rotatemoves (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	int seat;
+
+	if (!vm)
+		return;
+	seat = (vm->argc > 1) ? (int)vm->globals[OFS_PARM1] : 0;
+	if (seat != 0)
+	{
+		vm->globals[OFS_RETURN] = 0;
+		return;
+	}
+	CSQC_Client_RotateMoves (&vm->globals[OFS_PARM0], seat);
+}
+
+/*
 L2 — «Свет/decals/скины» (2026-09-07; roadmap волна 5-финальная). Все номера —
 документированные no-op/аппроксимации: в ezq нет decal/skin-файловых подсистем
 FTE (`Mod_*Skin`, `CL_AddDecal`), readback-пикч и констант `lfield_*` для
@@ -6244,7 +6227,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 611, (builtin_t)csqc_light_nop_ret0); // #611 float(float type) gethostcachevalue
 	PR1VM_RegisterBuiltin (vm, 621, (builtin_t)csqc_light_nop_ret0); // #621 float(float fld, float hostnr) gethostcachenumber
 	PR1VM_RegisterBuiltin (vm, 622, (builtin_t)csqc_light_nop_ret0); // #622 float(string key) gethostcacheindexforkey
-	PR1VM_RegisterBuiltin (vm, 638, (builtin_t)csqc_light_nop_ret0); // #638 float() CL_RotateMoves
+	PR1VM_RegisterBuiltin (vm, 638, (builtin_t)csqc_cl_rotatemoves); // #638 void(vector anglechange, optional float seat) CL_RotateMoves (FTE)
 	PR1VM_RegisterBuiltin (vm, 640, (builtin_t)csqc_light_nop_ret0); // #640 float() V_CalcRefdef
 	PR1VM_RegisterBuiltin (vm, 653, (builtin_t)csqc_light_nop_ret0); // #653 float() fexists
 	PR1VM_RegisterBuiltin (vm, 740, (builtin_t)csqc_light_nop_ret0); // #740 float() controller_query

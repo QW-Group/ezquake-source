@@ -4833,6 +4833,117 @@ int CSQC_Client_ApplyInput (unsigned int seq)
 
 /*
 =================
+CSQC_VectorAngles
+
+Порт FTE VectorAngles (fteqw/engine/common/mathlib.c:294) с optional up→roll,
+meshpitch=false (r_meshpitch/r_meshroll не применяются — то же отклонение, что и
+у #51 vectoangles). forward — направление; up может быть NULL; result[3] =
+(pitch, yaw, roll). Общий хелпер для #51 (csqc_builtins.c) и #638 CL_RotateMoves.
+=================
+*/
+void CSQC_VectorAngles (const float *forward, const float *up, float *result)
+{
+	float yaw, pitch, roll;
+
+	if (forward[1] == 0 && forward[0] == 0)
+	{
+		if (forward[2] > 0)
+		{
+			pitch = -M_PI * 0.5f;
+			yaw = up ? (float)atan2 (-up[1], -up[0]) : 0;
+		}
+		else
+		{
+			pitch = M_PI * 0.5f;
+			yaw = up ? (float)atan2 (up[1], up[0]) : 0;
+		}
+		roll = 0;
+	}
+	else
+	{
+		float cp, sp, cy, sy;
+		yaw = (float)atan2 (forward[1], forward[0]);
+		pitch = -(float)atan2 (forward[2], sqrt (forward[0] * forward[0] + forward[1] * forward[1]));
+		if (up)
+		{
+			float tleft[3], tup[3];
+			cp = (float)cos (pitch); sp = (float)sin (pitch);
+			cy = (float)cos (yaw); sy = (float)sin (yaw);
+			tleft[0] = -sy; tleft[1] = cy; tleft[2] = 0;
+			tup[0] = sp * cy; tup[1] = sp * sy; tup[2] = cp;
+			roll = -(float)atan2 (up[0] * tleft[0] + up[1] * tleft[1] + up[2] * tleft[2],
+				up[0] * tup[0] + up[1] * tup[1] + up[2] * tup[2]);
+		}
+		else
+			roll = 0;
+	}
+	pitch *= (float)(180 / M_PI);
+	yaw *= (float)(180 / M_PI);
+	roll *= (float)(180 / M_PI);
+	if (pitch < 0) pitch += 360;
+	if (yaw < 0) yaw += 360;
+	if (roll < 0) roll += 360;
+	result[0] = pitch; result[1] = yaw; result[2] = roll;
+}
+
+/*
+CSQC_VectorTransform — порт FTE VectorTransform (fteqw/engine/common/mathlib.c:760)
+для matrix3x4 без трансляции (в #638 4-й столбец матрицы = 0).
+*/
+static void CSQC_VectorTransform (const float *in, float mat[3][4], float *out)
+{
+	out[0] = DotProduct (in, mat[0]) + mat[0][3];
+	out[1] = DotProduct (in, mat[1]) + mat[1][3];
+	out[2] = DotProduct (in, mat[2]) + mat[2][3];
+}
+
+/*
+=================
+CSQC_Client_RotateMoves
+
+#638 CL_RotateMoves (класс I; FTE PF_cl_RotateMoves pr_csqc.c:4094-4125):
+поворот углов отправленных, но ещё не подтверждённых usercmd (seq >
+servercommandframe) на дельту anglechange, порядок как FTE:
+AngleVectorsFLU(anglechange) → forward/up кадра → VectorTransform → VectorAngles.
+usercmd.angles в ezq — float-градусы (qwprot/src/protocol.h:539), поэтому без
+SHORT2ANGLE/ANGLE2SHORT (в FTE cmd.angles — short). Возврат 0 при невалидном
+seat (single-seat: валиден только 0; FTE pr_csqc.c:4102-4106).
+=================
+*/
+int CSQC_Client_RotateMoves (float *anglechange, int seat)
+{
+	int i;
+	float mat[3][4];
+	vec3_t of, ou, nf, nu, a;
+	unsigned int ack;
+
+	if (!s_csqc.loaded || s_csqc.errored)
+		return 0;
+	if (seat != 0)
+		return 0;
+
+	AngleVectorsFLU (anglechange, mat[0], mat[1], mat[2]);
+	mat[0][3] = mat[1][3] = mat[2][3] = 0;
+
+	ack = (unsigned int)CSQC_Client_ServerCmdFrame ();
+	for (i = 0; i < CSQC_INHIST; i++)
+	{
+		csqc_inrec_t *r = &s_inhist[i];
+		if (!r->seq || r->seq <= ack)
+			continue;			// пустые и подтверждённые слоты не трогаем
+
+		VectorCopy (r->cmd.angles, a);
+		AngleVectors (a, of, NULL, ou);
+		CSQC_VectorTransform (of, mat, nf);
+		CSQC_VectorTransform (ou, mat, nu);
+		CSQC_VectorAngles (nf, nu, a);
+		VectorCopy (a, r->cmd.angles);
+	}
+	return 1;
+}
+
+/*
+=================
 CSQC_Client_MakeVectors
 
 #1 makevectors (C6.1; FTE-паритет PF_cs_makevectors, pr_csqc.c:669): по вектору
