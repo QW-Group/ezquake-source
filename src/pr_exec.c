@@ -488,7 +488,7 @@ static int PR1VM_FieldOfs (pr1vm_t *vm, int i)
 // A3 debug canary (client console `pr1vm_test_guards`, called from
 // `csqc_progscheck`): unit-test the client-VM bound predicates on a synthetic
 // instance. No execution / no PR_RunError; prints [CSQC-TEST] lines + SUMMARY.
-static void PR1VM_GuardCheck (const char *name, qbool ok, int *pass, int *fail)
+void PR1VM_GuardCheck (const char *name, qbool ok, int *pass, int *fail)
 {
 	if (ok)
 		(*pass)++;

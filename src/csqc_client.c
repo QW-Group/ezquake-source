@@ -1095,7 +1095,7 @@ static void CSQC_Client_StateOp (pr1vm_t *vm, float frame, func_t func)
 	int slot = 0;
 
 	if (s_csqc.global_self >= 0)
-		slot = *(int *)&vm->globals[s_csqc.global_self] / vm->edict_size;
+		slot = CSQC_Client_EntNum (vm, *(int *)&vm->globals[s_csqc.global_self]);
 	if (slot < 0 || slot >= vm->max_edicts)
 		return;
 	v = (float *)((byte *)vm->game_edicts + (size_t)slot * vm->edict_size);
@@ -1741,7 +1741,7 @@ static int CSQC_Client_RunEntSpawn (pr1vm_t *vm, unsigned int entnum)
 	if (!CSQC_Client_Exec (s_csqc.func_entspawn))
 		return 0;
 	selfval = *(int *)&vm->globals[s_csqc.global_self];
-	slot = selfval / vm->edict_size;
+	slot = CSQC_Client_EntNum (vm, selfval);
 	return (slot > 0 && slot < CSQC_MAX_EDICTS && s_used[slot]) ? slot : 0;
 }
 
@@ -1754,7 +1754,7 @@ static void CSQC_Client_RemapAfterUpdate (pr1vm_t *vm, unsigned int entnum)
 	if (!vm || s_csqc.func_entspawn <= 0 || s_csqc.global_self < 0 || vm->edict_size <= 0)
 		return;
 	selfval = *(int *)&vm->globals[s_csqc.global_self];
-	slot = selfval / vm->edict_size;
+	slot = CSQC_Client_EntNum (vm, selfval);
 	if (slot < 0 || slot >= CSQC_MAX_EDICTS || !s_used[slot])
 		slot = 0;
 	CSQC_Client_MapNumber ((int)entnum, slot);
@@ -1860,6 +1860,36 @@ int CSQC_Client_EntUsedCount (void)
 		if (s_used[i])
 			n++;
 	return n;
+}
+
+/*
+=================
+CSQC_Client_EntNum
+
+Convert a raw PR1 entity value (slot*edict_size) into a pool slot. The client
+VM executes untrusted csprogs and a builtin entity argument is not dereferenced
+by the VM (unlike an opcode pointer), so an out-of-range value is clamped to
+world (0) instead of faulting. FTE parity: PF_etos/PF_wasfreed go through
+ProgsToEdict (fteqw/engine/qclib/initlib.c:960-974), which reports "Bad entity
+index" and falls back to edict 0. Same bound as the opcode predicate
+PR1VM_ClientBadEdict (pr_exec.c:428-436); on the client instance
+num_edicts == max_edicts == CSQC_MAX_EDICTS (see CSQC_Client_AllocArena).
+=================
+*/
+int CSQC_Client_EntNum (struct pr1vm_s *v, int raw)
+{
+	pr1vm_t *vm = (pr1vm_t *)v;
+	int idx;
+
+	if (!vm || vm->edict_size <= 0)
+		return 0;
+	idx = raw / vm->edict_size;
+	if (raw < 0 || idx >= vm->max_edicts)
+	{
+		Con_DPrintf ("CSQC: bad entity value %d\n", raw);
+		return 0;	// world
+	}
+	return idx;
 }
 
 int CSQC_Client_NumToSlot (int number)
@@ -3186,6 +3216,28 @@ static void CSQC_Client_ProgsCheck_f (void)
 
 	// 3) runtime-guard predicate unit tests (synthetic instance)
 	PR1VM_TestGuards_f ();
+
+	// 4) R3: entity-argument conversion bound (CSQC_Client_EntNum) — OOB must
+	// clamp to world(0), never fault (FTE ProgsToEdict parity). Synthetic
+	// instance: the helper only needs edict_size/max_edicts.
+	{
+		pr1vm_t tvm;
+		int gpass = 0, gfail = 0;
+
+		memset (&tvm, 0, sizeof (tvm));
+		tvm.edict_size = 16;
+		tvm.max_edicts = 4;
+
+		PR1VM_GuardCheck ("ent_of-zero",     CSQC_Client_EntNum (&tvm, 0) == 0, &gpass, &gfail);
+		PR1VM_GuardCheck ("ent_of-3",        CSQC_Client_EntNum (&tvm, 3 * 16) == 3, &gpass, &gfail);
+		PR1VM_GuardCheck ("ent_of-over",     CSQC_Client_EntNum (&tvm, 4 * 16) == 0, &gpass, &gfail);
+		PR1VM_GuardCheck ("ent_of-negative", CSQC_Client_EntNum (&tvm, -1) == 0, &gpass, &gfail);
+		PR1VM_GuardCheck ("ent_of-huge",     CSQC_Client_EntNum (&tvm, 0x40000000) == 0, &gpass, &gfail);
+		PR1VM_GuardCheck ("ent_of-small",    CSQC_Client_EntNum (&tvm, 1) == 0, &gpass, &gfail);
+		PR1VM_GuardCheck ("ent_of-nullvm",   CSQC_Client_EntNum (NULL, 3 * 16) == 0, &gpass, &gfail);
+
+		Con_Printf ("[CSQC-TEST] SUMMARY group=ent_of pass=%d fail=%d\n", gpass, gfail);
+	}
 
 	Con_Printf ("[CSQC-TEST] SUMMARY group=progscheck pass=%d fail=%d\n", pass, fail);
 }

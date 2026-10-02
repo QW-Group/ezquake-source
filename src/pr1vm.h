@@ -153,6 +153,10 @@ void PR1VM_TestError_f(void);
 // A3 debug: unit-test the client-VM bound predicates (pr1vm_test_guards).
 void PR1VM_TestGuards_f(void);
 
+// A3 debug: shared pass/fail counter used by engine-side bound predicate tests
+// (PR1VM_TestGuards_f and the client-side ent_of group in csqc_progscheck).
+void PR1VM_GuardCheck(const char *name, qbool ok, int *pass, int *fail);
+
 int  PR1VM_EnterFunction(pr1vm_t *vm, dfunction_t *f);
 int  PR1VM_LeaveFunction(pr1vm_t *vm);
 void PR1VM_ExecuteProgram(pr1vm_t *vm, func_t fnum);

@@ -3779,11 +3779,9 @@ ev_string, 2 = ev_float, 3 = ev_vector, 4 = ev_entity (pr_comp.h etype_t).
 
 static int csqc_ent_of (pr1vm_t *vm, int parmofs)
 {
-	int v;
-	if (!vm || vm->edict_size <= 0)
-		return -1;
-	v = *(int *)&vm->globals[parmofs];
-	return v / vm->edict_size;
+	if (!vm)
+		return 0;
+	return CSQC_Client_EntNum (vm, *(int *)&vm->globals[parmofs]);
 }
 
 static float *csqc_ent_slot (pr1vm_t *vm, int entnum)
@@ -4816,7 +4814,7 @@ static void csqc_walkmove (void)
 	ofs = PR1VM_FindGlobal (vm, "self");
 	if (ofs >= 0)
 	{
-		entnum = *(int *)&vm->globals[ofs] / vm->edict_size;
+		entnum = CSQC_Client_EntNum (vm, *(int *)&vm->globals[ofs]);
 		org = csqc_ent_ofs (vm, entnum, CSQC_Client_FieldOfs (vm, CSQC_FLD_ORIGIN));
 	}
 	if (!org)
@@ -4853,7 +4851,7 @@ static void csqc_droptofloor (void)
 	ofs = PR1VM_FindGlobal (vm, "self");
 	if (ofs >= 0)
 	{
-		entnum = *(int *)&vm->globals[ofs] / vm->edict_size;
+		entnum = CSQC_Client_EntNum (vm, *(int *)&vm->globals[ofs]);
 		org = csqc_ent_ofs (vm, entnum, CSQC_Client_FieldOfs (vm, CSQC_FLD_ORIGIN));
 	}
 	if (!org)

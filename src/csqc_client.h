@@ -43,6 +43,7 @@ char *CSQC_Client_GetString (struct pr1vm_s *vm, int num);
 // FTE-пул (слот ≠ серверный номер). entnum-функции работают со слотами пула;
 // сетевые номера держатся картой номер→слот (svc 76/92). slot 0 = world.
 int CSQC_Client_EntAlloc (struct pr1vm_s *vm);			// первый свободный слот пула (свой) / 0
+int CSQC_Client_EntNum (struct pr1vm_s *vm, int raw);		// raw (N*edict_size) -> слот пула; OOB -> world(0)
 void CSQC_Client_EntFree (struct pr1vm_s *vm, int slot);	// освободить свою сущность (сеть не трогаем)
 int CSQC_Client_NetAllocSlot (struct pr1vm_s *vm);		// слот без s_own (сетевой приём; vm — обнуление слота, R2)
 void CSQC_Client_NetFreeSlot (int slot, int number);		// освободить слот + numslot
