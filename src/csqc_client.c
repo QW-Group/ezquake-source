@@ -1646,7 +1646,7 @@ static const char *s_traceg_names[CSQC_TRACEG_COUNT] =
 {
 	"trace_fraction", "trace_allsolid", "trace_startsolid", "trace_inopen",
 	"trace_inwater", "trace_plane_dist", "trace_endpos", "trace_plane_normal",
-	"trace_ent"
+	"trace_ent", "trace_networkentity", "trace_endcontents"
 };
 
 static const char *s_fieldcache_names[CSQC_FLD_COUNT] =
@@ -1716,6 +1716,29 @@ static void CSQC_Client_SetContextSlot (pr1vm_t *vm, unsigned slot, unsigned num
 		s = (float *)((byte *)vm->game_edicts + (size_t)slot * vm->edict_size + s_csqc.field_entnum * 4);
 		s[0] = (float)number;
 	}
+}
+
+/*
+=================
+CSQC_Client_EntityEntNum
+
+ssqc-номер задетой сущности — модульное поле `.entnum` арена-эдикта: серверный номер
+для сетевых сущностей (CSQC_Client_SetContextSlot), 0 для своих spawn-сущностей.
+Источник FTE-паритета trace_networkentity (FTE `tr->entnum` = `touch->number` только
+для сетевых ssqc-brush, fteqw/engine/server/world.c:2274; fteqw/engine/client/pr_csqc.c:2938).
+Вне диапазона/без поля — 0.
+=================
+*/
+int CSQC_Client_EntityEntNum (pr1vm_t *vm, int slot)
+{
+	float *s;
+
+	if (!vm || !vm->game_edicts || s_csqc.field_entnum < 0)
+		return 0;
+	if (slot <= 0 || slot >= CSQC_MAX_EDICTS || slot >= vm->num_edicts)
+		return 0;
+	s = (float *)((byte *)vm->game_edicts + (size_t)slot * vm->edict_size + s_csqc.field_entnum * 4);
+	return (int)s[0];
 }
 
 /*

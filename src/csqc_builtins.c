@@ -4527,6 +4527,24 @@ static trace_t csqc_world_trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t 
 	return tr;
 }
 
+/*
+R11: конверсия Q1-контента (CM_HullPointContents → CONTENTS_*, -1..-6) в домен FTECONTENTS,
+как FTE `tr->contents` (fteqw/engine/common/world.h:70; таблица fteqw/engine/common/q1bsp.c:729-737).
+Индекс -1-q1. Для попадания в сущность: локальная csqc/AABB → 0 (нет surface-contents, FTE-паритет:
+эмпирически `ec local 0`); сетевая brush (ssqc) → content из `.skin` (Q1, как FTE World_ClipToNetwork
+skinnum, world.c:2190-2211) либо FTECONTENTS_SOLID по умолчанию (обычный solid-brush, FTE model-trace).
+*/
+static const unsigned int s_q1_to_fte_contents[7] =
+{
+	0x00000000u,	// CONTENTS_EMPTY (-1)
+	0x00000001u,	// CONTENTS_SOLID (-2)
+	0x00000020u,	// CONTENTS_WATER (-3)
+	0x00000010u,	// CONTENTS_SLIME (-4)
+	0x00000008u,	// CONTENTS_LAVA  (-5)
+	0x80000000u,	// CONTENTS_SKY   (-6)
+	0x00000001u		// STRIPPED       (-7)
+};
+
 static void csqc_store_trace (pr1vm_t *vm, trace_t *tr)
 {
 	int o;
@@ -4559,6 +4577,43 @@ static void csqc_store_trace (pr1vm_t *vm, trace_t *tr)
 	{
 		// entity-значение = slot*edict_size (int-биты); 0 — world.
 		*(int *)&vm->globals[o] = (tr->e.entnum > 0) ? tr->e.entnum * vm->edict_size : 0;
+	}
+	// R11: trace_networkentity — ssqc-номер задетой сущности (FTE `tr->entnum`); для своих
+	// spawn-сущностей/мира — 0. НЕ слот арены (FTE fteqw/engine/server/world.c:2274).
+	if ((o = CSQC_Client_TraceGlobal (vm, CSQC_TRACEG_NETWORKENTITY)) >= 0)
+		vm->globals[o] = (float)CSQC_Client_EntityEntNum (vm, tr->e.entnum);
+	// R11: trace_endcontents — домен FTECONTENTS (FTE `tr->contents`, pr_csqc.c:2928).
+	// Мир → конверсия Q1-листа в trace_endpos (проверено: промах→0). Локальная csqc/AABB
+	// → 0 (нет surface-contents; ezq==FTE). Сетевая brush (ssqc) → `.skin`/`SOLID` —
+	// best-effort БЕЗ live-подтверждения (на стенде FTE не бьёт синтетически эмитированный
+	// brush; см. docs/adr/0042-csqc-client-trace-globals.md). Иначе 0.
+	if ((o = CSQC_Client_TraceGlobal (vm, CSQC_TRACEG_ENDCONTENTS)) >= 0)
+	{
+		unsigned int c = 0u;
+		if (tr->e.entnum > 0 && vm->game_edicts && vm->edict_size > 0)
+		{
+			int ssqc = CSQC_Client_EntityEntNum (vm, tr->e.entnum);
+			if (ssqc > 0)
+			{
+				int fskin = CSQC_Client_FieldOfs (vm, CSQC_FLD_SKIN);
+				int fsol = CSQC_Client_FieldOfs (vm, CSQC_FLD_SOLID);
+				float *base = (float *)((byte *)vm->game_edicts + (size_t)tr->e.entnum * vm->edict_size);
+				int skin = (fskin >= 0) ? (int)base[fskin] : 0;
+				int sol = (fsol >= 0) ? (int)base[fsol] : 0;
+				if (skin <= -1 && skin >= -6)
+					c = s_q1_to_fte_contents[-1 - skin];
+				else if (sol == CSQC_SOLID_BSP)
+					c = 0x00000001u;	// FTECONTENTS_SOLID (обычный solid-brush, FTE model-trace)
+			}
+		}
+		else if (cl.clipmodels[1])
+		{
+			hull_t *h = &cl.clipmodels[1]->hulls[0];
+			int q1 = CM_HullPointContents (h, h->firstclipnode, tr->endpos);
+			if (q1 >= -6 && q1 <= -1)
+				c = s_q1_to_fte_contents[-1 - q1];
+		}
+		vm->globals[o] = (float)c;
 	}
 }
 

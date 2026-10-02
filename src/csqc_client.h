@@ -49,6 +49,7 @@ int CSQC_Client_NetAllocSlot (struct pr1vm_s *vm);		// слот без s_own (с
 void CSQC_Client_NetFreeSlot (int slot, int number);		// освободить слот + numslot
 int CSQC_Client_NumToSlot (int number);					// карта номер→слот / 0
 int CSQC_Client_MapNumber (int number, int slot);		// запись карты (возврат slot)
+int CSQC_Client_EntityEntNum (struct pr1vm_s *vm, int slot);	// .entnum арена-эдикта (ssqc-номер / 0)
 // P1d C1 — обход/диагностика пула и полей модуля.
 qbool CSQC_Client_EntUsed (int slot);			// слот занят (сеть или spawn)
 int CSQC_Client_EntSpawnBase (void);			// первый используемый слот (1)
@@ -68,6 +69,8 @@ typedef enum
 	CSQC_TRACEG_ENDPOS,
 	CSQC_TRACEG_PLANE_NORMAL,
 	CSQC_TRACEG_ENT,
+	CSQC_TRACEG_NETWORKENTITY,
+	CSQC_TRACEG_ENDCONTENTS,
 	CSQC_TRACEG_COUNT
 } csqc_traceglobal_id_t;
 
