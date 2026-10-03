@@ -730,6 +730,44 @@ float CSQC_Client_StringWidth (const char *text, qbool usecolours, float fontsiz
 	return Draw_StringLength (text, -1, scale, true);
 }
 
+/*
+=================
+CSQC_Client_DrawFontScaleX
+
+x-множитель глобала `drawfontscale` (vector) активной VM — общий для CSQC и MenuQC
+(обработчики переиспользуются). Резолв офсета — PR1VM_FindGlobal, ленивый per-VM
+кэш: при смене VM (CSQC ↔ menu-VM) офсет перерезолвится (одна пара на горячем пути;
+раньше — линейный скан globaldefs по strcmp на каждый draw).
+
+FTE-эталон — pr_menu.c:140-149 (PR_CL_BeginString):
+  if (drawfontscale && (drawfontscale[0] || drawfontscale[1])) szx *= [0];
+т.е. глобала нет → без масштаба; обе компоненты нули → без масштаба (текст не
+ужимается в 0). y-компонента здесь не чтится (ezq-шрифт uniform, parity-audit §D.2).
+=================
+*/
+static pr1vm_t *s_drawfontscale_vm = NULL;
+static int s_drawfontscale_ofs = -1;
+
+float CSQC_Client_DrawFontScaleX (pr1vm_t *vm)
+{
+	float x, y;
+
+	if (!vm)
+		return 1.0f;
+	if (s_drawfontscale_vm != vm)
+	{
+		s_drawfontscale_vm = vm;
+		s_drawfontscale_ofs = PR1VM_FindGlobal (vm, "drawfontscale");
+	}
+	if (s_drawfontscale_ofs < 0)
+		return 1.0f;
+	x = vm->globals[s_drawfontscale_ofs + 0];
+	y = vm->globals[s_drawfontscale_ofs + 1];
+	if (x == 0.0f && y == 0.0f)
+		return 1.0f;
+	return x;
+}
+
 qbool CSQC_Client_PrecachePic (const char *name)
 {
 	if (!name || !name[0])

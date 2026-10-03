@@ -817,7 +817,8 @@ static void csqc_drawstring (void)
 		alpha = g[OFS_PARM0 + 9];
 	}
 	// Слой D шаг 2: size.x -> scale (8px ячейка FTE); 0 => 1.
-	scale = (g[OFS_PARM0 + 6] > 0) ? g[OFS_PARM0 + 6] / 8.0f : 1;
+	// drawfontscale: общий x-множитель текста (FTE pr_menu.c:140-149).
+	scale = ((g[OFS_PARM0 + 6] > 0) ? g[OFS_PARM0 + 6] / 8.0f : 1) * CSQC_Client_DrawFontScaleX (vm);
 	CSQC_Client_DrawText (g[OFS_PARM0 + 0], g[OFS_PARM0 + 1], s, r, gg, b, alpha, scale);
 }
 
@@ -905,7 +906,7 @@ static void csqc_drawcharacter (void)
 	if (!vm)
 		return;
 	g = vm->globals;
-	scale = (g[OFS_PARM0 + 6] > 0) ? g[OFS_PARM0 + 6] / 8.0f : 1;
+	scale = ((g[OFS_PARM0 + 6] > 0) ? g[OFS_PARM0 + 6] / 8.0f : 1) * CSQC_Client_DrawFontScaleX (vm);
 	CSQC_Client_DrawCharacter (g[OFS_PARM0 + 0], g[OFS_PARM0 + 1], (int)g[OFS_PARM0 + 3],
 		(int)(bound (0, g[OFS_PARM0 + 9], 1) * 255.0f + 0.5f),
 		(int)(bound (0, g[OFS_PARM0 + 10], 1) * 255.0f + 0.5f),
@@ -1012,8 +1013,11 @@ static void csqc_stringwidth (void)
 	if (!vm)
 		return;
 	text = CSQC_Client_GetString (vm, *(int *)&vm->globals[OFS_PARM0]);
+	// drawfontscale: умножаем size.x до передачи (внутри — /8) — метрика согласована
+	// с drawstring (FTE pr_menu.c:509-514: scale[0]/[1] × drawfontscale).
 	vm->globals[OFS_RETURN] = CSQC_Client_StringWidth (text ? text : "",
-		vm->globals[OFS_PARM0 + 3] != 0, vm->globals[OFS_PARM0 + 6]);
+		vm->globals[OFS_PARM0 + 3] != 0,
+		vm->globals[OFS_PARM0 + 6] * CSQC_Client_DrawFontScaleX (vm));
 }
 
 /*
@@ -1101,7 +1105,7 @@ static void csqc_drawrawstring (void)
 	r = (int)(bound (0, g[OFS_PARM0 + 9], 1) * 255.0f + 0.5f);
 	gg = (int)(bound (0, g[OFS_PARM0 + 10], 1) * 255.0f + 0.5f);
 	b = (int)(bound (0, g[OFS_PARM0 + 11], 1) * 255.0f + 0.5f);
-	scale = (g[OFS_PARM0 + 6] > 0) ? g[OFS_PARM0 + 6] / 8.0f : 1;
+	scale = ((g[OFS_PARM0 + 6] > 0) ? g[OFS_PARM0 + 6] / 8.0f : 1) * CSQC_Client_DrawFontScaleX (vm);
 	CSQC_Client_DrawRawText (g[OFS_PARM0 + 0], g[OFS_PARM0 + 1], s,
 		r, gg, b, g[OFS_PARM0 + 12], scale);
 }

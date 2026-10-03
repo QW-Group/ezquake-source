@@ -219,6 +219,11 @@ qbool CSQC_Client_PicSize (const char *name, float *w, float *h);	// #318 drawge
 void CSQC_Client_SetClipArea (float x, float y, float w, float h);	// #324
 void CSQC_Client_ResetClipArea (void);				// #325
 float CSQC_Client_StringWidth (const char *text, qbool usecolours, float fontsize_x);
+// Глобал `drawfontscale` (vector) активной VM: x-множитель масштаба текста для
+// draw/measure-хендлеров (FTE-паритет pr_menu.c:140-149). Нет глобала → 1.0;
+// guard `x==0 && y==0` (обе нулевые = «масштаб выключен») → 1.0. y-компонента
+// не применяется (ezq-шрифт uniform; отклонение — parity-audit §D.2).
+float CSQC_Client_DrawFontScaleX (struct pr1vm_s *vm);
 qbool CSQC_Client_PrecachePic (const char *name);
 
 // Слой D, шаг 3 — #343 setcursormode (полная реализация, A3.1). Парсинг ABI в
