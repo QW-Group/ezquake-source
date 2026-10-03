@@ -20,9 +20,8 @@ void R_BrushModelFreeMemory(void);
 
 renderer_api_t renderer;
 
-// Э5: имя бэкенда рендерера для CSQC_RendererRestarted — FTE-паритет с
-// rendererinfo_t.description (fteqw gl_vidcommon.c:3925 "OpenGL"; gl_vidsdl.c:1017
-// "Vulkan-SDL"). Не GPU-строка (glGetString(GL_RENDERER)).
+// Renderer backend name for CSQC_RendererRestarted, matching the renderer
+// description string ("OpenGL"/"Vulkan"), not the GPU string (glGetString(GL_RENDERER)).
 const char *R_RendererDescription(void)
 {
 #ifdef EZ_MULTIPLE_RENDERERS

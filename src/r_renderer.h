@@ -32,8 +32,8 @@ typedef struct renderer_api_s {
 
 extern renderer_api_t renderer;
 
-// Э5: имя бэкенда рендерера ("OpenGL"/"Vulkan") для CSQC_RendererRestarted
-// (FTE-паритет с rendererinfo_t.description; не GPU-строка).
+// Renderer backend name ("OpenGL"/"Vulkan") for CSQC_RendererRestarted (not the
+// GPU string).
 const char *R_RendererDescription(void);
 
 #undef RENDERER_METHOD

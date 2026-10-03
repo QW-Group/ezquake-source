@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "input.h"
 #ifndef CLIENTONLY
-#include "csqc_client.h"	// CSQC_Client_SensitivityScale (C1.1 #346)
+#include "csqc_client.h"	// CSQC_Client_SensitivityScale (#346)
 #endif
 #include "keys.h"
 #include "movie.h"
@@ -106,8 +106,8 @@ void IN_MouseMove (usercmd_t *cmd)
 		old_mouse_y = my;
 
 		if (m_accel.value > 0.0f) {
-			// C1.1 #346: CSQC-модуль может временно масштабировать чувствительность
-			// (sensitivity * scale; неактивен — scale=1, как FTE in_sensitivityscale).
+			// #346: the CSQC module may temporarily scale sensitivity
+			// (sensitivity * scale; inactive -> scale=1).
 #ifndef CLIENTONLY
 			float accelsens = sensitivity.value * CSQC_Client_SensitivityScale ();
 #else
@@ -141,16 +141,15 @@ void IN_MouseMove (usercmd_t *cmd)
 		}
 
 #ifndef CLIENTONLY
-		// C1.2: дельты мыши модулю (обычный режим; cursor-режим обрабатывает
-		// MOUSEABS в CSQC_Client_Update). Только когда модуль «в фокусе» —
-		// key_dest == key_game (консоль/меню не шлём, как для клавиш).
-		// handled -> не применяем к look/strafe.
+		// Mouse deltas to the module (normal mode; cursor mode handles MOUSEABS in
+		// CSQC_Client_Update). Only when the module is in focus, key_dest == key_game
+		// (console/menu are not sent, as for keys). Handled -> not applied to
+		// look/strafe.
 		if (key_dest == key_game && CSQC_Client_HasInputEvent ()
 			&& !CSQC_Client_CSQCCursor ())
 		{
 			float dx = mx, dy = my;
-			// B14 (FTE-паритет pr_csqc.c:9070): дельты — в vid.conwidth-единицах,
-			// а mx/my — в render-2D.
+			// Deltas are in vid.conwidth units, while mx/my are in render-2D.
 			CSQC_Client_ScaleCursorDelta (&dx, &dy);
 			if (CSQC_Client_InputEvent (IE_MOUSEDELTA, dx, dy, 0))
 			{

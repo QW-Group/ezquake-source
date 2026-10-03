@@ -1063,9 +1063,9 @@ void CL_FinishDownload(void)
 				if (rename(cls.downloadtempname, cls.downloadname))
 					Com_Printf ("Failed to rename %s to %s.\n",	cls.downloadtempname, cls.downloadname);
 
-			// T4 precache_model re-trigger: auto-reload a matching CSQC model so its
-			// stable index turns render-usable without a module re-precache (FTE
-			// CL_DownloadFinished, cl_parse.c:858-868). No-op without a CSQC module.
+			// Re-trigger precache_model: auto-reload a matching CSQC model so its
+			// stable index becomes render-usable without a module re-precache.
+			// No-op without a CSQC module.
 			CSQC_Client_ModelDownloadFinished (cls.downloadname);
 		} else {
 			/* If download didn't complete, remove the unfinished leftover .tmp file ... */
@@ -3222,8 +3222,8 @@ void CL_ParsePrint (void)
 		return;
 	}
 
-	// Э1: CSQC_Parse_Print — перехват сетевого print (FTE cl_parse.c:6731/6900).
-	// Наличие колбэка => движок свой print не печатает (модуль форвардит сам).
+	// Network print callback: if the module handles the message, the engine
+	// suppresses its own print (the module forwards it itself).
 	if (!cls.demoseeking && CSQC_Client_ParsePrint (s0, level))
 		return;
 
@@ -3465,9 +3465,9 @@ void CL_SetStat (int stat, int value)
 		return;
 	}
 
-	// Extended CSQC-статы 32..255 (mvdsv шлёт их клиентам с FTE_PEXT_CSQC).
-	// cl.stats[] хранит только стандартные 0..31 — расширенные складываются
-	// в хранилище клиентского CSQC (getstati/f читают их оттуда).
+	// Extended CSQC stats 32..255 (servers send them to clients with FTE_PEXT_CSQC).
+	// cl.stats[] holds only the standard 0..31; extended stats go to the client
+	// CSQC store (getstati/getstatf read them from there).
 	if (stat >= MAX_CL_STATS)
 	{
 #ifndef CLIENTONLY
@@ -3844,7 +3844,7 @@ void CL_ParseServerMessage (void)
 					if (CL_Demo_SkipMessage (true))
 						break;
 
-					// Э1: CSQC_Parse_CenterPrint — перехват (FTE cl_screen.c:448).
+					// Centerprint callback: nonzero return means the module handled it.
 					if (CSQC_Client_ParseCenterPrint(s))
 						break;
 					if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
@@ -3887,9 +3887,9 @@ void CL_ParseServerMessage (void)
 
 					CL_DisableLerpMove();
 
-					// Э4: FTE-паритет — CSQC_Parse_SetAngles вызывается только для non-MVD
-					// (FTE cl_parse.c:7827 DPB_MVD-ветка хук не вызывает). Возврат != 0 ⇒
-					// движок свой угол не применяет (весь apply-блок пропускается).
+					// CSQC_Parse_SetAngles is called only for non-MVD playback; a nonzero
+					// return means the engine does not apply its own angle (the whole
+					// apply block is skipped).
 					if (!cls.mvdplayback)
 						sa_handled = CSQC_Client_ParseSetAngles (newangles, false);
 
@@ -4091,7 +4091,7 @@ void CL_ParseServerMessage (void)
 					cl.solo_completed_time = cl.servertime;
 					vid.recalc_refdef = true;	// go to full screen
 					finstr = MSG_ReadString ();
-					// Э1: CSQC_Parse_CenterPrint — перехват (FTE cl_screen.c:448).
+					// Centerprint callback: nonzero return means the module handled it.
 					if (!CSQC_Client_ParseCenterPrint(finstr))
 						SCR_CenterPrint(finstr);
 					break;
@@ -4140,20 +4140,19 @@ void CL_ParseServerMessage (void)
 #if defined(FTE_PEXT_CSQC) && !defined(CLIENTONLY)
 			case svc_fte_csqcentities:
 				{
-					// CSQC-сущности (76): модуль читает payload через read*.
+					// CSQC entities (76): the module reads the payload via read*.
 					CSQC_Client_ParseEntities (false);
 					break;
 				}
 			case svc_fte_csqcentities_sized:
 				{
-					// Sized-вариант (92, mvdsv под sv_csqcdebug): перед payload
-					// каждой сущности — short-длина (E3).
+					// Sized variant (92): a short length precedes each entity's payload.
 					CSQC_Client_ParseEntities (true);
 					break;
 				}
 			case svc_fte_updatestatstring:
 				{
-					// CSQC string-стат 32..255 (mvdsv PR228 rev [18]): [byte][string].
+					// CSQC string stat 32..255: [byte][string].
 					i = MSG_ReadByte();
 					s = MSG_ReadString();
 					CSQC_Client_SetStatString(i, s);
@@ -4161,7 +4160,7 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_fte_updatestatfloat:
 				{
-					// CSQC float-стат 32..255: [byte][float].
+					// CSQC float stat 32..255: [byte][float].
 					i = MSG_ReadByte();
 					CSQC_Client_SetStatFloat(i, MSG_ReadFloat());
 					break;
@@ -4276,10 +4275,10 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_qizmovoice:
 				{
-					// svc 83: конфликт qizmovoice (legacy) vs svc_fte_cgamepacket
-					// (CSQC). При договорённом FTE_PEXT_CSQC и cl_pext_csqc это
-					// CSQC-cgamepacket (ADR 0003, вариант 1) — парсим его модулем,
-					// иначе чужой CSQC-multicast роняет клиент как bad message.
+					// svc 83: qizmovoice (legacy) vs svc_fte_cgamepacket (CSQC)
+					// conflict. With FTE_PEXT_CSQC negotiated and cl_pext_csqc set it is
+					// a CSQC cgamepacket parsed by the module; otherwise a foreign CSQC
+					// multicast would kill the client as a bad message.
 #if defined(FTE_PEXT_CSQC) && !defined(CLIENTONLY)
 					extern cvar_t cl_pext_csqc;
 					if (cl_pext_csqc.value && (cls.fteprotocolextensions & FTE_PEXT_CSQC))
@@ -4294,16 +4293,16 @@ void CL_ParseServerMessage (void)
 #if defined(FTE_PEXT_CSQC) && !defined(CLIENTONLY)
 			case svc_fte_cgamepacket_sized:
 				{
-					// Sized cgamepacket (90, mvdsv под sv_csqcdebug): [90][len][payload]
-					// (sv_send.c:450-462). Payload = как 83 (имя события + args).
-					// R1: payload_start — ПОСЛЕ длины (len = payload-only), иначе used
-					// включает 2 байта длины и skip недосигает на 2.
+					// Sized cgamepacket (90): [90][len][payload]. Payload is like 83
+					// (event name + args). payload_start is taken after the length
+					// (len is payload-only), otherwise the skip count would include
+					// the two length bytes and under-read by two.
 					int payload_len = MSG_ReadShort ();
 					int payload_start = msg_readcount;
 					extern cvar_t cl_pext_csqc;
 					if (cl_pext_csqc.value && (cls.fteprotocolextensions & FTE_PEXT_CSQC))
 						CSQC_Client_ParseEvent (true);
-					// skip-защита: дочитать невычитанный остаток payload
+					// Skip guard: read any remaining part of the payload.
 					{
 						int used = msg_readcount - payload_start;
 						if (used < payload_len)

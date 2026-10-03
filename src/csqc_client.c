@@ -1,19 +1,12 @@
 /*
-csqc_client.c -- клиентская обвязка PR1VM (наш csprogs.dat), Фаза 5 (мини-каркас).
+csqc_client.c -- client-side PR1VM wrapper for our csprogs.dat (CSQC).
 
-Что делает (спайк, «оверлей + статы 0-31»):
-  1. При получении полного serverinfo с *csprogs / *csprogssize и битом
-     FTE_PEXT_CSQC — грузит локальный csprogs.dat в статический клиентский
-     инстанс PR1VM (v7-secondary16), регистрирует клиентские builtins и
-     вызывает CSQC_Init.
-  2. В первом 2D-кадре (ca_active) — CSQC_WorldLoaded, каждый кадр —
-     CSQC_UpdateView(w,h,menushown); перед вызовом обновляет глобал time.
-  3. registercommand -> Cmd_AddCommand; выполнение команды -> CSQC_ConsoleCommand.
-  4. При разрыве — CSQC_Shutdown, PR1VM_UnLoad, снятие команд.
-
-Вне скоупа мини-каркаса (следующие подшаги): парсинг 76/83/90/92, статы
-32-127, реальный sendevent (clcfte_qcrequest), read*-builtins, скачивание
-csprogs.dat.
+Loads the local csprogs.dat into a static client PR1VM instance when the server
+offers CSQC (*csprogs / *csprogssize + FTE_PEXT_CSQC), registers the client
+builtins and runs CSQC_Init; then CSQC_WorldLoaded on entering the world and
+CSQC_UpdateView(w,h,menushown) each frame. registercommand -> Cmd_AddCommand;
+executing a command -> CSQC_ConsoleCommand; on disconnect -> CSQC_Shutdown +
+PR1VM_UnLoad and removal of the commands.
 */
 
 #ifndef CLIENTONLY
@@ -21,32 +14,32 @@ csprogs.dat.
 #include "keys.h"		// key_dest / key_menu
 #include "pr1vm.h"
 #include "csqc_client.h"
-#include "pmove.h"		// playermove_t/pmove/movevars/PM_PlayerMove (C1.4 #347)
+#include "pmove.h"		// playermove_t/pmove/movevars/PM_PlayerMove (#347)
 #include "common_draw.h"	// CachePic_Find/Remove, Draw_EnableScissorRectangle/DisableScissor
 #include "r_texture.h"		// R_LoadPicImage/TEX_ALPHA (#318)
 #include "r_matrix.h"		// R_Project3DCoordinates/R_Get*Matrix (#310/#311)
 #include "gl_model.h"		// model_t mins/maxs (#504 getentity)
-#include "r_renderer.h"		// R_RendererDescription (Э5 CSQC_RendererRestarted)
-#include "input.h"		// CL_SendClientCommand (enablecsqc/disablecsqc, T1.6a)
-#include "version.h"		// VERSION_NUM (CSQC_Init enginever, T1.6a)
+#include "r_renderer.h"		// R_RendererDescription (CSQC_RendererRestarted)
+#include "input.h"		// CL_SendClientCommand (enablecsqc/disablecsqc)
+#include "version.h"		// VERSION_NUM (CSQC_Init enginever)
 
-// CSQC API level, который движок сообщает модулю в CSQC_Init (FTE-паритет:
-// pr_common.h CSQC_API_VERSION 1.0, pr_csqc.c:8285).
+// CSQC API level the engine reports to the module in CSQC_Init (FTE parity:
+// CSQC_API_VERSION is 1.0).
 #ifndef CSQC_API_VERSION
 #define CSQC_API_VERSION	1.0f
 #endif
 
-// FTE-пул (слот ≠ серверный номер; план docs/archive/ezquake_csqc_client_corebuiltins_plan.md):
-// CSQC_MAX_NUM — верх серверных номеров (карта номер→слот), CSQC_MAX_EDICTS — размер пула
-// edict-слотов арены (слот 0 = world, не управляется). .entnum (поле модуля) = серверный
-// номер; модульные spawn-сущности номера не имеют (.entnum=0).
+// Entity pool (slot != server number): CSQC_MAX_NUM is the upper bound of server
+// numbers (number->slot map), CSQC_MAX_EDICTS is the arena edict-slot pool size
+// (slot 0 = world, not managed). The module's .entnum field = server number;
+// module-spawned entities have no number (.entnum=0).
 #define CSQC_MAX_NUM	4096
 #define CSQC_MAX_EDICTS	4096
 
-// Клиентские строковые таблицы + temp-кольцо инстанса клиентской VM. Держатся
-// вне shared pr1vm_t (ядро хранит только указатели на них в vm->), чтобы в
-// shared-ядре не было клиентских данных/логики (mvdsv копирует ядро дословно).
-// Размер кольца = числу уникальных temp-строк, живущих до перезаписи слота.
+// Client string tables + temp ring of the client VM instance. Kept outside the
+// shared pr1vm_t (the core only holds pointers to them in vm->) so the shared
+// core carries no client data/logic. Ring size = number of unique temp strings
+// alive until their slot is overwritten.
 #define CSQC_TEMP_STRINGS		64
 #define CSQC_TEMP_STRING_SIZE	2048
 typedef struct csqc_strpool_s
@@ -54,9 +47,9 @@ typedef struct csqc_strpool_s
 	char	*strtbl[MAX_PRSTR];
 	char	*newstrtbl[MAX_PRSTR];
 	int		numstr;
-	// Temp-строки deep-copy в следующий слот кольца: каждый вызов получает
-	// собственный стабильный буфер (результат builtin не алиасит ни источник,
-	// ни прошлые результаты; слот перезаписывается последующими вызовами).
+	// Temp strings deep-copy into the next ring slot: each call gets its own
+	// stable buffer (the builtin result aliases neither the source nor past
+	// results; the slot is overwritten by later calls).
 	char	tmpstr[CSQC_TEMP_STRINGS][CSQC_TEMP_STRING_SIZE];
 	int		tmpstr_cur;
 } csqc_strpool_t;
@@ -64,89 +57,88 @@ typedef struct csqc_strpool_s
 typedef struct csqc_client_state_s
 {
 	pr1vm_t		vm;
-	qbool		loaded;		// модуль загружен в инстанс
-	qbool		inited;		// CSQC_Init вызван
-	// C3 (Wave C): кэш cvar csqc_dbg (модуль регистрирует его в CSQC_Init через
-	// registercvar; резолвим после init, чтобы не звать Cvar_Find на каждую сущность).
+	qbool		loaded;		// module loaded into the instance
+	qbool		inited;		// CSQC_Init called
+	// Cached csqc_dbg cvar pointer (the module registers it in CSQC_Init via
+	// registercvar; resolved after init so Cvar_Find is not called per entity).
 	cvar_t		*csqc_dbg_cvar;
-	qbool		errored;	// PR_RunError на клиентском инстансе (кадры отключены)
-	qbool		mayread;	// модуль вправе читать net-message — только parse-callback'и
-						// (CSQC_Ent_Update/CSQC_Parse_Event; R7/T1.4a, FTE csqc_mayread)
-	qbool		world_done;	// CSQC_WorldLoaded вызван
-	qbool		enable_sent;	// enablecsqc/disablecsqc уже отправлен серверу
-	qbool		enable_value;	// последнее отправленное состояние (true=enablecsqc, T1.6a)
-	qbool		seen[CSQC_MAX_NUM];	// известные CSQC-сущности (isnew для Ent_Update)
+	qbool		errored;	// PR_RunError on the client instance (frames disabled)
+	qbool		mayread;	// module may read the net message - parse callbacks only
+						// (CSQC_Ent_Update/CSQC_Parse_Event; FTE csqc_mayread)
+	qbool		world_done;	// CSQC_WorldLoaded called
+	qbool		enable_sent;	// enablecsqc/disablecsqc already sent to the server
+	qbool		enable_value;	// last sent state (true=enablecsqc)
+	qbool		seen[CSQC_MAX_NUM];	// known CSQC entities (isnew for Ent_Update)
 	int			func_init, func_world, func_update, func_console, func_shutdown;
 	int			func_entupdate, func_entremove, func_parseevent;
-	int			func_parseprint, func_parsecp;	// Э1: CSQC_Parse_Print / CSQC_Parse_CenterPrint
-	int			func_parsedamage;	// Э2: CSQC_Parse_Damage (или -1)
-	int			func_eventsound;	// Э3: CSQC_Event_Sound (или -1)
-	int			func_parsesetangles;	// Э4: CSQC_Parse_SetAngles (или -1)
-	int			func_rr;	// Э5: CSQC_RendererRestarted (или -1)
-	int			func_entspawn;	// CSQC_Ent_Spawn (или -1; R7/T1.3a, FTE-паритет)
-	int			func_input;		// CSQC_Input_Frame (или -1)
-	int			func_inputevent;	// CSQC_InputEvent (или -1; C1.2)
-	int			func_startframe;	// CSQC StartFrame (или -1; T2.7)
-	int			func_endframe;		// CSQC EndFrame (или -1; T2.7)
-	int			global_time;	// смещение глобала time (или -1)
-	int			global_gamespeed;	// смещение глобала gamespeed (или -1; T2.1)
-	int			global_self;	// смещение глобала self (или -1; ADR 0017 P2/D3)
-	int			global_other;	// смещение глобала other (или -1; T2.7 think-loop)
-	int			global_physics_mode;	// смещение глобала physics_mode (или -1; T2.7)
-	int			field_entnum;	// float-слово поля .entnum в entvars (или -1)
-	// C1.4/C5-B #347: field-offset'ы стандартной физики (или -1).
+	int			func_parseprint, func_parsecp;	// CSQC_Parse_Print / CSQC_Parse_CenterPrint
+	int			func_parsedamage;	// CSQC_Parse_Damage (or -1)
+	int			func_eventsound;	// CSQC_Event_Sound (or -1)
+	int			func_parsesetangles;	// CSQC_Parse_SetAngles (or -1)
+	int			func_rr;	// CSQC_RendererRestarted (or -1)
+	int			func_entspawn;	// CSQC_Ent_Spawn (or -1; FTE parity)
+	int			func_input;		// CSQC_Input_Frame (or -1)
+	int			func_inputevent;	// CSQC_InputEvent (or -1)
+	int			func_startframe;	// CSQC StartFrame (or -1)
+	int			func_endframe;		// CSQC EndFrame (or -1)
+	int			global_time;	// offset of the time global (or -1)
+	int			global_gamespeed;	// offset of the gamespeed global (or -1)
+	int			global_self;	// offset of the self global (or -1)
+	int			global_other;	// offset of the other global (or -1; think-loop)
+	int			global_physics_mode;	// offset of the physics_mode global (or -1)
+	int			field_entnum;	// float word of the .entnum field in entvars (or -1)
+	// #347: standard physics field offsets (or -1).
 	int			f_origin, f_velocity, f_angles, f_mins, f_maxs;
 	int			f_movetype, f_flags, f_gravity, f_pmove_flags;
 	int			f_modelindex, f_skin;	// #371 player/delta bridge (raw state fields)
 	int			f_frame, f_effects, f_colormap, f_drawmask;	// #371 bridge (raw state fields)
-	int			f_think, f_nextthink;	// T2.7 think-loop: поля .think/.nextthink (или -1)
-	// FTE-пул Шаг 7 (часть 2): поля классификации трасс и зеркала игроков —
-	// удалены вместе с зеркалом (окружение = FTE: без серверной эмиссии игроков
-	// ezquake сущности игроков не фабрикует). Публикация player_localentnum (FTE).
-	int			g_localentnum;	// глобал модуля player_localentnum (или -1)
-	// input_* глобалы для CSQC_Input_Frame (или -1, если модуль их не объявил).
+	int			f_think, f_nextthink;	// think-loop: .think/.nextthink fields (or -1)
+	// Player mirroring is removed (the entity environment matches FTE without
+	// server-side player emission - ezquake does not fabricate player entities).
+	// Only player_localentnum is published (FTE).
+	int			g_localentnum;	// module global player_localentnum (or -1)
+	// input_* globals for CSQC_Input_Frame (or -1 if the module did not declare them).
 	int			in_timelength, in_angles, in_movevalues, in_buttons, in_impulse;
-	int			in_sequence;	// input_sequence (C1.3 #345) или -1
-	// C5-A: глобалы окна предикции (csdefs.qc:50-51) или -1.
+	int			in_sequence;	// input_sequence (#345) or -1
+	// Prediction window globals (or -1).
 	int			g_ccframe;		// clientcommandframe
 	int			g_scframe;		// servercommandframe
-	// C5-A/B: deprec-глобалы pmove_org/pmove_vel/pmove_onground (или -1;
-	// пишет #347 в B; в A только резолв).
+	// Deprecated pmove_org/pmove_vel/pmove_onground globals (or -1; #347 writes them).
 	int			p_org, p_vel, p_onground;
-	// #1 makevectors (C6.1): глобалы v_forward/v_right/v_up модуля (или -1).
+	// #1 makevectors: module v_forward/v_right/v_up globals (or -1).
 	int			g_vfwd, g_vright, g_vup;
-	int			g_view_angles;	// C5-E: глобал view_angles (или -1)
-	// B4: симулированные глобалы уровня FTE (или -1): frametime/cltime/maxclients/
-	// player_localnum/intermission (pr_csqc.c:8818-8838).
+	int			g_view_angles;	// view_angles global (or -1)
+	// Simulated FTE-level globals (or -1): frametime/cltime/maxclients/
+	// player_localnum/intermission.
 	int			g_frametime, g_cltime, g_maxclients, g_player_localnum, g_intermission;
-	// Скачивание csprogs (локально нет валидного файла): качаем *csprogsname с
-	// сервера и сохраняем в csprogsvers/<crc>.dat (как FTE); загружаем после
-	// появления валидного файла (см. CSQC_Client_Update).
+	// csprogs download (no valid local file): download *csprogsname from the
+	// server into csprogsvers/<crc>.dat (as FTE does); load once a valid file
+	// appears (see CSQC_Client_Update).
 	qbool		csprogs_dl_pending;
-	// B17: таймаут — по отсутствию прогресса, а не плоские 20 c от старта.
-	double		csprogs_dl_lastprogress;	// время последнего роста downloadpercent
-	int			csprogs_dl_percent;			// последний виденный cls.downloadpercent
-	qbool		csprogs_dl_started;			// наше скачивание уже открывалось (cls.download)
-	char		csprogs_dl_localname[MAX_OSPATH];	// cls.downloadname нашего файла (гейт)
-	unsigned	csprogs_crc;	// *csprogs (md4 Com_BlockChecksum) / 0 если нет
+	// Timeout by absence of progress rather than a flat 20 s from start.
+	double		csprogs_dl_lastprogress;	// time of last downloadpercent growth
+	int			csprogs_dl_percent;			// last seen cls.downloadpercent
+	qbool		csprogs_dl_started;			// our download has opened (cls.download)
+	char		csprogs_dl_localname[MAX_OSPATH];	// cls.downloadname of our file (gate)
+	unsigned	csprogs_crc;	// *csprogs (md4 Com_BlockChecksum) / 0 if absent
 	int			csprogs_size;	// *csprogssize
-	char		csprogs_dl_path[MAX_QPATH];	// локальный файл после скачивания
-	int			numcmds;	// число зарегистрированных команд модуля
-	int			maxcmds;	// ёмкость cmds (B18, динамическая)
-	char		**cmds;		// Q_malloc: имена команд модуля (снятие при выгрузке)
-	// Арена edicts клиентского инстанса (ADR 0017 P1/D2). Q_malloc, free в
-	// Disconnect/Load-start; bind в vm->edicts/game_edicts (entity-опкоды).
+	char		csprogs_dl_path[MAX_QPATH];	// local file after download
+	int			numcmds;	// number of module-registered commands
+	int			maxcmds;	// cmds capacity (dynamic)
+	char		**cmds;		// Q_malloc: module command names (removed on unload)
+	// Edict arena of the client instance. Q_malloc; freed in Disconnect/Load-start;
+	// bound into vm->edicts/game_edicts (entity opcodes).
 	edict_t		*edicts;
 	byte		*game_edicts;
-	// Клиентские строковые таблицы инстанса (см. csqc_strpool_t): при загрузке
-	// vm->strtbl/newstrtbl/numstr указывают сюда.
+	// Client string tables of the instance (see csqc_strpool_t): on load
+	// vm->strtbl/newstrtbl/numstr point here.
 	csqc_strpool_t strpool;
 } csqc_client_state_t;
 
 static csqc_client_state_t s_csqc;
 
-// Client PR1VM helpers (rule "client parts live outside shared core files"):
-// LoadClientV6 + CSQCSmoke are implemented here (used to be in pr_edict.c/pr1vm.h).
+// Client PR1VM helpers (client parts live outside shared core files):
+// LoadClientV6 + CSQCSmoke are implemented here.
 static qbool PR1VM_LoadClientV6 (pr1vm_t *vm, const byte *data, int filesize);
 static void PR1VM_CSQCSmoke_f (void);
 static void CSQC_Client_ProgsCheck_f (void);
@@ -155,11 +147,11 @@ static void CSQC_Client_ProgsCheck_f (void);
 =================
 PR1VM_ClientSetString
 
-Клиентская обёртка над единым PR1VM_SetString (core): temp-строки deep-copy в
-per-instance кольцо (стабильный буфер), затем core регистрирует указатель в
-vm->strtbl. Переполнение — клиентская политика (silent bail). Строки из области
-строк модуля передаются в core без копии (offset). Имя с PR1VM- — работа с PR1-VM
-(в отличие от PR2).
+Client wrapper over the shared PR1VM_SetString (core): temp strings deep-copy into
+the per-instance ring (stable buffer), then the core registers the pointer in
+vm->strtbl. Overflow is client policy (silent bail). Strings from the module's
+string area are passed to the core without a copy (offset). Named PR1VM- because it
+works with the PR1 VM (as opposed to PR2).
 =================
 */
 void PR1VM_ClientSetString (pr1vm_t *vm, int *address, char *s)
@@ -180,43 +172,42 @@ void PR1VM_ClientSetString (pr1vm_t *vm, int *address, char *s)
 	if (!pool || !vm->strings || !vm->strtbl || !vm->numstr)
 		return;
 
-	// Уже область строк модуля — core запишет offset сам.
+	// Already inside the module string area - the core writes the offset itself.
 	if (s >= vm->strings && s < vm->strings + vm->progs->numstrings)
 	{
 		PR1VM_SetString (vm, (string_t *)address, s);
 		return;
 	}
 
-	// Temp-строка: deep-copy в следующий слот кольца (буфер стабилен для
-	// инстанса; слот перезаписывается последующими вызовами).
+	// Temp string: deep-copy into the next ring slot (the buffer is stable for the
+	// instance; the slot is overwritten by later calls).
 	dst = pool->tmpstr[pool->tmpstr_cur];
 	pool->tmpstr_cur = (pool->tmpstr_cur + 1) % CSQC_TEMP_STRINGS;
 	strlcpy (dst, s, CSQC_TEMP_STRING_SIZE);
 
 	if (*vm->numstr + 1 >= MAX_PRSTR)
-		return;	// клиент: без fatal
+		return;	// client: no fatal
 
 	PR1VM_SetString (vm, (string_t *)address, dst);
 }
 
-// C5-A #345: кольцевой буфер отправленных usercmd (запись из CL_SendCmd).
-// seq = зеркало cls.netchan.outgoing_sequence (номер клиентского сообщения на
-// момент записи; Netchan_Transmit инкрементирует ПОСЛЕ записи заголовка —
-// net_chan.c:316-319, поэтому во время CL_SendCmd outgoing_sequence ещё равен
-// номеру текущего cmd). C1.3 ввёл локальный счётчик — заменён зеркалом (C5-A).
-// Размер 64 = UPDATE_BACKUP (окно предикции).
+// #345: ring buffer of sent usercmds (written from CL_SendCmd).
+// seq = mirror of cls.netchan.outgoing_sequence (the client message number at
+// write time; Netchan_Transmit increments AFTER writing the header, so during
+// CL_SendCmd outgoing_sequence still equals the current cmd's number).
+// Size 64 = UPDATE_BACKUP (prediction window).
 #define CSQC_INHIST	64
 typedef struct { unsigned int seq; usercmd_t cmd; } csqc_inrec_t;
 static csqc_inrec_t s_inhist[CSQC_INHIST];
-static unsigned int s_last_seq;	// seq последней записи (0 — записей нет)
-// T2.2: «живой» clientcommandframe = seq последнего собранного cmd (аналог FTE
-// cl.movesequence; cl_input.c ставит его на сборке). НЕ следующая outgoing_sequence:
-// Netchan_Transmit инкрементирует после отправки (net_chan.c:319), поэтому в
-// render-фазе outgoing_sequence уже N+1, а FTE ccframe остаётся N (client.h:869
-// «movesequence+1 … still pending»). Обновляется в CSQC_Client_InputFrame.
-static unsigned int s_ccframe;	// 0 — cmd ещё не собирался
+static unsigned int s_last_seq;	// seq of the last write (0 = none yet)
+// The "live" clientcommandframe = seq of the last built cmd (FTE cl.movesequence;
+// cl_input.c sets it at build). NOT the next outgoing_sequence: Netchan_Transmit
+// increments after sending, so in the render phase outgoing_sequence is already
+// N+1 while FTE ccframe stays N ("movesequence+1 ... still pending"). Updated in
+// CSQC_Client_InputFrame.
+static unsigned int s_ccframe;	// 0 = no cmd built yet
 
-// C2.2 #460-469: пул string-buffers (DP). Строки deep-copy (переживают кадры).
+// #460-469: string-buffer pool (DP). Strings are deep-copied (survive frames).
 #define CSQC_MAX_BUFS	64
 typedef struct
 {
@@ -227,13 +218,13 @@ typedef struct
 } csqc_buf_t;
 static csqc_buf_t s_bufs[CSQC_MAX_BUFS];
 
-// C1.1 — #346 setsensitivityscaler: временный множитель чувствительности мыши
-// (зум-аналог FTE in_sensitivityscale). Хранит модуль; применяет in_sdl2.c.
+// #346 setsensitivityscaler: temporary mouse-sensitivity multiplier (the FTE
+// in_sensitivityscale zoom analog). Stored by the module; applied in in_sdl2.c.
 static float s_sens_scale = 1;
 
-// Слой D шаг 3 — #343 setcursormode (A3.1): состояние курсора модуля. Пока
-// usecursor=1 и модуль активен в игре (CSQC_Client_CSQCCursor), мышь свободна
-// (vid_sdl2 не отдаёт её OS-курсору), а SCR_DrawCursor рисует курсор модуля.
+// #343 setcursormode: the module's cursor state. While usecursor=1 and the module
+// is active in-game (CSQC_Client_CSQCCursor), the mouse is free (vid_sdl2 does not
+// hand it to the OS cursor) and SCR_DrawCursor draws the module's cursor.
 typedef struct
 {
 	qbool	usecursor;
@@ -243,21 +234,21 @@ typedef struct
 } csqc_cursormode_t;
 static csqc_cursormode_t s_cursormode;
 
-// Клиентская арена edicts (ADR 0017 P1/D2 + FTE-пул): пул слотов произвольный,
-// серверный номер хранится в .entnum (карта s_numslot: номер→слот). Слот 0 — world.
-// s_own — сущность создана модулем (spawn); remove разрешён только для своих.
+// Client edict arena: an arbitrary slot pool; the server number lives in .entnum
+// (map s_numslot: number->slot). Slot 0 = world. s_own - entity created by the
+// module (spawn); remove is allowed only for owned entities.
 static qbool s_used[CSQC_MAX_EDICTS];
 static qbool s_own[CSQC_MAX_EDICTS];
 static int s_numslot[CSQC_MAX_NUM];
-// B16: обратная карта slot→номер. Invariant: s_numslot[N] не должен переживать
-// освобождение слота — иначе движок возьмёт stale-слот (review add #9).
+// Reverse map slot->number. Invariant: s_numslot[N] must not outlive the slot's
+// release - otherwise the engine would take a stale slot.
 static int s_slotnum[CSQC_MAX_EDICTS];
 
-// Extended CSQC-статы 32..255 (clientstat/pointerstat от mvdsv). Стандартные
-// 0..31 живут в cl.stats[] (клиентская структура); расширенные хранятся здесь
-// (см. CSQC_Client_GetStat/SetStat). Stat wire 78/79 кладёт float/string-статы:
-// statsf — точное значение (приём и из 79, и из int-пути svc_updatestat), statss —
-// строка (Q_strdup, освобождается в CSQC_Client_Disconnect).
+// Extended CSQC stats 32..255 (clientstat/pointerstat from mvdsv). Standard 0..31
+// live in cl.stats[] (client struct); extended ones are stored here (see
+// CSQC_Client_GetStat/SetStat). Stat wire 78/79 stores float/string stats:
+// statsf - exact value (accepted both from 79 and from the int path svc_updatestat),
+// statss - string (Q_strdup, freed in CSQC_Client_Disconnect).
 static int s_csqc_stat[MAX_EXTENDED_CL_STATS];
 static float s_csqc_statsf[MAX_EXTENDED_CL_STATS];
 static char *s_csqc_statss[MAX_EXTENDED_CL_STATS];
@@ -265,7 +256,7 @@ static char *s_csqc_statss[MAX_EXTENDED_CL_STATS];
 /*
 =================
 CSQC_Client_GetStat / SetStat / GetScreenSize / DrawText / RegisterCommand
-Accessor'ы для csqc_builtins.c и cl_parse.c (см. csqc_client.h).
+Accessors for csqc_builtins.c and cl_parse.c (see csqc_client.h).
 =================
 */
 float CSQC_Client_GetStat (int idx)
@@ -307,8 +298,8 @@ void CSQC_Client_SetStat (int idx, int value)
 	if (idx >= 32 && idx < MAX_EXTENDED_CL_STATS)
 	{
 		s_csqc_stat[idx] = value;
-		// Сервер при int-эмиссии float-стата держит int-кэш в синхроне
-		// (sv_send.c:1199 client->stats[i]=iv) — getstatf должен видеть то же.
+		// The server keeps an int cache in sync when emitting a float stat as an
+		// int - getstatf must see the same value.
 		s_csqc_statsf[idx] = (float)value;
 	}
 }
@@ -317,7 +308,7 @@ void CSQC_Client_SetStatFloat (int idx, float value)
 {
 	if (idx >= 32 && idx < MAX_EXTENDED_CL_STATS)
 	{
-		// Паритет FTE CL_SetStatNumeric (cl_parse.c:6110): int=(int)fvalue.
+		// FTE CL_SetStatNumeric parity: int=(int)fvalue.
 		s_csqc_statsf[idx] = value;
 		s_csqc_stat[idx] = (int)value;
 	}
@@ -340,23 +331,21 @@ void CSQC_Client_GetScreenSize (int *w, int *h)
 		*h = vid.height;
 }
 
-// T4 ^-разметка FTE -> &cRGB-раны. Контракт docs/adr/0030-csqc-strcolor-markup.md,
-// ход — .opencode/plans/csqc-pr1vm-engine-strcolor-render.md (Этапы 2/3).
-// Реализовано: ^0-9 (q3), ^xRGB (3 hex), ^&XY extended FG (палитра consolecolours[16];
-// BG не выразим в draw-пути — doc), ^d (reset), ^s/^r (стек цвета, глубина 4 как FTE
-// extstack), consume ^b/^h/^m/^a (флаги не рисуются — doc), ^^ (литерал); неизвестный/
-// висячий ^ — литерал (FTE messedup, common.c:4523); &c/&r копируются.
-// Вне scope (accept+doc, ADR 0030): links ^[..^], charset `u8:`/`k8:`, ^Uxxxx/^{xxxx},
-// ezquakemess, визуальные эффекты blink/halfalpha/2nd charset и BG.
-// Палитры — FTE consolecolours (fteqw/engine/common/common.c:3621), квантование 16
-// уровней/канал (&c-ниббл); q3codemasks :3642; ^8 (half-alpha white) рисуется белым —
-// alpha-отклонение. out==NULL — только подсчёт длины.
+// Translate FTE ^-markup into &cRGB runs. Supported: ^0-9 (q3), ^xRGB (3 hex),
+// ^&XY extended FG (consolecolours[16] palette; BG is not expressible in the draw
+// path), ^d (reset), ^s/^r (color stack, depth 4 as FTE extstack), consume
+// ^b/^h/^m/^a (flags are not drawn), ^^ (literal); unknown/dangling ^ is a literal
+// (FTE messedup); &c/&r are copied through.
+// Out of scope: links ^[..^], charset `u8:`/`k8:`, ^Uxxxx/^{xxxx}, ezquakemess, and
+// the visual blink/halfalpha/2nd-charset/BG effects. Palettes are FTE
+// consolecolours, quantized 16 levels/channel (&c nibble); ^8 (half-alpha white) is
+// drawn white - alpha deviation. out==NULL only counts the length.
 static const char *csqc_q3_nibbles[10] = {
 	"000", "F55", "5F5", "FF5", "55F", "5FF", "F5F", "FFF", "FFF", "BBB"
 };
 
-// ^&XY extended FG: X/Y — индекс consolecolours[16] (fteqw/engine/common/console.h:66-81),
-// квантование 4 бит/канал (как q3-таблица выше).
+// ^&XY extended FG: X/Y are an index into consolecolours[16], quantized 4 bits
+// per channel (like the q3 table above).
 static const char *csqc_console_nibbles[16] = {
 	"000", "00B", "0B0", "0BB", "B00", "B0B", "B50", "BBB",
 	"555", "55F", "5F5", "5FF", "F55", "F5F", "FF5", "FFF"
@@ -373,8 +362,8 @@ static int csqc_hexval (int c)
 	return -1;
 }
 
-// ^&XY код-символ: 0-9, A-F (FTE isextendedcode; зеркало CSQCVM_IsExtCode,
-// csqc_builtins.c:3000). Возврат — индекс consolecolours 0-15 или -1 ('-'/невалид).
+// ^&XY code character: 0-9, A-F (FTE isextendedcode). Returns the consolecolours
+// index 0-15 or -1 ('-'/invalid).
 static int csqc_ext_index (int c)
 {
 	if (c >= '0' && c <= '9')
@@ -387,17 +376,17 @@ static int csqc_ext_index (int c)
 static int CSQC_Client_TranslateMarkup (const char *in, char *out, size_t outsize)
 {
 	size_t n = 0;
-	char curfg[3];		// текущий FG (&c-нибблы)
-	int have_col = 0;	// 0 = default/white (=&r), 1 = цветной
-	char stackfg[4][3];	// стек ^s/^r (FTE extstack, глубина 4)
+	char curfg[3];		// current FG (&c nibbles)
+	int have_col = 0;	// 0 = default/white (=&r), 1 = colored
+	char stackfg[4][3];	// ^s/^r stack (FTE extstack, depth 4)
 	int stackcol[4];
 	int sp = 0;
 
 	if (!in)
 		in = "";
-	// PUT: копирует байт, безопасно для out==NULL (только длина) и переполнения.
+	// PUT: copies a byte, safe for out==NULL (length only) and overflow.
 #define PUT(ch) do { if (out && outsize && n + 1 < outsize) out[n] = (char)(ch); n++; } while (0)
-	// SETFG: запомнить текущий FG (для ^s/^r).
+	// SETFG: remember the current FG (for ^s/^r).
 #define SETFG(p) do { curfg[0] = (p)[0]; curfg[1] = (p)[1]; curfg[2] = (p)[2]; have_col = 1; } while (0)
 	for (; *in; in++)
 	{
@@ -419,22 +408,21 @@ static int CSQC_Client_TranslateMarkup (const char *in, char *out, size_t outsiz
 			}
 			else
 			{
-				// невалидный hex: скипаем "^x" целиком (FTE str+=2, common.c:4413;
-				// паритет со стрипом #476/#477, ADR 0030) — 'x' не рисуется.
+				// Invalid hex: skip "^x" entirely (FTE str+=2) - 'x' is not drawn.
 				in += 1;
 			}
 			continue;
 		}
 		if (in[0] == '^' && in[1] == '&')
 		{
-			// ^&XY extended FG/BG (FTE common.c:4177-4207): реализуем FG (BG не выразим
-			// в draw-пути — отклонение, ADR 0030); Y игнорируется.
+			// ^&XY extended FG/BG: implement FG (BG is not expressible in the draw
+			// path - deviation); Y is ignored.
 			if ((csqc_ext_index (in[2]) >= 0 || in[2] == '-') &&
 				(csqc_ext_index (in[3]) >= 0 || in[3] == '-'))
 			{
 				if (in[2] == '-')
 				{
-					// default FG = white (FTE COLOR_WHITE, common.c:4186)
+					// default FG = white (FTE COLOR_WHITE)
 					PUT ('&'); PUT ('r');
 					have_col = 0;
 				}
@@ -448,7 +436,7 @@ static int CSQC_Client_TranslateMarkup (const char *in, char *out, size_t outsiz
 			}
 			else
 			{
-				// невалид: '^' литерал, '&' на след. итерации (FTE messedup)
+				// invalid: '^' literal, '&' handled on the next iteration (FTE messedup)
 				PUT (*in);
 			}
 			continue;
@@ -462,14 +450,14 @@ static int CSQC_Client_TranslateMarkup (const char *in, char *out, size_t outsiz
 		}
 		if (in[0] == '^' && (in[1] == 'b' || in[1] == 'h' || in[1] == 'm' || in[1] == 'a'))
 		{
-			// FTE toggle blink/halfalpha/2nd charset (common.c:4290-4304); флаги не
-			// выразимы в draw-пути — код потребляем (паритет ширины), эффект — doc.
+			// FTE toggle blink/halfalpha/2nd charset; the flags are not expressible in
+			// the draw path - consume the code (width parity), effect not drawn.
 			in += 1;
 			continue;
 		}
 		if (in[0] == '^' && in[1] == 's')
 		{
-			// push стека (FTE extstack, common.c:4305-4312); храним только цвет.
+			// push the stack (FTE extstack); store only the color.
 			if (sp < (int)(sizeof (stackcol) / sizeof (stackcol[0])))
 			{
 				stackfg[sp][0] = curfg[0];
@@ -483,7 +471,7 @@ static int CSQC_Client_TranslateMarkup (const char *in, char *out, size_t outsiz
 		}
 		if (in[0] == '^' && in[1] == 'r')
 		{
-			// pop стека (FTE common.c:4313-4320): восстановить цвет.
+			// pop the stack: restore the color.
 			if (sp > 0)
 			{
 				sp--;
@@ -508,8 +496,8 @@ static int CSQC_Client_TranslateMarkup (const char *in, char *out, size_t outsiz
 			in += 1;
 			continue;
 		}
-		// неизвестный/висячий '^' — литерал (FTE messedup, common.c:4523): '^' в out,
-		// следующий символ обрабатывается на след. итерации.
+		// Unknown/dangling '^' is a literal (FTE messedup): '^' goes to out, the next
+		// character is handled on the next iteration.
 		PUT (*in);
 	}
 	if (out && outsize)
@@ -527,26 +515,26 @@ void CSQC_Client_DrawText (float x, float y, const char *text, int r, int g, int
 	float saved;
 	if (!text)
 		return;
-	// Слой D шаг 2: масштаб шрифта из size.x (scale=size.x/8; 0 => 1). Цвет
-	// модуля передаём &cRRGGBB-кодом движка. Чтобы он не зависел от
-	// scr_coloredText пользователя, временно включаем его на время отрисовки.
+	// Font scale from size.x (scale=size.x/8; 0 => 1). The module's color is passed
+	// as an &cRRGGBB code to the engine. To make it independent of the user's
+	// scr_coloredText, temporarily enable it for the draw.
 	saved = scr_coloredText.value;
 	Cvar_SetValue (&scr_coloredText, 1);
-	// Цвет &cRGB — 3 hex-разряда (канал×16), а не &cRRGGBB.
+	// &cRGB is 3 hex digits (channel*16), not &cRRGGBB.
 	prefix = snprintf (buf, sizeof (buf), "&c%X%X%X",
 		(bound (0, r, 255)) / 16, (bound (0, g, 255)) / 16, (bound (0, b, 255)) / 16);
 	if (prefix < 0)
 		prefix = 0;
-	// T4: ^-разметка модуля -> &cRGB-раны после базового цвета (см. транслятор выше).
+	// Module ^-markup -> &cRGB runs after the base color (see translator above).
 	CSQC_Client_TranslateMarkup (text, buf + prefix, sizeof (buf) - prefix);
-	// B15 (FTE-паритет drawcolouredstring, pr_menu.c:565): alpha применяется
-	// (R2D_ImageColours(...,alpha)); color=NULL -> цвет берётся из &c-кодов.
+	// FTE drawcolouredstring parity: alpha is applied; color=NULL -> color comes
+	// from the &c codes.
 	Draw_SColoredAlphaString (x, y, buf, NULL, 0, 0, (scale > 0) ? scale : 1,
 		bound (0, alpha, 1), true);
 	Cvar_SetValue (&scr_coloredText, saved);
 }
 
-// Цвет для draw-помощников Слоя D (rgb 0..255 байты, alpha 0..1).
+// Color for the 2D draw helpers (rgb 0..255 bytes, alpha 0..1).
 static color_t CSQC_Client_Color (int r, int g, int b, float alpha)
 {
 	return RGBA_TO_COLOR ((byte)bound (0, r, 255), (byte)bound (0, g, 255),
@@ -554,16 +542,16 @@ static color_t CSQC_Client_Color (int r, int g, int b, float alpha)
 }
 
 /*
-#324 drawsetcliparea / #325 drawresetcliparea — геометрическое отсечение (решение
-2026-09-07; аппаратный GL-scissor на отложенном 2D-пайплайне ezq не применим).
-Состояние clip-прямоугольника в координатах CSQC-рисования; прямоугольные
-примитивы (pic/subpic/fill) пересекаются с ним, текст/линии только не рисуются,
-если целиком вне (строки внутри не режутся) — отклонение в parity.
+#324 drawsetcliparea / #325 drawresetcliparea - geometric clipping (hardware
+GL-scissor is not applicable to ezq's deferred 2D pipeline). The clip rectangle is
+stored in CSQC draw coordinates; rectangular primitives (pic/subpic/fill) are
+intersected with it, text/lines are only skipped if fully outside (lines inside are
+not cut) - a parity deviation.
 */
 static qbool s_clip_on = false;
 static float s_clip_x, s_clip_y, s_clip_w, s_clip_h;
 
-// Пересекает dest-rect (x,y,w,h) с активным clip. Возврат false = пусто/вне.
+// Intersects the dest-rect (x,y,w,h) with the active clip. false = empty/outside.
 static qbool CSQC_Client_ClipDest (float *x, float *y, float *w, float *h)
 {
 	float x0, y0, x1, y1;
@@ -584,9 +572,8 @@ static qbool CSQC_Client_ClipDest (float *x, float *y, float *w, float *h)
 
 /*
 =================
-Слой D, шаг 1 — 2D-графика (docs/archive/ezquake_csqc_client_layerd_2d_plan.md).
-Координаты/размеры — сырые пиксели видео (как DrawText). drawpic: rgb-tint
-игнорируется (только alpha; решение R2), масштаб = size / нативный размер.
+2D graphics. Coordinates/sizes are raw video pixels (as DrawText). drawpic: the
+rgb tint is ignored (only alpha); scale = size / native size.
 =================
 */
 void CSQC_Client_DrawFill (float x, float y, float w, float h, int r, int g, int b, float alpha)
@@ -608,9 +595,9 @@ qbool CSQC_Client_DrawPic (float x, float y, float w, float h, const char *name,
 	pic = Draw_CachePicSafe (name, false, false);
 	if (!pic)
 		return false;
-	// FTE-паритет #322: отрицательный размер — зеркалирование. Знаковый scale_x/y
-	// разворачивает текстуру (texcoord привязан к вершине в R_DrawImage); клип не
-	// применяем (отрицательный dest ломает пересечение).
+	// FTE parity #322: a negative size means mirroring. Signed scale_x/y flips the
+	// texture (texcoord bound to the vertex in R_DrawImage); clip is not applied
+	// (a negative dest breaks the intersection).
 	if (w < 0 || h < 0)
 	{
 		sx = w / (float)pic->width;
@@ -624,8 +611,8 @@ qbool CSQC_Client_DrawPic (float x, float y, float w, float h, const char *name,
 	}
 	if (w == 0 || h == 0)
 		return true;
-	// Клип: пересечение dest с активной областью, источник пересчитывается
-	// (свойство «весь pic → dest» сохраняется).
+	// Clip: intersect dest with the active area, recompute the source (the
+	// "whole pic -> dest" property is preserved).
 	dx = x; dy = y; dw = w; dh = h;
 	if (!CSQC_Client_ClipDest (&dx, &dy, &dw, &dh))
 		return true;
@@ -653,7 +640,7 @@ void CSQC_Client_DrawSubPic (float x, float y, float w, float h, const char *nam
 	pic = Draw_CachePicSafe (name, false, false);
 	if (!pic)
 		return;
-	// FTE-паритет #328: отрицательный размер одной оси — зеркалирование (знаковый scale).
+	// FTE parity #328: a negative size on one axis means mirroring (signed scale).
 	if (w < 0 || h < 0)
 	{
 		ssx = w / srcw;
@@ -667,7 +654,7 @@ void CSQC_Client_DrawSubPic (float x, float y, float w, float h, const char *nam
 	}
 	if (w == 0 || h == 0)
 		return;
-	// Клип как в DrawPic: dest пересекается, источник — по аффинному маппингу.
+	// Clip as in DrawPic: dest is intersected, source via affine mapping.
 	dx = x; dy = y; dw = w; dh = h;
 	if (!CSQC_Client_ClipDest (&dx, &dy, &dw, &dh))
 		return;
@@ -692,12 +679,12 @@ void CSQC_Client_DrawCharacter (float x, float y, int ch, int r, int g, int b, f
 	int c = ch & 0xff;
 	if (c <= 0)
 		return;
-	// Один символ default-шрифта с цветом &cRGB (как DrawText).
+	// One default-font character with an &cRGB color (as DrawText).
 	saved = scr_coloredText.value;
 	Cvar_SetValue (&scr_coloredText, 1);
 	snprintf (buf, sizeof (buf), "&c%X%X%X%c",
 		(bound (0, r, 255)) / 16, (bound (0, g, 255)) / 16, (bound (0, b, 255)) / 16, c);
-	// B15: alpha как FTE drawcharacter (pr_menu.c:1009).
+	// alpha as in FTE drawcharacter.
 	Draw_SColoredAlphaString (x, y, buf, NULL, 0, 0, (scale > 0) ? scale : 1,
 		bound (0, alpha, 1), true);
 	Cvar_SetValue (&scr_coloredText, saved);
@@ -716,17 +703,17 @@ float CSQC_Client_StringWidth (const char *text, qbool usecolours, float fontsiz
 	float scale;
 	if (!text)
 		return 0;
-	// Масштаб из size.x (как DrawText; 0 => 1) — та же метрика, что рисует
-	// drawstring: r_draw_charset.c Draw_StringLength/Colors.
+	// Scale from size.x (as DrawText; 0 => 1) - the same metric drawstring draws:
+	// Draw_StringLength/Colors.
 	scale = (fontsize_x > 0) ? fontsize_x / 8.0f : 1;
 	if (usecolours)
 	{
-		// T4: ^-коды не считаются символами ширины (FTE #327 со снятым markup) —
-		// та же трансляция, что в DrawText, затем Draw_StringLengthColors пропускает &c/&r.
+		// ^-codes do not count as width characters (FTE #327 with markup stripped) -
+		// same translation as DrawText, then Draw_StringLengthColors skips &c/&r.
 		CSQC_Client_TranslateMarkup (text, wbuf, sizeof (wbuf));
 		return Draw_StringLengthColors (wbuf, -1, scale, true);
 	}
-	// usecolours=0: FTE #327 держит markup (keepmarkup) и считает его символы — оригинал.
+	// usecolours=0: FTE #327 keeps the markup (keepmarkup) and counts its characters - original.
 	return Draw_StringLength (text, -1, scale, true);
 }
 
@@ -734,15 +721,15 @@ float CSQC_Client_StringWidth (const char *text, qbool usecolours, float fontsiz
 =================
 CSQC_Client_DrawFontScaleX
 
-x-множитель глобала `drawfontscale` (vector) активной VM — общий для CSQC и MenuQC
-(обработчики переиспользуются). Резолв офсета — PR1VM_FindGlobal, ленивый per-VM
-кэш: при смене VM (CSQC ↔ menu-VM) офсет перерезолвится (одна пара на горячем пути;
-раньше — линейный скан globaldefs по strcmp на каждый draw).
+x multiplier of the `drawfontscale` (vector) global of the active VM - shared by
+CSQC and MenuQC (handlers are reused). The offset is resolved via PR1VM_FindGlobal
+with a lazy per-VM cache: when the VM changes (CSQC <-> menu-VM) the offset is
+re-resolved.
 
-FTE-эталон — pr_menu.c:140-149 (PR_CL_BeginString):
+FTE reference (PR_CL_BeginString):
   if (drawfontscale && (drawfontscale[0] || drawfontscale[1])) szx *= [0];
-т.е. глобала нет → без масштаба; обе компоненты нули → без масштаба (текст не
-ужимается в 0). y-компонента здесь не чтится (ezq-шрифт uniform, parity-audit §D.2).
+i.e. no global -> no scale; both components zero -> no scale (text is not squashed
+to 0). The y component is not honored here (ezq font is uniform).
 =================
 */
 static pr1vm_t *s_drawfontscale_vm = NULL;
@@ -775,7 +762,7 @@ qbool CSQC_Client_PrecachePic (const char *name)
 	return Draw_CachePicSafe (name, false, false) != NULL;
 }
 
-// Слой L2 — «2D-графика доп» (2026-09-07; #316/#318/#319/#321/#324/#325/#329).
+// Additional 2D graphics (#316/#318/#319/#321/#324/#325/#329).
 
 qbool CSQC_Client_IsCachedPic (const char *name)
 {
@@ -791,11 +778,11 @@ qbool CSQC_Client_PicSize (const char *name, float *w, float *h)
 	char path[MAX_QPATH];
 	if (!name || !name[0])
 		return false;
-	// #318 FTE-паритет (PF_CL_drawgetimagesize, pr_menu.c:1093): R2D_SafeCachePic +
-	// R_GetShaderSizes. FTE резолвит имя через Image_GetTexture extension-fallback
-	// (r_imageextensions + COM_DefaultExtension(".lmp")) — bare-имя тоже резолвится
-	// (parity-audit 2026-09-22, задача A). ".lmp" читаем из заголовка напрямую
-	// (ezq Draw_CachePicSafe на .lmp-пути отдаёт чужой размер).
+	// #318 FTE parity (PF_CL_drawgetimagesize): R2D_SafeCachePic + R_GetShaderSizes.
+	// FTE resolves the name via Image_GetTexture extension-fallback
+	// (r_imageextensions + COM_DefaultExtension(".lmp")) - a bare name also resolves.
+	// ".lmp" is read from the header directly (ezq Draw_CachePicSafe on a .lmp path
+	// returns an unrelated size).
 	ext = COM_FileExtension (name);
 	if (!ext || !ext[0])
 	{
@@ -806,8 +793,8 @@ qbool CSQC_Client_PicSize (const char *name, float *w, float *h)
 	}
 	if (!strcasecmp (ext, "lmp"))
 	{
-		// Заголовок .lmp (qpic_t): два int LE (см. SwapPic/LittleLong). wad.h не
-		// тянем (требует texture_t) — читаем заголовок напрямую.
+		// .lmp header (qpic_t): two LE ints (see SwapPic/LittleLong). We do not pull
+		// in wad.h (it requires texture_t) - read the header directly.
 		byte *data = FS_LoadTempFile ((char *)name, NULL);
 		int iw, ih;
 		if (!data)
@@ -837,10 +824,9 @@ void CSQC_Client_DrawRawText (float x, float y, const char *text, int r, int g, 
 	float xx;
 	if (!text)
 		return;
-	// «Сырой» вывод: каждый символ рисуется одиночным цветным глифом — внутри
-	// одной строки нет места для сборки &cRGB, поэтому & в тексте модуля
-	// выводится литерально (как FTE drawrawstring). Цвет и alpha применяются
-	// (FTE drawrawstring, pr_menu.c:1039).
+	// "Raw" output: each character is drawn as a single colored glyph - there is no
+	// place to build an &cRGB within one string, so an & in the module text is
+	// output literally (as FTE drawrawstring). Color and alpha are applied.
 	xx = x;
 	for (p = text; *p; p++)
 	{
@@ -852,8 +838,8 @@ void CSQC_Client_DrawRawText (float x, float y, const char *text, int r, int g, 
 }
 
 /*
-#324 drawsetcliparea / #325 drawresetcliparea — геометрический clip (состояние),
-без аппаратного scissor/flush (см. комментарий к CSQC_Client_ClipDest).
+#324 drawsetcliparea / #325 drawresetcliparea - geometric clip (state), no hardware
+scissor/flush (see the comment at CSQC_Client_ClipDest).
 */
 void CSQC_Client_SetClipArea (float x, float y, float w, float h)
 {
@@ -872,10 +858,10 @@ void CSQC_Client_ResetClipArea (void)
 void CSQC_Client_SetCursorMode (qbool usecursor, const char *image,
 	float hotspot_x, float hotspot_y, float scale)
 {
-	// Полная реализация (roadmap A3.1): запоминаем параметры; эффект включается
-	// самим состоянием CSQC_Client_CSQCCursor() — пока usecursor=1 и модуль активен
-	// в игре, mouse-механика ezquake не отдаёт мышь OS-курсору (vid_sdl2.c), а
-	// SCR_DrawCursor рисует курсор модуля. Клики/InputEvent-канал — C1.
+	// Store the parameters; the effect is enabled by CSQC_Client_CSQCCursor() itself
+	// - while usecursor=1 and the module is active in-game, the ezquake mouse
+	// mechanics do not hand the mouse to the OS cursor (vid_sdl2.c), and
+	// SCR_DrawCursor draws the module's cursor.
 	s_cursormode.usecursor = usecursor;
 	s_cursormode.cursorimage[0] = 0;
 	if (image)
@@ -887,17 +873,16 @@ void CSQC_Client_SetCursorMode (qbool usecursor, const char *image,
 
 qbool CSQC_Client_CSQCCursor (void)
 {
-	// Курсор модуля действует только в игровом кадре (key_game): при открытом
-	// консоль/меню движка их собственный курсор/мышь имеют приоритет.
+	// The module cursor only applies in the game frame (key_game): when the engine
+	// console/menu is open their own cursor/mouse take priority.
 	return s_cursormode.usecursor && s_csqc.loaded && !s_csqc.errored
 		&& key_dest == key_game;
 }
 
-// B14 (FTE-паритет): позиция/дельта мыши выдаются в vid.conwidth-единицах (как
-// Draw_* и контракт IE_MOUSEABS), тогда как cursor_x/y и mx/my — в render-2D
-// (VID_RenderWidth2D). FTE масштабирует *vid.width/vid.pixelwidth
-// (pr_csqc.c:9053 MOUSEABS, :9070 MOUSEDELTA). Эталон конверсии — SCR_UpdateCursor
-// (cl_screen.c:668-673).
+// FTE parity: mouse position/delta are returned in vid.conwidth units (as Draw_*
+// and the IE_MOUSEABS contract), while cursor_x/y and mx/my are in render-2D
+// (VID_RenderWidth2D). FTE scales by *vid.width/vid.pixelwidth. The conversion
+// reference is SCR_UpdateCursor.
 static float CSQC_Client_CursorScaleX (void)
 {
 	int rw = VID_RenderWidth2D ();
@@ -920,7 +905,7 @@ void CSQC_Client_ScaleCursorDelta (float *x, float *y)
 
 void CSQC_Client_GetCursorPos (float *x, float *y)
 {
-	extern double cursor_x, cursor_y;	// cl_screen.c:164 (render-2D координаты указателя)
+	extern double cursor_x, cursor_y;	// pointer coordinates in render-2D
 	if (x)
 		*x = (float)cursor_x * CSQC_Client_CursorScaleX ();
 	if (y)
@@ -929,13 +914,13 @@ void CSQC_Client_GetCursorPos (float *x, float *y)
 
 void CSQC_Client_SetSensitivityScale (float scale)
 {
-	// C1.1 #346: множитель чувствительности (может быть 0); дефолт 1.
+	// #346: sensitivity multiplier (may be 0); default 1.
 	s_sens_scale = scale;
 }
 
 float CSQC_Client_SensitivityScale (void)
 {
-	// Неактивный модуль — без влияния (default 1).
+	// Inactive module - no effect (default 1).
 	if (!s_csqc.loaded || s_csqc.errored)
 		return 1;
 	return s_sens_scale;
@@ -949,10 +934,10 @@ void CSQC_Client_DrawCursor (void)
 
 	if (!CSQC_Client_CSQCCursor ())
 		return;
-	// FTE: scale <= 0 -> 1; hotspot — «остриё» курсора в пикселях картинки
-	// (умножается на масштаб), т.е. позиция указывает на точку клика.
-	// B14: позиция курсора — в vid.conwidth-единицах (как Draw_*), а cursor_x/y —
-	// в render-2D; hotspot остаётся пиксельным (FTE in_generic.c).
+	// FTE: scale <= 0 -> 1; hotspot is the cursor "tip" in image pixels (multiplied
+	// by the scale), so the position points at the click point. The cursor position
+	// is in vid.conwidth units (as Draw_*), while cursor_x/y is in render-2D; the
+	// hotspot stays in pixels (FTE in_generic.c).
 	scale = (s_cursormode.scale > 0) ? s_cursormode.scale : 1;
 	x = (float)cursor_x * CSQC_Client_CursorScaleX () - s_cursormode.hotspot[0] * scale;
 	y = (float)cursor_y * CSQC_Client_CursorScaleY () - s_cursormode.hotspot[1] * scale;
@@ -969,7 +954,7 @@ void CSQC_Client_DrawCursor (void)
 			return;
 		}
 	}
-	// Без картинки — дефолтное перекрестие (визуально как ezquake-курсор).
+	// No image - default crosshair (visually like the ezquake cursor).
 	{
 		color_t c = RGBA_TO_COLOR (0, 255, 0, 255);
 		float s = scale;
@@ -991,10 +976,10 @@ void CSQC_Client_RegisterCommand (const char *cmd)
 		return;
 	for (i = 0; i < s_csqc.numcmds; i++)
 		if (!strcmp (s_csqc.cmds[i], cmd))
-			return;					// уже зарегистрирована
+			return;					// already registered
 
-	// B18 (FTE-parity, unlimited): динамический список вместо прежнего cap [16][64]
-	// (fteqw PF_cs_registercommand, pr_csqc.c:5426 -> Cmd_AddCommandD без лимита).
+	// FTE parity, unlimited: a dynamic list instead of a fixed cap (FTE
+	// PF_cs_registercommand -> Cmd_AddCommandD with no limit).
 	if (s_csqc.numcmds >= s_csqc.maxcmds)
 	{
 		int newmax = s_csqc.maxcmds ? s_csqc.maxcmds * 2 : 16;
@@ -1002,10 +987,10 @@ void CSQC_Client_RegisterCommand (const char *cmd)
 		s_csqc.maxcmds = newmax;
 	}
 
-	// Cmd_AddRemCommand копирует имя в Q_malloc-блок (в отличие от
-	// Cmd_AddCommand, который держит указатель на имя и аллоцит узел в hunk).
-	// Узел/имя переживают Host_ClearMemory и корректно удаляются RemoveCommand.
-	// Своя копия нужна для снятия команды при выгрузке модуля.
+	// Cmd_AddRemCommand copies the name into a Q_malloc block (unlike
+	// Cmd_AddCommand, which holds a pointer to the name and allocates the node in
+	// the hunk). The node/name survive Host_ClearMemory and are removed correctly by
+	// RemoveCommand. Our own copy is needed to remove the command on module unload.
 	name = Q_strdup (cmd);
 	if (!Cmd_AddRemCommand (name, CSQC_Client_ConsoleCommand_f))
 	{
@@ -1021,20 +1006,18 @@ void CSQC_Client_RegisterCommand (const char *cmd)
 CSQC_Client_RegisterCommands
 
 Registers client debug commands for PR1VM (csqc_smoke, etc.). Called from
-CL_InitLocal (cl_main.c) — commands available in the client console. csqc_smoke
-used to be registered in PR2_Init (server); moved here per the rule "client parts
-live outside shared core files" (docs/archive/ezquake_csqc_client_pr1vm_plan.md).
+CL_InitLocal (cl_main.c) - commands available in the client console.
 =================
 */
 void CSQC_Client_RegisterCommands (void)
 {
-	Cmd_AddCommand ("csqc_smoke", PR1VM_CSQCSmoke_f);	// PR1VM S3 debug
-	Cmd_AddCommand ("csqc_progscheck", CSQC_Client_ProgsCheck_f);	// A3 debug canary
+	Cmd_AddCommand ("csqc_smoke", PR1VM_CSQCSmoke_f);	// PR1VM debug
+	Cmd_AddCommand ("csqc_progscheck", CSQC_Client_ProgsCheck_f);	// debug canary
 }
 
 /*
 =================
-host-колбэки клиентского инстанса
+host callbacks of the client instance
 =================
 */
 static void CSQC_Client_HostPrint (pr1vm_t *vm, const char *msg)
@@ -1047,10 +1030,9 @@ static void CSQC_Client_HostError (pr1vm_t *vm, const char *msg)
 {
 	Con_Printf ("CSQC (PR1VM) program error: %s\n", msg);
 	s_csqc.errored = true;
-	// A1 (abort-stack): do not return into the interpreter — unwind back to the
-	// outermost active setjmp in PR1VM_ExecuteProgram (the client VM always has
-	// abortbuf_valid set). Frames stay disabled (errored); reload on the next
-	// ConnectCheck.
+	// Do not return into the interpreter - unwind back to the outermost active
+	// setjmp in PR1VM_ExecuteProgram (the client VM always has abortbuf_valid set).
+	// Frames stay disabled (errored); reload on the next ConnectCheck.
 	if (vm && vm->abortbuf_valid && vm->abortbuf)
 		longjmp (*vm->abortbuf, 1);
 	// No abort-buffer: fall back to the previous behavior (return; the caller
@@ -1061,11 +1043,11 @@ static void CSQC_Client_HostError (pr1vm_t *vm, const char *msg)
 =================
 CSQC_Client_Abort
 
-Фатальная ошибка модуля (паритет FTE CSQC_Abort → Host_EndGame): печатаем
-причину и отключаем клиента от сервера (дисконнект, возврат в меню), затем
-Host_Abort (longjmp в Host_Frame) — не возвращаемся в исполняемую VM.
-errored ставим ДО CL_Disconnect, чтобы CSQC_Client_Disconnect не звал
-func_shutdown реентерабельно (мы сами внутри исполняемой VM).
+Fatal module error (FTE CSQC_Abort -> Host_EndGame parity): print the reason and
+disconnect the client from the server (back to the menu), then Host_Abort (longjmp
+into Host_Frame) - do not return into the executing VM. errored is set BEFORE
+CL_Disconnect so CSQC_Client_Disconnect does not call func_shutdown re-entrantly
+(we are inside the executing VM).
 =================
 */
 void CSQC_Client_Abort (const char *msg)
@@ -1080,12 +1062,11 @@ void CSQC_Client_Abort (const char *msg)
 =================
 CSQC_Client_GetString
 
-Ограниченное чтение строк клиентской VM (недоверенный скачанный csprogs.dat):
-положительный offset обязан лежать в блоке строк модуля; всё, что дальше —
-подделанное значение и даёт NULL (вызывающие мапят в ""/пропуск). Общий
-PR1VM_GetString остаётся без границы (серверные/карты-строки живут за
-numstrings), поэтому граница клиента живёт здесь и ставится как vm->get_string
-(ADR 0019, option 2).
+Bounded string reads of the client VM (untrusted downloaded csprogs.dat): a
+positive offset must lie inside the module's string block; anything beyond is a
+forged value and returns NULL (callers map it to ""/skip). The shared PR1VM_GetString
+stays unbounded (server/map strings live past numstrings), so the client bound
+lives here and is installed as vm->get_string.
 =================
 */
 char *CSQC_Client_GetString (pr1vm_t *vm, int num)
@@ -1097,18 +1078,17 @@ char *CSQC_Client_GetString (pr1vm_t *vm, int num)
 
 /*
 =================
-Внутренние помощники
+Internal helpers
 =================
 */
-// B4: map-uptime клиента и предыдущий cl.time для frametime (FTE
-// pr_csqc.c:8818-8838: frametime = bound(0, cl.time - cl.lasttime, 0.1),
-// cltime = realtime - cl.mapstarttime).
+// Client map-uptime and previous cl.time for frametime (FTE: frametime =
+// bound(0, cl.time - cl.lasttime, 0.1), cltime = realtime - cl.mapstarttime).
 static double s_mapstarttime;
 static double s_prev_cltime;
 
-// B4: симулированное серверное время модуля. FTE: *csqcg.time = cl.servertime
-// (pr_csqc.c:8839-8840); если сервер не шлёт STAT_TIME/svc_time — клиентский
-// map-uptime (тот же часовой домен, что cltime).
+// Simulated server time of the module. FTE: *csqcg.time = cl.servertime; if the
+// server does not send STAT_TIME/svc_time - client map-uptime (same time domain as
+// cltime).
 static double CSQC_Client_TimeNow (void)
 {
 	if (cl.servertime_works)
@@ -1123,10 +1103,10 @@ static void CSQC_Client_SetTime (void)
 		vm->globals[s_csqc.global_time] = (float)CSQC_Client_TimeNow ();
 }
 
-// B21 (FTE CSQC_StateOp pr_csqc.c:7868-7875): OP_STATE клиентского модуля — по
-// его собственным field/global-офсетам (не по фикс. entvars_t/globalvars_t).
-// self — арена-слот (движок пишет raw = slot*edict_size); поля — через резолв
-// модуля (f_nextthink/f_frame/f_think), time — через global_time.
+// FTE CSQC_StateOp parity: the client module's OP_STATE uses its own field/global
+// offsets (not the fixed entvars_t/globalvars_t). self is an arena slot (the engine
+// writes raw = slot*edict_size); fields via the module's resolve
+// (f_nextthink/f_frame/f_think), time via global_time.
 static void CSQC_Client_StateOp (pr1vm_t *vm, float frame, func_t func)
 {
 	float *v;
@@ -1157,8 +1137,8 @@ static qbool CSQC_Client_Exec (int fidx)
 	return !s_csqc.errored;
 }
 
-/* C4 Э3: как CSQC_Client_Exec, но возвращает G_FLOAT(OFS_RETURN) модуля
- * (для delta-callback: возврат != 0 = «движок не рисует сущность»). */
+/* As CSQC_Client_Exec, but returns the module's G_FLOAT(OFS_RETURN) (for the
+ * delta callback: return != 0 = "the engine does not draw the entity"). */
 static qbool CSQC_Client_ExecRet (int fidx, float *ret)
 {
 	pr1vm_t *vm = &s_csqc.vm;
@@ -1194,8 +1174,8 @@ static void CSQC_Client_ClearCommands (void)
 =================
 CSQC_Client_ConsoleCommand_f
 
-Команда, зарегистрированная модулем через registercommand. Восстанавливаем
-полную строку («name arg1 arg2 …») и зовём CSQC_ConsoleCommand(string cmd).
+A command registered by the module via registercommand. Rebuild the full line
+("name arg1 arg2 ...") and call CSQC_ConsoleCommand(string cmd).
 =================
 */
 static void CSQC_Client_ConsoleCommand_f (void)
@@ -1231,17 +1211,17 @@ int CSQC_Client_Active (void)
 
 /*
 =================
-Ф3 (renderscene takeover)
+renderscene takeover
 
-Модуль владеет 3D-сценой как в FTE: когда модуль активен, CSQC_UpdateView
-вызывается в 3D-фазе (SCR_UpdateScreenPlayerView) вместо R_RenderView();
-#300 clearscene / #301 addentities наполняют cl_visents; #304 renderscene
-выполняет R_RenderView(). Флаг s_scene_rendered — защита от чёрного экрана:
-если модуль не позвал renderscene, движок рисует кадр сам (fallback).
+The module owns the 3D scene as in FTE: when the module is active, CSQC_UpdateView
+is called in the 3D phase (SCR_UpdateScreenPlayerView) instead of R_RenderView();
+#300 clearscene / #301 addentities fill cl_visents; #304 renderscene runs
+R_RenderView(). The s_scene_rendered flag guards against a black screen: if the
+module did not call renderscene, the engine draws the frame itself (fallback).
 =================
 */
 static qbool s_scene_rendered = false;
-static qbool s_scene_viewmodel = false;	// C4 Э2: #301 mask&MASK_STDVIEWMODEL запрошен
+static qbool s_scene_viewmodel = false;	// #301 mask&MASK_STDVIEWMODEL requested
 
 qbool CSQC_Client_SceneActive (void)
 {
@@ -1254,7 +1234,7 @@ void CSQC_Client_BeginScene (void)
 	s_scene_viewmodel = false;
 }
 
-// C4 Э2 (#301 mask&2): модуль запросил движковую вьюмодель в сцене (FTE CL_LinkViewModel).
+// #301 mask&2: the module requested the engine viewmodel in the scene (FTE CL_LinkViewModel).
 void CSQC_Client_LinkViewModel (void)
 {
 	s_scene_viewmodel = true;
@@ -1278,13 +1258,14 @@ qbool CSQC_Client_SceneRendered (void)
 
 /*
 =================
-C4 Этап 1: CSQC_Client_CallPredraw
+CSQC_Client_CallPredraw
 
-Вызов .predraw эдикта арены при #301/#302 (FTE PF_R_AddEntityMask, pr_csqc.c:1450-1457):
-self = slot*edict_size, исполнение, возврат G_FLOAT(OFS_RETURN). Модуль через возврат решает
-авто-добавление (PREDRAW_AUTOADD=0) или пропуск (!=0). Если predraw удалил эдикт или исполнение
-упало — *removed=1 (не добавлять). self восстанавливается (как FTE `*csqcg.self = oldself`).
-.entnum не трогаем (в отличие от SetContextSlot — FTE тоже не переписывает его в addentities).
+Call the arena edict's .predraw on #301/#302 (FTE PF_R_AddEntityMask): self =
+slot*edict_size, execute, return G_FLOAT(OFS_RETURN). The module decides via the
+return whether to auto-add (PREDRAW_AUTOADD=0) or skip (!=0). If predraw removed
+the edict or execution failed - *removed=1 (do not add). self is restored (as FTE
+`*csqcg.self = oldself`). .entnum is untouched (unlike SetContextSlot - FTE also
+does not rewrite it in addentities).
 =================
 */
 float CSQC_Client_CallPredraw (int slot, int fidx, qbool *removed)
@@ -1325,17 +1306,17 @@ float CSQC_Client_CallPredraw (int slot, int fidx, qbool *removed)
 
 /*
 =================
-Ф3: CSQC-реестр моделей
+CSQC model registry
 
-#20/#75 precache_model регистрирует модель (имя→model_t*, индекс 1-based); #200
-getmodelindex / #333 setmodelindex и поле `.modelindex` работают с этим индексом
-(отклонение от FTE: у FTE отдельное пространство индексов для csqc-only моделей;
-у нас — единый реестр поверх Mod_ForName). Индекс module-opaque.
+#20/#75 precache_model registers a model (name->model_t*, 1-based index); #200
+getmodelindex / #333 setmodelindex and the `.modelindex` field work with this index
+(deviation from FTE: FTE has a separate index space for csqc-only models; here it is
+a single registry over Mod_ForName). The index is module-opaque.
 
-T4 precache_model re-trigger: имя регистрируется даже при отсутствующем файле
-(Mod_ForName возвращает NULL) — слот хранит NULL-заглушку, но индекс стабилен
-(FTE pr_csqc.c:3215). После успешного скачивания заглушка заполняется в
-CSQC_Client_ModelDownloadFinished (drop-in без повторного precache моделью).
+precache_model re-trigger: the name is registered even when the file is missing
+(Mod_ForName returns NULL) - the slot holds a NULL placeholder, but the index stays
+stable. After a successful download the placeholder is filled in
+CSQC_Client_ModelDownloadFinished (drop-in without the module re-precaching).
 =================
 */
 #define CSQC_MAX_MODELS 512
@@ -1362,9 +1343,9 @@ int CSQC_Client_ModelIndex (const char *name)
 		return idx;
 	if (s_nmodels >= CSQC_MAX_MODELS)
 		return 0;
-	// T4 precache_model re-trigger (FTE pr_csqc.c:3215): register the name even if the
-	// file is missing (Mod_ForName == NULL) so the returned index stays stable; the slot
-	// then holds a NULL placeholder until the model is loaded after a successful download
+	// precache_model re-trigger: register the name even if the file is missing
+	// (Mod_ForName == NULL) so the returned index stays stable; the slot then holds
+	// a NULL placeholder until the model is loaded after a successful download
 	// (CSQC_Client_ModelDownloadFinished). "!= 0" therefore means "registered", not "loaded".
 	m = Mod_ForName (name, false);
 	strlcpy (s_modelnames[s_nmodels], name, MAX_QPATH);
@@ -1377,7 +1358,7 @@ struct model_s *CSQC_Client_ModelForIndex (int idx)
 	return (idx >= 1 && idx <= s_nmodels) ? s_models[idx - 1] : NULL;
 }
 
-/* #334 modelnameforindex: обратный резолв индекса CSQC-реестра (T3 Э3). */
+/* #334 modelnameforindex: reverse lookup of a CSQC registry index. */
 const char *CSQC_Client_ModelNameForIndex (int idx)
 {
 	return (idx >= 1 && idx <= s_nmodels) ? s_modelnames[idx - 1] : NULL;
@@ -1392,14 +1373,14 @@ void CSQC_Client_ModelReset (void)
 
 /*
 =================
-T4 precache_model re-trigger: reload-on-download (FTE CL_DownloadFinished, cl_parse.c:858-868).
+precache_model re-trigger: reload-on-download (FTE CL_DownloadFinished).
 
 Called from CL_FinishDownload after a successful download. `downloadname` is
-cls.downloadname (="<gamedir>/<file>", cl_parse.c:510), so the gamedir prefix is
-stripped and the rest matched against the CSQC model registry. A matching slot is
-(re)loaded via Mod_ForName: a NULL placeholder becomes the loaded model, so its stable
-index turns render-usable without the module re-calling precache_model. A no-op when
-the registry is empty (no CSQC module / nothing precached).
+cls.downloadname (="<gamedir>/<file>"), so the gamedir prefix is stripped and the
+rest matched against the CSQC model registry. A matching slot is (re)loaded via
+Mod_ForName: a NULL placeholder becomes the loaded model, so its stable index turns
+render-usable without the module re-calling precache_model. A no-op when the registry
+is empty (no CSQC module / nothing precached).
 =================
 */
 void CSQC_Client_ModelDownloadFinished (const char *downloadname)
@@ -1427,9 +1408,9 @@ void CSQC_Client_ModelDownloadFinished (const char *downloadname)
 =================
 CSQC_Client_ValidateFile
 
-Проверяет локальный файл csprogs по серверным ключам: размер == *csprogssize
-и (если задан *csprogs) Com_BlockChecksum == crc (тот же md4, что у mvdsv
-Com_BlockChecksum, md4.c). Аналог FTE CSQC_ValidateMainCSProgs (pr_csqc.c).
+Validates a local csprogs file against the server keys: size == *csprogssize and
+(if *csprogs is set) Com_BlockChecksum == crc (the same md4 as mvdsv's
+Com_BlockChecksum). Analog of FTE CSQC_ValidateMainCSProgs.
 =================
 */
 static qbool CSQC_Client_ValidateData (byte *data, int filesize, int size, unsigned crc)
@@ -1451,9 +1432,9 @@ static qbool CSQC_Client_ValidateFile (const char *path, int size, unsigned crc)
 
 	if (!path || !path[0])
 		return false;
-	// C1 (Wave C): heap-буфер + Q_free, не низкий hunk. ValidateFile зовётся в т.ч.
-	// каждый кадр в CSQC_Client_Update, пока идёт скачивание; Hunk_AllocName копил бы
-	// копии csprogs до смены карты.
+	// Heap buffer + Q_free, not the low hunk. ValidateFile is also called every
+	// frame in CSQC_Client_Update while a download is in progress; Hunk_AllocName
+	// would accumulate csprogs copies until the next map.
 	data = (byte *)FS_LoadHeapFile (path, &filesize);
 	ok = CSQC_Client_ValidateData (data, filesize, size, crc);
 	Q_free (data);
@@ -1464,16 +1445,15 @@ static qbool CSQC_Client_ValidateFile (const char *path, int size, unsigned crc)
 =================
 CSQC_Client_FindMainProgs
 
-Поиск валидного локального csprogs по FTE-семантике (CSQC_FindMainProgs,
-fteqw/engine/client/pr_csqc.c): 1) кэш csprogsvers/<crc>.dat, 2) *csprogsname
-(+ фолбэк на csprogs.dat). При валидном name-файле и заданном crc пишем копию
-в кэш csprogsvers/<crc>.dat (write-back, как FTE COM_WriteFile в pr_csqc.c) —
-следующие коннекты берут кэш, а не перекачивают. Возвращает true и заполняет
-pathbuf путём для CSQC_Client_Load.
+Find a valid local csprogs using FTE semantics (CSQC_FindMainProgs): 1) the
+csprogsvers/<crc>.dat cache, 2) *csprogsname (+ fallback to csprogs.dat). When a
+valid name-file is found and crc is set, write a copy into the csprogsvers/<crc>.dat
+cache (write-back, as FTE) so later connects take the cache instead of re-downloading.
+Returns true and fills pathbuf with the path for CSQC_Client_Load.
 
-anycsqc (T1.6b, FTE-паритет pr_csqc.c:7779): promiscuous-режим — не сверять
-size/crc локального кандидата (сервер с anycsqc/битым *csprogs либо demoplayback,
-pr_csqc.c:7777); write-back в crc-кэш при этом не делается.
+anycsqc (FTE parity): promiscuous mode - do not check size/crc of the local
+candidate (server with anycsqc/corrupt *csprogs, or demoplayback); write-back to the
+crc cache is not done in this case.
 =================
 */
 static qbool CSQC_Client_FindMainProgs (char *pathbuf, size_t bufsz,
@@ -1505,8 +1485,8 @@ static qbool CSQC_Client_FindMainProgs (char *pathbuf, size_t bufsz,
 		byte *data;
 		int len;
 
-		// C1 (Wave C): грузим кандидата один раз (heap) — валидация и write-back
-		// из одного буфера; раньше было две HunkFile-загрузки на кандидата.
+		// Load the candidate once (heap) - validation and write-back from one
+		// buffer; previously two HunkFile loads per candidate.
 		data = (byte *)FS_LoadHeapFile (cands[i], &len);
 		if (!CSQC_Client_ValidateData (data, len, anycsqc ? 0 : sizep, anycsqc ? 0 : crc))
 		{
@@ -1515,8 +1495,8 @@ static qbool CSQC_Client_FindMainProgs (char *pathbuf, size_t bufsz,
 		}
 
 		strlcpy (pathbuf, cands[i], bufsz);
-		// FTE write-back: валидный name-файл копируем в кэш на будущее.
-		// При anycsqc/demo crc не подтверждён — в кэш не пишем.
+		// FTE write-back: copy a valid name-file into the cache for later. With
+		// anycsqc/demo the crc is not confirmed - do not write the cache.
 		if (crc && !anycsqc && !cls.demoplayback)
 		{
 			char dest[MAX_OSPATH], dir[MAX_OSPATH];
@@ -1549,11 +1529,11 @@ static qbool CSQC_Client_FindMainProgs (char *pathbuf, size_t bufsz,
 =================
 CSQC_Client_StartDownload
 
-Запрашивает у сервера скачивание csprogs. Сервер отдаёт файл под *csprogsname
-(mvdsv SV_LoadCSQC), но мы сохраняем его в отдельную папку-кэш
-csprogsvers/<crc>.dat (как ftew, cl_parse.c:1640-1641), чтобы разные серверы не
-перезатирали друг друга. ezquake CL_CheckOrDownloadFile не умеет разделять
-remote/local имя — повторяем его стартовые шаги с другим локальным путём.
+Requests the csprogs download from the server. The server serves the file under
+*csprogsname (mvdsv SV_LoadCSQC), but we save it into a separate cache folder
+csprogsvers/<crc>.dat (as FTE does) so different servers do not overwrite each
+other. ezquake CL_CheckOrDownloadFile cannot separate the remote/local name - so we
+repeat its startup steps with a different local path.
 =================
 */
 static void CSQC_Client_StartDownload (const char *remote, const char *localrel)
@@ -1571,7 +1551,7 @@ static void CSQC_Client_StartDownload (const char *remote, const char *localrel)
 	COM_StripExtension (cls.downloadname, cls.downloadtempname, sizeof (cls.downloadtempname));
 	strlcat (cls.downloadtempname, ".tmp", sizeof (cls.downloadtempname));
 
-	// каталог назначения (напр. csprogsvers/) должен существовать
+	// the destination directory (e.g. csprogsvers/) must exist
 	strlcpy (dir, cls.downloadname, sizeof (dir));
 	slash = strrchr (dir, '/');
 	if (slash && slash != dir)
@@ -1584,8 +1564,8 @@ static void CSQC_Client_StartDownload (const char *remote, const char *localrel)
 	MSG_WriteByte (&cls.netchan.message, clc_stringcmd);
 	MSG_WriteString (&cls.netchan.message, va ("download \"%s\"", remote));
 	cls.downloadnumber++;
-	// B17: старт окна отсутствия прогресса + запоминаем имя нашего downloadname
-	// (cls.download общий для всех загрузок — прогресс считаем только по своему файлу).
+	// Start the no-progress window and remember our downloadname (cls.download is
+	// shared by all downloads - count progress only against our own file).
 	s_csqc.csprogs_dl_lastprogress = Sys_DoubleTime ();
 	s_csqc.csprogs_dl_percent = 0;
 	s_csqc.csprogs_dl_started = false;
@@ -1596,9 +1576,9 @@ static void CSQC_Client_StartDownload (const char *remote, const char *localrel)
 =================
 CSQC_Client_FreeArena / AllocArena
 
-Клиентская арена edicts (ADR 0017 P1/D2): прямая карта entnum -> слот
-(entity-значение PR1 = N*edict_size). Q_malloc (не hunk — урок Bug1);
-free в Disconnect и в начале Load (защита от повторного вызова).
+Client edict arena: direct entnum -> slot map (PR1 entity value = N*edict_size).
+Q_malloc (not hunk); freed in Disconnect and at the start of Load (guards against a
+repeated call).
 =================
 */
 static void CSQC_Client_FreeArena (void)
@@ -1623,7 +1603,7 @@ static void CSQC_Client_AllocArena (pr1vm_t *vm)
 	if (!vm || vm->edict_size <= 0)
 		return;
 
-	// FTE-пул: сброс занятости/номера-карты при (пере)выделении арены.
+	// Reset occupancy/number-map when (re)allocating the arena.
 	memset (s_used, 0, sizeof (s_used));
 	memset (s_own, 0, sizeof (s_own));
 	memset (s_numslot, 0, sizeof (s_numslot));
@@ -1640,16 +1620,16 @@ static void CSQC_Client_AllocArena (pr1vm_t *vm)
 	vm->game_edicts = s_csqc.game_edicts;
 	vm->num_edicts = CSQC_MAX_EDICTS;
 	vm->max_edicts = CSQC_MAX_EDICTS;
-	vm->state = 0;	// клиентский инстанс; OP_ADDRESS-гард «world» не активен (world не пишем)
-	vm->fieldofs_patch = NULL;	// FTE csprogs: raw field-оффсеты (ADR 0017 P2)
+	vm->state = 0;	// client instance; the "world" OP_ADDRESS guard is inactive (world not written)
+	vm->fieldofs_patch = NULL;	// FTE csprogs uses raw field offsets.
 }
 
 /*
 =================
 CSQC_Client_FindField
 
-Ищет поле модуля по имени в fielddefs (см. PR1VM_FindFunction). Возвращает
-смещение поля в float-словах от начала entvars (ddef_t.ofs) или -1.
+Finds a module field by name in fielddefs (see PR1VM_FindFunction). Returns the
+field offset in float words from the start of entvars (ddef_t.ofs) or -1.
 =================
 */
 int CSQC_Client_FindField (pr1vm_t *vm, const char *name)
@@ -1669,15 +1649,14 @@ int CSQC_Client_FindField (pr1vm_t *vm, const char *name)
 
 /*
 =================
-C2 (Wave C): кэш офсетов горячего пути
+Hot-path offset cache
 
-Резолв traced-глобалов и entity-полей, читаемых каждый кадр (csqc_store_trace,
-csqc_add_one_entity, csqc_addentities), выполняется один раз при загрузке модуля
-(CSQC_Client_OffsetCacheResolve). Раньше каждый вызов звал PR1VM_FindGlobal /
-CSQC_Client_FindField — линейный скан globaldefs/fielddefs по strcmp.
+Resolution of the traced globals and entity fields read every frame
+(csqc_store_trace, csqc_add_one_entity, csqc_addentities) is done once at module
+load (CSQC_Client_OffsetCacheResolve). Previously each call invoked PR1VM_FindGlobal
+/ CSQC_Client_FindField - a linear strcmp scan of globaldefs/fielddefs.
 
-FTE-эталон: глобалы — csqcg (pr_common.h:1109-1118, CSQC_FindGlobals pr_csqc.c:290-296,
-store :2917-2923); entity-поля — overlay csqcentvars_t (pr_csqc.c:353-395).
+FTE reference: globals - csqcg; entity fields - the overlay csqcentvars_t.
 =================
 */
 static const char *s_traceg_names[CSQC_TRACEG_COUNT] =
@@ -1734,9 +1713,9 @@ int CSQC_Client_FieldOfs (pr1vm_t *vm, int id)
 =================
 CSQC_Client_SetEntityContext
 
-Ставит контекст сущности для CSQC_Ent_Update/Remove (ADR 0017 P2/D3):
-self = entnum*edict_size (entity-значение PR1) и пишет float entnum в поле
-.entnum (слот 7) арены. Модуль дальше читает self.entnum.
+Sets the entity context for CSQC_Ent_Update/Remove: self = entnum*edict_size (PR1
+entity value) and writes the float entnum into the arena's .entnum field. The module
+then reads self.entnum.
 =================
 */
 static void CSQC_Client_SetContextSlot (pr1vm_t *vm, unsigned slot, unsigned number)
@@ -1745,8 +1724,8 @@ static void CSQC_Client_SetContextSlot (pr1vm_t *vm, unsigned slot, unsigned num
 
 	if (!vm || !vm->game_edicts)
 		return;
-	// self = slot*edict_size (entity-значение PR1, int-биты); .entnum (поле модуля)
-	// = серверный номер (у своих spawn-сущностей номер не пишется — остаётся 0).
+	// self = slot*edict_size (PR1 entity value, int bits); .entnum (module field) =
+	// server number (owned spawn entities do not get a number - it stays 0).
 	if (s_csqc.global_self >= 0)
 		*(int *)&vm->globals[s_csqc.global_self] = (int)slot * vm->edict_size;
 	if (s_csqc.field_entnum >= 0 && slot < CSQC_MAX_EDICTS)
@@ -1760,11 +1739,10 @@ static void CSQC_Client_SetContextSlot (pr1vm_t *vm, unsigned slot, unsigned num
 =================
 CSQC_Client_EntityEntNum
 
-ssqc-номер задетой сущности — модульное поле `.entnum` арена-эдикта: серверный номер
-для сетевых сущностей (CSQC_Client_SetContextSlot), 0 для своих spawn-сущностей.
-Источник FTE-паритета trace_networkentity (FTE `tr->entnum` = `touch->number` только
-для сетевых ssqc-brush, fteqw/engine/server/world.c:2274; fteqw/engine/client/pr_csqc.c:2938).
-Вне диапазона/без поля — 0.
+ssqc number of the touched entity - the arena edict's module field `.entnum`: the
+server number for network entities (CSQC_Client_SetContextSlot), 0 for owned spawn
+entities. Source of FTE trace_networkentity parity (FTE `tr->entnum` =
+`touch->number` only for network ssqc brushes). Out of range / no field - 0.
 =================
 */
 int CSQC_Client_EntityEntNum (pr1vm_t *vm, int slot)
@@ -1783,12 +1761,11 @@ int CSQC_Client_EntityEntNum (pr1vm_t *vm, int slot)
 =================
 CSQC_Client_RunEntSpawn
 
-R7/T1.3a: хук новой CSQC-сущности (FTE-паритет, pr_csqc.c:9650-9664). Движок
-обнуляет self (self=0=мир), кладёт серверный номер в PARM0, вызывает
-CSQC_Ent_Spawn; модуль создаёт/настраивает сущность (обычно spawn();
-self.entnum = entnum) и возвращает её в self. Читаем self → слот арены
-(self/edict_size). Возврат: валидный занятый слот или 0 (мир/невалиден; Q-D —
-без фолбэка, как FTE ent=NULL).
+Hook for a new CSQC entity (FTE parity). The engine zeroes self (self=0=world), puts
+the server number into PARM0, calls CSQC_Ent_Spawn; the module creates/configures the
+entity (usually spawn(); self.entnum = entnum) and returns it in self. Read self ->
+arena slot (self/edict_size). Returns a valid occupied slot or 0 (world/invalid; no
+fallback, as FTE ent=NULL).
 =================
 */
 static int CSQC_Client_RunEntSpawn (pr1vm_t *vm, unsigned int entnum)
@@ -1806,8 +1783,8 @@ static int CSQC_Client_RunEntSpawn (pr1vm_t *vm, unsigned int entnum)
 	return (slot > 0 && slot < CSQC_MAX_EDICTS && s_used[slot]) ? slot : 0;
 }
 
-/* Q-E (FTE pr_csqc.c:9693-9694): после CSQC_Ent_Update модуль может сменить self;
-   номер→слот переносим на новый валидный слот (0 = мир/снят). */
+/* After CSQC_Ent_Update the module may change self; remap number->slot onto the new
+   valid slot (0 = world/removed). */
 static void CSQC_Client_RemapAfterUpdate (pr1vm_t *vm, unsigned int entnum)
 {
 	int selfval, slot;
@@ -1823,12 +1800,12 @@ static void CSQC_Client_RemapAfterUpdate (pr1vm_t *vm, unsigned int entnum)
 
 /*
 =================
-CSQC_Client_EntAlloc / EntFree (FTE-пул)
+CSQC_Client_EntAlloc / EntFree (entity pool)
 
-Модульные сущности (builtin spawn) берут произвольный свободный слот пула
-(первый свободный от 1) и помечаются s_own (remove разрешён только своим).
-Сетевые слоты выделяются тем же пулом (без s_own) и держатся картой
-номер→слот в ParseEntities. entity-значение PR1 = slot*edict_size.
+Module entities (builtin spawn) take any free pool slot (first free from 1) and are
+marked s_own (remove allowed only for owned ones). Network slots are allocated from
+the same pool (without s_own) and held by the number->slot map in ParseEntities. PR1
+entity value = slot*edict_size.
 =================
 */
 static int CSQC_Client_AllocSlot (pr1vm_t *vm)
@@ -1839,9 +1816,8 @@ static int CSQC_Client_AllocSlot (pr1vm_t *vm)
 		{
 			s_used[i] = true;
 			s_own[i] = false;
-			// R2/D-A (FTE-паритет): обнулять поля слота при (пере)использовании —
-			// иначе модуль видит остатки прошлой сущности. FTE: QC_ClearEdict /
-			// ED_AllocIndex (pr_edict.c:30,85).
+			// FTE parity: zero the slot fields on (re)use - otherwise the module
+			// sees remnants of a previous entity. FTE: QC_ClearEdict / ED_AllocIndex.
 			if (vm && vm->game_edicts && vm->edict_size > 0)
 				memset ((byte *)vm->game_edicts + (size_t)i * vm->edict_size, 0, vm->edict_size);
 			return i;
@@ -1856,7 +1832,7 @@ int CSQC_Client_EntAlloc (struct pr1vm_s *v)
 	int slot;
 	slot = CSQC_Client_AllocSlot (vm);
 	if (slot)
-		s_own[slot] = true;	// spawn-сущность: .entnum не пишем (0)
+		s_own[slot] = true;	// spawn entity: .entnum not written (0)
 	return slot;
 }
 
@@ -1870,9 +1846,9 @@ void CSQC_Client_EntFree (struct pr1vm_s *v, int entnum)
 	if (entnum <= 0 || entnum >= CSQC_MAX_EDICTS || !s_used[entnum])
 		return;
 	if (!s_own[entnum])
-		return;	// сетевая сущность — не трогаем (ADR 0017)
-	// B16: снять обратную карту slot→N, иначе s_numslot[N] остаётся валидным на
-	// освобождённый слот, который может быть переиспользован (review add #9).
+		return;	// network entity - do not touch
+	// Drop the reverse slot->N map, otherwise s_numslot[N] stays valid on the freed
+	// slot, which may be reused.
 	if (s_slotnum[entnum] > 0 && s_slotnum[entnum] < CSQC_MAX_NUM
 		&& s_numslot[s_slotnum[entnum]] == entnum)
 		s_numslot[s_slotnum[entnum]] = 0;
@@ -1883,8 +1859,8 @@ void CSQC_Client_EntFree (struct pr1vm_s *v, int entnum)
 	memset (s, 0, vm->edict_size);
 }
 
-/* внутренний сетевой путь (ParseEntities): слот без s_own.
-   vm нужен для обнуления полей слота (R2/D-A). */
+/* internal network path (ParseEntities): a slot without s_own.
+   vm is needed to zero the slot fields. */
 int CSQC_Client_NetAllocSlot (struct pr1vm_s *v)
 {
 	return CSQC_Client_AllocSlot ((pr1vm_t *)v);
@@ -1898,12 +1874,12 @@ void CSQC_Client_NetFreeSlot (int slot, int number)
 		s_own[slot] = false;
 	}
 	if (slot > 0 && slot < CSQC_MAX_EDICTS)
-		s_slotnum[slot] = 0;	// B16: обратная карта не переживает фриз
+		s_slotnum[slot] = 0;	// reverse map does not outlive the free
 	if (number > 0 && number < CSQC_MAX_NUM && s_numslot[number] == slot)
 		s_numslot[number] = 0;
 }
 
-/* доступ/диагностика (P1d C1): обход пула и полей */
+/* access/diagnostics: walk the pool and fields */
 qbool CSQC_Client_EntUsed (int entnum)
 {
 	return (entnum > 0 && entnum < CSQC_MAX_EDICTS) ? s_used[entnum] : false;
@@ -1911,7 +1887,7 @@ qbool CSQC_Client_EntUsed (int entnum)
 
 int CSQC_Client_EntSpawnBase (void)
 {
-	return 1;	// первый используемый слот пула (0 — world)
+	return 1;	// first usable pool slot (0 = world)
 }
 
 int CSQC_Client_EntUsedCount (void)
@@ -1931,9 +1907,8 @@ Convert a raw PR1 entity value (slot*edict_size) into a pool slot. The client
 VM executes untrusted csprogs and a builtin entity argument is not dereferenced
 by the VM (unlike an opcode pointer), so an out-of-range value is clamped to
 world (0) instead of faulting. FTE parity: PF_etos/PF_wasfreed go through
-ProgsToEdict (fteqw/engine/qclib/initlib.c:960-974), which reports "Bad entity
-index" and falls back to edict 0. Same bound as the opcode predicate
-PR1VM_ClientBadEdict (pr_exec.c:428-436); on the client instance
+ProgsToEdict, which reports "Bad entity index" and falls back to edict 0. Same
+bound as the opcode predicate PR1VM_ClientBadEdict; on the client instance
 num_edicts == max_edicts == CSQC_MAX_EDICTS (see CSQC_Client_AllocArena).
 =================
 */
@@ -1969,27 +1944,27 @@ int CSQC_Client_MapNumber (int number, int slot)
 
 /*
 =================
-E1a #371 deltalisten: движковый мост player_state → arena-edict (FTE-путь,
-pr_csqc.c `CSQC_DeltaPlayer`/`CSQC_PlayerStateToCSQC`). Мост отдаёт модулю
-авторитетное (no-lerp) состояние игроков: `self`/`.entnum` = pnum+1, поля
-origin/velocity/angles (+modelindex/skin). Модуль-калбэк зовётся как
-CSQC_Ent_Update (PARM0 = isnew) раз на новый acked-кадр (cl.parsecount).
+#371 deltalisten: engine bridge player_state -> arena-edict (FTE path
+`CSQC_DeltaPlayer`/`CSQC_PlayerStateToCSQC`). The bridge gives the module the
+authoritative (no-lerp) player state: `self`/`.entnum` = pnum+1, fields
+origin/velocity/angles (+modelindex/skin). The module callback is invoked as
+CSQC_Ent_Update (PARM0 = isnew) once per new acked frame (cl.parsecount).
 =================
 */
 static int s_delta_func[MAX_MODELS];
 static int s_delta_flags[MAX_MODELS];
-// Личный маппинг player-bridge (pnum → arena slot), чтобы отличать владение от
-// svc76 (CSQC_Client_NumToSlot). num = pnum+1 (серверный entnum игрока).
+// Personal player-bridge mapping (pnum -> arena slot), to distinguish ownership
+// from svc76 (CSQC_Client_NumToSlot). num = pnum+1 (server entnum of the player).
 static int s_player_slot[MAX_CLIENTS];
-// E1b: delta-entity мост — номер пакетной сущности → arena slot + «виден в кадре».
+// delta-entity bridge: packet entity number -> arena slot + "seen this frame".
 static int s_delta_slot[CSQC_MAX_NUM];
 static byte s_delta_seen[CSQC_MAX_NUM];
-// C4 Э3 (MASK_DELTA): callback вернул !=0 → движок не рисует сущность (рисует модуль).
+// MASK_DELTA: callback returned !=0 -> the engine does not draw the entity (the module does).
 static byte s_delta_player_owned[MAX_CLIENTS];
 static byte s_delta_ent_owned[CSQC_MAX_NUM];
-// C4 (Wave C): есть ли хоть один зарегистрированный deltalisten (func>0). Если нет —
-// Delta* не memset'ит 4096-массивы и не сканирует пакетные сущности каждый кадр
-// (FTE: deltafunction[] пуст -> CSQC_DeltaUpdate не работает, pr_csqc.c:7691/:5733).
+// Whether at least one deltalisten is registered (func>0). If not, the Delta* paths
+// do not memset the 4096 arrays and do not scan packet entities each frame (FTE:
+// deltafunction[] empty -> CSQC_DeltaUpdate does nothing).
 static qbool s_delta_any;
 
 static void CSQC_Client_DeltaReset (void)
@@ -2004,7 +1979,7 @@ static void CSQC_Client_DeltaReset (void)
 	memset (s_delta_ent_owned, 0, sizeof (s_delta_ent_owned));
 }
 
-// C4 Э3: геттеры для CL_LinkPlayers/CL_LinkPacketEntities (cl_ents.c).
+// Getters for CL_LinkPlayers/CL_LinkPacketEntities (cl_ents.c).
 qbool CSQC_Client_DeltaPlayerOwned (int pnum)
 {
 	return (pnum >= 0 && pnum < MAX_CLIENTS && s_delta_player_owned[pnum]) ? true : false;
@@ -2028,7 +2003,7 @@ void CSQC_Client_DeltaListen (const char *model, int func, int flags)
 			s_delta_flags[i] = flags;
 		}
 		if (func > 0)
-			s_delta_any = true;	// C4: хотя бы один слушатель — Delta* активны
+			s_delta_any = true;	// at least one listener - Delta* are active
 		return;
 	}
 	for (i = 1; i < MAX_MODELS; i++)
@@ -2053,9 +2028,9 @@ static void CSQC_Client_DeltaPlayers (pr1vm_t *vm)
 	if (!vm || !vm->game_edicts || !vm->edict_size)
 		return;
 	if (!s_delta_any)
-		return;		// C4: нет слушателей — работа не нужна
+		return;		// no listeners - nothing to do
 	if (cls.demoplayback || cls.mvdplayback)
-		return;		// предикция — только живая игра (как C5-A)
+		return;		// prediction - live game only
 	memset (s_delta_player_owned, 0, sizeof (s_delta_player_owned));
 	for (pnum = 0; pnum < MAX_CLIENTS; pnum++)
 	{
@@ -2070,7 +2045,7 @@ static void CSQC_Client_DeltaPlayers (pr1vm_t *vm)
 
 		if (!func)
 		{
-			// сущность отсутствует/без слушателя — убрать, если она была
+			// entity absent / no listener - remove it if it was there
 			if (slot)
 			{
 				if (s_csqc.func_entremove > 0)
@@ -2084,7 +2059,7 @@ static void CSQC_Client_DeltaPlayers (pr1vm_t *vm)
 			continue;
 		}
 
-		// svc76 уже владеет номером — не перетираем (FTE csqcent[]-guard)
+		// svc76 already owns the number - do not overwrite (FTE csqcent[]-guard)
 		if (!slot && CSQC_Client_NumToSlot (num))
 			continue;
 
@@ -2100,7 +2075,7 @@ static void CSQC_Client_DeltaPlayers (pr1vm_t *vm)
 
 		CSQC_Client_SetContextSlot (vm, (unsigned)slot, (unsigned)num);
 
-		// Поля player_state (no-lerp: сырые значения, как FTE RSES_NOLERP).
+		// player_state fields (no-lerp: raw values, as FTE RSES_NOLERP).
 		{
 			float *base = (float *)((byte *)vm->game_edicts + (size_t)slot * vm->edict_size);
 			if (s_csqc.f_origin >= 0)
@@ -2109,8 +2084,8 @@ static void CSQC_Client_DeltaPlayers (pr1vm_t *vm)
 				VectorCopy (st->velocity, base + s_csqc.f_velocity);
 			if (s_csqc.f_angles >= 0)
 			{
-				// viewangles сервер шлёт только в демо; локальному игроку —
-				// свежие cl.viewangles (обновляются из usercmd).
+				// The server sends viewangles only in demos; for the local player use
+				// fresh cl.viewangles (updated from usercmd).
 				const float *ang = (pnum == cl.playernum) ? cl.viewangles : st->viewangles;
 				VectorCopy (ang, base + s_csqc.f_angles);
 			}
@@ -2118,22 +2093,21 @@ static void CSQC_Client_DeltaPlayers (pr1vm_t *vm)
 				base[s_csqc.f_modelindex] = (float)st->modelindex;
 			if (s_csqc.f_skin >= 0)
 				base[s_csqc.f_skin] = (float)st->skinnum;
-			// Stage 4: player render fields. FTE CSQC_PlayerStateToCSQC fills
-			// frame/skin/colormap (pr_csqc.c:5485,5609-5636); engine player render
-			// uses frame/effects/translations (cl_ents.c:2222-2226).
+			// Player render fields. FTE CSQC_PlayerStateToCSQC fills
+			// frame/skin/colormap; engine player render uses frame/effects/translations.
 			if (s_csqc.f_frame >= 0)
 				base[s_csqc.f_frame] = (float)st->frame;
 			if (s_csqc.f_effects >= 0)
 				base[s_csqc.f_effects] = (float)st->effects;
 			if (s_csqc.f_colormap >= 0)
-				base[s_csqc.f_colormap] = (float)(pnum + 1);	// player index (FTE pr_csqc.c:5627)
+				base[s_csqc.f_colormap] = (float)(pnum + 1);	// player index
 			if (s_csqc.f_drawmask >= 0)
-				base[s_csqc.f_drawmask] = 1;	// MASK_DELTA (FTE pr_csqc.c:5697)
+				base[s_csqc.f_drawmask] = 1;	// MASK_DELTA
 		}
 
 		vm->globals[OFS_PARM0] = isnew ? 1 : 0;
 		{
-			// C4 Э3: возврат callback !=0 → движок не рисует этого игрока (рисует модуль).
+			// callback return !=0 -> the engine does not draw this player (the module does).
 			float pret = 0;
 			if (CSQC_Client_ExecRet (func, &pret) && pret != 0)
 				s_delta_player_owned[pnum] = 1;
@@ -2145,11 +2119,11 @@ static void CSQC_Client_DeltaPlayers (pr1vm_t *vm)
 
 /*
 =================
-E1b #371 delta-entity мост (FTE CSQC_DeltaStart/Update/End, pr_csqc.c:5719+):
-пакетные сущности кадра (entity_state_t) с зарегистрированным по модели callback'ом
-отдаются модулю как CSQC_Ent_Update (self/.entnum, PARM0 = isnew). Пропавшие в
-кадре — remove-путь. RSES_NOLERP/NOROTATE: сырое состояние (интерполяции нет);
-NOTRAILS/NOLIGHTS недействительны (в ezq CSQC нет трейлов/динамического света).
+#371 delta-entity bridge (FTE CSQC_DeltaStart/Update/End): packet entities of the
+frame (entity_state_t) with a model-registered callback are handed to the module as
+CSQC_Ent_Update (self/.entnum, PARM0 = isnew). Ones missing from the frame go through
+the remove path. RSES_NOLERP/NOROTATE: raw state (no interpolation); NOTRAILS/NOLIGHTS
+are invalid (ezq CSQC has no trails/dynamic light).
 =================
 */
 static void CSQC_Client_DeltaEntities (pr1vm_t *vm)
@@ -2160,7 +2134,7 @@ static void CSQC_Client_DeltaEntities (pr1vm_t *vm)
 	if (!vm || !vm->game_edicts || !vm->edict_size)
 		return;
 	if (!s_delta_any)
-		return;		// C4: нет слушателей — не memset'им/сканируем 4096 каждый кадр
+		return;		// no listeners - do not memset/scan 4096 each frame
 	if (cls.demoplayback || cls.mvdplayback)
 		return;
 	if (!cl.validsequence)
@@ -2189,7 +2163,7 @@ static void CSQC_Client_DeltaEntities (pr1vm_t *vm)
 		slot = s_delta_slot[num];
 		if (!slot)
 		{
-			// svc76 уже владеет номером — не перетираем
+			// svc76 already owns the number - do not overwrite
 			if (CSQC_Client_NumToSlot (num))
 				continue;
 			slot = CSQC_Client_NetAllocSlot (vm);
@@ -2215,11 +2189,11 @@ static void CSQC_Client_DeltaEntities (pr1vm_t *vm)
 		if (s_csqc.f_effects >= 0)
 			base[s_csqc.f_effects] = (float)es->effects;
 		if (s_csqc.f_drawmask >= 0)
-			base[s_csqc.f_drawmask] = 1;	// MASK_DELTA (FTE pr_common.h:901)
+			base[s_csqc.f_drawmask] = 1;	// MASK_DELTA
 
 		vm->globals[OFS_PARM0] = isnew ? 1 : 0;
 		{
-			// C4 Э3: возврат callback !=0 → движок не рисует эту пакетную сущность.
+			// callback return !=0 -> the engine does not draw this packet entity.
 			float pret = 0;
 			if (CSQC_Client_ExecRet (func, &pret) && pret != 0)
 				s_delta_ent_owned[num] = 1;
@@ -2228,7 +2202,7 @@ static void CSQC_Client_DeltaEntities (pr1vm_t *vm)
 			return;
 	}
 
-	// пропавшие в этом кадре — remove-путь
+	// ones missing this frame - remove path
 	for (num = 1; num < CSQC_MAX_NUM; num++)
 	{
 		int slot = s_delta_slot[num];
@@ -2247,15 +2221,14 @@ static void CSQC_Client_DeltaEntities (pr1vm_t *vm)
 
 /*
 =================
-player_localentnum (FTE pr_csqc.c:136-145)
+player_localentnum (FTE)
 =================
 
-Публикация глобала модуля player_localentnum (номер наблюдаемого игрока) каждый
-кадр перед CSQC_UpdateView. Это часть окружения builtins «как в FTE»: FTE публикует
-глобал всегда; НО сущности игроков ezquake НЕ фабрикует (окружение сущностей = то,
-что прислал сервер svc76 + свои spawn, как у FTE в отсутствие серверной эмиссии
-игроков / player-delta). Зеркало игроков (бывш. Шаг 7.2) удалено — C7 self/play
-N/A до серверной эмиссии игроков модом.
+Publish the module global player_localentnum (number of the observed player) each
+frame before CSQC_UpdateView. FTE publishes the global always; but ezquake does NOT
+fabricate player entities (the entity environment is what the server sent via svc76
+plus own spawns, as FTE in the absence of server player emission / player-delta).
+The player mirror is removed - self/play are N/A until the mod emits players.
 */
 void CSQC_Client_UpdateLocalEntnum (void)
 {
@@ -2268,17 +2241,18 @@ void CSQC_Client_UpdateLocalEntnum (void)
 
 /*
 =================
-C5-E Ф1 (no-op revision): view/listener/view_angles + project/unproject.
+view/listener/view_angles + project/unproject.
 
-- `view_angles` — глобал модуля, публикуется каждый кадр (FTE); значение — углы вида
-  движка (cl.viewangles).
-- `#351 setlistener` — модуль задаёт аудио-листенер; cl_main.c использует его в S_Update,
-  пока модуль активен (иначе — обычно).
-- `#303 setproperty` (подмножество VF_*) — view-origin/angles/vrect/fov модуля; применяется
-  к r_refdef после V_CalcRefdef (cl_view.c) при активном CSQC. Лаг 1 кадр: CSQC_UpdateView
-  вызывается в HUD-фазе (после 3D-рендера) — отличие от FTE, документировано.
-- `#310/#311 project/unproject` — экран↔мир через матрицы движка
-  (R_GetModelviewMatrix/R_GetProjectionMatrix/R_GetViewport, r_matrix.c).
+- `view_angles` - module global, published each frame (FTE); value is the engine's
+  view angles (cl.viewangles).
+- `#351 setlistener` - the module sets the audio listener; cl_main.c uses it in
+  S_Update while the module is active (otherwise as usual).
+- `#303 setproperty` (VF_* subset) - the module's view-origin/angles/vrect/fov;
+  applied to r_refdef after V_CalcRefdef (cl_view.c) when CSQC is active. One-frame
+  lag: CSQC_UpdateView is called in the HUD phase (after 3D rendering) - documented
+  difference from FTE.
+- `#310/#311 project/unproject` - screen<->world via the engine matrices
+  (R_GetModelviewMatrix/R_GetProjectionMatrix/R_GetViewport).
 =================
 */
 #define CSQC_VFP_MIN		1
@@ -2299,9 +2273,8 @@ C5-E Ф1 (no-op revision): view/listener/view_angles + project/unproject.
 #define CSQC_VFP_ANGLES_X	16
 #define CSQC_VFP_ANGLES_Y	17
 #define CSQC_VFP_ANGLES_Z	18
-// B22: set-флаги (FTE pr_common.h:809-824, csdefs.qc:395-402). Значения — как
-// в FTE; VF_PERSPECTIVE распознаётся (return 1), но визуально не реализован
-// (accept+doc) — изометрия в ezq-рендере отсутствует.
+// set flags (FTE). Values are as in FTE; VF_PERSPECTIVE is recognized (return 1)
+// but not visually implemented - ezq rendering has no isometry.
 #define CSQC_VFP_DRAWWORLD	19
 #define CSQC_VFP_DRAWENGINESBAR	20
 #define CSQC_VFP_DRAWCROSSHAIR	21
@@ -2315,7 +2288,7 @@ static qbool s_vp_origin_set, s_vp_angles_set, s_vp_vrect_set, s_vp_fovx_set, s_
 static vec3_t s_vp_origin, s_vp_angles;
 static int s_vp_x, s_vp_y, s_vp_w, s_vp_h;
 static float s_vp_fovx, s_vp_fovy;
-// B22: set-флаги (FTE-дефолты clearscene, pr_csqc.c:2078-2079).
+// set flags (FTE clearscene defaults).
 static qbool s_vp_drawsbar = false;
 static qbool s_vp_drawcrosshair = false;
 
@@ -2324,7 +2297,7 @@ static void CSQC_Client_ViewPropsReset (void)
 	s_vp_on = false;
 	s_vp_origin_set = s_vp_angles_set = s_vp_vrect_set = false;
 	s_vp_fovx_set = s_vp_fovy_set = false;
-	// FTE clearscene: sbar/crosshair off (pr_csqc.c:2078-2079).
+	// FTE clearscene: sbar/crosshair off.
 	s_vp_drawsbar = false;
 	s_vp_drawcrosshair = false;
 }
@@ -2339,8 +2312,8 @@ static void CSQC_Client_ViewReset (void)
 	CSQC_Client_ViewPropsReset ();
 }
 
-// #300 clearscene: FTE сбрасывает view-свойства (модуль зовёт clearscene каждую
-// CSQC_UpdateView; без сброса #303-override «залипал» бы между кадрами).
+// #300 clearscene: FTE resets the view properties (the module calls clearscene every
+// CSQC_UpdateView; without the reset the #303 override would "stick" between frames).
 void CSQC_Client_ResetViewProps (void)
 {
 	CSQC_Client_ViewPropsReset ();
@@ -2369,8 +2342,8 @@ void CSQC_Client_GetListener (float *origin, float *forward, float *right, float
 	VectorCopy (s_listener_up, up);
 }
 
-// #303 setproperty: VF_* подмножество (view). args — последовательные float-аргументы
-// после property (вектор — 3 значения, скаляр — 1).
+// #303 setproperty: VF_* subset (view). args are the sequential float arguments
+// after property (a vector is 3 values, a scalar is 1).
 qbool CSQC_Client_SetViewProperty (int prop, int argc, const float *args)
 {
 	qbool handled = true;
@@ -2389,9 +2362,9 @@ qbool CSQC_Client_SetViewProperty (int prop, int argc, const float *args)
 	case CSQC_VFP_ANGLES_Y: s_vp_angles[1] = args[0]; s_vp_angles_set = true; break;
 	case CSQC_VFP_ANGLES_Z: s_vp_angles[2] = args[0]; s_vp_angles_set = true; break;
 	case CSQC_VFP_VIEWPORT:
-		// FTE pr_csqc.c:2542 — позиция-вектор (PARM1) + размер-вектор (PARM2),
-		// т.е. 6 слов (csdefs VF_VIEWPORT = "vector+vector"). Раньше ezq читал
-		// args[0..1] как размер, теряя позицию/size.
+		// position vector (PARM1) + size vector (PARM2), i.e. 6 words
+		// (VF_VIEWPORT = "vector+vector"). Previously ezq read args[0..1] as the
+		// size, losing position/size.
 		if (argc >= 6)
 		{
 			s_vp_x = (int)args[0]; s_vp_y = (int)args[1];
@@ -2415,8 +2388,8 @@ qbool CSQC_Client_SetViewProperty (int prop, int argc, const float *args)
 	case CSQC_VFP_FOVX: s_vp_fovx = args[0]; s_vp_fovx_set = true; break;
 	case CSQC_VFP_FOVY: s_vp_fovy = args[0]; s_vp_fovy_set = true; break;
 	case CSQC_VFP_DRAWWORLD:
-		// accept+doc: распознан (return 1); мир под takeover всегда рисует
-		// R_RenderView (r_rmain.c:939), аналога RDF_NOWORLDMODEL нет.
+		// recognized (return 1); the world under takeover is always drawn by
+		// R_RenderView - there is no RDF_NOWORLDMODEL analog.
 		break;
 	case CSQC_VFP_DRAWENGINESBAR:
 		if (argc >= 1) s_vp_drawsbar = (args[0] != 0);
@@ -2425,21 +2398,21 @@ qbool CSQC_Client_SetViewProperty (int prop, int argc, const float *args)
 		if (argc >= 1) s_vp_drawcrosshair = (args[0] != 0);
 		break;
 	case CSQC_VFP_PERSPECTIVE:
-		// accept+doc: флаг распознан (return 1), изометрия в ezq-рендере не
-		// реализована (нет аналога r_refdef.useperspective).
+		// flag recognized (return 1); isometry is not implemented in the ezq
+		// renderer (no r_refdef.useperspective analog).
 		break;
 	default:
-		handled = false;	// без аналога — FTE default возвращает 0
+		handled = false;	// no analog - FTE default returns 0
 		break;
 	}
 	s_vp_on = s_vp_origin_set || s_vp_angles_set || s_vp_vrect_set || s_vp_fovx_set || s_vp_fovy_set;
-	// FTE применяет view-флаги в том же кадре (setter пишет r_refdef сразу); ezq
-	// раньше откладывал до V_CalcRefdef => лаг 1 кадр (parity-audit, было).
+	// FTE applies the view flags in the same frame (the setter writes r_refdef at
+	// once); ezq previously deferred to V_CalcRefdef => 1-frame lag.
 	CSQC_Client_ApplyViewProps ();
 	return handled;
 }
 
-// Применяется после V_CalcRefdef (cl_view.c), только при активном CSQC-модуле.
+// Applied after V_CalcRefdef (cl_view.c), only when a CSQC module is active.
 void CSQC_Client_ApplyViewProps (void)
 {
 	if (!s_vp_on || !s_csqc.loaded || s_csqc.errored)
@@ -2463,11 +2436,11 @@ void CSQC_Client_ApplyViewProps (void)
 
 /*
 =================
-B22 (FTE-паритет): гейт движкового sbar/HUD и crosshair. FTE clearscene ставит
-r_refdef.drawsbar/drawcrosshair = false (pr_csqc.c:2078-2079), модуль возвращает их
-через #303 setproperty(VF_DRAWENGINESBAR/VF_DRAWCROSSHAIR, 1). Под takeover
-(CSQC_Client_SceneActive) cl_screen.c спрашивает эти аксессоры; вне takeover гейт
-не применяется (движковый HUD/прицел — как раньше).
+FTE parity: gate of the engine sbar/HUD and crosshair. FTE clearscene sets
+r_refdef.drawsbar/drawcrosshair = false, the module returns them via #303
+setproperty(VF_DRAWENGINESBAR/VF_DRAWCROSSHAIR, 1). Under takeover
+(CSQC_Client_SceneActive) cl_screen.c asks these accessors; outside takeover the
+gate is not applied (engine HUD/crosshair as before).
 =================
 */
 qbool CSQC_Client_DrawEngineSbar (void)
@@ -2480,7 +2453,7 @@ qbool CSQC_Client_DrawCrosshairFlag (void)
 	return s_vp_drawcrosshair;
 }
 
-// C5-E: публикация глобала view_angles (перед CSQC_UpdateView).
+// Publish the view_angles global (before CSQC_UpdateView).
 void CSQC_Client_PublishViewAngles (void)
 {
 	pr1vm_t *vm = &s_csqc.vm;
@@ -2492,10 +2465,10 @@ void CSQC_Client_PublishViewAngles (void)
 }
 
 /*
-C5-E Ф1: #311 project / #310 unproject — семантика FTE (pr_csqc.c:1966/2012):
-clip = (model*proj) * v (наша композиция эквивалентна FTE proj*modelview),
-NDC -> экран с Y-флипом и r_refdef.vrect, глубина FTE (знак при w<0).
-Guard'ов нет (FTE-паритет); вырожденные случаи дают NaN/Inf — это диагностика.
+#311 project / #310 unproject - FTE semantics:
+clip = (model*proj) * v (our composition is equivalent to FTE proj*modelview),
+NDC -> screen with a Y flip and r_refdef.vrect, FTE depth (sign when w<0).
+No guards (FTE parity); degenerate cases yield NaN/Inf - diagnostic only.
 */
 qbool CSQC_Client_Project (const float *world, float *sx, float *sy, float *sz)
 {
@@ -2506,7 +2479,7 @@ qbool CSQC_Client_Project (const float *world, float *sx, float *sy, float *sz)
 	R_GetModelviewMatrix (model);
 	R_GetProjectionMatrix (proj);
 
-	// a = model * proj (row-вектор)
+	// a = model * proj (row vector)
 	for (i = 0; i < 4; i++)
 		for (j = 0; j < 4; j++)
 		{
@@ -2523,7 +2496,7 @@ qbool CSQC_Client_Project (const float *world, float *sx, float *sy, float *sz)
 			sum += v[k] * a[k * 4 + j];
 		clip[j] = sum;
 	}
-	clip[0] /= clip[3];	// FTE: без guard (вырожденный w -> NaN/Inf)
+	clip[0] /= clip[3];	// FTE: no guard (degenerate w -> NaN/Inf)
 	clip[1] /= clip[3];
 	clip[2] /= clip[3];
 
@@ -2539,7 +2512,7 @@ qbool CSQC_Client_Project (const float *world, float *sx, float *sy, float *sz)
 	return true;
 }
 
-// Обратная 4x4 (row-major) методом Гаусса-Жордана.
+// Inverse 4x4 (row-major) by Gauss-Jordan elimination.
 static qbool csqc_mat4_invert (const float *m, float *out)
 {
 	float a[4][8];
@@ -2587,7 +2560,7 @@ static qbool csqc_mat4_invert (const float *m, float *out)
 	return true;
 }
 
-// #310 unproject(screen x, y, depth) -> world (FTE-маппинг экран->NDC).
+// #310 unproject(screen x, y, depth) -> world (FTE screen->NDC mapping).
 qbool CSQC_Client_Unproject (float sx, float sy, float sz, float *world)
 {
 	float model[16], proj[16], a[16], inv[16], v[4], res[4], sum, tx, ty;
@@ -2622,7 +2595,7 @@ qbool CSQC_Client_Unproject (float sx, float sy, float sz, float *world)
 			sum += v[k] * inv[k * 4 + j];
 		res[j] = sum;
 	}
-	// FTE: деление на res[3] без guard
+	// FTE: divide by res[3] with no guard
 	world[0] = res[0] / res[3];
 	world[1] = res[1] / res[3];
 	world[2] = res[2] / res[3];
@@ -2633,25 +2606,24 @@ qbool CSQC_Client_Unproject (float sx, float sy, float sz, float *world)
 =================
 CSQC_Client_GetEntity
 
-#504 getentity — FTE PF_getentity (pr_csqc.c:5862-6170): read interpolated state
-of non-csqc (engine-networked) entities by server number. ezq has no
-cl.lerpents/cl.lerpplayers; the source is cl_entities[] (current entity_state_t +
-per-frame lerp data) and, for players, player_state_t / player bbox / player
-colours. "Active" = present in the current packet (player: playerstate.messagenum
-== cl.parsecount; map: cent->sequence == cl.validsequence), the analog of FTE
-"le->sequence == cl.lerpentssequence".
+#504 getentity - FTE PF_getentity: read interpolated state of non-csqc
+(engine-networked) entities by server number. ezq has no cl.lerpents/cl.lerpplayers;
+the source is cl_entities[] (current entity_state_t + per-frame lerp data) and, for
+players, player_state_t / player bbox / player colours. "Active" = present in the
+current packet (player: playerstate.messagenum == cl.parsecount; map: cent->sequence
+== cl.validsequence), the analog of FTE "le->sequence == cl.lerpentssequence".
 
-Origin and angles are interpolated (T2.4) with the same lerp data the renderer
-uses (cent->old_origin/current.origin, old_angles/current.angles, startlerp/
-deltalerp), so even the local player and non-drawn entities (whose lerp_origin is
-not written by CL_LinkPlayers) get the lerped values. Player-angle convention
-follows FTE: the local player's pitch is model-space (-viewangles[0]/3), remote
-players keep the raw packet angles. GE_MAXENTS is the runtime equivalent of FTE
-cl.maxlerpents (highest packet entity number + headroom).
+Origin and angles are interpolated with the same lerp data the renderer uses
+(cent->old_origin/current.origin, old_angles/current.angles, startlerp/deltalerp),
+so even the local player and non-drawn entities (whose lerp_origin is not written by
+CL_LinkPlayers) get the lerped values. Player-angle convention follows FTE: the
+local player's pitch is model-space (-viewangles[0]/3), remote players keep the raw
+packet angles. GE_MAXENTS is the runtime equivalent of FTE cl.maxlerpents (highest
+packet entity number + headroom).
 
 out[3] is always zeroed then filled (float fields use out[0]; vector fields use all
 three). Fields with no ezq data source return the FTE default (0, or '1 1 1' for
-GLOWMOD/RTCOLOUR) — documented deviation (parity audit).
+GLOWMOD/RTCOLOUR) - documented deviation.
 =================
 */
 #define CSQC_GE_MAXENTS		(-1)
@@ -2679,8 +2651,7 @@ GLOWMOD/RTCOLOUR) — documented deviation (parity audit).
 #define CSQC_GE_GLOWMOD		208
 #define CSQC_GE_RTCOLOUR	213
 
-// Lerp helpers for #504 (T2.4) — mirror the renderer's interpolation
-// (cl_ents.c CL_LinkPacketEntities:1270-1295/1325-1333). The lerp data
+// Lerp helpers for #504 - mirror the renderer's interpolation. The lerp data
 // (old_origin/current.origin, old_angles/current.angles, startlerp/deltalerp) is
 // filled by CL_SetupPacketEntity (map entities) and SetupPlayerEntity (players).
 extern cvar_t cl_nolerp, cl_lerp_monsters;
@@ -2720,7 +2691,7 @@ static void CSQC_Client_EntityLerp (const centity_t *cent, vec3_t org, vec3_t an
 	{
 		float d = time - cent->startlerp;
 
-		if (d >= 2 * cent->deltalerp)	// entity looks stopped — stay at last lerp
+		if (d >= 2 * cent->deltalerp)	// entity looks stopped - stay at last lerp
 			VectorCopy (cent->lerp_origin, org);
 		else
 			VectorMA (cent->old_origin, d, cent->velocity, org);
@@ -2790,19 +2761,18 @@ void CSQC_Client_GetEntity (int entnum, int fldnum, float out[3])
 
 	modelindex = es->modelindex;
 
-	// Interpolated origin + angles (T2.4): same lerp data as the renderer, applied
-	// here so the local player / non-drawn entities are lerped too (their
-	// cent->lerp_origin is not written by CL_LinkPlayers).
+	// Interpolated origin + angles: same lerp data as the renderer, applied here so
+	// the local player / non-drawn entities are lerped too (their cent->lerp_origin
+	// is not written by CL_LinkPlayers).
 	CSQC_Client_EntityLerp (cent, org, ang);
 
-	// Local player (T2.4, FTE parity): the server does not send the local player
-	// its own viewangles (playerstate.viewangles is demo-only, client.h:128), so
-	// use the client's own angles — the same source as the #371 bridge. FTE's
-	// #504 for the local player returns the *model* pitch (le->angles[0] =
-	// simangles[0]*0.333*r_meshpitch, cl_pred.c:1448-1451; r_meshpitch=-1 in QW),
-	// i.e. exactly the renderer convention (cl_ents.c:2240: -viewangles[0]/3).
-	// Remote players keep the raw packet angles (verified live: FTE and ezq
-	// remote readings match), so only the local player gets the transform.
+	// Local player (FTE parity): the server does not send the local player its own
+	// viewangles (playerstate.viewangles is demo-only), so use the client's own
+	// angles - the same source as the #371 bridge. FTE's #504 for the local player
+	// returns the *model* pitch (le->angles[0] = simangles[0]*0.333*r_meshpitch;
+	// r_meshpitch=-1 in QW), i.e. exactly the renderer convention (-viewangles[0]/3).
+	// Remote players keep the raw packet angles (FTE and ezq remote readings match),
+	// so only the local player gets the transform.
 	if (is_player && pnum == cl.playernum)
 	{
 		VectorCopy (cl.viewangles, ang);
@@ -2847,7 +2817,7 @@ void CSQC_Client_GetEntity (int entnum, int fldnum, float out[3])
 			}
 			else
 			{
-				// FTE decodes es->solidsize; ezq has none — approximate with the
+				// FTE decodes es->solidsize; ezq has none - approximate with the
 				// model bounding box.
 				model = (modelindex > 0 && modelindex < MAX_MODELS)
 					? cl.model_precache[modelindex] : NULL;
@@ -2870,7 +2840,7 @@ void CSQC_Client_GetEntity (int entnum, int fldnum, float out[3])
 		}
 		break;
 	case CSQC_GE_SCALE:
-		out[0] = 1;		// no scale in ezq state (FTE default 16/16) — deviation
+		out[0] = 1;		// no scale in ezq state (FTE default 16/16) - deviation
 		break;
 	case CSQC_GE_ALPHA:
 #ifdef FTE_PEXT_TRANS
@@ -2894,9 +2864,8 @@ void CSQC_Client_GetEntity (int entnum, int fldnum, float out[3])
 		out[0] = is_player ? (float)cl.players[pnum].topcolor
 			: (float)((es->colormap >> 4) & 15);
 		break;
-	// Stage 4b: for players the source is player_state (FTE PF_getentity player
-	// branch, pr_csqc.c:5909/5948/5954/5957) — SetupPlayerEntity does not copy
-	// skinnum/effects into cent->current (cl_ents.c:1526-1531).
+	// For players the source is player_state (FTE PF_getentity player branch) -
+	// SetupPlayerEntity does not copy skinnum/effects into cent->current.
 	case CSQC_GE_SKIN:
 		out[0] = (float)(is_player ? ps->skinnum : es->skinnum);
 		break;
@@ -2915,7 +2884,7 @@ void CSQC_Client_GetEntity (int entnum, int fldnum, float out[3])
 	default:
 		// GE_MODELINDEX2/GE_FATNESS/GE_DRAWFLAGS/GE_ABSLIGHT/GE_GLOWSIZE/
 		// GE_GLOWCOLOUR/GE_RTSTYLE/GE_RTPFLAGS/GE_RTRADIUS/GE_TAGENTITY/
-		// GE_TAGINDEX/GE_GRAVITYDIR/GE_TRAILEFFECTNUM — no ezq data source
+		// GE_TAGINDEX/GE_GRAVITYDIR/GE_TRAILEFFECTNUM - no ezq data source
 		// (documented deviation); FTE default (vec3 defaults to '1 1 1' for the
 		// two glow/rt colour fields, 0 otherwise).
 		if (fldnum == CSQC_GE_GLOWMOD || fldnum == CSQC_GE_RTCOLOUR)
@@ -2928,12 +2897,12 @@ void CSQC_Client_GetEntity (int entnum, int fldnum, float out[3])
 =================
 PR1VM_LumpFits / PR1VM_StmtWords / PR1VM_ValidateClientV6
 
-A3: a downloaded csprogs.dat is server-supplied and must not be trusted. The
-server PR1 core is only ever fed a locally-installed, CRC-checked progs, so its
-loader trusts the header; the client loader must not. Validate the header lump
-ranges against the file size and the operand/field ranges the interpreter
-indexes (pr_exec.c:592-594 `vm->globals[st->a/b/c]`, `parm_start/locals`,
-`first_statement`) before PR1VM_LoadData byte-swaps and walks the lumps.
+A downloaded csprogs.dat is server-supplied and must not be trusted. The server PR1
+core is only ever fed a locally-installed, CRC-checked progs, so its loader trusts
+the header; the client loader must not. Validate the header lump ranges against the
+file size and the operand/field ranges the interpreter indexes
+(`vm->globals[st->a/b/c]`, `parm_start/locals`, `first_statement`) before
+PR1VM_LoadData byte-swaps and walks the lumps.
 =================
 */
 static qbool PR1VM_LumpFits (int ofs, int num, int elemsize, int filesize, const char *name)
@@ -3021,7 +2990,7 @@ static qbool PR1VM_ValidateClientV6 (const byte *data, int filesize)
 	}
 
 	// statements: every operand indexes vm->globals[st->a/b/c]; vector ops use 3.
-	// Branch deltas (OP_GOTO->a, OP_IF/OP_IFNOT->b) are targets, not globals —
+	// Branch deltas (OP_GOTO->a, OP_IF/OP_IFNOT->b) are targets, not globals -
 	// bounded at run time in PR1VM_ExecuteProgram.
 	st = (const dstatement_t *) ((const byte *) data + h.ofs_statements);
 	for (i = 0; i < h.numstatements; i++)
@@ -3078,10 +3047,10 @@ static qbool PR1VM_ValidateClientV6 (const byte *data, int filesize)
 =================
 PR1VM_LoadClientV6
 
-Client v6-loader (our csprogs.dat, classic QW version 6; v6 migration).
-No CRC check; errors -> false + Con_Printf (no SV_Error). A3: structural
-validation before executing server-supplied bytes. Implemented in the client
-file (rule "client parts live outside shared core files").
+Client v6-loader (our csprogs.dat, classic QW version 6). No CRC check; errors ->
+false + Con_Printf (no SV_Error). Structural validation before executing
+server-supplied bytes. Implemented in the client file (client parts live outside
+shared core files).
 =================
 */
 static qbool PR1VM_LoadClientV6 (pr1vm_t *vm, const byte *data, int filesize)
@@ -3097,15 +3066,14 @@ static qbool PR1VM_LoadClientV6 (pr1vm_t *vm, const byte *data, int filesize)
 =================
 PR1VM_CSQCSmoke_f
 
-PR1VM (S3, debug): loads csprogs.dat (classic v6, migration P1) from the current
-gamedir into a static client instance, resolves CSQC functions and runs
-CSQC_WorldLoaded (empty body — client builtins not wired yet, S5).
-Debug command lives in the client file (rule "client parts live outside shared");
-registered from CSQC_Client_RegisterCommands (cl_main.c: CL_InitLocal).
+Debug command: loads csprogs.dat (classic v6) from the current gamedir into a
+static client instance, resolves CSQC functions and runs CSQC_WorldLoaded. Lives in
+the client file (client parts live outside shared); registered from
+CSQC_Client_RegisterCommands (cl_main.c: CL_InitLocal).
 =================
 */
 static pr1vm_t csqc_smoke_vm;
-// Отдельный строковый пул для debug-инстанса csqc_smoke (свой к vm).
+// Separate string pool for the csqc_smoke debug instance (its own vm).
 static csqc_strpool_t csqc_smoke_strpool;
 
 static void PR1VM_CSQCSmoke_f (void)
@@ -3123,16 +3091,16 @@ static void PR1VM_CSQCSmoke_f (void)
 		return;
 	}
 
-	// S6/P2.1: cleanup (incl. Q_free of builtin table), then reload
+	// cleanup (incl. Q_free of the builtin table), then reload
 	PR1VM_UnLoad (vm);
-	vm->get_string = CSQC_Client_GetString;	// option 2: bounded untrusted csprogs strings
+	vm->get_string = CSQC_Client_GetString;	// bounded untrusted csprogs strings
 	if (!PR1VM_LoadClientV6 (vm, data, filesize))
 	{
 		Con_Printf ("csqc_smoke: v6 load failed\n");
 		return;
 	}
 
-	// Строковые таблицы debug-инстанса: свой пул (back-pointer в host_udata).
+	// Debug instance string tables: its own pool (back-pointer in host_udata).
 	memset (&csqc_smoke_strpool, 0, sizeof (csqc_smoke_strpool));
 	vm->host_udata = &csqc_smoke_strpool;
 	vm->strtbl = csqc_smoke_strpool.strtbl;
@@ -3144,7 +3112,7 @@ static void PR1VM_CSQCSmoke_f (void)
 		vm->progs->numstatements, vm->progs->numfunctions, vm->progs->numglobals,
 		progs ? progs->numstatements : -1, progs ? progs->numfunctions : -1);
 
-	// P2.1: client builtin table (layer C)
+	// client builtin table
 	CSQCVM_RegisterBuiltins (vm);
 
 	f = PR1VM_FindFunction (vm, "CSQC_Init");
@@ -3177,7 +3145,7 @@ static void PR1VM_CSQCSmoke_f (void)
 		Con_Printf ("csqc_smoke: CSQC_ConsoleCommand ok (ret=%.0f, tokenize/argv builtins)\n",
 			vm->globals[OFS_RETURN]);
 	}
-	// P2.2: weapon_name(0) -> ftos(0)="0" (builtin ftos + string return)
+	// weapon_name(0) -> ftos(0)="0" (builtin ftos + string return)
 	f = PR1VM_FindFunction (vm, "weapon_name");
 	if (f)
 	{
@@ -3194,11 +3162,10 @@ static void PR1VM_CSQCSmoke_f (void)
 =================
 CSQC_Client_ProgsCheck_f
 
-A3 debug canary (client console `csqc_progscheck`): verifies the load-time
-validator (clean csprogs.dat -> accepted; synthetically corrupted copies ->
-rejected) and runs the runtime-guard predicate unit tests
-(PR1VM_TestGuards_f). Engine-side, FTE has no equivalent command — a recorded
-deviation from the module-harness FTE-oracle rule (ADR 0023).
+Debug canary (client console `csqc_progscheck`): verifies the load-time validator
+(clean csprogs.dat -> accepted; synthetically corrupted copies -> rejected) and runs
+the runtime-guard predicate unit tests (PR1VM_TestGuards_f). Engine-side, FTE has no
+equivalent command - a recorded deviation.
 =================
 */
 static void CSQC_Client_ProgsCheck_f (void)
@@ -3255,9 +3222,9 @@ static void CSQC_Client_ProgsCheck_f (void)
 
 	Q_free (buf);
 
-	// 3) client string accessor (option 2): a positive offset at/beyond the
-	// module string block must be rejected; in-range stays readable. The bound
-	// lives here (client layer), not in the shared PR1VM_GetString.
+	// 3) client string accessor: a positive offset at/beyond the module string
+	// block must be rejected; in-range stays readable. The bound lives here (client
+	// layer), not in the shared PR1VM_GetString.
 	{
 		pr1vm_t tvm;
 		dprograms_t xh;
@@ -3278,9 +3245,9 @@ static void CSQC_Client_ProgsCheck_f (void)
 	// 3) runtime-guard predicate unit tests (synthetic instance)
 	PR1VM_TestGuards_f ();
 
-	// 4) R3: entity-argument conversion bound (CSQC_Client_EntNum) — OOB must
-	// clamp to world(0), never fault (FTE ProgsToEdict parity). Synthetic
-	// instance: the helper only needs edict_size/max_edicts.
+	// 4) entity-argument conversion bound (CSQC_Client_EntNum) - OOB must clamp to
+	// world(0), never fault (FTE ProgsToEdict parity). Synthetic instance: the
+	// helper only needs edict_size/max_edicts.
 	{
 		pr1vm_t tvm;
 		int gpass = 0, gfail = 0;
@@ -3307,9 +3274,9 @@ static void CSQC_Client_ProgsCheck_f (void)
 =================
 CSQC_Client_Load
 
-Загружает csprogs (path из gamedir; локальный файл или только что скачанный
-csprogsvers/<crc>.dat) в клиентский инстанс и вызывает CSQC_Init. Возвращает
-true при успехе. При неудаче печатает причину.
+Loads csprogs (path from gamedir; a local file or a freshly downloaded
+csprogsvers/<crc>.dat) into the client instance and calls CSQC_Init. Returns true
+on success; on failure prints the reason.
 =================
 */
 static qbool CSQC_Client_Load (const char *path)
@@ -3319,9 +3286,9 @@ static qbool CSQC_Client_Load (const char *path)
 	pr1vm_t *vm;
 	dfunction_t *f;
 
-	// C1 (Wave C): здесь намеренно FS_LoadHunkFile (низкий hunk), а не heap/temp —
-	// PR1VM_LoadData не копирует буфер (vm->progs/... ссылаются в data), поэтому
-	// данные должны жить до выгрузки модуля. Обоснование — ADR 0019/0031.
+	// Deliberately FS_LoadHunkFile (low hunk), not heap/temp - PR1VM_LoadData does
+	// not copy the buffer (vm->progs/... reference data), so the data must live
+	// until the module is unloaded.
 	data = (byte *)FS_LoadHunkFile ((char *)path, &filesize);
 	if (!data)
 	{
@@ -3329,14 +3296,14 @@ static qbool CSQC_Client_Load (const char *path)
 		return false;
 	}
 
-	// Защита от повторного Load (арена из прошлой загрузки) до memset.
+	// Guard against a repeated Load (arena from a previous load) before memset.
 	CSQC_Client_FreeArena ();
-	// C2.2: string-buffers чистить при новой загрузке модуля.
+	// clear string-buffers on a new module load
 	CSQC_Client_BufReset ();
-	// E1a #371: снять регистрации deltalisten/карту player-моста.
+	// #371: drop deltalisten registrations / the player-bridge map.
 	CSQC_Client_DeltaReset ();
 	CSQC_Client_ViewReset ();
-	CSQC_Client_ModelReset ();	// Ф3: CSQC-реестр моделей чистится при загрузке
+	CSQC_Client_ModelReset ();	// CSQC model registry cleared on load
 
 	memset (&s_csqc, 0, sizeof (s_csqc));
 	s_csqc.func_init = s_csqc.func_world = s_csqc.func_update =
@@ -3373,16 +3340,16 @@ static qbool CSQC_Client_Load (const char *path)
 	s_csqc.g_view_angles = -1;
 	s_csqc.g_frametime = s_csqc.g_cltime = s_csqc.g_maxclients = -1;
 	s_csqc.g_player_localnum = s_csqc.g_intermission = -1;
-	CSQC_Client_OffsetCacheReset ();	// C2 (Wave C): офсеты горячего пути — до резолва
+	CSQC_Client_OffsetCacheReset ();	// hot-path offsets, before resolve
 	s_last_seq = 0;
 	s_ccframe = 0;
 
 	vm = &s_csqc.vm;
 	vm->host_error = CSQC_Client_HostError;
 	vm->host_print = CSQC_Client_HostPrint;
-	vm->abortbuf_valid = true;	// A1: client VM unwinds via the abort-stack
-	vm->get_string = CSQC_Client_GetString;	// option 2: bounded untrusted csprogs strings
-	vm->stateop = CSQC_Client_StateOp;	// B21: OP_STATE по field/global модуля
+	vm->abortbuf_valid = true;	// client VM unwinds via the abort-stack
+	vm->get_string = CSQC_Client_GetString;	// bounded untrusted csprogs strings
+	vm->stateop = CSQC_Client_StateOp;	// OP_STATE via the module's field/global
 
 	if (!PR1VM_LoadClientV6 (vm, data, filesize))
 	{
@@ -3390,8 +3357,8 @@ static qbool CSQC_Client_Load (const char *path)
 		return false;
 	}
 
-	// Строковые таблицы клиентского инстанса: vm->strtbl/newstrtbl/numstr ->
-	// пул инстанса; host_udata — back-pointer для PR1VM_ClientSetString.
+	// Client instance string tables: vm->strtbl/newstrtbl/numstr -> the instance
+	// pool; host_udata is the back-pointer for PR1VM_ClientSetString.
 	vm->host_udata = &s_csqc.strpool;
 	vm->strtbl = s_csqc.strpool.strtbl;
 	vm->newstrtbl = s_csqc.strpool.newstrtbl;
@@ -3399,7 +3366,7 @@ static qbool CSQC_Client_Load (const char *path)
 
 	CSQCVM_RegisterBuiltins (vm);
 
-	// P1/D2: арена edicts клиентского инстанса (edict_size известен после load).
+	// client instance edict arena (edict_size known after load).
 	CSQC_Client_AllocArena (vm);
 
 	f = PR1VM_FindFunction (vm, "CSQC_Init");
@@ -3429,26 +3396,26 @@ static qbool CSQC_Client_Load (const char *path)
 	f = PR1VM_FindFunction (vm, "CSQC_Parse_Event");
 	if (f)
 		s_csqc.func_parseevent = (int)(f - vm->functions);
-	// Э1: сетевые печатные колбэки (FTE pr_common.h:1087-1088).
+	// network print callbacks
 	f = PR1VM_FindFunction (vm, "CSQC_Parse_Print");
 	if (f)
 		s_csqc.func_parseprint = (int)(f - vm->functions);
 	f = PR1VM_FindFunction (vm, "CSQC_Parse_CenterPrint");
 	if (f)
 		s_csqc.func_parsecp = (int)(f - vm->functions);
-	// Э2: сетевой колбэк урона (FTE pr_common.h:1090).
+	// network damage callback
 	f = PR1VM_FindFunction (vm, "CSQC_Parse_Damage");
 	if (f)
 		s_csqc.func_parsedamage = (int)(f - vm->functions);
-	// Э3: сетевой колбэк звука (FTE pr_common.h:1106, pr_csqc.c:9453).
+	// network sound callback
 	f = PR1VM_FindFunction (vm, "CSQC_Event_Sound");
 	if (f)
 		s_csqc.func_eventsound = (int)(f - vm->functions);
-	// Э4: сетевой колбэк углов (FTE pr_common.h:1091, pr_csqc.c:9400).
+	// network angles callback
 	f = PR1VM_FindFunction (vm, "CSQC_Parse_SetAngles");
 	if (f)
 		s_csqc.func_parsesetangles = (int)(f - vm->functions);
-	// Э5: движковый колбэк переинициализации рендерера (FTE pr_common.h:1096, pr_csqc.c:8314).
+	// renderer reinit callback
 	f = PR1VM_FindFunction (vm, "CSQC_RendererRestarted");
 	if (f)
 		s_csqc.func_rr = (int)(f - vm->functions);
@@ -3458,7 +3425,7 @@ static qbool CSQC_Client_Load (const char *path)
 	f = PR1VM_FindFunction (vm, "CSQC_InputEvent");
 	if (f)
 		s_csqc.func_inputevent = (int)(f - vm->functions);
-	// T2.7 (R9): CSQC think-loop — StartFrame/EndFrame (FTE pr_common.h:1112-1113).
+	// CSQC think-loop - StartFrame/EndFrame.
 	f = PR1VM_FindFunction (vm, "StartFrame");
 	if (f)
 		s_csqc.func_startframe = (int)(f - vm->functions);
@@ -3467,17 +3434,17 @@ static qbool CSQC_Client_Load (const char *path)
 		s_csqc.func_endframe = (int)(f - vm->functions);
 
 	s_csqc.global_time = PR1VM_FindGlobal (vm, "time");
-	// T2.1: gamespeed (csdefs.qc:166; engine-set). QW/ezq не имеет cl.gamespeed,
-	// поэтому публикуем 1 (0 при серверной паузе) — см. CSQC_Client_Update.
+	// gamespeed (engine-set). QW/ezq has no cl.gamespeed, so publish 1 (0 on server
+	// pause) - see CSQC_Client_Update.
 	s_csqc.global_gamespeed = PR1VM_FindGlobal (vm, "gamespeed");
-	// P2/D3: self-глобал и поле .entnum (движок пишет их при entity-вызовах).
+	// self global and the .entnum field (the engine writes them on entity calls).
 	s_csqc.global_self = PR1VM_FindGlobal (vm, "self");
-	// T2.7: other (world для StartFrame/EndFrame/thinks; FTE CSQC_Event_Think) и
-	// physics_mode (csdefs.qc:163, default 2).
+	// other (world for StartFrame/EndFrame/thinks; FTE CSQC_Event_Think) and
+	// physics_mode (default 2).
 	s_csqc.global_other = PR1VM_FindGlobal (vm, "other");
 	s_csqc.global_physics_mode = PR1VM_FindGlobal (vm, "physics_mode");
 	s_csqc.field_entnum = CSQC_Client_FindField (vm, "entnum");
-	// C1.4 #347: поля стандартной физики (если есть в схеме модуля).
+	// #347: standard physics fields (if present in the module's schema).
 	s_csqc.f_origin = CSQC_Client_FindField (vm, "origin");
 	s_csqc.f_velocity = CSQC_Client_FindField (vm, "velocity");
 	s_csqc.f_angles = CSQC_Client_FindField (vm, "angles");
@@ -3493,39 +3460,39 @@ static qbool CSQC_Client_Load (const char *path)
 	s_csqc.f_effects = CSQC_Client_FindField (vm, "effects");
 	s_csqc.f_colormap = CSQC_Client_FindField (vm, "colormap");
 	s_csqc.f_drawmask = CSQC_Client_FindField (vm, "drawmask");
-	// T2.7 think-loop: поля .think/.nextthink (csdefs.qc:90,92).
+	// think-loop: .think/.nextthink fields.
 	s_csqc.f_think = CSQC_Client_FindField (vm, "think");
 	s_csqc.f_nextthink = CSQC_Client_FindField (vm, "nextthink");
 	s_csqc.g_localentnum = PR1VM_FindGlobal (vm, "player_localentnum");
 
-	// input_* глобалы для CSQC_Input_Frame (csdefs.qc: input_timelength/angles/
-	// movevalues/buttons/impulse). Резолвим только объявленные модулем.
+	// input_* globals for CSQC_Input_Frame (input_timelength/angles/movevalues/
+	// buttons/impulse). Resolve only those the module declared.
 	s_csqc.in_timelength = PR1VM_FindGlobal (vm, "input_timelength");
 	s_csqc.in_angles = PR1VM_FindGlobal (vm, "input_angles");
 	s_csqc.in_movevalues = PR1VM_FindGlobal (vm, "input_movevalues");
 	s_csqc.in_buttons = PR1VM_FindGlobal (vm, "input_buttons");
 	s_csqc.in_impulse = PR1VM_FindGlobal (vm, "input_impulse");
 	s_csqc.in_sequence = PR1VM_FindGlobal (vm, "input_sequence");
-	// C5-A: глобалы окна предикции + deprec pmove_* (csdefs.qc:50-51,69-71).
+	// prediction window globals + deprecated pmove_*.
 	s_csqc.g_ccframe = PR1VM_FindGlobal (vm, "clientcommandframe");
 	s_csqc.g_scframe = PR1VM_FindGlobal (vm, "servercommandframe");
 	s_csqc.p_org = PR1VM_FindGlobal (vm, "pmove_org");
 	s_csqc.p_vel = PR1VM_FindGlobal (vm, "pmove_vel");
 	s_csqc.p_onground = PR1VM_FindGlobal (vm, "pmove_onground");
-	// #1 makevectors (C6.1): цели записи v_forward/v_right/v_up (FTE-паритет).
+	// #1 makevectors: v_forward/v_right/v_up write targets (FTE parity).
 	s_csqc.g_vfwd = PR1VM_FindGlobal (vm, "v_forward");
 	s_csqc.g_vright = PR1VM_FindGlobal (vm, "v_right");
 	s_csqc.g_vup = PR1VM_FindGlobal (vm, "v_up");
-	// C5-E Ф1: глобал view_angles (публикуется каждый кадр).
+	// view_angles global (published each frame).
 	s_csqc.g_view_angles = PR1VM_FindGlobal (vm, "view_angles");
-	// B4: симулированные глобалы (FTE pr_csqc.c:8818-8838).
+	// simulated globals.
 	s_csqc.g_frametime = PR1VM_FindGlobal (vm, "frametime");
 	s_csqc.g_cltime = PR1VM_FindGlobal (vm, "cltime");
 	s_csqc.g_maxclients = PR1VM_FindGlobal (vm, "maxclients");
 	s_csqc.g_player_localnum = PR1VM_FindGlobal (vm, "player_localnum");
 	s_csqc.g_intermission = PR1VM_FindGlobal (vm, "intermission");
 
-	// C2 (Wave C): резолв кэша офсетов горячего пути (traceline/addentities).
+	// resolve the hot-path offset cache (traceline/addentities).
 	CSQC_Client_OffsetCacheResolve (vm);
 
 	s_csqc.loaded = true;
@@ -3542,9 +3509,9 @@ static qbool CSQC_Client_Load (const char *path)
 	Con_Printf ("CSQC: P2 self=%d entnum_fld=%d edict_size=%d es=%d\n",
 		s_csqc.global_self, s_csqc.field_entnum, vm->edict_size, s_csqc.func_entspawn);
 
-	// CSQC_Init(apiver, enginename, enginever) — FTE-паритет (pr_csqc.c:8285-8287):
-	// apiver = CSQC_API_VERSION, enginename = имя движка, enginever = номер версии.
-	// Модуль аргументы использует только как хинты (TF2003/fo-qwprogs их игнорируют).
+	// CSQC_Init(apiver, enginename, enginever) - FTE parity: apiver =
+	// CSQC_API_VERSION, enginename = engine name, enginever = version number. The
+	// module uses the arguments only as hints.
 	if (s_csqc.func_init > 0)
 	{
 		vm->globals[OFS_PARM0] = CSQC_API_VERSION;
@@ -3553,11 +3520,11 @@ static qbool CSQC_Client_Load (const char *path)
 		CSQC_Client_Exec (s_csqc.func_init);
 		s_csqc.inited = !s_csqc.errored;
 	}
-	// Э5: сразу после CSQC_Init уведомить модуль о (пере)инициализации рендерера — FTE-паритет
-	// (pr_csqc.c:8305 `CSQC_RendererRestarted(true)`), до первого CSQC_WorldLoaded.
+	// Right after CSQC_Init notify the module about renderer (re)init - FTE parity
+	// (CSQC_RendererRestarted(true)), before the first CSQC_WorldLoaded.
 	CSQC_Client_RendererRestarted (R_RendererDescription ());
-	// C3 (Wave C): модуль зарегистрировал csqc_dbg через registercvar (#93) в
-	// CSQC_Init — кэшируем указатель для горячего пути (CSQC_Client_ParseEntities).
+	// The module registered csqc_dbg via registercvar (#93) in CSQC_Init - cache the
+	// pointer for the hot path (CSQC_Client_ParseEntities).
 	s_csqc.csqc_dbg_cvar = Cvar_Find ("csqc_dbg");
 	return true;
 }
@@ -3566,11 +3533,10 @@ static qbool CSQC_Client_Load (const char *path)
 =================
 CSQC_Client_NotifyCSQC
 
-FTE-паритет (cl_parse.c:1526-1535): сообщить серверу, получает ли наш модуль
-CSQC-поток. enablecsqc — модуль загружен и готов (после CSQC_WorldLoaded);
-disablecsqc — сервер предложил CSQC, но модуль не запустился (T1.6a, D-J).
-Идемпотентно (повторное состояние не отправляем); в демо/без коннекта — no-op
-(CL_SendClientCommand).
+FTE parity: tell the server whether our module receives the CSQC stream. enablecsqc
+- module loaded and ready (after CSQC_WorldLoaded); disablecsqc - server offered
+CSQC but the module did not start. Idempotent (a repeated state is not sent); a
+no-op in demos / without a connection (CL_SendClientCommand).
 =================
 */
 static void CSQC_Client_NotifyCSQC (qbool enable)
@@ -3591,10 +3557,10 @@ static void CSQC_Client_NotifyCSQC (qbool enable)
 =================
 CSQC_Client_ConnectCheck
 
-Вызывается при входе в мир (CL_MakeActive, до ca_active) — момент, когда весь
-контент (включая csprogs.dat) уже доступен в FS (аналог преспауна FTE).
-Если сервер предлагает CSQC (*csprogssize) и модуль ещё не загружен —
-грузим и вызываем CSQC_Init.
+Called on entering the world (CL_MakeActive, before ca_active) - the moment when
+all content (including csprogs.dat) is already available in FS (analog of FTE's
+prespawn). If the server offers CSQC (*csprogssize) and the module is not loaded -
+load it and call CSQC_Init.
 =================
 */
 void CSQC_Client_ConnectCheck (void)
@@ -3608,21 +3574,21 @@ void CSQC_Client_ConnectCheck (void)
 	char *crcend;
 	qbool anycsqc;
 
-	// B4: клиентский map-uptime (FTE cltime = realtime-cl.mapstarttime) и база
-	// frametime (cl.time - prev). Ставится на каждый вход в мир.
+	// client map-uptime (FTE cltime = realtime-cl.mapstarttime) and frametime base
+	// (cl.time - prev). Set on each world entry.
 	s_mapstarttime = cls.realtime;
 	s_prev_cltime = cl.time;
 
-	// Мастер-выключатель (аналог FTE cl_nocsqc): 0 — весь CSQC отключён,
-	// модуль не грузится, клиент ведёт себя как раньше.
+	// Master switch (analog of FTE cl_nocsqc): 0 - all CSQC disabled, the module is
+	// not loaded, the client behaves as before.
 	if (!cl_pext_csqc.value)
 		return;
 
 	sizep = (int)strtoul (Info_ValueForKey (cl.serverinfo, "*csprogssize"), NULL, 0);
 
-	// anycsqc (T1.6b, FTE-паритет): сервер разрешает грузить локальный csprogs без
-	// сверки crc (pr_csqc.c:7779); «битый» *csprogs (trailing-мусор) FTE тоже
-	// трактует как anycsqc (cl_parse.c:1342-1347). В демо сверки нет (pr_csqc.c:7777).
+	// anycsqc (FTE parity): the server allows loading a local csprogs without crc
+	// check; a "corrupt" *csprogs (trailing garbage) FTE also treats as anycsqc. In
+	// demos there is no check.
 	anycsqc = atoi (Info_ValueForKey (cl.serverinfo, "anycsqc")) != 0;
 	crcs = Info_ValueForKey (cl.serverinfo, "*csprogs");
 	crc = (unsigned)strtoul (crcs, &crcend, 0);
@@ -3636,23 +3602,23 @@ void CSQC_Client_ConnectCheck (void)
 		anycsqc = true;
 
 	if (sizep <= 0 && !anycsqc)
-		return;		// обычный сервер без CSQC (или PR1-гейт сервера)
+		return;		// ordinary server without CSQC (or server PR1 gate)
 
 	name = Info_ValueForKey (cl.serverinfo, "*csprogsname");
 	if (!name || !name[0])
 		name = "csprogs.dat";
 
-	// Модуль загружается «с нуля» на КАЖДЫЙ вход в мир (первый коннект и каждая
-	// смена карты): выгрузка происходит при выходе из мира (CL_ClearState, до
-	// Host_ClearMemory), здесь — загрузка свежего csprogs. Защитный unload на
-	// случай путей без CL_ClearState (двойной вызов безопасен — no-op).
+	// The module is loaded "from scratch" on EVERY world entry (first connect and
+	// every map change): unload happens on exiting the world (CL_ClearState, before
+	// Host_ClearMemory), here - loading fresh csprogs. A defensive unload in case of
+	// paths without CL_ClearState (a double call is a safe no-op).
 	if (s_csqc.loaded)
 		CSQC_Client_Disconnect ();
 
-	// Локальные кандидаты по FTE-семантике (CSQC_FindMainProgs, pr_csqc.c):
-	// 1) кэш csprogsvers/<crc>.dat, 2) *csprogsname (+ фолбэк csprogs.dat);
-	// при валидном name-файле делается write-back копии в кэш. anycsqc/demo —
-	// без сверки size/crc (T1.6b).
+	// Local candidates with FTE semantics (CSQC_FindMainProgs): 1) the
+	// csprogsvers/<crc>.dat cache, 2) *csprogsname (+ fallback csprogs.dat); on a
+	// valid name-file a copy is written back into the cache. anycsqc/demo - no
+	// size/crc check.
 	if (CSQC_Client_FindMainProgs (path, sizeof (path), name, sizep, crc, anycsqc))
 	{
 		if (!CSQC_Client_Load (path))
@@ -3665,24 +3631,24 @@ void CSQC_Client_ConnectCheck (void)
 			CSQC_Client_NotifyCSQC (false);
 			return;
 		}
-		// Вход в новую карту: per-карта состояние чистое (WorldLoaded/enablecsqc
-		// будут этой карты; модуль уже новый).
+		// Entering a new map: per-map state is clean (WorldLoaded/enablecsqc will be
+		// this map's; the module is already new).
 		memset (s_csqc.seen, 0, sizeof (s_csqc.seen));
 		s_csqc.world_done = false;
 		s_csqc.enable_sent = false;
 		return;
 	}
 
-	// Демо/MVD: локального csprogs нет, скачивание в демо недоступно
-	// (StartDownload — no-op) — pending не ставим (иначе ложный таймаут, T1.6b).
+	// Demo/MVD: no local csprogs, download is unavailable in demos (StartDownload is
+	// a no-op) - do not set pending (otherwise a false timeout).
 	if (cls.demoplayback)
 	{
 		Con_Printf ("CSQC: no local csprogs for demo playback\n");
 		return;
 	}
 
-	// Скачивание csprogs запрещено cvar'ом (FTE-паритет: cl_download_csprogs):
-	// модуль не грузится, сообщаем серверу disablecsqc (D-J/T1.6a).
+	// csprogs download disabled by cvar (FTE parity: cl_download_csprogs): the
+	// module is not loaded, tell the server disablecsqc.
 	if (!cl_download_csprogs.value)
 	{
 		Con_Printf ("CSQC: not downloading %s (cl_download_csprogs 0)\n", name);
@@ -3690,9 +3656,9 @@ void CSQC_Client_ConnectCheck (void)
 		return;
 	}
 
-	// Валидного локального нет — качаем с сервера: сервер отдаёт *csprogsname,
-	// сохраняем в отдельную папку csprogsvers/<crc>.dat (не перезатираем чужие).
-	// Загрузка модуля произойдёт в CSQC_Client_Update, когда файл появится.
+	// No valid local one - download from the server: the server serves *csprogsname,
+	// we save into a separate csprogsvers/<crc>.dat folder (do not overwrite others).
+	// Module load happens in CSQC_Client_Update once the file appears.
 	s_csqc.csprogs_crc = crc;
 	s_csqc.csprogs_size = sizep;
 	if (crc)
@@ -3705,22 +3671,20 @@ void CSQC_Client_ConnectCheck (void)
 
 /*
 =================
-C5-A: окно предикции EXT_CSQC_1 — значения глобалов модуля
-clientcommandframe/servercommandframe (csdefs.qc:50-51).
+EXT_CSQC_1 prediction window - the module globals clientcommandframe /
+servercommandframe.
 
-- clientcommandframe = «живой» (последний собранный) клиентский кадр = s_ccframe
-  (аналог FTE cl.movesequence, pr_csqc.c:8841/9430-9431). Ставится в
-  CSQC_Client_InputFrame на сборке cmd и НЕ пересчитывается после отправки:
-  Netchan_Transmit инкрементирует outgoing_sequence (net_chan.c:319), но
-  clientcommandframe остаётся номером собранного cmd. Это то, что просит
-  #345(clientcommandframe) — живой pending-кадр (T2.2); следующего ещё нет.
-- servercommandframe = последний подтверждённый сервером клиентский кадр =
-  cl.parsecount (CL_ParseClientdata ставит его в cls.netchan.incoming_acknowledged,
-  cl_parse.c:2050-2054) — аналог FTE QW ackedmovesequence.
-- Предикция недоступна (0): демо/MVD, не ca_active, до первого принятого
-  серверного кадра (cl.validsequence == 0; client.h:647-650).
-- Окно (servercommandframe, clientcommandframe] — контракт модуля (движок его
-  не проверяет; спека ext_csqc_1.txt:262) — см. CSQC_Client_ApplyInput.
+- clientcommandframe = the "live" (last built) client frame = s_ccframe (FTE
+  cl.movesequence). Set in CSQC_Client_InputFrame at cmd build and NOT recomputed
+  after sending: Netchan_Transmit increments outgoing_sequence, but clientcommandframe
+  stays the built cmd's number. This is what #345(clientcommandframe) asks for - the
+  live pending frame; the next one does not exist yet.
+- servercommandframe = the last server-acked client frame = cl.parsecount (analog of
+  FTE QW ackedmovesequence).
+- Prediction unavailable (0): demo/MVD, not ca_active, before the first accepted
+  server frame (cl.validsequence == 0).
+- The window (servercommandframe, clientcommandframe] is the module's contract (the
+  engine does not check it; see ext_csqc_1 spec) - see CSQC_Client_ApplyInput.
 =================
 */
 static float CSQC_Client_ClientCmdFrame (void)
@@ -3729,9 +3693,9 @@ static float CSQC_Client_ClientCmdFrame (void)
 		return 0;
 	if (cls.state != ca_active || cls.demoplayback || cls.mvdplayback)
 		return 0;
-	// T2.2: последний собранный кадр (FTE cl.movesequence), не следующая
-	// outgoing_sequence — иначе в render-фазе #345(clientcommandframe) просит ещё
-	// не собранный seq и получает 0 (см. s_ccframe).
+	// The last built frame (FTE cl.movesequence), not the next outgoing_sequence -
+	// otherwise in the render phase #345(clientcommandframe) would ask for a
+	// not-yet-built seq and get 0 (see s_ccframe).
 	return (float)s_ccframe;
 }
 
@@ -3742,7 +3706,7 @@ static float CSQC_Client_ServerCmdFrame (void)
 	if (cls.state != ca_active || cls.demoplayback || cls.mvdplayback)
 		return 0;
 	if (!cl.validsequence)
-		return 0;	// ни одного принятого серверного кадра (преспаун)
+		return 0;	// no accepted server frame yet (prespawn)
 	return (float)cl.parsecount;
 }
 
@@ -3758,14 +3722,15 @@ static void CSQC_Client_PatchFrames (void)
 
 /*
 =================
-T2.7 (R9): CSQC think-loop — per-frame жизненный цикл модуля в 3D-takeover.
+CSQC think-loop - the per-frame module lifecycle in 3D takeover.
 
-FTE-паритет (CSQC_DrawView pr_csqc.c:8740-8811; CSQC_Event_Think pr_csqc.c:7576-7586):
-StartFrame → thinks (.nextthink/.think, single-think NQ-стиль) → EndFrame. StartFrame/
-EndFrame: self/other = world, time = кадровое. think: self = сущность, other = world,
-time = кадровое (FTE перекрывает thinktime физикстаймом), nextthink обнуляется до вызова.
-thinks — только при physics_mode != 0. Отклонения (accept+doc): World_Physics_Frame
-mode 2 (movetypes), customphysics и PR_RunThreads (у PR1VM нет sleep/fork → no-op).
+FTE parity (CSQC_DrawView; CSQC_Event_Think): StartFrame -> thinks
+(.nextthink/.think, single-think NQ-style) -> EndFrame. StartFrame/EndFrame:
+self/other = world, time = frame time. think: self = entity, other = world, time =
+frame time (FTE overrides thinktime with the physics time), nextthink is zeroed
+before the call. thinks run only when physics_mode != 0. Deviations:
+World_Physics_Frame mode 2 (movetypes), customphysics and PR_RunThreads (PR1VM has
+no sleep/fork -> no-op).
 =================
 */
 static void CSQC_Client_RunFrameThink (void)
@@ -3777,19 +3742,19 @@ static void CSQC_Client_RunFrameThink (void)
 	if (!s_csqc.loaded || !s_csqc.inited || s_csqc.errored)
 		return;
 
-	// База — модульный time (Q4; Sys_DoubleTime), окно — кадровый интервал (аналог
-	// FTE host_frametime).
+	// Base is the module time, window is the frame interval (analog of FTE
+	// host_frametime).
 	CSQC_Client_SetTime ();
 	t = (s_csqc.global_time >= 0) ? vm->globals[s_csqc.global_time] : 0;
 	frame = (float)cls.frametime;
 	if (frame < 0)
 		frame = 0;
 
-	// physics_mode: csdefs.qc:163 default 2; 0 = «original csqc» — физика не гоняется.
+	// physics_mode: default 2; 0 = "original csqc" - physics not run.
 	mode = (s_csqc.global_physics_mode >= 0)
 		? (int)vm->globals[s_csqc.global_physics_mode] : 2;
 
-	// StartFrame: self/other = world (FTE pr_csqc.c:8746-8749).
+	// StartFrame: self/other = world.
 	if (s_csqc.func_startframe > 0)
 	{
 		if (s_csqc.global_self >= 0)
@@ -3803,10 +3768,10 @@ static void CSQC_Client_RunFrameThink (void)
 			return;
 	}
 
-	// PR_RunThreads: PR1VM не имеет sleep/fork → no-op (FTE-паритет без тредов).
+	// PR_RunThreads: PR1VM has no sleep/fork -> no-op (FTE parity without threads).
 
-	// thinks: mode1 (DP-compat) и mode2 (movetypes) — у нас только thinks (mode2
-	// movetypes accept+doc). Слот 0 = world, free/незанятые пропускаем.
+	// thinks: mode1 (DP-compat) and mode2 (movetypes) - only thinks here (mode2
+	// movetypes). Slot 0 = world, free/unoccupied slots are skipped.
 	if (mode != 0 && s_csqc.f_think >= 0 && s_csqc.f_nextthink >= 0)
 	{
 		for (slot = 1; slot < CSQC_MAX_EDICTS; slot++)
@@ -3823,8 +3788,8 @@ static void CSQC_Client_RunFrameThink (void)
 			thinkfunc = *(int *)&base[s_csqc.f_think];
 			base[s_csqc.f_nextthink] = 0;
 			if (thinkfunc <= 0)
-				continue;	// nextthink без think — пропуск (FTE пишет варн)
-			// FTE CSQC_Event_Think: self=сущность, other=world, time=кадровое.
+				continue;	// nextthink without think - skip (FTE logs a warning)
+			// FTE CSQC_Event_Think: self=entity, other=world, time=frame time.
 			if (s_csqc.global_self >= 0)
 				*(int *)&vm->globals[s_csqc.global_self] = (int)slot * vm->edict_size;
 			if (s_csqc.global_other >= 0)
@@ -3833,11 +3798,11 @@ static void CSQC_Client_RunFrameThink (void)
 				vm->globals[s_csqc.global_time] = t;
 			PR1VM_ExecuteProgram (vm, (func_t)thinkfunc);
 			if (s_csqc.errored)
-				return;	// edict мог self-удалиться — цикл по s_used безопасен
+				return;	// an edict may have removed itself - looping s_used is safe
 		}
 	}
 
-	// EndFrame: self/other = world (FTE pr_csqc.c:8752-8757).
+	// EndFrame: self/other = world.
 	if (s_csqc.func_endframe > 0)
 	{
 		if (s_csqc.global_self >= 0)
@@ -3854,19 +3819,18 @@ static void CSQC_Client_RunFrameThink (void)
 =================
 CSQC_Client_NotMenu / CSQC_Client_KeynumToQC / CSQC_Client_QCToKeynum
 
-B1/B6 (FTE-parity). Эталон FTE: notmenu — pr_csqc.c:8889
-(`!Key_Dest_Has(kdm_menu|kdm_cwindows)`); трансляция клавиш —
-pr_clcmd.c:14 (`MP_TranslateFTEtoQCCodes`, FTE->QC) и :218 (`MP_TranslateQCtoFTECodes`,
-QC->FTE). Внутренний домен ezq — keys.h:28-213 (K_*, K_MOUSE1=200, K_MWHEELUP=244);
-QC/CSQC-контракт — DP-нумерация (csdefs.qc:1377-1449).
-Модуль получает/отдаёт только QC-коды; неизвестные ключи уходят «нативными»
-(отрицательное значение собственного keynum) — как FTE-дефолт, round-trip сохраняется.
+FTE parity. FTE reference: notmenu (`!Key_Dest_Has(kdm_menu|kdm_cwindows)`); key
+translation via MP_TranslateFTEtoQCCodes (FTE->QC) and MP_TranslateQCtoFTECodes
+(QC->FTE). The internal ezq domain is keys.h (K_*, K_MOUSE1=200, K_MWHEELUP=244); the
+QC/CSQC contract is DP numbering. The module receives/returns only QC codes; unknown
+keys go through "natively" (negative value of its own keynum) - as the FTE default,
+round-trip is preserved.
 =================
 */
 qbool CSQC_Client_NotMenu (void)
 {
-	// Вариант (b): любое слоёное меню скрывает игру (FTE kdm_menu|kdm_cwindows);
-	// консоль/чат/стартовое демо остаются notmenu=1 (FTE не исключает kdm_console).
+	// Any layered menu hides the game (FTE kdm_menu|kdm_cwindows); console/chat/
+	// startup demo stay notmenu=1 (FTE does not exclude kdm_console).
 	return !(key_dest == key_menu || key_dest == key_hudeditor
 		|| key_dest == key_demo_controls || key_dest == key_startupdemo_menu);
 }
@@ -3934,7 +3898,7 @@ int CSQC_Client_KeynumToQC (int keynum)
 
 	case K_PRINTSCR:	return 174;
 
-	// mouse: DP интерливит колёса между MOUSE3 и MOUSE4 (pr_clcmd.c:74-83).
+	// mouse: DP interleaves the wheels between MOUSE3 and MOUSE4.
 	case K_MOUSE1:		return 512;
 	case K_MOUSE2:		return 513;
 	case K_MOUSE3:		return 514;
@@ -3951,8 +3915,8 @@ int CSQC_Client_KeynumToQC (int keynum)
 	case K_JOY3:		return 770;
 	case K_JOY4:		return 771;
 
-	// FTE K_AUX1..16 -> 800..815 (замечание: csdefs.qc даёт 784..799 —
-	// известное расхождение констант модуля, вне Э5; см. ADR 0032).
+	// FTE K_AUX1..16 -> 800..815 (the module's csdefs gives 784..799 - a known
+	// constant discrepancy, out of scope).
 	case K_AUX1:		return 800;
 	case K_AUX2:		return 801;
 	case K_AUX3:		return 802;
@@ -3971,13 +3935,13 @@ int CSQC_Client_KeynumToQC (int keynum)
 	case K_AUX16:		return 815;
 
 	default:
-		if (keynum == -1)			// модуль передал «нет клавиши»
+		if (keynum == -1)			// module passed "no key"
 			return keynum;
-		if (keynum < 0)				// уже нативный отрицательный код
+		if (keynum < 0)				// already a native negative code
 			return -keynum;
-		if (keynum >= 0 && keynum < 128)	// printable/control ascii — identity
+		if (keynum >= 0 && keynum < 128)	// printable/control ascii - identity
 			return keynum;
-		return -keynum;			// нет QC-эквивалента — нативный код
+		return -keynum;			// no QC equivalent - native code
 	}
 }
 
@@ -4078,13 +4042,13 @@ int CSQC_Client_QCToKeynum (int code)
 	case 815:		return K_AUX16;
 
 	default:
-		if (code == -1)				// модуль передал «нет клавиши»
+		if (code == -1)				// module passed "no key"
 			return code;
-		if (code < 0)				// нативный код — обратно
+		if (code < 0)				// native code - back
 			return -code;
-		if (code >= 0 && code < 128)	// printable/control ascii — identity
+		if (code >= 0 && code < 128)	// printable/control ascii - identity
 			return code;
-		return -code;				// нет ezq-эквивалента
+		return -code;				// no ezq equivalent
 	}
 }
 
@@ -4092,10 +4056,10 @@ int CSQC_Client_QCToKeynum (int code)
 =================
 CSQC_Client_PublishSimGlobals
 
-B4 (FTE pr_csqc.c:8818-8838): симулированные глобалы модуля — frametime, cltime,
-maxclients, player_localnum, intermission. Публикуются каждый кадр до
-CSQC_UpdateView. frametime — дельта клиентского времени (FTE cl.time-cl.lasttime);
-cltime — клиентский map-uptime; maxclients — serverinfo (QW-ключ).
+Simulated module globals - frametime, cltime, maxclients, player_localnum,
+intermission. Published each frame before CSQC_UpdateView. frametime - client time
+delta (FTE cl.time-cl.lasttime); cltime - client map-uptime; maxclients - serverinfo
+(QW key).
 =================
 */
 static void CSQC_Client_PublishSimGlobals (void)
@@ -4124,10 +4088,10 @@ static void CSQC_Client_PublishSimGlobals (void)
 =================
 CSQC_Client_Update
 
-Вызывается каждый 2D-кадр (HUD-фаза, cl_screen.c). WorldLoaded — один раз
-после входа в мир; далее CSQC_UpdateView(vid.width, vid.height, notmenu).
-Если модуль ждёт скачивания csprogs — при появлении валидного файла грузит
-его и продолжает как при входе в мир.
+Called each 2D frame (HUD phase, cl_screen.c). WorldLoaded - once after entering the
+world; then CSQC_UpdateView(vid.width, vid.height, notmenu). If the module is waiting
+for the csprogs download - load it when a valid file appears and continue as on world
+entry.
 =================
 */
 void CSQC_Client_Update (void)
@@ -4137,10 +4101,10 @@ void CSQC_Client_Update (void)
 	if (cls.state != ca_active)
 		return;
 
-	// Clip-состояние (#324/325) — пер-кадр (модуль ставит/снимает в своём кадре).
+	// Clip state (#324/325) - per frame (the module sets/clears it in its frame).
 	s_clip_on = false;
 
-	// Ожидание скачанного csprogs (валидный файл появился -> грузим).
+	// Waiting for a downloaded csprogs (a valid file appeared -> load).
 	if (s_csqc.csprogs_dl_pending)
 	{
 		char path[MAX_QPATH];
@@ -4160,16 +4124,16 @@ void CSQC_Client_Update (void)
 				CSQC_Client_NotifyCSQC (false);
 				return;
 			}
-			// как при входе в мир: per-карта состояние чистое
+			// as on world entry: per-map state is clean
 			memset (s_csqc.seen, 0, sizeof (s_csqc.seen));
 			s_csqc.world_done = false;
 			s_csqc.enable_sent = false;
 		}
 		else
 		{
-			// B17: таймаут по отсутствию прогресса (FTE своего лимита не имеет —
-			// опирается на общую download-машину; плоские 20 c от старта сдавались
-			// на медленном линке, хотя загрузка шла).
+			// Timeout by absence of progress (FTE has no limit of its own - it
+			// relies on the general download machine; a flat 20 s from start gave up
+			// on slow links even though the download was running).
 			double now = Sys_DoubleTime ();
 			qbool ours = cls.download
 				&& !strcmp (cls.downloadname, s_csqc.csprogs_dl_localname);
@@ -4187,14 +4151,14 @@ void CSQC_Client_Update (void)
 			}
 			else if (s_csqc.csprogs_dl_started)
 			{
-				// наше скачивание завершилось без валидного файла (сбой/отмена)
+				// our download finished without a valid file (failure/cancel)
 				s_csqc.csprogs_dl_pending = false;
 				Con_Printf ("CSQC: csprogs download failed\n");
 				CSQC_Client_NotifyCSQC (false);
 			}
 			else if (now - s_csqc.csprogs_dl_lastprogress > 20)
 			{
-				// прогресса нет дольше окна (в т.ч. загрузка так и не началась)
+				// no progress for longer than the window (incl. the download never started)
 				s_csqc.csprogs_dl_pending = false;
 				Con_Printf ("CSQC: csprogs download timed out (no progress)\n");
 				CSQC_Client_NotifyCSQC (false);
@@ -4211,48 +4175,48 @@ void CSQC_Client_Update (void)
 		s_csqc.world_done = true;
 		if (!CSQC_Client_Exec (s_csqc.func_world))
 			return;
-		// FTE: enablecsqc — после CSQC_WorldLoaded каждой карты (module ready).
+		// FTE: enablecsqc - after CSQC_WorldLoaded of each map (module ready).
 		CSQC_Client_NotifyCSQC (true);
 	}
 
-	// T2.7 (R9): per-frame CSQC think-loop (StartFrame/thinks/EndFrame) — FTE
-	// CSQC_DrawView до CSQC_UpdateView (pr_csqc.c:8740-8811).
+	// per-frame CSQC think-loop (StartFrame/thinks/EndFrame) - FTE CSQC_DrawView
+	// before CSQC_UpdateView.
 	CSQC_Client_RunFrameThink ();
 
-	// player_localentnum — публикуем до модуля (окружение builtins как FTE;
-	// сущности игроков не фабрикуем — см. CSQC_Client_UpdateLocalEntnum).
+	// player_localentnum - publish before the module (builtin environment as FTE;
+	// player entities are not fabricated - see CSQC_Client_UpdateLocalEntnum).
 	CSQC_Client_UpdateLocalEntnum ();
-	// C5-A: окно предикции модулю (перед CSQC_UpdateView; FTE pr_csqc.c:8837-8844).
+	// prediction window to the module (before CSQC_UpdateView).
 	CSQC_Client_PatchFrames ();
-	// C5-E Ф1: view_angles модулю (FTE).
+	// view_angles to the module (FTE).
 	CSQC_Client_PublishViewAngles ();
-	// T2.1: gamespeed модулю (FTE pr_csqc.c:8845-8851). QW/ezq не имеет
-	// cl.gamespeed → 1; на серверной паузе 0 (как FTE).
+	// gamespeed to the module. QW/ezq has no cl.gamespeed -> 1; on server pause 0
+	// (as FTE).
 	if (s_csqc.global_gamespeed >= 0)
 		s_csqc.vm.globals[s_csqc.global_gamespeed] = (cl.paused & PAUSED_SERVER) ? 0 : 1;
-	// B4: frametime/cltime/maxclients/player_localnum/intermission (FTE).
+	// frametime/cltime/maxclients/player_localnum/intermission.
 	CSQC_Client_PublishSimGlobals ();
 
-	// E1a/E1b #371 deltalisten: мост player_state/entity_state → arena-edict
-	// каждый кадр (FTE-модель: CL_LinkPlayers/CL_LinkPacketEntities per-frame).
-	// Модуль получает авторитетное (no-lerp) состояние игроков и delta-сущностей.
+	// #371 deltalisten: player_state/entity_state -> arena-edict bridge each frame
+	// (FTE model: CL_LinkPlayers/CL_LinkPacketEntities per-frame). The module gets
+	// the authoritative (no-lerp) state of players and delta entities.
 	CSQC_Client_DeltaPlayers (vm);
 	if (!s_csqc.errored)
 		CSQC_Client_DeltaEntities (vm);
 
 	if (s_csqc.func_update > 0)
 	{
-		// FTE-семантика #351: листенер действует только если модуль задал его
-		// в этом кадре (иначе — движковый вид; сбрасываем перед UpdateView).
+		// FTE #351 semantics: the listener applies only if the module set it this
+		// frame (otherwise the engine view; reset before UpdateView).
 		s_listener_on = false;
 		vm->globals[OFS_PARM0] = vid.width;
 		vm->globals[OFS_PARM1] = vid.height;
-		vm->globals[OFS_PARM2] = CSQC_Client_NotMenu () ? 1 : 0;	// B1 (FTE pr_csqc.c:8889)
+		vm->globals[OFS_PARM2] = CSQC_Client_NotMenu () ? 1 : 0;	// FTE notmenu
 		CSQC_Client_Exec (s_csqc.func_update);
 	}
 
-	// C1.2: при активном CSQC-курсоре — абсолютная позиция мыши модулю, только
-	// когда она изменилась с прошлого кадра (как FTE: события на перемещение).
+	// With an active CSQC cursor, send the absolute mouse position to the module
+	// only when it changed since last frame (as FTE: events on movement).
 	{
 		static float ie_abs_lastx = -1, ie_abs_lasty = -1;
 		float cmx = 0, cmy = 0;
@@ -4269,7 +4233,7 @@ void CSQC_Client_Update (void)
 		}
 		else
 		{
-			ie_abs_lastx = ie_abs_lasty = -1;	// курсор снят — сброс
+			ie_abs_lastx = ie_abs_lasty = -1;	// cursor removed - reset
 		}
 	}
 }
@@ -4278,9 +4242,9 @@ void CSQC_Client_Update (void)
 =================
 CSQC_Client_ParseAllowed
 
-Runtime-гейт CSQC-парсеров (R5): договорён FTE_PEXT_CSQC и включён cl_pext_csqc —
-тот же критерий, что в cl_parse.c для case 83/90. Гейт в функции (а не только в
-case) покрывает и «модуль не загружен/ошибся», см. ParseEntities.
+Runtime gate of the CSQC parsers: FTE_PEXT_CSQC agreed and cl_pext_csqc enabled - the
+same criterion as cl_parse.c for case 83/90. The gate in a function (not only in the
+case) also covers "module not loaded / errored", see ParseEntities.
 =================
 */
 qbool CSQC_Client_ParseAllowed (void)
@@ -4297,10 +4261,9 @@ qbool CSQC_Client_ParseAllowed (void)
 =================
 CSQC_Client_MayRead
 
-R7/T1.4a: read*-builtins модуля допустимы только внутри parse-callback'ов
-(CSQC_Ent_Update / CSQC_Parse_Event) — паритет FTE csqc_mayread
-(pr_csqc.c:9690-9692, :9208, :9249). Вне их — CSQC_Client_Abort (паритет FTE
-CSQC_Abort, pr_csqc.c:7489-7505).
+The module's read*-builtins are allowed only inside parse callbacks (CSQC_Ent_Update
+/ CSQC_Parse_Event) - FTE csqc_mayread parity. Outside them - CSQC_Client_Abort (FTE
+CSQC_Abort parity).
 =================
 */
 qbool CSQC_Client_MayRead (void)
@@ -4312,9 +4275,10 @@ qbool CSQC_Client_MayRead (void)
 =================
 CSQC_Client_ParsePrint
 
-Э1: CSQC_Parse_Print(string, float) — перехват сетевого svc_print (chat и обычный).
-FTE pr_csqc.c:9306-9362: наличие колбэка => движок свой print не печатает (модуль
-сам решает, форвардить ли в #339 print). Возврат — был ли колбэк вызван.
+CSQC_Parse_Print(string, float) - intercept of the network svc_print (chat and
+ordinary). FTE: if the callback exists => the engine does not print its own (the
+module decides whether to forward to #339 print). Returns whether the callback was
+called.
 =================
 */
 qbool CSQC_Client_ParsePrint (const char *msg, int level)
@@ -4334,9 +4298,9 @@ qbool CSQC_Client_ParsePrint (const char *msg, int level)
 =================
 CSQC_Client_ParseCenterPrint
 
-Э1: CSQC_Parse_CenterPrint(string) — перехват svc_centerprint/svc_finale.
-FTE pr_csqc.c:9385-9398: возврат модуля != 0 => движок centerprint игнорирует.
-Возврат — подавлять ли движковый вывод.
+CSQC_Parse_CenterPrint(string) - intercept of svc_centerprint/svc_finale. FTE: a
+module return != 0 => the engine ignores the centerprint. Returns whether to
+suppress the engine output.
 =================
 */
 qbool CSQC_Client_ParseCenterPrint (const char *msg)
@@ -4356,10 +4320,10 @@ qbool CSQC_Client_ParseCenterPrint (const char *msg)
 =================
 CSQC_Client_ParseDamage
 
-Э2: CSQC_Parse_Damage(float save, float take, vector inflictororg) — разбор svc_damage
-(V_ParseDamage). FTE pr_csqc.c:9287-9304: PARM0=save(dmg_save), PARM1=take(dmg_take),
-PARM2=вектор источника; return≠0 ⇒ полностью подавить цветосдвиг/view-kick (view.c:513).
-Возврат — подавлять ли движковые эффекты урона.
+CSQC_Parse_Damage(float save, float take, vector inflictororg) - parse svc_damage
+(V_ParseDamage). FTE: PARM0=save(dmg_save), PARM1=take(dmg_take), PARM2=source
+vector; return !=0 => fully suppress the color shift/view kick. Returns whether to
+suppress the engine damage effects.
 =================
 */
 qbool CSQC_Client_ParseDamage (float save, float take, const vec3_t source)
@@ -4383,11 +4347,11 @@ qbool CSQC_Client_ParseDamage (float save, float take, const vec3_t source)
 =================
 CSQC_Client_EventSound
 
-Э3: CSQC_Event_Sound(entnum, channel, soundname, vol, attenuation, pos, pitchmod, flags) —
-разбор svc_sound (CL_ParseStartSoundPacket / NQD_ParseStartSoundPacket). FTE
-pr_csqc.c:9453-9484: PARM0=entnum…PARM5=pos, PARM6=pitchmod*100, PARM7=flags; self =
-csqc-энтити по номеру или world (pr_csqc.c:9464-9469). Возврат ≠0 ⇒ движок звук не играет
-(FTE cl_parse.c:5336/5543). self выставляется и не восстанавливается (FTE-паритет).
+CSQC_Event_Sound(entnum, channel, soundname, vol, attenuation, pos, pitchmod, flags) -
+parse svc_sound (CL_ParseStartSoundPacket / NQD_ParseStartSoundPacket). FTE:
+PARM0=entnum..PARM5=pos, PARM6=pitchmod*100, PARM7=flags; self = csqc entity by
+number or world. Return !=0 => the engine does not play the sound. self is set and
+not restored (FTE parity).
 =================
 */
 qbool CSQC_Client_EventSound (int entnum, int channel, const char *name, float vol,
@@ -4400,7 +4364,7 @@ qbool CSQC_Client_EventSound (int entnum, int channel, const char *name, float v
 	if (!s_csqc.loaded || s_csqc.errored || s_csqc.func_eventsound <= 0)
 		return false;
 
-	// FTE pr_csqc.c:9464-9469: self = arena-энтити по номеру или 0 (world).
+	// self = arena entity by number or 0 (world).
 	slot = CSQC_Client_NumToSlot (entnum);
 	if (slot > 0 && slot < CSQC_MAX_EDICTS && CSQC_Client_EntUsed (slot))
 		CSQC_Client_SetContextSlot (vm, (unsigned)slot, (unsigned)entnum);
@@ -4415,7 +4379,7 @@ qbool CSQC_Client_EventSound (int entnum, int channel, const char *name, float v
 	vm->globals[OFS_PARM5 + 0] = pos[0];
 	vm->globals[OFS_PARM5 + 1] = pos[1];
 	vm->globals[OFS_PARM5 + 2] = pos[2];
-	vm->globals[OFS_PARM6] = pitchmod * 100.0f;	// FTE pr_csqc.c:9477
+	vm->globals[OFS_PARM6] = pitchmod * 100.0f;
 	vm->globals[OFS_PARM7] = flags;
 
 	CSQC_Client_ExecRet (s_csqc.func_eventsound, &ret);
@@ -4426,11 +4390,10 @@ qbool CSQC_Client_EventSound (int entnum, int channel, const char *name, float v
 =================
 CSQC_Client_ParseSetAngles
 
-Э4: CSQC_Parse_SetAngles(vector angles, float isdelta) — разбор svc_setangle
-(cl_parse.c live/QW-demo, cl_nqdemo.c NQ-demo). FTE pr_csqc.c:9400-9416, pr_common.h:1091:
-PARM0+0..2=вектор углов (3 слова), PARM1=isdelta; return≠0 ⇒ движок свой угол не применяет
-(FTE cl_parse.c:7527/7857/9816; MVD DPB_MVD-ветка хук не вызывает). Возврат — подавлять ли
-движковое применение угла.
+CSQC_Parse_SetAngles(vector angles, float isdelta) - parse svc_setangle (live/QW demo,
+NQ demo). FTE: PARM0+0..2 = angle vector (3 words), PARM1 = isdelta; return !=0 => the
+engine does not apply its own angle (the MVD DPB_MVD branch does not call the hook).
+Returns whether to suppress the engine angle application.
 =================
 */
 qbool CSQC_Client_ParseSetAngles (const float *angles, float isdelta)
@@ -4453,16 +4416,15 @@ qbool CSQC_Client_ParseSetAngles (const float *angles, float isdelta)
 =================
 CSQC_Client_RendererRestarted
 
-Э5: CSQC_RendererRestarted(string rendererdescription) — движковый колбэк при
-переинициализации рендерера (vid_restart/vid_reload, VID_Startup) и при загрузке
-модуля (CSQC_Client_Load, после CSQC_Init). FTE pr_csqc.c:8314-8363, pr_common.h:1096:
-PARM0 = строка-описание рендерера; возврат движок не читает (suppress-семантики нет).
+CSQC_RendererRestarted(string rendererdescription) - engine callback on renderer
+reinit (vid_restart/vid_reload, VID_Startup) and on module load (CSQC_Client_Load,
+after CSQC_Init). FTE: PARM0 = renderer description string; the return is not read
+(there is no suppress semantics).
 
-Строка persistent (в отличие от temp-колбэков Э1–Э4): модуль может сохранить её в
-глобале (канарейка `g_rr_desc = rrdesc`), а кольцо PR1VM_ClientSetString перезаписывает
-слоты. Поэтому держим собственную переиспользуемую копию и регистрируем её в strtbl
-напрямую (PR1VM_SetString) — offset стабилен между вызовами, GL-указатель (glGetString)
-после vid_restart не переиспользуется.
+The string is persistent (unlike the temp callbacks): the module may store it in a
+global, while the PR1VM_ClientSetString ring overwrites slots. So keep our own
+reusable copy and register it in strtbl directly (PR1VM_SetString) - the offset is
+stable between calls, and a GL pointer (glGetString) is not reused after vid_restart.
 =================
 */
 static char s_rr_desc[256];
@@ -4483,13 +4445,12 @@ void CSQC_Client_RendererRestarted (const char *desc)
 =================
 CSQC_Client_ParseEntities
 
-Парсинг svc_fte_csqcentities(76)/sized(92):
-для каждой сущности — short entnum, бит 0x8000 = remove, 0 = конец.
-Update: CSQC_Ent_Update(isnew) — модуль читает payload из текущего сообщения
-(read*); контекст сущности (self/.entnum) движок ставит перед вызовом
-(ADR 0017 P2/D3). Remove: CSQC_Ent_Remove с self/.entnum (без builtin-стрима).
-Sized (92, только mvdsv под sv_csqcdebug): перед payload каждой update-сущности
-идёт short-длина — skip-защита от рассинхрона (E3).
+Parsing of svc_fte_csqcentities(76)/sized(92): for each entity - a short entnum,
+bit 0x8000 = remove, 0 = end. Update: CSQC_Ent_Update(isnew) - the module reads the
+payload from the current message (read*); the entity context (self/.entnum) is set
+by the engine before the call. Remove: CSQC_Ent_Remove with self/.entnum (no builtin
+stream). Sized (92, only mvdsv under sv_csqcdebug): before each update entity's
+payload there is a short length - a skip guard against desync.
 =================
 */
 void CSQC_Client_ParseEntities (qbool sized)
@@ -4499,11 +4460,11 @@ void CSQC_Client_ParseEntities (qbool sized)
 	qbool removeflag;
 	qbool ready;
 
-	// R5: runtime-гейт (как cl_parse.c case 83/90) + живой модуль. Без гейта или
-	// без модуля 76/92 не трактуются как CSQC. Sized-поток проходим и без модуля
-	// (нужны только wire-поля entnum/len); non-sized пройти нельзя — длины payload
-	// нет без исполнения модуля, поэтому это протокольная ошибка (как FTE
-	// Host_EndGame, pr_csqc.c:9560), а не тихий рассинхрон.
+	// Runtime gate (as cl_parse.c case 83/90) + a live module. Without the gate or
+	// module, 76/92 are not treated as CSQC. A sized stream can be walked without a
+	// module (only the wire fields entnum/len are needed); a non-sized one cannot -
+	// the payload length is unknown without executing the module, so this is a
+	// protocol error (as FTE Host_EndGame), not a silent desync.
 	ready = CSQC_Client_ParseAllowed ()
 		&& s_csqc.loaded && s_csqc.inited && !s_csqc.errored
 		&& (s_csqc.func_entupdate > 0 || s_csqc.func_entremove > 0);
@@ -4525,11 +4486,11 @@ void CSQC_Client_ParseEntities (qbool sized)
 			break;
 		if (entnum >= (unsigned int)(sizeof (s_csqc.seen) / sizeof (s_csqc.seen[0])))
 		{
-			// R7/T1.3b (D4, accept+doc): dynamic growth НЕ реализован — карта
-			// номер→слот фиксирована (CSQC_MAX_NUM/CSQC_MAX_EDICTS = 4096). Номер
-			// ≥ 4096 недостижим с mvdsv (MAX_EDICTS=2048), путь чисто защитный;
-			// остаток датаграма не дрейнится — задокументированное ограничение
-			// (FTE `CSQC_EntityCheck` растит csqcent[], pr_csqc.c:9440-9451).
+			// Dynamic growth is NOT implemented - the number->slot map is fixed
+			// (CSQC_MAX_NUM/CSQC_MAX_EDICTS = 4096). A number >= 4096 is unreachable
+			// from mvdsv (MAX_EDICTS=2048), this path is purely defensive; the rest
+			// of the datagram is not drained - a documented limitation (FTE
+			// `CSQC_EntityCheck` grows csqcent[]).
 			break;
 		}
 
@@ -4537,8 +4498,8 @@ void CSQC_Client_ParseEntities (qbool sized)
 		{
 			int slot;
 
-			// D2/Q1: remove-0 (world) — фатально безусловно (FTE pr_csqc.c:9615-9616).
-			// Host_Error (сообщение + Host_Abort); в ezq Host_EndGame — void() без abort.
+			// remove-0 (world) is unconditionally fatal (FTE). Host_Error (message +
+			// Host_Abort).
 			if (!entnum)
 				Host_Error ("CSQC_Client_ParseEntities: cannot remove world\n");
 
@@ -4547,22 +4508,22 @@ void CSQC_Client_ParseEntities (qbool sized)
 			{
 				if (ready && s_csqc.func_entremove > 0)
 				{
-					// P2/D3: контекст (self=slot, .entnum=номер), без builtin-стрима.
+					// context (self=slot, .entnum=number), without a builtin stream.
 					CSQC_Client_SetContextSlot (vm, (unsigned)slot, entnum);
 					CSQC_Client_Exec (s_csqc.func_entremove);
 				}
-				// D-B/R7: слот освобождает движок безусловно (колбэк опционален);
-				// FTE pr_csqc.c:9625-9632, :5658-5671. Отклонение ezq от FTE: при
-				// наличии колбэка FTE перекладывает фри на модуль — не меняем.
+				// The engine frees the slot unconditionally (the callback is optional).
+				// ezq deviation from FTE: when a callback exists FTE hands the free to
+				// the module - we do not change that.
 				CSQC_Client_NetFreeSlot (slot, (int)entnum);
 			}
 			s_csqc.seen[entnum] = false;
 			continue;
 		}
 
-		// Update. Sized: [len short][payload]. R1: payload_start — ПОСЛЕ длины
-		// (иначе used включает 2 байта длины и skip недосигает на 2; FTE
-		// pr_csqc.c:9640-9642 берёт packetstart после ReadShort).
+		// Update. Sized: [len short][payload]. payload_start is AFTER the length
+		// (otherwise used includes the 2 length bytes and skip falls short by 2; FTE
+		// takes packetstart after ReadShort).
 		if (sized)
 		{
 			payload_len = MSG_ReadShort ();
@@ -4571,8 +4532,8 @@ void CSQC_Client_ParseEntities (qbool sized)
 
 		if (!ready || s_csqc.func_entupdate <= 0)
 		{
-			// Модуля/колбэка update нет: вычитать payload, чтобы не рассинхронить
-			// поток. Non-sized длину не знает — фатально (см. выше).
+			// No update module/callback: read out the payload so the stream is not
+			// desynced. Non-sized does not know the length - fatal (see above).
 			if (sized && payload_len > 0)
 				MSG_ReadSkip (payload_len);
 			else if (!sized)
@@ -4583,16 +4544,16 @@ void CSQC_Client_ParseEntities (qbool sized)
 		vm->globals[OFS_PARM0] = s_csqc.seen[entnum] ? 0 : 1;
 		s_csqc.seen[entnum] = true;
 
-		// P2/D3 + FTE-пул: номер→слот; новый номер — слот пула либо CSQC_Ent_Spawn
-		// (R7/T1.3a), контекст (self=slot, .entnum=номер).
+		// number->slot; a new number gets a pool slot or CSQC_Ent_Spawn, context
+		// (self=slot, .entnum=number).
 		{
 			int slot = CSQC_Client_NumToSlot ((int)entnum);
 			if (!slot)
 			{
 				if (s_csqc.func_entspawn > 0)
 				{
-					// FTE pr_csqc.c:9650-9658: модуль сам создаёт/настраивает сущность;
-					// невалидный self (0/мир) → без слота (Q-D, как FTE ent=NULL).
+					// The module creates/configures the entity itself; an invalid self
+					// (0/world) -> no slot (as FTE ent=NULL).
 					slot = CSQC_Client_RunEntSpawn (vm, entnum);
 					if (slot)
 						CSQC_Client_MapNumber ((int)entnum, slot);
@@ -4603,15 +4564,15 @@ void CSQC_Client_ParseEntities (qbool sized)
 					if (!slot)
 					{
 						Con_Printf ("CSQC: pool full, entity %u dropped\n", entnum);
-						break;	// патологично (пул 4095); рассинхрон невозможен при чтении
+						break;	// pathological (pool 4095); desync impossible while reading
 					}
 					CSQC_Client_MapNumber ((int)entnum, slot);
-					// FTE-пул Шаг 5 (диагностика): номер → слот пула; печать
-					// ограничена, чтобы серверный churn remove/update не залил
-					// консоль (≤32 строк на сессию csqc_dbg>=3).
+					// number -> pool slot diagnostic; printing is limited so server
+					// remove/update churn does not flood the console (<=32 lines per
+					// session at csqc_dbg>=3).
 					{
 						static int s_dbg_lines = 0;
-						cvar_t *dbg = s_csqc.csqc_dbg_cvar;	// C3: кэш (резолв после CSQC_Init)
+						cvar_t *dbg = s_csqc.csqc_dbg_cvar;	// cached (resolved after CSQC_Init)
 						if (dbg && dbg->value >= 3)
 						{
 							if (s_dbg_lines < 32)
@@ -4631,16 +4592,16 @@ void CSQC_Client_ParseEntities (qbool sized)
 				*(int *)&vm->globals[s_csqc.global_self] = 0;	// FTE: self = NULL/world
 		}
 
-		s_csqc.mayread = true;	// R7/T1.4a: read*-контекст модуля (паритет FTE csqc_mayread)
+		s_csqc.mayread = true;	// read* context of the module (FTE csqc_mayread parity)
 		CSQC_Client_Exec (s_csqc.func_entupdate);
 		s_csqc.mayread = false;
 
 		if (s_csqc.errored)
 		{
-			// B5: модуль упал mid-message — нельзя выходить, оставив остаток списка
-			// (он будет разобран как svc-опкоды). Non-sized (76) длины payload не
-			// знает → ресинк невозможен, фатально (FTE Host_EndGame). Sized (92):
-			// дочитываем текущий payload и далее идём в drain-режим по остатку.
+			// Module crashed mid-message - cannot leave, or the rest of the list will
+			// be parsed as svc opcodes. Non-sized (76) does not know the payload
+			// length -> resync impossible, fatal (FTE Host_EndGame). Sized (92): read
+			// out the current payload and then drain the rest.
 			if (!sized)
 				Host_Error ("CSQC_Client_ParseEntities: update module error\n");
 			if (payload_len >= 0)
@@ -4653,11 +4614,11 @@ void CSQC_Client_ParseEntities (qbool sized)
 			continue;
 		}
 
-		// Q-E (FTE pr_csqc.c:9693-9694): Spawn-модуль может сменить self в Update —
-		// переносим номер→слот на новый валидный слот (0 = снят/мир).
+		// A Spawn module may change self in Update - remap number->slot onto the new
+		// valid slot (0 = removed/world).
 		CSQC_Client_RemapAfterUpdate (vm, entnum);
 
-		// Skip-защита: если модуль прочитал меньше payload_len — дочитать.
+		// Skip guard: if the module read less than payload_len - read the rest.
 		if (payload_len >= 0)
 		{
 			int used = msg_readcount - payload_start;
@@ -4671,9 +4632,10 @@ void CSQC_Client_ParseEntities (qbool sized)
 =================
 CSQC_Client_ParseEvent
 
-Парсинг svc_fte_cgamepacket(83) (E1): имя события и payload читает сам модуль
-(CSQC_Parse_Event) через read*-builtins из текущего сообщения. Guard как в
-ParseEntities — без модуля чужой CSQC-multicast (echo) не роняет клиент.
+Parsing of svc_fte_cgamepacket(83): the module itself reads the event name and
+payload (CSQC_Parse_Event) via read*-builtins from the current message. Guard as in
+ParseEntities - without a module, a foreign CSQC multicast (echo) does not crash the
+client.
 =================
 */
 void CSQC_Client_ParseEvent (qbool sized)
@@ -4682,22 +4644,22 @@ void CSQC_Client_ParseEvent (qbool sized)
 		&& s_csqc.loaded && s_csqc.inited && !s_csqc.errored
 		&& s_csqc.func_parseevent > 0;
 
-	// B5 (FTE CSQC_ParseGamePacket pr_csqc.c:9212-9255): sized-поток caller
-	// (cl_parse.c case 90) дрейнит по длине сам — здесь достаточно вернуться;
-	// non-sized (case 83) длины не имеет, поэтому без модуля/колбэка это
-	// протокольная ошибка (FTE Host_EndGame) — иначе остаток payload разберётся
-	// как svc-опкоды и даст misparse.
+	// FTE CSQC_ParseGamePacket: the sized-stream caller (cl_parse.c case 90) drains
+	// by length itself - here it is enough to return; non-sized (case 83) has no
+	// length, so without a module/callback this is a protocol error (FTE
+	// Host_EndGame) - otherwise the rest of the payload would be parsed as svc
+	// opcodes and misparse.
 	if (!ready)
 	{
 		if (!sized)
 			Host_Error ("CSQC_Client_ParseEvent: cgamepacket without CSQC\n");
 		return;
 	}
-	s_csqc.mayread = true;	// R7/T1.4a: read*-контекст модуля (паритет FTE csqc_mayread)
+	s_csqc.mayread = true;	// read* context of the module (FTE csqc_mayread parity)
 	CSQC_Client_Exec (s_csqc.func_parseevent);
 	s_csqc.mayread = false;
-	// B5: модуль мог упасть на середине payload. Sized — caller дрейнит по длине;
-	// non-sized длину не знает → фатально (как FTE Host_EndGame).
+	// The module may have crashed mid-payload. Sized - caller drains by length;
+	// non-sized does not know the length -> fatal (as FTE Host_EndGame).
 	if (s_csqc.errored && !sized)
 		Host_Error ("CSQC_Client_ParseEvent: cgamepacket module error\n");
 }
@@ -4706,48 +4668,47 @@ void CSQC_Client_ParseEvent (qbool sized)
 =================
 CSQC_Client_InputFrame
 
-CSQC_Input_Frame: вызывается перед отправкой каждого usercmd (CL_SendCmd,
-cl_input.c). Механика FTE (pr_csqc.c:9418 CSQC_Input_Frame + cs_set/get_input_state,
-:3875-4010) на QW-наборе input_*-глобалов, объявленных модулем (csdefs.qc:
-input_sequence/timelength/angles/movevalues/buttons/impulse): движок заполняет их из
-cmd, исполняет CSQC_Input_Frame, затем пишет изменения обратно в cmd.
+CSQC_Input_Frame: called before each usercmd is sent (CL_SendCmd, cl_input.c). FTE
+mechanics (CSQC_Input_Frame + cs_set/get_input_state) on the QW set of module-declared
+input_* globals (input_sequence/timelength/angles/movevalues/buttons/impulse): the
+engine fills them from cmd, runs CSQC_Input_Frame, then writes the changes back into
+cmd.
 
-Отличия от FTE:
-- usercmd.angles в ezquake — float-градусы (не short), конвертацию делает
-  MSG_WriteAngle16 в MSG_WriteDeltaUsercmd (com_msg.c:237) — здесь копируем напрямую;
-- input_timelength множится на gamespeed (T2.1); у ezq нет cl.gamespeed → 1
-  (0 на серверной паузе), т.е. в QW-поведении это no-op;
-- FTE-глобалы lightlevel/weapon/servertime/clienttime/cursor/VR и InputEvent-типы
-  joy/accel/focus (CSIE_*) в QW-модуле не объявлены — N/A.
+Differences from FTE:
+- usercmd.angles in ezquake is float degrees (not short), conversion done by
+  MSG_WriteAngle16 in MSG_WriteDeltaUsercmd - copied directly here;
+- input_timelength is multiplied by gamespeed; ezq has no cl.gamespeed -> 1 (0 on
+  server pause), i.e. in QW behavior this is a no-op;
+- the FTE globals lightlevel/weapon/servertime/clienttime/cursor/VR and the
+  joy/accel/focus InputEvent types (CSIE_*) are not declared in the QW module - N/A.
 =================
 */
 void CSQC_Client_InputFrame (usercmd_t *cmd)
 {
 	pr1vm_t *vm = &s_csqc.vm;
 
-	// T2.2: живой clientcommandframe = seq текущего собранного cmd (FTE
-	// cl.movesequence, pr_csqc.c:9430-9431). Ставим до guard — трекаем и без
-	// модуля; render-фаза (PatchFrames) затем отдаёт это же значение, а не
-	// инкрементированную outgoing_sequence.
+	// live clientcommandframe = seq of the current built cmd (FTE cl.movesequence).
+	// Set before the guard - track even without a module; the render phase
+	// (PatchFrames) then returns this same value, not the incremented
+	// outgoing_sequence.
 	s_ccframe = (unsigned int)cls.netchan.outgoing_sequence;
 
 	if (!s_csqc.loaded || !s_csqc.inited || s_csqc.errored || s_csqc.func_input <= 0)
 		return;
 
-	// C5-A: окно предикции до CSQC_Input_Frame (clientcommandframe = текущий cmd;
-	// FTE pr_csqc.c:9430-9431).
+	// prediction window before CSQC_Input_Frame (clientcommandframe = current cmd).
 	CSQC_Client_PatchFrames ();
 
 	CSQC_Client_SetTime ();
 
-	// T2.1: input_sequence = seq текущего cmd (FTE cs_set_input_state,
-	// pr_csqc.c:3877-3878); та же нумерация, что clientcommandframe.
+	// input_sequence = seq of the current cmd (FTE cs_set_input_state); same
+	// numbering as clientcommandframe.
 	if (s_csqc.in_sequence >= 0)
 		vm->globals[s_csqc.in_sequence] = CSQC_Client_ClientCmdFrame ();
 
-	// cmd -> input_* глобалы (только объявленные модулем).
-	// input_timelength = msec/1000 * gamespeed (FTE pr_csqc.c:3880); gamespeed у ezq
-	// 1 (0 на серверной паузе) — см. CSQC_Client_Update.
+	// cmd -> input_* globals (only those declared by the module).
+	// input_timelength = msec/1000 * gamespeed; ezq gamespeed is 1 (0 on server
+	// pause) - see CSQC_Client_Update.
 	if (s_csqc.in_timelength >= 0)
 		vm->globals[s_csqc.in_timelength] = cmd->msec / 1000.0f
 			* ((cl.paused & PAUSED_SERVER) ? 0.0f : 1.0f);
@@ -4769,9 +4730,9 @@ void CSQC_Client_InputFrame (usercmd_t *cmd)
 		vm->globals[s_csqc.in_impulse] = cmd->impulse;
 
 	if (!CSQC_Client_Exec (s_csqc.func_input))
-		return;		// errored — кадры отключены, cmd не трогаем
+		return;		// errored - frames disabled, cmd untouched
 
-	// input_* глобалы -> cmd (записываем только то, что изменил модуль).
+	// input_* globals -> cmd (write only what the module changed).
 	if (s_csqc.in_timelength >= 0)
 	{
 		int msec = (int)(vm->globals[s_csqc.in_timelength] * 1000.0f);
@@ -4803,20 +4764,19 @@ void CSQC_Client_InputFrame (usercmd_t *cmd)
 =================
 CSQC_Client_RecordInput / CSQC_Client_ApplyInput
 
-C5-A #345: история отправленных usercmd. CL_SendCmd записывает каждый
-отправленный cmd (CSQC_Client_RecordInput); builtin #345(seq) запрашивает его и
-заполняет input_* глобалы (CSQC_Client_ApplyInput).
+#345: history of sent usercmds. CL_SendCmd records each sent cmd
+(CSQC_Client_RecordInput); builtin #345(seq) asks for it and fills the input_*
+globals (CSQC_Client_ApplyInput).
 
-seq = зеркало cls.netchan.outgoing_sequence (номер клиентского сообщения на
-момент записи; Netchan_Transmit инкрементирует после записи заголовка). Это и
-есть тот номер, который подтверждает сервер (servercommandframe = incoming_
-acknowledged = cl.parsecount, cl_parse.c:2050-2053) — окно (servercommandframe,
-clientcommandframe] согласовано в одной нумерации. Отличие от FTE: у нас
-ring-история (64) + запись только живого пути CL_SendCmd (демо/MVD не
-записываются). T2.2: clientcommandframe = s_ccframe = последний записанный seq,
-поэтому #345(clientcommandframe) попадает в ring (живой pending-кадр доступен вне
-CSQC_Input_Frame, как FTE movesequence). NQ-механизм ackedmovesequence
-(PEXT2_PREDINFO) недостижим (не для QW).
+seq = mirror of cls.netchan.outgoing_sequence (the client message number at write
+time; Netchan_Transmit increments after writing the header). This is the number the
+server acknowledges (servercommandframe = incoming_acknowledged = cl.parsecount) -
+the window (servercommandframe, clientcommandframe] is consistent in one numbering.
+Difference from FTE: here a ring history (64) + records only the live CL_SendCmd
+path (demos/MVD are not recorded). clientcommandframe = s_ccframe = the last
+recorded seq, so #345(clientcommandframe) hits the ring (the live pending frame is
+available outside CSQC_Input_Frame, as FTE movesequence). The NQ ackedmovesequence
+mechanism (PEXT2_PREDINFO) is unreachable (not for QW).
 =================
 */
 void CSQC_Client_RecordInput (usercmd_t *cmd)
@@ -4840,8 +4800,8 @@ static void CSQC_Client_FillInputFromCmd (usercmd_t *cmd)
 {
 	pr1vm_t *vm = &s_csqc.vm;
 
-	// T2.2: ×gamespeed как в Input_Frame/FTE cs_set_input_state (pr_csqc.c:3880);
-	// у ezq gamespeed 1 (0 на серверной паузе) — в QW no-op.
+	// x gamespeed as in Input_Frame / FTE cs_set_input_state; ezq gamespeed is 1
+	// (0 on server pause) - a QW no-op.
 	if (s_csqc.in_timelength >= 0)
 		vm->globals[s_csqc.in_timelength] = cmd->msec / 1000.0f
 			* ((cl.paused & PAUSED_SERVER) ? 0.0f : 1.0f);
@@ -4872,10 +4832,9 @@ int CSQC_Client_ApplyInput (unsigned int seq)
 		return 0;
 	if (!seq)
 		return 0;
-	// C5-A: paused-guard как FTE (pr_csqc.c:4142) — на серверной паузе кадры
-	// окна не применяются. Диапазон (servercommandframe, clientcommandframe]
-	// движок не проверяет (контракт модуля; спека ext_csqc_1.txt:262) — здесь
-	// только живучесть кольца.
+	// paused guard as FTE - on server pause the window frames are not applied. The
+	// range (servercommandframe, clientcommandframe] is not checked by the engine
+	// (module contract; see ext_csqc_1 spec) - here only ring liveness.
 	if ((cl.paused & PAUSED_SERVER) && seq >= (unsigned)CSQC_Client_ServerCmdFrame ())
 		return 0;
 	for (i = 0; i < CSQC_INHIST; i++)
@@ -4896,10 +4855,10 @@ int CSQC_Client_ApplyInput (unsigned int seq)
 =================
 CSQC_VectorAngles
 
-Порт FTE VectorAngles (fteqw/engine/common/mathlib.c:294) с optional up→roll,
-meshpitch=false (r_meshpitch/r_meshroll не применяются — то же отклонение, что и
-у #51 vectoangles). forward — направление; up может быть NULL; result[3] =
-(pitch, yaw, roll). Общий хелпер для #51 (csqc_builtins.c) и #638 CL_RotateMoves.
+Port of FTE VectorAngles with optional up->roll, meshpitch=false (r_meshpitch/
+r_meshroll are not applied - the same deviation as #51 vectoangles). forward is the
+direction; up may be NULL; result[3] = (pitch, yaw, roll). Shared helper for #51
+(csqc_builtins.c) and #638 CL_RotateMoves.
 =================
 */
 void CSQC_VectorAngles (const float *forward, const float *up, float *result)
@@ -4948,8 +4907,8 @@ void CSQC_VectorAngles (const float *forward, const float *up, float *result)
 }
 
 /*
-CSQC_VectorTransform — порт FTE VectorTransform (fteqw/engine/common/mathlib.c:760)
-для matrix3x4 без трансляции (в #638 4-й столбец матрицы = 0).
+CSQC_VectorTransform - port of FTE VectorTransform for a matrix3x4 without
+translation (in #638 the 4th matrix column = 0).
 */
 static void CSQC_VectorTransform (const float *in, float mat[3][4], float *out)
 {
@@ -4962,13 +4921,11 @@ static void CSQC_VectorTransform (const float *in, float mat[3][4], float *out)
 =================
 CSQC_Client_RotateMoves
 
-#638 CL_RotateMoves (класс I; FTE PF_cl_RotateMoves pr_csqc.c:4094-4125):
-поворот углов отправленных, но ещё не подтверждённых usercmd (seq >
-servercommandframe) на дельту anglechange, порядок как FTE:
-AngleVectorsFLU(anglechange) → forward/up кадра → VectorTransform → VectorAngles.
-usercmd.angles в ezq — float-градусы (qwprot/src/protocol.h:539), поэтому без
-SHORT2ANGLE/ANGLE2SHORT (в FTE cmd.angles — short). Возврат 0 при невалидном
-seat (single-seat: валиден только 0; FTE pr_csqc.c:4102-4106).
+#638 CL_RotateMoves (FTE PF_cl_RotateMoves): rotate the angles of sent but not yet
+acked usercmds (seq > servercommandframe) by the anglechange delta, order as FTE:
+AngleVectorsFLU(anglechange) -> frame forward/up -> VectorTransform -> VectorAngles.
+usercmd.angles in ezq is float degrees, so no SHORT2ANGLE/ANGLE2SHORT (in FTE
+cmd.angles is short). Returns 0 on an invalid seat (single-seat: only 0 is valid).
 =================
 */
 int CSQC_Client_RotateMoves (float *anglechange, int seat)
@@ -4991,7 +4948,7 @@ int CSQC_Client_RotateMoves (float *anglechange, int seat)
 	{
 		csqc_inrec_t *r = &s_inhist[i];
 		if (!r->seq || r->seq <= ack)
-			continue;			// пустые и подтверждённые слоты не трогаем
+			continue;			// empty and acked slots are untouched
 
 		VectorCopy (r->cmd.angles, a);
 		AngleVectors (a, of, NULL, ou);
@@ -5007,9 +4964,9 @@ int CSQC_Client_RotateMoves (float *anglechange, int seat)
 =================
 CSQC_Client_MakeVectors
 
-#1 makevectors (C6.1; FTE-паритет PF_cs_makevectors, pr_csqc.c:669): по вектору
-углов пишет v_forward/v_right/v_up модуля (глобалы, резолв в Load). Если модуль
-их не объявил — no-op (offset -1).
+#1 makevectors (FTE PF_cs_makevectors parity): from an angle vector write the
+module's v_forward/v_right/v_up (globals, resolved in Load). If the module did not
+declare them - no-op (offset -1).
 =================
 */
 void CSQC_Client_MakeVectors (float *ang)
@@ -5020,7 +4977,7 @@ void CSQC_Client_MakeVectors (float *ang)
 	if (!s_csqc.loaded || !s_csqc.inited || s_csqc.errored)
 		return;
 	if (s_csqc.g_vfwd < 0 || s_csqc.g_vright < 0 || s_csqc.g_vup < 0)
-		return;		// модуль не объявил v_forward/v_right/v_up
+		return;		// module did not declare v_forward/v_right/v_up
 	f = &vm->globals[s_csqc.g_vfwd];
 	r = &vm->globals[s_csqc.g_vright];
 	u = &vm->globals[s_csqc.g_vup];
@@ -5031,10 +4988,10 @@ void CSQC_Client_MakeVectors (float *ang)
 =================
 CSQC_Client_VectorVectors
 
-#432 vectorvectors (T3 Э3; FTE-паритет PF_vectorvectors, pr_bgcmd.c:6559): нормализует
-заданное направление в v_forward модуля и строит ортогональные v_right/v_up через FTE
-VVPerpendicularVector + CrossProduct (mathlib.c:270/288). Не используем ezq
-PerpendicularVector — у неё другой edge-case для (0,0,z). Модуль без глобалов — no-op.
+#432 vectorvectors (FTE PF_vectorvectors parity): normalize the given direction into
+the module's v_forward and build orthogonal v_right/v_up via FTE VVPerpendicularVector
++ CrossProduct. Do not use ezq PerpendicularVector - it has a different edge case for
+(0,0,z). Module without the globals - no-op.
 =================
 */
 void CSQC_Client_VectorVectors (float *dir)
@@ -5046,7 +5003,7 @@ void CSQC_Client_VectorVectors (float *dir)
 	if (!s_csqc.loaded || !s_csqc.inited || s_csqc.errored)
 		return;
 	if (s_csqc.g_vfwd < 0 || s_csqc.g_vright < 0 || s_csqc.g_vup < 0)
-		return;		// модуль не объявил v_forward/v_right/v_up
+		return;		// module did not declare v_forward/v_right/v_up
 	f = &vm->globals[s_csqc.g_vfwd];
 	r = &vm->globals[s_csqc.g_vright];
 	u = &vm->globals[s_csqc.g_vup];
@@ -5075,10 +5032,10 @@ void CSQC_Client_VectorVectors (float *dir)
 =================
 CSQC_Client_HasInputEvent / CSQC_Client_InputEvent
 
-C1.2: доставка событий ввода модулю (CSQC_InputEvent, csdefs.qc:159). Вызывается
-из keys.c (клавиши/клики/колесо при key_dest == key_game) и in_sdl2.c (мышь:
-MOUSEDELTA в обычном режиме; MOUSEABS — из CSQC_Client_Update при CSQCCursor).
-Возврат модуля != 0 означает «событие обработано» (движок не применяет его).
+Delivery of input events to the module (CSQC_InputEvent). Called from keys.c
+(keys/clicks/wheel at key_dest == key_game) and in_sdl2.c (mouse: MOUSEDELTA in the
+ordinary mode; MOUSEABS - from CSQC_Client_Update at CSQCCursor). A module return
+!= 0 means "event handled" (the engine does not apply it).
 =================
 */
 qbool CSQC_Client_HasInputEvent (void)
@@ -5093,11 +5050,11 @@ int CSQC_Client_InputEvent (int evtype, float a, float b, float c)
 
 	if (!CSQC_Client_HasInputEvent ())
 		return 0;
-	// B6: модуль работает в QC/DP-домене клавиш (csdefs.qc:1377-1449); переводим
-	// внутренний keynum ezq -> QC для key-событий (мышь/дельты — без трансляции).
+	// The module works in the QC/DP key domain; translate the internal ezq keynum ->
+	// QC for key events (mouse/deltas - no translation).
 	if (evtype == IE_KEYDOWN || evtype == IE_KEYUP)
 		a = CSQC_Client_KeynumToQC ((int)a);
-	// Параметры модульной функции (4 float) — как CSQC_UpdateView.
+	// Parameters of the module function (4 float) - as CSQC_UpdateView.
 	vm->globals[OFS_PARM0] = evtype;
 	vm->globals[OFS_PARM1] = a;
 	vm->globals[OFS_PARM2] = b;
@@ -5111,34 +5068,33 @@ int CSQC_Client_InputEvent (int evtype, float a, float b, float c)
 =================
 CSQC_Client_RunPlayerPhysics
 
-C5-B #347 runstandardplayerphysics(ent): FTE-семантика (PF_cs_runplayerphysics,
-pr_csqc.c:4185-4299) на клиентском PM-пути ezquake (PM_PlayerMove, как cl_pred.c):
+#347 runstandardplayerphysics(ent): FTE semantics (PF_cs_runplayerphysics) on the
+ezquake client PM path (PM_PlayerMove, as cl_pred.c):
 
-- B1: команда движения — из input_*-глобалов (модуль зовёт getinputstate(seq)
-  перед #347); fallback — последний записанный usercmd (если input_* не объявлены);
-- B2: solid-набор пересобирается внутри вызова (CL_SetSolidEntities + Players);
-  поля ent .mins/.maxs/.gravity/.pmove_flags/.flags; запись .origin/.velocity/
-  .angles, .flags (FL_ONGROUND), .pmove_flags (PMF_JUMP_HELD);
-- B3: чанки ≤50 мс (как cl_pred.c:76-88) + deprec pmove_org/vel/onground.
+- the movement command comes from the input_* globals (the module calls
+  getinputstate(seq) before #347); fallback - the last recorded usercmd (if input_*
+  are not declared);
+- the solid set is rebuilt inside the call (CL_SetSolidEntities + Players); entity
+  fields .mins/.maxs/.gravity/.pmove_flags/.flags; writes .origin/.velocity/.angles,
+  .flags (FL_ONGROUND), .pmove_flags (PMF_JUMP_HELD);
+- chunks <=50 ms (as cl_pred.c) + deprecated pmove_org/vel/onground.
 
-Отклонения от FTE — accept+doc (T2.3, ezq pmove без соответствующих полей):
-- skipent: FTE-PM его не читает (только trace-хелперы, pmovetst.c:131), а
-  CL_SetSolidPlayers локального игрока исключает (cl_ents.c:2532) → мотв;
-- .gravitydir: FTE-дефолт -z (pr_csqc.c:4270, pmove.c:890-894); directional
-  требует port PM-core (вне #347) — для QW-мода не используется;
-- onladder → PMF_LADDER: FTE-детект только Q2/Q3 (pmove.c:1010-1052), в QW
-  мёртв → недостижим и на FTE;
-- .waterlevel: PM считает и использует внутри (PM_CategorizePosition/PM_Friction/
-  PM_WaterMove), но в поле не отдаётся — ни ezq-, ни FTE-клиентский #347 его не
-  пишут (SSQC runclientphys — pr_cmds.c:10286); .groundent в csdefs нет.
-Box ent мапится на глобальные player_mins/maxs (box других игроков — тот же).
+Deviations from FTE (ezq pmove has no corresponding fields):
+- skipent: FTE-PM does not read it (only trace helpers), and CL_SetSolidPlayers
+  excludes the local player -> moot;
+- .gravitydir: FTE default -z; directional requires porting the PM core (out of
+  #347) - unused for the QW mod;
+- onladder -> PMF_LADDER: FTE detects only Q2/Q3, dead in QW -> unreachable on FTE too;
+- .waterlevel: PM computes and uses it internally, but does not write it to the field
+  - neither ezq nor FTE client #347 writes it; .groundent is not in csdefs.
+A box entity maps onto the global player_mins/maxs (other players' box is the same).
 =================
 */
-#define CSQC_MV_WALK	3	// csdefs.qc MOVETYPE_* (FTE-нумерация)
+#define CSQC_MV_WALK	3	// MOVETYPE_* (FTE numbering)
 #define CSQC_MV_FLY		5
 #define CSQC_MV_NOCLIP	8
-#define CSQC_PMF_JUMP_HELD	1	// fteqw/engine/common/pmove.h:36
-#define CSQC_FL_ONGROUND	512	// csdefs.qc:270
+#define CSQC_PMF_JUMP_HELD	1
+#define CSQC_FL_ONGROUND	512
 
 void CSQC_Client_RunPlayerPhysics (int entnum)
 {
@@ -5151,15 +5107,15 @@ void CSQC_Client_RunPlayerPhysics (int entnum)
 	if (!s_csqc.loaded || !s_csqc.inited || s_csqc.errored)
 		return;
 	if (entnum <= 0 || entnum >= CSQC_MAX_EDICTS || cls.state != ca_active)
-		return;		// slot 0 = world (FTE: readonly-guard, pr_csqc.c:4197)
+		return;		// slot 0 = world (FTE: readonly guard)
 	if (cls.demoplayback || cls.mvdplayback)
-		return;		// только живая игра (physents из cl)
+		return;		// live game only (physents from cl)
 
 	base = (float *)((byte *)vm->game_edicts + (size_t)entnum * vm->edict_size);
 
 	memset (&pmove, 0, sizeof (pmove));
 
-	// --- B1: вход из input_* (fallback — последний записанный usercmd) ---
+	// --- input from input_* (fallback - last recorded usercmd) ---
 	if (s_csqc.in_timelength >= 0 || s_csqc.in_angles >= 0 || s_csqc.in_movevalues >= 0)
 	{
 		int m = (s_csqc.in_timelength >= 0)
@@ -5193,7 +5149,7 @@ void CSQC_Client_RunPlayerPhysics (int entnum)
 		VectorCopy (pmove.cmd.angles, pmove.angles);
 	}
 
-	// --- B2: состояние ent ---
+	// --- entity state ---
 	if (s_csqc.f_origin >= 0)
 		VectorCopy (base + s_csqc.f_origin, pmove.origin);
 	else
@@ -5205,8 +5161,8 @@ void CSQC_Client_RunPlayerPhysics (int entnum)
 	if (s_csqc.f_flags >= 0)
 		pmove.onground = (((int)base[s_csqc.f_flags]) & CSQC_FL_ONGROUND) != 0;
 
-	// box ent -> глобальные player_mins/maxs (в ezq PM/SetSolidPlayers используют
-	// глобальный бокс); сохраняем и восстанавливаем после вызова.
+	// box ent -> global player_mins/maxs (ezq PM/SetSolidPlayers use the global
+	// box); save and restore after the call.
 	VectorCopy (player_mins, saved_mins);
 	VectorCopy (player_maxs, saved_maxs);
 	if (s_csqc.f_mins >= 0 && s_csqc.f_maxs >= 0)
@@ -5243,11 +5199,11 @@ void CSQC_Client_RunPlayerPhysics (int entnum)
 	if (s_csqc.f_gravity >= 0 && base[s_csqc.f_gravity] != 0)
 		movevars.entgravity = base[s_csqc.f_gravity];
 
-	// solid-набор: мир+BSP-энт (пересборка после memset) + игроки (cl_pred).
+	// solid set: world+BSP ents (rebuilt after memset) + players (cl_pred).
 	CL_SetSolidEntities ();
 	CL_SetSolidPlayers (cl.playernum);
 
-	// --- B3: чанки ≤50 мс ---
+	// --- chunks <=50 ms ---
 	msecs = pmove.cmd.msec;
 	if (msecs <= 0)
 		msecs = 1;
@@ -5259,7 +5215,7 @@ void CSQC_Client_RunPlayerPhysics (int entnum)
 		msecs -= step;
 	}
 
-	// --- результат обратно в ent ---
+	// --- result back into the entity ---
 	o = (s_csqc.f_origin >= 0) ? base + s_csqc.f_origin : NULL;
 	v = (s_csqc.f_velocity >= 0) ? base + s_csqc.f_velocity : NULL;
 	if (o)
@@ -5278,7 +5234,7 @@ void CSQC_Client_RunPlayerPhysics (int entnum)
 	if (s_csqc.f_pmove_flags >= 0)
 		base[s_csqc.f_pmove_flags] = (float)(pmove.jump_held ? CSQC_PMF_JUMP_HELD : 0);
 
-	// deprec-глобалы (читает fo-модуль).
+	// deprecated globals (read by the fo-module).
 	if (s_csqc.p_org >= 0)
 		for (i = 0; i < 3; i++)
 			vm->globals[s_csqc.p_org + i] = pmove.origin[i];
@@ -5294,7 +5250,7 @@ void CSQC_Client_RunPlayerPhysics (int entnum)
 
 /*
 =================
-C2.2 — string-buffers (#460-469). Хранилище — s_bufs (handle = idx+1).
+string-buffers (#460-469). Storage - s_bufs (handle = idx+1).
 =================
 */
 static csqc_buf_t *CSQC_Client_BufAt (int handle)
@@ -5376,7 +5332,7 @@ int CSQC_Client_BufAdd (int handle, const char *s, int order)
 	idx = CSQC_Client_BufPush (b, s);
 	if (idx < 0)
 		return -1;
-	// order > 0 — вставка на позицию (не дальше конца списка).
+	// order > 0 - insert at the position (not past the end of the list).
 	if (order > 0 && order < idx)
 	{
 		char *tmp = b->str[idx];
@@ -5442,7 +5398,7 @@ int CSQC_Client_BufSort (int handle, int prefixlen, int backward)
 	int i, j;
 	if (!b)
 		return 0;
-	(void)prefixlen;	// сортировка по всей строке (prefix-семантику не эмулируем)
+	(void)prefixlen;	// sort by the whole string (prefix semantics not emulated)
 	for (i = 0; i < b->num; i++)
 	{
 		for (j = i + 1; j < b->num; j++)
@@ -5521,25 +5477,25 @@ void CSQC_Client_Disconnect (void)
 		PR1VM_UnLoad (&s_csqc.vm);
 	}
 	CSQC_Client_ClearCommands ();
-	// P1/D2: арена edicts до memset (указатели ещё на месте).
+	// edict arena before memset (the pointers are still in place).
 	CSQC_Client_FreeArena ();
-	// Сброс курсора модуля (#343 A3.1): при новом коннекте состояние чистое.
+	// Reset the module cursor (#343): on a new connect the state is clean.
 	s_cursormode.usecursor = false;
 	s_cursormode.cursorimage[0] = 0;
 	s_cursormode.scale = 0;
-	// C1.1 #346: чувствительность в дефолт.
+	// #346: sensitivity back to default.
 	s_sens_scale = 1;
-	// C2.2: string-buffers очистить (deep-copy строки).
+	// clear string-buffers (deep-copy strings)
 	CSQC_Client_BufReset ();
-	// E1a #371: снять регистрации deltalisten/карту player-моста.
+	// #371: drop deltalisten registrations / the player-bridge map.
 	CSQC_Client_DeltaReset ();
 	CSQC_Client_ViewReset ();
-	s_scene_rendered = false;	// Ф3: takeover-сцена сброшена
-	CSQC_Client_ModelReset ();	// Ф3: CSQC-реестр моделей
+	s_scene_rendered = false;	// takeover scene reset
+	CSQC_Client_ModelReset ();	// CSQC model registry
 	memset (&s_csqc, 0, sizeof (s_csqc));
 	memset (s_csqc_stat, 0, sizeof (s_csqc_stat));
 	memset (s_csqc_statsf, 0, sizeof (s_csqc_statsf));
-	// Stat wire 78/79: строковые статы — глубокие копии (Q_strdup).
+	// Stat wire 78/79: string stats are deep copies (Q_strdup).
 	for (i = 0; i < MAX_EXTENDED_CL_STATS; i++)
 	{
 		Q_free (s_csqc_statss[i]);
@@ -5579,7 +5535,7 @@ void CSQC_Client_Disconnect (void)
 	s_csqc.g_view_angles = -1;
 	s_csqc.g_frametime = s_csqc.g_cltime = s_csqc.g_maxclients = -1;
 	s_csqc.g_player_localnum = s_csqc.g_intermission = -1;
-	CSQC_Client_OffsetCacheReset ();	// C2 (Wave C): офсеты горячего пути
+	CSQC_Client_OffsetCacheReset ();	// hot-path offsets
 	s_last_seq = 0;
 	s_ccframe = 0;
 }

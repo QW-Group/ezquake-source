@@ -117,8 +117,8 @@ cvar_t  cl_pext_limits = { "cl_pext_limits", "1" }; // enhanced protocol limits
 cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
 #ifdef FTE_PEXT_CSQC
 #ifndef CLIENTONLY
-cvar_t  cl_pext_csqc = {"cl_pext_csqc", "1"};			// CSQC (наш клиентский PR1VM, csqc_client.c)
- // T1.6a (D-I, FTE-паритет cl_download_csprogs): разрешить скачивание csprogs.dat с сервера.
+cvar_t  cl_pext_csqc = {"cl_pext_csqc", "1"};			// CSQC (our client PR1VM, csqc_client.c)
+ // Allow downloading csprogs.dat from the server.
 cvar_t  cl_download_csprogs = {"cl_download_csprogs", "1", CVAR_ARCHIVE};
 #endif
 #endif
@@ -432,8 +432,8 @@ void CL_MakeActive(void)
 	}
 
 #ifndef CLIENTONLY
-	// CSQC: вход в мир (весь контент уже в FS) — аналог преспауна FTE.
-	// Грузим csprogs.dat + CSQC_Init строго до первого активного кадра.
+	// CSQC: entering the world (all content is already in the FS), analogous to
+	// the FTE prespawn. Load csprogs.dat + CSQC_Init before the first active frame.
 	CSQC_Client_ConnectCheck ();
 #endif
 
@@ -543,10 +543,10 @@ unsigned int CL_SupportedFTEExtensions (void)
 #endif
 	}
 
-	// CSQC (наш клиентский PR1VM). Сам по себе бит безопасен: сервер (mvdsv)
-	// шлёт extended-статы 32..127 (клиент их игнорирует до подшага «статы
-	// 32-127»), а CSQC-сущности — только после enablecsqc (его клиент не шлёт,
-	// пока нет парсинга 76/83/90/92).
+	// CSQC (our client PR1VM). The bit itself is safe: the server sends extended
+	// stats 32..127 (the client ignores them until they are wired up), and CSQC
+	// entities only after enablecsqc (which the client does not send until it can
+	// parse 76/83/90/92).
 #ifdef FTE_PEXT_CSQC
 #ifndef CLIENTONLY
 	if (cl_pext_csqc.value)
@@ -1386,10 +1386,9 @@ void CL_ClearState (void)
 	Com_DPrintf ("Clearing memory\n");
 
 #ifndef CLIENTONLY
-	// CSQC: выгружаем клиентский инстанс модуля до отката hunk
-	// (Host_ClearMemory освобождает данные csprogs.dat и cmd-узлы выше
-	// host_hunklevel; держать их после этого нельзя — см. фикс краша при
-	// смене карты, docs/archive/ezquake_csqc_client_pr1vm_plan.md «S1 — баги»).
+	// CSQC: unload the client module instance before the hunk is rolled back.
+	// Host_ClearMemory frees the csprogs.dat data and cmd nodes above
+	// host_hunklevel, so they must not be kept past that point (map-change crash fix).
 	CSQC_Client_Disconnect ();
 #endif
 
@@ -1564,7 +1563,7 @@ void CL_Disconnect (void)
 	QTV_FreeUserList();
 
 #ifndef CLIENTONLY
-	// CSQC: Shutdown + выгрузка клиентского инстанса модуля.
+	// CSQC: shutdown and unload the client module instance.
 	CSQC_Client_Disconnect ();
 #endif
 
@@ -2575,8 +2574,8 @@ void CL_LinkEntities (void)
 		}
 
 		// build a refresh entity list
-		// Ф3 (takeover): при активной CSQC-сцене движок список не строит —
-		// это делает модуль через #300 clearscene + #301 addentities (#304 renderscene).
+		// With an active CSQC scene the engine does not build the entity list;
+		// the module does it via #300 clearscene + #301 addentities (#304 renderscene).
 		if (!CSQC_Client_SceneActive ())
 			CL_EmitEntities();
 	}
@@ -2589,8 +2588,8 @@ void CL_SoundFrame (void)
 	if (cls.state == ca_active)
 	{
 		if (!ISPAUSED) {
-			// C5-E Ф1 (#351): при активном CSQC-модуле с заданным листенером
-			// звук позиционируется от него (иначе — движковый вид).
+			// #351: with an active CSQC module that set a listener, sound is
+			// positioned from it; otherwise the engine view is used.
 			if (CSQC_Client_ListenerActive())
 			{
 				vec3_t lorg, lfwd, lrht, lup;

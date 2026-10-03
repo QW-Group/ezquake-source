@@ -26,7 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "teamplay.h"
 #include "cl_tent.h"
-#include "csqc_client.h"	// C4 Э3: Delta*Owned (MASK_DELTA suppression)
+#include "csqc_client.h"	// Delta*Owned (MASK_DELTA suppression)
 
 static int MVD_TranslateFlags(int src);
 void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);	
@@ -1102,7 +1102,7 @@ void CL_LinkPacketEntities(void)
 	{
 		state = &pack->entities[pnum];
 
-		// C4 Э3 (MASK_DELTA): модуль рисует эту сущность сам (delta-callback вернул !=0).
+		// MASK_DELTA: the module draws this entity itself (delta callback returned nonzero).
 		if (CSQC_Client_DeltaEntityOwned (state->number))
 			continue;
 
@@ -2100,7 +2100,7 @@ static void CL_LinkPlayers(void)
 		if (state->messagenum != cl.parsecount)
 			continue;	// not present this frame
 
-		// C4 Э3 (MASK_DELTA): модуль рисует этого игрока сам (delta-callback вернул !=0).
+		// MASK_DELTA: the module draws this player itself (delta callback returned nonzero).
 		if (CSQC_Client_DeltaPlayerOwned (j))
 			continue;
 
@@ -2584,10 +2584,9 @@ void CL_EmitEntities (void)
 }
 
 // CSQC #301 addentities(mask&1): merge engine entities into the existing list
-// without clearing it (FTE PF_R_AddEntityMask, pr_csqc.c:1391-1479, never clears).
-// In the takeover path clearing is the module's job via #300 clearscene; the
-// implicit CL_ClearScene in CL_EmitEntities would discard entities already added
-// with #302 addentity in the same frame (R4 / FTE-parity).
+// without clearing it. In the takeover path clearing is the module's job via
+// #300 clearscene; the implicit CL_ClearScene in CL_EmitEntities would discard
+// entities already added with #302 addentity in the same frame.
 void CL_EmitEntitiesKeepScene (void)
 {
 	if (!CL_EmitEntitiesReady())

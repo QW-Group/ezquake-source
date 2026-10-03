@@ -39,7 +39,7 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "sbar.h"
 #include "menu.h"
 #ifndef CLIENTONLY
-#include "csqc_client.h"	// CSQC-курсор модуля (#343 A3.1)
+#include "csqc_client.h"	// module CSQC cursor (#343)
 #endif
 #include "Ctrl.h"
 #include "qtv.h"
@@ -626,8 +626,8 @@ static void SCR_DrawCursor(void)
 	double scale = SCR_GetCursorScale();
 
 #ifndef CLIENTONLY
-	// CSQC-курсор модуля (#343 setcursormode, A3.1) — приоритет над штатным
-	// Quake-курсором движка (иначе рисовались бы оба).
+	// Module CSQC cursor (#343 setcursormode) takes priority over the engine's
+	// standard Quake cursor (otherwise both would be drawn).
 	if (CSQC_Client_CSQCCursor ()) {
 		CSQC_Client_DrawCursor ();
 		scr_pointer_state.x_old = scr_pointer_state.x;
@@ -801,8 +801,8 @@ static void SCR_DrawElements(void)
 					SCR_VoiceMeter();
 				}
 
-				// B22 (FTE-паритет): под takeover прицел рисуется только если модуль
-				// вернул VF_DRAWCROSSHAIR=1 (clearscene по умолчанию его гасит).
+				// Under takeover the crosshair is drawn only if the module returned
+				// VF_DRAWCROSSHAIR=1 (clearscene hides it by default).
 				if ((key_dest != key_menu) && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores))
 					&& (!CSQC_Client_SceneActive () || CSQC_Client_DrawCrosshairFlag ()))
 				{
@@ -836,8 +836,8 @@ static void SCR_DrawElements(void)
 				if (CL_MultiviewEnabled())
 					SCR_DrawMultiviewOverviewElements ();
 
-				// B22 (FTE-паритет): под takeover модуль владеет sbar/HUD; движковые
-				// рисуются только если модуль вернул VF_DRAWENGINESBAR=1.
+				// Under takeover the module owns the sbar/HUD; the engine ones are
+				// drawn only if the module returned VF_DRAWENGINESBAR=1.
 				if (!CSQC_Client_SceneActive () || CSQC_Client_DrawEngineSbar ())
 				{
 					Sbar_Draw();
@@ -847,9 +847,9 @@ static void SCR_DrawElements(void)
 
 				DemoControls_Draw();
 #ifndef CLIENTONLY
-				// CSQC-оверлей (наш csprogs.dat): поверх движкового HUD.
-				// Ф3 (takeover): при активной сцене модуль уже вызван в 3D-фазе
-				// (SCR_UpdateScreenPlayerView) — второй вызов в кадре не нужен.
+				// CSQC overlay (our csprogs.dat): drawn over the engine HUD.
+				// Under takeover the module is already called in the 3D phase
+				// (SCR_UpdateScreenPlayerView), so no second call per frame is needed.
 				if (!CSQC_Client_SceneActive())
 					CSQC_Client_Update ();
 #endif
@@ -959,10 +959,10 @@ void SCR_UpdateScreenPlayerView(int flags)
 		if (V_PreRenderView()) {
 			R_SetupFrame();
 
-			// Ф3 (takeover): при активном CSQC-модуле он владеет 3D-сценой —
-			// CSQC_UpdateView вызывается здесь (до отрисовки), #304 renderscene
-			// выполняет R_RenderView. Если модуль renderscene не позвал — движковый
-			// fallback (защита от чёрного экрана). Иначе — прежний путь.
+			// Under takeover the active CSQC module owns the 3D scene: CSQC_UpdateView
+			// is called here (before rendering), and #304 renderscene performs
+			// R_RenderView. If the module did not call renderscene, the engine path is
+			// used as a fallback (guard against a black screen).
 			if (CSQC_Client_SceneActive()) {
 				CSQC_Client_BeginScene();
 				CSQC_Client_Update();

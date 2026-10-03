@@ -136,9 +136,7 @@ void R_AddEfrags (entity_t *ent) {
 /*
 Returns true if the box [mins,maxs] touches at least one leaf that is visible
 this frame (leaf->visframe == r_visframecount, set by R_MarkLeaves). Solid
-leaves are ignored. Mirrors FTE Q1BSP_RFindTouchedLeafs + Q1BSP_EdictInFatPVS in
-a single pass, without storing a pvscache. Used for CSQC arena entities
-(docs/adr/0028-csqc-arena-culling.md).
+leaves are ignored; no pvscache is stored. Used for CSQC arena entities.
 */
 static qbool R_BoxTouchesVisibleLeaf_r(mnode_t *node, const vec3_t mins, const vec3_t maxs)
 {

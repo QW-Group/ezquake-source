@@ -392,7 +392,7 @@ static void NQD_ParsePrint (void)
 	char *s = MSG_ReadString();
 	if (s[0] == 1) {	// chat
 		// CSQC_Client_ParsePrint returns nonzero if the module handled the
-		// message; the engine then suppresses its own print (FTE cl_parse.c:9468).
+		// message; the engine then suppresses its own print.
 		if (CSQC_Client_ParsePrint (s + 1, PRINT_CHAT))
 			return;
 		if (cl_chatsound.value)
@@ -1184,7 +1184,7 @@ static void NQD_ParseServerMessage (void)
 			{
 				char *s = MSG_ReadString ();
 				// CSQC_Client_ParseCenterPrint returns nonzero if the module
-				// handled it; engine then skips its own centerprint (FTE cl_screen.c:448).
+				// handled it; the engine then skips its own centerprint.
 				if (!CSQC_Client_ParseCenterPrint (s))
 					SCR_CenterPrint (s);
 			}
@@ -1209,8 +1209,9 @@ static void NQD_ParseServerMessage (void)
 				for (i=0 ; i<3 ; i++)
 					sa_ang[i] = MSG_ReadAngle ();
 
-				// Э4: FTE NQ-путь хук вызывает (FTE cl_parse.c:9816); return != 0 ⇒
-				// движок свой угол не применяет (не обновляем viewangles/simangles/fixangle).
+				// On the NQ path the hook is still called; a nonzero return means the
+				// engine does not apply its own angle (viewangles/simangles/fixangle
+				// are not updated).
 				if (!CSQC_Client_ParseSetAngles (sa_ang, false))
 					for (i=0 ; i<3 ; i++)
 						nq_last_fixangle[i] = cl.simangles[i] = cl.viewangles[i] = sa_ang[i];

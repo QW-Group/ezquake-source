@@ -24,7 +24,7 @@
 #include "quakedef.h"
 
 #ifndef CLIENTONLY
-#include "csqc_client.h"	// CSQC_Client_CSQCCursor (курсор модуля #343)
+#include "csqc_client.h"	// CSQC_Client_CSQCCursor (module cursor #343)
 #endif
 
 #include <SDL.h>
@@ -261,9 +261,9 @@ static qbool IN_OSMouseCursorRequired(void)
 	qbool in_os_cursor_mode = (key_dest != key_game || cls.demoplayback) && (in_release_mouse_modes.integer & (1 << key_dest));
 
 #ifndef CLIENTONLY
-	// CSQC-курсор модуля (#343 setcursormode 1): мышь должна оставаться в движке
-	// (не отдаваться OS-курсору), иначе поверх рисуемого курсора будет двойной.
-	// CSQC_Client_CSQCCursor уже учитывает key_dest == key_game.
+	// Module CSQC cursor (#343 setcursormode 1): the mouse must stay in the engine
+	// (not be handed to the OS cursor), otherwise there would be a double cursor
+	// over the drawn one. CSQC_Client_CSQCCursor already checks key_dest == key_game.
 	if (CSQC_Client_CSQCCursor ())
 		return false;
 #endif
@@ -276,7 +276,7 @@ static qbool IN_OSMouseCursorRequired(void)
 qbool IN_MouseTrackingRequired(void)
 {
 #ifndef CLIENTONLY
-	// CSQC-курсор: позиция указателя должна отслеживаться и в игровом кадре.
+	// CSQC cursor: the pointer position must be tracked in the game frame too.
 	if (CSQC_Client_CSQCCursor ())
 		return true;
 #endif
@@ -1806,9 +1806,8 @@ static void VID_Startup(void)
 
 	Cvar_ClearAllModifiedFlags(CVAR_RELOAD_GFX);
 
-	// Э5: уведомить CSQC-модуль о переинициализации рендерера (vid_restart hard / vid_reload
-	// soft; общий хвост обоих путей). FTE-паритет (pr_csqc.c:8314, renderer.c:1918). No-op
-	// без активного модуля.
+	// Notify the CSQC module about renderer reinitialization (vid_restart hard /
+	// vid_reload soft; common tail of both paths). No-op without an active module.
 	CSQC_Client_RendererRestarted (R_RendererDescription ());
 }
 

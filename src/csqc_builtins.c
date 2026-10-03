@@ -1,49 +1,48 @@
 /*
-csqc_builtins.c -- клиентские builtins PR1VM (наш csprogs.dat, слой C, P2.x).
+ csqc_builtins.c -- client PR1VM builtins (our csprogs.dat).
 
-Builtins для клиентского инстанса: номера — baked из TF2003 csdefs.qc (= #N),
-аргументы читаются из vm->globals[OFS_PARM0..], возврат в OFS_RETURN,
-строки — через CSQC_Client_GetString/PR1VM_ClientSetString (S4) на активном инстансе.
+ Builtins for the client instance: numbers are baked from TF2003 csdefs.qc (= #N),
+ arguments are read from vm->globals[OFS_PARM0..], return value in OFS_RETURN,
+ strings via CSQC_Client_GetString/PR1VM_ClientSetString on the active instance.
 
-P2.1: dprint/ftos/registercommand/tokenize/argv. Layers A/B are added here as
-implemented (drawstring/getstatf/read builtins/sprintf are P2.2/P2.3).
+ Implemented here: dprint/ftos/registercommand/tokenize/argv plus the layers added
+ incrementally (drawstring/getstatf/read builtins/sprintf).
 */
 
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
-#include "quakedef.h"	// client.h (cls: netchan/fteprotocolextensions/state) с нужными типами
+#include "quakedef.h"	// client.h (cls: netchan/fteprotocolextensions/state) with needed types
 #include <time.h>		// csqc_calltimeofday (#231)
 #include <stdlib.h>		// strtod (#81/#117)
 #include <ctype.h>		// tolower (#494 crc16 insensitive, #480/481)
-#include <math.h>		// libm-математика (T1: #471-475/#532)
-#include <string.h>		// strlen/strncmp/strcasecmp (T4: #228-230)
+#include <math.h>		// libm math (#471-475/#532)
+#include <string.h>		// strlen/strncmp/strcasecmp (#228-230)
 #ifndef _WIN32
-#include <strings.h>		// strcasecmp/strncasecmp (T4: #229/230; MSVC — макросы в q_shared.h)
+#include <strings.h>		// strcasecmp/strncasecmp (#229/230; on MSVC these are macros in q_shared.h)
 #endif
-#include "keys.h"		// Key_KeynumToString/Key_StringToKeynum (Слой D шаг 3)
-#include "qsound.h"		// S_LocalSoundWithVol (C3.1 #177)
-#include "cl_tent.h"		// CL_CreateBeam (C3.3b #428-431)
-#include "gl_model.h"		// custom_model_*/Mod_CustomModel (#431 no-op, C6.1)
+#include "keys.h"		// Key_KeynumToString/Key_StringToKeynum
+#include "qsound.h"		// S_LocalSoundWithVol (#177)
+#include "cl_tent.h"		// CL_CreateBeam (#428-431)
+#include "gl_model.h"		// custom_model_*/Mod_CustomModel (#431 no-op)
 #include "crc.h"		// CRC_Init/CRC_ProcessByte/CRC_Value (#494 crc16, #639 digest_hex)
 #include "sha1.h"		// SHA1Init/SHA1Update/SHA1Final reentrant API (#639 digest_hex)
 #include "screen.h"		// SCR_CenterPrint (#338 cprint)
 #include "pr1vm.h"
-#include "csqc_client.h"	// accessor'ы к клиентскому состоянию/выводу (Фаза 5)
+#include "csqc_client.h"	// accessors to client state/output
 #include "utils.h"		// HexToInt (#476/#477 strlennocol/strdecolorize)
-#include "sbar.h"		// Sbar_ColorForMap (B10 topcolor_rgb/bottomcolor_rgb)
-#include "net.h"		// NET_AdrToString (B10 serverkey "ip")
+#include "sbar.h"		// Sbar_ColorForMap (topcolor_rgb/bottomcolor_rgb)
+#include "net.h"		// NET_AdrToString (serverkey "ip")
 
 static pr1vm_t *CSQCVM_Active (void)
 {
 	return PR1VM_Active ();
 }
 
-// Phase 1 L1 P1a (ADR 0019 / docs/archive/ezquake_csqc_client_corebuiltins_plan.md):
-// реюз чистых float/vector-тел серверных builtins на клиентском инстансе.
-// Тела не трогают строки/edict/sv-состояние, а аргументы/возврат читают через
-// G_* макросы (pr_globals) — attach в PR1VM_ExecuteProgram делает pr_globals
-// указывающим на globals исполняемой (клиентской) VM, поэтому вызов корректен.
-// Нестатические серверные PF_* объявлены в pr_cmds.c; здесь — extern-прототипы.
+// Reuse the pure float/vector bodies of the server builtins on the client instance.
+// These bodies do not touch strings/edict/sv state; arguments/return are read via
+// the G_* macros (pr_globals) - the attach in PR1VM_ExecuteProgram points
+// pr_globals at the executing (client) VM globals, so the call is correct.
+// Non-static server PF_* are declared in pr_cmds.c; extern prototypes here.
 extern void PF_random (void);
 extern void PF_normalize (void);
 extern void PF_vlen (void);
@@ -62,10 +61,9 @@ extern void PF_bound (void);
 extern void PF_traceon (void);
 extern void PF_traceoff (void);
 
-// ADR 0019 (Этап 0): собственный токен-контекст клиентской VM (#441 tokenize /
-// #442 argv). Серверный PR1 использует свой pr1_tokencontext (pr_cmds.c); здесь —
-// свой, чтобы не разделять глобальный токен-буфер движка (Cmd_TokenizeString),
-// которым пользуется консоль/обработка команд.
+// Dedicated token context for the client VM (#441 tokenize / #442 argv). Server PR1
+// uses its own pr1_tokencontext (pr_cmds.c); here we keep a separate one so we do not
+// share the engine's global token buffer (Cmd_TokenizeString) used by the console.
 static tokenizecontext_t csqc_tokencontext;
 
 static char *CSQCVM_Str (int ofs)
@@ -83,9 +81,9 @@ static void CSQCVM_SetRetStr (char *s)
 		PR1VM_ClientSetString (vm, (string_t *)&vm->globals[OFS_RETURN], s);
 }
 
-// Varargs-конкатенация по конвенции PR1 (3 float-слота на аргумент), аналог
-// серверного PF_VarString (pr_cmds.c). FTE: PF_VarString(prinst, first, pr_globals)
-// — error/objerror/localcmd/cprint/print (first=0), infoadd (first=2).
+// Varargs concatenation following the PR1 convention (3 float slots per argument),
+// like the server PF_VarString (pr_cmds.c). Used for error/objerror/localcmd/cprint/
+// print (first=0) and infoadd (first=2).
 static char *CSQCVM_VarString (int first)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -111,9 +109,9 @@ static char *CSQCVM_VarString (int first)
 // Defined below (entity section); forward-declared for the #347/#459/te_beam users.
 static int csqc_ent_of (pr1vm_t *vm, int parmofs);
 static float *csqc_ent_field (pr1vm_t *vm, int entnum, const char *name);
-static float *csqc_ent_ofs (pr1vm_t *vm, int entnum, int fldofs);	// C2: доступ по кэш-офсету
+static float *csqc_ent_ofs (pr1vm_t *vm, int entnum, int fldofs);	// access via cached field offset
 static void csqc_ret_entity (pr1vm_t *vm, int entnum);
-static void csqc_add_one_entity (int e);	// Ф3: arena-эдикт -> ezq entity_t
+static void csqc_add_one_entity (int e);	// arena edict -> ezq entity_t
 
 /*
 void(string s, ...) dprint = #25
@@ -126,8 +124,8 @@ static void csqc_dprint (void)
 }
 
 /*
-Порт Q_ftoa (fteqw engine/common/common.c:526) для #26 ftos: float → строка
-без потери значащих цифр («infinite decimal places»), обрезка хвостовых нулей.
+ Port of Q_ftoa for #26 ftos: float -> string without losing significant digits
+ ("infinite decimal places"), trimming trailing zeros.
 */
 static void csqc_q_ftoa (char *str, size_t maxlen, float in)
 {
@@ -146,7 +144,7 @@ static void csqc_q_ftoa (char *str, size_t maxlen, float in)
 		return;
 	}
 	exp = -exp;
-	exp = (int)(exp * 0.30102999957f);	// base 2 → base 10
+	exp = (int)(exp * 0.30102999957f);	// base 2 -> base 10
 	exp += 8;
 	if (exp <= 0)
 		snprintf (buf, sizeof (buf), "%.0f", in);
@@ -155,7 +153,7 @@ static void csqc_q_ftoa (char *str, size_t maxlen, float in)
 		char fmt[16];
 		snprintf (fmt, sizeof (fmt), "%%.%if", exp);
 		snprintf (buf, sizeof (buf), fmt, in);
-		// обрезка хвостовых нулей и точки (как Q_ftoa)
+		// trim trailing zeros and dot (like Q_ftoa)
 		for (p = buf + strlen (buf) - 1; p > buf && *p == '0'; p--)
 			*p = '\0';
 		if (*p == '.')
@@ -165,8 +163,8 @@ static void csqc_q_ftoa (char *str, size_t maxlen, float in)
 }
 
 /*
-string(float val) ftos = #26 — FTE-паритет (PF_ftos, pr_bgcmd.c:4645):
-целое значение → "%d"; иначе Q_ftoa (дробная часть не теряется).
+ string(float val) ftos = #26 - FTE parity (PF_ftos): integer value -> "%d";
+ otherwise Q_ftoa (fractional part is not lost).
 */
 static void csqc_ftos (void)
 {
@@ -195,10 +193,10 @@ static void csqc_registercommand (void)
 }
 
 /*
-float(string varname) cvar = #45
+ float(string varname) cvar = #45
 
-Возвращает значение cvar движка по имени (нет такого cvar — 0). Нужно модулю
-для диагностических переключателей (напр. csqc_dbg) и конфига.
+ Returns the engine cvar value by name (0 if there is no such cvar). Needed by the
+ module for diagnostic switches (e.g. csqc_dbg) and config.
 */
 static void csqc_cvar (void)
 {
@@ -208,11 +206,11 @@ static void csqc_cvar (void)
 }
 
 /*
-void(vector vang) makevectors = #1
-(C6.1) FTE-паритет (pr_csqc.c:669 PF_cs_makevectors, табл. :6634): по вектору
-углов (pitch,yaw,roll) пишет v_forward/v_right/v_up модуля. Внутренние глобалы
-резолвит CSQC_Client_MakeVectors (нет объявления — no-op). Классический
-низкий номер #1 теперь доступен модулям (серверный набор в клиент не грузится).
+ void(vector vang) makevectors = #1
+ FTE parity (PF_cs_makevectors): from the angle vector (pitch,yaw,roll) writes the
+ module's v_forward/v_right/v_up. Internal globals are resolved by
+ CSQC_Client_MakeVectors (no-op if there is no declaration). The classic low number
+ #1 is now available to modules (the server set is not loaded into the client).
 */
 static void csqc_makevectors (void)
 {
@@ -223,9 +221,9 @@ static void csqc_makevectors (void)
 }
 
 /*
-void(vector dir) vectorvectors = #432 (T3 Э3) — FTE-паритет (PF_vectorvectors,
-pr_bgcmd.c:6559): нормализованный dir → v_forward модуля, ортогональные
-v_right/v_up. Тело — CSQC_Client_VectorVectors.
+ void(vector dir) vectorvectors = #432 - FTE parity (PF_vectorvectors):
+ normalized dir -> module v_forward, orthogonal v_right/v_up. Body is
+ CSQC_Client_VectorVectors.
 */
 static void csqc_vectorvectors (void)
 {
@@ -236,11 +234,10 @@ static void csqc_vectorvectors (void)
 }
 
 /*
-float() random = #7 — FTE-паритет (PF_random, pr_bgcmd.c:6360).
-Возвращает в (0,1): (rand&0x7fff)/0x8000 + 0.5/0x8000 — никогда 0 и 1
-(в отличие от серверного ezq-PF_random, способного вернуть 1.0).
-FTE optional: argc==1 → *x; argc>=2 → a + r*(b-a). Внутренний клиентский
-wrapper — серверный PF_random не трогаем (общий с сервером).
+ float() random = #7 - FTE parity (PF_random). Returns a value in (0,1):
+ (rand&0x7fff)/0x8000 + 0.5/0x8000 - never 0 or 1 (unlike the server ezq PF_random,
+ which can return 1.0). FTE optional: argc==1 -> *x; argc>=2 -> a + r*(b-a). This is
+ a client-side wrapper; the shared server PF_random is left untouched.
 */
 static void csqc_random (void)
 {
@@ -257,10 +254,10 @@ static void csqc_random (void)
 }
 
 /*
-float(vector v [, optional entity reference]) vectoyaw = #13 — FTE-паритет
-(PF_vectoyaw, pr_bgcmd.c:6775): yaw = (int)(atan2*180/π), <0 → +360.
-FTE optional entity — gravity-axis; у нас клиент axis не ведёт (gravitydir нет):
-идентичность-ось (дефолт FTE без gravitydir) — отклонение задокум.
+ float(vector v [, optional entity reference]) vectoyaw = #13 - FTE parity
+ (PF_vectoyaw): yaw = (int)(atan2*180/pi), <0 -> +360. The FTE optional entity is
+ the gravity axis; the client does not track an axis (no gravitydir), so the identity
+ axis is used (FTE default without gravitydir).
 */
 static void csqc_vectoyaw (void)
 {
@@ -284,9 +281,9 @@ static void csqc_vectoyaw (void)
 }
 
 /*
-vector(vector fwd [, optional vector up]) vectoangles = #51 — FTE-паритет
-(PF_vectoangles pr_bgcmd.c:6822 → VectorAngles mathlib.c:294, meshpitch=1).
-Optional up → roll. meshpitch/r_meshroll у нас игнорируются (=1) — отклонение.
+ vector(vector fwd [, optional vector up]) vectoangles = #51 - FTE parity
+ (PF_vectoangles -> VectorAngles, meshpitch=1). Optional up -> roll.
+ meshpitch/r_meshroll are ignored here (=1).
 */
 static void csqc_vectoangles (void)
 {
@@ -334,8 +331,8 @@ static void csqc_argv (void)
 }
 
 /*
-string(string s1, optional string s2, ...) strcat = #115
-(P2.2) Конкатенация переданных строк (до vm->argc аргументов).
+ string(string s1, optional string s2, ...) strcat = #115
+ Concatenation of the passed strings (up to vm->argc arguments).
 */
 static void csqc_strcat (void)
 {
@@ -349,8 +346,8 @@ static void csqc_strcat (void)
 	if (n <= 0)
 		n = 1;
 	buf[0] = 0;
-	// Параметры PR1 — каждые 3 float-слота на аргумент (как PF_VarString,
-	// pr_cmds.c: OFS_PARM0 + i*3); argc = число аргументов.
+	// PR1 params are 3 float slots per argument (like PF_VarString: OFS_PARM0 + i*3);
+	// argc = argument count.
 	for (i = 0; i < n && i < 16; i++)
 	{
 		char *s = CSQC_Client_GetString (vm, *(int *)&vm->globals[OFS_PARM0 + i * 3]);
@@ -363,12 +360,9 @@ static void csqc_strcat (void)
 }
 
 /*
-float(string s1, string sub, optional float startidx) strstrofs = #221
-(P2.2) Возвращает позицию подстроки (0-based) или -1.
-*/
-/*
-float(string s1, string sub, optional float startidx) strstrofs = #221 — FTE-паритет
-(PF_strstrofs pr_bgcmd.c:4611): start вне [0,len] (и не 0) → −1.
+ float(string s1, string sub, optional float startidx) strstrofs = #221 - FTE parity
+ (PF_strstrofs): returns the substring position (0-based) or -1; start outside
+ [0,len] (and not 0) -> -1.
 */
 static void csqc_strstrofs (void)
 {
@@ -396,12 +390,12 @@ static void csqc_strstrofs (void)
 }
 
 /*
-string(float ccase, float redalpha, float redchars, string str, ...) strconv = #224
-(FTE_STRINGS) Порт FTE PF_strconv + chrconv_number/chrconv_punct/chrchar_alpha
-(pr_bgcmd.c:4427-4556): bulk-конверсия регистра/цвета. ccase 0 same/1 lower/2 upper;
-redalpha 0 same/1 white/2 red/5 alternate/6 alternate-alternate; redchars — аналогично
-для цифр. Аргумент-строка — vararg с позиции 3 (как FTE PF_VarString(prinst,3,...)).
-*/
+ string(float ccase, float redalpha, float redchars, string str, ...) strconv = #224
+ Port of FTE PF_strconv plus chrconv_number/chrconv_punct/chrchar_alpha: bulk case/
+ colour conversion. ccase 0 same/1 lower/2 upper; redalpha 0 same/1 white/2 red/
+ 5 alternate/6 alternate-alternate; redchars is the same for digits. The string
+ argument is a vararg starting at position 3.
+ */
 static int csqc_chrconv_number (int i, int base, int conv)
 {
 	i -= base;
@@ -528,14 +522,13 @@ static void csqc_strconv (void)
 }
 
 /*
-float(float property, ...) getproperty = #309
+ float(float property, ...) getproperty = #309
 
-Полный read-паритет FTE (PF_R_GetViewFlag, pr_csqc.c): чтение текущего состояния
-рендера движка (r_refdef/cl/vid), а не «значения, поставленные модулем #303».
-Числа VF_* — из TF2003-qvm/csqc/csdefs.qc (346-375). set-флаги (DRAWWORLD и пр.)
-в getter-списке FTE отсутствуют → default 0; у нас тоже 0. 3D-сцена (#303/#304) —
-вне скоупа (ADR 0018).
-*/
+ Full FTE read parity (PF_R_GetViewFlag): reads the current engine render state
+ (r_refdef/cl/vid), not "values set by the module via #303". The VF_* numbers come
+ from the module's csdefs.qc. The set-flags (DRAWWORLD etc.) are absent from the FTE
+ getter list -> default 0; we also return 0 here.
+ */
 #define CSQC_VF_MIN		1	// viewport top-left (x,y)
 #define CSQC_VF_MIN_X		2
 #define CSQC_VF_MIN_Y		3
@@ -580,7 +573,7 @@ static void csqc_getproperty (void)
 	{
 	case CSQC_VF_SCREENVSIZE:
 	case CSQC_VF_SCREENPSIZE:
-		// «виртуальный»/«физический» размер; в ezquake без OS-скейла — одно и то же.
+		// "virtual"/"physical" size; in ezquake without OS scaling they are the same.
 		r[0] = vid.width;
 		r[1] = vid.height;
 		break;
@@ -595,7 +588,7 @@ static void csqc_getproperty (void)
 		r[0] = r_refdef.fov_y;
 		break;
 	case CSQC_VF_AFOV:
-		// FTE: r_refdef.afov; в ezquake его нет — приближённо cvar fov.
+		// FTE reads r_refdef.afov; ezquake has none - approximate with the fov cvar.
 		r[0] = Cvar_Value ("fov");
 		break;
 	case CSQC_VF_ORIGIN:
@@ -659,17 +652,17 @@ static void csqc_getproperty (void)
 		r[0] = r_refdef.vrect.height;
 		break;
 	default:
-		// set-флаги (DRAWWORLD/PERSPECTIVE/...) и без аналога/DP-legacy — 0
-		// (в FTE getter-списка нет, default возвращает 0).
+		// set-flags (DRAWWORLD/PERSPECTIVE/...) and no-analog/DP-legacy -> 0
+		// (not in the FTE getter list; its default returns 0).
 		break;
 	}
 }
 
 /*
-vector(vector v) unproject = #310 / vector(vector v) project = #311 (C5-E Ф1).
-Экран↔мир через матрицы движка (R_GetModelviewMatrix/R_GetProjectionMatrix/
-R_GetViewport, r_matrix.c). Неудача/вырожденная матрица -> '0 0 0'.
-*/
+ vector(vector v) unproject = #310 / vector(vector v) project = #311.
+ Screen<->world via the engine matrices (R_GetModelviewMatrix/R_GetProjectionMatrix/
+ R_GetViewport). Failure/degenerate matrix -> '0 0 0'.
+ */
 static void csqc_project (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -698,24 +691,24 @@ static void csqc_unproject (void)
 }
 
 /*
-void() clearscene = #300 / void(float mask) addentities = #301 /
-float(float property, ...) setproperty = #303 / void() renderscene = #304
-No-op: 3D-рендер модуля не делаем (движок рисует сам), HUD — поверх.
-*/
+ void() clearscene = #300 / void(float mask) addentities = #301 /
+ float(float property, ...) setproperty = #303 / void() renderscene = #304
+ The module does not do its own 3D rendering (the engine draws); the HUD is on top.
+ */
 static void csqc_clearscene (void)
 {
-	// FTE: clearscene сбрасывает view-свойства (#303 setproperty) и rentity-список.
+	// clearscene resets the view properties (#303 setproperty) and the rentity list.
 	CSQC_Client_ResetViewProps ();
 	if (CSQC_Client_SceneActive ())
 		CL_ClearScene ();
 }
 /*
-void(float mask) addentities = #301 (Ф3 takeover).
-FTE PF_R_AddEntityMask (pr_csqc.c:1380): mask&1 (MASK_DELTA=MASK_ENGINE) —
-движковая сцена (CL_EmitEntities: мир/игроки/энтити); mask&2 (MASK_STDVIEWMODEL) —
-движковая вьюмодель (C4 Э2, FTE CL_LinkViewModel); затем обход CSQC-эдиктов
-арены по ВСЕМУ mask (`drawmask & mask`), как в FTE.
-*/
+ void(float mask) addentities = #301.
+ FTE PF_R_AddEntityMask: mask&1 (MASK_DELTA=MASK_ENGINE) - the engine scene
+ (CL_EmitEntities: world/players/entities); mask&2 (MASK_STDVIEWMODEL) - the engine
+ view model (CL_LinkViewModel); then walk the CSQC arena edicts for the whole mask
+ (`drawmask & mask`).
+ */
 static void csqc_addentities (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -724,7 +717,7 @@ static void csqc_addentities (void)
 		return;
 	mask = (int)vm->globals[OFS_PARM0];
 	if (mask & 1)
-		CL_EmitEntitiesKeepScene ();	// B19: merge без CL_ClearScene (FTE PF_R_AddEntityMask)
+		CL_EmitEntitiesKeepScene ();	// merge without CL_ClearScene
 	if (mask & 2)
 		CSQC_Client_LinkViewModel ();
 	for (e = 1; e < vm->num_edicts; e++)
@@ -739,12 +732,11 @@ static void csqc_addentities (void)
 	}
 }
 /*
-float(float property, ...) setproperty = #303 (C5-E Ф1: подмножество view).
-Обрабатываются VF_MIN/SIZE/VIEWPORT/FOV/ORIGIN/ANGLES (и _X/_Y/_Z); значения
-применяются к r_refdef после V_CalcRefdef (cl_view.c) при активном CSQC
-(лаг 1 кадр — CSQC_UpdateView в HUD-фазе; документировано). Прочие свойства —
-no-op (как FTE default; 3D-сцена/ADR 0018 — Ф3).
-*/
+ float(float property, ...) setproperty = #303 (view subset).
+ Handles VF_MIN/SIZE/VIEWPORT/FOV/ORIGIN/ANGLES (and _X/_Y/_Z); the values are
+ applied to r_refdef after V_CalcRefdef when CSQC is active (1-frame lag -
+ CSQC_UpdateView in the HUD phase). Other properties are no-op (FTE default).
+ */
 static void csqc_setproperty (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -753,8 +745,8 @@ static void csqc_setproperty (void)
 	if (!vm)
 		return;
 	prop = (int)vm->globals[OFS_PARM0];
-	// после property: (argc-1) QC-аргументов по 3 слова; VF_VIEWPORT =
-	// vector+vector (позиция+размер) = 6 слов (FTE pr_csqc.c:2542, csdefs VF_VIEWPORT).
+	// after property: (argc-1) QC args, 3 words each; VF_VIEWPORT = vector+vector
+	// (position+size) = 6 words.
 	words = (vm->argc - 1) * 3;
 	if (words < 0)
 		words = 0;
@@ -762,30 +754,28 @@ static void csqc_setproperty (void)
 		words = 6;
 	for (i = 0; i < words; i++)
 		args[i] = vm->globals[OFS_PARM0 + 3 + i];
-	// FTE PF_R_SetViewFlag: 1 для распознанного VF_, 0 для неизвестного
-	// (pr_csqc.c:2389 и default:2691).
+	// 1 for a recognized VF_*, 0 for an unknown one.
 	vm->globals[OFS_RETURN] = CSQC_Client_SetViewProperty (prop, words, args) ? 1 : 0;
 }
 static void csqc_renderscene (void)
 {
-	// Ф3 (takeover): #304 renderscene выполняет 3D-рендер кадра (как FTE
-	// PF_R_RenderScene -> R_RenderView). Вне takeover — no-op (движок рисует сам).
+	// #304 renderscene performs the frame's 3D rendering (like FTE
+	// PF_R_RenderScene -> R_RenderView). Outside takeover it is a no-op (the engine draws).
 	if (CSQC_Client_SceneActive ())
 		CSQC_Client_RenderScene ();
 }
 
 /*
-float(vector position, string text, vector size, vector rgb,
-      float alpha, float drawflag) drawstring = #326
+ float(vector position, string text, vector size, vector rgb,
+       float alpha, float drawflag) drawstring = #326
 
-Двойная сигнатура FTE PF_CL_drawcolouredstring (pr_menu.c:523): при `argc >= 6`
-расширенная (rgb=P3, alpha=P4, flag=P5), иначе legacy-DP (белый цвет, alpha=P3,
-flag=P4 при argc>=5). Рисуем строку в 2D-оверлее ezquake. Параметры PR1 — каждые
-3 слова на аргумент: pos=0..2, text=3, size=6..8, rgb=9..11 (0..1 → байты),
-alpha=12, drawflag=15. Масштаб — size.x/8 (ezq-шрифт uniform-only; size.y не
-применяется — расхождение с FTE задокументировано в parity-audit §D.2).
-Цвет выставляем явно (Draw_SetColor) — не зависит от scr_coloredText.
-*/
+ Dual signature of FTE PF_CL_drawcolouredstring: with `argc >= 6` the extended form
+ (rgb=P3, alpha=P4, flag=P5), otherwise legacy DP (white color, alpha=P3, flag=P4 at
+ argc>=5). Draws the string in the ezquake 2D overlay. PR1 params are 3 words per
+ argument: pos=0..2, text=3, size=6..8, rgb=9..11 (0..1 -> bytes), alpha=12,
+ drawflag=15. Scale is size.x/8 (ezq font is uniform-only; size.y is not applied).
+ Color is set explicitly (Draw_SetColor) - independent of scr_coloredText.
+ */
 static void csqc_drawstring (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -799,7 +789,7 @@ static void csqc_drawstring (void)
 	s = CSQC_Client_GetString (vm, *(int *)&g[OFS_PARM0 + 3]);
 	if (!s)
 	{
-		// FTE: null-строка -> -1 (pr_menu.c:553-557).
+		// null string -> -1.
 		vm->globals[OFS_RETURN] = -1;
 		return;
 	}
@@ -812,21 +802,21 @@ static void csqc_drawstring (void)
 	}
 	else
 	{
-		// legacy-DP: (pos, text, size, alpha [, flag]) — белый цвет.
+		// legacy-DP: (pos, text, size, alpha [, flag]) - white color.
 		r = gg = b = 255;
 		alpha = g[OFS_PARM0 + 9];
 	}
-	// Слой D шаг 2: size.x -> scale (8px ячейка FTE); 0 => 1.
-	// drawfontscale: общий x-множитель текста (FTE pr_menu.c:140-149).
+	// size.x -> scale (8px cell); 0 => 1.
+	// drawfontscale: common x-multiplier of the text.
 	scale = ((g[OFS_PARM0 + 6] > 0) ? g[OFS_PARM0 + 6] / 8.0f : 1) * CSQC_Client_DrawFontScaleX (vm);
 	CSQC_Client_DrawText (g[OFS_PARM0 + 0], g[OFS_PARM0 + 1], s, r, gg, b, alpha, scale);
 }
 
 /*
-float(float stnum) getstati = #330
-FTE PF_cs_getstat_int (pr_csqc.c:2812): G_INT(OFS_RETURN) = stats[stnum] — возвращаются
-raw int-биты (не число). Числовое значение модуль читает через getstatf (#331).
-0..31 — cl.stats, 32..255 — ext-хранилище (CSQC_Client_GetStatInt).
+ float(float stnum) getstati = #330
+ FTE PF_cs_getstat_int: G_INT(OFS_RETURN) = stats[stnum] - raw int bits are returned
+ (not a float). The numeric value is read by the module via getstatf (#331).
+ 0..31 - cl.stats, 32..255 - ext storage (CSQC_Client_GetStatInt).
 */
 static void csqc_getstati (void)
 {
@@ -837,10 +827,10 @@ static void csqc_getstati (void)
 }
 
 /*
-float(float stnum, optional float firstbit, optional float bitcount) getstatf = #331
-Паритет FTE PF_cs_getstat_float (pr_csqc.c:2814-2843):
-  без доп. аргументов — float-значение стата (statsf, приём stat wire 79);
-  при firstbit/bitcount — бит-выборка из int-значения стата (getstatbits).
+ float(float stnum, optional float firstbit, optional float bitcount) getstatf = #331
+ FTE parity (PF_cs_getstat_float):
+   without extra args - the float stat value (statsf, from stat wire 79);
+   with firstbit/bitcount - bit extraction from the int stat value (getstatbits).
 */
 static void csqc_getstatf (void)
 {
@@ -856,8 +846,8 @@ static void csqc_getstatf (void)
 	}
 	if (vm->argc > 1)
 	{
-		// Точный int (не float-путь): большие int теряют младшие биты в float32
-		// (FTE pr_csqc.c:2826 читает stats[] как int).
+		// Exact int (not the float path): large ints lose low bits in float32
+		// (FTE reads stats[] as int).
 		int val = CSQC_Client_GetStatInt (stnum);
 		int first = (int)vm->globals[OFS_PARM1];
 		int count = (vm->argc > 2) ? (int)vm->globals[OFS_PARM2] : 1;
@@ -865,7 +855,7 @@ static void csqc_getstatf (void)
 			first = 0;
 		if (count < 0)
 			count = 0;
-		if (count > 31)	// FTE делает (1<<count); clamp без UB
+		if (count > 31)	// FTE does (1<<count); clamp to avoid UB
 			count = 31;
 		vm->globals[OFS_RETURN] = (float)((((unsigned int)val) & (((1u << count) - 1u) << first)) >> first);
 	}
@@ -874,11 +864,11 @@ static void csqc_getstatf (void)
 }
 
 /*
-string(float firststnum) getstats = #332
-Паритет FTE PF_cs_getstat_string при PEXT_CSQC (pr_csqc.c:2844-2854):
-statsstr[stnum], приём stat wire 78 (svc_fte_updatestatstring). Legacy packed-int
-вариант (4 int-стата, старые движки) не реализован — наш клиент всегда на
-FTE_PEXT_CSQC (модуль запускается только при нём).
+ string(float firststnum) getstats = #332
+ FTE parity (PF_cs_getstat_string under PEXT_CSQC): statsstr[stnum], received via
+ stat wire 78 (svc_fte_updatestatstring). The legacy packed-int variant (4 int stats,
+ old engines) is not implemented - our client is always on FTE_PEXT_CSQC (the module
+ only runs on it).
 */
 static void csqc_getstats (void)
 {
@@ -888,11 +878,10 @@ static void csqc_getstats (void)
 	CSQCVM_SetRetStr ((char *)CSQC_Client_GetStatString ((int)vm->globals[OFS_PARM0]));
 }
 
-// ---------------------------------------------------------------- Слой D, шаг 1
-// 2D-графика. Раскладка параметров — 3-словные ячейки от OFS_PARM0 (см.
-// docs/archive/ezquake_csqc_client_layerd_2d_plan.md §ABI). Возвраты draw* —
-// FTE-паритет (pr_menu.c): drawpic 1/0 (pic найден), drawfill/drawsubpic 1,
-// drawcharacter 1 (0 — null-символ, -1).
+// ----------------------------------------------------------------------------
+// 2D graphics. Param layout is 3-word cells from OFS_PARM0. draw* return values
+// follow FTE (pr_menu.c): drawpic 1/0 (pic found), drawfill/drawsubpic 1,
+// drawcharacter 1 (0 for null char, -1).
 
 /*
 float(vector position, float character, vector size, vector rgb, float alpha,
@@ -912,14 +901,14 @@ static void csqc_drawcharacter (void)
 		(int)(bound (0, g[OFS_PARM0 + 10], 1) * 255.0f + 0.5f),
 		(int)(bound (0, g[OFS_PARM0 + 11], 1) * 255.0f + 0.5f),
 		g[OFS_PARM0 + 12], scale);
-	// FTE PF_CL_drawcharacter (pr_menu.c:980): null-символ -> -1, иначе 1.
+	// null char -> -1, otherwise 1.
 	vm->globals[OFS_RETURN] = (g[OFS_PARM0 + 3] == 0) ? -1 : 1;
 }
 
 /*
 float(vector position, string pic, vector size, vector rgb, float alpha,
      optional float drawflag) drawpic = #322
-Возврат — pic найден (1) / нет (0), FTE PF_CL_drawpic (pr_menu.c:610).
+ Returns pic found (1) / not found (0), FTE PF_CL_drawpic.
 */
 static void csqc_drawpic (void)
 {
@@ -941,7 +930,7 @@ static void csqc_drawpic (void)
 /*
 void(vector pos, vector sz, string pic, vector srcpos, vector srcsz, vector rgb,
      float alpha, optional float drawflag) drawsubpic = #328
-Возврат — всегда 1 (FTE PF_CL_drawsubpic, pr_menu.c:688).
+ Returns always 1 (FTE PF_CL_drawsubpic).
 */
 static void csqc_drawsubpic (void)
 {
@@ -965,7 +954,7 @@ static void csqc_drawsubpic (void)
 /*
 float(vector position, vector size, vector rgb, float alpha,
      optional float drawflag) drawfill = #323
-Возврат — всегда 1 (FTE PF_CL_drawfill, pr_menu.c:49).
+ Returns always 1 (FTE PF_CL_drawfill).
 */
 static void csqc_drawfill (void)
 {
@@ -986,7 +975,7 @@ static void csqc_drawfill (void)
 /*
 void(float width, vector pos1, vector pos2, vector rgb, float alpha,
      optional float drawflag) drawline = #315
-FTE PF_CL_drawline (pr_menu.c:1063): width игнорируется (hairline).
+FTE PF_CL_drawline: width is ignored (hairline).
 */
 static void csqc_drawline (void)
 {
@@ -1013,16 +1002,16 @@ static void csqc_stringwidth (void)
 	if (!vm)
 		return;
 	text = CSQC_Client_GetString (vm, *(int *)&vm->globals[OFS_PARM0]);
-	// drawfontscale: умножаем size.x до передачи (внутри — /8) — метрика согласована
-	// с drawstring (FTE pr_menu.c:509-514: scale[0]/[1] × drawfontscale).
+	// drawfontscale: multiply size.x before passing (inside it is /8) - metric is
+	// consistent with drawstring.
 	vm->globals[OFS_RETURN] = CSQC_Client_StringWidth (text ? text : "",
 		vm->globals[OFS_PARM0 + 3] != 0,
 		vm->globals[OFS_PARM0 + 6] * CSQC_Client_DrawFontScaleX (vm));
 }
 
 /*
-string(string name, optional float trywad) precache_pic = #317
-Возвращает name, если пикча загрузилась (trywad игнорируется), иначе "".
+ string(string name, optional float trywad) precache_pic = #317
+ Returns name if the pic loaded (trywad is ignored), otherwise "".
 */
 static void csqc_precache_pic (void)
 {
@@ -1038,13 +1027,13 @@ static void csqc_precache_pic (void)
 }
 
 /*
-L2 — «2D-графика доп» (2026-09-07; #316/#318/#319/#321/#324/#325/#329).
-FTE-эталон — pr_menu.c PF_CL_* (iscachedpic 813, drawgetimagesize 1093, freepic 969,
-drawrawstring 1019, drawsetcliparea 65, drawresetcliparea 87, drawrotpic_dp 762).
-Обёртки-реализации — в CSQC_Client_* (csqc_client.c/.h).
+ Additional 2D graphics (#316/#318/#319/#321/#324/#325/#329). FTE reference - the
+ pr_menu.c PF_CL_* builtins (iscachedpic, drawgetimagesize, freepic, drawrawstring,
+ drawsetcliparea, drawresetcliparea, drawrotpic_dp). Implementations are in
+ CSQC_Client_* (csqc_client.c/.h).
 */
 
-/* float(string name) iscachedpic = #316 — пикча уже в кэше (без загрузки) */
+/* float(string name) iscachedpic = #316 - pic already in cache (no load) */
 static void csqc_iscachedpic (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -1055,7 +1044,7 @@ static void csqc_iscachedpic (void)
 	vm->globals[OFS_RETURN] = (name && CSQC_Client_IsCachedPic (name)) ? 1 : 0;
 }
 
-/* vector(string picname) drawgetimagesize = #318 — (w,h,0) загруженной пикчи */
+/* vector(string picname) drawgetimagesize = #318 - (w,h,0) of the loaded pic */
 static void csqc_drawgetimagesize (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -1078,16 +1067,16 @@ static void csqc_drawgetimagesize (void)
 	}
 }
 
-/* void(string name) freepic = #319 — no-op (FTE: тело пустое; пикчи шарятся) */
+/* void(string name) freepic = #319 - no-op (FTE: empty body; pics are shared) */
 static void csqc_freepic (void)
 {
-	/* no-op (FTE-паритет: shader/pic могут использоваться в других местах) */
+	/* no-op (FTE parity: shader/pic may be used elsewhere) */
 }
 
 /*
-void(vector position, string text, vector scale, vector rgb, float alpha,
-     optional float flag) drawrawstring = #321
-Раскладка как drawstring #326; «сырой» текст (без &c-префикса/парсинга).
+ void(vector position, string text, vector scale, vector rgb, float alpha,
+      optional float flag) drawrawstring = #321
+ Layout like drawstring #326; "raw" text (no &c-prefix/parsing).
 */
 static void csqc_drawrawstring (void)
 {
@@ -1134,21 +1123,21 @@ static void csqc_drawresetcliparea (void)
 /*
 void(vector pivot, string picname, vector size, vector mins, float angle,
      vector rgb, float alpha, optional float flag) drawrotpic_dp = #329
-No-op: в ezq 2D-пути нет GL-ротации текстурированного quad (докум. отклонение).
+ No-op: the ezq 2D path has no GL rotation of a textured quad.
 */
 static void csqc_drawrotpic_dp (void)
 {
-	/* no-op (документировано; GL-ротация 2D-quad в ezq отсутствует) */
+	/* no-op (no GL rotation of a 2D quad in ezq) */
 }
 
 /*
-string(string fmt, ...) sprintf = #627
-Мини-форматтер (QC) с width/flags/precision — подмножество FTE PF_sprintf_internal
-(pr_bgcmd.c:7295). Разбор %[flags][width][.precision]conv; flags - 0 + ' ' #;
-width/precision — только литеральные (без '*'/'%$' — отклонение от FTE, задокументировано).
-Конверсии d i u x X c s f g e + v ('x y z'); %o/%p/%S/%E/%F/%G/%V/length не поддержаны.
-Неизвестная конверсия — директива verbatim. Аргументы — из парам-слотов
-(OFS_PARM0 + 3*n), границы vm->argc; строки — CSQC_Client_GetString с валидацией offset.
+ string(string fmt, ...) sprintf = #627
+ Mini QC formatter with width/flags/precision - a subset of FTE PF_sprintf_internal.
+ Parses %[flags][width][.precision]conv; flags - 0 + ' ' #; width/precision are
+ literal only (no '*'/'%$'). Conversions d i u x X c s f g e + v ('x y z');
+ %o/%p/%S/%E/%F/%G/%V/length are unsupported. Unknown conversion is verbatim.
+ Arguments come from the param slots (OFS_PARM0 + 3*n), bounded by vm->argc; strings
+ via CSQC_Client_GetString with offset validation.
 */
 static char *csqc_sprintf_put_int (char *f, int v)
 {
@@ -1176,7 +1165,7 @@ static void csqc_sprintf (void)
 	char buf[2048];
 	char tmp[512];
 	const char *fmt, *p;
-	int pn = 1;		// номер аргумента после fmt (base = OFS_PARM0 + pn*3)
+	int pn = 1;		// argument number after fmt (base = OFS_PARM0 + pn*3)
 	size_t o = 0;
 
 	if (!vm)
@@ -1212,7 +1201,7 @@ static void csqc_sprintf (void)
 			else
 				break;
 		}
-		// width — только литеральное число (без '*')
+		// width - literal number only (no '*')
 		if (*p >= '1' && *p <= '9')
 		{
 			int nd = 0;
@@ -1225,7 +1214,7 @@ static void csqc_sprintf (void)
 			if (width > 2047)
 				width = 2047;
 		}
-		// precision — только литеральное число
+		// precision - literal number only
 		if (*p == '.')
 		{
 			int nd = 0;
@@ -1242,7 +1231,7 @@ static void csqc_sprintf (void)
 		if (!conv)
 			break;
 
-		// собрать C-формат: %[#][0][-][ ][+][width][.prec]
+		// build the C format: %[#][0][-][ ][+][width][.prec]
 		f = formatbuf;
 		*f++ = '%';
 		if (conv != 's' && conv != 'c' && (flags & 1))
@@ -1284,8 +1273,8 @@ static void csqc_sprintf (void)
 			{
 				int off = *(int *)&vm->globals[OFS_PARM0 + pn * 3];
 				char *gs = CSQC_Client_GetString (vm, off);
-				// Валидация: неотрицательный offset обязан лежать в строковой
-				// области модуля; отрицательные — во временных таблицах.
+				// Validation: a non-negative offset must lie in the module's string
+				// area; negative offsets are temporary tables.
 				if (gs && off >= 0 && (unsigned)off >= (unsigned)vm->progs->numstrings)
 					gs = NULL;
 				if (gs)
@@ -1336,7 +1325,7 @@ static void csqc_sprintf (void)
 				pn++;
 				break;
 			default:
-				// неизвестная конверсия — директива verbatim
+				// unknown conversion - verbatim directive
 				{
 					const char *q;
 					for (q = dir; q <= p && o < sizeof (buf) - 1; q++)
@@ -1359,22 +1348,19 @@ static void csqc_sprintf (void)
 }
 
 /*
-void(string evname, string evargs, ...) sendevent = #359
-(E2) Реальная запись clcfte_qcrequest(81) — wire-контракт ftew PF_cs_sendevent
-(pr_csqc.c:3794) / mvdsv SV_ReadQCRequest (sv_user.c:4616):
-  [byte 81] затем до 6 аргументов "[byte type][значение]", затем [byte 0
-  (ev_void-терминатор)] и [string evname].
-Типы: 's'=1 ev_string+string, 'f'=2 ev_float+float, 'v'=3 ev_vector+3 floats,
-'i'=8 ev_integer+long (raw-bits из float-слота, как ftew G_INT), 'e'=4
-ev_entity+entity (R12/T1.5: arena-эдикт → серверный номер из поля .entnum;
-невалид/freed → world(0), спека ext_csqc_1.txt:384; wire — как ftew
-MSG_WriteEntity, common.c:1351-1363). Неизвестный символ (вкл. '\0') — break
-(остаток не шлём; 'u'/'F'/'I'/'p' модуль не использует). Гварды: активный
-коннект + договорённый FTE_PEXT_CSQC + cl_pext_csqc (сервер без CSQC иначе
-дропает клиента, sv_user.c:5146).
-Seat-байт (R12): ftew пишет 200+csqc_playerseat только при seat>0
-(pr_csqc.c:3869-3872); ezq — single-seat (seat≡0, нет splitscreen/playerview) →
-байт не пишется, как у обычного ftew-клиента (Q-I=a, N/A).
+ void(string evname, string evargs, ...) sendevent = #359
+ Writes the real clcfte_qcrequest (81) wire contract:
+   [byte 81] then up to 6 args "[byte type][value]", then [byte 0 (ev_void
+   terminator)] and [string evname].
+ Types: 's'=1 ev_string+string, 'f'=2 ev_float+float, 'v'=3 ev_vector+3 floats,
+ 'i'=8 ev_integer+long (raw bits from the float slot), 'e'=4 ev_entity+entity
+ (arena edict -> server number from the .entnum field; invalid/freed -> world(0);
+ wire like MSG_WriteEntity). Unknown character (incl. '\0') - break (the rest is
+ not sent; 'u'/'F'/'I'/'p' are not used by the module). Guards: active connection +
+ negotiated FTE_PEXT_CSQC + cl_pext_csqc (a server without CSQC would otherwise
+ drop the client).
+ Seat byte: the wire writes 200+csqc_playerseat only when seat>0; ezq is single-seat
+ (seat==0, no splitscreen/playerview) -> the byte is not written.
 */
 #define CSQC_EV_VOID	0
 #define CSQC_EV_STRING	1
@@ -1383,10 +1369,9 @@ Seat-байт (R12): ftew пишет 200+csqc_playerseat только при sea
 #define CSQC_EV_ENTITY	4
 #define CSQC_EV_INTEGER	8
 
-/* R12/T1.5: entity-wire как ftew MSG_WriteEntity (common.c:1351-1363).
-   Некорректный номер (в т.ч. отрицательный) вырождается в world(0) — модуль не
-   должен ронять клиент; ftew-ный Host_EndGame при entnum>MAX_EDICTS сюда не
-   переносим. */
+/* Entity wire like MSG_WriteEntity. An invalid number (incl. negative) degenerates
+   to world(0) - the module must not crash the client; the Host_EndGame on
+   entnum>MAX_EDICTS is not ported here. */
 static void csqc_sendevent_write_entity (int entnum)
 {
 	if (entnum < 0)
@@ -1410,9 +1395,9 @@ static void csqc_sendevent (void)
 
 	if (!vm)
 		return;
-	// B8 (FTE pr_csqc.c:3801): sendevent требует лишь активного соединения, не ca_active.
-	// CSQC_Client_ConnectCheck зовёт CSQC_Init из CL_MakeActive до cls.state = ca_active
-	// (cl_main.c:437-440) — события из CSQC_Init обязаны уходить на сервер.
+	// sendevent requires only an active connection, not ca_active.
+	// CSQC_Client_ConnectCheck calls CSQC_Init from CL_MakeActive before
+	// cls.state = ca_active, so events from CSQC_Init must reach the server.
 	if (!cls.state)
 		return;
 	if (!cl_pext_csqc.value)
@@ -1458,8 +1443,8 @@ static void csqc_sendevent (void)
 		}
 		else if (c == 'e')
 		{
-			// R12/T1.5 (FTE pr_csqc.c:3860-3865): arena-эдикт → серверный номер
-			// из поля .entnum; невалид/пусто → world(0).
+			// arena edict -> server number from the .entnum field;
+			// invalid/empty -> world(0).
 			int slot = csqc_ent_of (vm, base);
 			float *f = (slot > 0 && CSQC_Client_EntUsed (slot))
 				? csqc_ent_field (vm, slot, "entnum") : NULL;
@@ -1475,15 +1460,15 @@ static void csqc_sendevent (void)
 }
 
 /*
-S1 read*-минимум: читают из текущего сетевого сообщения (как FTE). Remove
-больше не через стрим — identity модуль берёт из self.entnum (ADR 0017 P2).
+ The read* minimum: they read from the current network message. Remove is no longer
+ stream-based - the module takes identity from self.entnum.
 */
 static void csqc_readbyte (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
 	if (!vm)
 		return;
-	if (!CSQC_Client_MayRead ())	// R7/T1.4a (FTE pr_csqc.c:3416-3424)
+	if (!CSQC_Client_MayRead ())	// read not valid at this time
 	{
 		CSQC_Client_Abort ("PF_ReadByte is not valid at this time");
 		vm->globals[OFS_RETURN] = -1;
@@ -1493,8 +1478,8 @@ static void csqc_readbyte (void)
 }
 
 /*
-float() readchar = #361
-(S2) Байт со знаком из текущего сетевого сообщения.
+ float() readchar = #361
+ Signed byte from the current network message.
 */
 static void csqc_readchar (void)
 {
@@ -1515,7 +1500,7 @@ static void csqc_readshort (void)
 	pr1vm_t *vm = CSQCVM_Active ();
 	if (!vm)
 		return;
-	if (!CSQC_Client_MayRead ())	// R7/T1.4a (FTE pr_csqc.c:3436-3444)
+	if (!CSQC_Client_MayRead ())	// read not valid at this time
 	{
 		CSQC_Client_Abort ("PF_ReadShort is not valid at this time");
 		vm->globals[OFS_RETURN] = -1;
@@ -1529,7 +1514,7 @@ static void csqc_readlong (void)
 	pr1vm_t *vm = CSQCVM_Active ();
 	if (!vm)
 		return;
-	if (!CSQC_Client_MayRead ())	// R7/T1.4a (FTE pr_csqc.c:3462-3470)
+	if (!CSQC_Client_MayRead ())	// read not valid at this time
 	{
 		CSQC_Client_Abort ("PF_ReadLong is not valid at this time");
 		vm->globals[OFS_RETURN] = -1;
@@ -1539,16 +1524,16 @@ static void csqc_readlong (void)
 }
 
 /*
-float() readcoord = #364 / string() readstring = #366
-(E1/S2) Координата/строка из текущего сетевого сообщения (нужны cgamepacket-echo
-и типизированному 76-payload).
+ float() readcoord = #364 / string() readstring = #366
+ Coordinate/string from the current network message (needed for the cgamepacket echo
+ and the typed 76-payload).
 */
 static void csqc_readcoord (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
 	if (!vm)
 		return;
-	if (!CSQC_Client_MayRead ())	// R7/T1.4a (FTE pr_csqc.c:3472-3480)
+	if (!CSQC_Client_MayRead ())	// read not valid at this time
 	{
 		CSQC_Client_Abort ("PF_ReadCoord is not valid at this time");
 		vm->globals[OFS_RETURN] = -1;
@@ -1558,15 +1543,15 @@ static void csqc_readcoord (void)
 }
 
 /*
-float() readangle = #365
-(S2) Угол из текущего сетевого сообщения.
+ float() readangle = #365
+ Angle from the current network message.
 */
 static void csqc_readangle (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
 	if (!vm)
 		return;
-	if (!CSQC_Client_MayRead ())	// R7/T1.4a (FTE pr_csqc.c:3552-3560)
+	if (!CSQC_Client_MayRead ())	// read not valid at this time
 	{
 		CSQC_Client_Abort ("PF_ReadAngle is not valid at this time");
 		vm->globals[OFS_RETURN] = -1;
@@ -1581,7 +1566,7 @@ static void csqc_readstring (void)
 	char *s;
 	if (!vm)
 		return;
-	if (!CSQC_Client_MayRead ())	// R7/T1.4a (FTE pr_csqc.c:3536-3544)
+	if (!CSQC_Client_MayRead ())	// read not valid at this time
 	{
 		CSQC_Client_Abort ("PF_ReadString is not valid at this time");
 		vm->globals[OFS_RETURN] = 0;
@@ -1592,15 +1577,15 @@ static void csqc_readstring (void)
 }
 
 /*
-float() readfloat = #367
-(S2) Полный float из текущего сетевого сообщения.
+ float() readfloat = #367
+ Full float from the current network message.
 */
 static void csqc_readfloat (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
 	if (!vm)
 		return;
-	if (!CSQC_Client_MayRead ())	// R7/T1.4a (FTE pr_csqc.c:3482-3490)
+	if (!CSQC_Client_MayRead ())	// read not valid at this time
 	{
 		CSQC_Client_Abort ("PF_ReadFloat is not valid at this time");
 		vm->globals[OFS_RETURN] = -1;
@@ -1610,20 +1595,18 @@ static void csqc_readfloat (void)
 }
 
 /*
-R7/T1.4b (#368): PEXT2_REPLACEMENTDELTAS нет в qwprot — локальная константа под
-#ifndef (значение — FTE fteqw/engine/common/protocol.h:83). qwprot-субмодуль и
-CL_SupportedFTEExtensions2 не трогаем: бит клиентом не анонсируется, ветка
-forward-compat (live с mvdsv недостижима).
+ PEXT2_REPLACEMENTDELTAS is not in qwprot - a local constant under #ifndef. The
+ qwprot submodule and CL_SupportedFTEExtensions2 are left untouched: the client does
+ not announce the bit, so this branch is forward-compat only.
 */
 #ifndef PEXT2_REPLACEMENTDELTAS
 #define PEXT2_REPLACEMENTDELTAS 0x00000008
 #endif
 
 /*
-R7/T1.4b (#368): номер эдикта из текущего потока — PEXT2-aware, паритет FTE
-MSGCL_ReadEntity (fteqw/engine/common/common.c:1396-1404): при
-PEXT2_REPLACEMENTDELTAS — MSG_ReadBigEntity (:1364-1374: short; бит 0x8000 →
-(hi & 0x7fff)<<8 | byte), иначе обычный short (unsigned short, как FTE).
+ Edict number from the current stream - PEXT2-aware, FTE parity (MSGCL_ReadEntity):
+ with PEXT2_REPLACEMENTDELTAS - big entity (short; bit 0x8000 -> (hi & 0x7fff)<<8 |
+ byte), otherwise a plain short (unsigned short).
 */
 static int CSQC_Client_ReadEntityNum (void)
 {
@@ -1642,7 +1625,7 @@ static void csqc_readentitynum (void)
 	pr1vm_t *vm = CSQCVM_Active ();
 	if (!vm)
 		return;
-	if (!CSQC_Client_MayRead ())	// R7/T1.4a (FTE pr_csqc.c:3450-3460)
+	if (!CSQC_Client_MayRead ())	// read not valid at this time
 	{
 		CSQC_Client_Abort ("PF_ReadEntityNum is not valid at this time");
 		vm->globals[OFS_RETURN] = -1;
@@ -1652,13 +1635,12 @@ static void csqc_readentitynum (void)
 }
 
 /*
-Слой D шаг 3 — ввод/интерфейс builtins. B6 (FTE-parity): #340/#341 работают в
-QC/DP-домене клавиш (csdefs.qc:1377-1449) — вход/выход транслируется через
-CSQC_Client_QCToKeynum/CSQC_Client_KeynumToQC (эталон — fteqw pr_clcmd.c:14/:218).
+ Input/interface builtins. #340/#341 operate in the QC/DP key domain - input/output
+ is translated via CSQC_Client_QCToKeynum/CSQC_Client_KeynumToQC.
 
-string(float keynum) keynumtostring = #340
-QC-код -> имя клавиши (Key_KeynumToString для внутреннего keynum ezq).
-CSQCVM_SetRetStr глубоко копирует в temp-ring инстанса.
+ string(float keynum) keynumtostring = #340
+ QC code -> key name (Key_KeynumToString for the ezq internal keynum).
+ CSQCVM_SetRetStr deep-copies into the instance temp ring.
 */
 static void csqc_keynumtostring (void)
 {
@@ -1669,9 +1651,9 @@ static void csqc_keynumtostring (void)
 }
 
 /*
-float(string keyname) stringtokeynum = #341
-Имя клавиши -> QC-код; пустая строка/нет такого имени -> -1
-(Key_StringToKeynum даёт -1, KeynumToQC сохраняет -1).
+ float(string keyname) stringtokeynum = #341
+ Key name -> QC code; empty string/no such name -> -1
+ (Key_StringToKeynum gives -1, KeynumToQC keeps -1).
 */
 static void csqc_stringtokeynum (void)
 {
@@ -1683,9 +1665,9 @@ static void csqc_stringtokeynum (void)
 }
 
 /*
-float() isdemo = #349
-0 — не демо; 1 — обычное демо; 2 — MVD/QTV-просмотр (cls.mvdplayback: 1=MVD, 2=QTV).
-Семантика совпадает с FTE PF_cl_playingdemo (pr_clcmd.c: DPB_NONE=0, DPB_MVD=2, иначе 1).
+ float() isdemo = #349
+ 0 - not demo; 1 - normal demo; 2 - MVD/QTV viewing (cls.mvdplayback: 1=MVD, 2=QTV).
+ Matches FTE PF_cl_playingdemo semantics (DPB_NONE=0, DPB_MVD=2, otherwise 1).
 */
 static void csqc_isdemo (void)
 {
@@ -1696,10 +1678,10 @@ static void csqc_isdemo (void)
 }
 
 /*
-string(string key) serverkey = #354
-FTE PF_cl_serverkey_internal (pr_clcmd.c:1391): синтетические ключи ip/maxplayers/protocol/
-dlstate, затем fallback на serverinfo. Deviation (accept+doc): protocol — упрощённая строка
-(без разбора QW/ZQ/FTE), dlstate — только процент (FTE — многополевая строка).
+ string(string key) serverkey = #354
+ FTE PF_cl_serverkey_internal: synthetic keys ip/maxplayers/protocol/dlstate, then
+ fallback to serverinfo. Deviation: protocol is a simplified string (no QW/ZQ/FTE
+ parsing), dlstate is only the percent (FTE is a multi-field string).
 */
 static void csqc_serverkey (void)
 {
@@ -1711,18 +1693,18 @@ static void csqc_serverkey (void)
 		return;
 	if (!key)
 		key = "";
-	if (!strcmp (key, "ip"))				// FTE :1396
+	if (!strcmp (key, "ip"))				// ip key
 	{
 		if (cls.demoplayback)
 			v = cls.demoname;
 		else
 			v = NET_AdrToString (cls.netchan.remote_address);
 	}
-	else if (!strcmp (key, "maxplayers"))			// FTE :1430
+	else if (!strcmp (key, "maxplayers"))			// maxplayers key
 		snprintf (buf, sizeof (buf), "%d", cl.sv_maxclients), v = buf;
-	else if (!strcmp (key, "protocol"))			// FTE :1452 (упрощено)
+	else if (!strcmp (key, "protocol"))			// protocol key (simplified)
 		v = cls.demoplayback ? "QuakeWorld demo" : "QuakeWorld";
-	else if (!strcmp (key, "dlstate"))			// FTE :1434 (упрощено)
+	else if (!strcmp (key, "dlstate"))			// dlstate key (simplified)
 	{
 		if (!cls.download)
 			v = "";
@@ -1735,17 +1717,17 @@ static void csqc_serverkey (void)
 }
 
 /*
-string(float playernum, string keyname) getplayerkeyvalue = #348
-Значения scoreboard/userinfo игрока (cl.players[pnum]). Числовые ключи
-frags/ping/userid/spectator — форматированием; name/team/topcolor/bottomcolor и
-прочие — из userinfo (как FTE PF_cs_getplayerkey_internal, pr_csqc.c:4344).
-Пустой слот / вне [0, MAX_CLIENTS) -> "" (пустая строка). Отклонение: pnum<0
-(scoreboard-индекс fragsort) не поддержан -> "" (roadmap A6).
+ string(float playernum, string keyname) getplayerkeyvalue = #348
+ Player scoreboard/userinfo values (cl.players[pnum]). Numeric keys
+ frags/ping/userid/spectator - via formatting; name/team/topcolor/bottomcolor and
+ others - from userinfo (like FTE PF_cs_getplayerkey_internal). Empty slot / outside
+ [0, MAX_CLIENTS) -> "" (empty string). Deviation: pnum<0 (scoreboard fragsort index)
+ is unsupported -> "".
 */
 /*
-void(float sens) setsensitivityscaler = #346
-Временный множитель чувствительности мыши (зум-аналог FTE PF_cs_setsensitivityscaler,
-in_sensitivityscale). Значение применяет in_sdl2.c к sensitivity в игровом ветвлении.
+ void(float sens) setsensitivityscaler = #346
+ Temporary mouse sensitivity multiplier (zoom analog of FTE
+ PF_cs_setsensitivityscaler). The value is applied to sensitivity by in_sdl2.c.
 */
 static void csqc_setsensitivityscaler (void)
 {
@@ -1756,14 +1738,12 @@ static void csqc_setsensitivityscaler (void)
 }
 
 /*
-float(float inputsequencenum) getinputstate = #345
-Заполняет input_* глобалы из истории отправленных usercmd (C5-A). seq = зеркало
-cls.netchan.outgoing_sequence; валиден (servercommandframe, clientcommandframe]
-(контракт модуля — движок диапазон не проверяет, спека ext_csqc_1.txt:262);
-paused-guard как FTE (pr_csqc.c:4142). Возврат 0, если seq вне кольца истории
-(64) или пауза. T2.2: clientcommandframe = последний отправленный seq (FTE
-cl.movesequence), поэтому #345(clientcommandframe) отдаёт живой pending-кадр вне
-CSQC_Input_Frame (в ring; у FTE — пересборка cl_pendingcmd).
+ float(float inputsequencenum) getinputstate = #345
+ Fills the input_* globals from the sent usercmd history. seq is a mirror of
+ cls.netchan.outgoing_sequence; valid range (servercommandframe, clientcommandframe]
+ (the engine does not check the range), with a paused guard. Returns 0 if seq is
+ outside the history ring (64) or paused. clientcommandframe is the last sent seq,
+ so #345(clientcommandframe) returns the live pending frame outside CSQC_Input_Frame.
 */
 static void csqc_getinputstate (void)
 {
@@ -1776,13 +1756,13 @@ static void csqc_getinputstate (void)
 }
 
 /*
-void(entity ent) runstandardplayerphysics = #347
-C5-B: FTE-семантика (pr_csqc.c:4185-4299) — PM_PlayerMove по input_*-глобалам
-(модуль зовёт getinputstate(seq) перед вызовом), solid-набор мир+энт+игроки,
-поля ent (.mins/.maxs/.gravity/.pmove_flags/.flags), запись .flags/.pmove_flags +
-deprec pmove_org/vel/onground. Отклонения (нет полей в ezq pmove) — в csqc_client.c.
-Entity-аргумент — сырые int-биты (csqc_ent_of, как FTE G_EDICT): float-чтение
-обращало значение spawn() (int-биты N*edict_size) в 0 — квирк C5-B.
+ void(entity ent) runstandardplayerphysics = #347
+ FTE semantics - PM_PlayerMove over the input_* globals (the module calls
+ getinputstate(seq) before), solid set world+ent+players, ent fields
+ (.mins/.maxs/.gravity/.pmove_flags/.flags), writing .flags/.pmove_flags plus the
+ deprecated pmove_org/vel/onground. Deviations (missing fields in ezq pmove) are in
+ csqc_client.c. The entity argument is raw int bits (csqc_ent_of): a float read
+ would turn the spawn() value (int bits N*edict_size) into 0.
 */
 static void csqc_runstandardplayerphysics (void)
 {
@@ -1795,10 +1775,10 @@ static void csqc_runstandardplayerphysics (void)
 }
 
 /*
-entity(float entnum) edict_num = #459
-C2.1: entity-значение по номеру — сырые int-биты N*edict_size (как self в
-SetEntityContext и spawn), FTE PF_edict_for_num пишет G_INT(OFS_RETURN), а не float.
-Вне диапазона арены -> 0 (world).
+ entity(float entnum) edict_num = #459
+ Entity value by number - raw int bits N*edict_size (like self in SetEntityContext
+ and spawn); FTE PF_edict_for_num writes G_INT(OFS_RETURN), not a float. Outside the
+ arena range -> 0 (world).
 */
 static void csqc_edict_num (void)
 {
@@ -1816,8 +1796,8 @@ static void csqc_edict_num (void)
 }
 
 /*
-C2.2 — string-buffers #460-469 (DP). Хранилище в csqc_client (deep-copy);
-builtins — тонкие обёртки (ABI i*3, возвраты строк через CSQCVM_SetRetStr).
+ string buffers #460-469 (DP). Storage lives in csqc_client (deep-copy); the
+ builtins are thin wrappers (ABI i*3, string returns via CSQCVM_SetRetStr).
 */
 static int CSQCVM_ArgInt (int idx)
 {
@@ -1931,11 +1911,10 @@ static void csqc_bufstr_free (void)
 }
 
 /*
-C3.1.
-void(string soundname, optional float channel, optional float volume) localsound = #177
-FTE PF_cl_localsound (pr_clcmd.c:1059) = S_LocalSound2(name, chan, vol): local-звук.
-ezquake: S_LocalSoundWithVol (snd_main.c:1085, precache по имени, канал local −1).
-Отклонение: channel игнорируется; vol 0..1 (default 1).
+ void(string soundname, optional float channel, optional float volume) localsound = #177
+ FTE PF_cl_localsound = S_LocalSound2(name, chan, vol): local sound.
+ ezquake: S_LocalSoundWithVol (precache by name, channel local -1).
+ Deviation: channel is ignored; vol 0..1 (default 1).
 */
 static void csqc_localsound (void)
 {
@@ -1953,10 +1932,10 @@ static void csqc_localsound (void)
 }
 
 /*
-float(vector org, float radius, vector lightcolours, optional float style, ...)
-dynamiclight_add = #305
-ezquake: CL_AllocDlight + поля (lt_custom, color=lightcolours*255, radius, 0.1s).
-style/cubemap/pflags — нет аналога (вне скоупа, документировано). Возврат — индекс слота.
+ float(vector org, float radius, vector lightcolours, optional float style, ...)
+ dynamiclight_add = #305
+ ezquake: CL_AllocDlight + fields (lt_custom, color=lightcolours*255, radius, 0.1s).
+ style/cubemap/pflags have no analog (no-op). Return is the slot index.
 */
 static void csqc_dynamiclight_add (void)
 {
@@ -1984,10 +1963,9 @@ static void csqc_dynamiclight_add (void)
 }
 
 /*
-C3.2 — частицы #335-337. В ezquake нет реестра имён эффектов — свой мини-реестр
-(имя -> палитровый цвет/базовое кол-во). #335 возвращает handle эффекта (idx+1,
-нет -> -1); #336/#337 спавнят R_RunParticleEffect (аппроксимация; FTE-реестр не
-портируем — документировано).
+ Particles #335-337. ezquake has no effect-name registry - a mini registry
+ (name -> palette colour/base count). #335 returns an effect handle (idx+1, -1 if
+ none); #336/#337 spawn R_RunParticleEffect (approximation).
 */
 typedef struct { const char *name; int color; int count; } csqc_peffect_t;
 static const csqc_peffect_t s_peffects[] = {
@@ -2076,9 +2054,10 @@ static void csqc_pointparticles (void)
 }
 
 /*
-C3.3a — te_* аппроксимируемая группа (частицы/взрывы/spikes #405-427, кроме #426).
-Аппроксимация: R_RunParticleEffect/R_ParticleExplosion/R_BlobExplosion/CL_ExplosionSprite
-(палитровые цвета, bbox/направления приближённо). Не-мапящиеся (#426 и др.) не регистрируются.
+ The approximated te_* group (particles/explosions/spikes #405-427, except #426).
+ Approximation via R_RunParticleEffect/R_ParticleExplosion/R_BlobExplosion/
+ CL_ExplosionSprite (palette colours, bbox/directions approximate). Unmappable ones
+ (#426 etc.) are not registered.
 */
 static unsigned int s_te_rnd = 1;
 static float csqc_te_rand01 (void)
@@ -2163,7 +2142,7 @@ static void csqc_te_spark (void)
 	R_RunParticleEffect (&g[OFS_PARM0], &g[OFS_PARM0 + 3], 0,
 		bound (1, (int)g[OFS_PARM0 + 6], 4096));
 }
-// #412-415 quad-эффекты (org в w0) — белые частицы
+// #412-415 quad effects (org in w0) - white particles
 static void csqc_te_quad (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -2194,7 +2173,7 @@ static void csqc_te_gunshot (void)
 	count = (vm->argc > 1) ? (int)g[OFS_PARM0 + 3] : 20;
 	R_RunParticleEffect (&g[OFS_PARM0], vec3_origin, 0, bound (1, count, 4096));
 }
-// #419/420/423/424 spikes — цветные частицы
+// #419/420/423/424 spikes - coloured particles
 static void csqc_te_spike_color (int color)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -2228,11 +2207,11 @@ static void csqc_te_lavasplash (void)
 }
 
 /*
-C3.3b — beams #428-431 (te_lightning1/2/3, te_beam): CL_CreateBeam(type, ent, start, end)
-(cl_tent.c:439). own-entity -> entnum (сырые int-биты через csqc_ent_of). Аппроксимация.
-#431-fix (C6.1): если модель эффекта отсутствует (напр. progs/beam.mdl в стенде) —
-Con_Printf-варн и no-op, БЕЗ host error/disconnect (Mod_CustomModel(crash=false);
-CL_CreateBeam сам грузит с crash=true и рвёт коннект).
+ Beams #428-431 (te_lightning1/2/3, te_beam): CL_CreateBeam(type, ent, start, end).
+ own-entity -> entnum (raw int bits via csqc_ent_of). Approximation. If the effect
+ model is missing (e.g. progs/beam.mdl) - Con_Printf warning and no-op, without a
+ host error/disconnect (Mod_CustomModel(crash=false); CL_CreateBeam itself loads with
+ crash=true and drops the connection).
 */
 static custom_model_id_t CSQC_BeamModelId (int type)
 {
@@ -2301,11 +2280,11 @@ static void csqc_getplayerkeyvalue (void)
 	pi = &cl.players[pnum];
 	if (!pi->name[0])
 	{
-		CSQCVM_SetRetStr ("");	// пустой слот — игрока нет
+		CSQCVM_SetRetStr ("");	// empty slot - no player
 		return;
 	}
-	// B10 (Э8.2): ключи FTE PF_cs_getplayerkey_internal (pr_csqc.c:4344): к уже
-	// имевшимся frags/ping/userid/spectator/name + userinfo добавлены pl,
+	// FTE PF_cs_getplayerkey_internal keys: to the existing
+	// frags/ping/userid/spectator/name + userinfo add pl,
 	// activetime, ignored, viewentity, topcolor_rgb/bottomcolor_rgb.
 	if (!strcmp (key, "frags"))
 		snprintf (buf, sizeof (buf), "%d", pi->frags), v = buf;
@@ -2315,18 +2294,18 @@ static void csqc_getplayerkeyvalue (void)
 		snprintf (buf, sizeof (buf), "%d", pi->userid), v = buf;
 	else if (!strcmp (key, "spectator"))
 		snprintf (buf, sizeof (buf), "%d", (int)pi->spectator), v = buf;
-	else if (!strcmp (key, "pl"))				// packet loss (FTE :4375)
+	else if (!strcmp (key, "pl"))				// packet loss
 		snprintf (buf, sizeof (buf), "%d", (int)pi->pl), v = buf;
-	else if (!strcmp (key, "activetime"))			// FTE :4382 (realtime - entertime)
+	else if (!strcmp (key, "activetime"))			// realtime - entertime
 		snprintf (buf, sizeof (buf), "%f", cls.realtime - pi->entertime), v = buf;
 	else if (!strcmp (key, "ignored"))
 		snprintf (buf, sizeof (buf), "%d", (int)pi->ignored), v = buf;
-	else if (!strcmp (key, "viewentity"))			// FTE :4351 (DP-compat: pnum+1)
+	else if (!strcmp (key, "viewentity"))			// DP-compat: pnum+1
 		snprintf (buf, sizeof (buf), "%d", pnum + 1), v = buf;
 	else if (!strcmp (key, "topcolor_rgb") || !strcmp (key, "bottomcolor_rgb"))
 	{
-		// FTE :4392-4415 — палитра-цвет (real_*); DP-RGB (col>=16) не поддержан
-		// (accept+doc). Формат — "'r g b'" (%g).
+		// palette colour (real_*); DP-RGB (col>=16) is unsupported.
+		// Format is "'r g b'" (%g).
 		int col = (key[0] == 't') ? (int)pi->real_topcolor : (int)pi->real_bottomcolor;
 		if (col < 16)
 		{
@@ -2346,14 +2325,14 @@ static void csqc_getplayerkeyvalue (void)
 }
 
 /*
-void(float usecursor, optional string cursorimage, optional vector hotspot,
-     optional float scale) setcursormode = #343
-FTE (pr_clcmd.c PF_cl_setcursormode): освобождает/хватает мышь и настраивает курсор.
-ezquake (A3.1): полная реализация — пока usecursor=1 и модуль активен в игре, мышь
-не отдаётся OS-курсору и SCR_DrawCursor рисует курсор модуля (image/hotspot/scale);
-при 0 мышь возвращается движку. Клики/InputEvent-канал модуля — C1.
-ABI/scale — как FTE: hotspot — вектор (w6..8), масштаб читается из hotspot.z (w8),
-отдельный float-арг (w9) игнорируется; scale <= 0 -> нативный размер курсора.
+ void(float usecursor, optional string cursorimage, optional vector hotspot,
+      optional float scale) setcursormode = #343
+ FTE: releases/grabs the mouse and configures the cursor. ezquake: full implementation
+ - while usecursor=1 and the module is active in-game, the mouse is not given to the
+ OS cursor and SCR_DrawCursor draws the module's cursor (image/hotspot/scale); at 0
+ the mouse is returned to the engine.
+ ABI/scale like FTE: hotspot is a vector (w6..8), scale is read from hotspot.z (w8),
+ a separate float arg (w9) is ignored; scale <= 0 -> native cursor size.
 */
 static void csqc_setcursormode (void)
 {
@@ -2370,11 +2349,10 @@ static void csqc_setcursormode (void)
 }
 
 /*
-vector() getmousepos = #344
-Позиция CSQC-курсора в координатах 2D-оверлея ezquake (см. GetCursorPos); z = 0.
-FTE (pr_menu.c PF_cl_getmousepos): при абсолютном курсоре — позиция, иначе дельты
-со сбросом. Отклонение (roadmap A3.2): всегда позиция (модуль в абсолютном режиме;
-дельты/InputEvent-канал — C1).
+ vector() getmousepos = #344
+ Position of the CSQC cursor in ezquake 2D overlay coordinates (GetCursorPos); z = 0.
+ FTE: with an absolute cursor - position, otherwise deltas with reset. Deviation:
+ always the position (the module is in absolute mode).
 */
 static void csqc_getmousepos (void)
 {
@@ -2389,8 +2367,8 @@ static void csqc_getmousepos (void)
 }
 
 /*
-float(float x, float y) pow = #97 (Phase 1 L1 P1a; клиентский обработчик —
-серверная PF_pow статическая; чистая математика)
+ float(float x, float y) pow = #97 (client handler; the server PF_pow is static;
+ pure math)
 */
 static void csqc_pow (void)
 {
@@ -2401,7 +2379,7 @@ static void csqc_pow (void)
 }
 
 /*
-vector() randomvec = #91 (Phase 1 L1 P1a; клиентский обработчик, как PF_randomvec)
+ vector() randomvec = #91 (client handler, like PF_randomvec)
 */
 static void csqc_randomvec (void)
 {
@@ -2418,10 +2396,8 @@ static void csqc_randomvec (void)
 }
 
 /*
-L2-тривиалы T1 — математика (2026-09-07; волна тривиал-кандидатов, L2-реестр).
-FTE-эталон тел — fteqw/engine/common/pr_bgcmd.c (asin 6486, log 4776, anglemod 6534,
-mod 6452, bitshift 6376, crc16 5772, gettimef 7266). Чистые float/string-функции без
-edict/движкового состояния (исключения #494 crc16 / #519 gettimef отмечены в телах).
+ Math builtins. Bodies are pure float/string functions without edict/engine state
+ (the exceptions #494 crc16 / #519 gettimef are noted in their bodies).
 */
 
 /*
@@ -2465,8 +2441,8 @@ static void csqc_tan (void)
 }
 
 /*
-float(float x, optional float base) log = #532
-log(x); при 2-м аргументе — log_base(x) = log(x)/log(base) (PF_Logarithm).
+ float(float x, optional float base) log = #532
+ log(x); with a 2nd argument - log_base(x) = log(x)/log(base) (PF_Logarithm).
 */
 static void csqc_log (void)
 {
@@ -2481,7 +2457,7 @@ static void csqc_log (void)
 }
 
 /*
-float(float v) anglemod = #102 — в [0,360) (PF_anglemod).
+float(float v) anglemod = #102 - in [0,360) (PF_anglemod).
 */
 static void csqc_anglemod (void)
 {
@@ -2498,7 +2474,7 @@ static void csqc_anglemod (void)
 }
 
 /*
-float(float a, float n) mod = #245 — a - n*(int)(a/n); деление на 0 → warning + 0.
+float(float a, float n) mod = #245 - a - n*(int)(a/n); division by 0 -> warning + 0.
 */
 static void csqc_mod (void)
 {
@@ -2518,8 +2494,8 @@ static void csqc_mod (void)
 }
 
 /*
-float(float number, float quantity) bitshift = #218
-quantity<0 → сдвиг вправо на −quantity, иначе влево (PF_bitshift).
+ float(float number, float quantity) bitshift = #218
+ quantity<0 -> shift right by -quantity, otherwise left (PF_bitshift).
 */
 static void csqc_bitshift (void)
 {
@@ -2537,10 +2513,10 @@ static void csqc_bitshift (void)
 }
 
 /*
-float(float insensitive, string str, ...) crc16 = #494
-CRC16 (CCITT, poly 0x1021, init/xor 0xffff/0x0000 — тот же, что ezq CRC_* и FTE
-hash_crc16); insensitive → строчные буквы перед подсчётом (FTE hash_crc16_lower).
-Строки от 1-го аргумента конкатенируются (FTE PF_VarString). Возврат — значение crc.
+ float(float insensitive, string str, ...) crc16 = #494
+ CRC16 (CCITT, poly 0x1021, init/xor 0xffff/0x0000 - same as ezq CRC_*);
+ insensitive -> lowercase letters before counting. Strings from the 1st argument are
+ concatenated. Return is the crc value.
 */
 static void csqc_crc16 (void)
 {
@@ -2569,11 +2545,11 @@ static void csqc_crc16 (void)
 }
 
 /*
-float(optional float timer) gettimef = #519 — время в секундах (float).
-FTE PF_gettimed (pr_bgcmd.c:7248): timer 0/нет — realtime (кадр), 1 — wall-clock
-с точностью до мс, 5 — sim-time (cl.time); остальное → realtime.
-Отклонение (в parity): mode0 = cls.realtime ezquake (масштабируется cl_demospeed).
-sys.h не включаем (конфликт dllfunction_t после quakedef) — прототип локальный.
+ float(optional float timer) gettimef = #519 - time in seconds (float).
+ FTE PF_gettimed: timer 0/none - realtime (frame), 1 - wall-clock with ms precision,
+ 5 - sim-time (cl.time); otherwise -> realtime.
+ Deviation: mode0 = cls.realtime (scales with cl_demospeed).
+ sys.h is not included (dllfunction_t conflict after quakedef) - local prototype.
 */
 double Sys_DoubleTime (void);
 static void csqc_gettimef (void)
@@ -2598,14 +2574,12 @@ static void csqc_gettimef (void)
 }
 
 /*
-L2-тривиалы T2 — int/hex конверсии (#259-262, 2026-09-07; волна тривиал-кандидатов).
-FTE-эталон — pr_bgcmd.c (itos 4701, stoi 4712, htos 4720, stoh 4731).
-ABI: параметры/возврат типа int в классике передаются 4 байтами битового значения
-(как строки), а не float-числом — читаем/пишем через *(int *)&globals[...].
+ int/hex conversions (#259-262). ABI: int-typed params/returns are passed as 4 bytes
+ of a bit value (like strings), not as a float - read/write via *(int *)&globals[...].
 */
 
 /*
-string(int input) itos = #260 — "%d".
+string(int input) itos = #260 - "%d".
 */
 static void csqc_itos (void)
 {
@@ -2618,7 +2592,7 @@ static void csqc_itos (void)
 }
 
 /*
-int(string input) stoi = #259 — atoi (возврат int-битами).
+int(string input) stoi = #259 - atoi (returns int bits).
 */
 static void csqc_stoi (void)
 {
@@ -2630,7 +2604,7 @@ static void csqc_stoi (void)
 }
 
 /*
-string(int input) htos = #262 — "%08x" (всегда 8 символов, без префикса).
+string(int input) htos = #262 - "%08x" (always 8 chars, no prefix).
 */
 static void csqc_htos (void)
 {
@@ -2643,7 +2617,7 @@ static void csqc_htos (void)
 }
 
 /*
-int(string input) stoh = #261 — strtoul base 16 (возврат int-битами).
+int(string input) stoh = #261 - strtoul base 16 (returns int bits).
 */
 static void csqc_stoh (void)
 {
@@ -2655,21 +2629,18 @@ static void csqc_stoh (void)
 }
 
 /*
-L2-тривиалы T3 — cvar-метаданные (#482/#495/#518, 2026-09-07; волна тривиал-кандидатов).
-FTE-эталон — pr_bgcmd.c (cvar_defstring 1907, cvar_description 1918, cvar_type 1934).
-Отклонения (parity): в ezq `cvar_t` нет description (→ #518 всегда "" и флаг
-HASDESCRIPTION не ставится); PRIVATE-аналога FTE (NOTFROMSERVER/NOUNSAFEEXPAND) нет —
-не выставляется.
+ cvar metadata (#482/#495/#518). Deviations: ezq cvar_t has no description (#518 is
+ always "" and HASDESCRIPTION is not set); there is no FTE PRIVATE analog
+ (NOTFROMSERVER/NOUNSAFEEXPAND), so it is not set.
 */
 
 /*
-string(string cvarname) cvar_defstring = #482
-FTE: FindOrGet (создаёт, если нет), возврат default-значения (нет — "").
-ezq: Cvar_Find / Cvar_Create (FindOrGet), возврат cvar_t.defaultvalue.
-Отклонение (T3 Э6, doc): для `registercvar(name,value)` FTE отдаёт "" — это quirk
-`PF_registercvar` (`pr_bgcmd.c:2001` читает value по гейту `callargc>2`, а 2-арг вызов
-даёт value "") → `defaultstr=""`. ezq честно возвращает defaultvalue (value) — намеренно,
-т.к. мимикрия quirk сломала бы дефолты модуля (`csqc_vm` и др.).
+ string(string cvarname) cvar_defstring = #482
+ FTE: FindOrGet (creates if missing), returns the default value ("" if none).
+ ezq: Cvar_Find / Cvar_Create, returns cvar_t.defaultvalue.
+ Deviation: for registercvar(name,value) FTE returns "" (a PF_registercvar quirk);
+ ezq honestly returns defaultvalue, since mimicking the quirk would break the module's
+ defaults (csqc_vm etc.).
 */
 static void csqc_cvar_defstring (void)
 {
@@ -2685,10 +2656,10 @@ static void csqc_cvar_defstring (void)
 }
 
 /*
-float(string cvarname) cvar_type = #495
-Флаги FTE (pr_common.h:225): EXISTS=1 SAVED=2 PRIVATE=4 ENGINE=8 HASDESCRIPTION=16
-READONLY=32. Маппинг на ezq: SAVED = CVAR_ARCHIVE|CVAR_USER_ARCHIVE; ENGINE = не
-CVAR_USER_CREATED/MOD_CREATED; READONLY = CVAR_ROM. cvar не обязан существовать.
+ float(string cvarname) cvar_type = #495
+ FTE flags: EXISTS=1 SAVED=2 PRIVATE=4 ENGINE=8 HASDESCRIPTION=16 READONLY=32.
+ Mapping to ezq: SAVED = CVAR_ARCHIVE|CVAR_USER_ARCHIVE; ENGINE = not
+ CVAR_USER_CREATED/MOD_CREATED; READONLY = CVAR_ROM. The cvar need not exist.
 */
 static void csqc_cvar_type (void)
 {
@@ -2713,8 +2684,8 @@ static void csqc_cvar_type (void)
 }
 
 /*
-string(string cvarname) cvar_description = #518
-FTE возвращает описание cvar; в ezq у cvar_t описаний нет — всегда "".
+ string(string cvarname) cvar_description = #518
+ FTE returns the cvar description; ezq cvar_t has none - always "".
 */
 static void csqc_cvar_description (void)
 {
@@ -2725,16 +2696,13 @@ static void csqc_cvar_description (void)
 }
 
 /*
-L2-тривиалы T4 — строки простые (2026-09-07; волна тривиал-кандидатов).
-FTE-эталон — pr_bgcmd.c (strpad 4363, strncasecmp 4272/strncmp 4305, infoadd/infoget
-4337/4348, strreplace 4968/strireplace 4997, chr2str 4560/str2chr 4579, strtolower
-5066/strtoupper 5077). ASCII-семантика (UTF-8-ветки FTE — вне классики, отклонение
-в parity). Строки возврата — temp-ring (SetRetStr).
+ Simple string builtins. ASCII semantics (the FTE UTF-8 branches are out of scope).
+ String returns use the temp ring (SetRetStr).
 */
 
 /*
-float(string str, optional float index) str2chr = #222 — код символа; index<0 —
-с конца; вне [0,len) → 0.
+ float(string str, optional float index) str2chr = #222 - char code; index<0 - from
+ the end; outside [0,len) -> 0.
 */
 static void csqc_str2chr (void)
 {
@@ -2755,7 +2723,7 @@ static void csqc_str2chr (void)
 }
 
 /*
-string(float chr, ...) chr2str = #223 — строка из кодов символов (каждый аргумент).
+string(float chr, ...) chr2str = #223 - string from char codes (each argument).
 */
 static void csqc_chr2str (void)
 {
@@ -2771,8 +2739,8 @@ static void csqc_chr2str (void)
 }
 
 /*
-string(float pad, string str1, ...) strpad = #225 — выравнивание конкатенации
-строк к ширине |pad|: pad>0 — справа, pad<0 — слева (PF_strpad).
+ string(float pad, string str1, ...) strpad = #225 - pads the concatenated strings to
+ width |pad|: pad>0 - right, pad<0 - left (PF_strpad).
 */
 static void csqc_strpad (void)
 {
@@ -2823,10 +2791,10 @@ static void csqc_strpad (void)
 }
 
 /*
-string(infostring old, string key, string value) infoadd = #226
-string(infostring info, string key) infoget = #227
-QW-infostring \key\value; FTE Info_* (pr_bgcmd.c). Прототипы Info_SetValueForStarKey
-в common.h нет — локальный extern.
+ string(infostring old, string key, string value) infoadd = #226
+ string(infostring info, string key) infoget = #227
+ QW infostring \key\value; FTE Info_*. Info_SetValueForStarKey has no prototype in
+ common.h - local extern.
 */
 void Info_SetValueForStarKey (char *s, char *key, char *value, int maxsize);
 static void csqc_infoadd (void)
@@ -2854,8 +2822,8 @@ static void csqc_infoget (void)
 }
 
 /*
-float(string s1, string s2, optional float len, optional float s1ofs, optional float s2ofs)
-strcmp/strncmp = #228 (PF_strncmp, pr_bgcmd.c:4305)
+ float(string s1, string s2, optional float len, optional float s1ofs, optional float s2ofs)
+ strcmp/strncmp = #228 (PF_strncmp)
 */
 static void csqc_strncmp (void)
 {
@@ -2886,8 +2854,8 @@ static void csqc_strncmp (void)
 
 /*
 float(string s1, string s2) strcasecmp = #229
-float(string s1, string s2, float len, optional float s1ofs, optional float s2ofs)
-strncasecmp = #230 (PF_strncasecmp, pr_bgcmd.c:4272)
+ float(string s1, string s2, float len, optional float s1ofs, optional float s2ofs)
+ strncasecmp = #230 (PF_strncasecmp)
 */
 static void csqc_strncasecmp (void)
 {
@@ -2917,7 +2885,7 @@ static void csqc_strncasecmp (void)
 }
 
 /*
-string(string s) strtolower = #480 / strtoupper = #481 — ASCII (FTE — unicode).
+string(string s) strtolower = #480 / strtoupper = #481 - ASCII (FTE is unicode).
 */
 static void csqc_strtolower (void)
 {
@@ -2953,14 +2921,12 @@ static void csqc_strtoupper (void)
 }
 
 /*
-Стрипинг цветовой разметки для #476 strlennocol / #477 strdecolorize (T3 Э3, T4 `^`).
-FTE-паритет: `&cRGB` (валидный 3-hex) / `&r` (логика r_draw_charset.c:331-365) и
-colour/state-коды `^`: q3-цвета `^0-9`, `^xRRGGBB`, `^&XX` (extended FG/BG),
-состояния `^b/^d/^m/^a/^h/^s/^r`, escape `^^`, плюс FTE-поведение неизвестного/
-висячего `^` (ft eqw/engine/common/common.c:4169-4478, flags=0/keepmarkup=false).
-Вне scope: links `^[..^]`, charset `u8:`/`k8:`, `^Uxxxx`/`^{xxxx}` — отклонение,
-backlog docs/plans/ezquake_csqc_client_strcolor_markup.md. Возврат — длина
-результата (байты, как FTE COM_DeFunString); out==NULL допустим (только подсчёт).
+ Colour markup stripping for #476 strlennocol / #477 strdecolorize.
+ FTE parity: `&cRGB` (valid 3-hex) / `&r` and the `^` colour/state codes: q3 colours
+ `^0-9`, `^xRRGGBB`, `^&XX` (extended FG/BG), states `^b/^d/^m/^a/^h/^s/^r`, escape
+ `^^`, plus the FTE behaviour for unknown/dangling `^`. Out of scope: links `^[..^]`,
+ charset `u8:`/`k8:`, `^Uxxxx`/`^{xxxx}`. Return is the result length in bytes;
+ out==NULL is allowed (count only).
 */
 static int CSQCVM_IsExtCode (char c)
 {
@@ -3010,7 +2976,7 @@ static int CSQCVM_StripColor (const char *in, char *out, size_t outsize)
 					in += 3;
 					continue;
 				}
-				// invalid: '^' остаётся литералом, '&' обрабатывается на след. итерации
+				// invalid: '^' stays a literal, '&' is handled on the next iteration
 			}
 			else if (c1 == 'b' || c1 == 'd' || c1 == 'm' || c1 == 'a'
 				|| c1 == 'h' || c1 == 's' || c1 == 'r')
@@ -3026,7 +2992,7 @@ static int CSQCVM_StripColor (const char *in, char *out, size_t outsize)
 				in += 1;
 				continue;
 			}
-			// unknown / end / out-of-scope: '^' литерал, следующий символ — как обычно
+			// unknown / end / out-of-scope: '^' literal, next char processed normally
 		}
 		if (out && outsize && n + 1 < outsize)
 			out[n] = *in;
@@ -3038,8 +3004,8 @@ static int CSQCVM_StripColor (const char *in, char *out, size_t outsize)
 }
 
 /*
-float(string s) strlennocol = #476 — FTE-паритет (PF_strlennocol, pr_bgcmd.c:5038):
-длина строки без цветовых кодов.
+ float(string s) strlennocol = #476 - FTE parity (PF_strlennocol): string length
+ without colour codes.
 */
 static void csqc_strlennocol (void)
 {
@@ -3050,8 +3016,8 @@ static void csqc_strlennocol (void)
 }
 
 /*
-string(string s) strdecolorize = #477 — FTE-паритет (PF_strdecolorize, pr_bgcmd.c:5054):
-строка с вырезанными цветовыми кодами.
+ string(string s) strdecolorize = #477 - FTE parity (PF_strdecolorize): string with
+ colour codes removed.
 */
 static void csqc_strdecolorize (void)
 {
@@ -3065,9 +3031,9 @@ static void csqc_strdecolorize (void)
 }
 
 /*
-string(string input, string token) instr = #206 — FTE-паритет (PF_instr, pr_bgcmd.c:4945):
-первое вхождение variadic-хвоста (с парма 1) в input; возврат — подстрока-остаток с позиции
-вхождения, либо "" если не найдено.
+ string(string input, string token) instr = #206 - FTE parity (PF_instr): first
+ occurrence of the variadic tail (from param 1) in input; returns the remaining
+ substring from the match position, or "" if not found.
 */
 static void csqc_instr (void)
 {
@@ -3088,9 +3054,9 @@ static void csqc_instr (void)
 }
 
 /*
-string(string search, string replace, string subject) strreplace = #484
-string(string search, string replace, string subject) strireplace = #485
-(PF_strreplace/strireplace: 4096-буфер, нерекурсивная замена).
+ string(string search, string replace, string subject) strreplace = #484
+ string(string search, string replace, string subject) strireplace = #485
+ (4096-byte buffer, non-recursive replacement).
 */
 static void csqc_strreplace (void)
 {
@@ -3158,20 +3124,15 @@ static void csqc_strireplace (void)
 }
 
 /*
-Phase 1 L1 P1c — cvar/exec/ошибки. Client-handlers (строки через CSQC_Client_GetString,
-без серверных зеркал). #28 coredump / #31 eprint — entity-отладка, уходят в P1d.
+ cvar/exec/error handlers. Client handlers (strings via CSQC_Client_GetString, no
+ server mirrors). #28 coredump / #31 eprint are entity debugging.
 */
 
 /*
-void(string err, ...) error = #10
-Не-серверный вариант: печатаем и поднимаем host_error активной VM (клиентский
-колбэк ставит errored — кадры отключаются). Отклонение от серверного PF_error:
-без дампа self/edict и SV_Error.
-*/
-/*
-void(string errortext) error = #10 — FTE-паритет (PF_error, pr_bgcmd.c:7196):
-developer!=0 — нефатально (печать; FTE — debug-break, у нас печать и continue);
-developer==0 — фатально (abort через host_error). Отклонение: FTE-стек не печатаем.
+ void(string err, ...) error = #10 - FTE parity (PF_error):
+ developer!=0 - non-fatal (print; FTE debug-breaks, we print and continue);
+ developer==0 - fatal (abort via host_error). Deviation: no FTE stack dump, no
+ self/edict dump.
 */
 static void csqc_error (void)
 {
@@ -3185,12 +3146,11 @@ static void csqc_error (void)
 }
 
 /*
-void(string err, ...) objerror = #11
-Паритет FTE (PF_objerror, pr_csqc.c): фатальность зависит от cvar developer.
-developer!=0 — нефатальна: печать в консоль, модуль продолжает (debug_trace
-в FTE не воспроизводим). developer==0 — фатальна: печать + дисконнект клиента
-(CSQC_Client_Abort: как FTE CSQC_Abort → Host_EndGame).
-Отклонение от FTE: без дампа self/edict (ED_Print) перед сообщением.
+ void(string err, ...) objerror = #11
+ FTE parity (PF_objerror): fatality depends on the developer cvar. developer!=0 -
+ non-fatal: print to console, the module continues (FTE debug_trace is not
+ reproducible). developer==0 - fatal: print + client disconnect (CSQC_Client_Abort).
+ Deviation from FTE: no self/edict dump (ED_Print) before the message.
 */
 static void csqc_objerror (void)
 {
@@ -3204,11 +3164,10 @@ static void csqc_objerror (void)
 }
 
 /*
-void(string str) localcmd = #46
-Выполнение строки как команды движка — так же, как команды с сервера (svc_stufftext):
-через cbuf_svc с фильтром cl_remote_capabilities (cmd.c Cmd_ExecuteStringEx), а не в
-неограниченный cbuf_main. Отклонение от FTE: FTE использует RESTRICT_INSECURE
-(exec-level), ezq — allowlist по имени (ADR 0019, раздел про localcmd).
+ void(string str) localcmd = #46
+ Executes the string as an engine command - like server-sent commands (svc_stufftext):
+ via cbuf_svc with the cl_remote_capabilities filter, not the unrestricted cbuf_main.
+ Deviation from FTE: FTE uses RESTRICT_INSECURE (exec-level), ezq an allowlist.
 */
 static void csqc_localcmd (void)
 {
@@ -3218,13 +3177,13 @@ static void csqc_localcmd (void)
 }
 
 /*
-void(string cvarname, string value) cvar_set = #72
-Как серверный PF_cvar_set (pr_cmds.c): если cvar нет — предупреждение.
+ void(string cvarname, string value) cvar_set = #72
+ Like the server PF_cvar_set: if the cvar is missing - a warning.
 */
 /*
-void(string cvarname, string value) cvar_set = #72 — FTE-паритет (PF_cvar_set,
-pr_bgcmd.c:1957): FTE использует FindOrGet — отсутствующий cvar создаётся.
-Отклонение: CVAR_NOTFROMSERVER-guard не воспроизводим (клиент).
+ void(string cvarname, string value) cvar_set = #72 - FTE parity (PF_cvar_set): FTE
+ uses FindOrGet - a missing cvar is created. Deviation: the CVAR_NOTFROMSERVER guard
+ is not reproducible (client).
 */
 static void csqc_cvar_set (void)
 {
@@ -3239,14 +3198,14 @@ static void csqc_cvar_set (void)
 		return;
 	var = Cvar_Find (name);
 	if (!var)
-		var = Cvar_Create (name, "", 0);	// FindOrGet: создаём, если нет
+		var = Cvar_Create (name, "", 0);	// FindOrGet: create if missing
 	if (var)
 		Cvar_Set (var, val ? val : "");
 }
 
 /*
-float(string name, string value) registercvar = #93
-Создание переменной движка (namespace общий), если ещё нет; возврат 1/0.
+ float(string name, string value) registercvar = #93
+ Creates an engine variable (shared namespace) if it does not exist; returns 1/0.
 */
 static void csqc_registercvar (void)
 {
@@ -3271,17 +3230,17 @@ static void csqc_registercvar (void)
 }
 
 /*
-float(string ext) checkextension = #99
-FTE-паритет: PF_checkextension (pr_csqc.c:4579) ищет имя в QSG_Extensions (pr_bgcmd.c:8227)
-и отдаёт extensioncheck() при наличии, иначе — все ли builtins расширения поддержаны.
-Здесь — статическая таблица-зеркало подмножества, реализованного в ezq (Q1: no-op не
-рекламируем; исключение Q5 — эффект-таблицы с заглушками te_teleport/te_lightningblood/
-te_bloodqw). Имена — точные написания FTE, включая ведущий '_' у _DP_TE_*. EXT_CSQC —
-спец-кейс (протокол, не builtins): 1 при активной CSQC-сессии (cls.fteprotocolextensions).
-Осознанно НЕ рекламируем (FTE рекламирует, ezq — no-op): FRIK_FILE, FTE_QC_INTCONV,
-_DP_TE_FLAMEJET/_DP_TE_PLASMABURN, DP_QC_STRINGBUFFERS (R6), DP_QC_FS_SEARCH(_PACKFILE),
-DP_QC_GETSURFACE, DP_QC_FINDCHAIN(FLOAT)/FINDFLAGS/FINDCHAINFLAGS, DP_QC_COPYENTITY,
-DP_QC_WHICHPACK, DP_QC_URI_ESCAPE, KRIMZON_SV_PARSECLIENTCOMMAND.
+ float(string ext) checkextension = #99
+ FTE parity: PF_checkextension looks up the name in the extension list and returns
+ whether it is supported. Here a static mirror table of the subset implemented in
+ ezq (a no-op is not advertised; the effect tables with stubs are the exception).
+ Names use the exact FTE spellings, including the leading '_' of _DP_TE_*. EXT_CSQC is
+ a special case (protocol, not builtins): 1 when the CSQC session is active.
+ Deliberately NOT advertised (FTE advertises, ezq is a no-op): FRIK_FILE,
+ FTE_QC_INTCONV, _DP_TE_FLAMEJET/_DP_TE_PLASMABURN, DP_QC_STRINGBUFFERS,
+ DP_QC_FS_SEARCH(_PACKFILE), DP_QC_GETSURFACE, DP_QC_FINDCHAIN(FLOAT)/FINDFLAGS/
+ FINDCHAINFLAGS, DP_QC_COPYENTITY, DP_QC_WHICHPACK, DP_QC_URI_ESCAPE,
+ KRIMZON_SV_PARSECLIENTCOMMAND.
 */
 static void csqc_checkextension (void)
 {
@@ -3322,7 +3281,7 @@ static void csqc_checkextension (void)
 		"FTE_STRINGS",
 		"DP_TE_STANDARDEFFECTBUILTINS",
 		"FTE_TE_STANDARDEFFECTBUILTINS",
-		"FTE_QC_DIGEST_SHA1",	// #639 digest_hex (SHA1 only; SHA224/384/512 not implemented — class D)
+		"FTE_QC_DIGEST_SHA1",	// #639 digest_hex (SHA1 only; SHA224/384/512 not implemented)
 		NULL
 	};
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -3334,7 +3293,7 @@ static void csqc_checkextension (void)
 	vm->globals[OFS_RETURN] = 0;
 	if (!ext)
 		return;
-	if (!strcmp (ext, "EXT_CSQC"))		// FTE pr_bgcmd.c:8368 (check_pext_csqc)
+	if (!strcmp (ext, "EXT_CSQC"))		// protocol, not builtins
 	{
 		vm->globals[OFS_RETURN] = (cls.fteprotocolextensions & FTE_PEXT_CSQC) ? 1 : 0;
 		return;
@@ -3348,9 +3307,9 @@ static void csqc_checkextension (void)
 }
 
 /*
-void() calltimeofday = #231
-Как серверный PF_calltimeofday: если в модуле есть функция "timeofday" —
-заполнить её аргументы (sec/min/hour/day/mon/year) локальным временем и вызвать.
+ void() calltimeofday = #231
+ Like the server PF_calltimeofday: if the module has a "timeofday" function - fill
+ its args (sec/min/hour/day/mon/year) with local time and call it.
 */
 static void csqc_calltimeofday (void)
 {
@@ -3377,13 +3336,13 @@ static void csqc_calltimeofday (void)
 }
 
 /*
-Phase 1 L1 P1b — строки/конверсии. Client-handlers на per-instance строки
-(PR1VM_Get/SetString). #118/#119: без GC — strzone = deep-copy в per-instance
-кольцо (PR1VM_ClientSetString), strunzone = no-op (документированное отклонение).
+ String/conversion handlers. Client handlers on per-instance strings
+ (PR1VM_Get/SetString). #118/#119: no GC - strzone deep-copies into the per-instance
+ ring (PR1VM_ClientSetString), strunzone is a no-op.
 */
 
 /*
-string(vector v) vtos = #27 — FTE-паритет (PF_vtos pr_bgcmd.c:4768): "'%f %f %f'".
+string(vector v) vtos = #27 - FTE parity (PF_vtos): "'%f %f %f'".
 */
 static void csqc_vtos (void)
 {
@@ -3421,13 +3380,9 @@ static void csqc_strlen (void)
 }
 
 /*
-string(string s, float start, float count) substring = #116
-(логика серверного PF_substr, per-instance строки)
-*/
-/*
-string(string s, float start, float count) substring = #116 — FTE-паритет
-(PF_substring pr_bgcmd.c:4886): отрицательные start/length от конца, строгий
-clamp (start>=slen || length<=0 → "").
+ string(string s, float start, float count) substring = #116 - FTE parity
+ (PF_substring): negative start/length from the end, strict clamp
+ (start>=slen || length<=0 -> "").
 */
 static void csqc_substring (void)
 {
@@ -3461,8 +3416,9 @@ static void csqc_substring (void)
 }
 
 /*
-vector(string s) stov = #117 — FTE pr_bgcmd.c:4740 (PF_VarString(0), парс из vtos-формата;
-`'`-stop). Прототип в csdefs/FTE не variadic, поэтому extra-args из модуля недостижимы.
+ vector(string s) stov = #117 - FTE (PF_VarString(0), parsed from the vtos format;
+ `'`-stop). The prototype is not variadic, so extra args from the module are
+ unreachable.
 */
 static void csqc_stov (void)
 {
@@ -3497,8 +3453,9 @@ static void csqc_stov (void)
 }
 
 /*
-string(string s) strzone = #118
-Отклонение (нет GC на клиенте): deep-copy в per-instance кольцо (PR1VM_ClientSetString).
+ string(string s) strzone = #118
+ Deviation (no GC on the client): deep-copy into the per-instance ring
+ (PR1VM_ClientSetString).
 */
 static void csqc_strzone (void)
 {
@@ -3510,12 +3467,12 @@ static void csqc_strzone (void)
 }
 
 /*
-void(string s) strunzone = #119
-Отклонение: no-op (нет GC/персистентного пула на клиенте).
+ void(string s) strunzone = #119
+ Deviation: no-op (no GC/persistent pool on the client).
 */
 static void csqc_strunzone (void)
 {
-	/* no-op (ADR 0017 D7 / тема B: классическое кольцо без GC) */
+	/* no-op (classic ring without GC) */
 }
 
 /*
@@ -3530,31 +3487,29 @@ static void csqc_cvar_string (void)
 		return;
 	if (!name)
 		name = "";
-	// FTE pr_bgcmd.c:1892: отдаётся latched_string, если значение защёлкнуто.
-	// PF_Cvar_FindOrGet (autocreate) и флаг CVAR_NOUNSAFEEXPAND — FTE-специфичны
-	// (в ezq нет); см. parity-audit §D.2.
+	// FTE returns latched_string if the value is latched. PF_Cvar_FindOrGet
+	// (autocreate) and the CVAR_NOUNSAFEEXPAND flag are FTE-specific (not in ezq).
 	var = Cvar_Find (name);
 	CSQCVM_SetRetStr (var ? (var->latchedString ? var->latchedString : var->string) : "");
 }
 
 /*
-Phase 1 L1 P1e — клиентские подсистемы. Best-effort на клиентские API ezquake;
-отклонения от FTE документируются в parity-audit.
+ Client subsystems. Best-effort on the ezquake client APIs.
 */
 
 /*
-void() breakpoint = #6
-Debugger: no-op на клиенте (движок не имеет QC-отладчика).
+ void() breakpoint = #6
+ Debugger: no-op on the client (the engine has no QC debugger).
 */
 static void csqc_breakpoint (void)
 {
-	/* no-op (документировано) */
+	/* no-op */
 }
 
 /*
-void(entity e, float chan, string samp, float vol, float atten) sound = #8
-Отклонение: позиционный звук у entity не делаем (нет origin-поля без арены);
-прекеш + локальное проигрывание как #177 (объём vol).
+ void(entity e, float chan, string samp, float vol, float atten) sound = #8
+ Deviation: no positional sound at the entity (no origin field without the arena);
+ precache + local playback like #177 (volume vol).
 */
 static void csqc_sound (void)
 {
@@ -3574,10 +3529,9 @@ static void csqc_sound (void)
 }
 
 /*
-void(string str) precache_sound = #19/#76 — FTE parity (PF_cs_PrecacheSound,
-pr_csqc.c:3268): local precache + queue a missing sound for download
-(PF_cs_PrecacheSound -> Sound_CheckDownload, cl_parse.c:1573).
-void — OFS_RETURN is not written (module does not rely on the return value).
+ void(string str) precache_sound = #19/#76 - FTE parity (PF_cs_PrecacheSound): local
+ precache + queue a missing sound for download. void - OFS_RETURN is not written
+ (the module does not rely on the return value).
 */
 static void csqc_precache_sound (void)
 {
@@ -3587,8 +3541,8 @@ static void csqc_precache_sound (void)
 	{
 		S_PrecacheSound (n);
 		// FTE parity: queue the missing sound (`sound/<name>`). Caller-side guard on
-		// `cls.download`: ezq download is single-slot (cl_parse.c:482), so a second request
-		// would clobber the in-flight one. `*` = sexed sound (not downloadable).
+		// `cls.download`: ezq download is single-slot, so a second request would clobber
+		// the in-flight one. `*` = sexed sound (not downloadable).
 		if (n[0] != '*' && !cls.download)
 			CL_CheckOrDownloadFile (va ("sound/%s", n));
 	}
@@ -3601,11 +3555,10 @@ static void csqc_precache_model (void)
 	if (vm && n && n[0])
 	{
 		int idx = CSQC_Client_ModelIndex (n);
-		// T4 precache_model re-trigger: ModelIndex now returns a stable index even for a
-		// missing model (NULL placeholder), so "file missing" is detected by the model
-		// being not loaded, not by index==0. FTE parity (PF_cs_PrecacheModel_Internal,
-		// pr_csqc.c:3218): queue the model for download. Same single-slot `cls.download`
-		// guard as precache_sound.
+		// ModelIndex now returns a stable index even for a missing model (NULL
+		// placeholder), so "file missing" is detected by the model being not loaded,
+		// not by index==0. FTE parity (PF_cs_PrecacheModel_Internal): queue the model
+		// for download. Same single-slot `cls.download` guard as precache_sound.
 		if (!CSQC_Client_ModelForIndex (idx) && n[0] != '*' && !cls.download)
 			CL_CheckOrDownloadFile (n);
 	}
@@ -3613,10 +3566,10 @@ static void csqc_precache_model (void)
 }
 
 /*
-float(string modelname, optional float queryonly) getmodelindex = #200 (Ф3).
-Индекс модели в CSQC-реестре (name→Mod_ForName); FTE PF_getmodelindex. queryonly!=0 —
-только поиск уже зарегистрированной (без загрузки); иначе — зарегистрировать.
-Отклонение: единый реестр поверх Mod_ForName (у FTE — отдельное пространство индексов).
+ float(string modelname, optional float queryonly) getmodelindex = #200.
+ Model index in the CSQC registry (name->Mod_ForName); FTE PF_getmodelindex.
+ queryonly!=0 - only look up an already registered one (no load); otherwise register.
+ Deviation: a single registry on top of Mod_ForName (FTE has a separate index space).
 */
 static void csqc_getmodelindex (void)
 {
@@ -3632,12 +3585,11 @@ static void csqc_getmodelindex (void)
 }
 
 /*
-string(float mdlindex) modelnameforindex = #334 (T3 Э3).
-FTE-паритет (PF_cs_ModelnameForIndex, pr_csqc.c:3277): обратный резолв индекса.
-Отклонение: у ezq единый положительный CSQC-реестр (getmodelindex возвращает
-именно его индекс, комментарий csqc_client.c), у FTE — csqc-слоты < 0 и
-server-precache >= 0. Поэтому порядок: CSQC-реестр → server cl.model_name[idx]
-(сетевые/серверные индексы); idx<0 → "".
+ string(float mdlindex) modelnameforindex = #334.
+ FTE parity (PF_cs_ModelnameForIndex): reverse index resolution.
+ Deviation: ezq has a single positive CSQC registry (getmodelindex returns exactly
+ its index), while FTE has csqc slots < 0 and server-precache >= 0. Hence the order:
+ CSQC registry -> server cl.model_name[idx]; idx<0 -> "".
 */
 static void csqc_modelnameforindex (void)
 {
@@ -3655,11 +3607,11 @@ static void csqc_modelnameforindex (void)
 }
 
 /*
-float(string) precache_file (#68/#77) — FTE-паритет (PF_cs_precachefile →
-CL_CheckOrEnqueDownloadFile): true=файл есть → 1; false=поставлен на скачивание → 0.
-У нас — CL_CheckOrDownloadFile (cl_parse.c:482, тот же контракт: true если есть/не
-качается, иначе шлёт download и false). Guard: при уже идущем скачивании (cls.download)
-второй не стартуем → 0 (отклонение). Ограничения CL_Download_Accept — см. parity.
+ float(string) precache_file (#68/#77) - FTE parity (PF_cs_precachefile ->
+ CL_CheckOrEnqueDownloadFile): true=file present -> 1; false=queued for download -> 0.
+ Here - CL_CheckOrDownloadFile (the same contract: true if present/not downloading,
+ otherwise sends download and false). Guard: if a download is already in flight
+ (cls.download) we do not start a second one -> 0.
 */
 static void csqc_precache_file (void)
 {
@@ -3674,7 +3626,7 @@ static void csqc_precache_file (void)
 		vm->globals[OFS_RETURN] = 0;
 		return;
 	}
-	if (cls.download)	// уже качается другой ресурс — не перебиваем
+	if (cls.download)	// another resource is already downloading - do not interrupt
 	{
 		vm->globals[OFS_RETURN] = 0;
 		return;
@@ -3683,8 +3635,8 @@ static void csqc_precache_file (void)
 }
 
 /*
-void(vector pos, string samp, float vol, float atten) ambientsound = #74
-Отклонение: без позиционного 3D — прекеш + локальное проигрывание (vol).
+ void(vector pos, string samp, float vol, float atten) ambientsound = #74
+ Deviation: no positional 3D - precache + local playback (vol).
 */
 static void csqc_ambientsound (void)
 {
@@ -3718,27 +3670,26 @@ static void csqc_particle (void)
 }
 
 /*
-void(float lightstyle, string stylestring, optional vector rgb) lightstyle = #35
-Отклонение: клиент не стилизует свет — no-op (документировано).
+ void(float lightstyle, string stylestring, optional vector rgb) lightstyle = #35
+ Deviation: the client does not style lights - no-op.
 */
 static void csqc_lightstyle (void)
 {
-	/* no-op (документировано) */
+	/* no-op */
 }
 
 /*
-void(float pause) setpause = #531
-Отклонение: на клиенте нет серверной паузы — no-op (документировано).
+ void(float pause) setpause = #531
+ Deviation: no server pause on the client - no-op.
 */
 static void csqc_setpause (void)
 {
-	/* no-op (документировано) */
+	/* no-op */
 }
 
 /*
-Phase 1 L1 P1d C1 — базовые entity на арене ADR 0017 (модульный резерв C0-A).
-entity-значение PR1 = entnum*edict_size (int-биты). Типы полей (eprint): код 1 =
-ev_string, 2 = ev_float, 3 = ev_vector, 4 = ev_entity (pr_comp.h etype_t).
+ Basic entities on the arena. PR1 entity value = entnum*edict_size (int bits). Field
+ types (eprint): code 1 = ev_string, 2 = ev_float, 3 = ev_vector, 4 = ev_entity.
 */
 
 static int csqc_ent_of (pr1vm_t *vm, int parmofs)
@@ -3767,8 +3718,8 @@ static float *csqc_ent_field (pr1vm_t *vm, int entnum, const char *name)
 	return slot ? &slot[ofs] : NULL;
 }
 
-// C2 (Wave C): доступ к полю по кэш-офсету (CSQC_Client_FieldOfs) — без скана
-// fielddefs на каждый вызов (горячий путь addentities).
+// Access a field via the cached offset (CSQC_Client_FieldOfs) - no fielddefs scan
+// per call (hot path in addentities).
 static float *csqc_ent_ofs (pr1vm_t *vm, int entnum, int fldofs)
 {
 	float *slot;
@@ -3784,12 +3735,10 @@ static void csqc_ret_entity (pr1vm_t *vm, int entnum)
 }
 
 /*
-Ф3 (takeover): arena-эдикт -> ezq entity_t -> cl_visents (#301 arena / #302).
-FTE CopyCSQCEdictToEntity берёт .modelindex; у нас modelindex-библиотека ещё
-заглушки (#200/#333), поэтому модель берём по `.model`-строке через Mod_ForName
-(отклонение, отдельный шаг). C4 Этап 1: .predraw вызывается до чтения полей
-(FTE pr_csqc.c:1450-1457), .renderflags мапится в ent.renderfx (подмножество CSQCRF_*).
-.scale не применяется — вынесено отдельно (docs/plans/ezquake_csqc_client_scale.md).
+ arena edict -> ezq entity_t -> cl_visents (#301 arena / #302). FTE
+ CopyCSQCEdictToEntity uses .modelindex; here the model is taken from the `.model`
+ string via Mod_ForName. .predraw is called before reading fields, .renderflags maps
+ to ent.renderfx (a subset of CSQCRF_*). .scale is not applied.
 */
 static void csqc_add_one_entity (int e)
 {
@@ -3799,15 +3748,14 @@ static void csqc_add_one_entity (int e)
 	char *mname;
 	model_t *model;
 	int ofs;
-	int playernum = -1;	// Stage 4b: network player index (colormap 1..MAX_CLIENTS)
+	int playernum = -1;	// network player index (colormap 1..MAX_CLIENTS)
 
 	if (!vm || e <= 0 || !CSQC_Client_EntUsed (e))
 		return;
 
-	// C4 Этап 1: .predraw (FTE pr_csqc.c:1450-1457). Возврат != PREDRAW_AUTOADD(0)
-	// или удаление эдикта -> не добавлять. RF_NOAUTOADD в FTE удалён (pr_common.h:881)
-	// в пользу возврата predraw — не проверяем. Function-значение поля — сырые int-биты
-	// (EV_FUNCTION): читаем как int, а не через float (иначе denormal -> 0).
+	// .predraw. Return != PREDRAW_AUTOADD(0) or removal of the edict -> do not add.
+	// The function-valued field is raw int bits (EV_FUNCTION): read as int, not float
+	// (otherwise denormal -> 0).
 	if ((f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_PREDRAW))) && *(int *)&f[0] > 0)
 	{
 		qbool removed = false;
@@ -3819,7 +3767,7 @@ static void csqc_add_one_entity (int e)
 	slot = csqc_ent_slot (vm, e);
 	if (!slot)
 		return;
-	// model: .modelindex (Ф3, FTE-паритет) с fallback на .model-строку
+	// model: .modelindex with fallback to the .model string
 	model = NULL;
 	if ((ofs = CSQC_Client_FieldOfs (vm, CSQC_FLD_MODELINDEX)) >= 0)
 	{
@@ -3842,13 +3790,11 @@ static void csqc_add_one_entity (int e)
 	memset (&ent, 0, sizeof (ent));
 	ent.model = model;
 	ent.colormap = vid.colormap;
-	// Stage 4: .colormap as player index (1..MAX_CLIENTS) -> team translation
-	// table + scoreboard (player skin), same as the engine player render
-	// (cl_ents.c:1261-1262, 2223-2224; cl_nqdemo.c:1029-1030). The modhint guard
-	// mirrors cl_ents.c:1258-1259: heads/gibs (h_player) stay unskinned.
-	// FTE CopyCSQCEdictToEntity maps the index to playerindex/topcolour
-	// (pr_csqc.c:861-879); values > MAX_CLIENTS (DP colormap) fall back to
-	// vid.colormap / NULL scoreboard (documented deviation).
+	// .colormap as player index (1..MAX_CLIENTS) -> team translation table +
+	// scoreboard (player skin), same as the engine player render. The modhint guard
+	// mirrors the engine: heads/gibs (h_player) stay unskinned. FTE maps the index to
+	// playerindex/topcolour; values > MAX_CLIENTS (DP colormap) fall back to
+	// vid.colormap / NULL scoreboard.
 	if ((f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_COLORMAP))))
 	{
 		int cm = (int)f[0];
@@ -3863,17 +3809,15 @@ static void csqc_add_one_entity (int e)
 	ent.framelerp = -1;
 	if ((f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_ORIGIN))))		VectorCopy (f, ent.origin);
 	if ((f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_ANGLES))))		VectorCopy (f, ent.angles);
-	// Stage 4b: player render pitch = -viewangles/3, same as the engine player
-	// render (cl_ents.c:2240) and the FTE CSQC bridge (pr_csqc.c:5626,
-	// r_meshpitch=-1). Render-side only: does not touch the module's .angles
-	// (used by #347/prediction). Roll is left 0 (FTE CSQC bridge also 0).
+	// player render pitch = -viewangles/3, same as the engine player render and the
+	// FTE CSQC bridge. Render-side only: does not touch the module's .angles (used by
+	// #347/prediction). Roll is left 0 (the FTE CSQC bridge also 0).
 	if (playernum >= 0)
 		ent.angles[PITCH] = -ent.angles[PITCH] / 3;
 	if ((f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_FRAME))))		ent.frame = ent.oldframe = (int)f[0];
-	// Stage 4b: player frame interpolation — exact engine formula (CL_LinkPlayers,
-	// cl_ents.c:2228-2237). Without it CSQC renders the raw frame while the engine
-	// lerps, so the pose jumps when toggling csqc_delta. FTE has no jump because
-	// engine and CSQC share cl.lerpplayers (pr_csqc.c:5617).
+	// player frame interpolation - exact engine formula (CL_LinkPlayers). Without it
+	// CSQC renders the raw frame while the engine lerps, so the pose jumps when
+	// toggling csqc_delta. FTE has no jump because engine and CSQC share cl.lerpplayers.
 	if (playernum >= 0)
 	{
 		centity_t *cent = &cl_entities[playernum + 1];
@@ -3888,10 +3832,9 @@ static void csqc_add_one_entity (int e)
 			ent.framelerp = -1;
 		}
 	}
-	// Stage 4b (engine-only): cl_deadbodyFilter for CSQC-owned players. The engine
-	// player filter (CL_LinkPlayers, cl_ents.c:2188-2208) is skipped for owned
-	// players, so apply the same semantics here. TF exception for mode 3
-	// (!cl.teamfortress) mirrors the engine.
+	// cl_deadbodyFilter for CSQC-owned players. The engine player filter
+	// (CL_LinkPlayers) is skipped for owned players, so apply the same semantics
+	// here. TF exception for mode 3 (!cl.teamfortress) mirrors the engine.
 	if (playernum >= 0 && model->modhint == MOD_PLAYER)
 	{
 		int i = ent.frame;
@@ -3914,12 +3857,11 @@ static void csqc_add_one_entity (int e)
 	if ((f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_SKIN))))		ent.skinnum = (int)f[0];
 	if ((f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_EFFECTS))))	ent.effects = (int)f[0];
 	if ((f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_ALPHA))))		ent.alpha = f[0];
-	// .scale: uniform render scale (FTE pr_csqc.c:841-844, 0 remapped to 1).
-	// 0 stays 0 here — the render helper/culling treat 0 as unscaled.
+	// .scale: uniform render scale (FTE remaps 0 to 1). 0 stays 0 here - the render
+	// helper/culling treat 0 as unscaled.
 	if ((f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_SCALE))))		ent.scale = f[0];
-	// C4 Этап 1: .renderflags (CSQCRF_*) -> ent.renderfx (RF_*). Маппим доступное
-	// подмножество (FTE pr_csqc.c:773-799); DEPTHHACK/EXTERNALMODEL/FIRSTPERSON/USEAXIS
-	// без прямого ezq-аналога — отклонение (parity-audit).
+	// .renderflags (CSQCRF_*) -> ent.renderfx (RF_*). Map the available subset;
+	// DEPTHHACK/EXTERNALMODEL/FIRSTPERSON/USEAXIS have no direct ezq analog.
 	if ((f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_RENDERFLAGS))))
 	{
 		int rflags = (int)f[0];
@@ -3931,7 +3873,7 @@ static void csqc_add_one_entity (int e)
 			ent.renderfx |= RF_ADDITIVEBLEND;
 	}
 
-	// Stage 3 (docs/adr/0028): PVS/leaf + bbox culling, FTE EdictInFatPVS parity.
+	// PVS/leaf + bbox culling, FTE EdictInFatPVS parity.
 	// R_CSQC_BeginCull marks the leaves/frustum for this frame (once per frame).
 	R_CSQC_BeginCull ();
 	if (!R_CSQC_EntityVisible (&ent))
@@ -3940,7 +3882,7 @@ static void csqc_add_one_entity (int e)
 	CL_AddEntity (&ent);
 }
 
-/* void(entity ent) addentity = #302 (Ф3 takeover) */
+/* void(entity ent) addentity = #302 */
 static void csqc_addentity (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -3958,7 +3900,7 @@ static void csqc_spawn (void)
 	csqc_ret_entity (vm, CSQC_Client_EntAlloc (vm));
 }
 
-/* void(entity e) remove = #15 (вне резерва — игнор, ADR 0017) */
+/* void(entity e) remove = #15 */
 static void csqc_remove (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -3984,10 +3926,9 @@ static void csqc_setorigin (void)
 }
 
 /*
-B20 (FTE-паритет): перенос bbox модели в поля арена-эдикта.
-FTE csqc_setmodel копирует model->mins/maxs и size (pr_csqc.c:3129-3131);
-PF_cs_SetSize пишет .size = maxs-mins (pr_csqc.c:2911). model == NULL ->
-обнулить (FTE-ветка «model NULL», pr_csqc.c:3146-3150).
+ FTE parity: copy the model bbox into the arena edict fields. FTE csqc_setmodel
+ copies model->mins/maxs and size; PF_cs_SetSize writes .size = maxs-mins.
+ model == NULL -> zero out.
 */
 static void csqc_model_bbox (pr1vm_t *vm, int e, model_t *model)
 {
@@ -4035,12 +3976,12 @@ static void csqc_setmodel (void)
 	ofs = CSQC_Client_FieldOfs (vm, CSQC_FLD_MODEL);
 	if (ofs >= 0)
 		PR1VM_ClientSetString (vm, (string_t *)&slot[ofs], s);
-	// Ф3: .modelindex из CSQC-реестра (рендер arena-эдиктов по индексу, FTE-паритет)
+	// .modelindex from the CSQC registry (arena edicts are rendered by index)
 	idx = CSQC_Client_ModelIndex (s);
 	ofs = CSQC_Client_FieldOfs (vm, CSQC_FLD_MODELINDEX);
 	if (ofs >= 0)
 		slot[ofs] = (float)idx;
-	// B20: bbox из модели + .modelflags (FTE pr_csqc.c:3096-3155, PF_cs_SetModel :3178).
+	// bbox from the model + .modelflags.
 	model = idx ? CSQC_Client_ModelForIndex (idx) : NULL;
 	csqc_model_bbox (vm, e, model);
 	ofs = CSQC_Client_FieldOfs (vm, CSQC_FLD_MODELFLAGS);
@@ -4048,7 +3989,7 @@ static void csqc_setmodel (void)
 		slot[ofs] = (float)model->flags;
 }
 
-/* void(entity e, float mdlindex) setmodelindex = #333 (Ф3) */
+/* void(entity e, float mdlindex) setmodelindex = #333 */
 static void csqc_setmodelindex (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -4063,9 +4004,8 @@ static void csqc_setmodelindex (void)
 	f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_MODELINDEX));
 	if (f)
 		f[0] = (float)idx;
-	// B20 (FTE PF_cs_SetModelIndex, pr_csqc.c:3180-3186 -> csqc_setmodel): резолв
-	// CSQC-реестра -> .model + bbox. Нерезолвнутый/неположительный индекс -> .model не
-	// трогаем (паритет FTE early-return). Единое positive-пространство — ADR 0024.
+	// Resolve the CSQC registry -> .model + bbox. An unresolved/non-positive index ->
+	// .model is left untouched (FTE early-return parity). Single positive index space.
 	model = (idx > 0) ? CSQC_Client_ModelForIndex (idx) : NULL;
 	if (!model)
 		return;
@@ -4094,7 +4034,7 @@ static void csqc_setsize (void)
 	mx = &vm->globals[OFS_PARM0 + 6];
 	fmin[0] = mn[0]; fmin[1] = mn[1]; fmin[2] = mn[2];
 	fmax[0] = mx[0]; fmax[1] = mx[1]; fmax[2] = mx[2];
-	// B20: .size = maxs - mins (FTE PF_cs_SetSize, pr_csqc.c:2911)
+	// .size = maxs - mins
 	fsz = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_SIZE));
 	if (fsz)
 	{
@@ -4104,7 +4044,7 @@ static void csqc_setsize (void)
 	}
 }
 
-/* entity(entity e) nextent = #47 — модульный резерв (сетевые не «used») */
+/* entity(entity e) nextent = #47 - module arena (network ones are not "used") */
 static void csqc_nextent (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -4123,7 +4063,7 @@ static void csqc_nextent (void)
 	csqc_ret_entity (vm, 0);
 }
 
-/* entity(entity start, .string fld, string match) find = #18 (резерв; string-поля) */
+/* entity(entity start, .string fld, string match) find = #18 (string fields) */
 static void csqc_find (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -4160,8 +4100,8 @@ static void csqc_find (void)
 	csqc_ret_entity (vm, 0);
 }
 
-/* SOLID/FL/MOVE-константы (паритет csdefs.qc). Вынесены выше csqc_findradius,
-   который использует solid/FL_FINDABLE_NONSOLID (FTE pr_bgcmd.c:4040). */
+/* SOLID/FL/MOVE constants (csdefs.qc parity). Placed above csqc_findradius, which
+   uses solid/FL_FINDABLE_NONSOLID. */
 #define CSQC_SOLID_NOT		0
 #define CSQC_SOLID_TRIGGER	1
 #define CSQC_SOLID_BSP		4
@@ -4175,7 +4115,7 @@ static void csqc_find (void)
 #define CSQC_MOVE_EVERYTHING	32
 #define CSQC_MOVE_LAGGED	64
 
-/* entity(vector org, float rad) findradius = #22 — резерв; chain если поле есть */
+/* entity(vector org, float rad) findradius = #22 - arena; chain if the field exists */
 static void csqc_findradius (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -4187,7 +4127,7 @@ static void csqc_findradius (void)
 	org = &vm->globals[OFS_PARM0];
 	rad = vm->globals[OFS_PARM0 + 3];
 	chain_ofs = CSQC_Client_FieldOfs (vm, CSQC_FLD_CHAIN);
-	prev = 0;	// голова цепочки; world(0) — терминатор (FTE pr_bgcmd.c:4012/4058)
+	prev = 0;	// chain head; world(0) is the terminator
 	for (e = CSQC_Client_EntSpawnBase (); e < vm->num_edicts; e++)
 	{
 		if (!CSQC_Client_EntUsed (e))
@@ -4195,7 +4135,7 @@ static void csqc_findradius (void)
 		o = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_ORIGIN));
 		if (!o)
 			continue;
-		// FTE pr_bgcmd.c:4040 — не-solid пропускается, если нет FL_FINDABLE_NONSOLID.
+		// non-solid is skipped unless FL_FINDABLE_NONSOLID is set.
 		fld = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_SOLID));
 		if (fld && (int)*fld == CSQC_SOLID_NOT)
 		{
@@ -4206,8 +4146,8 @@ static void csqc_findradius (void)
 		d = (o[0]-org[0])*(o[0]-org[0]) + (o[1]-org[1])*(o[1]-org[1]) + (o[2]-org[2])*(o[2]-org[2]);
 		if (d > rad * rad)
 			continue;
-		// FTE: ent.v.chain = chain; chain = ent -> возврат последнего (головы),
-		// прочие совпадения доступны обходом `.chain` (FTE pr_bgcmd.c:4058/4088/4093).
+		// ent.v.chain = chain; chain = ent -> return the last (head), the other
+		// matches are reachable by walking `.chain`.
 		if (chain_ofs >= 0)
 		{
 			chslot = csqc_ent_slot (vm, e);
@@ -4220,12 +4160,9 @@ static void csqc_findradius (void)
 }
 
 /*
-L2 — «Entity-поиск/копия» (#400/#402/#403/#449/#450). FTE oracle — pr_bgcmd.c:
-PF_copyentity (:4213), PF_findchain (:1569), PF_findchainfloat (:1531),
-PF_FindFlags (:1611), PF_findchainflags (:1493). Arena fields are float-word
-offsets (ddef_t.ofs), entity value PR1 = slot*edict_size (ADR 0017). The chain
-link writes the previous entity value into the chainfield (terminator world(0)),
-same as csqc_findradius (#22).
+ Entity search/copy (#400/#402/#403/#449/#450). Arena fields are float-word offsets
+ (ddef_t.ofs), PR1 entity value = slot*edict_size. The chain link writes the previous
+ entity value into the chainfield (terminator world(0)), same as csqc_findradius (#22).
 */
 
 /* void(entity from, entity to) copyentity = #400 */
@@ -4241,8 +4178,8 @@ static void csqc_copyentity (void)
 		to = CSQC_Client_EntAlloc (vm);
 	else
 		to = csqc_ent_of (vm, OFS_PARM0 + 3);
-	// FTE pr_bgcmd.c:4228-4231 — free source/dest is fatal (readonly/fieldsize
-	// have no ezq-arena counterpart: no readonly, single edict_size).
+	// free source/dest is fatal (readonly/fieldsize have no ezq-arena counterpart:
+	// no readonly, single edict_size).
 	if (from <= 0 || !CSQC_Client_EntUsed (from))
 	{
 		CSQC_Client_Abort ("PF_copyentity: source is free");
@@ -4258,8 +4195,7 @@ static void csqc_copyentity (void)
 	if (!src || !dst)
 		return;
 	memcpy (dst, src, vm->edict_size);
-	// FTE pr_bgcmd.c:4235 World_LinkEdict — accept+doc: no client linking
-	// (per-frame culling, ADR 0028). FTE returns dest; csdefs declares void.
+	// no client linking (per-frame culling). FTE returns dest; the module declares void.
 	csqc_ret_entity (vm, to);
 }
 
@@ -4325,7 +4261,7 @@ static void csqc_findchainfloat (void)
 		slot = csqc_ent_slot (vm, e);
 		if (!slot)
 			continue;
-		// FTE pr_bgcmd.c:1531 — float equality (not int bits, unlike findfloat #98).
+		// float equality (not int bits, unlike findfloat #98).
 		if (slot[f] != match)
 			continue;
 		*(int *)&slot[cf] = prev * vm->edict_size;
@@ -4401,19 +4337,19 @@ static void csqc_findchainflags (void)
 	csqc_ret_entity (vm, prev);
 }
 
-/* void() changeyaw = #49 — no-op (отклонение; без серверной физики) */
+/* void() changeyaw = #49 - no-op (no server physics) */
 static void csqc_changeyaw (void)
 {
-	/* no-op (документировано) */
+	/* no-op */
 }
 
-/* void(entity e) makestatic = #69 — no-op (отклонение; клиент статик-энтов не ведёт) */
+/* void(entity e) makestatic = #69 - no-op (client does not track static ents) */
 static void csqc_makestatic (void)
 {
-	/* no-op (документировано) */
+	/* no-op */
 }
 
-/* string(entity e, string key) infokey = #80 — serverinfo (клиент без per-ent userinfo) */
+/* string(entity e, string key) infokey = #80 - serverinfo (client has no per-ent userinfo) */
 static void csqc_infokey (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -4423,7 +4359,7 @@ static void csqc_infokey (void)
 	CSQCVM_SetRetStr (Info_ValueForKey (cl.serverinfo, key ? key : ""));
 }
 
-/* float(entity e) checkbottom = #40 — 0 (отклонение: нет серверного пола) */
+/* float(entity e) checkbottom = #40 - 0 (no server floor) */
 static void csqc_checkbottom (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -4432,7 +4368,7 @@ static void csqc_checkbottom (void)
 	vm->globals[OFS_RETURN] = 0;
 }
 
-/* void(entity e) eprint = #31 — печать полей слота в консоль (по fielddefs) */
+/* void(entity e) eprint = #31 - print the slot fields to the console (via fielddefs) */
 static void csqc_eprint (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -4473,7 +4409,7 @@ static void csqc_eprint (void)
 	}
 }
 
-/* void() coredump = #28 — шапка модуля + занятость резерва */
+/* void() coredump = #28 - module header + arena usage */
 static void csqc_coredump (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -4485,12 +4421,12 @@ static void csqc_coredump (void)
 }
 
 /*
-Phase 1 L1 P1d C2 — мировые трассы/физика. С Шага 7 (часть 2) traceline/tracebox
-учитывают entity-слой пула (dispatch MOVE_* + forent/owner-ignore + зеркало игроков,
-см. csqc_trace_ents ниже); walkmove/droptofloor остаются мир-only (серверная семантика:
-движение к полу/шаг не блокируется сущностями). Отклонения: AABB вместо hull,
-HITMODEL→bbox, TRIGGERS без brush-мира, LAGGED нет, plane ent-попадания не пишется,
-движение — своя трасса без полного PM_PlayerMove.
+ World traces/physics. traceline/tracebox account for the pool entity layer (MOVE_*
+ dispatch + forent/owner-ignore + player mirror, see csqc_trace_ents below);
+ walkmove/droptofloor stay world-only (server semantics: the move to floor/step is not
+ blocked by entities). Deviations: AABB instead of hull, HITMODEL->bbox, TRIGGERS
+ without the brush world, no LAGGED, the entity-hit plane is not written, movement is
+ its own trace without a full PM_PlayerMove.
 */
 
 static trace_t csqc_trace_fallback (vec3_t end)
@@ -4510,7 +4446,7 @@ static trace_t csqc_world_trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t 
 	vec3_t offset, sl, el;
 	qbool box = (mins != NULL && maxs != NULL);
 
-	clip = cl.clipmodels[1];	// мировая clip-модель (hull'ы BSP)
+	clip = cl.clipmodels[1];	// world clip model (BSP hulls)
 	if (!clip)
 		return csqc_trace_fallback (end);
 
@@ -4521,7 +4457,7 @@ static trace_t csqc_world_trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t 
 		return CM_HullTrace (hull, start, end);
 	}
 
-	/* box: hull[1] (player-clip) с offset по переданным mins/maxs */
+	/* box: hull[1] (player-clip) with an offset by the passed mins/maxs */
 	hull = &clip->hulls[1];
 	VectorSubtract (hull->clip_mins, mins, offset);
 	VectorSubtract (start, offset, sl);
@@ -4532,11 +4468,10 @@ static trace_t csqc_world_trace (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t 
 }
 
 /*
-R11: конверсия Q1-контента (CM_HullPointContents → CONTENTS_*, -1..-6) в домен FTECONTENTS,
-как FTE `tr->contents` (fteqw/engine/common/world.h:70; таблица fteqw/engine/common/q1bsp.c:729-737).
-Индекс -1-q1. Для попадания в сущность: локальная csqc/AABB → 0 (нет surface-contents, FTE-паритет:
-эмпирически `ec local 0`); сетевая brush (ssqc) → content из `.skin` (Q1, как FTE World_ClipToNetwork
-skinnum, world.c:2190-2211) либо FTECONTENTS_SOLID по умолчанию (обычный solid-brush, FTE model-trace).
+ Q1 content conversion (CM_HullPointContents -> CONTENTS_*, -1..-6) into the
+ FTECONTENTS domain, like FTE `tr->contents`. Index -1-q1. For an entity hit: local
+ csqc/AABB -> 0 (no surface-contents); a network brush (ssqc) -> content from `.skin`
+ (Q1) or FTECONTENTS_SOLID by default (a plain solid brush).
 */
 static const unsigned int s_q1_to_fte_contents[7] =
 {
@@ -4552,7 +4487,7 @@ static const unsigned int s_q1_to_fte_contents[7] =
 static void csqc_store_trace (pr1vm_t *vm, trace_t *tr)
 {
 	int o;
-	// C2 (Wave C): офсеты из кэша (резолв при загрузке), не скан globaldefs.
+	// offsets from the cache (resolved at load), not a globaldefs scan.
 	if ((o = CSQC_Client_TraceGlobal (vm, CSQC_TRACEG_FRACTION)) >= 0)
 		vm->globals[o] = tr->fraction;
 	if ((o = CSQC_Client_TraceGlobal (vm, CSQC_TRACEG_ALLSOLID)) >= 0)
@@ -4579,18 +4514,16 @@ static void csqc_store_trace (pr1vm_t *vm, trace_t *tr)
 	}
 	if ((o = CSQC_Client_TraceGlobal (vm, CSQC_TRACEG_ENT)) >= 0)
 	{
-		// entity-значение = slot*edict_size (int-биты); 0 — world.
+		// entity value = slot*edict_size (int bits); 0 - world.
 		*(int *)&vm->globals[o] = (tr->e.entnum > 0) ? tr->e.entnum * vm->edict_size : 0;
 	}
-	// R11: trace_networkentity — ssqc-номер задетой сущности (FTE `tr->entnum`); для своих
-	// spawn-сущностей/мира — 0. НЕ слот арены (FTE fteqw/engine/server/world.c:2274).
+	// trace_networkentity - the ssqc number of the hit entity; for own spawn
+	// entities/world - 0. Not an arena slot.
 	if ((o = CSQC_Client_TraceGlobal (vm, CSQC_TRACEG_NETWORKENTITY)) >= 0)
 		vm->globals[o] = (float)CSQC_Client_EntityEntNum (vm, tr->e.entnum);
-	// R11: trace_endcontents — домен FTECONTENTS (FTE `tr->contents`, pr_csqc.c:2928).
-	// Мир → конверсия Q1-листа в trace_endpos (проверено: промах→0). Локальная csqc/AABB
-	// → 0 (нет surface-contents; ezq==FTE). Сетевая brush (ssqc) → `.skin`/`SOLID` —
-	// best-effort БЕЗ live-подтверждения (на стенде FTE не бьёт синтетически эмитированный
-	// brush; см. docs/adr/0042-csqc-client-trace-globals.md). Иначе 0.
+	// trace_endcontents - FTECONTENTS domain. World -> Q1 leaf conversion at
+	// trace_endpos (a miss -> 0). Local csqc/AABB -> 0 (no surface-contents).
+	// Network brush (ssqc) -> `.skin`/`SOLID` - best-effort. Otherwise 0.
 	if ((o = CSQC_Client_TraceGlobal (vm, CSQC_TRACEG_ENDCONTENTS)) >= 0)
 	{
 		unsigned int c = 0u;
@@ -4607,7 +4540,7 @@ static void csqc_store_trace (pr1vm_t *vm, trace_t *tr)
 				if (skin <= -1 && skin >= -6)
 					c = s_q1_to_fte_contents[-1 - skin];
 				else if (sol == CSQC_SOLID_BSP)
-					c = 0x00000001u;	// FTECONTENTS_SOLID (обычный solid-brush, FTE model-trace)
+					c = 0x00000001u;	// FTECONTENTS_SOLID (plain solid brush)
 			}
 		}
 		else if (cl.clipmodels[1])
@@ -4621,7 +4554,7 @@ static void csqc_store_trace (pr1vm_t *vm, trace_t *tr)
 	}
 }
 
-/* Отрезок против AABB (slab); возвращает t в [0,1], false — нет пересечения. */
+/* Segment vs AABB (slab); returns t in [0,1], false if no intersection. */
 static qbool csqc_ray_aabb (vec3_t start, vec3_t dir, vec3_t bmin, vec3_t bmax, float *tout)
 {
 	float tmin = 0, tmax = 1;
@@ -4649,13 +4582,12 @@ static qbool csqc_ray_aabb (vec3_t start, vec3_t dir, vec3_t bmin, vec3_t bmax, 
 }
 
 /*
-FTE-пул Шаг 7 (часть 2): dispatch MOVE_* + forent/owner-ignore над сущностями пула.
-После мир-трассы проверить сущности (origin/mins/maxs) и, если ближе — перекрыть.
-AABB-приближение (без hull/movetype-семантики; .solid/.flags/.owner — как в csdefs.qc).
-moveflags — 3-й арг traceline / 5-й tracebox (маска MOVE_* FTE); forent — slot сущности,
-которую и её владельца трасса не бьёт. boxmin/boxmax != NULL — tracebox: AABB сущности
-расширяется на бокс (swept-приближение). Константы SOLID/FL/MOVE — определены выше
-(перед csqc_findradius; паритет csdefs.qc).
+ MOVE_* dispatch + forent/owner-ignore over the pool entities. After the world trace,
+ check entities (origin/mins/maxs) and override if closer. AABB approximation (no
+ hull/movetype semantics; .solid/.flags/.owner as in csdefs.qc). moveflags - 3rd arg of
+ traceline / 5th of tracebox (MOVE_* mask); forent - the entity slot that the trace
+ (and its owner) does not hit. boxmin/boxmax != NULL - tracebox: the entity AABB is
+ expanded by the box (swept approximation). SOLID/FL/MOVE constants are defined above.
 */
 
 static void csqc_trace_ents (pr1vm_t *vm, vec3_t start, vec3_t end,
@@ -4673,9 +4605,9 @@ static void csqc_trace_ents (pr1vm_t *vm, vec3_t start, vec3_t end,
 	everything = !!(moveflags & CSQC_MOVE_EVERYTHING);
 	triggers = !!(moveflags & CSQC_MOVE_TRIGGERS);
 	missile = !!(moveflags & CSQC_MOVE_MISSILE);
-	// NOMONSTERS не выходит сразу: FTE оставляет SOLID_BSP (см. фильтр ниже).
+	// NOMONSTERS does not exit immediately: FTE keeps SOLID_BSP (see the filter below).
 	if (forent < 0 || forent >= vm->num_edicts)
-		forent = 0;	// world — forent-проверок нет
+		forent = 0;	// world - no forent checks
 
 	ofs_o = CSQC_Client_FieldOfs (vm, CSQC_FLD_ORIGIN);
 	ofs_mn = CSQC_Client_FieldOfs (vm, CSQC_FLD_MINS);
@@ -4684,7 +4616,7 @@ static void csqc_trace_ents (pr1vm_t *vm, vec3_t start, vec3_t end,
 	ofs_fl = CSQC_Client_FieldOfs (vm, CSQC_FLD_FLAGS);
 	ofs_own = CSQC_Client_FieldOfs (vm, CSQC_FLD_OWNER);
 	if (ofs_o < 0 || ofs_mn < 0 || ofs_mx < 0)
-		return;	// модуль без геометрии полей — entity-слой недоступен
+		return;	// module has no geometry fields - entity layer unavailable
 
 	for (i = 0; i < 3; i++)
 		dir[i] = end[i] - start[i];
@@ -4702,8 +4634,8 @@ static void csqc_trace_ents (pr1vm_t *vm, vec3_t start, vec3_t end,
 		mn = base + ofs_mn;
 		mx = base + ofs_mx;
 
-		// forent/owner-ignore (FTE csdefs.qc:523-525): не бьёт forent, его .owner и
-		// любую сущность, чей .owner == forent.
+		// forent/owner-ignore: does not hit forent, its .owner and any entity whose
+		// .owner == forent.
 		if (e == forent)
 			continue;
 		if (ofs_own >= 0)
@@ -4711,7 +4643,7 @@ static void csqc_trace_ents (pr1vm_t *vm, vec3_t start, vec3_t end,
 			int own;
 			own = (int)base[ofs_own];
 			if (own != 0 && own / vm->edict_size == forent)
-				continue;	// ent, чей owner == forent
+				continue;	// ent whose owner == forent
 		}
 		if (forent > 0 && ofs_own >= 0)
 		{
@@ -4724,9 +4656,8 @@ static void csqc_trace_ents (pr1vm_t *vm, vec3_t start, vec3_t end,
 		solf = (ofs_sol >= 0) ? (int)base[ofs_sol] : CSQC_SOLID_NOT;
 		flf = (ofs_fl >= 0) ? (int)base[ofs_fl] : 0;
 
-		// FTE-фильтр (world.c:1937 World_ClipToLinks / :1528 World_ClipToEverything):
-		// SOLID_NOT — всегда мимо; триггер бьётся только при MOVE_TRIGGERS/
-		// MOVE_EVERYTHING И FL_FINDABLE_NONSOLID (world.c:1956-1959/:1541).
+		// FTE filter: SOLID_NOT - always skipped; a trigger is hit only with
+		// MOVE_TRIGGERS/MOVE_EVERYTHING AND FL_FINDABLE_NONSOLID.
 		if (solf == CSQC_SOLID_NOT)
 			continue;
 		if (solf == CSQC_SOLID_TRIGGER)
@@ -4736,10 +4667,10 @@ static void csqc_trace_ents (pr1vm_t *vm, vec3_t start, vec3_t end,
 			if (!everything && !triggers)
 				continue;
 		}
-		// MOVE_NOMONSTERS оставляет SOLID_BSP (world.c:1970/:1547).
+		// MOVE_NOMONSTERS keeps SOLID_BSP.
 		if (nomon && solf != CSQC_SOLID_BSP)
 			continue;
-		// MISSILE: монстры с увеличенным размером (±15, как FTE).
+		// MISSILE: monsters with an increased size (+-15).
 		if (missile && (flf & CSQC_FL_MONSTER))
 			inflate = 15;
 
@@ -4769,7 +4700,7 @@ static void csqc_traceline (void)
 	int moveflags, forent;
 	if (!vm)
 		return;
-	// ABI PR1: каждый параметр — 3-словный блок (param_index*3). traceline:
+	// PR1 ABI: each param is a 3-word block (param_index*3). traceline:
 	// v1@0 v2@3 flags@6 forent@9.
 	moveflags = (int)vm->globals[OFS_PARM0 + 6];
 	forent = csqc_ent_of (vm, OFS_PARM0 + 9);
@@ -4788,7 +4719,7 @@ static void csqc_tracebox (void)
 	int moveflags, forent;
 	if (!vm)
 		return;
-	// ABI PR1: каждый параметр — 3-словный блок (param_index*3). tracebox:
+	// PR1 ABI: each param is a 3-word block (param_index*3). tracebox:
 	// v1@0 mins@3 maxs@6 v2@9 flags@12 forent@15.
 	moveflags = (int)vm->globals[OFS_PARM0 + 12];
 	forent = csqc_ent_of (vm, OFS_PARM0 + 15);
@@ -4816,7 +4747,7 @@ static void csqc_pointcontents (void)
 	vm->globals[OFS_RETURN] = CM_HullPointContents (hull, hull->firstclipnode,
 		&vm->globals[OFS_PARM0]);
 }
-/* float(float yaw, float dist) walkmove = #32 (self, своя трасса) */
+/* float(float yaw, float dist) walkmove = #32 (self, own trace) */
 static void csqc_walkmove (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -4844,7 +4775,7 @@ static void csqc_walkmove (void)
 	rad = yaw * (M_PI / 180.0);
 	VectorCopy (org, start);
 	end[0] = org[0] + cos (rad) * dist;
-	end[1] = org[1] + sin (rad) * dist;	// QW/FTE: yaw 0 = +x, yaw 90 = +y
+	end[1] = org[1] + sin (rad) * dist;	// yaw 0 = +x, yaw 90 = +y
 	end[2] = org[2];
 	tr = csqc_world_trace (start, NULL, NULL, end);
 	if (tr.fraction < 1)
@@ -4856,7 +4787,7 @@ static void csqc_walkmove (void)
 	vm->globals[OFS_RETURN] = 1;
 }
 
-/* float() droptofloor = #34 (self; трасса вниз до земли) */
+/* float() droptofloor = #34 (self; trace down to the ground) */
 static void csqc_droptofloor (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -4879,7 +4810,7 @@ static void csqc_droptofloor (void)
 		return;
 	}
 	VectorCopy (org, start);
-	end[0] = org[0]; end[1] = org[1]; end[2] = org[2] - 512;	// FTE CSQC pr_csqc.c:5262
+	end[0] = org[0]; end[1] = org[1]; end[2] = org[2] - 512;
 	tr = csqc_world_trace (start, NULL, NULL, end);
 	if (tr.fraction >= 1 || tr.fraction <= 0)
 	{
@@ -4887,8 +4818,8 @@ static void csqc_droptofloor (void)
 		return;
 	}
 	org[0] = tr.endpos[0]; org[1] = tr.endpos[1]; org[2] = tr.endpos[2];
-	// FTE pr_csqc.c:5273-5274 — посадка на землю помечается FL_ONGROUND и
-	// groundentity (мир = world(0); мир-трасса ezq сущностей не бьёт — подмножество).
+	// landing on the ground sets FL_ONGROUND and groundentity (world = world(0);
+	// the ezq world trace does not hit entities - a subset).
 	{
 		float *ff = csqc_ent_ofs (vm, entnum, CSQC_Client_FieldOfs (vm, CSQC_FLD_FLAGS));
 		float *gf = csqc_ent_field (vm, entnum, "groundentity");
@@ -4900,25 +4831,22 @@ static void csqc_droptofloor (void)
 	vm->globals[OFS_RETURN] = 1;
 }
 
-/* void(float step) movetogoal = #67 — no-op (у модуля нет поля goalentity) */
+/* void(float step) movetogoal = #67 - no-op (the module has no goalentity field) */
 static void csqc_movetogoal (void)
 {
-	/* no-op (документировано; нет .goalentity) */
+	/* no-op (no .goalentity) */
 }
 
 /*
-L2 ST — строки/токенизация (2026-09-07; см. docs/archive/ezquake_csqc_client_l2_roadmap.md).
-FTE-эталон — pr_bgcmd.c: strftime 5088, tokenize_console 6214, tokenizebyseparator
-6219, argv_start_index 6307, argv_end_index 6321. Отдельное хранилище span'ов для
-#514/#479/#515/#516; существующие #441/#442 работают через Cmd-контекст и НЕ меняются
-(раздельные механизмы — отклонение в parity).
+ Strings/tokenization. A separate span store for #514/#479/#515/#516; the existing
+ #441/#442 work via the Cmd context and are unchanged (separate mechanisms).
 */
 #define CSQC_TOK_MAX 128
 static int s_tokn = 0;
 static int s_tok_start[CSQC_TOK_MAX];
 static int s_tok_end[CSQC_TOK_MAX];
 
-// Консольная токенизация (спаны): пробелы/табы разделители; "..." — один токен.
+// Console tokenization (spans): spaces/tabs are separators; "..." is one token.
 static void csqc_tok_console_spans (const char *s)
 {
 	int i = 0, len = s ? (int)strlen (s) : 0, n = 0;
@@ -4949,8 +4877,8 @@ static void csqc_tok_console_spans (const char *s)
 	s_tokn = n;
 }
 
-// tokenizebyseparator: split по любому сепаратору (пустые токены учитываются),
-// спаны как у FTE (6219).
+// tokenizebyseparator: split by any separator (empty tokens are kept),
+// spans like FTE.
 static void csqc_tok_sep_spans (const char *s, const char *sep[], int nsep)
 {
 	int i, len, tokstart, n, si;
@@ -4969,7 +4897,7 @@ static void csqc_tok_sep_spans (const char *s, const char *sep[], int nsep)
 	{
 		int found = -1;
 		if (i >= len)
-			found = -2;			// конец строки
+			found = -2;			// end of string
 		else
 		{
 			for (si = 0; si < nsep && si < 7; si++)
@@ -5026,7 +4954,7 @@ static void csqc_strftime (void)
 		p = CSQC_Client_GetString (vm, *(int *)&vm->globals[OFS_PARM0 + i * 3]);
 		if (!p)
 			continue;
-		// msvc-совместимость (как FTE): %R/%F
+		// msvc compatibility (like FTE): %R/%F
 		if (!strcmp (p, "%R"))
 			p = "%H:%M";
 		else if (!strcmp (p, "%F"))
@@ -5043,11 +4971,11 @@ static void csqc_strftime (void)
 		if (strftime (out, sizeof (out), buf, tm))
 			CSQCVM_SetRetStr (out);
 		else
-			CSQCVM_SetRetStr (buf);	// некорректный формат — вернуть как есть
+			CSQCVM_SetRetStr (buf);	// invalid format - return as is
 	}
 }
 
-/* float(string str) tokenize_console = #514 — как #441 (Cmd) + спаны */
+/* float(string str) tokenize_console = #514 - like #441 (Cmd) + spans */
 static void csqc_tokenize_console (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5104,14 +5032,11 @@ static void csqc_argv_end_index (void)
 }
 
 /*
-L2 — «Ввод/клавиатура/меню» (2026-09-07; roadmap волна 2). FTE-эталон —
-pr_clcmd.c (findkeysforcommand 388, getkeybind 431, setkeybind 438,
-stringtokeynum 451, keynumtostring 469, getresolution 774, GetBindMap 969,
-setmousetarget 989, getmousetarget 1007). ezq: keybindings[]/Key_* (keys.h);
-bindmaps/модификаторов/перечисления режимов нет — no-op/аппроксимации (parity).
+ Input/keyboard/menu. ezq uses keybindings[]/Key_* (keys.h); there are no bindmaps/
+ modifiers/mode enumeration - no-op/approximations.
 */
 
-/* string(float keynum) getkeybind = #342 — binding команда или "" (B6: вход — QC-код) */
+/* string(float keynum) getkeybind = #342 - bound command or "" (input is a QC code) */
 static void csqc_getkeybind (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5126,7 +5051,7 @@ static void csqc_getkeybind (void)
 	CSQCVM_SetRetStr (b ? b : "");
 }
 
-/* void(float keynum, string binding, optional float bindmap) setkeybind = #630 (B6: вход — QC-код) */
+/* void(float keynum, string binding, optional float bindmap) setkeybind = #630 (input is a QC code) */
 static void csqc_setkeybind (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5138,7 +5063,7 @@ static void csqc_setkeybind (void)
 		Key_SetBinding (keynum, binding ? binding : "");
 }
 
-/* #520 keynumtostring_omgwtf / #609 keynumtostring_menu — как #340 (QC-домен, B6) */
+/* #520 keynumtostring_omgwtf / #609 keynumtostring_menu - like #340 (QC domain) */
 static void csqc_keynumtostring_menu (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5147,7 +5072,7 @@ static void csqc_keynumtostring_menu (void)
 	CSQCVM_SetRetStr (Key_KeynumToString (CSQC_Client_QCToKeynum ((int)vm->globals[OFS_PARM0])));
 }
 
-/* float(string key) stringtokeynum_menu = #614 — как #341 (QC-домен, B6) */
+/* float(string key) stringtokeynum_menu = #614 - like #341 (QC domain) */
 static void csqc_stringtokeynum_menu (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5158,10 +5083,10 @@ static void csqc_stringtokeynum_menu (void)
 }
 
 /*
-string(string command, optional float bindmap) findkeysforcommand = #521
-string(string command, optional float bindmap) findkeysforcommand_dp = #610
-B9 (FTE-parity): скан keybindings[]; возврат QC-кодов в формате FTE
-` 'code' 'code'…` (fteqw pr_clcmd.c:388-408: `va(" '%i'", …)`).
+ string(string command, optional float bindmap) findkeysforcommand = #521
+ string(string command, optional float bindmap) findkeysforcommand_dp = #610
+ FTE parity: scan keybindings[]; return QC codes in the FTE format
+ ` 'code' 'code'...`.
 */
 static void csqc_findkeysforcommand (void)
 {
@@ -5183,13 +5108,13 @@ static void csqc_findkeysforcommand (void)
 	CSQCVM_SetRetStr (buf);
 }
 
-/* void(float trg) setmousetarget = #603 — no-op (курсор через #343) */
+/* void(float trg) setmousetarget = #603 - no-op (cursor via #343) */
 static void csqc_setmousetarget (void)
 {
-	/* no-op (отдельного mousetarget нет; курсор — #343) */
+	/* no-op (no separate mousetarget; cursor is #343) */
 }
 
-/* float() getmousetarget = #604 — 2 если CSQC-курсор активен, иначе 1 */
+/* float() getmousetarget = #604 - 2 if the CSQC cursor is active, otherwise 1 */
 static void csqc_getmousetarget (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5198,8 +5123,8 @@ static void csqc_getmousetarget (void)
 	vm->globals[OFS_RETURN] = CSQC_Client_CSQCCursor () ? 2 : 1;
 }
 
-/* vector(float vidmode, optional float forfullscreen) getresolution = #608 —
-   возврат текущего разрешения (список режимов не перечисляем) */
+/* vector(float vidmode, optional float forfullscreen) getresolution = #608 -
+   returns the current resolution (mode list is not enumerated) */
 static void csqc_getresolution (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5210,7 +5135,7 @@ static void csqc_getresolution (void)
 	vm->globals[OFS_RETURN + 2] = 0;
 }
 
-/* vector() getbindmaps = #631 — bindmaps нет: (0,0,0) */
+/* vector() getbindmaps = #631 - no bindmaps: (0,0,0) */
 static void csqc_getbindmaps (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5221,7 +5146,7 @@ static void csqc_getbindmaps (void)
 	vm->globals[OFS_RETURN + 2] = 0;
 }
 
-/* float(vector bindmaps) setbindmaps = #632 — no-op, возврат 1 */
+/* float(vector bindmaps) setbindmaps = #632 - no-op, returns 1 */
 static void csqc_setbindmaps (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5231,19 +5156,18 @@ static void csqc_setbindmaps (void)
 }
 
 /*
-L2 — «Звук» (2026-09-07; roadmap волна 5). FTE-эталон — pr_csqc.c/pr_clcmd.c.
-Реализовано: #483 pointsound (S_PrecacheSound + S_StartSound(0,0,…) с origin —
-позиционный по origin, как FTE). No-op (нет аналога в ezq): #351 SetListener
-(аудио-листенер фиксирован), #371 deltalisten (предикция EXT_CSQC_1), #533
-getsoundtime / #534 soundlength (нет канальных таймингов/длины сэмпла).
+ Sound. Implemented: #483 pointsound (S_PrecacheSound + S_StartSound(0,0,...) with
+ origin - positional by origin). No-op (no analog in ezq): #351 SetListener (audio
+ listener is fixed), #371 deltalisten (EXT_CSQC_1 prediction), #533 getsoundtime /
+ #534 soundlength (no channel timings/sample length).
 */
 
 /*
-void(vector origin, string sample, float volume, float attenuation,
-     optional float pitchpct) pointsound = #483
-FTE pr_csqc.c:4694: 5-й арг — pitch в процентах (100 = норм), кладётся в playback-rate
-(chan->rate, snd_dma.c:2962). В ezq-sound нет pitch/rate (channel_t/микшер без rate) —
-аргумент принимается для идентичности вызова и игнорируется (parity-audit §D.2).
+ void(vector origin, string sample, float volume, float attenuation,
+      optional float pitchpct) pointsound = #483
+ FTE: the 5th arg is pitch in percent (100 = normal), stored as the playback rate.
+ ezq sound has no pitch/rate (the channel mixer has no rate) - the argument is
+ accepted for call identity and ignored.
 */
 static void csqc_pointsound (void)
 {
@@ -5257,7 +5181,7 @@ static void csqc_pointsound (void)
 	org = &vm->globals[OFS_PARM0];
 	sample = CSQC_Client_GetString (vm, *(int *)&vm->globals[OFS_PARM0 + 3]);
 	if (vm->argc >= 5)
-		pitchpct = vm->globals[OFS_PARM0 + 12] * 0.01f;	// только для паритета вызова
+		pitchpct = vm->globals[OFS_PARM0 + 12] * 0.01f;	// only for call parity
 	(void)pitchpct;
 	if (!sample || !sample[0])
 		return;
@@ -5268,9 +5192,9 @@ static void csqc_pointsound (void)
 
 /* #351 SetListener / #371 deltalisten */
 /*
-void(vector origin, vector forward, vector right, vector up) setlistener = #351
-C5-E Ф1: модуль задаёт аудио-листенер; cl_main.c использует его в S_Update, пока
-модуль активен (иначе — движковый вид). FTE-паритет для предикции звука.
+ void(vector origin, vector forward, vector right, vector up) setlistener = #351
+ The module sets the audio listener; cl_main.c uses it in S_Update while the module
+ is active (otherwise the engine's view). FTE parity for sound prediction.
 */
 static void csqc_setlistener (void)
 {
@@ -5281,11 +5205,10 @@ static void csqc_setlistener (void)
 		&vm->globals[OFS_PARM0 + 6], &vm->globals[OFS_PARM0 + 9]);
 }
 /*
-float(string modelname, float(float isnew) updatecallback, float flags) deltalisten = #371
-E1a: реальная регистрация (FTE PF_DeltaListen, pr_csqc.c:5810) — реестр callback'ов
-по modelindex; движок вызывает их при обновлении сущностей (player_state-мост в
-CSQC_Client_DeltaPlayers; delta-entities — E1b). modelname="*" — все модели;
-func<=0/невалидный — снятие регистрации.
+ float(string modelname, float(float isnew) updatecallback, float flags) deltalisten = #371
+ Real registration (FTE PF_DeltaListen) - a callback registry by modelindex; the
+ engine calls them on entity updates (the player_state bridge in
+ CSQC_Client_DeltaPlayers). modelname="*" - all models; func<=0/invalid - removal.
 */
 static void csqc_deltalisten (void)
 {
@@ -5297,12 +5220,12 @@ static void csqc_deltalisten (void)
 	model = CSQC_Client_GetString (vm, *(int *)&vm->globals[OFS_PARM0]);
 	func = *(int *)&vm->globals[OFS_PARM1];
 	if (func < 0 || func >= vm->progs->numfunctions)
-		func = 0;	// невалидный указатель — снятие/no-op
+		func = 0;	// invalid pointer - removal/no-op
 	CSQC_Client_DeltaListen (model, func, (int)vm->globals[OFS_PARM2]);
 	vm->globals[OFS_RETURN] = 0;
 }
 
-/* #533 getsoundtime / #534 soundlength — no-op (нет канальных таймингов/длины) */
+/* #533 getsoundtime / #534 soundlength - no-op (no channel timings/length) */
 static void csqc_getsoundtime (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5319,9 +5242,8 @@ static void csqc_soundlength (void)
 }
 
 /*
-L2 — «Entity-рефлексия» (#496-500, 2026-09-07; roadmap — ранее отложено). FTE-эталон
-pr_bgcmd.c:7694-7830 (FieldInfo + UglyValueString/ParseEval). Работаем по
-vm->fielddefs[] (ddef_t: name/type/ofs в словах арены, etype_t ev_* из pr_comp.h).
+ Entity reflection (#496-500). Works over vm->fielddefs[] (ddef_t: name/type/ofs in
+ arena words, etype_t ev_*).
 */
 static ddef_t *csqc_fielddef (pr1vm_t *vm, unsigned int fidx)
 {
@@ -5359,7 +5281,7 @@ static void csqc_entityfieldname (void)
 	CSQCVM_SetRetStr (s ? s : "");
 }
 
-/* float(float fieldnum) entityfieldtype = #498 (полный ddef_t.type; FTE pr_bgcmd.c:7750) */
+/* float(float fieldnum) entityfieldtype = #498 (full ddef_t.type) */
 static void csqc_entityfieldtype (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5466,9 +5388,9 @@ static void csqc_putentityfieldstring (void)
 }
 
 /*
-L2 — «BSP-поверхности» (2026-09-07). Все no-op: FTE читает геометрию brush-моделей
-(surfaces/mesh/plane/texture, pr_bgcmd.c:953-1350); в ezq такого geometry-интерфейса
-моделей нет. Регистрация — защита от «Bad builtin».
+ BSP surfaces. All no-op: FTE reads brush-model geometry
+ (surfaces/mesh/plane/texture); ezq has no such model geometry interface. Registered
+ to avoid "Bad builtin".
 */
 static void csqc_bsp_nop_vec (void)
 {
@@ -5481,12 +5403,10 @@ static void csqc_bsp_nop_vec (void)
 }
 
 /*
-L2 — «Интроспекция/кон» (2026-09-07; roadmap продолжение L2). FTE-эталон —
-pr_bgcmd.c (isfunction 3809, callfunction 3816, argescape 6349, checkcommand 7820),
-pr_menu.c (con_* 1143+). Реализовано: #294 checkcommand (ezq: cmd→1, cvar→3,
-alias недоступно→0), #295 argescape (своё quoting), #607 isfunction. No-op:
-#391/#392/#393/#394 (multi-console FTE нет в ezq), #605 callfunction (reentrant
-exec из builtin не поддержан — отложено).
+ Introspection/console. Implemented: #294 checkcommand (cmd->1, cvar->3, no alias->0),
+ #295 argescape (own quoting), #607 isfunction. No-op: #391/#392/#393/#394 (FTE
+ multi-console has no ezq analog), #605 callfunction (reentrant exec from a builtin
+ is unsupported).
 */
 
 /* float(string name) checkcommand = #294 */
@@ -5504,7 +5424,7 @@ static void csqc_checkcommand (void)
 		vm->globals[OFS_RETURN] = 0;
 }
 
-/* string(string s) argescape = #295 — оборачивает в кавычки с экранированием */
+/* string(string s) argescape = #295 - wraps in quotes with escaping */
 static void csqc_argescape (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5541,7 +5461,7 @@ static void csqc_argescape (void)
 	CSQCVM_SetRetStr (buf);
 }
 
-/* float(string name) isfunction = #607 — функция есть в модуле */
+/* float(string name) isfunction = #607 - the function exists in the module */
 static void csqc_isfunction (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5552,11 +5472,10 @@ static void csqc_isfunction (void)
 }
 
 /*
-void(vector anglechange, optional float seat) CL_RotateMoves = #638 — FTE-паритет
-(PF_cl_RotateMoves fteqw/engine/client/pr_csqc.c:4094; класс I, ADR 0040): поворот
-углов неподтверждённых usercmd. Тело — CSQC_Client_RotateMoves (s_inhist).
-Невалидный seat → 0 (FTE :4102-4106); при валидном seat return-значение FTE не
-задаёт (csdefs — void) — оставляем как есть.
+ void(vector anglechange, optional float seat) CL_RotateMoves = #638 - FTE parity
+ (PF_cl_RotateMoves): rotates the angles of unacknowledged usercmd. Body is
+ CSQC_Client_RotateMoves (s_inhist). Invalid seat -> 0; for a valid seat FTE leaves
+ the return value unset (void) - we leave it as is.
 */
 static void csqc_cl_rotatemoves (void)
 {
@@ -5575,10 +5494,9 @@ static void csqc_cl_rotatemoves (void)
 }
 
 /*
-L2 — «Свет/decals/скины» (2026-09-07; roadmap волна 5-финальная). Все номера —
-документированные no-op/аппроксимации: в ezq нет decal/skin-файловых подсистем
-FTE (`Mod_*Skin`, `CL_AddDecal`), readback-пикч и констант `lfield_*` для
-`cl_dlights[]`. Регистрация — чтобы модуль не ловил «Bad builtin».
+ Lights/decals/skins. All no-op/approximations: ezq has no FTE decal/skin file
+ subsystems (`Mod_*Skin`, `CL_AddDecal`), readback pics or `lfield_*` constants for
+ `cl_dlights[]`. Registered so the module does not hit "Bad builtin".
 */
 static void csqc_light_nop_ret0 (void)
 {
@@ -5589,18 +5507,16 @@ static void csqc_light_nop_ret0 (void)
 }
 
 /*
-L2 — «Система/VM остаток» (2026-09-07; roadmap волна 3, минимум-скоуп). Реализовано
-полностью: #98 findfloat (обход пула по float-полю, как FTE PF_FindFloat
-pr_bgcmd.c:1643). #92 getlight — аппроксимация (сэмпла света нет → 0). No-op
-(серверно-мировые/нет аналога): #64 tracetoss, #240 checkpvs, #278 terrain_edit,
-#279 touchtriggers, #504 getentity. #206 instr/#496-500 (рефлексия FieldInfo) —
-отложены отдельным шагом (сигнатура/механизм).
+ System/VM remainder. Fully implemented: #98 findfloat (pool walk by float field,
+ like FTE PF_FindFloat). #92 getlight - approximation (no light sample -> 0). No-op
+ (server-world/no analog): #64 tracetoss, #240 checkpvs, #278 terrain_edit,
+ #279 touchtriggers, #504 getentity.
 */
 
 /*
-entity(entity start, .float fld, float match) findfloat = #98
-(он же findentity у FTE). Возврат: следующий used-слот после start с равенством
-значения float-поля; нет — world (0).
+ entity(entity start, .float fld, float match) findfloat = #98
+ (findentity in FTE). Returns: the next used slot after start with an equal float
+ field value; none - world (0).
 */
 static void csqc_findfloat (void)
 {
@@ -5626,8 +5542,8 @@ static void csqc_findfloat (void)
 		slot = csqc_ent_slot (vm, e);
 		if (!slot)
 			continue;
-		// FTE pr_bgcmd.c:1672 сравнивает сырые 32-битные значения
-		// (((int*)ed->v)[f] == G_INT(PARM2)), а не float (различие — -0.0/NaN).
+		// FTE compares raw 32-bit values (((int*)ed->v)[f] == G_INT(PARM2)), not
+		// float (difference - -0.0/NaN).
 		if (*(int *)&slot[f] == *(int *)&match)
 		{
 			csqc_ret_entity (vm, e);
@@ -5637,7 +5553,7 @@ static void csqc_findfloat (void)
 	csqc_ret_entity (vm, 0);
 }
 
-/* vector(vector org) getlight = #92 — аппроксимация: сэмпла статик-света нет → 0 */
+/* vector(vector org) getlight = #92 - approximation: no static light sample -> 0 */
 static void csqc_getlight_approx (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5648,18 +5564,17 @@ static void csqc_getlight_approx (void)
 	vm->globals[OFS_RETURN + 2] = 0;
 }
 
-/* no-op: #64/#240/#278/#279 — серверно-мировые/нет аналога (см. parity) */
+/* no-op: #64/#240/#278/#279 - server-world/no analog */
 static void csqc_vmrest_nop (void)
 {
-	/* no-op (документировано) */
+	/* no-op */
 }
 
 /*
-__variant(float entnum, float fieldnum) getentity = #504 (C5-E Ф2).
-FTE PF_getentity (pr_csqc.c:5862): интерп. состояние engine-сетевой сущности по
-серверному номеру. Реализация — CSQC_Client_GetEntity (csqc_client.c); сюда
-пишем 3 слова возврата (float-поля занимают первое). Поля без ezq-источника —
-FTE-дефолт (отклонения в parity-audit).
+ __variant(float entnum, float fieldnum) getentity = #504.
+ FTE PF_getentity: interpolated state of an engine-network entity by server number.
+ Implementation is CSQC_Client_GetEntity (csqc_client.c); we write 3 return words
+ here (float fields occupy the first). Fields without an ezq source - FTE default.
 */
 static void csqc_getentity (void)
 {
@@ -5674,14 +5589,11 @@ static void csqc_getentity (void)
 }
 
 /*
-L2 — «Система/VM простые» (2026-09-07). FTE-эталон: etos pr_bgcmd.c:5029,
-wasfreed/num_for_edict pr_bgcmd.c:3961/3970, print pr_bgcmd.c:4264, cprint
-pr_csqc.c:662 (SCR_CenterPrint), isserver pr_clcmd.c:553. Entity-значение в нашей
-классике = slot*edict_size; слот = ent_of (см. #459/#512 — слот-индексная семантика,
-отклонение от FTE-«entnum», в parity).
+ Simple system/VM builtins. The entity value in our classic mode = slot*edict_size;
+ slot = ent_of (see #459/#512 - slot-index semantics, deviation from FTE "entnum").
 */
 
-/* string(entity ent) etos = #65 — "entity <slot>" */
+/* string(entity ent) etos = #65 - "entity <slot>" */
 static void csqc_etos (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5694,7 +5606,7 @@ static void csqc_etos (void)
 	CSQCVM_SetRetStr (buf);
 }
 
-/* void(string s, ...) print = #339 — консоль (Con_Printf). */
+/* void(string s, ...) print = #339 - console (Con_Printf). */
 static void csqc_print (void)
 {
 	char *s = CSQCVM_VarString (0);
@@ -5702,15 +5614,15 @@ static void csqc_print (void)
 		Con_Printf ("%s", s);
 }
 
-/* void(string s, ...) cprint = #338 — центр-экран (SCR_CenterPrint, как FTE). */
+/* void(string s, ...) cprint = #338 - center screen (SCR_CenterPrint, like FTE). */
 static void csqc_cprint (void)
 {
 	char *s = CSQCVM_VarString (0);
 	SCR_CenterPrint (s ? s : "");
 }
 
-/* float() isserver = #350 — сервер запущен? (ezq-клиент включает сервер).
-   Отклонение: без различения 0.5 (sv.allocated_client_slots нет в ezq). */
+/* float() isserver = #350 - is the server running? (the ezq client includes one).
+   Deviation: no 0.5 distinction (no sv.allocated_client_slots in ezq). */
 static void csqc_isserver (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5719,7 +5631,7 @@ static void csqc_isserver (void)
 	vm->globals[OFS_RETURN] = (sv.state != ss_dead) ? 1 : 0;
 }
 
-/* float(entity ent) wasfreed = #353 — слот освобождён (remove). */
+/* float(entity ent) wasfreed = #353 - slot freed (remove). */
 static void csqc_wasfreed (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5730,7 +5642,7 @@ static void csqc_wasfreed (void)
 	vm->globals[OFS_RETURN] = (slot > 0 && !CSQC_Client_EntUsed (slot)) ? 1 : 0;
 }
 
-/* float(entity ent) num_for_edict = #512 — слот-индекс (парный к #459). */
+/* float(entity ent) num_for_edict = #512 - slot index (paired with #459). */
 static void csqc_num_for_edict (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5741,23 +5653,22 @@ static void csqc_num_for_edict (void)
 	vm->globals[OFS_RETURN] = slot > 0 ? slot : 0;
 }
 
-/* #63 changepitch — no-op (движение углов к idealpitch — серверная механика). */
+/* #63 changepitch - no-op (moving angles to idealpitch is server mechanics). */
 static void csqc_changepitch (void)
 {
-	/* no-op (документировано; как changeyaw #49) */
+	/* no-op (like changeyaw #49) */
 }
 
 /*
-#639 digest_hex (FTE parity, PF_digest_hex pr_bgcmd.c:5826): hash the varargs
-concatenation (from parm1) into a lowercase-hex tempstring. Supported names
-(exact uppercase match, FTE pr_bgcmd.c:5792-5807): "SHA1", "MD4", "CRC16".
-MD5/SHA-2 are not implemented in ezq (class D deviation, ADR 0040) — any other
-name (or a lowercase one) returns "" like FTE (pr_bgcmd.c:5808-5809,5823).
-ezq bin2hex is UPPERCASE (sha1.c:151-158) — not usable, hence the local helper.
+ #639 digest_hex (FTE parity, PF_digest_hex): hash the varargs concatenation (from
+ parm1) into a lowercase-hex tempstring. Supported names (exact uppercase match):
+ "SHA1", "MD4", "CRC16". MD5/SHA-2 are not implemented in ezq - any other name (or a
+ lowercase one) returns "" like FTE. ezq bin2hex is UPPERCASE - not usable, hence the
+ local helper.
 */
-/* MD4 context mirror of md4.c:52-57 (md4.c has no header and is shared with
-   mvdsv — ADR 0022, do not touch). UINT4 == unsigned int on LP64/x86_64; RSA
-   MD4 layout is stable, keep in sync with md4.c. */
+/* MD4 context mirror of md4.c (md4.c has no header and is shared with mvdsv - do
+   not touch). UINT4 == unsigned int on LP64/x86_64; the RSA MD4 layout is stable,
+   keep in sync with md4.c. */
 typedef struct {
 	unsigned int state[4];
 	unsigned int count[2];
@@ -5820,7 +5731,7 @@ static void csqc_digest_hex (void)
 		for (i = 0; i < (int)strlen (data); i++)
 			CRC_ProcessByte (&crc, (unsigned char)data[i]);
 		crc = CRC_Value (crc);
-		digest[0] = crc & 0xff;		// little-endian bytes, like FTE hash_crc16 (crc.c:86-87)
+		digest[0] = crc & 0xff;		// little-endian bytes, like FTE hash_crc16
 		digest[1] = (crc >> 8) & 0xff;
 		len = 2;
 	}
@@ -5830,10 +5741,10 @@ static void csqc_digest_hex (void)
 		CSQCVM_SetRetStr (out);
 	}
 	else
-		CSQCVM_SetRetStr ("");	// MD5/SHA-2/unknown — class D deviation (ADR 0040)
+		CSQCVM_SetRetStr ("");	// MD5/SHA-2/unknown - not implemented
 }
 
-/* #355 getentitytoken — deprecated/не нужен: возврат "" (""). */
+/* #355 getentitytoken - deprecated/not needed: returns "". */
 static void csqc_nop_str (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5844,13 +5755,13 @@ static void csqc_nop_str (void)
 
 void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 {
-	// #1 makevectors (C6.1, FTE-паритет) — до CSQC-специфичных.
+	// #1 makevectors (FTE parity) - before the CSQC-specific ones.
 	PR1VM_RegisterBuiltin (vm, 1, (builtin_t)csqc_makevectors); // #1 void() makevectors (QUAKE)
 
-	// Phase 1 L1 P1a — реюз чистых float/vector серверных PF_* (см. extern выше):
-	// attach в PR1VM_ExecuteProgram переключает pr_globals на исполняемую VM.
-	// #7/#13/#51 — клиентские wrapper'ы (FTE-паритет возврата/арг), серверные
-	// PF_random/PF_vectoyaw/PF_vectoangles общие с сервером — не трогаем.
+	// Reuse pure float/vector server PF_* (see the externs above): the attach in
+	// PR1VM_ExecuteProgram points pr_globals at the executing VM.
+	// #7/#13/#51 are client wrappers (FTE parity of return/args); the server
+	// PF_random/PF_vectoyaw/PF_vectoangles are shared with the server - untouched.
 	PR1VM_RegisterBuiltin (vm, 7,   (builtin_t)csqc_random); // #7 float() random (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 9,   (builtin_t)PF_normalize); // #9 vector(vector in) normalize (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 12,  (builtin_t)PF_vlen); // #12 float(vector v) vlen (QUAKE)
@@ -5868,13 +5779,12 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 94,  (builtin_t)PF_min); // #94 float(float a, floats) min (DP_QC_MINMAXBOUND)
 	PR1VM_RegisterBuiltin (vm, 95,  (builtin_t)PF_max); // #95 float(float a, floats) max (DP_QC_MINMAXBOUND)
 	PR1VM_RegisterBuiltin (vm, 96,  (builtin_t)PF_bound); // #96 float(float minimum, float val, float maximum) bound (DP_QC_MINMAXBOUND)
-	// #97 pow / #91 randomvec — тела в pr_cmds.c статические: лёгкие клиентские
-	// обработчики (чистая математика, читают/пишут vm->globals).
+	// #97 pow / #91 randomvec - their pr_cmds.c bodies are static: light client
+	// handlers (pure math, read/write vm->globals).
 	PR1VM_RegisterBuiltin (vm, 97,  (builtin_t)csqc_pow); // #97 float(float value) pow (DP_QC_SINCOSSQRTPOW)
 	PR1VM_RegisterBuiltin (vm, 91,  (builtin_t)csqc_randomvec); // #91 vector() randomvec (DP_QC_RANDOMVEC)
 
-	// Phase 1 L1 P1c — cvar/exec/ошибки (#10/#11/#46/#72/#93/#99/#231;
-	// #28 coredump / #31 eprint — P1d).
+	// cvar/exec/errors (#10/#11/#46/#72/#93/#99/#231; #28 coredump / #31 eprint).
 	PR1VM_RegisterBuiltin (vm, 10,  (builtin_t)csqc_error); // #10 void(string errortext) error (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 11,  (builtin_t)csqc_objerror); // #11 void(string errortext) onjerror (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 46,  (builtin_t)csqc_localcmd); // #46 void(string str) localcmd (QUAKE)
@@ -5883,7 +5793,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 99,  (builtin_t)csqc_checkextension); // #99 float(string extname) checkextension (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 231, (builtin_t)csqc_calltimeofday); // #231 void() calltimeofday
 
-	// Phase 1 L1 P1b — строки/конверсии (#118/#119 — ring/no-op, отклонение).
+	// strings/conversions (#118/#119 - ring/no-op).
 	PR1VM_RegisterBuiltin (vm, 27,  (builtin_t)csqc_vtos); // #27 string(vector f) vtos (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 81,  (builtin_t)csqc_stof); // #81 float(string s) stof (FRIK_FILE or QW_ENGINE)
 	PR1VM_RegisterBuiltin (vm, 114, (builtin_t)csqc_strlen); // #114 float(string str) strlen (FRIK_FILE)
@@ -5893,7 +5803,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 119, (builtin_t)csqc_strunzone); // #119 void(string str) freestring (FRIK_FILE)
 	PR1VM_RegisterBuiltin (vm, 448, (builtin_t)csqc_cvar_string); // #448 string(float n) cvar_string (DP_QC_CVAR_STRING)
 
-	// Phase 1 L1 P1e — клиентские подсистемы (no-op/отклонения — в parity-audit).
+	// client subsystems.
 	PR1VM_RegisterBuiltin (vm, 6,   (builtin_t)csqc_breakpoint); // #6 void() debugbreak (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 8,   (builtin_t)csqc_sound); // #8 void(entity e, float chan, string samp, float vol, float atten) sound (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 19,  (builtin_t)csqc_precache_sound); // #19 void(string str) precache_sound (QUAKE)
@@ -5907,7 +5817,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 77,  (builtin_t)csqc_precache_file); // #77 void(string str) precache_file2 (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 531, (builtin_t)csqc_setpause); // #531 ?
 
-	// Phase 1 L1 P1d C1 — базовые entity на арене (резерв C0-A).
+	// basic entities on the arena.
 	PR1VM_RegisterBuiltin (vm, 2,   (builtin_t)csqc_setorigin); // #2 void(entity e, vector org) setorigin (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 3,   (builtin_t)csqc_setmodel); // #3 void(entity e, string modl) setmodel (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 4,   (builtin_t)csqc_setsize); // #4 void(entity e, vector mins, vector maxs) setsize (QUAKE)
@@ -5923,7 +5833,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 69,  (builtin_t)csqc_makestatic); // #69 void(entity e) makestatic (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 80,  (builtin_t)csqc_infokey); // #80 string(entity e, string keyname) infokey (QW_ENGINE) (don't support)
 
-	// Phase 1 L1 P1d C2 — мировые трассы/физика (мир-only).
+	// world traces/physics (world-only).
 	PR1VM_RegisterBuiltin (vm, 16,  (builtin_t)csqc_traceline); // #16 void(vector v1, vector v2, float nomonst, entity forent) traceline (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 90,  (builtin_t)csqc_tracebox); // #90 void(vector start, vector mins, vector maxs, vector end, float nomonsters, entity ent) tracebox
 	PR1VM_RegisterBuiltin (vm, 41,  (builtin_t)csqc_pointcontents); // #41 float(vector org) pointcontents (QUAKE)
@@ -5935,27 +5845,27 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 26, (builtin_t)csqc_ftos); // #26 string(float f) ftos (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 45, (builtin_t)csqc_cvar); // #45 float(string cvarname) cvar (QUAKE)
 
-	// Слой D шаг 3 — ввод/интерфейс: #340 keynumtostring, #341 stringtokeynum.
+	// input/interface: #340 keynumtostring, #341 stringtokeynum.
 	PR1VM_RegisterBuiltin (vm, 340, (builtin_t)csqc_keynumtostring); // #340 string(float keynum) keynumtostring (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 341, (builtin_t)csqc_stringtokeynum); // #341 float(string keyname) stringtokeynum (EXT_CSQC)
 	// #349 isdemo, #354 serverkey.
 	PR1VM_RegisterBuiltin (vm, 349, (builtin_t)csqc_isdemo); // #349 float() isdemo (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 354, (builtin_t)csqc_serverkey); // #354 string(string key) serverkey;
-	// #343 setcursormode (A3.1: полная — курсор модуля в CSQC-оверлее).
+	// #343 setcursormode (full: module cursor in the CSQC overlay).
 	PR1VM_RegisterBuiltin (vm, 343, (builtin_t)csqc_setcursormode); // #343 void(float usecursor, optional string cursorimage, optional vector hotspot, optional float scale) setcursormode
-	// #344 getmousepos (A3.2: read-путь позиции CSQC-курсора).
+	// #344 getmousepos (read path of the CSQC cursor position).
 	PR1VM_RegisterBuiltin (vm, 344, (builtin_t)csqc_getmousepos); // #344 vector() getmousepos
-	// #348 getplayerkeyvalue (A6).
+	// #348 getplayerkeyvalue.
 	PR1VM_RegisterBuiltin (vm, 348, (builtin_t)csqc_getplayerkeyvalue); // #348 string(float playernum, string keyname) getplayerkeyvalue (EXT_CSQC)
-	// C1.1 — #346 setsensitivityscaler.
+	// #346 setsensitivityscaler.
 	PR1VM_RegisterBuiltin (vm, 346, (builtin_t)csqc_setsensitivityscaler); // #346 void(float sens) setsensitivityscaler (EXT_CSQC)
-	// C1.3 — #345 getinputstate.
+	// #345 getinputstate.
 	PR1VM_RegisterBuiltin (vm, 345, (builtin_t)csqc_getinputstate); // #345 float(float framenum) getinputstate (EXT_CSQC)
-	// C1.4 — #347 runstandardplayerphysics.
+	// #347 runstandardplayerphysics.
 	PR1VM_RegisterBuiltin (vm, 347, (builtin_t)csqc_runstandardplayerphysics); // #347 void() runstandardplayerphysics (EXT_CSQC)
-	// C2.1 — #459 edict_num.
+	// #459 edict_num.
 	PR1VM_RegisterBuiltin (vm, 459, (builtin_t)csqc_edict_num); // #459 entity(float entnum) edict_num
-	// C2.2 — #460-469 string-buffers.
+	// #460-469 string-buffers.
 	PR1VM_RegisterBuiltin (vm, 460, (builtin_t)csqc_buf_create); // #460 float() buf_create
 	PR1VM_RegisterBuiltin (vm, 461, (builtin_t)csqc_buf_del); // #461 void(float bufhandle) buf_del
 	PR1VM_RegisterBuiltin (vm, 462, (builtin_t)csqc_buf_getsize); // #462 float(float bufhandle) buf_getsize
@@ -5966,14 +5876,14 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 467, (builtin_t)csqc_bufstr_set); // #467 void(float bufhandle, float string_index, string str) bufstr_set
 	PR1VM_RegisterBuiltin (vm, 468, (builtin_t)csqc_bufstr_add); // #468 float(float bufhandle, string str, float order) bufstr_add
 	PR1VM_RegisterBuiltin (vm, 469, (builtin_t)csqc_bufstr_free); // #469 void(float bufhandle, float string_index) bufstr_free
-	// C3.1 — #177 localsound, #305 dynamiclight_add.
+	// #177 localsound, #305 dynamiclight_add.
 	PR1VM_RegisterBuiltin (vm, 177, (builtin_t)csqc_localsound); // #177 void(string soundname, optional float channel, optional float volume) localsound
 	PR1VM_RegisterBuiltin (vm, 305, (builtin_t)csqc_dynamiclight_add); // #305 float(vector org, float radius, vector lightcolours) adddynamiclight (EXT_CSQC)
-	// C3.2 — #335-337 частицы (мини-реестр).
+	// #335-337 particles (mini registry).
 	PR1VM_RegisterBuiltin (vm, 335, (builtin_t)csqc_particleeffectnum); // #335 float(string effectname) particleeffectnum (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 336, (builtin_t)csqc_trailparticles); // #336 void(float effectnum, entity ent, vector start, vector end) trailparticles (EXT_CSQC),
 	PR1VM_RegisterBuiltin (vm, 337, (builtin_t)csqc_pointparticles); // #337 void(float effectnum, vector origin [, vector dir, float count]) pointparticles (EXT_CSQC)
-	// C3.3a — te_* аппроксимируемая группа (#405-427, кроме #426).
+	// the approximated te_* group (#405-427, except #426).
 	PR1VM_RegisterBuiltin (vm, 405, (builtin_t)csqc_te_blood); // #405 void(vector org, vector velocity, float howmany) te_blood (DP_TE_BLOOD)
 	PR1VM_RegisterBuiltin (vm, 406, (builtin_t)csqc_te_bloodshower); // #406 void(vector mincorner, vector maxcorner, float explosionspeed, float howmany) te_bloodshower (DP_TE_BLOODSHOWER)
 	PR1VM_RegisterBuiltin (vm, 407, (builtin_t)csqc_te_explosionrgb); // #407 void(vector org, vector color) te_explosionrgb (DP_TE_EXPLOSIONRGB)
@@ -5996,7 +5906,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 424, (builtin_t)csqc_te_knightspike); // #424 void(vector org) te_knightspike (DP_TE_STANDARDEFFECTBUILTINS)
 	PR1VM_RegisterBuiltin (vm, 425, (builtin_t)csqc_te_lavasplash); // #425 void(vector org) te_lavasplash  (DP_TE_STANDARDEFFECTBUILTINS)
 	PR1VM_RegisterBuiltin (vm, 427, (builtin_t)csqc_te_explosion2); // #427 void(vector org, float color, float colorlength) te_explosion2 (DP_TE_STANDARDEFFECTBUILTINS)
-	// C3.3b — beams #428-431.
+	// beams #428-431.
 	PR1VM_RegisterBuiltin (vm, 428, (builtin_t)csqc_te_lightning1); // #428 void(entity own, vector start, vector end) te_lightning1 (DP_TE_STANDARDEFFECTBUILTINS)
 	PR1VM_RegisterBuiltin (vm, 429, (builtin_t)csqc_te_lightning2); // #429 void(entity own, vector start, vector end) te_lightning2 (DP_TE_STANDARDEFFECTBUILTINS)
 	PR1VM_RegisterBuiltin (vm, 430, (builtin_t)csqc_te_lightning3); // #430 void(entity own, vector start, vector end) te_lightning3 (DP_TE_STANDARDEFFECTBUILTINS)
@@ -6007,7 +5917,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 441, (builtin_t)csqc_tokenize); // #441 float(string s) tokenize (KRIMZON_SV_PARSECLIENTCOMMAND)
 	PR1VM_RegisterBuiltin (vm, 442, (builtin_t)csqc_argv); // #442 string(float n) argv (KRIMZON_SV_PARSECLIENTCOMMAND)
 
-	// L2-тривиалы T1 — математика (2026-09-07): чистая математика/C, без состояния.
+	// math: pure C, no state.
 	PR1VM_RegisterBuiltin (vm, 471, (builtin_t)csqc_asin); // #471 float(float s) asin
 	PR1VM_RegisterBuiltin (vm, 472, (builtin_t)csqc_acos); // #472 float(float c) acos
 	PR1VM_RegisterBuiltin (vm, 473, (builtin_t)csqc_atan); // #473 float(float t) atan
@@ -6020,19 +5930,18 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 494, (builtin_t)csqc_crc16); // #494 float(float caseinsensitive, string s, ...) crc16
 	PR1VM_RegisterBuiltin (vm, 519, (builtin_t)csqc_gettimef); // #519 float(optional float timetype) gettime
 
-	// L2-тривиалы T2 — int/hex конверсии (2026-09-07): #259-262.
+	// int/hex conversions: #259-262.
 	PR1VM_RegisterBuiltin (vm, 259, (builtin_t)csqc_stoi); // #259 int(string) stoi
 	PR1VM_RegisterBuiltin (vm, 260, (builtin_t)csqc_itos); // #260 string(int) itos
 	PR1VM_RegisterBuiltin (vm, 261, (builtin_t)csqc_stoh); // #261 int(string) stoh
 	PR1VM_RegisterBuiltin (vm, 262, (builtin_t)csqc_htos); // #262 string(int) htos
 
-	// L2-тривиалы T3 — cvar-метаданные (2026-09-07): #482/#495/#518.
+	// cvar metadata: #482/#495/#518.
 	PR1VM_RegisterBuiltin (vm, 482, (builtin_t)csqc_cvar_defstring); // #482 string(string s) cvar_defstring
 	PR1VM_RegisterBuiltin (vm, 495, (builtin_t)csqc_cvar_type); // #495 float(string name) cvar_type
 	PR1VM_RegisterBuiltin (vm, 518, (builtin_t)csqc_cvar_description); // #518 string(string cvarname) cvar_description
 
-	// L2-тривиалы T4 — строки простые (2026-09-07): #222/223/225/226/227/228/229/230/
-	// 480/481/484/485.
+	// simple strings: #222/223/225/226/227/228/229/230/480/481/484/485.
 	PR1VM_RegisterBuiltin (vm, 222, (builtin_t)csqc_str2chr); // #222 float(string str, float index) str2chr (FTE_STRINGS)
 	PR1VM_RegisterBuiltin (vm, 223, (builtin_t)csqc_chr2str); // #223 string(float chr, ...) chr2str (FTE_STRINGS)
 	PR1VM_RegisterBuiltin (vm, 225, (builtin_t)csqc_strpad); // #225 string strpad(float pad, string str1, ...) strpad (FTE_STRINGS)
@@ -6046,8 +5955,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 484, (builtin_t)csqc_strreplace); // #484 string(string search, string replace, string subject) strreplace
 	PR1VM_RegisterBuiltin (vm, 485, (builtin_t)csqc_strireplace); // #485 string(string search, string replace, string subject) strireplace
 
-	// L2 — «Система/VM простые» (2026-09-07): #65/#338/#339/#350/#353/#512 +
-	// no-op #63/#355.
+	// simple system/VM: #65/#338/#339/#350/#353/#512 + no-op #63/#355.
 	PR1VM_RegisterBuiltin (vm, 65,  (builtin_t)csqc_etos); // #65 string(entity ent) etos (DP_QC_ETOS)
 	PR1VM_RegisterBuiltin (vm, 338, (builtin_t)csqc_cprint); // #338 void(string s) cprint (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 339, (builtin_t)csqc_print); // #339 void(string s) print (EXT_CSQC)
@@ -6057,14 +5965,14 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 63,  (builtin_t)csqc_changepitch); // #63 void(entity ent) changepitch (DP_QC_CHANGEPITCH)
 	PR1VM_RegisterBuiltin (vm, 355, (builtin_t)csqc_nop_str); // #355 string() getentitytoken;
 
-	// L2 ST — строки/токенизация (2026-09-07): #478/#514/#479/#515/#516.
+	// strings/tokenization: #478/#514/#479/#515/#516.
 	PR1VM_RegisterBuiltin (vm, 478, (builtin_t)csqc_strftime); // #478 string(float uselocaltime, string format, ...) strftime
 	PR1VM_RegisterBuiltin (vm, 514, (builtin_t)csqc_tokenize_console); // #514 float(string str) tokenize_console
 	PR1VM_RegisterBuiltin (vm, 479, (builtin_t)csqc_tokenizebyseparator); // #479 float(string s, string separator1, ...) tokenizebyseparator
 	PR1VM_RegisterBuiltin (vm, 515, (builtin_t)csqc_argv_start_index); // #515 float(float idx) argv_start_index
 	PR1VM_RegisterBuiltin (vm, 516, (builtin_t)csqc_argv_end_index); // #516 float(float idx) argv_end_index
 
-	// L2 — «Ввод/клавиатура/меню» (2026-09-07): #342/#520/#521/#603/#604/#608/#609/#610/#614/#630/#631/#632.
+	// input/keyboard/menu: #342/#520/#521/#603/#604/#608/#609/#610/#614/#630/#631/#632.
 	PR1VM_RegisterBuiltin (vm, 342, (builtin_t)csqc_getkeybind); // #342 string(float keynum) getkeybind (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 520, (builtin_t)csqc_keynumtostring_menu); // #520 string(float keynum) keynumtostring_omgwtf
 	PR1VM_RegisterBuiltin (vm, 521, (builtin_t)csqc_findkeysforcommand); // #521 string(string command, optional float bindmap) findkeysforcommand
@@ -6078,24 +5986,23 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 631, (builtin_t)csqc_getbindmaps); // #631 vector() getbindmaps
 	PR1VM_RegisterBuiltin (vm, 632, (builtin_t)csqc_setbindmaps); // #632 float(vector bindmaps) setbindmaps
 
-	// L2 — «Система/VM остаток» (2026-09-07, минимум): #98 + #92-аппрокс + no-op
-	// #64/#240/#278/#279 (рефлексия #496-500/#206 — отдельным шагом).
+	// system/VM remainder: #98 + #92-approx + no-op #64/#240/#278/#279.
 	PR1VM_RegisterBuiltin (vm, 98,  (builtin_t)csqc_findfloat); // #98 entity(entity start, .float fld, float match) findfloat (DP_QC_FINDFLOAT)
 	PR1VM_RegisterBuiltin (vm, 92,  (builtin_t)csqc_getlight_approx); // #92 vector(vector org) getlight (DP_QC_GETLIGHT)
 	PR1VM_RegisterBuiltin (vm, 64,  (builtin_t)csqc_vmrest_nop); // #64 void(entity ent, entity ignore) tracetoss (DP_QC_TRACETOSS)
 	PR1VM_RegisterBuiltin (vm, 240, (builtin_t)csqc_vmrest_nop); // #240 float(vector viewpos, entity entity) checkpvs
 	PR1VM_RegisterBuiltin (vm, 278, (builtin_t)csqc_vmrest_nop); // #278 void(float action, vector pos, float radius, float quant) terrain_edit
 	PR1VM_RegisterBuiltin (vm, 279, (builtin_t)csqc_vmrest_nop); // #279 void() touchtriggers
-	PR1VM_RegisterBuiltin (vm, 504, (builtin_t)csqc_getentity); // #504 __variant(float entnum, float fieldnum) getentity (C5-E Ф2)
+	PR1VM_RegisterBuiltin (vm, 504, (builtin_t)csqc_getentity); // #504 __variant(float entnum, float fieldnum) getentity
 
-	// L2 — «Звук» (2026-09-07): #483 + no-op #351/#371/#533/#534.
+	// sound: #483 + no-op #351/#371/#533/#534.
 	PR1VM_RegisterBuiltin (vm, 483, (builtin_t)csqc_pointsound); // #483 void(vector origin, string sample, float volume, float attenuation) pointsound
 	PR1VM_RegisterBuiltin (vm, 351, (builtin_t)csqc_setlistener); // #351 void(vector origin, vector forward, vector right, vector up) SetListener (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 371, (builtin_t)csqc_deltalisten); // #371 float(string modelname, float flags) deltalisten  (EXT_CSQC_1)
 	PR1VM_RegisterBuiltin (vm, 533, (builtin_t)csqc_getsoundtime); // #533 float(entity e, float channel) getsoundtime
 	PR1VM_RegisterBuiltin (vm, 534, (builtin_t)csqc_soundlength); // #534 float(string sample) soundlength
 
-	// L2 — «Свет/decals/скины» (2026-09-07): все no-op (нет аналогов в ezq).
+	// lights/decals/skins: all no-op (no analogs in ezq).
 	PR1VM_RegisterBuiltin (vm, 372, (builtin_t)csqc_light_nop_ret0); // #372 __variant(float lno, float fld) dynamiclight_get
 	PR1VM_RegisterBuiltin (vm, 373, (builtin_t)csqc_light_nop_ret0); // #373 void(float lno, float fld, __variant value) dynamiclight_set
 	PR1VM_RegisterBuiltin (vm, 375, (builtin_t)csqc_light_nop_ret0); // #375 void(string shadername, vector origin, vector up, vector side, vector rgb, float alpha) adddecal
@@ -6105,7 +6012,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 379, (builtin_t)csqc_light_nop_ret0); // #379 ?
 	PR1VM_RegisterBuiltin (vm, 501, (builtin_t)csqc_light_nop_ret0); // #501 void(float to, string s, float sz) WritePicture
 
-	// L2 — «Интроспекция/кон» (2026-09-07): #294/#295/#607 + no-op #391-394/#605.
+	// introspection/console: #294/#295/#607 + no-op #391-394/#605.
 	PR1VM_RegisterBuiltin (vm, 294, (builtin_t)csqc_checkcommand); // #294 float(string name) checkcommand
 	PR1VM_RegisterBuiltin (vm, 295, (builtin_t)csqc_argescape); // #295 string(string s) argescape
 	PR1VM_RegisterBuiltin (vm, 607, (builtin_t)csqc_isfunction); // #607 float(string s) isfunction
@@ -6115,7 +6022,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 394, (builtin_t)csqc_light_nop_ret0); // #394 float(string conname, float inevtype, float parama, float paramb, float paramc) con_input
 	PR1VM_RegisterBuiltin (vm, 605, (builtin_t)csqc_vmrest_nop); // #605 void(.../*, string funcname*/) callfunction
 
-	// L2 — «BSP-поверхности» (2026-09-07): все no-op (нет geometry-интерфейса).
+	// BSP surfaces: all no-op (no geometry interface).
 	PR1VM_RegisterBuiltin (vm, 434, (builtin_t)csqc_light_nop_ret0); // #434 float(entity e, float s) getsurfacenumpoints (DP_QC_GETSURFACE)
 	PR1VM_RegisterBuiltin (vm, 435, (builtin_t)csqc_bsp_nop_vec); // #435 vector(entity e, float s, float n) getsurfacepoint (DP_QC_GETSURFACE)
 	PR1VM_RegisterBuiltin (vm, 436, (builtin_t)csqc_bsp_nop_vec); // #436 vector(entity e, float s) getsurfacenormal (DP_QC_GETSURFACE)
@@ -6126,14 +6033,14 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 628, (builtin_t)csqc_light_nop_ret0); // #628 float(entity e, float s) getsurfacenumtriangles
 	PR1VM_RegisterBuiltin (vm, 629, (builtin_t)csqc_bsp_nop_vec); // #629 vector(entity e, float s, float n) getsurfacetriangle
 
-	// L2 — «Entity-рефлексия» (2026-09-07): #496-500 по fielddefs модуля.
+	// entity reflection: #496-500 over the module's fielddefs.
 	PR1VM_RegisterBuiltin (vm, 496, (builtin_t)csqc_numentityfields); // #496 float() numentityfields
 	PR1VM_RegisterBuiltin (vm, 497, (builtin_t)csqc_entityfieldname); // #497 string(float fieldnum) entityfieldname
 	PR1VM_RegisterBuiltin (vm, 498, (builtin_t)csqc_entityfieldtype); // #498 float(float fieldnum) entityfieldtype
 	PR1VM_RegisterBuiltin (vm, 499, (builtin_t)csqc_getentityfieldstring); // #499 string(float fieldnum, entity ent) getentityfieldstring
 	PR1VM_RegisterBuiltin (vm, 500, (builtin_t)csqc_putentityfieldstring); // #500 float(float fieldnum, entity ent, string s) putentityfieldstring
 
-	// P2.3 — визуальный слой B (2D-оверлей; сетевая часть B — позже).
+	// visual layer B (2D overlay).
 	PR1VM_RegisterBuiltin (vm, 300, (builtin_t)csqc_clearscene); // #300 void() clearscene (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 301, (builtin_t)csqc_addentities); // #301 void(float mask) addentities (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 303, (builtin_t)csqc_setproperty); // #303 float(float property, ...) setproperty (EXT_CSQC)
@@ -6147,7 +6054,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 323, (builtin_t)csqc_drawfill); // #323 float(vector position, vector size, vector rgb, float alpha [, float flag]) drawfill (EXT_CSQC, [EXT_CSQC_???])
 	PR1VM_RegisterBuiltin (vm, 327, (builtin_t)csqc_stringwidth); // #327 float(string text, float usecolours, optional vector fontsize) stringwidth
 	PR1VM_RegisterBuiltin (vm, 328, (builtin_t)csqc_drawsubpic); // #328 void(vector pos, vector sz, string pic, vector srcpos, vector srcsz, vector rgb, float alpha, optional float drawflag) drawsubpic
-	// L2 — «2D-графика доп» (2026-09-07): #316/#318/#319/#321/#324/#325 + no-op #329.
+	// additional 2D graphics: #316/#318/#319/#321/#324/#325 + no-op #329.
 	PR1VM_RegisterBuiltin (vm, 316, (builtin_t)csqc_iscachedpic); // #316 float(string name) iscachedpic (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 318, (builtin_t)csqc_drawgetimagesize); // #318 vector(string picname) draw_getimagesize (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 319, (builtin_t)csqc_freepic); // #319 void(string name) freepic (EXT_CSQC)
@@ -6161,7 +6068,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 359, (builtin_t)csqc_sendevent); // #359 void(string evname, string evargs, ...) (EXT_CSQC_1)
 	PR1VM_RegisterBuiltin (vm, 627, (builtin_t)csqc_sprintf); // #627 string(string fmt, ...) sprintf
 
-	// S1 read*-минимум (полный набор #360–368 — S2).
+	// read* minimum (full set #360-368).
 	PR1VM_RegisterBuiltin (vm, 360, (builtin_t)csqc_readbyte); // #360 float() readbyte (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 361, (builtin_t)csqc_readchar); // #361 float() readchar (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 362, (builtin_t)csqc_readshort); // #362 float() readshort (EXT_CSQC)
@@ -6172,10 +6079,10 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 367, (builtin_t)csqc_readfloat); // #367 float() readfloat (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 368, (builtin_t)csqc_readentitynum); // #368 float() readentitynum (EXT_CSQC)
 
-	// L2 заглушки: VOID (67) — тип-correct no-op.
+	// VOID stubs - type-correct no-op.
 	PR1VM_RegisterBuiltin (vm, 111, (builtin_t)csqc_vmrest_nop); // #111 void(float fnum) fclose (FRIK_FILE)
 	PR1VM_RegisterBuiltin (vm, 113, (builtin_t)csqc_vmrest_nop); // #113 void(float fnum, string str) fputs (FRIK_FILE)
-	PR1VM_RegisterBuiltin (vm, 204, (builtin_t)csqc_vmrest_nop); // #204 void(float prnum, __variant newval, string varname) externset — no-op v6 (ADR 0020): variant-запись в другую прогу (типов нет в v6)
+	PR1VM_RegisterBuiltin (vm, 204, (builtin_t)csqc_vmrest_nop); // #204 void(float prnum, __variant newval, string varname) externset - no-op in classic v6: variant write to another program (no v6 types)
 	PR1VM_RegisterBuiltin (vm, 207, (builtin_t)csqc_vmrest_nop); // #207 void(entity portal, float state) openportal
 	PR1VM_RegisterBuiltin (vm, 210, (builtin_t)csqc_vmrest_nop); // #210 void() fork
 	PR1VM_RegisterBuiltin (vm, 211, (builtin_t)csqc_vmrest_nop); // #211 void() abort (FTE_MULTITHREADED)
@@ -6197,15 +6104,15 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 288, (builtin_t)csqc_vmrest_nop); // #288 void(hashtable table) hash_destroytab
 	PR1VM_RegisterBuiltin (vm, 289, (builtin_t)csqc_vmrest_nop); // #289 void(hashtable table, string name, __variant value, optional float typeandflags) hash_add
 	PR1VM_RegisterBuiltin (vm, 293, (builtin_t)csqc_vmrest_nop); // #293 void() hash_getcb
-	PR1VM_RegisterBuiltin (vm, 302, (builtin_t)csqc_addentity); // #302 void(entity ent) addentity (EXT_CSQC; Ф3 takeover)
+	PR1VM_RegisterBuiltin (vm, 302, (builtin_t)csqc_addentity); // #302 void(entity ent) addentity (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 306, (builtin_t)csqc_vmrest_nop); // #306 void(string texturename) R_BeginPolygon (EXT_CSQC_???)
 	PR1VM_RegisterBuiltin (vm, 307, (builtin_t)csqc_vmrest_nop); // #307 void(vector org, vector texcoords, vector rgb, float alpha) R_PolygonVertex (EXT_CSQC_???)
 	PR1VM_RegisterBuiltin (vm, 308, (builtin_t)csqc_vmrest_nop); // #308 void() R_EndPolygon (EXT_CSQC_???)
-	PR1VM_RegisterBuiltin (vm, 333, (builtin_t)csqc_setmodelindex); // #333 void(entity e, float mdlindex) setmodelindex (EXT_CSQC; Ф3)
-	PR1VM_RegisterBuiltin (vm, 385, (builtin_t)csqc_vmrest_nop); // #385 void(__variant *ptr) memfree — no-op v6 (ADR 0020): типизированный указатель (нет pointer-модели в v6)
-	PR1VM_RegisterBuiltin (vm, 386, (builtin_t)csqc_vmrest_nop); // #386 void(__variant *dst, __variant *src, int size) memcpy — no-op v6 (ADR 0020): типизированный указатель (нет pointer-модели в v6)
-	PR1VM_RegisterBuiltin (vm, 387, (builtin_t)csqc_vmrest_nop); // #387 void(__variant *dst, int val, int size) memfill8 — no-op v6 (ADR 0020): типизированный указатель (нет pointer-модели в v6)
-	PR1VM_RegisterBuiltin (vm, 389, (builtin_t)csqc_vmrest_nop); // #389 void(__variant *dst, float ofs, __variant val) memsetval — no-op v6 (ADR 0020): типизированный указатель + runtime-тип значения
+	PR1VM_RegisterBuiltin (vm, 333, (builtin_t)csqc_setmodelindex); // #333 void(entity e, float mdlindex) setmodelindex (EXT_CSQC)
+	PR1VM_RegisterBuiltin (vm, 385, (builtin_t)csqc_vmrest_nop); // #385 void(__variant *ptr) memfree - no-op in classic v6: typed pointer (no v6 pointer model)
+	PR1VM_RegisterBuiltin (vm, 386, (builtin_t)csqc_vmrest_nop); // #386 void(__variant *dst, __variant *src, int size) memcpy - no-op in classic v6: typed pointer (no v6 pointer model)
+	PR1VM_RegisterBuiltin (vm, 387, (builtin_t)csqc_vmrest_nop); // #387 void(__variant *dst, int val, int size) memfill8 - no-op in classic v6: typed pointer (no v6 pointer model)
+	PR1VM_RegisterBuiltin (vm, 389, (builtin_t)csqc_vmrest_nop); // #389 void(__variant *dst, float ofs, __variant val) memsetval - no-op in classic v6: typed pointer + runtime value type
 	PR1VM_RegisterBuiltin (vm, 400, (builtin_t)csqc_copyentity); // #400 void(entity from, entity to) copyentity (DP_QC_COPYENTITY)
 	PR1VM_RegisterBuiltin (vm, 404, (builtin_t)csqc_vmrest_nop); // #404 void(vector org, string modelname, float startframe, float endframe, float framerate) effect (DP_SV_EFFECT)
 	PR1VM_RegisterBuiltin (vm, 426, (builtin_t)csqc_vmrest_nop); // #426 void(vector org) te_teleport (DP_TE_STANDARDEFFECTBUILTINS)
@@ -6240,14 +6147,14 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 654, (builtin_t)csqc_vmrest_nop); // #654 void() rmtree
 	PR1VM_RegisterBuiltin (vm, 741, (builtin_t)csqc_vmrest_nop); // #741 void() controller_rumble
 	PR1VM_RegisterBuiltin (vm, 742, (builtin_t)csqc_vmrest_nop); // #742 void() controller_rumbletriggers
-	// L2 заглушки: FLOAT0 (49) — тип-correct no-op.
+	// FLOAT0 stubs - type-correct no-op.
 	PR1VM_RegisterBuiltin (vm, 110, (builtin_t)csqc_light_nop_ret0); // #110 float(string strname, float accessmode) fopen (FRIK_FILE)
-	PR1VM_RegisterBuiltin (vm, 200, (builtin_t)csqc_getmodelindex); // #200 float(string modelname, optional float queryonly) getmodelindex (Ф3)
-	PR1VM_RegisterBuiltin (vm, 201, (builtin_t)csqc_light_nop_ret0); // #201 __variant(float prnum, string funcname, ...) externcall — no-op v6 (ADR 0020): variant-обмен между VM (типов нет в v6)
+	PR1VM_RegisterBuiltin (vm, 200, (builtin_t)csqc_getmodelindex); // #200 float(string modelname, optional float queryonly) getmodelindex
+	PR1VM_RegisterBuiltin (vm, 201, (builtin_t)csqc_light_nop_ret0); // #201 __variant(float prnum, string funcname, ...) externcall - no-op in classic v6: variant exchange between VMs (no v6 types)
 	PR1VM_RegisterBuiltin (vm, 202, (builtin_t)csqc_light_nop_ret0); // #202 float(string progsname) addprogs
-	PR1VM_RegisterBuiltin (vm, 203, (builtin_t)csqc_light_nop_ret0); // #203 __variant(float prnum, string varname) externvalue — no-op v6 (ADR 0020): variant-чтение другой проги (типов нет в v6)
+	PR1VM_RegisterBuiltin (vm, 203, (builtin_t)csqc_light_nop_ret0); // #203 __variant(float prnum, string varname) externvalue - no-op in classic v6: variant read of another program (no v6 types)
 	PR1VM_RegisterBuiltin (vm, 205, (builtin_t)csqc_light_nop_ret0); // #205 float() externrefcall
-	PR1VM_RegisterBuiltin (vm, 206, (builtin_t)csqc_instr); // #206 string(string input, string token) instr (T3 Э4)
+	PR1VM_RegisterBuiltin (vm, 206, (builtin_t)csqc_instr); // #206 string(string input, string token) instr
 	PR1VM_RegisterBuiltin (vm, 237, (builtin_t)csqc_light_nop_ret0); // #237 float(float mdlindex, string skinname) skinforname
 	PR1VM_RegisterBuiltin (vm, 238, (builtin_t)csqc_light_nop_ret0); // #238 float(string shadername, optional string defaultshader, ...) shaderforname
 	PR1VM_RegisterBuiltin (vm, 242, (builtin_t)csqc_light_nop_ret0); // #242 void(string dest, string content) sendpacket
@@ -6259,16 +6166,16 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 276, (builtin_t)csqc_light_nop_ret0); // #276 float(float modidx, string framename) frameforname
 	PR1VM_RegisterBuiltin (vm, 277, (builtin_t)csqc_light_nop_ret0); // #277 float(float modidx, float framenum) frameduration
 	PR1VM_RegisterBuiltin (vm, 281, (builtin_t)csqc_light_nop_ret0); // #281 (FTE_QC_RAGDOLL)
-	PR1VM_RegisterBuiltin (vm, 282, (builtin_t)csqc_light_nop_ret0); // #282 (FTE_QC_RAGDOLL) skel_mmap — no-op v6 (ADR 0020): нативный указатель на данные скелета (нет pointer в v6)
+	PR1VM_RegisterBuiltin (vm, 282, (builtin_t)csqc_light_nop_ret0); // #282 (FTE_QC_RAGDOLL) skel_mmap - no-op in classic v6: native pointer to skeleton data (no v6 pointer)
 	PR1VM_RegisterBuiltin (vm, 286, (builtin_t)csqc_light_nop_ret0); // #286 float(float resourcetype, float tryload, string resourcename) resourcestatus
 	PR1VM_RegisterBuiltin (vm, 287, (builtin_t)csqc_light_nop_ret0); // #287 hashtable(float tabsize, optional float defaulttype) hash_createtab
 	PR1VM_RegisterBuiltin (vm, 290, (builtin_t)csqc_light_nop_ret0); // #290 __variant(hashtable table, string name, optional __variant deflt, optional float requiretype, optional float index) hash_get
 	PR1VM_RegisterBuiltin (vm, 291, (builtin_t)csqc_light_nop_ret0); // #291 __variant(hashtable table, string name) hash_delete
 	PR1VM_RegisterBuiltin (vm, 356, (builtin_t)csqc_light_nop_ret0); // #356 float(string s) findfont
 	PR1VM_RegisterBuiltin (vm, 357, (builtin_t)csqc_light_nop_ret0); // #357 float(string fontname, string fontmaps, string sizes, float slot, optional float fix_scale, optional float fix_voffset) loadfont
-	PR1VM_RegisterBuiltin (vm, 384, (builtin_t)csqc_light_nop_ret0); // #384 __variant*(int size) memalloc — no-op v6 (ADR 0020): типизированный указатель (нет pointer-модели в v6)
-	PR1VM_RegisterBuiltin (vm, 388, (builtin_t)csqc_light_nop_ret0); // #388 __variant(__variant *dst, float ofs) memgetval — no-op v6 (ADR 0020): типизированный указатель + runtime-тип значения
-	PR1VM_RegisterBuiltin (vm, 390, (builtin_t)csqc_light_nop_ret0); // #390 __variant*(__variant *base, float ofs) memptradd — no-op v6 (ADR 0020): арифметика нативных указателей (нет pointer в v6)
+	PR1VM_RegisterBuiltin (vm, 384, (builtin_t)csqc_light_nop_ret0); // #384 __variant*(int size) memalloc - no-op in classic v6: typed pointer (no v6 pointer model)
+	PR1VM_RegisterBuiltin (vm, 388, (builtin_t)csqc_light_nop_ret0); // #388 __variant(__variant *dst, float ofs) memgetval - no-op in classic v6: typed pointer + runtime value type
+	PR1VM_RegisterBuiltin (vm, 390, (builtin_t)csqc_light_nop_ret0); // #390 __variant*(__variant *base, float ofs) memptradd - no-op in classic v6: native pointer arithmetic (no v6 pointer)
 	PR1VM_RegisterBuiltin (vm, 402, (builtin_t)csqc_findchain); // #402 entity(.string field, string match, .entity chainfield) findchain (DP_QC_FINDCHAIN)
 	PR1VM_RegisterBuiltin (vm, 403, (builtin_t)csqc_findchainfloat); // #403 entity(.float fld, float match, .entity chainfield) findchainfloat (DP_QC_FINDCHAINFLOAT)
 	PR1VM_RegisterBuiltin (vm, 444, (builtin_t)csqc_light_nop_ret0); // #444 float	search_begin(string pattern, float caseinsensitive, float quiet) (DP_QC_FS_SEARCH)
@@ -6290,7 +6197,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 640, (builtin_t)csqc_light_nop_ret0); // #640 float() V_CalcRefdef
 	PR1VM_RegisterBuiltin (vm, 653, (builtin_t)csqc_light_nop_ret0); // #653 float() fexists
 	PR1VM_RegisterBuiltin (vm, 740, (builtin_t)csqc_light_nop_ret0); // #740 float() controller_query
-	// L2 заглушки: STRING (18) — тип-correct no-op.
+	// STRING stubs - type-correct no-op.
 	PR1VM_RegisterBuiltin (vm, 112, (builtin_t)csqc_nop_str); // #112 string(float fnum) fgets (FRIK_FILE)
 	PR1VM_RegisterBuiltin (vm, 224, (builtin_t)csqc_strconv); // #224 string(float ccase, float redalpha, float redchars, string str, ...) strconv (FTE_STRINGS)
 	PR1VM_RegisterBuiltin (vm, 266, (builtin_t)csqc_nop_str); // #266 string(float skel, float bonenum) skel_get_bonename
@@ -6309,7 +6216,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 625, (builtin_t)csqc_nop_str); // #625 string(string dnsname, optional float defport) netaddress_resolve
 	PR1VM_RegisterBuiltin (vm, 626, (builtin_t)csqc_nop_str); // #626 string() getgamedirinfo
 	PR1VM_RegisterBuiltin (vm, 639, (builtin_t)csqc_digest_hex); // #639 string(string digest, string data, ...) digest_hex
-	// L2 заглушки: VECTOR (7) — тип-correct no-op.
+	// VECTOR stubs - type-correct no-op.
 	PR1VM_RegisterBuiltin (vm, 244, (builtin_t)csqc_bsp_nop_vec); // #244 vector(entity ent, float tagnum) rotatevectorsbytag
 	PR1VM_RegisterBuiltin (vm, 269, (builtin_t)csqc_bsp_nop_vec); // #269 vector(float skel, float bonenum) skel_get_bonerel
 	PR1VM_RegisterBuiltin (vm, 270, (builtin_t)csqc_bsp_nop_vec); // #270 vector(float skel, float bonenum) skel_get_boneabs

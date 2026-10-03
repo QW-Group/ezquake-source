@@ -287,8 +287,7 @@ void GLC_DrawSpriteModel(entity_t* e)
 		VectorCopy(vright, right);
 	}
 
-	// CSQC: scale the billboard basis (FTE parity,
-	// fteqw/engine/gl/gl_alias.c:2767-2775). 0 means unscaled.
+	// CSQC: scale the billboard basis. 0 means unscaled.
 	model_scale = e->scale ? e->scale : 1;
 	if (model_scale != 1) {
 		VectorScale(right, model_scale, right);

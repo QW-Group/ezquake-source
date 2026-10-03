@@ -29,7 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "mvd_utils.h"
 #include "r_matrix.h"
 #include "pmove.h"
-#include "csqc_client.h"	// C5-E Ф1: CSQC_Client_ApplyViewProps (#303)
+#include "csqc_client.h"	// CSQC_Client_ApplyViewProps (#303)
 
 #ifdef X11_GAMMA_WORKAROUND
 #include "tr_types.h"
@@ -290,8 +290,8 @@ void V_ParseDamage (void)
 
 	cl.faceanimtime = cl.time + 0.2;		// put sbar face into pain frame
 
-	// Э2: сетевой колбэк урона; return != 0 => модуль подавляет цветосдвиг/view-kick
-	// (FTE view.c:512-515). Проверяем после faceanim (как FTE), до hurtblur/cshift.
+	// Network damage callback; a nonzero return means the module suppresses the
+	// color shift/view kick. Checked after faceanim, before hurtblur/cshift.
 	if (CSQC_Client_ParseDamage (armor, blood, from))
 		return;
 
@@ -1037,8 +1037,9 @@ static void V_CalcRefdef(void)
 	//VULT CAMERAS
 	CameraUpdate(view_message.flags & PF_DEAD);
 
-	// C5-E Ф1 (#303): view-свойства CSQC-модуля применяем ДО размещения view-модели,
-	// иначе оружие берёт движковый origin и «отстаёт» от мира (V_AddViewWeapon ниже).
+	// #303: apply the CSQC module's view properties before placing the viewmodel,
+	// otherwise the weapon takes the engine origin and lags behind the world
+	// (V_AddViewWeapon below).
 	CSQC_Client_ApplyViewProps();
 
 	// meag: really viewheight shouldn't be here, but it was incorrectly passed for years instead of bob,

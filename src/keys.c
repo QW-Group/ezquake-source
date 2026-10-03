@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "keys.h"
 #include "input.h"
 #ifndef CLIENTONLY
-#include "csqc_client.h"	// CSQC_Client_InputEvent (C1.2)
+#include "csqc_client.h"	// CSQC_Client_InputEvent
 #endif
 
 #ifdef _WIN32
@@ -2372,9 +2372,9 @@ void Key_Event (int key, qbool down)
 		unichar = 0;
 
 #ifndef CLIENTONLY
-	// C1.2: при игре (key_dest == key_game) и наличии CSQC_InputEvent модуля —
-	// отдаём клавишу/клик/колесо модулю; возврат != 0 -> модуль обработал
-	// (обычную обработку пропускаем). Аналог FTE `!Key_Dest_Has(~kdm_game)`.
+	// In-game (key_dest == key_game) with a CSQC_InputEvent present, give the
+	// key/click/wheel to the module; a nonzero return means the module handled it
+	// (normal processing is skipped).
 	if (key_dest == key_game && CSQC_Client_HasInputEvent ())
 	{
 		if (CSQC_Client_InputEvent (down ? IE_KEYDOWN : IE_KEYUP, key, unichar, 0))

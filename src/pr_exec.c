@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <limits.h>
 
 // PR1 execution state moved into pr1vm_t (pr1vm.h). Still shared here:
-// pr_trace (debug flag) and pr_argc (builtin call arg count) — until S5.
+// pr_trace (debug flag) and pr_argc (builtin call arg count).
 
 static pr1vm_t sv_pr1vm;	// server instance (default for PR_* wrappers)
 static pr1vm_t *g_active;	// instance PR1 is currently executing inside
@@ -45,10 +45,10 @@ void PR1VM_Reset(pr1vm_t *vm)
 	memset(vm, 0, sizeof(*vm));
 }
 
-// ADR 0019 (A2): restore the classic pr_globals/g_active saved when this instance
-// was attached. Called on abnormal unwind (fatal client error → UnLoad) so the
-// next server frame never writes through freed client memory. No-op when the
-// instance is not the active one.
+// Restore the classic pr_globals/g_active saved when this instance was attached.
+// Called on abnormal unwind (fatal client error -> UnLoad) so the next server
+// frame never writes through freed client memory. No-op when the instance is not
+// the active one.
 void PR1VM_RestoreContext (pr1vm_t *vm)
 {
 	if (!vm || g_active != vm || !vm->context_saved)
@@ -60,19 +60,19 @@ void PR1VM_RestoreContext (pr1vm_t *vm)
 	vm->context_prev_active = NULL;
 }
 
-// S6: full reset of mirrors/exec state; host callbacks are kept.
+// Full reset of mirrors/exec state; host callbacks are kept.
 void PR1VM_UnLoad (pr1vm_t *vm)
 {
 	void (*host_error)(pr1vm_t *, const char *) = vm->host_error;
 	void (*host_print)(pr1vm_t *, const char *) = vm->host_print;
 	void *host_udata = vm->host_udata;
 
-	// A2: if still attached (fatal client error during execution), restore the
+	// If still attached (fatal client error during execution), restore the
 	// classic context before the mirrors are freed below.
 	PR1VM_RestoreContext (vm);
 
 	// Builtin tables are Q_malloc'd (server PR_InitBuiltins / client
-	// registration) — free them; the next load recreates them.
+	// registration) -- free them; the next load recreates them.
 	if (vm->builtins)
 	{
 		Q_free (vm->builtins);
@@ -85,7 +85,7 @@ void PR1VM_UnLoad (pr1vm_t *vm)
 	vm->host_udata = host_udata;
 }
 
-// P2.1: register a builtin by number (growing per-instance table).
+// Register a builtin by number (growing per-instance table).
 void PR1VM_RegisterBuiltin (pr1vm_t *vm, int num, builtin_t fn)
 {
 	if (num < 0 || !vm)
@@ -111,8 +111,8 @@ void PR1VM_RegisterBuiltin (pr1vm_t *vm, int num, builtin_t fn)
 void PR_PrintStatement (dstatement_t *s);
 void PR_StackTrace (void);
 
-// Server host_error: prints the statement/stack and exits as before
-// (PR_RunError behavior up to S4). A client instance gets its own callback in S5.
+// Server host_error: prints the statement/stack and exits as before. A client
+// instance gets its own callback.
 static void PR1VM_ServerHostError (pr1vm_t *vm, const char *msg)
 {
 	sv_error = true;
@@ -152,7 +152,7 @@ void PR1VM_BindServer(pr1vm_t *vm)
 	vm->host_error = PR1VM_ServerHostError;
 }
 
-// S4 debug: provoke PR_RunError on the server instance (host_error check).
+// Debug: provoke PR_RunError on the server instance (host_error check).
 void PR1VM_TestError_f (void)
 {
 	pr1vm_t *vm;
@@ -166,7 +166,7 @@ void PR1VM_TestError_f (void)
 	PR_RunError ("PR1VM test error (host_error path)");
 }
 
-// pr_argc/pr_trace moved into pr1vm_t (S5): vm->argc / vm->trace.
+// pr_argc/pr_trace live in pr1vm_t as vm->argc / vm->trace.
 
 char *pr_opnames[] =
     {
@@ -396,7 +396,7 @@ void PR_RunError (char *error, ...)
 
 	if (vm && vm->host_error)
 	{
-		// A1: the callback must not return into the interpreter. The client
+		// The callback must not return into the interpreter. The client
 		// host_error longjmps to the abort-stack in PR1VM_ExecuteProgram; the
 		// server one calls SV_Error (never returns). If it returns anyway (no
 		// abort-buffer), fall through to the fatal path below so the faulting
@@ -420,11 +420,11 @@ void PR_RunError (char *error, ...)
 	SV_Error ("Program error (PR_RunError)");
 }
 
-// A3 (client VM only): pure bound predicates for the untrusted csprogs VM. The
-// server PR1 instance is fed a locally-installed, CRC-checked progs and keeps
-// its previous behaviour, so every check is gated on abortbuf_valid (set only
-// for the client instance; cf. A1/A2). The guards are predicates so the debug
-// canary (PR1VM_TestGuards_f) can unit-test them without arming a frame.
+// Client VM only: pure bound predicates for the untrusted csprogs VM. The server
+// PR1 instance is fed a locally-installed, CRC-checked progs and keeps its
+// previous behaviour, so every check is gated on abortbuf_valid (set only for
+// the client instance). The guards are predicates so the debug canary
+// (PR1VM_TestGuards_f) can unit-test them without arming a frame.
 static qbool PR1VM_ClientBadEdict (pr1vm_t *vm, int e)
 {
 	int idx;
@@ -444,8 +444,8 @@ static qbool PR1VM_ClientBadPtr (pr1vm_t *vm, unsigned off, unsigned width)
 	size = (unsigned) vm->max_edicts * (unsigned) vm->edict_size;
 	if (size < width)
 		return true;
-	// FTE QCPOINTERWRITEFAIL (execloop.h:35) disallows null writes; reject any
-	// write that leaves the addressable region (the last word is still allowed).
+	// FTE QCPOINTERWRITEFAIL disallows null writes; reject any write that leaves
+	// the addressable region (the last word is still allowed).
 	return (off == 0 || off > size - width);
 }
 
@@ -456,12 +456,11 @@ static qbool PR1VM_ClientBadField (pr1vm_t *vm, int ofs, int width)
 	return (ofs < 0 || (ofs + width) * (int)sizeof (int) > vm->edict_size);
 }
 
-// D5 (Wave A gate, server-neutral): OP_NOT_S/OP_EQ_S/OP_NE_S compare module
-// strings through PR1VM_GetString, which returns NULL for an out-of-range
-// offset. FTE handles a NULL string explicitly (fteqw/engine/qclib/execloop.h
-// OP_NOT_S/OP_EQ_S/OP_NE_S); without this the NULL reaches `!*s` / `strcmp`
-// and crashes. Map NULL to the empty string; usable without any client code and
-// inert for valid server progs (PR1VM_GetString never returns NULL there).
+// OP_NOT_S/OP_EQ_S/OP_NE_S compare module strings through PR1VM_GetString,
+// which returns NULL for an out-of-range offset. FTE handles a NULL string
+// explicitly; without this the NULL reaches `!*s` / `strcmp` and crashes. Map
+// NULL to the empty string; usable without any client code and inert for valid
+// server progs (PR1VM_GetString never returns NULL there).
 static const char *PR1VM_SafeString (pr1vm_t *vm, int num)
 {
 	const char *s = vm->get_string ? vm->get_string (vm, num) : PR1VM_GetString (vm, num);
@@ -469,7 +468,7 @@ static const char *PR1VM_SafeString (pr1vm_t *vm, int num)
 	return s ? s : "";
 }
 
-// PR1VM S5b: entity addressing through the instance mirrors (progs.h formulas on vm).
+// Entity addressing through the instance mirrors (progs.h formulas on vm).
 static edict_t *PR1VM_ProgToEdict (pr1vm_t *vm, int e)
 {
 	if (PR1VM_ClientBadEdict (vm, e))
@@ -477,15 +476,15 @@ static edict_t *PR1VM_ProgToEdict (pr1vm_t *vm, int e)
 	return &vm->edicts[e / vm->edict_size];
 }
 
-// Module dialect field-offset map (ADR 0017 P2, per-instance):
-// NULL => raw/identity (classic QW, FTE CSQC); otherwise NQ remap. We do not
-// use the global PR_FIELDOFS — it is not initialized in this build (zeros).
+// Module dialect field-offset map (per-instance): NULL => raw/identity (classic
+// QW, FTE CSQC); otherwise NQ remap. We do not use the global PR_FIELDOFS -- it
+// is not initialized in this build (zeros).
 static int PR1VM_FieldOfs (pr1vm_t *vm, int i)
 {
 	return (i >= 0 && i <= 105 && vm->fieldofs_patch) ? vm->fieldofs_patch[i] : i;
 }
 
-// A3 debug canary (client console `pr1vm_test_guards`, called from
+// Debug canary (client console `pr1vm_test_guards`, called from
 // `csqc_progscheck`): unit-test the client-VM bound predicates on a synthetic
 // instance. No execution / no PR_RunError; prints [CSQC-TEST] lines + SUMMARY.
 void PR1VM_GuardCheck (const char *name, qbool ok, int *pass, int *fail)
@@ -531,9 +530,9 @@ void PR1VM_TestGuards_f (void)
 	PR1VM_GuardCheck ("field-over", PR1VM_ClientBadField (&vm, 4, 1) == true, &pass, &fail);
 	PR1VM_GuardCheck ("field-negative", PR1VM_ClientBadField (&vm, -1, 1) == true, &pass, &fail);
 
-	// D5: PR1VM_GetString returns NULL for out-of-range offsets (positive OOB
-	// with no progs, or negative beyond the temp/temp-string tables); SafeString
-	// must turn that into "" so OP_NOT_S/OP_EQ_S/OP_NE_S never deref NULL.
+	// PR1VM_GetString returns NULL for out-of-range offsets (positive OOB with
+	// no progs, or negative beyond the temp/temp-string tables); SafeString must
+	// turn that into "" so OP_NOT_S/OP_EQ_S/OP_NE_S never deref NULL.
 	PR1VM_GuardCheck ("str-oob-positive", strcmp (PR1VM_SafeString (&vm, 0x7fffffff), "") == 0, &pass, &fail);
 	PR1VM_GuardCheck ("str-oob-negative", strcmp (PR1VM_SafeString (&vm, -99999), "") == 0, &pass, &fail);
 
@@ -619,28 +618,28 @@ void PR1VM_ExecuteProgram (pr1vm_t *vm, func_t fnum)
 {
 	eval_t *a = NULL, *b = NULL, *c = NULL;
 	pr1vm_t *volatile saved_active;
-	float *volatile saved_prglobals;	// ADR 0019: "classic" mirror context before attach
+	float *volatile saved_prglobals;	// "classic" mirror context before attach
 	int s;
 	dstatement_t *st = NULL;
 	dfunction_t *f, *newf;
 	int runaway;
 	int i;
 	edict_t *ed;
-	volatile int exitdepth;		// read after longjmp (A1)
+	volatile int exitdepth;		// read after longjmp
 	volatile int saved_localstack_used;
-	volatile qbool owns_abort;	// this frame owns the abort target (A1)
-	volatile qbool saved_context;	// this frame saved the classic context (A2)
+	volatile qbool owns_abort;	// this frame owns the abort target
+	volatile qbool saved_context;	// this frame saved the classic context
 	jmp_buf frame_abort;		// stack-local unwind target for this frame
 	eval_t *ptr;
 
-	// ADR 0019 (Step 0): attach the executing VM — for the duration of the loop
-	// the classic mirrors (pr_globals), which builtins read/write through the
-	// G_* macros, point at this VM's data. For the server instance this is
-	// identity (its mirrors are the default). Restored at the end of the
-	// function (incl. after an abort-stack unwind). Nesting (listen/
-	// PR_ExecuteProgram from client context) is safe: values are saved in this
-	// frame's locals and restored on exit; the *outermost* frame keeps a durable
-	// copy in context_prev_* for UnLoad/RestoreContext (A2).
+	// Attach the executing VM -- for the duration of the loop the classic mirrors
+	// (pr_globals), which builtins read/write through the G_* macros, point at
+	// this VM's data. For the server instance this is identity (its mirrors are
+	// the default). Restored at the end of the function (incl. after an
+	// abort-stack unwind). Nesting (listen/PR_ExecuteProgram from client
+	// context) is safe: values are saved in this frame's locals and restored on
+	// exit; the *outermost* frame keeps a durable copy in context_prev_* for
+	// UnLoad/RestoreContext.
 	saved_active = g_active;
 	saved_prglobals = pr_globals;
 	// Only the abort-capable (client) VM keeps the durable context copy used by
@@ -662,8 +661,8 @@ void PR1VM_ExecuteProgram (pr1vm_t *vm, func_t fnum)
 	exitdepth = vm->depth;
 	saved_localstack_used = vm->localstack_used;
 
-	// A1 (abort-stack): the *outermost* client-VM frame owns the unwind target.
-	// Nested calls (e.g. #231 calltimeofday → PR1VM_ExecuteProgram on the same
+	// Abort-stack: the *outermost* client-VM frame owns the unwind target.
+	// Nested calls (e.g. #231 calltimeofday -> PR1VM_ExecuteProgram on the same
 	// VM) do not re-arm it, so a PR_RunError anywhere unwinds the whole VM here
 	// instead of returning into the interpreter. Server/PR2 keep abortbuf_valid
 	// false and the previous fatal path (SV_Error).
@@ -892,8 +891,8 @@ void PR1VM_ExecuteProgram (pr1vm_t *vm, func_t fnum)
 			NUM_FOR_EDICT(ed);		// make sure it's in range
 #endif
 			//need for checking 'cmd mmode player N', if N >= 0x10000000 =(signed)=> negative
-			// Field offset — through the instance dialect map (PR1VM_FieldOfs):
-			// FTE/classic raw, NQ — remap (ADR 0017 P2).
+			// Field offset -- through the instance dialect map (PR1VM_FieldOfs):
+			// FTE/classic raw, NQ -- remap.
 			if (b->_int >= 0)
 			{
 				if (PR1VM_ClientBadField (vm, b->_int, 1))
@@ -988,8 +987,8 @@ void PR1VM_ExecuteProgram (pr1vm_t *vm, func_t fnum)
 			s = PR1VM_LeaveFunction (vm);
 			if (vm->depth == exitdepth)
 			{
-				// ADR 0019 (Step 0): detach — restore the classic mirror
-				// context, then the active instance.
+				// Detach -- restore the classic mirror context, then the active
+				// instance.
 				pr_globals = saved_prglobals;
 				g_active = saved_active;
 				if (saved_context)
@@ -1005,10 +1004,9 @@ void PR1VM_ExecuteProgram (pr1vm_t *vm, func_t fnum)
 			break;
 
 		case OP_STATE:
-			// B21 (FTE qclib/execloop.h:972 -> externs->stateop): per-instance
-			// handler. The client CSQC VM resolves the module's own field/global
-			// offsets; NULL (server PR1/NQ/trusted) keeps the classic fixed layout
-			// byte-for-byte.
+			// Per-instance handler. The client CSQC VM resolves the module's own
+			// field/global offsets; NULL (server PR1/NQ/trusted) keeps the classic
+			// fixed layout byte-for-byte.
 			if (vm->stateop)
 			{
 				vm->stateop (vm, a->_float, b->function);
@@ -1246,7 +1244,7 @@ void PR1_UnLoadProgs(void)
 #endif
 		progs = NULL;
 
-		// PR1VM S6: the instance no longer references the module being freed.
+		// The instance no longer references the module being freed.
 		PR1VM_UnLoad (PR1VM_Server ());
 	}
 }

@@ -1110,7 +1110,7 @@ PR1_LoadProgs
 void PF_clear_strtbl(void);
 
 #ifdef WITH_NQPROGS
-// NQ remap of field offsets (0..105; >105 — identity). Values are the NQ branch
+// NQ remap of field offsets (0..105; >105 -- identity). Values are the NQ branch
 // of the PR_InitPatchTables formula. Used by the server PR1 instance under NQ.
 static const int fieldofs_nq[106] = {
 	  0,  1,  2,  3,  4,  5,  6,  7,  9, 10,
@@ -1157,9 +1157,9 @@ void PR_InitPatchTables (void)
 =================
 PR1VM_FillAndSwapLumps
 
-PR1VM: from an already byte-swapped header fills the instance mirrors and
-byte-swaps the lumps. Common for v6 and v7 (the first 15 header fields match;
-v7 extends them with debug/type fields after entityfields).
+From an already byte-swapped header fills the instance mirrors and byte-swaps
+the lumps. Common for v6 and v7 (the first 15 header fields match; v7 extends
+them with debug/type fields after entityfields).
 =================
 */
 static void PR1VM_FillAndSwapLumps (pr1vm_t *vm, dprograms_t *p)
@@ -1216,8 +1216,8 @@ static void PR1VM_FillAndSwapLumps (pr1vm_t *vm, dprograms_t *p)
 =================
 PR1VM_LoadData
 
-PR1VM (S2): fills the instance from a progs (v6) file. Byte-swaps the header and
-lumps; version/CRC validation and error text are left to the PR1_LoadProgs wrapper.
+Fills the instance from a progs (v6) file. Byte-swaps the header and lumps;
+version/CRC validation and error text are left to the PR1_LoadProgs wrapper.
 =================
 */
 void PR1VM_LoadData (pr1vm_t *vm, dprograms_t *hdr)
@@ -1236,8 +1236,8 @@ void PR1VM_LoadData (pr1vm_t *vm, dprograms_t *hdr)
 =================
 PR1VM_CommitServer
 
-PR1VM (S2): server — instance mirrors -> shared "module" globals (read by
-PR2 and sv_*.c). Called after a successful PR1VM_LoadData.
+Server: instance mirrors -> shared "module" globals (read by PR2 and sv_*.c).
+Called after a successful PR1VM_LoadData.
 =================
 */
 void PR1VM_CommitServer (pr1vm_t *vm)
@@ -1273,7 +1273,7 @@ char *PR1VM_GetString (pr1vm_t *vm, int num)
 	// stored as positive offsets *beyond* progs->numstrings, so the shared
 	// reader must not bound against numstrings. The client VM keeps untrusted
 	// csprogs strings bounded through its own accessor (csqc_client.c
-	// CSQC_Client_GetString, installed as vm->get_string); see ADR 0019.
+	// CSQC_Client_GetString, installed as vm->get_string).
 	return vm->strings + num;
 }
 
@@ -1294,7 +1294,7 @@ void PR1VM_SetString (pr1vm_t *vm, string_t *address, char *s)
 		return;
 
 	// The module string area [strings, strings+numstrings) is constant
-	// (lifetime = module load) — store an offset.
+	// (lifetime = module load) -- store an offset.
 	if (s >= vm->strings && s < vm->strings + vm->progs->numstrings)
 	{
 		*address = (int)(s - vm->strings);
@@ -1404,13 +1404,13 @@ void PR1_LoadProgs (void)
 	snprintf (num, sizeof(num), "%i", CRC_Block ((byte *)progs, filesize));
 	Info_SetValueForStarKey (svs.info, "*progs", num, MAX_SERVERINFO_STRING);
 
-	// PR1VM (S2): load into the instance (swap header+lumps) + checks,
-	// then commit the mirrors into the shared globals.
+	// Load into the instance (swap header+lumps) + checks, then commit the
+	// mirrors into the shared globals.
 	{
 		pr1vm_t *vm = PR1VM_Server();
 
-		// S6: every load (incl. repeats/after errors) starts from a clean
-		// instance — fixes stale mirrors after a failed load.
+		// Every load (incl. repeats/after errors) starts from a clean instance
+		// -- fixes stale mirrors after a failed load.
 		PR1VM_UnLoad (vm);
 
 		num_prstr = 0;
@@ -1426,8 +1426,8 @@ void PR1_LoadProgs (void)
 			if (vm->fielddefs[i].type & DEF_SAVEGLOBAL)
 				SV_Error ("PR1_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
 
-		// Field-offset map per module dialect: classic — raw (NULL),
-		// NQ — NQ remap (ADR 0017 P2, per-instance).
+		// Field-offset map per module dialect: classic -- raw (NULL),
+		// NQ -- NQ remap (per-instance).
 #ifdef WITH_NQPROGS
 		vm->fieldofs_patch = pr_nqprogs ? fieldofs_nq : NULL;
 #else
@@ -1465,7 +1465,7 @@ void PR1_Init (void)
 
 	memset(pr_newstrtbl, 0, sizeof(pr_newstrtbl));
 
-	// PR1VM: server execution instance (S1) — zero its state.
+	// Zero the server execution instance state.
 	PR1VM_Reset(PR1VM_Server());
 }
 

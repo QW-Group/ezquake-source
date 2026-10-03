@@ -1113,12 +1113,12 @@ void CL_SendCmd(void)
 		return;
 	}
 
-	// CSQC_Input_Frame: дать модулю прочитать/изменить отправляемый usercmd
-	// (input_* глобалы). Только живой (не MVD) путь и только текущий кадр;
-	// два бэкап-кадра ниже не трогаем.
+	// CSQC_Input_Frame: let the module read/modify the outgoing usercmd (input_*
+	// globals). Only the live (non-MVD) path and only the current frame; the two
+	// backup frames below are left alone.
 	CSQC_Client_InputFrame(cmd);
-	// C1.3 #345: записать отправляемый cmd в историю модуля (после возможных
-	// изменений Input_Frame).
+	// #345: record the outgoing cmd in the module's history (after any Input_Frame
+	// modifications).
 	CSQC_Client_RecordInput(cmd);
 
 	SZ_Init(&buf, data, sizeof(data));

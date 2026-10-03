@@ -247,7 +247,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 	qbool polygonOffset = gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(e);
 
 	clmodel = e->model;
-	// CSQC: per-entity uniform render scale (FTE gl_rmain.c:360-403); 0 = unscaled.
+	// CSQC: per-entity uniform render scale; 0 = unscaled.
 	model_scale = e->scale ? e->scale : 1;
 	if (!clmodel->nummodelsurfaces) {
 		return;

@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_aliasmodel.h"
 #include "crc.h"
 #include "qmb_particles.h"
-#include "csqc_client.h"	// C4 Э2: гейт вьюмодели при CSQC-takeover (#301 mask&2)
+#include "csqc_client.h"	// viewmodel gate under CSQC takeover (#301 mask&2)
 #include "r_matrix.h"
 #include "r_local.h"
 #include "r_framestats.h"
@@ -649,8 +649,8 @@ void R_DrawViewModel(void)
 	centity_t *cent = CL_WeaponModelForView();
 	static entity_t gun;
 
-	// C4 Э2 (#301 mask&2): при активной CSQC-сцене движковую вьюмодель рисуем только если
-	// модуль запросил MASK_STDVIEWMODEL (FTE CL_LinkViewModel); иначе — как вне takeover.
+	// #301 mask&2: with an active CSQC scene, draw the engine viewmodel only if the
+	// module requested MASK_STDVIEWMODEL; otherwise behave as outside takeover.
 	if (CSQC_Client_SceneActive () && !CSQC_Client_SceneViewModel ()) {
 		return;
 	}

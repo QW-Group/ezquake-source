@@ -201,7 +201,7 @@ void R_RenderView(void);		// must set r_refdef first
 void R_Init_EFrags (void);
 void R_AddEfrags(entity_t *ent);
 
-// CSQC arena culling (docs/adr/0028-csqc-arena-culling.md)
+// CSQC arena culling
 void R_CSQC_BeginCull(void);
 qbool R_CSQC_EntityVisible(entity_t *ent);
 void R_NewMap(qbool vid_restart);
