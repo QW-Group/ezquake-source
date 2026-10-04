@@ -141,6 +141,47 @@ add:
 	Q_free(tmp);
 }
 
+/*
+TF-scoped remote capabilities.
+
+Classic Team Fortress servers stuffcmd client-side cvars/commands (fov, v_cshift,
+v_idlescale, cl_movespeedkey, setinfo, bind, ...) that are not part of the upstream
+default cl_remote_capabilities allowlist. Like the existing TF impulse allowlist
+(AllowedImpulse below), these are permitted only when the connected server is Team
+Fortress (gamedir "fortress"). Non-TF servers keep the upstream allowlist unchanged.
+*/
+static const char *tf_remote_capabilities[] = {
+	"fov", "v_cshift", "v_idlescale",
+	"v_iyaw_cycle", "v_iroll_cycle", "v_ipitch_cycle",
+	"v_iyaw_level", "v_iroll_level", "v_ipitch_level",
+	"cl_movespeedkey", "cl_forwardspeed", "cl_backspeed", "cl_sidespeed", "cl_upspeed",
+	"cl_rollangle", "sensitivity", "setinfo", "bind", "reload", "screenshot", "disconnect",
+	NULL
+};
+
+static qbool Cmd_IsTFCapability (const char *name)
+{
+	int i;
+
+	for (i = 0; tf_remote_capabilities[i]; i++) {
+		if (!strcmp(tf_remote_capabilities[i], name))
+			return true;
+	}
+
+	return false;
+}
+
+static qbool Cmd_RemoteAllowed (const char *name)
+{
+	if (Hash_Get(rc_hash, (char *)name))
+		return true;
+
+	if (cl.teamfortress && Cmd_IsTFCapability(name))
+		return true;
+
+	return false;
+}
+
 qbool CL_IsDownloadableFileExtension(const char *filename)
 {
 	qbool is_allowed = false;
@@ -1901,7 +1942,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 		}
 
 		if (cmd->function) {
-			if (cbuf_current == &cbuf_svc && !Hash_Get(rc_hash, cmd->name)) {
+			if (cbuf_current == &cbuf_svc && !Cmd_RemoteAllowed(cmd->name)) {
 				Com_Printf("Blocked %s: not in cl_remote_capabilities\n", cmd->name);
 				goto done;
 			}
@@ -1920,7 +1961,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 
 	// check cvars
 	if ((v = Cvar_Find(Cmd_Argv(0)))) {
-		if (cbuf_current == &cbuf_svc && !Hash_Get(rc_hash, v->name)) {
+		if (cbuf_current == &cbuf_svc && !Cmd_RemoteAllowed(v->name)) {
 			Com_Printf("Blocked %s: not in cl_remote_capabilities\n", v->name);
 			goto done;
 		}
