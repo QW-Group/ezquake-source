@@ -3084,6 +3084,10 @@ static void PR1VM_CSQCSmoke_f (void)
 	dfunction_t *f;
 	func_t idx;
 
+	// Developer-gated manual diagnostic (matches pr1vm_test_error).
+	if (!developer.value)
+		return;
+
 	data = (byte *)FS_LoadHunkFile ("csprogs.dat", &filesize);
 	if (!data)
 	{
@@ -3175,6 +3179,10 @@ static void CSQC_Client_ProgsCheck_f (void)
 	dprograms_t *h;
 	int filesize;
 	int pass = 0, fail = 0;
+
+	// Developer-gated manual diagnostic (matches pr1vm_test_error).
+	if (!developer.value)
+		return;
 
 	data = (byte *)FS_LoadHunkFile ("csprogs.dat", &filesize);
 	if (!data || filesize < (int)sizeof (dprograms_t))
@@ -3503,12 +3511,6 @@ static qbool CSQC_Client_Load (const char *path)
 		s_csqc.func_world, s_csqc.func_update, s_csqc.func_console, s_csqc.func_shutdown,
 		s_csqc.func_entupdate, s_csqc.func_entremove, s_csqc.func_parseevent,
 		s_csqc.func_input, s_csqc.func_inputevent, s_csqc.global_time);
-	Con_Printf ("CSQC: T2.7 sf=%d ef=%d pm=%d think=%d nextthink=%d\n",
-		s_csqc.func_startframe, s_csqc.func_endframe, s_csqc.global_physics_mode,
-		s_csqc.f_think, s_csqc.f_nextthink);
-	Con_Printf ("CSQC: P2 self=%d entnum_fld=%d edict_size=%d es=%d\n",
-		s_csqc.global_self, s_csqc.field_entnum, vm->edict_size, s_csqc.func_entspawn);
-
 	// CSQC_Init(apiver, enginename, enginever) - FTE parity: apiver =
 	// CSQC_API_VERSION, enginename = engine name, enginever = version number. The
 	// module uses the arguments only as hints.
