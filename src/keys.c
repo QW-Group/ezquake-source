@@ -788,11 +788,26 @@ void CompleteCommandNew (void)
 
 			len = strlen (text);
 
-			memmove (key_lines[edit_line] + key_linepos + len,
-					key_lines[edit_line] + key_linepos +
-					last_cmd_length,
-					(MAXCMDLINE - key_linepos + 1 -
-					 last_cmd_length)*sizeof(wchar));
+			// Bound both the insertion and the shifted tail to the line buffer.
+			// The previous fixed count spanned the whole buffer and overran
+			// key_lines[] when cycling completions (fortify aborts with
+			// "buffer overflow detected" on the second TAB).
+			if (key_linepos + len > MAXCMDLINE - 1)
+				len = MAXCMDLINE - 1 - key_linepos;
+			if (len < 0)
+				len = 0;
+
+			{
+				int tail = qwcslen (key_lines[edit_line]) - (key_linepos + last_cmd_length) + 1;
+				int room = MAXCMDLINE - (key_linepos + len);
+
+				if (tail > room)
+					tail = room;
+				if (tail > 0)
+					memmove (key_lines[edit_line] + key_linepos + len,
+							key_lines[edit_line] + key_linepos + last_cmd_length,
+							tail * sizeof(wchar));
+			}
 			memcpy (key_lines[edit_line] + key_linepos, str2wcs(text),
 					len * sizeof(wchar));
 
