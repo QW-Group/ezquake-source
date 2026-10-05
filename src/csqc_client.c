@@ -140,8 +140,10 @@ static csqc_client_state_t s_csqc;
 // Client PR1VM helpers (client parts live outside shared core files):
 // LoadClientV6 + CSQCSmoke are implemented here.
 static qbool PR1VM_LoadClientV6 (pr1vm_t *vm, const byte *data, int filesize);
+#ifdef CSQC_DEBUG
 static void PR1VM_CSQCSmoke_f (void);
 static void CSQC_Client_ProgsCheck_f (void);
+#endif
 
 /*
 =================
@@ -1011,8 +1013,10 @@ CL_InitLocal (cl_main.c) - commands available in the client console.
 */
 void CSQC_Client_RegisterCommands (void)
 {
+#ifdef CSQC_DEBUG
 	Cmd_AddCommand ("csqc_smoke", PR1VM_CSQCSmoke_f);	// PR1VM debug
 	Cmd_AddCommand ("csqc_progscheck", CSQC_Client_ProgsCheck_f);	// debug canary
+#endif
 }
 
 /*
@@ -3062,6 +3066,7 @@ static qbool PR1VM_LoadClientV6 (pr1vm_t *vm, const byte *data, int filesize)
 	return true;
 }
 
+#ifdef CSQC_DEBUG
 /*
 =================
 PR1VM_CSQCSmoke_f
@@ -3277,6 +3282,7 @@ static void CSQC_Client_ProgsCheck_f (void)
 
 	Con_Printf ("[CSQC-TEST] SUMMARY group=progscheck pass=%d fail=%d\n", pass, fail);
 }
+#endif
 
 /*
 =================
@@ -3505,7 +3511,7 @@ static qbool CSQC_Client_Load (const char *path)
 
 	s_csqc.loaded = true;
 
-	Con_Printf ("CSQC: loaded %s (%d statements, crc=0x%x), funcs i=%d w=%d u=%d "
+	Con_DPrintf ("CSQC: loaded %s (%d statements, crc=0x%x), funcs i=%d w=%d u=%d "
 		"c=%d s=%d eu=%d er=%d pe=%d if=%d ie=%d time=%d\n",
 		path, vm->progs->numstatements, (unsigned int)vm->progs->crc, s_csqc.func_init,
 		s_csqc.func_world, s_csqc.func_update, s_csqc.func_console, s_csqc.func_shutdown,
@@ -3552,7 +3558,7 @@ static void CSQC_Client_NotifyCSQC (qbool enable)
 	CL_SendClientCommand (true, enable ? "enablecsqc" : "disablecsqc");
 	s_csqc.enable_sent = true;
 	s_csqc.enable_value = enable;
-	Con_Printf ("CSQC: %s sent\n", enable ? "enablecsqc" : "disablecsqc");
+	Con_DPrintf ("CSQC: %s sent\n", enable ? "enablecsqc" : "disablecsqc");
 }
 
 /*

@@ -70,7 +70,9 @@ void PR2_Init(void)
 	Cmd_AddCommand ("edictcount", ED_Count);
 	Cmd_AddCommand ("profile", PR2_Profile_f);
 	Cmd_AddCommand ("mod", PR2_GameConsoleCommand);
+#ifdef CSQC_DEBUG
 	Cmd_AddCommand ("pr1vm_test_error", PR1VM_TestError_f);	// PR1VM S4 debug
+#endif
 
 	Cmd_AddCommand ("vminfo", VM_VmInfo_f);
 	memset(pr_newstrtbl, 0, sizeof(pr_newstrtbl));

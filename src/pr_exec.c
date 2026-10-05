@@ -152,6 +152,7 @@ void PR1VM_BindServer(pr1vm_t *vm)
 	vm->host_error = PR1VM_ServerHostError;
 }
 
+#ifdef CSQC_DEBUG
 // Debug: provoke PR_RunError on the server instance (host_error check).
 void PR1VM_TestError_f (void)
 {
@@ -165,6 +166,7 @@ void PR1VM_TestError_f (void)
 	g_active = vm;
 	PR_RunError ("PR1VM test error (host_error path)");
 }
+#endif
 
 // pr_argc/pr_trace live in pr1vm_t as vm->argc / vm->trace.
 
@@ -484,6 +486,7 @@ static int PR1VM_FieldOfs (pr1vm_t *vm, int i)
 	return (i >= 0 && i <= 105 && vm->fieldofs_patch) ? vm->fieldofs_patch[i] : i;
 }
 
+#ifdef CSQC_DEBUG
 // Debug canary (client console `pr1vm_test_guards`, called from
 // `csqc_progscheck`): unit-test the client-VM bound predicates on a synthetic
 // instance. No execution / no PR_RunError; prints [CSQC-TEST] lines + SUMMARY.
@@ -538,6 +541,7 @@ void PR1VM_TestGuards_f (void)
 
 	Con_Printf ("[CSQC-TEST] SUMMARY group=guard pass=%d fail=%d\n", pass, fail);
 }
+#endif
 
 /*
 ====================

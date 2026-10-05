@@ -20,6 +20,11 @@ instance is added together with the loader/wiring.
 #define PR1VM_MAX_STACK	32
 #define PR1VM_LOCALSTACK	2048
 
+// Compile-time gate for ezquake-only PR1VM debug/test surface (the client
+// console commands csqc_smoke/csqc_progscheck/pr1vm_test_error and the
+// bound-predicate unit tests). Off in release builds; uncomment to enable.
+//#define CSQC_DEBUG
+
 typedef struct pr1vm_s pr1vm_t;
 
 typedef struct
@@ -144,6 +149,7 @@ void PR1VM_SetString(pr1vm_t *vm, string_t *address, char *s);
 // num+1 slots; unfilled slots = NULL (dispatcher errors out).
 void PR1VM_RegisterBuiltin(pr1vm_t *vm, int num, builtin_t fn);
 
+#ifdef CSQC_DEBUG
 // Debug: provoke PR_RunError on the server instance (pr1vm_test_error).
 void PR1VM_TestError_f(void);
 
@@ -153,6 +159,7 @@ void PR1VM_TestGuards_f(void);
 // Debug: shared pass/fail counter used by engine-side bound predicate tests
 // (PR1VM_TestGuards_f and the client-side ent_of group in csqc_progscheck).
 void PR1VM_GuardCheck(const char *name, qbool ok, int *pass, int *fail);
+#endif
 
 int  PR1VM_EnterFunction(pr1vm_t *vm, dfunction_t *f);
 int  PR1VM_LeaveFunction(pr1vm_t *vm);

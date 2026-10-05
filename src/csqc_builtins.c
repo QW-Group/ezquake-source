@@ -120,7 +120,7 @@ static void csqc_dprint (void)
 {
 	char *s = CSQCVM_Str (OFS_PARM0);
 	if (s)
-		Con_Printf ("%s", s);
+		Con_DPrintf ("%s", s);	// FTE parity: PF_dprint -> Con_DPrintf (developer-gated)
 }
 
 /*
