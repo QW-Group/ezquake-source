@@ -130,6 +130,10 @@ typedef struct csqc_client_state_s
 	// bound into vm->edicts/game_edicts (entity opcodes).
 	edict_t		*edicts;
 	byte		*game_edicts;
+	// Heap-owned csprogs.dat buffer (FS_LoadHeapFile). vm->progs/strings/globals
+	// reference it, so it must outlive the module; freed on unload (Disconnect)
+	// and on load failure.
+	byte		*module_data;
 	// Client string tables of the instance (see csqc_strpool_t): on load
 	// vm->strtbl/newstrtbl/numstr point here.
 	csqc_strpool_t strpool;
@@ -3327,10 +3331,11 @@ static qbool CSQC_Client_Load (const char *path)
 	pr1vm_t *vm;
 	dfunction_t *f;
 
-	// Deliberately FS_LoadHunkFile (low hunk), not heap/temp - PR1VM_LoadData does
-	// not copy the buffer (vm->progs/... reference data), so the data must live
-	// until the module is unloaded.
-	data = (byte *)FS_LoadHunkFile ((char *)path, &filesize);
+	// Heap-owned buffer: PR1VM_LoadData does not copy it (vm->progs/... reference
+	// data), so the data must live until the module is unloaded. Owned via
+	// s_csqc.module_data, freed on a repeated Load, on load failure and in
+	// CSQC_Client_Disconnect (after PR1VM_UnLoad).
+	data = (byte *)FS_LoadHeapFile (path, &filesize);
 	if (!data)
 	{
 		Con_Printf ("CSQC: server offers csprogs but %s not found locally\n", path);
@@ -3346,7 +3351,13 @@ static qbool CSQC_Client_Load (const char *path)
 	CSQC_Client_ViewReset ();
 	CSQC_Client_ModelReset ();	// CSQC model registry cleared on load
 
+	// Free a buffer left from a previous load (its VM is dropped by the reset
+	// below and no longer referenced after the resets above).
+	Q_free (s_csqc.module_data);
+	s_csqc.module_data = NULL;
+
 	memset (&s_csqc, 0, sizeof (s_csqc));
+	s_csqc.module_data = data;	// heap-owned; freed on load failure and unload
 	s_csqc.func_init = s_csqc.func_world = s_csqc.func_update =
 		s_csqc.func_console = s_csqc.func_shutdown = -1;
 	s_csqc.func_entupdate = s_csqc.func_entremove = s_csqc.func_parseevent = -1;
@@ -3395,6 +3406,8 @@ static qbool CSQC_Client_Load (const char *path)
 	if (!PR1VM_LoadClientV6 (vm, data, filesize))
 	{
 		Con_Printf ("CSQC: %s load failed (v6)\n", path);
+		Q_free (data);
+		s_csqc.module_data = NULL;
 		return false;
 	}
 
@@ -5511,6 +5524,11 @@ void CSQC_Client_Disconnect (void)
 			CSQC_Client_Exec (s_csqc.func_shutdown);
 		PR1VM_UnLoad (&s_csqc.vm);
 	}
+	// Heap-owned csprogs buffer: the VM no longer references it after UnLoad;
+	// free it here, before the state is cleared (also covers a loaded module that
+	// failed after PR1VM_LoadClientV6, e.g. CSQC_Init errored).
+	Q_free (s_csqc.module_data);
+	s_csqc.module_data = NULL;
 	CSQC_Client_ClearCommands ();
 	// edict arena before memset (the pointers are still in place).
 	CSQC_Client_FreeArena ();
