@@ -2949,6 +2949,10 @@ static int PR1VM_StmtWords (int op, int which)
 		return which == 1 ? 3 : 1;
 	case OP_LOAD_V:
 		return which == 2 ? 3 : 1;
+	case OP_STOREP_V:
+		// a is the vector source (OPA->_vector[0..2]); b is the edict pointer
+		// (runtime-bounded), c unused. Matches pr_exec.c OP_STOREP_V.
+		return which == 0 ? 3 : 1;
 	default:
 		return 1;
 	}
@@ -3232,6 +3236,29 @@ static void CSQC_Client_ProgsCheck_f (void)
 
 	memset (buf, 0, filesize);
 	PC_CHECK ("zeroed", !PR1VM_ValidateClientV6 (buf, filesize));
+
+	// 2b) OP_STOREP_V vector source width: a == numglobals-1 must be rejected
+	// (interpreter reads globals[a+1..a+2]), a == numglobals-3 must be accepted.
+	{
+		dstatement_t *st;
+		int numglobals = LittleLong (((dprograms_t *) data)->numglobals);
+		int ofs_st = LittleLong (((dprograms_t *) data)->ofs_statements);
+
+		memcpy (buf, data, filesize);
+		st = (dstatement_t *) (buf + ofs_st);
+		st->op = (unsigned short) LittleShort ((short) OP_STOREP_V);
+		st->a = (short) LittleShort ((short) (numglobals - 1));
+		st->b = (short) LittleShort (0);
+		st->c = (short) LittleShort (0);
+		PC_CHECK ("storep_v-a-vector-oob", !PR1VM_ValidateClientV6 (buf, filesize));
+
+		memcpy (buf, data, filesize);
+		st->op = (unsigned short) LittleShort ((short) OP_STOREP_V);
+		st->a = (short) LittleShort ((short) (numglobals - 3));
+		st->b = (short) LittleShort (0);
+		st->c = (short) LittleShort (0);
+		PC_CHECK ("storep_v-a-vector-edge", PR1VM_ValidateClientV6 (buf, filesize));
+	}
 
 	Q_free (buf);
 
