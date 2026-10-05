@@ -36,6 +36,15 @@ PR1VM_UnLoad and removal of the commands.
 #define CSQC_MAX_NUM	4096
 #define CSQC_MAX_EDICTS	4096
 
+// Untrusted-csprogs validator caps (client-only; ADR 0031). CSQC_MAX_BUILTINS is
+// the upper bound of client builtin slots (max registered builtin number is 742,
+// csqc_builtins.c; first_statement == -num is a builtin). CSQC_MAX_ENTITYFIELDS
+// bounds entityfields so edict_size (entityfields*4, pr_edict.c) and the
+// CSQC_MAX_EDICTS-slot arena (max ~64 MB) cannot overflow (real module: 109).
+// Both leave generous headroom over the real module.
+#define CSQC_MAX_BUILTINS		1024
+#define CSQC_MAX_ENTITYFIELDS	4096
+
 // Client string tables + temp ring of the client VM instance. Kept outside the
 // shared pr1vm_t (the core only holds pointers to them in vm->) so the shared
 // core carries no client data/logic. Ring size = number of unique temp strings
@@ -2915,8 +2924,11 @@ PR1VM_LoadData byte-swaps and walks the lumps.
 */
 static qbool PR1VM_LumpFits (int ofs, int num, int elemsize, int filesize, const char *name)
 {
-	if (ofs < (int)sizeof (dprograms_t) || num < 0 || elemsize <= 0 ||
-		(size_t) ofs + (size_t) num * (size_t) elemsize > (size_t) filesize)
+	// Bound by division (num <= (filesize - ofs) / elemsize) instead of the
+	// product ofs + num*elemsize, which wraps on a 32-bit size_t (i686) and would
+	// let a crafted num slip past. Same result on 32/64-bit.
+	if (ofs < (int)sizeof (dprograms_t) || ofs > filesize || num < 0 || elemsize <= 0 ||
+		num > (filesize - ofs) / elemsize)
 	{
 		Con_Printf ("CSQC: csprogs.dat rejected: bad %s lump (ofs=%d num=%d)\n",
 			name, ofs, num);
@@ -2950,7 +2962,9 @@ static int PR1VM_StmtWords (int op, int which)
 	case OP_NOT_V:
 		return which == 0 ? 3 : 1;
 	case OP_STORE_V:
-		return which == 1 ? 3 : 1;
+		// Both operands are vectors: a is the source (a->vector[0..2]), b the
+		// destination (b->vector[0..2]) - matches pr_exec.c OP_STORE_V.
+		return (which == 0 || which == 1) ? 3 : 1;
 	case OP_LOAD_V:
 		return which == 2 ? 3 : 1;
 	case OP_STOREP_V:
@@ -2967,6 +2981,7 @@ static qbool PR1VM_ValidateClientV6 (const byte *data, int filesize)
 	dprograms_t h;
 	const dstatement_t *st;
 	const dfunction_t *fn;
+	const ddef_t *dd;
 	int i, j;
 
 	if (!data || filesize < (int)sizeof (h))
@@ -2994,7 +3009,8 @@ static qbool PR1VM_ValidateClientV6 (const byte *data, int filesize)
 		return false;
 
 	if (h.numstatements < 1 || h.numfunctions < 1 || h.numstrings < 1 ||
-		h.numglobals < 3 || h.entityfields <= 0)
+		h.numglobals < RESERVED_OFS ||
+		h.entityfields <= 0 || h.entityfields > CSQC_MAX_ENTITYFIELDS)
 	{
 		Con_Printf ("CSQC: csprogs.dat rejected: bad counts (stmt=%d func=%d str=%d glob=%d ef=%d)\n",
 			h.numstatements, h.numfunctions, h.numstrings, h.numglobals, h.entityfields);
@@ -3031,6 +3047,38 @@ static qbool PR1VM_ValidateClientV6 (const byte *data, int filesize)
 		}
 	}
 
+	// defs: every def offset + its type width must stay inside the lump the
+	// engine writes through (globaldefs -> globals, fielddefs -> entvars);
+	// width is 3 for a vector def, 1 otherwise. ofs is unsigned (ddef_t).
+	dd = (const ddef_t *) ((const byte *) data + h.ofs_globaldefs);
+	for (i = 0; i < h.numglobaldefs; i++)
+	{
+		int ofs = (int)(unsigned short) LittleShort ((short) dd[i].ofs);
+		int type = (int)(unsigned short) LittleShort ((short) dd[i].type) & ~DEF_SAVEGLOBAL;
+		int width = (type == ev_vector) ? 3 : 1;
+
+		if (ofs + width > h.numglobals)
+		{
+			Con_Printf ("CSQC: csprogs.dat rejected: globaldef %d out of range (ofs=%d w=%d glob=%d)\n",
+				i, ofs, width, h.numglobals);
+			return false;
+		}
+	}
+	dd = (const ddef_t *) ((const byte *) data + h.ofs_fielddefs);
+	for (i = 0; i < h.numfielddefs; i++)
+	{
+		int ofs = (int)(unsigned short) LittleShort ((short) dd[i].ofs);
+		int type = (int)(unsigned short) LittleShort ((short) dd[i].type) & ~DEF_SAVEGLOBAL;
+		int width = (type == ev_vector) ? 3 : 1;
+
+		if (ofs + width > h.entityfields)
+		{
+			Con_Printf ("CSQC: csprogs.dat rejected: fielddef %d out of range (ofs=%d w=%d ef=%d)\n",
+				i, ofs, width, h.entityfields);
+			return false;
+		}
+	}
+
 	// functions: parm_start/locals within globals, first_statement within statements
 	fn = (const dfunction_t *) ((const byte *) data + h.ofs_functions);
 	for (i = 0; i < h.numfunctions; i++)
@@ -3039,15 +3087,43 @@ static qbool PR1VM_ValidateClientV6 (const byte *data, int filesize)
 		int parm = LittleLong (fn[i].parm_start);
 		int loc = LittleLong (fn[i].locals);
 		int nparm = LittleLong (fn[i].numparms);
+		int sum = 0;
+		int k;
 
-		if (first > 0 && first >= h.numstatements)
+		// first_statement: builtins are negative (|first| <= builtin slots),
+		// real code is [0, numstatements). INT_MIN would make OP_CALL's
+		// i = -first a negative builtin index; #0:name (first == 0 for i > 0) is
+		// not supported (ADR 0020).
+		if (first < -CSQC_MAX_BUILTINS ||
+			(first > 0 && first >= h.numstatements) ||
+			(first == 0 && i > 0))
 		{
-			Con_Printf ("CSQC: csprogs.dat rejected: function %d first_statement out of range\n", i);
+			Con_Printf ("CSQC: csprogs.dat rejected: function %d first_statement out of range (%d)\n",
+				i, first);
 			return false;
 		}
 		if (nparm < 0 || nparm > MAX_PARMS || parm < 0 || loc < 0 || parm + loc > h.numglobals)
 		{
 			Con_Printf ("CSQC: csprogs.dat rejected: function %d parms/locals out of range\n", i);
+			return false;
+		}
+		// parm_size: each 0..3 (byte) and the word sum must fit locals (fteqcc
+		// invariant); EnterFunction copies sum(parm_size) words from parm_start.
+		for (k = 0; k < nparm; k++)
+		{
+			int ps = (int) fn[i].parm_size[k];
+			if (ps > 3)
+			{
+				Con_Printf ("CSQC: csprogs.dat rejected: function %d parm_size out of range (%d)\n",
+					i, ps);
+				return false;
+			}
+			sum += ps;
+		}
+		if (sum > loc)
+		{
+			Con_Printf ("CSQC: csprogs.dat rejected: function %d parm_size sum %d > locals %d\n",
+				i, sum, loc);
 			return false;
 		}
 	}
@@ -3262,6 +3338,124 @@ static void CSQC_Client_ProgsCheck_f (void)
 		st->b = (short) LittleShort (0);
 		st->c = (short) LittleShort (0);
 		PC_CHECK ("storep_v-a-vector-edge", PR1VM_ValidateClientV6 (buf, filesize));
+	}
+
+	// 2c) OP_STORE_V vector width: both a (source) and b (dest) are 3 words;
+	// a == numglobals-1 must be rejected, a == b == numglobals-3 accepted.
+	{
+		dstatement_t *st;
+		int numglobals = LittleLong (((dprograms_t *) data)->numglobals);
+		int ofs_st = LittleLong (((dprograms_t *) data)->ofs_statements);
+
+		memcpy (buf, data, filesize);
+		st = (dstatement_t *) (buf + ofs_st);
+		st->op = (unsigned short) LittleShort ((short) OP_STORE_V);
+		st->a = (short) LittleShort ((short) (numglobals - 1));
+		st->b = (short) LittleShort (0);
+		st->c = (short) LittleShort (0);
+		PC_CHECK ("store_v-a-vector-oob", !PR1VM_ValidateClientV6 (buf, filesize));
+
+		memcpy (buf, data, filesize);
+		st->op = (unsigned short) LittleShort ((short) OP_STORE_V);
+		st->a = (short) LittleShort ((short) (numglobals - 3));
+		st->b = (short) LittleShort ((short) (numglobals - 3));
+		st->c = (short) LittleShort (0);
+		PC_CHECK ("store_v-a-vector-edge", PR1VM_ValidateClientV6 (buf, filesize));
+	}
+
+	// 2d) defs: an offset at/past the lump end must be rejected (width-aware).
+	// type is forced to ev_float (width 1) so the reject is the ofs bound, not
+	// vector width.
+	{
+		ddef_t *dd;
+		int numglobals = LittleLong (((dprograms_t *) data)->numglobals);
+		int entityfields = LittleLong (((dprograms_t *) data)->entityfields);
+		int numgd = LittleLong (((dprograms_t *) data)->numglobaldefs);
+		int numfd = LittleLong (((dprograms_t *) data)->numfielddefs);
+		int ofs_gd = LittleLong (((dprograms_t *) data)->ofs_globaldefs);
+		int ofs_fd = LittleLong (((dprograms_t *) data)->ofs_fielddefs);
+
+		if (numgd >= 1)
+		{
+			memcpy (buf, data, filesize);
+			dd = (ddef_t *) (buf + ofs_gd);
+			dd->type = (unsigned short) LittleShort ((short) ev_float);
+			dd->ofs = (unsigned short) LittleShort ((short) numglobals);
+			PC_CHECK ("globaldef-ofs-oob", !PR1VM_ValidateClientV6 (buf, filesize));
+		}
+		else
+			Con_Printf ("csqc_progscheck: skip globaldef-ofs-oob (numglobaldefs=0)\n");
+
+		if (numfd >= 1)
+		{
+			memcpy (buf, data, filesize);
+			dd = (ddef_t *) (buf + ofs_fd);
+			dd->type = (unsigned short) LittleShort ((short) ev_float);
+			dd->ofs = (unsigned short) LittleShort ((short) entityfields);
+			PC_CHECK ("fielddef-ofs-oob", !PR1VM_ValidateClientV6 (buf, filesize));
+		}
+		else
+			Con_Printf ("csqc_progscheck: skip fielddef-ofs-oob (numfielddefs=0)\n");
+	}
+
+	// 2e) parm_size: a word count > 3 must be rejected.
+	{
+		dfunction_t *fnp;
+		int numf = LittleLong (((dprograms_t *) data)->numfunctions);
+		int ofs_fn = LittleLong (((dprograms_t *) data)->ofs_functions);
+
+		if (numf >= 1)
+		{
+			memcpy (buf, data, filesize);
+			fnp = (dfunction_t *) (buf + ofs_fn);
+			fnp->numparms = LittleLong (1);
+			fnp->parm_size[0] = 4;
+			PC_CHECK ("parm_size-oob", !PR1VM_ValidateClientV6 (buf, filesize));
+		}
+		else
+			Con_Printf ("csqc_progscheck: skip parm_size-oob (numfunctions=0)\n");
+	}
+
+	// 2f) first_statement: INT_MIN and 0 for i>0 rejected; -1 (builtin) accepted.
+	{
+		dfunction_t *fnp;
+		int numf = LittleLong (((dprograms_t *) data)->numfunctions);
+		int ofs_fn = LittleLong (((dprograms_t *) data)->ofs_functions);
+
+		if (numf >= 2)
+		{
+			memcpy (buf, data, filesize);
+			fnp = (dfunction_t *) (buf + ofs_fn);
+			fnp[1].first_statement = LittleLong (INT_MIN);
+			PC_CHECK ("firststmt-intmin", !PR1VM_ValidateClientV6 (buf, filesize));
+
+			memcpy (buf, data, filesize);
+			fnp = (dfunction_t *) (buf + ofs_fn);
+			fnp[1].first_statement = LittleLong (0);
+			PC_CHECK ("firststmt-zero-nonfirst", !PR1VM_ValidateClientV6 (buf, filesize));
+
+			memcpy (buf, data, filesize);
+			fnp = (dfunction_t *) (buf + ofs_fn);
+			fnp[1].first_statement = LittleLong (-1);
+			PC_CHECK ("firststmt-builtin-ok", PR1VM_ValidateClientV6 (buf, filesize));
+		}
+		else
+			Con_Printf ("csqc_progscheck: skip first_statement cases (numfunctions<2)\n");
+	}
+
+	// 2g) lump-range division and entityfields cap. The 32-bit product wrap only
+	// manifests on i686; the division keeps the result bitness-invariant, so the
+	// same reject holds on 64-bit.
+	{
+		memcpy (buf, data, filesize);
+		h = (dprograms_t *) buf;
+		h->numstatements = LittleLong (0x40000000);
+		PC_CHECK ("lump-division-wrap", !PR1VM_ValidateClientV6 (buf, filesize));
+
+		memcpy (buf, data, filesize);
+		h = (dprograms_t *) buf;
+		h->entityfields = LittleLong (0x40000000);
+		PC_CHECK ("entityfields-cap", !PR1VM_ValidateClientV6 (buf, filesize));
 	}
 
 	Q_free (buf);

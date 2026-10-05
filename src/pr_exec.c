@@ -455,7 +455,13 @@ static qbool PR1VM_ClientBadField (pr1vm_t *vm, int ofs, int width)
 {
 	if (!vm->abortbuf_valid)
 		return false;
-	return (ofs < 0 || (ofs + width) * (int)sizeof (int) > vm->edict_size);
+	if (ofs < 0 || width < 0 || vm->edict_size <= 0)
+		return true;
+	// Unsigned comparison: (ofs + width) may overflow int, so compare in words
+	// against edict_size / sizeof(int) instead of scaling the sum (FTE:
+	// (unsigned int)(i+1)*4 > ed->fieldsize; execloop.h).
+	return ((unsigned) ofs + (unsigned) width) >
+		((unsigned) vm->edict_size / (unsigned) sizeof (int));
 }
 
 // OP_NOT_S/OP_EQ_S/OP_NE_S compare module strings through PR1VM_GetString,
@@ -501,6 +507,19 @@ void PR1VM_GuardCheck (const char *name, qbool ok, int *pass, int *fail)
 	}
 }
 
+// Test-only host_error: longjmp to the active abort target (mirrors the client
+// CSQC_Client_HostError) so the runtime-bound canary can unwind without arming a
+// real VM frame. Records whether the unwind was the sequential-execution bound
+// (so the canary cannot false-pass on an unrelated PR_RunError, e.g. runaway).
+static qbool pr1vm_test_bound_hit;
+static void PR1VM_TestHostError (pr1vm_t *vm, const char *msg)
+{
+	pr1vm_test_bound_hit = (msg && strstr (msg, "bad statement index") != NULL);
+	if (vm && vm->abortbuf)
+		longjmp (*vm->abortbuf, 1);
+	Con_Printf ("[CSQC-TEST] test host_error without abort buffer: %s\n", msg ? msg : "");
+}
+
 void PR1VM_TestGuards_f (void)
 {
 	pr1vm_t vm;
@@ -532,12 +551,63 @@ void PR1VM_TestGuards_f (void)
 	PR1VM_GuardCheck ("field-last", PR1VM_ClientBadField (&vm, 3, 1) == false, &pass, &fail);
 	PR1VM_GuardCheck ("field-over", PR1VM_ClientBadField (&vm, 4, 1) == true, &pass, &fail);
 	PR1VM_GuardCheck ("field-negative", PR1VM_ClientBadField (&vm, -1, 1) == true, &pass, &fail);
+	// ofs + width must not overflow int and skip the bound (unsigned math).
+	PR1VM_GuardCheck ("field-intoverflow", PR1VM_ClientBadField (&vm, 0x7fffffff, 4) == true, &pass, &fail);
 
 	// PR1VM_GetString returns NULL for out-of-range offsets (positive OOB with
 	// no progs, or negative beyond the temp/temp-string tables); SafeString must
 	// turn that into "" so OP_NOT_S/OP_EQ_S/OP_NE_S never deref NULL.
 	PR1VM_GuardCheck ("str-oob-positive", strcmp (PR1VM_SafeString (&vm, 0x7fffffff), "") == 0, &pass, &fail);
 	PR1VM_GuardCheck ("str-oob-negative", strcmp (PR1VM_SafeString (&vm, -99999), "") == 0, &pass, &fail);
+
+	// Sequential-execution (fall-through) bound: a crafted function whose last
+	// statement does not terminate must PR_RunError -> abort unwind instead of
+	// reading statements[] past the end. Self-contained tiny in-memory module on
+	// a synthetic abort-capable instance with a longjmp host_error.
+	{
+		pr1vm_t tvm;
+		dprograms_t tp;
+		dstatement_t tst[2];
+		dfunction_t tfn[2];
+		float tglobals[RESERVED_OFS + 4];
+
+		memset (&tvm, 0, sizeof (tvm));
+		memset (&tp, 0, sizeof (tp));
+		memset (tst, 0, sizeof (tst));
+		memset (tfn, 0, sizeof (tfn));
+		memset (tglobals, 0, sizeof (tglobals));
+
+		// statements[1] is a harmless self-store that does not terminate, so
+		// execution runs off the end (numstatements == 2).
+		tst[1].op = OP_STORE_F;
+		tst[1].a = tst[1].b = tst[1].c = 0;
+
+		// function 1 -> statements[1] (EnterFunction returns first_statement-1).
+		tfn[1].first_statement = 1;
+
+		tp.numstatements = 2;
+		tp.numfunctions = 2;
+		tp.numglobals = RESERVED_OFS + 4;
+		tp.entityfields = 1;
+
+		tvm.progs = &tp;
+		tvm.statements = tst;
+		tvm.functions = tfn;
+		tvm.globals = tglobals;
+		tvm.edict_size = 4;
+		tvm.max_edicts = 1;
+		tvm.abortbuf_valid = true;
+		tvm.host_error = PR1VM_TestHostError;
+
+		pr1vm_test_bound_hit = false;
+		PR1VM_ExecuteProgram (&tvm, 1);
+
+		// The abort unwind sets xstatement = -1 and the host_error recorded that
+		// the sequential-execution bound (not runaway/other) fired. Both together
+		// prove the bound fired without an OOB statements[] read.
+		PR1VM_GuardCheck ("fallthrough-bound",
+			tvm.xstatement == -1 && pr1vm_test_bound_hit, &pass, &fail);
+	}
 
 	Con_Printf ("[CSQC-TEST] SUMMARY group=guard pass=%d fail=%d\n", pass, fail);
 }
@@ -689,18 +759,33 @@ void PR1VM_ExecuteProgram (pr1vm_t *vm, func_t fnum)
 
 	if (!fnum || fnum >= vm->progs->numfunctions)
 	{
-		if (vm->global_struct && vm->global_struct->self && vm->edicts)
+		// Server-only diagnostic: the untrusted client VM must not invoke the
+		// server-side edict printer (ADR 0019; FTE's equivalent call is
+		// commented out).
+		if (!vm->abortbuf_valid && vm->global_struct && vm->global_struct->self && vm->edicts)
 			ED_Print (PR1VM_ProgToEdict(vm, vm->global_struct->self));
 		PR_RunError ("PR_ExecuteProgram: NULL function");
 	}
 
 	f = &vm->functions[fnum];
 
+	// A builtin function (first_statement < 0) must never be an entry point:
+	// EnterFunction would return first_statement-1 and the interpreter would walk
+	// statements[] at a negative index. OP_CALL* still dispatches builtins.
+	if (vm->abortbuf_valid && f->first_statement < 0)
+		PR_RunError ("PR_ExecuteProgram: builtin as entry point (%d)", fnum);
+
 	s = PR1VM_EnterFunction (vm, f);
 
 	while (1)
 	{
 		s++; // next statement
+
+		// Sequential execution (s++) must stay inside statements[]; a crafted
+		// function whose last statement does not terminate would run off the end.
+		// Branch targets are bounded separately below. Client-gated.
+		if (vm->abortbuf_valid && (s < 0 || s >= vm->progs->numstatements))
+			PR_RunError ("bad statement index %d", s);
 
 		st = &vm->statements[s];
 		a = (eval_t *)&vm->globals[st->a];

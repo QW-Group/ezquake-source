@@ -1321,6 +1321,15 @@ void PR1VM_SetString (pr1vm_t *vm, string_t *address, char *s)
 	*address = -(*vm->numstr);
 }
 
+// s_name reads in the shared finders go through the client bound hook when one
+// is installed (untrusted csprogs); the server instance leaves get_string NULL
+// and falls back to the unbounded PR1VM_GetString (map strings live past
+// numstrings) - server-neutral.
+static char *PR1VM_FindString (pr1vm_t *vm, int num)
+{
+	return vm->get_string ? vm->get_string (vm, num) : PR1VM_GetString (vm, num);
+}
+
 dfunction_t *PR1VM_FindFunction (pr1vm_t *vm, const char *name)
 {
 	int i;
@@ -1330,7 +1339,7 @@ dfunction_t *PR1VM_FindFunction (pr1vm_t *vm, const char *name)
 
 	for (i = 0; i < vm->progs->numfunctions; i++)
 	{
-		char *s = PR1VM_GetString (vm, vm->functions[i].s_name);
+		char *s = PR1VM_FindString (vm, vm->functions[i].s_name);
 		if (s && s[0] && !strcmp (s, name))
 			return &vm->functions[i];
 	}
@@ -1346,7 +1355,7 @@ int PR1VM_FindGlobal (pr1vm_t *vm, const char *name)
 
 	for (i = 0; i < vm->progs->numglobaldefs; i++)
 	{
-		char *s = PR1VM_GetString (vm, vm->globaldefs[i].s_name);
+		char *s = PR1VM_FindString (vm, vm->globaldefs[i].s_name);
 		if (s && s[0] && !strcmp (s, name))
 			return vm->globaldefs[i].ofs;
 	}
