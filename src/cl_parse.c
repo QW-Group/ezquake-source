@@ -52,6 +52,12 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 
 int CL_LoginImageId(const char* name);
 
+// svcfte_effect / svcfte_effect2 (74/75): base FTE svc, not gated by any protocol
+// extension and absent from src/qwprot. Declared locally so the client can drain
+// their payload. Layout reference: fteqw engine/common/protocol.h:344-345.
+#define svcfte_effect	74
+#define svcfte_effect2	75
+
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 void IN_ServerSideWeaponSelectionResponse(const char* s);
 #endif
@@ -3714,6 +3720,44 @@ static void CL_RotateCmd(usercmd_t* cmd, float yaw_delta)
 	cmd->forwardmove = result[1];
 }
 
+// svcfte_effect (74) / svcfte_effect2 (75): [vector] org [byte|short] modelindex
+// [byte|short] startframe [byte] framecount [byte] framerate. FTE reads these in
+// CL_ParseEffect (fteqw engine/client/cl_tent.c:2555) and renders a sprite effect.
+// ezquake has no such renderer yet, so the payload is drained and discarded;
+// draining keeps the receive path byte-aligned (otherwise default: raised
+// Host_Error "Illegible server message"). The visual #404 effect is a separate
+// backlog (docs/plans/ezquake_csqc_client_effect404.md).
+static void CL_DrainFTEEffect (qbool effect2)
+{
+	static int s_dbg_lines = 0;
+
+	MSG_ReadCoord ();	// org[0]
+	MSG_ReadCoord ();	// org[1]
+	MSG_ReadCoord ();	// org[2]
+
+	if (effect2)
+	{
+		MSG_ReadShort ();	// modelindex
+		MSG_ReadShort ();	// startframe
+	}
+	else
+	{
+		MSG_ReadByte ();	// modelindex
+		MSG_ReadByte ();	// startframe
+	}
+
+	MSG_ReadByte ();	// framecount
+	MSG_ReadByte ();	// framerate
+
+	// Canary: a mod may call #404 every frame, so limit the (developer-gated)
+	// diagnostic to a few lines per session.
+	if (s_dbg_lines < 4)
+	{
+		Com_DPrintf ("CL_ParseServerMessage: drained svcfte_effect%s\n", effect2 ? "2" : "");
+		s_dbg_lines++;
+	}
+}
+
 void CL_ParseServerMessage (void) 
 {
 	int cmd, i, j = 0;
@@ -4177,6 +4221,18 @@ void CL_ParseServerMessage (void)
 					break;
 				}
 #endif
+			// svcfte_effect/effect2 (74/75): base FTE svc, always emitted without
+			// any pext gate. Payload is drained (no renderer yet) to stay in sync.
+			case svcfte_effect:
+				{
+					CL_DrainFTEEffect (false);
+					break;
+				}
+			case svcfte_effect2:
+				{
+					CL_DrainFTEEffect (true);
+					break;
+				}
 			case svc_download:
 				{
 					CL_ParseDownload();
