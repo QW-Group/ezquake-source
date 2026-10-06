@@ -70,6 +70,12 @@ struct pr1vm_s
 	// Builtin container: dispatch by number - first_statement.
 	int				numbuiltins;
 	builtin_t		*builtins;
+	// Stub metadata, parallel to builtins: a set byte means the builtin at that
+	// number is a no-op placeholder (checkbuiltin/checkextension honesty).
+	// Grown alongside builtins; NULL/clear = real implementation. Client VM only
+	// (server registration leaves it NULL). Untrusted csprogs cannot set it.
+	byte			*builtin_stub;
+	int				builtin_stub_size;
 	// Current call: arg count + trace flag.
 	int				argc;
 	qbool			trace;
@@ -148,6 +154,12 @@ void PR1VM_SetString(pr1vm_t *vm, string_t *address, char *s);
 // Register a builtin by number (client/any instance table). The table grows to
 // num+1 slots; unfilled slots = NULL (dispatcher errors out).
 void PR1VM_RegisterBuiltin(pr1vm_t *vm, int num, builtin_t fn);
+
+// Stub metadata (client CSQC VM; ADR 0035). PR1VM_MarkBuiltinStub flags the
+// builtin at num as a no-op placeholder; its parallel bitmap grows like the
+// builtin table. PR1VM_IsBuiltinStub returns false for unset/OOB numbers.
+void PR1VM_MarkBuiltinStub(pr1vm_t *vm, int num);
+qbool PR1VM_IsBuiltinStub(pr1vm_t *vm, int num);
 
 #ifdef CSQC_DEBUG
 // Debug: provoke PR_RunError on the server instance (pr1vm_test_error).

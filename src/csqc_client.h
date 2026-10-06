@@ -331,6 +331,19 @@ void CSQC_Client_RendererRestarted (const char *desc);
 // Register the builtin table of the client instance (implemented in csqc_builtins.c).
 void CSQCVM_RegisterBuiltins (struct pr1vm_s *vm);
 
+// Engine-internal builtin slots for name-mapped `#0` builtins (the module declares
+// `= #0`, resolved by name at load; these numbers never appear in csprogs). Above
+// the highest module-visible number (742), below CSQC_MAX_BUILTINS (1024).
+#define CSQC_BUILTIN_CHECKBUILTIN	1023
+// Return-0 fallback for an unknown `#0` name (FTE parity).
+#define CSQC_BUILTIN_NAMED_UNKNOWN	1022
+
+// Resolve `#0` name-mapped builtins of a freshly loaded client csprogs (ADR 0035):
+// functions with first_statement == 0 (i > 0) get a numeric slot by name; unknown
+// names map to a return-0 stub (FTE parity). Called by the v6 loader after
+// PR1VM_LoadData. Implemented in csqc_builtins.c (client-only).
+void CSQCVM_ResolveNamedBuiltins (struct pr1vm_s *vm);
+
 // Client wrapper over the shared PR1VM_SetString (core, pr_edict.c): temp strings
 // are deep-copied into the client instance ring (stable buffer) and registered via
 // vm->strtbl. Strings from the module area are passed to core without a copy.

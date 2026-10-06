@@ -78,6 +78,11 @@ void PR1VM_UnLoad (pr1vm_t *vm)
 		Q_free (vm->builtins);
 		vm->builtins = NULL;
 	}
+	if (vm->builtin_stub)
+	{
+		Q_free (vm->builtin_stub);
+		vm->builtin_stub = NULL;
+	}
 
 	memset (vm, 0, sizeof (*vm));
 	vm->host_error = host_error;
@@ -105,6 +110,44 @@ void PR1VM_RegisterBuiltin (pr1vm_t *vm, int num, builtin_t fn)
 		vm->numbuiltins = num + 1;
 	}
 	vm->builtins[num] = fn;
+}
+
+// Flag a registered builtin number as a no-op stub. The bitmap is grown to cover
+// num (and the current builtin count), mirroring PR1VM_RegisterBuiltin; the
+// table is Q_malloc'd and freed in PR1VM_UnLoad.
+void PR1VM_MarkBuiltinStub (pr1vm_t *vm, int num)
+{
+	int need;
+
+	if (!vm || num < 0)
+		return;
+
+	need = num + 1;
+	if (need > vm->builtin_stub_size)
+	{
+		byte *nt = (byte *) Q_malloc (need * sizeof (byte));
+		int old = vm->builtin_stub_size;
+
+		if (!nt)
+			return;
+		if (vm->builtin_stub)
+		{
+			memcpy (nt, vm->builtin_stub, old * sizeof (byte));
+			Q_free (vm->builtin_stub);
+		}
+		memset (nt + old, 0, (need - old) * sizeof (byte));
+		vm->builtin_stub = nt;
+		vm->builtin_stub_size = need;
+	}
+
+	vm->builtin_stub[num] = 1;
+}
+
+qbool PR1VM_IsBuiltinStub (pr1vm_t *vm, int num)
+{
+	if (!vm || !vm->builtin_stub || num < 0 || num >= vm->builtin_stub_size)
+		return false;
+	return vm->builtin_stub[num] != 0;
 }
 
 // forward decls (defined below in this file)

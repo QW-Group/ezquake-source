@@ -3231,59 +3231,130 @@ static void csqc_registercvar (void)
 
 /*
  float(string ext) checkextension = #99
- FTE parity: PF_checkextension looks up the name in the extension list and returns
- whether it is supported. Here a static mirror table of the subset implemented in
- ezq (a no-op is not advertised; the effect tables with stubs are the exception).
- Names use the exact FTE spellings, including the leading '_' of _DP_TE_*. EXT_CSQC is
- a special case (protocol, not builtins): 1 when the CSQC session is active.
+ FTE parity (PF_checkextension, fteqw/engine/client/pr_csqc.c:4579-4612): look the
+ name up in QSG_Extensions (fteqw/engine/common/pr_bgcmd.c:8227-8548); if the entry
+ has an extensioncheck gate return it, otherwise return whether every member builtin
+ is implemented (not PF_Fixme). Here a name is advertised only when all its member
+ builtins are registered and not stubs (honest advertisement, ADR 0035 rule Q1);
+ names use the exact FTE spellings (including the '_' of _DP_TE_*). EXT_CSQC is a
+ special case (protocol, not builtins): the negotiated FTE_PEXT_CSQC bit.
+ Explicit exceptions (ADR 0035 Q5) are advertised despite stub members:
+ DP_TE_STANDARDEFFECTBUILTINS, FTE_TE_STANDARDEFFECTBUILTINS, FTE_STRINGS.
  Deliberately NOT advertised (FTE advertises, ezq is a no-op): FRIK_FILE,
  FTE_QC_INTCONV, _DP_TE_FLAMEJET/_DP_TE_PLASMABURN, DP_QC_STRINGBUFFERS,
  DP_QC_FS_SEARCH(_PACKFILE), DP_QC_GETSURFACE, DP_QC_FINDCHAIN(FLOAT)/FINDFLAGS/
  FINDCHAINFLAGS, DP_QC_COPYENTITY, DP_QC_WHICHPACK, DP_QC_URI_ESCAPE,
  KRIMZON_SV_PARSECLIENTCOMMAND.
 */
+struct csqc_ext_map_s
+{
+	const char *name;
+	const int *members;	// module builtin numbers that must all be implemented
+	int count;
+};
+
+static const int csqc_ext_sincossqrtpow[] = { 60, 61, 62, 97 };
+static const int csqc_ext_minmaxbound[] = { 94, 95, 96 };
+static const int csqc_ext_randomvec[] = { 91 };
+static const int csqc_ext_registercvar[] = { 93 };
+static const int csqc_ext_cvar_string[] = { 448 };
+static const int csqc_ext_cvar_defstring[] = { 482 };
+static const int csqc_ext_cvar_type[] = { 495 };
+static const int csqc_ext_edict_num[] = { 459 };
+static const int csqc_ext_etos[] = { 65 };
+static const int csqc_ext_findfloat[] = { 98 };
+static const int csqc_ext_strftime[] = { 478 };
+static const int csqc_ext_strreplace[] = { 484, 485 };
+static const int csqc_ext_tokenizebyseparator[] = { 479 };
+static const int csqc_ext_sprintf[] = { 627 };
+static const int csqc_ext_string_case[] = { 480, 481 };
+static const int csqc_ext_string_color[] = { 476, 477 };
+static const int csqc_ext_crc16[] = { 494 };
+static const int csqc_ext_asinacos[] = { 471, 472, 473, 474, 475 };
+static const int csqc_ext_changepitch[] = { 63 };
+static const int csqc_ext_vectorvectors[] = { 432 };
+static const int csqc_ext_tracebox[] = { 90 };
+static const int csqc_ext_entitydata[] = { 496, 497, 498, 499, 500 };
+static const int csqc_ext_bitshift[] = { 218 };
+static const int csqc_ext_te_blood[] = { 405 };
+static const int csqc_ext_te_bloodshower[] = { 406 };
+static const int csqc_ext_te_explosionrgb[] = { 407 };
+static const int csqc_ext_te_particlecube[] = { 408 };
+static const int csqc_ext_te_particlerain[] = { 409 };
+static const int csqc_ext_te_particlesnow[] = { 410 };
+static const int csqc_ext_te_spark[] = { 411 };
+static const int csqc_ext_te_smallflash[] = { 416 };
+static const int csqc_ext_te_customflash[] = { 417 };
+static const int csqc_ext_te_quadeffects[] = { 412, 413, 414, 415 };
+static const int csqc_ext_digest_sha1[] = { 639 };
+
+#define CSQC_COUNTOF(a) ((int)(sizeof (a) / sizeof ((a)[0])))
+
+static const struct csqc_ext_map_s csqc_ext_map[] =
+{
+	{ "DP_QC_SINCOSSQRTPOW", csqc_ext_sincossqrtpow, CSQC_COUNTOF (csqc_ext_sincossqrtpow) },
+	{ "DP_QC_MINMAXBOUND", csqc_ext_minmaxbound, CSQC_COUNTOF (csqc_ext_minmaxbound) },
+	{ "DP_QC_RANDOMVEC", csqc_ext_randomvec, CSQC_COUNTOF (csqc_ext_randomvec) },
+	{ "DP_REGISTERCVAR", csqc_ext_registercvar, CSQC_COUNTOF (csqc_ext_registercvar) },
+	{ "DP_QC_CVAR_STRING", csqc_ext_cvar_string, CSQC_COUNTOF (csqc_ext_cvar_string) },
+	{ "DP_QC_CVAR_DEFSTRING", csqc_ext_cvar_defstring, CSQC_COUNTOF (csqc_ext_cvar_defstring) },
+	{ "DP_QC_CVAR_TYPE", csqc_ext_cvar_type, CSQC_COUNTOF (csqc_ext_cvar_type) },
+	{ "DP_QC_EDICT_NUM", csqc_ext_edict_num, CSQC_COUNTOF (csqc_ext_edict_num) },
+	{ "DP_QC_ETOS", csqc_ext_etos, CSQC_COUNTOF (csqc_ext_etos) },
+	{ "DP_QC_FINDFLOAT", csqc_ext_findfloat, CSQC_COUNTOF (csqc_ext_findfloat) },
+	{ "DP_QC_STRFTIME", csqc_ext_strftime, CSQC_COUNTOF (csqc_ext_strftime) },
+	{ "DP_QC_STRREPLACE", csqc_ext_strreplace, CSQC_COUNTOF (csqc_ext_strreplace) },
+	{ "DP_QC_TOKENIZEBYSEPARATOR", csqc_ext_tokenizebyseparator, CSQC_COUNTOF (csqc_ext_tokenizebyseparator) },
+	{ "DP_QC_SPRINTF", csqc_ext_sprintf, CSQC_COUNTOF (csqc_ext_sprintf) },
+	{ "DP_QC_STRING_CASE_FUNCTIONS", csqc_ext_string_case, CSQC_COUNTOF (csqc_ext_string_case) },
+	{ "DP_QC_STRINGCOLORFUNCTIONS", csqc_ext_string_color, CSQC_COUNTOF (csqc_ext_string_color) },
+	{ "DP_QC_CRC16", csqc_ext_crc16, CSQC_COUNTOF (csqc_ext_crc16) },
+	{ "DP_QC_ASINACOSATANATAN2TAN", csqc_ext_asinacos, CSQC_COUNTOF (csqc_ext_asinacos) },
+	{ "DP_QC_CHANGEPITCH", csqc_ext_changepitch, CSQC_COUNTOF (csqc_ext_changepitch) },
+	{ "DP_QC_VECTORVECTORS", csqc_ext_vectorvectors, CSQC_COUNTOF (csqc_ext_vectorvectors) },
+	{ "DP_QC_TRACEBOX", csqc_ext_tracebox, CSQC_COUNTOF (csqc_ext_tracebox) },
+	{ "DP_QC_ENTITYDATA", csqc_ext_entitydata, CSQC_COUNTOF (csqc_ext_entitydata) },
+	{ "EXT_BITSHIFT", csqc_ext_bitshift, CSQC_COUNTOF (csqc_ext_bitshift) },
+	{ "DP_TE_BLOOD", csqc_ext_te_blood, CSQC_COUNTOF (csqc_ext_te_blood) },
+	{ "_DP_TE_BLOODSHOWER", csqc_ext_te_bloodshower, CSQC_COUNTOF (csqc_ext_te_bloodshower) },
+	{ "DP_TE_EXPLOSIONRGB", csqc_ext_te_explosionrgb, CSQC_COUNTOF (csqc_ext_te_explosionrgb) },
+	{ "DP_TE_PARTICLECUBE", csqc_ext_te_particlecube, CSQC_COUNTOF (csqc_ext_te_particlecube) },
+	{ "DP_TE_PARTICLERAIN", csqc_ext_te_particlerain, CSQC_COUNTOF (csqc_ext_te_particlerain) },
+	{ "DP_TE_PARTICLESNOW", csqc_ext_te_particlesnow, CSQC_COUNTOF (csqc_ext_te_particlesnow) },
+	{ "DP_TE_SPARK", csqc_ext_te_spark, CSQC_COUNTOF (csqc_ext_te_spark) },
+	{ "DP_TE_SMALLFLASH", csqc_ext_te_smallflash, CSQC_COUNTOF (csqc_ext_te_smallflash) },
+	{ "DP_TE_CUSTOMFLASH", csqc_ext_te_customflash, CSQC_COUNTOF (csqc_ext_te_customflash) },
+	{ "_DP_TE_QUADEFFECTS1", csqc_ext_te_quadeffects, CSQC_COUNTOF (csqc_ext_te_quadeffects) },
+	{ "FTE_QC_DIGEST_SHA1", csqc_ext_digest_sha1, CSQC_COUNTOF (csqc_ext_digest_sha1) },
+	{ NULL, NULL, 0 }
+};
+
+// Advertised despite stub members (ADR 0035 Q5, user-approved exception).
+static const char *csqc_ext_exceptions[] =
+{
+	"DP_TE_STANDARDEFFECTBUILTINS",
+	"FTE_TE_STANDARDEFFECTBUILTINS",
+	"FTE_STRINGS",
+	NULL
+};
+
+// Every member registered and not a no-op stub.
+static qbool csqc_ext_all_implemented (pr1vm_t *vm, const int *members, int count)
+{
+	int i, num;
+	for (i = 0; i < count; i++)
+	{
+		num = members[i];
+		if (num <= 0 || num >= vm->numbuiltins || !vm->builtins[num])
+			return false;
+		if (PR1VM_IsBuiltinStub (vm, num))
+			return false;
+	}
+	return true;
+}
+
 static void csqc_checkextension (void)
 {
-	static const char *supported[] = {
-		"DP_QC_SINCOSSQRTPOW",
-		"DP_QC_MINMAXBOUND",
-		"DP_QC_RANDOMVEC",
-		"DP_REGISTERCVAR",
-		"DP_QC_CVAR_STRING",
-		"DP_QC_CVAR_DEFSTRING",
-		"DP_QC_CVAR_TYPE",
-		"DP_QC_EDICT_NUM",
-		"DP_QC_ETOS",
-		"DP_QC_FINDFLOAT",
-		"DP_QC_STRFTIME",
-		"DP_QC_STRREPLACE",
-		"DP_QC_TOKENIZEBYSEPARATOR",
-		"DP_QC_SPRINTF",
-		"DP_QC_STRING_CASE_FUNCTIONS",
-		"DP_QC_STRINGCOLORFUNCTIONS",
-		"DP_QC_CRC16",
-		"DP_QC_ASINACOSATANATAN2TAN",
-		"DP_QC_CHANGEPITCH",
-		"DP_QC_VECTORVECTORS",
-		"DP_QC_TRACEBOX",
-		"DP_QC_ENTITYDATA",
-		"EXT_BITSHIFT",
-		"DP_TE_BLOOD",
-		"_DP_TE_BLOODSHOWER",
-		"DP_TE_EXPLOSIONRGB",
-		"DP_TE_PARTICLECUBE",
-		"DP_TE_PARTICLERAIN",
-		"DP_TE_PARTICLESNOW",
-		"DP_TE_SPARK",
-		"DP_TE_SMALLFLASH",
-		"DP_TE_CUSTOMFLASH",
-		"_DP_TE_QUADEFFECTS1",
-		"FTE_STRINGS",
-		"DP_TE_STANDARDEFFECTBUILTINS",
-		"FTE_TE_STANDARDEFFECTBUILTINS",
-		"FTE_QC_DIGEST_SHA1",	// #639 digest_hex (SHA1 only; SHA224/384/512 not implemented)
-		NULL
-	};
 	pr1vm_t *vm = CSQCVM_Active ();
 	char *ext;
 	int i;
@@ -3298,12 +3369,99 @@ static void csqc_checkextension (void)
 		vm->globals[OFS_RETURN] = (cls.fteprotocolextensions & FTE_PEXT_CSQC) ? 1 : 0;
 		return;
 	}
-	for (i = 0; supported[i]; i++)
-		if (!strcmp (supported[i], ext))
+	for (i = 0; csqc_ext_exceptions[i]; i++)
+		if (!strcmp (ext, csqc_ext_exceptions[i]))
 		{
 			vm->globals[OFS_RETURN] = 1;
 			return;
 		}
+	for (i = 0; csqc_ext_map[i].name; i++)
+		if (!strcmp (ext, csqc_ext_map[i].name))
+		{
+			vm->globals[OFS_RETURN] = csqc_ext_all_implemented (vm, csqc_ext_map[i].members, csqc_ext_map[i].count) ? 1 : 0;
+			return;
+		}
+}
+
+/*
+ float(func_t funcref) checkbuiltin = #0 (name-mapped; FTE PF_checkbuiltin,
+ fteqw/engine/client/pr_csqc.c:634-660). 1 only when the referenced function is a
+ registered, implemented (non-stub) builtin in range; otherwise 0.
+*/
+static void csqc_checkbuiltin (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	int funcref, binum;
+	if (!vm)
+		return;
+	vm->globals[OFS_RETURN] = 0;
+	// func_t/entity globals are raw ints in the float slot, not float-encoded:
+	// read the raw word (FTE G_INT), never float-cast (a small func index like 66
+	// is a denormal float bit pattern and would truncate to 0).
+	funcref = *(int *) &vm->globals[OFS_PARM0];
+	if (funcref <= 0 || !vm->functions || !vm->progs || funcref >= vm->progs->numfunctions)
+		return;
+	binum = vm->functions[funcref].first_statement;
+	if (binum >= 0)
+		return;					// not a builtin
+	binum = -binum;
+	if (binum <= 0 || binum >= vm->numbuiltins || !vm->builtins[binum])
+		return;
+	if (PR1VM_IsBuiltinStub (vm, binum))
+		return;
+	vm->globals[OFS_RETURN] = 1;
+}
+
+/*
+ Fallback for a `#0` name the module declares but the engine does not implement:
+ returns 0 (FTE parity - an unresolved named builtin degrades to an OP_DONE / 0,
+ see fteqw quakec/menusys/menu/main.qc:63).
+*/
+static void csqc_named_unknown (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	if (vm)
+		vm->globals[OFS_RETURN] = 0;
+}
+
+/*
+ Resolve `#0` (name-mapped) builtins of a freshly loaded client csprogs: a function
+ with first_statement == 0 (i > 0) has no body - its slot is assigned by name.
+ Known names map to their engine slot; unknown names map to the return-0 fallback.
+ After this call no i > 0 function keeps first_statement == 0 (the validator relies
+ on that invariant - csqc_client.c). Called by the v6 loader after PR1VM_LoadData.
+*/
+static const struct
+{
+	const char *name;
+	int num;
+} csqc_named_builtins[] =
+{
+	{ "checkbuiltin", CSQC_BUILTIN_CHECKBUILTIN },
+	{ NULL, 0 }
+};
+
+void CSQCVM_ResolveNamedBuiltins (pr1vm_t *vm)
+{
+	int i, j;
+	if (!vm || !vm->functions || !vm->progs)
+		return;
+	for (i = 1; i < vm->progs->numfunctions; i++)
+	{
+		const char *name;
+		if (vm->functions[i].first_statement != 0)
+			continue;
+		name = CSQC_Client_GetString (vm, vm->functions[i].s_name);
+		if (name)
+			for (j = 0; csqc_named_builtins[j].name; j++)
+				if (!strcmp (name, csqc_named_builtins[j].name))
+				{
+					vm->functions[i].first_statement = -csqc_named_builtins[j].num;
+					break;
+				}
+		if (vm->functions[i].first_statement == 0)
+			vm->functions[i].first_statement = -CSQC_BUILTIN_NAMED_UNKNOWN;
+	}
 }
 
 /*
@@ -5653,10 +5811,61 @@ static void csqc_num_for_edict (void)
 	vm->globals[OFS_RETURN] = slot > 0 ? slot : 0;
 }
 
-/* #63 changepitch - no-op (moving angles to idealpitch is server mechanics). */
+/*
+ #63 changepitch (DP_QC_CHANGEPITCH).
+ FTE parity: PF_changepitch (fteqw/engine/common/pr_bgcmd.c:6736-6772) moves
+ self.angles[0] toward self.idealpitch by at most self.pitch_speed (wrap +/-180),
+ then anglemods. Like FTE/DP the argument is ignored - the target is `self`.
+*/
 static void csqc_changepitch (void)
 {
-	/* no-op (like changeyaw #49) */
+	pr1vm_t *vm = CSQCVM_Active ();
+	float *ang, *idealp, *speedp;
+	int selfofs, entnum, f_ang, f_ideal, f_speed;
+	float current, ideal, speed, move;
+
+	if (!vm)
+		return;
+	selfofs = PR1VM_FindGlobal (vm, "self");
+	f_ang = CSQC_Client_FieldOfs (vm, CSQC_FLD_ANGLES);
+	f_ideal = CSQC_Client_FindField (vm, "idealpitch");
+	f_speed = CSQC_Client_FindField (vm, "pitch_speed");
+	if (selfofs < 0 || f_ang < 0 || f_ideal < 0 || f_speed < 0)
+		return;
+	entnum = CSQC_Client_EntNum (vm, *(int *) &vm->globals[selfofs]);
+	ang = csqc_ent_ofs (vm, entnum, f_ang);
+	idealp = csqc_ent_ofs (vm, entnum, f_ideal);
+	speedp = csqc_ent_ofs (vm, entnum, f_speed);
+	if (!ang || !idealp || !speedp)
+		return;
+
+	current = anglemod (ang[0]);
+	ideal = idealp[0];
+	speed = speedp[0];
+	if (current == ideal)
+		return;
+	move = ideal - current;
+	if (ideal > current)
+	{
+		if (move >= 180)
+			move = move - 360;
+	}
+	else
+	{
+		if (move <= -180)
+			move = move + 360;
+	}
+	if (move > 0)
+	{
+		if (move > speed)
+			move = speed;
+	}
+	else
+	{
+		if (move < -speed)
+			move = -speed;
+	}
+	ang[0] = anglemod (current + move);
 }
 
 /*
@@ -6224,6 +6433,36 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 311, (builtin_t)csqc_project); // #311 vector (vector v) project (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 452, (builtin_t)csqc_bsp_nop_vec); // #452 vector(entity ent, float tagindex) gettaginfo (DP_MD3_TAGSINFO)
 	PR1VM_RegisterBuiltin (vm, 493, (builtin_t)csqc_bsp_nop_vec); // #493 vector(string name)
+
+	// Name-mapped `#0` builtins (engine slots; the module declares `= #0`).
+	PR1VM_RegisterBuiltin (vm, CSQC_BUILTIN_CHECKBUILTIN, (builtin_t)csqc_checkbuiltin); // #0 checkbuiltin
+	PR1VM_RegisterBuiltin (vm, CSQC_BUILTIN_NAMED_UNKNOWN, (builtin_t)csqc_named_unknown); // #0 unknown-name fallback
+	PR1VM_MarkBuiltinStub (vm, CSQC_BUILTIN_NAMED_UNKNOWN);	// unresolved name -> checkbuiltin must be 0 (FTE parity)
+
+	// Mark no-op stubs so checkbuiltin/checkextension are honest (ADR 0035).
+	// Shared stubs are detected by identity to the four no-op bodies; the
+	// dedicated list covers single-use no-ops with their own wrapper (#63 is
+	// now implemented and is intentionally absent).
+	{
+		static const int dedicated[] = { 6, 35, 40, 49, 67, 69, 92, 119, 319, 329, 531, 533, 534, 603, 631, 632 };
+		int i, j;
+		for (i = 0; i < vm->numbuiltins; i++)
+		{
+			builtin_t fn = vm->builtins[i];
+			if (!fn)
+				continue;
+			if (fn == (builtin_t)csqc_vmrest_nop || fn == (builtin_t)csqc_nop_str ||
+				fn == (builtin_t)csqc_light_nop_ret0 || fn == (builtin_t)csqc_bsp_nop_vec)
+				PR1VM_MarkBuiltinStub (vm, i);
+			else
+				for (j = 0; j < (int)(sizeof (dedicated) / sizeof (dedicated[0])); j++)
+					if (i == dedicated[j])
+					{
+						PR1VM_MarkBuiltinStub (vm, i);
+						break;
+					}
+		}
+	}
 }
 
 #endif // !CLIENTONLY

@@ -3094,11 +3094,13 @@ static qbool PR1VM_ValidateClientV6 (const byte *data, int filesize)
 
 		// first_statement: builtins are negative (|first| <= builtin slots),
 		// real code is [0, numstatements). INT_MIN would make OP_CALL's
-		// i = -first a negative builtin index; #0:name (first == 0 for i > 0) is
-		// not supported (ADR 0020).
+		// i = -first a negative builtin index. first == 0 for i > 0 is the
+		// name-mapped `#0` placeholder (admitting on load); CSQCVM_ResolveNamedBuiltins
+		// assigns every such function a numeric slot (known name or return-0
+		// fallback) right after PR1VM_LoadData, so none is left at 0 (ADR 0035).
+		// Function 0 (i == 0) legitimately has first == 0 (global init).
 		if (first < -CSQC_MAX_BUILTINS ||
-			(first > 0 && first >= h.numstatements) ||
-			(first == 0 && i > 0))
+			(first > 0 && first >= h.numstatements))
 		{
 			Con_Printf ("CSQC: csprogs.dat rejected: function %d first_statement out of range (%d)\n",
 				i, first);
@@ -3149,6 +3151,10 @@ static qbool PR1VM_LoadClientV6 (pr1vm_t *vm, const byte *data, int filesize)
 		return false;
 
 	PR1VM_LoadData (vm, (dprograms_t *)data);
+	// Resolve `#0` name-mapped builtins now that functions are host-endian, so no
+	// i>0 function is left with first_statement == 0 (the validator allows it; the
+	// interpreter would otherwise enter statement -1). ADR 0035.
+	CSQCVM_ResolveNamedBuiltins (vm);
 	return true;
 }
 
