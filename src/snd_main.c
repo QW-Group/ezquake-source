@@ -92,6 +92,8 @@ cvar_t s_ambientlevel = {"s_ambientlevel", "0.3"};
 cvar_t s_ambientfade = {"s_ambientfade", "100"};
 cvar_t s_show = {"s_show", "0"};
 cvar_t s_swapstereo = {"s_swapstereo", "0"};
+cvar_t s_qizmo_enhanced_stereo = {"s_qizmo_enhanced_stereo", "0"};
+cvar_t s_qizmo_enhanced_stereo_offset = {"s_qizmo_enhanced_stereo_offset", "4"};
 cvar_t s_linearresample = {"s_linearresample", "0", CVAR_LATCH_SOUND };
 cvar_t s_linearresample_stream = {"s_linearresample_stream", "0"};
 cvar_t s_khz = {"s_khz", "11", CVAR_NONE, OnChange_s_khz}; // If > 11, default sounds are noticeably different.
@@ -440,6 +442,8 @@ static void S_Register_RegularCvarsAndCommands(void)
 	Cvar_Register(&s_ambientfade);
 	Cvar_Register(&s_show);
 	Cvar_Register(&s_swapstereo);
+	Cvar_Register(&s_qizmo_enhanced_stereo);
+	Cvar_Register(&s_qizmo_enhanced_stereo_offset);
 	Cvar_Register(&s_linearresample_stream);
 	Cvar_Register(&s_desiredsamples);
 	Cvar_Register(&s_silent_racing);
@@ -606,6 +610,8 @@ static void SND_Spatialize (channel_t *ch)
 	vec_t dot, dist, lscale, rscale, scale;
 	vec3_t source_vec;
 
+	ch->stereo_offset = 0;
+
 	// anything coming from the view entity will always be full volume
 	if ((ch->entnum == cl.playernum + 1) || (ch->entnum == SELF_SOUND_ENTITY)) {
 		ch->leftvol = ch->master_vol;
@@ -622,6 +628,14 @@ static void SND_Spatialize (channel_t *ch)
 	if (shw->numchannels == 1) {
 		rscale = 1.0;
 		lscale = 1.0;
+	} else if (s_qizmo_enhanced_stereo.integer && !(ch->flags & CHANNEL_FLAG_VOICE)) {
+		// Panning constants extracted from the Qizmo 2.91 binary.
+		rscale = 0.625 + (0.375 * dot);
+		lscale = 0.625 - (0.375 * dot);
+		// Timing calculation reconstructed from the Qizmo 2.91 binary.
+		// Keep its float-rounded pi/2 and truncate BEFORE multiplying by the offset.
+		ch->stereo_offset = bound(0, s_qizmo_enhanced_stereo_offset.integer, 1024)
+			* (int) (1.5707963705062866 - acos(bound(-1.0, dot, 1.0)));
 	} else {
 		rscale = 1.0 + dot;
 		lscale = 1.0 - dot;
@@ -879,7 +893,7 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 
 		if (i >= MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS) {
 			// see if it can just use the last one
-			if (combine && combine->sfx == ch->sfx) {
+			if (combine && combine->sfx == ch->sfx && combine->stereo_offset == ch->stereo_offset) {
 				combine->leftvol += ch->leftvol;
 				combine->rightvol += ch->rightvol;
 				ch->leftvol = ch->rightvol = 0;
@@ -888,7 +902,7 @@ void S_Update (vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 			// search for one
 			combine = channels+MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS;
 			for (j = MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS; j < i; j++, combine++)
-				if (combine->sfx == ch->sfx)
+				if (combine->sfx == ch->sfx && combine->stereo_offset == ch->stereo_offset)
 					break;
 
 			if (j == total_channels) {

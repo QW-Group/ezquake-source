@@ -67,6 +67,7 @@ typedef struct channel_s {
 	int		rightvol;		// 0-255 volume
 	int		end;			// end time in global paintsamples
 	int 		pos;			// sample position in sfx
+	int		stereo_offset;		// Qizmo right-channel offset in samples
 	int		looping;		// where to loop, -1 = no looping
 	int		entnum;			// to allow overriding a specific sound
 	int		entchannel;		//
@@ -139,6 +140,7 @@ extern cvar_t		s_khz;
 extern cvar_t		s_volume;
 extern cvar_t		s_raw_volume;
 extern cvar_t		s_swapstereo;
+extern cvar_t		s_qizmo_enhanced_stereo;
 extern cvar_t		bgmvolume;
 
 #endif
