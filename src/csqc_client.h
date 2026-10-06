@@ -263,6 +263,20 @@ int CSQC_Client_QCToKeynum (int code);
 // CSQC wire numbers (svc_fte_updatestatstring/float 78/79, svc_fte_cgamepacket 83,
 // svc_fte_cgamepacket_sized 90, svc_fte_csqcentities_sized 92, clcfte_qcrequest 81)
 // come from qwprot src/protocol.h under #ifdef FTE_PEXT_CSQC.
+//
+// FTE svc numbers absent from the qwprot submodule (documented in ADR
+// docs/adr/0003-protocol-ext.md; FTE engine/common/protocol.h): defined locally.
+#define SVCFTE_PRECACHE          77  // late precache: [short idx|type][string name]
+#define SVCFTE_TRAILPARTICLES    80  // [ent][short effect][coord x6]
+#define SVCFTE_POINTPARTICLES    81  // [short effect][coord x6][short count]
+#define SVCFTE_POINTPARTICLES1   82  // compact: [short effect][coord x3]
+#define SVCFTE_TEMP_ENTITY_SIZED 91  // [short len][payload]
+// svcfte_precache index/type packing (FTE PC_*).
+#define SVCFTE_PC_TYPE     0xc000
+#define SVCFTE_PC_MODEL    0x0000
+#define SVCFTE_PC_SOUND    0x8000
+#define SVCFTE_PC_PARTICLE 0x4000
+#define SVCFTE_PC_UNUSED   0xc000
 
 // Runtime gate for the CSQC parsers: FTE_PEXT_CSQC negotiated and cl_pext_csqc
 // enabled (as in cl_parse.c case 83/90). Without it, 76/92 must not be treated
@@ -278,6 +292,17 @@ void CSQC_Client_ParseEntities (qbool sized);
 // sized=false (case 83) has no length -- with no live module/callback it is a
 // protocol error.
 void CSQC_Client_ParseEvent (qbool sized);
+
+// Receive-side FTE-CSQC parsers for messages absent from the qwprot submodule
+// (cl_parse.c cases; FTE wire layouts, ADR docs/adr/0003-protocol-ext.md). They
+// read from the global net_message. Also exercised by the csqc_netprobe canary.
+void CSQC_Client_ParsePrecacheMsg (void);        // svcfte_precache (77)
+void CSQC_Client_DrainTrailMsg (void);           // svcfte_trailparticles (80)
+void CSQC_Client_DrainPointMsg (qbool compact);  // svcfte_pointparticles (81) / 1 (82)
+void CSQC_Client_DrainTempEntSizedMsg (void);    // svcfte_temp_entity_sized (91)
+// Size guard shared by sized messages (90/91/92): align msg_readcount to
+// payload_start+payload_len (rewind over-read, pad under-read).
+void CSQC_Client_SizedRewind (int payload_start, int payload_len);
 
 // Network print callbacks. ParsePrint is true if the module handled it (the
 // engine suppresses its own print); ParseCenterPrint is true if the module

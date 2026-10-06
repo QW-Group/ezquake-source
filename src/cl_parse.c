@@ -4152,17 +4152,28 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_fte_updatestatstring:
 				{
-					// CSQC string stat 32..255: [byte][string].
+					// CSQC string stat: [byte idx][string]. FTE routes any idx <
+					// MAX_CL_STATS through CL_SetStatString; QW has no standard 0..31
+					// string stat, so indices <32 are accepted and ignored (stream stays
+					// sane). idx>=32 goes to the extended CSQC store.
 					i = MSG_ReadByte();
 					s = MSG_ReadString();
-					CSQC_Client_SetStatString(i, s);
+					if (i >= MAX_CL_STATS)
+						CSQC_Client_SetStatString(i, s);
 					break;
 				}
 			case svc_fte_updatestatfloat:
 				{
-					// CSQC float stat 32..255: [byte][float].
+					// CSQC float stat: [byte idx][float]. FTE CL_SetStatNumeric parity:
+					// idx < MAX_CL_STATS updates the standard engine stat (death/axe/
+					// STAT_VIEWHEIGHT); idx>=32 goes to the extended CSQC store.
+					float fstat;
 					i = MSG_ReadByte();
-					CSQC_Client_SetStatFloat(i, MSG_ReadFloat());
+					fstat = MSG_ReadFloat();
+					if (i < MAX_CL_STATS)
+						CL_SetStat(i, (int)fstat);
+					else
+						CSQC_Client_SetStatFloat(i, fstat);
 					break;
 				}
 #endif
@@ -4302,12 +4313,37 @@ void CL_ParseServerMessage (void)
 					extern cvar_t cl_pext_csqc;
 					if (cl_pext_csqc.value && (cls.fteprotocolextensions & FTE_PEXT_CSQC))
 						CSQC_Client_ParseEvent (true);
-					// Skip guard: read any remaining part of the payload.
-					{
-						int used = msg_readcount - payload_start;
-						if (used < payload_len)
-							MSG_ReadSkip (payload_len - used);
-					}
+					CSQC_Client_SizedRewind (payload_start, payload_len);
+					break;
+				}
+			case SVCFTE_PRECACHE:
+				{
+					// FTE late precache (77): register index->name (no download).
+					CSQC_Client_ParsePrecacheMsg ();
+					break;
+				}
+			case SVCFTE_TRAILPARTICLES:
+				{
+					// FTE trail particles (80): drained only (no visual).
+					CSQC_Client_DrainTrailMsg ();
+					break;
+				}
+			case SVCFTE_POINTPARTICLES:
+				{
+					// FTE point particles (81): drained only.
+					CSQC_Client_DrainPointMsg (false);
+					break;
+				}
+			case SVCFTE_POINTPARTICLES1:
+				{
+					// FTE compact point particles (82): drained only.
+					CSQC_Client_DrainPointMsg (true);
+					break;
+				}
+			case SVCFTE_TEMP_ENTITY_SIZED:
+				{
+					// FTE sized temp entity (91): drained by length (sized guard).
+					CSQC_Client_DrainTempEntSizedMsg ();
 					break;
 				}
 #endif

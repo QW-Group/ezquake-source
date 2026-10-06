@@ -156,6 +156,7 @@ static qbool PR1VM_LoadClientV6 (pr1vm_t *vm, const byte *data, int filesize);
 #ifdef CSQC_DEBUG
 static void PR1VM_CSQCSmoke_f (void);
 static void CSQC_Client_ProgsCheck_f (void);
+static void CSQC_Client_NetProbe_f (void);
 #endif
 
 /*
@@ -1029,6 +1030,7 @@ void CSQC_Client_RegisterCommands (void)
 #ifdef CSQC_DEBUG
 	Cmd_AddCommand ("csqc_smoke", PR1VM_CSQCSmoke_f);	// PR1VM debug
 	Cmd_AddCommand ("csqc_progscheck", CSQC_Client_ProgsCheck_f);	// debug canary
+	Cmd_AddCommand ("csqc_netprobe", CSQC_Client_NetProbe_f);	// FTE-CSQC receive canary
 #endif
 }
 
@@ -4695,6 +4697,219 @@ stream). Sized (92, only mvdsv under sv_csqcdebug): before each update entity's
 payload there is a short length - a skip guard against desync.
 =================
 */
+/*
+=================
+CSQC_Client_SizedRewind
+
+FTE sized-message guard (pr_csqc.c:9696-9713): after handling a payload, align
+msg_readcount to the declared end payload_start+payload_len, for both under-read
+(pad) and over-read (rewind). MSG_ReadSkip is forward-only in ezq, so over-read is
+rewound by writing msg_readcount directly.
+=================
+*/
+void CSQC_Client_SizedRewind (int payload_start, int payload_len)
+{
+	int used = msg_readcount - payload_start;
+
+	if (used < payload_len)
+		MSG_ReadSkip (payload_len - used);
+	else if (used > payload_len)
+		msg_readcount = payload_start + payload_len;
+}
+
+/*
+=================
+CSQC_Client_ParsePrecacheMsg
+
+FTE svcfte_precache (77): [short idx|type][string name]. Register the index->name
+mapping without downloading (model/sound); particle/unused are drained.
+=================
+*/
+void CSQC_Client_ParsePrecacheMsg (void)
+{
+	int code = (unsigned short)MSG_ReadShort ();
+	const char *name = MSG_ReadString ();
+	int ptype = code & SVCFTE_PC_TYPE;
+	int pidx = code & ~SVCFTE_PC_TYPE;
+
+	if (!name)
+		return;
+
+	if (ptype == SVCFTE_PC_MODEL)
+	{
+		if (pidx >= 1 && pidx < MAX_MODELS)
+			strlcpy (cl.model_name[pidx], name, sizeof (cl.model_name[pidx]));
+	}
+	else if (ptype == SVCFTE_PC_SOUND)
+	{
+		if (pidx >= 1 && pidx < MAX_SOUNDS)
+			strlcpy (cl.sound_name[pidx], name, sizeof (cl.sound_name[pidx]));
+	}
+}
+
+/*
+=================
+CSQC_Client_DrainTrailMsg
+
+FTE svcfte_trailparticles (80): [ent short][short effect][coord x6]. Drained only
+(no visual). Entity is read as a short: ezq does not negotiate
+PEXT2_REPLACEMENTDELTAS, so FTE MSGCL_ReadEntity uses the plain short form.
+=================
+*/
+void CSQC_Client_DrainTrailMsg (void)
+{
+	int i;
+
+	MSG_ReadShort ();				// entity number
+	MSG_ReadShort ();				// effect index
+	for (i = 0; i < 6; i++)
+		MSG_ReadCoord ();
+}
+
+/*
+=================
+CSQC_Client_DrainPointMsg
+
+FTE svcfte_pointparticles (81) / pointparticles1 (82). 81: [short effect][coord x6]
+[short count]; 82 (compact): [short effect][coord x3].
+=================
+*/
+void CSQC_Client_DrainPointMsg (qbool compact)
+{
+	int i;
+
+	MSG_ReadShort ();				// effect index
+	for (i = 0; i < (compact ? 3 : 6); i++)
+		MSG_ReadCoord ();
+	if (!compact)
+		MSG_ReadShort ();			// count
+}
+
+/*
+=================
+CSQC_Client_DrainTempEntSizedMsg
+
+FTE svcfte_temp_entity_sized (91): [short len][payload]. Drained by length with the
+sized guard (no module temp-entity parse in this change).
+=================
+*/
+void CSQC_Client_DrainTempEntSizedMsg (void)
+{
+	int payload_len = MSG_ReadShort ();
+	int payload_start = msg_readcount;
+
+	CSQC_Client_SizedRewind (payload_start, payload_len);
+}
+
+#ifdef CSQC_DEBUG
+static void CSQC_Client_NetProbe_f (void);
+
+static void CSQC_NetProbe_WriteShort (byte *buf, int *n, int v)
+{
+	buf[(*n)++] = (byte)(v & 0xff);
+	buf[(*n)++] = (byte)((v >> 8) & 0xff);
+}
+
+/*
+=================
+CSQC_Client_NetProbe_f
+
+Debug canary (client console `csqc_netprobe`): feeds synthetic wire bodies through
+the same receive helpers cl_parse.c uses for the FTE-CSQC messages absent from
+qwprot (77/80/81/82/91) and the sized entities drain (92), and checks exact byte
+consumption / no badread. No server or module required.
+=================
+*/
+#define NETPROBE_RUN(label, call, expect) \
+	do { \
+		sizebuf_t _s = net_message; \
+		int _rc = msg_readcount; \
+		qbool _bad = msg_badread; \
+		net_message.data = buf; \
+		net_message.cursize = n; \
+		msg_readcount = 0; \
+		msg_badread = false; \
+		call; \
+		PR1VM_GuardCheck (label, !msg_badread && msg_readcount == (expect), &pass, &fail); \
+		net_message = _s; \
+		msg_readcount = _rc; \
+		msg_badread = _bad; \
+	} while (0)
+
+static void CSQC_Client_NetProbe_f (void)
+{
+	int pass = 0, fail = 0;
+	byte buf[128];
+	int n;
+
+	// 77 precache: [short idx|type][string], model index 5.
+	{
+		const char *nm = "progs/test.mdl";
+		n = 0;
+		CSQC_NetProbe_WriteShort (buf, &n, 5 | SVCFTE_PC_MODEL);
+		memcpy (buf + n, nm, strlen (nm) + 1);
+		n += (int)strlen (nm) + 1;
+		NETPROBE_RUN ("netprobe 77 precache", CSQC_Client_ParsePrecacheMsg (), n);
+	}
+	// 80 trail: [ent short][short effect][coord x6].
+	{
+		int i;
+		n = 0;
+		CSQC_NetProbe_WriteShort (buf, &n, 3);
+		CSQC_NetProbe_WriteShort (buf, &n, 7);
+		for (i = 0; i < 6; i++)
+			CSQC_NetProbe_WriteShort (buf, &n, 100 + i);
+		NETPROBE_RUN ("netprobe 80 trail", CSQC_Client_DrainTrailMsg (), n);
+	}
+	// 81 point (full): [short effect][coord x6][short count].
+	{
+		int i;
+		n = 0;
+		CSQC_NetProbe_WriteShort (buf, &n, 7);
+		for (i = 0; i < 6; i++)
+			CSQC_NetProbe_WriteShort (buf, &n, 200 + i);
+		CSQC_NetProbe_WriteShort (buf, &n, 4);
+		NETPROBE_RUN ("netprobe 81 point", CSQC_Client_DrainPointMsg (false), n);
+	}
+	// 82 point1 (compact): [short effect][coord x3].
+	{
+		int i;
+		n = 0;
+		CSQC_NetProbe_WriteShort (buf, &n, 7);
+		for (i = 0; i < 3; i++)
+			CSQC_NetProbe_WriteShort (buf, &n, 300 + i);
+		NETPROBE_RUN ("netprobe 82 point1", CSQC_Client_DrainPointMsg (true), n);
+	}
+	// 91 temp_entity_sized: [short len][payload len].
+	{
+		n = 0;
+		CSQC_NetProbe_WriteShort (buf, &n, 4);
+		buf[n++] = 1; buf[n++] = 2; buf[n++] = 3; buf[n++] = 4;
+		NETPROBE_RUN ("netprobe 91 tent-sized", CSQC_Client_DrainTempEntSizedMsg (), n);
+	}
+	// 91 sized guard, over-read: module-less path drains exactly len.
+	{
+		n = 0;
+		CSQC_NetProbe_WriteShort (buf, &n, 2);
+		buf[n++] = 9; buf[n++] = 9;
+		NETPROBE_RUN ("netprobe 91 sized-guard", CSQC_Client_DrainTempEntSizedMsg (), n);
+	}
+	// 92 csqcentities_sized (walked without module): [ent][len][payload]...[0].
+	{
+		n = 0;
+		CSQC_NetProbe_WriteShort (buf, &n, 1);
+		CSQC_NetProbe_WriteShort (buf, &n, 3);
+		buf[n++] = 1; buf[n++] = 2; buf[n++] = 3;
+		CSQC_NetProbe_WriteShort (buf, &n, 0);
+		NETPROBE_RUN ("netprobe 92 entities", CSQC_Client_ParseEntities (true), n);
+	}
+
+	Con_Printf ("[CSQC-NETPROBE] pass=%d fail=%d\n", pass, fail);
+}
+
+#undef NETPROBE_RUN
+#endif // CSQC_DEBUG
+
 void CSQC_Client_ParseEntities (qbool sized)
 {
 	pr1vm_t *vm = &s_csqc.vm;
@@ -4847,11 +5062,7 @@ void CSQC_Client_ParseEntities (qbool sized)
 			if (!sized)
 				Host_Error ("CSQC_Client_ParseEntities: update module error\n");
 			if (payload_len >= 0)
-			{
-				int used = msg_readcount - payload_start;
-				if (used < payload_len)
-					MSG_ReadSkip (payload_len - used);
-			}
+				CSQC_Client_SizedRewind (payload_start, payload_len);
 			ready = false;
 			continue;
 		}
@@ -4860,13 +5071,9 @@ void CSQC_Client_ParseEntities (qbool sized)
 		// valid slot (0 = removed/world).
 		CSQC_Client_RemapAfterUpdate (vm, entnum);
 
-		// Skip guard: if the module read less than payload_len - read the rest.
+		// Size guard: align to payload_start+payload_len (rewind over-read / pad under-read).
 		if (payload_len >= 0)
-		{
-			int used = msg_readcount - payload_start;
-			if (used < payload_len)
-				MSG_ReadSkip (payload_len - used);
-		}
+			CSQC_Client_SizedRewind (payload_start, payload_len);
 	}
 }
 
