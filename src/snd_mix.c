@@ -174,7 +174,7 @@ CHANNEL MIXING
 
 static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 {
-	int data, i;
+	int data, i, rightpos;
 	int *lscale, *rscale;
 	unsigned char *sfx;
 
@@ -190,6 +190,12 @@ static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 	for (i = 0; i < count ;i++) {
 		data = sfx[i];
 		painttarget[i].left += lscale[data];
+		// The offset can point before the first sample or after the last.
+		// Play silence when there is no sample at that position.
+		if (s_qizmo_enhanced_stereo.integer && ch->stereo_offset) {
+			rightpos = ch->pos + i + ch->stereo_offset;
+			data = (unsigned int) rightpos < sc->total_length ? sc->data[rightpos] : 0;
+		}
 		painttarget[i].right += rscale[data];
 	}
 
@@ -198,7 +204,7 @@ static void SND_PaintChannelFrom8 (channel_t *ch, sfxcache_t *sc, int count)
 
 static void SND_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count)
 {
-	int data, left, right, leftvol, rightvol, i;
+	int data, left, right, leftvol, rightvol, i, rightpos;
 	signed short *sfx;
 
 	leftvol = ch->leftvol;
@@ -208,6 +214,13 @@ static void SND_PaintChannelFrom16 (channel_t *ch, sfxcache_t *sc, int count)
 	for (i = 0; i < count ;i++) {
 		data = sfx[i];
 		left = (data * leftvol) >> 8;
+		// The offset can point before the first sample or after the last.
+		// Play silence when there is no sample at that position.
+		if (s_qizmo_enhanced_stereo.integer && ch->stereo_offset) {
+			rightpos = ch->pos + i + ch->stereo_offset;
+			data = (unsigned int) rightpos < sc->total_length
+				? ((signed short *)sc->data)[rightpos] : 0;
+		}
 		right = (data * rightvol) >> 8;
 		painttarget[i].left += left;
 		painttarget[i].right += right;

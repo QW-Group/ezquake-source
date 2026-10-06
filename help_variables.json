@@ -17381,6 +17381,20 @@
         }
       ]
     },
+    "s_qizmo_enhanced_stereo": {
+      "default": "0",
+      "desc": "Uses Qizmo 2.91's volume panning and enhanced stereo timing effect for positional game sounds.",
+      "group-id": "45",
+      "remarks": "Offsets the right channel according to sound direction. Sounds directly ahead or behind have no timing offset. The default offset is -4, 0 or +4 samples at every sound rate. See s_qizmo_enhanced_stereo_offset to adjust it. Voice and local player sounds are unaffected.",
+      "type": "boolean"
+    },
+    "s_qizmo_enhanced_stereo_offset": {
+      "default": "4",
+      "desc": "Sets the right-channel timing offset in samples when s_qizmo_enhanced_stereo is enabled.",
+      "group-id": "45",
+      "remarks": "Clamped to 0-1024 samples. The default 4 matches Qizmo 2.91. Larger values exaggerate the effect for testing, but can cut off the beginning or end of the sound in the right channel or introduce gaps when sounds loop. Set 0 to disable the timing offset while keeping Qizmo's volume panning. The direction threshold is unchanged. The offset is not scaled with sound rate.",
+      "type": "integer"
+    },
     "s_raw_volume": {
       "default": "1",
       "desc": "Controls volume of voice (voip) playback.",
