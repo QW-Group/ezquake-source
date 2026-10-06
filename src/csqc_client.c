@@ -157,6 +157,7 @@ static qbool PR1VM_LoadClientV6 (pr1vm_t *vm, const byte *data, int filesize);
 static void PR1VM_CSQCSmoke_f (void);
 static void CSQC_Client_ProgsCheck_f (void);
 static void CSQC_Client_NetProbe_f (void);
+static void CSQC_Client_DlCheck_f (void);
 #endif
 
 /*
@@ -1031,6 +1032,7 @@ void CSQC_Client_RegisterCommands (void)
 	Cmd_AddCommand ("csqc_smoke", PR1VM_CSQCSmoke_f);	// PR1VM debug
 	Cmd_AddCommand ("csqc_progscheck", CSQC_Client_ProgsCheck_f);	// debug canary
 	Cmd_AddCommand ("csqc_netprobe", CSQC_Client_NetProbe_f);	// FTE-CSQC receive canary
+	Cmd_AddCommand ("csqc_dlcheck", CSQC_Client_DlCheck_f);	// download-path canary
 #endif
 }
 
@@ -1548,8 +1550,8 @@ static qbool CSQC_Client_FindMainProgs (char *pathbuf, size_t bufsz,
 =================
 CSQC_Client_StartDownload
 
-Requests the csprogs download from the server. The server serves the file under
-*csprogsname (mvdsv SV_LoadCSQC), but we save it into a separate cache folder
+Requests the csprogs download from the server under a fixed remote name
+"csprogs.dat" (FTE cl_parse.c:1641), saving it into the crc-keyed cache folder
 csprogsvers/<crc>.dat (as FTE does) so different servers do not overwrite each
 other. ezquake CL_CheckOrDownloadFile cannot separate the remote/local name - so we
 repeat its startup steps with a different local path.
@@ -1589,6 +1591,36 @@ static void CSQC_Client_StartDownload (const char *remote, const char *localrel)
 	s_csqc.csprogs_dl_percent = 0;
 	s_csqc.csprogs_dl_started = false;
 	strlcpy (s_csqc.csprogs_dl_localname, cls.downloadname, sizeof (s_csqc.csprogs_dl_localname));
+}
+
+/*
+=================
+CSQC_Client_DlPath
+
+Local path of a downloaded csprogs: always the crc-keyed cache file
+"csprogsvers/<crc>.dat" (FTE cl_parse.c:1640). The server's *csprogsname is not an
+input, so it can never steer the write outside <gamedir>/csprogsvers/.
+=================
+*/
+static void CSQC_Client_DlPath (char *buf, size_t bufsz, unsigned crc)
+{
+	snprintf (buf, bufsz, "csprogsvers/%x.dat", crc);
+}
+
+/*
+=================
+CSQC_Client_CsprogsDlValid
+
+FTE parity (cl_parse.c:1630/1635): a csprogs download is only allowed when the
+server's *csprogs value is non-empty and fully numeric (endptr - after strtoul -
+points at the string terminator). Empty / trailing-garbage values are rejected.
+Invariant: endptr MUST be the strtoul result for csprogs (caller parses once in
+ConnectCheck); the helper only combines the two conditions.
+=================
+*/
+static qbool CSQC_Client_CsprogsDlValid (const char *csprogs, const char *endptr)
+{
+	return csprogs[0] != '\0' && *endptr == '\0';
 }
 
 /*
@@ -3515,6 +3547,55 @@ static void CSQC_Client_ProgsCheck_f (void)
 
 	Con_Printf ("[CSQC-TEST] SUMMARY group=progscheck pass=%d fail=%d\n", pass, fail);
 }
+
+/*
+=================
+CSQC_Client_DlCheck_f
+
+Debug canary (client console `csqc_dlcheck`): verifies the csprogs download-path
+policy. The local write path is always the crc key (never *csprogsname, so a
+hostile name cannot escape <gamedir>/csprogsvers/), and a download is only valid
+for a non-empty, fully numeric *csprogs (FTE cl_parse.c:1630/1635/1640). Engine-side
+canary; FTE has no equivalent command. Tests the helpers in isolation; the full
+ConnectCheck wiring (parse *csprogs -> gate -> no download) is covered by the live
+hostile gate (design D5), not here.
+=================
+*/
+static void CSQC_Client_DlCheck_f (void)
+{
+	int pass = 0, fail = 0;
+	char path[MAX_QPATH];
+	char *end;
+
+	// Developer-gated manual diagnostic (matches csqc_progscheck).
+	if (!developer.value)
+		return;
+
+#define DLC_CHECK(name, cond) \
+	do { if (cond) pass++; else { fail++; Con_Printf ("[CSQC-TEST] FAIL %s\n", name); } } while (0)
+
+	// Local path: crc-key only; a hostile *csprogsname is not an input.
+	CSQC_Client_DlPath (path, sizeof (path), 0);
+	DLC_CHECK ("path-crc0", !strcmp (path, "csprogsvers/0.dat"));
+	CSQC_Client_DlPath (path, sizeof (path), 0xdeadbeefu);
+	DLC_CHECK ("path-crc", !strcmp (path, "csprogsvers/deadbeef.dat"));
+
+	// Download gate: non-empty + fully numeric (FTE cl_parse.c:1630/1635).
+	(void)strtoul ("0", &end, 0);
+	DLC_CHECK ("valid-zero", CSQC_Client_CsprogsDlValid ("0", end));
+	(void)strtoul ("0xdeadbeef", &end, 0);
+	DLC_CHECK ("valid-hex", CSQC_Client_CsprogsDlValid ("0xdeadbeef", end));
+	(void)strtoul ("", &end, 0);
+	DLC_CHECK ("invalid-empty", !CSQC_Client_CsprogsDlValid ("", end));
+	(void)strtoul ("abc", &end, 0);
+	DLC_CHECK ("invalid-alpha", !CSQC_Client_CsprogsDlValid ("abc", end));
+	(void)strtoul ("123xyz", &end, 0);
+	DLC_CHECK ("invalid-trailing", !CSQC_Client_CsprogsDlValid ("123xyz", end));
+
+#undef DLC_CHECK
+
+	Con_Printf ("[CSQC-TEST] SUMMARY group=dlcheck pass=%d fail=%d\n", pass, fail);
+}
 #endif
 
 /*
@@ -3897,6 +3978,17 @@ void CSQC_Client_ConnectCheck (void)
 		return;
 	}
 
+	// FTE parity (cl_parse.c:1630/1635): download is only attempted for a non-empty,
+	// fully numeric *csprogs checksum. An empty or trailing-garbage value must not
+	// start a download (and must never build a local path from *csprogsname) - tell
+	// the server we have no CSQC module. The anycsqc/local fallback above is intact.
+	if (!CSQC_Client_CsprogsDlValid (crcs, crcend))
+	{
+		Con_Printf ("CSQC: not downloading csprogs (invalid *csprogs)\n");
+		CSQC_Client_NotifyCSQC (false);
+		return;
+	}
+
 	// csprogs download disabled by cvar (FTE parity: cl_download_csprogs): the
 	// module is not loaded, tell the server disablecsqc.
 	if (!cl_download_csprogs.value)
@@ -3906,16 +3998,16 @@ void CSQC_Client_ConnectCheck (void)
 		return;
 	}
 
-	// No valid local one - download from the server: the server serves *csprogsname,
-	// we save into a separate csprogsvers/<crc>.dat folder (do not overwrite others).
-	// Module load happens in CSQC_Client_Update once the file appears.
+	// No valid local one - download from the server. The request name is fixed
+	// "csprogs.dat" (FTE cl_parse.c:1641), and we save into the crc-keyed
+	// csprogsvers/<crc>.dat folder (FTE cl_parse.c:1640) so the server's
+	// *csprogsname can never choose the local write path and different servers do
+	// not overwrite each other. Module load happens in CSQC_Client_Update once the
+	// file appears.
 	s_csqc.csprogs_crc = crc;
 	s_csqc.csprogs_size = sizep;
-	if (crc)
-		snprintf (s_csqc.csprogs_dl_path, sizeof (s_csqc.csprogs_dl_path), "csprogsvers/%x.dat", crc);
-	else
-		snprintf (s_csqc.csprogs_dl_path, sizeof (s_csqc.csprogs_dl_path), "%s", name);
-	CSQC_Client_StartDownload (name, s_csqc.csprogs_dl_path);
+	CSQC_Client_DlPath (s_csqc.csprogs_dl_path, sizeof (s_csqc.csprogs_dl_path), crc);
+	CSQC_Client_StartDownload ("csprogs.dat", s_csqc.csprogs_dl_path);
 	s_csqc.csprogs_dl_pending = true;
 }
 
