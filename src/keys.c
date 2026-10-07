@@ -761,6 +761,7 @@ void CompleteCommandNew (void)
 			char text[50];
 			int test;
 			int testvar;
+			int end;
 			try++;
 			//Com_Printf("%i\n",try);
 			test = try - 1;
@@ -807,12 +808,18 @@ void CompleteCommandNew (void)
 					memmove (key_lines[edit_line] + key_linepos + len,
 							key_lines[edit_line] + key_linepos + last_cmd_length,
 							tail * sizeof(wchar));
+				end = key_linepos + len + tail;
 			}
 			memcpy (key_lines[edit_line] + key_linepos, str2wcs(text),
 					len * sizeof(wchar));
+			// Guarantee NUL-termination even when the shifted tail was clamped to
+			// `room` (then the source NUL does not fit) - ADR 0045 follow-up.
+			if (end > MAXCMDLINE - 1)
+				end = MAXCMDLINE - 1;
+			key_lines[edit_line][end] = L'\0';
 
 			del_removes = 1;
-			last_cmd_length = strlen (text);
+			last_cmd_length = len;
 		}
 		else if (count == try)
 		{
@@ -2387,13 +2394,32 @@ void Key_Event (int key, qbool down)
 		unichar = 0;
 
 #ifndef CLIENTONLY
-	// In-game (key_dest == key_game) with a CSQC_InputEvent present, give the
-	// key/click/wheel to the module; a nonzero return means the module handled it
-	// (normal processing is skipped).
-	if (key_dest == key_game && CSQC_Client_HasInputEvent ())
+	// Deliver keys/clicks/wheel to the CSQC module (CSQC_InputEvent). Reserved keys
+	// are never handed to the module so it cannot lock out the console/menu:
+	// backtick without Shift (FTE parity) and K_ESCAPE plain/Shift (intentional
+	// deviation from FTE, which lets CSQC steal plain Esc - ADR 0032). Key-down is
+	// delivered only in game; key-up is delivered regardless of key_dest (the module
+	// filters it by its delivered-down set), so releasing a key after the console or
+	// menu opened cannot leave it stuck. A nonzero return means the module handled
+	// the event (normal processing is skipped).
+	if (CSQC_Client_HasInputEvent ())
 	{
-		if (CSQC_Client_InputEvent (down ? IE_KEYDOWN : IE_KEYUP, key, unichar, 0))
-			return;
+		qbool reserved = (key == '`' && !keydown[K_SHIFT]) || key == K_ESCAPE;
+
+		if (!reserved)
+		{
+			if (key_dest == key_game)
+			{
+				if (CSQC_Client_InputEvent (down ? IE_KEYDOWN : IE_KEYUP, key, unichar, 0))
+					return;
+			}
+			else if (!down)
+			{
+				// FTE parity: still forward the up event so CSQC can release the key;
+				// the return value is ignored (the bind must release normally).
+				CSQC_Client_InputEvent (IE_KEYUP, key, unichar, 0);
+			}
+		}
 	}
 #endif
 

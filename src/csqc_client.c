@@ -68,15 +68,17 @@ typedef struct csqc_client_state_s
 	pr1vm_t		vm;
 	qbool		loaded;		// module loaded into the instance
 	qbool		inited;		// CSQC_Init called
-	// Cached csqc_dbg cvar pointer (the module registers it in CSQC_Init via
-	// registercvar; resolved after init so Cvar_Find is not called per entity).
-	cvar_t		*csqc_dbg_cvar;
 	qbool		errored;	// PR_RunError on the client instance (frames disabled)
 	qbool		mayread;	// module may read the net message - parse callbacks only
 						// (CSQC_Ent_Update/CSQC_Parse_Event; FTE csqc_mayread)
 	qbool		world_done;	// CSQC_WorldLoaded called
 	qbool		enable_sent;	// enablecsqc/disablecsqc already sent to the server
 	qbool		enable_value;	// last sent state (true=enablecsqc)
+	// Keys whose key-down was delivered to CSQC_InputEvent: a key-up is delivered to
+	// the module only if its down was delivered, then the entry is cleared; unmatched
+	// ups (and reserved keys, which never reach the module) are dropped. Single-device
+	// (devid is always 0 in ezq); zeroed by the memset on load/disconnect.
+	byte		csqckeysdown[UNKNOWN];
 	qbool		seen[CSQC_MAX_NUM];	// known CSQC entities (isnew for Ent_Update)
 	int			func_init, func_world, func_update, func_console, func_shutdown;
 	int			func_entupdate, func_entremove, func_parseevent;
@@ -3861,9 +3863,6 @@ static qbool CSQC_Client_Load (const char *path)
 	// Right after CSQC_Init notify the module about renderer (re)init - FTE parity
 	// (CSQC_RendererRestarted(true)), before the first CSQC_WorldLoaded.
 	CSQC_Client_RendererRestarted (R_RendererDescription ());
-	// The module registered csqc_dbg via registercvar (#93) in CSQC_Init - cache the
-	// pointer for the hot path (CSQC_Client_ParseEntities).
-	s_csqc.csqc_dbg_cvar = Cvar_Find ("csqc_dbg");
 	return true;
 }
 
@@ -5021,6 +5020,10 @@ void CSQC_Client_ParseEntities (qbool sized)
 	unsigned int entnum;
 	qbool removeflag;
 	qbool ready;
+	// csqc_dbg is a module-owned cvar (registercvar #93); it can be unset/recreated
+	// between frames, so resolve it per call instead of caching a pointer that can
+	// dangle (ADR 0032/debug-hygiene).
+	cvar_t *dbg = Cvar_Find ("csqc_dbg");
 
 	// Runtime gate (as cl_parse.c case 83/90) + a live module. Without the gate or
 	// module, 76/92 are not treated as CSQC. A sized stream can be walked without a
@@ -5134,7 +5137,6 @@ void CSQC_Client_ParseEntities (qbool sized)
 					// session at csqc_dbg>=3).
 					{
 						static int s_dbg_lines = 0;
-						cvar_t *dbg = s_csqc.csqc_dbg_cvar;	// cached (resolved after CSQC_Init)
 						if (dbg && dbg->value >= 3)
 						{
 							if (s_dbg_lines < 32)
@@ -5590,7 +5592,8 @@ void CSQC_Client_VectorVectors (float *dir)
 CSQC_Client_HasInputEvent / CSQC_Client_InputEvent
 
 Delivery of input events to the module (CSQC_InputEvent). Called from keys.c
-(keys/clicks/wheel at key_dest == key_game) and in_sdl2.c (mouse: MOUSEDELTA in the
+(keys/clicks/wheel: down in game, up also outside the game for keys whose down was
+delivered - reserved keys never reach here) and in_sdl2.c (mouse: MOUSEDELTA in the
 ordinary mode; MOUSEABS - from CSQC_Client_Update at CSQCCursor). A module return
 != 0 means "event handled" (the engine does not apply it).
 =================
@@ -5608,9 +5611,25 @@ int CSQC_Client_InputEvent (int evtype, float a, float b, float c)
 	if (!CSQC_Client_HasInputEvent ())
 		return 0;
 	// The module works in the QC/DP key domain; translate the internal ezq keynum ->
-	// QC for key events (mouse/deltas - no translation).
+	// QC for key events (mouse/deltas - no translation). Key events are tracked so a
+	// key-up delivered outside the game still reaches the module (no stuck keys),
+	// while an up without a delivered down (or a reserved key) is dropped.
 	if (evtype == IE_KEYDOWN || evtype == IE_KEYUP)
-		a = CSQC_Client_KeynumToQC ((int)a);
+	{
+		int key = (int)a;
+
+		if (key < 0 || key >= UNKNOWN)
+			key = 0;	// defensive bound (FTE clamps an out-of-range keynum to 0)
+		if (evtype == IE_KEYDOWN)
+			s_csqc.csqckeysdown[key] = 1;
+		else
+		{
+			if (!s_csqc.csqckeysdown[key])
+				return 0;	// no delivered down - do not leak the up to the module
+			s_csqc.csqckeysdown[key] = 0;
+		}
+		a = CSQC_Client_KeynumToQC (key);
+	}
 	// Parameters of the module function (4 float) - as CSQC_UpdateView.
 	vm->globals[OFS_PARM0] = evtype;
 	vm->globals[OFS_PARM1] = a;
