@@ -657,6 +657,13 @@ void CSQC_Client_DrawSubPic (float x, float y, float w, float h, const char *nam
 	pic = Draw_CachePicSafe (name, false, false);
 	if (!pic)
 		return;
+	// FTE parity #328 (PF_CL_drawsubpic -> R2D_Image): srcpos/srcsize are normalized
+	// (0..1) texture coordinates. Draw_SAlphaSubPic2 divides the source rect by the pic
+	// size (pixel semantics), so scale the normalized rect up to pixels first.
+	srcx *= pic->width;
+	srcy *= pic->height;
+	srcw *= pic->width;
+	srch *= pic->height;
 	// FTE parity #328: a negative size on one axis means mirroring (signed scale).
 	if (w < 0 || h < 0)
 	{
@@ -5402,13 +5409,14 @@ int CSQC_Client_ApplyInput (unsigned int seq)
 =================
 CSQC_VectorAngles
 
-Port of FTE VectorAngles with optional up->roll, meshpitch=false (r_meshpitch/
-r_meshroll are not applied - the same deviation as #51 vectoangles). forward is the
-direction; up may be NULL; result[3] = (pitch, yaw, roll). Shared helper for #51
-(csqc_builtins.c) and #638 CL_RotateMoves.
+Port of FTE VectorAngles with optional up->roll. When `meshpitch` is set the
+pitch is inverted (r_meshpitch = -1, FTE VectorAngles(..., true)) - parity for
+#51 vectoangles; #638 CL_RotateMoves passes false (raw angles, #51 deviation).
+forward is the direction; up may be NULL; result[3] = (pitch, yaw, roll).
+Shared helper for #51 (csqc_builtins.c) and #638 CL_RotateMoves.
 =================
 */
-void CSQC_VectorAngles (const float *forward, const float *up, float *result)
+void CSQC_VectorAngles (const float *forward, const float *up, float *result, qbool meshpitch)
 {
 	float yaw, pitch, roll;
 
@@ -5447,6 +5455,8 @@ void CSQC_VectorAngles (const float *forward, const float *up, float *result)
 	pitch *= (float)(180 / M_PI);
 	yaw *= (float)(180 / M_PI);
 	roll *= (float)(180 / M_PI);
+	if (meshpitch)
+		pitch = -pitch;		// r_meshpitch = -1 (r_meshroll = 1: roll unchanged)
 	if (pitch < 0) pitch += 360;
 	if (yaw < 0) yaw += 360;
 	if (roll < 0) roll += 360;
@@ -5501,7 +5511,7 @@ int CSQC_Client_RotateMoves (float *anglechange, int seat)
 		AngleVectors (a, of, NULL, ou);
 		CSQC_VectorTransform (of, mat, nf);
 		CSQC_VectorTransform (ou, mat, nu);
-		CSQC_VectorAngles (nf, nu, a);
+		CSQC_VectorAngles (nf, nu, a, false);
 		VectorCopy (a, r->cmd.angles);
 	}
 	return 1;

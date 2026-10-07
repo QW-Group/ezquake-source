@@ -24,6 +24,7 @@
 #include "qsound.h"		// S_LocalSoundWithVol (#177)
 #include "cl_tent.h"		// CL_CreateBeam (#428-431)
 #include "gl_model.h"		// custom_model_*/Mod_CustomModel (#431 no-op)
+#include "tr_types.h"		// glConfig (vidWidth/vidHeight, #309 VF_SCREENPSIZE)
 #include "crc.h"		// CRC_Init/CRC_ProcessByte/CRC_Value (#494 crc16, #639 digest_hex)
 #include "sha1.h"		// SHA1Init/SHA1Update/SHA1Final reentrant API (#639 digest_hex)
 #include "screen.h"		// SCR_CenterPrint (#338 cprint)
@@ -118,9 +119,8 @@ void(string s, ...) dprint = #25
 */
 static void csqc_dprint (void)
 {
-	char *s = CSQCVM_Str (OFS_PARM0);
-	if (s)
-		Con_DPrintf ("%s", s);	// FTE parity: PF_dprint -> Con_DPrintf (developer-gated)
+	// FTE parity: PF_dprint -> PF_VarString(0) (all args); Con_DPrintf is developer-gated.
+	Con_DPrintf ("%s", CSQCVM_VarString (0));
 }
 
 /*
@@ -193,6 +193,29 @@ static void csqc_registercommand (void)
 }
 
 /*
+ Read-guard for sensitive cvars (#45/#448/#482/#495), FTE parity. FTE hides cvars
+ flagged CVAR_NOUNSAFEEXPAND (rcon/password class, pr_csqc.c:592); ezq has no such flag,
+ so an explicit denylist is used. Only the rcon/password class is hidden - neighbouring
+ cvars (cl_timeout, cl_pext*, allow_scripts, ...) stay readable, unlike the
+ CVAR_NOTFROMSERVER write-guard (which covers a wider set; ADR 0047 WS2-B).
+*/
+static qbool CSQC_CvarReadDenied (const char *name)
+{
+	static const char *denied[] = {
+		"rcon_password", "rcon_address", "password", "pq_password",
+		"spectator_password", "vip_password", "qtv_password",
+		"irc_server_password", "cl_crypt_rcon",
+	};
+	int i;
+	if (!name)
+		return false;
+	for (i = 0; i < (int)(sizeof (denied) / sizeof (denied[0])); i++)
+		if (!strcmp (name, denied[i]))
+			return true;
+	return false;
+}
+
+/*
  float(string varname) cvar = #45
 
  Returns the engine cvar value by name (0 if there is no such cvar). Needed by the
@@ -202,7 +225,8 @@ static void csqc_cvar (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
 	char *name = CSQCVM_Str (OFS_PARM0);
-	vm->globals[OFS_RETURN] = (vm && name && name[0]) ? Cvar_Value (name) : 0;
+	// #45 read-guard: a denied (rcon/password) name yields 0, like FTE CVAR_NOUNSAFEEXPAND.
+	vm->globals[OFS_RETURN] = (vm && name && name[0] && !CSQC_CvarReadDenied (name)) ? Cvar_Value (name) : 0;
 }
 
 /*
@@ -282,8 +306,7 @@ static void csqc_vectoyaw (void)
 
 /*
  vector(vector fwd [, optional vector up]) vectoangles = #51 - FTE parity
- (PF_vectoangles -> VectorAngles, meshpitch=1). Optional up -> roll.
- meshpitch/r_meshroll are ignored here (=1).
+ (PF_vectoangles -> VectorAngles(..., true): r_meshpitch=-1 inverts pitch). Optional up -> roll.
 */
 static void csqc_vectoangles (void)
 {
@@ -297,7 +320,7 @@ static void csqc_vectoangles (void)
 	forward = &vm->globals[OFS_PARM0];
 	up = (vm->argc >= 2) ? &vm->globals[OFS_PARM0 + 3] : NULL;
 
-	CSQC_VectorAngles (forward, up, result);
+	CSQC_VectorAngles (forward, up, result, true);
 	vm->globals[OFS_RETURN] = result[0];
 	vm->globals[OFS_RETURN + 1] = result[1];
 	vm->globals[OFS_RETURN + 2] = result[2];
@@ -572,10 +595,14 @@ static void csqc_getproperty (void)
 	switch ((int)prop)
 	{
 	case CSQC_VF_SCREENVSIZE:
-	case CSQC_VF_SCREENPSIZE:
-		// "virtual"/"physical" size; in ezquake without OS scaling they are the same.
+		// virtual size (vid.width/height; already scaled by r_conscale).
 		r[0] = vid.width;
 		r[1] = vid.height;
+		break;
+	case CSQC_VF_SCREENPSIZE:
+		// physical framebuffer size (FTE pr_csqc.c:2294-2301: vid.rotpixel*).
+		r[0] = glConfig.vidWidth;
+		r[1] = glConfig.vidHeight;
 		break;
 	case CSQC_VF_FOV:
 		r[0] = r_refdef.fov_x;
@@ -999,14 +1026,20 @@ static void csqc_stringwidth (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
 	char *text;
+	float fontsize_x, w;
 	if (!vm)
 		return;
 	text = CSQC_Client_GetString (vm, *(int *)&vm->globals[OFS_PARM0]);
 	// drawfontscale: multiply size.x before passing (inside it is /8) - metric is
-	// consistent with drawstring.
-	vm->globals[OFS_RETURN] = CSQC_Client_StringWidth (text ? text : "",
+	// consistent with drawstring. FTE #327: size = argc>2 ? PARM2 : NULL; without
+	// size the default size is 8 and the result is divided by 8 (DP compat).
+	fontsize_x = (vm->argc > 2) ? vm->globals[OFS_PARM0 + 6] : 8.0f;
+	w = CSQC_Client_StringWidth (text ? text : "",
 		vm->globals[OFS_PARM0 + 3] != 0,
-		vm->globals[OFS_PARM0 + 6] * CSQC_Client_DrawFontScaleX (vm));
+		fontsize_x * CSQC_Client_DrawFontScaleX (vm));
+	if (vm->argc <= 2)
+		w /= 8.0f;
+	vm->globals[OFS_RETURN] = w;
 }
 
 /*
@@ -1992,6 +2025,9 @@ static void csqc_particleeffectnum (void)
 			vm->globals[OFS_RETURN] = i + 1;
 			return;
 		}
+	// FTE PF_cs_particleeffectnum (pr_csqc.c:3762-3775) returns -i for a client-only/
+	// newly-created name (0 only when the client table is full), +i for a server-known
+	// one. ezq has no client particle registry -> -1 is a sign-parity approximation.
 	vm->globals[OFS_RETURN] = -1;
 }
 
@@ -2095,10 +2131,13 @@ static void csqc_te_bloodshower (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
 	float *g;
-	vec3_t vel = { 0, 0, -100 };
+	vec3_t vel;
 	if (!vm)
 		return;
 	g = vm->globals;
+	vel[0] = 0;
+	vel[1] = 0;
+	vel[2] = -g[OFS_PARM0 + 6];	// FTE parity (pr_csqc.c:5069-5077): explosionspeed (PARM2), not a fixed -100
 	csqc_te_bbox_effect (&g[OFS_PARM0], &g[OFS_PARM0 + 3], vel,
 		bound (1, (int)g[OFS_PARM0 + 7], 4096), 73);
 }
@@ -2252,6 +2291,9 @@ static void csqc_te_beam_type (int type)
 		return;
 	}
 	entnum = csqc_ent_of (vm, OFS_PARM0);
+	// FTE parity (pr_csqc.c:5157-5181): shift the CSQC beam owner past MAX_EDICTS so it
+	// never overrides/suppresses a server beam with the same numeric index (0 = world).
+	entnum += (entnum ? MAX_EDICTS : 0);
 	CL_CreateBeam (type, entnum, &g[OFS_PARM0 + 3], &g[OFS_PARM0 + 6]);
 }
 static void csqc_te_lightning1 (void) { csqc_te_beam_type (1); }
@@ -2539,6 +2581,9 @@ static void csqc_crc16 (void)
 			break;
 	}
 	CRC_Init (&crc);
+	// hash exactly the concatenated bytes that fit (snprintf may report a longer
+	// would-be length on truncation - FTE PF_VarString is bounded by the real length).
+	len = (int)strlen (buf);
 	for (i = 0; i < len; i++)
 		CRC_ProcessByte (&crc, insens ? tolower ((int)(unsigned char)buf[i]) : (unsigned char)buf[i]);
 	vm->globals[OFS_RETURN] = CRC_Value (crc);
@@ -2649,6 +2694,11 @@ static void csqc_cvar_defstring (void)
 	cvar_t *v;
 	if (!vm)
 		return;
+	if (CSQC_CvarReadDenied (name))
+	{
+		CSQCVM_SetRetStr ("");	// #482 read-guard: sensitive cvar -> "" (FTE null-string)
+		return;
+	}
 	v = (name && name[0]) ? Cvar_Find (name) : NULL;
 	if (!v && name && name[0])
 		v = Cvar_Create (name, "", 0);
@@ -2659,8 +2709,8 @@ static void csqc_cvar_defstring (void)
  float(string cvarname) cvar_type = #495
  FTE flags: EXISTS=1 SAVED=2 PRIVATE=4 ENGINE=8 HASDESCRIPTION=16 READONLY=32.
  Mapping to ezq: SAVED = CVAR_ARCHIVE|CVAR_USER_ARCHIVE; PRIVATE = CVAR_NOTFROMSERVER
- (fteqw/engine/common/pr_bgcmd.c:1944 sets PRIVATE for NOTFROMSERVER|NOUNSAFEEXPAND;
- ezq has no NOUNSAFEEXPAND analog - documented deviation); ENGINE = not
+ (ADR 0047 WS2-B) or the sensitive-cvar read-denylist (WS4; FTE sets PRIVATE for
+ NOTFROMSERVER|NOUNSAFEEXPAND, pr_bgcmd.c:1944); ENGINE = not
  CVAR_USER_CREATED/MOD_CREATED; READONLY = CVAR_ROM. The cvar need not exist.
 */
 static void csqc_cvar_type (void)
@@ -2677,13 +2727,15 @@ static void csqc_cvar_type (void)
 		ret |= 1;	// EXISTS
 		if (v->flags & (CVAR_ARCHIVE | CVAR_USER_ARCHIVE))
 			ret |= 2;	// SAVED
-		if (v->flags & CVAR_NOTFROMSERVER)
-			ret |= 4;	// PRIVATE
 		if (v->flags & CVAR_ROM)
 			ret |= 32;	// READONLY
 		if (!(v->flags & (CVAR_USER_CREATED | CVAR_MOD_CREATED)))
 			ret |= 8;	// ENGINE
 	}
+	// #495 read-guard: PRIVATE for NOTFROMSERVER (ADR 0047 WS2-B) or the sensitive-cvar
+	// denylist (FTE sets PRIVATE for NOTFROMSERVER|NOUNSAFEEXPAND, pr_bgcmd.c:1944).
+	if ((v && (v->flags & CVAR_NOTFROMSERVER)) || CSQC_CvarReadDenied (name))
+		ret |= 4;	// PRIVATE
 	vm->globals[OFS_RETURN] = ret;
 }
 
@@ -3574,6 +3626,8 @@ static void csqc_substring (void)
 	l -= start;
 	if (len > l)
 		len = l;
+	if (len > (int)sizeof (buf) - 1)
+		len = (int)sizeof (buf) - 1;	// bound the write to buf (FTE uses an exact-size temp string)
 	strlcpy (buf, s + start, (size_t)len + 1);
 	CSQCVM_SetRetStr (buf);
 }
@@ -3651,7 +3705,12 @@ static void csqc_cvar_string (void)
 	if (!name)
 		name = "";
 	// FTE returns latched_string if the value is latched. PF_Cvar_FindOrGet
-	// (autocreate) and the CVAR_NOUNSAFEEXPAND flag are FTE-specific (not in ezq).
+	// (autocreate) is FTE-specific (not in ezq). #448 read-guard: sensitive cvar -> "".
+	if (CSQC_CvarReadDenied (name))
+	{
+		CSQCVM_SetRetStr ("");
+		return;
+	}
 	var = Cvar_Find (name);
 	CSQCVM_SetRetStr (var ? (var->latchedString ? var->latchedString : var->string) : "");
 }
@@ -4458,7 +4517,7 @@ static void csqc_findflags (void)
 		slot = csqc_ent_slot (vm, e);
 		if (!slot)
 			continue;
-		if (*(int *)&slot[f] & *(int *)&match)
+		if ((int)slot[f] & (int)match)
 		{
 			csqc_ret_entity (vm, e);
 			return;
@@ -4492,7 +4551,7 @@ static void csqc_findchainflags (void)
 		slot = csqc_ent_slot (vm, e);
 		if (!slot)
 			continue;
-		if (!(*(int *)&slot[f] & *(int *)&match))
+		if (!((int)slot[f] & (int)match))
 			continue;
 		*(int *)&slot[cf] = prev * vm->edict_size;
 		prev = e;
@@ -5170,9 +5229,10 @@ static void csqc_tokenizebyseparator (void)
 static void csqc_argv_start_index (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
-	int idx = (int)vm->globals[OFS_PARM0];
+	int idx;
 	if (!vm)
 		return;
+	idx = (int)vm->globals[OFS_PARM0];
 	if (idx < 0)
 		idx += s_tokn;
 	if ((unsigned int)idx >= (unsigned int)s_tokn)
@@ -5183,9 +5243,10 @@ static void csqc_argv_start_index (void)
 static void csqc_argv_end_index (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
-	int idx = (int)vm->globals[OFS_PARM0];
+	int idx;
 	if (!vm)
 		return;
+	idx = (int)vm->globals[OFS_PARM0];
 	if (idx < 0)
 		idx += s_tokn;
 	if ((unsigned int)idx >= (unsigned int)s_tokn)
@@ -5203,10 +5264,11 @@ static void csqc_argv_end_index (void)
 static void csqc_getkeybind (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
-	int keynum = CSQC_Client_QCToKeynum ((int)vm->globals[OFS_PARM0]);
+	int keynum;
 	char *b;
 	if (!vm)
 		return;
+	keynum = CSQC_Client_QCToKeynum ((int)vm->globals[OFS_PARM0]);
 	if (keynum < 0 || keynum >= UNKNOWN + 256)
 		b = NULL;
 	else
@@ -5218,10 +5280,12 @@ static void csqc_getkeybind (void)
 static void csqc_setkeybind (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
-	int keynum = CSQC_Client_QCToKeynum ((int)vm->globals[OFS_PARM0]);
-	char *binding = CSQCVM_Str (OFS_PARM1);
+	int keynum;
+	char *binding;
 	if (!vm)
 		return;
+	keynum = CSQC_Client_QCToKeynum ((int)vm->globals[OFS_PARM0]);
+	binding = CSQCVM_Str (OFS_PARM1);
 	if (keynum >= 0 && keynum < UNKNOWN + 256)
 	{
 		// PR #1160 WS2-C: a downloaded (untrusted) module must not bind a key to a
