@@ -288,16 +288,33 @@ and refreshes the frustum planes (R_SetFrustum) early for R_CSQC_EntityVisible.
 */
 
 // Called before adding CSQC arena edicts (once per frame; idempotent).
+static int s_csqc_cull_frame = -1;
+
 void R_CSQC_BeginCull(void)
 {
-	static int s_cull_frame = -1;
-
-	if (s_cull_frame == r_framecount)
+	if (s_csqc_cull_frame == r_framecount)
 		return;
-	s_cull_frame = r_framecount;
+	s_csqc_cull_frame = r_framecount;
 
 	R_SetFrustum();
 	R_MarkLeaves();
+}
+
+// CSQC takeover: after the module applies its view properties (#303 setproperty),
+// re-derive the render/cull camera from r_refdef. The engine's R_SetupFrame ran
+// before CSQC_Client_Update, so the r_origin/vpn globals still hold the engine
+// camera; R_CSQC_BeginCull and the module's #304 renderscene (R_RenderView reads
+// those globals) would then cull/render from the wrong camera. Also invalidates
+// the per-frame cull cache so the next R_CSQC_BeginCull recomputes from the module
+// view (FTE parity: render-time view from r_refdef). ADR 0028.
+static void R_SetViewLeaves (vec3_t origin);
+
+void R_CSQC_ApplyModuleView(void)
+{
+	VectorCopy (r_refdef.vieworg, r_origin);
+	AngleVectors (r_refdef.viewangles, vpn, vright, vup);
+	R_SetViewLeaves (r_origin);
+	s_csqc_cull_frame = -1;
 }
 
 // True if the CSQC arena entity should be drawn (fat-PVS + frustum culling).
@@ -428,11 +445,48 @@ static void R_ConfigureFog(int contents)
 	r_refdef2.fog_color[3] = r_refdef2.fog_skycolor[3] = 1.0f;
 }
 
-void R_SetupFrame(void)
+// Shared view-leaf resolution (used by R_SetupFrame and the CSQC module-view
+// re-derivation R_CSQC_ApplyModuleView): from the view origin, find the leaf and
+// the optional second (water-surface) leaf for the watervis PVS merge.
+static void R_SetViewLeaves (vec3_t origin)
 {
 	vec3_t testorigin;
 	mleaf_t	*leaf;
 
+	// current viewleaf
+	r_oldviewleaf = r_viewleaf;
+	r_oldviewleaf2 = r_viewleaf2;
+
+	r_viewleaf = Mod_PointInLeaf (origin, cl.worldmodel);
+	r_viewleaf2 = NULL;
+
+	// FIXME: might need to test falling out bottom of water as well?
+
+	// check above and below so crossing solid water doesn't draw wrong
+	if (r_viewleaf->contents <= CONTENTS_WATER && r_viewleaf->contents >= CONTENTS_LAVA) {
+		// look up a bit
+		VectorCopy (origin, testorigin);
+		testorigin[2] += 10;
+		leaf = Mod_PointInLeaf (testorigin, cl.worldmodel);
+		if (leaf->contents == CONTENTS_EMPTY) {
+			r_viewleaf2 = leaf;
+		}
+	}
+	else if (r_viewleaf->contents == CONTENTS_EMPTY) {
+		// FIXME: If we test down and find CONTENTS_SOLID then we should reduce viewheight_test and try again?
+
+		// look down a bit
+		VectorCopy(origin, testorigin);
+		testorigin[2] -= r_refdef.viewheight_test;
+		leaf = Mod_PointInLeaf(testorigin, cl.worldmodel);
+		if (leaf->contents <= CONTENTS_WATER && leaf->contents >= CONTENTS_LAVA) {
+			r_viewleaf2 = leaf;
+		}
+	}
+}
+
+void R_SetupFrame(void)
+{
 	R_AnimateLight ();
 
 	r_framecount++;
@@ -450,36 +504,7 @@ void R_SetupFrame(void)
 		VectorCopy(vup, vup_noroll);
 	}
 
-	// current viewleaf
-	r_oldviewleaf = r_viewleaf;
-	r_oldviewleaf2 = r_viewleaf2;
-
-	r_viewleaf = Mod_PointInLeaf (r_origin, cl.worldmodel);
-	r_viewleaf2 = NULL;
-
-	// FIXME: might need to test falling out bottom of water as well?
-
-	// check above and below so crossing solid water doesn't draw wrong
-	if (r_viewleaf->contents <= CONTENTS_WATER && r_viewleaf->contents >= CONTENTS_LAVA) {
-		// look up a bit
-		VectorCopy (r_origin, testorigin);
-		testorigin[2] += 10;
-		leaf = Mod_PointInLeaf (testorigin, cl.worldmodel);
-		if (leaf->contents == CONTENTS_EMPTY) {
-			r_viewleaf2 = leaf;
-		}
-	}
-	else if (r_viewleaf->contents == CONTENTS_EMPTY) {
-		// FIXME: If we test down and find CONTENTS_SOLID then we should reduce viewheight_test and try again?
-
-		// look down a bit
-		VectorCopy(r_origin, testorigin);
-		testorigin[2] -= r_refdef.viewheight_test;
-		leaf = Mod_PointInLeaf(testorigin, cl.worldmodel);
-		if (leaf->contents <= CONTENTS_WATER && leaf->contents >= CONTENTS_LAVA) {
-			r_viewleaf2 = leaf;
-		}
-	}
+	R_SetViewLeaves (r_origin);
 
 	V_SetContentsColor(r_viewleaf->contents);
 	R_ConfigureFog(r_viewleaf->contents);

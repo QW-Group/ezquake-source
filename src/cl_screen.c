@@ -967,7 +967,14 @@ void SCR_UpdateScreenPlayerView(int flags)
 				CSQC_Client_BeginScene();
 				CSQC_Client_Update();
 				if (!CSQC_Client_SceneRendered())
+				{
+					// The module owns the scene but did not call #304 renderscene
+					// this frame. Render the engine's own entities instead of the
+					// stale arena list from the previous frame (FTE parity: the
+					// engine path builds the entity list; ADR 0018).
+					CL_EmitEntities();
 					R_RenderView();
+				}
 			}
 			else {
 				R_RenderView();
@@ -1042,6 +1049,16 @@ void SCR_UpdateScreenHudOnly(void)
 			R_FlushImageDraw();
 		}
 		R_TraceLeaveNamedRegion();
+	}
+	else if (CSQC_Client_SceneActive()) {
+		// #3: under takeover the CSQC module owns its 2D HUD (drawstring/drawpic/
+		// ... queued into the hud image queue during CSQC_UpdateView). r_drawhud
+		// suppresses the engine HUD/console only, and must not suppress the
+		// module's queued 2D draws - FTE flushes the CSQC R2D independently of
+		// nohud (pr_csqc.c R2D_Flush). Flush here because the engine HUD branch
+		// above (the only other R_FlushImageDraw caller) is skipped at
+		// r_drawhud 0. Inert outside takeover (ADR 0018).
+		R_FlushImageDraw();
 	}
 }
 

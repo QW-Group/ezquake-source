@@ -189,7 +189,12 @@ void PR1VM_ClientSetString (pr1vm_t *vm, int *address, char *s)
 
 	pool = (csqc_strpool_t *)vm->host_udata;
 	if (!pool || !vm->strings || !vm->strtbl || !vm->numstr)
+	{
+		// Uninitialized string machinery: FTE writes a null string_t on any
+		// set-failure; do the same instead of leaving a stale OFS_RETURN (#9).
+		*address = 0;
 		return;
+	}
 
 	// Already inside the module string area - the core writes the offset itself.
 	if (s >= vm->strings && s < vm->strings + vm->progs->numstrings)
@@ -205,7 +210,13 @@ void PR1VM_ClientSetString (pr1vm_t *vm, int *address, char *s)
 	strlcpy (dst, s, CSQC_TEMP_STRING_SIZE);
 
 	if (*vm->numstr + 1 >= MAX_PRSTR)
-		return;	// client: no fatal
+	{
+		// Pool exhausted: FTE writes a null string_t (0) on allocation failure
+		// instead of leaving the previous OFS_RETURN (stale). Client-gated: the
+		// shared PR1VM_SetString stays server-neutral (ADR 0019).
+		*address = 0;
+		return;
+	}
 
 	PR1VM_SetString (vm, (string_t *)address, dst);
 }
@@ -790,6 +801,44 @@ qbool CSQC_Client_PrecachePic (const char *name)
 
 // Additional 2D graphics (#316/#318/#319/#321/#324/#325/#329).
 
+// Per-name cache of resolved .lmp sizes: the module may call #318
+// drawgetimagesize for the same pic every frame; FTE resolves via the pic cache
+// (R2D_SafeCachePic + R_GetShaderSizes) without re-reading. ezq reads the .lmp
+// header directly (Draw_CachePicSafe yields an unrelated size for .lmp), so cache
+// the validated size here instead of reloading the temp file each call.
+#define CSQC_PICSIZE_CACHE	64
+static struct { char name[MAX_QPATH]; int w, h; } s_picsize_cache[CSQC_PICSIZE_CACHE];
+static int s_picsize_count;
+
+static void CSQC_Client_PicSizeReset (void)
+{
+	memset (s_picsize_cache, 0, sizeof (s_picsize_cache));
+	s_picsize_count = 0;
+}
+
+static qbool CSQC_Client_PicSizeCached (const char *name, int *w, int *h)
+{
+	int i;
+	for (i = 0; i < s_picsize_count; i++)
+		if (!strcmp (s_picsize_cache[i].name, name))
+		{
+			*w = s_picsize_cache[i].w;
+			*h = s_picsize_cache[i].h;
+			return true;
+		}
+	return false;
+}
+
+static void CSQC_Client_PicSizeStore (const char *name, int w, int h)
+{
+	if (s_picsize_count >= CSQC_PICSIZE_CACHE)
+		return;
+	strlcpy (s_picsize_cache[s_picsize_count].name, name, MAX_QPATH);
+	s_picsize_cache[s_picsize_count].w = w;
+	s_picsize_cache[s_picsize_count].h = h;
+	s_picsize_count++;
+}
+
 qbool CSQC_Client_IsCachedPic (const char *name)
 {
 	if (!name || !name[0])
@@ -821,16 +870,32 @@ qbool CSQC_Client_PicSize (const char *name, float *w, float *h)
 	{
 		// .lmp header (qpic_t): two LE ints (see SwapPic/LittleLong). We do not pull
 		// in wad.h (it requires texture_t) - read the header directly.
-		byte *data = FS_LoadTempFile ((char *)name, NULL);
-		int iw, ih;
-		if (!data)
+		// FTE Image_FixupImageSize: validate the lump before trusting w/h
+		// (size >= 8 and size == 8 + w*h); on failure return (0,0) without reading
+		// past the buffer. Resolved sizes are cached per name (no re-read on the
+		// next call for the same pic).
+		byte *data;
+		int len = 0, iw, ih, cw, ch;
+		if (CSQC_Client_PicSizeCached (name, &cw, &ch))
+		{
+			if (w) *w = (float)cw;
+			if (h) *h = (float)ch;
+			return true;
+		}
+		data = FS_LoadTempFile ((char *)name, &len);
+		if (!data || len < 8)
 			return false;
 		memcpy (&iw, data, sizeof (iw));
 		memcpy (&ih, data + sizeof (iw), sizeof (ih));
+		iw = LittleLong (iw);
+		ih = LittleLong (ih);
+		if (iw <= 0 || ih <= 0 || (long long)len != 8LL + (long long)iw * (long long)ih)
+			return false;
 		if (w)
-			*w = (float)LittleLong (iw);
+			*w = (float)iw;
 		if (h)
-			*h = (float)LittleLong (ih);
+			*h = (float)ih;
+		CSQC_Client_PicSizeStore (name, iw, ih);
 		return true;
 	}
 	pic = R_LoadPicImage (name, NULL, 0, 0, TEX_ALPHA);
@@ -1399,6 +1464,7 @@ void CSQC_Client_ModelReset (void)
 	memset (s_modelnames, 0, sizeof (s_modelnames));
 	memset (s_models, 0, sizeof (s_models));
 	s_nmodels = 0;
+	CSQC_Client_PicSizeReset ();	// #318 size cache (per module load)
 }
 
 /*
@@ -2376,7 +2442,18 @@ static void CSQC_Client_ViewReset (void)
 // CSQC_UpdateView; without the reset the #303 override would "stick" between frames).
 void CSQC_Client_ResetViewProps (void)
 {
+	// FTE clearscene (PF_R_ClearScene -> V_ClearRefdef + V_CalcRefdef) restores the
+	// engine view to default values. In ezq fov/vrect are recomputed only by
+	// SCR_CalcRefdef (on vid/fov cvar changes), so a module VF_FOV/VF_SIZE override
+	// written into r_refdef would otherwise persist after clearscene. Recompute the
+	// engine defaults only when the module had overridden fov/vrect: clearscene runs
+	// every module frame, and SCR_CalcRefdef has side effects (Sbar_Changed,
+	// scr_fullupdate) that we avoid in the common (no-override) case. (ADR 0033.)
+	qbool had_vrect = s_vp_vrect_set;
+	qbool had_fov = s_vp_fovx_set || s_vp_fovy_set;
 	CSQC_Client_ViewPropsReset ();
+	if (had_vrect || had_fov)
+		SCR_CalcRefdef ();
 }
 
 // #351 setlistener(origin, forward, right, up)
@@ -2473,6 +2550,10 @@ qbool CSQC_Client_SetViewProperty (int prop, int argc, const float *args)
 }
 
 // Applied after V_CalcRefdef (cl_view.c), only when a CSQC module is active.
+// R_CSQC_ApplyModuleView lives in r_rmain.c (render.h is renderer-private and
+// cannot be included here - it redefines the renderer types already pulled in).
+extern void R_CSQC_ApplyModuleView (void);
+
 void CSQC_Client_ApplyViewProps (void)
 {
 	if (!s_vp_on || !s_csqc.loaded || s_csqc.errored)
@@ -2492,6 +2573,13 @@ void CSQC_Client_ApplyViewProps (void)
 		r_refdef.fov_x = s_vp_fovx;
 	if (s_vp_fovy_set)
 		r_refdef.fov_y = s_vp_fovy;
+
+	// #1: re-derive the render/cull camera from r_refdef after the module view
+	// properties were written, so arena culling (R_CSQC_BeginCull) and the
+	// module's #304 renderscene (R_RenderView) use the module camera instead of
+	// the engine camera from R_SetupFrame (FTE parity; ADR 0028). Scene-gated.
+	if (CSQC_Client_SceneActive ())
+		R_CSQC_ApplyModuleView ();
 }
 
 /*
@@ -4421,16 +4509,34 @@ static void CSQC_Client_PublishSimGlobals (void)
 		vm->globals[s_csqc.g_cltime] = (float)(cls.realtime - s_mapstarttime);
 	if (s_csqc.g_maxclients >= 0)
 	{
+		// FTE: maxclients = cl.allocated_client_slots (QW default 32, clamp
+		// MAX_CLIENTS), not the serverinfo string. ezq has no dedicated
+		// allocated-slots field, so use the serverdata-derived serverinfo value
+		// with the FTE QW default (MAX_CLIENTS) when absent/invalid - never 0 on
+		// a live connection (FTE parity; ADR 0034).
 		const char *mc = Info_ValueForKey (cl.serverinfo, "maxclients");
-		vm->globals[s_csqc.g_maxclients] = (float)((mc && mc[0]) ? atoi (mc) : 0);
+		int n = (mc && mc[0]) ? atoi (mc) : MAX_CLIENTS;
+		vm->globals[s_csqc.g_maxclients] = (float)bound (1, n, MAX_CLIENTS);
 	}
 	if (s_csqc.g_player_localnum >= 0)
-		vm->globals[s_csqc.g_player_localnum] = (cl.viewplayernum >= 0) ? cl.viewplayernum : 0;
+	{
+		// FTE: player_localnum = csqc_playerview->playernum (own client slot) -
+		// not the chase/spectator-tracked view player (cl.viewplayernum).
+		int n = (cl.playernum >= 0 && cl.playernum < MAX_CLIENTS) ? cl.playernum : 0;
+		vm->globals[s_csqc.g_player_localnum] = (float)n;
+	}
 	if (s_csqc.g_intermission >= 0)
 		vm->globals[s_csqc.g_intermission] = cl.intermission ? 1 : 0;
 
 	s_prev_cltime = cl.time;
 }
+
+// Once-per-frame guard for CSQC_Client_Update: under multiview the 3D phase
+// (SCR_UpdateScreenPlayerView) runs the module frame once per player view, while
+// FTE calls CSQC_UpdateView once per redraw (gl_screen.c). host_screenupdatecount
+// is bumped once per frame in SCR_UpdateScreenPrePlayerView, before the multiview
+// loop, so it is stable across the per-view iterations (ADR 0018).
+static int s_update_screencount = -1;
 
 /*
 =================
@@ -4448,6 +4554,10 @@ void CSQC_Client_Update (void)
 
 	if (cls.state != ca_active)
 		return;
+
+	if (s_update_screencount == host_screenupdatecount)
+		return;
+	s_update_screencount = host_screenupdatecount;
 
 	// Clip state (#324/325) - per frame (the module sets/clears it in its frame).
 	s_clip_on = false;
@@ -5694,13 +5804,11 @@ void CSQC_Client_RunPlayerPhysics (int entnum)
 	// --- input from input_* (fallback - last recorded usercmd) ---
 	if (s_csqc.in_timelength >= 0 || s_csqc.in_angles >= 0 || s_csqc.in_movevalues >= 0)
 	{
-		int m = (s_csqc.in_timelength >= 0)
+		// FTE (PF_cs_runplayerphysics): msecs = input_timelength*1000; a
+		// zero/negative duration means no physics step (the substep loop is
+		// skipped). No m<1->1 floor (previously forced a 1 ms step).
+		msecs = (s_csqc.in_timelength >= 0)
 			? (int)(vm->globals[s_csqc.in_timelength] * 1000.0f) : 1;
-		if (m < 1)
-			m = 1;
-		else if (m > 255)
-			m = 255;
-		pmove.cmd.msec = (byte)m;
 		if (s_csqc.in_angles >= 0)
 		{
 			VectorCopy (&vm->globals[s_csqc.in_angles], pmove.cmd.angles);
@@ -5723,6 +5831,7 @@ void CSQC_Client_RunPlayerPhysics (int entnum)
 			return;
 		pmove.cmd = s_inhist[s_last_seq % CSQC_INHIST].cmd;
 		VectorCopy (pmove.cmd.angles, pmove.angles);
+		msecs = pmove.cmd.msec;
 	}
 
 	// --- entity state ---
@@ -5780,9 +5889,7 @@ void CSQC_Client_RunPlayerPhysics (int entnum)
 	CL_SetSolidPlayers (cl.playernum);
 
 	// --- chunks <=50 ms ---
-	msecs = pmove.cmd.msec;
-	if (msecs <= 0)
-		msecs = 1;
+	// FTE: while (msecs > 0) - a zero/negative duration performs no step.
 	while (msecs > 0)
 	{
 		int step = (msecs > 50) ? 50 : msecs;
