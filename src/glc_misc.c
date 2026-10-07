@@ -48,9 +48,6 @@ void GLC_BrightenScreen(void)
 {
 	float f;
 
-	if (vid_hwgamma_enabled) {
-		return;
-	}
 	if (v_contrast.value <= 1.0) {
 		return;
 	}

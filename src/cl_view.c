@@ -30,9 +30,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_matrix.h"
 #include "pmove.h"
 
-#ifdef X11_GAMMA_WORKAROUND
-#include "tr_types.h"
-#endif
 #include "r_local.h"
 #include "r_renderer.h"
 #include "r_brushmodel.h"
@@ -80,9 +77,6 @@ cvar_t	crosshaircolor = {"crosshaircolor", "255 0 0", CVAR_COLOR};
 cvar_t	crosshairsize	= {"crosshairsize", "1"};
 cvar_t  cl_crossx = {"cl_crossx", "0"};
 cvar_t  cl_crossy = {"cl_crossy", "0"};
-
-// gamma updates are expensive in hw: update at lower fps, otherwise drops are severe
-static cvar_t vid_hwgamma_fps = { "vid_hwgamma_fps", "60" };
 
 // QW262: less flash grenade effect in demos
 cvar_t cl_demoplay_flash       = { "cl_demoplay_flash",      "0.33" };
@@ -254,16 +248,9 @@ cshift_t	cshift_slime = { {0,25,5}, 150 };
 cshift_t	cshift_lava = { {255,80,0}, 150 };
 
 cvar_t		gl_cshiftpercent = {"gl_cshiftpercent", "100"};
-cvar_t		gl_hwblend = {"gl_hwblend", "0"};
 float		v_blend[4];		// rgba 0.0 - 1.0
 cvar_t		v_gamma = {"gl_gamma", "1.0"};
 cvar_t		v_contrast = {"gl_contrast", "1.0"};
-
-#ifdef X11_GAMMA_WORKAROUND
-unsigned short ramps[3][4096];
-#else
-unsigned short	ramps[3][256];
-#endif
 
 void V_ParseDamage (void)
 {
@@ -627,96 +614,6 @@ void V_AddLightBlend(float r, float g, float b, float a2, qbool suppress_polyble
 	v_blend[0] = v_blend[0] * (1 - a2) + r * a2;
 	v_blend[1] = v_blend[1] * (1 - a2) + g * a2;
 	v_blend[2] = v_blend[2] * (1 - a2) + b * a2;
-}
-
-void V_UpdatePalette (void)
-{
-	int i, j, c;
-	float current_gamma, current_contrast, a, rgb[3];
-	static float prev_blend[4] = { 0, 0, 0, 0 };
-	static float old_gamma = 1, old_contrast = 1;
-	static qbool old_change_palette = false;
-	static double last_set = 0;
-	extern float vid_gamma;
-	float hw_vblend[4];
-	// whether or not to include content/damage palette shifts as part of the hw gamma
-	qbool change_palette = (vid_hwgamma_enabled && gl_hwblend.value && !cl.teamfortress);
-	int change_flags = 0;
-
-	if (change_palette) {
-		memcpy(hw_vblend, v_blend, sizeof(hw_vblend));
-	}
-	else {
-		memset(hw_vblend, 0, sizeof(hw_vblend));
-	}
-	current_gamma = (vid_hwgamma_enabled ? bound(0.3, v_gamma.value, 3) : 1);
-	current_contrast = (vid_hwgamma_enabled ? bound(1, v_contrast.value, 3) : 1);
-
-	change_flags |= (memcmp(hw_vblend, prev_blend, sizeof(hw_vblend)) ? 1 : 0);
-	change_flags |= (current_gamma != old_gamma || v_gamma.modified ? 2 : 0);
-	change_flags |= (current_contrast != old_contrast ? 4 : 0);
-	change_flags |= (change_palette != old_change_palette ? 8 : 0);
-
-	if (!change_flags) {
-		return;
-	}
-
-	// don't update if not enough time has passed & only palette updating
-	if (change_flags == 1 && vid_hwgamma_fps.integer && curtime < last_set + (1.0f / max(10, vid_hwgamma_fps.integer))) {
-		return;
-	}
-
-	// store flags
-	old_change_palette = change_palette;
-	prev_blend[0] = hw_vblend[0];
-	prev_blend[1] = hw_vblend[1];
-	prev_blend[2] = hw_vblend[2];
-	prev_blend[3] = hw_vblend[3];
-	old_gamma = current_gamma;
-	old_contrast = current_contrast;
-	last_set = curtime;
-	v_gamma.modified = false;
-	if (developer.integer == 3) {
-		Con_DPrintf("palette: change_flags %d [%d %d %d %d] %.2f %.2f\n", change_flags, (int)(hw_vblend[0] * 255), (int)(hw_vblend[1] * 255), (int)(hw_vblend[2] * 255), (int)(hw_vblend[3] * 255), current_gamma, current_contrast);
-	}
-
-	a = hw_vblend[3];
-	if (R_OldGammaBehaviour() && vid_gamma != 1.0) {
-		current_contrast = pow(current_contrast, vid_gamma);
-		current_gamma = current_gamma / vid_gamma;
-	}
-
-	// Have to do this in a loop these days as certain color ranges will be blocked by OS
-	do {
-		float std_alpha;
-
-		rgb[0] = 255 * hw_vblend[0] * a;
-		rgb[1] = 255 * hw_vblend[1] * a;
-		rgb[2] = 255 * hw_vblend[2] * a;
-
-		std_alpha = 1 - a;
-
-#ifdef X11_GAMMA_WORKAROUND
-		std_alpha *= 256.0 / glConfig.gammacrap.size;
-		for (i = 0; i < glConfig.gammacrap.size; i++) {
-#else
-		for (i = 0; i < 256; i++) {
-#endif
-			for (j = 0; j < 3; j++) {
-				// apply blend and contrast
-				c = (i * std_alpha + rgb[j]) * current_contrast;
-				if (c > 255) {
-					c = 255;
-				}
-				// apply gamma
-				c = 255 * pow(c / 255.5, current_gamma) + 0.5;
-				c = bound(0, c, 255);
-				ramps[j][i] = c << 8;
-			}
-		}
-
-		a *= 0.8;
-	} while (VID_SetDeviceGammaRamp((unsigned short *)ramps) && a > 0.1);
 }
 
 // BorisU -->
@@ -1210,8 +1107,6 @@ void V_Init (void) {
 	Cvar_Register(&v_dlightcolor);
 	Cvar_Register(&v_dlightcshiftpercent);
 	Cvar_Register(&gl_cshiftpercent);
-	Cvar_Register(&gl_hwblend);
-	Cvar_Register(&vid_hwgamma_fps);
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_SCREEN);
 	Cvar_Register(&v_gamma);
