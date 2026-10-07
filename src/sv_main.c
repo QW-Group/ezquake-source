@@ -68,8 +68,8 @@ cvar_t	zombietime = {"zombietime", "2"};	// seconds to sink messages
 // after disconnect
 
 #ifdef SERVERONLY
-cvar_t	rcon_password = {"rcon_password", ""};	// password for remote server commands
-cvar_t	password = {"password", ""};	// password for entering the game
+cvar_t	rcon_password = {"rcon_password", "", CVAR_NOTFROMSERVER};	// password for remote server commands
+cvar_t	password = {"password", "", CVAR_NOTFROMSERVER};	// password for entering the game
 #else
 // client already have such variables.
 extern cvar_t rcon_password;

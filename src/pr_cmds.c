@@ -1195,6 +1195,11 @@ void PF_cvar_set (void)
 		return;
 	}
 
+	// A cvar flagged CVAR_NOTFROMSERVER must not be set by gamecode (FTE parity:
+	// fteqw/engine/common/pr_bgcmd.c:1966).
+	if (var->flags & CVAR_NOTFROMSERVER)
+		return;
+
 	Cvar_Set (var, val);
 }
 

@@ -67,12 +67,12 @@ cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 				"track,wait"
 
 static void OnChange_remote_capabilities(cvar_t *var, char *string, qbool *cancel);
-cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, 0,
+cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, CVAR_NOTFROMSERVER,
 				   OnChange_remote_capabilities};
 hashtable_t *rc_hash;
 
-cvar_t cl_allow_downloads = {"cl_allow_downloads", "bsp,lmp,loc,mdl,mvd,pcx,spr,wad,wav"};
-cvar_t cl_allow_uploads = {"cl_allow_uploads", "0"};
+cvar_t cl_allow_downloads = {"cl_allow_downloads", "bsp,lmp,loc,mdl,mvd,pcx,spr,wad,wav", CVAR_NOTFROMSERVER};
+cvar_t cl_allow_uploads = {"cl_allow_uploads", "0", CVAR_NOTFROMSERVER};
 
 cbuf_t cbuf_main;
 cbuf_t cbuf_svc;

@@ -299,6 +299,11 @@ void Cvar_SetByName (const char *var_name, char *value)
 		return;
 	}
 
+	// Gamecode entry point (PR2 G_CVAR_SET / G_CVAR_SET_FLOAT, pr2_cmds.c) must not set a
+	// cvar flagged CVAR_NOTFROMSERVER (FTE parity: fteqw/engine/common/pr_bgcmd.c:1966).
+	if (var->flags & CVAR_NOTFROMSERVER)
+		return;
+
 	Cvar_Set (var, value);
 }
 
@@ -512,6 +517,18 @@ qbool Cvar_Command (void)
 	}
 	else {
 #ifndef SERVERONLY
+		// A cvar flagged CVAR_NOTFROMSERVER must not be set from the svc source
+		// (remote svc_stufftext / module localcmd -> cbuf_svc). FTE parity:
+		// CVAR_NOTFROMSERVER + Cmd_IsInsecure (fteqw/engine/common/cvar.c:1524); here
+		// insecure is approximated by the svc source cbuf (user console = cbuf_main
+		// unaffected). cbuf_server is NOT gated here: ezq runs "exec server.cfg" through
+		// it on first map (sv_init.c:284), so blocking it would break listen server.cfg
+		// (documented deviation).
+		if ((v->flags & CVAR_NOTFROMSERVER) && cbuf_current == &cbuf_svc) {
+			Con_Printf ("Server tried setting %s cvar\n", v->name);
+			return true;
+		}
+
 		// RestrictTriggers means that advanced (possibly cheaty) scripts are not allowed
 		// So we will force the usage of user-created variables to go through the set command
 		if (cbuf_current == &cbuf_server) {
@@ -793,6 +810,10 @@ void Cvar_Set_f (void)
 	var = Cvar_Find (var_name);
 
 	if (var) {
+		if ((var->flags & CVAR_NOTFROMSERVER) && cbuf_current == &cbuf_svc) {
+			Con_Printf ("Server tried setting %s cvar\n", var_name);
+			return;
+		}
 		Cvar_Set(var, Cmd_Argv(2));
 	}
 	else {
@@ -820,6 +841,10 @@ void Cvar_Inc_f(void)
 	var = Cvar_Find(Cmd_Argv(1));
 	if (!var) {
 		Con_Printf("Unknown variable \"%s\"\n", Cmd_Argv(1));
+		return;
+	}
+	if ((var->flags & CVAR_NOTFROMSERVER) && cbuf_current == &cbuf_svc) {
+		Con_Printf ("Server tried setting %s cvar\n", var->name);
 		return;
 	}
 	delta = (c == 3) ? atof(Cmd_Argv(2)) : 1;

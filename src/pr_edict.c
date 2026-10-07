@@ -80,7 +80,7 @@ func_t mod_ConsoleCmd, mod_UserCmd;
 func_t mod_UserInfo_Changed, mod_localinfoChanged;
 func_t mod_ChatMessage;
 
-cvar_t	sv_progsname = {"sv_progsname", "qwprogs"};
+cvar_t	sv_progsname = {"sv_progsname", "qwprogs", CVAR_NOTFROMSERVER};
 #ifdef WITH_NQPROGS
 cvar_t  sv_forcenqprogs = {"sv_forcenqprogs", "0"};
 #endif

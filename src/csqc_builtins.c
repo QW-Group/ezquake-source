@@ -2658,7 +2658,9 @@ static void csqc_cvar_defstring (void)
 /*
  float(string cvarname) cvar_type = #495
  FTE flags: EXISTS=1 SAVED=2 PRIVATE=4 ENGINE=8 HASDESCRIPTION=16 READONLY=32.
- Mapping to ezq: SAVED = CVAR_ARCHIVE|CVAR_USER_ARCHIVE; ENGINE = not
+ Mapping to ezq: SAVED = CVAR_ARCHIVE|CVAR_USER_ARCHIVE; PRIVATE = CVAR_NOTFROMSERVER
+ (fteqw/engine/common/pr_bgcmd.c:1944 sets PRIVATE for NOTFROMSERVER|NOUNSAFEEXPAND;
+ ezq has no NOUNSAFEEXPAND analog - documented deviation); ENGINE = not
  CVAR_USER_CREATED/MOD_CREATED; READONLY = CVAR_ROM. The cvar need not exist.
 */
 static void csqc_cvar_type (void)
@@ -2675,6 +2677,8 @@ static void csqc_cvar_type (void)
 		ret |= 1;	// EXISTS
 		if (v->flags & (CVAR_ARCHIVE | CVAR_USER_ARCHIVE))
 			ret |= 2;	// SAVED
+		if (v->flags & CVAR_NOTFROMSERVER)
+			ret |= 4;	// PRIVATE
 		if (v->flags & CVAR_ROM)
 			ret |= 32;	// READONLY
 		if (!(v->flags & (CVAR_USER_CREATED | CVAR_MOD_CREATED)))
@@ -3182,8 +3186,9 @@ static void csqc_localcmd (void)
 */
 /*
  void(string cvarname, string value) cvar_set = #72 - FTE parity (PF_cvar_set): FTE
- uses FindOrGet - a missing cvar is created. Deviation: the CVAR_NOTFROMSERVER guard
- is not reproducible (client).
+ uses FindOrGet - a missing cvar is created. CVAR_NOTFROMSERVER guard mirrors
+ fteqw/engine/common/pr_bgcmd.c:1966: a cvar flagged as not-settable-from-server is
+ silently not written (the module is an untrusted source).
 */
 static void csqc_cvar_set (void)
 {
@@ -3199,7 +3204,7 @@ static void csqc_cvar_set (void)
 	var = Cvar_Find (name);
 	if (!var)
 		var = Cvar_Create (name, "", 0);	// FindOrGet: create if missing
-	if (var)
+	if (var && !(var->flags & CVAR_NOTFROMSERVER))
 		Cvar_Set (var, val ? val : "");
 }
 

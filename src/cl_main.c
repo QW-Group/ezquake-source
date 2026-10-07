@@ -98,31 +98,31 @@ void CL_ParseHiddenDataMessage(void);
 
 static void AuthUsernameChanged(cvar_t* var, char* value, qbool* cancel);
 
-cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
-cvar_t	rcon_password = {"rcon_password", ""};
-cvar_t	rcon_address = {"rcon_address", ""};
-cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1"};
+cvar_t	allow_scripts = {"allow_scripts", "2", CVAR_NOTFROMSERVER, Rulesets_OnChange_allow_scripts};
+cvar_t	rcon_password = {"rcon_password", "", CVAR_NOTFROMSERVER};
+cvar_t	rcon_address = {"rcon_address", "", CVAR_NOTFROMSERVER};
+cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1", CVAR_NOTFROMSERVER};
 
-cvar_t	cl_timeout = {"cl_timeout", "60"};
+cvar_t	cl_timeout = {"cl_timeout", "60", CVAR_NOTFROMSERVER};
 
-cvar_t	cl_delay_packet = {"cl_delay_packet", "0", 0, Rulesets_OnChange_cl_delay_packet};
-cvar_t  cl_delay_packet_target = { "cl_delay_packet_target", "0", 0, Rulesets_OnChange_cl_delay_packet };
-cvar_t  cl_delay_packet_dev = { "cl_delay_packet_deviation", "0", 0, Rulesets_OnChange_cl_delay_packet };
+cvar_t	cl_delay_packet = {"cl_delay_packet", "0", CVAR_NOTFROMSERVER, Rulesets_OnChange_cl_delay_packet};
+cvar_t  cl_delay_packet_target = { "cl_delay_packet_target", "0", CVAR_NOTFROMSERVER, Rulesets_OnChange_cl_delay_packet };
+cvar_t  cl_delay_packet_dev = { "cl_delay_packet_deviation", "0", CVAR_NOTFROMSERVER, Rulesets_OnChange_cl_delay_packet };
 
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
-cvar_t  cl_pext = {"cl_pext", "1"};					// allow/disallow protocol extensions at all.
+cvar_t  cl_pext = {"cl_pext", "1", CVAR_NOTFROMSERVER};	// allow/disallow protocol extensions at all.
 													// some extensions can be explicitly controlled.
-cvar_t  cl_pext_limits = { "cl_pext_limits", "1" }; // enhanced protocol limits
-cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
+cvar_t  cl_pext_limits = { "cl_pext_limits", "1", CVAR_NOTFROMSERVER }; // enhanced protocol limits
+cvar_t  cl_pext_other = {"cl_pext_other", "0", CVAR_NOTFROMSERVER};		// extensions which does not have own variables should be controlled by this variable.
 #ifdef FTE_PEXT_CSQC
 #ifndef CLIENTONLY
-cvar_t  cl_pext_csqc = {"cl_pext_csqc", "1"};			// CSQC (our client PR1VM, csqc_client.c)
+cvar_t  cl_pext_csqc = {"cl_pext_csqc", "1", CVAR_NOTFROMSERVER};			// CSQC (our client PR1VM, csqc_client.c)
  // Allow downloading csprogs.dat from the server.
-cvar_t  cl_download_csprogs = {"cl_download_csprogs", "1", CVAR_ARCHIVE};
+cvar_t  cl_download_csprogs = {"cl_download_csprogs", "1", CVAR_ARCHIVE | CVAR_NOTFROMSERVER};
 #endif
 #endif
-cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1" }; // if set, user will be warned when saving demos that are not backwards compatible
+cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1", CVAR_NOTFROMSERVER }; // if set, user will be warned when saving demos that are not backwards compatible
 cvar_t  cl_pext_lagteleport = { "cl_pext_lagteleport", "1" }; // server-side adjustment of yaw angle through teleports
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 cvar_t  cl_pext_serversideweapon = { "cl_pext_serversideweapon", "0", 0, onchange_pext_serversideweapon }; // server-side weapon selection
@@ -255,7 +255,7 @@ cvar_t r_lightmap_lateupload    = {"r_lightmap_lateupload", "0"};
 cvar_t r_lightmap_packbytexture = {"r_lightmap_packbytexture", "2"};
 
 // info mirrors
-cvar_t  password                = {"password", "", CVAR_USERINFO};
+cvar_t  password                = {"password", "", CVAR_USERINFO | CVAR_NOTFROMSERVER};
 cvar_t  spectator               = {"spectator", "", CVAR_USERINFO_NO_CFG_RESET };
 void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel);
 cvar_t  name                    = {"name", "player", CVAR_USERINFO, CL_OnChange_name_validate};
