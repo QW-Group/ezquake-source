@@ -5223,7 +5223,28 @@ static void csqc_setkeybind (void)
 	if (!vm)
 		return;
 	if (keynum >= 0 && keynum < UNKNOWN + 256)
+	{
+		// PR #1160 WS2-C: a downloaded (untrusted) module must not bind a key to a
+		// registered local command/cvar outside the remote allowlist - the bind would
+		// later be executed in cbuf_main, past the cbuf_svc-only Cmd_RemoteAllowed
+		// check. Only *known* local names are gated; an unknown token (server-side
+		// "+command" such as +b9probe) is accepted, matching FTE (insecure bind).
+		if (binding && binding[0])
+		{
+			static tokenizecontext_t bindgate_tokencontext;
+			char *tok;
+
+			Cmd_TokenizeStringEx (&bindgate_tokencontext, binding);
+			tok = Cmd_ArgvEx (&bindgate_tokencontext, 0);
+			if (tok && tok[0] && (Cmd_FindCommand (tok) || Cvar_Find (tok)) && !Cmd_RemoteAllowed (tok))
+			{
+				Con_DPrintf ("Blocked setkeybind on \"%s\": not in remote capabilities\n", tok);
+				return;
+			}
+		}
+
 		Key_SetBinding (keynum, binding ? binding : "");
+	}
 }
 
 /* #520 keynumtostring_omgwtf / #609 keynumtostring_menu - like #340 (QC domain) */

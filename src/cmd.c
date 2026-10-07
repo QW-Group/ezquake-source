@@ -58,18 +58,56 @@ cvar_t cl_warncmd = {"cl_warncmd", "1"};
 cvar_t cl_warnexec = {"cl_warnexec", "1"};
 cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 
+/*
+Built-in client input verbs (+/-): they only toggle local input state (movement/fire/
+look/scoreboard/zoom) and can never be a privileged local command, so they are always
+remote-allowed. Without this a downloaded CSQC module could not remap a key to
++forward/+jump/... via setkeybind (#630) - those are registered commands but absent
+from the base allowlist (PR #1160 WS2-C review finding). Deliberately excluded:
++voip (a remote +voip would open the local mic - privacy) and mode-specific
++cl_wp_stats/+qtv_delay (add here if a module needs them).
+*/
+#define INPUT_CAPABILITIES "+moveup,-moveup,+movedown,-movedown,+left,-left,+right,-right," \
+			   "+forward,-forward,+back,-back,+lookup,-lookup,+lookdown,-lookdown," \
+			   "+strafe,-strafe,+moveleft,-moveleft,+moveright,-moveright,+speed,-speed," \
+			   "+fire,-fire,+fire_ar,-fire_ar,+attack2,-attack2,+use,-use,+jump,-jump," \
+			   "+klook,-klook,+mlook,-mlook,+showscores,-showscores,+showteamscores," \
+			   "-showteamscores,+zoom,-zoom"
+
 #define REMOTE_CAPABILITIES "+attack,-attack,alias,bf,changing,cmd,color,download,exec,fullserverinfo," \
 				"impulse,infoset,ktx_infoset,ktx_sinfoset,nextul,on_admin,on_connect," \
 				"on_connect_ctf,on_connect_ffa,on_enter,on_enter_ctf,on_enter_ffa,on_matchend," \
 				"on_matchstart,on_observe,on_observe_ctf,on_observe_ffa,on_spec_enter," \
 				"on_spec_enter_ctf,on_spec_enter_ffa,on_spec_matchend,on_spec_matchstart," \
 				"on_unadmin,packet,play,rate,reconnect,say,sinfoset,skin,skins,team,tempalias," \
-				"track,wait"
+				"track,wait," INPUT_CAPABILITIES
 
 static void OnChange_remote_capabilities(cvar_t *var, char *string, qbool *cancel);
 cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, CVAR_NOTFROMSERVER,
 				   OnChange_remote_capabilities};
 hashtable_t *rc_hash;
+
+/*
+TF-scoped remote capabilities (user-clearable cl_remote_capabilities_tf).
+
+Classic Team Fortress servers stuffcmd client-side cvars/commands (fov, v_cshift,
+v_idlescale, cl_movespeedkey, setinfo, bind, ...) that are not part of the upstream
+default cl_remote_capabilities allowlist. Like the existing TF impulse allowlist
+(AllowedImpulse below), these are permitted only when the connected server is Team
+Fortress (gamedir "fortress"). Default equals the previously hardcoded TF list;
+a user may clear the cvar to disable the whole TF set (ADR 0044 update).
+*/
+#define TF_REMOTE_CAPABILITIES "fov,v_cshift,v_idlescale," \
+				"v_iyaw_cycle,v_iroll_cycle,v_ipitch_cycle," \
+				"v_iyaw_level,v_iroll_level,v_ipitch_level," \
+				"cl_movespeedkey,cl_forwardspeed,cl_backspeed,cl_sidespeed,cl_upspeed," \
+				"cl_rollangle,sensitivity,setinfo,bind,reload,screenshot,disconnect"
+
+static void OnChange_remote_capabilities_tf(cvar_t *var, char *string, qbool *cancel);
+cvar_t cl_remote_capabilities_tf = {"cl_remote_capabilities_tf", TF_REMOTE_CAPABILITIES,
+				    CVAR_ARCHIVE | CVAR_NOTFROMSERVER, OnChange_remote_capabilities_tf};
+static hashtable_t *rc_tf_hash;
+static char rc_tf_marker;	// non-NULL payload stored in rc_tf_hash (never freed)
 
 cvar_t cl_allow_downloads = {"cl_allow_downloads", "bsp,lmp,loc,mdl,mvd,pcx,spr,wad,wav", CVAR_NOTFROMSERVER};
 cvar_t cl_allow_uploads = {"cl_allow_uploads", "0", CVAR_NOTFROMSERVER};
@@ -141,42 +179,64 @@ add:
 	Q_free(tmp);
 }
 
-/*
-TF-scoped remote capabilities.
-
-Classic Team Fortress servers stuffcmd client-side cvars/commands (fov, v_cshift,
-v_idlescale, cl_movespeedkey, setinfo, bind, ...) that are not part of the upstream
-default cl_remote_capabilities allowlist. Like the existing TF impulse allowlist
-(AllowedImpulse below), these are permitted only when the connected server is Team
-Fortress (gamedir "fortress"). Non-TF servers keep the upstream allowlist unchanged.
-*/
-static const char *tf_remote_capabilities[] = {
-	"fov", "v_cshift", "v_idlescale",
-	"v_iyaw_cycle", "v_iroll_cycle", "v_ipitch_cycle",
-	"v_iyaw_level", "v_iroll_level", "v_ipitch_level",
-	"cl_movespeedkey", "cl_forwardspeed", "cl_backspeed", "cl_sidespeed", "cl_upspeed",
-	"cl_rollangle", "sensitivity", "setinfo", "bind", "reload", "screenshot", "disconnect",
-	NULL
-};
-
-static qbool Cmd_IsTFCapability (const char *name)
+static void OnChange_remote_capabilities_tf(cvar_t *var, char *string, qbool *cancel)
 {
-	int i;
+	char *cmd, *tmp;
 
-	for (i = 0; tf_remote_capabilities[i]; i++) {
-		if (!strcmp(tf_remote_capabilities[i], name))
-			return true;
+	// Mirrors OnChange_remote_capabilities: remote capabilities may only be changed
+	// while disconnected, so a cleared TF set takes effect on the next connect.
+	if (cls.state != ca_disconnected)
+	{
+		Com_Printf("You cannot change remote capabilities unless you are disconnected\n");
+		return;
 	}
 
-	return false;
+	if (!rc_tf_hash)
+	{
+		rc_tf_hash = Hash_InitTable(64);
+	}
+	else
+	{
+		Hash_Flush(rc_tf_hash);
+	}
+
+	if (!string || string[0] == 0)
+		return;
+
+	tmp = Q_strdup(string);
+	cmd = strtok(tmp, ",");
+	while (cmd != NULL)
+	{
+		Com_DPrintf("Adding %s to TF capabilities\n", cmd);
+
+		if (!Hash_Get(rc_tf_hash, cmd))
+		{
+			Hash_Add(rc_tf_hash, cmd, &rc_tf_marker);
+		}
+
+		cmd = strtok(NULL, ",");
+	}
+	Q_free(tmp);
 }
 
-static qbool Cmd_RemoteAllowed (const char *name)
+/*
+Remote-allowlist check for commands/cvars executed from a remote source
+(server svc_stufftext -> cbuf_svc) or from the untrusted client CSQC module
+(setkeybind/localcmd gates). Non-TF servers consult only cl_remote_capabilities.
+
+Known residual holes (accept+doc, ADR 0047): command *arguments* are not checked
+(server `bind x quit`); an alias created by a module (`alias` is in the base
+allowlist) then bound via setkeybind to an unknown name bypasses the first-token
+check; and the setkeybind gate inspects only the *first* token, so a multi-command
+bind (`+probe; quit`) is accepted as a whole. Full bind-level clamp is a follow-up
+(ADR 0044).
+*/
+qbool Cmd_RemoteAllowed (const char *name)
 {
 	if (Hash_Get(rc_hash, (char *)name))
 		return true;
 
-	if (cl.teamfortress && Cmd_IsTFCapability(name))
+	if (cl.teamfortress && rc_tf_hash && Hash_Get(rc_tf_hash, (char *)name))
 		return true;
 
 	return false;
@@ -2596,6 +2656,7 @@ void Cmd_Init (void)
 	Cvar_Register(&cl_curlybraces);
 	Cvar_Register(&cl_warnexec);
 	Cvar_Register(&cl_remote_capabilities);
+	Cvar_Register(&cl_remote_capabilities_tf);
 	Cvar_Register(&cl_allow_downloads);
 	Cvar_Register(&cl_allow_uploads);
 
