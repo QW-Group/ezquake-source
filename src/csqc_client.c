@@ -67,7 +67,7 @@ typedef struct csqc_client_state_s
 {
 	pr1vm_t		vm;
 	qbool		loaded;		// module loaded into the instance
-	qbool		inited;		// CSQC_Init called
+	qbool		inited;		// progs loaded, no load-time error (CSQC_Init optional; FTE CSQC_Inited parity)
 	qbool		errored;	// PR_RunError on the client instance (frames disabled)
 	qbool		mayread;	// module may read the net message - parse callbacks only
 						// (CSQC_Ent_Update/CSQC_Parse_Event; FTE csqc_mayread)
@@ -1353,33 +1353,62 @@ static void CSQC_Client_ClearCommands (void)
 	s_csqc.maxcmds = 0;
 }
 
+// Re-entrancy guard for the console catch-all (and the module's own registered
+// commands): the module may issue localcmd, which can hit an unknown command and
+// would otherwise recurse into CSQC_ConsoleCommand. Cleared on module load.
+static qbool s_console_executing;
+
+/*
+=================
+CSQC_Client_ConsoleCommand
+
+Run CSQC_ConsoleCommand(string cmd) and return the module's result (non-zero =
+handled; FTE CSQC_ConsoleCommand, pr_csqc.c:9138-9157). Used by the registered
+command wrapper and by the cmd.c catch-all for unknown commands.
+=================
+*/
+qbool CSQC_Client_ConsoleCommand (const char *line)
+{
+	pr1vm_t *vm = &s_csqc.vm;
+	qbool handled;
+
+	if (!line || !line[0])
+		return false;
+	if (!s_csqc.loaded || !s_csqc.inited || s_csqc.errored)
+		return false;
+	if (s_csqc.func_console <= 0)
+		return false;
+	if (s_console_executing)
+		return false;
+
+	s_console_executing = true;
+	CSQC_Client_SetTime ();
+	PR1VM_ClientSetString (vm, (string_t *)&vm->globals[OFS_PARM0], (char *)line);
+	vm->globals[OFS_RETURN] = 0;
+	PR1VM_ExecuteProgram (vm, (func_t)s_csqc.func_console);
+	handled = (vm->globals[OFS_RETURN] != 0);
+	s_console_executing = false;
+	return handled;
+}
+
 /*
 =================
 CSQC_Client_ConsoleCommand_f
 
 A command registered by the module via registercommand. Rebuild the full line
-("name arg1 arg2 ...") and call CSQC_ConsoleCommand(string cmd).
+("name arg1 arg2 ...") and run CSQC_ConsoleCommand.
 =================
 */
 static void CSQC_Client_ConsoleCommand_f (void)
 {
-	pr1vm_t *vm = &s_csqc.vm;
 	const char *line;
-
-	if (!s_csqc.loaded || !s_csqc.inited || s_csqc.errored)
-		return;
-	if (s_csqc.func_console <= 0)
-		return;
 
 	if (Cmd_Argc () > 1)
 		line = va ("%s %s", Cmd_Argv (0), Cmd_Args ());
 	else
 		line = Cmd_Argv (0);
 
-	CSQC_Client_SetTime ();
-	PR1VM_ClientSetString (vm, (string_t *)&vm->globals[OFS_PARM0], (char *)line);
-	vm->globals[OFS_RETURN] = 0;
-	PR1VM_ExecuteProgram (vm, (func_t)s_csqc.func_console);
+	CSQC_Client_ConsoleCommand (line);
 }
 
 /*
@@ -1498,17 +1527,27 @@ float CSQC_Client_CallPredraw (int slot, int fidx, qbool *removed)
 
 /*
 =================
-CSQC model registry
+CSQC model registry (FTE sign-split index space, pr_csqc.c:676-722)
 
-#20/#75 precache_model registers a model (name->model_t*, 1-based index); #200
-getmodelindex / #333 setmodelindex and the `.modelindex` field work with this index
-(deviation from FTE: FTE has a separate index space for csqc-only models; here it is
-a single registry over Mod_ForName). The index is module-opaque.
+The module-visible model index follows the FTE sign convention:
+- positive `i`  -> server resource (`cl.model_name[i]` / `cl.model_precache[i]`);
+- negative `-i` -> csqc-only slot in this registry (backing store `s_models` /
+  `s_modelnames`, 1-based so slot i is `[-i-1]`);
+- `0`           -> no model.
+
+`CS_FindModel` parity: the csqc layer is searched first, then the server precache.
+#20/#75 precache_model / #200 getmodelindex / #333 setmodelindex / #334
+modelnameforindex and the `.modelindex` field all share this domain. The index is
+module-opaque for our module (`!= 0` / round-trip).
 
 precache_model re-trigger: the name is registered even when the file is missing
 (Mod_ForName returns NULL) - the slot holds a NULL placeholder, but the index stays
 stable. After a successful download the placeholder is filled in
 CSQC_Client_ModelDownloadFinished (drop-in without the module re-precaching).
+
+Deviation from FTE: capacity CSQC_MAX_MODELS=512 (FTE MAX_CSMODELS=2048), soft 0 on
+exhaustion (no Host_EndGame), and no separate model_csqcprecache array - `s_models`
+is reused as the csqc layer.
 =================
 */
 #define CSQC_MAX_MODELS 512
@@ -1521,9 +1560,18 @@ int CSQC_Client_ModelIndexKnown (const char *name)
 	int i;
 	if (!name || !name[0])
 		return 0;
+	// csqc layer first (FTE CS_FindModel order)
 	for (i = 0; i < s_nmodels; i++)
 		if (!strcmp (s_modelnames[i], name))
-			return i + 1;
+			return -(i + 1);
+	// server precache (positive)
+	for (i = 1; i < MAX_MODELS; i++)
+	{
+		if (!cl.model_name[i][0])
+			break;
+		if (!strcmp (cl.model_name[i], name))
+			return i;
+	}
 	return 0;
 }
 
@@ -1542,18 +1590,27 @@ int CSQC_Client_ModelIndex (const char *name)
 	m = Mod_ForName (name, false);
 	strlcpy (s_modelnames[s_nmodels], name, MAX_QPATH);
 	s_models[s_nmodels] = m;
-	return ++s_nmodels;
+	// negative csqc slot (FTE: modelindex = -freei with freei < 0)
+	return -(++s_nmodels);
 }
 
 struct model_s *CSQC_Client_ModelForIndex (int idx)
 {
-	return (idx >= 1 && idx <= s_nmodels) ? s_models[idx - 1] : NULL;
+	if (idx > 0 && idx < MAX_MODELS)
+		return cl.model_precache[idx];
+	if (idx < 0 && -idx <= s_nmodels)
+		return s_models[-idx - 1];
+	return NULL;
 }
 
-/* #334 modelnameforindex: reverse lookup of a CSQC registry index. */
+/* #334 modelnameforindex: reverse lookup across both index spaces. */
 const char *CSQC_Client_ModelNameForIndex (int idx)
 {
-	return (idx >= 1 && idx <= s_nmodels) ? s_modelnames[idx - 1] : NULL;
+	if (idx > 0 && idx < MAX_MODELS && cl.model_name[idx][0])
+		return cl.model_name[idx];
+	if (idx < 0 && -idx <= s_nmodels)
+		return s_modelnames[-idx - 1];
+	return NULL;
 }
 
 void CSQC_Client_ModelReset (void)
@@ -3866,6 +3923,7 @@ static qbool CSQC_Client_Load (const char *path)
 	CSQC_Client_OffsetCacheReset ();	// hot-path offsets, before resolve
 	s_last_seq = 0;
 	s_ccframe = 0;
+	s_console_executing = false;
 
 	vm = &s_csqc.vm;
 	vm->host_error = CSQC_Client_HostError;
@@ -4037,8 +4095,13 @@ static qbool CSQC_Client_Load (const char *path)
 		PR1VM_ClientSetString (vm, (string_t *)&vm->globals[OFS_PARM1], "ezQuake");
 		vm->globals[OFS_PARM2] = VERSION_NUM;
 		CSQC_Client_Exec (s_csqc.func_init);
-		s_csqc.inited = !s_csqc.errored;
 	}
+	// FTE parity (CSQC_Inited = csqcprogs != NULL, pr_csqc.c:7840-7845): module
+	// availability does not depend on the optional CSQC_Init callback. It is set
+	// unconditionally - "progs loaded and not broken" - so an Init-less module still
+	// receives entities/events/frames/console (all inited-gated sites). A failed
+	// CSQC_Init left errored=true, so inited stays false.
+	s_csqc.inited = !s_csqc.errored;
 	// Right after CSQC_Init notify the module about renderer (re)init - FTE parity
 	// (CSQC_RendererRestarted(true)), before the first CSQC_WorldLoaded.
 	CSQC_Client_RendererRestarted (R_RendererDescription ());
@@ -4724,9 +4787,12 @@ void CSQC_Client_Update (void)
 	if (!s_csqc.world_done)
 	{
 		s_csqc.world_done = true;
-		if (!CSQC_Client_Exec (s_csqc.func_world))
+		// CSQC_WorldLoaded is optional (FTE parity, pr_csqc.c:8409-8410): call it
+		// only when declared. A module that errors inside it does not become ready.
+		if (s_csqc.func_world > 0 && !CSQC_Client_Exec (s_csqc.func_world))
 			return;
-		// FTE: enablecsqc - after CSQC_WorldLoaded of each map (module ready).
+		// FTE: enablecsqc once per map for an available module, independent of
+		// CSQC_WorldLoaded (cl_parse.c:1524-1530).
 		CSQC_Client_NotifyCSQC (true);
 	}
 
@@ -5223,10 +5289,17 @@ void CSQC_Client_ParseEntities (qbool sized)
 	unsigned int entnum;
 	qbool removeflag;
 	qbool ready;
+	int isnew;
 	// csqc_dbg is a module-owned cvar (registercvar #93); it can be unset/recreated
 	// between frames, so resolve it per call instead of caching a pointer that can
 	// dangle (ADR 0032/debug-hygiene).
 	cvar_t *dbg = Cvar_Find ("csqc_dbg");
+
+	// FTE parity (pr_csqc.c:9585-9588): publish the prediction frames before the
+	// entity loop, so CSQC_Ent_Update sees the current parse-time frames
+	// (servercommandframe == cl.parsecount) rather than the previous render frame.
+	// Numeration/window are unchanged (ADR 0025).
+	CSQC_Client_PatchFrames ();
 
 	// Runtime gate (as cl_parse.c case 83/90) + a live module. Without the gate or
 	// module, 76/92 are not treated as CSQC. A sized stream can be walked without a
@@ -5309,7 +5382,12 @@ void CSQC_Client_ParseEntities (qbool sized)
 			continue;
 		}
 
-		vm->globals[OFS_PARM0] = s_csqc.seen[entnum] ? 0 : 1;
+		// isnew (FTE parity): 1 for the first update of a network entity, 0 after.
+		// Save it across the spawn/alloc branch - CSQC_Ent_Spawn writes PARM0 (the
+		// server number) and would otherwise clobber the isnew argument that
+		// CSQC_Ent_Update must see (FTE re-asserts PARM0=true after the spawn).
+		isnew = s_csqc.seen[entnum] ? 0 : 1;
+		vm->globals[OFS_PARM0] = (float)isnew;
 		s_csqc.seen[entnum] = true;
 
 		// number->slot; a new number gets a pool slot or CSQC_Ent_Spawn, context
@@ -5358,6 +5436,10 @@ void CSQC_Client_ParseEntities (qbool sized)
 			else if (s_csqc.global_self >= 0)
 				*(int *)&vm->globals[s_csqc.global_self] = 0;	// FTE: self = NULL/world
 		}
+
+		// Restore the isnew argument the spawn/alloc branch may have clobbered
+		// (FTE pr_csqc.c:9666: G_FLOAT(OFS_PARM0)=true for a new entity).
+		vm->globals[OFS_PARM0] = (float)isnew;
 
 		s_csqc.mayread = true;	// read* context of the module (FTE csqc_mayread parity)
 		CSQC_Client_Exec (s_csqc.func_entupdate);
@@ -6333,6 +6415,7 @@ void CSQC_Client_Disconnect (void)
 	CSQC_Client_OffsetCacheReset ();	// hot-path offsets
 	s_last_seq = 0;
 	s_ccframe = 0;
+	s_console_executing = false;	// a longjmp'd console call must not wedge the guard
 }
 
 #endif // !CLIENTONLY

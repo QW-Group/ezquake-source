@@ -50,6 +50,12 @@ static macro_command_t macro_commands[num_macros] = {
 
 qbool CL_CheckServerCommand (void);
 
+#ifdef FTE_PEXT_CSQC
+// CSQC module console catch-all (implemented in csqc_client.c). Returns true if the
+// module's CSQC_ConsoleCommand handled the line (FTE cmd.c:3080-3085).
+qbool CSQC_Client_ConsoleCommand (const char *line);
+#endif
+
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
 static int gtf = 0; // global trigger flag
 
@@ -2129,6 +2135,23 @@ checkaliases:
 		if (Cvar_CreateTempVar())
 			goto done;
 	}
+
+#ifdef FTE_PEXT_CSQC
+	// CSQC console catch-all (FTE cmd.c:3080-3085): an unknown command (including a
+	// server stuffcmd) is offered to the module's CSQC_ConsoleCommand. A non-zero
+	// return means "handled" and suppresses the "Unknown command" diagnostic below.
+	// The helper is a no-op (returns false) without a loaded module, so the plain
+	// client is unaffected; it also guards against console re-entry.
+	{
+		char line[1024];
+		if (Cmd_Argc() > 1)
+			snprintf (line, sizeof (line), "%s %s", Cmd_Argv(0), Cmd_Args());
+		else
+			snprintf (line, sizeof (line), "%s", Cmd_Argv(0));
+		if (CSQC_Client_ConsoleCommand (line))
+			goto done;
+	}
+#endif
 
 	if (cbuf_current != &cbuf_svc)
 	{

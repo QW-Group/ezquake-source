@@ -3228,8 +3228,13 @@ static void csqc_objerror (void)
 static void csqc_localcmd (void)
 {
 	char *s = CSQCVM_VarString (0);
+	// Append '\n': Cbuf_ExecuteEx (cmd.c) does not execute a cbuf_svc line without
+	// a trailing newline (guard against partially stuffed aliases), so a command
+	// without it would sit in the buffer forever. All other cbuf_svc producers add
+	// it too (e.g. cl_parse.c svc_stufftext va("%s\n", s)); FTE PF_localcmd executes
+	// its buffer regardless. Without this, module localcmd was a silent no-op on ezq.
 	if (s && s[0])
-		Cbuf_AddTextEx (&cbuf_svc, s);
+		Cbuf_AddTextEx (&cbuf_svc, va ("%s\n", s));
 }
 
 /*
@@ -3838,9 +3843,10 @@ static void csqc_precache_model (void)
 
 /*
  float(string modelname, optional float queryonly) getmodelindex = #200.
- Model index in the CSQC registry (name->Mod_ForName); FTE PF_getmodelindex.
- queryonly!=0 - only look up an already registered one (no load); otherwise register.
- Deviation: a single registry on top of Mod_ForName (FTE has a separate index space).
+ FTE PF_getmodelindex (PF_cs_PrecacheModel_Internal): domain is the sign-split index
+ space - positive = server precache (cl.model_name), negative = csqc-only slot.
+ queryonly!=0 - only look up (no load/registration); otherwise register a missing
+ model as a csqc-only slot. Order: csqc layer then server (FTE CS_FindModel).
 */
 static void csqc_getmodelindex (void)
 {
@@ -3857,10 +3863,8 @@ static void csqc_getmodelindex (void)
 
 /*
  string(float mdlindex) modelnameforindex = #334.
- FTE parity (PF_cs_ModelnameForIndex): reverse index resolution.
- Deviation: ezq has a single positive CSQC registry (getmodelindex returns exactly
- its index), while FTE has csqc slots < 0 and server-precache >= 0. Hence the order:
- CSQC registry -> server cl.model_name[idx]; idx<0 -> "".
+ FTE parity (PF_cs_ModelnameForIndex): reverse resolution across the sign-split index
+ space - idx > 0 -> cl.model_name[idx], idx < 0 -> csqc slot, idx == 0 -> "".
 */
 static void csqc_modelnameforindex (void)
 {
@@ -3872,8 +3876,6 @@ static void csqc_modelnameforindex (void)
 		return;
 	idx = (int)vm->globals[OFS_PARM0];
 	name = CSQC_Client_ModelNameForIndex (idx);
-	if (!name && idx >= 0 && idx < MAX_MODELS)
-		name = cl.model_name[idx];
 	CSQCVM_SetRetStr ((char *)(name ? name : ""));
 }
 
@@ -4038,12 +4040,13 @@ static void csqc_add_one_entity (int e)
 	slot = csqc_ent_slot (vm, e);
 	if (!slot)
 		return;
-	// model: .modelindex with fallback to the .model string
+	// model: .modelindex with fallback to the .model string. FTE sign-split: both a
+	// positive server index and a negative csqc-only index resolve via the accessor.
 	model = NULL;
 	if ((ofs = CSQC_Client_FieldOfs (vm, CSQC_FLD_MODELINDEX)) >= 0)
 	{
 		int mi = (int)slot[ofs];
-		if (mi > 0)
+		if (mi != 0)
 			model = CSQC_Client_ModelForIndex (mi);
 	}
 	if (!model)
@@ -4247,7 +4250,7 @@ static void csqc_setmodel (void)
 	ofs = CSQC_Client_FieldOfs (vm, CSQC_FLD_MODEL);
 	if (ofs >= 0)
 		PR1VM_ClientSetString (vm, (string_t *)&slot[ofs], s);
-	// .modelindex from the CSQC registry (arena edicts are rendered by index)
+	// .modelindex from the sign-split index space (arena edicts render by index)
 	idx = CSQC_Client_ModelIndex (s);
 	ofs = CSQC_Client_FieldOfs (vm, CSQC_FLD_MODELINDEX);
 	if (ofs >= 0)
@@ -4275,9 +4278,10 @@ static void csqc_setmodelindex (void)
 	f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_MODELINDEX));
 	if (f)
 		f[0] = (float)idx;
-	// Resolve the CSQC registry -> .model + bbox. An unresolved/non-positive index ->
-	// .model is left untouched (FTE early-return parity). Single positive index space.
-	model = (idx > 0) ? CSQC_Client_ModelForIndex (idx) : NULL;
+	// Resolve the sign-split index space -> .model + bbox. An unresolved index (0) ->
+	// .model is left untouched (FTE early-return parity). idx > 0 = server model,
+	// idx < 0 = csqc-only slot.
+	model = (idx != 0) ? CSQC_Client_ModelForIndex (idx) : NULL;
 	if (!model)
 		return;
 	name = CSQC_Client_ModelNameForIndex (idx);
