@@ -1340,9 +1340,18 @@ qbool CSQC_Client_SceneViewModel (void)
 	return s_scene_viewmodel;
 }
 
+// r_rmain.c lives in the renderer (render.h is renderer-private and cannot be
+// included here - it redefines the renderer types already pulled in).
+extern void R_CSQC_ApplyModuleView (void);
+
 void CSQC_Client_RenderScene (void)
 {
 	s_scene_rendered = true;
+	// #304 renderscene: derive the render/cull view from r_refdef (the module
+	// camera) before rendering, so the world render matches the module camera even
+	// when the module never called addentities (R_CSQC_BeginCull would then not
+	// have run). Idempotent; ADR 0028.
+	R_CSQC_ApplyModuleView ();
 	R_RenderView ();
 }
 
@@ -2550,10 +2559,6 @@ qbool CSQC_Client_SetViewProperty (int prop, int argc, const float *args)
 }
 
 // Applied after V_CalcRefdef (cl_view.c), only when a CSQC module is active.
-// R_CSQC_ApplyModuleView lives in r_rmain.c (render.h is renderer-private and
-// cannot be included here - it redefines the renderer types already pulled in).
-extern void R_CSQC_ApplyModuleView (void);
-
 void CSQC_Client_ApplyViewProps (void)
 {
 	if (!s_vp_on || !s_csqc.loaded || s_csqc.errored)
@@ -2573,13 +2578,10 @@ void CSQC_Client_ApplyViewProps (void)
 		r_refdef.fov_x = s_vp_fovx;
 	if (s_vp_fovy_set)
 		r_refdef.fov_y = s_vp_fovy;
-
-	// #1: re-derive the render/cull camera from r_refdef after the module view
-	// properties were written, so arena culling (R_CSQC_BeginCull) and the
-	// module's #304 renderscene (R_RenderView) use the module camera instead of
-	// the engine camera from R_SetupFrame (FTE parity; ADR 0028). Scene-gated.
-	if (CSQC_Client_SceneActive ())
-		R_CSQC_ApplyModuleView ();
+	// The module camera itself is derived from r_refdef in the render path instead:
+	// R_CSQC_BeginCull (arena cull) + CSQC_Client_RenderScene (#304). Deriving here
+	// (pre-R_SetupFrame) was redundant and re-snapshotted r_oldviewleaf/r_oldviewleaf2,
+	// desyncing R_MarkLeaves -> stale PVS (ADR 0028).
 }
 
 /*
@@ -4515,7 +4517,9 @@ static void CSQC_Client_PublishSimGlobals (void)
 		// with the FTE QW default (MAX_CLIENTS) when absent/invalid - never 0 on
 		// a live connection (FTE parity; ADR 0034).
 		const char *mc = Info_ValueForKey (cl.serverinfo, "maxclients");
-		int n = (mc && mc[0]) ? atoi (mc) : MAX_CLIENTS;
+		int n = (mc && mc[0]) ? atoi (mc) : 0;
+		if (n <= 0)
+			n = MAX_CLIENTS;	// absent/invalid -> FTE QW default (never 0 when live)
 		vm->globals[s_csqc.g_maxclients] = (float)bound (1, n, MAX_CLIENTS);
 	}
 	if (s_csqc.g_player_localnum >= 0)
@@ -5781,6 +5785,7 @@ A box entity maps onto the global player_mins/maxs (other players' box is the sa
 #define CSQC_MV_NOCLIP	8
 #define CSQC_PMF_JUMP_HELD	1
 #define CSQC_FL_ONGROUND	512
+#define CSQC_PHYSICS_MAX_MSECS	1000	// defensive cap for #347 (module input_timelength)
 
 void CSQC_Client_RunPlayerPhysics (int entnum)
 {
@@ -5807,8 +5812,20 @@ void CSQC_Client_RunPlayerPhysics (int entnum)
 		// FTE (PF_cs_runplayerphysics): msecs = input_timelength*1000; a
 		// zero/negative duration means no physics step (the substep loop is
 		// skipped). No m<1->1 floor (previously forced a 1 ms step).
-		msecs = (s_csqc.in_timelength >= 0)
-			? (int)(vm->globals[s_csqc.in_timelength] * 1000.0f) : 1;
+		if (s_csqc.in_timelength >= 0)
+		{
+			// Defensive ceiling: a module bug / hostile csprogs could pass an
+			// absurd input_timelength. Clamp the magnitude so the float->int cast
+			// is well-defined (huge/NaN is UB) and the substep loop cannot spin for
+			// an unbounded time. FTE has no cap, but a real frame is << 1 s; a
+			// non-positive result still performs no step, matching FTE.
+			float ms = vm->globals[s_csqc.in_timelength] * 1000.0f;
+			if (!(ms >= -(float)CSQC_PHYSICS_MAX_MSECS && ms <= (float)CSQC_PHYSICS_MAX_MSECS))
+				ms = (ms > 0) ? CSQC_PHYSICS_MAX_MSECS : 0;	// +inf -> cap; NaN/-inf/negative -> 0
+			msecs = (int)ms;
+		}
+		else
+			msecs = 1;
 		if (s_csqc.in_angles >= 0)
 		{
 			VectorCopy (&vm->globals[s_csqc.in_angles], pmove.cmd.angles);

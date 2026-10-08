@@ -533,9 +533,13 @@ void V_CalcPowerupCshift(void)
 	}
 }
 
-void V_CalcBlend (void)
+// Fold the current cshift table into v_blend (no per-frame decay) - idempotent,
+// so it is safe to call more than once per frame. Used by V_CalcBlend and by the
+// CSQC module-view re-derivation (R_CSQC_ApplyModuleView), after V_SetContentsColor
+// changed the contents cshift for the module camera's leaf.
+void V_RecalcBlend (void)
 {
-	float r, g, b, a, a2, t;
+	float r, g, b, a, a2;
 	int j;
 	extern cvar_t gl_polyblend;
 
@@ -547,19 +551,6 @@ void V_CalcBlend (void)
 	}
 	else {
 		V_CalcPowerupCshift ();
-	}
-
-	// drop the damage value
-	t = cls.frametime * 150;
-	cl.cshifts[CSHIFT_DAMAGE].percent -= t;
-	if (cl.cshifts[CSHIFT_DAMAGE].percent <= 0) {
-		cl.cshifts[CSHIFT_DAMAGE].percent = 0;
-	}
-
-	// drop the bonus value
-	cl.cshifts[CSHIFT_BONUS].percent -= cls.frametime * 100;
-	if (cl.cshifts[CSHIFT_BONUS].percent <= 0) {
-		cl.cshifts[CSHIFT_BONUS].percent = 0;
 	}
 
 	for (j = 0; j < NUM_CSHIFTS; j++)	{
@@ -590,6 +581,30 @@ void V_CalcBlend (void)
 	v_blend[2] = b / 255.0;
 	v_blend[3] = a;
 	v_blend[3] = bound(0, v_blend[3], 1);
+}
+
+void V_CalcBlend (void)
+{
+	float t;
+
+	// Advance the damage/bonus flash decay. This must run exactly once per frame:
+	// the full V_CalcBlend is called from R_SetupFrame (and from V_PreRenderView in
+	// the !ca_active branch). The fold below (V_RecalcBlend) is idempotent and may
+	// be called again when the view contents change later in the frame (CSQC
+	// module camera).
+	t = cls.frametime * 150;
+	cl.cshifts[CSHIFT_DAMAGE].percent -= t;
+	if (cl.cshifts[CSHIFT_DAMAGE].percent <= 0) {
+		cl.cshifts[CSHIFT_DAMAGE].percent = 0;
+	}
+
+	// drop the bonus value
+	cl.cshifts[CSHIFT_BONUS].percent -= cls.frametime * 100;
+	if (cl.cshifts[CSHIFT_BONUS].percent <= 0) {
+		cl.cshifts[CSHIFT_BONUS].percent = 0;
+	}
+
+	V_RecalcBlend ();
 }
 
 void V_AddLightBlend(float r, float g, float b, float a2, qbool suppress_polyblend)

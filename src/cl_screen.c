@@ -63,6 +63,8 @@ void WeaponStats_CommandInit(void);
 void SCR_DrawHud(void);
 void SCR_DrawClocks(void);
 void R_SetupFrame(void);
+void R_CSQC_ApplyModuleView(void);
+void R_CSQC_ApplyModuleView(void);
 void SCR_Draw_TeamInfo(void);
 void SCR_Draw_ShowNick(void);
 void SCR_DrawQTVBuffer(void);
@@ -971,7 +973,11 @@ void SCR_UpdateScreenPlayerView(int flags)
 					// The module owns the scene but did not call #304 renderscene
 					// this frame. Render the engine's own entities instead of the
 					// stale arena list from the previous frame (FTE parity: the
-					// engine path builds the entity list; ADR 0018).
+					// engine path builds the entity list; ADR 0018). Apply the module
+					// camera first (a module that called neither addentities nor
+					// renderscene would otherwise render with R_SetupFrame's stale
+					// r_origin while r_refdef.vieworg is already the module camera).
+					R_CSQC_ApplyModuleView();
 					CL_EmitEntities();
 					R_RenderView();
 				}
