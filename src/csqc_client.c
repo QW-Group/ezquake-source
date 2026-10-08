@@ -221,6 +221,94 @@ void PR1VM_ClientSetString (pr1vm_t *vm, int *address, char *s)
 	PR1VM_SetString (vm, (string_t *)address, dst);
 }
 
+// Zone'd (semi-permanent) client strings -- FTE strzone semantics for the
+// non-QCGC case: a heap copy owned by the instance pool, returned as the
+// negative offset -(i + MAX_PRSTR) and resolved by PR1VM_GetString. Unlike the
+// temp ring it survives later string builtins and frames until an explicit
+// strunzone (#119) or a pool reset (module load / disconnect).
+qbool CSQC_Client_ZoneStore (pr1vm_t *vm, int *address, char *buf)
+{
+	csqc_strpool_t *pool;
+	int i;
+
+	if (!address)
+	{
+		Q_free (buf);
+		return false;
+	}
+
+	pool = vm ? (csqc_strpool_t *)vm->host_udata : NULL;
+	if (!vm || !pool || !vm->newstrtbl || !buf)
+	{
+		*address = 0;
+		Q_free (buf);
+		return false;
+	}
+
+	for (i = 0; i < MAX_PRSTR; i++)
+		if (!pool->newstrtbl[i])
+			break;
+
+	if (i == MAX_PRSTR)
+	{
+		// FTE: allocation failure -> null string, no fatal (pr_bgcmd.c:4817-4821).
+		*address = 0;
+		Q_free (buf);
+		return false;
+	}
+
+	pool->newstrtbl[i] = buf;
+	*address = -(i + MAX_PRSTR);
+	return true;
+}
+
+// #119 strunzone: free a string returned by strzone. Literal/temp/out-of-range
+// arguments and a repeated free are a soft no-op. FTE (non-QCGC) frees unguarded
+// (AddressableFree on a bad offset is UB); ezq bounds-checks and warns - a
+// deliberate safer deviation (ADR 0037).
+void CSQC_Client_UnzoneString (pr1vm_t *vm, int num)
+{
+	csqc_strpool_t *pool;
+	int i;
+
+	pool = vm ? (csqc_strpool_t *)vm->host_udata : NULL;
+	if (!vm || !pool || !vm->newstrtbl)
+		return;
+
+	// Valid offsets are -(i + MAX_PRSTR), i in [0, MAX_PRSTR).
+	if (num > -MAX_PRSTR || num <= -(MAX_PRSTR * 2))
+	{
+		Con_Printf ("strunzone: not a dynamic string\n");
+		return;
+	}
+
+	i = -num - MAX_PRSTR;
+	if (!pool->newstrtbl[i])
+	{
+		Con_Printf ("strunzone: string already freed\n");
+		return;
+	}
+
+	Q_free (pool->newstrtbl[i]);
+	pool->newstrtbl[i] = NULL;
+}
+
+// Free every zone'd string of the instance pool. MUST run before the state
+// memset on module load / disconnect (otherwise the heap slots leak).
+void CSQC_Client_FreeStringPool (void)
+{
+	int i;
+
+	for (i = 0; i < MAX_PRSTR; i++)
+	{
+		if (s_csqc.strpool.newstrtbl[i])
+		{
+			Q_free (s_csqc.strpool.newstrtbl[i]);
+			s_csqc.strpool.newstrtbl[i] = NULL;
+		}
+	}
+}
+
 // #345: ring buffer of sent usercmds (written from CL_SendCmd).
 // seq = mirror of cls.netchan.outgoing_sequence (the client message number at
 // write time; Netchan_Transmit increments AFTER writing the header, so during
@@ -3732,6 +3820,7 @@ static qbool CSQC_Client_Load (const char *path)
 	CSQC_Client_DeltaReset ();
 	CSQC_Client_ViewReset ();
 	CSQC_Client_ModelReset ();	// CSQC model registry cleared on load
+	CSQC_Client_FreeStringPool ();	// #118: free strzone'd strings before memset
 
 	// Free a buffer left from a previous load (its VM is dropped by the reset
 	// below and no longer referenced after the resets above).
@@ -6197,6 +6286,7 @@ void CSQC_Client_Disconnect (void)
 	CSQC_Client_ViewReset ();
 	s_scene_rendered = false;	// takeover scene reset
 	CSQC_Client_ModelReset ();	// CSQC model registry
+	CSQC_Client_FreeStringPool ();	// #118: free strzone'd strings before memset
 	memset (&s_csqc, 0, sizeof (s_csqc));
 	memset (s_csqc_stat, 0, sizeof (s_csqc_stat));
 	memset (s_csqc_statsf, 0, sizeof (s_csqc_statsf));

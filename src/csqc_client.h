@@ -350,6 +350,16 @@ void CSQCVM_ResolveNamedBuiltins (struct pr1vm_s *vm);
 // Works with the PR1 VM (unlike PR2). address is a string_t* (int*).
 void PR1VM_ClientSetString (struct pr1vm_s *vm, int *address, char *s);
 
+// Zone'd (semi-permanent) client strings, FTE strzone/strunzone semantics for the
+// non-QCGC case (#118/#119). CSQC_Client_ZoneStore takes ownership of a heap buffer
+// (Q_malloc'd by the caller), stores it in the instance pool and writes the negative
+// offset -(i + MAX_PRSTR) to *address; allocation failure -> null string. Unzone frees
+// a slot (soft no-op on a bad/repeated argument); FreeStringPool releases every slot
+// (called before the state memset on load/disconnect).
+qbool CSQC_Client_ZoneStore (struct pr1vm_s *vm, int *address, char *buf);
+void CSQC_Client_UnzoneString (struct pr1vm_s *vm, int num);
+void CSQC_Client_FreeStringPool (void);
+
 // Register client debug commands for PR1VM (csqc_smoke, etc.; csqc_client.c) --
 // called from CL_InitLocal (cl_main.c).
 void CSQC_Client_RegisterCommands (void);

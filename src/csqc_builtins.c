@@ -3344,6 +3344,13 @@ static const int csqc_ext_te_smallflash[] = { 416 };
 static const int csqc_ext_te_customflash[] = { 417 };
 static const int csqc_ext_te_quadeffects[] = { 412, 413, 414, 415 };
 static const int csqc_ext_digest_sha1[] = { 639 };
+// FTE_STRINGS (fteqw pr_bgcmd.c:8513-8514): all 17 members are real (non-stub)
+// after #118/#119 are implemented, so the name moves out of the exceptions list
+// into the implementation-derived map (ADR 0035).
+static const int csqc_ext_strings[] = {
+	81, 114, 115, 116, 117, 118, 119,
+	221, 222, 223, 224, 225, 226, 227, 228, 229, 230
+};
 
 #define CSQC_COUNTOF(a) ((int)(sizeof (a) / sizeof ((a)[0])))
 
@@ -3383,6 +3390,7 @@ static const struct csqc_ext_map_s csqc_ext_map[] =
 	{ "DP_TE_CUSTOMFLASH", csqc_ext_te_customflash, CSQC_COUNTOF (csqc_ext_te_customflash) },
 	{ "_DP_TE_QUADEFFECTS1", csqc_ext_te_quadeffects, CSQC_COUNTOF (csqc_ext_te_quadeffects) },
 	{ "FTE_QC_DIGEST_SHA1", csqc_ext_digest_sha1, CSQC_COUNTOF (csqc_ext_digest_sha1) },
+	{ "FTE_STRINGS", csqc_ext_strings, CSQC_COUNTOF (csqc_ext_strings) },
 	{ NULL, NULL, 0 }
 };
 
@@ -3391,7 +3399,6 @@ static const char *csqc_ext_exceptions[] =
 {
 	"DP_TE_STANDARDEFFECTBUILTINS",
 	"FTE_TE_STANDARDEFFECTBUILTINS",
-	"FTE_STRINGS",
 	NULL
 };
 
@@ -3670,26 +3677,68 @@ static void csqc_stov (void)
 }
 
 /*
- string(string s) strzone = #118
- Deviation (no GC on the client): deep-copy into the per-instance ring
- (PR1VM_ClientSetString).
+ string(string s, ...) strzone = #118
+ FTE parity (non-QCGC, pr_bgcmd.c:4797-4832): concatenate the passed strings and
+ return a semi-permanent heap copy owned by the client pool (negative offset),
+ freed by strunzone (#119) or on a pool reset. Allocation failure -> "" (0).
 */
 static void csqc_strzone (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
-	char *s = CSQCVM_Str (OFS_PARM0);
+	int n, i, len = 0;
+	char *buf;
+
 	if (!vm)
 		return;
-	CSQCVM_SetRetStr (s ? s : "");
+
+	n = vm->argc;
+	if (n < 0)
+		n = 0;
+	if (n > 8)					// FTE caps the argument list at 8 (s[8]/l[8])
+		n = 8;
+
+	for (i = 0; i < n; i++)
+	{
+		char *s = CSQC_Client_GetString (vm, *(int *)&vm->globals[OFS_PARM0 + i * 3]);
+		if (s)
+			len += strlen (s);
+	}
+
+	buf = (char *)Q_malloc (len + 1);
+	if (!buf)
+	{
+		vm->globals[OFS_RETURN] = 0;
+		return;
+	}
+
+	len = 0;
+	for (i = 0; i < n; i++)
+	{
+		char *s = CSQC_Client_GetString (vm, *(int *)&vm->globals[OFS_PARM0 + i * 3]);
+		if (s)
+		{
+			int l = (int)strlen (s);
+			memcpy (buf + len, s, l);
+			len += l;
+		}
+	}
+	buf[len] = 0;
+
+	CSQC_Client_ZoneStore (vm, (int *)&vm->globals[OFS_RETURN], buf);
 }
 
 /*
  void(string s) strunzone = #119
- Deviation: no-op (no GC/persistent pool on the client).
+ FTE parity (non-QCGC): free a string returned by strzone. A literal/temp/
+ out-of-range or repeated argument is a bounds-checked soft no-op (safer than
+ FTE's unguarded AddressableFree; ADR 0037).
 */
 static void csqc_strunzone (void)
 {
-	/* no-op (classic ring without GC) */
+	pr1vm_t *vm = CSQCVM_Active ();
+	if (!vm)
+		return;
+	CSQC_Client_UnzoneString (vm, *(int *)&vm->globals[OFS_PARM0]);
 }
 
 /*
@@ -6531,10 +6580,10 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 
 	// Mark no-op stubs so checkbuiltin/checkextension are honest (ADR 0035).
 	// Shared stubs are detected by identity to the four no-op bodies; the
-	// dedicated list covers single-use no-ops with their own wrapper (#63 is
-	// now implemented and is intentionally absent).
+	// dedicated list covers single-use no-ops with their own wrapper (#63 and
+	// #119 are implemented now and are intentionally absent).
 	{
-		static const int dedicated[] = { 6, 35, 40, 49, 67, 69, 92, 119, 319, 329, 531, 533, 534, 603, 631, 632 };
+		static const int dedicated[] = { 6, 35, 40, 49, 67, 69, 92, 319, 329, 531, 533, 534, 603, 631, 632 };
 		int i, j;
 		for (i = 0; i < vm->numbuiltins; i++)
 		{
