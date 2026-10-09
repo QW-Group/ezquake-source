@@ -5330,6 +5330,80 @@ static void csqc_getkeybind (void)
 }
 
 /* void(float keynum, string binding, optional float bindmap) setkeybind = #630 (input is a QC code) */
+
+// PR #1160 re-review (F2): a downloaded (untrusted) module must not bind a key
+// to a registered local command/cvar outside the remote allowlist - the bind
+// would later be executed in cbuf_main, past the cbuf_svc-only Cmd_RemoteAllowed
+// check. The engine splits a command buffer into lines at newlines and unquoted
+// ';', with quotes, {}-braces (cl_curlybraces), backslash escapes and '//'
+// comments changing that split; a mismatch between this gate and the engine's
+// segmentation is an easy bypass. Instead of re-implementing that grammar,
+// reject any binding that contains one of those metacharacters and only allow
+// plain ';'/newline-joined commands. A module bind is untrusted, so over-
+// rejecting exotic binds is acceptable (full exec-time clamp is the ADR 0044
+// follow-up). Every command in the binding is checked (not just the first) and
+// alias names are rejected (an alias body can hide a privileged command). An
+// unknown token (server-side "+command" such as +b9probe) is still accepted,
+// matching FTE (insecure bind).
+static qbool CSQC_SetkeybindAllowed (const char *binding)
+{
+	static tokenizecontext_t bindgate_tokencontext;
+	const char *p;
+
+	if (!binding || !binding[0])
+		return true;
+
+	for (p = binding; *p; p++)
+	{
+		if (*p == '"' || *p == '{' || *p == '}' || *p == '\\' ||
+			*p == '\r' || *p == '$')
+			return false;
+		if (p[0] == '/' && p[1] == '/')
+			return false;
+	}
+
+	p = binding;
+	while (*p)
+	{
+		char segment[512];
+		size_t n = 0;
+		qbool overflow = false;
+		char *tok;
+
+		while (*p && *p != '\n' && *p != ';')
+		{
+			if (n + 1 < sizeof (segment))
+				segment[n++] = *p;
+			else
+				overflow = true;
+			p++;
+		}
+		segment[n] = 0;
+
+		if (*p == ';' || *p == '\n')
+			p++;
+
+		if (overflow)
+			return false;	// fail closed on an oversized command
+
+		Cmd_TokenizeStringEx (&bindgate_tokencontext, segment);
+		tok = Cmd_ArgvEx (&bindgate_tokencontext, 0);
+		if (tok && tok[0])
+		{
+			if (Cmd_FindAlias (tok))
+				return false;
+			// Legacy aliases (gamma, path, ...) are not in the command/cvar
+			// hash but the engine still resolves them (Cmd_LegacyCommand).
+			if (Cmd_IsLegacyCommand (tok))
+				return false;
+			if ((Cmd_FindCommand (tok) || Cvar_Find (tok)) && !Cmd_RemoteAllowed (tok))
+				return false;
+		}
+	}
+
+	return true;
+}
+
 static void csqc_setkeybind (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5341,26 +5415,14 @@ static void csqc_setkeybind (void)
 	binding = CSQCVM_Str (OFS_PARM1);
 	if (keynum >= 0 && keynum < UNKNOWN + 256)
 	{
-		// PR #1160 WS2-C: a downloaded (untrusted) module must not bind a key to a
-		// registered local command/cvar outside the remote allowlist - the bind would
-		// later be executed in cbuf_main, past the cbuf_svc-only Cmd_RemoteAllowed
-		// check. Only *known* local names are gated; an unknown token (server-side
-		// "+command" such as +b9probe) is accepted, matching FTE (insecure bind).
-		if (binding && binding[0])
+		if (binding && binding[0] && !CSQC_SetkeybindAllowed (binding))
 		{
-			static tokenizecontext_t bindgate_tokencontext;
-			char *tok;
-
-			Cmd_TokenizeStringEx (&bindgate_tokencontext, binding);
-			tok = Cmd_ArgvEx (&bindgate_tokencontext, 0);
-			if (tok && tok[0] && (Cmd_FindCommand (tok) || Cvar_Find (tok)) && !Cmd_RemoteAllowed (tok))
-			{
-				Con_DPrintf ("Blocked setkeybind on \"%s\": not in remote capabilities\n", tok);
-				return;
-			}
+			Con_DPrintf ("Blocked setkeybind on \"%s\": not in remote capabilities\n", binding);
+			return;
 		}
 
-		Key_SetBinding (keynum, binding ? binding : "");
+		// PR #1160 re-review (F2): module binds are flagged so they are not saved.
+		Key_SetBindingModule (keynum, binding ? binding : "");
 	}
 }
 

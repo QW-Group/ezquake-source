@@ -346,7 +346,7 @@ void R_CSQC_ApplyModuleView(void)
 qbool R_CSQC_EntityVisible(entity_t *ent)
 {
 	vec3_t mins, maxs;
-	float scale;
+	float scale, radius;
 	int i;
 
 	if (!ent || !ent->model)
@@ -357,9 +357,39 @@ qbool R_CSQC_EntityVisible(entity_t *ent)
 		return true;
 
 	scale = ent->scale ? ent->scale : 1;
-	for (i = 0; i < 3; i++) {
-		mins[i] = ent->origin[i] + scale * ent->model->mins[i];
-		maxs[i] = ent->origin[i] + scale * ent->model->maxs[i];
+
+	// PR #1160 re-review (F3): a rotated model's axis-aligned bbox is
+	// under-estimated, so a rotated edict could be culled while still visible.
+	// Expand symmetrically by the model radius (FTE R_CullEntityBox parity).
+	if (ent->angles[0] || ent->angles[1] || ent->angles[2])
+	{
+		radius = ent->model->radius;
+		if (radius <= 0)
+		{
+			for (i = 0; i < 3; i++)
+			{
+				float v = fabs(ent->model->mins[i]);
+				if (radius < v)
+					radius = v;
+				v = fabs(ent->model->maxs[i]);
+				if (radius < v)
+					radius = v;
+			}
+		}
+		if (radius <= 0)
+			radius = 16;
+
+		for (i = 0; i < 3; i++) {
+			mins[i] = ent->origin[i] - scale * radius;
+			maxs[i] = ent->origin[i] + scale * radius;
+		}
+	}
+	else
+	{
+		for (i = 0; i < 3; i++) {
+			mins[i] = ent->origin[i] + scale * ent->model->mins[i];
+			maxs[i] = ent->origin[i] + scale * ent->model->maxs[i];
+		}
 	}
 
 	if (R_CullBox(mins, maxs))

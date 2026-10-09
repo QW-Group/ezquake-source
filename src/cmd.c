@@ -231,10 +231,10 @@ Remote-allowlist check for commands/cvars executed from a remote source
 (setkeybind/localcmd gates). Non-TF servers consult only cl_remote_capabilities.
 
 Known residual holes (accept+doc, ADR 0047): command *arguments* are not checked
-(server `bind x quit`); an alias created by a module (`alias` is in the base
-allowlist) then bound via setkeybind to an unknown name bypasses the first-token
-check; and the setkeybind gate inspects only the *first* token, so a multi-command
-bind (`+probe; quit`) is accepted as a whole. Full bind-level clamp is a follow-up
+(server `bind x quit`); and an alias created by a module after the setkeybind call
+(`alias` is in the base allowlist) is a TOCTOU - setkeybind validates every command
+in the binding and rejects existing aliases, but a later `alias mypwn quit` +
+keypress still reaches exec. Full exec-time bind-level clamp is a follow-up
 (ADR 0044).
 */
 qbool Cmd_RemoteAllowed (const char *name)

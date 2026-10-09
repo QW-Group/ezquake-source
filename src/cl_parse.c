@@ -4363,8 +4363,11 @@ void CL_ParseServerMessage (void)
 					// Sized cgamepacket (90): [90][len][payload]. Payload is like 83
 					// (event name + args). payload_start is taken after the length
 					// (len is payload-only), otherwise the skip count would include
-					// the two length bytes and under-read by two.
-					int payload_len = MSG_ReadShort ();
+					// the two length bytes and under-read by two. The length is
+					// unsigned (FTE pr_csqc.c parity): a signed read would let a
+					// server-controlled >=0x8000 length rewind the parser behind the
+					// payload (out-of-bounds read + parser loop; PR #1160 re-review).
+					int payload_len = (unsigned short)MSG_ReadShort ();
 					int payload_start = msg_readcount;
 					extern cvar_t cl_pext_csqc;
 					if (cl_pext_csqc.value && (cls.fteprotocolextensions & FTE_PEXT_CSQC))

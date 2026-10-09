@@ -5077,17 +5077,31 @@ CSQC_Client_SizedRewind
 FTE sized-message guard (pr_csqc.c:9696-9713): after handling a payload, align
 msg_readcount to the declared end payload_start+payload_len, for both under-read
 (pad) and over-read (rewind). MSG_ReadSkip is forward-only in ezq, so over-read is
-rewound by writing msg_readcount directly.
+rewound by writing msg_readcount directly. A degenerate (negative) length is
+clamped to 0 so the pointer can never move behind payload_start - otherwise a
+server-controlled >=0x8000 length would cause an out-of-bounds read and a parser
+loop (PR #1160 re-review). This clamp is defensive: after the unsigned length
+reads in svc 90/91 and the payload_len >= 0 gate in svc 92, no caller passes a
+negative length today.
 =================
 */
 void CSQC_Client_SizedRewind (int payload_start, int payload_len)
 {
 	int used = msg_readcount - payload_start;
 
+	if (payload_len < 0)
+		payload_len = 0;
+
 	if (used < payload_len)
 		MSG_ReadSkip (payload_len - used);
 	else if (used > payload_len)
-		msg_readcount = payload_start + payload_len;
+	{
+		int target = payload_start + payload_len;
+
+		if (target < payload_start)
+			target = payload_start;
+		msg_readcount = target;
+	}
 }
 
 /*
@@ -5168,7 +5182,10 @@ sized guard (no module temp-entity parse in this change).
 */
 void CSQC_Client_DrainTempEntSizedMsg (void)
 {
-	int payload_len = MSG_ReadShort ();
+	// Unsigned length (FTE cl_tent.c parity); a signed read would let a
+	// server-controlled >=0x8000 length rewind the parser behind the payload
+	// (out-of-bounds read + parser loop; PR #1160 re-review).
+	int payload_len = (unsigned short)MSG_ReadShort ();
 	int payload_start = msg_readcount;
 
 	CSQC_Client_SizedRewind (payload_start, payload_len);
@@ -5266,6 +5283,48 @@ static void CSQC_Client_NetProbe_f (void)
 		CSQC_NetProbe_WriteShort (buf, &n, 2);
 		buf[n++] = 9; buf[n++] = 9;
 		NETPROBE_RUN ("netprobe 91 sized-guard", CSQC_Client_DrainTempEntSizedMsg (), n);
+	}
+	// 91 degenerate length (0xFFFD): the unsigned read must not rewind behind
+	// the payload start (PR #1160 re-review). Pre-fix the signed read left
+	// msg_readcount == -1 (out-of-bounds) and the main parser looped on the
+	// same svc; post-fix the oversized forward skip terminates via msg_badread.
+	{
+		n = 0;
+		CSQC_NetProbe_WriteShort (buf, &n, 0xFFFD);
+		buf[n++] = 1; buf[n++] = 2;
+		{
+			sizebuf_t _s = net_message;
+			int _rc = msg_readcount;
+			qbool _bad = msg_badread;
+			net_message.data = buf;
+			net_message.cursize = n;
+			msg_readcount = 0;
+			msg_badread = false;
+			CSQC_Client_DrainTempEntSizedMsg ();
+			PR1VM_GuardCheck ("netprobe 91 degenerate no-backward",
+				msg_readcount >= 2 && msg_badread, &pass, &fail);
+			net_message = _s;
+			msg_readcount = _rc;
+			msg_badread = _bad;
+		}
+	}
+	// SizedRewind with a negative length: clamp, never move behind payload_start.
+	{
+		sizebuf_t _s = net_message;
+		int _rc = msg_readcount;
+		qbool _bad = msg_badread;
+		n = 4;
+		buf[0] = 1; buf[1] = 2; buf[2] = 3; buf[3] = 4;
+		net_message.data = buf;
+		net_message.cursize = n;
+		msg_readcount = 3;
+		msg_badread = false;
+		CSQC_Client_SizedRewind (2, -3);
+		PR1VM_GuardCheck ("netprobe sized-rewind negative clamp",
+			msg_readcount >= 2 && !msg_badread, &pass, &fail);
+		net_message = _s;
+		msg_readcount = _rc;
+		msg_badread = _bad;
 	}
 	// 92 csqcentities_sized (walked without module): [ent][len][payload]...[0].
 	{

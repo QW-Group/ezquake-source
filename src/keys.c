@@ -97,6 +97,9 @@ int count_alias = 0;
 keydest_t	key_dest, key_dest_beforemm, key_dest_beforecon;
 
 char	*keybindings[UNKNOWN + 256];
+// PR #1160 re-review (F2): true when the bind was set by the untrusted client
+// CSQC module (setkeybind, #630). Such binds are not persisted to the user config.
+qbool	keybinding_module[UNKNOWN + 256];
 qbool	consolekeys[UNKNOWN + 256];	// if true, can't be rebound while in console
 qbool	hudeditorkeys[UNKNOWN + 256];	// if true, can't be rebound while in hud editor
 qbool	democontrolskey[UNKNOWN + 256];
@@ -1674,14 +1677,14 @@ char *Key_KeynumToString (int keynum) {
 	return "<UNKNOWN KEYNUM>";
 }
 
-void Key_SetBinding (int keynum, const char *binding) {
+static void Key_SetBindingEx (int keynum, const char *binding, qbool module) {
 	if (keynum == -1)
 		return;
 
 #ifndef __APPLE__
 	if (keynum == K_CTRL || keynum == K_ALT || keynum == K_SHIFT || keynum == K_WIN) {
-		Key_SetBinding(keynum + 1, binding);
-		Key_SetBinding(keynum + 2, binding);
+		Key_SetBindingEx(keynum + 1, binding, module);
+		Key_SetBindingEx(keynum + 2, binding, module);
 		return;
 	}
 #endif
@@ -1689,6 +1692,23 @@ void Key_SetBinding (int keynum, const char *binding) {
 	// free (and hence Q_free) is safe to call with a NULL argument
 	Q_free (keybindings[keynum]);
 	keybindings[keynum] = Q_strdup(binding);
+	keybinding_module[keynum] = module;
+}
+
+void Key_SetBinding (int keynum, const char *binding) {
+	Key_SetBindingEx (keynum, binding, false);
+}
+
+// Set a bind on behalf of the (untrusted) CSQC module; flagged so it is not saved.
+void Key_SetBindingModule (int keynum, const char *binding) {
+	Key_SetBindingEx (keynum, binding, true);
+}
+
+qbool Key_IsModuleBind (int keynum) {
+	if (keynum >= 0 && keynum < UNKNOWN + 256)
+		return keybinding_module[keynum];
+
+	return false;
 }
 
 void Key_Unbind (int keynum) {
@@ -1704,6 +1724,7 @@ void Key_Unbind (int keynum) {
 	// free (and hence Q_free) is safe to call with a NULL argument
 	Q_free (keybindings[keynum]);
 	keybindings[keynum] = NULL;
+	keybinding_module[keynum] = false;
 }
 
 void Key_Unbind_f (void) {
