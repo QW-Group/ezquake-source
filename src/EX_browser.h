@@ -292,10 +292,23 @@ void SB_PingTree_Shutdown(void);
 qbool SB_PingTree_Built(void);
 void SB_PingTree_Build(void);
 qbool SB_PingTree_IsBuilding(void);
+double SB_PingTree_Age(void);
 void SB_PingTree_DumpPath(const netadr_t *addr);
 void SB_Proxy_QueryForPingList(const netadr_t *address, proxy_ping_report_callback callback);
 void SB_PingTree_ConnectBestPath(const netadr_t *addr);
 int SB_PingTree_GetPathLen(const netadr_t *addr);
+qbool SB_PingTree_GetProxyString(const netadr_t *addr, char *out, size_t outsz,
+                                  int *out_total_ping_ms);
+
+#define SB_ROUTE_MAX_ALTERNATIVES 10
+#define SB_ROUTE_PROXYLIST_SIZE 256
+typedef struct sb_route_s {
+	char proxylist[SB_ROUTE_PROXYLIST_SIZE];
+	int total_cost_ms;
+	int hops;
+} sb_route_t;
+
+int SB_PingTree_GetRoutes(const netadr_t *addr, sb_route_t *routes, int max_routes);
 void SB_Proxylist_Unserialize_f(void);
 
 #define SB_TRIGGER_REFRESHDONE        1
