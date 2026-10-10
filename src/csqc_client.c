@@ -130,6 +130,7 @@ typedef struct csqc_client_state_s
 	double		csprogs_dl_lastprogress;	// time of last downloadpercent growth
 	int			csprogs_dl_percent;			// last seen cls.downloadpercent
 	qbool		csprogs_dl_started;			// our download has opened (cls.download)
+	qbool		csprogs_dl_requested;		// the download request was sent (slot was free)
 	char		csprogs_dl_localname[MAX_OSPATH];	// cls.downloadname of our file (gate)
 	unsigned	csprogs_crc;	// *csprogs (md4 Com_BlockChecksum) / 0 if absent
 	int			csprogs_size;	// *csprogssize
@@ -1868,14 +1869,19 @@ other. ezquake CL_CheckOrDownloadFile cannot separate the remote/local name - so
 repeat its startup steps with a different local path.
 =================
 */
-static void CSQC_Client_StartDownload (const char *remote, const char *localrel)
+static qbool CSQC_Client_StartDownload (const char *remote, const char *localrel)
 {
 	extern void Sys_mkdir (const char *path);
 	char dir[MAX_OSPATH];
 	char *slash;
 
-	if (cls.state < ca_connected || cls.demoplayback)
-		return;
+	// Do NOT clobber a download already in flight (manual "download", QTV): the
+	// shared cls.downloadname/tempname belong to the running transfer and the
+	// completion rename (CL_FinishDownload) would move that file into our crc
+	// cache. The caller defers and retries once the slot is free
+	// (CSQC_Client_Update). PR #1160 review.
+	if (cls.state < ca_connected || cls.demoplayback || cls.download)
+		return false;
 
 	snprintf (cls.downloadname, sizeof (cls.downloadname), "%s/%s", cls.gamedir, localrel);
 	cls.downloadmethod = DL_QW;
@@ -1901,7 +1907,10 @@ static void CSQC_Client_StartDownload (const char *remote, const char *localrel)
 	s_csqc.csprogs_dl_lastprogress = Sys_DoubleTime ();
 	s_csqc.csprogs_dl_percent = 0;
 	s_csqc.csprogs_dl_started = false;
+	s_csqc.csprogs_dl_requested = true;
 	strlcpy (s_csqc.csprogs_dl_localname, cls.downloadname, sizeof (s_csqc.csprogs_dl_localname));
+
+	return true;
 }
 
 /*
@@ -4406,7 +4415,9 @@ void CSQC_Client_ConnectCheck (void)
 	s_csqc.csprogs_crc = crc;
 	s_csqc.csprogs_size = sizep;
 	CSQC_Client_DlPath (s_csqc.csprogs_dl_path, sizeof (s_csqc.csprogs_dl_path), crc);
-	CSQC_Client_StartDownload ("csprogs.dat", s_csqc.csprogs_dl_path);
+	// May be deferred (returns false) when another download is in flight; the
+	// per-frame CSQC_Client_Update retries it.
+	s_csqc.csprogs_dl_requested = CSQC_Client_StartDownload ("csprogs.dat", s_csqc.csprogs_dl_path);
 	s_csqc.csprogs_dl_pending = true;
 }
 
@@ -4925,6 +4936,15 @@ void CSQC_Client_Update (void)
 				s_csqc.csprogs_dl_pending = false;
 				Con_Printf ("CSQC: csprogs download failed\n");
 				CSQC_Client_NotifyCSQC (false);
+			}
+			else if (!s_csqc.csprogs_dl_requested)
+			{
+				// The request is not out yet: the download slot was busy with
+				// another transfer when we connected. Retry once it is free and
+				// keep the no-progress window from expiring while we defer.
+				if (!cls.download)
+					s_csqc.csprogs_dl_requested = CSQC_Client_StartDownload ("csprogs.dat", s_csqc.csprogs_dl_path);
+				s_csqc.csprogs_dl_lastprogress = now;
 			}
 			else if (now - s_csqc.csprogs_dl_lastprogress > 20)
 			{
