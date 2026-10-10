@@ -119,7 +119,7 @@ static vfsfile_t *CL_Open_Demo_File(const char *name, qbool searchpaks, char **f
 static void OnChange_demo_dir(cvar_t *var, char *string, qbool *cancel);
 cvar_t demo_dir = {"demo_dir", "", 0, OnChange_demo_dir};
 cvar_t demo_benchmarkdumps = {"demo_benchmarkdumps", "1"};
-cvar_t cl_startupdemo = {"cl_startupdemo", ""};
+cvar_t cl_startupdemo = {"cl_startupdemo", "", CVAR_NOTFROMSERVER}; // value goes into `playdemo %s` (host.c)
 cvar_t demo_jump_rewind = { "demo_jump_rewind", "-10" };
 cvar_t cl_demo_qwd_delta = { "cl_demo_qwd_delta", "1" };
 cvar_t demo_jump_skip_messages = { "demo_jump_skip_messages", "1" };

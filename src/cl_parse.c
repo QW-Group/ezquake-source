@@ -3519,6 +3519,12 @@ void CL_SetStat (int stat, int value)
 
 	cl.stats[stat] = value;
 
+#ifndef CLIENTONLY
+	// Keep the CSQC getstatf (#331) float cache in sync with the standard int stat
+	// (E5). stat < MAX_CL_STATS here (extended indices returned earlier).
+	CSQC_Client_SetStat (stat, value);
+#endif
+
 #ifdef FTE_PEXT_ACCURATETIMINGS
 	if (stat == STAT_TIME && (cls.fteprotocolextensions & FTE_PEXT_ACCURATETIMINGS))
 	{
@@ -4210,14 +4216,15 @@ void CL_ParseServerMessage (void)
 				{
 					// CSQC float stat: [byte idx][float]. FTE CL_SetStatNumeric parity:
 					// idx < MAX_CL_STATS updates the standard engine stat (death/axe/
-					// STAT_VIEWHEIGHT); idx>=32 goes to the extended CSQC store.
+					// STAT_VIEWHEIGHT) as the int path; idx>=32 goes to the extended
+					// CSQC store. The exact float is retained for getstatf (#331) so a
+					// standard index is not truncated (E5).
 					float fstat;
 					i = MSG_ReadByte();
 					fstat = MSG_ReadFloat();
 					if (i < MAX_CL_STATS)
 						CL_SetStat(i, (int)fstat);
-					else
-						CSQC_Client_SetStatFloat(i, fstat);
+					CSQC_Client_SetStatFloat(i, fstat);
 					break;
 				}
 #endif
@@ -4364,9 +4371,10 @@ void CL_ParseServerMessage (void)
 					// (event name + args). payload_start is taken after the length
 					// (len is payload-only), otherwise the skip count would include
 					// the two length bytes and under-read by two. The length is
-					// unsigned (FTE pr_csqc.c parity): a signed read would let a
-					// server-controlled >=0x8000 length rewind the parser behind the
-					// payload (out-of-bounds read + parser loop; PR #1160 re-review).
+					// unsigned (hardening deviation from FTE, which reads the short
+					// signed): a signed read would let a server-controlled >=0x8000
+					// length rewind the parser behind the payload (out-of-bounds read +
+					// parser loop; PR #1160 re-review).
 					int payload_len = (unsigned short)MSG_ReadShort ();
 					int payload_start = msg_readcount;
 					extern cvar_t cl_pext_csqc;

@@ -21,7 +21,7 @@ struct pr1vm_s;		// PR1 instance (pr1vm.h); opaque pointer only here
 
 // Access to client state/output (implemented in csqc_client.c):
 float CSQC_Client_GetStat (int idx);				// 0..31 -> cl.stats, 32..255 -> ext stats (int)
-void CSQC_Client_SetStat (int idx, int value);		// receive ext stats 32..255 (CL_SetStat)
+void CSQC_Client_SetStat (int idx, int value);		// int stat: 0..31 -> getstatf float cache, 32..255 -> ext stats (CL_SetStat)
 // Stat wire 78/79 (float/string CSQC stats 32..255): received from
 // svc_fte_updatestatfloat/string and exposed via #331 getstatf / #332 getstats.
 // FTE keeps them in per-player statsf[]/statsstr[]; here they live in a single

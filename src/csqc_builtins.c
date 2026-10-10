@@ -59,8 +59,6 @@ extern void PF_sqrt (void);
 extern void PF_min (void);
 extern void PF_max (void);
 extern void PF_bound (void);
-extern void PF_traceon (void);
-extern void PF_traceoff (void);
 
 // Dedicated token context for the client VM (#441 tokenize / #442 argv). Server PR1
 // uses its own pr1_tokencontext (pr_cmds.c); here we keep a separate one so we do not
@@ -880,9 +878,13 @@ static void csqc_getstatf (void)
 		int count = (vm->argc > 2) ? (int)vm->globals[OFS_PARM2] : 1;
 		if (first < 0)
 			first = 0;
+		if (first > 31)
+			first = 31;	// shift domain 0..31 (B6)
 		if (count < 0)
 			count = 0;
-		if (count > 31)	// FTE does (1<<count); clamp to avoid UB
+		if (first + count > 32)
+			count = 32 - first;	// first+count <= 32 (B6)
+		if (count > 31)	// FTE does (1<<count); clamp so the mask does not overflow
 			count = 31;
 		vm->globals[OFS_RETURN] = (float)((((unsigned int)val) & (((1u << count) - 1u) << first)) >> first);
 	}
@@ -4678,7 +4680,12 @@ static void csqc_eprint (void)
 			Con_Printf ("  .%s = '%g %g %g'\n", fn, slot[ofs], slot[ofs + 1], slot[ofs + 2]);
 			break;
 		case 4:	/* ev_entity */
-			Con_Printf ("  .%s = ent %d\n", fn, (int)slot[ofs]);
+			{
+				// entity fields hold raw int bits (prog value = slot*edict_size),
+				// not a float - read them as int, as getentityfieldstring does (B4).
+				int v = *(int *)&slot[ofs];
+				Con_Printf ("  .%s = ent %d\n", fn, (vm->edict_size > 0) ? v / vm->edict_size : v);
+			}
 			break;
 		}
 	}
@@ -4915,15 +4922,17 @@ static void csqc_trace_ents (pr1vm_t *vm, vec3_t start, vec3_t end,
 			continue;
 		if (ofs_own >= 0)
 		{
+			// .owner holds raw int bits (prog value = slot*edict_size), not a float:
+			// read as int so the owner-ignore actually matches (B1).
 			int own;
-			own = (int)base[ofs_own];
+			own = *(int *)&base[ofs_own];
 			if (own != 0 && own / vm->edict_size == forent)
 				continue;	// ent whose owner == forent
 		}
 		if (forent > 0 && ofs_own >= 0)
 		{
 			float *fbase = (float *)((byte *)vm->game_edicts + (size_t)forent * vm->edict_size);
-			int fo = (int)fbase[ofs_own];
+			int fo = *(int *)&fbase[ofs_own];
 			if (fo != 0 && fo / vm->edict_size == e)
 				continue;	// forent.owner == ent
 		}
@@ -5164,7 +5173,10 @@ static void csqc_tok_sep_spans (const char *s, const char *sep[], int nsep)
 		return;
 	len = (int)strlen (s);
 	for (si = 0; si < nsep && si < 7; si++)
-		seplen[si] = (int)strlen (sep[si]);
+		// A NULL separator (unzoned/out-of-range string offset -> CSQCVM_Str NULL)
+		// would crash strlen; an empty separator would match at every position and
+		// loop forever. Treat both as absent (B2, PR #1160 re-review).
+		seplen[si] = (sep[si] && sep[si][0]) ? (int)strlen (sep[si]) : 0;
 	i = 0;
 	tokstart = 0;
 	n = 0;
@@ -5176,7 +5188,7 @@ static void csqc_tok_sep_spans (const char *s, const char *sep[], int nsep)
 		else
 		{
 			for (si = 0; si < nsep && si < 7; si++)
-				if (!strncmp (s + i, sep[si], seplen[si]))
+				if (seplen[si] > 0 && !strncmp (s + i, sep[si], seplen[si]))
 				{
 					found = si;
 					break;
@@ -6167,6 +6179,27 @@ static void csqc_nop_str (void)
 	CSQCVM_SetRetStr ("");
 }
 
+/*
+=================
+csqc_traceon / csqc_traceoff (#29/#30)
+
+Client-safe no-op. The server PF_traceon/PF_traceoff flip vm->trace; the shared
+executor then calls PR_PrintStatement -> PR_GlobalString -> ED_GlobalAtOfs, which
+walks the *server* progs / pr_globaldefs (NULL on a client without a local server)
+and NULL-derefs. FTE uses a per-instance debug_trace with its own printer
+(engine/qclib/pr_exec.c); porting a per-VM printer to the client is out of scope,
+so the safe behaviour (spec allows a no-op) is to disable client trace entirely
+(PR #1160 re-review).
+=================
+*/
+static void csqc_traceon (void)
+{
+}
+
+static void csqc_traceoff (void)
+{
+}
+
 void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 {
 	// #1 makevectors (FTE parity) - before the CSQC-specific ones.
@@ -6180,8 +6213,8 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 9,   (builtin_t)PF_normalize); // #9 vector(vector in) normalize (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 12,  (builtin_t)PF_vlen); // #12 float(vector v) vlen (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 13,  (builtin_t)csqc_vectoyaw); // #13 float(vector v) vectoyaw (QUAKE)
-	PR1VM_RegisterBuiltin (vm, 29,  (builtin_t)PF_traceon); // #29 void() traceon (QUAKE)
-	PR1VM_RegisterBuiltin (vm, 30,  (builtin_t)PF_traceoff); // #30 void() traceoff (QUAKE)
+	PR1VM_RegisterBuiltin (vm, 29,  (builtin_t)csqc_traceon); // #29 void() traceon (QUAKE)
+	PR1VM_RegisterBuiltin (vm, 30,  (builtin_t)csqc_traceoff); // #30 void() traceoff (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 36,  (builtin_t)PF_rint); // #36 float(float f) rint (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 37,  (builtin_t)PF_floor); // #37 float(float f) floor (QUAKE)
 	PR1VM_RegisterBuiltin (vm, 38,  (builtin_t)PF_ceil); // #38 float(float f) ceil (QUAKE)

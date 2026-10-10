@@ -2143,13 +2143,28 @@ checkaliases:
 	// The helper is a no-op (returns false) without a loaded module, so the plain
 	// client is unaffected; it also guards against console re-entry.
 	{
-		char line[1024];
+		// Buffer sized to the actual command: a fixed char[1024] silently truncated
+		// long commands (long stufftext / alias) before CSQC_ConsoleCommand
+		// (B11, PR #1160 re-review).
+		size_t len = strlen (Cmd_Argv(0)) + 1;
+		char *line;
+
 		if (Cmd_Argc() > 1)
-			snprintf (line, sizeof (line), "%s %s", Cmd_Argv(0), Cmd_Args());
-		else
-			snprintf (line, sizeof (line), "%s", Cmd_Argv(0));
-		if (CSQC_Client_ConsoleCommand (line))
-			goto done;
+			len += strlen (Cmd_Args()) + 1;
+		line = (char *)Q_malloc (len);
+		if (line)
+		{
+			if (Cmd_Argc() > 1)
+				snprintf (line, len, "%s %s", Cmd_Argv(0), Cmd_Args());
+			else
+				snprintf (line, len, "%s", Cmd_Argv(0));
+			{
+				qbool handled = CSQC_Client_ConsoleCommand (line);
+				Q_free (line);
+				if (handled)
+					goto done;
+			}
+		}
 	}
 #endif
 

@@ -308,6 +308,14 @@ void R_CSQC_BeginCull(void)
 	R_MarkLeaves();
 }
 
+// Re-arm the once-per-frame cull guard so the next scene's arena cull (a second
+// #304 renderscene in the same frame with a different module camera) re-derives its
+// own frustum/PVS instead of reusing the first camera's (PR #1160 re-review, B9).
+void R_CSQC_ResetCull(void)
+{
+	s_csqc_cull_frame = -1;
+}
+
 // CSQC takeover: derive the render/cull camera from r_refdef (the module camera
 // written by #303 setproperty). Called from R_CSQC_BeginCull (so the arena cull
 // and the world render use the module view) and from CSQC_Client_RenderScene

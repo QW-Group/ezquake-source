@@ -649,9 +649,12 @@ void R_DrawViewModel(void)
 	centity_t *cent = CL_WeaponModelForView();
 	static entity_t gun;
 
-	// #301 mask&2: with an active CSQC scene, draw the engine viewmodel only if the
-	// module requested MASK_STDVIEWMODEL; otherwise behave as outside takeover.
-	if (CSQC_Client_SceneActive () && !CSQC_Client_SceneViewModel ()) {
+	// #301 mask&2: with an active CSQC takeover scene, draw the engine viewmodel only
+	// if the module requested MASK_STDVIEWMODEL. On the fallback path (the module was
+	// active but did not call renderscene this frame) the engine draws the frame
+	// itself, so the viewmodel must be drawn as outside takeover - suppression only
+	// applies to a completed takeover render (E4/B8, PR #1160 re-review).
+	if (CSQC_Client_SceneActive () && CSQC_Client_SceneRendered () && !CSQC_Client_SceneViewModel ()) {
 		return;
 	}
 

@@ -286,7 +286,7 @@ cvar_t cl_verify_qwprotocol     = {"cl_verify_qwprotocol", "1"};
 cvar_t demo_autotrack           = {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
 
 // Authentication
-cvar_t cl_username              = {"cl_username", "", CVAR_QUEUED_TRIGGER, AuthUsernameChanged};
+cvar_t cl_username              = {"cl_username", "", CVAR_QUEUED_TRIGGER | CVAR_NOTFROMSERVER, AuthUsernameChanged}; // value goes into `cmd login %s` (cl_parse.c)
 static void CL_Authenticate_f(void);
 
 // antilag debugging

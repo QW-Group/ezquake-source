@@ -370,6 +370,11 @@ static int s_slotnum[CSQC_MAX_EDICTS];
 static int s_csqc_stat[MAX_EXTENDED_CL_STATS];
 static float s_csqc_statsf[MAX_EXTENDED_CL_STATS];
 static char *s_csqc_statss[MAX_EXTENDED_CL_STATS];
+// Standard stats 0..31: exact float cache for getstatf (#331) alongside cl.stats[]
+// (int). FTE keeps both stats[] and statsf[]; here cl.stats[] is the int store and
+// this is the float store. valid[] marks an explicit float/int value seen (E5).
+static float s_csqc_cl_statsf[32];
+static byte s_csqc_cl_statsf_valid[32];
 
 /*
 =================
@@ -398,7 +403,9 @@ int CSQC_Client_GetStatInt (int idx)
 float CSQC_Client_GetStatFloat (int idx)
 {
 	if (idx >= 0 && idx < 32)
-		return (float)cl.stats[idx];
+		// Exact float when the stat arrived as a float (#79), else the int value
+		// (FTE statsf[]/stats[] parity); E5.
+		return s_csqc_cl_statsf_valid[idx] ? s_csqc_cl_statsf[idx] : (float)cl.stats[idx];
 	if (idx >= 32 && idx < MAX_EXTENDED_CL_STATS)
 		return s_csqc_statsf[idx];
 	return 0;
@@ -413,6 +420,14 @@ const char *CSQC_Client_GetStatString (int idx)
 
 void CSQC_Client_SetStat (int idx, int value)
 {
+	if (idx >= 0 && idx < 32)
+	{
+		// int stat (svc_updatestat / #79 int path): keep the getstatf (#331) float
+		// cache in sync (E5).
+		s_csqc_cl_statsf[idx] = (float)value;
+		s_csqc_cl_statsf_valid[idx] = 1;
+		return;
+	}
 	if (idx >= 32 && idx < MAX_EXTENDED_CL_STATS)
 	{
 		s_csqc_stat[idx] = value;
@@ -424,6 +439,14 @@ void CSQC_Client_SetStat (int idx, int value)
 
 void CSQC_Client_SetStatFloat (int idx, float value)
 {
+	if (idx >= 0 && idx < 32)
+	{
+		// #79 float stat for a standard index: exact value for getstatf (#331);
+		// cl.stats[] int is set separately by the caller (E5).
+		s_csqc_cl_statsf[idx] = value;
+		s_csqc_cl_statsf_valid[idx] = 1;
+		return;
+	}
 	if (idx >= 32 && idx < MAX_EXTENDED_CL_STATS)
 	{
 		// FTE CL_SetStatNumeric parity: int=(int)fvalue.
@@ -860,6 +883,16 @@ to 0). The y component is not honored here (ezq font is uniform).
 static pr1vm_t *s_drawfontscale_vm = NULL;
 static int s_drawfontscale_ofs = -1;
 
+// Invalidate the per-VM drawfontscale offset cache. The client VM address is stable
+// across module reloads, so a cached offset from a previous module would read a
+// foreign/out-of-range global; re-resolve on the next text call (PR #1160 re-review,
+// B3). Called from CSQC_Client_Load / CSQC_Client_Disconnect.
+static void CSQC_Client_DrawFontScaleReset (void)
+{
+	s_drawfontscale_vm = NULL;
+	s_drawfontscale_ofs = -1;
+}
+
 float CSQC_Client_DrawFontScaleX (pr1vm_t *vm)
 {
 	float x, y;
@@ -1156,6 +1189,16 @@ void CSQC_Client_RegisterCommand (const char *cmd)
 	for (i = 0; i < s_csqc.numcmds; i++)
 		if (!strcmp (s_csqc.cmds[i], cmd))
 			return;					// already registered
+
+	// Reject a name that collides with an existing cvar: commands resolve before
+	// cvars (Cmd_ExecuteString), so a module could otherwise shadow e.g.
+	// rcon_password and intercept the user's cvar input. FTE parity
+	// (Cmd_AddCommandD refuses cvar names); PR #1160 re-review.
+	if (Cvar_Find (cmd))
+	{
+		Con_Printf ("CSQC: registercommand: '%s' is a cvar, refused\n", cmd);
+		return;
+	}
 
 	// FTE parity, unlimited: a dynamic list instead of a fixed cap (FTE
 	// PF_cs_registercommand -> Cmd_AddCommandD with no limit).
@@ -1460,6 +1503,7 @@ qbool CSQC_Client_SceneViewModel (void)
 // r_rmain.c lives in the renderer (render.h is renderer-private and cannot be
 // included here - it redefines the renderer types already pulled in).
 extern void R_CSQC_ApplyModuleView (void);
+extern void R_CSQC_ResetCull (void);
 
 void CSQC_Client_RenderScene (void)
 {
@@ -1470,6 +1514,9 @@ void CSQC_Client_RenderScene (void)
 	// have run). Idempotent; ADR 0028.
 	R_CSQC_ApplyModuleView ();
 	R_RenderView ();
+	// Re-arm the once-per-frame arena cull guard so a second renderscene in the
+	// same frame culls by its own camera (B9, PR #1160 re-review).
+	R_CSQC_ResetCull ();
 }
 
 qbool CSQC_Client_SceneRendered (void)
@@ -1584,10 +1631,11 @@ int CSQC_Client_ModelIndex (const char *name)
 	if (s_nmodels >= CSQC_MAX_MODELS)
 		return 0;
 	// precache_model re-trigger: register the name even if the file is missing
-	// (Mod_ForName == NULL) so the returned index stays stable; the slot then holds
-	// a NULL placeholder until the model is loaded after a successful download
+	// (Mod_ForNameTolerant == NULL) so the returned index stays stable; the slot then
+	// holds a NULL placeholder until the model is loaded after a successful download
 	// (CSQC_Client_ModelDownloadFinished). "!= 0" therefore means "registered", not "loaded".
-	m = Mod_ForName (name, false);
+	// Tolerant: a found non-model file becomes a stub instead of Host_Error (E6).
+	m = Mod_ForNameTolerant (name, false);
 	strlcpy (s_modelnames[s_nmodels], name, MAX_QPATH);
 	s_models[s_nmodels] = m;
 	// negative csqc slot (FTE: modelindex = -freei with freei < 0)
@@ -1638,7 +1686,7 @@ void CSQC_Client_ModelDownloadFinished (const char *downloadname)
 	const char *raw;
 	int i, prefix;
 
-	if (!downloadname || !downloadname[0] || s_nmodels <= 0)
+	if (!downloadname || !downloadname[0])
 		return;
 
 	prefix = (int)strlen (cls.gamedir);
@@ -1646,11 +1694,22 @@ void CSQC_Client_ModelDownloadFinished (const char *downloadname)
 		return;
 	raw = downloadname + prefix + 1;
 
+	// csqc-only registry (negative index space)
 	for (i = 0; i < s_nmodels; i++)
 	{
 		if (strcmp (s_modelnames[i], raw))
 			continue;
-		s_models[i] = Mod_ForName (s_modelnames[i], false);
+		s_models[i] = Mod_ForNameTolerant (s_modelnames[i], false);
+	}
+
+	// Server precache (#77 / svc_precache): refill cl.model_precache for a matching
+	// server name (a missing file was left as a non-NULL stub placeholder).
+	for (i = 1; i < MAX_MODELS; i++)
+	{
+		if (!cl.model_name[i][0])
+			continue;
+		if (!strcmp (cl.model_name[i], raw))
+			cl.model_precache[i] = Mod_ForNameTolerant (cl.model_name[i], false);
 	}
 }
 
@@ -2063,6 +2122,10 @@ static int CSQC_Client_RunEntSpawn (pr1vm_t *vm, unsigned int entnum)
 	return (slot > 0 && slot < CSQC_MAX_EDICTS && s_used[slot]) ? slot : 0;
 }
 
+// Forward decl: clears player/delta bridges referencing a freed slot; defined with
+// the delta bridge state below.
+static void CSQC_Client_ClearSlotBridges (int slot);
+
 /* After CSQC_Ent_Update the module may change self; remap number->slot onto the new
    valid slot (0 = world/removed). */
 static void CSQC_Client_RemapAfterUpdate (pr1vm_t *vm, unsigned int entnum)
@@ -2137,6 +2200,10 @@ void CSQC_Client_EntFree (struct pr1vm_s *v, int entnum)
 	s_own[entnum] = false;
 	s = (float *)((byte *)vm->game_edicts + (size_t)entnum * vm->edict_size);
 	memset (s, 0, vm->edict_size);
+	// Symmetric with NetFreeSlot: drop any player/delta bridge referencing the freed
+	// slot (E1) - otherwise a module `remove()` of a handed-off network entity leaves
+	// a stale bridge writing into a reused slot.
+	CSQC_Client_ClearSlotBridges (entnum);
 }
 
 /* internal network path (ParseEntities): a slot without s_own.
@@ -2157,6 +2224,10 @@ void CSQC_Client_NetFreeSlot (int slot, int number)
 		s_slotnum[slot] = 0;	// reverse map does not outlive the free
 	if (number > 0 && number < CSQC_MAX_NUM && s_numslot[number] == slot)
 		s_numslot[number] = 0;
+	// Drop any player/delta bridge that referenced this slot so a reused slot is
+	// not written with player/packet state belonging to a different logical edict
+	// (PR #1160 re-review, E1).
+	CSQC_Client_ClearSlotBridges (slot);
 }
 
 /* access/diagnostics: walk the pool and fields */
@@ -2257,6 +2328,21 @@ static void CSQC_Client_DeltaReset (void)
 	memset (s_delta_seen, 0, sizeof (s_delta_seen));
 	memset (s_delta_player_owned, 0, sizeof (s_delta_player_owned));
 	memset (s_delta_ent_owned, 0, sizeof (s_delta_ent_owned));
+}
+
+// Clear the player/delta bridges referencing a freed arena slot (see NetFreeSlot).
+static void CSQC_Client_ClearSlotBridges (int slot)
+{
+	int i;
+
+	if (slot <= 0)
+		return;
+	for (i = 0; i < MAX_CLIENTS; i++)
+		if (s_player_slot[i] == slot)
+			s_player_slot[i] = 0;
+	for (i = 0; i < CSQC_MAX_NUM; i++)
+		if (s_delta_slot[i] == slot)
+			s_delta_slot[i] = 0;
 }
 
 // Getters for CL_LinkPlayers/CL_LinkPacketEntities (cl_ents.c).
@@ -2771,8 +2857,10 @@ qbool CSQC_Client_Project (const float *world, float *sx, float *sy, float *sz)
 	float rx, ry, rw, rh;
 	int i, j, k;
 
-	R_GetModelviewMatrix (model);
-	R_GetProjectionMatrix (proj);
+	// Build the matrices from r_refdef (the current frame's camera), not the live GL
+	// matrices - before renderscene the latter are the previous 2D-ortho HUD pass
+	// (PR #1160 re-review, E4).
+	R_GetRefdefMatrices (model, proj);
 
 	// a = model * proj (row vector)
 	for (i = 0; i < 4; i++)
@@ -2861,8 +2949,8 @@ qbool CSQC_Client_Unproject (float sx, float sy, float sz, float *world)
 	float model[16], proj[16], a[16], inv[16], v[4], res[4], sum, tx, ty;
 	int i, j, k;
 
-	R_GetModelviewMatrix (model);
-	R_GetProjectionMatrix (proj);
+	// r_refdef-derived matrices (see CSQC_Client_Project / E4).
+	R_GetRefdefMatrices (model, proj);
 	for (i = 0; i < 4; i++)
 		for (j = 0; j < 4; j++)
 		{
@@ -3293,6 +3381,45 @@ static qbool PR1VM_ValidateClientV6 (const byte *data, int filesize)
 		Con_Printf ("CSQC: csprogs.dat rejected: bad counts (stmt=%d func=%d str=%d glob=%d ef=%d)\n",
 			h.numstatements, h.numfunctions, h.numstrings, h.numglobals, h.entityfields);
 		return false;
+	}
+
+	// Reject overlapping header lumps (PR #1160 re-review). The lumps are used
+	// in-place in the file buffer, so a write through one lump must not reach
+	// another's bytes: a valid OP_STORE_F global write overlapping statements[]
+	// would rewrite an executable statement, and a later OP_CALL would read/write
+	// outside the module buffer (heap OOB). Ranges already fit the file (checked
+	// above), so ofs + len cannot overflow.
+	{
+		struct { int ofs; int len; const char *name; } lumps[6];
+		int a, b;
+
+		lumps[0].ofs = h.ofs_statements; lumps[0].len = h.numstatements * (int)sizeof (dstatement_t); lumps[0].name = "statements";
+		lumps[1].ofs = h.ofs_globaldefs; lumps[1].len = h.numglobaldefs * (int)sizeof (ddef_t);       lumps[1].name = "globaldefs";
+		lumps[2].ofs = h.ofs_fielddefs;  lumps[2].len = h.numfielddefs  * (int)sizeof (ddef_t);       lumps[2].name = "fielddefs";
+		lumps[3].ofs = h.ofs_functions;  lumps[3].len = h.numfunctions  * (int)sizeof (dfunction_t);  lumps[3].name = "functions";
+		// For QW v6 progs numstrings is the byte SIZE of the strings area
+		// [strings, strings+numstrings) - not a count of strings (pr_edict.c:1296-1298;
+		// FTE qclib/pr_edict.c:3004). Do NOT treat it as a string count.
+		lumps[4].ofs = h.ofs_strings;    lumps[4].len = h.numstrings;                                  lumps[4].name = "strings";
+		lumps[5].ofs = h.ofs_globals;    lumps[5].len = h.numglobals   * (int)sizeof (float);          lumps[5].name = "globals";
+
+		for (a = 0; a < 6; a++)
+		{
+			if (lumps[a].len <= 0)
+				continue;
+			for (b = a + 1; b < 6; b++)
+			{
+				if (lumps[b].len <= 0)
+					continue;
+				if (lumps[a].ofs < lumps[b].ofs + lumps[b].len &&
+					lumps[b].ofs < lumps[a].ofs + lumps[a].len)
+				{
+					Con_Printf ("CSQC: csprogs.dat rejected: %s lump overlaps %s\n",
+						lumps[a].name, lumps[b].name);
+					return false;
+				}
+			}
+		}
 	}
 
 	// statements: every operand indexes vm->globals[st->a/b/c]; vector ops use 3.
@@ -3878,6 +4005,7 @@ static qbool CSQC_Client_Load (const char *path)
 	CSQC_Client_ViewReset ();
 	CSQC_Client_ModelReset ();	// CSQC model registry cleared on load
 	CSQC_Client_FreeStringPool ();	// #118: free strzone'd strings before memset
+	CSQC_Client_DrawFontScaleReset ();	// #B3: re-resolve drawfontscale for the new module
 
 	// Free a buffer left from a previous load (its VM is dropped by the reset
 	// below and no longer referenced after the resets above).
@@ -4440,9 +4568,14 @@ int CSQC_Client_KeynumToQC (int keynum)
 	case K_LEFTARROW:	return 130;
 	case K_RIGHTARROW:	return 131;
 
-	case K_LALT:		return 132;
-	case K_LCTRL:		return 133;
-	case K_LSHIFT:		return 134;
+	// Both sides of the modifiers map to the same QC code (FTE pr_clcmd.c parity):
+	// a module's `scanx == K_SHIFT` matches the right Shift too (B7).
+	case K_LALT:
+	case K_RALT:		return 132;
+	case K_LCTRL:
+	case K_RCTRL:		return 133;
+	case K_LSHIFT:
+	case K_RSHIFT:		return 134;
 
 	case K_F1:			return 135;
 	case K_F2:			return 136;
@@ -5125,7 +5258,24 @@ void CSQC_Client_ParsePrecacheMsg (void)
 	if (ptype == SVCFTE_PC_MODEL)
 	{
 		if (pidx >= 1 && pidx < MAX_MODELS)
+		{
+			struct model_s *m;
 			strlcpy (cl.model_name[pidx], name, sizeof (cl.model_name[pidx]));
+			// FTE CL_ParsePrecache: resolve the name to a model (or a stub) so a later
+			// packet entity with this server index does not hit
+			// Host_Error("bad modelindex") on a NULL cl.model_precache[] (E2). A found
+			// non-model file yields a stub instead of aborting (E6).
+			m = Mod_ForNameTolerant (name, false);
+			if (!m)
+			{
+				// missing file: non-NULL placeholder + queue for download (single-slot
+				// cls.download guard, like the precache_model builtin).
+				m = Mod_ForNameTolerant (name, true);
+				if (name[0] != '*' && !cls.download)
+					CL_CheckOrDownloadFile ((char *)name);
+			}
+			cl.model_precache[pidx] = m;
+		}
 	}
 	else if (ptype == SVCFTE_PC_SOUND)
 	{
@@ -5410,12 +5560,24 @@ void CSQC_Client_ParseEntities (qbool sized)
 				{
 					// context (self=slot, .entnum=number), without a builtin stream.
 					CSQC_Client_SetContextSlot (vm, (unsigned)slot, entnum);
+					// FTE parity (pr_csqc.c CSQC_EntRemove): a declared callback owns
+					// the edict - the engine must NOT free the slot here, the module
+					// frees it with remove(). Drop the number->slot map first (FTE sets
+					// csqcent[entnum]=NULL before the callback) so a later entity with
+					// the same number takes a fresh slot instead of aliasing this one,
+					// and transfer ownership (s_own) so remove() accepts the slot.
+					if (entnum < CSQC_MAX_NUM && s_numslot[entnum] == slot)
+						s_numslot[entnum] = 0;
+					if (s_slotnum[slot] == (int)entnum)
+						s_slotnum[slot] = 0;
+					s_own[slot] = true;
 					CSQC_Client_Exec (s_csqc.func_entremove);
 				}
-				// The engine frees the slot unconditionally (the callback is optional).
-				// ezq deviation from FTE: when a callback exists FTE hands the free to
-				// the module - we do not change that.
-				CSQC_Client_NetFreeSlot (slot, (int)entnum);
+				else
+				{
+					// No callback: engine-managed lifetime.
+					CSQC_Client_NetFreeSlot (slot, (int)entnum);
+				}
 			}
 			s_csqc.seen[entnum] = false;
 			continue;
@@ -5426,7 +5588,12 @@ void CSQC_Client_ParseEntities (qbool sized)
 		// takes packetstart after ReadShort).
 		if (sized)
 		{
-			payload_len = MSG_ReadShort ();
+			// Unsigned length (hardening deviation from FTE, which reads the short
+			// signed and relies on MSG_ReadSkip clamping the negative; here it also
+			// matches svc 90/91): a signed read would let a server-controlled >=0x8000
+			// length rewind the parser behind the payload (out-of-bounds read + parser
+			// loop; PR #1160 re-review).
+			payload_len = (unsigned short)MSG_ReadShort ();
 			payload_start = msg_readcount;
 		}
 
@@ -5583,6 +5750,20 @@ Differences from FTE:
   joy/accel/focus InputEvent types (CSIE_*) are not declared in the QW module - N/A.
 =================
 */
+// Clamp a module-supplied float to an integer field range. Casting NaN or an
+// out-of-range float to short/byte is undefined behaviour, so the write-back of
+// CSQC_Input_Frame must clamp first (B5, PR #1160 re-review). NaN -> 0.
+static int CSQC_Client_ClampInput (float v, int lo, int hi)
+{
+	if (v != v)
+		return 0;
+	if (v <= (float)lo)
+		return lo;
+	if (v >= (float)hi)
+		return hi;
+	return (int)v;
+}
+
 void CSQC_Client_InputFrame (usercmd_t *cmd)
 {
 	pr1vm_t *vm = &s_csqc.vm;
@@ -5650,14 +5831,14 @@ void CSQC_Client_InputFrame (usercmd_t *cmd)
 	}
 	if (s_csqc.in_movevalues >= 0)
 	{
-		cmd->forwardmove = (short)vm->globals[s_csqc.in_movevalues + 0];
-		cmd->sidemove = (short)vm->globals[s_csqc.in_movevalues + 1];
-		cmd->upmove = (short)vm->globals[s_csqc.in_movevalues + 2];
+		cmd->forwardmove = (short)CSQC_Client_ClampInput (vm->globals[s_csqc.in_movevalues + 0], -32768, 32767);
+		cmd->sidemove = (short)CSQC_Client_ClampInput (vm->globals[s_csqc.in_movevalues + 1], -32768, 32767);
+		cmd->upmove = (short)CSQC_Client_ClampInput (vm->globals[s_csqc.in_movevalues + 2], -32768, 32767);
 	}
 	if (s_csqc.in_buttons >= 0)
-		cmd->buttons = (byte)vm->globals[s_csqc.in_buttons];
+		cmd->buttons = (byte)CSQC_Client_ClampInput (vm->globals[s_csqc.in_buttons], 0, 255);
 	if (s_csqc.in_impulse >= 0)
-		cmd->impulse = (byte)vm->globals[s_csqc.in_impulse];
+		cmd->impulse = (byte)CSQC_Client_ClampInput (vm->globals[s_csqc.in_impulse], 0, 255);
 }
 
 /*
@@ -6400,6 +6581,23 @@ void CSQC_Client_Disconnect (void)
 {
 	int i;
 
+	// The client VM can be executing when this runs: a builtin may raise an engine
+	// Host_Error (e.g. precache_model on a found non-model file -> Mod_ForName ->
+	// Host_Error -> CL_Disconnect -> here). Running func_shutdown / PR1VM_UnLoad now
+	// would re-enter the VM; a nested module error longjmps to the *outer*
+	// PR1VM_ExecuteProgram frame, abandoning Host_Error before it clears `inerror` -
+	// the next Host_Error then hits Sys_Error("recursively entered"). Detach the
+	// classic mirrors (so this VM is no longer PR1VM_Active()) and defer the actual
+	// teardown to the next disconnect, when the VM is not executing (PR #1160
+	// re-review, D6).
+	if (PR1VM_Active () == &s_csqc.vm)
+	{
+		PR1VM_RestoreContext (&s_csqc.vm);
+		s_csqc.vm.abortbuf = NULL;	// drop the abandoned frame's unwind target
+		s_csqc.errored = true;		// module defunct: never executed again before unload
+		return;
+	}
+
 	if (s_csqc.loaded)
 	{
 		if (s_csqc.inited && !s_csqc.errored)
@@ -6428,9 +6626,12 @@ void CSQC_Client_Disconnect (void)
 	s_scene_rendered = false;	// takeover scene reset
 	CSQC_Client_ModelReset ();	// CSQC model registry
 	CSQC_Client_FreeStringPool ();	// #118: free strzone'd strings before memset
+	CSQC_Client_DrawFontScaleReset ();	// #B3: invalidate drawfontscale offset cache
 	memset (&s_csqc, 0, sizeof (s_csqc));
 	memset (s_csqc_stat, 0, sizeof (s_csqc_stat));
 	memset (s_csqc_statsf, 0, sizeof (s_csqc_statsf));
+	memset (s_csqc_cl_statsf, 0, sizeof (s_csqc_cl_statsf));
+	memset (s_csqc_cl_statsf_valid, 0, sizeof (s_csqc_cl_statsf_valid));
 	// Stat wire 78/79: string stats are deep copies (Q_strdup).
 	for (i = 0; i < MAX_EXTENDED_CL_STATS; i++)
 	{
