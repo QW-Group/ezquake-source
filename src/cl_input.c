@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "input.h"
 #include "pmove.h"		// PM_FLY etc
 #include "rulesets.h"
+#include "csqc_client.h"	// CSQC_Client_InputFrame
 
 static void IN_AttackUp_CommonHide(void);
 
@@ -1111,6 +1112,14 @@ void CL_SendCmd(void)
 		cls.netchan.outgoing_sequence++;
 		return;
 	}
+
+	// CSQC_Input_Frame: let the module read/modify the outgoing usercmd (input_*
+	// globals). Only the live (non-MVD) path and only the current frame; the two
+	// backup frames below are left alone.
+	CSQC_Client_InputFrame(cmd);
+	// #345: record the outgoing cmd in the module's history (after any Input_Frame
+	// modifications).
+	CSQC_Client_RecordInput(cmd);
 
 	SZ_Init(&buf, data, sizeof(data));
 

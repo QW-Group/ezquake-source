@@ -33,6 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_aliasmodel.h"
 #include "crc.h"
 #include "qmb_particles.h"
+#include "csqc_client.h"	// viewmodel gate under CSQC takeover (#301 mask&2)
 #include "r_matrix.h"
 #include "r_local.h"
 #include "r_framestats.h"
@@ -176,24 +177,25 @@ static void R_RenderAliasModelEntity(
 qbool R_CullAliasModel(entity_t* ent, maliasframedesc_t* oldframe, maliasframedesc_t* frame)
 {
 	vec3_t mins, maxs;
+	float scale = ent->scale ? ent->scale : 1;
 
 	//culling
 	if (!(ent->renderfx & RF_WEAPONMODEL)) {
 		if (ent->angles[0] || ent->angles[1] || ent->angles[2]) {
-			if (R_CullSphere(ent->origin, max(oldframe->radius, frame->radius))) {
+			if (R_CullSphere(ent->origin, scale * max(oldframe->radius, frame->radius))) {
 				return true;
 			}
 		}
 		else {
 			if (r_framelerp == 1) {
-				VectorAdd(ent->origin, frame->bboxmin, mins);
-				VectorAdd(ent->origin, frame->bboxmax, maxs);
+				VectorMA(ent->origin, scale, frame->bboxmin, mins);
+				VectorMA(ent->origin, scale, frame->bboxmax, maxs);
 			}
 			else {
 				int i;
 				for (i = 0; i < 3; i++) {
-					mins[i] = ent->origin[i] + min(oldframe->bboxmin[i], frame->bboxmin[i]);
-					maxs[i] = ent->origin[i] + max(oldframe->bboxmax[i], frame->bboxmax[i]);
+					mins[i] = ent->origin[i] + scale * min(oldframe->bboxmin[i], frame->bboxmin[i]);
+					maxs[i] = ent->origin[i] + scale * max(oldframe->bboxmax[i], frame->bboxmax[i]);
 				}
 			}
 			if (R_CullBox(mins, maxs)) {
@@ -647,6 +649,15 @@ void R_DrawViewModel(void)
 	centity_t *cent = CL_WeaponModelForView();
 	static entity_t gun;
 
+	// #301 mask&2: with an active CSQC takeover scene, draw the engine viewmodel only
+	// if the module requested MASK_STDVIEWMODEL. On the fallback path (the module was
+	// active but did not call renderscene this frame) the engine draws the frame
+	// itself, so the viewmodel must be drawn as outside takeover - suppression only
+	// applies to a completed takeover render (E4/B8, PR #1160 re-review).
+	if (CSQC_Client_SceneActive () && CSQC_Client_SceneRendered () && !CSQC_Client_SceneViewModel ()) {
+		return;
+	}
+
 	//VULT CAMERA - Don't draw gun in external camera
 	if (cameratype != C_NORMAL) {
 		return;
@@ -1001,6 +1012,7 @@ void R_AliasModelPrepare(entity_t* ent, int framecount, int* frame1_, int* frame
 	int expected2 = Mod_ExpectedNextFrame(ent->model, frame2, framecount);
 
 	R_RotateForEntity(ent);
+	R_ScaleModelviewForEntity(ent);
 	if ((ent->renderfx & RF_WEAPONMODEL) && r_viewmodelsize.value < 1) {
 		// perform scalling for r_viewmodelsize
 		R_ScaleModelview(0.5 + bound(0, r_viewmodelsize.value, 1) / 2, 1, 1);

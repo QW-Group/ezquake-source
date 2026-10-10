@@ -35,6 +35,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h"
 #include "hud_common.h"
 #include "hud_editor.h"
+#ifndef CLIENTONLY
+#include "csqc_client.h"
+#endif
 #include "input.h"
 #include "gl_model.h"
 #include "tr_types.h"
@@ -95,24 +98,31 @@ void CL_ParseHiddenDataMessage(void);
 
 static void AuthUsernameChanged(cvar_t* var, char* value, qbool* cancel);
 
-cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
-cvar_t	rcon_password = {"rcon_password", ""};
-cvar_t	rcon_address = {"rcon_address", ""};
-cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1"};
+cvar_t	allow_scripts = {"allow_scripts", "2", CVAR_NOTFROMSERVER, Rulesets_OnChange_allow_scripts};
+cvar_t	rcon_password = {"rcon_password", "", CVAR_NOTFROMSERVER};
+cvar_t	rcon_address = {"rcon_address", "", CVAR_NOTFROMSERVER};
+cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1", CVAR_NOTFROMSERVER};
 
-cvar_t	cl_timeout = {"cl_timeout", "60"};
+cvar_t	cl_timeout = {"cl_timeout", "60", CVAR_NOTFROMSERVER};
 
-cvar_t	cl_delay_packet = {"cl_delay_packet", "0", 0, Rulesets_OnChange_cl_delay_packet};
-cvar_t  cl_delay_packet_target = { "cl_delay_packet_target", "0", 0, Rulesets_OnChange_cl_delay_packet };
-cvar_t  cl_delay_packet_dev = { "cl_delay_packet_deviation", "0", 0, Rulesets_OnChange_cl_delay_packet };
+cvar_t	cl_delay_packet = {"cl_delay_packet", "0", CVAR_NOTFROMSERVER, Rulesets_OnChange_cl_delay_packet};
+cvar_t  cl_delay_packet_target = { "cl_delay_packet_target", "0", CVAR_NOTFROMSERVER, Rulesets_OnChange_cl_delay_packet };
+cvar_t  cl_delay_packet_dev = { "cl_delay_packet_deviation", "0", CVAR_NOTFROMSERVER, Rulesets_OnChange_cl_delay_packet };
 
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
-cvar_t  cl_pext = {"cl_pext", "1"};					// allow/disallow protocol extensions at all.
+cvar_t  cl_pext = {"cl_pext", "1", CVAR_NOTFROMSERVER};	// allow/disallow protocol extensions at all.
 													// some extensions can be explicitly controlled.
-cvar_t  cl_pext_limits = { "cl_pext_limits", "1" }; // enhanced protocol limits
-cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
-cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1" }; // if set, user will be warned when saving demos that are not backwards compatible
+cvar_t  cl_pext_limits = { "cl_pext_limits", "1", CVAR_NOTFROMSERVER }; // enhanced protocol limits
+cvar_t  cl_pext_other = {"cl_pext_other", "0", CVAR_NOTFROMSERVER};		// extensions which does not have own variables should be controlled by this variable.
+#ifdef FTE_PEXT_CSQC
+#ifndef CLIENTONLY
+cvar_t  cl_pext_csqc = {"cl_pext_csqc", "1", CVAR_NOTFROMSERVER};			// CSQC (our client PR1VM, csqc_client.c)
+ // Allow downloading csprogs.dat from the server.
+cvar_t  cl_download_csprogs = {"cl_download_csprogs", "1", CVAR_ARCHIVE | CVAR_NOTFROMSERVER};
+#endif
+#endif
+cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1", CVAR_NOTFROMSERVER }; // if set, user will be warned when saving demos that are not backwards compatible
 cvar_t  cl_pext_lagteleport = { "cl_pext_lagteleport", "1" }; // server-side adjustment of yaw angle through teleports
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 cvar_t  cl_pext_serversideweapon = { "cl_pext_serversideweapon", "0", 0, onchange_pext_serversideweapon }; // server-side weapon selection
@@ -245,7 +255,7 @@ cvar_t r_lightmap_lateupload    = {"r_lightmap_lateupload", "0"};
 cvar_t r_lightmap_packbytexture = {"r_lightmap_packbytexture", "2"};
 
 // info mirrors
-cvar_t  password                = {"password", "", CVAR_USERINFO};
+cvar_t  password                = {"password", "", CVAR_USERINFO | CVAR_NOTFROMSERVER};
 cvar_t  spectator               = {"spectator", "", CVAR_USERINFO_NO_CFG_RESET };
 void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel);
 cvar_t  name                    = {"name", "player", CVAR_USERINFO, CL_OnChange_name_validate};
@@ -276,7 +286,7 @@ cvar_t cl_verify_qwprotocol     = {"cl_verify_qwprotocol", "1"};
 cvar_t demo_autotrack           = {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
 
 // Authentication
-cvar_t cl_username              = {"cl_username", "", CVAR_QUEUED_TRIGGER, AuthUsernameChanged};
+cvar_t cl_username              = {"cl_username", "", CVAR_QUEUED_TRIGGER | CVAR_NOTFROMSERVER, AuthUsernameChanged}; // value goes into `cmd login %s` (cl_parse.c)
 static void CL_Authenticate_f(void);
 
 // antilag debugging
@@ -421,6 +431,12 @@ void CL_MakeActive(void)
 		R_ProgramCompileAll();
 	}
 
+#ifndef CLIENTONLY
+	// CSQC: entering the world (all content is already in the FS), analogous to
+	// the FTE prespawn. Load csprogs.dat + CSQC_Init before the first active frame.
+	CSQC_Client_ConnectCheck ();
+#endif
+
 	cls.state = ca_active;
 	if (cls.demoplayback) 
 	{
@@ -469,6 +485,18 @@ void CL_UserinfoChanged (char *key, char *string)
 }
 
 #ifdef PROTOCOL_VERSION_FTE
+/*
+Client-supported FTE protocol extensions (declare mask sent in the connect packet).
+
+Contract: each emitted bit is backed by a receiving parser in this build (see the
+per-bit comments); the only exception is the documented server hint FTE_PEXT_HLBSP.
+FTE analogue: Net_PextMask (fteqw/engine/common/net_chan.c:112-213).
+
+Bits ezquake does not implement are never emitted. They either have no FTE_PEXT_*
+macro or handler at all (SETVIEW/SCALE/LIGHTSTYLECOL/VIEW2/SOUNDDBL/FATNESS/
+TE_BULLET/HULLSIZE/Q2BSP/Q3BSP/SPLITSCREEN/HEXEN2/CUSTOMTEMPEFFECTS/SHOWPIC/
+SETATTACHMENT), or the macro exists but no emit branch is compiled (DPFLAGS).
+*/
 unsigned int CL_SupportedFTEExtensions (void)
 {
 	unsigned int fteprotextsupported = 0;
@@ -476,30 +504,38 @@ unsigned int CL_SupportedFTEExtensions (void)
 	if (!cl_pext.value)
 		return 0;
 
+	// CHUNKEDDOWNLOADS: svc_download chunked transfer - cl_parse.c CL_ParseDownload.
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (cl_pext_chunkeddownloads.value)
 		fteprotextsupported |= FTE_PEXT_CHUNKEDDOWNLOADS;
 #endif
 
+	// 256PACKETENTITIES: up to 256 entity slots per packet - cl_ents.c CL_ParsePacketEntities.
 #ifdef FTE_PEXT_256PACKETENTITIES
 	if (cl_pext_256packetentities.value)
 		fteprotextsupported |= FTE_PEXT_256PACKETENTITIES;
 #endif
 
+	// FLOATCOORDS: floating-point entity origins - cl_ents.c CL_ParseDelta
+	// (msg_coordsize set in cl_parse.c:1482).
 #ifdef FTE_PEXT_FLOATCOORDS
 	if (cl_pext_floatcoords.value)
 		fteprotextsupported |= FTE_PEXT_FLOATCOORDS;
 #endif
 
+	// TRANS: per-entity alpha byte - cl_ents.c U_FTE_TRANS.
 #ifdef FTE_PEXT_TRANS
 	if (cl_pext_alpha.value)
 		fteprotextsupported |= FTE_PEXT_TRANS;
 #endif
+	// COLOURMOD: per-entity colourmod byte - cl_ents.c U_FTE_COLOURMOD.
 #ifdef FTE_PEXT_COLOURMOD
 	if (cl_pext_colourmod.value)
 		fteprotextsupported |= FTE_PEXT_COLOURMOD;
 #endif
 
+	// Extended limits: larger model/entity indices and spawnstatic2 delta
+	// - cl_parse.c CL_ParseSpawnBaseline2 / cl_ents.c.
 	if (cl_pext_limits.value) {
 #ifdef FTE_PEXT_MODELDBL
 		fteprotextsupported |= FTE_PEXT_MODELDBL;
@@ -515,11 +551,19 @@ unsigned int CL_SupportedFTEExtensions (void)
 #endif
 	}
 
+	// ACCURATETIMINGS: server time via STAT_TIME - cl_parse.c:3516 (cl.servertime_works).
+	// The macro is defined by the CMake ANTILAG option (default ON), so in a standard
+	// build the macro is present and this branch is live; in a non-ANTILAG build it is
+	// absent and the bit is never emitted.
 #ifdef FTE_PEXT_ACCURATETIMINGS
 	if (cl_pext_accuratetimings.value)
 		fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
 #endif
 
+	// HLBSP: server hint only ("stops fte servers from complaining"); no parser and no
+	// active server consumer (FTE reject for HL levels is commented out). Kept for
+	// upstream master parity, opt-in via cl_pext_other (default 0) - documented exception
+	// to the declared == implemented contract.
 	if (cl_pext_other.value)
 	{
 #ifdef FTE_PEXT_HLBSP
@@ -527,11 +571,28 @@ unsigned int CL_SupportedFTEExtensions (void)
 #endif
 	}
 
+	// CSQC (our client PR1VM). The bit itself is safe: the server sends extended
+	// stats 32..127 (the client ignores them until they are wired up), and CSQC
+	// entities only after enablecsqc (which the client does not send until it can
+	// parse 76/83/90/92).
+#ifdef FTE_PEXT_CSQC
+#ifndef CLIENTONLY
+	if (cl_pext_csqc.value)
+		fteprotextsupported |= FTE_PEXT_CSQC;
+#endif
+#endif
+
 	return fteprotextsupported;
 }
 #endif // PROTOCOL_VERSION_FTE
 
 #ifdef PROTOCOL_VERSION_FTE2
+/*
+Client-supported FTE2 extensions. Only VOICECHAT is implemented; it is gated on the
+Speex voice parser being compiled in (FTE_PEXT2_VOICECHAT is defined under WITH_SPEEX),
+so the bit is absent in a non-Speex build. FTE analogue: Net_PextMask
+(fteqw/engine/common/net_chan.c:214-252).
+*/
 unsigned int CL_SupportedFTEExtensions2 (void)
 {
 	unsigned int fteprotextsupported2 = 0
@@ -705,6 +766,19 @@ static void CL_PextList_f(void)
 #endif
 		{ 0, NULL }
 	};
+#endif
+
+	// The mask the client would declare with the current cl_pext* cvars (independent of
+	// the connection). Config-dependent: the canonical build (ANTILAG=ON, WITH_SPEEX)
+	// gives FTE1 = 0x6148f048, FTE2 = 0x2; without ANTILAG/Speex 0x6148f008 / 0x0.
+#ifdef PROTOCOL_VERSION_FTE
+	CL_PrintPextGroup("FTE extensions (client support)", CL_SupportedFTEExtensions(), fte_pexts);
+#endif
+#ifdef PROTOCOL_VERSION_FTE2
+	CL_PrintPextGroup("FTE2 extensions (client support)", CL_SupportedFTEExtensions2(), fte2_pexts);
+#endif
+#ifdef PROTOCOL_VERSION_MVD1
+	CL_PrintPextGroup("MVD1 extensions (client support)", CL_SupportedMVDExtensions1(), mvd1_pexts);
 #endif
 
 	if (cls.state == ca_disconnected) {
@@ -1358,6 +1432,13 @@ void CL_ClearState (void)
 
 	Com_DPrintf ("Clearing memory\n");
 
+#ifndef CLIENTONLY
+	// CSQC: unload the client module instance before the hunk is rolled back.
+	// Host_ClearMemory frees the csprogs.dat data and cmd nodes above
+	// host_hunklevel, so they must not be kept past that point (map-change crash fix).
+	CSQC_Client_Disconnect ();
+#endif
+
 	if (!com_serveractive) {
 		Host_ClearMemory();
 	}
@@ -1527,6 +1608,11 @@ void CL_Disconnect (void)
 
 	// well, we need free qtv users before new connection
 	QTV_FreeUserList();
+
+#ifndef CLIENTONLY
+	// CSQC: shutdown and unload the client module instance.
+	CSQC_Client_Disconnect ();
+#endif
 
 	Cvar_ForceSet(&host_mapname, ""); // Notice mapname not valid yet
 }
@@ -2074,7 +2160,13 @@ static void CL_InitLocal(void)
 	Cvar_Register(&cl_pext);
 	Cvar_Register(&cl_pext_limits);
 	Cvar_Register(&cl_pext_other);
-	Cvar_Register(&cl_pext_warndemos);
+#ifdef FTE_PEXT_CSQC
+#ifndef CLIENTONLY
+	Cvar_Register(&cl_pext_csqc);
+	Cvar_Register(&cl_download_csprogs);
+#endif
+#endif
+ 	Cvar_Register(&cl_pext_warndemos);
 #ifdef MVD_PEXT1_HIGHLAGTELEPORT
 	Cvar_Register(&cl_pext_lagteleport);
 #endif
@@ -2162,6 +2254,11 @@ static void CL_InitLocal(void)
 	}
 
 	CL_InitCommands ();
+
+#ifndef CLIENTONLY
+	// CSQC client debug commands for PR1VM (csqc_smoke, etc.; csqc_client.c).
+	CSQC_Client_RegisterCommands ();
+#endif
 
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand ("connect", CL_Connect_f);
@@ -2524,7 +2621,10 @@ void CL_LinkEntities (void)
 		}
 
 		// build a refresh entity list
-		CL_EmitEntities();
+		// With an active CSQC scene the engine does not build the entity list;
+		// the module does it via #300 clearscene + #301 addentities (#304 renderscene).
+		if (!CSQC_Client_SceneActive ())
+			CL_EmitEntities();
 	}
 }
 
@@ -2535,7 +2635,16 @@ void CL_SoundFrame (void)
 	if (cls.state == ca_active)
 	{
 		if (!ISPAUSED) {
-			S_Update (r_origin, vpn, vright, vup);
+			// #351: with an active CSQC module that set a listener, sound is
+			// positioned from it; otherwise the engine view is used.
+			if (CSQC_Client_ListenerActive())
+			{
+				vec3_t lorg, lfwd, lrht, lup;
+				CSQC_Client_GetListener(lorg, lfwd, lrht, lup);
+				S_Update(lorg, lfwd, lrht, lup);
+			}
+			else
+				S_Update (r_origin, vpn, vright, vup);
 		}
 		else {
 			// do not play loop sounds (lifts etc.) when paused

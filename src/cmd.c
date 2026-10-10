@@ -50,6 +50,12 @@ static macro_command_t macro_commands[num_macros] = {
 
 qbool CL_CheckServerCommand (void);
 
+#ifdef FTE_PEXT_CSQC
+// CSQC module console catch-all (implemented in csqc_client.c). Returns true if the
+// module's CSQC_ConsoleCommand handled the line (FTE cmd.c:3080-3085).
+qbool CSQC_Client_ConsoleCommand (const char *line);
+#endif
+
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
 static int gtf = 0; // global trigger flag
 
@@ -67,12 +73,38 @@ cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 				"track,wait"
 
 static void OnChange_remote_capabilities(cvar_t *var, char *string, qbool *cancel);
-cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, 0,
+cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, CVAR_NOTFROMSERVER,
 				   OnChange_remote_capabilities};
 hashtable_t *rc_hash;
 
-cvar_t cl_allow_downloads = {"cl_allow_downloads", "bsp,lmp,loc,mdl,mvd,pcx,spr,wad,wav"};
-cvar_t cl_allow_uploads = {"cl_allow_uploads", "0"};
+/*
+TF anticheat remote commands (static, not user-configurable).
+
+Classic Team Fortress servers stuffcmd cvars/commands that ARE the subject of the
+existing TF anticheat (Change_v_idle/V_cshift_f in cl_view.c, OnFovChange in
+cl_screen.c): that anticheat cancels *local* changes to these values while letting
+the server path (cbuf_current == &cbuf_svc) through. Blocking the server's own
+control of these names would itself be a cheat contradicting the anticheat, so they
+are always permitted for a Team Fortress server (gamedir "fortress", cl.teamfortress)
+- unconditionally, regardless of cl_remote_capabilities.
+
+The set is a fixed compile-time list: the 9 anticheat-governed effect names above
+plus 7 server-authority movement/speed cvars (sensitivity included). It replaced the
+user-clearable cvar cl_remote_capabilities_tf (WS2-C, ADR 0047; removed per ADR 0044
+update) - no user toggle, since disabling the server's control of anticheat-governed
+values is the cheat. Non-anticheat TF names (setinfo, bind, reload, screenshot,
+disconnect) are out of scope here and handled separately.
+*/
+static const char *tf_anticheat_commands[] = {
+	"fov", "v_cshift", "v_idlescale",
+	"v_iyaw_cycle", "v_iroll_cycle", "v_ipitch_cycle",
+	"v_iyaw_level", "v_iroll_level", "v_ipitch_level",
+	"cl_movespeedkey", "cl_forwardspeed", "cl_backspeed",
+	"cl_sidespeed", "cl_upspeed", "cl_rollangle", "sensitivity",
+};
+
+cvar_t cl_allow_downloads = {"cl_allow_downloads", "bsp,lmp,loc,mdl,mvd,pcx,spr,wad,wav", CVAR_NOTFROMSERVER};
+cvar_t cl_allow_uploads = {"cl_allow_uploads", "0", CVAR_NOTFROMSERVER};
 
 cbuf_t cbuf_main;
 cbuf_t cbuf_svc;
@@ -139,6 +171,42 @@ add:
 		cmd = strtok(NULL, ",");
 	}
 	Q_free(tmp);
+}
+
+/*
+Remote-allowlist check for commands/cvars executed from a remote source
+(server svc_stufftext -> cbuf_svc) or from the untrusted client CSQC module
+(setkeybind/localcmd gates). Non-TF servers consult only cl_remote_capabilities.
+
+Known residual holes (accept+doc, ADR 0047): command *arguments* are not checked
+(server `bind x quit`); and an alias created by a module after the setkeybind call
+(`alias` is in the base allowlist) is a TOCTOU - setkeybind validates every command
+in the binding and rejects existing aliases, but a later `alias mypwn quit` +
+keypress still reaches exec. Full exec-time bind-level clamp is a follow-up
+(ADR 0044).
+*/
+static qbool Cmd_IsTFAnticheat (const char *name)
+{
+	int i;
+
+	for (i = 0; i < (int)(sizeof(tf_anticheat_commands) / sizeof(tf_anticheat_commands[0])); i++)
+	{
+		if (!strcmp(name, tf_anticheat_commands[i]))
+			return true;
+	}
+
+	return false;
+}
+
+qbool Cmd_RemoteAllowed (const char *name)
+{
+	if (Hash_Get(rc_hash, (char *)name))
+		return true;
+
+	if (cl.teamfortress && Cmd_IsTFAnticheat(name))
+		return true;
+
+	return false;
 }
 
 qbool CL_IsDownloadableFileExtension(const char *filename)
@@ -1901,7 +1969,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 		}
 
 		if (cmd->function) {
-			if (cbuf_current == &cbuf_svc && !Hash_Get(rc_hash, cmd->name)) {
+			if (cbuf_current == &cbuf_svc && !Cmd_RemoteAllowed(cmd->name)) {
 				Com_Printf("Blocked %s: not in cl_remote_capabilities\n", cmd->name);
 				goto done;
 			}
@@ -1920,7 +1988,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 
 	// check cvars
 	if ((v = Cvar_Find(Cmd_Argv(0)))) {
-		if (cbuf_current == &cbuf_svc && !Hash_Get(rc_hash, v->name)) {
+		if (cbuf_current == &cbuf_svc && !Cmd_RemoteAllowed(v->name)) {
 			Com_Printf("Blocked %s: not in cl_remote_capabilities\n", v->name);
 			goto done;
 		}
@@ -2028,6 +2096,38 @@ checkaliases:
 		if (Cvar_CreateTempVar())
 			goto done;
 	}
+
+#ifdef FTE_PEXT_CSQC
+	// CSQC console catch-all (FTE cmd.c:3080-3085): an unknown command (including a
+	// server stuffcmd) is offered to the module's CSQC_ConsoleCommand. A non-zero
+	// return means "handled" and suppresses the "Unknown command" diagnostic below.
+	// The helper is a no-op (returns false) without a loaded module, so the plain
+	// client is unaffected; it also guards against console re-entry.
+	{
+		// Buffer sized to the actual command: a fixed char[1024] silently truncated
+		// long commands (long stufftext / alias) before CSQC_ConsoleCommand
+		// (B11, PR #1160 re-review).
+		size_t len = strlen (Cmd_Argv(0)) + 1;
+		char *line;
+
+		if (Cmd_Argc() > 1)
+			len += strlen (Cmd_Args()) + 1;
+		line = (char *)Q_malloc (len);
+		if (line)
+		{
+			if (Cmd_Argc() > 1)
+				snprintf (line, len, "%s %s", Cmd_Argv(0), Cmd_Args());
+			else
+				snprintf (line, len, "%s", Cmd_Argv(0));
+			{
+				qbool handled = CSQC_Client_ConsoleCommand (line);
+				Q_free (line);
+				if (handled)
+					goto done;
+			}
+		}
+	}
+#endif
 
 	if (cbuf_current != &cbuf_svc)
 	{

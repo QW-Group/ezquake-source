@@ -80,6 +80,9 @@ typedef struct entity_s {
 	//VULT MOTION TRAILS
 	float alpha;
 
+	//CSQC: per-entity uniform render scale (FTE entity_t.scale). 0 means 1 (unscaled).
+	float scale;
+
 	// FIXME: could turn these into a union
 	struct mnode_s			*topnode;		// for bmodels, first world node that splits bmodel, or NULL if not split
 
@@ -197,6 +200,12 @@ void R_RenderView(void);		// must set r_refdef first
 
 void R_Init_EFrags (void);
 void R_AddEfrags(entity_t *ent);
+
+// CSQC arena culling
+void R_CSQC_BeginCull(void);
+void R_CSQC_ResetCull(void);
+qbool R_CSQC_EntityVisible(entity_t *ent);
+void R_CSQC_ApplyModuleView(void);
 void R_NewMap(qbool vid_restart);
 void R_NewMapPreLoad(void);
 

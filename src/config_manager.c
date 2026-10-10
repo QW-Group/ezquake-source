@@ -85,7 +85,9 @@ void DumpBindings (FILE *f)
 	for (i = 0; i < (sizeof(keybindings) / sizeof(*keybindings)); i++) {
 
 		leftright = Key_IsLeftRightSameBind(i) ? 1 : 0;
-		if (keybindings[i] || leftright) {
+		// PR #1160 re-review (F2): skip binds set by the CSQC module - they are
+		// not user binds and must not be persisted.
+		if ((keybindings[i] || leftright) && !Key_IsModuleBind(leftright ? i + 1 : i)) {
 			printed = true;
 			string = Key_KeynumToString(i);
 			spaces = CreateSpaces(BIND_ALIGN_COL - strlen(string) - 6);

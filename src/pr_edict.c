@@ -22,6 +22,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
+#include "pr1vm.h"
+#include <limits.h>
 
 dprograms_t		*progs;
 dfunction_t		*pr_functions;
@@ -78,7 +80,7 @@ func_t mod_ConsoleCmd, mod_UserCmd;
 func_t mod_UserInfo_Changed, mod_localinfoChanged;
 func_t mod_ChatMessage;
 
-cvar_t	sv_progsname = {"sv_progsname", "qwprogs"};
+cvar_t	sv_progsname = {"sv_progsname", "qwprogs", CVAR_NOTFROMSERVER};
 #ifdef WITH_NQPROGS
 cvar_t  sv_forcenqprogs = {"sv_forcenqprogs", "0"};
 #endif
@@ -1108,6 +1110,22 @@ PR1_LoadProgs
 void PF_clear_strtbl(void);
 
 #ifdef WITH_NQPROGS
+// NQ remap of field offsets (0..105; >105 -- identity). Values are the NQ branch
+// of the PR_InitPatchTables formula. Used by the server PR1 instance under NQ.
+static const int fieldofs_nq[106] = {
+	  0,  1,  2,  3,  4,  5,  6,  7,  9, 10,
+	 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+	 21, 22, 23, 24, 25,102,103,104, 26, 27,
+	 28, 29, 30, 31, 32, 33, 34, 35, 36, 37,
+	 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
+	 48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+	 58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
+	 68, 69, 70,105, 71, 72, 73, 74, 75, 76,
+	 77, 78, 79, 80, 81, 82, 83, 84, 85, 86,
+	 87, 88, 89, 90, 91, 92, 93, 94, 95, 96,
+	 97, 98, 99,100,101,  8,
+};
+
 void PR_InitPatchTables (void)
 {
 	int i;
@@ -1134,6 +1152,215 @@ void PR_InitPatchTables (void)
 	}
 }
 #endif
+
+/*
+=================
+PR1VM_FillAndSwapLumps
+
+From an already byte-swapped header fills the instance mirrors and byte-swaps
+the lumps. Common for v6 and v7 (the first 15 header fields match; v7 extends
+them with debug/type fields after entityfields).
+=================
+*/
+static void PR1VM_FillAndSwapLumps (pr1vm_t *vm, dprograms_t *p)
+{
+	int i;
+
+	vm->progs = p;
+	vm->functions = (dfunction_t *)((byte *)p + p->ofs_functions);
+	vm->strings = (char *)p + p->ofs_strings;
+	vm->globaldefs = (ddef_t *)((byte *)p + p->ofs_globaldefs);
+	vm->fielddefs = (ddef_t *)((byte *)p + p->ofs_fielddefs);
+	vm->statements = (dstatement_t *)((byte *)p + p->ofs_statements);
+	vm->global_struct = (globalvars_t *)((byte *)p + p->ofs_globals);
+	vm->globals = (float *)vm->global_struct;
+	vm->edict_size = p->entityfields * 4;
+
+	for (i = 0; i < p->numstatements; i++)
+	{
+		vm->statements[i].op = LittleShort(vm->statements[i].op);
+		vm->statements[i].a = LittleShort(vm->statements[i].a);
+		vm->statements[i].b = LittleShort(vm->statements[i].b);
+		vm->statements[i].c = LittleShort(vm->statements[i].c);
+	}
+
+	for (i = 0; i < p->numfunctions; i++)
+	{
+		vm->functions[i].first_statement = LittleLong (vm->functions[i].first_statement);
+		vm->functions[i].parm_start = LittleLong (vm->functions[i].parm_start);
+		vm->functions[i].s_name = LittleLong (vm->functions[i].s_name);
+		vm->functions[i].s_file = LittleLong (vm->functions[i].s_file);
+		vm->functions[i].numparms = LittleLong (vm->functions[i].numparms);
+		vm->functions[i].locals = LittleLong (vm->functions[i].locals);
+	}
+
+	for (i = 0; i < p->numglobaldefs; i++)
+	{
+		vm->globaldefs[i].type = LittleShort (vm->globaldefs[i].type);
+		vm->globaldefs[i].ofs = LittleShort (vm->globaldefs[i].ofs);
+		vm->globaldefs[i].s_name = LittleLong (vm->globaldefs[i].s_name);
+	}
+
+	for (i = 0; i < p->numfielddefs; i++)
+	{
+		vm->fielddefs[i].type = LittleShort (vm->fielddefs[i].type);
+		vm->fielddefs[i].ofs = LittleShort (vm->fielddefs[i].ofs);
+		vm->fielddefs[i].s_name = LittleLong (vm->fielddefs[i].s_name);
+	}
+
+	for (i = 0; i < p->numglobals; i++)
+		((int *)vm->globals)[i] = LittleLong (((int *)vm->globals)[i]);
+}
+
+/*
+=================
+PR1VM_LoadData
+
+Fills the instance from a progs (v6) file. Byte-swaps the header and lumps;
+version/CRC validation and error text are left to the PR1_LoadProgs wrapper.
+=================
+*/
+void PR1VM_LoadData (pr1vm_t *vm, dprograms_t *hdr)
+{
+	int i;
+	dprograms_t *p = hdr;
+
+	// byte swap the header
+	for (i = 0; i < (int) sizeof(*p) / 4 ; i++)
+		((int *)p)[i] = LittleLong ( ((int *)p)[i] );
+
+	PR1VM_FillAndSwapLumps (vm, p);
+}
+
+/*
+=================
+PR1VM_CommitServer
+
+Server: instance mirrors -> shared "module" globals (read by PR2 and sv_*.c).
+Called after a successful PR1VM_LoadData.
+=================
+*/
+void PR1VM_CommitServer (pr1vm_t *vm)
+{
+	progs = vm->progs;
+	pr_functions = vm->functions;
+	pr_strings = vm->strings;
+	pr_globaldefs = vm->globaldefs;
+	pr_fielddefs = vm->fielddefs;
+	pr_statements = vm->statements;
+	pr_global_struct = vm->global_struct;
+	pr_globals = vm->globals;
+	pr_edict_size = vm->edict_size;
+}
+
+char *PR1VM_GetString (pr1vm_t *vm, int num)
+{
+	if (!vm || !vm->strings)
+		return NULL;
+
+	if (num < 0)
+	{
+		int idx = -num;
+		if (idx >= 2 * MAX_PRSTR)
+			return NULL;
+		if (idx >= MAX_PRSTR)
+			return vm->newstrtbl ? vm->newstrtbl[idx - MAX_PRSTR] : NULL;
+		return vm->strtbl ? vm->strtbl[idx] : NULL;
+	}
+
+	// Positive offset indexes the string area. Server/map strings created via
+	// PR1_SetString (pr_exec.c) live in Hunk_Alloc'd "edstring" blocks and are
+	// stored as positive offsets *beyond* progs->numstrings, so the shared
+	// reader must not bound against numstrings. The client VM keeps untrusted
+	// csprogs strings bounded through its own accessor (csqc_client.c
+	// CSQC_Client_GetString, installed as vm->get_string).
+	return vm->strings + num;
+}
+
+void PR1VM_SetString (pr1vm_t *vm, string_t *address, char *s)
+{
+	int i;
+
+	if (!address)
+		return;
+
+	if (!s || !s[0])
+	{
+		*address = 0;
+		return;
+	}
+
+	if (!vm || !vm->strings || !vm->strtbl || !vm->numstr)
+		return;
+
+	// The module string area [strings, strings+numstrings) is constant
+	// (lifetime = module load) -- store an offset.
+	if (s >= vm->strings && s < vm->strings + vm->progs->numstrings)
+	{
+		*address = (int)(s - vm->strings);
+		return;
+	}
+
+	// Temp string: register the caller's pointer in the instance table. The
+	// client deep-copies temp strings into its own ring first (client part,
+	// outside the shared core); the server instance is not a caller (it uses
+	// PR1_SetString on the global tables).
+	for (i = 0; i < *vm->numstr; i++)
+	{
+		if (vm->strtbl[i] == s)
+		{
+			*address = -i;
+			return;
+		}
+	}
+
+	if (*vm->numstr + 1 >= MAX_PRSTR)
+		return;
+
+	vm->strtbl[++(*vm->numstr)] = s;
+	*address = -(*vm->numstr);
+}
+
+// s_name reads in the shared finders go through the client bound hook when one
+// is installed (untrusted csprogs); the server instance leaves get_string NULL
+// and falls back to the unbounded PR1VM_GetString (map strings live past
+// numstrings) - server-neutral.
+static char *PR1VM_FindString (pr1vm_t *vm, int num)
+{
+	return vm->get_string ? vm->get_string (vm, num) : PR1VM_GetString (vm, num);
+}
+
+dfunction_t *PR1VM_FindFunction (pr1vm_t *vm, const char *name)
+{
+	int i;
+
+	if (!vm || !vm->functions || !name)
+		return NULL;
+
+	for (i = 0; i < vm->progs->numfunctions; i++)
+	{
+		char *s = PR1VM_FindString (vm, vm->functions[i].s_name);
+		if (s && s[0] && !strcmp (s, name))
+			return &vm->functions[i];
+	}
+	return NULL;
+}
+
+int PR1VM_FindGlobal (pr1vm_t *vm, const char *name)
+{
+	int i;
+
+	if (!vm || !vm->globaldefs || !name)
+		return -1;
+
+	for (i = 0; i < vm->progs->numglobaldefs; i++)
+	{
+		char *s = PR1VM_FindString (vm, vm->globaldefs[i].s_name);
+		if (s && s[0] && !strcmp (s, name))
+			return vm->globaldefs[i].ofs;
+	}
+	return -1;
+}
 
 void PR1_LoadProgs (void)
 {
@@ -1186,65 +1413,38 @@ void PR1_LoadProgs (void)
 	snprintf (num, sizeof(num), "%i", CRC_Block ((byte *)progs, filesize));
 	Info_SetValueForStarKey (svs.info, "*progs", num, MAX_SERVERINFO_STRING);
 
-	// byte swap the header
-	for (i = 0; i < (int) sizeof(*progs) / 4 ; i++)
-		((int *)progs)[i] = LittleLong ( ((int *)progs)[i] );
-
-	if (progs->version != PROG_VERSION)
-		SV_Error ("qwprogs.dat has wrong version number (%i should be %i)", progs->version, PROG_VERSION);
-	if (progs->crc != (pr_nqprogs ? NQ_PROGHEADER_CRC : PROGHEADER_CRC))
-		SV_Error ("You must have the qwprogs.dat from QuakeWorld installed");
-
-	pr_functions = (dfunction_t *)((byte *)progs + progs->ofs_functions);
-	pr_strings = (char *)progs + progs->ofs_strings;
-	pr_globaldefs = (ddef_t *)((byte *)progs + progs->ofs_globaldefs);
-	pr_fielddefs = (ddef_t *)((byte *)progs + progs->ofs_fielddefs);
-	pr_statements = (dstatement_t *)((byte *)progs + progs->ofs_statements);
-
-	num_prstr = 0;
-
-	pr_global_struct = (globalvars_t *)((byte *)progs + progs->ofs_globals);
-	pr_globals = (float *)pr_global_struct;
-
-	pr_edict_size = progs->entityfields * 4;
-
-	// byte swap the lumps
-	for (i = 0; i < progs->numstatements; i++)
+	// Load into the instance (swap header+lumps) + checks, then commit the
+	// mirrors into the shared globals.
 	{
-		pr_statements[i].op = LittleShort(pr_statements[i].op);
-		pr_statements[i].a = LittleShort(pr_statements[i].a);
-		pr_statements[i].b = LittleShort(pr_statements[i].b);
-		pr_statements[i].c = LittleShort(pr_statements[i].c);
-	}
+		pr1vm_t *vm = PR1VM_Server();
 
-	for (i = 0; i < progs->numfunctions; i++)
-	{
-		pr_functions[i].first_statement = LittleLong (pr_functions[i].first_statement);
-		pr_functions[i].parm_start = LittleLong (pr_functions[i].parm_start);
-		pr_functions[i].s_name = LittleLong (pr_functions[i].s_name);
-		pr_functions[i].s_file = LittleLong (pr_functions[i].s_file);
-		pr_functions[i].numparms = LittleLong (pr_functions[i].numparms);
-		pr_functions[i].locals = LittleLong (pr_functions[i].locals);
-	}
+		// Every load (incl. repeats/after errors) starts from a clean instance
+		// -- fixes stale mirrors after a failed load.
+		PR1VM_UnLoad (vm);
 
-	for (i = 0; i < progs->numglobaldefs; i++)
-	{
-		pr_globaldefs[i].type = LittleShort (pr_globaldefs[i].type);
-		pr_globaldefs[i].ofs = LittleShort (pr_globaldefs[i].ofs);
-		pr_globaldefs[i].s_name = LittleLong (pr_globaldefs[i].s_name);
-	}
+		num_prstr = 0;
 
-	for (i = 0; i < progs->numfielddefs; i++)
-	{
-		pr_fielddefs[i].type = LittleShort (pr_fielddefs[i].type);
-		if (pr_fielddefs[i].type & DEF_SAVEGLOBAL)
-			SV_Error ("PR1_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
-		pr_fielddefs[i].ofs = LittleShort (pr_fielddefs[i].ofs);
-		pr_fielddefs[i].s_name = LittleLong (pr_fielddefs[i].s_name);
-	}
+		PR1VM_LoadData(vm, progs);
 
-	for (i = 0; i < progs->numglobals; i++)
-		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
+		if (vm->progs->version != PROG_VERSION)
+			SV_Error ("qwprogs.dat has wrong version number (%i should be %i)", vm->progs->version, PROG_VERSION);
+		if (vm->progs->crc != (pr_nqprogs ? NQ_PROGHEADER_CRC : PROGHEADER_CRC))
+			SV_Error ("You must have the qwprogs.dat from QuakeWorld installed");
+
+		for (i = 0; i < vm->progs->numfielddefs; i++)
+			if (vm->fielddefs[i].type & DEF_SAVEGLOBAL)
+				SV_Error ("PR1_LoadProgs: pr_fielddefs[i].type & DEF_SAVEGLOBAL");
+
+		// Field-offset map per module dialect: classic -- raw (NULL),
+		// NQ -- NQ remap (per-instance).
+#ifdef WITH_NQPROGS
+		vm->fieldofs_patch = pr_nqprogs ? fieldofs_nq : NULL;
+#else
+		vm->fieldofs_patch = NULL;
+#endif
+
+		PR1VM_CommitServer(vm);
+	}
 
 	PR_InitBuiltins();
 }
@@ -1273,6 +1473,9 @@ void PR1_Init (void)
 	Cmd_AddCommand ("profile", PR_Profile_f);
 
 	memset(pr_newstrtbl, 0, sizeof(pr_newstrtbl));
+
+	// Zero the server execution instance state.
+	PR1VM_Reset(PR1VM_Server());
 }
 
 edict_t *EDICT_NUM(int n)

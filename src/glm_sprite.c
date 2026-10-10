@@ -46,6 +46,7 @@ void GLM_DrawSpriteModel(entity_t* e)
 	mspriteframe_t *frame;
 	msprite2_t *psprite;
 	r_sprite3d_vert_t* vert;
+	float model_scale;
 
 	// don't even bother culling, because it's just a single
 	// polygon without a surface cache
@@ -75,6 +76,13 @@ void GLM_DrawSpriteModel(entity_t* e)
 	else {	// normal sprite
 		VectorCopy(vup, up);
 		VectorCopy(vright, right);
+	}
+
+	// CSQC: scale the billboard basis. 0 means unscaled.
+	model_scale = e->scale ? e->scale : 1;
+	if (model_scale != 1) {
+		VectorScale(right, model_scale, right);
+		VectorScale(up, model_scale, up);
 	}
 
 	vert = R_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, frame->gl_arraynum, frame->gl_arrayindex);

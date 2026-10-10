@@ -585,6 +585,7 @@ typedef struct model_s {
 void	Mod_Init (void);
 void	Mod_ClearAll (void);
 model_t *Mod_ForName (const char *name, qbool crash);
+model_t *Mod_ForNameTolerant (const char *name, qbool stub_on_missing);
 void	*Mod_Extradata (model_t *mod); // handles caching
 void	Mod_TouchModel (char *name);
 void	Mod_TouchModels (void); // for vid_restart

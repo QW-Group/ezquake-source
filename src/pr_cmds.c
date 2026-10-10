@@ -21,6 +21,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
+#include "pr1vm.h"
+
+// argc/trace live in the active instance (a builtin call is always inside exec).
+#define pr_argc (PR1VM_Active()->argc)
+#define pr_trace (PR1VM_Active()->trace)
 
 static tokenizecontext_t pr1_tokencontext;
 
@@ -65,7 +70,7 @@ void PF_error (void)
 	edict_t	*ed;
 
 	s = PF_VarString(0);
-	Con_Printf ("======SERVER ERROR in %s:\n%s\n", PR1_GetString(pr_xfunction->s_name) ,s);
+	Con_Printf ("======SERVER ERROR in %s:\n%s\n", PR1_GetString(PR1VM_Active()->xfunction->s_name) ,s);
 	ed = PROG_TO_EDICT(pr_global_struct->self);
 	ED_Print (ed);
 
@@ -88,7 +93,7 @@ void PF_objerror (void)
 	edict_t	*ed;
 
 	s = PF_VarString(0);
-	Con_Printf ("======OBJECT ERROR in %s:\n%s\n", PR1_GetString(pr_xfunction->s_name),s);
+	Con_Printf ("======OBJECT ERROR in %s:\n%s\n", PR1_GetString(PR1VM_Active()->xfunction->s_name),s);
 	ed = PROG_TO_EDICT(pr_global_struct->self);
 	ED_Print (ed);
 	ED_Free (ed);
@@ -1190,6 +1195,11 @@ void PF_cvar_set (void)
 		return;
 	}
 
+	// A cvar flagged CVAR_NOTFROMSERVER must not be set by gamecode (FTE parity:
+	// fteqw/engine/common/pr_bgcmd.c:1966).
+	if (var->flags & CVAR_NOTFROMSERVER)
+		return;
+
 	Cvar_Set (var, val);
 }
 
@@ -1470,14 +1480,14 @@ void PF_walkmove (void)
 	move[2] = 0;
 
 	// save program state, because SV_movestep may call other progs
-	oldf = pr_xfunction;
+	oldf = PR1VM_Active()->xfunction;
 	oldself = pr_global_struct->self;
 
 	G_FLOAT(OFS_RETURN) = SV_movestep(ent, move, true);
 
 
 	// restore program state
-	pr_xfunction = oldf;
+	PR1VM_Active()->xfunction = oldf;
 	pr_global_struct->self = oldself;
 }
 
@@ -2815,36 +2825,39 @@ static struct { int num; builtin_t func; } ext_builtins[] =
 
 #define num_ext_builtins (sizeof(ext_builtins)/sizeof(ext_builtins[0]))
 
-builtin_t *pr_builtins = NULL;
+// pr_numbuiltins stays a global mirror (sv_init.c:547 reads it);
+// the table itself lives on the server instance: vm->builtins.
 int pr_numbuiltins = 0;
 
 void PR_InitBuiltins (void)
 {
 	int i;
+	builtin_t *table;
+	pr1vm_t *vm = PR1VM_Server();
 
-	if (pr_builtins)
+	if (vm->builtins)
 		return; // We don't need reinit it.
 
-	// Free old array.
-	Q_free (pr_builtins);
 	// We have at least iD builtins.
 	pr_numbuiltins = num_std_builtins;
 	// Find highest builtin number to see how much space we actually need.
 	for (i = 0; i < num_ext_builtins; i++)
 		pr_numbuiltins = max(ext_builtins[i].num + 1, pr_numbuiltins);
 	// Allocate builtins array.
-	pr_builtins = (builtin_t *) Q_malloc(pr_numbuiltins * sizeof(builtin_t));
+	table = (builtin_t *) Q_malloc(pr_numbuiltins * sizeof(builtin_t));
 	// Init new array to PF_Fixme().
 	for (i = 0; i < pr_numbuiltins; i++)
-		pr_builtins[i] = PF_Fixme;
+		table[i] = PF_Fixme;
 	// Copy iD builtins in new array.
-	memcpy (pr_builtins, std_builtins, num_std_builtins * sizeof(builtin_t));
+	memcpy (table, std_builtins, num_std_builtins * sizeof(builtin_t));
 	// Add QSG builtins or, probably, overwrite iD ones.
 	for (i = 0; i < num_ext_builtins; i++)
 	{
 		assert (ext_builtins[i].num >= 0);
-		pr_builtins[ext_builtins[i].num] = ext_builtins[i].func;
+		table[ext_builtins[i].num] = ext_builtins[i].func;
 	}
+	vm->builtins = table;
+	vm->numbuiltins = pr_numbuiltins;
 }
 
 #endif // CLIENTONLY

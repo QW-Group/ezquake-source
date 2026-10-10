@@ -23,6 +23,10 @@
 
 #include "quakedef.h"
 
+#ifndef CLIENTONLY
+#include "csqc_client.h"	// CSQC_Client_CSQCCursor (module cursor #343)
+#endif
+
 #include <SDL.h>
 #include <SDL_syswm.h>
 
@@ -256,6 +260,14 @@ static qbool IN_OSMouseCursorRequired(void)
 	// Explicit check here for key_game... really setting all modes is equivalent to "in_grab_windowed_mouse 0"
 	qbool in_os_cursor_mode = (key_dest != key_game || cls.demoplayback) && (in_release_mouse_modes.integer & (1 << key_dest));
 
+#ifndef CLIENTONLY
+	// Module CSQC cursor (#343 setcursormode 1): the mouse must stay in the engine
+	// (not be handed to the OS cursor), otherwise there would be a double cursor
+	// over the drawn one. CSQC_Client_CSQCCursor already checks key_dest == key_game.
+	if (CSQC_Client_CSQCCursor ())
+		return false;
+#endif
+
 	// Windowed & (not-grabbing mouse | in OS cursor mode)
 	return (!r_fullscreen.value && (!in_grab_windowed_mouse.value || in_os_cursor_mode));
 }
@@ -263,6 +275,11 @@ static qbool IN_OSMouseCursorRequired(void)
 // True if we're in a mode where we need to keep track of mouse movement
 qbool IN_MouseTrackingRequired(void)
 {
+#ifndef CLIENTONLY
+	// CSQC cursor: the pointer position must be tracked in the game frame too.
+	if (CSQC_Client_CSQCCursor ())
+		return true;
+#endif
 	return (key_dest == key_menu || key_dest == key_hudeditor || key_dest == key_demo_controls);
 }
 
@@ -1788,6 +1805,10 @@ static void VID_Startup(void)
 	R_ProgramCompileAll();
 
 	Cvar_ClearAllModifiedFlags(CVAR_RELOAD_GFX);
+
+	// Notify the CSQC module about renderer reinitialization (vid_restart hard /
+	// vid_reload soft; common tail of both paths). No-op without an active module.
+	CSQC_Client_RendererRestarted (R_RendererDescription ());
 }
 
 void VID_ReloadCvarChanged(cvar_t* var)

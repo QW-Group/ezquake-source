@@ -23,6 +23,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "cvar.h"
 #include "quakedef.h"
 #include "input.h"
+#ifndef CLIENTONLY
+#include "csqc_client.h"	// CSQC_Client_SensitivityScale (#346)
+#endif
 #include "keys.h"
 #include "movie.h"
 
@@ -103,7 +106,13 @@ void IN_MouseMove (usercmd_t *cmd)
 		old_mouse_y = my;
 
 		if (m_accel.value > 0.0f) {
+			// #346: the CSQC module may temporarily scale sensitivity
+			// (sensitivity * scale; inactive -> scale=1).
+#ifndef CLIENTONLY
+			float accelsens = sensitivity.value * CSQC_Client_SensitivityScale ();
+#else
 			float accelsens = sensitivity.value;
+#endif
 			float mousespeed = (sqrt (mx * mx + my * my)) / (1000.0f * (float) cls.trueframetime);
 
 			mousespeed -= m_accel_offset.value;
@@ -122,9 +131,33 @@ void IN_MouseMove (usercmd_t *cmd)
 			mouse_x *= accelsens;
 			mouse_y *= accelsens;
 		} else {
-			mouse_x *= sensitivity.value;
-			mouse_y *= sensitivity.value;
+#ifndef CLIENTONLY
+			float sens = sensitivity.value * CSQC_Client_SensitivityScale ();
+#else
+			float sens = sensitivity.value;
+#endif
+			mouse_x *= sens;
+			mouse_y *= sens;
 		}
+
+#ifndef CLIENTONLY
+		// Mouse deltas to the module (normal mode; cursor mode handles MOUSEABS in
+		// CSQC_Client_Update). Only when the module is in focus, key_dest == key_game
+		// (console/menu are not sent, as for keys). Handled -> not applied to
+		// look/strafe.
+		if (key_dest == key_game && CSQC_Client_HasInputEvent ()
+			&& !CSQC_Client_CSQCCursor ())
+		{
+			float dx = mx, dy = my;
+			// Deltas are in vid.conwidth units, while mx/my are in render-2D.
+			CSQC_Client_ScaleCursorDelta (&dx, &dy);
+			if (CSQC_Client_InputEvent (IE_MOUSEDELTA, dx, dy, 0))
+			{
+				mouse_x = 0;
+				mouse_y = 0;
+			}
+		}
+#endif
 
 		// add mouse X/Y movement to cmd
 		if ((in_strafe.state & 1) || (lookstrafe.value && mlook_active))

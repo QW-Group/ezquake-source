@@ -38,9 +38,15 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 #include "utils.h"
 #include "sbar.h"
 #include "menu.h"
+#ifndef CLIENTONLY
+#include "csqc_client.h"	// module CSQC cursor (#343)
+#endif
 #include "Ctrl.h"
 #include "qtv.h"
 #include "demo_controls.h"
+#ifndef CLIENTONLY
+#include "csqc_client.h"
+#endif
 #include "r_trace.h"
 #include "r_lightmaps.h"
 #include "r_local.h"
@@ -57,6 +63,8 @@ void WeaponStats_CommandInit(void);
 void SCR_DrawHud(void);
 void SCR_DrawClocks(void);
 void R_SetupFrame(void);
+void R_CSQC_ApplyModuleView(void);
+void R_CSQC_ApplyModuleView(void);
 void SCR_Draw_TeamInfo(void);
 void SCR_Draw_ShowNick(void);
 void SCR_DrawQTVBuffer(void);
@@ -619,6 +627,17 @@ static void SCR_DrawCursor(void)
 {
 	double scale = SCR_GetCursorScale();
 
+#ifndef CLIENTONLY
+	// Module CSQC cursor (#343 setcursormode) takes priority over the engine's
+	// standard Quake cursor (otherwise both would be drawn).
+	if (CSQC_Client_CSQCCursor ()) {
+		CSQC_Client_DrawCursor ();
+		scr_pointer_state.x_old = scr_pointer_state.x;
+		scr_pointer_state.y_old = scr_pointer_state.y;
+		return;
+	}
+#endif
+
 	// Always draw the cursor if fullscreen
 	if (IN_QuakeMouseCursorRequired()) {
 		float x_coord = scr_pointer_state.x;
@@ -784,7 +803,10 @@ static void SCR_DrawElements(void)
 					SCR_VoiceMeter();
 				}
 
-				if ((key_dest != key_menu) && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores)))
+				// Under takeover the crosshair is drawn only if the module returned
+				// VF_DRAWCROSSHAIR=1 (clearscene hides it by default).
+				if ((key_dest != key_menu) && (scr_showcrosshair.integer || (!sb_showscores && !sb_showteamscores))
+					&& (!CSQC_Client_SceneActive () || CSQC_Client_DrawCrosshairFlag ()))
 				{
 					Draw_Crosshair ();
 				}
@@ -816,11 +838,23 @@ static void SCR_DrawElements(void)
 				if (CL_MultiviewEnabled())
 					SCR_DrawMultiviewOverviewElements ();
 
-				Sbar_Draw();
-				HUD_Draw();
+				// Under takeover the module owns the sbar/HUD; the engine ones are
+				// drawn only if the module returned VF_DRAWENGINESBAR=1.
+				if (!CSQC_Client_SceneActive () || CSQC_Client_DrawEngineSbar ())
+				{
+					Sbar_Draw();
+					HUD_Draw();
+				}
 				HUD_Editor_Draw();
 
 				DemoControls_Draw();
+#ifndef CLIENTONLY
+				// CSQC overlay (our csprogs.dat): drawn over the engine HUD.
+				// Under takeover the module is already called in the 3D phase
+				// (SCR_UpdateScreenPlayerView), so no second call per frame is needed.
+				if (!CSQC_Client_SceneActive())
+					CSQC_Client_Update ();
+#endif
 			}
 		}
 
@@ -927,7 +961,30 @@ void SCR_UpdateScreenPlayerView(int flags)
 		if (V_PreRenderView()) {
 			R_SetupFrame();
 
-			R_RenderView();
+			// Under takeover the active CSQC module owns the 3D scene: CSQC_UpdateView
+			// is called here (before rendering), and #304 renderscene performs
+			// R_RenderView. If the module did not call renderscene, the engine path is
+			// used as a fallback (guard against a black screen).
+			if (CSQC_Client_SceneActive()) {
+				CSQC_Client_BeginScene();
+				CSQC_Client_Update();
+				if (!CSQC_Client_SceneRendered())
+				{
+					// The module owns the scene but did not call #304 renderscene
+					// this frame. Render the engine's own entities instead of the
+					// stale arena list from the previous frame (FTE parity: the
+					// engine path builds the entity list; ADR 0018). Apply the module
+					// camera first (a module that called neither addentities nor
+					// renderscene would otherwise render with R_SetupFrame's stale
+					// r_origin while r_refdef.vieworg is already the module camera).
+					R_CSQC_ApplyModuleView();
+					CL_EmitEntities();
+					R_RenderView();
+				}
+			}
+			else {
+				R_RenderView();
+			}
 
 			if (flags & UPDATESCREEN_POSTPROCESS) {
 				R_PostProcessScene();
@@ -998,6 +1055,16 @@ void SCR_UpdateScreenHudOnly(void)
 			R_FlushImageDraw();
 		}
 		R_TraceLeaveNamedRegion();
+	}
+	else if (CSQC_Client_SceneActive()) {
+		// #3: under takeover the CSQC module owns its 2D HUD (drawstring/drawpic/
+		// ... queued into the hud image queue during CSQC_UpdateView). r_drawhud
+		// suppresses the engine HUD/console only, and must not suppress the
+		// module's queued 2D draws - FTE flushes the CSQC R2D independently of
+		// nohud (pr_csqc.c R2D_Flush). Flush here because the engine HUD branch
+		// above (the only other R_FlushImageDraw caller) is skipped at
+		// r_drawhud 0. Inert outside takeover (ADR 0018).
+		R_FlushImageDraw();
 	}
 }
 

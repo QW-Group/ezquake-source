@@ -228,6 +228,7 @@ source_group(TREE ${QWPROT_SOURCE_DIR} PREFIX "Header Files/qwprot" FILES ${qwpr
 
 set(server_headers
         ${SOURCE_DIR}/g_public.h
+        ${SOURCE_DIR}/pr1vm.h
         ${SOURCE_DIR}/pr2.h
         ${SOURCE_DIR}/pr_comp.h
         ${SOURCE_DIR}/progdefs.h
@@ -239,6 +240,7 @@ set(server_headers
         ${SOURCE_DIR}/sv_world.h
         ${SOURCE_DIR}/vm.h
         ${SOURCE_DIR}/vm_local.h
+        ${SOURCE_DIR}/csqc_client.h
 )
 set(server
         ${SOURCE_DIR}/pr2_cmds.c
@@ -682,6 +684,8 @@ set(client
         ${SOURCE_DIR}/common_draw.c
         ${SOURCE_DIR}/config_manager.c
         ${SOURCE_DIR}/console.c
+        ${SOURCE_DIR}/csqc_builtins.c
+        ${SOURCE_DIR}/csqc_client.c
         ${SOURCE_DIR}/demo_controls.c
         ${SOURCE_DIR}/demo_extension.c
         ${SOURCE_DIR}/demo_extension_voice.c

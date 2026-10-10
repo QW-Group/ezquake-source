@@ -233,6 +233,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 	unsigned int lj;
 	vec3_t mins, maxs;
 	model_t *clmodel;
+	float model_scale;
 	qbool rotated;
 	float oldMatrix[16];
 	extern cvar_t gl_brush_polygonoffset;
@@ -246,20 +247,22 @@ void R_BrushModelDrawEntity(entity_t *e)
 	qbool polygonOffset = gl_brush_polygonoffset.value > 0 && Ruleset_AllowPolygonOffset(e);
 
 	clmodel = e->model;
+	// CSQC: per-entity uniform render scale; 0 = unscaled.
+	model_scale = e->scale ? e->scale : 1;
 	if (!clmodel->nummodelsurfaces) {
 		return;
 	}
 
 	if (e->angles[0] || e->angles[1] || e->angles[2]) {
 		rotated = true;
-		if (R_CullSphere(e->origin, clmodel->radius)) {
+		if (R_CullSphere(e->origin, model_scale * clmodel->radius)) {
 			return;
 		}
 	}
 	else {
 		rotated = false;
-		VectorAdd(e->origin, clmodel->mins, mins);
-		VectorAdd(e->origin, clmodel->maxs, maxs);
+		VectorMA(e->origin, model_scale, clmodel->mins, mins);
+		VectorMA(e->origin, model_scale, clmodel->maxs, maxs);
 
 		if (R_CullBox(mins, maxs)) {
 			return;
@@ -278,6 +281,11 @@ void R_BrushModelDrawEntity(entity_t *e)
 		modelorg[0] = DotProduct(temp, forward);
 		modelorg[1] = -DotProduct(temp, right);
 		modelorg[2] = DotProduct(temp, up);
+	}
+	// CSQC scale: modelorg is the view position in unscaled model space, so undo
+	// the uniform mesh scale (surface plane distances mismatch otherwise; GLC only).
+	if (model_scale != 1) {
+		VectorScale(modelorg, 1.0f / model_scale, modelorg);
 	}
 
 	// calculate dynamic lighting for bmodel if it's not an instanced model
@@ -303,6 +311,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 	if (clmodel->last_texture_chained >= 0 || clmodel->drawflat_todo || skychain) {
 		R_PushModelviewMatrix(oldMatrix);
 		R_RotateForEntity(e);
+		R_ScaleModelviewForEntity(e);
 
 		// START shaman FIX for no simple textures on world brush models {
 		//draw the textures chains for the model

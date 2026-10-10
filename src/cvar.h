@@ -53,6 +53,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_USERINFONORESET (1<<20) // won't be reset by cfg_reset/cfg_load when 
 #define CVAR_LATCH_SOUND     (1<<21) // will only change when C code next does a Cvar_Register()... will trigger sound restart if modified on startup
 #define CVAR_RELOAD_GFX      (1<<22) // changes immediately but takes effect as textures load, prompt for vid_reload
+#define CVAR_NOTFROMSERVER   (1<<23) // cannot be set from the server/gamecode source (csqc cvar_set #72, server cbuf)
 
 #define CVAR_LATCH (CVAR_LATCH_GFX | CVAR_LATCH_SOUND)
 

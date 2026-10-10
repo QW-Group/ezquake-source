@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "gl_model.h"
+#include "bspfile.h"	// Q1_BSPVERSION etc. (Mod_ForNameTolerant tolerant check)
 #include "teamplay.h"
 #include "rulesets.h"
 #include "wad.h"
@@ -237,7 +238,10 @@ void Mod_ReloadModels(qbool vid_restart)
 }
 
 //Loads a model into the cache
-model_t *Mod_LoadModel(model_t *mod, qbool crash)
+// tolerant: a found-but-invalid file becomes a mod_unknown stub instead of aborting
+// (FTE MLV_WARN -> mod_dummy). Only the client CSQC precache path passes true; the
+// server/classic path stays fatal (see Mod_ForNameTolerant below).
+static model_t *Mod_LoadModelEx(model_t *mod, qbool crash, qbool tolerant)
 {
 	unsigned *buf;
 	int namelen;
@@ -283,25 +287,47 @@ model_t *Mod_LoadModel(model_t *mod, qbool crash)
 	// call the apropriate loader
 	mod->needload = false;
 
-	switch (LittleLong(*((unsigned *)buf))) {
-	case IDPOLYHEADER:
-		Mod_LoadAliasModel(mod, buf, filesize, loadname);
-		break;
+	{
+		int ident = LittleLong(*((unsigned *)buf));
 
-	case MD3_IDENT:
-		Mod_LoadAlias3Model(mod, buf, filesize);
-		break;
+		switch (ident) {
+		case IDPOLYHEADER:
+			Mod_LoadAliasModel(mod, buf, filesize, loadname);
+			break;
 
-	case IDSPRITEHEADER:
-		Mod_LoadSpriteModel(mod, buf);
-		break;
+		case MD3_IDENT:
+			Mod_LoadAlias3Model(mod, buf, filesize);
+			break;
 
-	default:
-		Mod_LoadBrushModel(mod, buf, filesize);
-		break;
+		case IDSPRITEHEADER:
+			Mod_LoadSpriteModel(mod, buf);
+			break;
+
+		default:
+			// A found file whose header is not an accepted BSP version is not a
+			// model. In tolerant mode (client CSQC precache) stub it instead of
+			// letting Mod_LoadBrushModel abort on the version - a server/module-
+			// supplied name must not crash the client (PR #1160 re-review, E6).
+			if (tolerant && ident != Q1_BSPVERSION && ident != HL_BSPVERSION &&
+				ident != Q1_BSPVERSION2 && ident != Q1_BSPVERSION29a)
+			{
+				mod->type = mod_unknown;
+				mod->mins[0] = mod->mins[1] = mod->mins[2] = -16;
+				mod->maxs[0] = mod->maxs[1] = mod->maxs[2] = 16;
+				Con_Printf("Mod_ForName: %s is not a model (version %i); using stub\n", mod->name, ident);
+				break;
+			}
+			Mod_LoadBrushModel(mod, buf, filesize);
+			break;
+		}
 	}
 
 	return mod;
+}
+
+model_t *Mod_LoadModel(model_t *mod, qbool crash)
+{
+	return Mod_LoadModelEx(mod, crash, false);
 }
 
 //Loads in a model for the given name
@@ -309,7 +335,34 @@ model_t *Mod_ForName(const char *name, qbool crash)
 {
 	model_t	*mod = Mod_FindName(name);
 
-	return Mod_LoadModel(mod, crash);
+	return Mod_LoadModelEx(mod, crash, false);
+}
+
+/*
+==================
+Mod_ForNameTolerant
+
+Tolerant variant of Mod_ForName for the client CSQC precache of server/module
+supplied names (svcfte_precache #77, precache_model/getmodelindex/setmodel). A
+found file that is not a valid model yields a mod_unknown stub instead of
+Host_Error (FTE MLV_WARN -> mod_dummy). With stub_on_missing a missing file also
+yields a non-NULL stub entry (needload left true so a later download reloads it),
+so a subsequent packet entity does not Host_Error on a NULL cl.model_precache[].
+==================
+*/
+model_t *Mod_ForNameTolerant(const char *name, qbool stub_on_missing)
+{
+	model_t	*mod = Mod_FindName(name);
+
+	if (!Mod_LoadModelEx(mod, false, true))
+	{
+		if (!stub_on_missing)
+			return NULL;
+		mod->type = mod_unknown;
+		mod->mins[0] = mod->mins[1] = mod->mins[2] = -16;
+		mod->maxs[0] = mod->maxs[1] = mod->maxs[2] = 16;
+	}
+	return mod;
 }
 
 qbool Img_HasFullbrights(byte *pixels, int size)

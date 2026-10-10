@@ -68,6 +68,7 @@ void SCR_OnChangeMVHudPos(cvar_t *var, char *newval, qbool *cancel);
 void OnChange_r_drawflat(cvar_t *v, char *skyname, qbool *cancel);
 void OnChange_r_skyname(cvar_t *v, char *s, qbool *cancel);
 void R_MarkLeaves(void);
+void R_SetFrustum(void);
 void R_InitBubble(void);
 void R_InitAliasModelCvars(void);
 void R_CreateWorldTextureChains(void);
@@ -277,6 +278,134 @@ qbool R_CullSphere(vec3_t centre, float radius)
 	return false;
 }
 
+/*
+=== CSQC arena culling ===
+
+Culls CSQC arena entities by bbox against the frustum and the current frame's
+visible leaves. There is no per-entity pvscache here: arena edicts are added to
+cl_visents before R_RenderView, so R_CSQC_BeginCull marks the leaves (R_MarkLeaves)
+and refreshes the frustum planes (R_SetFrustum) early for R_CSQC_EntityVisible.
+*/
+
+// Called before adding CSQC arena edicts (once per frame; idempotent).
+static int s_csqc_cull_frame = -1;
+extern qbool CSQC_Client_SceneActive (void);
+
+void R_CSQC_BeginCull(void)
+{
+	if (s_csqc_cull_frame == r_framecount)
+		return;
+	s_csqc_cull_frame = r_framecount;
+
+	// Under takeover the module owns the camera (#303 setproperty writes
+	// r_refdef.vieworg/viewangles). Derive the render/cull view from r_refdef here
+	// (spike variant (b)) so the arena cull below and the module's #304
+	// renderscene use the module camera. ADR 0028.
+	if (CSQC_Client_SceneActive ())
+		R_CSQC_ApplyModuleView ();
+
+	R_SetFrustum();
+	R_MarkLeaves();
+}
+
+// Re-arm the once-per-frame cull guard so the next scene's arena cull (a second
+// #304 renderscene in the same frame with a different module camera) re-derives its
+// own frustum/PVS instead of reusing the first camera's (PR #1160 re-review, B9).
+void R_CSQC_ResetCull(void)
+{
+	s_csqc_cull_frame = -1;
+}
+
+// CSQC takeover: derive the render/cull camera from r_refdef (the module camera
+// written by #303 setproperty). Called from R_CSQC_BeginCull (so the arena cull
+// and the world render use the module view) and from CSQC_Client_RenderScene
+// (covers modules that never call addentities). Idempotent: it never touches
+// r_oldviewleaf/r_oldviewleaf2 - R_SetupFrame already took the once-per-frame
+// snapshot, and re-snapshotting mid-frame desyncs R_MarkLeaves (watervis) and
+// leaves stale PVS marks (that was the #1 regression: 3D glitches on water
+// transitions). FTE derives the whole view from r_refdef (V_ApplyRefdef); ADR 0028.
+static void R_SetViewLeaves (vec3_t origin, qbool snapshot_old);
+static void R_ConfigureFog (int contents);
+
+void R_CSQC_ApplyModuleView(void)
+{
+	VectorCopy (r_refdef.vieworg, r_origin);
+	AngleVectors (r_refdef.viewangles, vpn, vright, vup);
+	if (r_refdef.viewangles[ROLL] != 0) {
+		vec3_t noroll_angles = { r_refdef.viewangles[0], r_refdef.viewangles[1], 0 };
+
+		AngleVectors(noroll_angles, NULL, vright_noroll, vup_noroll);
+	}
+	else {
+		VectorCopy(vright, vright_noroll);
+		VectorCopy(vup, vup_noroll);
+	}
+	R_SetViewLeaves (r_origin, false);
+	// Contents tint, fog and the screen blend must follow the module camera's leaf
+	// as well (FTE: V_ApplyRefdef from r_refdef). V_RecalcBlend (not V_CalcBlend)
+	// folds cshifts into v_blend without the once-per-frame damage/bonus decay,
+	// which stays in R_SetupFrame's V_CalcBlend.
+	V_SetContentsColor(r_viewleaf->contents);
+	R_ConfigureFog(r_viewleaf->contents);
+	V_RecalcBlend();
+}
+
+// True if the CSQC arena entity should be drawn (fat-PVS + frustum culling).
+qbool R_CSQC_EntityVisible(entity_t *ent)
+{
+	vec3_t mins, maxs;
+	float scale, radius;
+	int i;
+
+	if (!ent || !ent->model)
+		return true;
+
+	// Viewmodel entities are always visible.
+	if (ent->renderfx & RF_WEAPONMODEL)
+		return true;
+
+	scale = ent->scale ? ent->scale : 1;
+
+	// PR #1160 re-review (F3): a rotated model's axis-aligned bbox is
+	// under-estimated, so a rotated edict could be culled while still visible.
+	// Expand symmetrically by the model radius (FTE R_CullEntityBox parity).
+	if (ent->angles[0] || ent->angles[1] || ent->angles[2])
+	{
+		radius = ent->model->radius;
+		if (radius <= 0)
+		{
+			for (i = 0; i < 3; i++)
+			{
+				float v = fabs(ent->model->mins[i]);
+				if (radius < v)
+					radius = v;
+				v = fabs(ent->model->maxs[i]);
+				if (radius < v)
+					radius = v;
+			}
+		}
+		if (radius <= 0)
+			radius = 16;
+
+		for (i = 0; i < 3; i++) {
+			mins[i] = ent->origin[i] - scale * radius;
+			maxs[i] = ent->origin[i] + scale * radius;
+		}
+	}
+	else
+	{
+		for (i = 0; i < 3; i++) {
+			mins[i] = ent->origin[i] + scale * ent->model->mins[i];
+			maxs[i] = ent->origin[i] + scale * ent->model->maxs[i];
+		}
+	}
+
+	if (R_CullBox(mins, maxs))
+		return false;
+
+	return R_BoxTouchesVisibleLeaf(mins, maxs);
+}
+
 static int SignbitsForPlane(mplane_t *out)
 {
 	int	bits, j;
@@ -379,11 +508,53 @@ static void R_ConfigureFog(int contents)
 	r_refdef2.fog_color[3] = r_refdef2.fog_skycolor[3] = 1.0f;
 }
 
-void R_SetupFrame(void)
+// Shared view-leaf resolution (used by R_SetupFrame and the CSQC module-view
+// derivation R_CSQC_ApplyModuleView): from the view origin, find the leaf and the
+// optional second (water-surface) leaf for the watervis PVS merge. snapshot_old
+// records the previous leaves for R_MarkLeaves' watervis early-out and must be
+// true only for the once-per-frame R_SetupFrame call (see R_CSQC_ApplyModuleView).
+static void R_SetViewLeaves (vec3_t origin, qbool snapshot_old)
 {
 	vec3_t testorigin;
 	mleaf_t	*leaf;
 
+	// current viewleaf
+	if (snapshot_old)
+	{
+		r_oldviewleaf = r_viewleaf;
+		r_oldviewleaf2 = r_viewleaf2;
+	}
+
+	r_viewleaf = Mod_PointInLeaf (origin, cl.worldmodel);
+	r_viewleaf2 = NULL;
+
+	// FIXME: might need to test falling out bottom of water as well?
+
+	// check above and below so crossing solid water doesn't draw wrong
+	if (r_viewleaf->contents <= CONTENTS_WATER && r_viewleaf->contents >= CONTENTS_LAVA) {
+		// look up a bit
+		VectorCopy (origin, testorigin);
+		testorigin[2] += 10;
+		leaf = Mod_PointInLeaf (testorigin, cl.worldmodel);
+		if (leaf->contents == CONTENTS_EMPTY) {
+			r_viewleaf2 = leaf;
+		}
+	}
+	else if (r_viewleaf->contents == CONTENTS_EMPTY) {
+		// FIXME: If we test down and find CONTENTS_SOLID then we should reduce viewheight_test and try again?
+
+		// look down a bit
+		VectorCopy(origin, testorigin);
+		testorigin[2] -= r_refdef.viewheight_test;
+		leaf = Mod_PointInLeaf(testorigin, cl.worldmodel);
+		if (leaf->contents <= CONTENTS_WATER && leaf->contents >= CONTENTS_LAVA) {
+			r_viewleaf2 = leaf;
+		}
+	}
+}
+
+void R_SetupFrame(void)
+{
 	R_AnimateLight ();
 
 	r_framecount++;
@@ -401,36 +572,7 @@ void R_SetupFrame(void)
 		VectorCopy(vup, vup_noroll);
 	}
 
-	// current viewleaf
-	r_oldviewleaf = r_viewleaf;
-	r_oldviewleaf2 = r_viewleaf2;
-
-	r_viewleaf = Mod_PointInLeaf (r_origin, cl.worldmodel);
-	r_viewleaf2 = NULL;
-
-	// FIXME: might need to test falling out bottom of water as well?
-
-	// check above and below so crossing solid water doesn't draw wrong
-	if (r_viewleaf->contents <= CONTENTS_WATER && r_viewleaf->contents >= CONTENTS_LAVA) {
-		// look up a bit
-		VectorCopy (r_origin, testorigin);
-		testorigin[2] += 10;
-		leaf = Mod_PointInLeaf (testorigin, cl.worldmodel);
-		if (leaf->contents == CONTENTS_EMPTY) {
-			r_viewleaf2 = leaf;
-		}
-	}
-	else if (r_viewleaf->contents == CONTENTS_EMPTY) {
-		// FIXME: If we test down and find CONTENTS_SOLID then we should reduce viewheight_test and try again?
-
-		// look down a bit
-		VectorCopy(r_origin, testorigin);
-		testorigin[2] -= r_refdef.viewheight_test;
-		leaf = Mod_PointInLeaf(testorigin, cl.worldmodel);
-		if (leaf->contents <= CONTENTS_WATER && leaf->contents >= CONTENTS_LAVA) {
-			r_viewleaf2 = leaf;
-		}
-	}
+	R_SetViewLeaves (r_origin, true);
 
 	V_SetContentsColor(r_viewleaf->contents);
 	R_ConfigureFog(r_viewleaf->contents);

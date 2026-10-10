@@ -26,6 +26,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "menu.h"
 #include "keys.h"
 #include "input.h"
+#ifndef CLIENTONLY
+#include "csqc_client.h"	// CSQC_Client_InputEvent
+#endif
 
 #ifdef _WIN32
 #include <windows.h>
@@ -94,6 +97,9 @@ int count_alias = 0;
 keydest_t	key_dest, key_dest_beforemm, key_dest_beforecon;
 
 char	*keybindings[UNKNOWN + 256];
+// PR #1160 re-review (F2): true when the bind was set by the untrusted client
+// CSQC module (setkeybind, #630). Such binds are not persisted to the user config.
+qbool	keybinding_module[UNKNOWN + 256];
 qbool	consolekeys[UNKNOWN + 256];	// if true, can't be rebound while in console
 qbool	hudeditorkeys[UNKNOWN + 256];	// if true, can't be rebound while in hud editor
 qbool	democontrolskey[UNKNOWN + 256];
@@ -758,6 +764,7 @@ void CompleteCommandNew (void)
 			char text[50];
 			int test;
 			int testvar;
+			int end;
 			try++;
 			//Com_Printf("%i\n",try);
 			test = try - 1;
@@ -785,16 +792,37 @@ void CompleteCommandNew (void)
 
 			len = strlen (text);
 
-			memmove (key_lines[edit_line] + key_linepos + len,
-					key_lines[edit_line] + key_linepos +
-					last_cmd_length,
-					(MAXCMDLINE - key_linepos + 1 -
-					 last_cmd_length)*sizeof(wchar));
+			// Bound both the insertion and the shifted tail to the line buffer.
+			// The previous fixed count spanned the whole buffer and overran
+			// key_lines[] when cycling completions (fortify aborts with
+			// "buffer overflow detected" on the second TAB).
+			if (key_linepos + len > MAXCMDLINE - 1)
+				len = MAXCMDLINE - 1 - key_linepos;
+			if (len < 0)
+				len = 0;
+
+			{
+				int tail = qwcslen (key_lines[edit_line]) - (key_linepos + last_cmd_length) + 1;
+				int room = MAXCMDLINE - (key_linepos + len);
+
+				if (tail > room)
+					tail = room;
+				if (tail > 0)
+					memmove (key_lines[edit_line] + key_linepos + len,
+							key_lines[edit_line] + key_linepos + last_cmd_length,
+							tail * sizeof(wchar));
+				end = key_linepos + len + tail;
+			}
 			memcpy (key_lines[edit_line] + key_linepos, str2wcs(text),
 					len * sizeof(wchar));
+			// Guarantee NUL-termination even when the shifted tail was clamped to
+			// `room` (then the source NUL does not fit) - ADR 0045 follow-up.
+			if (end > MAXCMDLINE - 1)
+				end = MAXCMDLINE - 1;
+			key_lines[edit_line][end] = L'\0';
 
 			del_removes = 1;
-			last_cmd_length = strlen (text);
+			last_cmd_length = len;
 		}
 		else if (count == try)
 		{
@@ -1649,14 +1677,14 @@ char *Key_KeynumToString (int keynum) {
 	return "<UNKNOWN KEYNUM>";
 }
 
-void Key_SetBinding (int keynum, const char *binding) {
+static void Key_SetBindingEx (int keynum, const char *binding, qbool module) {
 	if (keynum == -1)
 		return;
 
 #ifndef __APPLE__
 	if (keynum == K_CTRL || keynum == K_ALT || keynum == K_SHIFT || keynum == K_WIN) {
-		Key_SetBinding(keynum + 1, binding);
-		Key_SetBinding(keynum + 2, binding);
+		Key_SetBindingEx(keynum + 1, binding, module);
+		Key_SetBindingEx(keynum + 2, binding, module);
 		return;
 	}
 #endif
@@ -1664,6 +1692,23 @@ void Key_SetBinding (int keynum, const char *binding) {
 	// free (and hence Q_free) is safe to call with a NULL argument
 	Q_free (keybindings[keynum]);
 	keybindings[keynum] = Q_strdup(binding);
+	keybinding_module[keynum] = module;
+}
+
+void Key_SetBinding (int keynum, const char *binding) {
+	Key_SetBindingEx (keynum, binding, false);
+}
+
+// Set a bind on behalf of the (untrusted) CSQC module; flagged so it is not saved.
+void Key_SetBindingModule (int keynum, const char *binding) {
+	Key_SetBindingEx (keynum, binding, true);
+}
+
+qbool Key_IsModuleBind (int keynum) {
+	if (keynum >= 0 && keynum < UNKNOWN + 256)
+		return keybinding_module[keynum];
+
+	return false;
 }
 
 void Key_Unbind (int keynum) {
@@ -1679,6 +1724,7 @@ void Key_Unbind (int keynum) {
 	// free (and hence Q_free) is safe to call with a NULL argument
 	Q_free (keybindings[keynum]);
 	keybindings[keynum] = NULL;
+	keybinding_module[keynum] = false;
 }
 
 void Key_Unbind_f (void) {
@@ -2367,6 +2413,36 @@ void Key_Event (int key, qbool down)
 	unichar = keydown[K_SHIFT] ? keyshift[key] : key;
 	if (unichar < 32 || unichar > 127)
 		unichar = 0;
+
+#ifndef CLIENTONLY
+	// Deliver keys/clicks/wheel to the CSQC module (CSQC_InputEvent). Reserved keys
+	// are never handed to the module so it cannot lock out the console/menu:
+	// backtick without Shift (FTE parity) and K_ESCAPE plain/Shift (intentional
+	// deviation from FTE, which lets CSQC steal plain Esc - ADR 0032). Key-down is
+	// delivered only in game; key-up is delivered regardless of key_dest (the module
+	// filters it by its delivered-down set), so releasing a key after the console or
+	// menu opened cannot leave it stuck. A nonzero return means the module handled
+	// the event (normal processing is skipped).
+	if (CSQC_Client_HasInputEvent ())
+	{
+		qbool reserved = (key == '`' && !keydown[K_SHIFT]) || key == K_ESCAPE;
+
+		if (!reserved)
+		{
+			if (key_dest == key_game)
+			{
+				if (CSQC_Client_InputEvent (down ? IE_KEYDOWN : IE_KEYUP, key, unichar, 0))
+					return;
+			}
+			else if (!down)
+			{
+				// FTE parity: still forward the up event so CSQC can release the key;
+				// the return value is ignored (the bind must release normally).
+				CSQC_Client_InputEvent (IE_KEYUP, key, unichar, 0);
+			}
+		}
+	}
+#endif
 
 	Key_EventEx (key, unichar, down);
 

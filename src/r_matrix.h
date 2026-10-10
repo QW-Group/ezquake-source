@@ -24,6 +24,7 @@ qbool R_Project3DCoordinates(float objx, float objy, float objz, float* winx, fl
 
 void R_GetModelviewMatrix(float* matrix);
 void R_GetProjectionMatrix(float* matrix);
+void R_GetRefdefMatrices(float* model, float* proj);
 void R_GetViewport(int* view);
 
 void R_IdentityProjectionView(void);
@@ -54,5 +55,6 @@ void R_MultiplyVector3f(const float* matrix, float x, float y, float z, float* r
 void R_MultiplyVector3fv(const float* matrix, const vec3_t vector, float* result);
 
 void R_RotateForEntity(const struct entity_s* e);
+void R_ScaleModelviewForEntity(const struct entity_s* e);
 
 #endif // EZQUAKE_R_MATRIX_HEADER
