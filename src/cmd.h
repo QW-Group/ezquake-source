@@ -115,7 +115,7 @@ cmd_function_t *Cmd_FindCommand (const char *cmd_name);  // for message triggers
 
 // True if 'name' is allowed to be executed from a remote (server stuffcmd) or
 // untrusted module source: listed in cl_remote_capabilities, or (only when the
-// connected server is Team Fortress) in cl_remote_capabilities_tf.
+// connected server is Team Fortress) one of the static TF anticheat commands.
 qbool Cmd_RemoteAllowed (const char *name);
 
 char *Cmd_CompleteCommand (char *partial);

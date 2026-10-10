@@ -94,26 +94,30 @@ cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, 
 hashtable_t *rc_hash;
 
 /*
-TF-scoped remote capabilities (user-clearable cl_remote_capabilities_tf).
+TF anticheat remote commands (static, not user-configurable).
 
-Classic Team Fortress servers stuffcmd client-side cvars/commands (fov, v_cshift,
-v_idlescale, cl_movespeedkey, setinfo, bind, ...) that are not part of the upstream
-default cl_remote_capabilities allowlist. Like the existing TF impulse allowlist
-(AllowedImpulse below), these are permitted only when the connected server is Team
-Fortress (gamedir "fortress"). Default equals the previously hardcoded TF list;
-a user may clear the cvar to disable the whole TF set (ADR 0044 update).
+Classic Team Fortress servers stuffcmd cvars/commands that ARE the subject of the
+existing TF anticheat (Change_v_idle/V_cshift_f in cl_view.c, OnFovChange in
+cl_screen.c): that anticheat cancels *local* changes to these values while letting
+the server path (cbuf_current == &cbuf_svc) through. Blocking the server's own
+control of these names would itself be a cheat contradicting the anticheat, so they
+are always permitted for a Team Fortress server (gamedir "fortress", cl.teamfortress)
+- unconditionally, regardless of cl_remote_capabilities.
+
+The set is a fixed compile-time list: the 9 anticheat-governed effect names above
+plus 7 server-authority movement/speed cvars (sensitivity included). It replaced the
+user-clearable cvar cl_remote_capabilities_tf (WS2-C, ADR 0047; removed per ADR 0044
+update) - no user toggle, since disabling the server's control of anticheat-governed
+values is the cheat. Non-anticheat TF names (setinfo, bind, reload, screenshot,
+disconnect) are out of scope here and handled separately.
 */
-#define TF_REMOTE_CAPABILITIES "fov,v_cshift,v_idlescale," \
-				"v_iyaw_cycle,v_iroll_cycle,v_ipitch_cycle," \
-				"v_iyaw_level,v_iroll_level,v_ipitch_level," \
-				"cl_movespeedkey,cl_forwardspeed,cl_backspeed,cl_sidespeed,cl_upspeed," \
-				"cl_rollangle,sensitivity,setinfo,bind,reload,screenshot,disconnect"
-
-static void OnChange_remote_capabilities_tf(cvar_t *var, char *string, qbool *cancel);
-cvar_t cl_remote_capabilities_tf = {"cl_remote_capabilities_tf", TF_REMOTE_CAPABILITIES,
-				    CVAR_ARCHIVE | CVAR_NOTFROMSERVER, OnChange_remote_capabilities_tf};
-static hashtable_t *rc_tf_hash;
-static char rc_tf_marker;	// non-NULL payload stored in rc_tf_hash (never freed)
+static const char *tf_anticheat_commands[] = {
+	"fov", "v_cshift", "v_idlescale",
+	"v_iyaw_cycle", "v_iroll_cycle", "v_ipitch_cycle",
+	"v_iyaw_level", "v_iroll_level", "v_ipitch_level",
+	"cl_movespeedkey", "cl_forwardspeed", "cl_backspeed",
+	"cl_sidespeed", "cl_upspeed", "cl_rollangle", "sensitivity",
+};
 
 cvar_t cl_allow_downloads = {"cl_allow_downloads", "bsp,lmp,loc,mdl,mvd,pcx,spr,wad,wav", CVAR_NOTFROMSERVER};
 cvar_t cl_allow_uploads = {"cl_allow_uploads", "0", CVAR_NOTFROMSERVER};
@@ -185,46 +189,6 @@ add:
 	Q_free(tmp);
 }
 
-static void OnChange_remote_capabilities_tf(cvar_t *var, char *string, qbool *cancel)
-{
-	char *cmd, *tmp;
-
-	// Mirrors OnChange_remote_capabilities: remote capabilities may only be changed
-	// while disconnected, so a cleared TF set takes effect on the next connect.
-	if (cls.state != ca_disconnected)
-	{
-		Com_Printf("You cannot change remote capabilities unless you are disconnected\n");
-		return;
-	}
-
-	if (!rc_tf_hash)
-	{
-		rc_tf_hash = Hash_InitTable(64);
-	}
-	else
-	{
-		Hash_Flush(rc_tf_hash);
-	}
-
-	if (!string || string[0] == 0)
-		return;
-
-	tmp = Q_strdup(string);
-	cmd = strtok(tmp, ",");
-	while (cmd != NULL)
-	{
-		Com_DPrintf("Adding %s to TF capabilities\n", cmd);
-
-		if (!Hash_Get(rc_tf_hash, cmd))
-		{
-			Hash_Add(rc_tf_hash, cmd, &rc_tf_marker);
-		}
-
-		cmd = strtok(NULL, ",");
-	}
-	Q_free(tmp);
-}
-
 /*
 Remote-allowlist check for commands/cvars executed from a remote source
 (server svc_stufftext -> cbuf_svc) or from the untrusted client CSQC module
@@ -237,12 +201,25 @@ in the binding and rejects existing aliases, but a later `alias mypwn quit` +
 keypress still reaches exec. Full exec-time bind-level clamp is a follow-up
 (ADR 0044).
 */
+static qbool Cmd_IsTFAnticheat (const char *name)
+{
+	int i;
+
+	for (i = 0; i < (int)(sizeof(tf_anticheat_commands) / sizeof(tf_anticheat_commands[0])); i++)
+	{
+		if (!strcmp(name, tf_anticheat_commands[i]))
+			return true;
+	}
+
+	return false;
+}
+
 qbool Cmd_RemoteAllowed (const char *name)
 {
 	if (Hash_Get(rc_hash, (char *)name))
 		return true;
 
-	if (cl.teamfortress && rc_tf_hash && Hash_Get(rc_tf_hash, (char *)name))
+	if (cl.teamfortress && Cmd_IsTFAnticheat(name))
 		return true;
 
 	return false;
@@ -2694,7 +2671,6 @@ void Cmd_Init (void)
 	Cvar_Register(&cl_curlybraces);
 	Cvar_Register(&cl_warnexec);
 	Cvar_Register(&cl_remote_capabilities);
-	Cvar_Register(&cl_remote_capabilities_tf);
 	Cvar_Register(&cl_allow_downloads);
 	Cvar_Register(&cl_allow_uploads);
 
