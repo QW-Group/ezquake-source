@@ -5357,6 +5357,39 @@ static void csqc_getkeybind (void)
 // alias names are rejected (an alias body can hide a privileged command). An
 // unknown token (server-side "+command" such as +b9probe) is still accepted,
 // matching FTE (insecure bind).
+/*
+Built-in client input verbs (+/-): they only toggle local input state (movement/fire/
+look/scoreboard/zoom) and are never a privileged local command, so setkeybind (#630)
+accepts them for a module key remap. They are deliberately NOT part of the server
+remote allowlist (cl_remote_capabilities): a server must not be able to stuffcmd
++forward/+jump/... into a client (PR #1160 review). +voip and mode-specific
++cl_wp_stats/+qtv_delay are excluded (add here if a module needs them).
+*/
+static const char *csqc_input_verbs[] = {
+	"+moveup", "-moveup", "+movedown", "-movedown", "+left", "-left", "+right", "-right",
+	"+forward", "-forward", "+back", "-back", "+lookup", "-lookup", "+lookdown", "-lookdown",
+	"+strafe", "-strafe", "+moveleft", "-moveleft", "+moveright", "-moveright", "+speed", "-speed",
+	"+fire", "-fire", "+fire_ar", "-fire_ar", "+attack2", "-attack2", "+use", "-use", "+jump", "-jump",
+	"+klook", "-klook", "+mlook", "-mlook", "+showscores", "-showscores", "+showteamscores", "-showteamscores",
+	"+zoom", "-zoom"
+};
+
+static qbool csqc_is_input_verb (const char *name)
+{
+	int i;
+
+	if (!name || !name[0])
+		return false;
+
+	for (i = 0; i < (int)(sizeof (csqc_input_verbs) / sizeof (csqc_input_verbs[0])); i++)
+	{
+		if (!strcasecmp (name, csqc_input_verbs[i]))
+			return true;
+	}
+
+	return false;
+}
+
 static qbool CSQC_SetkeybindAllowed (const char *binding)
 {
 	static tokenizecontext_t bindgate_tokencontext;
@@ -5409,7 +5442,14 @@ static qbool CSQC_SetkeybindAllowed (const char *binding)
 			if (Cmd_IsLegacyCommand (tok))
 				return false;
 			if ((Cmd_FindCommand (tok) || Cvar_Find (tok)) && !Cmd_RemoteAllowed (tok))
-				return false;
+			{
+				// A command the module registered itself and a built-in +/- input
+				// verb are not privileged: the former runs the module's own handler,
+				// the latter only toggles local input state. Accept both; every other
+				// registered local command/cvar still needs the remote allowlist.
+				if (!CSQC_Client_IsModuleCommand (tok) && !csqc_is_input_verb (tok))
+					return false;
+			}
 		}
 	}
 

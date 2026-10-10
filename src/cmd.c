@@ -64,29 +64,13 @@ cvar_t cl_warncmd = {"cl_warncmd", "1"};
 cvar_t cl_warnexec = {"cl_warnexec", "1"};
 cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 
-/*
-Built-in client input verbs (+/-): they only toggle local input state (movement/fire/
-look/scoreboard/zoom) and can never be a privileged local command, so they are always
-remote-allowed. Without this a downloaded CSQC module could not remap a key to
-+forward/+jump/... via setkeybind (#630) - those are registered commands but absent
-from the base allowlist (PR #1160 WS2-C review finding). Deliberately excluded:
-+voip (a remote +voip would open the local mic - privacy) and mode-specific
-+cl_wp_stats/+qtv_delay (add here if a module needs them).
-*/
-#define INPUT_CAPABILITIES "+moveup,-moveup,+movedown,-movedown,+left,-left,+right,-right," \
-			   "+forward,-forward,+back,-back,+lookup,-lookup,+lookdown,-lookdown," \
-			   "+strafe,-strafe,+moveleft,-moveleft,+moveright,-moveright,+speed,-speed," \
-			   "+fire,-fire,+fire_ar,-fire_ar,+attack2,-attack2,+use,-use,+jump,-jump," \
-			   "+klook,-klook,+mlook,-mlook,+showscores,-showscores,+showteamscores," \
-			   "-showteamscores,+zoom,-zoom"
-
 #define REMOTE_CAPABILITIES "+attack,-attack,alias,bf,changing,cmd,color,download,exec,fullserverinfo," \
 				"impulse,infoset,ktx_infoset,ktx_sinfoset,nextul,on_admin,on_connect," \
 				"on_connect_ctf,on_connect_ffa,on_enter,on_enter_ctf,on_enter_ffa,on_matchend," \
 				"on_matchstart,on_observe,on_observe_ctf,on_observe_ffa,on_spec_enter," \
 				"on_spec_enter_ctf,on_spec_enter_ffa,on_spec_matchend,on_spec_matchstart," \
 				"on_unadmin,packet,play,rate,reconnect,say,sinfoset,skin,skins,team,tempalias," \
-				"track,wait," INPUT_CAPABILITIES
+				"track,wait"
 
 static void OnChange_remote_capabilities(cvar_t *var, char *string, qbool *cancel);
 cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, CVAR_NOTFROMSERVER,

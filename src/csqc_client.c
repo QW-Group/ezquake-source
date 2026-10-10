@@ -1225,6 +1225,29 @@ void CSQC_Client_RegisterCommand (const char *cmd)
 
 /*
 =================
+CSQC_Client_IsModuleCommand
+
+True if `name` is a command the current CSQC module registered itself via the
+registercommand (#352) builtin. Such a command runs the module's own handler
+(CSQC_Client_ConsoleCommand_f) and cannot be a privileged engine command: a
+duplicate name is refused by Cmd_AddRemCommand and a cvar name is refused by
+CSQC_Client_RegisterCommand. setkeybind (#630) therefore accepts it even though it
+is absent from cl_remote_capabilities. PR #1160 review.
+=================
+*/
+qbool CSQC_Client_IsModuleCommand (const char *name)
+{
+	cmd_function_t *cmd;
+
+	if (!name || !name[0])
+		return false;
+
+	cmd = Cmd_FindCommand (name);
+	return cmd && cmd->function == CSQC_Client_ConsoleCommand_f;
+}
+
+/*
+=================
 CSQC_Client_RegisterCommands
 
 Registers client debug commands for PR1VM (csqc_smoke, etc.). Called from
