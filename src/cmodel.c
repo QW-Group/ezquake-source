@@ -654,9 +654,6 @@ static void CM_LoadSubmodels (byte *buffer, int length)
 			out->hulls[j].planes = map_planes;
 			out->hulls[j].clipnodes = map_clipnodes;
 			out->hulls[j].firstclipnode = LittleLong (in->headnode[j]);
-			if (out->hulls[j].firstclipnode < 0 || out->hulls[j].firstclipnode >= numclipnodes) {
-				Host_Error("CM_LoadSubmodels: model %d hull %d has invalid headnode %d (0 to %d)", i, j, out->hulls[j].firstclipnode, numclipnodes);
-			}
 			out->hulls[j].lastclipnode = numclipnodes - 1;
 		}
 
