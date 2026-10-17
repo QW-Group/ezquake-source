@@ -42,11 +42,11 @@ void MT_ChallengeMode_Change(cvar_t *cvar, char *value, qbool *cancel)
 	}
 }
 
-static cvar_t match_auto_logupload       = { "match_auto_logupload", "0" };
-static cvar_t match_auto_logupload_token = { "match_auto_logupload_token", "", 0, MT_ChallengeMode_Change };
-static cvar_t match_auto_logurl          = { "match_auto_logurl", "http://stats.quakeworld.nu/logupload" };
-static cvar_t match_challenge            = { "match_challenge", "0", 0, MT_ChallengeMode_Change };
-static cvar_t match_challenge_url        = { "match_challenge_url", "http://stats.quakeworld.nu/post-challenge", 0, MT_ChallengeMode_Change };
+static cvar_t match_auto_logupload       = { "match_auto_logupload", "0", CVAR_NOTFROMSERVER };
+static cvar_t match_auto_logupload_token = { "match_auto_logupload_token", "", CVAR_NOTFROMSERVER, MT_ChallengeMode_Change };
+static cvar_t match_auto_logurl          = { "match_auto_logurl", "http://stats.quakeworld.nu/logupload", CVAR_NOTFROMSERVER };
+static cvar_t match_challenge            = { "match_challenge", "0", CVAR_NOTFROMSERVER, MT_ChallengeMode_Change };
+static cvar_t match_challenge_url        = { "match_challenge_url", "http://stats.quakeworld.nu/post-challenge", CVAR_NOTFROMSERVER, MT_ChallengeMode_Change };
 static cvar_t match_ladder_id            = { "match_ladder_id", "1" };
 
 typedef enum challenge_status_e {

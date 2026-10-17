@@ -95,58 +95,58 @@ void CL_ParseHiddenDataMessage(void);
 
 static void AuthUsernameChanged(cvar_t* var, char* value, qbool* cancel);
 
-cvar_t	allow_scripts = {"allow_scripts", "2", 0, Rulesets_OnChange_allow_scripts};
-cvar_t	rcon_password = {"rcon_password", ""};
-cvar_t	rcon_address = {"rcon_address", ""};
-cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1"};
+cvar_t	allow_scripts = {"allow_scripts", "2", CVAR_NOTFROMSERVER, Rulesets_OnChange_allow_scripts};
+cvar_t	rcon_password = {"rcon_password", "", CVAR_NOTFROMSERVER};
+cvar_t	rcon_address = {"rcon_address", "", CVAR_NOTFROMSERVER};
+cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1", CVAR_NOTFROMSERVER};
 
-cvar_t	cl_timeout = {"cl_timeout", "60"};
+cvar_t	cl_timeout = {"cl_timeout", "60", CVAR_NOTFROMSERVER};
 
-cvar_t	cl_delay_packet = {"cl_delay_packet", "0", 0, Rulesets_OnChange_cl_delay_packet};
-cvar_t  cl_delay_packet_target = { "cl_delay_packet_target", "0", 0, Rulesets_OnChange_cl_delay_packet };
-cvar_t  cl_delay_packet_dev = { "cl_delay_packet_deviation", "0", 0, Rulesets_OnChange_cl_delay_packet };
+cvar_t	cl_delay_packet = {"cl_delay_packet", "0", CVAR_NOTFROMSERVER, Rulesets_OnChange_cl_delay_packet};
+cvar_t  cl_delay_packet_target = { "cl_delay_packet_target", "0", CVAR_NOTFROMSERVER, Rulesets_OnChange_cl_delay_packet };
+cvar_t  cl_delay_packet_dev = { "cl_delay_packet_deviation", "0", CVAR_NOTFROMSERVER, Rulesets_OnChange_cl_delay_packet };
 
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
-cvar_t  cl_pext = {"cl_pext", "1"};					// allow/disallow protocol extensions at all.
+cvar_t  cl_pext = {"cl_pext", "1", CVAR_NOTFROMSERVER};					// allow/disallow protocol extensions at all.
 													// some extensions can be explicitly controlled.
-cvar_t  cl_pext_limits = { "cl_pext_limits", "1" }; // enhanced protocol limits
-cvar_t  cl_pext_other = {"cl_pext_other", "0"};		// extensions which does not have own variables should be controlled by this variable.
-cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1" }; // if set, user will be warned when saving demos that are not backwards compatible
-cvar_t  cl_pext_lagteleport = { "cl_pext_lagteleport", "1" }; // server-side adjustment of yaw angle through teleports
+cvar_t  cl_pext_limits = { "cl_pext_limits", "1", CVAR_NOTFROMSERVER }; // enhanced protocol limits
+cvar_t  cl_pext_other = {"cl_pext_other", "0", CVAR_NOTFROMSERVER};		// extensions which does not have own variables should be controlled by this variable.
+cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1", CVAR_NOTFROMSERVER }; // if set, user will be warned when saving demos that are not backwards compatible
+cvar_t  cl_pext_lagteleport = { "cl_pext_lagteleport", "1", CVAR_NOTFROMSERVER }; // server-side adjustment of yaw angle through teleports
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
-cvar_t  cl_pext_serversideweapon = { "cl_pext_serversideweapon", "0", 0, onchange_pext_serversideweapon }; // server-side weapon selection
+cvar_t  cl_pext_serversideweapon = { "cl_pext_serversideweapon", "0", CVAR_NOTFROMSERVER, onchange_pext_serversideweapon }; // server-side weapon selection
 #endif
 #ifdef MVD_PEXT1_WEAPONPREDICTION
-cvar_t  cl_pext_weaponprediction = { "cl_pext_weaponprediction", "1" }; // client-side weapon prediction
+cvar_t  cl_pext_weaponprediction = { "cl_pext_weaponprediction", "1", CVAR_NOTFROMSERVER }; // client-side weapon prediction
 #endif
 #ifdef MVD_PEXT1_SIMPLEPROJECTILE
-cvar_t  cl_pext_simpleprojectiles = { "cl_pext_simpleprojectiles", "1" }; // send simple stateless projectiles
+cvar_t  cl_pext_simpleprojectiles = { "cl_pext_simpleprojectiles", "1", CVAR_NOTFROMSERVER }; // send simple stateless projectiles
 cvar_t  cl_sproj_xerp = { "cl_sproj_xerp", "0" }; // extrapolate projectiles based on ping
 #endif
 #endif
 #ifdef FTE_PEXT_256PACKETENTITIES
-cvar_t	cl_pext_256packetentities = {"cl_pext_256packetentities", "1"};
+cvar_t	cl_pext_256packetentities = {"cl_pext_256packetentities", "1", CVAR_NOTFROMSERVER};
 #endif
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
-cvar_t  cl_pext_chunkeddownloads  = {"cl_pext_chunkeddownloads", "1"};
+cvar_t  cl_pext_chunkeddownloads  = {"cl_pext_chunkeddownloads", "1", CVAR_NOTFROMSERVER};
 cvar_t  cl_chunksperframe  = {"cl_chunksperframe", "30"};
 #endif
 
 #ifdef FTE_PEXT_FLOATCOORDS
-cvar_t  cl_pext_floatcoords  = {"cl_pext_floatcoords", "1"};
+cvar_t  cl_pext_floatcoords  = {"cl_pext_floatcoords", "1", CVAR_NOTFROMSERVER};
 #endif
 
 #ifdef FTE_PEXT_TRANS
-cvar_t cl_pext_alpha = {"cl_pext_alpha", "1"};
+cvar_t cl_pext_alpha = {"cl_pext_alpha", "1", CVAR_NOTFROMSERVER};
 #endif
 
 #ifdef FTE_PEXT_COLOURMOD
-cvar_t cl_pext_colourmod = {"cl_pext_colourmod", "1"};
+cvar_t cl_pext_colourmod = {"cl_pext_colourmod", "1", CVAR_NOTFROMSERVER};
 #endif
 
 #ifdef FTE_PEXT_ACCURATETIMINGS
-cvar_t cl_pext_accuratetimings = {"cl_pext_accuratetimings", "1"};
+cvar_t cl_pext_accuratetimings = {"cl_pext_accuratetimings", "1", CVAR_NOTFROMSERVER};
 #endif
 
 #ifdef CLIENTONLY
@@ -194,8 +194,8 @@ cvar_t	cl_chatsound = {"s_chat_custom", "1"};
 cvar_t	cl_confirmquit = {"cl_confirmquit", "0"}; // , CVAR_INIT
 cvar_t	cl_fakename = {"cl_fakename", ""};
 cvar_t	cl_fakename_suffix = {"cl_fakename_suffix", ": "};
-cvar_t	qizmo_dir = {"qizmo_dir", "qizmo"};
-cvar_t	qwdtools_dir = {"qwdtools_dir", "qwdtools"};
+cvar_t	qizmo_dir = {"qizmo_dir", "qizmo", CVAR_NOTFROMSERVER};
+cvar_t	qwdtools_dir = {"qwdtools_dir", "qwdtools", CVAR_NOTFROMSERVER};
 void OnChangeColorForcing (cvar_t *var, char *value, qbool *cancel);
 void OnChangeDemoTeamplay (cvar_t *var, char *value, qbool *cancel);
 cvar_t  cl_demoteamplay = {"cl_demoteamplay", "0", 0, OnChangeDemoTeamplay};	// for NQ demos where we need to say it is teamplay rather than FFA
@@ -208,8 +208,8 @@ cvar_t cl_floodprot			= {"cl_floodprot", "0"};
 cvar_t cl_fp_messages		= {"cl_fp_messages", "4"};
 cvar_t cl_fp_persecond		= {"cl_fp_persecond", "4"};
 cvar_t cl_cmdline			= {"cl_cmdline", "", CVAR_ROM};
-cvar_t cl_useproxy			= {"cl_useproxy", "0"};
-cvar_t cl_proxyaddr         = {"cl_proxyaddr", ""};
+cvar_t cl_useproxy			= {"cl_useproxy", "0", CVAR_NOTFROMSERVER};
+cvar_t cl_proxyaddr         = {"cl_proxyaddr", "", CVAR_NOTFROMSERVER};
 cvar_t cl_window_caption	= {"cl_window_caption", "1"};
 cvar_t cl_window_caption_delimiter = {"cl_window_caption_delimiter", " | "};
 
@@ -245,7 +245,7 @@ cvar_t r_lightmap_lateupload    = {"r_lightmap_lateupload", "0"};
 cvar_t r_lightmap_packbytexture = {"r_lightmap_packbytexture", "2"};
 
 // info mirrors
-cvar_t  password                = {"password", "", CVAR_USERINFO};
+cvar_t  password                = {"password", "", CVAR_USERINFO | CVAR_NOTFROMSERVER};
 cvar_t  spectator               = {"spectator", "", CVAR_USERINFO_NO_CFG_RESET };
 void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel);
 cvar_t  name                    = {"name", "player", CVAR_USERINFO, CL_OnChange_name_validate};
@@ -263,11 +263,11 @@ cvar_t  b_switch                = {"b_switch", "", CVAR_USERINFO};
 cvar_t  railcolor               = {"railcolor", "", CVAR_USERINFO};
 cvar_t  gender                  = {"gender", "", CVAR_USERINFO};
 
-cvar_t  cl_mediaroot            = {"cl_mediaroot", "0"};
+cvar_t  cl_mediaroot            = {"cl_mediaroot", "0", CVAR_NOTFROMSERVER};
 
 cvar_t  msg_filter              = {"msg_filter", "0"};
 
-cvar_t  cl_onload               = {"cl_onload", "menu"};
+cvar_t  cl_onload               = {"cl_onload", "menu", CVAR_NOTFROMSERVER};
 
 #ifdef WIN32
 cvar_t cl_verify_qwprotocol     = {"cl_verify_qwprotocol", "1"};
@@ -276,7 +276,7 @@ cvar_t cl_verify_qwprotocol     = {"cl_verify_qwprotocol", "1"};
 cvar_t demo_autotrack           = {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
 
 // Authentication
-cvar_t cl_username              = {"cl_username", "", CVAR_QUEUED_TRIGGER, AuthUsernameChanged};
+cvar_t cl_username              = {"cl_username", "", CVAR_QUEUED_TRIGGER | CVAR_NOTFROMSERVER, AuthUsernameChanged};
 static void CL_Authenticate_f(void);
 
 // antilag debugging

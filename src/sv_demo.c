@@ -46,9 +46,9 @@ cvar_t  sv_demoExtraNames   = {"sv_demoExtraNames", "0"};
 cvar_t	sv_demoPrefix		= {"sv_demoPrefix",		""};
 cvar_t	sv_demoSuffix		= {"sv_demoSuffix",		""};
 cvar_t	sv_demotxt			= {"sv_demotxt",		"1"};
-cvar_t	sv_onrecordfinish	= {"sv_onRecordFinish", ""};
+cvar_t	sv_onrecordfinish	= {"sv_onRecordFinish", "", CVAR_NOTFROMSERVER};
 
-cvar_t	sv_ondemoremove		= {"sv_onDemoRemove",	""};
+cvar_t	sv_ondemoremove		= {"sv_onDemoRemove",	"", CVAR_NOTFROMSERVER};
 cvar_t	sv_demoRegexp		= {"sv_demoRegexp",		"\\.mvd(\\.(gz|bz2|rar|zip))?$"};
 
 cvar_t	sv_silentrecord		= {"sv_silentrecord",   "0"};
