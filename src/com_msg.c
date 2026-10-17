@@ -355,6 +355,13 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 		}
 	}
 
+#ifdef U_FTE_SCALE
+	if (to->scale != from->scale && (fte_extensions & FTE_PEXT_SCALE)) {
+		evenmorebits |= U_FTE_SCALE;
+		required_extensions |= FTE_PEXT_SCALE;
+	}
+#endif
+
 #ifdef U_FTE_TRANS
 	if (to->trans != from->trans && (fte_extensions & FTE_PEXT_TRANS)) {
 		evenmorebits |= U_FTE_TRANS;
@@ -451,6 +458,11 @@ void MSG_WriteDeltaEntity (entity_state_t *from, entity_state_t *to, sizebuf_t *
 	}
 	if (bits & U_ANGLE3)
 		MSG_WriteAngle(msg, to->angles[2]);
+
+#ifdef U_FTE_SCALE
+	if (evenmorebits & U_FTE_SCALE)
+		MSG_WriteByte (msg, to->scale);
+#endif
 
 #ifdef U_FTE_TRANS
 	if (evenmorebits & U_FTE_TRANS)

@@ -2280,6 +2280,12 @@
         }
       ]
     },
+    "cl_pext_scale": {
+      "default": "1",
+      "desc": "If set, enable support for FTE's entity scale protocol extension.\nAllows the server to scale models.",
+      "group-id": "21",
+      "type": "boolean"
+    },
     "cl_pext_serversideweapon": {
       "default": "0",
       "desc": "When 1, requests the MVD PEXT1 server-side weapon selection extension during connect; if the server does not support it, weapon scripts fall back to client-side execution.",

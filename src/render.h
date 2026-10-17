@@ -80,6 +80,9 @@ typedef struct entity_s {
 	//VULT MOTION TRAILS
 	float alpha;
 
+	// uniform model scale, 0 = unset (unscaled)
+	float scale;
+
 	// FIXME: could turn these into a union
 	struct mnode_s			*topnode;		// for bmodels, first world node that splits bmodel, or NULL if not split
 
@@ -102,6 +105,12 @@ typedef struct entity_s {
 	// outlining
 	float     outlineScale;
 } entity_t;
+
+// entity_t.scale with the unset value (0) mapped to 1
+static inline float R_EntityScale(const entity_t* ent)
+{
+	return ent->scale ? ent->scale : 1.0f;
+}
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct {

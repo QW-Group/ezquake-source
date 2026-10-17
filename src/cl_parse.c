@@ -1832,6 +1832,9 @@ void CL_ParseBaseline (entity_state_t *es)
 		es->angles[i] = MSG_ReadAngle ();
 	}
 
+#ifdef FTE_PEXT_SCALE
+	es->scale = 0;
+#endif
 #ifdef FTE_PEXT_TRANS
 	es->trans = 0;
 #endif
@@ -1893,6 +1896,10 @@ void CL_ParseStatic (qbool extended)
 	ent->frame = es.frame;
 	ent->colormap = vid.colormap;
 	ent->skinnum = es.skinnum;
+#ifdef FTE_PEXT_SCALE
+	// 1/16 units, 0 (unset) stays 0 which the renderer treats as unscaled.
+	ent->scale = es.scale / 16.0f;
+#endif
 #ifdef FTE_PEXT_TRANS
 	// set trans, 0 and 255 are both opaque, represented by alpha 0.
 	ent->alpha = es.trans == 255 ? 0.0f : (float)es.trans / 254.0f;
