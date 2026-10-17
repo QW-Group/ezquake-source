@@ -111,6 +111,7 @@ void R_SplitEntityOnNode (mnode_t *node) {
 
 void R_AddEfrags (entity_t *ent) {
 	model_t *entmodel;
+	float scale;
 	int i;
 
 	if (!ent->model)
@@ -122,10 +123,11 @@ void R_AddEfrags (entity_t *ent) {
 	r_pefragtopnode = NULL;
 
 	entmodel = ent->model;
+	scale = R_EntityScale(ent);
 
 	for (i = 0; i < 3; i++) {
-		r_emins[i] = ent->origin[i] + entmodel->mins[i];
-		r_emaxs[i] = ent->origin[i] + entmodel->maxs[i];
+		r_emins[i] = ent->origin[i] + scale * entmodel->mins[i];
+		r_emaxs[i] = ent->origin[i] + scale * entmodel->maxs[i];
 	}
 
 	R_SplitEntityOnNode (cl.worldmodel->nodes);

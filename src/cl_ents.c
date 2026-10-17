@@ -201,10 +201,11 @@ void CL_AddEntityToList(visentlist_t* list, visentlist_entrytype_t vistype, enti
 		if (vistype == visent_alpha) {
 			// Sort transparent entities based on closest point for stable back-to-front rendering.
 			vec3_t distance;
+			float scale = R_EntityScale(ent);
 			int i;
 			for (i = 0; i < 3; i++) {
 				distance[i] = r_refdef.vieworg[i] - ent->origin[i];
-				distance[i] -= bound(ent->model->mins[i], distance[i], ent->model->maxs[i]);
+				distance[i] -= bound(scale * ent->model->mins[i], distance[i], scale * ent->model->maxs[i]);
 			}
 			list->list[cl_visents.count].distance = DotProduct(distance, distance);
 		} else {
