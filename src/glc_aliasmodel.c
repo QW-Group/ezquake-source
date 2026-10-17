@@ -720,6 +720,7 @@ void GLC_DrawAliasModelShadow(entity_t* ent)
 {
 	float theta;
 	float oldMatrix[16];
+	float scale = R_EntityScale(ent);
 	static float shadescale = 0;
 	vec3_t shadevector;
 
@@ -733,6 +734,12 @@ void GLC_DrawAliasModelShadow(entity_t* ent)
 	R_PushModelviewMatrix(oldMatrix);
 	R_TranslateModelview(ent->origin[0], ent->origin[1], ent->origin[2]);
 	R_RotateModelview(ent->angles[1], 0, 0, 1);
+	if (scale != 1) {
+		// Scale about the origin, but shift so the flattened shadow
+		// (model z = 1 - lheight) still lands 1 unit above lightspot.
+		R_TranslateModelview(0, 0, 1 - scale);
+		R_ScaleModelview(scale, scale, scale);
+	}
 
 	GLC_StateBeginAliasModelShadow();
 	GLC_DrawAliasModelShadowDrawCall(ent, shadevector);
@@ -805,7 +812,9 @@ static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, vec3_t shadevector)
 	const aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 	const maliasframedesc_t* frame = &paliashdr->frames[ent->frame];
 	const maliasframedesc_t* oldframe = &paliashdr->frames[ent->oldframe];
-	float lheight = ent->origin[2] - ent->lightspot[2];
+	// in model units, the shear (z + lheight) and the flattened height
+	// (1 - lheight) are both evaluated in model space
+	float lheight = (ent->origin[2] - ent->lightspot[2]) / R_EntityScale(ent);
 	int pose1, pose2;
 	float lerpfrac;
 
