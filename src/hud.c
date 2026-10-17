@@ -504,6 +504,11 @@ void HUD_Toggle_f (void)
 			return;
 		}
 
+		if (Cvar_BlockedFromServer(var))
+		{
+			return;
+		}
+
 		Cvar_Set (var, var->value ? "0" : "1");
 		return;
 	}

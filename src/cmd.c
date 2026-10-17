@@ -2476,6 +2476,10 @@ void Cmd_Cvar_In_f (void)
 		return;
 	}
 
+	if (Cvar_BlockedFromServer(var1)) {
+		return;
+	}
+
 	if (!do_in (buf, var1->string, var2->string, options)) {
 		if (options & 4)
 			Com_Printf ("cvar_in: already inserted\n");
@@ -2507,6 +2511,10 @@ void Cmd_Cvar_Out_f (void)
 	var2 = Cvar_Find(Cmd_Argv(2));
 	if (!var2) {
 		Com_Printf ("cvar_out: unknown cvar \"%s\"\n", Cmd_Argv(2));
+		return;
+	}
+
+	if (Cvar_BlockedFromServer(var1)) {
 		return;
 	}
 

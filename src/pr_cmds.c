@@ -1190,6 +1190,9 @@ void PF_cvar_set (void)
 		return;
 	}
 
+	if (var->flags & CVAR_NOTFROMSERVER)
+		return;
+
 	Cvar_Set (var, val);
 }
 

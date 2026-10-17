@@ -468,6 +468,17 @@ static void Cvar_ApplyLatchedUpdate(cvar_t* var)
 	}
 }
 
+// A command from the server (svc_stufftext and server-defined aliases, both executed
+// through cbuf_svc) must not touch a cvar flagged CVAR_NOTFROMSERVER.
+qbool Cvar_BlockedFromServer(cvar_t *var)
+{
+	if (var && (var->flags & CVAR_NOTFROMSERVER) && cbuf_current == &cbuf_svc) {
+		Con_Printf("Server tried setting %s cvar\n", var->name);
+		return true;
+	}
+	return false;
+}
+
 qbool Cvar_Command (void)
 {
 	cvar_t *v;
@@ -475,6 +486,10 @@ qbool Cvar_Command (void)
 	// check variables
 	if (!(v = Cvar_Find (Cmd_Argv(0))))
 		return false;
+
+	if (Cvar_BlockedFromServer(v)) {
+		return true;
+	}
 
 	if (Cmd_Argc() == 1) {
 #ifndef SERVERONLY
@@ -552,7 +567,7 @@ static void Cvar_Toggle_f_base (qbool use_regex)
 			}
 
 			for (var = cvar_vars; var; var = var->next) {
-				if (ReSearchMatch(var->name)) {
+				if (ReSearchMatch(var->name) && !Cvar_BlockedFromServer(var)) {
 					Cvar_Set(var, var->value ? "0" : "1");
 				}
 			}
@@ -564,6 +579,9 @@ static void Cvar_Toggle_f_base (qbool use_regex)
 
 			if (!(var)) {
 				Con_Printf("Unknown variable \"%s\"\n", name);
+				continue;
+			}
+			if (Cvar_BlockedFromServer(var)) {
 				continue;
 			}
 			Cvar_Set(var, var->value ? "0" : "1");
@@ -793,6 +811,9 @@ void Cvar_Set_f (void)
 	var = Cvar_Find (var_name);
 
 	if (var) {
+		if (Cvar_BlockedFromServer(var)) {
+			return;
+		}
 		Cvar_Set(var, Cmd_Argv(2));
 	}
 	else {
@@ -820,6 +841,9 @@ void Cvar_Inc_f(void)
 	var = Cvar_Find(Cmd_Argv(1));
 	if (!var) {
 		Con_Printf("Unknown variable \"%s\"\n", Cmd_Argv(1));
+		return;
+	}
+	if (Cvar_BlockedFromServer(var)) {
 		return;
 	}
 	delta = (c == 3) ? atof(Cmd_Argv(2)) : 1;
@@ -874,14 +898,16 @@ void Cvar_Reset(qbool use_regex)
 
 		if (use_regex && re_search) {
 			for (var = cvar_vars; var; var = var->next) {
-				if (ReSearchMatch(var->name)) {
+				if (ReSearchMatch(var->name) && strcmp(var->string, var->defaultvalue) && !Cvar_BlockedFromServer(var)) {
 					Cvar_ResetVar(var);
 				}
 			}
 		}
 		else {
 			if ((var = Cvar_Find(name))) {
-				Cvar_ResetVar(var);
+				if (strcmp(var->string, var->defaultvalue) && !Cvar_BlockedFromServer(var)) {
+					Cvar_ResetVar(var);
+				}
 			}
 			else {
 				Com_Printf("%s : No variable with name %s\n", Cmd_Argv(0), name);
@@ -1126,6 +1152,9 @@ void Cvar_Set_tp_f(void)
 	var = Cvar_Find(var_name);
 
 	if (var) {
+		if (Cvar_BlockedFromServer(var)) {
+			return;
+		}
 		if (!var->teamplay) {
 			Com_Printf("\"%s\" is not a teamplay variable\n", var->name);
 			return;
@@ -1173,6 +1202,10 @@ static void Cvar_Set_ex_f(void)
 		var = Cvar_Create(var_name, "", 0);
 	}
 
+	if (Cvar_BlockedFromServer(var)) {
+		return;
+	}
+
 	Cmd_ExpandString(Cmd_Argv(2), text_exp);
 	st = TP_ParseMacroString(text_exp);
 	if (parse_funchars) {
@@ -1215,6 +1248,9 @@ void Cvar_Set_Alias_Str_f (void)
 		Com_Printf ("Unknown alias \"%s\"\n", alias_name);
 		return;
 	}
+	else if (Cvar_BlockedFromServer(var)) {
+		return;
+	}
 	else {
 		Cvar_Set (var, v);
 	}
@@ -1253,6 +1289,9 @@ void Cvar_Set_Bind_Str_f(void)
 	}
 	else if (keynum == -1) {
 		Com_Printf("Unknown key \"%s\"\n", key_name);
+		return;
+	}
+	else if (Cvar_BlockedFromServer(var)) {
 		return;
 	}
 	else {
@@ -1351,6 +1390,10 @@ void Cvar_Set_Calc_f(void)
 
 	if (!var)
 		var = Cvar_Create (var_name, Cmd_Argv (2), 0);
+
+	if (Cvar_BlockedFromServer(var)) {
+		return;
+	}
 
 	a2 = Cmd_Argv (2);
 	a3 = Cmd_Argv (3);
@@ -1516,6 +1559,10 @@ void Cvar_Set_Eval_f(void)
 
 		if (!var)
 			var = Cvar_Create (var_name, Cmd_Argv (1), 0);
+
+		if (Cvar_BlockedFromServer(var)) {
+			return;
+		}
 
 		expression = Cmd_MakeArgs(2);
 
