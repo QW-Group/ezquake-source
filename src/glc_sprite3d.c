@@ -286,6 +286,11 @@ void GLC_DrawSpriteModel(entity_t* e)
 		VectorCopy(vright, right);
 	}
 
+	if (e->scale && e->scale != 1) {
+		VectorScale(up, e->scale, up);
+		VectorScale(right, e->scale, right);
+	}
+
 	vert = R_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, frame->gl_texturenum, 0);
 	if (vert) {
 		vec3_t points[4];

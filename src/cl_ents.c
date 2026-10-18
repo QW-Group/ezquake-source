@@ -30,6 +30,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 static int MVD_TranslateFlags(int src);
 void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);	
 
+#ifdef FTE_PEXT_TRANS
+// FTE switches playerinfo to the extended flags layout (PF_EXTRA_PFS byte,
+// PF_ONGROUND/PF_SOLID moved to bits 22/23) when any of HULLSIZE, TRANS,
+// SCALE or FATNESS is negotiated. These are the ones ezQuake supports.
+#ifdef FTE_PEXT_SCALE
+#define PF_EXTRA_PFS_EXTENSIONS (FTE_PEXT_TRANS | FTE_PEXT_SCALE)
+#else
+#define PF_EXTRA_PFS_EXTENSIONS (FTE_PEXT_TRANS)
+#endif
+#endif
+
 extern cvar_t cl_predict_players, cl_solid_players, cl_rocket2grenade;
 extern cvar_t cl_predict_half;
 extern cvar_t cl_model_bobbing;		
@@ -190,10 +201,11 @@ void CL_AddEntityToList(visentlist_t* list, visentlist_entrytype_t vistype, enti
 		if (vistype == visent_alpha) {
 			// Sort transparent entities based on closest point for stable back-to-front rendering.
 			vec3_t distance;
+			float scale = R_EntityScale(ent);
 			int i;
 			for (i = 0; i < 3; i++) {
 				distance[i] = r_refdef.vieworg[i] - ent->origin[i];
-				distance[i] -= bound(ent->model->mins[i], distance[i], ent->model->maxs[i]);
+				distance[i] -= bound(scale * ent->model->mins[i], distance[i], scale * ent->model->maxs[i]);
 			}
 			list->list[cl_visents.count].distance = DotProduct(distance, distance);
 		} else {
@@ -580,6 +592,12 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 	}
 
 #ifdef PROTOCOL_VERSION_FTE
+#ifdef FTE_PEXT_SCALE
+	if ((morebits & U_FTE_SCALE) && (cls.fteprotocolextensions & FTE_PEXT_SCALE)) {
+		to->scale = MSG_ReadByte();
+	}
+#endif
+
 #ifdef FTE_PEXT_TRANS
 	if (morebits & U_FTE_TRANS && cls.fteprotocolextensions & FTE_PEXT_TRANS) {
 		to->trans = MSG_ReadByte();
@@ -1287,6 +1305,10 @@ void CL_LinkPacketEntities(void)
 				VectorInterpolate(cent->old_origin, lerp, cent->current.origin, ent.origin);
 			}
 		}
+#if defined(FTE_PEXT_SCALE)
+		// 1/16 units, 0 (unset) stays 0 which the renderer treats as unscaled.
+		ent.scale = state->scale / 16.0f;
+#endif
 #if defined(FTE_PEXT_TRANS)
 		// set trans, 0 and 255 are both opaque, represented by alpha 0.
 		ent.alpha = state->trans == 255 ? 0.0f : (float)state->trans / 254.0f;
@@ -1651,14 +1673,14 @@ void CL_ParsePlayerinfo (void)
 	{
 #ifdef FTE_PEXT_TRANS
 		flags = (unsigned short) MSG_ReadShort ();
-		if (cls.fteprotocolextensions & FTE_PEXT_TRANS)
+		if (cls.fteprotocolextensions & PF_EXTRA_PFS_EXTENSIONS)
 		{
 			if (flags & PF_EXTRA_PFS)
 				flags |= MSG_ReadByte() << 16;
 		}
 		else
 		{
-			// Without PEXT_TRANS there's no PF_EXTRA_PFS, move
+			// Without the extended layout there's no PF_EXTRA_PFS, move
 			// PF_ONGROUND and PF_SOLID to their expected offsets.
 			flags = (flags & 0x3fff) | (flags & 0xc000) << 8;
 		}
@@ -1777,6 +1799,13 @@ void CL_ParsePlayerinfo (void)
 			state->weaponframe = 0;
 
 
+#ifdef FTE_PEXT_SCALE
+		// Only sent while the scale differs from 1, and the slot still holds
+		// the state from UPDATE_BACKUP frames ago, so reset it first.
+		state->scale = 0;
+		if ((flags & PF_SCALE) && (cls.fteprotocolextensions & FTE_PEXT_SCALE))
+			state->scale = MSG_ReadByte();
+#endif
 #ifdef FTE_PEXT_TRANS
 		if (flags & PF_TRANS_Z && cls.fteprotocolextensions & FTE_PEXT_TRANS)
 			state->alpha = MSG_ReadByte();
@@ -1847,7 +1876,7 @@ guess_pm_type:
 			//   in protocol 27 - we always write out in new format
 			MSG_WriteByte(&cls.demomessage, num);
 #if defined(FTE_PEXT_TRANS)
-			if (cls.fteprotocolextensions & FTE_PEXT_TRANS)
+			if (cls.fteprotocolextensions & PF_EXTRA_PFS_EXTENSIONS)
 			{
 				if (flags & 0xff0000)
 				{
@@ -1861,7 +1890,7 @@ guess_pm_type:
 			}
 			else
 			{
-				// Without PEXT_TRANS there's no PF_EXTRA_PFS, move
+				// Without the extended layout there's no PF_EXTRA_PFS, move
 				// PF_ONGROUND and PF_SOLID to their expected offsets.
 				MSG_WriteShort (&cls.demomessage, flags & 0x3fff | (flags & 0xc00000) >> 8);
 			}
@@ -1921,6 +1950,10 @@ guess_pm_type:
 				}
 #endif
 			}
+#ifdef FTE_PEXT_SCALE
+			if ((flags & PF_SCALE) && (cls.fteprotocolextensions & FTE_PEXT_SCALE))
+				MSG_WriteByte(&cls.demomessage, state->scale);
+#endif
 #ifdef FTE_PEXT_TRANS
 			if (flags & PF_TRANS_Z && cls.fteprotocolextensions & FTE_PEXT_TRANS)
 				MSG_WriteByte(&cls.demomessage, state->alpha);		
@@ -1953,7 +1986,7 @@ guess_pm_type:
 void CL_AddFlagModels (entity_t *ent, int team) 
 {
 	int i;
-	float f;
+	float f, scale;
 	vec3_t v_forward, v_right;
 	entity_t newent;
 
@@ -1988,12 +2021,15 @@ void CL_AddFlagModels (entity_t *ent, int team)
 	newent.model = cl.model_precache[cl_modelindices[mi_flag]];
 	newent.skinnum = team;
 	newent.colormap = vid.colormap;
+	newent.scale = ent->scale;
 
+	// keep the flag on the back of a scaled player
+	scale = R_EntityScale(ent);
 	AngleVectors (ent->angles, v_forward, v_right, NULL);
 	v_forward[2] = -v_forward[2]; // reverse z component
 	for (i = 0; i < 3; i++)
-		newent.origin[i] = ent->origin[i] - f * v_forward[i] + 22 * v_right[i];
-	newent.origin[2] -= 16;
+		newent.origin[i] = ent->origin[i] - scale * f * v_forward[i] + scale * 22 * v_right[i];
+	newent.origin[2] -= 16 * scale;
 
 	VectorCopy (ent->angles, newent.angles);
 	newent.angles[2] -= 45;
@@ -2035,6 +2071,7 @@ static qbool CL_AddVWepModel (entity_t *ent, int vw_index, int old_vw_frame)
 		newent.renderfx |= RF_BEHINDWALL;
 	newent.effects = ent->effects; // Electro - added for shells
 	newent.scoreboard = ent->scoreboard; // for team color in gl_outline
+	newent.scale = ent->scale; // shares the player transform
 
 	if ((!cls.mvdplayback || Cam_TrackNum() >= 0) && cl.racing && !CL_SetAlphaByDistance(&newent)) {
 		return false;
@@ -2153,6 +2190,10 @@ static void CL_LinkPlayers(void)
 
 		// VULT MOTION TRAILS
 		ent.alpha = 0;
+#ifdef FTE_PEXT_SCALE
+		// 1/50 units, 0 (not sent) stays 0 which the renderer treats as unscaled.
+		ent.scale = state->scale / 50.0f;
+#endif
 		// The player object never gets added.
 		if (j == cl.playernum) {
 			// VULT CAMERAS

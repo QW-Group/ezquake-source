@@ -928,7 +928,8 @@ qbool R_CanDrawSimpleItem(entity_t* e)
 static qbool R_DrawTrySimpleItem(entity_t* ent)
 {
 	int sprtype = gl_simpleitems_orientation.integer;
-	float sprsize = bound(1, gl_simpleitems_size.value, 16), autorotate;
+	float scale = R_EntityScale(ent);
+	float sprsize = bound(1, gl_simpleitems_size.value, 16) * scale, autorotate;
 	texture_ref simpletexture;
 	vec3_t right, up, org, offset;
 	int skin;
@@ -980,7 +981,7 @@ static qbool R_DrawTrySimpleItem(entity_t* ent)
 
 		VectorSubtract(ent->model->maxs, ent->model->mins, offset);
 		offset[2] = 0;
-		VectorMA(org, 0.5, offset, org);
+		VectorMA(org, 0.5 * scale, offset, org);
 
 		if (cl_model_bobbing.value) {
 			org[2] += sin(autorotate / 90 * M_PI) * 5 + 5;

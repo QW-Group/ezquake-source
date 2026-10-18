@@ -376,6 +376,10 @@ void R_RotateForEntity(const struct entity_s *e)
 	R_RotateModelview(e->angles[1], 0, 0, 1);
 	R_RotateModelview(-e->angles[0], 0, 1, 0);
 	R_RotateModelview(e->angles[2], 1, 0, 0);
+
+	if (e->scale && e->scale != 1) {
+		R_ScaleModelview(e->scale, e->scale, e->scale);
+	}
 }
 
 qbool R_Project3DCoordinates(float objx, float objy, float objz, float* winx, float* winy, float* winz)

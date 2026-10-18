@@ -77,6 +77,11 @@ void GLM_DrawSpriteModel(entity_t* e)
 		VectorCopy(vright, right);
 	}
 
+	if (e->scale && e->scale != 1) {
+		VectorScale(up, e->scale, up);
+		VectorScale(right, e->scale, right);
+	}
+
 	vert = R_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, frame->gl_arraynum, frame->gl_arrayindex);
 	if (vert) {
 		R_Sprite3DRender(vert, e->origin, up, right, frame->up, frame->down, frame->left, frame->right, frame->gl_scalingS, frame->gl_scalingT, frame->gl_arrayindex);

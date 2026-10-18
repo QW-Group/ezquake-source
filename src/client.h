@@ -157,6 +157,9 @@ typedef struct
 
 	int			flags;			// Dead, gib, etc.
 
+#ifdef FTE_PEXT_SCALE
+	byte		scale;			// 1/50 units, 0 = not sent (unscaled)
+#endif
 #ifdef FTE_PEXT_TRANS
 	byte		alpha;
 #endif
