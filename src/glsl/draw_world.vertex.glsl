@@ -123,11 +123,14 @@ void main()
 		DetailCoord = detailCoord;
 #endif
 
+#if defined(DRAW_FLATFLOORS) || defined(DRAW_FLATWALLS)
+		float is_floor = min(1, (Flags & EZQ_SURFACE_WORLD) * (Flags & EZQ_SURFACE_IS_FLOOR));
+#endif
 #ifdef DRAW_FLATFLOORS
-		mix_floor = min(1, (Flags & EZQ_SURFACE_WORLD) * (Flags & EZQ_SURFACE_IS_FLOOR));
+		mix_floor = is_floor;
 #endif
 #ifdef DRAW_FLATWALLS
-		mix_wall = min(1, (Flags & EZQ_SURFACE_WORLD) * (1 - mix_floor));
+		mix_wall = min(1, (Flags & EZQ_SURFACE_WORLD) * (1 - is_floor));
 #endif
 	}
 }
