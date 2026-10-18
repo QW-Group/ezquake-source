@@ -125,7 +125,6 @@ static void R_InitialiseWorldStates(void)
 	state = R_InitRenderingState(r_state_alpha_surfaces_glm, true, "glmAlphaWorldState", vao_brushmodel);
 	state->blendingEnabled = true;
 	state->blendFunc = r_blendfunc_premultiplied_alpha;
-	state->polygonOffset.option = r_polygonoffset_standard;
 
 	R_InitRenderingState(r_state_opaque_surfaces_glm, true, "glmWorldState", vao_brushmodel);
 }
