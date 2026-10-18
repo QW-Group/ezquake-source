@@ -1146,7 +1146,8 @@ void GL_LoadProgramFunctions(void)
 		GL_InvalidateFunction(glProgramUniformMatrix4fv);
 	}
 
-	if (GL_VersionAtLeast(4, 3) || (GL_VersionAtLeast(4, 2) && SDL_GL_ExtensionSupported("GL_ARB_compute_shader") && SDL_GL_ExtensionSupported("GL_ARB_shader_image_load_store"))) {
+	// Shaders are compiled as GLSL 4.10 below OpenGL 4.3, which can't declare compute shaders
+	if (GL_VersionAtLeast(4, 3)) {
 		qbool compute_shaders_support = true;
 
 		GL_LoadMandatoryFunctionExtension(glDispatchCompute, compute_shaders_support);
