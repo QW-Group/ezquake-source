@@ -2510,6 +2510,13 @@ void PF2_VisibleTo(int viewer, int first, int len, byte *visible)
 	}
 }
 
+static qbool PR2_CvarWritable(const char *name)
+{
+	cvar_t *var = Cvar_Find(name);
+
+	return !var || !(var->flags & CVAR_NOTFROMSERVER);
+}
+
 //===========================================================================
 // SysCalls
 //===========================================================================
@@ -2607,7 +2614,8 @@ intptr_t PR2_GameSystemCalls(intptr_t *args) {
 	case G_CVAR:
 		return PASSFLOAT(Cvar_Value(VMA(1)));
 	case G_CVAR_SET:
-		Cvar_SetByName(VMA(1), VMA(2));
+		if (PR2_CvarWritable(VMA(1)))
+			Cvar_SetByName(VMA(1), VMA(2));
 		return 0;
 	case G_FINDRADIUS:
 		return PF2_FindRadius(NUM_FOR_GAME_EDICT(VMA(1)), (float *)VMA(2), VMF(3));
@@ -2726,7 +2734,8 @@ intptr_t PR2_GameSystemCalls(intptr_t *args) {
 		VM_CheckBounds(sv_vm, args[3], args[4]);
 		return PF2_FS_GetFileList(VMA(1), VMA(2), VMA(3), args[4], args[5]);
 	case G_CVAR_SET_FLOAT:
-		Cvar_SetValueByName(VMA(1), VMF(2));
+		if (PR2_CvarWritable(VMA(1)))
+			Cvar_SetValueByName(VMA(1), VMF(2));
 		return 0;
 	case G_CVAR_STRING:
 		VM_CheckBounds(sv_vm, args[2], args[3]);

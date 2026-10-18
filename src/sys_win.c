@@ -67,7 +67,7 @@ __attribute__((dllexport)) DWORD AmdPowerXpressRequestHighPerformance = 0x000000
 #define NOT_FOCUS_SLEEP	20				// sleep time when not focus
 
 void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
-cvar_t	sys_highpriority = {"sys_highpriority", "0", 0, OnChange_sys_highpriority};
+cvar_t	sys_highpriority = {"sys_highpriority", "0", CVAR_NOTFROMSERVER, OnChange_sys_highpriority};
 
 static HANDLE	qwclsemaphore;
 static HANDLE	tevent;
@@ -95,7 +95,7 @@ static qbool PowerOff_isDisabled = false;
 
 LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam);
 void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel);
-cvar_t	sys_disableWinKeys = {"sys_disableWinKeys", "0", 0, OnChange_sys_disableWinKeys};
+cvar_t	sys_disableWinKeys = {"sys_disableWinKeys", "0", CVAR_NOTFROMSERVER, OnChange_sys_disableWinKeys};
 
 extern qbool ActiveApp, Minimized;
 

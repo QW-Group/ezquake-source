@@ -53,6 +53,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define CVAR_USERINFONORESET (1<<20) // won't be reset by cfg_reset/cfg_load when 
 #define CVAR_LATCH_SOUND     (1<<21) // will only change when C code next does a Cvar_Register()... will trigger sound restart if modified on startup
 #define CVAR_RELOAD_GFX      (1<<22) // changes immediately but takes effect as textures load, prompt for vid_reload
+#define CVAR_NOTFROMSERVER   (1<<23) // ignored when set by the server (svc_stufftext) or by gamecode (progs cvar_set)
 
 #define CVAR_LATCH (CVAR_LATCH_GFX | CVAR_LATCH_SOUND)
 
@@ -137,6 +138,9 @@ char *Cvar_String (const char *var_name);
 // command.  Returns true if the command was a variable reference that
 // was handled. (print or change)
 qbool Cvar_Command (void);
+
+// true (after printing a warning) when a server command targets a CVAR_NOTFROMSERVER cvar
+qbool Cvar_BlockedFromServer(cvar_t *var);
 
 cvar_t *Cvar_Find (const char *name);
 qbool Cvar_Delete (const char *name);

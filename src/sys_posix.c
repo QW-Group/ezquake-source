@@ -63,7 +63,7 @@ int do_stdin = 1;
 
 void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
 
-cvar_t sys_highpriority = {"sys_highpriority", "", 0, OnChange_sys_highpriority};
+cvar_t sys_highpriority = {"sys_highpriority", "", CVAR_NOTFROMSERVER, OnChange_sys_highpriority};
 cvar_t sys_nostdout     = {"sys_nostdout", "0" };
 cvar_t sys_fontsdir     = {"sys_fontsdir", "/usr/local/share/fonts/"};
 

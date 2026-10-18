@@ -67,12 +67,12 @@ cvar_t cl_curlybraces = {"cl_curlybraces", "0"};
 				"track,wait"
 
 static void OnChange_remote_capabilities(cvar_t *var, char *string, qbool *cancel);
-cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, 0,
+cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, CVAR_NOTFROMSERVER,
 				   OnChange_remote_capabilities};
 hashtable_t *rc_hash;
 
-cvar_t cl_allow_downloads = {"cl_allow_downloads", "bsp,lmp,loc,mdl,mvd,pcx,spr,wad,wav"};
-cvar_t cl_allow_uploads = {"cl_allow_uploads", "0"};
+cvar_t cl_allow_downloads = {"cl_allow_downloads", "bsp,lmp,loc,mdl,mvd,pcx,spr,wad,wav", CVAR_NOTFROMSERVER};
+cvar_t cl_allow_uploads = {"cl_allow_uploads", "0", CVAR_NOTFROMSERVER};
 
 cbuf_t cbuf_main;
 cbuf_t cbuf_svc;
@@ -2476,6 +2476,10 @@ void Cmd_Cvar_In_f (void)
 		return;
 	}
 
+	if (Cvar_BlockedFromServer(var1)) {
+		return;
+	}
+
 	if (!do_in (buf, var1->string, var2->string, options)) {
 		if (options & 4)
 			Com_Printf ("cvar_in: already inserted\n");
@@ -2507,6 +2511,10 @@ void Cmd_Cvar_Out_f (void)
 	var2 = Cvar_Find(Cmd_Argv(2));
 	if (!var2) {
 		Com_Printf ("cvar_out: unknown cvar \"%s\"\n", Cmd_Argv(2));
+		return;
+	}
+
+	if (Cvar_BlockedFromServer(var1)) {
 		return;
 	}
 

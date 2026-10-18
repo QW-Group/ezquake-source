@@ -30,7 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 cvar_t irc_server_address = {"irc_server_address", "194.124.229.59"}; // quakenet
 cvar_t irc_server_port = {"irc_server_port", "6667"};
-cvar_t irc_server_password = {"irc_server_password", ""};
+cvar_t irc_server_password = {"irc_server_password", "", CVAR_NOTFROMSERVER};
 cvar_t irc_user_nick = {"irc_user_nick", ""};
 cvar_t irc_user_username = {"irc_user_username", "ezQuake"};
 cvar_t irc_user_realname = {"irc_user_realname", ""};

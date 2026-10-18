@@ -49,8 +49,8 @@ f_version_reply_time,
 f_skins_reply_time,
 f_server_reply_time;
 
-cvar_t allow_f_system  = {"allow_f_system",  "1"};
-cvar_t allow_f_cmdline = {"allow_f_cmdline", "1"};
+cvar_t allow_f_system  = {"allow_f_system",  "1", CVAR_NOTFROMSERVER};
+cvar_t allow_f_cmdline = {"allow_f_cmdline", "1", CVAR_NOTFROMSERVER};
 
 extern cvar_t enemyforceskins;
 extern cvar_t cl_independentPhysics;

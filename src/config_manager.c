@@ -58,19 +58,19 @@ extern qbool		sb_showscores, sb_showteamscores;
 extern cvar_t		cl_teamtopcolor, cl_teambottomcolor, cl_enemytopcolor, cl_enemybottomcolor;
 extern char		allskins[MAX_OSPATH];
 
-cvar_t	cfg_save_unchanged	=	{"cfg_save_unchanged", "0"};
-cvar_t	cfg_save_userinfo	=	{"cfg_save_userinfo", "2"};
-cvar_t	cfg_save_onquit		=	{"cfg_save_onquit", "0"};
-cvar_t	cfg_save_cvars		=	{"cfg_save_cvars", "1"};
-cvar_t	cfg_save_aliases	=	{"cfg_save_aliases", "1"};
-cvar_t	cfg_save_cmds		=	{"cfg_save_cmds", "1"};
-cvar_t	cfg_save_binds		=	{"cfg_save_binds", "1"};
-cvar_t	cfg_save_sysinfo	=	{"cfg_save_sysinfo", "0"};
-cvar_t	cfg_save_cmdline	=	{"cfg_save_cmdline", "1"};
-cvar_t	cfg_backup			=	{"cfg_backup", "0"};
-cvar_t	cfg_legacy_exec		=	{"cfg_legacy_exec", "1"};
-cvar_t  cfg_use_home		=	{"cfg_use_home", "0"};
-cvar_t  cfg_use_gamedir		=	{"cfg_use_gamedir", "0"};
+cvar_t	cfg_save_unchanged	=	{"cfg_save_unchanged", "0", CVAR_NOTFROMSERVER};
+cvar_t	cfg_save_userinfo	=	{"cfg_save_userinfo", "2", CVAR_NOTFROMSERVER};
+cvar_t	cfg_save_onquit		=	{"cfg_save_onquit", "0", CVAR_NOTFROMSERVER};
+cvar_t	cfg_save_cvars		=	{"cfg_save_cvars", "1", CVAR_NOTFROMSERVER};
+cvar_t	cfg_save_aliases	=	{"cfg_save_aliases", "1", CVAR_NOTFROMSERVER};
+cvar_t	cfg_save_cmds		=	{"cfg_save_cmds", "1", CVAR_NOTFROMSERVER};
+cvar_t	cfg_save_binds		=	{"cfg_save_binds", "1", CVAR_NOTFROMSERVER};
+cvar_t	cfg_save_sysinfo	=	{"cfg_save_sysinfo", "0", CVAR_NOTFROMSERVER};
+cvar_t	cfg_save_cmdline	=	{"cfg_save_cmdline", "1", CVAR_NOTFROMSERVER};
+cvar_t	cfg_backup			=	{"cfg_backup", "0", CVAR_NOTFROMSERVER};
+cvar_t	cfg_legacy_exec		=	{"cfg_legacy_exec", "1", CVAR_NOTFROMSERVER};
+cvar_t  cfg_use_home		=	{"cfg_use_home", "0", CVAR_NOTFROMSERVER};
+cvar_t  cfg_use_gamedir		=	{"cfg_use_gamedir", "0", CVAR_NOTFROMSERVER};
 
 /************************************ DUMP FUNCTIONS ************************************/
 

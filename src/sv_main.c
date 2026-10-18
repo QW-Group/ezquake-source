@@ -68,8 +68,8 @@ cvar_t	zombietime = {"zombietime", "2"};	// seconds to sink messages
 // after disconnect
 
 #ifdef SERVERONLY
-cvar_t	rcon_password = {"rcon_password", ""};	// password for remote server commands
-cvar_t	password = {"password", ""};	// password for entering the game
+cvar_t	rcon_password = {"rcon_password", "", CVAR_NOTFROMSERVER};	// password for remote server commands
+cvar_t	password = {"password", "", CVAR_NOTFROMSERVER};	// password for entering the game
 #else
 // client already have such variables.
 extern cvar_t rcon_password;
@@ -99,8 +99,8 @@ cvar_t	qconsole_log_say = {"qconsole_log_say", "0", 0, OnChange_qconsolelogsay_v
 cvar_t	sys_command_line = {"sys_command_line", "", CVAR_ROM};
 
 cvar_t	sv_use_dns = {"sv_use_dns", "0"}; // 1 - use DNS lookup in status command, 0 - don't use
-cvar_t	spectator_password = {"spectator_password", ""};	// password for entering as a sepctator
-cvar_t	vip_password = {"vip_password", ""};	// password for entering as a VIP sepctator
+cvar_t	spectator_password = {"spectator_password", "", CVAR_NOTFROMSERVER};	// password for entering as a sepctator
+cvar_t	vip_password = {"vip_password", "", CVAR_NOTFROMSERVER};	// password for entering as a VIP sepctator
 cvar_t	vip_values = {"vip_values", ""};
 
 cvar_t	allow_download = {"allow_download", "1"};

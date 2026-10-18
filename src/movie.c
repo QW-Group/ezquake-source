@@ -62,7 +62,7 @@ cvar_t   movie_vid_maxlen = {"demo_capture_vid_maxlen", "0"};
 #endif
 
 cvar_t          movie_fps                = {"demo_capture_fps", "30.0"};
-static cvar_t   movie_dir                = {"demo_capture_dir",  "capture", 0, OnChange_movie_dir};
+static cvar_t   movie_dir                = {"demo_capture_dir",  "capture", CVAR_NOTFROMSERVER, OnChange_movie_dir};
 cvar_t          movie_steadycam          = {"demo_capture_steadycam", "0"};
 static cvar_t   movie_background_threads = {"demo_capture_background_threads", "0"};
 

@@ -35,12 +35,10 @@ $Id: cl_screen.c,v 1.156 2007-10-29 00:56:47 qqshka Exp $
 
 #define	DEFAULT_SSHOT_FORMAT "png"
 
-static void OnChange_scr_allowsnap(cvar_t *, char *, qbool *);
-
 static cvar_t scr_sshot_autoname = { "sshot_autoname", "0" };
-cvar_t scr_allowsnap      = { "scr_allowsnap", "1", 0, OnChange_scr_allowsnap };
+cvar_t scr_allowsnap      = { "scr_allowsnap", "1", CVAR_NOTFROMSERVER };
 cvar_t scr_sshot_format = { "sshot_format", DEFAULT_SSHOT_FORMAT };
-cvar_t scr_sshot_dir = { "sshot_dir", "" };
+cvar_t scr_sshot_dir = { "sshot_dir", "", CVAR_NOTFROMSERVER };
 
 static int scr_autosshot_countdown = 0;
 static char auto_matchname[2 * MAX_OSPATH];
@@ -467,11 +465,6 @@ void SCR_Movieshot(char *name)
 	SCR_Screenshot(name, true);
 
 #endif // _WIN32
-}
-
-static void OnChange_scr_allowsnap(cvar_t *var, char *s, qbool *cancel)
-{
-	*cancel = (cls.state >= ca_connected && cbuf_current == &cbuf_svc);
 }
 
 void SShot_RegisterCvars(void)
