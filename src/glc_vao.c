@@ -32,11 +32,6 @@ GL_StaticProcedureDeclaration(glVertexAttribPointer, "index=%u, size=%d, type=%u
 GL_StaticProcedureDeclaration(glDisableVertexAttribArray, "index=%u", GLuint index)
 GL_StaticProcedureDeclaration(glEnableVertexAttribArray, "index=%u", GLuint index)
 
-void R_GLC_TexturePointer(r_buffer_id buffer_id, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
-void R_GLC_ColorPointer(r_buffer_id buffer_id, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
-void R_GLC_VertexPointer(r_buffer_id buffer_id, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
-void R_GLC_NormalPointer(r_buffer_id buffer_id, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
-
 // GLC uses vertex array, all client state
 typedef struct {
 	qbool enabled;

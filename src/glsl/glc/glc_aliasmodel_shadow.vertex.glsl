@@ -2,8 +2,6 @@
 
 #ezquake-definitions
 
-attribute float flags;
-
 uniform float lerpFraction;
 uniform vec2 shadevector;
 uniform float lheight;
@@ -12,12 +10,14 @@ void main()
 {
 	float lerpFrac = lerpFraction;
 
+	// gl_MultiTexCoord1 is the position in the pose being lerped towards
 #ifdef EZQ_ALIASMODEL_MUZZLEHACK
-	// #define AM_VERTEX_NOLERP 1 - no bittest in glsl 1.2
-	lerpFrac = sign(lerpFrac) * max(lerpFrac, mod(flags, 2));
+	if ((gl_Vertex.x > 0.0) != (gl_MultiTexCoord1.x > 0.0)) {
+		lerpFrac = sign(lerpFrac);
+	}
 #endif
 
-	vec4 pos = gl_Vertex + lerpFrac * vec4(gl_MultiTexCoord1.xyz, 0);
+	vec4 pos = vec4(mix(gl_Vertex.xyz, gl_MultiTexCoord1.xyz, lerpFrac), 1);
 
 	pos.x -= shadevector[0] * (pos[2] + lheight);
 	pos.y -= shadevector[1] * (pos[2] + lheight);

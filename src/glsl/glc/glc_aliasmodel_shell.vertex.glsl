@@ -2,8 +2,6 @@
 
 #ezquake-definitions
 
-attribute float flags;
-
 varying vec2 fsTextureCoord;
 varying vec2 fsAltTextureCoord;
 uniform float lerpFraction;      // 0 to 1
@@ -13,12 +11,14 @@ void main()
 {
 	float lerpFrac = lerpFraction;
 
+	// gl_MultiTexCoord1 is the position in the pose being lerped towards
 #ifdef EZQ_ALIASMODEL_MUZZLEHACK
-	// #define AM_VERTEX_NOLERP 1 - no bittest in glsl 1.2
-	lerpFrac = sign(lerpFrac) * max(lerpFrac, mod(flags, 2));
+	if ((gl_Vertex.x > 0.0) != (gl_MultiTexCoord1.x > 0.0)) {
+		lerpFrac = sign(lerpFrac);
+	}
 #endif
 
-	gl_Position = gl_ModelViewProjectionMatrix * ((gl_Vertex + lerpFrac * vec4(gl_MultiTexCoord1.xyz, 0)) + vec4(gl_Normal * 0.5, 0));
+	gl_Position = gl_ModelViewProjectionMatrix * vec4(mix(gl_Vertex.xyz, gl_MultiTexCoord1.xyz, lerpFrac) + gl_Normal * 0.5, 1);
 	fsTextureCoord = vec2(gl_MultiTexCoord0.s * 2 + scroll.x, gl_MultiTexCoord0.t * 2 + scroll.y);
 	fsAltTextureCoord = vec2(gl_MultiTexCoord0.s * 2 + scroll.z, gl_MultiTexCoord0.t * 2 + scroll.a);
 }
