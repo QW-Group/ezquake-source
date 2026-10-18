@@ -845,7 +845,8 @@ static qbool GL_CompileProgram(
 	}
 
 	if (program->shaders[shadertype_compute].text) {
-		return GL_CompileComputeShaderProgram(program, compute_shader_text[0], compute_shader_text_length[0]);
+		// Inserts the definitions itself, compute_shader_text[0] is now only the version line
+		return GL_CompileComputeShaderProgram(program, program->shaders[shadertype_compute].text, program->shaders[shadertype_compute].length);
 	}
 
 	if (GL_CompileShader(vertex_components, vertex_shader_text, vertex_shader_text_length, GL_VERTEX_SHADER, &shaders[shadertype_vertex])) {
