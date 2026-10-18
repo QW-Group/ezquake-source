@@ -350,7 +350,8 @@ static void GLM_AssignTexture(int texture_num, texture_t* texture)
 
 	if (sampler < 0) {
 		if (drawcall->material_samplers >= material_samplers_max) {
-			drawcall = GL_PrepareWorldModelBatch(drawcall->type);
+			// GLM_NextBatchRequest() reserves the sampler, so this should never happen
+			return;
 		}
 
 		sampler = drawcall->material_samplers++;
@@ -396,7 +397,21 @@ static qbool GLM_DuplicatePreviousRequest(model_t* model, float alpha, int num_t
 	return false;
 }
 
-static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, int num_textures, int first_texture, qbool polygonOffset, qbool caustics, qbool isAlphaTested)
+static qbool GLM_SamplerAvailable(glm_brushmodel_drawcall_t* drawcall, texture_t* texture)
+{
+	int i;
+
+	for (i = 0; i < drawcall->material_samplers; ++i) {
+		if (R_TextureReferenceEqual(texture->gl_texture_array, drawcall->allocated_samplers[i])) {
+			return true;
+		}
+	}
+
+	return drawcall->material_samplers < material_samplers_max;
+}
+
+// texture is the material that will be assigned to the request, NULL if none
+static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, int num_textures, int first_texture, texture_t* texture, qbool polygonOffset, qbool caustics, qbool isAlphaTested)
 {
 	glm_worldmodel_req_t* req;
 	qbool worldmodel = model ? model->isworldmodel : false;
@@ -423,7 +438,7 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 			}
 			else if (req->samplerMappingCount == 0) {
 				// Previous block didn't care about materials, allocate now
-				if (drawcall->sampler_mappings < MAX_SAMPLER_MAPPINGS) {
+				if (drawcall->sampler_mappings < MAX_SAMPLER_MAPPINGS && (!texture || GLM_SamplerAvailable(drawcall, texture))) {
 					req->samplerMappingBase = drawcall->sampler_mappings - first_texture;
 					req->samplerMappingCount = min(num_textures, MAX_SAMPLER_MAPPINGS - drawcall->sampler_mappings);
 					req->firstTexture = first_texture;
@@ -434,7 +449,9 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 		}
 	}
 
-	if (drawcall->sampler_mappings >= MAX_SAMPLER_MAPPINGS || drawcall->batch_count >= MAX_WORLDMODEL_BATCH) {
+	// The request's mapping must be written to the drawcall the request is in, so
+	// start a new drawcall now if there's no sampler left for its texture.
+	if (drawcall->sampler_mappings >= MAX_SAMPLER_MAPPINGS || drawcall->batch_count >= MAX_WORLDMODEL_BATCH || (texture && !GLM_SamplerAvailable(drawcall, texture))) {
 		drawcall = GL_PrepareWorldModelBatch(drawcall->type);
 	}
 
@@ -484,7 +501,7 @@ void GLM_DrawWaterSurfaces(void)
 		glpoly_t* poly;
 		texture_t* tex = R_TextureAnimation(NULL, surf->texinfo->texture);
 
-		req = GLM_NextBatchRequest(NULL, alpha, 1, surf->texinfo->miptex, false, false, tex->isAlphaTested);
+		req = GLM_NextBatchRequest(NULL, alpha, 1, surf->texinfo->miptex, tex, false, false, tex->isAlphaTested);
 		GLM_AssignTexture(surf->texinfo->miptex, tex);
 		for (poly = surf->polys; poly; poly = poly->next) {
 			int newVerts = poly->numverts;
@@ -780,7 +797,7 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 	}
 
 	if (model->drawflat_chain) {
-		req = GLM_NextBatchRequest(model, ent->alpha, 0, 0, false, false, false);
+		req = GLM_NextBatchRequest(model, ent->alpha, 0, 0, NULL, false, false, false);
 
 		req = GLM_DrawFlatChain(req, model->drawflat_chain);
 
@@ -793,16 +810,17 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 
 	for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
 		texture_t* tex = model->textures[i];
+		texture_t* frame;
 
 		if (!tex || !tex->loaded || !tex->texturechain || !R_TextureReferenceIsValid(tex->gl_texture_array)) {
 			continue;
 		}
 
-		req = GLM_NextBatchRequest(model, ent->alpha, 1, i, polygonOffset, caustics, tex->isAlphaTested);
-		tex = R_TextureAnimation(ent, tex);
-		GLM_AssignTexture(i, tex);
+		frame = R_TextureAnimation(ent, tex);
+		req = GLM_NextBatchRequest(model, ent->alpha, 1, i, frame, polygonOffset, caustics, tex->isAlphaTested);
+		GLM_AssignTexture(i, frame);
 
-		req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain);
+		req = GLM_DrawTexturedChain(req, tex->texturechain);
 	}
 }
 
