@@ -18,10 +18,12 @@
 #define AMF_TEAMMATE          256
 #define AMF_BEHINDWALL        512
 #define AMF_VWEPMODEL        1024
+#define AMF_LIMITLERP        2048 // vertices moving across x = 0 between poses aren't lerped (muzzle flashes)
 #define AMF_SHELLFLAGS       (AMF_SHELLMODEL_RED | AMF_SHELLMODEL_BLUE | AMF_SHELLMODEL_GREEN)
 
 #define AM_VERTEX_NOLERP        1 // the alias model vertex should not be lerped, and always use lerpfraction 1 (meag: update shader if value no longer 1)
 #define AM_VERTEX_NORMALFIXED   2 // set after the alias model pose has been checked for matching vertices with different normals
+#define AM_VERTEX_TEXELS        4 // size of an alias model vertex in RGBA32F texels, for reading a second pose in shaders
 
 // Models in the alias model data block when it's a uniform block (no SSBOs)
 #define MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS 64

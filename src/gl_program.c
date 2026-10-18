@@ -383,6 +383,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_aliasmodel, "causticsTex", 1, false },
 	// r_program_uniform_aliasmodel_samplers
 	{ r_program_aliasmodel, "samplers", 1, false },
+	// r_program_uniform_aliasmodel_posetex
+	{ r_program_aliasmodel, "poseTex", 1, false },
 	// r_program_uniform_sprites_materialtex
 	{ r_program_sprite3d, "materialTex", 1, false },
 	// r_program_uniform_postprocess_base

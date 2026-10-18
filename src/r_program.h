@@ -137,6 +137,7 @@ typedef enum {
 	r_program_uniform_brushmodel_at_materialtex,
 	r_program_uniform_aliasmodel_causticstex,
 	r_program_uniform_aliasmodel_samplers,
+	r_program_uniform_aliasmodel_posetex,
 	r_program_uniform_sprites_materialtex,
 	r_program_uniform_postprocess_base,
 	r_program_uniform_postprocess_overlay,
