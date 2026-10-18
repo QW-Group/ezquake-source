@@ -733,7 +733,7 @@ static int GL_InsertDefinitions(
 		// Inject the appropriate GLSL version string (with shader type for GLC core profile)
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 		if (R_UseModernOpenGL()) {
-			strings[0] = GL_VersionAtLeast(4, 3) ? "#version 430\n\n" : "#version 410\n\n";
+			strings[0] = GL_ShaderBindingsSupported() ? "#version 430\n\n" : "#version 410\n\n";
 		}
 		else
 #endif
@@ -1148,7 +1148,7 @@ void GL_LoadProgramFunctions(void)
 	}
 
 	// Shaders are compiled as GLSL 4.10 below OpenGL 4.3, which can't declare compute shaders
-	if (GL_VersionAtLeast(4, 3)) {
+	if (GL_ShaderBindingsSupported()) {
 		qbool compute_shaders_support = true;
 
 		GL_LoadMandatoryFunctionExtension(glDispatchCompute, compute_shaders_support);
@@ -1436,7 +1436,7 @@ int R_ProgramUniformGet1i(r_program_uniform_id uniform_id, int default_value)
 	return default_value;
 }
 
-// Set UBO block bindings manually when layout(binding=N) is unavailable (GL < 4.2)
+// Set UBO block bindings manually when layout(binding=N) is unavailable (GL < 4.3)
 static void R_PatchProgramBindings(r_program_id program_id)
 {
 	static const struct { const char* name; int binding; } storage_bindings[] = {
@@ -1448,7 +1448,7 @@ static void R_PatchProgramBindings(r_program_id program_id)
 	GLuint prog, idx;
 	int i;
 
-	if (GL_VersionAtLeast(4, 2)) {
+	if (GL_ShaderBindingsSupported()) {
 		return; // layout(binding=N) works in-shader
 	}
 
@@ -1516,7 +1516,7 @@ static void GL_BuildCoreDefinitions(void)
 
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	if (R_UseModernOpenGL()) {
-		if (GL_VersionAtLeast(4, 3)) {
+		if (GL_ShaderBindingsSupported()) {
 			strlcat(macro_definitions,
 				"#define EZ_HAS_SSBO 1\n"
 				"#define EZ_LAYOUT_BINDING(n) layout(binding=n)\n"

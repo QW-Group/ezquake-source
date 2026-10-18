@@ -121,7 +121,7 @@ qbool GLM_CompilePostProcessProgram(void)
 		// Initialise program for drawing image
 		R_ProgramCompileWithInclude(r_program_post_process, included_definitions);
 
-		if (!GL_VersionAtLeast(4, 2) && R_ProgramReady(r_program_post_process)) {
+		if (!GL_ShaderBindingsSupported() && R_ProgramReady(r_program_post_process)) {
 			R_ProgramUse(r_program_post_process);
 			R_ProgramUniform1i(r_program_uniform_postprocess_base, 0);
 			R_ProgramUniform1i(r_program_uniform_postprocess_overlay, 1);

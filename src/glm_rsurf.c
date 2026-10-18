@@ -233,8 +233,8 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 		// Initialise program for drawing image
 		R_ProgramCompileWithInclude(program_id, included_definitions);
 
-		// Set sampler uniforms for GL < 4.2 (no layout(binding=N) support)
-		if (!GL_VersionAtLeast(4, 2) && R_ProgramReady(program_id)) {
+		// Set sampler uniforms for GL < 4.3 (no layout(binding=N) support)
+		if (!GL_ShaderBindingsSupported() && R_ProgramReady(program_id)) {
 			int base = alpha_test ? r_program_uniform_brushmodel_at_detailtex : r_program_uniform_brushmodel_detailtex;
 			R_ProgramUse(program_id);
 			if (detail_textures) {
@@ -698,7 +698,7 @@ static glm_brushmodel_drawcall_t* GL_PrepareWorldModelBatch(glm_brushmodel_drawc
 // The section sizes (5120 & 4096 bytes) satisfy GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT.
 static qbool GLM_WorldDataBoundPerDrawcall(void)
 {
-	return !GL_VersionAtLeast(4, 3);
+	return !GL_ShaderBindingsSupported();
 }
 
 void GLM_PrepareWorldModelBatch(void)

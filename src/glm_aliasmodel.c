@@ -187,8 +187,8 @@ qbool GLM_CompileAliasModelProgram(void)
 		// Initialise program for drawing image
 		R_ProgramCompileWithInclude(r_program_aliasmodel, included_definitions);
 
-		// Set sampler uniforms for GL < 4.2 (no layout(binding=N) support)
-		if (!GL_VersionAtLeast(4, 2) && R_ProgramReady(r_program_aliasmodel)) {
+		// Set sampler uniforms for GL < 4.3 (no layout(binding=N) support)
+		if (!GL_ShaderBindingsSupported() && R_ProgramReady(r_program_aliasmodel)) {
 			R_ProgramUse(r_program_aliasmodel);
 			if (drawAlias_desiredOptions & DRAW_CAUSTIC_TEXTURES) {
 				R_ProgramUniform1i(r_program_uniform_aliasmodel_causticstex, TEXTURE_UNIT_CAUSTICS);
