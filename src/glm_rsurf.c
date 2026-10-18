@@ -879,7 +879,8 @@ static int GL_DrawCallComparison(const void* lhs_, const void* rhs_)
 		return -1;
 	}
 
-	return lhs->nonDynamicSampler - rhs->nonDynamicSampler;
+	// The sampler is per-request data so doesn't affect batching, keep submission order instead
+	return (int)lhs->baseInstance - (int)rhs->baseInstance;
 }
 
 static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall)
