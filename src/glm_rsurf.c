@@ -77,7 +77,6 @@ typedef struct glm_brushmodel_drawcall_s {
 	GLintptr drawDataOffset;
 	GLintptr samplerDataOffset;
 
-	int polygonOffsetSplit;
 	glm_brushmodel_drawcall_type type;
 
 	struct glm_brushmodel_drawcall_s* next;
@@ -745,7 +744,7 @@ static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintp
 
 void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 {
-	int draw;
+	int draw, begin, count;
 	qbool first = true;
 	unsigned int extra_offset = 0;
 	qbool alphablended = (type == alpha_surfaces);
@@ -778,21 +777,19 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 		// Bind texture units
 		renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
 
-		if (drawcall->polygonOffsetSplit >= 0 && drawcall->polygonOffsetSplit < drawcall->batch_count) {
-			uintptr_t normal_offset = drawcall->indirectDrawOffset + extra_offset;
-			uintptr_t polygonOffset_offset = (extra_offset + drawcall->indirectDrawOffset + sizeof(drawcall->worldmodel_requests[0]) * drawcall->polygonOffsetSplit);
+		// Opaque requests are sorted by polygon offset, translucent requests keep their
+		// order, so draw each run of requests with the same polygon offset
+		for (begin = 0; begin < drawcall->batch_count; begin += count) {
+			qbool polygonOffset = drawcall->worldmodel_requests[begin].polygonOffset;
+			uintptr_t offset = extra_offset + drawcall->indirectDrawOffset + sizeof(drawcall->worldmodel_requests[0]) * begin;
 
-			if (drawcall->polygonOffsetSplit) {
-				GLM_BeginDrawWorld(alphablended, false);
-				GLM_DrawWorldExecuteCalls(drawcall, normal_offset, 0, drawcall->polygonOffsetSplit, alphablended);
+			count = 1;
+			while (begin + count < drawcall->batch_count && drawcall->worldmodel_requests[begin + count].polygonOffset == polygonOffset) {
+				++count;
 			}
 
-			GLM_BeginDrawWorld(alphablended, true);
-			GLM_DrawWorldExecuteCalls(drawcall, polygonOffset_offset, drawcall->polygonOffsetSplit, drawcall->batch_count - drawcall->polygonOffsetSplit, alphablended);
-		}
-		else {
-			GLM_BeginDrawWorld(alphablended, false);
-			GLM_DrawWorldExecuteCalls(drawcall, extra_offset + drawcall->indirectDrawOffset, 0, drawcall->batch_count, alphablended);
+			GLM_BeginDrawWorld(alphablended, polygonOffset);
+			GLM_DrawWorldExecuteCalls(drawcall, offset, begin, count, alphablended);
 		}
 
 		R_TraceLeaveNamedRegion();
@@ -872,7 +869,6 @@ static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall)
 {
 	int i;
 
-	drawcall->polygonOffsetSplit = drawcall->batch_count;
 	if (drawcall->batch_count == 0) {
 		return;
 	}
@@ -883,10 +879,6 @@ static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall)
 		int sampler = drawcall->mappings[mappingIndex].samplerIndex;
 
 		thisReq->nonDynamicSampler = sampler;
-
-		if (thisReq->polygonOffset && drawcall->polygonOffsetSplit > i) {
-			drawcall->polygonOffsetSplit = i;
-		}
 	}
 
 	// Translucent bmodels are put into requests based on their distance from view and sorting here will break that order.
