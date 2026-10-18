@@ -438,6 +438,53 @@ static qbool GLM_SamplerAvailable(glm_brushmodel_drawcall_t* drawcall, texture_t
 	return drawcall->material_samplers < material_samplers_max;
 }
 
+// Unused sampler mappings allowed between two textures merged into one request
+#define GLM_MAX_MAPPING_GAP 4
+
+// The shader looks up each surface's material with samplerBase + material number, so a
+// request can draw several textures as long as they share a sampler (texture array).
+// Their mappings must be contiguous, gaps are filled with unused mappings.
+static qbool GLM_ExtendRequest(glm_brushmodel_drawcall_t* drawcall, glm_worldmodel_req_t* req, model_t* model, int texture_num, texture_t* texture)
+{
+	sampler_mapping_t* first_mapping;
+	int mapped_end;
+	int i;
+
+	if (req->model != model || !req->samplerMappingCount || texture_num < req->firstTexture) {
+		return false;
+	}
+
+	first_mapping = &drawcall->mappings[req->samplerMappingBase + req->firstTexture];
+	if (!R_TextureReferenceEqual(drawcall->allocated_samplers[first_mapping->samplerIndex], texture->gl_texture_array)) {
+		return false;
+	}
+
+	mapped_end = req->firstTexture + req->samplerMappingCount;
+	if (texture_num < mapped_end) {
+		// Already in range, fine if unused or mapped to the same layer
+		sampler_mapping_t* mapping = &drawcall->mappings[req->samplerMappingBase + texture_num];
+
+		return mapping->arrayIndex < 0 || mapping->arrayIndex == texture->gl_texture_index;
+	}
+
+	// The request's mappings must be the last allocated, so they can grow
+	if (req->samplerMappingBase + mapped_end != drawcall->sampler_mappings || texture_num - mapped_end > GLM_MAX_MAPPING_GAP || drawcall->sampler_mappings + texture_num - mapped_end + 1 > MAX_SAMPLER_MAPPINGS) {
+		return false;
+	}
+
+	for (i = mapped_end; i < texture_num; ++i) {
+		sampler_mapping_t* unused = &drawcall->mappings[req->samplerMappingBase + i];
+
+		unused->samplerIndex = first_mapping->samplerIndex;
+		unused->arrayIndex = -1;
+		unused->flags = 0;
+	}
+
+	drawcall->sampler_mappings += texture_num - mapped_end + 1;
+	req->samplerMappingCount = texture_num - req->firstTexture + 1;
+	return true;
+}
+
 // texture is the material that will be assigned to the request, NULL if none
 static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, int num_textures, int first_texture, texture_t* texture, qbool polygonOffset, qbool caustics, qbool isAlphaTested)
 {
@@ -456,14 +503,20 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 	if (drawcall->type != desired_type) {
 		drawcall = GL_PrepareWorldModelBatch(desired_type);
 	}
-	else if (drawcall->batch_count && drawcall->type == opaque_world && num_textures == 0) {
-		// Try and continue the previous request, as long as drawcall is not alpha
-		// as such requests must be drawn in the predetermined order.
+	else if (drawcall->batch_count) {
+		// Try and continue the previous request. Requests in alpha drawcalls must be
+		// drawn in the predetermined order, so only continue those for the same model
+		// (and with the matrix check, the same entity).
 		req = &drawcall->worldmodel_requests[drawcall->batch_count - 1];
 
-		if (worldmodel == req->worldmodel && !memcmp(req->mvMatrix, mvMatrix, sizeof(req->mvMatrix)) && polygonOffset == req->polygonOffset && req->flags == flags && req->isAlphaTested == isAlphaTested) {
-			// Neither request uses materials, so can draw with previous request
-			return req;
+		if ((drawcall->type == opaque_world || model == req->model) && worldmodel == req->worldmodel && req->alpha == alpha && !memcmp(req->mvMatrix, mvMatrix, sizeof(req->mvMatrix)) && polygonOffset == req->polygonOffset && req->flags == flags && req->isAlphaTested == isAlphaTested) {
+			if (num_textures == 0) {
+				// Neither request uses materials, so can draw with previous request
+				return req;
+			}
+			else if (GLM_ExtendRequest(drawcall, req, model, first_texture, texture)) {
+				return req;
+			}
 		}
 	}
 
