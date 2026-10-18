@@ -816,7 +816,7 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 	}
 
 	if (model->drawflat_chain) {
-		req = GLM_NextBatchRequest(model, ent->alpha, 0, 0, NULL, false, false, false);
+		req = GLM_NextBatchRequest(model, ent->alpha, 0, 0, NULL, polygonOffset, caustics, false);
 
 		req = GLM_DrawFlatChain(req, model->drawflat_chain);
 
