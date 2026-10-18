@@ -329,7 +329,7 @@ void GLM_EnterBatchedWorldRegion(void)
 	memset(drawcalls, 0, sizeof(drawcalls[0]) * maximum_drawcalls);
 }
 
-static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
+static void GLM_AssignTexture(int texture_num, texture_t* texture)
 {
 	glm_worldmodel_req_t* req = GLM_CurrentRequest();
 	int index = req->samplerMappingBase + texture_num;
@@ -338,7 +338,7 @@ static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
 	glm_brushmodel_drawcall_t* drawcall = &drawcalls[current_drawcall];
 
 	if (index >= sizeof(drawcall->mappings) / sizeof(drawcall->mappings[0])) {
-		return false;
+		return;
 	}
 
 	for (i = 0; i < drawcall->material_samplers; ++i) {
@@ -363,7 +363,6 @@ static qbool GLM_AssignTexture(int texture_num, texture_t* texture)
 	drawcall->mappings[index].flags |= R_TextureReferenceIsValid(texture->fb_texturenum) && !texture->isLumaTexture ? EZQ_SURFACE_HAS_FB : 0;
 	drawcall->mappings[index].flags |= R_TextureReferenceIsValid(texture->fb_texturenum) && texture->isAlphaTested ? EZQ_SURFACE_ALPHATEST : 0;
 	drawcall->mappings[index].flags |= texture->isLitTurb ? EZQ_SURFACE_LIT_TURB : 0;
-	return true;
 }
 
 static qbool GLM_DuplicatePreviousRequest(model_t* model, float alpha, int num_textures, int first_texture, qbool polygonOffset, qbool caustics)
@@ -372,11 +371,6 @@ static qbool GLM_DuplicatePreviousRequest(model_t* model, float alpha, int num_t
 	qbool worldmodel = model ? model->isworldmodel : false;
 	int flags = (caustics ? EZQ_SURFACE_UNDERWATER : 0);
 	glm_brushmodel_drawcall_t* drawcall = &drawcalls[current_drawcall];
-
-	// If user has switched off caustics (or no texture), ignore
-	if (caustics) {
-		caustics &= ((R_ProgramCustomOptions(r_program_brushmodel) & DRAW_CAUSTIC_TEXTURES) == DRAW_CAUSTIC_TEXTURES);
-	}
 
 	// See if previous batch has same texture & matrix, if so just continue
 	if (drawcall->batch_count) {
@@ -402,7 +396,7 @@ static qbool GLM_DuplicatePreviousRequest(model_t* model, float alpha, int num_t
 	return false;
 }
 
-static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, int num_textures, int first_texture, qbool polygonOffset, qbool caustics, qbool allow_duplicate, qbool isAlphaTested)
+static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, int num_textures, int first_texture, qbool polygonOffset, qbool caustics, qbool isAlphaTested)
 {
 	glm_worldmodel_req_t* req;
 	qbool worldmodel = model ? model->isworldmodel : false;
@@ -414,37 +408,14 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 
 	R_GetModelviewMatrix(mvMatrix);
 
-	// If user has switched off caustics (or no texture), ignore
-	if (caustics) {
-		caustics &= ((R_ProgramCustomOptions(r_program_brushmodel) & DRAW_CAUSTIC_TEXTURES) == DRAW_CAUSTIC_TEXTURES);
-	}
-
 	if (drawcall->type != desired_type) {
 		drawcall = GL_PrepareWorldModelBatch(desired_type);
 	}
 	else if (drawcall->batch_count && drawcall->type == opaque_world) {
-		// See if previous request has same texture & matrix, if so just continue
-		// as long as drawcall is not alpha as such requests must be drawn in the
-		// predetermined order.
+		// Try and continue the previous request, as long as drawcall is not alpha
+		// as such requests must be drawn in the predetermined order.
 		req = &drawcall->worldmodel_requests[drawcall->batch_count - 1];
 
-		if (allow_duplicate && model == req->model && req->samplerMappingCount == num_textures && req->firstTexture == first_texture && drawcall->batch_count < MAX_WORLDMODEL_BATCH && isAlphaTested == req->isAlphaTested) {
-			// Duplicate details from previous request, but with different matrix
-			glm_worldmodel_req_t* newreq = &drawcall->worldmodel_requests[drawcall->batch_count];
-
-			memcpy(newreq, req, sizeof(*newreq));
-			R_GetModelviewMatrix(newreq->mvMatrix);
-			newreq->alpha = alpha;
-			newreq->flags = flags;
-			newreq->polygonOffset = polygonOffset;
-			newreq->worldmodel = worldmodel;
-			newreq->baseInstance = drawcall->batch_count;
-			++drawcall->batch_count;
-
-			return NULL;
-		}
-
-		// Try and continue the previous batch
 		if (worldmodel == req->worldmodel && !memcmp(req->mvMatrix, mvMatrix, sizeof(req->mvMatrix)) && polygonOffset == req->polygonOffset && req->flags == flags && req->isAlphaTested == isAlphaTested) {
 			if (num_textures == 0) {
 				// We don't care about materials, so can draw with previous batch
@@ -513,7 +484,7 @@ void GLM_DrawWaterSurfaces(void)
 		glpoly_t* poly;
 		texture_t* tex = R_TextureAnimation(NULL, surf->texinfo->texture);
 
-		req = GLM_NextBatchRequest(NULL, alpha, 1, surf->texinfo->miptex, false, false, false, tex->isAlphaTested);
+		req = GLM_NextBatchRequest(NULL, alpha, 1, surf->texinfo->miptex, false, false, tex->isAlphaTested);
 		GLM_AssignTexture(surf->texinfo->miptex, tex);
 		for (poly = surf->polys; poly; poly = poly->next) {
 			int newVerts = poly->numverts;
@@ -809,7 +780,7 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 	}
 
 	if (model->drawflat_chain) {
-		req = GLM_NextBatchRequest(model, ent->alpha, 0, 0, false, false, false, false);
+		req = GLM_NextBatchRequest(model, ent->alpha, 0, 0, false, false, false);
 
 		req = GLM_DrawFlatChain(req, model->drawflat_chain);
 
@@ -827,12 +798,9 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 			continue;
 		}
 
-		req = GLM_NextBatchRequest(model, ent->alpha, 1, i, polygonOffset, caustics, false, tex->isAlphaTested);
+		req = GLM_NextBatchRequest(model, ent->alpha, 1, i, polygonOffset, caustics, tex->isAlphaTested);
 		tex = R_TextureAnimation(ent, tex);
-		if (!GLM_AssignTexture(i, tex)) {
-			req = GLM_NextBatchRequest(model, ent->alpha, 1, i, polygonOffset, caustics, false, tex->isAlphaTested);
-			GLM_AssignTexture(i, tex);
-		}
+		GLM_AssignTexture(i, tex);
 
 		req = GLM_DrawTexturedChain(req, model->textures[i]->texturechain);
 	}
