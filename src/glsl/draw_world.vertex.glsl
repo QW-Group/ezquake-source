@@ -88,6 +88,9 @@ void main()
 
 	if (lightmapCoord.z < 0) {
 		TextureCoord = vec3(tex.xy, materialArrayIndex);
+#if defined(DRAW_TEXTURELESS) && defined(DRAW_ALPHATEST_ENABLED)
+		TextureLessCoord = TextureCoord;
+#endif
 		TexCoordLightmap = vec3(0, 0, 0);
 #if defined(DRAW_SKYBOX) || defined(DRAW_SKYDOME)
 		Direction = (position - cameraPosition);

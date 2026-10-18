@@ -87,7 +87,7 @@ vec4 applyColorTinting(vec4 frag_colour)
 
 #if defined(DRAW_TEXTURELESS) && defined(DRAW_ALPHATEST_ENABLED)
 // We pass the original coordinates in TextureCoord & use them for alpha-test, but this is where color should come from
-out vec3 TextureLessCoord;
+in vec3 TextureLessCoord;
 #endif
 
 void main()
