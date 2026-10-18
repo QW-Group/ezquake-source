@@ -410,21 +410,7 @@ void R_AliasModelDeterminePoses(const maliasframedesc_t* oldframe, const maliasf
 {
 	int oldpose = R_AliasFramePose(oldframe);
 	int pose = R_AliasFramePose(frame);
-	float lerp = 0;
-
-	if (oldframe->nextpose == pose) {
-		lerp = r_framelerp;
-	}
-	else if (frame->nextpose == oldpose) {
-		int temp = pose;
-
-		pose = oldpose;
-		oldpose = temp;
-		lerp = (1 - r_framelerp);
-	}
-	else {
-		lerp = 1;
-	}
+	float lerp = (oldpose == pose ? 1 : r_framelerp);
 
 	if (lerp == 1) {
 		oldpose = pose;
@@ -885,23 +871,14 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 static void* Mod_LoadAliasFrame(void * pin, maliasframedesc_t *frame, int* posenum)
 {
 	trivertx_t *pinframe;
-	int i, len;
+	int i;
 	daliasframe_t *pdaliasframe;
 
 	pdaliasframe = (daliasframe_t *)pin;
 
 	strlcpy(frame->name, pdaliasframe->name, sizeof(frame->name));
-	strlcpy(frame->groupname, frame->name, sizeof(frame->groupname));
 	frame->firstpose = *posenum;
 	frame->numposes = 1;
-	frame->groupnumber = 0;
-
-	for (len = strlen(frame->groupname); len > 0 && isdigit(frame->groupname[len - 1]); --len) {
-		frame->groupnumber *= 10;
-		frame->groupnumber += (frame->groupname[len - 1] - '0');
-
-		frame->groupname[len - 1] = '\0';
-	}
 
 	for (i = 0; i < 3; i++) {
 		// these are byte values, so we don't have to worry about endianness
@@ -956,21 +933,6 @@ static void* Mod_LoadAliasGroup(void * pin, maliasframedesc_t *frame, int* posen
 	return ptemp;
 }
 
-maliasframedesc_t* R_AliasModelFindFrame(aliashdr_t* hdr, const char* framename, int framenumber)
-{
-	int f;
-
-	for (f = 0; f < hdr->numframes; ++f) {
-		maliasframedesc_t* frame = &hdr->frames[f];
-
-		if (frame->groupnumber == framenumber && !strcmp(frame->groupname, framename)) {
-			return frame;
-		}
-	}
-
-	return NULL;
-}
-
 void R_AliasModelColor(const entity_t* ent, float* color, qbool* invalidate_texture)
 {
 	*invalidate_texture = false;
@@ -998,8 +960,6 @@ void R_AliasModelPrepare(entity_t* ent, int framecount, int* frame1_, int* frame
 	extern cvar_t r_viewmodelsize, cl_drawgun;
 	int frame1 = bound(0, ent->oldframe, framecount - 1);
 	int frame2 = bound(0, ent->frame, framecount - 1);
-	int expected1 = Mod_ExpectedNextFrame(ent->model, frame1, framecount);
-	int expected2 = Mod_ExpectedNextFrame(ent->model, frame2, framecount);
 
 	R_RotateForEntity(ent);
 	if ((ent->renderfx & RF_WEAPONMODEL) && r_viewmodelsize.value < 1) {
@@ -1015,18 +975,11 @@ void R_AliasModelPrepare(entity_t* ent, int framecount, int* frame1_, int* frame
 
 	R_AliasSetupLighting(ent);
 
-	if (!r_lerpframes.value || ent->framelerp < 0 || frame1 == frame2 || (frame2 != expected1 && frame1 != expected2)) {
+	if (!r_lerpframes.value || ent->framelerp < 0 || frame1 == frame2) {
 		*lerpfrac = 1.0f;
 	}
 	else {
 		*lerpfrac = min(ent->framelerp, 1.0f);
-	}
-
-	if (frame2 != expected1 && frame1 == expected2) {
-		int temp = frame1;
-		frame1 = frame2;
-		frame2 = temp;
-		*lerpfrac = 1.0f - *lerpfrac;
 	}
 
 	if (*lerpfrac == 1) {

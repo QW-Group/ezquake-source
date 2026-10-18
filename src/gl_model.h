@@ -154,8 +154,6 @@ typedef struct vbo_model_vert_s {
 	int lightnormalindex;
 	vec3_t normal;
 	int padding2;
-	vec3_t direction;
-	int padding3;
 	float texture_coords[2];
 	unsigned int flags;
 	int padding4;
@@ -341,9 +339,6 @@ typedef struct maliasframedesc_s {
 	float				radius;
 	int					frame;
 	char				name[16];
-	char                groupname[16];
-	int                 groupnumber;
-	int                 nextpose;
 } maliasframedesc_t;
 
 typedef struct maliasgroupframedesc_s {
@@ -627,7 +622,6 @@ extern model_t* cl_custommodels[custom_model_count];
 
 model_t* Mod_CustomModel(custom_model_id_t id, qbool crash);
 
-int Mod_ExpectedNextFrame(model_t* mod, int framenum, int framecount);
 
 // aliasmodels
 #define NUMVERTEXNORMALS    162
