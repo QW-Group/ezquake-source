@@ -668,33 +668,24 @@ void GLM_PrepareWorldModelBatch(void)
 	R_TraceLeaveNamedRegion();
 }
 
-static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintptr_t offset, int begin, int count)
+static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintptr_t offset, int begin, int count, qbool alphablended)
 {
 	int i;
-	qbool prev_alphaTested = false;
 	qbool no_base_instance = !GL_Supported(R_SUPPORT_INSTANCED_RENDERING);
 
 	for (i = begin; i < begin + count; ++i) {
 		glm_worldmodel_req_t* req = &drawcall->worldmodel_requests[i];
+		// Only the alpha-tested program applies the request's alpha, so translucent requests always use it
+		qbool alphatested_program = alphablended || req->isAlphaTested;
 		int batchCount = 1;
 
-		if (req->isAlphaTested != prev_alphaTested) {
-			if (req->isAlphaTested) {
-				R_ProgramUse(r_program_brushmodel_alphatested);
-			}
-			else {
-				R_ProgramUse(r_program_brushmodel);
-			}
-			prev_alphaTested = req->isAlphaTested;
-		}
+		// Program is not tracked across calls, R_ProgramUse() skips redundant switches
+		R_ProgramUse(alphatested_program ? r_program_brushmodel_alphatested : r_program_brushmodel);
 
 		if (no_base_instance) {
 			// GL 4.1: no baseInstance support, _instanceId is always 0
 			// Use instanceOffset uniform so shader reads drawInfo[0 + baseInstance]
-			// Set on both programs since either may be active (alpha surfaces start
-			// with alphatested program but prev_alphaTested tracks request state)
-			R_ProgramUniform1i(r_program_uniform_brushmodel_instanceOffset, req->baseInstance);
-			R_ProgramUniform1i(r_program_uniform_brushmodel_alphatested_instanceOffset, req->baseInstance);
+			R_ProgramUniform1i(alphatested_program ? r_program_uniform_brushmodel_alphatested_instanceOffset : r_program_uniform_brushmodel_instanceOffset, req->baseInstance);
 			GL_DrawElementsBaseVertex(
 				GL_TRIANGLE_STRIP,
 				req->count,
@@ -705,7 +696,7 @@ static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintp
 			continue;
 		}
 
-		while (i + batchCount < begin + count && drawcall->worldmodel_requests[i + batchCount].isAlphaTested == req->isAlphaTested) {
+		while (i + batchCount < begin + count && (alphablended || drawcall->worldmodel_requests[i + batchCount].isAlphaTested == req->isAlphaTested)) {
 			++batchCount;
 		}
 
@@ -762,15 +753,15 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 
 			if (drawcall->polygonOffsetSplit) {
 				GLM_BeginDrawWorld(alphablended, false);
-				GLM_DrawWorldExecuteCalls(drawcall, normal_offset, 0, drawcall->polygonOffsetSplit);
+				GLM_DrawWorldExecuteCalls(drawcall, normal_offset, 0, drawcall->polygonOffsetSplit, alphablended);
 			}
 
 			GLM_BeginDrawWorld(alphablended, true);
-			GLM_DrawWorldExecuteCalls(drawcall, polygonOffset_offset, drawcall->polygonOffsetSplit, drawcall->batch_count - drawcall->polygonOffsetSplit);
+			GLM_DrawWorldExecuteCalls(drawcall, polygonOffset_offset, drawcall->polygonOffsetSplit, drawcall->batch_count - drawcall->polygonOffsetSplit, alphablended);
 		}
 		else {
 			GLM_BeginDrawWorld(alphablended, false);
-			GLM_DrawWorldExecuteCalls(drawcall, extra_offset + drawcall->indirectDrawOffset, 0, drawcall->batch_count);
+			GLM_DrawWorldExecuteCalls(drawcall, extra_offset + drawcall->indirectDrawOffset, 0, drawcall->batch_count, alphablended);
 		}
 
 		R_TraceLeaveNamedRegion();
