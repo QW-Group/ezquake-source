@@ -39,6 +39,7 @@
 #define EZQ_SURFACE_ALPHATEST  128  // alpha-testing should take place when rendering
 #define EZQ_SURFACE_HAS_FB     256  // surface has fb texture in next array index
 #define EZQ_SURFACE_LIT_TURB   512  // turb surface has lightmap
+#define EZQ_SURFACE_NO_MATERIAL 1024 // draw call has no material mappings (drawflat, sky), skip lookup
 
 #define MAX_SAMPLER_MAPPINGS 256
 

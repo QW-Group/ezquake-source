@@ -416,7 +416,9 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 {
 	glm_worldmodel_req_t* req;
 	qbool worldmodel = model ? model->isworldmodel : false;
-	int flags = (caustics ? EZQ_SURFACE_UNDERWATER : 0);
+	// Surfaces in requests without materials still carry their material number, so
+	// keep them apart from requests with materials & tell the shader not to look it up
+	int flags = (caustics ? EZQ_SURFACE_UNDERWATER : 0) | (num_textures ? 0 : EZQ_SURFACE_NO_MATERIAL);
 	glm_brushmodel_drawcall_t* drawcall = &drawcalls[current_drawcall];
 	float mvMatrix[16];
 
@@ -427,26 +429,14 @@ static glm_worldmodel_req_t* GLM_NextBatchRequest(model_t* model, float alpha, i
 	if (drawcall->type != desired_type) {
 		drawcall = GL_PrepareWorldModelBatch(desired_type);
 	}
-	else if (drawcall->batch_count && drawcall->type == opaque_world) {
+	else if (drawcall->batch_count && drawcall->type == opaque_world && num_textures == 0) {
 		// Try and continue the previous request, as long as drawcall is not alpha
 		// as such requests must be drawn in the predetermined order.
 		req = &drawcall->worldmodel_requests[drawcall->batch_count - 1];
 
 		if (worldmodel == req->worldmodel && !memcmp(req->mvMatrix, mvMatrix, sizeof(req->mvMatrix)) && polygonOffset == req->polygonOffset && req->flags == flags && req->isAlphaTested == isAlphaTested) {
-			if (num_textures == 0) {
-				// We don't care about materials, so can draw with previous batch
-				return req;
-			}
-			else if (req->samplerMappingCount == 0) {
-				// Previous block didn't care about materials, allocate now
-				if (drawcall->sampler_mappings < MAX_SAMPLER_MAPPINGS && (!texture || GLM_SamplerAvailable(drawcall, texture))) {
-					req->samplerMappingBase = drawcall->sampler_mappings - first_texture;
-					req->samplerMappingCount = min(num_textures, MAX_SAMPLER_MAPPINGS - drawcall->sampler_mappings);
-					req->firstTexture = first_texture;
-					drawcall->sampler_mappings += req->samplerMappingCount;
-					return req;
-				}
-			}
+			// Neither request uses materials, so can draw with previous request
+			return req;
 		}
 	}
 
@@ -876,9 +866,8 @@ static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall)
 	for (i = 0; i < drawcall->batch_count; ++i) {
 		glm_worldmodel_req_t* thisReq = &drawcall->worldmodel_requests[i];
 		int mappingIndex = bound(0, thisReq->samplerMappingBase + thisReq->firstTexture, sizeof(drawcall->mappings) / sizeof(drawcall->mappings[0]) - 1);
-		int sampler = drawcall->mappings[mappingIndex].samplerIndex;
 
-		thisReq->nonDynamicSampler = sampler;
+		thisReq->nonDynamicSampler = (thisReq->samplerMappingCount ? drawcall->mappings[mappingIndex].samplerIndex : 0);
 	}
 
 	// Translucent bmodels are put into requests based on their distance from view and sorting here will break that order.

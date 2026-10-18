@@ -65,9 +65,13 @@ void main()
 	int modelId = _instanceId;
 #endif
 	int materialNumber = int(tex.z);
-	float materialArrayIndex = samplerMapping[drawInfo[modelId].samplerBase + materialNumber].layer;
 	int drawCallFlags = drawInfo[modelId].drawFlags;
-	int textureFlags = samplerMapping[drawInfo[modelId].samplerBase + materialNumber].flags;
+	float materialArrayIndex = 0.0;
+	int textureFlags = 0;
+	if ((drawCallFlags & EZQ_SURFACE_NO_MATERIAL) == 0) {
+		materialArrayIndex = samplerMapping[drawInfo[modelId].samplerBase + materialNumber].layer;
+		textureFlags = samplerMapping[drawInfo[modelId].samplerBase + materialNumber].flags;
+	}
 #ifdef DRAW_ALPHATEST_ENABLED
 	alpha = drawInfo[modelId].alpha;
 #endif
