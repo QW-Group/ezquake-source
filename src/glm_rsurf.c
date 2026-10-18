@@ -367,35 +367,62 @@ static void GLM_AssignTexture(int texture_num, texture_t* texture)
 	drawcall->mappings[index].flags |= texture->isLitTurb ? EZQ_SURFACE_LIT_TURB : 0;
 }
 
-static qbool GLM_DuplicatePreviousRequest(model_t* model, float alpha, int num_textures, int first_texture, qbool polygonOffset, qbool caustics)
+static qbool GLM_TextureDrawable(texture_t* tex)
+{
+	return tex && tex->loaded && tex->texturechain && R_TextureReferenceIsValid(tex->gl_texture_array);
+}
+
+static qbool GLM_DuplicatePreviousRequest(entity_t* ent, qbool polygonOffset, qbool caustics)
 {
 	glm_worldmodel_req_t* req;
-	qbool worldmodel = model ? model->isworldmodel : false;
+	glm_worldmodel_req_t* newreq;
+	model_t* model = ent->model;
+	int first_texture = model->first_texture_chained;
+	int num_textures = model->last_texture_chained - model->first_texture_chained + 1;
+	qbool worldmodel = model->isworldmodel;
 	int flags = (caustics ? EZQ_SURFACE_UNDERWATER : 0);
+	glm_brushmodel_drawcall_type desired_type = ent->alpha == 0.0f ? opaque_world : alpha_surfaces;
 	glm_brushmodel_drawcall_t* drawcall = &drawcalls[current_drawcall];
+	int i;
 
-	// See if previous batch has same texture & matrix, if so just continue
-	if (drawcall->batch_count) {
-		req = &drawcall->worldmodel_requests[drawcall->batch_count - 1];
+	// Drawflat surfaces are in a separate request that wouldn't be duplicated
+	if (num_textures <= 0 || !drawcall->batch_count || drawcall->batch_count >= MAX_WORLDMODEL_BATCH || drawcall->type != desired_type || model->drawflat_chain) {
+		return false;
+	}
 
-		if (model == req->model && req->samplerMappingCount == num_textures && req->firstTexture == first_texture && drawcall->batch_count < MAX_WORLDMODEL_BATCH) {
-			// Duplicate details from previous request, but with different matrix
-			glm_worldmodel_req_t* newreq = &drawcall->worldmodel_requests[drawcall->batch_count];
+	// See if previous request was for all surfaces of the same model
+	req = &drawcall->worldmodel_requests[drawcall->batch_count - 1];
+	if (model != req->model || req->samplerMappingCount != num_textures || req->firstTexture != first_texture) {
+		return false;
+	}
 
-			memcpy(newreq, req, sizeof(*newreq));
-			R_GetModelviewMatrix(newreq->mvMatrix);
-			newreq->alpha = alpha;
-			newreq->flags = flags;
-			newreq->polygonOffset = polygonOffset;
-			newreq->worldmodel = worldmodel;
-			newreq->baseInstance = drawcall->batch_count;
-			++drawcall->batch_count;
+	// Animated textures depend on the entity, so must match the previous request's
+	for (i = first_texture; i < first_texture + num_textures; ++i) {
+		texture_t* tex = model->textures[i];
+		sampler_mapping_t* mapping = &drawcall->mappings[req->samplerMappingBase + i];
 
-			return true;
+		if (!GLM_TextureDrawable(tex)) {
+			continue;
+		}
+
+		tex = R_TextureAnimation(ent, tex);
+		if (mapping->arrayIndex != tex->gl_texture_index || !R_TextureReferenceEqual(drawcall->allocated_samplers[mapping->samplerIndex], tex->gl_texture_array)) {
+			return false;
 		}
 	}
 
-	return false;
+	// Duplicate details from previous request, but with different matrix
+	newreq = &drawcall->worldmodel_requests[drawcall->batch_count];
+	memcpy(newreq, req, sizeof(*newreq));
+	R_GetModelviewMatrix(newreq->mvMatrix);
+	newreq->alpha = ent->alpha;
+	newreq->flags = flags;
+	newreq->polygonOffset = polygonOffset;
+	newreq->worldmodel = worldmodel;
+	newreq->baseInstance = drawcall->batch_count;
+	++drawcall->batch_count;
+
+	return true;
 }
 
 static qbool GLM_SamplerAvailable(glm_brushmodel_drawcall_t* drawcall, texture_t* texture)
@@ -801,7 +828,7 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 	glm_worldmodel_req_t* req = NULL;
 	model_t* model = ent->model;
 
-	if (GLM_DuplicatePreviousRequest(model, ent->alpha, model->last_texture_chained - model->first_texture_chained + 1, model->first_texture_chained, polygonOffset, caustics)) {
+	if (GLM_DuplicatePreviousRequest(ent, polygonOffset, caustics)) {
 		return;
 	}
 
@@ -821,7 +848,7 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 		texture_t* tex = model->textures[i];
 		texture_t* frame;
 
-		if (!tex || !tex->loaded || !tex->texturechain || !R_TextureReferenceIsValid(tex->gl_texture_array)) {
+		if (!GLM_TextureDrawable(tex)) {
 			continue;
 		}
 
