@@ -23,7 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qwsvdef.h"
 #include "pr1vm.h"
 
-// PR1VM S5: argc/trace живут в активном инстансе (вызов builtin всегда внутри exec).
+// argc/trace live in the active instance (a builtin call is always inside exec).
 #define pr_argc (PR1VM_Active()->argc)
 #define pr_trace (PR1VM_Active()->trace)
 
@@ -2822,8 +2822,8 @@ static struct { int num; builtin_t func; } ext_builtins[] =
 
 #define num_ext_builtins (sizeof(ext_builtins)/sizeof(ext_builtins[0]))
 
-// pr_numbuiltins остаётся глобальным mirror-ом (sv_init.c:547 читает);
-// сама таблица живёт на серверном инстансе (PR1VM S5): vm->builtins.
+// pr_numbuiltins stays a global mirror (sv_init.c:547 reads it);
+// the table itself lives on the server instance: vm->builtins.
 int pr_numbuiltins = 0;
 
 void PR_InitBuiltins (void)

@@ -1,24 +1,29 @@
 /*
-pr1vm.h -- PR1 engine instance (ezquake PR1 refactor, S1)
+pr1vm.h -- PR1 engine instance (ezquake PR1 refactor)
 
-PR1-интерпретатор переводится с глобального состояния на per-instance:
-состояние исполнения (стеки вызовов/локальных переменных, xfunction/
-xstatement) живёт в pr1vm_t. «Модульные» глобалы (progs/pr_functions/...)
-в ezquake общие для PR1 и PR2 и читаются внешним кодом (sv_*.c) — они остаются
-как есть; в pr1vm_t они зеркалятся через PR1VM_BindServer() и полноценно
-переводятся на инстанс в слайсах S2-S4.
+The PR1 interpreter is moved from global state to per-instance state:
+execution state (call/local-variable stacks, xfunction/xstatement) lives in
+pr1vm_t. The "module" globals (progs/pr_functions/...) are shared between
+PR1 and PR2 in ezquake and are read by external code (sv_*.c) -- they stay as
+they are; pr1vm_t mirrors them through PR1VM_BindServer().
 
-Пока PR1 исполняется под CLIENTONLY-гейтом (серверный билд). API для
-клиентского инстанса добавится вместе с loader/обвязкой (S3/S5).
+PR1 runs under the CLIENTONLY gate (server build). The same API also serves a
+client instance; its loader/wiring lives in the client CSQC module.
 */
 
 #ifndef PR1VM_H
 #define PR1VM_H
 
 #include "progs.h"
+#include <setjmp.h>
 
 #define PR1VM_MAX_STACK	32
 #define PR1VM_LOCALSTACK	2048
+
+// Compile-time gate for ezquake-only PR1VM debug/test surface (the client
+// console commands csqc_smoke/csqc_progscheck/pr1vm_test_error and the
+// bound-predicate unit tests). Off in release builds; uncomment to enable.
+//#define CSQC_DEBUG
 
 typedef struct pr1vm_s pr1vm_t;
 
@@ -30,8 +35,8 @@ typedef struct
 
 struct pr1vm_s
 {
-	// Зеркала «модульных» глобалов (сервер = общие символы через BindServer;
-	// клиентский инстанс получит собственные буферы в S3).
+	// Mirrors of the "module" globals (the server uses shared symbols via
+	// BindServer; a client instance gets its own buffers).
 	dprograms_t		*progs;
 	dfunction_t		*functions;
 	ddef_t			*fielddefs;
@@ -42,14 +47,19 @@ struct pr1vm_s
 	float			*globals;
 	int				edict_size;		// bytes per entvars block
 
-	// Edict-модель (сервер: sv.edicts / sv.game_edicts). S5b: state зеркалит sv.state.
+	// Edict model (server: sv.edicts / sv.game_edicts). state mirrors sv.state.
 	edict_t			*edicts;
 	int				num_edicts;
 	int				max_edicts;
 	int				state;
-	void			*game_edicts;	// entvars-база для STOREP_*/EDICT_TO_PROG
+	void			*game_edicts;	// entvars base for STOREP_*/EDICT_TO_PROG
 
-	// Состояние исполнения (перенесено из глобалов pr_exec.c).
+	// Module dialect field-offset map: NULL = raw/identity
+	// (classic QW, FTE CSQC csprogs), otherwise a remap table (NQ progs).
+	// Depends only on the instance/module type; set on (re)load.
+	const int		*fieldofs_patch;
+
+	// Execution state (moved from pr_exec.c globals).
 	pr1vm_stack_t	stack[PR1VM_MAX_STACK];
 	int				depth;
 	int				localstack[PR1VM_LOCALSTACK];
@@ -57,61 +67,113 @@ struct pr1vm_s
 	dfunction_t		*xfunction;
 	int				xstatement;
 
-	// Builtin-контейнер (S5): диспетчер по номеру -first_statement.
+	// Builtin container: dispatch by number - first_statement.
 	int				numbuiltins;
 	builtin_t		*builtins;
-	// Текущий вызов (S5): число аргументов + флаг трассы.
+	// Stub metadata, parallel to builtins: a set byte means the builtin at that
+	// number is a no-op placeholder (checkbuiltin/checkextension honesty).
+	// Grown alongside builtins; NULL/clear = real implementation. Client VM only
+	// (server registration leaves it NULL). Untrusted csprogs cannot set it.
+	byte			*builtin_stub;
+	int				builtin_stub_size;
+	// Current call: arg count + trace flag.
 	int				argc;
 	qbool			trace;
 
-	// Клиентские (per-instance) динамические строки. Для серверного инстанса
-	// не используются: он делегирует глобальным таблицам (PR1_GetString/...),
-	// т.к. их читают PR2 и sv_*.
-	char			*strtbl[MAX_PRSTR];
-	char			*newstrtbl[MAX_PRSTR];
-	int				numstr;
+	// Per-instance string tables, held as pointers to the owner's storage:
+	//   server instance -> the global pr_strtbl/pr_newstrtbl/num_prstr
+	//     (bound in PR1VM_BindServer);
+	//   client instance -> its own arrays (bound on load).
+	// The shared string code (PR1VM_Get/SetString) uses only vm-> data, so the
+	// core has no VM-type condition.
+	char			**strtbl;
+	char			**newstrtbl;
+	int				*numstr;
 
-	// Host-интерфейс (S4): колбэки получают готовую строку.
+	// Host interface: callbacks receive a ready string.
 	void (*host_error)(pr1vm_t *vm, const char *msg);
 	void (*host_print)(pr1vm_t *vm, const char *msg);
 	void *host_udata;
+
+	// Optional string accessor. When set, the interpreter string ops
+	// read module strings through it -- the client VM installs a bounded one for
+	// untrusted csprogs; server/trusted instances leave it NULL and use the raw
+	// shared PR1VM_GetString (which must not bound positive offsets, since map
+	// strings live beyond progs->numstrings). Keeps the shared core free of any
+	// VM-type condition.
+	char *(*get_string)(pr1vm_t *vm, int num);
+
+	// Per-instance OP_STATE handler. NULL = default fixed classic layout
+	// (server/trusted instances -- byte-for-byte the previous behaviour); the
+	// client CSQC VM installs one that resolves the module's own field/global
+	// offsets. Keeps the shared core free of any VM-type condition.
+	void (*stateop)(pr1vm_t *vm, float frame, func_t func);
+
+	// Abort-stack: when abortbuf_valid is set (client VM), PR_RunError unwinds
+	// here instead of continuing the faulting statement. abortbuf points at the
+	// *outermost* active frame's stack-local jmp_buf (nested calls on the same VM
+	// reuse it, so an error unwinds the whole VM); NULL when no frame is active.
+	// context_prev_* remember the classic pr_globals/g_active that were active
+	// before attach, to restore on abnormal unwind / UnLoad while attached.
+	jmp_buf			*abortbuf;
+	qbool			abortbuf_valid;
+	qbool			context_saved;
+	float			*context_prev_globals;
+	pr1vm_t			*context_prev_active;
 };
 
-// Активный инстанс (тот, внутри которого сейчас исполняется PR1; NULL вне вызова).
+// Active instance (the one PR1 is currently executing inside; NULL outside a call).
 pr1vm_t *PR1VM_Active(void);
 
-// Серверный инстанс (sv_pr1vm) — «default» для PR_* обёрток.
+// Server instance (sv_pr1vm) -- default target of the PR_* wrappers.
 pr1vm_t *PR1VM_Server(void);
 
-// Обнулить инстанс и (для сервера) заполнить зеркала из общих глобалов и sv.*.
+// Zero the instance.
 void PR1VM_Reset(pr1vm_t *vm);
 // Fill the server mirrors from shared globals and sv.*. Exec state is not touched:
 // BindServer may run on a nested (recursive) PR_ExecuteProgram.
 void PR1VM_BindServer(pr1vm_t *vm);
-// S6: освободить инстанс от модуля — очистить зеркала lumps и exec-состояние,
-// сохранив host-колбэки (пере)задаются BindServer/клиентом.
+// Detach the instance from the module -- clear lump mirrors and exec state,
+// keeping host callbacks (re)set by BindServer/client.
 void PR1VM_UnLoad(pr1vm_t *vm);
 
-// Загрузка: байтсвоп заголовка+lumps и заполнение зеркал инстанса (без
-// валидации версии/CRC — их делает серверная обёртка).
+// If this instance is the active one, put the classic pr_globals/g_active back
+// to the context saved on attach. No-op otherwise.
+void PR1VM_RestoreContext(pr1vm_t *vm);
+
+// Load: byte-swap header+lumps and fill the instance mirrors (without
+// version/CRC validation -- done by the server wrapper).
 void PR1VM_LoadData(pr1vm_t *vm, dprograms_t *hdr);
-// Сервер: зеркала инстанса -> общие «модульные» глобалы (PR2/sv_*.c читают их).
+// Server: instance mirrors -> shared "module" globals (read by PR2/sv_*.c).
 void PR1VM_CommitServer(pr1vm_t *vm);
 
-// Клиентский v7-secondary16 loader («пустой» extended). Возвращает false и
-// печатает причину через Con_Printf (без SV_Error).
-qbool PR1VM_LoadClientV7(pr1vm_t *vm, const byte *data, int filesize);
-
-// Резолв по имени на инстансе (в отличие от ED_Find* — по зеркалам vm).
+// Resolve by name on the instance (unlike ED_Find*, which is against vm mirrors).
 dfunction_t *PR1VM_FindFunction(pr1vm_t *vm, const char *name);
 int PR1VM_FindGlobal(pr1vm_t *vm, const char *name);
 char *PR1VM_GetString(pr1vm_t *vm, int num);
 void PR1VM_SetString(pr1vm_t *vm, string_t *address, char *s);
 
-// S3 debug: консольная команда csqc_smoke (регистрируется в PR2_Init).
-void PR1VM_CSQCSmoke_f(void);
-// S4 debug: провокация PR_RunError на серверном инстансе (pr1vm_test_error).
+// Register a builtin by number (client/any instance table). The table grows to
+// num+1 slots; unfilled slots = NULL (dispatcher errors out).
+void PR1VM_RegisterBuiltin(pr1vm_t *vm, int num, builtin_t fn);
+
+// Stub metadata (client CSQC VM). PR1VM_MarkBuiltinStub flags the
+// builtin at num as a no-op placeholder; its parallel bitmap grows like the
+// builtin table. PR1VM_IsBuiltinStub returns false for unset/OOB numbers.
+void PR1VM_MarkBuiltinStub(pr1vm_t *vm, int num);
+qbool PR1VM_IsBuiltinStub(pr1vm_t *vm, int num);
+
+#ifdef CSQC_DEBUG
+// Debug: provoke PR_RunError on the server instance (pr1vm_test_error).
 void PR1VM_TestError_f(void);
+
+// Debug: unit-test the client-VM bound predicates (pr1vm_test_guards).
+void PR1VM_TestGuards_f(void);
+
+// Debug: shared pass/fail counter used by engine-side bound predicate tests
+// (PR1VM_TestGuards_f and the client-side ent_of group in csqc_progscheck).
+void PR1VM_GuardCheck(const char *name, qbool ok, int *pass, int *fail);
+#endif
 
 int  PR1VM_EnterFunction(pr1vm_t *vm, dfunction_t *f);
 int  PR1VM_LeaveFunction(pr1vm_t *vm);

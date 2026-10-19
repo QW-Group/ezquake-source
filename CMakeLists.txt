@@ -240,6 +240,7 @@ set(server_headers
         ${SOURCE_DIR}/sv_world.h
         ${SOURCE_DIR}/vm.h
         ${SOURCE_DIR}/vm_local.h
+        ${SOURCE_DIR}/csqc_client.h
 )
 set(server
         ${SOURCE_DIR}/pr2_cmds.c
@@ -683,6 +684,8 @@ set(client
         ${SOURCE_DIR}/common_draw.c
         ${SOURCE_DIR}/config_manager.c
         ${SOURCE_DIR}/console.c
+        ${SOURCE_DIR}/csqc_builtins.c
+        ${SOURCE_DIR}/csqc_client.c
         ${SOURCE_DIR}/demo_controls.c
         ${SOURCE_DIR}/demo_extension.c
         ${SOURCE_DIR}/demo_extension_voice.c

@@ -46,8 +46,17 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 #include "r_brushmodel_sky.h"
 #include "demo_spawnwarn.h"
 #include "central.h"
+#ifndef CLIENTONLY
+#include "csqc_client.h"
+#endif
 
 int CL_LoginImageId(const char* name);
+
+// svcfte_effect / svcfte_effect2 (74/75): base FTE svc, not gated by any protocol
+// extension and absent from src/qwprot. Declared locally so the client can drain
+// their payload. Layout reference: fteqw engine/common/protocol.h:344-345.
+#define svcfte_effect	74
+#define svcfte_effect2	75
 
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
 void IN_ServerSideWeaponSelectionResponse(const char* s);
@@ -1059,6 +1068,8 @@ void CL_FinishDownload(void)
 			if (strcmp(cls.downloadtempname, cls.downloadname))
 				if (rename(cls.downloadtempname, cls.downloadname))
 					Com_Printf ("Failed to rename %s to %s.\n",	cls.downloadtempname, cls.downloadname);
+
+			CSQC_Client_ModelDownloadFinished (cls.downloadname);
 		} else {
 			/* If download didn't complete, remove the unfinished leftover .tmp file ... */
 			unlink(cls.downloadtempname);
@@ -2037,7 +2048,7 @@ void CL_ParseStartSoundPacket(void)
 	if (CL_Demo_SkipMessage(true))
 		return;
 
-    S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
+	S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 
 	if (ent == cl.playernum+1)
 		TP_CheckPickupSound (cl.sound_name[sound_num], pos);
@@ -3453,7 +3464,7 @@ void CL_SetStat (int stat, int value)
 	int	j;
 	extern cvar_t scr_gameclock;
 
-	if (stat < 0 || stat >= MAX_CL_STATS) {
+	if (stat < 0 || stat > 255) {
 		Host_Error("CL_SetStat: %i is invalid", stat);
 		return;
 	}
@@ -3696,6 +3707,43 @@ static void CL_RotateCmd(usercmd_t* cmd, float yaw_delta)
 	cmd->forwardmove = result[1];
 }
 
+// svcfte_effect (74) / svcfte_effect2 (75): [vector] org [byte|short] modelindex
+// [byte|short] startframe [byte] framecount [byte] framerate. FTE reads these in
+// CL_ParseEffect (fteqw engine/client/cl_tent.c:2555) and renders a sprite effect.
+// ezquake has no such renderer yet, so the payload is drained and discarded;
+// draining keeps the receive path byte-aligned (otherwise default: raised
+// Host_Error "Illegible server message").
+static void CL_DrainFTEEffect (qbool effect2)
+{
+	static int s_dbg_lines = 0;
+
+	MSG_ReadCoord ();	// org[0]
+	MSG_ReadCoord ();	// org[1]
+	MSG_ReadCoord ();	// org[2]
+
+	if (effect2)
+	{
+		MSG_ReadShort ();	// modelindex
+		MSG_ReadShort ();	// startframe
+	}
+	else
+	{
+		MSG_ReadByte ();	// modelindex
+		MSG_ReadByte ();	// startframe
+	}
+
+	MSG_ReadByte ();	// framecount
+	MSG_ReadByte ();	// framerate
+
+	// Canary: a mod may call #404 every frame, so limit the (developer-gated)
+	// diagnostic to a few lines per session.
+	if (s_dbg_lines < 4)
+	{
+		Com_DPrintf ("CL_ParseServerMessage: drained svcfte_effect%s\n", effect2 ? "2" : "");
+		s_dbg_lines++;
+	}
+}
+
 void CL_ParseServerMessage (void) 
 {
 	int cmd, i, j = 0;
@@ -3826,12 +3874,9 @@ void CL_ParseServerMessage (void)
 					if (CL_Demo_SkipMessage (true))
 						break;
 
-					if (!cls.demoseeking)
-					{
-						if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
-							SCR_CenterPrint(s);
-						Print_flags[Print_current] = 0;
-					}
+					if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
+						SCR_CenterPrint(s);
+					Print_flags[Print_current] = 0;
 					break;
 				}
 			case svc_stufftext:
@@ -4058,11 +4103,14 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_finale:
 				{
+					char *finstr;
+
 					cl.intermission = 2;
 					cl.completed_time = cls.demoplayback ? cls.demotime : cls.realtime;
 					cl.solo_completed_time = cl.servertime;
 					vid.recalc_refdef = true;	// go to full screen
-					SCR_CenterPrint(MSG_ReadString ());
+					finstr = MSG_ReadString ();
+					SCR_CenterPrint(finstr);
 					break;
 				}
 			case svc_sellscreen:
@@ -4104,6 +4152,32 @@ void CL_ParseServerMessage (void)
 			case svc_serverinfo:
 				{
 					CL_ParseServerInfoChange();
+					break;
+				}
+#if defined(FTE_PEXT_CSQC) && !defined(CLIENTONLY)
+			case svc_fte_csqcentities:
+				{
+					// CSQC entities (76): the module reads the payload via read*.
+					CSQC_Client_ParseEntities (false);
+					break;
+				}
+			case svc_fte_csqcentities_sized:
+				{
+					// Sized variant (92): a short length precedes each entity's payload.
+					CSQC_Client_ParseEntities (true);
+					break;
+				}
+#endif
+			// svcfte_effect/effect2 (74/75): base FTE svc, always emitted without
+			// any pext gate. Payload is drained (no renderer yet) to stay in sync.
+			case svcfte_effect:
+				{
+					CL_DrainFTEEffect (false);
+					break;
+				}
+			case svcfte_effect2:
+				{
+					CL_DrainFTEEffect (true);
 					break;
 				}
 			case svc_download:
@@ -4215,9 +4289,72 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_qizmovoice:
 				{
+					// svc 83: qizmovoice (legacy) vs svc_fte_cgamepacket (CSQC)
+					// conflict. When FTE_PEXT_CSQC was negotiated it is a CSQC
+					// cgamepacket parsed by the module; otherwise a foreign CSQC
+					// multicast would kill the client as a bad message. Gate on the
+					// negotiated snapshot, not the live cvars: changing cl_pext_csqc
+					// mid-session must not change the parse layout (a server that
+					// announced CSQC keeps streaming).
+#if defined(FTE_PEXT_CSQC) && !defined(CLIENTONLY)
+					if (cls.fteprotocolextensions & FTE_PEXT_CSQC)
+					{
+						CSQC_Client_ParseEvent (false);
+						break;
+					}
+#endif
 					CL_ParseQizmoVoice();
 					break;
 				}
+#if defined(FTE_PEXT_CSQC) && !defined(CLIENTONLY)
+			case svc_fte_cgamepacket_sized:
+				{
+					// Sized cgamepacket (90): [90][len][payload]. Payload is like 83
+					// (event name + args). payload_start is taken after the length
+					// (len is payload-only), otherwise the skip count would include
+					// the two length bytes and under-read by two. The length is
+					// unsigned (hardening deviation from FTE, which reads the short
+					// signed): a signed read would let a server-controlled >=0x8000
+					// length rewind the parser behind the payload (out-of-bounds read +
+					// parser loop).
+					int payload_len = (unsigned short)MSG_ReadShort ();
+					int payload_start = msg_readcount;
+					if (cls.fteprotocolextensions & FTE_PEXT_CSQC)
+						CSQC_Client_ParseEvent (true);
+					CSQC_Client_SizedRewind (payload_start, payload_len);
+					break;
+				}
+			case SVCFTE_PRECACHE:
+				{
+					// FTE late precache (77): register index->name (no download).
+					CSQC_Client_ParsePrecacheMsg ();
+					break;
+				}
+			case SVCFTE_TRAILPARTICLES:
+				{
+					// FTE trail particles (80): drained only (no visual).
+					CSQC_Client_DrainTrailMsg ();
+					break;
+				}
+			case SVCFTE_POINTPARTICLES:
+				{
+					// FTE point particles (81): drained only.
+					CSQC_Client_DrainPointMsg (false);
+					break;
+				}
+			case SVCFTE_POINTPARTICLES1:
+				{
+					// FTE compact point particles (82): drained only.
+					CSQC_Client_DrainPointMsg (true);
+					break;
+				}
+			case SVCFTE_TEMP_ENTITY_SIZED:
+				{
+					// FTE sized temp entity (91): drained by length (sized guard).
+					CSQC_Client_DrainTempEntSizedMsg ();
+					break;
+				}
+#endif
 #ifdef MVD_PEXT1_SIMPLEPROJECTILE
 			case svc_packetsprojectiles:
 				{
