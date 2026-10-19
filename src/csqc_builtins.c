@@ -25,11 +25,12 @@
 #include "cl_tent.h"
 #include "gl_model.h"
 #include "tr_types.h"
-#include "crc.h"		// CRC_Init/CRC_ProcessByte/CRC_Value (#494 crc16)
+#include "crc.h"
+#include "sha1.h"
 #include "screen.h"
 #include "pr1vm.h"
 #include "csqc_client.h"
-#include "utils.h"		// shared string helpers
+#include "utils.h"
 #include "sbar.h"
 #include "net.h"
 
@@ -3033,6 +3034,116 @@ static void csqc_strtoupper (void)
 }
 
 /*
+ Colour markup stripping for #476 strlennocol / #477 strdecolorize.
+ FTE parity: `&cRGB` (valid 3-hex) / `&r` and the `^` colour/state codes: q3 colours
+ `^0-9`, `^xRRGGBB`, `^&XX` (extended FG/BG), states `^b/^d/^m/^a/^h/^s/^r`, escape
+ `^^`, plus the FTE behaviour for unknown/dangling `^`. Out of scope: links `^[..^]`,
+ charset `u8:`/`k8:`, `^Uxxxx`/`^{xxxx}`. Return is the result length in bytes;
+ out==NULL is allowed (count only).
+*/
+static int CSQCVM_IsExtCode (char c)
+{
+	return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || c == '-';
+}
+
+static int CSQCVM_StripColor (const char *in, char *out, size_t outsize)
+{
+	size_t n = 0;
+
+	if (!in)
+		in = "";
+	for (; *in; in++)
+	{
+		if (in[0] == '&' && in[1] == 'c'
+			&& HexToInt (in[2]) >= 0 && HexToInt (in[3]) >= 0 && HexToInt (in[4]) >= 0)
+		{
+			in += 4;
+			continue;
+		}
+		if (in[0] == '&' && in[1] == 'r')
+		{
+			in += 1;
+			continue;
+		}
+		if (in[0] == '^')
+		{
+			char c1 = in[1];
+
+			if (c1 >= '0' && c1 <= '9')			// ^0..^9 q3 colour
+			{
+				in += 1;
+				continue;
+			}
+			if (c1 == 'x')						// ^xRGB valid -> strip 5; invalid -> strip "^x"
+			{
+				if (HexToInt (in[2]) >= 0 && HexToInt (in[3]) >= 0 && HexToInt (in[4]) >= 0)
+					in += 4;
+				else
+					in += 1;
+				continue;
+			}
+			if (c1 == '&')						// ^&XX extended FG/BG
+			{
+				if (CSQCVM_IsExtCode (in[2]) && CSQCVM_IsExtCode (in[3]))
+				{
+					in += 3;
+					continue;
+				}
+				// invalid: '^' stays a literal, '&' is handled on the next iteration
+			}
+			else if (c1 == 'b' || c1 == 'd' || c1 == 'm' || c1 == 'a'
+				|| c1 == 'h' || c1 == 's' || c1 == 'r')
+			{
+				in += 1;
+				continue;
+			}
+			else if (c1 == '^')					// ^^ -> ^
+			{
+				if (out && outsize && n + 1 < outsize)
+					out[n] = '^';
+				n++;
+				in += 1;
+				continue;
+			}
+			// unknown / end / out-of-scope: '^' literal, next char processed normally
+		}
+		if (out && outsize && n + 1 < outsize)
+			out[n] = *in;
+		n++;
+	}
+	if (out && outsize)
+		out[(n < outsize) ? n : outsize - 1] = 0;
+	return (int)n;
+}
+
+/*
+ float(string s) strlennocol = #476 - FTE parity (PF_strlennocol): string length
+ without colour codes.
+*/
+static void csqc_strlennocol (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	if (!vm)
+		return;
+	vm->globals[OFS_RETURN] = (float)CSQCVM_StripColor (CSQCVM_Str (OFS_PARM0), NULL, 0);
+}
+
+/*
+ string(string s) strdecolorize = #477 - FTE parity (PF_strdecolorize): string with
+ colour codes removed.
+*/
+static void csqc_strdecolorize (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	char buf[8192];
+
+	if (!vm)
+		return;
+	CSQCVM_StripColor (CSQCVM_Str (OFS_PARM0), buf, sizeof (buf));
+	CSQCVM_SetRetStr (buf);
+}
+
+/*
  string(string input, string token) instr = #206 - FTE parity (PF_instr): first
  occurrence of the variadic tail (from param 1) in input; returns the remaining
  substring from the match position, or "" if not found.
@@ -3291,6 +3402,7 @@ static const int csqc_ext_strreplace[] = { 484, 485 };
 static const int csqc_ext_tokenizebyseparator[] = { 479 };
 static const int csqc_ext_sprintf[] = { 627 };
 static const int csqc_ext_string_case[] = { 480, 481 };
+static const int csqc_ext_string_color[] = { 476, 477 };
 static const int csqc_ext_crc16[] = { 494 };
 static const int csqc_ext_asinacos[] = { 471, 472, 473, 474, 475 };
 static const int csqc_ext_changepitch[] = { 63 };
@@ -3308,6 +3420,7 @@ static const int csqc_ext_te_spark[] = { 411 };
 static const int csqc_ext_te_smallflash[] = { 416 };
 static const int csqc_ext_te_customflash[] = { 417 };
 static const int csqc_ext_te_quadeffects[] = { 412, 413, 414, 415 };
+static const int csqc_ext_digest_sha1[] = { 639 };
 // FTE_STRINGS (fteqw pr_bgcmd.c:8513-8514): all 17 members are real (non-stub)
 // after #118/#119 are implemented, so the name moves out of the exceptions list
 // into the implementation-derived map.
@@ -3335,6 +3448,7 @@ static const struct csqc_ext_map_s csqc_ext_map[] =
 	{ "DP_QC_TOKENIZEBYSEPARATOR", csqc_ext_tokenizebyseparator, CSQC_COUNTOF (csqc_ext_tokenizebyseparator) },
 	{ "DP_QC_SPRINTF", csqc_ext_sprintf, CSQC_COUNTOF (csqc_ext_sprintf) },
 	{ "DP_QC_STRING_CASE_FUNCTIONS", csqc_ext_string_case, CSQC_COUNTOF (csqc_ext_string_case) },
+	{ "DP_QC_STRINGCOLORFUNCTIONS", csqc_ext_string_color, CSQC_COUNTOF (csqc_ext_string_color) },
 	{ "DP_QC_CRC16", csqc_ext_crc16, CSQC_COUNTOF (csqc_ext_crc16) },
 	{ "DP_QC_ASINACOSATANATAN2TAN", csqc_ext_asinacos, CSQC_COUNTOF (csqc_ext_asinacos) },
 	{ "DP_QC_CHANGEPITCH", csqc_ext_changepitch, CSQC_COUNTOF (csqc_ext_changepitch) },
@@ -3352,6 +3466,7 @@ static const struct csqc_ext_map_s csqc_ext_map[] =
 	{ "DP_TE_SMALLFLASH", csqc_ext_te_smallflash, CSQC_COUNTOF (csqc_ext_te_smallflash) },
 	{ "DP_TE_CUSTOMFLASH", csqc_ext_te_customflash, CSQC_COUNTOF (csqc_ext_te_customflash) },
 	{ "_DP_TE_QUADEFFECTS1", csqc_ext_te_quadeffects, CSQC_COUNTOF (csqc_ext_te_quadeffects) },
+	{ "FTE_QC_DIGEST_SHA1", csqc_ext_digest_sha1, CSQC_COUNTOF (csqc_ext_digest_sha1) },
 	{ "FTE_STRINGS", csqc_ext_strings, CSQC_COUNTOF (csqc_ext_strings) },
 	{ NULL, NULL, 0 }
 };
@@ -5626,6 +5741,75 @@ static void csqc_bsp_nop_vec (void)
 }
 
 /*
+ Introspection/console. Implemented: #294 checkcommand (cmd->1, cvar->3, no alias->0),
+ #295 argescape (own quoting), #607 isfunction. No-op: #391/#392/#393/#394 (FTE
+ multi-console has no ezq analog), #605 callfunction (reentrant exec from a builtin
+ is unsupported).
+*/
+
+/* float(string name) checkcommand = #294 */
+static void csqc_checkcommand (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	char *name = CSQCVM_Str (OFS_PARM0);
+	if (!vm)
+		return;
+	if (name && name[0] && Cmd_Exists (name))
+		vm->globals[OFS_RETURN] = 1;
+	else if (name && name[0] && Cvar_Find (name))
+		vm->globals[OFS_RETURN] = 3;
+	else
+		vm->globals[OFS_RETURN] = 0;
+}
+
+/* string(string s) argescape = #295 - wraps in quotes with escaping */
+static void csqc_argescape (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	const char *s = CSQCVM_Str (OFS_PARM0);
+	char buf[4096];
+	int i, n, need = 0;
+	if (!vm)
+		return;
+	s = s ? s : "";
+	n = strlen (s);
+	for (i = 0; i < n; i++)
+		if (s[i] == ' ' || s[i] == '\t' || s[i] == '"' || s[i] == '\\' || s[i] == ';')
+		{
+			need = 1;
+			break;
+		}
+	if (!need)
+	{
+		CSQCVM_SetRetStr ((char *)s);
+		return;
+	}
+	{
+		char *d = buf;
+		*d++ = '"';
+		for (i = 0; i < n && d < buf + sizeof (buf) - 3; i++)
+		{
+			if (s[i] == '"' || s[i] == '\\')
+				*d++ = '\\';
+			*d++ = s[i];
+		}
+		*d++ = '"';
+		*d = 0;
+	}
+	CSQCVM_SetRetStr (buf);
+}
+
+/* float(string name) isfunction = #607 - the function exists in the module */
+static void csqc_isfunction (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	char *name = CSQCVM_Str (OFS_PARM0);
+	if (!vm)
+		return;
+	vm->globals[OFS_RETURN] = (name && name[0] && PR1VM_FindFunction (vm, name)) ? 1 : 0;
+}
+
+/*
  Lights/decals/skins. All no-op/approximations: ezq has no FTE decal/skin file
  subsystems (`Mod_*Skin`, `CL_AddDecal`), readback pics or `lfield_*` constants for
  `cl_dlights[]`. Registered so the module does not hit "Bad builtin".
@@ -5852,6 +6036,91 @@ static void csqc_changepitch (void)
 			move = -speed;
 	}
 	ang[0] = csqc_anglemod_value (current + move);
+}
+
+/*
+ #639 digest_hex (FTE parity, PF_digest_hex): hash the varargs concatenation (from
+ parm1) into a lowercase-hex tempstring. Supported names (exact uppercase match):
+ "SHA1", "MD4", "CRC16". MD5/SHA-2 are not implemented in ezq - any other name (or a
+ lowercase one) returns "" like FTE. ezq bin2hex is UPPERCASE - not usable, hence the
+ local helper.
+*/
+/* MD4 context mirror of md4.c (md4.c has no header and is shared with mvdsv - do
+   not touch). UINT4 == unsigned int on LP64/x86_64; the RSA MD4 layout is stable,
+   keep in sync with md4.c. */
+typedef struct {
+	unsigned int state[4];
+	unsigned int count[2];
+	unsigned char buffer[64];
+} csqc_md4_ctx_t;
+
+extern void MD4Init (csqc_md4_ctx_t *);
+extern void MD4Update (csqc_md4_ctx_t *, unsigned char *, unsigned int);
+extern void MD4Final (unsigned char[16], csqc_md4_ctx_t *);
+
+static void csqc_digest_to_hex (char *out, const unsigned char *digest, int len)
+{
+	static const char hex[] = "0123456789abcdef";
+	int i;
+	for (i = 0; i < len; i++)
+	{
+		out[i * 2 + 0] = hex[digest[i] >> 4];
+		out[i * 2 + 1] = hex[digest[i] & 0xf];
+	}
+	out[i * 2] = 0;
+}
+
+static void csqc_digest_hex (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	unsigned char digest[DIGEST_SIZE];	// max digest here is SHA1 (20 bytes)
+	char *name, *data, out[DIGEST_SIZE * 2 + 1];
+	int len = 0;
+
+	if (!vm)
+		return;
+	name = CSQCVM_Str (OFS_PARM0);
+	data = CSQCVM_VarString (1);
+	if (!name)
+	{
+		CSQCVM_SetRetStr ("");
+		return;
+	}
+	if (!strcmp (name, "SHA1"))
+	{
+		SHA1_CTX ctx;
+		SHA1Init (&ctx);
+		SHA1Update (&ctx, (unsigned char *)data, strlen (data));
+		SHA1Final (digest, &ctx);
+		len = DIGEST_SIZE;
+	}
+	else if (!strcmp (name, "MD4"))
+	{
+		csqc_md4_ctx_t ctx;
+		MD4Init (&ctx);
+		MD4Update (&ctx, (unsigned char *)data, (unsigned int)strlen (data));
+		MD4Final (digest, &ctx);
+		len = 16;
+	}
+	else if (!strcmp (name, "CRC16"))
+	{
+		unsigned short crc;
+		int i;
+		CRC_Init (&crc);
+		for (i = 0; i < (int)strlen (data); i++)
+			CRC_ProcessByte (&crc, (unsigned char)data[i]);
+		crc = CRC_Value (crc);
+		digest[0] = crc & 0xff;		// little-endian bytes, like FTE hash_crc16
+		digest[1] = (crc >> 8) & 0xff;
+		len = 2;
+	}
+	if (len)
+	{
+		csqc_digest_to_hex (out, digest, len);
+		CSQCVM_SetRetStr (out);
+	}
+	else
+		CSQCVM_SetRetStr ("");	// MD5/SHA-2/unknown - not implemented
 }
 
 /* #355 getentitytoken - deprecated/not needed: returns "". */
@@ -6113,7 +6382,14 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 379, (builtin_t)csqc_light_nop_ret0);
 	PR1VM_RegisterBuiltin (vm, 501, (builtin_t)csqc_light_nop_ret0); // #501 void(float to, string s, float sz) WritePicture
 
-
+	PR1VM_RegisterBuiltin (vm, 294, (builtin_t)csqc_checkcommand); // #294 float(string name) checkcommand
+	PR1VM_RegisterBuiltin (vm, 295, (builtin_t)csqc_argescape); // #295 string(string s) argescape
+	PR1VM_RegisterBuiltin (vm, 607, (builtin_t)csqc_isfunction); // #607 float(string s) isfunction
+	PR1VM_RegisterBuiltin (vm, 391, (builtin_t)csqc_nop_str); // #391 string(string conname, string field, optional string newvalue) con_getset
+	PR1VM_RegisterBuiltin (vm, 392, (builtin_t)csqc_vmrest_nop); // #392 void(string conname, string messagefmt, ...) con_printf
+	PR1VM_RegisterBuiltin (vm, 393, (builtin_t)csqc_vmrest_nop); // #393 void(string conname, vector pos, vector size, float fontsize) con_draw
+	PR1VM_RegisterBuiltin (vm, 394, (builtin_t)csqc_light_nop_ret0); // #394 float(string conname, float inevtype, float parama, float paramb, float paramc) con_input
+	PR1VM_RegisterBuiltin (vm, 605, (builtin_t)csqc_vmrest_nop); // #605 void(.../*, string funcname*/) callfunction
 	PR1VM_RegisterBuiltin (vm, 434, (builtin_t)csqc_light_nop_ret0); // #434 float(entity e, float s) getsurfacenumpoints (DP_QC_GETSURFACE)
 	PR1VM_RegisterBuiltin (vm, 435, (builtin_t)csqc_bsp_nop_vec); // #435 vector(entity e, float s, float n) getsurfacepoint (DP_QC_GETSURFACE)
 	PR1VM_RegisterBuiltin (vm, 436, (builtin_t)csqc_bsp_nop_vec); // #436 vector(entity e, float s) getsurfacenormal (DP_QC_GETSURFACE)
@@ -6270,6 +6546,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 449, (builtin_t)csqc_findflags); // #449 entity(entity start, .float fld, float match) findflags (DP_QC_FINDFLAGS)
 	PR1VM_RegisterBuiltin (vm, 450, (builtin_t)csqc_findchainflags); // #450 entity(.float fld, float match, .entity chainfield) findchainflags (DP_QC_FINDCHAINFLAGS)
 	PR1VM_RegisterBuiltin (vm, 451, (builtin_t)csqc_light_nop_ret0); // #451 float(entity ent, string tagname) gettagindex (DP_MD3_TAGSINFO)
+	PR1VM_RegisterBuiltin (vm, 476, (builtin_t)csqc_strlennocol); // #476 float(string s) strlennocol
 	PR1VM_RegisterBuiltin (vm, 487, (builtin_t)csqc_light_nop_ret0); // #487 float(string name)
 	PR1VM_RegisterBuiltin (vm, 490, (builtin_t)csqc_light_nop_ret0); // #490 float(string name, float key, float eventtype)
 	PR1VM_RegisterBuiltin (vm, 513, (builtin_t)csqc_light_nop_ret0); // #513 float(string uril, float id) uri_get
@@ -6292,6 +6569,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 334, (builtin_t)csqc_modelnameforindex); // #334 string(float mdlindex) modelnameforindex (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 374, (builtin_t)csqc_nop_str); // #374 string(float efnum, float body) particleeffectquery
 	PR1VM_RegisterBuiltin (vm, 447, (builtin_t)csqc_nop_str); // #447 string	search_getfilename(float handle, float num) (DP_QC_FS_SEARCH)
+	PR1VM_RegisterBuiltin (vm, 477, (builtin_t)csqc_strdecolorize); // #477 string(string s) strdecolorize
 	PR1VM_RegisterBuiltin (vm, 503, (builtin_t)csqc_nop_str); // #503 string(string filename) whichpack
 	PR1VM_RegisterBuiltin (vm, 510, (builtin_t)csqc_nop_str); // #510 string(string in) uri_escape
 	PR1VM_RegisterBuiltin (vm, 511, (builtin_t)csqc_nop_str); // #511 string(string in) uri_unescape
@@ -6299,6 +6577,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 624, (builtin_t)csqc_nop_str); // #624 string() getextresponse
 	PR1VM_RegisterBuiltin (vm, 625, (builtin_t)csqc_nop_str); // #625 string(string dnsname, optional float defport) netaddress_resolve
 	PR1VM_RegisterBuiltin (vm, 626, (builtin_t)csqc_nop_str); // #626 string() getgamedirinfo
+	PR1VM_RegisterBuiltin (vm, 639, (builtin_t)csqc_digest_hex); // #639 string(string digest, string data, ...) digest_hex
 	// VECTOR stubs - type-correct no-op.
 	PR1VM_RegisterBuiltin (vm, 244, (builtin_t)csqc_bsp_nop_vec); // #244 vector(entity ent, float tagnum) rotatevectorsbytag
 	PR1VM_RegisterBuiltin (vm, 269, (builtin_t)csqc_bsp_nop_vec); // #269 vector(float skel, float bonenum) skel_get_bonerel
