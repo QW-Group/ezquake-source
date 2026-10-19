@@ -570,6 +570,182 @@ void CSQC_Client_GetScreenSize (int *w, int *h)
 		*h = vid.height;
 }
 
+// Translate FTE ^-markup into &cRGB runs. Supported: ^0-9 (q3), ^xRGB (3 hex),
+// ^&XY extended FG (consolecolours[16] palette; BG is not expressible in the draw
+// path), ^d (reset), ^s/^r (color stack, depth 4 as FTE extstack), consume
+// ^b/^h/^m/^a (flags are not drawn), ^^ (literal); unknown/dangling ^ is a literal
+// (FTE messedup); &c/&r are copied through.
+// Out of scope: links ^[..^], charset `u8:`/`k8:`, ^Uxxxx/^{xxxx}, ezquakemess, and
+// the visual blink/halfalpha/2nd-charset/BG effects. Palettes are FTE
+// consolecolours, quantized 16 levels/channel (&c nibble); ^8 (half-alpha white) is
+// drawn white - alpha deviation. out==NULL only counts the length.
+static const char *csqc_q3_nibbles[10] = {
+	"000", "F55", "5F5", "FF5", "55F", "5FF", "F5F", "FFF", "FFF", "BBB"
+};
+
+// ^&XY extended FG: X/Y are an index into consolecolours[16], quantized 4 bits
+// per channel (like the q3 table above).
+static const char *csqc_console_nibbles[16] = {
+	"000", "00B", "0B0", "0BB", "B00", "B0B", "B50", "BBB",
+	"555", "55F", "5F5", "5FF", "F55", "F5F", "FF5", "FFF"
+};
+
+static int csqc_hexval (int c)
+{
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	if (c >= 'A' && c <= 'F')
+		return c - 'A' + 10;
+	if (c >= 'a' && c <= 'f')
+		return c - 'a' + 10;
+	return -1;
+}
+
+// ^&XY code character: 0-9, A-F (FTE isextendedcode). Returns the consolecolours
+// index 0-15 or -1 ('-'/invalid).
+static int csqc_ext_index (int c)
+{
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	if (c >= 'A' && c <= 'F')
+		return c - 'A' + 10;
+	return -1;
+}
+
+static int CSQC_Client_TranslateMarkup (const char *in, char *out, size_t outsize)
+{
+	size_t n = 0;
+	char curfg[3];		// current FG (&c nibbles)
+	int have_col = 0;	// 0 = default/white (=&r), 1 = colored
+	char stackfg[4][3];	// ^s/^r stack (FTE extstack, depth 4)
+	int stackcol[4];
+	int sp = 0;
+
+	if (!in)
+		in = "";
+	// PUT: copies a byte, safe for out==NULL (length only) and overflow.
+#define PUT(ch) do { if (out && outsize && n + 1 < outsize) out[n] = (char)(ch); n++; } while (0)
+	// SETFG: remember the current FG (for ^s/^r).
+#define SETFG(p) do { curfg[0] = (p)[0]; curfg[1] = (p)[1]; curfg[2] = (p)[2]; have_col = 1; } while (0)
+	for (; *in; in++)
+	{
+		if (in[0] == '^' && in[1] >= '0' && in[1] <= '9')
+		{
+			const char *p = csqc_q3_nibbles[in[1] - '0'];
+			PUT ('&'); PUT ('c'); PUT (p[0]); PUT (p[1]); PUT (p[2]);
+			SETFG (p);
+			in += 1;
+			continue;
+		}
+		if (in[0] == '^' && in[1] == 'x')
+		{
+			if (csqc_hexval (in[2]) >= 0 && csqc_hexval (in[3]) >= 0 && csqc_hexval (in[4]) >= 0)
+			{
+				PUT ('&'); PUT ('c'); PUT (in[2]); PUT (in[3]); PUT (in[4]);
+				SETFG (in + 2);
+				in += 4;
+			}
+			else
+			{
+				// Invalid hex: skip "^x" entirely (FTE str+=2) - 'x' is not drawn.
+				in += 1;
+			}
+			continue;
+		}
+		if (in[0] == '^' && in[1] == '&')
+		{
+			// ^&XY extended FG/BG: implement FG (BG is not expressible in the draw
+			// path - deviation); Y is ignored.
+			if ((csqc_ext_index (in[2]) >= 0 || in[2] == '-') &&
+				(csqc_ext_index (in[3]) >= 0 || in[3] == '-'))
+			{
+				if (in[2] == '-')
+				{
+					// default FG = white (FTE COLOR_WHITE)
+					PUT ('&'); PUT ('r');
+					have_col = 0;
+				}
+				else
+				{
+					const char *p = csqc_console_nibbles[csqc_ext_index (in[2])];
+					PUT ('&'); PUT ('c'); PUT (p[0]); PUT (p[1]); PUT (p[2]);
+					SETFG (p);
+				}
+				in += 3;
+			}
+			else
+			{
+				// invalid: '^' literal, '&' handled on the next iteration (FTE messedup)
+				PUT (*in);
+			}
+			continue;
+		}
+		if (in[0] == '^' && in[1] == 'd')
+		{
+			PUT ('&'); PUT ('r');
+			have_col = 0;
+			in += 1;
+			continue;
+		}
+		if (in[0] == '^' && (in[1] == 'b' || in[1] == 'h' || in[1] == 'm' || in[1] == 'a'))
+		{
+			// FTE toggle blink/halfalpha/2nd charset; the flags are not expressible in
+			// the draw path - consume the code (width parity), effect not drawn.
+			in += 1;
+			continue;
+		}
+		if (in[0] == '^' && in[1] == 's')
+		{
+			// push the stack (FTE extstack); store only the color.
+			if (sp < (int)(sizeof (stackcol) / sizeof (stackcol[0])))
+			{
+				stackfg[sp][0] = curfg[0];
+				stackfg[sp][1] = curfg[1];
+				stackfg[sp][2] = curfg[2];
+				stackcol[sp] = have_col;
+				sp++;
+			}
+			in += 1;
+			continue;
+		}
+		if (in[0] == '^' && in[1] == 'r')
+		{
+			// pop the stack: restore the color.
+			if (sp > 0)
+			{
+				sp--;
+				if (stackcol[sp])
+				{
+					const char *p = stackfg[sp];
+					PUT ('&'); PUT ('c'); PUT (p[0]); PUT (p[1]); PUT (p[2]);
+					SETFG (p);
+				}
+				else
+				{
+					PUT ('&'); PUT ('r');
+					have_col = 0;
+				}
+			}
+			in += 1;
+			continue;
+		}
+		if (in[0] == '^' && in[1] == '^')
+		{
+			PUT ('^');
+			in += 1;
+			continue;
+		}
+		// Unknown/dangling '^' is a literal (FTE messedup): '^' goes to out, the next
+		// character is handled on the next iteration.
+		PUT (*in);
+	}
+	if (out && outsize)
+		out[(n < outsize) ? n : outsize - 1] = 0;
+	return (int)n;
+#undef PUT
+#undef SETFG
+}
+
 void CSQC_Client_DrawText (float x, float y, const char *text, int r, int g, int b, float alpha, float scale)
 {
 	extern cvar_t scr_coloredText;
@@ -588,7 +764,8 @@ void CSQC_Client_DrawText (float x, float y, const char *text, int r, int g, int
 		(bound (0, r, 255)) / 16, (bound (0, g, 255)) / 16, (bound (0, b, 255)) / 16);
 	if (prefix < 0)
 		prefix = 0;
-	Q_strncpyz (buf + prefix, text, sizeof (buf) - prefix);
+	// Module ^-markup -> &cRGB runs after the base color (see translator above).
+	CSQC_Client_TranslateMarkup (text, buf + prefix, sizeof (buf) - prefix);
 	// FTE drawcolouredstring parity: alpha is applied; color=NULL -> color comes
 	// from the &c codes.
 	Draw_SColoredAlphaString (x, y, buf, NULL, 0, 0, (scale > 0) ? scale : 1,
@@ -768,6 +945,7 @@ void CSQC_Client_DrawLine (float x1, float y1, float x2, float y2, float width, 
 
 float CSQC_Client_StringWidth (const char *text, qbool usecolours, float fontsize_x)
 {
+	static char wbuf[16384];
 	float scale;
 	if (!text)
 		return 0;
@@ -775,8 +953,13 @@ float CSQC_Client_StringWidth (const char *text, qbool usecolours, float fontsiz
 	// Draw_StringLength/Colors.
 	scale = (fontsize_x > 0) ? fontsize_x / 8.0f : 1;
 	if (usecolours)
-		return Draw_StringLengthColors (text, -1, scale, true);
-	// usecolours=0: FTE #327 keeps the text (keepmarkup) and counts its characters.
+	{
+		// ^-codes do not count as width characters (FTE #327 with markup stripped) -
+		// same translation as DrawText, then Draw_StringLengthColors skips &c/&r.
+		CSQC_Client_TranslateMarkup (text, wbuf, sizeof (wbuf));
+		return Draw_StringLengthColors (wbuf, -1, scale, true);
+	}
+	// usecolours=0: FTE #327 keeps the markup (keepmarkup) and counts its characters - original.
 	return Draw_StringLength (text, -1, scale, true);
 }
 
