@@ -5555,6 +5555,119 @@ static void csqc_getkeybind (void)
 
 /* void(float keynum, string binding, optional float bindmap) setkeybind = #630 (input is a QC code) */
 
+// A downloaded (untrusted) module must not bind a key
+// to a registered local command/cvar outside the remote allowlist - the bind
+// would later be executed in cbuf_main, past the cbuf_svc-only Cmd_RemoteAllowed
+// check. The engine splits a command buffer into lines at newlines and unquoted
+// ';', with quotes, {}-braces (cl_curlybraces), backslash escapes and '//'
+// comments changing that split; a mismatch between this gate and the engine's
+// segmentation is an easy bypass. Instead of re-implementing that grammar,
+// reject any binding that contains one of those metacharacters and only allow
+// plain ';'/newline-joined commands. A module bind is untrusted, so over-
+// rejecting exotic binds is acceptable (full exec-time clamp is a follow-up).
+// Every command in the binding is checked (not just the first) and
+// alias names are rejected (an alias body can hide a privileged command). An
+// unknown token (server-side "+command" such as +b9probe) is still accepted,
+// matching FTE (insecure bind).
+/*
+Built-in client input verbs (+/-): they only toggle local input state (movement/fire/
+look/scoreboard/zoom) and are never a privileged local command, so setkeybind (#630)
+accepts them for a module key remap. They are deliberately NOT part of the server
+remote allowlist (cl_remote_capabilities): a server must not be able to stuffcmd
++forward/+jump/... into a client. +voip and mode-specific
++cl_wp_stats/+qtv_delay are excluded (add here if a module needs them).
+*/
+static const char *csqc_input_verbs[] = {
+	"+moveup", "-moveup", "+movedown", "-movedown", "+left", "-left", "+right", "-right",
+	"+forward", "-forward", "+back", "-back", "+lookup", "-lookup", "+lookdown", "-lookdown",
+	"+strafe", "-strafe", "+moveleft", "-moveleft", "+moveright", "-moveright", "+speed", "-speed",
+	"+fire", "-fire", "+fire_ar", "-fire_ar", "+attack2", "-attack2", "+use", "-use", "+jump", "-jump",
+	"+klook", "-klook", "+mlook", "-mlook", "+showscores", "-showscores", "+showteamscores", "-showteamscores",
+	"+zoom", "-zoom"
+};
+
+static qbool csqc_is_input_verb (const char *name)
+{
+	int i;
+
+	if (!name || !name[0])
+		return false;
+
+	for (i = 0; i < (int)(sizeof (csqc_input_verbs) / sizeof (csqc_input_verbs[0])); i++)
+	{
+		if (!strcasecmp (name, csqc_input_verbs[i]))
+			return true;
+	}
+
+	return false;
+}
+
+static qbool CSQC_SetkeybindAllowed (const char *binding)
+{
+	static tokenizecontext_t bindgate_tokencontext;
+	const char *p;
+
+	if (!binding || !binding[0])
+		return true;
+
+	for (p = binding; *p; p++)
+	{
+		if (*p == '"' || *p == '{' || *p == '}' || *p == '\\' ||
+			*p == '\r' || *p == '$')
+			return false;
+		if (p[0] == '/' && p[1] == '/')
+			return false;
+	}
+
+	p = binding;
+	while (*p)
+	{
+		char segment[512];
+		size_t n = 0;
+		qbool overflow = false;
+		char *tok;
+
+		while (*p && *p != '\n' && *p != ';')
+		{
+			if (n + 1 < sizeof (segment))
+				segment[n++] = *p;
+			else
+				overflow = true;
+			p++;
+		}
+		segment[n] = 0;
+
+		if (*p == ';' || *p == '\n')
+			p++;
+
+		if (overflow)
+			return false;	// fail closed on an oversized command
+
+		Cmd_TokenizeStringEx (&bindgate_tokencontext, segment);
+		tok = Cmd_ArgvEx (&bindgate_tokencontext, 0);
+		if (tok && tok[0])
+		{
+			if (Cmd_FindAlias (tok))
+				return false;
+			// Legacy aliases (gamma, path, ...) are not in the command/cvar
+			// hash but the engine still resolves them (Cmd_LegacyCommand).
+			if (Cmd_IsLegacyCommand (tok))
+				return false;
+			if ((Cmd_FindCommand (tok) || Cvar_Find (tok)) && !Cmd_RemoteAllowed (tok))
+			{
+				// A command the module registered itself and a built-in +/- input
+				// verb are not privileged: the former runs the module's own handler,
+				// the latter only toggles local input state. Accept both; every other
+				// registered local command/cvar still needs the remote allowlist.
+				if (!CSQC_Client_IsModuleCommand (tok) && !csqc_is_input_verb (tok))
+					return false;
+			}
+		}
+	}
+
+	return true;
+}
+
 static void csqc_setkeybind (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -5566,6 +5679,12 @@ static void csqc_setkeybind (void)
 	binding = CSQCVM_Str (OFS_PARM1);
 	if (keynum >= 0 && keynum < UNKNOWN + 256)
 	{
+		if (binding && binding[0] && !CSQC_SetkeybindAllowed (binding))
+		{
+			Con_DPrintf ("Blocked setkeybind on \"%s\": not in remote capabilities\n", binding);
+			return;
+		}
+
 		// module binds are flagged so they are not saved.
 		Key_SetBindingModule (keynum, binding ? binding : "");
 	}

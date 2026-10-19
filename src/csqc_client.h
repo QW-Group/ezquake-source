@@ -48,6 +48,7 @@ void CSQC_Client_ClearModuleCvars (void);
 void CSQC_Client_GetScreenSize (int *w, int *h);	// vid.width/height (VF_SCREENVSIZE)
 void CSQC_Client_DrawText (float x, float y, const char *text, int r, int g, int b, float alpha, float scale);
 void CSQC_Client_RegisterCommand (const char *cmd);	// registercommand -> console binding
+qbool CSQC_Client_IsModuleCommand (const char *name);	// registercommand'd name (setkeybind allow)
 qbool CSQC_Client_ConsoleCommand (const char *line);	// #5: run CSQC_ConsoleCommand(line); true = handled
 void CSQC_Client_Abort (const char *msg);			// fatal: disconnects the client (FTE CSQC_Abort)
 // Bounded string reads for the client VM (untrusted csprogs): a positive offset

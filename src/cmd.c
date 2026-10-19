@@ -77,6 +77,32 @@ cvar_t cl_remote_capabilities = {"cl_remote_capabilities", REMOTE_CAPABILITIES, 
 				   OnChange_remote_capabilities};
 hashtable_t *rc_hash;
 
+/*
+TF anticheat remote commands (static, not user-configurable).
+
+Classic Team Fortress servers stuffcmd cvars/commands that ARE the subject of the
+existing TF anticheat (Change_v_idle/V_cshift_f in cl_view.c, OnFovChange in
+cl_screen.c): that anticheat cancels *local* changes to these values while letting
+the server path (cbuf_current == &cbuf_svc) through. Blocking the server's own
+control of these names would itself be a cheat contradicting the anticheat, so they
+are always permitted for a Team Fortress server (gamedir "fortress", cl.teamfortress)
+- unconditionally, regardless of cl_remote_capabilities.
+
+The set is a fixed compile-time list: the 9 anticheat-governed effect names above
+plus 7 server-authority movement/speed cvars (sensitivity included). It replaces the
+former user-clearable cvar cl_remote_capabilities_tf: there is no user toggle, since
+disabling the server's control of anticheat-governed values is the cheat.
+Non-anticheat TF names (setinfo, bind, reload, screenshot, disconnect) are out of
+scope here and handled separately.
+*/
+static const char *tf_anticheat_commands[] = {
+	"fov", "v_cshift", "v_idlescale",
+	"v_iyaw_cycle", "v_iroll_cycle", "v_ipitch_cycle",
+	"v_iyaw_level", "v_iroll_level", "v_ipitch_level",
+	"cl_movespeedkey", "cl_forwardspeed", "cl_backspeed",
+	"cl_sidespeed", "cl_upspeed", "cl_rollangle", "sensitivity",
+};
+
 cvar_t cl_allow_downloads = {"cl_allow_downloads", "bsp,lmp,loc,mdl,mvd,pcx,spr,wad,wav", CVAR_NOTFROMSERVER};
 cvar_t cl_allow_uploads = {"cl_allow_uploads", "0", CVAR_NOTFROMSERVER};
 
@@ -150,11 +176,35 @@ add:
 /*
 Remote-allowlist check for commands/cvars executed from a remote source
 (server svc_stufftext -> cbuf_svc) or from the untrusted client CSQC module
-(setkeybind/localcmd gates).
+(setkeybind/localcmd gates). Non-TF servers consult only cl_remote_capabilities.
+
+Known residual holes: command *arguments* are not checked (server `bind x quit`);
+and an alias created by a module after the setkeybind call (`alias` is in the base
+allowlist) is a TOCTOU - setkeybind validates every command in the binding and
+rejects existing aliases, but a later `alias mypwn quit` + keypress still reaches
+exec. Full exec-time bind-level clamp is a follow-up.
 */
+static qbool Cmd_IsTFAnticheat (const char *name)
+{
+	int i;
+
+	// Case-sensitive by design: matches Hash_Get (the base remote allowlist is
+	// also case-sensitive); a mixed-case server token fails closed (blocked).
+	for (i = 0; i < (int)(sizeof(tf_anticheat_commands) / sizeof(tf_anticheat_commands[0])); i++)
+	{
+		if (!strcmp(name, tf_anticheat_commands[i]))
+			return true;
+	}
+
+	return false;
+}
+
 qbool Cmd_RemoteAllowed (const char *name)
 {
 	if (Hash_Get(rc_hash, (char *)name))
+		return true;
+
+	if (cl.teamfortress && Cmd_IsTFAnticheat(name))
 		return true;
 
 	return false;
