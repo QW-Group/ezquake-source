@@ -90,7 +90,7 @@ typedef struct csqc_client_state_s
 	int			func_eventsound;	// CSQC_Event_Sound (or -1)
 	int			func_parsesetangles;	// CSQC_Parse_SetAngles (or -1)
 	int			func_rr;	// CSQC_RendererRestarted (or -1)
-	// CSQC_Ent_Spawn (or -1; FTE parity)
+	int			func_entspawn;	// CSQC_Ent_Spawn (or -1; FTE parity)
 	int			func_input;		// CSQC_Input_Frame (or -1)
 	int			func_inputevent;	// CSQC_InputEvent (or -1)
 	int			func_startframe;	// CSQC StartFrame (or -1)
@@ -2235,7 +2235,7 @@ static const char *s_traceg_names[CSQC_TRACEG_COUNT] =
 {
 	"trace_fraction", "trace_allsolid", "trace_startsolid", "trace_inopen",
 	"trace_inwater", "trace_plane_dist", "trace_endpos", "trace_plane_normal",
-	"trace_ent"
+	"trace_ent", "trace_networkentity", "trace_endcontents"
 };
 
 static const char *s_fieldcache_names[CSQC_FLD_COUNT] =
@@ -2305,6 +2305,28 @@ static void CSQC_Client_SetContextSlot (pr1vm_t *vm, unsigned slot, unsigned num
 		s = (float *)((byte *)vm->game_edicts + (size_t)slot * vm->edict_size + s_csqc.field_entnum * 4);
 		s[0] = (float)number;
 	}
+}
+
+/*
+=================
+CSQC_Client_EntityEntNum
+
+ssqc number of the touched entity - the arena edict's module field `.entnum`: the
+server number for network entities (CSQC_Client_SetContextSlot), 0 for owned spawn
+entities. Source of FTE trace_networkentity parity (FTE `tr->entnum` =
+`touch->number` only for network ssqc brushes). Out of range / no field - 0.
+=================
+*/
+int CSQC_Client_EntityEntNum (pr1vm_t *vm, int slot)
+{
+	float *s;
+
+	if (!vm || !vm->game_edicts || s_csqc.field_entnum < 0)
+		return 0;
+	if (slot <= 0 || slot >= CSQC_MAX_EDICTS || slot >= vm->num_edicts)
+		return 0;
+	s = (float *)((byte *)vm->game_edicts + (size_t)slot * vm->edict_size + s_csqc.field_entnum * 4);
+	return (int)s[0];
 }
 
 /*
@@ -6174,8 +6196,9 @@ CSQC_VectorAngles
 
 Port of FTE VectorAngles with optional up->roll. When `meshpitch` is set the
 pitch is inverted (r_meshpitch = -1, FTE VectorAngles(..., true)) - parity for
-#51 vectoangles. forward is the direction; up may be NULL;
-result[3] = (pitch, yaw, roll). Helper for #51 (csqc_builtins.c).
+#51 vectoangles; #638 CL_RotateMoves passes false (raw angles, #51 deviation).
+forward is the direction; up may be NULL; result[3] = (pitch, yaw, roll).
+Shared helper for #51 (csqc_builtins.c) and #638 CL_RotateMoves.
 =================
 */
 void CSQC_VectorAngles (const float *forward, const float *up, float *result, qbool meshpitch)
@@ -6223,6 +6246,60 @@ void CSQC_VectorAngles (const float *forward, const float *up, float *result, qb
 	if (yaw < 0) yaw += 360;
 	if (roll < 0) roll += 360;
 	result[0] = pitch; result[1] = yaw; result[2] = roll;
+}
+
+/*
+CSQC_VectorTransform - port of FTE VectorTransform for a matrix3x4; the translation
+column is applied (it is zero in #638, so it is a no-op there).
+*/
+static void CSQC_VectorTransform (const float *in, float mat[3][4], float *out)
+{
+	out[0] = DotProduct (in, mat[0]) + mat[0][3];
+	out[1] = DotProduct (in, mat[1]) + mat[1][3];
+	out[2] = DotProduct (in, mat[2]) + mat[2][3];
+}
+
+/*
+=================
+CSQC_Client_RotateMoves
+
+#638 CL_RotateMoves (FTE PF_cl_RotateMoves): rotate the angles of sent but not yet
+acked usercmds (seq > servercommandframe) by the anglechange delta, order as FTE:
+AngleVectorsFLU(anglechange) -> frame forward/up -> VectorTransform -> VectorAngles.
+usercmd.angles in ezq is float degrees, so no SHORT2ANGLE/ANGLE2SHORT (in FTE
+cmd.angles is short). Returns 0 on an invalid seat (single-seat: only 0 is valid).
+=================
+*/
+int CSQC_Client_RotateMoves (float *anglechange, int seat)
+{
+	int i;
+	float mat[3][4];
+	vec3_t of, ou, nf, nu, a;
+	unsigned int ack;
+
+	if (!s_csqc.loaded || s_csqc.errored)
+		return 0;
+	if (seat != 0)
+		return 0;
+
+	AngleVectorsFLU (anglechange, mat[0], mat[1], mat[2]);
+	mat[0][3] = mat[1][3] = mat[2][3] = 0;
+
+	ack = (unsigned int)CSQC_Client_ServerCmdFrame ();
+	for (i = 0; i < CSQC_INHIST; i++)
+	{
+		csqc_inrec_t *r = &s_inhist[i];
+		if (!r->seq || r->seq <= ack)
+			continue;			// empty and acked slots are untouched
+
+		VectorCopy (r->cmd.angles, a);
+		AngleVectors (a, of, NULL, ou);
+		CSQC_VectorTransform (of, mat, nf);
+		CSQC_VectorTransform (ou, mat, nu);
+		CSQC_VectorAngles (nf, nu, a, false);
+		VectorCopy (a, r->cmd.angles);
+	}
+	return 1;
 }
 
 /*
@@ -6817,6 +6894,11 @@ void CSQC_Client_Disconnect (void)
 	s_csqc.func_init = s_csqc.func_world = s_csqc.func_update =
 		s_csqc.func_console = s_csqc.func_shutdown = -1;
 	s_csqc.func_entupdate = s_csqc.func_entremove = s_csqc.func_parseevent = s_csqc.func_parsetempent = -1;
+	s_csqc.func_parseprint = s_csqc.func_parsecp = -1;
+	s_csqc.func_parsedamage = -1;
+	s_csqc.func_eventsound = -1;
+	s_csqc.func_parsesetangles = -1;
+	s_csqc.func_rr = -1;
 	s_csqc.func_entspawn = -1;
 	s_csqc.mayread = false;
 	s_csqc.func_input = -1;
