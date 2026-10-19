@@ -13,7 +13,27 @@ types (qbool/vec3_t) and is meant for client translation units.
 struct usercmd_s;	// ezquake usercmd_t (common.h -> protocol.h); kept dependency-free here
 struct pr1vm_s;		// PR1 instance (pr1vm.h); opaque pointer only here
 
+// Extended CSQC stats 32..255 live in a dedicated client store (stat index on the
+// wire is always a byte, 0..255; FTE-parity MAX_CL_STATS=256). Standard 0..31 stay
+// in cl.stats[].
+#define MAX_EXTENDED_CL_STATS 256
+
 // Access to client state/output (implemented in csqc_client.c):
+float CSQC_Client_GetStat (int idx);				// 0..31 -> cl.stats, 32..255 -> ext stats (int)
+void CSQC_Client_SetStat (int idx, int value);		// int stat: 0..31 -> getstatf float cache, 32..255 -> ext stats (CL_SetStat)
+// Stat wire 78/79 (float/string CSQC stats 32..255): received from
+// svc_fte_updatestatfloat/string and exposed via #331 getstatf / #332 getstats.
+// FTE keeps them in per-player statsf[]/statsstr[]; here they live in a single
+// module store. GetStatInt returns the exact int value for #331 bit access:
+// the float path would lose the low bits of large ints.
+int CSQC_Client_GetStatInt (int idx);			// 0..31 -> cl.stats, 32..255 -> ext (int)
+float CSQC_Client_GetStatFloat (int idx);			// 0..31 -> cl.stats, 32..255 -> statsf
+const char *CSQC_Client_GetStatString (int idx);	// 32..255 -> statss, otherwise ""
+void CSQC_Client_SetStatFloat (int idx, float value);		// svc_fte_updatestatfloat (79)
+void CSQC_Client_SetStatString (int idx, const char *s);	// svc_fte_updatestatstring (78)
+// Access to client state/output (implemented in csqc_client.c):
+void CSQC_Client_ResetStatCache (void);				// invalidate the #79 float cache (track switch)
+
 // Single download slot: queue module-initiated requests instead of overwriting the
 // in-flight cls.downloadname/tempname before the first svc_download arrives.
 qbool CSQC_Client_DownloadInProgress (void);		// any transfer or queued request
@@ -292,6 +312,30 @@ void CSQC_Client_DrainTempEntSizedMsg (void);    // svcfte_temp_entity_sized (91
 // Size guard shared by sized messages (90/91/92): align msg_readcount to
 // payload_start+payload_len (rewind over-read, pad under-read).
 void CSQC_Client_SizedRewind (int payload_start, int payload_len);
+
+// Network print callbacks. ParsePrint is true if the module handled it (the
+// engine suppresses its own print); ParseCenterPrint is true if the module
+// returned != 0 (suppress the engine centerprint).
+qbool CSQC_Client_ParsePrint (const char *msg, int level);
+qbool CSQC_Client_ParseCenterPrint (const char *msg);
+
+// Network damage callback. true if the module returned != 0 (suppress the engine's
+// color-shift / view-kick).
+qbool CSQC_Client_ParseDamage (float save, float take, const vec3_t source);
+
+// Network sound callback. true if the module returned != 0 (the engine does not
+// play the sound). self = the arena entity by entnum, or world.
+qbool CSQC_Client_EventSound (int entnum, int channel, const char *name, float vol,
+							  float atten, const vec3_t pos, float pitchmod, float flags);
+
+// Network forced-angles callback. true if the module returned != 0 (the engine does
+// not apply its own angle).
+qbool CSQC_Client_ParseSetAngles (const float *angles, float isdelta);
+
+// Engine callback CSQC_RendererRestarted(string rendererdescription) -- invoked on
+// renderer reinitialization (vid_restart/vid_reload) and on module load. The return
+// value is ignored.
+void CSQC_Client_RendererRestarted (const char *desc);
 
 // Register the builtin table of the client instance (implemented in csqc_builtins.c).
 void CSQCVM_RegisterBuiltins (struct pr1vm_s *vm);

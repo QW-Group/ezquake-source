@@ -2048,7 +2048,8 @@ void CL_ParseStartSoundPacket(void)
 	if (CL_Demo_SkipMessage(true))
 		return;
 
-	S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
+	if (!CSQC_Client_EventSound (ent, channel, cl.sound_name[sound_num], volume / 255.0, attenuation, pos, 1.0f, 0.0f))
+		S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 
 	if (ent == cl.playernum+1)
 		TP_CheckPickupSound (cl.sound_name[sound_num], pos);
@@ -3231,6 +3232,9 @@ void CL_ParsePrint (void)
 		return;
 	}
 
+	if (!cls.demoseeking && CSQC_Client_ParsePrint (s0, level))
+		return;
+
 	CL_ProcessPrint (level, s0);
 }
 
@@ -3469,6 +3473,17 @@ void CL_SetStat (int stat, int value)
 		return;
 	}
 
+	// Extended CSQC stats 32..255 (servers send them to clients with FTE_PEXT_CSQC).
+	// cl.stats[] holds only the standard 0..31; extended stats go to the client
+	// CSQC store (getstati/getstatf read them from there).
+	if (stat >= MAX_CL_STATS)
+	{
+#ifndef CLIENTONLY
+		CSQC_Client_SetStat (stat, value);
+#endif
+		return;
+	}
+
 	// Set the stat value for the current player we're parsing in the MVD.
 	if (cls.mvdplayback)
 	{
@@ -3505,6 +3520,12 @@ void CL_SetStat (int stat, int value)
 	}
 
 	cl.stats[stat] = value;
+
+#ifndef CLIENTONLY
+	// Keep the CSQC getstatf (#331) float cache in sync with the standard int stat
+	// stat < MAX_CL_STATS here (extended indices returned earlier).
+	CSQC_Client_SetStat (stat, value);
+#endif
 
 #ifdef FTE_PEXT_ACCURATETIMINGS
 	if (stat == STAT_TIME && (cls.fteprotocolextensions & FTE_PEXT_ACCURATETIMINGS))
@@ -3874,6 +3895,8 @@ void CL_ParseServerMessage (void)
 					if (CL_Demo_SkipMessage (true))
 						break;
 
+					if (CSQC_Client_ParseCenterPrint(s))
+						break;
 					if (!CL_SearchForReTriggers(s, RE_PRINT_CENTER))
 						SCR_CenterPrint(s);
 					Print_flags[Print_current] = 0;
@@ -3898,6 +3921,8 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_setangle:
 				{
+					qbool sa_handled = false;
+
 					if (cls.mvdplayback || (cls.mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT)) {
 						j = MSG_ReadByte();
 					}
@@ -3912,6 +3937,12 @@ void CL_ParseServerMessage (void)
 
 					CL_DisableLerpMove();
 
+					// CSQC_Parse_SetAngles is called only for non-MVD playback; a nonzero
+					// return means the engine does not apply its own angle (the whole
+					// apply block is skipped).
+					if (!cls.mvdplayback)
+						sa_handled = CSQC_Client_ParseSetAngles (newangles, false);
+
 					if (cls.mvdplayback) 
 					{
 						mvd_fixangle |= 1 << j;
@@ -3920,7 +3951,7 @@ void CL_ParseServerMessage (void)
 							VectorCopy(newangles, cl.viewangles);
 						}
 					} 
-					else {
+					else if (!sa_handled) {
 						VectorCopy (newangles, cl.viewangles);
 
 						if ((cls.mvdprotocolextensions1 & MVD_PEXT1_HIGHLAGTELEPORT) && j) {
@@ -4110,7 +4141,8 @@ void CL_ParseServerMessage (void)
 					cl.solo_completed_time = cl.servertime;
 					vid.recalc_refdef = true;	// go to full screen
 					finstr = MSG_ReadString ();
-					SCR_CenterPrint(finstr);
+					if (!CSQC_Client_ParseCenterPrint(finstr))
+						SCR_CenterPrint(finstr);
 					break;
 				}
 			case svc_sellscreen:
@@ -4165,6 +4197,38 @@ void CL_ParseServerMessage (void)
 				{
 					// Sized variant (92): a short length precedes each entity's payload.
 					CSQC_Client_ParseEntities (true);
+					break;
+				}
+			case svc_fte_updatestatstring:
+				{
+					// CSQC string stat: [byte idx][string]. FTE routes any idx <
+					// MAX_CL_STATS through CL_SetStatString; QW has no standard 0..31
+					// string stat, so indices <32 are accepted and ignored (stream stays
+					// sane). idx>=32 goes to the extended CSQC store.
+					i = MSG_ReadByte();
+					s = MSG_ReadString();
+					if (i >= MAX_CL_STATS)
+						CSQC_Client_SetStatString(i, s);
+					break;
+				}
+			case svc_fte_updatestatfloat:
+				{
+					// CSQC float stat: [byte idx][float]. FTE CL_SetStatNumeric parity:
+					// idx < MAX_CL_STATS updates the standard engine stat (death/axe/
+					// STAT_VIEWHEIGHT) as the int path; idx>=32 goes to the extended
+					// CSQC store. The exact float is retained for getstatf (#331) so a
+					// standard index is not truncated.
+					float fstat;
+					i = MSG_ReadByte();
+					fstat = MSG_ReadFloat();
+					if (i < MAX_CL_STATS)
+						CL_SetStat(i, (int)fstat);
+					// In MVD CL_SetStat routes the int to cl.players[lastto] and
+					// returns early when that player is not tracked; the float cache
+					// must follow the same routing, otherwise getstatf() reports
+					// another player's value.
+					if (i >= MAX_CL_STATS || !cls.mvdplayback || Cam_TrackNum() == cls.lastto)
+						CSQC_Client_SetStatFloat(i, fstat);
 					break;
 				}
 #endif

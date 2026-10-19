@@ -891,6 +891,76 @@ static void csqc_drawstring (void)
 }
 
 /*
+ float(float stnum) getstati = #330
+ FTE PF_cs_getstat_int: G_INT(OFS_RETURN) = stats[stnum] - raw int bits are returned
+ (not a float). The numeric value is read by the module via getstatf (#331).
+ 0..31 - cl.stats, 32..255 - ext storage (CSQC_Client_GetStatInt).
+*/
+static void csqc_getstati (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	if (!vm)
+		return;
+	*(int *)&vm->globals[OFS_RETURN] = CSQC_Client_GetStatInt ((int)vm->globals[OFS_PARM0]);
+}
+
+/*
+ float(float stnum, optional float firstbit, optional float bitcount) getstatf = #331
+ FTE parity (PF_cs_getstat_float):
+   without extra args - the float stat value (statsf, from stat wire 79);
+   with firstbit/bitcount - bit extraction from the int stat value (getstatbits).
+*/
+static void csqc_getstatf (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	int stnum;
+	if (!vm)
+		return;
+	stnum = (int)vm->globals[OFS_PARM0];
+	if (stnum < 0 || stnum >= MAX_EXTENDED_CL_STATS)
+	{
+		vm->globals[OFS_RETURN] = 0;
+		return;
+	}
+	if (vm->argc > 1)
+	{
+		// Exact int (not the float path): large ints lose low bits in float32
+		// (FTE reads stats[] as int).
+		int val = CSQC_Client_GetStatInt (stnum);
+		int first = (int)vm->globals[OFS_PARM1];
+		int count = (vm->argc > 2) ? (int)vm->globals[OFS_PARM2] : 1;
+		if (first < 0)
+			first = 0;
+		if (first > 31)
+			first = 31;	// shift domain 0..31
+		if (count < 0)
+			count = 0;
+		if (first + count > 32)
+			count = 32 - first;	// first+count <= 32
+		if (count > 31)	// FTE does (1<<count); clamp so the mask does not overflow
+			count = 31;
+		vm->globals[OFS_RETURN] = (float)((((unsigned int)val) & (((1u << count) - 1u) << first)) >> first);
+	}
+	else
+		vm->globals[OFS_RETURN] = CSQC_Client_GetStatFloat (stnum);
+}
+
+/*
+ string(float firststnum) getstats = #332
+ FTE parity (PF_cs_getstat_string under PEXT_CSQC): statsstr[stnum], received via
+ stat wire 78 (svc_fte_updatestatstring). The legacy packed-int variant (4 int stats,
+ old engines) is not implemented - our client is always on FTE_PEXT_CSQC (the module
+ only runs on it).
+*/
+static void csqc_getstats (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	if (!vm)
+		return;
+	CSQCVM_SetRetStr ((char *)CSQC_Client_GetStatString ((int)vm->globals[OFS_PARM0]));
+}
+
+/*
 float(vector position, float character, vector size, vector rgb, float alpha,
      optional float drawflag) drawcharacter = #320
 */
@@ -6080,6 +6150,9 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 324, (builtin_t)csqc_drawsetcliparea); // #324 void(float x, float y, float width, float height) drawsetcliparea (EXT_CSQC_???)
 	PR1VM_RegisterBuiltin (vm, 325, (builtin_t)csqc_drawresetcliparea); // #325 void(void) drawresetcliparea (EXT_CSQC_???)
 	PR1VM_RegisterBuiltin (vm, 329, (builtin_t)csqc_drawrotpic_dp); // #329 void(vector pivot, string picname, vector size, vector mins, float angle, vector rgb, float alpha, optional float drawflag) drawrotpic_dp
+	PR1VM_RegisterBuiltin (vm, 330, (builtin_t)csqc_getstati); // #330 int(float stnum) getstati (EXT_CSQC)
+	PR1VM_RegisterBuiltin (vm, 331, (builtin_t)csqc_getstatf); // #331 float(float stnum) getstatf (EXT_CSQC)
+	PR1VM_RegisterBuiltin (vm, 332, (builtin_t)csqc_getstats); // #332 string(float firststnum) getstats (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 359, (builtin_t)csqc_sendevent); // #359 void(string evname, string evargs, ...) (EXT_CSQC_1)
 	PR1VM_RegisterBuiltin (vm, 627, (builtin_t)csqc_sprintf); // #627 string(string fmt, ...) sprintf
 

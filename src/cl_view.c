@@ -290,6 +290,11 @@ void V_ParseDamage (void)
 
 	cl.faceanimtime = cl.time + 0.2;		// put sbar face into pain frame
 
+	// Network damage callback; a nonzero return means the module suppresses the
+	// color shift/view kick. Checked after faceanim, before hurtblur/cshift.
+	if (CSQC_Client_ParseDamage (armor, blood, from))
+		return;
+
 	cl.hurtblur = cl.time + count / 24;		// use hurt motion blur.
 
 	cl.cshifts[CSHIFT_DAMAGE].percent += 3*count;

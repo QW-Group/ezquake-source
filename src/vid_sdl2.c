@@ -1805,6 +1805,10 @@ static void VID_Startup(void)
 	R_ProgramCompileAll();
 
 	Cvar_ClearAllModifiedFlags(CVAR_RELOAD_GFX);
+
+	// Notify the CSQC module about renderer reinitialization (vid_restart hard /
+	// vid_reload soft; common tail of both paths). No-op without an active module.
+	CSQC_Client_RendererRestarted (R_RendererDescription ());
 }
 
 void VID_ReloadCvarChanged(cvar_t* var)
