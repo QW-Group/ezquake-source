@@ -117,6 +117,13 @@ void R_Draw_SAlphaSubPic2(float x, float y, mpic_t *pic, int src_width, int src_
 	R_DrawImage(x, y, scale_x * src_width, scale_y * src_height, newsl, newtl, newsh - newsl, newth - newtl, color, false, pic->texnum, false, false);
 }
 
+void R_Draw_SColoredSubPic2(float x, float y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float r, float g, float b, float alpha)
+{
+	byte color[] = { (byte)(r * 255), (byte)(g * 255), (byte)(b * 255), (byte)(alpha * 255) };
+
+	R_DrawImage(x, y, scale_x * src_width, scale_y * src_height, newsl, newtl, newsh - newsl, newth - newtl, color, false, pic->texnum, false, false);
+}
+
 void R_Draw_FadeScreen(float alpha)
 {
 	Draw_AlphaRectangleRGB(0, 0, vid.width, vid.height, 0.0f, true, RGBA_TO_COLOR(0, 0, 0, (alpha < 1 ? alpha * 255 : 255)));
