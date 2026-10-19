@@ -31,7 +31,6 @@ float CSQC_Client_GetStatFloat (int idx);			// 0..31 -> cl.stats, 32..255 -> sta
 const char *CSQC_Client_GetStatString (int idx);	// 32..255 -> statss, otherwise ""
 void CSQC_Client_SetStatFloat (int idx, float value);		// svc_fte_updatestatfloat (79)
 void CSQC_Client_SetStatString (int idx, const char *s);	// svc_fte_updatestatstring (78)
-// Access to client state/output (implemented in csqc_client.c):
 void CSQC_Client_ResetStatCache (void);				// invalidate the #79 float cache (track switch)
 
 // Single download slot: queue module-initiated requests instead of overwriting the
@@ -61,6 +60,7 @@ int CSQC_Client_NetAllocSlot (struct pr1vm_s *vm);		// slot without s_own (netwo
 void CSQC_Client_NetFreeSlot (int slot, int number);		// free slot + numslot
 int CSQC_Client_NumToSlot (int number);					// number->slot map / 0
 int CSQC_Client_MapNumber (int number, int slot);		// write map entry (returns slot)
+int CSQC_Client_EntityEntNum (struct pr1vm_s *vm, int slot);	// .entnum of an arena edict (ssqc number / 0)
 // Pool/module field traversal and diagnostics.
 qbool CSQC_Client_EntUsed (int slot);			// slot in use (network or spawn)
 int CSQC_Client_EntSpawnBase (void);			// first usable slot (1)
@@ -79,6 +79,8 @@ typedef enum
 	CSQC_TRACEG_ENDPOS,
 	CSQC_TRACEG_PLANE_NORMAL,
 	CSQC_TRACEG_ENT,
+	CSQC_TRACEG_NETWORKENTITY,
+	CSQC_TRACEG_ENDCONTENTS,
 	CSQC_TRACEG_COUNT
 } csqc_traceglobal_id_t;
 
@@ -192,7 +194,9 @@ void CSQC_Client_InputFrame (struct usercmd_s *cmd);
 // clientcommandframe] in one numbering (QW echoes the ack on netchan/frame).
 void CSQC_Client_RecordInput (struct usercmd_s *cmd);	// record from CL_SendCmd
 int CSQC_Client_ApplyInput (unsigned int seq);			// fill input_* by seq; 0/1
-// FTE VectorAngles (up->roll, meshpitch param): shared helper for #51.
+// #638 CL_RotateMoves: rotate angles of unacknowledged usercmd frames (seq > servercommandframe).
+int CSQC_Client_RotateMoves (float *anglechange, int seat);
+// FTE VectorAngles (up->roll, meshpitch param): shared helper for #51 (true) and #638 (false).
 void CSQC_VectorAngles (const float *forward, const float *up, float *result, qbool meshpitch);
 void CSQC_Client_RunPlayerPhysics (int entnum);			// #347 runstandardplayerphysics
 // #1 makevectors: writes the module's v_forward/v_right/v_up from vector angles.
