@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "qsound.h"
 #include "hud.h"
 #include "hud_common.h"
+#include "csqc_client.h"
 #include "vx_stuff.h"
 #include "settings.h"
 #include "teamplay.h"
@@ -390,9 +391,13 @@ static void NQD_ParsePrint (void)
 
 	char *s = MSG_ReadString();
 	if (s[0] == 1) {	// chat
+		if (CSQC_Client_ParsePrint (s + 1, PRINT_CHAT))
+			return;
 		if (cl_chatsound.value)
 			S_LocalSound ("misc/talk.wav");
 	}
+	else if (CSQC_Client_ParsePrint (s, PRINT_HIGH))
+		return;
 	Com_Printf ("%s", s);
 }
 
@@ -643,7 +648,8 @@ static void NQD_ParseStartSoundPacket(void)
 	for (i=0 ; i<3 ; i++)
 		pos[i] = MSG_ReadCoord ();
  
-    S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
+	if (!CSQC_Client_EventSound (ent, channel, cl.sound_name[sound_num], volume / 255.0, attenuation, pos, 1.0f, 0.0f))
+		S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 }       
 
 
@@ -1173,7 +1179,11 @@ static void NQD_ParseServerMessage (void)
 			break;
 			
 		case svc_centerprint:
-			SCR_CenterPrint (MSG_ReadString ());
+			{
+				char *s = MSG_ReadString ();
+				if (!CSQC_Client_ParseCenterPrint (s))
+					SCR_CenterPrint (s);
+			}
 			break;
 
 		case svc_stufftext:
@@ -1189,8 +1199,19 @@ static void NQD_ParseServerMessage (void)
 			break;
 
 		case svc_setangle:
-			for (i=0 ; i<3 ; i++)
-				nq_last_fixangle[i] = cl.simangles[i] = cl.viewangles[i] = MSG_ReadAngle ();
+			{
+				vec3_t sa_ang;
+
+				for (i=0 ; i<3 ; i++)
+					sa_ang[i] = MSG_ReadAngle ();
+
+				// On the NQ path the hook is still called; a nonzero return means the
+				// engine does not apply its own angle (viewangles/simangles/fixangle
+				// are not updated).
+				if (!CSQC_Client_ParseSetAngles (sa_ang, false))
+					for (i=0 ; i<3 ; i++)
+						nq_last_fixangle[i] = cl.simangles[i] = cl.viewangles[i] = sa_ang[i];
+			}
 			break;
 
 		case nq_svc_setview:
