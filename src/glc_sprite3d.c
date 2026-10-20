@@ -149,7 +149,7 @@ static void GLC_Draw3DSpritesVertexArray(gl_sprite3d_batch_t* batch)
 
 		while (last < batch->count) {
 			if (!R_TextureReferenceEqual(batch->textures[first], batch->textures[last])) {
-				GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
+				GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices + first, batch->numVertices + first, last - first);
 
 				if (R_TextureReferenceIsValid(batch->textures[last])) {
 					renderer.TextureUnitBind(0, batch->textures[last]);
@@ -162,7 +162,7 @@ static void GLC_Draw3DSpritesVertexArray(gl_sprite3d_batch_t* batch)
 			++last;
 		}
 
-		GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
+		GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices + first, batch->numVertices + first, last - first);
 	}
 }
 

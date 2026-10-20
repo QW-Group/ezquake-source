@@ -191,7 +191,7 @@ void GLM_Draw3DSprites(void)
 			renderer.TextureUnitBind(0, batch->textures[0]);
 			while (last < batch->count) {
 				if (!R_TextureReferenceEqual(batch->textures[first], batch->textures[last])) {
-					GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
+					GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices + first, batch->numVertices + first, last - first);
 
 					renderer.TextureUnitBind(0, batch->textures[last]);
 					first = last;
@@ -199,7 +199,7 @@ void GLM_Draw3DSprites(void)
 				++last;
 			}
 
-			GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
+			GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices + first, batch->numVertices + first, last - first);
 		}
 
 		R_TraceLeaveNamedRegion();
