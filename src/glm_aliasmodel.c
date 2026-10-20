@@ -114,6 +114,7 @@ extern float r_framelerp;
 #define DRAW_INSTANCED            (1 << 5)
 
 static uniform_block_aliasmodels_t aliasdata;
+static texture_ref alias_model_textures[MAX_STANDARD_ENTITIES]; // bound for models drawn individually
 
 static int cached_mode;
 
@@ -163,6 +164,7 @@ static void R_SetAliasModelUniforms(int mode)
 #undef GET_COLOR_VALUES
 
 static int material_samplers_max;
+static int material_sampler_units; // material samplers declared in the shader
 static int TEXTURE_UNIT_MATERIAL;
 static int TEXTURE_UNIT_CAUSTICS;
 
@@ -196,7 +198,15 @@ qbool GLM_CompileAliasModelProgram(void)
 			strlcat(included_definitions, "#define SAMPLER_MATERIAL_TEXTURE_START 0\n", sizeof(included_definitions));
 		}
 
-		strlcat(included_definitions, va("#define SAMPLER_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
+		if (GLM_AliasModelsDrawnIndividually()) {
+			// Models are drawn one at a time with their texture bound, and the driver sets up
+			// every sampler the program declares for each draw, so declare just one
+			material_sampler_units = 1;
+		}
+		else {
+			material_sampler_units = material_samplers_max;
+		}
+		strlcat(included_definitions, va("#define SAMPLER_COUNT %d\n", material_sampler_units), sizeof(included_definitions));
 		if (drawAlias_desiredOptions & DRAW_LERP_MUZZLEHACK) {
 			strlcat(included_definitions, "#define EZQ_ALIASMODEL_MUZZLEHACK\n", sizeof(included_definitions));
 		}
@@ -213,7 +223,7 @@ qbool GLM_CompileAliasModelProgram(void)
 			if (drawAlias_desiredOptions & DRAW_CAUSTIC_TEXTURES) {
 				R_ProgramUniform1i(r_program_uniform_aliasmodel_causticstex, TEXTURE_UNIT_CAUSTICS);
 			}
-			R_ProgramUniform1iArrayBase(r_program_uniform_aliasmodel_samplers, material_samplers_max, TEXTURE_UNIT_MATERIAL);
+			R_ProgramUniform1iArrayBase(r_program_uniform_aliasmodel_samplers, material_sampler_units, TEXTURE_UNIT_MATERIAL);
 		}
 
 		R_ProgramSetCustomOptions(r_program_aliasmodel, drawAlias_desiredOptions);
@@ -360,7 +370,7 @@ static void GLM_QueueAliasModelDrawImpl(
 	}
 
 	// Assign samplers - if we're over limit, need to flush and try again
-	textureSampler = AssignSampler(instr, texture);
+	textureSampler = (GLM_AliasModelsDrawnIndividually() ? 0 : AssignSampler(instr, texture));
 	if (textureSampler < 0) {
 		if (!GLM_NextAliasModelDrawCall(instr, true)) {
 			return;
@@ -393,6 +403,7 @@ static void GLM_QueueAliasModelDrawImpl(
 	uniform->color[2] = color[2];
 	uniform->color[3] = color[3];
 	uniform->materialSamplerMapping = textureSampler;
+	alias_model_textures[alias_draw_count] = texture;
 	uniform->minLumaMix = 1.0f - (ent->full_light ? bound(0, gl_fb_models.integer, 1) : 0);
 	uniform->outline_normal_scale = ent->outlineScale;
 	if(ent->scoreboard != NULL) {
@@ -511,7 +522,7 @@ void GLM_PrepareAliasModelBatches(void)
 }
 
 // The _instanceId vertex attribute is always 0 here, the instanceOffset uniform picks the model
-static int GLM_DrawAliasModelsIndividually(aliasmodel_draw_instructions_t* instr, int cmd_start, int call_index)
+static int GLM_DrawAliasModelsIndividually(aliasmodel_draw_instructions_t* instr, int cmd_start, int call_index, qbool bind_materials)
 {
 	int j;
 
@@ -528,6 +539,9 @@ static int GLM_DrawAliasModelsIndividually(aliasmodel_draw_instructions_t* instr
 			model -= section * MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS;
 		}
 
+		if (bind_materials && R_TextureReferenceIsValid(alias_model_textures[cmd->baseInstance])) {
+			renderer.TextureUnitBind(TEXTURE_UNIT_MATERIAL, alias_model_textures[cmd->baseInstance]);
+		}
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_instanceOffset, model);
 
 		GL_DrawArrays(GL_TRIANGLES, cmd->first, cmd->count);
@@ -540,10 +554,14 @@ static int GLM_DrawAliasModelsIndividually(aliasmodel_draw_instructions_t* instr
 }
 
 // Draws the models queued in one call, returns the number of commands drawn
-static int GLM_DrawAliasModelCall(aliasmodel_draw_instructions_t* instr, int cmd_start, int call_index, uintptr_t extra_offset)
+static int GLM_DrawAliasModelCall(aliasmodel_draw_instructions_t* instr, int cmd_start, int call_index, uintptr_t extra_offset, qbool bind_materials)
 {
 	if (GLM_AliasModelsDrawnIndividually()) {
-		return GLM_DrawAliasModelsIndividually(instr, cmd_start, call_index);
+		return GLM_DrawAliasModelsIndividually(instr, cmd_start, call_index, bind_materials);
+	}
+
+	if (bind_materials && instr->num_textures[call_index]) {
+		renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, instr->num_textures[call_index], instr->bound_textures[call_index]);
 	}
 
 	GL_MultiDrawArraysIndirect(
@@ -589,18 +607,14 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		GLM_StateBeginAliasModelZPassBatch();
 		call_start = 0;
 		for (i = 0; i < instr->num_calls; ++i) {
-			call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset);
+			call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset, false);
 		}
 	}
 
 	GLM_StateBeginAliasModelBatch(translucent, additive);
 	call_start = 0;
 	for (i = 0; i < instr->num_calls; ++i) {
-		if (!shells && instr->num_textures[i]) {
-			renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, instr->num_textures[i], instr->bound_textures[i]);
-		}
-
-		call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset);
+		call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset, !shells);
 	}
 
 	if (type == aliasmodel_draw_std && alias_draw_instructions[aliasmodel_draw_outlines_spec].num_calls) {
@@ -613,7 +627,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 
 		call_start = 0;
 		for (i = 0; i < instr->num_calls; ++i) {
-			call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset);
+			call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset, false);
 		}
 		R_TraceLeaveNamedRegion();
 	}
@@ -628,7 +642,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 
 		call_start = 0;
 		for (i = 0; i < instr->num_calls; ++i) {
-			call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset);
+			call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset, false);
 		}
 		R_TraceLeaveNamedRegion();
 	}
