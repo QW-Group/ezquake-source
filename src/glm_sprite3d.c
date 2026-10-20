@@ -177,6 +177,9 @@ void GLM_Draw3DSprites(void)
 		else if (batch->allSameNumber && batch->numVertices[0] == 4 && batch->primitive_id == r_primitive_triangle_strip) {
 			GLM_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
 		}
+		else if (batch->allSameNumber && batch->numVertices[0] == 6 && batch->primitive_id == r_primitive_triangle_strip) {
+			GLM_DrawSequentialBatch(batch, indexes_start_beams, INDEXES_MAX_BEAMS);
+		}
 		else if (batch->allSameNumber && batch->numVertices[0] == 9 && GL_Supported(R_SUPPORT_PRIMITIVERESTART)) {
 			GLM_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
 		}
