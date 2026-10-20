@@ -3435,7 +3435,7 @@ void CL_StopPlayback(void)
 			bin_ms[TIMEDEMO_BIN_COUNT - 1] = worst_ms * 10.0;
 
 			for (j = 0; j < TIMEDEMO_BIN_COUNT; ++j) {
-				Con_Printf("  %6.3f%: %4.1fms\n", bin_percentages[j], (bin_ms[j] / 10.0));
+				Con_Printf("  %7.3f%%: %4.1fms\n", bin_percentages[j] * 100.0, (bin_ms[j] / 10.0));
 			}
 		}
 		cls.timedemo = false;
