@@ -1739,6 +1739,10 @@ void R_ProgramCompileAll(void)
 			if (!GL_AppropriateRenderer(prog->renderer_id)) {
 				continue;
 			}
+			// Only the classic renderer draws with sub-programs other than the first
+			if (sub_program && prog->renderer_id == renderer_modern) {
+				continue;
+			}
 
 			if (prog->initialised && prog->compile_func) {
 				prog->compile_func();
