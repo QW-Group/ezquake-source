@@ -389,13 +389,16 @@ static qbool GLM_TextureDrawable(texture_t* tex)
 	return tex && tex->loaded && tex->texturechain && R_TextureReferenceIsValid(tex->gl_texture_array);
 }
 
-static qbool GLM_DuplicatePreviousRequest(entity_t* ent, qbool polygonOffset, qbool caustics)
+// Texture numbers of the model's chained textures by material index, -1 if not drawn
+static int* chained_materials;
+static int chained_materials_size;
+
+static qbool GLM_DuplicatePreviousRequest(entity_t* ent, qbool polygonOffset, qbool caustics, int first_material, int last_material)
 {
 	glm_worldmodel_req_t* req;
 	glm_worldmodel_req_t* newreq;
 	model_t* model = ent->model;
-	int first_texture = model->first_texture_chained;
-	int num_textures = model->last_texture_chained - model->first_texture_chained + 1;
+	int num_materials = last_material - first_material + 1;
 	qbool worldmodel = model->isworldmodel;
 	int flags = (caustics ? EZQ_SURFACE_UNDERWATER : 0);
 	glm_brushmodel_drawcall_type desired_type = ent->alpha == 0.0f ? opaque_world : alpha_surfaces;
@@ -403,26 +406,26 @@ static qbool GLM_DuplicatePreviousRequest(entity_t* ent, qbool polygonOffset, qb
 	int i;
 
 	// Drawflat surfaces are in a separate request that wouldn't be duplicated
-	if (num_textures <= 0 || !drawcall->batch_count || drawcall->batch_count >= MAX_WORLDMODEL_BATCH || drawcall->type != desired_type || model->drawflat_chain) {
+	if (num_materials <= 0 || !drawcall->batch_count || drawcall->batch_count >= MAX_WORLDMODEL_BATCH || drawcall->type != desired_type || model->drawflat_chain) {
 		return false;
 	}
 
 	// See if previous request was for all surfaces of the same model
 	req = &drawcall->worldmodel_requests[drawcall->batch_count - 1];
-	if (model != req->model || req->samplerMappingCount != num_textures || req->firstTexture != first_texture) {
+	if (model != req->model || req->samplerMappingCount != num_materials || req->firstTexture != first_material) {
 		return false;
 	}
 
 	// Animated textures depend on the entity, so must match the previous request's
-	for (i = first_texture; i < first_texture + num_textures; ++i) {
-		texture_t* tex = model->textures[i];
+	for (i = first_material; i <= last_material; ++i) {
 		sampler_mapping_t* mapping = &drawcall->mappings[req->samplerMappingBase + i];
+		texture_t* tex;
 
-		if (!GLM_TextureDrawable(tex)) {
+		if (chained_materials[i] < 0) {
 			continue;
 		}
 
-		tex = R_TextureAnimation(ent, tex);
+		tex = R_TextureAnimation(ent, model->textures[chained_materials[i]]);
 		if (mapping->arrayIndex != tex->gl_texture_index || !R_TextureReferenceEqual(drawcall->allocated_samplers[mapping->samplerIndex], tex->gl_texture_array)) {
 			return false;
 		}
@@ -589,8 +592,8 @@ void GLM_DrawWaterSurfaces(void)
 		glpoly_t* poly;
 		texture_t* tex = R_TextureAnimation(NULL, surf->texinfo->texture);
 
-		req = GLM_NextBatchRequest(NULL, alpha, 1, surf->texinfo->miptex, tex, false, false, tex->isAlphaTested);
-		GLM_AssignTexture(surf->texinfo->miptex, tex);
+		req = GLM_NextBatchRequest(NULL, alpha, 1, surf->texinfo->texture->gl_material_index, tex, false, false, tex->isAlphaTested);
+		GLM_AssignTexture(surf->texinfo->texture->gl_material_index, tex);
 		for (poly = surf->polys; poly; poly = poly->next) {
 			int newVerts = poly->numverts;
 
@@ -910,8 +913,30 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 	int i;
 	glm_worldmodel_req_t* req = NULL;
 	model_t* model = ent->model;
+	int first_material = model->numtextures, last_material = -1;
 
-	if (GLM_DuplicatePreviousRequest(ent, polygonOffset, caustics)) {
+	// Requests map materials to texture array layers, and the textures in an array have
+	// consecutive material numbers, so go through the textures by material
+	if (chained_materials_size < model->numtextures) {
+		chained_materials_size = model->numtextures;
+		chained_materials = Q_realloc(chained_materials, sizeof(chained_materials[0]) * chained_materials_size);
+	}
+	for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
+		if (GLM_TextureDrawable(model->textures[i])) {
+			first_material = min(first_material, model->textures[i]->gl_material_index);
+			last_material = max(last_material, model->textures[i]->gl_material_index);
+		}
+	}
+	for (i = first_material; i <= last_material; ++i) {
+		chained_materials[i] = -1;
+	}
+	for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
+		if (GLM_TextureDrawable(model->textures[i])) {
+			chained_materials[model->textures[i]->gl_material_index] = i;
+		}
+	}
+
+	if (GLM_DuplicatePreviousRequest(ent, polygonOffset, caustics, first_material, last_material)) {
 		return;
 	}
 
@@ -923,18 +948,15 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 		model->drawflat_chain = NULL;
 	}
 
-	if (model->last_texture_chained < 0) {
-		return;
-	}
-
-	for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
-		texture_t* tex = model->textures[i];
+	for (i = first_material; i <= last_material; ++i) {
+		texture_t* tex;
 		texture_t* frame;
 
-		if (!GLM_TextureDrawable(tex)) {
+		if (chained_materials[i] < 0) {
 			continue;
 		}
 
+		tex = model->textures[chained_materials[i]];
 		frame = R_TextureAnimation(ent, tex);
 		req = GLM_NextBatchRequest(model, ent->alpha, 1, i, frame, polygonOffset, caustics, tex->isAlphaTested);
 		GLM_AssignTexture(i, frame);

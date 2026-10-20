@@ -77,6 +77,7 @@ typedef struct texture_s {
 	unsigned int        gl_texture_index;
 	float               gl_texture_scaleS;
 	float               gl_texture_scaleT;
+	int                 gl_material_index;           //number in the model, consecutive for textures in the same array
 
 	int                 index;
 } texture_t;

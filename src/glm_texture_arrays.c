@@ -363,6 +363,38 @@ static void GLM_SetTextureArrays(model_t* mod)
 	}
 }
 
+// Number the model's textures so the textures in each texture array, alpha-tested ones after
+// the others, are numbered consecutively. The number is stored as the material of the vertices
+// & is what world draw requests map to texture array layers, so a request can then cover all
+// of an array's textures with a contiguous range of mappings.
+static void GLM_SetMaterialIndexes(model_t* mod)
+{
+	int i, array, alpha_tested;
+	int material = 0;
+
+	for (i = 0; i < mod->numtextures; ++i) {
+		if (mod->textures[i]) {
+			mod->textures[i]->gl_material_index = -1;
+		}
+	}
+
+	for (array = 0; array < mod->texture_array_count; ++array) {
+		for (alpha_tested = 0; alpha_tested <= 1; ++alpha_tested) {
+			for (i = mod->texture_array_first[array]; i >= 0; i = mod->textures[i]->next_same_size) {
+				if (!mod->textures[i]->isAlphaTested == !alpha_tested) {
+					mod->textures[i]->gl_material_index = material++;
+				}
+			}
+		}
+	}
+
+	for (i = 0; i < mod->numtextures; ++i) {
+		if (mod->textures[i] && mod->textures[i]->gl_material_index < 0) {
+			mod->textures[i]->gl_material_index = material++;
+		}
+	}
+}
+
 static void GL_ImportTexturesForModel(model_t* mod)
 {
 	int j;
@@ -437,6 +469,7 @@ static void GL_ImportTexturesForModel(model_t* mod)
 		}
 
 		GLM_SetTextureArrays(mod);
+		GLM_SetMaterialIndexes(mod);
 	}
 }
 
