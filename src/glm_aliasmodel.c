@@ -75,6 +75,7 @@ typedef struct aliasmodel_draw_data_s {
 	texture_ref bound_textures[MAXIMUM_ALIASMODEL_DRAWCALLS][MAXIMUM_MATERIAL_SAMPLERS];
 	int num_textures[MAXIMUM_ALIASMODEL_DRAWCALLS];
 	int num_cmds[MAXIMUM_ALIASMODEL_DRAWCALLS];
+	int total_cmds;
 	int num_calls;
 	int current_call;
 
@@ -299,11 +300,13 @@ static void GLM_QueueDrawCall(aliasmodel_draw_type_t type, int vbo_start, int vb
 		GLM_NextAliasModelDrawCall(instr, false);
 	}
 
-	if (instr->num_cmds[instr->current_call] >= sizeof(instr->indirect_buffer) / sizeof(instr->indirect_buffer[0])) {
+	if (instr->total_cmds >= sizeof(instr->indirect_buffer) / sizeof(instr->indirect_buffer[0])) {
 		return;
 	}
 
-	pos = instr->num_cmds[instr->current_call]++;
+	// Each call's commands follow the previous call's
+	pos = instr->total_cmds++;
+	instr->num_cmds[instr->current_call]++;
 	indirect = &instr->indirect_buffer[pos];
 	indirect->instanceCount = 1;
 	indirect->baseInstance = instance;
@@ -486,12 +489,11 @@ void GLM_PrepareAliasModelBatches(void)
 
 	// Build & update list of indirect calls
 	{
-		int i, j;
+		int i;
 		int offset = 0;
 
 		for (i = 0; i < aliasmodel_draw_max; ++i) {
 			aliasmodel_draw_instructions_t* instr = &alias_draw_instructions[i];
-			int total_cmds = 0;
 			int size;
 
 			if (!instr->num_calls) {
@@ -499,11 +501,7 @@ void GLM_PrepareAliasModelBatches(void)
 			}
 
 			instr->indirect_buffer_offset = offset;
-			for (j = 0; j < instr->num_calls; ++j) {
-				total_cmds += instr->num_cmds[j];
-			}
-
-			size = sizeof(instr->indirect_buffer[0]) * total_cmds;
+			size = sizeof(instr->indirect_buffer[0]) * instr->total_cmds;
 			buffers.UpdateSection(r_buffer_aliasmodel_drawcall_indirect, offset, size, instr->indirect_buffer);
 			offset += size;
 		}
@@ -541,6 +539,22 @@ static int GLM_DrawAliasModelsIndividually(aliasmodel_draw_instructions_t* instr
 	return instr->num_cmds[call_index];
 }
 
+// Draws the models queued in one call, returns the number of commands drawn
+static int GLM_DrawAliasModelCall(aliasmodel_draw_instructions_t* instr, int cmd_start, int call_index, uintptr_t extra_offset)
+{
+	if (GLM_AliasModelsDrawnIndividually()) {
+		return GLM_DrawAliasModelsIndividually(instr, cmd_start, call_index);
+	}
+
+	GL_MultiDrawArraysIndirect(
+		GL_TRIANGLES,
+		(const void*)(uintptr_t)(instr->indirect_buffer_offset + extra_offset + cmd_start * sizeof(instr->indirect_buffer[0])),
+		instr->num_cmds[call_index],
+		0
+	);
+	return instr->num_cmds[call_index];
+}
+
 static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 {
 	aliasmodel_draw_instructions_t* instr = &alias_draw_instructions[type];
@@ -550,13 +564,12 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	qbool translucent = (type != aliasmodel_draw_std && type != aliasmodel_draw_postscene_additive);
 	qbool additive = (type == aliasmodel_draw_postscene_additive);
 	qbool shells = (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells);
-	qbool individually = GLM_AliasModelsDrawnIndividually();
 
 	if (!instr->num_calls || !GLM_CompileAliasModelProgram()) {
 		return;
 	}
 
-	if (!individually) {
+	if (!GLM_AliasModelsDrawnIndividually()) {
 		buffers.Bind(r_buffer_aliasmodel_drawcall_indirect);
 		extra_offset = buffers.BufferOffset(r_buffer_aliasmodel_drawcall_indirect);
 	}
@@ -576,17 +589,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		GLM_StateBeginAliasModelZPassBatch();
 		call_start = 0;
 		for (i = 0; i < instr->num_calls; ++i) {
-			if (individually) {
-				call_start += GLM_DrawAliasModelsIndividually(instr, call_start, i);
-			}
-			else {
-				GL_MultiDrawArraysIndirect(
-					GL_TRIANGLES,
-					(const void*)(uintptr_t)(instr->indirect_buffer_offset + extra_offset),
-					instr->num_cmds[i],
-					0
-				);
-			}
+			call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset);
 		}
 	}
 
@@ -597,17 +600,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 			renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, instr->num_textures[i], instr->bound_textures[i]);
 		}
 
-		if (individually) {
-			call_start += GLM_DrawAliasModelsIndividually(instr, call_start, i);
-		}
-		else {
-			GL_MultiDrawArraysIndirect(
-				GL_TRIANGLES,
-				(const void*)(uintptr_t)(instr->indirect_buffer_offset + extra_offset),
-				instr->num_cmds[i],
-				0
-			);
-		}
+		call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset);
 	}
 
 	if (type == aliasmodel_draw_std && alias_draw_instructions[aliasmodel_draw_outlines_spec].num_calls) {
@@ -620,17 +613,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 
 		call_start = 0;
 		for (i = 0; i < instr->num_calls; ++i) {
-			if (individually) {
-				call_start += GLM_DrawAliasModelsIndividually(instr, call_start, i);
-			}
-			else {
-				GL_MultiDrawArraysIndirect(
-						GL_TRIANGLES,
-						(const void*)(uintptr_t)(instr->indirect_buffer_offset + extra_offset),
-						instr->num_cmds[i],
-						0
-				);
-			}
+			call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset);
 		}
 		R_TraceLeaveNamedRegion();
 	}
@@ -645,17 +628,7 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 
 		call_start = 0;
 		for (i = 0; i < instr->num_calls; ++i) {
-			if (individually) {
-				call_start += GLM_DrawAliasModelsIndividually(instr, call_start, i);
-			}
-			else {
-				GL_MultiDrawArraysIndirect(
-					GL_TRIANGLES,
-					(const void*)(uintptr_t)(instr->indirect_buffer_offset + extra_offset),
-					instr->num_cmds[i],
-					0
-				);
-			}
+			call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset);
 		}
 		R_TraceLeaveNamedRegion();
 	}
