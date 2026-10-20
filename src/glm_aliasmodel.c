@@ -116,6 +116,25 @@ static uniform_block_aliasmodels_t aliasdata;
 
 static int cached_mode;
 
+// Without SSBOs (OpenGL < 4.3) the model data is read through a uniform block holding a
+// section of MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS models, and without base instance the
+// model is picked with a uniform, so each model is drawn on its own.
+static qbool GLM_AliasModelsDrawnIndividually(void)
+{
+	return !GL_ShaderBindingsSupported() || !GL_Supported(R_SUPPORT_INSTANCED_RENDERING);
+}
+
+// The section size (64 * 144 bytes) satisfies GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT.
+static int bound_model_section;
+
+static void GLM_BindAliasModelSection(int section)
+{
+	uintptr_t section_size = sizeof(aliasdata.models[0]) * MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS;
+
+	buffers.BindRange(r_buffer_aliasmodel_model_data, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA), buffers.BufferOffset(r_buffer_aliasmodel_model_data) + section * section_size, section_size);
+	bound_model_section = section;
+}
+
 #define GET_COLOR_VALUES(colr) (float[]){(float)gl_outline_color_##colr.color[0] / 255.0f,(float)gl_outline_color_##colr.color[1] / 255.0f,(float)gl_outline_color_##colr.color[2] / 255.0f}
 
 static void R_SetAliasModelUniforms(int mode)
@@ -154,7 +173,7 @@ qbool GLM_CompileAliasModelProgram(void)
 		(r_refdef2.drawCaustics ? DRAW_CAUSTIC_TEXTURES : 0) |
 		(r_lerpmuzzlehack.integer ? DRAW_LERP_MUZZLEHACK : 0) |
 		(gl_smoothmodels.integer ? 0 : DRAW_FLAT_SHADING) |
-		(GL_Supported(R_SUPPORT_INSTANCED_RENDERING) ? DRAW_INSTANCED : 0);
+		(GLM_AliasModelsDrawnIndividually() ? 0 : DRAW_INSTANCED);
 
 	if (R_ProgramRecompileNeeded(r_program_aliasmodel, drawAlias_desiredOptions)) {
 		static char included_definitions[1024];
@@ -458,7 +477,12 @@ void GLM_PrepareAliasModelBatches(void)
 
 	// Update VBO with data about each entity
 	buffers.Update(r_buffer_aliasmodel_model_data, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
-	buffers.BindRange(r_buffer_aliasmodel_model_data, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA), buffers.BufferOffset(r_buffer_aliasmodel_model_data), sizeof(aliasdata.models[0]) * alias_draw_count);
+	if (GL_ShaderBindingsSupported()) {
+		buffers.BindRange(r_buffer_aliasmodel_model_data, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA), buffers.BufferOffset(r_buffer_aliasmodel_model_data), sizeof(aliasdata.models[0]) * alias_draw_count);
+	}
+	else {
+		GLM_BindAliasModelSection(0);
+	}
 
 	// Build & update list of indirect calls
 	{
@@ -488,17 +512,25 @@ void GLM_PrepareAliasModelBatches(void)
 	R_TraceLeaveNamedRegion();
 }
 
-// GL 4.1 fallback: no baseInstance, so use instanceOffset uniform to index correct model
-static int GLM_DrawAliasModelsNoBaseInstance(aliasmodel_draw_instructions_t* instr, int cmd_start, int call_index)
+// The _instanceId vertex attribute is always 0 here, the instanceOffset uniform picks the model
+static int GLM_DrawAliasModelsIndividually(aliasmodel_draw_instructions_t* instr, int cmd_start, int call_index)
 {
 	int j;
 
 	for (j = 0; j < instr->num_cmds[call_index]; ++j) {
 		DrawArraysIndirectCommand_t* cmd = &instr->indirect_buffer[cmd_start + j];
+		int model = cmd->baseInstance;
 
-		// Without baseInstance support, _instanceId vertex attribute is always 0.
-		// Use instanceOffset uniform so shader reads models[0 + baseInstance].
-		R_ProgramUniform1i(r_program_uniform_aliasmodel_instanceOffset, cmd->baseInstance);
+		if (!GL_ShaderBindingsSupported()) {
+			int section = model / MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS;
+
+			if (section != bound_model_section) {
+				GLM_BindAliasModelSection(section);
+			}
+			model -= section * MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS;
+		}
+
+		R_ProgramUniform1i(r_program_uniform_aliasmodel_instanceOffset, model);
 
 		GL_DrawArrays(GL_TRIANGLES, cmd->first, cmd->count);
 	}
@@ -518,13 +550,13 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	qbool translucent = (type != aliasmodel_draw_std && type != aliasmodel_draw_postscene_additive);
 	qbool additive = (type == aliasmodel_draw_postscene_additive);
 	qbool shells = (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells);
-	qbool no_base_instance = !GL_Supported(R_SUPPORT_INSTANCED_RENDERING);
+	qbool individually = GLM_AliasModelsDrawnIndividually();
 
 	if (!instr->num_calls || !GLM_CompileAliasModelProgram()) {
 		return;
 	}
 
-	if (!no_base_instance) {
+	if (!individually) {
 		buffers.Bind(r_buffer_aliasmodel_drawcall_indirect);
 		extra_offset = buffers.BufferOffset(r_buffer_aliasmodel_drawcall_indirect);
 	}
@@ -544,8 +576,8 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 		GLM_StateBeginAliasModelZPassBatch();
 		call_start = 0;
 		for (i = 0; i < instr->num_calls; ++i) {
-			if (no_base_instance) {
-				call_start += GLM_DrawAliasModelsNoBaseInstance(instr, call_start, i);
+			if (individually) {
+				call_start += GLM_DrawAliasModelsIndividually(instr, call_start, i);
 			}
 			else {
 				GL_MultiDrawArraysIndirect(
@@ -565,8 +597,8 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 			renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, instr->num_textures[i], instr->bound_textures[i]);
 		}
 
-		if (no_base_instance) {
-			call_start += GLM_DrawAliasModelsNoBaseInstance(instr, call_start, i);
+		if (individually) {
+			call_start += GLM_DrawAliasModelsIndividually(instr, call_start, i);
 		}
 		else {
 			GL_MultiDrawArraysIndirect(
@@ -588,8 +620,8 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 
 		call_start = 0;
 		for (i = 0; i < instr->num_calls; ++i) {
-			if (no_base_instance) {
-				call_start += GLM_DrawAliasModelsNoBaseInstance(instr, call_start, i);
+			if (individually) {
+				call_start += GLM_DrawAliasModelsIndividually(instr, call_start, i);
 			}
 			else {
 				GL_MultiDrawArraysIndirect(
@@ -613,8 +645,8 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 
 		call_start = 0;
 		for (i = 0; i < instr->num_calls; ++i) {
-			if (no_base_instance) {
-				call_start += GLM_DrawAliasModelsNoBaseInstance(instr, call_start, i);
+			if (individually) {
+				call_start += GLM_DrawAliasModelsIndividually(instr, call_start, i);
 			}
 			else {
 				GL_MultiDrawArraysIndirect(

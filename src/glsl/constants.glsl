@@ -23,6 +23,9 @@
 #define AM_VERTEX_NOLERP        1 // the alias model vertex should not be lerped, and always use lerpfraction 1 (meag: update shader if value no longer 1)
 #define AM_VERTEX_NORMALFIXED   2 // set after the alias model pose has been checked for matching vertices with different normals
 
+// Models in the alias model data block when it's a uniform block (no SSBOs)
+#define MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS 64
+
 // Brush-model flags
 #define EZQ_SURFACE_TYPE   7    // must cover all bits required for TEXTURE_TURB_*
 #define TEXTURE_TURB_WATER 1
