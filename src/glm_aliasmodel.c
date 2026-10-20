@@ -487,8 +487,8 @@ void GLM_PrepareAliasModelBatches(void)
 		GLM_BindAliasModelSection(0);
 	}
 
-	// Build & update list of indirect calls
-	{
+	// Build & update list of indirect calls, not read when the models are drawn individually
+	if (!GLM_AliasModelsDrawnIndividually()) {
 		int i;
 		int offset = 0;
 

@@ -701,18 +701,28 @@ static qbool GLM_WorldDataBoundPerDrawcall(void)
 	return !GL_ShaderBindingsSupported();
 }
 
+// Without base instance (OpenGL < 4.2) each request is drawn on its own from the request
+// itself, so the indirect draw buffer isn't read.
+static qbool GLM_WorldDrawnIndirect(void)
+{
+	return GL_Supported(R_SUPPORT_INSTANCED_RENDERING);
+}
+
 void GLM_PrepareWorldModelBatch(void)
 {
 	GLintptr drawOffset = 0;
 	GLintptr indexOffset = buffers.BufferOffset(r_buffer_brushmodel_index_data) / sizeof(modelIndexes[0]);
 	qbool bound_per_drawcall = GLM_WorldDataBoundPerDrawcall();
+	qbool indirect = GLM_WorldDrawnIndirect();
 	int samplerMappingOffset = 0;
 	int batchOffset = 0;
 	int draw, i;
 
 	R_TraceEnterNamedRegion(__func__);
 	buffers.Update(r_buffer_brushmodel_index_data, sizeof(modelIndexes[0]) * index_count, modelIndexes);
-	buffers.EnsureSize(r_buffer_brushmodel_drawcall_indirect, sizeof(drawcalls[0].worldmodel_requests) * maximum_drawcalls);
+	if (indirect) {
+		buffers.EnsureSize(r_buffer_brushmodel_drawcall_indirect, sizeof(drawcalls[0].worldmodel_requests) * maximum_drawcalls);
+	}
 	buffers.EnsureSize(r_buffer_brushmodel_drawcall_data, sizeof(drawcalls[0].calls) * maximum_drawcalls);
 	buffers.EnsureSize(r_buffer_brushmodel_worldsamplers_ssbo, sizeof(drawcalls[0].mappings) * maximum_drawcalls);
 
@@ -748,9 +758,11 @@ void GLM_PrepareWorldModelBatch(void)
 			drawcall->worldmodel_requests[i].firstIndex += indexOffset;
 		}
 
-		drawcall->indirectDrawOffset = drawOffset;
-		buffers.UpdateSection(r_buffer_brushmodel_drawcall_indirect, drawOffset, sizeof(drawcall->worldmodel_requests[0]) * drawcall->batch_count, &drawcall->worldmodel_requests);
-		drawOffset += sizeof(drawcall->worldmodel_requests[0]) * drawcall->batch_count;
+		if (indirect) {
+			drawcall->indirectDrawOffset = drawOffset;
+			buffers.UpdateSection(r_buffer_brushmodel_drawcall_indirect, drawOffset, sizeof(drawcall->worldmodel_requests[0]) * drawcall->batch_count, &drawcall->worldmodel_requests);
+			drawOffset += sizeof(drawcall->worldmodel_requests[0]) * drawcall->batch_count;
+		}
 
 		buffers.UpdateSection(r_buffer_brushmodel_drawcall_data, drawcall->drawDataOffset, sizeof(drawcall->calls[0]) * drawcall->batch_count, &drawcall->calls);
 		buffers.UpdateSection(r_buffer_brushmodel_worldsamplers_ssbo, drawcall->samplerDataOffset, sizeof(drawcall->mappings[0]) * drawcall->sampler_mappings, &drawcall->mappings);
@@ -765,7 +777,7 @@ void GLM_PrepareWorldModelBatch(void)
 static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintptr_t offset, int begin, int count, qbool alphablended)
 {
 	int i;
-	qbool no_base_instance = !GL_Supported(R_SUPPORT_INSTANCED_RENDERING);
+	qbool no_base_instance = !GLM_WorldDrawnIndirect();
 
 	for (i = begin; i < begin + count; ++i) {
 		glm_worldmodel_req_t* req = &drawcall->worldmodel_requests[i];
@@ -831,8 +843,10 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 			R_TraceEnterNamedRegion(__func__);
 			GL_StartWorldBatch(alphablended);
 			buffers.Bind(r_buffer_brushmodel_index_data);
-			buffers.Bind(r_buffer_brushmodel_drawcall_indirect);
-			extra_offset = buffers.BufferOffset(r_buffer_brushmodel_drawcall_indirect);
+			if (GLM_WorldDrawnIndirect()) {
+				buffers.Bind(r_buffer_brushmodel_drawcall_indirect);
+				extra_offset = buffers.BufferOffset(r_buffer_brushmodel_drawcall_indirect);
+			}
 
 			first = false;
 		}
