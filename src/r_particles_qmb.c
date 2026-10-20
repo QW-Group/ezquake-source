@@ -179,12 +179,25 @@ qbool TraceLineN (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal)
 	if (normal)
 		VectorCopy (trace.plane.normal, normal);
 
-	if (!trace.allsolid)
-		return false;
+	// Hit something, unless the line started inside it
+	return trace.fraction < 1 && !trace.startsolid;
+}
 
-	if (trace.startsolid)
-		return false;
+// Moves a particle that went into a wall back to where it hit it & reflects its velocity
+static qbool QMB_BounceParticle(particle_type_t* pt, particle_t* p, vec3_t oldorg)
+{
+	vec3_t stop, normal;
 
+	if (!TraceLineN(oldorg, p->org, stop, normal)) {
+		return false;
+	}
+
+	VectorCopy(stop, p->org);
+	VectorMA(p->vel, -pt->custom * DotProduct(p->vel, normal), normal, p->vel);
+
+	// The cached contents are for the point inside the wall
+	p->cached_distance = 0;
+	VectorClear(p->cached_movement);
 	return true;
 }
 
@@ -399,7 +412,7 @@ void QMB_InitParticles(void)
 	ADD_PARTICLE_TEXTURE(ptex_spark, spark_texture, 0, 1, 0, 0, 32, 32);
 
 	QMB_AddParticleType(p_spark, pd_spark, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -32, 0, pm_bounce, 1.3, 9, &count, "part:spark");
-	QMB_AddParticleType(p_sparkray, pd_sparkray, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -0, 0, pm_nophysics, 0, 9, &count, "part:sparkray");
+	QMB_AddParticleType(p_sparkray, pd_sparkray, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -0, 0, pm_normal, 0, 9, &count, "part:sparkray");
 	QMB_AddParticleType(p_gunblast, pd_spark, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -16, 0, pm_bounce, 1.3, 9, &count, "part:gunblast");
 
 	QMB_AddParticleType(p_fire, pd_billboard, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_generic, 204, 0, -2.95, pm_die, 0, 4, &count, "part:fire");
@@ -625,7 +638,6 @@ static void QMB_FillParticleVertexBuffer(void)
 		case pd_spark:
 		case pd_sparkray:
 			for (p = pt->start; p; p = p->next) {
-				vec3_t neworg;
 				float* point;
 				byte farColor[4];
 				particle_texture_t* ptex = &particle_textures[ptex_none];
@@ -643,10 +655,6 @@ static void QMB_FillParticleVertexBuffer(void)
 				vert = R_Sprite3DAddEntry(pt->billboard_type, pt->verts_per_primitive);
 				if (vert) {
 					vec3_t v;
-
-					if (!TraceLineN(p->endorg, p->org, neworg, NULL)) {
-						VectorCopy(p->org, neworg);
-					}
 
 					point = (pt->drawtype == pd_spark ? p->org : p->endorg);
 					farColor[0] = p->color[0] >> 1;
@@ -666,7 +674,7 @@ static void QMB_FillParticleVertexBuffer(void)
 					else {
 						for (j = 7; j >= 0; j--) {
 							for (k = 0; k < 3; k++) {
-								v[k] = neworg[k] + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
+								v[k] = p->org[k] + vright[k] * cost[j % 7] * p->size + vup[k] * sint[j % 7] * p->size;
 							}
 							QMB_BillboardAddVert(vert++, pt, v[0], v[1], v[2], ptex->coords[0][0], ptex->coords[0][1], farColor, -1);
 						}
@@ -867,9 +875,8 @@ static void QMB_FillParticleVertexBuffer(void)
 void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 {
 	float grav = movevars.gravity / 800.0;
-	vec3_t oldorg, stop, normal, movement;
+	vec3_t oldorg, movement;
 	int contents;
-	float bounce;
 	float lifetime;
 
 	p->size += p->growth * cls.frametime;
@@ -1006,14 +1013,15 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 				VectorScale(p->vel, cls.frametime, movement);
 				VectorAdd(p->org, movement, p->org);
 				if (CONTENTS_SOLID == ParticleContents(p, movement)) {
-					if (TraceLineN(oldorg, p->org, stop, normal)) {
-						VectorCopy(stop, p->org);
-						bounce = -pt->custom * DotProduct(p->vel, normal);
-						VectorMA(p->vel, bounce, normal, p->vel);
+					if (QMB_BounceParticle(pt, p, oldorg)) {
 						p->bounces++;
 						if (pt->id == p_smallspark) {
-							VectorCopy(stop, p->endorg);
+							VectorCopy(p->org, p->endorg);
 						}
+					}
+					else {
+						// Started inside the wall, nothing to bounce off
+						p->die = 0;
 					}
 				}
 			}
@@ -1060,12 +1068,10 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 			VectorCopy(p->org, oldorg);
 			VectorScale(p->vel, cls.frametime, movement);
 			VectorAdd(p->org, movement, p->org);
-			if (CONTENTS_SOLID == ParticleContents(p, movement)) {
-				if (TraceLineN(oldorg, p->org, stop, normal)) {
-					VectorCopy(stop, p->org);
-					bounce = -pt->custom * DotProduct(p->vel, normal);
-					VectorMA(p->vel, bounce, normal, p->vel);
-				}
+			if (CONTENTS_SOLID == ParticleContents(p, movement) && !QMB_BounceParticle(pt, p, oldorg)) {
+				// Started inside the wall, nothing to bounce off
+				p->die = 0;
+				break;
 			}
 			VX_ParticleTrail(oldorg, p->org, p->size, 0.2, p->color);
 			if (VectorLength(p->vel) == 0) {
