@@ -521,22 +521,41 @@ void GLM_PrepareAliasModelBatches(void)
 	R_TraceLeaveNamedRegion();
 }
 
-// The _instanceId vertex attribute is always 0 here, the instanceOffset uniform picks the model
+// Each command is drawn with the instanceOffset uniform picking its model, but consecutive
+// models drawn with the same pose & texture are drawn instanced, the _instanceId vertex
+// attribute counting up from 0 (there's no base instance) picking each model in the run.
 static int GLM_DrawAliasModelsIndividually(aliasmodel_draw_instructions_t* instr, int cmd_start, int call_index, qbool bind_materials)
 {
-	int j;
+	DrawArraysIndirectCommand_t* cmds = &instr->indirect_buffer[cmd_start];
+	int num_cmds = instr->num_cmds[call_index];
+	qbool sections = !GL_ShaderBindingsSupported();
+	int j, run;
 
-	for (j = 0; j < instr->num_cmds[call_index]; ++j) {
-		DrawArraysIndirectCommand_t* cmd = &instr->indirect_buffer[cmd_start + j];
+	for (j = 0; j < num_cmds; j += run) {
+		DrawArraysIndirectCommand_t* cmd = &cmds[j];
 		int model = cmd->baseInstance;
+		int section = 0;
 
-		if (!GL_ShaderBindingsSupported()) {
-			int section = model / MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS;
-
+		if (sections) {
+			section = model / MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS;
 			if (section != bound_model_section) {
 				GLM_BindAliasModelSection(section);
 			}
 			model -= section * MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS;
+		}
+
+		for (run = 1; j + run < num_cmds && GL_DrawArraysInstancedAvailable(); ++run) {
+			DrawArraysIndirectCommand_t* next = &cmds[j + run];
+
+			if (next->first != cmd->first || next->count != cmd->count || next->baseInstance != cmd->baseInstance + run) {
+				break;
+			}
+			if (sections && next->baseInstance / MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS != section) {
+				break;
+			}
+			if (bind_materials && !R_TextureReferenceEqual(alias_model_textures[next->baseInstance], alias_model_textures[cmd->baseInstance])) {
+				break;
+			}
 		}
 
 		if (bind_materials && R_TextureReferenceIsValid(alias_model_textures[cmd->baseInstance])) {
@@ -544,13 +563,15 @@ static int GLM_DrawAliasModelsIndividually(aliasmodel_draw_instructions_t* instr
 		}
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_instanceOffset, model);
 
-		GL_DrawArrays(GL_TRIANGLES, cmd->first, cmd->count);
+		if (run > 1) {
+			GL_DrawArraysInstanced(GL_TRIANGLES, cmd->first, cmd->count, run);
+		}
+		else {
+			GL_DrawArrays(GL_TRIANGLES, cmd->first, cmd->count);
+		}
 	}
 
-	// Reset for potential use with baseInstance path
-	R_ProgramUniform1i(r_program_uniform_aliasmodel_instanceOffset, 0);
-
-	return instr->num_cmds[call_index];
+	return num_cmds;
 }
 
 // Draws the models queued in one call, returns the number of commands drawn
