@@ -193,7 +193,7 @@
             "cacheVariables": {
                 "VCPKG_TARGET_TRIPLET": "arm64-osx",
                 "CMAKE_OSX_ARCHITECTURES": "arm64",
-                "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0"
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "12.0"
             }
         },
         {
@@ -203,7 +203,7 @@
             "cacheVariables": {
                 "VCPKG_TARGET_TRIPLET": "x64-osx",
                 "CMAKE_OSX_ARCHITECTURES": "x86_64",
-                "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0"
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "12.0"
             }
         },
         {
