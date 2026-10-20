@@ -114,7 +114,8 @@ static void GLM_CheckDrawCallSize(void)
 #define DRAW_SKYWIND               (1 << 14)
 #define DRAW_INSTANCED             (1 << 15)
 
-static int material_samplers_max;
+static int material_samplers_max;  // texture arrays a drawcall can use
+static int material_sampler_units; // material samplers declared in the shader
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
 static int TEXTURE_UNIT_LIGHTMAPS;
 static int TEXTURE_UNIT_DETAIL;
@@ -122,6 +123,13 @@ static int TEXTURE_UNIT_CAUSTICS;
 static int TEXTURE_UNIT_SKYBOX;
 static int TEXTURE_UNIT_SKYDOME_TEXTURE;
 static int TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE;
+
+// Without base instance (OpenGL < 4.2) each request is drawn on its own from the request
+// itself, so the indirect draw buffer isn't read.
+static qbool GLM_WorldDrawnIndirect(void)
+{
+	return GL_Supported(R_SUPPORT_INSTANCED_RENDERING);
+}
 
 // We re-compile whenever certain options change, to save texture bindings/lookups
 static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alpha_test)
@@ -217,8 +225,17 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 		strlcat(included_definitions, va("#define SAMPLER_LIGHTMAP_TEXTURE %d\n", TEXTURE_UNIT_LIGHTMAPS), sizeof(included_definitions));
 		TEXTURE_UNIT_MATERIAL = samplers++;
 		strlcat(included_definitions, va("#define SAMPLER_MATERIAL_TEXTURE_START %d\n", TEXTURE_UNIT_MATERIAL), sizeof(included_definitions));
-		material_samplers_max = min(glConfig.texture_units - TEXTURE_UNIT_MATERIAL, MAXIMUM_MATERIAL_SAMPLERS);
-		strlcat(included_definitions, va("#define SAMPLER_MATERIAL_TEXTURE_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
+		if (GLM_WorldDrawnIndirect()) {
+			material_samplers_max = min(glConfig.texture_units - TEXTURE_UNIT_MATERIAL, MAXIMUM_MATERIAL_SAMPLERS);
+			material_sampler_units = material_samplers_max;
+		}
+		else {
+			// Requests are drawn one at a time with their texture array bound, and the driver
+			// sets up every sampler the program declares for each draw, so declare just one
+			material_samplers_max = MAXIMUM_MATERIAL_SAMPLERS;
+			material_sampler_units = 1;
+		}
+		strlcat(included_definitions, va("#define SAMPLER_MATERIAL_TEXTURE_COUNT %d\n", material_sampler_units), sizeof(included_definitions));
 		strlcat(included_definitions, va("#define MAX_INSTANCEID %d\n", MAX_WORLDMODEL_BATCH), sizeof(included_definitions));
 		if (r_drawflat.integer == 1 || r_drawflat.integer == 2) {
 			strlcat(included_definitions, "#define DRAW_FLATFLOORS\n", sizeof(included_definitions));
@@ -251,7 +268,7 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 				R_ProgramUniform1i(base + 4, TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE);
 			}
 			R_ProgramUniform1i(base + 5, TEXTURE_UNIT_LIGHTMAPS);
-			R_ProgramUniform1iArrayBase(base + 6, material_samplers_max, TEXTURE_UNIT_MATERIAL);
+			R_ProgramUniform1iArrayBase(base + 6, material_sampler_units, TEXTURE_UNIT_MATERIAL);
 		}
 
 		R_ProgramSetCustomOptions(program_id, drawworld_desiredOptions);
@@ -701,13 +718,6 @@ static qbool GLM_WorldDataBoundPerDrawcall(void)
 	return !GL_ShaderBindingsSupported();
 }
 
-// Without base instance (OpenGL < 4.2) each request is drawn on its own from the request
-// itself, so the indirect draw buffer isn't read.
-static qbool GLM_WorldDrawnIndirect(void)
-{
-	return GL_Supported(R_SUPPORT_INSTANCED_RENDERING);
-}
-
 void GLM_PrepareWorldModelBatch(void)
 {
 	GLintptr drawOffset = 0;
@@ -789,6 +799,10 @@ static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintp
 		R_ProgramUse(alphatested_program ? r_program_brushmodel_alphatested : r_program_brushmodel);
 
 		if (no_base_instance) {
+			if (req->samplerMappingCount) {
+				renderer.TextureUnitBind(TEXTURE_UNIT_MATERIAL, drawcall->allocated_samplers[req->nonDynamicSampler]);
+			}
+
 			// GL 4.1: no baseInstance support, _instanceId is always 0
 			// Use instanceOffset uniform so shader reads drawInfo[0 + baseInstance]
 			R_ProgramUniform1i(alphatested_program ? r_program_uniform_brushmodel_alphatested_instanceOffset : r_program_uniform_brushmodel_instanceOffset, req->baseInstance);
@@ -858,8 +872,10 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 			buffers.BindRange(r_buffer_brushmodel_worldsamplers_ssbo, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS), buffers.BufferOffset(r_buffer_brushmodel_worldsamplers_ssbo) + drawcall->samplerDataOffset, sizeof(drawcall->mappings));
 		}
 
-		// Bind texture units
-		renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
+		// Bind texture units, requests drawn individually bind their own
+		if (GLM_WorldDrawnIndirect()) {
+			renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
+		}
 
 		// Opaque requests are sorted by polygon offset, translucent requests keep their
 		// order, so draw each run of requests with the same polygon offset
@@ -946,7 +962,11 @@ static int GL_DrawCallComparison(const void* lhs_, const void* rhs_)
 		return -1;
 	}
 
-	// The sampler is per-request data so doesn't affect batching, keep submission order instead
+	// Requests drawn individually bind their own texture array, so group them to bind fewer.
+	// Otherwise the sampler is per-request data so doesn't affect batching, keep submission order.
+	if (!GLM_WorldDrawnIndirect() && lhs->nonDynamicSampler != rhs->nonDynamicSampler) {
+		return lhs->nonDynamicSampler - rhs->nonDynamicSampler;
+	}
 	return (int)lhs->baseInstance - (int)rhs->baseInstance;
 }
 
@@ -977,7 +997,7 @@ static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall)
 		drawcall->calls[i].flags = thisReq->flags;
 		memcpy(drawcall->calls[i].modelMatrix, thisReq->mvMatrix, sizeof(drawcall->calls[i].modelMatrix));
 		drawcall->calls[i].samplerBase = thisReq->samplerMappingBase;
-		drawcall->calls[i].sampler = thisReq->nonDynamicSampler;
+		drawcall->calls[i].sampler = (GLM_WorldDrawnIndirect() ? thisReq->nonDynamicSampler : 0);
 		thisReq->baseInstance = i;
 	}
 }
