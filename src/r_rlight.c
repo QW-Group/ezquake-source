@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_lightmaps.h"
 #include "r_state.h"
 #include "r_lighting.h"
+#include "tr_types.h"
 
 int	r_dlightframecount;
 

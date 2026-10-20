@@ -45,7 +45,7 @@ static const float rgb9e5tab[32] = {
 
 extern cvar_t r_dynamic;
 #define R_NoLighting()       (r_dynamic.integer == 0)
-#define R_HardwareLighting() (r_dynamic.integer == 2 && R_UseModernOpenGL())
+#define R_HardwareLighting() (r_dynamic.integer == 2 && R_UseModernOpenGL() && GL_Supported(R_SUPPORT_COMPUTE_SHADERS))
 #define R_SoftwareLighting() (r_dynamic.integer && !R_HardwareLighting())
 
 #endif // EZQUAKE_R_LOCAL_HEADER

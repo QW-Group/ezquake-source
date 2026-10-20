@@ -214,7 +214,7 @@ qbool GLM_CreateMultiImageProgram(void)
 		// Initialise program for drawing image
 		R_ProgramCompileWithInclude(r_program_hud_images, included_definitions);
 
-		if (!GL_VersionAtLeast(4, 2) && R_ProgramReady(r_program_hud_images)) {
+		if (!GL_ShaderBindingsSupported() && R_ProgramReady(r_program_hud_images)) {
 			R_ProgramUse(r_program_hud_images);
 			R_ProgramUniform1i(r_program_uniform_hudimage_tex, 0);
 		}

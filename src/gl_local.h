@@ -178,9 +178,13 @@ void GL_InitialiseDebugging(void);
 // Which renderer to use
 #define GL_VersionAtLeast(major, minor) (glConfig.majorVersion > (major) || (glConfig.majorVersion == (major) && glConfig.minorVersion >= (minor)))
 
+// Shaders are compiled as GLSL 4.30 with SSBOs and layout(binding=N) on GL 4.3+. Below
+// that they're GLSL 4.10, so sampler units and block bindings must be set from C.
+#define GL_ShaderBindingsSupported() GL_VersionAtLeast(4, 3)
+
 // When SSBOs are unavailable (GL < 4.3), storage buffers become UBOs.
 // UBOs share the binding namespace with GlobalState (binding 0), so offset by 1.
-#define EZQ_STORAGE_BLOCK_BINDING(n) (GL_VersionAtLeast(4, 3) ? (n) : ((n) + 1))
+#define EZQ_STORAGE_BLOCK_BINDING(n) (GL_ShaderBindingsSupported() ? (n) : ((n) + 1))
 
 void GL_TextureInitialiseState(void);
 void GL_InvalidateTextureReferences(GLuint texture);
