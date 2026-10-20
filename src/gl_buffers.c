@@ -440,12 +440,21 @@ static void GL_BufferShutdown(void)
 	memset(&glBufferState, 0, sizeof(glBufferState));
 }
 
+// Binding to an indexed target also binds the buffer to the generic target
+static void GL_BufferBoundToGenericTarget(GLenum target, GLuint buffer)
+{
+	if (target == GL_UNIFORM_BUFFER) {
+		glBufferState.currentUniformBuffer = buffer;
+	}
+}
+
 static void GL_BindBufferBase(r_buffer_id id, unsigned int index)
 {
 	assert(id != r_buffer_none);
 	assert(glBufferState.buffers[id].glref);
 
 	GL_Procedure(glBindBufferBase, GL_BufferTypeToTarget(glBufferState.buffers[id].type), index, glBufferState.buffers[id].glref);
+	GL_BufferBoundToGenericTarget(GL_BufferTypeToTarget(glBufferState.buffers[id].type), glBufferState.buffers[id].glref);
 }
 
 static void GL_BindBufferRange(r_buffer_id id, unsigned int index, ptrdiff_t offset, int size)
@@ -461,6 +470,7 @@ static void GL_BindBufferRange(r_buffer_id id, unsigned int index, ptrdiff_t off
 	assert(offset + size <= glBufferState.buffers[id].size * (glBufferState.buffers[id].persistent_mapped_ptr ? 3 : 1));
 
 	GL_Procedure(glBindBufferRange, GL_BufferTypeToTarget(glBufferState.buffers[id].type), index, glBufferState.buffers[id].glref, offset, size);
+	GL_BufferBoundToGenericTarget(GL_BufferTypeToTarget(glBufferState.buffers[id].type), glBufferState.buffers[id].glref);
 }
 
 static qbool GL_BindBufferImpl(GLenum target, GLuint buffer)
