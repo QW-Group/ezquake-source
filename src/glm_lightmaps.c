@@ -40,6 +40,8 @@ static texture_ref lightmap_texture_array;
 static texture_ref lightmap_data_array;
 static texture_ref lightmap_source_array;
 static unsigned int lightmap_depth;
+static unsigned int lightmap_compute_depth;
+static qbool lightmap_compute_arrays_current; // source & data arrays hold the current lightmaps
 static unsigned int* surfaceTodoData;
 static int surfaceTodoLength;
 static int maximumSurfaceNumber;
@@ -63,12 +65,67 @@ qbool GLM_CompileLightmapComputeProgram(void)
 	return R_ProgramReady(r_program_lightmap_compute);
 }
 
+static void GLM_UploadComputeLightmapArrays(int i)
+{
+	GL_TexSubImage3D(
+		0, lightmap_source_array, 0, 0, 0, i,
+		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT,
+		lightmaps[i].sourcedata
+	);
+
+	GL_TexSubImage3D(
+		0, lightmap_data_array, 0, 0, 0, i,
+		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_RGBA_INTEGER, GL_INT,
+		lightmaps[i].computeData
+	);
+}
+
+// The source & data arrays are only read by the lighting compute shader, so they're only
+// created when hardware lighting is used, and must be filled if it was enabled later on.
+static void GLM_CreateComputeLightmapArrays(void)
+{
+	lightmap_compute_arrays_current = true;
+	if (R_TextureReferenceIsValid(lightmap_source_array) && lightmap_compute_depth >= lightmap_array_size) {
+		return;
+	}
+
+	if (R_TextureReferenceIsValid(lightmap_data_array)) {
+		R_DeleteTextureArray(&lightmap_data_array);
+	}
+
+	if (R_TextureReferenceIsValid(lightmap_source_array)) {
+		R_DeleteTextureArray(&lightmap_source_array);
+	}
+
+	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_source_array, "lightmap_source_array");
+	GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA32UI, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, false);
+	R_SetTextureArraySize(lightmap_source_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 16);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_source_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 16, "lightmap_source_array");
+#endif
+
+	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_data_array, "lightmap_data_array");
+	GL_TexStorage3D(GL_TEXTURE0, lightmap_data_array, 1, GL_RGBA32I, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, false);
+	R_SetTextureArraySize(lightmap_data_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 16);
+#ifdef DEBUG_MEMORY_ALLOCATIONS
+	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_data_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 16, "lightmap_data_array");
+#endif
+	lightmap_compute_depth = lightmap_array_size;
+}
+
 void GLM_ComputeLightmaps(void)
 {
 	int i, start;
 
 	if (!GLM_CompileLightmapComputeProgram()) {
 		return;
+	}
+
+	if (!lightmap_compute_arrays_current) {
+		GLM_CreateComputeLightmapArrays();
+		for (i = 0; i < lightmap_array_size && lightmaps[i].allocated[0]; ++i) {
+			GLM_UploadComputeLightmapArrays(i);
+		}
 	}
 
 	if (!R_BufferReferenceIsValid(r_buffer_brushmodel_lightstyles_ssbo)) {
@@ -137,20 +194,17 @@ void GLM_CreateLightmapTextures(void)
 		buffers.EnsureSize(r_buffer_brushmodel_surfacestolight_ssbo, surfaceTodoLength);
 	}
 
+	lightmap_compute_arrays_current = false;
+	if (R_HardwareLighting()) {
+		GLM_CreateComputeLightmapArrays();
+	}
+
 	if (R_TextureReferenceIsValid(lightmap_texture_array) && lightmap_depth >= lightmap_array_size) {
 		return;
 	}
 
 	if (R_TextureReferenceIsValid(lightmap_texture_array)) {
 		R_DeleteTextureArray(&lightmap_texture_array);
-	}
-
-	if (R_TextureReferenceIsValid(lightmap_data_array)) {
-		R_DeleteTextureArray(&lightmap_data_array);
-	}
-
-	if (R_TextureReferenceIsValid(lightmap_source_array)) {
-		R_DeleteTextureArray(&lightmap_source_array);
 	}
 
 	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_texture_array, "lightmap_texture_array");
@@ -165,20 +219,6 @@ void GLM_CreateLightmapTextures(void)
 	for (i = 0; i < lightmap_array_size; ++i) {
 		lightmaps[i].gl_texref = lightmap_texture_array;
 	}
-
-	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_source_array, "lightmap_source_array");
-	GL_TexStorage3D(GL_TEXTURE0, lightmap_source_array, 1, GL_RGBA32UI, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, false);
-	R_SetTextureArraySize(lightmap_source_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 16);
-#ifdef DEBUG_MEMORY_ALLOCATIONS
-	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_source_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 16, "lightmap_source_array");
-#endif
-
-	GL_CreateTexturesWithIdentifier(texture_type_2d_array, 1, &lightmap_data_array, "lightmap_data_array");
-	GL_TexStorage3D(GL_TEXTURE0, lightmap_data_array, 1, GL_RGBA32I, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, false);
-	R_SetTextureArraySize(lightmap_data_array, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, lightmap_array_size, 16);
-#ifdef DEBUG_MEMORY_ALLOCATIONS
-	Sys_Printf("\nopengl-texture,alloc,%u,%d,%d,%d,%s\n", lightmap_data_array.index, LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT * lightmap_array_size * 16, "lightmap_data_array");
-#endif
 }
 
 void GLM_InvalidateLightmapTextures(void)
@@ -187,6 +227,8 @@ void GLM_InvalidateLightmapTextures(void)
 	R_TextureReferenceInvalidate(lightmap_data_array);
 	R_TextureReferenceInvalidate(lightmap_source_array);
 	lightmap_depth = 0;
+	lightmap_compute_depth = 0;
+	lightmap_compute_arrays_current = false;
 }
 
 void GLM_LightmapFrameInit(void)
@@ -222,17 +264,9 @@ void GLM_BuildLightmap(int i)
 		lightmaps[i].rawdata
 	);
 
-	GL_TexSubImage3D(
-		0, lightmap_source_array, 0, 0, 0, i,
-		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_RGBA_INTEGER, GL_UNSIGNED_INT,
-		lightmaps[i].sourcedata
-	);
-
-	GL_TexSubImage3D(
-		0, lightmap_data_array, 0, 0, 0, i,
-		LIGHTMAP_WIDTH, LIGHTMAP_HEIGHT, 1, GL_RGBA_INTEGER, GL_INT,
-		lightmaps[i].computeData
-	);
+	if (lightmap_compute_arrays_current) {
+		GLM_UploadComputeLightmapArrays(i);
+	}
 }
 
 void GLM_UploadLightmap(int textureUnit, int lightmapnum)
