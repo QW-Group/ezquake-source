@@ -60,20 +60,17 @@ extern void PF_min (void);
 extern void PF_max (void);
 extern void PF_bound (void);
 
-// Dedicated token context for the client VM (#441 tokenize / #442 argv). Server PR1
-// uses its own pr1_tokencontext (pr_cmds.c); here we keep a separate one so we do not
-// share the engine's global token buffer (Cmd_TokenizeString) used by the console.
-static tokenizecontext_t csqc_tokencontext;
-// Tokenizer selected for #442 argv: 0 = Cmd context (#441/#514), 1 = span store
-// (#479 tokenizebyseparator). FTE has one qctoken for both; keeping them separate
-// made tokenizebyseparator + argv return empty tokens.
+// One token store shared by every tokenizer (#441/#479/#514) and every reader
+// (#442, `argc`, #515/#516): a token is an offset span into s_tok_src plus its
+// parsed text, so argv and the index builtins cannot disagree (FTE keeps a single
+// qctoken[] the same way, fteqw/engine/common/pr_bgcmd.c:6141-6148).
 #define CSQC_TOK_SRC 2048
-static int s_tok_mode;
-static char s_tok_src[CSQC_TOK_SRC];
 #define CSQC_TOK_MAX 128
+static char s_tok_src[CSQC_TOK_SRC];
 static int s_tokn;
 static int s_tok_start[CSQC_TOK_MAX];
 static int s_tok_end[CSQC_TOK_MAX];
+static char s_tok_text[CSQC_TOK_MAX][CSQC_TOK_SRC];
 
 static char *CSQCVM_Str (int ofs)
 {
@@ -361,18 +358,189 @@ static void csqc_vectoangles (void)
 }
 
 /*
+ Parse one token with FTE COM_StringParse semantics
+ (fteqw/engine/common/common.c:4823-5032). qctokenize selects the module flavour:
+ tokenize/tokenizebyseparator split the QC punctuation set and treat single quotes
+ as quoting, while tokenize_console keeps them as text and drops block comments.
+ Returns the position after the token, or NULL at the end of the input.
+*/
+static const char *csqc_parse_token (const char *data, char *token, int tokenlen, qbool qctokenize)
+{
+	int c;
+	int len = 0;
+	qbool punct;
+
+	token[0] = 0;
+	if (!data)
+		return NULL;
+
+	for (;;)
+	{
+		while ((c = (unsigned char)*data), c <= ' ' && c != '\n')
+		{
+			if (!c)
+				return NULL;
+			data++;
+		}
+		if (c == '/' && data[1] == '/')
+		{
+			while (*data && *data != '\n')
+				data++;
+			continue;
+		}
+		if (c == '/' && data[1] == '*' && !qctokenize)
+		{
+			data += 2;
+			while (*data)
+			{
+				if (*data == '*' && data[1] == '/')
+				{
+					data += 2;
+					break;
+				}
+				data++;
+			}
+			continue;
+		}
+		break;
+	}
+
+	// A newline is its own token even for the console flavour: the only way to
+	// reach one here is through a `//` comment (the caller skips plain whitespace).
+	if (c == '\n')
+	{
+		token[0] = '\n';
+		token[1] = 0;
+		return data + 1;
+	}
+
+	if (c == '"')
+	{
+		data++;
+		for (;;)
+		{
+			if (len >= tokenlen - 1)
+			{
+				token[len] = 0;
+				return data;
+			}
+			c = (unsigned char)*data++;
+			if (c == '"')
+			{
+				c = (unsigned char)*data;
+				if (c != '"')
+				{
+					token[len] = 0;
+					return data;
+				}
+				data++;
+			}
+			if (!c)
+			{
+				token[len] = 0;
+				return data - 1;
+			}
+			token[len++] = (char)c;
+		}
+	}
+
+	if (c == '\'' && qctokenize)
+	{
+		data++;
+		for (;;)
+		{
+			if (len >= tokenlen - 1)
+			{
+				token[len] = 0;
+				return data;
+			}
+			c = (unsigned char)*data++;
+			if (c == '\'')
+			{
+				if (*data != '\'')
+				{
+					token[len] = 0;
+					return data;
+				}
+				data++;
+				token[len++] = '\'';
+				continue;
+			}
+			if (!c)
+			{
+				token[len] = 0;
+				return data - 1;
+			}
+			token[len++] = (char)c;
+		}
+	}
+
+	punct = qctokenize && (c == '{' || c == '}' || c == ')' || c == '(' ||
+		c == ']' || c == '[' || c == '\'' || c == ':' || c == ',' || c == ';');
+	if (punct)
+	{
+		token[0] = (char)c;
+		token[1] = 0;
+		return data + 1;
+	}
+
+	do
+	{
+		if (len >= tokenlen - 1)
+			break;
+		token[len++] = (char)c;
+		data++;
+		c = (unsigned char)*data;
+	} while (c > 32 && !(qctokenize && (c == '{' || c == '}' || c == ')' ||
+		c == '(' || c == ']' || c == '[' || c == '\'' || c == ':' || c == ',' || c == ';')));
+	token[len] = 0;
+	return data;
+}
+
+/*
+ Tokenize into the single shared store. FTE tokenizeqc skips all bytes <= ' ' before
+ a token and lets COM_StringParse split it; limits (FTE is unbounded): source 2048
+ bytes, 128 tokens, 2048 bytes per parsed token.
+*/
+static int csqc_tokenize_source (const char *s, qbool qctokenize)
+{
+	const char *p;
+	char *start;
+
+	s_tokn = 0;
+	if (!s)
+	{
+		s_tok_src[0] = 0;
+		return 0;
+	}
+	strlcpy (s_tok_src, s, sizeof (s_tok_src));
+	start = s_tok_src;
+	p = start;
+	while (s_tokn < CSQC_TOK_MAX)
+	{
+		while (*p && (unsigned char)*p <= ' ')
+			p++;
+		if (!*p)
+			break;
+		s_tok_start[s_tokn] = (int)(p - start);
+		p = csqc_parse_token (p, s_tok_text[s_tokn], CSQC_TOK_SRC, qctokenize);
+		if (!p)
+			break;
+		s_tok_end[s_tokn] = (int)(p - start);
+		s_tokn++;
+	}
+	return s_tokn;
+}
+
+/*
 float(string s) tokenize = #441
 */
 static void csqc_tokenize (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
-	char *s = CSQCVM_Str (OFS_PARM0);
 	if (!vm)
 		return;
-	if (s)
-		Cmd_TokenizeStringEx (&csqc_tokencontext, s);
-	s_tok_mode = 0;
-	vm->globals[OFS_RETURN] = Cmd_ArgcEx (&csqc_tokencontext);
+	vm->globals[OFS_RETURN] = csqc_tokenize_source (CSQCVM_Str (OFS_PARM0), true);
 }
 
 /*
@@ -385,25 +553,20 @@ static void csqc_argv (void)
 	if (!vm)
 		return;
 	n = (int)vm->globals[OFS_PARM0];
-	if (s_tok_mode == 1)
-	{
-		static char tok[CSQC_TOK_SRC];
-		if (n < 0 || n >= s_tokn)
-			tok[0] = 0;
-		else
-		{
-			int len = s_tok_end[n] - s_tok_start[n];
-			if (len < 0)
-				len = 0;
-			if (len >= (int)sizeof (tok))
-				len = (int)sizeof (tok) - 1;
-			memcpy (tok, s_tok_src + s_tok_start[n], len);
-			tok[len] = 0;
-		}
-		CSQCVM_SetRetStr (tok);
+	if (n < 0)
+		n += s_tokn;
+	CSQCVM_SetRetStr ((n < 0 || n >= s_tokn) ? "" : s_tok_text[n]);
+}
+
+/*
+float() argc = #0 (name-mapped only, as in FTE fteqw/engine/client/pr_csqc.c:7171)
+*/
+static void csqc_argc (void)
+{
+	pr1vm_t *vm = CSQCVM_Active ();
+	if (!vm)
 		return;
-	}
-	CSQCVM_SetRetStr (Cmd_ArgvEx (&csqc_tokencontext, n));
+	vm->globals[OFS_RETURN] = s_tokn;
 }
 
 /*
@@ -1259,7 +1422,6 @@ static void csqc_sprintf (void)
 	for (p = fmt; *p && o < sizeof (buf) - 1; p++)
 	{
 		char conv, formatbuf[32], *f;
-		const char *dir;
 		int flags = 0, width = -1, prec = -1, haswidth = 0;
 
 		if (*p != '%')
@@ -1267,7 +1429,6 @@ static void csqc_sprintf (void)
 			buf[o++] = *p;
 			continue;
 		}
-		dir = p;
 		p++;
 		if (*p == '%')
 		{
@@ -1309,6 +1470,11 @@ static void csqc_sprintf (void)
 			if (prec > 2047)
 				prec = 2047;
 		}
+		// FTE length modifiers: h (float), l/L (int), q/j/z/t (accepted). v6 has
+		// no int type, so the modifier is consumed and the argument stays float.
+		while (*p == 'h' || *p == 'l' || *p == 'L' || *p == 'q' ||
+			*p == 'j' || *p == 'z' || *p == 't')
+			p++;
 		conv = *p;
 		if (!conv)
 			break;
@@ -1407,13 +1573,9 @@ static void csqc_sprintf (void)
 				pn++;
 				break;
 			default:
-				// unknown conversion - verbatim directive
-				{
-					const char *q;
-					for (q = dir; q <= p && o < sizeof (buf) - 1; q++)
-						buf[o++] = *q;
-				}
-				continue;
+				// FTE PF_sprintf_internal stops on an unknown conversion; the output
+				// produced so far is kept (no argument shift for later directives).
+				goto finished;
 			}
 		}
 
@@ -1425,6 +1587,7 @@ static void csqc_sprintf (void)
 			o += l;
 		}
 	}
+finished:
 	buf[o] = 0;
 	CSQCVM_SetRetStr (buf);
 }
@@ -3579,6 +3742,7 @@ static const struct
 } csqc_named_builtins[] =
 {
 	{ "checkbuiltin", CSQC_BUILTIN_CHECKBUILTIN },
+	{ "argc", CSQC_BUILTIN_ARGC },
 	{ NULL, 0 }
 };
 
@@ -3601,7 +3765,14 @@ void CSQCVM_ResolveNamedBuiltins (pr1vm_t *vm)
 					break;
 				}
 		if (vm->functions[i].first_statement == 0)
+		{
+			// FTE names the unresolved builtin in developer output and keeps the
+			// return-0 fallback (fteqw/engine/client/pr_csqc.c:7476-7479): loading
+			// must not fail on a name this build does not implement.
+			if (name)
+				Con_DPrintf ("Unknown csqc builtin: %s\n", name);
 			vm->functions[i].first_statement = -CSQC_BUILTIN_NAMED_UNKNOWN;
+		}
 	}
 }
 
@@ -3887,18 +4058,12 @@ static void csqc_precache_sound (void)
 	if (vm && n && n[0])
 	{
 		S_PrecacheSound (n);
-		// FTE parity: queue the missing sound (`sound/<name>`). ezq download is
-		// single-slot and cls.download is NULL until the first svc_download, so a
-		// second CSQC_Init request would clobber the first: queue instead and
-		// flush one per frame. `*` = sexed sound (not downloadable). The distinct-name
-		// cap keeps S_FindName from hitting MAX_SFX.
+		// FTE parity: queue the missing sound (`sound/<name>`); the shared helper
+		// owns the single-slot guard, the dl_single type and the in-flight marker.
+		// `*` = sexed sound (not downloadable). The distinct-name cap keeps
+		// S_FindName from hitting MAX_SFX.
 		if (n[0] != '*' && CSQC_Client_AllowModuleSound (n))
-		{
-			if (CSQC_Client_DownloadInProgress ())
-				CSQC_Client_QueueDownload (va ("sound/%s", n));
-			else
-				CL_CheckOrDownloadFile (va ("sound/%s", n));
-		}
+			CSQC_Client_RequestDownload (va ("sound/%s", n));
 	}
 }
 
@@ -3912,14 +4077,9 @@ static void csqc_precache_model (void)
 		// ModelIndex now returns a stable index even for a missing model (NULL
 		// placeholder), so "file missing" is detected by the model being not loaded,
 		// not by index==0. FTE parity (PF_cs_PrecacheModel_Internal): queue the model
-		// for download (same single-slot queue as precache_sound).
+		// for download (same single-slot helper as precache_sound).
 		if (!CSQC_Client_ModelForIndex (idx) && n[0] != '*')
-		{
-			if (CSQC_Client_DownloadInProgress ())
-				CSQC_Client_QueueDownload (n);
-			else
-				CL_CheckOrDownloadFile (n);
-		}
+			CSQC_Client_RequestDownload (n);
 	}
 	CSQCVM_SetRetStr (n ? n : "");
 }
@@ -3965,10 +4125,9 @@ static void csqc_modelnameforindex (void)
 /*
  float(string) precache_file (#68/#77) - FTE parity (PF_cs_precachefile ->
  CL_CheckOrEnqueDownloadFile): true=file present -> 1; false=queued for download -> 0.
- Here - CL_CheckOrDownloadFile (the same contract: true if present/not downloading,
- otherwise sends download and false). Guard: if a download is already in flight
- (cls.download) we do not start a second one -> 0.
-*/
+ Delegated to CSQC_Client_RequestDownload: single-slot guard (incl. the
+ pre-first-block window), dl_single type and the in-flight marker live there.
+ */
 static void csqc_precache_file (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
@@ -3982,13 +4141,8 @@ static void csqc_precache_file (void)
 		vm->globals[OFS_RETURN] = 0;
 		return;
 	}
-	if (CSQC_Client_DownloadInProgress ())	// single slot (incl. the pre-first-block window)
-	{
-		CSQC_Client_QueueDownload (n);
-		vm->globals[OFS_RETURN] = 0;
-		return;
-	}
-	vm->globals[OFS_RETURN] = CL_CheckOrDownloadFile (n) ? 1.0f : 0.0f;
+	// Single slot (incl. the pre-first-block window); 1 = present, 0 = queued/sent.
+	vm->globals[OFS_RETURN] = CSQC_Client_RequestDownload (n) ? 1.0f : 0.0f;
 }
 
 /*
@@ -4172,11 +4326,9 @@ static void csqc_add_one_entity (int e, qbool run_predraw)
 	ent.framelerp = -1;
 	if ((f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_ORIGIN))))		VectorCopy (f, ent.origin);
 	if ((f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_ANGLES))))		VectorCopy (f, ent.angles);
-	// player render pitch = -viewangles/3, same as the engine player render and the
-	// FTE CSQC bridge. Render-side only: does not touch the module's .angles (used by
-	// #347/prediction). Roll is left 0 (the FTE CSQC bridge also 0).
-	if (playernum >= 0)
-		ent.angles[PITCH] = -ent.angles[PITCH] / 3;
+	// Player edicts already carry model-space pitch (FTE bridge/#347), so the
+	// renderer consumes .angles as-is; no render-side transform here. Roll stays 0
+	// (the FTE CSQC bridge also writes 0).
 	if ((f = csqc_ent_ofs (vm, e, CSQC_Client_FieldOfs (vm, CSQC_FLD_FRAME))))		ent.frame = ent.oldframe = (int)f[0];
 	// player frame interpolation - exact engine formula (CL_LinkPlayers). Without it
 	// CSQC renders the raw frame while the engine lerps, so the pose jumps when
@@ -5208,46 +5360,9 @@ static void csqc_movetogoal (void)
 {
 }
 
-/*
- Strings/tokenization. A separate span store for #514/#479/#515/#516; the existing
- #441/#442 work via the Cmd context and are unchanged (separate mechanisms).
-*/
-
-
-// Console tokenization (spans): spaces/tabs are separators; "..." is one token.
-static void csqc_tok_console_spans (const char *s)
-{
-	int i = 0, len = s ? (int)strlen (s) : 0, n = 0;
-	s_tokn = 0;
-	while (i < len && n < CSQC_TOK_MAX)
-	{
-		while (i < len && (s[i] == ' ' || s[i] == '\t'))
-			i++;
-		if (i >= len)
-			break;
-		s_tok_start[n] = i;
-		if (s[i] == '"')
-		{
-			i++;
-			while (i < len && s[i] != '"')
-				i++;
-			if (i < len)
-				i++;
-		}
-		else
-		{
-			while (i < len && s[i] != ' ' && s[i] != '\t')
-				i++;
-		}
-		s_tok_end[n] = i;
-		n++;
-	}
-	s_tokn = n;
-}
-
-// tokenizebyseparator: split by any separator (empty tokens are kept),
-// spans like FTE.
-static void csqc_tok_sep_spans (const char *s, const char *sep[], int nsep)
+// tokenizebyseparator: split by any separator (empty tokens are kept), raw
+// substrings as tokens, spans like FTE (fteqw/engine/common/pr_bgcmd.c:6219).
+static void csqc_tok_sep_fill (const char *s, const char *sep[], int nsep)
 {
 	int i, len, tokstart, n, si;
 	int seplen[7];
@@ -5305,6 +5420,17 @@ static void csqc_tok_sep_spans (const char *s, const char *sep[], int nsep)
 			i++;
 	}
 	s_tokn = n;
+	for (i = 0; i < s_tokn; i++)
+	{
+		int tlen = s_tok_end[i] - s_tok_start[i];
+
+		if (tlen < 0)
+			tlen = 0;
+		if (tlen > CSQC_TOK_SRC - 1)
+			tlen = CSQC_TOK_SRC - 1;
+		memcpy (s_tok_text[i], s + s_tok_start[i], tlen);
+		s_tok_text[i][tlen] = 0;
+	}
 }
 
 /* string(float uselocaltime, string format, ...) strftime = #478 */
@@ -5346,37 +5472,29 @@ static void csqc_strftime (void)
 	}
 }
 
-/* float(string str) tokenize_console = #514 - like #441 (Cmd) + spans */
+/* float(string str) tokenize_console = #514 */
 static void csqc_tokenize_console (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
-	char *s = CSQCVM_Str (OFS_PARM0);
 	if (!vm)
 		return;
-	if (s)
-		Cmd_TokenizeStringEx (&csqc_tokencontext, s);
-	s_tok_mode = 0;
-	vm->globals[OFS_RETURN] = Cmd_ArgcEx (&csqc_tokencontext);
-	csqc_tok_console_spans (s);
+	vm->globals[OFS_RETURN] = csqc_tokenize_source (CSQCVM_Str (OFS_PARM0), false);
 }
 
 /* float(string s, string sep1, ...) tokenizebyseparator = #479 */
 static void csqc_tokenizebyseparator (void)
 {
 	pr1vm_t *vm = CSQCVM_Active ();
-	char *s = CSQCVM_Str (OFS_PARM0);
+	char *s;
 	const char *sep[7];
 	int nsep = 0, i;
 	if (!vm)
 		return;
+	s = CSQCVM_Str (OFS_PARM0);
 	for (i = 1; i < vm->argc && nsep < 7; i++)
 		sep[nsep++] = CSQCVM_Str (OFS_PARM0 + i * 3);
-	if (s)
-		strlcpy (s_tok_src, s, sizeof (s_tok_src));
-	else
-		s_tok_src[0] = 0;
-	csqc_tok_sep_spans (s_tok_src, sep, nsep);
-	s_tok_mode = 1;
+	strlcpy (s_tok_src, s ? s : "", sizeof (s_tok_src));
+	csqc_tok_sep_fill (s_tok_src, sep, nsep);
 	vm->globals[OFS_RETURN] = s_tokn;
 }
 
@@ -5754,7 +5872,21 @@ static void csqc_putentityfieldstring (void)
 	switch (type)
 	{
 	case ev_string:
-		PR1VM_ClientSetString (vm, (string_t *)&slot[ofs], s ? s : "");
+		{
+			// An editable entity field must not alias the temp-result ring: the
+			// value would change under the module after later string builtins. Keep
+			// a zone-owned (semi-permanent) copy and release the previous one.
+			// The field owns the string: overwriting releases a previous zone copy
+			// (a value also referenced elsewhere is not detected) and the pool is
+			// bounded by MAX_PRSTR (1024) shared with strzone.
+			int old = *(int *)&slot[ofs];
+			char *copy = Q_strdup (s ? s : "");
+
+			if (old <= -MAX_PRSTR && old > -(MAX_PRSTR * 2))
+				CSQC_Client_UnzoneString (vm, old);
+			if (!CSQC_Client_ZoneStore (vm, (int *)&slot[ofs], copy))
+				Con_DPrintf ("CSQC: putentityfieldstring: zone pool exhausted\n");
+		}
 		break;
 	case ev_vector:
 		{
@@ -6665,6 +6797,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	// Name-mapped `#0` builtins (engine slots; the module declares `= #0`).
 	PR1VM_RegisterBuiltin (vm, CSQC_BUILTIN_CHECKBUILTIN, (builtin_t)csqc_checkbuiltin); // #0 checkbuiltin
 	PR1VM_RegisterBuiltin (vm, CSQC_BUILTIN_NAMED_UNKNOWN, (builtin_t)csqc_named_unknown); // #0 unknown-name fallback
+	PR1VM_RegisterBuiltin (vm, CSQC_BUILTIN_ARGC, (builtin_t)csqc_argc); // #0 float() argc
 	PR1VM_MarkBuiltinStub (vm, CSQC_BUILTIN_NAMED_UNKNOWN);	// unresolved name -> checkbuiltin must be 0 (FTE parity)
 
 	// Mark no-op stubs so checkbuiltin/checkextension are honest.
