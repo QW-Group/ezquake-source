@@ -1050,10 +1050,6 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 			break;
 		case pm_bounce:
 			if (!gl_bounceparticles.value || p->bounces) {
-				if (pt->id == p_smallspark) {
-					VectorCopy(p->org, p->endorg);
-				}
-
 				VectorScale(p->vel, cls.frametime, movement);
 				VectorAdd(p->org, movement, p->org);
 				if (QMB_ParticleContents(p, movement, oldorg, &contents) && contents == CONTENTS_SOLID) {
@@ -1061,23 +1057,20 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 				}
 			}
 			else {
-				if (pt->id == p_smallspark) {
-					VectorCopy(p->org, p->endorg);
-				}
 				VectorScale(p->vel, cls.frametime, movement);
 				VectorAdd(p->org, movement, p->org);
 				if (QMB_ParticleContents(p, movement, oldorg, &contents) && contents == CONTENTS_SOLID) {
 					if (QMB_BounceParticle(pt, p, oldorg)) {
 						p->bounces++;
-						if (pt->id == p_smallspark) {
-							VectorCopy(p->org, p->endorg);
-						}
 					}
 					else {
 						// Started inside the wall, nothing to bounce off
 						p->die = 0;
 					}
 				}
+			}
+			if (pt->id == p_smallspark) {
+				VectorMA(p->org, -1.0f / QMB_PHYSICS_FPS, p->vel, p->endorg);
 			}
 			break;
 			//VULT PARTICLES
