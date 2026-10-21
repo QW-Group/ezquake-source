@@ -201,13 +201,29 @@ static qbool QMB_BounceParticle(particle_type_t* pt, particle_t* p, vec3_t oldor
 	return true;
 }
 
-// Particles leaving a trail add a segment to it once per physics frame, at the 77 fps of
-// QuakeWorld servers. They added one every frame, which was a physics frame before
-// independent physics, but at thousands of fps each streak kept hundreds of segments
-// alive and a few of them filled the particle pool.
+// Particles look up the contents they moved into, and add a segment to their trail,
+// once per physics frame, at the 77 fps of QuakeWorld servers. They did both every
+// frame, which was a physics frame before independent physics, but at thousands of fps
+// the lookups were the most expensive part of particles, and each streak kept hundreds
+// of trail segments alive so a few filled the pool.
 #define QMB_PHYSICS_FPS 77
 
-static qbool qmb_trail_segment_due;
+static qbool qmb_physics_frame;
+
+// Looks up the contents a particle moved into, on physics frames only. Returns whether it
+// looked them up, and sets lastorg to where the particle was at the previous lookup.
+static qbool QMB_ParticleContents(particle_t* p, vec3_t movement, vec3_t lastorg, int* contents)
+{
+	VectorAdd(p->unchecked_movement, movement, p->unchecked_movement);
+	if (!qmb_physics_frame) {
+		return false;
+	}
+
+	VectorSubtract(p->org, p->unchecked_movement, lastorg);
+	*contents = ParticleContents(p, p->unchecked_movement);
+	VectorClear(p->unchecked_movement);
+	return true;
+}
 
 // Adds a segment to a particle's trail, from where the previous segment ended (endorg)
 static void QMB_AddTrailSegment(particle_t* p, float time)
@@ -979,10 +995,9 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 		case pm_static:
 			break;
 		case pm_normal:
-			VectorCopy(p->org, oldorg);
 			VectorScale(p->vel, cls.frametime, movement);
 			VectorAdd(p->org, movement, p->org);
-			if (ParticleContents(p, movement) == CONTENTS_SOLID) {
+			if (QMB_ParticleContents(p, movement, oldorg, &contents) && contents == CONTENTS_SOLID) {
 				p->hit = 1;
 				VectorCopy(oldorg, p->org);
 				VectorClear(p->vel);
@@ -990,10 +1005,10 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 			break;
 		case pm_float:
 			VectorScale(p->vel, cls.frametime, movement);
-			movement[2] += p->size + 1;
 			VectorAdd(p->org, movement, p->org);
-			contents = ParticleContents(p, movement);
-			if (!ISUNDERWATER(contents)) {
+			// Look up the contents at the top of the bubble
+			p->org[2] += p->size + 1;
+			if (QMB_ParticleContents(p, movement, oldorg, &contents) && !ISUNDERWATER(contents)) {
 				p->die = 0;
 			}
 			p->org[2] -= p->size + 1;
@@ -1004,7 +1019,7 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 		case pm_die:
 			VectorScale(p->vel, cls.frametime, movement);
 			VectorAdd(p->org, movement, p->org);
-			if (CONTENTS_SOLID == ParticleContents(p, movement)) {
+			if (QMB_ParticleContents(p, movement, oldorg, &contents) && contents == CONTENTS_SOLID) {
 				p->die = 0;
 			}
 			break;
@@ -1016,18 +1031,17 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 
 				VectorScale(p->vel, cls.frametime, movement);
 				VectorAdd(p->org, movement, p->org);
-				if (CONTENTS_SOLID == ParticleContents(p, movement)) {
+				if (QMB_ParticleContents(p, movement, oldorg, &contents) && contents == CONTENTS_SOLID) {
 					p->die = 0;
 				}
 			}
 			else {
-				VectorCopy(p->org, oldorg);
 				if (pt->id == p_smallspark) {
-					VectorCopy(oldorg, p->endorg);
+					VectorCopy(p->org, p->endorg);
 				}
 				VectorScale(p->vel, cls.frametime, movement);
 				VectorAdd(p->org, movement, p->org);
-				if (CONTENTS_SOLID == ParticleContents(p, movement)) {
+				if (QMB_ParticleContents(p, movement, oldorg, &contents) && contents == CONTENTS_SOLID) {
 					if (QMB_BounceParticle(pt, p, oldorg)) {
 						p->bounces++;
 						if (pt->id == p_smallspark) {
@@ -1043,11 +1057,9 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 			break;
 			//VULT PARTICLES
 		case pm_rain:
-			VectorCopy(p->org, oldorg);
 			VectorScale(p->vel, cls.frametime, movement);
 			VectorAdd(p->org, movement, p->org);
-			contents = ParticleContents(p, movement);
-			if (ISUNDERWATER(contents) || contents == CONTENTS_SOLID) {
+			if (QMB_ParticleContents(p, movement, oldorg, &contents) && (ISUNDERWATER(contents) || contents == CONTENTS_SOLID)) {
 				if (!amf_weather_rain_fast.value || amf_weather_rain_fast.value == 2) {
 					vec3_t rorg;
 					VectorCopy(oldorg, rorg);
@@ -1074,16 +1086,15 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 				}
 				p->die = 0;
 			}
-			else if (qmb_trail_segment_due) {
+			else if (qmb_physics_frame) {
 				QMB_AddTrailSegment(p, 0.2);
 			}
 			break;
 			//VULT PARTICLES
 		case pm_streak:
-			VectorCopy(p->org, oldorg);
 			VectorScale(p->vel, cls.frametime, movement);
 			VectorAdd(p->org, movement, p->org);
-			if (CONTENTS_SOLID == ParticleContents(p, movement)) {
+			if (QMB_ParticleContents(p, movement, oldorg, &contents) && contents == CONTENTS_SOLID) {
 				if (!QMB_BounceParticle(pt, p, oldorg)) {
 					// Started inside the wall, nothing to bounce off
 					p->die = 0;
@@ -1092,7 +1103,7 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 				// End the segment where it bounced, so the trail doesn't cut the corner
 				QMB_AddTrailSegment(p, 0.2);
 			}
-			else if (qmb_trail_segment_due) {
+			else if (qmb_physics_frame) {
 				QMB_AddTrailSegment(p, 0.2);
 			}
 			if (VectorLength(p->vel) == 0) {
@@ -1101,7 +1112,7 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 			break;
 		case pm_streakwave:
 			VectorMA(p->org, cls.frametime, p->vel, p->org);
-			if (qmb_trail_segment_due) {
+			if (qmb_physics_frame) {
 				QMB_AddTrailSegment(p, 0.5);
 			}
 			p->vel[0] = 19 * p->vel[0] / 20;
@@ -1127,9 +1138,9 @@ static void QMB_UpdateParticles(void)
 		return;
 	}
 
-	// Trails get a segment whenever particle time passes into a new physics frame
+	// Contents and trails are updated whenever particle time passes into a new physics frame
 	tick = (int)(particle_time * QMB_PHYSICS_FPS);
-	qmb_trail_segment_due = (tick != trail_segment_tick);
+	qmb_physics_frame = (tick != trail_segment_tick);
 	trail_segment_tick = tick;
 
 	//VULT PARTICLES

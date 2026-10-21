@@ -66,6 +66,7 @@ extern float particle_time;
 	_p->cached_contents = 0;                            \
 	_p->cached_distance = 0;                            \
 	VectorClear(_p->cached_movement);                   \
+	VectorClear(_p->unchecked_movement);                \
 	_p->entity_ref = 0;                                 \
 	_p->entity_trailnumber = 0;                         \
 	ParticleStats(1); \
