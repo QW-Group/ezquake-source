@@ -247,7 +247,7 @@ void GLC_Draw3DSpritesInline(void)
 void GLC_DrawSimpleItem(model_t* model, int skin, vec3_t org, float sprsize, vec3_t up, vec3_t right)
 {
 	texture_ref simpletexture = model->simpletexture[skin];
-	r_sprite3d_vert_t* vert = R_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, simpletexture, 0);
+	r_sprite3d_vert_t* vert = R_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, simpletexture);
 
 	if (vert) {
 		R_Sprite3DRender(vert, org, up, right, sprsize, -sprsize, -sprsize, sprsize, 1, 1, 0);
@@ -294,7 +294,7 @@ void GLC_DrawSpriteModel(entity_t* e)
 		VectorScale(right, e->scale, right);
 	}
 
-	vert = R_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, frame->gl_texturenum, 0);
+	vert = R_Sprite3DAddEntrySpecific(SPRITE3D_ENTITIES, 4, frame->gl_texturenum);
 	if (vert) {
 		vec3_t points[4];
 

@@ -204,30 +204,34 @@ void R_Sprite3DInitialiseBatch(sprite3d_batch_id type, r_state_id state, texture
 	batch->texture_index = index;
 	batch->name = batch_type_names[type];
 	batch->id = type;
+	batch->glVertexOffset = buffers.BufferOffset(r_buffer_sprite_vertex_data) / sizeof(verts[0]);
 }
 
-r_sprite3d_vert_t* R_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int texture_index)
+r_sprite3d_vert_t* R_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture)
 {
 	gl_sprite3d_batch_t* batch = BatchForType(type, false);
 	int start = vertexCount;
-	int sprite_count = sprites_in_batch[batch_to_vertpool[batch->id]];
+	int* sprite_count;
 
-	if (!batch || sprite_count >= MAX_3DSPRITES_PER_BATCH || (sprite_count + 1) * verts_required >= MAX_VERTS_PER_BATCH) {
+	if (!batch) {
+		return NULL;
+	}
+	sprite_count = &sprites_in_batch[batch_to_vertpool[batch->id]];
+	if (*sprite_count >= MAX_3DSPRITES_PER_BATCH || (*sprite_count + 1) * verts_required >= MAX_VERTS_PER_BATCH) {
 		return NULL;
 	}
 	if (start + verts_required >= MAX_VERTS_PER_SCENE) {
 		return NULL;
 	}
 	batch->firstVertices[batch->count] = start;
-	batch->glFirstVertices[batch->count] = start + buffers.BufferOffset(r_buffer_sprite_vertex_data) / sizeof(verts[0]);
+	batch->glFirstVertices[batch->count] = start + batch->glVertexOffset;
 	batch->numVertices[batch->count] = verts_required;
 	batch->textures[batch->count] = texture;
-	batch->textureIndexes[batch->count] = texture_index;
 
 	if (batch->count) {
 		batch->allSameNumber &= verts_required == batch->numVertices[0];
 	}
-	sprites_in_batch[batch_to_vertpool[batch->id]] += 1;
+	++*sprite_count;
 	++batch->count;
 	vertexCount += verts_required;
 	return &verts[start];
@@ -235,35 +239,12 @@ r_sprite3d_vert_t* R_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_
 
 r_sprite3d_vert_t* R_Sprite3DAddEntryFixed(sprite3d_batch_id type, int verts_required)
 {
-	return R_Sprite3DAddEntrySpecific(type, verts_required, null_texture_reference, 0);
+	return R_Sprite3DAddEntrySpecific(type, verts_required, null_texture_reference);
 }
 
 r_sprite3d_vert_t* R_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required)
 {
-	return R_Sprite3DAddEntrySpecific(type, verts_required, null_texture_reference, 0);
-}
-
-void R_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index)
-{
-	extern int particletexture_array_index;
-	extern float particletexture_array_xpos_tr;
-	extern float particletexture_array_ypos_tr;
-
-	vert->color[0] = color[0];
-	vert->color[1] = color[1];
-	vert->color[2] = color[2];
-	vert->color[3] = color[3];
-	VectorSet(vert->position, x, y, z);
-	if (texture_index < 0) {
-		vert->tex[0] = particletexture_array_xpos_tr;
-		vert->tex[1] = particletexture_array_ypos_tr;
-		vert->tex[2] = particletexture_array_index;
-	}
-	else {
-		vert->tex[0] = s;
-		vert->tex[1] = t;
-		vert->tex[2] = texture_index;
-	}
+	return R_Sprite3DAddEntrySpecific(type, verts_required, null_texture_reference);
 }
 
 void R_Sprite3DCreateVBO(void)

@@ -20,11 +20,11 @@ typedef struct gl_sprite3d_batch_s {
 	int glFirstVertices[MAX_3DSPRITES_PER_BATCH];
 	int numVertices[MAX_3DSPRITES_PER_BATCH];
 	texture_ref textures[MAX_3DSPRITES_PER_BATCH];
-	int textureIndexes[MAX_3DSPRITES_PER_BATCH];
 
 	const char* name;
 	sprite3d_batch_id id;
 	unsigned int count;
+	int glVertexOffset;     // of the frame's vertices in the vertex buffer
 } gl_sprite3d_batch_t;
 
 typedef enum {
