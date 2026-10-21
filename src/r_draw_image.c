@@ -84,6 +84,32 @@ void R_DrawImage(float x, float y, float width, float height, float tex_s, float
 	renderer.DrawImage(x, y, width, height, tex_s, tex_t, tex_width, tex_height, color, flags);
 }
 
+void R_DrawImageRotated(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, texture_ref texnum, float angle)
+{
+	// Vertex order written by the backends: TL, BL, TR, BR
+	static const float corners[4][2] = { { -0.5f, -0.5f }, { -0.5f, 0.5f }, { 0.5f, -0.5f }, { 0.5f, 0.5f } };
+	int image = imageData.imageCount;
+	float centre_x = x + width / 2, centre_y = y + height / 2;
+	float c = cos(DEG2RAD(angle)), s = sin(DEG2RAD(angle));
+	int i;
+
+	R_DrawImage(x, y, width, height, tex_s, tex_t, tex_width, tex_height, color, false, texnum, false, false);
+	if (imageData.imageCount == image) {
+		return;
+	}
+
+	for (i = 0; i < 4; ++i) {
+		float dx = corners[i][0] * width;
+		float dy = corners[i][1] * height;
+		float v[4] = { centre_x + dx * c - dy * s, centre_y + dx * s + dy * c, 0, 1 };
+		glm_image_t* vert = &imageData.images[image * 4 + i];
+
+		R_MultiplyVector(cachedMatrix, v, v);
+		vert->pos[0] = v[0];
+		vert->pos[1] = v[1];
+	}
+}
+
 void R_DrawRectangle(float x, float y, float width, float height, byte* color)
 {
 	renderer.DrawRectangle(x, y, width, height, color);
