@@ -94,6 +94,8 @@ void VID_RenderFrameEnd(void);
 
 const SDL_DisplayMode *VID_GetDisplayMode(int index);
 int VID_DisplayModeRefreshRate(const SDL_DisplayMode *mode);
+int VID_DisplayModePixelWidth(const SDL_DisplayMode *mode);
+int VID_DisplayModePixelHeight(const SDL_DisplayMode *mode);
 int VID_GetCurrentModeIndex(void);
 int VID_GetModeIndexCount(void);
 

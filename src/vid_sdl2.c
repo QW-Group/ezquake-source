@@ -255,9 +255,13 @@ qbool IN_QuakeMouseCursorRequired(void)
 
 static void IN_SnapMouseBackToCentre(void)
 {
-	SDL_WarpMouseInWindow(sdl_window, glConfig.vidWidth / 2, glConfig.vidHeight / 2);
-	old_x = glConfig.vidWidth / 2;
-	old_y = glConfig.vidHeight / 2;
+	// The mouse is in window coordinates, which aren't pixels on high density displays
+	int width = 0, height = 0;
+
+	SDL_GetWindowSize(sdl_window, &width, &height);
+	SDL_WarpMouseInWindow(sdl_window, width / 2, height / 2);
+	old_x = width / 2;
+	old_y = height / 2;
 }
 
 static void in_raw_callback(cvar_t *var, char *value, qbool *cancel)
@@ -542,7 +546,7 @@ static void window_event(SDL_Event *event)
 			}
 			break;
 
-		case SDL_EVENT_WINDOW_RESIZED:
+		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 			if (!(flags & SDL_WINDOW_FULLSCREEN) && !r_fullscreen.integer) {
 				glConfig.vidWidth = event->window.data1;
 				glConfig.vidHeight = event->window.data2;
@@ -794,6 +798,12 @@ static void HandleEvents(void)
 	SDL_Event event;
 	qbool relative_mode = (mouse_active && SDL_GetWindowRelativeMouseMode(sdl_window));
 	qbool track_movement_through_state = (mouse_active && !relative_mode);
+	// The cursor moves in pixels, mouse motion is in window coordinates
+	float density = SDL_GetWindowPixelDensity(sdl_window);
+
+	if (density <= 0) {
+		density = 1;
+	}
 
 #if defined(_WIN32) && !defined(WITHOUT_WINKEYHOOK)
 	HandleWindowsKeyboardEvents(windows_keys_down, true);
@@ -812,7 +822,7 @@ static void HandleEvents(void)
 		case SDL_EVENT_WINDOW_FOCUS_GAINED:
 		case SDL_EVENT_WINDOW_RESTORED:
 		case SDL_EVENT_WINDOW_MOVED:
-		case SDL_EVENT_WINDOW_RESIZED:
+		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 			window_event(&event);
 			break;
 		case SDL_EVENT_KEY_DOWN:
@@ -841,8 +851,8 @@ static void HandleEvents(void)
 				if (!track_movement_through_state) {
 					float factor = (IN_MouseTrackingRequired() ? cursor_sensitivity.value : 1);
 
-					cursor_x += event.motion.xrel * factor;
-					cursor_y += event.motion.yrel * factor;
+					cursor_x += event.motion.xrel * factor * density;
+					cursor_y += event.motion.yrel * factor * density;
 
 					cursor_x = bound(0, cursor_x, VID_RenderWidth2D());
 					cursor_y = bound(0, cursor_y, VID_RenderHeight2D());
@@ -895,8 +905,8 @@ static void HandleEvents(void)
 		mx = pos_x - old_x;
 		my = pos_y - old_y;
 
-		cursor_x = min(max(0, cursor_x + (pos_x - glConfig.vidWidth / 2) * factor), VID_RenderWidth2D());
-		cursor_y = min(max(0, cursor_y + (pos_y - glConfig.vidHeight / 2) * factor), VID_RenderHeight2D());
+		cursor_x = min(max(0, cursor_x + mx * factor * density), VID_RenderWidth2D());
+		cursor_y = min(max(0, cursor_y + my * factor * density), VID_RenderHeight2D());
 
 		IN_SnapMouseBackToCentre();
 	}
@@ -1086,13 +1096,13 @@ static void VID_SetupResolution(void)
 		if (vid_usedesktopres.integer == 1) {
 			const SDL_DisplayMode *display_mode = SDL_GetDesktopDisplayMode(VID_GetDisplayID(display_nbr));
 			if (display_mode) {
-				glConfig.vidWidth = last_working_width = display_mode->w;
-				glConfig.vidHeight = last_working_height = display_mode->h;
+				glConfig.vidWidth = last_working_width = VID_DisplayModePixelWidth(display_mode);
+				glConfig.vidHeight = last_working_height = VID_DisplayModePixelHeight(display_mode);
 				glConfig.displayFrequency = last_working_hz = VID_DisplayModeRefreshRate(display_mode);
 				last_working_display = display_nbr;
 				last_working_values = true;
-				Cvar_AutoSetInt(&vid_width, display_mode->w);
-				Cvar_AutoSetInt(&vid_height, display_mode->h);
+				Cvar_AutoSetInt(&vid_width, glConfig.vidWidth);
+				Cvar_AutoSetInt(&vid_height, glConfig.vidHeight);
 				Cvar_AutoSetInt(&r_displayRefresh, VID_DisplayModeRefreshRate(display_mode));
 				return;
 			} else {
@@ -1140,9 +1150,9 @@ int VID_GetCurrentModeIndex(void)
 	int best_idx = -1;
 
 	for (i = 0; i < modelist_count; i++) {
-		if (modelist[i].w == vid_width.integer && modelist[i].h == vid_height.integer) {
+		if (VID_DisplayModePixelWidth(&modelist[i]) == vid_width.integer && VID_DisplayModePixelHeight(&modelist[i]) == vid_height.integer) {
 			if (VID_DisplayModeRefreshRate(&modelist[i]) == r_displayRefresh.integer) {
-				Com_DPrintf("MATCHED: %dx%d hz:%d\n", modelist[i].w, modelist[i].h, VID_DisplayModeRefreshRate(&modelist[i]));
+				Com_DPrintf("MATCHED: %dx%d hz:%d\n", vid_width.integer, vid_height.integer, VID_DisplayModeRefreshRate(&modelist[i]));
 				return i;
 			}
 
@@ -1178,6 +1188,25 @@ const SDL_DisplayMode *VID_GetDisplayMode(int index)
 int VID_DisplayModeRefreshRate(const SDL_DisplayMode *mode)
 {
 	return (int)SDL_lroundf(mode->refresh_rate);
+}
+
+// Display modes are sized in window coordinates, ezQuake's resolutions are in pixels
+int VID_DisplayModePixelWidth(const SDL_DisplayMode *mode)
+{
+	return (int)SDL_lroundf(mode->w * mode->pixel_density);
+}
+
+int VID_DisplayModePixelHeight(const SDL_DisplayMode *mode)
+{
+	return (int)SDL_lroundf(mode->h * mode->pixel_density);
+}
+
+// Pixels per window coordinate on a display, 2 on macOS Retina displays
+static float VID_DisplayPixelDensity(int displayNumber)
+{
+	const SDL_DisplayMode *mode = SDL_GetDesktopDisplayMode(VID_GetDisplayID(displayNumber));
+
+	return (mode && mode->pixel_density > 0 ? mode->pixel_density : 1.0f);
 }
 
 static void VID_SDL_GL_SetupWindowAttributes(int options)
@@ -1272,13 +1301,17 @@ static SDL_Window *VID_SDL_CreateWindow(int flags)
 		int xpos = vid_xpos.integer;
 		int ypos = vid_ypos.integer;
 
-		VID_AbsolutePositionFromRelative(&xpos, &ypos, &displayNumber);
+		float density;
 
-		return VID_SDL_CreateWindowAt(xpos, ypos, glConfig.vidWidth, glConfig.vidHeight, flags);
+		VID_AbsolutePositionFromRelative(&xpos, &ypos, &displayNumber);
+		density = VID_DisplayPixelDensity(displayNumber);
+
+		return VID_SDL_CreateWindowAt(xpos, ypos, (int)(glConfig.vidWidth / density + 0.5f), (int)(glConfig.vidHeight / density + 0.5f), flags);
 	}
 	else {
-		int windowWidth = glConfig.vidWidth;
-		int windowHeight = glConfig.vidHeight;
+		float density = VID_DisplayPixelDensity(VID_DisplayNumber(true));
+		int windowWidth = (int)(glConfig.vidWidth / density + 0.5f);
+		int windowHeight = (int)(glConfig.vidHeight / density + 0.5f);
 		int windowX = SDL_WINDOWPOS_CENTERED;
 		int windowY = SDL_WINDOWPOS_CENTERED;
 		int displayNumber = VID_DisplayNumber(true);
@@ -1328,8 +1361,8 @@ static void VID_SetWindowResolution(void)
 				Com_Printf("sdl error: %s\n", SDL_GetError());
 			}
 			else {
-				last_working_width = (&modelist[index])->w;
-				last_working_height = (&modelist[index])->h;
+				last_working_width = VID_DisplayModePixelWidth(&modelist[index]);
+				last_working_height = VID_DisplayModePixelHeight(&modelist[index]);
 				last_working_hz = VID_DisplayModeRefreshRate(&modelist[index]);
 				last_working_display = vid_displayNumber.integer;
 				last_working_values = true;
@@ -1354,13 +1387,11 @@ static void VID_SDL_Init(void)
 
 	VID_SDL_InitSubSystem();
 
-	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL;
-	// MEAG: deliberately not specifying SDL_WINDOW_HIGH_PIXEL_DENSITY as in our current workflow, it
-	//          breaks retina devices (we ask for display resolution and get told lower value)
-	//       Understand this is meant to be helped by NSHighResolutionCapable in Info.plist, but
-	//          BLooD_DoG tried that and it didn't help.  No OSX device to test on, so removed
-	//          for the moment.
-	//       Flag has no effect on Windows (SDL makes the process per-monitor DPI aware)
+	// Render at the full pixel resolution of high density displays such as Retina, so frames are
+	// shown 1:1. ezQuake's resolutions are in pixels while SDL's window sizes, positions and display
+	// modes are in window coordinates, which are only pixels elsewhere (Windows is per-monitor DPI
+	// aware, Wayland scales to the display).
+	flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 	if (r_fullscreen.integer > 0) {
 		// Desktop fullscreen right away, exclusive modes are applied by VID_SetWindowResolution
 		flags |= (vid_usedesktopres.integer == 1 ? SDL_WINDOW_FULLSCREEN : 0);
@@ -1421,6 +1452,11 @@ static void VID_SDL_Init(void)
 				sdl_window = VID_SDL_CreateWindow(flags);
 
 				if (sdl_window) {
+					if (!r_fullscreen.integer) {
+						// The window was sized in window coordinates, take the pixels it got
+						SDL_GetWindowSizeInPixels(sdl_window, &glConfig.vidWidth, &glConfig.vidHeight);
+					}
+
 					VID_SetWindowResolution();
 
 					// Try to create context and see what we get
@@ -1789,7 +1825,7 @@ static void VID_ModeList_f(void)
 	}
 	
 	for (; i < modelist_count; i++) {
-		Com_Printf("%dx%d@%dHz\n", (&modelist[i])->w, (&modelist[i])->h, VID_DisplayModeRefreshRate(&modelist[i]));
+		Com_Printf("%dx%d@%dHz\n", VID_DisplayModePixelWidth(&modelist[i]), VID_DisplayModePixelHeight(&modelist[i]), VID_DisplayModeRefreshRate(&modelist[i]));
 	}
 }
 

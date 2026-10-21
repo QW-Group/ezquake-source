@@ -487,8 +487,8 @@ static void ApplyVideoSettings(const menu_system_settings_t *s)
 		return;
 	}
 
-	Cvar_SetValue(&vid_width, current->w);
-	Cvar_SetValue(&vid_height, current->h);
+	Cvar_SetValue(&vid_width, VID_DisplayModePixelWidth(current));
+	Cvar_SetValue(&vid_height, VID_DisplayModePixelHeight(current));
 	Cvar_SetValue(&r_displayRefresh, VID_DisplayModeRefreshRate(current));
 	Cvar_SetValue(&r_colorbits, s->bpp);
 	Cvar_SetValue(&r_fullscreen, s->fullscreen);
@@ -544,7 +544,7 @@ const char* ResolutionRead(void)
 		return "";
 	}
 
-	snprintf(buf, sizeof(buf), "%dx%d@%dHz", mode->w, mode->h, VID_DisplayModeRefreshRate(mode));
+	snprintf(buf, sizeof(buf), "%dx%d@%dHz", VID_DisplayModePixelWidth(mode), VID_DisplayModePixelHeight(mode), VID_DisplayModeRefreshRate(mode));
 		
 	return buf;
 }
