@@ -1358,24 +1358,22 @@ cmd_function_t *Cmd_RemoveCommand_Hash(char *cmd_name)
 	int key = Com_HashKey (cmd_name) % CMD_HASHPOOL_SIZE;
 	cmd_function_t *cmd = cmd_hash_array[key];
 	cmd_function_t *prev = NULL;
-	cmd_function_t *retval = NULL;
 
-	if (strcasecmp(cmd_name, cmd->name) == 0) {
-		retval = cmd;
-		cmd_hash_array[key] = cmd_hash_array[key]->hash_next;
-	}
-	else
+	while (cmd)
 	{
-		prev = cmd;
-		for (cmd = cmd->hash_next; cmd; cmd = cmd->hash_next) {
-			if (strcasecmp(cmd_name, cmd->name) == 0) {
-				retval = cmd;
+		if (strcasecmp(cmd_name, cmd->name) == 0)
+		{
+			if (prev)
 				prev->hash_next = cmd->hash_next;
-			}
+			else
+				cmd_hash_array[key] = cmd->hash_next;
+			return cmd;
 		}
+		prev = cmd;
+		cmd = cmd->hash_next;
 	}
 
-	return retval;
+	return NULL;
 }
 
 // removes command from the linked list of all commands
@@ -1391,7 +1389,7 @@ cmd_function_t *Cmd_RemoveCommand_List (char *cmd_name)
 		{
 			return NULL;
 		}
-		if (!strcmp (cmd_name, cmd->name))
+		if (!strcasecmp (cmd_name, cmd->name))
 		{
 			*back = cmd->next;
 			return cmd;
@@ -1403,21 +1401,22 @@ cmd_function_t *Cmd_RemoveCommand_List (char *cmd_name)
 // removes command from all structures and deallocates it
 void Cmd_RemoveCommand (char *cmd_name)
 {
-	cmd_function_t *cmd;
+	cmd_function_t *cmd = Cmd_FindCommand (cmd_name);
 
-	cmd = Cmd_RemoveCommand_List(cmd_name);
-	cmd = Cmd_RemoveCommand_Hash(cmd_name);
+	if (!cmd)
+		return;
 
-	if (cmd) {
-		if (cmd->zmalloced)
-		{
-			Q_free(cmd);
-		}
-		else
-		{
-			Con_Printf("Cmd_RemoveCommand: %s was not added dynamically\n", cmd_name);
-		}
+	if (!cmd->zmalloced)
+	{
+		Con_Printf("Cmd_RemoveCommand: %s was not added dynamically\n", cmd_name);
+		return;
 	}
+
+	// Unlink from both containers before freeing: the hash bucket and the flat
+	// command list are independent, so a node left in either would dangle.
+	Cmd_RemoveCommand_Hash (cmd_name);
+	Cmd_RemoveCommand_List (cmd_name);
+	Q_free (cmd);
 }
 
 qbool Cmd_Exists (char *cmd_name)
