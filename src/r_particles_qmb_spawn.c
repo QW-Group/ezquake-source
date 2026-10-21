@@ -242,6 +242,7 @@ __inline static void AddParticleEnt(part_type_t type, vec3_t org, int count, flo
 			case p_rain:
 				p->size = 1;
 				VectorCopy(org, p->org);
+				VectorCopy(org, p->endorg);
 				p->vel[0] = (rand() % 10 + 85)*size;
 				p->vel[1] = (rand() % 10 + 85)*size;
 				p->vel[2] = (rand() % -100 - 2000)*(size / 3);
@@ -263,6 +264,7 @@ __inline static void AddParticleEnt(part_type_t type, vec3_t org, int count, flo
 			case p_streakwave:
 			case p_smallspark:
 				VectorCopy(org, p->org);
+				VectorCopy(org, p->endorg);
 				VectorCopy(dir, p->vel);
 				break;
 				//VULT PARTICLES

@@ -201,6 +201,21 @@ static qbool QMB_BounceParticle(particle_type_t* pt, particle_t* p, vec3_t oldor
 	return true;
 }
 
+// Particles leaving a trail add a segment to it once per physics frame, at the 77 fps of
+// QuakeWorld servers. They added one every frame, which was a physics frame before
+// independent physics, but at thousands of fps each streak kept hundreds of segments
+// alive and a few of them filled the particle pool.
+#define QMB_PHYSICS_FPS 77
+
+static qbool qmb_trail_segment_due;
+
+// Adds a segment to a particle's trail, from where the previous segment ended (endorg)
+static void QMB_AddTrailSegment(particle_t* p, float time)
+{
+	VX_ParticleTrail(p->endorg, p->org, p->size, time, p->color);
+	VectorCopy(p->org, p->endorg);
+}
+
 #define ADD_PARTICLE_TEXTURE(_ptex, _texnum, _texindex, _components, _s1, _t1, _s2, _t2)	\
 do {																						\
 	particle_textures[_ptex].texnum = _texnum;												\
@@ -1055,12 +1070,12 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 						}
 					}
 					VectorCopy(rorg, p->org);
-					VX_ParticleTrail(oldorg, p->org, p->size, 0.2, p->color);
+					QMB_AddTrailSegment(p, 0.2);
 				}
 				p->die = 0;
 			}
-			else {
-				VX_ParticleTrail(oldorg, p->org, p->size, 0.2, p->color);
+			else if (qmb_trail_segment_due) {
+				QMB_AddTrailSegment(p, 0.2);
 			}
 			break;
 			//VULT PARTICLES
@@ -1068,20 +1083,27 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 			VectorCopy(p->org, oldorg);
 			VectorScale(p->vel, cls.frametime, movement);
 			VectorAdd(p->org, movement, p->org);
-			if (CONTENTS_SOLID == ParticleContents(p, movement) && !QMB_BounceParticle(pt, p, oldorg)) {
-				// Started inside the wall, nothing to bounce off
-				p->die = 0;
-				break;
+			if (CONTENTS_SOLID == ParticleContents(p, movement)) {
+				if (!QMB_BounceParticle(pt, p, oldorg)) {
+					// Started inside the wall, nothing to bounce off
+					p->die = 0;
+					break;
+				}
+				// End the segment where it bounced, so the trail doesn't cut the corner
+				QMB_AddTrailSegment(p, 0.2);
 			}
-			VX_ParticleTrail(oldorg, p->org, p->size, 0.2, p->color);
+			else if (qmb_trail_segment_due) {
+				QMB_AddTrailSegment(p, 0.2);
+			}
 			if (VectorLength(p->vel) == 0) {
 				p->die = 0;
 			}
 			break;
 		case pm_streakwave:
-			VectorCopy(p->org, oldorg);
 			VectorMA(p->org, cls.frametime, p->vel, p->org);
-			VX_ParticleTrail(oldorg, p->org, p->size, 0.5, p->color);
+			if (qmb_trail_segment_due) {
+				QMB_AddTrailSegment(p, 0.5);
+			}
 			p->vel[0] = 19 * p->vel[0] / 20;
 			p->vel[1] = 19 * p->vel[1] / 20;
 			p->vel[2] = 19 * p->vel[2] / 20;
@@ -1095,7 +1117,8 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 // TODO: Split up
 static void QMB_UpdateParticles(void)
 {
-	int i;
+	static int trail_segment_tick;
+	int i, tick;
 	particle_type_t *pt;
 	particle_t *p;
 	particle_t **prev;
@@ -1103,6 +1126,11 @@ static void QMB_UpdateParticles(void)
 	if (!qmb_initialized) {
 		return;
 	}
+
+	// Trails get a segment whenever particle time passes into a new physics frame
+	tick = (int)(particle_time * QMB_PHYSICS_FPS);
+	qmb_trail_segment_due = (tick != trail_segment_tick);
+	trail_segment_tick = tick;
 
 	//VULT PARTICLES
 	WeatherEffect();
