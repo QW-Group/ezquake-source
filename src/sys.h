@@ -21,11 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "q_platform.h"
 
-#ifdef _WIN32
-#define Sys_MSleep(x) Sleep(x)
-#else
-#define Sys_MSleep(x) usleep((x) * 1000)
-#endif
+#define Sys_MSleep(x) SDL_Delay(x)
 
 #ifndef _WIN32
 #define DWORD unsigned int
