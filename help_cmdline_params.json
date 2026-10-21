@@ -124,9 +124,6 @@
   "-nohome": {
     "description": "Disables the per-user home directory (`Documents\\ezQuake` on Windows, `~/.ezquake` on Linux/macOS), forcing all file I/O to use the base game directory only."
   },
-  "-nohwgamma": {
-    "description": "Disables hardware gamma ramp support. Has no effect under the `mtfl` ruleset, which blocks this override."
-  },
   "-nohwtimer": {
     "description": "Disables the Windows high-resolution hardware timer (`QueryPerformanceCounter`) and falls back to the multimedia timer at 1 ms resolution. Windows only. Use when `QueryPerformanceCounter` produces unreliable results on certain hardware or VM configurations."
   },
@@ -152,7 +149,7 @@
     "description": "Suppresses stdout output on POSIX by setting `sys_nostdout=1` before `Host_Init`. POSIX/Linux only."
   },
   "-oldgamma": {
-    "description": "Switches gamma correction to the legacy palette-baking method, applying `vid_gamma_table` to texture data at load time instead of using the hardware gamma ramp. Distinct from `-nohwgamma`, which disables hardware gamma without activating palette baking."
+    "description": "Switches gamma correction to the legacy palette-baking method, applying `vid_gamma_table` to texture data at load time instead of applying gamma in the post-process shader."
   },
   "-particles": {
     "description": "Sets the maximum number of simultaneously active particles to `<count>` (`-particles <count>`), overriding the `r_particles_count` cvar at startup. Default is 2048; the active particle subsystem clamps to its own range (classic: 512-8192, QMB: 256-32768)."

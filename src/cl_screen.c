@@ -838,7 +838,7 @@ static void SCR_DrawElements(void)
 
 qbool SCR_UpdateScreenPrePlayerView (void)
 {
-	extern cvar_t gl_clear;
+	extern cvar_t gl_clear, vid_software_palette;
 	extern qbool Minimized;
 	static int oldfovmode = 0;
 
@@ -899,7 +899,7 @@ qbool SCR_UpdateScreenPrePlayerView (void)
 		SCR_CalcRefdef();
 	}
 
-	if ((v_contrast.value > 1 && !vid_hwgamma_enabled) || gl_clear.value) {
+	if ((v_contrast.value > 1 && !vid_software_palette.integer) || gl_clear.value) {
 		Sbar_Changed();
 	}
 	else if (scr_newHud.integer == 2 && scr_viewsize.value < 120) {

@@ -26,6 +26,7 @@
                     "value": "vcpkg/scripts/buildsystems/vcpkg.cmake"
                 },
                 "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/cmake/triplets",
+                "VCPKG_OVERLAY_PORTS": "${sourceDir}/cmake/ports",
                 "VCPKG_LIBRARY_LINKAGE": "static",
                 "VCPKG_CRT_LINKAGE": "dynamic",
                 "VCPKG_INSTALL_OPTIONS": "--clean-after-build",

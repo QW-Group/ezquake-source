@@ -125,19 +125,8 @@ void GLC_RenderFramebuffers(void)
 	qbool flip3d = GL_FramebufferEnabled3D();
 
 	if (GLC_CompilePostProcessProgram()) {
-		extern cvar_t gl_hwblend;
-
-		float blend_alpha = (!vid_hwgamma_enabled || !gl_hwblend.value || cl.teamfortress) ? 0 : v_blend[3];
-		float blend_values[4] = {
-			v_blend[0] * blend_alpha,
-			v_blend[1] * blend_alpha,
-			v_blend[2] * blend_alpha,
-			1 - blend_alpha
-		};
-
 		R_ProgramUse(r_program_post_process_glc);
 		R_ProgramUniform1f(r_program_uniform_post_process_glc_gamma, v_gamma.value);
-		R_ProgramUniform4fv(r_program_uniform_post_process_glc_v_blend, blend_values);
 		R_ProgramUniform1f(r_program_uniform_post_process_glc_contrast, bound(1, v_contrast.value, 3));
 		R_ProgramUniform1f(r_program_uniform_post_process_glc_r_inv_width, 1.0f / (float)VID_ScaledWidth3D());
 		R_ProgramUniform1f(r_program_uniform_post_process_glc_r_inv_height, 1.0f / (float)VID_ScaledHeight3D());

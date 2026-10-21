@@ -1,6 +1,6 @@
 #import <AppKit/Appkit.h>
 #import <Foundation/Foundation.h>
-#import <SDL.h>
+#import <SDL3/SDL.h>
 #import "common.h"
 
 @interface URL : NSObject
@@ -29,26 +29,57 @@ void init_macos_extras(void)
 	Cmd_AddCommand("sys_forget_sandbox", EzClearBookmarkedDirectory);
 }
 
-static void EzSimpleAlert(NSString *title, NSString *message)
+static void EzSimpleAlert(const char *title, const char *message)
 {
-	NSAlert *alert = [[NSAlert alloc] init];
-	[alert setMessageText:title];
-	[alert setInformativeText:message];
-	[alert addButtonWithTitle:@"Ok"];
-	[alert runModal];
+	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_WARNING, title, message, NULL);
 }
 
-static BOOL EzIsValidEzQuakeDirectory(NSString *directoryPath)
+static BOOL EzIsValidEzQuakeDirectory(const char *directory)
 {
-	NSString *id1Path = [directoryPath stringByAppendingPathComponent:@"id1"];
-	NSString *pakFilePath = [id1Path stringByAppendingPathComponent:@"pak0.pak"];
-
-	BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:pakFilePath];
-	if (!exists) {
-		EzSimpleAlert(@"Game directory not found", @"Select a directory containing 'id1/pak0.pak'.");
+	if (!SDL_GetPathInfo(va("%s/id1/pak0.pak", directory), NULL)) {
+		EzSimpleAlert("Game directory not found", "Select a directory containing 'id1/pak0.pak'.");
+		return NO;
 	}
 
-	return exists;
+	return YES;
+}
+
+typedef struct {
+	char path[MAX_OSPATH];
+	BOOL selected;
+	SDL_AtomicInt done;
+} EzFolderChoice;
+
+static void SDLCALL EzFolderChosen(void *userdata, const char * const *filelist, int filter)
+{
+	EzFolderChoice *choice = (EzFolderChoice *)userdata;
+
+	if (filelist && filelist[0]) {
+		strlcpy(choice->path, filelist[0], sizeof(choice->path));
+		choice->selected = YES;
+	}
+
+	SDL_SetAtomicInt(&choice->done, 1);
+}
+
+// Returns NO when the user cancels
+static BOOL EzChooseFolder(char *path, int length)
+{
+	EzFolderChoice choice = { 0 };
+
+	SDL_ShowOpenFolderDialog(EzFolderChosen, &choice, NULL, NULL, false);
+
+	// Without a parent window the dialog is modal and has usually answered already
+	while (!SDL_GetAtomicInt(&choice.done)) {
+		SDL_PumpEvents();
+		SDL_Delay(10);
+	}
+
+	if (choice.selected) {
+		strlcpy(path, choice.path, length);
+	}
+
+	return choice.selected;
 }
 
 static BOOL EzCheckExistingSettings(char *basedir, int length)
@@ -71,18 +102,18 @@ static BOOL EzCheckExistingSettings(char *basedir, int length)
 	                                          error:&error];
 	if (bookmarkDataIsStale || error) {
 		NSString *msg = error.localizedDescription ? error.localizedDescription : @"Bookmark data is stale";
-		EzSimpleAlert(@"Error resolving bookmark", msg);
+		EzSimpleAlert("Error resolving bookmark", [msg UTF8String]);
 		return NO;
 	}
 
 	if (![resolvedURL startAccessingSecurityScopedResource]) {
-		EzSimpleAlert(@"Failed to start accessing security-scoped resource", @"");
+		EzSimpleAlert("Failed to start accessing security-scoped resource", "");
 		return NO;
 	}
 
-	NSString *resolvedPath = [resolvedURL path];
+	const char *resolvedPath = [[resolvedURL path] UTF8String];
 	if (EzIsValidEzQuakeDirectory(resolvedPath)) {
-		strlcpy(basedir, [resolvedPath UTF8String], length);
+		strlcpy(basedir, resolvedPath, length);
 		return YES;
 	}
 
@@ -95,7 +126,7 @@ void SysLibrarySupportDir(char *basedir, int length)
 		// Need to temporarily start SDL here to not break initialization of application which
 		// prevents both the dummy menu, and more importantly mouseMovedHandler from working.
 		SDL_Window *window = SDL_CreateWindow(
-				"ezQuake", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0, SDL_WINDOW_HIDDEN
+				"ezQuake", 0, 0, SDL_WINDOW_HIDDEN
 		);
 
 		if (EzCheckExistingSettings(basedir, length)) {
@@ -103,40 +134,29 @@ void SysLibrarySupportDir(char *basedir, int length)
 			return;
 		}
 
-		NSOpenPanel *openPanel = [NSOpenPanel openPanel];
-		[openPanel setCanChooseFiles:NO];
-		[openPanel setCanChooseDirectories:YES];
-		[openPanel setAllowsMultipleSelection:NO];
-		[openPanel setMessage:@"Select game directory containing id1/pak0.pak:"];
-
-		BOOL validDirectorySelected = NO;
-		while (!validDirectorySelected) {
-			if ([openPanel runModal] != NSModalResponseOK) {
-				break;
-			}
-
-			NSURL *directoryURL = [[openPanel URLs] objectAtIndex:0];
-			if (!EzIsValidEzQuakeDirectory([directoryURL path])) {
+		char path[MAX_OSPATH];
+		while (EzChooseFolder(path, sizeof(path))) {
+			if (!EzIsValidEzQuakeDirectory(path)) {
 				continue;
 			}
 
+			// The sandbox lets this process use the chosen directory, so it can be bookmarked
+			NSURL *directoryURL = [NSURL fileURLWithPath:[NSString stringWithUTF8String:path] isDirectory:YES];
 			NSError *error = nil;
 			NSData *bookmarkData = [directoryURL bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
 			                              includingResourceValuesForKeys:nil
 			                                               relativeToURL:nil
 			                                                       error:&error];
 			if (error) {
-				EzSimpleAlert(@"Error creating bookmark", error.localizedDescription);
+				EzSimpleAlert("Error creating bookmark", [error.localizedDescription UTF8String]);
 				break;
 			}
 
 			[[NSUserDefaults standardUserDefaults] setObject:bookmarkData forKey:@"basedir"];
 			[[NSUserDefaults standardUserDefaults] setObject:@VERSION forKey:@"version"];
 
-			validDirectorySelected = YES;
-
-			NSString *resolvedPath = [directoryURL path];
-			strlcpy(basedir, [resolvedPath UTF8String], length);
+			strlcpy(basedir, path, length);
+			break;
 		}
 
 		SDL_DestroyWindow(window);

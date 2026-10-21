@@ -848,66 +848,29 @@ qbool FindBestNick (const char *nick, int flags, char *result, size_t result_len
 
 /********************************** Clipboard ****************************************/
 
-#ifndef _WIN32
-#define CLIPBOARDSIZE 1024
-static char clipboard[CLIPBOARDSIZE] = "\0";    // for clipboard implementation
-#endif
 // copies given text to clipboard
 void CopyToClipboard(const char *text)
 {
-#ifdef _WIN32
-	if (OpenClipboard(NULL))
-	{
-		LPTSTR  lptstrCopy;
-		HGLOBAL hglbCopy;
-
-		EmptyClipboard();
-		hglbCopy = GlobalAlloc(GMEM_DDESHARE, strlen(text)+1);
-		lptstrCopy = GlobalLock(hglbCopy);
-		strcpy((char *)lptstrCopy, text);
-		GlobalUnlock(hglbCopy);
-		SetClipboardData(CF_TEXT, hglbCopy);
-
-		CloseClipboard();
-	}
-#else
-	strlcpy (clipboard, text, CLIPBOARDSIZE);
 	Sys_CopyToClipboard(text);
-#endif
 }
 
 // reads from clipboard
 char *ReadFromClipboard(void)
 {
-#ifdef _WIN32
 	static char clipbuf[1024];
-	int     i;
-	HANDLE  th;
-	char    *clipText;
+	char *text = SDL_GetClipboardText();
+	size_t i;
 
-	clipbuf[0] = 0;
+	strlcpy(clipbuf, text ? text : "", sizeof(clipbuf));
+	SDL_free(text);
 
-	if (OpenClipboard(NULL))
-	{
-		th = GetClipboardData(CF_TEXT);
-		if (th)
-		{
-			clipText = GlobalLock(th);
-			if (clipText)
-			{
-				strlcpy(clipbuf, clipText, sizeof (clipbuf));
-				for (i=0; i < strlen(clipbuf); i++)
-					if (clipbuf[i]=='\n' || clipbuf[i]=='\t' || clipbuf[i]=='\b')
-						clipbuf[i] = ' ';
-			}
-			GlobalUnlock(th);
+	for (i = 0; clipbuf[i]; i++) {
+		if (clipbuf[i] == '\n' || clipbuf[i] == '\t' || clipbuf[i] == '\b') {
+			clipbuf[i] = ' ';
 		}
-		CloseClipboard();
 	}
+
 	return clipbuf;
-#else
-	return clipboard;
-#endif
 }
 
 

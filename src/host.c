@@ -33,7 +33,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "quakedef.h"
 #include "EX_browser.h"
 #include "fs.h"
@@ -715,12 +715,22 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
 
-	if (SDL_Init(0) != 0)
+	// The identifier matches the desktop entry, for Wayland's app_id and the X11 window class
+	SDL_SetAppMetadata("ezQuake", VERSION_NUMBER, "io.github.ezQuake");
+
+	if (!SDL_Init(0))
 	{
 		fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError());
 		exit(EXIT_FAILURE);
 	}
 	atexit(SDL_Quit);
+
+#ifdef __APPLE__
+	// Read when video starts, which on macOS already happens during filesystem init (SysLibrarySupportDir)
+	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
+	// Holding a key would open the accent menu, SDL2 always turned it off
+	SDL_SetHint(SDL_HINT_MAC_PRESS_AND_HOLD, "0");
+#endif
 
 	Host_InitMemory (default_memsize);
 

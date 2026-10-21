@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_VID_HEADER
 #define EZQUAKE_VID_HEADER
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #define VID_CBITS 6
 #define VID_GRADES (1 << VID_CBITS)
@@ -82,9 +82,6 @@ void VID_NotifyActivity(void);
 
 void VID_SetCaption (char *text);
 
-int VID_SetDeviceGammaRamp (unsigned short *ramps);
-extern qbool vid_hwgamma_enabled;
-
 extern int glx, gly, glwidth, glheight;
 
 void VID_Minimize(void);
@@ -96,6 +93,9 @@ qbool VID_VsyncLagEnabled(void);
 void VID_RenderFrameEnd(void);
 
 const SDL_DisplayMode *VID_GetDisplayMode(int index);
+int VID_DisplayModeRefreshRate(const SDL_DisplayMode *mode);
+int VID_DisplayModePixelWidth(const SDL_DisplayMode *mode);
+int VID_DisplayModePixelHeight(const SDL_DisplayMode *mode);
 int VID_GetCurrentModeIndex(void);
 int VID_GetModeIndexCount(void);
 

@@ -46,7 +46,6 @@ typedef enum {
 	r_program_uniform_post_process_glc_gamma,
 	r_program_uniform_post_process_glc_base,
 	r_program_uniform_post_process_glc_overlay,
-	r_program_uniform_post_process_glc_v_blend,
 	r_program_uniform_post_process_glc_contrast,
 	r_program_uniform_post_process_glc_r_inv_width,
 	r_program_uniform_post_process_glc_r_inv_height,

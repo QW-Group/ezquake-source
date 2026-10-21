@@ -78,8 +78,6 @@ void MaskExceptions (void);
 void Sys_PopFPCW (void);
 void Sys_PushFPCW_SetHigh (void);
 
-typedef HRESULT (WINAPI *SetProcessDpiAwarenessFunc)(_In_ DWORD value);
-
 #ifndef WITHOUT_WINKEYHOOK
 
 #ifndef WH_KEYBOARD_LL
@@ -90,8 +88,6 @@ unsigned int windows_keys_down, windows_keys_up;
 
 static HHOOK WinKeyHook;
 static qbool WinKeyHook_isActive;
-static qbool ScreenSaver_isDisabled = false;
-static qbool PowerOff_isDisabled = false;
 
 LRESULT CALLBACK LLWinKeyHook(int Code, WPARAM wParam, LPARAM lParam);
 void OnChange_sys_disableWinKeys(cvar_t *var, char *string, qbool *cancel);
@@ -430,40 +426,6 @@ dir_t Sys_listdir (const char *path, const char *ext, int sort_type)
 // SYSTEM IO
 // ===============================================================================
 
-/// turn back on screen saver and monitor power off
-static void Sys_RestoreScreenSaving(void)
-{
-    if (ScreenSaver_isDisabled)
-        SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, TRUE, 0, SPIF_SENDWININICHANGE);
-
-	if (PowerOff_isDisabled)
-		SystemParametersInfo(SPI_SETPOWEROFFACTIVE, TRUE, 0, SPIF_SENDWININICHANGE);
-}
-
-/// disable screen saver and monitor power off
-static void Sys_DisableScreenSaving(void)
-{
-	int bIsEnabled = 0;
-
-	// disables screen saver
-	if ( SystemParametersInfo(SPI_GETSCREENSAVEACTIVE, 0, (PVOID)(&bIsEnabled), 0) && bIsEnabled ) 
-	{
-		if ( SystemParametersInfo(SPI_SETSCREENSAVEACTIVE, FALSE, 0, SPIF_SENDWININICHANGE) ) 
-		{
-			ScreenSaver_isDisabled = true;
-		}
-	}
-
-	// disables screen power off
-	if ( SystemParametersInfo(SPI_GETPOWEROFFACTIVE, 0, (PVOID)(&bIsEnabled), 0) && bIsEnabled ) 
-	{
-		if ( SystemParametersInfo(SPI_SETPOWEROFFACTIVE, FALSE, 0, SPIF_SENDWININICHANGE) ) 
-		{
-			PowerOff_isDisabled = true;
-		}
-	}
-}
-
 void Sys_Error (char *error, ...) 
 {
 	va_list argptr;
@@ -480,8 +442,6 @@ void Sys_Error (char *error, ...)
 	if (qwclsemaphore)
 		CloseHandle (qwclsemaphore);
 
-	Sys_RestoreScreenSaving();
- 
 	exit (1);
 }
 
@@ -557,8 +517,6 @@ void Sys_Quit (void)
 		}
 	}
 
-	Sys_RestoreScreenSaving();
- 
 	exit (0);
 }
 
@@ -660,20 +618,6 @@ void WinCheckOSInfo(void)
 	if (vinfo.dwPlatformId != VER_PLATFORM_WIN32_NT || vinfo.dwMajorVersion < 5 || (vinfo.dwMajorVersion == 5 && vinfo.dwMinorVersion < 1)) {
 		Sys_Error("ezQuake requires at least Windows XP.");
 		return;
-	}
-
-	// Use raw resolutions, not scaled
-	{
-		HMODULE lib = LoadLibrary("Shcore.dll");
-		if (lib != NULL) {
-			SetProcessDpiAwarenessFunc SetProcessDpiAwareness;
-
-			SetProcessDpiAwareness = (SetProcessDpiAwarenessFunc) GetProcAddress(lib, "SetProcessDpiAwareness");
-			if (SetProcessDpiAwareness != NULL) {
-				SetProcessDpiAwareness(2);
-			}
-			FreeLibrary(lib);
-		}
 	}
 }
 
@@ -1282,8 +1226,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		if (*s != '-' && *s != '+')
 			qconsole_log = fopen(s, "a");
 	}
-
-	Sys_DisableScreenSaving();
 
 	// Take the greater of all the available memory or half the total memory,
 	// but at least 8 Mb and no more than 32 Mb, unless they explicitly request otherwise

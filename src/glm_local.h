@@ -24,7 +24,6 @@ typedef struct uniform_block_frame_constants_s {
 	float r_slimecolor[4];
 	float r_watercolor[4];
 	float r_skycolor[4];
-	float v_blend[4];
 
 	//
 	float time;

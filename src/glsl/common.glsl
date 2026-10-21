@@ -21,7 +21,6 @@ EZ_SSBO_LAYOUT(std140, EZQ_GL_BINDINGPOINT_FRAMECONSTANTS) uniform GlobalState {
 	vec4 r_slimecolor;
 	vec4 r_watercolor;
 	vec4 r_skycolor;
-	vec4 v_blend;
 
 	float time;
 	float gamma;
