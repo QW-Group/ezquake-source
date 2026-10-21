@@ -12,6 +12,11 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: read
+      # cache-vcpkg lists existing cache entries via the REST API
+      actions: read
+
     strategy:
       matrix:
         include:
@@ -93,8 +98,15 @@ jobs:
         cmakeVersion: "~4.2.0"
       if: matrix.os != 'ubuntu-latest'
 
-    - name: Setup vcpkg
-      uses: lukka/run-vcpkg@v11
+    # Per-package vcpkg binary cache keyed by ABI hash. Branches and PRs
+    # restore whatever master has already built; vcpkg itself is bootstrapped
+    # by the toolchain file during configure.
+    - name: Setup vcpkg binary cache
+      uses: QW-Group/cache-vcpkg@ced63d6050d6f60ade6269fec5dd891f3d7e4b2e
+      with:
+        vcpkg-root: vcpkg
+        cache-key-prefix: vcpkg-${{ matrix.configurePreset }}
+        installed-dir: build-${{ matrix.configurePreset }}/vcpkg_installed
       if: matrix.os != 'ubuntu-latest'
 
     - name: Run CMake
