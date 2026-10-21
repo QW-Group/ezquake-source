@@ -931,7 +931,7 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 	float grav = movevars.gravity / 800.0;
 	vec3_t oldorg, movement;
 	int contents;
-	float lifetime;
+	float lifetime, slowdown;
 
 	p->size += p->growth * cls.frametime;
 
@@ -1138,9 +1138,9 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 			if (qmb_physics_frame) {
 				QMB_AddTrailSegment(p, 0.5);
 			}
-			p->vel[0] = 19 * p->vel[0] / 20;
-			p->vel[1] = 19 * p->vel[1] / 20;
-			p->vel[2] = 19 * p->vel[2] / 20;
+			// Loses 1/20 of its speed per physics frame, at any frame rate
+			slowdown = pow(19.0 / 20, cls.frametime * QMB_PHYSICS_FPS);
+			VectorScale(p->vel, slowdown, p->vel);
 			break;
 		default:
 			assert(!"QMB_UpdateParticles: unexpected pt->move");
