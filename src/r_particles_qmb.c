@@ -441,7 +441,7 @@ void QMB_InitParticles(void)
 	}
 	ADD_PARTICLE_TEXTURE(ptex_shockwave, shockwave_texture, 0, 1, 0, 0, 256, 256);
 	ADD_PARTICLE_TEXTURE(ptex_lightning, lightning_texture, 0, 1, 0, 0, 256, 256);
-	ADD_PARTICLE_TEXTURE(ptex_spark, spark_texture, 0, 1, 0, 0, 32, 32);
+	ADD_PARTICLE_TEXTURE(ptex_spark, spark_texture, 0, 1, 0, 0, 256, 256);
 
 	QMB_AddParticleType(p_spark, pd_spark, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -32, 0, pm_bounce, 1.3, 9, &count, "part:spark");
 	QMB_AddParticleType(p_sparkray, pd_sparkray, BLEND_GL_SRC_ALPHA_GL_ONE, ptex_none, 255, -0, 0, pm_normal, 0, 9, &count, "part:sparkray");
@@ -627,7 +627,9 @@ static void QMB_FillParticleVertexBuffer(void)
 		switch (pt->drawtype) {
 		case pd_beam:
 			for (p = pt->start; p; p = p->next) {
-				particle_texture_t* ptex = &particle_textures[ptex_lightning];
+				particle_texture_t* ptex = &particle_textures[pt->texture];
+				// Untextured beams (streak trails) are drawn in solid colour
+				int tex_index = (R_TextureReferenceIsValid(ptex->texnum) ? ptex->tex_index : -1);
 				vec3_t right1, right2;
 				float half_t = (ptex->coords[0][1] + ptex->coords[0][3]) * 0.5f;
 				int trail_parts = min(amf_part_traildetail.integer, MAX_BEAM_TRAIL);
@@ -661,16 +663,16 @@ static void QMB_FillParticleVertexBuffer(void)
 
 					R_CalcBeamVerts(varray_vertex, p->org, p->endorg, right1, right2, p->size / (l * amf_part_trailwidth.value));
 
-					QMB_BillboardAddVert(vert++, pt, varray_vertex[4], varray_vertex[5], varray_vertex[6], ptex->coords[0][2], ptex->coords[0][3], p->color, ptex->tex_index);
-					QMB_BillboardAddVert(vert++, pt, varray_vertex[8], varray_vertex[9], varray_vertex[10], ptex->coords[0][0], ptex->coords[0][3], p->color, ptex->tex_index);
+					QMB_BillboardAddVert(vert++, pt, varray_vertex[4], varray_vertex[5], varray_vertex[6], ptex->coords[0][2], ptex->coords[0][3], p->color, tex_index);
+					QMB_BillboardAddVert(vert++, pt, varray_vertex[8], varray_vertex[9], varray_vertex[10], ptex->coords[0][0], ptex->coords[0][3], p->color, tex_index);
 
 					// near center
-					QMB_BillboardAddVert(vert++, pt, (varray_vertex[0] + varray_vertex[4]) / 2, (varray_vertex[1] + varray_vertex[5]) / 2, (varray_vertex[2] + varray_vertex[6]) / 2, ptex->coords[0][2], half_t, p->color, ptex->tex_index);
+					QMB_BillboardAddVert(vert++, pt, (varray_vertex[0] + varray_vertex[4]) / 2, (varray_vertex[1] + varray_vertex[5]) / 2, (varray_vertex[2] + varray_vertex[6]) / 2, ptex->coords[0][2], half_t, p->color, tex_index);
 					// far center
-					QMB_BillboardAddVert(vert++, pt, (varray_vertex[8] + varray_vertex[12]) / 2, (varray_vertex[9] + varray_vertex[13]) / 2, (varray_vertex[10] + varray_vertex[14]) / 2, ptex->coords[0][0], half_t, p->color, ptex->tex_index);
+					QMB_BillboardAddVert(vert++, pt, (varray_vertex[8] + varray_vertex[12]) / 2, (varray_vertex[9] + varray_vertex[13]) / 2, (varray_vertex[10] + varray_vertex[14]) / 2, ptex->coords[0][0], half_t, p->color, tex_index);
 
-					QMB_BillboardAddVert(vert++, pt, varray_vertex[0], varray_vertex[1], varray_vertex[2], ptex->coords[0][2], ptex->coords[0][1], p->color, ptex->tex_index);
-					QMB_BillboardAddVert(vert++, pt, varray_vertex[12], varray_vertex[13], varray_vertex[14], ptex->coords[0][0], ptex->coords[0][1], p->color, ptex->tex_index);
+					QMB_BillboardAddVert(vert++, pt, varray_vertex[0], varray_vertex[1], varray_vertex[2], ptex->coords[0][2], ptex->coords[0][1], p->color, tex_index);
+					QMB_BillboardAddVert(vert++, pt, varray_vertex[12], varray_vertex[13], varray_vertex[14], ptex->coords[0][0], ptex->coords[0][1], p->color, tex_index);
 				}
 			}
 			break;
