@@ -21474,7 +21474,7 @@
     },
     "vid_flashonactivity": {
       "default": "1",
-      "desc": "When there is activity in the server, ezQuake's taskbar window will flash.\nActivity includes chat, high priority messages, disconnection from server.",
+      "desc": "When there is activity in the server, ezQuake's taskbar window will flash (the Dock icon bounces on macOS).\nActivity includes chat, high priority messages, disconnection from server.",
       "group-id": "52",
       "type": "float"
     },

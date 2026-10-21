@@ -1596,21 +1596,11 @@ void VID_SetCaption (char *text)
 
 void VID_NotifyActivity(void)
 {
-#ifdef _WIN32
-	if (ActiveApp || !vid_flashonactivity.value) {
+	if (!sdl_window || ActiveApp || !vid_flashonactivity.value) {
 		return;
 	}
 
-	{
-		SDL_PropertiesID props = SDL_GetWindowProperties(sdl_window);
-		HWND hwnd = (HWND)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
-		if (hwnd) {
-			FlashWindow(hwnd, TRUE);
-		} else {
-			Com_DPrintf("Sys_NotifyActivity: could not get Win32 HWND\n");
-		}
-	}
-#endif
+	SDL_FlashWindow(sdl_window, SDL_FLASH_BRIEFLY);
 }
 
 void VID_Minimize (void)
