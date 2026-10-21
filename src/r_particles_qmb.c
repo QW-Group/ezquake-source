@@ -127,6 +127,7 @@ static part_blend_info_t blend_options[NUMBER_OF_BLEND_TYPES] = {
 };
 
 #define MAX_BEAM_TRAIL 10
+#define QMB_SQRT2 1.4143f // rounded up, for culling
 #define TEXTURE_DETAILS(x) (R_UseModernOpenGL() ? x->tex_array : x->texnum),(x->tex_index)
 
 static float sint[7] = {0.000000, 0.781832, 0.974928, 0.433884, -0.433884, -0.974928, -0.781832};
@@ -599,7 +600,7 @@ __inline static qbool CALCULATE_PARTICLE_BILLBOARD(particle_texture_t* ptex, par
 
 static void QMB_FillParticleVertexBuffer(void)
 {
-	vec3_t billboard[4], velcoord[4];
+	vec3_t billboard[4], velcoord[4], centre;
 	particle_type_t* pt;
 	particle_t* p;
 	int i, j, k;
@@ -636,6 +637,13 @@ static void QMB_FillParticleVertexBuffer(void)
 				}
 
 				if (particle_time < p->start || particle_time >= p->die) {
+					continue;
+				}
+
+				// The beam runs from org to endorg, and is widest for the last trail part
+				VectorAdd(p->org, p->endorg, centre);
+				VectorScale(centre, 0.5f, centre);
+				if (R_CullSphere(centre, VectorDistance(p->org, p->endorg) * 0.5f + p->size / bound(0.01f, amf_part_trailwidth.value, 1))) {
 					continue;
 				}
 
@@ -721,6 +729,15 @@ static void QMB_FillParticleVertexBuffer(void)
 
 				for (p = pt->start; p; p = p->next) {
 					if (particle_time < p->start || particle_time >= p->die) {
+						continue;
+					}
+
+					// The corners are size * (up +- right) from org, with up the length of
+					// vup (1) for billboards and of vel * custom for velocity billboards
+					if (pt->drawtype == pd_billboard && R_CullSphere(p->org, p->size * QMB_SQRT2)) {
+						continue;
+					}
+					else if (pt->drawtype == pd_billboard_vel && R_CullSphere(p->org, p->size * (VectorLength(p->vel) * fabs(pt->custom) + 1))) {
 						continue;
 					}
 
@@ -869,6 +886,12 @@ static void QMB_FillParticleVertexBuffer(void)
 					int i;
 
 					if (particle_time < p->start || particle_time >= p->die) {
+						continue;
+					}
+
+					// Flames rise 4-44 units, drift 3 units to the side & are at most 7 units in size
+					VectorSet(centre, p->org[0], p->org[1], p->org[2] + 24);
+					if (R_CullSphere(centre, 21 + 7 * QMB_SQRT2)) {
 						continue;
 					}
 
