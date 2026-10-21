@@ -715,6 +715,9 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	COM_InitArgv (argc, argv);
 	COM_StoreOriginalCmdline(argc, argv);
 
+	// The identifier matches the desktop entry, for Wayland's app_id and the X11 window class
+	SDL_SetAppMetadata("ezQuake", VERSION_NUMBER, "io.github.ezQuake");
+
 	if (!SDL_Init(0))
 	{
 		fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError());
