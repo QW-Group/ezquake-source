@@ -722,6 +722,11 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	}
 	atexit(SDL_Quit);
 
+#ifdef __APPLE__
+	// Read when video starts, which on macOS already happens during filesystem init (SysLibrarySupportDir)
+	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
+#endif
+
 	Host_InitMemory (default_memsize);
 
 	Cbuf_Init ();
