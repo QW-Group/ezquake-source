@@ -1233,12 +1233,8 @@ static int VID_SetWindowIcon(SDL_Window *sdl_window)
 	// it actually is higher resolution than the one here.
 	return 0;
 #else
-	SDL_Surface *icon_surface;
-	SDL_PixelFormat fmt = SDL_GetPixelFormatForMasks(
-		ezquake_icon.bytes_per_pixel * 8,
-		0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
-	icon_surface = SDL_CreateSurfaceFrom(
-		ezquake_icon.width, ezquake_icon.height, fmt,
+	SDL_Surface *icon_surface = SDL_CreateSurfaceFrom(
+		ezquake_icon.width, ezquake_icon.height, SDL_PIXELFORMAT_RGBA32,
 		(void *)ezquake_icon.pixel_data,
 		ezquake_icon.width * ezquake_icon.bytes_per_pixel);
 
@@ -1377,9 +1373,7 @@ static void VID_SDL_Init(void)
 	// SDL_HINT_GRAB_KEYBOARD removed in SDL3; GrabMouse grabs the keyboard along with the mouse instead
 	// SDL_HINT_MOUSE_RELATIVE_MODE_WARP removed in SDL3
 #ifdef __APPLE__
-#ifdef SDL_HINT_TOUCH_MOUSE_EVENTS
 	SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
-#endif
 #endif
 
 	{
