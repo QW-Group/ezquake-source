@@ -96,8 +96,32 @@ typedef enum {
 
 void R_Sprite3DInitialiseBatch(sprite3d_batch_id type, r_state_id rendering_state, texture_ref texture, int index, r_primitive_id primitive_type);
 r_sprite3d_vert_t* R_Sprite3DAddEntry(sprite3d_batch_id type, int verts_required);
-r_sprite3d_vert_t* R_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture, int index);
-void R_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index);
+r_sprite3d_vert_t* R_Sprite3DAddEntrySpecific(sprite3d_batch_id type, int verts_required, texture_ref texture);
+
+// Called for every vertex of every particle, so inline
+static __inline void R_Sprite3DSetVert(r_sprite3d_vert_t* vert, float x, float y, float z, float s, float t, byte color[4], int texture_index)
+{
+	extern int particletexture_array_index;
+	extern float particletexture_array_xpos_tr;
+	extern float particletexture_array_ypos_tr;
+
+	vert->color[0] = color[0];
+	vert->color[1] = color[1];
+	vert->color[2] = color[2];
+	vert->color[3] = color[3];
+	VectorSet(vert->position, x, y, z);
+	if (texture_index < 0) {
+		vert->tex[0] = particletexture_array_xpos_tr;
+		vert->tex[1] = particletexture_array_ypos_tr;
+		vert->tex[2] = particletexture_array_index;
+	}
+	else {
+		vert->tex[0] = s;
+		vert->tex[1] = t;
+		vert->tex[2] = texture_index;
+	}
+}
+
 void R_Sprite3DRender(r_sprite3d_vert_t* vert, vec3_t origin, vec3_t up, vec3_t right, float scale_up, float scale_down, float scale_left, float scale_right, float s, float t, int index);
 
 // Internal for renderers

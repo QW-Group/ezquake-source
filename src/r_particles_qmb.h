@@ -107,6 +107,7 @@ typedef struct particle_s {
 	int         cached_contents;
 	vec3_t      cached_movement;
 	float       cached_distance;
+	vec3_t      unchecked_movement;	// since its contents were last looked up
 
 	int         entity_ref;
 	int         entity_trailindex;
