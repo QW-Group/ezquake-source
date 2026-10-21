@@ -812,12 +812,13 @@ void OnChange_gl_clearColor(cvar_t *v, char *s, qbool *cancel) {
 
 static void R_Clear(void)
 {
+	extern cvar_t vid_software_palette;
 	qbool clear_color = false;
 
 	// This used to cause a bug with some graphics cards when
 	// in multiview mode. It would clear all but the last
 	// drawn views.
-	clear_color |= (!cl_multiview.integer && (gl_clear.integer || v_contrast.value > 1));
+	clear_color |= (!cl_multiview.integer && (gl_clear.integer || (v_contrast.value > 1 && !vid_software_palette.integer)));
 
 	// If outside level or in wall, sky is usually visible
 	clear_color |= (r_viewleaf->contents == CONTENTS_SOLID && (R_UseModernOpenGL() || r_fastsky.integer));
