@@ -1364,7 +1364,7 @@ static void VID_SDL_Init(void)
 	//       Understand this is meant to be helped by NSHighResolutionCapable in Info.plist, but
 	//          BLooD_DoG tried that and it didn't help.  No OSX device to test on, so removed
 	//          for the moment.
-	//       Flag has no effect on Windows (see SetProcessDpiAwarenessFunc in sys_win.c)
+	//       Flag has no effect on Windows (SDL makes the process per-monitor DPI aware)
 	if (r_fullscreen.integer > 0) {
 		// Desktop fullscreen right away, exclusive modes are applied by VID_SetWindowResolution
 		flags |= (vid_usedesktopres.integer == 1 ? SDL_WINDOW_FULLSCREEN : 0);

@@ -78,8 +78,6 @@ void MaskExceptions (void);
 void Sys_PopFPCW (void);
 void Sys_PushFPCW_SetHigh (void);
 
-typedef HRESULT (WINAPI *SetProcessDpiAwarenessFunc)(_In_ DWORD value);
-
 #ifndef WITHOUT_WINKEYHOOK
 
 #ifndef WH_KEYBOARD_LL
@@ -660,20 +658,6 @@ void WinCheckOSInfo(void)
 	if (vinfo.dwPlatformId != VER_PLATFORM_WIN32_NT || vinfo.dwMajorVersion < 5 || (vinfo.dwMajorVersion == 5 && vinfo.dwMinorVersion < 1)) {
 		Sys_Error("ezQuake requires at least Windows XP.");
 		return;
-	}
-
-	// Use raw resolutions, not scaled
-	{
-		HMODULE lib = LoadLibrary("Shcore.dll");
-		if (lib != NULL) {
-			SetProcessDpiAwarenessFunc SetProcessDpiAwareness;
-
-			SetProcessDpiAwareness = (SetProcessDpiAwarenessFunc) GetProcAddress(lib, "SetProcessDpiAwareness");
-			if (SetProcessDpiAwareness != NULL) {
-				SetProcessDpiAwareness(2);
-			}
-			FreeLibrary(lib);
-		}
 	}
 }
 
