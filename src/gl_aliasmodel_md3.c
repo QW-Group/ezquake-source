@@ -25,9 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "r_aliasmodel.h"
 #include "vx_vertexlights.h" 
 #include "r_matrix.h"
-#include "glsl/constants.glsl"
 
-void GL_AliasModelSetVertexDirection(int num_triangles, vbo_model_vert_t* vbo_buffer, int v1, int v2, qbool limit_lerp, int key_pose);
 void GL_AliasModelFixNormals(vbo_model_vert_t* vbo_buffer, int v, int vertsPerPose);
 
 void GLM_MakeAlias3DisplayLists(model_t* model)
@@ -66,10 +64,7 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 			for (triangle = 0; triangle < surf->numTriangles; ++triangle) {
 				for (i = 0; i < 3; ++i, ++v) {
 					int vertexNumber = framenum * surf->numVerts + triangles[triangle].indexes[i];
-					int nextFrame = Mod_ExpectedNextFrame(model, framenum, pheader->numFrames);
-					int nextVertexNumber = nextFrame * surf->numVerts + triangles[triangle].indexes[i];
 					ezMd3XyzNormal_t* vert = &vertices[vertexNumber];
-					ezMd3XyzNormal_t* nextVert = &vertices[nextVertexNumber];
 					float s, t;
 
 					s = texCoords[triangles[triangle].indexes[i]].s;
@@ -80,14 +75,6 @@ void GLM_MakeAlias3DisplayLists(model_t* model)
 					vbo[v].texture_coords[0] = s;
 					vbo[v].texture_coords[1] = t;
 					vbo[v].flags = 0;
-
-					// Set direction
-					VectorSubtract(nextVert->xyz, vert->xyz, vbo[v].direction);
-					if (model->renderfx & RF_LIMITLERP) {
-						if ((vert->xyz[0] > 0) != (nextVert->xyz[0] > 0)) {
-							vbo[v].flags |= AM_VERTEX_NOLERP;
-						}
-					}
 				}
 			}
 		}

@@ -2,8 +2,6 @@
 
 #ezquake-definitions
 
-attribute float flags;
-
 #ifdef BACKFACE_PASS
 
 // for outline
@@ -31,21 +29,24 @@ varying vec4 fsBaseColor;
 #endif
 
 
-#define AM_VERTEX_NOLERP 1
-
 void main()
 {
 	float lerpFrac = lerpFraction;
+	vec3 position;
+
+	// gl_MultiTexCoord1 is the position in the pose being lerped towards
 #ifdef EZQ_ALIASMODEL_MUZZLEHACK
-	lerpFrac = sign(lerpFrac) * max(lerpFrac, mod(flags, 2));
+	if ((gl_Vertex.x > 0.0) != (gl_MultiTexCoord1.x > 0.0)) {
+		lerpFrac = sign(lerpFrac);
+	}
 #endif
+	position = mix(gl_Vertex.xyz, gl_MultiTexCoord1.xyz, lerpFrac);
 
 #ifdef BACKFACE_PASS
-	gl_Position = gl_ModelViewProjectionMatrix * (gl_Vertex + lerpFrac * vec4(gl_MultiTexCoord1.xyz, 0) + vec4(outlineScale * gl_Normal, 0));
-	// gl_Position += gl_ModelViewProjectionMatrix * 
+	gl_Position = gl_ModelViewProjectionMatrix * vec4(position + outlineScale * gl_Normal, 1);
 	fsBaseColor = gl_Color;
 #else
-		gl_Position = gl_ModelViewProjectionMatrix * (gl_Vertex + lerpFrac * vec4(gl_MultiTexCoord1.xyz, 0));
+		gl_Position = gl_ModelViewProjectionMatrix * vec4(position, 1);
 	#if defined(TEXTURING_ENABLED) || defined(DRAW_CAUSTIC_TEXTURES)
 		fsTextureCoord = gl_MultiTexCoord0.st;
 	#endif // TEXTURING

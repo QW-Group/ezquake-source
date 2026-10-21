@@ -38,6 +38,12 @@ void GLC_VAOEnableCustomAttribute(r_vao_id vao, int index, r_program_attribute_i
 void GLC_VAODisableCustomAttribute(r_vao_id vao, int index);
 
 void GLC_DeleteVAOs(void);
+
+// Set client vertex array state directly, defined in gl_state.c
+void R_GLC_TexturePointer(r_buffer_id buffer_id, int unit, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
+void R_GLC_ColorPointer(r_buffer_id buffer_id, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
+void R_GLC_VertexPointer(r_buffer_id buffer_id, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
+void R_GLC_NormalPointer(r_buffer_id buffer_id, qbool enabled, int size, GLenum type, int stride, void* pointer_or_offset);
 void GLC_GenVertexArray(r_vao_id vao, const char* name);
 qbool GLC_VertexArrayCreated(r_vao_id vao);
 void GLC_BindVertexArray(r_vao_id vao);

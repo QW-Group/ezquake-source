@@ -49,7 +49,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 
 static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, vec3_t shadevector);
-static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int firstVert, int verts, qbool weaponmodel);
+static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int firstVert, int pose2Vert, int verts, qbool weaponmodel);
 
 extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 
@@ -83,11 +83,8 @@ static void GLC_ConfigureAliasModelState(void)
 		GLC_VAOEnableVertexPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, position));
 		GLC_VAOEnableNormalPointer(vao_aliasmodel, 3, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, normal));
 		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 0, 2, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords));
-		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 1, 3, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, direction));
-		GLC_VAOEnableCustomAttribute(vao_aliasmodel, 0, r_program_attribute_aliasmodel_std_glc_flags, 1, GL_INT, false, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags));
-		GLC_VAOEnableCustomAttribute(vao_aliasmodel, 1, r_program_attribute_aliasmodel_shell_glc_flags, 1, GL_INT, false, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags));
-		GLC_VAOEnableCustomAttribute(vao_aliasmodel, 2, r_program_attribute_aliasmodel_shadow_glc_flags, 1, GL_INT, false, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags));
-		GLC_VAOEnableCustomAttribute(vao_aliasmodel, 3, r_program_attribute_aliasmodel_outline_glc_flags, 1, GL_INT, false, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags));
+		// Position of the second pose to lerp to, see GLC_AliasModelBindPoses()
+		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel, 1, 3, GL_FLOAT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, position));
 	}
 	else {
 		if (gl_vbo_clientmemory.integer) {
@@ -110,6 +107,21 @@ static void GLC_ConfigureAliasModelState(void)
 		GLC_VAOEnableVertexPointer(vao_aliasmodel_powerupshell, 3, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].position);
 		GLC_VAOEnableTextureCoordPointer(vao_aliasmodel_powerupshell, 0, 2, GL_FLOAT, sizeof(temp_aliasmodel_buffer[0]), &temp_aliasmodel_buffer[0].texture_coords[0]);
 	}
+}
+
+// The shaders lerp from the standard vertex arrays to the positions in texture
+// coordinate set 1, so point them at any two poses. Draw calls after this start
+// from 0, relative to the first pose.
+void GLC_AliasModelBindPoses(int pose1Vert, int pose2Vert)
+{
+	const int stride = sizeof(vbo_model_vert_t);
+	uintptr_t pose1 = (uintptr_t)pose1Vert * stride;
+	uintptr_t pose2 = (uintptr_t)pose2Vert * stride;
+
+	R_GLC_VertexPointer(r_buffer_aliasmodel_vertex_data, true, 3, GL_FLOAT, stride, (void*)(pose1 + (uintptr_t)VBO_FIELDOFFSET(vbo_model_vert_t, position)));
+	R_GLC_NormalPointer(r_buffer_aliasmodel_vertex_data, true, 3, GL_FLOAT, stride, (void*)(pose1 + (uintptr_t)VBO_FIELDOFFSET(vbo_model_vert_t, normal)));
+	R_GLC_TexturePointer(r_buffer_aliasmodel_vertex_data, 0, true, 2, GL_FLOAT, stride, (void*)(pose1 + (uintptr_t)VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords)));
+	R_GLC_TexturePointer(r_buffer_aliasmodel_vertex_data, 1, true, 3, GL_FLOAT, stride, (void*)(pose2 + (uintptr_t)VBO_FIELDOFFSET(vbo_model_vert_t, position)));
 }
 
 void GLC_AllocateAliasPoseBuffer(void)
@@ -367,6 +379,7 @@ static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int po
 	float angle_radians = -ent->angles[YAW] * M_PI / 180.0;
 	vec3_t angle_vector = { cos(angle_radians), sin(angle_radians), 1 };
 	int firstVert = model->vbo_start + pose1 * paliashdr->vertsPerPose;
+	int pose2Vert = model->vbo_start + pose2 * paliashdr->vertsPerPose;
 	int subprogram;
 
 	if (outline) {
@@ -374,7 +387,7 @@ static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int po
 			R_ProgramUse(r_program_aliasmodel_outline_glc);
 			R_ProgramUniform1f(r_program_uniform_aliasmodel_outline_glc_lerpFraction, lerpfrac);
 			R_ProgramUniform1f(r_program_uniform_aliasmodel_outline_glc_outlineScale, ent->outlineScale);
-			GLC_DrawCachedAliasOutlineFrame(model, GL_TRIANGLES, firstVert, paliashdr->vertsPerPose, ent->renderfx & RF_WEAPONMODEL);
+			GLC_DrawCachedAliasOutlineFrame(model, GL_TRIANGLES, firstVert, pose2Vert, paliashdr->vertsPerPose, ent->renderfx & RF_WEAPONMODEL);
 		}
 	}
 	else {
@@ -385,7 +398,7 @@ static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int po
 			!invalidate_texture,
 			gl_fb_models.integer && (ent->ambientlight == 4096 && ent->shadelight == 4096),
 			r_refdef2.drawCaustics && (render_effects & RF_CAUSTICS),
-			r_lerpmuzzlehack.integer && (render_effects & RF_WEAPONMODEL)
+			r_lerpmuzzlehack.integer && (render_effects & RF_WEAPONMODEL) && (model->renderfx & RF_LIMITLERP)
 		);
 
 		if (buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelStandardCompileSpecific(subprogram)) {
@@ -401,11 +414,13 @@ static void GLC_DrawAliasFrameImpl_Program(entity_t* ent, model_t* model, int po
 
 			if (ent->r_modelalpha < 1) {
 				GLC_StateBeginDrawAliasZPass(render_effects & RF_WEAPONMODEL);
-				GL_DrawArrays(GL_TRIANGLES, firstVert, paliashdr->vertsPerPose);
+				GLC_AliasModelBindPoses(firstVert, pose2Vert);
+				GL_DrawArrays(GL_TRIANGLES, 0, paliashdr->vertsPerPose);
 			}
 			GLC_StateBeginDrawAliasFrameProgram(texture, underwatertexture, render_effects, ent->custom_model, ent->r_modelalpha, false);
 			R_CustomColor(color[0], color[1], color[2], color[3]);
-			GL_DrawArrays(GL_TRIANGLES, firstVert, paliashdr->vertsPerPose);
+			GLC_AliasModelBindPoses(firstVert, pose2Vert);
+			GL_DrawArrays(GL_TRIANGLES, 0, paliashdr->vertsPerPose);
 			if (render_effects & RF_CAUSTICS) {
 				GLC_StateEndUnderwaterAliasModelCaustics();
 			}
@@ -555,12 +570,12 @@ void GLC_DrawAliasFrame(entity_t* ent, model_t* model, int pose1, int pose2, tex
 	}
 }
 
-// This can be used with program or immediate mode
-static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int firstVert, int verts, qbool weaponmodel)
+static void GLC_DrawCachedAliasOutlineFrame(model_t* model, GLenum primitive, int firstVert, int pose2Vert, int verts, qbool weaponmodel)
 {
 	GLC_StateBeginAliasOutlineFrame(weaponmodel);
 
-	GL_DrawArrays(primitive, firstVert, verts);
+	GLC_AliasModelBindPoses(firstVert, pose2Vert);
+	GL_DrawArrays(primitive, 0, verts);
 }
 
 void GLC_PowerupShellColor(int layer_no, int effects, float* color)
@@ -590,11 +605,12 @@ const float* GLC_PowerupShell_ScrollParams(void)
 	return r_refdef2.powerup_scroll_params;
 }
 
-static void GLC_DrawPowerupShell_Program(entity_t* ent, int pose1, float fraclerp)
+static void GLC_DrawPowerupShell_Program(entity_t* ent, int pose1, int pose2, float fraclerp)
 {
 	if (buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelShellCompile()) {
 		aliashdr_t* paliashdr = (aliashdr_t*)Mod_Extradata(ent->model);
 		int firstVert = ent->model->vbo_start + pose1 * paliashdr->vertsPerPose;
+		int pose2Vert = ent->model->vbo_start + pose2 * paliashdr->vertsPerPose;
 		float color1[4], color2[4];
 
 		GLC_PowerupShellColor(0, ent->effects, color1);
@@ -607,7 +623,8 @@ static void GLC_DrawPowerupShell_Program(entity_t* ent, int pose1, float fracler
 		R_ProgramUniform4fv(r_program_uniform_aliasmodel_shell_glc_fsBaseColor2, color2);
 		R_ProgramUniform4fv(r_program_uniform_aliasmodel_shell_glc_scroll, GLC_PowerupShell_ScrollParams());
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_shell_glc_lerpFraction, fraclerp);
-		GL_DrawArrays(GL_TRIANGLES, firstVert, paliashdr->vertsPerPose);
+		GLC_AliasModelBindPoses(firstVert, pose2Vert);
+		GL_DrawArrays(GL_TRIANGLES, 0, paliashdr->vertsPerPose);
 		R_ProgramUse(r_program_none);
 	}
 }
@@ -709,7 +726,7 @@ static void GLC_DrawPowerupShell(entity_t* ent, maliasframedesc_t *oldframe, mal
 	R_AliasModelDeterminePoses(oldframe, frame, &pose1, &pose2, &lerp);
 
 	if (gl_program_aliasmodels.integer) {
-		GLC_DrawPowerupShell_Program(ent, pose1, lerp);
+		GLC_DrawPowerupShell_Program(ent, pose1, pose2, lerp);
 	}
 	else {
 		GLC_DrawPowerupShell_Immediate(ent, pose1, pose2, lerp);
@@ -746,18 +763,20 @@ void GLC_DrawAliasModelShadow(entity_t* ent)
 	R_PopModelviewMatrix(oldMatrix);
 }
 
-static void GLC_DrawAliasModelShadowDrawCall_Program(entity_t* ent, int pose1, float lerpfrac, float lheight, vec3_t shadevector)
+static void GLC_DrawAliasModelShadowDrawCall_Program(entity_t* ent, int pose1, int pose2, float lerpfrac, float lheight, vec3_t shadevector)
 {
 	if (buffers.supported && GL_Supported(R_SUPPORT_RENDERING_SHADERS) && GLC_AliasModelShadowCompile()) {
 		const aliashdr_t* paliashdr = (aliashdr_t *)Mod_Extradata(ent->model); // locate the proper data
 		int firstVert = ent->model->vbo_start + pose1 * paliashdr->vertsPerPose;
+		int pose2Vert = ent->model->vbo_start + pose2 * paliashdr->vertsPerPose;
 
 		R_ProgramUse(r_program_aliasmodel_shadow_glc);
 		GLC_BindVertexArrayAttributes(vao_aliasmodel);
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_shadow_glc_lerpFraction, lerpfrac);
 		R_ProgramUniform1f(r_program_uniform_aliasmodel_shadow_glc_lheight, lheight);
 		R_ProgramUniform2fv(r_program_uniform_aliasmodel_shadow_glc_shadevector, shadevector);
-		GL_DrawArrays(GL_TRIANGLES, firstVert, paliashdr->vertsPerPose);
+		GLC_AliasModelBindPoses(firstVert, pose2Vert);
+		GL_DrawArrays(GL_TRIANGLES, 0, paliashdr->vertsPerPose);
 		R_ProgramUse(r_program_none);
 	}
 }
@@ -821,7 +840,7 @@ static void GLC_DrawAliasModelShadowDrawCall(entity_t* ent, vec3_t shadevector)
 	R_AliasModelDeterminePoses(oldframe, frame, &pose1, &pose2, &lerpfrac);
 
 	if (gl_program_aliasmodels.integer) {
-		GLC_DrawAliasModelShadowDrawCall_Program(ent, pose1, lerpfrac, lheight, shadevector);
+		GLC_DrawAliasModelShadowDrawCall_Program(ent, pose1, pose2, lerpfrac, lheight, shadevector);
 	}
 	else {
 		GLC_DrawAliasModelShadowDrawCall_Immediate(ent, pose1, lerpfrac, lheight, shadevector);

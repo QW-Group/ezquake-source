@@ -56,7 +56,8 @@ static const char* gl_friendlyTextureTargetNames[] = {
 	"GL_TEXTURE_2D",              // texture_type_2d,
 	"GL_TEXTURE_2D_ARRAY",        // texture_type_2d_array,
 	"GL_TEXTURE_CUBE_MAP",        // texture_type_cubemap,
-	"GL_TEXTURE_2D_MULTISAMPLE"   // texture_type_2d_multisampled,
+	"GL_TEXTURE_2D_MULTISAMPLE",  // texture_type_2d_multisampled,
+	"GL_TEXTURE_BUFFER"           // texture_type_buffer,
 };
 
 static const char* fogModeDescriptions[] = {
@@ -479,6 +480,9 @@ r_texture_type_id GL_TargetTypeToTextureType(GLuint targetType)
 	}
 	else if (targetType == GL_TEXTURE_2D_MULTISAMPLE) {
 		return texture_type_2d_multisampled;
+	}
+	else if (targetType == GL_TEXTURE_BUFFER) {
+		return texture_type_buffer;
 	}
 	else {
 		Sys_Error("GL_TargetTypeToTextureType(%x) - unsupported", targetType);

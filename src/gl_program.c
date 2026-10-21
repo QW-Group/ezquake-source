@@ -383,6 +383,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_aliasmodel, "causticsTex", 1, false },
 	// r_program_uniform_aliasmodel_samplers
 	{ r_program_aliasmodel, "samplers", 1, false },
+	// r_program_uniform_aliasmodel_posetex
+	{ r_program_aliasmodel, "poseTex", 1, false },
 	// r_program_uniform_sprites_materialtex
 	{ r_program_sprite3d, "materialTex", 1, false },
 	// r_program_uniform_postprocess_base
@@ -412,14 +414,6 @@ typedef struct r_program_attribute_s {
 } r_program_attribute_t;
 
 static r_program_attribute_t program_attributes[] = {
-	// r_program_attribute_aliasmodel_std_glc_flags
-	{ r_program_aliasmodel_std_glc, "flags" },
-	// r_program_attribute_aliasmodel_shell_glc_flags
-	{ r_program_aliasmodel_shell_glc, "flags" },
-	// r_program_attribute_aliasmodel_shadow_glc_flags
-	{ r_program_aliasmodel_shadow_glc, "flags" },
-	// r_program_attribute_aliasmodel_outline_glc_flags
-	{ r_program_aliasmodel_outline_glc, "flags" },
 	// r_program_attribute_world_drawflat_style
 	{ r_program_world_drawflat_glc, "style" },
 	// r_program_attribute_world_textured_style

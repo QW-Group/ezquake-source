@@ -591,6 +591,11 @@ static qbool GL_BufferValid(r_buffer_id id)
 	return id > r_buffer_none && id < r_buffer_count && glBufferState.buffers[id].glref != 0;
 }
 
+GLuint GL_BufferName(r_buffer_id id)
+{
+	return GL_BufferValid(id) ? glBufferState.buffers[id].glref : 0;
+}
+
 // Called when the VAO is bound
 static void GL_SetElementArrayBuffer(r_buffer_id id)
 {

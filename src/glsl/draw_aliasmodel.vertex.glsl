@@ -10,8 +10,9 @@ layout(location = 0) in vec3 vboPosition;
 layout(location = 1) in vec2 vboTex;
 layout(location = 2) in vec3 vboNormalCoords;
 layout(location = 3) in int _instanceId;
-layout(location = 4) in vec3 vboDirection;
-layout(location = 5) in int vboFlags;
+
+// The vertex data, to read the pose being interpolated towards
+EZ_LAYOUT_BINDING(SAMPLER_POSE_TEXTURE) uniform samplerBuffer poseTex;
 
 EZ_SSBO_LAYOUT(std140, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) EZ_SSBO(AliasModelData) {
 	AliasModel models[EZ_SSBO_ARRAY_SIZE(MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS)];
@@ -50,10 +51,14 @@ void main()
 	plrtopcolor = models[modelId].topcolor;
 	plrbotcolor = models[modelId].bottomcolor;
 
+	// Draws in a batch share the vertex arrays, so the second pose is read from the vertex data
+	vec3 pose2Position = texelFetch(poseTex, (gl_VertexID + models[modelId].pose2Offset) * AM_VERTEX_TEXELS).xyz;
 #ifdef EZQ_ALIASMODEL_MUZZLEHACK
-	lerpFrac = sign(lerpFrac) * max(lerpFrac, (vboFlags & AM_VERTEX_NOLERP));
+	if ((models[modelId].flags & AMF_LIMITLERP) != 0 && (position.x > 0.0) != (pose2Position.x > 0.0)) {
+		lerpFrac = sign(lerpFrac);
+	}
 #endif
-	position = position + vboDirection * lerpFrac;
+	position = mix(position, pose2Position, lerpFrac);
 	fsMaterialSampler = models[modelId].materialTextureMapping;
 
 	if (mode == EZQ_ALIAS_MODE_NORMAL) {

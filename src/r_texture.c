@@ -335,7 +335,9 @@ void R_DeleteTextures(void)
 #ifdef RENDERER_OPTION_MODERN_OPENGL
 	{
 		extern texture_ref particletexture_array;
+		extern texture_ref aliasmodel_pose_texture;
 		R_TextureReferenceInvalidate(particletexture_array);
+		R_TextureReferenceInvalidate(aliasmodel_pose_texture);
 	}
 #endif
 

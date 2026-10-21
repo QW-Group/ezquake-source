@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_texture.h"
 #include "gl_model.h"
 #include "gl_local.h"
+#include "r_buffers.h"
 
 // --------------
 // Texture functions
@@ -54,6 +55,8 @@ void GL_TexSubImage3D(int textureUnit, texture_ref reference, GLint level, GLint
 void GL_GetTexImage(GLenum textureUnit, texture_ref reference, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer);
 
 void GL_BindTextureUnit(GLuint unit, texture_ref reference);
+qbool GL_TexBuffer(texture_ref texture, GLenum internalformat, r_buffer_id buffer);
+GLuint GL_BufferName(r_buffer_id id);
 qbool GL_EnsureTextureUnitBound(int unit, texture_ref reference);
 
 void GL_CreateTextureNames(GLenum textureUnit, GLenum target, GLsizei n, GLuint* textures);

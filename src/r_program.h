@@ -137,6 +137,7 @@ typedef enum {
 	r_program_uniform_brushmodel_at_materialtex,
 	r_program_uniform_aliasmodel_causticstex,
 	r_program_uniform_aliasmodel_samplers,
+	r_program_uniform_aliasmodel_posetex,
 	r_program_uniform_sprites_materialtex,
 	r_program_uniform_postprocess_base,
 	r_program_uniform_postprocess_overlay,
@@ -149,10 +150,6 @@ typedef enum {
 } r_program_uniform_id;
 
 typedef enum {
-	r_program_attribute_aliasmodel_std_glc_flags,
-	r_program_attribute_aliasmodel_shell_glc_flags,
-	r_program_attribute_aliasmodel_shadow_glc_flags,
-	r_program_attribute_aliasmodel_outline_glc_flags,
 	r_program_attribute_world_drawflat_style,
 	r_program_attribute_world_textured_style,
 	r_program_attribute_world_textured_detailCoord,

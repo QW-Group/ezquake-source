@@ -30,25 +30,6 @@ void GLM_CreateAliasModelVAO(void);
 #endif
 
 // Also used by .md3
-void GL_AliasModelSetVertexDirection(int num_triangles, vbo_model_vert_t* vbo_buffer, int v1, int v2, qbool limit_lerp, int key_pose)
-{
-	int j, k;
-
-	for (j = 0; j < num_triangles; ++j) {
-		for (k = 0; k < 3; ++k, ++v1, ++v2) {
-			VectorSubtract(vbo_buffer[v2].position, vbo_buffer[v1].position, vbo_buffer[v1].direction);
-
-			vbo_buffer[v1].flags = 0;
-			if (limit_lerp) {
-				if ((vbo_buffer[v1].position[0] > 0) != (vbo_buffer[v2].position[0] > 0)) {
-					vbo_buffer[v1].flags |= AM_VERTEX_NOLERP;
-				}
-			}
-		}
-	}
-}
-
-// Also used by .md3
 void GL_AliasModelFixNormals(vbo_model_vert_t* vbo_buffer, int v, int vertsPerPose)
 {
 	int j, k;
@@ -90,7 +71,6 @@ void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 	extern float r_avertexnormals[NUMVERTEXNORMALS][3];
 	vbo_model_vert_t* vbo_buffer;
 	int pose, j, k, v;
-	int f;
 
 	v = 0;
 	hdr->poseverts = hdr->vertsPerPose = 3 * hdr->numtris;
@@ -139,30 +119,6 @@ void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 		}
 
 		GL_AliasModelFixNormals(vbo_buffer, pose * hdr->vertsPerPose, hdr->vertsPerPose);
-	}
-
-	// Go back through and set directions
-	for (f = 0; f < hdr->numframes; ++f) {
-		maliasframedesc_t* frame = &hdr->frames[f];
-
-		if (frame->numposes > 1) {
-			// This frame has animated poses, so link them all together
-			for (pose = 0; pose < frame->numposes - 1; ++pose) {
-				GL_AliasModelSetVertexDirection(hdr->numtris, vbo_buffer, hdr->vertsPerPose * (frame->firstpose + pose), hdr->vertsPerPose * (frame->firstpose + pose + 1), m->renderfx & RF_LIMITLERP, 0);
-			}
-		}
-		else {
-			// Find next frame's pose
-			maliasframedesc_t* frame2 = R_AliasModelFindFrame(hdr, frame->groupname, frame->groupnumber + 1);
-			if (!frame2) {
-				frame2 = R_AliasModelFindFrame(hdr, frame->groupname, 1 + Mod_ExpectedNextFrame(m, frame->groupnumber, hdr->numframes));
-			}
-
-			if (frame2) {
-				GL_AliasModelSetVertexDirection(hdr->numtris, vbo_buffer, hdr->vertsPerPose * frame->firstpose, hdr->vertsPerPose * frame2->firstpose, m->renderfx & RF_LIMITLERP, 0);
-				frame->nextpose = frame2->firstpose;
-			}
-		}
 	}
 }
 

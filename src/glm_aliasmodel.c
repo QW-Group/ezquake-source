@@ -34,6 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_buffers.h"
 #include "r_program.h"
 #include "r_renderer.h"
+#include "gl_texture_internal.h"
 
 void GLM_StateBeginAliasModelZPassBatch(void);
 void GLM_StateBeginAliasModelBatch(qbool translucent, qbool additive);
@@ -98,7 +99,7 @@ typedef struct uniform_block_aliasmodel_s {
 	int materialSamplerMapping;
 	float lerpFraction;
 	float minLumaMix;
-	float outline_normal_scale;
+	int pose2Offset;             // vertices from the drawn pose to the pose being lerped towards
 } uniform_block_aliasmodel_t;
 
 typedef struct block_aliasmodels_s {
@@ -167,6 +168,14 @@ static int material_samplers_max;
 static int material_sampler_units; // material samplers declared in the shader
 static int TEXTURE_UNIT_MATERIAL;
 static int TEXTURE_UNIT_CAUSTICS;
+static const int TEXTURE_UNIT_POSES = 0;
+
+// Buffer texture over the vertex data, so the vertex shader can read any second pose
+texture_ref aliasmodel_pose_texture;
+
+#ifdef C_ASSERT
+C_ASSERT(sizeof(vbo_model_vert_t) == 16 * AM_VERTEX_TEXELS);
+#endif
 
 qbool GLM_CompileAliasModelProgram(void)
 {
@@ -182,20 +191,21 @@ qbool GLM_CompileAliasModelProgram(void)
 		static char included_definitions[1024];
 
 		included_definitions[0] = '\0';
+		strlcat(included_definitions, va("#define SAMPLER_POSE_TEXTURE %d\n", TEXTURE_UNIT_POSES), sizeof(included_definitions));
 		if (drawAlias_desiredOptions & DRAW_CAUSTIC_TEXTURES) {
-			material_samplers_max = glConfig.texture_units - 1;
-			TEXTURE_UNIT_CAUSTICS = 0;
-			TEXTURE_UNIT_MATERIAL = 1;
+			material_samplers_max = glConfig.texture_units - 2;
+			TEXTURE_UNIT_CAUSTICS = 1;
+			TEXTURE_UNIT_MATERIAL = 2;
 
 			strlcat(included_definitions, "#define DRAW_CAUSTIC_TEXTURES\n", sizeof(included_definitions));
-			strlcat(included_definitions, "#define SAMPLER_CAUSTIC_TEXTURE 0\n", sizeof(included_definitions));
-			strlcat(included_definitions, "#define SAMPLER_MATERIAL_TEXTURE_START 1\n", sizeof(included_definitions));
+			strlcat(included_definitions, "#define SAMPLER_CAUSTIC_TEXTURE 1\n", sizeof(included_definitions));
+			strlcat(included_definitions, "#define SAMPLER_MATERIAL_TEXTURE_START 2\n", sizeof(included_definitions));
 		}
 		else {
-			material_samplers_max = glConfig.texture_units;
-			TEXTURE_UNIT_MATERIAL = 0;
+			material_samplers_max = glConfig.texture_units - 1;
+			TEXTURE_UNIT_MATERIAL = 1;
 
-			strlcat(included_definitions, "#define SAMPLER_MATERIAL_TEXTURE_START 0\n", sizeof(included_definitions));
+			strlcat(included_definitions, "#define SAMPLER_MATERIAL_TEXTURE_START 1\n", sizeof(included_definitions));
 		}
 
 		if (GLM_AliasModelsDrawnIndividually()) {
@@ -220,6 +230,7 @@ qbool GLM_CompileAliasModelProgram(void)
 		// Set sampler uniforms for GL < 4.3 (no layout(binding=N) support)
 		if (!GL_ShaderBindingsSupported() && R_ProgramReady(r_program_aliasmodel)) {
 			R_ProgramUse(r_program_aliasmodel);
+			R_ProgramUniform1i(r_program_uniform_aliasmodel_posetex, TEXTURE_UNIT_POSES);
 			if (drawAlias_desiredOptions & DRAW_CAUSTIC_TEXTURES) {
 				R_ProgramUniform1i(r_program_uniform_aliasmodel_causticstex, TEXTURE_UNIT_CAUSTICS);
 			}
@@ -249,10 +260,24 @@ void GLM_CreateAliasModelVAO(void)
 	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, r_buffer_aliasmodel_vertex_data, 1, 2, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, texture_coords), 0);
 	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, r_buffer_aliasmodel_vertex_data, 2, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, normal), 0);
 	GLM_ConfigureVertexAttribIPointer(vao_aliasmodel, r_buffer_instance_number, 3, 1, GL_UNSIGNED_INT, sizeof(GLuint), 0, 1);
-	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, r_buffer_aliasmodel_vertex_data, 4, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, direction), 0);
-	GLM_ConfigureVertexAttribIPointer(vao_aliasmodel, r_buffer_aliasmodel_vertex_data, 5, 1, GL_UNSIGNED_INT, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, flags), 0);
 
 	R_BindVertexArray(vao_none);
+
+	// The vertex data was (re)created, point the pose texture at it
+	{
+		GLint max_texels = 0;
+
+		if (!R_TextureReferenceIsValid(aliasmodel_pose_texture)) {
+			GL_CreateTexturesWithIdentifier(texture_type_buffer, 1, &aliasmodel_pose_texture, "aliasmodel-poses");
+			R_TextureSetFlag(aliasmodel_pose_texture, TEX_NO_TEXTUREMODE);
+		}
+
+		glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE, &max_texels);
+		if (buffers.Size(r_buffer_aliasmodel_vertex_data) / 16 > (size_t)max_texels ||!GL_TexBuffer(aliasmodel_pose_texture, GL_RGBA32F, r_buffer_aliasmodel_vertex_data)) {
+			Con_Printf("Alias model vertex data can't be read as a buffer texture, frames won't be interpolated\n");
+			R_DeleteTexture(&aliasmodel_pose_texture);
+		}
+	}
 }
 
 static int AssignSampler(aliasmodel_draw_instructions_t* instr, texture_ref texture)
@@ -326,7 +351,7 @@ static void GLM_QueueDrawCall(aliasmodel_draw_type_t type, int vbo_start, int vb
 
 static void GLM_QueueAliasModelDrawImpl(
 	entity_t* ent, model_t* model, float* color, int vbo_start, int vbo_count, texture_ref texture,
-	int effects, float lerpFraction, int lerpFrameVertOffset, qbool outline, int render_effects
+	int effects, float lerpFraction, int poseVertIndex2, qbool outline, int render_effects
 )
 {
 	qbool shell = (effects & (EF_RED | EF_BLUE | EF_GREEN)) && R_TextureReferenceIsValid(shelltexture) && Ruleset_AllowPowerupShell(model);
@@ -393,11 +418,15 @@ static void GLM_QueueAliasModelDrawImpl(
 		(ent->scoreboard != NULL ? ent->scoreboard->teammate ? AMF_TEAMMATE : 0 : 0) |
 		(ent->renderfx & RF_BEHINDWALL ? AMF_BEHINDWALL : 0) |
 		(ent->renderfx & RF_PLAYERMODEL ? AMF_PLAYERMODEL : 0) |
-		(ent->renderfx & RF_VWEPMODEL ? AMF_VWEPMODEL : 0);
+		(ent->renderfx & RF_VWEPMODEL ? AMF_VWEPMODEL : 0) |
+		(model->renderfx & RF_LIMITLERP ? AMF_LIMITLERP : 0);
 	uniform->yaw_angle_rad = ent->angles[YAW] * M_PI / 180.0;
 	uniform->shadelight = ent->shadelight;
 	uniform->ambientlight = ent->ambientlight;
-	uniform->lerpFraction = lerpFraction;
+	if (R_TextureReferenceIsValid(aliasmodel_pose_texture)) {
+		uniform->lerpFraction = lerpFraction;
+		uniform->pose2Offset = poseVertIndex2 - vbo_start;
+	}
 	uniform->color[0] = color[0];
 	uniform->color[1] = color[1];
 	uniform->color[2] = color[2];
@@ -405,7 +434,6 @@ static void GLM_QueueAliasModelDrawImpl(
 	uniform->materialSamplerMapping = textureSampler;
 	alias_model_textures[alias_draw_count] = texture;
 	uniform->minLumaMix = 1.0f - (ent->full_light ? bound(0, gl_fb_models.integer, 1) : 0);
-	uniform->outline_normal_scale = ent->outlineScale;
 	if(ent->scoreboard != NULL) {
 		int tc = 16 * (bound(0, ent->scoreboard->topcolor, 13)) + 8;
 		int bc = 16 * (bound(0, ent->scoreboard->bottomcolor, 13)) + 8;
@@ -615,6 +643,9 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 
 	R_ProgramUse(r_program_aliasmodel);
 	R_SetAliasModelUniforms(mode);
+	if (R_TextureReferenceIsValid(aliasmodel_pose_texture)) {
+		renderer.TextureUnitBind(TEXTURE_UNIT_POSES, aliasmodel_pose_texture);
+	}
 	// We have prepared the draw calls earlier in the frame so very trival logic here
 	if (r_refdef2.drawCaustics) {
 		renderer.TextureUnitBind(TEXTURE_UNIT_CAUSTICS, underwatertexture);

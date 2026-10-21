@@ -71,6 +71,7 @@ GL_StaticProcedureDeclaration(glGetInternalformativ, "target=%u, internalformat=
 // Multi-sampled textures
 GL_StaticProcedureDeclaration(glTextureStorage2DMultisample, "texture=%d, samples=%d, internalformat=%d, width=%d, height=%d, fixedsamplelocations=%d", GLuint texture, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations)
 GL_StaticProcedureDeclaration(glTexStorage2DMultisample, "target=%x, samples=%d, internalformat=%d, width=%d, height=%d, fixedsamplelocations=%d", GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations)
+GL_StaticProcedureDeclaration(glTexBuffer, "target=%x, internalformat=%x, buffer=%u", GLenum target, GLenum internalformat, GLuint buffer)
 GL_StaticProcedureDeclaration(glTexImage2DMultisample, "target=%x, samples=%d, internalformat=%d, width=%d, height=%d, fixedsamplelocations=%d", GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations)
 
 void GL_LoadTextureManagementFunctions(void)
@@ -186,6 +187,12 @@ void GL_LoadTextureManagementFunctions(void)
 		GL_InvalidateFunction(glGetTextureLevelParameterfv);
 		GL_InvalidateFunction(glGetTextureLevelParameterfv);
 		GL_InvalidateFunction(glGetTextureLevelParameteriv);
+	}
+
+	if (GL_VersionAtLeast(3, 1) || SDL_GL_ExtensionSupported("GL_ARB_texture_buffer_object")) {
+		GL_LoadOptionalFunction(glTexBuffer);
+	} else {
+		GL_InvalidateFunction(glTexBuffer);
 	}
 
 	if (GL_VersionAtLeast(3, 3)) {
@@ -436,6 +443,18 @@ void GL_GetTexLevelParameteriv(GLenum textureUnit, texture_ref texture, GLint le
 		GL_BindTextureUnit(textureUnit, texture);
 		GL_BuiltinProcedure(glGetTexLevelParameteriv, "target=%u, level=%d, pname=%u, params=%p", target, level, pname, params);
 	}
+}
+
+// Makes a buffer texture read the buffer's contents, for texelFetch() from a samplerBuffer
+qbool GL_TexBuffer(texture_ref texture, GLenum internalformat, r_buffer_id buffer)
+{
+	if (!GL_Available(glTexBuffer) || !GL_BufferName(buffer)) {
+		return false;
+	}
+
+	GL_BindTextureUnit(GL_TEXTURE0, texture);
+	GL_Procedure(glTexBuffer, GL_TEXTURE_BUFFER, internalformat, GL_BufferName(buffer));
+	return true;
 }
 
 void GL_GetTexImage(GLenum textureUnit, texture_ref texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* buffer)
