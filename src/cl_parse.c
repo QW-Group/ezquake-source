@@ -537,6 +537,7 @@ qbool CL_CheckOrDownloadFile(char *filename)
 	}
 
 	cls.downloadnumber++;
+	cls.downloadrequested = true;
 
 	return false;
 }
@@ -1064,12 +1065,24 @@ void CL_FinishDownload(void)
 		if (cls.downloadpercent == 100) {
 			Com_DPrintf("Download took %.1f seconds\n", Sys_DoubleTime() - cls.downloadstarttime);
 
-			// rename the temp file to its final name
-			if (strcmp(cls.downloadtempname, cls.downloadname))
-				if (rename(cls.downloadtempname, cls.downloadname))
-					Com_Printf ("Failed to rename %s to %s.\n",	cls.downloadtempname, cls.downloadname);
+			// Validate before publishing: a csprogs crc slot must never hold bytes
+			// the server did not advertise. The hook removes the temp file and
+			// returns false on failure; non-CSQC transfers pass through.
+			if (CSQC_Client_ValidateDownload (cls.downloadtempname, cls.downloadname))
+			{
+				// rename the temp file to its final name
+				if (strcmp(cls.downloadtempname, cls.downloadname))
+				{
+#ifdef _WIN32
+					// rename() does not replace an existing file on Windows.
+					remove (cls.downloadname);
+#endif
+					if (rename(cls.downloadtempname, cls.downloadname))
+						Com_Printf ("Failed to rename %s to %s.\n",	cls.downloadtempname, cls.downloadname);
+				}
 
-			CSQC_Client_ModelDownloadFinished (cls.downloadname);
+				CSQC_Client_ModelDownloadFinished (cls.downloadname);
+			}
 		} else {
 			/* If download didn't complete, remove the unfinished leftover .tmp file ... */
 			unlink(cls.downloadtempname);
@@ -1077,8 +1090,10 @@ void CL_FinishDownload(void)
 	}
 
 	cls.download = NULL;
+	cls.downloadrequested = false;
 	cls.downloadpercent = 0;
 	cls.downloadmethod = DL_NONE;
+	CSQC_Client_DownloadFinished (cls.downloadname);
 
 	// VFS-FIXME: D-Kure: Surely there is somewhere better for this in fs.c
 	filesystemchanged = true;
@@ -2003,7 +2018,8 @@ void CL_ParseStartSoundPacket(void)
 				{
 					predict_sound = PM_FilterWeaponSound(sound_num);
 				}
-				else if (strcmp(cl.sound_precache[sound_num]->name, "player/axhit2.wav") == 0)
+				else if (cl.sound_precache[sound_num] &&
+					strcmp(cl.sound_precache[sound_num]->name, "player/axhit2.wav") == 0)
 				{
 					predict_sound = false;
 				}
@@ -2017,7 +2033,8 @@ void CL_ParseStartSoundPacket(void)
 			{
 				if (!(cl_predict_weaponsound.integer & 256))
 				{
-					if (strcmp(cl.sound_precache[sound_num]->name, "weapons/lstart.wav") == 0)
+					if (cl.sound_precache[sound_num] &&
+						strcmp(cl.sound_precache[sound_num]->name, "weapons/lstart.wav") == 0)
 						return;
 				}
 			}
@@ -2027,7 +2044,8 @@ void CL_ParseStartSoundPacket(void)
 		{
 			if (channel == 4)
 			{
-				if (strcmp(cl.sound_precache[sound_num]->name, "player/plyrjmp8.wav") == 0)
+				if (cl.sound_precache[sound_num] &&
+					strcmp(cl.sound_precache[sound_num]->name, "player/plyrjmp8.wav") == 0)
 					return;
 			}
 		}
@@ -2753,11 +2771,9 @@ static void FlushString (const wchar *s, int level, qbool team, int offset)
 
 	wchar zomfg[4096]; // FIXME
 
-	cfrags_format cff = {0, 0, 0, 0, 0, 0, false}; // Stats_ParsePrint stuff
+	qbool handled;
 
-	// During gametime, use notify for team messages only
-	if (con_mm2_only.integer && !team && !(cl.standby || cl.countdown))
-		Print_flags[Print_current] |= PR_NONOTIFY;
+	cfrags_format cff = {0, 0, 0, 0, 0, 0, false}; // Stats_ParsePrint stuff
 
 	s0 = wcs2str (s);
 	f = strstr (s0, name.string);
@@ -2797,25 +2813,54 @@ static void FlushString (const wchar *s, int level, qbool team, int offset)
 		return;
 	}
 
-	// Colorize player names here
-	if (scr_coloredfrags.value && cff.isFragMsg && cff.p1len) {
-		text = CL_ColorizeFragMessage(text, &cff);
-	}
+	// CSQC_Parse_Print receives the complete line after the engine filters
+	// (ignore/flood/msg_filter/chat sound ran in CL_ProcessPrint) and after the
+	// assembly in cl.sprint_buf. The module owns only the console output: the
+	// engine-side line processing below still runs for a line it handles, and the
+	// print attributes (notify/timestamp) must not leak onto the next line.
+	handled = !cls.demoseeking && CSQC_Client_ParsePrint (s0, level);
 
-	/* FIXME
-	 * disconnect: There should be something like Com_PrintfW...
-	 * we have to *Print* message with one Con_Printf/Con_PrintfW call
-	 * else re_triggers with remove option will be fucked
-	 * so we have to use additional buffer
-	 */
-	memset (zomfg, 0, sizeof (zomfg));
-	qwcslcpy (zomfg, str2wcs(mark), sizeof (zomfg) / sizeof (wchar));
-	qwcslcpy (zomfg + qwcslen (zomfg), text, sizeof (zomfg) / sizeof (wchar) - qwcslen (zomfg));
-	if (cl_showFragsMessages.value || !cff.isFragMsg) {
-		if (cl_showFragsMessages.integer == 2 && cff.isFragMsg) {
+	if (!handled)
+	{
+		// During gametime, use notify for team messages only
+		if (con_mm2_only.integer && !team && !(cl.standby || cl.countdown))
 			Print_flags[Print_current] |= PR_NONOTIFY;
+
+		if (con_timestamps.integer && s0[0] && s0[0] != '\n' && s0[0] != '\r')
+		{
+			SYSTEMTIME lt;
+			char tmpbuf[16];
+			GetLocalTime (&lt);
+			if (con_timestamps.integer == 2 && (cl.spectator || cls.demoplayback || cl.standby)) {
+				snprintf(tmpbuf, sizeof(tmpbuf), "%2d:%02d:%02d ", lt.wHour, lt.wMinute, lt.wSecond);
+				Com_Printf("%s", tmpbuf);
+			}
+			else {
+				snprintf(tmpbuf, sizeof(tmpbuf), "%2d:%02d ", lt.wHour, lt.wMinute);
+				Com_Printf("%s", tmpbuf);
+			}
 		}
-		Con_PrintW(zomfg); // FIXME logging
+
+		// Colorize player names here
+		if (scr_coloredfrags.value && cff.isFragMsg && cff.p1len) {
+			text = CL_ColorizeFragMessage(text, &cff);
+		}
+
+		/* FIXME
+		 * disconnect: There should be something like Com_PrintfW...
+		 * we have to *Print* message with one Con_Printf/Con_PrintfW call
+		 * else re_triggers with remove option will be fucked
+		 * so we have to use additional buffer
+		 */
+		memset (zomfg, 0, sizeof (zomfg));
+		qwcslcpy (zomfg, str2wcs(mark), sizeof (zomfg) / sizeof (wchar));
+		qwcslcpy (zomfg + qwcslen (zomfg), text, sizeof (zomfg) / sizeof (wchar) - qwcslen (zomfg));
+		if (cl_showFragsMessages.value || !cff.isFragMsg) {
+			if (cl_showFragsMessages.integer == 2 && cff.isFragMsg) {
+				Print_flags[Print_current] |= PR_NONOTIFY;
+			}
+			Con_PrintW(zomfg); // FIXME logging
+		}
 	}
 
 	if (level >= 4)
@@ -3158,24 +3203,6 @@ void CL_ProcessPrint (int level, char* s0)
 		if (level >= PRINT_HIGH && s[0]) // actually there are no need for level >= PRINT_HIGH check
 			VID_NotifyActivity();
 
-		if (s[0])  // KT sometimes sends empty strings
-		{
-			// @CHECKME@
-			if (con_timestamps.integer) {
-				SYSTEMTIME lt;
-				char tmpbuf[16];
-				GetLocalTime (&lt);
-				if (con_timestamps.integer == 2 && (cl.spectator || cls.demoplayback || cl.standby)) {
-					snprintf(tmpbuf, sizeof(tmpbuf), "%2d:%02d:%02d ", lt.wHour, lt.wMinute, lt.wSecond);
-					Com_Printf(tmpbuf);
-				}
-				else {
-					snprintf(tmpbuf, sizeof(tmpbuf), "%2d:%02d ", lt.wHour, lt.wMinute);
-					Com_Printf(tmpbuf);
-				}
-			}
-		}
-
 		if (cl_nofake.value == 1 || (cl_nofake.value == 2 && flags != 2)) 
 		{
 			for (p = s; *p; p++)
@@ -3213,13 +3240,16 @@ void CL_ProcessPrint (int level, char* s0)
 	qwcslcpy (cl.sprint_buf + qwcslen(cl.sprint_buf), s, sizeof(cl.sprint_buf)/sizeof(wchar) - qwcslen(cl.sprint_buf));
 	cl.sprint_level = level;
 
-	if ((p = qwcsrchr(cl.sprint_buf, '\n'))) 
+	// One callback per line, as FTE does: a single svc_print may carry several
+	// newlines. The chat prefix offset belongs to the first line only.
+	while ((p = qwcschr (cl.sprint_buf, '\n')))
 	{
 		len = p - cl.sprint_buf + 1;
 		memcpy(str, cl.sprint_buf, len * sizeof(wchar));
 		str[len] = '\0';
 		qwcslcpy (cl.sprint_buf, p + 1, sizeof(cl.sprint_buf)/sizeof(wchar));
 		FlushString (str, level, (flags == 2), offset);
+		offset = 0;
 	}
 }
 
@@ -3232,9 +3262,7 @@ void CL_ParsePrint (void)
 		return;
 	}
 
-	if (!cls.demoseeking && CSQC_Client_ParsePrint (s0, level))
-		return;
-
+	// The module is hooked in FlushString, i.e. on the assembled, filtered line.
 	CL_ProcessPrint (level, s0);
 }
 

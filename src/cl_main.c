@@ -488,20 +488,6 @@ void CL_UserinfoChanged (char *key, char *string)
 }
 
 #ifdef PROTOCOL_VERSION_FTE
-/*
-Client-supported FTE protocol extensions (declare mask sent in the connect packet).
-
-Contract: each emitted bit is backed by a receiving parser in this build (see the
-per-bit comments); the only exception is the documented server hint FTE_PEXT_HLBSP.
-FTE analogue: Net_PextMask (fteqw/engine/common/net_chan.c:112-213).
-
-Bits ezquake does not implement are never emitted. They either have no FTE_PEXT_*
-macro or handler at all (SETVIEW/LIGHTSTYLECOL/VIEW2/SOUNDDBL/FATNESS/TE_BULLET/
-HULLSIZE/Q2BSP/Q3BSP/SPLITSCREEN/HEXEN2/CUSTOMTEMPEFFECTS/SHOWPIC/SETATTACHMENT),
-or the macro exists but no emit branch is compiled (DPFLAGS). SCALE has a full
-emit/receive path, but its macro is build-defined and disabled in the canonical
-build, so the bit is not emitted unless FTE_PEXT_SCALE is defined.
-*/
 unsigned int CL_SupportedFTEExtensions (void)
 {
 	unsigned int fteprotextsupported = 0;
@@ -509,20 +495,16 @@ unsigned int CL_SupportedFTEExtensions (void)
 	if (!cl_pext.value)
 		return 0;
 
-	// CHUNKEDDOWNLOADS: svc_download chunked transfer - cl_parse.c CL_ParseDownload.
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (cl_pext_chunkeddownloads.value)
 		fteprotextsupported |= FTE_PEXT_CHUNKEDDOWNLOADS;
 #endif
 
-	// 256PACKETENTITIES: up to 256 entity slots per packet - cl_ents.c CL_ParsePacketEntities.
 #ifdef FTE_PEXT_256PACKETENTITIES
 	if (cl_pext_256packetentities.value)
 		fteprotextsupported |= FTE_PEXT_256PACKETENTITIES;
 #endif
 
-	// FLOATCOORDS: floating-point entity origins - cl_ents.c CL_ParseDelta
-	// (msg_coordsize set in cl_parse.c CL_ParseServerData).
 #ifdef FTE_PEXT_FLOATCOORDS
 	if (cl_pext_floatcoords.value)
 		fteprotextsupported |= FTE_PEXT_FLOATCOORDS;
@@ -533,19 +515,15 @@ unsigned int CL_SupportedFTEExtensions (void)
 		fteprotextsupported |= FTE_PEXT_SCALE;
 #endif
 
-	// TRANS: per-entity alpha byte - cl_ents.c U_FTE_TRANS.
 #ifdef FTE_PEXT_TRANS
 	if (cl_pext_alpha.value)
 		fteprotextsupported |= FTE_PEXT_TRANS;
 #endif
-	// COLOURMOD: per-entity colourmod byte - cl_ents.c U_FTE_COLOURMOD.
 #ifdef FTE_PEXT_COLOURMOD
 	if (cl_pext_colourmod.value)
 		fteprotextsupported |= FTE_PEXT_COLOURMOD;
 #endif
 
-	// Extended limits: larger model/entity indices and spawnstatic2 delta
-	// - cl_parse.c CL_ParseSpawnBaseline2 / cl_ents.c.
 	if (cl_pext_limits.value) {
 #ifdef FTE_PEXT_MODELDBL
 		fteprotextsupported |= FTE_PEXT_MODELDBL;
@@ -561,19 +539,11 @@ unsigned int CL_SupportedFTEExtensions (void)
 #endif
 	}
 
-	// ACCURATETIMINGS: server time via STAT_TIME - cl_parse.c CL_SetStat (cl.servertime_works).
-	// The macro is defined by the CMake ANTILAG option (default ON), so in a standard
-	// build the macro is present and this branch is live; in a non-ANTILAG build it is
-	// absent and the bit is never emitted.
 #ifdef FTE_PEXT_ACCURATETIMINGS
 	if (cl_pext_accuratetimings.value)
 		fteprotextsupported |= FTE_PEXT_ACCURATETIMINGS;
 #endif
 
-	// HLBSP: server hint only ("stops fte servers from complaining"); no parser and no
-	// active server consumer (FTE reject for HL levels is commented out). Kept for
-	// upstream master parity, opt-in via cl_pext_other (default 0) - documented exception
-	// to the declared == implemented contract.
 	if (cl_pext_other.value)
 	{
 #ifdef FTE_PEXT_HLBSP
@@ -581,9 +551,6 @@ unsigned int CL_SupportedFTEExtensions (void)
 #endif
 	}
 
-	// CSQC (our client PR1VM): extended stats 32..255, cgamepackets and CSQC
-	// entities, enabled by cl_pext_csqc (off by default) and consumed by the
-	// client module.
 #ifdef FTE_PEXT_CSQC
 #ifndef CLIENTONLY
 	if (cl_pext_csqc.value)
@@ -596,12 +563,6 @@ unsigned int CL_SupportedFTEExtensions (void)
 #endif // PROTOCOL_VERSION_FTE
 
 #ifdef PROTOCOL_VERSION_FTE2
-/*
-Client-supported FTE2 extensions. Only VOICECHAT is implemented; it is gated on the
-Speex voice parser being compiled in (FTE_PEXT2_VOICECHAT is defined under WITH_SPEEX),
-so the bit is absent in a non-Speex build. FTE analogue: Net_PextMask
-(fteqw/engine/common/net_chan.c:214-252).
-*/
 unsigned int CL_SupportedFTEExtensions2 (void)
 {
 	unsigned int fteprotextsupported2 = 0
@@ -1445,8 +1406,6 @@ void CL_ClearState (void)
 	Com_DPrintf ("Clearing memory\n");
 
 #ifndef CLIENTONLY
-	// Host_ClearMemory below frees the csprogs.dat data and cmd nodes above
-	// host_hunklevel, so the module instance must be unloaded first (map-change crash fix).
 	CSQC_Client_Disconnect ();
 #endif
 
@@ -1598,6 +1557,7 @@ void CL_Disconnect (void)
 		cls.downloadpercent = 0;
 		cls.downloadtype = dl_none;
 	}
+	cls.downloadrequested = false;
 
 	CL_StopUpload();
 	DeleteServerAliases();

@@ -988,12 +988,20 @@ void PR1VM_ExecuteProgram (pr1vm_t *vm, func_t fnum)
 		case OP_STOREP_FNC:		// pointers
 			if (PR1VM_ClientBadPtr (vm, (unsigned)b->_int, sizeof (int)))
 				PR_RunError ("bad pointer write (offset %d)", b->_int);
+			// Pointer writes bypass OP_ADDRESS: the world block is the first
+			// edict_size bytes of game_edicts, so apply the same phase gate.
+			if (vm->abortbuf_valid && !vm->world_writable &&
+				(unsigned)b->_int < (unsigned)vm->edict_size)
+				PR_RunError ("assignment to world entity");
 			ptr = (eval_t *)((byte *)vm->game_edicts + b->_int);
 			ptr->_int = a->_int;
 			break;
 		case OP_STOREP_V:
 			if (PR1VM_ClientBadPtr (vm, (unsigned)b->_int, 3 * sizeof (int)))
 				PR_RunError ("bad pointer write (offset %d)", b->_int);
+			if (vm->abortbuf_valid && !vm->world_writable &&
+				(unsigned)b->_int < (unsigned)vm->edict_size)
+				PR_RunError ("assignment to world entity");
 			ptr = (eval_t *)((byte *)vm->game_edicts + b->_int);
 			ptr->vector[0] = a->vector[0];
 			ptr->vector[1] = a->vector[1];
@@ -1006,8 +1014,11 @@ void PR1VM_ExecuteProgram (pr1vm_t *vm, func_t fnum)
 			NUM_FOR_EDICT(ed);		// make sure it's in range
 #endif
 			// The client instance keeps state 0 (not ss_active), so gate world
-			// writes on abortbuf_valid too: an untrusted module must not mutate world.
-			if (ed == vm->edicts && (vm->state == ss_active || vm->abortbuf_valid))
+			// writes on abortbuf_valid too: an untrusted module must not mutate
+			// world outside the trusted init/world-loaded callbacks (FTE parity,
+			// pr_csqc.c:8393/8413).
+			if (ed == vm->edicts && (vm->state == ss_active ||
+				(vm->abortbuf_valid && !vm->world_writable)))
 				PR_RunError ("assignment to world entity");
 			if (PR1VM_ClientBadField (vm, b->_int, 1))
 				PR_RunError ("bad field address %d", b->_int);

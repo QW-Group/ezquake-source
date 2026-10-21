@@ -683,6 +683,7 @@ void CL_Download_f (void){
 	cls.downloadtype      = dl_single;
 	cls.downloadmethod    = DL_QW; // by default its DL_QW, if server support DL_QWCHUNKED it will be changed.
 	cls.downloadstarttime = Sys_DoubleTime();
+	cls.downloadrequested = true;
 
 	snprintf(cls.downloadname, sizeof(cls.downloadname), "%s/%s", dir, ondiskname);
 	COM_StripExtension(cls.downloadname, cls.downloadtempname, sizeof(cls.downloadtempname));

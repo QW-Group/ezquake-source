@@ -52,6 +52,10 @@ struct pr1vm_s
 	int				num_edicts;
 	int				max_edicts;
 	int				state;
+	// Client CSQC: world (edict 0) is writable only while the trusted
+	// CSQC_Init/CSQC_WorldLoaded callbacks run (FTE pr_csqc.c:8393/8413).
+	// Always false for server instances, which keep their own state gate.
+	qbool			world_writable;
 	void			*game_edicts;	// entvars base for STOREP_*/EDICT_TO_PROG
 
 	// Module dialect field-offset map: NULL = raw/identity

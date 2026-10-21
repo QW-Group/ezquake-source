@@ -36,6 +36,9 @@ void CSQC_Client_ResetStatCache (void);				// invalidate the #79 float cache (tr
 // Single download slot: queue module-initiated requests instead of overwriting the
 // in-flight cls.downloadname/tempname before the first svc_download arrives.
 qbool CSQC_Client_DownloadInProgress (void);		// any transfer or queued request
+int CSQC_Client_RequestDownload (const char *name);	// 1 = present, 0 = queued/sent
+void CSQC_Client_DownloadFinished (const char *finished);	// NULL = force (timeout)
+qbool CSQC_Client_ValidateDownload (const char *tmp, const char *final);
 void CSQC_Client_QueueDownload (const char *name);
 void CSQC_Client_FlushDownloadQueue (void);		// per-frame: start one queued request
 qbool CSQC_Client_AllowWireModelName (const char *name);	// capped distinct-name table
@@ -348,6 +351,8 @@ void CSQCVM_RegisterBuiltins (struct pr1vm_s *vm);
 // `= #0`, resolved by name at load; these numbers never appear in csprogs). Above
 // the highest module-visible number (742), below CSQC_MAX_BUILTINS (1024).
 #define CSQC_BUILTIN_CHECKBUILTIN	1023
+// `argc` (FTE exposes it only as a `#0` name, not as a numbered slot).
+#define CSQC_BUILTIN_ARGC			1021
 // Return-0 fallback for an unknown `#0` name (FTE parity).
 #define CSQC_BUILTIN_NAMED_UNKNOWN	1022
 
