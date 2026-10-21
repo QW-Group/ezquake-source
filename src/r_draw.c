@@ -588,6 +588,7 @@ void Draw_Init (void)
 	// string into the background before turning it into a texture.
 	Draw_InitCharset(); // Safe re-init.
 	Draw_InitConback(); // Safe re-init.
+	Con_InitParticles(); // Safe re-init.
 
 	// Load the crosshair pics
 	Draw_InitCrosshairs();
