@@ -30,9 +30,9 @@ GL_StaticProcedureDeclaration(glMultiDrawArrays, "mode=%u, first=%p, count=%p, d
 GL_StaticProcedureDeclaration(glMultiDrawElements, "mode=%u, count=%p, type=%u, indices=%p, drawcount=%d", GLenum mode, const GLsizei* count, GLenum type, const GLvoid* const* indices, GLsizei drawcount)
 GL_StaticProcedureDeclaration(glDrawElementsBaseVertex, "mode=%u, count=%d, type=%u, indices=%p, basevertex=%d", GLenum mode, GLsizei count, GLenum type, GLvoid* indices, GLint basevertex)
 GL_StaticProcedureDeclaration(glPrimitiveRestartIndex, "index=%u", GLuint index)
+GL_StaticProcedureDeclaration(glDrawArraysInstanced, "mode=%u, first=%d, count=%d, primcount=%d", GLenum mode, GLint first, GLsizei count, GLsizei primcount)
 
 // (modern/4.3+)
-// typedef void (APIENTRY *glDrawArraysInstanced_t)(GLenum mode, GLint first, GLsizei count, GLsizei primcount);
 GL_StaticProcedureDeclaration(glMultiDrawArraysIndirect, "mode=%u, indirect=%p, drawcount=%d, stride=%d", GLenum mode, const void* indirect, GLsizei drawcount, GLsizei stride)
 GL_StaticProcedureDeclaration(glMultiDrawElementsIndirect, "mode=%u, type=%u, indirect=%p, drawcount=%d, stride=%d", GLenum mode, GLenum type, const void* indirect, GLsizei drawcount, GLsizei stride)
 GL_StaticProcedureDeclaration(glDrawArraysInstancedBaseInstance, "mode=%u, first=%d, count=%d, primcount=%d, baseinstance=%u", GLenum mode, GLint first, GLsizei count, GLsizei primcount, GLuint baseinstance)
@@ -106,6 +106,12 @@ void GL_LoadDrawFunctions(void)
 		GL_InvalidateFunction(glDrawElementsBaseVertex);
 	}
 
+	if (GL_VersionAtLeast(3, 1)) {
+		GL_LoadOptionalFunction(glDrawArraysInstanced);
+	} else {
+		GL_InvalidateFunction(glDrawArraysInstanced);
+	}
+
 	GL_InvalidateFunction(glPrimitiveRestartIndex);
 
 	glConfig.supported_features &= ~R_SUPPORT_PRIMITIVERESTART;
@@ -174,6 +180,18 @@ void GL_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type, GLvoid* 
 qbool GL_DrawElementsBaseVertexAvailable(void)
 {
 	return GL_Available(glDrawElementsBaseVertex);
+}
+
+void GL_DrawArraysInstanced(GLenum mode, GLint first, GLsizei count, GLsizei primcount)
+{
+	GL_Procedure(glDrawArraysInstanced, mode, first, count, primcount);
+	++frameStats.draw_calls;
+	frameStats.subdraw_calls += primcount;
+}
+
+qbool GL_DrawArraysInstancedAvailable(void)
+{
+	return GL_Available(glDrawArraysInstanced);
 }
 
 void GL_DrawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices)

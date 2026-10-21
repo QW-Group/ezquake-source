@@ -70,6 +70,8 @@ typedef struct buffer_data_s {
 	qbool using_storage;
 
 	void* persistent_mapped_ptr;
+	unsigned int write_generation;  // buffer generation of the last write
+	qbool stream_write_failed;      // mapping failed, write with glBufferSubData
 } buffer_data_t;
 
 static GLenum GL_BufferTypeToTarget(buffertype_t type)
@@ -139,6 +141,7 @@ static struct {
 	buffer_data_t buffers[r_buffer_count];
 	qbool tripleBuffer_supported;
 	GLsync tripleBufferSyncObjects[3];
+	unsigned int generation;        // advanced at the start of every frame
 
 	GLuint currentArrayBuffer;
 	GLuint currentUniformBuffer;
@@ -175,6 +178,7 @@ static buffer_data_t* GL_BufferAllocateSlot(r_buffer_id id, buffertype_t type, c
 	buffer->size = size;
 	buffer->usage = usage;
 	buffer->type = type;
+	buffer->write_generation = glBufferState.generation;
 	GL_Procedure(glGenBuffers, 1, &buffer->glref);
 	return buffer;
 }
@@ -297,6 +301,44 @@ static qbool GL_CreateFixedBuffer(r_buffer_id id, buffertype_t type, const char*
 	return true;
 }
 
+// Per-frame buffers that aren't persistently mapped get written while the GPU may still be
+// drawing the previous frame from them. glBufferSubData makes the driver wait or copy the data
+// aside (on macOS it always stages the data and copies it with a blit, and submits its command
+// buffer first if the buffer is in use), so map the range instead. A frame's first write
+// invalidates the whole buffer, letting the driver hand out fresh storage, so later writes to
+// other ranges in the same frame don't have to wait for the GPU.
+static qbool GL_StreamBufferWrite(r_buffer_id id, ptrdiff_t offset, int size, const void* data, qbool whole_buffer)
+{
+	buffer_data_t* buffer = &glBufferState.buffers[id];
+	qbool first_write = (buffer->write_generation != glBufferState.generation);
+	GLenum target = GL_BufferTypeToTarget(buffer->type);
+	GLbitfield access = GL_MAP_WRITE_BIT;
+	void* mapped;
+
+	if (buffer->usage != bufferusage_once_per_frame || buffer->using_storage || buffer->stream_write_failed || !GL_Available(glMapBufferRange)) {
+		return false;
+	}
+
+	buffer->write_generation = glBufferState.generation;
+	if (whole_buffer || first_write) {
+		access |= GL_MAP_INVALIDATE_BUFFER_BIT;
+	}
+	else {
+		access |= GL_MAP_INVALIDATE_RANGE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+	}
+
+	GL_BindBuffer(id);
+	mapped = GL_Function(glMapBufferRange, target, offset, size, access);
+	if (!mapped) {
+		// Later writes this frame would assume the storage was invalidated
+		buffer->stream_write_failed = true;
+		return false;
+	}
+	memcpy(mapped, data, size);
+	GL_Procedure(glUnmapBuffer, target);
+	return true;
+}
+
 static void GL_UpdateBuffer(r_buffer_id id, int size, void* data)
 {
 	assert(id != r_buffer_none);
@@ -312,6 +354,9 @@ static void GL_UpdateBuffer(r_buffer_id id, int size, void* data)
 	}
 	else {
 		R_TraceLogAPICall("GL_UpdateBuffer(%s)", glBufferState.buffers[id].name);
+		if (GL_StreamBufferWrite(id, 0, size, data, true)) {
+			return;
+		}
 		if (GL_Available(glNamedBufferSubData)) {
 			GL_Procedure(glNamedBufferSubData, glBufferState.buffers[id].glref, 0, (GLsizei)size, data);
 		}
@@ -405,7 +450,7 @@ static void GL_UpdateBufferSection(r_buffer_id id, ptrdiff_t offset, int size, c
 
 		memcpy(base, data, size);
 	}
-	else {
+	else if (!GL_StreamBufferWrite(id, offset, size, data, false)) {
 		if (GL_Available(glNamedBufferSubData)) {
 			GL_Procedure(glNamedBufferSubData, glBufferState.buffers[id].glref, offset, size, data);
 		}
@@ -440,12 +485,21 @@ static void GL_BufferShutdown(void)
 	memset(&glBufferState, 0, sizeof(glBufferState));
 }
 
+// Binding to an indexed target also binds the buffer to the generic target
+static void GL_BufferBoundToGenericTarget(GLenum target, GLuint buffer)
+{
+	if (target == GL_UNIFORM_BUFFER) {
+		glBufferState.currentUniformBuffer = buffer;
+	}
+}
+
 static void GL_BindBufferBase(r_buffer_id id, unsigned int index)
 {
 	assert(id != r_buffer_none);
 	assert(glBufferState.buffers[id].glref);
 
 	GL_Procedure(glBindBufferBase, GL_BufferTypeToTarget(glBufferState.buffers[id].type), index, glBufferState.buffers[id].glref);
+	GL_BufferBoundToGenericTarget(GL_BufferTypeToTarget(glBufferState.buffers[id].type), glBufferState.buffers[id].glref);
 }
 
 static void GL_BindBufferRange(r_buffer_id id, unsigned int index, ptrdiff_t offset, int size)
@@ -461,6 +515,7 @@ static void GL_BindBufferRange(r_buffer_id id, unsigned int index, ptrdiff_t off
 	assert(offset + size <= glBufferState.buffers[id].size * (glBufferState.buffers[id].persistent_mapped_ptr ? 3 : 1));
 
 	GL_Procedure(glBindBufferRange, GL_BufferTypeToTarget(glBufferState.buffers[id].type), index, glBufferState.buffers[id].glref, offset, size);
+	GL_BufferBoundToGenericTarget(GL_BufferTypeToTarget(glBufferState.buffers[id].type), glBufferState.buffers[id].glref);
 }
 
 static qbool GL_BindBufferImpl(GLenum target, GLuint buffer)
@@ -559,6 +614,7 @@ static void GL_EnsureBufferSize(r_buffer_id id, int size)
 
 static void GL_BufferStartFrame(void)
 {
+	++glBufferState.generation;
 	if (glBufferState.tripleBuffer_supported && glBufferState.tripleBufferSyncObjects[glConfig.tripleBufferIndex]) {
 		GLenum waitRet = GL_Function(glClientWaitSync, glBufferState.tripleBufferSyncObjects[glConfig.tripleBufferIndex], 0, 0);
 		while (waitRet == GL_TIMEOUT_EXPIRED) {

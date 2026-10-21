@@ -177,6 +177,9 @@ void GLM_Draw3DSprites(void)
 		else if (batch->allSameNumber && batch->numVertices[0] == 4 && batch->primitive_id == r_primitive_triangle_strip) {
 			GLM_DrawSequentialBatch(batch, indexes_start_quads, INDEXES_MAX_QUADS);
 		}
+		else if (batch->allSameNumber && batch->numVertices[0] == 6 && batch->primitive_id == r_primitive_triangle_strip) {
+			GLM_DrawSequentialBatch(batch, indexes_start_beams, INDEXES_MAX_BEAMS);
+		}
 		else if (batch->allSameNumber && batch->numVertices[0] == 9 && GL_Supported(R_SUPPORT_PRIMITIVERESTART)) {
 			GLM_DrawSequentialBatch(batch, indexes_start_sparks, INDEXES_MAX_SPARKS);
 		}
@@ -191,7 +194,7 @@ void GLM_Draw3DSprites(void)
 			renderer.TextureUnitBind(0, batch->textures[0]);
 			while (last < batch->count) {
 				if (!R_TextureReferenceEqual(batch->textures[first], batch->textures[last])) {
-					GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
+					GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices + first, batch->numVertices + first, last - first);
 
 					renderer.TextureUnitBind(0, batch->textures[last]);
 					first = last;
@@ -199,7 +202,7 @@ void GLM_Draw3DSprites(void)
 				++last;
 			}
 
-			GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices, batch->numVertices, last - first);
+			GL_MultiDrawArrays(glPrimitiveTypes[batch->primitive_id], batch->glFirstVertices + first, batch->numVertices + first, last - first);
 		}
 
 		R_TraceLeaveNamedRegion();

@@ -14,7 +14,7 @@ layout(location = 4) in vec3 vboDirection;
 layout(location = 5) in int vboFlags;
 
 EZ_SSBO_LAYOUT(std140, EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA) EZ_SSBO(AliasModelData) {
-	AliasModel models[EZ_SSBO_ARRAY_SIZE(64)];
+	AliasModel models[EZ_SSBO_ARRAY_SIZE(MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS)];
 };
 
 out vec2 fsTextureCoord;

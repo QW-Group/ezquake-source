@@ -7,6 +7,7 @@
 #define INDEXES_MAX_QUADS            512
 #define INDEXES_MAX_FLASHBLEND         8
 #define INDEXES_MAX_SPARKS            16
+#define INDEXES_MAX_BEAMS            512
 
 typedef struct gl_sprite3d_batch_s {
 	r_state_id rendering_state;

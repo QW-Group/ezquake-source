@@ -89,7 +89,7 @@ int GLM_BrushModelCopyVertToBuffer(model_t* mod, void* vbo_buffer_, int position
 	VectorCopy(source, target->position);
 	target->material_coords[0] = source[3] * (scaleS ? scaleS : 1);
 	target->material_coords[1] = source[4] * (scaleT ? scaleT : 1);
-	target->material_coords[2] = material;
+	target->material_coords[2] = mod->textures[material]->gl_material_index;
 	target->lightmap_coords[0] = source[5];
 	target->lightmap_coords[1] = source[6];
 	target->lightmap_coords[2] = lightmap;

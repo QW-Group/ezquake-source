@@ -28,7 +28,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "r_renderer.h"
 #include "r_texture.h"
 
-int indexes_start_quads, indexes_start_flashblend, indexes_start_sparks;
+int indexes_start_quads, indexes_start_flashblend, indexes_start_sparks, indexes_start_beams;
 
 static const char* batch_type_names[] = {
 	"ENTITIES",
@@ -105,7 +105,7 @@ gl_sprite3d_batch_t batches[MAX_SPRITE3D_BATCHES];
 unsigned int batchMapping[MAX_SPRITE3D_BATCHES];
 unsigned int batchCount;
 unsigned int vertexCount;
-static unsigned int indexData[INDEXES_MAX_QUADS * 4 + INDEXES_MAX_SPARKS * 9 + INDEXES_MAX_FLASHBLEND * 18 + (INDEXES_MAX_QUADS + INDEXES_MAX_SPARKS + INDEXES_MAX_FLASHBLEND) * 3];
+static unsigned int indexData[INDEXES_MAX_QUADS * 4 + INDEXES_MAX_SPARKS * 9 + INDEXES_MAX_FLASHBLEND * 18 + INDEXES_MAX_BEAMS * 6 + (INDEXES_MAX_QUADS + INDEXES_MAX_SPARKS + INDEXES_MAX_FLASHBLEND + INDEXES_MAX_BEAMS) * 3];
 static int sprites_in_batch[sprite_vertpool_count];
 
 sprite_vertpool_id batch_to_vertpool[] = {
@@ -273,6 +273,31 @@ void R_Sprite3DCreateVBO(void)
 	}
 }
 
+// Indexes for sprites of the same number of vertices, separated by primitive restart if
+// supported, otherwise by degenerate triangles (which only works for triangle strips)
+static int R_Sprite3DAddIndexes(int pos, int sprites, int verts_per_sprite)
+{
+	int i, j;
+	int vbo_pos;
+
+	for (i = 0, vbo_pos = 0; i < sprites; ++i) {
+		if (i) {
+			if (GL_Supported(R_SUPPORT_PRIMITIVERESTART)) {
+				indexData[pos++] = ~(unsigned int)0;
+			}
+			else {
+				indexData[pos++] = vbo_pos - 1;
+				indexData[pos++] = vbo_pos;
+			}
+		}
+		for (j = 0; j < verts_per_sprite; ++j) {
+			indexData[pos++] = vbo_pos++;
+		}
+	}
+
+	return pos;
+}
+
 void R_Sprite3DCreateIndexBuffer(void)
 {
 	if (!R_BufferReferenceIsValid(r_buffer_sprite_index_data)) {
@@ -282,37 +307,15 @@ void R_Sprite3DCreateIndexBuffer(void)
 		int vbo_pos;
 
 		indexes_start_quads = pos;
-		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_QUADS; ++i) {
-			if (i) {
-				if (GL_Supported(R_SUPPORT_PRIMITIVERESTART)) {
-					indexData[pos++] = ~(unsigned int)0;
-				}
-				else {
-					indexData[pos++] = vbo_pos - 1;
-					indexData[pos++] = vbo_pos;
-				}
-			}
-			for (j = 0; j < 4; ++j) {
-				indexData[pos++] = vbo_pos++;
-			}
-		}
+		pos = R_Sprite3DAddIndexes(pos, INDEXES_MAX_QUADS, 4);
+
+		// Beams (triangle strips of 6 vertices)
+		indexes_start_beams = pos;
+		pos = R_Sprite3DAddIndexes(pos, INDEXES_MAX_BEAMS, 6);
 
 		// These are currently only supported/used if primitive restart supported, as they're rendered as triangle fans
 		indexes_start_flashblend = pos;
-		for (i = 0, vbo_pos = 0; i < INDEXES_MAX_FLASHBLEND; ++i) {
-			if (i) {
-				if (GL_Supported(R_SUPPORT_PRIMITIVERESTART)) {
-					indexData[pos++] = ~(unsigned int)0;
-				}
-				else {
-					indexData[pos++] = vbo_pos - 1;
-					indexData[pos++] = vbo_pos;
-				}
-			}
-			for (j = 0; j < 18; ++j) {
-				indexData[pos++] = vbo_pos++;
-			}
-		}
+		pos = R_Sprite3DAddIndexes(pos, INDEXES_MAX_FLASHBLEND, 18);
 
 		// These are currently only supported/used if primitive restart supported, as they're rendered as triangle fans
 		indexes_start_sparks = pos;

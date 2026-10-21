@@ -114,7 +114,8 @@ static void GLM_CheckDrawCallSize(void)
 #define DRAW_SKYWIND               (1 << 14)
 #define DRAW_INSTANCED             (1 << 15)
 
-static int material_samplers_max;
+static int material_samplers_max;  // texture arrays a drawcall can use
+static int material_sampler_units; // material samplers declared in the shader
 static int TEXTURE_UNIT_MATERIAL; // Must always be the first non-standard texture unit
 static int TEXTURE_UNIT_LIGHTMAPS;
 static int TEXTURE_UNIT_DETAIL;
@@ -122,6 +123,13 @@ static int TEXTURE_UNIT_CAUSTICS;
 static int TEXTURE_UNIT_SKYBOX;
 static int TEXTURE_UNIT_SKYDOME_TEXTURE;
 static int TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE;
+
+// Without base instance (OpenGL < 4.2) each request is drawn on its own from the request
+// itself, so the indirect draw buffer isn't read.
+static qbool GLM_WorldDrawnIndirect(void)
+{
+	return GL_Supported(R_SUPPORT_INSTANCED_RENDERING);
+}
 
 // We re-compile whenever certain options change, to save texture bindings/lookups
 static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alpha_test)
@@ -217,8 +225,17 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 		strlcat(included_definitions, va("#define SAMPLER_LIGHTMAP_TEXTURE %d\n", TEXTURE_UNIT_LIGHTMAPS), sizeof(included_definitions));
 		TEXTURE_UNIT_MATERIAL = samplers++;
 		strlcat(included_definitions, va("#define SAMPLER_MATERIAL_TEXTURE_START %d\n", TEXTURE_UNIT_MATERIAL), sizeof(included_definitions));
-		material_samplers_max = min(glConfig.texture_units - TEXTURE_UNIT_MATERIAL, MAXIMUM_MATERIAL_SAMPLERS);
-		strlcat(included_definitions, va("#define SAMPLER_MATERIAL_TEXTURE_COUNT %d\n", material_samplers_max), sizeof(included_definitions));
+		if (GLM_WorldDrawnIndirect()) {
+			material_samplers_max = min(glConfig.texture_units - TEXTURE_UNIT_MATERIAL, MAXIMUM_MATERIAL_SAMPLERS);
+			material_sampler_units = material_samplers_max;
+		}
+		else {
+			// Requests are drawn one at a time with their texture array bound, and the driver
+			// sets up every sampler the program declares for each draw, so declare just one
+			material_samplers_max = MAXIMUM_MATERIAL_SAMPLERS;
+			material_sampler_units = 1;
+		}
+		strlcat(included_definitions, va("#define SAMPLER_MATERIAL_TEXTURE_COUNT %d\n", material_sampler_units), sizeof(included_definitions));
 		strlcat(included_definitions, va("#define MAX_INSTANCEID %d\n", MAX_WORLDMODEL_BATCH), sizeof(included_definitions));
 		if (r_drawflat.integer == 1 || r_drawflat.integer == 2) {
 			strlcat(included_definitions, "#define DRAW_FLATFLOORS\n", sizeof(included_definitions));
@@ -251,7 +268,7 @@ static qbool GLM_CompileDrawWorldProgramImpl(r_program_id program_id, qbool alph
 				R_ProgramUniform1i(base + 4, TEXTURE_UNIT_SKYDOME_CLOUD_TEXTURE);
 			}
 			R_ProgramUniform1i(base + 5, TEXTURE_UNIT_LIGHTMAPS);
-			R_ProgramUniform1iArrayBase(base + 6, material_samplers_max, TEXTURE_UNIT_MATERIAL);
+			R_ProgramUniform1iArrayBase(base + 6, material_sampler_units, TEXTURE_UNIT_MATERIAL);
 		}
 
 		R_ProgramSetCustomOptions(program_id, drawworld_desiredOptions);
@@ -372,13 +389,16 @@ static qbool GLM_TextureDrawable(texture_t* tex)
 	return tex && tex->loaded && tex->texturechain && R_TextureReferenceIsValid(tex->gl_texture_array);
 }
 
-static qbool GLM_DuplicatePreviousRequest(entity_t* ent, qbool polygonOffset, qbool caustics)
+// Texture numbers of the model's chained textures by material index, -1 if not drawn
+static int* chained_materials;
+static int chained_materials_size;
+
+static qbool GLM_DuplicatePreviousRequest(entity_t* ent, qbool polygonOffset, qbool caustics, int first_material, int last_material)
 {
 	glm_worldmodel_req_t* req;
 	glm_worldmodel_req_t* newreq;
 	model_t* model = ent->model;
-	int first_texture = model->first_texture_chained;
-	int num_textures = model->last_texture_chained - model->first_texture_chained + 1;
+	int num_materials = last_material - first_material + 1;
 	qbool worldmodel = model->isworldmodel;
 	int flags = (caustics ? EZQ_SURFACE_UNDERWATER : 0);
 	glm_brushmodel_drawcall_type desired_type = ent->alpha == 0.0f ? opaque_world : alpha_surfaces;
@@ -386,26 +406,26 @@ static qbool GLM_DuplicatePreviousRequest(entity_t* ent, qbool polygonOffset, qb
 	int i;
 
 	// Drawflat surfaces are in a separate request that wouldn't be duplicated
-	if (num_textures <= 0 || !drawcall->batch_count || drawcall->batch_count >= MAX_WORLDMODEL_BATCH || drawcall->type != desired_type || model->drawflat_chain) {
+	if (num_materials <= 0 || !drawcall->batch_count || drawcall->batch_count >= MAX_WORLDMODEL_BATCH || drawcall->type != desired_type || model->drawflat_chain) {
 		return false;
 	}
 
 	// See if previous request was for all surfaces of the same model
 	req = &drawcall->worldmodel_requests[drawcall->batch_count - 1];
-	if (model != req->model || req->samplerMappingCount != num_textures || req->firstTexture != first_texture) {
+	if (model != req->model || req->samplerMappingCount != num_materials || req->firstTexture != first_material) {
 		return false;
 	}
 
 	// Animated textures depend on the entity, so must match the previous request's
-	for (i = first_texture; i < first_texture + num_textures; ++i) {
-		texture_t* tex = model->textures[i];
+	for (i = first_material; i <= last_material; ++i) {
 		sampler_mapping_t* mapping = &drawcall->mappings[req->samplerMappingBase + i];
+		texture_t* tex;
 
-		if (!GLM_TextureDrawable(tex)) {
+		if (chained_materials[i] < 0) {
 			continue;
 		}
 
-		tex = R_TextureAnimation(ent, tex);
+		tex = R_TextureAnimation(ent, model->textures[chained_materials[i]]);
 		if (mapping->arrayIndex != tex->gl_texture_index || !R_TextureReferenceEqual(drawcall->allocated_samplers[mapping->samplerIndex], tex->gl_texture_array)) {
 			return false;
 		}
@@ -572,8 +592,8 @@ void GLM_DrawWaterSurfaces(void)
 		glpoly_t* poly;
 		texture_t* tex = R_TextureAnimation(NULL, surf->texinfo->texture);
 
-		req = GLM_NextBatchRequest(NULL, alpha, 1, surf->texinfo->miptex, tex, false, false, tex->isAlphaTested);
-		GLM_AssignTexture(surf->texinfo->miptex, tex);
+		req = GLM_NextBatchRequest(NULL, alpha, 1, surf->texinfo->texture->gl_material_index, tex, false, false, tex->isAlphaTested);
+		GLM_AssignTexture(surf->texinfo->texture->gl_material_index, tex);
 		for (poly = surf->polys; poly; poly = poly->next) {
 			int newVerts = poly->numverts;
 
@@ -706,13 +726,16 @@ void GLM_PrepareWorldModelBatch(void)
 	GLintptr drawOffset = 0;
 	GLintptr indexOffset = buffers.BufferOffset(r_buffer_brushmodel_index_data) / sizeof(modelIndexes[0]);
 	qbool bound_per_drawcall = GLM_WorldDataBoundPerDrawcall();
+	qbool indirect = GLM_WorldDrawnIndirect();
 	int samplerMappingOffset = 0;
 	int batchOffset = 0;
 	int draw, i;
 
 	R_TraceEnterNamedRegion(__func__);
 	buffers.Update(r_buffer_brushmodel_index_data, sizeof(modelIndexes[0]) * index_count, modelIndexes);
-	buffers.EnsureSize(r_buffer_brushmodel_drawcall_indirect, sizeof(drawcalls[0].worldmodel_requests) * maximum_drawcalls);
+	if (indirect) {
+		buffers.EnsureSize(r_buffer_brushmodel_drawcall_indirect, sizeof(drawcalls[0].worldmodel_requests) * maximum_drawcalls);
+	}
 	buffers.EnsureSize(r_buffer_brushmodel_drawcall_data, sizeof(drawcalls[0].calls) * maximum_drawcalls);
 	buffers.EnsureSize(r_buffer_brushmodel_worldsamplers_ssbo, sizeof(drawcalls[0].mappings) * maximum_drawcalls);
 
@@ -748,9 +771,11 @@ void GLM_PrepareWorldModelBatch(void)
 			drawcall->worldmodel_requests[i].firstIndex += indexOffset;
 		}
 
-		drawcall->indirectDrawOffset = drawOffset;
-		buffers.UpdateSection(r_buffer_brushmodel_drawcall_indirect, drawOffset, sizeof(drawcall->worldmodel_requests[0]) * drawcall->batch_count, &drawcall->worldmodel_requests);
-		drawOffset += sizeof(drawcall->worldmodel_requests[0]) * drawcall->batch_count;
+		if (indirect) {
+			drawcall->indirectDrawOffset = drawOffset;
+			buffers.UpdateSection(r_buffer_brushmodel_drawcall_indirect, drawOffset, sizeof(drawcall->worldmodel_requests[0]) * drawcall->batch_count, &drawcall->worldmodel_requests);
+			drawOffset += sizeof(drawcall->worldmodel_requests[0]) * drawcall->batch_count;
+		}
 
 		buffers.UpdateSection(r_buffer_brushmodel_drawcall_data, drawcall->drawDataOffset, sizeof(drawcall->calls[0]) * drawcall->batch_count, &drawcall->calls);
 		buffers.UpdateSection(r_buffer_brushmodel_worldsamplers_ssbo, drawcall->samplerDataOffset, sizeof(drawcall->mappings[0]) * drawcall->sampler_mappings, &drawcall->mappings);
@@ -765,7 +790,7 @@ void GLM_PrepareWorldModelBatch(void)
 static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintptr_t offset, int begin, int count, qbool alphablended)
 {
 	int i;
-	qbool no_base_instance = !GL_Supported(R_SUPPORT_INSTANCED_RENDERING);
+	qbool no_base_instance = !GLM_WorldDrawnIndirect();
 
 	for (i = begin; i < begin + count; ++i) {
 		glm_worldmodel_req_t* req = &drawcall->worldmodel_requests[i];
@@ -777,6 +802,10 @@ static void GLM_DrawWorldExecuteCalls(glm_brushmodel_drawcall_t* drawcall, uintp
 		R_ProgramUse(alphatested_program ? r_program_brushmodel_alphatested : r_program_brushmodel);
 
 		if (no_base_instance) {
+			if (req->samplerMappingCount) {
+				renderer.TextureUnitBind(TEXTURE_UNIT_MATERIAL, drawcall->allocated_samplers[req->nonDynamicSampler]);
+			}
+
 			// GL 4.1: no baseInstance support, _instanceId is always 0
 			// Use instanceOffset uniform so shader reads drawInfo[0 + baseInstance]
 			R_ProgramUniform1i(alphatested_program ? r_program_uniform_brushmodel_alphatested_instanceOffset : r_program_uniform_brushmodel_instanceOffset, req->baseInstance);
@@ -831,8 +860,10 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 			R_TraceEnterNamedRegion(__func__);
 			GL_StartWorldBatch(alphablended);
 			buffers.Bind(r_buffer_brushmodel_index_data);
-			buffers.Bind(r_buffer_brushmodel_drawcall_indirect);
-			extra_offset = buffers.BufferOffset(r_buffer_brushmodel_drawcall_indirect);
+			if (GLM_WorldDrawnIndirect()) {
+				buffers.Bind(r_buffer_brushmodel_drawcall_indirect);
+				extra_offset = buffers.BufferOffset(r_buffer_brushmodel_drawcall_indirect);
+			}
 
 			first = false;
 		}
@@ -844,8 +875,10 @@ void GLM_DrawWorldModelBatch(glm_brushmodel_drawcall_type type)
 			buffers.BindRange(r_buffer_brushmodel_worldsamplers_ssbo, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_BRUSHMODEL_SAMPLERS), buffers.BufferOffset(r_buffer_brushmodel_worldsamplers_ssbo) + drawcall->samplerDataOffset, sizeof(drawcall->mappings));
 		}
 
-		// Bind texture units
-		renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
+		// Bind texture units, requests drawn individually bind their own
+		if (GLM_WorldDrawnIndirect()) {
+			renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, drawcall->material_samplers, drawcall->allocated_samplers);
+		}
 
 		// Opaque requests are sorted by polygon offset, translucent requests keep their
 		// order, so draw each run of requests with the same polygon offset
@@ -880,8 +913,30 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 	int i;
 	glm_worldmodel_req_t* req = NULL;
 	model_t* model = ent->model;
+	int first_material = model->numtextures, last_material = -1;
 
-	if (GLM_DuplicatePreviousRequest(ent, polygonOffset, caustics)) {
+	// Requests map materials to texture array layers, and the textures in an array have
+	// consecutive material numbers, so go through the textures by material
+	if (chained_materials_size < model->numtextures) {
+		chained_materials_size = model->numtextures;
+		chained_materials = Q_realloc(chained_materials, sizeof(chained_materials[0]) * chained_materials_size);
+	}
+	for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
+		if (GLM_TextureDrawable(model->textures[i])) {
+			first_material = min(first_material, model->textures[i]->gl_material_index);
+			last_material = max(last_material, model->textures[i]->gl_material_index);
+		}
+	}
+	for (i = first_material; i <= last_material; ++i) {
+		chained_materials[i] = -1;
+	}
+	for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
+		if (GLM_TextureDrawable(model->textures[i])) {
+			chained_materials[model->textures[i]->gl_material_index] = i;
+		}
+	}
+
+	if (GLM_DuplicatePreviousRequest(ent, polygonOffset, caustics, first_material, last_material)) {
 		return;
 	}
 
@@ -893,18 +948,15 @@ void GLM_DrawBrushModel(entity_t* ent, qbool polygonOffset, qbool caustics)
 		model->drawflat_chain = NULL;
 	}
 
-	if (model->last_texture_chained < 0) {
-		return;
-	}
-
-	for (i = model->first_texture_chained; i <= model->last_texture_chained; ++i) {
-		texture_t* tex = model->textures[i];
+	for (i = first_material; i <= last_material; ++i) {
+		texture_t* tex;
 		texture_t* frame;
 
-		if (!GLM_TextureDrawable(tex)) {
+		if (chained_materials[i] < 0) {
 			continue;
 		}
 
+		tex = model->textures[chained_materials[i]];
 		frame = R_TextureAnimation(ent, tex);
 		req = GLM_NextBatchRequest(model, ent->alpha, 1, i, frame, polygonOffset, caustics, tex->isAlphaTested);
 		GLM_AssignTexture(i, frame);
@@ -932,7 +984,11 @@ static int GL_DrawCallComparison(const void* lhs_, const void* rhs_)
 		return -1;
 	}
 
-	// The sampler is per-request data so doesn't affect batching, keep submission order instead
+	// Requests drawn individually bind their own texture array, so group them to bind fewer.
+	// Otherwise the sampler is per-request data so doesn't affect batching, keep submission order.
+	if (!GLM_WorldDrawnIndirect() && lhs->nonDynamicSampler != rhs->nonDynamicSampler) {
+		return lhs->nonDynamicSampler - rhs->nonDynamicSampler;
+	}
 	return (int)lhs->baseInstance - (int)rhs->baseInstance;
 }
 
@@ -963,7 +1019,7 @@ static void GL_SortDrawCalls(glm_brushmodel_drawcall_t* drawcall)
 		drawcall->calls[i].flags = thisReq->flags;
 		memcpy(drawcall->calls[i].modelMatrix, thisReq->mvMatrix, sizeof(drawcall->calls[i].modelMatrix));
 		drawcall->calls[i].samplerBase = thisReq->samplerMappingBase;
-		drawcall->calls[i].sampler = thisReq->nonDynamicSampler;
+		drawcall->calls[i].sampler = (GLM_WorldDrawnIndirect() ? thisReq->nonDynamicSampler : 0);
 		thisReq->baseInstance = i;
 	}
 }

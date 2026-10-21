@@ -13,5 +13,6 @@ void GL_DrawSequentialBatchImpl(gl_sprite3d_batch_t* batch, int first_batch, int
 extern int indexes_start_quads;
 extern int indexes_start_flashblend;
 extern int indexes_start_sparks;
+extern int indexes_start_beams;
 
 #endif // #ifndef EZQUAKE_GL_SPRITE3D_HEADER
