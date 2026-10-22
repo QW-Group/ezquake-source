@@ -512,6 +512,9 @@ unsigned int CL_SupportedFTEExtensions (void)
 #ifdef FTE_PEXT_MODELDBL
 		fteprotextsupported |= FTE_PEXT_MODELDBL;
 #endif
+#ifdef FTE_PEXT_SOUNDDBL
+		fteprotextsupported |= FTE_PEXT_SOUNDDBL;
+#endif
 #ifdef FTE_PEXT_ENTITYDBL
 		fteprotextsupported |= FTE_PEXT_ENTITYDBL;
 #endif
@@ -632,6 +635,9 @@ static void CL_PextList_f(void)
 {
 #ifdef PROTOCOL_VERSION_FTE
 	static const pext_info_t fte_pexts[] = {
+#ifdef FTE_PEXT_SOUNDDBL
+		{ FTE_PEXT_SOUNDDBL, "FTE_PEXT_SOUNDDBL" },
+#endif
 #ifdef FTE_PEXT_SCALE
 		{ FTE_PEXT_SCALE, "FTE_PEXT_SCALE" },
 #endif

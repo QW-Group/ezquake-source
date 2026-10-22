@@ -482,6 +482,22 @@ void CL_WriteServerdata (sizebuf_t *msg)
 	MSG_WriteFloat(msg, cl.entgravity);
 }
 
+/* Adapt the client-owned names to the shared signon/demo chunk encoder. */
+static int CL_WriteSoundListChunk(sizebuf_t *buf, int cursor)
+{
+	char *sounds[MAX_SOUNDS];
+	int count = 0, next;
+
+	while (count + 1 < MAX_SOUNDS && cl.sound_name[count + 1][0]) {
+		++count;
+		sounds[count] = cl.sound_name[count];
+	}
+	if (!MSG_WriteSoundListChunk(buf, sounds, count, cursor, MAX_MSGLEN / 2, &next)) {
+		Host_Error("Unable to write demo soundlist chunk");
+	}
+	return next;
+}
+
 //
 // Write startup data to demo (called when demo started and cls.state == ca_active)
 //
@@ -522,48 +538,12 @@ static void CL_WriteStartupData (void)
 	//
 	// Write the soundlist.
 	//
-	MSG_WriteByte (&buf, svc_soundlist);
-	MSG_WriteByte (&buf, 0);
-
-	// Loop through all sounds and write them to the demo.
 	n = 0;
-	s = cl.sound_name[n + 1];
-	while (*s)
-	{
-		// Write the sound name to the buffer.
-		MSG_WriteString (&buf, s);
-
-		// If the buffer is half full, flush it.
-		if (buf.cursize > MAX_MSGLEN / 2)
-		{
-			// End of the partial sound list.
-			MSG_WriteByte (&buf, 0);
-
-			// Write how many sounds we've listed so far.
-			MSG_WriteByte (&buf, n);
-
-			// Flush the buffer to the demo file and clear the buffer.
-			CL_WriteStartupDemoMessage (&buf, seq++);
-			SZ_Clear (&buf);
-
-			// Start on a new sound list and continue writing the
-			// remaining sounds.
-			MSG_WriteByte (&buf, svc_soundlist);
-			MSG_WriteByte (&buf, n + 1);
-		}
-
-		n++;
-		s = cl.sound_name[n+1];
-	}
-
-	// If the buffer isn't empty flush and clear it.
-	if (buf.cursize)
-	{
-		MSG_WriteByte (&buf, 0);
-		MSG_WriteByte (&buf, 0);
-		CL_WriteStartupDemoMessage (&buf, seq++);
-		SZ_Clear (&buf);
-	}
+	do {
+		n = CL_WriteSoundListChunk(&buf, n);
+		CL_WriteStartupDemoMessage(&buf, seq++);
+		SZ_Clear(&buf);
+	} while (n);
 
 	// Vwep modellist
 	if (cl.vwep_enabled && cl.vw_model_name[0][0]) 
@@ -989,34 +969,12 @@ void CL_WriteMVDStartupData(void)
 	//
 	// Soundlist.
 	//
-	MSG_WriteByte (&buf, svc_soundlist);
-	MSG_WriteByte (&buf, 0);
-
 	n = 0;
-	s = cl.sound_name[n + 1];
-	while (*s)
-	{
-		MSG_WriteString (&buf, s);
-		if (buf.cursize > MAX_MSGLEN/2)
-		{
-			MSG_WriteByte (&buf, 0);
-			MSG_WriteByte (&buf, n);
-			CL_WriteRecordMVDMessage (&buf);
-			SZ_Clear (&buf);
-			MSG_WriteByte (&buf, svc_soundlist);
-			MSG_WriteByte (&buf, n + 1);
-		}
-		n++;
-		s = cl.sound_name[n + 1];
-	}
-
-	if (buf.cursize)
-	{
-		MSG_WriteByte (&buf, 0);
-		MSG_WriteByte (&buf, 0);
-		CL_WriteRecordMVDMessage (&buf);
-		SZ_Clear (&buf);
-	}
+	do {
+		n = CL_WriteSoundListChunk(&buf, n);
+		CL_WriteRecordMVDMessage(&buf);
+		SZ_Clear(&buf);
+	} while (n);
 
 	//
 	// Modellist.

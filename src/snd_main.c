@@ -68,7 +68,7 @@ static vec3_t	listener_up;
 // because we don't want to free anything until we are
 // sure we won't need it.
 
-#define MAX_SFX (MAX_SOUNDS*2) // 256 * 2 = 512
+#define MAX_SFX (MAX_SOUNDS*2)
 
 static sfx_t	*known_sfx;
 static int	num_sfx;
