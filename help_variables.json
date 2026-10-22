@@ -21479,7 +21479,7 @@
       "type": "float"
     },
     "vid_framebuffer": {
-      "default": "0",
+      "default": "2",
       "desc": "Enables rendering to custom Framebuffer Objects. ezQuake uses these FBOs for improved color, \"render scale\" control, and other post-processing effects.",
       "group-id": "52",
       "type": "enum",

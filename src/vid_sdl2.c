@@ -209,7 +209,7 @@ cvar_t gl_multisamples            = {"gl_multisamples",            "0",       CV
 cvar_t vid_gammacorrection        = {"vid_gammacorrection",        "0",       CVAR_LATCH_GFX };
 cvar_t vid_software_palette       = {"vid_software_palette",       "1",       CVAR_NO_RESET | CVAR_LATCH_GFX };
 
-cvar_t vid_framebuffer             = {"vid_framebuffer",               "0",       CVAR_NO_RESET | CVAR_LATCH_GFX, conres_changed_callback };
+cvar_t vid_framebuffer             = {"vid_framebuffer",               "2",       CVAR_NO_RESET | CVAR_LATCH_GFX, conres_changed_callback };
 cvar_t vid_framebuffer_blit        = {"vid_framebuffer_blit",          "0",       CVAR_NO_RESET };
 cvar_t vid_framebuffer_width       = {"vid_framebuffer_width",         "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
 cvar_t vid_framebuffer_height      = {"vid_framebuffer_height",        "0",       CVAR_NO_RESET | CVAR_AUTO, conres_changed_callback };
