@@ -1573,7 +1573,10 @@ void CL_Reconnect_f (void)
 		return; // Change map during qtv playback.
 	}
 
-	if (cls.state == ca_connected) 
+	// A second local map change can interrupt signon, including after fresh
+	// serverdata from a late request. Keep the netchan: a full reconnect would
+	// call Host_EndGame and shut down the listen server.
+	if (cls.state == ca_connected || (com_serveractive && cls.state == ca_onserver))
 	{
 		Com_Printf ("reconnecting...\n");
 		MSG_WriteChar (&cls.netchan.message, clc_stringcmd);
