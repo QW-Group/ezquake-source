@@ -72,6 +72,13 @@ void GLM_PreRenderView(void)
 	frameConstants.time = cl.time;
 	frameConstants.gamma = bound(0.3, v_gamma.value, 3);
 	frameConstants.contrast = bound(1, v_contrast.value, 3);
+	if (R_OldGammaBehaviour()) {
+		extern float vid_gamma;
+
+		// The palette and textures already have vid_gamma baked in
+		frameConstants.gamma /= vid_gamma;
+		frameConstants.contrast = pow(frameConstants.contrast, vid_gamma);
+	}
 	frameConstants.r_alphatestfont = gl_alphafont.integer ? 0 : 1;
 	blend_alpha = R_PostProcessViewBlend() ? v_blend[3] : 0;
 	frameConstants.v_blend[0] = v_blend[0] * blend_alpha;

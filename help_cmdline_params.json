@@ -149,7 +149,7 @@
     "description": "Suppresses stdout output on POSIX by setting `sys_nostdout=1` before `Host_Init`. POSIX/Linux only."
   },
   "-oldgamma": {
-    "description": "Switches gamma correction to the legacy palette-baking method, applying `vid_gamma_table` to texture data at load time."
+    "description": "Switches gamma correction to the legacy palette-baking method, baking the `-gamma` value into `vid_gamma_table` and texture data at load time. Post-processing then applies only the rest of `gl_gamma` and `gl_contrast`."
   },
   "-particles": {
     "description": "Sets the maximum number of simultaneously active particles to `<count>` (`-particles <count>`), overriding the `r_particles_count` cvar at startup. Default is 2048; the active particle subsystem clamps to its own range (classic: 512-8192, QMB: 256-32768)."
