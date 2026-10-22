@@ -129,8 +129,8 @@ char *svc_strings[] = {
 	"svc_serverinfo",
 	"svc_updatepl",
 	"svc_nails2",
-	"NEW PROTOCOL",
-	"NEW PROTOCOL",
+	"svc_fte_soundextended",
+	"svc_fte_soundlistshort",
 	"NEW PROTOCOL",
 	"NEW PROTOCOL",
 	"NEW PROTOCOL",
@@ -767,7 +767,7 @@ void Sound_NextDownload (void)
 	}
 
 	cls.downloadtype = dl_sound;
-	for ( ; cl.sound_name[cls.downloadnumber][0]; cls.downloadnumber++)	
+	for ( ; cls.downloadnumber < MAX_SOUNDS && cl.sound_name[cls.downloadnumber][0]; cls.downloadnumber++)
 	{
 		s = cl.sound_name[cls.downloadnumber];
 		if (!CL_CheckOrDownloadFile(va("sound/%s",s)))
@@ -1651,7 +1651,7 @@ void CL_ParseServerData (void)
 #endif
 }
 
-void CL_ParseSoundlist (void)
+void CL_ParseSoundlist (qbool extended)
 {
 	int	numsounds, n;
 	char *str;
@@ -1661,11 +1661,18 @@ void CL_ParseSoundlist (void)
 
 	if (cl.protoversion >= 26) 
 	{
-		numsounds = MSG_ReadByte();
+		numsounds = extended ? (unsigned short)MSG_ReadShort() : MSG_ReadByte();
+		if (msg_badread || numsounds >= MAX_SOUNDS) {
+			Host_Error("Invalid soundlist cursor");
+			return;
+		}
 
 		while (1) 
 		{
 			str = MSG_ReadString ();
+			if (msg_badread) {
+				return;
+			}
 			if (!str[0])
 				break;
 			numsounds++;
@@ -1679,6 +1686,9 @@ void CL_ParseSoundlist (void)
 		}
 
 		n = MSG_ReadByte();
+		if (msg_badread) {
+			return;
+		}
 
 		if (n) 
 		{
@@ -1689,7 +1699,7 @@ void CL_ParseSoundlist (void)
 			else 
 			{
 				MSG_WriteByte(&cls.netchan.message, clc_stringcmd);
-				MSG_WriteString(&cls.netchan.message, va("soundlist %i %i", cl.servercount, n));
+				MSG_WriteString(&cls.netchan.message, va("soundlist %i %i", cl.servercount, (numsounds & 0xff00) + n));
 			}
 
 			return;
@@ -1700,9 +1710,11 @@ void CL_ParseSoundlist (void)
 		// Taken from http://www.quakewiki.net/archives/demospecs/qwd/qwd.html#AEN562
 		numsounds = 0;
 		do {
-			if (++numsounds > 255)
-				Host_Error ("Server sent too many sound_precache");
 			str = MSG_ReadString ();
+			if (msg_badread || !*str)
+				break;
+			if (++numsounds >= MAX_SOUNDS_LEGACY)
+				Host_Error ("Server sent too many sound_precache");
 			strlcpy (cl.sound_name[numsounds], str, sizeof(cl.sound_name[numsounds]));
 		} while (*str);
 	}
@@ -1952,29 +1964,54 @@ ACTION MESSAGES
 =====================================================================
 */
 
-void CL_ParseStartSoundPacket(void)
+void CL_ParseStartSoundPacket(qbool extended)
 {
     vec3_t pos;
     int channel, ent, sound_num, volume, i;
-	int tracknum;
+	int tracknum, flags = 0;
+	/* FTE's separate entity/channel form; not QW's packed volume flags. */
+	enum { large_entity = 1 << 3 };
     float attenuation;
 
-    channel = MSG_ReadShort();
-
-	volume = (channel & SND_VOLUME) ? MSG_ReadByte() : DEFAULT_SOUND_PACKET_VOLUME;
-
-	attenuation = (channel & SND_ATTENUATION) ? MSG_ReadByte() / 64.0 : DEFAULT_SOUND_PACKET_ATTENUATION;
-
-	sound_num = MSG_ReadByte();
+	if (extended) {
+		flags = MSG_ReadByte();
+		if (flags & ~(NQSND_VOLUME | NQSND_ATTENUATION | NQSND_LARGESOUND | large_entity)) {
+			Host_Error("Unsupported extended sound flags: %i", flags);
+			return;
+		}
+		volume = (flags & NQSND_VOLUME) ? MSG_ReadByte() : DEFAULT_SOUND_PACKET_VOLUME;
+		attenuation = (flags & NQSND_ATTENUATION) ? MSG_ReadByte() / 64.0 : DEFAULT_SOUND_PACKET_ATTENUATION;
+		if (flags & large_entity) {
+			ent = (unsigned short)MSG_ReadShort();
+			channel = MSG_ReadByte();
+		}
+		else {
+			channel = (unsigned short)MSG_ReadShort();
+			ent = channel >> 3;
+			channel &= 7;
+		}
+		sound_num = (flags & NQSND_LARGESOUND) ? (unsigned short)MSG_ReadShort() : MSG_ReadByte();
+	}
+	else {
+		channel = MSG_ReadShort();
+		volume = (channel & SND_VOLUME) ? MSG_ReadByte() : DEFAULT_SOUND_PACKET_VOLUME;
+		attenuation = (channel & SND_ATTENUATION) ? MSG_ReadByte() / 64.0 : DEFAULT_SOUND_PACKET_ATTENUATION;
+		sound_num = MSG_ReadByte();
+		ent = (channel >> 3) & 1023;
+		channel &= 7;
+	}
 
 	for (i = 0; i < 3; i++)
 		pos[i] = MSG_ReadCoord();
 
-	ent = (channel >> 3) & 1023;
-	channel &= 7;
-
-	if (ent > CL_MAX_EDICTS)
+	if (msg_badread)
+		return;
+	if (ent >= CL_MAX_EDICTS)
 		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
+	if (sound_num < 0 || sound_num >= MAX_SOUNDS)
+		Host_Error("CL_ParseStartSoundPacket: sound = %i", sound_num);
+	if (!cl.sound_precache[sound_num])
+		return;
 
 #ifdef MVD_PEXT1_WEAPONPREDICTION
 	// skip our own weapon/jump sounds if we are predicting them
@@ -3912,7 +3949,7 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_sound:
 				{
-					CL_ParseStartSoundPacket();
+					CL_ParseStartSoundPacket(false);
 					break;
 				}
 			case svc_stopsound:
@@ -4162,9 +4199,19 @@ void CL_ParseServerMessage (void)
 					break;
 				}
 #endif  // PROTOCOL_VERSION_FTE
+			case svc_fte_soundextended:
+				if (!(cls.fteprotocolextensions & FTE_PEXT_SOUNDDBL))
+					Host_Error("svc_fte_soundextended without FTE_PEXT_SOUNDDBL");
+				CL_ParseStartSoundPacket(true);
+				break;
+			case svc_fte_soundlistshort:
+				if (!(cls.fteprotocolextensions & FTE_PEXT_SOUNDDBL))
+					Host_Error("svc_fte_soundlistshort without FTE_PEXT_SOUNDDBL");
+				CL_ParseSoundlist(true);
+				break;
 			case svc_soundlist:
 				{
-					CL_ParseSoundlist();
+					CL_ParseSoundlist(false);
 					break;
 				}
 			case svc_packetentities:
