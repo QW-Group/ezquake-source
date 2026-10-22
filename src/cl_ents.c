@@ -525,9 +525,25 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 	} else {
 		morebits = 0;
 	}
+#ifdef FTE_PEXT_ENTITYDBL
+	if (morebits & U_FTE_ENTITYDBL) {
+		to->number += 512;
+	}
+#endif
+#ifdef FTE_PEXT_ENTITYDBL2
+	if (morebits & U_FTE_ENTITYDBL2) {
+		to->number += 1024;
+	}
+#endif
 #endif
 
 	to->flags = bits;
+	// Removals have no update fields. Older servers leave high entity-number
+	// bits in the leading word, where they overlap the origin flags.
+	if (bits & U_REMOVE) {
+		return;
+	}
+
 	if (bits & U_MODEL) {
 		to->modelindex = MSG_ReadByte();
 #ifdef FTE_PEXT_MODELDBL
@@ -613,16 +629,6 @@ void CL_ParseDelta (entity_state_t *from, entity_state_t *to, int bits) {
 	}
 #endif
 
-#ifdef FTE_PEXT_ENTITYDBL
-	if (morebits & U_FTE_ENTITYDBL) {
-		to->number += 512;
-	}
-#endif
-#ifdef FTE_PEXT_ENTITYDBL2
-	if (morebits & U_FTE_ENTITYDBL2) {
-		to->number += 1024;
-	}
-#endif
 #endif
 }
 
