@@ -102,6 +102,56 @@ coorddata MSG_ToAngle(float f, int bytes)	//return value is NOT byteswapped.
 
 #endif
 
+/* Encode a bounded catalog chunk; zero continuation is reserved for completion.
+ * The caller supplies entries 1..count and slot 0 remains reserved. */
+qbool MSG_WriteSoundListChunk(sizebuf_t *msg, char *const *sounds,
+                            int count, int cursor, int limit, int *next)
+{
+	int end, size, index;
+
+	if (count < 0 || count > 65535 || cursor < 0 || cursor > count) {
+		return false;
+	}
+	limit = min(limit, msg->maxsize);
+	/* Opcode, cursor, empty string and continuation; preflight before writing. */
+	size = msg->cursize + (cursor > 255 ? 5 : 4);
+	if (size > limit) {
+		return false;
+	}
+	end = cursor;
+	while (end < count) {
+		size_t length = strlen(sounds[end + 1]) + 1;
+
+		if (length > (size_t)(limit - size)) {
+			break;
+		}
+		size += (int)length;
+		++end;
+	}
+	/* Zero is reserved for completion. Never publish a non-final 256 boundary. */
+	if (end < count && !(end & 255)) {
+		--end;
+	}
+	if (end < cursor || (end == cursor && cursor < count)) {
+		return false;
+	}
+
+	MSG_WriteByte(msg, cursor > 255 ? svc_fte_soundlistshort : svc_soundlist);
+	if (cursor > 255) {
+		MSG_WriteShort(msg, cursor);
+	}
+	else {
+		MSG_WriteByte(msg, cursor);
+	}
+	for (index = cursor + 1; index <= end; ++index) {
+		MSG_WriteString(msg, sounds[index]);
+	}
+	MSG_WriteByte(msg, 0);
+	MSG_WriteByte(msg, end < count ? end & 255 : 0);
+	*next = end < count ? end : 0;
+	return true;
+}
+
 // writing functions
 void MSG_WriteChar (sizebuf_t *sb, int c)
 {
