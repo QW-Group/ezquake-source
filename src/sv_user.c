@@ -195,6 +195,25 @@ qbool PlayerCheckPing(void)
 	return true;
 }
 
+/* Reject unsupported network clients before signon or new-map gameplay. */
+qbool SV_CheckClientSoundSupport(client_t *client)
+{
+#ifdef USE_PR2
+	if (client->isBot) {
+		return true;
+	}
+#endif
+	if (SV_SoundPrecacheCount(sv.sound_precache, MAX_SOUNDS) < MAX_SOUNDS_LEGACY
+	    || (client->fteprotocolextensions & FTE_PEXT_SOUNDDBL)) {
+		return true;
+	}
+	SV_ClientPrintf(client, PRINT_HIGH,
+	                "Map %s requires extended sounds (PEXT_SOUNDDBL). "
+	                "Enable the extension or use a supporting client.\n", sv.mapname);
+	SV_DropClient(client);
+	return false;
+}
+
 /*
 ================
 Cmd_New_f
@@ -225,6 +244,10 @@ static void Cmd_New_f (void)
 	{
 		MSG_WriteByte (&sv_client->netchan.message, svc_stufftext);
 		MSG_WriteString (&sv_client->netchan.message, "cmd pext\n");
+		return;
+	}
+
+	if (!SV_CheckClientSoundSupport(sv_client)) {
 		return;
 	}
 
@@ -487,8 +510,7 @@ Cmd_Soundlist_f
 */
 static void Cmd_Soundlist_f (void)
 {
-	char		**s;
-	unsigned	n;
+	int n, count, next;
 
 	if (sv_client->state != cs_connected)
 	{
@@ -506,7 +528,8 @@ static void Cmd_Soundlist_f (void)
 	}
 
 	n = Q_atoi(Cmd_Argv(2));
-	if (n >= MAX_SOUNDS)
+	count = SV_SoundPrecacheCount(sv.sound_precache, MAX_SOUNDS);
+	if (n < 0 || n > count)
 	{
 		SV_ClearReliable (sv_client);
 		SV_ClientPrintf (sv_client, PRINT_HIGH,
@@ -524,20 +547,11 @@ static void Cmd_Soundlist_f (void)
 		SZ_Clear(&sv_client->netchan.message);
 	}
 
-	MSG_WriteByte (&sv_client->netchan.message, svc_soundlist);
-	MSG_WriteByte (&sv_client->netchan.message, n);
-	for (s = sv.sound_precache+1 + n ;
-	        *s && sv_client->netchan.message.cursize < (MAX_MSGLEN/2);
-	        s++, n++)
-		MSG_WriteString (&sv_client->netchan.message, *s);
-
-	MSG_WriteByte (&sv_client->netchan.message, 0);
-
-	// next msg
-	if (*s)
-		MSG_WriteByte (&sv_client->netchan.message, n);
-	else
-		MSG_WriteByte (&sv_client->netchan.message, 0);
+	if (!MSG_WriteSoundListChunk(&sv_client->netchan.message, sv.sound_precache,
+	                            count, n, MAX_MSGLEN / 2, &next)) {
+		SV_ClientPrintf(sv_client, PRINT_HIGH, "Unable to write soundlist chunk\n");
+		SV_DropClient(sv_client);
+	}
 }
 
 static char *TrimModelName (const char *full)

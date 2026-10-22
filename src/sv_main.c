@@ -3564,6 +3564,9 @@ void SV_InitLocal (void)
 #ifdef FTE_PEXT_MODELDBL
 	svs.fteprotocolextensions |= FTE_PEXT_MODELDBL;
 #endif
+#ifdef FTE_PEXT_SOUNDDBL
+	svs.fteprotocolextensions |= FTE_PEXT_SOUNDDBL;
+#endif
 #ifdef FTE_PEXT_ENTITYDBL
 	svs.fteprotocolextensions |= FTE_PEXT_ENTITYDBL;
 #endif

@@ -872,6 +872,8 @@ qbool SV_AddToRedirect(char *msg);
 void SV_Multicast(vec3_t origin, int to);
 void SV_MulticastEx(vec3_t origin, int to, const char *cl_reliable_key);
 void SV_StartParticle(vec3_t org, vec3_t dir, int color, int count, int replacement_te, int replacement_count);
+/* Count a dense sound catalog without reading beyond a full precache array. */
+int SV_SoundPrecacheCount(char *const *sounds, int capacity);
 void SV_StartSound(edict_t *entity, int channel, char *sample, int volume, float attenuation);
 void SV_ClientPrintf(client_t *cl, int level, char *fmt, ...);
 void SV_ClientPrintf2(client_t *cl, int level, char *fmt, ...);
@@ -891,6 +893,8 @@ void SV_FindModelNumbers (void);
 //
 // sv_user.c
 //
+/* Enforce the current map's sound capability before signon and after map load. */
+qbool SV_CheckClientSoundSupport(client_t *client);
 void SV_ExecuteClientMessage (client_t *cl);
 void SV_UserInit (void);
 void SV_TogglePause (const char *msg, int bit);

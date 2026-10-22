@@ -609,6 +609,15 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	// look up some model indexes for specialized message compression
 	SV_FindModelNumbers ();
 
+	for (i = 0; i < MAX_CLIENTS; ++i) {
+		client_t *client = &svs.clients[i];
+
+		/* Unsettled pext clients are checked by signon after negotiation. */
+		if (client->state >= cs_preconnected && !client->process_pext) {
+			SV_CheckClientSoundSupport(client);
+		}
+	}
+
 	// all spawning is completed, any further precache statements
 	// or prog writes to the signon message are errors
 	sv.state = ss_active;
