@@ -540,7 +540,7 @@ static void NQD_ParseServerData(void)
 		if (!str[0]) {
 			break;
 		}
-		if (numsounds == MAX_SOUNDS) {
+		if (numsounds == MAX_SOUNDS_LEGACY) {
 			Host_Error("Server sent too many sound precaches");
 		}
 		strlcpy(cl.sound_name[numsounds], str, sizeof(cl.sound_name[0]));

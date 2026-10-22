@@ -579,6 +579,65 @@ void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count,
 }
 
 
+/* Bounded sound precache and wire encoding shared by signon and MVD. */
+int SV_SoundPrecacheCount(char *const *sounds, int capacity)
+{
+	int count = 0;
+
+	while (count + 1 < capacity && sounds[count + 1]) {
+		++count;
+	}
+	return count;
+}
+
+/* Encode high IDs without changing legacy packets or multicast routing. */
+static void SV_WriteSoundPacket(sizebuf_t *msg, int entity, int channel,
+                         int sound_id, int volume, float attenuation,
+                         const float origin[3])
+{
+	int packed = (entity << 3) | channel;
+	int index;
+
+	if (sound_id > 255) {
+		int flags = NQSND_LARGESOUND;
+
+		if (volume != DEFAULT_SOUND_PACKET_VOLUME) {
+			flags |= NQSND_VOLUME;
+		}
+		if (attenuation != DEFAULT_SOUND_PACKET_ATTENUATION) {
+			flags |= NQSND_ATTENUATION;
+		}
+		MSG_WriteByte(msg, svc_fte_soundextended);
+		MSG_WriteByte(msg, flags);
+	}
+	else {
+		MSG_WriteByte(msg, svc_sound);
+		if (volume != DEFAULT_SOUND_PACKET_VOLUME) {
+			packed |= SND_VOLUME;
+		}
+		if (attenuation != DEFAULT_SOUND_PACKET_ATTENUATION) {
+			packed |= SND_ATTENUATION;
+		}
+		MSG_WriteShort(msg, packed);
+	}
+	if (volume != DEFAULT_SOUND_PACKET_VOLUME) {
+		MSG_WriteByte(msg, volume);
+	}
+	if (attenuation != DEFAULT_SOUND_PACKET_ATTENUATION) {
+		MSG_WriteByte(msg, attenuation * 64);
+	}
+	if (sound_id > 255) {
+		MSG_WriteShort(msg, packed);
+		MSG_WriteShort(msg, sound_id);
+	}
+	else {
+		MSG_WriteByte(msg, sound_id);
+	}
+	for (index = 0; index < 3; ++index) {
+		MSG_WriteCoord(msg, origin[index]);
+	}
+}
+
 /*
 ==================
 SV_StartSound
@@ -639,13 +698,6 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 	//	if (channel == CHAN_BODY || channel == CHAN_VOICE)
 	//		reliable = true;
 
-	channel = (ent<<3) | channel;
-
-	if (volume != DEFAULT_SOUND_PACKET_VOLUME)
-		channel |= SND_VOLUME;
-	if (attenuation != DEFAULT_SOUND_PACKET_ATTENUATION)
-		channel |= SND_ATTENUATION;
-
 	// use the entity origin unless it is a bmodel or a trigger
 	if (entity->v->solid == SOLID_BSP || (entity->v->solid == SOLID_TRIGGER && entity->v->modelindex == 0))
 	{
@@ -657,15 +709,8 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 		VectorCopy (entity->v->origin, origin);
 	}
 
-	MSG_WriteByte (&sv.multicast, svc_sound);
-	MSG_WriteShort (&sv.multicast, channel);
-	if (channel & SND_VOLUME)
-		MSG_WriteByte (&sv.multicast, volume);
-	if (channel & SND_ATTENUATION)
-		MSG_WriteByte (&sv.multicast, attenuation*64);
-	MSG_WriteByte (&sv.multicast, sound_num);
-	for (i=0 ; i<3 ; i++)
-		MSG_WriteCoord (&sv.multicast, origin[i]);
+	SV_WriteSoundPacket(&sv.multicast, ent, channel, sound_num, volume,
+	                    attenuation, origin);
 
 	if (use_phs)
 		SV_MulticastEx (origin, reliable ? MULTICAST_PHS_R : MULTICAST_PHS, sv_reliable_sound.value ? "rsnd" : NULL);

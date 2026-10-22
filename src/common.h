@@ -75,7 +75,8 @@ typedef enum
 #define MAX_MODELS              4096    // can't encode more than this, see SV_WriteDelta
 #define MAX_STATIC_ENTITIES     2048
 #define MAX_VWEP_MODELS         32	    // could be increased to 256
-#define MAX_SOUNDS              256	    // so they cannot be blindly increased
+#define MAX_SOUNDS_LEGACY       256     // byte sound indices, including reserved slot 0
+#define MAX_SOUNDS              4096    // SOUNDDBL sound indices, including reserved slot 0
 
 #define	SAVEGAME_COMMENT_LENGTH 39
 

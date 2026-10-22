@@ -556,7 +556,6 @@ PF_ambientsound
 */
 void PF_ambientsound (void)
 {
-	char		**check;
 	char		*samp;
 	float		*pos;
 	float 		vol, attenuation;
@@ -568,14 +567,17 @@ void PF_ambientsound (void)
 	attenuation = G_FLOAT(OFS_PARM3);
 
 	// check to see if samp was properly precached
-	for (soundnum=0, check = sv.sound_precache ; *check ; check++, soundnum++)
-		if (!strcmp(*check,samp))
+	for (soundnum = 0; soundnum < MAX_SOUNDS && sv.sound_precache[soundnum]; ++soundnum)
+		if (!strcmp(sv.sound_precache[soundnum], samp))
 			break;
 
-	if (!*check)
+	if (soundnum == MAX_SOUNDS || !sv.sound_precache[soundnum])
 	{
 		Con_Printf ("no precache: %s\n", samp);
 		return;
+	}
+	if (soundnum >= MAX_SOUNDS_LEGACY) {
+		PR_RunError("Ambient sound %s has ID %d; static sounds require ID <= 255", samp, soundnum);
 	}
 
 	// add an svc_spawnambient command to the level signon packet
