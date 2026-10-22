@@ -703,8 +703,7 @@
     "remarks": "This command can be specified while a game is in progress, after the current map ends this command will take effect."
   },
   "gamma": {
-    "description": "You can edit brightness.",
-    "remarks": "This is a shortcut for sw_gamma in vga and gl_gamma in gl."
+    "description": "Legacy alias for the cvar `gl_gamma`. Gamma applied to the rendered framebuffer (range 0.3 to 3) when `vid_software_palette` is 1. Prefer `gl_gamma` in new configs."
   },
   "give": {
     "description": "Give user a certain amount of an item.\nItems:\n1 - Axe\n2 - Shotgun\n3 - Double-Barrelled Shotgun\n4 - Nailgun\n5 - Super Nailgun\n6 - Grenade Launcher\n7 - Rocket Launcher\n8 - ThunderBolt\nC - Cells\nH - Health\nN - Nails\nR - Rockets\nS - Shells\n\nExamples:\ngive 1234 R 99\n - gives 99 rockets to user 1234\ngive 1234 7\n - gives the rocket launcher to user 1234",
@@ -2055,7 +2054,7 @@
     "description": "Lists all SDL2 display outputs available to the system, printing each one as an index and display name (e.g. \"0: Generic PnP Monitor\"). Useful when configuring multi-monitor setups to identify the correct display index for vid_displayindex or similar cvars."
   },
   "vid_framebuffer_palette": {
-    "description": "Legacy alias for the cvar `vid_software_palette`. Set to 0 to use hardware gamma (classic style), 1 to adjust gamma in post-processing. Prefer `vid_software_palette` in new configs."
+    "description": "Legacy alias for the cvar `vid_software_palette`. Set to 0 to leave `gl_gamma` unapplied and apply `gl_contrast` by drawing over the screen, 1 to apply both in post-processing. Prefer `vid_software_palette` in new configs."
   },
   "vid_fullscreen": {
     "description": "This command will switch to a fullscreen video mode specified in the \"vid_fullscreen_mode\" variable."
