@@ -400,7 +400,7 @@ static void SV_EmitPacketEntities (client_t *client, packet_entities_t *to, size
 			// the old entity isn't present in the new message
 			if (oldnum >= 512) {
 				//yup, this is expensive.
-				MSG_WriteShort (msg, oldnum | U_REMOVE | U_MOREBITS);
+				MSG_WriteShort (msg, (oldnum & 511) | U_REMOVE | U_MOREBITS);
 				MSG_WriteByte (msg, U_FTE_EVENMORE);
 				if (oldnum >= 1024) {
 					if (oldnum >= 1024 + 512) {
@@ -415,7 +415,7 @@ static void SV_EmitPacketEntities (client_t *client, packet_entities_t *to, size
 				}
 			}
 			else {
-				MSG_WriteShort(msg, oldnum | U_REMOVE);
+				MSG_WriteShort(msg, (oldnum & 511) | U_REMOVE);
 			}
 
 			oldindex++;
