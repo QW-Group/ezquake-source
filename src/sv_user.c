@@ -954,8 +954,9 @@ static void Cmd_Begin_f (void)
 	unsigned pmodel = 0, emodel = 0;
 	int i;
 
-	if (sv_client->state == cs_spawned)
-		return; // don't begin again
+	if (sv_client->state != cs_connected) {
+		return;
+	}
 
 	// handle the case of a level changing while a client was connecting
 	if (Q_atoi(Cmd_Argv(1)) != svs.spawncount)
