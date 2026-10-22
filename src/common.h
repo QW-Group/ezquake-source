@@ -379,6 +379,9 @@ struct usercmd_s;
 extern struct usercmd_s nullcmd;
 
 void MSG_WriteChar (sizebuf_t *sb, int c);
+/* Shared signon/demo soundlist framing; refuses an undersized chunk atomically. */
+qbool MSG_WriteSoundListChunk(sizebuf_t *msg, char *const *sounds,
+                             int count, int cursor, int limit, int *next);
 void MSG_WriteByte (sizebuf_t *sb, int c);
 void MSG_WriteShort (sizebuf_t *sb, int c);
 void MSG_WriteLong (sizebuf_t *sb, int c);
