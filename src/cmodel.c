@@ -697,16 +697,111 @@ static void CM_LoadSubmodels (byte *buffer, int length)
 
 /*
 =================
-CM_SetParent
+CM_SetParents
+
+Sets the node and leaf parents, walking the node trees from node 0 and from
+every submodel's headnode without recursion. Rejects a node reached twice and
+trees deeper than MAX_NODE_DEPTH. Call after CM_LoadSubmodels.
 =================
 */
-static void CM_SetParent (cnode_t *node, cnode_t *parent)
+#define MAX_NODE_DEPTH 4096
+
+static void CM_SetParents (void)
 {
-	node->parent = parent;
-	if (node->contents < 0)
+	int *stack, *depth;
+	int i, j, sp, root, num;
+	cnode_t *node, *child;
+
+	stack = (int *) Hunk_TempAllocMore (numnodes * sizeof(*stack));
+	depth = (int *) Hunk_TempAllocMore (numnodes * sizeof(*depth));
+	memset (depth, 0, numnodes * sizeof(*depth));
+
+	// node 0 first, then the submodels
+	for (i = -1; i < numcmodels; i++) {
+		root = (i < 0) ? 0 : map_cmodels[i].hulls[0].firstclipnode;
+		if (root < 0 || root >= numnodes || depth[root])
+			continue;
+
+		map_nodes[root].parent = NULL;
+		depth[root] = 1;
+		stack[0] = root;
+		sp = 1;
+
+		while (sp) {
+			node = map_nodes + stack[--sp];
+			for (j = 0; j < 2; j++) {
+				child = node->children[j];
+				child->parent = node;
+				if (child->contents < 0)
+					continue; // leafs may be shared
+
+				num = child - map_nodes;
+				if (depth[num])
+					Host_Error ("CM_LoadMap: node %d is reached twice", num);
+				depth[num] = depth[node - map_nodes] + 1;
+				if (depth[num] > MAX_NODE_DEPTH)
+					Host_Error ("CM_LoadMap: node tree is deeper than %d", MAX_NODE_DEPTH);
+				stack[sp++] = num;
+			}
+		}
+	}
+}
+
+/*
+=================
+CM_CheckClipHulls
+
+Walks each model's clip hulls from their headnodes without recursion and
+rejects a clipnode that appears twice on one path. Clipnodes may be shared.
+=================
+*/
+static void CM_CheckClipHulls (void)
+{
+	int *stack;
+	byte *side, *state; // state: 0 not seen, 1 on the current path, 2 done
+	int i, j, sp, num, child;
+
+	if (!numclipnodes)
 		return;
-	CM_SetParent (node->children[0], node);
-	CM_SetParent (node->children[1], node);
+
+	stack = (int *) Hunk_TempAllocMore (numclipnodes * sizeof(*stack));
+	side = (byte *) Hunk_TempAllocMore (numclipnodes);
+	state = (byte *) Hunk_TempAllocMore (numclipnodes);
+	memset (state, 0, numclipnodes);
+
+	for (i = 0; i < numcmodels; i++) {
+		for (j = 1; j < MAX_MAP_HULLS; j++) {
+			num = map_cmodels[i].hulls[j].firstclipnode;
+			if (num < 0 || num >= numclipnodes || state[num])
+				continue;
+
+			state[num] = 1;
+			stack[0] = num;
+			side[0] = 0;
+			sp = 1;
+
+			while (sp) {
+				num = stack[sp - 1];
+				if (side[sp - 1] == 2) {
+					state[num] = 2;
+					sp--;
+					continue;
+				}
+
+				child = map_clipnodes[num].children[side[sp - 1]++];
+				// contents, a bad number left to the hull code, or checked already
+				if (child < 0 || child >= numclipnodes || state[child] == 2)
+					continue;
+				if (state[child] == 1)
+					Host_Error ("CM_LoadMap: clipnode %d loops in model %d hull %d", child, i, j);
+
+				state[child] = 1;
+				stack[sp] = child;
+				side[sp] = 0;
+				sp++;
+			}
+		}
+	}
 }
 
 /*
@@ -782,8 +877,6 @@ static void CM_LoadNodes (byte *buffer, int length)
 			out->children[j] = CM_NodeChild(p);
 		}
 	}
-
-	CM_SetParent (map_nodes, NULL); // sets nodes and leafs
 }
 
 static void CM_LoadNodes29a(byte *buffer, int length)
@@ -813,8 +906,6 @@ static void CM_LoadNodes29a(byte *buffer, int length)
 			out->children[j] = CM_NodeChild(p);
 		}
 	}
-
-	CM_SetParent(map_nodes, NULL); // sets nodes and leafs
 }
 
 static void CM_LoadNodesBSP2(byte *buffer, int length)
@@ -844,8 +935,6 @@ static void CM_LoadNodesBSP2(byte *buffer, int length)
 			out->children[j] = CM_NodeChild(p);
 		}
 	}
-
-	CM_SetParent(map_nodes, NULL); // sets nodes and leafs
 }
 
 /*
@@ -1546,6 +1635,8 @@ cmodel_t *CM_LoadMap (char *name, qbool clientload, cm_vispolicy_t vispolicy,
 	}
 	CM_LoadEntities (l_entities, header.lumps[LUMP_ENTITIES].filelen);
 	CM_LoadSubmodels (l_models, header.lumps[LUMP_MODELS].filelen);
+	CM_SetParents ();
+	CM_CheckClipHulls ();
 
 	CM_LoadPhysicsNormals(l_physnormals, l_physnormals_len);
 	CM_MakeHull0 ();
