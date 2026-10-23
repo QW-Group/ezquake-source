@@ -1864,12 +1864,13 @@ static bspx_lump_t* CM_LoadBSPX(vfsfile_t *vf, dheader_t *header, bspx_header_t 
 
 	xheader->numlumps = LittleLong(xheader->numlumps);
 
-	lumpssize = sizeof(bspx_lump_t) * xheader->numlumps;
-
-	if (xheader->numlumps < 0 || xofs + sizeof(bspx_header_t) + lumpssize > filesize) {
+	// CM_BSPX_FindOffset leaves room for the header
+	if (xheader->numlumps < 0 || xheader->numlumps > (filesize - xofs - (int)sizeof(bspx_header_t)) / (int)sizeof(bspx_lump_t)) {
         Con_Printf("Corrupt BSPX header\n");
 		return NULL;
 	}
+
+	lumpssize = sizeof(bspx_lump_t) * xheader->numlumps;
 
 	lump = (bspx_lump_t*)Hunk_TempAllocMore(lumpssize);
 
