@@ -711,6 +711,45 @@ static void CM_SetParent (cnode_t *node, cnode_t *parent)
 
 /*
 =================
+CM_NodePlane
+=================
+*/
+static mplane_t *CM_NodePlane (int p)
+{
+	if (p < 0 || p >= numplanes)
+		Host_Error ("CM_LoadMap: bad node plane %d (%d planes)", p, numplanes);
+
+	return map_planes + p;
+}
+
+/*
+=================
+CM_NodeChild
+
+A node child is a node (p >= 0) or a leaf (-1 - p).
+Call after CM_LoadLeafs and once numnodes is set.
+=================
+*/
+static cnode_t *CM_NodeChild (int p)
+{
+	if (p >= 0) {
+		if (p >= numnodes)
+			Host_Error ("CM_LoadMap: bad node child %d (%d nodes)", p, numnodes);
+		return map_nodes + p;
+	}
+
+	p = -1 - p;
+	if (p >= numleafs)
+		Host_Error ("CM_LoadMap: bad leaf child %d (%d leafs)", p, numleafs);
+	// nodes and leafs are told apart by contents < 0
+	if (map_leafs[p].contents >= 0)
+		Host_Error ("CM_LoadMap: leaf %d has bad contents %d", p, map_leafs[p].contents);
+
+	return (cnode_t *)(map_leafs + p);
+}
+
+/*
+=================
 CM_LoadNodes
 =================
 */
@@ -725,6 +764,8 @@ static void CM_LoadNodes (byte *buffer, int length)
 		Host_Error ("CM_LoadMap: funny lump size");
 
 	count = length / sizeof(*in);
+	if (count < 1)
+		Host_Error ("CM_LoadMap: map with no nodes");
 	out = (cnode_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	map_nodes = out;
@@ -733,12 +774,12 @@ static void CM_LoadNodes (byte *buffer, int length)
 	for (i = 0; i < count; i++, in++, out++)
 	{
 		p = LittleLong(in->planenum);
-		out->plane = map_planes + p;
+		out->plane = CM_NodePlane(p);
 
 		for (j=0 ; j<2 ; j++)
 		{
 			p = LittleShort (in->children[j]);
-			out->children[j] = (p >= 0) ? (map_nodes + p) : ((cnode_t *)(map_leafs + (-1 - p)));
+			out->children[j] = CM_NodeChild(p);
 		}
 	}
 
@@ -756,6 +797,8 @@ static void CM_LoadNodes29a(byte *buffer, int length)
 		Host_Error("CM_LoadMap: funny lump size");
 
 	count = length / sizeof(*in);
+	if (count < 1)
+		Host_Error("CM_LoadMap: map with no nodes");
 	out = (cnode_t *)Hunk_AllocName(count * sizeof(*out), loadname);
 
 	map_nodes = out;
@@ -763,11 +806,11 @@ static void CM_LoadNodes29a(byte *buffer, int length)
 
 	for (i = 0; i < count; i++, in++, out++) {
 		p = LittleLong(in->planenum);
-		out->plane = map_planes + p;
+		out->plane = CM_NodePlane(p);
 
 		for (j = 0; j < 2; j++) {
 			p = LittleLong(in->children[j]);
-			out->children[j] = (p >= 0) ? (map_nodes + p) : ((cnode_t *)(map_leafs + (-1 - p)));
+			out->children[j] = CM_NodeChild(p);
 		}
 	}
 
@@ -785,6 +828,8 @@ static void CM_LoadNodesBSP2(byte *buffer, int length)
 		Host_Error("CM_LoadMap: funny lump size");
 
 	count = length / sizeof(*in);
+	if (count < 1)
+		Host_Error("CM_LoadMap: map with no nodes");
 	out = (cnode_t *)Hunk_AllocName(count * sizeof(*out), loadname);
 
 	map_nodes = out;
@@ -792,11 +837,11 @@ static void CM_LoadNodesBSP2(byte *buffer, int length)
 
 	for (i = 0; i < count; i++, in++, out++) {
 		p = LittleLong(in->planenum);
-		out->plane = map_planes + p;
+		out->plane = CM_NodePlane(p);
 
 		for (j = 0; j < 2; j++) {
 			p = LittleLong(in->children[j]);
-			out->children[j] = (p >= 0) ? (map_nodes + p) : ((cnode_t *)(map_leafs + (-1 - p)));
+			out->children[j] = CM_NodeChild(p);
 		}
 	}
 
@@ -817,6 +862,8 @@ static void CM_LoadLeafs (byte *buffer, int length)
 	if (length % sizeof(*in))
 		Host_Error ("CM_LoadMap: funny lump size");
 	count = length / sizeof(*in);
+	if (count < 1)
+		Host_Error ("CM_LoadMap: map with no leafs");
 	out = (cleaf_t *) Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	map_leafs = out;
@@ -844,6 +891,9 @@ static void CM_LoadLeafs29a (byte *buffer, int length)
 	}
 
 	count = length / sizeof(*in);
+	if (count < 1) {
+		Host_Error("CM_LoadMap: map with no leafs");
+	}
 	out = Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	map_leafs = out;
@@ -873,6 +923,9 @@ static void CM_LoadLeafsBSP2 (byte *buffer, int length)
 	}
 
 	count = length / sizeof(*in);
+	if (count < 1) {
+		Host_Error("CM_LoadMap: map with no leafs");
+	}
 	out = Hunk_AllocName ( count*sizeof(*out), loadname);
 
 	map_leafs = out;
@@ -909,6 +962,8 @@ static void CM_LoadClipnodes(byte *buffer, int length)
 
 	for (i = 0; i < count; i++, out++, in++) {
 		out->planenum = LittleLong(in->planenum);
+		if (out->planenum < 0 || out->planenum >= numplanes)
+			Host_Error("CM_LoadMap: clipnode %d has bad plane %d (%d planes)", i, out->planenum, numplanes);
 		out->children[0] = LittleShort(in->children[0]);
 		out->children[1] = LittleShort(in->children[1]);
 	}
@@ -931,6 +986,8 @@ static void CM_LoadClipnodesBSP2(byte *buffer, int length)
 
 	for (i = 0; i < count; i++, out++, in++) {
 		out->planenum = LittleLong(in->planenum);
+		if (out->planenum < 0 || out->planenum >= numplanes)
+			Host_Error("CM_LoadMap: clipnode %d has bad plane %d (%d planes)", i, out->planenum, numplanes);
 		out->children[0] = LittleLong(in->children[0]);
 		out->children[1] = LittleLong(in->children[1]);
 	}
@@ -1069,6 +1126,8 @@ static void CM_LoadPlanes(byte *buffer, size_t length)
 		Host_Error("CM_LoadMap: funny lump size");
 
 	count = length / sizeof(*in);
+	if (count < 1)
+		Host_Error("CM_LoadMap: map with no planes");
 	out = (mplane_t *)Hunk_AllocName(count * sizeof(*out), loadname);
 
 	map_planes = out;
