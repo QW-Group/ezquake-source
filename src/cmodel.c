@@ -1319,6 +1319,24 @@ static vfsfile_t *CM_OpenMap(char *name, dheader_t *header)
 	return vf;
 }
 
+static qbool CM_CheckLumps(vfsfile_t *vf, dheader_t *header)
+{
+	long long filesize = VFS_GETLEN(vf);
+	int i;
+
+	for (i = 0; i < HEADER_LUMPS; i++) {
+		lump_t *lump = &header->lumps[i];
+
+		if (lump->fileofs < 0 || lump->filelen < 0 || (long long)lump->fileofs + lump->filelen > filesize)
+		{
+			Con_Printf("Invalid BSP lump %d position, ofs: %d, len: %d, filelen: %lld\n", i, lump->fileofs, lump->filelen, filesize);
+			return false;
+		}
+	}
+
+	return true;
+}
+
 static qbool CM_CalcChecksum(vfsfile_t *f, dheader_t *header, unsigned *checksum, unsigned *checksum2)
 {
 	byte *buf;
@@ -1411,6 +1429,12 @@ cmodel_t *CM_LoadMap (char *name, qbool clientload, cm_vispolicy_t vispolicy,
 	vf = CM_OpenMap(name, &header);
 	if (!vf)
 	{
+		return NULL;
+	}
+
+	if (!CM_CheckLumps(vf, &header))
+	{
+		VFS_CLOSE(vf);
 		return NULL;
 	}
 
