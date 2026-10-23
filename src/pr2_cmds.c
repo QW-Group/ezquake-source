@@ -446,12 +446,8 @@ void PF2_ambientsound(float x, float y, float z, char *samp, float vol,	float at
 	if( !samp )
 		samp = "";
 
-	// check to see if samp was properly precached
-	for (soundnum = 0; soundnum < MAX_SOUNDS && sv.sound_precache[soundnum]; ++soundnum)
-		if (!strcmp(sv.sound_precache[soundnum], samp))
-			break;
-
-	if (soundnum == MAX_SOUNDS || !sv.sound_precache[soundnum])
+	soundnum = SV_AmbientSoundIndex(samp);
+	if (soundnum < 0)
 	{
 		Con_Printf("no precache: %s\n", samp);
 		return;

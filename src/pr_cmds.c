@@ -566,12 +566,8 @@ void PF_ambientsound (void)
 	vol = G_FLOAT(OFS_PARM2);
 	attenuation = G_FLOAT(OFS_PARM3);
 
-	// check to see if samp was properly precached
-	for (soundnum = 0; soundnum < MAX_SOUNDS && sv.sound_precache[soundnum]; ++soundnum)
-		if (!strcmp(sv.sound_precache[soundnum], samp))
-			break;
-
-	if (soundnum == MAX_SOUNDS || !sv.sound_precache[soundnum])
+	soundnum = SV_AmbientSoundIndex(samp);
+	if (soundnum < 0)
 	{
 		Con_Printf ("no precache: %s\n", samp);
 		return;

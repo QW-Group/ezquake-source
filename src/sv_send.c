@@ -579,6 +579,32 @@ void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count,
 }
 
 
+/* During loading, reserve low IDs for ambient sounds without moving IDs
+ * already written to signon. Never reorder a published catalog. */
+int SV_AmbientSoundIndex(const char *sample)
+{
+	int index;
+	char *displaced;
+
+	for (index = 0; index < MAX_SOUNDS && sv.sound_precache[index]; ++index) {
+		if (!strcmp(sv.sound_precache[index], sample)) {
+			break;
+		}
+	}
+	if (index == MAX_SOUNDS || !sv.sound_precache[index]) {
+		return -1;
+	}
+	if (sv.state != ss_loading || index <= sv.num_ambient_sounds
+		|| sv.num_ambient_sounds == MAX_SOUNDS_LEGACY - 1) {
+		return index;
+	}
+	++sv.num_ambient_sounds;
+	displaced = sv.sound_precache[sv.num_ambient_sounds];
+	sv.sound_precache[sv.num_ambient_sounds] = sv.sound_precache[index];
+	sv.sound_precache[index] = displaced;
+	return sv.num_ambient_sounds;
+}
+
 /* Bounded sound precache and wire encoding shared by signon and MVD. */
 int SV_SoundPrecacheCount(char *const *sounds, int capacity)
 {

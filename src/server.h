@@ -90,6 +90,7 @@ typedef struct
 	char		*model_precache[MAX_MODELS];	// NULL terminated
 	char		*vw_model_name[MAX_VWEP_MODELS];	// NULL terminated
 	char		*sound_precache[MAX_SOUNDS];	// NULL terminated
+	int			num_ambient_sounds; // protected sound_precache[1..N] during map loading
 	char		*lightstyles[MAX_LIGHTSTYLES];
 	cmodel_t	*models[MAX_MODELS];
 
@@ -874,6 +875,8 @@ void SV_MulticastEx(vec3_t origin, int to, const char *cl_reliable_key);
 void SV_StartParticle(vec3_t org, vec3_t dir, int color, int count, int replacement_te, int replacement_count);
 /* Count a dense sound catalog without reading beyond a full precache array. */
 int SV_SoundPrecacheCount(char *const *sounds, int capacity);
+// Resolve an ambient sample, protecting its byte-sized ID during map loading; -1 if missing.
+int SV_AmbientSoundIndex(const char *sample);
 void SV_StartSound(edict_t *entity, int channel, char *sample, int volume, float attenuation);
 void SV_ClientPrintf(client_t *cl, int level, char *fmt, ...);
 void SV_ClientPrintf2(client_t *cl, int level, char *fmt, ...);
