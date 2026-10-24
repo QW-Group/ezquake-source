@@ -166,14 +166,7 @@ int NUM_FOR_EDICT(edict_t *e);
 #define	E_STRING(e,o) (PR1_GetString(*(string_t *)&((float*)e->v)[PR_FIELDOFS(o)]))
 
 typedef void		(*builtin_t) (void);
-extern	builtin_t	*pr_builtins;
 extern	int		pr_numbuiltins;
-
-extern	int		pr_argc;
-
-extern	qbool	pr_trace;
-extern	dfunction_t	*pr_xfunction;
-extern	int		pr_xstatement;
 
 extern func_t mod_ConsoleCmd, mod_UserCmd;
 extern func_t mod_UserInfo_Changed, mod_localinfoChanged;

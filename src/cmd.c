@@ -50,6 +50,12 @@ static macro_command_t macro_commands[num_macros] = {
 
 qbool CL_CheckServerCommand (void);
 
+#ifdef FTE_PEXT_CSQC
+// CSQC module console catch-all (implemented in csqc_client.c). Returns true if the
+// module's CSQC_ConsoleCommand handled the line (FTE cmd.c:3080-3085).
+qbool CSQC_Client_ConsoleCommand (const char *line);
+#endif
+
 static void Cmd_ExecuteStringEx (cbuf_t *context, char *text);
 static int gtf = 0; // global trigger flag
 
@@ -139,6 +145,19 @@ add:
 		cmd = strtok(NULL, ",");
 	}
 	Q_free(tmp);
+}
+
+/*
+Remote-allowlist check for commands/cvars executed from a remote source
+(server svc_stufftext -> cbuf_svc) or from the untrusted client CSQC module
+(setkeybind/localcmd gates).
+*/
+qbool Cmd_RemoteAllowed (const char *name)
+{
+	if (Hash_Get(rc_hash, (char *)name))
+		return true;
+
+	return false;
 }
 
 qbool CL_IsDownloadableFileExtension(const char *filename)
@@ -1339,24 +1358,22 @@ cmd_function_t *Cmd_RemoveCommand_Hash(char *cmd_name)
 	int key = Com_HashKey (cmd_name) % CMD_HASHPOOL_SIZE;
 	cmd_function_t *cmd = cmd_hash_array[key];
 	cmd_function_t *prev = NULL;
-	cmd_function_t *retval = NULL;
 
-	if (strcasecmp(cmd_name, cmd->name) == 0) {
-		retval = cmd;
-		cmd_hash_array[key] = cmd_hash_array[key]->hash_next;
-	}
-	else
+	while (cmd)
 	{
-		prev = cmd;
-		for (cmd = cmd->hash_next; cmd; cmd = cmd->hash_next) {
-			if (strcasecmp(cmd_name, cmd->name) == 0) {
-				retval = cmd;
+		if (strcasecmp(cmd_name, cmd->name) == 0)
+		{
+			if (prev)
 				prev->hash_next = cmd->hash_next;
-			}
+			else
+				cmd_hash_array[key] = cmd->hash_next;
+			return cmd;
 		}
+		prev = cmd;
+		cmd = cmd->hash_next;
 	}
 
-	return retval;
+	return NULL;
 }
 
 // removes command from the linked list of all commands
@@ -1372,7 +1389,7 @@ cmd_function_t *Cmd_RemoveCommand_List (char *cmd_name)
 		{
 			return NULL;
 		}
-		if (!strcmp (cmd_name, cmd->name))
+		if (!strcasecmp (cmd_name, cmd->name))
 		{
 			*back = cmd->next;
 			return cmd;
@@ -1384,21 +1401,22 @@ cmd_function_t *Cmd_RemoveCommand_List (char *cmd_name)
 // removes command from all structures and deallocates it
 void Cmd_RemoveCommand (char *cmd_name)
 {
-	cmd_function_t *cmd;
+	cmd_function_t *cmd = Cmd_FindCommand (cmd_name);
 
-	cmd = Cmd_RemoveCommand_List(cmd_name);
-	cmd = Cmd_RemoveCommand_Hash(cmd_name);
+	if (!cmd)
+		return;
 
-	if (cmd) {
-		if (cmd->zmalloced)
-		{
-			Q_free(cmd);
-		}
-		else
-		{
-			Con_Printf("Cmd_RemoveCommand: %s was not added dynamically\n", cmd_name);
-		}
+	if (!cmd->zmalloced)
+	{
+		Con_Printf("Cmd_RemoveCommand: %s was not added dynamically\n", cmd_name);
+		return;
 	}
+
+	// Unlink from both containers before freeing: the hash bucket and the flat
+	// command list are independent, so a node left in either would dangle.
+	Cmd_RemoveCommand_Hash (cmd_name);
+	Cmd_RemoveCommand_List (cmd_name);
+	Q_free (cmd);
 }
 
 qbool Cmd_Exists (char *cmd_name)
@@ -1901,7 +1919,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 		}
 
 		if (cmd->function) {
-			if (cbuf_current == &cbuf_svc && !Hash_Get(rc_hash, cmd->name)) {
+			if (cbuf_current == &cbuf_svc && !Cmd_RemoteAllowed(cmd->name)) {
 				Com_Printf("Blocked %s: not in cl_remote_capabilities\n", cmd->name);
 				goto done;
 			}
@@ -1920,7 +1938,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 
 	// check cvars
 	if ((v = Cvar_Find(Cmd_Argv(0)))) {
-		if (cbuf_current == &cbuf_svc && !Hash_Get(rc_hash, v->name)) {
+		if (cbuf_current == &cbuf_svc && !Cmd_RemoteAllowed(v->name)) {
 			Com_Printf("Blocked %s: not in cl_remote_capabilities\n", v->name);
 			goto done;
 		}
@@ -2028,6 +2046,38 @@ checkaliases:
 		if (Cvar_CreateTempVar())
 			goto done;
 	}
+
+#ifdef FTE_PEXT_CSQC
+	// CSQC console catch-all (FTE cmd.c:3080-3085): an unknown command (including a
+	// server stuffcmd) is offered to the module's CSQC_ConsoleCommand. A non-zero
+	// return means "handled" and suppresses the "Unknown command" diagnostic below.
+	// The helper is a no-op (returns false) without a loaded module, so the plain
+	// client is unaffected; it also guards against console re-entry.
+	{
+		// Buffer sized to the actual command: a fixed char[1024] silently truncated
+		// long commands (long stufftext / alias) before CSQC_ConsoleCommand
+		
+		size_t len = strlen (Cmd_Argv(0)) + 1;
+		char *line;
+
+		if (Cmd_Argc() > 1)
+			len += strlen (Cmd_Args()) + 1;
+		line = (char *)Q_malloc (len);
+		if (line)
+		{
+			if (Cmd_Argc() > 1)
+				snprintf (line, len, "%s %s", Cmd_Argv(0), Cmd_Args());
+			else
+				snprintf (line, len, "%s", Cmd_Argv(0));
+			{
+				qbool handled = CSQC_Client_ConsoleCommand (line);
+				Q_free (line);
+				if (handled)
+					goto done;
+			}
+		}
+	}
+#endif
 
 	if (cbuf_current != &cbuf_svc)
 	{

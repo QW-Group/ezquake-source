@@ -206,6 +206,11 @@ void R_RenderView(void);		// must set r_refdef first
 
 void R_Init_EFrags (void);
 void R_AddEfrags(entity_t *ent);
+
+void R_CSQC_BeginCull(void);
+void R_CSQC_ResetCull(void);
+qbool R_CSQC_EntityVisible(entity_t *ent);
+void R_CSQC_ApplyModuleView(void);
 void R_NewMap(qbool vid_restart);
 void R_NewMapPreLoad(void);
 

@@ -32,6 +32,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "utils.h"
 #include "sbar.h"
 #include "qtv.h"
+#include "csqc_client.h"
 
 static int Cam_MainTrackNum(void);
 
@@ -193,6 +194,7 @@ void Cam_Lock(int playernum)
 
 	if (cls.mvdplayback) {
 		memcpy(cl.stats, cl.players[playernum].stats, sizeof(cl.stats));
+		CSQC_Client_ResetStatCache ();	// #79 float cache follows the tracked player
 		cl.ideal_track = playernum;
 		cl.mvd_time_offset = 0;
 	}

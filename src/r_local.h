@@ -38,6 +38,7 @@ void R_EmptyImageQueue(void);
 // culling
 qbool R_CullBox(vec3_t mins, vec3_t maxs);
 qbool R_CullSphere(vec3_t centre, float radius);
+qbool R_BoxTouchesVisibleLeaf(const vec3_t mins, const vec3_t maxs);
 
 // vis
 extern refdef_t	r_refdef;
