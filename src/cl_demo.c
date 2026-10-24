@@ -409,6 +409,31 @@ static char *TrimModelName (const char *full)
 	return shortn;
 }
 
+/* QWD and MVD startup records must retain extended ambient sound IDs. */
+static void CL_WriteStaticSound(sizebuf_t *msg, const static_sound_t *ss)
+{
+	int i;
+
+	if (ss->sound_num > 255) {
+		MSG_WriteByte(msg, svc_fte_spawnstaticsound2);
+		MSG_WriteByte(msg, STATIC_SOUND_LARGEINDEX);
+	}
+	else {
+		MSG_WriteByte(msg, svc_spawnstaticsound);
+	}
+	for (i = 0; i < 3; ++i) {
+		MSG_WriteCoord(msg, ss->org[i]);
+	}
+	if (ss->sound_num > 255) {
+		MSG_WriteShort(msg, ss->sound_num);
+	}
+	else {
+		MSG_WriteByte(msg, ss->sound_num);
+	}
+	MSG_WriteByte(msg, ss->vol);
+	MSG_WriteByte(msg, ss->atten);
+}
+
 void CL_WriteServerdata (sizebuf_t *msg)
 {
 	int ignore_extensions;
@@ -660,12 +685,7 @@ static void CL_WriteStartupData (void)
 	for (i = 0; i < cl.num_static_sounds; i++) 
 	{
 		static_sound_t *ss = &cl.static_sounds[i];
-		MSG_WriteByte (&buf, svc_spawnstaticsound);
-		for (j = 0; j < 3; j++)
-			MSG_WriteCoord (&buf, ss->org[j]);
-		MSG_WriteByte (&buf, ss->sound_num);
-		MSG_WriteByte (&buf, ss->vol);
-		MSG_WriteByte (&buf, ss->atten);
+		CL_WriteStaticSound(&buf, ss);
 
 		if (buf.cursize > MAX_MSGLEN/2) 
 		{
@@ -1064,15 +1084,7 @@ void CL_WriteMVDStartupData(void)
 	for (i = 0; i < cl.num_static_sounds; i++)
 	{
 		static_sound_t *ss = &cl.static_sounds[i];
-
-		MSG_WriteByte (&buf, svc_spawnstaticsound);
-
-		for (j = 0; j < 3; j++)
-			MSG_WriteCoord (&buf, ss->org[j]);
-
-		MSG_WriteByte (&buf, ss->sound_num);
-		MSG_WriteByte (&buf, ss->vol);
-		MSG_WriteByte (&buf, ss->atten);
+		CL_WriteStaticSound(&buf, ss);
 
 		if (buf.cursize > MAX_MSGLEN/2)
 		{

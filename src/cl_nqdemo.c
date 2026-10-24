@@ -43,7 +43,7 @@ void CL_FindModelNumbers (void);
 void TP_NewMap (void);
 void CL_ParseBaseline (entity_state_t *es);
 void CL_ParseStatic (qbool extended);
-void CL_ParseStaticSound (void);
+void CL_ParseStaticSound (unsigned int flags);
 
 #define	NQ_PROTOCOL_VERSION	15
 
@@ -1292,7 +1292,7 @@ static void NQD_ParseServerMessage (void)
 			break;
 
 		case svc_spawnstaticsound:
-			CL_ParseStaticSound ();
+			CL_ParseStaticSound (0);
 			break;
 
 		case svc_cdtrack:
