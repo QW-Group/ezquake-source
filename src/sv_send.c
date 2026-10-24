@@ -579,12 +579,10 @@ void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count,
 }
 
 
-/* During loading, reserve low IDs for ambient sounds without moving IDs
- * already written to signon. Never reorder a published catalog. */
+/* Resolve a precached ambient sample without changing published sound IDs. */
 int SV_AmbientSoundIndex(const char *sample)
 {
 	int index;
-	char *displaced;
 
 	for (index = 0; index < MAX_SOUNDS && sv.sound_precache[index]; ++index) {
 		if (!strcmp(sv.sound_precache[index], sample)) {
@@ -594,15 +592,33 @@ int SV_AmbientSoundIndex(const char *sample)
 	if (index == MAX_SOUNDS || !sv.sound_precache[index]) {
 		return -1;
 	}
-	if (sv.state != ss_loading || index <= sv.num_ambient_sounds
-		|| sv.num_ambient_sounds == MAX_SOUNDS_LEGACY - 1) {
-		return index;
+	return index;
+}
+
+/* Static sounds use their legacy form unless the ID needs SOUNDDBL. */
+void SV_WriteStaticSound(sizebuf_t *msg, const float origin[3], int sound_id,
+                         int volume, int attenuation)
+{
+	int i;
+
+	if (sound_id > 255) {
+		MSG_WriteByte(msg, svc_fte_spawnstaticsound2);
+		MSG_WriteByte(msg, STATIC_SOUND_LARGEINDEX);
 	}
-	++sv.num_ambient_sounds;
-	displaced = sv.sound_precache[sv.num_ambient_sounds];
-	sv.sound_precache[sv.num_ambient_sounds] = sv.sound_precache[index];
-	sv.sound_precache[index] = displaced;
-	return sv.num_ambient_sounds;
+	else {
+		MSG_WriteByte(msg, svc_spawnstaticsound);
+	}
+	for (i = 0; i < 3; ++i) {
+		MSG_WriteCoord(msg, origin[i]);
+	}
+	if (sound_id > 255) {
+		MSG_WriteShort(msg, sound_id);
+	}
+	else {
+		MSG_WriteByte(msg, sound_id);
+	}
+	MSG_WriteByte(msg, volume);
+	MSG_WriteByte(msg, attenuation);
 }
 
 /* Bounded sound precache and wire encoding shared by signon and MVD. */
