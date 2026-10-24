@@ -1934,19 +1934,26 @@ void CL_ParseStatic (qbool extended)
 	R_AddEfrags(ent);
 }
 
-void CL_ParseStaticSound (void)
+void CL_ParseStaticSound (unsigned int flags)
 {
 	extern cvar_t cl_staticsounds;
 	static_sound_t ss;
 	int i;
 
+	if (flags & ~STATIC_SOUND_LARGEINDEX) {
+		Host_Error("CL_ParseStaticSound: unsupported flags %u", flags);
+	}
 	for (i = 0; i < 3; i++) {
 		ss.org[i] = MSG_ReadCoord();
 	}
 
-	ss.sound_num = MSG_ReadByte();
+	ss.sound_num = (flags & STATIC_SOUND_LARGEINDEX)
+		? (unsigned short)MSG_ReadShort() : MSG_ReadByte();
 	ss.vol = MSG_ReadByte();
 	ss.atten = MSG_ReadByte();
+	if (msg_badread || ss.sound_num < 0 || ss.sound_num >= MAX_SOUNDS) {
+		Host_Error("CL_ParseStaticSound: invalid sound record (index %d)", ss.sound_num);
+	}
 
 	if (cl.num_static_sounds < MAX_STATIC_SOUNDS) 
 	{
@@ -4066,7 +4073,12 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_spawnstaticsound:
 				{
-					CL_ParseStaticSound();
+					CL_ParseStaticSound(0);
+					break;
+				}
+			case svc_fte_spawnstaticsound2:
+				{
+					CL_ParseStaticSound(MSG_ReadByte());
 					break;
 				}
 			case svc_cdtrack:
