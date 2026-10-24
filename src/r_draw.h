@@ -3,6 +3,7 @@
 #define EZQUAKE_R_DRAW_HEADER
 
 void R_Draw_SAlphaSubPic2(float x, float y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float alpha);
+void R_Draw_SColoredSubPic2(float x, float y, mpic_t *pic, int src_width, int src_height, float newsl, float newtl, float newsh, float newth, float scale_x, float scale_y, float r, float g, float b, float alpha);
 void R_Draw_AlphaPieSliceRGB(float x, float y, float radius, float startangle, float endangle, float thickness, qbool fill, color_t color);
 void R_Draw_LineRGB(float thickness, byte* color, float x_start, float y_start, float x_end, float y_end);
 void R_DrawImage(float x, float y, float width, float height, float tex_s, float tex_t, float tex_width, float tex_height, byte* color, qbool alpha_test, texture_ref texnum, qbool isText, qbool isCrosshair);

@@ -274,6 +274,8 @@ void Key_EventEx (int key, wchar unichar, qbool down);
 void Key_Init (void);
 void Key_Shutdown(void);
 void Key_SetBinding (int keynum, const char *binding);
+void Key_SetBindingModule (int keynum, const char *binding);
+qbool Key_IsModuleBind (int keynum);
 void Key_Unbind (int keynum);
 void Key_ClearStates (void);
 int	 Key_StringToKeynum (const char *str);

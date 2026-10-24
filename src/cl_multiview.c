@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // meag: for switching back to 3d resolution to draw the multiview outlines
 #include "r_matrix.h"
 #include "mvd_utils.h"
+#include "csqc_client.h"
 
 extern int glx, gly, glwidth, glheight;
 
@@ -1158,6 +1159,7 @@ static void CL_Multiview (void)
 	// view to the client state, so that the correct stats are drawn
 	// in the multiview mini-HUD.
 	memcpy (cl.stats, cl.players[playernum].stats, sizeof (cl.stats));
+	CSQC_Client_ResetStatCache ();	// #79 float cache follows the tracked player
 
 	//
 	// Increase the current view being rendered.
@@ -1745,5 +1747,6 @@ void CL_MultiviewInsetRestoreStats(void)
 {
 	if (cl_multiview.value == 2 && cl_mvinset.integer) {
 		memcpy(cl.stats, cl.players[nTrack1duel].stats, sizeof(cl.stats));
+		CSQC_Client_ResetStatCache ();	// #79 float cache follows the tracked player
 	}
 }

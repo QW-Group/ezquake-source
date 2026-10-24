@@ -907,6 +907,27 @@ void Draw_SAlphaSubPic2(float x, float y, mpic_t *pic, int src_x, int src_y, int
 	R_Draw_SAlphaSubPic2(x, y, pic, src_width, src_height, newsl, newtl, newsh, newth, scale_x, scale_y, alpha);
 }
 
+void Draw_SColoredSubPic2(float x, float y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale_x, float scale_y, int r, int g, int b, float alpha)
+{
+	float newsl, newtl, newsh, newth;
+	float oldglwidth, oldglheight;
+
+	oldglwidth = pic->sh - pic->sl;
+	oldglheight = pic->th - pic->tl;
+
+	newsl = pic->sl + (src_x * oldglwidth) / (float)pic->width;
+	newsh = newsl + (src_width * oldglwidth) / (float)pic->width;
+
+	newtl = pic->tl + (src_y * oldglheight) / (float)pic->height;
+	newth = newtl + (src_height * oldglheight) / (float)pic->height;
+
+	alpha *= overall_alpha;
+
+	R_Draw_SColoredSubPic2(x, y, pic, src_width, src_height, newsl, newtl, newsh, newth,
+		scale_x, scale_y, bound(0, r, 255) / 255.0f, bound(0, g, 255) / 255.0f,
+		bound(0, b, 255) / 255.0f, alpha);
+}
+
 void Draw_SAlphaSubPic(float x, float y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha)
 {
 	Draw_SAlphaSubPic2(x, y, pic, src_x, src_y, src_width, src_height, scale, scale, alpha);
