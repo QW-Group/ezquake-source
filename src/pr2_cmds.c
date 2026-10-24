@@ -436,7 +436,7 @@ PF2_ambientsound
 */
 void PF2_ambientsound(float x, float y, float z, char *samp, float vol,	float attenuation)
 {
-	int		i, soundnum;
+	int		soundnum;
 	vec3_t 	pos;
 
 	pos[0] = x;
@@ -452,20 +452,7 @@ void PF2_ambientsound(float x, float y, float z, char *samp, float vol,	float at
 		Con_Printf("no precache: %s\n", samp);
 		return;
 	}
-	if (soundnum >= MAX_SOUNDS_LEGACY) {
-		PR2_RunError("Ambient sound %s has ID %d; static sounds require ID <= 255", samp, soundnum);
-	}
-
-	// add an svc_spawnambient command to the level signon packet
-	MSG_WriteByte(&sv.signon, svc_spawnstaticsound);
-	for (i = 0; i < 3; i++)
-		MSG_WriteCoord(&sv.signon, pos[i]);
-
-	MSG_WriteByte(&sv.signon, soundnum);
-
-	MSG_WriteByte(&sv.signon, vol * 255);
-	MSG_WriteByte(&sv.signon, attenuation * 64);
-
+	SV_WriteStaticSound(&sv.signon, pos, soundnum, vol * 255, attenuation * 64);
 }
 
 /*
