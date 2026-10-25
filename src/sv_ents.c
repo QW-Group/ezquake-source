@@ -36,8 +36,11 @@ extern	int sv_nailmodel, sv_supernailmodel, sv_playermodel;
 
 cvar_t	sv_nailhack	= {"sv_nailhack", "1"};
 
-// Maximum packet we will send - currently 256 if extension supported
+// Maximum packet entity count for live clients.
 #define MAX_PACKETENTITIES_POSSIBLE 256
+
+/* Conservative byte budget for a single entity delta record. */
+#define ENTITY_DELTA_RESERVE_BYTES 40
 
 static qbool SV_AddNailUpdate (edict_t *ent)
 {
@@ -60,12 +63,13 @@ static qbool SV_AddNailUpdate (edict_t *ent)
 
 static void SV_EmitNailUpdate (sizebuf_t *msg, qbool recorder)
 {
-	int x, y, z, p, yaw, n, i;
+	int x, y, z, p, yaw, n, i, count;
 	byte bits[6]; // [48 bits] xyzpy 12 12 12 4 8
 	edict_t *ent;
 
 
-	if (!numnails)
+	count = min(numnails, (msg->maxsize - msg->cursize - 2) / (recorder ? 7 : 6));
+	if (count <= 0)
 		return;
 
 	if (recorder)
@@ -73,9 +77,9 @@ static void SV_EmitNailUpdate (sizebuf_t *msg, qbool recorder)
 	else
 		MSG_WriteByte (msg, svc_nails);
 
-	MSG_WriteByte (msg, numnails);
+	MSG_WriteByte (msg, count);
 
-	for (n=0 ; n<numnails ; n++)
+	for (n=0 ; n<count ; n++)
 	{
 		ent = nails[n];
 		if (recorder)
@@ -175,7 +179,7 @@ void SV_WriteDelta(client_t* client, entity_state_t *from, entity_state_t *to, s
 		bits |= U_SOLID;
 
 	// Taken from FTE
-	if (msg->cursize + 40 > msg->maxsize && !MSG_HasOverflowHandler(msg))
+	if (msg->cursize + ENTITY_DELTA_RESERVE_BYTES > msg->maxsize && !MSG_HasOverflowHandler(msg))
 	{
 		// not enough space in the buffer, don't send the entity this frame. (not sending means nothing changes, and it takes no bytes!!)
 		int oldnum = to->number;
@@ -326,104 +330,167 @@ void SV_WriteDelta(client_t* client, entity_state_t *from, entity_state_t *to, s
 #endif
 }
 
+/* Removal records use four bytes for extended entity IDs, two otherwise. */
+static void SV_WriteEntityRemoval(sizebuf_t *msg, int number)
+{
+	if (number >= 512)
+	{
+		MSG_WriteShort (msg, (number & 511) | U_REMOVE | U_MOREBITS);
+		MSG_WriteByte (msg, U_FTE_EVENMORE);
+		if (number >= 1024)
+		{
+			if (number >= 1024 + 512)
+			{
+				MSG_WriteByte(msg, U_FTE_ENTITYDBL | U_FTE_ENTITYDBL2);
+			}
+			else
+			{
+				MSG_WriteByte(msg, U_FTE_ENTITYDBL2);
+			}
+		}
+		else
+		{
+			MSG_WriteByte(msg, U_FTE_ENTITYDBL);
+		}
+	}
+	else
+	{
+		MSG_WriteShort(msg, (number & 511) | U_REMOVE);
+	}
+}
+
 /*
 =============
 SV_EmitPacketEntities
 
 Writes a delta update of a packet_entities_t to the message.
+Saves the state the receiver can reconstruct, including deferred removals.
 
 =============
 */
-static void SV_EmitPacketEntities (client_t *client, packet_entities_t *to, sizebuf_t *msg)
+static void SV_EmitPacketEntities(client_t *client, packet_entities_t *to, sizebuf_t *msg,
+                                 int max_entities, int tail_bytes)
 {
-	int oldindex, newindex, oldnum, newnum, oldmax;
-	client_frame_t	*fromframe;
-	packet_entities_t *from1;
-	edict_t	*ent;
+	packet_entities_t sent;
+	packet_entities_t *from = NULL;
+	byte remove_sizes[MAX_MVD_PACKET_ENTITIES];
+	int oldmax = 0, oldindex, newindex, last_remove = -1;
+	int remove_bytes = 0, reserved = 0, known_count, header;
+	const int full_limit = msg->maxsize;
 
-	// this is the frame that we are going to delta update from
+	/* A ring slot being reused cannot also supply the delta base. */
+	if (client->delta_sequence != -1 && to == &client->frames[client->delta_sequence & UPDATE_MASK].entities)
+		client->delta_sequence = -1;
 	if (client->delta_sequence != -1)
 	{
-		fromframe = &client->frames[client->delta_sequence & UPDATE_MASK];
-		from1 = &fromframe->entities;
-		oldmax = from1->num_entities;
-
-		MSG_WriteByte (msg, svc_deltapacketentities);
-		MSG_WriteByte (msg, client->delta_sequence);
+		from = &client->frames[client->delta_sequence & UPDATE_MASK].entities;
+		oldmax = from->num_entities;
 	}
-	else
+
+	/* Skip this update if its header and terminator cannot fit. */
+	header = from ? 2 : 1;
+	if (msg->maxsize - msg->cursize < header + 2)
 	{
-		oldmax = 0;	// no delta update
-		from1 = NULL;
-
-		MSG_WriteByte (msg, svc_packetentities);
+		to->num_entities = oldmax;
+		if (oldmax)
+			memcpy(to->entities, from->entities, oldmax * sizeof(to->entities[0]));
+		return;
 	}
 
-	newindex = 0;
-	oldindex = 0;
-	//Con_Printf ("---%i to %i ----\n", client->delta_sequence & UPDATE_MASK
-	//			, client->netchan.outgoing_sequence & UPDATE_MASK);
+	/* Find removed entities and count the bytes their removal records need. */
+	for (oldindex = 0, newindex = 0; oldindex < oldmax; ++oldindex)
+	{
+		int number = from->entities[oldindex].number;
+
+		while (newindex < to->num_entities && to->entities[newindex].number < number)
+			++newindex;
+		remove_sizes[oldindex] = newindex == to->num_entities || to->entities[newindex].number != number
+			? (number >= 512 ? 4 : 2) : 0;
+		remove_bytes += remove_sizes[oldindex];
+	}
+
+	/* Normally retain room for effects/nails too; a crowded frame favours world progress. */
+	if (tail_bytes > 0
+		&& tail_bytes <= msg->maxsize - msg->cursize - header - 2 - remove_bytes - ENTITY_DELTA_RESERVE_BYTES)
+		msg->maxsize -= tail_bytes;
+
+	/* Reserve fitting removals and count the entity slots they free. */
+	known_count = oldmax;
+	for (oldindex = 0; oldindex < oldmax; ++oldindex)
+	{
+		if (!remove_sizes[oldindex])
+			continue;
+		if (reserved + remove_sizes[oldindex] > msg->maxsize - msg->cursize - header - 2)
+			break;
+		reserved += remove_sizes[oldindex];
+		last_remove = oldindex;
+		--known_count;
+	}
+
+	MSG_WriteByte(msg, from ? svc_deltapacketentities : svc_packetentities);
+	if (from)
+		MSG_WriteByte(msg, client->delta_sequence);
+
+	/* Merge the sorted states and build the receiver's resulting state. */
+	sent.num_entities = 0;
+	oldindex = newindex = 0;
 	while (newindex < to->num_entities || oldindex < oldmax)
 	{
-		newnum = newindex >= to->num_entities ? 9999 : to->entities[newindex].number;
-		oldnum = oldindex >= oldmax ? 9999 : from1->entities[oldindex].number;
+		int newnum = newindex < to->num_entities ? to->entities[newindex].number : 9999;
+		int oldnum = oldindex < oldmax ? from->entities[oldindex].number : 9999;
 
-		if (newnum == oldnum)
-		{	// delta update from old position
-			//Con_Printf ("delta %i\n", newnum);
-			SV_WriteDelta (client, &from1->entities[oldindex], &to->entities[newindex], msg, false);
-			oldindex++;
-			newindex++;
-			continue;
-		}
-
-		if (newnum < oldnum)
-		{	// this is a new entity, send it from the baseline
-			if (newnum == 9999)
-			{
-				Sys_Printf("LOL, %d, %d, %d, %d %d %d\n", // nice message
-				           newnum, oldnum, to->num_entities, oldmax,
-				           client->netchan.incoming_sequence & UPDATE_MASK,
-				           client->delta_sequence & UPDATE_MASK);
-				if (client->edict == NULL)
-					Sys_Printf("demo\n");
-			}
-			ent = EDICT_NUM(newnum);
-			//Con_Printf ("baseline %i\n", newnum);
-			SV_WriteDelta (client, &ent->e.baseline, &to->entities[newindex], msg, true);
-			newindex++;
-			continue;
-		}
-
-		if (newnum > oldnum)
+		if (oldnum < newnum)
 		{
-			// the old entity isn't present in the new message
-			if (oldnum >= 512) {
-				//yup, this is expensive.
-				MSG_WriteShort (msg, (oldnum & 511) | U_REMOVE | U_MOREBITS);
-				MSG_WriteByte (msg, U_FTE_EVENMORE);
-				if (oldnum >= 1024) {
-					if (oldnum >= 1024 + 512) {
-						MSG_WriteByte(msg, U_FTE_ENTITYDBL | U_FTE_ENTITYDBL2);
-					}
-					else {
-						MSG_WriteByte(msg, U_FTE_ENTITYDBL2);
-					}
-				}
-				else {
-					MSG_WriteByte(msg, U_FTE_ENTITYDBL);
-				}
+			if (oldindex <= last_remove)
+			{
+				SV_WriteEntityRemoval(msg, oldnum);
+				reserved -= remove_sizes[oldindex];
 			}
-			else {
-				MSG_WriteShort(msg, (oldnum & 511) | U_REMOVE);
+			else
+			{
+				sent.entities[sent.num_entities++] = from->entities[oldindex];
 			}
+			++oldindex;
+		}
+		else
+		{
+			const int entity_limit = msg->maxsize;
+			int before = msg->cursize;
+			qbool existing = newnum == oldnum;
 
-			oldindex++;
-			continue;
+			/* Leave room for pending removals and the terminator. */
+			msg->maxsize -= reserved + 2;
+			if ((existing || known_count < max_entities)
+				&& msg->cursize + ENTITY_DELTA_RESERVE_BYTES <= msg->maxsize)
+			{
+				entity_state_t *base = existing ? &from->entities[oldindex] : &EDICT_NUM(newnum)->e.baseline;
+				SV_WriteDelta(client, base, &to->entities[newindex], msg, !existing);
+			}
+			msg->maxsize = entity_limit;
+
+			/* Record emitted state; retain deferred entries and omit unsent additions. */
+			if (msg->cursize != before)
+			{
+				sent.entities[sent.num_entities++] = to->entities[newindex];
+				if (!existing)
+					++known_count;
+			}
+			else if (existing)
+			{
+				sent.entities[sent.num_entities++] = from->entities[oldindex];
+			}
+			if (existing)
+				++oldindex;
+			++newindex;
 		}
 	}
 
-	MSG_WriteShort (msg, 0);	// end of packetentities
+	MSG_WriteShort(msg, 0);
+	msg->maxsize = full_limit;
+
+	/* Save this packet's state as a future delta base. */
+	to->num_entities = sent.num_entities;
+	memcpy(to->entities, sent.entities, sent.num_entities * sizeof(to->entities[0]));
 }
 
 static int TranslateEffects (edict_t *ent)
@@ -855,6 +922,7 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 {
 	qbool disable_updates; // disables sending entities to the client
 	int e, i, max_packet_entities;
+	int full_limit, datagram_bytes, tail_bytes;
 	packet_entities_t *pack;
 	client_frame_t *frame;
 	entity_state_t *state;
@@ -1040,10 +1108,15 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 		}
 	} // server flash
 
-	// encode the packet entities as a delta from the
-	// last packetentities acknowledged by the client
+	full_limit = msg->maxsize;
+	datagram_bytes = !recorder && !client->datagram.overflowed ? client->datagram.cursize : 0;
+	tail_bytes = datagram_bytes + (numnails ? 2 + numnails * (recorder ? 7 : 6) : 0);
 
-	SV_EmitPacketEntities (client, pack, msg);
+	// Encode packet entities, using the client's acknowledged frame when available.
+	SV_EmitPacketEntities(client, pack, msg, max_packet_entities, tail_bytes);
+
+	/* Keep optional tails from using space reserved for queued multicast. */
+	msg->maxsize = max(msg->cursize, full_limit - datagram_bytes);
 
 	// now add the specialized nail update
 	SV_EmitNailUpdate (msg, recorder);
@@ -1066,11 +1139,14 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 
 			if ((int)ent->v->effects & EF_MUZZLEFLASH) {
 				ent->v->effects = (int)ent->v->effects & ~EF_MUZZLEFLASH;
+				if (msg->maxsize - msg->cursize < 3)
+					continue;
 				MSG_WriteByte (msg, svc_muzzleflash);
 				MSG_WriteShort (msg, e);
 			}
 		}
 	}
+	msg->maxsize = full_limit;
 }
 
 /*
