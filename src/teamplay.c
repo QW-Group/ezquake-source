@@ -2164,7 +2164,7 @@ static void DumpFlagCommand(FILE *f, char *name, unsigned int flags, unsigned in
 		flags &= ~it_runes;
 	}
 	for (i = 0; i < NUM_ITEMFLAGS; i++) {
-		if (flags & (1 << i))
+		if (flags & (1u << i))
 			fprintf (f, "%s ", pknames[i]);
 	}
 	fprintf(f, "\n");
@@ -2196,7 +2196,7 @@ static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 			int p;
 			for (p = 0; p < NUM_ITEMFLAGS; ++p) {
 				for (i = 0; i < NUM_ITEMFLAGS; i++) {
-					if (priorities[i] == p && (*flags & (1 << i))) {
+					if (priorities[i] == p && (*flags & (1u << i))) {
 						if (notfirst) {
 							Com_Printf(" ");
 						}
@@ -2208,7 +2208,7 @@ static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 			}
 		} else {
 			for (i = 0; i < NUM_ITEMFLAGS; i++) {
-				if (*flags & (1 << i)) {
+				if (*flags & (1u << i)) {
 					if (notfirst) {
 						Com_Printf(" ");
 					}
@@ -2234,7 +2234,7 @@ static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 	}
 	else if (*Cmd_Argv(1) == '+') {
 		for (i = 0; i < NUM_ITEMFLAGS; ++i) {
-			if (*flags & (1 << i)) {
+			if (*flags & (1u << i)) {
 				++offset;
 			}
 		}
@@ -2254,7 +2254,7 @@ static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 		flag = 0;
 		for (j = 0; j < NUM_ITEMFLAGS; j++) {
 			if (!strcasecmp(p, pknames[j])) {
-				flag = 1 << j;
+				flag = 1u << j;
 				break;
 			}
 		}
@@ -2286,7 +2286,7 @@ static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 			*flags &= ~flag;
 
 			for (j = 1; j <= NUM_ITEMFLAGS; j++) {
-				if (flag & (1 << (j - 1))) {
+				if (flag & (1u << (j - 1))) {
 					priorities[j - 1] = 0;
 				}
 			}
@@ -2295,7 +2295,7 @@ static void FlagCommand(unsigned int* flags, unsigned int defaultflags)
 			*flags |= flag;
 
 			for (j = 1; j <= NUM_ITEMFLAGS; j++) {
-				if (flag & (1 << (j - 1))) {
+				if (flag & (1u << (j - 1))) {
 					priorities[j - 1] = i + offset;
 				}
 			}
@@ -2449,7 +2449,7 @@ item_t	tp_items[] = {
                         {	it_rune3,	&tp_name_rune3,	"progs/end3.mdl",
                           {0, 0, 20},	18,
                         },
-                        {	(unsigned int) it_rune4,	&tp_name_rune4,	"progs/end4.mdl",
+                        {	it_rune4,	&tp_name_rune4,	"progs/end4.mdl",
                           {0, 0, 20},	18,
                         },
                         {	it_ra|it_ya|it_ga, NULL,	"progs/armor.mdl",
