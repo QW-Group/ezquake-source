@@ -295,7 +295,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 						k = li * 32 + lj;
 
 						if (!gl_flashblend.integer || (cl_dlights[k].bubble && gl_flashblend.integer != 2)) {
-							R_MarkLights(&cl_dlights[k], 1 << k, clmodel->nodes + clmodel->firstnode);
+							R_MarkLights(&cl_dlights[k], 1u << k, clmodel->nodes + clmodel->firstnode);
 						}
 					}
 				}

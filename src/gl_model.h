@@ -207,7 +207,7 @@ typedef struct msurface_s {
 
 	// lighting info
 	int                 dlightframe;
-	int                 dlightbits;
+	unsigned int        dlightbits;
 
 	// This is not an OpenGL texture name, it's the lightmap index
 	int                 lightmaptexturenum;

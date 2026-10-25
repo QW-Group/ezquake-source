@@ -215,12 +215,12 @@ void R_RenderDlights(void)
 							R_RenderDlight(l);
 						}
 						if (gl_rl_globe.integer & 2) {
-							R_MarkLights(l, 1 << (i * 32 + j), cl.worldmodel->nodes);
+							R_MarkLights(l, 1u << (i * 32 + j), cl.worldmodel->nodes);
 						}
 						continue;
 					}
 
-					R_MarkLights(l, 1 << (i * 32 + j), cl.worldmodel->nodes);
+					R_MarkLights(l, 1u << (i * 32 + j), cl.worldmodel->nodes);
 
 					if (gl_flashblend.integer && !(l->bubble && gl_flashblend.integer != 2)) {
 						R_RenderDlight(l);
@@ -245,7 +245,7 @@ R_MarkLights
 =============
 */
 //VULT: Lord Havoc light stuff
-void R_MarkLights(dlight_t *light, int bit, mnode_t *node)
+void R_MarkLights(dlight_t *light, unsigned int bit, mnode_t *node)
 {
 	float		dist;
 	msurface_t	*surf;

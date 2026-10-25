@@ -84,11 +84,11 @@ static void R_BuildDlightList (msurface_t *surf)
 	dlightbits = surf->dlightbits;
 
 	for (lnum = 0; lnum < MAX_DLIGHTS && dlightbits; lnum++) {
-		if (!(surf->dlightbits & (1 << lnum))) {
+		if (!(surf->dlightbits & (1u << lnum))) {
 			continue;		// not lit by this light
 		}
 
-		dlightbits &= ~(1<<lnum);
+		dlightbits &= ~(1u << lnum);
 
 		dist = PlaneDiff(cl_dlights[lnum].origin, surf->plane);
 		irad = (cl_dlights[lnum].radius - fabs(dist)) * 256;

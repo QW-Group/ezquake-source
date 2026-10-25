@@ -28,7 +28,7 @@ extern cvar_t       gl_flashblend;
 extern cvar_t       gl_rl_globe;
 
 // gl_rlight.c
-void R_MarkLights(dlight_t *light, int bit, mnode_t *node);
+void R_MarkLights(dlight_t *light, unsigned int bit, mnode_t *node);
 void R_AnimateLight(void);
 void R_RenderDlights(void);
 void R_LightEntity(entity_t* ent);
