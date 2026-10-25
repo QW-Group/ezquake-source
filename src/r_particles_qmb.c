@@ -943,7 +943,9 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 	}
 
 	//VULT PARTICLE
-	lifetime = ((p->die - particle_time) / (p->die - p->start));
+	// Particles spawned while parsing packets start at the new frame's time, but are
+	// processed once before particle time catches up with it
+	lifetime = min(1, (p->die - particle_time) / (p->die - p->start));
 	p->color[3] = p->initial_alpha * lifetime;
 
 	if (p->color[3] <= 0) {
