@@ -155,6 +155,9 @@ qbool SV_RunThink (edict_t *ent)
 
 		if (ent->e.free)
 			return false;
+		// Non-advancing schedules must wait for the next physics frame.
+		if (ent->v->nextthink <= thinktime)
+			return true;
 	} while (1);
 
 	return true;
