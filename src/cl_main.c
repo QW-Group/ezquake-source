@@ -1339,16 +1339,20 @@ void CL_DNS_f(void)
 		*s = 0;
 	addr.s_addr = inet_addr(address);
 	
-	if (inet_addr(address) == INADDR_NONE) 
+	if (inet_addr(address) == INADDR_NONE)
 	{
+		struct addrinfo hints = { 0 }, *res;
+
 		// Forward lookup
-		if (!(h = gethostbyname(address))) 
+		hints.ai_family = AF_INET;
+		if (getaddrinfo(address, NULL, &hints, &res) != 0)
 		{
 			Com_Printf("Couldn't resolve %s\n", address);
-		} 
-		else 
+		}
+		else
 		{
-			addr.s_addr = *(int *) h->h_addr_list[0];
+			addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr;
+			freeaddrinfo(res);
 			Com_Printf("Resolved %s to %s\n", address, inet_ntoa(addr));
 		}
 		return;
