@@ -2618,7 +2618,7 @@ void CL_EmitEntities (void)
 	CL_UpdateTEnts();
 }
 
-int	mvd_fixangle;
+unsigned int	mvd_fixangle;
 
 static int MVD_TranslateFlags(int src) 
 {
@@ -2684,7 +2684,7 @@ static void MVD_InitInterpolation(void) {
 		pplayer->predict = false;
 
 		tracknum = Cam_TrackNum();
-		if (mvd_fixangle & (1 << i)) {
+		if (mvd_fixangle & (1u << i)) {
 			if (i == tracknum) {
 				VectorCopy(cl.viewangles, state->command.angles);
 				VectorCopy(cl.viewangles, state->viewangles);
@@ -2693,7 +2693,7 @@ static void MVD_InitInterpolation(void) {
 			// no angle interpolation
 			VectorCopy(state->command.angles, oldstate->command.angles);
 
-			mvd_fixangle &= ~(1 << i);
+			mvd_fixangle &= ~(1u << i);
 		}
 
 		// we dont interpolate ourself if we are spectating

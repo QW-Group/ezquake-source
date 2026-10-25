@@ -3750,7 +3750,7 @@ void CL_ParseServerMessage (void)
 {
 	int cmd, i, j = 0;
 	char *s;
-	extern int mvd_fixangle;
+	extern unsigned int mvd_fixangle;
 	vec3_t newangles;
 	int msg_svc_start;
 	int oldread = 0;
@@ -3919,7 +3919,7 @@ void CL_ParseServerMessage (void)
 
 					if (cls.mvdplayback) 
 					{
-						mvd_fixangle |= 1 << j;
+						mvd_fixangle |= 1u << j;
 
 						if (j == Cam_TrackNum()) {
 							VectorCopy(newangles, cl.viewangles);
