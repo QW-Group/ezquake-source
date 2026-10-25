@@ -775,8 +775,8 @@ static void R_BuildLightmapData(msurface_t* surf, int surfnum)
 
 	lightmap_flags = 0xFFFFFFFF;
 	for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
-		lightmap_flags &= ~(0xFF << (8 * maps));
-		lightmap_flags |= surf->styles[maps] << (8 * maps);
+		lightmap_flags &= ~(0xFFu << (8 * maps));
+		lightmap_flags |= (unsigned int)surf->styles[maps] << (8 * maps);
 	}
 
 	for (t = 0; t < tmax; ++t) {
