@@ -451,7 +451,7 @@ nextInstruction2:
 
 		case OP_BLOCK_COPY:
 			{
-				int		*src, *dest;
+				byte *src, *dest;
 				int		count, srci, desti;
 
 				count = v0;
@@ -461,8 +461,8 @@ nextInstruction2:
 				count = ((srci + count) & dataMask) - srci;
 				count = ((desti + count) & dataMask) - desti;
 
-				src = (int *)&image[ srci ];
-				dest = (int *)&image[ desti ];
+				src = &image[srci];
+				dest = &image[desti];
 				
 				memcpy( dest, src, count );
 				opStack -= 2;
