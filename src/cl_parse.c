@@ -3533,7 +3533,7 @@ void CL_SetStat (int stat, int value)
 	{
 		// Set flash times.
 		for (j = 0; j < 32; j++)
-			if ( (value & (1 << j)) && !(cl.stats[stat] & (1 << j)) )
+			if ( (value & (1u << j)) && !(cl.stats[stat] & (1u << j)) )
 				cl.item_gettime[j] = cl.time;
 	}
 

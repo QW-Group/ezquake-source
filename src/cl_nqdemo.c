@@ -235,7 +235,7 @@ static void NQD_ParseClientdata (int bits)
 	{	// set flash times
 		Sbar_Changed ();
 		for (j=0 ; j<32 ; j++)
-			if ( (i & (1<<j)) && !(cl.stats[STAT_ITEMS] & (1<<j)))
+			if ( (i & (1u<<j)) && !(cl.stats[STAT_ITEMS] & (1u<<j)))
 				cl.item_gettime[j] = cl.time;
 		cl.stats[STAT_ITEMS] = i;
 	}
