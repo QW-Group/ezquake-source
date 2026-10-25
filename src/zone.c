@@ -687,7 +687,9 @@ Memory_Init
 void Memory_Init(void *buf, int size)
 {
 	hunk_base = (byte *)buf;
-	hunk_size = size;
+	// High allocations are carved down from the end in multiples of 16 bytes,
+	// so the end needs the same alignment as the start.
+	hunk_size = size & ~15;
 	hunk_low_used = 0;
 	hunk_high_used = 0;
 
