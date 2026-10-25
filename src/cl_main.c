@@ -2370,6 +2370,8 @@ void CL_Init (void)
 
 void CL_BeginLocalConnection (void) 
 {
+	int i;
+
 	S_StopAllSounds();
 
 	// make sure we're not connected to an external server,
@@ -2377,7 +2379,15 @@ void CL_BeginLocalConnection (void)
 	if (!com_serveractive)
 		CL_Disconnect ();
 
+	// SV_SpawnServer frees brush models (Host_ClearMemory), so drop them here:
+	// if it fails, CL_Disconnect walks these lists
 	cl.worldmodel = NULL;
+	for (i = 0; i < MAX_MODELS; i++)
+		if (cl.model_precache[i] && cl.model_precache[i]->type == mod_brush)
+			cl.model_precache[i] = NULL;
+	for (i = 0; i < MAX_VWEP_MODELS; i++)
+		if (cl.vw_model_precache[i] && cl.vw_model_precache[i]->type == mod_brush)
+			cl.vw_model_precache[i] = NULL;
 
 	if (cls.state == ca_active)
 		cls.state = ca_connected;
