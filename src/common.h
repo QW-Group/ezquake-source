@@ -135,7 +135,7 @@ typedef enum
 #define	IT_SIGIL1               (1<<28)
 #define	IT_SIGIL2               (1<<29)
 #define	IT_SIGIL3               (1<<30)
-#define	IT_SIGIL4               (1<<31)
+#define	IT_SIGIL4               (1u<<31)
 
 //
 // entity effects
