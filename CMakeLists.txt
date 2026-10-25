@@ -44,7 +44,8 @@ if(ENABLE_LTO)
     message("-- Link Time Optimization: Enabled")
 endif()
 
-if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+# MSVC is also set for clang-cl, which takes MSVC-style flags
+if(MSVC)
     add_compile_options(
             /nologo
             /W3
@@ -954,6 +955,35 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
                 XCODE_ATTRIBUTE_CODE_SIGN_INJECT_BASE_ENTITLEMENTS[variant=RelWithDebInfo] YES
                 XCODE_ATTRIBUTE_CODE_SIGN_INJECT_BASE_ENTITLEMENTS[variant=Release]        NO
                 XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "dist/macOS/ezquake.entitlements.plist"
+        )
+    endif()
+endif()
+
+# clang-cl objects are linked by the linker directly rather than through the clang
+# driver, so the sanitizer runtime libraries and DLL aren't located automatically.
+# The runtime directory is taken from where clang finds the DLL, since
+# -print-runtime-dir names the per-target directory even when the runtime is
+# installed in lib/windows.
+if(MSVC AND CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(CLANG_ASAN_DLL_NAME clang_rt.asan_dynamic-x86_64.dll)
+    else()
+        set(CLANG_ASAN_DLL_NAME clang_rt.asan_dynamic-i386.dll)
+    endif()
+    execute_process(
+            COMMAND ${CMAKE_C_COMPILER} /clang:-print-file-name=${CLANG_ASAN_DLL_NAME}
+            OUTPUT_VARIABLE CLANG_ASAN_DLL
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+    )
+    file(TO_CMAKE_PATH "${CLANG_ASAN_DLL}" CLANG_ASAN_DLL)
+
+    # -print-file-name echoes the bare name back when the file isn't found
+    if(IS_ABSOLUTE "${CLANG_ASAN_DLL}" AND EXISTS "${CLANG_ASAN_DLL}")
+        get_filename_component(CLANG_RUNTIME_DIR "${CLANG_ASAN_DLL}" DIRECTORY)
+        target_link_directories(ezquake PRIVATE "${CLANG_RUNTIME_DIR}")
+        add_custom_command(TARGET ezquake POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CLANG_ASAN_DLL}" "$<TARGET_FILE_DIR:ezquake>"
         )
     endif()
 endif()

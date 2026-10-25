@@ -216,6 +216,55 @@
             }
         },
         {
+            "name": "linux-asan",
+            "description": "Debug build with AddressSanitizer and UndefinedBehaviorSanitizer, using system libraries",
+            "inherits": "dynamic",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CONFIGURATION_TYPES": "Debug",
+                "CMAKE_C_FLAGS_DEBUG": "-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize=function -fno-sanitize-recover=all",
+                "CMAKE_EXE_LINKER_FLAGS_DEBUG": "-fsanitize=address,undefined"
+            }
+        },
+        {
+            "name": "windows-asan",
+            "description": "clang-cl build with AddressSanitizer and UndefinedBehaviorSanitizer. Uses the release CRT and release vcpkg libraries, which clang's ASan requires, but keeps asserts enabled. Run from a Visual Studio developer prompt with the 'C++ Clang tools for Windows' component installed",
+            "generator": "Ninja Multi-Config",
+            "inherits": "template-vcpkg",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "VCPKG_TARGET_TRIPLET": "x64-windows-static",
+                "CMAKE_C_COMPILER": "clang-cl",
+                "CMAKE_CONFIGURATION_TYPES": "RelWithDebInfo",
+                "ENABLE_LTO": "OFF",
+                "CMAKE_C_FLAGS_RELWITHDEBINFO": "/Z7 /clang:-O1 /Oy- -fsanitize=address,undefined -fno-sanitize=function -fno-sanitize-recover=all",
+                "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "/DEBUG /INCREMENTAL:NO clang_rt.asan_dynamic-x86_64.lib /WHOLEARCHIVE:clang_rt.asan_static_runtime_thunk-x86_64.lib"
+            }
+        },
+        {
+            "name": "macos-asan",
+            "description": "Xcode Debug build with AddressSanitizer and UndefinedBehaviorSanitizer. App sandbox and hardened runtime are disabled so the sanitizer runtime can load",
+            "inherits": "macos-arm64",
+            "cacheVariables": {
+                "CMAKE_CONFIGURATION_TYPES": "Debug",
+                "ENABLE_SANDBOX": "OFF",
+                "ENABLE_LTO": "OFF",
+                "CMAKE_XCODE_ATTRIBUTE_ENABLE_ADDRESS_SANITIZER": "YES",
+                "CMAKE_XCODE_ATTRIBUTE_ENABLE_UNDEFINED_BEHAVIOR_SANITIZER": "YES",
+                "CMAKE_C_FLAGS_DEBUG": "-O1 -g -fno-omit-frame-pointer -fno-sanitize-recover=all",
+                "CMAKE_OBJC_FLAGS_DEBUG": "-O1 -g -fno-omit-frame-pointer -fno-sanitize-recover=all"
+            }
+        },
+        {
             "name": "static",
             "description": "Configure XCode project file",
             "generator": "Ninja Multi-Config",
@@ -432,6 +481,27 @@
             "displayName": "Build native dynamically linked release",
             "description": "Build with community release triplet",
             "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "linux-asan",
+            "configurePreset": "linux-asan",
+            "displayName": "Build native debug with ASan and UBSan",
+            "description": "Build Debug configuration instrumented with AddressSanitizer and UndefinedBehaviorSanitizer",
+            "configuration": "Debug"
+        },
+        {
+            "name": "windows-asan",
+            "configurePreset": "windows-asan",
+            "displayName": "Build clang-cl with ASan and UBSan",
+            "description": "Build RelWithDebInfo configuration instrumented with AddressSanitizer and UndefinedBehaviorSanitizer",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "macos-asan",
+            "configurePreset": "macos-asan",
+            "displayName": "Build Xcode debug with ASan and UBSan",
+            "description": "Build Debug configuration instrumented with AddressSanitizer and UndefinedBehaviorSanitizer",
+            "configuration": "Debug"
         },
         {
             "name": "static-debug",
