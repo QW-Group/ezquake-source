@@ -1,8 +1,8 @@
 {
-    "version": 3,
+    "version": 6,
     "cmakeMinimumRequired": {
         "major": 3,
-        "minor": 22,
+        "minor": 25,
         "patch": 0
     },
     "configurePresets": [
@@ -523,6 +523,91 @@
             "displayName": "Build native statically linked release with debug info",
             "description": "Build with statically linked release with debug info",
             "configuration": "RelWithDebInfo"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "template-asan-test",
+            "hidden": true,
+            "output": {
+                "verbosity": "verbose",
+                "outputOnFailure": true
+            },
+            "environment": {
+                "ASAN_OPTIONS": "detect_leaks=0:halt_on_error=1",
+                "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
+            }
+        },
+        {
+            "name": "linux-asan",
+            "inherits": "template-asan-test",
+            "configurePreset": "linux-asan",
+            "configuration": "Debug"
+        },
+        {
+            "name": "windows-asan",
+            "inherits": "template-asan-test",
+            "configurePreset": "windows-asan",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "macos-asan",
+            "inherits": "template-asan-test",
+            "configurePreset": "macos-asan",
+            "configuration": "Debug"
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "linux-asan",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-asan"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-asan"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-asan"
+                }
+            ]
+        },
+        {
+            "name": "windows-asan",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "windows-asan"
+                },
+                {
+                    "type": "build",
+                    "name": "windows-asan"
+                },
+                {
+                    "type": "test",
+                    "name": "windows-asan"
+                }
+            ]
+        },
+        {
+            "name": "macos-asan",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "macos-asan"
+                },
+                {
+                    "type": "build",
+                    "name": "macos-asan"
+                },
+                {
+                    "type": "test",
+                    "name": "macos-asan"
+                }
+            ]
         }
     ]
 }

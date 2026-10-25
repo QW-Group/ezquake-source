@@ -987,3 +987,10 @@ if(MSVC AND CMAKE_C_COMPILER_ID STREQUAL "Clang")
         )
     endif()
 endif()
+
+# Plays the demo named by EZQUAKE_BASEDIR and EZQUAKE_DEMO, see cmake/RunDemo.cmake
+enable_testing()
+add_test(NAME timedemo
+        COMMAND ${CMAKE_COMMAND} -DEZQUAKE=$<TARGET_FILE:ezquake> -P ${PROJECT_SOURCE_DIR}/cmake/RunDemo.cmake
+)
+set_tests_properties(timedemo PROPERTIES SKIP_REGULAR_EXPRESSION "SKIPPED:")
