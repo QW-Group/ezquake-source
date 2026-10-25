@@ -478,16 +478,16 @@ nextInstruction2:
 			break;
 
 		case OP_NEGI:
-			*opStack = -r0.i;
+			*opStack = -r0.u;
 			break;
 
 		case OP_ADD:
-			opStack[-1] = r1.i + r0.i;
+			opStack[-1] = r1.u + r0.u;
 			opStack--;
 			break;
 
 		case OP_SUB:
-			opStack[-1] = r1.i - r0.i;
+			opStack[-1] = r1.u - r0.u;
 			opStack--;
 			break;
 
@@ -512,7 +512,7 @@ nextInstruction2:
 			break;
 
 		case OP_MULI:
-			opStack[-1] = r1.i * r0.i;
+			opStack[-1] = r1.u * r0.u;
 			opStack--;
 			break;
 
@@ -541,7 +541,7 @@ nextInstruction2:
 			break;
 
 		case OP_LSH:
-			opStack[-1] = r1.i << r0.i;
+			opStack[-1] = r1.u << r0.i;
 			opStack--;
 			break;
 
