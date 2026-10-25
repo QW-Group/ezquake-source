@@ -313,8 +313,8 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 	// write the packet header
 	SZ_Init (&send, send_buf, min(chan->message.maxsize + PACKET_HEADER, (int)sizeof(send_buf)));
 
-	w1 = chan->outgoing_sequence | (send_reliable<<31);
-	w2 = chan->incoming_sequence | (chan->incoming_reliable_sequence<<31);
+	w1 = chan->outgoing_sequence | ((unsigned)send_reliable << 31);
+	w2 = chan->incoming_sequence | ((unsigned)chan->incoming_reliable_sequence << 31);
 
 	chan->outgoing_sequence++;
 
@@ -410,8 +410,8 @@ qbool Netchan_Process (netchan_t *chan)
 	reliable_message = sequence >> 31;
 	reliable_ack = sequence_ack >> 31;
 
-	sequence &= ~(1 << 31);
-	sequence_ack &= ~(1 << 31);
+	sequence &= ~(1u << 31);
+	sequence_ack &= ~(1u << 31);
 
 	if (ShowPacket(chan->sock, PACKET_RECEIVING)) {
 #ifndef SERVERONLY
