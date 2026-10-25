@@ -35,6 +35,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "hud.h"
 #include "hud_common.h"
 #include "hud_editor.h"
+#ifndef CLIENTONLY
+#include "csqc_client.h"
+#endif
 #include "input.h"
 #include "gl_model.h"
 #include "tr_types.h"
@@ -112,6 +115,14 @@ cvar_t  cl_pext = {"cl_pext", "1", CVAR_NOTFROMSERVER};					// allow/disallow pr
 													// some extensions can be explicitly controlled.
 cvar_t  cl_pext_limits = { "cl_pext_limits", "1", CVAR_NOTFROMSERVER }; // enhanced protocol limits
 cvar_t  cl_pext_other = {"cl_pext_other", "0", CVAR_NOTFROMSERVER};		// extensions which does not have own variables should be controlled by this variable.
+#ifdef FTE_PEXT_CSQC
+#ifndef CLIENTONLY
+// CSQC executes server-supplied csprogs.dat in the client; off until the user opts
+// in.
+cvar_t  cl_pext_csqc = {"cl_pext_csqc", "0", CVAR_NOTFROMSERVER};			// CSQC (our client PR1VM, csqc_client.c)
+cvar_t  cl_download_csprogs = {"cl_download_csprogs", "0", CVAR_ARCHIVE | CVAR_NOTFROMSERVER};
+#endif
+#endif
 cvar_t  cl_pext_warndemos = { "cl_pext_warndemos", "1", CVAR_NOTFROMSERVER }; // if set, user will be warned when saving demos that are not backwards compatible
 cvar_t  cl_pext_lagteleport = { "cl_pext_lagteleport", "1", CVAR_NOTFROMSERVER }; // server-side adjustment of yaw angle through teleports
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON
@@ -280,7 +291,7 @@ cvar_t cl_verify_qwprotocol     = {"cl_verify_qwprotocol", "1"};
 cvar_t demo_autotrack           = {"demo_autotrack", "0"}; // use or not autotrack info from mvd demos
 
 // Authentication
-cvar_t cl_username              = {"cl_username", "", CVAR_QUEUED_TRIGGER | CVAR_NOTFROMSERVER, AuthUsernameChanged};
+cvar_t cl_username              = {"cl_username", "", CVAR_QUEUED_TRIGGER | CVAR_NOTFROMSERVER, AuthUsernameChanged}; // value goes into `cmd login %s` (cl_parse.c)
 static void CL_Authenticate_f(void);
 
 // antilag debugging
@@ -425,6 +436,10 @@ void CL_MakeActive(void)
 		R_ProgramCompileAll();
 	}
 
+#ifndef CLIENTONLY
+	CSQC_Client_ConnectCheck ();
+#endif
+
 	cls.state = ca_active;
 	if (cls.demoplayback) 
 	{
@@ -499,6 +514,7 @@ unsigned int CL_SupportedFTEExtensions (void)
 	if (cl_pext_scale.value)
 		fteprotextsupported |= FTE_PEXT_SCALE;
 #endif
+
 #ifdef FTE_PEXT_TRANS
 	if (cl_pext_alpha.value)
 		fteprotextsupported |= FTE_PEXT_TRANS;
@@ -537,6 +553,13 @@ unsigned int CL_SupportedFTEExtensions (void)
 		fteprotextsupported |= FTE_PEXT_HLBSP;
 #endif
 	}
+
+#ifdef FTE_PEXT_CSQC
+#ifndef CLIENTONLY
+	if (cl_pext_csqc.value)
+		fteprotextsupported |= FTE_PEXT_CSQC;
+#endif
+#endif
 
 	return fteprotextsupported;
 }
@@ -722,6 +745,19 @@ static void CL_PextList_f(void)
 #endif
 		{ 0, NULL }
 	};
+#endif
+
+	// The mask the client would declare with the current cl_pext* cvars (independent of
+	// the connection). Config-dependent: the canonical build (ANTILAG=ON, WITH_SPEEX)
+	// gives FTE1 = 0x6148f048, FTE2 = 0x2; without ANTILAG/Speex 0x6148f008 / 0x0.
+#ifdef PROTOCOL_VERSION_FTE
+	CL_PrintPextGroup("FTE extensions (client support)", CL_SupportedFTEExtensions(), fte_pexts);
+#endif
+#ifdef PROTOCOL_VERSION_FTE2
+	CL_PrintPextGroup("FTE2 extensions (client support)", CL_SupportedFTEExtensions2(), fte2_pexts);
+#endif
+#ifdef PROTOCOL_VERSION_MVD1
+	CL_PrintPextGroup("MVD1 extensions (client support)", CL_SupportedMVDExtensions1(), mvd1_pexts);
 #endif
 
 	if (cls.state == ca_disconnected) {
@@ -1375,6 +1411,10 @@ void CL_ClearState (void)
 
 	Com_DPrintf ("Clearing memory\n");
 
+#ifndef CLIENTONLY
+	CSQC_Client_Disconnect ();
+#endif
+
 	if (!com_serveractive) {
 		Host_ClearMemory();
 	}
@@ -1523,6 +1563,7 @@ void CL_Disconnect (void)
 		cls.downloadpercent = 0;
 		cls.downloadtype = dl_none;
 	}
+	cls.downloadrequested = false;
 
 	CL_StopUpload();
 	DeleteServerAliases();
@@ -1544,6 +1585,10 @@ void CL_Disconnect (void)
 
 	// well, we need free qtv users before new connection
 	QTV_FreeUserList();
+
+#ifndef CLIENTONLY
+	CSQC_Client_Disconnect ();
+#endif
 
 	Cvar_ForceSet(&host_mapname, ""); // Notice mapname not valid yet
 }
@@ -2094,7 +2139,13 @@ static void CL_InitLocal(void)
 	Cvar_Register(&cl_pext);
 	Cvar_Register(&cl_pext_limits);
 	Cvar_Register(&cl_pext_other);
-	Cvar_Register(&cl_pext_warndemos);
+#ifdef FTE_PEXT_CSQC
+#ifndef CLIENTONLY
+	Cvar_Register(&cl_pext_csqc);
+	Cvar_Register(&cl_download_csprogs);
+#endif
+#endif
+ 	Cvar_Register(&cl_pext_warndemos);
 #ifdef MVD_PEXT1_HIGHLAGTELEPORT
 	Cvar_Register(&cl_pext_lagteleport);
 #endif
@@ -2185,6 +2236,10 @@ static void CL_InitLocal(void)
 	}
 
 	CL_InitCommands ();
+
+#ifndef CLIENTONLY
+	CSQC_Client_RegisterCommands ();
+#endif
 
 	Cmd_AddCommand ("disconnect", CL_Disconnect_f);
 	Cmd_AddCommand ("connect", CL_Connect_f);
@@ -2546,8 +2601,10 @@ void CL_LinkEntities (void)
 			CL_PredictMove(false);
 		}
 
-		// build a refresh entity list
-		CL_EmitEntities();
+		// With an active CSQC scene the engine does not build the entity list;
+		// the module does it via #300 clearscene + #301 addentities (#304 renderscene).
+		if (!CSQC_Client_SceneActive ())
+			CL_EmitEntities();
 	}
 }
 
@@ -2558,7 +2615,16 @@ void CL_SoundFrame (void)
 	if (cls.state == ca_active)
 	{
 		if (!ISPAUSED) {
-			S_Update (r_origin, vpn, vright, vup);
+			// #351: with an active CSQC module that set a listener, sound is
+			// positioned from it; otherwise the engine view is used.
+			if (CSQC_Client_ListenerActive())
+			{
+				vec3_t lorg, lfwd, lrht, lup;
+				CSQC_Client_GetListener(lorg, lfwd, lrht, lup);
+				S_Update(lorg, lfwd, lrht, lup);
+			}
+			else
+				S_Update (r_origin, vpn, vright, vup);
 		}
 		else {
 			// do not play loop sounds (lifts etc.) when paused

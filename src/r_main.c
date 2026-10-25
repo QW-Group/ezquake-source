@@ -20,6 +20,16 @@ void R_BrushModelFreeMemory(void);
 
 renderer_api_t renderer;
 
+const char *R_RendererDescription(void)
+{
+#ifdef EZ_MULTIPLE_RENDERERS
+	if (R_UseVulkan()) {
+		return "Vulkan";
+	}
+#endif
+	return "OpenGL";
+}
+
 void R_NewMapPrepare(qbool vid_restart)
 {
 	if (cl.worldmodel) {

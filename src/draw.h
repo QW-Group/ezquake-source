@@ -174,6 +174,7 @@ void Draw_AlphaFillRGB(float x, float y, float w, float h, color_t color);
 void Draw_AlphaSubPic(float x, float y, mpic_t *pic, int srcx, int srcy, int width, int height, float alpha);
 void Draw_SAlphaSubPic(float x, float y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha);
 void Draw_SAlphaSubPic2(float x, float y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale_x, float scale_y, float alpha);
+void Draw_SColoredSubPic2(float x, float y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale_x, float scale_y, int r, int g, int b, float alpha);
 void Draw_AlphaPic(float x, float y, mpic_t *pic, float alpha);
 void Draw_2dAlphaTexture(float x, float y, float width, float height, texture_ref texture_num, float alpha);
 
