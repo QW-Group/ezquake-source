@@ -321,7 +321,7 @@ dlight_t *CL_AllocDlight(int key)
 			if (dl->key == key) {
 				memset (dl, 0, sizeof(*dl));
 				dl->key = key;
-				cl_dlight_active[i/32] |= (1<<(i%32));
+				cl_dlight_active[i/32] |= (1u<<(i%32));
 				return dl;
 			}
 		}
@@ -331,11 +331,11 @@ dlight_t *CL_AllocDlight(int key)
 	for (i = 0; i < MAX_DLIGHTS/32; i++) {
 		if (cl_dlight_active[i] != 0xffffffff) {
 			for (j = 0; j < 32; j++) {
-				if (!(cl_dlight_active[i] & (1<<j)) && i*32+j < MAX_DLIGHTS) {
+				if (!(cl_dlight_active[i] & (1u<<j)) && i*32+j < MAX_DLIGHTS) {
 					dl = cl_dlights + i * 32 + j;
 					memset(dl, 0, sizeof(*dl));
 					dl->key = key;
-					cl_dlight_active[i] |= 1<<j;
+					cl_dlight_active[i] |= 1u<<j;
 					return dl;
 				}
 			}
@@ -393,11 +393,11 @@ void CL_DecayLights(void)
 	for (i = 0; i < MAX_DLIGHTS/32; i++) {
 		if (cl_dlight_active[i]) {
 			for (j = 0; j < 32; j++) {
-				if ((cl_dlight_active[i]&(1<<j)) && i*32+j < MAX_DLIGHTS) {
+				if ((cl_dlight_active[i]&(1u<<j)) && i*32+j < MAX_DLIGHTS) {
 					dl = cl_dlights + i*32 + j;
 
 					if (dl->die < cl.time) {
-						cl_dlight_active[i] &= ~(1 << j);
+						cl_dlight_active[i] &= ~(1u << j);
 						dl->radius = 0;
 						continue;
 					}
@@ -405,7 +405,7 @@ void CL_DecayLights(void)
 					dl->radius -= max(r_lightdecayrate.value, 1) * cls.frametime * dl->decay;
 
 					if (dl->radius <= 0) {
-						cl_dlight_active[i] &= ~(1 << j);
+						cl_dlight_active[i] &= ~(1u << j);
 						dl->radius = 0;
 						continue;
 					}

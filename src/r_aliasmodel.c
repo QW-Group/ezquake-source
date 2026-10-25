@@ -457,7 +457,7 @@ static void R_AliasModelColoredLighting(entity_t* ent)
 		}
 
 		for (j = 0; j < 32; j++) {
-			if ((cl_dlight_active[i] & (1 << j)) && i * 32 + j < MAX_DLIGHTS) {
+			if ((cl_dlight_active[i] & (1u << j)) && i * 32 + j < MAX_DLIGHTS) {
 				lnum = i * 32 + j;
 
 				VectorSubtract(ent->origin, cl_dlights[lnum].origin, dist);
@@ -502,7 +502,7 @@ static void R_AliasModelStandardLighting(entity_t* ent)
 	for (i = 0; i < MAX_DLIGHTS / 32; i++) {
 		if (cl_dlight_active[i]) {
 			for (j = 0; j < 32; j++) {
-				if ((cl_dlight_active[i] & (1 << j)) && i * 32 + j < MAX_DLIGHTS) {
+				if ((cl_dlight_active[i] & (1u << j)) && i * 32 + j < MAX_DLIGHTS) {
 					lnum = i * 32 + j;
 
 					VectorSubtract(ent->origin, cl_dlights[lnum].origin, dist);

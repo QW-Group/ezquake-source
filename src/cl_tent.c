@@ -179,7 +179,7 @@ static void CL_FakeProjectile_KillDlight(fproj_t *prj)
 	for (i = 0, dl = cl_dlights; i < MAX_DLIGHTS; i++, dl++) {
 		if (dl->key == prj->dl_key) {
 			memset(dl, 0, sizeof(*dl));
-			cl_dlight_active[i / 32] &= ~(1 << (i % 32));
+			cl_dlight_active[i / 32] &= ~(1u << (i % 32));
 		}
 	}
 

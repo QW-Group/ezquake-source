@@ -291,7 +291,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 		for (li = 0; li < MAX_DLIGHTS / 32; li++) {
 			if (cl_dlight_active[li]) {
 				for (lj = 0; lj < 32; lj++) {
-					if ((cl_dlight_active[li] & (1 << lj)) && li * 32 + lj < MAX_DLIGHTS) {
+					if ((cl_dlight_active[li] & (1u << lj)) && li * 32 + lj < MAX_DLIGHTS) {
 						k = li * 32 + lj;
 
 						if (!gl_flashblend.integer || (cl_dlights[k].bubble && gl_flashblend.integer != 2)) {
