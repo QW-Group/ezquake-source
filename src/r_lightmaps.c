@@ -293,7 +293,7 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride, uint32_t f
 			m = max(r, g);
 			m = max(m, b);
 			if (m > ((255 << 16) + (1 << 15))) {
-				unsigned s = (((255 << 16) + (1 << 15)) << 8) / m;
+				unsigned s = (((255u << 16) + (1 << 15)) << 8) / m;
 				r = (r >> 8) * s;
 				g = (g >> 8) * s;
 				b = (b >> 8) * s;
