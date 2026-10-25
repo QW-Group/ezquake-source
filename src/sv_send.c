@@ -992,6 +992,9 @@ void SV_SendClientDatagram (client_t *client, int client_num)
 {
 	byte		buf[MAX_DATAGRAM];
 	sizebuf_t	msg;
+#ifdef FTE_PEXT2_VOICECHAT
+	int full_limit;
+#endif
 	//	packet_t	*pack;
 
 	SZ_InitEx(&msg, buf, sizeof(buf), true);
@@ -1018,15 +1021,18 @@ void SV_SendClientDatagram (client_t *client, int client_num)
 		SV_WriteEntitiesToClient(client, &msg, false);
 
 #ifdef FTE_PEXT2_VOICECHAT
+		full_limit = msg.maxsize;
+		if (!client->datagram.overflowed)
+			msg.maxsize = max(msg.cursize, full_limit - client->datagram.cursize);
 		SV_VoiceSendPacket(client, &msg);
+		msg.maxsize = full_limit;
 #endif
 	}
 
-	// copy the accumulated multicast datagram
-	// for this client out to the message
+	// Append queued multicast only if it fits, preserving the world update.
 	if (client->datagram.overflowed)
 		Con_Printf ("WARNING: datagram overflowed for %s\n", client->name);
-	else
+	else if (!msg.overflowed && client->datagram.cursize <= msg.maxsize - msg.cursize)
 		SZ_Write (&msg, client->datagram.data, client->datagram.cursize);
 	SZ_Clear (&client->datagram);
 
