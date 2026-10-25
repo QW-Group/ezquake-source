@@ -1111,7 +1111,11 @@ intptr_t PF2_Find(int e, int fofs, char *str)
 		if (!(intptr_t *)((byte *)ed->v + fofs))
 			continue;
 
-		t = VM_ArgPtr(*(intptr_t *)((char *)ed->v + fofs));
+		// String fields hold pointers in native mods but 32-bit offsets in QVMs
+		if (sv_vm->type == VMI_NATIVE)
+			t = VM_ArgPtr(*(intptr_t *)((char *)ed->v + fofs));
+		else
+			t = VM_ArgPtr(*(string_t *)((char *)ed->v + fofs));
 
 		if (!t)
 			continue;
