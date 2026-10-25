@@ -24,8 +24,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "spritegn.h"
 #include "bspfile.h"
 
-#define VBO_FIELDOFFSET(type, field) (void*)((uintptr_t)&(((type*)0)->field))
-#define VK_VBO_FIELDOFFSET(type, field) (uint32_t)((uintptr_t)&(((type*)0)->field))
+#include <stddef.h>
+
+#define VBO_FIELDOFFSET(type, field) ((void*)(uintptr_t)offsetof(type, field))
+#define VK_VBO_FIELDOFFSET(type, field) ((uint32_t)offsetof(type, field))
 
 /*
 d*_t structures are on-disk representations
