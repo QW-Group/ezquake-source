@@ -532,10 +532,14 @@ void Serverinfo_Draw (void);
 void Serverinfo_Players_Draw(int x, int y, int w, int h);
 void Serverinfo_Rules_Draw(int x, int y, int w, int h);
 void Serverinfo_Sources_Draw(int x, int y, int w, int h);
+void Serverinfo_Route_Draw(int x, int y, int w, int h);
 void Serverinfo_Key (int key);
 void Serverinfo_Players_Key(int key);
 void Serverinfo_Rules_Key(int key);
 void Serverinfo_Sources_Key(int key);
+void Serverinfo_Route_Key(int key);
+void Serverinfo_Route_Invalidate(void);
+static void Serverinfo_Route_Reset(void);
 
 //
 // serverinfo
@@ -606,6 +610,28 @@ int serverinfo_sources_pos;
 int serverinfo_sources_disp;
 extern int autoupdate_serverinfo; // declared in EX_browser_net.c
 
+// serverinfo "route" tab: shows the sb_findroutes alternatives to the
+// selected server (same source/cache as the connectbr/connectinfo commands
+// in cl_connectbr.c - no separate discovery or measurement here) and lets
+// the user toggle individual proxy hops out of the selected route before
+// connecting. serverinfo_route_hop_enabled tracks hops of the CURRENTLY
+// SELECTED route only (indexed by hop position within its proxylist), so it
+// is reset every time the selected route or the underlying server changes.
+// Every hop needs at least "x:x@" (4 bytes) inside proxylist, so this many
+// hop slots can never be exceeded by a proxylist that fits in
+// SB_ROUTE_PROXYLIST_SIZE - no silent truncation of a real route.
+#define SERVERINFO_ROUTE_MAX_HOPS (SB_ROUTE_PROXYLIST_SIZE / 4)
+static sb_route_t serverinfo_routes[SB_ROUTE_MAX_ALTERNATIVES];
+static int serverinfo_routes_count;
+static int serverinfo_route_pos;
+static int serverinfo_route_disp; // route# at the top of the visible list, same role as serverinfo_sources_disp
+static int serverinfo_route_hop_pos;
+static netadr_t serverinfo_routes_addr;
+static double serverinfo_routes_built_at; // 0 means "never queried yet", even if the query found zero routes
+static qbool serverinfo_route_hop_enabled[SERVERINFO_ROUTE_MAX_HOPS];
+static int serverinfo_route_hop_enabled_for; // serverinfo_route_pos the array above belongs to, -1 if stale
+static double serverinfo_route_last_build_attempt; // Sys_DoubleTime() of the last SB_PingTree_Build() we triggered, 0 if none yet
+
 void Serverinfo_Stop(void)
 {
 	show_serverinfo = NULL;
@@ -620,6 +646,7 @@ void Serverinfo_Start (server_data *s)
 
 	serverinfo_players_pos = 0;
 	serverinfo_sources_pos = 0;
+	Serverinfo_Route_Reset();
 
 	autoupdate_serverinfo = 1;
 	show_serverinfo = s;
@@ -650,6 +677,7 @@ void Serverinfo_Change (server_data *s)
 {
 	Alter_Autoupdate(s);
 	show_serverinfo = s;
+	Serverinfo_Route_Reset();
 
 	// testing connection
 	if (testing_connection)
@@ -1278,13 +1306,15 @@ void Serverinfo_Draw (void)
 	buf[w/8] = 0;
 	UI_Print_Center(x, y+10, w, buf, false);
 
-	strlcpy(buf, " players serverinfo sources ", sizeof(buf));
+	strlcpy(buf, " players serverinfo sources route ", sizeof(buf));
 	if (serverinfo_pos == 0)
 		memcpy (buf, "\x10\xF0\xEC\xE1\xF9\xE5\xF2\xF3\x11", 9);
 	if (serverinfo_pos == 1)
 		memcpy (buf + 8, "\x10\xF3\xE5\xF2\xF6\xE5\xF2\xE9\xEE\xE6\xEF\x11", 12); // FIXME: non-ascii chars
 	if (serverinfo_pos == 2)
 		memcpy (buf + 19, "\x10\xF3\xEF\xF5\xF2\xE3\xE5\xF3\x11", 9); // FIXME: non-ascii chars
+	if (serverinfo_pos == 3)
+		memcpy (buf + 27, "\x10\xF2\xEF\xF5\xF4\xE5\x11", 7); // FIXME: non-ascii chars
 
 	UI_Print_Center(x, y+24, w, buf, false);
 
@@ -1306,6 +1336,8 @@ void Serverinfo_Draw (void)
 			Serverinfo_Rules_Draw(x, y+40, w, h-40); break;
 		case 2: // sources
 			Serverinfo_Sources_Draw(x, y+40, w, h-40); break;
+		case 3: // route (sb_findroutes)
+			Serverinfo_Route_Draw(x, y+40, w, h-40); break;
 		default:
 			;
 	}
@@ -1550,6 +1582,222 @@ void Serverinfo_Sources_Draw(int x, int y, int w, int h)
 		if (serverinfo_sources_pos == serverinfo_sources_disp+i)
 			UI_DrawCharacter(x+8*7, y+i*8+8, '\x8D');
 	}
+}
+
+// Splits route->proxylist ("ip1:port1@ip2:port2@...") into up to
+// SERVERINFO_ROUTE_MAX_HOPS null-terminated tokens written into hops[][].
+// Returns the hop count. storage must stay alive as long as hops[] is used
+// (each hops[i] points into it), so callers keep it on their own stack.
+static int Serverinfo_Route_SplitHops(const sb_route_t *route, char storage[SB_ROUTE_PROXYLIST_SIZE],
+                                       char *hops[SERVERINFO_ROUTE_MAX_HOPS])
+{
+	int count = 0;
+	char *tok, *ctx = NULL;
+
+	strlcpy(storage, route->proxylist, SB_ROUTE_PROXYLIST_SIZE);
+	if (!storage[0])
+		return 0;
+
+	for (tok = strtok_r(storage, "@", &ctx); tok && count < SERVERINFO_ROUTE_MAX_HOPS;
+	     tok = strtok_r(NULL, "@", &ctx)) {
+		hops[count++] = tok;
+	}
+	return count;
+}
+
+// Drops every cached route/hop-toggle state. Called whenever the server the
+// popup is showing changes (Serverinfo_Start/Serverinfo_Change), so the route
+// tab never shows or applies stale data left over from a different server.
+void Serverinfo_Route_Invalidate(void)
+{
+	serverinfo_routes_count = 0;
+	serverinfo_routes_built_at = 0;
+	serverinfo_route_pos = 0;
+	serverinfo_route_disp = 0;
+	serverinfo_route_hop_pos = 0;
+	serverinfo_route_hop_enabled_for = -1;
+}
+
+// Only called when the server the popup is showing actually changes
+// (Serverinfo_Start/Serverinfo_Change) - unlike Invalidate() this also drops
+// the SB_PingTree_Build() retry cooldown, since a genuinely different server
+// deserves an immediate fresh attempt.
+static void Serverinfo_Route_Reset(void)
+{
+	Serverinfo_Route_Invalidate();
+	serverinfo_route_last_build_attempt = 0;
+}
+
+// Rebuilds the cached route list for show_serverinfo if it is missing, for
+// the wrong server, or older than the same TTL connectbr/connectnext use
+// (CONNECTBR_ROUTE_TTL in cl_connectbr.c). Called by both Draw and Key so
+// neither ever indexes serverinfo_routes[] against stale/foreign data.
+static void Serverinfo_Route_EnsureFresh(void)
+{
+	server_data *s = show_serverinfo;
+
+	if (s && serverinfo_routes_built_at && NET_CompareAdr(serverinfo_routes_addr, s->address)
+	    && Sys_DoubleTime() - serverinfo_routes_built_at <= 120.0)
+		return; // still fresh for the server currently shown (0 routes found is a valid, cacheable result)
+
+	Serverinfo_Route_Invalidate();
+	if (!s || SB_PingTree_IsBuilding())
+		return;
+
+	// Same staleness rule connectbr/connectnext use (CONNECTBR_ROUTE_TTL):
+	// an aged graph is rebuilt from scratch rather than re-running Dijkstra
+	// over measurements that may no longer reflect the network.
+	if (!SB_PingTree_Built() || SB_PingTree_Age() > 120.0) {
+		// SB_PingTree_Build() is fire-and-forget (a detached thread flips
+		// pingtree_built once it's done); without a cooldown, a build that
+		// fails or simply takes a while gets re-triggered on every single
+		// frame this tab is drawn/keyed, spamming "Building the Ping
+		// Tree..." and starting a fresh attempt before the last one could
+		// ever finish.
+		if (Sys_DoubleTime() - serverinfo_route_last_build_attempt > 5.0) {
+			serverinfo_route_last_build_attempt = Sys_DoubleTime();
+			SB_PingTree_Build();
+		}
+		return;
+	}
+
+	serverinfo_routes_count = SB_PingTree_GetRoutes(&s->address, serverinfo_routes, SB_ROUTE_MAX_ALTERNATIVES);
+	serverinfo_routes_addr = s->address;
+	serverinfo_routes_built_at = Sys_DoubleTime();
+}
+
+// Resets the per-hop enabled flags to "all on" whenever serverinfo_route_pos
+// now points at a route serverinfo_route_hop_enabled wasn't built for
+// (route just (re)selected, or the whole cache was invalidated).
+static void Serverinfo_Route_EnsureHopState(int hop_count)
+{
+	int i;
+
+	if (serverinfo_route_hop_enabled_for == serverinfo_route_pos)
+		return;
+	for (i = 0; i < hop_count; i++)
+		serverinfo_route_hop_enabled[i] = true;
+	serverinfo_route_hop_enabled_for = serverinfo_route_pos;
+}
+
+// Rebuilds cl_proxyaddr from serverinfo_routes[serverinfo_route_pos], skipping
+// hops the user disabled with K_ENTER in the route tab. Mirrors what
+// CL_BR_ApplyRoute (cl_connectbr.c) does for connectbr/connectnext, just with
+// a user-editable hop subset instead of always using the full cached route.
+static void Serverinfo_Route_ApplyToProxyaddr(void)
+{
+	char storage[SB_ROUTE_PROXYLIST_SIZE];
+	char *hops[SERVERINFO_ROUTE_MAX_HOPS];
+	char out[SB_ROUTE_PROXYLIST_SIZE];
+	int count, i;
+
+	if (serverinfo_route_pos < 0 || serverinfo_route_pos >= serverinfo_routes_count)
+		return;
+
+	// Caller is expected to have already run EnsureHopState for this route
+	// (Draw and Key both do before calling here) - not repeated to avoid
+	// clobbering flags the caller may have just flipped.
+	count = Serverinfo_Route_SplitHops(&serverinfo_routes[serverinfo_route_pos], storage, hops);
+
+	out[0] = '\0';
+	for (i = 0; i < count; i++) {
+		if (!serverinfo_route_hop_enabled[i])
+			continue;
+		if (out[0])
+			strlcat(out, "@", sizeof(out));
+		strlcat(out, hops[i], sizeof(out));
+	}
+
+	Cvar_Set(&cl_proxyaddr, out);
+}
+
+// Connects using exactly what the route tab currently has applied to
+// cl_proxyaddr (Serverinfo_Route_ApplyToProxyaddr already ran on every
+// selection/toggle). Deliberately does NOT call SB_PingTree_ConnectBestPath -
+// that recomputes cl_proxyaddr from scratch and would silently discard the
+// user's route/hop choice, which is the whole point of this tab.
+static void Serverinfo_Route_Connect(void)
+{
+	server_data *s = show_serverinfo;
+
+	if (!s)
+		return;
+	Cbuf_AddText("join ");
+	Cbuf_AddText(s->display.ip);
+	Cbuf_AddText("\n");
+	SB_Browser_Hide(s);
+}
+
+void Serverinfo_Route_Draw(int x, int y, int w, int h)
+{
+	int i, listsize, routes_shown;
+	int hop_count, hop_disp, hop_listsize;
+	char storage[SB_ROUTE_PROXYLIST_SIZE];
+	char *hops[SERVERINFO_ROUTE_MAX_HOPS];
+	int hopy;
+
+	if (show_serverinfo == NULL)
+		return;
+
+	Serverinfo_Route_EnsureFresh();
+
+	if (!serverinfo_routes_count) {
+		UI_Print_Center(x, y + h/2 - 4, w, SB_PingTree_Built() ?
+		                "no route found by sb_findroutes" : "sb_findroutes graph not built yet", false);
+		return;
+	}
+
+	serverinfo_route_pos = max(0, min(serverinfo_route_pos, serverinfo_routes_count - 1));
+
+	// top half: route alternatives (scrolled like Serverinfo_Sources_Draw),
+	// bottom half: hops of the selected one
+	listsize = max(1, min(serverinfo_routes_count, (h/2) / 8 - 1));
+	routes_shown = min(serverinfo_routes_count, listsize);
+
+	if (serverinfo_route_pos > serverinfo_route_disp + listsize - 1)
+		serverinfo_route_disp = serverinfo_route_pos - listsize + 1;
+	if (serverinfo_route_disp > serverinfo_routes_count - listsize)
+		serverinfo_route_disp = max(serverinfo_routes_count - listsize, 0);
+	if (serverinfo_route_pos < serverinfo_route_disp)
+		serverinfo_route_disp = serverinfo_route_pos;
+
+	// header/footer take one row each, so hop area gets everything between
+	UI_Print(x, y, " #  cost  hops", true);
+	for (i = 0; i < routes_shown; i++) {
+		char buf[40];
+		int ri = serverinfo_route_disp + i;
+		sb_route_t *route = &serverinfo_routes[ri];
+
+		snprintf(buf, sizeof(buf), " %-2d %5dms  %d", ri + 1, route->total_cost_ms, route->hops);
+		buf[w/8] = 0;
+		UI_Print(x, y + i*8 + 8, buf, ri == serverinfo_route_pos);
+	}
+
+	hop_count = Serverinfo_Route_SplitHops(&serverinfo_routes[serverinfo_route_pos], storage, hops);
+	Serverinfo_Route_EnsureHopState(hop_count);
+	serverinfo_route_hop_pos = max(0, min(serverinfo_route_hop_pos, max(0, hop_count - 1)));
+
+	hopy = y + routes_shown * 8 + 16;
+	if (!hop_count) {
+		UI_Print(x, hopy, "direct, no proxy hops", false);
+	}
+	else {
+		UI_Print(x, hopy, "hops:", false);
+		hop_listsize = max(1, (y + h - (hopy + 16)) / 8);
+		hop_disp = max(0, min(serverinfo_route_hop_pos - hop_listsize + 1, hop_count - hop_listsize));
+		hop_disp = max(0, min(hop_disp, serverinfo_route_hop_pos));
+		for (i = 0; i < hop_listsize && hop_disp + i < hop_count; i++) {
+			char buf[40];
+			int hi = hop_disp + i;
+
+			snprintf(buf, sizeof(buf), " [%c] %s",
+			         serverinfo_route_hop_enabled[hi] ? 'x' : ' ', hops[hi]);
+			buf[w/8] = 0;
+			UI_Print(x, hopy + (i+1)*8, buf, hi == serverinfo_route_hop_pos);
+		}
+	}
+
+	UI_Print(x, y + h - 8, "enter:toggle hop  j:connect", false);
 }
 
 const char *SB_Source_Type_Location_Name(sb_source_type_t type)
@@ -2183,7 +2431,11 @@ void Serverinfo_Key(int key)
 		case K_MOUSE1:
 		case 'x': // x was once used for best route connection
 		case K_ENTER:
-			if (serverinfo_pos != 2)
+			if (serverinfo_pos == 2)
+				Serverinfo_Sources_Key(key);
+			else if (serverinfo_pos == 3)
+				Serverinfo_Route_Key(key);
+			else
 			{
 				if (show_serverinfo->qwfwd) {
 					SB_Select_QWfwd(show_serverinfo);
@@ -2193,8 +2445,6 @@ void Serverinfo_Key(int key)
 					Join_Server(show_serverinfo);
 				}
 			}
-			else
-				Serverinfo_Sources_Key(key);
 			break;
 		case K_MOUSE2:
 		case K_ESCAPE:
@@ -2222,7 +2472,10 @@ void Serverinfo_Key(int key)
 			break;
 		case 'j':
 		case 'p':
-			Join_Server(show_serverinfo);
+			if (serverinfo_pos == 3)
+				Serverinfo_Route_Connect();
+			else
+				Join_Server(show_serverinfo);
 			break;
 		case 'n':
 			Join_Server_Direct(show_serverinfo);
@@ -2286,12 +2539,15 @@ void Serverinfo_Key(int key)
 				case 2: // sources
 					Serverinfo_Sources_Key(key);
 					break;
+				case 3: // route
+					Serverinfo_Route_Key(key);
+					break;
 				default:
 					;
 			}
 	}
 
-	serverinfo_pos = (serverinfo_pos + 3) % 3;
+	serverinfo_pos = (serverinfo_pos + 4) % 4;
 }
 
 void Serverinfo_Players_Key(int key)
@@ -2377,6 +2633,67 @@ void Serverinfo_Sources_Key(int key)
 
 	serverinfo_sources_pos = max(serverinfo_sources_pos, 0);
 	serverinfo_sources_pos = min(serverinfo_sources_pos, sourcesn_updated-1);
+}
+
+void Serverinfo_Route_Key(int key)
+{
+	char storage[SB_ROUTE_PROXYLIST_SIZE];
+	char *hops[SERVERINFO_ROUTE_MAX_HOPS];
+	int hop_count;
+	qbool route_changed = false;
+
+	Serverinfo_Route_EnsureFresh();
+	if (!serverinfo_routes_count)
+		return;
+	serverinfo_route_pos = max(0, min(serverinfo_route_pos, serverinfo_routes_count - 1));
+
+	hop_count = Serverinfo_Route_SplitHops(&serverinfo_routes[serverinfo_route_pos], storage, hops);
+	Serverinfo_Route_EnsureHopState(hop_count);
+	serverinfo_route_hop_pos = max(0, min(serverinfo_route_hop_pos, max(0, hop_count - 1)));
+
+	switch (key)
+	{
+		case K_UPARROW:
+		case K_MWHEELUP:
+			if (serverinfo_route_hop_pos > 0)
+				serverinfo_route_hop_pos--;
+			else if (serverinfo_route_pos > 0) {
+				serverinfo_route_pos--;
+				serverinfo_route_hop_pos = 0;
+				route_changed = true;
+			}
+			break;
+		case K_DOWNARROW:
+		case K_MWHEELDOWN:
+			if (hop_count && serverinfo_route_hop_pos < hop_count - 1)
+				serverinfo_route_hop_pos++;
+			else if (serverinfo_route_pos < serverinfo_routes_count - 1) {
+				serverinfo_route_pos++;
+				serverinfo_route_hop_pos = 0;
+				route_changed = true;
+			}
+			break;
+		case K_ENTER:
+		case K_SPACE:
+			if (hop_count && serverinfo_route_hop_pos < hop_count) {
+				serverinfo_route_hop_enabled[serverinfo_route_hop_pos] =
+					!serverinfo_route_hop_enabled[serverinfo_route_hop_pos];
+				Serverinfo_Route_ApplyToProxyaddr();
+			}
+			break;
+		default:
+			;
+	}
+
+	// Selecting a different route re-derives its own hop count/flags (they
+	// belong to the new route, not the one we just left) and applies it to
+	// cl_proxyaddr immediately - otherwise connecting without ever pressing
+	// enter/space would silently reuse whatever the previous route left set.
+	if (route_changed) {
+		hop_count = Serverinfo_Route_SplitHops(&serverinfo_routes[serverinfo_route_pos], storage, hops);
+		Serverinfo_Route_EnsureHopState(hop_count);
+		Serverinfo_Route_ApplyToProxyaddr();
+	}
 }
 
 void SB_RemoveSourceProc(void)
