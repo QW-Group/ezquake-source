@@ -5855,65 +5855,6 @@ static void csqc_getentityfieldstring (void)
 	CSQCVM_SetRetStr (buf);
 }
 
-/* float(float fieldnum, entity ent, string s) putentityfieldstring = #500 */
-static void csqc_putentityfieldstring (void)
-{
-	pr1vm_t *vm = CSQCVM_Active ();
-	ddef_t *f;
-	float *slot;
-	int slotidx, type, ofs;
-	char *s = CSQCVM_Str (OFS_PARM2);
-	if (!vm)
-		return;
-	f = csqc_fielddef (vm, (unsigned int)vm->globals[OFS_PARM0]);
-	slotidx = csqc_ent_of (vm, OFS_PARM1);
-	vm->globals[OFS_RETURN] = 0;
-	if (!f || slotidx < 0)
-		return;
-	slot = csqc_ent_slot (vm, slotidx);
-	if (!slot)
-		return;
-	type = f->type & 0xff;
-	ofs = f->ofs;
-	switch (type)
-	{
-	case ev_string:
-		{
-			// An editable entity field must not alias the temp-result ring: the
-			// value would change under the module after later string builtins. Keep
-			// a zone-owned (semi-permanent) copy and release the previous one.
-			// The field owns the string: overwriting releases a previous zone copy
-			// (a value also referenced elsewhere is not detected) and the pool is
-			// bounded by MAX_PRSTR (1024) shared with strzone.
-			int old = *(int *)&slot[ofs];
-			char *copy = Q_strdup (s ? s : "");
-
-			if (old <= -MAX_PRSTR && old > -(MAX_PRSTR * 2))
-				CSQC_Client_UnzoneString (vm, old);
-			if (!CSQC_Client_ZoneStore (vm, (int *)&slot[ofs], copy))
-				Con_DPrintf ("CSQC: putentityfieldstring: zone pool exhausted\n");
-		}
-		break;
-	case ev_vector:
-		{
-			float v[3] = { 0, 0, 0 };
-			int n = 0;
-			if (s)
-				n = sscanf (s, "%f %f %f", &v[0], &v[1], &v[2]);
-			if (n > 0)
-				VectorCopy (v, &slot[ofs]);
-			else
-				return;
-			break;
-		}
-	case ev_float:
-	default:
-		slot[ofs] = (s && s[0]) ? (float)atof (s) : 0;
-		break;
-	}
-	vm->globals[OFS_RETURN] = 1;
-}
-
 /*
  BSP surfaces. All no-op: FTE reads brush-model geometry
  (surfaces/mesh/plane/texture); ezq has no such model geometry interface. Registered
@@ -6616,7 +6557,6 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 	PR1VM_RegisterBuiltin (vm, 497, (builtin_t)csqc_entityfieldname); // #497 string(float fieldnum) entityfieldname
 	PR1VM_RegisterBuiltin (vm, 498, (builtin_t)csqc_entityfieldtype); // #498 float(float fieldnum) entityfieldtype
 	PR1VM_RegisterBuiltin (vm, 499, (builtin_t)csqc_getentityfieldstring); // #499 string(float fieldnum, entity ent) getentityfieldstring
-	PR1VM_RegisterBuiltin (vm, 500, (builtin_t)csqc_putentityfieldstring); // #500 float(float fieldnum, entity ent, string s) putentityfieldstring
 
 	PR1VM_RegisterBuiltin (vm, 300, (builtin_t)csqc_clearscene); // #300 void() clearscene (EXT_CSQC)
 	PR1VM_RegisterBuiltin (vm, 301, (builtin_t)csqc_addentities); // #301 void(float mask) addentities (EXT_CSQC)
