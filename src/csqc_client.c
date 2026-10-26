@@ -4342,7 +4342,8 @@ static void CSQC_Client_ProgsCheck_f (void)
 			Con_Printf ("csqc_progscheck: skip parm_size-oob (numfunctions=0)\n");
 	}
 
-	// 2f) first_statement: INT_MIN and 0 for i>0 rejected; -1 (builtin) accepted.
+	// 2f) first_statement: INT_MIN rejected; 0 for i>0 is the name-mapped #0
+	// placeholder (accepted on load, resolved to a numeric slot); -1 accepted.
 	{
 		dfunction_t *fnp;
 		int numf = LittleLong (((dprograms_t *) data)->numfunctions);
@@ -4358,7 +4359,7 @@ static void CSQC_Client_ProgsCheck_f (void)
 			memcpy (buf, data, filesize);
 			fnp = (dfunction_t *) (buf + ofs_fn);
 			fnp[1].first_statement = LittleLong (0);
-			PC_CHECK ("firststmt-zero-nonfirst", !PR1VM_ValidateClientV6 (buf, filesize));
+			PC_CHECK ("firststmt-zero-nonfirst-ok", PR1VM_ValidateClientV6 (buf, filesize));
 
 			memcpy (buf, data, filesize);
 			fnp = (dfunction_t *) (buf + ofs_fn);
