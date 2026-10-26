@@ -741,9 +741,6 @@ static void CL_PextList_f(void)
 	};
 #endif
 
-	// The mask the client would declare with the current cl_pext* cvars (independent of
-	// the connection). Config-dependent: the canonical build (ANTILAG=ON, WITH_SPEEX)
-	// gives FTE1 = 0x6148f048, FTE2 = 0x2; without ANTILAG/Speex 0x6148f008 / 0x0.
 #ifdef PROTOCOL_VERSION_FTE
 	CL_PrintPextGroup("FTE extensions (client support)", CL_SupportedFTEExtensions(), fte_pexts);
 #endif

@@ -353,13 +353,14 @@ void CSQCVM_RegisterBuiltins (struct pr1vm_s *vm);
 #define CSQC_BUILTIN_CHECKBUILTIN	1023
 // `argc` (FTE exposes it only as a `#0` name, not as a numbered slot).
 #define CSQC_BUILTIN_ARGC			1021
-// Return-0 fallback for an unknown `#0` name (FTE parity).
+// Aborting stub for an unknown `#0` name: calling it fails the module like FTE's
+// slot 0 (PF_Fixme); checkbuiltin still reports 0.
 #define CSQC_BUILTIN_NAMED_UNKNOWN	1022
 
 // Resolve `#0` name-mapped builtins of a freshly loaded client csprogs:
 // functions with first_statement == 0 (i > 0) get a numeric slot by name; unknown
-// names map to a return-0 stub (FTE parity). Called by the v6 loader after
-// PR1VM_LoadData. Implemented in csqc_builtins.c (client-only).
+// names map to the aborting stub above (FTE slot 0, PF_Fixme). Called by the v6
+// loader after PR1VM_LoadData. Implemented in csqc_builtins.c (client-only).
 void CSQCVM_ResolveNamedBuiltins (struct pr1vm_s *vm);
 
 // Client wrapper over the shared PR1VM_SetString (core, pr_edict.c): temp strings

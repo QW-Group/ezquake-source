@@ -3717,23 +3717,28 @@ static void csqc_checkbuiltin (void)
 }
 
 /*
- Fallback for a `#0` name the module declares but the engine does not implement:
- returns 0 (FTE parity - an unresolved named builtin degrades to an OP_DONE / 0,
- see fteqw quakec/menusys/menu/main.qc:63).
+ Slot for a `#0` name the module declares but the engine does not implement.
+ FTE leaves first_statement == 0, which dispatches to slot 0 (PF_Fixme) and
+ aborts on the first call (fteqw/engine/client/pr_csqc.c:8080-8081, 600-613).
+ That slot cannot stay 0 here (the interpreter enters a function with
+ first_statement == 0 as a body, pr_exec.c:1112), so unresolved names map to
+ this stub instead; it aborts the call the same way. The name is printed at
+ load time (CSQCVM_ResolveNamedBuiltins), because one shared slot cannot tell
+ which name landed on it.
 */
 static void csqc_named_unknown (void)
 {
-	pr1vm_t *vm = CSQCVM_Active ();
-	if (vm)
-		vm->globals[OFS_RETURN] = 0;
+	PR_RunError ("CSQC named builtin not implemented.\nCSQC is not compatible.");
 }
 
 /*
  Resolve `#0` (name-mapped) builtins of a freshly loaded client csprogs: a function
  with first_statement == 0 (i > 0) has no body - its slot is assigned by name.
- Known names map to their engine slot; unknown names map to the return-0 fallback.
- After this call no i > 0 function keeps first_statement == 0 (the validator relies
- on that invariant - csqc_client.c). Called by the v6 loader after PR1VM_LoadData.
+ Known names map to their engine slot; unknown names map to csqc_named_unknown,
+ which aborts the call like FTE's slot 0 (PF_Fixme).
+ After this call no i > 0 function keeps first_statement == 0: the interpreter
+ would enter it as a body (pr_exec.c:1112). Called by the v6 loader after
+ PR1VM_LoadData.
 */
 static const struct
 {
@@ -3766,9 +3771,10 @@ void CSQCVM_ResolveNamedBuiltins (pr1vm_t *vm)
 				}
 		if (vm->functions[i].first_statement == 0)
 		{
-			// FTE names the unresolved builtin in developer output and keeps the
-			// return-0 fallback (fteqw/engine/client/pr_csqc.c:7476-7479): loading
-			// must not fail on a name this build does not implement.
+			// FTE names the unresolved builtin in developer output and leaves
+			// first_statement == 0, which aborts the first call through slot 0
+			// (PF_Fixme, fteqw/engine/client/pr_csqc.c:7476-7477, 8080-8081).
+			// Loading must not fail on a name this build does not implement.
 			if (name)
 				Con_DPrintf ("Unknown csqc builtin: %s\n", name);
 			vm->functions[i].first_statement = -CSQC_BUILTIN_NAMED_UNKNOWN;
@@ -6796,7 +6802,7 @@ void CSQCVM_RegisterBuiltins (pr1vm_t *vm)
 
 	// Name-mapped `#0` builtins (engine slots; the module declares `= #0`).
 	PR1VM_RegisterBuiltin (vm, CSQC_BUILTIN_CHECKBUILTIN, (builtin_t)csqc_checkbuiltin); // #0 checkbuiltin
-	PR1VM_RegisterBuiltin (vm, CSQC_BUILTIN_NAMED_UNKNOWN, (builtin_t)csqc_named_unknown); // #0 unknown-name fallback
+	PR1VM_RegisterBuiltin (vm, CSQC_BUILTIN_NAMED_UNKNOWN, (builtin_t)csqc_named_unknown); // #0 unknown name: call aborts
 	PR1VM_RegisterBuiltin (vm, CSQC_BUILTIN_ARGC, (builtin_t)csqc_argc); // #0 float() argc
 	PR1VM_MarkBuiltinStub (vm, CSQC_BUILTIN_NAMED_UNKNOWN);	// unresolved name -> checkbuiltin must be 0 (FTE parity)
 

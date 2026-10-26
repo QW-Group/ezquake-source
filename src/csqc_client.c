@@ -4011,8 +4011,8 @@ static qbool PR1VM_ValidateClientV6 (const byte *data, int filesize)
 		// real code is [0, numstatements). INT_MIN would make OP_CALL's
 		// i = -first a negative builtin index. first == 0 for i > 0 is the
 		// name-mapped `#0` placeholder (admitting on load); CSQCVM_ResolveNamedBuiltins
-		// assigns every such function a numeric slot (known name or return-0
-		// fallback) right after PR1VM_LoadData, so none is left at 0.
+		// assigns every such function a numeric slot (known name or the aborting
+		// unknown-name stub) right after PR1VM_LoadData, so none is left at 0.
 		// Function 0 (i == 0) legitimately has first == 0 (global init).
 		if (first < -CSQC_MAX_BUILTINS ||
 			(first > 0 && first >= h.numstatements))
