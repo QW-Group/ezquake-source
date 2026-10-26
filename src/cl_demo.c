@@ -4666,7 +4666,11 @@ void CL_QTVPlay_f (void)
 	// (QTV proxies can be chained, so we must get the last @)
 	// In other words split stream and host part
 
-	strlcpy(stream_host, connrequest, sizeof(stream_host));
+	// Chain through qtv_proxyaddr unless the address is already chained (has more than one @).
+	if (qtv_proxyaddr.string[0] && strncmp(connrequest, "tcp:", 4) && strchr(connrequest, '@') == strchrrev(connrequest, '@'))
+		snprintf(stream_host, sizeof(stream_host), "tcp:%s@%s", connrequest, qtv_proxyaddr.string);
+	else
+		strlcpy(stream_host, connrequest, sizeof(stream_host));
 
 	connrequest = strchrrev(stream_host, '@');
 	if (connrequest)

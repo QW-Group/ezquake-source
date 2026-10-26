@@ -87,6 +87,7 @@ extern cvar_t qtv_adjustmaxspeed;
 extern cvar_t qtv_adjustlowstart;
 extern cvar_t qtv_adjusthighstart;
 extern cvar_t qtv_allow_pause;
+extern cvar_t qtv_proxyaddr;
 
 extern cvar_t qtv_event_join;
 extern cvar_t qtv_event_leave;
