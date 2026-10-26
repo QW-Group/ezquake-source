@@ -1378,9 +1378,15 @@ static void csqc_drawrotpic_dp (void)
 /*
  string(string fmt, ...) sprintf = #627
  Mini QC formatter with width/flags/precision - a subset of FTE PF_sprintf_internal.
- Parses %[flags][width][.precision]conv; flags - 0 + ' ' #; width/precision are
- literal only (no '*'/'%$'). Conversions d i u x X c s f g e + v ('x y z');
- %o/%p/%S/%E/%F/%G/%V/length are unsupported. Unknown conversion is verbatim.
+ Parses %[flags][width][.precision][length]conv; flags - 0 + ' ' #; width/precision
+ are literal only (no '*'/'%$'). Length modifiers pick the argument domain: h is
+ float, l/L is a raw int32, q/j/z/t are consumed (a 32-bit slot cannot widen to
+ int64). Conversions d i u x X c s f g e + v ('x y z'). %i defaults to a raw-int
+ read; every other conversion defaults to float, matching FTE. The VM stores
+ functions, fields and entities as raw ints in float slots; entity values are byte
+ offsets here, so print an edict number through num_for_edict (#512) instead of
+ relying on %i. %o/%p/%S/%E/%F/%G/%V/%I remain unsupported. An unknown conversion
+ stops formatting and keeps the output produced so far.
  Arguments come from the param slots (OFS_PARM0 + 3*n), bounded by vm->argc; strings
  via CSQC_Client_GetString with offset validation.
 */
@@ -1422,7 +1428,7 @@ static void csqc_sprintf (void)
 	for (p = fmt; *p && o < sizeof (buf) - 1; p++)
 	{
 		char conv, formatbuf[32], *f;
-		int flags = 0, width = -1, prec = -1, haswidth = 0;
+		int flags = 0, width = -1, prec = -1, haswidth = 0, isfloat = -1;
 
 		if (*p != '%')
 		{
@@ -1470,14 +1476,30 @@ static void csqc_sprintf (void)
 			if (prec > 2047)
 				prec = 2047;
 		}
-		// FTE length modifiers: h (float), l/L (int), q/j/z/t (accepted). v6 has
-		// no int type, so the modifier is consumed and the argument stays float.
-		while (*p == 'h' || *p == 'l' || *p == 'L' || *p == 'q' ||
-			*p == 'j' || *p == 'z' || *p == 't')
-			p++;
+		// FTE length modifiers: h selects the float domain, l/L the raw-int domain.
+		// q/j/z/t are consumed; q would request an int64 read that a 32-bit slot
+		// cannot provide. Repeats are allowed and the last modifier wins.
+		for (;; p++)
+		{
+			if (*p == 'h')
+				isfloat = 1;
+			else if (*p == 'l' || *p == 'L')
+				isfloat = 0;
+			else if (*p != 'q' && *p != 'j' && *p != 'z' && *p != 't')
+				break;
+		}
 		conv = *p;
 		if (!conv)
 			break;
+		// %i reads raw int unless a modifier already chose the domain; every other
+		// conversion defaults to float (FTE PF_sprintf_internal).
+		if (conv == 'i')
+		{
+			if (isfloat < 0)
+				isfloat = 0;
+		}
+		else if (isfloat < 0)
+			isfloat = 1;
 
 		// build the C format: %[#][0][-][ ][+][width][.prec]
 		f = formatbuf;
@@ -1504,9 +1526,20 @@ static void csqc_sprintf (void)
 			*f = 0;
 			if (pn < vm->argc)
 			{
-				x = (double)vm->globals[OFS_PARM0 + pn * 3];
-				y = (double)vm->globals[OFS_PARM0 + pn * 3 + 1];
-				z = (double)vm->globals[OFS_PARM0 + pn * 3 + 2];
+				int ofs = OFS_PARM0 + pn * 3;
+
+				if (isfloat)
+				{
+					x = (double)vm->globals[ofs];
+					y = (double)vm->globals[ofs + 1];
+					z = (double)vm->globals[ofs + 2];
+				}
+				else
+				{
+					x = (double)*(int *)&vm->globals[ofs];
+					y = (double)*(int *)&vm->globals[ofs + 1];
+					z = (double)*(int *)&vm->globals[ofs + 2];
+				}
 			}
 			pn++;
 			snprintf (vfmt, sizeof (vfmt), "%s %s %s", formatbuf, formatbuf, formatbuf);
@@ -1534,7 +1567,9 @@ static void csqc_sprintf (void)
 		else
 		{
 			int argok = (pn < vm->argc);
-			float av = argok ? vm->globals[OFS_PARM0 + pn * 3] : 0;
+			int ofs = OFS_PARM0 + pn * 3;
+			float fv = argok ? vm->globals[ofs] : 0;
+			int iv = argok ? *(int *)&vm->globals[ofs] : 0;
 
 			switch (conv)
 			{
@@ -1542,26 +1577,29 @@ static void csqc_sprintf (void)
 			case 'i':
 				*f++ = 'd';
 				*f = 0;
-				snprintf (tmp, sizeof (tmp), formatbuf, (int)av);
+				if (isfloat)
+					snprintf (tmp, sizeof (tmp), formatbuf, (int)fv);
+				else
+					snprintf (tmp, sizeof (tmp), formatbuf, iv);
 				pn++;
 				break;
 			case 'u':
 				*f++ = 'u';
 				*f = 0;
-				snprintf (tmp, sizeof (tmp), formatbuf, (unsigned)(int)av);
+				snprintf (tmp, sizeof (tmp), formatbuf, isfloat ? (unsigned)(int)fv : (unsigned)iv);
 				pn++;
 				break;
 			case 'x':
 			case 'X':
 				*f++ = conv;
 				*f = 0;
-				snprintf (tmp, sizeof (tmp), formatbuf, (unsigned)(int)av);
+				snprintf (tmp, sizeof (tmp), formatbuf, isfloat ? (unsigned)(int)fv : (unsigned)iv);
 				pn++;
 				break;
 			case 'c':
 				*f++ = 'c';
 				*f = 0;
-				snprintf (tmp, sizeof (tmp), formatbuf, (int)av);
+				snprintf (tmp, sizeof (tmp), formatbuf, isfloat ? (int)fv : iv);
 				pn++;
 				break;
 			case 'f':
@@ -1569,12 +1607,12 @@ static void csqc_sprintf (void)
 			case 'g':
 				*f++ = conv;
 				*f = 0;
-				snprintf (tmp, sizeof (tmp), formatbuf, (double)av);
+				snprintf (tmp, sizeof (tmp), formatbuf, isfloat ? (double)fv : (double)iv);
 				pn++;
 				break;
 			default:
 				// FTE PF_sprintf_internal stops on an unknown conversion; the output
-				// produced so far is kept (no argument shift for later directives).
+				// produced so far is kept and the rest of the format is not parsed.
 				goto finished;
 			}
 		}
