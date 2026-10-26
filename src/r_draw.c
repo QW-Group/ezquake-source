@@ -588,6 +588,7 @@ void Draw_Init (void)
 	// string into the background before turning it into a texture.
 	Draw_InitCharset(); // Safe re-init.
 	Draw_InitConback(); // Safe re-init.
+	Con_InitParticles(); // Safe re-init.
 
 	// Load the crosshair pics
 	Draw_InitCrosshairs();
@@ -910,6 +911,25 @@ void Draw_SAlphaSubPic2(float x, float y, mpic_t *pic, int src_x, int src_y, int
 void Draw_SAlphaSubPic(float x, float y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha)
 {
 	Draw_SAlphaSubPic2(x, y, pic, src_x, src_y, src_width, src_height, scale, scale, alpha);
+}
+
+void Draw_SAlphaSubPicRotated(float x, float y, mpic_t *pic, int src_x, int src_y, int src_width, int src_height, float scale, float alpha, float angle)
+{
+	float newsl, newtl, newsh, newth;
+	float oldglwidth = pic->sh - pic->sl;
+	float oldglheight = pic->th - pic->tl;
+	float width = scale * src_width, height = scale * src_height;
+	byte color[4] = { 255, 255, 255, 0 };
+
+	newsl = pic->sl + (src_x * oldglwidth) / (float)pic->width;
+	newsh = newsl + (src_width * oldglwidth) / (float)pic->width;
+
+	newtl = pic->tl + (src_y * oldglheight) / (float)pic->height;
+	newth = newtl + (src_height * oldglheight) / (float)pic->height;
+
+	color[3] = bound(0, alpha * overall_alpha, 1) * 255;
+
+	R_DrawImageRotated(x - width / 2, y - height / 2, width, height, newsl, newtl, newsh - newsl, newth - newtl, color, pic->texnum, angle);
 }
 
 void Draw_SSubPic(float x, float y, mpic_t *gl, int srcx, int srcy, int width, int height, float scale)
