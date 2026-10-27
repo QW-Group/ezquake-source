@@ -1262,7 +1262,7 @@ static void CL_UpdateFakeProjectiles(void)
 
 		cent->current = centstate;
 
-		if (!prj->modelindex || !cl.model_precache[prj->modelindex] || prj->modelindex >= MAX_MODELS)
+		if (prj->modelindex <= 0 || prj->modelindex >= MAX_MODELS || !cl.model_precache[prj->modelindex])
 			continue;
 
 		ent.model = cl.model_precache[prj->modelindex];
