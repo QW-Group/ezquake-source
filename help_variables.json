@@ -15029,6 +15029,13 @@
         }
       ]
     },
+    "qtv_proxyaddr": {
+      "default": "",
+      "desc": "Relay QTV (host:port) to route /qtvplay through.",
+      "group-id": "38",
+      "remarks": "Like cl_proxyaddr but for QTV. Not applied to tcp: or already chained addresses.",
+      "type": "string"
+    },
     "qtv_say_team": {
       "default": "0",
       "group-id": "38",
