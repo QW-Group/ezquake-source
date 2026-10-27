@@ -523,6 +523,69 @@ static int CL_WriteSoundListChunk(sizebuf_t *buf, int cursor)
 	return next;
 }
 
+static void CL_WriteDemoStaticEntity(sizebuf_t *buf, const entity_t *ent, int modelindex)
+{
+	int j;
+
+	if (modelindex > 255) {
+		entity_state_t from = { 0 }, to = { 0 };
+		if ((cls.fteprotocolextensions & (FTE_PEXT_SPAWNSTATIC2 | FTE_PEXT_MODELDBL))
+				!= (FTE_PEXT_SPAWNSTATIC2 | FTE_PEXT_MODELDBL))
+			return;
+		to.number = 1;
+		to.modelindex = modelindex;
+		to.frame = ent->frame;
+		to.skinnum = ent->skinnum;
+		VectorCopy(ent->origin, to.origin);
+		VectorCopy(ent->angles, to.angles);
+		MSG_WriteByte(buf, svc_fte_spawnstatic2);
+		MSG_WriteDeltaEntity(&from, &to, buf, true, cls.fteprotocolextensions, cls.mvdprotocolextensions1);
+		return;
+	}
+
+	MSG_WriteByte(buf, svc_spawnstatic);
+	MSG_WriteByte(buf, modelindex);
+	MSG_WriteByte(buf, ent->frame);
+	MSG_WriteByte(buf, 0);
+	MSG_WriteByte(buf, ent->skinnum);
+	for (j = 0; j < 3; j++) {
+		MSG_WriteCoord(buf, ent->origin[j]);
+		MSG_WriteAngle(buf, ent->angles[j]);
+	}
+}
+
+static void CL_WriteDemoBaseline(sizebuf_t *buf, int entity, const entity_state_t *state)
+{
+	int j;
+
+	if ((unsigned)state->modelindex >= MAX_MODELS)
+		return;
+	if (state->modelindex > 255) {
+		entity_state_t from = { 0 }, to;
+		if (!entity)
+			return;
+		if ((cls.fteprotocolextensions & (FTE_PEXT_SPAWNSTATIC2 | FTE_PEXT_MODELDBL))
+				!= (FTE_PEXT_SPAWNSTATIC2 | FTE_PEXT_MODELDBL))
+			return;
+		to = *state;
+		to.number = entity;
+		MSG_WriteByte(buf, svc_fte_spawnbaseline2);
+		MSG_WriteDeltaEntity(&from, &to, buf, true, cls.fteprotocolextensions, cls.mvdprotocolextensions1);
+		return;
+	}
+
+	MSG_WriteByte(buf, svc_spawnbaseline);
+	MSG_WriteShort(buf, entity);
+	MSG_WriteByte(buf, state->modelindex);
+	MSG_WriteByte(buf, state->frame);
+	MSG_WriteByte(buf, state->colormap);
+	MSG_WriteByte(buf, state->skinnum);
+	for (j = 0; j < 3; j++) {
+		MSG_WriteCoord(buf, state->origin[j]);
+		MSG_WriteAngle(buf, state->angles[j]);
+	}
+}
+
 //
 // Write startup data to demo (called when demo started and cls.state == ca_active)
 //
@@ -601,14 +664,14 @@ static void CL_WriteStartupData (void)
 
 	// Loop through the models
 	n = 0;
-	s = cl.model_name[n + 1];
-	while (*s)
+	while (n + 1 < MAX_MODELS && cl.model_name[n + 1][0])
 	{
+		s = cl.model_name[n + 1];
 		// Write the model name to the buffer.
 		MSG_WriteString (&buf, s);
 
 		// If the buffer is half full, flush it.
-		if (buf.cursize	> MAX_MSGLEN / 2)
+		if (buf.cursize	> MAX_MSGLEN / 2 && (n & 0xff))
 		{
 			// End of partial model list.
 			MSG_WriteByte (&buf, 0);
@@ -621,11 +684,15 @@ static void CL_WriteStartupData (void)
 			SZ_Clear (&buf);
 
 			// Start on a new partial model list and continue.
-			MSG_WriteByte (&buf, svc_modellist);
-			MSG_WriteByte (&buf, n + 1);
+			if (n + 1 > 0xff) {
+				MSG_WriteByte (&buf, svc_fte_modellistshort);
+				MSG_WriteShort (&buf, n + 1);
+			} else {
+				MSG_WriteByte (&buf, svc_modellist);
+				MSG_WriteByte (&buf, n + 1);
+			}
 		}
 		n++;
-		s = cl.model_name[n + 1];
 	}
 
 	// Flush the buffer if it's not empty.
@@ -645,9 +712,6 @@ static void CL_WriteStartupData (void)
 		// Get the next static entity.
 		ent = cl_static_entities + i;
 
-		// Write ID for static entities.
-		MSG_WriteByte (&buf, svc_spawnstatic);
-
 		// Find if the model is precached or not.
 		for (j = 1; j < MAX_MODELS; j++)
 		{
@@ -655,23 +719,7 @@ static void CL_WriteStartupData (void)
 				break;
 		}
 
-		// Write if the model is precached.
-		if (j == MAX_MODELS)
-			MSG_WriteByte (&buf, 0);
-		else
-			MSG_WriteByte (&buf, j);
-
-		// Write the entities frame and skin number.
-		MSG_WriteByte (&buf, ent->frame);
-		MSG_WriteByte (&buf, 0);
-		MSG_WriteByte (&buf, ent->skinnum);
-
-		// Write the coordinate and angles.
-		for (j = 0; j < 3; j++)
-		{
-			MSG_WriteCoord (&buf, ent->origin[j]);
-			MSG_WriteAngle (&buf, ent->angles[j]);
-		}
+		CL_WriteDemoStaticEntity(&buf, ent, j == MAX_MODELS ? 0 : j);
 
 		// Flush the buffer if it's half full.
 		if (buf.cursize > MAX_MSGLEN / 2)
@@ -707,22 +755,7 @@ static void CL_WriteStartupData (void)
 		//
 		if (memcmp(es, &blankes, sizeof(blankes)))
 		{
-			// Write ID.
-			MSG_WriteByte (&buf, svc_spawnbaseline);
-			MSG_WriteShort (&buf, i);
-
-			// Write model info.
-			MSG_WriteByte (&buf, es->modelindex);
-			MSG_WriteByte (&buf, es->frame);
-			MSG_WriteByte (&buf, es->colormap);
-			MSG_WriteByte (&buf, es->skinnum);
-
-			// Write coordinates and angles.
-			for (j = 0; j < 3; j++)
-			{
-				MSG_WriteCoord(&buf, es->origin[j]);
-				MSG_WriteAngle(&buf, es->angles[j]);
-			}
+			CL_WriteDemoBaseline(&buf, i, es);
 
 			// Flush to demo file if buffer is half full.
 			if (buf.cursize > MAX_MSGLEN / 2)
@@ -1003,21 +1036,25 @@ void CL_WriteMVDStartupData(void)
 	MSG_WriteByte (&buf, 0);
 
 	n = 0;
-	s = cl.model_name[n+1];
-	while (*s)
+	while (n + 1 < MAX_MODELS && cl.model_name[n+1][0])
 	{
+		s = cl.model_name[n+1];
 		MSG_WriteString (&buf, s);
-		if (buf.cursize > MAX_MSGLEN/2)
+		if (buf.cursize > MAX_MSGLEN/2 && (n & 0xff))
 		{
 			MSG_WriteByte (&buf, 0);
 			MSG_WriteByte (&buf, n);
 			CL_WriteRecordMVDMessage (&buf);
 			SZ_Clear (&buf);
-			MSG_WriteByte (&buf, svc_modellist);
-			MSG_WriteByte (&buf, n + 1);
+			if (n + 1 > 0xff) {
+				MSG_WriteByte (&buf, svc_fte_modellistshort);
+				MSG_WriteShort (&buf, n + 1);
+			} else {
+				MSG_WriteByte (&buf, svc_modellist);
+				MSG_WriteByte (&buf, n + 1);
+			}
 		}
 		n++;
-		s = cl.model_name[n+1];
 	}
 
 	if (buf.cursize)
@@ -1036,9 +1073,6 @@ void CL_WriteMVDStartupData(void)
 		// Get the next static entity.
 		ent = cl_static_entities + i;
 
-		// Write ID for static entities.
-		MSG_WriteByte (&buf, svc_spawnstatic);
-
 		// Find if the model is precached or not.
 		for (j = 1; j < MAX_MODELS; j++)
 		{
@@ -1046,23 +1080,7 @@ void CL_WriteMVDStartupData(void)
 				break;
 		}
 
-		// Write if the model is precached.
-		if (j == MAX_MODELS)
-			MSG_WriteByte (&buf, 0);
-		else
-			MSG_WriteByte (&buf, j);
-
-		// Write the entities frame and skin number.
-		MSG_WriteByte (&buf, ent->frame);
-		MSG_WriteByte (&buf, 0);
-		MSG_WriteByte (&buf, ent->skinnum);
-
-		// Write the coordinate and angles.
-		for (j = 0; j < 3; j++)
-		{
-			MSG_WriteCoord (&buf, ent->origin[j]);
-			MSG_WriteAngle (&buf, ent->angles[j]);
-		}
+		CL_WriteDemoStaticEntity(&buf, ent, j == MAX_MODELS ? 0 : j);
 
 		// Flush the buffer if it's half full.
 		if (buf.cursize > MAX_MSGLEN / 2)
@@ -1113,22 +1131,7 @@ void CL_WriteMVDStartupData(void)
 		//
 		if (memcmp(es, &blankes, sizeof(blankes)))
 		{
-			// Write ID.
-			MSG_WriteByte (&buf, svc_spawnbaseline);
-			MSG_WriteShort (&buf, i);
-
-			// Write model info.
-			MSG_WriteByte (&buf, es->modelindex);
-			MSG_WriteByte (&buf, es->frame);
-			MSG_WriteByte (&buf, es->colormap);
-			MSG_WriteByte (&buf, es->skinnum);
-
-			// Write coordinates and angles.
-			for (j = 0; j < 3; j++)
-			{
-				MSG_WriteCoord(&buf, es->origin[j]);
-				MSG_WriteAngle(&buf, es->angles[j]);
-			}
+			CL_WriteDemoBaseline(&buf, i, es);
 
 			// Flush to demo file if buffer is half full.
 			if (buf.cursize > MAX_MSGLEN / 2)

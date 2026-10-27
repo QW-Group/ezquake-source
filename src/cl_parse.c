@@ -715,7 +715,7 @@ void Model_NextDownload (void)
 	}
 
 	cls.downloadtype = dl_model;
-	for ( ; cl.model_name[cls.downloadnumber][0]; cls.downloadnumber++)	
+	for ( ; cls.downloadnumber < MAX_MODELS && cl.model_name[cls.downloadnumber][0]; cls.downloadnumber++)
 	{
 		s = cl.model_name[cls.downloadnumber];
 		if (s[0] == '*')
@@ -1843,6 +1843,8 @@ void CL_ParseBaseline (entity_state_t *es)
 		es->origin[i] = MSG_ReadCoord ();
 		es->angles[i] = MSG_ReadAngle ();
 	}
+	if (msg_badread)
+		Host_Error("CL_ParseBaseline: truncated baseline");
 
 #ifdef FTE_PEXT_SCALE
 	es->scale = 0;
@@ -1875,6 +1877,8 @@ static void CL_ParseSpawnBaseline2 (void)
 	memset(&es, 0, sizeof (entity_state_t));
 
 	CL_ParseDelta(&nullst, &es, MSG_ReadShort());
+	if ((unsigned)es.number >= CL_MAX_EDICTS || msg_badread)
+		Host_Error("CL_ParseSpawnBaseline2: invalid entity number or truncated baseline");
 	memcpy(&cl_entities[es.number].baseline, &es, sizeof(es));
 }
 #endif
@@ -1896,6 +1900,8 @@ void CL_ParseStatic (qbool extended)
 	{
 		CL_ParseBaseline (&es);
 	}
+	if ((unsigned)es.modelindex >= MAX_MODELS || msg_badread)
+		Host_Error("CL_ParseStatic: invalid model index or truncated entity");
 
 	if (cl.num_statics >= MAX_STATIC_ENTITIES) {
 		Host_Error("Too many static entities");
@@ -4015,6 +4021,8 @@ void CL_ParseServerMessage (void)
 			case svc_spawnbaseline:
 				{
 					i = MSG_ReadShort();
+					if ((unsigned)i >= CL_MAX_EDICTS)
+						Host_Error("CL_ParseServerMessage: invalid baseline entity %d", i);
 					CL_ParseBaseline(&cl_entities[i].baseline);
 					break;
 				}

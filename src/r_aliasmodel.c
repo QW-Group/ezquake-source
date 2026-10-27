@@ -645,7 +645,8 @@ void R_DrawViewModel(void)
 
 	memset(&gun, 0, sizeof(gun));
 
-	if (!(gun.model = cl.model_precache[cent->current.modelindex])) {
+	if ((unsigned)cent->current.modelindex >= MAX_MODELS
+			|| !(gun.model = cl.model_precache[cent->current.modelindex])) {
 		Host_Error("R_DrawViewModel: bad modelindex");
 	}
 

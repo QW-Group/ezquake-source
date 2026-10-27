@@ -881,6 +881,10 @@ static void V_AddViewWeapon(float bob)
 	extern cvar_t scr_fov, scr_fovmode, scr_newHud;
 
 	cent = CL_WeaponModelForView();
+	if ((unsigned)gunmodel >= MAX_MODELS) {
+		cent->current.modelindex = 0;
+		return;
+	}
 	TP_ParseWeaponModel(cl.model_precache[gunmodel]);
 
 	if (!cl_drawgun.value
