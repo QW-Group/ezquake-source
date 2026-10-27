@@ -1370,8 +1370,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	MSG_WriteByte (&buf, 0);
 
 	n = 0;
-	s = sv.model_precache[n+1];
-	while (s)
+	while (n + 1 < MAX_MODELS && (s = sv.model_precache[n+1]))
 	{
 		MSG_WriteString (&buf, s);
 		if (buf.cursize > MAX_MSGLEN/2 && n & 0xff)
@@ -1392,7 +1391,6 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 			}
 		}
 		n++;
-		s = sv.model_precache[n+1];
 	}
 
 	if (buf.cursize)

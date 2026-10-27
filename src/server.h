@@ -87,7 +87,7 @@ typedef struct
 	unsigned	map_checksum;
 	unsigned	map_checksum2;
 	cmodel_t	*worldmodel;
-	char		*model_precache[MAX_MODELS];	// NULL terminated
+	char		*model_precache[MAX_MODELS];	// may be full; bound scans by MAX_MODELS
 	char		*vw_model_name[MAX_VWEP_MODELS];	// NULL terminated
 	char		*sound_precache[MAX_SOUNDS];	// NULL terminated
 	char		*lightstyles[MAX_LIGHTSTYLES];
