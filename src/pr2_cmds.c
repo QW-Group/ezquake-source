@@ -296,11 +296,11 @@ void PF2_setmodel(edict_t *e, char *m)
 	if (!m)
 		m = "";
 	// check to see if model was properly precached
-	for (i = 0, check = sv.model_precache; *check; i++, check++)
+	for (i = 0, check = sv.model_precache; i < MAX_MODELS && *check; i++, check++)
 		if (!strcmp(*check, m))
 			break;
 
-	if (!*check)
+	if (i == MAX_MODELS || !*check)
 		PR2_RunError("no precache: %s\n", m);
 
 	PR2_SetEntityString_model(e, &e->v->model, m);

@@ -222,6 +222,7 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 
 	edict_t *ent;
 	int i;
+	int inline_models;
 	int skill_level = current_skill;
 
 	extern cvar_t sv_loadentfiles, sv_loadentfiles_dir;
@@ -511,7 +512,11 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	}
 	sv.model_precache[1] = sv.modelname;
 	sv.models[1] = sv.worldmodel;
-	for (i = 1; i < CM_NumInlineModels(); i++)
+	inline_models = CM_NumInlineModels();
+	// The loop writes at 1 + i, so its last index must be below MAX_MODELS.
+	if (inline_models > MAX_MODELS - 1)
+		SV_Error ("SV_SpawnServer: too many inline models (%d, max %d)", inline_models, MAX_MODELS - 1);
+	for (i = 1; i < inline_models; i++)
 	{
 		sv.model_precache[1+i] = localmodels[i];
 		sv.models[i+1] =  CM_InlineModel (localmodels[i]);
