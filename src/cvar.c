@@ -380,6 +380,11 @@ void Cvar_Register(cvar_t *var)
 			return;
 		}
 
+		// Renderer restarts may register the same static cvar again.
+		if (old == var) {
+			return;
+		}
+
 		// warn if CVAR_SILENT is not set
 		if (!(old->flags & CVAR_SILENT)) {
 			Com_Printf("Can't register variable %s, already defined\n", var->name);
