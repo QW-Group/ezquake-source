@@ -1178,20 +1178,19 @@ qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange)
 	return true;
 }
 
-/* Reserve the queued initial catalog only for streams that need extended sounds. */
-static void SV_MVD_ReserveSoundList(int count, mvddest_t *dest)
+static void SV_MVD_ReservePrecacheLists(mvddest_t *dest)
 {
 	size_t reserve = 65536;
 	mvddest_t *d;
 	int i;
 
-	if (count < MAX_SOUNDS_LEGACY) {
-		return;
-	}
 	/* Initial gamestate is queued before streams are flushed. Keep the old
 	 * allowance for other state, plus names and worst-case per-chunk framing. */
-	for (i = 1; i <= count; ++i) {
+	for (i = 1; i < MAX_SOUNDS && sv.sound_precache[i]; ++i) {
 		reserve += strlen(sv.sound_precache[i]) + 16;
+	}
+	for (i = 1; i < MAX_MODELS && sv.model_precache[i]; ++i) {
+		reserve += strlen(sv.model_precache[i]) + 16;
 	}
 	for (d = demo.dest; d; d = d->nextdest) {
 		size_t needed;
@@ -1202,7 +1201,7 @@ static void SV_MVD_ReserveSoundList(int count, mvddest_t *dest)
 		}
 		needed = reserve + d->cacheused;
 		if (needed > INT_MAX) {
-			SV_Error("MVD soundlist exceeds stream cache limit");
+			SV_Error("MVD precache lists exceed stream cache limit");
 		}
 		if (needed <= (size_t)d->maxcachesize) {
 			continue;
@@ -1231,7 +1230,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	if (!demo.dest)
 		return;
 
-	SV_MVD_ReserveSoundList(sound_count, dest);
+	SV_MVD_ReservePrecacheLists(dest);
 
 	sv.mvdrecording = true; // NOTE:  afaik set to false on map change, so restore it here
 	demo.pingtime = demo.time = sv.time;
