@@ -977,6 +977,14 @@ void CL_WriteMVDStartupData(void)
 	}
 	#endif // PROTOCOL_VERSION_FTE2
 
+	#ifdef PROTOCOL_VERSION_MVD1
+	if (cls.mvdprotocolextensions1)
+	{
+		MSG_WriteLong (&buf, PROTOCOL_VERSION_MVD1);
+		MSG_WriteLong (&buf, cls.mvdprotocolextensions1);
+	}
+	#endif // PROTOCOL_VERSION_MVD1
+
 	MSG_WriteLong (&buf, PROTOCOL_VERSION);
 	MSG_WriteLong (&buf, cl.servercount);
 
