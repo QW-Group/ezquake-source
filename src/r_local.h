@@ -28,6 +28,7 @@ void R_BeginRendering(int *x, int *y, int *width, int *height);
 void R_EndRendering(void);
 void R_Set2D(void);
 void R_PolyBlend(void);
+qbool R_PostProcessViewBlend(void);
 void R_OnDisconnect(void);
 void R_StateDefault3D(void);
 
