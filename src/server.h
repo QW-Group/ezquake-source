@@ -70,6 +70,7 @@ typedef struct
 	double		physicstime;		// last time physics was run
 
 	int			lastcheck;			// used by PF_checkclient
+	byte		*checkpvs;			// map-owned copy for the current checkclient selection
 	double		lastchecktime;			// for monster ai
 
 	qbool		paused;				// are we paused?
@@ -710,6 +711,7 @@ typedef struct
 extern	cvar_t	sv_paused; // 1 - normal, 2 - auto (single player), 3 - both
 extern	cvar_t	sv_maxspeed;
 extern	cvar_t	sv_mintic, sv_maxtic, sv_maxfps;
+extern	cvar_t	sv_calcphs;
 extern	cvar_t	sv_antilag, sv_antilag_no_pred, sv_antilag_projectiles;
 
 extern	int current_skill;

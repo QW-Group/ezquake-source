@@ -574,8 +574,6 @@ name checkclient ()
 =================
 */
 
-static byte	*checkpvs;
-
 int PF2_newcheckclient(int check)
 {
 	int		i;
@@ -616,7 +614,7 @@ int PF2_newcheckclient(int check)
 
 	// get the PVS for the entity
 	VectorAdd (ent->v->origin, ent->v->view_ofs, org);
-	checkpvs = CM_LeafPVS (CM_PointInLeaf(org));
+	memcpy(sv.checkpvs, CM_LeafPVS(CM_PointInLeaf(org)), CM_PVSRowBytes());
 
 	return i;
 }
@@ -648,7 +646,7 @@ intptr_t PF2_checkclient(void)
 	self = PROG_TO_EDICT(pr_global_struct->self);
 	VectorAdd(self->v->origin, self->v->view_ofs, view);
 	l = CM_Leafnum(CM_PointInLeaf(view)) - 1;
-	if ((l < 0) || !(checkpvs[l >> 3] & (1 << (l & 7))))
+	if ((l < 0) || !(sv.checkpvs[l >> 3] & (1 << (l & 7))))
 	{
 		return NUM_FOR_EDICT(sv.edicts);
 	}

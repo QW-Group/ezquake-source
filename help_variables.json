@@ -19814,6 +19814,27 @@
       "group-id": "43",
       "type": "string"
     },
+    "sv_calcphs": {
+      "default": "2",
+      "desc": "Controls server PVS (potentially visible set) storage and PHS (potentially hearable set) calculation.",
+      "group-id": "43",
+      "remarks": "Applies when a new server map is loaded. Changing this variable does not rebuild the current map. External clients always use automatic PVS storage. Without PHS, PHS multicast uses the existing broadcast fallback.",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Expand PVS matrices smaller than 1 MiB; decode larger ones on demand. Do not calculate PHS.",
+          "name": "0"
+        },
+        {
+          "description": "Always expand PVS and calculate PHS, subject to available hunk memory.",
+          "name": "1"
+        },
+        {
+          "description": "Expand PVS and calculate PHS only for matrices smaller than 1 MiB; otherwise decode PVS on demand without PHS.",
+          "name": "2"
+        }
+      ]
+    },
     "sv_cheats": {
       "group-id": "43",
       "type": "boolean",

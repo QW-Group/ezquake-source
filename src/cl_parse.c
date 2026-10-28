@@ -725,7 +725,7 @@ void Model_NextDownload (void)
 			return;	// started a download
 	}
 
-	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, NULL, &cl.map_checksum2);
+	cl.clipmodels[1] = CM_LoadMap (cl.model_name[1], true, CM_VIS_AUTO, NULL, &cl.map_checksum2);
 	COM_StripExtension (COM_SkipPath(cl.model_name[1]), mapname, sizeof(mapname));
 	cl.map_checksum2 = Com_TranslateMapChecksum (mapname, cl.map_checksum2);
 	R_NewMapPreLoad();

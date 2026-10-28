@@ -678,10 +678,6 @@ void PF_checkpos (void)
 
 //============================================================================
 
-// Unlike Quake's Mod_LeafPVS, CM_LeafPVS returns a pointer to static data
-// uncompressed at load time, so it's safe to store for future use
-static byte	*checkpvs;
-
 int PF_newcheckclient (int check)
 {
 	int		i;
@@ -723,7 +719,7 @@ int PF_newcheckclient (int check)
 
 // get the PVS for the entity
 	VectorAdd (ent->v->origin, ent->v->view_ofs, org);
-	checkpvs = CM_LeafPVS (CM_PointInLeaf(org));
+	memcpy(sv.checkpvs, CM_LeafPVS(CM_PointInLeaf(org)), CM_PVSRowBytes());
 
 	return i;
 }
@@ -770,7 +766,7 @@ static void PF_checkclient (void)
 	self = PROG_TO_EDICT(pr_global_struct->self);
 	VectorAdd (self->v->origin, self->v->view_ofs, vieworg);
 	l = CM_Leafnum(CM_PointInLeaf(vieworg)) - 1;
-	if ( (l<0) || !(checkpvs[l>>3] & (1<<(l&7)) ) )
+	if ( (l<0) || !(sv.checkpvs[l>>3] & (1<<(l&7)) ) )
 	{
 		RETURN_EDICT(sv.edicts);
 		return;

@@ -99,7 +99,9 @@ trace_t CM_HullTrace (hull_t *hull, vec3_t start, vec3_t end);
 struct cleaf_s *CM_PointInLeaf (const vec3_t p);
 int CM_Leafnum (const struct cleaf_s *leaf);
 int CM_LeafAmbientLevel (const struct cleaf_s *leaf, int ambient_channel);
+// Borrowed until the next PVS decode or map reset; copy before retaining.
 byte *CM_LeafPVS (const struct cleaf_s *leaf);
+int CM_PVSRowBytes(void); // aligned visibility row width for owned copies
 byte *CM_LeafPHS (const struct cleaf_s *leaf); // only for the server
 byte *CM_FatPVS (vec3_t org);
 int CM_FindTouchedLeafs (const vec3_t mins, const vec3_t maxs, int leafs[], int maxleafs, int headnode, int *topnode);
@@ -107,7 +109,15 @@ char *CM_EntityString (void);
 int CM_NumInlineModels (void);
 cmodel_t *CM_InlineModel (char *name);
 void CM_InvalidateMap (void);
-cmodel_t *CM_LoadMap (char *name, qbool clientload, unsigned *checksum, unsigned *checksum2);
+/* Visibility storage and optional server PHS, selected only on a fresh map load. */
+typedef enum {
+	CM_VIS_NO_PHS = 0,  // automatic PVS storage, no PHS
+	CM_VIS_FULL = 1,    // fully expanded PVS and server PHS
+	CM_VIS_AUTO = 2     // expand small PVS/PHS matrices only
+} cm_vispolicy_t;
+
+cmodel_t *CM_LoadMap (char *name, qbool clientload, cm_vispolicy_t vispolicy,
+                     unsigned *checksum, unsigned *checksum2);
 void CM_Init (void);
 
 typedef struct bspx_header_s {

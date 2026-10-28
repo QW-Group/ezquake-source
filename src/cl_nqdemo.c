@@ -548,7 +548,7 @@ static void NQD_ParseServerData(void)
 	}
 
 	// now we try to load everything else until a cache allocation fails
-	cl.clipmodels[1] = CM_LoadMap(cl.model_name[1], true, NULL, &cl.map_checksum2);
+	cl.clipmodels[1] = CM_LoadMap(cl.model_name[1], true, CM_VIS_AUTO, NULL, &cl.map_checksum2);
 	if (!com_serveractive) {
 		Cvar_ForceSet(&host_mapname, mapname);
 	}
