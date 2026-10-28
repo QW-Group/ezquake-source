@@ -539,6 +539,10 @@ typedef struct model_s {
 
 	byte*               visdata;
 	int                 visdata_length;
+	int                 vis_rowbytes;       // aligned width of map-owned visibility scratch
+	byte*               vis_novis;          // all-visible row, including padding
+	byte*               vis_decompressed;   // borrowed until the next row decode
+	byte*               vis_merged;         // separate mask for two-leaf water visibility
 	byte*               lightdata;
 	size_t              lightdatasamplesize;
 
@@ -578,7 +582,6 @@ typedef struct model_s {
 
 //============================================================================
 
-void	Mod_Init (void);
 void	Mod_ClearAll (void);
 model_t *Mod_ForName (const char *name, qbool crash);
 void	*Mod_Extradata (model_t *mod); // handles caching

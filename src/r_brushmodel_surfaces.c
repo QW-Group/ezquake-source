@@ -375,7 +375,7 @@ void R_MarkLeaves(void)
 	byte *vis;
 	mnode_t *node;
 	int i;
-	byte solid[MAX_MAP_LEAFS / 8];
+	byte *solid = cl.worldmodel->vis_merged;
 	extern cvar_t r_novis;
 
 	if (!r_novis.value && r_oldviewleaf == r_viewleaf && r_oldviewleaf2 == r_viewleaf2) {
@@ -387,8 +387,7 @@ void R_MarkLeaves(void)
 	r_oldviewleaf = r_viewleaf;
 
 	if (r_novis.value) {
-		vis = solid;
-		memset(solid, 0xff, (cl.worldmodel->numleafs + 7) >> 3);
+		vis = cl.worldmodel->vis_novis;
 	}
 	else {
 		vis = Mod_LeafPVS(r_viewleaf, cl.worldmodel);
@@ -398,11 +397,11 @@ void R_MarkLeaves(void)
 			unsigned	*src, *dest;
 
 			// merge visibility data for two leafs
-			count = (cl.worldmodel->numleafs + 7) >> 3;
+			count = cl.worldmodel->vis_rowbytes;
 			memcpy(solid, vis, count);
 			src = (unsigned *)Mod_LeafPVS(r_viewleaf2, cl.worldmodel);
 			dest = (unsigned *)solid;
-			count = (count + 3) >> 2;
+			count >>= 2;
 			for (i = 0; i < count; i++)
 				*dest++ |= *src++;
 			vis = solid;
