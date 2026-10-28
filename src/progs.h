@@ -55,7 +55,7 @@ typedef struct sv_edict_s
 	int         entnum;
 
 	int			num_leafs;
-	short		leafnums[MAX_ENT_LEAFS];
+	int			leafnums[MAX_ENT_LEAFS]; // zero-based PVS indices, including large BSP2 maps
 
 	entity_state_t	baseline;
 

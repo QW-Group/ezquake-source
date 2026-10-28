@@ -412,6 +412,20 @@ static qbool Mod_LoadExternalSkyTexture(texture_t *tx)
 	return true;
 }
 
+/* Allocate hunk-owned rows once per BSP load; inline models share them. */
+static void Mod_AllocVisBuffers(model_t *model)
+{
+	size_t rowbytes = (((size_t)model->numleafs + 31) >> 5) * 4;
+
+	if (rowbytes > INT_MAX)
+		Host_Error("Mod_AllocVisBuffers: visibility row exceeds allocator limit");
+	model->vis_rowbytes = (int)rowbytes;
+	model->vis_novis = (byte *)Hunk_AllocName((int)rowbytes, "r_novis");
+	model->vis_decompressed = (byte *)Hunk_AllocName((int)rowbytes, "r_visdec");
+	model->vis_merged = (byte *)Hunk_AllocName((int)rowbytes, "r_vismerge");
+	memset(model->vis_novis, 0xff, rowbytes);
+}
+
 static void Mod_LoadVisibility(model_t* loadmodel, lump_t* l, byte* mod_base)
 {
 	if (l->filelen <= 0) {
@@ -1405,7 +1419,10 @@ static void Mod_LoadLeafs(model_t* loadmodel, lump_t* l, byte* mod_base)
 		out->nummarksurfaces = num_marksurfaces;
 
 		p = LittleLong(in->visofs);
-		out->compressed_vis = (p == -1 || loadmodel->visdata == NULL || p >= loadmodel->visdata_length) ? NULL : loadmodel->visdata + p;
+		if (loadmodel->visdata && (p < -1 || p >= loadmodel->visdata_length)) {
+			Host_Error("Mod_LoadLeafs: invalid visibility offset in %s", loadmodel->name);
+		}
+		out->compressed_vis = (p == -1 || loadmodel->visdata == NULL) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
 
 		if (ContentsIsLiquid(out->contents)) {
@@ -1449,7 +1466,10 @@ static void Mod_LoadLeafs29a(model_t* loadmodel, lump_t* l, byte* mod_base)
 		out->nummarksurfaces = LittleLong(in->nummarksurfaces);
 
 		p = LittleLong(in->visofs);
-		out->compressed_vis = (p == -1 || loadmodel->visdata == NULL || p >= loadmodel->visdata_length) ? NULL : loadmodel->visdata + p;
+		if (loadmodel->visdata && (p < -1 || p >= loadmodel->visdata_length)) {
+			Host_Error("Mod_LoadLeafs: invalid visibility offset in %s", loadmodel->name);
+		}
+		out->compressed_vis = (p == -1 || loadmodel->visdata == NULL) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
 
 		if (ContentsIsLiquid(out->contents)) {
@@ -1494,7 +1514,10 @@ static void Mod_LoadLeafsBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 		out->nummarksurfaces = LittleLong(in->nummarksurfaces);
 
 		p = LittleLong(in->visofs);
-		out->compressed_vis = (p == -1 || loadmodel->visdata == NULL || p >= loadmodel->visdata_length) ? NULL : loadmodel->visdata + p;
+		if (loadmodel->visdata && (p < -1 || p >= loadmodel->visdata_length)) {
+			Host_Error("Mod_LoadLeafs: invalid visibility offset in %s", loadmodel->name);
+		}
+		out->compressed_vis = (p == -1 || loadmodel->visdata == NULL) ? NULL : loadmodel->visdata + p;
 		out->efrags = NULL;
 
 		if (ContentsIsLiquid(out->contents)) {
@@ -1587,6 +1610,12 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 		Mod_LoadNodes(mod, &header->lumps[LUMP_NODES], (byte*)header);
 	}
 	Mod_LoadSubmodels(mod, &header->lumps[LUMP_MODELS], (byte*)header);
+	if (!mod->numsubmodels || mod->submodels[0].visleafs < 0
+		|| mod->submodels[0].visleafs >= mod->numleafs) {
+		Host_Error("Mod_LoadBrushModel: invalid visibility leaf count in %s", mod->name);
+	}
+	mod->numleafs = mod->submodels[0].visleafs;
+	Mod_AllocVisBuffers(mod);
 
 	// regular and alternate animation
 	mod->numframes = 2;

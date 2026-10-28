@@ -771,7 +771,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Sys_Init ();
 	Sys_CvarInit();
 	CM_Init ();
-	Mod_Init ();
 	VersionCheck_Init();
 
 #ifndef CLIENTONLY

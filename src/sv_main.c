@@ -134,6 +134,7 @@ cvar_t  sv_speedcheck = {"sv_speedcheck", "1"};
 //<-
 //<-
 //cvar_t	sv_highchars = {"sv_highchars", "1"};
+cvar_t	sv_calcphs = {"sv_calcphs", "2"}; // 0: no PHS, 1: force PVS/PHS, 2: automatic at map load
 cvar_t	sv_phs = {"sv_phs", "1"};
 cvar_t	pausable = {"pausable", "0"};
 cvar_t	sv_maxrate = {"sv_maxrate", "0"};
@@ -3482,6 +3483,7 @@ void SV_InitLocal (void)
 	//<-
 	Cvar_Register (&sv_allowlastscores);
 //	Cvar_Register (&sv_highchars);
+	Cvar_Register (&sv_calcphs);
 	Cvar_Register (&sv_phs);
 	Cvar_Register (&pausable);
 	Cvar_Register (&sv_maxrate);

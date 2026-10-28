@@ -44,15 +44,8 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 model_t *Mod_LoadModel(model_t *mod, qbool crash);
 void Mod_AddModelFlags(model_t *mod);
 
-byte	mod_novis[MAX_MAP_LEAFS/8];
-
 model_t	mod_known[MAX_MODELS];
 int		mod_numknown;
-
-void Mod_Init(void)
-{
-	memset(mod_novis, 0xff, sizeof(mod_novis));
-}
 
 //Caches the data if needed
 void *Mod_Extradata(model_t *mod)
@@ -93,46 +86,55 @@ mleaf_t *Mod_PointInLeaf(vec3_t p, model_t *model)
 	return NULL;	// never reached
 }
 
+/* Decode a bounded row into this model's map-owned scratch, with zero padding. */
 byte *Mod_DecompressVis(byte *in, model_t *model)
 {
-	static byte	decompressed[MAX_MAP_LEAFS / 8];
-	int c, row;
-	byte *out;
+	const byte *end;
+	byte *out = model->vis_decompressed;
+	int remaining = (model->numleafs + 7) >> 3;
+	int count;
 
-	row = (model->numleafs + 7) >> 3;
-	out = decompressed;
-
-	if (!in) {	// no vis info, so make all visible
-		while (row) {
-			*out++ = 0xff;
-			row--;
-		}
-		return decompressed;
-	}
-
-	do {
+	if (!in)
+		return model->vis_novis;
+	end = model->visdata + model->visdata_length;
+	if (in < model->visdata || in >= end)
+		Host_Error("Mod_DecompressVis: invalid visibility offset");
+	memset(out, 0, model->vis_rowbytes);
+	while (remaining > 0) {
+		if (in >= end)
+			Host_Error("Mod_DecompressVis: truncated PVS row");
 		if (*in) {
 			*out++ = *in++;
+			remaining--;
 			continue;
 		}
-
-		c = in[1];
-		in += 2;
-		while (c) {
-			*out++ = 0;
-			c--;
-		}
-	} while (out - decompressed < row);
-
-	return decompressed;
+		in++;
+		if (in >= end)
+			Host_Error("Mod_DecompressVis: truncated PVS run");
+		count = *in++;
+		if (!count || count > remaining)
+			Host_Error("Mod_DecompressVis: invalid PVS run");
+		out += count;
+		remaining -= count;
+	}
+	return model->vis_decompressed;
 }
 
 byte *Mod_LeafPVS(mleaf_t *leaf, model_t *model)
 {
 	if (leaf == model->leafs) {
-		return mod_novis;
+		return model->vis_novis;
 	}
 	return Mod_DecompressVis(leaf->compressed_vis, model);
+}
+
+/* Clear references to hunk-owned visibility buffers; storage is released by hunk. */
+static void Mod_ClearVisBuffers(model_t *mod)
+{
+	mod->vis_novis = NULL;
+	mod->vis_decompressed = NULL;
+	mod->vis_merged = NULL;
+	mod->vis_rowbytes = 0;
 }
 
 void Mod_ClearAll(void)
@@ -143,6 +145,7 @@ void Mod_ClearAll(void)
 	for (i = 0, mod = mod_known; i < mod_numknown; i++, mod++) {
 		if (mod->type != mod_alias && mod->type != mod_alias3 && mod->type != mod_sprite) {
 			mod->needload = true;
+			Mod_ClearVisBuffers(mod);
 		}
 	}
 }
@@ -179,6 +182,7 @@ model_t *Mod_FindName(const char *name)
 		}
 		strlcpy(mod->name, name, sizeof(mod->name));
 		mod->needload = true;
+		Mod_ClearVisBuffers(mod);
 		mod_numknown++;
 	}
 	return mod;
