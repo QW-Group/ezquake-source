@@ -19912,6 +19912,27 @@
       "group-id": "43",
       "type": ""
     },
+    "sv_demo_format": {
+      "default": "auto",
+      "desc": "Select the MVD file and QTV stream format for the next map.",
+      "group-id": "43",
+      "remarks": "Latched per map, including new recording destinations. Selection uses supported map capacity, not the number of occupied slots. RD playback and QTV forwarding require compatible consumers.",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Use legacy at capacities up to 2048, otherwise RD.",
+          "name": "auto"
+        },
+        {
+          "description": "Use legacy; unsupported when map capacity exceeds 2048.",
+          "name": "legacy"
+        },
+        {
+          "description": "Use RD even at legacy map capacities.",
+          "name": "rd"
+        }
+      ]
+    },
     "sv_demofps": {
       "group-id": "43",
       "type": ""
