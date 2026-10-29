@@ -1983,18 +1983,17 @@ void CL_ParseStartSoundPacket(qbool extended)
     int channel, ent, sound_num, volume, i;
 	int tracknum, flags = 0;
 	/* FTE's separate entity/channel form; not QW's packed volume flags. */
-	enum { large_entity = 1 << 3 };
     float attenuation;
 
 	if (extended) {
 		flags = MSG_ReadByte();
-		if (flags & ~(NQSND_VOLUME | NQSND_ATTENUATION | NQSND_LARGESOUND | large_entity)) {
+		if (flags & ~(NQSND_VOLUME | NQSND_ATTENUATION | NQSND_LARGESOUND | NQSND_LARGEENTITY)) {
 			Host_Error("Unsupported extended sound flags: %i", flags);
 			return;
 		}
 		volume = (flags & NQSND_VOLUME) ? MSG_ReadByte() : DEFAULT_SOUND_PACKET_VOLUME;
 		attenuation = (flags & NQSND_ATTENUATION) ? MSG_ReadByte() / 64.0 : DEFAULT_SOUND_PACKET_ATTENUATION;
-		if (flags & large_entity) {
+		if (flags & NQSND_LARGEENTITY) {
 			ent = (unsigned short)MSG_ReadShort();
 			channel = MSG_ReadByte();
 		}

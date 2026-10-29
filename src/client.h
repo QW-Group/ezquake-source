@@ -618,6 +618,14 @@ typedef struct scr_damage_s {
 	qbool visible;
 } scr_damage_t;
 
+/* Retained RD network state plus derived client prediction information. */
+typedef struct {
+    rd_entity_state_t state;            // Base wire fields, independent of legacy packet arrays.
+    vec3_t viewangles;                  // View angles derived using the last update's pitch convention.
+    double state_time;                 // Local command/receive time of the last entity update.
+    qbool reset;                       // This frame explicitly reset the entity to its baseline.
+} rd_client_entity_t;
+
 /// a structure that is wiped completely at every server signon
 typedef struct {
 	int			servercount;		///< server identification for prespawns
@@ -658,6 +666,7 @@ typedef struct {
 
 	double		last_ping_request;	///< while showing scoreboard
 
+	struct cl_rd_state_s *rd;           // RD-only retained frames/baselines, freed before state clear.
 	// sentcmds[cl.netchan.outgoing_sequence & UPDATE_MASK] = cmd
 	frame_t		frames[UPDATE_BACKUP];
 
@@ -1147,6 +1156,15 @@ void CL_SetSolidPlayers (int playernum);
 void CL_SetUpPlayerPrediction(qbool dopred);
 void CL_EmitEntities (void);
 void CL_ClearProjectiles (void);
+/* Base RD decoding and ownership; only selected after RD negotiation. */
+qbool CL_RD_ReadState(rd_client_entity_t *result, const rd_client_entity_t *old,
+                     const rd_client_entity_t *baseline, int number);
+qbool CL_RD_ReadBaseline(rd_client_entity_t *result, qbool numbered);
+qbool CL_RD_ParseEntities(void);
+qbool CL_RD_Valid(void);
+const rd_client_entity_t *CL_RD_Entity(int number, qbool previous);
+float CL_RD_Time(qbool previous);
+void CL_RD_Clear(void);
 void CL_ParsePacketEntities (qbool delta);
 #ifdef MVD_PEXT1_SIMPLEPROJECTILE
 void CL_ParsePacketSimpleProjectiles(void);

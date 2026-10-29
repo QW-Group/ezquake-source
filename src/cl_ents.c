@@ -27,6 +27,336 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "cl_tent.h"
 
+/* Separate RD buffers keep legacy frame capacities and demo layouts unchanged. */
+struct cl_rd_state_s {
+	rd_client_entity_t *current, *previous, *candidate; // Atomic publish and interpolation buffers.
+	rd_client_entity_t *baselines;       // RD baselines have different defaults/fields from QW.
+	float time, oldtime;                // Server timestamps for the two published frames.
+	qbool valid;                       // A reset-world marker established the initial state.
+};
+
+/* FTE base-RD null defaults, including identity appearance values. */
+static void CL_RD_InitEntity(rd_client_entity_t *entity)
+{
+	memset(entity, 0, sizeof(*entity));
+	entity->state.trans = 255;
+	entity->state.scale = 16;
+	entity->state.drawflags = SCALE_ORIGIN_ORIGIN;
+	memset(entity->state.colourmod, 32, sizeof(entity->state.colourmod));
+	memset(entity->state.glowmod, 32, sizeof(entity->state.glowmod));
+}
+
+/* Allocate only when an RD signon or entity stream actually needs these buffers. */
+static struct cl_rd_state_s *CL_RD_EnsureState(void)
+{
+	if (!cl.rd) {
+		cl.rd = Q_calloc(1, sizeof(*cl.rd));
+		cl.rd->current = Q_calloc(CL_MAX_EDICTS, sizeof(*cl.rd->current));
+		cl.rd->previous = Q_calloc(CL_MAX_EDICTS, sizeof(*cl.rd->previous));
+		cl.rd->candidate = Q_calloc(CL_MAX_EDICTS, sizeof(*cl.rd->candidate));
+		cl.rd->baselines = Q_calloc(CL_MAX_EDICTS, sizeof(*cl.rd->baselines));
+	}
+	return cl.rd;
+}
+
+/* Release retained allocations before the owning client state is wiped. */
+void CL_RD_Clear(void)
+{
+	if (!cl.rd) {
+		return;
+	}
+	Q_free(cl.rd->current);
+	Q_free(cl.rd->previous);
+	Q_free(cl.rd->candidate);
+	Q_free(cl.rd->baselines);
+	Q_free(cl.rd);
+}
+
+/* Normal RD entity references use a different extension bit from update indices. */
+static unsigned int CL_RD_ReadEntityNumber(void)
+{
+	unsigned int number = (unsigned short)MSG_ReadShort();
+	if (number & RD_ENTITYREF_EXTEND) {
+		number = ((number & RD_ENTITYREF_MASK) << 8) | (unsigned int)MSG_ReadByte();
+	}
+	return number;
+}
+
+// MVD's entity-only float coordinates apply to RD baselines and live states too.
+static float CL_RD_ReadCoord(void)
+{
+	return cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS ? MSG_ReadFloat() : MSG_ReadCoord();
+}
+
+/* Decode one base-RD payload transactionally, consuming unsupported visuals too. */
+qbool CL_RD_ReadState(rd_client_entity_t *result, const rd_client_entity_t *old,
+					 const rd_client_entity_t *baseline, int number)
+{
+	rd_client_entity_t next;
+	rd_entity_state_t *s = &next.state;
+	unsigned int bits = (unsigned int)MSG_ReadByte(), pred = 0;
+	int i;
+	if (bits & UF_EXTEND1) {
+		bits |= (unsigned int)MSG_ReadByte() << 8;
+	}
+	if (bits & UF_EXTEND2) {
+		bits |= (unsigned int)MSG_ReadByte() << 16;
+	}
+	if (bits & UF_EXTEND3) {
+		bits |= (unsigned int)MSG_ReadByte() << 24;
+	}
+	if (msg_badread || number < 0 || number >= CL_MAX_EDICTS || (bits & (UF_BONEDATA | UF_UNUSED1 | UF_EXTEND4))) {
+		return false;
+	}
+	if ((bits & UF_RESET) && baseline) {
+		next = *baseline;
+	} else if (!(bits & UF_RESET) && old) {
+		next = *old;
+	} else {
+		CL_RD_InitEntity(&next);
+	}
+	s->number = number;
+	next.reset = !!(bits & UF_RESET);
+	if (bits & UF_FRAME) {
+		s->frame = bits & UF_16BIT_LERPTIME ? (unsigned short)MSG_ReadShort() : MSG_ReadByte();
+	}
+	if (bits & UF_ORIGINXY) {
+		s->origin[0] = CL_RD_ReadCoord();
+		s->origin[1] = CL_RD_ReadCoord();
+	}
+	if (bits & UF_ORIGINZ) {
+		s->origin[2] = CL_RD_ReadCoord();
+	}
+	if (bits & UF_ANGLESXZ) {
+		s->angles[0] = bits & UF_PREDINFO ? MSG_ReadAngle16() : MSG_ReadAngle();
+		s->angles[2] = bits & UF_PREDINFO ? MSG_ReadAngle16() : MSG_ReadAngle();
+	}
+	if (bits & UF_ANGLESY) {
+		s->angles[1] = bits & UF_PREDINFO ? MSG_ReadAngle16() : MSG_ReadAngle();
+	}
+	if ((bits & (UF_EFFECTS | UF_EFFECTS2_OLD)) == (UF_EFFECTS | UF_EFFECTS2_OLD)) {
+		s->effects = MSG_ReadLong();
+	} else if (bits & UF_EFFECTS2_OLD) {
+		s->effects = (unsigned short)MSG_ReadShort();
+	} else if (bits & UF_EFFECTS) {
+		s->effects = MSG_ReadByte();
+	}
+	memset(s->movement, 0, sizeof(s->movement));
+	memset(s->velocity, 0, sizeof(s->velocity));
+	s->msec = 0;
+	if (bits & UF_PREDINFO) {
+		pred = MSG_ReadByte();
+		for (i = 0; i < 3; ++i) {
+			if (pred & (UFP_FORWARD << i)) {
+				s->movement[i] = MSG_ReadShort();
+			}
+		}
+		if (pred & UFP_MOVETYPE) {
+			s->pmovetype = MSG_ReadByte();
+		}
+		if (pred & UFP_VELOCITYXY) {
+			s->velocity[0] = MSG_ReadShort();
+			s->velocity[1] = MSG_ReadShort();
+		}
+		if (pred & UFP_VELOCITYZ) {
+			s->velocity[2] = MSG_ReadShort();
+		}
+		if (pred & UFP_MSEC) {
+			s->msec = MSG_ReadByte();
+		}
+		if (pred & UFP_WEAPONFRAME_OLD) {
+			s->weaponframe = MSG_ReadByte();
+			if (s->weaponframe & 128) {
+				s->weaponframe = (s->weaponframe & 127) | ((unsigned int)MSG_ReadByte() << 7);
+			}
+		}
+	}
+	for (i = 0; i < 3; ++i) {
+		if (bits & (i == 1 ? UF_ANGLESY : UF_ANGLESXZ)) {
+			float a = s->angles[i] * (i == 0 ? (bits & UF_PREDINFO ? -3 : -1) : 1);
+			next.viewangles[i] = ((int)(a * 65536.0f / 360.0f) & 65535) * (360.0f / 65536.0f);
+		}
+	}
+	if (bits & UF_MODEL) {
+		s->modelindex = bits & UF_16BIT_LERPTIME ? (unsigned short)MSG_ReadShort() : MSG_ReadByte();
+	}
+	if (bits & UF_SKIN) {
+		s->skinnum = bits & UF_16BIT_LERPTIME ? MSG_ReadShort() : MSG_ReadByte();
+	}
+	if (bits & UF_COLORMAP) {
+		s->colormap = MSG_ReadByte();
+	}
+	if (bits & UF_SOLID) {
+		s->solidsize = (unsigned short)MSG_ReadShort();
+	}
+	if (bits & UF_FLAGS) {
+		s->dpflags = MSG_ReadByte();
+	}
+	if (bits & UF_ALPHA) {
+		s->trans = MSG_ReadByte();
+	}
+	if (bits & UF_SCALE) {
+		s->scale = MSG_ReadByte();
+	}
+	if (bits & UF_DRAWFLAGS) {
+		s->drawflags = MSG_ReadByte();
+		s->abslight = (s->drawflags & MLS_MASK) >= MLS_ADDLIGHT ? MSG_ReadByte() : 0;
+	}
+	if (bits & UF_TAGINFO) {
+		s->tagentity = CL_RD_ReadEntityNumber();
+		s->tagindex = MSG_ReadByte();
+	}
+	if (bits & UF_LIGHT) {
+		for (i = 0; i < 4; ++i) {
+			s->light[i] = (unsigned short)MSG_ReadShort();
+		}
+		s->lightstyle = MSG_ReadByte();
+		s->lightpflags = MSG_ReadByte();
+	}
+	if (bits & UF_TRAILEFFECT) {
+		unsigned int trail = (unsigned short)MSG_ReadShort();
+		s->traileffect = trail & 0x3fff;
+		s->emiteffect = trail & 0x8000 ? ((unsigned short)MSG_ReadShort() & 0x3fff) : 0;
+	}
+	if (bits & UF_COLORMOD) {
+		for (i = 0; i < 3; ++i) {
+			s->colourmod[i] = MSG_ReadByte();
+		}
+	}
+	if (bits & UF_GLOW) {
+		s->glowsize = MSG_ReadByte();
+		s->glowcolour = MSG_ReadByte();
+		for (i = 0; i < 3; ++i) {
+			s->glowmod[i] = MSG_ReadByte();
+		}
+	}
+	if (bits & UF_FATNESS) {
+		s->fatness = MSG_ReadChar();
+	}
+	if (bits & UF_MODELINDEX2) {
+		s->modelindex2 = bits & UF_16BIT_LERPTIME ? (unsigned short)MSG_ReadShort() : MSG_ReadByte();
+	}
+	if (bits & UF_GRAVITYDIR) {
+		s->gravitydir[0] = MSG_ReadByte();
+		s->gravitydir[1] = MSG_ReadByte();
+	}
+	if (msg_badread || (unsigned int)s->modelindex >= MAX_MODELS || (unsigned int)s->modelindex2 >= MAX_MODELS || s->tagentity >= CL_MAX_EDICTS) {
+		return false;
+	}
+	for (i = 0; i < 3; ++i) {
+		if (!isfinite(s->origin[i]) || !isfinite(s->angles[i])) {
+			return false;
+		}
+	}
+	*result = next;
+	return true;
+}
+
+/* RD statics omit the entity reference; numbered baselines retain full RD data. */
+qbool CL_RD_ReadBaseline(rd_client_entity_t *result, qbool numbered)
+{
+	unsigned int number = numbered ? CL_RD_ReadEntityNumber() : 0;
+	rd_client_entity_t next;
+	if (number >= CL_MAX_EDICTS || !CL_RD_ReadState(&next, NULL, NULL, number)) {
+		return false;
+	}
+	if (numbered) {
+		CL_RD_EnsureState()->baselines[number] = next;
+	}
+	*result = next;
+	return true;
+}
+
+/* Decode a complete frame before replacing the last valid persistent state. */
+qbool CL_RD_ParseEntities(void)
+{
+	struct cl_rd_state_s *rd = CL_RD_EnsureState();
+	rd_client_entity_t *swap;
+	float time = MSG_ReadFloat();
+	qbool valid = rd->valid;
+	int last = 0, i;
+	if (msg_badread || !isfinite(time)) {
+		return false;
+	}
+	memcpy(rd->candidate, rd->current, CL_MAX_EDICTS * sizeof(*rd->current));
+	for (i = 0; i < CL_MAX_EDICTS; ++i) {
+		rd->candidate[i].reset = false;
+	}
+	for (;;) {
+		unsigned int word = (unsigned short)MSG_ReadShort(), number;
+		qbool remove = !!(word & RD_ENTITYINDEX_REMOVE);
+		if (msg_badread) {
+			return false;
+		}
+		if (!word) {
+			break;
+		}
+		number = word & RD_ENTITYINDEX_MASK;
+		if (word & RD_ENTITYINDEX_EXTEND) {
+			number |= (unsigned int)MSG_ReadByte() << 14;
+		}
+		if (msg_badread || number >= CL_MAX_EDICTS) {
+			return false;
+		}
+		if (!number && remove && !last) {
+			memset(rd->candidate, 0, CL_MAX_EDICTS * sizeof(*rd->candidate));
+			valid = true;
+			continue;
+		}
+		if (!number || number <= (unsigned int)last) {
+			return false;
+		}
+		last = number;
+		if (remove) {
+			memset(&rd->candidate[number], 0, sizeof(rd->candidate[number]));
+		} else {
+			const rd_client_entity_t *old = rd->candidate[number].state.number ? &rd->candidate[number] : NULL;
+			const rd_client_entity_t *base = rd->baselines[number].state.number ? &rd->baselines[number] : NULL;
+			if (!CL_RD_ReadState(&rd->candidate[number], old, base, number)) {
+				return false;
+			}
+			rd->candidate[number].state_time = cl.parsecounttime;
+		}
+	}
+	if (!valid) {
+		return true; /* Await reset-world recovery without publishing unknown state. */
+	}
+	swap = rd->previous;
+	rd->previous = rd->current;
+	rd->current = rd->candidate;
+	rd->candidate = swap;
+	rd->oldtime = rd->time;
+	rd->time = time;
+	rd->valid = true;
+	return true;
+}
+
+/* Access only published state, and suppress interpolation through explicit resets. */
+const rd_client_entity_t *CL_RD_Entity(int number, qbool previous)
+{
+	const rd_client_entity_t *entity;
+	if (!cl.rd || !cl.rd->valid || number <= 0 || number >= CL_MAX_EDICTS) {
+		return NULL;
+	}
+	if (previous && cl.rd->current[number].reset) {
+		return NULL;
+	}
+	entity = previous ? &cl.rd->previous[number] : &cl.rd->current[number];
+	return entity->state.number ? entity : NULL;
+}
+
+/* Report whether the initial world reset was received. */
+qbool CL_RD_Valid(void)
+{
+	return cl.rd && cl.rd->valid;
+}
+
+/* RD timestamps are independent of the legacy frame ring. */
+float CL_RD_Time(qbool previous)
+{
+	return cl.rd ? (previous ? cl.rd->oldtime : cl.rd->time) : 0;
+}
+
 static int MVD_TranslateFlags(int src);
 void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);	
 
