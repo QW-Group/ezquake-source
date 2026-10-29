@@ -789,7 +789,7 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 		{
 			// Without PEXT_TRANS there's no PF_EXTRA_PFS, move
 			// PF_ONGROUND and PF_SOLID to their expected offsets.
-			MSG_WriteShort (msg, pflags & 0x3fff | (pflags & 0xc00000) >> 8);
+			MSG_WriteShort (msg, (pflags & 0x3fff) | ((pflags & 0xc00000) >> 8));
 		}
 #else
 		MSG_WriteShort (msg, pflags);

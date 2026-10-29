@@ -1905,7 +1905,7 @@ guess_pm_type:
 			{
 				// Without the extended layout there's no PF_EXTRA_PFS, move
 				// PF_ONGROUND and PF_SOLID to their expected offsets.
-				MSG_WriteShort (&cls.demomessage, flags & 0x3fff | (flags & 0xc00000) >> 8);
+				MSG_WriteShort (&cls.demomessage, (flags & 0x3fff) | ((flags & 0xc00000) >> 8));
 			}
 #else
 			MSG_WriteShort(&cls.demomessage, flags);

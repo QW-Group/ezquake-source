@@ -2427,10 +2427,12 @@ static double CL_MinFrameTime (void)
 		return 0;
 
 	if ((cls.state == ca_disconnected) || (Minimized && !cls.download))
+	{
 		if (cl_maxfps_menu.value >= 30)
 			return 1 / cl_maxfps_menu.value;
 		else
 			return 1 / (r_displayRefresh.autoString ? atoi(r_displayRefresh.autoString) : 30.0);
+	}
 
 	if (cls.demoplayback)
 	{
