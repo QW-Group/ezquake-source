@@ -3671,10 +3671,21 @@ void CL_MuzzleFlash (void)
 	if ((unsigned) (i - 1) >= MAX_CLIENTS) 
 	{
 		// A monster firing
-		num_ent = cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.num_entities;
+		entity_state_t rd_ent;
+		qbool replacement = CL_RD_Valid();
+		num_ent = replacement ? 1 : cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.num_entities;
 
 		for (j = 0; j < num_ent; j++) {
-			ent = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.entities[j];
+			if (replacement) {
+				const rd_client_entity_t *entity = CL_RD_Entity(i, false);
+				if (!entity)
+					return;
+				CL_RD_ToLegacy(&entity->state, &rd_ent);
+				ent = &rd_ent;
+			}
+			else {
+				ent = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities.entities[j];
+			}
 
 			if (ent->number == i) {
 				mod = cl.model_precache[ent->modelindex];
