@@ -1301,6 +1301,8 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 #endif
 
 #ifdef PROTOCOL_VERSION_FTE2
+	/* Recording retains its legacy entity codec, independent of live clients. */
+	demo.recorder.fteprotocolextensions2 &= ~FTE_PEXT2_REPLACEMENTDELTAS;
 	if (demo.recorder.fteprotocolextensions2)
 	{
 		MSG_WriteLong(&buf, PROTOCOL_VERSION_FTE2);

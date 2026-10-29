@@ -20151,6 +20151,13 @@
         }
       ]
     },
+    "sv_pext_replacementdeltas": {
+      "default": "0",
+      "desc": "Allow replacement deltas for new client connections.",
+      "group-id": "43",
+      "remarks": "Existing connections retain their negotiated protocol.",
+      "type": "boolean"
+    },
     "sv_phs": {
       "group-id": "43",
       "remarks": "of the map.",

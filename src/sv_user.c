@@ -204,7 +204,8 @@ qbool SV_CheckClientSoundSupport(client_t *client)
 	}
 #endif
 	if (SV_SoundPrecacheCount(sv.sound_precache, MAX_SOUNDS) < MAX_SOUNDS_LEGACY
-	    || (client->fteprotocolextensions & FTE_PEXT_SOUNDDBL)) {
+	    || (client->fteprotocolextensions & FTE_PEXT_SOUNDDBL)
+	    || (client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)) {
 		return true;
 	}
 	SV_ClientPrintf(client, PRINT_HIGH,
@@ -368,7 +369,8 @@ static void Cmd_New_f (void)
 #endif
 
 #ifdef FTE_PEXT_ENTITYDBL
-	if (sv.max_edicts > 512 && !(sv_client->fteprotocolextensions & FTE_PEXT_ENTITYDBL)) {
+	if (sv.max_edicts > 512 && !(sv_client->fteprotocolextensions & FTE_PEXT_ENTITYDBL)
+	    && !(sv_client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)) {
 		SV_ClientPrintf(sv_client, 2, "\n\nWARNING:\n"
 			"Your client lacks support for extended\n"
 			"  entity limits, some enemies/projectiles\n"
@@ -602,7 +604,8 @@ static void Cmd_Modellist_f (void)
 	n = Q_atoi(Cmd_Argv(2));
 	maxclientsupportedmodels = 256;
 #ifdef FTE_PEXT_MODELDBL
-	if (sv_client->fteprotocolextensions & FTE_PEXT_MODELDBL) {
+	if ((sv_client->fteprotocolextensions & FTE_PEXT_MODELDBL)
+	    || (sv_client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)) {
 		maxclientsupportedmodels = MAX_MODELS;
 	}
 #endif
@@ -745,7 +748,17 @@ static void Cmd_PreSpawn_f (void)
 				break;
 			}
 
-			if (sv_client->fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2) {
+			if (sv_client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) {
+				rd_entity_state_t rd;
+				SV_RD_FromLegacy(&rd, s);
+				MSG_WriteByte(&sv_client->netchan.message, svc_fte_spawnstatic2);
+				if (!MSG_RD_WriteBaseline(&sv_client->netchan.message, &rd, false, (sv_client->mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0)) {
+					SV_ClientPrintf(sv_client, PRINT_HIGH, "Invalid RD static entity\n");
+					SV_DropClient(sv_client);
+					return;
+				}
+			}
+			else if (sv_client->fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2) {
 				MSG_WriteByte(&sv_client->netchan.message, svc_fte_spawnstatic2);
 				SV_WriteDelta(sv_client, &from, s, &sv_client->netchan.message, true);
 			}
@@ -780,7 +793,17 @@ static void Cmd_PreSpawn_f (void)
 				continue;
 			}
 
-			if (sv_client->fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2) {
+			if (sv_client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) {
+				rd_entity_state_t rd;
+				SV_RD_FromLegacy(&rd, s);
+				MSG_WriteByte(&sv_client->netchan.message, svc_fte_spawnbaseline2);
+				if (!MSG_RD_WriteBaseline(&sv_client->netchan.message, &rd, true, (sv_client->mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0)) {
+					SV_ClientPrintf(sv_client, PRINT_HIGH, "Invalid RD baseline\n");
+					SV_DropClient(sv_client);
+					return;
+				}
+			}
+			else if (sv_client->fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2) {
 				MSG_WriteByte(&sv_client->netchan.message, svc_fte_spawnbaseline2);
 				SV_WriteDelta(sv_client, &empty_baseline, s, &sv_client->netchan.message, true);
 			}
@@ -4380,6 +4403,8 @@ void SV_ExecuteClientMessage (client_t *cl)
 //	if (cl->state == cs_zombie) // FIXME
 //		return; // FIXME
 
+	SV_RD_AckFrame(cl, cl->netchan.incoming_acknowledged);
+
 	// this is a valid, sequenced packet, so process it
 	svs.stats.packets++;
 	cl->send_message = true; // reply at end of frame
@@ -4504,8 +4529,12 @@ void SV_ExecuteClientMessage (client_t *cl)
 		}
 
 		c = MSG_ReadByte ();
-		if (c == -1)
+		if (c == -1) {
+			if (cl->rd && cl->state == cs_spawned && cl->delta_sequence == -1) {
+				SV_RD_RequestReset(cl);
+			}
 			break;
+		}
 
 		switch (c)
 		{
