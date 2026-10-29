@@ -31,8 +31,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 struct cl_rd_state_s {
 	rd_client_entity_t *current, *previous, *candidate; // Atomic publish and interpolation buffers.
 	rd_client_entity_t *baselines;       // RD baselines have different defaults/fields from QW.
+	rd_entity_state_t *statics;          // Raw RD statics, indexed by the existing static list.
 	float time, oldtime;                // Server timestamps for the two published frames.
 	qbool valid;                       // A reset-world marker established the initial state.
+	int player_lerp_sequence[MAX_CLIENTS]; // Animation bases retained across chunks of one MVD frame.
+	int player_lerp_frame;              // Parsecount for the captured player bases.
+	float player_lerp_time;             // RD server timestamp for the captured player bases.
+	qbool player_lerp_valid;            // Distinguish initial storage from frame zero.
 };
 
 void CL_RD_ToLegacy(const rd_entity_state_t *s, entity_state_t *to)
@@ -150,7 +155,37 @@ void CL_RD_Clear(void)
 	Q_free(cl.rd->previous);
 	Q_free(cl.rd->candidate);
 	Q_free(cl.rd->baselines);
+	Q_free(cl.rd->statics);
 	Q_free(cl.rd);
+}
+
+/* Startup writers read the accepted baseline without a legacy projection. */
+const rd_client_entity_t *CL_RD_Baseline(int number)
+{
+	if (!cl.rd || number <= 0 || number >= CL_MAX_EDICTS || !cl.rd->baselines[number].state.number) {
+		return NULL;
+	}
+	return &cl.rd->baselines[number];
+}
+
+/* Raw statics share the renderer static list's indices and map lifetime. */
+const rd_entity_state_t *CL_RD_Static(int index)
+{
+	return cl.rd && cl.rd->statics && index >= 0 && index < MAX_STATIC_ENTITIES
+		? &cl.rd->statics[index] : NULL;
+}
+
+/* Retain only successfully parsed static records for demo startup. */
+void CL_RD_SetStatic(int index, const rd_entity_state_t *state)
+{
+	struct cl_rd_state_s *rd = CL_RD_EnsureState();
+	if (index < 0 || index >= MAX_STATIC_ENTITIES) {
+		Host_Error("Invalid RD static index");
+	}
+	if (!rd->statics) {
+		rd->statics = Q_calloc(MAX_STATIC_ENTITIES, sizeof(*rd->statics));
+	}
+	rd->statics[index] = *state;
 }
 
 /* Normal RD entity references use a different extension bit from update indices. */
@@ -1928,16 +1963,18 @@ void CL_LinkProjectiles (void)
 	}
 }
 
-void SetupPlayerEntity(int num, player_state_t *state) 
+/* Return the interpolation base, or zero when this update breaks continuity. */
+static int CL_SetupPlayerEntity(int num, player_state_t *state, int previous_sequence)
 {
 	centity_t *cent;
 
 	cent = &cl_entities[num];
 
-	if (!cl.oldparsecount || cl.oldparsecount != cent->sequence ||
+	if (!cl.oldparsecount || cl.oldparsecount != previous_sequence ||
 		state->modelindex != cent->current.modelindex ||
 		!VectorL2Compare(state->origin, cent->current.origin, 200)) 
 	{
+		previous_sequence = 0;
 		cent->startlerp = cl.time;
 		cent->deltalerp = -1;
 		cent->frametime = -1;
@@ -1977,6 +2014,12 @@ void SetupPlayerEntity(int num, player_state_t *state)
 	cent->sequence = state->messagenum;	
 	cent->current.modelindex = state->modelindex;
 	cent->old_vw_index = state->vw_index;
+	return previous_sequence;
+}
+
+void SetupPlayerEntity(int num, player_state_t *state)
+{
+	CL_SetupPlayerEntity(num, state, cl_entities[num].sequence);
 }
 
 player_state_t oldplayerstates[MAX_CLIENTS];	
@@ -2434,6 +2477,17 @@ void CL_RD_PublishFrame(void)
 	frame->invalid = false;
 	cl.servertime = CL_RD_Time(false);
 	cl.servertime_works = true;
+	if (cls.mvdplayback && (!cl.rd->player_lerp_valid
+		|| cl.rd->player_lerp_frame != cl.parsecount
+		|| cl.rd->player_lerp_time != cl.servertime)) {
+		/* Repeated chunks use the preceding frame, including its loss/reset status. */
+		for (number = 1; number <= MAX_CLIENTS; ++number) {
+			cl.rd->player_lerp_sequence[number - 1] = cl_entities[number].sequence;
+		}
+		cl.rd->player_lerp_frame = cl.parsecount;
+		cl.rd->player_lerp_time = cl.servertime;
+		cl.rd->player_lerp_valid = true;
+	}
 	for (number = 1; number < CL_MAX_EDICTS; ++number) {
 		const rd_client_entity_t *entity = CL_RD_Entity(number, false);
 		const rd_client_entity_t *previous = CL_RD_Entity(number, true);
@@ -2448,8 +2502,15 @@ void CL_RD_PublishFrame(void)
 			oldplayerstates[number - 1] = *player;
 			if (!previous) {
 				cl_entities[number].sequence = 0;
+				cl.rd->player_lerp_sequence[number - 1] = 0;
 			}
-			SetupPlayerEntity(number, player);
+			if (cls.mvdplayback) {
+				cl.rd->player_lerp_sequence[number - 1] = CL_SetupPlayerEntity(number, player,
+					cl.rd->player_lerp_sequence[number - 1]);
+			}
+			else {
+				SetupPlayerEntity(number, player);
+			}
 		}
 		else if (entity) {
 			entity_state_t state;

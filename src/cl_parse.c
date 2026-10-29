@@ -1429,12 +1429,6 @@ void CL_ParseServerData (void)
 		if (protover == PROTOCOL_VERSION_FTE2)
 		{
 			cls.fteprotocolextensions2 = MSG_ReadLong();
-			if (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) {
-				if (cls.demoplayback) {
-					Host_Error("RD demo playback is not supported");
-				}
-				CL_StopRecordingForProtocolChange();
-			}
 			Com_DPrintf ("Using FTE extensions2 0x%x\n", cls.fteprotocolextensions2);
 			continue;
 		}
@@ -1904,12 +1898,15 @@ void CL_ParseStatic (qbool extended)
 {
 	entity_t *ent;
 	entity_state_t es;
+	rd_entity_state_t raw;
+	qbool replacement = cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS;
 
 	if (extended && (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)) {
 		rd_client_entity_t entity;
 		if (!CL_RD_ReadBaseline(&entity, false)) {
 			Host_Error("Invalid RD static entity");
 		}
+		raw = entity.state;
 		CL_RD_ToLegacy(&entity.state, &es);
 	}
 	else if (extended)
@@ -1928,6 +1925,18 @@ void CL_ParseStatic (qbool extended)
 
 	if (cl.num_statics >= MAX_STATIC_ENTITIES) {
 		Host_Error("Too many static entities");
+	}
+	if (replacement) {
+		if (!extended) {
+			MSG_RD_InitState(&raw);
+			raw.modelindex = es.modelindex;
+			raw.frame = es.frame;
+			raw.colormap = es.colormap;
+			raw.skinnum = es.skinnum;
+			VectorCopy(es.origin, raw.origin);
+			VectorCopy(es.angles, raw.angles);
+		}
+		CL_RD_SetStatic(cl.num_statics, &raw);
 	}
 	ent = &cl_static_entities[cl.num_statics++];
 	ent->entity_id = cl.num_statics;
