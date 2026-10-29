@@ -32,6 +32,10 @@ typedef struct renderer_api_s {
 
 extern renderer_api_t renderer;
 
+// Renderer backend name ("OpenGL"/"Vulkan") for CSQC_RendererRestarted (not the
+// GPU string).
+const char *R_RendererDescription(void);
+
 #undef RENDERER_METHOD
 
 #endif // EZQUAKE_R_RENDERER_HEADER

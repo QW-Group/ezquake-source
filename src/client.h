@@ -495,6 +495,7 @@ typedef struct
 	char		downloadtempname[MAX_PATH];
 	char		downloadname[MAX_PATH];
 	int			downloadnumber;
+	qbool		downloadrequested;		///< a download command was sent, but the first block has not arrived yet
 	dltype_t	downloadtype;
 	int			downloadpercent;
 	int			downloadrate;
@@ -1146,6 +1147,7 @@ void CL_DecayLights (void);
 void CL_SetSolidPlayers (int playernum);
 void CL_SetUpPlayerPrediction(qbool dopred);
 void CL_EmitEntities (void);
+void CL_EmitEntitiesKeepScene (void);	// CSQC #301: link engine entities without clearing the scene (FTE parity)
 void CL_ClearProjectiles (void);
 void CL_ParsePacketEntities (qbool delta);
 #ifdef MVD_PEXT1_SIMPLEPROJECTILE
