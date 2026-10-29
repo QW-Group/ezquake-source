@@ -274,13 +274,14 @@ tries to send an unreliable message to a connection, and handles the
 transmition / retransmition of the reliable messages.
 
 A 0 length will still generate a packet and deal with the reliable messages.
+Returns whether the unreliable payload was included alongside reliable data.
 ================
 */
-void Netchan_Transmit (netchan_t *chan, int length, byte *data)
+qbool Netchan_Transmit (netchan_t *chan, int length, byte *data)
 {
 	sizebuf_t send;
 	byte send_buf[MAX_MSGLEN + PACKET_HEADER];
-	qbool send_reliable;
+	qbool send_reliable, included;
 	unsigned w1, w2;
 	int i;
 	static double last_error_time = 0;
@@ -292,7 +293,7 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 			Con_Printf ("%s:Outgoing message overflow\n", NET_AdrToString (chan->remote_address));
 			last_error_time = curtime;
 		}
-		return;
+		return false;
 	}
 
 	// if the remote side dropped the last reliable message, resend it
@@ -334,7 +335,8 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 	}
 
 	// add the unreliable part if space is available
-	if (send.maxsize - send.cursize >= length) {
+	included = send.maxsize - send.cursize >= length;
+	if (included) {
 		SZ_Write(&send, data, length);
 	}
 
@@ -378,6 +380,7 @@ void Netchan_Transmit (netchan_t *chan, int length, byte *data)
 		);
 	}
 
+	return included;
 }
 
 /*
