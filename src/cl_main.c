@@ -108,6 +108,7 @@ cvar_t  cl_delay_packet_dev = { "cl_delay_packet_deviation", "0", CVAR_NOTFROMSE
 
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
+cvar_t cl_pext_replacementdeltas = {"cl_pext_replacementdeltas", "1", CVAR_NOTFROMSERVER}; // Allow retained FTE entity updates.
 cvar_t  cl_pext = {"cl_pext", "1", CVAR_NOTFROMSERVER};					// allow/disallow protocol extensions at all.
 													// some extensions can be explicitly controlled.
 cvar_t  cl_pext_limits = { "cl_pext_limits", "1", CVAR_NOTFROMSERVER }; // enhanced protocol limits
@@ -553,6 +554,9 @@ unsigned int CL_SupportedFTEExtensions2 (void)
 
 	if (!cl_pext.value)
 		return 0;
+
+	if (cl_pext_replacementdeltas.integer)
+		fteprotextsupported2 |= FTE_PEXT2_REPLACEMENTDELTAS;
 
 	return fteprotextsupported2;
 }
@@ -1375,6 +1379,7 @@ void CL_ClearState (void)
 	extern cshift_t	cshift_empty;
 	extern void CL_ProcessServerInfo (void);
 
+	CL_RD_Clear();
 	S_StopAllSounds();
 
 	Com_DPrintf ("Clearing memory\n");
@@ -1462,6 +1467,8 @@ void CL_ClearState (void)
 void CL_Disconnect (void) 
 {
 	byte final[10];
+
+	CL_RD_Clear();
 
 	connect_time = 0;
 	con_addtimestamp = true;
@@ -2096,6 +2103,7 @@ static void CL_InitLocal(void)
 
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
 	Cvar_Register(&cl_pext);
+	Cvar_Register(&cl_pext_replacementdeltas);
 	Cvar_Register(&cl_pext_limits);
 	Cvar_Register(&cl_pext_other);
 	Cvar_Register(&cl_pext_warndemos);

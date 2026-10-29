@@ -2298,6 +2298,23 @@ void CL_Stop_f (void)
 	}
 }
 
+// Stopping a recording writes final packets through net_message. Preserve the
+// live serverdata packet while changing from a legacy recording to RD.
+void CL_StopRecordingForProtocolChange(void)
+{
+	sizebuf_t saved = net_message;
+	byte *data;
+	if (!cls.demorecording) {
+		return;
+	}
+	data = Q_malloc(saved.cursize);
+	memcpy(data, saved.data, saved.cursize);
+	CL_Stop_f();
+	net_message = saved;
+	memcpy(net_message.data, data, saved.cursize);
+	Q_free(data);
+}
+
 //
 // Returns the Demo directory. If the user hasn't set the demo_dir var, the gamedir is returned.
 //
@@ -2323,6 +2340,11 @@ void CL_Record_f (void)
 		return;
 	}
 #endif
+
+	if (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) {
+		Com_Printf("Demo recording is not supported in a replacement-delta session.\n");
+		return;
+	}
 
 	if (cls.mvdplayback) {
 		CL_RecordMvd_f();
@@ -2430,6 +2452,11 @@ static qbool CL_MatchRecordDemo(char *dir, char *name, qbool autorecord)
 	char *fullname;
 	char *exts[] = {"qwd", "qwz", "mvd", NULL};
 	int num;
+
+	if (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) {
+		Com_Printf("Demo recording is not supported in a replacement-delta session.\n");
+		return false;
+	}
 
 	if (cls.state != ca_active)
 	{

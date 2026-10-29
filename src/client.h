@@ -995,6 +995,7 @@ void CL_WriteDemoEntities (void);
 void CL_WriteServerdata (sizebuf_t *msg);
 void CL_StopPlayback (void);
 void CL_Stop_f (void);
+void CL_StopRecordingForProtocolChange(void);
 void CL_CheckQizmoCompletion(void);
 void CL_Demo_Jump(double seconds, int relative, demoseekingtype_t seeking);
 void CL_Demo_Init(void);
@@ -1157,6 +1158,11 @@ void CL_SetUpPlayerPrediction(qbool dopred);
 void CL_EmitEntities (void);
 void CL_ClearProjectiles (void);
 /* Base RD decoding and ownership; only selected after RD negotiation. */
+// Project retained RD state into the existing render/prediction interfaces, one entity at a time.
+void CL_RD_ToLegacy(const rd_entity_state_t *source, entity_state_t *target);
+void CL_RD_ToPlayer(const rd_client_entity_t *source, player_state_t *target);
+// Publish a completely decoded RD frame to player prediction and entity interpolation.
+void CL_RD_PublishFrame(void);
 qbool CL_RD_ReadState(rd_client_entity_t *result, const rd_client_entity_t *old,
                      const rd_client_entity_t *baseline, int number);
 qbool CL_RD_ReadBaseline(rd_client_entity_t *result, qbool numbered);
