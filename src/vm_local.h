@@ -169,9 +169,6 @@ typedef struct
 	int		jtrgLength;			// number of jump table targets
 } vmHeader_t;
 
-
-typedef struct vm_s vm_t;
-
 struct vm_s {
 
 	unsigned int programStack;		// the vm may be recursively entered
