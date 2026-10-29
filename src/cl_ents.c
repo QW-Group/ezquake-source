@@ -35,6 +35,91 @@ struct cl_rd_state_s {
 	qbool valid;                       // A reset-world marker established the initial state.
 };
 
+void CL_RD_ToLegacy(const rd_entity_state_t *s, entity_state_t *to)
+{
+	memset(to, 0, sizeof(*to));
+	to->number = s->number;
+	VectorCopy(s->origin, to->origin);
+	VectorCopy(s->angles, to->angles);
+	to->modelindex = s->modelindex;
+	to->frame = s->frame;
+	to->skinnum = s->skinnum;
+	to->colormap = s->colormap;
+	to->effects = s->effects;
+#ifdef FTE_PEXT_SCALE
+	to->scale = s->scale;
+#endif
+#ifdef FTE_PEXT_TRANS
+	/* Legacy zero means opaque; approximate RD zero with its minimum alpha. */
+	to->trans = s->trans == 255 ? 0 : max(1, s->trans);
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+	memcpy(to->colourmod, s->colourmod, sizeof(to->colourmod));
+#endif
+}
+
+void CL_RD_ToPlayer(const rd_client_entity_t *entity, player_state_t *to)
+{
+	const rd_entity_state_t *s = &entity->state;
+	int i;
+	memset(to, 0, sizeof(*to));
+	to->flags = s->solidsize ? PF_SOLID : 0;
+	switch (s->pmovetype & RD_MOVETYPE_MASK) {
+	case RD_MOVETYPE_NOCLIP:
+		to->pm_type = cl.z_ext & Z_EXT_PM_TYPE_NEW ? PM_SPECTATOR : PM_OLD_SPECTATOR;
+		break;
+	case RD_MOVETYPE_FLY:
+		to->pm_type = PM_FLY;
+		break;
+	case RD_MOVETYPE_NONE:
+		to->pm_type = PM_NONE;
+		break;
+	case RD_MOVETYPE_LOCK:
+		to->pm_type = PM_LOCK;
+		break;
+	case RD_MOVETYPE_TOSS:
+	case RD_MOVETYPE_BOUNCE:
+		to->pm_type = PM_DEAD;
+		to->flags |= PF_DEAD;
+		break;
+	default:
+		to->pm_type = PM_NORMAL;
+		break;
+	}
+	to->onground = !!(s->pmovetype & RD_MOVETYPE_ONGROUND);
+	to->jump_held = !!(s->pmovetype & RD_MOVETYPE_JUMP_HELD);
+	to->messagenum = cl.parsecount;
+	to->state_time = entity->state_time - s->msec * 0.001;
+	VectorCopy(s->origin, to->origin);
+	/* Playerinfo uses signed angles; retain the cyclic RD representation separately. */
+	for (i = 0; i < 3; ++i) {
+		float angle = entity->viewangles[i];
+		if (angle >= 180.0f) {
+			angle -= 360.0f;
+		}
+		to->viewangles[i] = angle;
+		to->command.angles[i] = angle;
+		to->velocity[i] = s->velocity[i] / 8.0f;
+	}
+	to->command.forwardmove = s->movement[0];
+	to->command.sidemove = s->movement[1];
+	to->command.upmove = s->movement[2];
+	to->command.msec = s->msec;
+	to->modelindex = s->modelindex;
+	to->frame = s->frame;
+	to->skinnum = s->skinnum;
+	to->effects = s->effects;
+	to->weaponframe = s->weaponframe;
+#ifdef FTE_PEXT_SCALE
+	to->scale = s->scale;
+#endif
+#ifdef FTE_PEXT_TRANS
+	to->alpha = s->trans == 255 ? 0 : max(1, s->trans);
+#endif
+	/* Player modelindex2 selects the vwep table; other entities use model precaches. */
+	to->vw_index = (unsigned int)s->modelindex2 < MAX_VWEP_MODELS ? s->modelindex2 : 0;
+}
+
 /* FTE base-RD null defaults, including identity appearance values. */
 static void CL_RD_InitEntity(rd_client_entity_t *entity)
 {
@@ -1455,9 +1540,20 @@ void CL_LinkPacketEntities(void)
 
 	memset(&ent, 0, sizeof(ent));
 
-	for (pnum = 0; pnum < pack->num_entities; pnum++) 
+	for (pnum = 0; pnum < (CL_RD_Valid() ? CL_MAX_EDICTS : pack->num_entities); pnum++)
 	{
-		state = &pack->entities[pnum];
+		entity_state_t projected;
+		if (CL_RD_Valid()) {
+			const rd_client_entity_t *entity = CL_RD_Entity(pnum, false);
+			if (pnum <= MAX_CLIENTS || !entity) {
+				continue;
+			}
+			CL_RD_ToLegacy(&entity->state, &projected);
+			state = &projected;
+		}
+		else {
+			state = &pack->entities[pnum];
+		}
 		cent = &cl_entities[state->number];
 
 		// Control powerup glow for bots.
@@ -2328,6 +2424,51 @@ guess_pm_type:
 	SetupPlayerEntity(num + 1, state);
 }
 
+void CL_RD_PublishFrame(void)
+{
+	int number;
+	frame_t *frame = &cl.frames[cl.parsecountmod];
+	if (!CL_RD_Valid()) {
+		return;
+	}
+	cl.oldvalidsequence = cl.validsequence;
+	cl.validsequence = cls.netchan.incoming_sequence;
+	cl.delta_sequence = cl.validsequence;
+	cl.frames[cl.validsequence & UPDATE_MASK].invalid = false;
+	frame->invalid = false;
+	cl.servertime = CL_RD_Time(false);
+	cl.servertime_works = true;
+	for (number = 1; number < CL_MAX_EDICTS; ++number) {
+		const rd_client_entity_t *entity = CL_RD_Entity(number, false);
+		const rd_client_entity_t *previous = CL_RD_Entity(number, true);
+		if (number <= MAX_CLIENTS) {
+			player_state_t *player = &frame->playerstate[number - 1];
+			if (!entity) {
+				player->messagenum = -1;
+				continue;
+			}
+			CL_RD_ToPlayer(entity, player);
+			TP_ParsePlayerInfo(&oldplayerstates[number - 1], player, &cl.players[number - 1]);
+			oldplayerstates[number - 1] = *player;
+			if (!previous) {
+				cl_entities[number].sequence = 0;
+			}
+			SetupPlayerEntity(number, player);
+		}
+		else if (entity) {
+			entity_state_t state;
+			CL_RD_ToLegacy(&entity->state, &state);
+			if (!previous) {
+				cl_entities[number].sequence = 0;
+			}
+			CL_SetupPacketEntity(number, &state, !previous || memcmp(&entity->state, &previous->state, sizeof(entity->state)) != 0);
+		}
+	}
+	if (cls.state == ca_onserver) {
+		CL_MakeActive();
+	}
+}
+
 // Called when the CTF flags are set
 void CL_AddFlagModels (entity_t *ent, int team) 
 {
@@ -2537,8 +2678,8 @@ static void CL_LinkPlayers(void)
 		// VULT MOTION TRAILS
 		ent.alpha = 0;
 #ifdef FTE_PEXT_SCALE
-		// 1/50 units, 0 (not sent) stays 0 which the renderer treats as unscaled.
-		ent.scale = state->scale / 50.0f;
+		// Scale uses 1/16 units in RD and 1/50 in legacy; zero is unscaled.
+		ent.scale = state->scale / ((cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) ? 16.0f : 50.0f);
 #endif
 		// The player object never gets added.
 		if (j == cl.playernum) {
@@ -2792,9 +2933,35 @@ void CL_SetSolidEntities (void)
 	frame = &cl.frames[cl.parsecountmod];
 	pak = &frame->packet_entities;
 
-	for (i = 0; i < pak->num_entities; i++) 
+	for (i = 0; i < (CL_RD_Valid() ? CL_MAX_EDICTS : pak->num_entities); i++)
 	{
-		state = &pak->entities[i];
+		entity_state_t projected;
+		const rd_client_entity_t *rd = NULL;
+		if (CL_RD_Valid()) {
+			rd = CL_RD_Entity(i, false);
+			if (i <= MAX_CLIENTS || !rd || !rd->state.solidsize) {
+				continue;
+			}
+			CL_RD_ToLegacy(&rd->state, &projected);
+			state = &projected;
+		}
+		else {
+			state = &pak->entities[i];
+		}
+
+		if (rd && rd->state.solidsize != ES_SOLID_BSP) {
+			physent_t *phys;
+			unsigned int solid = rd->state.solidsize;
+			if (pmove.numphysent == MAX_PHYSENTS) {
+				break;
+			}
+			phys = &pmove.physents[pmove.numphysent++];
+			memset(phys, 0, sizeof(*phys));
+			VectorCopy(state->origin, phys->origin);
+			VectorSet(phys->mins, -(int)(solid & 31)*8, -(int)(solid & 31)*8, -(int)((solid >> 5)&31)*8);
+			VectorSet(phys->maxs, (solid & 31)*8, (solid & 31)*8, ((solid >> 10)&63)*8-32);
+			continue;
+		}
 
 		if (!state->modelindex)
 			continue;

@@ -2280,6 +2280,13 @@
         }
       ]
     },
+    "cl_pext_replacementdeltas": {
+      "default": "1",
+      "desc": "Request FTE replacement deltas when connecting to a server.",
+      "group-id": "21",
+      "remarks": "Applies to new connections. Disabling this does not change an already negotiated connection.",
+      "type": "boolean"
+    },
     "cl_pext_scale": {
       "default": "1",
       "desc": "If set, enable support for FTE's entity scale protocol extension.\nAllows the server to scale models.",

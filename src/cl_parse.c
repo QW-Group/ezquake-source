@@ -1429,6 +1429,12 @@ void CL_ParseServerData (void)
 		if (protover == PROTOCOL_VERSION_FTE2)
 		{
 			cls.fteprotocolextensions2 = MSG_ReadLong();
+			if (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) {
+				if (cls.demoplayback) {
+					Host_Error("RD demo playback is not supported");
+				}
+				CL_StopRecordingForProtocolChange();
+			}
 			Com_DPrintf ("Using FTE extensions2 0x%x\n", cls.fteprotocolextensions2);
 			continue;
 		}
@@ -1758,7 +1764,8 @@ void CL_ParseModellist (qbool extended)
 				return;
 			}
 		
-			if (nummodels >= 256 && !(cls.fteprotocolextensions & FTE_PEXT_MODELDBL))
+			if (nummodels >= 256 && !(cls.fteprotocolextensions & FTE_PEXT_MODELDBL)
+				&& !(cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
 			#else
 			if (++nummodels >= MAX_MODELS)
 			#endif // PROTOCOL_VERSION_FTE
@@ -1867,18 +1874,27 @@ static void CL_ParseSpawnBaseline2 (void)
 {
 	entity_state_t nullst, es;
 
-	if (!(cls.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2)) 
+	if (!(cls.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2)
+		&& !(cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
 	{
 		Com_Printf ("illegible server message\nsvc_fte_spawnbaseline2 (%i) without FTE_PEXT_SPAWNSTATIC2\n", svc_fte_spawnbaseline2);
 		Host_EndGame();
 	}
 
-	memset(&nullst, 0, sizeof (entity_state_t));
-	memset(&es, 0, sizeof (entity_state_t));
-
-	CL_ParseDelta(&nullst, &es, MSG_ReadShort());
-	if ((unsigned)es.number >= CL_MAX_EDICTS || msg_badread)
-		Host_Error("CL_ParseSpawnBaseline2: invalid entity number or truncated baseline");
+	if (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) {
+		rd_client_entity_t entity;
+		if (!CL_RD_ReadBaseline(&entity, true)) {
+			Host_Error("Invalid RD baseline");
+		}
+		CL_RD_ToLegacy(&entity.state, &es);
+	}
+	else {
+		memset(&nullst, 0, sizeof(nullst));
+		memset(&es, 0, sizeof(es));
+		CL_ParseDelta(&nullst, &es, MSG_ReadShort());
+		if ((unsigned)es.number >= CL_MAX_EDICTS || msg_badread)
+			Host_Error("CL_ParseSpawnBaseline2: invalid entity number or truncated baseline");
+	}
 	memcpy(&cl_entities[es.number].baseline, &es, sizeof(es));
 }
 #endif
@@ -1889,7 +1905,14 @@ void CL_ParseStatic (qbool extended)
 	entity_t *ent;
 	entity_state_t es;
 
-	if (extended)
+	if (extended && (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)) {
+		rd_client_entity_t entity;
+		if (!CL_RD_ReadBaseline(&entity, false)) {
+			Host_Error("Invalid RD static entity");
+		}
+		CL_RD_ToLegacy(&entity.state, &es);
+	}
+	else if (extended)
 	{
 		entity_state_t nullst;
 		memset (&nullst, 0, sizeof(entity_state_t));
@@ -1977,24 +2000,67 @@ ACTION MESSAGES
 =====================================================================
 */
 
+// FTE's prefix-length integer encodes the high sound channel flags.
+static unsigned int CL_ReadSoundFlags(void)
+{
+	unsigned int first = MSG_ReadByte(), count = 0, mask = 128, flags;
+	while (mask && (first & mask)) {
+		first -= mask;
+		++count;
+		mask >>= 1;
+	}
+	// Base sound flags occupy one byte; consume wider encodings but reject unknown bits.
+	flags = first;
+	while (count--) {
+		unsigned int next = MSG_ReadByte();
+		if (flags > 255) {
+			Host_Error("Unsupported extended sound flags");
+		}
+		flags = (flags << 8) | next;
+	}
+	return flags;
+}
+
 void CL_ParseStartSoundPacket(qbool extended)
 {
     vec3_t pos;
     int channel, ent, sound_num, volume, i;
 	int tracknum, flags = 0;
 	/* FTE's separate entity/channel form; not QW's packed volume flags. */
+	enum { more_flags = 1 << 2,
+		time_offset = 1 << 6, pitch = 1 << 7, velocity = 1 << 8 };
+	qbool rd = (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) != 0;
     float attenuation;
 
 	if (extended) {
 		flags = MSG_ReadByte();
-		if (flags & ~(NQSND_VOLUME | NQSND_ATTENUATION | NQSND_LARGESOUND | NQSND_LARGEENTITY)) {
+		if (rd && (flags & more_flags)) {
+			flags |= CL_ReadSoundFlags() << 8;
+		}
+		if (flags & ~(NQSND_VOLUME | NQSND_ATTENUATION | NQSND_LARGESOUND | NQSND_LARGEENTITY
+			| (rd ? more_flags | time_offset | pitch | 0xe700 : 0))) {
 			Host_Error("Unsupported extended sound flags: %i", flags);
 			return;
 		}
 		volume = (flags & NQSND_VOLUME) ? MSG_ReadByte() : DEFAULT_SOUND_PACKET_VOLUME;
 		attenuation = (flags & NQSND_ATTENUATION) ? MSG_ReadByte() / 64.0 : DEFAULT_SOUND_PACKET_ATTENUATION;
+		// Optional FTE mixing controls are parsed even when the legacy mixer cannot render them.
+		if (flags & pitch) {
+			MSG_ReadByte();
+		}
+		if (flags & time_offset) {
+			MSG_ReadShort();
+		}
+		if (flags & velocity) {
+			for (i = 0; i < 3; ++i) {
+				MSG_ReadShort();
+			}
+		}
 		if (flags & NQSND_LARGEENTITY) {
 			ent = (unsigned short)MSG_ReadShort();
+			if (rd && (ent & 0x8000)) {
+				ent = ((ent & 0x7fff) << 8) | MSG_ReadByte();
+			}
 			channel = MSG_ReadByte();
 		}
 		else {
@@ -2022,6 +2088,10 @@ void CL_ParseStartSoundPacket(qbool extended)
 		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
 	if (sound_num < 0 || sound_num >= MAX_SOUNDS)
 		Host_Error("CL_ParseStartSoundPacket: sound = %i", sound_num);
+	if (rd && !sound_num) {
+		S_StopSound(ent, channel);
+		return;
+	}
 	if (!cl.sound_precache[sound_num])
 		return;
 
@@ -3492,9 +3562,11 @@ void CL_ParseStufftext (void)
 		Cbuf_AddTextEx(&cbuf_svc, s);
 	}
 
-	// Execute stuffed commands immediately when starting a demo
-	if (cls.demoplayback && cls.state != ca_active)
-		Cbuf_ExecuteEx (&cbuf_svc); // FIXME: execute cbuf_main too?
+	// FTE pipelines RD signon lists; apply serverinfo before resource loading.
+	if ((cls.demoplayback && cls.state != ca_active)
+		|| (cls.state == ca_onserver && (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))) {
+		Cbuf_ExecuteEx (&cbuf_svc);
+	}
 }
 
 void CL_SetStat (int stat, int value)
@@ -3791,6 +3863,9 @@ void CL_ParseServerMessage (void)
 
 		if (cmd == svc_qizmovoice)
 			SHOWNET("svc_qizmovoice")
+		else if (cmd == svc_fte_updateentities) {
+			SHOWNET("svc_fte_updateentities");
+		}
 		else if (cmd < num_svc_strings)
 			SHOWNET(svc_strings[cmd]);
 
@@ -4040,7 +4115,8 @@ void CL_ParseServerMessage (void)
 #if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_SPAWNSTATIC2)
 			case svc_fte_spawnstatic2:
 				{
-					if (cls.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2)
+					if ((cls.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2)
+						|| (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
 						CL_ParseStatic(true);
 					else
 						Host_Error("CL_ParseServerMessage: svc_fte_spawnstatic2 without FTE_PEXT_SPAWNSTATIC2");
@@ -4210,7 +4286,8 @@ void CL_ParseServerMessage (void)
 #if defined (PROTOCOL_VERSION_FTE) && defined (FTE_PEXT_MODELDBL)
 			case svc_fte_modellistshort:
 				{
-					if (cls.fteprotocolextensions & FTE_PEXT_MODELDBL)
+					if ((cls.fteprotocolextensions & FTE_PEXT_MODELDBL)
+						|| (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
 						CL_ParseModellist(true);
 					else
 						Host_Error("CL_ParseServerMessage: svc_fte_modellistshort without FTE_PEXT_MODELDBL");
@@ -4219,12 +4296,14 @@ void CL_ParseServerMessage (void)
 				}
 #endif  // PROTOCOL_VERSION_FTE
 			case svc_fte_soundextended:
-				if (!(cls.fteprotocolextensions & FTE_PEXT_SOUNDDBL))
+				if (!(cls.fteprotocolextensions & FTE_PEXT_SOUNDDBL)
+					&& !(cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
 					Host_Error("svc_fte_soundextended without FTE_PEXT_SOUNDDBL");
 				CL_ParseStartSoundPacket(true);
 				break;
 			case svc_fte_soundlistshort:
-				if (!(cls.fteprotocolextensions & FTE_PEXT_SOUNDDBL))
+				if (!(cls.fteprotocolextensions & FTE_PEXT_SOUNDDBL)
+					&& !(cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
 					Host_Error("svc_fte_soundlistshort without FTE_PEXT_SOUNDDBL");
 				CL_ParseSoundlist(true);
 				break;
@@ -4233,6 +4312,14 @@ void CL_ParseServerMessage (void)
 					CL_ParseSoundlist(false);
 					break;
 				}
+			case svc_fte_updateentities:
+				if (!(cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
+					Host_Error("RD entities without negotiation");
+				if (!CL_RD_ParseEntities()) {
+					Host_Error("Invalid RD entity frame");
+				}
+				CL_RD_PublishFrame();
+				break;
 			case svc_packetentities:
 				{
 					CL_ParsePacketEntities(false);
