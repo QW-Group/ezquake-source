@@ -70,8 +70,6 @@ else()
             -std=gnu89
 
             -Wall
-            -Wno-pointer-to-int-cast
-            -Wno-int-to-pointer-cast
             -Wno-strict-aliasing
             -Wno-deprecated-declarations
 
