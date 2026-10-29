@@ -423,9 +423,9 @@ void MSG_ReadSkip(int bytes);
 void MSG_RD_InitState(rd_entity_state_t *state);
 unsigned int MSG_RD_StateBits(const rd_entity_state_t *from, const rd_entity_state_t *to);
 qbool MSG_RD_WriteEntityRef(sizebuf_t *msg, unsigned int number);
-qbool MSG_RD_WriteEntity(sizebuf_t *msg, const rd_entity_state_t *state, unsigned int bits);
+qbool MSG_RD_WriteEntity(sizebuf_t *msg, const rd_entity_state_t *state, unsigned int bits, qbool floatcoords);
 qbool MSG_RD_WriteRemove(sizebuf_t *msg, int number);
-qbool MSG_RD_WriteBaseline(sizebuf_t *msg, const rd_entity_state_t *state, qbool numbered);
+qbool MSG_RD_WriteBaseline(sizebuf_t *msg, const rd_entity_state_t *state, qbool numbered, qbool floatcoords);
 
 //============================================================================
 

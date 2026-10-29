@@ -256,6 +256,9 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 #endif
 
 	SV_SaveSpawnparms ();
+	for (i = 0; i < MAX_CLIENTS; ++i) {
+		SV_RD_ClearClient(&svs.clients[i]);
+	}
 	SV_LoadAccounts();
 
 #ifdef USE_PR2

@@ -961,7 +961,9 @@ void SV_UpdateClientStats (client_t *client)
 	if (fofs_items2)	// ZQ_ITEMS2 extension
 		stats[STAT_ITEMS] |= (int)EdictFieldFloat(ent, fofs_items2) << 23;
 
-	if (ent->v->health > 0 || client->spectator) // viewheight for PF_DEAD & PF_GIB is hardwired
+	/* RD has no legacy PF_DEAD/PF_GIB viewheight override. */
+	if (ent->v->health > 0 || client->spectator
+		|| (client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
 		stats[STAT_VIEWHEIGHT] = ent->v->view_ofs[2];
 
 	for (i=0 ; i<MAX_CL_STATS ; i++)
@@ -1043,11 +1045,13 @@ void SV_SendClientDatagram (client_t *client, int client_num)
 	if (msg.overflowed)
 	{
 		Con_Printf ("WARNING: msg overflowed for %s\n", client->name);
+		SV_RD_DroppedFrame(client, client->netchan.incoming_sequence);
 		SZ_Clear (&msg);
 	}
 
 	// send the datagram
-	Netchan_Transmit (&client->netchan, msg.cursize, buf);
+	if (!Netchan_Transmit(&client->netchan, msg.cursize, buf))
+		SV_RD_DroppedFrame(client, client->netchan.incoming_sequence);
 }
 
 /*
