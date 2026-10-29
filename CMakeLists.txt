@@ -111,7 +111,7 @@ else()
     endif()
     # Should mostly be fixed in mvdsv, and next sync can remove this
     check_c_compiler_flag("-Wshorten-64-to-32" HAS_SHORTEN_64_TO_32)
-    if(HAS_TYPE_REDEFINITION)
+    if(HAS_SHORTEN_64_TO_32)
         add_compile_options("-Wno-shorten-64-to-32")
     endif()
 endif()
