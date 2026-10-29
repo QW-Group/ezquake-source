@@ -722,7 +722,8 @@ LOCAL expr_val operator_##name (EParser p, const expr_val e1, const expr_val e2)
 	expr_val ret = {0}; ret.type = ET_BOOL;												\
 	if (e1.type == ET_STR || e2.type == ET_STR)										\
 		return string_check_cmp(p, e1, e2, CMPRESULT_##name);						\
-	else ret.b_val = (cond); return ret;											\
+	ret.b_val = (cond);																\
+	return ret;																		\
 }
 
 ADDOP(le, LT_VAL() || EQ_VAL());
