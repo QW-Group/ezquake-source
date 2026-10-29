@@ -1345,7 +1345,7 @@ void CL_WriteMVDStartupData(void)
 	//
 	// This set proper model, origin, angles etc for players.
 	//
-	for (i = 0; i < MAX_CLIENTS; i++)
+	for (i = 0; !(cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) && i < MAX_CLIENTS; i++)
 	{
 		vec3_t origin, angles;
 		int j, flags;
@@ -1459,7 +1459,10 @@ void CL_WriteMVDStartupData(void)
 	// 
 	// Send packetentities.
 	//
-	{
+	if (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) {
+		CL_WriteRDCurrentState(true, 0);
+	}
+	else {
 		int ent_index, ent_total;
 		entity_state_t *ent_state;
 
@@ -1540,11 +1543,6 @@ void CL_StopMvd_f(void)
 
 void CL_RecordMvd_f(void)
 {
-	if (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) {
-		Com_Printf("RD MVD cutting is not supported yet.\n");
-		return;
-	}
-
 	char nameext[MAX_OSPATH * 2], name[MAX_OSPATH * 2];
 
 	switch(Cmd_Argc())
@@ -1657,11 +1655,6 @@ static int CL_StreamRead(void* buf, int size, qbool peek)
 		// We are not peeking, so move along buffer.
 		stream_buffer_cnt -= need;
 		memmove(stream_buffer, stream_buffer + need, stream_buffer_cnt);
-
-		// We get some data from playback file or qtv stream, dump it to file right now.
-		if (need > 0 && cls.mvdplayback && cls.mvdrecording) {
-			CL_MVD_DemoWrite(buf, need);
-		}
 	}
 
 	return need;
@@ -1697,6 +1690,11 @@ int CL_Demo_Read(void *buf, int size, qbool peek)
 
 	if (need != size) {
 		Host_Error("Unexpected end of demo");
+	}
+
+	/* Cuts copy consumed bytes from both mapped demos and buffered streams. */
+	if (!peek && need > 0 && cls.mvdplayback && cls.mvdrecording) {
+		CL_MVD_DemoWrite(buf, need);
 	}
 
 	return need;
