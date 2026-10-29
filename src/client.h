@@ -995,7 +995,6 @@ void CL_WriteDemoEntities (void);
 void CL_WriteServerdata (sizebuf_t *msg);
 void CL_StopPlayback (void);
 void CL_Stop_f (void);
-void CL_StopRecordingForProtocolChange(void);
 void CL_CheckQizmoCompletion(void);
 void CL_Demo_Jump(double seconds, int relative, demoseekingtype_t seeking);
 void CL_Demo_Init(void);
@@ -1171,6 +1170,9 @@ qbool CL_RD_Valid(void);
 const rd_client_entity_t *CL_RD_Entity(int number, qbool previous);
 float CL_RD_Time(qbool previous);
 void CL_RD_Clear(void);
+const rd_client_entity_t *CL_RD_Baseline(int number);
+const rd_entity_state_t *CL_RD_Static(int index);
+void CL_RD_SetStatic(int index, const rd_entity_state_t *state);
 void CL_ParsePacketEntities (qbool delta);
 #ifdef MVD_PEXT1_SIMPLEPROJECTILE
 void CL_ParsePacketSimpleProjectiles(void);
