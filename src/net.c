@@ -205,7 +205,7 @@ static qbool NET_PacketQueueAdd(packet_queue_t* queue, byte* data, int size, net
 			MSG_BeginReading();
 			MSG_ReadLong(); // sequence =
 			sequence_ack = MSG_ReadLong();
-			sequence_ack &= ~(1 << 31);
+			sequence_ack &= ~(1u << 31);
 
 			sequencemod = sequence_ack & UPDATE_MASK;
 			expected_latency = (cls.realtime - cl.frames[sequencemod].senttime) * 1000.0;
