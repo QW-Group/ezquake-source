@@ -208,6 +208,7 @@ typedef struct client_s
 	antilag_position_t	antilag_positions[MAX_ANTILAG_POSITIONS];
 	int				antilag_position_next;
 
+	struct sv_rd_state_s *rd;            // RD-only pending entity state and resend history.
 	usercmd_t		lastcmd;			// for filling in big drops and partial predictions
 	double			localtime;			// of last message
 	qbool			jump_held;
@@ -924,6 +925,17 @@ void SV_KickClient(client_t* client, const char* reason);
 //
 // sv_ents.c
 //
+/* RD ownership, snapshot collection and QW acknowledgement lifecycle. */
+void SV_RD_FromLegacy(rd_entity_state_t *to, const entity_state_t *from);
+void SV_RD_ClearClient(client_t *client);
+void SV_RD_ResetClient(client_t *client, int capacity);
+void SV_RD_BeginSnapshot(client_t *client);
+void SV_RD_RequestReset(client_t *client);
+void SV_RD_QueueEntity(client_t *client, const rd_entity_state_t *state);
+void SV_RD_AckFrame(client_t *client, int sequence);
+void SV_RD_DroppedFrame(client_t *client, int sequence);
+void SV_RD_WriteFrame(client_t *client, sizebuf_t *msg, int sequence, float time);
+
 void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder);
 void SV_SetVisibleEntitiesForBot (client_t* client);
 

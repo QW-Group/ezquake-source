@@ -124,11 +124,7 @@ void CL_RD_ToPlayer(const rd_client_entity_t *entity, player_state_t *to)
 static void CL_RD_InitEntity(rd_client_entity_t *entity)
 {
 	memset(entity, 0, sizeof(*entity));
-	entity->state.trans = 255;
-	entity->state.scale = 16;
-	entity->state.drawflags = SCALE_ORIGIN_ORIGIN;
-	memset(entity->state.colourmod, 32, sizeof(entity->state.colourmod));
-	memset(entity->state.glowmod, 32, sizeof(entity->state.glowmod));
+	MSG_RD_InitState(&entity->state);
 }
 
 /* Allocate only when an RD signon or entity stream actually needs these buffers. */

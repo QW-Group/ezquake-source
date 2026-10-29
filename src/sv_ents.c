@@ -22,6 +22,293 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
 
+/* Convert existing typed baselines/statics without changing legacy storage. */
+void SV_RD_FromLegacy(rd_entity_state_t *to, const entity_state_t *from)
+{
+	MSG_RD_InitState(to);
+	to->number = from->number;
+	VectorCopy(from->origin, to->origin);
+	VectorCopy(from->angles, to->angles);
+	to->modelindex = from->modelindex;
+	to->frame = from->frame;
+	to->skinnum = from->skinnum;
+	to->colormap = from->colormap;
+	to->effects = from->effects;
+#ifdef FTE_PEXT_TRANS
+	to->trans = from->trans ? from->trans : 255;
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+	if (from->colourmod[0] || from->colourmod[1] || from->colourmod[2])
+		memcpy(to->colourmod, from->colourmod, sizeof(to->colourmod));
+#endif
+}
+
+/* Internal pending marker; never passed to the wire field writer. */
+#define RD_REMOVE UF_UNUSED1
+
+typedef struct {
+	unsigned int bits;                  // Fields transmitted, for loss recovery.
+	unsigned short number;              // Entity slot, including reset-world slot zero.
+} rd_change_t;
+
+typedef struct {
+	int sequence, count, capacity;      // Owned ring entry and allocated change count.
+	rd_change_t *changes;               // Grown only to the number of emitted records.
+} rd_frame_t;
+
+struct sv_rd_state_s {
+	int capacity, last_ack, cursor;     // Supported slots, acknowledged sequence, deferred scan.
+	rd_entity_state_t *current;         // Current desired state; number zero means absent.
+	unsigned int *pending;             // Dirty fields/removals not yet delivered.
+	byte *seen;                        // Visibility in the snapshot currently being built.
+	int *introduction;                 // -1 awaiting first reset, 0 acked, otherwise first sequence+1.
+	rd_frame_t frames[UPDATE_BACKUP];   // Bounded transmitted-change history.
+};
+
+/* Release RD allocations before a client slot or map state is reused. */
+void SV_RD_ClearClient(client_t *client)
+{
+	struct sv_rd_state_s *rd = client->rd;
+	int i;
+	if (!rd) {
+		return;
+	}
+	for (i = 0; i < UPDATE_BACKUP; ++i) {
+		Q_free(rd->frames[i].changes);
+	}
+	Q_free(rd->current);
+	Q_free(rd->pending);
+	Q_free(rd->seen);
+	Q_free(rd->introduction);
+	Q_free(rd);
+	client->rd = NULL;
+}
+
+/* Allocate history only for an RD connection, with the negotiated engine bound. */
+void SV_RD_ResetClient(client_t *client, int capacity)
+{
+	struct sv_rd_state_s *rd;
+	int i;
+	SV_RD_ClearClient(client);
+	if (capacity < 1 || capacity > MAX_EDICTS) {
+		Sys_Error("Invalid RD capacity %d", capacity);
+	}
+	client->rd = rd = Q_malloc(sizeof(*rd));
+	rd->capacity = capacity;
+	rd->last_ack = -1;
+	rd->cursor = MAX_CLIENTS + 1;
+	rd->current = Q_calloc(capacity, sizeof(*rd->current));
+	rd->pending = Q_calloc(capacity, sizeof(*rd->pending));
+	rd->seen = Q_calloc(capacity, sizeof(*rd->seen));
+	rd->introduction = Q_calloc(capacity, sizeof(*rd->introduction));
+	rd->pending[0] = RD_REMOVE;
+	for (i = 0; i < UPDATE_BACKUP; ++i) {
+		rd->frames[i].sequence = -1;
+	}
+}
+
+/* Reset the world and every retained introduction without changing ACK history. */
+static void SV_RD_ResetWorld(struct sv_rd_state_s *rd)
+{
+	int n;
+	rd->pending[0] = RD_REMOVE;
+	rd->cursor = MAX_CLIENTS + 1;
+	for (n = 1; n < rd->capacity; ++n) {
+		if (rd->current[n].number) {
+			rd->pending[n] = UF_RESET;
+			rd->introduction[n] = -1;
+		}
+	}
+}
+
+/* A client without a valid delta sequence requests the complete current world. */
+void SV_RD_RequestReset(client_t *client)
+{
+	struct sv_rd_state_s *rd = client->rd;
+	if (!rd) {
+		return;
+	}
+	SV_RD_ResetWorld(rd);
+}
+
+/* Begin collecting the real snapshot; unobserved slots become removals. */
+void SV_RD_BeginSnapshot(client_t *client)
+{
+	if (client->rd) {
+		memset(client->rd->seen, 0, client->rd->capacity);
+	}
+}
+
+/* Queue current field values; a new/reused slot needs an acknowledged reset. */
+void SV_RD_QueueEntity(client_t *client, const rd_entity_state_t *state)
+{
+	struct sv_rd_state_s *rd = client->rd;
+	int n = state->number;
+	if (!rd || n <= 0 || n >= rd->capacity) {
+		return;
+	}
+	rd->seen[n] = true;
+	if (!rd->current[n].number) {
+		rd->pending[n] = UF_RESET;
+		rd->introduction[n] = -1;
+	}
+	else {
+		rd->pending[n] |= MSG_RD_StateBits(&rd->current[n], state);
+	}
+	rd->current[n] = *state;
+}
+
+/* Lost packets reflag fields against the current slot, never obsolete values. */
+static void SV_RD_Requeue(struct sv_rd_state_s *rd, const rd_frame_t *frame)
+{
+	int i, n;
+	for (i = 0; i < frame->count; ++i) {
+		n = frame->changes[i].number;
+		if (!n) {
+			SV_RD_ResetWorld(rd);
+		}
+		else if (!rd->current[n].number) {
+			rd->pending[n] = RD_REMOVE;
+		} else if (frame->changes[i].bits & RD_REMOVE) {
+			rd->pending[n] = UF_RESET;
+		} else {
+			rd->pending[n] |= frame->changes[i].bits;
+		}
+	}
+}
+
+/* A locally omitted unreliable datagram must not be retired by its packet ACK. */
+void SV_RD_DroppedFrame(client_t *client, int sequence)
+{
+	struct sv_rd_state_s *rd = client->rd;
+	rd_frame_t *frame;
+	if (!rd) {
+		return;
+	}
+	frame = &rd->frames[sequence & UPDATE_MASK];
+	if (frame->sequence != sequence) {
+		return;
+	}
+	SV_RD_Requeue(rd, frame);
+	frame->count = 0;
+}
+
+/* QW netchan ACKs retire one frame and requeue earlier unacknowledged frames. */
+void SV_RD_AckFrame(client_t *client, int sequence)
+{
+	struct sv_rd_state_s *rd = client->rd;
+	int i, j;
+	if (!rd || sequence <= rd->last_ack) {
+		return;
+	}
+	for (i = 0; i < UPDATE_BACKUP; ++i) {
+		rd_frame_t *f = &rd->frames[i];
+		if (f->sequence <= rd->last_ack || f->sequence > sequence) {
+			continue;
+		}
+		if (f->sequence != sequence) {
+			SV_RD_Requeue(rd, f);
+		} else {
+			for (j = 0; j < f->count; ++j) {
+				int n = f->changes[j].number;
+				if (n && (f->changes[j].bits & UF_RESET) && rd->introduction[n] > 0 && rd->introduction[n] <= sequence + 1) {
+					rd->introduction[n] = 0;
+				}
+			}
+		}
+		f->count = 0;
+	}
+	rd->last_ack = sequence;
+}
+
+/* Store only records actually emitted, growing within the supported slot bound. */
+static void SV_RD_Record(struct sv_rd_state_s *rd, rd_frame_t *frame, int number, unsigned int bits)
+{
+	if (frame->count == frame->capacity) {
+		int capacity = min(rd->capacity, max(16, frame->capacity * 2));
+		rd_change_t *changes = Q_malloc(capacity * sizeof(*changes));
+		if (frame->count) {
+			memcpy(changes, frame->changes, frame->count * sizeof(*changes));
+		}
+		Q_free(frame->changes);
+		frame->changes = changes;
+		frame->capacity = capacity;
+	}
+	frame->changes[frame->count].number = number;
+	frame->changes[frame->count++].bits = bits;
+}
+
+/* Emit sorted updates within the caller's budget; retain any deferred fields. */
+void SV_RD_WriteFrame(client_t *client, sizebuf_t *msg, int sequence, float time)
+{
+	struct sv_rd_state_s *rd = client->rd;
+	rd_frame_t *frame;
+	int n, next = MAX_CLIENTS + 1, limit = msg->maxsize;
+	if (!rd) {
+		return;
+	}
+	frame = &rd->frames[sequence & UPDATE_MASK];
+	if (frame->count) {
+		SV_RD_Requeue(rd, frame);
+	}
+	frame->count = 0;
+	frame->sequence = sequence;
+	for (n = 1; n < rd->capacity; ++n) {
+		if (rd->current[n].number && !rd->seen[n]) {
+			rd->current[n].number = 0;
+			rd->pending[n] = RD_REMOVE;
+		}
+	}
+	if (msg->maxsize - msg->cursize < 7 + (rd->pending[0] ? 2 : 0)) {
+		return;
+	}
+	MSG_WriteByte(msg, svc_fte_updateentities);
+	MSG_WriteFloat(msg, time);
+	msg->maxsize -= 2;
+	if (rd->pending[0]) {
+		MSG_RD_WriteRemove(msg, 0);
+		SV_RD_Record(rd, frame, 0, RD_REMOVE);
+		rd->pending[0] = 0;
+	}
+	for (n = 1; n < rd->capacity; ++n) {
+		unsigned int bits = rd->pending[n];
+		rd_entity_state_t baseline;
+		if (!bits || (n > MAX_CLIENTS && n < rd->cursor && !(bits & RD_REMOVE))) {
+			continue;
+		}
+		if (bits & RD_REMOVE) {
+			if (!MSG_RD_WriteRemove(msg, n)) {
+				next = n;
+				break;
+			}
+		}
+		else {
+			if (rd->introduction[n]) {
+				bits |= UF_RESET;
+			}
+			if (bits & UF_RESET) {
+				SV_RD_FromLegacy(&baseline, &EDICT_NUM(n)->e.baseline);
+				bits = UF_RESET | MSG_RD_StateBits(&baseline, &rd->current[n]);
+			}
+			/* Player angles carry the view-pitch / -3 basis even at rest. */
+			if (n <= MAX_CLIENTS && (bits & (UF_ANGLESXZ | UF_ANGLESY))) {
+				bits |= UF_PREDINFO;
+			}
+			if (!MSG_RD_WriteEntity(msg, &rd->current[n], bits)) {
+				next = n;
+				break;
+			}
+			if (rd->introduction[n] == -1) {
+				rd->introduction[n] = sequence + 1;
+			}
+		}
+		SV_RD_Record(rd, frame, n, bits);
+		rd->pending[n] = 0;
+	}
+	rd->cursor = max(MAX_CLIENTS + 1, next);
+	msg->maxsize = limit;
+	MSG_WriteShort(msg, 0);
+}
 
 //=============================================================================
 
