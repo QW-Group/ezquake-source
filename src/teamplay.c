@@ -2494,7 +2494,7 @@ static int FindNearestItem (int flags, item_t **pitem)
 	entity_state_t rd_ent, best_entity;
 	qbool replacement = CL_RD_Valid();
 	entity_state_t *ent, *bestent = NULL;
-	int	i;
+	int	i, entity_count;
 	float bestdist, dist;
 	vec3_t org, v;
 	item_t *item;
@@ -2506,7 +2506,8 @@ static int FindNearestItem (int flags, item_t **pitem)
 	pak = &frame->packet_entities;
 	bestdist = 100 * 100;
 	*pitem = NULL;
-	for (i = 0; i < (replacement ? CL_MAX_EDICTS : pak->num_entities); i++) {
+	entity_count = replacement ? CL_RD_SlotLimit() : pak->num_entities;
+	for (i = 0; i < entity_count; i++) {
 		if (replacement) {
 			const rd_client_entity_t *entity = CL_RD_Entity(i, true);
 			if (!entity)
@@ -2853,7 +2854,7 @@ void TP_FindPoint (void)
 	entity_state_t rd_ent, best_entity;
 	qbool replacement = CL_RD_Valid();
 	entity_state_t *ent;
-	int	i, j, tempflags;
+	int	i, j, tempflags, entity_count;
 	unsigned int pointflags_dmm;
 	float best = -1, rank;
 	entity_state_t *bestent = NULL;
@@ -2884,7 +2885,8 @@ void TP_FindPoint (void)
 	}
 
 	pak = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities;
-	for (i = 0; i < (replacement ? CL_MAX_EDICTS : pak->num_entities); i++) {
+	entity_count = replacement ? CL_RD_SlotLimit() : pak->num_entities;
+	for (i = 0; i < entity_count; i++) {
 		if (replacement) {
 			const rd_client_entity_t *entity = CL_RD_Entity(i, false);
 			if (!entity)

@@ -771,9 +771,10 @@ static void Radar_DrawEntities(int x, int y, float scale, float player_size, int
 		char buffer[MAX_SCOREBOARDNAME + 8];
 		entity_state_t rd_state;
 		qbool replacement = CL_RD_Valid();
+		int entity_count = replacement ? CL_RD_SlotLimit() : pack->num_entities;
 
 		// Player slots are drawn separately by Radar_DrawPlayers.
-		for (i = replacement ? MAX_CLIENTS + 1 : 0; i < (replacement ? CL_MAX_EDICTS : pack->num_entities); ++i) {
+		for (i = replacement ? MAX_CLIENTS + 1 : 0; i < entity_count; ++i) {
 			entity_state_t *state;
 
 			if (replacement) {
