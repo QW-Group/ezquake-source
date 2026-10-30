@@ -1391,6 +1391,8 @@ void CL_ClearState (void)
 
 	CL_ClearTEnts ();
 	CL_ClearScene ();
+	Q_free(cl_visents.list);
+	cl_visents.capacity = 0;
 
 	CL_ClearPredict();
 
@@ -3002,6 +3004,8 @@ void CL_Frame(double time)
 void CL_Shutdown (void) 
 {
 	CL_Disconnect();
+	Q_free(cl_visents.list);
+	cl_visents.capacity = 0;
 	SList_Shutdown();
 	CDAudio_Shutdown();
 	S_Shutdown();
