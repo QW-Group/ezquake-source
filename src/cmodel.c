@@ -1114,8 +1114,11 @@ static byte *DecompressVis(const byte *in)
 		if (in >= end)
 			Host_Error("DecompressVis: truncated PVS run");
 		count = *in++;
-		if (!count || count > remaining)
+		if (!count)
 			Host_Error("DecompressVis: invalid PVS run");
+		// hlvis rounds rows up to a multiple of 64 leafs, so the last zero run may end past the row
+		if (count > remaining)
+			count = remaining;
 		out += count;
 		remaining -= count;
 	}
