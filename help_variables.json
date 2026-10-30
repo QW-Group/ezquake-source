@@ -20061,6 +20061,13 @@
       "group-id": "43",
       "type": ""
     },
+    "sv_maxedicts": {
+      "default": "2048",
+      "desc": "Upper limit for entity slots, including the world, from 512 to 16384.",
+      "group-id": "43",
+      "remarks": "Applied when a map starts; the game and sv_extlimits can further limit capacity. A finalized capacity above 2048 requires replacement deltas and rejects clients without RD, regardless of sv_pext_replacementdeltas.",
+      "type": "integer"
+    },
     "sv_maxlogsize": {
       "group-id": "43",
       "type": ""
@@ -20176,7 +20183,7 @@
       "default": "0",
       "desc": "Allow replacement deltas for new client connections.",
       "group-id": "43",
-      "remarks": "Existing connections retain their negotiated protocol.",
+      "remarks": "Existing connections retain their negotiated protocol. At finalized map capacities above 2048, RD is required even when this option is zero.",
       "type": "boolean"
     },
     "sv_phs": {

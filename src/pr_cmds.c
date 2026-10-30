@@ -1195,7 +1195,9 @@ findradius (origin, radius)
 static void PF_findradius (void)
 {
 	int			i, j, numtouch;
-	edict_t		*touchlist[MAX_EDICTS], *ent, *chain;
+	/* This query executes no game callbacks and may reuse its scratch list. */
+	static edict_t *touchlist[MAX_EDICTS];
+	edict_t		*ent, *chain;
 	float		rad, rad_2, *org;
 	vec3_t		mins, maxs, eorg;
 

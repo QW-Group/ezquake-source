@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef SERVERONLY
 void CL_ClearState(void);
 void CL_ClearQueuedPackets(void);
+unsigned int CL_SupportedFTEExtensions2(void);
 #endif
 
 server_static_t	svs;				// persistent server info
@@ -504,6 +505,7 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	{
 		extern cvar_t sv_extlimits, sv_bspversion;
 
+		sv.max_edicts = min(sv.max_edicts, (int)sv_maxedicts.value);
 		if (sv_extlimits.value == 0 || (sv_extlimits.value == 2 && sv_bspversion.value < 2)) {
 			sv.max_edicts = min(sv.max_edicts, MAX_EDICTS_SAFE);
 		}
@@ -637,9 +639,17 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	for (i = 0; i < MAX_CLIENTS; ++i) {
 		client_t *client = &svs.clients[i];
 
+#ifndef SERVERONLY
+		/* A loopback client shares this process: select its supported RD codec
+		 * for new map serverdata without disconnecting the listen server. */
+		if (client->state >= cs_preconnected && SV_EntityCapacityRequiresRD()
+			&& client->netchan.remote_address.type == NA_LOOPBACK) {
+			client->fteprotocolextensions2 |= CL_SupportedFTEExtensions2() & FTE_PEXT2_REPLACEMENTDELTAS;
+		}
+#endif
 		/* Unsettled pext clients are checked by signon after negotiation. */
 		if (client->state >= cs_preconnected && !client->process_pext) {
-			SV_CheckClientSoundSupport(client);
+			SV_CheckClientMapSupport(client);
 		}
 	}
 

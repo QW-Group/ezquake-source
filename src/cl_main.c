@@ -847,6 +847,7 @@ void CL_CheckForResend (void)
 #endif // PROTOCOL_VERSION_FTE
 #ifdef PROTOCOL_VERSION_FTE2
 				svs.fteprotocolextensions2
+					| (SV_EntityCapacityRequiresRD() ? FTE_PEXT2_REPLACEMENTDELTAS : 0)
 	#ifdef PROTOCOL_VERSION_MVD1
                 ,
 	#endif

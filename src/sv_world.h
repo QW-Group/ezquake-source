@@ -45,6 +45,11 @@ typedef struct areanode_s
 
 extern	areanode_t	sv_areanodes[AREA_NODES];
 
+// Invocation-owned large physics lists, also released on recoverable server errors.
+void *SV_AllocPhysicsScratch(size_t size);
+void SV_FreePhysicsScratch(void *memory);
+void SV_ClearPhysicsScratch(void);
+
 void SV_ClearWorld (void);
 // called after the world model has been loaded, before linking any entities
 
