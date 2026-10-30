@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "r_matrix.h"
 #include "glm_vao.h"
+#include "glm_local.h"
 #include "r_texture.h"
 #include "r_brushmodel.h" // R_PointIsUnderwater only
 #include "r_buffers.h"
@@ -40,12 +41,8 @@ void GLM_StateBeginAliasModelZPassBatch(void);
 void GLM_StateBeginAliasModelBatch(qbool translucent, qbool additive);
 void GLM_StateBeginAliasOutlineBatch(void);
 
-// MAX_STANDARD_ENTITIES used to be 512, so lets pretend like
-// there can't be more aliasmodel entities, as that will cause
-// the arrays sized according to this limit to become too big
-// for caches etc. Should there be more aliasmodels than this,
-// there will be an error printed.
-#define MAXIMUM_ALIASMODEL_DRAWCALLS 512   // ridiculous
+// Retain complete CPU batches and upload disjoint GPU ranges once per view.
+#define MAXIMUM_ALIASMODEL_DRAWCALLS 512
 #define MAXIMUM_MATERIAL_SAMPLERS 32
 
 typedef enum aliasmodel_draw_type_s {
@@ -68,23 +65,26 @@ typedef struct DrawArraysIndirectCommand_s {
 	GLuint baseInstance;
 } DrawArraysIndirectCommand_t;
 
+// Material bindings for one draw call, allocated only for calls actually queued.
+typedef struct aliasmodel_material_call_s {
+	texture_ref textures[MAXIMUM_MATERIAL_SAMPLERS];
+	int num_textures;
+	int num_cmds;
+} aliasmodel_material_call_t;
+
 // Internal structure, filled in during initial pass over entities
 typedef struct aliasmodel_draw_data_s {
 	// Need to split standard & alpha model draws to cope with # of texture units available
 	//   Outlines & shells are easier as they have 0 & 1 textures respectively
 	DrawArraysIndirectCommand_t indirect_buffer[MAXIMUM_ALIASMODEL_DRAWCALLS];
-	texture_ref bound_textures[MAXIMUM_ALIASMODEL_DRAWCALLS][MAXIMUM_MATERIAL_SAMPLERS];
-	int num_textures[MAXIMUM_ALIASMODEL_DRAWCALLS];
-	int num_cmds[MAXIMUM_ALIASMODEL_DRAWCALLS];
+	aliasmodel_material_call_t* calls; // Retained sampler tables, independent of world capacity.
+	int call_capacity;
 	int total_cmds;
 	int num_calls;
 	int current_call;
 
 	unsigned int indirect_buffer_offset;
 } aliasmodel_draw_instructions_t;
-
-static aliasmodel_draw_instructions_t alias_draw_instructions[aliasmodel_draw_max];
-static int alias_draw_count;
 
 typedef struct uniform_block_aliasmodel_s {
 	float modelViewMatrix[16];
@@ -103,7 +103,7 @@ typedef struct uniform_block_aliasmodel_s {
 } uniform_block_aliasmodel_t;
 
 typedef struct block_aliasmodels_s {
-	uniform_block_aliasmodel_t models[MAX_STANDARD_ENTITIES];
+	uniform_block_aliasmodel_t models[MAXIMUM_ALIASMODEL_DRAWCALLS];
 } uniform_block_aliasmodels_t;
 
 extern float r_framelerp;
@@ -114,8 +114,25 @@ extern float r_framelerp;
 #define DRAW_FLAT_SHADING         (1 << 4)
 #define DRAW_INSTANCED            (1 << 5)
 
-static uniform_block_aliasmodels_t aliasdata;
-static texture_ref alias_model_textures[MAX_STANDARD_ENTITIES]; // bound for models drawn individually
+// CPU records survive until every render pass has consumed every batch.
+typedef struct aliasmodel_batch_s {
+	uniform_block_aliasmodels_t data;
+	texture_ref textures[MAXIMUM_ALIASMODEL_DRAWCALLS];
+	aliasmodel_draw_instructions_t instructions[aliasmodel_draw_max];
+	int count;
+	int model_buffer_offset; // Byte offset of this batch in the shared GPU model buffer.
+	struct aliasmodel_batch_s* next;
+} aliasmodel_batch_t;
+
+static aliasmodel_batch_t first_alias_batch;
+static aliasmodel_batch_t* alias_batch = &first_alias_batch;
+static aliasmodel_batch_t* bound_alias_batch; // Selected GPU range, invalidated at view/model reset.
+
+// Retained contiguous staging avoids replacing a batch while another pass still needs it.
+static byte* alias_model_upload;
+static int alias_model_upload_capacity;
+static byte* alias_indirect_upload;
+static int alias_indirect_upload_capacity;
 
 static int cached_mode;
 
@@ -132,9 +149,9 @@ static int bound_model_section;
 
 static void GLM_BindAliasModelSection(int section)
 {
-	uintptr_t section_size = sizeof(aliasdata.models[0]) * MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS;
+	uintptr_t section_size = sizeof(alias_batch->data.models[0]) * MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS;
 
-	buffers.BindRange(r_buffer_aliasmodel_model_data, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA), buffers.BufferOffset(r_buffer_aliasmodel_model_data) + section * section_size, section_size);
+	buffers.BindRange(r_buffer_aliasmodel_model_data, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA), buffers.BufferOffset(r_buffer_aliasmodel_model_data) + alias_batch->model_buffer_offset + section * section_size, section_size);
 	bound_model_section = section;
 }
 
@@ -193,7 +210,7 @@ qbool GLM_CompileAliasModelProgram(void)
 		included_definitions[0] = '\0';
 		strlcat(included_definitions, va("#define SAMPLER_POSE_TEXTURE %d\n", TEXTURE_UNIT_POSES), sizeof(included_definitions));
 		if (drawAlias_desiredOptions & DRAW_CAUSTIC_TEXTURES) {
-			material_samplers_max = glConfig.texture_units - 2;
+			material_samplers_max = min(glConfig.texture_units - 2, MAXIMUM_MATERIAL_SAMPLERS);
 			TEXTURE_UNIT_CAUSTICS = 1;
 			TEXTURE_UNIT_MATERIAL = 2;
 
@@ -202,7 +219,7 @@ qbool GLM_CompileAliasModelProgram(void)
 			strlcat(included_definitions, "#define SAMPLER_MATERIAL_TEXTURE_START 2\n", sizeof(included_definitions));
 		}
 		else {
-			material_samplers_max = glConfig.texture_units - 1;
+			material_samplers_max = min(glConfig.texture_units - 1, MAXIMUM_MATERIAL_SAMPLERS);
 			TEXTURE_UNIT_MATERIAL = 1;
 
 			strlcat(included_definitions, "#define SAMPLER_MATERIAL_TEXTURE_START 1\n", sizeof(included_definitions));
@@ -242,11 +259,12 @@ qbool GLM_CompileAliasModelProgram(void)
 	cached_mode = R_ProgramUniformGet1i(r_program_uniform_aliasmodel_drawmode, 0);
 
 	if (!R_BufferReferenceIsValid(r_buffer_aliasmodel_drawcall_indirect)) {
-		buffers.Create(r_buffer_aliasmodel_drawcall_indirect, buffertype_indirect, "aliasmodel-indirect-draw", sizeof(alias_draw_instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, bufferusage_once_per_frame);
+		// Another view may replace data still used by earlier draws in the same frame.
+		buffers.Create(r_buffer_aliasmodel_drawcall_indirect, buffertype_indirect, "aliasmodel-indirect-draw", sizeof(alias_batch->instructions[0].indirect_buffer) * aliasmodel_draw_max, NULL, bufferusage_reuse_per_frame);
 	}
 
 	if (!R_BufferReferenceIsValid(r_buffer_aliasmodel_model_data)) {
-		buffers.Create(r_buffer_aliasmodel_model_data, buffertype_storage, "alias-data", sizeof(aliasdata), NULL, bufferusage_once_per_frame);
+		buffers.Create(r_buffer_aliasmodel_model_data, buffertype_storage, "alias-data", sizeof(alias_batch->data), NULL, bufferusage_reuse_per_frame);
 	}
 
 	return R_ProgramReady(r_program_aliasmodel);
@@ -254,6 +272,7 @@ qbool GLM_CompileAliasModelProgram(void)
 
 void GLM_CreateAliasModelVAO(void)
 {
+	GLM_FreeAliasModelBatches();
 	R_GenVertexArray(vao_aliasmodel);
 
 	GLM_ConfigureVertexAttribPointer(vao_aliasmodel, r_buffer_aliasmodel_vertex_data, 0, 3, GL_FLOAT, GL_FALSE, sizeof(vbo_model_vert_t), VBO_FIELDOFFSET(vbo_model_vert_t, position), 0);
@@ -288,60 +307,64 @@ static int AssignSampler(aliasmodel_draw_instructions_t* instr, texture_ref text
 	if (!R_TextureReferenceIsValid(texture)) {
 		return 0;
 	}
-	if (instr->current_call >= sizeof(instr->bound_textures) / sizeof(instr->bound_textures[0])) {
+	if (instr->current_call >= instr->num_calls) {
 		return -1;
 	}
 
-	allocated_samplers = instr->bound_textures[instr->current_call];
-	for (i = 0; i < instr->num_textures[instr->current_call]; ++i) {
+	allocated_samplers = instr->calls[instr->current_call].textures;
+	for (i = 0; i < instr->calls[instr->current_call].num_textures; ++i) {
 		if (R_TextureReferenceEqual(texture, allocated_samplers[i])) {
 			return i;
 		}
 	}
 
-	if (instr->num_textures[instr->current_call] < material_samplers_max) {
-		allocated_samplers[instr->num_textures[instr->current_call]] = texture;
-		return instr->num_textures[instr->current_call]++;
+	if (instr->calls[instr->current_call].num_textures < material_samplers_max) {
+		allocated_samplers[instr->calls[instr->current_call].num_textures] = texture;
+		return instr->calls[instr->current_call].num_textures++;
 	}
 
 	return -1;
 }
 
-static qbool GLM_NextAliasModelDrawCall(aliasmodel_draw_instructions_t* instr, qbool bind_default_textures)
+static void GLM_NextAliasModelDrawCall(aliasmodel_draw_instructions_t* instr, qbool bind_default_textures)
 {
-	if (instr->num_calls >= sizeof(instr->num_textures) / sizeof(instr->num_textures[0])) {
-		return false;
+	if (instr->num_calls == instr->call_capacity) {
+		int capacity = instr->call_capacity ? instr->call_capacity * 2 : 8;
+		if (capacity > MAXIMUM_ALIASMODEL_DRAWCALLS) {
+			Host_Error("Alias model material batch overflow");
+		}
+		instr->calls = Q_realloc(instr->calls, capacity * sizeof(instr->calls[0]));
+		instr->call_capacity = capacity;
 	}
 
 	instr->current_call = instr->num_calls;
 	instr->num_calls++;
-	instr->num_textures[instr->current_call] = 0;
+	memset(&instr->calls[instr->current_call], 0, sizeof(instr->calls[0]));
 	if (bind_default_textures) {
 		if (R_ProgramCustomOptions(r_program_aliasmodel) & DRAW_CAUSTIC_TEXTURES) {
-			instr->bound_textures[instr->current_call][0] = underwatertexture;
-			instr->num_textures[instr->current_call]++;
+			instr->calls[instr->current_call].textures[0] = underwatertexture;
+			instr->calls[instr->current_call].num_textures++;
 		}
 	}
-	return true;
 }
 
 static void GLM_QueueDrawCall(aliasmodel_draw_type_t type, int vbo_start, int vbo_count, int instance)
 {
 	int pos;
-	aliasmodel_draw_instructions_t* instr = &alias_draw_instructions[type];
+	aliasmodel_draw_instructions_t* instr = &alias_batch->instructions[type];
 	DrawArraysIndirectCommand_t* indirect;
 
 	if (!instr->num_calls) {
 		GLM_NextAliasModelDrawCall(instr, false);
 	}
 
-	if (instr->total_cmds >= sizeof(instr->indirect_buffer) / sizeof(instr->indirect_buffer[0])) {
-		return;
+	if (instr->total_cmds >= MAXIMUM_ALIASMODEL_DRAWCALLS) {
+		Host_Error("Alias model command batch overflow");
 	}
 
 	// Each call's commands follow the previous call's
 	pos = instr->total_cmds++;
-	instr->num_cmds[instr->current_call]++;
+	instr->calls[instr->current_call].num_cmds++;
 	indirect = &instr->indirect_buffer[pos];
 	indirect->instanceCount = 1;
 	indirect->baseInstance = instance;
@@ -383,30 +406,29 @@ static void GLM_QueueAliasModelDrawImpl(
 		outline = false;
 	}
 
-	instr = &alias_draw_instructions[type];
-
-	// Should never happen...
-	if (alias_draw_count >= sizeof(aliasdata.models) / sizeof(aliasdata.models[0])) {
-		return;
+	if (alias_batch->count == MAXIMUM_ALIASMODEL_DRAWCALLS) {
+		if (!alias_batch->next) {
+			alias_batch->next = Q_calloc(1, sizeof(*alias_batch));
+		}
+		alias_batch = alias_batch->next;
 	}
+	instr = &alias_batch->instructions[type];
 
 	if (!instr->num_calls) {
 		GLM_NextAliasModelDrawCall(instr, true);
 	}
 
-	// Assign samplers - if we're over limit, need to flush and try again
+	// Start another material call when the sampler table is full.
 	textureSampler = (GLM_AliasModelsDrawnIndividually() ? 0 : AssignSampler(instr, texture));
 	if (textureSampler < 0) {
-		if (!GLM_NextAliasModelDrawCall(instr, true)) {
-			return;
-		}
+		GLM_NextAliasModelDrawCall(instr, true);
 
 		textureSampler = AssignSampler(instr, texture);
 	}
 
 	// Store static data ready for upload
-	memset(&aliasdata.models[alias_draw_count], 0, sizeof(aliasdata.models[alias_draw_count]));
-	uniform = &aliasdata.models[alias_draw_count];
+	memset(&alias_batch->data.models[alias_batch->count], 0, sizeof(alias_batch->data.models[alias_batch->count]));
+	uniform = &alias_batch->data.models[alias_batch->count];
 	R_GetModelviewMatrix(uniform->modelViewMatrix);
 	uniform->amFlags =
 		(effects & EF_RED ? AMF_SHELLMODEL_RED : 0) |
@@ -432,7 +454,7 @@ static void GLM_QueueAliasModelDrawImpl(
 	uniform->color[2] = color[2];
 	uniform->color[3] = color[3];
 	uniform->materialSamplerMapping = textureSampler;
-	alias_model_textures[alias_draw_count] = texture;
+	alias_batch->textures[alias_batch->count] = texture;
 	uniform->minLumaMix = 1.0f - (ent->full_light ? bound(0, gl_fb_models.integer, 1) : 0);
 	if(ent->scoreboard != NULL) {
 		int tc = 16 * (bound(0, ent->scoreboard->topcolor, 13)) + 8;
@@ -444,20 +466,20 @@ static void GLM_QueueAliasModelDrawImpl(
 	}
 
 	// Add to queues
-	GLM_QueueDrawCall(type, vbo_start, vbo_count, alias_draw_count);
+	GLM_QueueDrawCall(type, vbo_start, vbo_count, alias_batch->count);
 	if (outline) {
-		GLM_QueueDrawCall(aliasmodel_draw_outlines, vbo_start, vbo_count, alias_draw_count);
+		GLM_QueueDrawCall(aliasmodel_draw_outlines, vbo_start, vbo_count, alias_batch->count);
 	}
 	if (shell) {
-		GLM_QueueDrawCall(shelltype, vbo_start, vbo_count, alias_draw_count);
+		GLM_QueueDrawCall(shelltype, vbo_start, vbo_count, alias_batch->count);
 	}
 	if((render_effects & RF_PLAYERMODEL) && (render_effects & RF_BEHINDWALL) &&
 	   (cls.demoplayback || cls.mvdplayback) && gl_spec_xray.value)
 	{
-		GLM_QueueDrawCall(aliasmodel_draw_outlines_spec, vbo_start, vbo_count, alias_draw_count);
+		GLM_QueueDrawCall(aliasmodel_draw_outlines_spec, vbo_start, vbo_count, alias_batch->count);
 	}
 
-	alias_draw_count++;
+	alias_batch->count++;
 }
 
 // Called for .mdl & .md3
@@ -509,43 +531,87 @@ void GLM_DrawAliasFrame(
 	);
 }
 
-void GLM_PrepareAliasModelBatches(void)
+// Select a retained GPU range without uploading it again for another pass.
+static void GLM_SelectAliasModelBatch(aliasmodel_batch_t* batch)
 {
-	if (!GLM_CompileAliasModelProgram() || !alias_draw_count) {
+	alias_batch = batch;
+	if (bound_alias_batch == batch) {
 		return;
 	}
+	bound_alias_batch = batch;
 
-	R_TraceEnterNamedRegion(__func__);
-
-	// Update VBO with data about each entity
-	buffers.Update(r_buffer_aliasmodel_model_data, sizeof(aliasdata.models[0]) * alias_draw_count, aliasdata.models);
 	if (GL_ShaderBindingsSupported()) {
-		buffers.BindRange(r_buffer_aliasmodel_model_data, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA), buffers.BufferOffset(r_buffer_aliasmodel_model_data), sizeof(aliasdata.models[0]) * alias_draw_count);
+		buffers.BindRange(r_buffer_aliasmodel_model_data, EZQ_STORAGE_BLOCK_BINDING(EZQ_GL_BINDINGPOINT_ALIASMODEL_DRAWDATA), buffers.BufferOffset(r_buffer_aliasmodel_model_data) + batch->model_buffer_offset, sizeof(batch->data.models[0]) * batch->count);
 	}
 	else {
 		GLM_BindAliasModelSection(0);
 	}
+}
 
-	// Build & update list of indirect calls, not read when the models are drawn individually
-	if (!GLM_AliasModelsDrawnIndividually()) {
-		int i;
-		int offset = 0;
+void GLM_PrepareAliasModelBatches(void)
+{
+	aliasmodel_batch_t* batch;
+	int i, model_size = 0, model_used = 0, indirect_size = 0;
+	int model_stride = sizeof(first_alias_batch.data);
+	int alignment = GL_ShaderBindingsSupported() ? glConfig.shaderStorageBufferOffsetAlignment : glConfig.uniformBufferOffsetAlignment;
+	qbool individual = GLM_AliasModelsDrawnIndividually();
 
-		for (i = 0; i < aliasmodel_draw_max; ++i) {
-			aliasmodel_draw_instructions_t* instr = &alias_draw_instructions[i];
-			int size;
+	if (!first_alias_batch.count || !GLM_CompileAliasModelProgram()) {
+		return;
+	}
 
-			if (!instr->num_calls) {
-				continue;
+	if (alignment > 1) {
+		model_stride = ((model_stride + alignment - 1) / alignment) * alignment;
+	}
+
+	// Assign ranges before resizing; commands keep batch-local model indices.
+	for (batch = &first_alias_batch; batch && batch->count; batch = batch->next) {
+		batch->model_buffer_offset = model_size;
+		model_used = model_size + sizeof(batch->data.models[0]) * batch->count;
+		model_size += model_stride;
+		if (!individual) {
+			for (i = 0; i < aliasmodel_draw_max; ++i) {
+				aliasmodel_draw_instructions_t* instr = &batch->instructions[i];
+
+				instr->indirect_buffer_offset = indirect_size;
+				indirect_size += sizeof(instr->indirect_buffer[0]) * instr->total_cmds;
 			}
-
-			instr->indirect_buffer_offset = offset;
-			size = sizeof(instr->indirect_buffer[0]) * instr->total_cmds;
-			buffers.UpdateSection(r_buffer_aliasmodel_drawcall_indirect, offset, size, instr->indirect_buffer);
-			offset += size;
 		}
 	}
 
+	if (model_size > alias_model_upload_capacity) {
+		alias_model_upload = Q_realloc(alias_model_upload, model_size);
+		memset(alias_model_upload + alias_model_upload_capacity, 0, model_size - alias_model_upload_capacity);
+		alias_model_upload_capacity = model_size;
+	}
+	buffers.EnsureSize(r_buffer_aliasmodel_model_data, model_size);
+	if (indirect_size) {
+		if (indirect_size > alias_indirect_upload_capacity) {
+			alias_indirect_upload = Q_realloc(alias_indirect_upload, indirect_size);
+			alias_indirect_upload_capacity = indirect_size;
+		}
+		buffers.EnsureSize(r_buffer_aliasmodel_drawcall_indirect, indirect_size);
+	}
+
+	R_TraceEnterNamedRegion(__func__);
+	for (batch = &first_alias_batch; batch && batch->count; batch = batch->next) {
+		memcpy(alias_model_upload + batch->model_buffer_offset, batch->data.models, sizeof(batch->data.models[0]) * batch->count);
+		if (!individual) {
+			for (i = 0; i < aliasmodel_draw_max; ++i) {
+				aliasmodel_draw_instructions_t* instr = &batch->instructions[i];
+
+				if (instr->total_cmds) {
+					memcpy(alias_indirect_upload + instr->indirect_buffer_offset, instr->indirect_buffer, sizeof(instr->indirect_buffer[0]) * instr->total_cmds);
+				}
+			}
+		}
+	}
+
+	buffers.Update(r_buffer_aliasmodel_model_data, model_used, alias_model_upload);
+	if (indirect_size) {
+		buffers.Update(r_buffer_aliasmodel_drawcall_indirect, indirect_size, alias_indirect_upload);
+	}
+	bound_alias_batch = NULL;
 	R_TraceLeaveNamedRegion();
 }
 
@@ -555,7 +621,7 @@ void GLM_PrepareAliasModelBatches(void)
 static int GLM_DrawAliasModelsIndividually(aliasmodel_draw_instructions_t* instr, int cmd_start, int call_index, qbool bind_materials)
 {
 	DrawArraysIndirectCommand_t* cmds = &instr->indirect_buffer[cmd_start];
-	int num_cmds = instr->num_cmds[call_index];
+	int num_cmds = instr->calls[call_index].num_cmds;
 	qbool sections = !GL_ShaderBindingsSupported();
 	int j, run;
 
@@ -581,13 +647,13 @@ static int GLM_DrawAliasModelsIndividually(aliasmodel_draw_instructions_t* instr
 			if (sections && next->baseInstance / MAX_ALIASMODEL_UNIFORM_BLOCK_MODELS != section) {
 				break;
 			}
-			if (bind_materials && !R_TextureReferenceEqual(alias_model_textures[next->baseInstance], alias_model_textures[cmd->baseInstance])) {
+			if (bind_materials && !R_TextureReferenceEqual(alias_batch->textures[next->baseInstance], alias_batch->textures[cmd->baseInstance])) {
 				break;
 			}
 		}
 
-		if (bind_materials && R_TextureReferenceIsValid(alias_model_textures[cmd->baseInstance])) {
-			renderer.TextureUnitBind(TEXTURE_UNIT_MATERIAL, alias_model_textures[cmd->baseInstance]);
+		if (bind_materials && R_TextureReferenceIsValid(alias_batch->textures[cmd->baseInstance])) {
+			renderer.TextureUnitBind(TEXTURE_UNIT_MATERIAL, alias_batch->textures[cmd->baseInstance]);
 		}
 		R_ProgramUniform1i(r_program_uniform_aliasmodel_instanceOffset, model);
 
@@ -609,36 +675,62 @@ static int GLM_DrawAliasModelCall(aliasmodel_draw_instructions_t* instr, int cmd
 		return GLM_DrawAliasModelsIndividually(instr, cmd_start, call_index, bind_materials);
 	}
 
-	if (bind_materials && instr->num_textures[call_index]) {
-		renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, instr->num_textures[call_index], instr->bound_textures[call_index]);
+	if (bind_materials && instr->calls[call_index].num_textures) {
+		renderer.TextureUnitMultiBind(TEXTURE_UNIT_MATERIAL, instr->calls[call_index].num_textures, instr->calls[call_index].textures);
 	}
 
 	GL_MultiDrawArraysIndirect(
 		GL_TRIANGLES,
 		(const void*)(uintptr_t)(instr->indirect_buffer_offset + extra_offset + cmd_start * sizeof(instr->indirect_buffer[0])),
-		instr->num_cmds[call_index],
+		instr->calls[call_index].num_cmds,
 		0
 	);
-	return instr->num_cmds[call_index];
+	return instr->calls[call_index].num_cmds;
+}
+
+// Check the complete frame, rather than only the last batch selected for upload.
+static qbool GLM_HasAliasModelCalls(aliasmodel_draw_type_t type)
+{
+	aliasmodel_batch_t* batch;
+	for (batch = &first_alias_batch; batch && batch->count; batch = batch->next) {
+		if (batch->instructions[type].num_calls) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// Consume every batch in one pass before starting outlines, alpha or the next pass.
+static void GLM_DrawPreparedAliasCalls(aliasmodel_draw_type_t type, qbool bind_materials)
+{
+	aliasmodel_batch_t* batch;
+	for (batch = &first_alias_batch; batch && batch->count; batch = batch->next) {
+		aliasmodel_draw_instructions_t* instr = &batch->instructions[type];
+		uintptr_t extra_offset = 0;
+		int i, call_start = 0;
+		if (!instr->num_calls) {
+			continue;
+		}
+		GLM_SelectAliasModelBatch(batch);
+		if (!GLM_AliasModelsDrawnIndividually()) {
+			buffers.Bind(r_buffer_aliasmodel_drawcall_indirect);
+			extra_offset = buffers.BufferOffset(r_buffer_aliasmodel_drawcall_indirect);
+		}
+		for (i = 0; i < instr->num_calls; ++i) {
+			call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset, bind_materials);
+		}
+	}
 }
 
 static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 {
-	aliasmodel_draw_instructions_t* instr = &alias_draw_instructions[type];
 	GLint mode = (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells ? EZQ_ALIAS_MODE_SHELLS : EZQ_ALIAS_MODE_NORMAL);
-	unsigned int extra_offset = 0;
-	int i, call_start;
 	qbool translucent = (type != aliasmodel_draw_std && type != aliasmodel_draw_postscene_additive);
 	qbool additive = (type == aliasmodel_draw_postscene_additive);
 	qbool shells = (type == aliasmodel_draw_shells || type == aliasmodel_draw_postscene_shells);
 
-	if (!instr->num_calls || !GLM_CompileAliasModelProgram()) {
+	if (!GLM_HasAliasModelCalls(type) || !GLM_CompileAliasModelProgram()) {
 		return;
-	}
-
-	if (!GLM_AliasModelsDrawnIndividually()) {
-		buffers.Bind(r_buffer_aliasmodel_drawcall_indirect);
-		extra_offset = buffers.BufferOffset(r_buffer_aliasmodel_drawcall_indirect);
 	}
 
 	R_ProgramUse(r_program_aliasmodel);
@@ -657,45 +749,29 @@ static void GLM_RenderPreparedEntities(aliasmodel_draw_type_t type)
 	// Depth pre-pass to make viewmodel look good.
 	if (type == aliasmodel_draw_postscene) {
 		GLM_StateBeginAliasModelZPassBatch();
-		call_start = 0;
-		for (i = 0; i < instr->num_calls; ++i) {
-			call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset, false);
-		}
+		GLM_DrawPreparedAliasCalls(type, false);
 	}
 
 	GLM_StateBeginAliasModelBatch(translucent, additive);
-	call_start = 0;
-	for (i = 0; i < instr->num_calls; ++i) {
-		call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset, !shells);
-	}
+	GLM_DrawPreparedAliasCalls(type, !shells);
 
-	if (type == aliasmodel_draw_std && alias_draw_instructions[aliasmodel_draw_outlines_spec].num_calls) {
-		instr = &alias_draw_instructions[aliasmodel_draw_outlines_spec];
-
+	if (type == aliasmodel_draw_std && GLM_HasAliasModelCalls(aliasmodel_draw_outlines_spec)) {
 		R_TraceEnterNamedRegion("GLM_DrawOutlineBatch");
 		R_SetAliasModelUniforms(EZQ_ALIAS_MODE_OUTLINES_SPEC);
 
 		R_ApplyRenderingState(r_state_aliasmodel_outline_spec);
 
-		call_start = 0;
-		for (i = 0; i < instr->num_calls; ++i) {
-			call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset, false);
-		}
+		GLM_DrawPreparedAliasCalls(aliasmodel_draw_outlines_spec, false);
 		R_TraceLeaveNamedRegion();
 	}
 
-	if (type == aliasmodel_draw_std && alias_draw_instructions[aliasmodel_draw_outlines].num_calls) {
-		instr = &alias_draw_instructions[aliasmodel_draw_outlines];
-
+	if (type == aliasmodel_draw_std && GLM_HasAliasModelCalls(aliasmodel_draw_outlines)) {
 		R_TraceEnterNamedRegion("GLM_DrawOutlineBatch");
 		R_SetAliasModelUniforms(EZQ_ALIAS_MODE_OUTLINES);
 
 		GLM_StateBeginAliasOutlineBatch();
 
-		call_start = 0;
-		for (i = 0; i < instr->num_calls; ++i) {
-			call_start += GLM_DrawAliasModelCall(instr, call_start, i, extra_offset, false);
-		}
+		GLM_DrawPreparedAliasCalls(aliasmodel_draw_outlines, false);
 		R_TraceLeaveNamedRegion();
 	}
 }
@@ -716,8 +792,40 @@ void GLM_DrawAliasModelPostSceneBatches(void)
 
 void GLM_InitialiseAliasModelBatches(void)
 {
-	alias_draw_count = 0;
-	memset(alias_draw_instructions, 0, sizeof(alias_draw_instructions));
+	aliasmodel_batch_t* batch;
+	int i;
+	for (batch = &first_alias_batch; batch; batch = batch->next) {
+		batch->count = 0;
+		for (i = 0; i < aliasmodel_draw_max; ++i) {
+			aliasmodel_draw_instructions_t* instr = &batch->instructions[i];
+			instr->num_calls = instr->current_call = instr->total_cmds = 0;
+		}
+	}
+	alias_batch = &first_alias_batch;
+	bound_alias_batch = NULL;
+}
+
+// Release retained CPU batches at map/model recreation and renderer shutdown.
+void GLM_FreeAliasModelBatches(void)
+{
+	aliasmodel_batch_t* batch = &first_alias_batch;
+	while (batch) {
+		aliasmodel_batch_t* next = batch->next;
+		int i;
+		for (i = 0; i < aliasmodel_draw_max; ++i) {
+			Q_free(batch->instructions[i].calls);
+		}
+		if (batch != &first_alias_batch) {
+			Q_free(batch);
+		}
+		batch = next;
+	}
+	Q_free(alias_model_upload);
+	Q_free(alias_indirect_upload);
+	alias_model_upload_capacity = alias_indirect_upload_capacity = 0;
+	memset(&first_alias_batch, 0, sizeof(first_alias_batch));
+	alias_batch = &first_alias_batch;
+	bound_alias_batch = NULL;
 }
 
 void GLM_AliasModelShadow(entity_t* ent)

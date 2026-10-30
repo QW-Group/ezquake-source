@@ -45,6 +45,9 @@ void R_Shutdown(r_shutdown_mode_t mode)
 	// Not texture related so leave alone (FIXME: move to renderer.Shutdown)
 	if (mode != r_shutdown_reload) {
 		R_BrushModelFreeMemory();
+#ifdef RENDERER_OPTION_MODERN_OPENGL
+		GLM_FreeAliasModelBatches();
+#endif
 		if (renderer.DeleteVAOs) {
 			renderer.DeleteVAOs();
 		}
