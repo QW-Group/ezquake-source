@@ -1127,6 +1127,7 @@ float cvar (string)
 void PF_cvar (void)
 {
 	char	*str;
+	cvar_t	*var;
 
 	str = G_STRING(OFS_PARM0);
 
@@ -1141,6 +1142,12 @@ void PF_cvar (void)
 	)
 	{
 		// workaround for NQ progs bug: timelimit and samelevel are checked in SP/coop
+		G_FLOAT(OFS_RETURN) = 0.0;
+		return;
+	}
+
+	var = Cvar_Find(str);
+	if (var && (var->flags & CVAR_NOUNSAFEEXPAND)) {
 		G_FLOAT(OFS_RETURN) = 0.0;
 		return;
 	}
@@ -2567,7 +2574,7 @@ static void PF_cvar_string (void)
 
 	str = G_STRING(OFS_PARM0);
 	var = Cvar_Find(str);
-	if (!var) {
+	if (!var || (var->flags & CVAR_NOUNSAFEEXPAND)) {
 		G_INT(OFS_RETURN) = 0;
 		return;
 	}

@@ -1707,7 +1707,7 @@ void Cmd_ExpandString (const char *data, char *dest)
 				buf[i++] = c;
 				buf[i] = 0;
 
-				if ((var = Cvar_Find(buf)))
+				if ((var = Cvar_Find(buf)) && !Cvar_HiddenFromServer(var))
 					bestvar = var;
 
 				if (i >= (int) sizeof (buf) - 1)
@@ -2395,7 +2395,7 @@ void Cmd_Alias_In_f (void)
 	}
 
 	var = Cvar_Find(Cmd_Argv(2));
-	if (!var) {
+	if (!var || Cvar_HiddenFromServer(var)) {
 		Com_Printf ("alias_in: unknown cvar \"%s\"\n", Cmd_Argv(2));
 		return;
 	}
@@ -2432,7 +2432,7 @@ void Cmd_Alias_Out_f (void)
 	}
 
 	var = Cvar_Find(Cmd_Argv(2));
-	if (!var) {
+	if (!var || Cvar_HiddenFromServer(var)) {
 		Com_Printf ("alias_out: unknown cvar \"%s\"\n", Cmd_Argv(2));
 		return;
 	}
@@ -2471,7 +2471,7 @@ void Cmd_Cvar_In_f (void)
 	}
 
 	var2 = Cvar_Find(Cmd_Argv(2));
-	if (!var2) {
+	if (!var2 || Cvar_HiddenFromServer(var2)) {
 		Com_Printf ("cvar_in: unknown cvar \"%s\"\n", Cmd_Argv(2));
 		return;
 	}
@@ -2509,7 +2509,7 @@ void Cmd_Cvar_Out_f (void)
 	}
 
 	var2 = Cvar_Find(Cmd_Argv(2));
-	if (!var2) {
+	if (!var2 || Cvar_HiddenFromServer(var2)) {
 		Com_Printf ("cvar_out: unknown cvar \"%s\"\n", Cmd_Argv(2));
 		return;
 	}
