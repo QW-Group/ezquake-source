@@ -1113,7 +1113,7 @@ static void MSG_RD_WritePayload(sizebuf_t *msg, const rd_entity_state_t *s, unsi
 		}
 	}
 	if (bits & UF_TAGINFO) {
-		MSG_WriteShort(msg, s->tagentity);
+		MSG_RD_WriteEntityRef(msg, s->tagentity);
 		MSG_WriteByte(msg, s->tagindex);
 	}
 	if (bits & UF_LIGHT) {
@@ -1186,6 +1186,41 @@ qbool MSG_RD_WriteEntityRef(sizebuf_t *msg, unsigned int number)
 	return true;
 }
 
+/* A truncated reference never becomes a usable entity number. */
+int MSG_RD_ReadEntityRef(void)
+{
+	unsigned int number = (unsigned short)MSG_ReadShort();
+
+	if (number & RD_ENTITYREF_EXTEND) {
+		number = ((number & RD_ENTITYREF_MASK) << 8) | MSG_ReadByte();
+	}
+	return msg_badread ? -1 : (int)number;
+}
+
+/* RD update indices use 14 low bits and an optional high byte, independently
+ * of the current map capacity. Write nothing when the whole index cannot fit. */
+qbool MSG_RD_WriteEntityIndex(sizebuf_t *msg, unsigned int number, qbool remove)
+{
+	unsigned int word, size;
+
+	if (number > RD_ENTITYINDEX_MAX) {
+		return false;
+	}
+	size = number < RD_ENTITYINDEX_EXTEND ? 2 : 3;
+	if (msg->maxsize - msg->cursize < size) {
+		return false;
+	}
+	word = (number & RD_ENTITYINDEX_MASK) | (remove ? RD_ENTITYINDEX_REMOVE : 0);
+	if (size == 3) {
+		word |= RD_ENTITYINDEX_EXTEND;
+	}
+	MSG_WriteShort(msg, word);
+	if (size == 3) {
+		MSG_WriteByte(msg, number >> 14);
+	}
+	return true;
+}
+
 /* Copy only a complete record; callers retain pending bits on failure. */
 qbool MSG_RD_WriteEntity(sizebuf_t *msg, const rd_entity_state_t *state, unsigned int bits, qbool floatcoords)
 {
@@ -1195,7 +1230,7 @@ qbool MSG_RD_WriteEntity(sizebuf_t *msg, const rd_entity_state_t *state, unsigne
 		return false;
 	}
 	SZ_Init(&record, data, sizeof(data));
-	MSG_WriteShort(&record, state->number);
+	MSG_RD_WriteEntityIndex(&record, state->number, false);
 	MSG_RD_WritePayload(&record, state, bits, floatcoords);
 	if (record.cursize > msg->maxsize - msg->cursize) {
 		return false;
@@ -1207,11 +1242,10 @@ qbool MSG_RD_WriteEntity(sizebuf_t *msg, const rd_entity_state_t *state, unsigne
 /* World removal is FTE's reset-all marker; other removals identify one slot. */
 qbool MSG_RD_WriteRemove(sizebuf_t *msg, int number)
 {
-	if (number < 0 || number >= MAX_EDICTS || msg->maxsize - msg->cursize < 2) {
+	if (number < 0 || number >= MAX_EDICTS) {
 		return false;
 	}
-	MSG_WriteShort(msg, number | RD_ENTITYINDEX_REMOVE);
-	return true;
+	return MSG_RD_WriteEntityIndex(msg, number, true);
 }
 
 /* Static payloads omit the entity reference; baselines include it. */
@@ -1226,7 +1260,7 @@ qbool MSG_RD_WriteBaseline(sizebuf_t *msg, const rd_entity_state_t *state, qbool
 	}
 	SZ_Init(&record, data, sizeof(data));
 	if (numbered) {
-		MSG_WriteShort(&record, state->number);
+		MSG_RD_WriteEntityRef(&record, state->number);
 	}
 	MSG_RD_WritePayload(&record, state, UF_RESET | MSG_RD_StateBits(&nullstate, state), floatcoords);
 	if (record.cursize > msg->maxsize - msg->cursize) {
