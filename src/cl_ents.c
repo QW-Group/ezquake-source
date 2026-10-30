@@ -34,6 +34,7 @@ struct cl_rd_state_s {
 	rd_entity_state_t *statics;          // Raw RD statics, indexed by the existing static list.
 	float time, oldtime;                // Server timestamps for the two published frames.
 	qbool valid;                       // A reset-world marker established the initial state.
+	int slot_limit;                    // Exclusive inspected slot extent; includes failed scratch writes, never shrinks.
 	int player_lerp_sequence[MAX_CLIENTS]; // Animation bases retained across chunks of one MVD frame.
 	int player_lerp_frame;              // Parsecount for the captured player bases.
 	float player_lerp_time;             // RD server timestamp for the captured player bases.
@@ -137,6 +138,8 @@ static struct cl_rd_state_s *CL_RD_EnsureState(void)
 {
 	if (!cl.rd) {
 		cl.rd = Q_calloc(1, sizeof(*cl.rd));
+		cl.rd->slot_limit = MAX_CLIENTS + 1; // Missing players must still be cleared when publishing.
+
 		cl.rd->current = Q_calloc(CL_MAX_EDICTS, sizeof(*cl.rd->current));
 		cl.rd->previous = Q_calloc(CL_MAX_EDICTS, sizeof(*cl.rd->previous));
 		cl.rd->candidate = Q_calloc(CL_MAX_EDICTS, sizeof(*cl.rd->candidate));
@@ -384,8 +387,10 @@ qbool CL_RD_ParseEntities(void)
 	if (msg_badread || !isfinite(time)) {
 		return false;
 	}
-	memcpy(rd->candidate, rd->current, CL_MAX_EDICTS * sizeof(*rd->current));
-	for (i = 0; i < CL_MAX_EDICTS; ++i) {
+	/* All three active buffers remain allocation-zero beyond slot_limit. Keep
+	 * the extent after a failed decode so the next copy also clears dirty scratch. */
+	memcpy(rd->candidate, rd->current, rd->slot_limit * sizeof(*rd->current));
+	for (i = 0; i < rd->slot_limit; ++i) {
 		rd->candidate[i].reset = false;
 	}
 	for (;;) {
@@ -404,8 +409,9 @@ qbool CL_RD_ParseEntities(void)
 		if (msg_badread || number >= CL_MAX_EDICTS) {
 			return false;
 		}
+		rd->slot_limit = max(rd->slot_limit, number + 1);
 		if (!number && remove && !last) {
-			memset(rd->candidate, 0, CL_MAX_EDICTS * sizeof(*rd->candidate));
+			memset(rd->candidate, 0, rd->slot_limit * sizeof(*rd->candidate));
 			valid = true;
 			continue;
 		}
@@ -441,7 +447,7 @@ qbool CL_RD_ParseEntities(void)
 const rd_client_entity_t *CL_RD_Entity(int number, qbool previous)
 {
 	const rd_client_entity_t *entity;
-	if (!cl.rd || !cl.rd->valid || number <= 0 || number >= CL_MAX_EDICTS) {
+	if (!cl.rd || !cl.rd->valid || number <= 0 || number >= cl.rd->slot_limit) {
 		return NULL;
 	}
 	if (previous && cl.rd->current[number].reset) {
@@ -455,6 +461,12 @@ const rd_client_entity_t *CL_RD_Entity(int number, qbool previous)
 qbool CL_RD_Valid(void)
 {
 	return cl.rd && cl.rd->valid;
+}
+
+/* Bound consumer scans by the retained extent, including previous high slots. */
+int CL_RD_SlotLimit(void)
+{
+	return CL_RD_Valid() ? cl.rd->slot_limit : 0;
 }
 
 /* RD timestamps are independent of the legacy frame ring. */
@@ -1561,7 +1573,7 @@ void CL_LinkPacketEntities(void)
 
 	memset(&ent, 0, sizeof(ent));
 
-	for (pnum = 0; pnum < (CL_RD_Valid() ? CL_MAX_EDICTS : pack->num_entities); pnum++)
+	for (pnum = 0; pnum < (CL_RD_Valid() ? cl.rd->slot_limit : pack->num_entities); pnum++)
 	{
 		entity_state_t projected;
 		if (CL_RD_Valid()) {
@@ -2478,7 +2490,7 @@ void CL_RD_PublishFrame(void)
 		cl.rd->player_lerp_time = cl.servertime;
 		cl.rd->player_lerp_valid = true;
 	}
-	for (number = 1; number < CL_MAX_EDICTS; ++number) {
+	for (number = 1; number < cl.rd->slot_limit; ++number) {
 		const rd_client_entity_t *entity = CL_RD_Entity(number, false);
 		const rd_client_entity_t *previous = CL_RD_Entity(number, true);
 		if (number <= MAX_CLIENTS) {
@@ -2991,7 +3003,7 @@ void CL_SetSolidEntities (void)
 	frame = &cl.frames[cl.parsecountmod];
 	pak = &frame->packet_entities;
 
-	for (i = 0; i < (CL_RD_Valid() ? CL_MAX_EDICTS : pak->num_entities); i++)
+	for (i = 0; i < (CL_RD_Valid() ? cl.rd->slot_limit : pak->num_entities); i++)
 	{
 		entity_state_t projected;
 		const rd_client_entity_t *rd = NULL;

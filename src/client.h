@@ -1167,6 +1167,7 @@ qbool CL_RD_ReadState(rd_client_entity_t *result, const rd_client_entity_t *old,
 qbool CL_RD_ReadBaseline(rd_client_entity_t *result, qbool numbered);
 qbool CL_RD_ParseEntities(void);
 qbool CL_RD_Valid(void);
+int CL_RD_SlotLimit(void);
 const rd_client_entity_t *CL_RD_Entity(int number, qbool previous);
 float CL_RD_Time(qbool previous);
 void CL_RD_Clear(void);
