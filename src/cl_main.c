@@ -2606,7 +2606,9 @@ static void CL_ServerFrame(double frametime)
 {
 #ifndef CLIENTONLY
 	if (com_serveractive) {
-		playermove_t oldmove;
+		/* The server shares pmove with client prediction; keep the large backup
+		 * off the stack and refresh it before every server frame. */
+		static playermove_t oldmove;
 
 		memcpy(&oldmove, &pmove, sizeof(playermove_t));
 
