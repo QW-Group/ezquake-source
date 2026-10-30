@@ -26,7 +26,7 @@
 static cvar_t cl_www_address = { "cl_www_address", "https://badplace.eu/", CVAR_ROM };
 #else
 static cvar_t sv_www_address = { "sv_www_address", "" };
-static cvar_t sv_www_authkey = { "sv_www_authkey", "", CVAR_NOTFROMSERVER };
+static cvar_t sv_www_authkey = { "sv_www_authkey", "", CVAR_NOTFROMSERVER | CVAR_NOUNSAFEEXPAND };
 static cvar_t sv_www_checkin_period = { "sv_www_checkin_period", "60" };
 
 static void Web_ConstructServerURL(char* url, const char* path, int sizeof_url);

@@ -479,6 +479,14 @@ qbool Cvar_BlockedFromServer(cvar_t *var)
 	return false;
 }
 
+// A command from the server (cbuf_svc), from gamecode (cbuf_server) or from a demo
+// (cbuf_demo_extension) must not read a cvar flagged CVAR_NOUNSAFEEXPAND.
+qbool Cvar_HiddenFromServer(cvar_t *var)
+{
+	return var && (var->flags & CVAR_NOUNSAFEEXPAND) &&
+		(cbuf_current == &cbuf_svc || cbuf_current == &cbuf_server || cbuf_current == &cbuf_demo_extension);
+}
+
 qbool Cvar_Command (void)
 {
 	cvar_t *v;
