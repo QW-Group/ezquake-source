@@ -43,6 +43,42 @@ typedef struct
 } moveclip_t;
 
 
+/* Invocation-owned lists also survive recoverable game-error unwinding. */
+typedef struct physics_scratch_s {
+	struct physics_scratch_s *previous; // Outer callback's active allocation.
+} physics_scratch_t;
+static physics_scratch_t *physics_scratch; // Active allocations, innermost first.
+
+/* Retain a large physics list until its callback scope ends or the server stops. */
+void *SV_AllocPhysicsScratch(size_t size)
+{
+	physics_scratch_t *scratch = Q_malloc(sizeof(*scratch) + size);
+	scratch->previous = physics_scratch;
+	physics_scratch = scratch;
+	return scratch + 1;
+}
+
+/* Normal callback returns release lists in reverse allocation order. */
+void SV_FreePhysicsScratch(void *memory)
+{
+	physics_scratch_t *scratch;
+
+	if (!memory) {
+		return;
+	}
+	scratch = (physics_scratch_t *)memory - 1;
+	physics_scratch = scratch->previous;
+	Q_free(scratch);
+}
+
+/* A recoverable game error bypasses the normal frees before Host_Abort. */
+void SV_ClearPhysicsScratch(void)
+{
+	while (physics_scratch) {
+		SV_FreePhysicsScratch(physics_scratch + 1);
+	}
+}
+
 /*
 ================
 SV_HullForEntity
@@ -298,8 +334,13 @@ SV_TouchLinks
 static void SV_TouchLinks ( edict_t *ent, areanode_t *node )
 {
 	int			i, numtouch;
-	edict_t		*touchlist[MAX_EDICTS], *touch;
+	edict_t		*local[MAX_LEGACY_EDICTS], **touchlist = local, *touch;
 	int			old_self, old_other;
+
+	/* Touch callbacks may reenter; each large map query owns its list. */
+	if (sv.max_edicts > MAX_LEGACY_EDICTS) {
+		touchlist = SV_AllocPhysicsScratch(sv.max_edicts * sizeof(*touchlist));
+	}
 
 	numtouch = SV_AreaEdicts(ent->v->absmin, ent->v->absmax, touchlist, sv.max_edicts, AREA_TRIGGERS);
 
@@ -322,6 +363,9 @@ static void SV_TouchLinks ( edict_t *ent, areanode_t *node )
 
 		pr_global_struct->self = old_self;
 		pr_global_struct->other = old_other;
+	}
+	if (touchlist != local) {
+		SV_FreePhysicsScratch(touchlist);
 	}
 }
 
@@ -521,7 +565,9 @@ Mins and maxs enclose the entire area swept by the move
 void SV_ClipToLinks ( areanode_t *node, moveclip_t *clip )
 {
 	int			i, numtouch;
-	edict_t		*touchlist[MAX_EDICTS], *touch;
+	/* Clipping executes no game callbacks, so this scratch is not reentered. */
+	static edict_t *touchlist[MAX_EDICTS];
+	edict_t		*touch;
 	trace_t		trace;
 
 	numtouch = SV_AreaEdicts (clip->boxmins, clip->boxmaxs, touchlist, sv.max_edicts, AREA_SOLID);

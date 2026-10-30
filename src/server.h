@@ -754,6 +754,10 @@ extern char			master_rcon_password[128];
 // sv_main.c
 //
 
+/* Map-latched entity capacity policy. */
+extern cvar_t sv_maxedicts;
+qbool SV_EntityCapacityRequiresRD(void);
+
 extern	double	realtime; // not bounded in any way, changed at start of every frame, never reset
 
 typedef enum {
@@ -904,8 +908,7 @@ void SV_FindModelNumbers (void);
 //
 // sv_user.c
 //
-/* Enforce the current map's sound capability before signon and after map load. */
-qbool SV_CheckClientSoundSupport(client_t *client);
+qbool SV_CheckClientMapSupport(client_t *client);
 void SV_ExecuteClientMessage (client_t *cl);
 void SV_UserInit (void);
 void SV_TogglePause (const char *msg, int bit);

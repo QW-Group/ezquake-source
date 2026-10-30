@@ -195,6 +195,26 @@ cvar_t sv_pext_mvdsv_serversideweapon = { "sv_pext_mvdsv_serversideweapon", "1" 
 
 cvar_t sv_extlimits = { "sv_extlimits", "2" };
 
+/* Map capacity is latched by spawn, so changing this never resizes a live game. */
+static void OnChange_maxedicts(cvar_t *var, char *value, qbool *cancel)
+{
+	char *end;
+	double number = strtod(value, &end);
+
+	if (end == value || *end || !isfinite(number) || number < MAX_EDICTS_SAFE
+		|| number > MAX_EDICTS || number != floor(number) || Q_atof(value) != number) {
+		Con_Printf("sv_maxedicts must be an integer from %d to %d\n", MAX_EDICTS_SAFE, MAX_EDICTS);
+		*cancel = true;
+	}
+}
+cvar_t sv_maxedicts = {"sv_maxedicts", "2048", CVAR_NONE, OnChange_maxedicts};
+
+/* The finalized map limit, not current occupancy, determines wire eligibility. */
+qbool SV_EntityCapacityRequiresRD(void)
+{
+	return sv.max_edicts > MAX_LEGACY_EDICTS;
+}
+
 /* Change advertised RD support only; existing connections retain their codec. */
 static void OnChange_replacementdeltas(cvar_t *var, char *value, qbool *cancel)
 {
@@ -236,6 +256,8 @@ Quake calls this before calling Sys_Quit or Sys_Error
 void SV_Shutdown (char *finalmsg)
 {
 	int i;
+
+	SV_ClearPhysicsScratch();
 
 	if (!sv.state)
 		return; // already shutdown. FIXME: what about error during SV_SpawnServer() ?
@@ -876,7 +898,7 @@ static void SVC_GetChallenge (void)
 
 #ifdef PROTOCOL_VERSION_FTE2
 	//tell the client what fte extensions2 we support
-	if (svs.fteprotocolextensions2)
+	if (svs.fteprotocolextensions2 || SV_EntityCapacityRequiresRD())
 	{
 		int lng;
 
@@ -884,7 +906,8 @@ static void SVC_GetChallenge (void)
 		memcpy(over, &lng, sizeof(int));
 		over += 4;
 
-		lng = LittleLong(svs.fteprotocolextensions2);
+		lng = LittleLong(svs.fteprotocolextensions2
+			| (SV_EntityCapacityRequiresRD() ? FTE_PEXT2_REPLACEMENTDELTAS : 0));
 		memcpy(over, &lng, sizeof(int));
 		over += 4;
 	}
@@ -1375,7 +1398,7 @@ static void SVC_DirectConnect (void)
 #ifdef PROTOCOL_VERSION_FTE2
 	newcl->fteprotocolextensions2 = protextsupported2;
 	/* A client-supplied mask must not bypass the server's RD opt-in. */
-	if (!(svs.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
+	if (!(svs.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) && !SV_EntityCapacityRequiresRD())
 		newcl->fteprotocolextensions2 &= ~FTE_PEXT2_REPLACEMENTDELTAS;
 #endif // PROTOCOL_VERSION_FTE2
 
@@ -3523,6 +3546,15 @@ void SV_InitLocal (void)
 #endif
 
 	Cvar_Register (&sv_extlimits);
+	Cvar_Register (&sv_maxedicts);
+	/* Registration may adopt an early +set value without calling OnChange. */
+	{
+		qbool invalid = false;
+		OnChange_maxedicts(&sv_maxedicts, sv_maxedicts.string, &invalid);
+		if (invalid) {
+			Cvar_Set(&sv_maxedicts, "2048");
+		}
+	}
 	Cvar_Register (&sv_pext_replacementdeltas);
 	OnChange_replacementdeltas(&sv_pext_replacementdeltas, sv_pext_replacementdeltas.string, NULL);
 #ifdef MVD_PEXT1_SERVERSIDEWEAPON

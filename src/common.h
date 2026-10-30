@@ -68,8 +68,8 @@ typedef enum
 //============================================================================
 
 // per-level limits
-#define CL_MAX_EDICTS           2048	// FIXME: ouch! ouch! ouch!
-#define MAX_EDICTS              2048    // can't encode more than this, see SV_WriteDelta
+#define CL_MAX_EDICTS           16384   // Includes world slot zero
+#define MAX_EDICTS              16384   // RD world ceiling; legacy packet limits remain separate
 #define MAX_LEGACY_EDICTS       2048    // QW packet entities with ENTITYDBL/ENTITYDBL2
 #define MAX_EDICTS_SAFE         512     // lower limit, to make sure no client limits exceeded
 #define MAX_LIGHTSTYLES         64

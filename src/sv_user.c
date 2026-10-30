@@ -196,13 +196,21 @@ qbool PlayerCheckPing(void)
 }
 
 /* Reject unsupported network clients before signon or new-map gameplay. */
-qbool SV_CheckClientSoundSupport(client_t *client)
+qbool SV_CheckClientMapSupport(client_t *client)
 {
 #ifdef USE_PR2
 	if (client->isBot) {
 		return true;
 	}
 #endif
+	if (SV_EntityCapacityRequiresRD()
+		&& !(client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)) {
+		SV_ClientPrintf(client, PRINT_HIGH,
+			"Map %s requires replacement deltas (PEXT2_REPLACEMENTDELTAS). "
+			"Reconnect with a supporting client.\n", sv.mapname);
+		SV_DropClient(client);
+		return false;
+	}
 	if (SV_SoundPrecacheCount(sv.sound_precache, MAX_SOUNDS) < MAX_SOUNDS_LEGACY
 	    || (client->fteprotocolextensions & FTE_PEXT_SOUNDDBL)
 	    || (client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)) {
@@ -248,7 +256,7 @@ static void Cmd_New_f (void)
 		return;
 	}
 
-	if (!SV_CheckClientSoundSupport(sv_client)) {
+	if (!SV_CheckClientMapSupport(sv_client)) {
 		return;
 	}
 
@@ -3149,7 +3157,8 @@ void Cmd_PEXT_f(void)
 			// do not reset it.
 			if (!sv_client->fteprotocolextensions2)
 			{
-				sv_client->fteprotocolextensions2 = proto_value & svs.fteprotocolextensions2;
+				sv_client->fteprotocolextensions2 = proto_value & (svs.fteprotocolextensions2
+					| (SV_EntityCapacityRequiresRD() ? FTE_PEXT2_REPLACEMENTDELTAS : 0));
 				if (sv_client->fteprotocolextensions2)
 					Con_DPrintf("PEXT: Client supports 0x%x fte extensions2\n", sv_client->fteprotocolextensions2);
 			}
