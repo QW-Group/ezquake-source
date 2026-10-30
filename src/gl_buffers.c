@@ -315,7 +315,10 @@ static qbool GL_StreamBufferWrite(r_buffer_id id, ptrdiff_t offset, int size, co
 	GLbitfield access = GL_MAP_WRITE_BIT;
 	void* mapped;
 
-	if (buffer->usage != bufferusage_once_per_frame || buffer->using_storage || buffer->stream_write_failed || !GL_Available(glMapBufferRange)) {
+	// A complete replacement can discard mutable storage even when reused in-frame.
+	// Partial reused ranges may still be read by earlier draws and must synchronize.
+	if ((buffer->usage != bufferusage_once_per_frame && !(buffer->usage == bufferusage_reuse_per_frame && whole_buffer))
+		|| buffer->using_storage || buffer->stream_write_failed || !GL_Available(glMapBufferRange)) {
 		return false;
 	}
 
