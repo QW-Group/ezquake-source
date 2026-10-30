@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef __PMOVE_H__
 #define __PMOVE_H__
 
-#define	MAX_PHYSENTS 64 
+#define	MAX_PHYSENTS 2048
 
 typedef struct {
 	vec3_t		origin;

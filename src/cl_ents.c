@@ -2964,6 +2964,17 @@ static void CL_LinkPlayers(void)
 	}
 }
 
+/* Diagnose the bounded movement reserve once per map, rather than per object. */
+static void CL_PhysentOverflow(void)
+{
+	static int warned_servercount = -1;
+
+	if (warned_servercount != cl.servercount) {
+		Con_DPrintf("Client movement candidate limit reached\n");
+		warned_servercount = cl.servercount;
+	}
+}
+
 // Builds all the pmove physents for the current frame
 void CL_SetSolidEntities (void)
 {
@@ -3000,6 +3011,7 @@ void CL_SetSolidEntities (void)
 			physent_t *phys;
 			unsigned int solid = rd->state.solidsize;
 			if (pmove.numphysent == MAX_PHYSENTS) {
+				CL_PhysentOverflow();
 				break;
 			}
 			phys = &pmove.physents[pmove.numphysent++];
@@ -3015,8 +3027,10 @@ void CL_SetSolidEntities (void)
 
 		if (cl.clipmodels[state->modelindex])
 		{
-			if (pmove.numphysent == MAX_PHYSENTS)
+			if (pmove.numphysent == MAX_PHYSENTS) {
+				CL_PhysentOverflow();
 				break;
+			}
 
 			pmove.physents[pmove.numphysent].model = cl.clipmodels[state->modelindex];
 #if defined(FTE_PEXT_TRANS)
@@ -3113,8 +3127,10 @@ void CL_SetSolidPlayers (int playernum)
 	{
 		pplayer = &predicted_players[j];
 	
-		if (pmove.numphysent == MAX_PHYSENTS)
+		if (pmove.numphysent == MAX_PHYSENTS) {
+			CL_PhysentOverflow();
 			break;
+		}
 
 		if (!pplayer->active)
 			continue;	// not present this frame

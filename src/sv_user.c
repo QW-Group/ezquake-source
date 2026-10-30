@@ -3432,6 +3432,8 @@ AddLinksToPmove
 */
 static void AddLinksToPmove ( areanode_t *node )
 {
+	/* Report an exhausted movement reserve at most once per map. */
+	static int warned_spawncount = -1;
 	link_t		*l, *next;
 	edict_t		*check;
 	int 		pl;
@@ -3468,8 +3470,13 @@ static void AddLinksToPmove ( areanode_t *node )
 					break;
 			if (i != 3)
 				continue;
-			if (pmove.numphysent == MAX_PHYSENTS)
+			if (pmove.numphysent == MAX_PHYSENTS) {
+				if (warned_spawncount != svs.spawncount) {
+					Con_DPrintf("AddLinksToPmove: movement candidate limit reached\n");
+					warned_spawncount = svs.spawncount;
+				}
 				return;
+			}
 			pe = &pmove.physents[pmove.numphysent];
 			pmove.numphysent++;
 
