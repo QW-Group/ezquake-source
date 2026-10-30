@@ -112,8 +112,11 @@ byte *Mod_DecompressVis(byte *in, model_t *model)
 		if (in >= end)
 			Host_Error("Mod_DecompressVis: truncated PVS run");
 		count = *in++;
-		if (!count || count > remaining)
+		if (!count)
 			Host_Error("Mod_DecompressVis: invalid PVS run");
+		// hlvis rounds rows up to a multiple of 64 leafs, so the last zero run may end past the row
+		if (count > remaining)
+			count = remaining;
 		out += count;
 		remaining -= count;
 	}
