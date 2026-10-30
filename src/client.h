@@ -886,7 +886,8 @@ typedef struct visentity_s {
 #define MAX_STANDARD_ENTITIES 2048
 
 typedef struct visentlist_s {
-	visentity_t list[MAX_STANDARD_ENTITIES];
+	visentity_t* list;              // CPU instances grow independently of GPU batch limits.
+	int         capacity;          // Retained between frames; released with client state.
 	int         count;
 
 	int         typecount[visent_max];

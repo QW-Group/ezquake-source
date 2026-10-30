@@ -640,45 +640,57 @@ void CL_ClearScene(void) {
 void CL_AddEntityToList(visentlist_t* list, visentlist_entrytype_t vistype, entity_t* ent, modtype_t type, qbool shell)
 {
 	extern cvar_t gl_outline;
+	entity_t saved;
 
-	if (list->count < sizeof(list->list) / sizeof(list->list[0])) {
-		list->list[cl_visents.count].ent = *ent;
-
-		ent = &list->list[cl_visents.count].ent;
-		list->list[cl_visents.count].type = type;
-		if (vistype == visent_alpha) {
-			// Sort transparent entities based on closest point for stable back-to-front rendering.
-			vec3_t distance;
-			float scale = R_EntityScale(ent);
-			int i;
-			for (i = 0; i < 3; i++) {
-				distance[i] = r_refdef.vieworg[i] - ent->origin[i];
-				distance[i] -= bound(scale * ent->model->mins[i], distance[i], scale * ent->model->maxs[i]);
-			}
-			list->list[cl_visents.count].distance = DotProduct(distance, distance);
-		} else {
-			list->list[cl_visents.count].distance = VectorDistanceQuick(cl.simorg, ent->origin);
+	if (list->count == list->capacity) {
+		int capacity;
+		if (list->capacity > INT_MAX / 2 / sizeof(list->list[0])) {
+			Host_Error("Visible entity list is too large");
 		}
-		list->list[cl_visents.count].draw[vistype] = true;
-
-		ent->outlineScale = 0.5f * (r_refdef2.outlineBase + DotProduct(ent->origin, r_refdef2.outline_vpn));
-		ent->outlineScale = bound(ent->outlineScale, 0, 2);
-
-		++list->typecount[vistype];
-		if (shell) {
-			list->list[cl_visents.count].draw[visent_shells] = true;
-			++list->typecount[visent_shells];
-		}
-		// Check for outline on models.
-		// We don't support outline for transparent models,
-		// and we also check for ruleset, since we don't want outline on eyes.
-		if (((gl_outline.integer & 1) && !RuleSets_DisallowModelOutline(ent->model))) {
-			list->list[cl_visents.count].draw[visent_outlines] = true;
-			++list->typecount[visent_outlines];
-		}
-
-		++list->count;
+		capacity = list->capacity ? list->capacity * 2 : MAX_STANDARD_ENTITIES;
+		// The input may itself be an entry in the allocation being moved.
+		saved = *ent;
+		list->list = Q_realloc(list->list, capacity * sizeof(list->list[0]));
+		memset(list->list + list->capacity, 0, (capacity - list->capacity) * sizeof(list->list[0]));
+		list->capacity = capacity;
+		ent = &saved;
 	}
+	list->list[list->count].ent = *ent;
+
+	ent = &list->list[list->count].ent;
+	list->list[list->count].type = type;
+	if (vistype == visent_alpha) {
+		// Sort transparent entities based on closest point for stable back-to-front rendering.
+		vec3_t distance;
+		float scale = R_EntityScale(ent);
+		int i;
+		for (i = 0; i < 3; i++) {
+			distance[i] = r_refdef.vieworg[i] - ent->origin[i];
+			distance[i] -= bound(scale * ent->model->mins[i], distance[i], scale * ent->model->maxs[i]);
+		}
+		list->list[list->count].distance = DotProduct(distance, distance);
+	} else {
+		list->list[list->count].distance = VectorDistanceQuick(cl.simorg, ent->origin);
+	}
+	list->list[list->count].draw[vistype] = true;
+
+	ent->outlineScale = 0.5f * (r_refdef2.outlineBase + DotProduct(ent->origin, r_refdef2.outline_vpn));
+	ent->outlineScale = bound(ent->outlineScale, 0, 2);
+
+	++list->typecount[vistype];
+	if (shell) {
+		list->list[list->count].draw[visent_shells] = true;
+		++list->typecount[visent_shells];
+	}
+	// Check for outline on models.
+	// We don't support outline for transparent models,
+	// and we also check for ruleset, since we don't want outline on eyes.
+	if (((gl_outline.integer & 1) && !RuleSets_DisallowModelOutline(ent->model))) {
+		list->list[list->count].draw[visent_outlines] = true;
+		++list->typecount[visent_outlines];
+	}
+
+	++list->count;
 }
 
 void CL_AddEntity(entity_t *ent)

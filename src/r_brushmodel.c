@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "quakedef.h"
+#include <limits.h>
 #include "gl_model.h"
 #include "r_vao.h"
 #include "r_renderer.h"
@@ -33,6 +34,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 unsigned int* modelIndexes;
 unsigned int modelIndexMaximum;
+
+// Keep the usual reserve, growing only for scenes that actually need more indices.
+void R_BrushModelEnsureIndexCapacity(size_t required)
+{
+	size_t capacity;
+	const size_t maximum = INT_MAX / sizeof(*modelIndexes);
+
+	if (required <= modelIndexMaximum) {
+		return;
+	}
+	if (required > maximum) {
+		Host_Error("Brush model index buffer is too large");
+	}
+	capacity = max((size_t)modelIndexMaximum, 1024U);
+	while (capacity < required) {
+		capacity = min(capacity * 2, maximum);
+	}
+	modelIndexes = Q_realloc(modelIndexes, capacity * sizeof(*modelIndexes));
+	modelIndexMaximum = capacity;
+}
 
 static int R_BrushModelMeasureVBOSize(model_t* m);
 static int R_BrushModelPopulateVBO(model_t* m, void* vbo_buffer, int vbo_pos);

@@ -255,7 +255,7 @@ static qbool GL_CreateFixedBuffer(r_buffer_id id, buffertype_t type, const char*
 		return true;
 	}
 
-	GL_BindBufferImpl(target, buffer->glref);
+	GL_BindBuffer(id);
 	if (target == GL_UNIFORM_BUFFER) {
 		alignment = glConfig.uniformBufferOffsetAlignment;
 	}
@@ -382,6 +382,8 @@ static void GL_ResizeBuffer(r_buffer_id id, int size, void* data)
 	assert(glBufferState.buffers[id].glref);
 
 	if (glBufferState.buffers[id].using_storage) {
+		char name[sizeof(glBufferState.buffers[id].name)];
+		strlcpy(name, glBufferState.buffers[id].name, sizeof(name));
 		if (glBufferState.buffers[id].persistent_mapped_ptr) {
 			if (GL_Available(glUnmapNamedBuffer)) {
 				GL_Procedure(glUnmapNamedBuffer, glBufferState.buffers[id].glref);
@@ -391,13 +393,8 @@ static void GL_ResizeBuffer(r_buffer_id id, int size, void* data)
 				GL_Procedure(glUnmapBuffer, GL_BufferTypeToTarget(glBufferState.buffers[id].type));
 			}
 		}
-		GL_Procedure(glDeleteBuffers, 1, &glBufferState.buffers[id].glref);
-		glBufferState.buffers[id].glref = 0;
-#ifdef DEBUG_MEMORY_ALLOCATIONS
-		Sys_Printf("\nbuffer,free-resize,%d,%s,%u\n", id, glBufferState.buffers[id].name, glBufferState.buffers[id].size * (glBufferState.buffers[id].persistent_mapped_ptr ? 3 : 1));
-#endif
-
-		GL_CreateFixedBuffer(id, glBufferState.buffers[id].type, glBufferState.buffers[id].name, size, data, glBufferState.buffers[id].usage);
+		// Allocation invalidates cached bindings before deleting/reusing the GL name.
+		GL_CreateFixedBuffer(id, glBufferState.buffers[id].type, name, size, data, glBufferState.buffers[id].usage);
 	}
 	else {
 		if (GL_Available(glNamedBufferData)) {
