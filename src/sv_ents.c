@@ -789,7 +789,7 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 		{
 			// Without PEXT_TRANS there's no PF_EXTRA_PFS, move
 			// PF_ONGROUND and PF_SOLID to their expected offsets.
-			MSG_WriteShort (msg, pflags & 0x3fff | (pflags & 0xc00000) >> 8);
+			MSG_WriteShort (msg, (pflags & 0x3fff) | ((pflags & 0xc00000) >> 8));
 		}
 #else
 		MSG_WriteShort (msg, pflags);
@@ -929,7 +929,8 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 	edict_t *ent;
 	byte *pvs;
 	int hideent;
-	unsigned int client_flag = (1 << (client - svs.clients));
+	// The MVD recorder isn't one of svs.clients, so it has no visibility bit
+	unsigned int client_flag = recorder ? 0 : 1u << (client - svs.clients);
 	edict_t	*clent = client->edict;
 
 	float distances[MAX_PACKETENTITIES_POSSIBLE] = { 0 };
@@ -1030,7 +1031,7 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 
 			if (fofs_visibility) {
 				// Don't include other filters in logic for setting this field
-				((eval_t *)((byte *)(ent)->v + fofs_visibility))->_int |= (1 << (client - svs.clients));
+				((eval_t *)((byte *)(ent)->v + fofs_visibility))->_int |= client_flag;
 			}
 
 			if (e == hideent) {

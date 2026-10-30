@@ -247,7 +247,7 @@ void GLM_RenderDynamicLightmaps(msurface_t* s, qbool world)
 	R_RenderDynamicLightmaps(s, world);
 
 	if (world && surfaceTodoData && s->surfacenum < maximumSurfaceNumber) {
-		surfaceTodoData[s->surfacenum / 32] |= (1 << (s->surfacenum % 32));
+		surfaceTodoData[s->surfacenum / 32] |= (1u << (s->surfacenum % 32));
 		if (s->lightmaptexturenum >= 0 && s->lightmaptexturenum < lightmap_array_size) {
 			lightmaps[s->lightmaptexturenum].modified = true;
 		}

@@ -321,7 +321,7 @@ dlight_t *CL_AllocDlight(int key)
 			if (dl->key == key) {
 				memset (dl, 0, sizeof(*dl));
 				dl->key = key;
-				cl_dlight_active[i/32] |= (1<<(i%32));
+				cl_dlight_active[i/32] |= (1u<<(i%32));
 				return dl;
 			}
 		}
@@ -331,11 +331,11 @@ dlight_t *CL_AllocDlight(int key)
 	for (i = 0; i < MAX_DLIGHTS/32; i++) {
 		if (cl_dlight_active[i] != 0xffffffff) {
 			for (j = 0; j < 32; j++) {
-				if (!(cl_dlight_active[i] & (1<<j)) && i*32+j < MAX_DLIGHTS) {
+				if (!(cl_dlight_active[i] & (1u<<j)) && i*32+j < MAX_DLIGHTS) {
 					dl = cl_dlights + i * 32 + j;
 					memset(dl, 0, sizeof(*dl));
 					dl->key = key;
-					cl_dlight_active[i] |= 1<<j;
+					cl_dlight_active[i] |= 1u<<j;
 					return dl;
 				}
 			}
@@ -393,11 +393,11 @@ void CL_DecayLights(void)
 	for (i = 0; i < MAX_DLIGHTS/32; i++) {
 		if (cl_dlight_active[i]) {
 			for (j = 0; j < 32; j++) {
-				if ((cl_dlight_active[i]&(1<<j)) && i*32+j < MAX_DLIGHTS) {
+				if ((cl_dlight_active[i]&(1u<<j)) && i*32+j < MAX_DLIGHTS) {
 					dl = cl_dlights + i*32 + j;
 
 					if (dl->die < cl.time) {
-						cl_dlight_active[i] &= ~(1 << j);
+						cl_dlight_active[i] &= ~(1u << j);
 						dl->radius = 0;
 						continue;
 					}
@@ -405,7 +405,7 @@ void CL_DecayLights(void)
 					dl->radius -= max(r_lightdecayrate.value, 1) * cls.frametime * dl->decay;
 
 					if (dl->radius <= 0) {
-						cl_dlight_active[i] &= ~(1 << j);
+						cl_dlight_active[i] &= ~(1u << j);
 						dl->radius = 0;
 						continue;
 					}
@@ -1905,7 +1905,7 @@ guess_pm_type:
 			{
 				// Without the extended layout there's no PF_EXTRA_PFS, move
 				// PF_ONGROUND and PF_SOLID to their expected offsets.
-				MSG_WriteShort (&cls.demomessage, flags & 0x3fff | (flags & 0xc00000) >> 8);
+				MSG_WriteShort (&cls.demomessage, (flags & 0x3fff) | ((flags & 0xc00000) >> 8));
 			}
 #else
 			MSG_WriteShort(&cls.demomessage, flags);
@@ -2618,7 +2618,7 @@ void CL_EmitEntities (void)
 	CL_UpdateTEnts();
 }
 
-int	mvd_fixangle;
+unsigned int	mvd_fixangle;
 
 static int MVD_TranslateFlags(int src) 
 {
@@ -2684,7 +2684,7 @@ static void MVD_InitInterpolation(void) {
 		pplayer->predict = false;
 
 		tracknum = Cam_TrackNum();
-		if (mvd_fixangle & (1 << i)) {
+		if (mvd_fixangle & (1u << i)) {
 			if (i == tracknum) {
 				VectorCopy(cl.viewangles, state->command.angles);
 				VectorCopy(cl.viewangles, state->viewangles);
@@ -2693,7 +2693,7 @@ static void MVD_InitInterpolation(void) {
 			// no angle interpolation
 			VectorCopy(state->command.angles, oldstate->command.angles);
 
-			mvd_fixangle &= ~(1 << i);
+			mvd_fixangle &= ~(1u << i);
 		}
 
 		// we dont interpolate ourself if we are spectating

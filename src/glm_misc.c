@@ -81,7 +81,7 @@ void GLM_PreRenderView(void)
 
 	// Lights
 	for (i = 0; i < MAX_DLIGHTS; ++i) {
-		if (cl_dlight_active[i / 32] & (1 << (i % 32))) {
+		if (cl_dlight_active[i / 32] & (1u << (i % 32))) {
 			extern cvar_t gl_colorlights;
 
 			dlight_t* light = &cl_dlights[i];

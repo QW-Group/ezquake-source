@@ -166,7 +166,7 @@ static void SCR_HUD_DrawSigil(hud_t *hud, int num, float scale, int style, qbool
 			if (!HUD_PrepareDraw(hud, 8 * scale, 8 * scale, &x, &y)) {
 				return;
 			}
-			if (HUD_Stats(STAT_ITEMS) & (1 << (28 + num))) {
+			if (HUD_Stats(STAT_ITEMS) & (1u << (28 + num))) {
 				Draw_SCharacterP(x, y, num + '0' + 1, scale, proportional);
 			}
 			break;
@@ -174,7 +174,7 @@ static void SCR_HUD_DrawSigil(hud_t *hud, int num, float scale, int style, qbool
 			if (!HUD_PrepareDraw(hud, 8 * scale, 16 * scale, &x, &y)) {
 				return;
 			}
-			if (HUD_Stats(STAT_ITEMS) & (1 << (28 + num))) {
+			if (HUD_Stats(STAT_ITEMS) & (1u << (28 + num))) {
 				Draw_SPic(x, y, sb_sigil[num], scale);
 			}
 			break;

@@ -799,7 +799,7 @@ float FloatSwapPDP2Lit (float f)
 // Extract integers from buffers
 unsigned int BuffBigLong (const unsigned char *buffer)
 {
-	return (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
+	return ((unsigned int)buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
 }
 
 unsigned short BuffBigShort (const unsigned char *buffer)
@@ -809,7 +809,7 @@ unsigned short BuffBigShort (const unsigned char *buffer)
 
 unsigned int BuffLittleLong (const unsigned char *buffer)
 {
-	return (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
+	return ((unsigned int)buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
 }
 
 unsigned short BuffLittleShort (const unsigned char *buffer)

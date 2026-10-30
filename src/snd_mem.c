@@ -47,7 +47,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 		} \
 		while (outnlsamps) \
 		{ \
-			*out = (*in >> outrshift) << outlshift; \
+			*out = (*in >> outrshift) * (1 << outlshift); \
 			out++; \
 			outnlsamps--; \
 		} \
@@ -74,8 +74,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 		} \
 		while (outnlsamps) \
 		{ \
-			out[0] = (in[0] >> outrshift) << outlshift; \
-			out[1] = (in[1] >> outrshift) << outlshift; \
+			out[0] = (in[0] >> outrshift) * (1 << outlshift); \
+			out[1] = (in[1] >> outrshift) * (1 << outlshift); \
 			out += 2; \
 			outnlsamps--; \
 		} \
@@ -102,7 +102,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 		} \
 		while (outnlsamps) \
 		{ \
-			out[0] = (((in[0] >> outrshift) << outlshift) + ((in[1] >> outrshift) << outlshift)) >> 1; \
+			out[0] = (((in[0] >> outrshift) * (1 << outlshift)) + ((in[1] >> outrshift) * (1 << outlshift))) >> 1; \
 			out++; \
 			outnlsamps--; \
 		} \
@@ -210,7 +210,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	\
 		while (outsamps) \
 		{ \
-			*out = (*in >> outrshift) << outlshift; \
+			*out = (*in >> outrshift) * (1 << outlshift); \
 			inaccum += infrac; \
 			in += (inaccum >> 16); \
 			inaccum &= 0xFFFF; \
@@ -228,8 +228,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	\
 		while (outsamps) \
 		{ \
-			out[0] = (in[0] >> outrshift) << outlshift; \
-			out[1] = (in[1] >> outrshift) << outlshift; \
+			out[0] = (in[0] >> outrshift) * (1 << outlshift); \
+			out[1] = (in[1] >> outrshift) * (1 << outlshift); \
 			inaccum += infrac; \
 			in += (inaccum >> 16) * 2; \
 			inaccum &= 0xFFFF; \
@@ -247,7 +247,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	\
 		while (outsamps) \
 		{ \
-			out[0] = (((in[0] >> outrshift) << outlshift) + ((in[1] >> outrshift) << outlshift)) >> 1; \
+			out[0] = (((in[0] >> outrshift) * (1 << outlshift)) + ((in[1] >> outrshift) * (1 << outlshift))) >> 1; \
 			inaccum += infrac; \
 			in += (inaccum >> 16) * 2; \
 			inaccum &= 0xFFFF; \
@@ -260,7 +260,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	{ \
 		while (insamps) \
 		{ \
-			*out = (*in >> outrshift) << outlshift; \
+			*out = (*in >> outrshift) * (1 << outlshift); \
 			out++; \
 			in++; \
 			insamps--; \
@@ -271,7 +271,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	{ \
 		while (insamps) \
 		{ \
-			*out = (((in[0] >> outrshift) << outlshift) + ((in[1] >> outrshift) << outlshift)) >> 1; \
+			*out = (((in[0] >> outrshift) * (1 << outlshift)) + ((in[1] >> outrshift) * (1 << outlshift))) >> 1; \
 			out++; \
 			in += 2; \
 			insamps--; \

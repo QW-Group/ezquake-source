@@ -44,7 +44,8 @@ if(ENABLE_LTO)
     message("-- Link Time Optimization: Enabled")
 endif()
 
-if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+# MSVC is also set for clang-cl, which takes MSVC-style flags
+if(MSVC)
     add_compile_options(
             /nologo
             /W3
@@ -69,8 +70,6 @@ else()
             -std=gnu89
 
             -Wall
-            -Wno-pointer-to-int-cast
-            -Wno-int-to-pointer-cast
             -Wno-strict-aliasing
             -Wno-deprecated-declarations
 
@@ -88,26 +87,26 @@ else()
     if(HAS_STRLCPY_STRLCAT_SIZE)
         add_compile_options("-Werror=strlcpy-strlcat-size")
     endif()
+    check_c_compiler_flag("-Wshift-sign-overflow" HAS_SHIFT_SIGN_OVERFLOW)
+    if(HAS_SHIFT_SIGN_OVERFLOW)
+        add_compile_options("-Werror=shift-sign-overflow")
+    endif()
+    # Level 2 also catches shifting into the sign bit, as clang's -Wshift-sign-overflow
+    check_c_compiler_flag("-Wshift-overflow=2" HAS_SHIFT_OVERFLOW_2)
+    if(HAS_SHIFT_OVERFLOW_2)
+        add_compile_options("-Werror=shift-overflow=2")
+    endif()
+    check_c_compiler_flag("-Wnull-pointer-subtraction" HAS_NULL_POINTER_SUBTRACTION)
+    if(HAS_NULL_POINTER_SUBTRACTION)
+        add_compile_options("-Werror=null-pointer-subtraction")
+    endif()
     check_c_compiler_flag("-Wformat-truncation" HAS_FORMAT_TRUNCATION)
     if(HAS_FORMAT_TRUNCATION)
         add_compile_options("-Wno-error=format-truncation" "-Wno-format-truncation")
     endif()
-    check_c_compiler_flag("-Wparentheses" HAS_PARENTHESIS)
-    if(HAS_PARENTHESIS)
-        add_compile_options("-Wno-parentheses")
-    endif()
-    check_c_compiler_flag("-Wmisleading-indentation" HAS_MISLEADING_INDENTATION)
-    if(HAS_MISLEADING_INDENTATION)
-        add_compile_options("-Wno-misleading-indentation")
-    endif()
-    # While not gnu89, it's in practice allowed by all supported compilers
-    check_c_compiler_flag("-Wtypedef-redefinition" HAS_TYPE_REDEFINITION)
-    if(HAS_TYPE_REDEFINITION)
-        add_compile_options("-Wno-typedef-redefinition")
-    endif()
     # Should mostly be fixed in mvdsv, and next sync can remove this
     check_c_compiler_flag("-Wshorten-64-to-32" HAS_SHORTEN_64_TO_32)
-    if(HAS_TYPE_REDEFINITION)
+    if(HAS_SHORTEN_64_TO_32)
         add_compile_options("-Wno-shorten-64-to-32")
     endif()
 endif()
@@ -957,3 +956,39 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
         )
     endif()
 endif()
+
+# clang-cl objects are linked by the linker directly rather than through the clang
+# driver, so the sanitizer runtime libraries and DLL aren't located automatically.
+# The runtime directory is taken from where clang finds the DLL, since
+# -print-runtime-dir names the per-target directory even when the runtime is
+# installed in lib/windows.
+if(MSVC AND CMAKE_C_COMPILER_ID STREQUAL "Clang")
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(CLANG_ASAN_DLL_NAME clang_rt.asan_dynamic-x86_64.dll)
+    else()
+        set(CLANG_ASAN_DLL_NAME clang_rt.asan_dynamic-i386.dll)
+    endif()
+    execute_process(
+            COMMAND ${CMAKE_C_COMPILER} /clang:-print-file-name=${CLANG_ASAN_DLL_NAME}
+            OUTPUT_VARIABLE CLANG_ASAN_DLL
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET
+    )
+    file(TO_CMAKE_PATH "${CLANG_ASAN_DLL}" CLANG_ASAN_DLL)
+
+    # -print-file-name echoes the bare name back when the file isn't found
+    if(IS_ABSOLUTE "${CLANG_ASAN_DLL}" AND EXISTS "${CLANG_ASAN_DLL}")
+        get_filename_component(CLANG_RUNTIME_DIR "${CLANG_ASAN_DLL}" DIRECTORY)
+        target_link_directories(ezquake PRIVATE "${CLANG_RUNTIME_DIR}")
+        add_custom_command(TARGET ezquake POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CLANG_ASAN_DLL}" "$<TARGET_FILE_DIR:ezquake>"
+        )
+    endif()
+endif()
+
+# Plays the demo named by EZQUAKE_BASEDIR and EZQUAKE_DEMO, see cmake/RunDemo.cmake
+enable_testing()
+add_test(NAME timedemo
+        COMMAND ${CMAKE_COMMAND} -DEZQUAKE=$<TARGET_FILE:ezquake> -P ${PROJECT_SOURCE_DIR}/cmake/RunDemo.cmake
+)
+set_tests_properties(timedemo PROPERTIES SKIP_REGULAR_EXPRESSION "SKIPPED:")

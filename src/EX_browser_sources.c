@@ -853,26 +853,26 @@ int SB_Source_Add(const char* name, const char* address, sb_source_type_t type)
 
 void SB_Source_Remove(int i)
 {
-    source_data *s;
+	source_data *s;
 
 	if (i < 0 || i >= MAX_SOURCES) {
 		return;
 	}
 
 	s = sources[i];
-    if (s->type == type_dummy)
-        return;
+	if (s->type == type_dummy)
+		return;
 
 	Q_free(sources[i]);
 
-    // remove from SB
-    if (i < sourcesn - 1)
-    {
+	// remove from SB
+	if (i < sourcesn - 1)
+	{
 		memmove(sources+i,
-                sources+i + 1,
-                (sourcesn-i-1)*sizeof(*sources));
-    }
-    sourcesn--;
+				sources+i + 1,
+				(sourcesn-i-1)*sizeof(*sources));
+	}
+	sourcesn--;
 
 	SB_Sources_Dump();
 }

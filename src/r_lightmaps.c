@@ -84,11 +84,11 @@ static void R_BuildDlightList (msurface_t *surf)
 	dlightbits = surf->dlightbits;
 
 	for (lnum = 0; lnum < MAX_DLIGHTS && dlightbits; lnum++) {
-		if (!(surf->dlightbits & (1 << lnum))) {
+		if (!(surf->dlightbits & (1u << lnum))) {
 			continue;		// not lit by this light
 		}
 
-		dlightbits &= ~(1<<lnum);
+		dlightbits &= ~(1u << lnum);
 
 		dist = PlaneDiff(cl_dlights[lnum].origin, surf->plane);
 		irad = (cl_dlights[lnum].radius - fabs(dist)) * 256;
@@ -293,7 +293,7 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride, uint32_t f
 			m = max(r, g);
 			m = max(m, b);
 			if (m > ((255 << 16) + (1 << 15))) {
-				unsigned s = (((255 << 16) + (1 << 15)) << 8) / m;
+				unsigned s = (((255u << 16) + (1 << 15)) << 8) / m;
 				r = (r >> 8) * s;
 				g = (g >> 8) * s;
 				b = (b >> 8) * s;
@@ -775,8 +775,8 @@ static void R_BuildLightmapData(msurface_t* surf, int surfnum)
 
 	lightmap_flags = 0xFFFFFFFF;
 	for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
-		lightmap_flags &= ~(0xFF << (8 * maps));
-		lightmap_flags |= surf->styles[maps] << (8 * maps);
+		lightmap_flags &= ~(0xFFu << (8 * maps));
+		lightmap_flags |= (unsigned int)surf->styles[maps] << (8 * maps);
 	}
 
 	for (t = 0; t < tmax; ++t) {

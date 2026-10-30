@@ -205,7 +205,7 @@ static qbool NET_PacketQueueAdd(packet_queue_t* queue, byte* data, int size, net
 			MSG_BeginReading();
 			MSG_ReadLong(); // sequence =
 			sequence_ack = MSG_ReadLong();
-			sequence_ack &= ~(1 << 31);
+			sequence_ack &= ~(1u << 31);
 
 			sequencemod = sequence_ack & UPDATE_MASK;
 			expected_latency = (cls.realtime - cl.frames[sequencemod].senttime) * 1000.0;
@@ -385,7 +385,6 @@ char *NET_BaseAdrToString (const netadr_t a)
 
 static qbool NET_StringToSockaddr (const char *s, struct sockaddr_storage *sadr)
 {
-	struct hostent	*h;
 	char	*colon;
 	char	copy[128];
 
@@ -417,15 +416,15 @@ static qbool NET_StringToSockaddr (const char *s, struct sockaddr_storage *sadr)
 		*(int *)&((struct sockaddr_in *)sadr)->sin_addr = inet_addr(copy);
 	}
 	else {
-		if (!(h = gethostbyname(copy))) {
+		struct addrinfo hints = { 0 }, *res;
+
+		hints.ai_family = AF_INET;
+		if (getaddrinfo(copy, NULL, &hints, &res) != 0) {
 			return false;
 		}
 
-		if (h->h_addrtype != AF_INET) {
-			return false;
-		}
-
-		*(int *)&((struct sockaddr_in *)sadr)->sin_addr = *(int *)h->h_addr_list[0];
+		((struct sockaddr_in *)sadr)->sin_addr = ((struct sockaddr_in *)res->ai_addr)->sin_addr;
+		freeaddrinfo(res);
 	}
 
 	return true;

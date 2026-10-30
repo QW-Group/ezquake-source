@@ -612,12 +612,12 @@ const int COLOR_WHITE = 0xFFFFFFFF;
 
 color_t RGBA_TO_COLOR(byte r, byte g, byte b, byte a) 
 {
-	return ((r << 0) | (g << 8) | (b << 16) | (a << 24)) & 0xFFFFFFFF;
+	return ((r << 0) | (g << 8) | (b << 16) | ((unsigned int)a << 24)) & 0xFFFFFFFF;
 }
 
 color_t RGBAVECT_TO_COLOR(byte rgba[4])
 {
-	return ((rgba[0] << 0) | (rgba[1] << 8) | (rgba[2] << 16) | (rgba[3] << 24)) & 0xFFFFFFFF;
+	return ((rgba[0] << 0) | (rgba[1] << 8) | (rgba[2] << 16) | ((unsigned int)rgba[3] << 24)) & 0xFFFFFFFF;
 }
 
 color_t RGBAVECT_TO_COLOR_PREMULT(byte rgba[4])
@@ -630,7 +630,7 @@ color_t RGBAVECT_TO_COLOR_PREMULT(byte rgba[4])
 	premult[2] = rgba[2] * alpha;
 	premult[3] = rgba[3];
 
-	return ((premult[0] << 0) | (premult[1] << 8) | (premult[2] << 16) | (premult[3] << 24)) & 0xFFFFFFFF;
+	return ((premult[0] << 0) | (premult[1] << 8) | (premult[2] << 16) | ((unsigned int)premult[3] << 24)) & 0xFFFFFFFF;
 }
 
 color_t RGBAVECT_TO_COLOR_PREMULT_SPECIFIC(byte rgba[4], float alpha)
@@ -642,7 +642,7 @@ color_t RGBAVECT_TO_COLOR_PREMULT_SPECIFIC(byte rgba[4], float alpha)
 	premult[2] = rgba[2] * alpha;
 	premult[3] = 255 * alpha;
 
-	return ((premult[0] << 0) | (premult[1] << 8) | (premult[2] << 16) | (premult[3] << 24)) & 0xFFFFFFFF;
+	return ((premult[0] << 0) | (premult[1] << 8) | (premult[2] << 16) | ((unsigned int)premult[3] << 24)) & 0xFFFFFFFF;
 }
 
 byte* COLOR_TO_RGBA(color_t i, byte rgba[4]) 

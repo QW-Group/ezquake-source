@@ -587,7 +587,7 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 			// just for r_fastturb's sake
 			{
 				byte *data = (byte *) &d_8to24table[*((byte *) mt + mt->offsets[0] + ((mt->height * mt->width) >> 1))];
-				tx->flatcolor3ub = (255 << 24) + (data[0] << 0) + (data[1] << 8) + (data[2] << 16);
+				tx->flatcolor3ub = (255u << 24) + (data[0] << 0) + (data[1] << 8) + (data[2] << 16);
 
 				if (strstr(tx->name, "water") || strstr(tx->name, "mwat")) {
 					tx->turbType = TEXTURE_TURB_WATER;

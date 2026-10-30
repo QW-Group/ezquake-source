@@ -19,6 +19,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // sys.h -- non-portable functions
 
+#include <stdint.h>
+
 #include "q_platform.h"
 
 #ifdef _WIN32
@@ -182,7 +184,7 @@ typedef struct
 typedef struct
 {
 	file_t *files;
-	int	size;
+	int64_t size; // summed over all files, which can exceed 2 GB
 	int	numfiles;
 	int	numdirs;
 } dir_t;
