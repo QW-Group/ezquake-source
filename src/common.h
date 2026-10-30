@@ -422,7 +422,11 @@ void MSG_ReadSkip(int bytes);
 /* Base RD field codec, shared by live networking and demo startup writers. */
 void MSG_RD_InitState(rd_entity_state_t *state);
 unsigned int MSG_RD_StateBits(const rd_entity_state_t *from, const rd_entity_state_t *to);
+/* Ordinary RD references; read failure sets msg_badread and returns -1. */
 qbool MSG_RD_WriteEntityRef(sizebuf_t *msg, unsigned int number);
+int MSG_RD_ReadEntityRef(void);
+/* Atomic RD update/removal index; independent of runtime entity capacity. */
+qbool MSG_RD_WriteEntityIndex(sizebuf_t *msg, unsigned int number, qbool remove);
 qbool MSG_RD_WriteEntity(sizebuf_t *msg, const rd_entity_state_t *state, unsigned int bits, qbool floatcoords);
 qbool MSG_RD_WriteRemove(sizebuf_t *msg, int number);
 qbool MSG_RD_WriteBaseline(sizebuf_t *msg, const rd_entity_state_t *state, qbool numbered, qbool floatcoords);

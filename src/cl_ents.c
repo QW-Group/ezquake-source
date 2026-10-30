@@ -188,16 +188,6 @@ void CL_RD_SetStatic(int index, const rd_entity_state_t *state)
 	rd->statics[index] = *state;
 }
 
-/* Normal RD entity references use a different extension bit from update indices. */
-static unsigned int CL_RD_ReadEntityNumber(void)
-{
-	unsigned int number = (unsigned short)MSG_ReadShort();
-	if (number & RD_ENTITYREF_EXTEND) {
-		number = ((number & RD_ENTITYREF_MASK) << 8) | (unsigned int)MSG_ReadByte();
-	}
-	return number;
-}
-
 // MVD's entity-only float coordinates apply to RD baselines and live states too.
 static float CL_RD_ReadCoord(void)
 {
@@ -319,7 +309,7 @@ qbool CL_RD_ReadState(rd_client_entity_t *result, const rd_client_entity_t *old,
 		s->abslight = (s->drawflags & MLS_MASK) >= MLS_ADDLIGHT ? MSG_ReadByte() : 0;
 	}
 	if (bits & UF_TAGINFO) {
-		s->tagentity = CL_RD_ReadEntityNumber();
+		s->tagentity = MSG_RD_ReadEntityRef();
 		s->tagindex = MSG_ReadByte();
 	}
 	if (bits & UF_LIGHT) {
@@ -371,7 +361,7 @@ qbool CL_RD_ReadState(rd_client_entity_t *result, const rd_client_entity_t *old,
 /* RD statics omit the entity reference; numbered baselines retain full RD data. */
 qbool CL_RD_ReadBaseline(rd_client_entity_t *result, qbool numbered)
 {
-	unsigned int number = numbered ? CL_RD_ReadEntityNumber() : 0;
+	unsigned int number = numbered ? MSG_RD_ReadEntityRef() : 0;
 	rd_client_entity_t next;
 	if (number >= CL_MAX_EDICTS || !CL_RD_ReadState(&next, NULL, NULL, number)) {
 		return false;

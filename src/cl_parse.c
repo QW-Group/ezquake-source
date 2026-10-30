@@ -2066,10 +2066,7 @@ void CL_ParseStartSoundPacket(qbool extended)
 			}
 		}
 		if (flags & NQSND_LARGEENTITY) {
-			ent = (unsigned short)MSG_ReadShort();
-			if (rd && (ent & 0x8000)) {
-				ent = ((ent & 0x7fff) << 8) | MSG_ReadByte();
-			}
+			ent = rd ? MSG_RD_ReadEntityRef() : (unsigned short)MSG_ReadShort();
 			channel = MSG_ReadByte();
 		}
 		else {
@@ -3666,9 +3663,10 @@ void CL_MuzzleFlash (void)
 	player_state_t *state;
 	vec3_t none = {0,0,0};
 
-	i = MSG_ReadShort();
+	i = cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS
+		? MSG_RD_ReadEntityRef() : MSG_ReadShort();
 
-	if (CL_Demo_SkipMessage(true))
+	if (msg_badread || CL_Demo_SkipMessage(true))
 		return;
 
 	if (!cl_muzzleflash.value)
@@ -4061,7 +4059,7 @@ void CL_ParseServerMessage (void)
 				}
 			case svc_stopsound:
 				{
-					i = MSG_ReadShort();
+					i = (unsigned short)MSG_ReadShort();
 
 					if (CL_Demo_SkipMessage (true))
 						break;
