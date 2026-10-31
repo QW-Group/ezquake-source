@@ -627,7 +627,7 @@ void SV_MVD_RunPendingConnections (void)
 						e = ("QTVSV 1\n"
 							 "PERROR: Incompatible version (valid version is v1)\n\n");
 					}
-					else if (sv.demo_format != 0)
+					else if (sv.demo_format < 0)
 					{
 						e = "QTVSV 1\nTERROR: This map requires an unsupported recording format.\n\n";
 					}
