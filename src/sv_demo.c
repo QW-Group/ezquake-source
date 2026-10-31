@@ -864,7 +864,7 @@ void SV_MVD_FinishMap(void)
 	SV_MVD_ClearRD();
 }
 
-/* Latch once after the game's map capacity is finalized; stream RD is deferred. */
+/* Latch once after the game's map capacity is finalized. */
 void SV_MVD_ConfigureMap(void)
 {
 	mvddest_t **link = &demo.dest;
@@ -878,7 +878,7 @@ void SV_MVD_ConfigureMap(void)
 	sv.demo_format = SV_MVD_SelectFormat(format, sv.max_edicts);
 	while (*link) {
 		mvddest_t *dest = *link;
-		if (sv.demo_format < 0 || (sv.demo_format == 1 && dest->desttype == DEST_STREAM)) {
+		if (sv.demo_format < 0) {
 			Con_Printf("Closing recording output: selected MVD format is unsupported.\n");
 			*link = dest->nextdest;
 			DestClose(dest, false);
@@ -1223,7 +1223,7 @@ qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange)
 {
 	int i;
 
-	if (sv.demo_format < 0 || (dest && dest->desttype == DEST_STREAM && sv.demo_format == 1)) {
+	if (sv.demo_format < 0) {
 		Con_Printf("Cannot record: selected MVD format is unsupported for this output.\n");
 		return false;
 	}
@@ -1325,6 +1325,15 @@ static void SV_MVD_ReservePrecacheLists(mvddest_t *dest)
 	for (i = 1; i < MAX_MODELS && sv.model_precache[i]; ++i) {
 		reserve += strlen(sv.model_precache[i]) + 16;
 	}
+	if (sv.demo_format == 1) {
+		/* A full base-RD record, including MVD framing, fits in 256 bytes.
+		 * Startup queues baselines, statics and current entities before flushing. */
+		reserve += 256U * ((size_t)sv.num_baseline_edicts + sv.static_entity_count + sv.num_edicts);
+		for (i = 0; i < sv.num_signon_buffers; ++i) {
+			reserve += (size_t)sv.signon_buffer_size[i] + 16;
+		}
+	}
+
 	for (d = demo.dest; d; d = d->nextdest) {
 		size_t needed;
 		char *cache;
