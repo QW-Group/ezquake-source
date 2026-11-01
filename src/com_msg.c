@@ -868,9 +868,10 @@ void MSG_RD_InitState(rd_entity_state_t *state)
 	memset(state->glowmod, 32, sizeof(state->glowmod));
 }
 
-/* Compare persistent fields; predinfo also carries transient movement. */
-unsigned int MSG_RD_StateBits(const rd_entity_state_t *from, const rd_entity_state_t *to)
+/* Select fields once; retained prediction fields need their own dirty mask. */
+rd_delta_t MSG_RD_SelectDelta(const rd_entity_state_t *from, const rd_entity_state_t *to, qbool remote)
 {
+	rd_delta_t delta = {0, 0};
 	unsigned int bits = 0;
 	if (from->origin[0] != to->origin[0] || from->origin[1] != to->origin[1]) {
 		bits |= UF_ORIGINXY;
@@ -938,14 +939,24 @@ unsigned int MSG_RD_StateBits(const rd_entity_state_t *from, const rd_entity_sta
 	if (memcmp(from->gravitydir, to->gravitydir, sizeof(to->gravitydir))) {
 		bits |= UF_GRAVITYDIR;
 	}
-	if (from->pmovetype != to->pmovetype || from->weaponframe != to->weaponframe
-		|| memcmp(from->velocity, to->velocity, sizeof(to->velocity))
+	if (from->pmovetype != to->pmovetype) {
+		delta.pred_fields |= UFP_MOVETYPE;
+	}
+	if (from->weaponframe != to->weaponframe) {
+		delta.pred_fields |= UFP_WEAPONFRAME_OLD;
+	}
+	if (delta.pred_fields || memcmp(from->velocity, to->velocity, sizeof(to->velocity))
+		|| memcmp(from->movement, to->movement, sizeof(to->movement)) || from->msec != to->msec
 		|| (to->pmovetype && (to->msec || to->velocity[0] || to->velocity[1] || to->velocity[2]
 			|| to->movement[0] || to->movement[1] || to->movement[2]))) {
 		bits |= UF_PREDINFO;
-		/* Moving players need their origin and model/view angle basis together. */
-		if (to->pmovetype) {
-			bits |= UF_ORIGINXY | UF_ORIGINZ | UF_ANGLESXZ | UF_ANGLESY;
+		/* Prediction can have advanced the previous moving state. Refresh its
+		 * origin, and remote players' angle basis, as in FTE's base profile. */
+		if (to->pmovetype && (from->velocity[0] || from->velocity[1] || from->velocity[2])) {
+			bits |= UF_ORIGINXY | UF_ORIGINZ;
+			if (remote) {
+				bits |= UF_ANGLESXZ | UF_ANGLESY;
+			}
 		}
 	}
 	/* Refresh the camera basis when entering or leaving server control. */
@@ -953,13 +964,13 @@ unsigned int MSG_RD_StateBits(const rd_entity_state_t *from, const rd_entity_sta
 		&& ((from->pmovetype & RD_MOVETYPE_MASK) == RD_MOVETYPE_LOCK || (to->pmovetype & RD_MOVETYPE_MASK) == RD_MOVETYPE_LOCK)) {
 		bits |= UF_ORIGINXY | UF_ORIGINZ | UF_ANGLESXZ | UF_ANGLESY | UF_PREDINFO;
 	}
-	return bits;
+	delta.fields = bits;
+	return delta;
 }
 
 /* Encode one complete base-RD payload into a bounded temporary message. */
-static void MSG_RD_WritePayload(sizebuf_t *msg, const rd_entity_state_t *s, unsigned int bits, qbool floatcoords)
+static void MSG_RD_WritePayload(sizebuf_t *msg, const rd_entity_state_t *s, unsigned int bits, unsigned int pred, qbool floatcoords)
 {
-	unsigned int pred = UFP_MOVETYPE | UFP_WEAPONFRAME_OLD;
 	int i;
 	if (((bits & UF_MODEL) && s->modelindex > 255) || ((bits & UF_MODELINDEX2) && s->modelindex2 > 255)
 		|| ((bits & UF_FRAME) && s->frame > 255) || ((bits & UF_SKIN) && (s->skinnum < 0 || s->skinnum > 255)))
@@ -1061,7 +1072,9 @@ static void MSG_RD_WritePayload(sizebuf_t *msg, const rd_entity_state_t *s, unsi
 				MSG_WriteShort(msg, s->movement[i]);
 			}
 		}
-		MSG_WriteByte(msg, s->pmovetype);
+		if (pred & UFP_MOVETYPE) {
+			MSG_WriteByte(msg, s->pmovetype);
+		}
 		if (pred & UFP_VELOCITYXY) {
 			MSG_WriteShort(msg, s->velocity[0]);
 			MSG_WriteShort(msg, s->velocity[1]);
@@ -1072,9 +1085,11 @@ static void MSG_RD_WritePayload(sizebuf_t *msg, const rd_entity_state_t *s, unsi
 		if (pred & UFP_MSEC) {
 			MSG_WriteByte(msg, s->msec);
 		}
-		MSG_WriteByte(msg, (s->weaponframe & 127) | (s->weaponframe > 127 ? 128 : 0));
-		if (s->weaponframe > 127) {
-			MSG_WriteByte(msg, s->weaponframe >> 7);
+		if (pred & UFP_WEAPONFRAME_OLD) {
+			MSG_WriteByte(msg, (s->weaponframe & 127) | (s->weaponframe > 127 ? 128 : 0));
+			if (s->weaponframe > 127) {
+				MSG_WriteByte(msg, s->weaponframe >> 7);
+			}
 		}
 	}
 	if (bits & UF_MODEL) {
@@ -1222,16 +1237,22 @@ qbool MSG_RD_WriteEntityIndex(sizebuf_t *msg, unsigned int number, qbool remove)
 }
 
 /* Copy only a complete record; callers retain pending bits on failure. */
-qbool MSG_RD_WriteEntity(sizebuf_t *msg, const rd_entity_state_t *state, unsigned int bits, qbool floatcoords)
+qbool MSG_RD_WriteEntity(sizebuf_t *msg, const rd_entity_state_t *state, rd_delta_t delta, qbool floatcoords)
 {
 	byte data[256];
 	sizebuf_t record;
-	if (state->number <= 0 || state->number >= MAX_EDICTS || !MSG_RD_ValidState(state, bits)) {
+	if (delta.pred_fields & ~(UFP_MOVETYPE | UFP_WEAPONFRAME_OLD)) {
+		return false;
+	}
+	if (delta.pred_fields) {
+		delta.fields |= UF_PREDINFO;
+	}
+	if (state->number <= 0 || state->number >= MAX_EDICTS || !MSG_RD_ValidState(state, delta.fields)) {
 		return false;
 	}
 	SZ_Init(&record, data, sizeof(data));
 	MSG_RD_WriteEntityIndex(&record, state->number, false);
-	MSG_RD_WritePayload(&record, state, bits, floatcoords);
+	MSG_RD_WritePayload(&record, state, delta.fields, delta.pred_fields, floatcoords);
 	if (record.cursize > msg->maxsize - msg->cursize) {
 		return false;
 	}
@@ -1254,6 +1275,7 @@ qbool MSG_RD_WriteBaseline(sizebuf_t *msg, const rd_entity_state_t *state, qbool
 	byte data[256];
 	sizebuf_t record;
 	rd_entity_state_t nullstate;
+	rd_delta_t delta;
 	MSG_RD_InitState(&nullstate);
 	if ((numbered && (state->number < 0 || state->number >= MAX_EDICTS)) || !MSG_RD_ValidState(state, 0)) {
 		return false;
@@ -1262,7 +1284,8 @@ qbool MSG_RD_WriteBaseline(sizebuf_t *msg, const rd_entity_state_t *state, qbool
 	if (numbered) {
 		MSG_RD_WriteEntityRef(&record, state->number);
 	}
-	MSG_RD_WritePayload(&record, state, UF_RESET | MSG_RD_StateBits(&nullstate, state), floatcoords);
+	delta = MSG_RD_SelectDelta(&nullstate, state, true);
+	MSG_RD_WritePayload(&record, state, delta.fields | UF_RESET, delta.pred_fields, floatcoords);
 	if (record.cursize > msg->maxsize - msg->cursize) {
 		return false;
 	}
