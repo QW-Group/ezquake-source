@@ -642,7 +642,7 @@ static int CL_WriteRDCurrentState(qbool mvd, int seq)
 				const rd_client_entity_t *entity = CL_RD_Entity(number, false);
 				const rd_client_entity_t *baseline = CL_RD_Baseline(number);
 				rd_entity_state_t nullstate;
-				unsigned int bits;
+				rd_delta_t delta = {0, 0};
 				float pitch;
 				qbool plain;
 				if (!entity) {
@@ -657,13 +657,13 @@ static int CL_WriteRDCurrentState(qbool mvd, int seq)
 				if (!phase) {
 					corrections |= plain;
 					MSG_RD_InitState(&nullstate);
-					bits = UF_RESET | UF_ANGLESXZ | UF_ANGLESY | UF_PREDINFO
-						| MSG_RD_StateBits(baseline ? &baseline->state : &nullstate, &entity->state);
+					delta = MSG_RD_SelectDelta(baseline ? &baseline->state : &nullstate, &entity->state, true);
+					delta.fields |= UF_RESET | UF_ANGLESXZ | UF_ANGLESY | UF_PREDINFO;
 				}
 				else {
-					bits = phase == 1 ? UF_ANGLESXZ : UF_PREDINFO;
+					delta.fields = phase == 1 ? UF_ANGLESXZ : UF_PREDINFO;
 				}
-				if (!MSG_RD_WriteEntity(&msg, &entity->state, bits,
+				if (!MSG_RD_WriteEntity(&msg, &entity->state, delta,
 										(cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0)) {
 					break;
 				}

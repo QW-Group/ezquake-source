@@ -47,7 +47,7 @@ void SV_RD_FromLegacy(rd_entity_state_t *to, const entity_state_t *from)
 #define RD_REMOVE UF_UNUSED1
 
 typedef struct {
-	unsigned int bits;                  // Fields transmitted, for loss recovery.
+	rd_delta_t delta;                   // Fields and persistent prediction selections transmitted.
 	unsigned short number;              // Entity slot, including reset-world slot zero.
 } rd_change_t;
 
@@ -60,11 +60,19 @@ struct sv_rd_state_s {
 	int capacity, last_ack, cursor;     // Supported slots, acknowledged sequence, deferred scan.
 	int slot_limit;                    // Exclusive highest queued slot; never shrinks before reset.
 	rd_entity_state_t *current;         // Current desired state; number zero means absent.
-	unsigned int *pending;             // Dirty fields/removals not yet delivered.
+	rd_delta_t *pending;               // Dirty fields/removals not yet delivered.
 	byte *seen;                        // Visibility in the snapshot currently being built.
 	int *introduction;                 // -1 awaiting first reset, 0 acked, otherwise first sequence+1.
 	rd_frame_t frames[UPDATE_BACKUP];   // Bounded transmitted-change history.
 };
+
+/* Unacknowledged fields retain their selection, not the old field values. */
+static rd_delta_t SV_RD_MergeDelta(rd_delta_t a, rd_delta_t b)
+{
+	a.fields |= b.fields;
+	a.pred_fields |= b.pred_fields;
+	return a;
+}
 
 /* Release RD allocations before a client slot or map state is reused. */
 void SV_RD_ClearClient(client_t *client)
@@ -103,7 +111,7 @@ void SV_RD_ResetClient(client_t *client, int capacity)
 	rd->pending = Q_calloc(capacity, sizeof(*rd->pending));
 	rd->seen = Q_calloc(capacity, sizeof(*rd->seen));
 	rd->introduction = Q_calloc(capacity, sizeof(*rd->introduction));
-	rd->pending[0] = RD_REMOVE;
+	rd->pending[0] = (rd_delta_t){RD_REMOVE, 0};
 	for (i = 0; i < UPDATE_BACKUP; ++i) {
 		rd->frames[i].sequence = -1;
 	}
@@ -113,11 +121,11 @@ void SV_RD_ResetClient(client_t *client, int capacity)
 static void SV_RD_ResetWorld(struct sv_rd_state_s *rd)
 {
 	int n;
-	rd->pending[0] = RD_REMOVE;
+	rd->pending[0] = (rd_delta_t){RD_REMOVE, 0};
 	rd->cursor = MAX_CLIENTS + 1;
 	for (n = 1; n < rd->slot_limit; ++n) {
 		if (rd->current[n].number) {
-			rd->pending[n] = UF_RESET;
+			rd->pending[n] = (rd_delta_t){UF_RESET, 0};
 			rd->introduction[n] = -1;
 		}
 	}
@@ -154,11 +162,12 @@ void SV_RD_QueueEntity(client_t *client, const rd_entity_state_t *state)
 	rd->slot_limit = max(rd->slot_limit, n + 1);
 	rd->seen[n] = true;
 	if (!rd->current[n].number) {
-		rd->pending[n] = UF_RESET;
+		rd->pending[n] = (rd_delta_t){UF_RESET, 0};
 		rd->introduction[n] = -1;
 	}
 	else {
-		rd->pending[n] |= MSG_RD_StateBits(&rd->current[n], state);
+		rd->pending[n] = SV_RD_MergeDelta(rd->pending[n],
+										  MSG_RD_SelectDelta(&rd->current[n], state, !client->edict || n != client->edict->e.entnum));
 	}
 	rd->current[n] = *state;
 }
@@ -173,11 +182,11 @@ static void SV_RD_Requeue(struct sv_rd_state_s *rd, const rd_frame_t *frame)
 			SV_RD_ResetWorld(rd);
 		}
 		else if (!rd->current[n].number) {
-			rd->pending[n] = RD_REMOVE;
-		} else if (frame->changes[i].bits & RD_REMOVE) {
-			rd->pending[n] = UF_RESET;
+			rd->pending[n] = (rd_delta_t){RD_REMOVE, 0};
+		} else if (frame->changes[i].delta.fields & RD_REMOVE) {
+			rd->pending[n] = (rd_delta_t){UF_RESET, 0};
 		} else {
-			rd->pending[n] |= frame->changes[i].bits;
+			rd->pending[n] = SV_RD_MergeDelta(rd->pending[n], frame->changes[i].delta);
 		}
 	}
 }
@@ -216,7 +225,7 @@ void SV_RD_AckFrame(client_t *client, int sequence)
 		} else {
 			for (j = 0; j < f->count; ++j) {
 				int n = f->changes[j].number;
-				if (n && (f->changes[j].bits & UF_RESET) && rd->introduction[n] > 0 && rd->introduction[n] <= sequence + 1) {
+				if (n && (f->changes[j].delta.fields & UF_RESET) && rd->introduction[n] > 0 && rd->introduction[n] <= sequence + 1) {
 					rd->introduction[n] = 0;
 				}
 			}
@@ -227,7 +236,7 @@ void SV_RD_AckFrame(client_t *client, int sequence)
 }
 
 /* Store only records actually emitted, growing within the supported slot bound. */
-static void SV_RD_Record(struct sv_rd_state_s *rd, rd_frame_t *frame, int number, unsigned int bits)
+static void SV_RD_Record(struct sv_rd_state_s *rd, rd_frame_t *frame, int number, rd_delta_t delta)
 {
 	if (frame->count == frame->capacity) {
 		int capacity = min(rd->capacity, max(16, frame->capacity * 2));
@@ -240,7 +249,7 @@ static void SV_RD_Record(struct sv_rd_state_s *rd, rd_frame_t *frame, int number
 		frame->capacity = capacity;
 	}
 	frame->changes[frame->count].number = number;
-	frame->changes[frame->count++].bits = bits;
+	frame->changes[frame->count++].delta = delta;
 }
 
 /* Emit sorted updates within the caller's budget; retain any deferred fields. */
@@ -261,27 +270,27 @@ void SV_RD_WriteFrame(client_t *client, sizebuf_t *msg, int sequence, float time
 	for (n = 1; n < rd->slot_limit; ++n) {
 		if (rd->current[n].number && !rd->seen[n]) {
 			rd->current[n].number = 0;
-			rd->pending[n] = RD_REMOVE;
+			rd->pending[n] = (rd_delta_t){RD_REMOVE, 0};
 		}
 	}
-	if (msg->maxsize - msg->cursize < 7 + (rd->pending[0] ? 2 : 0)) {
+	if (msg->maxsize - msg->cursize < 7 + (rd->pending[0].fields ? 2 : 0)) {
 		return;
 	}
 	MSG_WriteByte(msg, svc_fte_updateentities);
 	MSG_WriteFloat(msg, time);
 	msg->maxsize -= 2;
-	if (rd->pending[0]) {
+	if (rd->pending[0].fields) {
 		MSG_RD_WriteRemove(msg, 0);
-		SV_RD_Record(rd, frame, 0, RD_REMOVE);
-		rd->pending[0] = 0;
+		SV_RD_Record(rd, frame, 0, (rd_delta_t){RD_REMOVE, 0});
+		rd->pending[0] = (rd_delta_t){0, 0};
 	}
 	for (n = 1; n < rd->slot_limit; ++n) {
-		unsigned int bits = rd->pending[n];
+		rd_delta_t delta = rd->pending[n];
 		rd_entity_state_t baseline;
-		if (!bits || (n > MAX_CLIENTS && n < rd->cursor && !(bits & RD_REMOVE))) {
+		if (!delta.fields || (n > MAX_CLIENTS && n < rd->cursor && !(delta.fields & RD_REMOVE))) {
 			continue;
 		}
-		if (bits & RD_REMOVE) {
+		if (delta.fields & RD_REMOVE) {
 			if (!MSG_RD_WriteRemove(msg, n)) {
 				next = n;
 				break;
@@ -289,17 +298,18 @@ void SV_RD_WriteFrame(client_t *client, sizebuf_t *msg, int sequence, float time
 		}
 		else {
 			if (rd->introduction[n]) {
-				bits |= UF_RESET;
+				delta.fields |= UF_RESET;
 			}
-			if (bits & UF_RESET) {
+			if (delta.fields & UF_RESET) {
 				SV_RD_FromLegacy(&baseline, &EDICT_NUM(n)->e.baseline);
-				bits = UF_RESET | MSG_RD_StateBits(&baseline, &rd->current[n]);
+				delta = MSG_RD_SelectDelta(&baseline, &rd->current[n], !client->edict || n != client->edict->e.entnum);
+				delta.fields |= UF_RESET;
 			}
 			/* Player angles carry the view-pitch / -3 basis even at rest. */
-			if (n <= MAX_CLIENTS && (bits & (UF_ANGLESXZ | UF_ANGLESY))) {
-				bits |= UF_PREDINFO;
+			if (n <= MAX_CLIENTS && (delta.fields & (UF_ANGLESXZ | UF_ANGLESY))) {
+				delta.fields |= UF_PREDINFO;
 			}
-			if (!MSG_RD_WriteEntity(msg, &rd->current[n], bits, (client->mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0)) {
+			if (!MSG_RD_WriteEntity(msg, &rd->current[n], delta, (client->mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0)) {
 				next = n;
 				break;
 			}
@@ -307,8 +317,8 @@ void SV_RD_WriteFrame(client_t *client, sizebuf_t *msg, int sequence, float time
 				rd->introduction[n] = sequence + 1;
 			}
 		}
-		SV_RD_Record(rd, frame, n, bits);
-		rd->pending[n] = 0;
+		SV_RD_Record(rd, frame, n, delta);
+		rd->pending[n] = (rd_delta_t){0, 0};
 	}
 	rd->cursor = max(MAX_CLIENTS + 1, next);
 	msg->maxsize = limit;
@@ -1643,7 +1653,7 @@ qbool SV_MVD_WriteRDEntities(qbool initial)
 		for (; n < sv.max_edicts; ++n) {
 			rd_entity_state_t *state = &demo.rd_current[n];
 			rd_entity_state_t *previous = &demo.rd_previous[n];
-			unsigned int bits;
+			rd_delta_t delta;
 			if (!state->number) {
 				if (initial || !previous->number) {
 					continue;
@@ -1656,18 +1666,19 @@ qbool SV_MVD_WriteRDEntities(qbool initial)
 				if (initial || !previous->number) {
 					rd_entity_state_t baseline;
 					SV_RD_FromLegacy(&baseline, &EDICT_NUM(n)->e.baseline);
-					bits = UF_RESET | MSG_RD_StateBits(&baseline, state);
+					delta = MSG_RD_SelectDelta(&baseline, state, true);
+					delta.fields |= UF_RESET;
 				}
 				else {
-					bits = MSG_RD_StateBits(previous, state);
+					delta = MSG_RD_SelectDelta(previous, state, true);
 				}
-				if (!bits) {
+				if (!delta.fields) {
 					continue;
 				}
-				if (n <= MAX_CLIENTS && (bits & (UF_ANGLESXZ | UF_ANGLESY))) {
-					bits |= UF_PREDINFO;
+				if (n <= MAX_CLIENTS && (delta.fields & (UF_ANGLESXZ | UF_ANGLESY))) {
+					delta.fields |= UF_PREDINFO;
 				}
-				if (!MSG_RD_WriteEntity(&msg, state, bits, (demo.recorder.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0)) {
+				if (!MSG_RD_WriteEntity(&msg, state, delta, (demo.recorder.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0)) {
 					break;
 				}
 			}
