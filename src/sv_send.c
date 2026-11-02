@@ -563,6 +563,56 @@ void SV_Multicast (vec3_t origin, int to)
 	SV_MulticastEx(origin, to, NULL);
 }
 
+/* Preserve the original hook ID for RD and the historical alias for legacy. */
+void SV_SendNQBeam(int entity, const byte *coordinates)
+{
+	vec3_t origin = {0, 0, 0};
+	byte legacy_data[4 + 6 * sizeof(float)], rd_data[5 + 6 * sizeof(float)];
+	sizebuf_t legacy, rd;
+	int legacy_entity = entity > 1023 ? 0 : entity;
+
+	SZ_Init(&legacy, legacy_data, sizeof(legacy_data));
+	MSG_WriteByte(&legacy, svc_temp_entity);
+	MSG_WriteByte(&legacy, TE_LIGHTNING1);
+	MSG_WriteShort(&legacy, (short)(legacy_entity - 1288));
+	SZ_Write(&legacy, coordinates, 6 * msg_coordsize);
+
+	SZ_Init(&rd, rd_data, sizeof(rd_data));
+	MSG_WriteByte(&rd, svc_temp_entity);
+	MSG_WriteByte(&rd, TEQW_BEAM);
+	MSG_RD_WriteEntityRef(&rd, entity);
+	SZ_Write(&rd, coordinates, 6 * msg_coordsize);
+
+	SV_FlushReliableDatagram();
+	SV_MulticastExFiltered(origin, MULTICAST_ALL_R, NULL, false, &legacy, &rd);
+}
+
+/* Build both rail representations before the common PHS delivery path. */
+void SV_RailTrail(vec3_t start, vec3_t end, int player, int color)
+{
+	byte legacy_data[4 + 6 * sizeof(float)], rd_data[2 + 6 * sizeof(float)];
+	sizebuf_t legacy, rd;
+	int i;
+
+	SZ_Init(&legacy, legacy_data, sizeof(legacy_data));
+	MSG_WriteByte(&legacy, svc_temp_entity);
+	MSG_WriteByte(&legacy, TE_LIGHTNING1);
+	MSG_WriteShort(&legacy, -264 + 8 * player + color);
+
+	SZ_Init(&rd, rd_data, sizeof(rd_data));
+	MSG_WriteByte(&rd, svc_temp_entity);
+	MSG_WriteByte(&rd, TEQW_RAILTRAIL);
+	for (i = 0; i < 3; i++) {
+		MSG_WriteCoord(&legacy, start[i]);
+		MSG_WriteCoord(&rd, start[i]);
+	}
+	for (i = 0; i < 3; i++) {
+		MSG_WriteCoord(&legacy, end[i]);
+		MSG_WriteCoord(&rd, end[i]);
+	}
+	SV_MulticastExFiltered(start, MULTICAST_PHS, NULL, false, &legacy, &rd);
+}
+
 void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count,
 					   int replacement_te, int replacement_count)
 {
