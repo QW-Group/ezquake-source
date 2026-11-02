@@ -61,6 +61,8 @@ void R_ParticleTrail(vec3_t start, vec3_t end, trail_type_t type);
 void R_EntityParticleTrail(centity_t* cent, trail_type_t type);
 void R_BlobExplosion(vec3_t);
 void R_ParticleExplosion(vec3_t);
+// Explosion particles without the QuakeWorld sprite.
+void R_NQParticleExplosion(vec3_t org);
 void R_LavaSplash(vec3_t);
 void R_TeleportSplash(vec3_t);
 void Classic_InitParticles(void);
@@ -70,6 +72,8 @@ void Classic_ParticleTrail(vec3_t start, vec3_t end, vec3_t *, trail_type_t type
 void Classic_ParticleRailTrail(vec3_t start, vec3_t end, int color);
 void Classic_BlobExplosion(vec3_t org);
 void Classic_ParticleExplosion(vec3_t org);
+// A byte palette range, wrapping at palette index 255; zero length is empty.
+void Classic_ParticleExplosion2(vec3_t org, int color_start, int color_length);
 void Classic_LavaSplash(vec3_t org);
 void Classic_TeleportSplash(vec3_t org);
 
