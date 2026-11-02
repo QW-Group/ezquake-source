@@ -481,6 +481,10 @@ unsigned int CL_SupportedFTEExtensions (void)
 	if (!cl_pext.value)
 		return 0;
 
+#ifdef FTE_PEXT_TE_BULLET
+	fteprotextsupported |= FTE_PEXT_TE_BULLET;
+#endif
+
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (cl_pext_chunkeddownloads.value)
 		fteprotextsupported |= FTE_PEXT_CHUNKEDDOWNLOADS;

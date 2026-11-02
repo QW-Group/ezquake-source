@@ -203,6 +203,20 @@ qbool SV_CheckClientMapSupport(client_t *client)
 		return true;
 	}
 #endif
+#ifdef FTE_PEXT2_REPLACEMENTDELTAS
+	if ((client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)
+#ifdef FTE_PEXT_TE_BULLET
+		&& !(client->fteprotocolextensions & FTE_PEXT_TE_BULLET)
+#endif
+	) {
+		SV_ClientPrintf(client, PRINT_HIGH,
+			"This server requires FTE temporary effects (PEXT_TE_BULLET) "
+			"with replacement deltas (PEXT2_REPLACEMENTDELTAS).\n"
+			"Enable both extensions or use a supporting client, then reconnect.\n");
+		SV_DropClient(client);
+		return false;
+	}
+#endif
 	if (SV_EntityCapacityRequiresRD()
 		&& !(client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)) {
 		SV_ClientPrintf(client, PRINT_HIGH,
@@ -433,6 +447,15 @@ static void Cmd_New_f (void)
 	if (sv_client->fteprotocolextensions) // let the client know
 	{
 		unsigned int ext = sv_client->fteprotocolextensions;
+
+#if defined(FTE_PEXT_TE_BULLET) && defined(FTE_PEXT2_REPLACEMENTDELTAS)
+		/* Retain client capabilities for later maps; advertise only this profile. */
+		if (!(sv_client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)) {
+			ext &= ~FTE_PEXT_TE_BULLET;
+		}
+#elif defined(FTE_PEXT_TE_BULLET)
+		ext &= ~FTE_PEXT_TE_BULLET;
+#endif
 
 #ifdef FTE_PEXT_FLOATCOORDS
 		if (msg_coordsize == 2) //we're not using float orgs on this level.
