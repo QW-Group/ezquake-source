@@ -1456,8 +1456,9 @@ intptr_t QDECL VM_Call( vm_t *vm, int nargs, int callnum, ... )
 		}
 		va_end(ap);
 
-		// add more agruments if you're changed MAX_VMMAIN_CALL_ARGS:
-		r = vm->entryPoint( callnum, args[0], args[1], args[2] );
+		// Native vmMain declares twelve payload arguments; unused ones are zero.
+		r = vm->entryPoint(callnum, args[0], args[1], args[2], 0, 0, 0,
+		                   0, 0, 0, 0, 0, 0);
 	} else {
 #if idx386 && !defined __clang__ // calling convention doesn't need conversion in some cases
 #ifndef NO_VM_COMPILED
