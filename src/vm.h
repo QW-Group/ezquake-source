@@ -34,6 +34,10 @@ typedef enum {
 extern  vm_t    *currentVM;
 typedef intptr_t (*syscall_t)( intptr_t *parms );
 typedef intptr_t (QDECL *dllSyscall_t)( intptr_t callNum, ... );
+// Native vmMain uses fixed arguments, unlike the module's variadic syscalls.
+typedef intptr_t (QDECL *vmMain_t)(int command, int arg0, int arg1, int arg2,
+    int arg3, int arg4, int arg5, int arg6, int arg7, int arg8,
+    int arg9, int arg10, int arg11);
 typedef void (QDECL *dllEntry_t)( dllSyscall_t syscallptr );
 
 
