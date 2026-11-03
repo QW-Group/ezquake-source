@@ -62,6 +62,7 @@ typedef struct packet_s
 typedef struct
 {
 	int demo_format;                    // Map-latched MVD format: -1 refused, 0 legacy, 1 RD.
+	qbool demo_rd_predinfo;             // Map-latched full player prediction payloads in RD recordings.
 	server_state_t	state;				// precache commands are only valid during load
 
 	double		time;
