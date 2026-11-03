@@ -1614,6 +1614,11 @@ static void SV_MVD_CollectRD(void)
 			}
 			SV_RD_BuildEntityState(state, ent, n, NULL);
 			SV_RD_BuildPlayerFields(state, ent, player, SV_PMTypeForClient(player));
+			if (!sv.demo_rd_predinfo) {
+				memset(state->movement, 0, sizeof(state->movement));
+				memset(state->velocity, 0, sizeof(state->velocity));
+				state->msec = 0;
+			}
 		}
 		else {
 			if (ent->e.free || !SV_EntityVisibleToClient(&demo.recorder, n, NULL)) {

@@ -46,6 +46,7 @@ cvar_t  sv_demoPings        = {"sv_demopings",      "3"};
 cvar_t  sv_demoMaxSize      = {"sv_demoMaxSize",    "20480"};
 cvar_t  sv_demoExtraNames   = {"sv_demoExtraNames", "0"};
 cvar_t sv_demo_format = {"sv_demo_format", "auto", CVAR_NONE, OnChange_demo_format};
+cvar_t sv_demo_rd_predinfo = {"sv_demo_rd_predinfo", "0"};
 
 cvar_t	sv_demoPrefix		= {"sv_demoPrefix",		""};
 cvar_t	sv_demoSuffix		= {"sv_demoSuffix",		""};
@@ -876,6 +877,7 @@ void SV_MVD_ConfigureMap(void)
 		format = "auto";
 	}
 	sv.demo_format = SV_MVD_SelectFormat(format, sv.max_edicts);
+	sv.demo_rd_predinfo = sv_demo_rd_predinfo.value != 0;
 	while (*link) {
 		mvddest_t *dest = *link;
 		if (sv.demo_format < 0) {
@@ -2031,6 +2033,7 @@ static void MVD_Init (void)
 	memset(&demo, 0, sizeof(demo)); // clear whole demo struct at least once
 	
 	Cvar_Register (&sv_demo_format);
+	Cvar_Register (&sv_demo_rd_predinfo);
 	Cvar_Register (&sv_demofps);
 	Cvar_Register (&sv_demoIdlefps);
 	Cvar_Register (&sv_demoPings);

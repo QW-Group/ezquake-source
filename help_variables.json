@@ -19933,6 +19933,13 @@
         }
       ]
     },
+    "sv_demo_rd_predinfo": {
+      "default": "0",
+      "desc": "Record full player movement prediction payloads in RD MVD files and QTV streams.",
+      "group-id": "43",
+      "remarks": "Latched per map. Zero uses compact player data without movement commands, velocity or msec; one retains the full payload. Movement mode, precise player angles and weapon animation remain available. This does not change live UDP prediction.",
+      "type": "boolean"
+    },
     "sv_demofps": {
       "group-id": "43",
       "type": ""
