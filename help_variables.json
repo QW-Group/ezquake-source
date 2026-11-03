@@ -3359,6 +3359,19 @@
       "group-id": "5",
       "type": "float"
     },
+    "con_particles_alpha": {
+      "default": "0",
+      "desc": "Opacity (0 to 1) of powerup icons falling down the console background. 0 disables.",
+      "group-id": "5",
+      "type": "float"
+    },
+    "con_particles_images": {
+      "default": "0",
+      "desc": "Number of slots (1 to 16) in a 4x4 grid, row by row, to pick the con_particles_alpha icons from. 0 disables.",
+      "group-id": "5",
+      "remarks": "Uses textures/conpart.png if present, otherwise quad, pentagram, ring and biosuit fill the first row. Empty slots are skipped.",
+      "type": "integer"
+    },
     "con_prompt_charcode": {
       "default": "93",
       "desc": "ASCII code of prompt character.",

@@ -40,6 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "fonts.h"
 #include "rulesets.h"
 #include "menu.h"
+#include "r_texture.h"
 
 #define     MINIMUM_CONBUFSIZE     (1 << 15)
 #define     DEFAULT_CONBUFSIZE     (1 << 16)
@@ -56,6 +57,8 @@ int 		con_linewidth;		// characters across screen
 int			con_totallines;		// total lines in console scrollback
 float		con_cursorspeed = 4;
 
+cvar_t		con_particles_alpha  = {"con_particles_alpha",  "0"};
+cvar_t		con_particles_images = {"con_particles_images", "0"};
 cvar_t		con_notify = {"con_notify", "1"};
 cvar_t		_con_notifylines = {"con_notifylines","4"};
 cvar_t		con_notifytime = {"con_notifytime","3"};		//seconds
@@ -465,6 +468,9 @@ void Con_Init (void) {
 	Cvar_Register (&con_wordwrap);
 	Cvar_Register (&con_clearnotify);
 	Cvar_Register (&con_notify);
+
+	Cvar_Register (&con_particles_alpha);
+	Cvar_Register (&con_particles_images);
 #ifdef _WIN32
 	Cvar_Register (&con_toggle_deadkey);
 #endif
@@ -897,6 +903,8 @@ void SCR_DrawNotify(int posX, int posY, float scale, int notifyTime, int notifyL
 	}
 }
 
+static void Con_DrawParticles (int lines);
+
 //Draws the console with the solid background
 void Con_DrawConsole (int lines) {
 	int i, j, x, y, n=0, rows, row, idx, probing_progress;
@@ -908,6 +916,8 @@ void Con_DrawConsole (int lines) {
 
 	// draw the background
 	Draw_ConsoleBackground (lines);
+
+	Con_DrawParticles (lines);
 
 	// draw the text
 	con_vislines = lines;
@@ -1024,3 +1034,184 @@ void Con_DrawConsole (int lines) {
 	Con_DrawInput ();
 }
 
+//************************************************************
+//
+// Console particles: powerup icons tumbling down the console background like snowflakes.
+// Images come from textures/conpart (a 4x4 grid of equally sized images) when present,
+// otherwise the status bar powerup icons fill the first four slots.
+//
+
+#define MAX_CONPART             128
+#define CONPART_GRID            4
+#define CONPART_SLOTS           (CONPART_GRID * CONPART_GRID)
+#define CONPART_SPAWN_INTERVAL  0.1
+#define CONPART_LIFETIME        7
+#define CONPART_GRAVITY         9.8f
+#define CONPART_ACCEL           0.4f
+#define CONPART_HALF_DIAGONAL   0.71f	// lowest point of a rotated square, relative to its size
+
+typedef struct conpart_s {
+	double		die;
+	float		org[2];
+	float		vel[2];
+	float		startalpha;
+	float		angle, spin;
+	float		size;
+	int			image;
+} conpart_t;
+
+static conpart_t conpart[MAX_CONPART];
+static qbool conpart_loaded;
+static mpic_t *conpart_atlas;
+static int conpart_slots;	// one bit per slot that has something to draw
+
+static const int conpart_icons[] = { WADPIC_SB_QUAD, WADPIC_SB_INVULN, WADPIC_SB_INVIS, WADPIC_SB_SUIT };
+
+#define CONPART_ICON_COUNT ((int)(sizeof(conpart_icons) / sizeof(conpart_icons[0])))
+
+void Con_InitParticles (void)
+{
+	conpart_loaded = false;
+	conpart_atlas = NULL;
+}
+
+static void Con_LoadParticleImages (void)
+{
+	int x, y, width, height;
+	byte *pixels;
+
+	conpart_loaded = true;
+	conpart_slots = (1 << CONPART_ICON_COUNT) - 1;
+
+	if (!(conpart_atlas = Draw_CachePicSafe("textures/conpart", false, true)))
+		return;
+
+	// note which slots have visible pixels, so empty ones don't spawn invisible particles
+	if (!(pixels = R_LoadImagePixels("textures/conpart", 0, 0, 0, &width, &height))) {
+		conpart_slots = (1 << CONPART_SLOTS) - 1;
+		return;
+	}
+
+	conpart_slots = 0;
+	for (y = 0; y < height; y++) {
+		for (x = 0; x < width; x++) {
+			if (pixels[(y * width + x) * 4 + 3])
+				conpart_slots |= 1 << ((y * CONPART_GRID / height) * CONPART_GRID + x * CONPART_GRID / width);
+		}
+	}
+
+	Q_free(pixels);
+}
+
+static void Con_AddParticle (double time)
+{
+	static double last_time = 0;
+	int i, n, slots = conpart_slots & ((1 << bound(1, con_particles_images.integer, CONPART_SLOTS)) - 1);
+	conpart_t *p;
+
+	if (time - last_time < CONPART_SPAWN_INTERVAL || !slots)
+		return;
+
+	last_time = time;
+
+	for (i = 0; i < MAX_CONPART && conpart[i].die >= time; i++)
+		;
+
+	if (i >= MAX_CONPART)
+		return; // no free space
+
+	p = &conpart[i];
+
+	// pick one of the usable slots at random
+	for (n = i = 0; i < CONPART_SLOTS; i++)
+		n += (slots >> i) & 1;
+	n = i_rnd(0, n - 1);
+	for (i = 0; !((slots >> i) & 1) || n--; i++)
+		;
+	p->image = i;
+
+	p->die = time + CONPART_LIFETIME;
+	p->size = f_rnd(10, 22);
+	p->org[0] = rand() % vid.width;
+	p->org[1] = -(rand() % 8) - CONPART_HALF_DIAGONAL * p->size; // spawn above the screen
+	p->vel[0] = f_rnd(-5, 5);
+	p->vel[1] = f_rnd(20, 30);
+	p->startalpha = bound(0, con_particles_alpha.value, 1);
+	p->angle = f_rnd(0, 360);
+	p->spin = f_rnd(-5, 5);
+	p->spin += (p->spin > 0 ? 15 : -15);
+}
+
+static void Con_DrawParticle (const conpart_t *p, float alpha)
+{
+	int x = 0, y = 0, width, height;
+	mpic_t *pic;
+
+	if (conpart_atlas) {
+		pic = conpart_atlas;
+		width = pic->width / CONPART_GRID;
+		height = pic->height / CONPART_GRID;
+		x = (p->image % CONPART_GRID) * width;
+		y = (p->image / CONPART_GRID) * height;
+
+		// leave out the border texels so filtering doesn't bleed in the neighbouring images
+		x++;
+		y++;
+		width -= 2;
+		height -= 2;
+	}
+	else {
+		if (!(pic = wad_pictures[conpart_icons[p->image % CONPART_ICON_COUNT]].pic))
+			return;
+
+		width = pic->width;
+		height = pic->height;
+	}
+
+	if (width <= 0 || height <= 0)
+		return;
+
+	Draw_SAlphaSubPicRotated(p->org[0], p->org[1], pic, x, y, width, height, p->size / width, alpha, p->angle);
+}
+
+static void Con_DrawParticles (int lines)
+{
+	float dt = cls.trueframetime;
+	double time;
+	int i;
+
+	if (!bound(0, con_particles_alpha.value, 1) || con_particles_images.integer < 1)
+		return;
+
+	if (!conpart_loaded)
+		Con_LoadParticleImages();
+
+	time = Sys_DoubleTime();
+
+	for (i = 0; i < MAX_CONPART; i++) {
+		conpart_t *p = &conpart[i];
+		float alpha;
+
+		if (p->die < time)
+			continue;
+
+		p->angle += p->spin * dt;
+		p->vel[1] += CONPART_GRAVITY * dt;
+		p->vel[0] *= 1 + CONPART_ACCEL * dt;
+		p->vel[1] *= 1 + CONPART_ACCEL * dt;
+		p->org[0] += p->vel[0] * dt;
+		p->org[1] += p->vel[1] * dt;
+
+		// fade out towards the bottom of the console
+		alpha = (lines - bound(0, p->org[1] + CONPART_HALF_DIAGONAL * p->size, lines)) / lines;
+		alpha *= alpha;
+		if (alpha <= 0) {
+			p->die = 0;
+			continue;
+		}
+
+		Con_DrawParticle(p, alpha * p->startalpha);
+	}
+
+	Con_AddParticle(time);
+}
