@@ -22,6 +22,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
 
+/* Invalid appearance fields use zero; preserve all representable RD values.
+ * Check QC floats before converting them, including non-finite input. */
+static int SV_RD_AppearanceValue(double value, int minimum, int maximum)
+{
+	if (!isfinite(value) || value <= (double)minimum - 1 || value >= (double)maximum + 1) {
+		return 0;
+	}
+	return (int)value;
+}
+
 /* Convert existing typed baselines/statics without changing legacy storage. */
 void SV_RD_FromLegacy(rd_entity_state_t *to, const entity_state_t *from)
 {
@@ -29,10 +39,10 @@ void SV_RD_FromLegacy(rd_entity_state_t *to, const entity_state_t *from)
 	to->number = from->number;
 	VectorCopy(from->origin, to->origin);
 	VectorCopy(from->angles, to->angles);
-	to->modelindex = from->modelindex;
-	to->frame = from->frame;
-	to->skinnum = from->skinnum;
-	to->colormap = from->colormap;
+	to->modelindex = SV_RD_AppearanceValue(from->modelindex, 0, MAX_MODELS - 1);
+	to->frame = SV_RD_AppearanceValue(from->frame, 0, 65535);
+	to->skinnum = SV_RD_AppearanceValue(from->skinnum, -32768, 32767);
+	to->colormap = SV_RD_AppearanceValue(from->colormap, 0, 255);
 	to->effects = from->effects;
 #ifdef FTE_PEXT_TRANS
 	to->trans = from->trans ? from->trans : 255;
@@ -817,10 +827,10 @@ static void SV_RD_BuildEntityState(rd_entity_state_t *state, edict_t *ent, int n
 	state->number = number;
 	VectorCopy(ent->v->origin, state->origin);
 	VectorCopy(ent->v->angles, state->angles);
-	state->modelindex = ent->v->modelindex;
-	state->frame = ent->v->frame;
-	state->skinnum = ent->v->skin;
-	state->colormap = ent->v->colormap;
+	state->modelindex = SV_RD_AppearanceValue(ent->v->modelindex, 0, MAX_MODELS - 1);
+	state->frame = SV_RD_AppearanceValue(ent->v->frame, 0, 65535);
+	state->skinnum = SV_RD_AppearanceValue(ent->v->skin, -32768, 32767);
+	state->colormap = SV_RD_AppearanceValue(ent->v->colormap, 0, 255);
 	state->effects = TranslateEffects(ent);
 	/* Player modelindex2 selects a vwep entry rather than a model precache. */
 	if (number <= MAX_CLIENTS && sv.vw_model_name[0] && fofs_vw_index) {
