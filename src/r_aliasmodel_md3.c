@@ -33,6 +33,7 @@ typedef float m3by3_t[3][3];
 static int Mod_ReadFlagsFromMD1(char *name)
 {
 	mdl_t* pinmodel;
+	int filesize;
 	char fname[MAX_QPATH];
 	COM_StripExtension(name, fname, sizeof(fname));
 	COM_DefaultExtension(fname, ".md3", sizeof(fname));
@@ -47,9 +48,9 @@ static int Mod_ReadFlagsFromMD1(char *name)
 		COM_DefaultExtension(fname, ".mdl", sizeof(fname));
 	}
 
-	pinmodel = (mdl_t *)FS_LoadTempFile(fname, NULL);
+	pinmodel = (mdl_t *)FS_LoadTempFile(fname, &filesize);
 
-	if (!pinmodel) {
+	if (!pinmodel || filesize < (int)sizeof(*pinmodel)) {
 		//not found
 		return 0;
 	}

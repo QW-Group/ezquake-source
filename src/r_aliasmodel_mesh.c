@@ -89,7 +89,7 @@ void GL_PrepareAliasModel(model_t* m, aliashdr_t* hdr)
 
 				src = &poseverts[pose][vert];
 
-				l = src->lightnormalindex;
+				l = src->lightnormalindex < NUMVERTEXNORMALS ? src->lightnormalindex : 0;
 				x = src->v[0] * hdr->scale[0] + hdr->scale_origin[0];
 				y = src->v[1] * hdr->scale[1] + hdr->scale_origin[1];
 				z = src->v[2] * hdr->scale[2] + hdr->scale_origin[2];

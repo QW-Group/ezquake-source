@@ -68,9 +68,8 @@ mtriangle_t	triangles[MAXALIASTRIS];
 trivertx_t	*poseverts[MAXALIASFRAMES];
 int			posenum;
 
-static void* Mod_LoadAliasFrame(void* pin, maliasframedesc_t *frame, int* posenum);
-static void* Mod_LoadAliasGroup(void* pin, maliasframedesc_t *frame, int* posenum);
-void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t *pskintype);
+static void* Mod_LoadAliasFrame(model_t* mod, void* pin, maliasframedesc_t *frame, int* posenum, const byte* end);
+static void* Mod_LoadAliasGroup(model_t* mod, void* pin, maliasframedesc_t *frame, int* posenum, const byte* end);
 
 static cvar_t    gl_shaftlight = { "gl_shaftlight", "1" };
 cvar_t    r_lerpmuzzlehack = { "r_lerpmuzzlehack", "1" };
@@ -372,13 +371,11 @@ void R_DrawAliasModel(entity_t *ent, qbool outline)
 int R_AliasFramePose(const maliasframedesc_t* frame)
 {
 	int pose, numposes;
-	float interval;
 
 	pose = frame->firstpose;
 	numposes = frame->numposes;
 	if (numposes > 1) {
-		interval = frame->interval;
-		pose += (int)(r_refdef2.time / interval) % numposes;
+		pose += bound(0, (int)fmod(r_refdef2.time / frame->interval, numposes), numposes - 1);
 	}
 
 	return pose;
@@ -716,9 +713,18 @@ void R_InitAliasModelCvars(void)
 	Cvar_Register(&gl_custom_grenade_tf);
 }
 
+/* Host_Error unless count elements of size bytes starting at data end at or before end. */
+void Mod_CheckAliasData(const model_t* mod, const void* data, int count, size_t size, const byte* end)
+{
+	if (count < 0 || (const byte *)data > end || (size_t)count > (size_t)(end - (const byte *)data) / size) {
+		Host_Error("Mod_LoadAliasModel: model %s is truncated", mod->name);
+	}
+}
+
 void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* loadname)
 {
 	int i, j, version, numframes, size, start, total;
+	const byte *buffer_end = (const byte *)buffer + filesize;
 	mdl_t *pinmodel;
 	stvert_t *pinstverts;
 	dtriangle_t *pintriangles;
@@ -737,6 +743,7 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 	start = Hunk_LowMark();
 
 	pinmodel = (mdl_t *)buffer;
+	Mod_CheckAliasData(mod, pinmodel, 1, sizeof(*pinmodel), buffer_end);
 
 	version = LittleLong(pinmodel->version);
 
@@ -746,8 +753,13 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 		return;
 	}
 
+	numframes = LittleLong(pinmodel->numframes);
+	if (numframes < 1 || numframes > MAXALIASFRAMES) {
+		Host_Error("Mod_LoadAliasModel: model %s has invalid # of frames: %d\n", mod->name, numframes);
+	}
+
 	// allocate space for a working header, plus all the data except the frames, skin and group info
-	size = sizeof(aliashdr_t) + (LittleLong(pinmodel->numframes) - 1) * sizeof(pheader->frames[0]);
+	size = sizeof(aliashdr_t) + (numframes - 1) * sizeof(pheader->frames[0]);
 	pheader = (aliashdr_t *)Hunk_AllocName(size, loadname);
 
 	mod->flags = LittleLong(pinmodel->flags);
@@ -760,6 +772,10 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 
 	if (pheader->skinheight > MAX_LBM_HEIGHT) {
 		Host_Error("Mod_LoadAliasModel: model %s has a skin taller than %d", mod->name, MAX_LBM_HEIGHT);
+	}
+
+	if (pheader->skinwidth <= 0 || pheader->skinheight <= 0 || pheader->skinwidth > filesize / pheader->skinheight) {
+		Host_Error("Mod_LoadAliasModel: model %s has an invalid skin size (%dx%d)", mod->name, pheader->skinwidth, pheader->skinheight);
 	}
 
 	pheader->numverts = LittleLong(pinmodel->numverts);
@@ -778,11 +794,11 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 		Host_Error("Mod_LoadAliasModel: model %s has no triangles", mod->name);
 	}
 
-	pheader->numframes = LittleLong(pinmodel->numframes);
-	numframes = pheader->numframes;
-	if (numframes < 1) {
-		Host_Error("Mod_LoadAliasModel: model %s has invalid # of frames: %d\n", mod->name, numframes);
+	if (pheader->numtris > MAXALIASTRIS) {
+		Host_Error("Mod_LoadAliasModel: model %s has too many triangles", mod->name);
 	}
+
+	pheader->numframes = numframes;
 
 	pheader->size = LittleFloat(pinmodel->size) * ALIAS_BASE_SIZE_RATIO;
 	mod->synctype = LittleLong(pinmodel->synctype);
@@ -796,10 +812,11 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 
 	// load the skins
 	pskintype = (daliasskintype_t *)&pinmodel[1];
-	pskintype = Mod_LoadAllSkins(mod, pheader->numskins, pskintype);
+	pskintype = Mod_LoadAllSkins(mod, pheader->numskins, pskintype, buffer_end);
 
 	// load base s and t vertices
 	pinstverts = (stvert_t *)pskintype;
+	Mod_CheckAliasData(mod, pinstverts, pheader->numverts, sizeof(*pinstverts), buffer_end);
 
 	for (i = 0; i < pheader->numverts; i++) {
 		stverts[i].onseam = LittleLong(pinstverts[i].onseam);
@@ -809,6 +826,7 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 
 	// load triangle lists
 	pintriangles = (dtriangle_t *)&pinstverts[pheader->numverts];
+	Mod_CheckAliasData(mod, pintriangles, pheader->numtris, sizeof(*pintriangles), buffer_end);
 
 	for (i = 0; i < pheader->numtris; i++) {
 		triangles[i].facesfront = LittleLong(pintriangles[i].facesfront);
@@ -829,13 +847,14 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 	mod->maxs[0] = mod->maxs[1] = mod->maxs[2] = 0;
 
 	for (i = 0; i < numframes; i++) {
+		Mod_CheckAliasData(mod, pframetype, 1, sizeof(*pframetype), buffer_end);
 		frametype = LittleLong(pframetype->type);
 
 		if (frametype == ALIAS_SINGLE) {
-			pframetype = (daliasframetype_t *)Mod_LoadAliasFrame(pframetype + 1, &pheader->frames[i], &posenum);
+			pframetype = (daliasframetype_t *)Mod_LoadAliasFrame(mod, pframetype + 1, &pheader->frames[i], &posenum, buffer_end);
 		}
 		else {
-			pframetype = (daliasframetype_t *)Mod_LoadAliasGroup(pframetype + 1, &pheader->frames[i], &posenum);
+			pframetype = (daliasframetype_t *)Mod_LoadAliasGroup(mod, pframetype + 1, &pheader->frames[i], &posenum, buffer_end);
 		}
 
 		for (j = 0; j < 3; j++) {
@@ -868,15 +887,26 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 	Hunk_FreeToLowMark(start);
 }
 
-static void* Mod_LoadAliasFrame(void * pin, maliasframedesc_t *frame, int* posenum)
+/* A pose in the file is a frame header followed by one vertex per model vertex. */
+static size_t Mod_AliasPoseSize(void)
 {
-	trivertx_t *pinframe;
+	return sizeof(daliasframe_t) + pheader->numverts * sizeof(trivertx_t);
+}
+
+static void* Mod_LoadAliasFrame(model_t* mod, void * pin, maliasframedesc_t *frame, int* posenum, const byte* end)
+{
 	int i;
 	daliasframe_t *pdaliasframe;
 
-	pdaliasframe = (daliasframe_t *)pin;
+	if (*posenum >= MAXALIASFRAMES) {
+		Host_Error("Mod_LoadAliasFrame: model %s has more than %d poses", mod->name, MAXALIASFRAMES);
+	}
 
-	strlcpy(frame->name, pdaliasframe->name, sizeof(frame->name));
+	pdaliasframe = (daliasframe_t *)pin;
+	Mod_CheckAliasData(mod, pdaliasframe, 1, Mod_AliasPoseSize(), end);
+
+	memcpy(frame->name, pdaliasframe->name, sizeof(frame->name));
+	frame->name[sizeof(frame->name) - 1] = '\0';
 	frame->firstpose = *posenum;
 	frame->numposes = 1;
 
@@ -887,17 +917,13 @@ static void* Mod_LoadAliasFrame(void * pin, maliasframedesc_t *frame, int* posen
 	}
 	frame->radius = RadiusFromBounds(frame->bboxmin, frame->bboxmax);
 
-	pinframe = (trivertx_t *)(pdaliasframe + 1);
-
-	poseverts[*posenum] = pinframe;
+	poseverts[*posenum] = (trivertx_t *)(pdaliasframe + 1);
 	(*posenum)++;
 
-	pinframe += pheader->numverts;
-
-	return (void *)pinframe;
+	return (byte *)pin + Mod_AliasPoseSize();
 }
 
-static void* Mod_LoadAliasGroup(void * pin, maliasframedesc_t *frame, int* posenum)
+static void* Mod_LoadAliasGroup(model_t* mod, void * pin, maliasframedesc_t *frame, int* posenum, const byte* end)
 {
 	daliasgroup_t *pingroup;
 	int i, numframes;
@@ -905,8 +931,15 @@ static void* Mod_LoadAliasGroup(void * pin, maliasframedesc_t *frame, int* posen
 	void *ptemp;
 
 	pingroup = (daliasgroup_t *)pin;
+	Mod_CheckAliasData(mod, pingroup, 1, sizeof(*pingroup), end);
 
 	numframes = LittleLong(pingroup->numframes);
+	if (numframes < 1) {
+		Host_Error("Mod_LoadAliasGroup: model %s has an empty frame group", mod->name);
+	}
+	if (numframes > MAXALIASFRAMES - *posenum) {
+		Host_Error("Mod_LoadAliasGroup: model %s has more than %d poses", mod->name, MAXALIASFRAMES);
+	}
 
 	frame->firstpose = *posenum;
 	frame->numposes = numframes;
@@ -919,15 +952,20 @@ static void* Mod_LoadAliasGroup(void * pin, maliasframedesc_t *frame, int* posen
 	frame->radius = RadiusFromBounds(frame->bboxmin, frame->bboxmax);
 
 	pin_intervals = (daliasinterval_t *)(pingroup + 1);
+	Mod_CheckAliasData(mod, pin_intervals, numframes, sizeof(*pin_intervals), end);
 	frame->interval = LittleFloat(pin_intervals->interval);
+	if (numframes > 1 && !(frame->interval > 0)) {
+		Host_Error("Mod_LoadAliasGroup: model %s has an invalid frame interval", mod->name);
+	}
 	pin_intervals += numframes;
 
 	ptemp = (void *)pin_intervals;
 	for (i = 0; i < numframes; i++) {
+		Mod_CheckAliasData(mod, ptemp, 1, Mod_AliasPoseSize(), end);
 		poseverts[*posenum] = (trivertx_t *)((daliasframe_t *)ptemp + 1);
 		(*posenum)++;
 
-		ptemp = (trivertx_t *)((daliasframe_t *)ptemp + 1) + pheader->numverts;
+		ptemp = (byte *)ptemp + Mod_AliasPoseSize();
 	}
 
 	return ptemp;

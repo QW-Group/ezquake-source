@@ -25,6 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "rulesets.h"
 #include "r_texture.h"
 #include "r_local.h"
+#include "r_aliasmodel.h"
 #include "image.h"
 
 static void Mod_FloodFillSkin(byte *skin, int skinwidth, int skinheight);
@@ -136,7 +137,7 @@ static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, te
 	return texnum;
 }
 
-void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskintype)
+void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskintype, const byte* end)
 {
 	int i, j, k, s, groupskins, texmode = 0;
 	texture_ref gl_texnum, fb_texnum;
@@ -160,7 +161,9 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 	texmode |= (!gl_scaleModelTextures.value && !loadmodel->isworldmodel) ? TEX_NOSCALE : 0;
 
 	for (i = 0; i < numskins; i++) {
+		Mod_CheckAliasData(loadmodel, pskintype, 1, sizeof(*pskintype), end);
 		if (pskintype->type == ALIAS_SKIN_SINGLE) {
+			Mod_CheckAliasData(loadmodel, pskintype + 1, s, 1, end);
 			Mod_FloodFillSkin(skin, pheader->skinwidth, pheader->skinheight);
 
 			// save 8 bit texels for the player model to remap
@@ -195,12 +198,18 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 			// animating skin group.  yuck.
 			pskintype++;
 			pinskingroup = (daliasskingroup_t *)pskintype;
+			Mod_CheckAliasData(loadmodel, pinskingroup, 1, sizeof(*pinskingroup), end);
 			groupskins = LittleLong(pinskingroup->numskins);
+			if (groupskins < 1) {
+				Host_Error("Mod_LoadAllSkins: Invalid # of skins in group: %d (model %s)\n", groupskins, loadmodel->name);
+			}
 			pinskinintervals = (daliasskininterval_t *)(pinskingroup + 1);
+			Mod_CheckAliasData(loadmodel, pinskinintervals, groupskins, sizeof(*pinskinintervals), end);
 
 			pskintype = (void *)(pinskinintervals + groupskins);
 
 			for (j = 0; j < groupskins; j++) {
+				Mod_CheckAliasData(loadmodel, pskintype, s, 1, end);
 				Mod_FloodFillSkin(skin, pheader->skinwidth, pheader->skinheight);
 
 				snprintf(identifier, sizeof(identifier), "%s_%i_%i", basename, i, j);
@@ -233,7 +242,7 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 }
 
 typedef struct {
-	short x, y;
+	int x, y;
 } floodfill_t;
 
 extern unsigned d_8to24table[];
