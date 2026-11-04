@@ -774,7 +774,8 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 		Host_Error("Mod_LoadAliasModel: model %s has a skin taller than %d", mod->name, MAX_LBM_HEIGHT);
 	}
 
-	if (pheader->skinwidth <= 0 || pheader->skinheight <= 0 || pheader->skinwidth > filesize / pheader->skinheight) {
+	if (pheader->skinwidth <= 0 || pheader->skinheight <= 0 || pheader->skinwidth > filesize / pheader->skinheight
+		|| (pheader->skinwidth * pheader->skinheight) & 3) {
 		Host_Error("Mod_LoadAliasModel: model %s has an invalid skin size (%dx%d)", mod->name, pheader->skinwidth, pheader->skinheight);
 	}
 
