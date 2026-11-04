@@ -33,6 +33,30 @@ static void Cache_FreeHigh(int new_high_hunk);
 #define Cache_Init(...)
 #endif
 
+// With AddressSanitizer, free hunk memory is poisoned and temporary
+// allocations end in a poisoned redzone, so reads past the end of a loaded
+// file or into freed hunk memory are reported. The server-only cache lives
+// in the free space, so it is left out there.
+#if !defined(SERVERONLY) && defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define HUNK_ASAN
+#endif
+#endif
+#if !defined(SERVERONLY) && defined(__SANITIZE_ADDRESS__)
+#define HUNK_ASAN
+#endif
+
+#ifdef HUNK_ASAN
+#include <sanitizer/asan_interface.h>
+#define HUNK_TEMP_REDZONE 1024
+#define Hunk_Poison(p, n) ASAN_POISON_MEMORY_REGION((p), (n))
+#define Hunk_Unpoison(p, n) ASAN_UNPOISON_MEMORY_REGION((p), (n))
+#else
+#define HUNK_TEMP_REDZONE 0
+#define Hunk_Poison(p, n) ((void)(p), (void)(n))
+#define Hunk_Unpoison(p, n) ((void)(p), (void)(n))
+#endif
+
 //============================================================================
 
 #define HUNK_SENTINEL 0x1df001ed
@@ -192,6 +216,7 @@ void *Hunk_AllocName(int size, const char *name)
 
 	Cache_FreeLow(hunk_low_used);
 
+	Hunk_Unpoison(h, size);
 	memset(h, 0, size);
 
 	h->size = size;
@@ -218,6 +243,7 @@ void Hunk_FreeToLowMark(int mark)
 		Sys_Error("Hunk_FreeToLowMark: bad mark %i, hunk_low_used = %i", mark, hunk_low_used);
 	}
 	memset(hunk_base + mark, 0, hunk_low_used - mark);
+	Hunk_Poison(hunk_base + mark, hunk_low_used - mark);
 	hunk_low_used = mark;
 }
 
@@ -231,7 +257,9 @@ static void Hunk_FreeToHighMark(int mark)
 	if (mark < 0 || mark > hunk_high_used) {
 		Sys_Error("Hunk_FreeToHighMark: bad mark %i", mark);
 	}
+	Hunk_Unpoison(hunk_base + hunk_size - hunk_high_used, hunk_high_used - mark);
 	memset(hunk_base + hunk_size - hunk_high_used, 0, hunk_high_used - mark);
+	Hunk_Poison(hunk_base + hunk_size - hunk_high_used, hunk_high_used - mark);
 	hunk_high_used = mark;
 }
 
@@ -243,6 +271,7 @@ Hunk_HighAllocName
 static void *Hunk_HighAllocName(int size, char *name)
 {
 	hunk_t *h;
+	int requested = size;
 
 	if (size < 0) {
 		Sys_Error("Hunk_HighAllocName: bad size: %i", size);
@@ -252,7 +281,7 @@ static void *Hunk_HighAllocName(int size, char *name)
 	Hunk_Check();
 #endif
 
-	size = sizeof(hunk_t) + ((size + 15)&~15);
+	size = sizeof(hunk_t) + ((size + 15)&~15) + HUNK_TEMP_REDZONE;
 
 	if (hunk_size - hunk_low_used - hunk_high_used < size) {
 #ifdef SERVERONLY
@@ -267,10 +296,12 @@ static void *Hunk_HighAllocName(int size, char *name)
 
 	h = (hunk_t *)(hunk_base + hunk_size - hunk_high_used);
 
+	Hunk_Unpoison(h, size);
 	memset(h, 0, size);
 	h->size = size;
 	h->sentinel = HUNK_SENTINEL;
 	strlcpy(h->name, name, sizeof(h->name));
+	Hunk_Poison((byte *)(h + 1) + requested, size - (int)sizeof(hunk_t) - requested);
 
 	return (void *)(h + 1);
 }
@@ -698,6 +729,7 @@ void Memory_Init(void *buf, int size)
 	hunk_size = size & ~15;
 	hunk_low_used = 0;
 	hunk_high_used = 0;
+	Hunk_Poison(hunk_base, hunk_size);
 
 	Cache_Init();
 
