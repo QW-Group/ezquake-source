@@ -139,7 +139,7 @@ static texture_ref Mod_LoadExternalSkin(model_t* loadmodel, char *identifier, te
 
 void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskintype, const byte* end)
 {
-	int i, j, k, s, groupskins, texmode = 0;
+	int i, j, k, s, groupskins, firstskin, texmode = 0;
 	texture_ref gl_texnum, fb_texnum;
 	char basename[64], identifier[64];
 	byte *skin;
@@ -207,9 +207,13 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 			Mod_CheckAliasData(loadmodel, pinskinintervals, groupskins, sizeof(*pinskinintervals), end);
 
 			pskintype = (void *)(pinskinintervals + groupskins);
+			Mod_CheckAliasData(loadmodel, pskintype, groupskins, s, end);
 
-			for (j = 0; j < groupskins; j++) {
-				Mod_CheckAliasData(loadmodel, pskintype, s, 1, end);
+			// Skin j is drawn in animation slot j & 3, so only the last four skins are ever drawn.
+			firstskin = groupskins > 4 ? groupskins - 4 : 0;
+			pskintype = (daliasskintype_t *)((byte *)pskintype + firstskin * s);
+
+			for (j = firstskin; j < groupskins; j++) {
 				Mod_FloodFillSkin(skin, pheader->skinwidth, pheader->skinheight);
 
 				snprintf(identifier, sizeof(identifier), "%s_%i_%i", basename, i, j);
