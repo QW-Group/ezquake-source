@@ -442,13 +442,6 @@ qbool SV_Push (edict_t *pusher, vec3_t move)
 	void		*storage = NULL;
 	float		solid_save;
 
-	/* Blocked callbacks may push recursively; retain this invocation's rollback. */
-	if (sv.max_edicts > MAX_LEGACY_EDICTS) {
-		storage = SV_AllocPhysicsScratch(sv.max_edicts * (sizeof(*moved_edict) + sizeof(*moved_from)));
-		moved_edict = storage;
-		moved_from = (vec3_t *)(moved_edict + sv.max_edicts);
-	}
-
 	for (i=0 ; i<3 ; i++)
 	{
 		mins[i] = pusher->v->absmin[i] + move[i];
@@ -501,6 +494,15 @@ qbool SV_Push (edict_t *pusher, vec3_t move)
 		// remove the onground flag for non-players
 		if (check->v->movetype != MOVETYPE_WALK)
 			check->v->flags = (int)check->v->flags & ~FL_ONGROUND;
+
+		if (num_moved == MAX_LEGACY_EDICTS && !storage) {
+			/* Preserve this call's rollback before callbacks can reenter. */
+			storage = SV_AllocPhysicsScratch(sv.max_edicts * (sizeof(*moved_edict) + sizeof(*moved_from)));
+			moved_edict = storage;
+			moved_from = (vec3_t *)(moved_edict + sv.max_edicts);
+			memcpy(moved_edict, local_edict, sizeof(local_edict));
+			memcpy(moved_from, local_from, sizeof(local_from));
+		}
 
 		VectorCopy (check->v->origin, moved_from[num_moved]);
 		moved_edict[num_moved] = check;

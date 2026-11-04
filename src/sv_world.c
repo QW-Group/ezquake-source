@@ -337,12 +337,12 @@ static void SV_TouchLinks ( edict_t *ent, areanode_t *node )
 	edict_t		*local[MAX_LEGACY_EDICTS], **touchlist = local, *touch;
 	int			old_self, old_other;
 
-	/* Touch callbacks may reenter; each large map query owns its list. */
-	if (sv.max_edicts > MAX_LEGACY_EDICTS) {
+	numtouch = SV_AreaEdicts(ent->v->absmin, ent->v->absmax, touchlist, min(sv.max_edicts, MAX_LEGACY_EDICTS), AREA_TRIGGERS);
+	if (numtouch == MAX_LEGACY_EDICTS && sv.max_edicts > MAX_LEGACY_EDICTS) {
+		/* Complete this call's list before callbacks can reenter. */
 		touchlist = SV_AllocPhysicsScratch(sv.max_edicts * sizeof(*touchlist));
+		numtouch = SV_AreaEdicts(ent->v->absmin, ent->v->absmax, touchlist, sv.max_edicts, AREA_TRIGGERS);
 	}
-
-	numtouch = SV_AreaEdicts(ent->v->absmin, ent->v->absmax, touchlist, sv.max_edicts, AREA_TRIGGERS);
 
 // touch linked edicts
 	for (i = 0; i < numtouch; i++)
