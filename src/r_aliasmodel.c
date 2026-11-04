@@ -718,7 +718,7 @@ void R_InitAliasModelCvars(void)
 
 void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* loadname)
 {
-	int i, j, version, numframes, size, start, end, total;
+	int i, j, version, numframes, size, start, total;
 	mdl_t *pinmodel;
 	stvert_t *pinstverts;
 	dtriangle_t *pintriangles;
@@ -854,8 +854,7 @@ void Mod_LoadAliasModel(model_t *mod, void *buffer, int filesize, const char* lo
 	renderer.PrepareAliasModel(mod, pheader);
 
 	// move the complete, relocatable alias model to the cache
-	end = Hunk_LowMark();
-	total = end - start;
+	total = (byte *)Hunk_LowEnd() - (byte *)pheader;
 
 	mod->cached_data = Q_malloc(total);
 	memcpy(mod->cached_data, pheader, total);

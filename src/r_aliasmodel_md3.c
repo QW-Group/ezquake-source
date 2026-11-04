@@ -30,7 +30,7 @@ void GLM_MakeAlias3DisplayLists(model_t* model);
 
 typedef float m3by3_t[3][3];
 
-static int Mod_ReadFlagsFromMD1(char *name, int md3version)
+static int Mod_ReadFlagsFromMD1(char *name)
 {
 	mdl_t* pinmodel;
 	char fname[MAX_QPATH];
@@ -173,7 +173,7 @@ static void Mod_MD3LoadSkins(model_t* mod, md3Header_t* header, md3model_t* mode
 
 void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 {
-	int start, end, total;
+	int start, total;
 	int numsurfs;
 	int surfn;
 
@@ -332,8 +332,7 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 		}
 	}
 
-	end = Hunk_LowMark();
-	total = end - start;
+	total = (byte *)Hunk_LowEnd() - (byte *)pheader;
 
 	mod->cached_data = Q_malloc(total);
 	if (!mod->cached_data) {
@@ -352,7 +351,7 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 
 	Hunk_FreeToLowMark(start);
 
-	mod->flags = Mod_ReadFlagsFromMD1(mod->name, mem->flags);
+	mod->flags = Mod_ReadFlagsFromMD1(mod->name);
 
 	if (buffers.supported) {
 		GLM_MakeAlias3DisplayLists(mod);

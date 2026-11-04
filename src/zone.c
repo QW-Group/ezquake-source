@@ -206,6 +206,12 @@ int	Hunk_LowMark(void)
 	return hunk_low_used;
 }
 
+/* Address just past the last low hunk allocation. */
+void *Hunk_LowEnd(void)
+{
+	return hunk_base + hunk_low_used;
+}
+
 void Hunk_FreeToLowMark(int mark)
 {
 	if (mark < 0 || mark > hunk_low_used) {
