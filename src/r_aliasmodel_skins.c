@@ -142,11 +142,8 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 	int i, j, k, s, groupskins, firstskin, texmode = 0;
 	texture_ref gl_texnum, fb_texnum;
 	char basename[64], identifier[64];
-	byte *skin;
 	daliasskingroup_t *pinskingroup;
 	daliasskininterval_t *pinskinintervals;
-
-	skin = (byte *)(pskintype + 1);
 
 	if (numskins < 1 || numskins > MAX_SKINS) {
 		Host_Error("Mod_LoadAllSkins: Invalid # of skins: %d (model %s)\n", numskins, loadmodel->name);
@@ -164,7 +161,7 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 		Mod_CheckAliasData(loadmodel, pskintype, 1, sizeof(*pskintype), end);
 		if (pskintype->type == ALIAS_SKIN_SINGLE) {
 			Mod_CheckAliasData(loadmodel, pskintype + 1, s, 1, end);
-			Mod_FloodFillSkin(skin, pheader->skinwidth, pheader->skinheight);
+			Mod_FloodFillSkin((byte *)(pskintype + 1), pheader->skinwidth, pheader->skinheight);
 
 			// save 8 bit texels for the player model to remap
 			if (loadmodel->modhint == MOD_PLAYER) {
@@ -214,7 +211,7 @@ void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskin
 			pskintype = (daliasskintype_t *)((byte *)pskintype + firstskin * s);
 
 			for (j = firstskin; j < groupskins; j++) {
-				Mod_FloodFillSkin(skin, pheader->skinwidth, pheader->skinheight);
+				Mod_FloodFillSkin((byte *)pskintype, pheader->skinwidth, pheader->skinheight);
 
 				snprintf(identifier, sizeof(identifier), "%s_%i_%i", basename, i, j);
 
