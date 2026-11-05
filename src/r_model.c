@@ -287,6 +287,10 @@ model_t *Mod_LoadModel(model_t *mod, qbool crash)
 	loadmodel = mod;
 	FMod_CheckModel(mod->name, buf, filesize);
 
+	if (filesize < 4) {
+		Host_Error("Mod_LoadModel: %s is too short", mod->name);
+	}
+
 	// call the apropriate loader
 	mod->needload = false;
 

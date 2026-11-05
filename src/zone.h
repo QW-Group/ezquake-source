@@ -85,6 +85,7 @@ void Memory_Init (void *buf, int size);
 void *Hunk_AllocName (int size, const char *name);
 
 int	Hunk_LowMark (void);
+void *Hunk_LowEnd (void);
 void Hunk_FreeToLowMark (int mark);
 
 void Hunk_TempFlush(void);

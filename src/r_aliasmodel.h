@@ -13,7 +13,8 @@ void GLM_DrawAliasModelFrame(
 	texture_ref texture, qbool outline, int effects, int render_effects, float lerp_fraction
 );
 
-void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskintype);
+void Mod_CheckAliasData(const model_t* mod, const void* data, int count, size_t size, const byte* end);
+void* Mod_LoadAllSkins(model_t* loadmodel, int numskins, daliasskintype_t* pskintype, const byte* end);
 
 extern cvar_t gl_powerupshells_base1level, gl_powerupshells_base2level;
 extern cvar_t gl_powerupshells_effect1level, gl_powerupshells_effect2level;
