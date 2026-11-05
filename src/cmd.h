@@ -166,6 +166,10 @@ void Cmd_ExpandString (const char *data, char *dest);
 // Expands all $cvar or $macro expressions.
 // dest should point to a 1024-byte buffer
 
+void Cmd_ExpandUntrustedString (const char *data, char *dest);
+// As Cmd_ExpandString, for text from files the server can supply (.loc files);
+// CVAR_NOUNSAFEEXPAND cvars are never expanded.
+
 void Cmd_TokenizeString (const char *text);
 // Takes a null terminated string.  Does not need to be /n terminated.
 // breaks the string up into arg tokens.

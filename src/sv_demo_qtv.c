@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static cvar_t qtv_streamport     = {"qtv_streamport",      "0"};
 static cvar_t qtv_maxstreams     = {"qtv_maxstreams",      "1"};
-static cvar_t qtv_password       = {"qtv_password",         "", CVAR_NOTFROMSERVER};
+static cvar_t qtv_password       = {"qtv_password",         "", CVAR_NOTFROMSERVER | CVAR_NOUNSAFEEXPAND};
 static cvar_t qtv_pendingtimeout = {"qtv_pendingtimeout",  "5"}; // 5  seconds must be enough
 static cvar_t qtv_sayenabled     = {"qtv_sayenabled",      "0"}; // allow mod to override GameStarted() logic
 cvar_t qtv_streamtimeout         = {"qtv_streamtimeout",  "45"}; // 45 seconds

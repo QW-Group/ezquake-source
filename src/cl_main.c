@@ -96,8 +96,8 @@ void CL_ParseHiddenDataMessage(void);
 static void AuthUsernameChanged(cvar_t* var, char* value, qbool* cancel);
 
 cvar_t	allow_scripts = {"allow_scripts", "2", CVAR_NOTFROMSERVER, Rulesets_OnChange_allow_scripts};
-cvar_t	rcon_password = {"rcon_password", "", CVAR_NOTFROMSERVER};
-cvar_t	rcon_address = {"rcon_address", "", CVAR_NOTFROMSERVER};
+cvar_t	rcon_password = {"rcon_password", "", CVAR_NOTFROMSERVER | CVAR_NOUNSAFEEXPAND};
+cvar_t	rcon_address = {"rcon_address", "", CVAR_NOTFROMSERVER | CVAR_NOUNSAFEEXPAND};
 cvar_t	cl_crypt_rcon = {"cl_crypt_rcon", "1", CVAR_NOTFROMSERVER};
 
 cvar_t	cl_timeout = {"cl_timeout", "60", CVAR_NOTFROMSERVER};
@@ -249,7 +249,7 @@ cvar_t r_lightmap_lateupload    = {"r_lightmap_lateupload", "0"};
 cvar_t r_lightmap_packbytexture = {"r_lightmap_packbytexture", "2"};
 
 // info mirrors
-cvar_t  password                = {"password", "", CVAR_USERINFO | CVAR_NOTFROMSERVER};
+cvar_t  password                = {"password", "", CVAR_USERINFO | CVAR_NOTFROMSERVER | CVAR_NOUNSAFEEXPAND};
 cvar_t  spectator               = {"spectator", "", CVAR_USERINFO_NO_CFG_RESET };
 void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel);
 cvar_t  name                    = {"name", "player", CVAR_USERINFO, CL_OnChange_name_validate};

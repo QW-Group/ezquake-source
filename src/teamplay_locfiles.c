@@ -520,7 +520,7 @@ done_locmacros:
 
 	buf[0] = 0;
 	recursive = true;
-	Cmd_ExpandString(newbuf, buf);
+	Cmd_ExpandUntrustedString(newbuf, buf);
 	recursive = false;
 
 	return buf;
