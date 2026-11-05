@@ -30,6 +30,9 @@ void SCR_HUD_DrawFace(hud_t *hud)
 	extern mpic_t  *sb_face_quad;
 	extern mpic_t  *sb_face_invuln;
 	extern mpic_t  *sb_face_invis_invuln;
+	extern mpic_t  *sb_face_quad_invuln;
+	extern mpic_t  *sb_face_quad_invis;
+	extern mpic_t  *sb_face_quad_invis_invuln;
 
 	int     f, anim;
 	int     x, y;
@@ -49,6 +52,27 @@ void SCR_HUD_DrawFace(hud_t *hud)
 	if (!HUD_PrepareDraw(hud, 24 * scale, 24 * scale, &x, &y))
 		return;
 
+	if (sb_face_quad_invis_invuln &&
+		(HUD_Stats(STAT_ITEMS) &
+			(IT_QUAD | IT_INVISIBILITY | IT_INVULNERABILITY)) ==
+			(IT_QUAD | IT_INVISIBILITY | IT_INVULNERABILITY)) {
+		Draw_SPic(x, y, sb_face_quad_invis_invuln, scale);
+		return;
+	}
+	if (sb_face_quad_invuln &&
+		(HUD_Stats(STAT_ITEMS) &
+			(IT_QUAD | IT_INVISIBILITY | IT_INVULNERABILITY)) ==
+			(IT_QUAD | IT_INVULNERABILITY)) {
+		Draw_SPic(x, y, sb_face_quad_invuln, scale);
+		return;
+	}
+	if (sb_face_quad_invis &&
+		(HUD_Stats(STAT_ITEMS) &
+			(IT_QUAD | IT_INVISIBILITY | IT_INVULNERABILITY)) ==
+			(IT_QUAD | IT_INVISIBILITY)) {
+		Draw_SPic(x, y, sb_face_quad_invis, scale);
+		return;
+	}
 	if ((HUD_Stats(STAT_ITEMS) & (IT_INVISIBILITY | IT_INVULNERABILITY))
 		== (IT_INVISIBILITY | IT_INVULNERABILITY)) {
 		Draw_SPic(x, y, sb_face_invis_invuln, scale);

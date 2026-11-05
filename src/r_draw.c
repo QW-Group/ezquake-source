@@ -339,6 +339,10 @@ wadpic_t wad_pictures[WADPIC_PIC_COUNT];
 
 mpic_t *Draw_CacheWadPic(char *name, int code)
 {
+	static mpic_t optional_faces[3];
+	qbool optional_face = code == WADPIC_FACE_QUADINVU ||
+		code == WADPIC_FACE_QUADINVI || code == WADPIC_FACE_QUADINVUI;
+	qbool missing_optional_lump = true;
 	qpic_t *p;
 	mpic_t *pic, *pic_24bit;
 	wadpic_t* wadpic = NULL;
@@ -347,7 +351,13 @@ mpic_t *Draw_CacheWadPic(char *name, int code)
 		wadpic = &wad_pictures[code];
 	}
 
-	p = W_GetLumpName (name);
+	if (optional_face) {
+		p = W_LumpExists(name) ? W_GetLumpName(name) : NULL;
+	} else {
+		p = W_GetLumpName(name);
+	}
+	missing_optional_lump = optional_face && !p;
+
 	pic = (mpic_t *)p;
 	if (wadpic) {
 		strlcpy(wadpic->name, name, sizeof(wadpic->name));
@@ -357,6 +367,13 @@ mpic_t *Draw_CacheWadPic(char *name, int code)
 	if ((pic_24bit = R_LoadPicImage(va("textures/wad/%s", name), name, 0, 0, TEX_ALPHA)) ||
 		(pic_24bit = R_LoadPicImage(va("gfx/%s", name), name, 0, 0, TEX_ALPHA)))
 	{
+		if (missing_optional_lump) {
+			pic = &optional_faces[code - WADPIC_FACE_QUADINVU];
+			memset(pic, 0, sizeof(*pic));
+			pic->width = 24;
+			pic->height = 24;
+			wadpic->pic = pic;
+		}
 		// Only keep the size info from the lump. The other stuff is copied from the 24 bit image.
 		pic->sh		= pic_24bit->sh;
 		pic->sl		= pic_24bit->sl;
@@ -369,6 +386,10 @@ mpic_t *Draw_CacheWadPic(char *name, int code)
 		}
 
 		return pic;
+	}
+
+	if (missing_optional_lump) {
+		return NULL;
 	}
 
 	R_LoadPicTexture(name, pic, p->data);
