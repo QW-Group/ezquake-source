@@ -133,7 +133,7 @@ void W_LoadWadFile(const char *filename)
 	}
 }
 
-lumpinfo_t *W_GetLumpinfo(const char *name)
+static lumpinfo_t *W_FindLumpinfo(const char *name)
 {
 	int i;
 	lumpinfo_t	*lump_p;
@@ -146,8 +146,22 @@ lumpinfo_t *W_GetLumpinfo(const char *name)
 		}
 	}
 
-	Sys_Error("W_GetLumpinfo: %s not found", name);
 	return NULL;
+}
+
+lumpinfo_t *W_GetLumpinfo(const char *name)
+{
+	lumpinfo_t* lump = W_FindLumpinfo(name);
+
+	if (!lump) {
+		Sys_Error("W_GetLumpinfo: %s not found", name);
+	}
+	return lump;
+}
+
+qbool W_LumpExists(const char *name)
+{
+	return W_FindLumpinfo(name) != NULL;
 }
 
 void* W_GetLumpName(const char *name)

@@ -111,6 +111,9 @@ mpic_t	*sb_face_invis;
 mpic_t	*sb_face_quad;
 mpic_t	*sb_face_invuln;
 mpic_t	*sb_face_invis_invuln;
+mpic_t	*sb_face_quad_invuln;
+mpic_t	*sb_face_quad_invis;
+mpic_t	*sb_face_quad_invis_invuln;
 
 qbool	sb_showscores;
 qbool	sb_showteamscores;
@@ -285,6 +288,9 @@ void Sbar_Init(void)
 	sb_face_invuln = Draw_CacheWadPic("face_invul2", WADPIC_FACE_INVUL2);
 	sb_face_invis_invuln = Draw_CacheWadPic("face_inv2", WADPIC_FACE_INV2);
 	sb_face_quad = Draw_CacheWadPic("face_quad", WADPIC_FACE_QUAD);
+	sb_face_quad_invuln = Draw_CacheWadPic("face_quadinvu", WADPIC_FACE_QUADINVU);
+	sb_face_quad_invis = Draw_CacheWadPic("face_quadinvi", WADPIC_FACE_QUADINVI);
+	sb_face_quad_invis_invuln = Draw_CacheWadPic("face_quadinvui", WADPIC_FACE_QUADINVUI);
 
 	sb_sbar = Draw_CacheWadPic("sbar", WADPIC_SB_SBAR);
 	sb_ibar = Draw_CacheWadPic("ibar", WADPIC_SB_IBAR);
@@ -1005,6 +1011,27 @@ static void Sbar_DrawFrags (void) {
 static void Sbar_DrawFace (void) {
 	int f, anim;
 
+	if (sb_face_quad_invis_invuln &&
+		(cl.stats[STAT_ITEMS] &
+			(IT_QUAD | IT_INVISIBILITY | IT_INVULNERABILITY)) ==
+			(IT_QUAD | IT_INVISIBILITY | IT_INVULNERABILITY)) {
+		Sbar_DrawPic (112, 0, sb_face_quad_invis_invuln);
+		return;
+	}
+	if (sb_face_quad_invuln &&
+		(cl.stats[STAT_ITEMS] &
+			(IT_QUAD | IT_INVISIBILITY | IT_INVULNERABILITY)) ==
+			(IT_QUAD | IT_INVULNERABILITY)) {
+		Sbar_DrawPic (112, 0, sb_face_quad_invuln);
+		return;
+	}
+	if (sb_face_quad_invis &&
+		(cl.stats[STAT_ITEMS] &
+			(IT_QUAD | IT_INVISIBILITY | IT_INVULNERABILITY)) ==
+			(IT_QUAD | IT_INVISIBILITY)) {
+		Sbar_DrawPic (112, 0, sb_face_quad_invis);
+		return;
+	}
 	if ( (cl.stats[STAT_ITEMS] & (IT_INVISIBILITY | IT_INVULNERABILITY) )
 			== (IT_INVISIBILITY | IT_INVULNERABILITY) )	{
 		Sbar_DrawPic (112, 0, sb_face_invis_invuln);
