@@ -597,10 +597,7 @@ void GLM_DrawWaterSurfaces(void)
 		for (poly = surf->polys; poly; poly = poly->next) {
 			int newVerts = poly->numverts;
 
-			if (index_count + 1 + newVerts > modelIndexMaximum) {
-				// Should never happen now, we allocate enough space
-				continue;
-			}
+			R_BrushModelEnsureIndexCapacity((size_t)index_count + 1 + newVerts);
 
 			if (req->count) {
 				modelIndexes[index_count++] = ~(GLuint)0;
@@ -628,10 +625,7 @@ static glm_worldmodel_req_t* GLM_DrawFlatChain(glm_worldmodel_req_t* req, msurfa
 		for (poly = surf->polys; poly; poly = poly->next) {
 			int newVerts = poly->numverts;
 
-			if (index_count + 1 + newVerts > modelIndexMaximum) {
-				// Should never happen now
-				continue;
-			}
+			R_BrushModelEnsureIndexCapacity((size_t)index_count + 1 + newVerts);
 
 			if (req->count) {
 				modelIndexes[index_count++] = ~(GLuint)0;
@@ -659,10 +653,7 @@ static glm_worldmodel_req_t* GLM_DrawTexturedChain(glm_worldmodel_req_t* req, ms
 		for (poly = surf->polys; poly; poly = poly->next) {
 			int newVerts = poly->numverts;
 
-			if (index_count + 1 + newVerts > modelIndexMaximum) {
-				// Should never happen now
-				continue;
-			}
+			R_BrushModelEnsureIndexCapacity((size_t)index_count + 1 + newVerts);
 
 			if (req->count) {
 				modelIndexes[index_count++] = ~(GLuint)0;
@@ -724,7 +715,7 @@ static qbool GLM_WorldDataBoundPerDrawcall(void)
 void GLM_PrepareWorldModelBatch(void)
 {
 	GLintptr drawOffset = 0;
-	GLintptr indexOffset = buffers.BufferOffset(r_buffer_brushmodel_index_data) / sizeof(modelIndexes[0]);
+	GLintptr indexOffset;
 	qbool bound_per_drawcall = GLM_WorldDataBoundPerDrawcall();
 	qbool indirect = GLM_WorldDrawnIndirect();
 	int samplerMappingOffset = 0;
@@ -732,7 +723,13 @@ void GLM_PrepareWorldModelBatch(void)
 	int draw, i;
 
 	R_TraceEnterNamedRegion(__func__);
+	if (sizeof(modelIndexes[0]) * index_count > buffers.Size(r_buffer_brushmodel_index_data)) {
+		// Immutable storage may get a new GL name; resize with its owning VAO bound.
+		R_BindVertexArray(vao_brushmodel);
+		buffers.EnsureSize(r_buffer_brushmodel_index_data, sizeof(modelIndexes[0]) * index_count);
+	}
 	buffers.Update(r_buffer_brushmodel_index_data, sizeof(modelIndexes[0]) * index_count, modelIndexes);
+	indexOffset = buffers.BufferOffset(r_buffer_brushmodel_index_data) / sizeof(modelIndexes[0]);
 	if (indirect) {
 		buffers.EnsureSize(r_buffer_brushmodel_drawcall_indirect, sizeof(drawcalls[0].worldmodel_requests) * maximum_drawcalls);
 	}

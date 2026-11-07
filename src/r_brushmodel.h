@@ -55,6 +55,8 @@ void chain_surfaces_by_lightmap(msurface_t** chain_head, msurface_t* surf);
 extern unsigned int* modelIndexes;
 extern unsigned int modelIndexMaximum;
 void R_BrushModelCreateVBO(void);
+// Grow CPU index storage for the surfaces actually submitted this frame.
+void R_BrushModelEnsureIndexCapacity(size_t required);
 
 #define BRUSHMODEL_MAX_SURFACE_EXTENTS +999999999
 #define BRUSHMODEL_MIN_SURFACE_EXTENTS -999999999

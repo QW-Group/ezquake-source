@@ -1195,7 +1195,9 @@ findradius (origin, radius)
 static void PF_findradius (void)
 {
 	int			i, j, numtouch;
-	edict_t		*touchlist[MAX_EDICTS], *ent, *chain;
+	/* This query executes no game callbacks and may reuse its scratch list. */
+	static edict_t *touchlist[MAX_EDICTS];
+	edict_t		*ent, *chain;
 	float		rad, rad_2, *org;
 	vec3_t		mins, maxs, eorg;
 
@@ -1917,16 +1919,11 @@ switch (nqp_buf_data[1]) {
 	  break;
   case NQ_TE_BEAM:
   {		int entnum;
-		if (nqp_buf.cursize < 16)
+		if (nqp_buf.cursize < 4 + 6 * msg_coordsize)
 			goto waitformore;
-		MSG_WriteByte (&sv.reliable_datagram, svc_temp_entity);
-		MSG_WriteByte (&sv.reliable_datagram, TE_LIGHTNING1);
 		entnum = nqp_buf_data[2] + nqp_buf_data[3]*256;
-		if ((unsigned int)entnum > 1023)
-			entnum = 0;
-		MSG_WriteShort (&sv.reliable_datagram, (short)(entnum - 1288));
-		NQP_Skip (4);
-		nqp_expect = 12;
+		SV_SendNQBeam(entnum, nqp_buf_data + 4);
+		NQP_Skip(4 + 6 * msg_coordsize);
 		break;
   }
 

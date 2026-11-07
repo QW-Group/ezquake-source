@@ -27,6 +27,454 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "teamplay.h"
 #include "cl_tent.h"
 
+/* Separate RD buffers keep legacy frame capacities and demo layouts unchanged. */
+struct cl_rd_state_s {
+	rd_client_entity_t *current, *previous, *candidate; // Atomic publish and interpolation buffers.
+	rd_client_entity_t *baselines;       // RD baselines have different defaults/fields from QW.
+	rd_entity_state_t *statics;          // Raw RD statics, indexed by the existing static list.
+	float time, oldtime;                // Server timestamps for the two published frames.
+	qbool valid;                       // A reset-world marker established the initial state.
+	int slot_limit;                    // Exclusive inspected slot extent; includes failed scratch writes, never shrinks.
+	int player_lerp_sequence[MAX_CLIENTS]; // Animation bases retained across chunks of one MVD frame.
+	int player_lerp_frame;              // Parsecount for the captured player bases.
+	float player_lerp_time;             // RD server timestamp for the captured player bases.
+	qbool player_lerp_valid;            // Distinguish initial storage from frame zero.
+};
+
+void CL_RD_ToLegacy(const rd_entity_state_t *s, entity_state_t *to)
+{
+	memset(to, 0, sizeof(*to));
+	to->number = s->number;
+	VectorCopy(s->origin, to->origin);
+	VectorCopy(s->angles, to->angles);
+	to->modelindex = s->modelindex;
+	to->frame = s->frame;
+	to->skinnum = s->skinnum;
+	to->colormap = s->colormap;
+	to->effects = s->effects;
+#ifdef FTE_PEXT_SCALE
+	to->scale = s->scale;
+#endif
+#ifdef FTE_PEXT_TRANS
+	/* Legacy zero means opaque; approximate RD zero with its minimum alpha. */
+	to->trans = s->trans == 255 ? 0 : max(1, s->trans);
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+	memcpy(to->colourmod, s->colourmod, sizeof(to->colourmod));
+#endif
+}
+
+void CL_RD_ToPlayer(const rd_client_entity_t *entity, player_state_t *to)
+{
+	const rd_entity_state_t *s = &entity->state;
+	int i;
+	memset(to, 0, sizeof(*to));
+	to->flags = s->solidsize ? PF_SOLID : 0;
+	switch (s->pmovetype & RD_MOVETYPE_MASK) {
+	case RD_MOVETYPE_NOCLIP:
+		to->pm_type = cl.z_ext & Z_EXT_PM_TYPE_NEW ? PM_SPECTATOR : PM_OLD_SPECTATOR;
+		break;
+	case RD_MOVETYPE_FLY:
+		to->pm_type = PM_FLY;
+		break;
+	case RD_MOVETYPE_NONE:
+		to->pm_type = PM_NONE;
+		break;
+	case RD_MOVETYPE_LOCK:
+		to->pm_type = PM_LOCK;
+		break;
+	case RD_MOVETYPE_TOSS:
+	case RD_MOVETYPE_BOUNCE:
+		to->pm_type = PM_DEAD;
+		to->flags |= PF_DEAD;
+		break;
+	default:
+		to->pm_type = PM_NORMAL;
+		break;
+	}
+	to->onground = !!(s->pmovetype & RD_MOVETYPE_ONGROUND);
+	to->jump_held = !!(s->pmovetype & RD_MOVETYPE_JUMP_HELD);
+	to->messagenum = cl.parsecount;
+	to->state_time = entity->state_time - s->msec * 0.001;
+	VectorCopy(s->origin, to->origin);
+	/* Playerinfo uses signed angles; retain the cyclic RD representation separately. */
+	for (i = 0; i < 3; ++i) {
+		float angle = entity->viewangles[i];
+		if (angle >= 180.0f) {
+			angle -= 360.0f;
+		}
+		to->viewangles[i] = angle;
+		to->command.angles[i] = angle;
+		to->velocity[i] = s->velocity[i] / 8.0f;
+	}
+	to->command.forwardmove = s->movement[0];
+	to->command.sidemove = s->movement[1];
+	to->command.upmove = s->movement[2];
+	to->command.msec = s->msec;
+	to->modelindex = s->modelindex;
+	to->frame = s->frame;
+	to->skinnum = s->skinnum;
+	to->effects = s->effects;
+	to->weaponframe = s->weaponframe;
+#ifdef FTE_PEXT_SCALE
+	to->scale = s->scale;
+#endif
+#ifdef FTE_PEXT_TRANS
+	to->alpha = s->trans == 255 ? 0 : max(1, s->trans);
+#endif
+	/* Player modelindex2 selects the vwep table; other entities use model precaches. */
+	to->vw_index = (unsigned int)s->modelindex2 < MAX_VWEP_MODELS ? s->modelindex2 : 0;
+}
+
+/* FTE base-RD null defaults, including identity appearance values. */
+static void CL_RD_InitEntity(rd_client_entity_t *entity)
+{
+	memset(entity, 0, sizeof(*entity));
+	MSG_RD_InitState(&entity->state);
+}
+
+/* Allocate only when an RD signon or entity stream actually needs these buffers. */
+static struct cl_rd_state_s *CL_RD_EnsureState(void)
+{
+	if (!cl.rd) {
+		cl.rd = Q_calloc(1, sizeof(*cl.rd));
+		cl.rd->slot_limit = MAX_CLIENTS + 1; // Missing players must still be cleared when publishing.
+
+		cl.rd->current = Q_calloc(CL_MAX_EDICTS, sizeof(*cl.rd->current));
+		cl.rd->previous = Q_calloc(CL_MAX_EDICTS, sizeof(*cl.rd->previous));
+		cl.rd->candidate = Q_calloc(CL_MAX_EDICTS, sizeof(*cl.rd->candidate));
+		cl.rd->baselines = Q_calloc(CL_MAX_EDICTS, sizeof(*cl.rd->baselines));
+	}
+	return cl.rd;
+}
+
+/* Release retained allocations before the owning client state is wiped. */
+void CL_RD_Clear(void)
+{
+	if (!cl.rd) {
+		return;
+	}
+	Q_free(cl.rd->current);
+	Q_free(cl.rd->previous);
+	Q_free(cl.rd->candidate);
+	Q_free(cl.rd->baselines);
+	Q_free(cl.rd->statics);
+	Q_free(cl.rd);
+}
+
+/* Startup writers read the accepted baseline without a legacy projection. */
+const rd_client_entity_t *CL_RD_Baseline(int number)
+{
+	if (!cl.rd || number <= 0 || number >= CL_MAX_EDICTS || !cl.rd->baselines[number].state.number) {
+		return NULL;
+	}
+	return &cl.rd->baselines[number];
+}
+
+/* Raw statics share the renderer static list's indices and map lifetime. */
+const rd_entity_state_t *CL_RD_Static(int index)
+{
+	return cl.rd && cl.rd->statics && index >= 0 && index < MAX_STATIC_ENTITIES
+		? &cl.rd->statics[index] : NULL;
+}
+
+/* Retain only successfully parsed static records for demo startup. */
+void CL_RD_SetStatic(int index, const rd_entity_state_t *state)
+{
+	struct cl_rd_state_s *rd = CL_RD_EnsureState();
+	if (index < 0 || index >= MAX_STATIC_ENTITIES) {
+		Host_Error("Invalid RD static index");
+	}
+	if (!rd->statics) {
+		rd->statics = Q_calloc(MAX_STATIC_ENTITIES, sizeof(*rd->statics));
+	}
+	rd->statics[index] = *state;
+}
+
+// MVD's entity-only float coordinates apply to RD baselines and live states too.
+static float CL_RD_ReadCoord(void)
+{
+	return cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS ? MSG_ReadFloat() : MSG_ReadCoord();
+}
+
+/* Decode one base-RD payload transactionally, consuming unsupported visuals too. */
+qbool CL_RD_ReadState(rd_client_entity_t *result, const rd_client_entity_t *old,
+					 const rd_client_entity_t *baseline, int number)
+{
+	rd_client_entity_t next;
+	rd_entity_state_t *s = &next.state;
+	unsigned int bits = (unsigned int)MSG_ReadByte(), pred = 0;
+	int i;
+	if (bits & UF_EXTEND1) {
+		bits |= (unsigned int)MSG_ReadByte() << 8;
+	}
+	if (bits & UF_EXTEND2) {
+		bits |= (unsigned int)MSG_ReadByte() << 16;
+	}
+	if (bits & UF_EXTEND3) {
+		bits |= (unsigned int)MSG_ReadByte() << 24;
+	}
+	if (msg_badread || number < 0 || number >= CL_MAX_EDICTS || (bits & (UF_BONEDATA | UF_UNUSED1 | UF_EXTEND4))) {
+		return false;
+	}
+	if ((bits & UF_RESET) && baseline) {
+		next = *baseline;
+	} else if (!(bits & UF_RESET) && old) {
+		next = *old;
+	} else {
+		CL_RD_InitEntity(&next);
+	}
+	s->number = number;
+	next.reset = !!(bits & UF_RESET);
+	if (bits & UF_FRAME) {
+		s->frame = bits & UF_16BIT_LERPTIME ? (unsigned short)MSG_ReadShort() : MSG_ReadByte();
+	}
+	if (bits & UF_ORIGINXY) {
+		s->origin[0] = CL_RD_ReadCoord();
+		s->origin[1] = CL_RD_ReadCoord();
+	}
+	if (bits & UF_ORIGINZ) {
+		s->origin[2] = CL_RD_ReadCoord();
+	}
+	if (bits & UF_ANGLESXZ) {
+		s->angles[0] = bits & UF_PREDINFO ? MSG_ReadAngle16() : MSG_ReadAngle();
+		s->angles[2] = bits & UF_PREDINFO ? MSG_ReadAngle16() : MSG_ReadAngle();
+	}
+	if (bits & UF_ANGLESY) {
+		s->angles[1] = bits & UF_PREDINFO ? MSG_ReadAngle16() : MSG_ReadAngle();
+	}
+	if ((bits & (UF_EFFECTS | UF_EFFECTS2_OLD)) == (UF_EFFECTS | UF_EFFECTS2_OLD)) {
+		s->effects = MSG_ReadLong();
+	} else if (bits & UF_EFFECTS2_OLD) {
+		s->effects = (unsigned short)MSG_ReadShort();
+	} else if (bits & UF_EFFECTS) {
+		s->effects = MSG_ReadByte();
+	}
+	memset(s->movement, 0, sizeof(s->movement));
+	memset(s->velocity, 0, sizeof(s->velocity));
+	s->msec = 0;
+	if (bits & UF_PREDINFO) {
+		pred = MSG_ReadByte();
+		for (i = 0; i < 3; ++i) {
+			if (pred & (UFP_FORWARD << i)) {
+				s->movement[i] = MSG_ReadShort();
+			}
+		}
+		if (pred & UFP_MOVETYPE) {
+			s->pmovetype = MSG_ReadByte();
+		}
+		if (pred & UFP_VELOCITYXY) {
+			s->velocity[0] = MSG_ReadShort();
+			s->velocity[1] = MSG_ReadShort();
+		}
+		if (pred & UFP_VELOCITYZ) {
+			s->velocity[2] = MSG_ReadShort();
+		}
+		if (pred & UFP_MSEC) {
+			s->msec = MSG_ReadByte();
+		}
+		if (pred & UFP_WEAPONFRAME_OLD) {
+			s->weaponframe = MSG_ReadByte();
+			if (s->weaponframe & 128) {
+				s->weaponframe = (s->weaponframe & 127) | ((unsigned int)MSG_ReadByte() << 7);
+			}
+		}
+	}
+	for (i = 0; i < 3; ++i) {
+		if (bits & (i == 1 ? UF_ANGLESY : UF_ANGLESXZ)) {
+			float a = s->angles[i] * (i == 0 ? (bits & UF_PREDINFO ? -3 : -1) : 1);
+			next.viewangles[i] = ((int)(a * 65536.0f / 360.0f) & 65535) * (360.0f / 65536.0f);
+		}
+	}
+	if (bits & UF_MODEL) {
+		s->modelindex = bits & UF_16BIT_LERPTIME ? (unsigned short)MSG_ReadShort() : MSG_ReadByte();
+	}
+	if (bits & UF_SKIN) {
+		s->skinnum = bits & UF_16BIT_LERPTIME ? MSG_ReadShort() : MSG_ReadByte();
+	}
+	if (bits & UF_COLORMAP) {
+		s->colormap = MSG_ReadByte();
+	}
+	if (bits & UF_SOLID) {
+		s->solidsize = (unsigned short)MSG_ReadShort();
+	}
+	if (bits & UF_FLAGS) {
+		s->dpflags = MSG_ReadByte();
+	}
+	if (bits & UF_ALPHA) {
+		s->trans = MSG_ReadByte();
+	}
+	if (bits & UF_SCALE) {
+		s->scale = MSG_ReadByte();
+	}
+	if (bits & UF_DRAWFLAGS) {
+		s->drawflags = MSG_ReadByte();
+		s->abslight = (s->drawflags & MLS_MASK) >= MLS_ADDLIGHT ? MSG_ReadByte() : 0;
+	}
+	if (bits & UF_TAGINFO) {
+		s->tagentity = MSG_RD_ReadEntityRef();
+		s->tagindex = MSG_ReadByte();
+	}
+	if (bits & UF_LIGHT) {
+		for (i = 0; i < 4; ++i) {
+			s->light[i] = (unsigned short)MSG_ReadShort();
+		}
+		s->lightstyle = MSG_ReadByte();
+		s->lightpflags = MSG_ReadByte();
+	}
+	if (bits & UF_TRAILEFFECT) {
+		unsigned int trail = (unsigned short)MSG_ReadShort();
+		s->traileffect = trail & 0x3fff;
+		s->emiteffect = trail & 0x8000 ? ((unsigned short)MSG_ReadShort() & 0x3fff) : 0;
+	}
+	if (bits & UF_COLORMOD) {
+		for (i = 0; i < 3; ++i) {
+			s->colourmod[i] = MSG_ReadByte();
+		}
+	}
+	if (bits & UF_GLOW) {
+		s->glowsize = MSG_ReadByte();
+		s->glowcolour = MSG_ReadByte();
+		for (i = 0; i < 3; ++i) {
+			s->glowmod[i] = MSG_ReadByte();
+		}
+	}
+	if (bits & UF_FATNESS) {
+		s->fatness = MSG_ReadChar();
+	}
+	if (bits & UF_MODELINDEX2) {
+		s->modelindex2 = bits & UF_16BIT_LERPTIME ? (unsigned short)MSG_ReadShort() : MSG_ReadByte();
+	}
+	if (bits & UF_GRAVITYDIR) {
+		s->gravitydir[0] = MSG_ReadByte();
+		s->gravitydir[1] = MSG_ReadByte();
+	}
+	if (msg_badread || (unsigned int)s->modelindex >= MAX_MODELS || (unsigned int)s->modelindex2 >= MAX_MODELS || s->tagentity >= CL_MAX_EDICTS) {
+		return false;
+	}
+	for (i = 0; i < 3; ++i) {
+		if (!isfinite(s->origin[i]) || !isfinite(s->angles[i])) {
+			return false;
+		}
+	}
+	*result = next;
+	return true;
+}
+
+/* RD statics omit the entity reference; numbered baselines retain full RD data. */
+qbool CL_RD_ReadBaseline(rd_client_entity_t *result, qbool numbered)
+{
+	unsigned int number = numbered ? MSG_RD_ReadEntityRef() : 0;
+	rd_client_entity_t next;
+	if (number >= CL_MAX_EDICTS || !CL_RD_ReadState(&next, NULL, NULL, number)) {
+		return false;
+	}
+	if (numbered) {
+		CL_RD_EnsureState()->baselines[number] = next;
+	}
+	*result = next;
+	return true;
+}
+
+/* Decode a complete frame before replacing the last valid persistent state. */
+qbool CL_RD_ParseEntities(void)
+{
+	struct cl_rd_state_s *rd = CL_RD_EnsureState();
+	rd_client_entity_t *swap;
+	float time = MSG_ReadFloat();
+	qbool valid = rd->valid;
+	int last = 0, i;
+	if (msg_badread || !isfinite(time)) {
+		return false;
+	}
+	/* All three active buffers remain allocation-zero beyond slot_limit. Keep
+	 * the extent after a failed decode so the next copy also clears dirty scratch. */
+	memcpy(rd->candidate, rd->current, rd->slot_limit * sizeof(*rd->current));
+	for (i = 0; i < rd->slot_limit; ++i) {
+		rd->candidate[i].reset = false;
+	}
+	for (;;) {
+		unsigned int word = (unsigned short)MSG_ReadShort(), number;
+		qbool remove = !!(word & RD_ENTITYINDEX_REMOVE);
+		if (msg_badread) {
+			return false;
+		}
+		if (!word) {
+			break;
+		}
+		number = word & RD_ENTITYINDEX_MASK;
+		if (word & RD_ENTITYINDEX_EXTEND) {
+			number |= (unsigned int)MSG_ReadByte() << 14;
+		}
+		if (msg_badread || number >= CL_MAX_EDICTS) {
+			return false;
+		}
+		rd->slot_limit = max(rd->slot_limit, number + 1);
+		if (!number && remove && !last) {
+			memset(rd->candidate, 0, rd->slot_limit * sizeof(*rd->candidate));
+			valid = true;
+			continue;
+		}
+		if (!number || number <= (unsigned int)last) {
+			return false;
+		}
+		last = number;
+		if (remove) {
+			memset(&rd->candidate[number], 0, sizeof(rd->candidate[number]));
+		} else {
+			const rd_client_entity_t *old = rd->candidate[number].state.number ? &rd->candidate[number] : NULL;
+			const rd_client_entity_t *base = rd->baselines[number].state.number ? &rd->baselines[number] : NULL;
+			if (!CL_RD_ReadState(&rd->candidate[number], old, base, number)) {
+				return false;
+			}
+			rd->candidate[number].state_time = cl.parsecounttime;
+		}
+	}
+	if (!valid) {
+		return true; /* Await reset-world recovery without publishing unknown state. */
+	}
+	swap = rd->previous;
+	rd->previous = rd->current;
+	rd->current = rd->candidate;
+	rd->candidate = swap;
+	rd->oldtime = rd->time;
+	rd->time = time;
+	rd->valid = true;
+	return true;
+}
+
+/* Access only published state, and suppress interpolation through explicit resets. */
+const rd_client_entity_t *CL_RD_Entity(int number, qbool previous)
+{
+	const rd_client_entity_t *entity;
+	if (!cl.rd || !cl.rd->valid || number <= 0 || number >= cl.rd->slot_limit) {
+		return NULL;
+	}
+	if (previous && cl.rd->current[number].reset) {
+		return NULL;
+	}
+	entity = previous ? &cl.rd->previous[number] : &cl.rd->current[number];
+	return entity->state.number ? entity : NULL;
+}
+
+/* Report whether the initial world reset was received. */
+qbool CL_RD_Valid(void)
+{
+	return cl.rd && cl.rd->valid;
+}
+
+/* Bound consumer scans by the retained extent, including previous high slots. */
+int CL_RD_SlotLimit(void)
+{
+	return CL_RD_Valid() ? cl.rd->slot_limit : 0;
+}
+
+/* RD timestamps are independent of the legacy frame ring. */
+float CL_RD_Time(qbool previous)
+{
+	return cl.rd ? (previous ? cl.rd->oldtime : cl.rd->time) : 0;
+}
+
 static int MVD_TranslateFlags(int src);
 void TP_ParsePlayerInfo(player_state_t *, player_state_t *, player_info_t *info);	
 
@@ -192,45 +640,57 @@ void CL_ClearScene(void) {
 void CL_AddEntityToList(visentlist_t* list, visentlist_entrytype_t vistype, entity_t* ent, modtype_t type, qbool shell)
 {
 	extern cvar_t gl_outline;
+	entity_t saved;
 
-	if (list->count < sizeof(list->list) / sizeof(list->list[0])) {
-		list->list[cl_visents.count].ent = *ent;
-
-		ent = &list->list[cl_visents.count].ent;
-		list->list[cl_visents.count].type = type;
-		if (vistype == visent_alpha) {
-			// Sort transparent entities based on closest point for stable back-to-front rendering.
-			vec3_t distance;
-			float scale = R_EntityScale(ent);
-			int i;
-			for (i = 0; i < 3; i++) {
-				distance[i] = r_refdef.vieworg[i] - ent->origin[i];
-				distance[i] -= bound(scale * ent->model->mins[i], distance[i], scale * ent->model->maxs[i]);
-			}
-			list->list[cl_visents.count].distance = DotProduct(distance, distance);
-		} else {
-			list->list[cl_visents.count].distance = VectorDistanceQuick(cl.simorg, ent->origin);
+	if (list->count == list->capacity) {
+		int capacity;
+		if (list->capacity > INT_MAX / 2 / sizeof(list->list[0])) {
+			Host_Error("Visible entity list is too large");
 		}
-		list->list[cl_visents.count].draw[vistype] = true;
-
-		ent->outlineScale = 0.5f * (r_refdef2.outlineBase + DotProduct(ent->origin, r_refdef2.outline_vpn));
-		ent->outlineScale = bound(ent->outlineScale, 0, 2);
-
-		++list->typecount[vistype];
-		if (shell) {
-			list->list[cl_visents.count].draw[visent_shells] = true;
-			++list->typecount[visent_shells];
-		}
-		// Check for outline on models.
-		// We don't support outline for transparent models,
-		// and we also check for ruleset, since we don't want outline on eyes.
-		if (((gl_outline.integer & 1) && !RuleSets_DisallowModelOutline(ent->model))) {
-			list->list[cl_visents.count].draw[visent_outlines] = true;
-			++list->typecount[visent_outlines];
-		}
-
-		++list->count;
+		capacity = list->capacity ? list->capacity * 2 : MAX_STANDARD_ENTITIES;
+		// The input may itself be an entry in the allocation being moved.
+		saved = *ent;
+		list->list = Q_realloc(list->list, capacity * sizeof(list->list[0]));
+		memset(list->list + list->capacity, 0, (capacity - list->capacity) * sizeof(list->list[0]));
+		list->capacity = capacity;
+		ent = &saved;
 	}
+	list->list[list->count].ent = *ent;
+
+	ent = &list->list[list->count].ent;
+	list->list[list->count].type = type;
+	if (vistype == visent_alpha) {
+		// Sort transparent entities based on closest point for stable back-to-front rendering.
+		vec3_t distance;
+		float scale = R_EntityScale(ent);
+		int i;
+		for (i = 0; i < 3; i++) {
+			distance[i] = r_refdef.vieworg[i] - ent->origin[i];
+			distance[i] -= bound(scale * ent->model->mins[i], distance[i], scale * ent->model->maxs[i]);
+		}
+		list->list[list->count].distance = DotProduct(distance, distance);
+	} else {
+		list->list[list->count].distance = VectorDistanceQuick(cl.simorg, ent->origin);
+	}
+	list->list[list->count].draw[vistype] = true;
+
+	ent->outlineScale = 0.5f * (r_refdef2.outlineBase + DotProduct(ent->origin, r_refdef2.outline_vpn));
+	ent->outlineScale = bound(ent->outlineScale, 0, 2);
+
+	++list->typecount[vistype];
+	if (shell) {
+		list->list[list->count].draw[visent_shells] = true;
+		++list->typecount[visent_shells];
+	}
+	// Check for outline on models.
+	// We don't support outline for transparent models,
+	// and we also check for ruleset, since we don't want outline on eyes.
+	if (((gl_outline.integer & 1) && !RuleSets_DisallowModelOutline(ent->model))) {
+		list->list[list->count].draw[visent_outlines] = true;
+		++list->typecount[visent_outlines];
+	}
+
+	++list->count;
 }
 
 void CL_AddEntity(entity_t *ent)
@@ -1125,9 +1585,20 @@ void CL_LinkPacketEntities(void)
 
 	memset(&ent, 0, sizeof(ent));
 
-	for (pnum = 0; pnum < pack->num_entities; pnum++) 
+	for (pnum = 0; pnum < (CL_RD_Valid() ? cl.rd->slot_limit : pack->num_entities); pnum++)
 	{
-		state = &pack->entities[pnum];
+		entity_state_t projected;
+		if (CL_RD_Valid()) {
+			const rd_client_entity_t *entity = CL_RD_Entity(pnum, false);
+			if (pnum <= MAX_CLIENTS || !entity) {
+				continue;
+			}
+			CL_RD_ToLegacy(&entity->state, &projected);
+			state = &projected;
+		}
+		else {
+			state = &pack->entities[pnum];
+		}
 		cent = &cl_entities[state->number];
 
 		// Control powerup glow for bots.
@@ -1506,16 +1977,18 @@ void CL_LinkProjectiles (void)
 	}
 }
 
-void SetupPlayerEntity(int num, player_state_t *state) 
+/* Return the interpolation base, or zero when this update breaks continuity. */
+static int CL_SetupPlayerEntity(int num, player_state_t *state, int previous_sequence)
 {
 	centity_t *cent;
 
 	cent = &cl_entities[num];
 
-	if (!cl.oldparsecount || cl.oldparsecount != cent->sequence ||
+	if (!cl.oldparsecount || cl.oldparsecount != previous_sequence ||
 		state->modelindex != cent->current.modelindex ||
 		!VectorL2Compare(state->origin, cent->current.origin, 200)) 
 	{
+		previous_sequence = 0;
 		cent->startlerp = cl.time;
 		cent->deltalerp = -1;
 		cent->frametime = -1;
@@ -1555,6 +2028,12 @@ void SetupPlayerEntity(int num, player_state_t *state)
 	cent->sequence = state->messagenum;	
 	cent->current.modelindex = state->modelindex;
 	cent->old_vw_index = state->vw_index;
+	return previous_sequence;
+}
+
+void SetupPlayerEntity(int num, player_state_t *state)
+{
+	CL_SetupPlayerEntity(num, state, cl_entities[num].sequence);
 }
 
 player_state_t oldplayerstates[MAX_CLIENTS];	
@@ -1998,6 +2477,69 @@ guess_pm_type:
 	SetupPlayerEntity(num + 1, state);
 }
 
+void CL_RD_PublishFrame(void)
+{
+	int number;
+	frame_t *frame = &cl.frames[cl.parsecountmod];
+	if (!CL_RD_Valid()) {
+		return;
+	}
+	cl.oldvalidsequence = cl.validsequence;
+	cl.validsequence = cls.netchan.incoming_sequence;
+	cl.delta_sequence = cl.validsequence;
+	cl.frames[cl.validsequence & UPDATE_MASK].invalid = false;
+	frame->invalid = false;
+	cl.servertime = CL_RD_Time(false);
+	cl.servertime_works = true;
+	if (cls.mvdplayback && (!cl.rd->player_lerp_valid
+		|| cl.rd->player_lerp_frame != cl.parsecount
+		|| cl.rd->player_lerp_time != cl.servertime)) {
+		/* Repeated chunks use the preceding frame, including its loss/reset status. */
+		for (number = 1; number <= MAX_CLIENTS; ++number) {
+			cl.rd->player_lerp_sequence[number - 1] = cl_entities[number].sequence;
+		}
+		cl.rd->player_lerp_frame = cl.parsecount;
+		cl.rd->player_lerp_time = cl.servertime;
+		cl.rd->player_lerp_valid = true;
+	}
+	for (number = 1; number < cl.rd->slot_limit; ++number) {
+		const rd_client_entity_t *entity = CL_RD_Entity(number, false);
+		const rd_client_entity_t *previous = CL_RD_Entity(number, true);
+		if (number <= MAX_CLIENTS) {
+			player_state_t *player = &frame->playerstate[number - 1];
+			if (!entity) {
+				player->messagenum = -1;
+				continue;
+			}
+			CL_RD_ToPlayer(entity, player);
+			TP_ParsePlayerInfo(&oldplayerstates[number - 1], player, &cl.players[number - 1]);
+			oldplayerstates[number - 1] = *player;
+			if (!previous) {
+				cl_entities[number].sequence = 0;
+				cl.rd->player_lerp_sequence[number - 1] = 0;
+			}
+			if (cls.mvdplayback) {
+				cl.rd->player_lerp_sequence[number - 1] = CL_SetupPlayerEntity(number, player,
+					cl.rd->player_lerp_sequence[number - 1]);
+			}
+			else {
+				SetupPlayerEntity(number, player);
+			}
+		}
+		else if (entity) {
+			entity_state_t state;
+			CL_RD_ToLegacy(&entity->state, &state);
+			if (!previous) {
+				cl_entities[number].sequence = 0;
+			}
+			CL_SetupPacketEntity(number, &state, !previous || memcmp(&entity->state, &previous->state, sizeof(entity->state)) != 0);
+		}
+	}
+	if (cls.state == ca_onserver) {
+		CL_MakeActive();
+	}
+}
+
 // Called when the CTF flags are set
 void CL_AddFlagModels (entity_t *ent, int team) 
 {
@@ -2207,8 +2749,8 @@ static void CL_LinkPlayers(void)
 		// VULT MOTION TRAILS
 		ent.alpha = 0;
 #ifdef FTE_PEXT_SCALE
-		// 1/50 units, 0 (not sent) stays 0 which the renderer treats as unscaled.
-		ent.scale = state->scale / 50.0f;
+		// Scale uses 1/16 units in RD and 1/50 in legacy; zero is unscaled.
+		ent.scale = state->scale / ((cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) ? 16.0f : 50.0f);
 #endif
 		// The player object never gets added.
 		if (j == cl.playernum) {
@@ -2446,6 +2988,17 @@ static void CL_LinkPlayers(void)
 	}
 }
 
+/* Diagnose the bounded movement reserve once per map, rather than per object. */
+static void CL_PhysentOverflow(void)
+{
+	static int warned_servercount = -1;
+
+	if (warned_servercount != cl.servercount) {
+		Con_DPrintf("Client movement candidate limit reached\n");
+		warned_servercount = cl.servercount;
+	}
+}
+
 // Builds all the pmove physents for the current frame
 void CL_SetSolidEntities (void)
 {
@@ -2462,17 +3015,46 @@ void CL_SetSolidEntities (void)
 	frame = &cl.frames[cl.parsecountmod];
 	pak = &frame->packet_entities;
 
-	for (i = 0; i < pak->num_entities; i++) 
+	for (i = 0; i < (CL_RD_Valid() ? cl.rd->slot_limit : pak->num_entities); i++)
 	{
-		state = &pak->entities[i];
+		entity_state_t projected;
+		const rd_client_entity_t *rd = NULL;
+		if (CL_RD_Valid()) {
+			rd = CL_RD_Entity(i, false);
+			if (i <= MAX_CLIENTS || !rd || !rd->state.solidsize) {
+				continue;
+			}
+			CL_RD_ToLegacy(&rd->state, &projected);
+			state = &projected;
+		}
+		else {
+			state = &pak->entities[i];
+		}
+
+		if (rd && rd->state.solidsize != ES_SOLID_BSP) {
+			physent_t *phys;
+			unsigned int solid = rd->state.solidsize;
+			if (pmove.numphysent == MAX_PHYSENTS) {
+				CL_PhysentOverflow();
+				break;
+			}
+			phys = &pmove.physents[pmove.numphysent++];
+			memset(phys, 0, sizeof(*phys));
+			VectorCopy(state->origin, phys->origin);
+			VectorSet(phys->mins, -(int)(solid & 31)*8, -(int)(solid & 31)*8, -(int)((solid >> 5)&31)*8);
+			VectorSet(phys->maxs, (solid & 31)*8, (solid & 31)*8, ((solid >> 10)&63)*8-32);
+			continue;
+		}
 
 		if (!state->modelindex)
 			continue;
 
 		if (cl.clipmodels[state->modelindex])
 		{
-			if (pmove.numphysent == MAX_PHYSENTS)
+			if (pmove.numphysent == MAX_PHYSENTS) {
+				CL_PhysentOverflow();
 				break;
+			}
 
 			pmove.physents[pmove.numphysent].model = cl.clipmodels[state->modelindex];
 #if defined(FTE_PEXT_TRANS)
@@ -2569,8 +3151,10 @@ void CL_SetSolidPlayers (int playernum)
 	{
 		pplayer = &predicted_players[j];
 	
-		if (pmove.numphysent == MAX_PHYSENTS)
+		if (pmove.numphysent == MAX_PHYSENTS) {
+			CL_PhysentOverflow();
 			break;
+		}
 
 		if (!pplayer->active)
 			continue;	// not present this frame

@@ -108,6 +108,7 @@ cvar_t  cl_delay_packet_dev = { "cl_delay_packet_deviation", "0", CVAR_NOTFROMSE
 
 cvar_t	cl_shownet = {"cl_shownet", "0"};	// can be 0, 1, or 2
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
+cvar_t cl_pext_replacementdeltas = {"cl_pext_replacementdeltas", "1", CVAR_NOTFROMSERVER}; // Allow retained FTE entity updates.
 cvar_t  cl_pext = {"cl_pext", "1", CVAR_NOTFROMSERVER};					// allow/disallow protocol extensions at all.
 													// some extensions can be explicitly controlled.
 cvar_t  cl_pext_limits = { "cl_pext_limits", "1", CVAR_NOTFROMSERVER }; // enhanced protocol limits
@@ -480,6 +481,10 @@ unsigned int CL_SupportedFTEExtensions (void)
 	if (!cl_pext.value)
 		return 0;
 
+#ifdef FTE_PEXT_TE_BULLET
+	fteprotextsupported |= FTE_PEXT_TE_BULLET;
+#endif
+
 #ifdef FTE_PEXT_CHUNKEDDOWNLOADS
 	if (cl_pext_chunkeddownloads.value)
 		fteprotextsupported |= FTE_PEXT_CHUNKEDDOWNLOADS;
@@ -553,6 +558,9 @@ unsigned int CL_SupportedFTEExtensions2 (void)
 
 	if (!cl_pext.value)
 		return 0;
+
+	if (cl_pext_replacementdeltas.integer)
+		fteprotextsupported2 |= FTE_PEXT2_REPLACEMENTDELTAS;
 
 	return fteprotextsupported2;
 }
@@ -635,6 +643,9 @@ static void CL_PextList_f(void)
 {
 #ifdef PROTOCOL_VERSION_FTE
 	static const pext_info_t fte_pexts[] = {
+#ifdef FTE_PEXT_TE_BULLET
+		{ FTE_PEXT_TE_BULLET, "FTE_PEXT_TE_BULLET" },
+#endif
 #ifdef FTE_PEXT_SOUNDDBL
 		{ FTE_PEXT_SOUNDDBL, "FTE_PEXT_SOUNDDBL" },
 #endif
@@ -685,6 +696,9 @@ static void CL_PextList_f(void)
 #endif
 #ifdef PROTOCOL_VERSION_FTE2
 	static const pext_info_t fte2_pexts[] = {
+#ifdef FTE_PEXT2_REPLACEMENTDELTAS
+		{ FTE_PEXT2_REPLACEMENTDELTAS, "FTE_PEXT2_REPLACEMENTDELTAS" },
+#endif
 #ifdef FTE_PEXT2_VOICECHAT
 		{ FTE_PEXT2_VOICECHAT, "FTE_PEXT2_VOICECHAT" },
 #endif
@@ -843,6 +857,7 @@ void CL_CheckForResend (void)
 #endif // PROTOCOL_VERSION_FTE
 #ifdef PROTOCOL_VERSION_FTE2
 				svs.fteprotocolextensions2
+					| (SV_EntityCapacityRequiresRD() ? FTE_PEXT2_REPLACEMENTDELTAS : 0)
 	#ifdef PROTOCOL_VERSION_MVD1
                 ,
 	#endif
@@ -1375,6 +1390,7 @@ void CL_ClearState (void)
 	extern cshift_t	cshift_empty;
 	extern void CL_ProcessServerInfo (void);
 
+	CL_RD_Clear();
 	S_StopAllSounds();
 
 	Com_DPrintf ("Clearing memory\n");
@@ -1385,6 +1401,8 @@ void CL_ClearState (void)
 
 	CL_ClearTEnts ();
 	CL_ClearScene ();
+	Q_free(cl_visents.list);
+	cl_visents.capacity = 0;
 
 	CL_ClearPredict();
 
@@ -1462,6 +1480,8 @@ void CL_ClearState (void)
 void CL_Disconnect (void) 
 {
 	byte final[10];
+
+	CL_RD_Clear();
 
 	connect_time = 0;
 	con_addtimestamp = true;
@@ -2096,6 +2116,7 @@ static void CL_InitLocal(void)
 
 #if defined(PROTOCOL_VERSION_FTE) || defined(PROTOCOL_VERSION_FTE2) || defined(PROTOCOL_VERSION_MVD1)
 	Cvar_Register(&cl_pext);
+	Cvar_Register(&cl_pext_replacementdeltas);
 	Cvar_Register(&cl_pext_limits);
 	Cvar_Register(&cl_pext_other);
 	Cvar_Register(&cl_pext_warndemos);
@@ -2598,7 +2619,9 @@ static void CL_ServerFrame(double frametime)
 {
 #ifndef CLIENTONLY
 	if (com_serveractive) {
-		playermove_t oldmove;
+		/* The server shares pmove with client prediction; keep the large backup
+		 * off the stack and refresh it before every server frame. */
+		static playermove_t oldmove;
 
 		memcpy(&oldmove, &pmove, sizeof(playermove_t));
 
@@ -2991,6 +3014,8 @@ void CL_Frame(double time)
 void CL_Shutdown (void) 
 {
 	CL_Disconnect();
+	Q_free(cl_visents.list);
+	cl_visents.capacity = 0;
 	SList_Shutdown();
 	CDAudio_Shutdown();
 	S_Shutdown();

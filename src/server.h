@@ -61,6 +61,8 @@ typedef struct packet_s
 #define MAP_NAME_LEN 64
 typedef struct
 {
+	int demo_format;                    // Map-latched MVD format: -1 refused, 0 legacy, 1 RD.
+	qbool demo_rd_predinfo;             // Map-latched full player prediction payloads in RD recordings.
 	server_state_t	state;				// precache commands are only valid during load
 
 	double		time;
@@ -208,6 +210,7 @@ typedef struct client_s
 	antilag_position_t	antilag_positions[MAX_ANTILAG_POSITIONS];
 	int				antilag_position_next;
 
+	struct sv_rd_state_s *rd;            // RD-only pending entity state and resend history.
 	usercmd_t		lastcmd;			// for filling in big drops and partial predictions
 	double			localtime;			// of last message
 	qbool			jump_held;
@@ -511,6 +514,8 @@ typedef struct
 	double			prevtime;
 
 	client_t		recorder;
+	rd_entity_state_t *rd_previous;     // Last successfully recorded RD entities.
+	rd_entity_state_t *rd_current;      // Scratch world for the current recording snapshot.
 
 	qbool			fixangle[MAX_CLIENTS];
 
@@ -750,6 +755,10 @@ extern char			master_rcon_password[128];
 // sv_main.c
 //
 
+/* Map-latched entity capacity policy. */
+extern cvar_t sv_maxedicts;
+qbool SV_EntityCapacityRequiresRD(void);
+
 extern	double	realtime; // not bounded in any way, changed at start of every frame, never reset
 
 typedef enum {
@@ -873,6 +882,10 @@ qbool SV_AddToRedirect(char *msg);
 
 void SV_Multicast(vec3_t origin, int to);
 void SV_MulticastEx(vec3_t origin, int to, const char *cl_reliable_key);
+// Send a PHS rail effect using each recipient's wire format.
+void SV_RailTrail(vec3_t start, vec3_t end, int player, int color);
+// Queue a reliable NQ beam for spawned clients after earlier broadcasts.
+void SV_SendNQBeam(int entity, const byte *coordinates);
 void SV_StartParticle(vec3_t org, vec3_t dir, int color, int count, int replacement_te, int replacement_count);
 /* Count a dense sound catalog without reading beyond a full precache array. */
 int SV_SoundPrecacheCount(char *const *sounds, int capacity);
@@ -900,8 +913,7 @@ void SV_FindModelNumbers (void);
 //
 // sv_user.c
 //
-/* Enforce the current map's sound capability before signon and after map load. */
-qbool SV_CheckClientSoundSupport(client_t *client);
+qbool SV_CheckClientMapSupport(client_t *client);
 void SV_ExecuteClientMessage (client_t *cl);
 void SV_UserInit (void);
 void SV_TogglePause (const char *msg, int bit);
@@ -924,6 +936,23 @@ void SV_KickClient(client_t* client, const char* reason);
 //
 // sv_ents.c
 //
+/* RD ownership, snapshot collection and QW acknowledgement lifecycle. */
+void SV_RD_FromLegacy(rd_entity_state_t *to, const entity_state_t *from);
+void SV_RD_ClearClient(client_t *client);
+void SV_RD_ResetClient(client_t *client, int capacity);
+void SV_RD_BeginSnapshot(client_t *client);
+void SV_RD_RequestReset(client_t *client);
+void SV_RD_QueueEntity(client_t *client, const rd_entity_state_t *state);
+void SV_RD_AckFrame(client_t *client, int sequence);
+void SV_RD_DroppedFrame(client_t *client, int sequence);
+void SV_RD_WriteFrame(client_t *client, sizebuf_t *msg, int sequence, float time);
+
+/* RD recorder state and complete-world snapshots. */
+void SV_MVD_ClearRD(void);
+qbool SV_MVD_WriteRDEntities(qbool initial);
+
+/* Live NQ flash conversion and RD recorder event capture. */
+void SV_WriteNQMuzzleFlashes(sizebuf_t *msg);
 void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder);
 void SV_SetVisibleEntitiesForBot (client_t* client);
 
@@ -971,6 +1000,11 @@ void SV_MVDStop_f (void);
 qbool SV_MVDWritePackets (int num);
 void SV_MVD_SendInitialGamestate(mvddest_t *dest);
 qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange);
+qbool SV_MVD_UsesRD(void);
+void SV_MVD_ConfigureMap(void);
+void SV_MVD_FinishMap(void);
+void SV_MVD_FlushCurrentFrame(void);
+qbool SV_MVD_WriteRDMessage(sizebuf_t *msg, qbool initial);
 
 mvddest_t	*DestByName (char *name);
 void		DestClose (mvddest_t *d, qbool destroyfiles);

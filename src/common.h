@@ -68,8 +68,9 @@ typedef enum
 //============================================================================
 
 // per-level limits
-#define CL_MAX_EDICTS           2048	// FIXME: ouch! ouch! ouch!
-#define MAX_EDICTS              2048    // can't encode more than this, see SV_WriteDelta
+#define CL_MAX_EDICTS           16384   // Includes world slot zero
+#define MAX_EDICTS              16384   // RD world ceiling; legacy packet limits remain separate
+#define MAX_LEGACY_EDICTS       2048    // QW packet entities with ENTITYDBL/ENTITYDBL2
 #define MAX_EDICTS_SAFE         512     // lower limit, to make sure no client limits exceeded
 #define MAX_LIGHTSTYLES         64
 #define MAX_MODELS              4096    // can't encode more than this, see SV_WriteDelta
@@ -417,6 +418,25 @@ void MSG_ReadDeltaUsercmd (struct usercmd_s *from, struct usercmd_s *cmd, int pr
 
 void MSG_ReadData (void *data, int len);
 void MSG_ReadSkip(int bytes);
+
+/* Dirty selections travel through pending/history; transient values are taken
+ * from the current state when emitted. Only movetype/weaponframe persist in predinfo. */
+typedef struct {
+	unsigned int fields;                // UF_* fields, without wire extension/width flags.
+	byte pred_fields;                   // UFP_MOVETYPE / UFP_WEAPONFRAME_OLD changes.
+} rd_delta_t;
+
+/* Base RD field codec, shared by live networking and demo startup writers. */
+void MSG_RD_InitState(rd_entity_state_t *state);
+rd_delta_t MSG_RD_SelectDelta(const rd_entity_state_t *from, const rd_entity_state_t *to, qbool remote);
+/* Ordinary RD references; read failure sets msg_badread and returns -1. */
+qbool MSG_RD_WriteEntityRef(sizebuf_t *msg, unsigned int number);
+int MSG_RD_ReadEntityRef(void);
+/* Atomic RD update/removal index; independent of runtime entity capacity. */
+qbool MSG_RD_WriteEntityIndex(sizebuf_t *msg, unsigned int number, qbool remove);
+qbool MSG_RD_WriteEntity(sizebuf_t *msg, const rd_entity_state_t *state, rd_delta_t delta, qbool floatcoords);
+qbool MSG_RD_WriteRemove(sizebuf_t *msg, int number);
+qbool MSG_RD_WriteBaseline(sizebuf_t *msg, const rd_entity_state_t *state, qbool numbered, qbool floatcoords);
 
 //============================================================================
 

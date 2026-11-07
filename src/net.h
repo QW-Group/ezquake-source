@@ -268,7 +268,7 @@ typedef struct {
 } netchan_t;
 
 void Netchan_Init (void);
-void Netchan_Transmit (netchan_t *chan, int length, byte *data);
+qbool Netchan_Transmit (netchan_t *chan, int length, byte *data);
 void Netchan_OutOfBand (netsrc_t sock, netadr_t adr, int length, byte *data);
 void Netchan_OutOfBandPrint (netsrc_t sock, netadr_t adr, char *format, ...);
 qbool Netchan_Process (netchan_t *chan);

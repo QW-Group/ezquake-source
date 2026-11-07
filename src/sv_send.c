@@ -23,6 +23,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "qwsvdef.h"
 
 static void SV_BotWriteDamage(client_t* c, int i);
+static void SV_FlushReliableDatagram(void);
 
 #define CHAN_AUTO   0
 #define CHAN_WEAPON 1
@@ -370,13 +371,16 @@ void SV_BroadcastPrintfEx (int level, int flags, char *fmt, ...)
 =================
 SV_BroadcastCommand
  
-Sends text to all active clients
+Queues connection commands for live clients only. MVD/QTV change maps through
+serverdata and must not receive these commands after their new gamestate.
 =================
 */
 void SV_BroadcastCommand (char *fmt, ...)
 {
 	va_list		argptr;
 	char		string[1024];
+	client_t	*client;
+	int			i, length;
 
 	if (!sv.state)
 		return;
@@ -384,24 +388,34 @@ void SV_BroadcastCommand (char *fmt, ...)
 	vsnprintf (string, sizeof(string), fmt, argptr);
 	va_end (argptr);
 
-	MSG_WriteByte (&sv.reliable_datagram, svc_stufftext);
-	MSG_WriteString (&sv.reliable_datagram, string);
+	/* Preserve ordering with earlier reliable broadcasts before bypassing them. */
+	SV_FlushReliableDatagram();
+	length = strlen(string) + 2;
+	for (i = 0, client = svs.clients; i < MAX_CLIENTS; i++, client++) {
+		if (client->state < cs_preconnected) {
+			continue;
+		}
+		ClientReliableWrite_Begin(client, svc_stufftext, length);
+		ClientReliableWrite_String(client, string);
+	}
 }
 
 
 /*
 =================
-SV_Multicast
+SV_MulticastExFiltered
 
-Sends the contents of sv.multicast to a subset of the clients,
-then clears sv.multicast.
+Routes prepared messages by visibility and reliability, selecting each recipient's
+wire format and filtering unsupported extended sounds. Callers own the buffers.
 
 MULTICAST_ALL	same as broadcast
 MULTICAST_PVS	send to clients potentially visible from org
 MULTICAST_PHS	send to clients potentially hearable from org
 =================
 */
-void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key)
+static void SV_MulticastExFiltered(vec3_t origin, int to, const char *cl_reliable_key,
+                                  qbool extended_sound, const sizebuf_t *legacy,
+                                  const sizebuf_t *rd)
 {
 	client_t*   client;
 	byte*       mask;
@@ -410,6 +424,7 @@ void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key)
 	qbool       reliable;
 	vec3_t      vieworg;
 	qbool       mvd_only = false;
+	const sizebuf_t *message;
 
 	reliable = false;
 
@@ -451,6 +466,10 @@ void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key)
 			continue;
 		if (SV_SkipCommsBotMessage(client))
 			continue;
+		if (extended_sound && !legacy->cursize
+		    && !(client->fteprotocolextensions & FTE_PEXT_SOUNDDBL)
+		    && !(client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
+			continue; // The legacy sound format cannot represent this ID.
 
 		if (!mask)
 			goto inrange; // multicast to all
@@ -493,43 +512,105 @@ void SV_MulticastEx (vec3_t origin, int to, const char *cl_reliable_key)
 		}
 
 inrange:
+		message = rd && ((client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)
+		    || (extended_sound && (client->fteprotocolextensions & FTE_PEXT_SOUNDDBL)))
+		    ? rd : legacy;
 		if (reliable || (cl_reliable_key && *cl_reliable_key && strcmp("0", Info_Get(&client->_userinfo_ctx_, cl_reliable_key))))
 		{
-			ClientReliableCheckBlock(client, sv.multicast.cursize);
-			ClientReliableWrite_SZ(client, sv.multicast.data, sv.multicast.cursize);
+			ClientReliableCheckBlock(client, message->cursize);
+			ClientReliableWrite_SZ(client, message->data, message->cursize);
 		}
 		else
-			SZ_Write (&client->datagram, sv.multicast.data, sv.multicast.cursize);
+			SZ_Write (&client->datagram, message->data, message->cursize);
 	}
 
-	if (sv.mvdrecording) {
+	if (sv.mvdrecording && (!extended_sound || legacy->cursize
+	    || (demo.recorder.fteprotocolextensions & FTE_PEXT_SOUNDDBL)
+	    || (demo.recorder.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))) {
+		message = rd && ((demo.recorder.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)
+		    || (extended_sound && (demo.recorder.fteprotocolextensions & FTE_PEXT_SOUNDDBL)))
+		    ? rd : legacy;
 		if (mvd_only) {
 			mvdhidden_block_header_t header;
-			header.length = sv.multicast.cursize - 2;
+			header.length = message->cursize - 2;
 			// header.type_id = ...; < up to the mod to fill this part in
 
 			// write to dem_multiple(0), which will be skipped by all major clients (ezQuake, FTE, fod)
-			if (MVDWrite_HiddenBlockBegin(sv.multicast.cursize + sizeof(header.length))) {
+			if (MVDWrite_HiddenBlockBegin(message->cursize + sizeof(header.length))) {
 				MVD_SZ_Write(&header.length, sizeof(header.length));
-				MVD_SZ_Write(sv.multicast.data, sv.multicast.cursize);
+				MVD_SZ_Write(message->data, message->cursize);
 			}
 		}
 		else if (reliable) {
-			if (MVDWrite_Begin(dem_all, 0, sv.multicast.cursize)) {
-				MVD_SZ_Write(sv.multicast.data, sv.multicast.cursize);
+			if (MVDWrite_Begin(dem_all, 0, message->cursize)) {
+				MVD_SZ_Write(message->data, message->cursize);
 			}
 		}
 		else {
-			SZ_Write(&demo.datagram, sv.multicast.data, sv.multicast.cursize);
+			SZ_Write(&demo.datagram, message->data, message->cursize);
 		}
 	}
+}
 
-	SZ_Clear (&sv.multicast);
+void SV_MulticastEx(vec3_t origin, int to, const char *cl_reliable_key)
+{
+	SV_MulticastExFiltered(origin, to, cl_reliable_key, false, &sv.multicast, NULL);
+	SZ_Clear(&sv.multicast);
 }
 
 void SV_Multicast (vec3_t origin, int to)
 {
 	SV_MulticastEx(origin, to, NULL);
+}
+
+/* Preserve the original hook ID for RD and the historical alias for legacy. */
+void SV_SendNQBeam(int entity, const byte *coordinates)
+{
+	vec3_t origin = {0, 0, 0};
+	byte legacy_data[4 + 6 * sizeof(float)], rd_data[5 + 6 * sizeof(float)];
+	sizebuf_t legacy, rd;
+	int legacy_entity = entity > 1023 ? 0 : entity;
+
+	SZ_Init(&legacy, legacy_data, sizeof(legacy_data));
+	MSG_WriteByte(&legacy, svc_temp_entity);
+	MSG_WriteByte(&legacy, TE_LIGHTNING1);
+	MSG_WriteShort(&legacy, (short)(legacy_entity - 1288));
+	SZ_Write(&legacy, coordinates, 6 * msg_coordsize);
+
+	SZ_Init(&rd, rd_data, sizeof(rd_data));
+	MSG_WriteByte(&rd, svc_temp_entity);
+	MSG_WriteByte(&rd, TEQW_BEAM);
+	MSG_RD_WriteEntityRef(&rd, entity);
+	SZ_Write(&rd, coordinates, 6 * msg_coordsize);
+
+	SV_FlushReliableDatagram();
+	SV_MulticastExFiltered(origin, MULTICAST_ALL_R, NULL, false, &legacy, &rd);
+}
+
+/* Build both rail representations before the common PHS delivery path. */
+void SV_RailTrail(vec3_t start, vec3_t end, int player, int color)
+{
+	byte legacy_data[4 + 6 * sizeof(float)], rd_data[2 + 6 * sizeof(float)];
+	sizebuf_t legacy, rd;
+	int i;
+
+	SZ_Init(&legacy, legacy_data, sizeof(legacy_data));
+	MSG_WriteByte(&legacy, svc_temp_entity);
+	MSG_WriteByte(&legacy, TE_LIGHTNING1);
+	MSG_WriteShort(&legacy, -264 + 8 * player + color);
+
+	SZ_Init(&rd, rd_data, sizeof(rd_data));
+	MSG_WriteByte(&rd, svc_temp_entity);
+	MSG_WriteByte(&rd, TEQW_RAILTRAIL);
+	for (i = 0; i < 3; i++) {
+		MSG_WriteCoord(&legacy, start[i]);
+		MSG_WriteCoord(&rd, start[i]);
+	}
+	for (i = 0; i < 3; i++) {
+		MSG_WriteCoord(&legacy, end[i]);
+		MSG_WriteCoord(&rd, end[i]);
+	}
+	SV_MulticastExFiltered(start, MULTICAST_PHS, NULL, false, &legacy, &rd);
 }
 
 void SV_StartParticle (vec3_t org, vec3_t dir, int color, int count,
@@ -635,13 +716,14 @@ int SV_SoundPrecacheCount(char *const *sounds, int capacity)
 /* Encode high IDs without changing legacy packets or multicast routing. */
 static void SV_WriteSoundPacket(sizebuf_t *msg, int entity, int channel,
                          int sound_id, int volume, float attenuation,
-                         const float origin[3])
+                         const float origin[3], qbool extended)
 {
 	int packed = (entity << 3) | channel;
 	int index;
 
-	if (sound_id > 255) {
-		int flags = NQSND_LARGESOUND;
+	if (extended) {
+		/* A packed entity/channel word only has thirteen entity bits. */
+		int flags = (sound_id > 255 ? NQSND_LARGESOUND : 0) | (entity >= 8192 ? NQSND_LARGEENTITY : 0);
 
 		if (volume != DEFAULT_SOUND_PACKET_VOLUME) {
 			flags |= NQSND_VOLUME;
@@ -668,9 +750,18 @@ static void SV_WriteSoundPacket(sizebuf_t *msg, int entity, int channel,
 	if (attenuation != DEFAULT_SOUND_PACKET_ATTENUATION) {
 		MSG_WriteByte(msg, attenuation * 64);
 	}
-	if (sound_id > 255) {
-		MSG_WriteShort(msg, packed);
-		MSG_WriteShort(msg, sound_id);
+	if (extended) {
+		if (entity >= 8192) {
+			MSG_RD_WriteEntityRef(msg, entity);
+			MSG_WriteByte(msg, channel);
+		}
+		else {
+			MSG_WriteShort(msg, packed);
+		}
+		if (sound_id > 255)
+			MSG_WriteShort(msg, sound_id);
+		else
+			MSG_WriteByte(msg, sound_id);
 	}
 	else {
 		MSG_WriteByte(msg, sound_id);
@@ -697,6 +788,9 @@ Larger attenuations will drop off.  (max 4 attenuation)
 */
 void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, float attenuation)
 {
+	byte legacy_data[64];
+	sizebuf_t legacy;
+	qbool extended;
 	int     sound_num;
 	int     i;
 	int     ent;
@@ -751,13 +845,25 @@ void SV_StartSound (edict_t *entity, int channel, char *sample, int volume, floa
 		VectorCopy (entity->v->origin, origin);
 	}
 
+	extended = ent >= 1024 || sound_num > 255;
 	SV_WriteSoundPacket(&sv.multicast, ent, channel, sound_num, volume,
-	                    attenuation, origin);
+	                    attenuation, origin, extended);
+	SZ_Init(&legacy, legacy_data, sizeof(legacy_data));
+	if (!extended) {
+		legacy = sv.multicast;
+	} else if (ent < 2048 && sound_num <= 255) {
+		/* Legacy has eleven entity bits before its attenuation/volume flags. */
+		SV_WriteSoundPacket(&legacy, ent, channel, sound_num, volume,
+		                    attenuation, origin, false);
+	}
 
 	if (use_phs)
-		SV_MulticastEx (origin, reliable ? MULTICAST_PHS_R : MULTICAST_PHS, sv_reliable_sound.value ? "rsnd" : NULL);
+		SV_MulticastExFiltered (origin, reliable ? MULTICAST_PHS_R : MULTICAST_PHS, sv_reliable_sound.value ? "rsnd" : NULL,
+		                        extended, &legacy, extended ? &sv.multicast : NULL);
 	else
-		SV_MulticastEx (origin, reliable ? MULTICAST_ALL_R : MULTICAST_ALL, sv_reliable_sound.value ? "rsnd" : NULL);
+		SV_MulticastExFiltered (origin, reliable ? MULTICAST_ALL_R : MULTICAST_ALL, sv_reliable_sound.value ? "rsnd" : NULL,
+		                        extended, &legacy, extended ? &sv.multicast : NULL);
+	SZ_Clear(&sv.multicast);
 }
 
 
@@ -961,7 +1067,9 @@ void SV_UpdateClientStats (client_t *client)
 	if (fofs_items2)	// ZQ_ITEMS2 extension
 		stats[STAT_ITEMS] |= (int)EdictFieldFloat(ent, fofs_items2) << 23;
 
-	if (ent->v->health > 0 || client->spectator) // viewheight for PF_DEAD & PF_GIB is hardwired
+	/* RD has no legacy PF_DEAD/PF_GIB viewheight override. */
+	if (ent->v->health > 0 || client->spectator
+		|| (client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS))
 		stats[STAT_VIEWHEIGHT] = ent->v->view_ofs[2];
 
 	for (i=0 ; i<MAX_CL_STATS ; i++)
@@ -1043,11 +1151,53 @@ void SV_SendClientDatagram (client_t *client, int client_num)
 	if (msg.overflowed)
 	{
 		Con_Printf ("WARNING: msg overflowed for %s\n", client->name);
+		SV_RD_DroppedFrame(client, client->netchan.incoming_sequence);
 		SZ_Clear (&msg);
 	}
 
 	// send the datagram
-	Netchan_Transmit (&client->netchan, msg.cursize, buf);
+	if (!Netchan_Transmit(&client->netchan, msg.cursize, buf))
+		SV_RD_DroppedFrame(client, client->netchan.incoming_sequence);
+}
+
+/*
+=======================
+SV_FlushReliableDatagram
+
+Delivers the staged broadcast reliable data to each connected client, writes
+the same data to an MVD recording, and clears the shared staging buffer.
+=======================
+*/
+static void SV_FlushReliableDatagram (void)
+{
+	int j;
+	client_t *client;
+
+	if (!sv.reliable_datagram.cursize) {
+		return;
+	}
+
+	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++)
+	{
+		/* Free and zombie slots cannot receive reliable traffic, while
+		 * preconnected clients need roster updates before completing signon. */
+		if (client->state < cs_preconnected) {
+			continue;
+		}
+
+		ClientReliableCheckBlock(client, sv.reliable_datagram.cursize);
+		ClientReliableWrite_SZ(client, sv.reliable_datagram.data, sv.reliable_datagram.cursize);
+	}
+
+	if (sv.mvdrecording)
+	{
+		if (MVDWrite_Begin(dem_all, 0, sv.reliable_datagram.cursize))
+		{
+			MVD_SZ_Write(sv.reliable_datagram.data, sv.reliable_datagram.cursize);
+		}
+	}
+
+	SZ_Clear (&sv.reliable_datagram);
 }
 
 /*
@@ -1135,33 +1285,19 @@ static void SV_UpdateToReliableMessages (void)
 	if (sv.datagram.overflowed)
 		SZ_Clear (&sv.datagram);
 
-	// append the broadcast messages to each client messages
-	for (j=0, client = svs.clients ; j<MAX_CLIENTS ; j++, client++)
-	{
-		if (client->state < cs_preconnected)
-			continue; // reliables go to all connected or spawned
+	SV_FlushReliableDatagram();
 
-		ClientReliableCheckBlock(client, sv.reliable_datagram.cursize);
-		ClientReliableWrite_SZ(client, sv.reliable_datagram.data, sv.reliable_datagram.cursize);
-
-		if (client->state != cs_spawned)
-			continue; // datagrams only go to spawned
-
-		SZ_Write (&client->datagram, sv.datagram.data, sv.datagram.cursize);
-	}
-
-	if (sv.mvdrecording && sv.reliable_datagram.cursize)
-	{
-		if (MVDWrite_Begin(dem_all, 0, sv.reliable_datagram.cursize))
-		{
-			MVD_SZ_Write(sv.reliable_datagram.data, sv.reliable_datagram.cursize);
+	// Append broadcast datagrams to spawned clients.
+	for (j = 0, client = svs.clients; j < MAX_CLIENTS; j++, client++) {
+		if (client->state != cs_spawned) {
+			continue;
 		}
+		SZ_Write(&client->datagram, sv.datagram.data, sv.datagram.cursize);
+	}
+	if (sv.mvdrecording) {
+		SZ_Write(&demo.datagram, sv.datagram.data, sv.datagram.cursize);
 	}
 
-	if (sv.mvdrecording)
-		SZ_Write(&demo.datagram, sv.datagram.data, sv.datagram.cursize); // FIXME: ???
-
-	SZ_Clear (&sv.reliable_datagram);
 	SZ_Clear (&sv.datagram);
 }
 
@@ -1361,8 +1497,10 @@ void MVD_WriteStats(void)
 		stats[STAT_CELLS] = ent->v->ammo_cells;
 		stats[STAT_ACTIVEWEAPON] = ent->v->weapon;
 
-		if (ent->v->health > 0) // viewheight for PF_DEAD & PF_GIB is hardwired
+		/* RD carries corpse/gib viewheight explicitly instead of legacy flags. */
+		if (ent->v->health > 0 || SV_MVD_UsesRD()) {
 			stats[STAT_VIEWHEIGHT] = ent->v->view_ofs[2];
+		}
 
 		// stuff the sigil bits into the high bits of items for sbar
 		stats[STAT_ITEMS] = (int) ent->v->items | ((int) PR_GLOBAL(serverflags) << 28);
@@ -1459,21 +1597,26 @@ void SV_SendDemoMessage(void)
 	if (!demo.recorder.delta_sequence)
 		demo.recorder.delta_sequence = -1;
 
-	SV_WriteEntitiesToClient (&demo.recorder, &msg, true);
+	if (!SV_MVD_UsesRD()) {
+		SV_WriteEntitiesToClient (&demo.recorder, &msg, true);
 
-	if (msg.overflowed)
-	{
-		Sys_Printf("WARNING: msg overflowed in SV_SendDemoMessage\n");
-	}
-	else
-	{
-		if (msg.cursize)
+		if (msg.overflowed)
 		{
-			if (MVDWrite_Begin(dem_all, 0, msg.cursize))
+			Sys_Printf("WARNING: msg overflowed in SV_SendDemoMessage\n");
+		}
+		else
+		{
+			if (msg.cursize)
 			{
-				MVD_SZ_Write(msg.data, msg.cursize);
+				if (MVDWrite_Begin(dem_all, 0, msg.cursize))
+				{
+					MVD_SZ_Write(msg.data, msg.cursize);
+				}
 			}
 		}
+	}
+	else {
+		SV_WriteNQMuzzleFlashes(NULL);
 	}
 
 	SZ_Clear(&msg);
@@ -1497,11 +1640,21 @@ void SV_SendDemoMessage(void)
 
 	SZ_Clear (&demo.datagram);
 
+	if (SV_MVD_UsesRD()) {
+		SV_MVD_FlushCurrentFrame();
+		if (!SV_MVD_WriteRDEntities(false)) {
+			SV_MVDStop(4, false);
+			return;
+		}
+	}
+
 	demo.recorder.delta_sequence = demo.recorder.netchan.incoming_sequence&255;
 	demo.recorder.netchan.incoming_sequence++;
-	demo.frames[demo.parsecount & UPDATE_MASK].time = sv.time;
-	demo.frames[demo.parsecount & UPDATE_MASK].paused = sv.paused;
-	demo.frames[demo.parsecount & UPDATE_MASK].pause_duration = (int)bound(0, (curtime - demo.curtime) * 1000.0f, 255);
+	if (!SV_MVD_UsesRD()) {
+		demo.frames[demo.parsecount & UPDATE_MASK].time = sv.time;
+		demo.frames[demo.parsecount & UPDATE_MASK].paused = sv.paused;
+		demo.frames[demo.parsecount & UPDATE_MASK].pause_duration = (int)bound(0, (curtime - demo.curtime) * 1000.0f, 255);
+	}
 	demo.curtime = curtime;
 	demo.time = sv.time;
 

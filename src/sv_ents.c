@@ -22,6 +22,318 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
 
+/* Invalid appearance fields use zero; preserve all representable RD values.
+ * Check QC floats before converting them, including non-finite input. */
+static int SV_RD_AppearanceValue(double value, int minimum, int maximum)
+{
+	if (!isfinite(value) || value <= (double)minimum - 1 || value >= (double)maximum + 1) {
+		return 0;
+	}
+	return (int)value;
+}
+
+/* Convert existing typed baselines/statics without changing legacy storage. */
+void SV_RD_FromLegacy(rd_entity_state_t *to, const entity_state_t *from)
+{
+	MSG_RD_InitState(to);
+	to->number = from->number;
+	VectorCopy(from->origin, to->origin);
+	VectorCopy(from->angles, to->angles);
+	to->modelindex = SV_RD_AppearanceValue(from->modelindex, 0, MAX_MODELS - 1);
+	to->frame = SV_RD_AppearanceValue(from->frame, 0, 65535);
+	to->skinnum = SV_RD_AppearanceValue(from->skinnum, -32768, 32767);
+	to->colormap = SV_RD_AppearanceValue(from->colormap, 0, 255);
+	to->effects = from->effects;
+#ifdef FTE_PEXT_TRANS
+	to->trans = from->trans ? from->trans : 255;
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+	if (from->colourmod[0] || from->colourmod[1] || from->colourmod[2])
+		memcpy(to->colourmod, from->colourmod, sizeof(to->colourmod));
+#endif
+}
+
+/* Internal pending marker; never passed to the wire field writer. */
+#define RD_REMOVE UF_UNUSED1
+
+typedef struct {
+	rd_delta_t delta;                   // Fields and persistent prediction selections transmitted.
+	unsigned short number;              // Entity slot, including reset-world slot zero.
+} rd_change_t;
+
+typedef struct {
+	int sequence, count, capacity;      // Owned ring entry and allocated change count.
+	rd_change_t *changes;               // Grown only to the number of emitted records.
+} rd_frame_t;
+
+struct sv_rd_state_s {
+	int capacity, last_ack, cursor;     // Supported slots, acknowledged sequence, deferred scan.
+	int slot_limit;                    // Exclusive highest queued slot; never shrinks before reset.
+	rd_entity_state_t *current;         // Current desired state; number zero means absent.
+	rd_delta_t *pending;               // Dirty fields/removals not yet delivered.
+	byte *seen;                        // Visibility in the snapshot currently being built.
+	int *introduction;                 // -1 awaiting first reset, 0 acked, otherwise first sequence+1.
+	rd_frame_t frames[UPDATE_BACKUP];   // Bounded transmitted-change history.
+};
+
+/* Unacknowledged fields retain their selection, not the old field values. */
+static rd_delta_t SV_RD_MergeDelta(rd_delta_t a, rd_delta_t b)
+{
+	a.fields |= b.fields;
+	a.pred_fields |= b.pred_fields;
+	return a;
+}
+
+/* Release RD allocations before a client slot or map state is reused. */
+void SV_RD_ClearClient(client_t *client)
+{
+	struct sv_rd_state_s *rd = client->rd;
+	int i;
+	if (!rd) {
+		return;
+	}
+	for (i = 0; i < UPDATE_BACKUP; ++i) {
+		Q_free(rd->frames[i].changes);
+	}
+	Q_free(rd->current);
+	Q_free(rd->pending);
+	Q_free(rd->seen);
+	Q_free(rd->introduction);
+	Q_free(rd);
+	client->rd = NULL;
+}
+
+/* Allocate history only for an RD connection, with the negotiated engine bound. */
+void SV_RD_ResetClient(client_t *client, int capacity)
+{
+	struct sv_rd_state_s *rd;
+	int i;
+	SV_RD_ClearClient(client);
+	if (capacity < 1 || capacity > MAX_EDICTS) {
+		Sys_Error("Invalid RD capacity %d", capacity);
+	}
+	client->rd = rd = Q_malloc(sizeof(*rd));
+	rd->capacity = capacity;
+	rd->slot_limit = 1;
+	rd->last_ack = -1;
+	rd->cursor = MAX_CLIENTS + 1;
+	rd->current = Q_calloc(capacity, sizeof(*rd->current));
+	rd->pending = Q_calloc(capacity, sizeof(*rd->pending));
+	rd->seen = Q_calloc(capacity, sizeof(*rd->seen));
+	rd->introduction = Q_calloc(capacity, sizeof(*rd->introduction));
+	rd->pending[0] = (rd_delta_t){RD_REMOVE, 0};
+	for (i = 0; i < UPDATE_BACKUP; ++i) {
+		rd->frames[i].sequence = -1;
+	}
+}
+
+/* Reset the world and every retained introduction without changing ACK history. */
+static void SV_RD_ResetWorld(struct sv_rd_state_s *rd)
+{
+	int n;
+	rd->pending[0] = (rd_delta_t){RD_REMOVE, 0};
+	rd->cursor = MAX_CLIENTS + 1;
+	for (n = 1; n < rd->slot_limit; ++n) {
+		if (rd->current[n].number) {
+			rd->pending[n] = (rd_delta_t){UF_RESET, 0};
+			rd->introduction[n] = -1;
+		}
+	}
+}
+
+/* A client without a valid delta sequence requests the complete current world. */
+void SV_RD_RequestReset(client_t *client)
+{
+	struct sv_rd_state_s *rd = client->rd;
+	if (!rd) {
+		return;
+	}
+	SV_RD_ResetWorld(rd);
+}
+
+/* Begin collecting the real snapshot; unobserved slots become removals. */
+void SV_RD_BeginSnapshot(client_t *client)
+{
+	if (client->rd) {
+		memset(client->rd->seen, 0, client->rd->slot_limit);
+	}
+}
+
+/* Queue current field values; a new/reused slot needs an acknowledged reset. */
+void SV_RD_QueueEntity(client_t *client, const rd_entity_state_t *state)
+{
+	struct sv_rd_state_s *rd = client->rd;
+	int n = state->number;
+	if (!rd || n <= 0 || n >= rd->capacity) {
+		return;
+	}
+	/* Newly reached array tails are still calloc-zero; retain the extent for
+	 * removals and ACK recovery even after the highest slot disappears. */
+	rd->slot_limit = max(rd->slot_limit, n + 1);
+	rd->seen[n] = true;
+	if (!rd->current[n].number) {
+		rd->pending[n] = (rd_delta_t){UF_RESET, 0};
+		rd->introduction[n] = -1;
+	}
+	else {
+		rd->pending[n] = SV_RD_MergeDelta(rd->pending[n],
+										  MSG_RD_SelectDelta(&rd->current[n], state, !client->edict || n != client->edict->e.entnum));
+	}
+	rd->current[n] = *state;
+}
+
+/* Lost packets reflag fields against the current slot, never obsolete values. */
+static void SV_RD_Requeue(struct sv_rd_state_s *rd, const rd_frame_t *frame)
+{
+	int i, n;
+	for (i = 0; i < frame->count; ++i) {
+		n = frame->changes[i].number;
+		if (!n) {
+			SV_RD_ResetWorld(rd);
+		}
+		else if (!rd->current[n].number) {
+			rd->pending[n] = (rd_delta_t){RD_REMOVE, 0};
+		} else if (frame->changes[i].delta.fields & RD_REMOVE) {
+			rd->pending[n] = (rd_delta_t){UF_RESET, 0};
+		} else {
+			rd->pending[n] = SV_RD_MergeDelta(rd->pending[n], frame->changes[i].delta);
+		}
+	}
+}
+
+/* A locally omitted unreliable datagram must not be retired by its packet ACK. */
+void SV_RD_DroppedFrame(client_t *client, int sequence)
+{
+	struct sv_rd_state_s *rd = client->rd;
+	rd_frame_t *frame;
+	if (!rd) {
+		return;
+	}
+	frame = &rd->frames[sequence & UPDATE_MASK];
+	if (frame->sequence != sequence) {
+		return;
+	}
+	SV_RD_Requeue(rd, frame);
+	frame->count = 0;
+}
+
+/* QW netchan ACKs retire one frame and requeue earlier unacknowledged frames. */
+void SV_RD_AckFrame(client_t *client, int sequence)
+{
+	struct sv_rd_state_s *rd = client->rd;
+	int i, j;
+	if (!rd || sequence <= rd->last_ack) {
+		return;
+	}
+	for (i = 0; i < UPDATE_BACKUP; ++i) {
+		rd_frame_t *f = &rd->frames[i];
+		if (f->sequence <= rd->last_ack || f->sequence > sequence) {
+			continue;
+		}
+		if (f->sequence != sequence) {
+			SV_RD_Requeue(rd, f);
+		} else {
+			for (j = 0; j < f->count; ++j) {
+				int n = f->changes[j].number;
+				if (n && (f->changes[j].delta.fields & UF_RESET) && rd->introduction[n] > 0 && rd->introduction[n] <= sequence + 1) {
+					rd->introduction[n] = 0;
+				}
+			}
+		}
+		f->count = 0;
+	}
+	rd->last_ack = sequence;
+}
+
+/* Store only records actually emitted, growing within the supported slot bound. */
+static void SV_RD_Record(struct sv_rd_state_s *rd, rd_frame_t *frame, int number, rd_delta_t delta)
+{
+	if (frame->count == frame->capacity) {
+		int capacity = min(rd->capacity, max(16, frame->capacity * 2));
+		rd_change_t *changes = Q_malloc(capacity * sizeof(*changes));
+		if (frame->count) {
+			memcpy(changes, frame->changes, frame->count * sizeof(*changes));
+		}
+		Q_free(frame->changes);
+		frame->changes = changes;
+		frame->capacity = capacity;
+	}
+	frame->changes[frame->count].number = number;
+	frame->changes[frame->count++].delta = delta;
+}
+
+/* Emit sorted updates within the caller's budget; retain any deferred fields. */
+void SV_RD_WriteFrame(client_t *client, sizebuf_t *msg, int sequence, float time)
+{
+	struct sv_rd_state_s *rd = client->rd;
+	rd_frame_t *frame;
+	int n, next = MAX_CLIENTS + 1, limit = msg->maxsize;
+	if (!rd) {
+		return;
+	}
+	frame = &rd->frames[sequence & UPDATE_MASK];
+	if (frame->count) {
+		SV_RD_Requeue(rd, frame);
+	}
+	frame->count = 0;
+	frame->sequence = sequence;
+	for (n = 1; n < rd->slot_limit; ++n) {
+		if (rd->current[n].number && !rd->seen[n]) {
+			rd->current[n].number = 0;
+			rd->pending[n] = (rd_delta_t){RD_REMOVE, 0};
+		}
+	}
+	if (msg->maxsize - msg->cursize < 7 + (rd->pending[0].fields ? 2 : 0)) {
+		return;
+	}
+	MSG_WriteByte(msg, svc_fte_updateentities);
+	MSG_WriteFloat(msg, time);
+	msg->maxsize -= 2;
+	if (rd->pending[0].fields) {
+		MSG_RD_WriteRemove(msg, 0);
+		SV_RD_Record(rd, frame, 0, (rd_delta_t){RD_REMOVE, 0});
+		rd->pending[0] = (rd_delta_t){0, 0};
+	}
+	for (n = 1; n < rd->slot_limit; ++n) {
+		rd_delta_t delta = rd->pending[n];
+		rd_entity_state_t baseline;
+		if (!delta.fields || (n > MAX_CLIENTS && n < rd->cursor && !(delta.fields & RD_REMOVE))) {
+			continue;
+		}
+		if (delta.fields & RD_REMOVE) {
+			if (!MSG_RD_WriteRemove(msg, n)) {
+				next = n;
+				break;
+			}
+		}
+		else {
+			if (rd->introduction[n]) {
+				delta.fields |= UF_RESET;
+			}
+			if (delta.fields & UF_RESET) {
+				SV_RD_FromLegacy(&baseline, &EDICT_NUM(n)->e.baseline);
+				delta = MSG_RD_SelectDelta(&baseline, &rd->current[n], !client->edict || n != client->edict->e.entnum);
+				delta.fields |= UF_RESET;
+			}
+			/* Player angles carry the view-pitch / -3 basis even at rest. */
+			if (n <= MAX_CLIENTS && (delta.fields & (UF_ANGLESXZ | UF_ANGLESY))) {
+				delta.fields |= UF_PREDINFO;
+			}
+			if (!MSG_RD_WriteEntity(msg, &rd->current[n], delta, (client->mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0)) {
+				next = n;
+				break;
+			}
+			if (rd->introduction[n] == -1) {
+				rd->introduction[n] = sequence + 1;
+			}
+		}
+		SV_RD_Record(rd, frame, n, delta);
+		rd->pending[n] = (rd_delta_t){0, 0};
+	}
+	rd->cursor = max(MAX_CLIENTS + 1, next);
+	msg->maxsize = limit;
+	MSG_WriteShort(msg, 0);
+}
 
 //=============================================================================
 
@@ -507,6 +819,56 @@ static int TranslateEffects (edict_t *ent)
 	return fx;
 }
 
+/* Build base RD state after the existing visibility decisions. */
+static void SV_RD_BuildEntityState(rd_entity_state_t *state, edict_t *ent, int number, client_t *client)
+{
+	int i;
+	MSG_RD_InitState(state);
+	state->number = number;
+	VectorCopy(ent->v->origin, state->origin);
+	VectorCopy(ent->v->angles, state->angles);
+	state->modelindex = SV_RD_AppearanceValue(ent->v->modelindex, 0, MAX_MODELS - 1);
+	state->frame = SV_RD_AppearanceValue(ent->v->frame, 0, 65535);
+	state->skinnum = SV_RD_AppearanceValue(ent->v->skin, -32768, 32767);
+	state->colormap = SV_RD_AppearanceValue(ent->v->colormap, 0, 255);
+	state->effects = TranslateEffects(ent);
+	/* Player modelindex2 selects a vwep entry rather than a model precache. */
+	if (number <= MAX_CLIENTS && sv.vw_model_name[0] && fofs_vw_index) {
+		float index = EdictFieldFloat(ent, fofs_vw_index);
+		if (index > 0 && index < MAX_VWEP_MODELS) {
+			state->modelindex2 = (int)index;
+		}
+	}
+	if (!ent->v->movetype || ent->v->movetype == MOVETYPE_STEP) {
+		state->dpflags |= RENDER_STEP;
+	}
+	if (ent->v->solid == SOLID_BSP || (ent->v->skin < 0 && ent->v->modelindex)) {
+		state->solidsize = ES_SOLID_BSP;
+	} else if (ent->v->solid == SOLID_BBOX || ent->v->solid == SOLID_SLIDEBOX) {
+		int x = bound(0, (int)ent->v->maxs[0] / 8, 31);
+		int down = bound(0, (int)-ent->v->mins[2] / 8, 31);
+		int up = bound(0, ((int)ent->v->maxs[2] + 32) / 8, 63);
+		state->solidsize = x | (down << 5) | (up << 10);
+	}
+	if (client && ent->v->owner && PROG_TO_EDICT(ent->v->owner) == client->edict) {
+		state->solidsize = 0;
+	}
+#ifdef FTE_PEXT_TRANS
+	if (ent->xv.alpha > 0 && ent->xv.alpha < 1) {
+		state->trans = bound(0, (int)(ent->xv.alpha * 254), 254);
+	}
+#endif
+#ifdef FTE_PEXT_COLOURMOD
+	if (ent->xv.colourmod[0] || ent->xv.colourmod[1] || ent->xv.colourmod[2]) {
+		for (i = 0; i < 3; ++i) {
+			state->colourmod[i] = bound(0, (int)(ent->xv.colourmod[i] * 32), 255);
+		}
+	}
+#else
+	(void)i;
+#endif
+}
+
 /*
 =============
 SV_MVD_WritePlayersToClient
@@ -604,13 +966,61 @@ qbool SV_PlayerVisibleToClient (client_t* client, int j, byte* pvs, edict_t* sel
 	return true;
 }
 
+/* Shared player fields; live callers retain their recipient-specific omissions. */
+static void SV_RD_BuildPlayerFields(rd_entity_state_t *state, edict_t *ent, client_t *player, int pm)
+{
+	int i;
+	switch (pm) {
+	case PM_DEAD:
+		state->pmovetype = RD_MOVETYPE_TOSS;
+		break;
+	case PM_SPECTATOR:
+	case PM_OLD_SPECTATOR:
+		state->pmovetype = RD_MOVETYPE_NOCLIP;
+		break;
+	case PM_FLY:
+		state->pmovetype = RD_MOVETYPE_FLY;
+		break;
+	case PM_NONE:
+		state->pmovetype = RD_MOVETYPE_NONE;
+		break;
+	case PM_LOCK:
+		state->pmovetype = RD_MOVETYPE_LOCK;
+		break;
+	default:
+		state->pmovetype = RD_MOVETYPE_WALK;
+		break;
+	}
+	if ((int)ent->v->flags & FL_ONGROUND) {
+		state->pmovetype |= RD_MOVETYPE_ONGROUND;
+	}
+	if (player->jump_held) {
+		state->pmovetype |= RD_MOVETYPE_JUMP_HELD;
+	}
+	if (pm != PM_DEAD) {
+		VectorCopy(ent->v->v_angle, state->angles);
+		state->angles[0] /= -3;
+	}
+	for (i = 0; i < 3; ++i) {
+		state->velocity[i] = bound(-32768, (int)(ent->v->velocity[i] * 8), 32767);
+	}
+	state->movement[0] = player->lastcmd.forwardmove;
+	state->movement[1] = player->lastcmd.sidemove;
+	state->movement[2] = player->lastcmd.upmove;
+	state->msec = bound(0, (int)(1000 * (sv.time - player->localtime)), 255);
+	state->weaponframe = bound(0, (int)ent->v->weaponframe, 32767);
+	if (player->spectator) {
+		state->modelindex = 0;
+	}
+}
+
+int SV_PMTypeForClient (client_t *cl);
+
 /*
 =============
 SV_WritePlayersToClient
 =============
 */
-
-int SV_PMTypeForClient (client_t *cl);
 static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, byte *pvs, qbool disable_updates, sizebuf_t *msg)
 {
 	int msec, pflags, pm_type = 0, pm_code = 0, i, j;
@@ -681,6 +1091,22 @@ static void SV_WritePlayersToClient (client_t *client, client_frame_t *frame, by
 
 		if (disable_updates && ent != self_ent)
 		{ // Vladis
+			continue;
+		}
+
+		if (client->rd) {
+			rd_entity_state_t rd;
+			int pm = track_ent ? PM_LOCK : SV_PMTypeForClient(cl);
+			SV_RD_BuildEntityState(&rd, ent, j + 1, client);
+			SV_RD_BuildPlayerFields(&rd, ent, cl, pm);
+			if (ent == self_ent) {
+				memset(rd.movement, 0, sizeof(rd.movement));
+				rd.msec = 0;
+			}
+			if (ent != self_ent && client->spec_track != j + 1) {
+				rd.weaponframe = 0;
+			}
+			SV_RD_QueueEntity(client, &rd);
 			continue;
 		}
 
@@ -907,6 +1333,33 @@ qbool SV_EntityVisibleToClient (client_t* client, int e, byte* pvs)
 	return true;
 }
 
+/* Translate NQ flashes once, retaining RD recorder events until their snapshot. */
+void SV_WriteNQMuzzleFlashes(sizebuf_t *msg)
+{
+	int e;
+	edict_t *ent;
+
+	if (!pr_nqprogs) {
+		return;
+	}
+	for (e = 1, ent = EDICT_NUM(e); e < sv.num_edicts; ++e, ent = NEXT_EDICT(ent)) {
+		if (!ent->v->modelindex || !*PR_GetEntityString(ent->v->model)) {
+			continue;
+		}
+		if ((int)ent->v->effects & EF_MUZZLEFLASH) {
+			byte data[3] = {svc_muzzleflash, (byte)e, (byte)(e >> 8)};
+
+			if (sv.mvdrecording && SV_MVD_UsesRD()) {
+				SZ_Write(&demo.recorder.datagram, data, sizeof(data));
+			}
+			ent->v->effects = (int)ent->v->effects & ~EF_MUZZLEFLASH;
+			if (msg && msg->maxsize - msg->cursize >= 3) {
+				SZ_Write(msg, data, sizeof(data));
+			}
+		}
+	}
+}
+
 /*
 =============
 SV_WriteEntitiesToClient
@@ -920,6 +1373,7 @@ svc_playerinfo messages
 
 void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 {
+	qbool replacement = !recorder && (client->fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS);
 	qbool disable_updates; // disables sending entities to the client
 	int e, i, max_packet_entities;
 	int full_limit, datagram_bytes, tail_bytes;
@@ -1001,6 +1455,13 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 		}
 	}
 
+	if (replacement) {
+		if (!client->rd) {
+			SV_RD_ResetClient(client, sv.max_edicts);
+		}
+		SV_RD_BeginSnapshot(client);
+	}
+
 	// send over the players in the PVS
 	if ( recorder )
 		SV_MVD_WritePlayersToClient (); // nice, no params at all!
@@ -1020,7 +1481,7 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 		// from ZQuake unless using protocol extensions.
 		// max_edicts = min(sv.num_edicts, MAX_EDICTS);
 
-		for (e = pr_nqprogs ? 1 : MAX_CLIENTS + 1, ent = EDICT_NUM(e); e < sv.num_edicts; e++, ent = NEXT_EDICT(ent))
+		for (e = (pr_nqprogs && !replacement) ? 1 : MAX_CLIENTS + 1, ent = EDICT_NUM(e); e < sv.num_edicts; e++, ent = NEXT_EDICT(ent))
 		{
 			if (!SV_EntityVisibleToClient(client, e, pvs)) {
 				if (fofs_visibility) {
@@ -1035,6 +1496,13 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 			}
 
 			if (e == hideent) {
+				continue;
+			}
+
+			if (replacement) {
+				rd_entity_state_t rd;
+				SV_RD_BuildEntityState(&rd, ent, e, client);
+				SV_RD_QueueEntity(client, &rd);
 				continue;
 			}
 
@@ -1113,41 +1581,151 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 	datagram_bytes = !recorder && !client->datagram.overflowed ? client->datagram.cursize : 0;
 	tail_bytes = datagram_bytes + (numnails ? 2 + numnails * (recorder ? 7 : 6) : 0);
 
-	// Encode packet entities, using the client's acknowledged frame when available.
-	SV_EmitPacketEntities(client, pack, msg, max_packet_entities, tail_bytes);
+	if (replacement) {
+		if (datagram_bytes > 0 && full_limit - datagram_bytes - msg->cursize >= 9)
+			msg->maxsize -= datagram_bytes;
+		SV_RD_WriteFrame(client, msg, client->netchan.incoming_sequence, sv.time);
+		msg->maxsize = max(msg->cursize, full_limit - datagram_bytes);
+	}
+	else {
+		// Encode packet entities, using the client's acknowledged frame when available.
+		SV_EmitPacketEntities(client, pack, msg, max_packet_entities, tail_bytes);
 
-	/* Keep optional tails from using space reserved for queued multicast. */
-	msg->maxsize = max(msg->cursize, full_limit - datagram_bytes);
+		/* Keep optional tails from using space reserved for queued multicast. */
+		msg->maxsize = max(msg->cursize, full_limit - datagram_bytes);
 
-	// now add the specialized nail update
-	SV_EmitNailUpdate (msg, recorder);
+		// now add the specialized nail update
+		SV_EmitNailUpdate (msg, recorder);
+	}
 
-	// Translate NQ progs' EF_MUZZLEFLASH to svc_muzzleflash
-	if (pr_nqprogs)
-	{
-		for (e=1, ent=EDICT_NUM(e) ; e < sv.num_edicts ; e++, ent = NEXT_EDICT(ent))
-		{
-			// ignore ents without visible models
-			if (!ent->v->modelindex || !*PR_GetEntityString(ent->v->model))
+	SV_WriteNQMuzzleFlashes(msg);
+	msg->maxsize = full_limit;
+}
+
+/* Free only the recorder's arrays; live clients retain their own ACK state. */
+void SV_MVD_ClearRD(void)
+{
+	Q_free(demo.rd_previous);
+	Q_free(demo.rd_current);
+}
+
+/* Collect the recorder's complete world, without a player's PVS/owner filters. */
+static void SV_MVD_CollectRD(void)
+{
+	int n;
+	memset(demo.rd_current, 0, sv.max_edicts * sizeof(*demo.rd_current));
+	for (n = 1; n < sv.num_edicts; ++n) {
+		edict_t *ent = EDICT_NUM(n);
+		rd_entity_state_t *state = &demo.rd_current[n];
+		if (n <= MAX_CLIENTS) {
+			client_t *player = &svs.clients[n - 1];
+			if (player->state != cs_spawned || player->spectator) {
 				continue;
-
-			// ignore if not touching a PV leaf (meag: this does nothing... complete or remove?)
-			if (pvs && ent->e.num_leafs >= 0) {
-				for (i = 0; i < ent->e.num_leafs; i++)
-					if (pvs[ent->e.leafnums[i] >> 3] & (1 << (ent->e.leafnums[i] & 7)))
-						break;
 			}
-
-			if ((int)ent->v->effects & EF_MUZZLEFLASH) {
-				ent->v->effects = (int)ent->v->effects & ~EF_MUZZLEFLASH;
-				if (msg->maxsize - msg->cursize < 3)
-					continue;
-				MSG_WriteByte (msg, svc_muzzleflash);
-				MSG_WriteShort (msg, e);
+			SV_RD_BuildEntityState(state, ent, n, NULL);
+			SV_RD_BuildPlayerFields(state, ent, player, SV_PMTypeForClient(player));
+			if (!sv.demo_rd_predinfo) {
+				memset(state->movement, 0, sizeof(state->movement));
+				memset(state->velocity, 0, sizeof(state->velocity));
+				state->msec = 0;
 			}
 		}
+		else {
+			if (ent->e.free || !SV_EntityVisibleToClient(&demo.recorder, n, NULL)) {
+				continue;
+			}
+			SV_RD_BuildEntityState(state, ent, n, NULL);
+		}
 	}
-	msg->maxsize = full_limit;
+}
+
+/* Each bounded message commits only after output accepts it. Initial snapshots
+ * target a new destination and must not change the ongoing recorder's base. */
+qbool SV_MVD_WriteRDEntities(qbool initial)
+{
+	byte data[MAX_MSGLEN];
+	sizebuf_t msg;
+	int n = 1;
+	qbool first_snapshot = initial && !demo.rd_previous;
+	qbool first = true;
+	if (!demo.rd_previous) {
+		demo.rd_previous = Q_calloc(sv.max_edicts, sizeof(*demo.rd_previous));
+	}
+	if (!demo.rd_current) {
+		demo.rd_current = Q_calloc(sv.max_edicts, sizeof(*demo.rd_current));
+	}
+	SV_MVD_CollectRD();
+	do {
+		int start = n;
+		SZ_Init(&msg, data, sizeof(data));
+		MSG_WriteByte(&msg, svc_fte_updateentities);
+		MSG_WriteFloat(&msg, sv.time);
+		if (initial && first) {
+			MSG_RD_WriteRemove(&msg, 0);
+		}
+		first = false;
+		msg.maxsize -= 2;
+		for (; n < sv.max_edicts; ++n) {
+			rd_entity_state_t *state = &demo.rd_current[n];
+			rd_entity_state_t *previous = &demo.rd_previous[n];
+			rd_delta_t delta;
+			if (!state->number) {
+				if (initial || !previous->number) {
+					continue;
+				}
+				if (!MSG_RD_WriteRemove(&msg, n)) {
+					break;
+				}
+			}
+			else {
+				if (initial || !previous->number) {
+					rd_entity_state_t baseline;
+					SV_RD_FromLegacy(&baseline, &EDICT_NUM(n)->e.baseline);
+					delta = MSG_RD_SelectDelta(&baseline, state, true);
+					delta.fields |= UF_RESET;
+				}
+				else {
+					delta = MSG_RD_SelectDelta(previous, state, true);
+				}
+				if (!delta.fields) {
+					continue;
+				}
+				if (n <= MAX_CLIENTS && (delta.fields & (UF_ANGLESXZ | UF_ANGLESY))) {
+					delta.fields |= UF_PREDINFO;
+				}
+				if (!MSG_RD_WriteEntity(&msg, state, delta, (demo.recorder.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0)) {
+					break;
+				}
+			}
+		}
+		if (n == start) {
+			return false; // A single invalid record cannot make progress.
+		}
+		msg.maxsize = sizeof(data);
+		MSG_WriteShort(&msg, 0);
+		if (!SV_MVD_WriteRDMessage(&msg, initial)) {
+			return false;
+		}
+		if (!initial) {
+			memcpy(demo.rd_previous + start, demo.rd_current + start,
+				   (n - start) * sizeof(*demo.rd_previous));
+		}
+	} while (n < sv.max_edicts);
+	/* The first snapshot is the stream base, including entities removed before
+	 * its first delta. Later destination snapshots must not replace that base. */
+	if (first_snapshot)
+		memcpy(demo.rd_previous, demo.rd_current, sv.max_edicts * sizeof(*demo.rd_previous));
+	if (!initial) {
+		if (demo.recorder.datagram.overflowed) {
+			Sys_Printf("WARNING: NQ muzzle flashes overflowed in RD recording\n");
+		}
+		else if (demo.recorder.datagram.cursize
+			&& !SV_MVD_WriteRDMessage(&demo.recorder.datagram, false)) {
+			return false;
+		}
+		SZ_Clear(&demo.recorder.datagram);
+	}
+	return true;
 }
 
 /*

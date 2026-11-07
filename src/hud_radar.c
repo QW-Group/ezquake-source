@@ -769,9 +769,24 @@ static void Radar_DrawEntities(int x, int y, float scale, float player_size, int
 		int entity_p_y = 0;
 		packet_entities_t *pack = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities;
 		char buffer[MAX_SCOREBOARDNAME + 8];
+		entity_state_t rd_state;
+		qbool replacement = CL_RD_Valid();
+		int entity_count = replacement ? CL_RD_SlotLimit() : pack->num_entities;
 
-		for (i = 0; i < pack->num_entities; ++i) {
-			entity_state_t *state = &pack->entities[i];
+		// Player slots are drawn separately by Radar_DrawPlayers.
+		for (i = replacement ? MAX_CLIENTS + 1 : 0; i < entity_count; ++i) {
+			entity_state_t *state;
+
+			if (replacement) {
+				const rd_client_entity_t *entity = CL_RD_Entity(i, false);
+				if (!entity)
+					continue;
+				CL_RD_ToLegacy(&entity->state, &rd_state);
+				state = &rd_state;
+			}
+			else {
+				state = &pack->entities[i];
+			}
 
 			// must be body or gibbed head
 			if (state->modelindex != cl_modelindices[mi_player] && state->modelindex != cl_modelindices[mi_h_player]) {

@@ -379,7 +379,7 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 		// don't execute lines without ending \n; this fixes problems with
 		// partially stuffed aliases not being executed properly
 
-		if (cbuf_current == &cbuf_svc && i == cursize)
+		if (cbuf == &cbuf_svc && i == cursize)
 			break;
 
 		// Copy text to line, skipping carriage return chars

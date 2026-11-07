@@ -2280,6 +2280,13 @@
         }
       ]
     },
+    "cl_pext_replacementdeltas": {
+      "default": "1",
+      "desc": "Request FTE replacement deltas when connecting to a server.",
+      "group-id": "21",
+      "remarks": "Applies to new connections. Disabling this does not change an already negotiated connection.",
+      "type": "boolean"
+    },
     "cl_pext_scale": {
       "default": "1",
       "desc": "If set, enable support for FTE's entity scale protocol extension.\nAllows the server to scale models.",
@@ -19905,6 +19912,34 @@
       "group-id": "43",
       "type": ""
     },
+    "sv_demo_format": {
+      "default": "auto",
+      "desc": "Select the MVD file and QTV stream format for the next map.",
+      "group-id": "43",
+      "remarks": "Latched per map, including new recording destinations. Selection uses supported map capacity, not the number of occupied slots. RD playback and QTV forwarding require compatible consumers.",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Use legacy at capacities up to 2048, otherwise RD.",
+          "name": "auto"
+        },
+        {
+          "description": "Use legacy; unsupported when map capacity exceeds 2048.",
+          "name": "legacy"
+        },
+        {
+          "description": "Use RD even at legacy map capacities.",
+          "name": "rd"
+        }
+      ]
+    },
+    "sv_demo_rd_predinfo": {
+      "default": "0",
+      "desc": "Record full player movement prediction payloads in RD MVD files and QTV streams.",
+      "group-id": "43",
+      "remarks": "Latched per map. Zero uses compact player data without movement commands, velocity or msec; one retains the full payload. Movement mode, precise player angles and weapon animation remain available. This does not change live UDP prediction.",
+      "type": "boolean"
+    },
     "sv_demofps": {
       "group-id": "43",
       "type": ""
@@ -20033,6 +20068,13 @@
       "group-id": "43",
       "type": ""
     },
+    "sv_maxedicts": {
+      "default": "2048",
+      "desc": "Upper limit for entity slots, including the world, from 512 to 16384.",
+      "group-id": "43",
+      "remarks": "Applied when a map starts; the game and sv_extlimits can further limit capacity. A finalized capacity above 2048 requires replacement deltas and rejects clients without the paired RD and PEXT_TE_BULLET profile, regardless of sv_pext_replacementdeltas.",
+      "type": "integer"
+    },
     "sv_maxlogsize": {
       "group-id": "43",
       "type": ""
@@ -20143,6 +20185,13 @@
           "name": "3"
         }
       ]
+    },
+    "sv_pext_replacementdeltas": {
+      "default": "0",
+      "desc": "Allow replacement deltas for new client connections.",
+      "group-id": "43",
+      "remarks": "Existing connections retain their negotiated protocol. At finalized map capacities above 2048, RD is required even when this option is zero.",
+      "type": "boolean"
     },
     "sv_phs": {
       "group-id": "43",

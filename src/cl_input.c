@@ -1168,7 +1168,8 @@ void CL_SendCmd(void)
 		cls.netchan.outgoing_sequence);
 
 	// request delta compression of entities
-	if (cls.netchan.outgoing_sequence - cl.validsequence >= UPDATE_BACKUP - 1) {
+	if (!(cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)
+		&& cls.netchan.outgoing_sequence - cl.validsequence >= UPDATE_BACKUP - 1) {
 		cl.validsequence = 0;
 		cl.delta_sequence = 0;
 	}

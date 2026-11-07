@@ -523,9 +523,20 @@ static int CL_WriteSoundListChunk(sizebuf_t *buf, int cursor)
 	return next;
 }
 
-static void CL_WriteDemoStaticEntity(sizebuf_t *buf, const entity_t *ent, int modelindex)
+static void CL_WriteDemoStaticEntity(sizebuf_t *buf, const entity_t *ent, int modelindex, int index)
 {
 	int j;
+
+	if (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) {
+		const rd_entity_state_t *raw = CL_RD_Static(index);
+		if (!raw) {
+			Host_Error("Missing RD static startup state");
+		}
+		MSG_WriteByte(buf, svc_fte_spawnstatic2);
+		if (!MSG_RD_WriteBaseline(buf, raw, false, (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0))
+			Host_Error("RD static startup record does not fit");
+		return;
+	}
 
 	if (modelindex > 255) {
 		entity_state_t from = { 0 }, to = { 0 };
@@ -558,6 +569,17 @@ static void CL_WriteDemoBaseline(sizebuf_t *buf, int entity, const entity_state_
 {
 	int j;
 
+	if (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) {
+		const rd_client_entity_t *raw = CL_RD_Baseline(entity);
+		if (!raw) {
+			return;
+		}
+		MSG_WriteByte(buf, svc_fte_spawnbaseline2);
+		if (!MSG_RD_WriteBaseline(buf, &raw->state, true, (cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0))
+			Host_Error("RD baseline startup record does not fit");
+		return;
+	}
+
 	if ((unsigned)state->modelindex >= MAX_MODELS)
 		return;
 	if (state->modelindex > 255) {
@@ -584,6 +606,82 @@ static void CL_WriteDemoBaseline(sizebuf_t *buf, int entity, const entity_state_
 		MSG_WriteCoord(buf, state->origin[j]);
 		MSG_WriteAngle(buf, state->angles[j]);
 	}
+}
+
+static void CL_WriteRecordMVDMessage(sizebuf_t *msg);
+
+/* Emit accepted state locally; return the next synthetic QWD startup sequence. */
+static int CL_WriteRDCurrentState(qbool mvd, int seq)
+{
+	byte data[MAX_MSGLEN * 2];
+	sizebuf_t msg;
+	int phase;
+	qbool corrections = false;
+	if (!CL_RD_Valid()) {
+		Host_Error("No accepted RD state for demo startup");
+	}
+	/* Angle16 preserves precision. Plain-pitch records need an angle8 fixup,
+	 * followed by predinfo-only restoration of transient movement fields. */
+	for (phase = 0; phase < 3; ++phase) {
+		int number = 1;
+		qbool first = true;
+		if (phase && !corrections) {
+			break;
+		}
+		do {
+			int start = number;
+			SZ_Init(&msg, data, sizeof(data));
+			MSG_WriteByte(&msg, svc_fte_updateentities);
+			MSG_WriteFloat(&msg, CL_RD_Time(false));
+			if (!phase && first) {
+				MSG_RD_WriteRemove(&msg, 0);
+			}
+			first = false;
+			msg.maxsize -= 2;
+			for (; number < CL_MAX_EDICTS; ++number) {
+				const rd_client_entity_t *entity = CL_RD_Entity(number, false);
+				const rd_client_entity_t *baseline = CL_RD_Baseline(number);
+				rd_entity_state_t nullstate;
+				rd_delta_t delta = {0, 0};
+				float pitch;
+				qbool plain;
+				if (!entity) {
+					continue;
+				}
+				pitch = entity->state.angles[0] * -3;
+				pitch = ((int)(pitch * 65536.0f / 360.0f) & 65535) * (360.0f / 65536.0f);
+				plain = entity->viewangles[0] != pitch;
+				if (phase && !plain) {
+					continue;
+				}
+				if (!phase) {
+					corrections |= plain;
+					MSG_RD_InitState(&nullstate);
+					delta = MSG_RD_SelectDelta(baseline ? &baseline->state : &nullstate, &entity->state, true);
+					delta.fields |= UF_RESET | UF_ANGLESXZ | UF_ANGLESY | UF_PREDINFO;
+				}
+				else {
+					delta.fields = phase == 1 ? UF_ANGLESXZ : UF_PREDINFO;
+				}
+				if (!MSG_RD_WriteEntity(&msg, &entity->state, delta,
+										(cls.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0)) {
+					break;
+				}
+			}
+			if (number == start) {
+				Host_Error("Invalid RD entity %d in demo startup", number);
+				return seq;
+			}
+			msg.maxsize = sizeof(data);
+			MSG_WriteShort(&msg, 0);
+			if (mvd) {
+				CL_WriteRecordMVDMessage(&msg);
+			} else {
+				CL_WriteStartupDemoMessage(&msg, seq++);
+			}
+		} while (number < CL_MAX_EDICTS);
+	}
+	return seq;
 }
 
 //
@@ -719,7 +817,7 @@ static void CL_WriteStartupData (void)
 				break;
 		}
 
-		CL_WriteDemoStaticEntity(&buf, ent, j == MAX_MODELS ? 0 : j);
+		CL_WriteDemoStaticEntity(&buf, ent, j == MAX_MODELS ? 0 : j, i);
 
 		// Flush the buffer if it's half full.
 		if (buf.cursize > MAX_MSGLEN / 2)
@@ -753,7 +851,7 @@ static void CL_WriteStartupData (void)
 		//
 		// If the entity state isn't blank write it to the buffer.
 		//
-		if (memcmp(es, &blankes, sizeof(blankes)))
+		if ((cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) ? CL_RD_Baseline(i) != NULL : memcmp(es, &blankes, sizeof(blankes)) != 0)
 		{
 			CL_WriteDemoBaseline(&buf, i, es);
 
@@ -864,6 +962,9 @@ static void CL_WriteStartupData (void)
 	MSG_WriteString (&buf, va("skins\n"));
 
 	CL_WriteStartupDemoMessage (&buf, seq++);
+
+	if (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)
+		seq = CL_WriteRDCurrentState(false, seq);
 
 	CL_WriteSetDemoMessage();
 
@@ -1088,7 +1189,7 @@ void CL_WriteMVDStartupData(void)
 				break;
 		}
 
-		CL_WriteDemoStaticEntity(&buf, ent, j == MAX_MODELS ? 0 : j);
+		CL_WriteDemoStaticEntity(&buf, ent, j == MAX_MODELS ? 0 : j, i);
 
 		// Flush the buffer if it's half full.
 		if (buf.cursize > MAX_MSGLEN / 2)
@@ -1137,7 +1238,7 @@ void CL_WriteMVDStartupData(void)
 		//
 		// If the entity state isn't blank write it to the buffer.
 		//
-		if (memcmp(es, &blankes, sizeof(blankes)))
+		if ((cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) ? CL_RD_Baseline(i) != NULL : memcmp(es, &blankes, sizeof(blankes)) != 0)
 		{
 			CL_WriteDemoBaseline(&buf, i, es);
 
@@ -1244,7 +1345,7 @@ void CL_WriteMVDStartupData(void)
 	//
 	// This set proper model, origin, angles etc for players.
 	//
-	for (i = 0; i < MAX_CLIENTS; i++)
+	for (i = 0; !(cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) && i < MAX_CLIENTS; i++)
 	{
 		vec3_t origin, angles;
 		int j, flags;
@@ -1358,7 +1459,10 @@ void CL_WriteMVDStartupData(void)
 	// 
 	// Send packetentities.
 	//
-	{
+	if (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) {
+		CL_WriteRDCurrentState(true, 0);
+	}
+	else {
 		int ent_index, ent_total;
 		entity_state_t *ent_state;
 
@@ -1551,11 +1655,6 @@ static int CL_StreamRead(void* buf, int size, qbool peek)
 		// We are not peeking, so move along buffer.
 		stream_buffer_cnt -= need;
 		memmove(stream_buffer, stream_buffer + need, stream_buffer_cnt);
-
-		// We get some data from playback file or qtv stream, dump it to file right now.
-		if (need > 0 && cls.mvdplayback && cls.mvdrecording) {
-			CL_MVD_DemoWrite(buf, need);
-		}
 	}
 
 	return need;
@@ -1591,6 +1690,11 @@ int CL_Demo_Read(void *buf, int size, qbool peek)
 
 	if (need != size) {
 		Host_Error("Unexpected end of demo");
+	}
+
+	/* Cuts copy consumed bytes from both mapped demos and buffered streams. */
+	if (!peek && need > 0 && cls.mvdplayback && cls.mvdrecording) {
+		CL_MVD_DemoWrite(buf, need);
 	}
 
 	return need;
@@ -2221,17 +2325,19 @@ static void OnChange_demo_format(cvar_t *var, char *string, qbool *cancel)
 //
 static void CL_WriteDemoPimpMessage(void)
 {
+	byte data[MAX_MSGLEN];
+	sizebuf_t msg;
 	if (cls.demoplayback) {
 		return;
 	}
 
-	SZ_Clear(&net_message);
-	MSG_WriteLong(&net_message, cls.netchan.incoming_sequence + 1);
-	MSG_WriteLong(&net_message, cls.netchan.incoming_acknowledged | (cls.netchan.incoming_reliable_acknowledged << 31));
-	MSG_WriteByte(&net_message, svc_print);
-	MSG_WriteByte(&net_message, PRINT_HIGH);
-	MSG_WriteString(&net_message, EZ_QWD_SIGNOFF);
-	CL_WriteDemoMessage(&net_message);
+	SZ_Init(&msg, data, sizeof(data));
+	MSG_WriteLong(&msg, cls.netchan.incoming_sequence + 1);
+	MSG_WriteLong(&msg, cls.netchan.incoming_acknowledged | (cls.netchan.incoming_reliable_acknowledged << 31));
+	MSG_WriteByte(&msg, svc_print);
+	MSG_WriteByte(&msg, PRINT_HIGH);
+	MSG_WriteString(&msg, EZ_QWD_SIGNOFF);
+	CL_WriteDemoMessage(&msg);
 }
 
 //
@@ -2239,6 +2345,8 @@ static void CL_WriteDemoPimpMessage(void)
 //
 static void CL_StopRecording (void)
 {
+	byte data[MAX_MSGLEN];
+	sizebuf_t msg;
 	// Nothing to stop.
 	if (!cls.demorecording)
 		return;
@@ -2247,11 +2355,11 @@ static void CL_StopRecording (void)
 	CL_WriteDemoPimpMessage();
 
 	// Write a disconnect message to the demo file.
-	SZ_Clear (&net_message);
-	MSG_WriteLong (&net_message, -1);	// -1 sequence means out of band
-	MSG_WriteByte (&net_message, svc_disconnect);
-	MSG_WriteString (&net_message, "EndOfDemo");
-	CL_WriteDemoMessage (&net_message);
+	SZ_Init(&msg, data, sizeof(data));
+	MSG_WriteLong (&msg, -1);	// -1 sequence means out of band
+	MSG_WriteByte (&msg, svc_disconnect);
+	MSG_WriteString (&msg, "EndOfDemo");
+	CL_WriteDemoMessage (&msg);
 
 	// Finish up by closing the demo file.
 	CL_Demo_Close();

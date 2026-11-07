@@ -252,14 +252,10 @@ void R_ReadPointFile_f(void)
 }
 #endif
 
-void Classic_ParticleExplosion(vec3_t org)
+static void Classic_ParticleExplosionParticles(vec3_t org)
 {
 	int	i, j;
 	qparticle_t	*p;
-
-	if (r_explosiontype.value != 9) {
-		CL_ExplosionSprite(org);
-	}
 
 	if (r_explosiontype.value == 1) {
 		return;
@@ -287,6 +283,49 @@ void Classic_ParticleExplosion(vec3_t org)
 				p->org[j] = org[j] + ((rand() % 32) - 16);
 				p->vel[j] = (rand() % 512) - 256;
 			}
+		}
+	}
+}
+
+void Classic_ParticleExplosion(vec3_t org)
+{
+	if (r_explosiontype.value != 9) {
+		CL_ExplosionSprite(org);
+	}
+	Classic_ParticleExplosionParticles(org);
+}
+
+// NetQuake explosions have particles without the QuakeWorld explosion sprite.
+void R_NQParticleExplosion(vec3_t org)
+{
+	if (qmb_initialized && gl_part_explosions.value) {
+		QMB_ParticleExplosion(org);
+	}
+	else {
+		Classic_ParticleExplosionParticles(org);
+	}
+}
+
+// Preserve the palette range of the FTE/NetQuake colored explosion.
+void Classic_ParticleExplosion2(vec3_t org, int color_start, int color_length)
+{
+	int i, j;
+	qparticle_t *p;
+
+	if (color_length <= 0) {
+		return;
+	}
+	for (i = 0; i < 512; i++) {
+		if (r_numactiveparticles >= r_numparticles) {
+			return;
+		}
+		p = &particles[r_numactiveparticles++];
+		p->die = r_refdef2.time + 0.3;
+		p->color = (color_start + i % color_length) & 255;
+		p->type = pt_blob;
+		for (j = 0; j < 3; j++) {
+			p->org[j] = org[j] + ((rand() % 32) - 16);
+			p->vel[j] = (rand() % 512) - 256;
 		}
 	}
 }

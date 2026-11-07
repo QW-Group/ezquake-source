@@ -857,3 +857,438 @@ void MSG_DecodeMVDSVWeaponFlags(int flags, int* weaponmode, int* weaponhide, qbo
 
 }
 
+/* FTE's null state uses identity appearance values, unlike legacy QW. */
+void MSG_RD_InitState(rd_entity_state_t *state)
+{
+	memset(state, 0, sizeof(*state));
+	state->trans = 255;
+	state->scale = 16;
+	state->drawflags = SCALE_ORIGIN_ORIGIN;
+	memset(state->colourmod, 32, sizeof(state->colourmod));
+	memset(state->glowmod, 32, sizeof(state->glowmod));
+}
+
+/* Select fields once; retained prediction fields need their own dirty mask. */
+rd_delta_t MSG_RD_SelectDelta(const rd_entity_state_t *from, const rd_entity_state_t *to, qbool remote)
+{
+	rd_delta_t delta = {0, 0};
+	unsigned int bits = 0;
+	if (from->origin[0] != to->origin[0] || from->origin[1] != to->origin[1]) {
+		bits |= UF_ORIGINXY;
+	}
+	if (from->origin[2] != to->origin[2]) {
+		bits |= UF_ORIGINZ;
+	}
+	if (from->angles[0] != to->angles[0] || from->angles[2] != to->angles[2]) {
+		bits |= UF_ANGLESXZ;
+	}
+	if (from->angles[1] != to->angles[1]) {
+		bits |= UF_ANGLESY;
+	}
+	if (from->frame != to->frame) {
+		bits |= UF_FRAME;
+	}
+	if (from->effects != to->effects) {
+		bits |= UF_EFFECTS;
+	}
+	if (from->modelindex != to->modelindex) {
+		bits |= UF_MODEL;
+	}
+	if (from->modelindex2 != to->modelindex2) {
+		bits |= UF_MODELINDEX2;
+	}
+	if (from->skinnum != to->skinnum) {
+		bits |= UF_SKIN;
+	}
+	if (from->colormap != to->colormap) {
+		bits |= UF_COLORMAP;
+	}
+	if (from->solidsize != to->solidsize) {
+		bits |= UF_SOLID;
+	}
+	if (from->dpflags != to->dpflags) {
+		bits |= UF_FLAGS;
+	}
+	if (from->trans != to->trans) {
+		bits |= UF_ALPHA;
+	}
+	if (from->scale != to->scale) {
+		bits |= UF_SCALE;
+	}
+	if (from->fatness != to->fatness) {
+		bits |= UF_FATNESS;
+	}
+	if (from->drawflags != to->drawflags || from->abslight != to->abslight) {
+		bits |= UF_DRAWFLAGS;
+	}
+	if (from->tagentity != to->tagentity || from->tagindex != to->tagindex) {
+		bits |= UF_TAGINFO;
+	}
+	if (memcmp(from->light, to->light, sizeof(to->light)) || from->lightstyle != to->lightstyle || from->lightpflags != to->lightpflags) {
+		bits |= UF_LIGHT;
+	}
+	if (from->traileffect != to->traileffect || from->emiteffect != to->emiteffect) {
+		bits |= UF_TRAILEFFECT;
+	}
+	if (memcmp(from->colourmod, to->colourmod, sizeof(to->colourmod))) {
+		bits |= UF_COLORMOD;
+	}
+	if (from->glowsize != to->glowsize || from->glowcolour != to->glowcolour || memcmp(from->glowmod, to->glowmod, sizeof(to->glowmod))) {
+		bits |= UF_GLOW;
+	}
+	if (memcmp(from->gravitydir, to->gravitydir, sizeof(to->gravitydir))) {
+		bits |= UF_GRAVITYDIR;
+	}
+	if (from->pmovetype != to->pmovetype) {
+		delta.pred_fields |= UFP_MOVETYPE;
+	}
+	if (from->weaponframe != to->weaponframe) {
+		delta.pred_fields |= UFP_WEAPONFRAME_OLD;
+	}
+	if (delta.pred_fields || memcmp(from->velocity, to->velocity, sizeof(to->velocity))
+		|| memcmp(from->movement, to->movement, sizeof(to->movement)) || from->msec != to->msec
+		|| (to->pmovetype && (to->msec || to->velocity[0] || to->velocity[1] || to->velocity[2]
+			|| to->movement[0] || to->movement[1] || to->movement[2]))) {
+		bits |= UF_PREDINFO;
+		/* Prediction can have advanced the previous moving state. Refresh its
+		 * origin, and remote players' angle basis, as in FTE's base profile. */
+		if (to->pmovetype && (from->velocity[0] || from->velocity[1] || from->velocity[2])) {
+			bits |= UF_ORIGINXY | UF_ORIGINZ;
+			if (remote) {
+				bits |= UF_ANGLESXZ | UF_ANGLESY;
+			}
+		}
+	}
+	/* Refresh the camera basis when entering or leaving server control. */
+	if ((from->pmovetype & RD_MOVETYPE_MASK) != (to->pmovetype & RD_MOVETYPE_MASK)
+		&& ((from->pmovetype & RD_MOVETYPE_MASK) == RD_MOVETYPE_LOCK || (to->pmovetype & RD_MOVETYPE_MASK) == RD_MOVETYPE_LOCK)) {
+		bits |= UF_ORIGINXY | UF_ORIGINZ | UF_ANGLESXZ | UF_ANGLESY | UF_PREDINFO;
+	}
+	delta.fields = bits;
+	return delta;
+}
+
+/* Encode one complete base-RD payload into a bounded temporary message. */
+static void MSG_RD_WritePayload(sizebuf_t *msg, const rd_entity_state_t *s, unsigned int bits, unsigned int pred, qbool floatcoords)
+{
+	int i;
+	if (((bits & UF_MODEL) && s->modelindex > 255) || ((bits & UF_MODELINDEX2) && s->modelindex2 > 255)
+		|| ((bits & UF_FRAME) && s->frame > 255) || ((bits & UF_SKIN) && (s->skinnum < 0 || s->skinnum > 255)))
+		bits |= UF_16BIT_LERPTIME;
+	if (bits & UF_EFFECTS) {
+		if (s->effects & 0xffff0000u) {
+			bits |= UF_EFFECTS2_OLD;
+		} else if (s->effects & 0xff00u) {
+			bits = (bits & ~UF_EFFECTS) | UF_EFFECTS2_OLD;
+		}
+	}
+	if (bits & 0xff000000u) {
+		bits |= UF_EXTEND3;
+	}
+	if (bits & 0x00ff0000u) {
+		bits |= UF_EXTEND2;
+	}
+	if (bits & 0x0000ff00u) {
+		bits |= UF_EXTEND1;
+	}
+	MSG_WriteByte(msg, bits);
+	if (bits & UF_EXTEND1) {
+		MSG_WriteByte(msg, bits >> 8);
+	}
+	if (bits & UF_EXTEND2) {
+		MSG_WriteByte(msg, bits >> 16);
+	}
+	if (bits & UF_EXTEND3) {
+		MSG_WriteByte(msg, bits >> 24);
+	}
+	if (bits & UF_FRAME) {
+		if (bits & UF_16BIT_LERPTIME) {
+			MSG_WriteShort(msg, s->frame);
+		} else {
+			MSG_WriteByte(msg, s->frame);
+		}
+	}
+	if (bits & UF_ORIGINXY) {
+		if (floatcoords) {
+			MSG_WriteFloat(msg, s->origin[0]);
+			MSG_WriteFloat(msg, s->origin[1]);
+		} else {
+			MSG_WriteCoord(msg, s->origin[0]);
+			MSG_WriteCoord(msg, s->origin[1]);
+		}
+	}
+	if (bits & UF_ORIGINZ) {
+		if (floatcoords) {
+			MSG_WriteFloat(msg, s->origin[2]);
+		} else {
+			MSG_WriteCoord(msg, s->origin[2]);
+		}
+	}
+	if (bits & UF_ANGLESXZ) {
+		if (bits & UF_PREDINFO) {
+			MSG_WriteAngle16(msg, s->angles[0]);
+			MSG_WriteAngle16(msg, s->angles[2]);
+		} else {
+			MSG_WriteAngle(msg, s->angles[0]);
+			MSG_WriteAngle(msg, s->angles[2]);
+		}
+	}
+	if (bits & UF_ANGLESY) {
+		if (bits & UF_PREDINFO) {
+			MSG_WriteAngle16(msg, s->angles[1]);
+		} else {
+			MSG_WriteAngle(msg, s->angles[1]);
+		}
+	}
+	if ((bits & (UF_EFFECTS | UF_EFFECTS2_OLD)) == (UF_EFFECTS | UF_EFFECTS2_OLD)) {
+		MSG_WriteLong(msg, s->effects);
+	} else if (bits & UF_EFFECTS2_OLD) {
+		MSG_WriteShort(msg, s->effects);
+	} else if (bits & UF_EFFECTS) {
+		MSG_WriteByte(msg, s->effects);
+	}
+	if (bits & UF_PREDINFO) {
+		if (s->movement[0]) {
+			pred |= UFP_FORWARD;
+		}
+		if (s->movement[1]) {
+			pred |= UFP_SIDE;
+		}
+		if (s->movement[2]) {
+			pred |= UFP_UP;
+		}
+		if (s->velocity[0] || s->velocity[1]) {
+			pred |= UFP_VELOCITYXY;
+		}
+		if (s->velocity[2]) {
+			pred |= UFP_VELOCITYZ;
+		}
+		if (s->msec) {
+			pred |= UFP_MSEC;
+		}
+		MSG_WriteByte(msg, pred);
+		for (i = 0; i < 3; ++i) {
+			if (pred & (UFP_FORWARD << i)) {
+				MSG_WriteShort(msg, s->movement[i]);
+			}
+		}
+		if (pred & UFP_MOVETYPE) {
+			MSG_WriteByte(msg, s->pmovetype);
+		}
+		if (pred & UFP_VELOCITYXY) {
+			MSG_WriteShort(msg, s->velocity[0]);
+			MSG_WriteShort(msg, s->velocity[1]);
+		}
+		if (pred & UFP_VELOCITYZ) {
+			MSG_WriteShort(msg, s->velocity[2]);
+		}
+		if (pred & UFP_MSEC) {
+			MSG_WriteByte(msg, s->msec);
+		}
+		if (pred & UFP_WEAPONFRAME_OLD) {
+			MSG_WriteByte(msg, (s->weaponframe & 127) | (s->weaponframe > 127 ? 128 : 0));
+			if (s->weaponframe > 127) {
+				MSG_WriteByte(msg, s->weaponframe >> 7);
+			}
+		}
+	}
+	if (bits & UF_MODEL) {
+		if (bits & UF_16BIT_LERPTIME) {
+			MSG_WriteShort(msg, s->modelindex);
+		} else {
+			MSG_WriteByte(msg, s->modelindex);
+		}
+	}
+	if (bits & UF_SKIN) {
+		if (bits & UF_16BIT_LERPTIME) {
+			MSG_WriteShort(msg, s->skinnum);
+		} else {
+			MSG_WriteByte(msg, s->skinnum);
+		}
+	}
+	if (bits & UF_COLORMAP) {
+		MSG_WriteByte(msg, s->colormap);
+	}
+	if (bits & UF_SOLID) {
+		MSG_WriteShort(msg, s->solidsize);
+	}
+	if (bits & UF_FLAGS) {
+		MSG_WriteByte(msg, s->dpflags);
+	}
+	if (bits & UF_ALPHA) {
+		MSG_WriteByte(msg, s->trans);
+	}
+	if (bits & UF_SCALE) {
+		MSG_WriteByte(msg, s->scale);
+	}
+	if (bits & UF_DRAWFLAGS) {
+		MSG_WriteByte(msg, s->drawflags);
+		if ((s->drawflags & MLS_MASK) >= MLS_ADDLIGHT) {
+			MSG_WriteByte(msg, s->abslight);
+		}
+	}
+	if (bits & UF_TAGINFO) {
+		MSG_RD_WriteEntityRef(msg, s->tagentity);
+		MSG_WriteByte(msg, s->tagindex);
+	}
+	if (bits & UF_LIGHT) {
+		for (i = 0; i < 4; ++i) {
+			MSG_WriteShort(msg, s->light[i]);
+		}
+		MSG_WriteByte(msg, s->lightstyle);
+		MSG_WriteByte(msg, s->lightpflags);
+	}
+	if (bits & UF_TRAILEFFECT) {
+		MSG_WriteShort(msg, s->traileffect | (s->emiteffect ? 0x8000 : 0));
+		if (s->emiteffect) {
+			MSG_WriteShort(msg, s->emiteffect);
+		}
+	}
+	if (bits & UF_COLORMOD) {
+		for (i = 0; i < 3; ++i) {
+			MSG_WriteByte(msg, s->colourmod[i]);
+		}
+	}
+	if (bits & UF_GLOW) {
+		MSG_WriteByte(msg, s->glowsize);
+		MSG_WriteByte(msg, s->glowcolour);
+		for (i = 0; i < 3; ++i) {
+			MSG_WriteByte(msg, s->glowmod[i]);
+		}
+	}
+	if (bits & UF_FATNESS) {
+		MSG_WriteChar(msg, s->fatness);
+	}
+	if (bits & UF_MODELINDEX2) {
+		if (bits & UF_16BIT_LERPTIME) {
+			MSG_WriteShort(msg, s->modelindex2);
+		} else {
+			MSG_WriteByte(msg, s->modelindex2);
+		}
+	}
+	if (bits & UF_GRAVITYDIR) {
+		MSG_WriteByte(msg, s->gravitydir[0]);
+		MSG_WriteByte(msg, s->gravitydir[1]);
+	}
+}
+
+/* Bounded base format: fields requiring other PEXT2 capabilities are rejected. */
+static qbool MSG_RD_ValidState(const rd_entity_state_t *s, unsigned int bits)
+{
+	return !(bits & (UF_BONEDATA | UF_UNUSED1 | UF_EXTEND4))
+		&& s->tagentity < MAX_EDICTS && s->weaponframe <= 32767
+		&& s->modelindex >= 0 && s->modelindex < MAX_MODELS
+		&& s->modelindex2 >= 0 && s->modelindex2 < MAX_MODELS
+		&& s->frame >= 0 && s->frame <= 65535
+		&& s->skinnum >= -32768 && s->skinnum <= 32767
+		&& s->colormap >= 0 && s->colormap <= 255
+		&& s->traileffect <= 0x3fff && s->emiteffect <= 0x3fff;
+}
+
+/* Ordinary RD references use a 15-bit short or 15 high bits plus a low byte.
+ * This is deliberately separate from update/removal index framing. */
+qbool MSG_RD_WriteEntityRef(sizebuf_t *msg, unsigned int number)
+{
+	int size = number < RD_ENTITYREF_EXTEND ? 2 : 3;
+
+	if (number > RD_ENTITYREF_MAX || msg->maxsize - msg->cursize < size) {
+		return false;
+	}
+	MSG_WriteShort(msg, size == 2 ? number : (number >> 8) | RD_ENTITYREF_EXTEND);
+	if (size == 3) {
+		MSG_WriteByte(msg, number & 0xff);
+	}
+	return true;
+}
+
+/* A truncated reference never becomes a usable entity number. */
+int MSG_RD_ReadEntityRef(void)
+{
+	unsigned int number = (unsigned short)MSG_ReadShort();
+
+	if (number & RD_ENTITYREF_EXTEND) {
+		number = ((number & RD_ENTITYREF_MASK) << 8) | MSG_ReadByte();
+	}
+	return msg_badread ? -1 : (int)number;
+}
+
+/* RD update indices use 14 low bits and an optional high byte, independently
+ * of the current map capacity. Write nothing when the whole index cannot fit. */
+qbool MSG_RD_WriteEntityIndex(sizebuf_t *msg, unsigned int number, qbool remove)
+{
+	unsigned int word, size;
+
+	if (number > RD_ENTITYINDEX_MAX) {
+		return false;
+	}
+	size = number < RD_ENTITYINDEX_EXTEND ? 2 : 3;
+	if (msg->maxsize - msg->cursize < size) {
+		return false;
+	}
+	word = (number & RD_ENTITYINDEX_MASK) | (remove ? RD_ENTITYINDEX_REMOVE : 0);
+	if (size == 3) {
+		word |= RD_ENTITYINDEX_EXTEND;
+	}
+	MSG_WriteShort(msg, word);
+	if (size == 3) {
+		MSG_WriteByte(msg, number >> 14);
+	}
+	return true;
+}
+
+/* Copy only a complete record; callers retain pending bits on failure. */
+qbool MSG_RD_WriteEntity(sizebuf_t *msg, const rd_entity_state_t *state, rd_delta_t delta, qbool floatcoords)
+{
+	byte data[256];
+	sizebuf_t record;
+	if (delta.pred_fields & ~(UFP_MOVETYPE | UFP_WEAPONFRAME_OLD)) {
+		return false;
+	}
+	if (delta.pred_fields) {
+		delta.fields |= UF_PREDINFO;
+	}
+	if (state->number <= 0 || state->number >= MAX_EDICTS || !MSG_RD_ValidState(state, delta.fields)) {
+		return false;
+	}
+	SZ_Init(&record, data, sizeof(data));
+	MSG_RD_WriteEntityIndex(&record, state->number, false);
+	MSG_RD_WritePayload(&record, state, delta.fields, delta.pred_fields, floatcoords);
+	if (record.cursize > msg->maxsize - msg->cursize) {
+		return false;
+	}
+	SZ_Write(msg, record.data, record.cursize);
+	return true;
+}
+
+/* World removal is FTE's reset-all marker; other removals identify one slot. */
+qbool MSG_RD_WriteRemove(sizebuf_t *msg, int number)
+{
+	if (number < 0 || number >= MAX_EDICTS) {
+		return false;
+	}
+	return MSG_RD_WriteEntityIndex(msg, number, true);
+}
+
+/* Static payloads omit the entity reference; baselines include it. */
+qbool MSG_RD_WriteBaseline(sizebuf_t *msg, const rd_entity_state_t *state, qbool numbered, qbool floatcoords)
+{
+	byte data[256];
+	sizebuf_t record;
+	rd_entity_state_t nullstate;
+	rd_delta_t delta;
+	MSG_RD_InitState(&nullstate);
+	if ((numbered && (state->number < 0 || state->number >= MAX_EDICTS)) || !MSG_RD_ValidState(state, 0)) {
+		return false;
+	}
+	SZ_Init(&record, data, sizeof(data));
+	if (numbered) {
+		MSG_RD_WriteEntityRef(&record, state->number);
+	}
+	delta = MSG_RD_SelectDelta(&nullstate, state, true);
+	MSG_RD_WritePayload(&record, state, delta.fields | UF_RESET, delta.pred_fields, floatcoords);
+	if (record.cursize > msg->maxsize - msg->cursize) {
+		return false;
+	}
+	SZ_Write(msg, record.data, record.cursize);
+	return true;
+}
