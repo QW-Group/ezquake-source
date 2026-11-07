@@ -643,6 +643,9 @@ static void CL_PextList_f(void)
 {
 #ifdef PROTOCOL_VERSION_FTE
 	static const pext_info_t fte_pexts[] = {
+#ifdef FTE_PEXT_TE_BULLET
+		{ FTE_PEXT_TE_BULLET, "FTE_PEXT_TE_BULLET" },
+#endif
 #ifdef FTE_PEXT_SOUNDDBL
 		{ FTE_PEXT_SOUNDDBL, "FTE_PEXT_SOUNDDBL" },
 #endif
@@ -693,6 +696,9 @@ static void CL_PextList_f(void)
 #endif
 #ifdef PROTOCOL_VERSION_FTE2
 	static const pext_info_t fte2_pexts[] = {
+#ifdef FTE_PEXT2_REPLACEMENTDELTAS
+		{ FTE_PEXT2_REPLACEMENTDELTAS, "FTE_PEXT2_REPLACEMENTDELTAS" },
+#endif
 #ifdef FTE_PEXT2_VOICECHAT
 		{ FTE_PEXT2_VOICECHAT, "FTE_PEXT2_VOICECHAT" },
 #endif
