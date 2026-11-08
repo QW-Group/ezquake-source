@@ -484,6 +484,8 @@ typedef struct mvddest_s
 
 // { used by QTV
 	double			io_time; // when last IO occur on socket, so we can timeout this dest
+	double			prefix_time; // when the current queued stream prefix started
+	int				prefix_bytes; // bytes of that prefix still awaiting a stream send
 	int				id; // dest id, used by QTV only
 	netadr_t		na;
 

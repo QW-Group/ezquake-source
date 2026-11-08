@@ -177,6 +177,7 @@ void DestClose (mvddest_t *d, qbool destroyfiles)
 void DestFlush (qbool complete)
 {
 	int len;
+	double now;
 	mvddest_t *d, *t;
 
 	if (!demo.dest)
@@ -220,11 +221,23 @@ void DestFlush (qbool complete)
 			break;
 
 		case DEST_STREAM:
-			if (d->io_time + qtv_streamtimeout.value <= Sys_DoubleTime())
+			now = Sys_DoubleTime();
+			if (d->cacheused && !d->prefix_bytes) {
+				d->prefix_bytes = d->cacheused;
+				d->prefix_time = now;
+			}
+			if (d->io_time + qtv_streamtimeout.value <= now)
 			{
 				// problem what send() have internal buffer, so send() success some time even peer side does't read,
 				// this may take some time before internal buffer overflow and timeout trigger, depends of buffer size.
 				Sys_Printf("DestFlush: stream timeout\n");
+				d->error = true;
+			}
+
+			/* Temporary workaround for QTV rebuffering, particularly older versions.
+			 * Fix QTV rather than increase this timeout multiplier. */
+			if (!d->error && d->prefix_bytes && d->prefix_time + 2.0 * qtv_streamtimeout.value <= now) {
+				Sys_Printf("DestFlush: stream queue timeout\n");
 				d->error = true;
 			}
 
@@ -240,6 +253,12 @@ void DestFlush (qbool complete)
 				}
 				else if (len > 0) //we put some data through
 				{ //move up the buffer
+					if (len >= d->prefix_bytes) {
+						d->prefix_bytes = 0;
+					}
+					else {
+						d->prefix_bytes -= len;
+					}
 					d->cacheused -= len;
 					memmove(d->cache, d->cache+len, d->cacheused);
 
