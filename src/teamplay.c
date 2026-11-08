@@ -2491,20 +2491,33 @@ static int FindNearestItem (int flags, item_t **pitem)
 {
 	frame_t *frame;
 	packet_entities_t *pak;
+	entity_state_t rd_ent, best_entity;
+	qbool replacement = CL_RD_Valid();
 	entity_state_t *ent, *bestent = NULL;
-	int	i;
+	int	i, entity_count;
 	float bestdist, dist;
 	vec3_t org, v;
 	item_t *item;
 
 	VectorCopy (cl.frames[cl.validsequence & UPDATE_MASK].playerstate[cl.playernum].origin, org);
 
-	// look in previous frame
+	// The previous frame still contains the item that was just picked up.
 	frame = &cl.frames[cl.oldvalidsequence&UPDATE_MASK];
 	pak = &frame->packet_entities;
 	bestdist = 100 * 100;
 	*pitem = NULL;
-	for (i = 0, ent = pak->entities; i < pak->num_entities; i++, ent++) {
+	entity_count = replacement ? CL_RD_SlotLimit() : pak->num_entities;
+	for (i = 0; i < entity_count; i++) {
+		if (replacement) {
+			const rd_client_entity_t *entity = CL_RD_Entity(i, true);
+			if (!entity)
+				continue;
+			CL_RD_ToLegacy(&entity->state, &rd_ent);
+			ent = &rd_ent;
+		}
+		else {
+			ent = &pak->entities[i];
+		}
 		item = model2item[ent->modelindex];
 		if (!item || !(item->itemflag & flags))
 			continue;
@@ -2515,7 +2528,8 @@ static int FindNearestItem (int flags, item_t **pitem)
 
 		if (dist <= bestdist) {
 			bestdist = dist;
-			bestent = ent;
+			best_entity = *ent;
+			bestent = &best_entity;
 			*pitem = item;
 		}
 	}
@@ -2837,8 +2851,10 @@ static float TP_RankPoint(item_vis_t *visitem)
 void TP_FindPoint (void)
 {
 	packet_entities_t *pak;
+	entity_state_t rd_ent, best_entity;
+	qbool replacement = CL_RD_Valid();
 	entity_state_t *ent;
-	int	i, j, tempflags;
+	int	i, j, tempflags, entity_count;
 	unsigned int pointflags_dmm;
 	float best = -1, rank;
 	entity_state_t *bestent = NULL;
@@ -2869,7 +2885,18 @@ void TP_FindPoint (void)
 	}
 
 	pak = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities;
-	for (i = 0,ent = pak->entities; i < pak->num_entities; i++, ent++) {
+	entity_count = replacement ? CL_RD_SlotLimit() : pak->num_entities;
+	for (i = 0; i < entity_count; i++) {
+		if (replacement) {
+			const rd_client_entity_t *entity = CL_RD_Entity(i, false);
+			if (!entity)
+				continue;
+			CL_RD_ToLegacy(&entity->state, &rd_ent);
+			ent = &rd_ent;
+		}
+		else {
+			ent = &pak->entities[i];
+		}
 		item = model2item[ent->modelindex];
 		if (!item || !(item->itemflag & pointflags_dmm))
 			continue;
@@ -2911,7 +2938,8 @@ void TP_FindPoint (void)
 		// check if we can actually see the object
 		if ((rank < best || best < 0) && TP_IsItemVisible(&visitem)) {
 			best = rank;
-			bestent = ent;
+			best_entity = *ent;
+			bestent = &best_entity;
 			bestitem = item;
 		}
 	}

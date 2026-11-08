@@ -437,8 +437,9 @@ qbool SV_Push (edict_t *pusher, vec3_t move)
 	vec3_t		mins, maxs;
 	vec3_t		pushorig;
 	int			num_moved;
-	edict_t		*moved_edict[MAX_EDICTS];
-	vec3_t		moved_from[MAX_EDICTS];
+	edict_t		*local_edict[MAX_LEGACY_EDICTS], **moved_edict = local_edict;
+	vec3_t		local_from[MAX_LEGACY_EDICTS], *moved_from = local_from;
+	void		*storage = NULL;
 	float		solid_save;
 
 	for (i=0 ; i<3 ; i++)
@@ -493,6 +494,15 @@ qbool SV_Push (edict_t *pusher, vec3_t move)
 		// remove the onground flag for non-players
 		if (check->v->movetype != MOVETYPE_WALK)
 			check->v->flags = (int)check->v->flags & ~FL_ONGROUND;
+
+		if (num_moved == MAX_LEGACY_EDICTS && !storage) {
+			/* Preserve this call's rollback before callbacks can reenter. */
+			storage = SV_AllocPhysicsScratch(sv.max_edicts * (sizeof(*moved_edict) + sizeof(*moved_from)));
+			moved_edict = storage;
+			moved_from = (vec3_t *)(moved_edict + sv.max_edicts);
+			memcpy(moved_edict, local_edict, sizeof(local_edict));
+			memcpy(moved_from, local_from, sizeof(local_from));
+		}
 
 		VectorCopy (check->v->origin, moved_from[num_moved]);
 		moved_edict[num_moved] = check;
@@ -551,9 +561,11 @@ qbool SV_Push (edict_t *pusher, vec3_t move)
 			VectorCopy (moved_from[i], moved_edict[i]->v->origin);
 			SV_LinkEdict (moved_edict[i], false);
 		}
+		SV_FreePhysicsScratch(storage);
 		return false;
 	}
 
+	SV_FreePhysicsScratch(storage);
 	return true;
 }
 

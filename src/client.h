@@ -618,6 +618,14 @@ typedef struct scr_damage_s {
 	qbool visible;
 } scr_damage_t;
 
+/* Retained RD network state plus derived client prediction information. */
+typedef struct {
+    rd_entity_state_t state;            // Base wire fields, independent of legacy packet arrays.
+    vec3_t viewangles;                  // View angles derived using the last update's pitch convention.
+    double state_time;                 // Local command/receive time of the last entity update.
+    qbool reset;                       // This frame explicitly reset the entity to its baseline.
+} rd_client_entity_t;
+
 /// a structure that is wiped completely at every server signon
 typedef struct {
 	int			servercount;		///< server identification for prespawns
@@ -658,6 +666,7 @@ typedef struct {
 
 	double		last_ping_request;	///< while showing scoreboard
 
+	struct cl_rd_state_s *rd;           // RD-only retained frames/baselines, freed before state clear.
 	// sentcmds[cl.netchan.outgoing_sequence & UPDATE_MASK] = cmd
 	frame_t		frames[UPDATE_BACKUP];
 
@@ -877,7 +886,8 @@ typedef struct visentity_s {
 #define MAX_STANDARD_ENTITIES 2048
 
 typedef struct visentlist_s {
-	visentity_t list[MAX_STANDARD_ENTITIES];
+	visentity_t* list;              // CPU instances grow independently of GPU batch limits.
+	int         capacity;          // Retained between frames; released with client state.
 	int         count;
 
 	int         typecount[visent_max];
@@ -1147,6 +1157,24 @@ void CL_SetSolidPlayers (int playernum);
 void CL_SetUpPlayerPrediction(qbool dopred);
 void CL_EmitEntities (void);
 void CL_ClearProjectiles (void);
+/* Base RD decoding and ownership; only selected after RD negotiation. */
+// Project retained RD state into the existing render/prediction interfaces, one entity at a time.
+void CL_RD_ToLegacy(const rd_entity_state_t *source, entity_state_t *target);
+void CL_RD_ToPlayer(const rd_client_entity_t *source, player_state_t *target);
+// Publish a completely decoded RD frame to player prediction and entity interpolation.
+void CL_RD_PublishFrame(void);
+qbool CL_RD_ReadState(rd_client_entity_t *result, const rd_client_entity_t *old,
+                     const rd_client_entity_t *baseline, int number);
+qbool CL_RD_ReadBaseline(rd_client_entity_t *result, qbool numbered);
+qbool CL_RD_ParseEntities(void);
+qbool CL_RD_Valid(void);
+int CL_RD_SlotLimit(void);
+const rd_client_entity_t *CL_RD_Entity(int number, qbool previous);
+float CL_RD_Time(qbool previous);
+void CL_RD_Clear(void);
+const rd_client_entity_t *CL_RD_Baseline(int number);
+const rd_entity_state_t *CL_RD_Static(int index);
+void CL_RD_SetStatic(int index, const rd_entity_state_t *state);
 void CL_ParsePacketEntities (qbool delta);
 #ifdef MVD_PEXT1_SIMPLEPROJECTILE
 void CL_ParsePacketSimpleProjectiles(void);

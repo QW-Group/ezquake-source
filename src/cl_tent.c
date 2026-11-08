@@ -409,12 +409,98 @@ fproj_t *CL_CreateFakeRocket(void)
 
 #endif // EZQ_FAKEPROJ
 
+/* Keep FTE and legacy encoded rail trails on the same user-selected renderer. */
+static void CL_DrawRailTrail(vec3_t start, vec3_t end, int color)
+{
+	// Most trail styles ignore the palette color.
+	switch (r_instagibtrail.integer) {
+		case 1:
+			R_ParticleTrail(start, end, GRENADE_TRAIL);
+			break;
+
+		case 2:
+			R_ParticleTrail(start, end, ROCKET_TRAIL);
+			break;
+
+		case 3:
+			R_ParticleTrail(start, end, ALT_ROCKET_TRAIL);
+			break;
+
+		case 4:
+			R_ParticleTrail(start, end, BLOOD_TRAIL);
+			break;
+
+		case 5:
+			R_ParticleTrail(start, end, BIG_BLOOD_TRAIL);
+			break;
+
+		case 6:
+			R_ParticleTrail(start, end, TRACER1_TRAIL);
+			break;
+
+		case 7:
+			R_ParticleTrail(start, end, TRACER2_TRAIL);
+			break;
+
+		case 8:
+			R_ParticleTrail(start, end, VOOR_TRAIL);
+			break;
+
+		case 9:
+			Classic_ParticleRailTrail(start, end, color);
+			break;
+
+		case 10:
+			R_ParticleTrail(start, end, RAIL_TRAIL);
+			break;
+
+		case 11:
+			QMB_ParticleRailTrail(start, end, color);
+			break;
+
+		case 12:
+			R_ParticleTrail(start, end, LAVA_TRAIL);
+			break;
+
+		case 13:
+			R_ParticleTrail(start, end, AMF_ROCKET_TRAIL);
+			break;
+
+		default:
+			break;
+	}
+}
+
+/* FTE QW rail trails carry only two positions and use the standard blue color. */
+static void CL_ParseRailTrail(vec3_t end)
+{
+	vec3_t start;
+
+	start[0] = MSG_ReadCoord();
+	start[1] = MSG_ReadCoord();
+	start[2] = MSG_ReadCoord();
+	end[0] = MSG_ReadCoord();
+	end[1] = MSG_ReadCoord();
+	end[2] = MSG_ReadCoord();
+
+	if (msg_badread || CL_Demo_SkipMessage(true)) {
+		return;
+	}
+	CL_DrawRailTrail(start, end, 208);
+}
+
+/* RD lightning and FTE beams use entity references; legacy lightning keeps aliases. */
 static void CL_ParseBeam(int type, vec3_t end)
 {
 	int ent;
 	vec3_t start;
+	qbool rd = (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) != 0;
+	qbool reference = rd || (type == 4 && !cls.nqdemoplayback);
 
-	ent = MSG_ReadShort();
+	ent = rd ? MSG_RD_ReadEntityRef() : MSG_ReadShort();
+	if (reference && !rd) {
+		ent = (unsigned short)ent;
+	}
 
 	start[0] = MSG_ReadCoord();
 	start[1] = MSG_ReadCoord();
@@ -423,6 +509,10 @@ static void CL_ParseBeam(int type, vec3_t end)
 	end[0] = MSG_ReadCoord();
 	end[1] = MSG_ReadCoord();
 	end[2] = MSG_ReadCoord();
+
+	if (msg_badread) {
+		return;
+	}
 
 #ifdef MVD_PEXT1_WEAPONPREDICTION
 	if (ent == cl.playernum + 1)
@@ -449,85 +539,14 @@ void CL_CreateBeam(int type, int ent, vec3_t start, vec3_t end)
 		return;
 	}
 
-    // an experimental protocol extension:
-    // TE_LIGHTNING1 with entity num in -512..-1 range is a rail trail
-    if (type == 1 && (ent >= -512 && ent <= -1)) 
-	{
-        int colors[8] = { 6 /* white (change to something else?) */,
-                208 /* blue */,
-                180 /* green */, 35 /* light blue */, 224 /* red */,
-                133 /* magenta... kinda */, 192 /* yellow */, 6 /* white */};
-        int color;
-        int cnum;
+	// Legacy lightning entity aliases encode rail colors rather than references.
+	if (type == 1 && ent >= -512 && ent <= -1) {
+		int colors[8] = { 6, 208, 180, 35, 224, 133, 192, 6 };
 
-        // -512..-257 are colored trails assigned to a specific
-        // player, so overrides can be applied; encoded as follows:
-        // 7654321076543210
-        // 1111111nnnnnnccc  (n = player num, c = color code)
-        cnum = ent & 7;
-        //pnum = (ent >> 3) & 63;
-        color = colors[cnum];
-
-		//color is ignored by most of trails
-		switch(r_instagibtrail.integer)
-		{
-			case 1:
-			R_ParticleTrail(start, end, GRENADE_TRAIL);
-			break;
-
-			case 2:
-			R_ParticleTrail(start, end, ROCKET_TRAIL);
-			break;
-
-			case 3:
-			R_ParticleTrail(start, end, ALT_ROCKET_TRAIL);
-			break;
-
-			case 4:
-			R_ParticleTrail(start, end, BLOOD_TRAIL);
-			break;
-
-			case 5:
-			R_ParticleTrail(start, end, BIG_BLOOD_TRAIL);
-			break;
-
-			case 6:
-			R_ParticleTrail(start, end, TRACER1_TRAIL);
-			break;
-
-			case 7:
-			R_ParticleTrail(start, end, TRACER2_TRAIL);
-			break;
-
-			case 8:
-			R_ParticleTrail(start, end, VOOR_TRAIL);
-			break;
-
-			case 9:
-			Classic_ParticleRailTrail(start, end, color);
-			break;
-
-			case 10:
-			R_ParticleTrail(start, end, RAIL_TRAIL);
-			break;
-
-			case 11:
-			QMB_ParticleRailTrail(start, end, color);
-			break;
-
-			case 12:
-			R_ParticleTrail(start, end, LAVA_TRAIL);
-			break;
-
-			case 13:
-			R_ParticleTrail(start, end, AMF_ROCKET_TRAIL);
-			break;
-
-			default: break;
-		}
-
-        return;
-    }
+		// -512..-257 additionally encode a player number in the upper bits.
+		CL_DrawRailTrail(start, end, colors[ent & 7]);
+		return;
+	}
 
 	switch (type) 
 	{
@@ -685,7 +704,7 @@ static void CL_Parse_TE_SUPERSPIKE(vec3_t pos)
 	}
 }
 
-static void CL_Parse_TE_EXPLOSION(vec3_t pos)
+static void CL_Parse_TE_EXPLOSION(vec3_t pos, qbool nq_particles)
 {
 	dlight_t *dl;
 	extern cvar_t gl_part_explosions;
@@ -743,6 +762,9 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos)
 		// sprite and particles
 		if (amf_part_explosion.value)
 			VXExplosion(pos);
+		else if (nq_particles) {
+			R_NQParticleExplosion(pos);
+		}
 		else {
 			R_ParticleExplosion(pos); // Normal explosion
 		}
@@ -806,6 +828,16 @@ static void CL_Parse_TE_TELEPORT(vec3_t pos)
 	}
 }
 
+static void CL_TE_GunshotEffect(vec3_t pos, int count)
+{
+	if (amf_part_gunshot.value && !Rulesets_RestrictParticles()) {
+		VXGunshot(pos, 5 * count * amf_part_gunshot.value);
+	}
+	else {
+		R_RunParticleEffect(pos, vec3_origin, 256 /* magic! */, 20 * count);
+	}
+}
+
 static void CL_Parse_TE_GUNSHOT(vec3_t pos)
 {
 	int count;
@@ -825,12 +857,34 @@ static void CL_Parse_TE_GUNSHOT(vec3_t pos)
 		return;
 	}
 	
-	if (amf_part_gunshot.value && !Rulesets_RestrictParticles()) {
-		VXGunshot(pos, 5 * count * amf_part_gunshot.value);
+	CL_TE_GunshotEffect(pos, count);
+}
+
+static void CL_Parse_TE_EXPLOSION2(vec3_t pos)
+{
+	int color_start, color_length;
+	dlight_t *dl;
+
+	pos[0] = MSG_ReadCoord();
+	pos[1] = MSG_ReadCoord();
+	pos[2] = MSG_ReadCoord();
+	color_start = MSG_ReadByte();
+	color_length = MSG_ReadByte();
+	if (msg_badread) {
+		Host_Error("CL_ParseTEnt: truncated colored explosion");
+		return;
 	}
-	else {
-		R_RunParticleEffect(pos, vec3_origin, 256 /* magic! */, 20 * count);
+	if (CL_Demo_SkipMessage(true)) {
+		return;
 	}
+
+	Classic_ParticleExplosion2(pos, color_start, color_length);
+	dl = CL_AllocDlight(0);
+	VectorCopy(pos, dl->origin);
+	dl->radius = 350;
+	dl->die = cl.time + 0.5;
+	dl->decay = 300;
+	S_StartSound(-1, 0, cl_sfx_r_exp3, pos, 1, 1);
 }
 
 static void CL_Parse_TE_BLOOD(vec3_t pos)
@@ -928,6 +982,30 @@ void CL_ParseTEnt (void)
 			parsed = true;
 			break;
 
+		case TEQW_RAILTRAIL:
+			if (cls.nqdemoplayback) {
+				break;
+			}
+			CL_ParseRailTrail(pos);
+			parsed = true;
+			break;
+
+		case TEQW_BEAM:
+			if (cls.nqdemoplayback) {
+				break;
+			}
+			CL_ParseBeam(4, pos);
+			parsed = true;
+			break;
+
+		case TEQW_EXPLOSION2:
+			if (cls.nqdemoplayback) {
+				break;
+			}
+			CL_Parse_TE_EXPLOSION2(pos);
+			parsed = true;
+			break;
+
 		// Bullet hitting wall.
 		case TE_GUNSHOT:
 			CL_Parse_TE_GUNSHOT(pos);
@@ -954,6 +1032,19 @@ void CL_ParseTEnt (void)
 		pos[1] = MSG_ReadCoord();
 		pos[2] = MSG_ReadCoord();
 
+		// These QW extensions overlap unrelated NetQuake effect numbers.
+		if (type == TE_BULLET || type == TEQW_SUPERBULLET || type == TEQW_EXPLOSION2 ||
+			type == TEQW_NQEXPLOSION || type == TEQW_NQGUNSHOT) {
+			if (cls.nqdemoplayback) {
+				Host_Error("CL_ParseTEnt: unknown NetQuake type %d", type);
+				return;
+			}
+			if (msg_badread) {
+				Host_Error("CL_ParseTEnt: truncated type %d", type);
+				return;
+			}
+		}
+
 		if (CL_Demo_SkipMessage(true)) {
 			return;
 		}
@@ -972,17 +1063,27 @@ void CL_ParseTEnt (void)
 			
 			// Spike hitting wall.
 			case TE_SPIKE: 
+			case TE_BULLET:
 				CL_Parse_TE_SPIKE(pos);
 				break;
 
 			// Super spike hitting wall.
 			case TE_SUPERSPIKE:		
+			case TEQW_SUPERBULLET:
 				CL_Parse_TE_SUPERSPIKE(pos);
 				break;
 
 			// Rocket explosion.
 			case TE_EXPLOSION:	
-				CL_Parse_TE_EXPLOSION(pos);
+				CL_Parse_TE_EXPLOSION(pos, false);
+				break;
+
+			case TEQW_NQEXPLOSION:
+				CL_Parse_TE_EXPLOSION(pos, true);
+				break;
+
+			case TEQW_NQGUNSHOT:
+				CL_TE_GunshotEffect(pos, 1);
 				break;
 
 			// Tarbaby explosion

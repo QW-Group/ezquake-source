@@ -32,6 +32,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 static void sv_demoDir_OnChange(cvar_t *cvar, char *value, qbool *cancel);
+static void OnChange_demo_format(cvar_t *var, char *value, qbool *cancel);
+static void OnChange_qtv_stream_max_queue_size(cvar_t *var, char *value, qbool *cancel);
+
+// Maximum queued bytes per QTV stream, configured in KiB.
+cvar_t qtv_stream_max_queue_size = {"qtv_stream_max_queue_size", "16384", CVAR_NONE, OnChange_qtv_stream_max_queue_size};
 
 cvar_t  sv_demoUseCache     = {"sv_demoUseCache",   "0"};
 cvar_t  sv_demoCacheSize    = {"sv_demoCacheSize",  "0", CVAR_ROM};
@@ -44,6 +49,8 @@ cvar_t  sv_demoIdlefps      = {"sv_demoIdlefps",    "10"};
 cvar_t  sv_demoPings        = {"sv_demopings",      "3"};
 cvar_t  sv_demoMaxSize      = {"sv_demoMaxSize",    "20480"};
 cvar_t  sv_demoExtraNames   = {"sv_demoExtraNames", "0"};
+cvar_t sv_demo_format = {"sv_demo_format", "auto", CVAR_NONE, OnChange_demo_format};
+cvar_t sv_demo_rd_predinfo = {"sv_demo_rd_predinfo", "0"};
 
 cvar_t	sv_demoPrefix		= {"sv_demoPrefix",		""};
 cvar_t	sv_demoSuffix		= {"sv_demoSuffix",		""};
@@ -170,6 +177,7 @@ void DestClose (mvddest_t *d, qbool destroyfiles)
 void DestFlush (qbool complete)
 {
 	int len;
+	double now;
 	mvddest_t *d, *t;
 
 	if (!demo.dest)
@@ -213,11 +221,23 @@ void DestFlush (qbool complete)
 			break;
 
 		case DEST_STREAM:
-			if (d->io_time + qtv_streamtimeout.value <= Sys_DoubleTime())
+			now = Sys_DoubleTime();
+			if (d->cacheused && !d->prefix_bytes) {
+				d->prefix_bytes = d->cacheused;
+				d->prefix_time = now;
+			}
+			if (d->io_time + qtv_streamtimeout.value <= now)
 			{
 				// problem what send() have internal buffer, so send() success some time even peer side does't read,
 				// this may take some time before internal buffer overflow and timeout trigger, depends of buffer size.
 				Sys_Printf("DestFlush: stream timeout\n");
+				d->error = true;
+			}
+
+			/* Temporary workaround for QTV rebuffering, particularly older versions.
+			 * Fix QTV rather than increase this timeout multiplier. */
+			if (!d->error && d->prefix_bytes && d->prefix_time + 2.0 * qtv_streamtimeout.value <= now) {
+				Sys_Printf("DestFlush: stream queue timeout\n");
 				d->error = true;
 			}
 
@@ -233,6 +253,12 @@ void DestFlush (qbool complete)
 				}
 				else if (len > 0) //we put some data through
 				{ //move up the buffer
+					if (len >= d->prefix_bytes) {
+						d->prefix_bytes = 0;
+					}
+					else {
+						d->prefix_bytes -= len;
+					}
 					d->cacheused -= len;
 					memmove(d->cache, d->cache+len, d->cacheused);
 
@@ -312,6 +338,91 @@ static int DestCloseAllFlush (qbool destroyfiles, qbool mvdonly)
 	return numclosed;
 }
 
+/* Apply live queue limits without disturbing other destinations or queued bytes. */
+static void OnChange_qtv_stream_max_queue_size(cvar_t *var, char *value, qbool *cancel)
+{
+	char *end;
+	long size_kib = strtol(value, &end, 10);
+	int limit;
+	mvddest_t *d;
+
+	if (end == value || *end || size_kib < 1 || size_kib > INT_MAX / 1024) {
+		Con_Printf("%s must be an integer from 1 to %d KiB.\n", var->name, INT_MAX / 1024);
+		*cancel = true;
+		return;
+	}
+	limit = (int)size_kib * 1024;
+	for (d = demo.dest; d; d = d->nextdest) {
+		if (d->desttype != DEST_STREAM || d->error) {
+			continue;
+		}
+		d->maxcachesize = limit;
+		if (d->cacheused > limit) {
+			Sys_Printf("QTV stream %d: queue exceeds new limit (%d > %d bytes)\n", d->id, d->cacheused, limit);
+			d->error = true;
+			continue;
+		}
+		if (d->cachesize > limit) {
+			char *cache = Q_tryrealloc(d->cache, limit);
+			if (!cache) {
+				Sys_Printf("QTV stream %d: could not resize queue to %d bytes\n", d->id, limit);
+				d->error = true;
+				continue;
+			}
+			d->cache = cache;
+			d->cachesize = limit;
+		}
+	}
+}
+
+/* Grow backing storage without changing the destination's queue limit. */
+static qbool DemoGrowCache(mvddest_t *d, int needed)
+{
+	int capacity = d->cachesize;
+	char *cache;
+
+	if (needed <= capacity) {
+		return true;
+	}
+	while (capacity < needed) {
+		if (capacity > d->maxcachesize / 2) {
+			capacity = d->maxcachesize;
+		}
+		else {
+			capacity *= 2;
+		}
+	}
+	cache = Q_tryrealloc(d->cache, capacity);
+	if (!cache) {
+		return false;
+	}
+	d->cache = cache;
+	d->cachesize = capacity;
+	return true;
+}
+
+/* Trim stream backing after startup, preserving queued data and its limit. */
+static void DemoTrimCache(mvddest_t *d)
+{
+	int capacity = 65536;
+	char *cache;
+
+	if (d->desttype != DEST_STREAM || d->error || d->cacheused > d->cachesize / 2) {
+		return;
+	}
+	while (capacity < d->cacheused) {
+		capacity *= 2;
+	}
+	if (capacity > d->cachesize / 2) {
+		return;
+	}
+	cache = Q_tryrealloc(d->cache, capacity);
+	if (cache) {
+		d->cache = cache;
+		d->cachesize = capacity;
+	}
+}
+
 int DemoWriteDest (void *data, int len, mvddest_t *d)
 {
 	int ret;
@@ -335,9 +446,14 @@ int DemoWriteDest (void *data, int len, mvddest_t *d)
 			break;
 		case DEST_BUFFEREDFILE:	//these write to a cache, which is flushed later
 		case DEST_STREAM:
-			if (d->cacheused + len > d->maxcachesize)
+			if ((size_t)d->cacheused + len > (size_t)d->maxcachesize)
 			{
-				Sys_Printf("DemoWriteDest: cache overflow %d > %d\n", d->cacheused + len, d->maxcachesize);
+				Sys_Printf("DemoWriteDest: cache overflow %zu > %d\n", (size_t)d->cacheused + len, d->maxcachesize);
+				d->error = true;
+				return 0;
+			}
+			if (!DemoGrowCache(d, d->cacheused + len)) {
+				Sys_Printf("DemoWriteDest: could not grow cache for destination %d\n", d->id);
 				d->error = true;
 				return 0;
 			}
@@ -626,7 +742,7 @@ static qbool SV_MVDWritePacketsEx (int num)
 		// find two frames
 		// one before the exact time (time - msec) and one after,
 		// then we can interpolte exact position for current frame
-		for (i = 0, cl = frame->clients, last_cl = demo.clients; i < MAX_CLIENTS; i++, cl++, last_cl++)
+		for (i = 0, cl = frame->clients, last_cl = demo.clients; !SV_MVD_UsesRD() && i < MAX_CLIENTS; i++, cl++, last_cl++)
 		{
 			if (cl->parsecount != demo.lastwritten)
 				continue; // not valid
@@ -807,6 +923,87 @@ qbool SV_MVDWritePackets (int num)
 	return (sv.mvdrecording ? true : false);
 }
 
+/* Selection depends on the allowed map capacity, never current occupancy. */
+static int SV_MVD_SelectFormat(const char *option, int capacity)
+{
+	if (!strcasecmp(option, "auto")) {
+		return capacity > MAX_LEGACY_EDICTS;
+	}
+	if (!strcasecmp(option, "rd")) {
+		return 1;
+	}
+	if (!strcasecmp(option, "legacy")) {
+		return capacity <= MAX_LEGACY_EDICTS ? 0 : -1;
+	}
+	return -1;
+}
+
+/* Reject spelling errors without disturbing the current recording epoch. */
+static void OnChange_demo_format(cvar_t *var, char *value, qbool *cancel)
+{
+	if (SV_MVD_SelectFormat(value, MAX_LEGACY_EDICTS) < 0) {
+		Con_Printf("sv_demo_format must be auto, legacy or rd\n");
+		*cancel = true;
+	}
+}
+
+/* Buffered output uses the format declared by its current recording epoch. */
+qbool SV_MVD_UsesRD(void)
+{
+	return (demo.recorder.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) != 0;
+}
+
+/* Flush queued metadata at the current clock without replaying pause time. */
+void SV_MVD_FlushCurrentFrame(void)
+{
+	demo_frame_t *frame = &demo.frames[demo.parsecount & UPDATE_MASK];
+
+	frame->time = sv.time;
+	frame->pause_duration = (int)bound(0, (curtime - demo.curtime) * 1000.0f, 255);
+	frame->paused = sv.paused && frame->pause_duration > 0;
+	SV_MVDWritePackets(demo.parsecount - demo.lastwritten + 1);
+	frame->paused = false;
+	frame->pause_duration = 0;
+	demo.curtime = curtime;
+	demo.time = sv.time;
+}
+
+/* Drain the old epoch before map memory, times or coordinate settings change. */
+void SV_MVD_FinishMap(void)
+{
+	if (sv.mvdrecording) {
+		SV_MVD_FlushCurrentFrame();
+		DestFlush(true);
+	}
+	SV_MVD_ClearRD();
+}
+
+/* Latch once after the game's map capacity is finalized. */
+void SV_MVD_ConfigureMap(void)
+{
+	mvddest_t **link = &demo.dest;
+	const char *format = sv_demo_format.string;
+
+	/* A user-created cvar can predate registration and bypass OnChange. */
+	if (SV_MVD_SelectFormat(format, MAX_LEGACY_EDICTS) < 0) {
+		Con_Printf("Invalid sv_demo_format; using auto for this map.\n");
+		format = "auto";
+	}
+	sv.demo_format = SV_MVD_SelectFormat(format, sv.max_edicts);
+	sv.demo_rd_predinfo = sv_demo_rd_predinfo.value != 0;
+	while (*link) {
+		mvddest_t *dest = *link;
+		if (sv.demo_format < 0) {
+			Con_Printf("Closing recording output: selected MVD format is unsupported.\n");
+			*link = dest->nextdest;
+			DestClose(dest, false);
+		}
+		else {
+			link = &dest->nextdest;
+		}
+	}
+}
+
 /*
 ====================
 SV_InitRecord
@@ -841,7 +1038,8 @@ static mvddest_t *SV_InitRecordFile (char *name)
 		dst->desttype = DEST_BUFFEREDFILE;
 		dst->file = file;
 		dst->maxcachesize = 1024 * (int) sv_demoCacheSize.value;
-		dst->cache = (char *) Q_malloc (dst->maxcachesize);
+		dst->cachesize = dst->maxcachesize;
+		dst->cache = (char *) Q_malloc (dst->cachesize);
 	}
 
 	s = name + strlen(name);
@@ -945,8 +1143,10 @@ void SV_MVDStop (int reason, qbool mvdonly)
 		// stop and remove
 		DestCloseAllFlush(true, mvdonly);
 
-		if (!demo.dest)
+		if (!demo.dest) {
 			sv.mvdrecording = false;
+			SV_MVD_ClearRD();
+		}
 
 		if (reason == 4)
 			SV_BroadcastPrintf (PRINT_CHAT, "Error in MVD/QTV recording, recording stopped\n");
@@ -982,8 +1182,10 @@ void SV_MVDStop (int reason, qbool mvdonly)
 
 	numclosed = DestCloseAllFlush(false, mvdonly);
 
-	if (!demo.dest)
+	if (!demo.dest) {
 		sv.mvdrecording = false;
+		SV_MVD_ClearRD();
+	}
 
 	if (numclosed)
 	{
@@ -1049,6 +1251,17 @@ static void SV_WriteRecordMVDMessage (sizebuf_t *msg)
 	DemoWrite (&len, 4);
 
 	DemoWrite (msg->data, msg->cursize);
+}
+
+/* RD chunks bypass the bounded legacy frame accumulator after its metadata
+ * has been flushed. Initial messages respect the existing singledest scope. */
+qbool SV_MVD_WriteRDMessage(sizebuf_t *msg, qbool initial)
+{
+	if (initial) {
+		SV_WriteRecordMVDMessage(msg);
+		return sv.mvdrecording;
+	}
+	return MVD_WriteMessage(msg, 0);
 }
 
 /*
@@ -1126,6 +1339,20 @@ qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange)
 {
 	int i;
 
+	if (sv.demo_format < 0) {
+		Con_Printf("Cannot record: selected MVD format is unsupported for this output.\n");
+		return false;
+	}
+	if (!mapchange && dest && sv.mvdrecording && SV_MVD_UsesRD()) {
+		/* Bring old outputs to the new destination's snapshot base first. */
+		SV_MVD_FlushCurrentFrame();
+		if (!SV_MVD_WriteRDEntities(false)) {
+			SV_MVDStop(4, false);
+			return false;
+		}
+		DestFlush(true);
+	}
+
 	if (mapchange)
 	{
 		if (dest) // during mapchange dest must be NULL
@@ -1145,7 +1372,12 @@ qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange)
 
     	// and here we memset() not whole demo_t struct, but part,
     	// so demo.dest and demo.pendingdest is not overwriten
+		SV_MVD_ClearRD();
 		memset(&demo, 0, offsetof(demo_t, mem_set_point));
+		if (sv.demo_format == 1) {
+			demo.prevtime = sv.time;
+			demo.curtime = curtime;
+		}
 
 		for (i = 0; i < UPDATE_BACKUP; i++)
 		{
@@ -1155,6 +1387,8 @@ qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange)
 
 		// set up buffer for non releable data
 		SZ_InitEx(&demo.datagram, demo.datagram_data, sizeof(demo.datagram_data), true);
+		/* RD flash events follow the recorder's entity snapshot. */
+		SZ_InitEx(&demo.recorder.datagram, demo.recorder.datagram_buf, sizeof(demo.recorder.datagram_buf), true);
 	}
 
 	if (mapchange)
@@ -1179,40 +1413,18 @@ qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange)
 	return true;
 }
 
-static void SV_MVD_ReservePrecacheLists(mvddest_t *dest)
+/* Admit file recording before allocating its file/cache; own failed starts. */
+static void SV_MVD_StartFile(char *name)
 {
-	size_t reserve = 65536;
-	mvddest_t *d;
-	int i;
+	mvddest_t *dest;
 
-	/* Initial gamestate is queued before streams are flushed. Keep the old
-	 * allowance for other state, plus names and worst-case per-chunk framing. */
-	for (i = 1; i < MAX_SOUNDS && sv.sound_precache[i]; ++i) {
-		reserve += strlen(sv.sound_precache[i]) + 16;
+	if (sv.demo_format < 0) {
+		Con_Printf("Cannot record: selected MVD format is unsupported.\n");
+		return;
 	}
-	for (i = 1; i < MAX_MODELS && sv.model_precache[i]; ++i) {
-		reserve += strlen(sv.model_precache[i]) + 16;
-	}
-	for (d = demo.dest; d; d = d->nextdest) {
-		size_t needed;
-		char *cache;
-
-		if (d->desttype != DEST_STREAM || (dest && dest != d)) {
-			continue;
-		}
-		needed = reserve + d->cacheused;
-		if (needed > INT_MAX) {
-			SV_Error("MVD precache lists exceed stream cache limit");
-		}
-		if (needed <= (size_t)d->maxcachesize) {
-			continue;
-		}
-		cache = Q_malloc(needed);
-		memcpy(cache, d->cache, d->cacheused);
-		Q_free(d->cache);
-		d->cache = cache;
-		d->maxcachesize = (int)needed;
-	}
+	dest = SV_InitRecordFile(name);
+	if (dest && !SV_MVD_Record(dest, false))
+		DestClose(dest, true);
 }
 
 void SV_MVD_SendInitialGamestate(mvddest_t* dest)
@@ -1222,6 +1434,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	unsigned int n;
 	char* s, info[MAX_EXT_INFO_STRING];
 
+	mvddest_t *d;
 	client_t* player;
 	edict_t* ent;
 	char* gamedir;
@@ -1230,8 +1443,6 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 
 	if (!demo.dest)
 		return;
-
-	SV_MVD_ReservePrecacheLists(dest);
 
 	sv.mvdrecording = true; // NOTE:  afaik set to false on map change, so restore it here
 	demo.pingtime = demo.time = sv.time;
@@ -1290,6 +1501,21 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 		demo.recorder.fteprotocolextensions |= FTE_PEXT_FLOATCOORDS;
 	else
 		demo.recorder.fteprotocolextensions &= ~FTE_PEXT_FLOATCOORDS;
+#endif
+
+#if defined(FTE_PEXT_TE_BULLET) && defined(FTE_PEXT2_REPLACEMENTDELTAS)
+	/* The map selects recording format independently of live client negotiation. */
+	if (sv.demo_format == 1) {
+		demo.recorder.fteprotocolextensions2 |= FTE_PEXT2_REPLACEMENTDELTAS;
+		demo.recorder.fteprotocolextensions |= FTE_PEXT_TE_BULLET;
+	} else {
+		demo.recorder.fteprotocolextensions2 &= ~FTE_PEXT2_REPLACEMENTDELTAS;
+		demo.recorder.fteprotocolextensions &= ~FTE_PEXT_TE_BULLET;
+	}
+#elif defined(FTE_PEXT_TE_BULLET)
+	demo.recorder.fteprotocolextensions &= ~FTE_PEXT_TE_BULLET;
+#elif defined(FTE_PEXT2_REPLACEMENTDELTAS)
+	demo.recorder.fteprotocolextensions2 &= ~FTE_PEXT2_REPLACEMENTDELTAS;
 #endif
 
 #ifdef PROTOCOL_VERSION_FTE
@@ -1414,7 +1640,14 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 				SZ_Clear (&buf);
 			}
 
-			if (demo.recorder.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2) {
+			if (SV_MVD_UsesRD()) {
+				rd_entity_state_t rd;
+				SV_RD_FromLegacy(&rd, s);
+				MSG_WriteByte(&buf, svc_fte_spawnstatic2);
+				if (!MSG_RD_WriteBaseline(&buf, &rd, false, (demo.recorder.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0))
+					SV_Error("RD MVD static record does not fit");
+			}
+			else if (demo.recorder.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2) {
 				MSG_WriteByte(&buf, svc_fte_spawnstatic2);
 				SV_WriteDelta(&demo.recorder, &from, s, &buf, true);
 			}
@@ -1450,7 +1683,14 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 				continue;
 			}
 
-			if (demo.recorder.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2) {
+			if (SV_MVD_UsesRD()) {
+				rd_entity_state_t rd;
+				SV_RD_FromLegacy(&rd, s);
+				MSG_WriteByte(&buf, svc_fte_spawnbaseline2);
+				if (!MSG_RD_WriteBaseline(&buf, &rd, true, (demo.recorder.mvdprotocolextensions1 & MVD_PEXT1_FLOATCOORDS) != 0))
+					SV_Error("RD MVD baseline record does not fit");
+			}
+			else if (demo.recorder.fteprotocolextensions & FTE_PEXT_SPAWNSTATIC2) {
 				MSG_WriteByte(&buf, svc_fte_spawnbaseline2);
 				SV_WriteDelta(&demo.recorder, &empty_baseline, s, &buf, true);
 			}
@@ -1543,7 +1783,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	}
 
 	// this set proper model origin and angles etc for players
-	for (i = 0; i < MAX_CLIENTS; i++)
+	for (i = 0; !SV_MVD_UsesRD() && i < MAX_CLIENTS; i++)
 	{
 		vec3_t origin, angles;
 		int j, flags;
@@ -1647,8 +1887,10 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 		stats[STAT_CELLS]        = ent->v->ammo_cells;
 		stats[STAT_ACTIVEWEAPON] = ent->v->weapon;
 
-		if (ent->v->health > 0) // viewheight for PF_DEAD & PF_GIB is hardwired
+		/* RD carries corpse/gib viewheight explicitly instead of legacy flags. */
+		if (ent->v->health > 0 || SV_MVD_UsesRD()) {
 			stats[STAT_VIEWHEIGHT] = ent->v->view_ofs[2];
+		}
 
 		// stuff the sigil bits into the high bits of items for sbar
 		stats[STAT_ITEMS] = (int) ent->v->items | ((int) PR_GLOBAL(serverflags) << 28);
@@ -1682,6 +1924,9 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 		Sys_Error("SV_MVD_SendInitialGamestate: buf.cursize %d", buf.cursize);
 	}
 
+	if (SV_MVD_UsesRD() && !SV_MVD_WriteRDEntities(true))
+		SV_Error("Could not write RD MVD initial state");
+
 	// send all current light styles
 	for (i=0 ; i<MAX_LIGHTSTYLES ; i++)
 	{
@@ -1699,6 +1944,11 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 
 //	SV_WriteSetMVDMessage();
 
+	for (d = demo.dest; d; d = d->nextdest) {
+		if (!dest || dest == d) {
+			DemoTrimCache(d);
+		}
+	}
 	singledest = NULL;
 }
 
@@ -1746,7 +1996,7 @@ void SV_MVD_Record_f (void)
 	//
 	// open the demo file and start recording
 	//
-	SV_MVD_Record (SV_InitRecordFile(name), false);
+	SV_MVD_StartFile(name);
 }
 
 /*
@@ -1844,7 +2094,7 @@ void SV_MVDEasyRecord_f (void)
 	snprintf(name4, sizeof(name4), "%s", va("%s/%s.xml", sv_demoDir.string, name4));
 	Cvar_Set(&extralogname, name4);
 
-	SV_MVD_Record (SV_InitRecordFile(name2), false);
+	SV_MVD_StartFile(name2);
 }
 
 //============================================================
@@ -1855,6 +2105,8 @@ static void MVD_Init (void)
 
 	memset(&demo, 0, sizeof(demo)); // clear whole demo struct at least once
 	
+	Cvar_Register (&sv_demo_format);
+	Cvar_Register (&sv_demo_rd_predinfo);
 	Cvar_Register (&sv_demofps);
 	Cvar_Register (&sv_demoIdlefps);
 	Cvar_Register (&sv_demoPings);

@@ -65,8 +65,14 @@ static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 
 	dst->desttype = DEST_STREAM;
 	dst->socket = socket1;
-	dst->maxcachesize = 65536;	//is this too small?
-	dst->cache = (char *) Q_malloc(dst->maxcachesize);
+	dst->maxcachesize = (int)qtv_stream_max_queue_size.value * 1024;
+	dst->cachesize = dst->maxcachesize < 65536 ? dst->maxcachesize : 65536;
+	dst->cache = Q_tryrealloc(NULL, dst->cachesize);
+	if (!dst->cache) {
+		Q_free(dst);
+		return NULL;
+	}
+	memset(dst->cache, 0, dst->cachesize);
 	dst->io_time = Sys_DoubleTime();
 	dst->id = ++lastdest;
 	dst->na = na;
@@ -626,6 +632,10 @@ void SV_MVD_RunPendingConnections (void)
 					{
 						e = ("QTVSV 1\n"
 							 "PERROR: Incompatible version (valid version is v1)\n\n");
+					}
+					else if (sv.demo_format < 0)
+					{
+						e = "QTVSV 1\nTERROR: This map requires an unsupported recording format.\n\n";
 					}
 					else if (raw)
 					{
@@ -1459,6 +1469,13 @@ void SV_QTV_Init(void)
 	Cvar_Register (&qtv_password);
 	Cvar_Register (&qtv_pendingtimeout);
 	Cvar_Register (&qtv_streamtimeout);
+	Cvar_Register (&qtv_stream_max_queue_size);
+#ifndef SERVERONLY
+	/* Early client configuration may predate registration and skip OnChange. */
+	if (Cvar_ForceCallback(&qtv_stream_max_queue_size)) {
+		Cvar_ResetVar(&qtv_stream_max_queue_size);
+	}
+#endif
 	Cvar_Register (&qtv_sayenabled);
 
 	Cmd_AddCommand ("qtv_list", Qtv_List_f);

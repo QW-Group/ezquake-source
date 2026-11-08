@@ -989,36 +989,27 @@ void *Q_calloc(size_t n, size_t size)
 }
 
 #ifdef DEBUG_MEMORY_ALLOCATIONS
-#define EZQUAKE_SAFE_REALLOC
-void* Q_realloc_debug(void* p, size_t newsize, const char* file, int line, const char* label)
+/* Return allocation failures to callers which can recover without stopping the game. */
+void* Q_tryrealloc_debug(void* p, size_t newsize, const char* file, int line, const char* label)
 {
 	ezquake_memory_block_t* block = NULL;
-	size_t old_size = 0;
+	qbool had_block = p != NULL;
 
-#ifdef EZQUAKE_SAFE_REALLOC
-	if (p && old_size)
-	{
-		void* new_buffer;
-
-		// To be sure we're not assuming the memory block is extended, allocate and re-allocate (can catch some bugs)
-		block = MEMORY_BLOCK_FOR_PTR(p);
-		new_buffer = Q_malloc_debug(newsize + sizeof(ezquake_memory_block_t), file, line, label);
-		if (!new_buffer) {
-			return NULL;
-		}
-		memcpy(new_buffer, p, block->size);
-		Q_free_debug(p, file, line);
-		return new_buffer;
+	if (!newsize || newsize > (size_t)-1 - sizeof(*block)) {
+		return NULL;
 	}
-#endif
-
 	if (p) {
 		block = MEMORY_BLOCK_FOR_PTR(p);
+	}
+	block = realloc(block, newsize + sizeof(*block));
+	if (!block) {
+		return NULL;
+	}
+
+	if (had_block) {
 		Sys_Printf("\nmemory,free(realloc),%u,%s,%d,%u,%s,%d\n", block->allocation_number, block->filename, block->line_number, block->size, file, line);
 	}
 	Sys_Printf("\nmemory,alloc(realloc),%u,%s,%d,%u,%s\n", allocation_number, file, line, newsize, label ? label : "");
-
-	block = p = realloc(block, newsize + sizeof(ezquake_memory_block_t));
 
 	strlcpy(block->filename, file, sizeof(block->filename));
 	block->line_number = line;
@@ -1027,18 +1018,40 @@ void* Q_realloc_debug(void* p, size_t newsize, const char* file, int line, const
 	if (label) {
 		strlcpy(block->label, label, sizeof(block->label));
 	}
+	else if (!had_block) {
+		block->label[0] = '\0';
+	}
 	Q_malloc_register(file, line);
 
-	return (void*)(((intptr_t)p) + sizeof(ezquake_memory_block_t));
+	return PTR_FOR_MEMORY_BLOCK(block);
 }
-#else
-void *Q_realloc(void *p, size_t newsize)
+
+void* Q_realloc_debug(void* p, size_t newsize, const char* file, int line, const char* label)
 {
-	if (!(p = realloc(p, newsize))) {
+	void *resized = Q_tryrealloc_debug(p, newsize, file, line, label);
+
+	if (!resized) {
 		Sys_Error("Q_realloc: Not enough memory free; check disk space\n");
 	}
+	return resized;
+}
+#else
+void *Q_tryrealloc(void *p, size_t newsize)
+{
+	if (!newsize) {
+		return NULL;
+	}
+	return realloc(p, newsize);
+}
 
-	return p;
+void *Q_realloc(void *p, size_t newsize)
+{
+	void *resized = Q_tryrealloc(p, newsize);
+
+	if (!resized) {
+		Sys_Error("Q_realloc: Not enough memory free; check disk space\n");
+	}
+	return resized;
 }
 #endif // !DEBUG_MEMORY_ALLOCATIONS
 

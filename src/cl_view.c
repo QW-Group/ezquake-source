@@ -971,6 +971,9 @@ static void V_CalcRefdef(void)
 	vec3_t forward;
 	float bob;
 	float height_adjustment;
+	qbool dead = (view_message.flags & PF_DEAD)
+		|| ((cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)
+			&& view_message.pm_type == PM_LOCK && cl.stats[STAT_HEALTH] <= 0);
 
 	V_DriftPitch();
 
@@ -994,16 +997,18 @@ static void V_CalcRefdef(void)
 
 	// add view height
 	r_refdef.viewheight_test = 4;
-	if (view_message.flags & PF_GIB) {
+	if (!(cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) && (view_message.flags & PF_GIB)) {
 		r_refdef.vieworg[2] += 8;	// gib view height
 	}
-	else if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0)) {
+	else if (!(cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)
+		&& (view_message.flags & PF_DEAD) && cl.stats[STAT_HEALTH] <= 0) {
 		r_refdef.vieworg[2] -= 16;	// corpse view height
 	}
 	else {
 		// normal view height
 		// Use STAT_VIEWHEIGHT in case of server support it or NQ demoplayback, if not then use default viewheight.
-		r_refdef.vieworg[2] += ((cl.z_ext & Z_EXT_VIEWHEIGHT) || cls.nqdemoplayback) ? cl.stats[STAT_VIEWHEIGHT] : DEFAULT_VIEWHEIGHT;
+		r_refdef.vieworg[2] += ((cl.z_ext & Z_EXT_VIEWHEIGHT) || cls.nqdemoplayback
+			|| (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS)) ? cl.stats[STAT_VIEWHEIGHT] : DEFAULT_VIEWHEIGHT;
 
 		r_refdef.vieworg[2] += height_adjustment;
 
@@ -1028,12 +1033,12 @@ static void V_CalcRefdef(void)
 		r_refdef.viewangles[PITCH] += cl.punchangle * 0.5;
 	}
 
-	if (view_message.flags & PF_DEAD && (cl.stats[STAT_HEALTH] <= 0)) {
+	if (dead && cl.stats[STAT_HEALTH] <= 0) {
 		r_refdef.viewangles[ROLL] = 80;	// dead view angle
 	}
 
 	//VULT CAMERAS
-	CameraUpdate(view_message.flags & PF_DEAD);
+	CameraUpdate(dead);
 
 	// meag: really viewheight shouldn't be here, but it was incorrectly passed for years instead of bob,
 	//       and so without it the gun is rendered too far forward if e.g. viewheight -6

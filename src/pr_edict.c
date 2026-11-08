@@ -1251,8 +1251,8 @@ void PR1_LoadProgs (void)
 
 void PR1_InitProg(void)
 {
-	sv.game_edicts = (entvars_t*) Hunk_AllocName (MAX_EDICTS * pr_edict_size, "edicts");
-	sv.max_edicts = MAX_EDICTS;
+	sv.max_edicts = (int)sv_maxedicts.value;
+	sv.game_edicts = (entvars_t*) Hunk_AllocName (sv.max_edicts * pr_edict_size, "edicts");
 }
 
 /*

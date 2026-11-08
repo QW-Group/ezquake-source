@@ -114,6 +114,8 @@ typedef struct uniform_block_spritedata_s {
 void GLM_PreRenderView(void);
 void GLM_SetupGL(void);
 
+// Release retained CPU draw records when models or the renderer are discarded.
+void GLM_FreeAliasModelBatches(void);
 void GLM_InitialiseAliasModelBatches(void);
 void GLM_PrepareAliasModelBatches(void);
 void GLM_DrawAliasModelBatches(void);
