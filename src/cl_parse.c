@@ -2094,16 +2094,12 @@ void CL_ParseStartSoundPacket(qbool extended)
 		Host_Error ("CL_ParseStartSoundPacket: ent = %i", ent);
 	if (sound_num < 0 || sound_num >= MAX_SOUNDS)
 		Host_Error("CL_ParseStartSoundPacket: sound = %i", sound_num);
-	if (rd && !sound_num) {
-		S_StopSound(ent, channel);
-		return;
-	}
-	if (!cl.sound_precache[sound_num])
+	if (sound_num && !cl.sound_precache[sound_num])
 		return;
 
 #ifdef MVD_PEXT1_WEAPONPREDICTION
 	// skip our own weapon/jump sounds if we are predicting them
-	if (ent == cl.playernum + 1 && PM_WeaponPredictionActive())
+	if (sound_num && ent == cl.playernum + 1 && PM_WeaponPredictionActive())
 	{
 		extern cvar_t cl_nopred;
 
@@ -2161,6 +2157,14 @@ void CL_ParseStartSoundPacket(qbool extended)
 
 	if (CL_Demo_SkipMessage(true))
 		return;
+
+	/* FTE uses sample zero to stop a channel in both QW sound layouts,
+	 * including legacy connections and demos. Apply demo filtering and
+	 * tracked-player remapping just as for ordinary sounds. */
+	if (!sound_num) {
+		S_StopSound(ent, channel);
+		return;
+	}
 
     S_StartSound (ent, channel, cl.sound_precache[sound_num], pos, volume/255.0, attenuation);
 
