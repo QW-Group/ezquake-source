@@ -293,9 +293,11 @@ unsigned int Com_HashKey (const char *name);
 //============================================================================
 
 // memory management
+// Q_tryrealloc preserves the original block on failure; zero size returns NULL unchanged.
 #ifdef DEBUG_MEMORY_ALLOCATIONS
 void *Q_malloc_debug(size_t size, const char* file, int line, const char* label);
 void *Q_calloc_debug(size_t n, size_t size, const char* file, int line, const char* label);
+void *Q_tryrealloc_debug(void *p, size_t newsize, const char* file, int line, const char* label);
 void *Q_realloc_debug(void *p, size_t newsize, const char* file, int line, const char* label);
 char *Q_strdup_debug(const char *src, const char* file, int line, const char* label);
 void Q_free_debug(void* ptr, const char* file, int line);
@@ -304,6 +306,7 @@ char *Q_wcs2str_malloc_debug(const wchar *ws, const char* file, int line); // yo
 #define Q_malloc(size) (Q_malloc_debug((size), __FILE__, __LINE__, NULL))
 #define Q_calloc(n, size) (Q_calloc_debug((n), (size), __FILE__, __LINE__, NULL))
 #define Q_calloc_named(n, size, name) (Q_calloc_debug((n), (size), __FILE__, __LINE__, name))
+#define Q_tryrealloc(p, newsize) (Q_tryrealloc_debug((p), (newsize), __FILE__, __LINE__, NULL))
 #define Q_realloc(p, newsize) (Q_realloc_debug((p), (newsize), __FILE__, __LINE__, NULL))
 #define Q_realloc_named(p, newsize, name) (Q_realloc_debug((p), (newsize), __FILE__, __LINE__, name))
 #define Q_strdup(src) (Q_strdup_debug((src), __FILE__, __LINE__, NULL))
@@ -317,6 +320,7 @@ char *Q_wcs2str_malloc_debug(const wchar *ws, const char* file, int line); // yo
 #define Q_strdup_named(size, name) (Q_strdup(size))
 void *Q_malloc(size_t size);
 void *Q_calloc(size_t n, size_t size);
+void *Q_tryrealloc(void *p, size_t newsize);
 void *Q_realloc(void *p, size_t newsize);
 #define Q_free(ptr) if(ptr) { free(ptr); ptr = NULL; }
 char *Q_strdup(const char *src);
