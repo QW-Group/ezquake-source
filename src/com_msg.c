@@ -1139,7 +1139,7 @@ static void MSG_RD_WritePayload(sizebuf_t *msg, const rd_entity_state_t *s, unsi
 		MSG_WriteByte(msg, s->lightpflags);
 	}
 	if (bits & UF_TRAILEFFECT) {
-		MSG_WriteShort(msg, s->traileffect | (s->emiteffect ? 0x8000 : 0));
+		MSG_WriteShort(msg, s->traileffect | (s->emiteffect ? RD_TRAILEFFECT_EMIT : 0));
 		if (s->emiteffect) {
 			MSG_WriteShort(msg, s->emiteffect);
 		}
@@ -1182,7 +1182,7 @@ static qbool MSG_RD_ValidState(const rd_entity_state_t *s, unsigned int bits)
 		&& s->frame >= 0 && s->frame <= 65535
 		&& s->skinnum >= -32768 && s->skinnum <= 32767
 		&& s->colormap >= 0 && s->colormap <= 255
-		&& s->traileffect <= 0x3fff && s->emiteffect <= 0x3fff;
+		&& s->traileffect <= RD_TRAILEFFECT_MASK && s->emiteffect <= RD_TRAILEFFECT_MASK;
 }
 
 /* Ordinary RD references use a 15-bit short or 15 high bits plus a low byte.

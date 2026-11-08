@@ -324,8 +324,8 @@ qbool CL_RD_ReadState(rd_client_entity_t *result, const rd_client_entity_t *old,
 	}
 	if (bits & UF_TRAILEFFECT) {
 		unsigned int trail = (unsigned short)MSG_ReadShort();
-		s->traileffect = trail & 0x3fff;
-		s->emiteffect = trail & 0x8000 ? ((unsigned short)MSG_ReadShort() & 0x3fff) : 0;
+		s->traileffect = trail & RD_TRAILEFFECT_MASK;
+		s->emiteffect = trail & RD_TRAILEFFECT_EMIT ? ((unsigned short)MSG_ReadShort() & RD_TRAILEFFECT_MASK) : 0;
 	}
 	if (bits & UF_COLORMOD) {
 		for (i = 0; i < 3; ++i) {

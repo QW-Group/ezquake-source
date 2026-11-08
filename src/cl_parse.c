@@ -2035,32 +2035,31 @@ void CL_ParseStartSoundPacket(qbool extended)
     vec3_t pos;
     int channel, ent, sound_num, volume, i;
 	int tracknum, flags = 0;
-	/* FTE's separate entity/channel form; not QW's packed volume flags. */
-	enum { more_flags = 1 << 2,
-		time_offset = 1 << 6, pitch = 1 << 7, velocity = 1 << 8 };
 	qbool rd = (cls.fteprotocolextensions2 & FTE_PEXT2_REPLACEMENTDELTAS) != 0;
     float attenuation;
 
 	if (extended) {
 		flags = MSG_ReadByte();
-		if (rd && (flags & more_flags)) {
+		if (rd && (flags & FTESND_MOREFLAGS)) {
 			flags |= CL_ReadSoundFlags() << 8;
 		}
 		if (flags & ~(NQSND_VOLUME | NQSND_ATTENUATION | NQSND_LARGESOUND | NQSND_LARGEENTITY
-			| (rd ? more_flags | time_offset | pitch | 0xe700 : 0))) {
+			| (rd ? FTESND_MOREFLAGS | FTESND_TIMEOFS | FTESND_PITCHADJ
+				| FTESND_VELOCITY | FTESND_FORCELOOP | FTESND_NOSPACIALISE
+				| FTESND_NOREVERB | FTESND_FOLLOW | FTESND_NOREPLACE : 0))) {
 			Host_Error("Unsupported extended sound flags: %i", flags);
 			return;
 		}
 		volume = (flags & NQSND_VOLUME) ? MSG_ReadByte() : DEFAULT_SOUND_PACKET_VOLUME;
 		attenuation = (flags & NQSND_ATTENUATION) ? MSG_ReadByte() / 64.0 : DEFAULT_SOUND_PACKET_ATTENUATION;
 		// Optional FTE mixing controls are parsed even when the legacy mixer cannot render them.
-		if (flags & pitch) {
+		if (flags & FTESND_PITCHADJ) {
 			MSG_ReadByte();
 		}
-		if (flags & time_offset) {
+		if (flags & FTESND_TIMEOFS) {
 			MSG_ReadShort();
 		}
-		if (flags & velocity) {
+		if (flags & FTESND_VELOCITY) {
 			for (i = 0; i < 3; ++i) {
 				MSG_ReadShort();
 			}
