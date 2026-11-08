@@ -900,7 +900,7 @@ void Cmd_Alias_f (void)
 	// QW262 -->
 	s=Cmd_MakeArgs(2);
 	while (*s) {
-		if (*s == '%' && ( s[1]>='0' || s[1]<='9')) {
+		if (*s == '%') {
 			a->flags |= ALIAS_HAS_PARAMETERS;
 			break;
 		}
@@ -1995,7 +1995,11 @@ checkaliases:
 						} else
 							strlcat(buf, s, sizeof(buf));
 					}
-					s=n+1;
+					s = n;
+					if (!*s) {
+						break;
+					}
+					++s;
 				}
 			} while(n);
 			strlcat(buf, s, sizeof(buf));
