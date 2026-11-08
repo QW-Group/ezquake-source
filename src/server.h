@@ -476,8 +476,9 @@ typedef struct mvddest_s
 	char path[MAX_QPATH];
 
 	char *cache;
-	int cacheused;
-	int maxcachesize;
+	int cacheused; // queued cache bytes
+	int cachesize; // allocated cache bytes
+	int maxcachesize; // allowed queued bytes
 
 	unsigned int totalsize;
 

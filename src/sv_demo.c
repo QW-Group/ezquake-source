@@ -315,6 +315,54 @@ static int DestCloseAllFlush (qbool destroyfiles, qbool mvdonly)
 	return numclosed;
 }
 
+/* Grow backing storage without changing the destination's queue limit. */
+static qbool DemoGrowCache(mvddest_t *d, int needed)
+{
+	int capacity = d->cachesize;
+	char *cache;
+
+	if (needed <= capacity) {
+		return true;
+	}
+	while (capacity < needed) {
+		if (capacity > d->maxcachesize / 2) {
+			capacity = d->maxcachesize;
+		}
+		else {
+			capacity *= 2;
+		}
+	}
+	cache = Q_tryrealloc(d->cache, capacity);
+	if (!cache) {
+		return false;
+	}
+	d->cache = cache;
+	d->cachesize = capacity;
+	return true;
+}
+
+/* Trim stream backing after startup, preserving queued data and its limit. */
+static void DemoTrimCache(mvddest_t *d)
+{
+	int capacity = 65536;
+	char *cache;
+
+	if (d->desttype != DEST_STREAM || d->error || d->cacheused > d->cachesize / 2) {
+		return;
+	}
+	while (capacity < d->cacheused) {
+		capacity *= 2;
+	}
+	if (capacity > d->cachesize / 2) {
+		return;
+	}
+	cache = Q_tryrealloc(d->cache, capacity);
+	if (cache) {
+		d->cache = cache;
+		d->cachesize = capacity;
+	}
+}
+
 int DemoWriteDest (void *data, int len, mvddest_t *d)
 {
 	int ret;
@@ -338,9 +386,14 @@ int DemoWriteDest (void *data, int len, mvddest_t *d)
 			break;
 		case DEST_BUFFEREDFILE:	//these write to a cache, which is flushed later
 		case DEST_STREAM:
-			if (d->cacheused + len > d->maxcachesize)
+			if ((size_t)d->cacheused + len > (size_t)d->maxcachesize)
 			{
-				Sys_Printf("DemoWriteDest: cache overflow %d > %d\n", d->cacheused + len, d->maxcachesize);
+				Sys_Printf("DemoWriteDest: cache overflow %zu > %d\n", (size_t)d->cacheused + len, d->maxcachesize);
+				d->error = true;
+				return 0;
+			}
+			if (!DemoGrowCache(d, d->cacheused + len)) {
+				Sys_Printf("DemoWriteDest: could not grow cache for destination %d\n", d->id);
 				d->error = true;
 				return 0;
 			}
@@ -925,7 +978,8 @@ static mvddest_t *SV_InitRecordFile (char *name)
 		dst->desttype = DEST_BUFFEREDFILE;
 		dst->file = file;
 		dst->maxcachesize = 1024 * (int) sv_demoCacheSize.value;
-		dst->cache = (char *) Q_malloc (dst->maxcachesize);
+		dst->cachesize = dst->maxcachesize;
+		dst->cache = (char *) Q_malloc (dst->cachesize);
 	}
 
 	s = name + strlen(name);
@@ -1338,7 +1392,6 @@ static void SV_MVD_ReservePrecacheLists(mvddest_t *dest)
 
 	for (d = demo.dest; d; d = d->nextdest) {
 		size_t needed;
-		char *cache;
 
 		if (d->desttype != DEST_STREAM || (dest && dest != d)) {
 			continue;
@@ -1350,10 +1403,6 @@ static void SV_MVD_ReservePrecacheLists(mvddest_t *dest)
 		if (needed <= (size_t)d->maxcachesize) {
 			continue;
 		}
-		cache = Q_malloc(needed);
-		memcpy(cache, d->cache, d->cacheused);
-		Q_free(d->cache);
-		d->cache = cache;
 		d->maxcachesize = (int)needed;
 	}
 }
@@ -1365,6 +1414,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	unsigned int n;
 	char* s, info[MAX_EXT_INFO_STRING];
 
+	mvddest_t *d;
 	client_t* player;
 	edict_t* ent;
 	char* gamedir;
@@ -1876,6 +1926,11 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 
 //	SV_WriteSetMVDMessage();
 
+	for (d = demo.dest; d; d = d->nextdest) {
+		if (!dest || dest == d) {
+			DemoTrimCache(d);
+		}
+	}
 	singledest = NULL;
 }
 

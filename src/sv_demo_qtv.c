@@ -66,7 +66,13 @@ static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 	dst->desttype = DEST_STREAM;
 	dst->socket = socket1;
 	dst->maxcachesize = 65536;	//is this too small?
-	dst->cache = (char *) Q_malloc(dst->maxcachesize);
+	dst->cachesize = dst->maxcachesize;
+	dst->cache = Q_tryrealloc(NULL, dst->cachesize);
+	if (!dst->cache) {
+		Q_free(dst);
+		return NULL;
+	}
+	memset(dst->cache, 0, dst->cachesize);
 	dst->io_time = Sys_DoubleTime();
 	dst->id = ++lastdest;
 	dst->na = na;
