@@ -33,6 +33,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static void sv_demoDir_OnChange(cvar_t *cvar, char *value, qbool *cancel);
 static void OnChange_demo_format(cvar_t *var, char *value, qbool *cancel);
+static void OnChange_qtv_stream_max_queue_size(cvar_t *var, char *value, qbool *cancel);
+
+// Maximum queued bytes per QTV stream, configured in KiB.
+cvar_t qtv_stream_max_queue_size = {"qtv_stream_max_queue_size", "16384", CVAR_NONE, OnChange_qtv_stream_max_queue_size};
 
 cvar_t  sv_demoUseCache     = {"sv_demoUseCache",   "0"};
 cvar_t  sv_demoCacheSize    = {"sv_demoCacheSize",  "0", CVAR_ROM};
@@ -313,6 +317,43 @@ static int DestCloseAllFlush (qbool destroyfiles, qbool mvdonly)
 	}
 
 	return numclosed;
+}
+
+/* Apply live queue limits without disturbing other destinations or queued bytes. */
+static void OnChange_qtv_stream_max_queue_size(cvar_t *var, char *value, qbool *cancel)
+{
+	char *end;
+	long size_kib = strtol(value, &end, 10);
+	int limit;
+	mvddest_t *d;
+
+	if (end == value || *end || size_kib < 1 || size_kib > INT_MAX / 1024) {
+		Con_Printf("%s must be an integer from 1 to %d KiB.\n", var->name, INT_MAX / 1024);
+		*cancel = true;
+		return;
+	}
+	limit = (int)size_kib * 1024;
+	for (d = demo.dest; d; d = d->nextdest) {
+		if (d->desttype != DEST_STREAM || d->error) {
+			continue;
+		}
+		d->maxcachesize = limit;
+		if (d->cacheused > limit) {
+			Sys_Printf("QTV stream %d: queue exceeds new limit (%d > %d bytes)\n", d->id, d->cacheused, limit);
+			d->error = true;
+			continue;
+		}
+		if (d->cachesize > limit) {
+			char *cache = Q_tryrealloc(d->cache, limit);
+			if (!cache) {
+				Sys_Printf("QTV stream %d: could not resize queue to %d bytes\n", d->id, limit);
+				d->error = true;
+				continue;
+			}
+			d->cache = cache;
+			d->cachesize = limit;
+		}
+	}
 }
 
 /* Grow backing storage without changing the destination's queue limit. */
@@ -1367,46 +1408,6 @@ static void SV_MVD_StartFile(char *name)
 		DestClose(dest, true);
 }
 
-static void SV_MVD_ReservePrecacheLists(mvddest_t *dest)
-{
-	size_t reserve = 65536;
-	mvddest_t *d;
-	int i;
-
-	/* Initial gamestate is queued before streams are flushed. Keep the old
-	 * allowance for other state, plus names and worst-case per-chunk framing. */
-	for (i = 1; i < MAX_SOUNDS && sv.sound_precache[i]; ++i) {
-		reserve += strlen(sv.sound_precache[i]) + 16;
-	}
-	for (i = 1; i < MAX_MODELS && sv.model_precache[i]; ++i) {
-		reserve += strlen(sv.model_precache[i]) + 16;
-	}
-	if (sv.demo_format == 1) {
-		/* A full base-RD record, including MVD framing, fits in 256 bytes.
-		 * Startup queues baselines, statics and current entities before flushing. */
-		reserve += 256U * ((size_t)sv.num_baseline_edicts + sv.static_entity_count + sv.num_edicts);
-		for (i = 0; i < sv.num_signon_buffers; ++i) {
-			reserve += (size_t)sv.signon_buffer_size[i] + 16;
-		}
-	}
-
-	for (d = demo.dest; d; d = d->nextdest) {
-		size_t needed;
-
-		if (d->desttype != DEST_STREAM || (dest && dest != d)) {
-			continue;
-		}
-		needed = reserve + d->cacheused;
-		if (needed > INT_MAX) {
-			SV_Error("MVD precache lists exceed stream cache limit");
-		}
-		if (needed <= (size_t)d->maxcachesize) {
-			continue;
-		}
-		d->maxcachesize = (int)needed;
-	}
-}
-
 void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 {
 	sizebuf_t	buf;
@@ -1423,8 +1424,6 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 
 	if (!demo.dest)
 		return;
-
-	SV_MVD_ReservePrecacheLists(dest);
 
 	sv.mvdrecording = true; // NOTE:  afaik set to false on map change, so restore it here
 	demo.pingtime = demo.time = sv.time;

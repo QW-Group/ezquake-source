@@ -15078,6 +15078,13 @@
         }
       ]
     },
+    "qtv_stream_max_queue_size": {
+      "default": "16384",
+      "desc": "Maximum queued data per server-side QTV stream, in KiB.",
+      "group-id": "43",
+      "remarks": "Positive integer from 1 to 2097151; 16384 means 16 MiB. Storage grows on demand. Changes apply immediately; lowering below queued data disconnects only the affected streams. Startup admission also includes a conservative initial-state allowance. File recording and the stream timeout are unchanged.",
+      "type": "integer"
+    },
     "qtv_streamport": {
       "default": "0",
       "desc": "Server variable, TCP port on which the server will listen for QTV connections.",
