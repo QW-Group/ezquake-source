@@ -671,20 +671,50 @@ static void SV_WriteEntityRemoval(sizebuf_t *msg, int number)
 	}
 }
 
+/* Release legacy delta bases without changing ping or antilag history. */
+void SV_ClearEntityHistory(client_t *client)
+{
+	int i;
+
+	Q_free(client->packet_entities);
+	client->packet_entity_capacity = 0;
+	for (i = 0; i < UPDATE_BACKUP; ++i) {
+		client->frames[i].entities.num_entities = 0;
+		client->frames[i].entities.entities = NULL;
+	}
+	client->delta_sequence = -1;
+}
+
+/* Allocate once for the negotiated legacy limit and reuse all ring slots. */
+static void SV_AllocEntityHistory(client_t *client, int max_entities)
+{
+	int i;
+
+	if (client->packet_entity_capacity == max_entities) {
+		return;
+	}
+	SV_ClearEntityHistory(client);
+	client->packet_entities = Q_malloc(UPDATE_BACKUP * max_entities * sizeof(*client->packet_entities));
+	client->packet_entity_capacity = max_entities;
+	for (i = 0; i < UPDATE_BACKUP; ++i) {
+		client->frames[i].entities.entities = client->packet_entities + i * max_entities;
+	}
+}
+
 /*
 =============
 SV_EmitPacketEntities
 
-Writes a delta update of a packet_entities_t to the message.
+Writes a legacy entity delta update to the message.
 Saves the state the receiver can reconstruct, including deferred removals.
 
 =============
 */
-static void SV_EmitPacketEntities(client_t *client, packet_entities_t *to, sizebuf_t *msg,
+static void SV_EmitPacketEntities(client_t *client, sv_packet_entities_t *to, sizebuf_t *msg,
                                  int max_entities, int tail_bytes)
 {
 	packet_entities_t sent;
-	packet_entities_t *from = NULL;
+	sv_packet_entities_t *from = NULL;
 	byte remove_sizes[MAX_MVD_PACKET_ENTITIES];
 	int oldmax = 0, oldindex, newindex, last_remove = -1;
 	int remove_bytes = 0, reserved = 0, known_count, header;
@@ -1377,7 +1407,7 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 	qbool disable_updates; // disables sending entities to the client
 	int e, i, max_packet_entities;
 	int full_limit, datagram_bytes, tail_bytes;
-	packet_entities_t *pack;
+	sv_packet_entities_t *pack = NULL;
 	client_frame_t *frame;
 	entity_state_t *state;
 	edict_t *ent;
@@ -1469,8 +1499,11 @@ void SV_WriteEntitiesToClient (client_t *client, sizebuf_t *msg, qbool recorder)
 		SV_WritePlayersToClient (client, frame, pvs, disable_updates, msg);
 
 	// put other visible entities into either a packet_entities or a nails message
-	pack = &frame->entities;
-	pack->num_entities = 0;
+	if (!replacement) {
+		SV_AllocEntityHistory(client, max_packet_entities);
+		pack = &frame->entities;
+		pack->num_entities = 0;
+	}
 
 	numnails = 0;
 

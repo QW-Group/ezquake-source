@@ -300,8 +300,10 @@ void SV_ShutdownGame(void)
 	sv_player = NULL;
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
+		SV_ClearEntityHistory(&svs.clients[i]);
 		svs.clients[i].edict = NULL;
 	}
+	SV_ClearEntityHistory(&demo.recorder);
 }
 
 /*

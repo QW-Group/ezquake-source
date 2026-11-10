@@ -976,6 +976,7 @@ void SV_MVD_FinishMap(void)
 		DestFlush(true);
 	}
 	SV_MVD_ClearRD();
+	SV_ClearEntityHistory(&demo.recorder);
 }
 
 /* Latch once after the game's map capacity is finalized. */
@@ -1146,6 +1147,7 @@ void SV_MVDStop (int reason, qbool mvdonly)
 		if (!demo.dest) {
 			sv.mvdrecording = false;
 			SV_MVD_ClearRD();
+			SV_ClearEntityHistory(&demo.recorder);
 		}
 
 		if (reason == 4)
@@ -1185,6 +1187,7 @@ void SV_MVDStop (int reason, qbool mvdonly)
 	if (!demo.dest) {
 		sv.mvdrecording = false;
 		SV_MVD_ClearRD();
+		SV_ClearEntityHistory(&demo.recorder);
 	}
 
 	if (numclosed)
@@ -1373,6 +1376,7 @@ qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange)
     	// and here we memset() not whole demo_t struct, but part,
     	// so demo.dest and demo.pendingdest is not overwriten
 		SV_MVD_ClearRD();
+		SV_ClearEntityHistory(&demo.recorder);
 		memset(&demo, 0, offsetof(demo_t, mem_set_point));
 		if (sv.demo_format == 1) {
 			demo.prevtime = sv.time;
