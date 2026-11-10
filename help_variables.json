@@ -20093,7 +20093,7 @@
     },
     "sv_maxedicts": {
       "default": "2048",
-      "desc": "Upper limit for entity slots, including the world, from 512 to 16384.",
+      "desc": "Upper limit for entity slots, including the world, from 512 to 32768.",
       "group-id": "43",
       "remarks": "Applied when a map starts; the game and sv_extlimits can further limit capacity. A finalized capacity above 2048 requires replacement deltas and rejects clients without the paired RD and PEXT_TE_BULLET profile, regardless of sv_pext_replacementdeltas.",
       "type": "integer"
