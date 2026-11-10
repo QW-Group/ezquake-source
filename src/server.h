@@ -100,6 +100,7 @@ typedef struct
 	int         num_baseline_edicts;// number of entities that have baselines
 
 	edict_t		edicts[MAX_EDICTS];
+	qbool		edicts_initialized; // The edict table and client pointers are ready for game shutdown callbacks.
 	entvars_t	*game_edicts;		// can NOT be array indexed, because entvars_t is variable sized
 
 	int         max_edicts;         // might not MAX_EDICTS if mod allocates memory
@@ -855,6 +856,7 @@ int SV_GenerateUserID (void);
 //
 int SV_ModelIndex (char *name);
 void SV_FlushSignon (void);
+void SV_ShutdownGame(void);
 void SV_SpawnServer (char *server, qbool devmap, char* entityfile, qbool loading_savegame);
 
 

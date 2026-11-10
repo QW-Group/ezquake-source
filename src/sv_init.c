@@ -219,6 +219,87 @@ static cm_vispolicy_t SV_VisibilityPolicy(void)
 
 /*
 ================
+SV_InitEdicts
+
+Initialize the edict table and client pointers after the map capacity is finalized.
+================
+*/
+static void SV_InitEdicts(void)
+{
+	int i;
+	edict_t *ent;
+
+	if (sv.max_edicts <= MAX_CLIENTS || sv.max_edicts > MAX_EDICTS)
+	{
+		SV_Error("SV_InitEdicts: invalid map capacity %d", sv.max_edicts);
+	}
+
+	for (i = 0; i < sv.max_edicts; i++)
+	{
+		sv.edicts[i].v = (entvars_t *)((byte *)sv.game_edicts + i * pr_edict_size);
+		sv.edicts[i].e.entnum = i;
+		sv.edicts[i].e.area.ed = &sv.edicts[i]; // Area lists use this to find the owning edict.
+	}
+
+	// Reserve client slots before running any clear callbacks.
+	sv.num_edicts = MAX_CLIENTS + 1;
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		svs.clients[i].edict = &sv.edicts[i + 1];
+	}
+
+	/* Clear callbacks may abort startup; allow game shutdown to use
+	 * the edict pointers already initialized above. */
+	sv.edicts_initialized = true;
+	for (i = 0; i < sv.max_edicts; i++)
+	{
+		PR_ClearEdict(&sv.edicts[i]);
+	}
+
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		ent = EDICT_NUM(i + 1);
+		// restore client name.
+		PR_SetEntityString(ent, ent->v->netname, svs.clients[i].name);
+		//ZOID - make sure we update frags right
+		svs.clients[i].old_frags = 0;
+	}
+}
+
+/*
+================
+SV_ShutdownGame
+
+Shut down and unload the game before clearing pointers to its entities.
+================
+*/
+void SV_ShutdownGame(void)
+{
+	int i;
+
+	if (sv.edicts_initialized)
+	{
+		/* A callback error may reenter shutdown; do not invoke it twice. */
+		sv.edicts_initialized = false;
+		PR_GameShutDown();
+	}
+	PR_UnLoadProgs();
+
+	for (i = 0; i < sv.max_edicts; i++)
+	{
+		SV_UnlinkEdict(&sv.edicts[i]);
+	}
+
+	sv.game_edicts = NULL;
+	sv_player = NULL;
+	for (i = 0; i < MAX_CLIENTS; i++)
+	{
+		svs.clients[i].edict = NULL;
+	}
+}
+
+/*
+================
 SV_SpawnServer
 
 Change the server to a new map, taking all connected
@@ -281,9 +362,7 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	}
 #endif
 
-	// Shutdown game.
-	PR_GameShutDown();
-	PR_UnLoadProgs();
+	SV_ShutdownGame();
 
 	svs.spawncount++; // any partially connected client will be restarted
 
@@ -377,14 +456,6 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 #endif
 	PR_InitProg();
 
-	for (i = 0; i < sv.max_edicts; i++)
-	{
-		sv.edicts[i].v = (entvars_t *)((byte *)sv.game_edicts + i * pr_edict_size);
-		sv.edicts[i].e.entnum = i;
-		sv.edicts[i].e.area.ed = &sv.edicts[i]; // yeah, pretty funny, but this help to find which edict_t own this area (link_t)
-		PR_ClearEdict(&sv.edicts[i]);
-	}
-
 	fofs_items2 = ED_FindFieldOffset ("items2"); // ZQ_ITEMS2 extension
 	fofs_maxspeed = ED_FindFieldOffset ("maxspeed");
 	fofs_gravity = ED_FindFieldOffset ("gravity");
@@ -463,19 +534,6 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	GE_PausedTic = ED_FindFunctionOffset ("GE_PausedTic");
 	GE_ShouldPause = ED_FindFunctionOffset ("GE_ShouldPause");
 
-	// leave slots at start for clients only
-	sv.num_edicts = MAX_CLIENTS+1;
-	for (i=0 ; i<MAX_CLIENTS ; i++)
-	{
-		ent = EDICT_NUM(i+1);
-		// restore client name.
-		PR_SetEntityString(ent, ent->v->netname, svs.clients[i].name);
-		// reserve edict.
-		svs.clients[i].edict = ent;
-		//ZOID - make sure we update frags right
-		svs.clients[i].old_frags = 0;
-	}
-
 	// fill sv.mapname and sv.modelname with new map name
 	strlcpy (sv.mapname, mapname, sizeof(sv.mapname));
 	snprintf (sv.modelname, sizeof(sv.modelname), "maps/%s.bsp", sv.mapname);
@@ -519,6 +577,7 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	sv.static_entity_count = 0;
 
 	SV_ClearWorld (); // clear physics interaction links
+	SV_InitEdicts();
 
 #ifdef USE_PR2
 	if ( sv_vm )
