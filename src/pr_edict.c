@@ -1277,7 +1277,7 @@ void PR1_Init (void)
 
 edict_t *EDICT_NUM(int n)
 {
-	if (n < 0 || n >= sv.max_edicts)
+	if (!sv.edicts || n < 0 || n >= sv.max_edicts)
 		SV_Error ("EDICT_NUM: bad number %i", n);
 	return &sv.edicts[n];
 }
