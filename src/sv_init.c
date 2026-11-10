@@ -234,6 +234,8 @@ static void SV_InitEdicts(void)
 		SV_Error("SV_InitEdicts: invalid map capacity %d", sv.max_edicts);
 	}
 
+	sv.edicts = Q_calloc(sv.max_edicts, sizeof(*sv.edicts));
+
 	for (i = 0; i < sv.max_edicts; i++)
 	{
 		sv.edicts[i].v = (entvars_t *)((byte *)sv.game_edicts + i * pr_edict_size);
@@ -285,9 +287,13 @@ void SV_ShutdownGame(void)
 	}
 	PR_UnLoadProgs();
 
-	for (i = 0; i < sv.max_edicts; i++)
+	if (sv.edicts)
 	{
-		SV_UnlinkEdict(&sv.edicts[i]);
+		for (i = 0; i < sv.max_edicts; i++)
+		{
+			SV_UnlinkEdict(&sv.edicts[i]);
+		}
+		Q_free(sv.edicts);
 	}
 
 	sv.game_edicts = NULL;

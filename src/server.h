@@ -99,7 +99,7 @@ typedef struct
 	int         num_edicts;         // increases towards MAX_EDICTS
 	int         num_baseline_edicts;// number of entities that have baselines
 
-	edict_t		edicts[MAX_EDICTS];
+	edict_t		*edicts; // Allocated once per map for sv.max_edicts; entity addresses remain stable.
 	qbool		edicts_initialized; // The edict table and client pointers are ready for game shutdown callbacks.
 	entvars_t	*game_edicts;		// can NOT be array indexed, because entvars_t is variable sized
 
