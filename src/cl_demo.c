@@ -4186,6 +4186,8 @@ void CL_QTVPoll (void)
 	need -= qtvrequestsize;			// We probably already have something, so don't re-read something we already read.
 	need = max(0, need);			// Don't cause a crash by trying to read a negative value.
 
+	// A read that completes BEGIN may also return MVD data for stream_buffer.
+	need = min(need, (int)sizeof(stream_buffer));
 	len = VFS_READ(qtvrequest, qtvrequestbuffer + qtvrequestsize, need, &err);
 
 	// EOF, end of polling.
