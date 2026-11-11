@@ -2155,6 +2155,7 @@ int PF2_Add_Bot(char *name, int bottomcolor, int topcolor, char *skin)
 		return 0;
 	}
 
+	SV_ClearEntityHistory(newcl);
 	memset(newcl, 0, sizeof(*newcl));
 	edictnum = (newcl - svs.clients) + 1;
 	ent = EDICT_NUM(edictnum);
@@ -2241,6 +2242,7 @@ void RemoveBot(client_t *cl)
 	if( !cl->isBot )
 		return;
 
+	SV_ClearEntityHistory(cl);
 	pr_global_struct->self = EDICT_TO_PROG(cl->edict);
 	if ( sv_vm )
 		PR2_GameClientDisconnect(0);

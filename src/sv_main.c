@@ -314,6 +314,7 @@ void SV_Shutdown (char *finalmsg)
 
 	for (i = 0; i < MAX_CLIENTS; ++i) {
 		SV_RD_ClearClient(&svs.clients[i]);
+		SV_ClearEntityHistory(&svs.clients[i]);
 	}
 	memset (svs.clients, 0, sizeof(svs.clients));
 	svs.lastuserid = 0;
@@ -406,6 +407,7 @@ or crashing.
 void SV_DropClient(client_t* drop)
 {
 	SV_RD_ClearClient(drop);
+	SV_ClearEntityHistory(drop);
 	//bliP: cuff, mute ->
 	SV_SavePenaltyFilter (drop, ft_mute, drop->lockedtill);
 	SV_SavePenaltyFilter (drop, ft_cuff, drop->cuff_time);
@@ -1395,6 +1397,7 @@ static void SVC_DirectConnect (void)
 	// accept the new client
 	// this is the only place a client_t is ever initialized
 	SV_RD_ClearClient(newcl);
+	SV_ClearEntityHistory(newcl);
 	memset (newcl, 0, sizeof(*newcl));
 
 	newcl->userid = SV_GenerateUserID();

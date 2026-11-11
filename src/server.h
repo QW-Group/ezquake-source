@@ -156,6 +156,12 @@ typedef enum
 
 typedef struct
 {
+	int num_entities;
+	entity_state_t *entities;
+} sv_packet_entities_t;
+
+typedef struct
+{
 	// received from client
 
 	// reply
@@ -166,7 +172,7 @@ typedef struct
 	double				sv_time;
 // }
 
-	packet_entities_t	entities;
+	sv_packet_entities_t	entities;
 } client_frame_t;
 
 typedef struct
@@ -266,6 +272,8 @@ typedef struct client_s
 	double			lastservertimeupdate;		// last realtime we sent STAT_TIME to the client
 
 	client_frame_t	frames[UPDATE_BACKUP];		// updates can be deltad from here
+	entity_state_t	*packet_entities;			// one legacy history block, absent for RD
+	int				packet_entity_capacity;		// entities per legacy frame
 
 	vfsfile_t		*download;			// file being downloaded
 	int             dupe;               // duplicate packets requested
@@ -941,6 +949,8 @@ void SV_KickClient(client_t* client, const char* reason);
 //
 // sv_ents.c
 //
+void SV_ClearEntityHistory(client_t *client);
+
 /* RD ownership, snapshot collection and QW acknowledgement lifecycle. */
 void SV_RD_FromLegacy(rd_entity_state_t *to, const entity_state_t *from);
 void SV_RD_ClearClient(client_t *client);
