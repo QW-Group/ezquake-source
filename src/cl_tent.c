@@ -704,13 +704,14 @@ static void CL_Parse_TE_SUPERSPIKE(vec3_t pos)
 	}
 }
 
-static void CL_Parse_TE_EXPLOSION(vec3_t pos, qbool nq_particles)
+/* Returns the light it spawned, if any, so variants can adjust it. */
+static dlight_t *CL_Parse_TE_EXPLOSION(vec3_t pos, qbool nq_particles)
 {
-	dlight_t *dl;
+	dlight_t *dl = NULL;
 	extern cvar_t gl_part_explosions;
 
 	if (cls.state != ca_active) {
-		return;
+		return NULL;
 	}
 
 	if (r_explosiontype.value == 2) {
@@ -794,6 +795,8 @@ static void CL_Parse_TE_EXPLOSION(vec3_t pos, qbool nq_particles)
 	}
 
 	S_StartSound(-1, 0, cl_sfx_r_exp3, pos, 1, 1);
+
+	return dl;
 }
 
 static void CL_Parse_TE_TAREXPLOSION(vec3_t pos)
@@ -953,6 +956,172 @@ static void CL_Parse_TE_LIGHTNINGBLOOD(vec3_t pos)
 	}
 }
 
+static void CL_ReadVector(vec3_t v)
+{
+	v[0] = MSG_ReadCoord();
+	v[1] = MSG_ReadCoord();
+	v[2] = MSG_ReadCoord();
+}
+
+/*
+ * Servers send light colors with full intensity at 255. Custom lights here
+ * reach it at 128, the cap dlightColorEx applies to user colors.
+ */
+static void CL_SetServerDlightColor(dlight_t *dl, const byte *color)
+{
+	dl->type = lt_custom;
+	dl->color[0] = color[0] / 2;
+	dl->color[1] = color[1] / 2;
+	dl->color[2] = color[2] / 2;
+}
+
+/*
+ * DarkPlaces blood, sparks, flame jets, smoke and plasma hits: an origin, a
+ * velocity (signed bytes for blood and sparks) and a particle count. FTE has
+ * no classic fallback except for flame jets, so the rest draw nothing here.
+ */
+static void CL_Parse_TEDP_DirectedEffect(int type, vec3_t pos)
+{
+	vec3_t vel;
+	qbool packed = (type == TEDP_BLOOD || type == TEDP_SPARK);
+	int i, count;
+
+	CL_ReadVector(pos);
+	for (i = 0; i < 3; i++) {
+		vel[i] = packed ? MSG_ReadChar() : MSG_ReadCoord();
+	}
+	count = MSG_ReadByte();
+
+	if (msg_badread || CL_Demo_SkipMessage(true)) {
+		return;
+	}
+
+	if (type == TEDP_FLAMEJET) {
+		R_RunParticleEffect(pos, vel, 232, count);
+	}
+}
+
+/*
+ * DarkPlaces blood showers, particle cubes, rain and snow fill a box. FTE
+ * draws them only as scripted effects; its classic particle system leaves
+ * them empty, so they are consumed without a visual.
+ */
+static void CL_Parse_TEDP_ParticleBox(int type, vec3_t mins)
+{
+	int i;
+
+	CL_ReadVector(mins);
+
+	if (type == TEDP_BLOODSHOWER) {
+		// maxs, explosion speed
+		for (i = 0; i < 4; i++) {
+			MSG_ReadCoord();
+		}
+		MSG_ReadShort(); // count
+		return;
+	}
+
+	// maxs, velocity
+	for (i = 0; i < 6; i++) {
+		MSG_ReadCoord();
+	}
+	MSG_ReadShort(); // count
+	MSG_ReadByte();  // palette color
+
+	if (type == TEDP_PARTICLECUBE) {
+		MSG_ReadByte();  // gravity flag
+		MSG_ReadCoord(); // velocity jitter
+	}
+}
+
+static void CL_Parse_TEDP_EXPLOSIONRGB(vec3_t pos)
+{
+	byte color[3];
+	dlight_t *dl;
+
+	CL_ReadVector(pos);
+	color[0] = MSG_ReadByte();
+	color[1] = MSG_ReadByte();
+	color[2] = MSG_ReadByte();
+
+	if (msg_badread || CL_Demo_SkipMessage(true)) {
+		return;
+	}
+
+	dl = CL_Parse_TE_EXPLOSION(pos, false);
+	if (dl) {
+		CL_SetServerDlightColor(dl, color);
+	}
+}
+
+static void CL_Parse_TEDP_CUSTOMFLASH(vec3_t pos)
+{
+	byte color[3];
+	float radius, lifetime;
+	dlight_t *dl;
+
+	CL_ReadVector(pos);
+	radius = MSG_ReadByte() * 8;
+	lifetime = (MSG_ReadByte() + 1) / 256.0f;
+	color[0] = MSG_ReadByte();
+	color[1] = MSG_ReadByte();
+	color[2] = MSG_ReadByte();
+
+	if (msg_badread || CL_Demo_SkipMessage(true)) {
+		return;
+	}
+
+	dl = CL_AllocDlight(0);
+	VectorCopy(pos, dl->origin);
+	dl->radius = radius;
+	dl->die = cl.time + lifetime;
+	dl->decay = radius / lifetime; // the lifetime byte encodes at least 1/256 s
+	CL_SetServerDlightColor(dl, color);
+}
+
+/* Nexuiz's nex beam. Without a scripted effect it is drawn like a rail trail, in white. */
+static void CL_Parse_TEDP_TEI_G3(vec3_t end)
+{
+	vec3_t start;
+	int i;
+
+	CL_ReadVector(start);
+	CL_ReadVector(end);
+
+	// The beam angles are ignored.
+	for (i = 0; i < 3; i++) {
+		MSG_ReadCoord();
+	}
+
+	if (msg_badread || CL_Demo_SkipMessage(true)) {
+		return;
+	}
+	CL_DrawRailTrail(start, end, 15);
+}
+
+static void CL_TE_SmallFlash(vec3_t pos)
+{
+	dlight_t *dl = CL_AllocDlight(0);
+
+	VectorCopy(pos, dl->origin);
+	dl->radius = 200;
+	dl->die = cl.time + 0.2;
+	dl->decay = 1000;
+	dl->type = lt_white;
+}
+
+/* Tei's big explosion lights a larger area for longer than a rocket's. */
+static void CL_TE_BigExplosion(vec3_t pos)
+{
+	dlight_t *dl = CL_Parse_TE_EXPLOSION(pos, false);
+
+	if (dl) {
+		dl->radius = 500 * bound(0, r_explosionlight.value, 1);
+		dl->die = cl.time + 1;
+		dl->decay = 500;
+	}
+}
+
 void CL_ParseTEnt (void) 
 {
 	int	type;
@@ -1021,6 +1190,38 @@ void CL_ParseTEnt (void)
 		// Lightning hitting body
 		case TE_LIGHTNINGBLOOD: 
 			CL_Parse_TE_LIGHTNINGBLOOD(pos);
+			parsed = true;
+			break;
+
+		case TEDP_BLOOD:
+		case TEDP_SPARK:
+		case TEDP_FLAMEJET:
+		case TEDP_SMOKE:
+		case TEDP_TEI_PLASMAHIT:
+			CL_Parse_TEDP_DirectedEffect(type, pos);
+			parsed = true;
+			break;
+
+		case TEDP_BLOODSHOWER:
+		case TEDP_PARTICLECUBE:
+		case TEDP_PARTICLERAIN:
+		case TEDP_PARTICLESNOW:
+			CL_Parse_TEDP_ParticleBox(type, pos);
+			parsed = true;
+			break;
+
+		case TEDP_EXPLOSIONRGB:
+			CL_Parse_TEDP_EXPLOSIONRGB(pos);
+			parsed = true;
+			break;
+
+		case TEDP_CUSTOMFLASH:
+			CL_Parse_TEDP_CUSTOMFLASH(pos);
+			parsed = true;
+			break;
+
+		case TEDP_TEI_G3:
+			CL_Parse_TEDP_TEI_G3(pos);
 			parsed = true;
 			break;
 	}
@@ -1097,6 +1298,35 @@ void CL_ParseTEnt (void)
 
 			case TE_TELEPORT:
 				CL_Parse_TE_TELEPORT(pos);
+				break;
+
+			// Without scripted particles, quad damage hits draw like normal ones.
+			case TEDP_GUNSHOTQUAD:
+				CL_TE_GunshotEffect(pos, 1);
+				break;
+
+			case TEDP_SPIKEQUAD:
+				CL_Parse_TE_SPIKE(pos);
+				break;
+
+			case TEDP_SUPERSPIKEQUAD:
+				CL_Parse_TE_SUPERSPIKE(pos);
+				break;
+
+			case TEDP_EXPLOSIONQUAD:
+				CL_Parse_TE_EXPLOSION(pos, false);
+				break;
+
+			case TEDP_SMALLFLASH:
+				CL_TE_SmallFlash(pos);
+				break;
+
+			case TEDP_PLASMABURN:
+				R_RunParticleEffect(pos, vec3_origin, 15, 50);
+				break;
+
+			case TEDP_TEI_BIGEXPLOSION:
+				CL_TE_BigExplosion(pos);
 				break;
 
 			default:
