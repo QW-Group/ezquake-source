@@ -1928,7 +1928,10 @@ switch (nqp_buf_data[1]) {
   }
 
   case NQ_TE_EXPLOSION2:
-		nqp_expect = 10;
+		if (nqp_buf.cursize < 4 + 3 * msg_coordsize)
+			goto waitformore;
+		SV_SendNQExplosion2(nqp_buf_data + 2);
+		NQP_Skip(4 + 3 * msg_coordsize);
 		break;
   default:
 		Con_Printf ("WARNING: progs.dat sent an unsupported svc_temp_entity: %i\n", nqp_buf_data[1]);
