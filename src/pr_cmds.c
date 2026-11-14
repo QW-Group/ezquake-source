@@ -1874,12 +1874,18 @@ static void NQP_Process (void)
 			nqp_expect = (p - nqp_buf_data) + 1;
 		}
 		else if (cmd == svc_intermission) {
+			byte data[1 + 3 * sizeof(float) + 3 * sizeof(short)];
+			sizebuf_t msg;
 			int i;
-			NQP_Flush (1);
+
+			SZ_Init(&msg, data, sizeof(data));
+			MSG_WriteByte(&msg, svc_intermission);
 			for (i = 0; i < 3; i++)
-				MSG_WriteCoord (&sv.reliable_datagram, svs.clients[0].edict->v->origin[i]);
+				MSG_WriteCoord(&msg, svs.clients[0].edict->v->origin[i]);
 			for (i = 0; i < 3; i++)
-				MSG_WriteAngle (&sv.reliable_datagram, svs.clients[0].edict->v->angles[i]);
+				MSG_WriteAngle(&msg, svs.clients[0].edict->v->angles[i]);
+			SV_MulticastNQMessage(data, msg.cursize);
+			NQP_Skip(1);
 		}
 		else if (cmd == nq_svc_cutscene) {
 			byte *p = (byte *)memchr (nqp_buf_data + 1, 0, nqp_buf.cursize - 1);
