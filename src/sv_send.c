@@ -609,6 +609,17 @@ void SV_SendNQExplosion2(const byte *payload)
 	SV_MulticastExFiltered(origin, MULTICAST_ALL_R, NULL, false, &legacy, &rd);
 }
 
+void SV_MulticastNQMessage(byte *data, int length)
+{
+	vec3_t origin = {0, 0, 0};
+	sizebuf_t msg;
+
+	SZ_Init(&msg, data, length);
+	msg.cursize = length;
+	SV_FlushReliableDatagram();
+	SV_MulticastExFiltered(origin, MULTICAST_ALL_R, NULL, false, &msg, NULL);
+}
+
 /* Build both rail representations before the common PHS delivery path. */
 void SV_RailTrail(vec3_t start, vec3_t end, int player, int color)
 {

@@ -900,6 +900,7 @@ void SV_RailTrail(vec3_t start, vec3_t end, int player, int color);
 // Queue a reliable NQ beam for spawned clients after earlier broadcasts.
 void SV_SendNQBeam(int entity, const byte *coordinates);
 void SV_SendNQExplosion2(const byte *payload);
+void SV_MulticastNQMessage(byte *data, int length);
 void SV_StartParticle(vec3_t org, vec3_t dir, int color, int count, int replacement_te, int replacement_count);
 /* Count a dense sound catalog without reading beyond a full precache array. */
 int SV_SoundPrecacheCount(char *const *sounds, int capacity);
