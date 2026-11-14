@@ -587,6 +587,39 @@ void SV_SendNQBeam(int entity, const byte *coordinates)
 	SV_MulticastExFiltered(origin, MULTICAST_ALL_R, NULL, false, &legacy, &rd);
 }
 
+void SV_SendNQExplosion2(const byte *payload)
+{
+	vec3_t origin = {0, 0, 0};
+	byte legacy_data[2 + 3 * sizeof(float)], rd_data[4 + 3 * sizeof(float)];
+	sizebuf_t legacy, rd;
+	int coord_bytes = 3 * msg_coordsize;
+
+	SZ_Init(&legacy, legacy_data, sizeof(legacy_data));
+	MSG_WriteByte(&legacy, svc_temp_entity);
+	MSG_WriteByte(&legacy, TE_EXPLOSION);
+	SZ_Write(&legacy, payload, coord_bytes);
+
+	/* NetQuake effect 12 is blood in QW. Only the FTE form carries the palette. */
+	SZ_Init(&rd, rd_data, sizeof(rd_data));
+	MSG_WriteByte(&rd, svc_temp_entity);
+	MSG_WriteByte(&rd, TEQW_EXPLOSION2);
+	SZ_Write(&rd, payload, coord_bytes + 2);
+
+	SV_FlushReliableDatagram();
+	SV_MulticastExFiltered(origin, MULTICAST_ALL_R, NULL, false, &legacy, &rd);
+}
+
+void SV_MulticastNQMessage(byte *data, int length)
+{
+	vec3_t origin = {0, 0, 0};
+	sizebuf_t msg;
+
+	SZ_Init(&msg, data, length);
+	msg.cursize = length;
+	SV_FlushReliableDatagram();
+	SV_MulticastExFiltered(origin, MULTICAST_ALL_R, NULL, false, &msg, NULL);
+}
+
 /* Build both rail representations before the common PHS delivery path. */
 void SV_RailTrail(vec3_t start, vec3_t end, int player, int color)
 {

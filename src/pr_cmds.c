@@ -1874,12 +1874,18 @@ static void NQP_Process (void)
 			nqp_expect = (p - nqp_buf_data) + 1;
 		}
 		else if (cmd == svc_intermission) {
+			byte data[1 + 3 * sizeof(float) + 3 * sizeof(short)];
+			sizebuf_t msg;
 			int i;
-			NQP_Flush (1);
+
+			SZ_Init(&msg, data, sizeof(data));
+			MSG_WriteByte(&msg, svc_intermission);
 			for (i = 0; i < 3; i++)
-				MSG_WriteCoord (&sv.reliable_datagram, svs.clients[0].edict->v->origin[i]);
+				MSG_WriteCoord(&msg, svs.clients[0].edict->v->origin[i]);
 			for (i = 0; i < 3; i++)
-				MSG_WriteAngle (&sv.reliable_datagram, svs.clients[0].edict->v->angles[i]);
+				MSG_WriteAngle(&msg, svs.clients[0].edict->v->angles[i]);
+			SV_MulticastNQMessage(data, msg.cursize);
+			NQP_Skip(1);
 		}
 		else if (cmd == nq_svc_cutscene) {
 			byte *p = (byte *)memchr (nqp_buf_data + 1, 0, nqp_buf.cursize - 1);
@@ -1890,6 +1896,8 @@ static void NQP_Process (void)
 			NQP_Skip (p - nqp_buf_data + 1);
 		}
 		else if (nqp_buf_data[0] == svc_temp_entity) {
+			int length;
+
 			if (nqp_buf.cursize < 2)
 				break;
 
@@ -1902,20 +1910,28 @@ switch (nqp_buf_data[1]) {
   case TE_KNIGHTSPIKE:
   case TE_LAVASPLASH:
   case TE_TELEPORT:
-		nqp_expect = 8;
+		length = 2 + 3 * msg_coordsize;
 		break;
   case TE_GUNSHOT:
-		if (nqp_buf.cursize < 8)
+  {
+		byte data[3 + 3 * sizeof(float)];
+
+		length = 2 + 3 * msg_coordsize;
+		if (nqp_buf.cursize < length)
 			goto waitformore;
-		NQP_Flush (2);
-		MSG_WriteByte (&sv.reliable_datagram, 1);
-		NQP_Flush (6);
-		break;
+		data[0] = svc_temp_entity;
+		data[1] = TE_GUNSHOT;
+		data[2] = 1; // QW requires a count before the coordinates.
+		memcpy(data + 3, nqp_buf_data + 2, length - 2);
+		SV_MulticastNQMessage(data, length + 1);
+		NQP_Skip(length);
+		continue;
+  }
 
   case TE_LIGHTNING1:
   case TE_LIGHTNING2:
   case TE_LIGHTNING3:
-		nqp_expect = 16;
+		length = 4 + 6 * msg_coordsize;
 	  break;
   case NQ_TE_BEAM:
   {		int entnum;
@@ -1924,17 +1940,24 @@ switch (nqp_buf_data[1]) {
 		entnum = nqp_buf_data[2] + nqp_buf_data[3]*256;
 		SV_SendNQBeam(entnum, nqp_buf_data + 4);
 		NQP_Skip(4 + 6 * msg_coordsize);
-		break;
+		continue;
   }
 
   case NQ_TE_EXPLOSION2:
-		nqp_expect = 10;
-		break;
+		if (nqp_buf.cursize < 4 + 3 * msg_coordsize)
+			goto waitformore;
+		SV_SendNQExplosion2(nqp_buf_data + 2);
+		NQP_Skip(4 + 3 * msg_coordsize);
+		continue;
   default:
 		Con_Printf ("WARNING: progs.dat sent an unsupported svc_temp_entity: %i\n", nqp_buf_data[1]);
 	    goto ignore;
 }
 
+			if (nqp_buf.cursize < length)
+				goto waitformore;
+			SV_MulticastNQMessage(nqp_buf_data, length);
+			NQP_Skip(length);
 		}
 		else {
 			Con_Printf ("WARNING: progs.dat sent an unsupported svc: %i\n", cmd);
