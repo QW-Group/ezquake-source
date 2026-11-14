@@ -1902,20 +1902,20 @@ switch (nqp_buf_data[1]) {
   case TE_KNIGHTSPIKE:
   case TE_LAVASPLASH:
   case TE_TELEPORT:
-		nqp_expect = 8;
+		nqp_expect = 2 + 3 * msg_coordsize;
 		break;
   case TE_GUNSHOT:
-		if (nqp_buf.cursize < 8)
+		if (nqp_buf.cursize < 2 + 3 * msg_coordsize)
 			goto waitformore;
 		NQP_Flush (2);
 		MSG_WriteByte (&sv.reliable_datagram, 1);
-		NQP_Flush (6);
+		NQP_Flush (3 * msg_coordsize);
 		break;
 
   case TE_LIGHTNING1:
   case TE_LIGHTNING2:
   case TE_LIGHTNING3:
-		nqp_expect = 16;
+		nqp_expect = 4 + 6 * msg_coordsize;
 	  break;
   case NQ_TE_BEAM:
   {		int entnum;
