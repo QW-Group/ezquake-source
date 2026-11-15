@@ -24,6 +24,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_R_PART_SCRIPT_H
 #define EZQUAKE_R_PART_SCRIPT_H
 
+struct model_s;
+
 // Effect type indices are >= 0; 0 is a valid effect.
 #define P_INVALID (-1)
 
@@ -31,6 +33,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // generation, so a key whose state was recycled no longer matches. Owners may
 // be zeroed or copied freely; a copied key shares the state.
 typedef unsigned int trailkey_t;
+
+// model_t emitflags
+#define PSCRIPT_EMIT_REPLACE  1 // the effect replaces the model, which is not drawn
+#define PSCRIPT_EMIT_FORWARDS 2 // emit along the entity's forward vector instead of down
 
 // Effects the engine spawns by fixed name. Some resolve through a fallback
 // name; see PScript_EffectType.
@@ -111,5 +117,8 @@ qbool PScript_RunParticleWeather(vec3_t minb, vec3_t maxb, vec3_t dir, float cou
 qbool PScript_RunParticleCube(int typenum, vec3_t minb, vec3_t maxb, vec3_t dir, float count, int colour, qbool gravity);
 qbool PScript_ParticleTrail(vec3_t start, vec3_t end, int typenum, float timeinterval, int dlkey, trailkey_t *tk);
 void PScript_DelinkTrailstate(trailkey_t *tk);
+void PScript_MatchTrailstate(trailkey_t *tk, int *tktype, int typenum);
+
+void PScript_UpdateModelEffects(struct model_s *mod);
 
 #endif // EZQUAKE_R_PART_SCRIPT_H

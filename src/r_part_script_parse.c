@@ -1269,14 +1269,10 @@ static void PScript_ParseEffect(pscript_reader_t *r, tokenizecontext_t *ctx, con
 	}
 }
 
-// Parses an r_part config (QuakeSpasm-Spiked and FTE syntax) from data,
-// creating or redefining effect types in namespace config, weak ones (that
-// leave types loaded by strong sets alone) when weak is set. Top-level
-// "r_part namespace <ns> [weak]" switches both for the rest of the data,
-// r_partredirect lines add redirects, a cl_expsprite line sets
-// pscript_expsprite, and every other top-level line, including console
-// commands, is ignored. Parsing stops after PSCRIPT_MAX_BLOCKS effects. May
-// reallocate pscript_types.
+// Parses an r_part config as text, not as console commands: only r_part,
+// r_partredirect, r_effect, r_trail and cl_expsprite lines are read and every
+// other top-level line is ignored. Weak types leave types loaded by strong
+// sets alone. May reallocate pscript_types.
 void PScript_ParseParticleEffectFile(const char *config, qbool weak, const char *data, size_t size)
 {
 	char effectnamespace[MAX_QPATH];
@@ -1333,6 +1329,9 @@ void PScript_ParseParticleEffectFile(const char *config, qbool weak, const char 
 		}
 		else if (!strcmp(cmd, "r_partredirect")) {
 			PScript_PartRedirectCmd(&ctx, true);
+		}
+		else if (!strcmp(cmd, "r_effect") || !strcmp(cmd, "r_trail")) {
+			PScript_AssociateEffectCmd(&ctx, effectnamespace);
 		}
 		else if (*cmd) {
 			Con_DPrintf("%s: ignored %s\n", config, cmd);

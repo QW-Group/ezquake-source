@@ -231,8 +231,9 @@ qbool R_FilterEntity(entity_t* ent)
 		return true;
 	}
 
-	// Handle flame/flame0 model changes
-	if (qmb_initialized) {
+	// Handle flame/flame0 model changes. A scripted emitter on the model is
+	// its fire, drawn with the model as it is.
+	if (qmb_initialized && !CL_ScriptedEmitter(ent)) {
 		if (!amf_part_fire.integer && ent->model->modhint == MOD_FLAME0) {
 			ent->model = cl.model_precache[cl_modelindices[mi_flame]];
 		}

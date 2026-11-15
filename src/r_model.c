@@ -186,6 +186,8 @@ model_t *Mod_FindName(const char *name)
 		strlcpy(mod->name, name, sizeof(mod->name));
 		mod->needload = true;
 		Mod_ClearVisBuffers(mod);
+		mod->emiteffect = P_INVALID;
+		mod->traileffect = P_INVALID;
 		mod_numknown++;
 	}
 	return mod;
@@ -311,6 +313,8 @@ model_t *Mod_LoadModel(model_t *mod, qbool crash)
 		Mod_LoadBrushModel(mod, buf, filesize);
 		break;
 	}
+
+	PScript_UpdateModelEffects(mod);
 
 	return mod;
 }

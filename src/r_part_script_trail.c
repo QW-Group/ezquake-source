@@ -83,6 +83,17 @@ void PScript_DelinkTrailstate(trailkey_t *tk)
 	}
 }
 
+// Delinks *tk when typenum is not *tktype, the type it was last used for, so
+// a last beam segment is never joined to another type's particles. A zeroed
+// key and type are a valid start.
+void PScript_MatchTrailstate(trailkey_t *tk, int *tktype, int typenum)
+{
+	if (*tktype != typenum) {
+		PScript_DelinkTrailstate(tk);
+		*tktype = typenum;
+	}
+}
+
 // Returns the state *tk names, or takes the oldest slot for a new one and
 // stores its key in *tk. NULL when tk is NULL or the states are unallocated.
 pscript_trailstate_t *PScript_FetchTrailstate(trailkey_t *tk)

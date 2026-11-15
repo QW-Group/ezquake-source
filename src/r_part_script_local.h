@@ -386,6 +386,7 @@ pscript_type_t *PScript_GetParticleType(const char *config, const char *name);
 int PScript_AllocateParticleType(const char *config, const char *name);
 void PScript_LoadTexture(pscript_type_t *ptype);
 void PScript_PartRedirectCmd(tokenizecontext_t *ctx, qbool fromset);
+void PScript_AssociateEffectCmd(tokenizecontext_t *ctx, const char *config);
 void PScript_LinkRunList(pscript_type_t *ptype);
 void PScript_UnlinkRunList(pscript_type_t *ptype);
 

@@ -745,6 +745,12 @@ static void NQD_ParseUpdate (int bits)
 		forcelink = true;	// no previous frame to lerp from
 	else
 		forcelink = false;
+	// A new entity, or one that was gone, starts its scripted effects over.
+	if (forcelink) {
+		PScript_DelinkTrailstate(&ent->pscript_trail);
+		PScript_DelinkTrailstate(&ent->pscript_emit);
+		ent->pscript_trailframe = 0;
+	}
 	ent->oldsequence = ent->sequence;
 	ent->sequence = cl_entframecount;
 	
@@ -1063,12 +1069,13 @@ void NQD_LinkEntities (void)
 		}
 		
 		// add automatic particle trails
-		if ((modelflags & ~EF_ROTATE)) {
+		if ((modelflags & ~EF_ROTATE) || (model->traileffect != P_INVALID && PScript_DynamicActive())) {
 			CL_AddParticleTrail(&ent, cent, &cst_lt, state);
 		}
 
 		VectorCopy(ent.origin, cent->lerp_origin);
 		cent->sequence = cl_entframecount;
+		CL_RunModelEmitter(&ent, &cent->pscript_emit, &cent->pscript_emitframe, &cent->pscript_emittype);
 		CL_AddEntity(&ent);
 	}
 
