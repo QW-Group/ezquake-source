@@ -517,6 +517,7 @@ set(common_renderer
         ${SOURCE_DIR}/r_part.c
         ${SOURCE_DIR}/r_part_script.c
         ${SOURCE_DIR}/r_part_script_decal.c
+        ${SOURCE_DIR}/r_part_script_effectinfo.c
         ${SOURCE_DIR}/r_part_script_parse.c
         ${SOURCE_DIR}/r_part_script_spawn.c
         ${SOURCE_DIR}/r_part_script_surface.c

@@ -16260,7 +16260,7 @@
     },
     "r_particledesc": {
       "default": "",
-      "desc": "Space-separated list of scripted particle sets to load, in FTE's r_part format. Each name loads particles/<name>.cfg; a name starting with ./ loads <name>.cfg from the game directory instead, and a name containing / falls back to <name>.cfg. The set particles/map_<map name>.cfg is also loaded for the current map when it exists. Events that a loaded set defines an effect for, such as TE_EXPLOSION or TR_ROCKET, use it instead of the classic or QMB particles.",
+      "desc": "Space-separated list of scripted particle sets to load, in FTE's r_part format. Each name loads particles/<name>.cfg; a name starting with ./ loads <name>.cfg from the game directory instead, and a name containing / falls back to <name>.cfg. Without such a .cfg, the names effectinfo and effectinfo_<suffix> import DarkPlaces' effectinfo.txt and effectinfo_<suffix>.txt. The set particles/map_<map name>.cfg is also loaded for the current map when it exists. Events that a loaded set defines an effect for, such as TE_EXPLOSION or TR_ROCKET, use it instead of the classic or QMB particles.",
       "group-id": "36",
       "remarks": "There are no built-in sets: with no set loaded, particles look as before. Under rulesets that restrict particles, only effects on the world, on static entities such as torches and on the map's own brush entities such as doors and plats run; events and other entities keep the classic or QMB particles. r_drawparticles 0 turns scripted effects off. The server cannot change this variable.",
       "type": "string"

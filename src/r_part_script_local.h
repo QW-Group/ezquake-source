@@ -78,12 +78,6 @@ typedef float pscript_vec4_t[4];
 #define PSCRIPT_MAX_BEAMSEGS    (1 << 11)
 #define PSCRIPT_MAX_TRAILSTATES (1 << 10)
 
-// Types one effect or trail runs along its assoc chain: a block and the 64
-// "+name" blocks that may extend it. Every particle can run an effect each
-// frame, so the chain's length multiplies a frame's work, and types that
-// spawn nothing never run out of particles to stop it.
-#define PSCRIPT_MAX_ASSOCSTEPS 65
-
 // trailkey_t layout: index + 1 in the low bits, so 0 stays free for "none".
 // 12 bits hold PSCRIPT_MAX_TRAILSTATES with room to grow and leave 20 bits of
 // generation, about a million reuses of one slot before a stale key aliases.
@@ -425,6 +419,9 @@ void PScript_ResetToDefaults(pscript_type_t *ptype);
 char *PScript_ReadLine(char *buffer, size_t buffersize, const char *filedata, size_t filesize, size_t *offset);
 void PScript_ParseParticleEffectFile(const char *config, qbool weak, const char *data, size_t size);
 void PScript_FinishParticleType(pscript_type_t *ptype);
+
+// r_part_script_effectinfo.c
+qbool PScript_ImportEffectInfo(const char *config);
 
 // r_part_script_spawn.c
 void PScript_EffectSpawned(pscript_type_t *ptype, vec3_t org, int dlkey);
