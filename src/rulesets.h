@@ -73,7 +73,6 @@ qbool RuleSets_DisallowExternalTexture(struct model_s *mod);
 qbool Ruleset_IsLumaAllowed(struct model_s *mod);
 qbool Ruleset_AllowPowerupShell(struct model_s* mod);
 qbool RuleSets_DisallowSimpleTexture(struct model_s *mod);
-qbool Ruleset_AllowNoHardwareGamma(void);
 
 // OnChange functions controling when a variable value changes
 void Rulesets_OnChange_indphys (cvar_t *var, char *value, qbool *cancel);

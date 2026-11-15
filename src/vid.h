@@ -82,9 +82,6 @@ void VID_NotifyActivity(void);
 
 void VID_SetCaption (char *text);
 
-int VID_SetDeviceGammaRamp (unsigned short *ramps);
-extern qbool vid_hwgamma_enabled;
-
 extern int glx, gly, glwidth, glheight;
 
 void VID_Minimize(void);

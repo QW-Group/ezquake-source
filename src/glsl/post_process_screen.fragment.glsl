@@ -59,6 +59,10 @@ void main()
 	result.g = result.g / (result.g + 1);
 	result.b = result.b / (result.b + 1);
 #endif
+#ifdef EZ_POSTPROCESS_PALETTE
+	// apply blend to the 3D view, under the HUD
+	result.rgb = result.rgb * v_blend.a + v_blend.rgb;
+#endif
 #ifdef EZ_POSTPROCESS_OVERLAY
 	vec4 add = sampleOverlay();
 	result *= 1 - add.a;
@@ -66,8 +70,8 @@ void main()
 #endif
 
 #ifdef EZ_POSTPROCESS_PALETTE
-	// apply blend & contrast
-	result = vec4((result.rgb * v_blend.a + v_blend.rgb) * contrast, 1);
+	// apply contrast
+	result = vec4(result.rgb * contrast, 1);
 
 	// apply gamma
 	result = vec4(pow(result.rgb, vec3(gamma)), 1);

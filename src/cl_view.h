@@ -25,7 +25,6 @@ extern cvar_t v_gamma;
 extern cvar_t v_contrast;
 
 void V_Init (void);
-void V_UpdatePalette (void);
 void V_ParseDamage (void);
 void V_SetContentsColor (int contents);
 void V_CalcBlend (void);
