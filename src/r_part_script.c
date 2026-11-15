@@ -195,7 +195,15 @@ static void PScript_OnChangeParticleDesc(cvar_t *var, char *value, qbool *cancel
 	pscript_sets_dirty = true;
 }
 
+// Surface emitters are only built while r_part_rain is on.
+static void PScript_OnChangeRain(cvar_t *var, char *value, qbool *cancel)
+{
+	pscript_effects_dirty = true;
+}
+
 static cvar_t r_particledesc = { "r_particledesc", "", CVAR_NOTFROMSERVER, PScript_OnChangeParticleDesc };
+cvar_t r_part_rain = { "r_part_rain", "0", 0, PScript_OnChangeRain };
+cvar_t r_part_rain_quantity = { "r_part_rain_quantity", "1" };
 cvar_t r_bouncysparks = { "r_bouncysparks", "1" };
 cvar_t r_decal_noperpendicular = { "r_decal_noperpendicular", "1" };
 cvar_t r_particle_tracelimit = { "r_particle_tracelimit", "65536" };
@@ -826,6 +834,8 @@ static void PScript_Refresh(void)
 	for (i = 0; i < mod_numknown; i++) {
 		PScript_UpdateModelEffects(&mod_known[i]);
 	}
+
+	PScript_RebuildSurfaceEmitters();
 }
 
 // r_partredirect [from [to]]; an empty or identical to removes the redirect.
@@ -1037,6 +1047,8 @@ void PScript_Init(void)
 	if (!host_initialized) {
 		Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 		Cvar_Register(&r_particledesc);
+		Cvar_Register(&r_part_rain);
+		Cvar_Register(&r_part_rain_quantity);
 		Cvar_Register(&r_bouncysparks);
 		Cvar_Register(&r_decal_noperpendicular);
 		Cvar_Register(&r_particle_tracelimit);
@@ -1074,9 +1086,7 @@ void PScript_Init(void)
 	}
 }
 
-// Called at client shutdown. Frees the pools and every type, set, redirect
-// and model association, leaving the module as before its first
-// PScript_Init apart from the registered cvars and commands.
+// Called at client shutdown.
 void PScript_Shutdown(void)
 {
 	pscript_redirect_t *r;
@@ -1084,6 +1094,7 @@ void PScript_Shutdown(void)
 	int i, j;
 
 	PScript_FreePools();
+	PScript_ClearAllSurfaceParticles();
 	for (i = 0; i < pscript_numtypes; i++) {
 		Q_free(pscript_types[i].sounds);
 		Q_free(pscript_types[i].ramp);
@@ -1128,10 +1139,8 @@ void PScript_Shutdown(void)
 	pscript_sets_dirty = true;
 }
 
-// Called on map changes, at the end of demo seeks and when rulesets start
-// to restrict particles, which PScript_BeginFrame notices. Drops every live
-// instance, applying changed pool sizes, and the next frame simulates no
-// time. Sets and textures stay.
+// Called on map changes, after demo seeks and when rulesets start to restrict
+// particles. Drops every live instance; sets and textures stay.
 void PScript_ClearParticles(void)
 {
 	if (pscript_active) {
@@ -1194,13 +1203,13 @@ void PScript_BeginFrame(void)
 	}
 }
 
-// Called once per rendered view. The first view of a host frame simulates
-// it; every view builds its own geometry from the same particles.
+// Called once per rendered view; the first view of a host frame simulates it.
 void PScript_DrawParticles(void)
 {
 	if (!pscript_active) {
 		return;
 	}
+	PScript_AddSurfaceView();
 	if (pscript_sim_pending) {
 		PScript_Simulate(pscript_frametime);
 		pscript_sim_pending = false;
@@ -1208,10 +1217,9 @@ void PScript_DrawParticles(void)
 	PScript_BuildGeometry();
 }
 
-// Called once per host frame after every view is rendered. Simulates the
-// frame if no view did, then, when time passed, marks the particles that
-// live one frame to end when the next frame that advances time begins, so
-// a paused view keeps showing them.
+// Called once per host frame after every view is rendered. One-frame
+// particles end when the next frame that advances time begins, so a paused
+// view keeps showing them.
 void PScript_EndFrame(void)
 {
 	if (!pscript_active) {
@@ -1224,6 +1232,7 @@ void PScript_EndFrame(void)
 	if (pscript_frametime > 0) {
 		PScript_MarkFrameParticles();
 	}
+	PScript_RunSurfaceEmitters();
 }
 
 // Every spawn function fails while this is false. Rulesets leave it alone:

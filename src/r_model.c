@@ -149,6 +149,7 @@ void Mod_ClearAll(void)
 		if (mod->type != mod_alias && mod->type != mod_alias3 && mod->type != mod_sprite) {
 			mod->needload = true;
 			Mod_ClearVisBuffers(mod);
+			PScript_ClearSurfaceParticles(mod);
 		}
 	}
 }

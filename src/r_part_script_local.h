@@ -209,6 +209,24 @@ typedef struct pscript_trailstate_s {
 	} u;
 } pscript_trailstate_t;
 
+// Surface triangle that emits a texture's effect (tex_<name> or texpart_).
+typedef struct pscript_surftri_s {
+	struct pscript_surftri_s *next;
+	vec3_t org;
+	vec3_t x;
+	vec3_t y;
+	float area;
+	double nexttime;
+	int ptype;
+	struct msurface_s *face;
+} pscript_surftri_t;
+
+typedef struct pscript_surftriblock_s {
+	struct pscript_surftriblock_s *next;
+	unsigned int count;
+	pscript_surftri_t tris[1024];
+} pscript_surftriblock_t;
+
 // Render state shared by every instance of a type.
 typedef struct pscript_looks_s {
 	pscript_looktype_t type;
@@ -372,6 +390,8 @@ extern int pscript_pe_colors[256]; // the pe_<n> types, by palette index
 extern qbool pscript_expsprite;
 extern cvar_t r_bouncysparks;
 extern cvar_t r_decal_noperpendicular;
+extern cvar_t r_part_rain;
+extern cvar_t r_part_rain_quantity;
 extern cvar_t r_particle_tracelimit;
 extern cvar_t r_part_sparks;
 extern cvar_t r_part_sparks_trifan;
@@ -444,6 +464,12 @@ struct model_s;
 struct msurface_s;
 int PScript_SurfacePolygon(const struct model_s *mod, const struct msurface_s *surf, vec3_t *verts, int maxverts);
 void PScript_ClipDecal(vec3_t center, vec3_t normal, vec3_t tangent1, vec3_t tangent2, float size, unsigned int surfflagmask, unsigned int surfflagmatch, pscript_decalcallback_t callback, void *ctx);
+
+// r_part_script_surface.c
+void PScript_ClearAllSurfaceParticles(void);
+void PScript_RebuildSurfaceEmitters(void);
+void PScript_AddSurfaceView(void);
+void PScript_RunSurfaceEmitters(void);
 
 // r_part.c
 extern cvar_t r_drawparticles;

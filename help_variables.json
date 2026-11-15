@@ -16218,6 +16218,19 @@
       "remarks": "Takes effect when the particle pools are next set up: on map change, on demo seek or when scripted effects are switched on.",
       "type": "integer"
     },
+    "r_part_rain": {
+      "default": "0",
+      "desc": "Lets surfaces emit the scripted particle effect named after their texture, tex_<texture name>, or the effect the map assigns to the texture, for weather such as rain or snow falling from the sky. Needs a particle set that defines such effects.",
+      "group-id": "36",
+      "remarks": "Under rulesets that restrict particles, only the world's own surfaces emit, not those of doors, plats and other brush entities.",
+      "type": "boolean"
+    },
+    "r_part_rain_quantity": {
+      "default": "1",
+      "desc": "Scales how many particles surfaces emit when r_part_rain is enabled.",
+      "group-id": "36",
+      "type": "float"
+    },
     "r_part_sparks": {
       "default": "1",
       "desc": "Draws the line sparks of scripted effects. 0 hides them, along with the fan and textured sparks that r_part_sparks_trifan and r_part_sparks_textured turn into line sparks.",

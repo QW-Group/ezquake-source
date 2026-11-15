@@ -121,4 +121,8 @@ void PScript_MatchTrailstate(trailkey_t *tk, int *tktype, int typenum);
 
 void PScript_UpdateModelEffects(struct model_s *mod);
 
+void PScript_ClearTextureEffects(void);
+void PScript_SetTextureEffect(const char *texture, const char *effect);
+void PScript_ClearSurfaceParticles(struct model_s *mod);
+
 #endif // EZQUAKE_R_PART_SCRIPT_H
