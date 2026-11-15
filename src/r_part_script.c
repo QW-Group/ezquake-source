@@ -37,6 +37,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Every effect name lookup walks the redirect list once per hop.
 #define PSCRIPT_MAX_REDIRECTS 1024
 
+// Every refresh matches each known model against all associations.
+#define PSCRIPT_MAX_ASSOCS 1024
+
 // Effect types kept at once. Creating a type compares its name with every
 // existing one, so loading n types takes n * n / 2 comparisons: 4096 types
 // load in 0.1 s, 100000 in 23 s. The largest combination of sets found has
@@ -59,6 +62,14 @@ typedef struct pscript_redirect_s {
 	char *to;
 	qbool fromset; // made by a particle set, not the console
 } pscript_redirect_t;
+
+typedef struct pscript_assoc_s {
+	struct pscript_assoc_s *next;
+	char model[MAX_QPATH];
+	char effect[MAX_QPATH];
+	unsigned int flags; // PSCRIPT_EMIT_*, for emitters
+	qbool trail;
+} pscript_assoc_t;
 
 typedef enum {
 	PSCRIPT_TEX_WHITE,
@@ -94,6 +105,7 @@ static double pscript_last;
 static qbool pscript_sim_pending;
 static pscript_set_t *pscript_sets;
 static pscript_redirect_t *pscript_redirects;
+static pscript_assoc_t *pscript_assocs;
 static int pscript_effectids[PSCRIPT_EFFECT_COUNT];
 static texture_ref pscript_builtin_textures[PSCRIPT_TEX_COUNT];
 // Identifiers of the effect images that took a texture slot since
@@ -603,10 +615,20 @@ static qbool PScript_LoadSet(const char *name, qbool implicit, qbool warn)
 	return false;
 }
 
-// Marks every type unloaded and forgets the loaded sets, with their choice
-// of explosion sprite and the redirects they made. FTE keeps a set's
-// redirects until shutdown, as it runs them as console commands; dropping
-// them keeps a map's set from redirecting effects on the maps after it.
+static void PScript_FreeAssocs(void)
+{
+	pscript_assoc_t *a;
+
+	while (pscript_assocs) {
+		a = pscript_assocs;
+		pscript_assocs = a->next;
+		Q_free(a);
+	}
+}
+
+// Marks every type unloaded and forgets the sets and what they made
+// (redirects, associations, explosion sprite choice), so a map's set does
+// not carry over to the maps after it.
 // Live instances keep using their type, so a ramp is freed together with
 // resetting the ramp mode that guards it.
 static void PScript_UnloadSets(void)
@@ -629,6 +651,7 @@ static void PScript_UnloadSets(void)
 			link = &r->next;
 		}
 	}
+	PScript_FreeAssocs();
 
 	for (i = 0; i < pscript_numtypes; i++) {
 		ptype = &pscript_types[i];
@@ -771,6 +794,8 @@ qbool PScript_ExplosionSprite(void)
 // stops because each set loads once.
 static void PScript_Refresh(void)
 {
+	extern model_t mod_known[];
+	extern int mod_numknown;
 	int i, type;
 
 	pscript_effects_dirty = false;
@@ -798,6 +823,12 @@ static void PScript_Refresh(void)
 			pscript_anyloaded = true;
 			break;
 		}
+	}
+
+	// Inline models (*N) are copies of the world model that are never
+	// loaded on their own, so only this reaches them.
+	for (i = 0; i < mod_numknown; i++) {
+		PScript_UpdateModelEffects(&mod_known[i]);
 	}
 	pscript_refreshcount = pscript_refreshcount == INT_MAX ? 1 : pscript_refreshcount + 1;
 }
@@ -873,6 +904,96 @@ static void PScript_PartRedirect_f(void)
 
 	Cmd_SaveContext(&ctx);
 	PScript_PartRedirectCmd(&ctx, false);
+}
+
+// "r_trail <model> <effect>" and "r_effect <model> <effect> [flags]" in a
+// particle set. An effect without a namespace is taken from config.
+// Players, eyes, flags and a few others are refused, as an effect attached to
+// them would show them through walls.
+void PScript_AssociateEffectCmd(tokenizecontext_t *ctx, const char *config)
+{
+	const char *command = Cmd_ArgvEx(ctx, 0);
+	const char *model = Cmd_ArgvEx(ctx, 1);
+	const char *effect = Cmd_ArgvEx(ctx, 2);
+	qbool trail = !strcasecmp(command, "r_trail");
+	unsigned int flags = 0;
+	char qualified[MAX_QPATH * 2];
+	char lowered[MAX_QPATH];
+	pscript_assoc_t *a;
+	const char *flag;
+	int i, count = 0;
+
+	for (i = 3; !trail && i < Cmd_ArgcEx(ctx); i++) {
+		flag = Cmd_ArgvEx(ctx, i);
+		if (!strcmp(flag, "replace") || !strcmp(flag, "1")) {
+			flags |= PSCRIPT_EMIT_REPLACE;
+		}
+		else if (!strcmp(flag, "forwards") || !strcmp(flag, "forward")) {
+			flags |= PSCRIPT_EMIT_FORWARDS;
+		}
+		else if (strcmp(flag, "0")) {
+			Con_DPrintf("%s %s: unknown flag %s\n", command, model, flag);
+		}
+	}
+
+	// A namespace with a dot could not be told from the effect name again.
+	if (config[0] && !strchr(config, '.') && !strchr(effect, '.')) {
+		snprintf(qualified, sizeof(qualified), "%s.%s", config, effect);
+		effect = qualified;
+	}
+
+	if (!model[0] || strlen(model) >= MAX_QPATH || strlen(effect) >= MAX_QPATH) {
+		return;
+	}
+	strlcpy(lowered, model, sizeof(lowered));
+	Q_strlwr(lowered);
+	if (strstr(lowered, "player") || strstr(lowered, "eyes") || strstr(lowered, "flag") || strstr(lowered, "tf_stan") || strstr(lowered, ".bsp") || strstr(lowered, "turr")) {
+		Con_Printf("Not allowed to attach effects to model \"%s\"\n", model);
+		return;
+	}
+
+	for (a = pscript_assocs; a; a = a->next, count++) {
+		if (a->trail == trail && !strcmp(a->model, model)) {
+			break;
+		}
+	}
+	if (!a) {
+		if (count >= PSCRIPT_MAX_ASSOCS) {
+			Con_DPrintf("%s %s ignored: more than %d model effects\n", command, model, PSCRIPT_MAX_ASSOCS);
+			return;
+		}
+		a = Q_calloc(1, sizeof(*a));
+		strlcpy(a->model, model, sizeof(a->model));
+		a->trail = trail;
+		a->next = pscript_assocs;
+		pscript_assocs = a;
+	}
+	strlcpy(a->effect, effect, sizeof(a->effect));
+	a->flags = flags;
+
+	pscript_effects_dirty = true;
+}
+
+// Can load namespaced sets.
+void PScript_UpdateModelEffects(struct model_s *mod)
+{
+	pscript_assoc_t *a;
+
+	mod->emiteffect = P_INVALID;
+	mod->traileffect = P_INVALID;
+	mod->emitflags = 0;
+	for (a = pscript_assocs; a; a = a->next) {
+		if (strcmp(a->model, mod->name)) {
+			continue;
+		}
+		if (a->trail) {
+			mod->traileffect = PScript_FindParticleType(a->effect);
+		}
+		else {
+			mod->emiteffect = PScript_FindParticleType(a->effect);
+			mod->emitflags = a->flags;
+		}
+	}
 }
 
 static void PScript_PartInfo_f(void)
@@ -956,9 +1077,9 @@ void PScript_Init(void)
 	}
 }
 
-// Called at client shutdown. Frees the pools and every type, set and
-// redirect, leaving the module as before its first PScript_Init apart from
-// the registered cvars and commands.
+// Called at client shutdown. Frees the pools and every type, set, redirect
+// and model association, leaving the module as before its first
+// PScript_Init apart from the registered cvars and commands.
 void PScript_Shutdown(void)
 {
 	pscript_redirect_t *r;
@@ -985,6 +1106,7 @@ void PScript_Shutdown(void)
 		pscript_redirects = r->next;
 		Q_free(r);
 	}
+	PScript_FreeAssocs();
 
 	pscript_pe_default = P_INVALID;
 	pscript_pe_size2 = P_INVALID;

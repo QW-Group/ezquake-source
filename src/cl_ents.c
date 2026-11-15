@@ -693,7 +693,8 @@ void CL_AddEntityToList(visentlist_t* list, visentlist_entrytype_t vistype, enti
 	++list->count;
 }
 
-void CL_AddEntity(entity_t *ent)
+// Adds the entity whether or not an r_effect replaces its model.
+static void CL_AddEntityModel(entity_t *ent)
 {
 	extern qbool R_CanDrawSimpleItem(entity_t* ent);
 	visentlist_entrytype_t vistype;
@@ -730,6 +731,17 @@ void CL_AddEntity(entity_t *ent)
 	}
 
 	CL_AddEntityToList(&cl_visents, vistype, ent, type, shell);
+}
+
+// An r_effect that replaces its model hides the model on every entity that
+// CL_ScriptedEmitter allows it for. That includes explosion sprites, which
+// run no emitter: the scripted explosion stands in for them.
+void CL_AddEntity(entity_t *ent)
+{
+	if (CL_ScriptedEmitter(ent) && (ent->model->emitflags & PSCRIPT_EMIT_REPLACE)) {
+		return;
+	}
+	CL_AddEntityModel(ent);
 }
 
 // NUM_DLIGHTTYPES - this constant not used here, but help u find dynamic light related code if u change something
@@ -917,6 +929,9 @@ void CL_SetupPacketEntity (int number, entity_state_t *state, qbool changed) {
 			cent->trails[t].lasttime = 0;
 			VectorCopy(state->origin, cent->trails[t].stop);
 		}
+		PScript_DelinkTrailstate(&cent->pscript_trail);
+		PScript_DelinkTrailstate(&cent->pscript_emit);
+		cent->pscript_trailframe = 0;
 	}
 	else {
 		cent->oldsequence = cent->sequence;
@@ -1438,6 +1453,8 @@ void CL_ParsePacketSimpleProjectiles(void)
 			mis = &cl_fakeprojectiles[cs_sprojectiles[word].fproj_number];
 			if (mis->entnum == word)
 			{
+				PScript_DelinkTrailstate(&mis->cent.pscript_trail);
+				PScript_DelinkTrailstate(&mis->cent.pscript_emit);
 				memset(mis, 0, sizeof(fproj_t));
 				mis->endtime = -1;
 				mis->index = 0;
@@ -1545,6 +1562,8 @@ void CL_ParsePacketSimpleProjectiles(void)
 		if (mis_new)
 		{
 			mis->entnum = word;
+			PScript_DelinkTrailstate(&cl_entities[mis->entnum].pscript_trail);
+			PScript_DelinkTrailstate(&cl_entities[mis->entnum].pscript_emit);
 			if (mis_new == 2)
 			{
 				memset(&cl_entities[mis->entnum], 0, sizeof(centity_t));
@@ -1558,6 +1577,11 @@ void CL_ParsePacketSimpleProjectiles(void)
 			else
 			{
 				cl_entities[mis->entnum] = mis->cent;
+				// The projectile goes on running its scripted trail and keeps
+				// the states; a copied key would let a reset of this slot
+				// free them under it.
+				cl_entities[mis->entnum].pscript_trail = 0;
+				cl_entities[mis->entnum].pscript_emit = 0;
 			}
 		}
 	}
@@ -1595,6 +1619,7 @@ void CL_LinkPacketEntities(void)
 	int i, pnum, flicker;
 	customlight_t cst_lt = {0};
 	extern qbool cl_nolerp_on_entity_flag;
+	qbool emitter;
 
 	pack = &cl.frames[cl.validsequence & UPDATE_MASK].packet_entities;
 
@@ -1846,7 +1871,10 @@ void CL_LinkPacketEntities(void)
 			}
 		}
 
-		if (qmb_initialized) 
+		// A scripted emitter stands in for the QMB flames and bubbles below.
+		emitter = CL_RunModelEmitter(&ent, &cent->pscript_emit, &cent->pscript_emitframe, &cent->pscript_emittype);
+
+		if (qmb_initialized && !emitter)
 		{
 			if (state->modelindex == cl_modelindices[mi_explod1] || state->modelindex == cl_modelindices[mi_explod2]) 
 			{
@@ -1872,7 +1900,7 @@ void CL_LinkPacketEntities(void)
 
 		// Add trails
 		VectorCopy(ent.origin, cent->lerp_origin);
-		if ((model->flags & ~EF_ROTATE) || model->modhint) {
+		if ((model->flags & ~EF_ROTATE) || model->modhint || (model->traileffect != P_INVALID && PScript_DynamicActive())) {
 			CL_AddParticleTrail(&ent, cent, &cst_lt, state);
 		}
 
@@ -1990,7 +2018,9 @@ void CL_LinkProjectiles (void)
 		ent.model = cl.model_precache[pr->modelindex];
 		VectorCopy(pr->origin, ent.origin);
 		VectorCopy(pr->angles, ent.angles);
-		CL_AddEntity(&ent);
+		// Nails have no state to run an emitter with, so one that replaces
+		// their model would leave them invisible.
+		CL_AddEntityModel(&ent);
 	}
 }
 

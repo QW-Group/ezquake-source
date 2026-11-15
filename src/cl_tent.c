@@ -187,6 +187,12 @@ static void CL_FakeProjectile_KillDlight(fproj_t *prj)
 	prj->dl_key = 0;
 }
 
+static void CL_FakeProjectile_DelinkTrails(fproj_t *prj)
+{
+	PScript_DelinkTrailstate(&prj->cent.pscript_trail);
+	PScript_DelinkTrailstate(&prj->cent.pscript_emit);
+}
+
 static void CL_SetTrailStops(centity_t *cent, const vec3_t stop)
 {
 	int i;
@@ -213,9 +219,24 @@ void CL_MatchFakeProjectile(centity_t *cent)
 				if (prj->partcount)
 				{
 					CL_SetTrailStops(cent, prj->partorg);
+					// The scripted trail goes on too, so a beam trail is not
+					// broken at the handover, and its next run covers the
+					// time since the projectile's last.
+					PScript_DelinkTrailstate(&cent->pscript_trail);
+					cent->pscript_trail = prj->cent.pscript_trail;
+					cent->pscript_trailtype = prj->cent.pscript_trailtype;
+					cent->pscript_trailframe = prj->cent.pscript_trailframe;
+					prj->cent.pscript_trail = 0;
 				}
+				// The emitter of the projectile's model goes on as well.
+				PScript_DelinkTrailstate(&cent->pscript_emit);
+				cent->pscript_emit = prj->cent.pscript_emit;
+				cent->pscript_emittype = prj->cent.pscript_emittype;
+				cent->pscript_emitframe = prj->cent.pscript_emitframe;
+				prj->cent.pscript_emit = 0;
 
 				CL_FakeProjectile_KillDlight(prj);
+				CL_FakeProjectile_DelinkTrails(prj);
 
 				memset(prj, 0, sizeof(fproj_t));
 				return;
@@ -235,6 +256,7 @@ fproj_t *CL_AllocFakeProjectile(void)
 	{
 		if (prj->endtime < cl.time)
 		{
+			CL_FakeProjectile_DelinkTrails(prj);
 			memset(prj, 0, sizeof(fproj_t));
 			prj->dl_key = MAX_EDICTS + i; // make sure not to collide with entity dlight keys
 			prj->index = i;
@@ -265,6 +287,7 @@ fproj_t *CL_AllocFakeProjectile(void)
 	}
 
 	prj = &cl_fakeprojectiles[cull_index];
+	CL_FakeProjectile_DelinkTrails(prj);
 	memset(prj, 0, sizeof(fproj_t));
 	prj->index = cull_index;
 	prj->dl_key = MAX_EDICTS + cull_index;
@@ -1811,6 +1834,10 @@ static void CL_UpdateFakeProjectiles(void)
 			}
 		}
 
+		// A predicted projectile stands in for a server entity, so it runs
+		// its model's emitter like one; one that replaces the model would
+		// otherwise leave it invisible until the server's entity arrives.
+		CL_RunModelEmitter(&ent, &cent->pscript_emit, &cent->pscript_emitframe, &cent->pscript_emittype);
 		CL_AddEntity(&ent);
 	}
 }

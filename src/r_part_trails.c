@@ -93,19 +93,130 @@ static void R_MissileTrail(centity_t *cent, int trail_num)
 	}
 }
 
+// The model's r_trail effect, else the effect for its trail flag, or P_INVALID.
+// Trails that r_rockettrail, r_grenadetrail and r_railtrail 0 turn off stay
+// off; lava balls take the rocket trail whatever r_rockettrail is, as their
+// classic trail does. Rails and building gibs get only an r_trail effect.
+static int CL_ScriptedTrailType(const model_t *model)
+{
+	int flagtrail = P_INVALID;
+
+	if (model->modhint == MOD_LAVABALL) {
+		flagtrail = PScript_EffectType(PSCRIPT_TR_ROCKET);
+	}
+	else if (model->flags & EF_ROCKET) {
+		if (!r_rockettrail.integer) {
+			return P_INVALID;
+		}
+		flagtrail = PScript_EffectType(PSCRIPT_TR_ROCKET);
+	}
+	else if (model->flags & EF_GRENADE) {
+		if (model->modhint == MOD_RAIL) {
+			if (!r_railtrail.integer) {
+				return P_INVALID;
+			}
+		}
+		else if (model->modhint != MOD_BUILDINGGIBS) {
+			if (!r_grenadetrail.integer) {
+				return P_INVALID;
+			}
+			flagtrail = PScript_EffectType(PSCRIPT_TR_GRENADE);
+		}
+	}
+	else if (model->flags & EF_GIB) {
+		flagtrail = PScript_EffectType(PSCRIPT_TR_BLOOD);
+	}
+	else if (model->flags & EF_ZOMGIB) {
+		if (model->modhint != MOD_RAIL2) {
+			flagtrail = PScript_EffectType(PSCRIPT_TR_SLIGHTBLOOD);
+		}
+	}
+	else if (model->flags & EF_TRACER) {
+		flagtrail = PScript_EffectType(PSCRIPT_TR_WIZSPIKE);
+	}
+	else if (model->flags & EF_TRACER2) {
+		flagtrail = PScript_EffectType(PSCRIPT_TR_KNIGHTSPIKE);
+	}
+	else if (model->flags & EF_TRACER3) {
+		flagtrail = PScript_EffectType(PSCRIPT_TR_VORESPIKE);
+	}
+
+	return model->traileffect != P_INVALID ? model->traileffect : flagtrail;
+}
+
+// The time a trail run covers since the owner's previous run in host frame
+// last, at most 0.1 s so that a hitch does not emit a burst. Predicted
+// projectiles run every 13 ms, so at high frame rates one run of theirs
+// covers several frames.
+static float CL_TrailInterval(int last)
+{
+	int frames = pscript_hostframe - last;
+
+	if (!last || frames <= 1) {
+		frames = 1;
+	}
+	return min(frames * pscript_frametime, 0.1);
+}
+
+// Runs the entity's scripted trail up to end once per host frame. Returns
+// false when it has none, so the caller draws its own. Only moving entities
+// leave trails, so rulesets that restrict particles turn them all off.
+static qbool CL_ScriptedEntityTrail(centity_t *cent, const model_t *model, vec3_t end, int dlkey)
+{
+	// Stamped on every call, so that after the system or the trail type was
+	// off a run still covers only the time since the previous call.
+	int last = cent->pscript_trailframe;
+	qbool due = PScript_EmitterDue(&cent->pscript_trailframe);
+	int i, type;
+
+	if (!PScript_DynamicActive()) {
+		return false;
+	}
+	type = CL_ScriptedTrailType(model);
+	if (type == P_INVALID) {
+		return false;
+	}
+
+	// No trail spans a jump, which also follows a demo seek or a slot reuse
+	// that left the old stop. The state starts over too, so a beam trail
+	// does not span it either. Checked on every call, as frames that emit
+	// nothing still move the stop.
+	for (i = 0; i < 3; i++) {
+		if (fabs(cent->trails[0].stop[i] - end[i]) > 128) {
+			PScript_DelinkTrailstate(&cent->pscript_trail);
+			VectorCopy(end, cent->trails[0].stop);
+			break;
+		}
+	}
+	if (due) {
+		PScript_MatchTrailstate(&cent->pscript_trail, &cent->pscript_trailtype, type);
+		PScript_ParticleTrail(cent->trails[0].stop, end, type, CL_TrailInterval(last), dlkey, &cent->pscript_trail);
+	}
+	VectorCopy(end, cent->trails[0].stop);
+	return true;
+}
+
 // Moved out of CL_LinkPacketEntities() so NQD playback can use same code.
+// A scripted trail replaces the classic and QMB trails; lights stay. It ends
+// at ent's origin rather than cent->lerp_origin, which NetQuake demos set
+// only after the call.
 void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, entity_state_t *state)
 {
 	extern cvar_t gl_no24bit;
 	model_t* model = cl.model_precache[state->modelindex];
 	float rocketlightsize = 0.0f;
+	qbool scripted = CL_ScriptedEntityTrail(cent, model, ent->origin, state->number);
 
 	if (model->modhint == MOD_LAVABALL) {
-		R_EntityParticleTrail(cent, LAVA_TRAIL);
+		if (!scripted) {
+			R_EntityParticleTrail(cent, LAVA_TRAIL);
+		}
 	}
 	else {
 		if (model->flags & EF_ROCKET) {
-			R_MissileTrail(cent, r_rockettrail.integer);
+			if (!scripted) {
+				R_MissileTrail(cent, r_rockettrail.integer);
+			}
 
 			// Add rocket lights
 			rocketlightsize = 200.0 * bound(0, r_rocketlight.value, 1);
@@ -135,36 +246,42 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, 
 			}
 		}
 		else if (model->flags & EF_GRENADE) {
-			if (model->modhint == MOD_BUILDINGGIBS) {
-				R_EntityParticleTrail(cent, GRENADE_TRAIL);
-			}
-			else if (r_grenadetrail.integer && model->modhint != MOD_RAIL) {
-				R_MissileTrail(cent, fix_trail_num_for_grens(r_grenadetrail.integer));
-			}
-			else if (r_railtrail.integer && model->modhint == MOD_RAIL) {
-				R_MissileTrail(cent, fix_trail_num_for_grens(r_railtrail.integer));
-			}
-			else {
-				R_MissileTrail(cent, 0);
+			if (!scripted) {
+				if (model->modhint == MOD_BUILDINGGIBS) {
+					R_EntityParticleTrail(cent, GRENADE_TRAIL);
+				}
+				else if (r_grenadetrail.integer && model->modhint != MOD_RAIL) {
+					R_MissileTrail(cent, fix_trail_num_for_grens(r_grenadetrail.integer));
+				}
+				else if (r_railtrail.integer && model->modhint == MOD_RAIL) {
+					R_MissileTrail(cent, fix_trail_num_for_grens(r_railtrail.integer));
+				}
+				else {
+					R_MissileTrail(cent, 0);
+				}
 			}
 		}
 		else if (model->flags & EF_GIB) {
-			if (amf_part_gibtrails.integer) {
-				R_EntityParticleTrail(cent, BLEEDING_TRAIL);
-			}
-			else {
-				R_EntityParticleTrail(cent, BLOOD_TRAIL);
+			if (!scripted) {
+				if (amf_part_gibtrails.integer) {
+					R_EntityParticleTrail(cent, BLEEDING_TRAIL);
+				}
+				else {
+					R_EntityParticleTrail(cent, BLOOD_TRAIL);
+				}
 			}
 		}
 		else if (model->flags & EF_ZOMGIB) {
-			if (model->modhint == MOD_RAIL2) {
-				R_EntityParticleTrail(cent, RAIL_TRAIL2);
-			}
-			else if (amf_part_gibtrails.value) {
-				R_EntityParticleTrail(cent, BLEEDING_TRAIL);
-			}
-			else {
-				R_EntityParticleTrail(cent, BIG_BLOOD_TRAIL);
+			if (!scripted) {
+				if (model->modhint == MOD_RAIL2) {
+					R_EntityParticleTrail(cent, RAIL_TRAIL2);
+				}
+				else if (amf_part_gibtrails.value) {
+					R_EntityParticleTrail(cent, BLEEDING_TRAIL);
+				}
+				else {
+					R_EntityParticleTrail(cent, BIG_BLOOD_TRAIL);
+				}
 			}
 		}
 		else if (model->flags & EF_TRACER) {
@@ -175,7 +292,9 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, 
 				R_CoronasEntityNew(C_WIZLIGHT, cent);
 			}
 
-			R_EntityParticleTrail(cent, TRACER1_TRAIL);
+			if (!scripted) {
+				R_EntityParticleTrail(cent, TRACER1_TRAIL);
+			}
 		}
 		else if (model->flags & EF_TRACER2) {
 			// VULT TRACER GLOW
@@ -185,7 +304,9 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, 
 				R_CoronasEntityNew(C_KNIGHTLIGHT, cent);
 			}
 
-			R_EntityParticleTrail(cent, TRACER2_TRAIL);
+			if (!scripted) {
+				R_EntityParticleTrail(cent, TRACER2_TRAIL);
+			}
 		}
 		else if (model->flags & EF_TRACER3) {
 			// VULT TRACER GLOW
@@ -195,22 +316,28 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, 
 				R_CoronasEntityNew(C_VORELIGHT, cent);
 			}
 
-			R_EntityParticleTrail(cent, VOOR_TRAIL);
+			if (!scripted) {
+				R_EntityParticleTrail(cent, VOOR_TRAIL);
+			}
 		}
 		else if (model->modhint == MOD_SPIKE && amf_nailtrail.integer && !gl_no24bit.integer) {
 			// VULT NAILTRAIL
-			if (amf_nailtrail_plasma.integer) {
-				byte color[3];
-				color[0] = 0; color[1] = 70; color[2] = 255;
-				FireballTrail(cent, color, 0.6, 0.3);
-			}
-			else {
-				ParticleNailTrail(cent, 2, 0.4f);
+			if (!scripted) {
+				if (amf_nailtrail_plasma.integer) {
+					byte color[3];
+					color[0] = 0; color[1] = 70; color[2] = 255;
+					FireballTrail(cent, color, 0.6, 0.3);
+				}
+				else {
+					ParticleNailTrail(cent, 2, 0.4f);
+				}
 			}
 		}
 		else if (model->modhint_trail == MOD_TF_TRAIL && amf_extratrails.integer) {
 			// VULT TRAILS
-			ParticleAlphaTrail(cent, 4, 0.4);
+			if (!scripted) {
+				ParticleAlphaTrail(cent, 4, 0.4);
+			}
 		}
 		else if (model->modhint == MOD_LASER && amf_extratrails.integer) {
 			rocketlightsize = 35 * (1 + bound(0, r_rocketlight.value, 1));
@@ -218,12 +345,14 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, 
 			if (!ISPAUSED && amf_coronas.integer) {
 				R_CoronasEntityNew(C_KNIGHTLIGHT, cent);
 			}
-			if (cent->trails[1].lasttime + 0.01 < particle_time) {
-				VX_LightningTrail(cent->trails[1].stop, ent->origin);
-				VectorCopy(ent->origin, cent->trails[1].stop);
-				cent->trails[1].lasttime = particle_time;
+			if (!scripted) {
+				if (cent->trails[1].lasttime + 0.01 < particle_time) {
+					VX_LightningTrail(cent->trails[1].stop, ent->origin);
+					VectorCopy(ent->origin, cent->trails[1].stop);
+					cent->trails[1].lasttime = particle_time;
+				}
+				R_EntityParticleTrail(cent, TRACER2_TRAIL);
 			}
-			R_EntityParticleTrail(cent, TRACER2_TRAIL);
 		}
 		else if (model->modhint == MOD_DETPACK) {
 			// VULT CORONAS
@@ -235,7 +364,9 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, 
 				VectorMA(liteorg, -10, forward, liteorg);
 
 				// MEAG: Fixme, was *old_origin, liteorg, cent->trail_origin - need to add check for detpack in ParticleAlphaTrail (?)
-				ParticleAlphaTrail(cent, 10, 0.8);
+				if (!scripted) {
+					ParticleAlphaTrail(cent, 10, 0.8);
+				}
 				if (!ISPAUSED && amf_coronas.integer) {
 					if (ent->skinnum > 0) {
 						R_CoronasNew(C_REDLIGHT, liteorg);
@@ -272,4 +403,44 @@ void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, 
 			VX_TeslaCharge(liteorg);
 		}
 	}
+}
+
+// Under rulesets that restrict particles, emitters run on static entities,
+// the only ones with an entity_id, and on the map's inline brush models;
+// those of other entities need PScript_DynamicActive.
+qbool CL_ScriptedEmitter(const entity_t *ent)
+{
+	if (ent->model->emiteffect == P_INVALID) {
+		return false;
+	}
+	return (ent->entity_id || PScript_InlineModel(ent->model)) ? PScript_Active() : PScript_DynamicActive();
+}
+
+// Runs the r_effect of ent's model once per host frame, down or, for a
+// "forwards" effect, along the model's forward vector. Returns true while it
+// runs. An effect that replaces the model hides it in CL_AddEntity.
+qbool CL_RunModelEmitter(entity_t *ent, trailkey_t *key, int *frame, int *type)
+{
+	model_t *model = ent->model;
+	vec3_t angles, forward, right, up;
+
+	if (!CL_ScriptedEmitter(ent)) {
+		return false;
+	}
+
+	if (PScript_EmitterDue(frame)) {
+		// Alias models pitch the other way.
+		VectorCopy(ent->angles, angles);
+		if (model->type == mod_alias || model->type == mod_alias3) {
+			angles[PITCH] = -angles[PITCH];
+		}
+		AngleVectors(angles, forward, right, up);
+		if (!(model->emitflags & PSCRIPT_EMIT_FORWARDS)) {
+			VectorNegate(up, forward);
+		}
+		PScript_MatchTrailstate(key, type, model->emiteffect);
+		// Capped so that a hitch does not emit a burst.
+		PScript_RunWorldEffect(ent->origin, forward, min(pscript_frametime, 0.1), model->emiteffect, key);
+	}
+	return true;
 }

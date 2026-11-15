@@ -819,6 +819,7 @@ void R_DrawParticles(void)
 		renderer.DrawClassicParticles(particles_to_draw);
 	}
 	QMB_DrawParticles();
+	R_RunStaticEmitters();
 	PScript_DrawParticles();
 }
 

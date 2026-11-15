@@ -302,6 +302,7 @@ clientState_t		cl;
 
 centity_t       cl_entities[CL_MAX_EDICTS];
 entity_t		cl_static_entities[MAX_STATIC_ENTITIES];
+static_emitter_t cl_static_emitters[MAX_STATIC_ENTITIES];
 lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
 dlight_t		cl_dlights[MAX_DLIGHTS];
 unsigned int cl_dlight_active[MAX_DLIGHTS/32];
@@ -1433,6 +1434,7 @@ void CL_ClearState (void)
 	memset(cl_lightstyle, 0, sizeof(cl_lightstyle));
 	memset(cl_entities, 0, sizeof(cl_entities));
 	memset(cl_static_entities, 0, sizeof(cl_static_entities));
+	memset(cl_static_emitters, 0, sizeof(cl_static_emitters));
 	CL_SpawnWarn_ClearPoints();
 
 	// Set entnum for all entity baselines
