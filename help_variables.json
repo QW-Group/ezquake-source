@@ -16173,6 +16173,41 @@
         }
       ]
     },
+    "r_part_beams": {
+      "default": "1",
+      "desc": "Draws scripted beam effects. 0 hides them.",
+      "group-id": "36",
+      "remarks": "Takes effect when the particle sets are next loaded, for example on map change.",
+      "type": "boolean"
+    },
+    "r_part_sparks": {
+      "default": "1",
+      "desc": "Draws the line sparks of scripted effects. 0 hides them, along with the fan and textured sparks that r_part_sparks_trifan and r_part_sparks_textured turn into line sparks.",
+      "group-id": "36",
+      "remarks": "Takes effect when the particle sets are next loaded, for example on map change.",
+      "type": "boolean"
+    },
+    "r_part_sparks_textured": {
+      "default": "1",
+      "desc": "Draws textured scripted sparks with their texture. 0 draws them as line sparks.",
+      "group-id": "36",
+      "remarks": "Takes effect when the particle sets are next loaded, for example on map change.",
+      "type": "boolean"
+    },
+    "r_part_sparks_trifan": {
+      "default": "1",
+      "desc": "Draws fan-shaped scripted sparks as fans. 0 draws them as line sparks.",
+      "group-id": "36",
+      "remarks": "Takes effect when the particle sets are next loaded, for example on map change.",
+      "type": "boolean"
+    },
+    "r_particledesc": {
+      "default": "",
+      "desc": "Space-separated list of scripted particle sets to load, in FTE's r_part format. Each name loads particles/<name>.cfg; a name starting with ./ loads <name>.cfg from the game directory instead, and a name containing / falls back to <name>.cfg. The set particles/map_<map name>.cfg is also loaded for the current map when it exists. Events that a loaded set defines an effect for, such as TE_EXPLOSION or TR_ROCKET, use it instead of the classic or QMB particles.",
+      "group-id": "36",
+      "remarks": "There are no built-in sets: with no set loaded, particles look as before. Under rulesets that restrict particles, only effects on the world, on static entities such as torches and on the map's own brush entities such as doors and plats run; events and other entities keep the classic or QMB particles. r_drawparticles 0 turns scripted effects off. The server cannot change this variable.",
+      "type": "string"
+    },
     "r_particles_count": {
       "default": "2048",
       "desc": "Maximum ammount of particles displayed.",

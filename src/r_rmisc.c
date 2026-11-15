@@ -285,6 +285,8 @@ void R_NewMap(qbool vid_restart)
 		InitCoronas();
 		//VULT NAMES
 		VX_TrackerClear();
+
+		PScript_NewMap();
 	}
 }
 

@@ -462,6 +462,8 @@ set(common_renderer_headers
         ${SOURCE_DIR}/r_lightmaps_internal.h
         ${SOURCE_DIR}/r_local.h
         ${SOURCE_DIR}/r_matrix.h
+        ${SOURCE_DIR}/r_part_script.h
+        ${SOURCE_DIR}/r_part_script_local.h
         ${SOURCE_DIR}/r_particles_qmb.h
         ${SOURCE_DIR}/r_performance.h
         ${SOURCE_DIR}/r_program.h
@@ -513,6 +515,8 @@ set(common_renderer
         ${SOURCE_DIR}/r_netgraph.c
         ${SOURCE_DIR}/r_palette.c
         ${SOURCE_DIR}/r_part.c
+        ${SOURCE_DIR}/r_part_script.c
+        ${SOURCE_DIR}/r_part_script_parse.c
         ${SOURCE_DIR}/r_part_trails.c
         ${SOURCE_DIR}/r_particles_qmb.c
         ${SOURCE_DIR}/r_particles_qmb_spawn.c

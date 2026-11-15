@@ -783,10 +783,13 @@ void R_InitParticles(void)
 
 	Classic_InitParticles();
 	QMB_InitParticles();
+	PScript_Init();
 }
 
 void R_ParticleFrame(void)
 {
+	PScript_BeginFrame();
+
 	if (!r_worldentity.model || !cl.worldmodel) {
 		return;
 	}
