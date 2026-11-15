@@ -40,10 +40,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // Every refresh matches each known model against all associations.
 #define PSCRIPT_MAX_ASSOCS 1024
 
-// Effect types kept at once. Creating a type compares its name with every
-// existing one, so loading n types takes n * n / 2 comparisons: 4096 types
-// load in 0.1 s, 100000 in 23 s. The largest combination of sets found has
-// 532 types.
+// Creating a type compares its name with every existing one, so loading
+// grows quadratically with the number of types.
 #define PSCRIPT_MAX_TYPES 4096
 
 // Each image, premul mode and filter takes a texture slot until vid_restart,
@@ -565,12 +563,11 @@ void PScript_LoadTexture(pscript_type_t *ptype)
 	ptype->looks.texture = PScript_BuiltinTexture(kind, premul);
 }
 
-// Records name as a loaded set and parses particles/<name>.cfg into the
-// config of that name; a name starting with "./" reads <name>.cfg in the game
-// directory instead, and a name with a '/' falls back to <name>.cfg. Returns
-// true when a file was parsed. Each name is read at most once until the sets
-// are unloaded, so a missing set is not looked for again. Implicit sets are
-// weak: they don't replace effects that an explicit set defined.
+// Parses particles/<name>.cfg ("./name" reads <name>.cfg in the game
+// directory), or imports an explicit effectinfo* set. Each name is read at
+// most once until the sets unload. Implicit sets are weak: they don't replace
+// effects an explicit set defined. Returns true when a file was read; may
+// move the type array.
 static qbool PScript_LoadSet(const char *name, qbool implicit, qbool warn)
 {
 	pscript_set_t **link;
@@ -617,6 +614,12 @@ static qbool PScript_LoadSet(const char *name, qbool implicit, qbool warn)
 		PScript_ParseParticleEffectFile(set->name, implicit, (const char *)data, max(size, 0));
 		Q_free(data);
 		return true;
+	}
+
+	// The importer reports a missing or unreadable file itself.
+	if (!implicit && (!strcmp(set->name, "effectinfo") || !strncmp(set->name, "effectinfo_", 11))) {
+		set->found = PScript_ImportEffectInfo(set->name);
+		return set->found;
 	}
 
 	if (warn) {
