@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vx_stuff.h"
 #include "settings.h"
 #include "teamplay.h"
+#include "r_part_script.h"
 #ifdef _WIN32
 #include "movie.h"
 #endif
@@ -669,10 +670,17 @@ static void CL_ParseParticleEffect (void)
 	count = MSG_ReadByte ();
 	color = MSG_ReadByte ();
 
+	if (msg_badread)
+		return;
+
 	// now run the effect
 	if (count == 255)
-		Classic_ParticleExplosion (org);
-	else 
+	{
+		// NetQuake encodes an explosion as 255 particles, so it is drawn as TE_EXPLOSION.
+		if (!PScript_RunParticleEffectState (org, NULL, 1, PScript_EffectType (PSCRIPT_TE_EXPLOSION), NULL) && !PScript_RunParticleEffect (org, NULL, 107, 1024))
+			Classic_ParticleExplosion (org);
+	}
+	else if (!PScript_RunParticleEffect (org, dir, color, count))
 		R_RunParticleEffect (org, dir, color, count);
 }
 
