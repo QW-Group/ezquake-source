@@ -83,14 +83,44 @@ typedef enum {
 	PSCRIPT_EFFECT_COUNT
 } pscript_effect_t;
 
+// Seconds simulated in the current host frame, 0 while paused or rewinding.
+extern float pscript_frametime;
+// Increases once per host frame and is never 0, so a zeroed stamp is stale.
+extern int pscript_hostframe;
+// Increases on every reload of the particle sets and is never 0 after the
+// first; callers that cache effect type numbers by name look them up again
+// when it changes.
+extern int pscript_refreshcount;
+
 void PScript_Init(void);
 void PScript_Shutdown(void);
 void PScript_NewMap(void);
+void PScript_ClearParticles(void);
 void PScript_BeginFrame(void);
+void PScript_DrawParticles(void);
+void PScript_EndFrame(void);
+qbool PScript_Active(void);
+qbool PScript_DynamicActive(void);
+qbool PScript_InlineModel(const struct model_s *mod);
+qbool PScript_EmitterDue(int *stamp);
 
 // The handle may be cached; rulesets are applied when the effect is run.
 int PScript_FindParticleType(const char *name);
 int PScript_EffectType(pscript_effect_t effect);
 qbool PScript_ExplosionSprite(void);
+
+// For events and moving entities, so they fail under rulesets that restrict
+// particles, as does PScript_ParticleTrail.
+qbool PScript_RunParticleEffectState(vec3_t org, vec3_t dir, float count, int typenum, trailkey_t *tk);
+// For effects on the world, static entities and the map's inline brush
+// models, which run under every ruleset.
+qbool PScript_RunWorldEffect(vec3_t org, vec3_t dir, float count, int typenum, trailkey_t *tk);
+qbool PScript_RunParticleEffectTypeString(vec3_t org, vec3_t dir, float count, const char *name);
+qbool PScript_RunParticleEffectTinted(vec3_t org, vec3_t dir, float count, int typenum, int colorindex, int colorrand);
+qbool PScript_RunParticleEffect(vec3_t org, vec3_t dir, int color, int count);
+qbool PScript_RunParticleWeather(vec3_t minb, vec3_t maxb, vec3_t dir, float count, int colour, const char *efname);
+qbool PScript_RunParticleCube(int typenum, vec3_t minb, vec3_t maxb, vec3_t dir, float count, int colour, qbool gravity);
+qbool PScript_ParticleTrail(vec3_t start, vec3_t end, int typenum, float timeinterval, int dlkey, trailkey_t *tk);
+void PScript_DelinkTrailstate(trailkey_t *tk);
 
 #endif // EZQUAKE_R_PART_SCRIPT_H

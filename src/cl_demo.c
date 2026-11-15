@@ -39,6 +39,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "demo_extension.h"
 #include "mvd_utils.h"
 #include "r_trace.h"
+#include "r_part_script.h"
 #include "sha3.h"
 #ifndef CLIENTONLY
 #include "server.h"
@@ -2143,6 +2144,9 @@ qbool CL_GetDemoMessage (void)
 		if (cls.demoseeking && cls.demotime <= demotime && cls.state >= ca_active)
 		{
 			cls.demoseeking = DST_SEEKING_NONE;
+			// Temp entities were skipped while seeking, so scripted effects
+			// still alive, such as long-lived decals, are from before the jump.
+			PScript_ClearParticles();
 
 			if (cls.demorewinding)
 			{

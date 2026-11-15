@@ -78,10 +78,20 @@ int pscript_pe_default = P_INVALID;
 int pscript_pe_size2 = P_INVALID;
 int pscript_pe_size3 = P_INVALID;
 int pscript_pe_colors[256];
+float pscript_frametime;
+int pscript_hostframe = 1;
+int pscript_refreshcount;
 qbool pscript_expsprite = true;
 
 static int pscript_typecapacity;
 static qbool pscript_sets_dirty;
+qbool pscript_anyloaded;
+static qbool pscript_active;
+static qbool pscript_restricted; // as the last PScript_BeginFrame found it
+static double pscript_last;
+// The host frame's time is still to be simulated: by the first view, so new
+// particles move before they are drawn, or at the end of a frame without one.
+static qbool pscript_sim_pending;
 static pscript_set_t *pscript_sets;
 static pscript_redirect_t *pscript_redirects;
 static int pscript_effectids[PSCRIPT_EFFECT_COUNT];
@@ -174,10 +184,17 @@ static void PScript_OnChangeParticleDesc(cvar_t *var, char *value, qbool *cancel
 }
 
 static cvar_t r_particledesc = { "r_particledesc", "", CVAR_NOTFROMSERVER, PScript_OnChangeParticleDesc };
+cvar_t r_bouncysparks = { "r_bouncysparks", "1" };
+cvar_t r_decal_noperpendicular = { "r_decal_noperpendicular", "1" };
+cvar_t r_particle_tracelimit = { "r_particle_tracelimit", "65536" };
 cvar_t r_part_sparks = { "r_part_sparks", "1" };
 cvar_t r_part_sparks_trifan = { "r_part_sparks_trifan", "1" };
 cvar_t r_part_sparks_textured = { "r_part_sparks_textured", "1" };
 cvar_t r_part_beams = { "r_part_beams", "1" };
+cvar_t r_part_contentswitch = { "r_part_contentswitch", "1" };
+cvar_t r_part_density = { "r_part_density", "1" };
+cvar_t r_part_maxparticles = { "r_part_maxparticles", "65536" };
+cvar_t r_part_maxdecals = { "r_part_maxdecals", "8192" };
 
 static const char *PScript_LegacyName(const char *name)
 {
@@ -628,6 +645,7 @@ static void PScript_UnloadSets(void)
 		pscript_sets = set->next;
 		Q_free(set);
 	}
+	PScript_ForgetMissingSounds();
 }
 
 // Loads the sets r_particledesc names and the current map's map_<name> set.
@@ -725,11 +743,12 @@ int PScript_FindParticleType(const char *fullname)
 	return type;
 }
 
-// Returns the type of an effect the engine spawns by name, or P_INVALID.
-// Refreshed whenever the types or redirects change.
+// These are effects of events and moving entities, so under rulesets that
+// restrict particles they give P_INVALID and the hooks fall back to ezQuake's
+// own effects.
 int PScript_EffectType(pscript_effect_t effect)
 {
-	if ((int)effect < 0 || effect >= PSCRIPT_EFFECT_COUNT) {
+	if ((int)effect < 0 || effect >= PSCRIPT_EFFECT_COUNT || Rulesets_RestrictParticles()) {
 		return P_INVALID;
 	}
 	return pscript_effectids[effect];
@@ -772,6 +791,15 @@ static void PScript_Refresh(void)
 		}
 		pscript_effectids[i] = type;
 	}
+
+	pscript_anyloaded = false;
+	for (i = 0; i < pscript_numtypes; i++) {
+		if (pscript_types[i].loaded) {
+			pscript_anyloaded = true;
+			break;
+		}
+	}
+	pscript_refreshcount = pscript_refreshcount == INT_MAX ? 1 : pscript_refreshcount + 1;
 }
 
 // r_partredirect [from [to]]; an empty or identical to removes the redirect.
@@ -849,6 +877,8 @@ static void PScript_PartRedirect_f(void)
 
 static void PScript_PartInfo_f(void)
 {
+	pscript_counts_t counts, total, spare;
+	pscript_type_t *ptype;
 	pscript_set_t *set;
 	int i, loaded = 0;
 
@@ -864,13 +894,26 @@ static void PScript_PartInfo_f(void)
 		}
 	}
 	Con_Printf("%d effect types, %d loaded\n", pscript_numtypes, loaded);
+
+	memset(&total, 0, sizeof(total));
+	for (ptype = pscript_runlist, i = 0; ptype && i < pscript_numtypes; ptype = ptype->nexttorun, i++) {
+		memset(&counts, 0, sizeof(counts));
+		PScript_CountInstances(ptype, &counts);
+		Con_Printf("%s.%s: %d particles%s, %d beams, %d decals\n", ptype->config, ptype->name, counts.particles, ptype->cliptype >= 0 ? " (+traceline)" : "", counts.beams, counts.decals);
+		total.particles += counts.particles;
+		total.beams += counts.beams;
+		total.decals += counts.decals;
+	}
+	memset(&spare, 0, sizeof(spare));
+	PScript_CountFree(&spare);
+	Con_Printf("%d particles, %d free\n", total.particles, spare.particles);
+	Con_Printf("%d beam segments, %d free\n", total.beams, spare.beams);
+	Con_Printf("%d decals, %d free\n", total.decals, spare.decals);
 }
 
-// Called by R_InitParticles at startup and after every vid_restart. The first
-// call registers the cvars and commands and has the next frame load the sets,
-// because a value set before registration never reached OnChange. Every call
-// reloads each type's texture: vid_restart deletes all textures and gives
-// their slots to other images. Loads no sets.
+// Called at startup and after every vid_restart, which deletes all textures,
+// so every call reloads each type's texture. The first call has the next frame
+// load the sets, as a value set before registration never reached OnChange.
 void PScript_Init(void)
 {
 	int i;
@@ -878,10 +921,17 @@ void PScript_Init(void)
 	if (!host_initialized) {
 		Cvar_SetCurrentGroup(CVAR_GROUP_PARTICLES);
 		Cvar_Register(&r_particledesc);
+		Cvar_Register(&r_bouncysparks);
+		Cvar_Register(&r_decal_noperpendicular);
+		Cvar_Register(&r_particle_tracelimit);
 		Cvar_Register(&r_part_sparks);
 		Cvar_Register(&r_part_sparks_trifan);
 		Cvar_Register(&r_part_sparks_textured);
 		Cvar_Register(&r_part_beams);
+		Cvar_Register(&r_part_contentswitch);
+		Cvar_Register(&r_part_density);
+		Cvar_Register(&r_part_maxparticles);
+		Cvar_Register(&r_part_maxdecals);
 		Cvar_ResetCurrentGroup();
 
 		Cmd_AddCommand("r_partinfo", PScript_PartInfo_f);
@@ -906,15 +956,16 @@ void PScript_Init(void)
 	}
 }
 
-// Called at client shutdown. Frees every type, set and redirect, leaving the
-// module as before its first PScript_Init apart from the registered cvars
-// and commands.
+// Called at client shutdown. Frees the pools and every type, set and
+// redirect, leaving the module as before its first PScript_Init apart from
+// the registered cvars and commands.
 void PScript_Shutdown(void)
 {
 	pscript_redirect_t *r;
 	pscript_set_t *set;
 	int i;
 
+	PScript_FreePools();
 	for (i = 0; i < pscript_numtypes; i++) {
 		Q_free(pscript_types[i].sounds);
 		Q_free(pscript_types[i].ramp);
@@ -947,23 +998,45 @@ void PScript_Shutdown(void)
 	for (i = 0; i < PSCRIPT_TEX_COUNT; i++) {
 		R_TextureReferenceInvalidate(pscript_builtin_textures[i]);
 	}
+	pscript_active = false;
+	pscript_restricted = false;
+	pscript_sim_pending = false;
+	pscript_anyloaded = false;
 	pscript_effects_dirty = false;
 	pscript_expsprite = true;
 	pscript_sets_dirty = true;
+}
+
+// Called on map changes, at the end of demo seeks and when rulesets start
+// to restrict particles, which PScript_BeginFrame notices. Drops every live
+// instance, applying changed pool sizes, and the next frame simulates no
+// time. Sets and textures stay.
+void PScript_ClearParticles(void)
+{
+	if (pscript_active) {
+		PScript_StartupPools();
+	}
+	pscript_last = r_refdef2.time;
 }
 
 // Called by R_NewMap once the map's models are loaded, so hooks later in this
 // frame use the new map's effects.
 void PScript_NewMap(void)
 {
+	PScript_ClearParticles();
 	PScript_ReloadSets();
 	PScript_Refresh();
 }
 
-// Called once per host frame before any view is rendered. Reloads the sets
-// after r_particledesc changed and refreshes after the types changed.
+// Called once per host frame after the network messages were parsed and
+// before any view is rendered. When rulesets start to restrict particles,
+// every instance is dropped so nothing spawned for an event or a moving
+// entity outlasts the change.
 void PScript_BeginFrame(void)
 {
+	qbool restricted = Rulesets_RestrictParticles();
+	qbool want;
+
 	if (pscript_sets_dirty) {
 		PScript_ReloadSets();
 		PScript_Refresh();
@@ -971,4 +1044,99 @@ void PScript_BeginFrame(void)
 	else if (pscript_effects_dirty) {
 		PScript_Refresh();
 	}
+
+	want = pscript_anyloaded && r_drawparticles.integer && renderer.SceneTrisSupported();
+	if (want && !pscript_active) {
+		PScript_StartupPools();
+		pscript_active = true;
+		pscript_last = r_refdef2.time;
+	}
+	else if (!want && pscript_active) {
+		PScript_ResetPools();
+		pscript_active = false;
+	}
+	else if (restricted && !pscript_restricted) {
+		PScript_ClearParticles();
+	}
+	pscript_restricted = restricted;
+
+	pscript_frametime = bound(0, r_refdef2.time - pscript_last, 1);
+	pscript_last = r_refdef2.time;
+	pscript_hostframe = pscript_hostframe == INT_MAX ? 1 : pscript_hostframe + 1;
+
+	if (pscript_active) {
+		if (pscript_frametime > 0) {
+			PScript_ExpireFrameParticles();
+		}
+		pscript_sim_pending = true;
+		PScript_RebuildTraceEntities();
+	}
+}
+
+// Called once per rendered view. The first view of a host frame simulates
+// it; every view builds its own geometry from the same particles.
+void PScript_DrawParticles(void)
+{
+	if (!pscript_active) {
+		return;
+	}
+	if (pscript_sim_pending) {
+		PScript_Simulate(pscript_frametime);
+		pscript_sim_pending = false;
+	}
+	PScript_BuildGeometry();
+}
+
+// Called once per host frame after every view is rendered. Simulates the
+// frame if no view did, then, when time passed, marks the particles that
+// live one frame to end when the next frame that advances time begins, so
+// a paused view keeps showing them.
+void PScript_EndFrame(void)
+{
+	if (!pscript_active) {
+		return;
+	}
+	if (pscript_sim_pending) {
+		PScript_Simulate(pscript_frametime);
+		pscript_sim_pending = false;
+	}
+	if (pscript_frametime > 0) {
+		PScript_MarkFrameParticles();
+	}
+}
+
+// Every spawn function fails while this is false. Rulesets leave it alone:
+// effects on the world, on static entities and on the map's inline brush
+// models run under all of them, while the entry points for the rest also
+// need PScript_DynamicActive.
+qbool PScript_Active(void)
+{
+	return pscript_active;
+}
+
+// Effects of events and of other entities can carry game state, such as an
+// emitter telling that an item is up, so they are off under rulesets that
+// restrict particles.
+qbool PScript_DynamicActive(void)
+{
+	return pscript_active && !Rulesets_RestrictParticles();
+}
+
+// True for a submodel of the current map ("*N"), such as a door or a plat.
+// These are copies of the world model sharing its surfaces; an external .bsp
+// model like a health box has its own.
+qbool PScript_InlineModel(const struct model_s *mod)
+{
+	return mod && mod->type == mod_brush && mod->name[0] == '*' && cl.worldmodel && mod->surfaces == cl.worldmodel->surfaces;
+}
+
+// For engine emitters visited once per view: true at most once per host frame
+// for a stamp, and only while active and time passes.
+qbool PScript_EmitterDue(int *stamp)
+{
+	if (*stamp == pscript_hostframe) {
+		return false;
+	}
+	*stamp = pscript_hostframe;
+	return pscript_active && pscript_frametime > 0;
 }

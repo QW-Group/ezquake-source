@@ -1329,7 +1329,7 @@
     "description": "Connects to a server or QTV stream using a qw:// URL. Usage: `qwurl <qw://host[:port][/command]>`. The URL must start with qw://. The optional path component selects the action: omitted or \"join\" or \"connect\" joins as a player; \"spectate\" or \"observe\" joins as a spectator; \"qtv[/password]\" connects to a QTV proxy. A challenge response path (\"challenge?...\") is also handled internally. Semicolons in the URL are rejected to prevent command injection. Example: `qwurl qw://qw.server.se:27500/spectate`."
   },
   "r_partinfo": {
-    "description": "Lists the loaded scripted particle sets, marking those that were not found, and the number of effect types they define."
+    "description": "Lists the loaded scripted particle sets, marking those that were not found, and the number of effect types they define, then each effect with live particles, beams or decals, marking those whose particles test for collisions with (+traceline), and finally the number of live and free particles, beam segments and decals."
   },
   "r_partredirect": {
     "description": "Makes a scripted particle effect name use another effect, for example r_partredirect TE_EXPLOSION TE_TAREXPLOSION. Without arguments, lists the redirects; with one, shows where that name is redirected. An empty or identical <to> removes the redirect. A redirect may lead to another, up to 5 in a row. Particle sets can add redirects too; theirs last until the sets reload, and a redirect made with this command replaces a set's and is never replaced by one.",

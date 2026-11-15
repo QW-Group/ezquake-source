@@ -350,7 +350,10 @@ typedef struct {
 	int				bubble;				// non zero means no flashblend bubble
 	dlighttype_t	type;
 	byte			color[3];			// use such color if type == lt_custom
-	byte unused[3];
+	byte			colorfade;			// non zero fades color by channelfade
+	byte			unused[2];
+	float			fadecolor[3];		// color before rounding, 128 is full
+	float			channelfade[3];		// fadecolor lost each second
 } dlight_t;
 
 typedef struct customlight_s {

@@ -845,10 +845,13 @@ void CL_DecayLights(void)
 	unsigned int j;
 	dlight_t *dl;
 	extern cvar_t r_lightdecayrate;
+	float colorfadetime;
 
 	if (cls.state < ca_active) {
 		return;
 	}
+
+	colorfadetime = ISPAUSED ? 0 : cls.frametime;
 
 	for (i = 0; i < MAX_DLIGHTS/32; i++) {
 		if (cl_dlight_active[i]) {
@@ -868,6 +871,20 @@ void CL_DecayLights(void)
 						cl_dlight_active[i] &= ~(1u << j);
 						dl->radius = 0;
 						continue;
+					}
+
+					// Fades follow game time, not r_lightdecayrate. The color
+					// stays within the byte range when a channel brightens.
+					if (dl->colorfade) {
+						int k;
+
+						for (k = 0; k < 3; k++) {
+							float c = dl->fadecolor[k] - colorfadetime * dl->channelfade[k];
+
+							c = c > 0 ? min(c, 255) : 0;
+							dl->fadecolor[k] = c;
+							dl->color[k] = (byte)c;
+						}
 					}
 				}
 			}

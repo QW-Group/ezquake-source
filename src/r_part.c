@@ -58,7 +58,7 @@ extern cvar_t gl_part_lavasplash;
 extern cvar_t gl_part_telesplash;
 
 cvar_t r_particles_count = { "r_particles_count", "2048" };
-static cvar_t r_drawparticles = { "r_drawparticles", "1" };
+cvar_t r_drawparticles = { "r_drawparticles", "1" };
 
 // Which particles to draw this frame
 typedef struct glm_particle_s {
@@ -802,6 +802,7 @@ void R_ClearParticles(void)
 {
 	Classic_ClearParticles();
 	QMB_ClearParticles();
+	PScript_ClearParticles();
 }
 
 void R_DrawParticles(void)
@@ -818,6 +819,7 @@ void R_DrawParticles(void)
 		renderer.DrawClassicParticles(particles_to_draw);
 	}
 	QMB_DrawParticles();
+	PScript_DrawParticles();
 }
 
 #define RunParticleEffect(var, org, dir, color, count)		\
@@ -1005,4 +1007,5 @@ finished:
 void R_ParticleEndFrame(void)
 {
 	Classic_MoveParticles();
+	PScript_EndFrame();
 }

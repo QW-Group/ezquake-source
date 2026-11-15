@@ -15266,6 +15266,12 @@
       "group-id": "8",
       "type": "integer"
     },
+    "r_bouncysparks": {
+      "default": "1",
+      "desc": "Lets scripted particles collide with the world, so effects that ask for it bounce, splash or leave decals. 0 lets particles pass through walls.",
+      "group-id": "36",
+      "type": "boolean"
+    },
     "r_chaticons_alpha": {
       "default": "0.8",
       "desc": "Opacity of chaticons.",
@@ -15288,6 +15294,12 @@
       "desc": "Displays the amount of damage taken recently on the screen above your armour and health.",
       "group-id": "47",
       "type": "float"
+    },
+    "r_decal_noperpendicular": {
+      "default": "1",
+      "desc": "Keeps scripted decals off surfaces at a steep angle to the decal, so a decal on a floor does not run up the adjacent walls.",
+      "group-id": "36",
+      "type": "boolean"
     },
     "r_drawdisc": {
       "default": "1",
@@ -16180,6 +16192,32 @@
       "remarks": "Takes effect when the particle sets are next loaded, for example on map change.",
       "type": "boolean"
     },
+    "r_part_contentswitch": {
+      "default": "1",
+      "desc": "Lets scripted effects change, or not spawn, depending on whether they are in water, slime or lava, as the effect defines.",
+      "group-id": "36",
+      "type": "boolean"
+    },
+    "r_part_density": {
+      "default": "1",
+      "desc": "Scales the number of particles that scripted effects spawn.",
+      "group-id": "36",
+      "type": "float"
+    },
+    "r_part_maxdecals": {
+      "default": "8192",
+      "desc": "Maximum number of scripted decal triangles alive at once, from 1 to 65536.",
+      "group-id": "36",
+      "remarks": "Takes effect when the particle pools are next set up: on map change, on demo seek or when scripted effects are switched on.",
+      "type": "integer"
+    },
+    "r_part_maxparticles": {
+      "default": "65536",
+      "desc": "Maximum number of scripted particles alive at once, from 1 to 65536.",
+      "group-id": "36",
+      "remarks": "Takes effect when the particle pools are next set up: on map change, on demo seek or when scripted effects are switched on.",
+      "type": "integer"
+    },
     "r_part_sparks": {
       "default": "1",
       "desc": "Draws the line sparks of scripted effects. 0 hides them, along with the fan and textured sparks that r_part_sparks_trifan and r_part_sparks_textured turn into line sparks.",
@@ -16200,6 +16238,12 @@
       "group-id": "36",
       "remarks": "Takes effect when the particle sets are next loaded, for example on map change.",
       "type": "boolean"
+    },
+    "r_particle_tracelimit": {
+      "default": "65536",
+      "desc": "Maximum number of collision tests that scripted particles may make per frame. Particles beyond the limit move without colliding in that frame.",
+      "group-id": "36",
+      "type": "integer"
     },
     "r_particledesc": {
       "default": "",
