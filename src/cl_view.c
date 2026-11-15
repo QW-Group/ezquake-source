@@ -629,6 +629,21 @@ void V_AddLightBlend(float r, float g, float b, float a2, qbool suppress_polyble
 	v_blend[2] = v_blend[2] * (1 - a2) + b * a2;
 }
 
+// The OS/driver may silently reset the hardware gamma ramp when the window is
+// created, changes video mode or regains focus, sometimes a little after the
+// event itself. Re-apply the ramp a few times during a short window afterwards.
+#define GAMMA_REFRESH_DURATION 2.0
+#define GAMMA_REFRESH_INTERVAL 0.25
+static double gamma_refresh_until = 0;
+static double gamma_refresh_last = 0;
+
+void V_RequestGammaRefresh (void)
+{
+	v_gamma.modified = true;
+	gamma_refresh_until = Sys_DoubleTime() + GAMMA_REFRESH_DURATION;
+	gamma_refresh_last = 0;
+}
+
 void V_UpdatePalette (void)
 {
 	int i, j, c;
@@ -651,6 +666,18 @@ void V_UpdatePalette (void)
 	}
 	current_gamma = (vid_hwgamma_enabled ? bound(0.3, v_gamma.value, 3) : 1);
 	current_contrast = (vid_hwgamma_enabled ? bound(1, v_contrast.value, 3) : 1);
+
+	if (gamma_refresh_until > 0) {
+		double now = Sys_DoubleTime();
+
+		if (now > gamma_refresh_until) {
+			gamma_refresh_until = 0;
+		}
+		else if (now >= gamma_refresh_last + GAMMA_REFRESH_INTERVAL) {
+			gamma_refresh_last = now;
+			v_gamma.modified = true;
+		}
+	}
 
 	change_flags |= (memcmp(hw_vblend, prev_blend, sizeof(hw_vblend)) ? 1 : 0);
 	change_flags |= (current_gamma != old_gamma || v_gamma.modified ? 2 : 0);

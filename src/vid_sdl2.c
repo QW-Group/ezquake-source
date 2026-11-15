@@ -573,11 +573,7 @@ static void window_event(SDL_WindowEvent *event)
 			Minimized = false;
 			ActiveApp = true;
 			scr_skipupdate = 0;
-#ifdef X11_GAMMA_WORKAROUND
-			if (vid_gamma_workaround.integer) {
-				v_gamma.modified = true;
-			}
-#endif
+			V_RequestGammaRefresh();
 #ifdef _WIN32
 			Sys_ActiveAppChanged ();
 #endif
@@ -1523,7 +1519,7 @@ static void VID_SDL_Init(void)
 		Com_Printf("Failed to set window icon");
 	}
 
-	v_gamma.modified = true;
+	V_RequestGammaRefresh();
 	r_swapInterval.modified = true;
 
 #ifdef X11_GAMMA_WORKAROUND
