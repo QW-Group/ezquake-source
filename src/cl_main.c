@@ -3016,6 +3016,7 @@ void CL_Shutdown (void)
 	CL_Disconnect();
 	Q_free(cl_visents.list);
 	cl_visents.capacity = 0;
+	PScript_Shutdown();
 	SList_Shutdown();
 	CDAudio_Shutdown();
 	S_Shutdown();

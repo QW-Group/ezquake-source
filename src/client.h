@@ -31,6 +31,8 @@ $Id: client.h,v 1.74 2007-10-12 00:08:42 cokeman1982 Exp $
 #ifndef EZQUAKE_CLIENT_HEADER
 #define EZQUAKE_CLIENT_HEADER
 
+#include "r_part_script.h"
+
 #if defined(_MSC_VER) && !defined(__attribute__)
 #define __attribute__(A) /**/
 #endif
