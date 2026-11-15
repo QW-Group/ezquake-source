@@ -330,6 +330,15 @@ typedef enum {
 
 	r_state_fx_world_geometry,
 
+	r_state_scenetris_alpha,
+	r_state_scenetris_colour,
+	r_state_scenetris_add_alpha,
+	r_state_scenetris_add_colour,
+	r_state_scenetris_subtract,
+	r_state_scenetris_invmod_alpha,
+	r_state_scenetris_invmod_colour,
+	r_state_scenetris_premul,
+
 	r_state_count
 } r_state_id;
 

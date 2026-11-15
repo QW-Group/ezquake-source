@@ -893,6 +893,7 @@ void R_RenderView(void)
 
 	// Render billboards
 	renderer.Draw3DSpritesInline();
+	renderer.DrawSceneTrisInline();
 
 	// Draw 3D hud elements
 	R_Render3DHud();
