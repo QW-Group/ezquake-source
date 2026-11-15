@@ -121,6 +121,8 @@ void GLM_PrepareAliasModelBatches(void);
 void GLM_DrawAliasModelBatches(void);
 void GLM_DrawAliasModelPostSceneBatches(void);
 
+void GLM_DrawSceneTris(void);
+
 void GLM_StateBeginPolyBlend(void);
 void GLM_StateBeginDraw3DSprites(void);
 void GLM_BeginDrawWorld(qbool alpha_surfaces, qbool polygon_offset);
