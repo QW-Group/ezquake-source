@@ -48,6 +48,11 @@ typedef struct
 	model_t *model;
 	float endtime;
 	vec3_t start, end;
+	// Scripted effects along the beam and where it hits, and their states.
+	pscript_effect_t effect, impact_effect;
+	trailkey_t trail, impact;
+	int trailtype, impacttype; // the types trail and impact were last used for
+	int trailframe;            // pscript_hostframe stamp of the trail
 } beam_t;
 
 beam_t cl_beams[MAX_BEAMS];
@@ -565,11 +570,34 @@ static void CL_ParseBeam(int type, vec3_t end)
 	CL_CreateBeam(type, ent, start, end);
 }
 
+// Runs the scripted impact effect once per beam message. A slot taken over
+// from another entity or from an ended beam starts its states over.
+static void CL_SetBeam(beam_t *b, int ent, model_t *m, pscript_effect_t effect, pscript_effect_t impact, vec3_t start, vec3_t end)
+{
+	int type = PScript_EffectType(impact);
+
+	if (b->entity != ent || !b->model || b->endtime < cl.time) {
+		PScript_DelinkTrailstate(&b->trail);
+		PScript_DelinkTrailstate(&b->impact);
+	}
+	b->entity = ent;
+	b->model = m;
+	b->effect = effect;
+	b->impact_effect = impact;
+	b->endtime = cl.time + 0.2;
+	VectorCopy(start, b->start);
+	VectorCopy(end, b->end);
+
+	PScript_MatchTrailstate(&b->impact, &b->impacttype, type);
+	PScript_RunParticleEffectState(end, vec3_origin, 1, type, &b->impact);
+}
+
 void CL_CreateBeam(int type, int ent, vec3_t start, vec3_t end)
 {
 	int i;
 	beam_t *b;
 	struct model_s *m;
+	pscript_effect_t effect, impact;
 
 	if (CL_Demo_SkipMessage(true))
 		return;
@@ -583,7 +611,7 @@ void CL_CreateBeam(int type, int ent, vec3_t start, vec3_t end)
 		int colors[8] = { 6, 208, 180, 35, 224, 133, 192, 6 };
 
 		// -512..-257 additionally encode a player number in the upper bits.
-		CL_DrawRailTrail(start, end, colors[ent & 7]);
+		CL_DrawRailTrailEffect(start, end, PSCRIPT_TE_RAILTRAIL, colors[ent & 7]);
 		return;
 	}
 
@@ -593,21 +621,29 @@ void CL_CreateBeam(int type, int ent, vec3_t start, vec3_t end)
 			if (!cl_bolt1_mod)
 				cl_bolt1_mod = Mod_CustomModel(custom_model_bolt, true);
 			m = cl_bolt1_mod;
+			effect = PSCRIPT_TE_LIGHTNING1;
+			impact = PSCRIPT_TE_LIGHTNING1_END;
 			break;
 		case 2:
 			if (!cl_bolt2_mod)
 				cl_bolt2_mod = Mod_CustomModel(custom_model_bolt2, true);
 			m = cl_bolt2_mod;
+			effect = PSCRIPT_TE_LIGHTNING2;
+			impact = PSCRIPT_TE_LIGHTNING2_END;
 			break;
 		case 3:
 			if (!cl_bolt3_mod)
 				cl_bolt3_mod = Mod_CustomModel(custom_model_bolt3, true);
 			m = cl_bolt3_mod;
+			effect = PSCRIPT_TE_LIGHTNING3;
+			impact = PSCRIPT_TE_LIGHTNING3_END;
 			break;
 		case 4: default:
 			if (!cl_beam_mod)
 				cl_beam_mod = Mod_CustomModel(custom_model_beam, true);
 			m = cl_beam_mod;
+			effect = PSCRIPT_TE_BEAM;
+			impact = PSCRIPT_TE_BEAM_END;
 			break;
 	}
 	
@@ -621,10 +657,7 @@ void CL_CreateBeam(int type, int ent, vec3_t start, vec3_t end)
 	{
 		if (b->entity == ent) 
 		{
-			b->model = m;
-			b->endtime = cl.time + 0.2;
-			VectorCopy(start, b->start);
-			VectorCopy(end, b->end);
+			CL_SetBeam(b, ent, m, effect, impact, start, end);
 			return;
 		}
 	}
@@ -634,11 +667,7 @@ void CL_CreateBeam(int type, int ent, vec3_t start, vec3_t end)
 	{
 		if (!b->model || b->endtime < cl.time) 
 		{
-			b->entity = ent;
-			b->model = m;
-			b->endtime = cl.time + 0.2;
-			VectorCopy(start, b->start);
-			VectorCopy(end, b->end);
+			CL_SetBeam(b, ent, m, effect, impact, start, end);
 			return;
 		}
 	}
@@ -1498,6 +1527,26 @@ static float fakeshaft_policy (void)
 	}
 }
 
+// Runs the beam's scripted trail once per host frame. Returns false when it
+// has none, so the caller draws the beam.
+static qbool CL_ScriptedBeam(beam_t *b)
+{
+	int type;
+
+	if (!PScript_Active()) {
+		return false;
+	}
+	type = PScript_EffectType(b->effect);
+	if (type == P_INVALID) {
+		return false;
+	}
+	if (PScript_EmitterDue(&b->trailframe)) {
+		PScript_MatchTrailstate(&b->trail, &b->trailtype, type);
+		PScript_ParticleTrail(b->start, b->end, type, pscript_frametime, b->entity, &b->trail);
+	}
+	return true;
+}
+
 static void CL_UpdateBeams(void)
 {
 	int i;
@@ -1510,6 +1559,7 @@ static void CL_UpdateBeams(void)
 	float lg_size = bound(3, amf_lightning_size.value, 30);
 	int beamstodraw, j, k;
 	qbool sparks = false;
+	qbool scripted, scripted_impact;
 	vec3_t beamstart[MAX_LIGHTNINGBEAMS], beamend[MAX_LIGHTNINGBEAMS];
 	vec3_t furthest_sparks;
 	beamstodraw = bound(1, amf_lightning.value, MAX_LIGHTNINGBEAMS);	
@@ -1589,6 +1639,11 @@ static void CL_UpdateBeams(void)
 			}
 		}
 
+		// The scripted beam stands in for the beam model and the VX beams,
+		// and a scripted effect where it hits for the sparks; coronas stay.
+		scripted = CL_ScriptedBeam(b);
+		scripted_impact = PScript_Active() && PScript_EffectType(b->impact_effect) != P_INVALID;
+
 		// Calculate pitch and yaw.
 		VectorSubtract (b->end, b->start, dist);
 
@@ -1620,7 +1675,7 @@ static void CL_UpdateBeams(void)
 		VectorScale (dist, 30, dist);
 
 		for ( ; d > 0; d -= 30) {
-			if (!amf_lightning.value || Rulesets_RestrictParticles()) {
+			if (!scripted && (!amf_lightning.value || Rulesets_RestrictParticles())) {
 				VectorCopy (org, ent.origin);
 				ent.model = b->model;
 				ent.angles[0] = pitch;
@@ -1632,7 +1687,7 @@ static void CL_UpdateBeams(void)
 
 				CL_AddEntity (&ent);
 			}
-			else if (!ISPAUSED) {
+			else if (!scripted && !ISPAUSED) {
 				//VULT - Some people might like their lightning beams thicker
 				for (k = 0; k < beamstodraw; k++) {
 					VectorAdd(org, dist, beamend[k]);
@@ -1659,7 +1714,7 @@ static void CL_UpdateBeams(void)
 			VectorAdd (org, dist, org);
 
 			// LIGHTNING SPARKS
-			if (amf_lightning_sparks.value && !Rulesets_RestrictParticles() && !ISPAUSED && !gl_no24bit.integer) {
+			if (amf_lightning_sparks.value && !Rulesets_RestrictParticles() && !ISPAUSED && !gl_no24bit.integer && !scripted_impact) {
 				trace_t	trace;
 				trace = PM_TraceLine (org, b->end);
 				if (trace.fraction < 1) {
