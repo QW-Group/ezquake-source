@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define EZQUAKE_R_PART_SCRIPT_LOCAL_H
 
 #include "r_part_script.h"
+#include "r_scenetris.h"
 
 typedef float pscript_vec2_t[2];
 typedef float pscript_vec4_t[4];
@@ -33,6 +34,11 @@ typedef float pscript_vec4_t[4];
 #define hrandom() (rand() * (1.0f / RAND_MAX) - 0.5f)
 // -1 to 1 in 32767 steps whatever RAND_MAX is; used by orgwrand/velwrand.
 #define crand() (rand() % 32767 / 16383.5f - 1)
+
+// Coarse sine in radians for spawn patterns and sprite rotation, where libm
+// is too slow.
+#define PSIN(x) (pscript_sintable[PScript_SinIndex(x)])
+#define PCOS(x) (pscript_sintable[(PScript_SinIndex(x) + 64) & 255])
 
 // mathlib.h's VectorMA, VectorScale and VectorInterpolate end in ';' and
 // share a global temporary, so they can neither be the body of an if with an
@@ -63,6 +69,26 @@ typedef float pscript_vec4_t[4];
 		float ps_a_ = (a); \
 		(c) = ps_a_ + ((b) - ps_a_) * (frac); \
 	} while (0)
+
+// r_part_maxparticles and r_part_maxdecals are clamped to these. A particle
+// takes six vertices and a decal triangle three, and decals are drawn first:
+// a full decal pool takes half a view's vertices, leaving half to particles.
+#define PSCRIPT_MAX_PARTICLES   (SCENETRIS_MAX_VERTS / 6)
+#define PSCRIPT_MAX_DECALS      (SCENETRIS_MAX_VERTS / 6)
+#define PSCRIPT_MAX_BEAMSEGS    (1 << 11)
+#define PSCRIPT_MAX_TRAILSTATES (1 << 10)
+
+// Types one effect or trail runs along its assoc chain: a block and the 64
+// "+name" blocks that may extend it. Every particle can run an effect each
+// frame, so the chain's length multiplies a frame's work, and types that
+// spawn nothing never run out of particles to stop it.
+#define PSCRIPT_MAX_ASSOCSTEPS 65
+
+// trailkey_t layout: index + 1 in the low bits, so 0 stays free for "none".
+// 12 bits hold PSCRIPT_MAX_TRAILSTATES with room to grow and leave 20 bits of
+// generation, about a million reuses of one slot before a stale key aliases.
+#define PSCRIPT_TRAILKEY_INDEXBITS 12
+#define PSCRIPT_TRAILKEY_INDEXMASK ((1u << PSCRIPT_TRAILKEY_INDEXBITS) - 1)
 
 // Point contents as bits, so effects can test a set of contents at once.
 #define PSCRIPT_CONTENTS_EMPTY      0
@@ -325,6 +351,15 @@ typedef struct pscript_type_s {
 
 #define PS_INRUNLIST 0x1
 
+typedef struct pscript_counts_s {
+	int particles;
+	int beams;
+	int decals;
+} pscript_counts_t;
+
+// numtris triangles, three points each.
+typedef void (*pscript_decalcallback_t)(void *ctx, vec3_t *points, size_t numtris);
+
 // r_part_script.c
 extern pscript_type_t *pscript_types;
 extern int pscript_numtypes;
@@ -335,10 +370,17 @@ extern int pscript_pe_size2;
 extern int pscript_pe_size3;
 extern int pscript_pe_colors[256]; // the pe_<n> types, by palette index
 extern qbool pscript_expsprite;
+extern cvar_t r_bouncysparks;
+extern cvar_t r_decal_noperpendicular;
+extern cvar_t r_particle_tracelimit;
 extern cvar_t r_part_sparks;
 extern cvar_t r_part_sparks_trifan;
 extern cvar_t r_part_sparks_textured;
 extern cvar_t r_part_beams;
+extern cvar_t r_part_contentswitch;
+extern cvar_t r_part_density;
+extern cvar_t r_part_maxparticles;
+extern cvar_t r_part_maxdecals;
 
 pscript_type_t *PScript_GetParticleType(const char *config, const char *name);
 int PScript_AllocateParticleType(const char *config, const char *name);
@@ -352,5 +394,57 @@ void PScript_ResetToDefaults(pscript_type_t *ptype);
 char *PScript_ReadLine(char *buffer, size_t buffersize, const char *filedata, size_t filesize, size_t *offset);
 void PScript_ParseParticleEffectFile(const char *config, qbool weak, const char *data, size_t size);
 void PScript_FinishParticleType(pscript_type_t *ptype);
+
+// r_part_script_spawn.c
+void PScript_EffectSpawned(pscript_type_t *ptype, vec3_t org, int dlkey);
+void PScript_ForgetMissingSounds(void);
+pscript_particle_t *PScript_SpawnParticle(pscript_type_t *ptype, int cidxoffset);
+pscript_beamseg_t *PScript_AppendBeamSeg(pscript_beamseg_t **first, pscript_beamseg_t *last, pscript_particle_t *p, float texture_s, const vec3_t dir);
+qbool PScript_ContentsAllow(const pscript_type_t *ptype, vec3_t org);
+pscript_type_t *PScript_InwaterType(pscript_type_t *ptype, vec3_t org);
+void PScript_WorldSpaceRandom(const pscript_type_t *ptype, pscript_particle_t *p);
+float PScript_BoundCount(float count);
+void PScript_SpawnClippedDecal(pscript_type_t *ptype, vec3_t center, vec3_t normal, float size, qbool randomslot);
+float PScript_TraceLine(vec3_t start, vec3_t end, vec3_t impact, vec3_t normal);
+unsigned int PScript_PointContents(vec3_t p);
+void PScript_RebuildTraceEntities(void);
+
+// r_part_script_trail.c
+pscript_trailstate_t *PScript_FetchTrailstate(trailkey_t *tk);
+pscript_trailstate_t *PScript_FetchHeadTrailstate(trailkey_t *tk, int typenum);
+void PScript_AllocTrailstates(void);
+void PScript_ResetTrailstates(void);
+void PScript_FreeTrailstates(void);
+void PScript_VectorVectors(const vec3_t forward, vec3_t right, vec3_t up);
+
+// r_part_script_update.c
+extern pscript_particle_t *pscript_free_particles;
+extern pscript_beamseg_t *pscript_free_beams;
+extern pscript_clippeddecal_t *pscript_free_decals;
+extern double pscript_particletime;
+extern float pscript_sintable[256];
+
+void PScript_InitSinTable(void);
+int PScript_SinIndex(double radians);
+void PScript_StartupPools(void);
+void PScript_ResetPools(void);
+void PScript_FreePools(void);
+void PScript_ReleaseTypeInstances(pscript_type_t *ptype);
+void PScript_CountInstances(const pscript_type_t *ptype, pscript_counts_t *counts);
+void PScript_CountFree(pscript_counts_t *counts);
+void PScript_Simulate(float dt);
+void PScript_BuildGeometry(void);
+void PScript_MarkFrameParticles(void);
+void PScript_ExpireFrameParticles(void);
+void PScript_ApplyRamp(const pscript_type_t *ptype, float die, float dt, pscript_vec4_t rgba, float *scale);
+
+// r_part_script_decal.c
+struct model_s;
+struct msurface_s;
+int PScript_SurfacePolygon(const struct model_s *mod, const struct msurface_s *surf, vec3_t *verts, int maxverts);
+void PScript_ClipDecal(vec3_t center, vec3_t normal, vec3_t tangent1, vec3_t tangent2, float size, unsigned int surfflagmask, unsigned int surfflagmatch, pscript_decalcallback_t callback, void *ctx);
+
+// r_part.c
+extern cvar_t r_drawparticles;
 
 #endif // EZQUAKE_R_PART_SCRIPT_LOCAL_H

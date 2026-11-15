@@ -141,6 +141,9 @@ static void CL_CheckForNQDSeekPointFound(void)
 		cls.demoseeking = DST_SEEKING_NONE;
 		cls.demotime = demotime; 
 
+		// Temp entities were skipped while seeking.
+		PScript_ClearParticles();
+
 		if (cls.demorewinding)
 		{
 			CL_Demo_Stop_Rewinding();

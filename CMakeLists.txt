@@ -516,7 +516,11 @@ set(common_renderer
         ${SOURCE_DIR}/r_palette.c
         ${SOURCE_DIR}/r_part.c
         ${SOURCE_DIR}/r_part_script.c
+        ${SOURCE_DIR}/r_part_script_decal.c
         ${SOURCE_DIR}/r_part_script_parse.c
+        ${SOURCE_DIR}/r_part_script_spawn.c
+        ${SOURCE_DIR}/r_part_script_trail.c
+        ${SOURCE_DIR}/r_part_script_update.c
         ${SOURCE_DIR}/r_part_trails.c
         ${SOURCE_DIR}/r_particles_qmb.c
         ${SOURCE_DIR}/r_particles_qmb_spawn.c

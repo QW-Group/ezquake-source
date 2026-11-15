@@ -1342,15 +1342,14 @@ void PScript_ParseParticleEffectFile(const char *config, qbool weak, const char 
 	}
 }
 
-// Releases what a type's previous definition allocated and resets every
-// field to its default, keeping the name, config and the beam segments that
-// trail states still hold. Unlinks the type from the run list.
+// Keeps the name, config and the beam segments that trail states still hold.
 void PScript_ResetToDefaults(pscript_type_t *ptype)
 {
 	char name[sizeof(ptype->name)];
 	char config[sizeof(ptype->config)];
 	pscript_beamseg_t *beams;
 
+	PScript_ReleaseTypeInstances(ptype);
 	PScript_UnlinkRunList(ptype);
 
 	beams = ptype->beams;
