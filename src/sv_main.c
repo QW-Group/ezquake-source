@@ -295,6 +295,7 @@ void SV_Shutdown (char *finalmsg)
 #endif
 	}
 
+	SV_QTV_ShutdownReverse();
 	SV_ShutdownGame();
 
 	memset (&sv, 0, sizeof(sv));
