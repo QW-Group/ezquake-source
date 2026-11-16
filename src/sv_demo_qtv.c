@@ -32,6 +32,15 @@ cvar_t qtv_streamtimeout         = {"qtv_streamtimeout",  "45"}; // 45 seconds
 static unsigned short int	listenport		= 0;
 static double				warned_time		= 0;
 
+static qbool SV_QTVRetryIO(int error)
+{
+#ifdef _WIN32
+	return error == WSAEWOULDBLOCK || error == WSAEINTR;
+#else
+	return error == EWOULDBLOCK || error == EAGAIN || error == EINTR;
+#endif
+}
+
 static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 {
 	static int lastdest = 0;
@@ -1186,7 +1195,7 @@ void QTV_ReadInput( mvddest_t *d )
 	{
 		len = recv(d->socket, d->inbuffer + d->inbuffersize, len, 0);
 
-		if (len == 0)
+		if (len == 0 || (len < 0 && !SV_QTVRetryIO(qerrno)))
 		{
 			Sys_Printf("QTV_ReadInput: read error from QTV client, dropping\n");
 			d->error = true;
