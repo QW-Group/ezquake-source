@@ -2958,17 +2958,13 @@ static qbool Sys_LaunchExternalDemoProcess(const char* cmdline, const char* path
 	}
 
 	if (child == 0) {
-		// TODO: can we redirect stdout for the system() call?
-
 		// child process: change to qizmo dir so it can find compress.dat
 		if (chdir(path) != 0) {
 			_exit(EXIT_FAILURE);
 		}
 
-		// execute & terminate with success/failure
-		if (system(cmdline) == 0) {
-			_exit(EXIT_SUCCESS);
-		}
+		// Replace the child so close-on-exec sockets are released while the tool runs.
+		execl("/bin/sh", "sh", "-c", cmdline, (char *)NULL);
 		_exit(EXIT_FAILURE);
 	}
 
@@ -2998,6 +2994,10 @@ qizmo_status_t Sys_QizmoStatus(void)
 	}
 	else {
 		// status has changed
+		if (WIFSIGNALED(status)) {
+			qizmo_process_id = 0;
+			return qizmo_terminated_failure;
+		}
 		if (WIFEXITED(status)) {
 			qizmo_process_id = 0;
 			return WEXITSTATUS(status) == 0 ? qizmo_terminated_ok : qizmo_terminated_failure;
