@@ -290,7 +290,7 @@ void SCR_RSShot_f(void)
 	
 	snprintf(filename, sizeof(filename), "%s/temp/__rsshot__", Sshot_SshotDirectory());
 
-	width = 800; height = 600;
+	width = glwidth; height = glheight;
 	base = (byte *)Q_malloc((width * height + glwidth * glheight) * 3);
 	pixels = base + glwidth * glheight * 3;
 
@@ -322,7 +322,6 @@ void SCR_RSShot_f(void)
 
 	remove(filename);
 }
-
 qbool SCR_TakingAutoScreenshot(void)
 {
 	return scr_autosshot_countdown > 0;
