@@ -37,6 +37,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <semaphore.h>
 #include <sys/ioctl.h>
 #include <sys/poll.h>
+#include <pthread.h>
 #include <sched.h>
 #include <errno.h>
 #include <dirent.h>
@@ -334,6 +335,8 @@ int main(int argc, char **argv)
 	}
 
 	signal(SIGFPE, SIG_IGN);
+	// A QTV peer can disconnect between socket readiness and send().
+	signal(SIGPIPE, SIG_IGN);
 
 	// we need to check for -noconinput and -nostdout before Host_Init is called
 	if (!(noconinput = COM_CheckParm(cmdline_param_client_nostdinput)))
@@ -666,13 +669,51 @@ int Sys_SemDestroy(sem_t *sem)
 }
 
 /*********************************************************************************/
+#ifndef SOCK_CLOEXEC
+// On systems without atomic close-on-exec, exclude process launches until
+// the worker has marked its new socket. DNS and connect run outside this lock.
+static pthread_mutex_t sys_spawn_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+int Sys_OpenStreamSocket(int family, int protocol)
+{
+#ifdef SOCK_CLOEXEC
+	return socket(family, SOCK_STREAM | SOCK_CLOEXEC, protocol);
+#else
+	int sock;
+
+	pthread_mutex_lock(&sys_spawn_mutex);
+	sock = socket(family, SOCK_STREAM, protocol);
+	if (sock != -1 && fcntl(sock, F_SETFD, FD_CLOEXEC) == -1) {
+		close(sock);
+		sock = -1;
+	}
+	pthread_mutex_unlock(&sys_spawn_mutex);
+	return sock;
+#endif
+}
+
+int Sys_RunCommand(const char *command)
+{
+#ifdef SOCK_CLOEXEC
+	return system(command);
+#else
+	int result;
+
+	pthread_mutex_lock(&sys_spawn_mutex);
+	result = system(command);
+	pthread_mutex_unlock(&sys_spawn_mutex);
+	return result;
+#endif
+}
+
 int Sys_Script (const char *path, const char *args)
 {
 	char str[1024];
 
 	snprintf(str, sizeof(str), "cd %s\n./%s.qws %s &\ncd ..", fs_gamedir, path, args);
 
-	if (system(str) == -1)
+	if (Sys_RunCommand(str) == -1)
 		return 0;
 
 	return 1;
@@ -816,7 +857,7 @@ void Sys_RegisterQWURLProtocol_f(void)
     fprintf(fptr, "%s", open_cmd);
     fclose(fptr);
 
-	if(system("xdg-mime default qw-url-handler.desktop x-scheme-handler/qw") != 0){
+	if(Sys_RunCommand("xdg-mime default qw-url-handler.desktop x-scheme-handler/qw") != 0){
         Con_Printf("Failed to register qw-url-handler file with xdg-mime, please make sure this program is installed.");
     }
 

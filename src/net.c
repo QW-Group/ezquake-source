@@ -1054,7 +1054,7 @@ qbool CL_UnqueOutputPacket(qbool sendall)
 
 //=============================================================================
 
-qbool TCP_Set_KEEPALIVE(int sock)
+qbool TCP_Set_KEEPALIVE(socket_t sock)
 {
 	int		iOptVal = 1;
 

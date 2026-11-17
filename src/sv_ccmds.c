@@ -768,7 +768,7 @@ void SV_LocalCommand_f (void)
 	}
 	strlcat (str, va("> %s 2>&1\n", temp_file), sizeof(str));
 
-	if (system(str) == -1)
+	if (Sys_RunCommand(str) == -1)
 		Con_Printf("command failed\n");
 	else
 	{
