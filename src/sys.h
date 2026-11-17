@@ -189,6 +189,14 @@ typedef struct
 	int	numdirs;
 } dir_t;
 
+#ifdef _WIN32
+#define Sys_OpenStreamSocket(family, protocol) \
+	WSASocket((family), SOCK_STREAM, (protocol), NULL, 0, WSA_FLAG_NO_HANDLE_INHERIT | WSA_FLAG_OVERLAPPED)
+#define Sys_RunCommand system
+#else
+int Sys_OpenStreamSocket(int family, int protocol);
+int Sys_RunCommand(const char *command);
+#endif
 int		Sys_Script (const char *path, const char *args);
 
 int		Sys_rmdir (const char *path);

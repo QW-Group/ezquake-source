@@ -201,7 +201,7 @@ int		NET_GetSocket(netsrc_t netsrc, qbool tcp);
 void	NET_InitServer_TCP(unsigned short int port);
 
 // UTILITY: set KEEPALIVE option on TCP socket (useful for faster timeout detection).
-qbool 	TCP_Set_KEEPALIVE(int sock);
+qbool 	TCP_Set_KEEPALIVE(socket_t sock);
 // UTILITY: open TCP socket for remove address (useful for client connection).
 int		TCP_OpenStream (netadr_t remoteaddr);
 // UTILITY: open TCP listen socket (useful for server).

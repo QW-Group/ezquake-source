@@ -152,7 +152,7 @@ void DestClose (mvddest_t *d, qbool destroyfiles)
 		Q_free(d->cache);
 	if (d->file)
 		fclose(d->file);
-	if (d->socket)
+	if (d->desttype == DEST_STREAM)
 		closesocket(d->socket);
 	if (d->qtvuserlist)
 		QTVsv_FreeUserList(d);

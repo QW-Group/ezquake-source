@@ -60,6 +60,33 @@ If you want to make a clean installation of ezQuake you can do this by following
 3. Create a subdirectory called *id1*
 4. Copy *pak0.pak* and *pak1.pak* into this subdirectory
 
+## Reverse QTV streaming
+
+The ezQuake server can initiate a stream to QTV-Go. Put the proxy's TCP
+listener address and the shared 64-digit hexadecimal key in a private local
+configuration file. In the combined client and server build, run
+`exec reverse.cfg` from the local console or use `+exec reverse.cfg` at
+startup. The automatically loaded `server.cfg` runs in the server command
+buffer, where the key command is rejected.
+
+```cfg
+qtv_reverse_address proxy.example.net:28000
+qtv_reverse_secret "<64 hexadecimal digits>"
+```
+
+On QTV-Go, set `qtv_reverse_secret` to the same key and set `address` to the
+proxy's public `host:port` for spectator links. Use an IPv4 address or a
+hostname with an IPv4 record for the TCP listener. The handshake
+authenticates the source to QTV-Go. Use a trusted network or an authenticated
+encrypted tunnel for the connection. Keep the key out of command-line
+arguments and RCON because those can be logged.
+
+The server connects after loading a map and retries automatically after a
+disconnect. The UDP `status 32` query reports the stream using the proxy's
+public address.
+Set `qtv_reverse_address ""` to disable it. `qtv_streamport` and
+`qtv_maxstreams` control incoming QTV pulls.
+
 ## Compiling
 
 On Linux, `./build-linux.sh` produces an ezQuake binary in the top directory. 

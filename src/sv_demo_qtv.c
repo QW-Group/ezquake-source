@@ -22,19 +22,58 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
 
+#ifndef _WIN32
+#include <poll.h>
+#endif
+
+static void SV_ReverseAddressChanged(cvar_t *var, char *value, qbool *cancel);
+void QTV_ReadInput(mvddest_t *d);
+
 static cvar_t qtv_streamport     = {"qtv_streamport",      "0"};
 static cvar_t qtv_maxstreams     = {"qtv_maxstreams",      "1"};
 static cvar_t qtv_password       = {"qtv_password",         "", CVAR_NOTFROMSERVER | CVAR_NOUNSAFEEXPAND};
 static cvar_t qtv_pendingtimeout = {"qtv_pendingtimeout",  "5"}; // 5  seconds must be enough
 static cvar_t qtv_sayenabled     = {"qtv_sayenabled",      "0"}; // allow mod to override GameStarted() logic
 cvar_t qtv_streamtimeout         = {"qtv_streamtimeout",  "45"}; // 45 seconds
+static cvar_t qtv_reverse_address = {"qtv_reverse_address", "", CVAR_NOTFROMSERVER, SV_ReverseAddressChanged};
 
 static unsigned short int	listenport		= 0;
 static double				warned_time		= 0;
 
-static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
+static qbool SV_QTVRetryIO(int error)
+{
+#ifdef _WIN32
+	return error == WSAEWOULDBLOCK || error == WSAEINTR;
+#else
+	return error == EWOULDBLOCK || error == EAGAIN || error == EINTR;
+#endif
+}
+
+static mvddest_t *SV_AllocStream(socket_t sock, netadr_t na)
 {
 	static int lastdest = 0;
+	mvddest_t *dst;
+
+	dst = (mvddest_t *) Q_malloc(sizeof(mvddest_t));
+	dst->desttype = DEST_STREAM;
+	dst->socket = sock;
+	dst->maxcachesize = (int)qtv_stream_max_queue_size.value * 1024;
+	dst->cachesize = min(dst->maxcachesize, 65536);
+	dst->cache = Q_tryrealloc(NULL, dst->cachesize);
+	if (!dst->cache) {
+		Q_free(dst);
+		return NULL;
+	}
+	memset(dst->cache, 0, dst->cachesize);
+	dst->io_time = Sys_DoubleTime();
+	dst->id = ++lastdest;
+	dst->na = na;
+
+	return dst;
+}
+
+static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
+{
 	int count;
 	mvddest_t *dst;
 	char name[sizeof(dst->qtvname)];
@@ -49,7 +88,7 @@ static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 	count = 0;
 	for (dst = demo.dest; dst; dst = dst->nextdest)
 	{
-		if (dst->desttype == DEST_STREAM)
+		if (dst->desttype == DEST_STREAM && !dst->reverse)
 		{
 			if (name[0] && !strcasecmp(name, dst->qtvname))
 				return NULL; // duplicate name, well empty names may still duplicates...
@@ -61,21 +100,10 @@ static mvddest_t *SV_InitStream (int socket1, netadr_t na, char *userinfo)
 	if ((int)qtv_maxstreams.value > 0 && count >= (int)qtv_maxstreams.value)
 		return NULL; //sorry
 
-	dst = (mvddest_t *) Q_malloc (sizeof(mvddest_t));
-
-	dst->desttype = DEST_STREAM;
-	dst->socket = socket1;
-	dst->maxcachesize = (int)qtv_stream_max_queue_size.value * 1024;
-	dst->cachesize = dst->maxcachesize < 65536 ? dst->maxcachesize : 65536;
-	dst->cache = Q_tryrealloc(NULL, dst->cachesize);
-	if (!dst->cache) {
-		Q_free(dst);
+	dst = SV_AllocStream(socket1, na);
+	if (!dst) {
 		return NULL;
 	}
-	memset(dst->cache, 0, dst->cachesize);
-	dst->io_time = Sys_DoubleTime();
-	dst->id = ++lastdest;
-	dst->na = na;
 
 	strlcpy(dst->qtvname, name, sizeof(dst->qtvname));
 	strlcpy(dst->qtvaddress, address, sizeof(dst->qtvaddress));
@@ -107,18 +135,746 @@ static void SV_MVD_InitPendingStream (int socket1, netadr_t na, qbool must_be_qi
 	demo.pendingdest = dst;
 }
 
-void SV_MVDCloseStreams(void)
+static void SV_MVDClosePullStreams(void)
 {
 	mvddest_t *d;
 	mvdpendingdest_t *p;
 
 	for (d = demo.dest; d; d = d->nextdest)
-		if (!d->error && d->desttype == DEST_STREAM)
+		if (!d->error && d->desttype == DEST_STREAM && !d->reverse)
 			d->error = true; // mark demo stream dest to close later
 
 	for (p = demo.pendingdest; p; p = p->nextdest)
 		if (!p->error)
 			p->error = true; // mark pending dest to close later
+}
+
+#define QTV_REVERSE_TIMEOUT_MS 5000
+#define QTV_REVERSE_MAX_RETRY 8
+#define QTV_REVERSE_KEY_SIZE 32
+#define QTV_REVERSE_AUTH "HMAC-SHA3-256"
+#define QTV_REVERSE_HELLO "QTV\nVERSION: 1\nREVERSE\n"
+
+typedef struct {
+	socket_t sock;
+	struct sockaddr_storage peer;
+	const char *error;
+	char name[sizeof(((mvddest_t *)0)->qtvname)];
+	char address[sizeof(((mvddest_t *)0)->qtvaddress)];
+	int streamid;
+	char input[MAX_PROXY_INBUFFER];
+	int input_size;
+} reverse_result_t;
+
+static struct {
+	double retry_at;
+	double retry_delay;
+	double connected_at;
+	byte secret[QTV_REVERSE_KEY_SIZE];
+	qbool has_secret;
+	qbool streaming;
+} reverse;
+
+static struct {
+	SDL_mutex *mutex;
+	// Game thread only. An attempt has started and its result has yet to be collected.
+	qbool running;
+	qbool discard_result;
+	qbool result_ready;
+	reverse_result_t result;
+	// The worker reads this configuration snapshot until it publishes its result.
+	char host[254];
+	char service[6];
+	byte secret[QTV_REVERSE_KEY_SIZE];
+} reverse_job;
+
+static int SV_ReverseNumber(const char *value, int max)
+{
+	int number = 0;
+
+	for (; *value; value++) {
+		int digit = *value - '0';
+
+		if (digit < 0 || digit > 9 || number > (max - digit) / 10) {
+			return 0;
+		}
+		number = number * 10 + digit;
+	}
+	return number;
+}
+
+// The server's TCP endpoint uses IPv4. The public address can also be IPv6.
+static const char *SV_ReversePort(const char *address, qbool public_address)
+{
+	const char *port = strrchr(address, ':');
+	const char *p;
+	qbool bracketed = public_address && address[0] == '[';
+
+	if (!port || port == address || !SV_ReverseNumber(port + 1, 65535)) {
+		return NULL;
+	}
+	if (bracketed && (port - address < 3 || port[-1] != ']')) {
+		return NULL;
+	}
+	for (p = address + bracketed; p < port - bracketed; p++) {
+		unsigned char ch = (unsigned char)*p;
+
+		if (ch <= ' ' || ch == 127 || strchr("\"\\;@/?#[]", ch) || (!bracketed && ch == ':')) {
+			return NULL;
+		}
+	}
+	return port + 1;
+}
+
+static mvddest_t *SV_ReverseDest(void)
+{
+	mvddest_t *d;
+
+	for (d = demo.dest; d; d = d->nextdest) {
+		if (d->desttype == DEST_STREAM && d->reverse) {
+			return d;
+		}
+	}
+	return NULL;
+}
+
+static void SV_ReverseConfigChanged(void)
+{
+	mvddest_t *d = SV_ReverseDest();
+
+	if (d) {
+		d->error = true;
+	}
+	if (reverse_job.running) {
+		SDL_LockMutex(reverse_job.mutex);
+		// A worker still in DNS or socket I/O closes its own socket on return.
+		reverse_job.discard_result = true;
+		if (reverse_job.result_ready && reverse_job.result.sock != INVALID_SOCKET) {
+			closesocket(reverse_job.result.sock);
+			reverse_job.result.sock = INVALID_SOCKET;
+		}
+		SDL_UnlockMutex(reverse_job.mutex);
+	}
+	reverse.streaming = false;
+	reverse.retry_at = 0;
+	reverse.retry_delay = 0;
+}
+
+static void SV_ReverseAddressChanged(cvar_t *var, char *value, qbool *cancel)
+{
+	const char *port;
+
+	if (*value) {
+		port = SV_ReversePort(value, false);
+		if (!port || (size_t)(port - value) > sizeof(reverse_job.host)) {
+			Con_Printf("qtv_reverse_address expects an IPv4 address or hostname with a TCP port.\n");
+			*cancel = true;
+			return;
+		}
+	}
+	if (strcmp(var->string, value)) {
+		SV_ReverseConfigChanged();
+	}
+}
+
+static int SV_ReverseHexDigit(unsigned char digit)
+{
+	if (digit >= '0' && digit <= '9') {
+		return digit - '0';
+	}
+	digit = tolower(digit);
+	if (digit >= 'a' && digit <= 'f') {
+		return digit - 'a' + 10;
+	}
+	return -1;
+}
+
+static qbool SV_ReverseDecode(const char *text, byte data[QTV_REVERSE_KEY_SIZE])
+{
+	int i;
+
+	if (strlen(text) != 2 * QTV_REVERSE_KEY_SIZE) {
+		return false;
+	}
+	for (i = 0; i < QTV_REVERSE_KEY_SIZE; i++) {
+		int hi = SV_ReverseHexDigit(text[2 * i]);
+		int lo = SV_ReverseHexDigit(text[2 * i + 1]);
+
+		if (hi < 0 || lo < 0) {
+			return false;
+		}
+		data[i] = (hi << 4) | lo;
+	}
+	return true;
+}
+
+static void SV_ReverseSecret_f(void)
+{
+	extern redirect_t sv_redirected;
+	byte secret[QTV_REVERSE_KEY_SIZE];
+
+	// The same executable can receive commands as a client or run local gamecode.
+	if (sv_redirected != RD_NONE || (cbuf_current && cbuf_current != &cbuf_main)) {
+		Con_Printf("Configure qtv_reverse_secret from a local configuration file.\n");
+		return;
+	}
+	if (Cmd_Argc() != 2 || (*Cmd_Argv(1) && !SV_ReverseDecode(Cmd_Argv(1), secret))) {
+		Con_Printf("Usage: qtv_reverse_secret <64 hex digits or \"\">\n");
+		return;
+	}
+	if (!*Cmd_Argv(1)) {
+		memset(reverse.secret, 0, sizeof(reverse.secret));
+		reverse.has_secret = false;
+	}
+	else {
+		if (reverse.has_secret && !memcmp(reverse.secret, secret, sizeof(secret))) {
+			return;
+		}
+		memcpy(reverse.secret, secret, sizeof(reverse.secret));
+		reverse.has_secret = true;
+	}
+	SV_ReverseConfigChanged();
+}
+
+static void SV_ReverseProof(const byte *secret, const byte *challenge, char *hex)
+{
+	static const char digits[] = "0123456789abcdef";
+	// HMAC uses the SHA3-256 rate of 136 bytes as its block size.
+	byte pad[136];
+	byte inner[QTV_REVERSE_KEY_SIZE];
+	sha3_context context;
+	const byte *digest;
+	int i;
+
+	memset(pad, 0x36, sizeof(pad));
+	for (i = 0; i < QTV_REVERSE_KEY_SIZE; i++) {
+		pad[i] ^= secret[i];
+	}
+	sha3_Init256(&context);
+	sha3_Update(&context, pad, sizeof(pad));
+	sha3_Update(&context, challenge, QTV_REVERSE_KEY_SIZE);
+	memcpy(inner, sha3_Finalize(&context), sizeof(inner));
+
+	memset(pad, 0x5c, sizeof(pad));
+	for (i = 0; i < QTV_REVERSE_KEY_SIZE; i++) {
+		pad[i] ^= secret[i];
+	}
+	sha3_Init256(&context);
+	sha3_Update(&context, pad, sizeof(pad));
+	sha3_Update(&context, inner, sizeof(inner));
+	digest = sha3_Finalize(&context);
+	for (i = 0; i < QTV_REVERSE_KEY_SIZE; i++) {
+		hex[2 * i] = digits[digest[i] >> 4];
+		hex[2 * i + 1] = digits[digest[i] & 15];
+	}
+	hex[2 * QTV_REVERSE_KEY_SIZE] = '\0';
+}
+
+static void SV_ReverseFailed(double now, const char *reason)
+{
+	static uint32_t retry_random;
+	double jitter;
+
+	// Keep reconnect jitter independent of the game's random sequence.
+	if (!retry_random) {
+		retry_random = SDL_GetTicks() ^ ((uint32_t)net_local_sv_ipadr.port << 16);
+	}
+	retry_random = retry_random * 1664525u + 1013904223u;
+	jitter = 0.8 + 0.2 * (retry_random / (double)UINT32_MAX);
+	reverse.retry_delay = reverse.retry_delay ? min(2 * reverse.retry_delay, QTV_REVERSE_MAX_RETRY) : 1;
+	reverse.retry_at = now + jitter * reverse.retry_delay;
+	Con_Printf("Reverse QTV: %s, retrying in %.1f seconds.\n", reason, reverse.retry_at - now);
+}
+
+// Sys_DoubleTime uses mutable timer state on some platforms.
+static uint64_t SV_ReverseClock(void)
+{
+#ifdef _WIN32
+	return GetTickCount64();
+#else
+	struct timespec now;
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	return (uint64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000;
+#endif
+}
+
+// Only the worker waits on the handshake socket.
+static qbool SV_ReverseWait(socket_t sock, qbool writing, uint64_t deadline)
+{
+	for (;;) {
+		uint64_t now = SV_ReverseClock();
+		int ready, remaining;
+#ifdef _WIN32
+		fd_set sockets, errors;
+		struct timeval timeout;
+#else
+		struct pollfd fd = {sock, writing ? POLLOUT : POLLIN, 0};
+#endif
+
+		if (now >= deadline) {
+			return false;
+		}
+		remaining = (int)(deadline - now);
+#ifdef _WIN32
+		FD_ZERO(&sockets);
+		FD_ZERO(&errors);
+		FD_SET(sock, &sockets);
+		FD_SET(sock, &errors);
+		timeout.tv_sec = remaining / 1000;
+		timeout.tv_usec = (remaining % 1000) * 1000;
+		ready = select(0, writing ? NULL : &sockets, writing ? &sockets : NULL, &errors, &timeout);
+#else
+		ready = poll(&fd, 1, remaining);
+#endif
+		if (ready >= 0 || !SV_QTVRetryIO(qerrno)) {
+			return ready > 0;
+		}
+	}
+}
+
+static qbool SV_ReverseConnect(socket_t sock, const struct addrinfo *address, uint64_t deadline)
+{
+	unsigned long nonblocking = 1;
+	int error;
+	socklen_t error_size = sizeof(error);
+
+	if (ioctlsocket(sock, FIONBIO, &nonblocking) == SOCKET_ERROR) {
+		return false;
+	}
+	if (connect(sock, address->ai_addr, address->ai_addrlen) == 0) {
+		return true;
+	}
+	error = qerrno;
+#ifdef _WIN32
+	if (error != WSAEWOULDBLOCK) {
+#else
+	if (error != EINPROGRESS && error != EINTR) {
+#endif
+		return false;
+	}
+	return SV_ReverseWait(sock, true, deadline) &&
+	       getsockopt(sock, SOL_SOCKET, SO_ERROR, (char *)&error, &error_size) == 0 && !error;
+}
+
+static qbool SV_ReverseDiscarded(void)
+{
+	qbool discard;
+
+	SDL_LockMutex(reverse_job.mutex);
+	discard = reverse_job.discard_result;
+	SDL_UnlockMutex(reverse_job.mutex);
+	return discard;
+}
+
+static const char *SV_ReverseDial(reverse_result_t *result)
+{
+	struct addrinfo hints = {0};
+	struct addrinfo *addresses, *address;
+	size_t remaining = 0;
+	uint64_t deadline;
+
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_NUMERICSERV;
+	if (getaddrinfo(reverse_job.host, reverse_job.service, &hints, &addresses)) {
+		return "could not resolve the proxy address";
+	}
+	for (address = addresses; address; address = address->ai_next) {
+		remaining++;
+	}
+
+	deadline = SV_ReverseClock() + QTV_REVERSE_TIMEOUT_MS;
+	for (address = addresses; address; address = address->ai_next, remaining--) {
+		uint64_t now = SV_ReverseClock();
+		socket_t sock;
+
+		if (now >= deadline || SV_ReverseDiscarded()) {
+			break;
+		}
+		sock = Sys_OpenStreamSocket(address->ai_family, address->ai_protocol);
+		if (sock == INVALID_SOCKET) {
+			continue;
+		}
+		// Share the remaining time so one silent address cannot starve the others.
+		if (SV_ReverseConnect(sock, address, now + max(1, (deadline - now) / remaining))) {
+			result->sock = sock;
+			memcpy(&result->peer, address->ai_addr, sizeof(struct sockaddr_in));
+			break;
+		}
+		closesocket(sock);
+	}
+	freeaddrinfo(addresses);
+	return result->sock == INVALID_SOCKET ? "could not connect to any proxy IPv4 address" : NULL;
+}
+
+// Read the expected set of fields once each, independent of their order.
+static qbool SV_ReverseFields(char *header, const char *const *keys, char **values, int count)
+{
+	const char initial[] = "QTVSV 1\n";
+	char *line, *end;
+	int i;
+
+	if (strncmp(header, initial, sizeof(initial) - 1)) {
+		return false;
+	}
+	for (line = header + sizeof(initial) - 1; *line; line = end + 1) {
+		end = strchr(line, '\n');
+		if (!end) {
+			return false;
+		}
+		*end = '\0';
+		for (i = 0; i < count; i++) {
+			size_t length = strlen(keys[i]);
+
+			if (!strncmp(line, keys[i], length)) {
+				if (values[i]) {
+					return false;
+				}
+				values[i] = line + length;
+				break;
+			}
+		}
+		if (i == count) {
+			return false;
+		}
+	}
+	for (i = 0; i < count; i++) {
+		if (!values[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+static qbool SV_ReverseUserinfo(char *info, reverse_result_t *result)
+{
+	size_t length = strlen(info);
+	char *key, *value, *next;
+
+	if (length < 3 || info[0] != '"' || info[1] != '\\' || info[length - 1] != '"') {
+		return false;
+	}
+	info[length - 1] = '\0';
+	for (key = info + 2; key; key = next) {
+		value = strchr(key, '\\');
+		if (!value) {
+			return false;
+		}
+		*value++ = '\0';
+		for (next = value; *next && *next != '\\'; next++) {
+			unsigned char ch = (unsigned char)*next;
+
+			if (ch < ' ' || ch == 127 || ch == '"' || ch == ';') {
+				return false;
+			}
+		}
+		length = next - value;
+		if (!length) {
+			return false;
+		}
+		if (*next) {
+			*next++ = '\0';
+		}
+		else {
+			next = NULL;
+		}
+
+		if (!strcmp(key, "name") && !result->name[0] && length < sizeof(result->name)) {
+			memcpy(result->name, value, length + 1);
+		}
+		else if (!strcmp(key, "address") && !result->address[0] && length < sizeof(result->address) &&
+		         SV_ReversePort(value, true)) {
+			memcpy(result->address, value, length + 1);
+		}
+		else if (!strcmp(key, "streamid") && !result->streamid) {
+			result->streamid = SV_ReverseNumber(value, INT_MAX);
+			if (!result->streamid) {
+				return false;
+			}
+		}
+		else {
+			return false;
+		}
+	}
+	return result->name[0] && result->address[0] && result->streamid;
+}
+
+static qbool SV_ReverseWrite(socket_t sock, const char *data, int size, uint64_t deadline)
+{
+	while (size && SV_ReverseWait(sock, true, deadline)) {
+		int len = send(sock, data, size, 0);
+
+		if (len < 0 && SV_QTVRetryIO(qerrno)) {
+			continue;
+		}
+		if (len <= 0) {
+			return false;
+		}
+		data += len;
+		size -= len;
+	}
+	return size == 0;
+}
+
+// Return the header length, including the terminating blank line and excluding any tail.
+static int SV_ReverseReadHeader(reverse_result_t *result, uint64_t deadline)
+{
+	char *input = result->input;
+
+	result->input_size = 0;
+	while (result->input_size < sizeof(result->input) && SV_ReverseWait(result->sock, false, deadline)) {
+		int scan = max(0, result->input_size - 1);
+		int len = recv(result->sock, input + result->input_size, sizeof(result->input) - result->input_size, 0);
+
+		if (len < 0 && SV_QTVRetryIO(qerrno)) {
+			continue;
+		}
+		if (len <= 0) {
+			break;
+		}
+		result->input_size += len;
+		for (; scan + 1 < result->input_size; scan++) {
+			if (input[scan] == '\n' && input[scan + 1] == '\n') {
+				if (memchr(input, '\0', scan + 2)) {
+					return 0;
+				}
+				input[scan + 1] = '\0';
+				return scan + 2;
+			}
+		}
+	}
+	return 0;
+}
+
+static qbool SV_ReverseRejected(const char *header)
+{
+	return !strncmp(header, "QTVSV 1\nPERROR:", sizeof("QTVSV 1\nPERROR:") - 1) ||
+	       !strncmp(header, "QTVSV 1\nTERROR:", sizeof("QTVSV 1\nTERROR:") - 1);
+}
+
+static const char *SV_ReverseHandshake(reverse_result_t *result)
+{
+	static const char hello[] = QTV_REVERSE_HELLO "\n";
+	static const char proof_format[] = QTV_REVERSE_HELLO "AUTH: " QTV_REVERSE_AUTH "\nRESPONSE: %s\n\n";
+	static const char *const challenge_keys[] = {"AUTH: ", "CHALLENGE: "};
+	static const char *const approval_keys[] = {"VERSION: ", "REVERSED", "USERINFO: "};
+	char *challenge_fields[2] = {0}, *approval_fields[3] = {0};
+	byte challenge[QTV_REVERSE_KEY_SIZE];
+	char proof[2 * QTV_REVERSE_KEY_SIZE + 1];
+	char response[sizeof(proof_format) + sizeof(proof)];
+	uint64_t deadline = SV_ReverseClock() + QTV_REVERSE_TIMEOUT_MS;
+	int size;
+
+	if (!SV_ReverseWrite(result->sock, hello, sizeof(hello) - 1, deadline)) {
+		return "could not send the reverse request";
+	}
+	size = SV_ReverseReadHeader(result, deadline);
+	if (!size) {
+		return "could not read the proxy challenge";
+	}
+	if (SV_ReverseRejected(result->input)) {
+		return "the proxy rejected the reverse request";
+	}
+	if (size != result->input_size || !SV_ReverseFields(result->input, challenge_keys, challenge_fields, 2) ||
+	    strcmp(challenge_fields[0], QTV_REVERSE_AUTH) || !SV_ReverseDecode(challenge_fields[1], challenge)) {
+		return "invalid proxy challenge";
+	}
+
+	if (SV_ReverseDiscarded()) {
+		return "configuration changed";
+	}
+	SV_ReverseProof(reverse_job.secret, challenge, proof);
+	snprintf(response, sizeof(response), proof_format, proof);
+	if (!SV_ReverseWrite(result->sock, response, strlen(response), deadline)) {
+		return "could not send the reverse proof";
+	}
+	size = SV_ReverseReadHeader(result, deadline);
+	if (!size) {
+		return "could not read the proxy approval";
+	}
+	if (SV_ReverseRejected(result->input)) {
+		return "the proxy refused the reverse stream";
+	}
+	if (!SV_ReverseFields(result->input, approval_keys, approval_fields, 3) ||
+	    strcmp(approval_fields[0], "1") || approval_fields[1][0]) {
+		return "invalid proxy approval";
+	}
+	if (!SV_ReverseUserinfo(approval_fields[2], result)) {
+		return "invalid proxy USERINFO";
+	}
+	result->input_size -= size;
+	memmove(result->input, result->input + size, result->input_size);
+	return NULL;
+}
+
+static int SV_ReverseWorker(void *unused)
+{
+	reverse_result_t result = {0};
+
+	result.sock = INVALID_SOCKET;
+	result.error = SV_ReverseDial(&result);
+	if (!result.error && !SV_ReverseDiscarded()) {
+		result.error = SV_ReverseHandshake(&result);
+	}
+	SDL_LockMutex(reverse_job.mutex);
+	if ((result.error || reverse_job.discard_result) && result.sock != INVALID_SOCKET) {
+		closesocket(result.sock);
+		result.sock = INVALID_SOCKET;
+	}
+	memset(reverse_job.secret, 0, sizeof(reverse_job.secret));
+	reverse_job.result = result;
+	reverse_job.result_ready = true;
+	SDL_UnlockMutex(reverse_job.mutex);
+	return 0;
+}
+
+// The recorder takes over the nonblocking socket only after the worker finishes.
+static const char *SV_ReverseStartStream(const reverse_result_t *result, double now)
+{
+	char begin[] = "QTVSV 1\nBEGIN\n\n";
+	mvddest_t *d;
+	netadr_t na;
+
+	if (!TCP_Set_KEEPALIVE(result->sock)) {
+		closesocket(result->sock);
+		return "could not set TCP keepalive";
+	}
+	SockadrToNetadr(&result->peer, &na);
+	d = SV_AllocStream(result->sock, na);
+	if (!d) {
+		closesocket(result->sock);
+		return "could not allocate the reverse destination";
+	}
+	d->reverse = true;
+	memcpy(d->inbuffer, result->input, result->input_size);
+	d->inbuffersize = result->input_size;
+	if (!DemoWriteDest(begin, sizeof(begin) - 1, d) || !SV_MVD_Record(d, false)) {
+		DestClose(d, false);
+		return "could not start the reverse recording";
+	}
+	// Signon can stop the recorder and release its destinations.
+	d = SV_ReverseDest();
+	if (!d || d->error) {
+		return "could not queue the initial signon";
+	}
+	strlcpy(d->qtvname, result->name, sizeof(d->qtvname));
+	strlcpy(d->qtvaddress, result->address, sizeof(d->qtvaddress));
+	d->qtvstreamid = result->streamid;
+	reverse.streaming = true;
+	reverse.connected_at = now;
+	Con_Printf("Reverse QTV stream %d connected.\n", d->id);
+	return NULL;
+}
+
+static void SV_ReverseCollect(double now)
+{
+	reverse_result_t result;
+	qbool discard;
+	const char *error;
+
+	if (SDL_TryLockMutex(reverse_job.mutex) != 0) {
+		return;
+	}
+	if (!reverse_job.result_ready) {
+		SDL_UnlockMutex(reverse_job.mutex);
+		return;
+	}
+	result = reverse_job.result;
+	discard = reverse_job.discard_result;
+	reverse_job.running = false;
+	SDL_UnlockMutex(reverse_job.mutex);
+
+	if (discard || sv.demo_format < 0) {
+		if (result.sock != INVALID_SOCKET) {
+			closesocket(result.sock);
+		}
+		return;
+	}
+	error = result.error;
+	if (!error) {
+		error = SV_ReverseStartStream(&result, now);
+	}
+	if (error) {
+		SV_ReverseFailed(now, error);
+	}
+}
+
+static void SV_ReversePoll(void)
+{
+	const char *address = qtv_reverse_address.string;
+	const char *port;
+	size_t host_size;
+	double now;
+
+	if (!reverse_job.running && !reverse.streaming && !*address) {
+		return;
+	}
+	now = Sys_DoubleTime();
+	if (reverse_job.running) {
+		SV_ReverseCollect(now);
+		return;
+	}
+	if (reverse.streaming) {
+		mvddest_t *d = SV_ReverseDest();
+
+		if (d && !d->error) {
+			QTV_ReadInput(d);
+		}
+		if (!d || d->error) {
+			reverse.streaming = false;
+			if (now - reverse.connected_at >= QTV_REVERSE_MAX_RETRY) {
+				reverse.retry_delay = 0;
+			}
+			SV_ReverseFailed(now, "stream disconnected");
+		}
+		return;
+	}
+	if (!*address || !reverse.has_secret || now < reverse.retry_at || sv.demo_format < 0 || SV_ReverseDest()) {
+		return;
+	}
+
+	port = SV_ReversePort(address, false);
+	if (!port || (size_t)(port - address) > sizeof(reverse_job.host)) {
+		return;
+	}
+	host_size = port - address - 1;
+	memcpy(reverse_job.host, address, host_size);
+	reverse_job.host[host_size] = '\0';
+	snprintf(reverse_job.service, sizeof(reverse_job.service), "%d", SV_ReverseNumber(port, 65535));
+	memcpy(reverse_job.secret, reverse.secret, sizeof(reverse_job.secret));
+	reverse_job.discard_result = false;
+	reverse_job.result_ready = false;
+	if (!reverse_job.mutex) {
+		reverse_job.mutex = SDL_CreateMutex();
+		if (!reverse_job.mutex) {
+			memset(reverse_job.secret, 0, sizeof(reverse_job.secret));
+			SV_ReverseFailed(now, "could not create the handshake mutex");
+			return;
+		}
+	}
+	if (Sys_CreateDetachedThread(SV_ReverseWorker, NULL)) {
+		memset(reverse_job.secret, 0, sizeof(reverse_job.secret));
+		SV_ReverseFailed(now, "could not start the handshake worker");
+		return;
+	}
+	reverse_job.running = true;
+}
+
+void SV_QTV_ShutdownReverse(void)
+{
+	mvddest_t **link;
+
+	SV_ReverseConfigChanged();
+	for (link = &demo.dest; *link; link = &(*link)->nextdest) {
+		mvddest_t *d = *link;
+
+		if (d->desttype == DEST_STREAM && d->reverse) {
+			*link = d->nextdest;
+			DestClose(d, false);
+			break;
+		}
+	}
 }
 
 static void SV_CheckQTVPort(void)
@@ -137,7 +893,7 @@ static void SV_CheckQTVPort(void)
 	if (!changed)
 		return;
 
-	SV_MVDCloseStreams(); // also close ative connects if any, this will help actually close listen socket, so later we can bind to port again
+	SV_MVDClosePullStreams();
 
 	warned_time = Sys_DoubleTime(); // so we repeat warning time to time
 
@@ -162,11 +918,12 @@ void SV_MVDStream_Poll (void)
 	if (sv.state != ss_active)
 		return;
 
+	SV_ReversePoll();
 	SV_CheckQTVPort(); // open/close/switch qtv port
 
 	if (NET_GetSocket(NS_SERVER, true) == INVALID_SOCKET) // we can't accept connection from QTV
 	{
-		SV_MVDCloseStreams(); // also close ative connects if any, this will help actually close listen socket, so later we can bind to port again
+		SV_MVDClosePullStreams();
 		return;
 	}
 
@@ -194,7 +951,7 @@ void SV_MVDStream_Poll (void)
 		count = 0;
 		for (dest = demo.dest; dest; dest = dest->nextdest)
 		{
-			if (dest->desttype == DEST_STREAM)
+			if (dest->desttype == DEST_STREAM && !dest->reverse)
 			{
 				count++;
 			}
@@ -1186,7 +1943,7 @@ void QTV_ReadInput( mvddest_t *d )
 	{
 		len = recv(d->socket, d->inbuffer + d->inbuffersize, len, 0);
 
-		if (len == 0)
+		if (len == 0 || (len < 0 && !SV_QTVRetryIO(qerrno)))
 		{
 			Sys_Printf("QTV_ReadInput: read error from QTV client, dropping\n");
 			d->error = true;
@@ -1269,7 +2026,7 @@ void QTV_ReadDests( void )
 
 	for (d = demo.dest; d; d = d->nextdest)
 	{
-		if (d->desttype != DEST_STREAM)
+		if (d->desttype != DEST_STREAM || d->reverse)
 			continue;
 
 		if (d->error)
@@ -1370,13 +2127,13 @@ void QTV_Streams_List (void)
 {
 	mvddest_t *dst;
 	for (dst = demo.dest; dst; dst = dst->nextdest) {
-		if (dst->desttype == DEST_STREAM) {
+		if (dst->desttype == DEST_STREAM && (!dst->reverse || (!dst->error && dst->qtvstreamid))) {
 			int qtv_users = QTVsv_UsersCount (dst);
 
 			if (dst->qtvaddress[0])
-				Con_Printf ("qtv %d \"%s\" \"%d@%s\" %d\n", dst->id, dst->qtvname, dst->qtvstreamid, dst->qtvaddress, qtv_users);
+				SV_AddToRedirect(va("qtv %d \"%s\" \"%d@%s\" %d\n", dst->id, dst->qtvname, dst->qtvstreamid, dst->qtvaddress, qtv_users));
 			else
-				Con_Printf ("qtv %d \"%s\" \"\" %d\n", dst->id, dst->qtvname, qtv_users);
+				SV_AddToRedirect(va("qtv %d \"%s\" \"\" %d\n", dst->id, dst->qtvname, qtv_users));
 		}
 	}
 }
@@ -1386,13 +2143,13 @@ void QTV_Streams_UserList (void)
 {
 	mvddest_t *dst;
 	for (dst = demo.dest; dst; dst = dst->nextdest) {
-		if (dst->desttype == DEST_STREAM) {
+		if (dst->desttype == DEST_STREAM && (!dst->reverse || (!dst->error && dst->qtvstreamid))) {
 			qtvuser_t *current;
 
-			Con_Printf ("qtvusers %d", dst->id);
+			SV_AddToRedirect(va("qtvusers %d", dst->id));
 			for (current = dst->qtvuserlist; current; current = current->next)
-				Con_Printf (" \"%s\"", current->name);
-			Con_Printf ("\n");
+				SV_AddToRedirect(va(" \"%s\"", current->name));
+			SV_AddToRedirect("\n");
 		}
 	}
 }
@@ -1470,14 +2227,19 @@ void SV_QTV_Init(void)
 	Cvar_Register (&qtv_pendingtimeout);
 	Cvar_Register (&qtv_streamtimeout);
 	Cvar_Register (&qtv_stream_max_queue_size);
+	Cvar_Register (&qtv_sayenabled);
+	Cvar_Register (&qtv_reverse_address);
 #ifndef SERVERONLY
 	/* Early client configuration may predate registration and skip OnChange. */
 	if (Cvar_ForceCallback(&qtv_stream_max_queue_size)) {
 		Cvar_ResetVar(&qtv_stream_max_queue_size);
 	}
+	if (Cvar_ForceCallback(&qtv_reverse_address)) {
+		Cvar_ResetVar(&qtv_reverse_address);
+	}
 #endif
-	Cvar_Register (&qtv_sayenabled);
 
+	Cmd_AddCommand ("qtv_reverse_secret", SV_ReverseSecret_f);
 	Cmd_AddCommand ("qtv_list", Qtv_List_f);
 	Cmd_AddCommand ("qtv_close", Qtv_Close_f);
 	Cmd_AddCommand ("qtv_status", Qtv_Status_f);
