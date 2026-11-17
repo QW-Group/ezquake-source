@@ -405,6 +405,83 @@ int FontFixedWidth(int max_length, float scale, qbool digits_only, qbool proport
 	return ceil((digits_only ? max_num_glyph_width : max_glyph_width) * max_length * scale);
 }
 
+// Remembers the previous value of every "*_proportional" cvar (console, scoreboard, HUD
+// elements, ...) the first time "fontload" switches them all to proportional, so that
+// "fontload none" can restore each one to what the user had before instead of zeroing
+// everything - a config with some elements deliberately left non-proportional (fixed-width
+// frag counters etc) survives a fontload/fontload-none round trip unchanged.
+typedef struct proportional_snapshot_s {
+	struct proportional_snapshot_s* next;
+	cvar_t* var;
+	char* value;
+} proportional_snapshot_t;
+
+static proportional_snapshot_t* proportional_snapshot;
+static qbool proportional_snapshot_taken;
+
+static void Font_TakeProportionalSnapshot(void)
+{
+	cvar_t* var;
+	size_t suffix_len = strlen("_proportional");
+
+	if (proportional_snapshot_taken) {
+		return;
+	}
+	proportional_snapshot_taken = true;
+
+	for (var = Cvar_Next(NULL); var; var = Cvar_Next(var)) {
+		size_t name_len = strlen(var->name);
+
+		if (name_len >= suffix_len && !strcmp(var->name + name_len - suffix_len, "_proportional")) {
+			proportional_snapshot_t* entry = Q_malloc(sizeof(*entry));
+
+			entry->var = var;
+			entry->value = Q_strdup(var->string);
+			entry->next = proportional_snapshot;
+			proportional_snapshot = entry;
+		}
+	}
+}
+
+// Switches every "*_proportional" cvar to proportional mode. Only called from the
+// "fontload <path>" command itself (not from font_facepath's OnChange), so that loading
+// a config file ("exec"/"set font_facepath ...") never has this mass side-effect - only
+// explicitly typing "fontload" does.
+static int Font_EnableAllProportional(void)
+{
+	proportional_snapshot_t* entry;
+	int count = 0;
+
+	Font_TakeProportionalSnapshot();
+
+	for (entry = proportional_snapshot; entry; entry = entry->next) {
+		Cvar_Set(entry->var, "1");
+		count++;
+	}
+
+	return count;
+}
+
+// Restores every "*_proportional" cvar to whatever value it had before the first
+// "fontload" of the session touched it (falls back to "0" if no snapshot was ever taken,
+// e.g. "fontload none" with nothing loaded yet).
+static int Font_RestoreAllProportional(void)
+{
+	proportional_snapshot_t* entry;
+	int count = 0;
+
+	if (!proportional_snapshot_taken) {
+		return 0;
+	}
+
+	for (entry = proportional_snapshot; entry; entry = entry->next) {
+		Cvar_Set(entry->var, entry->value);
+		count++;
+	}
+
+	return count;
+}
+
 static void OnChange_font_facepath(cvar_t* cvar, char* newvalue, qbool* cancel)
 {
 	if (newvalue && !newvalue[0]) {
@@ -412,7 +489,7 @@ static void OnChange_font_facepath(cvar_t* cvar, char* newvalue, qbool* cancel)
 		*cancel = false;
 	}
 	else {
-		*cancel = !FontCreate(0, Cmd_Argv(1));
+		*cancel = !FontCreate(0, newvalue);
 	}
 }
 
@@ -430,10 +507,19 @@ void Draw_LoadFont_f(void)
 		break;
 	case 2:
 		if (!strcmp(Cmd_Argv(1), "none")) {
-			Cvar_Set(&font_facepath, "");
+			if (font_facepath.string[0]) {
+				Cvar_Set(&font_facepath, "");
+				Com_Printf("Proportional font cleared, restored %d \"*_proportional\" cvar(s) to their previous value\n", Font_RestoreAllProportional());
+			}
 		}
 		else {
-			Cvar_Set(&font_facepath, Cmd_Argv(1));
+			char requested[MAX_OSPATH];
+
+			strlcpy(requested, Cmd_Argv(1), sizeof(requested));
+			Cvar_Set(&font_facepath, requested);
+			if (!strcmp(font_facepath.string, requested)) {
+				Com_Printf("Proportional font \"%s\" loaded, switched %d \"*_proportional\" cvar(s) to use it (\"%s none\" reverts)\n", requested, Font_EnableAllProportional(), Cmd_Argv(0));
+			}
 		}
 		break;
 	default:
