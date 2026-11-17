@@ -3599,10 +3599,16 @@ void CSQC_Client_GetEntity (int entnum, int fldnum, float out[3])
 	{
 		// Runtime equivalent of FTE cl.maxlerpents: highest packet-entity number
 		// seen this frame + headroom (FTE grows its lerp array in steps of 16).
+		// Replacement deltas keep entities outside packet_entities, so the
+		// retained slot extent is the highest-number source there.
 		packet_entities_t *pack;
 		int i, mx = 0;
 
-		if (cl.validsequence)
+		if (CL_RD_Valid())
+		{
+			mx = CL_RD_SlotLimit();
+		}
+		else if (cl.validsequence)
 		{
 			pack = &cl.frames[cl.parsecount & UPDATE_MASK].packet_entities;
 			for (i = 0; i < pack->num_entities; i++)
