@@ -40,6 +40,7 @@ static void GLM_Begin2DRendering(void)
 #define GLM_InitialiseVAOState             GL_InitialiseVAOState
 #define GLM_DescriptiveString              GL_DescriptiveString
 #define GLM_Draw3DSpritesInline            R_Stubs_NoOperation
+#define GLM_DrawSceneTrisInline            R_Stubs_NoOperation
 #define GLM_DrawDisc                       R_Stubs_NoOperation
 #define GLM_IsFramebufferEnabled3D         GL_FramebufferEnabled3D
 #define GLM_DrawAliasModelShadow           R_Stubs_NoOperationEntity

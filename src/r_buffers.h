@@ -25,6 +25,7 @@ typedef enum {
 	r_buffer_hud_circle_vertex_data,
 	r_buffer_postprocess_vertex_data,
 	r_buffer_frame_constants,
+	r_buffer_scenetris_vertex_data,
 
 	r_buffer_count
 } r_buffer_id;

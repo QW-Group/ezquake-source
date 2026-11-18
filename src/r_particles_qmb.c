@@ -996,7 +996,9 @@ void QMB_ProcessParticle(particle_type_t* pt, particle_t* p)
 		else if (p->entity_ref < 0) {
 			entity_t* sent = &cl_static_entities[-p->entity_ref - 1];
 
-			if (sent->visframe >= r_framecount - 1) {
+			// Burns while the torch is in view, unless a scripted emitter
+			// has become its fire.
+			if (sent->visframe >= r_framecount - 1 && !(sent->model && CL_ScriptedEmitter(sent))) {
 				sent->particle_time = particle_time;
 				p->start = particle_time;
 				p->die = particle_time + 0.8f;

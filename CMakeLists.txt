@@ -287,6 +287,8 @@ if(RENDERER_MODERN_OPENGL)
             ${MODERN_GLSL_DIR}/constants.glsl
             ${MODERN_GLSL_DIR}/draw_aliasmodel.fragment.glsl
             ${MODERN_GLSL_DIR}/draw_aliasmodel.vertex.glsl
+            ${MODERN_GLSL_DIR}/draw_scenetris.fragment.glsl
+            ${MODERN_GLSL_DIR}/draw_scenetris.vertex.glsl
             ${MODERN_GLSL_DIR}/draw_sprites.fragment.glsl
             ${MODERN_GLSL_DIR}/draw_sprites.vertex.glsl
             ${MODERN_GLSL_DIR}/draw_world.fragment.glsl
@@ -332,6 +334,7 @@ if(RENDERER_MODERN_OPENGL)
             ${SOURCE_DIR}/glm_performance.c
             ${SOURCE_DIR}/glm_rmain.c
             ${SOURCE_DIR}/glm_rsurf.c
+            ${SOURCE_DIR}/glm_scenetris.c
             ${SOURCE_DIR}/glm_sdl.c
             ${SOURCE_DIR}/glm_sprite.c
             ${SOURCE_DIR}/glm_sprite3d.c
@@ -393,6 +396,7 @@ if(RENDERER_CLASSIC_OPENGL)
             ${SOURCE_DIR}/glc_misc.c
             ${SOURCE_DIR}/glc_particles.c
             ${SOURCE_DIR}/glc_performance.c
+            ${SOURCE_DIR}/glc_scenetris.c
             ${SOURCE_DIR}/glc_sdl.c
             ${SOURCE_DIR}/glc_sky.c
             ${SOURCE_DIR}/glc_sprite3d.c
@@ -458,11 +462,14 @@ set(common_renderer_headers
         ${SOURCE_DIR}/r_lightmaps_internal.h
         ${SOURCE_DIR}/r_local.h
         ${SOURCE_DIR}/r_matrix.h
+        ${SOURCE_DIR}/r_part_script.h
+        ${SOURCE_DIR}/r_part_script_local.h
         ${SOURCE_DIR}/r_particles_qmb.h
         ${SOURCE_DIR}/r_performance.h
         ${SOURCE_DIR}/r_program.h
         ${SOURCE_DIR}/r_renderer.h
         ${SOURCE_DIR}/r_renderer_structure.h
+        ${SOURCE_DIR}/r_scenetris.h
         ${SOURCE_DIR}/r_shared.h
         ${SOURCE_DIR}/r_sprite3d.h
         ${SOURCE_DIR}/r_sprite3d_internal.h
@@ -508,6 +515,14 @@ set(common_renderer
         ${SOURCE_DIR}/r_netgraph.c
         ${SOURCE_DIR}/r_palette.c
         ${SOURCE_DIR}/r_part.c
+        ${SOURCE_DIR}/r_part_script.c
+        ${SOURCE_DIR}/r_part_script_decal.c
+        ${SOURCE_DIR}/r_part_script_effectinfo.c
+        ${SOURCE_DIR}/r_part_script_parse.c
+        ${SOURCE_DIR}/r_part_script_spawn.c
+        ${SOURCE_DIR}/r_part_script_surface.c
+        ${SOURCE_DIR}/r_part_script_trail.c
+        ${SOURCE_DIR}/r_part_script_update.c
         ${SOURCE_DIR}/r_part_trails.c
         ${SOURCE_DIR}/r_particles_qmb.c
         ${SOURCE_DIR}/r_particles_qmb_spawn.c
@@ -517,6 +532,7 @@ set(common_renderer
         ${SOURCE_DIR}/r_rlight.c
         ${SOURCE_DIR}/r_rmain.c
         ${SOURCE_DIR}/r_rmisc.c
+        ${SOURCE_DIR}/r_scenetris.c
         ${SOURCE_DIR}/r_sprite3d.c
         ${SOURCE_DIR}/r_sprites.c
         ${SOURCE_DIR}/r_states.c

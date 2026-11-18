@@ -83,6 +83,7 @@ static const char* vaoNames[] = {
 	"hud:lines",
 	"hud:polygons",
 	"post-process",
+	"scene-tris",
 	"powerupshell",
 	"brushmodel_details",
 	"brushmodel_lightmap_pass",
@@ -154,6 +155,12 @@ static GLenum glBlendFuncValuesSource[] = {
 	GL_ONE, // r_blendfunc_src_one_dest_zero,
 	GL_ZERO, // r_blendfunc_src_zero_dest_one,
 	GL_ONE, // r_blendfunc_src_one_dest_one_minus_src_color,
+	GL_SRC_ALPHA, // r_blendfunc_src_src_alpha_dest_one_minus_src_alpha,
+	GL_SRC_COLOR, // r_blendfunc_src_src_color_dest_one_minus_src_color,
+	GL_SRC_ALPHA, // r_blendfunc_src_src_alpha_dest_one,
+	GL_SRC_COLOR, // r_blendfunc_src_src_color_dest_one,
+	GL_SRC_ALPHA, // r_blendfunc_src_src_alpha_dest_one_minus_src_color,
+	GL_ZERO, // r_blendfunc_src_zero_dest_one_minus_src_alpha,
 };
 static GLenum glBlendFuncValuesDestination[] = {
 	GL_ZERO, // r_blendfunc_overwrite,
@@ -167,6 +174,12 @@ static GLenum glBlendFuncValuesDestination[] = {
 	GL_ZERO, // r_blendfunc_src_one_dest_zero,
 	GL_ONE, // r_blendfunc_src_zero_dest_one,
 	GL_ONE_MINUS_SRC_COLOR, // r_blendfunc_src_one_dest_one_minus_src_color,
+	GL_ONE_MINUS_SRC_ALPHA, // r_blendfunc_src_src_alpha_dest_one_minus_src_alpha,
+	GL_ONE_MINUS_SRC_COLOR, // r_blendfunc_src_src_color_dest_one_minus_src_color,
+	GL_ONE, // r_blendfunc_src_src_alpha_dest_one,
+	GL_ONE, // r_blendfunc_src_src_color_dest_one,
+	GL_ONE_MINUS_SRC_COLOR, // r_blendfunc_src_src_alpha_dest_one_minus_src_color,
+	GL_ONE_MINUS_SRC_ALPHA, // r_blendfunc_src_zero_dest_one_minus_src_alpha,
 };
 static GLenum glPolygonModeValues[] = {
 	GL_FILL, // r_polygonmode_fill,
@@ -218,6 +231,12 @@ static const char* txtBlendFuncNames[] = {
 	"src_one_dest_zero", // r_blendfunc_src_one_dest_zero
 	"src_zero_dest_one", // r_blendfunc_src_zero_dest_one
 	"src_one_dest_one_minus_src_color", // "r_blendfunc_src_one_dest_one_minus_src_color"
+	"src_src_alpha_dest_one_minus_src_alpha", // r_blendfunc_src_src_alpha_dest_one_minus_src_alpha
+	"src_src_color_dest_one_minus_src_color", // r_blendfunc_src_src_color_dest_one_minus_src_color
+	"src_src_alpha_dest_one", // r_blendfunc_src_src_alpha_dest_one
+	"src_src_color_dest_one", // r_blendfunc_src_src_color_dest_one
+	"src_src_alpha_dest_one_minus_src_color", // r_blendfunc_src_src_alpha_dest_one_minus_src_color
+	"src_zero_dest_one_minus_src_alpha", // r_blendfunc_src_zero_dest_one_minus_src_alpha
 };
 static const char* txtPolygonModeValues[] = {
 	"fill", // r_polygonmode_fill,
@@ -966,9 +985,11 @@ void R_CustomPolygonOffset(r_polygonoffset_t mode)
 	if (mode != current->polygonOffset.option) {
 		extern cvar_t gl_brush_polygonoffset, gl_brush_polygonoffset_factor;
 
-		float factor = (mode == r_polygonoffset_standard ? bound(-1, gl_brush_polygonoffset_factor.value, 1) : 1);
-		float units = (mode == r_polygonoffset_standard ? bound(0, gl_brush_polygonoffset.value, 2) : 1);
-		qbool enabled = (mode == r_polygonoffset_standard || mode == r_polygonoffset_outlines) && units != 0;
+		// Decals pull towards the viewer: the factor covers the depth slope of a surface seen at a
+		// grazing angle, the units the rounding between coplanar polygons with different vertices
+		float factor = (mode == r_polygonoffset_standard ? bound(-1, gl_brush_polygonoffset_factor.value, 1) : (mode == r_polygonoffset_decal ? -1 : 1));
+		float units = (mode == r_polygonoffset_standard ? bound(0, gl_brush_polygonoffset.value, 2) : (mode == r_polygonoffset_decal ? -2 : 1));
+		qbool enabled = mode != r_polygonoffset_disabled && units != 0;
 
 		if (glConfig.reversed_depth) {
 			// "farther" = smaller depth under reverse-z; negation preserves non-zero

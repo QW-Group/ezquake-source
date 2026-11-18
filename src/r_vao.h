@@ -32,6 +32,7 @@ typedef enum {
 	vao_hud_lines,
 	vao_hud_polygons,
 	vao_postprocess,
+	vao_scenetris,
 
 	// non-shader (classic OpenGL) only
 	vao_aliasmodel_powerupshell,

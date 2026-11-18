@@ -401,6 +401,8 @@ static r_program_uniform_t program_uniforms[] = {
 	{ r_program_brushmodel, "instanceOffset", 1, false },
 	// r_program_uniform_brushmodel_alphatested_instanceOffset
 	{ r_program_brushmodel_alphatested, "instanceOffset", 1, false },
+	// r_program_uniform_scenetris_materialtex
+	{ r_program_scenetris, "materialTex", 1, false },
 };
 
 #ifdef C_ASSERT
@@ -1644,6 +1646,7 @@ static void GL_BuildCoreDefinitions(void)
 	GL_DefineProgram_VF(r_program_fx_world_geometry, "world-geometry", true, fx_world_geometry, renderer_modern, GLM_CompileWorldGeometryProgram, STDOPTIONS_NONE);
 	GL_DefineProgram_VF(r_program_simple, "simple", false, simple, renderer_modern, GLM_CompileSimpleProgram, STDOPTIONS_NONE);
 	GL_DefineProgram_VF(r_program_simple3d, "simple3d", false, simple3d, renderer_modern, GLM_CompileSimple3dProgram, STDOPTIONS_NONE);
+	GL_DefineProgram_VF(r_program_scenetris, "scene-tris", true, draw_scenetris, renderer_modern, GLM_CompileSceneTrisProgram, STDOPTIONS_NONE);
 #endif
 
 #ifdef RENDERER_OPTION_CLASSIC_OPENGL

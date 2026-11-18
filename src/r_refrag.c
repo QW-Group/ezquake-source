@@ -135,18 +135,56 @@ void R_AddEfrags (entity_t *ent) {
 	ent->topnode = r_pefragtopnode;
 }
 
+static qbool R_StaticFlameHidden(const model_t *model)
+{
+	extern cvar_t r_drawflame;
+
+	return (model->modhint == MOD_FLAME || model->modhint == MOD_FLAME2) && !r_drawflame.integer;
+}
+
+static qbool R_EntityInPVS(const entity_t *ent)
+{
+	efrag_t *ef;
+
+	for (ef = ent->efrag; ef; ef = ef->entnext) {
+		if (ef->leaf->visframe == r_visframecount) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// R_StoreEfrags sees only the static entities in the view frustum; emitting
+// for the whole PVS keeps a flame burning while the view looks away.
+void R_RunStaticEmitters(void)
+{
+	static_emitter_t *emitter;
+	entity_t *ent;
+	int i;
+
+	if (!PScript_Active()) {
+		return;
+	}
+	for (i = 0; i < cl.num_statics; i++) {
+		ent = &cl_static_entities[i];
+		if (ent->model && CL_ScriptedEmitter(ent) && !R_StaticFlameHidden(ent->model) && R_EntityInPVS(ent)) {
+			emitter = &cl_static_emitters[i];
+			CL_RunModelEmitter(ent, &emitter->key, &emitter->frame, &emitter->type);
+		}
+	}
+}
+
 void R_StoreEfrags(efrag_t **ppefrag)
 {
 	entity_t *pent;
 	model_t *model;
 	efrag_t *pefrag;
-	extern cvar_t r_drawflame;
 
 	for (pefrag = *ppefrag; pefrag; pefrag = pefrag->leafnext) {
 		pent = pefrag->entity;
 		model = pent->model;
 
-		if ((model->modhint == MOD_FLAME || model->modhint == MOD_FLAME2) && !r_drawflame.integer) {
+		if (R_StaticFlameHidden(model)) {
 			continue;
 		}
 

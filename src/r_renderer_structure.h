@@ -104,6 +104,10 @@ RENDERER_METHOD(void, Prepare3DSprites, void)
 RENDERER_METHOD(void, Draw3DSprites, void)
 RENDERER_METHOD(void, Draw3DSpritesInline, void)   // FIXME get rid of this and all other inline rendering
 
+// Scene triangles
+RENDERER_METHOD(qbool, SceneTrisSupported, void)
+RENDERER_METHOD(void, DrawSceneTrisInline, void)
+
 // Framebuffers
 RENDERER_METHOD(void, RenderFramebuffers, void)
 RENDERER_METHOD(qbool, FramebufferCreate, framebuffer_id id, int width, int height)
