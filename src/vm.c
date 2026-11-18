@@ -451,7 +451,7 @@ void VM_LoadSymbols( vm_t *vm ) {
     snprintf( symbols, sizeof( symbols ), "%s.map", vm->name );
 	mapfile.v = FS_LoadTempFile( symbols, NULL );
 	if ( !mapfile.c ) {
-		Con_Printf( "Couldn't load symbol file: %s\n", symbols );
+		Con_DPrintf( "Couldn't load symbol file: %s\n", symbols );
 		return;
 	}
 
@@ -504,7 +504,7 @@ void VM_LoadSymbols( vm_t *vm ) {
 	}
 
 	vm->numSymbols = count;
-	Con_Printf( "%i symbols parsed from %s\n", count, symbols );
+	Con_DPrintf( "%i symbols parsed from %s\n", count, symbols );
     
 }
 
@@ -687,10 +687,9 @@ static vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 
 	// load the image
 	snprintf( filename, sizeof( filename ), "%s.qvm", vm->name );
-	Con_Printf( "Loading vm file %s...\n", filename );
+	Con_DPrintf( "Loading game code: %s (QVM)\n", filename );
 	header = ( vmHeader_t*)FS_LoadTempFile( filename, &length );
 	if ( !header ) {
-		Con_Printf( "Failed.\n" );
 		VM_Free( vm );
 		return NULL;
 	}
@@ -703,7 +702,7 @@ static vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 	errorMsg = VM_ValidateHeader( header, length );
 	if ( errorMsg ) {
 		VM_Free( vm );
-		Con_Printf( "%s\n", errorMsg );
+		Con_Printf( "%s: %s\n", filename, errorMsg );
 		return NULL;
 	}
 
@@ -711,7 +710,7 @@ static vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 	//tryjts = false;
 
 	if( header->vmMagic == VM_MAGIC_VER2 ) {
-		Con_Printf( "...which has vmMagic VM_MAGIC_VER2\n" );
+		Con_DPrintf( "...which has vmMagic VM_MAGIC_VER2\n" );
 	} else {
 	//	tryjts = true;
 	}
@@ -763,7 +762,7 @@ static vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 		header->jtrgLength &= ~0x03;
 
 		vm->numJumpTableTargets = header->jtrgLength >> 2;
-		Con_Printf( "Loading %d jump table targets\n", vm->numJumpTableTargets );
+		Con_DPrintf( "Loading %d jump table targets\n", vm->numJumpTableTargets );
 
 		if ( alloc ) {
 			vm->jumpTableTargets = Hunk_AllocName( header->jtrgLength, "qvm-jtt");
@@ -1205,7 +1204,6 @@ qbool VM_LoadNative( vm_t * vm)
 		vm->dllHandle = Sys_DLOpen( name );
 		if ( vm->dllHandle )
 		{
-			Con_Printf( "LoadLibrary (%s)\n", name );
 			break;
 		}
 	}
@@ -1224,6 +1222,8 @@ qbool VM_LoadNative( vm_t * vm)
 	Info_SetValueForStarKey( svs.info, "*qvm", DLEXT, MAX_SERVERINFO_STRING );
 	Info_SetValueForStarKey( svs.info, "*progs", DLEXT, MAX_SERVERINFO_STRING );
 	vm->type = VMI_NATIVE;
+	Con_Printf( "Game code loaded: %s." DLEXT " (native)\n", vm->name );
+	Con_DPrintf( "Native game code path: %s\n", name );
 	return true;
 }
 
@@ -1246,6 +1246,10 @@ vm_t *VM_Create( vmIndex_t index, const char	*name, syscall_t systemCalls, /*dll
 
 	if ( (unsigned)index >= VM_COUNT ) {
 		SV_Error( "VM_Create: bad vm index %i", index );	
+	}
+
+	if ( interpret == VMI_NONE ) {
+		return NULL;
 	}
 
 	//remaining = Hunk_MemoryRemaining();
@@ -1285,7 +1289,7 @@ vm_t *VM_Create( vmIndex_t index, const char	*name, syscall_t systemCalls, /*dll
 			return vm;
 		}
 
-		Con_Printf( "Failed to load dll, looking for qvm.\n" );
+		Con_Printf( "Could not load %s." DLEXT "; trying QVM.\n", name );
 		interpret = VMI_COMPILED;
 	}
 
@@ -1336,6 +1340,7 @@ vm_t *VM_Create( vmIndex_t index, const char	*name, syscall_t systemCalls, /*dll
 
 	// load the map file
 	VM_LoadSymbols( vm );
+	Con_Printf( "Game code loaded: %s.qvm (QVM, %s)\n", vm->name, vm->compiled ? "JIT" : "interpreted" );
 
 	//Con_Printf( "%s loaded in %d bytes on the hunk\n", vm->name, remaining - Hunk_MemoryRemaining() );
 

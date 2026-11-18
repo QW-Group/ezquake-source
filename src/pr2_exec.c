@@ -432,6 +432,8 @@ void PR2_LoadProgs(void)
 	}
 	else
 	{
+		if ((int)sv_progtype.value != VMI_NONE)
+			Con_Printf ("Could not load %s.qvm; trying QuakeC.\n", sv_progsname.string);
 		PR1_LoadProgs ();
 	}
 }

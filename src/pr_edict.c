@@ -1139,6 +1139,7 @@ void PR1_LoadProgs (void)
 {
 	int	i;
 	char num[32];
+	char name[MAX_OSPATH] = "progs.dat";
 	int filesize;
 
 	// flush the non-C variable lookup cache
@@ -1153,24 +1154,33 @@ void PR1_LoadProgs (void)
 	pr_nqprogs = false;
 
 	// forced load of NQ progs.
-	if (!progs && Cvar_Value("sv_forcenqprogs") && (progs = (dprograms_t *)FS_LoadHunkFile ("progs.dat", &filesize)))
+	if (!progs && Cvar_Value("sv_forcenqprogs") && (progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize)))
 		pr_nqprogs = true;
 #endif
 
 	if (!progs)
 	{
-		char name[MAX_OSPATH];
 		snprintf(name, sizeof(name), "%s.dat", sv_progsname.string);
 		progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize);
 	}
 	if (!progs)
-		progs = (dprograms_t *)FS_LoadHunkFile ("qwprogs.dat", &filesize);
+	{
+		strlcpy (name, "qwprogs.dat", sizeof(name));
+		progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize);
+	}
 	if (!progs)
-		progs = (dprograms_t *)FS_LoadHunkFile ("spprogs.dat", &filesize);
+	{
+		strlcpy (name, "spprogs.dat", sizeof(name));
+		progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize);
+	}
 #ifdef WITH_NQPROGS
 	// low priority load of NQ progs.
-	if (!progs && (progs = (dprograms_t *)FS_LoadHunkFile ("progs.dat", &filesize)))
-		pr_nqprogs = true;
+	if (!progs)
+	{
+		strlcpy (name, "progs.dat", sizeof(name));
+		if ((progs = (dprograms_t *)FS_LoadHunkFile (name, &filesize)))
+			pr_nqprogs = true;
+	}
 #endif
 
 	if (!progs)
@@ -1247,6 +1257,7 @@ void PR1_LoadProgs (void)
 		((int *)pr_globals)[i] = LittleLong (((int *)pr_globals)[i]);
 
 	PR_InitBuiltins();
+	Con_Printf ("Game code loaded: %s (QuakeC)\n", name);
 }
 
 void PR1_InitProg(void)
