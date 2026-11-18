@@ -1248,6 +1248,10 @@ vm_t *VM_Create( vmIndex_t index, const char	*name, syscall_t systemCalls, /*dll
 		SV_Error( "VM_Create: bad vm index %i", index );	
 	}
 
+	if ( interpret == VMI_NONE ) {
+		return NULL;
+	}
+
 	//remaining = Hunk_MemoryRemaining();
 
 	vm = &vmTable[ index ];
