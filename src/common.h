@@ -84,7 +84,8 @@ typedef enum
 //============================================================================
 
 // stats are integers communicated to the client by the server
-#define	MAX_CL_STATS		32
+#define	MAX_WIRE_STATS		32	// Standard stats understood by legacy MVD/QTV clients
+#define	MAX_CL_STATS		MAX_WIRE_STATS
 
 #define STAT_HEALTH             0
 //define STAT_FRAGS             1

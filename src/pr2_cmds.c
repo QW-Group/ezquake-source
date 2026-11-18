@@ -2223,6 +2223,7 @@ int PF2_Add_Bot(char *name, int bottomcolor, int topcolor, char *skin)
 
 	newcl->disable_updates_stop = -1.0;	// Vladis
 
+	MVD_PlayerReset(edictnum - 1);
 	SV_FullClientUpdate( newcl, &sv.reliable_datagram );
 
 	old_self = pr_global_struct->self;
