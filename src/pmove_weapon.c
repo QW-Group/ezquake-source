@@ -85,7 +85,13 @@ static prediction_event_fakeproj_t *PM_AddEvent_FakeProj(int type)
 // given the cl_predict_weaponsound bitmask?
 int PM_FilterWeaponSound(byte sound_num)
 {
-	const char *name = cl.sound_precache[sound_num]->name;
+	const char *name;
+	// The slot is empty when sound is disabled or the sound was never precached
+	// (late precache, module cap): nothing to compare, so keep the server sound
+	// (true would filter it out).
+	if (!cl.sound_precache[sound_num])
+		return false;
+	name = cl.sound_precache[sound_num]->name;
 
 	if (cl_predict_weaponsound.integer & 2)
 		if (strcmp(name, "weapons/ax1.wav") == 0)

@@ -495,6 +495,7 @@ typedef struct
 	char		downloadtempname[MAX_PATH];
 	char		downloadname[MAX_PATH];
 	int			downloadnumber;
+	qbool		downloadrequested;		///< a download command was sent, but the first block has not arrived yet
 	dltype_t	downloadtype;
 	int			downloadpercent;
 	int			downloadrate;
@@ -1158,6 +1159,7 @@ void CL_DecayLights (void);
 void CL_SetSolidPlayers (int playernum);
 void CL_SetUpPlayerPrediction(qbool dopred);
 void CL_EmitEntities (void);
+void CL_EmitEntitiesKeepScene (void);	// CSQC #301: link engine entities without clearing the scene (FTE parity)
 void CL_ClearProjectiles (void);
 /* Base RD decoding and ownership; only selected after RD negotiation. */
 // Project retained RD state into the existing render/prediction interfaces, one entity at a time.
