@@ -1504,6 +1504,12 @@ void SV_MVDPings (void)
 
 void MVD_WriteStats(void)
 {
+	/* The recorder samples these HUD values. Other stats, such as level
+	 * counters, must keep the state sent by their own messages. */
+	static const uint32_t player_stats = (1u << STAT_HEALTH) | (1u << STAT_WEAPON)
+		| (1u << STAT_AMMO) | (1u << STAT_ARMOR) | (1u << STAT_SHELLS)
+		| (1u << STAT_NAILS) | (1u << STAT_ROCKETS) | (1u << STAT_CELLS)
+		| (1u << STAT_ACTIVEWEAPON) | (1u << STAT_VIEWHEIGHT) | (1u << STAT_ITEMS);
 	client_t	*c;
 	int i, j;
 	edict_t		*ent;
@@ -1540,7 +1546,8 @@ void MVD_WriteStats(void)
 
 		for (j = 0 ; j < MAX_CL_STATS; j++)
 		{
-			if (stats[j] != demo.stats[i][j])
+			if (stats[j] != demo.stats[i][j] ||
+				(demo.resend_player_stats[i] && j < MAX_WIRE_STATS && (player_stats & (1u << j))))
 			{
 				demo.stats[i][j] = stats[j];
 				if (stats[j] >= 0 && stats[j] <= 255)
@@ -1563,6 +1570,7 @@ void MVD_WriteStats(void)
 				}
 			}
 		}
+		demo.resend_player_stats[i] = false;
 	}
 }
 

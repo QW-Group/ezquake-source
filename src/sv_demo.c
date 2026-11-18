@@ -1322,12 +1322,8 @@ static void SV_WriteSetMVDMessage (void)
 }
 */
 
-// mvd/qtv related stuff
-// Well, here is a chance what player connect after demo recording started,
-// so demo.info[edictnum - 1].model == player_model so SV_MVDWritePackets() will not wrote player model index,
-// so client during playback this demo will got invisible model, because model index will be 0.
-// Fixing that.
-// Btw, struct demo contain different client specific structs, may be they need clearing too, not sure.
+/* Refresh the model and HUD when a slot changes occupants or roles.
+ * Viewers may have joined the recording while the slot had no player. */
 void MVD_PlayerReset(int player)
 {
 	if (player < 0 || player >= MAX_CLIENTS) { // protect from lamers
@@ -1336,6 +1332,7 @@ void MVD_PlayerReset(int player)
 	}
 
 	memset(&(demo.clients[player]), 0, sizeof(demo.clients[0]));
+	demo.resend_player_stats[player] = true;
 }
 
 qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange)
