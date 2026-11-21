@@ -1425,7 +1425,7 @@ static vfsfile_t *CM_OpenMap(char *name, dheader_t *header)
 	vfsfile_t *vf;
 	int i, read;
 
-	vf = FS_OpenVFS(name, "rb", FS_ANY); // FIXME: should be FS_GAME.
+	vf = FS_OpenVFS(name, "rb", FS_GAME);
 	if (!vf) {
 		Host_Error ("CM_OpenMap: %s not found", name);
 	}
