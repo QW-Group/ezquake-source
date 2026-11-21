@@ -29,9 +29,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
-#ifndef SERVERONLY
-#include "pcre2.h"
-#endif
+#include <pcre2.h>
 #include "sv_mod_frags.h"
 
 qwmsg_t *qwmsg[MOD_MSG_MAX + 1];
@@ -178,7 +176,7 @@ char *parse_mod_string(char *str)
 				break;
 			default: ret = NULL;
 			}
-			pcre2_substring_list_free((const PCRE2_UCHAR8**)buf);
+			pcre2_substring_list_free((void *)buf);
 			break;
 		}
 	}

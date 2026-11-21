@@ -47,6 +47,31 @@ when developing. Should an option not activate as expected, removing the build d
 and starting over is always a failsafe. Static dependencies are [cached elsewhere](#Caches)
 and will not have to be rebuilt if only the build directory is removed.
 
+## Standalone dedicated server
+
+On Linux and macOS, the dedicated server presets use CMake 3.25 or newer,
+Ninja Multi-Config and system libraries. Install the development packages for
+SDL2, PCRE2, libcurl, zlib and minizip. SDL2 provides threads and mutexes.
+The server build skips the client and OpenGL dependencies.
+
+```shell
+cmake --preset server-only
+cmake --build --preset server-only-release --parallel
+```
+
+For a Debug build, use `cmake --build build-server-only --config Debug`. When
+configuring without presets, set `-DEZQUAKE_SERVER_ONLY=ON`.
+
+Put the Quake data in `id1` under the base directory. To run KTX, put its game
+module and configuration under `ktx` in the same directory.
+
+```shell
+build-server-only/Release/ezquake-server -basedir /path/to/quake -game ktx -progtype 2 +map dm4
+```
+
+Server commands can be entered on standard input. Use `quit` or send SIGTERM
+to stop the server.
+
 ## CMake Presets
 
 [CMake presets][cmake-presets] can be seen as aliases that associates a number of build
@@ -217,8 +242,7 @@ cases (client, server, common, sys, etc), and this also applies to header files.
 for this is to serve editors with the correct context, and if generating either a Xcode or
 Visual Studio project this categorization is also visualized in the project tree view.
 
-Looking forward, this will allow adding a `ezquake-sv` target by just reusing the relevant
-subset of source files.
+The `ezquake-server` target uses the common and server source groups to build the standalone server.
 
 ### Managing static dependencies
 

@@ -60,9 +60,6 @@ const char* Cmd_CommandLineParamName(cmdline_param_id id)
 	return commandline_parameters[id].name;
 }
 
-void Draw_BeginDisc (void);
-void Draw_EndDisc (void);
-
 #define MAX_NUM_ARGVS	50
 
 usercmd_t nullcmd; // guaranteed to be zero
@@ -1535,6 +1532,7 @@ void Com_EndRedirect (void) {
 unsigned Print_flags[16];
 int Print_current = 0;
 
+#ifndef SERVERONLY
 /* FIXME: Please make us thread safe! */
 void Com_Printf (char *fmt, ...) 
 {
@@ -1579,6 +1577,8 @@ void Com_DPrintf (char *fmt, ...)
 
 	Com_Printf ("%s", msg);
 }
+
+#endif
 
 void Com_Printf_State(int state, const char *fmt, ...)
 {
@@ -1646,6 +1646,7 @@ void Com_PrintVerticalBar(int width)
 	Com_Printf("\x82");
 }
 
+#ifndef SERVERONLY
 void COM_ParseIPCData(const char *buf, unsigned int bufsize)
 {
 	if (Rulesets_RestrictIPC()) {
@@ -1709,6 +1710,7 @@ qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbu
     return false;
 }
 
+#endif
 //============================================================================
 
 static char q_normalize_chartbl[256];

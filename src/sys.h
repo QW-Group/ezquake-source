@@ -112,6 +112,11 @@ void Sys_SendDeferredKeyEvents(void);
 
 void Sys_Init (void);
 
+#ifdef SERVERONLY
+char *Sys_ConsoleInput(void);
+void Sys_Restart(void);
+#endif
+
 wchar *Sys_GetClipboardTextW(void);
 void Sys_CopyToClipboard(const char *);
 

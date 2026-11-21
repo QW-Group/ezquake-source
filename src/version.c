@@ -29,6 +29,7 @@
 #include "common.h"
 #include "version.h"
 
+#ifndef SERVERONLY
 #include <jansson.h>
 #include <SDL_mutex.h>
 #include <SDL_thread.h>
@@ -45,7 +46,7 @@ static SDL_mutex *version_mutex = NULL;
 
 static void VersionCheck_OnConfigChange(cvar_t *var, char *string, qbool *cancel);
 static cvar_t allow_update_check  = {"sys_update_check",  "1", CVAR_NOTFROMSERVER, VersionCheck_OnConfigChange};
-
+#endif
 /*
 =======================
 CL_Version_f
@@ -148,6 +149,7 @@ char *VersionStringFull (void)
 	return str;
 }
 
+#ifndef SERVERONLY
 typedef struct version_context_St
 {
 	char *buffer;
@@ -353,3 +355,4 @@ qbool VersionCheck_GetLatest(char dest[VERSION_MAX_LEN])
 
 	return VersionCheck_IsOutdated(dest);
 }
+#endif

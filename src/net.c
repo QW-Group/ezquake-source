@@ -25,9 +25,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #else
 #include "quakedef.h"
 #include "server.h"
-#include "utils.h"
-#define MAX_STRINGS 16 // well, this used not only for va, anyway, static buffers is evil...
 #endif
+
+#include "utils.h"
+#define MAX_STRINGS 16
 
 #ifdef _WIN32
 WSADATA winsockdata;
@@ -77,11 +78,11 @@ static int NET_PortPingProbeWorker(void *data);
 static SDL_Thread **NET_PortPingProbeInitWorkers(struct sockaddr_in *addr, int num_threads, portpingprobe_t *results);
 static int NET_PortPingProbeOrchestrator(void *data);
 
+#endif
+
 #define MIN_TCP_TIMEOUT  500
 #define MAX_TCP_TIMEOUT 5000
-
 static cvar_t net_tcp_timeout = { "net_tcp_timeout", "2000" };
-#endif
 
 #ifndef CLIENTONLY
 netadr_t	net_local_sv_ipadr;
@@ -1187,6 +1188,19 @@ int TCP_OpenListenSocket (unsigned short int port)
 		return INVALID_SOCKET;
 	}
 
+#ifdef SERVERONLY
+	{
+		int reuse = 1;
+
+		// A restarted server must be able to listen while old QTV sockets are in TIME_WAIT.
+		if (setsockopt(newsocket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
+			Con_Printf("TCP_OpenListenSocket: SO_REUSEADDR: (%i): %s\n", qerrno, strerror(qerrno));
+			closesocket(newsocket);
+			return INVALID_SOCKET;
+		}
+	}
+#endif
+
 #ifndef _WIN32
 	if ((fcntl (newsocket, F_SETFL, O_NONBLOCK)) == -1) { // O'Rly?! @@@
 		Con_Printf ("TCP_OpenListenSocket: fcntl: (%i): %s\n", qerrno, strerror(qerrno));
@@ -1384,6 +1398,7 @@ void NET_Init (void)
 	SZ_Init (&net_message, net_message_buffer, sizeof(net_message_buffer));
 
 	Con_DPrintf("UDP Initialized\n");
+	Cvar_Register(&net_tcp_timeout);
 
 #ifndef SERVERONLY
 	cls.socketip = INVALID_SOCKET;
@@ -1392,7 +1407,6 @@ void NET_Init (void)
 // <--TCPCONNECT
 
 	Cvar_Register(&cl_net_clientport);
-	Cvar_Register(&net_tcp_timeout);
 
 	Cvar_Register(&cl_portpingprobe_delay);
 	Cvar_Register(&cl_portpingprobe_enable);
@@ -1662,6 +1676,7 @@ void NET_CloseServer (void)
 }
 #endif
 
+#ifndef SERVERONLY
 static void cl_portpingprobe_probes_changed(cvar_t *var, char *val, qbool *cancel)
 {
 	int probes = Q_atoi(val);
@@ -1995,3 +2010,4 @@ int NET_GetPortPingProbeProgress(void)
 {
 	return ((float)SDL_AtomicGet(&portpingprobe_progress) / (cl_portpingprobe_probes.integer * cl_portpingprobe_port_probes.integer)) * 100;
 }
+#endif

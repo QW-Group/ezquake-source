@@ -588,8 +588,6 @@ void FS_AddUserDirectory(char *dir)
 	FS_AddPathHandle(com_userdir, &osfilefuncs, malloc_dir, false, false, FS_LOAD_FILE_ALL);
 }
 
-void Draw_InitConback(void);
-
 // Sets the gamedir and path to a different directory.
 void FS_SetGamedir(char* dir, qbool force)
 {
@@ -700,6 +698,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 
 	FS_ShutDown();
 
+#ifndef SERVERONLY
 	if (guess_cwd) { // so, com_basedir directory will be where ezquake*.exe located
 #ifndef __APPLE__
 		char *e;
@@ -733,7 +732,9 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 			}
 #endif
 	}
-	else if ((i = COM_CheckParm (cmdline_param_filesystem_basedir)) && i < COM_Argc() - 1) {
+	else
+#endif
+	if ((i = COM_CheckParm (cmdline_param_filesystem_basedir)) && i < COM_Argc() - 1) {
 		// -basedir <path>
 		// Overrides the system supplied base directory (under id1)
 		strlcpy (com_basedir, COM_Argv(i + 1), sizeof(com_basedir));
@@ -819,10 +820,14 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 }
 
 void FS_InitFilesystem( void ) {
+#ifndef SERVERONLY
 	vfsfile_t *vfs;
+#endif
 
 	FS_InitModuleFS();
-	FS_InitFilesystemEx( false ); // first attempt, simplified
+	FS_InitFilesystemEx(false);
+
+#ifndef SERVERONLY
 	vfs = FS_OpenVFS("gfx.wad", "rb", FS_ANY); 
 	if (vfs) { // // we found gfx.wad, seems we have proper com_basedir
 		VFS_CLOSE(vfs);
@@ -830,8 +835,10 @@ void FS_InitFilesystem( void ) {
 	}
 
 	FS_InitFilesystemEx( true );  // second attempt
+#endif
 }
 
+#ifndef SERVERONLY
 // allow user select differet "style" how/where open/save different media files.
 // so user select media_dir is relative to quake base dir or some system HOME dir or may be full path
 // NOTE: using static buffer, use with care
@@ -864,6 +871,7 @@ char *FS_LegacyDir(char *media_dir)
 			return dir;
 	}
 }
+#endif
 
 
 //=============================================================================
@@ -1166,10 +1174,12 @@ static void FS_PakOper_Process(pak_operation_t op)
 	int i;
 	int c = Cmd_Argc();
 
+#ifndef SERVERONLY
 	if (cls.state != ca_disconnected && !cls.demoplayback && !cls.mvdplayback) {
 		Com_Printf("This command cannot be used while connected\n");
 		return;
 	}
+#endif
 	if (c < 2) {
 		Com_Printf("Usage: %s <pakname> [<pakname> [<pakname> ...]\n", Cmd_Argv(0));
 		return;
@@ -3011,6 +3021,7 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 	char gamedir[MAX_OSPATH];
 	char gamedirfile[MAX_QPATH];
 
+#ifndef SERVERONLY
 	//a lame way to fix pure paks
 	if (cls.state)
 	{
@@ -3028,6 +3039,7 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 			CL_Reconnect_f();
 		}
 	}
+#endif
 
 	FS_FlushFSHash();
 

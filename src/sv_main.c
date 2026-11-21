@@ -59,7 +59,6 @@ cvar_t  sv_mod_extensions = { "sv_mod_extensions", "2", CVAR_ROM };
 
 #ifdef SERVERONLY
 cvar_t  sys_simulation = { "sys_simulation", "0" };
-cvar_t	developer = {"developer", "0"};		// show extra messages
 cvar_t	version = {"version", "", CVAR_ROM};
 #endif
 
@@ -286,7 +285,7 @@ void SV_Shutdown (char *finalmsg)
 		if (sv.mvdrecording)
 			SV_MVDStop_f();
 
-#ifndef SERVER_ONLY
+#ifndef SERVERONLY
 		NET_CloseServer ();
 #endif
 
@@ -341,10 +340,14 @@ void SV_Error (char *error, ...)
 	vsnprintf (string, sizeof (string), error, argptr);
 	va_end (argptr);
 
+#ifdef SERVERONLY
+	Sys_Error("SV_Error: %s", string);
+#else
 	SV_Shutdown (va ("SV_Error: %s\n", string));
 
 	Host_EndGame();
 	Host_Error("SV_Error: %s", string);
+#endif
 }
 
 static void SV_FreeHeadDelayedPacket(client_t *cl) {
@@ -3887,15 +3890,6 @@ void OnChange_qconsolelogsay_var (cvar_t *var, char *value, qbool *cancel)
 
 #ifdef SERVERONLY
 
-void COM_Init (void)
-{
-	Cvar_Register (&developer);
-	Cvar_Register (&version);
-	Cvar_Register (&sys_simulation);
-
-	Cvar_SetROM(&version, SERVER_NAME " " SERVER_VERSION);
-}
-
 //Free hunk memory up to host_hunklevel
 //Can only be called when changing levels!
 void Host_ClearMemory (void)
@@ -3929,6 +3923,17 @@ void Host_InitMemory (int memsize)
 	Memory_Init (Q_malloc(memsize), memsize);
 }
 
+void Host_Error(char *error, ...)
+{
+	va_list args;
+	char message[1024];
+
+	va_start(args, error);
+	vsnprintf(message, sizeof(message), error, args);
+	va_end(args);
+	SV_Error("%s", message);
+}
+
 void Host_Init (int argc, char **argv, int default_memsize)
 {
 	extern int		hunk_size;
@@ -3940,14 +3945,16 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	Host_InitMemory (default_memsize);
 
-	Con_Printf ("============= Starting %s =============\n", VersionStringFull());
+	Con_Printf("Starting %s", VersionStringFull());
 
 	Cbuf_Init ();
 	Cmd_Init ();
 	Cvar_Init ();
 	COM_Init ();
+	Cvar_Register(&version);
+	Cvar_SetROM(&version, SERVER_NAME " " SERVER_VERSION);
 
-	FS_Init ();
+	FS_InitFilesystem ();
 	NET_Init ();
 
 	Netchan_Init ();
@@ -3981,7 +3988,8 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	Cbuf_InsertText ("exec server.cfg\n");
 
-	// process command line arguments
+	// Apply command-line settings after server.cfg and before starting the first map.
+	Cbuf_AddEarlyCommands ();
 	Cmd_StuffCmds_f ();
 	Cbuf_Execute ();
 
@@ -3989,14 +3997,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	SV_Map(true);
 
-	// if a map wasn't specified on the command line, spawn mvdsv-kg map
-	if (sv.state == ss_dead)
-	{
-		Cmd_ExecuteString ("map mvdsv-kg");
-		SV_Map(true);
-	}
-
-	// last resort - start map
+	// Fall back to the start map if the server still has no active map.
 	if (sv.state == ss_dead)
 	{
 		Cmd_ExecuteString ("map start");

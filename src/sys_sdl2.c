@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include <SDL.h>
 
+#ifndef SERVERONLY
 cvar_t sys_yieldcpu = {"sys_yieldcpu", "0"};
 cvar_t sys_inactivesound = {"sys_inactivesound", "0", CVAR_ARCHIVE};
 cvar_t sys_inactivesleep = {"sys_inactivesleep", "1"};
@@ -84,6 +85,7 @@ void Sys_CopyToClipboard(const char *text)
 	SDL_SetClipboardText(text);
 }
 
+#endif
 int Sys_CreateDetachedThread(int (*func)(void *), void *data)
 {
 	SDL_Thread *thread;

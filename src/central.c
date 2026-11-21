@@ -3,7 +3,7 @@
 
 #include "qwsvdef.h"
 #include <curl/curl.h>
-#ifndef SERVER_ONLY
+#ifndef SERVERONLY
 #include "quakedef.h"
 #endif
 
@@ -14,14 +14,14 @@
 #define MIN_CHECKIN_PERIOD          60
 
 #ifdef _WIN32
-#ifdef SERVER_ONLY
+#ifdef SERVERONLY
 #pragma comment(lib, "libcurld.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "wldap32.lib")
 #endif
 #endif
 
-#ifndef SERVER_ONLY
+#ifndef SERVERONLY
 // Have set this to read-only to stop this accidentally on-purpose being set to another site by someone else's config
 static cvar_t cl_www_address = { "cl_www_address", "https://badplace.eu/", CVAR_ROM };
 #else
@@ -30,18 +30,23 @@ static cvar_t sv_www_authkey = { "sv_www_authkey", "", CVAR_NOTFROMSERVER | CVAR
 static cvar_t sv_www_checkin_period = { "sv_www_checkin_period", "60" };
 
 static void Web_ConstructServerURL(char* url, const char* path, int sizeof_url);
-static void Web_SubmitRequestFormServer(const char* url, struct curl_httppost* first_form_ptr, struct curl_httppost* last_form_ptr, web_response_func_t callback, const char* requestId, void* internal_data);
 #endif
 
 static CURLM* curl_handle = NULL;
 
 static double last_checkin_time;
 
+static void Web_ConstructGenericURL(const char* base_url, char* url, const char* path, int sizeof_url);
+
 #define MAX_RESPONSE_LENGTH    (4096*2)
 
 struct web_request_data_s;
 
 typedef void(*web_response_func_t)(struct web_request_data_s* req, qbool valid);
+
+#ifdef SERVERONLY
+static void Web_SubmitRequestFormServer(const char* url, struct curl_httppost* first_form_ptr, struct curl_httppost* last_form_ptr, web_response_func_t callback, const char* requestId, void* internal_data);
+#endif
 
 typedef struct web_request_data_s {
 	CURL*               handle;
@@ -98,7 +103,7 @@ static void Web_SubmitRequestFormGeneric(const char* url, struct curl_httppost* 
 	curl_easy_setopt(req, CURLOPT_WRITEDATA, data);
 	curl_easy_setopt(req, CURLOPT_WRITEFUNCTION, Web_StandardTokenWrite);
 	if (first_form_ptr) {
-		curl_easy_setopt(req, CURLOPT_POST, 1);
+		curl_easy_setopt(req, CURLOPT_POST, 1L);
 		curl_easy_setopt(req, CURLOPT_HTTPPOST, first_form_ptr);
 	}
 
@@ -156,7 +161,7 @@ static int ProcessWebResponse(web_request_data_t* req, response_field_t* fields,
 	return total_fields;
 }
 
-#ifdef SERVER_ONLY
+#ifdef SERVERONLY
 static int utf8Encode(char in, char* out1, char* out2) {
 	if (in <= 0x7F) {
 		// <= 127 is encoded as single byte, no translation
@@ -197,7 +202,7 @@ static void Auth_GenerateChallengeResponse(web_request_data_t* req, qbool valid)
 		strlcat(buffer, challenge, sizeof(buffer));
 		strlcat(buffer, "\n", sizeof(buffer));
 
-		strlcpy(client->challenge, challenge, sizeof(client->challenge));
+		strlcpy(client->login_challenge, challenge, sizeof(client->login_challenge));
 		SV_ClientPrintf2(client, PRINT_HIGH, "Challenge stored...\n", message);
 
 		ClientReliableWrite_Begin (client, svc_stufftext, 2+strlen(buffer));
@@ -625,7 +630,7 @@ static void Web_PeriodicCheck(qbool server_busy)
 }
 #else
 #define Web_PeriodicCheck(...)
-#endif // SERVER_ONLY
+#endif // SERVERONLY
 
 static void Web_ConstructGenericURL(const char* base_url, char* url, const char* path, int sizeof_url)
 {
@@ -715,18 +720,18 @@ void Central_Shutdown(void)
 void Central_Init(void)
 {
 // TODO: client-only version
-#ifdef SERVER_ONLY
+#ifdef SERVERONLY
 	Cvar_Register(&sv_www_address);
 	Cvar_Register(&sv_www_authkey);
 	Cvar_Register(&sv_www_checkin_period);
 #endif
-#ifndef SERVER_ONLY
+#ifndef SERVERONLY
 	Cvar_Register(&cl_www_address);
 #endif
 
 	curl_handle = curl_multi_init();
 
-#ifdef SERVER_ONLY
+#ifdef SERVERONLY
 	if (curl_handle) {
 		Cmd_AddCommand("sv_web_get", Web_GetRequest_f);
 		Cmd_AddCommand("sv_web_post", Web_PostRequest_f);
@@ -735,7 +740,7 @@ void Central_Init(void)
 #endif
 }
 
-#ifndef SERVER_ONLY
+#ifndef SERVERONLY
 static void Web_ConstructClientURL(char* url, const char* path, int sizeof_url)
 {
 	Web_ConstructGenericURL(cl_www_address.string, url, path, sizeof_url);

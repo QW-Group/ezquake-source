@@ -131,6 +131,7 @@ char *ColorNameToRGBString(char *color_name)
 	return color_name;
 }
 
+#ifndef SERVERONLY
 /// \brief converts "255 255 0 128" to (255, 255, 0, 128) array and saves it to rgb output argument
 /// \param[in] s string in "R G B A" format
 /// \param[out] rgb array of 4 bytes
@@ -180,6 +181,7 @@ byte* StringToRGB(char *s)
 	return rgb;
 }
 
+#endif
 void RGBToString(const byte *rgb, char *s) {
 	// Scale down each value from 0x0 to 0xff to the range of 0x0 to 0xf.
 	byte r = rgb[0] * 0xf / 0xff;
@@ -377,6 +379,7 @@ int HexToInt(char c)
 
 /************************************** Game Mode Utils *********************************/
 
+#ifndef SERVERONLY
 char *get_ktx_mode (void)
 {
 	return Info_ValueForKey(cl.serverinfo, "mode");
@@ -403,6 +406,7 @@ qbool check_ktx_ca_wo (void) // playing clan arena or wipeout
 
 /************************************** File Utils **************************************/
 
+#endif
 int Util_Extend_Filename(char *filename, char **ext) {
 	char extendedname[1024], **s;
 	int i, offset;
@@ -502,6 +506,7 @@ char *Util_Invalid_Filename_Msg(char *s) {
 
 /************************************* Player Utils *************************************/
 
+#ifndef SERVERONLY
 static int Player_Compare (const void *p1, const void *p2) {
 	player_info_t *player1, *player2;
 	int team_comp;
@@ -948,6 +953,7 @@ qbool Util_F_Match (const char *_msg, char *f_request) {
 }
 
 
+#endif
 void Replace_In_String (char *src, int n, char delim, int num_args, ...)
 {
 	va_list ap;
@@ -1207,6 +1213,7 @@ void CharsToWhite(char* start, char* end)
 
 /********************************** TF Utils ****************************************/
 
+#ifndef SERVERONLY
 static char *Utils_TF_ColorToTeam_Failsafe(int color) {
 	int i, j, teamcounts[8], numteamsseen = 0, best = -1;
 	char *teams[MAX_CLIENTS];
@@ -1268,6 +1275,7 @@ int Utils_TF_TeamToColor(char *team) {
 
 /********************************** REGEXP ****************************************/
 
+#endif
 qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 {
 	pcre2_code *re = NULL;

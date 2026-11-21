@@ -557,8 +557,6 @@ static void Draw_Precache(void)
 	}
 }
 
-void Draw_InitConback (void);
-
 void Draw_Shutdown(void)
 {
 	W_FreeWadFile();

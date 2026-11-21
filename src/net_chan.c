@@ -123,6 +123,17 @@ static qbool ShowDrop(netsrc_t src)
 #define PACKET_SENDING 2
 #define PACKET_RECEIVING 3
 
+static double Netchan_PacketLogTime(void)
+{
+#ifdef SERVERONLY
+	return curtime;
+#else
+	// Keep packet diagnostics out of client print triggers.
+	Print_flags[Print_current] |= PR_TR_SKIP;
+	return cls.demopackettime;
+#endif
+}
+
 /*
 ===============
 Netchan_Init
@@ -368,11 +379,8 @@ qbool Netchan_Transmit (netchan_t *chan, int length, byte *data)
 #endif
 
 	if (ShowPacket(chan->sock, PACKET_SENDING)) {
-#ifndef SERVERONLY
-		Print_flags[Print_current] |= PR_TR_SKIP;
-#endif
 		Con_Printf ("%.1f --> s=%i(%i) a=%i(%i) %i%s\n"
-		            , cls.demopackettime * 1000, chan->outgoing_sequence
+		            , Netchan_PacketLogTime() * 1000, chan->outgoing_sequence
 		            , send_reliable
 		            , chan->incoming_sequence
 		            , chan->incoming_reliable_sequence
@@ -417,11 +425,8 @@ qbool Netchan_Process (netchan_t *chan)
 	sequence_ack &= ~(1u << 31);
 
 	if (ShowPacket(chan->sock, PACKET_RECEIVING)) {
-#ifndef SERVERONLY
-		Print_flags[Print_current] |= PR_TR_SKIP;
-#endif
 		Con_Printf ("%.1f <-- s=%i(%i) a=%i(%i) %i%s\n"
-		            , cls.demopackettime * 1000, sequence
+		            , Netchan_PacketLogTime() * 1000, sequence
 		            , reliable_message
 		            , sequence_ack
 		            , reliable_ack

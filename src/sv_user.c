@@ -1592,15 +1592,9 @@ static void Cmd_Download_f(void)
 
 	sv_client->downloadcount = 0;
 
-#ifdef SERVERONLY
-#define CLIENT_DOWNLOAD_RELATIVE_BASE FS_GAME // FIXME: Should we use FS_BASE ???
-#else
-#define CLIENT_DOWNLOAD_RELATIVE_BASE FS_BASE
-#endif
-
-	sv_client->download = FS_OpenVFS(name, "rb", CLIENT_DOWNLOAD_RELATIVE_BASE);
+	sv_client->download = FS_OpenVFS(name, "rb", FS_BASE);
 	if (!sv_client->download && alternative_path[0]) {
-		sv_client->download = FS_OpenVFS(alternative_path, "rb", CLIENT_DOWNLOAD_RELATIVE_BASE);
+		sv_client->download = FS_OpenVFS(alternative_path, "rb", FS_BASE);
 	}
 	if (sv_client->download) {
 		sv_client->downloadsize = VFS_GETLEN(sv_client->download);
@@ -4655,15 +4649,9 @@ void SV_ExecuteClientMessage (client_t *cl)
 			}*/
 			//<-
 
-#ifndef SERVERONLY
 			MSG_ReadDeltaUsercmd (&nullcmd, &oldest, PROTOCOL_VERSION);
 			MSG_ReadDeltaUsercmd (&oldest, &oldcmd, PROTOCOL_VERSION);
 			MSG_ReadDeltaUsercmd (&oldcmd, &newcmd, PROTOCOL_VERSION);
-#else
-			MSG_ReadDeltaUsercmd (&nullcmd, &oldest);
-			MSG_ReadDeltaUsercmd (&oldest, &oldcmd);
-			MSG_ReadDeltaUsercmd (&oldcmd, &newcmd);
-#endif
 
 			if ( cl->state != cs_spawned )
 				break;

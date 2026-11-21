@@ -47,7 +47,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <linux/fs.h>
 #endif
 
+#ifndef SERVERONLY
 #include <SDL.h>
+#endif
 #include <dlfcn.h>
 
 #include "quakedef.h"
@@ -74,10 +76,14 @@ cvar_t sys_fontsdir     = {"sys_fontsdir", "/usr/local/share/fonts/"};
 
 void Sys_Printf (char *fmt, ...)
 {
-#ifdef DEBUG
+#if defined(DEBUG) || defined(SERVERONLY)
 	va_list argptr;
+#ifdef SERVERONLY
+	char text[4096];
+#else
 	char text[2048];
 	unsigned char *p;
+#endif
 
 	va_start (argptr,fmt);
 	vsnprintf (text, sizeof(text), fmt, argptr);
@@ -86,49 +92,87 @@ void Sys_Printf (char *fmt, ...)
 	if (sys_nostdout.value)
 		return;
 
+#ifdef SERVERONLY
+	fputs(Q_normalizetext(text), stdout);
+	fflush(stdout);
+#else
 	for (p = (unsigned char *) text; *p; p++)
 		if ((*p > 128 || *p < 32) && *p != 10 && *p != 13 && *p != 9)
 			printf("[%02x]", *p);
 		else
 			putc(*p, stdout);
+#endif
 #else
 	return;
 #endif
 }
 
+#ifdef SERVERONLY
+static int server_stdin_flags = -1;
+
+static void Sys_RestoreStdin(void)
+{
+	if (server_stdin_flags != -1) {
+		fcntl(STDIN_FILENO, F_SETFL, server_stdin_flags);
+	}
+}
+#endif
+
 void Sys_Quit(void)
 {
+#ifdef SERVERONLY
+	NET_Shutdown();
+	Sys_RestoreStdin();
+#else
 	fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);
+#endif
 	exit(0);
 }
 
 void Sys_Init(void)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) && !defined(SERVERONLY)
 	extern void init_macos_extras(void);
 	init_macos_extras();
 #endif
 	Cvar_Register(&sys_highpriority);
+#ifndef SERVERONLY
 	Cvar_Register(&sys_fontsdir);
+#endif
 }
 
 void Sys_Error(char *error, ...)
 {
+#ifdef SERVERONLY
+	static qbool shutting_down;
+#else
 	extern FILE *qconsole_log;
+#endif
 	va_list argptr;
 	char string[1024];
 
-	fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);	//change stdin to non blocking
+#ifdef SERVERONLY
+	Sys_RestoreStdin();
+#else
+	fcntl (0, F_SETFL, fcntl (0, F_GETFL, 0) & ~O_NDELAY);
+#endif
 
 	va_start (argptr, error);
 	vsnprintf (string, sizeof(string), error, argptr);
 	va_end (argptr);
 	fprintf(stderr, "Error: %s\n", string);
+#ifdef SERVERONLY
+	if (!shutting_down) {
+		shutting_down = true;
+		SV_Shutdown(string);
+	}
+#else
 	if (qconsole_log)
 		fprintf(qconsole_log, "Error: %s\n", string);
 
 	Host_Shutdown ();
 	SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", string, NULL);
+#endif
 	exit(1);
 }
 
@@ -347,6 +391,102 @@ double Sys_DoubleTime(void)
 }
 #endif
 
+#ifdef SERVERONLY
+static volatile sig_atomic_t server_done;
+static char **server_argv;
+
+static void Sys_StopServer(int signal_number)
+{
+	(void)signal_number;
+	server_done = 1;
+}
+
+char *Sys_ConsoleInput(void)
+{
+	static char line[1024];
+	static size_t length;
+	static qbool too_long;
+	char ch;
+	ssize_t count;
+
+	while (stdin_ready) {
+		count = read(STDIN_FILENO, &ch, 1);
+		if (count != 1) {
+			stdin_ready = false;
+			if (count == 0) {
+				do_stdin = 0;
+				if (length && !too_long) {
+					line[length] = '\0';
+					length = 0;
+					return line;
+				}
+			}
+			return NULL;
+		}
+		if (ch == '\n') {
+			line[length] = '\0';
+			length = 0;
+			if (too_long) {
+				too_long = false;
+				Com_Printf("Console command is too long.\n");
+				continue;
+			}
+			return line;
+		}
+		if (ch != '\r') {
+			if (length < sizeof(line) - 1) {
+				line[length++] = ch;
+			}
+			else {
+				too_long = true;
+			}
+		}
+	}
+	return NULL;
+}
+
+int main(int argc, char **argv)
+{
+	extern cvar_t sys_select_timeout;
+	double oldtime, newtime, elapsed;
+	int flags;
+
+	server_argv = argv;
+	COM_InitArgv(argc, argv);
+	do_stdin = !COM_CheckParm(cmdline_param_client_nostdinput);
+	if (do_stdin) {
+		flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+		if (flags == -1 || fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK) == -1) {
+			do_stdin = 0;
+		}
+		else {
+			server_stdin_flags = flags;
+		}
+	}
+	if (COM_CheckParm(cmdline_param_client_nostdoutput)) {
+		sys_nostdout.value = 1;
+	}
+
+	signal(SIGINT, Sys_StopServer);
+	signal(SIGTERM, Sys_StopServer);
+	signal(SIGPIPE, SIG_IGN);
+
+	Host_Init(argc, argv, 64 * 1024 * 1024);
+	oldtime = Sys_DoubleTime();
+	while (!server_done) {
+		stdin_ready = NET_Sleep((int)sys_select_timeout.value / 1000, do_stdin);
+		newtime = Sys_DoubleTime();
+		elapsed = newtime - oldtime;
+		oldtime = newtime;
+		curtime += elapsed;
+		SV_Frame(elapsed);
+	}
+
+	SV_Shutdown("Server quit\n");
+	Sys_Quit();
+	return 0;
+}
+#else
 int main(int argc, char **argv)
 {
 	double time, oldtime, newtime;
@@ -390,6 +530,7 @@ int main(int argc, char **argv)
 		Host_Frame(time);
 	}
 }
+#endif
 
 void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length) {
 	int r;
@@ -605,6 +746,7 @@ int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void 
 }
 
 /*************************** INTER PROCESS CALLS *****************************/
+#ifndef SERVERONLY
 #define PIPE_BUFFERSIZE		1024
 
 static int fifo_pipe = -1;
@@ -679,6 +821,7 @@ unsigned int Sys_SendIPC(const char *buf)
 }
 
 
+#endif
 /********************************** SEMAPHORES *******************************/
 /* Sys_Sem*() returns 0 on success; on error, -1 is returned */
 int Sys_SemInit(sem_t *sem, int value, int max_value) 
@@ -725,6 +868,29 @@ int Sys_OpenStreamSocket(int family, int protocol)
 	return sock;
 #endif
 }
+
+#ifdef SERVERONLY
+void Sys_Restart(void)
+{
+	int fd, error;
+	int maxfd = getdtablesize();
+
+	Sys_RestoreStdin();
+#ifndef SOCK_CLOEXEC
+	pthread_mutex_lock(&sys_spawn_mutex);
+#endif
+	// Pack files and QTV connections must not carry over to the new process.
+	for (fd = STDERR_FILENO + 1; fd < maxfd; ++fd) {
+		fcntl(fd, F_SETFD, FD_CLOEXEC);
+	}
+	execvp(server_argv[0], server_argv);
+	error = errno;
+#ifndef SOCK_CLOEXEC
+	pthread_mutex_unlock(&sys_spawn_mutex);
+#endif
+	Sys_Error("Could not restart: %s", strerror(error));
+}
+#endif
 
 int Sys_RunCommand(const char *command)
 {
