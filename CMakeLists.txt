@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(ezquake C)
-
 option(EZQUAKE_SERVER_ONLY "Build the standalone dedicated server" OFF)
+if(EZQUAKE_SERVER_ONLY)
+    set(VCPKG_MANIFEST_NO_DEFAULT_FEATURES ON)
+endif()
+
+project(ezquake C)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT EZQUAKE_SERVER_ONLY)
     enable_language(OBJC)
@@ -249,16 +252,26 @@ if(USE_SYSTEM_LIBS AND HAVE_MINIZIP)
 endif()
 
 if(EZQUAKE_SERVER_ONLY)
-    if(NOT CMAKE_SYSTEM_NAME MATCHES "^(Linux|Darwin)$")
-        message(FATAL_ERROR "The standalone server currently supports Linux and macOS.")
+    if(WIN32)
+        set(server_system
+                ${SOURCE_DIR}/localtime_win.c
+                ${SOURCE_DIR}/sv_sys_win.c
+                ${SOURCE_DIR}/sys_win_shared.c
+        )
+    elseif(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Darwin)$")
+        set(server_system
+                ${SOURCE_DIR}/localtime_posix.c
+                ${SOURCE_DIR}/sys_posix.c
+        )
+    else()
+        message(FATAL_ERROR "The standalone server supports Linux, macOS and Windows.")
     endif()
 
     add_executable(ezquake-server
             ${common}
             ${server}
             ${SOURCE_DIR}/central.c
-            ${SOURCE_DIR}/localtime_posix.c
-            ${SOURCE_DIR}/sys_posix.c
+            ${server_system}
             ${SOURCE_DIR}/utils.c
     )
     target_include_directories(ezquake-server PRIVATE
@@ -273,8 +286,9 @@ if(EZQUAKE_SERVER_ONLY)
     target_link_libraries(ezquake-server PRIVATE
             git_version ${CMAKE_DL_LIBS}
             Dep::PCRE2 Dep::cURL Dep::zlib Dep::MiniZip Threads::Threads
+            $<$<PLATFORM_ID:Windows>:ws2_32;shell32>
     )
-    if(MATH)
+    if(MATH AND NOT MSVC)
         target_link_libraries(ezquake-server PRIVATE ${MATH})
     endif()
     return()
@@ -805,7 +819,7 @@ source_group(TREE ${SOURCE_DIR} PREFIX "Header Files/client" FILES ${client_head
 
 set(sys_headers ${SOURCE_DIR}/localtime.h)
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    set(sys ${SOURCE_DIR}/localtime_win.c)
+    set(sys ${SOURCE_DIR}/localtime_win.c ${SOURCE_DIR}/sys_win_shared.c)
 else()
     set(sys
             ${SOURCE_DIR}/localtime_posix.c

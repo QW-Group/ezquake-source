@@ -51,7 +51,9 @@ void *Sys_DLProc(DL_t dl, const char *name);
 
 #include "localtime.h"
 
-#ifdef SERVERONLY
+#if defined(SERVERONLY) && defined(_WIN32)
+typedef CRITICAL_SECTION sys_mutex_t;
+#elif defined(SERVERONLY)
 #include <pthread.h>
 typedef pthread_mutex_t sys_mutex_t;
 #else

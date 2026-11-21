@@ -72,6 +72,19 @@ build-server-only/Release/ezquake-server -basedir /path/to/quake -game ktx -prog
 Server commands can be entered on standard input. Use `quit` or send SIGTERM
 to stop the server.
 
+On Windows, run the server presets from an x64 Visual Studio Developer
+Command Prompt. Install the Desktop development with C++ workload, CMake
+3.25 or newer, and Ninja. The preset builds the server dependencies with
+vcpkg.
+
+```bat
+cmake --preset server-only-msvc-x64
+cmake --build --preset server-only-msvc-x64-release --parallel
+build-server-only-msvc-x64\Release\ezquake-server.exe -basedir C:/quake -game ktx -progtype 2 +map dm4
+```
+
+Use `quit` or Ctrl+C to stop the Windows server.
+
 ## CMake Presets
 
 [CMake presets][cmake-presets] can be seen as aliases that associates a number of build

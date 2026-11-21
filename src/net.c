@@ -1188,7 +1188,7 @@ int TCP_OpenListenSocket (unsigned short int port)
 		return INVALID_SOCKET;
 	}
 
-#ifdef SERVERONLY
+#if defined(SERVERONLY) && !defined(_WIN32)
 	{
 		int reuse = 1;
 

@@ -229,6 +229,14 @@
             }
         },
         {
+            "name": "server-only-msvc-x64",
+            "description": "Configure the standalone dedicated server with MSVC and vcpkg",
+            "inherits": "msvc-x64",
+            "cacheVariables": {
+                "EZQUAKE_SERVER_ONLY": "ON"
+            }
+        },
+        {
             "name": "linux-asan",
             "description": "Debug build with AddressSanitizer and UndefinedBehaviorSanitizer, using system libraries",
             "inherits": "dynamic",
@@ -499,6 +507,12 @@
             "name": "server-only-release",
             "configurePreset": "server-only",
             "displayName": "Build the standalone dedicated server",
+            "configuration": "Release"
+        },
+        {
+            "name": "server-only-msvc-x64-release",
+            "configurePreset": "server-only-msvc-x64",
+            "displayName": "Build the standalone dedicated server with MSVC",
             "configuration": "Release"
         },
         {

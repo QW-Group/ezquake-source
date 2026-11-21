@@ -13,14 +13,6 @@
 #define CHECKIN_PATH                "ServerApi/Checkin"
 #define MIN_CHECKIN_PERIOD          60
 
-#ifdef _WIN32
-#ifdef SERVERONLY
-#pragma comment(lib, "libcurld.lib")
-#pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "wldap32.lib")
-#endif
-#endif
-
 #ifndef SERVERONLY
 // Have set this to read-only to stop this accidentally on-purpose being set to another site by someone else's config
 static cvar_t cl_www_address = { "cl_www_address", "https://badplace.eu/", CVAR_ROM };

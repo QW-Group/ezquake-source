@@ -4006,13 +4006,6 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	if (sv.state == ss_dead)
 		SV_Error ("Couldn't spawn a server");
-
-#if defined (_WIN32) && !defined(_CONSOLE)
-	{
-		void SetWindowText_(char*);
-		SetWindowText_(va(SERVER_NAME ":%d - QuakeWorld server", NET_UDPSVPort()));
-	}
-#endif
 }
 
 #endif // SERVERONLY
