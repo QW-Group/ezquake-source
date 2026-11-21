@@ -51,8 +51,8 @@ and will not have to be rebuilt if only the build directory is removed.
 
 On Linux and macOS, the dedicated server presets use CMake 3.25 or newer,
 Ninja Multi-Config and system libraries. Install the development packages for
-SDL2, PCRE2, libcurl, zlib and minizip. SDL2 provides threads and mutexes.
-The server build skips the client and OpenGL dependencies.
+PCRE2, libcurl, zlib and minizip. Reverse QTV uses pthreads. The server build
+skips the client, SDL2 and OpenGL dependencies.
 
 ```shell
 cmake --preset server-only

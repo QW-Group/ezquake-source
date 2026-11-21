@@ -51,13 +51,26 @@ void *Sys_DLProc(DL_t dl, const char *name);
 
 #include "localtime.h"
 
+#ifdef SERVERONLY
+#include <pthread.h>
+typedef pthread_mutex_t sys_mutex_t;
+#else
 #include <SDL.h>
+typedef SDL_mutex *sys_mutex_t;
+#endif
+
+qbool Sys_MutexInit(sys_mutex_t *mutex);
+void Sys_MutexLock(sys_mutex_t *mutex);
+void Sys_MutexUnlock(sys_mutex_t *mutex);
+qbool Sys_MutexTryLock(sys_mutex_t *mutex);
 
 // create detached thread
 int  Sys_CreateDetachedThread(int (*func)(void *), void *data);
 
 // create thread
+#ifndef SERVERONLY
 SDL_Thread *Sys_CreateThread(int (*func)(void *), void *data);
+#endif
 
 #define MAX_PATH_LENGTH 1024
 

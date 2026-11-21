@@ -392,6 +392,71 @@ double Sys_DoubleTime(void)
 #endif
 
 #ifdef SERVERONLY
+typedef struct {
+	int (*func)(void *);
+	void *data;
+} sys_thread_args_t;
+
+static void *Sys_DetachedThreadMain(void *data)
+{
+	sys_thread_args_t args = *(sys_thread_args_t *)data;
+
+	free(data);
+	args.func(args.data);
+	return NULL;
+}
+
+int Sys_CreateDetachedThread(int (*func)(void *), void *data)
+{
+	pthread_t thread;
+	pthread_attr_t attr;
+	sys_thread_args_t *args;
+	int error;
+
+	if (pthread_attr_init(&attr) != 0) {
+		return -1;
+	}
+	error = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+	if (error != 0) {
+		pthread_attr_destroy(&attr);
+		return -1;
+	}
+	args = malloc(sizeof(*args));
+	if (!args) {
+		pthread_attr_destroy(&attr);
+		return -1;
+	}
+	args->func = func;
+	args->data = data;
+	error = pthread_create(&thread, &attr, Sys_DetachedThreadMain, args);
+	pthread_attr_destroy(&attr);
+	if (error != 0) {
+		free(args);
+		return -1;
+	}
+	return 0;
+}
+
+qbool Sys_MutexInit(sys_mutex_t *mutex)
+{
+	return pthread_mutex_init(mutex, NULL) == 0;
+}
+
+void Sys_MutexLock(sys_mutex_t *mutex)
+{
+	pthread_mutex_lock(mutex);
+}
+
+void Sys_MutexUnlock(sys_mutex_t *mutex)
+{
+	pthread_mutex_unlock(mutex);
+}
+
+qbool Sys_MutexTryLock(sys_mutex_t *mutex)
+{
+	return pthread_mutex_trylock(mutex) == 0;
+}
+
 static volatile sig_atomic_t server_done;
 static char **server_argv;
 

@@ -20,7 +20,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include <SDL.h>
 
-#ifndef SERVERONLY
 cvar_t sys_yieldcpu = {"sys_yieldcpu", "0"};
 cvar_t sys_inactivesound = {"sys_inactivesound", "0", CVAR_ARCHIVE};
 cvar_t sys_inactivesleep = {"sys_inactivesleep", "1"};
@@ -85,7 +84,27 @@ void Sys_CopyToClipboard(const char *text)
 	SDL_SetClipboardText(text);
 }
 
-#endif
+qbool Sys_MutexInit(sys_mutex_t *mutex)
+{
+	*mutex = SDL_CreateMutex();
+	return *mutex != NULL;
+}
+
+void Sys_MutexLock(sys_mutex_t *mutex)
+{
+	SDL_LockMutex(*mutex);
+}
+
+void Sys_MutexUnlock(sys_mutex_t *mutex)
+{
+	SDL_UnlockMutex(*mutex);
+}
+
+qbool Sys_MutexTryLock(sys_mutex_t *mutex)
+{
+	return SDL_TryLockMutex(*mutex) == 0;
+}
+
 int Sys_CreateDetachedThread(int (*func)(void *), void *data)
 {
 	SDL_Thread *thread;

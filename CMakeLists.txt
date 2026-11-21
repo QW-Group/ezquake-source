@@ -236,7 +236,6 @@ find_package(Threads REQUIRED)
 # Args: target name, pkg-config name, vcpkg package name, vcpkg target name, extra args
 check_dependency(MiniZip  "minizip"    "unofficial-minizip" "unofficial::minizip::minizip" REQUIRED)
 check_dependency(PCRE2    "libpcre2-8" "PCRE2"              "pcre2::pcre2-8-static"        REQUIRED)
-check_dependency(SDL2     "sdl2"       "SDL2"               "SDL2::SDL2-static"            REQUIRED)
 check_dependency(cURL     "libcurl"    "CURL"               "CURL::libcurl"                REQUIRED CONFIG)
 check_dependency(zlib     "zlib"       "ZLIB"               "ZLIB::ZLIB"                   REQUIRED)
 
@@ -260,7 +259,6 @@ if(EZQUAKE_SERVER_ONLY)
             ${SOURCE_DIR}/central.c
             ${SOURCE_DIR}/localtime_posix.c
             ${SOURCE_DIR}/sys_posix.c
-            ${SOURCE_DIR}/sys_sdl2.c
             ${SOURCE_DIR}/utils.c
     )
     target_include_directories(ezquake-server PRIVATE
@@ -274,7 +272,7 @@ if(EZQUAKE_SERVER_ONLY)
     )
     target_link_libraries(ezquake-server PRIVATE
             git_version ${CMAKE_DL_LIBS}
-            Dep::SDL2 Dep::PCRE2 Dep::cURL Dep::zlib Dep::MiniZip Threads::Threads
+            Dep::PCRE2 Dep::cURL Dep::zlib Dep::MiniZip Threads::Threads
     )
     if(MATH)
         target_link_libraries(ezquake-server PRIVATE ${MATH})
@@ -293,6 +291,7 @@ check_dependency(FreeType "freetype2"  "Freetype"           "Freetype::Freetype"
 check_dependency(JPEG     "libjpeg"    "JPEG"               "JPEG::JPEG"                   REQUIRED)
 check_dependency(Jansson  "jansson"    "jansson"            "jansson::jansson"             REQUIRED)
 check_dependency(PNG      "libpng"     "PNG"                "PNG::PNG"                     REQUIRED)
+check_dependency(SDL2     "sdl2"       "SDL2"               "SDL2::SDL2-static"            REQUIRED)
 check_dependency(SndFile  "sndfile"    "SndFile"            "SndFile::sndfile"             REQUIRED)
 check_dependency(Speex    "speex"      "Speex"              "SPEEX::SPEEX"                 OPTIONAL)
 check_dependency(SpeexDSP "speexdsp"   "SpeexDSP"           "SPEEX::SPEEXDSP"              OPTIONAL)
