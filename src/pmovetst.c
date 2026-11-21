@@ -223,7 +223,7 @@ trace_t PM_PlayerTrace (vec3_t start, vec3_t end)
 PM_TraceLine
 ================
 */
-trace_t PM_TraceLine (vec3_t start, vec3_t end)
+static trace_t PM_TraceLineEx(vec3_t start, vec3_t end, qbool ignore_transparent)
 {
 	int i;
 	hull_t *hull;
@@ -241,7 +241,8 @@ trace_t PM_TraceLine (vec3_t start, vec3_t end)
 		pe = &pmove.physents[i];
 
 #if defined(FTE_PEXT_TRANS)
-		if (cls.fteprotocolextensions & FTE_PEXT_TRANS && pe->is_transparent) {
+		// Only brush models receive an alpha value when the physent list is rebuilt.
+		if (ignore_transparent && pe->model && (cls.fteprotocolextensions & FTE_PEXT_TRANS) && pe->is_transparent) {
 			continue;
 		}
 #endif
@@ -276,4 +277,14 @@ trace_t PM_TraceLine (vec3_t start, vec3_t end)
 	}
 
 	return total;
+}
+
+trace_t PM_TraceLine(vec3_t start, vec3_t end)
+{
+	return PM_TraceLineEx(start, end, false);
+}
+
+trace_t PM_TraceLineForVisibility(vec3_t start, vec3_t end)
+{
+	return PM_TraceLineEx(start, end, true);
 }
