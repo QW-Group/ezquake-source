@@ -32,12 +32,14 @@ void FS_InitModuleFS (void);
 // Quake File System addons
 // original common FS functions are declared in common.h
 
+#ifndef SERVERONLY
 // QW262 -->
 #define UserdirSet (userdirfile[0] != '\0')
 extern	char userdirfile[MAX_OSPATH];
 extern	char com_userdir[MAX_OSPATH];
 void FS_SetUserDirectory (char *dir, char *type);
 // <-- QW262
+#endif
 
 // ====================================================================
 // Virtual File System

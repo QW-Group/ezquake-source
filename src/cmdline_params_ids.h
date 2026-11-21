@@ -47,7 +47,9 @@ CMDLINE_DEF(client_no_amd_fix, "-r-no-amd-fix"),
 
 CMDLINE_DEF(filesystem_basedir, "-basedir"),
 CMDLINE_DEF(filesystem_nohome, "-nohome"),
+#ifndef SERVERONLY
 CMDLINE_DEF(filesystem_userdir, "-userdir"),
+#endif
 CMDLINE_DEF(filesystem_game, "-game"),
 CMDLINE_DEF(filesystem_data, "-data"),
 
