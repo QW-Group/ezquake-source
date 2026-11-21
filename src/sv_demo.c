@@ -66,22 +66,30 @@ cvar_t	extralogname		= {"extralogname",		"unset"}; // no sv_ prefix? WTF!
 
 mvddest_t			*singledest;
 
-// only one .. is allowed (security)
 static void sv_demoDir_OnChange(cvar_t *cvar, char *value, qbool *cancel)
 {
-	if (cvar == &sv_demoDir && !value[0]) {
-		*cancel = true;
-		return;
+	const char *component = value;
+	size_t length;
+
+	if ((cvar == &sv_demoDir && !*value) || *value == '/' || *value == '\\' || strchr(value, ':')) {
+		goto invalid;
 	}
 
-	if (value[0] == '.' && value[1] == '.') {
-		value += 2;
+	while (*component) {
+		length = strcspn(component, "/\\");
+		if (length == 2 && component[0] == '.' && component[1] == '.') {
+			goto invalid;
+		}
+		component += length;
+		if (*component) {
+			++component;
+		}
 	}
+	return;
 
-	if (strstr(value, "/..")) {
-		*cancel = true;
-		return;
-	}
+invalid:
+	*cancel = true;
+	Con_Printf("%s requires a relative path inside the game directory.\n", cvar->name);
 }
 
 // { MVD writing functions, just wrappers
