@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "quakedef.h"
 #include "gl_model.h"
+#include "pmove.h"
 #include "vx_stuff.h"
 #include "glm_texture_arrays.h"
 #include "r_sprite3d.h"
@@ -430,7 +431,8 @@ static void R_CoronasNewImpl(coronatype_t type, vec3_t origin, int entity_id)
 		c->growth = -60;
 	}
 	else if (type == C_GUNFLASH) {
-		vec3_t normal, impact, vec;
+		vec3_t vec;
+		trace_t trace;
 		c->color[0] = c->color[1] = c->color[2] = 1;
 		c->texture = CORONATEX_GUNFLASH;
 		c->scale = 50;
@@ -442,8 +444,8 @@ static void R_CoronasNewImpl(coronatype_t type, vec3_t origin, int entity_id)
 		//I want to move it out of the wall so we can see it
 		//Mainly for the hwguy
 		//Sigh, if only they knew "omg see gunshots thru wall hax"
-		CL_TraceLine(r_refdef.vieworg, origin, impact, normal);
-		if (!VectorCompare(origin, impact)) {
+		trace = PM_TraceLine(r_refdef.vieworg, origin);
+		if (!VectorCompare(origin, trace.endpos)) {
 			VectorSubtract(r_refdef.vieworg, origin, vec);
 			VectorNormalize(vec);
 			VectorMA(origin, 2, vec, c->origin);

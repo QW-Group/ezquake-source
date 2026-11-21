@@ -20,7 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 float CL_TraceLine (vec3_t start, vec3_t end, vec3_t impact, vec3_t normal)
 {
-	trace_t trace = PM_TraceLine (start, end); /* PM_TraceLine hits bmodels and players */
+	// Keep glass transparent for camera and corona visibility.
+	trace_t trace = PM_TraceLineForVisibility(start, end);
 	VectorCopy (trace.endpos, impact);
 	if (normal)
 		VectorCopy (trace.plane.normal, normal);

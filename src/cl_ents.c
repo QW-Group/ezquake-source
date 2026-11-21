@@ -2943,7 +2943,7 @@ static void CL_LinkPlayers(void)
 		{
 			VectorCopy(cent->lerp_origin, end);
 			end[2] += 12;
-			trace = PM_TraceLine(r_refdef.vieworg, end);
+			trace = PM_TraceLineForVisibility(r_refdef.vieworg, end);
 
 			if (trace.fraction != 1) {
 				VectorSubtract(cent->lerp_origin, r_refdef.vieworg, diff);

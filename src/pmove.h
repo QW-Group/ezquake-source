@@ -162,6 +162,7 @@ void PM_CategorizePosition (void);
 qbool PM_TestPlayerPosition (vec3_t point);
 trace_t PM_PlayerTrace (vec3_t start, vec3_t end);
 trace_t PM_TraceLine (vec3_t start, vec3_t end);
+trace_t PM_TraceLineForVisibility(vec3_t start, vec3_t end);
 
 #define MIN_STEP_NORMAL 0.7 // roughly 45 degrees
 
