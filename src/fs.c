@@ -64,8 +64,10 @@ char	fs_netpath[MAX_OSPATH];
 char	com_gamedirfile[MAX_QPATH]; // qw tf ctf and etc. In other words single dir name without path
 char	com_gamedir[MAX_OSPATH];    // c:/quake/qw
 char	com_basedir[MAX_OSPATH];	// c:/quake
-char	com_homedir[MAX_PATH];		// something really long C:/Documents and Settings/qqshka
-#ifndef SERVERONLY
+#ifdef SERVERONLY
+static const char com_homedir[] = "";
+#else
+char	com_homedir[MAX_PATH];		// /home/ivan/.ezquake
 char	userdirfile[MAX_OSPATH] = {0};
 char	com_userdir[MAX_OSPATH] = {0};
 int		userdir_type = -1;
@@ -94,7 +96,9 @@ int fs_hash_dups;
 int fs_hash_files;
 
 cvar_t fs_cache = {"fs_cache", "1"};
+#ifndef SERVERONLY
 static cvar_t fs_savegame_home = { "fs_savegame_home", "1" };
+#endif
 
 static void FS_CreatePathRelative(const char *pname, int relativeto);
 void FS_ForceToPure(char *str, const char *crcs, int seed);
@@ -688,9 +692,9 @@ void FS_ShutDown( void ) {
 	com_gamedirfile[0]	= 0;
 	com_gamedir[0]		= 0;
 	com_basedir[0]		= 0;
-	com_homedir[0]		= 0;
 
 #ifndef SERVERONLY
+	com_homedir[0]		= 0;
 	userdirfile[0]		= 0;
 	com_userdir[0]		= 0;
 	userdir_type		= -1;
@@ -763,6 +767,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	if (i >= 0 && com_basedir[i] == '/')
 		com_basedir[i] = 0;
 
+#ifndef SERVERONLY
 	strlcpy(com_homedir, Sys_HomeDirectory(), sizeof(com_homedir));
 
 	if (COM_CheckParm(cmdline_param_filesystem_nohome)) {
@@ -778,6 +783,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 #endif
 		Com_Printf("Using home directory \"%s\"\n", com_homedir);
 	}
+#endif
 
 	// start up with id1 by default
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "id1");
@@ -2020,7 +2026,9 @@ void FS_InitModuleFS (void)
 
 	Cvar_SetCurrentGroup(CVAR_GROUP_FILESYSTEM);
 	Cvar_Register(&fs_cache);
+#ifndef SERVERONLY
 	Cvar_Register(&fs_savegame_home);
+#endif
 	Cvar_ResetCurrentGroup();
 
 	Com_Printf("Initialising quake VFS filesystem\n");
@@ -3339,10 +3347,9 @@ void FS_Shutdown(void)
 	}
 }
 
+#ifndef SERVERONLY
 void FS_SaveGameDirectory(char* buffer, int buffer_size)
 {
-	extern cvar_t fs_savegame_home;
-
 	if (fs_savegame_home.integer) {
 		snprintf(buffer, buffer_size, "%s/%s/save/", com_homedir, com_gamedirfile);
 	}
@@ -3350,3 +3357,4 @@ void FS_SaveGameDirectory(char* buffer, int buffer_size)
 		snprintf(buffer, buffer_size, "%s/save/", com_gamedir);
 	}
 }
+#endif

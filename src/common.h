@@ -239,7 +239,9 @@ struct cache_user_s;
 extern char	com_gamedir[MAX_OSPATH];
 extern char	com_basedir[MAX_OSPATH];
 extern char	com_gamedirfile[MAX_QPATH];
+#ifndef SERVERONLY
 extern char com_homedir[MAX_PATH];
+#endif
 
 extern qbool file_from_gamedir;	// set if file came from a gamedir (and gamedir wasn't id1/qw)
 

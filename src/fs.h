@@ -198,6 +198,8 @@ int FS_ZipGetNextFile (unzFile zip_file, sys_dirent *ent);
 
 qbool FS_UnsafeFilename(const char* name);
 qbool FS_HasAmbiguousWindowsPath(const char* name);
+#ifndef SERVERONLY
 void FS_SaveGameDirectory(char* buffer, int buffer_size);
+#endif
 
 #endif // __FS_H__
