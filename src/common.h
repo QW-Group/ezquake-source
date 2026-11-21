@@ -251,7 +251,7 @@ int FS_FOpenPathFile (const char *filename, FILE **file);
 byte *FS_LoadTempFile (char *path, int *len);
 byte *FS_LoadHunkFile (char *path, int *len);
 byte *FS_LoadHeapFile (const char *path, int *len);
-qbool FS_WriteFile(const char *filename, const void *data, int len); //The filename will be prefixed by com_basedir
+qbool FS_WriteFile(const char *filename, const void *data, int len); // Write a loose file through FS_GAME_OS.
 qbool FS_WriteFile_2(const char *filename, const void *data, int len); //The filename used as is
 void FS_CreatePath (char *path);
 int FS_FCreateFile (char *filename, FILE **file, char *path, char *mode);

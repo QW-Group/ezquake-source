@@ -61,14 +61,12 @@ typedef struct vfsfile_s {
 
 // VFS-FIXME: D-Kure Clean up this structure
 typedef enum {
-	FS_NONE_OS, // file name used as is, opened with OS functions (no paks)
-	FS_GAME_OS, // file used as com_basedir/filename, opened with OS functions 
-				// (no paks)
-	FS_BASE,	// file is relative to the com_basedir/com_homedir
-	FS_HOME,
-	FS_GAME,    // search mounted game directories and packs
-	FS_ANY      // file searched on quake file system even in paks, u may use
-				// only "rb" mode for file since u can't write to pak
+	FS_NONE_OS, // Open a loose file under home if enabled, then try the path as given.
+	FS_GAME_OS, // Open a loose file in userdir, home/<gamedir>, or basedir/<gamedir>.
+	FS_BASE,    // Open a loose file relative to basedir.
+	FS_HOME,    // Open a loose file relative to the ezQuake home directory if enabled.
+	FS_GAME,    // Read from mounted directories and packs. Writes use FS_GAME_OS.
+	FS_ANY      // Try FS_NONE_OS, FS_HOME, FS_GAME_OS, then FS_GAME.
 } relativeto_t;
 
 // mostly analogs for stdio functions

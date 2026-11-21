@@ -211,7 +211,6 @@ int FS_FCreateFile (char *filename, FILE **file, char *path, char *mode)
 	return 1;
 }
 
-//The filename will be prefixed by com_basedir
 static qbool FS_WriteFileRelative(const char *filename, const void *data, int len, int relativeto)
 {
 	vfsfile_t *f;
@@ -236,7 +235,7 @@ static qbool FS_WriteFileRelative(const char *filename, const void *data, int le
 ============
 FS_WriteFile
 
-The filename will be prefixed by the current game directory
+Write a loose file using the game directory paths.
 ============
 */
 qbool FS_WriteFile(const char *filename, const void *data, int len)
@@ -338,12 +337,11 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 	char base[32];
 	int len;
 
-	// Look for it in the filesystem or pack files.
 	//blanket-bans - Avoid combination of / & \ for directories
     if (Sys_PathProtection(path)) 
 		return NULL;
 
-	// VFS-FIXME: This only checks the pak files, not the base dir's
+	// Search mounted directories and packs before trying the fallback paths.
     FS_FLocateFile(path, FSLFRT_LENGTH, &loc);
 	if (loc.search) {
 		f = loc.search->funcs->OpenVFS(loc.search->handle, &loc, "rb");
@@ -1000,11 +998,8 @@ qbool FS_FormatOSPath(char *out, size_t size, const char *format, ...)
 /* ================
  * FS_OpenVFS
  * ================
- * This should be how all files are opened, will either give a valid vfsfile_t
- * or NULL. We first check the home directory for the file first, if not found 
- * we try the basedir.
+ * Open a file using the lookup rules for relativeto. Return NULL on failure.
  */
-// VFS-XXX: This is very similar to FS_OpenVFS in fs.c
 // VFS-FIXME: Clean up this function to reduce the relativeto options 
 vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 {
@@ -1092,7 +1087,13 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 		return VFSOS_Open(fullname, mode);
 
 	case FS_GAME:
-		break;
+		if (mode[0] != 'r') {
+			return FS_OpenVFS(filename, mode, FS_GAME_OS);
+		}
+		if (!FS_FLocateFile(filename, FSLFRT_IFFOUND, &loc)) {
+			return NULL;
+		}
+		return loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode);
 
 	case FS_ANY:
 		vfs = FS_OpenVFS(filename, mode, FS_NONE_OS);
@@ -1111,21 +1112,8 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 
 	default:
 		Sys_Error("FS_OpenVFS: Bad relative path (%i)", relativeto);
-		break;
+		return NULL;
 	}
-
-	FS_FLocateFile(filename, FSLFRT_IFFOUND, &loc);
-
-	if (loc.search)
-	{
-		return loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode);
-		//return VFS_Filter(filename, loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode));
-	}
-
-	//if we're meant to be writing, best write to it.
-	if ((strchr(mode, 'w') || strchr(mode, 'a')) && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename))
-		return VFSOS_Open(fullname, mode);
-	return NULL;
 }
 
 
