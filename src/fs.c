@@ -1038,21 +1038,20 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 		//sss: check userdir first
 		if (*com_userdir && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", com_userdir, filename)) {
 			vfs = VFSOS_Open (fullname, mode);
-			if (vfs) {
-				return vfs;
-			}
 		}
 
-		if (*com_homedir && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename)) {
+		if (!vfs && *com_homedir && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename)) {
 			vfs = VFSOS_Open(fullname, mode);
-			if (vfs) {
-				return vfs;
-			}
 		}
 
-		if (!FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename))
-			return NULL;
-		return VFSOS_Open(fullname, mode);
+		if (!vfs && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename)) {
+			vfs = VFSOS_Open(fullname, mode);
+		}
+		if (vfs && mode[0] != 'r') {
+			// Include newly created files in the next game search.
+			filesystemchanged = true;
+		}
+		return vfs;
 
 /* VFS-XXX: Removed as we don't really use this
  *	case FS_SKINS:
@@ -1092,7 +1091,7 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 			return NULL;
 		return VFSOS_Open(fullname, mode);
 
-	case FS_PAK:
+	case FS_GAME:
 		break;
 
 	case FS_ANY:
@@ -1108,7 +1107,7 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 		if (vfs)
 			return vfs;
 
-		return FS_OpenVFS(filename, mode, FS_PAK);
+		return FS_OpenVFS(filename, mode, FS_GAME);
 
 	default:
 		Sys_Error("FS_OpenVFS: Bad relative path (%i)", relativeto);

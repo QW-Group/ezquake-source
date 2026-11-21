@@ -1675,7 +1675,6 @@ pr2_fopen_files_t pr2_fopen_files[MAX_PR2_FILES];
 int pr2_num_open_files = 0;
 
 char* cmodes[]={"rb","r","wb","w","ab","a"};
-// FIXME: read from paks
 int PF2_FS_OpenFile(char *name, fileHandle_t *handle, fsMode_t fmode)
 {
 	int i, ret = -1;
@@ -1704,7 +1703,7 @@ int PF2_FS_OpenFile(char *name, fileHandle_t *handle, fsMode_t fmode)
 	{
 	case FS_READ_BIN:
 	case FS_READ_TXT:
-		pr2_fopen_files[i].handle = FS_OpenVFS(name, cmodes[fmode], FS_ANY);
+		pr2_fopen_files[i].handle = FS_OpenVFS(name, cmodes[fmode], FS_GAME);
 
 		if(!pr2_fopen_files[i].handle)
 		{

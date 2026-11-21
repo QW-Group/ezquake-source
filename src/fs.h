@@ -66,7 +66,7 @@ typedef enum {
 				// (no paks)
 	FS_BASE,	// file is relative to the com_basedir/com_homedir
 	FS_HOME,
-	FS_PAK,
+	FS_GAME,    // search mounted game directories and packs
 	FS_ANY      // file searched on quake file system even in paks, u may use
 				// only "rb" mode for file since u can't write to pak
 } relativeto_t;
