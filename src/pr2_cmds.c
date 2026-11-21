@@ -1719,8 +1719,6 @@ int PF2_FS_OpenFile(char *name, fileHandle_t *handle, fsMode_t fmode)
 	case FS_WRITE_TXT:
 	case FS_APPEND_BIN:
 	case FS_APPEND_TXT:
-		// well, perhaps we we should create path...
-		//		FS_CreatePathRelative(name, FS_GAME_OS);
 		pr2_fopen_files[i].handle = FS_OpenVFS(name, cmodes[fmode], FS_GAME_OS);
 		if ( !pr2_fopen_files[i].handle )
 		{

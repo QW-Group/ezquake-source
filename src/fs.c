@@ -269,14 +269,11 @@ FILE *FS_WriteFileOpen (char *filename)	//like fopen, but based around quake's p
 }
 #endif
 
-//Only used for CopyFile and download
-
-
 /*
 ============
 FS_CreatePath
 
-Only used for CopyFile and download
+Create the parent directories for a file path.
 ============
 */
 void FS_CreatePath(char *path)
@@ -987,6 +984,53 @@ qbool VFS_COPYPROTECTED(struct vfsfile_s *vf) {
 	return vf->copyprotected;
 }
 
+static vfsfile_t *FS_OpenGameOSPath(const char *root, const char *gamedir, const char *filename, char *mode, qbool create_path)
+{
+	char fullname[MAX_OSPATH];
+	qbool fits;
+
+	if (gamedir) {
+		fits = FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", root, gamedir, filename);
+	} else {
+		fits = FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", root, filename);
+	}
+	if (!fits) {
+		return NULL;
+	}
+	if (create_path) {
+		FS_CreatePath(fullname);
+	}
+	return VFSOS_Open(fullname, mode);
+}
+
+static vfsfile_t *FS_OpenGameOS(const char *filename, char *mode)
+{
+	qbool create_path;
+	vfsfile_t *vfs;
+
+	// Retry writes with directory creation only after every normal open fails.
+	for (create_path = false; ; create_path = true) {
+#ifndef SERVERONLY
+		if (*com_userdir) {
+			vfs = FS_OpenGameOSPath(com_userdir, NULL, filename, mode, create_path);
+			if (vfs) {
+				return vfs;
+			}
+		}
+#endif
+		if (*com_homedir) {
+			vfs = FS_OpenGameOSPath(com_homedir, com_gamedirfile, filename, mode, create_path);
+			if (vfs) {
+				return vfs;
+			}
+		}
+		vfs = FS_OpenGameOSPath(com_basedir, com_gamedirfile, filename, mode, create_path);
+		if (vfs || create_path || mode[0] == 'r' || FS_UnsafeFilename(filename)) {
+			return vfs;
+		}
+	}
+}
+
 //
 // some general function to open VFS file, except VFSTCP
 //
@@ -1044,20 +1088,7 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 		return VFSOS_Open(fullname, mode);
 
 	case FS_GAME_OS:	//OS access only, no paks
-#ifndef SERVERONLY
-		//sss: check userdir first
-		if (*com_userdir && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", com_userdir, filename)) {
-			vfs = VFSOS_Open (fullname, mode);
-		}
-#endif
-
-		if (!vfs && *com_homedir && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename)) {
-			vfs = VFSOS_Open(fullname, mode);
-		}
-
-		if (!vfs && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename)) {
-			vfs = VFSOS_Open(fullname, mode);
-		}
+		vfs = FS_OpenGameOS(filename, mode);
 		if (vfs && mode[0] != 'r') {
 			// Include newly created files in the next game search.
 			filesystemchanged = true;
