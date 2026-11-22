@@ -827,6 +827,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	    FS_AddHomeDirectory(com_homedir, FS_LOAD_FILE_ALL);
 	}
 
+#ifndef SERVERONLY
 	// -data <datadir>
 	// Adds datadirs similar to "-game"
 	//
@@ -841,7 +842,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 		}
 		i++;
 	}
-
+#endif
 
 	// any set gamedirs will be freed up to here
 	fs_base_searchpaths = fs_searchpaths;

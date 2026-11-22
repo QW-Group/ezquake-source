@@ -49,9 +49,9 @@ CMDLINE_DEF(filesystem_basedir, "-basedir"),
 #ifndef SERVERONLY
 CMDLINE_DEF(filesystem_nohome, "-nohome"),
 CMDLINE_DEF(filesystem_userdir, "-userdir"),
+CMDLINE_DEF(filesystem_data, "-data"),
 #endif
 CMDLINE_DEF(filesystem_game, "-game"),
-CMDLINE_DEF(filesystem_data, "-data"),
 
 CMDLINE_DEF(host_memory_minimum, "-minmemory"),
 CMDLINE_DEF(host_memory_kb, "-heapsize"),
