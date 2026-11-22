@@ -45,7 +45,7 @@
     "description": "set vid_conwidth during startup"
   },
   "-data": {
-    "description": "Adds `<datadir>` as an additional game data directory on top of the standard search path (`-data <path>`); may be specified multiple times."
+    "description": "Adds a resource directory relative to the base directory to the client search path. May be specified multiple times."
   },
   "-democache": {
     "arguments": "<size-in-kb>",

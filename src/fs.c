@@ -111,6 +111,7 @@ void FS_FlushFSHash(void);
 void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
 
 static void FS_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs);
+static void FS_AddGameSearchPath(const char *dir, FS_Load_File_Types loadstuff);
 static searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff);
 
 qbool Sys_PathProtection(const char *pattern);
@@ -326,6 +327,17 @@ int FS_FOpenPathFile (const char *filename, FILE **file) {
 //Sets fs_filepos to 0 for non paks, and to beging of file in pak file
 qbool	file_from_pak;		// global indicating file came from a packfile
 qbool	file_from_gamedir;	// global indicating file came from a gamedir (and gamedir wasn't id1/qw)
+
+#ifndef SERVERONLY
+static void FS_NormalizeSlashes(char *path)
+{
+	for (; *path; ++path) {
+		if (*path == '\\') {
+			*path = '/';
+		}
+	}
+}
+#endif
 
 static vfsfile_t *FS_OpenFileForLoad(const char *path)
 {
@@ -828,19 +840,25 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	}
 
 #ifndef SERVERONLY
-	// -data <datadir>
-	// Adds datadirs similar to "-game"
-	//
-	//Tei: original code from qbism.
+	// Keep data directories in the search path when the active game changes.
+	for (i = 1; (i = COM_CheckParmOffset(cmdline_param_filesystem_data, i)) && i < COM_Argc() - 1; i++) {
+		const char *directory = COM_Argv(i + 1);
+		int length;
 
-	i = 1;
-	while((i = COM_CheckParmOffset (cmdline_param_filesystem_data, i))) {
-		if (i && i < COM_Argc()-1) {
-			char tmp_path[MAX_OSPATH];
-			snprintf(&tmp_path[0], sizeof(tmp_path), "%s%s", com_basedir, COM_Argv(i+1)); /* FIXME: No slash?? Intentional?? */
-			FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
+		// A leading separator used to be required when joining this path to basedir.
+		directory += strspn(directory, "/\\");
+		if (!*directory) {
+			continue;
 		}
-		i++;
+		length = snprintf(tmp_path, sizeof(tmp_path), "%s/%s", com_basedir, directory);
+		if (length < 0 || length >= (int)sizeof(tmp_path)) {
+			continue;
+		}
+		FS_NormalizeSlashes(tmp_path);
+		while (tmp_path[length - 1] == '/') {
+			tmp_path[--length] = '\0';
+		}
+		FS_AddGameSearchPath(tmp_path, FS_LOAD_FILE_ALL);
 	}
 #endif
 
@@ -2738,10 +2756,7 @@ then loads and adds pak1.pak pak2.pak ...
 */
 void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 {
-	size_t size;
-	searchpath_t *search;
 	char *p;
-	char tmp_path[MAX_OSPATH];
 
 	if ((p = strrchr(dir, '/')) != NULL)
 		strlcpy (com_gamedirfile, ++p, sizeof (com_gamedirfile));
@@ -2750,12 +2765,22 @@ void FS_AddGameDirectory (char *dir, FS_Load_File_Types loadstuff)
 
 	if (com_gamedir != dir) strlcpy (com_gamedir, dir, sizeof (com_gamedir));
 
+	FS_AddGameSearchPath(dir, loadstuff);
+}
+
+static void FS_AddGameSearchPath(const char *dir, FS_Load_File_Types loadstuff)
+{
+	size_t size;
+	searchpath_t *search;
+	char *p;
+	char tmp_path[MAX_OSPATH];
+
 	for (search = fs_searchpaths; search; search = search->next)
 	{
 		if (search->funcs != &osfilefuncs)
 			continue;
 
-		if (!strcasecmp(search->handle, com_gamedir))
+		if (!strcasecmp(search->handle, dir))
 			return; //already loaded (base paths?)
 	}
 
@@ -2925,8 +2950,6 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 	searchpath_t	*oldpaths;
 	searchpath_t	*oldbase;
 	searchpath_t	*next;
-	char gamedir[MAX_OSPATH];
-	char gamedirfile[MAX_QPATH];
 
 #ifndef SERVERONLY
 	//a lame way to fix pure paks
@@ -2968,29 +2991,22 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 
 	fs_base_searchpaths = NULL;
 
-	// FS_AddGameDirectory makes each directory it adds back the game
-	// directory, but the game directory stays what it was
-	strlcpy(gamedir, com_gamedir, sizeof(gamedir));
-	strlcpy(gamedirfile, com_gamedirfile, sizeof(gamedirfile));
-
 	while(oldpaths)
 	{
 		next = oldpaths->nextpure;
 
-		if (oldpaths->funcs == &osfilefuncs)
-			FS_AddGameDirectory(oldpaths->handle, reloadflags);
-
-		// as at startup, point at the newest base path once it is back
-		if (oldbase == oldpaths)
+		if (oldpaths->funcs == &osfilefuncs) {
+			FS_AddGameSearchPath(oldpaths->handle, reloadflags);
+		}
+		// The last base path must already be in the rebuilt list.
+		if (oldbase == oldpaths) {
 			fs_base_searchpaths = fs_searchpaths;
+		}
 
 		oldpaths->funcs->ClosePath(oldpaths->handle);
 		Q_free(oldpaths);
 		oldpaths = next;
 	}
-
-	strlcpy(com_gamedir, gamedir, sizeof(com_gamedir));
-	strlcpy(com_gamedirfile, gamedirfile, sizeof(com_gamedirfile));
 
 	if (!fs_base_searchpaths)
 		fs_base_searchpaths = fs_searchpaths;
