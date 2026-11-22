@@ -1103,18 +1103,6 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 		break;
  */
 
-	case FS_BASE:
-//		if (*com_homedir)
-//		{
-//			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
-//			vfs = VFSOS_Open(fullname, mode);
-//			if (vfs)
-//				return vfs;
-//		}
-		if (!FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", com_basedir, filename))
-			return NULL;
-		return VFSOS_Open(fullname, mode);
-
 /* VFS-XXX: Removed as we don't really use this
  * case FS_CONFIGONLY:
 		if (*com_homedir)
@@ -2583,143 +2571,6 @@ vfsfile_t *VFS_Filter(const char *filename, vfsfile_t *handle)
 	return handle;
 }
 
-int FS_Rename2(char *oldf, char *newf, relativeto_t oldrelativeto, relativeto_t newrelativeto)
-{
-	char oldfullname[MAX_OSPATH];
-	char newfullname[MAX_OSPATH];
-
-	switch (oldrelativeto)
-	{
-	case FS_GAME_OS:
-		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%s/%s/", com_homedir, com_gamedirfile);
-		else
-			snprintf(oldfullname, sizeof(oldfullname), "%s%s/", com_basedir, com_gamedirfile);
-		break;
-/*	case FS_SKINS:
-		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%sqw/skins/", com_homedir);
-		else
-			snprintf(oldfullname, sizeof(oldfullname), "%sqw/skins/", com_basedir);
-		break;
- */
-
-	case FS_BASE:
-		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%s", com_homedir);
-		else
-			snprintf(oldfullname, sizeof(oldfullname), "%s", com_basedir);
-		break;
-	default:
-		Sys_Error("FS_Rename case not handled\n");
-	}
-
-	switch (newrelativeto)
-	{
-	case FS_GAME_OS:
-		if (*com_homedir)
-			snprintf(newfullname, sizeof(newfullname), "%s/%s/", com_homedir, com_gamedirfile);
-		else
-			snprintf(newfullname, sizeof(newfullname), "%s%s/", com_basedir, com_gamedirfile);
-		break;
-
-/*	case FS_SKINS:
-		if (*com_homedir)
-			snprintf(newfullname, sizeof(newfullname), "%s/qw/skins/", com_homedir);
-		else
-			snprintf(newfullname, sizeof(newfullname), "%sqw/skins/", com_basedir);
-		break;
- */
-	case FS_BASE:
-		if (*com_homedir)
-			snprintf(newfullname, sizeof(newfullname), "%s", com_homedir);
-		else
-			snprintf(newfullname, sizeof(newfullname), "%s", com_basedir);
-		break;
-	default:
-		Sys_Error("FS_Rename case not handled\n");
-	}
-
-	strlcat(oldfullname, oldf, sizeof(oldfullname));
-	strlcat(newfullname, newf, sizeof(newfullname));
-
-	FS_CreatePathRelative(newf, newrelativeto);
-	return rename(oldfullname, newfullname);
-}
-int FS_Rename(char *oldf, char *newf, relativeto_t relativeto)
-{
-	char oldfullname[MAX_OSPATH];
-	char newfullname[MAX_OSPATH];
-
-	switch (relativeto)
-	{
-	case FS_GAME_OS:
-		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%s/%s/", com_homedir, com_gamedirfile);
-		else
-			snprintf(oldfullname, sizeof(oldfullname), "%s%s/", com_basedir, com_gamedirfile);
-		break;
-
-/*	case FS_SKINS:
-		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%s/qw/skins/", com_homedir);
-		else
-			snprintf(oldfullname, sizeof(oldfullname), "%sqw/skins/", com_basedir);
-		break;
- */
-
-	case FS_BASE:
-		if (*com_homedir)
-			snprintf(oldfullname, sizeof(oldfullname), "%s", com_homedir);
-		else
-			snprintf(oldfullname, sizeof(oldfullname), "%s", com_basedir);
-		break;
-
-	default:
-		Sys_Error("FS_Rename case not handled\n");
-	}
-
-	strlcpy(newfullname, oldfullname, sizeof(newfullname));
-	strlcat(oldfullname, oldf, sizeof(oldfullname));
-	strlcat(newfullname, newf, sizeof(newfullname));
-
-	return rename(oldfullname, newfullname);
-}
-
-int FS_Remove(char *fname, int relativeto)
-{
-	char fullname[MAX_OSPATH];
-
-	switch (relativeto)
-	{
-	case FS_GAME_OS:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, fname);
-		else
-			snprintf(fullname, sizeof(fullname), "%s%s/%s", com_basedir, com_gamedirfile, fname);
-		break;
-
-/*	case FS_SKINS:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_homedir, fname);
-		else
-			snprintf(fullname, sizeof(fullname), "%sqw/skins/%s", com_basedir, fname);
-		break;
- */
-	case FS_BASE:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, fname);
-		else
-			snprintf(fullname, sizeof(fullname), "%s%s", com_basedir, fname);
-		break;
-	default:
-		Sys_Error("FS_Rename case not handled\n");
-		return 0;
-	}
-
-	return unlink (fullname);
-}
-
 static void FS_CreatePathRelative(const char *pname, int relativeto)
 {
 	char fullname[MAX_OSPATH];
@@ -2733,7 +2584,6 @@ static void FS_CreatePathRelative(const char *pname, int relativeto)
 		snprintf(fullname, sizeof(fullname), "%s/%s", com_gamedir, pname);
 		break;
 
-	case FS_BASE:
 	case FS_ANY:
 		if (*com_homedir)
 			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, pname);
