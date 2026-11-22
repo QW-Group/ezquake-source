@@ -580,6 +580,15 @@ typedef struct model_s {
 	qbool               texturechains_have_lumas;
 
 	int                 renderfx;
+
+	// Scripted particle effect types. 0 is a valid type, so every loaded
+	// model must be given P_INVALID or an association.
+	int                 emiteffect;
+	int                 traileffect;
+	unsigned int        emitflags;      // PSCRIPT_EMIT_*
+	struct pscript_surftri_s *surftris; // surfaces that emit their texture's effect
+	struct pscript_surftriblock_s *surftriblocks;
+	double              surftritime;    // emission clock of surftris
 } model_t;
 
 //============================================================================

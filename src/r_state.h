@@ -53,6 +53,12 @@ typedef enum {
 	r_blendfunc_src_one_dest_zero,
 	r_blendfunc_src_zero_dest_one,
 	r_blendfunc_src_one_dest_one_minus_src_color,
+	r_blendfunc_src_src_alpha_dest_one_minus_src_alpha,
+	r_blendfunc_src_src_color_dest_one_minus_src_color,
+	r_blendfunc_src_src_alpha_dest_one,
+	r_blendfunc_src_src_color_dest_one,
+	r_blendfunc_src_src_alpha_dest_one_minus_src_color,
+	r_blendfunc_src_zero_dest_one_minus_src_alpha,
 
 	r_blendfunc_count
 } r_blendfunc_t;
@@ -68,6 +74,7 @@ typedef enum {
 	r_polygonoffset_disabled,
 	r_polygonoffset_standard,
 	r_polygonoffset_outlines,
+	r_polygonoffset_decal,
 
 	r_polygonoffset_count
 } r_polygonoffset_t;
@@ -322,6 +329,15 @@ typedef enum {
 	r_state_drawflat_without_lightmaps_unfogged_glc,
 
 	r_state_fx_world_geometry,
+
+	r_state_scenetris_alpha,
+	r_state_scenetris_colour,
+	r_state_scenetris_add_alpha,
+	r_state_scenetris_add_colour,
+	r_state_scenetris_subtract,
+	r_state_scenetris_invmod_alpha,
+	r_state_scenetris_invmod_colour,
+	r_state_scenetris_premul,
 
 	r_state_count
 } r_state_id;

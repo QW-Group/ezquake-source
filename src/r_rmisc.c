@@ -206,6 +206,10 @@ static qbool R_ParseWorldspawn(const char* entstring, worldspawn_info_t* worldsp
 			worldspawn->fog_sky = atof(com_token);
 			worldspawn->fog_sky = bound(0, worldspawn->fog_sky, 1);
 		}
+		else if (!strncmp("texpart_", key, 8)) {
+			// FTE's "_texpart_<texture>" "<effect>": surfaces with the texture emit the effect
+			PScript_SetTextureEffect(key + 8, com_token);
+		}
 	}
 
 	return false;
@@ -219,6 +223,8 @@ void R_NewMap(qbool vid_restart)
 	extern int R_SetSky(char *skyname);
 	extern void HUD_NewRadarMap(void); // hud_common.c
 
+	// R_ParseWorldspawn adds this map's texpart_ keys
+	PScript_ClearTextureEffects();
 	if (R_ParseWorldspawn(CM_EntityString(), &worldspawn)) {
 		// load skybox specified
 		if (r_skyname.string[0] == 0 && worldspawn.skybox_name[0]) {
@@ -285,6 +291,8 @@ void R_NewMap(qbool vid_restart)
 		InitCoronas();
 		//VULT NAMES
 		VX_TrackerClear();
+
+		PScript_NewMap();
 	}
 }
 

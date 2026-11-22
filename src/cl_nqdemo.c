@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "vx_stuff.h"
 #include "settings.h"
 #include "teamplay.h"
+#include "r_part_script.h"
 #ifdef _WIN32
 #include "movie.h"
 #endif
@@ -140,6 +141,9 @@ static void CL_CheckForNQDSeekPointFound(void)
 	{
 		cls.demoseeking = DST_SEEKING_NONE;
 		cls.demotime = demotime; 
+
+		// Temp entities were skipped while seeking.
+		PScript_ClearParticles();
 
 		if (cls.demorewinding)
 		{
@@ -666,10 +670,17 @@ static void CL_ParseParticleEffect (void)
 	count = MSG_ReadByte ();
 	color = MSG_ReadByte ();
 
+	if (msg_badread)
+		return;
+
 	// now run the effect
 	if (count == 255)
-		Classic_ParticleExplosion (org);
-	else 
+	{
+		// NetQuake encodes an explosion as 255 particles, so it is drawn as TE_EXPLOSION.
+		if (!PScript_RunParticleEffectState (org, NULL, 1, PScript_EffectType (PSCRIPT_TE_EXPLOSION), NULL) && !PScript_RunParticleEffect (org, NULL, 107, 1024))
+			Classic_ParticleExplosion (org);
+	}
+	else if (!PScript_RunParticleEffect (org, dir, color, count))
 		R_RunParticleEffect (org, dir, color, count);
 }
 
@@ -732,6 +743,13 @@ static void NQD_ParseUpdate (int bits)
 		forcelink = true;	// no previous frame to lerp from
 	else
 		forcelink = false;
+	// A new entity, or one that was gone, starts its scripted effects over.
+	if (forcelink)
+	{
+		PScript_DelinkTrailstate(&ent->pscript_trail);
+		PScript_DelinkTrailstate(&ent->pscript_emit);
+		ent->pscript_trailframe = 0;
+	}
 	ent->oldsequence = ent->sequence;
 	ent->sequence = cl_entframecount;
 	
@@ -1050,12 +1068,13 @@ void NQD_LinkEntities (void)
 		}
 		
 		// add automatic particle trails
-		if ((modelflags & ~EF_ROTATE)) {
+		if ((modelflags & ~EF_ROTATE) || (model->traileffect != P_INVALID && PScript_DynamicActive())) {
 			CL_AddParticleTrail(&ent, cent, &cst_lt, state);
 		}
 
 		VectorCopy(ent.origin, cent->lerp_origin);
 		cent->sequence = cl_entframecount;
+		CL_RunModelEmitter(&ent, &cent->pscript_emit, &cent->pscript_emitframe, &cent->pscript_emittype);
 		CL_AddEntity(&ent);
 	}
 

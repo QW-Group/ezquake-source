@@ -274,6 +274,32 @@ static void R_InitialiseSpriteStates(void)
 	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
 }
 
+// Unfogged, and every run is pulled towards the viewer so that particles lying on a surface
+// draw on top of it
+static void R_InitialiseSceneTrisState(r_state_id id, const char *name, r_blendfunc_t blend_func)
+{
+	rendering_state_t *state = R_InitRenderingState(id, true, name, vao_scenetris);
+
+	state->depth.mask_enabled = false;
+	state->polygonOffset.option = r_polygonoffset_decal;
+	state->cullface.enabled = false;
+	state->blendingEnabled = true;
+	state->blendFunc = blend_func;
+	R_GLC_TextureUnitSet(state, 0, true, r_texunit_mode_modulate);
+}
+
+static void R_InitialiseSceneTrisStates(void)
+{
+	R_InitialiseSceneTrisState(r_state_scenetris_alpha, "scenetris:alpha", r_blendfunc_src_src_alpha_dest_one_minus_src_alpha);
+	R_InitialiseSceneTrisState(r_state_scenetris_colour, "scenetris:colour", r_blendfunc_src_src_color_dest_one_minus_src_color);
+	R_InitialiseSceneTrisState(r_state_scenetris_add_alpha, "scenetris:add-alpha", r_blendfunc_src_src_alpha_dest_one);
+	R_InitialiseSceneTrisState(r_state_scenetris_add_colour, "scenetris:add-colour", r_blendfunc_src_src_color_dest_one);
+	R_InitialiseSceneTrisState(r_state_scenetris_subtract, "scenetris:subtract", r_blendfunc_src_src_alpha_dest_one_minus_src_color);
+	R_InitialiseSceneTrisState(r_state_scenetris_invmod_alpha, "scenetris:invmod-alpha", r_blendfunc_src_zero_dest_one_minus_src_alpha);
+	R_InitialiseSceneTrisState(r_state_scenetris_invmod_colour, "scenetris:invmod-colour", r_blendfunc_src_zero_dest_one_minus_src_color);
+	R_InitialiseSceneTrisState(r_state_scenetris_premul, "scenetris:premul", r_blendfunc_premultiplied_alpha);
+}
+
 static void R_InitialiseEntityStates(void)
 {
 	rendering_state_t* state;
@@ -449,6 +475,7 @@ void R_InitialiseStates(void)
 	R_InitRenderingState(r_state_default_3d, true, "default3DState", vao_none);
 
 	R_InitialiseSpriteStates();
+	R_InitialiseSceneTrisStates();
 	R_InitialiseBrushModelStates();
 	R_Initialise2DStates();
 	R_InitialiseEntityStates();

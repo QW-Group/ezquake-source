@@ -15266,6 +15266,12 @@
       "group-id": "8",
       "type": "integer"
     },
+    "r_bouncysparks": {
+      "default": "1",
+      "desc": "Lets scripted particles collide with the world, so effects that ask for it bounce, splash or leave decals. 0 lets particles pass through walls.",
+      "group-id": "36",
+      "type": "boolean"
+    },
     "r_chaticons_alpha": {
       "default": "0.8",
       "desc": "Opacity of chaticons.",
@@ -15288,6 +15294,12 @@
       "desc": "Displays the amount of damage taken recently on the screen above your armour and health.",
       "group-id": "47",
       "type": "float"
+    },
+    "r_decal_noperpendicular": {
+      "default": "1",
+      "desc": "Keeps scripted decals off surfaces at a steep angle to the decal, so a decal on a floor does not run up the adjacent walls.",
+      "group-id": "36",
+      "type": "boolean"
     },
     "r_drawdisc": {
       "default": "1",
@@ -16172,6 +16184,92 @@
           "name": "true"
         }
       ]
+    },
+    "r_part_beams": {
+      "default": "1",
+      "desc": "Draws scripted beam effects. 0 hides them.",
+      "group-id": "36",
+      "remarks": "Takes effect when the particle sets are next loaded, for example on map change.",
+      "type": "boolean"
+    },
+    "r_part_contentswitch": {
+      "default": "1",
+      "desc": "Lets scripted effects change, or not spawn, depending on whether they are in water, slime or lava, as the effect defines.",
+      "group-id": "36",
+      "type": "boolean"
+    },
+    "r_part_density": {
+      "default": "1",
+      "desc": "Scales the number of particles that scripted effects spawn.",
+      "group-id": "36",
+      "type": "float"
+    },
+    "r_part_maxdecals": {
+      "default": "8192",
+      "desc": "Maximum number of scripted decal triangles alive at once, from 1 to 65536.",
+      "group-id": "36",
+      "remarks": "Takes effect when the particle pools are next set up: on map change, on demo seek or when scripted effects are switched on.",
+      "type": "integer"
+    },
+    "r_part_maxparticles": {
+      "default": "65536",
+      "desc": "Maximum number of scripted particles alive at once, from 1 to 65536.",
+      "group-id": "36",
+      "remarks": "Takes effect when the particle pools are next set up: on map change, on demo seek or when scripted effects are switched on.",
+      "type": "integer"
+    },
+    "r_part_rain": {
+      "default": "1",
+      "desc": "Lets surfaces emit the scripted particle effect named after their texture, tex_<texture name>, or the effect the map assigns to the texture, for weather such as rain or snow falling from the sky. Needs a particle set that defines such effects.",
+      "group-id": "36",
+      "remarks": "Under rulesets that restrict particles, the surfaces of the world and of the map's own brush entities, such as doors and plats, still emit; those of brush entities that use a separate .bsp model do not.",
+      "type": "boolean"
+    },
+    "r_part_rain_prewarm": {
+      "default": "1",
+      "desc": "Fills a part of the map with the particles its surfaces would have emitted while it was out of view, when it comes into view, so that weather such as rain or snow is already falling there. Only the world's surfaces are prewarmed, not those of brush entities.",
+      "group-id": "36",
+      "type": "boolean"
+    },
+    "r_part_rain_quantity": {
+      "default": "1",
+      "desc": "Scales how many particles surfaces emit when r_part_rain is enabled.",
+      "group-id": "36",
+      "type": "float"
+    },
+    "r_part_sparks": {
+      "default": "1",
+      "desc": "Draws the line sparks of scripted effects. 0 hides them, along with the fan and textured sparks that r_part_sparks_trifan and r_part_sparks_textured turn into line sparks.",
+      "group-id": "36",
+      "remarks": "Takes effect when the particle sets are next loaded, for example on map change.",
+      "type": "boolean"
+    },
+    "r_part_sparks_textured": {
+      "default": "1",
+      "desc": "Draws textured scripted sparks with their texture. 0 draws them as line sparks.",
+      "group-id": "36",
+      "remarks": "Takes effect when the particle sets are next loaded, for example on map change.",
+      "type": "boolean"
+    },
+    "r_part_sparks_trifan": {
+      "default": "1",
+      "desc": "Draws fan-shaped scripted sparks as fans. 0 draws them as line sparks.",
+      "group-id": "36",
+      "remarks": "Takes effect when the particle sets are next loaded, for example on map change.",
+      "type": "boolean"
+    },
+    "r_particle_tracelimit": {
+      "default": "65536",
+      "desc": "Maximum number of collision tests that scripted particles may make per frame. Particles beyond the limit move without colliding in that frame.",
+      "group-id": "36",
+      "type": "integer"
+    },
+    "r_particledesc": {
+      "default": "",
+      "desc": "Space-separated list of scripted particle sets to load, in FTE's r_part format. Each name loads particles/<name>.cfg; a name starting with ./ loads <name>.cfg from the game directory instead, and a name containing / falls back to <name>.cfg. Without such a .cfg, the names effectinfo and effectinfo_<suffix> import DarkPlaces' effectinfo.txt and effectinfo_<suffix>.txt. The set particles/map_<map name>.cfg is also loaded for the current map when it exists. Events that a loaded set defines an effect for, such as TE_EXPLOSION or TR_ROCKET, use it instead of the classic or QMB particles.",
+      "group-id": "36",
+      "remarks": "There are no built-in sets: with no set loaded, particles look as before. Under rulesets that restrict particles, only effects on the world, on static entities such as torches and on the map's own brush entities such as doors and plats run; events and other entities keep the classic or QMB particles. r_drawparticles 0 turns scripted effects off. The server cannot change this variable.",
+      "type": "string"
     },
     "r_particles_count": {
       "default": "2048",

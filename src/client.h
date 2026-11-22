@@ -31,6 +31,8 @@ $Id: client.h,v 1.74 2007-10-12 00:08:42 cokeman1982 Exp $
 #ifndef EZQUAKE_CLIENT_HEADER
 #define EZQUAKE_CLIENT_HEADER
 
+#include "r_part_script.h"
+
 #if defined(_MSC_VER) && !defined(__attribute__)
 #define __attribute__(A) /**/
 #endif
@@ -314,7 +316,24 @@ typedef struct
 	float           particle_emittime;
 	int             trail_number;   // this changes as trails are killed and entity re-used (can be used to detect reset)
 	int             corona_id;
+
+	// Scripted particles. Multiview links entities once per view, so the
+	// pscript_hostframe stamps keep each effect to once per host frame.
+	trailkey_t      pscript_trail;
+	trailkey_t      pscript_emit;
+	int             pscript_trailframe;
+	int             pscript_emitframe;
+	int             pscript_trailtype;  // the type pscript_trail was last used for
+	int             pscript_emittype;   // the type pscript_emit was last used for
 } centity_t;
+
+// Scripted emitter of the static entity with the same index, kept out of
+// entity_t, which every drawn entity copies each frame.
+typedef struct {
+	trailkey_t key;
+	int frame; // pscript_hostframe stamp
+	int type;  // the type key was last used for
+} static_emitter_t;
 
 typedef struct 
 {
@@ -348,7 +367,10 @@ typedef struct {
 	int				bubble;				// non zero means no flashblend bubble
 	dlighttype_t	type;
 	byte			color[3];			// use such color if type == lt_custom
-	byte unused[3];
+	byte			colorfade;			// non zero fades color by channelfade
+	byte			unused[2];
+	float			fadecolor[3];		// color before rounding, 128 is full
+	float			channelfade[3];		// fadecolor lost each second
 } dlight_t;
 
 typedef struct customlight_s {
@@ -954,6 +976,7 @@ extern cvar_t r_powerupglow;
 // FIXME, allocate dynamically
 extern	centity_t        cl_entities[CL_MAX_EDICTS];
 extern	entity_t         cl_static_entities[MAX_STATIC_ENTITIES];
+extern	static_emitter_t cl_static_emitters[MAX_STATIC_ENTITIES];
 extern	lightstyle_t     cl_lightstyle[MAX_LIGHTSTYLES];
 extern	dlight_t         cl_dlights[MAX_DLIGHTS];
 extern  unsigned int     cl_dlight_active[MAX_DLIGHTS/32];       
@@ -1146,6 +1169,8 @@ void CL_InitEnts(void);
 void CL_AddEntity (entity_t *ent);
 void CL_ClearScene (void) ;
 void CL_AddParticleTrail(entity_t* ent, centity_t* cent, customlight_t* cst_lt, entity_state_t *state);
+qbool CL_ScriptedEmitter(const entity_t *ent);
+qbool CL_RunModelEmitter(entity_t *ent, trailkey_t *key, int *frame, int *type);
 
 dlighttype_t dlightColor(float f, dlighttype_t def, qbool random);
 customlight_t *dlightColorEx(float f, char *str, dlighttype_t def, qbool random, customlight_t *l);
