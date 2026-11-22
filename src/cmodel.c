@@ -1152,7 +1152,7 @@ static void CM_LoadPhysicsNormals(byte *physnormals, int len_physnormals)
 
 		mark = Hunk_LowMark();
 		snprintf(extfile, sizeof(extfile), "maps/%s.qpn", loadname);
-		data = FS_LoadHunkFile(extfile, &extfilesize);
+		data = FS_LoadGameHunkFile(extfile, &extfilesize);
 		if (data) {
 			if (CM_LoadPhysicsNormalsData(data, extfilesize)) {
 				Con_Printf("Loading external physics normals\n");

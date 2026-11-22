@@ -327,30 +327,35 @@ int FS_FOpenPathFile (const char *filename, FILE **file) {
 qbool	file_from_pak;		// global indicating file came from a packfile
 qbool	file_from_gamedir;	// global indicating file came from a gamedir (and gamedir wasn't id1/qw)
 
-// VFS-FIXME: D-Kure: This function will be removed once we have the VFS layer
-
-// Filename are relative to the quake directory.
-// Always appends a 0 byte to the loaded data.
-static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
+static vfsfile_t *FS_OpenFileForLoad(const char *path)
 {
-	vfsfile_t *f = NULL;
-	vfserrno_t err;
 	flocation_t loc;
+
+	if (Sys_PathProtection(path)) {
+		return NULL;
+	}
+
+	// Search mounted directories and packs before trying the fallback paths.
+	FS_FLocateFile(path, FSLFRT_LENGTH, &loc);
+	if (loc.search) {
+		return loc.search->funcs->OpenVFS(loc.search->handle, &loc, "rb");
+	}
+	return FS_OpenVFS(path, "rb", FS_ANY);
+}
+
+typedef enum {
+	FS_LOAD_HUNK,
+	FS_LOAD_TEMP,
+	FS_LOAD_HEAP,
+} fs_load_memory_t;
+
+// Read and close an open file, appending a zero byte to the data.
+static byte *FS_LoadFile(vfsfile_t *f, const char *path, fs_load_memory_t memory, int *file_length)
+{
+	vfserrno_t err;
 	byte *buf;
 	char base[32];
 	int len;
-
-	//blanket-bans - Avoid combination of / & \ for directories
-    if (Sys_PathProtection(path)) 
-		return NULL;
-
-	// Search mounted directories and packs before trying the fallback paths.
-    FS_FLocateFile(path, FSLFRT_LENGTH, &loc);
-	if (loc.search) {
-		f = loc.search->funcs->OpenVFS(loc.search->handle, &loc, "rb");
-	} else {
-		f = FS_OpenVFS(path, "rb", FS_ANY);
-	} 
 
 	if (!f)
 		return NULL;
@@ -365,16 +370,15 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 	// Extract the filename base name for hunk tag.
 	COM_FileBase (path, base);
 
-	// TODO: Make these into defines.
-	if (usehunk == 1)
+	if (memory == FS_LOAD_HUNK)
 	{
 		buf = (byte *) Hunk_AllocName (len + 1, base);
 	}
-	else if (usehunk == 2)
+	else if (memory == FS_LOAD_TEMP)
 	{
 		buf = (byte *) Hunk_TempAlloc (len + 1);
 	}
-	else if (usehunk == 5)
+	else if (memory == FS_LOAD_HEAP)
 	{
 		buf = Q_malloc_named(len + 1, path);
 	}
@@ -402,17 +406,27 @@ static byte *FS_LoadFile (const char *path, int usehunk, int *file_length)
 }
 
 byte *FS_LoadHunkFile (char *path, int *len) {
-	return FS_LoadFile (path, 1, len);
+	return FS_LoadFile(FS_OpenFileForLoad(path), path, FS_LOAD_HUNK, len);
 }
 
 byte *FS_LoadTempFile (char *path, int *len) {
-	return FS_LoadFile (path, 2, len);
+	return FS_LoadFile(FS_OpenFileForLoad(path), path, FS_LOAD_TEMP, len);
 }
 
 // use Q_malloc, do not forget Q_free when no needed more
 byte *FS_LoadHeapFile (const char *path, int *len)
 {
-	return FS_LoadFile (path, 5, len);
+	return FS_LoadFile(FS_OpenFileForLoad(path), path, FS_LOAD_HEAP, len);
+}
+
+byte *FS_LoadGameHunkFile(const char *path, int *len)
+{
+	return FS_LoadFile(FS_OpenVFS(path, "rb", FS_GAME), path, FS_LOAD_HUNK, len);
+}
+
+byte *FS_LoadGameTempFile(const char *path, int *len)
+{
+	return FS_LoadFile(FS_OpenVFS(path, "rb", FS_GAME), path, FS_LOAD_TEMP, len);
 }
 
 #ifndef SERVERONLY

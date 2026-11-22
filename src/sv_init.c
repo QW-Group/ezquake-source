@@ -188,7 +188,7 @@ static unsigned SV_CheckModel(char *mdl)
 	int mark;
 
 	mark = Hunk_LowMark ();
-	buf = (byte *) FS_LoadHunkFile (mdl, &filesize);
+	buf = (byte *) FS_LoadGameHunkFile (mdl, &filesize);
 	if (!buf)
 	{
 		if (!strcmp (mdl, "progs/player.mdl"))
@@ -678,14 +678,14 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 		if (sv_loadentfiles_dir.string[0])
 		{
 			snprintf(ent_path, sizeof(ent_path), "maps/%s/%s.ent", sv_loadentfiles_dir.string, entityfile);
-			entitystring = (char *) FS_LoadHunkFile(ent_path, NULL);
+			entitystring = (char *) FS_LoadGameHunkFile(ent_path, NULL);
 		}
 
 		// try maps/ if not loaded yet.
 		if (!entitystring)
 		{
 			snprintf(ent_path, sizeof(ent_path), "maps/%s.ent", entityfile);
-			entitystring = (char *) FS_LoadHunkFile(ent_path, NULL);
+			entitystring = (char *) FS_LoadGameHunkFile(ent_path, NULL);
 		}
 
 		if (entitystring) {
