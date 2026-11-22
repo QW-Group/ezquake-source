@@ -428,6 +428,7 @@ void PScript_EffectSpawned(pscript_type_t *ptype, vec3_t org, int dlkey);
 void PScript_ForgetMissingSounds(void);
 pscript_particle_t *PScript_SpawnParticle(pscript_type_t *ptype, int cidxoffset);
 qbool PScript_RunEffect(vec3_t org, vec3_t dir, float count, int typenum, trailkey_t *tk);
+qbool PScript_RunAgedEffect(vec3_t org, vec3_t dir, float count, int typenum, trailkey_t *tk, float agemin, float agerange);
 qbool PScript_RunTrail(vec3_t start, vec3_t end, int typenum, float timeinterval, int dlkey, trailkey_t *tk);
 pscript_beamseg_t *PScript_AppendBeamSeg(pscript_beamseg_t **first, pscript_beamseg_t *last, pscript_particle_t *p, float texture_s, const vec3_t dir);
 qbool PScript_ContentsAllow(const pscript_type_t *ptype, vec3_t org);

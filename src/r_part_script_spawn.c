@@ -518,10 +518,9 @@ static void PScript_InitColour(const pscript_type_t *ptype, pscript_vec4_t rgba,
 	}
 }
 
-// Takes a particle from the free list onto ptype's list, NULL when it is
-// empty, and sets all but org, oldorg and vel. Absolute ramps apply at once,
-// as it may be drawn before it is simulated. The caller links the run list.
-pscript_particle_t *PScript_SpawnParticle(pscript_type_t *ptype, int cidxoffset)
+// PScript_SpawnParticle for a particle that starts age seconds old: the age
+// counts as life already used, and it has scaled and turned for that long.
+static inline pscript_particle_t *PScript_SpawnAgedParticle(pscript_type_t *ptype, int cidxoffset, float age)
 {
 	pscript_particle_t *p = pscript_free_particles;
 	float dieofs;
@@ -534,7 +533,14 @@ pscript_particle_t *PScript_SpawnParticle(pscript_type_t *ptype, int cidxoffset)
 	ptype->particles = p;
 
 	dieofs = ptype->randdie * frandom();
+	if (age > 0) {
+		dieofs += age;
+	}
 	p->scale = ptype->scale + ptype->scalerand * frandom();
+	// A ramp sets or changes the scale itself.
+	if (age > 0 && ptype->rampmode == RAMP_NONE) {
+		p->scale += ptype->scaledelta * age;
+	}
 	PScript_InitColour(ptype, p->rgba, dieofs, cidxoffset);
 	if (ptype->emittime < 0) {
 		p->state.trailstate = 0;
@@ -545,6 +551,9 @@ pscript_particle_t *PScript_SpawnParticle(pscript_type_t *ptype, int cidxoffset)
 
 	p->rotationspeed = ptype->rotationmin + frandom() * ptype->rotationrand;
 	p->angle = ptype->rotationstartmin + frandom() * ptype->rotationstartrand;
+	if (age > 0) {
+		p->angle += p->rotationspeed * age;
+	}
 	p->s1 = ptype->s1;
 	p->t1 = ptype->t1;
 	p->s2 = ptype->s2;
@@ -560,6 +569,70 @@ pscript_particle_t *PScript_SpawnParticle(pscript_type_t *ptype, int cidxoffset)
 	PScript_ApplyRamp(ptype, p->die, 0, p->rgba, &p->scale);
 
 	return p;
+}
+
+// Takes a particle from the free list onto ptype's list, NULL when it is
+// empty, and sets all but org, oldorg and vel. Absolute ramps apply at once,
+// as it may be drawn before it is simulated. The caller links the run list.
+pscript_particle_t *PScript_SpawnParticle(pscript_type_t *ptype, int cidxoffset)
+{
+	return PScript_SpawnAgedParticle(ptype, cidxoffset, 0);
+}
+
+// Below this friction times age, the move with friction loses its precision
+// to the division by friction, so the move without, its limit, is used.
+#define PSCRIPT_MIN_FRICTIONAGE 1e-6
+
+// Moves a particle of ptype, spawned age seconds old, from where it spawned
+// to where gravity and friction have taken it since; flurry is ignored. Only
+// a particle with life left moves. False when it must not appear: its life
+// is over, the move hit a surface, so it would have landed already, or the
+// result is not finite.
+static qbool PScript_PreageParticle(const pscript_type_t *ptype, pscript_particle_t *p, float age)
+{
+	vec3_t start, impact, normal;
+	double accel, f, x, e, vinf, v;
+	int i;
+
+	if (!isfinite(p->die)) {
+		return false;
+	}
+	// Die 0 particles live one frame whatever their die time says, and
+	// have used up the life in which they would move.
+	if (!ptype->die) {
+		return true;
+	}
+	if (!(p->die >= pscript_particletime)) {
+		return false;
+	}
+	if (!(ptype->flags & PT_VELOCITY)) {
+		return true;
+	}
+
+	VectorCopy(p->org, start);
+	for (i = 0; i < 3; i++) {
+		accel = i == 2 ? -ptype->gravity : 0;
+		f = (ptype->flags & PT_FRICTION) ? ptype->friction[i] : 0;
+		x = f * age;
+		v = p->vel[i];
+		if (fabs(x) > PSCRIPT_MIN_FRICTIONAGE) {
+			// The velocity decays towards vinf, where friction cancels
+			// gravity.
+			e = exp(-x);
+			vinf = accel / f;
+			p->org[i] += vinf * age + (v - vinf) * (1 - e) / f;
+			p->vel[i] = vinf + (v - vinf) * e;
+		}
+		else {
+			p->org[i] += v * age + 0.5 * accel * age * age;
+			p->vel[i] = v + accel * age;
+		}
+		if (!isfinite(p->org[i]) || !isfinite(p->vel[i])) {
+			return false;
+		}
+	}
+
+	return !(PART_VALID(ptype->cliptype) && r_bouncysparks.integer && PScript_TraceLine(start, p->org, impact, normal, NULL) < 1);
 }
 
 // Takes a beam segment for p from the free list, which must not be empty, and
@@ -785,32 +858,50 @@ static int PScript_StateLightKey(const pscript_trailstate_t *ts)
 
 // Spawns one type of a point effect's assoc chain in axis, whose third vector
 // is the effect direction; velscale scales veladd. ts may be NULL. A decal
-// type stores the normal of the surface it lands on in surfnormal.
-static pscript_chainstep_t PScript_RunEffectType(pscript_type_t *ptype, vec3_t org, vec3_t dir, vec3_t axis[3], float velscale, float count, pscript_trailstate_t *ts, vec3_t surfnormal)
+// type stores the normal of the surface it lands on in surfnormal. Each
+// particle starts agemin plus up to agerange seconds old; see
+// PScript_RunAgedEffect.
+static pscript_chainstep_t PScript_RunEffectType(pscript_type_t *ptype, vec3_t org, vec3_t dir, vec3_t axis[3], float velscale, float count, pscript_trailstate_t *ts, vec3_t surfnormal, float agemin, float agerange)
 {
 	pscript_beamseg_t *b = NULL, *bfirst = NULL;
 	pscript_particle_t *p;
 	vec3_t ofsvec, arsvec;
-	float pcount, m, orgadd, veladd, hspread, vspread;
+	float pcount, m, orgadd, veladd, hspread, vspread, age;
 	int i, j, k, l, spawnspc;
 	qbool beam = ptype->looks.type == PT_BEAM;
+	qbool aged = agemin > 0 || agerange > 0;
 
 	if (!PScript_ContentsAllow(ptype, org)) {
 		return CHAIN_NEXT;
 	}
 
-	PScript_EffectSpawned(ptype, org, PScript_StateLightKey(ts));
+	// Aged effects stand in for emission that happened unseen, often many at
+	// once, so they play no sound and light nothing.
+	if (!aged) {
+		PScript_EffectSpawned(ptype, org, PScript_StateLightKey(ts));
+	}
 
 	if (ptype->looks.type == PT_CDECAL) {
 		vec3_t center;
 		int entnum;
 
-		if (!pscript_free_decals) {
+		if (!aged && !pscript_free_decals) {
 			return CHAIN_STOP;
 		}
+		// An aged effect still finds the surface, which orients the rest
+		// of the chain, but leaves no decal: one per stand-in call would
+		// pile up on it at once.
 		entnum = PScript_FindDecalSurface(org, dir, center, surfnormal);
-		PScript_SpawnClippedDecal(ptype, center, surfnormal, ptype->scale + frandom() * ptype->scalerand, true, entnum);
+		if (!aged) {
+			PScript_SpawnClippedDecal(ptype, center, surfnormal, ptype->scale + frandom() * ptype->scalerand, true, entnum);
+		}
 		return PScript_HasDirection(dir) ? CHAIN_NEXT_SAME : CHAIN_NEXT_SURFACE;
+	}
+
+	// The points of a beam are drawn as one chain, which a point that would
+	// have landed cannot leave.
+	if (aged && beam) {
+		return CHAIN_NEXT;
 	}
 
 	// A per-frame count means nothing while no time passes.
@@ -893,7 +984,8 @@ static pscript_chainstep_t PScript_RunEffectType(pscript_type_t *ptype, vec3_t o
 		if (!pscript_free_particles || (beam && !pscript_free_beams)) {
 			break;
 		}
-		p = PScript_SpawnParticle(ptype, 0);
+		age = agerange > 0 ? agemin + agerange * frandom() : agemin;
+		p = PScript_SpawnAgedParticle(ptype, 0, age);
 		if (beam) {
 			b = PScript_AppendBeamSeg(&bfirst, b, p, i, vec3_origin);
 		}
@@ -1011,6 +1103,13 @@ static pscript_chainstep_t PScript_RunEffectType(pscript_type_t *ptype, vec3_t o
 			PScript_WorldSpaceRandom(ptype, p);
 		}
 		VectorAdd(p->org, ptype->orgbias, p->org);
+		if (age > 0 && !PScript_PreageParticle(ptype, p, age)) {
+			// Still the head of the list: nothing has spawned since.
+			ptype->particles = p->next;
+			p->next = pscript_free_particles;
+			pscript_free_particles = p;
+			continue;
+		}
 		VectorCopy(p->org, p->oldorg);
 	}
 
@@ -1038,12 +1137,12 @@ static pscript_chainstep_t PScript_RunEffectType(pscript_type_t *ptype, vec3_t o
 	return CHAIN_NEXT;
 }
 
-// Spawns effect typenum and its assoc chain at org. dir orients the pattern
-// and its length scales veladd; without one, the chain spawns along -z until
-// a decal finds a surface normal. tk carries state between calls, or is NULL.
-// False when inactive or typenum is not loaded, else true even if nothing
-// spawned. Ungated by rulesets, for effects that carry no game state.
-qbool PScript_RunEffect(vec3_t org, vec3_t dir, float count, int typenum, trailkey_t *tk)
+// PScript_RunEffect for particles that start as if emitted earlier: each
+// agemin plus a random part of agerange seconds ago, at most the sum. Ages
+// that are not finite and positive count as 0. An aged effect plays no sound
+// or light, leaves no clipped decal, spawns no beam, and keeps no state
+// between calls, so tk is ignored.
+qbool PScript_RunAgedEffect(vec3_t org, vec3_t dir, float count, int typenum, trailkey_t *tk, float agemin, float agerange)
 {
 	vec3_t axis[3] = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, -1 } };
 	vec3_t surfnormal;
@@ -1058,7 +1157,13 @@ qbool PScript_RunEffect(vec3_t org, vec3_t dir, float count, int typenum, trailk
 	}
 	ptype = PScript_InwaterType(&pscript_types[typenum], org);
 
-	if (ptype->flags & PT_NOSTATE) {
+	if (!(agemin > 0 && isfinite(agemin))) {
+		agemin = 0;
+	}
+	if (!(agerange > 0 && isfinite(agerange) && isfinite(agemin + agerange))) {
+		agerange = 0;
+	}
+	if ((ptype->flags & PT_NOSTATE) || agemin > 0 || agerange > 0) {
 		tk = NULL;
 	}
 	ts = PScript_FetchHeadTrailstate(tk, (int)(ptype - pscript_types));
@@ -1068,7 +1173,7 @@ qbool PScript_RunEffect(vec3_t org, vec3_t dir, float count, int typenum, trailk
 	// At most one step per type, because a config can make the assoc chain
 	// loop.
 	for (steps = 0; steps < pscript_numtypes; steps++) {
-		step = PScript_RunEffectType(ptype, org, dir, axis, velscale, count, ts, surfnormal);
+		step = PScript_RunEffectType(ptype, org, dir, axis, velscale, count, ts, surfnormal, agemin, agerange);
 		if (step == CHAIN_STOP || !PART_VALID(ptype->assoc)) {
 			break;
 		}
@@ -1085,6 +1190,16 @@ qbool PScript_RunEffect(vec3_t org, vec3_t dir, float count, int typenum, trailk
 	}
 
 	return true;
+}
+
+// Spawns effect typenum and its assoc chain at org. dir orients the pattern
+// and its length scales veladd; without one, the chain spawns along -z until
+// a decal finds a surface normal. tk carries state between calls, or is NULL.
+// False when inactive or typenum is not loaded, else true even if nothing
+// spawned. Ungated by rulesets, for effects that carry no game state.
+qbool PScript_RunEffect(vec3_t org, vec3_t dir, float count, int typenum, trailkey_t *tk)
+{
+	return PScript_RunAgedEffect(org, dir, count, typenum, tk, 0, 0);
 }
 
 // For events and moving entities; fails under rulesets that restrict
