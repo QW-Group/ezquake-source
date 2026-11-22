@@ -108,7 +108,7 @@ vfsfile_t *FS_OpenTemp(void)
 }
 
 // VFS-XXX: This is slightly different to fs.c version in that we don't take in a FILE *f
-vfsfile_t *VFSOS_Open(char *osname, char *mode)
+vfsfile_t *VFSOS_Open(const char *osname, char *mode)
 {
 	FILE *f;
 	vfsosfile_t *file;

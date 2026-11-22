@@ -1071,9 +1071,10 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 	flocation_t loc;
 	vfsfile_t *vfs = NULL;
 
-	//blanket-bans - Avoid combination of / & \ for directories
-	if (Sys_PathProtection(filename)) 
+	// Keep explicit OS paths intact and normalize paths used for game lookups.
+	if (relativeto != FS_NONE_OS && Sys_PathProtection(filename)) {
 		return NULL;
+	}
 
 	if (strcmp(mode, "rb") && strcmp(mode, "wb") && strcmp(mode, "ab")) {
 		return NULL; //urm, unable to write/append
@@ -1082,16 +1083,8 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 	/* General opening of files */
 	switch (relativeto)
 	{
-	case FS_NONE_OS: 	//OS access only, no paks, open file as is
-		if (*com_homedir && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", com_homedir, filename)) {
-			vfs = VFSOS_Open(fullname, mode);
-			if (vfs)
-				return vfs;
-		}
-
-		if (!FS_FormatOSPath(fullname, sizeof(fullname), "%s", filename))
-			return NULL;
-		return VFSOS_Open(fullname, mode);
+	case FS_NONE_OS:
+		return VFSOS_Open(filename, mode);
 
 	case FS_GAME_OS:	//OS access only, no paks
 		vfs = FS_OpenGameOS(filename, mode);
@@ -1149,11 +1142,11 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 		return loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode);
 
 	case FS_ANY:
-		vfs = FS_OpenVFS(filename, mode, FS_NONE_OS);
+		vfs = FS_OpenVFS(filename, mode, FS_HOME);
 		if (vfs)
 			return vfs;
 
-		vfs = FS_OpenVFS(filename, mode, FS_HOME);
+		vfs = FS_OpenVFS(filename, mode, FS_NONE_OS);
 		if (vfs)
 			return vfs;
 
@@ -2733,10 +2726,7 @@ static void FS_CreatePathRelative(const char *pname, int relativeto)
 	switch (relativeto)
 	{
 	case FS_NONE_OS:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, pname);
-		else
-			snprintf(fullname, sizeof(fullname), "%s", pname);
+		snprintf(fullname, sizeof(fullname), "%s", pname);
 		break;
 
 	case FS_GAME_OS:
