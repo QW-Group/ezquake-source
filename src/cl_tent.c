@@ -709,7 +709,7 @@ static qbool CL_TE_SuperSpikeEffect(pscript_effect_t effect, pscript_effect_t pl
 	return CL_TE_Effect(effect, pos, NULL, 1) || CL_TE_Effect(plain, pos, NULL, 2) || CL_TE_Effect(PSCRIPT_TE_GUNSHOT, pos, NULL, 20) || PScript_RunParticleEffect(pos, vec3_origin, 0, 20);
 }
 
-/* Wizard and knight spike impacts; scripted tells that a scripted effect drew the particles. */
+/* Wizard spike impacts; scripted tells that a scripted effect drew the particles. */
 static void CL_Parse_TE_WIZSPIKE(vec3_t pos, qbool scripted)
 {
 	if (!scripted)
@@ -727,23 +727,20 @@ static void CL_Parse_TE_WIZSPIKE(vec3_t pos, qbool scripted)
 	S_StartSound(-1, 0, cl_sfx_wizhit, pos, 1, 1);
 }
 
-// FIXME: D-Kure: This seems to be unused
-#if 0
-static void CL_Parse_TE_KNIGHTSPIKE(vec3_t pos)
+/* Knight spike impacts; scripted tells that a scripted effect drew the particles. */
+static void CL_TE_KnightSpike(vec3_t pos, qbool scripted)
 {
-	if (amf_part_sparks.value && !Rulesets_RestrictParticles())
-	{
-		byte col[3] = {255, 77, 0};
-		SparkGen(pos, col, 20, 150, 1);
+	if (!scripted) {
+		if (amf_part_sparks.value && !Rulesets_RestrictParticles()) {
+			byte col[3] = { 255, 77, 0 };
+			SparkGen(pos, col, 20, 150, 1);
+		}
+		else {
+			R_RunParticleEffect(pos, vec3_origin, 226, 20);
+		}
 	}
-	else
-	{
-		R_RunParticleEffect(pos, vec3_origin, 226, 20);
-	}
-
 	S_StartSound(-1, 0, cl_sfx_knighthit, pos, 1, 1);
 }
-#endif
 
 /* Spike and bullet impacts; scripted tells that a scripted effect drew the particles. */
 static void CL_Parse_TE_SPIKE(vec3_t pos, qbool scripted)
@@ -1360,8 +1357,7 @@ qbool CL_TempEntityEffect(int type, vec3_t pos)
 
 		// Spike hitting wall.
 		case TE_KNIGHTSPIKE:
-			// The point effect has Quake's knight spike colour; ezQuake's own particles draw a wizard spike.
-			CL_Parse_TE_WIZSPIKE(pos, CL_TE_Effect(PSCRIPT_TE_KNIGHTSPIKE, pos, NULL, 1) || PScript_RunParticleEffect(pos, vec3_origin, 226, 20));
+			CL_TE_KnightSpike(pos, CL_TE_Effect(PSCRIPT_TE_KNIGHTSPIKE, pos, NULL, 1) || PScript_RunParticleEffect(pos, vec3_origin, 226, 20));
 			return true;
 
 		// Spike hitting wall.
