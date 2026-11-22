@@ -253,6 +253,7 @@ int FS_FOpenPathFile (const char *filename, FILE **file);
 byte *FS_LoadTempFile (char *path, int *len);
 byte *FS_LoadHunkFile (char *path, int *len);
 byte *FS_LoadHeapFile (const char *path, int *len);
+byte *FS_LoadGameHeapFile(const char *path, int *len);
 byte *FS_LoadGameHunkFile(const char *path, int *len);
 byte *FS_LoadGameTempFile(const char *path, int *len);
 byte *FS_LoadOSPathHeapFile(char *path, int *len);

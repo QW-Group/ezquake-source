@@ -431,6 +431,11 @@ byte *FS_LoadHeapFile (const char *path, int *len)
 	return FS_LoadFile(FS_OpenFileForLoad(path), path, FS_LOAD_HEAP, len);
 }
 
+byte *FS_LoadGameHeapFile(const char *path, int *len)
+{
+	return FS_LoadFile(FS_OpenVFS(path, "rb", FS_GAME), path, FS_LOAD_HEAP, len);
+}
+
 byte *FS_LoadGameHunkFile(const char *path, int *len)
 {
 	return FS_LoadFile(FS_OpenVFS(path, "rb", FS_GAME), path, FS_LOAD_HUNK, len);

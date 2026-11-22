@@ -616,7 +616,11 @@ void Cmd_StuffCmds_f (void)
 
 static char *Cmd_LoadConfig(const char *path)
 {
+#ifdef SERVERONLY
+	char *text = (char *)FS_LoadGameHeapFile(path, NULL);
+#else
 	char *text = (char *)FS_LoadHeapFile(path, NULL);
+#endif
 	const char *separator = "\n";
 	size_t len, end, separator_size;
 	qbool has_newline, trailing_backslash;
