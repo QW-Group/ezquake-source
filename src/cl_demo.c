@@ -3176,7 +3176,7 @@ void CL_CheckQizmoCompletion(void)
 		Sys_remove(tempqwz_name);
 		tempqwz_name[0] = 0;
 
-		data = FS_LoadHeapFile(tempqwd_name, &length);
+		data = FS_LoadOSPathHeapFile(tempqwd_name, &length);
 		if (data == NULL) {
 			Com_Printf("Error: Couldn't open %s\n", tempqwd_name);
 			qwz_playback = false;
@@ -3917,7 +3917,7 @@ static void CL_StartDemoCommand(void)
 			return;
 		}
 
-		data = FS_LoadHeapFile(tempqwd_name, &length);
+		data = FS_LoadOSPathHeapFile(tempqwd_name, &length);
 		if (data) {
 			playbackfile = FSMMAP_OpenVFS(data, length);
 		}

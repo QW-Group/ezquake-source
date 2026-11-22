@@ -3287,7 +3287,7 @@ static void AuthUsernameChanged(cvar_t* var, char* value, qbool* cancel)
 
 	Cfg_GetConfigPath(path, sizeof(path), filename);
 
-	auth_token = FS_LoadTempFile(path, &auth_token_length);
+	auth_token = FS_LoadOSPathTempFile(path, &auth_token_length);
 	if (auth_token == 0) {
 		Com_Printf("Unable to load authentication token for '%s'\n", value);
 		*cancel = true;
