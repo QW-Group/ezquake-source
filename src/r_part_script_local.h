@@ -217,6 +217,7 @@ typedef struct pscript_surftri_s {
 	float area;
 	double nexttime;
 	int ptype;
+	float maxlife; // longest die along ptype's assoc chain, bounded
 	struct msurface_s *face;
 } pscript_surftri_t;
 
@@ -396,6 +397,7 @@ extern cvar_t r_bouncysparks;
 extern cvar_t r_decal_noperpendicular;
 extern cvar_t r_part_rain;
 extern cvar_t r_part_rain_quantity;
+extern cvar_t r_part_rain_prewarm;
 extern cvar_t r_particle_tracelimit;
 extern cvar_t r_part_sparks;
 extern cvar_t r_part_sparks_trifan;
@@ -477,6 +479,8 @@ void PScript_ClipDecal(struct model_s *mod, vec3_t center, vec3_t normal, vec3_t
 
 // r_part_script_surface.c
 void PScript_ClearAllSurfaceParticles(void);
+void PScript_FreeSurfaceLeaves(void);
+void PScript_ForgetSurfaceLeaves(void);
 void PScript_RebuildSurfaceEmitters(void);
 void PScript_AddSurfaceView(void);
 void PScript_RunSurfaceEmitters(void);

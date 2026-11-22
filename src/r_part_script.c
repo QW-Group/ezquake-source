@@ -202,6 +202,7 @@ static void PScript_OnChangeRain(cvar_t *var, char *value, qbool *cancel)
 static cvar_t r_particledesc = { "r_particledesc", "", CVAR_NOTFROMSERVER, PScript_OnChangeParticleDesc };
 cvar_t r_part_rain = { "r_part_rain", "1", 0, PScript_OnChangeRain };
 cvar_t r_part_rain_quantity = { "r_part_rain_quantity", "1" };
+cvar_t r_part_rain_prewarm = { "r_part_rain_prewarm", "1" };
 cvar_t r_bouncysparks = { "r_bouncysparks", "1" };
 cvar_t r_decal_noperpendicular = { "r_decal_noperpendicular", "1" };
 cvar_t r_particle_tracelimit = { "r_particle_tracelimit", "65536" };
@@ -1057,6 +1058,7 @@ void PScript_Init(void)
 		Cvar_Register(&r_particledesc);
 		Cvar_Register(&r_part_rain);
 		Cvar_Register(&r_part_rain_quantity);
+		Cvar_Register(&r_part_rain_prewarm);
 		Cvar_Register(&r_bouncysparks);
 		Cvar_Register(&r_decal_noperpendicular);
 		Cvar_Register(&r_particle_tracelimit);
@@ -1101,6 +1103,7 @@ void PScript_Shutdown(void)
 
 	PScript_FreePools();
 	PScript_ClearAllSurfaceParticles();
+	PScript_FreeSurfaceLeaves();
 	for (i = 0; i < pscript_numtypes; i++) {
 		Q_free(pscript_types[i].sounds);
 		Q_free(pscript_types[i].ramp);
@@ -1144,12 +1147,14 @@ void PScript_Shutdown(void)
 }
 
 // Called on map changes, after demo seeks and when rulesets start to restrict
-// particles. Drops every live instance; sets and textures stay.
+// particles. Drops every live instance; sets and textures stay. The areas
+// in view are empty again, so they prewarm.
 void PScript_ClearParticles(void)
 {
 	if (pscript_active) {
 		PScript_StartupPools();
 	}
+	PScript_ForgetSurfaceLeaves();
 	pscript_last = r_refdef2.time;
 }
 
