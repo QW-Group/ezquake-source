@@ -811,8 +811,9 @@ void SV_MVDEmbedInfo_f(void)
 	FILE* src;
 	byte* buf;
 	size_t sz;
-	char name[MAX_OSPATH];
+	const char* name;
 	char path[MAX_OSPATH];
+	int path_length;
 
 	if (Cmd_Argc() == 1) {
 		Con_Printf("Embeds contents of a file into mvd/qtv stream\n");
@@ -820,10 +821,14 @@ void SV_MVDEmbedInfo_f(void)
 		return;
 	}
 
-	// No config files, no sub-directories
-	strlcpy(name, Cmd_Argv(1), sizeof(name));
-	snprintf(path, MAX_OSPATH, "%s/%s", fs_gamedir, Cmd_Argv(1));
-	if (FS_UnsafeFilename(path) || !strcasecmp(COM_FileExtension(name), "cfg")) {
+	name = Cmd_Argv(1);
+	if (FS_UnsafeFilename(name) || FS_HasAmbiguousWindowsPath(name) || !strcasecmp(COM_FileExtension(name), "cfg")) {
+		Con_Printf("Unsafe filename detected - cancelled\n");
+		return;
+	}
+
+	path_length = snprintf(path, sizeof(path), "%s/%s", fs_gamedir, name);
+	if (path_length < 0 || (size_t)path_length >= sizeof(path)) {
 		Con_Printf("Unsafe filename detected - cancelled\n");
 		return;
 	}

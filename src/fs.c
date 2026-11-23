@@ -3217,6 +3217,28 @@ qbool FS_UnsafeFilename(const char* fileName)
 		strstr(fileName, "..");
 }
 
+/* Win32 can open a different name after trimming path components or parsing an NTFS stream. */
+qbool FS_HasAmbiguousWindowsPath(const char* name)
+{
+#ifdef _WIN32
+	while (*name) {
+		size_t length = strcspn(name, "/\\:");
+		const char* end = name + length;
+
+		if (*end == ':' || (length && end[-1] == ' ') || (length > 1 && end[-1] == '.')) {
+			return true;
+		}
+		if (!*end) {
+			break;
+		}
+		name = end + 1;
+	}
+#else
+	(void)name;
+#endif
+	return false;
+}
+
 void FS_Shutdown(void)
 {
 	searchpath_t* path;
