@@ -243,8 +243,6 @@ extern char	com_gamedirfile[MAX_QPATH];
 extern char com_homedir[MAX_PATH];
 #endif
 
-extern qbool file_from_gamedir;	// set if file came from a gamedir (and gamedir wasn't id1/qw)
-
 void FS_InitFilesystem (void);
 void FS_Shutdown(void);
 void FS_SetGamedir (char *dir, qbool force);

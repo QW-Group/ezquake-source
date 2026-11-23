@@ -321,12 +321,6 @@ int FS_FOpenPathFile (const char *filename, FILE **file) {
 	return -1;
 }
 
-//Finds the file in the search path.
-//Sets fs_netpath and one of handle or file
-//Sets fs_filepos to 0 for non paks, and to beging of file in pak file
-qbool	file_from_pak;		// global indicating file came from a packfile
-qbool	file_from_gamedir;	// global indicating file came from a gamedir (and gamedir wasn't id1/qw)
-
 static void FS_NormalizeSlashes(char *path)
 {
 	for (; *path; ++path) {
