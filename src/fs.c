@@ -114,7 +114,6 @@ static void FS_AddDataFiles(char *pathto, searchpath_t *search, char *extension,
 static void FS_AddGameSearchPath(const char *dir, FS_Load_File_Types loadstuff);
 static searchpath_t *FS_AddPathHandle(char *probablepath, searchpathfuncs_t *funcs, void *handle, qbool copyprotect, qbool istemporary, FS_Load_File_Types loadstuff);
 
-qbool Sys_PathProtection(const char *pattern);
 void FS_Dir_f (void);
 void FS_Locate_f (void);
 
@@ -328,7 +327,6 @@ int FS_FOpenPathFile (const char *filename, FILE **file) {
 qbool	file_from_pak;		// global indicating file came from a packfile
 qbool	file_from_gamedir;	// global indicating file came from a gamedir (and gamedir wasn't id1/qw)
 
-#ifndef SERVERONLY
 static void FS_NormalizeSlashes(char *path)
 {
 	for (; *path; ++path) {
@@ -337,22 +335,41 @@ static void FS_NormalizeSlashes(char *path)
 		}
 	}
 }
-#endif
+
+// Copy only when a caller's path needs normalization.
+static char *FS_CopyPathWithForwardSlashes(const char *path)
+{
+	char *copy;
+
+	if (!strchr(path, '\\')) {
+		return NULL;
+	}
+
+	copy = Q_strdup(path);
+	FS_NormalizeSlashes(copy);
+	return copy;
+}
 
 static vfsfile_t *FS_OpenFileForLoad(const char *path)
 {
 	flocation_t loc;
+	vfsfile_t *file;
+	char *normalized = FS_CopyPathWithForwardSlashes(path);
 
-	if (Sys_PathProtection(path)) {
-		return NULL;
+	if (normalized) {
+		path = normalized;
 	}
 
 	// Search mounted directories and packs before trying the fallback paths.
 	FS_FLocateFile(path, FSLFRT_LENGTH, &loc);
 	if (loc.search) {
-		return loc.search->funcs->OpenVFS(loc.search->handle, &loc, "rb");
+		file = loc.search->funcs->OpenVFS(loc.search->handle, &loc, "rb");
+	} else {
+		file = FS_OpenVFS(path, "rb", FS_ANY);
 	}
-	return FS_OpenVFS(path, "rb", FS_ANY);
+
+	Q_free(normalized);
+	return file;
 }
 
 typedef enum {
@@ -1063,6 +1080,14 @@ static vfsfile_t *FS_OpenGameOS(const char *filename, char *mode)
 {
 	qbool create_path;
 	vfsfile_t *vfs;
+#ifdef SERVERONLY
+	char cleanpath[MAX_OSPATH];
+
+	filename = FS_GetCleanPath(filename, cleanpath, sizeof(cleanpath));
+	if (!filename) {
+		return NULL;
+	}
+#endif
 
 	// Retry writes with directory creation only after every normal open fails.
 	for (create_path = false; ; create_path = true) {
@@ -1118,16 +1143,19 @@ qbool FS_FormatOSPath(char *out, size_t size, const char *format, ...)
 vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 {
 	char fullname[MAX_OSPATH];
+	char *normalized;
 	flocation_t loc;
 	vfsfile_t *vfs = NULL;
 
-	// Keep explicit OS paths intact and normalize paths used for game lookups.
-	if (relativeto != FS_NONE_OS && Sys_PathProtection(filename)) {
-		return NULL;
-	}
-
 	if (strcmp(mode, "rb") && strcmp(mode, "wb") && strcmp(mode, "ab")) {
 		return NULL; //urm, unable to write/append
+	}
+
+	normalized = relativeto == FS_NONE_OS ? NULL : FS_CopyPathWithForwardSlashes(filename);
+	if (normalized) {
+		vfs = FS_OpenVFS(normalized, mode, relativeto);
+		Q_free(normalized);
+		return vfs;
 	}
 
 	/* General opening of files */
@@ -2418,30 +2446,6 @@ char *FS_GetPackNames(char *buffer, int buffersize, qbool referencedonly)
 }
 
 
-//true if protection kicks in
-qbool Sys_PathProtection(const char *pattern)
-{
-	if (strchr(pattern, '\\'))
-	{
-		char *s;
-		//Com_Printf("Warning: \\ charactures in filename %s\n", pattern);
-		while((s = strchr(pattern, '\\')))
-			*s = '/';
-	}
-
-	return false; // Ignore the stuff below so we always succed
-
-/*	if (strstr(pattern, ".."))
-		Com_Printf("Error: '..' charactures in filename %s\n", pattern);
-	else if (pattern[0] == '/')
-		Com_Printf("Error: absolute path in filename %s\n", pattern);
-	else if (strstr(pattern, ":")) //win32 drive seperator (or mac path seperator, but / works there and they're used to it)
-		Com_Printf("Error: absolute path in filename %s\n", pattern);
-	else
-		return false;
-	return true;*/
-}
-
 #ifdef WITH_ZIP
 typedef struct {
 	unsigned char ident1;
@@ -2631,8 +2635,13 @@ static void FS_CreatePathRelative(const char *pname, int relativeto)
 		break;
 
 	case FS_GAME_OS:
+#ifdef SERVERONLY
+		// FS_OpenGameOS creates parent directories after validating the path.
+		return;
+#else
 		snprintf(fullname, sizeof(fullname), "%s/%s", com_gamedir, pname);
 		break;
+#endif
 
 	case FS_ANY:
 		if (*com_homedir)
@@ -3159,17 +3168,13 @@ FS_GetCleanPath
 */
 static const char *FS_GetCleanPath(const char *pattern, char *outbuf, int outlen)
 {
-	char *s;
-
-	if (strchr(pattern, '\\'))
-	{
-		strlcpy(outbuf, pattern, outlen);
-		pattern = outbuf;
-
+	if (strchr(pattern, '\\')) {
+		if (strlcpy(outbuf, pattern, outlen) >= (size_t)outlen) {
+			return NULL;
+		}
 		Con_Printf("Warning: \\ characters in filename %s\n", pattern);
-
-		for (s = (char*)pattern; (s = strchr(s, '\\')); s++)
-			*s = '/';
+		FS_NormalizeSlashes(outbuf);
+		pattern = outbuf;
 	}
 
 	if (*pattern == '/' || strstr(pattern, "..") || strstr(pattern, ":"))
