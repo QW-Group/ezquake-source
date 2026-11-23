@@ -836,8 +836,10 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	else {
 		FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
 	}
+#ifndef SERVERONLY
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "ezquake");
 	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
+#endif
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "qw");
 	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
 	if (*com_homedir) {
