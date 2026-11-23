@@ -532,31 +532,14 @@ static void Web_PostFileRequest_f(void)
 	char* requestId = NULL;
 	char url[512];
 	char path[MAX_OSPATH];
+	char demo_path[MAX_OSPATH];
+	int length;
 	CURLFORMcode code = CURL_FORMADD_OK;
-	const char* specified = Cmd_Argv(3);
+	const char* filename;
 
 	if (!sv_www_address.string[0]) {
 		Con_Printf("Address not set - functionality disabled\n");
 		return;
-	}
-
-	if (specified[0] == '*' && specified[1] == '\0') {
-		const char* demoname = SV_MVDDemoName();
-
-		if (!sv.mvdrecording || !demoname) {
-			Con_Printf("Not recording demo!\n");
-			return;
-		}
-
-		snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, sv_demoDir.string, SV_MVDName2Txt(demoname));
-	}
-	else {
-		if (strstr(specified, ".cfg") || !strchr(specified, '/')) {
-			Con_Printf("Filename invalid\n");
-			return;
-		}
-
-		snprintf(path, MAX_OSPATH, "%s/%s", fs_gamedir, specified);
 	}
 
 	if (Cmd_Argc() < 4) {
@@ -564,7 +547,40 @@ static void Web_PostFileRequest_f(void)
 		return;
 	}
 
-	if (FS_UnsafeFilename(path)) {
+	filename = Cmd_Argv(3);
+	if (filename[0] == '*' && filename[1] == '\0') {
+		const char* demoname = SV_MVDDemoName();
+		const char* sidecar;
+
+		if (!sv.mvdrecording || !demoname) {
+			Con_Printf("Not recording demo!\n");
+			return;
+		}
+
+		sidecar = SV_MVDName2Txt(demoname);
+		if (!sidecar) {
+			Con_Printf("Filename invalid\n");
+			return;
+		}
+
+		// The recorder appends the configured directory even if it starts with a slash.
+		length = snprintf(demo_path, sizeof(demo_path), "%s/%s", sv_demoDir.string, sidecar);
+		if (length < 0 || (size_t)length >= sizeof(demo_path)
+			|| strstr(demo_path, "..") || FS_HasAmbiguousWindowsPath(demo_path)) {
+			Con_Printf("Filename invalid\n");
+			return;
+		}
+
+		filename = demo_path;
+	} else if (FS_UnsafeFilename(filename) || FS_HasAmbiguousWindowsPath(filename)
+		|| strstr(filename, ".cfg")
+		|| !strcasecmp(COM_FileExtension(filename), "cfg")) {
+		Con_Printf("Filename invalid\n");
+		return;
+	}
+
+	length = snprintf(path, sizeof(path), "%s/%s", fs_gamedir, filename);
+	if (length < 0 || (size_t)length >= sizeof(path)) {
 		Con_Printf("Filename invalid\n");
 		return;
 	}
