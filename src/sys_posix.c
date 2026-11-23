@@ -353,14 +353,18 @@ char *Sys_getcwd(char *buf, int bufsize)
 	return getcwd(buf, bufsize);
 }
 
-#if (_POSIX_TIMERS > 0) && defined(_POSIX_MONOTONIC_CLOCK)
+// macOS exposes clock_gettime independently of _POSIX_TIMERS.
+#if defined(__APPLE__) || (_POSIX_TIMERS > 0 && defined(_POSIX_MONOTONIC_CLOCK))
 #include <time.h>
 double Sys_DoubleTime(void)
 {
 	static unsigned int secbase;
 	struct timespec ts;
 
-#ifdef __linux__
+#if defined(__APPLE__)
+	// Like the Linux raw monotonic clock, this stops during suspend.
+	clock_gettime(CLOCK_UPTIME_RAW, &ts);
+#elif defined(__linux__)
 	clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
 #else
 	clock_gettime(CLOCK_MONOTONIC, &ts);
