@@ -846,15 +846,16 @@ void CL_SendChunkDownloadReq(void)
 			return;
 
 		i = CL_RequestADownloadChunk();
-		// i < 0 mean client complete download, let server know
-		// qqshka: download percent optional, server does't really require it, that my extension, hope does't fuck up something
-
 		if (i < 0)
 		{
-			if (strstr(Info_ValueForKey(cl.serverinfo, "*version"), "MVDSV"))
+			const char *version = Info_ValueForKey(cl.serverinfo, "*version");
+
+			// stopdownload clears the server's demo queue, so signal completion with nextdl.
+			if (strstr(version, "MVDSV") || !strncmp(version, "EZQUAKE ", sizeof("EZQUAKE ") - 1)) {
 				CL_SendClientCommand(true, "nextdl %d %d %d", i, cls.downloadpercent, chunked_download_number);
-			else
+			} else {
 				CL_SendClientCommand(true, "stopdownload");
+			}
 
 			cls.downloadpercent = 100;
 			CL_FinishDownload(); // this also request next dl
