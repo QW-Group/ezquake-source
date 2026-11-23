@@ -252,7 +252,6 @@ This will be sent on the initial connection and upon each server load.
 int SV_VIPbyIP (netadr_t adr);
 static void Cmd_New_f (void)
 {
-	char		*gamedir;
 	int			playernum;
 	extern cvar_t sv_serverip;
 	extern cvar_t sv_getrealip;
@@ -369,10 +368,6 @@ static void Cmd_New_f (void)
 	//	SV_FullClientUpdate (sv_client, &sv.reliable_datagram);
 	//	sv_client->sendinfo = true;
 
-	gamedir = Info_ValueForKey (svs.info, "*gamedir");
-	if (!gamedir[0])
-		gamedir = "qw";
-
 #ifdef FTE_PEXT_FLOATCOORDS
 	if (msg_coordsize > 2 && !(sv_client->fteprotocolextensions & FTE_PEXT_FLOATCOORDS))
 	{
@@ -485,7 +480,7 @@ static void Cmd_New_f (void)
 #endif
 	MSG_WriteLong  (&sv_client->netchan.message, PROTOCOL_VERSION);
 	MSG_WriteLong  (&sv_client->netchan.message, svs.spawncount);
-	MSG_WriteString(&sv_client->netchan.message, gamedir);
+	MSG_WriteString(&sv_client->netchan.message, SV_GetAdvertisedGamedir());
 
 	playernum = NUM_FOR_EDICT(sv_client->edict)-1;
 	if (sv_client->spectator)

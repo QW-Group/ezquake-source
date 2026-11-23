@@ -1446,7 +1446,6 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	mvddest_t *d;
 	client_t* player;
 	edict_t* ent;
-	char* gamedir;
 	int i;
 	int sound_count = SV_SoundPrecacheCount(sv.sound_precache, MAX_SOUNDS);
 
@@ -1464,10 +1463,6 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	SZ_Init(&buf, buf_data, sizeof(buf_data));
 
 	// send the serverdata
-
-	gamedir = Info_ValueForKey(svs.info, "*gamedir");
-	if (!gamedir[0])
-		gamedir = "qw";
 
 	MSG_WriteByte(&buf, svc_serverdata);
 
@@ -1554,7 +1549,7 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 
 	MSG_WriteLong (&buf, PROTOCOL_VERSION);
 	MSG_WriteLong (&buf, svs.spawncount);
-	MSG_WriteString (&buf, gamedir);
+	MSG_WriteString (&buf, SV_GetAdvertisedGamedir());
 
 
 	MSG_WriteFloat (&buf, sv.time);

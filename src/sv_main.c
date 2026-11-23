@@ -3888,6 +3888,16 @@ void OnChange_qconsolelogsay_var (cvar_t *var, char *value, qbool *cancel)
 	logs[CONSOLE_LOG].log_level = Q_atoi(value);
 }
 
+const char *SV_GetAdvertisedGamedir(void)
+{
+	const char *gamedir = Info_ValueForKey(svs.info, "*gamedir");
+
+	if (*gamedir) {
+		return gamedir;
+	}
+	return *com_gamedirfile ? com_gamedirfile : "qw";
+}
+
 #ifdef SERVERONLY
 
 //Free hunk memory up to host_hunklevel
@@ -3986,6 +3996,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Con_Printf ("www authentication disabled (no curl support)\n");
 #endif
 
+	Info_SetValueForStarKey(svs.info, "*gamedir", com_gamedirfile, MAX_SERVERINFO_STRING);
 	Cbuf_InsertText ("exec server.cfg\n");
 
 	// Apply command-line settings after server.cfg and before starting the first map.
