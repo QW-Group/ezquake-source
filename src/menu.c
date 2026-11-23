@@ -758,7 +758,7 @@ void M_SinglePlayer_Draw (void) {
 #ifndef WITH_NQPROGS
 static void CheckSPGame (void) {
 	vfsfile_t *v;
-	if ((v = FS_OpenVFS("spprogs.dat", "rb", FS_ANY))) {
+	if ((v = FS_OpenVFS("spprogs.dat", "rb", FS_GAME))) {
 		VFS_CLOSE(v);
 		m_singleplayer_notavail = false;
 	} else {
@@ -985,8 +985,10 @@ void M_ScanSaves(char* sp_gamedir)
 void M_Menu_Load_f (void) {
 	vfsfile_t *f;
 
-	if (!(f = FS_OpenVFS("spprogs.dat", "rb", FS_ANY)))
+	if (!(f = FS_OpenVFS("spprogs.dat", "rb", FS_GAME))) {
 		return;
+	}
+	VFS_CLOSE(f);
 
 	M_EnterMenu (m_load);
 	// VFS-FIXME: file_from_gamedir is not set in FS_OpenVFS
