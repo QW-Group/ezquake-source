@@ -557,6 +557,44 @@ void Cmd_StuffCmds_f (void)
 	Q_free (token);
 }
 
+static char *Cmd_LoadConfig(const char *path)
+{
+	char *text = (char *)FS_LoadHeapFile(path, NULL);
+	const char *separator = "\n";
+	size_t len, end, separator_size;
+	qbool has_newline, trailing_backslash;
+
+	if (!text || !*text) {
+		return text;
+	}
+
+	// Give the script its own command separator so its last line cannot
+	// consume a following command such as the con_bindphysical reset.
+	len = strlen(text);
+	has_newline = text[len - 1] == '\n';
+	end = len - has_newline;
+
+	// The config can enable cl_curlybraces before its last line,
+	// allowing a backslash to escape LF or CRLF.
+	if (end && text[end - 1] == '\r') {
+		--end;
+	}
+	trailing_backslash = end && text[end - 1] == '\\';
+	if (has_newline && !trailing_backslash) {
+		return text;
+	}
+
+	if (!has_newline && trailing_backslash) {
+		// The parser strips both CRs. Two CRs preserve a literal
+		// backslash at EOF and leave the LF as the command separator.
+		separator = "\r\r\n";
+	}
+	separator_size = strlen(separator) + 1;
+	text = Q_realloc(text, len + separator_size);
+	memcpy(text + len, separator, separator_size);
+	return text;
+}
+
 void Cmd_Exec_f (void)
 {
 	char *f, name[MAX_OSPATH];
@@ -583,13 +621,13 @@ void Cmd_Exec_f (void)
 	}
 
 	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
-	if (!(f = (char *) FS_LoadHeapFile(name, NULL)))	{
+	if (!(f = Cmd_LoadConfig(name))) {
 		const char *p;
 		p = COM_SkipPath (name);
 		if (!strchr (p, '.')) {
 			// no extension, so try the default (.cfg)
 			strlcat (name, ".cfg", sizeof (name));
-			f = (char *)FS_LoadHeapFile(name, NULL);
+			f = Cmd_LoadConfig(name);
 		}
 		if (!f) {
 			Com_Printf ("couldn't exec %s\n", Cmd_Argv(1));
@@ -602,7 +640,7 @@ void Cmd_Exec_f (void)
 
 	// All config files default to con_bindphysical 1, and would have to over-ride if they
 	//   want different behaviour.
-	sprintf(reset_bindphysical, "\ncon_bindphysical %d\n", con_bindphysical.integer);
+	sprintf(reset_bindphysical, "con_bindphysical %d\n", con_bindphysical.integer);
 	if (cbuf_current == &cbuf_svc) {
 		Cbuf_AddTextEx(&cbuf_main, "con_bindphysical 1\n");
 		Cbuf_AddTextEx(&cbuf_main, f);
