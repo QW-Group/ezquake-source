@@ -4042,19 +4042,6 @@ static void CL_Play_f(void)
 	CL_StartDemoCommand();
 }
 
-static qbool CL_DemoPathIsAbsolute(const char *name)
-{
-	if (name[0] == '/') {
-		return true;
-	}
-#ifdef _WIN32
-	return name[0] == '\\'
-		|| (name[0] && name[1] == ':' && (name[2] == '/' || name[2] == '\\'));
-#else
-	return false;
-#endif
-}
-
 static vfsfile_t* CL_Open_Demo_File(const char* name, qbool searchpaks, char** fullPath)
 {
 	static char fullname[MAX_OSPATH];
@@ -4065,7 +4052,7 @@ static vfsfile_t* CL_Open_Demo_File(const char* name, qbool searchpaks, char** f
 		*fullPath = fullname;
 
 	// A file selected by the user may be outside all mounted directories.
-	if (CL_DemoPathIsAbsolute(name)) {
+	if (COM_IsAbsolutePath(name)) {
 		strlcpy(fullname, name, sizeof(fullname));
 		return FS_OpenVFS(name, "rb", FS_NONE_OS);
 	}

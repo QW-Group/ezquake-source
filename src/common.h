@@ -204,6 +204,7 @@ int COM_GetFloatTokens(const char *s, float *fl_array, int fl_array_size);
 
 void COM_Init (void);
 
+qbool COM_IsAbsolutePath(const char *path);
 const char *COM_SkipPath (const char *pathname);
 char *COM_SkipPathWritable (char *pathname);
 char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit);
@@ -254,7 +255,7 @@ byte *FS_LoadHeapFile (const char *path, int *len);
 byte *FS_LoadGameHeapFile(const char *path, int *len);
 byte *FS_LoadGameHunkFile(const char *path, int *len);
 byte *FS_LoadGameTempFile(const char *path, int *len);
-byte *FS_LoadOSPathHeapFile(char *path, int *len);
+byte *FS_LoadOSPathHeapFile(const char *path, int *len);
 byte *FS_LoadOSPathTempFile(char *path, int *len);
 qbool FS_WriteFile(const char *filename, const void *data, int len); // Write a loose file through FS_GAME_OS.
 qbool FS_WriteFile_2(const char *filename, const void *data, int len); //The filename used as is

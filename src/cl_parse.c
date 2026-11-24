@@ -1429,6 +1429,15 @@ void CL_StopUpload(void)
 =====================================================================
 */
 
+static void CL_QueueLegacyConfig(const char *path)
+{
+	// The server's game directory may differ from the one mounted locally.
+	// Queue the file we just found instead of resolving it through the mounted game.
+	if (!strpbrk(path, "\"\r\n")) {
+		Cbuf_AddText(va("exec \"%s%s\"\n", COM_IsAbsolutePath(path) ? "" : "./", path));
+	}
+}
+
 void CL_ParseServerData (void) 
 {
 	char *str, fn[MAX_OSPATH];
@@ -1578,7 +1587,7 @@ void CL_ParseServerData (void)
 			if (!strcmp(cls.gamedirfile, com_gamedirfile))
 				Cbuf_AddText ("exec config.cfg\n");
 			else
-				Cbuf_AddText (va("exec ../%s/config.cfg\n", cls.gamedirfile));
+				CL_QueueLegacyConfig(fn);
 		} 
 		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
 		{
@@ -1596,7 +1605,7 @@ void CL_ParseServerData (void)
 			if (!strcmp(cls.gamedirfile, com_gamedirfile))
 				Cbuf_AddText ("exec frontend.cfg\n");
 			else
-				Cbuf_AddText (va("exec ../%s/frontend.cfg\n", cls.gamedirfile));
+				CL_QueueLegacyConfig(fn);
 		} 
 		else if (cfg_legacy_exec.value == 3 && strcmp(cls.gamedir, "qw"))
 		{

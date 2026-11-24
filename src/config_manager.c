@@ -788,7 +788,7 @@ static void ResetConfigs(qbool explicit_reset, qbool read_legacy_configs)
 		Cbuf_AddText("cl_warncmd 0\n");
 		Cfg_ExecuteDefaultConfig();
 		Cbuf_Execute();
-		if ((v = FS_OpenVFS("autoexec.cfg", "rb", FS_ANY))) {
+		if ((v = FS_OpenVFS("autoexec.cfg", "rb", FS_GAME))) {
 			Cbuf_AddText("exec autoexec.cfg\n");
 			VFS_CLOSE(v);
 		}

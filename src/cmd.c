@@ -614,13 +614,24 @@ void Cmd_StuffCmds_f (void)
 	Q_free (token);
 }
 
+static qbool Cmd_ConfigIsOSPath(const char *path)
+{
+#ifndef SERVERONLY
+	if (COM_IsAbsolutePath(path) || !strncmp(path, "./", 2) || !strncmp(path, "../", 3)) {
+		return true;
+	}
+#ifdef _WIN32
+	return (path[0] && path[1] == ':') || !strncmp(path, ".\\", 2) || !strncmp(path, "..\\", 3);
+#endif
+#else
+	(void)path;
+#endif
+	return false;
+}
+
 static char *Cmd_LoadConfig(const char *path)
 {
-#ifdef SERVERONLY
-	char *text = (char *)FS_LoadGameHeapFile(path, NULL);
-#else
-	char *text = (char *)FS_LoadHeapFile(path, NULL);
-#endif
+	char *text = (char *)(Cmd_ConfigIsOSPath(path) ? FS_LoadOSPathHeapFile(path, NULL) : FS_LoadGameHeapFile(path, NULL));
 	const char *separator = "\n";
 	size_t len, end, separator_size;
 	qbool has_newline, trailing_backslash;
@@ -740,7 +751,12 @@ void Cmd_Exec_f (void)
 		}
 	}
 	if (cl_warnexec.integer || developer.integer) {
-		Com_Printf("execing %s/%s\n", FS_Locate_GetPath(name), name);
+		if (Cmd_ConfigIsOSPath(name)) {
+			Com_Printf("execing %s\n", name);
+		}
+		else {
+			Com_Printf("execing %s/%s\n", FS_Locate_GetPath(name), name);
+		}
 	}
 
 	Cmd_QueueConfig(f);

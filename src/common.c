@@ -100,6 +100,19 @@ void COM_StoreOriginalCmdline (int argc, char **argv)
 
 //============================================================================
 
+qbool COM_IsAbsolutePath(const char *path)
+{
+	if (path[0] == '/') {
+		return true;
+	}
+#ifdef _WIN32
+	return path[0] == '\\'
+		|| (path[0] && path[1] == ':' && (path[2] == '/' || path[2] == '\\'));
+#else
+	return false;
+#endif
+}
+
 const char *COM_SkipPath (const char *pathname)
 {
 	const char *last;

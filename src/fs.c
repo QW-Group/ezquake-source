@@ -456,7 +456,7 @@ byte *FS_LoadGameTempFile(const char *path, int *len)
 	return FS_LoadFile(FS_OpenVFS(path, "rb", FS_GAME), path, FS_LOAD_TEMP, len);
 }
 
-byte *FS_LoadOSPathHeapFile(char *path, int *len)
+byte *FS_LoadOSPathHeapFile(const char *path, int *len)
 {
 	return FS_LoadFile(FS_OpenVFS(path, "rb", FS_NONE_OS), path, FS_LOAD_HEAP, len);
 }
