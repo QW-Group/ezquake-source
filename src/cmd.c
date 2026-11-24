@@ -1912,7 +1912,7 @@ static void Cmd_ExecuteStringEx (cbuf_t *context, char *text)
 		}
 
 		if (cmd->function) {
-			if (cbuf_current == &cbuf_svc && !Hash_Get(rc_hash, cmd->name)) {
+			if (cbuf_current == &cbuf_svc && !Hash_Get(rc_hash, cmd->name) && strcmp(cmd->name, "openurl")) {
 				Com_Printf("Blocked %s: not in cl_remote_capabilities\n", cmd->name);
 				goto done;
 			}

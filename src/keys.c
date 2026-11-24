@@ -2096,6 +2096,8 @@ static qbool Key_ConsoleKey(int key)
 	return true;
 }
 
+qbool CL_OpenURL_Key(int key);
+
 // Called by the system between frames for both key up and key down events Should NOT be called during an interrupt!
 void Key_EventEx (int key, wchar unichar, qbool down)
 {
@@ -2138,6 +2140,9 @@ void Key_EventEx (int key, wchar unichar, qbool down)
 			}
 		}
 	}
+
+	if (down && key_dest == key_game && CL_OpenURL_Key(key))
+		return;
 
 	// Handle escape specialy, so the user can never unbind it.
 	if (key == K_ESCAPE)

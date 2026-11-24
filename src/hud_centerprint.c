@@ -149,6 +149,37 @@ static qbool SCR_CheckDrawCenterString(void)
 	return true;
 }
 
+// Prompt box (openurl Y/N), drawn below the centerprint without replacing it
+static char scr_prompt[512];
+static double scr_prompt_end;
+
+void SCR_PromptPrint(const char *str, float seconds)
+{
+	strlcpy(scr_prompt, str, sizeof(scr_prompt));
+	scr_prompt_end = cls.realtime + seconds;
+}
+
+static void SCR_Prompt_Draw(void)
+{
+	char line[256];
+	const char *s = scr_prompt, *end;
+	float y = vid.height * 0.68;
+	size_t len;
+
+	if (!scr_prompt[0] || cls.realtime > scr_prompt_end || key_dest != key_game) {
+		return;
+	}
+
+	while (*s) {
+		end = strchr(s, '\n');
+		len = end ? (size_t)(end - s) : strlen(s);
+		strlcpy(line, s, min(len + 1, sizeof(line)));
+		Draw_SString((vid.width - Draw_StringLengthColors(line, -1, 1, false)) / 2, y, line, 1, false);
+		y += 10;
+		s += len + (end ? 1 : 0);
+	}
+}
+
 void SCR_CenterString_Draw(void)
 {
 	float y;
@@ -157,6 +188,8 @@ void SCR_CenterString_Draw(void)
 	qbool proportional = false;
 	extern cvar_t scr_newHud;
 	static cvar_t* hud_draw = NULL;
+
+	SCR_Prompt_Draw();
 
 	if (!SCR_CheckDrawCenterString()) {
 		return;

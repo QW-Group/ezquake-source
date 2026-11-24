@@ -1232,6 +1232,10 @@
   "observeqtv": {
     "description": "Connects to a QTV stream for the specified server IP, or for the currently viewed server if no argument is given. Usage: `observeqtv [ip]`. Looks up the server address in the cached QTV list and issues a `qtvplay <link>` command when a matching entry is found. Requires the QTV list cache to be ready (run `qtv_update` first if not); prints an error if the cache is still being rebuilt, or \"No QTV stream address found for ...\" if no matching entry is in the cache."
   },
+  "openurl": {
+    "description": "Opens an http:// or https:// link in the system web browser. Servers can send this command (for example from a MOTD menu), so it is gated by cl_openurl.",
+    "syntax": "<url>"
+  },
   "order": {
     "description": "`order <element> <option>` -- controls the draw-order (z-order) of the named HUD element relative to all others. Option can be an integer (absolute order value), or one of the keywords: `backward` (decrease by 1), `forward` (increase by 1), `front` (bring to top), `back` (send to bottom). Running `order <element>` with no option prints the element's current order value. Example: `order teaminfo front`, `order clock backward`, `order fps 5`."
   },

@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "cdaudio.h"
+#include <SDL.h>
 #include "cl_slist.h"
 #include "movie.h"
 #include "logging.h"
@@ -1988,6 +1989,73 @@ void CL_OnChange_name_validate(cvar_t *var, char *val, qbool *cancel)
 
 void CL_InitCommands (void);
 
+// openurl <url>: opens an http(s) link in the system browser.
+// Servers can stuff this command, so cl_openurl gates it:
+// 0 = never, 1 = ask on screen (Y/N), 2 = always
+static cvar_t cl_openurl = {"cl_openurl", "1", CVAR_NOTFROMSERVER};
+static char openurl_pending[512];
+static double openurl_pending_time;
+
+static void CL_OpenURL(const char *url)
+{
+	if (SDL_OpenURL(url) != 0) {
+		Com_Printf("openurl: %s\n", SDL_GetError());
+	}
+}
+
+// Called from Key_EventEx, returns true if the key answered the Y/N prompt
+qbool CL_OpenURL_Key(int key)
+{
+	if (!openurl_pending[0]) {
+		return false;
+	}
+	if (Sys_DoubleTime() - openurl_pending_time > 10) {
+		openurl_pending[0] = 0;
+		return false;
+	}
+	if (key == 'y') {
+		CL_OpenURL(openurl_pending);
+	}
+	else if (key != 'n' && key != K_ESCAPE) {
+		return false;
+	}
+
+	openurl_pending[0] = 0;
+	SCR_PromptPrint("", 0);
+	return true;
+}
+
+static void CL_OpenURL_f(void)
+{
+	const char *url = Cmd_Argv(1);
+	const char *p;
+
+	if (Cmd_Argc() != 2 || (strncmp(url, "http://", 7) && strncmp(url, "https://", 8))) {
+		Com_Printf("Usage: %s <http(s)://url>\n", Cmd_Argv(0));
+		return;
+	}
+	for (p = url; *p; p++) {
+		if ((unsigned char)*p <= ' ' || (unsigned char)*p >= 127 || *p == '"' || *p == '\\') {
+			Com_Printf("openurl: invalid url\n");
+			return;
+		}
+	}
+
+	if (!cl_openurl.integer) {
+		Com_Printf("openurl disabled (cl_openurl 0): %s\n", url);
+		return;
+	}
+	if (cl_openurl.integer == 1) {
+		strlcpy(openurl_pending, url, sizeof(openurl_pending));
+		openurl_pending_time = Sys_DoubleTime();
+		Com_Printf("&cFD0Open link?&r %s &c4F1[Y]&r/&cF65[N]&r\n", url);
+		SCR_PromptPrint(va("&cFD0Open link?&r\n\n%s\n\n&c4F1[Y]&r yes   &cF65[N]&r no", url), 10);
+		return;
+	}
+
+	CL_OpenURL(url);
+}
+
 static void CL_InitLocal(void)
 {
 	char st[256];
@@ -2184,6 +2252,8 @@ static void CL_InitLocal(void)
 
 	Cvar_Register (&cl_username);
 	Cmd_AddCommand("authenticate", CL_Authenticate_f);
+	Cvar_Register (&cl_openurl);
+	Cmd_AddCommand("openurl", CL_OpenURL_f);
 
 	// debugging antilag
 	Cvar_Register(&cl_debug_antilag_view);
