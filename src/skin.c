@@ -252,6 +252,7 @@ static void Skin_Find(player_info_t *sc)
 static byte* Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *real_width, int *real_height)
 {
 	byte *pic;
+	vfsfile_t *file;
 
 	*max_w = *max_h = *bpp = 0;
 
@@ -265,7 +266,8 @@ static byte* Skin_PixelsLoad(char *name, int *max_w, int *max_h, int *bpp, int *
 		return pic;
 	}
 
-	if ((pic = Image_LoadPCX(NULL, name, 0, 0, real_width, real_height))) {
+	file = FS_OpenVFS(name, "rb", FS_GAME);
+	if (file && (pic = Image_LoadPCX(file, name, 0, 0, real_width, real_height))) {
 		// PCX is limited.
 		*max_w = 320;
 		*max_h = 200;

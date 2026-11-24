@@ -1121,7 +1121,8 @@ int CL_CalcNetStatistics(
 int CL_CalcNet (void);
 void CL_ParseServerMessage (void);
 void CL_NewTranslation (int slot);
-qbool CL_CheckOrDownloadFile (char *filename);
+qbool CL_Download_Accept(const char *filename, relativeto_t relativeto);
+qbool CL_CheckOrDownloadFile(const char *filename);
 qbool CL_IsUploading(void);
 void CL_NextUpload(void);
 void CL_StartUpload (byte *data, int size);

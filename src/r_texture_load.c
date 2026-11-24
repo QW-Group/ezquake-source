@@ -287,7 +287,7 @@ byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, i
 	}
 
 	snprintf(name, sizeof(name), "%s.link", basename);
-	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) {
+	if ((f = FS_OpenVFS(name, "rb", FS_GAME))) {
 		char link[128];
 		int len;
 
@@ -311,7 +311,7 @@ byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, i
 		}
 
 		snprintf(name, sizeof(name), "textures/%s", link);
-		if (len >= 3 && (f = FS_OpenVFS(name, "rb", FS_ANY))) {
+		if (len >= 3 && (f = FS_OpenVFS(name, "rb", FS_GAME))) {
 			// The loaders close f, also when they fail
 			if (!strcasecmp(link + len - 3, "tga")) {
 				data = Image_LoadTGA(f, name, matchwidth, matchheight, real_width, real_height);
@@ -361,7 +361,7 @@ byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, i
 		}
 
 		snprintf(name, sizeof(name), "%s.%s", basename, formats[i].extension);
-		if ((file = FS_OpenVFS(name, "rb", FS_ANY))) {
+		if ((file = FS_OpenVFS(name, "rb", FS_GAME))) {
 			if (f == NULL || (f->copyprotected && !file->copyprotected)) {
 				if (f) {
 					VFS_CLOSE(f);

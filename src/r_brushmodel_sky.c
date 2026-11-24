@@ -319,7 +319,7 @@ static void Skywind_Load_f(void)
 	}
 
 	snprintf(relname, sizeof(relname), "gfx/env/%s" SKYWIND_CFG, active_skyname);
-	buf = (char *)FS_LoadTempFile(relname, NULL);
+	buf = (char *)FS_LoadGameTempFile(relname, NULL);
 	if (!buf)
 	{
 		Con_DPrintf ("Sky wind config not found '%s'.\n", relname);

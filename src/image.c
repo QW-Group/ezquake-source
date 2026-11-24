@@ -660,7 +660,7 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 
 	// Check if we were given a non-null file pointer
 	// if so then use it, otherwise try to open the specified filename.
-	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
+	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_GAME)))
 	{
 		return NULL;
 	}
@@ -1214,7 +1214,7 @@ byte *Image_LoadTGA(vfsfile_t *fin, const char *filename, int matchwidth, int ma
 	byte *fileBuffer, *in, *out, *data, *enddata, rgba[4], palette[256 * 4];
 	int filesize;
 
-	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
+	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_GAME)))
 		return NULL;
 	filesize = VFS_GETLEN(fin);
 	fileBuffer = (byte *) Q_malloc(filesize);
@@ -1705,7 +1705,7 @@ byte *Image_LoadJPEG(vfsfile_t *fin, const char *filename, int matchwidth, int m
 	JSAMPARRAY buffer;		// Output row buffer.
 	int size_stride;		// physical row width in output buffer.
 
-	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
+	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_GAME)))
 		return NULL;
 	filesize = VFS_GETLEN(fin);
 
@@ -1839,7 +1839,7 @@ byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int m
 	int x, y, dataByte, runLength, width, height;
 	int filesize;
 
-	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
+	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_GAME)))
 		return NULL;
 	filesize = VFS_GETLEN(fin);
 

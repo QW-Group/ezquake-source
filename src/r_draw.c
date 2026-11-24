@@ -219,7 +219,7 @@ void customCrosshair_Init(void)
 	customcrosshair_loaded = CROSSHAIR_NONE;
 	R_TextureReferenceInvalidate(crosshairtexture_txt.texnum);
 
-	if (!(f = FS_OpenVFS("crosshairs/crosshair.txt", "rb", FS_ANY))) {
+	if (!(f = FS_OpenVFS("crosshairs/crosshair.txt", "rb", FS_GAME))) {
 		return;
 	}
 
@@ -414,9 +414,7 @@ mpic_t *Draw_CachePicSafe(const char *path, qbool crash, qbool only24bit)
 	char lmp_path[MAX_PATH];
 	mpic_t *fpic;
 	mpic_t *pic_24bit;
-	qbool lmp_found = false;
-	qpic_t *dat = NULL;
-	vfsfile_t *v = NULL;
+	qpic_t *dat;
 
 	// Check if the picture was already cached, if so inc refcount.
 	if ((fpic = CachePic_Find(path, true))) {
@@ -443,18 +441,8 @@ mpic_t *Draw_CachePicSafe(const char *path, qbool crash, qbool only24bit)
 	}
 
 	// Load the ".lmp" file.
-	if ((v = FS_OpenVFS(lmp_path, "rb", FS_ANY))) {
-		VFS_CLOSE(v);
-
-		if (!(dat = (qpic_t *)FS_LoadTempFile(lmp_path, NULL))) {
-			if(crash) {
-				Sys_Error ("Draw_CachePicSafe: failed to load %s", lmp_path);
-			}
-			return NULL;
-		}
-		lmp_found = true;
-
-		// Make sure the width and height are correct.
+	dat = (qpic_t *)FS_LoadGameTempFile(lmp_path, NULL);
+	if (dat) {
 		SwapPic (dat);
 	}
 
@@ -462,7 +450,7 @@ mpic_t *Draw_CachePicSafe(const char *path, qbool crash, qbool only24bit)
 	// If that fails load the data for the lmp instead.
 	if ((pic_24bit = R_LoadPicImage(path, NULL, 0, 0, TEX_ALPHA))) {
 		// Only use the lmp-data if there was one.
-		if (lmp_found) {
+		if (dat) {
 			pic_24bit->width = dat->width;
 			pic_24bit->height = dat->height;
 		}
@@ -1047,7 +1035,7 @@ void Draw_InitConback(void)
 		return;
 	}
 
-	if (!(cb = (qpic_t *)FS_LoadHeapFile("gfx/conback.lmp", NULL))) {
+	if (!(cb = (qpic_t *)FS_LoadGameHeapFile("gfx/conback.lmp", NULL))) {
 		Sys_Error("Couldn't load gfx/conback.lmp");
 		return;
 	}

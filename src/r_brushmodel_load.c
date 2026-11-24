@@ -105,26 +105,26 @@ static byte* LoadColoredLighting(char *name, char **litfilename, int *filesize)
 	}
 
 	*litfilename = va("maps/lits/%s.lit", mapname);
-	data = FS_LoadHunkFile (*litfilename, filesize);
+	data = FS_LoadGameHunkFile(*litfilename, filesize);
 
 	if (!data) {
 		*litfilename = va("maps/%s.lit", mapname);
-		data = FS_LoadHunkFile (*litfilename, filesize);
+		data = FS_LoadGameHunkFile(*litfilename, filesize);
 	}
 
 	if (!data) {
 		*litfilename = va("lits/%s.lit", mapname);
-		data = FS_LoadHunkFile (*litfilename, filesize);
+		data = FS_LoadGameHunkFile(*litfilename, filesize);
 	}
 
 	if (!data && groupname && !system) {
 		*litfilename = va("maps/%s.lit", groupname);
-		data = FS_LoadHunkFile (*litfilename, filesize);
+		data = FS_LoadGameHunkFile(*litfilename, filesize);
 	}
 
 	if (!data && groupname && !system) {
 		*litfilename = va("lits/%s.lit", groupname);
-		data = FS_LoadHunkFile (*litfilename, filesize);
+		data = FS_LoadGameHunkFile(*litfilename, filesize);
 	}
 
 	return data;

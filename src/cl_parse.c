@@ -504,14 +504,12 @@ static FILE *CL_OpenDownloadTempFile(void)
 	return NULL;
 }
 
-qbool CL_Download_Accept(const char *filename);
-
-// Returns true if the file exists, otherwise it attempts to start a download from the server.
-qbool CL_CheckOrDownloadFile(char *filename)
+// Use the loader's search path so a file it cannot open does not suppress a download.
+qbool CL_CheckOrDownloadFile(const char *filename)
 {
 	int length;
 
-	if (!CL_Download_Accept(filename))
+	if (!CL_Download_Accept(filename, FS_GAME))
 	{
 		return true;
 	}
@@ -805,7 +803,7 @@ void Sound_NextDownload (void)
 	for ( ; cls.downloadnumber < MAX_SOUNDS && cl.sound_name[cls.downloadnumber][0]; cls.downloadnumber++)
 	{
 		s = cl.sound_name[cls.downloadnumber];
-		if (!CL_CheckOrDownloadFile(va("sound/%s",s)))
+		if (!CL_CheckOrDownloadFile(va("sound/%s", s)))
 			return;		// started a download
 	}
 

@@ -327,7 +327,7 @@ static void S_FModCheckExtraSounds(void)
 	int i;
 
 	for (i = 0; i < (sizeof(soundlist)/sizeof(*soundlist)); i++) {
-		if (!(data = FS_LoadTempFile(soundlist[i], &filesize))) {
+		if (!(data = FS_LoadGameTempFile(soundlist[i], &filesize))) {
 			Com_Printf("Couldn't load file, ignoring FMod check for '%s'\n", soundlist[i]);
 			continue;
 		}

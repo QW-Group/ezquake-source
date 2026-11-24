@@ -199,7 +199,7 @@ qbool TP_CheckSoundTrigger (wchar *wstr)
 				COM_DefaultExtension (soundname, ".wav", sizeof(soundname));
  
 				// make sure we have it on disk (FIXME)
-				if (!(v = FS_OpenVFS(va("sound/%s", soundname), "rb", FS_ANY))) 
+				if (!(v = FS_OpenVFS(va("sound/%s", soundname), "rb", FS_GAME)))
 					return false;
 				VFS_CLOSE(v);
  

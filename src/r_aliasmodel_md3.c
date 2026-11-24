@@ -49,7 +49,7 @@ static int Mod_ReadFlagsFromMD1(char *name)
 		COM_DefaultExtension(fname, ".mdl", sizeof(fname));
 	}
 
-	pinmodel = (mdl_t *)FS_LoadTempFile(fname, &filesize);
+	pinmodel = (mdl_t *)FS_LoadGameTempFile(fname, &filesize);
 
 	if (!pinmodel || filesize < (int)sizeof(*pinmodel)) {
 		//not found
@@ -96,13 +96,13 @@ static void Mod_MD3LoadSkins(model_t* mod, md3Header_t* header, md3model_t* mode
 		int skinfile_length;
 
 		snprintf(skinfile, sizeof(skinfile), "%s_%d.skin", strippedmodelname, found_skins);
-		sfile = sfilestart = (char *)FS_LoadHeapFile(skinfile, &skinfile_length);
+		sfile = sfilestart = (char *)FS_LoadGameHeapFile(skinfile, &skinfile_length);
 
 		if (!sfile) {
 			// Try alternate name if we have one
 			if (found_skins < sizeof(alternative_names) / sizeof(alternative_names[0])) {
 				snprintf(skinfile, sizeof(skinfile), "%s_%s.skin", strippedmodelname, alternative_names[found_skins]);
-				sfile = sfilestart = (char *)FS_LoadHeapFile(skinfile, &skinfile_length);
+				sfile = sfilestart = (char *)FS_LoadGameHeapFile(skinfile, &skinfile_length);
 			}
 			
 			if (!sfile) {

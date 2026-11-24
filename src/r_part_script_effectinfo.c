@@ -229,7 +229,7 @@ static void EI_LoadParticleFont(ei_slot_t *slots)
 	}
 	EI_SetWholeTexture(&slots[EI_BEAMSLOT], "particles/nexbeam");
 
-	data = (char *)FS_LoadHeapFile("particles/particlefont.txt", &size);
+	data = (char *)FS_LoadGameHeapFile("particles/particlefont.txt", &size);
 	if (!data) {
 		return;
 	}

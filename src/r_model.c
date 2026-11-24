@@ -271,12 +271,12 @@ model_t *Mod_LoadModel(model_t *mod, qbool crash)
 		char newname[MAX_QPATH];
 		COM_StripExtension(mod->name, newname, sizeof(newname));
 		COM_DefaultExtension(newname, ".md3", sizeof(newname));
-		buf = (unsigned *)FS_LoadTempFile(newname, &filesize);
+		buf = (unsigned *)FS_LoadGameTempFile(newname, &filesize);
 	}
 
 	// load the file
 	if (!buf) {
-		buf = (unsigned *)FS_LoadTempFile(mod->name, &filesize);
+		buf = (unsigned *)FS_LoadGameTempFile(mod->name, &filesize);
 	}
 	if (!buf) {
 		if (crash) {

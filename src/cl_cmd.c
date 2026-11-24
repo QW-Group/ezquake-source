@@ -624,7 +624,7 @@ void CL_Rcon_f (void) {
 	NET_SendPacket (NS_CLIENT, strlen(message)+1, message, to);
 }
 
-qbool CL_Download_Accept(const char *filename)
+qbool CL_Download_Accept(const char *filename, relativeto_t relativeto)
 {
 	if (strstr(filename, "..") || !strcmp(filename, "") || filename[0] == '/' || strchr(filename, '\\') || strchr(filename, ':') || strstr(filename, "//")) {
 		Com_Printf("Warning: Invalid characters in filename \"%s\"\n", filename);
@@ -636,7 +636,7 @@ qbool CL_Download_Accept(const char *filename)
 		return false;
 	}
 
-	vfsfile_t *f = FS_OpenVFS(filename, "rb", FS_ANY);
+	vfsfile_t *f = FS_OpenVFS(filename, "rb", relativeto);
 	if (f) {
 		VFS_CLOSE(f);
 		return false;
@@ -666,7 +666,7 @@ void CL_Download_f (void){
 	filename = Cmd_Argv(1);
 	ondiskname = filename;
 
-	if (Cmd_Argc() != 2 || !filename[0] || !CL_Download_Accept(filename)) {
+	if (Cmd_Argc() != 2 || !filename[0] || !CL_Download_Accept(filename, FS_ANY)) {
 		Com_Printf ("Usage: %s <datafile>\n", Cmd_Argv(0));
 		return;
 	}
