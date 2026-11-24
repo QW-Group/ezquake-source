@@ -21,6 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EZQUAKE_R_TEXTURE_H
 #define EZQUAKE_R_TEXTURE_H
 
+#ifdef WITH_PNG
+#include <png.h>
+#endif
+
 #define TEX_COMPLAIN        (1<<0)  // shout if texture missing while loading
 #define TEX_MIPMAP          (1<<1)  // use mipmaps generation while loading texture
 #define TEX_ALPHA           (1<<2)  // use transparency in texture
@@ -95,6 +99,9 @@ void R_Texture_Init(void);
 void R_TextureAnisotropyChanged(texture_ref tex, qbool mipmap, qbool viewmodel);
 
 mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode);
+#ifdef WITH_PNG
+mpic_t* R_LoadPicPNG(const char *filename, const char *id, int mode, png_textp *text, int *text_count);
+#endif
 byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, int mode, int *real_width, int *real_height);
 qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t* pic);
 void R_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero);

@@ -110,25 +110,15 @@ void R_ImagePreMultiplyAlpha(byte* image, int width, int height, qbool zero)
 	}
 }
 
-mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode)
+static mpic_t* R_UploadPicImage(const char *id, byte *data, int real_width, int real_height, int mode)
 {
-	int width, height, i, real_width, real_height;
+	int width, height, i;
 	char identifier[MAX_QPATH] = "pic:";
-	byte *data, *src, *dest, *buf;
+	byte *src, *dest, *buf;
 	static mpic_t pic;
 
 	// this is 2D texture loading so it must not have MIP MAPS
 	mode &= ~TEX_MIPMAP;
-
-	R_TraceAPI("R_LoadPicImage(filename=%s, identifier=%s, matchwidth=%d, matchheight=%d, mode=%d)", filename, id, matchwidth, matchheight, mode);
-	if (Block24BitTextures) {
-		return NULL;
-	}
-
-	// Load the image data from file.
-	if (!(data = R_LoadImagePixels(filename, matchwidth, matchheight, 0, &real_width, &real_height))) {
-		return NULL;
-	}
 
 	pic.width = real_width;
 	pic.height = real_height;
@@ -150,7 +140,7 @@ mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int match
 
 	R_TextureSizeRoundUp(pic.width, pic.height, &width, &height);
 
-	strlcpy(identifier + 4, id ? id : filename, sizeof(identifier) - 4);
+	strlcpy(identifier + 4, id, sizeof(identifier) - 4);
 
 	// Upload the texture to OpenGL.
 	if (width == pic.width && height == pic.height) {
@@ -186,9 +176,47 @@ mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int match
 		Q_free(buf);
 	}
 
-	Q_free(data);	// Data was Q_malloc'ed by R_LoadImagePixels
+	Q_free(data);
 	return &pic;
 }
+
+mpic_t* R_LoadPicImage(const char *filename, char *id, int matchwidth, int matchheight, int mode)
+{
+	int width, height;
+	byte *data;
+
+	R_TraceAPI("R_LoadPicImage(filename=%s, identifier=%s, matchwidth=%d, matchheight=%d, mode=%d)", filename, id, matchwidth, matchheight, mode);
+	if (Block24BitTextures) {
+		return NULL;
+	}
+
+	data = R_LoadImagePixels(filename, matchwidth, matchheight, 0, &width, &height);
+	return data ? R_UploadPicImage(id ? id : filename, data, width, height, mode) : NULL;
+}
+
+#ifdef WITH_PNG
+mpic_t* R_LoadPicPNG(const char *filename, const char *id, int mode, png_textp *text, int *text_count)
+{
+	int width, height;
+	png_data *png;
+	mpic_t *pic;
+
+	if (Block24BitTextures) {
+		return NULL;
+	}
+
+	png = Image_LoadPNGData(NULL, filename, 0, 0, true, &width, &height);
+	if (!png) {
+		return NULL;
+	}
+
+	*text = png->textchunks;
+	*text_count = png->text_count;
+	pic = R_UploadPicImage(id, png->data, width, height, mode);
+	Q_free(png);
+	return pic;
+}
+#endif
 
 qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t* pic)
 {

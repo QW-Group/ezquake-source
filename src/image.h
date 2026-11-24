@@ -42,8 +42,7 @@ typedef struct
 	size_t text_count;
 } png_data;
 
-png_textp Image_LoadPNG_Comments (char *filename, int *text_count);
-png_data *Image_LoadPNG_All (vfsfile_t *vin, const char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height);
+png_data *Image_LoadPNGData(vfsfile_t *vin, const char *filename, int matchwidth, int matchheight, qbool load_text, int *real_width, int *real_height);
 #endif
 
 byte *Image_LoadPNG (vfsfile_t *v, const char *path, int matchwidth, int matchheight, int *real_width, int *real_height);

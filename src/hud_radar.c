@@ -120,93 +120,64 @@ static float map_height_diff = 0.0;
 //
 void HUD_NewRadarMap(void)
 {
-	int i = 0;
-	int len = 0;
-	int n_textcount = 0;
-	mpic_t *radar_pic_p = NULL;
-	png_textp txt = NULL;
-	char *radar_filename = NULL;
+	char radar_filename[MAX_OSPATH];
+	mpic_t *pic;
+	png_textp text;
+	int i, length, text_count, found_count = 0;
 
-	if (!cl.worldmodel)
-		return; // seems we are not ready to do that
+	if (!cl.worldmodel) {
+		return;
+	}
 
-	// Reset the radar pic status.
-	memset (&radar_pic, 0, sizeof(radar_pic));
+	memset(&radar_pic, 0, sizeof(radar_pic));
 	radar_pic_found = false;
 	conversion_formula_found = false;
 
-	// Allocate a string for the path to the radar image.
-	len = strlen (RADAR_BASE_PATH_FORMAT) + strlen (host_mapname.string);
-	radar_filename = Q_calloc (len, sizeof(char));
-	snprintf (radar_filename, len, RADAR_BASE_PATH_FORMAT, host_mapname.string);
-
-	// Load the map picture.
-	if ((radar_pic_p = R_LoadPicImage (radar_filename, host_mapname.string, 0, 0, TEX_ALPHA)) != NULL) {
-		radar_pic = *radar_pic_p;
-		radar_pic_found = true;
-
-		renderer.TextureWrapModeClamp(radar_pic.texnum);
-
-		// Calculate the height of the map.
-		map_height_diff = fabs((float)(cl.worldmodel->maxs[2] - cl.worldmodel->mins[2]));
-
-		// Get the comments from the PNG.
-		txt = Image_LoadPNG_Comments(radar_filename, &n_textcount);
-
-		// Check if we found any comments.
-		if(txt != NULL)
-		{
-			int found_count = 0;
-
-			// Find the conversion formula in the comments found in the PNG.
-			for(i = 0; i < n_textcount; i++)
-			{
-				if(!strcmp(txt[i].key, "QWLMConversionSlopeX"))
-				{
-					map_x_slope = atof(txt[i].text);
-					found_count++;
-				}
-				else if(!strcmp(txt[i].key, "QWLMConversionInterceptX"))
-				{
-					map_x_intercept = atof(txt[i].text);
-					found_count++;
-				}
-				else if(!strcmp(txt[i].key, "QWLMConversionSlopeY"))
-				{
-					map_y_slope = atof(txt[i].text);
-					found_count++;
-				}
-				else if(!strcmp(txt[i].key, "QWLMConversionInterceptY"))
-				{
-					map_y_intercept = atof(txt[i].text);
-					found_count++;
-				}
-
-				Q_free(txt[i].key);
-				Q_free(txt[i].text);
-
-				conversion_formula_found = (found_count == 4);
-			}
-
-			// Free the text chunks.
-			Q_free(txt);
-		}
-		else
-		{
-			conversion_formula_found = false;
-			Con_Printf("No conversion formula found\n");
-		}
-	}
-	else
-	{
-		// No radar pic found.
-		memset (&radar_pic, 0, sizeof(radar_pic));
-		radar_pic_found = false;
-		conversion_formula_found = false;
+	length = snprintf(radar_filename, sizeof(radar_filename), RADAR_BASE_PATH_FORMAT, host_mapname.string);
+	if (length < 0 || (size_t)length >= sizeof(radar_filename)) {
+		return;
 	}
 
-	// Free the path string to the radar png.
-	Q_free (radar_filename);
+	// The calibration belongs to these pixels, even if another copy of the PNG is visible.
+	pic = R_LoadPicPNG(radar_filename, host_mapname.string, TEX_ALPHA, &text, &text_count);
+	if (!pic) {
+		return;
+	}
+
+	radar_pic = *pic;
+	radar_pic_found = true;
+	renderer.TextureWrapModeClamp(radar_pic.texnum);
+	map_height_diff = fabs(cl.worldmodel->maxs[2] - cl.worldmodel->mins[2]);
+
+	if (!text) {
+		Con_Printf("No conversion formula found\n");
+		return;
+	}
+
+	for (i = 0; i < text_count; i++) {
+		if (!strcmp(text[i].key, "QWLMConversionSlopeX")) {
+			map_x_slope = atof(text[i].text);
+			found_count++;
+		}
+		else if (!strcmp(text[i].key, "QWLMConversionInterceptX")) {
+			map_x_intercept = atof(text[i].text);
+			found_count++;
+		}
+		else if (!strcmp(text[i].key, "QWLMConversionSlopeY")) {
+			map_y_slope = atof(text[i].text);
+			found_count++;
+		}
+		else if (!strcmp(text[i].key, "QWLMConversionInterceptY")) {
+			map_y_intercept = atof(text[i].text);
+			found_count++;
+		}
+
+		Q_free(text[i].key);
+		Q_free(text[i].text);
+	}
+
+	conversion_formula_found = (found_count == 4);
+	Q_free(text);
 }
 
 static void Radar_DrawGrid(stats_weight_grid_t *grid, int x, int y, float scale, int pic_width, int pic_height, int style)
