@@ -215,11 +215,14 @@ typedef struct
 } dir_t;
 
 #ifdef _WIN32
-#define Sys_OpenStreamSocket(family, protocol) \
-	WSASocket((family), SOCK_STREAM, (protocol), NULL, 0, WSA_FLAG_NO_HANDLE_INHERIT | WSA_FLAG_OVERLAPPED)
+#define Sys_OpenSocket(family, type, protocol) \
+	WSASocket((family), (type), (protocol), NULL, 0, WSA_FLAG_NO_HANDLE_INHERIT | WSA_FLAG_OVERLAPPED)
+#define Sys_AcceptSocket accept
 #define Sys_RunCommand system
 #else
-int Sys_OpenStreamSocket(int family, int protocol);
+#include <sys/socket.h>
+int Sys_OpenSocket(int family, int type, int protocol);
+int Sys_AcceptSocket(int listener, struct sockaddr *address, socklen_t *length);
 int Sys_RunCommand(const char *command);
 #endif
 int		Sys_Script (const char *path, const char *args);

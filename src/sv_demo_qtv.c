@@ -494,7 +494,7 @@ static const char *SV_ReverseDial(reverse_result_t *result)
 		if (now >= deadline || SV_ReverseDiscarded()) {
 			break;
 		}
-		sock = Sys_OpenStreamSocket(address->ai_family, address->ai_protocol);
+		sock = Sys_OpenSocket(address->ai_family, SOCK_STREAM, address->ai_protocol);
 		if (sock == INVALID_SOCKET) {
 			continue;
 		}
@@ -930,7 +930,7 @@ void SV_MVDStream_Poll (void)
 	}
 
 	addrlen = sizeof(addr);
-	client = accept (NET_GetSocket(NS_SERVER, true), (struct sockaddr *)&addr, &addrlen);
+	client = Sys_AcceptSocket(NET_GetSocket(NS_SERVER, true), (struct sockaddr *)&addr, &addrlen);
 
 	if (client == INVALID_SOCKET)
 		return;

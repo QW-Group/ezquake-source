@@ -1183,7 +1183,7 @@ int TCP_OpenListenSocket (unsigned short int port)
 	unsigned long nonblocking = true;
 	int i;
 
-	if ((newsocket = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
+	if ((newsocket = Sys_OpenSocket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVALID_SOCKET) {
 		Con_Printf ("TCP_OpenListenSocket: socket: (%i): %s\n", qerrno, strerror(qerrno));
 		return INVALID_SOCKET;
 	}
@@ -1264,7 +1264,7 @@ int UDP_OpenSocket (unsigned short int port)
 	unsigned long _true = true;
 	int i;
 
-	if ((newsocket = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET) {
+	if ((newsocket = Sys_OpenSocket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == INVALID_SOCKET) {
 		Con_Printf ("UDP_OpenSocket: socket: (%i): %s\n", qerrno, strerror(qerrno));
 		return INVALID_SOCKET;
 	}

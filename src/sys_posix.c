@@ -17,6 +17,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#if defined(__linux__) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE // accept4
+#endif
+
 #include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -916,23 +920,43 @@ int Sys_SemDestroy(sem_t *sem)
 /*********************************************************************************/
 #ifndef SOCK_CLOEXEC
 // On systems without atomic close-on-exec, exclude process launches until
-// the worker has marked its new socket. DNS and connect run outside this lock.
+// the new socket is marked. DNS and connect run outside this lock.
 static pthread_mutex_t sys_spawn_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static int Sys_SetSocketCloseOnExec(int sock)
+{
+	if (sock != -1 && fcntl(sock, F_SETFD, FD_CLOEXEC) == -1) {
+		close(sock);
+		return -1;
+	}
+	return sock;
+}
 #endif
 
-int Sys_OpenStreamSocket(int family, int protocol)
+// A background script can outlive a restart and otherwise keep the port bound.
+int Sys_OpenSocket(int family, int type, int protocol)
 {
 #ifdef SOCK_CLOEXEC
-	return socket(family, SOCK_STREAM | SOCK_CLOEXEC, protocol);
+	return socket(family, type | SOCK_CLOEXEC, protocol);
 #else
 	int sock;
 
 	pthread_mutex_lock(&sys_spawn_mutex);
-	sock = socket(family, SOCK_STREAM, protocol);
-	if (sock != -1 && fcntl(sock, F_SETFD, FD_CLOEXEC) == -1) {
-		close(sock);
-		sock = -1;
-	}
+	sock = Sys_SetSocketCloseOnExec(socket(family, type, protocol));
+	pthread_mutex_unlock(&sys_spawn_mutex);
+	return sock;
+#endif
+}
+
+int Sys_AcceptSocket(int listener, struct sockaddr *address, socklen_t *length)
+{
+#ifdef SOCK_CLOEXEC
+	return accept4(listener, address, length, SOCK_CLOEXEC);
+#else
+	int sock;
+
+	pthread_mutex_lock(&sys_spawn_mutex);
+	sock = Sys_SetSocketCloseOnExec(accept(listener, address, length));
 	pthread_mutex_unlock(&sys_spawn_mutex);
 	return sock;
 #endif
