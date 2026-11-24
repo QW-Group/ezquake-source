@@ -108,7 +108,6 @@ int FS_FileOpenRead (char *path, FILE **hndl);
 void FS_ReloadPackFiles_f(void);
 void FS_ListFiles_f(void);
 void FS_FlushFSHash(void);
-void FS_AddHomeDirectory(char *dir, FS_Load_File_Types loadstuff);
 
 static void FS_AddDataFiles(char *pathto, searchpath_t *search, char *extension, searchpathfuncs_t *funcs);
 static void FS_AddGameSearchPath(const char *dir, FS_Load_File_Types loadstuff);
@@ -647,6 +646,22 @@ void FS_AddUserDirectory(char *dir)
 }
 #endif
 
+static void FS_AddHomeGameDirectory(void)
+{
+	char path[MAX_OSPATH];
+	int length;
+
+	if (!*com_homedir) {
+		return;
+	}
+
+	length = snprintf(path, sizeof(path), "%s/%s", com_homedir, com_gamedirfile);
+	// FS_AddGameSearchPath appends a slash when mounting the directory.
+	if (length >= 0 && length < (int)sizeof(path) - 1) {
+		FS_AddGameSearchPath(path, FS_LOAD_FILE_ALL);
+	}
+}
+
 // Sets the gamedir and path to a different directory.
 void FS_SetGamedir(char* dir, qbool force)
 {
@@ -688,11 +703,7 @@ void FS_SetGamedir(char* dir, qbool force)
 	snprintf(com_gamedir, sizeof(com_gamedir), "%s/%s", com_basedir, dir);
 
 	FS_AddGameDirectory(com_gamedir, FS_LOAD_FILE_ALL);
-	if (*com_homedir) {
-		char tmp[MAX_OSPATH];
-		snprintf(&tmp[0], sizeof(tmp), "%s/%s", com_homedir, dir);
-		FS_AddHomeDirectory(tmp, FS_LOAD_FILE_ALL);
-	}
+	FS_AddHomeGameDirectory();
 
 	// Reload gamedir specific conback as its not flushed
 	Draw_InitConback();
@@ -854,7 +865,7 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/%s", com_basedir, "qw");
 	FS_AddGameDirectory(tmp_path, FS_LOAD_FILE_ALL);
 	if (*com_homedir) {
-	    FS_AddHomeDirectory(com_homedir, FS_LOAD_FILE_ALL);
+		FS_AddGameSearchPath(com_homedir, FS_LOAD_FILE_ALL);
 	}
 
 #ifndef SERVERONLY
@@ -893,6 +904,9 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 		i = COM_FindParm("+gamedir");
 	if (i && i < COM_Argc() - 1)
 		FS_SetGamedir (COM_Argv(i + 1), true);
+
+	// Mount the default qw home directory even when no gamedir switch occurs.
+	FS_AddHomeGameDirectory();
 }
 
 void FS_InitFilesystem( void ) {
@@ -2798,39 +2812,6 @@ static void FS_AddGameSearchPath(const char *dir, FS_Load_File_Types loadstuff)
 	size = strlen (dir) + 1;
 	p = Q_malloc_named(size, dir);
 	strlcpy (p, dir, size);
-	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/", dir);
-	FS_AddPathHandle (tmp_path, &osfilefuncs, p, false, false, loadstuff);
-}
-
-/*
-================
-FS_AddHomeDirectory
-
-Adds the home directory to the head of the path,
-then loads and adds pak1.pak pak2.pak ...
-================
-*/
-void FS_AddHomeDirectory (char *dir, FS_Load_File_Types loadstuff)
-{
-	size_t size;
-	searchpath_t *search;
-	char *p;
-	char tmp_path[MAX_OSPATH];
-
-	for (search = fs_searchpaths; search; search = search->next)
-	{
-		if (search->funcs != &osfilefuncs)
-			continue;
-
-		if (!strcasecmp(search->handle, com_homedir))
-			return; //already loaded (base paths?)
-	}
-
-	// add the directory to the search path
-	size = strlen (dir) + 1;
-	p = Q_malloc (size);
-	strlcpy (p, dir, size);
-
 	snprintf(&tmp_path[0], sizeof(tmp_path), "%s/", dir);
 	FS_AddPathHandle (tmp_path, &osfilefuncs, p, false, false, loadstuff);
 }
