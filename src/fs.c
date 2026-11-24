@@ -3052,7 +3052,7 @@ void FS_ListFiles_f(void)
 	if (Cmd_Argc() != 2) {
 		Com_Printf("Usage: fs_search <extension>\nLists files in search paths with given extension\n");
 	}
-	else if (!fs_cache.integer) {
+	else if (!fs_cache.value) {
 		Com_Printf("Can't search, fs_cache must be turned on\n");
 	}
 	else {
@@ -3060,12 +3060,16 @@ void FS_ListFiles_f(void)
 		char *ext = Cmd_Argv(1);
 		size_t ext_len = strlen(ext);
 
+		if (filesystemchanged) {
+			FS_RebuildFSHash();
+		}
+
 		for (i = 0; i < filesystemhash->numbuckets; i++) {
 			bucket_t *b = filesystemhash->bucket[i];
 			while (b) {
 				char *key = b->keystring;
 				size_t len = strlen(key);
-				if (strcmp(key+len-ext_len, ext) == 0) {
+				if (len >= ext_len && strcmp(key + (len - ext_len), ext) == 0) {
 					Com_Printf("%s\n", b->keystring);
 				}
 				b = b->next;
