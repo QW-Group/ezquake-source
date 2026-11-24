@@ -624,7 +624,7 @@ void CL_Rcon_f (void) {
 	NET_SendPacket (NS_CLIENT, strlen(message)+1, message, to);
 }
 
-qbool CL_Download_Accept(const char *filename, relativeto_t relativeto)
+qbool CL_Download_ValidateFilename(const char *filename)
 {
 	if (strstr(filename, "..") || !strcmp(filename, "") || filename[0] == '/' || strchr(filename, '\\') || strchr(filename, ':') || strstr(filename, "//")) {
 		Com_Printf("Warning: Invalid characters in filename \"%s\"\n", filename);
@@ -636,19 +636,13 @@ qbool CL_Download_Accept(const char *filename, relativeto_t relativeto)
 		return false;
 	}
 
-	vfsfile_t *f = FS_OpenVFS(filename, "rb", relativeto);
-	if (f) {
-		VFS_CLOSE(f);
-		return false;
-	}
-
 	return true;
 }
 
-void CL_Download_f (void){
-	char *dir; // we save to demo_dir or gamedir
-	char *filename; // which file to dl, will be sent to server
-	const char *ondiskname;
+void CL_Download_f(void)
+{
+	char *filename;
+	const char *dir, *localname;
 	char destination[sizeof(cls.downloadname)];
 	int length;
 	extern char *CL_DemoDirectory(void);
@@ -664,35 +658,33 @@ void CL_Download_f (void){
 	}
 
 	filename = Cmd_Argv(1);
-	ondiskname = filename;
-
-	if (Cmd_Argc() != 2 || !filename[0] || !CL_Download_Accept(filename, FS_ANY)) {
+	if (Cmd_Argc() != 2 || !filename[0] || !CL_Download_ValidateFilename(filename)) {
 		Com_Printf ("Usage: %s <datafile>\n", Cmd_Argv(0));
 		return;
 	}
 
-	// hack: save demos in demo_dir
-	if (
-				    Utils_RegExpMatch("\\.mvd(\\.(gz|bz2|rar|zip))?$", filename)
-				 || Utils_RegExpMatch("\\.(qwd|qwz|dem)$", filename)
-			) {
-		dir = CL_DemoDirectory(); // seems filename is a demo
-		// so, we save file in /dir/<demo_dir> instead of /dir/<demo_dir>/demos
-		ondiskname = COM_SkipPath(filename);
+	dir = cls.gamedir;
+	localname = filename;
+	// The server's demos/ prefix is independent of the client's demo_dir.
+	if (Utils_RegExpMatch("\\.mvd(\\.(gz|bz2|rar|zip))?$", filename)
+	 || Utils_RegExpMatch("\\.(qwd|qwz|dem)$", filename)) {
+		dir = CL_DemoDirectory();
+		localname = COM_SkipPath(filename);
 	}
-	else
-		dir = cls.gamedir; // not a demo
 
-	length = snprintf(destination, sizeof(destination), "%s/%s", dir, ondiskname);
+	length = snprintf(destination, sizeof(destination), "%s/%s", dir, localname);
 	if (length < 0 || (size_t)length >= sizeof(destination)) {
 		Com_Printf("Download path is too long.\n");
+		return;
+	}
+	if (COM_FileExists(destination)) {
+		Com_Printf("%s already exists.\n", destination);
 		return;
 	}
 
 	cls.downloadtype      = dl_single;
 	cls.downloadmethod    = DL_QW; // by default its DL_QW, if server support DL_QWCHUNKED it will be changed.
 	cls.downloadstarttime = Sys_DoubleTime();
-
 	strlcpy(cls.downloadname, destination, sizeof(cls.downloadname));
 
 	if (cls.mvdplayback == QTV_PLAYBACK)

@@ -507,10 +507,15 @@ static FILE *CL_OpenDownloadTempFile(void)
 // Use the loader's search path so a file it cannot open does not suppress a download.
 qbool CL_CheckOrDownloadFile(const char *filename)
 {
+	vfsfile_t *file;
 	int length;
 
-	if (!CL_Download_Accept(filename, FS_GAME))
-	{
+	if (!CL_Download_ValidateFilename(filename)) {
+		return true;
+	}
+	file = FS_OpenVFS(filename, "rb", FS_GAME);
+	if (file) {
+		VFS_CLOSE(file);
 		return true;
 	}
 
