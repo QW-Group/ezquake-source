@@ -21,6 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
 #include "common.h"
+#include <sys/stat.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -1668,6 +1669,56 @@ void COM_ParseIPCData(const char *buf, unsigned int bufsize)
 	}
 }
 
+qbool COM_FormatPlayDemoCommand(char *command, size_t size, const char *path)
+{
+	int length;
+
+	// The command parser has no escaping for quotes or line breaks in this argument.
+	if (!*path || strpbrk(path, "\"\r\n")) {
+		return false;
+	}
+
+	length = snprintf(command, size, "playdemo \"%s\"\n", path);
+	return length >= 0 && (size_t)length < size;
+}
+
+static qbool COM_FormatStartupDemoCommand(char *command, size_t size, const char *path)
+{
+	char absolute[MAX_OSPATH];
+	struct stat st;
+#ifdef _WIN32
+	if (Sys_fullpath(absolute, path, sizeof(absolute)) &&
+	    stat(absolute, &st) == 0 && (st.st_mode & S_IFMT) == S_IFREG) {
+		path = absolute;
+	}
+#else
+	if (path[0] != '/') {
+		char cwd[MAX_OSPATH];
+		const char *dir = NULL;
+		int length;
+
+#ifdef __APPLE__
+		// App Sandbox changes cwd before main; the shell preserves the launch directory in PWD.
+		if (getenv("APP_SANDBOX_CONTAINER_ID")) {
+			dir = getenv("PWD");
+		}
+#endif
+		if (!dir || dir[0] != '/') {
+			dir = Sys_getcwd(cwd, sizeof(cwd));
+		}
+		if (dir) {
+			// Preserve the demo extension when the final component is a symlink.
+			length = snprintf(absolute, sizeof(absolute), "%s/%s", dir, path);
+			if (length >= 0 && (size_t)length < sizeof(absolute) &&
+			    stat(absolute, &st) == 0 && S_ISREG(st.st_mode)) {
+				path = absolute;
+			}
+		}
+	}
+#endif
+	return COM_FormatPlayDemoCommand(command, size, path);
+}
+
 //
 // Check if the first command line argument is a .qtv or a demo to be played.
 //
@@ -1692,7 +1743,7 @@ qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbu
 			}
 			else if (CL_IsDemoExtension(infile))
 			{
-				snprintf(commandbuf_out, commandbuf_size, "playdemo \"%s\"\n", infile);
+				return COM_FormatStartupDemoCommand(commandbuf_out, commandbuf_size, infile);
 			}
 			else if (!strncasecmp(infile, "qw://", sizeof("qw://") - 1))
 			{

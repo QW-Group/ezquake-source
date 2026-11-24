@@ -484,6 +484,7 @@ void SV_Error (char *error, ...);
 
 void COM_ParseIPCData(const char *buf, unsigned int bufsize);
 
+qbool COM_FormatPlayDemoCommand(char *command, size_t size, const char *path);
 qbool COM_CheckArgsForPlayableFiles(char *commandbuf_out, unsigned int commandbuf_size);
 
 int Com_TranslateMapChecksum (const char *mapname, int checksum);

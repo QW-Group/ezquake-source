@@ -816,17 +816,21 @@ static void HandleEvents(void)
 				mouse_wheel_event(&event.wheel);
 			}
 			break;
-		case SDL_DROPFILE:
+		case SDL_DROPFILE: {
+			char command[1024];
+
 			/* TODO: Add handling for different file types */
 			if (strncmp(event.drop.file, "qw://", 5) == 0) {
 				Cbuf_AddText("qwurl ");
-			} else {
-				Cbuf_AddText("playdemo ");
+				Cbuf_AddText(event.drop.file);
+				Cbuf_AddText("\n");
 			}
-			Cbuf_AddText(event.drop.file);
-			Cbuf_AddText("\n");
+			else if (COM_FormatPlayDemoCommand(command, sizeof(command), event.drop.file)) {
+				Cbuf_AddText(command);
+			}
 			SDL_free(event.drop.file);
 			break;
+		}
 		}
 	}
 
