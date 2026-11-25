@@ -307,8 +307,9 @@ void R_BrushModelDrawEntity(entity_t *e)
 		VectorScale(modelorg, 1.0f / model_scale, modelorg);
 	}
 
-	// calculate dynamic lighting for bmodel if it's not an instanced model
-	if (clmodel->firstmodelsurface) {
+	// calculate dynamic lighting for bmodel if it's not an instanced model; a
+	// submodel whose head node is the node count has no nodes to mark
+	if (clmodel->firstmodelsurface && clmodel->firstnode < clmodel->numnodes) {
 		for (li = 0; li < MAX_DLIGHTS / 32; li++) {
 			if (cl_dlight_active[li]) {
 				for (lj = 0; lj < 32; lj++) {

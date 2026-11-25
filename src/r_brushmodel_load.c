@@ -1781,9 +1781,15 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 	for (i = 0; i < mod->numsubmodels; i++) {
 		bm = &mod->submodels[i];
 
+		if (bm->firstface < 0 || bm->numfaces < 0 || bm->firstface > mod->numsurfaces || bm->numfaces > mod->numsurfaces - bm->firstface) {
+			Host_Error("Inline model %i has bad face range [%d length %d, vs %d]", i, bm->firstface, bm->numfaces, mod->numsurfaces);
+		}
 		mod->firstmodelsurface = bm->firstface;
 		mod->nummodelsurfaces = bm->numfaces;
 
+		// qbsp gives a submodel whose hull 0 is a single leaf the number of
+		// nodes written before it, which is the node count when no submodel
+		// with nodes follows
 		mod->firstnode = bm->headnode[0];
 		if ((unsigned)mod->firstnode > mod->numnodes) {
 			Host_Error("Inline model %i has bad firstnode", i);
