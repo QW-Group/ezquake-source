@@ -274,7 +274,13 @@ void CachePics_AtlasUpload(void)
 {
 	if (atlas_dirty) {
 		R_TraceEnterFunctionRegion;
-		atlas_texnum = R_LoadTexture("cachepics:atlas", atlas_texture_width, atlas_texture_height, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
+		if (atlas_texels && R_TextureReferenceIsValid(atlas_texnum)) {
+			// Replace pixels directly: R_LoadTexture() would checksum them all first
+			renderer.TextureReplaceSubImageRGBA(atlas_texnum, 0, 0, atlas_texture_width, atlas_texture_height, atlas_texels);
+		}
+		else {
+			atlas_texnum = R_LoadTexture("cachepics:atlas", atlas_texture_width, atlas_texture_height, atlas_texels, TEX_ALPHA | TEX_NOSCALE, 4);
+		}
 		renderer.TextureSetFiltering(atlas_texnum, texture_minification_linear, texture_magnification_linear);
 		renderer.TextureWrapModeClamp(atlas_texnum);
 		R_TraceLeaveFunctionRegion;
