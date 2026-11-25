@@ -1027,6 +1027,7 @@ static mvddest_t *SV_InitRecordFile (char *name)
 	char path[MAX_OSPATH];
 
 	Con_DPrintf("SV_InitRecordFile: Demo name: \"%s\"\n", name);
+	FS_CreatePath(name);
 	file = fopen (name, "wb");
 	if (!file)
 	{
@@ -1989,8 +1990,6 @@ void SV_MVD_Record_f (void)
 	strlcpy(newname, va("%s%s%s", sv_demoPrefix.string, SV_CleanName((unsigned char*)Cmd_Argv(1)),
 						sv_demoSuffix.string), sizeof(newname) - 4);
 
-	Sys_mkdir(va("%s/%s", fs_gamedir, sv_demoDir.string));
-
 	snprintf (name, sizeof(name), "%s/%s/%s", fs_gamedir, sv_demoDir.string, newname);
 
 	if ((c = strlen(name)) > 3)
@@ -2075,7 +2074,6 @@ void SV_MVDEasyRecord_f (void)
 	strlcpy(name, va("%s%s%s", sv_demoPrefix.string,
 			 SV_CleanName((unsigned char*)name), sv_demoSuffix.string), MAX_DEMO_NAME);
 	strlcpy(name2, name, sizeof(name2));
-	Sys_mkdir(va("%s/%s", fs_gamedir, sv_demoDir.string));
 
 	// FIXME: very SLOW
 	if (!(name3 = quote(name2)))
