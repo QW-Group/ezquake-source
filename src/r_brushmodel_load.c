@@ -1704,7 +1704,8 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 	if (mod->bspversion != Q1_BSPVERSION && mod->bspversion != HL_BSPVERSION && mod->bspversion != Q1_BSPVERSION2 && mod->bspversion != Q1_BSPVERSION29a) {
 		Host_Error("Mod_LoadBrushModel: %s has wrong version number (%i should be %i (Quake), %i (HalfLife), %i (BSP2) or %i (2PSB))", mod->name, mod->bspversion, Q1_BSPVERSION, HL_BSPVERSION, Q1_BSPVERSION2, Q1_BSPVERSION29a);
 	}
-	mod->isworldmodel = !strcmp(mod->name, va("maps/%s.bsp", host_mapname.string));
+	// the model list of the server names the world first
+	mod->isworldmodel = !strcmp(mod->name, cl.model_name[1]);
 
 	// Mod_LoadModel only guarantees the version
 	if (filesize < (int)sizeof(dheader_t)) {
@@ -1813,6 +1814,12 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 			char name[16];
 			model_t* submodel;
 
+			// The model list names the submodels of the world *1 to *N, and
+			// they share the world's arrays. The submodels of any other brush
+			// model aren't named, so that they can't replace the world's.
+			if (!mod->isworldmodel) {
+				break;
+			}
 			snprintf(name, sizeof(name), "*%i", i + 1);
 			submodel = Mod_FindName(name);
 			*submodel = *mod;
