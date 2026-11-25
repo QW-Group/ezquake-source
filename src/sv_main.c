@@ -58,7 +58,6 @@ cvar_t	sys_restart_on_error = {"sys_restart_on_error", "0"};
 cvar_t  sv_mod_extensions = { "sv_mod_extensions", "2", CVAR_ROM };
 
 #ifdef SERVERONLY
-cvar_t  sys_simulation = { "sys_simulation", "0" };
 cvar_t	version = {"version", "", CVAR_ROM};
 #endif
 
