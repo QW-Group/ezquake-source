@@ -19,6 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // gl_mesh.c: triangle model functions
 
+#include <limits.h>
 #include "quakedef.h"
 #include "gl_model.h"
 #include "r_local.h"
@@ -183,6 +184,18 @@ static void R_ImportModelToVBO(model_t* mod, vbo_model_vert_t* aliasmodel_data, 
 	}
 }
 
+// Adds the vertices of an alias model to the length of the vertex buffer,
+// which must fit in the int size in bytes that buffers.Create takes
+static void R_AddAliasModelVertices(const model_t *mod, int *vbo_length)
+{
+	if (mod && (mod->type == mod_alias || mod->type == mod_alias3)) {
+		if (mod->vertsInVBO > INT_MAX / (int)sizeof(vbo_model_vert_t) - *vbo_length) {
+			Host_Error("R_CreateAliasModelVBO: vertex buffer too large to add %s", mod->name);
+		}
+		*vbo_length += mod->vertsInVBO;
+	}
+}
+
 void R_CreateAliasModelVBO(void)
 {
 	vbo_model_vert_t* aliasModelData;
@@ -191,28 +204,16 @@ void R_CreateAliasModelVBO(void)
 	int i;
 
 	for (i = 1; i < MAX_MODELS; ++i) {
-		model_t* mod = cl.model_precache[i];
-
-		if (mod && (mod->type == mod_alias || mod->type == mod_alias3)) {
-			required_vbo_length += mod->vertsInVBO;
-		}
+		R_AddAliasModelVertices(cl.model_precache[i], &required_vbo_length);
 	}
 
 	for (i = 0; i < MAX_VWEP_MODELS; i++) {
-		model_t* mod = cl.vw_model_precache[i];
-
-		if (mod && (mod->type == mod_alias || mod->type == mod_alias3)) {
-			required_vbo_length += mod->vertsInVBO;
-		}
+		R_AddAliasModelVertices(cl.vw_model_precache[i], &required_vbo_length);
 	}
 
 	// custom models are explicitly loaded by client, not notified by server
 	for (i = 0; i < custom_model_count; ++i) {
-		model_t* mod = Mod_CustomModel(i, false);
-
-		if (mod && (mod->type == mod_alias || mod->type == mod_alias3)) {
-			required_vbo_length += mod->vertsInVBO;
-		}
+		R_AddAliasModelVertices(Mod_CustomModel(i, false), &required_vbo_length);
 	}
 
 	// Go back through all models, populating VBO content
