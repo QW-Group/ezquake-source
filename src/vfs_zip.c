@@ -215,9 +215,13 @@ static int VFSZIP_WriteBytes (struct vfsfile_s *file, const void *buffer, int by
 }
 
 // VFS-FIXME: What is going on here... why not just unzSetOffset
+// Like fseek, takes a negative offset for SEEK_CUR and SEEK_END as the
+// unsigned long it converts to.
 static int VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 {
 	vfszip_t *vfsz = (vfszip_t*)file;
+	long offset, base;
+	int oldpos;
 
 	if (vfsz->defer)
 		return VFS_SEEK(vfsz->defer, pos, whence);
@@ -230,6 +234,7 @@ static int VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 		unsigned int i;
 		unsigned int length;
 
+		oldpos = vfsz->pos;
 		vfsz->defer = FS_OpenTemp();
 		if (vfsz->defer)
 		{
@@ -259,15 +264,25 @@ static int VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 		unzCloseCurrentFile(vfsz->parent->handle);
 		vfsz->parent->currentfile = NULL;	//make it not us
 
-		if (vfsz->defer)
-			return VFS_SEEK(vfsz->defer, pos, SEEK_SET);
+		if (vfsz->defer) {
+			// the copy leaves the temporary file at its end
+			if (whence == SEEK_CUR && VFS_SEEK(vfsz->defer, oldpos, SEEK_SET))
+				return -1;
+			return VFS_SEEK(vfsz->defer, pos, whence);
+		}
 	}
 
+	switch (whence) {
+		case SEEK_SET: base = 0; break;
+		case SEEK_CUR: base = vfsz->pos; break;
+		case SEEK_END: base = vfsz->length; break;
+		default: return -1;
+	}
 
-
-	if (pos > vfsz->length)
+	offset = (long)pos;
+	if (offset < -base || offset > vfsz->length - base)
 		return -1;
-	vfsz->pos = pos;
+	vfsz->pos = (int)(base + offset);
 
 	return 0;
 }
