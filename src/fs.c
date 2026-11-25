@@ -343,28 +343,6 @@ static char *FS_CopyPathWithForwardSlashes(const char *path)
 	return copy;
 }
 
-static vfsfile_t *FS_OpenFileForLoad(const char *path)
-{
-	flocation_t loc;
-	vfsfile_t *file;
-	char *normalized = FS_CopyPathWithForwardSlashes(path);
-
-	if (normalized) {
-		path = normalized;
-	}
-
-	// Search mounted directories and packs before trying the fallback paths.
-	FS_FLocateFile(path, FSLFRT_LENGTH, &loc);
-	if (loc.search) {
-		file = loc.search->funcs->OpenVFS(loc.search->handle, &loc, "rb");
-	} else {
-		file = FS_OpenVFS(path, "rb", FS_ANY);
-	}
-
-	Q_free(normalized);
-	return file;
-}
-
 typedef enum {
 	FS_LOAD_HUNK,
 	FS_LOAD_TEMP,
@@ -425,20 +403,6 @@ static byte *FS_LoadFile(vfsfile_t *f, const char *path, fs_load_memory_t memory
 	Draw_EndDisc ();
 
 	return buf;
-}
-
-byte *FS_LoadHunkFile (char *path, int *len) {
-	return FS_LoadFile(FS_OpenFileForLoad(path), path, FS_LOAD_HUNK, len);
-}
-
-byte *FS_LoadTempFile (char *path, int *len) {
-	return FS_LoadFile(FS_OpenFileForLoad(path), path, FS_LOAD_TEMP, len);
-}
-
-// use Q_malloc, do not forget Q_free when no needed more
-byte *FS_LoadHeapFile (const char *path, int *len)
-{
-	return FS_LoadFile(FS_OpenFileForLoad(path), path, FS_LOAD_HEAP, len);
 }
 
 byte *FS_LoadGameHeapFile(const char *path, int *len)
@@ -1148,10 +1112,8 @@ qbool FS_FormatOSPath(char *out, size_t size, const char *format, ...)
  * ================
  * Open a file using the lookup rules for relativeto. Return NULL on failure.
  */
-// VFS-FIXME: Clean up this function to reduce the relativeto options 
 vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 {
-	char fullname[MAX_OSPATH];
 	char *normalized;
 	flocation_t loc;
 	vfsfile_t *vfs = NULL;
@@ -1181,32 +1143,6 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 		}
 		return vfs;
 
-/* VFS-XXX: Removed as we don't really use this
- *	case FS_SKINS:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_homedir, filename);
-		else
-			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_basedir, filename);
-		break;
- */
-
-/* VFS-XXX: Removed as we don't really use this
- * case FS_CONFIGONLY:
-		if (*com_homedir)
-		{
-			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
-			vfs = VFSOS_Open(fullname, mode);
-			if (vfs)
-				return vfs;
-		}
-		snprintf(fullname, sizeof(fullname), "%s/ezquake/%s", com_basedir, filename);
-		return VFSOS_Open(fullname, mode);
- */
-	case FS_HOME:
-		if (!*com_homedir || !FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", com_homedir, filename))
-			return NULL;
-		return VFSOS_Open(fullname, mode);
-
 	case FS_GAME:
 		if (mode[0] != 'r') {
 			return FS_OpenVFS(filename, mode, FS_GAME_OS);
@@ -1215,21 +1151,6 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 			return NULL;
 		}
 		return loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode);
-
-	case FS_ANY:
-		vfs = FS_OpenVFS(filename, mode, FS_HOME);
-		if (vfs)
-			return vfs;
-
-		vfs = FS_OpenVFS(filename, mode, FS_NONE_OS);
-		if (vfs)
-			return vfs;
-
-		vfs = FS_OpenVFS(filename, mode, FS_GAME_OS);
-		if (vfs)
-			return vfs;
-
-		return FS_OpenVFS(filename, mode, FS_GAME);
 
 	default:
 		Sys_Error("FS_OpenVFS: Bad relative path (%i)", relativeto);
@@ -2652,12 +2573,6 @@ static void FS_CreatePathRelative(const char *pname, int relativeto)
 		break;
 #endif
 
-	case FS_ANY:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, pname);
-		else
-			snprintf(fullname, sizeof(fullname), "%s%s", com_basedir, pname);
-		break;
 /*	case FS_SKINS:
 		if (*com_homedir)
 			snprintf(fullname, sizeof(fullname), "%s/qw/skins/%s", com_homedir, pname);

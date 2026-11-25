@@ -61,13 +61,10 @@ typedef struct vfsfile_s {
 	qbool copyprotected;							// File found was in a pak
 } vfsfile_t;
 
-// VFS-FIXME: D-Kure Clean up this structure
 typedef enum {
 	FS_NONE_OS, // Open a loose file at the given OS path.
 	FS_GAME_OS, // Open a loose file in userdir, home/<gamedir>, or basedir/<gamedir>.
-	FS_HOME,    // Open a loose file relative to the ezQuake home directory if enabled.
-	FS_GAME,    // Read from mounted directories and packs. Writes use FS_GAME_OS.
-	FS_ANY      // Try FS_HOME, FS_NONE_OS, FS_GAME_OS, then FS_GAME.
+	FS_GAME     // Read from mounted directories and packs. Writes use FS_GAME_OS.
 } relativeto_t;
 
 // mostly analogs for stdio functions
