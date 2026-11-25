@@ -1789,6 +1789,9 @@ bspx_header_t* Mod_LoadBSPX(int filesize, byte* mod_base)
 	}
 
 	xheader = (bspx_header_t*)(mod_base + xofs);
+	if (memcmp(xheader->id, "BSPX", sizeof(xheader->id))) {
+		return NULL;
+	}
 	xheader->numlumps = LittleLong(xheader->numlumps);
 
 	// CM_BSPX_FindOffset leaves room for the header
@@ -1861,8 +1864,7 @@ static bspx_lump_t* CM_LoadBSPX(vfsfile_t *vf, dheader_t *header, bspx_header_t 
 	}
 
 	read = VFS_READ(vf, xheader, sizeof(bspx_header_t), NULL);
-	if (read != sizeof(bspx_header_t))
-	{
+	if (read != sizeof(bspx_header_t) || memcmp(xheader->id, "BSPX", sizeof(xheader->id))) {
 		return NULL;
 	}
 
