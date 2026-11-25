@@ -479,6 +479,9 @@ static int FSZIP_EnumerateFiles (void *handle, char *match, int (*func)(char *, 
 	return true;
 }
 
+// A central directory entry takes at least this many bytes of the archive.
+#define FSZIP_MIN_CENTRAL_ENTRY_SIZE 46
+
 /*
 =================
 COM_LoadZipFile
@@ -487,7 +490,8 @@ Takes an explicit (not game tree related) path to a pak file.
 
 Loads the header and directory, adding the files at the beginning
 of the list so they override previous pack files. Entries whose name
-or size doesn't fit a packfile_t are left out.
+or size doesn't fit a packfile_t are left out. An archive whose end
+record counts more entries than its size can hold is refused.
 =================
 */
 static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, const char *desc)
@@ -508,6 +512,12 @@ static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, const char *desc)
 
 	if (unzGetGlobalInfo64(zip->handle, &info) != UNZ_OK)
 		goto fail;
+	// the second bound keeps the file table's size in an int, so it can't
+	// wrap a 32-bit size_t either
+	if (info.number_entry > VFS_GETLEN(packhandle) / FSZIP_MIN_CENTRAL_ENTRY_SIZE || info.number_entry > INT_MAX / sizeof(packfile_t)) {
+		Com_Printf("%s: corrupt zip archive with %llu entries\n", desc, (unsigned long long)info.number_entry);
+		goto fail;
+	}
 	numentries = (int)info.number_entry;
 
 	zip->files = Q_malloc(numentries * sizeof(packfile_t));
