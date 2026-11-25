@@ -3008,6 +3008,8 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 	searchpath_t	*oldpaths;
 	searchpath_t	*oldbase;
 	searchpath_t	*next;
+	char gamedir[MAX_OSPATH];
+	char gamedirfile[MAX_QPATH];
 
 	//a lame way to fix pure paks
 	if (cls.state)
@@ -3036,6 +3038,11 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 
 	fs_base_searchpaths = NULL;
 
+	// FS_AddGameDirectory makes each directory it adds back the game
+	// directory, but the game directory stays what it was
+	strlcpy(gamedir, com_gamedir, sizeof(gamedir));
+	strlcpy(gamedirfile, com_gamedirfile, sizeof(gamedirfile));
+
 	while(oldpaths)
 	{
 		next = oldpaths->nextpure;
@@ -3051,6 +3058,9 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 		Q_free(oldpaths);
 		oldpaths = next;
 	}
+
+	strlcpy(com_gamedir, gamedir, sizeof(com_gamedir));
+	strlcpy(com_gamedirfile, gamedirfile, sizeof(com_gamedirfile));
 
 	if (!fs_base_searchpaths)
 		fs_base_searchpaths = fs_searchpaths;
