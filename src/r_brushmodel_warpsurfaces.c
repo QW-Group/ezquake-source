@@ -172,6 +172,11 @@ void R_SkySurfacesBuildPolys(msurface_t *fa)
 	glpoly_t	*poly;
 	float		*vert;
 
+	// the classic renderer draws the polygon through a buffer of this size too
+	if (fa->numedges > 64) {
+		Host_Error("[%s] sky surface %d has %d edges, more than 64", loadmodel->name, (int)(fa - loadmodel->surfaces), fa->numedges);
+	}
+
 	//
 	// convert edges back to a normal polygon
 	//
