@@ -918,8 +918,9 @@ void FS_InitFilesystem( void ) {
 	FS_InitFilesystemEx(false);
 
 #ifndef SERVERONLY
-	vfs = FS_OpenVFS("gfx.wad", "rb", FS_ANY); 
-	if (vfs) { // // we found gfx.wad, seems we have proper com_basedir
+	// Accept this basedir only if the renderer can load its startup WAD.
+	vfs = FS_OpenVFS("gfx.wad", "rb", FS_GAME);
+	if (vfs) {
 		VFS_CLOSE(vfs);
 		return;
 	}

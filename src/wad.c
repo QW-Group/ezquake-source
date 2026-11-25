@@ -97,7 +97,7 @@ void W_LoadWadFile(const char *filename)
 	// only one .wad can be loaded at a time
 	W_FreeWadFile();
 
-	wad_base = FS_LoadHeapFile(filename, &wad_filesize);
+	wad_base = FS_LoadGameHeapFile(filename, &wad_filesize);
 
 	if (!wad_base) {
 		if (!strcmp(filename, "gfx.wad"))
