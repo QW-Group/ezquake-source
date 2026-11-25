@@ -124,8 +124,10 @@ static void Image_Resample32 (void *indata, int inwidth, int inheight,
 		inrow = (byte *) indata;
 		oldy = 0;
 		Image_Resample32LerpLine (inrow, row1, inwidth, outwidth);
-		Image_Resample32LerpLine (inrow + inwidth4, row2, inwidth, outwidth);
-		
+		// A one-pixel-high image has no second row and never uses row2
+		if (inheight > 1)
+			Image_Resample32LerpLine(inrow + inwidth4, row2, inwidth, outwidth);
+
 		for (i = 0, f = 0; i < outheight; i++, f += fstep)	
 		{
 			yi = f >> 16;
@@ -253,8 +255,10 @@ static void Image_Resample24 (void *indata, int inwidth, int inheight,
 		inrow = (byte *) indata;
 		oldy = 0;
 		Image_Resample24LerpLine (inrow, row1, inwidth, outwidth);
-		Image_Resample24LerpLine (inrow + inwidth3, row2, inwidth, outwidth);
-		
+		// A one-pixel-high image has no second row and never uses row2
+		if (inheight > 1)
+			Image_Resample24LerpLine(inrow + inwidth3, row2, inwidth, outwidth);
+
 		for (i = 0, f = 0; i < outheight; i++, f += fstep)	
 		{
 			yi = f >> 16;
