@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <sys/stat.h>
 #include <io.h>			// _open, etc
 #include <direct.h>		// _mkdir
 #include <conio.h>		// _putch
@@ -254,6 +255,36 @@ void Sys_mkdir (const char *path)
 int Sys_remove (char *path)
 {
 	return remove(path);
+}
+
+FILE *Sys_FOpenExclusive(const char *path)
+{
+	// Legacy MSVCRT does not support the exclusive "x" mode in fopen.
+	int fd = _open(path, _O_WRONLY | _O_BINARY | _O_CREAT | _O_EXCL, _S_IREAD | _S_IWRITE);
+	FILE *file;
+
+	if (fd < 0) {
+		return NULL;
+	}
+	file = _fdopen(fd, "wb");
+	if (!file) {
+		int error = errno;
+		_close(fd);
+		_unlink(path);
+		errno = error;
+	}
+	return file;
+}
+
+int Sys_RenameNoReplace(const char *source, const char *destination)
+{
+	DWORD error;
+
+	if (MoveFileA(source, destination)) {
+		return 0;
+	}
+	error = GetLastError();
+	return (error == ERROR_ALREADY_EXISTS || error == ERROR_FILE_EXISTS) ? EEXIST : EIO;
 }
 
 int Sys_rmdir (const char *path)

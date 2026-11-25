@@ -42,6 +42,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <errno.h>
 #include <dirent.h>
 #include <sys/resource.h>
+#ifdef __linux__
+#include <sys/syscall.h>
+#include <linux/fs.h>
+#endif
 
 #include <SDL.h>
 #include <dlfcn.h>
@@ -141,6 +145,35 @@ Sys_remove
 int Sys_remove(char *path)
 {
 	return unlink(path);
+}
+
+FILE *Sys_FOpenExclusive(const char *path)
+{
+	return fopen(path, "wbx");
+}
+
+int Sys_RenameNoReplace(const char *source, const char *destination)
+{
+#if defined(__linux__) && defined(SYS_renameat2) && defined(RENAME_NOREPLACE)
+	if (syscall(SYS_renameat2, AT_FDCWD, source, AT_FDCWD, destination, RENAME_NOREPLACE) == 0) {
+		return 0;
+	}
+	if (errno != ENOSYS && errno != EINVAL && errno != EOPNOTSUPP) {
+		return errno;
+	}
+#elif defined(__APPLE__)
+	if (renamex_np(source, destination, RENAME_EXCL) == 0) {
+		return 0;
+	}
+	if (errno != ENOTSUP) {
+		return errno;
+	}
+#endif
+	// Both names are in the same directory. link() fails if the destination exists.
+	if (link(source, destination) == -1 || unlink(source) == -1) {
+		return errno;
+	}
+	return 0;
 }
 
 int Sys_rmdir(const char *path)
