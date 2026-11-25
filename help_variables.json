@@ -2792,11 +2792,34 @@
         }
       ]
     },
+    "cl_voip_bitrate": {
+      "default": "24000",
+      "desc": "Bitrate of your voice in bits per second when sending with Opus (6000 - 64000).",
+      "group-id": "32",
+      "type": "integer"
+    },
     "cl_voip_capturingvol": {
       "default": "0.5",
       "desc": "Volume multiplier applied while capturing, to avoid your audio from being heard by others.",
       "group-id": "32",
       "type": "integer"
+    },
+    "cl_voip_codec": {
+      "default": "1",
+      "desc": "Codec your voice is sent with. Voice from others is played back in either codec.",
+      "group-id": "32",
+      "remarks": "Clients built without Opus send with Speex and skip Opus voice. Clients older than Opus support don't hear Opus voice.",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Speex",
+          "name": "0"
+        },
+        {
+          "description": "Opus",
+          "name": "1"
+        }
+      ]
     },
     "cl_voip_demorecord": {
       "default": "1",
