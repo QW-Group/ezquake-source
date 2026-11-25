@@ -147,10 +147,11 @@ typedef struct {
 } vfszip_t;
 
 // VFS-FIXME Need to figure what this function is trying to do
-// Returns false if the entry can't be opened, e.g. when it is corrupt.
+// Returns false if the entry can't be opened or ends before the position it is
+// resumed at, e.g. when it is corrupt.
 static qbool VFSZIP_MakeActive(vfszip_t *vfsz)
 {
-	int i;
+	int left, chunk;
 	char buffer[8192];	//must be power of two
 
 	if ((vfszip_t*)vfsz->parent->currentfile == vfsz)
@@ -170,9 +171,13 @@ static qbool VFSZIP_MakeActive(vfszip_t *vfsz)
 		Com_DPrintf("VFSZIP_MakeActive: Shockingly inefficient\n");
 
 		//now we need to seek up to where we had previously gotten to.
-		for (i = 0; i < vfsz->pos-sizeof(buffer); i++)
-			unzReadCurrentFile(vfsz->parent->handle, buffer, sizeof(buffer));
-		unzReadCurrentFile(vfsz->parent->handle, buffer, vfsz->pos - i);
+		for (left = vfsz->pos; left > 0; left -= chunk) {
+			chunk = min(left, (int)sizeof(buffer));
+			if (unzReadCurrentFile(vfsz->parent->handle, buffer, chunk) != chunk) {
+				unzCloseCurrentFile(vfsz->parent->handle);
+				return false;
+			}
+		}
 	}
 
 	vfsz->parent->currentfile = (vfsfile_t*)vfsz;
