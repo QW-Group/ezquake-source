@@ -1548,6 +1548,11 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 	}
 	mod->isworldmodel = !strcmp(mod->name, va("maps/%s.bsp", host_mapname.string));
 
+	// Mod_LoadModel only guarantees the version
+	if (filesize < (int)sizeof(dheader_t)) {
+		Host_Error("Mod_LoadBrushModel: %s is too short", mod->name);
+	}
+
 	// swap all the lumps
 	for (i = 0; i < sizeof(dheader_t) / 4; i++) {
 		((int *)header)[i] = LittleLong(((int *)header)[i]);
@@ -1555,8 +1560,8 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 
 	// Check lump sizes
 	for (i = 0; i < sizeof(header->lumps) / sizeof(header->lumps[0]); ++i) {
-		if (header->lumps[i].fileofs > filesize) {
-			Host_Error("Mod_LoadBrushModel(%s): lump %d has offset beyond file (%d vs %d)", mod->name, i, header->lumps[i].fileofs, filesize);
+		if (header->lumps[i].fileofs < 0 || header->lumps[i].fileofs > filesize) {
+			Host_Error("Mod_LoadBrushModel(%s): lump %d has offset outside file (%d vs %d)", mod->name, i, header->lumps[i].fileofs, filesize);
 			return;
 		}
 		if (header->lumps[i].filelen < 0) {
