@@ -238,14 +238,29 @@ static void CalcSurfaceExtents(model_t* loadmodel, msurface_t *s) {
 	}
 }
 
-static void Mod_SetParent(mnode_t *node, mnode_t *parent)
+// the deepest node tree CM_LoadMap allows the world
+#define MAX_NODE_DEPTH 4096
+
+// Sets the parents of node, at depth depth, and of everything below it. The
+// renderer walks the tree by recursion and up from the leafs, so a node may
+// be reached only once, which keeps the tree from looping or sharing a
+// subtree, and no deeper than MAX_NODE_DEPTH. Leafs may be shared.
+static void Mod_SetParent(model_t *loadmodel, mnode_t *node, mnode_t *parent, int depth)
 {
-	node->parent = parent;
 	if (node->contents < 0) {
+		node->parent = parent;
 		return;
 	}
-	Mod_SetParent(node->children[0], node);
-	Mod_SetParent(node->children[1], node);
+	// the root is reached without a parent, the others get one
+	if (node->parent || (parent && node == loadmodel->nodes)) {
+		Host_Error("[%s] node %d is reached twice", loadmodel->name, (int)(node - loadmodel->nodes));
+	}
+	if (depth > MAX_NODE_DEPTH) {
+		Host_Error("[%s] node tree is deeper than %d", loadmodel->name, MAX_NODE_DEPTH);
+	}
+	node->parent = parent;
+	Mod_SetParent(loadmodel, node->children[0], node, depth + 1);
+	Mod_SetParent(loadmodel, node->children[1], node, depth + 1);
 }
 
 // Sets up the light data of a model: a Half-Life map's own, or the BSPX
@@ -1408,7 +1423,7 @@ static void Mod_LoadNodes(model_t* loadmodel, lump_t* l, byte* mod_base)
 		}
 	}
 
-	Mod_SetParent (loadmodel->nodes, NULL);	// sets nodes and leafs
+	Mod_SetParent(loadmodel, loadmodel->nodes, NULL, 1); // sets nodes and leafs
 }
 
 static void Mod_LoadNodes29a(model_t* loadmodel, lump_t* l, byte* mod_base)
@@ -1449,7 +1464,7 @@ static void Mod_LoadNodes29a(model_t* loadmodel, lump_t* l, byte* mod_base)
 		}
 	}
 
-	Mod_SetParent (loadmodel->nodes, NULL);	// sets nodes and leafs
+	Mod_SetParent(loadmodel, loadmodel->nodes, NULL, 1); // sets nodes and leafs
 }
 
 static void Mod_LoadNodesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
@@ -1490,7 +1505,7 @@ static void Mod_LoadNodesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 		}
 	}
 
-	Mod_SetParent (loadmodel->nodes, NULL);	// sets nodes and leafs
+	Mod_SetParent(loadmodel, loadmodel->nodes, NULL, 1); // sets nodes and leafs
 }
 
 static qbool ContentsIsLiquid(int contents)
