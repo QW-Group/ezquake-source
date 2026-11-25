@@ -230,12 +230,25 @@ static void LoadFragFile(char *filename, qbool quiet)
 	strlcpy(fragfilename, filename, sizeof(fragfilename));
 	COM_ForceExtensionEx(fragfilename, ".dat", sizeof(fragfilename));
 
-	// if it fragfile.dat then try to load from ezquake dir first,
-	// because we have a bit different fragfile format comparing to fuhquake
-	if (!strcasecmp(fragfilename, "fragfile.dat") && (buffer = (char *) FS_LoadHeapFile("../ezquake/fragfile.dat", NULL)))
-		strlcpy(fragfilename, "ezquake/fragfile.dat", sizeof(fragfilename));
+	// Prefer ezQuake's default definitions to other formats found in game directories.
+	if (!strcasecmp(fragfilename, "fragfile.dat")) {
+		const char *default_name = "ezquake/fragfile.dat";
+		char default_path[MAX_OSPATH];
+		int length = snprintf(default_path, sizeof(default_path), "%s/%s", com_basedir, default_name);
 
-	if (!buffer && !(buffer = (char *)FS_LoadHeapFile(fragfilename, NULL))) {
+		if (length >= 0 && length < (int)sizeof(default_path)) {
+			buffer = (char *)FS_LoadOSPathHeapFile(default_path, NULL);
+			if (buffer) {
+				strlcpy(fragfilename, default_name, sizeof(fragfilename));
+			}
+		}
+	}
+
+	if (!buffer) {
+		buffer = (char *)(COM_IsExplicitOSPath(fragfilename)
+			? FS_LoadOSPathHeapFile(fragfilename, NULL) : FS_LoadGameHeapFile(fragfilename, NULL));
+	}
+	if (!buffer) {
 		if (!quiet)
 			Com_Printf("Couldn't load fragfile \"%s\"\n", fragfilename);
 		return;

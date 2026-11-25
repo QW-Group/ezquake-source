@@ -113,6 +113,18 @@ qbool COM_IsAbsolutePath(const char *path)
 #endif
 }
 
+qbool COM_IsExplicitOSPath(const char *path)
+{
+	if (COM_IsAbsolutePath(path) || !strncmp(path, "./", 2) || !strncmp(path, "../", 3)) {
+		return true;
+	}
+#ifdef _WIN32
+	return (path[0] && path[1] == ':') || !strncmp(path, ".\\", 2) || !strncmp(path, "..\\", 3);
+#else
+	return false;
+#endif
+}
+
 const char *COM_SkipPath (const char *pathname)
 {
 	const char *last;

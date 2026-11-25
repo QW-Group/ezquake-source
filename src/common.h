@@ -205,6 +205,7 @@ int COM_GetFloatTokens(const char *s, float *fl_array, int fl_array_size);
 void COM_Init (void);
 
 qbool COM_IsAbsolutePath(const char *path);
+qbool COM_IsExplicitOSPath(const char *path);
 const char *COM_SkipPath (const char *pathname);
 char *COM_SkipPathWritable (char *pathname);
 char *COM_FitPath(char *dest, int destination_size, char *src, int size_to_fit);

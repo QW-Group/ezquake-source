@@ -617,16 +617,11 @@ void Cmd_StuffCmds_f (void)
 static qbool Cmd_ConfigIsOSPath(const char *path)
 {
 #ifndef SERVERONLY
-	if (COM_IsAbsolutePath(path) || !strncmp(path, "./", 2) || !strncmp(path, "../", 3)) {
-		return true;
-	}
-#ifdef _WIN32
-	return (path[0] && path[1] == ':') || !strncmp(path, ".\\", 2) || !strncmp(path, "..\\", 3);
-#endif
+	return COM_IsExplicitOSPath(path);
 #else
 	(void)path;
-#endif
 	return false;
+#endif
 }
 
 static char *Cmd_LoadConfig(const char *path)
