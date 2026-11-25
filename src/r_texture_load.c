@@ -282,43 +282,50 @@ byte* R_LoadImagePixels(const char *filename, int matchwidth, int matchheight, i
 	if ((f = FS_OpenVFS(name, "rb", FS_ANY))) {
 		char link[128];
 		int len;
-		VFS_GETS(f, link, sizeof(link));
+
+		if (!VFS_GETS(f, link, sizeof(link))) {
+			link[0] = '\0';
+		}
+		VFS_CLOSE(f);
+		f = NULL;
 
 		len = strlen(link);
 
 		// Strip endline.
-		if (link[len - 1] == '\n') {
+		if (len > 0 && link[len - 1] == '\n') {
 			link[len - 1] = '\0';
 			--len;
 		}
 
-		if (link[len - 1] == '\r') {
+		if (len > 0 && link[len - 1] == '\r') {
 			link[len - 1] = '\0';
 			--len;
 		}
 
 		snprintf(name, sizeof(name), "textures/%s", link);
-		if ((f = FS_OpenVFS(name, "rb", FS_ANY))) {
-			if (!data && !strcasecmp(link + len - 3, "tga")) {
+		if (len >= 3 && (f = FS_OpenVFS(name, "rb", FS_ANY))) {
+			// The loaders close f, also when they fail
+			if (!strcasecmp(link + len - 3, "tga")) {
 				data = Image_LoadTGA(f, name, matchwidth, matchheight, real_width, real_height);
 			}
-
 #ifdef WITH_PNG
-			if (!data && !strcasecmp(link + len - 3, "png")) {
+			else if (!strcasecmp(link + len - 3, "png")) {
 				data = Image_LoadPNG(f, name, matchwidth, matchheight, real_width, real_height);
 			}
 #endif // WITH_PNG
-
 #ifdef WITH_JPEG
-			if (!data && !strcasecmp(link + len - 3, "jpg")) {
+			else if (!strcasecmp(link + len - 3, "jpg")) {
 				data = Image_LoadJPEG(f, name, matchwidth, matchheight, real_width, real_height);
 			}
 #endif // WITH_JPEG
-
 			// TEX_NO_PCX - preventing loading skins here
-			if (!(mode & TEX_NO_PCX) && !data && !strcasecmp(link + len - 3, "pcx")) {
+			else if (!(mode & TEX_NO_PCX) && !strcasecmp(link + len - 3, "pcx")) {
 				data = Image_LoadPCX_As32Bit(f, name, matchwidth, matchheight, real_width, real_height);
 			}
+			else {
+				VFS_CLOSE(f);
+			}
+			f = NULL;
 
 			if (data)
 				return data;
