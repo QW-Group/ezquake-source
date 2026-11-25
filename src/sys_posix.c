@@ -997,14 +997,26 @@ int Sys_RunCommand(const char *command)
 
 int Sys_Script (const char *path, const char *args)
 {
-	char str[1024];
+	char dir[2 * sizeof(fs_gamedir)];
+	char command[sizeof(dir) + 1024];
+	const char *src;
+	char *dst = dir;
+	int length;
 
-	snprintf(str, sizeof(str), "cd %s\n./%s.qws %s &\ncd ..", fs_gamedir, path, args);
+	// Keep the game directory literal inside the shell's double quotes.
+	for (src = fs_gamedir; *src; ++src) {
+		if (strchr("\\\"$`", *src)) {
+			*dst++ = '\\';
+		}
+		*dst++ = *src;
+	}
+	*dst = '\0';
 
-	if (Sys_RunCommand(str) == -1)
+	length = snprintf(command, sizeof(command), "cd \"%s\" || exit 1\n./%s.qws %s &", dir, path, args);
+	if (length < 0 || (size_t)length >= sizeof(command)) {
 		return 0;
-
-	return 1;
+	}
+	return Sys_RunCommand(command) == 0;
 }
 
 DL_t Sys_DLOpen(const char *path)
