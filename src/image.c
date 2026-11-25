@@ -1261,6 +1261,11 @@ byte *Image_LoadTGA(vfsfile_t *fin, const char *filename, int matchwidth, int ma
 			TGA_ERROR("Unsupported TGA image %s: Bad colormap size.\n");
 		if (header.colormapType != 1 || header.colormapLength * 4 > sizeof(palette))
 			TGA_ERROR("Unsupported TGA image %s: Bad colormap type and/or length for color-mapped image.\n");
+		if (filesize - 18 - header.idLength < header.colormapLength * ((header.colormapSize + 7) >> 3))
+			TGA_ERROR("Unsupported TGA image %s: Truncated colormap.\n");
+
+		// Pixels are not checked against colormapLength
+		memset(palette, 0, sizeof(palette));
 
 		// read in the palette
 		if (header.colormapSize == 15 || header.colormapSize == 16) {
