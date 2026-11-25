@@ -209,6 +209,14 @@ qbool R_LoadCharsetImage(char *filename, char *identifier, int flags, charset_t*
 		return false;
 	}
 
+	// The image is a grid of 16x16 characters, each at least a pixel wide and high
+	if (real_width < CHARSET_CHARS_PER_ROW || real_height < CHARSET_CHARS_PER_ROW) {
+		Com_Printf("Charset image %s is smaller than %dx%d pixels\n", filename, CHARSET_CHARS_PER_ROW, CHARSET_CHARS_PER_ROW);
+		Q_free(data);
+		R_TraceLeaveRegion(true);
+		return false;
+	}
+
 	R_ImagePreMultiplyAlpha(data, real_width, real_height, false);
 
 	if (!identifier) {
