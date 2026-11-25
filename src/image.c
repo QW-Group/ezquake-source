@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef __FreeBSD__
 #include <dlfcn.h>
 #endif
+#include <stddef.h>
 #include "quakedef.h"
 #include "image.h"
 
@@ -1834,6 +1835,13 @@ byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int m
 		return NULL;
 	filesize = VFS_GETLEN(fin);
 
+	// The header is read and byte-swapped in place
+	if (filesize < (int)offsetof(pcx_t, data)) {
+		Com_DPrintf("Invalid PCX image %s\n", COM_SkipPath(filename));
+		VFS_CLOSE(fin);
+		return NULL;
+	}
+
 	pcxbuf = (byte *) Q_malloc(filesize);
 	if (VFS_READ(fin, pcxbuf, filesize, NULL) != filesize) 
 	{
@@ -1892,8 +1900,7 @@ byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int m
 	{
 		for (x = 0; x < width; ) 
 		{
-			if (pix - (byte *) pcx > filesize) 
-			{
+			if (pix - (byte *)pcx >= filesize) {
 				Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 				Q_free(pcxbuf);
 				Q_free(data);
@@ -1905,8 +1912,7 @@ byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int m
 			if ((dataByte & 0xC0) == 0xC0)
 			{
 				runLength = dataByte & 0x3F;
-				if (pix - (byte *) pcx > filesize)
-				{
+				if (pix - (byte *)pcx >= filesize) {
 					Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 					Q_free(pcxbuf);
 					Q_free(data);
@@ -1927,17 +1933,11 @@ byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int m
 				return NULL;
 			}
 
-			while (runLength-- > 0)
+			// A run may cover one byte past the line, such as the byte that
+			// pads a line of odd width to an even length, which is no pixel
+			while (runLength-- > 0 && x < width)
 				out[x++] = dataByte;
 		}
-	}
-
-	if (pix - (byte *) pcx > filesize) 
-	{
-		Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
-		Q_free(pcxbuf);
-		Q_free(data);
-		return NULL;
 	}
 
 	Q_free(pcxbuf);
