@@ -1728,6 +1728,12 @@ static int CM_BSPX_FindOffset(dheader_t *header, int filesize)
 		return -1;
 	}
 
+	// FTE and ericw-tools put the BSPX header at the next 4-byte boundary
+	xofs = (xofs + 3) & ~3;
+	if (xofs + sizeof(bspx_header_t) > filesize) {
+		return -1;
+	}
+
 	return xofs;
 }
 
