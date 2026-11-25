@@ -263,6 +263,34 @@ static void Mod_SetParent(model_t *loadmodel, mnode_t *node, mnode_t *parent, in
 	Mod_SetParent(loadmodel, node->children[1], node, depth + 1);
 }
 
+// Checks the tree of a submodel, which R_MarkLights walks by recursion, from
+// node, at depth depth, down, as Mod_SetParent checks the tree from node 0:
+// no node may be reached twice, and none deeper than MAX_NODE_DEPTH. A node
+// of the tree from node 0, or of the tree of an earlier submodel, which
+// reached marks, has been reached already; if it is the head node, the
+// submodel's tree is part of a checked tree.
+static void Mod_CheckSubmodelTree(model_t *loadmodel, byte *reached, mnode_t *node, int depth)
+{
+	int nodenum;
+
+	if (node->contents < 0) {
+		return;
+	}
+	nodenum = node - loadmodel->nodes;
+	if (node->parent || node == loadmodel->nodes || reached[nodenum]) {
+		if (depth == 1) {
+			return;
+		}
+		Host_Error("[%s] node %d is reached twice", loadmodel->name, nodenum);
+	}
+	if (depth > MAX_NODE_DEPTH) {
+		Host_Error("[%s] node tree is deeper than %d", loadmodel->name, MAX_NODE_DEPTH);
+	}
+	reached[nodenum] = 1;
+	Mod_CheckSubmodelTree(loadmodel, reached, node->children[0], depth + 1);
+	Mod_CheckSubmodelTree(loadmodel, reached, node->children[1], depth + 1);
+}
+
 // Sets up the light data of a model: a Half-Life map's own, or the BSPX
 // LIGHTING_E5BGR9 or RGBLIGHTING lump, which a .lit file replaces, or the
 // mono lighting in RGB. MOD_HDRLIGHTING tells the readers of the samples
@@ -1689,11 +1717,12 @@ static void Mod_LoadLeafsBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 // Called from Mod_LoadModel()
 void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 {
-	int i;
+	int i, mark;
 	dheader_t *header;
 	dmodel_t *bm;
 	vec3_t normal;
 	bspx_header_t* bspx_header;
+	byte *reached;
 
 	mod->type = mod_brush;
 
@@ -1784,6 +1813,9 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 	// regular and alternate animation
 	mod->numframes = 2;
 
+	mark = Hunk_LowMark();
+	reached = (byte *)Hunk_AllocName(mod->numnodes, mod->name);
+
 	// set up the submodels (FIXME: this is confusing)
 	for (i = 0; i < mod->numsubmodels; i++) {
 		bm = &mod->submodels[i];
@@ -1800,6 +1832,9 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 		mod->firstnode = bm->headnode[0];
 		if ((unsigned)mod->firstnode > mod->numnodes) {
 			Host_Error("Inline model %i has bad firstnode", i);
+		}
+		if (mod->firstnode < mod->numnodes) {
+			Mod_CheckSubmodelTree(mod, reached, mod->nodes + mod->firstnode, 1);
 		}
 
 		VectorCopy(bm->maxs, mod->maxs);
@@ -1827,6 +1862,7 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 			mod = submodel;
 		}
 	}
+	Hunk_FreeToLowMark(mark);
 
 	// set wall/ceiling drawflat
 	for (i = 0; i < mod->numsurfaces; ++i) {
