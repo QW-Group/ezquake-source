@@ -289,10 +289,10 @@ void WAD3_LoadWadFile(const char *filename)
 	if (wad3_numlumps == TEXWAD_MAXIMAGES)
 		return;
 
-	if (!(file = FS_OpenVFS(va("textures/halflife/%s", filename), "rb", FS_ANY)))
-		if (!(file = FS_OpenVFS(va("textures/wad3/%s", filename), "rb", FS_ANY)))
-			if (!(file = FS_OpenVFS(va("textures/%s", filename), "rb", FS_ANY)))
-				if (!(file = FS_OpenVFS(filename, "rb", FS_ANY))) {
+	if (!(file = FS_OpenVFS(va("textures/halflife/%s", filename), "rb", FS_GAME)))
+		if (!(file = FS_OpenVFS(va("textures/wad3/%s", filename), "rb", FS_GAME)))
+			if (!(file = FS_OpenVFS(va("textures/%s", filename), "rb", FS_GAME)))
+				if (!(file = FS_OpenVFS(filename, "rb", FS_GAME))) {
 					Com_Printf("WAD3_LoadWadFile: couldn't load halflife wad \"%s\"", filename);
 					return;
 				}
