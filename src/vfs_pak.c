@@ -227,7 +227,7 @@ static qbool FSPAK_FLocate(void *handle, flocation_t *loc, const char *filename,
 
 	if (pf)
 	{	//is this a pointer to a file in this pak?
-		if (pf < pak->files || pf > pak->files + pak->numfiles)
+		if (pf < pak->files || pf >= pak->files + pak->numfiles)
 			return false;	//was found in a different path
 	}
 	else
