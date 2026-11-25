@@ -3027,11 +3027,12 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 	{
 		next = oldpaths->nextpure;
 
-		if (oldbase == oldpaths)
-			fs_base_searchpaths = fs_searchpaths;
-
 		if (oldpaths->funcs == &osfilefuncs)
 			FS_AddGameDirectory(oldpaths->handle, reloadflags);
+
+		// as at startup, point at the newest base path once it is back
+		if (oldbase == oldpaths)
+			fs_base_searchpaths = fs_searchpaths;
 
 		oldpaths->funcs->ClosePath(oldpaths->handle);
 		Q_free(oldpaths);
