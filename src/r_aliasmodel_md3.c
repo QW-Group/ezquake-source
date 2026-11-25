@@ -298,7 +298,7 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 
 	md3model_t *pheader;
 	md3Header_t *mem;
-	surfinf_t *sinf;
+	surfinf_t *surface_info, *sinf;
 	md3Surface_t *surf;
 	md3Shader_t *sshad;
 	static md3Shader_t noshader;
@@ -357,7 +357,7 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 
 	Mod_MD3LoadSkins(mod, mem, pheader);
 	{
-		sinf = (surfinf_t*)((char *)pheader + pheader->surfinf);
+		surface_info = (surfinf_t *)((char *)pheader + pheader->surfinf);
 		surf = (md3Surface_t *)((char *)mem + mem->ofsSurfaces);
 		for (surfn = 0; surfn < numsurfs; surfn++) {
 			md3Triangle_t	*tris;
@@ -427,7 +427,8 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 				sshad = &noshader;
 			}
 
-			for (i = 0; i < mem->numSkins; ++i) {
+			// The table holds the surfaces of each skin in turn, as the renderers read it
+			for (i = 0, sinf = surface_info + surfn; i < mem->numSkins; ++i, sinf += numsurfs) {
 				char specifiedskinnameinfolder[128] = { 0 };
 				char tenebraeskinname[128] = { 0 };
 
@@ -461,7 +462,6 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 					sinf->texnum = R_LoadTextureImage("dummy", "dummy", 0, 0, 0);
 					strlcpy(sinf->name, "dummy", sizeof(sinf->name));
 				}
-				++sinf;
 			}
 
 			surf = (md3Surface_t *)((char *)surf + surf->ofsEnd);
