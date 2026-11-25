@@ -342,16 +342,22 @@ static void R_LightFromSurface(msurface_t* surf, int ds, int dt, vec3_t color)
 			for (maps = 0;maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
 				float e;
 				scale = (1<<7) * (float) d_lightstylevalue[surf->styles[maps]] * 1.0f / 256.0f;
-				e = rgb9e5tab[lightmap[      0]>>27] * scale;r00 += ((lightmap[      0]>> 0)&0x1ff) * e;g00 += ((lightmap[      0]>> 9)&0x1ff) * e;b00 += ((lightmap[      0]>> 9)&0x1ff) * e;
+				e = rgb9e5tab[lightmap[0] >> 27] * scale;
+				r00 += ((lightmap[0] >> 0) & 0x1ff) * e;
+				g00 += ((lightmap[0] >> 9) & 0x1ff) * e;
+				b00 += ((lightmap[0] >> 18) & 0x1ff) * e;
 				e = rgb9e5tab[lightmap[next] >> 27] * scale;
 				r01 += ((lightmap[next] >> 0) & 0x1ff) * e;
 				g01 += ((lightmap[next] >> 9) & 0x1ff) * e;
-				b01 += ((lightmap[next] >> 9) & 0x1ff) * e;
-				e = rgb9e5tab[lightmap[line3+0]>>27] * scale;r10 += ((lightmap[line3+0]>> 0)&0x1ff) * e;g10 += ((lightmap[line3+0]>> 9)&0x1ff) * e;b10 += ((lightmap[line3+0]>> 9)&0x1ff) * e;
+				b01 += ((lightmap[next] >> 18) & 0x1ff) * e;
+				e = rgb9e5tab[lightmap[line3 + 0] >> 27] * scale;
+				r10 += ((lightmap[line3 + 0] >> 0) & 0x1ff) * e;
+				g10 += ((lightmap[line3 + 0] >> 9) & 0x1ff) * e;
+				b10 += ((lightmap[line3 + 0] >> 18) & 0x1ff) * e;
 				e = rgb9e5tab[lightmap[line3 + next] >> 27] * scale;
 				r11 += ((lightmap[line3 + next] >> 0) & 0x1ff) * e;
 				g11 += ((lightmap[line3 + next] >> 9) & 0x1ff) * e;
-				b11 += ((lightmap[line3 + next] >> 9) & 0x1ff) * e;
+				b11 += ((lightmap[line3 + next] >> 18) & 0x1ff) * e;
 				lightmap += smax * tmax;
 			}
 		} else {
