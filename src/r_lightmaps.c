@@ -551,7 +551,11 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 	R_TraceLeaveFunctionRegion;
 }
 
-// returns a lightmap number and the position inside it
+// Returns the lightmap given a block of w by h samples, which
+// R_LightmapCreateForSurface keeps within the size of a lightmap, and puts
+// the position of the block in it in x and y. A block may lie up to the
+// last column and row of a lightmap, so when none has room, the empty
+// lightmaps added hold it, and the recursion ends there.
 static int LightmapAllocBlock(int w, int h, int *x, int *y)
 {
 	int i, j, best, best2;
@@ -564,7 +568,7 @@ static int LightmapAllocBlock(int w, int h, int *x, int *y)
 	for (texnum = last_lightmap_updated; texnum < lightmap_array_size; texnum++, last_lightmap_updated++) {
 		best = LIGHTMAP_HEIGHT + 1;
 
-		for (i = 0; i < LIGHTMAP_WIDTH - w; i++) {
+		for (i = 0; i <= LIGHTMAP_WIDTH - w; i++) {
 			best2 = 0;
 
 			for (j = i; j < i + w; j++) {
