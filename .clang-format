@@ -1,0 +1,77 @@
+# Requires clang-format 22 or newer.
+---
+Language: Cpp
+BasedOnStyle: LLVM
+
+# Tabs indent, spaces align, so aligned comments line up at any tab width.
+UseTab: AlignWithSpaces
+IndentWidth: 4
+TabWidth: 4
+ContinuationIndentWidth: 4
+ColumnLimit: 0
+
+# Function braces on their own line, other braces attached, else after a
+# closing brace on its own line.
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterControlStatement: Never
+  AfterEnum: false
+  AfterExternBlock: false
+  AfterFunction: true
+  AfterStruct: false
+  AfterUnion: false
+  BeforeElse: true
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+
+IndentCaseLabels: true
+IndentGotoLabels: false
+
+SpaceBeforeParens: ControlStatements
+SpaceAfterCStyleCast: false
+PointerAlignment: Right
+Cpp11BracedListStyle: false
+
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortEnumsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortFunctionsOnASingleLine: All
+# Single-statement bodies of if/else/for/while/do get braces too.
+InsertBraces: true
+
+AlignAfterOpenBracket: DontAlign
+# A call broken after its ( keeps the ) on a line of its own.
+BreakBeforeCloseBracketFunction: true
+AlignOperands: DontAlign
+AlignEscapedNewlines: DontAlign
+# Trailing comments stay where the author put them, so formatting a change
+# does not move comments on neighbouring lines.
+AlignTrailingComments:
+  Kind: Leave
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
+AlignConsecutiveMacros: None
+
+MaxEmptyLinesToKeep: 2
+ReflowComments: false
+SpacesInLineCommentPrefix:
+  Minimum: 0
+  Maximum: -1
+SortIncludes: Never
+InsertNewlineAtEOF: true
+LineEnding: LF
+
+# Leave #define bodies as written.
+SkipMacroDefinitionBody: true
+# File-scope macro invocations that take no trailing semicolon.
+StatementMacros:
+  - GL_StaticProcedureDeclaration
+  - GL_StaticFunctionDeclaration
+  - GL_StaticFunctionWrapperBody
+  - GL_StaticFunctionWrapperBodyNoArgs
+  - RENDERER_METHOD
