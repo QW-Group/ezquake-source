@@ -546,6 +546,7 @@ typedef struct model_s {
 	byte*               vis_decompressed;   // borrowed until the next row decode
 	byte*               vis_merged;         // separate mask for two-leaf water visibility
 	byte*               lightdata;
+	int lightdata_length;
 	size_t              lightdatasamplesize;
 
 	int					bspversion;

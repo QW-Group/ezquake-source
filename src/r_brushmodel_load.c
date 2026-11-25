@@ -130,19 +130,47 @@ static byte* LoadColoredLighting(char *name, char **litfilename, int *filesize)
 	return data;
 }
 
-static void SetSurfaceLighting(model_t* loadmodel, msurface_t* out, byte* styles, int lightofs)
+// Points the surface at its light samples, whose offset counts samples, or
+// bytes in Half-Life maps. The lightmap builders and R_LightFromSurface read
+// one lightmap of the surface's size for each of its styles, so that much
+// must lie inside the light data. Where it doesn't, as at the end of the data
+// when the light tool rounded a face's extents a sample smaller than
+// CalcSurfaceExtents does, the surface gets no samples and no styles, as the
+// light tools write a face without light data, and is drawn unlit. Sky and
+// unlit turbulent surfaces (SURF_DRAWTILED) get no lightmap and aren't
+// sampled, so their offset isn't checked. The extents, lmshift and flags of
+// the surface must be set.
+static void SetSurfaceLighting(model_t *loadmodel, msurface_t *out, int surfnum, byte *styles, int lightofs)
 {
-	int i;
+	int i, numstyles, smax, tmax, samplesize = (int)loadmodel->lightdatasamplesize;
+	long long start, length;
+
 	for (i = 0; i < MAXLIGHTMAPS; i++) {
 		out->styles[i] = styles[i];
 	}
 	i = LittleLong(lightofs);
 	if (i == -1 || loadmodel->lightdata == NULL) {
 		out->samples = NULL;
+		return;
 	}
-	else {
-		out->samples = loadmodel->lightdata + (loadmodel->bspversion == HL_BSPVERSION ? i : i * loadmodel->lightdatasamplesize);
+
+	numstyles = 0;
+	while (numstyles < MAXLIGHTMAPS && out->styles[numstyles] != 255) {
+		numstyles++;
 	}
+	smax = (out->extents[0] >> out->lmshift) + 1;
+	tmax = (out->extents[1] >> out->lmshift) + 1;
+	start = loadmodel->bspversion == HL_BSPVERSION ? i : (long long)i * samplesize;
+	length = smax * tmax > 0 ? (long long)numstyles * smax * tmax * samplesize : 0;
+	if (numstyles && !(out->flags & SURF_DRAWTILED) && (start < 0 || length > loadmodel->lightdata_length - start)) {
+		Com_DPrintf("[%s] surface %d has light samples outside the light data (offset %d), drawing it unlit\n", loadmodel->name, surfnum, i);
+		for (i = 0; i < MAXLIGHTMAPS; i++) {
+			out->styles[i] = 255;
+		}
+		out->samples = NULL;
+		return;
+	}
+	out->samples = loadmodel->lightdata + start;
 }
 
 //Fills in s->texturemins[] and s->extents[]
@@ -227,9 +255,12 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 
 
 	loadmodel->lightdata = NULL;
+	loadmodel->lightdata_length = 0;
 
 	if (loadmodel->bspversion == HL_BSPVERSION && l->filelen > 0) {
 		loadmodel->lightdata = (byte *) Hunk_AllocName(l->filelen, loadmodel->name);
+		loadmodel->lightdata_length = l->filelen;
+		loadmodel->lightdatasamplesize = 3;
 		memcpy (loadmodel->lightdata, mod_base + l->fileofs, l->filelen);
 		return;
 	}
@@ -248,6 +279,7 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 		rgb = Mod_BSPX_FindLump(bspx_header, "LIGHTING_E5BGR9", &lumpsize, mod_base);
 		if (rgb && lumpsize % 4 == 0 && (lumpsize == l->filelen * 4 || l->filelen <= 0)) {
 			loadmodel->lightdata = (byte *) Hunk_AllocName (lumpsize, loadmodel->name);
+			loadmodel->lightdata_length = lumpsize;
 			loadmodel->lightdatasamplesize = 4;
 			memcpy(loadmodel->lightdata, rgb, lumpsize);
 			loadmodel->flags |= MOD_HDRLIGHTING;
@@ -259,6 +291,7 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 			// Sanity-check size if vanilla lit exists
 			if (rgb && lumpsize % 3 == 0 && (lumpsize == l->filelen * 3 || l->filelen <= 0)) {
 				loadmodel->lightdata = (byte *) Hunk_AllocName(lumpsize, loadmodel->name);
+				loadmodel->lightdata_length = lumpsize;
 				loadmodel->lightdatasamplesize = 3;
 				memcpy(loadmodel->lightdata, rgb, lumpsize);
 				// we trust the inline RGB data to be bug free so we don't check it against the mono lightmap
@@ -299,6 +332,7 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 				Com_Printf("Static coloured lighting loaded\n");
 			}
 			loadmodel->lightdata = data + 8;
+			loadmodel->lightdata_length = l->filelen * 3;
 			loadmodel->lightdatasamplesize = 3;
 
 			in = mod_base + l->fileofs;
@@ -360,6 +394,7 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 
 	//no .lit found, expand the white lighting data to color
 	loadmodel->lightdata = (byte *) Hunk_AllocName (l->filelen * 3, va("%s_@lightdata", loadmodel->name));
+	loadmodel->lightdata_length = l->filelen * 3;
 	loadmodel->lightdatasamplesize = 3;
 	in = mod_base + l->fileofs;
 	out = loadmodel->lightdata;
@@ -1154,10 +1189,10 @@ static void Mod_LoadFaces(model_t* loadmodel, lump_t* l, byte* mod_base, bspx_he
 			lightofs = in->lightofs;
 		}
 
-		// lighting info
-		SetSurfaceLighting(loadmodel, out, in->styles, lightofs);
-
 		SetTextureFlags(loadmodel, out, surfnum);
+
+		// lighting info
+		SetSurfaceLighting(loadmodel, out, surfnum, in->styles, lightofs);
 	}
 }
 
@@ -1215,10 +1250,10 @@ static void Mod_LoadFacesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base, bsp
 			lightofs = in->lightofs;
 		}
 
-		// lighting info
-		SetSurfaceLighting(loadmodel, out, in->styles, lightofs);
-
 		SetTextureFlags(loadmodel, out, surfnum);
+
+		// lighting info
+		SetSurfaceLighting(loadmodel, out, surfnum, in->styles, lightofs);
 	}
 }
 
