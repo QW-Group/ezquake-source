@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Code to load MD3 files
 
+#include <limits.h>
 #include "quakedef.h"
 #include "gl_model.h"
 #include "r_aliasmodel_md3.h"
@@ -144,8 +145,12 @@ static void Mod_MD3LoadSkins(model_t* mod, md3Header_t* header, md3model_t* mode
 		++found_skins;
 	}
 
-	// End: make sure we allocate at least as many skins as defined in the model
-	while (found_skins < max(header->numSkins, 1)) {
+	// End: make sure we allocate at least as many skins as defined in the
+	// model, up to MAX_SKINS, as each skin loads a texture for every surface
+	if (header->numSkins > MAX_SKINS) {
+		Com_DPrintf("Model %s declares %d skins, loading %d\n", mod->name, header->numSkins, MAX_SKINS);
+	}
+	while (found_skins < bound(1, header->numSkins, MAX_SKINS)) {
 		MD3_ForEachSurface(header, surf, surface) {
 			md3_skin_list_entry_t* new_skin = Q_malloc(sizeof(md3_skin_list_entry_t));
 			new_skin->next = skin_list;
@@ -157,6 +162,16 @@ static void Mod_MD3LoadSkins(model_t* mod, md3Header_t* header, md3model_t* mode
 	}
 
 	header->numSkins = found_skins;
+
+	// the size of the table goes to Hunk_AllocName as an int
+	if (header->numSurfaces > INT_MAX / (int)sizeof(surfinf_t) / header->numSkins) {
+		while (skin_list) {
+			md3_skin_list_entry_t *next = skin_list->next;
+			Q_free(skin_list);
+			skin_list = next;
+		}
+		Host_Error("Mod_LoadAlias3Model: model %s has %d skins of %d surfaces", mod->name, header->numSkins, header->numSurfaces);
+	}
 
 	// Convert linked list to array so it's moveable & easier to access
 	surfinf_t* surface_info = Hunk_AllocName(sizeof(surfinf_t) * header->numSkins * header->numSurfaces, "md3surfinfo");
@@ -172,6 +187,104 @@ static void Mod_MD3LoadSkins(model_t* mod, md3Header_t* header, md3model_t* mode
 	}
 }
 
+/*
+ * True when count elements of frames * size bytes each at ofs lie inside a
+ * parent of parent_size bytes, computed without overflow for any frame count.
+ * A non-empty region must start at or after min_ofs, so that it does not
+ * overlap the header fields the loader rewrites in place.
+ */
+static qbool MD3_RegionFits(int ofs, int count, size_t size, int frames, size_t min_ofs, int parent_size)
+{
+	if (count == 0) {
+		return true;
+	}
+
+	return count > 0 && ofs >= 0 && (size_t)ofs >= min_ofs && ofs <= parent_size &&
+		(size_t)count <= (size_t)(parent_size - ofs) / size / frames;
+}
+
+/*
+ * Checks the little-endian MD3 file in buffer before it is copied and swapped
+ * in place, so the loader and the renderers can trust its counts and offsets.
+ * Returns NULL if the model can be loaded, otherwise the reason it cannot.
+ */
+static const char *Mod_MD3Validate(const byte *buffer, int filesize)
+{
+	const md3Header_t *header = (const md3Header_t *)buffer;
+	const md3Surface_t *surf;
+	const md3Triangle_t *tris;
+	int numframes, numsurfs, numshaders, numverts, numtris;
+	int ofs, surfsize, max_triangles, triangles = 0;
+	int i, j, k, index;
+
+	if (filesize < (int)sizeof(md3Header_t)) {
+		return "is truncated";
+	}
+
+	numframes = LittleLong(header->numFrames);
+	numsurfs = LittleLong(header->numSurfaces);
+	// the classic renderer divides by the frame count
+	if (numframes < 1) {
+		return "has an invalid number of frames";
+	}
+	// the classic renderer binds the skin of the first surface
+	if (numsurfs < 1) {
+		return "has an invalid number of surfaces";
+	}
+	if (!MD3_RegionFits(LittleLong(header->ofsFrames), numframes, sizeof(md3Frame_t), 1, sizeof(md3Header_t), filesize) ||
+		!MD3_RegionFits(LittleLong(header->ofsTags), LittleLong(header->numTags), sizeof(md3tag_t), numframes, sizeof(md3Header_t), filesize)) {
+		return "is truncated";
+	}
+
+	// GLM_MakeAlias3DisplayLists stores three vertices per triangle and frame,
+	// and buffers.Create takes the size of that vertex buffer as an int
+	max_triangles = (int)(INT_MAX / sizeof(vbo_model_vert_t) / 3 / numframes);
+
+	ofs = LittleLong(header->ofsSurfaces);
+	for (i = 0; i < numsurfs; i++) {
+		if (!MD3_RegionFits(ofs, 1, sizeof(md3Surface_t), 1, sizeof(md3Header_t), filesize)) {
+			return "is truncated";
+		}
+		surf = (const md3Surface_t *)(buffer + ofs);
+		surfsize = LittleLong(surf->ofsEnd);
+		if (surfsize < (int)sizeof(md3Surface_t) || surfsize > filesize - ofs) {
+			return "is truncated";
+		}
+
+		numshaders = LittleLong(surf->numShaders);
+		numverts = LittleLong(surf->numVerts);
+		numtris = LittleLong(surf->numTriangles);
+		// The renderers index the vertices of every surface with the header's
+		// frame count
+		if (!memchr(surf->name, 0, sizeof(surf->name)) || LittleLong(surf->numFrames) != numframes ||
+			!MD3_RegionFits(LittleLong(surf->ofsShaders), numshaders, sizeof(md3Shader_t), 1, sizeof(md3Surface_t), surfsize) ||
+			!MD3_RegionFits(LittleLong(surf->ofsTriangles), numtris, sizeof(md3Triangle_t), 1, sizeof(md3Surface_t), surfsize) ||
+			!MD3_RegionFits(LittleLong(surf->ofsSt), numverts, sizeof(md3St_t), 1, sizeof(md3Surface_t), surfsize) ||
+			!MD3_RegionFits(LittleLong(surf->ofsXyzNormals), numverts, sizeof(md3XyzNormal_t), numframes, sizeof(md3Surface_t), surfsize)) {
+			return "has an invalid surface";
+		}
+		// Hunk_AllocName takes the size of the decoded vertices as an int
+		if ((size_t)numverts > INT_MAX / sizeof(ezMd3XyzNormal_t) / numframes || numtris > max_triangles - triangles) {
+			return "is too large";
+		}
+		triangles += numtris;
+
+		tris = (const md3Triangle_t *)((const byte *)surf + LittleLong(surf->ofsTriangles));
+		for (j = 0; j < numtris; j++) {
+			for (k = 0; k < 3; k++) {
+				index = LittleLong(tris[j].indexes[k]);
+				if (index < 0 || index >= numverts) {
+					return "has a triangle with an invalid vertex";
+				}
+			}
+		}
+
+		ofs += surfsize;
+	}
+
+	return NULL;
+}
+
 void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 {
 	int start, total;
@@ -183,15 +296,23 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 	surfinf_t *sinf;
 	md3Surface_t *surf;
 	md3Shader_t *sshad;
+	static md3Shader_t noshader;
 	md3Frame_t *mFrame;
 	int fr, i, j;
 	md3St_t *st;
 	ezMd3XyzNormal_t* output_vert;
+	const char *error;
 
 	start = Hunk_LowMark();
 
 	mod->type = mod_alias3;
 	Mod_AddModelFlags(mod);
+
+	error = Mod_MD3Validate(buffer, filesize);
+	if (error) {
+		Host_Error("Mod_LoadAlias3Model: model %s %s", mod->name, error);
+		return;
+	}
 
 	numsurfs = LittleLong(((md3Header_t *)buffer)->numSurfaces);
 
@@ -289,8 +410,17 @@ void Mod_LoadAlias3Model(model_t *mod, void *buffer, int filesize)
 			}
 			surf->ofsXyzNormals = (char*)output_vert - (char*)surf;
 
-			sshad = (md3Shader_t *)((char *)surf + surf->ofsShaders);
-			sshad->shaderIndex = LittleLong(sshad->shaderIndex);
+			// a surface without shaders takes its textures from the .skin files
+			// and its own name, as one whose shader has no name
+			if (surf->numShaders > 0) {
+				sshad = (md3Shader_t *)((char *)surf + surf->ofsShaders);
+				sshad->shaderIndex = LittleLong(sshad->shaderIndex);
+				// some tools fill all of the name, which is read as a string
+				sshad->name[sizeof(sshad->name) - 1] = '\0';
+			}
+			else {
+				sshad = &noshader;
+			}
 
 			for (i = 0; i < mem->numSkins; ++i) {
 				char specifiedskinnameinfolder[128] = { 0 };
