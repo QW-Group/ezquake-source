@@ -244,6 +244,10 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride, uint32_t f
 		for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
 			scale = d_lightstylevalue[surf->styles[maps]];
 			surf->cached_light[maps] = scale;	// 8.8 fraction
+			// a face with styles can have light offset -1, and so no samples
+			if (!lightmap) {
+				continue;
+			}
 			// it sucks that blocklights is an int array. we can still massively
 			// overbright though, just not underbright quite as accurately
 			// (still quite a bit more than rgb8 precision there).
