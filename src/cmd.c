@@ -141,16 +141,15 @@ add:
 	Q_free(tmp);
 }
 
-qbool CL_IsDownloadableFileExtension(const char *filename)
+static qbool Cmd_IsListedDownloadExtension(const char *ext, qbool ignore_case)
 {
 	qbool is_allowed = false;
-	char *ext, *str, *tmp;
+	char *str, *tmp;
 
-	ext = COM_FileExtension(filename);
 	str = Q_strdup(cl_allow_downloads.string);
 	tmp = strtok(str, ",");
 	while (tmp != NULL) {
-		if (strcmp(ext, tmp) == 0) {
+		if ((ignore_case ? strcasecmp(ext, tmp) : strcmp(ext, tmp)) == 0) {
 			is_allowed = true;
 			break;
 		}
@@ -160,6 +159,44 @@ qbool CL_IsDownloadableFileExtension(const char *filename)
 	Q_free(str);
 
 	return is_allowed;
+}
+
+qbool CL_IsDownloadableFileExtension(const char *filename)
+{
+	return Cmd_IsListedDownloadExtension(COM_FileExtension(filename), false);
+}
+
+/*
+ * Returns true, after a warning, if exec must not read name because servers
+ * may download files of its type. Windows and macOS match names without case,
+ * and Windows also opens x.loc for "x.loc.", "x.loc ", "x.loc::$DATA" and
+ * "x.loc/zz/..", as it drops trailing dots and spaces, reads a stream suffix
+ * and resolves "." and ".." by the text of the path. Every component of name
+ * is therefore checked, without case and without those suffixes.
+ */
+static qbool Cmd_RefuseDownloadableExec(const char *name)
+{
+	char part[MAX_OSPATH], *ext;
+	const char *s;
+	size_t partlen, len;
+
+	for (s = name; *s; s += partlen + (s[partlen] != 0)) {
+		partlen = strcspn(s, "/\\");
+		strlcpy(part, s, min(partlen + 1, sizeof(part)));
+		part[strcspn(part, ":")] = 0;
+		len = strlen(part);
+		while (len > 0 && (part[len - 1] == '.' || part[len - 1] == ' ')) {
+			part[--len] = 0;
+		}
+
+		ext = COM_FileExtension(part);
+		if (Cmd_IsListedDownloadExtension(ext, true)) {
+			Com_Printf("Warning: \"%s\" is not allowed to be executed. Remove \"%s\" from cl_allow_downloads to allow execution\n", name, ext);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 static qbool Cmd_IsCommandAllowedInDemoExtension(const char *cmd)
@@ -615,18 +652,19 @@ void Cmd_Exec_f (void)
 	server_command = cbuf_current == &cbuf_server || !strcmp(Cmd_Argv(0), "serverexec");
 #endif
 
-	if (CL_IsDownloadableFileExtension(Cmd_Argv(1))) {
-		Com_Printf("Warning: \"%s\" is not allowed to be executed. Remove \"%s\" from cl_allow_downloads to allow execution\n", Cmd_Argv(1), COM_FileExtension(Cmd_Argv(1)));
+	strlcpy(name, Cmd_Argv(1), sizeof(name) - 4);
+	if (Cmd_RefuseDownloadableExec(name)) {
 		return;
 	}
-
-	strlcpy (name, Cmd_Argv(1), sizeof(name) - 4);
 	if (!(f = Cmd_LoadConfig(name))) {
 		const char *p;
 		p = COM_SkipPath (name);
 		if (!strchr (p, '.')) {
 			// no extension, so try the default (.cfg)
 			strlcat (name, ".cfg", sizeof (name));
+			if (Cmd_RefuseDownloadableExec(name)) {
+				return;
+			}
 			f = Cmd_LoadConfig(name);
 		}
 		if (!f) {
