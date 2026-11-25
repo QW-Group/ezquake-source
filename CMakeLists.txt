@@ -309,6 +309,7 @@ check_dependency(Expat    "expat"      "EXPAT"              "expat::expat"      
 check_dependency(FreeType "freetype2"  "Freetype"           "Freetype::Freetype"           OPTIONAL)
 check_dependency(JPEG     "libjpeg"    "JPEG"               "JPEG::JPEG"                   REQUIRED)
 check_dependency(Jansson  "jansson"    "jansson"            "jansson::jansson"             REQUIRED)
+check_dependency(Opus     "opus"       "Opus"               "Opus::opus"                   OPTIONAL CONFIG)
 check_dependency(PNG      "libpng"     "PNG"                "PNG::PNG"                     REQUIRED)
 check_dependency(SDL2     "sdl2"       "SDL2"               "SDL2::SDL2-static"            REQUIRED)
 check_dependency(SndFile  "sndfile"    "SndFile"            "SndFile::sndfile"             REQUIRED)
@@ -939,6 +940,7 @@ target_compile_definitions(ezquake PRIVATE
         $<$<BOOL:${HAVE_FREETYPE}>:EZ_FREETYPE_SUPPORT_STATIC>
 
         $<$<AND:$<BOOL:${HAVE_SPEEX}>,$<BOOL:${HAVE_SPEEXDSP}>>:WITH_SPEEX>
+        $<$<BOOL:${HAVE_OPUS}>:WITH_OPUS>
 
         # antilag 1 prototype protocol extensions; values must match the
         # commented-out defines in src/qwprot/src/protocol.h (shared with
@@ -974,6 +976,7 @@ target_link_libraries(ezquake PRIVATE
 
         $<$<AND:$<BOOL:${HAVE_SPEEX}>,$<BOOL:${HAVE_SPEEXDSP}>>:Dep::Speex>
         $<$<AND:$<BOOL:${HAVE_SPEEX}>,$<BOOL:${HAVE_SPEEXDSP}>>:Dep::SpeexDSP>
+        $<$<BOOL:${HAVE_OPUS}>:Dep::Opus>
 
         OpenGL::GL
         Threads::Threads

@@ -20,6 +20,7 @@
         { "name": "libpng", "default-features": false },
         { "name": "libjpeg-turbo", "default-features": false },
         { "name": "freetype", "default-features": false, "features": ["zlib"] },
+        { "name": "opus", "default-features": false },
         { "name": "speex", "default-features": false },
         { "name": "speexdsp", "default-features": false },
         { "name": "libsndfile", "default-features": false, "features": ["external-libs"] },
