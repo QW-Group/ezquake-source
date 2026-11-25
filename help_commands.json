@@ -2100,6 +2100,9 @@
   "vminfo": {
     "description": "Prints diagnostic information about all registered PR2 virtual machines to the server console. For each VM slot with a loaded module it reports the module name and execution type (native, compiled-on-load, or interpreted), followed by the code segment length, instruction table length, and data segment size in bytes. Useful for confirming which game VM is active and whether it was JIT-compiled or run in bytecode mode."
   },
+  "voip_volume": {
+    "description": "Sets how loud a player's voice chat plays (`voip_volume <name|userid> [0-2]`): 0 silences them, 1 is normal, 2 is twice as loud. With no volume, prints the current one. The setting follows the player's name in that slot and is not saved across sessions."
+  },
   "wait": {
     "description": "Adds one wait frame."
   },

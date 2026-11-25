@@ -24,6 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <SDL.h>
 #include "quakedef.h"
 #include "qsound.h"
+#include "utils.h"
 
 #ifdef FTE_PEXT2_VOICECHAT
 
@@ -74,6 +75,12 @@ static cvar_t cl_voip_bitrate = { "cl_voip_bitrate", "24000", CVAR_NOTFROMSERVER
 
 static float voicevolumemod = 1; // voice volume modifier.
 
+// voip_volume: a player's voice louder or quieter, kept while the slot holds that name
+static struct {
+	char name[MAX_SCOREBOARDNAME];
+	float amp;
+} voip_volume[MAX_CLIENTS];
+
 float S_VoipVoiceTransmitVolume(void)
 {
 	return voicevolumemod;
@@ -94,7 +101,6 @@ static struct
 	void *decoder[MAX_CLIENTS];
 	unsigned char decseq[MAX_CLIENTS];	/*sender's sequence, to detect+cover minor packetloss*/
 	unsigned char decgen[MAX_CLIENTS];	/*last generation. if it changes, we flush speex to reset packet loss*/
-	float decamp[MAX_CLIENTS];	/*amplify them by this*/
 	unsigned char deccodec[MAX_CLIENTS];	/*codec of the last packet. if it changes, the decoder starts over too*/
 	float lastspoke[MAX_CLIENTS];	/*time when they're no longer considered talking. if future, they're talking*/
 
@@ -151,7 +157,6 @@ static qbool S_Speex_Init (void)
 		speex_bits_init (&s_speex.decbits[i]);
 		speex_bits_reset (&s_speex.decbits[i]);
 		s_speex.decoder[i] = speex_decoder_init (mode);
-		s_speex.decamp[i] = 1;
 	}
 
 #ifdef WITH_OPUS
@@ -179,6 +184,15 @@ static int S_Voip_Codec(void)
 	}
 #endif
 	return VOIP_SPEEX_OLD;
+}
+
+// A player's voip_volume, 1 unless set for the name now in that slot
+static float S_Voip_PlayerVolume(unsigned int slot)
+{
+	if (voip_volume[slot].name[0] && !strcmp(voip_volume[slot].name, cl.players[slot].name)) {
+		return voip_volume[slot].amp;
+	}
+	return 1;
 }
 
 static void S_Voip_Amplify(short *pcm, unsigned int samples, float amp)
@@ -369,7 +383,7 @@ void S_Voip_Parse (void)
 
 	sender &= MAX_CLIENTS - 1;
 
-	amp = s_speex.decamp[sender];
+	amp = S_Voip_PlayerVolume (sender);
 
 #ifdef WITH_OPUS
 	if (codec == VOIP_OPUS) {
@@ -670,6 +684,27 @@ static void S_Voip_Disable_f (void)
 	Cvar_SetValue (&cl_voip_send, cl_voip_send.integer & ~2);
 }
 
+// voip_volume <userid | name> [0 - 2]
+static void S_Voip_Volume_f(void)
+{
+	int slot;
+
+	if (Cmd_Argc() != 2 && Cmd_Argc() != 3) {
+		Con_Printf("Usage: %s <userid | name> [0 - 2]\n", Cmd_Argv(0));
+		return;
+	}
+	slot = Player_StringtoSlot(Cmd_Argv(1), true, true);
+	if (slot < 0) {
+		Con_Printf("%s : no player %s\n", Cmd_Argv(0), Cmd_Argv(1));
+		return;
+	}
+	if (Cmd_Argc() == 3) {
+		strlcpy(voip_volume[slot].name, cl.players[slot].name, sizeof(voip_volume[slot].name));
+		voip_volume[slot].amp = bound(0, Q_atof(Cmd_Argv(2)), 2);
+	}
+	Con_Printf("%s : %s %.2f\n", Cmd_Argv(0), cl.players[slot].name, S_Voip_PlayerVolume(slot));
+}
+
 // 
 void S_Voip_RegisterCvars (void)
 {
@@ -689,6 +724,7 @@ void S_Voip_RegisterCvars (void)
 
 	Cmd_AddCommand ("+voip", S_Voip_Enable_f);
 	Cmd_AddCommand ("-voip", S_Voip_Disable_f);
+	Cmd_AddCommand ("voip_volume", S_Voip_Volume_f);
 }
 
 // Called after new serverdata received
