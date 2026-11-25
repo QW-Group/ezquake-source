@@ -1791,7 +1791,8 @@ bspx_header_t* Mod_LoadBSPX(int filesize, byte* mod_base)
 	xheader = (bspx_header_t*)(mod_base + xofs);
 	xheader->numlumps = LittleLong(xheader->numlumps);
 
-	if (xheader->numlumps < 0 || xofs + sizeof(bspx_header_t) + xheader->numlumps * sizeof(bspx_lump_t) > filesize) {
+	// CM_BSPX_FindOffset leaves room for the header
+	if (xheader->numlumps < 0 || xheader->numlumps > (filesize - xofs - (int)sizeof(bspx_header_t)) / (int)sizeof(bspx_lump_t)) {
 		return NULL;
 	}
 
