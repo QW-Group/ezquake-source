@@ -596,15 +596,9 @@ static void PNG_IO_user_flush_data(png_structp png_ptr)
 static qbool PNG_HasHeader (vfsfile_t *fin)
 {
 	byte header[PNG_HEADER_LENGTH];
-	vfserrno_t err;
 
-	if (VFS_READ(fin, header, PNG_HEADER_LENGTH, &err) != PNG_HEADER_LENGTH || png_sig_cmp(header, 0, PNG_HEADER_LENGTH)) {
-		VFS_CLOSE(fin);
-		fin = NULL;
-		return false;
-	}
-
-	return true;
+	return VFS_READ(fin, header, PNG_HEADER_LENGTH, NULL) == PNG_HEADER_LENGTH
+		&& !png_sig_cmp(header, 0, PNG_HEADER_LENGTH);
 }
 
 // libpng must not regain control after an error, so this unwinds to the
