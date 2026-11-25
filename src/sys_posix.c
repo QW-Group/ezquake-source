@@ -169,6 +169,9 @@ void Sys_Error(char *error, ...)
 	if (!shutting_down) {
 		shutting_down = true;
 		SV_Shutdown(string);
+		if (sys_restart_on_error.integer) {
+			Sys_Restart();
+		}
 	}
 #else
 	if (qconsole_log)
@@ -981,7 +984,8 @@ void Sys_Restart(void)
 #ifndef SOCK_CLOEXEC
 	pthread_mutex_unlock(&sys_spawn_mutex);
 #endif
-	Sys_Error("Could not restart: %s", strerror(error));
+	fprintf(stderr, "Could not restart: %s\n", strerror(error));
+	exit(1);
 }
 #endif
 

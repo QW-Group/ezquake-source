@@ -178,6 +178,9 @@ void Sys_Error(char *error, ...)
 	if (!shutting_down) {
 		shutting_down = true;
 		SV_Shutdown(text);
+		if (sys_restart_on_error.integer) {
+			Sys_Restart();
+		}
 	}
 	exit(1);
 }
@@ -192,15 +195,21 @@ void Sys_Restart(void)
 
 	length = GetModuleFileNameA(NULL, executable, sizeof(executable));
 	if (!length || length >= sizeof(executable)) {
-		Sys_Error("Could not find the server executable for restart");
+		fprintf(stderr, "Could not restart: could not find the server executable\n");
+		exit(1);
 	}
-	command_line = Q_strdup(GetCommandLineA());
+	command_line = _strdup(GetCommandLineA());
+	if (!command_line) {
+		fprintf(stderr, "Could not restart: out of memory\n");
+		exit(1);
+	}
 	NET_Shutdown();
 	startup.cb = sizeof(startup);
 	if (!CreateProcessA(executable, command_line, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &process)) {
-		Sys_Error("Could not restart (Windows error %lu)", GetLastError());
+		fprintf(stderr, "Could not restart (Windows error %lu)\n", GetLastError());
+		exit(1);
 	}
-	Q_free(command_line);
+	free(command_line);
 	CloseHandle(process.hThread);
 	CloseHandle(process.hProcess);
 	exit(0);

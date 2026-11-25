@@ -758,6 +758,9 @@ extern	char		localmodels[MAX_MODELS][MODEL_NAME_LEN]; // inline model names for 
 extern  ctxinfo_t _localinfo_;
 
 extern	qbool		sv_error;
+#ifdef SERVERONLY
+extern cvar_t sys_restart_on_error;
+#endif
 
 extern char			master_rcon_password[128];
 
