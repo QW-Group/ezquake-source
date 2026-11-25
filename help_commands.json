@@ -689,7 +689,7 @@
     "description": "Removes one or more .pak files from the virtual filesystem search path. Usage: `fs_removepak <pakname> [<pakname> ...]`. Each `<pakname>` is tried under ezquake/, qw/, and id1/ with a .pak extension; bare paths are NOT accepted for removal (to prevent accidental removal of generic names like 'pak'). The first successful match is removed and the file cache is flushed. Cannot be used while connected to a server. Legacy alias: `removepak`."
   },
   "fs_restart": {
-    "description": "Reloads all pack files in the current search path, rebuilding the VFS from scratch. Usage: `fs_restart [flags]`. With no argument (or 0), reloads all pack types (pak, pk3, pk4, doomwad, paklst). An optional numeric flags argument selects a subset of pack types to reload (bitmask: 2=pak, 4=pk3, 8=pk4, 16=doomwad, 32=paklst). If connected to a server, the client disconnects and reconnects automatically. Prints the resulting search path after reload (equivalent to fs_path)."
+    "description": "Reloads all pack files in the current search path, rebuilding the VFS from scratch. Usage: `fs_restart [flags]`. With no argument (or 0), reloads all pack types (pak, pk3, pk4, doomwad, paklst). An optional numeric flags argument selects a subset of pack types to reload (bitmask: 2=pak, 4=pk3, 8=pk4, 16=doomwad, 32=paklst). If connected to a server, the client disconnects and reconnects automatically; in a local game, the game ends and its map is started again. Prints the resulting search path after reload (equivalent to fs_path)."
   },
   "fs_search": {
     "description": "Search the filesystem cache by suffix."

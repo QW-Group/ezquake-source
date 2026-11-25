@@ -3014,8 +3014,19 @@ void FS_ReloadPackFilesFlags(FS_Load_File_Types reloadflags)
 	//a lame way to fix pure paks
 	if (cls.state)
 	{
+		qbool local_server = com_serveractive;
+
+#ifndef CLIENTONLY
+		// ending the game shuts a local server down, leaving nothing to
+		// reconnect to: start its map again, which runs after the reload
+		if (local_server) {
+			Cbuf_AddText(va("map \"%s\"\n", sv.mapname));
+		}
+#endif
 		CL_Disconnect_f();
-		CL_Reconnect_f();
+		if (!local_server) {
+			CL_Reconnect_f();
+		}
 	}
 
 	FS_FlushFSHash();
