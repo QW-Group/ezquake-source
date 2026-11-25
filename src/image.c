@@ -601,9 +601,7 @@ static qbool PNG_HasHeader (vfsfile_t *fin)
 	byte header[PNG_HEADER_LENGTH];
 	vfserrno_t err;
 
-	VFS_READ(fin, header, PNG_HEADER_LENGTH, &err);
-	if (png_sig_cmp(header, 0, PNG_HEADER_LENGTH)) 
-	{
+	if (VFS_READ(fin, header, PNG_HEADER_LENGTH, &err) != PNG_HEADER_LENGTH || png_sig_cmp(header, 0, PNG_HEADER_LENGTH)) {
 		VFS_CLOSE(fin);
 		fin = NULL;
 		return false;
