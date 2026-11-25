@@ -3879,7 +3879,7 @@ static void CL_StartDemoCommand(void)
 	// Save the name the user specified.
 	real_name = Cmd_Argv(1);
 
-	// Quick check for buffer overrun on COM_StripExtension below...
+	// Leave room for the extension when trying alternate demo formats.
 	if (strlen (real_name) > MAX_OSPATH - 4) {
 		Com_Printf ("Path is too long (%d characters, max is %d)\n", strlen (real_name), MAX_OSPATH - 4);
 		key_dest = failure_dest;
@@ -3942,9 +3942,11 @@ static void CL_StartDemoCommand(void)
 		}
 
 		for (i = 0; playbackfile == NULL && i < sizeof(demo_file_extensions) / sizeof(demo_file_extensions[0]); ++i) {
-			// Strip the extension from the specified filename and append
-			// the one we're currently checking for.
-			COM_StripExtension(name, name, sizeof(name));
+			// A dot in the directory (including "./") is part of the path.
+			char *dot = strrchr(COM_SkipPathWritable(name), '.');
+			if (dot) {
+				*dot = '\0';
+			}
 			strlcat(name, ".", sizeof(name));
 			strlcat(name, demo_file_extensions[i], sizeof(name));
 
@@ -4051,8 +4053,8 @@ static vfsfile_t* CL_Open_Demo_File(const char* name, qbool searchpaks, char** f
 	if (fullPath != NULL)
 		*fullPath = fullname;
 
-	// A file selected by the user may be outside all mounted directories.
-	if (COM_IsAbsolutePath(name)) {
+	// An explicit path selects the file even if demo_dir contains the same name.
+	if (COM_IsAbsolutePath(name) || (name[0] == '.' && IS_SLASH(name[1]))) {
 		strlcpy(fullname, name, sizeof(fullname));
 		return FS_OpenVFS(name, "rb", FS_NONE_OS);
 	}
