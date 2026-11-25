@@ -430,12 +430,12 @@ loc0:
 				continue;	// no lightmaps
 			}
 
-			// texturemins and extents are shorts, so a point of a surface has s
-			// and t within 65536 of 0; one further out misses every surface,
-			// and its conversion to int, or the subtraction, could overflow
+			// the texture coordinates of a surface lie within
+			// MAX_TEXTURE_COORD of 0, so a point further out isn't taken:
+			// its conversion to int, or the subtraction, could overflow
 			s = (float)DotProduct(mid, surf->lmvecs[0]) + surf->lmvecs[0][3];
 			t = (float)DotProduct(mid, surf->lmvecs[1]) + surf->lmvecs[1][3];
-			if (!(fabs(s) < 65536 && fabs(t) < 65536)) {
+			if (!(fabs(s) < MAX_TEXTURE_COORD && fabs(t) < MAX_TEXTURE_COORD)) {
 				continue;
 			}
 

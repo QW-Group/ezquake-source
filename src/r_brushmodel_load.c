@@ -173,11 +173,25 @@ static void SetSurfaceLighting(model_t *loadmodel, msurface_t *out, int surfnum,
 	out->samples = loadmodel->lightdata + start;
 }
 
+// Stores the texture coordinate x, in units of 16 texels, in *units, kept
+// within MAX_TEXTURE_COORD texels of 0. Returns false if x lies further out,
+// or is a NaN, which the floats of a texinfo and a vertex can give.
+static qbool Mod_TextureCoordUnits(double x, int *units)
+{
+	if (x >= -MAX_TEXTURE_COORD / 16 && x <= MAX_TEXTURE_COORD / 16) {
+		*units = (int)x;
+		return true;
+	}
+	*units = x > 0 ? MAX_TEXTURE_COORD / 16 : -MAX_TEXTURE_COORD / 16;
+	return false;
+}
+
 //Fills in s->texturemins[] and s->extents[]
 static void CalcSurfaceExtents(model_t* loadmodel, msurface_t *s) {
 	float mins[2], maxs[2], val;
 	int i,j, e, bmins[2], bmaxs[2];
 	long long extent;
+	qbool within;
 	mvertex_t *v;
 	mtexinfo_t *tex;
 
@@ -224,8 +238,13 @@ static void CalcSurfaceExtents(model_t* loadmodel, msurface_t *s) {
 	}
 
 	for (i = 0; i < 2; i++) {
-		bmins[i] = floor(mins[i]/16);
-		bmaxs[i] = ceil(maxs[i]/16);
+		// the lightmap builders and RecursiveLightPoint take the texture
+		// minimum, and its difference from a coordinate of the surface, in
+		// an int; no surface of a real map comes near the limit
+		within = Mod_TextureCoordUnits(floor(mins[i] / 16), &bmins[i]);
+		if (!Mod_TextureCoordUnits(ceil(maxs[i] / 16), &bmaxs[i]) || !within) {
+			Com_DPrintf("[%s] surface %d has texture coordinates beyond %d texels, which misplaces its light\n", loadmodel->name, (int)(s - loadmodel->surfaces), MAX_TEXTURE_COORD);
+		}
 
 		s->texturemins[i] = bmins[i] * 16;
 		// lightmaps are built from the extents of surfaces without
