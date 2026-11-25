@@ -155,10 +155,12 @@ static void Mod_MD3LoadSkins(model_t* mod, md3Header_t* header, md3model_t* mode
 			md3_skin_list_entry_t* new_skin = Q_malloc(sizeof(md3_skin_list_entry_t));
 			new_skin->next = skin_list;
 			skin_list = new_skin;
+			new_skin->surface_number = surface;
+			new_skin->skin_number = found_skins;
 			strlcpy(new_skin->surface_info.name, "textures/", sizeof(new_skin->surface_info.name));
 			strlcat(new_skin->surface_info.name, COM_SkipPath(surf->name), sizeof(new_skin->surface_info.name));
-			++found_skins;
 		}
+		++found_skins;
 	}
 
 	header->numSkins = found_skins;
