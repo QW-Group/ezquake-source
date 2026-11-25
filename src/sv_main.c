@@ -3955,11 +3955,11 @@ void Host_Init (int argc, char **argv, int default_memsize)
 
 	Host_InitMemory (default_memsize);
 
-	Con_Printf("Starting %s", VersionStringFull());
-
 	Cbuf_Init ();
 	Cmd_Init ();
 	Cvar_Init ();
+	Con_Printf("Starting %s", VersionStringFull());
+
 	COM_Init ();
 	Cvar_Register(&version);
 	Cvar_SetROM(&version, SERVER_NAME " " SERVER_VERSION);

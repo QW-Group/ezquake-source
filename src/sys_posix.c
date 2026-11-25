@@ -75,12 +75,11 @@ int do_stdin = 1;
 void OnChange_sys_highpriority (cvar_t *, char *, qbool *);
 
 cvar_t sys_highpriority = {"sys_highpriority", "", CVAR_NOTFROMSERVER, OnChange_sys_highpriority};
-cvar_t sys_nostdout     = {"sys_nostdout", "0" };
 cvar_t sys_fontsdir     = {"sys_fontsdir", "/usr/local/share/fonts/"};
 
 void Sys_Printf (char *fmt, ...)
 {
-#if defined(DEBUG) || defined(SERVERONLY)
+#if defined(DEBUG) || !defined(NDEBUG) || defined(SERVERONLY)
 	va_list argptr;
 #ifdef SERVERONLY
 	char text[4096];
@@ -89,12 +88,12 @@ void Sys_Printf (char *fmt, ...)
 	unsigned char *p;
 #endif
 
+	if (sys_nostdout.value)
+		return;
+
 	va_start (argptr,fmt);
 	vsnprintf (text, sizeof(text), fmt, argptr);
 	va_end (argptr);
-
-	if (sys_nostdout.value)
-		return;
 
 #ifdef SERVERONLY
 	fputs(Q_normalizetext(text), stdout);
@@ -539,9 +538,6 @@ int main(int argc, char **argv)
 			server_stdin_flags = flags;
 		}
 	}
-	if (COM_CheckParm(cmdline_param_client_nostdoutput)) {
-		sys_nostdout.value = 1;
-	}
 
 	signal(SIGINT, Sys_StopServer);
 	signal(SIGTERM, Sys_StopServer);
@@ -587,12 +583,8 @@ int main(int argc, char **argv)
 	// A QTV peer can disconnect between socket readiness and send().
 	signal(SIGPIPE, SIG_IGN);
 
-	// we need to check for -noconinput and -nostdout before Host_Init is called
 	if (!(noconinput = COM_CheckParm(cmdline_param_client_nostdinput)))
 		fcntl(0, F_SETFL, fcntl (0, F_GETFL, 0) | FNDELAY);
-
-	if (COM_CheckParm(cmdline_param_client_nostdoutput))
-		sys_nostdout.value = 1;
 
 	Host_Init (argc, argv, 256 * 1024 * 1024);
 

@@ -88,6 +88,8 @@ typedef struct cvar_s {
 	struct cvar_s *next;
 } cvar_t;
 
+extern cvar_t sys_nostdout;
+
 #ifndef SERVERONLY
 typedef struct cvar_group_s {
 	char	name[65];

@@ -55,6 +55,7 @@ static void Cvar_AddCvarToGroup(cvar_t *var);
 #endif
 
 static cvar_t *cvar_hash[VAR_HASHPOOL_SIZE];
+cvar_t sys_nostdout = {"sys_nostdout", "0", CVAR_NO_RESET | CVAR_NOTFROMSERVER};
 cvar_t *cvar_vars;
 static char	*cvar_null_string = "";
 
@@ -1661,6 +1662,12 @@ void Cvar_Init(void)
 
 	Cvar_ResetCurrentGroup();
 #endif
+
+	// Both client and server must honor -nostdout before filesystem startup prints to the terminal.
+	Cvar_Register(&sys_nostdout);
+	if (COM_CheckParm(cmdline_param_client_nostdoutput)) {
+		Cvar_Set(&sys_nostdout, "1");
+	}
 }
 
 void Cvar_Shutdown(void)

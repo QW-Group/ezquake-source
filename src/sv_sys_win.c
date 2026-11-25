@@ -27,8 +27,6 @@ static DWORD console_input_type;
 static qbool console_keyboard;
 static volatile LONG server_done;
 
-static cvar_t sys_nostdout = {"sys_nostdout", "0"};
-
 static BOOL WINAPI Sys_StopServer(DWORD event)
 {
 	if (event != CTRL_C_EVENT && event != CTRL_BREAK_EVENT) {
@@ -42,10 +40,6 @@ void Sys_Init(void)
 {
 	DWORD mode;
 
-	Cvar_Register(&sys_nostdout);
-	if (COM_CheckParm(cmdline_param_client_nostdoutput)) {
-		Cvar_Set(&sys_nostdout, "1");
-	}
 	if (COM_CheckParm(cmdline_param_client_nostdinput)) {
 		return;
 	}
