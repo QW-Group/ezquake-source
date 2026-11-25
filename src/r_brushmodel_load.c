@@ -177,6 +177,7 @@ static void SetSurfaceLighting(model_t *loadmodel, msurface_t *out, int surfnum,
 static void CalcSurfaceExtents(model_t* loadmodel, msurface_t *s) {
 	float mins[2], maxs[2], val;
 	int i,j, e, bmins[2], bmaxs[2];
+	long long extent;
 	mvertex_t *v;
 	mtexinfo_t *tex;
 
@@ -227,10 +228,13 @@ static void CalcSurfaceExtents(model_t* loadmodel, msurface_t *s) {
 		bmaxs[i] = ceil(maxs[i]/16);
 
 		s->texturemins[i] = bmins[i] * 16;
-		s->extents[i] = (bmaxs[i] - bmins[i]) * 16;
-		if (!(tex->flags & TEX_SPECIAL) && s->extents[i] > 512 /* 256 */) {
+		// lightmaps are built from the extents of surfaces without
+		// TEX_SPECIAL, so these must not wrap in the short
+		extent = ((long long)bmaxs[i] - bmins[i]) * 16;
+		if (!(tex->flags & TEX_SPECIAL) && (extent < 0 || extent > 512 /* 256 */)) {
 			Host_Error("CalcSurfaceExtents: Bad surface extents");
 		}
+		s->extents[i] = (short)extent;
 	}
 }
 
