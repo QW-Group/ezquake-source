@@ -1405,6 +1405,7 @@ void VX_TrackerInit(void)
 {
 	int i;
 	char fullpath[MAX_PATH];
+	qbool images_loaded = false;
 
 	memset(weapon_images, 0, sizeof(weapon_images));
 	memset(weapon_labels, 0, sizeof(weapon_labels));
@@ -1460,6 +1461,7 @@ void VX_TrackerInit(void)
 								pic->width = 16;
 								pic->height = 8;
 								++weapon_images[i];
+								images_loaded = true;
 							}
 						}
 					}
@@ -1542,7 +1544,10 @@ void VX_TrackerInit(void)
 		}
 	}
 
-	CachePics_MarkAtlasDirty();
+	// Only rebuild the atlas if images were loaded
+	if (images_loaded) {
+		CachePics_MarkAtlasDirty();
+	}
 }
 
 void SCR_HUD_DrawTracker(hud_t* hud)
