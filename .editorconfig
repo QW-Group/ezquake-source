@@ -1,0 +1,17 @@
+root = true
+
+[*]
+end_of_line = lf
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{c,h}]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+max_line_length = 120
+
+# Quake's 8-bit charset; latin1 keeps every byte as is.
+[{*.cfg,misc/fragfile/fragfile.dat}]
+charset = latin1
