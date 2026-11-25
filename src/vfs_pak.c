@@ -115,7 +115,7 @@ static int VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whence)
 	}
 
 	rel_offset = vfsp->currentpos - vfsp->startpos;
-	if (rel_offset < 0 || rel_offset >= vfsp->length) {
+	if (rel_offset < 0 || rel_offset > vfsp->length) {
 		Com_Printf("VFSPAK_Seek: Warning seeking past the file's size\n");
 	}
 
