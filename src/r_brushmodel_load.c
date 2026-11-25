@@ -1122,6 +1122,21 @@ static int Mod_LoadDecoupledLM(dlminfo_t* lminfos, int surfnum, msurface_t *out)
 	return LittleLong(lminfo->lightofs);
 }
 
+// Refuses a face whose edges, plane or texinfo lie outside their lumps, as
+// everything after the face loaders indexes them without checking.
+static void Mod_CheckFaceIndexes(model_t *loadmodel, int surfnum, int firstedge, int numedges, int planenum, int texinfo)
+{
+	if (firstedge < 0 || firstedge >= loadmodel->numsurfedges || numedges < 0 || numedges > loadmodel->numsurfedges - firstedge) {
+		Host_Error("[%s] surface %d references invalid edge range [%d length %d, vs %d]", loadmodel->name, surfnum, firstedge, numedges, loadmodel->numsurfedges);
+	}
+	if (planenum < 0 || planenum >= loadmodel->numplanes) {
+		Host_Error("[%s] surface %d references invalid plane %d/%d", loadmodel->name, surfnum, planenum, loadmodel->numplanes);
+	}
+	if (texinfo < 0 || texinfo >= loadmodel->numtexinfo) {
+		Host_Error("[%s] surface %d references invalid texinfo %d/%d", loadmodel->name, surfnum, texinfo, loadmodel->numtexinfo);
+	}
+}
+
 static void Mod_LoadFaces(model_t* loadmodel, lump_t* l, byte* mod_base, bspx_header_t *bspx_header)
 {
 	dlminfo_t *lminfos;
@@ -1156,24 +1171,14 @@ static void Mod_LoadFaces(model_t* loadmodel, lump_t* l, byte* mod_base, bspx_he
 		out->flags = 0;
 
 		texinfo = LittleShort(in->texinfo);
-
-		if (out->firstedge < 0 || out->firstedge >= loadmodel->numsurfedges || out->numedges > loadmodel->numsurfedges - out->firstedge) {
-			Host_Error("[%s] surface %d references invalid edge range [%d length %d, vs %d]", loadmodel->name, surfnum, out->firstedge, out->numedges, loadmodel->numsurfedges);
-		}
-
 		planenum = LittleShort(in->planenum);
-		if (planenum < 0 || planenum >= loadmodel->numplanes) {
-			Host_Error("[%s] surface %d references invalid plane %d/%d", loadmodel->name, surfnum, planenum, loadmodel->numplanes);
-		}
+		Mod_CheckFaceIndexes(loadmodel, surfnum, out->firstedge, out->numedges, planenum, texinfo);
 
 		side = LittleShort(in->side);
 		if (side) {
 			out->flags |= SURF_PLANEBACK;
 		}
 
-		if (texinfo < 0 || texinfo >= loadmodel->numtexinfo) {
-			Host_Error("[%s] surface %d references invalid texinfo %d/%d", loadmodel->name, surfnum, texinfo, loadmodel->numtexinfo);
-		}
 		out->plane = loadmodel->planes + planenum;
 		out->texinfo = loadmodel->texinfo + texinfo;
 
@@ -1201,7 +1206,7 @@ static void Mod_LoadFacesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base, bsp
 	dlminfo_t *lminfos;
 	dface29a_t *in;
 	msurface_t *out;
-	int count, surfnum, planenum, side, lminfosize, lightofs;
+	int count, surfnum, planenum, side, lminfosize, lightofs, texinfo;
 	int max_faces = INT_MAX / sizeof(*out);
 
 	in = (void *)(mod_base + l->fileofs);
@@ -1230,13 +1235,16 @@ static void Mod_LoadFacesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base, bsp
 		out->flags = 0;
 
 		planenum = LittleLong(in->planenum);
+		texinfo = LittleLong(in->texinfo);
+		Mod_CheckFaceIndexes(loadmodel, surfnum, out->firstedge, out->numedges, planenum, texinfo);
+
 		side = LittleLong(in->side);
 		if (side) {
 			out->flags |= SURF_PLANEBACK;
 		}
 
 		out->plane = loadmodel->planes + planenum;
-		out->texinfo = loadmodel->texinfo + LittleLong(in->texinfo);
+		out->texinfo = loadmodel->texinfo + texinfo;
 
 		lightofs = Mod_LoadDecoupledLM(lminfos, surfnum, out);
 		if (lightofs < 0) {
