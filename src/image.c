@@ -1220,7 +1220,10 @@ byte *Image_LoadTGA(vfsfile_t *fin, const char *filename, int matchwidth, int ma
 	filesize = VFS_GETLEN(fin);
 	fileBuffer = (byte *) Q_malloc(filesize);
 
-	VFS_READ(fin, fileBuffer, filesize, NULL);
+	if (VFS_READ(fin, fileBuffer, filesize, NULL) != filesize) {
+		VFS_CLOSE(fin);
+		TGA_ERROR("Image_LoadTGA: %s could not be read\n");
+	}
 	VFS_CLOSE(fin);
 
 	if (filesize < 19)
