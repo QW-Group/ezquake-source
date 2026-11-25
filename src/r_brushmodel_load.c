@@ -513,7 +513,7 @@ static void Mod_LoadSubmodels(model_t* loadmodel, lump_t* l, byte* mod_base)
 
 static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 {
-	int i, j, num, max, altmax, pixels;
+	int i, j, num, max, altmax, pixels, room;
 	miptex_t *mt;
 	texture_t *tx, *tx2, *anims[10], *altanims[10];
 	dmiptexlump_t *m;
@@ -524,10 +524,16 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 	}
 
 	m = (dmiptexlump_t *) (mod_base + l->fileofs);
+	if (l->filelen < (int)sizeof(m->nummiptex)) {
+		Host_Error("Mod_LoadTextures: texture lump of %d bytes in %s", l->filelen, mod->name);
+	}
 	m->nummiptex = LittleLong (m->nummiptex);
 	if (m->nummiptex < 0 || m->nummiptex > INT_MAX / sizeof(*mod->textures)) {
 		Host_Error("Mod_LoadTextures: nummiptex %d (0-%d)", m->nummiptex, INT_MAX / sizeof(*mod->textures));
 		return;
+	}
+	if (m->nummiptex > (l->filelen - (int)sizeof(m->nummiptex)) / (int)sizeof(m->dataofs[0])) {
+		Host_Error("Mod_LoadTextures: %d texture offsets do not fit a lump of %d bytes in %s", m->nummiptex, l->filelen, mod->name);
 	}
 	mod->numtextures = m->nummiptex;
 	mod->textures = (texture_t **) Hunk_AllocName(m->nummiptex * sizeof(*mod->textures), mod->name);
@@ -538,31 +544,54 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 			continue;
 		}
 
-		if (m->dataofs[i] < 0 || m->dataofs[i] > l->fileofs + l->filelen - sizeof(miptex_t)) {
-			Host_Error("Miptex %d has data offset %d (-1 to %d)", i, m->dataofs[i], l->fileofs + l->filelen - sizeof(miptex_t));
+		// the offset counts from the start of the lump; the pixels are checked
+		// below, as not all textures have them
+		if (m->dataofs[i] < 0 || m->dataofs[i] > l->filelen - (int)sizeof(miptex_t)) {
+			Host_Error("Miptex %d has data offset %d (-1 to %d)", i, m->dataofs[i], l->filelen - (int)sizeof(miptex_t));
 		}
 
 		mt = (miptex_t *)((byte *)m + m->dataofs[i]);
-		if ((uintptr_t)mt > (uintptr_t)mod_base + l->fileofs + l->filelen - sizeof(miptex_t)) {
-			Host_Error("Texture %s data offset > lump (%d + %d vs %d)", mt->name, mod_base, l->fileofs, l->filelen);
-		}
+		room = l->filelen - m->dataofs[i] - (int)sizeof(miptex_t);
 		mt->width  = LittleLong(mt->width);
 		mt->height = LittleLong(mt->height);
 		for (j = 0; j < MIPLEVELS; j++) {
 			mt->offsets[j] = LittleLong(mt->offsets[j]);
 		}
 
+		// a name that fills its 16 bytes has no NUL, so print at most those
 		if ((mt->width & 15) || (mt->height & 15)) {
-			Host_Error("Texture %s is not 16 aligned", mt->name);
+			Host_Error("Texture %.*s is not 16 aligned", (int)sizeof(mt->name), mt->name);
+		}
+		if (mt->width < 0 || mt->height < 0) {
+			Host_Error("Texture %.*s negative dimensions: %dx%d", (int)sizeof(mt->name), mt->name, mt->width, mt->height);
+		}
+		if (mt->height && mt->width > INT_MAX / mt->height / 3) {
+			Host_Error("Texture %.*s excessive size: %dx%d", (int)sizeof(mt->name), mt->name, mt->width, mt->height);
 		}
 
-		pixels = mt->width * mt->height / 64 * 85;// some magic numbers?
-		if (mod->bspversion == HL_BSPVERSION) {
-			pixels += 2 + 256 * 3;	/* palette and unknown two bytes */
-		}
-		// Some sanity checking (improve!)
-		if (pixels < 0 || m->dataofs[i] > (l->fileofs + l->filelen - pixels) || pixels > INT_MAX - sizeof(texture_t)) {
-			Host_Error("Texture %s: offset %d pixelsize %d, lumpsize %d", mt->name, m->dataofs[i], pixels, l->filelen);
+		// Everything that refuses the texture runs before its pixels are
+		// allocated, as a size the file can't hold would exhaust the hunk
+		pixels = 0;
+		if (mt->width && mt->height && mt->offsets[0]) {
+			pixels = mt->width * mt->height / 64 * 85; // some magic numbers?
+			if (mod->bspversion == HL_BSPVERSION) {
+				pixels += 2 + 256 * 3; /* palette and unknown two bytes */
+				// the pixels immediately follow the structures, then the
+				// palette, which some maps leave out
+				if (pixels - 2 - 256 * 3 > room) {
+					Host_Error("Texture %.*s: offset %d pixelsize %d, lumpsize %d", (int)sizeof(mt->name), mt->name, m->dataofs[i], pixels, l->filelen);
+				}
+			}
+			else {
+				if (pixels > room) {
+					Host_Error("Texture %.*s: offset %d pixelsize %d, lumpsize %d", (int)sizeof(mt->name), mt->name, m->dataofs[i], pixels, l->filelen);
+				}
+				// the sky, the r_fastturb colour and an upload at full size
+				// read mip level 0
+				if (mt->offsets[0] < sizeof(miptex_t) || mt->offsets[0] - sizeof(miptex_t) > pixels - mt->width * mt->height) {
+					Host_Error("Texture %.*s: mip level 0 at offset %u lies outside its pixels", (int)sizeof(mt->name), mt->name, mt->offsets[0]);
+				}
+			}
 		}
 		tx = (texture_t *)Hunk_AllocName(sizeof(texture_t) + pixels, mod->name);
 		mod->textures[i] = tx;
@@ -578,15 +607,9 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 		tx->index = i;
 		tx->loaded = false; // so texture will be reloaded
 
-		if (tx->width < 0 || tx->height < 0) {
-			Host_Error("Texture %s negative dimensions: %dx%d", tx->name, tx->width, tx->height);
-		}
 		if (tx->width == 0 || tx->height == 0) {
 			Con_Printf("Warning: Skipping zero size texture %s in %s\n", tx->name, mod->name);
 			continue;
-		}
-		if (tx->width > INT_MAX / tx->height / 3) {
-			Host_Error("Texture %s excessive size: %dx%d", tx->name, tx->width, tx->height);
 		}
 
 		if (mod->bspversion == HL_BSPVERSION) {
@@ -594,8 +617,8 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 				continue;
 			}
 
-			// the pixels immediately follow the structures
-			memcpy(tx + 1, mt + 1, pixels);
+			// what would lie past the lump stays 0
+			memcpy(tx + 1, mt + 1, min(pixels, room));
 			for (j = 0; j < MIPLEVELS; j++) {
 				tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
 			}
@@ -606,8 +629,19 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 			// the pixels immediately follow the structures
 			memcpy(tx+1, mt+1, pixels);
 
-			for (j = 0; j < MIPLEVELS; j++) {
-				tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
+			// The renderer uploads the mip level gl_miptexLevel picks, or level
+			// 0 for a texture it doesn't scale. A smaller level that lies
+			// outside the pixels gets no offset, and the renderer uploads the
+			// nearest larger level that has one instead.
+			tx->offsets[0] = mt->offsets[0] + sizeof(texture_t) - sizeof(miptex_t);
+			for (j = 1; j < MIPLEVELS; j++) {
+				if (mt->offsets[j] < sizeof(miptex_t) || mt->offsets[j] - sizeof(miptex_t) > pixels - (mt->width >> j) * (mt->height >> j)) {
+					Com_DPrintf("Texture %s in %s: mip level %d at offset %u lies outside its pixels\n", tx->name, mod->name, j, mt->offsets[j]);
+					tx->offsets[j] = 0;
+				}
+				else {
+					tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
+				}
 			}
 
 			// HACK HACK HACK
@@ -1785,6 +1819,10 @@ void R_LoadBrushModelTextures(model_t *m)
 		}
 
 		if (tx->offsets[0]) {
+			// Mod_LoadTextures leaves out a mip level that lies outside the pixels
+			while (!tx->offsets[mipTexLevel]) {
+				mipTexLevel--;
+			}
 			texname = tx->name;
 			width   = tx->width  >> mipTexLevel;
 			height  = tx->height >> mipTexLevel;
