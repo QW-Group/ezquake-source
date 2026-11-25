@@ -2738,9 +2738,13 @@ static int FS_AddWildDataFiles (char *descriptor, int size, void *vparam)
 	if (!search->funcs->FindFile(search->handle, &loc, descriptor, NULL))
 		return true;	//not found..
 	vfs = search->funcs->OpenVFS(search->handle, &loc, "rb");
-	pak = funcs->OpenNew (vfs, pakfile);
-	if (!pak)
+	if (!vfs)
 		return true;
+	pak = funcs->OpenNew (vfs, pakfile);
+	if (!pak) {
+		VFS_CLOSE(vfs);
+		return true;
+	}
 
 	snprintf (pakfile, sizeof (pakfile), "%s%s/", param->parentdesc, descriptor);
 	FS_AddPathHandle(pakfile, funcs, pak, true, false, FS_LOAD_FILE_ALL);
