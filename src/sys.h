@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // sys.h -- non-portable functions
 
 #include <stdint.h>
+#include <stdio.h>
 
 #include "q_platform.h"
 
@@ -86,6 +87,10 @@ char * Sys_getcwd (char *buf, int bufsize);
 // file IO
 void Sys_mkdir (const char *path);
 int Sys_remove (char *path);
+// Creates a new binary file for writing. On failure, returns NULL and sets errno.
+FILE *Sys_FOpenExclusive(const char *path);
+// Returns zero on success, EEXIST if the destination exists, or another error.
+int Sys_RenameNoReplace(const char *source, const char *destination);
 int Sys_EnumerateFiles (char *gpath, char *match, int (*func)(char *, int, void *), void *parm);
 
 // an error will cause the entire program to exit

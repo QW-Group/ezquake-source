@@ -648,7 +648,9 @@ qbool CL_Download_Accept(const char *filename)
 void CL_Download_f (void){
 	char *dir; // we save to demo_dir or gamedir
 	char *filename; // which file to dl, will be sent to server
-	char ondiskname[sizeof(cls.downloadname)]; // hack, save file to "right" place
+	const char *ondiskname;
+	char destination[sizeof(cls.downloadname)];
+	int length;
 	extern char *CL_DemoDirectory(void);
 
 	if (cls.state == ca_disconnected) {
@@ -656,8 +658,13 @@ void CL_Download_f (void){
 		return;
 	}
 
+	if (cls.downloadmethod != DL_NONE) {
+		Com_Printf("A download is already in progress.\n");
+		return;
+	}
+
 	filename = Cmd_Argv(1);
-	strlcpy(ondiskname, filename, sizeof(ondiskname)); // in most cases this is same as filename
+	ondiskname = filename;
 
 	if (Cmd_Argc() != 2 || !filename[0] || !CL_Download_Accept(filename)) {
 		Com_Printf ("Usage: %s <datafile>\n", Cmd_Argv(0));
@@ -671,22 +678,22 @@ void CL_Download_f (void){
 			) {
 		dir = CL_DemoDirectory(); // seems filename is a demo
 		// so, we save file in /dir/<demo_dir> instead of /dir/<demo_dir>/demos
-		strlcpy(ondiskname, COM_SkipPath(filename), sizeof(ondiskname));
+		ondiskname = COM_SkipPath(filename);
 	}
 	else
 		dir = cls.gamedir; // not a demo
 
-	// download to a temp name, and only rename
-	// to the real name when done, so if interrupted
-	// a runt file wont be left
+	length = snprintf(destination, sizeof(destination), "%s/%s", dir, ondiskname);
+	if (length < 0 || (size_t)length >= sizeof(destination)) {
+		Com_Printf("Download path is too long.\n");
+		return;
+	}
 
 	cls.downloadtype      = dl_single;
 	cls.downloadmethod    = DL_QW; // by default its DL_QW, if server support DL_QWCHUNKED it will be changed.
 	cls.downloadstarttime = Sys_DoubleTime();
 
-	snprintf(cls.downloadname, sizeof(cls.downloadname), "%s/%s", dir, ondiskname);
-	COM_StripExtension(cls.downloadname, cls.downloadtempname, sizeof(cls.downloadtempname));
-	strlcat(cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
+	strlcpy(cls.downloadname, destination, sizeof(cls.downloadname));
 
 	if (cls.mvdplayback == QTV_PLAYBACK)
 	{

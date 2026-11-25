@@ -20,6 +20,7 @@ $Id: cl_parse.c,v 1.135 2007-10-28 19:56:44 qqshka Exp $
 */
 
 #include "quakedef.h"
+#include <errno.h>
 #include "gl_model.h"
 #include "cdaudio.h"
 #include "ignore.h"
@@ -474,11 +475,42 @@ int CL_CalcNetStatistics(
 
 //=============================================================================
 
+// Keep the temporary file in the destination directory for the final rename.
+static FILE *CL_OpenDownloadTempFile(void)
+{
+	const char *dot = strrchr(COM_SkipPath(cls.downloadname), '.');
+	const char *suffix = dot && !strcasecmp(dot, ".tmp") ? ".part" : ".tmp";
+	int prefix = dot ? (int)(dot - cls.downloadname) : (int)strlen(cls.downloadname);
+	char number[16] = "";
+	unsigned int attempt;
+	int length;
+	FILE *file;
+
+	FS_CreatePath(cls.downloadname);
+	for (attempt = 0; attempt < 1000; ++attempt) {
+		if (attempt) {
+			snprintf(number, sizeof(number), ".%u", attempt);
+		}
+		length = snprintf(cls.downloadtempname, sizeof(cls.downloadtempname), "%.*s%s%s",
+			prefix, cls.downloadname, number, suffix);
+		if (length < 0 || (size_t)length >= sizeof(cls.downloadtempname)) {
+			return NULL;
+		}
+		file = Sys_FOpenExclusive(cls.downloadtempname);
+		if (file || errno != EEXIST) {
+			return file;
+		}
+	}
+	return NULL;
+}
+
 qbool CL_Download_Accept(const char *filename);
 
 // Returns true if the file exists, otherwise it attempts to start a download from the server.
 qbool CL_CheckOrDownloadFile(char *filename)
 {
+	int length;
+
 	if (!CL_Download_Accept(filename))
 	{
 		return true;
@@ -505,18 +537,20 @@ qbool CL_CheckOrDownloadFile(char *filename)
 		return true;
 	}
 
-	snprintf (cls.downloadname, sizeof(cls.downloadname), "%s/%s", cls.gamedir, filename);
-	Com_Printf ("Downloading %s...\n", filename);
+	// Retry this automatic download when the current transfer finishes.
+	if (cls.downloadmethod != DL_NONE) {
+		return false;
+	}
 
-	// download to a temp name, and only rename
-	// to the real name when done, so if interrupted
-	// a runt file wont be left
+	length = snprintf(cls.downloadname, sizeof(cls.downloadname), "%s/%s", cls.gamedir, filename);
+	if (length < 0 || (size_t)length >= sizeof(cls.downloadname)) {
+		Com_Printf("Download path is too long.\n");
+		return true;
+	}
+	Com_Printf ("Downloading %s...\n", filename);
 
 	cls.downloadmethod    = DL_QW; // by default its DL_QW, if server support DL_QWCHUNKED it will be changed.
 	cls.downloadstarttime = Sys_DoubleTime();
-
-	COM_StripExtension (cls.downloadname, cls.downloadtempname, sizeof(cls.downloadtempname));
-	strlcat (cls.downloadtempname, ".tmp", sizeof(cls.downloadtempname));
 
 	if (cls.mvdplayback == QTV_PLAYBACK) 
 	{
@@ -920,6 +954,7 @@ void CL_ParseChunkedDownload(void)
 				Com_Printf ("cls.download shouldn't have been set\n");
 
 			fclose (cls.download);
+			Sys_remove(cls.downloadtempname);
 			cls.download = NULL;
 			cls.downloadpercent = 0;
 		}
@@ -948,10 +983,8 @@ void CL_ParseChunkedDownload(void)
 //			Host_Error("Server sent the wrong download - \"%s\" instead of \"%s\"\n", svname, cls.downloadname);
 
 		// Start the new download
-		FS_CreatePath (cls.downloadtempname);
-
-		if ( !(cls.download = fopen (cls.downloadtempname, "wb")) ) 
-		{
+		cls.download = CL_OpenDownloadTempFile();
+		if (!cls.download) {
 			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
 			CL_FinishDownload(); // This also requests next dl.
 			return;
@@ -1055,15 +1088,19 @@ void CL_FinishDownload(void)
 		fclose (cls.download);
 
 		if (cls.downloadpercent == 100) {
-			Com_DPrintf("Download took %.1f seconds\n", Sys_DoubleTime() - cls.downloadstarttime);
+			int error = Sys_RenameNoReplace(cls.downloadtempname, cls.downloadname);
 
-			// rename the temp file to its final name
-			if (strcmp(cls.downloadtempname, cls.downloadname))
-				if (rename(cls.downloadtempname, cls.downloadname))
-					Com_Printf ("Failed to rename %s to %s.\n",	cls.downloadtempname, cls.downloadname);
+			Com_DPrintf("Download took %.1f seconds\n", Sys_DoubleTime() - cls.downloadstarttime);
+			if (error == EEXIST) {
+				Com_Printf("Keeping existing file %s.\n", cls.downloadname);
+				Sys_remove(cls.downloadtempname);
+			}
+			else if (error) {
+				Com_Printf("Failed to rename %s to %s.\n", cls.downloadtempname, cls.downloadname);
+			}
 		} else {
 			/* If download didn't complete, remove the unfinished leftover .tmp file ... */
-			unlink(cls.downloadtempname);
+			Sys_remove(cls.downloadtempname);
 		}
 	}
 
@@ -1138,6 +1175,7 @@ void CL_ParseDownload (void)
 		if (cls.download) {
 			Com_Printf ("cls.download shouldn't have been set\n");
 			fclose (cls.download);
+			Sys_remove(cls.downloadtempname);
 			cls.download = NULL;
 		}
 		CL_FinishDownload(); // this also request next dl
@@ -1147,10 +1185,8 @@ void CL_ParseDownload (void)
 	// Open the file if not opened yet
 	if (!cls.download) 
 	{
-		FS_CreatePath (cls.downloadtempname);
-
-		if ( !(cls.download = fopen (cls.downloadtempname, "wb")) )
-		{
+		cls.download = CL_OpenDownloadTempFile();
+		if (!cls.download) {
 			msg_readcount += size;
 			Com_Printf ("Failed to open %s\n", cls.downloadtempname);
 			CL_FinishDownload(); // this also request next dl
