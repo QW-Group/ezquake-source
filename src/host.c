@@ -822,7 +822,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Com_Printf("\n");
 	Com_Printf("Type /help to access the manual.\nUse /describe for help on commands.\n\n", VersionString());
 
-	if ((vf = FS_OpenVFS("autoexec.cfg", "rb", FS_GAME))) {
+	if ((vf = FS_OpenGameConfig("autoexec.cfg", NULL))) {
 		Cbuf_AddText ("exec autoexec.cfg\n\n");
 		VFS_CLOSE(vf);
 	}

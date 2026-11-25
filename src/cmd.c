@@ -624,9 +624,9 @@ static qbool Cmd_ConfigIsOSPath(const char *path)
 #endif
 }
 
-static char *Cmd_LoadConfig(const char *path)
+static char *Cmd_LoadConfig(const char *path, const char **search_path)
 {
-	char *text = (char *)(Cmd_ConfigIsOSPath(path) ? FS_LoadOSPathHeapFile(path, NULL) : FS_LoadGameHeapFile(path, NULL));
+	char *text = (char *)(Cmd_ConfigIsOSPath(path) ? FS_LoadOSPathHeapFile(path, NULL) : FS_LoadGameConfig(path, search_path));
 	const char *separator = "\n";
 	size_t len, end, separator_size;
 	qbool has_newline, trailing_backslash;
@@ -712,6 +712,7 @@ static void Cmd_PrintEcho(char *text)
 void Cmd_Exec_f (void)
 {
 	char *f, name[MAX_OSPATH];
+	const char *search_path = NULL;
 
 #ifndef SERVERONLY
 	if (Rulesets_RestrictExec()) {
@@ -729,7 +730,7 @@ void Cmd_Exec_f (void)
 	if (Cmd_RefuseDownloadableExec(name)) {
 		return;
 	}
-	if (!(f = Cmd_LoadConfig(name))) {
+	if (!(f = Cmd_LoadConfig(name, &search_path))) {
 		const char *p;
 		p = COM_SkipPath (name);
 		if (!strchr (p, '.')) {
@@ -738,7 +739,7 @@ void Cmd_Exec_f (void)
 			if (Cmd_RefuseDownloadableExec(name)) {
 				return;
 			}
-			f = Cmd_LoadConfig(name);
+			f = Cmd_LoadConfig(name, &search_path);
 		}
 		if (!f) {
 			Com_Printf ("couldn't exec %s\n", Cmd_Argv(1));
@@ -746,11 +747,11 @@ void Cmd_Exec_f (void)
 		}
 	}
 	if (cl_warnexec.integer || developer.integer) {
-		if (Cmd_ConfigIsOSPath(name)) {
-			Com_Printf("execing %s\n", name);
+		if (search_path) {
+			Com_Printf("execing %s/%s\n", search_path, name);
 		}
 		else {
-			Com_Printf("execing %s/%s\n", FS_Locate_GetPath(name), name);
+			Com_Printf("execing %s\n", name);
 		}
 	}
 

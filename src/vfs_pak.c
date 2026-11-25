@@ -234,7 +234,7 @@ static qbool FSPAK_FLocate(void *handle, flocation_t *loc, const char *filename,
 	{
 		for (i=0 ; i<pak->numfiles ; i++)	//look for the file
 		{
-			if (!strcmp (pak->files[i].name, filename))
+			if (!strcasecmp (pak->files[i].name, filename))
 			{
 				pf = &pak->files[i];
 				break;

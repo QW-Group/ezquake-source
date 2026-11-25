@@ -115,7 +115,7 @@ static void FSZIP_CreteFileFuncs(zlib_filefunc_def *funcs) {
 //==========================================
 typedef struct zipfile_s
 {
-	char filename[MAX_QPATH];
+	char filename[MAX_OSPATH];
 	unzFile handle;
 	int		numfiles;
 	packfile_t	*files;

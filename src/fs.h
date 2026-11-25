@@ -86,6 +86,7 @@ qbool			VFS_COPYPROTECTED(struct vfsfile_s *vf);
 // some general function to open VFS file, except TCP
 vfsfile_t *FS_OpenVFS(const char *filename, char *mode,relativeto_t relativeto);
 qbool FS_FormatOSPath(char *out, size_t size, const char *format, ...);
+vfsfile_t *FS_OpenGameConfig(const char *path, const char **search_path);
 
 // TCP VFS file
 vfsfile_t *FS_OpenTCP(char *name);

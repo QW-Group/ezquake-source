@@ -102,7 +102,9 @@ static cvar_t fs_savegame_home = { "fs_savegame_home", "1" };
 
 static void FS_CreatePathRelative(const char *pname, int relativeto);
 void FS_ForceToPure(char *str, const char *crcs, int seed);
-int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc); 
+static int FS_LocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc, qbool use_cache);
+static vfsfile_t *FS_OpenVFSInternal(const char *filename, char *mode, relativeto_t relativeto,
+                                   qbool use_cache, const char **search_path);
 void FS_EnumerateFiles (char *match, int (*func)(char *, int, void *), void *parm);
 int FS_FileOpenRead (char *path, FILE **hndl);
 void FS_ReloadPackFiles_f(void);
@@ -408,6 +410,17 @@ static byte *FS_LoadFile(vfsfile_t *f, const char *path, fs_load_memory_t memory
 byte *FS_LoadGameHeapFile(const char *path, int *len)
 {
 	return FS_LoadFile(FS_OpenVFS(path, "rb", FS_GAME), path, FS_LOAD_HEAP, len);
+}
+
+vfsfile_t *FS_OpenGameConfig(const char *path, const char **search_path)
+{
+	// Configs may be added outside the engine while the file cache is active.
+	return FS_OpenVFSInternal(path, "rb", FS_GAME, false, search_path);
+}
+
+byte *FS_LoadGameConfig(const char *path, const char **search_path)
+{
+	return FS_LoadFile(FS_OpenGameConfig(path, search_path), path, FS_LOAD_HEAP, NULL);
 }
 
 byte *FS_LoadGameHunkFile(const char *path, int *len)
@@ -1112,7 +1125,8 @@ qbool FS_FormatOSPath(char *out, size_t size, const char *format, ...)
  * ================
  * Open a file using the lookup rules for relativeto. Return NULL on failure.
  */
-vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
+static vfsfile_t *FS_OpenVFSInternal(const char *filename, char *mode, relativeto_t relativeto,
+                                   qbool use_cache, const char **search_path)
 {
 	char *normalized;
 	flocation_t loc;
@@ -1124,7 +1138,7 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 
 	normalized = relativeto == FS_NONE_OS ? NULL : FS_CopyPathWithForwardSlashes(filename);
 	if (normalized) {
-		vfs = FS_OpenVFS(normalized, mode, relativeto);
+		vfs = FS_OpenVFSInternal(normalized, mode, relativeto, use_cache, search_path);
 		Q_free(normalized);
 		return vfs;
 	}
@@ -1147,15 +1161,24 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 		if (mode[0] != 'r') {
 			return FS_OpenVFS(filename, mode, FS_GAME_OS);
 		}
-		if (!FS_FLocateFile(filename, FSLFRT_IFFOUND, &loc)) {
+		if (!FS_LocateFile(filename, FSLFRT_IFFOUND, &loc, use_cache)) {
 			return NULL;
 		}
-		return loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode);
+		vfs = loc.search->funcs->OpenVFS(loc.search->handle, &loc, mode);
+		if (vfs && search_path) {
+			*search_path = loc.search->handle;
+		}
+		return vfs;
 
 	default:
 		Sys_Error("FS_OpenVFS: Bad relative path (%i)", relativeto);
 		return NULL;
 	}
+}
+
+vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
+{
+	return FS_OpenVFSInternal(filename, mode, relativeto, true, NULL);
 }
 
 
@@ -2163,7 +2186,6 @@ void FS_Dir_f(void)
 FS_Locate_f
 ============
 */
-char * FS_Locate_GetPath (const char *file);
 void FS_Locate_f (void)
 {
 	flocation_t loc;
@@ -2187,19 +2209,6 @@ void FS_Locate_f (void)
 	}
 	else
 		Com_Printf("Not found\n");
-}
-
-char * FS_Locate_GetPath (const char *file)
-{
-	flocation_t loc;
-	if (FS_FLocateFile(file, FSLFRT_LENGTH, &loc)>=0)
-	{	//loc.search->funcs->PrintPath(loc.search->handle);
-		return (char *) loc.search->handle;
-	}
-	else
-	{
-		return "";
-	}
 }
 
 int fs_hash_dups;
@@ -2250,13 +2259,13 @@ void FS_RebuildFSHash(void)
 
 /*
 ============
-FS_FLocateFile
+FS_LocateFile
 
-Finds the file in the search path.
-Look FSLF_ReturnType_e definition so you know that it returns.
+Finds a file in the search path, optionally using the cache.
+FSLF_ReturnType_e selects how the result is returned.
 ============
 */
-int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc)
+static int FS_LocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc, qbool use_cache)
 {
 	int             depth = 0;
 	int             len;
@@ -2273,7 +2282,7 @@ int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation
 	}
 #endif
 
-	if (fs_cache.value) {
+	if (use_cache && fs_cache.value) {
 		if (filesystemchanged) {
 			FS_RebuildFSHash();
 		}
@@ -2336,6 +2345,11 @@ out:
 	else {
 		return depth;
 	}
+}
+
+int FS_FLocateFile(const char *filename, FSLF_ReturnType_e returntype, flocation_t *loc)
+{
+	return FS_LocateFile(filename, returntype, loc, true);
 }
 
 char *FS_GetPackHashes(char *buffer, int buffersize, qbool referencedonly)

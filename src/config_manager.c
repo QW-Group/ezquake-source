@@ -754,22 +754,17 @@ static void Config_PrintPreamble(FILE *f)
 // Executes default.cfg as long as it isn't the one from pak0.pak or nQuake's default (which is executed from autoexec.cfg ...)
 void Cfg_ExecuteDefaultConfig(void)
 {
-	flocation_t loc;
+	const char *search_path;
+	vfsfile_t *file = FS_OpenGameConfig("default.cfg", &search_path);
 
-	if (FS_FLocateFile("default.cfg", FSLFRT_IFFOUND, &loc)) {
-		char pak0default[MAX_OSPATH];
-		char nquakedefault[MAX_OSPATH];
-
-		strlcpy(pak0default, com_basedir, sizeof(pak0default));
-		strlcat(pak0default, "/id1/pak0.pak/default.cfg", sizeof(pak0default));
-
-		strlcpy(nquakedefault, com_basedir, sizeof(nquakedefault));
-		strlcat(nquakedefault, "/qw/nquake.pk3", sizeof(nquakedefault));
-
-		if (strcasecmp(pak0default, loc.rawname) && strcasecmp(nquakedefault, loc.rawname)) {
-			Cbuf_AddText("exec default.cfg\n");
-		}
+	if (!file) {
+		return;
 	}
+	if (strcasecmp(search_path, va("%s/id1/pak0.pak", com_basedir)) &&
+	    strcasecmp(search_path, va("%s/qw/nquake.pk3", com_basedir))) {
+		Cbuf_AddText("exec default.cfg\n");
+	}
+	VFS_CLOSE(file);
 }
 
 static void ResetConfigs(qbool explicit_reset, qbool read_legacy_configs)
@@ -788,7 +783,7 @@ static void ResetConfigs(qbool explicit_reset, qbool read_legacy_configs)
 		Cbuf_AddText("cl_warncmd 0\n");
 		Cfg_ExecuteDefaultConfig();
 		Cbuf_Execute();
-		if ((v = FS_OpenVFS("autoexec.cfg", "rb", FS_GAME))) {
+		if ((v = FS_OpenGameConfig("autoexec.cfg", NULL))) {
 			Cbuf_AddText("exec autoexec.cfg\n");
 			VFS_CLOSE(v);
 		}

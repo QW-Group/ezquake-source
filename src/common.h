@@ -251,6 +251,7 @@ void FS_SetGamedir (char *dir, qbool force);
 int FS_FOpenFile (const char *filename, FILE **file);
 int FS_FOpenPathFile (const char *filename, FILE **file);
 byte *FS_LoadGameHeapFile(const char *path, int *len);
+byte *FS_LoadGameConfig(const char *path, const char **search_path);
 byte *FS_LoadGameHunkFile(const char *path, int *len);
 byte *FS_LoadGameTempFile(const char *path, int *len);
 byte *FS_LoadOSPathHeapFile(const char *path, int *len);
@@ -263,8 +264,6 @@ char *FS_LegacyDir (char *media_dir);
 
 int FS_FileLength (FILE *f);
 int FS_FileOpenRead (char *path, FILE **hndl);
-
-char * FS_Locate_GetPath (const char *file);
 
 //============================================================
 // Alternative variant manipulation with info strings
