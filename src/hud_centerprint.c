@@ -163,13 +163,28 @@ static void SCR_Prompt_Draw(void)
 {
 	char line[256];
 	const char *s = scr_prompt, *end;
-	float y = vid.height * 0.68;
+	float y = vid.height * 0.68, w = 0, lw;
+	int lines = 0;
 	size_t len;
 
 	if (!scr_prompt[0] || cls.realtime > scr_prompt_end || key_dest != key_game) {
 		return;
 	}
 
+	// measure, then draw a dark box with a gold border so the prompt stands out from the centerprint
+	while (*s) {
+		end = strchr(s, '\n');
+		len = end ? (size_t)(end - s) : strlen(s);
+		strlcpy(line, s, min(len + 1, sizeof(line)));
+		lw = Draw_StringLengthColors(line, -1, 1, false);
+		w = max(w, lw);
+		lines++;
+		s += len + (end ? 1 : 0);
+	}
+	Draw_AlphaRectangleRGB((vid.width - w) / 2 - 12, y - 8, w + 24, lines * 10 + 14, 1, true, RGBA_TO_COLOR(0, 0, 0, 200));
+	Draw_AlphaRectangleRGB((vid.width - w) / 2 - 12, y - 8, w + 24, lines * 10 + 14, 2, false, RGBA_TO_COLOR(255, 208, 0, 255));
+
+	s = scr_prompt;
 	while (*s) {
 		end = strchr(s, '\n');
 		len = end ? (size_t)(end - s) : strlen(s);
