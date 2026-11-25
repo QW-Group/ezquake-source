@@ -369,7 +369,9 @@ static void DemoExtensionVoice_Load_f(void)
 		}
 	}
 	else {
-		data = FS_LoadHeapFile(path, &data_len);
+		data = COM_IsExplicitOSPath(path)
+			? FS_LoadOSPathHeapFile(path, &data_len)
+			: FS_LoadGameHeapFile(path, &data_len);
 		if (!data) {
 			Com_Printf("demo_voice: couldn't load %s\n", path);
 			return;
