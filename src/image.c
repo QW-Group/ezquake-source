@@ -1671,7 +1671,9 @@ jpeg_mem_src (j_decompress_ptr cinfo, byte * infile, int maxlen)
 
 byte *Image_LoadJPEG(vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 {
-	byte *mem = NULL, *in, *out;
+	// Allocated after setjmp and freed after longjmp
+	byte *volatile mem = NULL;
+	byte *in, *out;
 	int i, image_width, image_height;
 
 	byte *infile = NULL;
@@ -1731,12 +1733,12 @@ badjpeg:
 
 	jpeg_mem_src(&cinfo, infile, length);
 
-	(void) jpeg_read_header(&cinfo, TRUE);  
+	(void)jpeg_read_header(&cinfo, TRUE);
 
-	(void) jpeg_start_decompress(&cinfo);
-
-	image_width  = cinfo.output_width;
-	image_height = cinfo.output_height;
+	// Checked before jpeg_start_decompress, which decodes a progressive
+	// image into buffers sized by these dimensions
+	image_width = cinfo.image_width;
+	image_height = cinfo.image_height;
 
 	// Return the width and height.
 	if (real_width)
@@ -1757,6 +1759,8 @@ badjpeg:
 		goto badjpeg; 
 	}
 
+	(void)jpeg_start_decompress(&cinfo);
+
 	if (cinfo.output_components!=3)
 	{
 		Com_Printf("Bad number of componants in jpeg %s\n", COM_SkipPath(filename));
@@ -1773,7 +1777,9 @@ badjpeg:
 
 	while (cinfo.output_scanline < cinfo.output_height) 
 	{
-		(void) jpeg_read_scanlines(&cinfo, buffer, 1);    
+		if (jpeg_read_scanlines(&cinfo, buffer, 1) != 1) {
+			goto badjpeg;
+		}
 
 		in = buffer[0];
 		for (i = 0; i < cinfo.output_width; i++)
