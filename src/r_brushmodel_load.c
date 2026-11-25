@@ -248,6 +248,10 @@ static void Mod_SetParent(mnode_t *node, mnode_t *parent)
 	Mod_SetParent(node->children[1], node);
 }
 
+// Sets up the light data of a model: a Half-Life map's own, or the BSPX
+// LIGHTING_E5BGR9 or RGBLIGHTING lump, which a .lit file replaces, or the
+// mono lighting in RGB. MOD_HDRLIGHTING tells the readers of the samples
+// that they are E5BGR9, so it is set only while those are in use.
 static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx_header_t* bspx_header)
 {
 	int i, lit_ver, mark;
@@ -260,6 +264,7 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 
 	loadmodel->lightdata = NULL;
 	loadmodel->lightdata_length = 0;
+	loadmodel->flags &= ~MOD_HDRLIGHTING;
 
 	if (loadmodel->bspversion == HL_BSPVERSION && l->filelen > 0) {
 		loadmodel->lightdata = (byte *) Hunk_AllocName(l->filelen, loadmodel->name);
@@ -338,6 +343,7 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 			loadmodel->lightdata = data + 8;
 			loadmodel->lightdata_length = l->filelen * 3;
 			loadmodel->lightdatasamplesize = 3;
+			loadmodel->flags &= ~MOD_HDRLIGHTING;
 
 			in = mod_base + l->fileofs;
 			out = loadmodel->lightdata;
