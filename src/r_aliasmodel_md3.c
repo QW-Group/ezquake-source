@@ -88,9 +88,10 @@ static void Mod_MD3LoadSkins(model_t* mod, md3Header_t* header, md3model_t* mode
 
 	*skinfileskinname = '\0';
 
-	// Load as many external skins as we can find
-	while (true) {
-		char *sfile, *sfilestart, *nl;
+	// Load as many external skins as we can find, up to the MAX_SKINS a model
+	// gets, as each skin loads a texture for every surface
+	while (found_skins < MAX_SKINS) {
+		char *sfile, *sfilestart, *sfileend, *nl;
 		char skinfile[128] = { 0 };
 		int skinfile_length;
 
@@ -108,6 +109,7 @@ static void Mod_MD3LoadSkins(model_t* mod, md3Header_t* header, md3model_t* mode
 				break;
 			}
 		}
+		sfileend = sfilestart + skinfile_length;
 
 		// Scan the file for the textures to use for each surface
 		MD3_ForEachSurface(header, surf, surface) {
@@ -123,12 +125,14 @@ static void Mod_MD3LoadSkins(model_t* mod, md3Header_t* header, md3model_t* mode
 			strlcat(new_skin->surface_info.name, surf->name, sizeof(new_skin->surface_info.name));
 
 			// Search through the .skin file for the mapping from surface => texture
-			for (sfile = sfilestart; sfile < sfilestart + skinfile_length && sfile[0]; sfile = nl + 1) {
+			for (sfile = sfilestart; sfile < sfileend && sfile[0]; sfile = nl + 1) {
 				nl = strchr(sfile, '\n');
 				if (!nl) {
-					nl = sfile + skinfile_length;
+					nl = sfileend;
 				}
-				if (sfile[name_length] == ',' && !strncasecmp(surf->name, sfile, name_length)) {
+				// FS_LoadHeapFile ends the file with a single NUL, so look for the
+				// comma after the name only where the file is long enough to hold it
+				if (sfileend - sfile > name_length && sfile[name_length] == ',' && !strncasecmp(surf->name, sfile, name_length)) {
 					strlcpy(new_skin->surface_info.name, sfile + name_length + 1, sizeof(new_skin->surface_info.name));
 					new_skin->surface_info.name[min(sizeof(new_skin->surface_info.name) - 1, nl - (sfile + name_length + 1))] = '\0';
 					nl = strchr(new_skin->surface_info.name, '\r');
@@ -137,7 +141,6 @@ static void Mod_MD3LoadSkins(model_t* mod, md3Header_t* header, md3model_t* mode
 					}
 					break;
 				}
-				sfile = nl + 1;
 			}
 		}
 		Q_free(sfilestart);
