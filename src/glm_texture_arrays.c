@@ -438,6 +438,14 @@ static void GL_ImportTexturesForModel(model_t* mod)
 		texture_type type = mod->isworldmodel ? TEXTURETYPES_WORLDMODEL : TEXTURETYPES_BRUSHMODEL;
 		int i;
 
+		// Inline models share the world's textures: reuse its result
+		if (cl.worldmodel && mod != cl.worldmodel && mod->textures == cl.worldmodel->textures) {
+			mod->texture_array_count = cl.worldmodel->texture_array_count;
+			memcpy(mod->texture_array_first, cl.worldmodel->texture_array_first, sizeof(mod->texture_array_first));
+			memcpy(mod->texture_arrays, cl.worldmodel->texture_arrays, sizeof(mod->texture_arrays));
+			return;
+		}
+
 		for (i = 0; i < mod->numtextures; i++) {
 			texture_t* tx = mod->textures[i];
 			texture_array_ref_t* array_ref;
