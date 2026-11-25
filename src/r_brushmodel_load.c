@@ -1335,6 +1335,41 @@ static void Mod_LoadFacesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base, bsp
 	}
 }
 
+// Refuses a node whose plane or surfaces lie outside their lumps
+static void Mod_CheckNodeIndexes(model_t *loadmodel, int nodenum, int planenum, unsigned int firstsurface, unsigned int numsurfaces)
+{
+	unsigned int count = (unsigned int)loadmodel->numsurfaces;
+
+	if (planenum < 0 || planenum >= loadmodel->numplanes) {
+		Host_Error("[%s] node %d references invalid plane %d/%d", loadmodel->name, nodenum, planenum, loadmodel->numplanes);
+	}
+	if (firstsurface > count || numsurfaces > count - firstsurface) {
+		Host_Error("[%s] node %d references invalid surface range [%u length %u, vs %d]", loadmodel->name, nodenum, firstsurface, numsurfaces, loadmodel->numsurfaces);
+	}
+}
+
+// Returns child p of a node: node p, or leaf -1 - p for a negative p.
+// Everything that walks the tree tells a leaf from a node by its negative
+// contents, so a leaf must have them, and the leafs must be loaded first.
+static mnode_t *Mod_NodeChild(model_t *loadmodel, int nodenum, int p)
+{
+	if (p >= 0) {
+		if (p >= loadmodel->numnodes) {
+			Host_Error("[%s] node %d references invalid node %d/%d", loadmodel->name, nodenum, p, loadmodel->numnodes);
+		}
+		return loadmodel->nodes + p;
+	}
+
+	p = -1 - p;
+	if (p >= loadmodel->numleafs) {
+		Host_Error("[%s] node %d references invalid leaf %d/%d", loadmodel->name, nodenum, p, loadmodel->numleafs);
+	}
+	if (loadmodel->leafs[p].contents >= 0) {
+		Host_Error("[%s] node %d references leaf %d with contents %d", loadmodel->name, nodenum, p, loadmodel->leafs[p].contents);
+	}
+	return (mnode_t *)(loadmodel->leafs + p);
+}
+
 static void Mod_LoadNodes(model_t* loadmodel, lump_t* l, byte* mod_base)
 {
 	int i, j, count, p;
@@ -1362,20 +1397,14 @@ static void Mod_LoadNodes(model_t* loadmodel, lump_t* l, byte* mod_base)
 			out->minmaxs[3 + j] = LittleShort (in->maxs[j]);
 		}
 
-		p = LittleLong(in->planenum);
-		out->plane = loadmodel->planes + p;
-
 		out->firstsurface = LittleShort (in->firstface);
 		out->numsurfaces = LittleShort (in->numfaces);
+		p = LittleLong(in->planenum);
+		Mod_CheckNodeIndexes(loadmodel, i, p, out->firstsurface, out->numsurfaces);
+		out->plane = loadmodel->planes + p;
 
 		for (j = 0; j < 2; j++) {
-			p = LittleShort (in->children[j]);
-			if (p >= 0) {
-				out->children[j] = loadmodel->nodes + p;
-			}
-			else {
-				out->children[j] = (mnode_t *)(loadmodel->leafs + (-1 - p));
-			}
+			out->children[j] = Mod_NodeChild(loadmodel, i, LittleShort(in->children[j]));
 		}
 	}
 
@@ -1409,20 +1438,14 @@ static void Mod_LoadNodes29a(model_t* loadmodel, lump_t* l, byte* mod_base)
 			out->minmaxs[3 + j] = LittleShort (in->maxs[j]);
 		}
 
-		p = LittleLong(in->planenum);
-		out->plane = loadmodel->planes + p;
-
 		out->firstsurface = LittleLong (in->firstface);
 		out->numsurfaces = LittleLong (in->numfaces);
+		p = LittleLong(in->planenum);
+		Mod_CheckNodeIndexes(loadmodel, i, p, out->firstsurface, out->numsurfaces);
+		out->plane = loadmodel->planes + p;
 
 		for (j = 0; j < 2; j++) {
-			p = LittleLong (in->children[j]);
-			if (p >= 0) {
-				out->children[j] = loadmodel->nodes + p;
-			}
-			else {
-				out->children[j] = (mnode_t *)(loadmodel->leafs + (-1 - p));
-			}
+			out->children[j] = Mod_NodeChild(loadmodel, i, LittleLong(in->children[j]));
 		}
 	}
 
@@ -1456,20 +1479,14 @@ static void Mod_LoadNodesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 			out->minmaxs[3 + j] = LittleFloat (in->maxs[j]);
 		}
 
-		p = LittleLong(in->planenum);
-		out->plane = loadmodel->planes + p;
-
 		out->firstsurface = LittleLong (in->firstface);
 		out->numsurfaces = LittleLong (in->numfaces);
+		p = LittleLong(in->planenum);
+		Mod_CheckNodeIndexes(loadmodel, i, p, out->firstsurface, out->numsurfaces);
+		out->plane = loadmodel->planes + p;
 
 		for (j = 0; j < 2; j++) {
-			p = LittleLong (in->children[j]);
-			if (p >= 0) {
-				out->children[j] = loadmodel->nodes + p;
-			}
-			else {
-				out->children[j] = (mnode_t*)(loadmodel->leafs + (-1 - p));
-			}
+			out->children[j] = Mod_NodeChild(loadmodel, i, LittleLong(in->children[j]));
 		}
 	}
 
