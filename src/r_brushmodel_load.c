@@ -819,6 +819,18 @@ static void Mod_LoadVertexes(model_t* mod, lump_t *l, byte* mod_base)
 	}
 }
 
+// Refuses an edge whose vertices lie outside the vertex lump. A surface edge
+// can't use edge 0, as it can't be negated, so some compilers leave it
+// uninitialised: it isn't checked, and Mod_CheckFaceIndexes refuses its use.
+static void Mod_CheckEdge(model_t *loadmodel, int edgenum, const medge_t *edge)
+{
+	unsigned int numvertexes = (unsigned int)loadmodel->numvertexes;
+
+	if (edgenum > 0 && (edge->v[0] >= numvertexes || edge->v[1] >= numvertexes)) {
+		Host_Error("[%s] edge %d references invalid vertexes %u and %u/%d", loadmodel->name, edgenum, edge->v[0], edge->v[1], loadmodel->numvertexes);
+	}
+}
+
 static void Mod_LoadEdges(model_t* loadmodel, lump_t* l, byte* mod_base)
 {
 	dedge_t *in;
@@ -844,6 +856,7 @@ static void Mod_LoadEdges(model_t* loadmodel, lump_t* l, byte* mod_base)
 	for (i = 0; i < count; i++, in++, out++) {
 		out->v[0] = (unsigned short) LittleShort(in->v[0]);
 		out->v[1] = (unsigned short) LittleShort(in->v[1]);
+		Mod_CheckEdge(loadmodel, i, out);
 	}
 }
 
@@ -870,6 +883,7 @@ static void Mod_LoadEdgesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 	for (i = 0; i < count; i++, in++, out++) {
 		out->v[0] = LittleLong(in->v[0]);
 		out->v[1] = LittleLong(in->v[1]);
+		Mod_CheckEdge(loadmodel, i, out);
 	}
 }
 
@@ -891,6 +905,7 @@ static void Mod_LoadSurfedges(model_t* loadmodel, lump_t* l, byte* mod_base)
 	loadmodel->surfedges = out;
 	loadmodel->numsurfedges = count;
 
+	// Mod_CheckFaceIndexes checks the ones a face uses
 	for (i = 0; i < count; i++) {
 		out[i] = LittleLong(in[i]);
 	}
@@ -1170,8 +1185,19 @@ static int Mod_LoadDecoupledLM(dlminfo_t* lminfos, int surfnum, msurface_t *out)
 // everything after the face loaders indexes them without checking.
 static void Mod_CheckFaceIndexes(model_t *loadmodel, int surfnum, int firstedge, int numedges, int planenum, int texinfo)
 {
+	int i, edge;
+
 	if (firstedge < 0 || firstedge >= loadmodel->numsurfedges || numedges < 0 || numedges > loadmodel->numsurfedges - firstedge) {
 		Host_Error("[%s] surface %d references invalid edge range [%d length %d, vs %d]", loadmodel->name, surfnum, firstedge, numedges, loadmodel->numsurfedges);
+	}
+	// Surface edges are only read through the range of a face, so one that no
+	// face uses is not checked.
+	for (i = 0; i < numedges; i++) {
+		edge = loadmodel->surfedges[firstedge + i];
+		// an edge used backwards is negated, so edge 0 can't be used
+		if (edge == 0 || edge <= -loadmodel->numedges || edge >= loadmodel->numedges) {
+			Host_Error("[%s] surface edge %d references invalid edge %d/%d", loadmodel->name, firstedge + i, edge, loadmodel->numedges);
+		}
 	}
 	if (planenum < 0 || planenum >= loadmodel->numplanes) {
 		Host_Error("[%s] surface %d references invalid plane %d/%d", loadmodel->name, surfnum, planenum, loadmodel->numplanes);
