@@ -156,7 +156,8 @@ vfsfile_t *FSOS_OpenVFS(void *handle, flocation_t *loc, char *mode)
 {
 	char diskname[MAX_OSPATH];
 
-	snprintf(diskname, sizeof(diskname), "%s/%s", (char*)handle, loc->rawname);
+	if (!FS_FormatOSPath(diskname, sizeof(diskname), "%s/%s", (char *)handle, loc->rawname))
+		return NULL;
 
 	return VFSOS_Open(diskname, mode);
 }
@@ -215,7 +216,8 @@ static qbool FSOS_FLocate(void *handle, flocation_t *loc, const char *filename, 
 */
 
 // check a file in the directory tree
-	snprintf (netpath, sizeof(netpath)-1, "%s/%s",(char*)handle, filename);
+	if (!FS_FormatOSPath(netpath, sizeof(netpath), "%s/%s", (char *)handle, filename))
+		return false;
 
 	// VFS-FIXME: This could be optimised to only do this once and save the result!
 	f = fopen(netpath, "rb");

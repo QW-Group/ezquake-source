@@ -971,6 +971,24 @@ qbool VFS_COPYPROTECTED(struct vfsfile_s *vf) {
 // some general function to open VFS file, except VFSTCP
 //
 
+/*
+ * Formats a path to open into out, which holds size bytes, and returns false
+ * if the path doesn't fit. A path cut to fit names another file than the one
+ * asked for, so it must not be opened.
+ */
+qbool FS_FormatOSPath(char *out, size_t size, const char *format, ...)
+{
+	va_list args;
+	int len;
+
+	va_start(args, format);
+	len = vsnprintf(out, size, format, args);
+	va_end(args);
+
+	// where vsnprintf is _vsnprintf, a path that doesn't fit gives -1
+	return len >= 0 && (size_t)len < size;
+}
+
 /* ================
  * FS_OpenVFS
  * ================
@@ -998,37 +1016,34 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 	switch (relativeto)
 	{
 	case FS_NONE_OS: 	//OS access only, no paks, open file as is
-		if (*com_homedir)
-		{
-			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
+		if (*com_homedir && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", com_homedir, filename)) {
 			vfs = VFSOS_Open(fullname, mode);
 			if (vfs)
 				return vfs;
 		}
 
-		snprintf(fullname, sizeof(fullname), "%s", filename);
+		if (!FS_FormatOSPath(fullname, sizeof(fullname), "%s", filename))
+			return NULL;
 		return VFSOS_Open(fullname, mode);
 
 	case FS_GAME_OS:	//OS access only, no paks
 		//sss: check userdir first
-		if (*com_userdir) {
-			snprintf (fullname, sizeof (fullname), "%s/%s", com_userdir, filename);
+		if (*com_userdir && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", com_userdir, filename)) {
 			vfs = VFSOS_Open (fullname, mode);
 			if (vfs) {
 				return vfs;
 			}
 		}
 
-		if (*com_homedir)
-		{
-			snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename);
+		if (*com_homedir && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", com_homedir, com_gamedirfile, filename)) {
 			vfs = VFSOS_Open(fullname, mode);
 			if (vfs) {
 				return vfs;
 			}
 		}
 
-		snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename);
+		if (!FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename))
+			return NULL;
 		return VFSOS_Open(fullname, mode);
 
 /* VFS-XXX: Removed as we don't really use this
@@ -1048,7 +1063,8 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 //			if (vfs)
 //				return vfs;
 //		}
-		snprintf(fullname, sizeof(fullname), "%s/%s", com_basedir, filename);
+		if (!FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", com_basedir, filename))
+			return NULL;
 		return VFSOS_Open(fullname, mode);
 
 /* VFS-XXX: Removed as we don't really use this
@@ -1064,14 +1080,11 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 		return VFSOS_Open(fullname, mode);
  */
 	case FS_HOME:
-		if (*com_homedir)
-			snprintf(fullname, sizeof(fullname), "%s/%s", com_homedir, filename);
-		else
+		if (!*com_homedir || !FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s", com_homedir, filename))
 			return NULL;
 		return VFSOS_Open(fullname, mode);
 
 	case FS_PAK:
-		snprintf(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename);
 		break;
 
 	case FS_ANY:
@@ -1103,7 +1116,7 @@ vfsfile_t *FS_OpenVFS(const char *filename, char *mode, relativeto_t relativeto)
 	}
 
 	//if we're meant to be writing, best write to it.
-	if (strchr(mode , 'w') || strchr(mode , 'a'))
+	if ((strchr(mode, 'w') || strchr(mode, 'a')) && FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", com_basedir, com_gamedirfile, filename))
 		return VFSOS_Open(fullname, mode);
 	return NULL;
 }
