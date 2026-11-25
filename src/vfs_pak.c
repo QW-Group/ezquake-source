@@ -343,7 +343,9 @@ static void *FSPAK_LoadPackFile (vfsfile_t *file, const char *desc)
 		for (j=0 ; j<sizeof(info) ; j++)
 			CRC_ProcessByte(&crc, ((qbyte *)&info)[j]);
 */
-		strlcpy (newfiles[i].name, info.name, MAX_QPATH);
+		// a name that fills its 56 bytes isn't NUL-terminated
+		memcpy(newfiles[i].name, info.name, sizeof(info.name));
+		newfiles[i].name[sizeof(info.name)] = 0;
 		newfiles[i].filepos = LittleLong(info.filepos);
 		newfiles[i].filelen = LittleLong(info.filelen);
 		// readers allocate an entry's length and read it from its position
