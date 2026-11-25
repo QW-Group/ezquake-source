@@ -424,20 +424,24 @@ loc0:
 
 		surf = cl.worldmodel->surfaces + node->firstsurface;
 		for (i = 0; i < node->numsurfaces; i++, surf++) {
+			float s, t;
+
 			if (surf->flags & SURF_DRAWTILED) {
 				continue;	// no lightmaps
 			}
 
-			ds = (int)((float)DotProduct(mid, surf->lmvecs[0]) + surf->lmvecs[0][3]);
-			dt = (int)((float)DotProduct(mid, surf->lmvecs[1]) + surf->lmvecs[1][3]);
-			if (ds < surf->texturemins[0] || dt < surf->texturemins[1]) {
+			// texturemins and extents are shorts, so a point of a surface has s
+			// and t within 65536 of 0; one further out misses every surface,
+			// and its conversion to int, or the subtraction, could overflow
+			s = (float)DotProduct(mid, surf->lmvecs[0]) + surf->lmvecs[0][3];
+			t = (float)DotProduct(mid, surf->lmvecs[1]) + surf->lmvecs[1][3];
+			if (!(fabs(s) < 65536 && fabs(t) < 65536)) {
 				continue;
 			}
 
-			ds -= surf->texturemins[0];
-			dt -= surf->texturemins[1];
-
-			if (ds > surf->extents[0] || dt > surf->extents[1]) {
+			ds = (int)s - surf->texturemins[0];
+			dt = (int)t - surf->texturemins[1];
+			if (ds < 0 || dt < 0 || ds > surf->extents[0] || dt > surf->extents[1]) {
 				continue;
 			}
 
