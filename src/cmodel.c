@@ -1746,7 +1746,7 @@ static qbool CM_BSPX_LoadLumps(bspx_lump_t *lump, int numlumps, int filesize)
 		lump->lumpname[sizeof(lump->lumpname) - 1] = '\0'; // make sure it ends with zero
 		lump->fileofs = LittleLong(lump->fileofs);
 		lump->filelen = LittleLong(lump->filelen);
-		if (lump->fileofs < 0 || lump->filelen < 0 || (unsigned)(lump->fileofs + lump->filelen) >(unsigned)filesize) {
+		if (lump->fileofs < 0 || lump->filelen < 0 || (long long)lump->fileofs + lump->filelen > filesize) {
 			Con_Printf("Invalid BSPX lump position, ofs: %d, len: %d, filelen: %d\n", lump->fileofs, lump->filelen, filesize);
 			return false;
 		}
