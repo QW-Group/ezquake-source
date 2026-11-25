@@ -44,8 +44,8 @@ typedef struct web_request_data_s {
 	CURL*               handle;
 	double              time_sent;
 
-	// response from server
-	char                response[MAX_RESPONSE_LENGTH];
+	// Keep room for the terminator after a full response.
+	char                response[MAX_RESPONSE_LENGTH + 1];
 	size_t              response_length;
 
 	// form data
@@ -65,18 +65,21 @@ static web_request_data_t* web_requests;
 static size_t Web_StandardTokenWrite(void* buffer, size_t size, size_t nmemb, void* userp)
 {
 	web_request_data_t* data = (web_request_data_t*)userp;
-	size_t available = sizeof(data->response) - data->response_length;
-	if (size * nmemb > available) {
-		Con_DPrintf("WWW: Response too large, size*nmemb = %d, available %d\n", size * nmemb, available);
+	size_t available = MAX_RESPONSE_LENGTH - data->response_length;
+	size_t length;
+
+	if (size && nmemb > available / size) {
+		Con_DPrintf("WWW: Response exceeds %d bytes\n", MAX_RESPONSE_LENGTH);
 		return 0;
 	}
-	else if (size * nmemb > 0) {
-		Con_DPrintf("WWW: response received, writing %d bytes\n", size * nmemb);
-		memcpy(data->response + data->response_length, buffer, size * nmemb);
-		data->response_length += size * nmemb;
-		Con_DPrintf("WWW: response_length now %d bytes\n", data->response_length);
+	length = size * nmemb;
+	if (length) {
+		Con_DPrintf("WWW: response received, writing %zu bytes\n", length);
+		memcpy(data->response + data->response_length, buffer, length);
+		data->response_length += length;
+		Con_DPrintf("WWW: response_length now %zu bytes\n", data->response_length);
 	}
-	return size * nmemb;
+	return length;
 }
 
 static void Web_SubmitRequestFormGeneric(const char* url, struct curl_httppost* first_form_ptr, struct curl_httppost* last_form_ptr, web_response_func_t callback, const char* requestId, void* internal_data)
@@ -119,7 +122,6 @@ static int ProcessWebResponse(web_request_data_t* req, response_field_t* fields,
 
 	// Response should be multiple lines, <Key>:<Value>\n
 	// For multi-line values, prefix end of line with $
-	req->response[req->response_length] = '\0';
 	while ((colon = strchr(start, ':'))) {
 		newline = strchr(colon, '\n');
 		if (newline) {
@@ -186,6 +188,10 @@ static void Auth_GenerateChallengeResponse(web_request_data_t* req, qbool valid)
 	}
 
 	req->internal_data = NULL;
+	if (!valid) {
+		SV_ClientPrintf2(client, PRINT_HIGH, "Failure contacting central server.\n");
+		return;
+	}
 	ProcessWebResponse(req, fields, sizeof(fields) / sizeof(fields[0]));
 
 	if (response && !strcmp(response, "Success") && challenge) {
@@ -238,7 +244,7 @@ void Central_GenerateChallenge(client_t* client, const char* username, qbool dur
 
 	code = curl_formadd(&first_form_ptr, &last_form_ptr,
 		CURLFORM_PTRNAME, "status",
-		CURLFORM_COPYCONTENTS, during_login ? 0 : 1,
+		CURLFORM_COPYCONTENTS, during_login ? "0" : "1",
 		CURLFORM_END
 	);
 
@@ -271,6 +277,10 @@ void Auth_ProcessLoginAttempt(web_request_data_t* req, qbool valid)
 	req->internal_data = NULL;
 	if (client->login_request_time != req->time_sent) {
 		// Ignore result, subsequent request sent
+		return;
+	}
+	if (!valid) {
+		SV_LoginWebFailed(client);
 		return;
 	}
 
@@ -375,10 +385,8 @@ void Web_PostResponse(web_request_data_t* req, qbool valid)
 			{ "Upload", &upload }
 		};
 
-		req->response[req->response_length] = '\0';
-
 		Con_DPrintf("Response from web server:\n");
-		Con_DPrintf(req->response);
+		Con_DPrintf("%s", req->response);
 
 		ProcessWebResponse(req, fields, sizeof(fields) / sizeof(fields[0]));
 
@@ -665,6 +673,7 @@ void Central_ProcessResponses(void)
 					*list_pointer = this->next;
 
 					if (this->onCompleteCallback) {
+						this->response[this->response_length] = '\0';
 						if (result == CURLE_OK) {
 							this->onCompleteCallback(this, true);
 						}
