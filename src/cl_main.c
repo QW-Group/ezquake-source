@@ -886,6 +886,14 @@ void CL_CheckForResend (void)
 		return;
 	}
 
+	// only a local server answers there, and the client connects to one by
+	// itself once it runs
+	if (cls.server_adr.type == NA_LOOPBACK) {
+		Com_Printf("No local server to connect to\n");
+		connect_time = 0;
+		return;
+	}
+
 	t2 = Sys_DoubleTime();
 	connect_time = cls.realtime + t2 - t1;	// for retransmit requests
 
