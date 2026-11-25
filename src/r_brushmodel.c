@@ -195,6 +195,19 @@ static int R_BrushModelMeasureVBOSize(model_t* m)
 static int R_BrushModelPopulateVBO(model_t* m, void* vbo_buffer, int vbo_pos)
 {
 	int i, j;
+	int* first_surf = Q_malloc(m->numtextures * sizeof(int));
+	int* next_surf = Q_malloc(m->nummodelsurfaces * sizeof(int));
+
+	// Chain surfaces by texture, to avoid scanning them all per texture
+	memset(first_surf, -1, m->numtextures * sizeof(int));
+	for (j = m->nummodelsurfaces - 1; j >= 0; --j) {
+		int miptex = m->surfaces[m->firstmodelsurface + j].texinfo->miptex;
+
+		if (miptex >= 0 && miptex < m->numtextures) {
+			next_surf[j] = first_surf[miptex];
+			first_surf[miptex] = j;
+		}
+	}
 
 	// Order vertices in the VBO by texture & lightmap
 	for (i = 0; i < m->numtextures; ++i) {
@@ -206,16 +219,12 @@ static int R_BrushModelPopulateVBO(model_t* m, void* vbo_buffer, int vbo_pos)
 
 		has_fb = R_TextureReferenceIsValid(m->textures[i]->fb_texturenum);
 		has_luma = has_fb & m->textures[i]->isLumaTexture;
-		for (j = 0; j < m->nummodelsurfaces; ++j) {
+		for (j = first_surf[i]; j >= 0; j = next_surf[j]) {
 			msurface_t* surf = m->surfaces + m->firstmodelsurface + j;
 			qbool isTurbOrSky = surf->flags & (SURF_DRAWTURB | SURF_DRAWSKY);
 			qbool isLitTurb = surf->texinfo->texture->isLitTurb;
 			int lightmap = isTurbOrSky && !isLitTurb ? -1 : surf->lightmaptexturenum;
 			glpoly_t* poly;
-
-			if (surf->texinfo->miptex != i) {
-				continue;
-			}
 
 			// copy verts into buffer (alternate to turn fan into triangle strip)
 			for (poly = surf->polys; poly; poly = poly->next) {
@@ -238,6 +247,8 @@ static int R_BrushModelPopulateVBO(model_t* m, void* vbo_buffer, int vbo_pos)
 		}
 	}
 
+	Q_free(first_surf);
+	Q_free(next_surf);
 	return vbo_pos;
 }
 
