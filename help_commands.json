@@ -606,7 +606,7 @@
     "syntax": "<expression>"
   },
   "exec": {
-    "description": "Executes a config file from \\qw, \\id1 or \\ezquake. The companion command `serverexec` runs the same script routed to the server command buffer (`cbuf_server`) instead of the main client buffer -- useful for sending commands that should execute on the server side in listen-server builds."
+    "description": "Executes a config file from \\qw, \\id1 or \\ezquake. The companion command `serverexec` runs the same script routed to the server command buffer (`cbuf_server`) instead of the main client buffer -- useful for sending commands that should execute on the server side in listen-server builds. Files with an extension listed in `cl_allow_downloads`, and .tmp files, which downloads are written to until they are complete, are not executed."
   },
   "f_modified": {
     "description": "All the usual dm models, sounds, palettes etc are included in the check.\nIn Team Fortress the TF flag, dispensers and sentry guns are also checked. There is also an f_modified command which will print your f_modified response.",

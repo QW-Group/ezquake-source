@@ -168,7 +168,9 @@ qbool CL_IsDownloadableFileExtension(const char *filename)
 
 /*
  * Returns true, after a warning, if exec must not read name because servers
- * may download files of its type. Windows and macOS match names without case,
+ * may download files of its type, or because it is a .tmp file, which a
+ * download is written to until it is complete and which an interrupted one
+ * leaves behind. Windows and macOS match names without case,
  * and Windows also opens x.loc for "x.loc.", "x.loc ", "x.loc::$DATA" and
  * "x.loc/zz/..", as it drops trailing dots and spaces, reads a stream suffix
  * and resolves "." and ".." by the text of the path. Every component of name
@@ -190,6 +192,10 @@ static qbool Cmd_RefuseDownloadableExec(const char *name)
 		}
 
 		ext = COM_FileExtension(part);
+		if (!strcasecmp(ext, "tmp")) {
+			Com_Printf("Warning: \"%s\" is not allowed to be executed, as downloads are written to .tmp files\n", name);
+			return true;
+		}
 		if (Cmd_IsListedDownloadExtension(ext, true)) {
 			Com_Printf("Warning: \"%s\" is not allowed to be executed. Remove \"%s\" from cl_allow_downloads to allow execution\n", name, ext);
 			return true;
