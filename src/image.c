@@ -1301,6 +1301,16 @@ byte *Image_LoadTGA(vfsfile_t *fin, const char *filename, int matchwidth, int ma
 		TGA_ERROR("Unsupported TGA image %s: Bad image type.\n");
 	}
 
+	// An image that is not colour-mapped may still carry a colour map, which
+	// lies between the ID field and the pixels
+	if (mytype != MYTGA_MAPPED && header.colormapType == 1) {
+		int colormap_bytes = header.colormapLength * ((header.colormapSize + 7) >> 3);
+
+		if (filesize - 18 - header.idLength < colormap_bytes)
+			TGA_ERROR("Unsupported TGA image %s: Truncated colormap.\n");
+		in += colormap_bytes;
+	}
+
 	if (header.attributes & 0x10)
 		TGA_ERROR("Unsupported TGA image %s: Pixel data spans right to left.\n");
 
