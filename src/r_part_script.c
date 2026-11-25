@@ -602,10 +602,10 @@ static qbool PScript_LoadSet(const char *name, qbool implicit, qbool warn)
 	else {
 		snprintf(path, sizeof(path), "particles/%s.cfg", set->name);
 	}
-	data = FS_LoadHeapFile(path, &size);
+	data = FS_LoadGameHeapFile(path, &size);
 	if (!data && strchr(set->name, '/')) {
 		snprintf(path, sizeof(path), "%s.cfg", set->name);
-		data = FS_LoadHeapFile(path, &size);
+		data = FS_LoadGameHeapFile(path, &size);
 	}
 
 	if (data) {

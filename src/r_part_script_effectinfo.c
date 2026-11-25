@@ -815,7 +815,7 @@ qbool PScript_ImportEffectInfo(const char *config)
 		return false;
 	}
 	snprintf(path, sizeof(path), "%s.txt", setname);
-	data = (char *)FS_LoadHeapFile(path, &size);
+	data = (char *)FS_LoadGameHeapFile(path, &size);
 	if (!data) {
 		Con_Printf("Couldn't find %s\n", path);
 		return false;
