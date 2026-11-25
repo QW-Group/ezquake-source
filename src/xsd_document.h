@@ -302,7 +302,4 @@ void XSD_Document_Free(xml_t *);
 // read document content from file, return NULL if error
 xml_t * XSD_Document_LoadFromHandle(vfsfile_t *v, int filelen);
 
-// read document content from file, return NULL if error
-xml_document_t * XSD_Document_Load(char *filename);
-
 #endif // __XSD_DOCUMENT_H__
