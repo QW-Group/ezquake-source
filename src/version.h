@@ -77,8 +77,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define QW_CONFIGURATION	"Release"
 #endif
 
-// Note: for server mods to detect version, change VERSION_NUM below
+// Server mods read VERSION_NUM from world.impulse. Keep it in sync with VERSION_NUMBER.
 #define VERSION_NUMBER "3.7.0-dev"
+#define VERSION_NUM 3.7
 #define VERSION_MAX_LEN 32
 
 void CL_Version_f(void);
@@ -102,7 +103,6 @@ qbool VersionCheck_GetLatest(char dest[VERSION_MAX_LEN]);
 #define SERVER_VERSION_NUM  0.33
 #define SERVER_FULLNAME     "MVDSV: MultiView Demo SerVer"
 #define SERVER_HOME_URL     "https://mvdsv.deurk.net"
-#define VERSION_NUM         3.6
 #define BUILD_DATE          __DATE__ ", " __TIME__
 #define GIT_COMMIT          ""
 
