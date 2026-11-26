@@ -523,25 +523,6 @@ void Cbuf_ExecuteEx (cbuf_t *cbuf)
 ==============================================================================
 */
 
-/*
-Set commands are added early, so they are guaranteed to be set before
-the client and server initialize for the first time.
-
-Other commands are added late, after all initialization is complete.
-*/
-void Cbuf_AddEarlyCommands (void)
-{
-	int i;
-
-	for (i = 0; i < COM_Argc () - 2; i++) {
-		if (strcasecmp (COM_Argv(i), "+set"))
-			continue;
-
-		Cbuf_AddText (va ("set %s %s\n", COM_Argv (i + 1), COM_Argv (i + 2)));
-		i += 2;
-	}
-}
-
 qbool Cmd_IsAllowedStuffCmdsCommand(const char *str)
 {
 	char*	banned_list[] = {"set ", "cfg_load ", NULL};
@@ -551,7 +532,7 @@ qbool Cmd_IsAllowedStuffCmdsCommand(const char *str)
 	{
 		if(strncasecmp(str, *banned_cmd, strlen(*banned_cmd)) == 0)
 		{
-			//+set is processed in Cbuf_AddEarlyCommands(), +cfg_load allowed only once in Host_Init()
+			// +set is queued from argv directly. The client handles +cfg_load in Host_Init.
 			if((strncasecmp(str, "set ", 4) != 0) && (strncasecmp(str, "cfg_load ", 9) != 0))
 			{
 				Com_Printf("+%s is not allowed in cmdline or obsolete.\n", *banned_cmd);
@@ -569,13 +550,13 @@ Commands lead with a +, and continue until a - or another +
 quake +prog jctest.qp +cmd amlev1
 quake -nosound +cmd amlev1
 */
-void Cmd_StuffCmds_f (void)
+static void Cmd_QueueCommandLineRange(int first, int end)
 {
 	int k, len = 0;
 	char *s, *text, *token;
 
 	// build the combined string to parse from
-	for (k = 1; k < COM_Argc(); k++)
+	for (k = first; k < end; k++)
 		len += strlen (COM_Argv(k)) + 1;
 
 	if (!len)
@@ -583,9 +564,9 @@ void Cmd_StuffCmds_f (void)
 
 	text = (char *) Q_malloc(len + 1);
 	text[0] = '\0';
-	for (k = 1; k < COM_Argc(); k++) {
+	for (k = first; k < end; k++) {
 		strlcat (text, COM_Argv(k), len + 1);
-		if (k != COM_Argc() - 1)
+		if (k != end - 1)
 			strlcat (text, " ", len + 1);
 	}
 
@@ -612,6 +593,44 @@ void Cmd_StuffCmds_f (void)
 
 	Q_free(text);
 	Q_free (token);
+}
+
+// A +set consumes two argv entries, even when its value starts with '-' or '+'.
+static void Cmd_QueueStartupArgs(qbool sets_only)
+{
+	int first = 1;
+	int i;
+
+	for (i = first; i + 2 < COM_Argc(); i++) {
+		if (strcasecmp(COM_Argv(i), "+set")) {
+			continue;
+		}
+		if (!sets_only) {
+			Cmd_QueueCommandLineRange(first, i);
+		}
+		Cbuf_AddText(va("set %s %s\n", COM_Argv(i + 1), COM_Argv(i + 2)));
+		i += 2;
+		first = i + 1;
+	}
+	if (!sets_only) {
+		Cmd_QueueCommandLineRange(first, COM_Argc());
+	}
+}
+
+#ifndef SERVERONLY
+void Cbuf_AddEarlyCommands(void)
+{
+	Cmd_QueueStartupArgs(true);
+}
+#endif
+
+void Cmd_StuffCmds_f(void)
+{
+#ifdef SERVERONLY
+	Cmd_QueueStartupArgs(false);
+#else
+	Cmd_QueueCommandLineRange(1, COM_Argc());
+#endif
 }
 
 static qbool Cmd_ConfigIsOSPath(const char *path)

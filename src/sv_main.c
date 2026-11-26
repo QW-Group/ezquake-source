@@ -4004,8 +4004,7 @@ void Host_Init (int argc, char **argv, int default_memsize)
 	Info_SetValueForStarKey(svs.info, "*gamedir", com_gamedirfile, MAX_SERVERINFO_STRING);
 	Cbuf_InsertText ("exec server.cfg\n");
 
-	// Apply command-line settings after server.cfg and before starting the first map.
-	Cbuf_AddEarlyCommands ();
+	// Apply startup commands in argument order after server.cfg, as in MVDSV.
 	Cmd_StuffCmds_f ();
 	Cbuf_Execute ();
 
