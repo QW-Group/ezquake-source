@@ -1678,12 +1678,6 @@ void SV_Gamedir_f (void)
 
 	dir = Cmd_Argv(1);
 
-	if (strstr(dir, "..") || strchr(dir, '/') || strchr(dir, '\\') || strchr(dir, ':') )
-	{
-		Con_Printf ("Gamedir should be a single filename, not a path\n");
-		return;
-	}
-
 #ifndef SERVERONLY
 	if (CL_ClientState())
 	{
@@ -1692,8 +1686,9 @@ void SV_Gamedir_f (void)
 	}
 #endif
 
-	FS_SetGamedir (dir, false);
-	Info_SetValueForStarKey (svs.info, "*gamedir", dir, MAX_SERVERINFO_STRING);
+	if (FS_SetGamedir(dir, false)) {
+		Info_SetValueForStarKey (svs.info, "*gamedir", dir, MAX_SERVERINFO_STRING);
+	}
 }
 
 /*

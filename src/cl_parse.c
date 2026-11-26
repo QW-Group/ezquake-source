@@ -1547,7 +1547,8 @@ void CL_ParseServerData (void)
 	// game directory
 	str = MSG_ReadString ();
 
-	if (!strcmp(str, "")  || !strcmp(str, ".") || strstr(str, "..") || strstr(str, "//") || strchr(str, '\\') || strchr(str, ':')  || str[0] == '/') {
+	if (!str[0] || strlen(str) >= sizeof(cls.gamedirfile) || !strcmp(str, ".") || strstr(str, "..")
+	    || strstr(str, "//") || strchr(str, '\\') || strchr(str, ':') || str[0] == '/') {
 		Host_Error("Server reported invalid gamedir!\n");
 	}
 

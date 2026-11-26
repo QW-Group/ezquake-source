@@ -640,25 +640,37 @@ static void FS_AddHomeGameDirectory(void)
 }
 
 // Sets the gamedir and path to a different directory.
-void FS_SetGamedir(char* dir, qbool force)
+qbool FS_SetGamedir(char* dir, qbool force)
 {
 	searchpath_t* next;
+	char path[MAX_OSPATH];
+	int length;
 
 	if (dir == NULL || !dir[0]) {
 		dir = "qw";
 	}
 
+	if (strlen(dir) >= sizeof(com_gamedirfile)) {
+		Com_Printf("Gamedir name too long (maximum %d bytes)\n", (int)sizeof(com_gamedirfile) - 1);
+		return false;
+	}
+
 	if (strstr(dir, "..") || strchr(dir, '/') || strchr(dir, '\\') || strchr(dir, ':')) {
 		Com_Printf("Gamedir should be a single filename, not a path\n");
-		return;
+		return false;
 	}
 
 	if (!force && !strcmp(com_gamedirfile, dir)) {
 		// Still the same
-		return;
+		return true;
 	}
 
-	strlcpy(com_gamedirfile, dir, sizeof(com_gamedirfile));
+	length = snprintf(path, sizeof(path), "%s/%s", com_basedir, dir);
+	// FS_AddGameSearchPath needs room for a trailing slash.
+	if (length < 0 || length >= (int)sizeof(path) - 1) {
+		Com_Printf("Gamedir path too long: %s/%s\n", com_basedir, dir);
+		return false;
+	}
 
 	// Free up any current game dir info.
 	FS_FlushFSHash();
@@ -677,9 +689,7 @@ void FS_SetGamedir(char* dir, qbool force)
 	// Flush all data, so it will be forced to reload.
 	Cache_Flush();
 
-	snprintf(com_gamedir, sizeof(com_gamedir), "%s/%s", com_basedir, dir);
-
-	FS_AddGameDirectory(com_gamedir, FS_LOAD_FILE_ALL);
+	FS_AddGameDirectory(path, FS_LOAD_FILE_ALL);
 	FS_AddHomeGameDirectory();
 
 	// Reload gamedir specific conback as its not flushed
@@ -688,6 +698,7 @@ void FS_SetGamedir(char* dir, qbool force)
 #ifndef SERVERONLY
 	FS_AddUserDirectory(dir);
 #endif
+	return true;
 }
 
 char *FS_NextPath (char *prevpath)
@@ -879,8 +890,9 @@ void FS_InitFilesystemEx( qbool guess_cwd ) {
 	// the user might want to override default game directory
 	if (!(i = COM_CheckParm (cmdline_param_filesystem_game)))
 		i = COM_FindParm("+gamedir");
-	if (i && i < COM_Argc() - 1)
-		FS_SetGamedir (COM_Argv(i + 1), true);
+	if (i && i < COM_Argc() - 1 && !FS_SetGamedir(COM_Argv(i + 1), true)) {
+		Sys_Error("Invalid game directory for %s: %s", COM_Argv(i), COM_Argv(i + 1));
+	}
 
 	// Mount the default qw home directory even when no gamedir switch occurs.
 	FS_AddHomeGameDirectory();

@@ -247,7 +247,7 @@ extern char com_homedir[MAX_PATH];
 
 void FS_InitFilesystem (void);
 void FS_Shutdown(void);
-void FS_SetGamedir (char *dir, qbool force);
+qbool FS_SetGamedir (char *dir, qbool force);
 int FS_FOpenFile (const char *filename, FILE **file);
 int FS_FOpenPathFile (const char *filename, FILE **file);
 byte *FS_LoadGameHeapFile(const char *path, int *len);
