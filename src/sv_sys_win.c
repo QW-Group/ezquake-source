@@ -175,6 +175,7 @@ void Sys_Error(char *error, ...)
 	fprintf(stderr, "Error: %s\n", text);
 	if (!shutting_down) {
 		shutting_down = true;
+		SV_Write_Log(ERROR_LOG, 1, va("ERROR: %s\n", text));
 		SV_Shutdown(text);
 		if (sys_restart_on_error.integer) {
 			Sys_Restart();

@@ -58,6 +58,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "server.h"
+#ifdef SERVERONLY
+#include "sv_log.h"
+#endif
 #include <pcre2.h>
 
 
@@ -167,6 +170,7 @@ void Sys_Error(char *error, ...)
 #ifdef SERVERONLY
 	if (!shutting_down) {
 		shutting_down = true;
+		SV_Write_Log(ERROR_LOG, 1, va("ERROR: %s\n", string));
 		SV_Shutdown(string);
 		if (sys_restart_on_error.integer) {
 			Sys_Restart();
