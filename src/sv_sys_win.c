@@ -29,10 +29,14 @@ static volatile LONG server_done;
 
 static BOOL WINAPI Sys_StopServer(DWORD event)
 {
-	if (event != CTRL_C_EVENT && event != CTRL_BREAK_EVENT) {
+	if (event != CTRL_C_EVENT && event != CTRL_BREAK_EVENT && event != CTRL_CLOSE_EVENT) {
 		return FALSE;
 	}
 	InterlockedExchange(&server_done, 1);
+	if (event == CTRL_CLOSE_EVENT) {
+		// Returning lets Windows terminate the process. Let main finish SV_Shutdown and exit.
+		Sleep(INFINITE);
+	}
 	return TRUE;
 }
 
