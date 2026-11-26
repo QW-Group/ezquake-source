@@ -19,39 +19,59 @@ jobs:
 
     strategy:
       matrix:
+        configurePreset: [msbuild-x64, macos-arm64, macos-x64, dynamic]
+        product: [ezQuake, ezQuake-server]
         include:
           - os: windows-2025-vs2026
             configurePreset: msbuild-x64
             buildPreset: msbuild-x64-release
-            name: ezQuake-windows-x64
-            artifact: "ezquake.exe"
+            platform: windows-x64
+            artifacts:
+              ezQuake: ezquake.exe
+              ezQuake-server: ezquake-server.exe
             container: null
           - os: macos-latest
             configurePreset: macos-arm64
             buildPreset: macos-arm64-release
-            name: ezQuake-macOS-arm64
-            artifact: "ezQuake.zip"
+            platform: macOS-arm64
+            artifacts:
+              ezQuake: ezQuake.zip
+              ezQuake-server: ezquake-server.tar
             packages: ["autoconf", "automake", "libtool"]
             container: null
           - os: macos-latest
             configurePreset: macos-x64
             buildPreset: macos-x64-release
-            name: ezQuake-macOS-x64
-            artifact: "ezQuake.zip"
+            platform: macOS-x64
+            artifacts:
+              ezQuake: ezQuake.zip
+              ezQuake-server: ezquake-server.tar
             packages: ["autoconf", "automake", "libtool"]
             container: null
           - os: ubuntu-latest
             configurePreset: dynamic
             buildPreset: dynamic-release
-            name: ezQuake-linux-x86_64
-            artifact: "ezQuake-x86_64.AppImage"
+            platform: linux-x86_64
+            artifacts:
+              ezQuake: ezQuake-x86_64.AppImage
+              ezQuake-server: ezquake-server.tar
             cflags: "-march=nehalem"
+          - configurePreset: dynamic
+            product: ezQuake-server
+            packages: ["build-essential", "ca-certificates", "cmake", "git", "libcurl4-openssl-dev", "libminizip-dev", "libpcre2-dev", "ninja-build", "pkg-config", "zlib1g-dev"]
+            container:
+              image: debian:bookworm
+          - configurePreset: dynamic
+            product: ezQuake
             packages: ["build-essential", "ca-certificates", "cmake", "curl", "file", "git", "libcurl4-openssl-dev", "libexpat1-dev", "libfreetype-dev", "libfuse3-dev", "libjansson-dev", "libjpeg-dev", "libminizip-dev", "libpcre2-dev", "libpng-dev", "libsdl2-2.0-0", "libsdl2-dev", "libsndfile1-dev", "libspeex-dev", "libspeexdsp-dev", "ninja-build", "unzip"]
             container:
               image: debian:testing
               options: --privileged
+          - product: ezQuake-server
+            configureArgs: '["-DEZQUAKE_SERVER_ONLY=ON"]'
+            buildArgs: '["--target", "ezquake-server"]'
 
-    name: ${{ matrix.name }}
+    name: ${{ matrix.product }}-${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container }}
 
@@ -113,7 +133,9 @@ jobs:
       uses: lukka/run-cmake@v10
       with:
         configurePreset: ${{ matrix.configurePreset }}
+        configurePresetAdditionalArgs: ${{ matrix.configureArgs || '[]' }}
         buildPreset: ${{ matrix.buildPreset }}
+        buildPresetAdditionalArgs: ${{ matrix.buildArgs || '[]' }}
       env:
         CFLAGS: ${{ matrix.cflags }}
 
@@ -122,20 +144,25 @@ jobs:
         export EXECUTABLE=$(echo build-${{ matrix.configurePreset }}/Release/ezquake*)
         ./misc/appimage/appimage-manual_creation.sh
         mv ezQuake-x86_64.AppImage build-${{ matrix.configurePreset }}/Release/
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.product == 'ezQuake' && matrix.os == 'ubuntu-latest'
 
     - name: Preserve macOS executable bit
       run: |
         zip -r -9 ezQuake.zip ezQuake.app
       working-directory: build-${{ matrix.configurePreset }}/Release
-      if: matrix.os == 'macos-latest'
+      if: matrix.product == 'ezQuake' && matrix.os == 'macos-latest'
 
-    - name: Archive client
+    - name: Preserve server executable bit
+      if: matrix.product == 'ezQuake-server' && runner.os != 'Windows'
+      working-directory: build-${{ matrix.configurePreset }}/Release
+      run: tar -cf ezquake-server.tar ezquake-server
+
+    - name: Archive build
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.name }}
-        path: |
-          build-${{ matrix.configurePreset }}/Release/${{ matrix.artifact }}
+        name: ${{ matrix.product }}-${{ matrix.platform }}
+        path: build-${{ matrix.configurePreset }}/Release/${{ matrix.artifacts[matrix.product] }}
+        if-no-files-found: error
         compression-level: 9
 
   macos-universal:
@@ -189,10 +216,11 @@ jobs:
     needs: [macos-universal]
     runs-on: ubuntu-latest
     steps:
-      - name: Download Artifacts
+      - name: Download client artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: '!ezQuake-server-*'
 
       - name: Checkout
         uses: actions/checkout@v4
