@@ -1097,6 +1097,7 @@ void CL_FinishDownload(void)
 			}
 			else if (error) {
 				Com_Printf("Failed to rename %s to %s.\n", cls.downloadtempname, cls.downloadname);
+				Sys_remove(cls.downloadtempname);
 			}
 		} else {
 			/* If download didn't complete, remove the unfinished leftover .tmp file ... */
