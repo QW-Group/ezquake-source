@@ -222,6 +222,13 @@ jobs:
           path: artifacts
           pattern: '!ezQuake-server-*'
 
+      - name: Download server artifacts for GitHub Release
+        if: github.event_name == 'release'
+        uses: actions/download-artifact@v4
+        with:
+          path: server-artifacts
+          pattern: 'ezQuake-server-*'
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -263,6 +270,17 @@ jobs:
               fi
             done;
           )
+
+          # Compress the POSIX build tarballs with their executable modes intact.
+          for platform in linux-x86_64 macOS-arm64 macOS-x64; do
+            target="ezQuake-server-${platform}"
+            gzip -9nc "server-artifacts/${target}/ezquake-server.tar" > "${dist_dir}/${target}.tar.gz"
+          done
+
+          target=ezQuake-server-windows-x64
+          exe="server-artifacts/${target}/ezquake-server.exe"
+          touch -c --date="${RELEASE_DATE}" "${exe}"
+          zip -j -o -9 "${dist_dir}/${target}.zip" "${exe}"
 
           # Generate source release with submodule, version.json etc
           (
