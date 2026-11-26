@@ -48,6 +48,7 @@ void SCR_AutoScreenshot(char *matchname);
 qbool SCR_TakingAutoScreenshot(void);
 
 void SCR_CenterPrint(const char *str);
+void SCR_PromptPrint(const char *str, float seconds);
 void SCR_CenterPrint_Clear(void);
 void SCR_CenterPrint_Init(void);
 void SCR_CenterString_Draw(void);

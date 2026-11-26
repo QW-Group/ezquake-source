@@ -2103,6 +2103,26 @@
         }
       ]
     },
+    "cl_openurl": {
+      "default": "1",
+      "desc": "Controls the openurl command, which servers can use to open links (Discord, league sites...) in the system web browser.",
+      "group-id": "40",
+      "type": "enum",
+      "values": [
+        {
+          "description": "Never open links, only print them in the console",
+          "name": "0"
+        },
+        {
+          "description": "Ask on screen first, Y opens the link, N or Escape cancels",
+          "name": "1"
+        },
+        {
+          "description": "Open links without asking",
+          "name": "2"
+        }
+      ]
+    },
     "cl_parseFrags": {
       "default": "1",
       "group-id": "47",
