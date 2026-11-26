@@ -75,9 +75,10 @@ to stop the server.
 On Windows, run the server presets from an x64 Visual Studio Developer
 Command Prompt. Install the Desktop development with C++ workload, CMake
 3.25 or newer, and Ninja. The preset builds the server dependencies with
-vcpkg.
+vcpkg. On a fresh clone, initialize vcpkg before configuring.
 
 ```bat
+powershell -File .\bootstrap.ps1
 cmake --preset server-only-msvc-x64
 cmake --build --preset server-only-msvc-x64-release --parallel
 build-server-only-msvc-x64\Release\ezquake-server.exe -basedir C:/quake -game ktx -progtype 2 +map dm4
