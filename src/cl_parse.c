@@ -1560,6 +1560,9 @@ void CL_ParseServerData (void)
 	    || strstr(str, "//") || strchr(str, '\\') || strchr(str, ':') || str[0] == '/') {
 		Host_Error("Server reported invalid gamedir!\n");
 	}
+	if (!com_serveractive && !FS_SetGamedir(str, false)) {
+		Host_Error("Could not set game directory to '%s'", str);
+	}
 
 	cl.teamfortress = !strcasecmp(str, "fortress");
 	if (cl.teamfortress) 
@@ -1583,9 +1586,6 @@ void CL_ParseServerData (void)
 			"%s/%s", com_basedir, cls.gamedirfile);
 		cflag = true;
 	}
-
-	if (!com_serveractive)
-		FS_SetGamedir (str, false);
 
 	if (cfg_legacy_exec.value && (cflag || cfg_legacy_exec.value >= 2)) 
 	{
