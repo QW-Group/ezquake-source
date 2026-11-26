@@ -2903,6 +2903,23 @@
       "remarks": "See cl_voip_showmeter.",
       "type": "integer"
     },
+    "cl_voip_test": {
+      "default": "0",
+      "desc": "Plays your own voice back to you as others would hear it, without the network delay, to check your microphone level and noise.",
+      "group-id": "32",
+      "remarks": "Works connected or not. Talk with +voip or cl_voip_send as usual; when connected your voice is still sent.",
+      "type": "boolean",
+      "values": [
+        {
+          "description": "",
+          "name": "false"
+        },
+        {
+          "description": "",
+          "name": "true"
+        }
+      ]
+    },
     "cl_voip_vad_delay": {
       "default": "0.3",
       "desc": "Keeps sending voice data for this many seconds after voice activation would normally stop.",

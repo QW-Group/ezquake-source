@@ -72,6 +72,7 @@ static cvar_t cl_voip_showmeter_x = { "cl_voip_showmeter_x", "0" };             
 static cvar_t cl_voip_showmeter_y = { "cl_voip_showmeter_y", "0" };                    // vertical coordinate
 static cvar_t cl_voip_codec = { "cl_voip_codec", "1", CVAR_NOTFROMSERVER };            // 0: speex, 1: opus
 static cvar_t cl_voip_bitrate = { "cl_voip_bitrate", "24000", CVAR_NOTFROMSERVER };    // Opus bits per second
+static cvar_t cl_voip_test = { "cl_voip_test", "0", CVAR_NOTFROMSERVER };              // Hear your own voice locally
 
 static float voicevolumemod = 1; // voice volume modifier.
 
@@ -355,45 +356,24 @@ static void S_Voip_DecodeOpus(unsigned int sender, unsigned char gen, unsigned c
 }
 #endif
 
-// Called when data is received from server
-// TODO: store the voip data and then process in the main S_Update() call
-void S_Voip_Parse (void)
+// A voice packet from sender played back, whichever codec it is in
+static void S_Voip_Decode(unsigned int sender, unsigned char codec, unsigned char gen, unsigned char seq,
+	unsigned char *data, int bytes)
 {
-	unsigned int sender;
-	int bytes;
-	unsigned char data[1024], *start;
+	unsigned char *start;
 	short decodebuf[1024];
 	unsigned int decodesamps, len, newseq, drops;
-	unsigned char seq, gen, codec;
-	float amp = 1;
-
-	sender = MSG_ReadByte ();
-	gen = MSG_ReadByte ();
-	codec = gen >> 4;
-	gen &= 0x0f;
-	seq = MSG_ReadByte ();
-	bytes = MSG_ReadShort ();
-
-	if (bytes > sizeof (data) || !cl_voip_play.integer || !S_Speex_Init ()) {
-		Com_DPrintf ("skip data: %d\n", bytes);
-		MSG_ReadSkip (bytes);
-		return;
-	}
-	MSG_ReadData (data, bytes);
-
-	sender &= MAX_CLIENTS - 1;
-
-	amp = S_Voip_PlayerVolume (sender);
+	float amp = S_Voip_PlayerVolume(sender);
 
 #ifdef WITH_OPUS
 	if (codec == VOIP_OPUS) {
 		s_speex.lastspoke[sender] = cls.realtime + 0.5;
-		S_Voip_DecodeOpus (sender, gen, seq, data, bytes, amp);
+		S_Voip_DecodeOpus(sender, gen, seq, data, bytes, amp);
 		return;
 	}
 #endif
 	if (codec != VOIP_SPEEX_OLD) {
-		Com_DPrintf ("skip voip codec %d\n", codec);
+		Com_DPrintf("skip voip codec %d\n", codec);
 		return;
 	}
 
@@ -443,10 +423,42 @@ void S_Voip_Parse (void)
 	}
 }
 
+// Called when data is received from server
+// TODO: store the voip data and then process in the main S_Update() call
+void S_Voip_Parse (void)
+{
+	unsigned int sender;
+	int bytes;
+	unsigned char data[1024];
+	unsigned char seq, gen, codec;
+
+	sender = MSG_ReadByte ();
+	gen = MSG_ReadByte ();
+	codec = gen >> 4;
+	gen &= 0x0f;
+	seq = MSG_ReadByte ();
+	bytes = MSG_ReadShort ();
+
+	if (bytes > sizeof (data) || !cl_voip_play.integer || !S_Speex_Init ()) {
+		Com_DPrintf ("skip data: %d\n", bytes);
+		MSG_ReadSkip (bytes);
+		return;
+	}
+	MSG_ReadData (data, bytes);
+
+	sender &= MAX_CLIENTS - 1;
+
+	if (cl_voip_test.integer && sender == cl.playernum) {
+		return;	/*heard locally already*/
+	}
+	S_Voip_Decode (sender, codec, gen, seq, data, bytes);
+}
+
 #ifdef WITH_OPUS
-// The packets S_Voip_Transmit kept, a message each with the codec in the generation byte
+// The packets S_Voip_Transmit kept, a message each with the codec in the generation byte (buf NULL: none),
+// and played back here too under cl_voip_test
 static void S_Voip_SendOpus(unsigned char clc, sizebuf_t *buf, unsigned char seq,
-	const unsigned char *packets, unsigned int bytes)
+	unsigned char *packets, unsigned int bytes)
 {
 	unsigned int pos, len;
 
@@ -455,8 +467,15 @@ static void S_Voip_SendOpus(unsigned char clc, sizebuf_t *buf, unsigned char seq
 		if (!len) {
 			continue;
 		}
-		if (buf->maxsize - buf->cursize < (int)len + 5) {
-			return;
+		if (cl_voip_test.integer) {
+			S_Voip_Decode(cl.playernum & (MAX_CLIENTS - 1), VOIP_OPUS, s_speex.generation & 0x0f, seq,
+				packets + pos + 2, len);
+		}
+		if (buf && buf->maxsize - buf->cursize < (int)len + 5) {
+			buf = NULL; // full: the rest isn't sent
+		}
+		if (!buf) {
+			continue;
 		}
 		MSG_WriteByte(buf, clc);
 		MSG_WriteByte(buf, (VOIP_OPUS << 4) | (s_speex.generation & 0x0f));
@@ -481,10 +500,12 @@ void S_Voip_Transmit (unsigned char clc, sizebuf_t *buf)
 	SpeexPreprocessState *preproc;
 	float level, f;
 	float micamp = cl_voip_micamp.value;
-	qbool voipsendenable = (cl_voip_play.integer && (cls.fteprotocolextensions2 & FTE_PEXT2_VOICECHAT));
+	qbool canwrite = buf && cl_voip_play.integer && (cls.fteprotocolextensions2 & FTE_PEXT2_VOICECHAT);
+	qbool voipsendenable = canwrite || cl_voip_test.integer;
 
 	if (!voipsendenable) {
-		S_Capture_Shutdown();
+		if (s_speex.inited)	/*called every frame while disconnected: nothing to free most of the time*/
+			S_Capture_Shutdown();
 		return;
 	}
 
@@ -636,11 +657,15 @@ void S_Voip_Transmit (unsigned char clc, sizebuf_t *buf)
 
 #ifdef WITH_OPUS
 	if (s_speex.enccodec == VOIP_OPUS) {
-		S_Voip_SendOpus (clc, buf, initseq, outbuf, outpos);
+		S_Voip_SendOpus (clc, canwrite ? buf : NULL, initseq, outbuf, outpos);
 		outpos = 0;	/*sent as packets of their own*/
 	}
 #endif
-	if (outpos && buf->maxsize - buf->cursize >= outpos + 4) {
+	if (outpos && cl_voip_test.integer) {
+		S_Voip_Decode (cl.playernum & (MAX_CLIENTS - 1), VOIP_SPEEX_OLD, s_speex.generation & 0x0f, initseq,
+			outbuf, outpos);
+	}
+	if (outpos && canwrite && buf->maxsize - buf->cursize >= outpos + 4) {
 		MSG_WriteByte (buf, clc);
 		MSG_WriteByte (buf, (s_speex.generation & 0x0f)); /*gonna leave that nibble clear here... in this version, the client will ignore packets with those bits set. can use them for codec or something*/
 		MSG_WriteByte (buf, initseq);
@@ -721,6 +746,7 @@ void S_Voip_RegisterCvars (void)
 	Cvar_Register (&cl_voip_showmeter_y);
 	Cvar_Register (&cl_voip_codec);
 	Cvar_Register (&cl_voip_bitrate);
+	Cvar_Register (&cl_voip_test);
 
 	Cmd_AddCommand ("+voip", S_Voip_Enable_f);
 	Cmd_AddCommand ("-voip", S_Voip_Disable_f);
