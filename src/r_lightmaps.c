@@ -928,18 +928,28 @@ void R_BuildLightmaps(void)
 		// assign in order based on texture and then by size
 		if (r_lightmap_packbytexture.integer) {
 			msurface_t** surfaces = Q_malloc(m->numsurfaces * sizeof(msurface_t*));
+			int* first_surf = Q_malloc(m->numtextures * sizeof(int));
+			int* next_surf = Q_malloc(m->numsurfaces * sizeof(int));
+
+			// Chain surfaces by texture, to avoid scanning them all per texture
+			memset(first_surf, -1, m->numtextures * sizeof(int));
+			for (i = m->numsurfaces - 1; i >= 0; i--) {
+				int miptex = m->surfaces[i].texinfo->miptex;
+
+				if (miptex >= 0 && miptex < m->numtextures) {
+					next_surf[i] = first_surf[miptex];
+					first_surf[miptex] = i;
+				}
+			}
 
 			for (t = 0; t < m->numtextures; ++t) {
 				int surface_count = 0;
 
 				// create list of surfaces that need processed for this texture
-				for (i = 0; i < m->numsurfaces; i++) {
+				for (i = first_surf[t]; i >= 0; i = next_surf[i]) {
 					qbool isTurb = (m->surfaces[i].flags & SURF_DRAWTURB);
 					qbool isSky = (m->surfaces[i].flags & SURF_DRAWSKY);
 
-					if (m->surfaces[i].texinfo->miptex != t) {
-						continue;
-					}
 					if (isSky || m->surfaces[i].lightmaptexturenum >= 0) {
 						continue;
 					}
@@ -965,6 +975,8 @@ void R_BuildLightmaps(void)
 			}
 
 			Q_free(surfaces);
+			Q_free(first_surf);
+			Q_free(next_surf);
 		}
 
 		// Double-check: go through all textures again
