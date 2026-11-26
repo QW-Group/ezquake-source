@@ -2353,6 +2353,12 @@ static int FS_LocateFile(const char *filename, FSLF_ReturnType_e returntype, flo
 			goto out;
 		}
 
+		// The indexed directory may contain the name with different case.
+		// Search the remaining paths using the original spelling.
+		if (pf == search->handle && search->funcs == &osfilefuncs) {
+			pf = NULL;
+		}
+
 		depth += (search->funcs == &osfilefuncs || returntype == FSLFRT_DEPTH_ANYPATH);
 	}
 
