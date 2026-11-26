@@ -481,6 +481,7 @@ typedef struct mvddest_s
 
 	char name[MAX_QPATH];
 	char path[MAX_QPATH];
+	char *record_path; // path used to open the MVD file
 
 	char *cache;
 	int cacheused; // queued cache bytes
@@ -1029,7 +1030,7 @@ void SV_MVD_FlushCurrentFrame(void);
 qbool SV_MVD_WriteRDMessage(sizebuf_t *msg, qbool initial);
 
 mvddest_t	*DestByName (char *name);
-void		DestClose (mvddest_t *d, qbool destroyfiles);
+qbool		DestClose (mvddest_t *d, qbool destroyfiles);
 
 int DemoWriteDest (void *data, int len, mvddest_t *d);
 
