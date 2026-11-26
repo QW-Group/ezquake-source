@@ -46,6 +46,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 static void FS_RebuildFSHash(void);
 static void FS_RefreshFSCache_f(void);
+static void OnChange_fs_cache(cvar_t *var, char *value, qbool *cancel);
 #ifdef SERVERONLY
 static const char *FS_GetCleanPath(const char *pattern, char *outbuf, int outlen);
 #endif
@@ -96,7 +97,7 @@ qbool filesystemchanged = true;
 int fs_hash_dups;
 int fs_hash_files;
 
-cvar_t fs_cache = {"fs_cache", "1"};
+cvar_t fs_cache = {"fs_cache", "1", 0, OnChange_fs_cache};
 #ifndef SERVERONLY
 static cvar_t fs_savegame_home = { "fs_savegame_home", "1" };
 #endif
@@ -2241,6 +2242,13 @@ void FS_FlushFSHash(void)
 static void FS_RefreshFSCache_f(void)
 {
 	filesystemchanged = true;
+}
+
+static void OnChange_fs_cache(cvar_t *var, char *value, qbool *cancel)
+{
+	if (!var->value && Q_atof(value)) {
+		filesystemchanged = true;
+	}
 }
 
 void FS_RebuildFSHash(void)
