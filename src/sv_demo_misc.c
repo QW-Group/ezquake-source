@@ -180,31 +180,9 @@ qbool SV_DirSizeCheck (void)
 	return true;
 }
 
-void Run_sv_demotxt_and_sv_onrecordfinish (const char *dest_name, const char *dest_path, qbool destroyfiles)
+void SV_RunOnRecordFinish(const char *dest_name, const char *dest_path, qbool destroyfiles)
 {
 	char path[MAX_OSPATH];
-
-	snprintf(path, MAX_OSPATH, "%s/%s/%s", fs_gamedir, dest_path, dest_name);
-	strlcpy(path + strlen(path) - 3, "txt", MAX_OSPATH - strlen(path) + 3);
-
-	if ((int)sv_demotxt.value && !destroyfiles) // dont keep txt's for deleted demos
-	{
-		FILE *f;
-		char *text;
-
-		if (sv_demotxt.value == 2)
-		{
-			if ((f = fopen (path, "a+t")))
-				fclose(f); // at least made empty file, but do not owerwite
-		}
-		else if ((f = fopen (path, "w+t")))
-		{
-			text = SV_PrintTeams();
-			fwrite(text, strlen(text), 1, f);
-			fflush(f);
-			fclose(f);
-		}
-	}
 
 	if (sv_onrecordfinish.string[0] && !destroyfiles) // dont gzip deleted demos
 	{

@@ -1065,7 +1065,7 @@ char *SV_MVDNum(int num);
 //
 
 char	*SV_PrintTeams (void);
-void	Run_sv_demotxt_and_sv_onrecordfinish (const char *dest_name, const char *dest_path, qbool destroyfiles);
+void	SV_RunOnRecordFinish(const char *dest_name, const char *dest_path, qbool destroyfiles);
 qbool	SV_DirSizeCheck (void);
 char	*SV_CleanName (unsigned char *name);
 int     Dem_CountPlayers (void);

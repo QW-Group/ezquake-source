@@ -158,6 +158,18 @@ static char *SV_RecordTxtPath(const char *mvd_path)
 	return va("%.*s.txt", (int)strlen(mvd_path) - 4, mvd_path);
 }
 
+static void SV_WriteRecordTxt(const char *record_path)
+{
+	FILE *file = fopen(SV_RecordTxtPath(record_path), sv_demotxt.value == 2 ? "a+t" : "w+t");
+
+	if (file) {
+		if (sv_demotxt.value != 2) {
+			fputs(SV_PrintTeams(), file);
+		}
+		fclose(file);
+	}
+}
+
 qbool DestClose (mvddest_t *d, qbool destroyfiles)
 {
 	qbool success = true;
@@ -345,6 +357,10 @@ static int DestCloseAllFlush (qbool destroyfiles, qbool mvdonly)
 			strlcpy(dest_name, d->name, sizeof(dest_name));
 			strlcpy(dest_path, d->path, sizeof(dest_path));
 
+			if (!destroyfiles && d->record_path && (int)sv_demotxt.value) {
+				SV_WriteRecordTxt(d->record_path);
+			}
+
 			*prev = d->nextdest;
 			if (!DestClose(d, destroyfiles)) {
 				remove_failed = true;
@@ -352,7 +368,7 @@ static int DestCloseAllFlush (qbool destroyfiles, qbool mvdonly)
 			numclosed++;
 
 			if (dt != DEST_STREAM && dest_name[0]) // ignore stream or empty file name
-				Run_sv_demotxt_and_sv_onrecordfinish (dest_name, dest_path, destroyfiles);
+				SV_RunOnRecordFinish(dest_name, dest_path, destroyfiles);
 		}
 		else
 			prev = &d->nextdest;
@@ -1041,8 +1057,6 @@ static mvddest_t *SV_InitRecordFile (char *name)
 	mvddest_t *dst;
 	FILE *file;
 
-	char *path;
-
 	Con_DPrintf("SV_InitRecordFile: Demo name: \"%s\"\n", name);
 	FS_CreatePath(name);
 	file = fopen (name, "wb");
@@ -1080,28 +1094,10 @@ static mvddest_t *SV_InitRecordFile (char *name)
 		                    (dst->desttype == DEST_BUFFEREDFILE) ? "memory" : "disk", s+1);
 	Cvar_SetROM(&serverdemo, dst->name);
 
-	path = SV_RecordTxtPath(name);
-
 	if ((int)sv_demotxt.value)
-	{
-		FILE *f;
-		char *text;
-
-		if (sv_demotxt.value == 2)
-		{
-			if ((f = fopen (path, "a+t")))
-				fclose(f); // at least made empty file
-		}
-		else if ((f = fopen (path, "w+t")))
-		{
-			text = SV_PrintTeams();
-			fwrite(text, strlen(text), 1, f);
-			fflush(f);
-			fclose(f);
-		}
-	}
+		SV_WriteRecordTxt(dst->record_path);
 	else
-		Sys_remove(path);
+		Sys_remove(SV_RecordTxtPath(dst->record_path));
 
 	// force cache rebuild.
 	FS_FlushFSHash();
