@@ -1728,6 +1728,12 @@ static int CM_BSPX_FindOffset(dheader_t *header, int filesize)
 		return -1;
 	}
 
+	// FTE and ericw-tools put the BSPX header at the next 4-byte boundary
+	xofs = (xofs + 3) & ~3;
+	if (xofs + sizeof(bspx_header_t) > filesize) {
+		return -1;
+	}
+
 	return xofs;
 }
 
@@ -1740,7 +1746,7 @@ static qbool CM_BSPX_LoadLumps(bspx_lump_t *lump, int numlumps, int filesize)
 		lump->lumpname[sizeof(lump->lumpname) - 1] = '\0'; // make sure it ends with zero
 		lump->fileofs = LittleLong(lump->fileofs);
 		lump->filelen = LittleLong(lump->filelen);
-		if (lump->fileofs < 0 || lump->filelen < 0 || (unsigned)(lump->fileofs + lump->filelen) >(unsigned)filesize) {
+		if (lump->fileofs < 0 || lump->filelen < 0 || (long long)lump->fileofs + lump->filelen > filesize) {
 			Con_Printf("Invalid BSPX lump position, ofs: %d, len: %d, filelen: %d\n", lump->fileofs, lump->filelen, filesize);
 			return false;
 		}
@@ -1789,9 +1795,13 @@ bspx_header_t* Mod_LoadBSPX(int filesize, byte* mod_base)
 	}
 
 	xheader = (bspx_header_t*)(mod_base + xofs);
+	if (memcmp(xheader->id, "BSPX", sizeof(xheader->id))) {
+		return NULL;
+	}
 	xheader->numlumps = LittleLong(xheader->numlumps);
 
-	if (xheader->numlumps < 0 || xofs + sizeof(bspx_header_t) + xheader->numlumps * sizeof(bspx_lump_t) > filesize) {
+	// CM_BSPX_FindOffset leaves room for the header
+	if (xheader->numlumps < 0 || xheader->numlumps > (filesize - xofs - (int)sizeof(bspx_header_t)) / (int)sizeof(bspx_lump_t)) {
 		return NULL;
 	}
 
@@ -1860,8 +1870,7 @@ static bspx_lump_t* CM_LoadBSPX(vfsfile_t *vf, dheader_t *header, bspx_header_t 
 	}
 
 	read = VFS_READ(vf, xheader, sizeof(bspx_header_t), NULL);
-	if (read != sizeof(bspx_header_t))
-	{
+	if (read != sizeof(bspx_header_t) || memcmp(xheader->id, "BSPX", sizeof(xheader->id))) {
 		return NULL;
 	}
 

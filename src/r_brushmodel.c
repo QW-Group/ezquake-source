@@ -254,7 +254,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 	unsigned int lj;
 	vec3_t mins, maxs;
 	model_t *clmodel;
-	qbool rotated;
+	qbool rotated, world_submodel;
 	float model_scale;
 	float oldMatrix[16];
 	extern cvar_t gl_brush_polygonoffset;
@@ -307,8 +307,13 @@ void R_BrushModelDrawEntity(entity_t *e)
 		VectorScale(modelorg, 1.0f / model_scale, modelorg);
 	}
 
-	// calculate dynamic lighting for bmodel if it's not an instanced model
-	if (clmodel->firstmodelsurface) {
+	// calculate dynamic lighting for bmodel if it's an inline model of the
+	// world, which shares the world's surfaces and nodes: R_MarkLights marks
+	// the world's surfaces. Any other brush model is instanced, whatever its
+	// first surface. A submodel whose head node is the node count has no
+	// nodes to mark.
+	world_submodel = clmodel->firstmodelsurface && clmodel->surfaces == cl.worldmodel->surfaces;
+	if (world_submodel && clmodel->firstnode < clmodel->numnodes) {
 		for (li = 0; li < MAX_DLIGHTS / 32; li++) {
 			if (cl_dlight_active[li]) {
 				for (lj = 0; lj < 32; lj++) {
@@ -334,7 +339,7 @@ void R_BrushModelDrawEntity(entity_t *e)
 		// START shaman FIX for no simple textures on world brush models {
 		//draw the textures chains for the model
 		if (clmodel->last_texture_chained >= 0 || clmodel->drawflat_todo) {
-			if (clmodel->firstmodelsurface) {
+			if (world_submodel) {
 				R_RenderAllDynamicLightmaps(clmodel);
 			}
 

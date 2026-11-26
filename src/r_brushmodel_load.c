@@ -130,25 +130,68 @@ static byte* LoadColoredLighting(char *name, char **litfilename, int *filesize)
 	return data;
 }
 
-static void SetSurfaceLighting(model_t* loadmodel, msurface_t* out, byte* styles, int lightofs)
+// Points the surface at its light samples, whose offset counts samples, or
+// bytes in Half-Life maps. The lightmap builders and R_LightFromSurface read
+// one lightmap of the surface's size for each of its styles, so that much
+// must lie inside the light data. Where it doesn't, as at the end of the data
+// when the light tool rounded a face's extents a sample smaller than
+// CalcSurfaceExtents does, the surface gets no samples and no styles, as the
+// light tools write a face without light data, and is drawn unlit. Sky and
+// unlit turbulent surfaces (SURF_DRAWTILED) get no lightmap and aren't
+// sampled, so their offset isn't checked. The extents, lmshift and flags of
+// the surface must be set.
+static void SetSurfaceLighting(model_t *loadmodel, msurface_t *out, int surfnum, byte *styles, int lightofs)
 {
-	int i;
+	int i, numstyles, smax, tmax, samplesize = (int)loadmodel->lightdatasamplesize;
+	long long start, length;
+
 	for (i = 0; i < MAXLIGHTMAPS; i++) {
 		out->styles[i] = styles[i];
 	}
 	i = LittleLong(lightofs);
 	if (i == -1 || loadmodel->lightdata == NULL) {
 		out->samples = NULL;
+		return;
 	}
-	else {
-		out->samples = loadmodel->lightdata + (loadmodel->bspversion == HL_BSPVERSION ? i : i * loadmodel->lightdatasamplesize);
+
+	numstyles = 0;
+	while (numstyles < MAXLIGHTMAPS && out->styles[numstyles] != 255) {
+		numstyles++;
 	}
+	smax = (out->extents[0] >> out->lmshift) + 1;
+	tmax = (out->extents[1] >> out->lmshift) + 1;
+	start = loadmodel->bspversion == HL_BSPVERSION ? i : (long long)i * samplesize;
+	length = smax * tmax > 0 ? (long long)numstyles * smax * tmax * samplesize : 0;
+	if (numstyles && !(out->flags & SURF_DRAWTILED) && (start < 0 || length > loadmodel->lightdata_length - start)) {
+		Com_DPrintf("[%s] surface %d has light samples outside the light data (offset %d), drawing it unlit\n", loadmodel->name, surfnum, i);
+		for (i = 0; i < MAXLIGHTMAPS; i++) {
+			out->styles[i] = 255;
+		}
+		out->samples = NULL;
+		return;
+	}
+	out->samples = loadmodel->lightdata + start;
+}
+
+// Stores the texture coordinate x, in units of 16 texels, in *units, kept
+// within MAX_TEXTURE_COORD texels of 0. Returns false if x lies further out,
+// or is a NaN, which the floats of a texinfo and a vertex can give.
+static qbool Mod_TextureCoordUnits(double x, int *units)
+{
+	if (x >= -MAX_TEXTURE_COORD / 16 && x <= MAX_TEXTURE_COORD / 16) {
+		*units = (int)x;
+		return true;
+	}
+	*units = x > 0 ? MAX_TEXTURE_COORD / 16 : -MAX_TEXTURE_COORD / 16;
+	return false;
 }
 
 //Fills in s->texturemins[] and s->extents[]
 static void CalcSurfaceExtents(model_t* loadmodel, msurface_t *s) {
 	float mins[2], maxs[2], val;
 	int i,j, e, bmins[2], bmaxs[2];
+	long long extent;
+	qbool within;
 	mvertex_t *v;
 	mtexinfo_t *tex;
 
@@ -195,27 +238,82 @@ static void CalcSurfaceExtents(model_t* loadmodel, msurface_t *s) {
 	}
 
 	for (i = 0; i < 2; i++) {
-		bmins[i] = floor(mins[i]/16);
-		bmaxs[i] = ceil(maxs[i]/16);
+		// the lightmap builders and RecursiveLightPoint take the texture
+		// minimum, and its difference from a coordinate of the surface, in
+		// an int; no surface of a real map comes near the limit
+		within = Mod_TextureCoordUnits(floor(mins[i] / 16), &bmins[i]);
+		if (!Mod_TextureCoordUnits(ceil(maxs[i] / 16), &bmaxs[i]) || !within) {
+			Com_DPrintf("[%s] surface %d has texture coordinates beyond %d texels, which misplaces its light\n", loadmodel->name, (int)(s - loadmodel->surfaces), MAX_TEXTURE_COORD);
+		}
 
 		s->texturemins[i] = bmins[i] * 16;
-		s->extents[i] = (bmaxs[i] - bmins[i]) * 16;
-		if (!(tex->flags & TEX_SPECIAL) && s->extents[i] > 512 /* 256 */) {
+		// lightmaps are built from the extents of surfaces without
+		// TEX_SPECIAL, so these must not wrap in the short
+		extent = ((long long)bmaxs[i] - bmins[i]) * 16;
+		if (!(tex->flags & TEX_SPECIAL) && (extent < 0 || extent > 512 /* 256 */)) {
 			Host_Error("CalcSurfaceExtents: Bad surface extents");
 		}
+		s->extents[i] = (short)extent;
 	}
 }
 
-static void Mod_SetParent(mnode_t *node, mnode_t *parent)
+// the deepest node tree CM_LoadMap allows the world
+#define MAX_NODE_DEPTH 4096
+
+// Sets the parents of node, at depth depth, and of everything below it. The
+// renderer walks the tree by recursion and up from the leafs, so a node may
+// be reached only once, which keeps the tree from looping or sharing a
+// subtree, and no deeper than MAX_NODE_DEPTH. Leafs may be shared.
+static void Mod_SetParent(model_t *loadmodel, mnode_t *node, mnode_t *parent, int depth)
 {
+	if (node->contents < 0) {
+		node->parent = parent;
+		return;
+	}
+	// the root is reached without a parent, the others get one
+	if (node->parent || (parent && node == loadmodel->nodes)) {
+		Host_Error("[%s] node %d is reached twice", loadmodel->name, (int)(node - loadmodel->nodes));
+	}
+	if (depth > MAX_NODE_DEPTH) {
+		Host_Error("[%s] node tree is deeper than %d", loadmodel->name, MAX_NODE_DEPTH);
+	}
 	node->parent = parent;
+	Mod_SetParent(loadmodel, node->children[0], node, depth + 1);
+	Mod_SetParent(loadmodel, node->children[1], node, depth + 1);
+}
+
+// Checks the tree of a submodel, which R_MarkLights walks by recursion, from
+// node, at depth depth, down, as Mod_SetParent checks the tree from node 0:
+// no node may be reached twice, and none deeper than MAX_NODE_DEPTH. A node
+// of the tree from node 0, or of the tree of an earlier submodel, which
+// reached marks, has been reached already; if it is the head node, the
+// submodel's tree is part of a checked tree.
+static void Mod_CheckSubmodelTree(model_t *loadmodel, byte *reached, mnode_t *node, int depth)
+{
+	int nodenum;
+
 	if (node->contents < 0) {
 		return;
 	}
-	Mod_SetParent(node->children[0], node);
-	Mod_SetParent(node->children[1], node);
+	nodenum = node - loadmodel->nodes;
+	if (node->parent || node == loadmodel->nodes || reached[nodenum]) {
+		if (depth == 1) {
+			return;
+		}
+		Host_Error("[%s] node %d is reached twice", loadmodel->name, nodenum);
+	}
+	if (depth > MAX_NODE_DEPTH) {
+		Host_Error("[%s] node tree is deeper than %d", loadmodel->name, MAX_NODE_DEPTH);
+	}
+	reached[nodenum] = 1;
+	Mod_CheckSubmodelTree(loadmodel, reached, node->children[0], depth + 1);
+	Mod_CheckSubmodelTree(loadmodel, reached, node->children[1], depth + 1);
 }
 
+// Sets up the light data of a model: a Half-Life map's own, or the BSPX
+// LIGHTING_E5BGR9 or RGBLIGHTING lump, which a .lit file replaces, or the
+// mono lighting in RGB. MOD_HDRLIGHTING tells the readers of the samples
+// that they are E5BGR9, so it is set only while those are in use.
 static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx_header_t* bspx_header)
 {
 	int i, lit_ver, mark;
@@ -227,9 +325,13 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 
 
 	loadmodel->lightdata = NULL;
+	loadmodel->lightdata_length = 0;
+	loadmodel->flags &= ~MOD_HDRLIGHTING;
 
 	if (loadmodel->bspversion == HL_BSPVERSION && l->filelen > 0) {
 		loadmodel->lightdata = (byte *) Hunk_AllocName(l->filelen, loadmodel->name);
+		loadmodel->lightdata_length = l->filelen;
+		loadmodel->lightdatasamplesize = 3;
 		memcpy (loadmodel->lightdata, mod_base + l->fileofs, l->filelen);
 		return;
 	}
@@ -248,6 +350,7 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 		rgb = Mod_BSPX_FindLump(bspx_header, "LIGHTING_E5BGR9", &lumpsize, mod_base);
 		if (rgb && lumpsize % 4 == 0 && (lumpsize == l->filelen * 4 || l->filelen <= 0)) {
 			loadmodel->lightdata = (byte *) Hunk_AllocName (lumpsize, loadmodel->name);
+			loadmodel->lightdata_length = lumpsize;
 			loadmodel->lightdatasamplesize = 4;
 			memcpy(loadmodel->lightdata, rgb, lumpsize);
 			loadmodel->flags |= MOD_HDRLIGHTING;
@@ -259,6 +362,7 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 			// Sanity-check size if vanilla lit exists
 			if (rgb && lumpsize % 3 == 0 && (lumpsize == l->filelen * 3 || l->filelen <= 0)) {
 				loadmodel->lightdata = (byte *) Hunk_AllocName(lumpsize, loadmodel->name);
+				loadmodel->lightdata_length = lumpsize;
 				loadmodel->lightdatasamplesize = 3;
 				memcpy(loadmodel->lightdata, rgb, lumpsize);
 				// we trust the inline RGB data to be bug free so we don't check it against the mono lightmap
@@ -299,7 +403,9 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 				Com_Printf("Static coloured lighting loaded\n");
 			}
 			loadmodel->lightdata = data + 8;
+			loadmodel->lightdata_length = l->filelen * 3;
 			loadmodel->lightdatasamplesize = 3;
+			loadmodel->flags &= ~MOD_HDRLIGHTING;
 
 			in = mod_base + l->fileofs;
 			out = loadmodel->lightdata;
@@ -360,6 +466,7 @@ static void Mod_LoadLighting(model_t* loadmodel, lump_t* l, byte* mod_base, bspx
 
 	//no .lit found, expand the white lighting data to color
 	loadmodel->lightdata = (byte *) Hunk_AllocName (l->filelen * 3, va("%s_@lightdata", loadmodel->name));
+	loadmodel->lightdata_length = l->filelen * 3;
 	loadmodel->lightdatasamplesize = 3;
 	in = mod_base + l->fileofs;
 	out = loadmodel->lightdata;
@@ -478,7 +585,7 @@ static void Mod_LoadSubmodels(model_t* loadmodel, lump_t* l, byte* mod_base)
 
 static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 {
-	int i, j, num, max, altmax, pixels;
+	int i, j, num, max, altmax, pixels, room;
 	miptex_t *mt;
 	texture_t *tx, *tx2, *anims[10], *altanims[10];
 	dmiptexlump_t *m;
@@ -489,10 +596,16 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 	}
 
 	m = (dmiptexlump_t *) (mod_base + l->fileofs);
+	if (l->filelen < (int)sizeof(m->nummiptex)) {
+		Host_Error("Mod_LoadTextures: texture lump of %d bytes in %s", l->filelen, mod->name);
+	}
 	m->nummiptex = LittleLong (m->nummiptex);
 	if (m->nummiptex < 0 || m->nummiptex > INT_MAX / sizeof(*mod->textures)) {
 		Host_Error("Mod_LoadTextures: nummiptex %d (0-%d)", m->nummiptex, INT_MAX / sizeof(*mod->textures));
 		return;
+	}
+	if (m->nummiptex > (l->filelen - (int)sizeof(m->nummiptex)) / (int)sizeof(m->dataofs[0])) {
+		Host_Error("Mod_LoadTextures: %d texture offsets do not fit a lump of %d bytes in %s", m->nummiptex, l->filelen, mod->name);
 	}
 	mod->numtextures = m->nummiptex;
 	mod->textures = (texture_t **) Hunk_AllocName(m->nummiptex * sizeof(*mod->textures), mod->name);
@@ -503,31 +616,54 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 			continue;
 		}
 
-		if (m->dataofs[i] < 0 || m->dataofs[i] > l->fileofs + l->filelen - sizeof(miptex_t)) {
-			Host_Error("Miptex %d has data offset %d (-1 to %d)", i, m->dataofs[i], l->fileofs + l->filelen - sizeof(miptex_t));
+		// the offset counts from the start of the lump; the pixels are checked
+		// below, as not all textures have them
+		if (m->dataofs[i] < 0 || m->dataofs[i] > l->filelen - (int)sizeof(miptex_t)) {
+			Host_Error("Miptex %d has data offset %d (-1 to %d)", i, m->dataofs[i], l->filelen - (int)sizeof(miptex_t));
 		}
 
 		mt = (miptex_t *)((byte *)m + m->dataofs[i]);
-		if ((uintptr_t)mt > (uintptr_t)mod_base + l->fileofs + l->filelen - sizeof(miptex_t)) {
-			Host_Error("Texture %s data offset > lump (%d + %d vs %d)", mt->name, mod_base, l->fileofs, l->filelen);
-		}
+		room = l->filelen - m->dataofs[i] - (int)sizeof(miptex_t);
 		mt->width  = LittleLong(mt->width);
 		mt->height = LittleLong(mt->height);
 		for (j = 0; j < MIPLEVELS; j++) {
 			mt->offsets[j] = LittleLong(mt->offsets[j]);
 		}
 
+		// a name that fills its 16 bytes has no NUL, so print at most those
 		if ((mt->width & 15) || (mt->height & 15)) {
-			Host_Error("Texture %s is not 16 aligned", mt->name);
+			Host_Error("Texture %.*s is not 16 aligned", (int)sizeof(mt->name), mt->name);
+		}
+		if (mt->width < 0 || mt->height < 0) {
+			Host_Error("Texture %.*s negative dimensions: %dx%d", (int)sizeof(mt->name), mt->name, mt->width, mt->height);
+		}
+		if (mt->height && mt->width > INT_MAX / mt->height / 3) {
+			Host_Error("Texture %.*s excessive size: %dx%d", (int)sizeof(mt->name), mt->name, mt->width, mt->height);
 		}
 
-		pixels = mt->width * mt->height / 64 * 85;// some magic numbers?
-		if (mod->bspversion == HL_BSPVERSION) {
-			pixels += 2 + 256 * 3;	/* palette and unknown two bytes */
-		}
-		// Some sanity checking (improve!)
-		if (pixels < 0 || m->dataofs[i] > (l->fileofs + l->filelen - pixels) || pixels > INT_MAX - sizeof(texture_t)) {
-			Host_Error("Texture %s: offset %d pixelsize %d, lumpsize %d", mt->name, m->dataofs[i], pixels, l->filelen);
+		// Everything that refuses the texture runs before its pixels are
+		// allocated, as a size the file can't hold would exhaust the hunk
+		pixels = 0;
+		if (mt->width && mt->height && mt->offsets[0]) {
+			pixels = mt->width * mt->height / 64 * 85; // some magic numbers?
+			if (mod->bspversion == HL_BSPVERSION) {
+				pixels += 2 + 256 * 3; /* palette and unknown two bytes */
+				// the pixels immediately follow the structures, then the
+				// palette, which some maps leave out
+				if (pixels - 2 - 256 * 3 > room) {
+					Host_Error("Texture %.*s: offset %d pixelsize %d, lumpsize %d", (int)sizeof(mt->name), mt->name, m->dataofs[i], pixels, l->filelen);
+				}
+			}
+			else {
+				if (pixels > room) {
+					Host_Error("Texture %.*s: offset %d pixelsize %d, lumpsize %d", (int)sizeof(mt->name), mt->name, m->dataofs[i], pixels, l->filelen);
+				}
+				// the sky, the r_fastturb colour and an upload at full size
+				// read mip level 0
+				if (mt->offsets[0] < sizeof(miptex_t) || mt->offsets[0] - sizeof(miptex_t) > pixels - mt->width * mt->height) {
+					Host_Error("Texture %.*s: mip level 0 at offset %u lies outside its pixels", (int)sizeof(mt->name), mt->name, mt->offsets[0]);
+				}
+			}
 		}
 		tx = (texture_t *)Hunk_AllocName(sizeof(texture_t) + pixels, mod->name);
 		mod->textures[i] = tx;
@@ -543,15 +679,9 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 		tx->index = i;
 		tx->loaded = false; // so texture will be reloaded
 
-		if (tx->width < 0 || tx->height < 0) {
-			Host_Error("Texture %s negative dimensions: %dx%d", tx->name, tx->width, tx->height);
-		}
 		if (tx->width == 0 || tx->height == 0) {
 			Con_Printf("Warning: Skipping zero size texture %s in %s\n", tx->name, mod->name);
 			continue;
-		}
-		if (tx->width > INT_MAX / tx->height / 3) {
-			Host_Error("Texture %s excessive size: %dx%d", tx->name, tx->width, tx->height);
 		}
 
 		if (mod->bspversion == HL_BSPVERSION) {
@@ -559,8 +689,8 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 				continue;
 			}
 
-			// the pixels immediately follow the structures
-			memcpy(tx + 1, mt + 1, pixels);
+			// what would lie past the lump stays 0
+			memcpy(tx + 1, mt + 1, min(pixels, room));
 			for (j = 0; j < MIPLEVELS; j++) {
 				tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
 			}
@@ -571,8 +701,19 @@ static void Mod_LoadTextures(model_t* mod, lump_t *l, byte* mod_base)
 			// the pixels immediately follow the structures
 			memcpy(tx+1, mt+1, pixels);
 
-			for (j = 0; j < MIPLEVELS; j++) {
-				tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
+			// The renderer uploads the mip level gl_miptexLevel picks, or level
+			// 0 for a texture it doesn't scale. A smaller level that lies
+			// outside the pixels gets no offset, and the renderer uploads the
+			// nearest larger level that has one instead.
+			tx->offsets[0] = mt->offsets[0] + sizeof(texture_t) - sizeof(miptex_t);
+			for (j = 1; j < MIPLEVELS; j++) {
+				if (mt->offsets[j] < sizeof(miptex_t) || mt->offsets[j] - sizeof(miptex_t) > pixels - (mt->width >> j) * (mt->height >> j)) {
+					Com_DPrintf("Texture %s in %s: mip level %d at offset %u lies outside its pixels\n", tx->name, mod->name, j, mt->offsets[j]);
+					tx->offsets[j] = 0;
+				}
+				else {
+					tx->offsets[j] = mt->offsets[j] + sizeof(texture_t) - sizeof(miptex_t);
+				}
 			}
 
 			// HACK HACK HACK
@@ -740,6 +881,18 @@ static void Mod_LoadVertexes(model_t* mod, lump_t *l, byte* mod_base)
 	}
 }
 
+// Refuses an edge whose vertices lie outside the vertex lump. A surface edge
+// can't use edge 0, as it can't be negated, so some compilers leave it
+// uninitialised: it isn't checked, and Mod_CheckFaceIndexes refuses its use.
+static void Mod_CheckEdge(model_t *loadmodel, int edgenum, const medge_t *edge)
+{
+	unsigned int numvertexes = (unsigned int)loadmodel->numvertexes;
+
+	if (edgenum > 0 && (edge->v[0] >= numvertexes || edge->v[1] >= numvertexes)) {
+		Host_Error("[%s] edge %d references invalid vertexes %u and %u/%d", loadmodel->name, edgenum, edge->v[0], edge->v[1], loadmodel->numvertexes);
+	}
+}
+
 static void Mod_LoadEdges(model_t* loadmodel, lump_t* l, byte* mod_base)
 {
 	dedge_t *in;
@@ -765,6 +918,7 @@ static void Mod_LoadEdges(model_t* loadmodel, lump_t* l, byte* mod_base)
 	for (i = 0; i < count; i++, in++, out++) {
 		out->v[0] = (unsigned short) LittleShort(in->v[0]);
 		out->v[1] = (unsigned short) LittleShort(in->v[1]);
+		Mod_CheckEdge(loadmodel, i, out);
 	}
 }
 
@@ -791,6 +945,7 @@ static void Mod_LoadEdgesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 	for (i = 0; i < count; i++, in++, out++) {
 		out->v[0] = LittleLong(in->v[0]);
 		out->v[1] = LittleLong(in->v[1]);
+		Mod_CheckEdge(loadmodel, i, out);
 	}
 }
 
@@ -812,6 +967,7 @@ static void Mod_LoadSurfedges(model_t* loadmodel, lump_t* l, byte* mod_base)
 	loadmodel->surfedges = out;
 	loadmodel->numsurfedges = count;
 
+	// Mod_CheckFaceIndexes checks the ones a face uses
 	for (i = 0; i < count; i++) {
 		out[i] = LittleLong(in[i]);
 	}
@@ -1047,7 +1203,7 @@ static void Mod_LoadTexinfo(model_t* loadmodel, lump_t* l, byte* mod_base)
 }
 
 // Extension to support lightmaps that aren't tied to texture scale.
-static int Mod_LoadDecoupledLM(dlminfo_t* lminfos, int surfnum, msurface_t *out)
+static int Mod_LoadDecoupledLM(model_t *loadmodel, dlminfo_t *lminfos, int surfnum, msurface_t *out)
 {
 	dlminfo_t *lminfo;
 	unsigned short lmwidth, lmheight;
@@ -1064,6 +1220,12 @@ static int Mod_LoadDecoupledLM(dlminfo_t* lminfos, int surfnum, msurface_t *out)
 
 	if (lmwidth <= 0 || lmheight <= 0) {
 		return -1;
+	}
+	// lightmaps are built from the extents of surfaces without TEX_SPECIAL,
+	// which these are unless the face falls back on its own lighting, so
+	// they must not wrap in the short
+	if (LittleLong(lminfo->lightofs) >= 0 && !(out->texinfo->flags & TEX_SPECIAL) && (lmwidth > 32768 || lmheight > 32768)) {
+		Host_Error("[%s] surface %d has a decoupled lightmap of %dx%d samples", loadmodel->name, surfnum, lmwidth, lmheight);
 	}
 
 	for (i = 0; i < 2; i++) {
@@ -1085,6 +1247,32 @@ static int Mod_LoadDecoupledLM(dlminfo_t* lminfos, int surfnum, msurface_t *out)
 	out->lmvlen[1] = v1 > 0.0f ? 1.0f / v1 : 0.0f;
 
 	return LittleLong(lminfo->lightofs);
+}
+
+// Refuses a face whose edges, plane or texinfo lie outside their lumps, as
+// everything after the face loaders indexes them without checking.
+static void Mod_CheckFaceIndexes(model_t *loadmodel, int surfnum, int firstedge, int numedges, int planenum, int texinfo)
+{
+	int i, edge;
+
+	if (firstedge < 0 || firstedge >= loadmodel->numsurfedges || numedges < 0 || numedges > loadmodel->numsurfedges - firstedge) {
+		Host_Error("[%s] surface %d references invalid edge range [%d length %d, vs %d]", loadmodel->name, surfnum, firstedge, numedges, loadmodel->numsurfedges);
+	}
+	// Surface edges are only read through the range of a face, so one that no
+	// face uses is not checked.
+	for (i = 0; i < numedges; i++) {
+		edge = loadmodel->surfedges[firstedge + i];
+		// an edge used backwards is negated, so edge 0 can't be used
+		if (edge == 0 || edge <= -loadmodel->numedges || edge >= loadmodel->numedges) {
+			Host_Error("[%s] surface edge %d references invalid edge %d/%d", loadmodel->name, firstedge + i, edge, loadmodel->numedges);
+		}
+	}
+	if (planenum < 0 || planenum >= loadmodel->numplanes) {
+		Host_Error("[%s] surface %d references invalid plane %d/%d", loadmodel->name, surfnum, planenum, loadmodel->numplanes);
+	}
+	if (texinfo < 0 || texinfo >= loadmodel->numtexinfo) {
+		Host_Error("[%s] surface %d references invalid texinfo %d/%d", loadmodel->name, surfnum, texinfo, loadmodel->numtexinfo);
+	}
 }
 
 static void Mod_LoadFaces(model_t* loadmodel, lump_t* l, byte* mod_base, bspx_header_t *bspx_header)
@@ -1121,28 +1309,18 @@ static void Mod_LoadFaces(model_t* loadmodel, lump_t* l, byte* mod_base, bspx_he
 		out->flags = 0;
 
 		texinfo = LittleShort(in->texinfo);
-
-		if (out->firstedge < 0 || out->firstedge >= loadmodel->numsurfedges || out->numedges > loadmodel->numsurfedges - out->firstedge) {
-			Host_Error("[%s] surface %d references invalid edge range [%d length %d, vs %d]", loadmodel->name, surfnum, out->firstedge, out->numedges, loadmodel->numsurfedges);
-		}
-
 		planenum = LittleShort(in->planenum);
-		if (planenum < 0 || planenum >= loadmodel->numplanes) {
-			Host_Error("[%s] surface %d references invalid plane %d/%d", loadmodel->name, surfnum, planenum, loadmodel->numplanes);
-		}
+		Mod_CheckFaceIndexes(loadmodel, surfnum, out->firstedge, out->numedges, planenum, texinfo);
 
 		side = LittleShort(in->side);
 		if (side) {
 			out->flags |= SURF_PLANEBACK;
 		}
 
-		if (texinfo < 0 || texinfo >= loadmodel->numtexinfo) {
-			Host_Error("[%s] surface %d references invalid texinfo %d/%d", loadmodel->name, surfnum, texinfo, loadmodel->numtexinfo);
-		}
 		out->plane = loadmodel->planes + planenum;
 		out->texinfo = loadmodel->texinfo + texinfo;
 
-		lightofs = Mod_LoadDecoupledLM(lminfos, surfnum, out);
+		lightofs = Mod_LoadDecoupledLM(loadmodel, lminfos, surfnum, out);
 		if (lightofs < 0) {
 			memcpy(out->lmvecs, out->texinfo->vecs, sizeof(out->lmvecs));
 			out->lmshift = DEFAULT_LMSHIFT;
@@ -1154,10 +1332,10 @@ static void Mod_LoadFaces(model_t* loadmodel, lump_t* l, byte* mod_base, bspx_he
 			lightofs = in->lightofs;
 		}
 
-		// lighting info
-		SetSurfaceLighting(loadmodel, out, in->styles, lightofs);
-
 		SetTextureFlags(loadmodel, out, surfnum);
+
+		// lighting info
+		SetSurfaceLighting(loadmodel, out, surfnum, in->styles, lightofs);
 	}
 }
 
@@ -1166,7 +1344,7 @@ static void Mod_LoadFacesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base, bsp
 	dlminfo_t *lminfos;
 	dface29a_t *in;
 	msurface_t *out;
-	int count, surfnum, planenum, side, lminfosize, lightofs;
+	int count, surfnum, planenum, side, lminfosize, lightofs, texinfo;
 	int max_faces = INT_MAX / sizeof(*out);
 
 	in = (void *)(mod_base + l->fileofs);
@@ -1195,15 +1373,18 @@ static void Mod_LoadFacesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base, bsp
 		out->flags = 0;
 
 		planenum = LittleLong(in->planenum);
+		texinfo = LittleLong(in->texinfo);
+		Mod_CheckFaceIndexes(loadmodel, surfnum, out->firstedge, out->numedges, planenum, texinfo);
+
 		side = LittleLong(in->side);
 		if (side) {
 			out->flags |= SURF_PLANEBACK;
 		}
 
 		out->plane = loadmodel->planes + planenum;
-		out->texinfo = loadmodel->texinfo + LittleLong(in->texinfo);
+		out->texinfo = loadmodel->texinfo + texinfo;
 
-		lightofs = Mod_LoadDecoupledLM(lminfos, surfnum, out);
+		lightofs = Mod_LoadDecoupledLM(loadmodel, lminfos, surfnum, out);
 		if (lightofs < 0) {
 			memcpy(out->lmvecs, out->texinfo->vecs, sizeof(out->lmvecs));
 			out->lmshift = DEFAULT_LMSHIFT;
@@ -1215,11 +1396,46 @@ static void Mod_LoadFacesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base, bsp
 			lightofs = in->lightofs;
 		}
 
-		// lighting info
-		SetSurfaceLighting(loadmodel, out, in->styles, lightofs);
-
 		SetTextureFlags(loadmodel, out, surfnum);
+
+		// lighting info
+		SetSurfaceLighting(loadmodel, out, surfnum, in->styles, lightofs);
 	}
+}
+
+// Refuses a node whose plane or surfaces lie outside their lumps
+static void Mod_CheckNodeIndexes(model_t *loadmodel, int nodenum, int planenum, unsigned int firstsurface, unsigned int numsurfaces)
+{
+	unsigned int count = (unsigned int)loadmodel->numsurfaces;
+
+	if (planenum < 0 || planenum >= loadmodel->numplanes) {
+		Host_Error("[%s] node %d references invalid plane %d/%d", loadmodel->name, nodenum, planenum, loadmodel->numplanes);
+	}
+	if (firstsurface > count || numsurfaces > count - firstsurface) {
+		Host_Error("[%s] node %d references invalid surface range [%u length %u, vs %d]", loadmodel->name, nodenum, firstsurface, numsurfaces, loadmodel->numsurfaces);
+	}
+}
+
+// Returns child p of a node: node p, or leaf -1 - p for a negative p.
+// Everything that walks the tree tells a leaf from a node by its negative
+// contents, so a leaf must have them, and the leafs must be loaded first.
+static mnode_t *Mod_NodeChild(model_t *loadmodel, int nodenum, int p)
+{
+	if (p >= 0) {
+		if (p >= loadmodel->numnodes) {
+			Host_Error("[%s] node %d references invalid node %d/%d", loadmodel->name, nodenum, p, loadmodel->numnodes);
+		}
+		return loadmodel->nodes + p;
+	}
+
+	p = -1 - p;
+	if (p >= loadmodel->numleafs) {
+		Host_Error("[%s] node %d references invalid leaf %d/%d", loadmodel->name, nodenum, p, loadmodel->numleafs);
+	}
+	if (loadmodel->leafs[p].contents >= 0) {
+		Host_Error("[%s] node %d references leaf %d with contents %d", loadmodel->name, nodenum, p, loadmodel->leafs[p].contents);
+	}
+	return (mnode_t *)(loadmodel->leafs + p);
 }
 
 static void Mod_LoadNodes(model_t* loadmodel, lump_t* l, byte* mod_base)
@@ -1249,24 +1465,18 @@ static void Mod_LoadNodes(model_t* loadmodel, lump_t* l, byte* mod_base)
 			out->minmaxs[3 + j] = LittleShort (in->maxs[j]);
 		}
 
-		p = LittleLong(in->planenum);
-		out->plane = loadmodel->planes + p;
-
 		out->firstsurface = LittleShort (in->firstface);
 		out->numsurfaces = LittleShort (in->numfaces);
+		p = LittleLong(in->planenum);
+		Mod_CheckNodeIndexes(loadmodel, i, p, out->firstsurface, out->numsurfaces);
+		out->plane = loadmodel->planes + p;
 
 		for (j = 0; j < 2; j++) {
-			p = LittleShort (in->children[j]);
-			if (p >= 0) {
-				out->children[j] = loadmodel->nodes + p;
-			}
-			else {
-				out->children[j] = (mnode_t *)(loadmodel->leafs + (-1 - p));
-			}
+			out->children[j] = Mod_NodeChild(loadmodel, i, LittleShort(in->children[j]));
 		}
 	}
 
-	Mod_SetParent (loadmodel->nodes, NULL);	// sets nodes and leafs
+	Mod_SetParent(loadmodel, loadmodel->nodes, NULL, 1); // sets nodes and leafs
 }
 
 static void Mod_LoadNodes29a(model_t* loadmodel, lump_t* l, byte* mod_base)
@@ -1296,24 +1506,18 @@ static void Mod_LoadNodes29a(model_t* loadmodel, lump_t* l, byte* mod_base)
 			out->minmaxs[3 + j] = LittleShort (in->maxs[j]);
 		}
 
-		p = LittleLong(in->planenum);
-		out->plane = loadmodel->planes + p;
-
 		out->firstsurface = LittleLong (in->firstface);
 		out->numsurfaces = LittleLong (in->numfaces);
+		p = LittleLong(in->planenum);
+		Mod_CheckNodeIndexes(loadmodel, i, p, out->firstsurface, out->numsurfaces);
+		out->plane = loadmodel->planes + p;
 
 		for (j = 0; j < 2; j++) {
-			p = LittleLong (in->children[j]);
-			if (p >= 0) {
-				out->children[j] = loadmodel->nodes + p;
-			}
-			else {
-				out->children[j] = (mnode_t *)(loadmodel->leafs + (-1 - p));
-			}
+			out->children[j] = Mod_NodeChild(loadmodel, i, LittleLong(in->children[j]));
 		}
 	}
 
-	Mod_SetParent (loadmodel->nodes, NULL);	// sets nodes and leafs
+	Mod_SetParent(loadmodel, loadmodel->nodes, NULL, 1); // sets nodes and leafs
 }
 
 static void Mod_LoadNodesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
@@ -1343,24 +1547,18 @@ static void Mod_LoadNodesBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 			out->minmaxs[3 + j] = LittleFloat (in->maxs[j]);
 		}
 
-		p = LittleLong(in->planenum);
-		out->plane = loadmodel->planes + p;
-
 		out->firstsurface = LittleLong (in->firstface);
 		out->numsurfaces = LittleLong (in->numfaces);
+		p = LittleLong(in->planenum);
+		Mod_CheckNodeIndexes(loadmodel, i, p, out->firstsurface, out->numsurfaces);
+		out->plane = loadmodel->planes + p;
 
 		for (j = 0; j < 2; j++) {
-			p = LittleLong (in->children[j]);
-			if (p >= 0) {
-				out->children[j] = loadmodel->nodes + p;
-			}
-			else {
-				out->children[j] = (mnode_t*)(loadmodel->leafs + (-1 - p));
-			}
+			out->children[j] = Mod_NodeChild(loadmodel, i, LittleLong(in->children[j]));
 		}
 	}
 
-	Mod_SetParent (loadmodel->nodes, NULL);	// sets nodes and leafs
+	Mod_SetParent(loadmodel, loadmodel->nodes, NULL, 1); // sets nodes and leafs
 }
 
 static qbool ContentsIsLiquid(int contents)
@@ -1372,6 +1570,17 @@ static qbool ContentsIsLiquid(int contents)
 		return true;
 	default:
 		return false;
+	}
+}
+
+// Refuses a leaf whose mark surfaces lie outside their lump
+static void Mod_CheckLeafMarksurfaces(model_t *loadmodel, int first_marksurface, int num_marksurfaces)
+{
+	if (first_marksurface < 0 || first_marksurface > loadmodel->nummarksurfaces) {
+		Host_Error("Mod_LoadLeafs: first mark surface invalid (%d vs 0-%d)", first_marksurface, loadmodel->nummarksurfaces);
+	}
+	if (num_marksurfaces < 0 || num_marksurfaces > loadmodel->nummarksurfaces - first_marksurface) {
+		Host_Error("Mod_LoadLeafs: num_marksurfaces invalid (%d + %d vs 0-%d)", first_marksurface, num_marksurfaces, loadmodel->nummarksurfaces);
 	}
 }
 
@@ -1407,13 +1616,7 @@ static void Mod_LoadLeafs(model_t* loadmodel, lump_t* l, byte* mod_base)
 
 		first_marksurface = LittleShort(in->firstmarksurface);
 		num_marksurfaces = LittleShort(in->nummarksurfaces);
-
-		if (first_marksurface < 0 || first_marksurface > loadmodel->nummarksurfaces) {
-			Host_Error("Mod_LoadLeafs: first mark surface invalid (%d vs 0-%d)", first_marksurface, loadmodel->nummarksurfaces);
-		}
-		if (num_marksurfaces < 0 || num_marksurfaces > loadmodel->nummarksurfaces - first_marksurface) {
-			Host_Error("Mod_LoadLeafs: num_marksurfaces invalid (%d + %d vs 0-%d)", first_marksurface, num_marksurfaces, loadmodel->nummarksurfaces);
-		}
+		Mod_CheckLeafMarksurfaces(loadmodel, first_marksurface, num_marksurfaces);
 
 		out->firstmarksurface = loadmodel->marksurfaces + first_marksurface;
 		out->nummarksurfaces = num_marksurfaces;
@@ -1461,9 +1664,10 @@ static void Mod_LoadLeafs29a(model_t* loadmodel, lump_t* l, byte* mod_base)
 		p = LittleLong(in->contents);
 		out->contents = p;
 
-		out->firstmarksurface = loadmodel->marksurfaces +
-			LittleLong(in->firstmarksurface);
+		p = LittleLong(in->firstmarksurface);
 		out->nummarksurfaces = LittleLong(in->nummarksurfaces);
+		Mod_CheckLeafMarksurfaces(loadmodel, p, out->nummarksurfaces);
+		out->firstmarksurface = loadmodel->marksurfaces + p;
 
 		p = LittleLong(in->visofs);
 		if (loadmodel->visdata && (p < -1 || p >= loadmodel->visdata_length)) {
@@ -1509,9 +1713,10 @@ static void Mod_LoadLeafsBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 		p = LittleLong(in->contents);
 		out->contents = p;
 
-		out->firstmarksurface = loadmodel->marksurfaces +
-			LittleLong(in->firstmarksurface);
+		p = LittleLong(in->firstmarksurface);
 		out->nummarksurfaces = LittleLong(in->nummarksurfaces);
+		Mod_CheckLeafMarksurfaces(loadmodel, p, out->nummarksurfaces);
+		out->firstmarksurface = loadmodel->marksurfaces + p;
 
 		p = LittleLong(in->visofs);
 		if (loadmodel->visdata && (p < -1 || p >= loadmodel->visdata_length)) {
@@ -1531,11 +1736,12 @@ static void Mod_LoadLeafsBSP2(model_t* loadmodel, lump_t* l, byte* mod_base)
 // Called from Mod_LoadModel()
 void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 {
-	int i;
+	int i, mark;
 	dheader_t *header;
 	dmodel_t *bm;
 	vec3_t normal;
 	bspx_header_t* bspx_header;
+	byte *reached;
 
 	mod->type = mod_brush;
 
@@ -1546,7 +1752,13 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 	if (mod->bspversion != Q1_BSPVERSION && mod->bspversion != HL_BSPVERSION && mod->bspversion != Q1_BSPVERSION2 && mod->bspversion != Q1_BSPVERSION29a) {
 		Host_Error("Mod_LoadBrushModel: %s has wrong version number (%i should be %i (Quake), %i (HalfLife), %i (BSP2) or %i (2PSB))", mod->name, mod->bspversion, Q1_BSPVERSION, HL_BSPVERSION, Q1_BSPVERSION2, Q1_BSPVERSION29a);
 	}
-	mod->isworldmodel = !strcmp(mod->name, va("maps/%s.bsp", host_mapname.string));
+	// the model list of the server names the world first
+	mod->isworldmodel = !strcmp(mod->name, cl.model_name[1]);
+
+	// Mod_LoadModel only guarantees the version
+	if (filesize < (int)sizeof(dheader_t)) {
+		Host_Error("Mod_LoadBrushModel: %s is too short", mod->name);
+	}
 
 	// swap all the lumps
 	for (i = 0; i < sizeof(dheader_t) / 4; i++) {
@@ -1555,8 +1767,8 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 
 	// Check lump sizes
 	for (i = 0; i < sizeof(header->lumps) / sizeof(header->lumps[0]); ++i) {
-		if (header->lumps[i].fileofs > filesize) {
-			Host_Error("Mod_LoadBrushModel(%s): lump %d has offset beyond file (%d vs %d)", mod->name, i, header->lumps[i].fileofs, filesize);
+		if (header->lumps[i].fileofs < 0 || header->lumps[i].fileofs > filesize) {
+			Host_Error("Mod_LoadBrushModel(%s): lump %d has offset outside file (%d vs %d)", mod->name, i, header->lumps[i].fileofs, filesize);
 			return;
 		}
 		if (header->lumps[i].filelen < 0) {
@@ -1620,16 +1832,28 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 	// regular and alternate animation
 	mod->numframes = 2;
 
+	mark = Hunk_LowMark();
+	reached = (byte *)Hunk_AllocName(mod->numnodes, mod->name);
+
 	// set up the submodels (FIXME: this is confusing)
 	for (i = 0; i < mod->numsubmodels; i++) {
 		bm = &mod->submodels[i];
 
+		if (bm->firstface < 0 || bm->numfaces < 0 || bm->firstface > mod->numsurfaces || bm->numfaces > mod->numsurfaces - bm->firstface) {
+			Host_Error("Inline model %i has bad face range [%d length %d, vs %d]", i, bm->firstface, bm->numfaces, mod->numsurfaces);
+		}
 		mod->firstmodelsurface = bm->firstface;
 		mod->nummodelsurfaces = bm->numfaces;
 
+		// qbsp gives a submodel whose hull 0 is a single leaf the number of
+		// nodes written before it, which is the node count when no submodel
+		// with nodes follows
 		mod->firstnode = bm->headnode[0];
 		if ((unsigned)mod->firstnode > mod->numnodes) {
 			Host_Error("Inline model %i has bad firstnode", i);
+		}
+		if (mod->firstnode < mod->numnodes) {
+			Mod_CheckSubmodelTree(mod, reached, mod->nodes + mod->firstnode, 1);
 		}
 
 		VectorCopy(bm->maxs, mod->maxs);
@@ -1644,6 +1868,12 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 			char name[16];
 			model_t* submodel;
 
+			// The model list names the submodels of the world *1 to *N, and
+			// they share the world's arrays. The submodels of any other brush
+			// model aren't named, so that they can't replace the world's.
+			if (!mod->isworldmodel) {
+				break;
+			}
 			snprintf(name, sizeof(name), "*%i", i + 1);
 			submodel = Mod_FindName(name);
 			*submodel = *mod;
@@ -1651,6 +1881,7 @@ void Mod_LoadBrushModel(model_t *mod, void *buffer, int filesize)
 			mod = submodel;
 		}
 	}
+	Hunk_FreeToLowMark(mark);
 
 	// set wall/ceiling drawflat
 	for (i = 0; i < mod->numsurfaces; ++i) {
@@ -1737,6 +1968,10 @@ void R_LoadBrushModelTextures(model_t *m)
 		}
 
 		if (tx->offsets[0]) {
+			// Mod_LoadTextures leaves out a mip level that lies outside the pixels
+			while (!tx->offsets[mipTexLevel]) {
+				mipTexLevel--;
+			}
 			texname = tx->name;
 			width   = tx->width  >> mipTexLevel;
 			height  = tx->height >> mipTexLevel;

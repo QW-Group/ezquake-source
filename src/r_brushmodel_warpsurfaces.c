@@ -59,8 +59,10 @@ static void R_WarpSurfaceSubdividePolygon(int numverts, float *verts)
 	float subdivide_size;
 	extern cvar_t gl_subdivide_size;
 
+	// leaves room in front and back for the vertices a cut adds to each side
+	// of a convex polygon, and for the one that closes it
 	if (numverts > 60) {
-		Sys_Error("numverts = %i", numverts);
+		Host_Error("[%s] turbulent surface %d has more than 60 vertices to subdivide", loadmodel->name, (int)(warpface - loadmodel->surfaces));
 	}
 
 	subdivide_size = max(1, gl_subdivide_size.value);
@@ -90,6 +92,11 @@ static void R_WarpSurfaceSubdividePolygon(int numverts, float *verts)
 		f = b = 0;
 		v = verts;
 		for (j = 0; j < numverts; j++, v += 3) {
+			// a polygon that isn't convex can cross the cut at every edge,
+			// and each vertex can add two to a side
+			if (f > 60 || b > 60) {
+				Host_Error("[%s] turbulent surface %d has more than 60 vertices to subdivide", loadmodel->name, (int)(warpface - loadmodel->surfaces));
+			}
 			if (dist[j] >= 0) {
 				VectorCopy(v, front[f]);
 				f++;
@@ -171,6 +178,11 @@ void R_SkySurfacesBuildPolys(msurface_t *fa)
 	float		*vec;
 	glpoly_t	*poly;
 	float		*vert;
+
+	// the classic renderer draws the polygon through a buffer of this size too
+	if (fa->numedges > 64) {
+		Host_Error("[%s] sky surface %d has %d edges, more than 64", loadmodel->name, (int)(fa - loadmodel->surfaces), fa->numedges);
+	}
 
 	//
 	// convert edges back to a normal polygon

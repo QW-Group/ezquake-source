@@ -185,7 +185,7 @@ typedef struct msurface_s {
 	int                 firstedge;                  // look up in model->surfedges[], negative numbers
 	int                 numedges;                   // are backwards edges
 	
-	short               texturemins[2];
+	int texturemins[2];
 	short               extents[2];
 
 	short               lmshift;
@@ -546,6 +546,7 @@ typedef struct model_s {
 	byte*               vis_decompressed;   // borrowed until the next row decode
 	byte*               vis_merged;         // separate mask for two-leaf water visibility
 	byte*               lightdata;
+	int lightdata_length;
 	size_t              lightdatasamplesize;
 
 	int					bspversion;
@@ -655,5 +656,8 @@ extern mplane_t frustum[4];
 
 
 #define DEFAULT_LMSHIFT     4
+// CalcSurfaceExtents keeps the texture coordinates of surfaces within this
+// many texels of 0, so that the difference of two fits an int
+#define MAX_TEXTURE_COORD   (1 << 30)
 
 #endif	// __MODEL__

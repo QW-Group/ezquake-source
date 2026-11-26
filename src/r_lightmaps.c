@@ -244,6 +244,10 @@ static void R_BuildLightMap(msurface_t *surf, byte *dest, int stride, uint32_t f
 		for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
 			scale = d_lightstylevalue[surf->styles[maps]];
 			surf->cached_light[maps] = scale;	// 8.8 fraction
+			// a face with styles can have light offset -1, and so no samples
+			if (!lightmap) {
+				continue;
+			}
 			// it sucks that blocklights is an int array. we can still massively
 			// overbright though, just not underbright quite as accurately
 			// (still quite a bit more than rgb8 precision there).
@@ -547,7 +551,11 @@ void R_RenderAllDynamicLightmaps(model_t *model)
 	R_TraceLeaveFunctionRegion;
 }
 
-// returns a lightmap number and the position inside it
+// Returns the lightmap given a block of w by h samples, which
+// R_LightmapCreateForSurface keeps within the size of a lightmap, and puts
+// the position of the block in it in x and y. A block may lie up to the
+// last column and row of a lightmap, so when none has room, the empty
+// lightmaps added hold it, and the recursion ends there.
 static int LightmapAllocBlock(int w, int h, int *x, int *y)
 {
 	int i, j, best, best2;
@@ -560,7 +568,7 @@ static int LightmapAllocBlock(int w, int h, int *x, int *y)
 	for (texnum = last_lightmap_updated; texnum < lightmap_array_size; texnum++, last_lightmap_updated++) {
 		best = LIGHTMAP_HEIGHT + 1;
 
-		for (i = 0; i < LIGHTMAP_WIDTH - w; i++) {
+		for (i = 0; i <= LIGHTMAP_WIDTH - w; i++) {
 			best2 = 0;
 
 			for (j = i; j < i + w; j++) {

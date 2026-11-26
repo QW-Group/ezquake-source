@@ -51,43 +51,56 @@ static char active_skyname[MAX_QPATH];
 static void Skywind_Load_f(void);
 static void Skywind_Clear(void);
 
-//A sky texture is 256 * 128, with the right side being a masked overlay
+// Builds the sky layers from the first mip level of a sky texture: the solid
+// layer is its right half, the cloud layer its left half, masked where the
+// pixels are 0. A sky is 256x128 in id's maps, but the halves are taken from
+// the texture's own size, which the loader keeps to multiples of 16. A sky
+// without pixels is drawn with the texture that stands in for missing ones.
 void R_InitSky (texture_t *mt) {
-	int i, j, p, r, g, b;
+	int i, j, p, width, height, halfwidth;
+	long long r, g, b;
 	byte *src;
-	unsigned trans[128 * 128], transpix, *rgba;
+	unsigned *trans, transpix, *rgba;
 	int flags = TEX_MIPMAP | (gl_scaleskytextures.integer ? 0 : TEX_NOSCALE);
 
+	if (!mt->offsets[0]) {
+		mt = r_notexture_mip;
+	}
 	src = (byte *) mt + mt->offsets[0];
+	width = mt->width;
+	height = mt->height;
+	halfwidth = width / 2;
+	trans = Q_malloc(halfwidth * height * sizeof(*trans));
 
 	// make an average value for the back to avoid a fringe on the top level
 	r = g = b = 0;
-	for (i = 0; i < 128; i++) {
-		for (j = 0; j < 128; j++) {
-			p = src[i * 256 + j + 128];
+	for (i = 0; i < height; i++) {
+		for (j = 0; j < halfwidth; j++) {
+			p = src[i * width + j + halfwidth];
 			rgba = &d_8to24table[p];
-			trans[(i * 128) + j] = *rgba;
+			trans[(i * halfwidth) + j] = *rgba;
 			r += ((byte *) rgba)[0];
 			g += ((byte *) rgba)[1];
 			b += ((byte *) rgba)[2];
 		}
 	}
 
-	((byte *) &transpix)[0] = r / (128 * 128);
-	((byte *) &transpix)[1] = g / (128 * 128);
-	((byte *) &transpix)[2] = b / (128 * 128);
+	((byte *)&transpix)[0] = (byte)(r / (halfwidth * height));
+	((byte *)&transpix)[1] = (byte)(g / (halfwidth * height));
+	((byte *)&transpix)[2] = (byte)(b / (halfwidth * height));
 	((byte *) &transpix)[3] = 0;
 
-	solidskytexture = R_LoadTexture ("***solidskytexture***", 128, 128, (byte *)trans, flags, 4);
+	solidskytexture = R_LoadTexture("***solidskytexture***", halfwidth, height, (byte *)trans, flags, 4);
 
-	for (i = 0; i < 128; i++) {
-		for (j = 0; j < 128; j++) {
-			p = src[i * 256 + j];
-			trans[(i * 128) + j] = p ? d_8to24table[p] : transpix;
+	for (i = 0; i < height; i++) {
+		for (j = 0; j < halfwidth; j++) {
+			p = src[i * width + j];
+			trans[(i * halfwidth) + j] = p ? d_8to24table[p] : transpix;
 		}
 	}
 
-	alphaskytexture = R_LoadTexture ("***alphaskytexture***", 128, 128, (byte *)trans, TEX_ALPHA | flags, 4);
+	alphaskytexture = R_LoadTexture("***alphaskytexture***", halfwidth, height, (byte *)trans, TEX_ALPHA | flags, 4);
+	Q_free(trans);
 }
 
 int R_SetSky(char *skyname)

@@ -115,7 +115,7 @@ static int VFSPAK_Seek (struct vfsfile_s *vfs, unsigned long offset, int whence)
 	}
 
 	rel_offset = vfsp->currentpos - vfsp->startpos;
-	if (rel_offset < 0 || rel_offset >= vfsp->length) {
+	if (rel_offset < 0 || rel_offset > vfsp->length) {
 		Com_Printf("VFSPAK_Seek: Warning seeking past the file's size\n");
 	}
 
@@ -227,7 +227,7 @@ static qbool FSPAK_FLocate(void *handle, flocation_t *loc, const char *filename,
 
 	if (pf)
 	{	//is this a pointer to a file in this pak?
-		if (pf < pak->files || pf > pak->files + pak->numfiles)
+		if (pf < pak->files || pf >= pak->files + pak->numfiles)
 			return false;	//was found in a different path
 	}
 	else
@@ -280,7 +280,8 @@ FSPAK_LoadPackFile
 Takes an explicit (not game tree related) path to a pak file.
 
 Loads the header and directory, adding the files at the beginning
-of the list so they override previous pack files.
+of the list so they override previous pack files. A pak whose
+directory or entries lie outside it is refused.
 =================
 */
 static void *FSPAK_LoadPackFile (vfsfile_t *file, const char *desc)
@@ -293,12 +294,14 @@ static void *FSPAK_LoadPackFile (vfsfile_t *file, const char *desc)
 	vfsfile_t		*packhandle;
 	dpackfile_t		info;
 	vfserrno_t err;
+	unsigned long packlen;
 
 	packhandle = file;
 	if (packhandle == NULL)
 		return NULL;
 
-	VFS_READ(packhandle, &header, sizeof(header), &err);
+	if (VFS_READ(packhandle, &header, sizeof(header), &err) != (int)sizeof(header))
+		return NULL;
 	if (header.id[0] != 'P' || header.id[1] != 'A'
 	|| header.id[2] != 'C' || header.id[3] != 'K')
 	{
@@ -306,6 +309,12 @@ static void *FSPAK_LoadPackFile (vfsfile_t *file, const char *desc)
 	}
 	header.dirofs = LittleLong (header.dirofs);
 	header.dirlen = LittleLong (header.dirlen);
+	packlen = VFS_GETLEN(packhandle);
+	if (header.dirofs < 0 || header.dirlen < 0 || (unsigned long)header.dirofs > packlen ||
+		header.dirlen / sizeof(dpackfile_t) > (packlen - header.dirofs) / sizeof(dpackfile_t)) {
+		Com_Printf("%s: corrupt pak file, its directory is outside the file\n", desc);
+		return NULL;
+	}
 
 	numpackfiles = header.dirlen / sizeof(dpackfile_t);
 
@@ -328,15 +337,27 @@ static void *FSPAK_LoadPackFile (vfsfile_t *file, const char *desc)
 // parse the directory
 	for (i=0 ; i<numpackfiles ; i++)
 	{
-		*info.name = '\0';
-		VFS_READ(packhandle, &info, sizeof(info), &err);
+		if (VFS_READ(packhandle, &info, sizeof(info), &err) != (int)sizeof(info))
+			break;
 /*
 		for (j=0 ; j<sizeof(info) ; j++)
 			CRC_ProcessByte(&crc, ((qbyte *)&info)[j]);
 */
-		strlcpy (newfiles[i].name, info.name, MAX_QPATH);
+		// a name that fills its 56 bytes isn't NUL-terminated
+		memcpy(newfiles[i].name, info.name, sizeof(info.name));
+		newfiles[i].name[sizeof(info.name)] = 0;
 		newfiles[i].filepos = LittleLong(info.filepos);
 		newfiles[i].filelen = LittleLong(info.filelen);
+		// readers allocate an entry's length and read it from its position
+		if (newfiles[i].filepos < 0 || newfiles[i].filelen < 0 || (unsigned long)newfiles[i].filelen > packlen ||
+			(unsigned long)newfiles[i].filepos > packlen - newfiles[i].filelen)
+			break;
+	}
+	if (i < numpackfiles) {
+		Com_Printf("%s: corrupt pak file, entry %d is outside the file\n", desc, i);
+		Q_free(newfiles);
+		Q_free(pack);
+		return NULL;
 	}
 /*
 	if (crc != PAK0_CRC)

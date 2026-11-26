@@ -318,35 +318,61 @@ LIGHT SAMPLING
 
 mplane_t		*lightplane;
 
+// Adds the light of a surface at (ds, dt), its position in lmvecs units from
+// the texturemins and within the extents, interpolated between the samples
+// around it. The samples lie as the lightmap builders read them: one every
+// 1 << lmshift units, in rows of smax, a lightmap of smax * tmax per style.
 static void R_LightFromSurface(msurface_t* surf, int ds, int dt, vec3_t color)
 {
 	if (surf->samples) {
 		// LordHavoc: enhanced to interpolate lighting
-		int maps, line3, dsfrac = ds & 15, dtfrac = dt & 15, r00 = 0, g00 = 0, b00 = 0, r01 = 0, g01 = 0, b01 = 0, r10 = 0, g10 = 0, b10 = 0, r11 = 0, g11 = 0, b11 = 0;
+		int smax = (surf->extents[0] >> surf->lmshift) + 1, tmax = (surf->extents[1] >> surf->lmshift) + 1;
+		int sample = (dt >> surf->lmshift) * smax + (ds >> surf->lmshift);
+		// (ds, dt) lies within the extents, which span whole samples, so on
+		// the last column or row the fraction towards the next sample is 0:
+		// the sample on the edge stands in for the one past it
+		int next = (ds >> surf->lmshift) + 1 < smax ? 1 : 0, below = (dt >> surf->lmshift) + 1 < tmax ? smax : 0;
+		int maps, line3, dsfrac = ((ds << 4) >> surf->lmshift) & 15, dtfrac = ((dt << 4) >> surf->lmshift) & 15, r00 = 0, g00 = 0, b00 = 0, r01 = 0, g01 = 0, b01 = 0, r10 = 0, g10 = 0, b10 = 0, r11 = 0, g11 = 0, b11 = 0;
 		float scale;
-		line3 = ((surf->extents[0] >> 4) + 1) * 3;
+		line3 = below * 3;
 
 		if (cl.worldmodel->flags & MOD_HDRLIGHTING) {
-			uint32_t *lightmap = (uint32_t*)surf->samples + (dt * (surf->extents[0]+1) + ds);
-			line3 = (surf->extents[0]+1);
+			uint32_t *lightmap = (uint32_t *)surf->samples + sample;
+			line3 = below;
 			for (maps = 0;maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
 				float e;
 				scale = (1<<7) * (float) d_lightstylevalue[surf->styles[maps]] * 1.0f / 256.0f;
-				e = rgb9e5tab[lightmap[      0]>>27] * scale;r00 += ((lightmap[      0]>> 0)&0x1ff) * e;g00 += ((lightmap[      0]>> 9)&0x1ff) * e;b00 += ((lightmap[      0]>> 9)&0x1ff) * e;
-				e = rgb9e5tab[lightmap[      1]>>27] * scale;r01 += ((lightmap[      1]>> 0)&0x1ff) * e;g01 += ((lightmap[      1]>> 9)&0x1ff) * e;b01 += ((lightmap[      1]>> 9)&0x1ff) * e;
-				e = rgb9e5tab[lightmap[line3+0]>>27] * scale;r10 += ((lightmap[line3+0]>> 0)&0x1ff) * e;g10 += ((lightmap[line3+0]>> 9)&0x1ff) * e;b10 += ((lightmap[line3+0]>> 9)&0x1ff) * e;
-				e = rgb9e5tab[lightmap[line3+1]>>27] * scale;r11 += ((lightmap[line3+1]>> 0)&0x1ff) * e;g11 += ((lightmap[line3+1]>> 9)&0x1ff) * e;b11 += ((lightmap[line3+1]>> 9)&0x1ff) * e;
-				lightmap += (surf->extents[0]+1) * (surf->extents[1]+1);
+				e = rgb9e5tab[lightmap[0] >> 27] * scale;
+				r00 += ((lightmap[0] >> 0) & 0x1ff) * e;
+				g00 += ((lightmap[0] >> 9) & 0x1ff) * e;
+				b00 += ((lightmap[0] >> 18) & 0x1ff) * e;
+				e = rgb9e5tab[lightmap[next] >> 27] * scale;
+				r01 += ((lightmap[next] >> 0) & 0x1ff) * e;
+				g01 += ((lightmap[next] >> 9) & 0x1ff) * e;
+				b01 += ((lightmap[next] >> 18) & 0x1ff) * e;
+				e = rgb9e5tab[lightmap[line3 + 0] >> 27] * scale;
+				r10 += ((lightmap[line3 + 0] >> 0) & 0x1ff) * e;
+				g10 += ((lightmap[line3 + 0] >> 9) & 0x1ff) * e;
+				b10 += ((lightmap[line3 + 0] >> 18) & 0x1ff) * e;
+				e = rgb9e5tab[lightmap[line3 + next] >> 27] * scale;
+				r11 += ((lightmap[line3 + next] >> 0) & 0x1ff) * e;
+				g11 += ((lightmap[line3 + next] >> 9) & 0x1ff) * e;
+				b11 += ((lightmap[line3 + next] >> 18) & 0x1ff) * e;
+				lightmap += smax * tmax;
 			}
 		} else {
-			byte *lightmap = surf->samples + ((dt >> 4) * ((surf->extents[0] >> 4) + 1) + (ds >> 4)) * 3; // LordHavoc: *3 for color
+			byte *lightmap = surf->samples + sample * 3; // LordHavoc: *3 for color
 			for (maps = 0; maps < MAXLIGHTMAPS && surf->styles[maps] != 255; maps++) {
 				scale = (float)d_lightstylevalue[surf->styles[maps]] * 1.0 / 256.0;
 				r00 += (float)lightmap[0] * scale; g00 += (float)lightmap[1] * scale; b00 += (float)lightmap[2] * scale;
-				r01 += (float)lightmap[3] * scale; g01 += (float)lightmap[4] * scale; b01 += (float)lightmap[5] * scale;
+				r01 += (float)lightmap[next * 3 + 0] * scale;
+				g01 += (float)lightmap[next * 3 + 1] * scale;
+				b01 += (float)lightmap[next * 3 + 2] * scale;
 				r10 += (float)lightmap[line3 + 0] * scale; g10 += (float)lightmap[line3 + 1] * scale; b10 += (float)lightmap[line3 + 2] * scale;
-				r11 += (float)lightmap[line3 + 3] * scale; g11 += (float)lightmap[line3 + 4] * scale; b11 += (float)lightmap[line3 + 5] * scale;
-				lightmap += ((surf->extents[0] >> 4) + 1) * ((surf->extents[1] >> 4) + 1) * 3; // LordHavoc: *3 for colored lighting
+				r11 += (float)lightmap[line3 + next * 3 + 0] * scale;
+				g11 += (float)lightmap[line3 + next * 3 + 1] * scale;
+				b11 += (float)lightmap[line3 + next * 3 + 2] * scale;
+				lightmap += smax * tmax * 3; // LordHavoc: *3 for colored lighting
 			}
 		}
 
@@ -398,20 +424,24 @@ loc0:
 
 		surf = cl.worldmodel->surfaces + node->firstsurface;
 		for (i = 0; i < node->numsurfaces; i++, surf++) {
+			float s, t;
+
 			if (surf->flags & SURF_DRAWTILED) {
 				continue;	// no lightmaps
 			}
 
-			ds = (int)((float)DotProduct(mid, surf->lmvecs[0]) + surf->lmvecs[0][3]);
-			dt = (int)((float)DotProduct(mid, surf->lmvecs[1]) + surf->lmvecs[1][3]);
-			if (ds < surf->texturemins[0] || dt < surf->texturemins[1]) {
+			// the texture coordinates of a surface lie within
+			// MAX_TEXTURE_COORD of 0, so a point further out isn't taken:
+			// its conversion to int, or the subtraction, could overflow
+			s = (float)DotProduct(mid, surf->lmvecs[0]) + surf->lmvecs[0][3];
+			t = (float)DotProduct(mid, surf->lmvecs[1]) + surf->lmvecs[1][3];
+			if (!(fabs(s) < MAX_TEXTURE_COORD && fabs(t) < MAX_TEXTURE_COORD)) {
 				continue;
 			}
 
-			ds -= surf->texturemins[0];
-			dt -= surf->texturemins[1];
-
-			if (ds > surf->extents[0] || dt > surf->extents[1]) {
+			ds = (int)s - surf->texturemins[0];
+			dt = (int)t - surf->texturemins[1];
+			if (ds < 0 || dt < 0 || ds > surf->extents[0] || dt > surf->extents[1]) {
 				continue;
 			}
 

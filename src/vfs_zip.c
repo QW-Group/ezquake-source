@@ -20,6 +20,8 @@
 
 #ifdef WITH_ZIP
 
+#include <limits.h>
+
 #include "quakedef.h"
 #include "hash.h"
 #include "common.h"
@@ -145,43 +147,59 @@ typedef struct {
 } vfszip_t;
 
 // VFS-FIXME Need to figure what this function is trying to do
-static void VFSZIP_MakeActive(vfszip_t *vfsz)
+// Returns false if the entry can't be opened or ends before the position it is
+// resumed at, e.g. when it is corrupt.
+static qbool VFSZIP_MakeActive(vfszip_t *vfsz)
 {
-	int i;
+	int left, chunk;
 	char buffer[8192];	//must be power of two
 
 	if ((vfszip_t*)vfsz->parent->currentfile == vfsz)
-		return;	//already us
-	if (vfsz->parent->currentfile)
+		return true; //already us
+	if (vfsz->parent->currentfile) {
 		unzCloseCurrentFile(vfsz->parent->handle);
+		vfsz->parent->currentfile = NULL;
+	}
 
 	//unzLocateFileMy(vfsz->parent->handle, vfsz->index, vfsz->startpos);
-	unzSetOffset(vfsz->parent->handle, vfsz->startpos);
-	unzOpenCurrentFile(vfsz->parent->handle);
+	if (unzSetOffset(vfsz->parent->handle, vfsz->startpos) != UNZ_OK || unzOpenCurrentFile(vfsz->parent->handle) != UNZ_OK) {
+		return false;
+	}
 
 	if (vfsz->pos > 0)
 	{
 		Com_DPrintf("VFSZIP_MakeActive: Shockingly inefficient\n");
 
 		//now we need to seek up to where we had previously gotten to.
-		for (i = 0; i < vfsz->pos-sizeof(buffer); i++)
-			unzReadCurrentFile(vfsz->parent->handle, buffer, sizeof(buffer));
-		unzReadCurrentFile(vfsz->parent->handle, buffer, vfsz->pos - i);
+		for (left = vfsz->pos; left > 0; left -= chunk) {
+			chunk = min(left, (int)sizeof(buffer));
+			if (unzReadCurrentFile(vfsz->parent->handle, buffer, chunk) != chunk) {
+				unzCloseCurrentFile(vfsz->parent->handle);
+				return false;
+			}
+		}
 	}
 
 	vfsz->parent->currentfile = (vfsfile_t*)vfsz;
+	return true;
 }
 
 static int VFSZIP_ReadBytes (struct vfsfile_s *file, void *buffer, int bytestoread, vfserrno_t *err)
 {
-	int read;
+	int read = 0;
 	vfszip_t *vfsz = (vfszip_t*)file;
 
 	if (vfsz->defer)
 		return VFS_READ(vfsz->defer, buffer, bytestoread, err);
 
-	VFSZIP_MakeActive(vfsz);
-	read = unzReadCurrentFile(vfsz->parent->handle, buffer, bytestoread);
+	// minizip takes the count as unsigned and returns errors as negative
+	// counts; a failed read reads nothing and reports EOF
+	if (bytestoread > 0 && VFSZIP_MakeActive(vfsz)) {
+		read = unzReadCurrentFile(vfsz->parent->handle, buffer, bytestoread);
+		if (read < 0) {
+			read = 0;
+		}
+	}
 
 	if (err)
 		*err = ((read || bytestoread <= 0) ? VFSERR_NONE : VFSERR_EOF);
@@ -197,9 +215,13 @@ static int VFSZIP_WriteBytes (struct vfsfile_s *file, const void *buffer, int by
 }
 
 // VFS-FIXME: What is going on here... why not just unzSetOffset
+// Like fseek, takes a negative offset for SEEK_CUR and SEEK_END as the
+// unsigned long it converts to.
 static int VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 {
 	vfszip_t *vfsz = (vfszip_t*)file;
+	long offset, base;
+	int oldpos;
 
 	if (vfsz->defer)
 		return VFS_SEEK(vfsz->defer, pos, whence);
@@ -212,6 +234,7 @@ static int VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 		unsigned int i;
 		unsigned int length;
 
+		oldpos = vfsz->pos;
 		vfsz->defer = FS_OpenTemp();
 		if (vfsz->defer)
 		{
@@ -229,7 +252,9 @@ static int VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 					chunk = sizeof(buffer);
 				if (chunk == 0)
 					break;
-				unzReadCurrentFile(vfsz->parent->handle, buffer, chunk);
+				// a corrupt entry ends the copy, so reading past it hits EOF
+				if (unzReadCurrentFile(vfsz->parent->handle, buffer, chunk) != (int)chunk)
+					break;
 				VFS_WRITE(vfsz->defer, buffer, chunk);
 
 				i += chunk;
@@ -239,15 +264,25 @@ static int VFSZIP_Seek (struct vfsfile_s *file, unsigned long pos, int whence)
 		unzCloseCurrentFile(vfsz->parent->handle);
 		vfsz->parent->currentfile = NULL;	//make it not us
 
-		if (vfsz->defer)
-			return VFS_SEEK(vfsz->defer, pos, SEEK_SET);
+		if (vfsz->defer) {
+			// the copy leaves the temporary file at its end
+			if (whence == SEEK_CUR && VFS_SEEK(vfsz->defer, oldpos, SEEK_SET))
+				return -1;
+			return VFS_SEEK(vfsz->defer, pos, whence);
+		}
 	}
 
+	switch (whence) {
+		case SEEK_SET: base = 0; break;
+		case SEEK_CUR: base = vfsz->pos; break;
+		case SEEK_END: base = vfsz->length; break;
+		default: return -1;
+	}
 
-
-	if (pos > vfsz->length)
+	offset = (long)pos;
+	if (offset < -base || offset > vfsz->length - base)
 		return -1;
-	vfsz->pos = pos;
+	vfsz->pos = (int)(base + offset);
 
 	return 0;
 }
@@ -444,6 +479,9 @@ static int FSZIP_EnumerateFiles (void *handle, char *match, int (*func)(char *, 
 	return true;
 }
 
+// A central directory entry takes at least this many bytes of the archive.
+#define FSZIP_MIN_CENTRAL_ENTRY_SIZE 46
+
 /*
 =================
 COM_LoadZipFile
@@ -451,18 +489,20 @@ COM_LoadZipFile
 Takes an explicit (not game tree related) path to a pak file.
 
 Loads the header and directory, adding the files at the beginning
-of the list so they override previous pack files.
+of the list so they override previous pack files. Entries whose name
+or size doesn't fit a packfile_t are left out. An archive whose end
+record counts more entries than its size can hold is refused.
 =================
 */
 static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, const char *desc)
 {
-	int i, r;
+	int i, r, numentries;
 
 	zipfile_t *zip;
-	packfile_t		*newfiles;
+	packfile_t *pf;
 	zlib_filefunc_def *funcs = NULL;
-	unz_global_info info;
-	
+	unz_global_info64 info;
+
 	zip   = (zipfile_t *) Q_calloc(1, sizeof(*zip));
 	strlcpy (zip->filename, desc, sizeof (zip->filename));
 	FSZIP_CreteFileFuncs(&(zip->zlib_funcs));
@@ -470,30 +510,41 @@ static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, const char *desc)
 	zip->handle = unzOpen2(desc, funcs);
 	if (!zip->handle) goto fail;
 
-	if (unzGetGlobalInfo(zip->handle, &info) != UNZ_OK) goto fail;
+	if (unzGetGlobalInfo64(zip->handle, &info) != UNZ_OK)
+		goto fail;
+	// the second bound keeps the file table's size in an int, so it can't
+	// wrap a 32-bit size_t either
+	if (info.number_entry > VFS_GETLEN(packhandle) / FSZIP_MIN_CENTRAL_ENTRY_SIZE || info.number_entry > INT_MAX / sizeof(packfile_t)) {
+		Com_Printf("%s: corrupt zip archive with %llu entries\n", desc, (unsigned long long)info.number_entry);
+		goto fail;
+	}
+	numentries = (int)info.number_entry;
 
-	// Get the number of zip files
-	zip->numfiles = info.number_entry;
-
-	// Create a list of the number of files
-	zip->files = newfiles = Q_malloc (zip->numfiles * sizeof(packfile_t));
+	zip->files = Q_malloc(numentries * sizeof(packfile_t));
 	if (unzGoToFirstFile(zip->handle) != UNZ_OK) goto fail;
-	for (i = 0; i < zip->numfiles; i++) {
-		unz_file_info file_info;
-		if (unzGetCurrentFileInfo(zip->handle, &file_info, newfiles[i].name, sizeof(newfiles[i].name), NULL, 0, NULL, 0) != UNZ_OK) goto fail;
+	for (i = 0; i < numentries; i++) {
+		unz_file_info64 file_info;
 
-		Q_strlwr(newfiles[i].name);
-		newfiles[i].filelen = file_info.uncompressed_size;
-		newfiles[i].filepos = unzGetOffset(zip->handle); // VFS-FIXME: Need to verify this
+		pf = &zip->files[zip->numfiles];
+		if (unzGetCurrentFileInfo64(zip->handle, &file_info, pf->name, sizeof(pf->name), NULL, 0, NULL, 0) != UNZ_OK)
+			goto fail;
+
+		// minizip leaves a name that doesn't fit unterminated
+		if (file_info.size_filename < sizeof(pf->name) && file_info.uncompressed_size <= INT_MAX) {
+			Q_strlwr(pf->name);
+			pf->filelen = (int)file_info.uncompressed_size;
+			pf->filepos = unzGetOffset(zip->handle); // VFS-FIXME: Need to verify this
+			zip->numfiles++;
+		}
+
 		r = unzGoToNextFile (zip->handle);
 		if (r == UNZ_END_OF_LIST_OF_FILE) {
 			break;
 		} else if (r != UNZ_OK) {
 			goto fail;
 		}
-
 	}
-	
+
 	zip->references = 1;
 	zip->currentfile = NULL;
 
@@ -502,7 +553,8 @@ static void *FSZIP_LoadZipFile(vfsfile_t *packhandle, const char *desc)
 fail:
 	// Q_free is safe to call on NULL pointers
 	Q_free(funcs);
-	Q_free(zip->handle);
+	if (zip->handle)
+		unzClose(zip->handle);
 	Q_free(zip->files);
 	Q_free(zip);
 	return NULL;

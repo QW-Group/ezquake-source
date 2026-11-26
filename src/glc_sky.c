@@ -42,6 +42,7 @@ static void GLC_MakeSkyVec(float s, float t, int axis);
 
 static void R_SkyAddBoxSurface(msurface_t *fa);
 static void R_SkyClearVisibleLimits(void);
+static void R_SkySetFullVisibleLimits(void);
 
 static float speedscale, speedscale2;		// for sky and clouds, respectively
 
@@ -254,11 +255,7 @@ static qbool R_DetermineSkyLimits(qbool *ignore_z)
 	if (r_viewleaf->contents == CONTENTS_SOLID) {
 		// always draw if we're in a solid leaf (probably outside the level)
 		// FIXME: we don't really want to add all six planes every time!
-		int i;
-		for (i = 0; i < 6; i++) {
-			skymins[0][i] = skymins[1][i] = -1;
-			skymaxs[0][i] = skymaxs[1][i] = 1;
-		}
+		R_SkySetFullVisibleLimits();
 		*ignore_z = true;
 	}
 	else {
@@ -653,22 +650,27 @@ static void R_SkyPolygonCalcLimits(int nump, vec3_t vecs)
 	}
 }
 
-#define	MAX_CLIP_VERTS	64
+// The face loaders give a sky polygon at most 64 vertices, and a cut adds
+// at most one to each side of a convex polygon, so the six cuts leave at
+// most 70; the clipper copies the first vertex of a polygon past its last.
+#define MAX_CLIP_VERTS	(64 + 6 + 1)
 
-static void R_SkyPolygonClip(int nump, vec3_t vecs, int stage)
+// Clips a polygon of nump vertices, fewer than MAX_CLIP_VERTS, which vecs
+// holds with room for one more, against the planes between the faces of the
+// sky box from stage on, and adds each part to the visible limits of its
+// face. Returns false if a side outgrows the buffers, which only a polygon
+// that isn't convex does.
+static qbool R_SkyPolygonClip(int nump, vec3_t vecs, int stage)
 {
 	float *norm, *v, d, e, dists[MAX_CLIP_VERTS];
-	qbool front, back;
+	qbool front, back, cross;
 	int sides[MAX_CLIP_VERTS], newc[2], i, j;
 	vec3_t newv[2][MAX_CLIP_VERTS];
 
-	if (nump > MAX_CLIP_VERTS - 2) {
-		Sys_Error("ClipSkyPolygon: nump > MAX_CLIP_VERTS - 2");
-	}
 	if (stage == 6) {
 		// fully clipped, so draw it
 		R_SkyPolygonCalcLimits(nump, vecs);
-		return;
+		return true;
 	}
 
 	front = back = false;
@@ -691,8 +693,7 @@ static void R_SkyPolygonClip(int nump, vec3_t vecs, int stage)
 
 	if (!front || !back) {
 		// not clipped
-		R_SkyPolygonClip(nump, vecs, stage + 1);
-		return;
+		return R_SkyPolygonClip(nump, vecs, stage + 1);
 	}
 
 	// clip it
@@ -702,6 +703,14 @@ static void R_SkyPolygonClip(int nump, vec3_t vecs, int stage)
 	newc[0] = newc[1] = 0;
 
 	for (i = 0, v = vecs; i < nump; i++, v += 3) {
+		// the vertex goes to each side it lies on, and the point where its
+		// edge crosses the plane to both; each side keeps room for the copy
+		// of its first vertex that the next stage makes
+		cross = sides[i] != SIDE_ON && sides[i + 1] != SIDE_ON && sides[i + 1] != sides[i];
+		if (newc[0] + (sides[i] != SIDE_BACK) + cross >= MAX_CLIP_VERTS ||
+			newc[1] + (sides[i] != SIDE_FRONT) + cross >= MAX_CLIP_VERTS) {
+			return false;
+		}
 		switch (sides[i]) {
 			case SIDE_FRONT:
 				VectorCopy(v, newv[0][newc[0]]);
@@ -719,7 +728,7 @@ static void R_SkyPolygonClip(int nump, vec3_t vecs, int stage)
 				break;
 		}
 
-		if (sides[i] == SIDE_ON || sides[i + 1] == SIDE_ON || sides[i + 1] == sides[i])
+		if (!cross)
 			continue;
 
 		d = dists[i] / (dists[i] - dists[i + 1]);
@@ -733,8 +742,7 @@ static void R_SkyPolygonClip(int nump, vec3_t vecs, int stage)
 	}
 
 	// continue
-	R_SkyPolygonClip(newc[0], newv[0][0], stage + 1);
-	R_SkyPolygonClip(newc[1], newv[1][0], stage + 1);
+	return R_SkyPolygonClip(newc[0], newv[0][0], stage + 1) && R_SkyPolygonClip(newc[1], newv[1][0], stage + 1);
 }
 
 /*
@@ -750,6 +758,16 @@ static void R_SkyAddBoxSurface(msurface_t *fa)
 
 	// calculate vertex values for sky box
 	for (p = fa->polys; p; p = p->next) {
+		// fewer than 3 vertices cover no sky, and a polygon of more than a
+		// sky face may have, or one that isn't convex, lets all of the sky
+		// box be drawn
+		if (p->numverts < 3) {
+			continue;
+		}
+		if (p->numverts >= MAX_CLIP_VERTS) {
+			R_SkySetFullVisibleLimits();
+			continue;
+		}
 		// Meag: the R_SkyPolygonClip() requires verts in convex polygon order, i'm not messing
 		//       with it... so we add the verts in a weird order to get back from triangle strip
 		//       to verts
@@ -764,7 +782,19 @@ static void R_SkyAddBoxSurface(msurface_t *fa)
 				--j;
 			}
 		}
-		R_SkyPolygonClip(p->numverts, verts[0], 0);
+		if (!R_SkyPolygonClip(p->numverts, verts[0], 0)) {
+			R_SkySetFullVisibleLimits();
+		}
+	}
+}
+
+static void R_SkySetFullVisibleLimits(void)
+{
+	int i;
+
+	for (i = 0; i < 6; i++) {
+		skymins[0][i] = skymins[1][i] = -1;
+		skymaxs[0][i] = skymaxs[1][i] = 1;
 	}
 }
 

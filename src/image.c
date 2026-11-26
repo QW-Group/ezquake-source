@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifdef __FreeBSD__
 #include <dlfcn.h>
 #endif
+#include <stddef.h>
 #include "quakedef.h"
 #include "image.h"
 
@@ -124,8 +125,10 @@ static void Image_Resample32 (void *indata, int inwidth, int inheight,
 		inrow = (byte *) indata;
 		oldy = 0;
 		Image_Resample32LerpLine (inrow, row1, inwidth, outwidth);
-		Image_Resample32LerpLine (inrow + inwidth4, row2, inwidth, outwidth);
-		
+		// A one-pixel-high image has no second row and never uses row2
+		if (inheight > 1)
+			Image_Resample32LerpLine(inrow + inwidth4, row2, inwidth, outwidth);
+
 		for (i = 0, f = 0; i < outheight; i++, f += fstep)	
 		{
 			yi = f >> 16;
@@ -253,8 +256,10 @@ static void Image_Resample24 (void *indata, int inwidth, int inheight,
 		inrow = (byte *) indata;
 		oldy = 0;
 		Image_Resample24LerpLine (inrow, row1, inwidth, outwidth);
-		Image_Resample24LerpLine (inrow + inwidth3, row2, inwidth, outwidth);
-		
+		// A one-pixel-high image has no second row and never uses row2
+		if (inheight > 1)
+			Image_Resample24LerpLine(inrow + inwidth3, row2, inwidth, outwidth);
+
 		for (i = 0, f = 0; i < outheight; i++, f += fstep)	
 		{
 			yi = f >> 16;
@@ -529,7 +534,10 @@ static int apng_compression;
 static void PNG_IO_user_read_data(png_structp png_ptr, png_bytep data, png_size_t length) {
 	vfsfile_t *v = (vfsfile_t *) png_get_io_ptr(png_ptr);
 	vfserrno_t err;
-	VFS_READ(v, data, (int)length, &err);
+
+	if (VFS_READ(v, data, (int)length, &err) != (int)length) {
+		png_error(png_ptr, "read error");
+	}
 }
 
 static void PNG_IO_user_write_data(png_structp png_ptr, png_bytep data, png_size_t length) {
@@ -593,9 +601,7 @@ static qbool PNG_HasHeader (vfsfile_t *fin)
 	byte header[PNG_HEADER_LENGTH];
 	vfserrno_t err;
 
-	VFS_READ(fin, header, PNG_HEADER_LENGTH, &err);
-	if (png_sig_cmp(header, 0, PNG_HEADER_LENGTH)) 
-	{
+	if (VFS_READ(fin, header, PNG_HEADER_LENGTH, &err) != PNG_HEADER_LENGTH || png_sig_cmp(header, 0, PNG_HEADER_LENGTH)) {
 		VFS_CLOSE(fin);
 		fin = NULL;
 		return false;
@@ -604,6 +610,8 @@ static qbool PNG_HasHeader (vfsfile_t *fin)
 	return true;
 }
 
+// libpng must not regain control after an error, so this unwinds to the
+// png_jmpbuf that every reader using it must set before reading
 static void Image_PngErrorHandler(png_structp png_ptr, png_const_charp error_msg)
 {
 	const char* filename = (const char*)png_get_error_ptr(png_ptr);
@@ -615,7 +623,8 @@ static void Image_PngErrorHandler(png_structp png_ptr, png_const_charp error_msg
 		error_msg = "unknown error";
 	}
 
-	Sys_Error("Invalid PNG detected: %s (%s)\n", filename, error_msg);
+	Com_Printf("Invalid PNG detected: %s (%s)\n", filename, error_msg);
+	png_longjmp(png_ptr, 1);
 }
 
 static void Image_PngWarningHandler(png_structp png_ptr, png_const_charp error_msg)
@@ -637,8 +646,9 @@ static void Image_PngWarningHandler(png_structp png_ptr, png_const_charp error_m
 
 png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int loadflag, int *real_width, int *real_height)
 {
-	byte **rowpointers = NULL;
-	byte *data = NULL;
+	// Allocated after setjmp and freed after longjmp
+	byte **volatile rowpointers = NULL;
+	byte *volatile data = NULL;
 	png_structp png_ptr = NULL;
 	png_infop pnginfo = NULL;			
 	png_textp textchunks = NULL;		// Actual text chunks that will be returned.
@@ -681,15 +691,14 @@ png_data *Image_LoadPNG_All (vfsfile_t *fin, const char *filename, int matchwidt
 
 	// Set the return address that PNGLib should return to if
 	// an error occurs during reading.
-#if 0
-	if (setjmp(png_ptr->jmpbuf)) 
-	{
+	if (setjmp(png_jmpbuf(png_ptr))) {
 		png_destroy_read_struct(&png_ptr, &pnginfo, NULL);
+		Q_free(rowpointers);
+		Q_free(data);
 		VFS_CLOSE(fin);
 		fin = NULL;
 		return NULL;
 	}
-#endif
 
 	// Set the read function that should be used.
     png_set_read_fn(png_ptr, fin, PNG_IO_user_read_data);
@@ -1210,7 +1219,10 @@ byte *Image_LoadTGA(vfsfile_t *fin, const char *filename, int matchwidth, int ma
 	filesize = VFS_GETLEN(fin);
 	fileBuffer = (byte *) Q_malloc(filesize);
 
-	VFS_READ(fin, fileBuffer, filesize, NULL);
+	if (VFS_READ(fin, fileBuffer, filesize, NULL) != filesize) {
+		VFS_CLOSE(fin);
+		TGA_ERROR("Image_LoadTGA: %s could not be read\n");
+	}
 	VFS_CLOSE(fin);
 
 	if (filesize < 19)
@@ -1261,6 +1273,11 @@ byte *Image_LoadTGA(vfsfile_t *fin, const char *filename, int matchwidth, int ma
 			TGA_ERROR("Unsupported TGA image %s: Bad colormap size.\n");
 		if (header.colormapType != 1 || header.colormapLength * 4 > sizeof(palette))
 			TGA_ERROR("Unsupported TGA image %s: Bad colormap type and/or length for color-mapped image.\n");
+		if (filesize - 18 - header.idLength < header.colormapLength * ((header.colormapSize + 7) >> 3))
+			TGA_ERROR("Unsupported TGA image %s: Truncated colormap.\n");
+
+		// Pixels are not checked against colormapLength
+		memset(palette, 0, sizeof(palette));
 
 		// read in the palette
 		if (header.colormapSize == 15 || header.colormapSize == 16) {
@@ -1280,6 +1297,16 @@ byte *Image_LoadTGA(vfsfile_t *fin, const char *filename, int matchwidth, int ma
 		mytype = (header.pixelSize == 8) ? MYTGA_MONO8 : MYTGA_MONO16;
 	} else {
 		TGA_ERROR("Unsupported TGA image %s: Bad image type.\n");
+	}
+
+	// An image that is not colour-mapped may still carry a colour map, which
+	// lies between the ID field and the pixels
+	if (mytype != MYTGA_MAPPED && header.colormapType == 1) {
+		int colormap_bytes = header.colormapLength * ((header.colormapSize + 7) >> 3);
+
+		if (filesize - 18 - header.idLength < colormap_bytes)
+			TGA_ERROR("Unsupported TGA image %s: Truncated colormap.\n");
+		in += colormap_bytes;
 	}
 
 	if (header.attributes & 0x10)
@@ -1656,7 +1683,9 @@ jpeg_mem_src (j_decompress_ptr cinfo, byte * infile, int maxlen)
 
 byte *Image_LoadJPEG(vfsfile_t *fin, const char *filename, int matchwidth, int matchheight, int *real_width, int *real_height)
 {
-	byte *mem = NULL, *in, *out;
+	// Allocated after setjmp and freed after longjmp
+	byte *volatile mem = NULL;
+	byte *in, *out;
 	int i, image_width, image_height;
 
 	byte *infile = NULL;
@@ -1716,12 +1745,12 @@ badjpeg:
 
 	jpeg_mem_src(&cinfo, infile, length);
 
-	(void) jpeg_read_header(&cinfo, TRUE);  
+	(void)jpeg_read_header(&cinfo, TRUE);
 
-	(void) jpeg_start_decompress(&cinfo);
-
-	image_width  = cinfo.output_width;
-	image_height = cinfo.output_height;
+	// Checked before jpeg_start_decompress, which decodes a progressive
+	// image into buffers sized by these dimensions
+	image_width = cinfo.image_width;
+	image_height = cinfo.image_height;
 
 	// Return the width and height.
 	if (real_width)
@@ -1742,6 +1771,8 @@ badjpeg:
 		goto badjpeg; 
 	}
 
+	(void)jpeg_start_decompress(&cinfo);
+
 	if (cinfo.output_components!=3)
 	{
 		Com_Printf("Bad number of componants in jpeg %s\n", COM_SkipPath(filename));
@@ -1758,7 +1789,9 @@ badjpeg:
 
 	while (cinfo.output_scanline < cinfo.output_height) 
 	{
-		(void) jpeg_read_scanlines(&cinfo, buffer, 1);    
+		if (jpeg_read_scanlines(&cinfo, buffer, 1) != 1) {
+			goto badjpeg;
+		}
 
 		in = buffer[0];
 		for (i = 0; i < cinfo.output_width; i++)
@@ -1809,6 +1842,13 @@ byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int m
 	if (!fin && !(fin = FS_OpenVFS(filename, "rb", FS_ANY)))
 		return NULL;
 	filesize = VFS_GETLEN(fin);
+
+	// The header is read and byte-swapped in place
+	if (filesize < (int)offsetof(pcx_t, data)) {
+		Com_DPrintf("Invalid PCX image %s\n", COM_SkipPath(filename));
+		VFS_CLOSE(fin);
+		return NULL;
+	}
 
 	pcxbuf = (byte *) Q_malloc(filesize);
 	if (VFS_READ(fin, pcxbuf, filesize, NULL) != filesize) 
@@ -1868,8 +1908,7 @@ byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int m
 	{
 		for (x = 0; x < width; ) 
 		{
-			if (pix - (byte *) pcx > filesize) 
-			{
+			if (pix - (byte *)pcx >= filesize) {
 				Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 				Q_free(pcxbuf);
 				Q_free(data);
@@ -1881,8 +1920,7 @@ byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int m
 			if ((dataByte & 0xC0) == 0xC0)
 			{
 				runLength = dataByte & 0x3F;
-				if (pix - (byte *) pcx > filesize)
-				{
+				if (pix - (byte *)pcx >= filesize) {
 					Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
 					Q_free(pcxbuf);
 					Q_free(data);
@@ -1903,17 +1941,11 @@ byte *Image_LoadPCX (vfsfile_t *fin, const char *filename, int matchwidth, int m
 				return NULL;
 			}
 
-			while (runLength-- > 0)
+			// A run may cover one byte past the line, such as the byte that
+			// pads a line of odd width to an even length, which is no pixel
+			while (runLength-- > 0 && x < width)
 				out[x++] = dataByte;
 		}
-	}
-
-	if (pix - (byte *) pcx > filesize) 
-	{
-		Com_DPrintf ("Malformed PCX image %s\n", COM_SkipPath(filename));
-		Q_free(pcxbuf);
-		Q_free(data);
-		return NULL;
 	}
 
 	Q_free(pcxbuf);
