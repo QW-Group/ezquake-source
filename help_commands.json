@@ -676,6 +676,9 @@
   "fs_dir": {
     "description": "Lists files in the VFS under a given directory, with optional filtering and display options. Usage: `fs_dir <directory> [file_suffix] [hidedir] [hideext] [hidesize]`. `<directory>` is a path within the VFS search path; an optional `<file_suffix>` filters results to files with that extension. Display flags: hidedir removes the directory prefix from each filename; hideext strips the file extension; hidesize suppresses the file size column. Each matching entry is printed with its size in bytes unless hidesize is set. Legacy alias: `dir`."
   },
+  "fs_flush": {
+    "description": "Marks the game file index for rebuilding on the next cached lookup. Use this after adding or removing files in a mounted directory."
+  },
   "fs_loadpak": {
     "description": "Attempts to load one or more .pak files into the virtual filesystem search path. Usage: `fs_loadpak <pakname> [<pakname> ...]`. Each `<pakname>` is tried first as a bare path, then under ezquake/, qw/, and id1/ with a .pak extension appended. Note: the add operation is currently stubbed out (VFS-FIXME in source) and will always report failure; only fs_removepak reliably changes the active pak set. Cannot be used while connected to a server. Legacy alias: `loadpak`."
   },

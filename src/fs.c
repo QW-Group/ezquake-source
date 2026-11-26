@@ -45,6 +45,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #endif
 
 static void FS_RebuildFSHash(void);
+static void FS_RefreshFSCache_f(void);
 #ifdef SERVERONLY
 static const char *FS_GetCleanPath(const char *pattern, char *outbuf, int outlen);
 #endif
@@ -2041,6 +2042,7 @@ void FS_InitModuleFS (void)
 	Cmd_AddCommand("fs_path", FS_Path_f);
 	Cmd_AddLegacyCommand("path", "fs_path");
 	Cmd_AddCommand("fs_restart", FS_ReloadPackFiles_f);
+	Cmd_AddCommand("fs_flush", FS_RefreshFSCache_f);
 	Cmd_AddCommand("fs_diff", FS_DiffFile_f); 		// VFS-FIXME <-- Only a debug function
 	Cmd_AddCommand("fs_dir", FS_Dir_f);
 	Cmd_AddLegacyCommand("dir", "fs_dir");
@@ -2233,6 +2235,11 @@ void FS_FlushFSHash(void)
 		Hash_Flush(filesystemhash);
 	}
 
+	filesystemchanged = true;
+}
+
+static void FS_RefreshFSCache_f(void)
+{
 	filesystemchanged = true;
 }
 
@@ -2699,18 +2706,6 @@ static void FS_AddDataFiles(char *pathto, searchpath_t *parent, char *extension,
 		fclose(pak_lst);
 	}
 }
-
-void FS_RefreshFSCache_f(void)
-{
-	filesystemchanged=true;
-}
-
-void FS_FlushFSCache(void)
-{
-	if (fs_cache.value != 2)
-		filesystemchanged=true;
-}
-
 
 /*
 ================
