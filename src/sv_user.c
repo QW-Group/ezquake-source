@@ -1539,15 +1539,12 @@ static qbool SV_IsDownloadPath(const char *name)
 
 static vfsfile_t *SV_OpenDemoDownload(const char *directory, const char *filename)
 {
-	char fullname[MAX_OSPATH];
-	int length;
-
 	// Download demos from the recording directory even when userdir is set.
-	length = snprintf(fullname, sizeof(fullname), "%s/%s/%s", fs_gamedir, directory, filename);
-	if (length < 0 || length >= (int)sizeof(fullname)) {
-		return NULL;
-	}
-	return FS_OpenVFS(fullname, "rb", FS_NONE_OS);
+	char *fullname = Q_strdup_printf("%s/%s/%s", fs_gamedir, directory, filename);
+	vfsfile_t *file = FS_OpenVFS(fullname, "rb", FS_NONE_OS);
+
+	Q_free(fullname);
+	return file;
 }
 
 static qbool SV_ParseDemoNumber(const char *selector, int *num)

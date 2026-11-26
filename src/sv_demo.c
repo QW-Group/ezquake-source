@@ -147,7 +147,7 @@ mvddest_t *DestByName (char *name)
 	mvddest_t *d;
 
 	for (d = demo.dest; d; d = d->nextdest)
-		if (!strncmp(name, d->name, sizeof(d->name)-1))
+		if (d->name && !strcmp(name, d->name))
 			return d;
 
 	return NULL;
@@ -350,12 +350,8 @@ static int DestCloseAllFlush (qbool destroyfiles, qbool mvdonly)
 
 		if (!mvdonly || d->desttype != DEST_STREAM)
 		{
-			desttype_t dt = d->desttype;
-			char dest_name[sizeof(d->name)];
-			char dest_path[sizeof(d->path)];
-
-			strlcpy(dest_name, d->name, sizeof(dest_name));
-			strlcpy(dest_path, d->path, sizeof(dest_path));
+			// DestClose frees the recording path before the finish script runs.
+			char *relpath = d->record_relpath ? Q_strdup(d->record_relpath) : NULL;
 
 			if (!destroyfiles && d->record_path && (int)sv_demotxt.value) {
 				SV_WriteRecordTxt(d->record_path);
@@ -367,8 +363,10 @@ static int DestCloseAllFlush (qbool destroyfiles, qbool mvdonly)
 			}
 			numclosed++;
 
-			if (dt != DEST_STREAM && dest_name[0]) // ignore stream or empty file name
-				SV_RunOnRecordFinish(dest_name, dest_path, destroyfiles);
+			if (relpath) {
+				SV_RunOnRecordFinish(relpath, destroyfiles);
+				Q_free(relpath);
+			}
 		}
 		else
 			prev = &d->nextdest;
@@ -1053,7 +1051,7 @@ SV_InitRecord
 */
 static mvddest_t *SV_InitRecordFile (char *name)
 {
-	char *s;
+	char advertised_name[MAX_INFO_KEY];
 	mvddest_t *dst;
 	FILE *file;
 
@@ -1068,6 +1066,8 @@ static mvddest_t *SV_InitRecordFile (char *name)
 
 	dst = (mvddest_t*) Q_malloc (sizeof(mvddest_t));
 	dst->record_path = Q_strdup(name);
+	dst->record_relpath = dst->record_path + strlen(fs_gamedir) + 1;
+	dst->name = strrchr(dst->record_relpath, '/') + 1;
 
 	if (!(int)sv_demoUseCache.value)
 	{
@@ -1084,15 +1084,11 @@ static mvddest_t *SV_InitRecordFile (char *name)
 		dst->cache = (char *) Q_malloc (dst->cachesize);
 	}
 
-	s = name + strlen(name);
-	while (*s != '/') s--;
-	strlcpy(dst->name, s+1, sizeof(dst->name));
-	strlcpy(dst->path, sv_demoDir.string, sizeof(dst->path));
-
 	if ( !sv_silentrecord.value )
 		SV_BroadcastPrintf (PRINT_CHAT, "Server starts recording (%s):\n%s\n",
-		                    (dst->desttype == DEST_BUFFEREDFILE) ? "memory" : "disk", s+1);
-	Cvar_SetROM(&serverdemo, dst->name);
+		                    (dst->desttype == DEST_BUFFEREDFILE) ? "memory" : "disk", dst->name);
+	strlcpy(advertised_name, dst->name, sizeof(advertised_name));
+	Cvar_SetROM(&serverdemo, advertised_name);
 
 	if ((int)sv_demotxt.value)
 		SV_WriteRecordTxt(dst->record_path);
@@ -1112,7 +1108,7 @@ static void SV_AddLastDemo(void)
 
 	for (d = demo.dest; d; d = d->nextdest)
 	{
-		if (d->desttype != DEST_STREAM && d->name[0])
+		if (d->name)
 		{
 			name = d->name;
 			break; // we found file dest with non empty name, use it as last demo name
@@ -2249,10 +2245,7 @@ const char* SV_MVDDemoName(void)
 	mvddest_t* d;
 
 	for (d = demo.dest; d; d = d->nextdest) {
-		if (d->desttype == DEST_STREAM) {
-			continue; // streams are not saved on to HDD, so ignore it...
-		}
-		if (d->name[0]) {
+		if (d->name) {
 			return d->name;
 		}
 	}

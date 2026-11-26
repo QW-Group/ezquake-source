@@ -283,18 +283,18 @@ int Sys_Script(const char *path, const char *args)
 {
 	STARTUPINFO startup = {0};
 	PROCESS_INFORMATION process;
-	char command_line[1024];
+	char *command_line;
+	BOOL started;
 	char shell[MAX_OSPATH];
 
 	if (!Sys_fullpath(shell, "sh.exe", sizeof(shell))) {
 		return 0;
 	}
-	if (snprintf(command_line, sizeof(command_line), "\"%s\" %s.qws %s", shell, path, args) >= sizeof(command_line)) {
-		return 0;
-	}
-
+	command_line = Q_strdup_printf("\"%s\" %s.qws %s", shell, path, args);
 	startup.cb = sizeof(startup);
-	if (!CreateProcessA(shell, command_line, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, fs_gamedir, &startup, &process)) {
+	started = CreateProcessA(shell, command_line, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, fs_gamedir, &startup, &process);
+	Q_free(command_line);
+	if (!started) {
 		return 0;
 	}
 	CloseHandle(process.hThread);

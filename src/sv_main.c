@@ -2836,9 +2836,9 @@ static char *DecodeArgs(char *args)
 	return string;
 }
 
-void SV_Script_f (void)
+void SV_RunScript(const char *arg_prefix)
 {
-	char *path, *p;
+	char *path, *p, *args;
 	extern redirect_t sv_redirected;
 
 	if (Cmd_Argc() < 2)
@@ -2873,8 +2873,14 @@ void SV_Script_f (void)
 	if (sv_redirected != RD_MOD)
 		Sys_Printf("Running %s.qws\n", path);
 
-	Sys_Script(path, va("%d %s", sv_redirected, p));
+	args = Q_strdup_printf("%d %s%s", sv_redirected, arg_prefix, p);
+	Sys_Script(path, args);
+	Q_free(args);
+}
 
+void SV_Script_f (void)
+{
+	SV_RunScript("");
 }
 
 //============================================================================

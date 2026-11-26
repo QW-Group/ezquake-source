@@ -1302,7 +1302,8 @@ int Sys_Script (const char *path, const char *args)
 {
 	STARTUPINFO			si;
 	PROCESS_INFORMATION	pi;
-	char cmdline[1024], curdir[MAX_OSPATH];
+	char *cmdline, curdir[MAX_OSPATH];
+	BOOL started;
 
 	memset (&si, 0, sizeof(si));
 	si.cb = sizeof(si);
@@ -1311,12 +1312,13 @@ int Sys_Script (const char *path, const char *args)
 
 	GetCurrentDirectory(sizeof(curdir), curdir);
 
-
-	snprintf(cmdline, sizeof(cmdline), "%s\\sh.exe %s.qws %s", curdir, path, args);
+	cmdline = Q_strdup_printf("%s\\sh.exe %s.qws %s", curdir, path, args);
 	strlcat(curdir, va("\\%s", fs_gamedir+2), MAX_OSPATH);
 
-	return CreateProcess (NULL, cmdline, NULL, NULL,
-	                      FALSE, 0/*DETACHED_PROCESS CREATE_NEW_CONSOLE*/ , NULL, curdir, &si, &pi);
+	started = CreateProcess (NULL, cmdline, NULL, NULL,
+	                         FALSE, 0/*DETACHED_PROCESS CREATE_NEW_CONSOLE*/ , NULL, curdir, &si, &pi);
+	Q_free(cmdline);
+	return started;
 }
 
 // ===========================================================================

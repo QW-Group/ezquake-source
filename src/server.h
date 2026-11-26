@@ -479,9 +479,9 @@ typedef struct mvddest_s
 	socket_t socket;
 	FILE *file;
 
-	char name[MAX_QPATH];
-	char path[MAX_QPATH];
-	char *record_path; // path used to open the MVD file
+	char *record_path; // owns the path used to open the MVD file
+	const char *record_relpath; // points into record_path after the game directory
+	char *name; // basename within record_path
 
 	char *cache;
 	int cacheused; // queued cache bytes
@@ -862,6 +862,7 @@ void SV_SendBan (void);
 qbool GameStarted(void);
 //<-
 void SV_Script_f (void);
+void SV_RunScript(const char *arg_prefix);
 int SV_GenerateUserID (void);
 
 //
@@ -1065,7 +1066,7 @@ char *SV_MVDNum(int num);
 //
 
 char	*SV_PrintTeams (void);
-void	SV_RunOnRecordFinish(const char *dest_name, const char *dest_path, qbool destroyfiles);
+void	SV_RunOnRecordFinish(char *relpath, qbool destroyfiles);
 qbool	SV_DirSizeCheck (void);
 char	*SV_CleanName (unsigned char *name);
 int     Dem_CountPlayers (void);
