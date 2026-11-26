@@ -644,6 +644,7 @@ void CL_Download_f(void)
 	char *filename;
 	const char *dir, *localname;
 	char destination[sizeof(cls.downloadname)];
+	dltype_t type = dl_single;
 	int length;
 	extern char *CL_DemoDirectory(void);
 
@@ -670,6 +671,10 @@ void CL_Download_f(void)
 	 || Utils_RegExpMatch("\\.(qwd|qwz|dem)$", filename)) {
 		dir = CL_DemoDirectory();
 		localname = COM_SkipPath(filename);
+		if (cbuf_current == &cbuf_svc && !cls.demoplayback && !strncmp(filename, "demos/", 6)) {
+			// The server waits for this transfer before offering the next queued demo.
+			type = dl_server_demo;
+		}
 	}
 
 	length = snprintf(destination, sizeof(destination), "%s/%s", dir, localname);
@@ -677,12 +682,12 @@ void CL_Download_f(void)
 		Com_Printf("Download path is too long.\n");
 		return;
 	}
-	if (COM_FileExists(destination)) {
+	if (type != dl_server_demo && COM_FileExists(destination)) {
 		Com_Printf("%s already exists.\n", destination);
 		return;
 	}
 
-	cls.downloadtype      = dl_single;
+	cls.downloadtype      = type;
 	cls.downloadmethod    = DL_QW; // by default its DL_QW, if server support DL_QWCHUNKED it will be changed.
 	cls.downloadstarttime = Sys_DoubleTime();
 	strlcpy(cls.downloadname, destination, sizeof(cls.downloadname));

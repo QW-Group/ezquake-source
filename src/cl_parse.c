@@ -985,6 +985,16 @@ void CL_ParseChunkedDownload(void)
 //		if (strcasecmp(cls.downloadname, svname))
 //			Host_Error("Server sent the wrong download - \"%s\" instead of \"%s\"\n", svname, cls.downloadname);
 
+		chunked_download_number++;
+		// A pending request is still DL_QW here. We switch to DL_QWCHUNKS after opening the temp file below.
+		if (cls.downloadmethod == DL_QW && cls.downloadtype == dl_server_demo && COM_FileExists(cls.downloadname)) {
+			// The server has opened the demo. Acknowledge it without requesting any chunks.
+			Com_Printf("Keeping existing file %s.\n", cls.downloadname);
+			CL_SendClientCommand(true, "nextdl -1 100 %d", chunked_download_number);
+			CL_FinishDownload();
+			return;
+		}
+
 		// Start the new download
 		cls.download = CL_OpenDownloadTempFile();
 		if (!cls.download) {
@@ -995,8 +1005,6 @@ void CL_ParseChunkedDownload(void)
 
 		cls.downloadmethod  = DL_QWCHUNKS;
 		cls.downloadpercent = 0;
-
-		chunked_download_number++;
 
 		downloadsize        = totalsize;
 
@@ -1066,6 +1074,7 @@ void CL_RequestNextDownload (void)
 	switch (cls.downloadtype)
 	{
 		case dl_single:
+		case dl_server_demo:
 			break;
 		case dl_skin:
 			Skin_NextDownload ();

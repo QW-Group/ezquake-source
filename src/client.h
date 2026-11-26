@@ -403,7 +403,8 @@ typedef enum
 	dl_vwep_model,
 	dl_sound,
 	dl_skin,
-	dl_single
+	dl_single,
+	dl_server_demo
 } dltype_t;		// download type
 
 typedef enum demoseekingtype_e
