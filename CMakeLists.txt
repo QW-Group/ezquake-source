@@ -35,7 +35,9 @@ git_refresh_submodules()
 git_extract_version(git_version)
 
 # Xcode has its own LTO features.
-if(ENABLE_LTO AND NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(xcode_lto "$<IF:$<OR:$<CONFIG:Debug>,$<NOT:$<BOOL:${ENABLE_LTO}>>>,NO,YES>")
+elseif(ENABLE_LTO)
     check_ipo_supported(RESULT USE_LTO)
     if(USE_LTO)
         set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
@@ -274,6 +276,9 @@ if(EZQUAKE_SERVER_ONLY)
             ${server_system}
             ${SOURCE_DIR}/utils.c
     )
+    if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+        set_target_properties(ezquake-server PROPERTIES XCODE_ATTRIBUTE_LLVM_LTO "${xcode_lto}")
+    endif()
     target_include_directories(ezquake-server PRIVATE
             ${QWPROT_SOURCE_DIR}
             ${EZQUAKE_MINIZIP_INCLUDE_DIR}
@@ -1001,7 +1006,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
             XCODE_ATTRIBUTE_PRODUCT_BUNDLE_IDENTIFIER               "com.ezquake.ezQuake"
             XCODE_ATTRIBUTE_MARKETING_VERSION                       "${version}"
             XCODE_ATTRIBUTE_CURRENT_PROJECT_VERSION                 "${version}"
-            XCODE_ATTRIBUTE_LLVM_LTO                                $<IF:$<OR:$<CONFIG:Debug>,$<NOT:$<BOOL:${ENABLE_LTO}>>>,NO,Monolithic>
+            XCODE_ATTRIBUTE_LLVM_LTO                                "${xcode_lto}"
             XCODE_ATTRIBUTE_GCC_OPTIMIZATION_LEVEL                  $<IF:$<CONFIG:Debug>,0,3>
             XCODE_ATTRIBUTE_DEAD_CODE_STRIPPING                     YES
             XCODE_ATTRIBUTE_GENERATE_INFOPLIST_FILE                 YES
