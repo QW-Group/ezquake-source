@@ -38,9 +38,10 @@ void R_CompressFullbrightTexture(byte* skin_pixels, int skin_width, int skin_hei
 	int x, y;
 
 	// adjust fb-texture to add alpha (this is from (TEX_FULLBRIGHT | TEX_LUMA) processing)
-	for (x = 0; x < skin_width; ++x) {
-		for (y = 0; y < skin_height; ++y) {
-			int base = (x + y * skin_width) * 4;
+	// the fb texture still has its own size here, it is only rescaled to the skin's size below
+	for (x = 0; x < fb_width; ++x) {
+		for (y = 0; y < fb_height; ++y) {
+			int base = (x + y * fb_width) * 4;
 			extern cvar_t gl_wicked_luma_level;
 
 			// For luma textures that don't have alpha component (or are just incorrect)
