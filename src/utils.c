@@ -1313,7 +1313,7 @@ qbool Utils_RegExpMatch(char *regexp, char *matchstring)
 	return false;
 }
 
-qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **resultstring, int *resultlength, int group)
+qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **resultstring, size_t *resultlength, int group)
 {
 	pcre2_code *re = NULL;
 	int error;
@@ -1334,8 +1334,8 @@ qbool Utils_RegExpGetGroup(char *regexp, char *matchstring, const char **results
 
 	match_data = pcre2_match_data_create_from_pattern(re, NULL);
 	if (re && (match = pcre2_match(re, (PCRE2_SPTR)matchstring, strlen(matchstring), 0, 0, match_data, NULL)) >= 0) {
-		int substring_length = 0;
-		error = pcre2_substring_get_bynumber (match_data, group, (PCRE2_UCHAR8**)resultstring, (size_t*)&substring_length);
+		PCRE2_SIZE substring_length = 0;
+		error = pcre2_substring_get_bynumber (match_data, group, (PCRE2_UCHAR8**)resultstring, &substring_length);
 
 		if (resultlength != NULL) {
 			(*resultlength) = substring_length;

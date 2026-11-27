@@ -1709,7 +1709,7 @@ int FS_ZipBreakupArchivePath (char *archive_extension,			// The extension of the
 	char *archive_path_found = NULL;
 	char *inzip_path_found = NULL;
 	char regexp[MAX_PATH];
-	int result_length = 0;
+	size_t result_length = 0;
 
 	snprintf(regexp, sizeof(regexp), "(.*?\\.%s)(\\\\|/)(.*)", archive_extension);
 
