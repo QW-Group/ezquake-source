@@ -137,7 +137,7 @@ void *Hash_Get(hashtable_t *table, char *name)
 	return NULL;
 }
 
-void *Hash_GetInsensitive(hashtable_t *table, const char *name)
+const bucket_t *Hash_GetInsensitiveBucket(hashtable_t *table, const char *name)
 {
 	int bucknum = Hash_KeyInsensitive(name, table->numbuckets);
 	bucket_t *buck;
@@ -147,11 +147,17 @@ void *Hash_GetInsensitive(hashtable_t *table, const char *name)
 	while(buck)
 	{
 		if (!strcasecmp(name, buck->keystring))
-			return buck->data;
+			return buck;
 
 		buck = buck->next;
 	}
 	return NULL;
+}
+
+void *Hash_GetInsensitive(hashtable_t *table, const char *name)
+{
+	const bucket_t *buck = Hash_GetInsensitiveBucket(table, name);
+	return buck ? buck->data : NULL;
 }
 
 void *Hash_GetKey(hashtable_t *table, char *key)

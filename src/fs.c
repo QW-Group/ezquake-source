@@ -234,8 +234,6 @@ static qbool FS_WriteFileRelative(const char *filename, const void *data, int le
 		return false;
 	}
 
-	filesystemchanged=true;
-
 	return true;
 }
 
@@ -1057,10 +1055,43 @@ qbool VFS_COPYPROTECTED(struct vfsfile_s *vf) {
 	return vf->copyprotected;
 }
 
+static qbool FS_WriteTargetIsIndexed(const char *fullname, const char *filename)
+{
+	const bucket_t *entry;
+	searchpath_t *search;
+	size_t directory_length;
+
+	if (!fs_cache.value || filesystemchanged || !filesystemhash) {
+		return false;
+	}
+
+	// A case-insensitive match can still be a different file on disk.
+	entry = Hash_GetInsensitiveBucket(filesystemhash, filename);
+	if (!entry || strcmp(entry->keystring, filename)) {
+		return false;
+	}
+
+	// fullname was formed by joining the write directory and filename with a slash.
+	directory_length = strlen(fullname) - strlen(filename) - 1;
+	for (search = fs_searchpaths; search; search = search->next) {
+		if (search->funcs == &osfilefuncs && search->handle == entry->data) {
+			const char *directory = search->handle;
+			size_t length = strlen(directory);
+
+			if (length && directory[length - 1] == '/') {
+				length--;
+			}
+			return length == directory_length && !strncmp(directory, fullname, length);
+		}
+	}
+	return false;
+}
+
 static vfsfile_t *FS_OpenGameOSPath(const char *root, const char *gamedir, const char *filename, char *mode, qbool create_path)
 {
 	char fullname[MAX_OSPATH];
 	qbool fits;
+	vfsfile_t *vfs;
 
 	if (gamedir) {
 		fits = FS_FormatOSPath(fullname, sizeof(fullname), "%s/%s/%s", root, gamedir, filename);
@@ -1073,7 +1104,12 @@ static vfsfile_t *FS_OpenGameOSPath(const char *root, const char *gamedir, const
 	if (create_path) {
 		FS_CreatePath(fullname);
 	}
-	return VFSOS_Open(fullname, mode);
+	vfs = VFSOS_Open(fullname, mode);
+	if (vfs && mode[0] != 'r' && (create_path || !FS_WriteTargetIsIndexed(fullname, filename))) {
+		// Include newly created files in the next game search.
+		filesystemchanged = true;
+	}
+	return vfs;
 }
 
 static vfsfile_t *FS_OpenGameOS(const char *filename, char *mode)
@@ -1164,12 +1200,7 @@ static vfsfile_t *FS_OpenVFSInternal(const char *filename, char *mode, relativet
 		return VFSOS_Open(filename, mode);
 
 	case FS_GAME_OS:	//OS access only, no paks
-		vfs = FS_OpenGameOS(filename, mode);
-		if (vfs && mode[0] != 'r') {
-			// Include newly created files in the next game search.
-			filesystemchanged = true;
-		}
-		return vfs;
+		return FS_OpenGameOS(filename, mode);
 
 	case FS_GAME:
 		if (mode[0] != 'r') {
