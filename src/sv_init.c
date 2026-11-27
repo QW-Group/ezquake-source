@@ -207,6 +207,52 @@ static unsigned SV_CheckModel(char *mdl)
 	return crc;
 }
 
+#ifdef SV_HAS_CSQC
+// CSQC is only meaningful for a PR2 mod (native/QVM). A PR1 classic progs.dat
+// cannot drive CSQC, so with it loaded we must not load/announce csprogs and
+// must not advertise FTE_PEXT_CSQC to clients.
+qbool SV_CSQCActive(void)
+{
+	return sv_vm != NULL;
+}
+
+void SV_UpdateCSQCExtension(void)
+{
+	if (sv_vm)
+		svs.fteprotocolextensions |= FTE_PEXT_CSQC;
+	else
+		svs.fteprotocolextensions &= ~FTE_PEXT_CSQC;
+}
+
+static void SV_LoadCSQC(void)
+{
+	extern cvar_t sv_csqc_progname;
+	byte *file;
+	int size;
+
+	// "no csprogs" state (checksum 0 + empty star keys) covers both the PR1
+	// (no CSQC at all) and the missing-csprogs-file cases; set it in one place.
+	if (!SV_CSQCActive() || !(file = FS_LoadGameTempFile(sv_csqc_progname.string, &size)))
+	{
+		sv.csqcchecksum = 0;
+		Info_SetValueForStarKey(svs.info, "*csprogs", "", MAX_SERVERINFO_STRING);
+		Info_SetValueForStarKey(svs.info, "*csprogssize", "", MAX_SERVERINFO_STRING);
+		Info_SetValueForStarKey(svs.info, "*csprogsname", "", MAX_SERVERINFO_STRING);
+		return;
+	}
+
+	{
+		char text[64];
+		sv.csqcchecksum = Com_BlockChecksum(file, size);
+		sprintf(text, "0x%x", sv.csqcchecksum);
+		Info_SetValueForStarKey(svs.info, "*csprogs", text, MAX_SERVERINFO_STRING);
+		sprintf(text, "0x%x", (unsigned int)size);
+		Info_SetValueForStarKey(svs.info, "*csprogssize", text, MAX_SERVERINFO_STRING);
+		Info_SetValueForStarKey(svs.info, "*csprogsname", sv_csqc_progname.string, MAX_SERVERINFO_STRING);
+	}
+}
+#endif
+
 /* Select visibility policy for a freshly loaded server map. */
 static cm_vispolicy_t SV_VisibilityPolicy(void)
 {
@@ -296,12 +342,23 @@ void SV_ShutdownGame(void)
 		Q_free(sv.edicts);
 	}
 
+#ifdef SV_HAS_CSQC
+	SV_FreeCSQCList();
+#endif
+
 	sv.game_edicts = NULL;
 	sv_player = NULL;
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
 		SV_ClearEntityHistory(&svs.clients[i]);
 		svs.clients[i].edict = NULL;
+#ifdef SV_HAS_CSQC
+		/* Each map must enable CSQC again. Keep negotiated capabilities so CSQC
+		 * can resume after switching from PR2 to PR1 and back. */
+		svs.clients[i].csqcactive = false;
+		Q_free(svs.clients[i].pendingcsqcbits);
+		svs.clients[i].max_net_ents = 0;
+#endif
 	}
 	SV_ClearEntityHistory(&demo.recorder);
 }
@@ -364,7 +421,7 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 			svs.clients[i].state = cs_free;
 			Info_RemoveAll(&svs.clients[i]._userinfo_ctx_);
 			Info_RemoveAll(&svs.clients[i]._userinfoshort_ctx_);
-			SV_FullClientUpdate(&svs.clients[i], &sv.reliable_datagram);
+			/* No roster update needed: sv is cleared below and clients re-sign on. */
 			svs.clients[i].isBot = 0;
 		}
 	}
@@ -463,6 +520,13 @@ void SV_SpawnServer(char *mapname, qbool devmap, char* entityfile, qbool loading
 	PR_InitPatchTables();
 #endif
 	PR_InitProg();
+
+#ifdef SV_HAS_CSQC
+	// after progs are loaded we know whether the mod is PR2 (CSQC-capable) or
+	// PR1 (.dat, no CSQC); recompute the advertised extension and csprogs keys.
+	SV_UpdateCSQCExtension();
+	SV_LoadCSQC();
+#endif
 
 	fofs_items2 = ED_FindFieldOffset ("items2"); // ZQ_ITEMS2 extension
 	fofs_maxspeed = ED_FindFieldOffset ("maxspeed");

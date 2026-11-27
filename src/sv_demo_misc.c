@@ -21,10 +21,45 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #ifndef CLIENTONLY
 #include "qwsvdef.h"
+#ifdef PCRE2_CODE_UNIT_WIDTH
 #include <pcre2.h>
+#endif
 
 #define MAX_DEMOINFO_SIZE (1024 * 200)
 static char chartbl[256];
+
+void SV_MVDEmbedStartTimestamp(void)
+{
+	mvdhidden_block_header_t header;
+	uint64_t v;
+	byte buf[10];
+	int len = 0;
+
+	if (!sv.mvdrecording) {
+		return;
+	}
+
+	// ULE128-encode the millisecond timestamp: 7 data bits per byte, MSB set
+	// on every byte except the last. Aligns with the remaster's variable-length
+	// int convention and extends gracefully past 64 bits.
+	v = Sys_TimestampMilliseconds();
+	while (v >= 0x80) {
+		buf[len++] = (byte)((v & 0x7F) | 0x80);
+		v >>= 7;
+	}
+	buf[len++] = (byte)v;
+
+	header.length = LittleLong(len);
+	header.type_id = LittleShort(mvdhidden_demo_start_timestamp_ms);
+
+	if (!MVDWrite_HiddenBlockBegin(sizeof(header.length) + sizeof(header.type_id) + len)) {
+		return;
+	}
+
+	MVD_SZ_Write(&header.length, sizeof(header.length));
+	MVD_SZ_Write(&header.type_id, sizeof(header.type_id));
+	MVD_SZ_Write(buf, len);
+}
 
 /*
 ====================
@@ -64,13 +99,13 @@ void CleanName_Init (void)
 	chartbl[33] = chartbl[33 + 128] = '!';
 
 	// #
-	chartbl[35] = chartbl[35 + 128] = '#';
+	// chartbl[35] = chartbl[35 + 128] = '#';
 
 	// %
-	chartbl[37] = chartbl[37 + 128] = '%';
+	// chartbl[37] = chartbl[37 + 128] = '%';
 
 	// &
-	chartbl[38] = chartbl[38 + 128] = '&';
+	// chartbl[38] = chartbl[38 + 128] = '&';
 
 	// '
 	chartbl[39] = chartbl[39 + 128] = '\'';
@@ -214,10 +249,14 @@ void SV_RunOnRecordFinish(char *relpath, qbool destroyfiles)
 		extern redirect_t sv_redirected;
 		redirect_t old = sv_redirected;
 		char *name = strrchr(relpath, '/');
-		char *args, *out;
+		char *args, *out, *extension;
 
 		*name++ = '\0';
-		COM_StripExtension(name, name, strlen(name) + 1);
+		extension = strrchr(name, '.');
+
+		if (extension) {
+			*extension = '\0';
+		}
 		args = Q_malloc(2 * (strlen(relpath) + strlen(name)) + sizeof("\"\" \"\" "));
 		out = SV_AppendRecordArg(args, relpath);
 		out = SV_AppendRecordArg(out, name);
@@ -337,10 +376,16 @@ void SV_DemoList (qbool use_regex)
 	int		i, j, n;
 	int		files[MAX_DIRFILES + 1];
 
+#ifdef PCRE2_CODE_UNIT_WIDTH
 	PCRE2_SIZE	error_offset;
 	pcre2_code	*preg;
 	pcre2_match_data *match_data = NULL;
 	int error;
+#else
+	int	r;
+	pcre	*preg;
+	const char	*errbuf;
+#endif
 
 	memset(files, 0, sizeof(files));
 
@@ -358,12 +403,13 @@ void SV_DemoList (qbool use_regex)
 		{
 			if (use_regex)
 			{
+#ifdef PCRE2_CODE_UNIT_WIDTH
 				if (!(preg = pcre2_compile((PCRE2_SPTR)Q_normalizetext(Cmd_Argv(j)), PCRE2_ZERO_TERMINATED, PCRE2_CASELESS, &error, &error_offset, NULL)))
 				{
 					PCRE2_UCHAR error_str[256];
 					pcre2_get_error_message(error, error_str, sizeof(error_str));
-					Con_Printf("SV_DemoList: pcre2_compile(%s) error: %s at offset %d\n",
-					           Cmd_Argv(j), error_str, error_offset);
+					Con_Printf("SV_DemoList: pcre2_compile(%s) error: %s at offset %zu\n",
+					           Cmd_Argv(j), error_str, (size_t)error_offset);
 					pcre2_code_free(preg);
 					break;
 				}
@@ -379,6 +425,29 @@ void SV_DemoList (qbool use_regex)
 					}
 					break;
 				}
+#else
+				if (!(preg = pcre_compile(Q_normalizetext(Cmd_Argv(j)),	PCRE_CASELESS, &errbuf, &r, NULL)))
+				{
+					Con_Printf("Sys_listdir: pcre_compile(%s) error: %s at offset %d\n",
+					           Cmd_Argv(j), errbuf, r);
+					pcre_free(preg);
+					break;
+				}
+				switch (r = pcre_exec(preg, NULL, list->name,
+				                      strlen(list->name), 0, 0, NULL, 0))
+				{
+				case 0:
+					pcre_free(preg);
+					continue;
+				case PCRE_ERROR_NOMATCH:
+					break;
+				default:
+					Con_Printf("Sys_listdir: pcre_exec(%s, %s) error code: %d\n",
+					           Cmd_Argv(j), list->name, r);
+				}
+				pcre_free(preg);
+				break;
+#endif
 			}
 			else
 			{
@@ -496,6 +565,7 @@ char *SV_MVDNum (int num)
 }
 
 #define OVECCOUNT 3
+#ifdef PCRE2_CODE_UNIT_WIDTH
 char *SV_MVDName2Txt (const char *name)
 {
 	char	s[MAX_OSPATH];
@@ -519,8 +589,8 @@ char *SV_MVDName2Txt (const char *name)
 	{
 		PCRE2_UCHAR error_str[256];
 		pcre2_get_error_message(error, error_str, sizeof(error_str));
-		Con_Printf("SV_MVDName2Txt: pcre2_compile(%s) error: %s at offset %d\n",
-					sv_demoRegexp.string, error_str, error_offset);
+		Con_Printf("SV_MVDName2Txt: pcre2_compile(%s) error: %s at offset %zu\n",
+					sv_demoRegexp.string, error_str, (size_t)error_offset);
 		pcre2_code_free(preg);
 		return NULL;
 	}
@@ -563,6 +633,63 @@ char *SV_MVDName2Txt (const char *name)
 	//Con_Printf("%d) %s, %s\n", r, name, s);
 	return va("%s", s);
 }
+#else
+char *SV_MVDName2Txt (const char *name)
+{
+	char	s[MAX_OSPATH];
+	int		len;
+
+	int		r, ovector[OVECCOUNT];
+	pcre	*preg;
+	const char	*errbuf;
+
+	if (!name)
+		return NULL;
+
+	if (!*name)
+		return NULL;
+
+	strlcpy(s, name, MAX_OSPATH);
+	len = strlen(s);
+
+	if (!(preg = pcre_compile(sv_demoRegexp.string, PCRE_CASELESS, &errbuf, &r, NULL)))
+	{
+		Con_Printf("SV_MVDName2Txt: pcre_compile(%s) error: %s at offset %d\n",
+					sv_demoRegexp.string, errbuf, r);
+		pcre_free(preg);
+		return NULL;
+	}
+	r = pcre_exec(preg, NULL, s, len, 0, 0, ovector, OVECCOUNT);
+	pcre_free(preg);
+	if (r < 0)
+	{
+		switch (r)
+		{
+		case PCRE_ERROR_NOMATCH:
+			return NULL;
+		default:
+			Con_Printf("SV_MVDName2Txt: pcre_exec(%s, %s) error code: %d\n",
+						sv_demoRegexp.string, s, r);
+			return NULL;
+		}
+	}
+	else
+	{
+		if (ovector[0] + 5 > MAX_OSPATH)
+			len = MAX_OSPATH - 5;
+		else
+			len = ovector[0];
+	}
+	s[len++] = '.';
+	s[len++] = 't';
+	s[len++] = 'x';
+	s[len++] = 't';
+	s[len]   = '\0';
+
+	//Con_Printf("%d) %s, %s\n", r, name, s);
+	return va("%s", s);
+}
+#endif
 
 static char *SV_MVDTxTNum (int num)
 {

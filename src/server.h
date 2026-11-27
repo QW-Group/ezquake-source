@@ -1068,6 +1068,7 @@ char *SV_MVDNum(int num);
 
 char	*SV_PrintTeams (void);
 void	SV_RunOnRecordFinish(char *relpath, qbool destroyfiles);
+void	SV_MVDEmbedStartTimestamp(void);
 qbool	SV_DirSizeCheck (void);
 char	*SV_CleanName (unsigned char *name);
 int     Dem_CountPlayers (void);

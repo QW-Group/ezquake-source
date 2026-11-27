@@ -45,7 +45,7 @@ cvar_t  sv_demoMaxDirSize   = {"sv_demoMaxDirSize", "102400"};
 cvar_t  sv_demoClearOld     = {"sv_demoClearOld",   "0"};
 cvar_t  sv_demoDir          = {"sv_demoDir",        "demos", 0, sv_demoDir_OnChange};
 cvar_t  sv_demoDirAlt       = {"sv_demoDirAlt",     "", 0, sv_demoDir_OnChange };
-cvar_t  sv_demofps          = {"sv_demofps",        "30"};
+cvar_t  sv_demofps          = {"sv_demofps",        "77"};
 cvar_t  sv_demoIdlefps      = {"sv_demoIdlefps",    "10"};
 cvar_t  sv_demoPings        = {"sv_demopings",      "3"};
 cvar_t  sv_demoMaxSize      = {"sv_demoMaxSize",    "20480"};
@@ -62,6 +62,11 @@ cvar_t	sv_ondemoremove		= {"sv_onDemoRemove",	"", CVAR_NOTFROMSERVER};
 cvar_t	sv_demoRegexp		= {"sv_demoRegexp",		"\\.mvd(\\.(gz|bz2|rar|zip))?$"};
 
 cvar_t	sv_silentrecord		= {"sv_silentrecord",   "0"};
+// opt-in: record the CSQC stream (svc 76/83, stats 32..255) into MVD/QTV. Off
+// by default because stock ezQuake/QTV cannot parse it.
+#ifdef SV_HAS_CSQC
+cvar_t	sv_mvd_csqc			= {"sv_mvd_csqc",		"0"};
+#endif
 
 cvar_t	extralogname		= {"extralogname",		"unset"}; // no sv_ prefix? WTF!
 
@@ -233,10 +238,12 @@ void DestFlush (qbool complete)
 
 	for (d = demo.dest; d; d = d->nextdest)
 	{
-		// Flush buffered files before marking them for closure. Streams have no size limit.
-		qbool size_limit_exceeded = d->desttype != DEST_STREAM &&
+		// Check if demo total size is exceeded, stream dests are not limited.
+		qbool total_size_check = (
+			d->desttype != DEST_STREAM &&
 			(unsigned int)sv_demoMaxSize.value &&
-			d->totalsize > ((unsigned int)sv_demoMaxSize.value * 1024);
+			d->totalsize > ((unsigned int)sv_demoMaxSize.value * 1024)
+		);
 
 		switch(d->desttype)
 		{
@@ -245,7 +252,7 @@ void DestFlush (qbool complete)
 			break;
 
 		case DEST_BUFFEREDFILE:
-			if (d->cacheused + DEMO_FLUSH_CACHE_IF_LESS_THAN_THIS > d->maxcachesize || complete || size_limit_exceeded)
+			if (d->cacheused + DEMO_FLUSH_CACHE_IF_LESS_THAN_THIS > d->maxcachesize || complete || total_size_check)
 			{
 				len = (int)fwrite(d->cache, 1, d->cacheused, d->file);
 				if (len != d->cacheused)
@@ -319,7 +326,8 @@ void DestFlush (qbool complete)
 			Sys_Error("DestFlush: encountered bad dest.");
 		}
 
-		if (size_limit_exceeded)
+		// Keep in mind that stream dests are not limited by this check.
+		if (total_size_check)
 		{
 			Sys_Printf("DestFlush: sv_demoMaxSize = %dKiB trigger for dest\n", (int)sv_demoMaxSize.value);
 			d->error = true;
@@ -715,28 +723,36 @@ static qbool MVD_WriteMessage (sizebuf_t *msg, byte msec)
 	return (sv.mvdrecording ? true : false);
 }
 
-static void SV_MVDWritePausedTimeToStreams(demo_frame_t* frame)
+static void SV_MVDWritePausedTime(demo_frame_t *frame)
 {
-	// When writing out a paused frame, send a packet to let QTV keep delay in sync
-	if (frame->paused) {
-		mvddest_t* d;
-		sizebuf_t msg;
-		byte msg_buffer[128];
-		byte duration = frame->pause_duration;
+	mvddest_t *d;
+	sizebuf_t msg;
+	byte msg_buffer[17];
 
-		SZ_Init(&msg, msg_buffer, sizeof(msg_buffer));
-		MSG_WriteByte(&msg, 0);                                           //     0: duration == 0, for demos
-		MSG_WriteByte(&msg, dem_multiple);                                //     1: target of the packet
-		MSG_WriteLong(&msg, 0);                                           //  2- 5: 0 ... demo_multiple(0) => hidden packet
-		MSG_WriteLong(&msg, LittleLong(sizeof(short) + sizeof(byte)));    //  6-10: length = <short> + <byte>
-		MSG_WriteShort(&msg, LittleShort(mvdhidden_paused_duration));     // 11-12: tell QTV how much time has really passed
-		MSG_WriteByte(&msg, duration);                                    //    13: true ms value, as demo packets will have 0
+	if (!frame->paused) {
+		return;
+	}
 
-		for (d = demo.dest; d; d = d->nextdest) {
-			if (d->desttype == DEST_STREAM) {
-				DemoWriteDest(msg.data, msg.cursize, d);
-			}
+	SZ_Init(&msg, msg_buffer, sizeof(msg_buffer));
+	MSG_WriteByte(&msg, 0);
+	MSG_WriteByte(&msg, dem_multiple);
+	MSG_WriteLong(&msg, 0); // dem_multiple with no recipients is a hidden packet
+#ifdef SV_QTV_LEGACY_PAUSE_BLOCK
+	MSG_WriteLong(&msg, sizeof(short) + sizeof(byte));
+#else
+	MSG_WriteLong(&msg, sizeof_mvdhidden_block_header_t_range0 + sizeof(byte));
+	MSG_WriteLong(&msg, sizeof(byte));
+#endif
+	MSG_WriteShort(&msg, mvdhidden_paused_duration);
+	MSG_WriteByte(&msg, frame->pause_duration);
+
+	for (d = demo.dest; d; d = d->nextdest) {
+#ifdef SV_QTV_LEGACY_PAUSE_BLOCK
+		if (d->desttype != DEST_STREAM) {
+			continue;
 		}
+#endif
+		DemoWriteDest(msg.data, msg.cursize, d);
 	}
 }
 
@@ -778,7 +794,7 @@ static qbool SV_MVDWritePacketsEx (int num)
 		time1 = frame->time;
 		nextframe = frame;
 
-		SV_MVDWritePausedTimeToStreams(frame);
+		SV_MVDWritePausedTime(frame);
 
 		// find two frames
 		// one before the exact time (time - msec) and one after,
@@ -1131,6 +1147,33 @@ static void SV_AddLastDemo(void)
 
 /*
 ====================
+SV_MVD_FreeRecorderCSQC
+
+Frees the recorder's CSQC delta state (pendingcsqcbits) without touching
+demo.dest - used by SV_MVDStop when the recorder really goes away and by
+SV_MVD_Record before it partial-memsets the demo struct on a fresh start.
+====================
+*/
+static void SV_MVD_FreeRecorderCSQC (void)
+{
+#ifdef SV_HAS_CSQC
+	int i, j;
+	if (demo.recorder.pendingcsqcbits)
+	{
+		Q_free(demo.recorder.pendingcsqcbits);
+		demo.recorder.pendingcsqcbits = NULL;
+	}
+	demo.recorder.max_net_ents = 0;
+	demo.recorder.csqcactive = false;
+	// free the recorder's cached string stats (host copies)
+	for (i = 0; i < MAX_CLIENTS; i++)
+		for (j = 0; j < MAX_CL_STATS; j++)
+			Q_free(demo.statss[i][j]);
+#endif
+}
+
+/*
+====================
 SV_MVDStop
 
 stop recording a demo
@@ -1151,7 +1194,7 @@ void SV_MVDStop (int reason, qbool mvdonly)
 	if (!sv.mvdrecording)
 	{
 		Con_Printf ("Not recording a demo.\n");
-		return;
+		goto out;
 	}
 
 	instop = true; // SET TO TRUE, DON'T FORGET SET TO FALSE ON RETURN
@@ -1167,7 +1210,6 @@ void SV_MVDStop (int reason, qbool mvdonly)
 		if (!demo.dest) {
 			sv.mvdrecording = false;
 			SV_MVD_ClearRD();
-			SV_ClearEntityHistory(&demo.recorder);
 		}
 
 		if (reason == 4)
@@ -1184,7 +1226,7 @@ void SV_MVDStop (int reason, qbool mvdonly)
 
 		instop = false; // SET TO FALSE
 
-		return;
+		goto out;
 	}
 	
 	// write a disconnect message to the demo file
@@ -1207,7 +1249,6 @@ void SV_MVDStop (int reason, qbool mvdonly)
 	if (!demo.dest) {
 		sv.mvdrecording = false;
 		SV_MVD_ClearRD();
-		SV_ClearEntityHistory(&demo.recorder);
 	}
 
 	if (numclosed)
@@ -1224,6 +1265,25 @@ void SV_MVDStop (int reason, qbool mvdonly)
 	Cvar_SetROM(&serverdemo, "");
 
 	instop = false; // SET TO FALSE
+
+out:
+	// Free the recorder's CSQC delta state only when the recorder is really
+	// gone. A mvdonly stop (reason 0/2 via SV_MVDStop_f / SV_MVD_Cancel_f, and
+	// KTX's localcmd("stop")) keeps DEST_STREAM (QTV) destinations alive, so
+	// sv.mvdrecording stays true and the stream still needs csqcactive +
+	// pendingcsqcbits to keep emitting CSQC entities. Clearing them here left
+	// a live QTV stream without CSQC (entities fell back to packetentities and
+	// viewers kept stale state) with no way to re-arm, since
+	// SV_MVD_SendInitialGamestate is only called from SV_MVD_Record. On the
+	// next fresh record start the struct is memset anyway.
+	if (!sv.mvdrecording) {
+		SV_ClearEntityHistory(&demo.recorder);
+		SV_MVD_FreeRecorderCSQC();
+	}
+#ifdef SV_HAS_BROADCAST
+	if (reason != 3)
+		SV_BroadcastPrintCache();
+#endif
 }
 
 /*
@@ -1390,6 +1450,14 @@ qbool SV_MVD_Record (mvddest_t *dest, qbool mapchange)
 		// this is either mapchange and we have QTV connected
 		// or we just use /record or whatever command first time and here no recording yet
 
+		// The recorder (demo.recorder, holding the CSQC delta bitset) lives
+		// before mem_set_point, so the partial memset below would overwrite
+		// demo.recorder.pendingcsqcbits without freeing it. The ordinary map
+		// path frees it earlier via SV_MVDStop_f, but the savegame `load` path
+		// calls SV_SpawnServer directly (sv_save.c) without it, so free here to
+		// avoid a leak per load (see sv_save.c).
+		SV_MVD_FreeRecorderCSQC();
+
     	// and here we memset() not whole demo_t struct, but part,
     	// so demo.dest and demo.pendingdest is not overwriten
 		SV_MVD_ClearRD();
@@ -1454,12 +1522,14 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	unsigned char buf_data[MAX_MSGLEN];
 	unsigned int n;
 	char* s, info[MAX_EXT_INFO_STRING];
+	char epoch[21];
 
 	mvddest_t *d;
 	client_t* player;
 	edict_t* ent;
 	int i;
 	int sound_count = SV_SoundPrecacheCount(sv.sound_precache, MAX_SOUNDS);
+	int sound_cursor = 0, next_sound;
 
 	if (!demo.dest)
 		return;
@@ -1467,6 +1537,21 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	sv.mvdrecording = true; // NOTE:  afaik set to false on map change, so restore it here
 	demo.pingtime = demo.time = sv.time;
 	singledest = dest;
+
+#ifdef SV_HAS_CSQC
+	// A new dest joins mid-stream (QTV attach) or the map changed: the recorder
+	// shares its CSQC delta bitset across all dests, so re-arm the PRESENT
+	// entities for a full resend, otherwise the joining dest never receives the
+	// CSQC entities it missed (FTE parity, sv_mvd.c:1708). No-op unless the
+	// recorder was explicitly armed for CSQC (sv_mvd_csqc).
+	if (demo.recorder.csqcactive && demo.recorder.pendingcsqcbits)
+	{
+		int e;
+		for (e = 1; e < demo.recorder.max_net_ents; e++)
+			if (demo.recorder.pendingcsqcbits[e] & SENDFLAGS_PRESENT)
+				demo.recorder.pendingcsqcbits[e] |= SENDFLAGS_USABLE;
+	}
+#endif
 
 	/*-------------------------------------------------*/
 
@@ -1507,6 +1592,21 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 #ifdef FTE_PEXT_COLOURMOD
 	demo.recorder.fteprotocolextensions |= FTE_PEXT_COLOURMOD;
 #endif
+#ifdef SV_HAS_CSQC
+	// Only arm the recorder for CSQC when explicitly opted in: by default the
+	// MVD/QTV stream must stay parseable by stock ezQuake/QTV.
+	if (SV_CSQCActive() && (int)sv_mvd_csqc.value)
+	{
+		demo.recorder.fteprotocolextensions |= FTE_PEXT_CSQC;
+		demo.recorder.csqcactive = true;
+		// lazily allocate the recorder's CSQC delta bitset
+		if (!demo.recorder.pendingcsqcbits && sv.max_edicts > 0)
+		{
+			demo.recorder.pendingcsqcbits = Q_calloc(sv.max_edicts, sizeof(uint64_t));
+			demo.recorder.max_net_ents = sv.max_edicts;
+		}
+	}
+#endif
 #ifdef FTE_PEXT2_VOICECHAT
 	demo.recorder.fteprotocolextensions2 |= FTE_PEXT2_VOICECHAT;
 #endif
@@ -1520,13 +1620,13 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 #endif
 
 #if defined(FTE_PEXT_TE_BULLET) && defined(FTE_PEXT2_REPLACEMENTDELTAS)
-	/* The map selects recording format independently of live client negotiation. */
+	/* Select both profile bits before writing either extension family. */
 	if (sv.demo_format == 1) {
-		demo.recorder.fteprotocolextensions2 |= FTE_PEXT2_REPLACEMENTDELTAS;
 		demo.recorder.fteprotocolextensions |= FTE_PEXT_TE_BULLET;
+		demo.recorder.fteprotocolextensions2 |= FTE_PEXT2_REPLACEMENTDELTAS;
 	} else {
-		demo.recorder.fteprotocolextensions2 &= ~FTE_PEXT2_REPLACEMENTDELTAS;
 		demo.recorder.fteprotocolextensions &= ~FTE_PEXT_TE_BULLET;
+		demo.recorder.fteprotocolextensions2 &= ~FTE_PEXT2_REPLACEMENTDELTAS;
 	}
 #elif defined(FTE_PEXT_TE_BULLET)
 	demo.recorder.fteprotocolextensions &= ~FTE_PEXT_TE_BULLET;
@@ -1585,6 +1685,10 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	MSG_WriteByte (&buf, svc_cdtrack);
 	MSG_WriteByte (&buf, 0); // none in demos
 
+	//set start time
+	snprintf(epoch, sizeof(epoch), "%lu", (unsigned long)time(NULL));
+	Info_SetValueForKey (svs.info, "epoch", epoch, MAX_SERVERINFO_STRING);
+
 	// send server info string
 	MSG_WriteByte (&buf, svc_stufftext);
 	MSG_WriteString (&buf, va("fullserverinfo \"%s\"\n", svs.info) );
@@ -1592,20 +1696,18 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	// flush packet
 	SV_WriteRecordMVDMessage (&buf);
 	SZ_Clear (&buf);
+	SV_MVDEmbedStartTimestamp();
 
 	// soundlist
-	n = 0;
 	do {
-		int next;
-
 		if (!MSG_WriteSoundListChunk(&buf, sv.sound_precache, sound_count,
-		                            n, MAX_MSGLEN / 2, &next)) {
+		                            sound_cursor, MAX_MSGLEN / 2, &next_sound)) {
 			SV_Error("Unable to write MVD soundlist chunk");
 		}
-		SV_WriteRecordMVDMessage(&buf);
-		SZ_Clear(&buf);
-		n = next;
-	} while (n);
+		SV_WriteRecordMVDMessage (&buf);
+		SZ_Clear (&buf);
+		sound_cursor = next_sound;
+	} while (sound_cursor);
 
 	// modellist
 	MSG_WriteByte (&buf, svc_modellist);
@@ -1879,8 +1981,13 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 	// send stats
 	for (i = 0; i < MAX_CLIENTS; i++)
 	{
-		int		stats[MAX_CL_STATS];
+		int		statsi[MAX_CL_STATS];
 		int		j;
+		int		n;
+#ifdef SV_HAS_CSQC
+		float	statsf[MAX_CL_STATS];
+		const char *statss[MAX_CL_STATS];
+#endif
 
 		player = svs.clients + i;
 		ent = player->edict;
@@ -1891,38 +1998,87 @@ void SV_MVD_SendInitialGamestate(mvddest_t* dest)
 		if (player->spectator)
 			continue;
 
-		memset(stats, 0, sizeof(stats));
+		memset(statsi, 0, sizeof(statsi));
+#ifdef SV_HAS_CSQC
+		memset(statsf, 0, sizeof(statsf));
+		memset(statss, 0, sizeof(statss));
+#endif
 
-		stats[STAT_HEALTH]       = ent->v->health;
-		stats[STAT_WEAPON]       = SV_ModelIndex(PR_GetEntityString(ent->v->weaponmodel));
-		stats[STAT_AMMO]         = ent->v->currentammo;
-		stats[STAT_ARMOR]        = ent->v->armorvalue;
-		stats[STAT_SHELLS]       = ent->v->ammo_shells;
-		stats[STAT_NAILS]        = ent->v->ammo_nails;
-		stats[STAT_ROCKETS]      = ent->v->ammo_rockets;
-		stats[STAT_CELLS]        = ent->v->ammo_cells;
-		stats[STAT_ACTIVEWEAPON] = ent->v->weapon;
+		statsi[STAT_HEALTH]       = ent->v->health;
+		statsi[STAT_WEAPON]       = SV_ModelIndex(PR_GetEntityString(ent->v->weaponmodel));
+		statsi[STAT_AMMO]         = ent->v->currentammo;
+		statsi[STAT_ARMOR]        = ent->v->armorvalue;
+		statsi[STAT_SHELLS]       = ent->v->ammo_shells;
+		statsi[STAT_NAILS]        = ent->v->ammo_nails;
+		statsi[STAT_ROCKETS]      = ent->v->ammo_rockets;
+		statsi[STAT_CELLS]        = ent->v->ammo_cells;
+		statsi[STAT_ACTIVEWEAPON] = ent->v->weapon;
 
 		/* RD carries corpse/gib viewheight explicitly instead of legacy flags. */
 		if (ent->v->health > 0 || SV_MVD_UsesRD()) {
-			stats[STAT_VIEWHEIGHT] = ent->v->view_ofs[2];
+			statsi[STAT_VIEWHEIGHT] = ent->v->view_ofs[2];
 		}
 
-		stats[STAT_ITEMS] = SV_ItemsStat(ent);
+		statsi[STAT_ITEMS] = SV_ItemsStat(ent);
 
-		for (j = 0; j < MAX_CL_STATS; j++)
+#ifdef SV_HAS_CSQC
+		// clientstat/pointerstat registered stats (32..255) for the recorder.
+		if (SV_WantsQCStats (&demo.recorder))
+			SV_UpdateQCStats (ent, statsi, statsf, statss);
+#endif
+
+		// legacy 32 stats unless the recorder is explicitly CSQC
+#ifdef SV_HAS_CSQC
+		n = SV_WantsQCStats (&demo.recorder) ? MAX_CL_STATS : MAX_WIRE_STATS;
+#else
+		n = MAX_WIRE_STATS;
+#endif
+
+		for (j = 0; j < n; j++)
 		{
-			if (stats[j] >= 0 && stats[j] <= 255)
+#ifdef SV_HAS_CSQC
+			// float/string stats use their own wire opcodes
+			if (SV_QCStatKind(j) == QCSTAT_KIND_FLOAT)
+			{
+				if (statsf[j] && statsf[j] != (float)(int)statsf[j])
+				{
+					MSG_WriteByte(&buf, svc_fte_updatestatfloat);
+					MSG_WriteByte(&buf, j);
+					MSG_WriteFloat(&buf, statsf[j]);
+				}
+				else if ((int)statsf[j] >= 0 && (int)statsf[j] <= 255)
+				{
+					MSG_WriteByte(&buf, svc_updatestat);
+					MSG_WriteByte(&buf, j);
+					MSG_WriteByte(&buf, (int)statsf[j]);
+				}
+				else
+				{
+					MSG_WriteByte(&buf, svc_updatestatlong);
+					MSG_WriteByte(&buf, j);
+					MSG_WriteLong(&buf, (int)statsf[j]);
+				}
+				continue;
+			}
+			if (SV_QCStatKind(j) == QCSTAT_KIND_STRING)
+			{
+				MSG_WriteByte(&buf, svc_fte_updatestatstring);
+				MSG_WriteByte(&buf, j);
+				MSG_WriteString(&buf, (char *)(statss[j] ? statss[j] : ""));
+				continue;
+			}
+#endif
+			if (statsi[j] >= 0 && statsi[j] <= 255)
 			{
 				MSG_WriteByte(&buf, svc_updatestat);
 				MSG_WriteByte(&buf, j);
-				MSG_WriteByte(&buf, stats[j]);
+				MSG_WriteByte(&buf, statsi[j]);
 			}
 			else
 			{
 				MSG_WriteByte(&buf, svc_updatestatlong);
 				MSG_WriteByte(&buf, j);
-				MSG_WriteLong(&buf, stats[j]);
+				MSG_WriteLong(&buf, statsi[j]);
 			}
 		}
 
@@ -2137,6 +2293,9 @@ static void MVD_Init (void)
 	Cvar_Register (&sv_demoExtraNames);
 	Cvar_Register (&sv_demoRegexp);
 	Cvar_Register (&sv_silentrecord);
+#ifdef SV_HAS_CSQC
+	Cvar_Register (&sv_mvd_csqc);
+#endif
 
 	Cvar_Register (&extralogname);
 

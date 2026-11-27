@@ -72,6 +72,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 int noconinput = 0;
 
+uint64_t Sys_TimestampMilliseconds(void)
+{
+	struct timeval now;
+
+	gettimeofday(&now, NULL);
+	return (uint64_t)now.tv_sec * 1000 + (uint64_t)now.tv_usec / 1000;
+}
+
 qbool stdin_ready;
 int do_stdin = 1;
 

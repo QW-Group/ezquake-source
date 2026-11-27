@@ -117,6 +117,7 @@ void Sys_Printf (char *fmt, ...);
 void Sys_Quit (void);
 
 double Sys_DoubleTime (void);
+uint64_t Sys_TimestampMilliseconds(void);
 
 
 // Perform Key_Event() callbacks until the input que is empty

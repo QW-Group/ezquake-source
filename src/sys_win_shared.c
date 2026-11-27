@@ -27,6 +27,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <pcre2.h>
 #include <shlobj.h>
 
+uint64_t Sys_TimestampMilliseconds(void)
+{
+	FILETIME time;
+	ULARGE_INTEGER ticks;
+
+	GetSystemTimeAsFileTime(&time);
+	ticks.LowPart = time.dwLowDateTime;
+	ticks.HighPart = time.dwHighDateTime;
+
+	return (ticks.QuadPart - 116444736000000000ULL) / 10000ULL;
+}
+
 void Sys_mkdir (const char *path)
 {
 	_mkdir (path);
