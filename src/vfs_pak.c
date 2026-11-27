@@ -385,6 +385,5 @@ searchpathfuncs_t packfilefuncs = {
 	FSOS_ReadFile,
 	FSPAK_EnumerateFiles,
 	FSPAK_LoadPackFile,
-	NULL,
 	FSPAK_OpenVFS
 };

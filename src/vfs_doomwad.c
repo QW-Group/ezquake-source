@@ -220,7 +220,6 @@ searchpathfuncs_t doomwadfilefuncs = {
 	FSOS_ReadFile,
 	FSPAK_EnumerateFiles,
 	FSPAK_LoadDoomWadFile,
-	NULL,
 	FSPAK_OpenVFS
 };
 

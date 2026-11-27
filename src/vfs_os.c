@@ -267,6 +267,5 @@ searchpathfuncs_t osfilefuncs = {
 	FSOS_ReadFile,
 	FSOS_EnumerateFiles,
 	NULL,
-	NULL,
 	FSOS_OpenVFS
 };
