@@ -1106,7 +1106,8 @@ void SV_LastStats_f (void)
 		if ((f = fopen(path, "rt")) != NULL)
 		{
 			if (FS_FileLength(f) == 0) {
-			    continue;
+				fclose(f);
+				continue;
 			}
 
 			if (i != dir.numfiles - limit)
