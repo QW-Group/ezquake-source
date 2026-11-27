@@ -2799,7 +2799,7 @@
       "type": "integer"
     },
     "cl_voip_capturingvol": {
-      "default": "0.5",
+      "default": "1",
       "desc": "Volume multiplier applied while capturing, to avoid your audio from being heard by others.",
       "group-id": "32",
       "type": "integer"
