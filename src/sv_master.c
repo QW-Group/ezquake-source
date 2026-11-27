@@ -25,7 +25,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define HEARTBEAT_SECONDS 300
 
-static netadr_t master_adr[MAX_MASTERS]; // address of group servers
+netadr_t master_adr[MAX_MASTERS]; // address of group servers
 
 /*
 ====================
@@ -41,7 +41,7 @@ void SV_SetMaster_f (void)
 
 	memset (&master_adr, 0, sizeof(master_adr));
 
-	for (i=1 ; i<Cmd_Argc() ; i++)
+	for (i=1 ; i<Cmd_Argc() && i-1 < MAX_MASTERS ; i++)
 	{
 		if (!strcmp(Cmd_Argv(i), "none") || !NET_StringToAdr (Cmd_Argv(i), &master_adr[i-1]))
 		{
